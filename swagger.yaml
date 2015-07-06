@@ -1,0 +1,293 @@
+swagger: '2.0'
+
+# Document metadata
+info:
+    version: "0.0.1"
+    title: Mainflux
+    termsOfService: http://swagger.io/terms/
+    contact:
+        name: API Support
+        url: http://wwww.mainflux.com/support
+        email: support@mainflux.com
+    license:
+        name: MIT
+        url: http://opensource.org/licenses/MIT
+
+paths:
+    /status:
+        # This is a HTTP operation
+        get:
+            # Describe this verb here. Note: you can use markdown
+            description: |
+                Gets Mainflux server status.
+
+            # Expected responses for this operation:
+            responses:
+                # Response code
+                200:
+                    description: Server is running
+          
+                    # A schema describing your response object.
+                    # Use JSON Schema format
+                    schema:
+                        title: Status
+                        type: string
+
+    /things:
+        # This is a HTTP operation
+        get:
+            # Describe this verb here. Note: you can use markdown
+            description: |
+                Gets all of the existing `Thing` objects.
+      
+            # This is array of GET operation parameters:
+            parameters:
+                # An example parameter that is in query and is required
+                -   
+                    name: authUuid
+                    in: query
+                    description: authentification UUID
+                    required: true
+                    type: string
+
+                -   
+                    name: authToken
+                    in: query
+                    description: authentification token
+                    required: true
+                    type: number
+                    format: double
+                    
+      
+            # Expected responses for this operation:
+            responses:
+                # Response code
+                200:
+                    description: Successful response
+          
+                    # A schema describing your response object.
+                    # Use JSON Schema format
+                    schema:
+                        title: ArrayOfThings
+                        type: array
+                        items:
+                            title: Thing
+                            type: object
+                            properties:
+                                uuid:
+                                    type: number
+                                name:
+                                    type: string
+                                type:
+                                    type: string
+                                manufacturer:
+                                    type: string
+        post:
+            # Describe this verb here. Note: you can use markdown
+            description: |
+                Creates `Thing` object.
+                Returns newly created Thing object.
+      
+            # This is array of GET operation parameters:
+            parameters:
+                # An example parameter that is in query and is required
+                -   
+                    name: authUuid
+                    in: query
+                    description: authentification UUID
+                    required: true
+                    type: string
+
+                -   
+                    name: authToken
+                    in: query
+                    description: authentification token
+                    required: true
+                    type: number
+                    format: double
+                    
+      
+            # Expected responses for this operation:
+            responses:
+                # Response code
+                200:
+                    description: Successful response
+          
+                    # A schema describing your response object.
+                    # Use JSON Schema format
+                    schema:
+                        title: Thing
+                        type: object
+                        properties:
+                            uuid:
+                                type: number
+                            name:
+                                type: string
+                            type:
+                                type: string
+                            manufacturer:
+                                type: string
+    /things/{thingUuid}:
+        # This is a HTTP operation
+        get:
+            # Describe this verb here. Note: you can use markdown
+            description: |
+                Gets Thing object from the database by thingUuid.
+      
+            # This is array of GET operation parameters:
+            parameters:
+                # An example parameter that is in query and is required
+                -
+                    name: thingUuid
+                    in: path
+                    description: thing UUID
+                    required: true
+                    type: string
+                -
+                    name: authUuid
+                    in: query
+                    description: authentification UUID
+                    required: true
+                    type: string
+
+                -   
+                    name: authToken
+                    in: query
+                    description: authentification token
+                    required: true
+                    type: number
+                    format: double
+                    
+      
+            # Expected responses for this operation:
+            responses:
+                # Response code
+                200:
+                    description: Successful response
+          
+                    # A schema describing your response object.
+                    # Use JSON Schema format
+                    schema:
+                        title: Thing
+                        type: object
+                        properties:
+                            uuid:
+                                type: number
+                            name:
+                                type: string
+                            type:
+                                type: string
+                            manufacturer:
+                                type: string
+
+        put:
+            # Describe this verb here. Note: you can use markdown
+            description: |
+                Updates Thing object from the database.
+      
+            # This is array of GET operation parameters:
+            parameters:
+                # An example parameter that is in query and is required
+                -
+                    name: thingUuid
+                    in: path
+                    description: thing UUID
+                    required: true
+                    type: string
+                -
+                    name: params
+                    in: query
+                    description: thing parameters
+                    required: true
+                    type: string
+                -
+                    name: authUuid
+                    in: query
+                    description: authentification UUID
+                    required: true
+                    type: string
+
+                -   
+                    name: authToken
+                    in: query
+                    description: authentification token
+                    required: true
+                    type: number
+                    format: double
+                    
+      
+            # Expected responses for this operation:
+            responses:
+                # Response code
+                200:
+                    description: Successful response
+          
+                    # A schema describing your response object.
+                    # Use JSON Schema format
+                    schema:
+                        title: Thing
+                        type: object
+                        properties:
+                            uuid:
+                                type: number
+                            name:
+                                type: string
+                            type:
+                                type: string
+                            manufacturer:
+                                type: string
+                                
+        delete:
+            # Describe this verb here. Note: you can use markdown
+            description: |
+                Deletes Thing object from the database.
+      
+            # This is array of GET operation parameters:
+            parameters:
+                # An example parameter that is in query and is required
+                -
+                    name: thingUuid
+                    in: path
+                    description: thing UUID
+                    required: true
+                    type: string
+                -
+                    name: authUuid
+                    in: query
+                    description: authentification UUID
+                    required: true
+                    type: string
+
+                -   
+                    name: authToken
+                    in: query
+                    description: authentification token
+                    required: true
+                    type: number
+                    format: double
+                    
+      
+            # Expected responses for this operation:
+            responses:
+                # Response code
+                200:
+                    description: Successful response
+          
+                    # A schema describing your response object.
+                    # Use JSON Schema format
+                    schema:
+                        title: Thing
+                        type: object
+                        properties:
+                            uuid:
+                                type: number
+                            name:
+                                type: string
+                            type:
+                                type: string
+                            manufacturer:
+                                type: string
+                                
+            
+                
+

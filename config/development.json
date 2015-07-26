@@ -1,0 +1,9 @@
+{
+    "message" : "We are in development",
+    "db" : {
+        "path" : "mongodb://localhost",
+        "port" : "27017",
+        "name" : "test"
+    },
+    "port" : "8080"
+}

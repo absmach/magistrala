@@ -1,0 +1,14 @@
+api:
+  build: .
+  volumes:
+    - ".:/src"
+  ports:
+   - "8080:8080"
+  # set up links so that api knows about db, redis, etc...
+  links:
+   - mongodb
+
+mongodb:
+  image: mongo
+  ports:
+    - "27017:27017"

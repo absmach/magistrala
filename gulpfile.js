@@ -18,7 +18,7 @@ gulp.task('jshint', function() {
 // configure which files to watch and what tasks to use on file changes
 gulp.task('watch', function() {
     gulp.watch('app/**/*.js', ['jshint']);
-    
+
     // Start up the server and have it reload when anything in the
     // ./build/ directory changes
     nodemon({script: 'server.js', watch: 'app/**'});

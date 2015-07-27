@@ -17,8 +17,10 @@ var bodyParser  = require('body-parser');
 
 // MongoDB
 var mongoose    = require('mongoose');
+// Docker MongoDB url
+var docker_mongo_url = process.env.MAINFLUX_MONGODB_1_PORT_27017_TCP_ADDR
 
-mongoose.connect(config.db.path + ':' + config.db.port + '/' + config.db.name); // connect to our database
+mongoose.connect(docker_mongo_url || config.db.path + ':' + config.db.port + '/' + config.db.name); // connect to our database
 
 
 // configure app to use bodyParser()

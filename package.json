@@ -1,6 +1,12 @@
 {
   "name": "node-api",
+  "description": "Mainflux is an open source MIT licensed IoT cloud written in NodeJS",
   "main": "server.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mainflux/mainflux"
+  },
+
   "dependencies": {
     "express": "~4.0.0",
     "mongoose": "~3.6.13",

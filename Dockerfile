@@ -2,34 +2,21 @@
 # Mainflux Dockerfile
 ###
 # Set the base image to Node, onbuild variant: https://registry.hub.docker.com/_/node/
-FROM node:0.10-onbuild
 
-# Maintained by Mainflux team
-MAINTAINER Mainflux <docker@mainflux.com>
+FROM node:0.10.38
 
-# Log info
-RUN echo "Starting Mainflux server..."
+RUN apt-get update -qq && apt-get install -y build-essential
 
-###
-# Installations
-###
-# Add Gulp globally
+RUN mkdir /src
+
 RUN npm install -g gulp
+RUN npm install -g nodemon
 
-# Gulp also demands to be saved locally
-RUN npm install --save-dev gulp
-
-# Finally, install all project Node modules
+WORKDIR /src
+ADD package.json /src/package.json
 RUN npm install
 
-###
-# Setup the port
-###
-# Run Mainflux on port 80
-ENV PORT 80
-
-# Expose port on which we run Mainflux
-EXPOSE $PORT
+EXPOSE 8080
 
 ###
 # Run main command from entrypoint and parameters in CMD[]
@@ -39,4 +26,3 @@ CMD [""]
 
 # Set default container command
 ENTRYPOINT gulp
-

@@ -13,16 +13,11 @@ Mainflux is an open source MIT licensed IoT cloud written in NodeJS
     gulp
 ```
 
-## Docker
-### Build image
+## Docker compose
+###  Run docker-compose up and Compose will start and run  entire app.
 ```bash
-    sudo docker build -t=mainflux .
+    docker-compose up
 ```
 
-## Run image
-```bash
-    sudo docker run -i -t -d -p 8080:8080 --name=mainflux mainflux`
-```
-
-## License 
+## License
 MIT

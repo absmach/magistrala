@@ -9,9 +9,15 @@ RUN apt-get update -qq && apt-get install -y build-essential
 
 RUN mkdir /src
 
+-###
+-# Installations
+-###
+-# Add Gulp globally
+
 RUN npm install -g gulp
 RUN npm install -g nodemon
 
+# Finally, install all project Node modules
 WORKDIR /src
 ADD package.json /src/package.json
 RUN npm install
@@ -21,7 +27,7 @@ EXPOSE 8080
 ###
 # Run main command from entrypoint and parameters in CMD[]
 ###
-# Default port to execute the entrypoint (MongoDB)
+
 CMD [""]
 
 # Set default container command

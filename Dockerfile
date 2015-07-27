@@ -9,10 +9,10 @@ RUN apt-get update -qq && apt-get install -y build-essential
 
 RUN mkdir /src
 
--###
--# Installations
--###
--# Add Gulp globally
+###
+# Installations
+###
+# Add Gulp globally
 
 RUN npm install -g gulp
 RUN npm install -g nodemon

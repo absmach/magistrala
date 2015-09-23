@@ -11,7 +11,10 @@
   "dependencies": {
     "express": "~4.0.0",
     "mongoose": "~3.6.13",
-    "body-parser": "~1.0.1"
+    "body-parser": "~1.0.1",
+    "jsonwebtoken": "~5.0.5",
+    "bcrypt": "~0.8.5",
+    "lodash": "~3.10.1"
   },
   "devDependencies": {
     "gulp-jshint": "^1.11.2",

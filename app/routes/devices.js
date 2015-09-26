@@ -3,17 +3,21 @@ var router = express.Router();              // get an instance of the express Ro
 
 var Device   = require('../models/device');
 
-// on routes that end in /devices
-// ----------------------------------------------------
+/**
+ * /devices
+ */
 router.route('/')
 
-    // create a devices (accessed at POST http://localhost:8080/devices)
+    /** Create a device (accessed at POST http://localhost:8080/devices) */
     .post(function(req, res) {
-        
-        var device = new Device();        // create a new instance of the Bear model
-        device.name = req.body.name;     // set the device's name (comes from the request)
 
-        // save the device and check for errors
+		conslole.log("req.headers['mainflux_uuid']", req.headers['mainflux_uuid']);
+		conslole.log("req.headers['mainflux_token']", req.headers['mainflux_token']);
+        
+        var device = new Device();		// create a new instance of the Device model
+        device.name = req.body.name;	// set the device's name (comes from the request)
+
+        /** Save the device and check for errors */
         device.save(function(err) {
             if (err)
                 res.send(err);
@@ -23,7 +27,7 @@ router.route('/')
         
     })
 
-    // get all the devices (accessed at GET http://localhost:8080/devices)
+    /** Get all the devices (accessed at GET http://localhost:8080/devices) */
     .get(function(req, res) {
         Device.find(function(err, devices) {
             if (err)
@@ -34,11 +38,13 @@ router.route('/')
     });
 
     
-// on routes that end in /devices/:device_id
-// ----------------------------------------------------
+/**
+ * /devices/:device_id
+ * N.B. Colon (`:`) is needed because of Express `req.params`: http://expressjs.com/api.html#req.params
+ */
 router.route('/:device_id')
 
-    // get the device with that id (accessed at GET http://localhost:8080/devices/:device_id)
+    /** Get the device with that id (accessed at GET http://localhost:8080/devices/:device_id) */
     .get(function(req, res) {
         Device.findById(req.params.device_id, function(err, device) {
             if (err)
@@ -47,10 +53,10 @@ router.route('/:device_id')
         });
     })
 
-    // update the device with this id (accessed at PUT http://localhost:8080/devices/:device_id)
+    /** Update the device with this id (accessed at PUT http://localhost:8080/devices/:device_id) */
     .put(function(req, res) {
 
-        // use our device model to find the device we want
+        /** Use our device model to find the device we want */
         Device.findById(req.params.device_id, function(err, device) {
 
             if (err)
@@ -58,7 +64,7 @@ router.route('/:device_id')
 
             device.name = req.body.name;  // update the devices info
 
-            // save the device
+            /** Save the device */
             device.save(function(err) {
                 if (err)
                     res.send(err);
@@ -69,7 +75,7 @@ router.route('/:device_id')
         })
     })
 
-    // delete the device with this id (accessed at DELETE http://localhost:8080/devices/:device_id)
+    /** Delete the device with this id (accessed at DELETE http://localhost:8080/devices/:device_id) */
     .delete(function(req, res) {
         Device.remove({
             _id: req.params.device_id
@@ -81,5 +87,7 @@ router.route('/:device_id')
         });
     });
 
-// export router module
+/**
+ * Export router module
+ */
 module.exports = router;

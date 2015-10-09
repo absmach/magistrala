@@ -3,7 +3,7 @@
 [![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org) [![Join the chat at https://gitter.im/Mainflux/mainflux](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Mainflux/mainflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ### About
-Mainflux is lean open source MIT licensed industrial IoT cloud written in NodeJS.
+Mainflux is lean open source industrial IoT cloud written in NodeJS.
 
 It allows device, user and application connections over various network protocols, like HTTP, MQTT, WebSocket and CoAP, making a seamless bridge between them. As a consequence, Mainflux represents highly secure and highly optimised M2M platform based on the cutting-edge standards and approaches in the industry.
 
@@ -56,4 +56,4 @@ This is why Mainflux uses [Docker Compose](https://docs.docker.com/compose/insta
 ```
 
 ### License
-MIT
+Apache License, version 2.0

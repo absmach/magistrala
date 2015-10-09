@@ -48,7 +48,7 @@ gulp
 ```
 
 ### Docker
-Apart from main `nodejs` docker image, `Mainflux` also uses `mongo` Docker image (database instance is run in a separte generic Docker image).
+Apart from main `nodejs` Docker image, Mainflux also uses `mongo` Docker image (database instance is run in a separte generic Docker image).
 
 This is why Mainflux uses [Docker Compose](https://docs.docker.com/compose/install/), to run both `nodejs` and `mongo` images at the same time and make a connection between them:
 ```bash
@@ -56,4 +56,4 @@ This is why Mainflux uses [Docker Compose](https://docs.docker.com/compose/insta
 ```
 
 ### License
-Apache License, version 2.0
+[Apache License, version 2.0](LICENSE)

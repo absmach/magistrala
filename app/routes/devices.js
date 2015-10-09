@@ -11,8 +11,8 @@ router.route('/')
     /** Create a device (accessed at POST http://localhost:8080/devices) */
     .post(function(req, res) {
 
-		conslole.log("req.headers['mainflux_uuid']", req.headers['mainflux_uuid']);
-		conslole.log("req.headers['mainflux_token']", req.headers['mainflux_token']);
+		console.log("req.headers['mainflux_uuid']", req.headers['mainflux_uuid']);
+		console.log("req.headers['mainflux_token']", req.headers['mainflux_token']);
         
         var device = new Device();		// create a new instance of the Device model
         device.name = req.body.name;	// set the device's name (comes from the request)

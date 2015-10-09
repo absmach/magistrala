@@ -172,7 +172,7 @@ included in the project:
  If you set your `user.name` and `user.email` git configs, you can sign your commit automatically with `git commit -s`.
 
 **IMPORTANT**: By submitting a patch, you agree to allow the project
-owners to license your work under the terms of the [MIT License](LICENSE).
+owners to license your work under the terms of the [Apache License, Version 2.0](LICENSE).
 
 ## Merge approval
 

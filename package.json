@@ -6,6 +6,7 @@
     "type": "git",
     "url": "https://github.com/Mainflux/mainflux"
   },
+  "license": "Apache-2.0",
 
   "dependencies": {
     "express": "~4.0.0",

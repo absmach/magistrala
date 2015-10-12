@@ -11,8 +11,7 @@ router.route('/')
     /** Create a device (accessed at POST http://localhost:8080/devices) */
     .post(function(req, res) {
 
-		console.log("req.headers['mainflux_uuid']", req.headers['mainflux_uuid']);
-		console.log("req.headers['mainflux_token']", req.headers['mainflux_token']);
+		console.log("req.headers['x-auth-token'] = ", req.headers['x-auth-token']);
         
         var device = new Device();		// create a new instance of the Device model
         device.name = req.body.name;	// set the device's name (comes from the request)
@@ -22,13 +21,16 @@ router.route('/')
             if (err)
                 res.send(err);
 
-            res.json({ message: 'Device created!' });
+            res.json(device);
         });
         
     })
 
     /** Get all the devices (accessed at GET http://localhost:8080/devices) */
     .get(function(req, res) {
+
+		console.log("req.headers['x-auth-token'] = ", req.headers['x-auth-token']);
+		
         Device.find(function(err, devices) {
             if (err)
                 res.send(err);
@@ -69,7 +71,7 @@ router.route('/:device_id')
                 if (err)
                     res.send(err);
 
-                res.json({ message: 'Device updated!' });
+                res.json(device);
             });
 
         })
@@ -83,7 +85,7 @@ router.route('/:device_id')
             if (err)
                 res.send(err);
 
-            res.json({ message: 'Successfully deleted' });
+            res.json(device);
         });
     });
 

@@ -7,7 +7,7 @@ router.route('/')
 
     // get the status (accessed at GET http://localhost:8080/status)
     .get(function(req, res) {
-        var stat = {"status":"OK"}
+        var stat = {"status":"OK"};
         res.send(stat);
     });
 

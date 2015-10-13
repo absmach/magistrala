@@ -5,5 +5,7 @@
         "port" : "27017",
         "name" : "test"
     },
-    "port" : "8080"
+    "port" : "8080",
+    "secretToken": "VelikaSrbija",
+    "userTokenExpirePeriod": "10080"
 }

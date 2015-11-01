@@ -7,6 +7,9 @@
     "url": "https://github.com/Mainflux/mainflux"
   },
   "license": "Apache-2.0",
+  "scripts": {
+    "test": "mocha"
+  },
   "dependencies": {
     "express": "~4.0.0",
     "mongoose": "~3.6.13",

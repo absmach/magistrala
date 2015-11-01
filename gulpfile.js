@@ -1,15 +1,16 @@
 /* File: gulpfile.js */
 
 // grab our packages
-var gulp   = require('gulp');
-var jshint = require('gulp-jshint');
+var gulp    = require('gulp');
+var jshint  = require('gulp-jshint');
 var nodemon = require('gulp-nodemon');
+var mocha   = require('gulp-mocha');
 
 // define the default task and add the watch task to it
 gulp.task('default', ['watch']);
 
 // configure the jshint task
-gulp.task('jshint', function() {
+gulp.task('lint', function() {
     return gulp.src('app/**/*.js')
         .pipe(jshint())
         .pipe(jshint.reporter('jshint-stylish'));
@@ -22,4 +23,10 @@ gulp.task('watch', function() {
     // Start up the server and have it reload when anything in the
     // ./build/ directory changes
     nodemon({script: 'server.js', watch: 'app/**'});
+});
+
+gulp.task('test', function() {
+  return gulp
+    .src('test/*.js')
+    .pipe(mocha());
 });

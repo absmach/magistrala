@@ -50,11 +50,10 @@ app.use('/sessions', require('./app/routes/sessions'));
 /**
  * SERVER START
  */
-app.listen(port);
+var server = app.listen(port);
 console.log('Magic happens on port ' + port);
-
 
 /**
  * Export app for testing
  */
-module.exports = app;
+module.exports = server;

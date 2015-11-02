@@ -5,6 +5,7 @@ var gulp    = require('gulp');
 var jshint  = require('gulp-jshint');
 var nodemon = require('gulp-nodemon');
 var mocha   = require('gulp-mocha');
+var exit    = require('gulp-exit');
 
 // define the default task and add the watch task to it
 gulp.task('default', ['watch']);
@@ -28,5 +29,7 @@ gulp.task('watch', function() {
 gulp.task('test', function() {
   return gulp
     .src('test/*.js')
-    .pipe(mocha());
+    .pipe(mocha())
+    .pipe(exit());
 });
+

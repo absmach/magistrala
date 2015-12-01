@@ -11,12 +11,12 @@
     "test": "node_modules/.bin/mocha"
   },
   "dependencies": {
-    "express": "~4.0.0",
-    "mongoose": "~3.6.13",
+    "bcrypt": "~0.8.5",
     "body-parser": "~1.0.1",
     "jsonwebtoken": "~5.0.5",
-    "bcrypt": "~0.8.5",
-    "lodash": "~3.10.1"
+    "lodash": "~3.10.1",
+    "mongojs": "^1.4.1",
+    "restify": "^4.0.3"
   },
   "devDependencies": {
     "chai": "^3.4.0",

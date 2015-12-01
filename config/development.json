@@ -7,5 +7,9 @@
     },
     "port" : "8080",
     "secretToken": "VelikaSrbija",
-    "userTokenExpirePeriod": "10080"
+    "userTokenExpirePeriod": "10080",
+    "limiter" : {
+        "defaultBurstRate": 50,
+        "defaultRatePerSec": 0.5
+    }
 }

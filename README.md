@@ -47,6 +47,8 @@ Run Gulp Task:
 gulp
 ```
 
+> N.B. Mainflux has a MongoDB dependency. Database path and port can be defined in the [config](https://github.com/Mainflux/mainflux/tree/master/config) files.
+
 ### Docker
 Apart from main `nodejs` Docker image, Mainflux also uses `mongo` Docker image (database instance is run in a separte generic Docker image).
 
@@ -56,7 +58,7 @@ This is why Mainflux uses [Docker Compose](https://docs.docker.com/compose/insta
 ```
 
 ### Documentation
-Development documentation can be found on our [Mainflux GitHub Wiki](https://github.com/nodesign/weio/wiki)
+Development documentation can be found on our [Mainflux GitHub Wiki](https://github.com/Mainflux/mainflux/wiki)
 
 ### Community
 #### Mailing lists

@@ -5,55 +5,69 @@
  * All rights not explicitly granted in the Apache license, version 2.0 are reserved.
  * See the included LICENSE file for more details.
  */
-
-/**
- * Extrenal configs are kept in the config.js file on the same level
- */
+var restify = require('restify');
+var domain = require('domain');
 var config = require('./config/config');
-console.log(config.message);
 
 
 /**
- * SETUP
+ * RESTIFY
  */
-var express     = require('express');        // call express
-var app         = express();                 // define our app using express
-var bodyParser  = require('body-parser');
 
-/** MongoDB */
-var mongoose    = require('mongoose');
+/** Create server */
+var server = restify.createServer({
+    name: "Mainflux"
+});
 
-/** Docker MongoDB url */
-var docker_mongo_url = process.env.MAINFLUX_MONGODB_1_PORT_27017_TCP_ADDR
+server.pre(restify.pre.sanitizePath());
+server.use(restify.acceptParser(server.acceptable));
+server.use(restify.bodyParser());
+server.use(restify.queryParser());
+server.use(restify.authorizationParser());
 
-/** Connect to DB */
-mongoose.connect(docker_mongo_url || config.db.path + ':' + config.db.port + '/' + config.db.name);
+console.log('Enabling CORS');
+server.use(restify.CORS());
+server.use(restify.fullResponse());
 
-/** Configure app to use bodyParser() */
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+//Global error handler
+server.use(function(req, res, next) {
+    var domainHandler = domain.create();
 
-var port = process.env.PORT || config.port;        // set our port
+    domainHandler.on('error', function(err) {
+        var errMsg = 'Request: \n' + req + '\n';
+        errMsg += 'Response: \n' + res + '\n';
+        errMsg += 'Context: \n' + err;
+        errMsg += 'Trace: \n' + err.stack + '\n';
+
+        console.log(err.message);
+
+        //logger.error(err.message || '');
+    });
+
+    domainHandler.enter();
+    next();
+});
 
 
 /**
  * ROUTES
  */
-app.use('/status', require('./app/routes/status'));
-app.use('/devices', require('./app/routes/devices'));
-app.use('/users', require('./app/routes/users'));
-app.use('/sessions', require('./app/routes/sessions'));
-
-
+var route = require('./app/routes');
+route(server);
 
 
 /**
  * SERVER START
  */
-var server = app.listen(port);
-console.log('Magic happens on port ' + port);
+var port = process.env.PORT || config.port;
+
+console.log('Starting the server');
+server.listen(port, function() {
+    console.log('%s is running at %s', server.name, server.url);
+});
+
 
 /**
- * Export app for testing
+ * Exports
  */
 module.exports = server;

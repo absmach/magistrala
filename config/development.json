@@ -6,7 +6,7 @@
         "name" : "test"
     },
     "port" : "8080",
-    "secretToken": "VelikaSrbija",
+    "tokenSecret": "Pariz-Beograd",
     "userTokenExpirePeriod": "10080",
     "limiter" : {
         "defaultBurstRate": 50,

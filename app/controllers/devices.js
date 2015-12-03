@@ -1,6 +1,9 @@
 var mongojs = require('mongojs');
 var devicesDb = require('../database').collection('devices');
 
+var jwt = require('jsonwebtoken');
+var config = require('../../config/config');
+
 /** createDevice() */
 exports.createDevice = function(req, res, next) {
 
@@ -9,9 +12,17 @@ exports.createDevice = function(req, res, next) {
     /** Save the device and check for errors */
     devicesDb.insert(req.body, function(err, device) {
         if (err)
-            res.send(err);
+            return next(err);
 
-        res.json(device);
+        var token = jwt.sign(device, config.tokenSecret, {
+                expiresInMinutes: config.userTokenExpirePeriod
+        });
+
+        res.json({
+                status: 200,
+                message: 'Device created',
+                token: token
+        });
     });
 
     return next();
@@ -24,7 +35,7 @@ exports.getAllDevices = function(req, res, next) {
 		
     devicesDb.find(req.body, function(err, devices) {
         if (err)
-            res.send(err);
+            return next(err);
 
         res.json(devices);
         return next();
@@ -63,7 +74,7 @@ exports.updateDevice = function(req, res, next) {
 
 /** deleteDevice() */
 exports.deleteDevice = function(req, res, next) {
-    deviceDb.remove({
+    devicesDb.remove({
         _id: mongojs.ObjectId(req.params.device_id)
     }, function(err, device) {
         if (err)

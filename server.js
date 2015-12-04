@@ -6,6 +6,7 @@
  * See the included LICENSE file for more details.
  */
 var restify = require('restify');
+var jwt = require('restify-jwt');
 var domain = require('domain');
 var config = require('./config/config');
 
@@ -29,7 +30,25 @@ console.log('Enabling CORS');
 server.use(restify.CORS());
 server.use(restify.fullResponse());
 
-//Global error handler
+/** JWT */
+server.use(jwt({
+    secret: config.tokenSecret,
+    requestProperty: 'token',
+    getToken: function fromHeaderOrQuerystring(req) {
+        var token = (req.body && req.body.access_token) ||
+            (req.query && req.query.access_token) ||
+            req.headers['x-auth-token'];
+
+        return token;
+    }
+}).unless({
+    path: [
+        '/status',
+        {url: '/devices', methods: ['POST']}
+    ]
+}));
+
+/** Global error handler */
 server.use(function(req, res, next) {
     var domainHandler = domain.create();
 

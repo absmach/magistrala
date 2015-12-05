@@ -10,11 +10,22 @@ info:
   license:
     name: Apache-2.0
     url: 'http://opensource.org/licenses/Apache-2.0'
+host: api.mainflux.com
+basePath: /
+schemes:
+  - http
+  - https
+consumes:
+  - application/json
+  - text/xml
+produces:
+  - application/json
+  - text/html
 paths:
   /status:
     get:
       description: |
-        Gets Mainflux server status.
+        Gets Mainflux server status
       responses:
         '200':
           description: Server is running

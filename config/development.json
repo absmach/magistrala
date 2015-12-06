@@ -11,5 +11,6 @@
     "limiter" : {
         "defaultBurstRate": 50,
         "defaultRatePerSec": 0.5
-    }
+    },
+    "version": "0.1"
 }

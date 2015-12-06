@@ -7,8 +7,10 @@ api:
   # set up links so that api knows about db, redis, etc...
   links:
    - mongodb
+  container_name: mainflux-api-docker
 
 mongodb:
   image: mongo
   ports:
     - "27017:27017"
+  container_name: mainflux-mongo-docker

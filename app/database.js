@@ -5,13 +5,20 @@ var config = require('../config/config');
  */
 var mongojs = require('mongojs');
 
-/** Docker MongoDB url */
-var docker_mongo_url = process.env.MAINFLUX_MONGODB_1_PORT_27017_TCP_ADDR
-
 /** Connect to DB */
-console.log("Connecting to DB");
 var collections = ['devices'];
-var db = mongojs(docker_mongo_url || config.db.path + ':' + config.db.port + '/' + config.db.name);
+
+/** Check if we run with Docker compose */
+var dockerMongo = process.env.MONGODB_NAME;
+var dbUrl = '';
+if (dockerMongo && dockerMongo == '/mainflux-api-docker/mongodb') {
+    dbUrl = 'mongodb://' + process.env.MONGODB_PORT_27017_TCP_ADDR + ':' + process.env.MONGODB_PORT_27017_TCP_PORT + '/' + config.db.name;
+} else {
+    dbUrl = 'mongodb://' + config.db.addr + ':' + config.db.port + '/' + config.db.name;
+}
+
+var db = mongojs(dbUrl);
+
 
 /**
  * EXPORTS

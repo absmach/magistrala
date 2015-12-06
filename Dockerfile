@@ -3,7 +3,8 @@
 ###
 # Set the base image to Node, onbuild variant: https://registry.hub.docker.com/_/node/
 
-FROM node:0.10.38
+FROM node:4.2.3
+MAINTAINER Mainflux
 
 RUN apt-get update -qq && apt-get install -y build-essential
 

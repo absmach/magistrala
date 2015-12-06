@@ -9,7 +9,8 @@ var restify = require('restify');
 var jwt = require('restify-jwt');
 var domain = require('domain');
 var config = require('./config/config');
-
+var bunyan = require('bunyan');
+var log = bunyan.createLogger({name: "Mainflux"});
 
 /**
  * RESTIFY
@@ -60,7 +61,7 @@ server.use(function(req, res, next) {
 
         console.log(err.message);
 
-        //logger.error(err.message || '');
+        log.info(err);
     });
 
     domainHandler.enter();

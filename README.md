@@ -54,7 +54,7 @@ Apart from main `nodejs` Docker image, Mainflux also uses `mongo` Docker image (
 
 This is why Mainflux uses [Docker Compose](https://docs.docker.com/compose/install/), to run both `nodejs` and `mongo` images at the same time and make a connection between them:
 ```bash
-    docker-compose up
+docker-compose up
 ```
 
 ### Documentation

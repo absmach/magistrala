@@ -3,6 +3,9 @@ var devicesDb = require('../database').collection('devices');
 
 var jwt = require('jsonwebtoken');
 var config = require('../../config/config');
+var log = require('../logger');
+
+var os = require('os');
 
 /** createDevice() */
 exports.createDevice = function(req, res, next) {
@@ -14,8 +17,16 @@ exports.createDevice = function(req, res, next) {
         if (err)
             return next(err);
 
-        var token = jwt.sign(device, config.tokenSecret, {
-                expiresInMinutes: config.userTokenExpirePeriod
+        var signaturePayload = {
+            version: config.version
+        }
+
+        console.log(signaturePayload);
+
+        var token = jwt.sign(signaturePayload, config.tokenSecret, {
+            subject: 'Device Auth Token',
+            issuer: req.headers.host,
+            audience: device._id.toString()
         });
 
         res.json({
@@ -32,6 +43,8 @@ exports.createDevice = function(req, res, next) {
 exports.getAllDevices = function(req, res, next) {
 
 	console.log("req.headers['x-auth-token'] = ", req.headers['x-auth-token']);
+
+    log.info('hi');
 		
     devicesDb.find(req.body, function(err, devices) {
         if (err)

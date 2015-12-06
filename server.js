@@ -9,8 +9,7 @@ var restify = require('restify');
 var jwt = require('restify-jwt');
 var domain = require('domain');
 var config = require('./config/config');
-var bunyan = require('bunyan');
-var log = bunyan.createLogger({name: "Mainflux"});
+var log = require('./app/logger');
 
 /**
  * RESTIFY

@@ -61,7 +61,7 @@ Executing:
 ```bash
 docker-compose up
 ```
-will automatically build the all the images, run Docker containers and create link between them - i.e. it will bring up Mianflux API server + MongoDB ready for use.
+will automatically build all the images, run Docker containers and create link between them - i.e. it will bring up Mainflux API server + MongoDB ready for use.
 
 For more details and troubleshooting please consult [Docker chapter on Mainflux Wiki](https://github.com/Mainflux/mainflux/wiki/Docker).
 ### Documentation

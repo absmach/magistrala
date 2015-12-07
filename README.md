@@ -48,17 +48,26 @@ gulp
 ```
 
 > N.B. Mainflux has a MongoDB dependency. Database path and port can be defined in the [config](https://github.com/Mainflux/mainflux/tree/master/config) files.
+> 
+> To avoid installation of MongoDB on the local system in order to deploy Mainflux you can use Docker image,
+> as explained below.
 
 ### Docker
 Apart from main `nodejs` Docker image, Mainflux also uses `mongo` Docker image (database instance is run in a separte generic Docker image).
 
-This is why Mainflux uses [Docker Compose](https://docs.docker.com/compose/install/), to run both `nodejs` and `mongo` images at the same time and make a connection between them:
+This is why Mainflux uses [Docker Compose](https://docs.docker.com/compose/install/), to run both `nodejs` and `mongo` images at the same time and make a connection ([container link](https://docs.docker.com/v1.8/userguide/dockerlinks/)) between them.
+
+Executing:
 ```bash
 docker-compose up
 ```
+will automatically build the all the images, run Docker containers and create link between them - i.e. it will bring up Mianflux API server + MongoDB ready for use.
 
+For more details and troubleshooting please consult [Docker chapter on Mainflux Wiki](https://github.com/Mainflux/mainflux/wiki/Docker).
 ### Documentation
-Development documentation can be found on our [Mainflux GitHub Wiki](https://github.com/Mainflux/mainflux/wiki)
+Development documentation can be found on our [Mainflux GitHub Wiki](https://github.com/Mainflux/mainflux/wiki).
+
+Swagger-generated API reference can be foud at [http://mainflux.com/apidoc](http://mainflux.com/apidoc).
 
 ### Community
 #### Mailing lists

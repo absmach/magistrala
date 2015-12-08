@@ -11,17 +11,16 @@ var os = require('os');
 exports.createDevice = function(req, res, next) {
 
     console.log("req.headers['x-auth-token'] = ", req.headers['x-auth-token']);
+    console.log("req.headers['content-type'] = ", req.headers['content-type']);
         
     /** Save the device and check for errors */
-    devicesDb.insert(req.body, function(err, device) {
+    devicesDb.save(req.body, function(err, device) {
         if (err)
             return next(err);
 
         var signaturePayload = {
             version: config.version
         }
-
-        console.log(signaturePayload);
 
         var token = jwt.sign(signaturePayload, config.tokenSecret, {
             subject: 'Device Auth Token',
@@ -32,7 +31,8 @@ exports.createDevice = function(req, res, next) {
         res.json({
                 status: 200,
                 message: 'Device created',
-                token: token
+                token: token,
+                _id: device._id.toString()
         });
     });
 
@@ -58,12 +58,15 @@ exports.getAllDevices = function(req, res, next) {
 /** getDevice() */
 exports.getDevice = function(req, res, next) {
 
-    console.log(req.params.device_id);
     devicesDb.findOne({_id: mongojs.ObjectId(req.params.device_id)}, function(err, device) {
         if (err)
             return next(err);
         
-        res.json(device);
+        if (device) {
+            res.json(device);
+        } else {
+            res.send("NOT FOUND");
+        }
         return next();
     });
 }
@@ -87,6 +90,7 @@ exports.updateDevice = function(req, res, next) {
 
 /** deleteDevice() */
 exports.deleteDevice = function(req, res, next) {
+
     devicesDb.remove({
         _id: mongojs.ObjectId(req.params.device_id)
     }, function(err, device) {

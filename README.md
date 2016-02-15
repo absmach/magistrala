@@ -10,7 +10,7 @@ It allows device, user and application connections over various network protocol
 
 ### Architecture
 
-![AltTxt](http://we-io.net/img/MainfluxDiagram.png "Mainflux Architecture")
+![Mainflux Architecture](https://github.com/Mainflux/mainflux-doc/blob/master/img/mainfluxArchitecture.jpg "Mainflux Architecture")
 
 ### Features
 An extensive (and incomplete) list of featureas includes:

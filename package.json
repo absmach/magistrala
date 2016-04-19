@@ -16,7 +16,7 @@
     "bunyan": "^1.5.1",
     "jsonwebtoken": "~5.0.5",
     "lodash": "~3.10.1",
-    "mongojs": "^1.4.1",
+    "mongoose": "^4.4.12",
     "restify": "^4.0.3"
   },
   "devDependencies": {

@@ -6,10 +6,27 @@
  * See the included LICENSE file for more details.
  */
 var restify = require('restify');
-var jwt = require('restify-jwt');
 var domain = require('domain');
 var config = require('./config/config');
 var log = require('./app/logger');
+
+// MongoDB
+var mongoose = require('mongoose');
+
+/**
+ * Connect to DB
+ */
+/** Check if we run with Docker compose */
+var dockerMongo = process.env.MONGODB_NAME;
+var dbUrl = '';
+if (dockerMongo && dockerMongo == '/mainflux-api-docker/mongodb') {
+    dbUrl = 'mongodb://' + process.env.MONGODB_PORT_27017_TCP_ADDR + ':' + process.env.MONGODB_PORT_27017_TCP_PORT + '/' + config.db.name;
+} else {
+    dbUrl = 'mongodb://' + config.db.addr + ':' + config.db.port + '/' + config.db.name;
+}
+
+mongoose.connect(dbUrl, {server:{auto_reconnect:true}});
+
 
 /**
  * RESTIFY
@@ -20,33 +37,14 @@ var server = restify.createServer({
     name: "Mainflux"
 });
 
+
 server.pre(restify.pre.sanitizePath());
 server.use(restify.acceptParser(server.acceptable));
 server.use(restify.bodyParser());
 server.use(restify.queryParser());
 server.use(restify.authorizationParser());
-
-console.log('Enabling CORS');
 server.use(restify.CORS());
 server.use(restify.fullResponse());
-
-/** JWT */
-server.use(jwt({
-    secret: config.tokenSecret,
-    requestProperty: 'token',
-    getToken: function fromHeaderOrQuerystring(req) {
-        var token = (req.body && req.body.access_token) ||
-            (req.query && req.query.access_token) ||
-            req.headers['x-auth-token'];
-
-        return token;
-    }
-}).unless({
-    path: [
-        '/status',
-        {url: '/devices', methods: ['POST']}
-    ]
-}));
 
 /** Global error handler */
 server.use(function(req, res, next) {
@@ -80,9 +78,26 @@ route(server);
  */
 var port = process.env.PORT || config.port;
 
-console.log('Starting the server');
+var banner = `
+oocccdMMMMMMMMMWOkkkkoooolcclX
+llc:::0MMMMMMMM0xxxxxdlllc:::d
+lll:::cXMMMMMMXxxxxxxxdlllc:::
+lllc:::cXMMMMNkxxxdxxxxolllc::
+olllc:::oWMMNkxxxdloxxxxolllc:   ##     ##    ###    #### ##    ## ######## ##       ##     ## ##     ##
+xolllc:::xWWOxxxdllloxxxxolllc   ###   ###   ## ##    ##  ###   ## ##       ##       ##     ##  ##   ## 
+xxolllc:::x0xxxdllll:oxxxxllll   #### ####  ##   ##   ##  ####  ## ##       ##       ##     ##   ## ##  
+xxxolllc::oxxxxllll:::dxxxdlll   ## ### ## ##     ##  ##  ## ## ## ######   ##       ##     ##    ###   
+xxxdllll:lxxxxolllc:::Okxxxdll   ##     ## #########  ##  ##  #### ##       ##       ##     ##   ## ##  
+0xxxdllloxxxxolllc:::OMNkxxxdl   ##     ## ##     ##  ##  ##   ### ##       ##       ##     ##  ##   ## 
+W0xxxdllxxxxolllc:::xMMMXxxxxd   ##     ## ##     ## #### ##    ## ##       ########  #######  ##     ##
+MWOxxxdxxxxdlllc:::oWMMMMKxxxx
+MMWkxxxxxxdlllc:::oNMMMMMM0xxx
+MMMXxxxxxdllllc::cXMMMMMMMWOxx
+MMMM0xxxxolllc:::kMMMMMMMMMXxx
+`
 server.listen(port, function() {
-    console.log('%s is running at %s', server.name, server.url);
+    console.log(banner);
+    console.log('Magic happens on port ' + port);
 });
 
 

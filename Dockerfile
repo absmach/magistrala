@@ -8,7 +8,7 @@ MAINTAINER Mainflux
 
 RUN apt-get update -qq && apt-get install -y build-essential
 
-RUN mkdir /src
+RUN mkdir /mainflux
 
 ###
 # Installations
@@ -19,8 +19,8 @@ RUN npm install -g gulp
 RUN npm install -g nodemon
 
 # Finally, install all project Node modules
-WORKDIR /src
-ADD package.json /src/package.json
+COPY . /mainflux
+WORKDIR /mainflux
 RUN npm install
 
 EXPOSE 8080

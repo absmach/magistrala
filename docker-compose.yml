@@ -1,16 +1,39 @@
-api:
-  build: .
-  volumes:
-    - ".:/src"
-  ports:
-   - "8080:8080"
-  # set up links so that api knows about db, redis, etc...
-  links:
-   - mongodb
-  container_name: mainflux-api-docker
+###
+# Copyright (c) Mainflux
+#
+# Mainflux server is licensed under an Apache license, version 2.0 license.
+# All rights not explicitly granted in the Apache license, version 2.0 are reserved.
+# See the included LICENSE file for more details.
+###
 
-mongodb:
-  image: mongo
+###
+# MongoDB
+###
+mongo:
+  image: mongo:3.2
+  container_name: mainflux-mongodb
+  command: --smallfiles --nojournal
+
+###
+# NATS
+###
+nats:
+  image: apcera/gnatsd:latest
+  container_name: mainflux-nats
   ports:
-    - "27017:27017"
-  container_name: mainflux-mongo-docker
+    - "4222:4222"
+    - "8333:8333"
+
+###
+# Mainflux
+###
+mainflux:
+  image: mainflux/mainflux-lite:latest
+  container_name: mainflux-api
+  volumes:
+    - ./config:/mainflux/config
+  links:
+    - mongo
+    - nats
+  ports:
+    - "8080:8080"

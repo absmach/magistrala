@@ -36,4 +36,4 @@ mainflux:
     - mongo
     - nats
   ports:
-    - "8080:8080"
+    - "7070:7070"

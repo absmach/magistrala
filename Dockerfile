@@ -6,6 +6,8 @@
 FROM node:4.2.3
 MAINTAINER Mainflux
 
+ENV MAINFLUX_PORT=7070
+
 RUN apt-get update -qq && apt-get install -y build-essential
 
 RUN mkdir /mainflux
@@ -23,7 +25,7 @@ COPY . /mainflux
 WORKDIR /mainflux
 RUN npm install
 
-EXPOSE 8080
+EXPOSE $MAINFLUX_PORT
 
 ###
 # Run main command from entrypoint and parameters in CMD[]

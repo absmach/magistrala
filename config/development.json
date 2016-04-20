@@ -5,7 +5,7 @@
         "port" : "27017",
         "name" : "test"
     },
-    "port" : "8080",
+    "port" : "7070",
     "tokenSecret": "Pariz-Beograd",
     "userTokenExpirePeriod": "10080",
     "limiter" : {

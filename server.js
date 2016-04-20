@@ -10,24 +10,6 @@ var domain = require('domain');
 var config = require('./config/config');
 var log = require('./app/logger');
 
-// MongoDB
-var mongoose = require('mongoose');
-
-/**
- * Connect to DB
- */
-/** Check if we run with Docker compose */
-var dockerMongo = process.env.MONGODB_NAME;
-var dbUrl = '';
-if (dockerMongo && dockerMongo == '/mainflux-api/mongodb') {
-    dbUrl = 'mongodb://' + process.env.MONGODB_PORT_27017_TCP_ADDR + ':' + process.env.MONGODB_PORT_27017_TCP_PORT + '/' + config.db.name;
-} else {
-    dbUrl = 'mongodb://' + config.db.addr + ':' + config.db.port + '/' + config.db.name;
-}
-
-mongoose.connect(dbUrl, {server:{auto_reconnect:true}});
-
-
 /**
  * RESTIFY
  */

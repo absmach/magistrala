@@ -1,8 +1,11 @@
+var mongojs = require('mongojs');
+var devicesDb = require('../database').collection('devices');
+
+var jwt = require('jsonwebtoken');
 var config = require('../../config/config');
 var log = require('../logger');
 
-var Device = require('../models/device');
-
+var os = require('os');
 
 /** createDevice() */
 exports.createDevice = function(req, res, next) {
@@ -11,17 +14,29 @@ exports.createDevice = function(req, res, next) {
     console.log("req.headers['content-type'] = ", req.headers['content-type']);
         
     /** Save the device and check for errors */
-    var device = new Device();		// create a new instance of the Device model
-    device.name = req.body.name;	// set the device's name (comes from the request)
-
-    /** Save the device and check for errors */
-    device.save(function(err) {
+    devicesDb.save(req.body, function(err, device) {
         if (err)
-            res.send(err);
+            return next(err);
 
-        res.json(device);
-        return next();
+        var signaturePayload = {
+            version: config.version
+        }
+
+        var token = jwt.sign(signaturePayload, config.tokenSecret, {
+            subject: 'Device Auth Token',
+            issuer: req.headers.host,
+            audience: device._id.toString()
+        });
+
+        res.json({
+                status: 200,
+                message: 'Device created',
+                token: token,
+                _id: device._id.toString()
+        });
     });
+
+    return next();
 }
 
 /** getAllDevices() */
@@ -29,9 +44,11 @@ exports.getAllDevices = function(req, res, next) {
 
 	console.log("req.headers['x-auth-token'] = ", req.headers['x-auth-token']);
 
-    Device.find(function(err, devices) {
+    log.info('hi');
+		
+    devicesDb.find(req.body, function(err, devices) {
         if (err)
-            res.send(err);
+            return next(err);
 
         res.json(devices);
         return next();
@@ -41,11 +58,15 @@ exports.getAllDevices = function(req, res, next) {
 /** getDevice() */
 exports.getDevice = function(req, res, next) {
 
-    Device.findById(req.params.device_id, function(err, device) {
+    devicesDb.findOne({_id: mongojs.ObjectId(req.params.device_id)}, function(err, device) {
         if (err)
-            res.send(err);
+            return next(err);
         
-        res.json(device);
+        if (device) {
+            res.json(device);
+        } else {
+            res.send("NOT FOUND");
+        }
         return next();
     });
 }
@@ -53,34 +74,31 @@ exports.getDevice = function(req, res, next) {
 /** updateDevice() */
 exports.updateDevice = function(req, res, next) {
     /** Use our device model to find the device we want */
-    Device.findById(req.params.device_id, function(err, device) {
-        if (err)
-            res.send(err);
-
-        device.name = req.body.name;  // update the devices info
-
-        /** Save the device */
-        device.save(function(err) {
+    console.log(req.body);
+    devicesDb.update({
+        _id: mongojs.ObjectId(req.params.device_id)
+    },
+        {$set: req.body},
+        function(err, device) {
             if (err)
-                res.send(err);
+                return next(err);
 
-            res.json(device);
+            res.send('OK');
             return next();
-        });
-
     });
 }
 
 /** deleteDevice() */
 exports.deleteDevice = function(req, res, next) {
-    Device.remove({
-            _id: req.params.device_id
-        }, function(err, device) {
-            if (err)
-                res.send(err);
 
-            res.json(device);
-            return next();
-        });
+    devicesDb.remove({
+        _id: mongojs.ObjectId(req.params.device_id)
+    }, function(err, device) {
+        if (err)
+            return next(err);
+
+        res.send('OK');
+        return next();
+    });
 }
 

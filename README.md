@@ -26,7 +26,6 @@ An extensive (and incomplete) list of featureas includes:
 - Partial [oneM2M](http://www.onem2m.org/) compliance
 - Easy deployment and high system scalability via Docker images
 - Clear project roadmap, extensive development ecosystem and highly skilled developer community
-- Professional support via [Mainflux](http://mainflux.com) company
 - And many more
 
 

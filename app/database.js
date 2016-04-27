@@ -1,4 +1,4 @@
-var config = require('../config/config');
+var config = require('../config');
 
 /**
  * MONGO DB
@@ -14,7 +14,7 @@ var dbUrl = '';
 if (dockerMongo && dockerMongo == '/mainflux-api/mongodb') {
     dbUrl = 'mongodb://' + process.env.MONGODB_PORT_27017_TCP_ADDR + ':' + process.env.MONGODB_PORT_27017_TCP_PORT + '/' + config.db.name;
 } else {
-    dbUrl = 'mongodb://' + config.db.addr + ':' + config.db.port + '/' + config.db.name;
+    dbUrl = 'mongodb://' + config.db.host + ':' + config.db.port + '/' + config.db.name;
 }
 
 var db = mongojs(dbUrl);

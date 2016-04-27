@@ -23,7 +23,7 @@ gulp.task('watch', function() {
 
     // Start up the server and have it reload when anything in the
     // ./build/ directory changes
-    nodemon({script: 'server.js', watch: 'app/**'});
+    nodemon({script: 'mainflux.js', watch: 'app/**'});
 });
 
 gulp.task('test', function() {

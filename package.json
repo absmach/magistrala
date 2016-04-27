@@ -17,7 +17,9 @@
     "jsonwebtoken": "~5.0.5",
     "lodash": "~3.10.1",
     "mongojs": "^1.4.1",
-    "restify": "^4.0.3"
+    "mosca": "^1.2.0",
+    "restify": "^4.0.3",
+    "ws": "^1.1.0"
   },
   "devDependencies": {
     "chai": "^3.4.0",

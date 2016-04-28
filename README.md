@@ -49,6 +49,7 @@ Mainflux IoT cloud is composed of several components, i.e. microservices:
 - MQTT API Server
 - WebSocket API Server
 - NATS PUB/SUB Broker
+- Dashflux UI
 
 The following matrix describes the functionality of each GE in the system and gives the location of the code repositories:
 

@@ -1,4 +1,4 @@
-# Mainflux Lite
+# Mainflux
 
 [![License](https://img.shields.io/badge/license-Apache%20v2.0-blue.svg)](LICENSE) [![Join the chat at https://gitter.im/Mainflux/mainflux](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Mainflux/mainflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
@@ -14,17 +14,16 @@ It allows device, user and application connections over various network protocol
 
 ### Features
 An extensive (and incomplete) list of featureas includes:
+- Responsive and scalable architecture based on a set of [Microservices](https://en.wikipedia.org/wiki/Microservices)
 - Set of clean APIs, Swagger documented: HTTP RESTful, MQTT, WebSocket and CoAP
-- Set of client libraries for many HW platforms in several programming languages: C/C++, JavaScript and Python
+- SDK - set of client libraries for many HW platforms in several programming languages: C/C++, JavaScript, Go and Python
 - Device management and provisioning and OTA FW updates
-- UNIX-like permissions for device sharing
 - Highly secured connections via TLS and DTLS
-- User authentication via [JSON Web Tokens](http://jwt.io/)
-- Responsive and scalable ModgoDB database
-- Modern architecture based on micro-services
-- [LwM2M](http://goo.gl/rHjLZQ) standard compliance via [Coreflux](https://github.com/Mainflux/coreflux)
-- Partial [oneM2M](http://www.onem2m.org/) compliance
-- Easy deployment and high system scalability via Docker images
+- Standardized [NGSI](http://technical.openmobilealliance.org/Technical/technical-information/release-program/current-releases/ngsi-v1-0) model representation
+- Enhanced and fine-grained security via [Reverse Proxy](https://en.wikipedia.org/wiki/Reverse_proxy), [OAuth 2.0](http://oauth.net/2/) [identity management](https://en.wikipedia.org/wiki/Identity_management) and [RBAC](https://en.wikipedia.org/wiki/Role-based_access_control) Authorization Server.
+- [LwM2M](http://goo.gl/rHjLZQ) standard compliance
+- [oneM2M](http://www.onem2m.org/) adapter
+- Easy deployment and high system scalability via [Docker](https://www.docker.com/) images
 - Clear project roadmap, extensive development ecosystem and highly skilled developer community
 - And many more
 
@@ -36,20 +35,38 @@ Clone the repo:
 git clone https://github.com/Mainflux/mainflux.git
 cd mainflux
 ```
-Install Node modules:
-```bash
-npm install
-```
+### System Architecture
+Mainflux IoT cloud is composed of several components, i.e. microservices:
+- Mainflux Core Server
+- Mainflux HTTP API Server
+- Mainflux MQTT API Server
+- Mainflux WebSocket API Server
+- NATS PUB/SUB Broker
 
-Run Gulp Task:
-```bash
-gulp
-```
+The following matrix describes the functionality of each GE in the system and gives the location of the code repositories:
 
-> N.B. Mainflux has a MongoDB dependency. Database path and port can be defined in the [config](https://github.com/Mainflux/mainflux/tree/master/config) files.
-> 
-> To avoid installation of MongoDB on the local system in order to deploy Mainflux you can use Docker image,
-> as explained below.
+| Microservice         | Function               |  GitHub repo                                                             |
+| :------------------- |:-----------------------| :------------------------------------------------------------------------|
+| Mainflux Core        | Core Server            | [mainflux-core-server](https://github.com/Mainflux/mainflux-core-server) |
+| HTTP API Server      | HTTP API Server        | [mainflux-http-server](https://github.com/Mainflux/mainflux-http-server) |
+| HTTP MQTT Server     | MQTT API Server        | [mainflux-mqtt-server](https://github.com/Mainflux/mainflux-mqtt-server) |
+| HTTP WS Server       | WS API Server          | [mainflux-ws-server](https://github.com/Mainflux/mainflux-ws-server)     |
+| NATS                 | PUB/SUB Broker         | [gnatsd](https://github.com/nats-io/gnatsd)                              |
+
+These components are packaged and deployed in a set of Docker containers maintained by Mainflux team, with images uploaded to [Mainflux Docker Hub page](https://hub.docker.com/u/mainflux/).
+
+Docker composition that constitues Mainflux IoT infrastructure is defined in the [`docker-compose.yml`](https://github.com/Mainflux/mainflux/blob/master/docker-compose.yml).
+
+### Deployment
+Deployment of Mainflux IoT Cloud is super-easy:
+- Get the [`docker-compose.yml`](https://github.com/Mainflux/mainflux-fiware/blob/master/docker-compose.yml)
+- Start the composition:
+```
+docker-compose up
+```
+This will automatically download Docker images from [Mainflux Docker Hub](https://hub.docker.com/u/mainflux/) and deploy the composition.
+
+If you need to modify these Docker images, you will have to look at appropriate repos in the [Mainflux project GitHub](https://github.com/Mainflux) - look for the repos starting with prefix `mainflux-<protocol>-server`.
 
 ### Docker
 Apart from main `nodejs` Docker image, Mainflux also uses `mongo` Docker image (database instance is run in a separte generic Docker image).
@@ -63,10 +80,9 @@ docker-compose up
 will automatically build all the images, run Docker containers and create link between them - i.e. it will bring up Mainflux API server + MongoDB ready for use.
 
 For more details and troubleshooting please consult [Docker chapter on Mainflux Wiki](https://github.com/Mainflux/mainflux/wiki/Docker).
+
 ### Documentation
 Development documentation can be found on our [Mainflux GitHub Wiki](https://github.com/Mainflux/mainflux/wiki).
-
-Swagger-generated API reference can be foud at [http://mainflux.com/apidoc](http://mainflux.com/apidoc).
 
 ### Community
 #### Mailing lists

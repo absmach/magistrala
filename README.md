@@ -59,6 +59,7 @@ The following matrix describes the functionality of each GE in the system and gi
 | MQTT API Server      | MQTT API Server        | [mainflux-mqtt-server](https://github.com/Mainflux/mainflux-mqtt-server) |
 | WS API Server        | WS API Server          | [mainflux-ws-server](https://github.com/Mainflux/mainflux-ws-server)     |
 | NATS                 | PUB/SUB Broker         | [nats-io/gnatsd](https://github.com/nats-io/gnatsd)                      |
+| Dashflux             | Dashboard UI           | [dashflux](https://github.com/Mainflux/dashflux)                         |
 
 These components are packaged and deployed in a set of Docker containers maintained by Mainflux team, with images uploaded to [Mainflux Docker Hub page](https://hub.docker.com/u/mainflux/).
 

@@ -31,7 +31,7 @@ mainflux-core:
   image: mainflux/mainflux-core-server:latest
   container_name: mainflux-core
   volumes:
-    - ./config/core:/mainflux/config
+    - ./config/core/config.js:/mainflux-core/config.js
   links:
     - mongo
     - nats
@@ -45,7 +45,7 @@ mainflux-http:
   image: mainflux/mainflux-http-server:latest
   container_name: mainflux-http
   volumes:
-    - ./config/http:/mainflux-http/config
+    - ./config/http/config.js:/mainflux-http/config.js
   links:
     - nats
   ports:
@@ -58,7 +58,7 @@ mainflux-mqtt:
   image: mainflux/mainflux-mqtt-server:latest
   container_name: mainflux-mqtt
   volumes:
-    - ./config/mqtt:/mainflux-mqtt/config
+    - ./config/mqtt/config.js:/mainflux-mqtt/config.js
   links:
     - nats
   ports:
@@ -71,7 +71,7 @@ mainflux-ws:
   image: mainflux/mainflux-ws-server:latest
   container_name: mainflux-ws
   volumes:
-    - ./config/ws:/mainflux-ws/config
+    - ./config/ws/config.js:/mainflux-ws/config.js
   links:
     - nats
   ports:

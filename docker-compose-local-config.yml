@@ -1,0 +1,79 @@
+###
+# Copyright (c) Mainflux
+#
+# Mainflux server is licensed under an Apache license, version 2.0 license.
+# All rights not explicitly granted in the Apache license, version 2.0 are reserved.
+# See the included LICENSE file for more details.
+###
+
+###
+# MongoDB
+###
+mongo:
+  image: mongo:3.2
+  container_name: mainflux-mongodb
+  command: --smallfiles --nojournal
+
+###
+# NATS
+###
+nats:
+  image: apcera/gnatsd:latest
+  container_name: mainflux-nats
+  ports:
+    - "4222:4222"
+    - "8333:8333"
+
+###
+# Mainflux Core Server
+###
+mainflux-core:
+  image: mainflux/mainflux-core-server:latest
+  container_name: mainflux-core
+  volumes:
+    - ./config/core/config.js:/mainflux-core/config.js
+  links:
+    - mongo
+    - nats
+  ports:
+    - "6969:6969"
+
+###
+# Mainflux HTTP Server
+###
+mainflux-http:
+  image: mainflux/mainflux-http-server:latest
+  container_name: mainflux-http
+  volumes:
+    - ./config/http/config.js:/mainflux-http/config.js
+  links:
+    - nats
+  ports:
+    - "7070:7070"
+
+###
+# Mainflux MQTT Server
+###
+mainflux-mqtt:
+  image: mainflux/mainflux-mqtt-server:latest
+  container_name: mainflux-mqtt
+  volumes:
+    - ./config/mqtt/config.js:/mainflux-mqtt/config.js
+  links:
+    - nats
+  ports:
+    - "1883:1883"
+
+###
+# Mainflux WS Server
+###
+mainflux-ws:
+  image: mainflux/mainflux-ws-server:latest
+  container_name: mainflux-ws
+  volumes:
+    - ./config/ws/config.js:/mainflux-ws/config.js
+  links:
+    - nats
+  ports:
+    - "9090:9090"
+    

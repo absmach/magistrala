@@ -5,12 +5,11 @@
 ### About
 Mainflux is lean open source industrial IoT cloud written in NodeJS.
 
-It allows device, user and application connections over various network protocols, like HTTP, MQTT, WebSocket and CoAP, making a seamless bridge between them. As a consequence, Mainflux represents highly secure and highly optimised M2M platform based on the cutting-edge standards and approaches in the industry.
+It allows device, user and application connections over various network protocols, like HTTP, MQTT, WebSocket and CoAP, making a seamless bridge between them. As a consequence, Mainflux represents highly secure and highly optimised M2M platform based on the cutting-edge standards and approaches in the industry. It is used as the IoT middleware for building complex IoT solutions.
 
+![Cloud Architecture](https://github.com/Mainflux/mainflux-doc/blob/master/img/cloudArchitecture.jpg)
 
-### Architecture
-
-![Mainflux Architecture](https://github.com/Mainflux/mainflux-doc/blob/master/img/mainfluxArchitecture.jpg "Mainflux Architecture")
+Mainflux is built with <3 by Mainflux team and community contributors.
 
 ### Features
 An extensive (and incomplete) list of featureas includes:
@@ -27,20 +26,27 @@ An extensive (and incomplete) list of featureas includes:
 - Clear project roadmap, extensive development ecosystem and highly skilled developer community
 - And many more
 
-
-### Install
-
-Clone the repo:
+### Install/Deploy
+Installation and deployment of Mainflux IoT Cloud is super-easy:
+- Clone the repo:
 ```bash
-git clone https://github.com/Mainflux/mainflux.git
-cd mainflux
+git clone https://github.com/Mainflux/mainflux.git && cd mainflux
 ```
+
+- Start the Docker composition:
+```bash
+docker-compose up
+```
+This will automatically download Docker images from [Mainflux Docker Hub](https://hub.docker.com/u/mainflux/) and deploy the composition.
+
+If you need to modify these Docker images, you will have to look at appropriate repos in the [Mainflux project GitHub](https://github.com/Mainflux) - look for the repos starting with prefix `mainflux-<protocol>-server`.
+
 ### System Architecture
 Mainflux IoT cloud is composed of several components, i.e. microservices:
-- Mainflux Core Server
-- Mainflux HTTP API Server
-- Mainflux MQTT API Server
-- Mainflux WebSocket API Server
+- Mainflux Core
+- HTTP API Server
+- MQTT API Server
+- WebSocket API Server
 - NATS PUB/SUB Broker
 
 The following matrix describes the functionality of each GE in the system and gives the location of the code repositories:
@@ -49,37 +55,13 @@ The following matrix describes the functionality of each GE in the system and gi
 | :------------------- |:-----------------------| :------------------------------------------------------------------------|
 | Mainflux Core        | Core Server            | [mainflux-core-server](https://github.com/Mainflux/mainflux-core-server) |
 | HTTP API Server      | HTTP API Server        | [mainflux-http-server](https://github.com/Mainflux/mainflux-http-server) |
-| HTTP MQTT Server     | MQTT API Server        | [mainflux-mqtt-server](https://github.com/Mainflux/mainflux-mqtt-server) |
-| HTTP WS Server       | WS API Server          | [mainflux-ws-server](https://github.com/Mainflux/mainflux-ws-server)     |
+| MQTT API Server      | MQTT API Server        | [mainflux-mqtt-server](https://github.com/Mainflux/mainflux-mqtt-server) |
+| WS API Server        | WS API Server          | [mainflux-ws-server](https://github.com/Mainflux/mainflux-ws-server)     |
 | NATS                 | PUB/SUB Broker         | [gnatsd](https://github.com/nats-io/gnatsd)                              |
 
 These components are packaged and deployed in a set of Docker containers maintained by Mainflux team, with images uploaded to [Mainflux Docker Hub page](https://hub.docker.com/u/mainflux/).
 
 Docker composition that constitues Mainflux IoT infrastructure is defined in the [`docker-compose.yml`](https://github.com/Mainflux/mainflux/blob/master/docker-compose.yml).
-
-### Deployment
-Deployment of Mainflux IoT Cloud is super-easy:
-- Get the [`docker-compose.yml`](https://github.com/Mainflux/mainflux-fiware/blob/master/docker-compose.yml)
-- Start the composition:
-```
-docker-compose up
-```
-This will automatically download Docker images from [Mainflux Docker Hub](https://hub.docker.com/u/mainflux/) and deploy the composition.
-
-If you need to modify these Docker images, you will have to look at appropriate repos in the [Mainflux project GitHub](https://github.com/Mainflux) - look for the repos starting with prefix `mainflux-<protocol>-server`.
-
-### Docker
-Apart from main `nodejs` Docker image, Mainflux also uses `mongo` Docker image (database instance is run in a separte generic Docker image).
-
-This is why Mainflux uses [Docker Compose](https://docs.docker.com/compose/install/), to run both `nodejs` and `mongo` images at the same time and make a connection ([container link](https://docs.docker.com/v1.8/userguide/dockerlinks/)) between them.
-
-Executing:
-```bash
-docker-compose up
-```
-will automatically build all the images, run Docker containers and create link between them - i.e. it will bring up Mainflux API server + MongoDB ready for use.
-
-For more details and troubleshooting please consult [Docker chapter on Mainflux Wiki](https://github.com/Mainflux/mainflux/wiki/Docker).
 
 ### Documentation
 Development documentation can be found on our [Mainflux GitHub Wiki](https://github.com/Mainflux/mainflux/wiki).

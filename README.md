@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/license-Apache%20v2.0-blue.svg)](LICENSE) [![Join the chat at https://gitter.im/Mainflux/mainflux](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Mainflux/mainflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ### About
-Mainflux is an open source and patent-free IoT Cloud Platform.
+Mainflux is an open source and patent-free IoT cloud platform based on [microservices](https://en.wikipedia.org/wiki/Microservices).
 
 It allows device, user and application connections over various network protocols, like HTTP, MQTT, WebSocket and CoAP, making a seamless bridge between them. It is used as the IoT middleware for building complex IoT solutions.
 
@@ -13,7 +13,7 @@ Mainflux is built with <3 by Mainflux team and community contributors.
 
 ### Features
 An extensive (and incomplete) list of featureas includes:
-- Responsive and scalable architecture based on a set of [Microservices](https://en.wikipedia.org/wiki/Microservices)
+- Responsive and scalable architecture based on a set of [microservices](https://en.wikipedia.org/wiki/Microservices)
 - Set of clean APIs, Swagger documented: HTTP RESTful, MQTT, WebSocket and CoAP
 - SDK - set of client libraries for many HW platforms in several programming languages: C/C++, JavaScript, Go and Python
 - Device management and provisioning and OTA FW updates
@@ -27,7 +27,7 @@ An extensive (and incomplete) list of featureas includes:
 - And many more
 
 ### Install/Deploy
-Installation and deployment of Mainflux IoT Cloud is super-easy:
+Installation and deployment of Mainflux IoT cloud is super-easy:
 - Clone the repo:
 ```bash
 git clone https://github.com/Mainflux/mainflux.git && cd mainflux

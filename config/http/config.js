@@ -16,13 +16,4 @@ config.server = {
     version: 0.1
 }
 
-/**
- * MongoDB
- */
-config.db = {
-    host : 'localhost',
-    port : 27017,
-    name : 'test'
-}
-
 module.exports = config;

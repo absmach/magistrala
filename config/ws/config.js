@@ -5,8 +5,6 @@
  * All rights not explicitly granted in the Apache license, version 2.0 are reserved.
  * See the included LICENSE file for more details.
  */
-var mosca = require('mosca');
-
 var config = {};
 
 /**

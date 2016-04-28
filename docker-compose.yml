@@ -25,15 +25,55 @@ nats:
     - "8333:8333"
 
 ###
-# Mainflux
+# Mainflux Core Server
 ###
-mainflux:
-  image: mainflux/mainflux-lite:latest
-  container_name: mainflux-api
+mainflux-core:
+  image: mainflux/mainflux-core-server:latest
+  container_name: mainflux-core
   volumes:
-    - ./config:/mainflux/config
+    - ./config/core:/mainflux/config
   links:
     - mongo
     - nats
   ports:
+    - "6969:6969"
+
+###
+# Mainflux HTTP Server
+###
+mainflux-http:
+  image: mainflux/mainflux-http-server:latest
+  container_name: mainflux-http
+  volumes:
+    - ./config/http:/mainflux-http/config
+  links:
+    - nats
+  ports:
     - "7070:7070"
+
+###
+# Mainflux MQTT Server
+###
+mainflux-mqtt:
+  image: mainflux/mainflux-mqtt-server:latest
+  container_name: mainflux-mqtt
+  volumes:
+    - ./config/mqtt:/mainflux-mqtt/config
+  links:
+    - nats
+  ports:
+    - "1883:1883"
+
+###
+# Mainflux WS Server
+###
+mainflux-ws:
+  image: mainflux/mainflux-ws-server:latest
+  container_name: mainflux-ws
+  volumes:
+    - ./config/ws:/mainflux-ws/config
+  links:
+    - nats
+  ports:
+    - "9090:9090"
+    

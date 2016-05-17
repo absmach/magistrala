@@ -20,9 +20,17 @@ config.server = {
  * MongoDB
  */
 config.db = {
-    host : 'localhost',
+    host : mongo,
     port : 27017,
     name : 'test'
+}
+
+/**
+ * NATS
+ */
+config.nats = {
+    host : nats,
+    port : 4222
 }
 
 module.exports = config;

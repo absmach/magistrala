@@ -16,4 +16,12 @@ config.server = {
     version: 0.1
 }
 
+/**
+ * NATS
+ */
+config.nats = {
+    host : nats,
+    port : 4222
+}
+
 module.exports = config;

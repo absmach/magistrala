@@ -20,7 +20,7 @@ config.server = {
  * NATS
  */
 config.nats = {
-    host : nats,
+    host : 'nats',
     port : 4222
 }
 

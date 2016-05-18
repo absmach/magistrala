@@ -20,7 +20,7 @@ config.server = {
  * MongoDB
  */
 config.db = {
-    host : mongo,
+    host : 'mongo',
     port : 27017,
     name : 'test'
 }
@@ -29,7 +29,7 @@ config.db = {
  * NATS
  */
 config.nats = {
-    host : nats,
+    host : 'nats',
     port : 4222
 }
 

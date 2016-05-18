@@ -45,10 +45,12 @@ If you need to modify these Docker images, you will have to look at appropriate 
 ### System Architecture
 Mainflux IoT cloud is composed of several components, i.e. microservices:
 - Mainflux Core
+- Authentication and Authorization Server
 - HTTP API Server
 - MQTT API Server
 - WebSocket API Server
 - NATS PUB/SUB Broker
+- Mongo Database
 - Dashflux UI
 
 The following matrix describes the functionality of each GE in the system and gives the location of the code repositories:
@@ -56,10 +58,12 @@ The following matrix describes the functionality of each GE in the system and gi
 | Microservice         | Function               |  GitHub repo                                                             |
 | :------------------- |:-----------------------| :------------------------------------------------------------------------|
 | Mainflux Core        | Core Server            | [mainflux-core-server](https://github.com/Mainflux/mainflux-core-server) |
+| Mainflux Auth Server | Authentication and Authorization | [mainflux-auth-server](https://github.com/Mainflux/mainflux-auth-server) |
 | HTTP API Server      | HTTP API Server        | [mainflux-http-server](https://github.com/Mainflux/mainflux-http-server) |
 | MQTT API Server      | MQTT API Server        | [mainflux-mqtt-server](https://github.com/Mainflux/mainflux-mqtt-server) |
 | WS API Server        | WS API Server          | [mainflux-ws-server](https://github.com/Mainflux/mainflux-ws-server)     |
 | NATS                 | PUB/SUB Broker         | [nats-io/gnatsd](https://github.com/nats-io/gnatsd)                      |
+| MongDB               | Device Context Storage | [mongodb/mongo](https://github.com/mongodb/mongo)                        |
 | Dashflux             | Dashboard UI           | [dashflux](https://github.com/Mainflux/dashflux)                         |
 
 These components are packaged and deployed in a set of Docker containers maintained by Mainflux team, with images uploaded to [Mainflux Docker Hub page](https://hub.docker.com/u/mainflux/).

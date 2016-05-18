@@ -58,7 +58,7 @@ The following matrix describes the functionality of each GE in the system and gi
 | Microservice         | Function               |  GitHub repo                                                             |
 | :------------------- |:-----------------------| :------------------------------------------------------------------------|
 | Mainflux Core        | Core Server            | [mainflux-core-server](https://github.com/Mainflux/mainflux-core-server) |
-| Mainflux Auth Server | Authentication and Authorization | [mainflux-auth-server](https://github.com/Mainflux/mainflux-auth-server) |
+| Auth Server | Authentication and Authorization | [mainflux-auth-server](https://github.com/Mainflux/mainflux-auth-server) |
 | HTTP API Server      | HTTP API Server        | [mainflux-http-server](https://github.com/Mainflux/mainflux-http-server) |
 | MQTT API Server      | MQTT API Server        | [mainflux-mqtt-server](https://github.com/Mainflux/mainflux-mqtt-server) |
 | WS API Server        | WS API Server          | [mainflux-ws-server](https://github.com/Mainflux/mainflux-ws-server)     |

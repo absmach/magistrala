@@ -53,7 +53,10 @@ Mainflux IoT cloud is composed of several components, i.e. microservices:
 - Mongo Database
 - Dashflux UI
 
-The following matrix describes the functionality of each GE in the system and gives the location of the code repositories:
+Following diagram illustrates the architecture:
+![Mainflux Arch](https://github.com/Mainflux/mainflux-doc/blob/master/mermaid/arch.png)
+
+And here is the matrix describes the functionality of each microservice in the system and gives the location of the code repositories:
 
 | Microservice         | Function               |  GitHub repo                                                             |
 | :------------------- |:-----------------------| :------------------------------------------------------------------------|

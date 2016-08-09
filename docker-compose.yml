@@ -33,8 +33,6 @@ mainflux-core:
   links:
     - mongo
     - nats
-  ports:
-    - "6969:6969"
 
 ###
 # Mainflux HTTP Server

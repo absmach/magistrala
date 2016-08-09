@@ -31,12 +31,10 @@ mainflux-core:
   image: mainflux/mainflux-core-server:latest
   container_name: mainflux-core
   volumes:
-    - ./config/core/config.js:/mainflux-core/config.js
+    - ./config/core/config.yml:/go/src/github.com/mainflux/mainflux-core-server/config.yml
   links:
     - mongo
     - nats
-  ports:
-    - "6969:6969"
 
 ###
 # Mainflux HTTP Server
@@ -45,7 +43,7 @@ mainflux-http:
   image: mainflux/mainflux-http-server:latest
   container_name: mainflux-http
   volumes:
-    - ./config/http/config.js:/mainflux-http/config.js
+    - ./config/http/config.yml:/go/src/github.com/mainflux/mainflux-http-server/config.yml
   links:
     - nats
   ports:

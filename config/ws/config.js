@@ -8,10 +8,19 @@
 var config = {};
 
 /**
- * Mosca
+ * WS Server
  */
 config.ws = {
+    host: '0.0.0.0',
     port: 9090,
+}
+
+/**
+ * NATS
+ */
+config.nats = {
+    host : 'nats',
+    port : 4222
 }
 
 

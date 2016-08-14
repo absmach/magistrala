@@ -7,10 +7,20 @@
 ###
 
 ###
+# InfluxDB
+###
+influx:
+  image: influxdb:latest
+  container_name: mainflux-influxdb
+  ports:
+    - "8083:8083"
+    - "8086:8086"
+
+###
 # MongoDB
 ###
 mongo:
-  image: mongo:3.2
+  image: mongo:latest
   container_name: mainflux-mongodb
   command: --smallfiles --nojournal
 
@@ -31,6 +41,7 @@ mainflux-core:
   image: mainflux/mainflux-core-server:latest
   container_name: mainflux-core
   links:
+    - influx
     - mongo
     - nats
 

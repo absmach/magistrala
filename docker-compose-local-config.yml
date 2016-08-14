@@ -7,6 +7,16 @@
 ###
 
 ###
+# InfluxDB
+###
+influx:
+  image: influxdb:latest
+  container_name: mainflux-influxdb
+  ports:
+    - "8083:8083"
+    - "8086:8086"
+
+###
 # MongoDB
 ###
 mongo:
@@ -33,6 +43,7 @@ mainflux-core:
   volumes:
     - ./config/core/config.yml:/go/src/github.com/mainflux/mainflux-core-server/config.yml
   links:
+    - influx
     - mongo
     - nats
 

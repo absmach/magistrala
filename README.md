@@ -99,7 +99,7 @@ Development documentation can be found on our [Mainflux GitHub Wiki](https://git
 [@mainflux](https://twitter.com/mainflux)
 
 ### Authors
-Main architect and BDFL of Mainflux project is [@drasko](https://github.com/drasko). You can also reach me on Twitter: [@draskodraskovic](https://twitter.com/draskodraskovic)
+Main architect and BDFL of Mainflux project is [@drasko](https://github.com/drasko). You can also reach me on Twitter: [@draskodraskovic](https://twitter.com/draskodraskovic).
 
 Maintainers are listed in [MAINTAINERS](MAINTAINERS) file.
 

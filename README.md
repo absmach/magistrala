@@ -7,6 +7,8 @@ Mainflux is modern open source and patent-free IoT cloud platform written in Go 
 
 It allows device, user and application connections over various network protocols, like HTTP, MQTT, WebSocket and CoAP, making a seamless bridge between them. It is used as the IoT middleware for building complex IoT solutions.
 
+![Cloud Architecture](https://github.com/Mainflux/mainflux-doc/blob/master/img/cloudArchMonochrome.jpg)
+
 Mainflux is built with <3 by Mainflux [team](MAINTAINERS) and community contributors.
 
 > **N.B. Mainlux is uder heavy development and not yet suitable for professional deployments**

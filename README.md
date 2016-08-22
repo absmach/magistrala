@@ -3,28 +3,24 @@
 [![License](https://img.shields.io/badge/license-Apache%20v2.0-blue.svg)](LICENSE) [![Join the chat at https://gitter.im/Mainflux/mainflux](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Mainflux/mainflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ### About
-Mainflux is an open source and patent-free IoT cloud platform based on [microservices](https://en.wikipedia.org/wiki/Microservices).
+Mainflux is modern open source and patent-free IoT cloud platform written in Go and based on [microservices](#system-architecture).
 
 It allows device, user and application connections over various network protocols, like HTTP, MQTT, WebSocket and CoAP, making a seamless bridge between them. It is used as the IoT middleware for building complex IoT solutions.
 
-![Cloud Architecture](https://github.com/Mainflux/mainflux-doc/blob/master/img/cloudArchitecture.jpg)
-
 Mainflux is built with <3 by Mainflux team and community contributors.
 
-### Features
-An extensive (and incomplete) list of features includes:
-- Responsive and scalable architecture based on a set of [microservices](https://en.wikipedia.org/wiki/Microservices)
-- Set of clean APIs: HTTP RESTful, MQTT, WebSocket and CoAP
-- SDK - set of client libraries for many HW platforms in several programming languages: C/C++, JavaScript, Go and Python
-- Device management and provisioning and OTA FW updates
-- Highly secured connections via TLS and DTLS
-- Standardized [NGSI](http://technical.openmobilealliance.org/Technical/technical-information/release-program/current-releases/ngsi-v1-0) model representation
-- Enhanced and fine-grained security via [Reverse Proxy](https://en.wikipedia.org/wiki/Reverse_proxy), [OAuth 2.0](http://oauth.net/2/) [identity management](https://en.wikipedia.org/wiki/Identity_management) and [RBAC](https://en.wikipedia.org/wiki/Role-based_access_control) Authorization Server.
-- [LwM2M](http://goo.gl/rHjLZQ) standard compliance
-- [oneM2M](http://www.onem2m.org/) adapter
-- Easy deployment and high system scalability via [Docker](https://www.docker.com/) images
-- Clear project roadmap, extensive development ecosystem and highly skilled developer community
-- And many more
+> **N.B. Mainlux is uder heavy development and not yet suitable for professional deployments**
+
+### Two Flavours
+Mainflux comes in two flawours:
+- [Mainflux Lite](https://github.com/Mainflux/mainflux-lite) - simplified monolithic system
+- Maiflux Full (or just Mainflux) - the full-blown multi-service system 
+
+If you are new to Mainflux it [Mainflux Lite](https://github.com/Mainflux/mainflux-lite) is a place to start. It has most of the services offered by Mainflux, but bundled in one monolithic binary.
+
+Mainflux Lite is suitable for quick and simple deployments and for development.
+
+On the other hand, Mainflux Full (in further text refered simply as Mainflux) is a production system, based on several independent and inter-connected services run in a separate Docker containers.
 
 ### Install/Deploy
 Installation and deployment of Mainflux IoT cloud is super-easy:
@@ -71,6 +67,20 @@ And here is the matrix describes the functionality of each microservice in the s
 These components are packaged and deployed in a set of Docker containers maintained by Mainflux team, with images uploaded to [Mainflux Docker Hub page](https://hub.docker.com/u/mainflux/).
 
 Docker composition that constitues Mainflux IoT infrastructure is defined in the [`docker-compose.yml`](https://github.com/Mainflux/mainflux/blob/master/docker-compose.yml).
+
+### Features
+An extensive (and incomplete) list of features includes:
+- Responsive and scalable architecture based on a set of [microservices](https://en.wikipedia.org/wiki/Microservices)
+- Set of clean APIs: HTTP RESTful, MQTT, WebSocket and CoAP
+- SDK - set of client libraries for many HW platforms in several programming languages: C/C++, JavaScript, Go and Python
+- Device management and provisioning and OTA FW updates
+- Highly secured connections via TLS and DTLS
+- Enhanced and fine-grained security via [Reverse Proxy](https://en.wikipedia.org/wiki/Reverse_proxy), [OAuth 2.0](http://oauth.net/2/) [identity management](https://en.wikipedia.org/wiki/Identity_management) and [RBAC](https://en.wikipedia.org/wiki/Role-based_access_control) Authorization Server.
+- [LwM2M](http://goo.gl/rHjLZQ) standard compliance
+- [oneM2M](http://www.onem2m.org/) adapter
+- Easy deployment and high system scalability via [Docker](https://www.docker.com/) images
+- Clear project roadmap, extensive development ecosystem and highly skilled developer community
+- And many more
 
 ### Documentation
 Development documentation can be found on our [Mainflux GitHub Wiki](https://github.com/Mainflux/mainflux/wiki).

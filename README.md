@@ -7,7 +7,7 @@ Mainflux is modern open source and patent-free IoT cloud platform written in Go 
 
 It allows device, user and application connections over various network protocols, like HTTP, MQTT, WebSocket and CoAP, making a seamless bridge between them. It is used as the IoT middleware for building complex IoT solutions.
 
-Mainflux is built with <3 by Mainflux team and community contributors.
+Mainflux is built with <3 by Mainflux [team](MAINTAINERS) and community contributors.
 
 > **N.B. Mainlux is uder heavy development and not yet suitable for professional deployments**
 
@@ -16,13 +16,15 @@ Mainflux comes in two flawours:
 - [Mainflux Lite](https://github.com/Mainflux/mainflux-lite) - simplified monolithic system
 - Maiflux Full (or just Mainflux) - the full-blown multi-service system 
 
-If you are new to Mainflux it [Mainflux Lite](https://github.com/Mainflux/mainflux-lite) is a place to start. It has most of the services offered by Mainflux, but bundled in one monolithic binary.
+If you are new to Mainflux then [Mainflux Lite](https://github.com/Mainflux/mainflux-lite) is a place to start. It has most of the services offered by Mainflux, but bundled in one monolithic binary.
 
 Mainflux Lite is suitable for quick and simple deployments and for development.
 
 On the other hand, Mainflux Full (in further text refered simply as Mainflux) is a production system, based on several independent and inter-connected services run in a separate Docker containers.
 
 ### Install/Deploy
+> For Mainflux Lite installation proceed to the [project's page](https://github.com/Mainflux/mainflux-lite)
+
 Installation and deployment of Mainflux IoT cloud is super-easy:
 - Clone the repo:
 ```bash
@@ -95,6 +97,11 @@ Development documentation can be found on our [Mainflux GitHub Wiki](https://git
 
 #### Twitter
 [@mainflux](https://twitter.com/mainflux)
+
+### Authors
+Main architect and BDFL of Mainflux project is [@drasko](https://github.com/drasko). You can also reach me on Twitter: [@draskodraskovic](https://twitter.com/draskodraskovic)
+
+Maintainers are listed in [MAINTAINERS](MAINTAINERS) file.
 
 ### License
 [Apache License, version 2.0](LICENSE)

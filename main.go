@@ -149,7 +149,4 @@ _|      _|    _|_|_|  _|  _|    _|    _|      _|    _|_|_|  _|    _|
                 Made with <3 by Mainflux Team
 [w] http://mainflux.io
 [t] @mainflux
-
-                       ** LITE **
-
 `

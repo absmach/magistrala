@@ -15,8 +15,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/mainflux/mainflux-lite/config"
-	mfdb "github.com/mainflux/mainflux-lite/db"
+	"github.com/mainflux/mainflux/config"
+	mfdb "github.com/mainflux/mainflux/db"
 
 	"github.com/kataras/iris"
 	"github.com/ory-am/dockertest"

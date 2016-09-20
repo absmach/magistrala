@@ -11,8 +11,8 @@ package servers
 import (
 	"strconv"
 
-	"github.com/mainflux/mainflux-lite/controllers"
-	"github.com/mainflux/mainflux-lite/config"
+	"github.com/mainflux/mainflux/controllers"
+	"github.com/mainflux/mainflux/config"
 
 	"github.com/iris-contrib/middleware/logger"
 	"github.com/kataras/iris"

@@ -45,7 +45,7 @@ func (this *Config) Parse() {
 		viper.SetConfigFile(os.Args[1])
 	} else {
 		// default cfg path to source dir, as we keep cfg.yml there
-		cfgDir := os.Getenv("GOPATH") + "/src/github.com/mainflux/mainflux-lite/config"
+		cfgDir := os.Getenv("GOPATH") + "/src/github.com/mainflux/mainflux/config"
 		viper.SetConfigName("config") // name of config file (without extension)
 		viper.AddConfigPath(cfgDir)   // path to look for the config file in
 	}

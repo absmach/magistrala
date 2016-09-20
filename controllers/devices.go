@@ -14,8 +14,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/mainflux/mainflux-lite/db"
-	"github.com/mainflux/mainflux-lite/models"
+	"github.com/mainflux/mainflux/db"
+	"github.com/mainflux/mainflux/models"
 
 	"github.com/satori/go.uuid"
 	"gopkg.in/mgo.v2/bson"

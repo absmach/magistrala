@@ -14,9 +14,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/mainflux/mainflux-lite/db"
-	"github.com/mainflux/mainflux-lite/models"
-	"github.com/mainflux/mainflux-lite/clients"
+	"github.com/mainflux/mainflux/db"
+	"github.com/mainflux/mainflux/models"
+	"github.com/mainflux/mainflux/clients"
 
 	"github.com/satori/go.uuid"
 	"gopkg.in/mgo.v2/bson"
@@ -47,7 +47,6 @@ func CreateChannel(ctx *iris.Context) {
 	Db.Init()
 	defer Db.Close()
 
-
 	c := models.Channel{}
 	json.Unmarshal(ctx.RequestCtx.Request.Body(), &c)
 
@@ -58,8 +57,9 @@ func CreateChannel(ctx *iris.Context) {
 	c.Id = uuid.String()
 
 	// Insert reference to DeviceId
-	if c.Device = nil {
+	if c.Device == "" {
 		ctx.JSON(iris.StatusBadRequest, iris.Map{"response": "No device ID in request body"})
+		return
 	}
 
 	// TODO Check if Device ID is valid (in database)

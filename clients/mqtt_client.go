@@ -7,7 +7,7 @@ import (
 	"log"
 	"encoding/json"
 
-	"github.com/mainflux/mainflux-lite/db"
+	"github.com/mainflux/mainflux/db"
 
 	"github.com/krylovsk/gosenml"
 	"github.com/kataras/iris"

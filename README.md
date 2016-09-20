@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/license-Apache%20v2.0-blue.svg)](LICENSE) [![Join the chat at https://gitter.im/Mainflux/mainflux](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Mainflux/mainflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ### About
-Mainflux is modern open source and patent-free IoT cloud platform written in Go and based on [microservices](#system-architecture).
+Mainflux is modern open source and patent-free IoT cloud platform written in Go.
 
 It allows device, user and application connections over various network protocols, like HTTP, MQTT, WebSocket and CoAP, making a seamless bridge between them. It is used as the IoT middleware for building complex IoT solutions.
 
@@ -41,11 +41,9 @@ This will automatically download Docker images from [Mainflux Docker Hub](https:
 
 ### System Architecture
 Mainflux IoT cloud is composed of several components, i.e. microservices:
-- Mainflux Core
+- Mainflux Core (HTTP API Server and Admin)
 - Authentication and Authorization Server
-- HTTP API Server
-- MQTT PUB/SUB Broker
-- WebSocket API Server
+- MQTT PUB/SUB Broker (and WebSocket Server)
 - Mongo Database
 - Dashflux UI
 

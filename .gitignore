@@ -40,3 +40,11 @@ Session.vim
 # auto-generated tag files
 tags
 
+# Go sources
+./src
+
+# Go tests
+*.test
+
+# Binary
+mainflux

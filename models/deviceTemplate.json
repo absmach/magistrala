@@ -1,0 +1,18 @@
+{ 
+    "id": "88fce370-1c68-11e6-8610-27f9510f1a02",
+    "name": "Some Device",
+    "description": "Longer description for Some Device",
+    "visibility": "private",
+    "status": "enabled",
+    "tags": [ "lorem", "ipsum" ],
+    "location": {
+        "name": "Storage Room",
+        "latitude": -37.9788423562422,
+        "longitude": -57.5478776916862,
+        "elevation": 5
+    },
+    "created": "2014-09-01T10:00:00.764Z",
+    "updated": "2014-09-02T10:00:00.245Z",
+    "metadata": {}
+}
+

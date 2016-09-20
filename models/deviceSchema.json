@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "default": "",
+	  "readOnly": true
+    },
+    "name": {
+      "type": "string",
+      "default": "Unnamed Device"
+    },
+    "description": {
+      "type": "string",
+      "default": ""
+    },
+    "visibility": {
+      "type": "string",
+      "default": "private"
+    },
+    "status": {
+      "type": "string",
+      "default": "disabled"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "default": ""
+      }
+    },
+    "location": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "default": ""
+        },
+        "latitude": {
+          "type": "number",
+          "default": 0
+        },
+        "longitude": {
+          "type": "number",
+          "default": 0
+        },
+        "elevation": {
+          "type": "integer",
+          "default": 0
+        }
+      },
+      "default": {"name": "", "latitude": 0, "longitude": 0, "elevation": 0}
+    },
+    "created": {
+      "type": "string",
+      "default": "",
+	  "reaOnly": true
+    },
+    "updated": {
+      "type": "string",
+      "default": "",
+	  "readOnly": true
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  "additionalProperties": false
+}
+

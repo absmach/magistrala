@@ -7,6 +7,13 @@
 ###
 
 ###
+# HTPP Server
+###
+http:
+  host: "0.0.0.0"
+  port: 7070
+
+###
 # MongoDB
 ###
 mongo:
@@ -14,17 +21,3 @@ mongo:
   port: 27017
   db: "mainflux"
 
-###
-# InfluxDB
-###
-influx:
-  host: "influx"
-  port: 8086
-  db: "mainflux"
-
-###
-# NATS
-###
-nats:
-  host: "nats"
-  port: 4222

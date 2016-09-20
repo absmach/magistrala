@@ -7,16 +7,6 @@
 ###
 
 ###
-# InfluxDB
-###
-influx:
-  image: influxdb:latest
-  container_name: mainflux-influxdb
-  ports:
-    - "8083:8083"
-    - "8086:8086"
-
-###
 # MongoDB
 ###
 mongo:
@@ -25,56 +15,13 @@ mongo:
   command: --smallfiles --nojournal
 
 ###
-# NATS
+# Mainflux Lite
 ###
-nats:
-  image: apcera/gnatsd:latest
-  container_name: mainflux-nats
-  ports:
-    - "4222:4222"
-    - "8333:8333"
-
-###
-# Mainflux Core Server
-###
-mainflux-core:
-  image: mainflux/mainflux-core-server:latest
-  container_name: mainflux-core
+mainflux-lite:
+  image: mainflux/mainflux-lite:latest
+  container_name: mainflux-lite
   links:
-    - influx
     - mongo
-    - nats
-
-###
-# Mainflux HTTP Server
-###
-mainflux-http:
-  image: mainflux/mainflux-http-server:latest
-  container_name: mainflux-http
-  links:
-    - nats
   ports:
     - "7070:7070"
 
-###
-# Mainflux MQTT Server
-###
-mainflux-mqtt:
-  image: mainflux/mainflux-mqtt-server:latest
-  container_name: mainflux-mqtt
-  links:
-    - nats
-  ports:
-    - "1883:1883"
-
-###
-# Mainflux WS Server
-###
-mainflux-ws:
-  image: mainflux/mainflux-ws-server:latest
-  container_name: mainflux-ws
-  links:
-    - nats
-  ports:
-    - "9090:9090"
-    

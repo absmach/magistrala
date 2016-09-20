@@ -14,9 +14,19 @@ Mainflux is built with <3 by Mainflux [team](MAINTAINERS) and community contribu
 > **N.B. Mainlux is uder heavy development and not yet suitable for professional deployments**
 
 ### Install/Deploy
-> For Mainflux Lite installation proceed to the [project's page](https://github.com/Mainflux/mainflux-lite)
+Mainflux uses [MongoDB](https://www.mongodb.com/), so insure that it is installed on your system (more info [here](https://github.com/Mainflux/mainflux-lite/blob/master/doc/dependencies.md)). You will also need MQTT broker running on default port 1883 - for example [Mosquitto](https://mosquitto.org/).
 
-Installation and deployment of Mainflux IoT cloud is super-easy:
+Installing Mainflux is trivial [`go get`](https://golang.org/cmd/go/):
+```bash
+go get github.com/mainflux/mainflux
+$GOBIN/mainflux
+```
+
+If you are new to Go, more information about setting-up environment and fetching Mainflux Lite code can be found [here](https://github.com/Mainflux/mainflux-lite/blob/master/doc/install.md).
+
+### Docker
+Running Mainflux in a Docker is even easier, as it will launch whole composition of microservices, so you do not have to care about dependencies.
+
 - Clone the repo:
 ```bash
 git clone https://github.com/Mainflux/mainflux.git && cd mainflux
@@ -28,8 +38,6 @@ docker-compose up
 ```
 
 This will automatically download Docker images from [Mainflux Docker Hub](https://hub.docker.com/u/mainflux/) and deploy the composition.
-
-If you need to modify these Docker images, you will have to look at appropriate repos in the [Mainflux project GitHub](https://github.com/Mainflux) - look for the repos starting with prefix `mainflux-<protocol>-server`.
 
 ### System Architecture
 Mainflux IoT cloud is composed of several components, i.e. microservices:

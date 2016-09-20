@@ -15,7 +15,7 @@ import (
 type (
 	Channel struct {
 		Id      string `json:"id"`
-		Device  string `json:"device"`
+		Device  string `json:"device,omitempty"`
 		Created string `json:"created"`
 		Updated string `json:"updated"`
 

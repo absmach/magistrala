@@ -59,11 +59,11 @@ func registerRoutes() {
 	iris.Delete("/devices/:device_id", controllers.DeleteDevice)
 
 	// CHANNELS
-	iris.Post("/devices/:device_id/channels", controllers.CreateChannel)
-	iris.Get("/devices/:device_id/channels", controllers.GetChannels)
+	iris.Post("/channels", controllers.CreateChannel)
+	iris.Get("/channels", controllers.GetChannels)
 
-	iris.Get("/devices/:device_id/channels/:channel_id", controllers.GetChannel)
-	iris.Put("/devices/:device_id/channels/:channel_id", controllers.UpdateChannel)
+	iris.Get("/channels/:channel_id", controllers.GetChannel)
+	iris.Put("/channels/:channel_id", controllers.UpdateChannel)
 
-	iris.Delete("/devices/:device_id/channels/:channel_id", controllers.DeleteChannel)
+	iris.Delete("/channels/:channel_id", controllers.DeleteChannel)
 }

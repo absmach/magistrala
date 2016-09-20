@@ -58,8 +58,11 @@ func CreateChannel(ctx *iris.Context) {
 	c.Id = uuid.String()
 
 	// Insert reference to DeviceId
-	did := ctx.Param("device_id")
-	c.Device = did
+	if c.Device = nil {
+		ctx.JSON(iris.StatusBadRequest, iris.Map{"response": "No device ID in request body"})
+	}
+
+	// TODO Check if Device ID is valid (in database)
 
 	// Timestamp
 	t := time.Now().UTC().Format(time.RFC3339)

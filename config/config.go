@@ -10,59 +10,49 @@ package config
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
+	"github.com/BurntSushi/toml"
 	"os"
 )
 
 type Config struct {
 	// HTTP
-	HttpHost string
-	HttpPort int
+	HttpHost		string
+	HttpPort		int
 
 	// Mongo
-	MongoHost     string
-	MongoPort     int
-	MongoDatabase string
+	MongoHost		string
+	MongoPort		int
+	MongoDatabase	string
+
+	// MQTT
+	MqttHost		string
+	MqttPort		int
 
 	// Influx
-	InfluxHost     string
-	InfluxPort     int
-	InfluxDatabase string
+	InfluxHost		string
+	InfluxPort		int
+	InfluxDatabase	string
 }
 
 
-func (this *Config) Parse() {
-	/**
-	 * Config
-	 */
-	/** Viper setup */
-	viper.SetConfigType("yaml")   // or viper.SetConfigType("YAML")
+func (cfg *Config) Parse() {
+
+	var confFile string
 
 	testEnv := os.Getenv("TEST_ENV")
 	if testEnv == "" && len(os.Args) > 1 {
 		// We are not in the TEST_ENV (where different args are provided)
 		// and provided config file as an argument
-		viper.SetConfigFile(os.Args[1])
+		confFile = os.Args[1]
 	} else {
 		// default cfg path to source dir, as we keep cfg.yml there
-		cfgDir := os.Getenv("GOPATH") + "/src/github.com/mainflux/mainflux/config"
-		viper.SetConfigName("config") // name of config file (without extension)
-		viper.AddConfigPath(cfgDir)   // path to look for the config file in
+		confFile = os.Getenv("GOPATH") + "/src/github.com/mainflux/mainflux/config/config.toml"
 	}
 
-	err := viper.ReadInConfig()   // Find and read the config file
-	if err != nil {               // Handle errors reading the config file
-		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+	if _, err := toml.DecodeFile(confFile, &cfg); err != nil {
+		// handle error
+		fmt.Println("Error parsing Toml")
 	}
 
-	this.MongoHost = viper.GetString("mongo.host")
-	this.MongoPort = viper.GetInt("mongo.port")
-	this.MongoDatabase = viper.GetString("mongo.db")
-
-	this.InfluxHost = viper.GetString("influx.host")
-	this.InfluxPort = viper.GetInt("influx.port")
-	this.InfluxDatabase = viper.GetString("influx.db")
-
-	this.HttpHost = viper.GetString("http.host")
-	this.HttpPort = viper.GetInt("http.port")
+	fmt.Println(cfg)
 }

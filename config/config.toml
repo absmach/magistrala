@@ -6,19 +6,15 @@
 # See the included LICENSE file for more details.
 ###
 
-###
-# HTPP Server
-###
-http:
-  host: "0.0.0.0"
-  port: 7070
+# HTTP
+httpHost = "0.0.0.0"
+httpPort = 7070
 
-###
-# MongoDB
-###
-mongo:
-  host: "localhost"
-  port: 27017
-  db: "mainflux"
+# Mongo
+mongoHost = "localhost"
+mongoPort = 27017
+mongoDatabase = "mainflux"
 
-
+# MQTT
+mqttHost = "localhost"
+mqttPort = 1833

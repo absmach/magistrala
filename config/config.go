@@ -53,6 +53,4 @@ func (cfg *Config) Parse() {
 		// handle error
 		fmt.Println("Error parsing Toml")
 	}
-
-	fmt.Println(cfg)
 }

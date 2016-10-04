@@ -9,16 +9,17 @@
 package servers
 
 import (
-	"fmt"
 	"testing"
 	"time"
 	"log"
 	"os"
+    "net/http"
+    "net/http/httptest"
 
 	"github.com/mainflux/mainflux/config"
+	"github.com/mainflux/mainflux/controllers"
 	mfdb "github.com/mainflux/mainflux/db"
 
-	"github.com/kataras/iris"
 	"github.com/ory-am/dockertest"
 	"gopkg.in/mgo.v2"
 )
@@ -74,17 +75,31 @@ func TestServer(t *testing.T) {
 	var cfg config.Config
 	cfg.Parse()
 
-	go HttpServer(cfg)
 
-	// prepare test framework
-	if ok := <-iris.Available; !ok {
-		t.Fatal("Unexpected error: server cannot start, please report this as bug!!")
-	}
+	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
+    // pass 'nil' as the third parameter.
+    req, err := http.NewRequest("GET", "/status", nil)
+    if err != nil {
+		t.Fatal(err)
+    }
 
+    // We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
+    rr := httptest.NewRecorder()
+    handler := http.HandlerFunc(controllers.GetStatus)
 
-	e := iris.Tester(t)
-	r := e.Request("GET", "/status").Expect().Status(iris.StatusOK).JSON()
-	fmt.Println("%v", r)
+    // Our handlers satisfy http.Handler, so we can call their ServeHTTP method 
+    // directly and pass in our Request and ResponseRecorder.
+    handler.ServeHTTP(rr, req)
 
+    // Check the status code is what we expect.
+    if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+    }
+
+    // Check the response body is what we expect.
+    expected := `{"running": true}`
+    if rr.Body.String() != expected {
+		t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
+    }
 }
 

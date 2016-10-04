@@ -12,7 +12,7 @@ MAINTAINER Mainflux
 RUN apk update && apk add git && rm -rf /var/cache/apk/*
 
 # Copy the local package files to the container's workspace.
-ADD . /go/src/github.com/mainflux/mainflux
+ADD .. /go/src/github.com/mainflux/mainflux
 
 RUN mkdir -p /etc/mainflux
 COPY config/config-docker.toml /etc/mainflux/config.toml

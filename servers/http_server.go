@@ -39,16 +39,14 @@ func HttpServer(cfg config.Config) {
 
 	mux.Delete("/devices/:device_id", http.HandlerFunc(controllers.DeleteDevice))
 
-/**
 	// Channels
-	mux.HandleFunc("/channels", controllers.CreateChannel)
-	mux.HandleFunc("/channels", controllers.GetChannels)
+	mux.Post("/channels", http.HandlerFunc(controllers.CreateChannel))
+	mux.Get("/channels", http.HandlerFunc(controllers.GetChannels))
 
-	mux.HandleFunc("/channels/:channel_id", controllers.GetChannel)
-	mux.HandleFunc("/channels/:channel_id", controllers.UpdateChannel)
+	mux.Get("/channels/:channel_id", http.HandlerFunc(controllers.GetChannel))
+	mux.Put("/channels/:channel_id", http.HandlerFunc(controllers.UpdateChannel))
 
-	mux.HandleFunc("/channels/:channel_id", controllers.DeleteChannel)
-**/
+	mux.Delete("/channels/:channel_id", http.HandlerFunc(controllers.DeleteChannel))
 
 	/**
 	 * Server

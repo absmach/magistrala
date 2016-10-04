@@ -21,7 +21,11 @@ import (
 	"github.com/satori/go.uuid"
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/kataras/iris"
+	"io"
+	"net/http"
+	"io/ioutil"
+
+	"github.com/go-zoo/bone"
 )
 
 /** == Functions == */
@@ -29,16 +33,28 @@ import (
 /**
  * CreateChannel ()
  */
-func CreateChannel(ctx *iris.Context) {
+func CreateChannel(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	data, err := ioutil.ReadAll(r.Body)
+    if err != nil {
+        panic(err)
+    }
+
 	var body map[string]interface{}
-	ctx.ReadJSON(&body)
-	/*
+	if err := json.Unmarshal(data, &body); err != nil {
+		panic(err)
+	}
+
+	/**
 	if validateJsonSchema("channel", body) != true {
 		println("Invalid schema")
-		ctx.JSON(iris.StatusBadRequest, iris.Map{"response": "invalid json schema in request"})
+		w.WriteHeader(http.StatusBadRequest)
+		str := `{"response": "invalid json schema in request"}`
+		io.WriteString(w, str)
 		return
 	}
-	*/
+	**/
 
 	// Init new Mongo session
 	// and get the "channels" collection
@@ -48,7 +64,9 @@ func CreateChannel(ctx *iris.Context) {
 	defer Db.Close()
 
 	c := models.Channel{}
-	json.Unmarshal(ctx.RequestCtx.Request.Body(), &c)
+	if err := json.Unmarshal(data, &c); err != nil {
+		panic(err)
+	}
 
 	// Creating UUID Version 4
 	uuid := uuid.NewV4()
@@ -57,8 +75,11 @@ func CreateChannel(ctx *iris.Context) {
 	c.Id = uuid.String()
 
 	// Insert reference to DeviceId
-	if c.Device == "" {
-		ctx.JSON(iris.StatusBadRequest, iris.Map{"response": "No device ID in request body"})
+	c.Device = r.URL.Query().Get("device")
+	if len(c.Device) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		str := `{"response": "no device ID in request parameter"}`
+		io.WriteString(w, str)
 		return
 	}
 
@@ -69,100 +90,146 @@ func CreateChannel(ctx *iris.Context) {
 	c.Created, c.Updated = t, t
 
 	// Insert Channel
-	err := Db.C("channels").Insert(c)
-	if err != nil {
-		ctx.JSON(iris.StatusInternalServerError, iris.Map{"response": "cannot create device"})
+	if err := Db.C("channels").Insert(c); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		str := `{"response": "cannot create channel"}`
+		io.WriteString(w, str)
 		return
 	}
 
-	ctx.JSON(iris.StatusCreated, iris.Map{"response": "created", "id": c.Id})
+	w.WriteHeader(http.StatusOK)
+	str := `{"response": "created", "id": "` + c.Id + `"}`
+    io.WriteString(w, str)
 }
 
 /**
  * GetChannels()
  */
-func GetChannels(ctx *iris.Context) {
+func GetChannels(w http.ResponseWriter, r *http.Request) {
 	Db := db.MgoDb{}
 	Db.Init()
 	defer Db.Close()
 
 	results := []models.Channel{}
-	err := Db.C("channels").Find(nil).All(&results)
-	if err != nil {
+	if err := Db.C("channels").Find(nil).All(&results); err != nil {
 		log.Print(err)
 	}
 
-	ctx.JSON(iris.StatusOK, &results)
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	res, err := json.Marshal(results)
+	if err != nil {
+		log.Print(err)
+	}
+    io.WriteString(w, string(res))
 }
 
 /**
  * GetChannel()
  */
-func GetChannel(ctx *iris.Context) {
+func GetChannel(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
 	Db := db.MgoDb{}
 	Db.Init()
 	defer Db.Close()
 
-	id := ctx.Param("channel_id")
+	id := bone.GetValue(r, "channel_id")
 
 	result := models.Channel{}
-	err := Db.C("channels").Find(bson.M{"id": id}).One(&result)
-	if err != nil {
+	if err := Db.C("channels").Find(bson.M{"id": id}).One(&result); err != nil {
 		log.Print(err)
-		ctx.JSON(iris.StatusNotFound, iris.Map{"response": "not found", "id": id})
+		w.WriteHeader(http.StatusNotFound)
+		str := `{"response": "not found", "id": "` + id + `"}`
+		if err != nil {
+			log.Print(err)
+		}
+		io.WriteString(w, str)
 		return
 	}
 
-	ctx.JSON(iris.StatusOK, &result)
+
+	w.WriteHeader(http.StatusOK)
+	res, err := json.Marshal(result)
+	if err != nil {
+		log.Print(err)
+	}
+    io.WriteString(w, string(res))
 }
 
 /**
  * UpdateChannel()
  */
-func UpdateChannel(ctx *iris.Context) {
-	var body map[string]interface{}
-	ctx.ReadJSON(&body)
-	// Validate JSON schema user provided
-	/*
-	if validateJsonSchema("channel", body) != true {
-		println("Invalid schema")
-		ctx.JSON(iris.StatusBadRequest, iris.Map{"response": "invalid json schema in request"})
+func UpdateChannel(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	data, err := ioutil.ReadAll(r.Body)
+    if err != nil {
+        panic(err)
+    }
+
+	if len(data) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		str := `{"response": "no data provided"}`
+		io.WriteString(w, str)
 		return
 	}
-	*/
 
-	id := ctx.Param("channel_id")
+	var body map[string]interface{}
+	if err := json.Unmarshal(data, &body); err != nil {
+		panic(err)
+	}
+
+	/**
+	if validateJsonSchema("channel", body) != true {
+		println("Invalid schema")
+		w.WriteHeader(http.StatusBadRequest)
+		str := `{"response": "invalid json schema in request"}`
+		io.WriteString(w, str)
+		return
+	}
+	**/
+
+	id := bone.GetValue(r, "channel_id")
 
 
 	// Publish the channel update.
 	// This will be catched by the MQTT main client (subscribed to all channel topics)
 	// and then written in the DB in the MQTT handler
-	token := clients.MqttClient.Publish("mainflux/" + id, 0, false, string(ctx.RequestCtx.Request.Body()))
+	token := clients.MqttClient.Publish("mainflux/" + id, 0, false, string(data))
 	token.Wait()
 
 	// Wait on status from MQTT handler (which executes DB write)
 	status := <-clients.WriteStatusChannel
-	ctx.JSON(status.Nb, iris.Map{"response": status.Str})
+	w.WriteHeader(status.Nb)
+	str := `{"response": "` + status.Str + `"}`
+	io.WriteString(w, str)
 }
 
 /**
  * DeleteChannel()
  */
-func DeleteChannel(ctx *iris.Context) {
+func DeleteChannel(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
 	Db := db.MgoDb{}
 	Db.Init()
 	defer Db.Close()
 
-	id := ctx.Param("channel_id")
+	id := bone.GetValue(r, "channel_id")
 
 	err := Db.C("channels").Remove(bson.M{"id": id})
 		if err != nil {
 		log.Print(err)
-		ctx.JSON(iris.StatusNotFound, iris.Map{"response": "not deleted", "id": id})
+		w.WriteHeader(http.StatusNotFound)
+		str := `{"response": "not deleted", "id": "` + id + `"}`
+		io.WriteString(w, str)
 		return
 	}
 
-	ctx.JSON(iris.StatusOK, iris.Map{"response": "deleted", "id": id})
+	w.WriteHeader(http.StatusOK)
+	str := `{"response": "deleted", "id": "` + id + `"}`
+    io.WriteString(w, str)
 }
 
 

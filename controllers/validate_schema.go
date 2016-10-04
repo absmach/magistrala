@@ -25,7 +25,7 @@ import (
 func validateJsonSchema(model string, body map[string]interface{}) bool {
 	pwd, _ := os.Getwd()
 	schemaLoader := gojsonschema.NewReferenceLoader("file://" + pwd +
-		"/models/" + model + "Schema.json")
+		"/schema/" + model + "Schema.json")
 	bodyLoader := gojsonschema.NewGoLoader(body)
 	result, err := gojsonschema.Validate(schemaLoader, bodyLoader)
 	if err != nil {

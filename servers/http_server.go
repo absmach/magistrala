@@ -10,60 +10,51 @@ package servers
 
 import (
 	"strconv"
+	"net/http"
 
 	"github.com/mainflux/mainflux/controllers"
 	"github.com/mainflux/mainflux/config"
 
-	"github.com/iris-contrib/middleware/logger"
-	"github.com/kataras/iris"
+	"github.com/go-zoo/bone"
+
 )
 
 
 func HttpServer(cfg config.Config) {
-	// Iris config
-	iris.Config.DisableBanner = true
 
-	// set the global middlewares
-	iris.Use(logger.New())
+	mux := bone.New()
 
-	// set the custom errors
-	iris.OnError(iris.StatusNotFound, func(ctx *iris.Context) {
-		ctx.Render("errors/404.html", iris.Map{"Title": iris.StatusText(iris.StatusNotFound)})
-	})
+	/**
+	 * Routes
+	 */
+	// Status
+	mux.Get("/status", http.HandlerFunc(controllers.GetStatus))
 
-	iris.OnError(iris.StatusInternalServerError, func(ctx *iris.Context) {
-		ctx.Render("errors/500.html", nil, iris.RenderOptions{"layout": iris.NoLayout})
-	})
+	// Devices
+	mux.Post("/devices", http.HandlerFunc(controllers.CreateDevice))
+	mux.Get("/devices", http.HandlerFunc(controllers.GetDevices))
 
-	// register public API
-	registerRoutes()
+	mux.Get("/devices/:device_id", http.HandlerFunc(controllers.GetDevice))
+	mux.Put("/devices/:device_id", http.HandlerFunc(controllers.UpdateDevice))
 
-	// start the server
-	iris.Listen(cfg.HttpHost + ":" + strconv.Itoa(cfg.HttpPort))
+	mux.Delete("/devices/:device_id", http.HandlerFunc(controllers.DeleteDevice))
+
+/**
+	// Channels
+	mux.HandleFunc("/channels", controllers.CreateChannel)
+	mux.HandleFunc("/channels", controllers.GetChannels)
+
+	mux.HandleFunc("/channels/:channel_id", controllers.GetChannel)
+	mux.HandleFunc("/channels/:channel_id", controllers.UpdateChannel)
+
+	mux.HandleFunc("/channels/:channel_id", controllers.DeleteChannel)
+**/
+
+	/**
+	 * Server
+	 */
+	http.ListenAndServe(cfg.HttpHost + ":" + strconv.Itoa(cfg.HttpPort), mux)
 
 	// Use following to start HTTPS server on the same port
 	//iris.ListenTLS(cfg.HttpHost + ":" + strconv.Itoa(cfg.HttpPort), "tls/mainflux.crt", "tls/mainflux.key")
-}
-
-func registerRoutes() {
-	// STATUS
-	iris.Get("/status", controllers.GetStatus)
-
-	// DEVICES
-	iris.Post("/devices", controllers.CreateDevice)
-	iris.Get("/devices", controllers.GetDevices)
-
-	iris.Get("/devices/:device_id", controllers.GetDevice)
-	iris.Put("/devices/:device_id", controllers.UpdateDevice)
-
-	iris.Delete("/devices/:device_id", controllers.DeleteDevice)
-
-	// CHANNELS
-	iris.Post("/channels", controllers.CreateChannel)
-	iris.Get("/channels", controllers.GetChannels)
-
-	iris.Get("/channels/:channel_id", controllers.GetChannel)
-	iris.Put("/channels/:channel_id", controllers.UpdateChannel)
-
-	iris.Delete("/channels/:channel_id", controllers.DeleteChannel)
 }

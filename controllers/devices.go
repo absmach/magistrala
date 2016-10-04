@@ -20,19 +20,43 @@ import (
 	"github.com/satori/go.uuid"
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/kataras/iris"
+	"io"
+	"net/http"
+	"io/ioutil"
+
+	"github.com/go-zoo/bone"
 )
 
 /** == Functions == */
 /**
  * CreateDevice ()
  */
-func CreateDevice(ctx *iris.Context) {
+func CreateDevice(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	data, err := ioutil.ReadAll(r.Body)
+    if err != nil {
+		println("HERE")
+        panic(err)
+    }
+
+	if len(data) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		str := `{"response": "no data provided"}`
+		io.WriteString(w, str)
+		return
+	}
+
 	var body map[string]interface{}
-	ctx.ReadJSON(&body)
+	if err := json.Unmarshal(data, &body); err != nil {
+		panic(err)
+	}
+
 	if validateJsonSchema("device", body) != true {
 		println("Invalid schema")
-		ctx.JSON(iris.StatusBadRequest, iris.Map{"response": "invalid json schema in request"})
+		w.WriteHeader(http.StatusBadRequest)
+		str := `{"response": "invalid json schema in request"}`
+		io.WriteString(w, str)
 		return
 	}
 
@@ -45,7 +69,11 @@ func CreateDevice(ctx *iris.Context) {
 
 	// Set up defaults and pick up new values from user-provided JSON
 	d := models.Device{Name: "Some Name"}
-	json.Unmarshal(ctx.RequestCtx.Request.Body(), &d)
+	if err := json.Unmarshal(data, &d); err != nil {
+		println("Cannot decode!")
+		log.Print(err.Error())
+		panic(err)
+	}
 
 	// Creating UUID Version 4
 	uuid := uuid.NewV4()
@@ -58,82 +86,125 @@ func CreateDevice(ctx *iris.Context) {
 	d.Created, d.Updated = t, t
 
 	// Insert Device
-	erri := Db.C("devices").Insert(d)
-	if erri != nil {
-		ctx.JSON(iris.StatusInternalServerError, iris.Map{"response": "cannot create device"})
+	if err := Db.C("devices").Insert(d); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		str := `{"response": "cannot create device"}`
+		io.WriteString(w, str)
 		return
 	}
 
-	ctx.JSON(iris.StatusCreated, iris.Map{"response": "created", "id": d.Id})
+	w.WriteHeader(http.StatusOK)
+	str := `{"response": "created", "id": "` + d.Id + `"}`
+    io.WriteString(w, str)
 }
 
 /**
  * GetDevices()
  */
-func GetDevices(ctx *iris.Context) {
+func GetDevices(w http.ResponseWriter, r *http.Request) {
 	Db := db.MgoDb{}
 	Db.Init()
 	defer Db.Close()
 
 	results := []models.Device{}
-	err := Db.C("devices").Find(nil).All(&results)
-	if err != nil {
+	if err := Db.C("devices").Find(nil).All(&results); err != nil {
 		log.Print(err)
 	}
 
-	ctx.JSON(iris.StatusOK, &results)
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	res, err := json.Marshal(results)
+	if err != nil {
+		log.Print(err)
+	}
+    io.WriteString(w, string(res))
 }
 
 /**
  * GetDevice()
  */
-func GetDevice(ctx *iris.Context) {
+func GetDevice(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
 	Db := db.MgoDb{}
 	Db.Init()
 	defer Db.Close()
 
-	id := ctx.Param("device_id")
+	id := bone.GetValue(r, "device_id")
 
 	result := models.Device{}
 	err := Db.C("devices").Find(bson.M{"id": id}).One(&result)
 	if err != nil {
 		log.Print(err)
-		ctx.JSON(iris.StatusNotFound, iris.Map{"response": "not found", "id": id})
+		w.WriteHeader(http.StatusNotFound)
+		str := `{"response": "not found", "id": "` + id + `"}`
+		if err != nil {
+			log.Print(err)
+		}
+		io.WriteString(w, str)
 		return
 	}
 
-	ctx.JSON(iris.StatusOK, &result)
+	w.WriteHeader(http.StatusOK)
+	res, err := json.Marshal(result)
+	if err != nil {
+		log.Print(err)
+	}
+    io.WriteString(w, string(res))
 }
 
 /**
  * UpdateDevice()
  */
-func UpdateDevice(ctx *iris.Context) {
+func UpdateDevice(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	data, err := ioutil.ReadAll(r.Body)
+    if err != nil {
+		println("HERE")
+        panic(err)
+    }
+
+	if len(data) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		str := `{"response": "no data provided"}`
+		io.WriteString(w, str)
+		return
+	}
+
 	var body map[string]interface{}
-	ctx.ReadJSON(&body)
+	if err := json.Unmarshal(data, &body); err != nil {
+		panic(err)
+	}
+
+	if validateJsonSchema("device", body) != true {
+		println("Invalid schema")
+		w.WriteHeader(http.StatusBadRequest)
+		str := `{"response": "invalid json schema in request"}`
+		io.WriteString(w, str)
+		return
+	}
+
 
 	Db := db.MgoDb{}
 	Db.Init()
 	defer Db.Close()
 
-	id := ctx.Param("device_id")
-
-	// Validate JSON schema user provided
-	if validateJsonSchema("device", body) != true {
-		println("Invalid schema")
-		ctx.JSON(iris.StatusBadRequest, iris.Map{"response": "invalid json schema in request"})
-		return
-	}
+	id := bone.GetValue(r, "device_id")
 
 	// Check if someone is trying to change "id" key
 	// and protect us from this
 	if _, ok := body["id"]; ok {
-		ctx.JSON(iris.StatusBadRequest, iris.Map{"response": "invalid request: device id is read-only"})
+		w.WriteHeader(http.StatusBadRequest)
+		str := `{"response": "invalid request: device id is read-only"}`
+		io.WriteString(w, str)
 		return
 	}
 	if _, ok := body["created"]; ok {
 		println("Error: can not change device")
-		ctx.JSON(iris.StatusBadRequest, iris.Map{"response": "invalid request: 'created' is read-only"})
+		w.WriteHeader(http.StatusBadRequest)
+		str := `{"response": "invalid request: 'created' is read-only"}`
+		io.WriteString(w, str)
 		return
 	}
 
@@ -143,32 +214,41 @@ func UpdateDevice(ctx *iris.Context) {
 
 	colQuerier := bson.M{"id": id}
 	change := bson.M{"$set": body}
-	err := Db.C("devices").Update(colQuerier, change)
-	if err != nil {
+	if err := Db.C("devices").Update(colQuerier, change); err != nil {
 		log.Print(err)
-		ctx.JSON(iris.StatusNotFound, iris.Map{"response": "not updated", "id": id})
+		w.WriteHeader(http.StatusNotFound)
+		str := `{"response": "not updated", "id": "` + id + `"}`
+		io.WriteString(w, str)
 		return
 	}
 
-	ctx.JSON(iris.StatusOK, iris.Map{"response": "updated", "id": id})
+	w.WriteHeader(http.StatusOK)
+	str := `{"response": "updated", "id": "` + id + `"}`
+	io.WriteString(w, str)
 }
 
 /**
  * DeleteDevice()
  */
-func DeleteDevice(ctx *iris.Context) {
+func DeleteDevice(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
 	Db := db.MgoDb{}
 	Db.Init()
 	defer Db.Close()
 
-	id := ctx.Param("device_id")
+	id := bone.GetValue(r, "device_id")
 
 	err := Db.C("devices").Remove(bson.M{"id": id})
 	if err != nil {
 		log.Print(err)
-		ctx.JSON(iris.StatusNotFound, iris.Map{"response": "not deleted", "id": id})
+		w.WriteHeader(http.StatusNotFound)
+		str := `{"response": "not deleted", "id": "` + id + `"}`
+		io.WriteString(w, str)
 		return
 	}
 
-	ctx.JSON(iris.StatusOK, iris.Map{"response": "deleted", "id": id})
+	w.WriteHeader(http.StatusOK)
+	str := `{"response": "deleted", "id": "` + id + `"}`
+    io.WriteString(w, str)
 }

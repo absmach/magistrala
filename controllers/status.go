@@ -8,7 +8,8 @@
 package controllers
 
 import (
-	"github.com/kataras/iris"
+	"io"
+	"net/http"
 )
 
 /** == Functions == */
@@ -16,6 +17,9 @@ import (
 /**
  * getStatus()
  */
-func GetStatus(ctx *iris.Context) {
-	ctx.JSON(iris.StatusOK, iris.Map{"status": "OK"})
+func GetStatus(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	str := `{"status" : "OK"}`
+    io.WriteString(w, str)
 }

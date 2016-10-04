@@ -1,0 +1,49 @@
+###
+# Copyright (c) Mainflux
+#
+# Mainflux server is licensed under an Apache license, version 2.0 license.
+# All rights not explicitly granted in the Apache license, version 2.0 are reserved.
+# See the included LICENSE file for more details.
+###
+
+###
+# InfluxDB
+###
+#influx:
+#  image: influxdb:latest
+#  container_name: mainflux-influxdb
+#  ports:
+#    - "8083:8083"
+#    - "8086:8086"
+
+###
+# MongoDB
+###
+mongo:
+  image: mongo:latest
+  container_name: mainflux-mongodb
+  command: --smallfiles --nojournal
+
+###
+# Emqttd
+###
+emqttd:
+  image: mainflux/emqttd-docker:latest
+  container_name: mainflux-emqttd
+  ports:
+    - "1883:1883"
+    - "8083:8083"
+    - "18083:18083"
+
+###
+# Mainflux Core Server
+###
+mainflux-server:
+  image: mainflux/mainflux:latest
+  container_name: mainflux-server
+  links:
+    - influx
+    - mongo
+    - emdttd
+
+

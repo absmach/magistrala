@@ -41,6 +41,13 @@ func CreateChannel(w http.ResponseWriter, r *http.Request) {
         panic(err)
     }
 
+	if len(data) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		str := `{"response": "no data (Device ID) provided"}`
+		io.WriteString(w, str)
+		return
+	}
+
 	var body map[string]interface{}
 	if err := json.Unmarshal(data, &body); err != nil {
 		panic(err)
@@ -75,10 +82,9 @@ func CreateChannel(w http.ResponseWriter, r *http.Request) {
 	c.Id = uuid.String()
 
 	// Insert reference to DeviceId
-	c.Device = r.URL.Query().Get("device")
 	if len(c.Device) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
-		str := `{"response": "no device ID in request parameter"}`
+		str := `{"response": "no device ID provided in request"}`
 		io.WriteString(w, str)
 		return
 	}

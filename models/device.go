@@ -9,22 +9,21 @@
 package models
 
 type (
-	DeviceLocation struct {
-		Name      string `json:"name"`
-		Latitude  int    `json:"latitude"`
-		Longitude int    `json:"longitude"`
-		Elevation int    `json:"elevation"`
-	}
-
 	Device struct {
 		Id   string `json:"id"`
 		Name string `json:"name"`
 
-		Description string         `json:"description"`
-		Visibility  string         `json:"visibility"`
-		Status      string         `json:"status"`
-		Tags        []string       `json:"tags"`
-		Location    DeviceLocation `json:"location"`
+		Description		string  `json:"description"`
+
+		// Service (gateway) to which this device belongs to
+		// If device connects directly to Mainflux, use `main` (default)
+		Service			string	`json:"service"`
+
+		Online			bool	`json:"online"`
+		ConnectedAt		string	`json:"connected_at"`
+		DisonnectedAt	string	`json:"disconnected_at"`
+
+		Channels []Channel `json:"channels"`
 
 		Created string `json:"created"`
 		Updated string `json:"updated"`

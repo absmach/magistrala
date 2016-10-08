@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"log"
 	"time"
+	"strconv"
 
 	"github.com/mainflux/mainflux/db"
 	"github.com/mainflux/mainflux/models"
@@ -116,8 +117,42 @@ func GetChannels(w http.ResponseWriter, r *http.Request) {
 	Db.Init()
 	defer Db.Close()
 
+	// Get fileter values from parameters:
+	// - climit = count limit, limits number of returned `channel` elements
+	// - vlimit = value limit, limits number of values within the channel
+	var climit, vlimit int
+	var err error
+	s := r.URL.Query().Get("climit")
+	if len(s) == 0 {
+		// Set default limit to -5
+		climit = -100
+	} else {
+		climit, err = strconv.Atoi(s); if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			str := `{"response": "wrong count limit"}`
+			io.WriteString(w, str)
+			return
+		}
+	}
+
+	s = r.URL.Query().Get("vlimit")
+	if len(s) == 0 {
+		// Set default limit to -5
+		vlimit = -100
+	} else {
+		vlimit, err = strconv.Atoi(s); if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			str := `{"response": "wrong value limit"}`
+			io.WriteString(w, str)
+			return
+		}
+	}
+
+	// Query DB
 	results := []models.Channel{}
-	if err := Db.C("channels").Find(nil).All(&results); err != nil {
+	if err := Db.C("channels").Find(nil).
+				Select(bson.M{"values": bson.M{"$slice": vlimit}}).
+				Sort("-_id").Limit(climit).All(&results); err != nil {
 		log.Print(err)
 	}
 
@@ -142,14 +177,29 @@ func GetChannel(w http.ResponseWriter, r *http.Request) {
 
 	id := bone.GetValue(r, "channel_id")
 
+
+	var vlimit int
+	var err error
+	s := r.URL.Query().Get("vlimit")
+	if len(s) == 0 {
+		// Set default limit to -5
+		vlimit = -5
+	} else {
+		vlimit, err = strconv.Atoi(s); if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			str := `{"response": "wrong limit"}`
+			io.WriteString(w, str)
+			return
+		}
+	}
+
 	result := models.Channel{}
-	if err := Db.C("channels").Find(bson.M{"id": id}).One(&result); err != nil {
+	if err := Db.C("channels").Find(bson.M{"id": id}).
+				Select(bson.M{"values": bson.M{"$slice": vlimit}}).
+				One(&result); err != nil {
 		log.Print(err)
 		w.WriteHeader(http.StatusNotFound)
 		str := `{"response": "not found", "id": "` + id + `"}`
-		if err != nil {
-			log.Print(err)
-		}
 		io.WriteString(w, str)
 		return
 	}
@@ -168,6 +218,10 @@ func GetChannel(w http.ResponseWriter, r *http.Request) {
  */
 func UpdateChannel(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	Db := db.MgoDb{}
+	Db.Init()
+	defer Db.Close()
 
 	data, err := ioutil.ReadAll(r.Body)
     if err != nil {
@@ -198,11 +252,35 @@ func UpdateChannel(w http.ResponseWriter, r *http.Request) {
 
 	id := bone.GetValue(r, "channel_id")
 
+	// Get the channels "device_id"
+	c := models.Channel{}
+	if err := Db.C("channels").Find(bson.M{"id": id}).
+				Select(bson.M{"device": 1}).
+				One(&c); err != nil {
+		log.Print(err)
+		w.WriteHeader(http.StatusNotFound)
+		str := `{"response": "cannot find channel's device", "id": "` + id + `"}`
+		io.WriteString(w, str)
+		return
+	}
+
+	// Get device to check service it belongs to
+	d := models.Device{}
+	if err := Db.C("devices").Find(bson.M{"id": c.Device}).
+				Select(bson.M{"service": 1}).
+				One(&d); err != nil {
+		log.Print(err)
+		w.WriteHeader(http.StatusNotFound)
+		str := `{"response": "device not found", "id": "` + id + `"}`
+		io.WriteString(w, str)
+		return
+	}
+
 
 	// Publish the channel update.
 	// This will be catched by the MQTT main client (subscribed to all channel topics)
 	// and then written in the DB in the MQTT handler
-	token := clients.MqttClient.Publish("mainflux/" + id, 0, false, string(data))
+	token := clients.MqttClient.Publish("mainflux/" + d.Service + "/" + id, 0, false, string(data))
 	token.Wait()
 
 	// Wait on status from MQTT handler (which executes DB write)

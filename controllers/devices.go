@@ -52,6 +52,7 @@ func CreateDevice(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	/*
 	if validateJsonSchema("device", body) != true {
 		println("Invalid schema")
 		w.WriteHeader(http.StatusBadRequest)
@@ -59,6 +60,7 @@ func CreateDevice(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, str)
 		return
 	}
+	*/
 
 	// Init new Mongo session
 	// and get the "devices" collection
@@ -68,7 +70,7 @@ func CreateDevice(w http.ResponseWriter, r *http.Request) {
 	defer Db.Close()
 
 	// Set up defaults and pick up new values from user-provided JSON
-	d := models.Device{Name: "Some Name"}
+	d := models.Device{Name: "Some Name", Service: "main", Online: false}
 	if err := json.Unmarshal(data, &d); err != nil {
 		println("Cannot decode!")
 		log.Print(err.Error())
@@ -177,6 +179,7 @@ func UpdateDevice(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	/*
 	if validateJsonSchema("device", body) != true {
 		println("Invalid schema")
 		w.WriteHeader(http.StatusBadRequest)
@@ -184,6 +187,7 @@ func UpdateDevice(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, str)
 		return
 	}
+	*/
 
 
 	Db := db.MgoDb{}

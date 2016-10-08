@@ -6,11 +6,12 @@ import (
 	"time"
 	"log"
 	"encoding/json"
+	"net/http"
 
 	"github.com/mainflux/mainflux/db"
+	"github.com/mainflux/mainflux/models"
 
 	"github.com/krylovsk/gosenml"
-	"github.com/kataras/iris"
 	"gopkg.in/mgo.v2/bson"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
@@ -63,8 +64,8 @@ func (mqc *MqttConn) MqttSub() {
 	// Subscribe to all channels of all the devices and request messages to be delivered
 	// at a maximum qos of zero, wait for the receipt to confirm the subscription
 	// Topic is in the form:
-	// mainflux/<channel_id>
-	if token := mqc.Client.Subscribe("mainflux/+", 0, nil); token.Wait() && token.Error() != nil {
+	// mainflux/<service>/<channel_id>
+	if token := mqc.Client.Subscribe("mainflux/#", 0, nil); token.Wait() && token.Error() != nil {
 		fmt.Println(token.Error())
 	}
 
@@ -92,27 +93,45 @@ func WriteChannel(id string, bodyBytes []byte) ChannelWriteStatus {
 	// and protect us from this
 	s := ChannelWriteStatus{}
 	if _, ok := body["id"]; ok {
-		s.Nb = iris.StatusBadRequest
+		s.Nb = http.StatusBadRequest
 		s.Str = "Invalid request: 'id' is read-only"
 		return s
 	}
 	if _, ok := body["device"]; ok {
 		println("Error: can not change device")
-		s.Nb = iris.StatusBadRequest
+		s.Nb = http.StatusBadRequest
 		s.Str = "Invalid request: 'device' is read-only"
 		return s
 	}
 	if _, ok := body["created"]; ok {
 		println("Error: can not change device")
-		s.Nb = iris.StatusBadRequest
+		s.Nb = http.StatusBadRequest
 		s.Str = "Invalid request: 'created' is read-only"
 		return s
 	}
 
+	// Find the channel
+	c := models.Channel{}
+	if err := Db.C("channels").Find(bson.M{"id": id}).One(&c); err != nil {
+		s.Nb = http.StatusNotFound
+		s.Str = "Channel not found"
+		return s
+	}
+
 	senmlDecoder := gosenml.NewJSONDecoder()
-	m, _ := senmlDecoder.DecodeMessage(bodyBytes)
+	var m gosenml.Message
+	var err error
+	if m, err = senmlDecoder.DecodeMessage(bodyBytes); err != nil {
+		s.Nb = http.StatusBadRequest
+		s.Str = "Invalid request: SenML can not be decoded"
+		return s
+	}
+
+	m.BaseName = c.Name + m.BaseName
+	m.BaseUnits = c.Unit + m.BaseUnits
+
 	for _, e := range m.Entries {
-		// BaseName
+		// Name = channelName + baseName + entryName
 		e.Name = m.BaseName + e.Name
 
 		// BaseTime
@@ -132,7 +151,7 @@ func WriteChannel(id string, bodyBytes []byte) ChannelWriteStatus {
 		err := Db.C("channels").Update(colQuerier, change)
 		if err != nil {
 			log.Print(err)
-			s.Nb = iris.StatusNotFound
+			s.Nb = http.StatusNotFound
 			s.Str = "Not inserted"
 			return s
 		}
@@ -145,15 +164,14 @@ func WriteChannel(id string, bodyBytes []byte) ChannelWriteStatus {
 	/** Then update channel timestamp */
 	colQuerier := bson.M{"id": id}
 	change := bson.M{"$set": bson.M{"updated": body["updated"]}}
-	err := Db.C("channels").Update(colQuerier, change)
-	if err != nil {
+	if err := Db.C("channels").Update(colQuerier, change); err != nil {
 		log.Print(err)
-		s.Nb = iris.StatusNotFound
+		s.Nb = http.StatusNotFound
 		s.Str = "Not updated"
 		return s
 	}
 
-	s.Nb = iris.StatusOK
+	s.Nb = http.StatusOK
 	s.Str = "Updated"
 	return s
 }

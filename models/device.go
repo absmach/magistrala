@@ -15,10 +15,6 @@ type (
 
 		Description		string  `json:"description"`
 
-		// Service (gateway) to which this device belongs to
-		// If device connects directly to Mainflux, use `main` (default)
-		Service			string	`json:"service"`
-
 		Online			bool	`json:"online"`
 		ConnectedAt		string	`json:"connected_at"`
 		DisonnectedAt	string	`json:"disconnected_at"`

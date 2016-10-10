@@ -252,35 +252,10 @@ func UpdateChannel(w http.ResponseWriter, r *http.Request) {
 
 	id := bone.GetValue(r, "channel_id")
 
-	// Get the channels "device_id"
-	c := models.Channel{}
-	if err := Db.C("channels").Find(bson.M{"id": id}).
-				Select(bson.M{"device": 1}).
-				One(&c); err != nil {
-		log.Print(err)
-		w.WriteHeader(http.StatusNotFound)
-		str := `{"response": "cannot find channel's device", "id": "` + id + `"}`
-		io.WriteString(w, str)
-		return
-	}
-
-	// Get device to check service it belongs to
-	d := models.Device{}
-	if err := Db.C("devices").Find(bson.M{"id": c.Device}).
-				Select(bson.M{"service": 1}).
-				One(&d); err != nil {
-		log.Print(err)
-		w.WriteHeader(http.StatusNotFound)
-		str := `{"response": "device not found", "id": "` + id + `"}`
-		io.WriteString(w, str)
-		return
-	}
-
-
 	// Publish the channel update.
 	// This will be catched by the MQTT main client (subscribed to all channel topics)
 	// and then written in the DB in the MQTT handler
-	token := clients.MqttClient.Publish("mainflux/" + d.Service + "/" + id, 0, false, string(data))
+	token := clients.MqttClient.Publish("mainflux/" + id, 0, false, string(data))
 	token.Wait()
 
 	// Wait on status from MQTT handler (which executes DB write)

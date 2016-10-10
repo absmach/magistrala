@@ -70,7 +70,7 @@ func CreateDevice(w http.ResponseWriter, r *http.Request) {
 	defer Db.Close()
 
 	// Set up defaults and pick up new values from user-provided JSON
-	d := models.Device{Name: "Some Name", Service: "main", Online: false}
+	d := models.Device{Name: "Some Name", Online: false}
 	if err := json.Unmarshal(data, &d); err != nil {
 		println("Cannot decode!")
 		log.Print(err.Error())

@@ -78,8 +78,6 @@ type client struct {
 	stop            chan struct{}
 	persist         Store
 	options         ClientOptions
-	pingTimer       *time.Timer
-	pingRespTimer   *time.Timer
 	pingResp        chan struct{}
 	status          connStatus
 	workers         sync.WaitGroup
@@ -224,9 +222,6 @@ func (c *client) Connect() Token {
 		c.ibound = make(chan packets.ControlPacket)
 		c.errors = make(chan error, 1)
 		c.stop = make(chan struct{})
-		c.pingTimer = time.NewTimer(c.options.KeepAlive)
-		c.pingRespTimer = time.NewTimer(time.Duration(10) * time.Second)
-		c.pingRespTimer.Stop()
 		c.pingResp = make(chan struct{}, 1)
 
 		c.incomingPubChan = make(chan *packets.PublishPacket, c.options.MessageChannelDepth)
@@ -268,12 +263,14 @@ func (c *client) Connect() Token {
 // internal function used to reconnect the client when it loses its connection
 func (c *client) reconnect() {
 	DEBUG.Println(CLI, "enter reconnect")
-	c.setConnected(reconnecting)
-	var rc byte = 1
-	var sleep uint = 1
-	var err error
+	var (
+		err error
 
-	for rc != 0 {
+		rc    = byte(1)
+		sleep = time.Duration(1 * time.Second)
+	)
+
+	for rc != 0 && c.status != disconnected {
 		cm := newConnectMsgFromOptions(&c.options)
 
 		for _, broker := range c.options.Servers {
@@ -318,15 +315,23 @@ func (c *client) reconnect() {
 			}
 		}
 		if rc != 0 {
-			DEBUG.Println(CLI, "Reconnect failed, sleeping for", sleep, "seconds")
-			time.Sleep(time.Duration(sleep) * time.Second)
-			if sleep <= uint(c.options.MaxReconnectInterval.Seconds()) {
+			DEBUG.Println(CLI, "Reconnect failed, sleeping for", int(sleep.Seconds()), "seconds")
+			time.Sleep(sleep)
+			if sleep < c.options.MaxReconnectInterval {
 				sleep *= 2
+			}
+
+			if sleep > c.options.MaxReconnectInterval {
+				sleep = c.options.MaxReconnectInterval
 			}
 		}
 	}
+	// Disconnect() must have been called while we were trying to reconnect.
+	if c.status == disconnected {
+		DEBUG.Println(CLI, "Client moved to disconnected state while reconnecting, abandoning reconnect")
+		return
+	}
 
-	c.pingTimer.Reset(c.options.KeepAlive)
 	c.stop = make(chan struct{})
 
 	c.workers.Add(1)
@@ -378,19 +383,21 @@ func (c *client) connect() byte {
 // the specified number of milliseconds to wait for existing work to be
 // completed.
 func (c *client) Disconnect(quiesce uint) {
-	if !c.IsConnected() {
-		WARN.Println(CLI, "already disconnected")
-		return
+	if c.status == connected {
+		DEBUG.Println(CLI, "disconnecting")
+		c.setConnected(disconnected)
+
+		dm := packets.NewControlPacket(packets.Disconnect).(*packets.DisconnectPacket)
+		dt := newToken(packets.Disconnect)
+		c.oboundP <- &PacketAndToken{p: dm, t: dt}
+
+		// wait for work to finish, or quiesce time consumed
+		dt.WaitTimeout(time.Duration(quiesce) * time.Millisecond)
+	} else {
+		WARN.Println(CLI, "Disconnect() called but not connected (disconnected/reconnecting)")
+		c.setConnected(disconnected)
 	}
-	DEBUG.Println(CLI, "disconnecting")
-	c.setConnected(disconnected)
 
-	dm := packets.NewControlPacket(packets.Disconnect).(*packets.DisconnectPacket)
-	dt := newToken(packets.Disconnect)
-	c.oboundP <- &PacketAndToken{p: dm, t: dt}
-
-	// wait for work to finish, or quiesce time consumed
-	dt.WaitTimeout(time.Duration(quiesce) * time.Millisecond)
 	c.disconnect()
 }
 
@@ -414,13 +421,14 @@ func (c *client) internalConnLost(err error) {
 		c.closeStop()
 		c.conn.Close()
 		c.workers.Wait()
-		if c.options.OnConnectionLost != nil {
-			go c.options.OnConnectionLost(c, err)
-		}
 		if c.options.AutoReconnect {
+			c.setConnected(reconnecting)
 			go c.reconnect()
 		} else {
 			c.setConnected(disconnected)
+		}
+		if c.options.OnConnectionLost != nil {
+			go c.options.OnConnectionLost(c, err)
 		}
 	}
 }
@@ -436,9 +444,17 @@ func (c *client) closeStop() {
 	}
 }
 
+func (c *client) closeConn() {
+	c.Lock()
+	defer c.Unlock()
+	if c.conn != nil {
+		c.conn.Close()
+	}
+}
+
 func (c *client) disconnect() {
 	c.closeStop()
-	c.conn.Close()
+	c.closeConn()
 	c.workers.Wait()
 	close(c.stopRouter)
 	DEBUG.Println(CLI, "disconnected")

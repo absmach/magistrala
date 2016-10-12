@@ -1,8 +1,10 @@
 language: go
 
 go:
-  - 1.6
-  - tip
+  - 1.7
+
+before_install:
+  - sudo apt-get -qq update
 
 # Sudo is required for docker
 sudo: required

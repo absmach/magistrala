@@ -1,0 +1,20 @@
+package: github.com/mainflux/mainflux
+import:
+- package: github.com/BurntSushi/toml
+  version: ~0.2.0
+- package: github.com/eclipse/paho.mqtt.golang
+  version: ~1.0.0
+- package: github.com/fatih/color
+  version: ~1.0.0
+- package: github.com/go-zoo/bone
+  version: ~1.2.0
+- package: github.com/krylovsk/gosenml
+- package: github.com/satori/go.uuid
+  version: ~1.1.0
+- package: github.com/xeipuuv/gojsonschema
+- package: gopkg.in/mgo.v2
+  subpackages:
+  - bson
+testImport:
+- package: github.com/ory-am/dockertest
+  version: ~2.2.2

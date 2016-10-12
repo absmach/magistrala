@@ -1,0 +1,9 @@
+.msg {
+    color: blue;
+}
+.block {
+    background-color: red;
+    border-radius: 50px;
+    width: 300px;
+    height: 300px;
+}

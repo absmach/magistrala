@@ -64,7 +64,7 @@ func (mqc *MqttConn) MqttSub() {
 	// Subscribe to all channels of all the devices and request messages to be delivered
 	// at a maximum qos of zero, wait for the receipt to confirm the subscription
 	// Topic is in the form:
-	// mainflux/<service>/<channel_id>
+	// mainflux/<channel_id>
 	if token := mqc.Client.Subscribe("mainflux/#", 0, nil); token.Wait() && token.Error() != nil {
 		fmt.Println(token.Error())
 	}

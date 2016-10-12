@@ -21,6 +21,9 @@
 ###
 mongo:
   image: mongo:latest
+  ports:
+    - "27017:27017"
+    - "28017:28017"
   container_name: mainflux-mongodb
   command: --smallfiles --nojournal
 
@@ -42,8 +45,6 @@ mainflux-server:
   image: mainflux/mainflux:latest
   container_name: mainflux-server
   links:
-    - influx
+    #- influx
     - mongo
-    - emdttd
-
-
+    - emqttd

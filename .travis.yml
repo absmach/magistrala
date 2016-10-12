@@ -5,6 +5,7 @@ go:
 
 before_install:
   - sudo apt-get -qq update
+  - rm -rf vendor
 
 # Sudo is required for docker
 sudo: required

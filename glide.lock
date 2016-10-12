@@ -1,10 +1,10 @@
-hash: 66d7291cd74288a935de41fb4a151c983c52feee556cae1d6e2230c3c70a31d8
-updated: 2016-10-12T15:23:23.717254004+02:00
+hash: e45f1b36f1f69712061260e9ecf2d9d6a2cff1d1d6fcf9c4246e9678a4796f72
+updated: 2016-10-12T17:44:20.535180376+02:00
 imports:
 - name: github.com/BurntSushi/toml
   version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
 - name: github.com/eclipse/paho.mqtt.golang
-  version: 45f9b18f4864c81d49c3ed01e5faec9eeb05de31
+  version: 13afcbe8e41508479762a90e9242577210c2ca8d
   subpackages:
   - packets
 - name: github.com/fatih/color
@@ -26,7 +26,7 @@ imports:
 - name: github.com/xeipuuv/gojsonschema
   version: 00f9fafb54d2244d291b86ab63d12c38bd5c3886
 - name: golang.org/x/net
-  version: cf4effbb9db1f3ef07f7e1891402991b6afbb276
+  version: 6dba816f1056709e29a1c442883cab1336d3c083
   subpackages:
   - websocket
 - name: golang.org/x/sys

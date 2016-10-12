@@ -3,7 +3,7 @@ import:
 - package: github.com/BurntSushi/toml
   version: ~0.2.0
 - package: github.com/eclipse/paho.mqtt.golang
-  version: ~1.0.0
+  version: master
 - package: github.com/fatih/color
   version: ~1.0.0
 - package: github.com/go-zoo/bone

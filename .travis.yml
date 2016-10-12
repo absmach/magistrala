@@ -5,8 +5,6 @@ go:
 
 before_install:
   - sudo apt-get -qq update
-
-before_script:
     ##
     # Travis is running `go test -v ./...`
     # and this runs tests in `vendor` directory also.

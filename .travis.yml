@@ -6,9 +6,12 @@ go:
 before_install:
   - sudo apt-get -qq update
 
+install:
+  - go get github.com/Masterminds/glide
+
 script:
-    go get -v ./...
-    go test $(glide novendor)
+  - go get -v ./...
+  - go test $(glide novendor)
 
 # Sudo is required for docker
 sudo: required

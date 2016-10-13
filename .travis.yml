@@ -5,15 +5,10 @@ go:
 
 before_install:
   - sudo apt-get -qq update
-    ##
-    # Travis is running `go test -v ./...`
-    # and this runs tests in `vendor` directory also.
-    # There is a lot of problems with running these 3rd party tests
-    # (missing DB connections for DBs we do not use, etc).
-    # Best is to remove vendoring and force Travis build upon $GOPATH
-    # and then testing is done just for our current dir (Mainflux tests only)
-    ##
-  - rm -rf vendor
+
+script:
+    go get -v ./...
+    go test $(glide novendor)
 
 # Sudo is required for docker
 sudo: required

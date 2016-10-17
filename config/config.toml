@@ -17,4 +17,4 @@ mongoDatabase = "mainflux"
 
 # MQTT
 mqttHost = "localhost"
-mqttPort = 1833
+mqttPort = 1883

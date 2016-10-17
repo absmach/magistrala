@@ -7,9 +7,11 @@ import (
 	"log"
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/mainflux/mainflux/db"
 	"github.com/mainflux/mainflux/models"
+	"github.com/mainflux/mainflux/config"
 
 	"github.com/krylovsk/gosenml"
 	"gopkg.in/mgo.v2/bson"
@@ -48,10 +50,10 @@ var msgHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) 
 	fmt.Println(status)
 }
 
-func (mqc *MqttConn) MqttSub() {
+func (mqc *MqttConn) MqttSub(cfg config.Config) {
 	// Create a ClientOptions struct setting the broker address, clientid, turn
 	// off trace output and set the default message handler
-	mqc.Opts = mqtt.NewClientOptions().AddBroker("tcp://localhost:1883")
+	mqc.Opts = mqtt.NewClientOptions().AddBroker("tcp://" + cfg.MqttHost + ":" + strconv.Itoa(cfg.MqttPort))
 	mqc.Opts.SetClientID("mainflux")
 	mqc.Opts.SetDefaultPublishHandler(msgHandler)
 

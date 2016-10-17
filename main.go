@@ -123,7 +123,7 @@ func main() {
 	// MQTT 
 	mqc := new(clients.MqttConn)
 	//Sub to everything comming on all channels of all devices
-	mqc.MqttSub()
+	mqc.MqttSub(cfg)
 
 	// Serve HTTP
 	go servers.HttpServer(cfg)

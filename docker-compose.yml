@@ -7,16 +7,6 @@
 ###
 
 ###
-# InfluxDB
-###
-#influx:
-#  image: influxdb:latest
-#  container_name: mainflux-influxdb
-#  ports:
-#    - "8083:8083"
-#    - "8086:8086"
-
-###
 # MongoDB
 ###
 mongo:
@@ -41,10 +31,11 @@ emqttd:
 ###
 # Mainflux Core Server
 ###
-mainflux-server:
+mainflux:
   image: mainflux/mainflux:latest
   container_name: mainflux-server
   links:
-    #- influx
     - mongo
     - emqttd
+  ports:
+    - "7070:7070"

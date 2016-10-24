@@ -25,7 +25,7 @@ go get github.com/mainflux/mainflux
 $GOBIN/mainflux
 ```
 
-If you are new to Go, more information about setting-up environment and fetching Mainflux Lite code can be found [here](https://github.com/Mainflux/mainflux-lite/blob/master/doc/install.md).
+If you are new to Go, more information about setting-up environment and fetching Mainflux code can be found [here](https://github.com/Mainflux/mainflux-lite/blob/master/doc/install.md).
 
 ### Docker
 Running Mainflux in a Docker is even easier, as it will launch whole composition of microservices, so you do not have to care about dependencies.

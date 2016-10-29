@@ -24,6 +24,11 @@
 
 [maintainers]
 
+	[[manuel]]
+	Name	= "Manuel IMPERIALE"
+	Email	= "manuel.imperiale@gmail.com"
+	GitHub	= "manuIO"
+
 	[[janko]]
 	Name	= "Janko ISIDOROVIC"
 	Email	= "janko.isidorovic@mainflux.com"
@@ -33,3 +38,8 @@
 	Name	= "Nikola MARCETIC"
 	Email	= "nikola.marcetic@mainflux.com"
 	GitHub	= "nmarcetic"
+	
+	[[dejan]]
+	Name	= "Dejan MIJIC"
+	Email	= "dejan.mjc@gmail.com"
+	GitHub	= "mijicd"

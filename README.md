@@ -6,7 +6,7 @@
 [![Join the chat at https://gitter.im/Mainflux/mainflux](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Mainflux/mainflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ### About
-Mainflux is modern open source and patent-free IoT cloud platform written in Go.
+Mainflux is modern [highly-secured](https://github.com/mainflux/mainflux-auth-server) open source and patent-free IoT cloud platform written in Go.
 
 It allows device, user and application connections over various network protocols, like HTTP, MQTT, WebSocket and CoAP, making a seamless bridge between them. It is used as the IoT middleware for building complex IoT solutions.
 
@@ -14,7 +14,10 @@ It allows device, user and application connections over various network protocol
 
 Mainflux is built with <3 by Mainflux [team](MAINTAINERS) and community contributors.
 
-> **N.B. Mainlux is uder heavy development and not yet suitable for professional deployments**
+### Security
+For professional deployments Mainflux is usually combined with [Mainflux Authentication and Authorization Server](https://github.com/mainflux/mainflux-auth-server) which adds fine-grained security based on customizable API keys.
+
+Mainflux Auth Server also provides user accounts and device and application access control with simple customizable scheme based on scoped JWTs.
 
 ### Install/Deploy
 Mainflux uses [MongoDB](https://www.mongodb.com/), so insure that it is installed on your system (more info [here](https://github.com/Mainflux/mainflux-lite/blob/master/doc/dependencies.md)). You will also need MQTT broker running on default port 1883 - for example [Mosquitto](https://mosquitto.org/).
@@ -44,11 +47,11 @@ This will automatically download Docker images from [Mainflux Docker Hub](https:
 
 ### System Architecture
 Mainflux IoT cloud is composed of several components, i.e. microservices:
-- Mainflux Core (HTTP API Server and Admin)
-- Authentication and Authorization Server
-- MQTT PUB/SUB Broker (and WebSocket Server)
+- [Mainflux Core (HTTP API Server and Admin)](https://github.com/mainflux/mainflux)
+- [Authentication and Authorization Server](https://github.com/mainflux/mainflux-auth-server)
+- [MQTT PUB/SUB Broker (with WebSocket and CoAP support)](https://github.com/mainflux/emqttd-docker)
 - Mongo Database
-- Dashflux UI
+- [Dashflux UI](https://github.com/mainflux/dashflux)
 
 Docker composition that constitues Mainflux IoT infrastructure is defined in the [`docker-compose.yml`](https://github.com/Mainflux/mainflux/blob/master/docker-compose.yml).
 
@@ -59,9 +62,7 @@ An extensive (and incomplete) list of features includes:
 - SDK - set of client libraries for many HW platforms in several programming languages: C/C++, JavaScript, Go and Python
 - Device management and provisioning and OTA FW updates
 - Highly secured connections via TLS and DTLS
-- Enhanced and fine-grained security via [Reverse Proxy](https://en.wikipedia.org/wiki/Reverse_proxy), [OAuth 2.0](http://oauth.net/2/) [identity management](https://en.wikipedia.org/wiki/Identity_management) and [RBAC](https://en.wikipedia.org/wiki/Role-based_access_control) Authorization Server.
-- [LwM2M](http://goo.gl/rHjLZQ) standard compliance
-- [oneM2M](http://www.onem2m.org/) adapter
+- Enhanced and fine-grained security via deployment-ready [Mainflux Authentication and Authorization Server](https://github.com/mainflux/mainflux-auth-server) with Access Control scheme based on customizable API keys and scoped JWT
 - Easy deployment and high system scalability via [Docker](https://www.docker.com/) images
 - Clear project roadmap, extensive development ecosystem and highly skilled developer community
 - And many more
@@ -82,9 +83,11 @@ For quick questions and suggestions you can also use GitHub Issues.
 [@mainflux](https://twitter.com/mainflux)
 
 ### Authors
-Main architect and BDFL of Mainflux project is [@drasko](https://github.com/drasko).
+Main architect and BDFL of Mainflux project is [@drasko](https://github.com/drasko). Additionaly, initial version of Mainflux was architectured and crafted by [@janko-isidorovic](https://github.com/janko-isidorovic), [@nmarcetic](https://github.com/nmarcetic) and [@mijicd](https://github.com/mijicd).
 
 Maintainers are listed in [MAINTAINERS](MAINTAINERS) file.
+
+Contributors are listed in [CONTRIBUTORS](CONTRIBUTORS) file.
 
 ### License
 [Apache License, version 2.0](LICENSE)

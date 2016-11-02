@@ -22,7 +22,7 @@ Mainflux Auth Server also provides user accounts and device and application acce
 ### Install/Deploy
 Mainflux uses [MongoDB](https://www.mongodb.com/), so insure that it is installed on your system. You will also need MQTT broker running on default port 1883 - for example [Mosquitto](https://mosquitto.org/).
 
-> N.B. Professional Mainflux deployments use [EMQTTD](https://github.com/mainflux/emqttd-docker) - massively scalable MQTT broker written in Erlang. The way it is used in deployments can be seen from [docker-compose.yml](docker-compose.yml)
+> N.B. Professional Mainflux deployments use [EMQTTD](https://github.com/mainflux/emqttd-docker) - massively scalable MQTT broker written in Erlang. The way it is used can be seen from [docker-compose.yml](docker-compose.yml)
 
 Installing Mainflux is trivial [`go get`](https://golang.org/cmd/go/):
 ```bash

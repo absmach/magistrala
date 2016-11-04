@@ -19,11 +19,14 @@ import (
 )
 
 type (
+	// ChannelWriteStatus is a type of Go chan
+	// that is used to communicate request status
 	ChannelWriteStatus struct {
 		Nb  int
 		Str string
 	}
 
+	// MqttConn struct
 	MqttConn struct {
 		Opts   *mqtt.ClientOptions
 		Client mqtt.Client
@@ -31,7 +34,10 @@ type (
 )
 
 var (
-	MqttClient         mqtt.Client
+	// MqttClient is used in HTTP server to communicate HTTP value updates/requests
+	MqttClient mqtt.Client
+
+	// WriteStatusChannel is used by HTTP server to communicate req status
 	WriteStatusChannel chan ChannelWriteStatus
 )
 
@@ -41,8 +47,8 @@ var msgHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) 
 	fmt.Printf("MSG: %s\n", msg.Payload())
 
 	s := strings.Split(msg.Topic(), "/")
-	chanId := s[len(s)-1]
-	status := WriteChannel(chanId, msg.Payload())
+	chanID := s[len(s)-1]
+	status := WriteChannel(chanID, msg.Payload())
 
 	// Send status to HTTP publisher
 	WriteStatusChannel <- status
@@ -50,10 +56,11 @@ var msgHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) 
 	fmt.Println(status)
 }
 
+// MqttSub function - we subscribe to topic `mainflux/#` (no trailing `/`)
 func (mqc *MqttConn) MqttSub(cfg config.Config) {
 	// Create a ClientOptions struct setting the broker address, clientid, turn
 	// off trace output and set the default message handler
-	mqc.Opts = mqtt.NewClientOptions().AddBroker("tcp://" + cfg.MqttHost + ":" + strconv.Itoa(cfg.MqttPort))
+	mqc.Opts = mqtt.NewClientOptions().AddBroker("tcp://" + cfg.MQTTHost + ":" + strconv.Itoa(cfg.MQTTPort))
 	mqc.Opts.SetClientID("mainflux")
 	mqc.Opts.SetDefaultPublishHandler(msgHandler)
 
@@ -75,11 +82,9 @@ func (mqc *MqttConn) MqttSub(cfg config.Config) {
 	WriteStatusChannel = make(chan ChannelWriteStatus)
 }
 
-/**
- * WriteChannel()
- * Generic function that updates the channel value.
- * Can be called via various protocols
- */
+// WriteChannel function
+// Generic function that updates the channel value.
+// Can be called via various protocols.
 func WriteChannel(id string, bodyBytes []byte) ChannelWriteStatus {
 	var body map[string]interface{}
 	if err := json.Unmarshal(bodyBytes, &body); err != nil {
@@ -90,9 +95,10 @@ func WriteChannel(id string, bodyBytes []byte) ChannelWriteStatus {
 	Db.Init()
 	defer Db.Close()
 
+	s := ChannelWriteStatus{}
+
 	// Check if someone is trying to change "id" key
 	// and protect us from this
-	s := ChannelWriteStatus{}
 	if _, ok := body["id"]; ok {
 		s.Nb = http.StatusBadRequest
 		s.Str = "Invalid request: 'id' is read-only"

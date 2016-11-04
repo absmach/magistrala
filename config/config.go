@@ -14,10 +14,11 @@ import (
 	"os"
 )
 
+// Config struct
 type Config struct {
 	// HTTP
-	HttpHost string
-	HttpPort int
+	HTTPHost string
+	HTTPPort int
 
 	// Mongo
 	MongoHost     string
@@ -25,8 +26,8 @@ type Config struct {
 	MongoDatabase string
 
 	// MQTT
-	MqttHost string
-	MqttPort int
+	MQTTHost string
+	MQTTPort int
 
 	// Influx
 	InfluxHost     string
@@ -34,6 +35,7 @@ type Config struct {
 	InfluxDatabase string
 }
 
+// Parse TOML config
 func (cfg *Config) Parse() {
 
 	var confFile string

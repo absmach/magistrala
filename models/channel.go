@@ -13,8 +13,9 @@ import (
 )
 
 type (
+	// Channel struct
 	Channel struct {
-		Id     string `json:"id"`
+		ID     string `json:"id"`
 		Device string `json:"device"`
 
 		// Name is optional. If present, it is pre-pended to `bn` member of SenML.

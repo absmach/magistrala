@@ -93,8 +93,7 @@ func (this *MgoDb) Index(collection string, keys []string) bool {
 	}
 	err := this.Db.C(collection).EnsureIndex(index)
 	if err != nil {
-		panic(err)
-
+		println(err)
 		return false
 	}
 

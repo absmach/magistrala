@@ -28,9 +28,8 @@ import (
 )
 
 /** == Functions == */
-/**
- * CreateDevice ()
- */
+
+// CreateDevice function
 func CreateDevice(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
@@ -81,7 +80,7 @@ func CreateDevice(w http.ResponseWriter, r *http.Request) {
 	uuid := uuid.NewV4()
 	fmt.Println(uuid.String())
 
-	d.Id = uuid.String()
+	d.ID = uuid.String()
 
 	// Timestamp
 	t := time.Now().UTC().Format(time.RFC3339)
@@ -96,13 +95,11 @@ func CreateDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	str := `{"response": "created", "id": "` + d.Id + `"}`
+	str := `{"response": "created", "id": "` + d.ID + `"}`
 	io.WriteString(w, str)
 }
 
-/**
- * GetDevices()
- */
+// GetDevices function
 func GetDevices(w http.ResponseWriter, r *http.Request) {
 	Db := db.MgoDb{}
 	Db.Init()
@@ -122,9 +119,7 @@ func GetDevices(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, string(res))
 }
 
-/**
- * GetDevice()
- */
+// GetDevice function
 func GetDevice(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
@@ -155,9 +150,7 @@ func GetDevice(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, string(res))
 }
 
-/**
- * UpdateDevice()
- */
+// UpdateDevice function
 func UpdateDevice(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
@@ -230,9 +223,7 @@ func UpdateDevice(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, str)
 }
 
-/**
- * DeleteDevice()
- */
+// DeleteDevice function
 func DeleteDevice(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 

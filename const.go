@@ -13,31 +13,31 @@ import (
 )
 
 const (
-	// VERSION is the current version for the server.
-	VERSION = "0.0.1"
+	// Version is the current version for the server.
+	Version = "0.0.1"
 
-	// DEFAULT_PORT is the default port for client connections.
-	DEFAULT_PORT = 1833
+	// DefaultPort is the default port for client connections.
+	DefaultPort = 1833
 
-	// DEFAULT_HOST defaults to all interfaces.
-	DEFAULT_HOST = "0.0.0.0"
+	// DefaultHost defaults to all interfaces.
+	DefaultHost = "0.0.0.0"
 
-	// MAX_PAYLOAD_SIZE is the maximum allowed payload size. Should be using
+	// MaxPayloadSize is the maximum allowed payload size. Should be using
 	// something different if > 1MB payloads are needed.
-	MAX_PAYLOAD_SIZE = (1024 * 1024)
+	MaxPayloadSize = (1024 * 1024)
 
-	// MAX_PENDING_SIZE is the maximum outbound size (in bytes) per client.
-	MAX_PENDING_SIZE = (10 * 1024 * 1024)
+	// MaxPendingSize is the maximum outbound size (in bytes) per client.
+	MaxPendingSize = (10 * 1024 * 1024)
 
-	// DEFAULT_MAX_CONNECTIONS is the default maximum connections allowed.
-	DEFAULT_MAX_CONNECTIONS = (64 * 1024)
+	// DefaultMaxConnections is the default maximum connections allowed.
+	DefaultMaxConnections = (64 * 1024)
 
-	// ACCEPT_MIN_SLEEP is the minimum acceptable sleep times on temporary errors.
-	ACCEPT_MIN_SLEEP = 10 * time.Millisecond
+	// AcceptMinSleep is the minimum acceptable sleep times on temporary errors.
+	AcceptMinSleep = 10 * time.Millisecond
 
-	// ACCEPT_MAX_SLEEP is the maximum acceptable sleep times on temporary errors
-	ACCEPT_MAX_SLEEP = 1 * time.Second
+	// AcceptMaxSleep is the maximum acceptable sleep times on temporary errors
+	AcceptMaxSleep = 1 * time.Second
 
-	// _EMPTY_ is empty string
-	_EMPTY_ = ""
+	// EmptyString is empty string
+	EmptyString = ""
 )

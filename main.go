@@ -22,9 +22,6 @@ import (
 	"strings"
 )
 
-type MainfluxLite struct {
-}
-
 var usageStr = `
 Usage: mainflux [options]
 Server Options:
@@ -51,7 +48,7 @@ func usage() {
 
 // PrintServerAndExit will print our version and exit.
 func PrintServerAndExit() {
-	fmt.Printf("Mainflux version %s\n", VERSION)
+	fmt.Printf("Mainflux version %s\n", Version)
 	os.Exit(0)
 }
 
@@ -126,11 +123,11 @@ func main() {
 	mqc.MqttSub(cfg)
 
 	// Serve HTTP
-	go servers.HttpServer(cfg)
+	go servers.HTTPServer(cfg)
 
 	// Print banner
 	color.Cyan(banner)
-	color.Cyan("Magic happens on port " + strconv.Itoa(cfg.HttpPort))
+	color.Cyan("Magic happens on port " + strconv.Itoa(cfg.HTTPPort))
 
 	/** Keep main() runnig */
 	runtime.Goexit()

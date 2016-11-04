@@ -22,7 +22,7 @@ import (
  * - ./models/deviceSchema.json
  * - ./models/channelSchema.json
  */
-func validateJsonSchema(model string, body map[string]interface{}) bool {
+func validateJSONSchema(model string, body map[string]interface{}) bool {
 	pwd, _ := os.Getwd()
 	schemaLoader := gojsonschema.NewReferenceLoader("file://" + pwd +
 		"/schema/" + model + "Schema.json")
@@ -32,14 +32,14 @@ func validateJsonSchema(model string, body map[string]interface{}) bool {
 		log.Print(err.Error())
 	}
 
-	if result.Valid() {
-		fmt.Printf("The document is valid\n")
-		return true
-	} else {
+	if !result.Valid() {
 		fmt.Printf("The document is not valid. See errors :\n")
 		for _, desc := range result.Errors() {
 			fmt.Printf("- %s\n", desc)
 		}
 		return false
 	}
+
+	fmt.Printf("The document is valid\n")
+	return true
 }

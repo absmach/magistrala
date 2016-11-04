@@ -9,8 +9,9 @@
 package models
 
 type (
+	// Device struct
 	Device struct {
-		Id   string `json:"id"`
+		ID   string `json:"id"`
 		Name string `json:"name"`
 
 		Description string `json:"description"`

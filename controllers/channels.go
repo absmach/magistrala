@@ -31,9 +31,7 @@ import (
 
 /** == Functions == */
 
-/**
- * CreateChannel ()
- */
+// CreateChannel function
 func CreateChannel(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
@@ -80,9 +78,9 @@ func CreateChannel(w http.ResponseWriter, r *http.Request) {
 	uuid := uuid.NewV4()
 	fmt.Println(uuid.String())
 
-	c.Id = uuid.String()
+	c.ID = uuid.String()
 
-	// Insert reference to DeviceId
+	// Insert reference to DeviceID
 	if len(c.Device) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		str := `{"response": "no device ID provided in request"}`
@@ -105,13 +103,11 @@ func CreateChannel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	str := `{"response": "created", "id": "` + c.Id + `"}`
+	str := `{"response": "created", "id": "` + c.ID + `"}`
 	io.WriteString(w, str)
 }
 
-/**
- * GetChannels()
- */
+// GetChannels function
 func GetChannels(w http.ResponseWriter, r *http.Request) {
 	Db := db.MgoDb{}
 	Db.Init()
@@ -167,9 +163,7 @@ func GetChannels(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, string(res))
 }
 
-/**
- * GetChannel()
- */
+// GetChannel function
 func GetChannel(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
@@ -214,9 +208,7 @@ func GetChannel(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, string(res))
 }
 
-/**
- * UpdateChannel()
- */
+// UpdateChannel function
 func UpdateChannel(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
@@ -266,9 +258,7 @@ func UpdateChannel(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, str)
 }
 
-/**
- * DeleteChannel()
- */
+// DeleteChannel function
 func DeleteChannel(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 

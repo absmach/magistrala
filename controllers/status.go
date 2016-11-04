@@ -5,6 +5,7 @@
  * All rights not explicitly granted in the Apache license, version 2.0 are reserved.
  * See the included LICENSE file for more details.
  */
+
 package controllers
 
 import (
@@ -14,9 +15,7 @@ import (
 
 /** == Functions == */
 
-/**
- * getStatus()
- */
+// GetStatus function
 func GetStatus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)

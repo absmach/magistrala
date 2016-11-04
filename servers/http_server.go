@@ -18,7 +18,8 @@ import (
 	"github.com/go-zoo/bone"
 )
 
-func HttpServer(cfg config.Config) {
+// HTTPServer - starts HTTP Server
+func HTTPServer(cfg config.Config) {
 
 	mux := bone.New()
 
@@ -49,8 +50,5 @@ func HttpServer(cfg config.Config) {
 	/**
 	 * Server
 	 */
-	http.ListenAndServe(cfg.HttpHost+":"+strconv.Itoa(cfg.HttpPort), mux)
-
-	// Use following to start HTTPS server on the same port
-	//iris.ListenTLS(cfg.HttpHost + ":" + strconv.Itoa(cfg.HttpPort), "tls/mainflux.crt", "tls/mainflux.key")
+	http.ListenAndServe(cfg.HTTPHost+":"+strconv.Itoa(cfg.HTTPPort), mux)
 }

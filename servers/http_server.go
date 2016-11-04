@@ -9,16 +9,14 @@
 package servers
 
 import (
-	"strconv"
 	"net/http"
+	"strconv"
 
-	"github.com/mainflux/mainflux/controllers"
 	"github.com/mainflux/mainflux/config"
+	"github.com/mainflux/mainflux/controllers"
 
 	"github.com/go-zoo/bone"
-
 )
-
 
 func HttpServer(cfg config.Config) {
 
@@ -51,7 +49,7 @@ func HttpServer(cfg config.Config) {
 	/**
 	 * Server
 	 */
-	http.ListenAndServe(cfg.HttpHost + ":" + strconv.Itoa(cfg.HttpPort), mux)
+	http.ListenAndServe(cfg.HttpHost+":"+strconv.Itoa(cfg.HttpPort), mux)
 
 	// Use following to start HTTPS server on the same port
 	//iris.ListenTLS(cfg.HttpHost + ":" + strconv.Itoa(cfg.HttpPort), "tls/mainflux.crt", "tls/mainflux.key")

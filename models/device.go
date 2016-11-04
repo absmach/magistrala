@@ -13,17 +13,17 @@ type (
 		Id   string `json:"id"`
 		Name string `json:"name"`
 
-		Description		string  `json:"description"`
+		Description string `json:"description"`
 
-		Online			bool	`json:"online"`
-		ConnectedAt		string	`json:"connected_at"`
-		DisonnectedAt	string	`json:"disconnected_at"`
+		Online        bool   `json:"online"`
+		ConnectedAt   string `json:"connected_at"`
+		DisonnectedAt string `json:"disconnected_at"`
 
 		Channels []Channel `json:"channels"`
 
 		Created string `json:"created"`
 		Updated string `json:"updated"`
 
-		Metadata  map[string]interface{} `json:"metadata"`
+		Metadata map[string]interface{} `json:"metadata"`
 	}
 )

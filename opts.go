@@ -10,15 +10,15 @@ package main
 
 // Options block for gnatsd server.
 type Options struct {
-	Host               string
-	Port               int
-	Trace              bool
-	Debug              bool
-	MaxConn            int
-	Logtime            bool
-	Authorization      string
-	Username           string
-	Password           string
-	PidFile            string
-	LogFile            string
+	Host          string
+	Port          int
+	Trace         bool
+	Debug         bool
+	MaxConn       int
+	Logtime       bool
+	Authorization string
+	Username      string
+	Password      string
+	PidFile       string
+	LogFile       string
 }

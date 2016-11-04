@@ -9,12 +9,12 @@
 package servers
 
 import (
+	"log"
+	"net/http"
+	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
-	"log"
-	"os"
-    "net/http"
-    "net/http/httptest"
 
 	"github.com/mainflux/mainflux/config"
 	"github.com/mainflux/mainflux/controllers"
@@ -24,10 +24,9 @@ import (
 	"gopkg.in/mgo.v2"
 )
 
-
 func TestMain(m *testing.M) {
 	// We are in testing - notify the program
-	// so that it is not confused if some other commad line 
+	// so that it is not confused if some other commad line
 	// arguments come in - for example when test is started with `go test -v ./...`
 	// which is what Travis does
 	os.Setenv("TEST_ENV", "1")
@@ -75,31 +74,29 @@ func TestServer(t *testing.T) {
 	var cfg config.Config
 	cfg.Parse()
 
-
 	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
-    // pass 'nil' as the third parameter.
-    req, err := http.NewRequest("GET", "/status", nil)
-    if err != nil {
+	// pass 'nil' as the third parameter.
+	req, err := http.NewRequest("GET", "/status", nil)
+	if err != nil {
 		t.Fatal(err)
-    }
+	}
 
-    // We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-    rr := httptest.NewRecorder()
-    handler := http.HandlerFunc(controllers.GetStatus)
+	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(controllers.GetStatus)
 
-    // Our handlers satisfy http.Handler, so we can call their ServeHTTP method 
-    // directly and pass in our Request and ResponseRecorder.
-    handler.ServeHTTP(rr, req)
+	// Our handlers satisfy http.Handler, so we can call their ServeHTTP method
+	// directly and pass in our Request and ResponseRecorder.
+	handler.ServeHTTP(rr, req)
 
-    // Check the status code is what we expect.
-    if status := rr.Code; status != http.StatusOK {
+	// Check the status code is what we expect.
+	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
-    }
+	}
 
-    // Check the response body is what we expect.
-    expected := `{"running": true}`
-    if rr.Body.String() != expected {
+	// Check the response body is what we expect.
+	expected := `{"running": true}`
+	if rr.Body.String() != expected {
 		t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
-    }
+	}
 }
-

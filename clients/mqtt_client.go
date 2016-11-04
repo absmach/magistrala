@@ -1,37 +1,37 @@
 package clients
 
 import (
-	"fmt"
-	"strings"
-	"time"
-	"log"
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
+	"github.com/mainflux/mainflux/config"
 	"github.com/mainflux/mainflux/db"
 	"github.com/mainflux/mainflux/models"
-	"github.com/mainflux/mainflux/config"
 
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/krylovsk/gosenml"
 	"gopkg.in/mgo.v2/bson"
-	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
 type (
 	ChannelWriteStatus struct {
-		Nb int
+		Nb  int
 		Str string
 	}
 
 	MqttConn struct {
-		Opts *mqtt.ClientOptions
+		Opts   *mqtt.ClientOptions
 		Client mqtt.Client
 	}
 )
 
 var (
-	MqttClient mqtt.Client
+	MqttClient         mqtt.Client
 	WriteStatusChannel chan ChannelWriteStatus
 )
 
@@ -44,7 +44,7 @@ var msgHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) 
 	chanId := s[len(s)-1]
 	status := WriteChannel(chanId, msg.Payload())
 
-	// Send status to HTTP publisher 
+	// Send status to HTTP publisher
 	WriteStatusChannel <- status
 
 	fmt.Println(status)
@@ -74,7 +74,6 @@ func (mqc *MqttConn) MqttSub(cfg config.Config) {
 	MqttClient = mqc.Client
 	WriteStatusChannel = make(chan ChannelWriteStatus)
 }
-
 
 /**
  * WriteChannel()

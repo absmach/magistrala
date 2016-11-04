@@ -9,17 +9,17 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"os"
-	"strings"
-	"strconv"
+	"github.com/fatih/color"
+	"github.com/mainflux/mainflux/clients"
 	"github.com/mainflux/mainflux/config"
 	"github.com/mainflux/mainflux/db"
 	"github.com/mainflux/mainflux/servers"
-	"github.com/mainflux/mainflux/clients"
-	"github.com/fatih/color"
+	"os"
 	"runtime"
-	"flag"
+	"strconv"
+	"strings"
 )
 
 type MainfluxLite struct {

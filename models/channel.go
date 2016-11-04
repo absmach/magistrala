@@ -14,19 +14,19 @@ import (
 
 type (
 	Channel struct {
-		Id      string `json:"id"`
-		Device  string `json:"device"`
+		Id     string `json:"id"`
+		Device string `json:"device"`
 
 		// Name is optional. If present, it is pre-pended to `bn` member of SenML.
-		Name	string `json:"name"`
+		Name string `json:"name"`
 		// Unit is optional. If present, it is pre-pended to `bu` member of SenML.
-		Unit	string `json:"unit"`
+		Unit string `json:"unit"`
 
-		Values  []gosenml.Entry `json:"values"`
+		Values []gosenml.Entry `json:"values"`
 
 		Created string `json:"created"`
 		Updated string `json:"updated"`
 
-		Metadata  map[string]interface{} `json:"metadata"`
+		Metadata map[string]interface{} `json:"metadata"`
 	}
 )

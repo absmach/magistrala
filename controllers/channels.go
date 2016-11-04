@@ -12,19 +12,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"time"
 	"strconv"
+	"time"
 
+	"github.com/mainflux/mainflux/clients"
 	"github.com/mainflux/mainflux/db"
 	"github.com/mainflux/mainflux/models"
-	"github.com/mainflux/mainflux/clients"
 
 	"github.com/satori/go.uuid"
 	"gopkg.in/mgo.v2/bson"
 
 	"io"
-	"net/http"
 	"io/ioutil"
+	"net/http"
 
 	"github.com/go-zoo/bone"
 )
@@ -38,9 +38,9 @@ func CreateChannel(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	data, err := ioutil.ReadAll(r.Body)
-    if err != nil {
-        panic(err)
-    }
+	if err != nil {
+		panic(err)
+	}
 
 	if len(data) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
@@ -106,7 +106,7 @@ func CreateChannel(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	str := `{"response": "created", "id": "` + c.Id + `"}`
-    io.WriteString(w, str)
+	io.WriteString(w, str)
 }
 
 /**
@@ -127,7 +127,8 @@ func GetChannels(w http.ResponseWriter, r *http.Request) {
 		// Set default limit to -5
 		climit = -100
 	} else {
-		climit, err = strconv.Atoi(s); if err != nil {
+		climit, err = strconv.Atoi(s)
+		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			str := `{"response": "wrong count limit"}`
 			io.WriteString(w, str)
@@ -140,7 +141,8 @@ func GetChannels(w http.ResponseWriter, r *http.Request) {
 		// Set default limit to -5
 		vlimit = -100
 	} else {
-		vlimit, err = strconv.Atoi(s); if err != nil {
+		vlimit, err = strconv.Atoi(s)
+		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			str := `{"response": "wrong value limit"}`
 			io.WriteString(w, str)
@@ -151,8 +153,8 @@ func GetChannels(w http.ResponseWriter, r *http.Request) {
 	// Query DB
 	results := []models.Channel{}
 	if err := Db.C("channels").Find(nil).
-				Select(bson.M{"values": bson.M{"$slice": vlimit}}).
-				Sort("-_id").Limit(climit).All(&results); err != nil {
+		Select(bson.M{"values": bson.M{"$slice": vlimit}}).
+		Sort("-_id").Limit(climit).All(&results); err != nil {
 		log.Print(err)
 	}
 
@@ -162,7 +164,7 @@ func GetChannels(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print(err)
 	}
-    io.WriteString(w, string(res))
+	io.WriteString(w, string(res))
 }
 
 /**
@@ -177,7 +179,6 @@ func GetChannel(w http.ResponseWriter, r *http.Request) {
 
 	id := bone.GetValue(r, "channel_id")
 
-
 	var vlimit int
 	var err error
 	s := r.URL.Query().Get("vlimit")
@@ -185,7 +186,8 @@ func GetChannel(w http.ResponseWriter, r *http.Request) {
 		// Set default limit to -5
 		vlimit = -5
 	} else {
-		vlimit, err = strconv.Atoi(s); if err != nil {
+		vlimit, err = strconv.Atoi(s)
+		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			str := `{"response": "wrong limit"}`
 			io.WriteString(w, str)
@@ -195,8 +197,8 @@ func GetChannel(w http.ResponseWriter, r *http.Request) {
 
 	result := models.Channel{}
 	if err := Db.C("channels").Find(bson.M{"id": id}).
-				Select(bson.M{"values": bson.M{"$slice": vlimit}}).
-				One(&result); err != nil {
+		Select(bson.M{"values": bson.M{"$slice": vlimit}}).
+		One(&result); err != nil {
 		log.Print(err)
 		w.WriteHeader(http.StatusNotFound)
 		str := `{"response": "not found", "id": "` + id + `"}`
@@ -204,13 +206,12 @@ func GetChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
 	w.WriteHeader(http.StatusOK)
 	res, err := json.Marshal(result)
 	if err != nil {
 		log.Print(err)
 	}
-    io.WriteString(w, string(res))
+	io.WriteString(w, string(res))
 }
 
 /**
@@ -224,9 +225,9 @@ func UpdateChannel(w http.ResponseWriter, r *http.Request) {
 	defer Db.Close()
 
 	data, err := ioutil.ReadAll(r.Body)
-    if err != nil {
-        panic(err)
-    }
+	if err != nil {
+		panic(err)
+	}
 
 	if len(data) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
@@ -255,7 +256,7 @@ func UpdateChannel(w http.ResponseWriter, r *http.Request) {
 	// Publish the channel update.
 	// This will be catched by the MQTT main client (subscribed to all channel topics)
 	// and then written in the DB in the MQTT handler
-	token := clients.MqttClient.Publish("mainflux/" + id, 0, false, string(data))
+	token := clients.MqttClient.Publish("mainflux/"+id, 0, false, string(data))
 	token.Wait()
 
 	// Wait on status from MQTT handler (which executes DB write)
@@ -278,7 +279,7 @@ func DeleteChannel(w http.ResponseWriter, r *http.Request) {
 	id := bone.GetValue(r, "channel_id")
 
 	err := Db.C("channels").Remove(bson.M{"id": id})
-		if err != nil {
+	if err != nil {
 		log.Print(err)
 		w.WriteHeader(http.StatusNotFound)
 		str := `{"response": "not deleted", "id": "` + id + `"}`
@@ -288,7 +289,5 @@ func DeleteChannel(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	str := `{"response": "deleted", "id": "` + id + `"}`
-    io.WriteString(w, str)
+	io.WriteString(w, str)
 }
-
-

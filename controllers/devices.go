@@ -21,8 +21,8 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"io"
-	"net/http"
 	"io/ioutil"
+	"net/http"
 
 	"github.com/go-zoo/bone"
 )
@@ -35,10 +35,10 @@ func CreateDevice(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	data, err := ioutil.ReadAll(r.Body)
-    if err != nil {
+	if err != nil {
 		println("HERE")
-        panic(err)
-    }
+		panic(err)
+	}
 
 	if len(data) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
@@ -53,13 +53,13 @@ func CreateDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	/*
-	if validateJsonSchema("device", body) != true {
-		println("Invalid schema")
-		w.WriteHeader(http.StatusBadRequest)
-		str := `{"response": "invalid json schema in request"}`
-		io.WriteString(w, str)
-		return
-	}
+		if validateJsonSchema("device", body) != true {
+			println("Invalid schema")
+			w.WriteHeader(http.StatusBadRequest)
+			str := `{"response": "invalid json schema in request"}`
+			io.WriteString(w, str)
+			return
+		}
 	*/
 
 	// Init new Mongo session
@@ -97,7 +97,7 @@ func CreateDevice(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	str := `{"response": "created", "id": "` + d.Id + `"}`
-    io.WriteString(w, str)
+	io.WriteString(w, str)
 }
 
 /**
@@ -119,7 +119,7 @@ func GetDevices(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print(err)
 	}
-    io.WriteString(w, string(res))
+	io.WriteString(w, string(res))
 }
 
 /**
@@ -152,7 +152,7 @@ func GetDevice(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Print(err)
 	}
-    io.WriteString(w, string(res))
+	io.WriteString(w, string(res))
 }
 
 /**
@@ -162,10 +162,10 @@ func UpdateDevice(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	data, err := ioutil.ReadAll(r.Body)
-    if err != nil {
+	if err != nil {
 		println("HERE")
-        panic(err)
-    }
+		panic(err)
+	}
 
 	if len(data) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
@@ -180,15 +180,14 @@ func UpdateDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	/*
-	if validateJsonSchema("device", body) != true {
-		println("Invalid schema")
-		w.WriteHeader(http.StatusBadRequest)
-		str := `{"response": "invalid json schema in request"}`
-		io.WriteString(w, str)
-		return
-	}
+		if validateJsonSchema("device", body) != true {
+			println("Invalid schema")
+			w.WriteHeader(http.StatusBadRequest)
+			str := `{"response": "invalid json schema in request"}`
+			io.WriteString(w, str)
+			return
+		}
 	*/
-
 
 	Db := db.MgoDb{}
 	Db.Init()
@@ -254,5 +253,5 @@ func DeleteDevice(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	str := `{"response": "deleted", "id": "` + id + `"}`
-    io.WriteString(w, str)
+	io.WriteString(w, str)
 }

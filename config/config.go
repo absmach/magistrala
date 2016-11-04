@@ -16,24 +16,23 @@ import (
 
 type Config struct {
 	// HTTP
-	HttpHost		string
-	HttpPort		int
+	HttpHost string
+	HttpPort int
 
 	// Mongo
-	MongoHost		string
-	MongoPort		int
-	MongoDatabase	string
+	MongoHost     string
+	MongoPort     int
+	MongoDatabase string
 
 	// MQTT
-	MqttHost		string
-	MqttPort		int
+	MqttHost string
+	MqttPort int
 
 	// Influx
-	InfluxHost		string
-	InfluxPort		int
-	InfluxDatabase	string
+	InfluxHost     string
+	InfluxPort     int
+	InfluxDatabase string
 }
-
 
 func (cfg *Config) Parse() {
 

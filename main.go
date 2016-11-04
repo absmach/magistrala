@@ -120,9 +120,9 @@ func main() {
 	// MongoDb
 	db.InitMongo(cfg.MongoHost, cfg.MongoPort, cfg.MongoDatabase)
 
-	// MQTT 
+	// MQTT
 	mqc := new(clients.MqttConn)
-	//Sub to everything comming on all channels of all devices
+	//Sub to everything coming on all channels of all devices
 	mqc.MqttSub(cfg)
 
 	// Serve HTTP

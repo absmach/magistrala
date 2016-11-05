@@ -16,15 +16,18 @@ import (
 var (
 	mainSession *mgo.Session
 	mainDb      *mgo.Database
-	DbName      string
+	// DbName field
+	DbName string
 )
 
+// MgoDb struct
 type MgoDb struct {
 	Session *mgo.Session
 	Db      *mgo.Database
 	Col     *mgo.Collection
 }
 
+// InitMongo function
 func InitMongo(host string, port int, db string) error {
 	var err error
 	if mainSession == nil {
@@ -42,48 +45,56 @@ func InitMongo(host string, port int, db string) error {
 	return err
 }
 
+// SetMainSession function
 func SetMainSession(s *mgo.Session) {
 	mainSession = s
 	mainSession.SetMode(mgo.Monotonic, true)
 }
 
+// SetMainDb function
 func SetMainDb(db string) {
 	mainDb = mainSession.DB(db)
 	DbName = db
 }
 
-func (this *MgoDb) Init() *mgo.Session {
-	this.Session = mainSession.Copy()
-	this.Db = this.Session.DB(DbName)
+// Init function
+func (mdb *MgoDb) Init() *mgo.Session {
+	mdb.Session = mainSession.Copy()
+	mdb.Db = mdb.Session.DB(DbName)
 
-	return this.Session
+	return mdb.Session
 }
 
-func (this *MgoDb) C(collection string) *mgo.Collection {
-	this.Col = this.Session.DB(DbName).C(collection)
-	return this.Col
+// C function
+func (mdb *MgoDb) C(collection string) *mgo.Collection {
+	mdb.Col = mdb.Session.DB(DbName).C(collection)
+	return mdb.Col
 }
 
-func (this *MgoDb) Close() bool {
-	defer this.Session.Close()
+// Close function
+func (mdb *MgoDb) Close() bool {
+	defer mdb.Session.Close()
 	return true
 }
 
-func (this *MgoDb) DropoDb() {
-	err := this.Session.DB(DbName).DropDatabase()
+// DropDb function
+func (mdb *MgoDb) DropDb() {
+	err := mdb.Session.DB(DbName).DropDatabase()
 	if err != nil {
 		panic(err)
 	}
 }
 
-func (this *MgoDb) RemoveAll(collection string) bool {
-	this.Session.DB(DbName).C(collection).RemoveAll(nil)
+// RemoveAll function
+func (mdb *MgoDb) RemoveAll(collection string) bool {
+	mdb.Session.DB(DbName).C(collection).RemoveAll(nil)
 
-	this.Col = this.Session.DB(DbName).C(collection)
+	mdb.Col = mdb.Session.DB(DbName).C(collection)
 	return true
 }
 
-func (this *MgoDb) Index(collection string, keys []string) bool {
+// Index function
+func (mdb *MgoDb) Index(collection string, keys []string) bool {
 	index := mgo.Index{
 		Key:        keys,
 		Unique:     true,
@@ -91,7 +102,7 @@ func (this *MgoDb) Index(collection string, keys []string) bool {
 		Background: true,
 		Sparse:     true,
 	}
-	err := this.Db.C(collection).EnsureIndex(index)
+	err := mdb.Db.C(collection).EnsureIndex(index)
 	if err != nil {
 		println(err)
 		return false
@@ -100,7 +111,8 @@ func (this *MgoDb) Index(collection string, keys []string) bool {
 	return true
 }
 
-func (this *MgoDb) IsDup(err error) bool {
+// IsDup function
+func (mdb *MgoDb) IsDup(err error) bool {
 	if mgo.IsDup(err) {
 		return true
 	}

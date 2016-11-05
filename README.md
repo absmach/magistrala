@@ -1,11 +1,11 @@
+![GophersPhone](https://github.com/Mainflux/mainflux-doc/blob/master/img/gophersPhoneSmall.jpg)
+
 # Mainflux
 
 [![License](https://img.shields.io/badge/license-Apache%20v2.0-blue.svg)](LICENSE)
 [![Build Status](https://travis-ci.org/mainflux/mainflux.svg?branch=master)](https://travis-ci.org/mainflux/mainflux)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Mainflux/mainflux)](https://goreportcard.com/report/github.com/Mainflux/mainflux)
 [![Join the chat at https://gitter.im/Mainflux/mainflux](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Mainflux/mainflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
-![GophersPhone](https://github.com/Mainflux/mainflux-doc/blob/master/img/gophersPhoneSmall.jpg)
 
 ### About
 Mainflux is modern [highly-secured](https://github.com/mainflux/mainflux-auth-server) open source and patent-free IoT cloud platform written in Go.

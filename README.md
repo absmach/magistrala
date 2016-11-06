@@ -1,4 +1,4 @@
-![GophersPhone](https://github.com/Mainflux/mainflux-doc/blob/master/img/gophersPhoneSmall.jpg)
+![gophersBanner](https://github.com/mainflux/mainflux-doc/blob/master/img/gopherBanner.jpg)
 
 # Mainflux
 

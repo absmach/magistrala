@@ -10,8 +10,6 @@ Mainflux is modern massively-scalable and [highly-secured](#security) open sourc
 
 It allows device, user and application connections over various network protocols, like HTTP, MQTT, WebSocket and CoAP, making a seamless bridge between them. It is used as the IoT middleware for building complex IoT solutions.
 
-![Cloud Architecture](https://github.com/Mainflux/mainflux-doc/blob/master/img/cloudArchMonochrome.jpg)
-
 Mainflux is built with <3 by Mainflux [team](MAINTAINERS) and community contributors.
 
 ### Architecture

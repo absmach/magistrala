@@ -6,7 +6,7 @@
 [![Join the chat at https://gitter.im/Mainflux/mainflux](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Mainflux/mainflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ### About
-Mainflux is modern [highly-secured](https://github.com/mainflux/mainflux-auth-server) open source and patent-free IoT cloud platform written in Go.
+Mainflux is modern massively scalable and [highly-secured](Security) open source and patent-free IoT cloud platform written in Go and Erlang, based on a set of [microservices](Architecture).
 
 It allows device, user and application connections over various network protocols, like HTTP, MQTT, WebSocket and CoAP, making a seamless bridge between them. It is used as the IoT middleware for building complex IoT solutions.
 
@@ -14,27 +14,24 @@ It allows device, user and application connections over various network protocol
 
 Mainflux is built with <3 by Mainflux [team](MAINTAINERS) and community contributors.
 
+### Architecture
+Mainflux IoT cloud is composed of several components, i.e. microservices:
+- [Mainflux Core (HTTP API Server and Admin)](https://github.com/mainflux/mainflux-core)
+- [Authentication and Authorization Server](https://github.com/mainflux/mainflux-auth-server)
+- [MQTT PUB/SUB Broker (with WebSocket and CoAP support)](https://github.com/mainflux/emqttd-docker)
+- [Mongo Database](https://github.com/mongodb/mongo)
+- [PEP Proxy](https://github.com/mainflux/mainflux-pep-proxy)
+- [Mainflux UI](https://github.com/mainflux/mainflux-ui)
+
+Docker composition that constitues Mainflux IoT infrastructure is defined in the [`docker-compose.yml`](https://github.com/Mainflux/mainflux/blob/master/docker-compose.yml).
+
 ### Security
 For professional deployments Mainflux is usually combined with [Mainflux Authentication and Authorization Server](https://github.com/mainflux/mainflux-auth-server) which adds fine-grained security based on customizable API keys.
 
 Mainflux Auth Server also provides user accounts and device and application access control with simple customizable scheme based on scoped JWTs.
 
 ### Install/Deploy
-Mainflux uses [MongoDB](https://www.mongodb.com/), so insure that it is installed on your system. You will also need MQTT broker running on default port 1883 - for example [Mosquitto](https://mosquitto.org/).
-
-> N.B. Professional Mainflux deployments use [EMQTTD](https://github.com/mainflux/emqttd-docker) - massively scalable MQTT broker written in Erlang. The way it is used can be seen from [docker-compose.yml](docker-compose.yml)
-
-Installing Mainflux is trivial [`go get`](https://golang.org/cmd/go/):
-```bash
-go get github.com/mainflux/mainflux
-$GOBIN/mainflux
-```
-
-If you are new to Go, more information about setting-up environment and fetching Mainflux code can be found [here](https://github.com/mainflux/mainflux-doc/blob/master/goenv.md).
-
-### Docker
-Running Mainflux in a Docker is even easier, as it will launch whole composition of microservices, so you do not have to care about dependencies.
-
+ 
 - Clone the repo:
 ```bash
 git clone https://github.com/Mainflux/mainflux.git && cd mainflux
@@ -45,17 +42,7 @@ git clone https://github.com/Mainflux/mainflux.git && cd mainflux
 docker-compose up
 ```
 
-This will automatically download Docker images from [Mainflux Docker Hub](https://hub.docker.com/u/mainflux/) and deploy the composition.
-
-### System Architecture
-Mainflux IoT cloud is composed of several components, i.e. microservices:
-- [Mainflux Core (HTTP API Server and Admin)](https://github.com/mainflux/mainflux)
-- [Authentication and Authorization Server](https://github.com/mainflux/mainflux-auth-server)
-- [MQTT PUB/SUB Broker (with WebSocket and CoAP support)](https://github.com/mainflux/emqttd-docker)
-- Mongo Database
-- [Dashflux UI](https://github.com/mainflux/dashflux)
-
-Docker composition that constitues Mainflux IoT infrastructure is defined in the [`docker-compose.yml`](https://github.com/Mainflux/mainflux/blob/master/docker-compose.yml).
+This will automatically download Docker images from [Mainflux Docker Hub](https://hub.docker.com/u/mainflux/) and deploy the composition of Mianflux microservices.
 
 ### Features
 An extensive (and incomplete) list of features includes:

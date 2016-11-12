@@ -6,7 +6,7 @@
 [![Join the chat at https://gitter.im/Mainflux/mainflux](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Mainflux/mainflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ### About
-Mainflux is modern massively scalable and [highly-secured](Security) open source and patent-free IoT cloud platform written in Go and Erlang, based on a set of [microservices](Architecture).
+Mainflux is modern massively-scalable and [highly-secured](#Security) open source and patent-free IoT cloud platform written in Go and Erlang, based on a set of [microservices](#Architecture).
 
 It allows device, user and application connections over various network protocols, like HTTP, MQTT, WebSocket and CoAP, making a seamless bridge between them. It is used as the IoT middleware for building complex IoT solutions.
 

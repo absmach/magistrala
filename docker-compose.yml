@@ -31,9 +31,9 @@ emqttd:
 ###
 # Mainflux Core Server
 ###
-mainflux:
-  image: mainflux/mainflux:latest
-  container_name: mainflux-server
+mainflux-core:
+  image: mainflux/mainflux-core:latest
+  container_name: mainflux-core
   links:
     - mongo
     - emqttd

@@ -20,13 +20,12 @@ mongo:
 ###
 # Emqttd
 ###
-emqttd:
-  image: mainflux/emqttd-docker:latest
-  container_name: mainflux-emqttd
+mainflux-mqtt:
+  image: mainflux/mainflux-mqtt:latest
+  container_name: mainflux-mqtt
   ports:
     - "1883:1883"
-    - "8083:8083"
-    - "18083:18083"
+    - "8883:8883"
 
 ###
 # Mainflux Core Server

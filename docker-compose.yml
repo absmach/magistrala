@@ -18,7 +18,7 @@ mongo:
   command: --smallfiles --nojournal
 
 ###
-# Emqttd
+# Mainflux MQTT Broker
 ###
 mainflux-mqtt:
   image: mainflux/mainflux-mqtt:latest

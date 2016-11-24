@@ -3,6 +3,15 @@
 [![License](https://img.shields.io/badge/license-Apache%20v2.0-blue.svg)](LICENSE)
 [![Join the chat at https://gitter.im/Mainflux/mainflux](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Mainflux/mainflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+### Quick Links
+
+| Link          | Description           |
+|:--------------|:----------------------|
+| [mainflux-core](https://github.com/mainflux/mainflux-core) | Mainflux Core Service |
+| [mainflux-auth](https://github.com/mainflux/mainflux-auth) | Authentication and Authorization Server |
+| [mainflux-mqtt](https://github.com/mainflux/mainflux-mqtt) | MQTT PUB/SUB Broker (with WebSocket and CoAP support) |
+| [mainflux-ui](https://github.com/mainflux/mainflux-ui)     | System Dashboard in Angular 2 Material |
+
 ### About
 Mainflux is modern massively-scalable and [highly-secured](#security) open source and patent-free IoT cloud platform written in Go and Erlang, based on a set of [microservices](#architecture).
 
@@ -14,12 +23,15 @@ Mainflux is built with <3 by Mainflux [team](MAINTAINERS) and community contribu
 
 ### Architecture
 Mainflux IoT cloud is composed of several components, i.e. microservices:
-- [Mainflux Core (HTTP API Server and Admin)](https://github.com/mainflux/mainflux-core)
-- [Authentication and Authorization Server](https://github.com/mainflux/mainflux-auth-server)
-- [MQTT PUB/SUB Broker (with WebSocket and CoAP support)](https://github.com/mainflux/emqttd-docker)
-- [Mongo Database](https://github.com/mongodb/mongo)
-- [PEP Proxy](https://github.com/mainflux/mainflux-pep-proxy)
-- [Mainflux UI](https://github.com/mainflux/mainflux-ui)
+
+| Link          | Description           |
+|:--------------|:----------------------|
+| [mainflux-core](https://github.com/mainflux/mainflux-core) | Mainflux Core Service |
+| [mainflux-auth](https://github.com/mainflux/mainflux-auth) | Authentication and Authorization Server |
+| [mainflux-mqtt](https://github.com/mainflux/mainflux-mqtt) | MQTT PUB/SUB Broker (with WebSocket and CoAP support) |
+| [mainflux-ui](https://github.com/mainflux/mainflux-ui)     | System Dashboard in Angular 2 Material |
+| [MongoDB](https://github.com/mongodb/mongo)                | Devices/Measurements NoSQL Database |
+| [Redis](https://github.com/antirez/redis)                  | System async events and caching |
 
 Docker composition that constitues Mainflux IoT infrastructure is defined in the [`docker-compose.yml`](https://github.com/Mainflux/mainflux/blob/master/docker-compose.yml).
 

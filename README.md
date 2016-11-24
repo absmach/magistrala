@@ -11,6 +11,7 @@
 | [mainflux-auth](https://github.com/mainflux/mainflux-auth) | Authentication and Authorization Server |
 | [mainflux-mqtt](https://github.com/mainflux/mainflux-mqtt) | MQTT PUB/SUB Broker (with WebSocket and CoAP support) |
 | [mainflux-ui](https://github.com/mainflux/mainflux-ui)     | System Dashboard in Angular 2 Material |
+| [mainflux-cli](https://github.com/mainflux/mainflux-cli)   | Interactive command-line interface |
 
 ### About
 Mainflux is modern massively-scalable and [highly-secured](#security) open source and patent-free IoT cloud platform written in Go and Erlang, based on a set of [microservices](#architecture).
@@ -30,6 +31,7 @@ Mainflux IoT cloud is composed of several components, i.e. microservices:
 | [mainflux-auth](https://github.com/mainflux/mainflux-auth) | Authentication and Authorization Server |
 | [mainflux-mqtt](https://github.com/mainflux/mainflux-mqtt) | MQTT PUB/SUB Broker (with WebSocket and CoAP support) |
 | [mainflux-ui](https://github.com/mainflux/mainflux-ui)     | System Dashboard in Angular 2 Material |
+| [mainflux-cli](https://github.com/mainflux/mainflux-cli)   | Interactive command-line interface |
 | [MongoDB](https://github.com/mongodb/mongo)                | Devices/Measurements NoSQL Database |
 | [Redis](https://github.com/antirez/redis)                  | System async events and caching |
 

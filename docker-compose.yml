@@ -18,6 +18,15 @@ mongo:
   command: --smallfiles --nojournal
 
 ###
+# Redis
+###
+redis:
+  image: redis:latest
+  container_name: mainflux-redis
+  ports:
+    - "6379:6379"
+
+###
 # Mainflux MQTT Broker
 ###
 mainflux-mqtt:
@@ -35,6 +44,7 @@ mainflux-core:
   container_name: mainflux-core
   links:
     - mongo
-    - emqttd
+    - redis
+    - mainflux-mqtt
   ports:
     - "7070:7070"

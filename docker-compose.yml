@@ -18,13 +18,14 @@ mongo:
   command: --smallfiles --nojournal
 
 ###
-# Redis
+# NATS
 ###
-redis:
-  image: redis:latest
-  container_name: mainflux-redis
+nats:
+  image: apcera/gnatsd:latest
+  container_name: mainflux-nats
   ports:
-    - "6379:6379"
+    - "4222:4222"
+    - "8333:8333"
 
 ###
 # Mainflux MQTT Broker
@@ -44,7 +45,7 @@ mainflux-core:
   container_name: mainflux-core
   links:
     - mongo
-    - redis
+    - nats
     - mainflux-mqtt
   ports:
     - "7070:7070"

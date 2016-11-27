@@ -25,7 +25,7 @@ nats:
   container_name: mainflux-nats
   ports:
     - "4222:4222"
-    - "8333:8333"
+    - "8222:8222"
 
 ###
 # Mainflux MQTT Broker

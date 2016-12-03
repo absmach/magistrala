@@ -69,7 +69,7 @@ An extensive (and incomplete) list of features includes:
 - And many more
 
 ### Documentation
-Development documentation can be found on our [Mainflux GitHub Wiki](https://github.com/Mainflux/mainflux/wiki).
+Mainflux documentation can be found [here](http://mainflux.io/).
 
 ### Community
 #### Mailing list

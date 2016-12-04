@@ -34,6 +34,7 @@ Mainflux IoT cloud is composed of several components, i.e. microservices:
 | [mainflux-cli](https://github.com/mainflux/mainflux-cli)   | Interactive command-line interface |
 | [MongoDB](https://github.com/mongodb/mongo)                | Devices/Measurements NoSQL Database |
 | [Redis](https://github.com/antirez/redis)                  | System async events and caching |
+| [NATS](https://github.com/nats-io/gnatsd)                  | System event bus |
 
 Docker composition that constitues Mainflux IoT infrastructure is defined in the [`docker-compose.yml`](https://github.com/Mainflux/mainflux/blob/master/docker-compose.yml).
 

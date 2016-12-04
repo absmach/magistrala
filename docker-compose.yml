@@ -21,7 +21,7 @@ mongo:
 # NATS
 ###
 nats:
-  image: apcera/gnatsd:latest
+  image: apcera/gnatsd:0.7.2
   container_name: mainflux-nats
   ports:
     - "4222:4222"

@@ -12,6 +12,7 @@
 | [mainflux-mqtt](https://github.com/mainflux/mainflux-mqtt) | MQTT PUB/SUB Broker (with WebSocket support) |
 | [mainflux-ui](https://github.com/mainflux/mainflux-ui)     | System Dashboard in Angular 2 Material |
 | [mainflux-cli](https://github.com/mainflux/mainflux-cli)   | Interactive command-line interface |
+| [mainflux-nginx](https://github.com/mainflux/mainflux-nginx)   | NGINX configuration for reverse proxy with auth |
 
 ### About
 Mainflux is modern massively-scalable and [highly-secured](#security) open source and patent-free IoT cloud platform written in Go and Erlang, based on a set of [microservices](#architecture).
@@ -35,6 +36,7 @@ Mainflux IoT cloud is composed of several components, i.e. microservices:
 | [MongoDB](https://github.com/mongodb/mongo)                | Devices/Measurements NoSQL Database |
 | [Redis](https://github.com/antirez/redis)                  | System async events and caching |
 | [NATS](https://github.com/nats-io/gnatsd)                  | System event bus |
+| [NGINX](https://github.com/nginx/nginx)                    | Reverse Proxy with Auth forwarding |
 
 Docker composition that constitues Mainflux IoT infrastructure is defined in the [`docker-compose.yml`](https://github.com/Mainflux/mainflux/blob/master/docker-compose.yml).
 

@@ -28,13 +28,13 @@ cd mainflux-mqtt
 npm install
 cd ..
 
-# NGINX
+# NGINX Conf
 git clone https://github.com/mainflux/mainflux-nginx
 
 # NATS
 go get -v github.com/nats-io/gnatsd
 
-# Put symlink
+# Make symlink to go mainflux sources
 ln -s $GOPATH/src/github.com/mainflux mainflux-go
 
 # Go back to where we started

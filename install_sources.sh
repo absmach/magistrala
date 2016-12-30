@@ -74,6 +74,3 @@ sudo systemctl restart nginx.service
 
 EOF
 
-
-
-

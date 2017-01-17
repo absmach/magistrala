@@ -5,7 +5,7 @@ DIR=$PWD
 mkdir -p ./mainflux
 cd ./mainflux
 
-if [ -z "$FOPATH" ]; then
+if [ -z "$GOPATH" ]; then
 	mkdir -p $PWD/go
 	export GOPATH=$PWD/go
 fi

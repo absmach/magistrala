@@ -37,7 +37,6 @@ mainflux-mqtt:
     - "1883:1883"
     - "8883:8883"
   links:
-    - mongo
     - nats
 
 ###

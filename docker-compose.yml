@@ -37,7 +37,6 @@ mainflux-mqtt:
     - "1883:1883"
     - "8883:8883"
   links:
-    - mongo
     - nats
 
 ###
@@ -49,6 +48,5 @@ mainflux-core:
   links:
     - mongo
     - nats
-    - mainflux-mqtt
   ports:
     - "7070:7070"

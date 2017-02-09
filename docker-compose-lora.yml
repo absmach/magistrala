@@ -1,0 +1,131 @@
+###
+# Copyright (c) Mainflux
+#
+# Mainflux server is licensed under an Apache license, version 2.0 license.
+# All rights not explicitly granted in the Apache license, version 2.0 are reserved.
+# See the included LICENSE file for more details.
+###
+
+###
+# MongoDB
+###
+mongo:
+  image: mongo:latest
+  ports:
+    - "27017:27017"
+    - "28017:28017"
+  container_name: mainflux-mongodb
+  command: --smallfiles --nojournal
+
+### 
+# Redis
+###
+redis:
+  image: redis:alpine
+  container_name: mainflux-redis
+  ports:
+    - "6379:6379"
+
+###
+# NATS
+###
+nats:
+  image: nats:latest
+  container_name: mainflux-nats
+  ports:
+    - "4222:4222"
+    - "8222:8222"
+
+###
+# Mainflux MQTT Broker
+###
+mainflux-mqtt:
+  image: mainflux/mainflux-mqtt:latest
+  container_name: mainflux-mqtt
+  ports:
+    - "1883:1883"
+    - "8883:8883"
+  links:
+    - nats
+
+###
+# Mainflux Core Server
+###
+mainflux-core:
+  image: mainflux/mainflux-core:latest
+  container_name: mainflux-core
+  links:
+    - mongo
+    - nats
+  ports:
+    - "7070:7070"
+
+############
+### LoRa ###
+############
+###
+# Postgres
+###
+postgres:
+  image: postgres:9.5
+  environment:
+    - POSTGRES_PASSWORD=loraserver
+    - POSTGRES_USER=loraserver
+    - POSTGRES_DB=loraserver
+
+###
+# Mosquitto
+###
+mosquitto:
+  image: ansi/mosquitto
+
+###
+# LoRaWAN Gateway Bridge
+###
+lora-gateway-bridge:
+  image: mainflux/lora-gateway-bridge:latest
+  container_name: mainflux-lora-gateway-bridge
+  command: make serve
+  ports:
+    - "1700/udp:1700/udp"
+  links:
+    - mosquitto
+  environment:
+    - MQTT_SERVER=tcp://mosquitto:1883
+
+###
+# LoRaWAN Network Server
+###
+lora-network-server:
+  image: mainflux/loraserver:latest
+  container_name: mainflux-lora-network-server
+  command: ./build/loraserver
+  links:
+    - postgres
+    - redis
+    - mosquitto
+  environment:
+    - POSTGRES_DSN=postgres://loraserver:loraserver@postgres/loraserver?sslmode=disable
+    - DB_AUTOMIGRATE=true
+    - NET_ID=010203
+    - BAND=EU_863_870
+    - REDIS_URL=redis://redis:6379
+    - GW_MQTT_SERVER=tcp://mosquitto:1883
+    - APP_MQTT_SERVER=tcp://mosquitto:1883
+
+###
+# LoRaWAN Application Server
+###
+lora-app-server:
+  image: mainflux/lora-app-server:latest
+  container_name: mainflux-lora-app-server
+  command: make serve
+  links:
+    - postgres
+    - redis
+    - mosquitto
+  environment:
+    - DB_AUTOMIGRATE=true
+    - POSTGRES_DSN=postgres://loraserver:loraserver@postgres/loraserver?sslmode=disable
+    - REDIS_URL=redis://redis:6379
+    - MQTT_SERVER=tcp://mosquitto:1883

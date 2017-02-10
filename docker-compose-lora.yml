@@ -54,7 +54,6 @@ services:
     container_name: mainflux-mqtt
     ports:
       - "1883:1883"
-      - "8883:8883"
     networks:
       - mainflux
 
@@ -112,7 +111,7 @@ services:
   lora-network-server:
     image: mainflux/loraserver:latest
     container_name: mainflux-lora-network-server
-    command: ./build/loraserver
+    command: dockerize -wait tcp://postgres:5432 -wait tcp://mosquitto:1883 -wait tcp://redis:6379 -timeout 10s ./build/loraserver
     environment:
       - POSTGRES_DSN=postgres://loraserver:loraserver@postgres/loraserver?sslmode=disable
       - DB_AUTOMIGRATE=true
@@ -131,7 +130,7 @@ services:
   lora-app-server:
     image: mainflux/lora-app-server:latest
     container_name: mainflux-lora-app-server
-    command: ./build/lora-app-server
+    command: dockerize -wait tcp://postgres:5432 -wait tcp://mosquitto:1883 -wait tcp://redis:6379 -timeout 10s ./build/lora-app-server
     environment:
       - DB_AUTOMIGRATE=true
       - POSTGRES_DSN=postgres://loraserver:loraserver@postgres/loraserver?sslmode=disable

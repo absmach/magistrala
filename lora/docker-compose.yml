@@ -128,6 +128,8 @@ services:
   # LoRaWAN Application Server
   ###
   lora-app-server:
+    volumes:
+      - ./certs:/etc/lora-app-server/certs
     image: mainflux/lora-app-server:latest
     container_name: mainflux-lora-app-server
     command: dockerize -wait tcp://postgres:5432 -wait tcp://mosquitto:1883 -wait tcp://redis:6379 -timeout 10s ./build/lora-app-server
@@ -137,6 +139,8 @@ services:
       - REDIS_URL=redis://redis:6379
       - MQTT_SERVER=tcp://mosquitto:1883
       - NS_SERVER=lora-network-server:8000
+      - HTTP_TLS_CERT=/etc/lora-app-server/certs/http-tls.crt
+      - HTTP_TLS_KEY=/etc/lora-app-server/certs/http-tls.key
     networks:
       - lora
 

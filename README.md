@@ -31,6 +31,7 @@ Mainflux IoT cloud is composed of several components, i.e. microservices:
 | [mainflux-core](https://github.com/mainflux/mainflux-core) | Mainflux Core Service |
 | [mainflux-auth](https://github.com/mainflux/mainflux-auth) | Authentication and Authorization Server |
 | [mainflux-mqtt](https://github.com/mainflux/mainflux-mqtt) | MQTT PUB/SUB Broker (with WebSocket support) |
+| [mainflux-coap](https://github.com/mainflux/mainflux-coap) | CoAP Server |
 | [mainflux-ui](https://github.com/mainflux/mainflux-ui)     | System Dashboard in Angular 2 Material |
 | [mainflux-cli](https://github.com/mainflux/mainflux-cli)   | Interactive command-line interface |
 | [MongoDB](https://github.com/mongodb/mongo)                | Devices/Measurements NoSQL Database |

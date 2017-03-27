@@ -9,17 +9,68 @@
 version: '2'
 
 services:
+  ###
+  # MongoDB
+  ###
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+      - "28017:28017"
+    container_name: mainflux-mongodb
+    command: --smallfiles --nojournal
+    networks:
+      - mainflux
+
   ### 
   # Redis
   ###
   redis:
     image: redis:alpine
-    container_name: redis
+    container_name: mainflux-redis
     ports:
       - "6379:6379"
     networks:
+      - mainflux
       - lora
 
+  ###
+  # NATS
+  ###
+  nats:
+    image: nats:latest
+    container_name: mainflux-nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    networks:
+      - mainflux
+
+  ###
+  # Mainflux MQTT Broker
+  ###
+  mainflux-mqtt:
+    image: mainflux/mainflux-mqtt:latest
+    container_name: mainflux-mqtt
+    ports:
+      - "1883:1883"
+    networks:
+      - mainflux
+
+  ###
+  # Mainflux Core Server
+  ###
+  mainflux-core:
+    image: mainflux/mainflux-core:latest
+    container_name: mainflux-core
+    ports:
+      - "7070:7070"
+    networks:
+      - mainflux
+
+  ############
+  ### LoRa ###
+  ############
   ###
   # Postgres
   ###
@@ -45,7 +96,7 @@ services:
   ###
   lora-gateway-bridge:
     image: mainflux/loraserver-docker:lora-gateway-bridge
-    container_name: lora-gateway-bridge
+    container_name: mainflux-lora-gateway-bridge
     command: dockerize -wait tcp://mosquitto:1883 -timeout 10s ./lora-gateway-bridge
     ports:
       - "1700/udp:1700/udp"
@@ -59,7 +110,7 @@ services:
   ###
   lora-network-server:
     image: mainflux/loraserver-docker:loraserver
-    container_name: lora-network-server
+    container_name: mainflux-lora-network-server
     command: dockerize -wait tcp://postgres:5432 -wait tcp://mosquitto:1883 -wait tcp://redis:6379 -timeout 10s ./loraserver
     environment:
       - POSTGRES_DSN=postgres://loraserver:loraserver@postgres/loraserver?sslmode=disable
@@ -80,7 +131,7 @@ services:
     volumes:
       - ./certs:/opt/lora/lora-app-server/certs
     image: mainflux/loraserver-docker:lora-app-server
-    container_name: lora-app-server
+    container_name: mainflux-lora-app-server
     command: dockerize -wait tcp://postgres:5432 -wait tcp://mosquitto:1883 -wait tcp://redis:6379 -timeout 10s ./lora-app-server
     ports:
       - "8080:8080"
@@ -97,4 +148,5 @@ services:
       - lora
 
 networks:
+  mainflux:
   lora:

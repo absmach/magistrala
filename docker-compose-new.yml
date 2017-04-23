@@ -1,0 +1,95 @@
+###
+# Copyright (c) Mainflux
+#
+# Mainflux server is licensed under an Apache license, version 2.0 license.
+# All rights not explicitly granted in the Apache license, version 2.0 are reserved.
+# See the included LICENSE file for more details.
+###
+
+version: "2"
+
+services:
+  ###
+  # InfluxDB
+  ###
+  influxdb:
+    image: influxdb:latest
+    container_name: mainflux-influxdb
+    ports:
+      - "8083:8083"
+      - "8086:8086"
+      - "8090:8090"
+    networks:
+      - mfxnet
+
+  ###
+  # MongoDB
+  ###
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+      - "28017:28017"
+    container_name: mainflux-mongodb
+    command: --smallfiles --nojournal
+    networks:
+      - mfxnet
+
+  ###
+  # NATS
+  ###
+  nats:
+    image: nats:latest
+    container_name: mainflux-nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    networks:
+      - mfxnet
+
+  ###
+  # Mainflux MQTT Broker
+  ###
+  mainflux-mqtt:
+    image: mainflux/mainflux-mqtt:latest
+    container_name: mainflux-mqtt
+    ports:
+      - "1883:1883"
+      - "8883:8883"
+    networks:
+      - mfxnet
+
+  ###
+  # Mainflux HTTP Sender
+  ###
+  mainflux-http-sender:
+    image: mainflux/mainflux-http-sender:latest
+    container_name: mainflux-http-sender
+    ports:
+      - "7070:7070"
+    networks:
+      - mfxnet
+
+  ###
+  # Mainflux InfluxDB Writer
+  ###
+  mainflux-influxdb-writer:
+    image: mainflux/mainflux-influxdb-writer:latest
+    container_name: mainflux-influxdb-writer
+    networks:
+      - mfxnet
+
+  ###
+  # Mainflux InfluxDB Reader
+  ###
+  mainflux-influxdb-reader:
+    image: mainflux/mainflux-influxdb-reader:latest
+    container_name: mainflux-influxdb-reader
+    ports:
+      - "7080:7080"
+    networks:
+      - mfxnet
+
+networks:
+    mfxnet:
+

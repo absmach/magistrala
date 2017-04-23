@@ -12,15 +12,13 @@ services:
   ###
   # InfluxDB
   ###
-  influxdb:
+  influx:
     image: influxdb:latest
     container_name: mainflux-influxdb
     ports:
       - "8083:8083"
       - "8086:8086"
       - "8090:8090"
-    networks:
-      - mfxnet
 
   ###
   # MongoDB
@@ -32,8 +30,6 @@ services:
       - "28017:28017"
     container_name: mainflux-mongodb
     command: --smallfiles --nojournal
-    networks:
-      - mfxnet
 
   ###
   # NATS
@@ -44,8 +40,6 @@ services:
     ports:
       - "4222:4222"
       - "8222:8222"
-    networks:
-      - mfxnet
 
   ###
   # Mainflux MQTT Broker
@@ -56,8 +50,6 @@ services:
     ports:
       - "1883:1883"
       - "8883:8883"
-    networks:
-      - mfxnet
 
   ###
   # Mainflux HTTP Sender
@@ -67,8 +59,6 @@ services:
     container_name: mainflux-http-sender
     ports:
       - "7070:7070"
-    networks:
-      - mfxnet
 
   ###
   # Mainflux InfluxDB Writer
@@ -76,8 +66,7 @@ services:
   mainflux-influxdb-writer:
     image: mainflux/mainflux-influxdb-writer:latest
     container_name: mainflux-influxdb-writer
-    networks:
-      - mfxnet
+
 
   ###
   # Mainflux InfluxDB Reader
@@ -87,9 +76,4 @@ services:
     container_name: mainflux-influxdb-reader
     ports:
       - "7080:7080"
-    networks:
-      - mfxnet
-
-networks:
-    mfxnet:
 

@@ -52,6 +52,15 @@ services:
       - "8883:8883"
 
   ###
+  # Mainflux CoAP Server
+  ###
+  mainflux-coap:
+    image: mainflux/mainflux-coap:latest
+    container_name: mainflux-coap
+    ports:
+      - "5683:5683"
+
+  ###
   # Mainflux HTTP Sender
   ###
   mainflux-http-sender:

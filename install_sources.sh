@@ -13,8 +13,14 @@ fi
 export GOBIN=$GOPATH/bin
 export PATH=$PATH:$GOBIN
 
-# Core
-go get -v github.com/mainflux/mainflux-core
+# InfluxDB Writer
+go get -v github.com/mainflux/mainflux-influxdb-writer
+
+# InfluxDB Reader
+go get -v github.com/mainflux/mainflux-influxdb-reader
+
+# HTTP
+go get -v github.com/mainflux/mainflux-http-sender
 
 # Auth
 go get -v github.com/mainflux/mainflux-auth
@@ -53,7 +59,7 @@ cat << EOF
 - NGINX config files are located  in $PWD/mainflux/mainflux-nginx
 
 External dependencies needed for Mainflux are:
-- MongoDB
+- InfluxDB
 - NATS
 - Redis
 - NGINX
@@ -61,7 +67,7 @@ External dependencies needed for Mainflux are:
 NATS have been installed, for MongoDB, Redis and NGINX
 run something like:
 
-sudo apt-get install mongodb redis-server nginx
+sudo apt-get install influxdb redis-server nginx
 
 NGINX config has been cloned in mainflux-nginx,
 and these config files have to be copied to /etc/nginx once NGINX server

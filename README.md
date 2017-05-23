@@ -7,7 +7,9 @@
 
 | Link          | Description           |
 |:--------------|:----------------------|
-| [mainflux-core](https://github.com/mainflux/mainflux-core) | Mainflux Core Service |
+| [mainflux-http-sender](https://github.com/mainflux/mainflux-http-sender) | HTTP message API server |
+| [mainflux-influxdb-writer](https://github.com/mainflux/mainflux-influxdb-writer) | Wroker behind NATS that writes messages into DB |
+| [mainflux-influxdb-reader](https://github.com/mainflux/mainflux-influxdbreader) | HTTP API server for reading messages from DB |
 | [mainflux-auth](https://github.com/mainflux/mainflux-auth) | Authentication and Authorization Server |
 | [mainflux-mqtt](https://github.com/mainflux/mainflux-mqtt) | MQTT PUB/SUB Broker (with WebSocket support) |
 | [mainflux-coap](https://github.com/mainflux/mainflux-coap) | CoAP Server |

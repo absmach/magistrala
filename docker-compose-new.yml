@@ -86,3 +86,11 @@ services:
     ports:
       - "7080:7080"
 
+  ###
+  # Mainflux Manager
+  ###
+  mainflux-manager:
+    image: mainflux/mainflux-manager:latest
+    container_name: mainflux-manager
+    ports:
+      - "9090:9090"

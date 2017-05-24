@@ -3,21 +3,6 @@
 [![License](https://img.shields.io/badge/license-Apache%20v2.0-blue.svg)](LICENSE)
 [![Join the chat at https://gitter.im/Mainflux/mainflux](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Mainflux/mainflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-### Quick Links
-
-| Link          | Description           |
-|:--------------|:----------------------|
-| [mainflux-http-sender](https://github.com/mainflux/mainflux-http-sender) | HTTP message API server |
-| [mainflux-manager](https://github.com/mainflux/mainflux-manager) | Service for system provisioning |
-| [mainflux-influxdb-writer](https://github.com/mainflux/mainflux-influxdb-writer) | Wroker behind NATS that writes messages into DB |
-| [mainflux-influxdb-reader](https://github.com/mainflux/mainflux-influxdbreader) | HTTP API server for reading messages from DB |
-| [mainflux-auth](https://github.com/mainflux/mainflux-auth) | Authentication and Authorization Server |
-| [mainflux-mqtt](https://github.com/mainflux/mainflux-mqtt) | MQTT PUB/SUB Broker (with WebSocket support) |
-| [mainflux-coap](https://github.com/mainflux/mainflux-coap) | CoAP Server |
-| [mainflux-ui](https://github.com/mainflux/mainflux-ui)     | System Dashboard in Angular 2 Material |
-| [mainflux-cli](https://github.com/mainflux/mainflux-cli)   | Interactive command-line interface |
-| [mainflux-nginx](https://github.com/mainflux/mainflux-nginx)   | NGINX configuration for reverse proxy with auth |
-
 ### About
 Mainflux is modern massively-scalable and [highly-secured](#security) open source and patent-free IoT cloud platform written in Go and Erlang, based on a set of [microservices](#architecture).
 

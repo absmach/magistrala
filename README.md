@@ -19,7 +19,7 @@ Mainflux IoT cloud is composed of several components, i.e. microservices:
 |:--------------|:----------------------|
 | [mainflux-http-sender](https://github.com/mainflux/mainflux-http-sender) | HTTP message API server |
 | [mainflux-manager](https://github.com/mainflux/mainflux-manager) | Service for system provisioning |
-| [mainflux-influxdb-writer](https://github.com/mainflux/mainflux-influxdb-writer) | Wroker behind NATS that writes messages into DB |
+| [mainflux-influxdb-writer](https://github.com/mainflux/mainflux-influxdb-writer) | Worker behind NATS that writes messages into DB |
 | [mainflux-influxdb-reader](https://github.com/mainflux/mainflux-influxdbreader) | HTTP API server for reading messages from DB |
 | [mainflux-auth](https://github.com/mainflux/mainflux-auth) | Authentication and Authorization Server |
 | [mainflux-mqtt](https://github.com/mainflux/mainflux-mqtt) | MQTT PUB/SUB Broker (with WebSocket support) |

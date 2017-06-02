@@ -28,7 +28,7 @@ Mainflux IoT cloud is composed of several components, i.e. microservices:
 | [mainflux-cli](https://github.com/mainflux/mainflux-cli)   | Interactive command-line interface |
 | [MongoDB](https://github.com/mongodb/mongo)                | Devices/Measurements NoSQL Database |
 | [InfluxDB](https://github.com/influxdata/influxdb)         | Time-Series Database for Messages |
-| [PostgreSQL](hhttps://github.com/postgres/postgres)        | DB needed for Auth service (Hydra and Ladon) |
+| [PostgreSQL](https://github.com/postgres/postgres)        | DB needed for Auth service (Hydra and Ladon) |
 | [Hydra](https://github.com/ory/hydra)                      | OAuth-2.0 Server |
 | [Redis](https://github.com/antirez/redis)                  | System async events and caching |
 | [NATS](https://github.com/nats-io/gnatsd)                  | System event bus |

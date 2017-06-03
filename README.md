@@ -10,7 +10,7 @@ It allows device, user and application connections over various network protocol
 
 ![gophersBanner](https://github.com/mainflux/mainflux-doc/blob/master/img/gopherBanner.jpg)
 
-Mainflux is built with <3 by Mainflux [team](MAINTAINERS) and community contributors.
+Mainflux is built with <3 by [Mainflux company](https://www.mainflux.com/) and community contributors.
 
 ### Architecture
 Mainflux IoT cloud is composed of several components, i.e. microservices:

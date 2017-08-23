@@ -17,18 +17,15 @@ Mainflux IoT cloud is composed of several components, i.e. microservices:
 
 | Link          | Description           |
 |:--------------|:----------------------|
-| [httpadapter](https://github.com/mainflux/httpadapter) | HTTP message API server |
+| [http-adapter](https://github.com/mainflux/http-adapter) | HTTP message API server |
 | [manager](https://github.com/mainflux/manager) | Service for managing platform resources, including auth |
-| [mainflux-influxdb-writer](https://github.com/mainflux/mainflux-influxdb-writer) | Worker behind NATS that writes messages into DB |
-| [mainflux-influxdb-reader](https://github.com/mainflux/mainflux-influxdb-reader) | HTTP API server for reading messages from DB |
-| [mainflux-mqtt](https://github.com/mainflux/mainflux-mqtt) | MQTT PUB/SUB Broker (with WebSocket support) |
+| [message-writer](https://github.com/mainflux/message-writer) | Worker behind NATS that writes messages into Cassandra DB |
+| message-reader (WIP) | HTTP API server for reading messages from DB |
+| [mqtt-adapter](https://github.com/mainflux/mqtt-adapter) | MQTT PUB/SUB Broker (with WebSocket support) |
 | [mainflux-coap](https://github.com/mainflux/mainflux-coap) | CoAP Server |
 | [mainflux-ui](https://github.com/mainflux/mainflux-ui)     | System Dashboard in Angular 2 Material |
 | [mainflux-cli](https://github.com/mainflux/mainflux-cli)   | Interactive command-line interface |
-| [MongoDB](https://github.com/mongodb/mongo)                | Devices/Measurements NoSQL Database |
-| [InfluxDB](https://github.com/influxdata/influxdb)         | Time-Series Database for Messages |
-| [PostgreSQL](https://github.com/postgres/postgres)        | DB needed for Auth service (Hydra and Ladon) |
-| [Hydra](https://github.com/ory/hydra)                      | OAuth-2.0 Server |
+| [Cassandra](https://github.com/apache/cassandra)           | System Database |
 | [Redis](https://github.com/antirez/redis)                  | System async events and caching |
 | [NATS](https://github.com/nats-io/gnatsd)                  | System event bus |
 | [NGINX](https://github.com/nginx/nginx)                    | Reverse Proxy with Auth forwarding |
@@ -36,11 +33,6 @@ Mainflux IoT cloud is composed of several components, i.e. microservices:
 ![arch](https://raw.githubusercontent.com/mainflux/mainflux-doc/master/img/Architecture.png)
 
 Docker composition that constitues Mainflux IoT infrastructure is defined in the [`docker-compose.yml`](https://github.com/Mainflux/mainflux/blob/master/docker-compose.yml).
-
-### Security
-For professional deployments Mainflux is usually combined with [Mainflux Authentication and Authorization Server](https://github.com/mainflux/mainflux-auth-server) which adds fine-grained security based on customizable API keys.
-
-Mainflux Auth Server also provides user accounts and device and application access control with simple customizable scheme based on scoped JWTs.
 
 ### Install/Deploy
  
@@ -63,7 +55,7 @@ An extensive (and incomplete) list of features includes:
 - SDK - set of client libraries for many HW platforms in several programming languages: C/C++, JavaScript, Go and Python
 - Device management and provisioning and OTA FW updates
 - Highly secured connections via TLS and DTLS
-- Enhanced and fine-grained security via deployment-ready [Mainflux Authentication and Authorization Server](https://github.com/mainflux/mainflux-auth-server) with Access Control scheme based on customizable API keys and scoped JWT
+- Enhanced and fine-grained security with Access Control Lists
 - Easy deployment and high system scalability via [Docker](https://www.docker.com/) images
 - Clear project roadmap, extensive development ecosystem and highly skilled developer community
 - And many more

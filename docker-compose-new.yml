@@ -1,0 +1,65 @@
+###
+# Copyright (c) 2015-2017 Mainflux
+#
+# Mainflux server is licensed under an Apache license, version 2.0 license.
+# All rights not explicitly granted in the Apache license, version 2.0 are reserved.
+# See the included LICENSE file for more details.
+###
+
+version: "2"
+
+services:
+  ###
+  # NATS
+  ###
+  nats:
+    image: nats:latest
+    container_name: mainflux-nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+
+  ###
+  # Manager
+  ###
+  manager:
+    image: mainflux/manager:latest
+    container_name: mainflux-manager
+    ports:
+      - "9090:9090"
+
+  ###
+  # Message Writer
+  ###
+  message-writer:
+    image: mainflux/message-writer:latest
+    container_name: mainflux-message-writer
+  
+  ###
+  # MQTT Broker
+  ###
+  mqtt-adapter:
+    image: mainflux/mqtt-adapter:latest
+    container_name: mainflux-mqtt
+    ports:
+      - "1883:1883"
+      - "8883:8883"
+
+  ###
+  # CoAP Server
+  ###
+  mainflux-coap:
+    image: mainflux/coap-adapter:latest
+    container_name: mainflux-coap
+    ports:
+      - "5683:5683"
+
+  ###
+  # HTTP Server
+  ###
+  http-adapter:
+    image: mainflux/http-adapter:latest
+    container_name: mainflux-http
+    ports:
+      - "7070:7070"
+

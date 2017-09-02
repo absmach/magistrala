@@ -3,6 +3,13 @@
 [![License](https://img.shields.io/badge/license-Apache%20v2.0-blue.svg)](LICENSE)
 [![Join the chat at https://gitter.im/Mainflux/mainflux](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Mainflux/mainflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+> **NOTE**
+>
+> Mainflux is currently under heavy refractoring, moving to `go-kit` framework and `Cassandra` database for v1.0.0 release.
+> Release ETA: end of September
+>
+> **Docker composition will unusable during this period - use direct install**
+
 ### About
 Mainflux is modern massively-scalable and [highly-secured](#security) open source and patent-free IoT cloud platform written in Go, based on a set of [microservices](#architecture).
 
@@ -20,7 +27,6 @@ Mainflux IoT cloud is composed of several components, i.e. microservices:
 | [http-adapter](https://github.com/mainflux/http-adapter) | HTTP message API server |
 | [manager](https://github.com/mainflux/manager) | Service for managing platform resources, including auth |
 | [message-writer](https://github.com/mainflux/message-writer) | Worker behind NATS that writes messages into Cassandra DB |
-| message-reader (WIP) | HTTP API server for reading messages from DB |
 | [mqtt-adapter](https://github.com/mainflux/mqtt-adapter) | MQTT PUB/SUB Broker (with WebSocket support) |
 | [mainflux-coap](https://github.com/mainflux/mainflux-coap) | CoAP Server |
 | [mainflux-ui](https://github.com/mainflux/mainflux-ui)     | System Dashboard in Angular 2 Material |

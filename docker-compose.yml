@@ -10,28 +10,6 @@ version: "2"
 
 services:
   ###
-  # InfluxDB
-  ###
-  influx:
-    image: influxdb:latest
-    container_name: mainflux-influxdb
-    ports:
-      - "8083:8083"
-      - "8086:8086"
-      - "8090:8090"
-
-  ###
-  # MongoDB
-  ###
-  mongo:
-    image: mongo:latest
-    ports:
-      - "27017:27017"
-      - "28017:28017"
-    container_name: mainflux-mongodb
-    command: --smallfiles --nojournal
-
-  ###
   # NATS
   ###
   nats:
@@ -42,54 +20,46 @@ services:
       - "8222:8222"
 
   ###
-  # Mainflux MQTT Broker
+  # Manager
   ###
-  mainflux-mqtt:
-    image: mainflux/mainflux-mqtt:latest
+  manager:
+    image: mainflux/manager:latest
+    container_name: mainflux-manager
+    ports:
+      - "9090:9090"
+
+  ###
+  # Message Writer
+  ###
+  message-writer:
+    image: mainflux/message-writer:latest
+    container_name: mainflux-message-writer
+  
+  ###
+  # MQTT Broker
+  ###
+  mqtt-adapter:
+    image: mainflux/mqtt-adapter:latest
     container_name: mainflux-mqtt
     ports:
       - "1883:1883"
       - "8883:8883"
 
   ###
-  # Mainflux CoAP Server
+  # CoAP Server
   ###
   mainflux-coap:
-    image: mainflux/mainflux-coap:latest
+    image: mainflux/coap-adapter:latest
     container_name: mainflux-coap
     ports:
       - "5683:5683"
 
   ###
-  # Mainflux HTTP Sender
+  # HTTP Server
   ###
-  mainflux-http-sender:
-    image: mainflux/mainflux-http-sender:latest
-    container_name: mainflux-http-sender
+  http-adapter:
+    image: mainflux/http-adapter:latest
+    container_name: mainflux-http
     ports:
       - "7070:7070"
 
-  ###
-  # Mainflux InfluxDB Writer
-  ###
-  mainflux-influxdb-writer:
-    image: mainflux/mainflux-influxdb-writer:latest
-    container_name: mainflux-influxdb-writer
-
-  ###
-  # Mainflux InfluxDB Reader
-  ###
-  mainflux-influxdb-reader:
-    image: mainflux/mainflux-influxdb-reader:latest
-    container_name: mainflux-influxdb-reader
-    ports:
-      - "7080:7080"
-
-  ###
-  # Mainflux Manager
-  ###
-  mainflux-manager:
-    image: mainflux/mainflux-manager:latest
-    container_name: mainflux-manager
-    ports:
-      - "9090:9090"

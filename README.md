@@ -5,7 +5,7 @@
 
 > **NOTE**
 >
-> Mainflux is currently under heavy refractoring, moving to `go-kit` framework and `Cassandra` database for v1.0.0 release.
+> Mainflux is currently under heavy refactoring, moving to `go-kit` framework and `Cassandra` database for `v1.0.0` release.
 > Release ETA: end of September
 >
 > **Docker composition will unusable during this period - use direct install**

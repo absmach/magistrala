@@ -36,7 +36,7 @@ Mainflux IoT cloud is composed of several components, i.e. microservices:
 | [NATS](https://github.com/nats-io/gnatsd)                  | System event bus |
 | [NGINX](https://github.com/nginx/nginx)                    | Reverse Proxy with Auth forwarding |
 
-![arch](https://raw.githubusercontent.com/mainflux/doc/master/img/Architecture.png)
+![arch](https://raw.githubusercontent.com/mainflux/doc/master/docs/images/architecture.png)
 
 Docker composition that constitues Mainflux IoT infrastructure is defined in the [`docker-compose.yml`](https://github.com/Mainflux/mainflux/blob/master/docker-compose.yml).
 

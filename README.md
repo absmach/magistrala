@@ -66,8 +66,20 @@ An extensive (and incomplete) list of features includes:
 - Clear project roadmap, extensive development ecosystem and highly skilled developer community
 - And many more
 
+### Roadmap
+- [x] Use `go-kit` microservice framework
+- [x] Switch to `Cassandra`
+- [x] Use Docker multi-stage builds
+- [ ] Enable service discovery (`Consul` or `etcd`)
+- [ ] Finish `Dashflux` (Mainflux UI) MVP
+- [ ] Release `v1.0.0` (ETA: end of September)
+- [ ] Deploy public cloud
+- [ ] E2E tests and benchmarks
+- [ ] Ansible and Terraform deployment scripts
+- [ ] Kubernetes deployment procedure
+
 ### Documentation
-Mainflux documentation can be found [here](http://mainflux.io/).
+Mainflux documentation can be found [here](http://mainflux.readthedocs.io).
 
 ### Community
 #### Mailing list

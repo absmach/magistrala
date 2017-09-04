@@ -8,7 +8,7 @@
 > Mainflux is currently under heavy refactoring, moving to `go-kit` framework and `Cassandra` database for `v1.0.0` release.
 > Release ETA: end of September
 >
-> **Docker composition will unusable during this period - use direct install**
+> **Docker composition will be unusable during this period - use direct install**
 
 ### About
 Mainflux is modern massively-scalable and [highly-secured](#security) open source and patent-free IoT cloud platform written in Go, based on a set of [microservices](#architecture).

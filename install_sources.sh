@@ -13,29 +13,29 @@ fi
 export GOBIN=$GOPATH/bin
 export PATH=$PATH:$GOBIN
 
-# InfluxDB Writer
-go get -v github.com/mainflux/mainflux-influxdb-writer
+# Manager
+go get -v github.com/mainflux/manager
 
-# InfluxDB Reader
-go get -v github.com/mainflux/mainflux-influxdb-reader
+# Message Writer
+go get -v github.com/mainflux/message-writer
 
 # HTTP
-go get -v github.com/mainflux/mainflux-http-sender
+go get -v github.com/mainflux/http-adapter
 
-# Auth
-go get -v github.com/mainflux/mainflux-auth
+# CoAP
+go get -v github.com/mainflux/coap-adapter
 
 # Cli
 go get -v github.com/mainflux/mainflux-cli
 
 # MQTT
-git clone https://github.com/mainflux/mainflux-mqtt
-cd mainflux-mqtt
+git clone https://github.com/mainflux/mqtt-adapter
+cd mqtt-adapter
 npm install
 cd ..
 
 # NGINX Conf
-git clone https://github.com/mainflux/mainflux-nginx
+git clone https://github.com/mainflux/nginx-conf
 
 # NATS
 go get -v github.com/nats-io/gnatsd
@@ -55,21 +55,19 @@ cat << EOF
 
 - Go sources are located at $GOPATH/src
 - Go binaries are located are $GOBIN
-- MQTT NodeJS sources are located at $PWD/mainflux/mainflux-mqtt
-- NGINX config files are located  in $PWD/mainflux/mainflux-nginx
+- MQTT NodeJS sources are located at $PWD/mainflux/mqtt-adapter
+- NGINX config files are located  in $PWD/mainflux/nginx-conf
 
 External dependencies needed for Mainflux are:
-- InfluxDB
+- Cassandra
 - NATS
-- Redis
 - NGINX
 
-NATS have been installed, for MongoDB, Redis and NGINX
-run something like:
+NATS have been installed.
+For Cassandra follow the instructions at http://cassandra.apache.org/download/
+For NGINX follow the instructions here: http://nginx.org/en/docs/install.html
 
-sudo apt-get install influxdb redis-server nginx
-
-NGINX config has been cloned in mainflux-nginx,
+NGINX config has been cloned in nginx-conf,
 and these config files have to be copied to /etc/nginx once NGINX server
 is installed on the system.
 After copying these files you have to re-start the nginx service:

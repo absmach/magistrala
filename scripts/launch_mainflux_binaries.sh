@@ -15,10 +15,9 @@ function cleanup {
 }
 
 gnatsd &
-mainflux-http-sender &
-mainflux-influxdb-writer &
-mainflux-influxdb-reader &
-mainflux-manager &
+http-adapter &
+message-writer &
+manager &
 
 trap cleanup EXIT
 

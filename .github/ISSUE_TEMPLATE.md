@@ -1,13 +1,5 @@
-## Description of the problem or steps to reproduce
+Please note that issues opened for this repo are used for Mainflux project management.
 
-## Specifications
+As a consequence, please open only feature requests or project-wide issues here.
 
-### Version
-You can read VERSION file to get the current Mainflux version.
-
-### Component Commit Hash
-If you are filing and issue for a component, then it would be great to provide us
-the component latest commit hash. You can use `<mainflux-component> --version`
-(e.g. `http-adapter --version`) to get the component commit hash.
-
-Commit hash:
+Component-specific bugs should be reported in a component repo - for example all `http-adapter` issues should be opened [here](https://github.com/mainflux/http-adapter/issues)

@@ -184,5 +184,5 @@ For more details, see the [MAINTAINERS](MAINTAINERS) page.
 
 ## Documentation Styleguide
 
-* Use [Markdown](https://daringfireball.net/projects/markdown)
+* Use [Markdown](https://daringfireball.net/projects/markdown) for READMEs and similar
 * Use [Godoc](https://blog.golang.org/godoc-documenting-go-code) for in-code documentation

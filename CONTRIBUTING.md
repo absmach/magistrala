@@ -47,7 +47,7 @@ Please adhere to the coding conventions used throughout a project (indentation,
 accurate comments, etc.) and any other requirements (such as test coverage).
 
 * Follow the [EffectiveGo](https://golang.org/doc/effective_go.html) styleguide
-* Follow the [JavaScript](https://github.com/styleguide/javascript) styleguide
+* Follow the [Google's JavaScript styleguide](https://google.github.io/styleguide/jsguide.html)
 * Document new code based on the [Documentation Styleguide](#documentation-styleguide)
 * End files with a newline
 
@@ -185,6 +185,4 @@ For more details, see the [MAINTAINERS](MAINTAINERS) page.
 ## Documentation Styleguide
 
 * Use [Markdown](https://daringfireball.net/projects/markdown)
-* Use [Doxygen](https://www.stack.nl/~dimitri/doxygen/manual/docblocks.html) documenting styleguide
-* Specifficaly, use [JavaDoc](https://en.wikipedia.org/wiki/Javadoc) flavor
-* See [Atomthreads](https://github.com/kelvinlawson/atomthreads/blob/master/kernel/atomkernel.c) project for fantastic example of code commenting
+* Use [Godoc](https://blog.golang.org/godoc-documenting-go-code) for in-code documentation

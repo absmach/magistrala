@@ -77,7 +77,7 @@ An extensive (and incomplete) list of features includes:
 - [ ] Ansible and Terraform deployment scripts
 - [ ] Kubernetes deployment procedure
 
-Project task management is done via [GitHub Projects](https://github.com/mainflux/mainflux/projects/2), through issues opened in this repo.
+Project task management is done via [GitHub issues](https://github.com/Mainflux/mainflux/issues) opened for this repo and properly labeled.
 
 ### Documentation
 Mainflux documentation can be found [here](http://mainflux.readthedocs.io).

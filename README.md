@@ -77,6 +77,8 @@ An extensive (and incomplete) list of features includes:
 - [ ] Ansible and Terraform deployment scripts
 - [ ] Kubernetes deployment procedure
 
+Project task management is done through GitHub issues of this repo, and presented on project's scrum board on Waffle: https://waffle.io/mainflux/mainflux
+
 ### Documentation
 Mainflux documentation can be found [here](http://mainflux.readthedocs.io).
 

@@ -1,0 +1,43 @@
+################################################################
+# Global configuration
+################################################################
+
+# Entrypoints to be used by frontends that do not specify any entrypoint.
+# Each frontend can specify its own entrypoints.
+defaultEntryPoints = ["http"]
+
+# Entrypoints definition
+[entryPoints]
+    [entryPoints.http]
+    address = ":3000"
+
+[frontends]
+    [frontends.frontend_manager]
+    backend = "backend_manager"
+        [frontends.frontend_manager.routes.routes_manager]
+        rule = "Path: /info, /users, /users/{id:[0-9]+}, /tokens, /clients, /clients/{id:[0-9]+}, /channels, /channels/{id:[0,9]+}"
+[backends]
+    [backends.backend_manager]
+        [backends.backend_manager.servers.server1]
+        url = "http://localhost:8180"
+
+        [frontends.frontend_manager.headers.customresponseheaders]
+        Access-Control-Allow-Origin = "*"
+
+################################################################
+# Web configuration backend
+################################################################
+
+# Enable web configuration backend
+[web]
+
+# Web administration port
+address = ":8080"
+
+################################################################
+# File configuration backend
+################################################################
+
+# Enable File configuration backend
+[file]
+

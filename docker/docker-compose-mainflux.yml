@@ -6,18 +6,9 @@
 # See the included LICENSE file for more details.
 ###
 
-version: "2"
+version: "3"
 
 services:
-  ###
-  # NATS
-  ###
-  nats:
-    image: nats:latest
-    container_name: mainflux-nats
-    ports:
-      - "4222:4222"
-      - "8222:8222"
 
   ###
   # Manager
@@ -27,6 +18,11 @@ services:
     container_name: mainflux-manager
     ports:
       - "9090:9090"
+    external_links:
+      - mainflux-cassandra:cassandra
+    environment:
+      - MANAGER_DB_CLUSTER=cassandra
+      - MANAGER_DB_KEYSPACE=manager
 
   ###
   # Message Writer
@@ -34,6 +30,14 @@ services:
   message-writer:
     image: mainflux/message-writer:latest
     container_name: mainflux-message-writer
+    network_mode: bridge
+    external_links:
+      - mainflux-nats:nats
+      - mainflux-cassandra:cassandra
+    environment:
+      - MESSAGE_WRITER_DB_CLUSTER=cassandra
+      - MESSAGE_WRITER_DB_KEYSPACE=message_writer
+      - MESSAGE_WRITER_NATS_URL=nats://nats:4222
   
   ###
   # MQTT Broker
@@ -44,6 +48,11 @@ services:
     ports:
       - "1883:1883"
       - "8883:8883"
+    network_mode: bridge
+    external_links:
+      - mainflux-nats:nats
+    environment:
+      - MQTT_ADAPTER_NATS_URL=nats://nats:4222
 
   ###
   # CoAP Server
@@ -53,6 +62,9 @@ services:
     container_name: mainflux-coap
     ports:
       - "5683:5683"
+    network_mode: bridge
+    external_links:
+      - mainflux-nats:nats
 
   ###
   # HTTP Server
@@ -60,6 +72,11 @@ services:
   http-adapter:
     image: mainflux/http-adapter:latest
     container_name: mainflux-http
+    network_mode: bridge
     ports:
       - "7070:7070"
+    external_links:
+      - mainflux-nats:nats
+    environment:
+      - HTTP_ADAPTER_NATS_URL=nats://nats:4222
 

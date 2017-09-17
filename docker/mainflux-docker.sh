@@ -79,10 +79,37 @@ _start() {
 
   # Check if C* is alive
   printf "\nWaiting for Cassandra to start. This takes time, please be patient...\n"
-  sleep 20
+  
+  # Wait until Cassandra is ready to accept cqlsh commands
+  # or timeout after 15 sec
+  c_on=0
+  retries=0
+  while [[ $retries -lt 15 ]]
+  do
+    # Check if C* port 9042 is open
+    if $(docker exec -it mainflux-cassandra cqlsh -e "exit" > /dev/null 2>&1)
+    then
+      # Sucess
+      c_on=1
+      break
+    fi
+
+    sleep 1
+    printf "."
+    retries=$((retries + 1))
+  done
+
+  # If Cassandra did not start then shut down everything and exit
+  if [[ $c_on -eq 0 ]]
+  then
+    printf "\nCassandra did not start - shuting down everything.\n"
+    docker-compose -f docker-compose-nats-cassandra-traefik.yml stop
+    exit 0
+  else
+    printf "OK\n"
+  fi
 
   # Create C* keyspaces, if missing
-  printf "\nSetting up Cassandra...\n"
   docker exec -it mainflux-cassandra cqlsh -e "CREATE KEYSPACE IF NOT EXISTS manager WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };"
   docker exec -it mainflux-cassandra cqlsh -e "CREATE KEYSPACE IF NOT EXISTS message_writer WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };"
 
@@ -106,7 +133,7 @@ _stop() {
   printf "Stopping Mainflux composition...\n\n"
   docker-compose -f docker-compose-mainflux.yml stop
 
-  printf "Stopping NATS, Cassandra and Traefik...\n\n"
+  printf "\nStopping NATS, Cassandra and Traefik...\n\n"
   docker-compose -f docker-compose-nats-cassandra-traefik.yml stop
 
   printf "\n*** MAINFLUX IS OFF ***\n\n"

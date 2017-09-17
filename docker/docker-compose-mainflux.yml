@@ -55,18 +55,6 @@ services:
       - MQTT_ADAPTER_NATS_URL=nats://nats:4222
 
   ###
-  # CoAP Server
-  ###
-  mainflux-coap:
-    image: mainflux/coap-adapter:latest
-    container_name: mainflux-coap
-    ports:
-      - "5683:5683"
-    network_mode: bridge
-    external_links:
-      - mainflux-nats:nats
-
-  ###
   # HTTP Server
   ###
   http-adapter:

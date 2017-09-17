@@ -1,0 +1,28 @@
+###
+# Copyright (c) 2015-2017 Mainflux
+#
+# Mainflux server is licensed under an Apache license, version 2.0 license.
+# All rights not explicitly granted in the Apache license, version 2.0 are reserved.
+# See the included LICENSE file for more details.
+###
+
+version: "3"
+
+services:
+
+  ###
+  # Traefik
+  ###
+  traefik:
+    image: traefik:latest
+    container_name: mainflux-traefik
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - $PWD/traefik.toml:/var/traefik/traefik.toml
+    network_mode: bridge
+    ports:
+      - "3000:3000"
+      - "8080:8080"
+    external_links:
+      - mainflux-http
+

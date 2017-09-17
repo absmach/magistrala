@@ -6,7 +6,7 @@
 set -o nounset
 
 # Exit immediately if a pipeline returns non-zero.
-set -o errexit
+#set -o errexit
 
 # Print a helpful message if a pipeline with non-zero exit code causes the
 # script to exit as described above.
@@ -69,13 +69,13 @@ _start() {
   # Start NATS, Cassandra and Traefik
   printf "Starting NATS, Cassandra and Traefik...\n\n"
 
-  NB_DOCKERS=$(docker ps -a -f name=mainflux-nats -f name=mainflux-cassandra -f name=mainflux-traefik | wc -l)
-  if [[ $NB_DOCKERS -lt 4 ]]
+  NB_DOCKERS=$(docker ps -a -f name=mainflux-nats -f name=mainflux-cassandra | wc -l)
+  if [[ $NB_DOCKERS -lt 3 ]]
   then
-    docker-compose -f docker-compose-nats-cassandra-traefik.yml pull
-    docker-compose -f docker-compose-nats-cassandra-traefik.yml create
+    docker-compose -f docker-compose-nats-cassandra.yml pull
+    docker-compose -f docker-compose-nats-cassandra.yml create
   fi
-  docker-compose -f docker-compose-nats-cassandra-traefik.yml start
+  docker-compose -f docker-compose-nats-cassandra.yml start
 
   # Check if C* is alive
   printf "\nWaiting for Cassandra to start. This takes time, please be patient...\n"
@@ -103,7 +103,7 @@ _start() {
   if [[ $c_on -eq 0 ]]
   then
     printf "\nCassandra did not start - shuting down everything.\n"
-    docker-compose -f docker-compose-nats-cassandra-traefik.yml stop
+    docker-compose -f docker-compose-nats-cassandra.yml stop
     exit 0
   else
     printf "OK\n"
@@ -124,17 +124,37 @@ _start() {
   fi
   docker-compose -f docker-compose-mainflux.yml start
 
+  # Start Traefik
+  printf "\nStarting Traefik...\n\n"
+
+  NB_DOCKERS=$(docker ps -a -f name=traefik | wc -l)
+  if [[ $NB_DOCKERS -lt 2 ]]
+  then
+    docker-compose -f docker-compose-traefik.yml pull
+    docker-compose -f docker-compose-traefik.yml create
+  fi
+  docker-compose -f docker-compose-traefik.yml start
+
+  if [[ $? -ne 0 ]]
+  then
+    _stop
+    exit 1
+  fi
+
   printf "\n*** MAINFLUX IS ON ***\n\n"
 
   docker ps
 }
 
 _stop() {
+  printf "\nStopping Traefik...\n\n"
+  docker-compose -f docker-compose-traefik.yml stop
+
   printf "Stopping Mainflux composition...\n\n"
   docker-compose -f docker-compose-mainflux.yml stop
 
-  printf "\nStopping NATS, Cassandra and Traefik...\n\n"
-  docker-compose -f docker-compose-nats-cassandra-traefik.yml stop
+  printf "\nStopping NATS and Cassandra...\n\n"
+  docker-compose -f docker-compose-nats-cassandra.yml stop
 
   printf "\n*** MAINFLUX IS OFF ***\n\n"
 }

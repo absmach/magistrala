@@ -19,7 +19,7 @@ defaultEntryPoints = ["http"]
 [backends]
     [backends.backend_manager]
         [backends.backend_manager.servers.server1]
-        url = "http://localhost:8180"
+        url = "http://mainflux-http:8180"
 
         [frontends.frontend_manager.headers.customresponseheaders]
         Access-Control-Allow-Origin = "*"

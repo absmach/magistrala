@@ -31,15 +31,3 @@ services:
       - "9042:9042"
       - "9160:9160"
 
-  ###
-  # Traefik
-  ###
-  traefik:
-    image: traefik:latest
-    container_name: mainflux-traefik
-    volumes:
-      - ./traefik.toml:/etc/traefik/traefik.toml
-    network_mode: bridge
-    ports:
-      - "3000:3000"
-

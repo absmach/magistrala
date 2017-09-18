@@ -3,13 +3,6 @@
 [![License](https://img.shields.io/badge/license-Apache%20v2.0-blue.svg)](LICENSE)
 [![Join the chat at https://gitter.im/Mainflux/mainflux](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Mainflux/mainflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-> **NOTE**
->
-> Mainflux is currently under heavy refactoring, moving to `go-kit` framework and `Cassandra` database for `v1.0.0` release.
-> Release ETA: end of September
->
-> **Docker composition will be unusable during this period - use direct install**
-
 ### About
 Mainflux is modern massively-scalable and [highly-secured](#security) open source and patent-free IoT cloud platform written in Go, based on a set of [microservices](#architecture).
 
@@ -40,18 +33,31 @@ Mainflux IoT cloud is composed of several components, i.e. microservices:
 Docker composition that constitues Mainflux IoT infrastructure is defined in the [`docker-compose.yml`](https://github.com/Mainflux/mainflux/blob/master/docker-compose.yml).
 
 ### Install/Deploy
- 
+
+#### Docker Composition
 - Clone the repo:
 ```bash
-git clone https://github.com/Mainflux/mainflux.git && cd mainflux
+git clone https://github.com/Mainflux/mainflux.git
 ```
 
-- Start the Docker composition:
+- Go to `mainflux/docker` dir:
+```
+cd mainflux/docker
+```
+
+- Use `mainflux_docker.sh` script to start the Docker composition:
 ```bash
-docker-compose up
+./mainflux_docker.sh start
 ```
 
 This will automatically download Docker images from [Mainflux Docker Hub](https://hub.docker.com/u/mainflux/) and deploy the composition of Mianflux microservices.
+
+### From Sources
+Use script [install_sources.sh](install_sources.sh).
+
+This will create `./mainflux_sources` dir, git-clone all the sources from GitHub repos and place them in appropriate destination (Go code goes to $GOPATH, symlinks are created).
+
+It will also give you the instructions how to finish the installation manually.
 
 ### Features
 An extensive (and incomplete) list of features includes:

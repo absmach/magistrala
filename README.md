@@ -30,8 +30,6 @@ Mainflux IoT cloud is composed of several components, i.e. microservices:
 
 ![arch](https://github.com/mainflux/doc/blob/master/docs/img/architecture.jpg)
 
-Docker composition that constitues Mainflux IoT infrastructure is defined in the [`docker-compose.yml`](https://github.com/Mainflux/mainflux/blob/master/docker-compose.yml).
-
 ### Install/Deploy
 
 #### Docker Composition

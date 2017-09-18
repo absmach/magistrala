@@ -45,15 +45,15 @@ git clone https://github.com/Mainflux/mainflux.git
 cd mainflux/docker
 ```
 
-- Use `mainflux_docker.sh` script to start the Docker composition:
+- Use [`mainflux-docker.sh`](docker/mainflux-docker.sh) script to start the Docker composition:
 ```bash
-./mainflux_docker.sh start
+./mainflux-docker.sh start
 ```
 
 This will automatically download Docker images from [Mainflux Docker Hub](https://hub.docker.com/u/mainflux/) and deploy the composition of Mianflux microservices.
 
 ### From Sources
-Use script [install_sources.sh](install_sources.sh).
+Use script [`install_sources.sh`](install_sources.sh).
 
 This will create `./mainflux_sources` dir, git-clone all the sources from GitHub repos and place them in appropriate destination (Go code goes to $GOPATH, symlinks are created).
 

@@ -1,0 +1,66 @@
+###
+# Copyright (c) 2015-2017 Mainflux
+#
+# Mainflux server is licensed under an Apache license, version 2.0 license.
+# All rights not explicitly granted in the Apache license, version 2.0 are reserved.
+# See the included LICENSE file for more details.
+###
+
+version: "3"
+
+services:
+
+  ###
+  # cAdvisor
+  ###
+  cadvisor:
+    image: google/cadvisor
+    container_name: mainflux-cadvisor
+    ports:
+      - 8080:8080
+    network_mode: bridge
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+
+  ###
+  # Prometheus Pushgateway
+  ###
+  prometheus-gateway:
+    image: prom/pushgateway
+    container_name: mainflux-prometheus-gateway
+    network_mode: bridge
+    ports:
+      - 9091:9091
+
+  ###
+  # Prometheus Server
+  ###
+  prometheus-server:
+    image: prom/prometheus
+    container_name: mainflux-prometheus
+    network_mode: bridge
+    ports:
+      - 9090:9090
+    links:
+      - cadvisor:cadvisor
+      - metrics-gateway:metrics-gateway
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  ###
+  # Grafana
+  ###
+  grafana:
+    image: grafana/grafana
+    container_name: mainflux-grafana
+    network_mode: bridge
+    ports:
+      - 3000:3000
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=secret
+    links:
+      - prometheus-server:prometheus
+

@@ -24,5 +24,6 @@ services:
       - "3000:3000"
       - "8080:8080"
     external_links:
+      - mainflux-manager
       - mainflux-http
 

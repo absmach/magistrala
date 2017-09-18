@@ -16,8 +16,9 @@ services:
   manager:
     image: mainflux/manager:latest
     container_name: mainflux-manager
+    network_mode: bridge
     ports:
-      - "9090:9090"
+      - "8180:8180"
     external_links:
       - mainflux-cassandra:cassandra
     environment:

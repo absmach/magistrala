@@ -18,7 +18,7 @@ services:
     container_name: mainflux-traefik
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - $PWD/traefik.toml:/var/traefik/traefik.toml
+      - $PWD/traefik.toml:/etc/traefik/traefik.toml
     network_mode: bridge
     ports:
       - "3000:3000"

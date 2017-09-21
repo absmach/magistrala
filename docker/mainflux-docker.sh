@@ -66,8 +66,8 @@ HEREDOC
 
 _start() {
 
-  # Start NATS, Cassandra and Traefik
-  printf "Starting NATS, Cassandra and Traefik...\n\n"
+  # Start NATS, Cassandra and Nginx
+  printf "Starting NATS, Cassandra and Nginx...\n\n"
 
   NB_DOCKERS=$(docker ps -a -f name=mainflux-nats -f name=mainflux-cassandra | wc -l)
   if [[ $NB_DOCKERS -lt 3 ]]
@@ -79,7 +79,7 @@ _start() {
 
   # Check if C* is alive
   printf "\nWaiting for Cassandra to start. This takes time, please be patient...\n"
-  
+
   # Wait until Cassandra is ready to accept cqlsh commands
   # or timeout after 15 sec
   c_on=0
@@ -124,16 +124,16 @@ _start() {
   fi
   docker-compose -f docker-compose-mainflux.yml start
 
-  # Start Traefik
-  printf "\nStarting Traefik...\n\n"
+  # Start Nginx
+  printf "\nStarting Nginx...\n\n"
 
-  NB_DOCKERS=$(docker ps -a -f name=traefik | wc -l)
+  NB_DOCKERS=$(docker ps -a -f name=nginx | wc -l)
   if [[ $NB_DOCKERS -lt 2 ]]
   then
-    docker-compose -f docker-compose-traefik.yml pull
-    docker-compose -f docker-compose-traefik.yml create
+    docker-compose -f docker-compose-nginx.yml pull
+    docker-compose -f docker-compose-nginx.yml create
   fi
-  docker-compose -f docker-compose-traefik.yml start
+  docker-compose -f docker-compose-nginx.yml start
 
   if [[ $? -ne 0 ]]
   then
@@ -147,8 +147,8 @@ _start() {
 }
 
 _stop() {
-  printf "\nStopping Traefik...\n\n"
-  docker-compose -f docker-compose-traefik.yml stop
+  printf "\nStopping Nginx...\n\n"
+  docker-compose -f docker-compose-nginx.yml stop
 
   printf "Stopping Mainflux composition...\n\n"
   docker-compose -f docker-compose-mainflux.yml stop
@@ -188,7 +188,7 @@ _main() {
   if [[ $# -eq 0 ]] ; then
     _print_help
   fi
-  
+
   # Avoid complex option parsing when only one program option is expected.
   if [[ "${1:-}" =~ ^-h|--help$  ]]
   then

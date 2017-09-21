@@ -23,11 +23,10 @@ services:
       - $PWD/ssl/dhparam.pem:/etc/ssl/certs/dhparam.pem
     network_mode: bridge
     ports:
-      - "3000:80"
-      - "4443:443"
+      - "80:80"
+      - "443:443"
       - "8883:8883"
     external_links:
       - mainflux-manager
       - mainflux-http
       - mainflux-mqtt
-

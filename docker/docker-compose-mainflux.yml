@@ -39,7 +39,7 @@ services:
       - MESSAGE_WRITER_DB_CLUSTER=cassandra
       - MESSAGE_WRITER_DB_KEYSPACE=message_writer
       - MESSAGE_WRITER_NATS_URL=nats://nats:4222
-  
+
   ###
   # MQTT Broker
   ###
@@ -48,7 +48,6 @@ services:
     container_name: mainflux-mqtt
     ports:
       - "1883:1883"
-      - "8883:8883"
     network_mode: bridge
     external_links:
       - mainflux-nats:nats
@@ -68,4 +67,3 @@ services:
       - mainflux-nats:nats
     environment:
       - HTTP_ADAPTER_NATS_URL=nats://nats:4222
-

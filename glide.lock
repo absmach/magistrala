@@ -1,5 +1,5 @@
-hash: 5689f63c32ebf4734fa0e7932fbdac208ddf860163711b866f56cf946383e90d
-updated: 2017-09-23T00:58:00.140795482+02:00
+hash: 76e5d031517c055f5f10b0af9c24c52451001124986e629d9b6183b0b32de118
+updated: 2017-09-23T01:17:04.474123796+02:00
 imports:
 - name: github.com/beorn7/perks
   version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
@@ -42,6 +42,13 @@ imports:
   version: c12348ce28de40eed0136aa2b644d0ee0650e56c
   subpackages:
   - pbutil
+- name: github.com/nats-io/go-nats
+  version: 29f9728a183bf3fa7e809e14edac00b33be72088
+  subpackages:
+  - encoders/builtin
+  - util
+- name: github.com/nats-io/nuid
+  version: 3cf34f9fca4e88afa9da8eabd75e3326c9941b44
 - name: github.com/prometheus/client_golang
   version: c5b7fccd204277076155f10851dad72b76a49317
   subpackages:
@@ -61,16 +68,24 @@ imports:
   version: e645f4e5aaa8506fc71d6edbc5c4ff02c04c46f2
   subpackages:
   - xfs
+- name: github.com/sirupsen/logrus
+  version: f006c2ac4710855cf0f916dd6b77acf6b048dc6e
 - name: golang.org/x/crypto
   version: 7d9177d70076375b9a59c8fde23d52d9c4a7ecd5
   subpackages:
   - bcrypt
   - blowfish
+  - ssh/terminal
 - name: golang.org/x/net
   version: 0744d001aa8470aaa53df28d32e5ceeb8af9bd70
   subpackages:
   - context
   - context/ctxhttp
+- name: golang.org/x/sys
+  version: 429f518978ab01db8bb6f44b66785088e7fba58b
+  subpackages:
+  - unix
+  - windows
 - name: gopkg.in/inf.v0
   version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
 testImports:

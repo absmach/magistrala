@@ -1,6 +1,7 @@
 package: github.com/mainflux/mainflux
 license: Apache License 2.0
 import:
+  - package: github.com/cisco/senml
   - package: github.com/dgrijalva/jwt-go
     version: 3.0.0
   - package: github.com/gocql/gocql

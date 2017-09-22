@@ -1,10 +1,12 @@
-hash: 76e5d031517c055f5f10b0af9c24c52451001124986e629d9b6183b0b32de118
-updated: 2017-09-23T01:17:04.474123796+02:00
+hash: 7e2b4e5676369afcb20935bb2e0c4acdc8e9a91f16971bb4a57b996e9e93ca1b
+updated: 2017-09-23T01:53:39.035665337+02:00
 imports:
 - name: github.com/beorn7/perks
   version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
   subpackages:
   - quantile
+- name: github.com/cisco/senml
+  version: eb356817a51441202197049d8e7ae3c3755d8965
 - name: github.com/dgrijalva/jwt-go
   version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
 - name: github.com/go-kit/kit
@@ -70,6 +72,10 @@ imports:
   - xfs
 - name: github.com/sirupsen/logrus
   version: f006c2ac4710855cf0f916dd6b77acf6b048dc6e
+- name: github.com/ugorji/go
+  version: 54210f4e076c57f351166f0ed60e67d3fca57a36
+  subpackages:
+  - codec
 - name: golang.org/x/crypto
   version: 7d9177d70076375b9a59c8fde23d52d9c4a7ecd5
   subpackages:

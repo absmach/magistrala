@@ -1,0 +1,11 @@
+[Unit]
+Description=SenML Server
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/senmlServer -ijsons -http 8880 -expand -linp -topic senml -post http://10.1.3.17:8086/write?db=fh2
+
+
+[Install]
+WantedBy=multi-user.target
+

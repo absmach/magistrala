@@ -1,0 +1,498 @@
+swagger: "2.0"
+info:
+  title: Mainflux manager service
+  description: HTTP API for managing platform users, devices, applications and channels.
+  version: "1.0.0"
+consumes:
+  - "application/json"
+produces:
+  - "application/json"
+paths:
+  /users:
+    post:
+      summary: Registers user account
+      description: |
+        Registers new user account given email and password. New account will
+        be uniquely identified by its email address.
+      tags:
+        - users
+      parameters:
+        - name: user
+          description: JSON-formatted document describing the new user.
+          in: body
+          schema:
+            $ref: "#/definitions/User"
+          required: true
+      responses:
+        201:
+          description: Registered new user.
+        400:
+          description: Failed due to malformed JSON.
+        409:
+          description: Failed due to using an existing email address.
+        500:
+          $ref: "#/responses/ServiceError"
+  /tokens:
+    post:
+      summary: User authentication
+      description: |
+        Generates an access token when provided with proper credentials.
+      tags:
+        - users
+      parameters:
+        - name: credentials
+          description: JSON-formatted document containing user credentials.
+          in: body
+          schema:
+            $ref: "#/definitions/User"
+          required: true
+      responses:
+        201:
+          description: User authenticated.
+          schema:
+            $ref: "#/definitions/Token"
+        400:
+          description: |
+            Failed due to malformed JSON or using an invalid credentials.
+        500:
+          $ref: "#/responses/ServiceError"
+  /clients:
+    post:
+      summary: Adds new client
+      description: |
+        Adds new client to the list of clients owned by user identified using
+        the provided access token.
+      tags:
+        - clients
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - name: client
+          description: JSON-formatted document describing the new client.
+          in: body
+          schema:
+            $ref: "#/definitions/ClientReq"
+          required: true
+      responses:
+        201:
+          description: Client registered.
+          headers:
+            Location:
+              type: string
+              description: Created client's relative URL (i.e. /clients/{clientId}).
+        400:
+          description: Failed due to malformed JSON.
+        403:
+          description: Missing or invalid access token provided.
+        500:
+          $ref: "#/responses/ServiceError"
+    get:
+      summary: Retrieves managed clients
+      description: |
+        Retrieves a list of managed clients. Due to performance concerns, data
+        is retrieved in subsets. The API clients must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
+      tags:
+        - clients
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/Size"
+        - $ref: "#/parameters/Offset"
+      responses:
+        200:
+          description: Data retrieved.
+          headers:
+            X-Count:
+              type: integer
+              description: |
+                Total number of managed clients. This value can be used to
+                implement the paging strategy on API clients.
+          schema:
+            $ref: "#/definitions/ClientList"
+        400:
+          description: Failed due to malformed query parameters.
+        403:
+          description: Missing or invalid access token provided.
+        500:
+          $ref: "#/responses/ServiceError"
+  /clients/{id}:
+    get:
+      summary: Retrieves client info
+      tags:
+        - clients
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/Id"
+      responses:
+        200:
+          description: Data retrieved.
+          schema:
+            $ref: "#/definitions/ClientRes"
+        403:
+          description: Missing or invalid access token provided.
+        404:
+          description: Client does not exist.
+        500:
+          $ref: "#/responses/ServiceError"
+    put:
+      summary: Updates client info
+      description: |
+        Update is performed by replacing the current resource data with values
+        provided in a request payload. Resource's unique identifier will not be
+        affected. Note that the client's type and ID cannot be changed.
+      tags:
+        - clients
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/Id"
+        - name: client
+          description: JSON-formatted document describing the updated client.
+          in: body
+          schema:
+            $ref: "#/definitions/ClientReq"
+          required: true
+      responses:
+        200:
+          description: Client updated.
+        400:
+          description: Failed due to malformed JSON.
+        403:
+          description: Missing or invalid access token provided.
+        404:
+          description: Client does not exist.
+        500:
+          $ref: "#/responses/ServiceError"
+    delete:
+      summary: Removes a client
+      description: |
+        Removes a client. The service will ensure that the removed client is
+        disconnected from all of the existing channels.
+      tags:
+        - clients
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/Id"
+      responses:
+        204:
+          description: Client removed.
+        403:
+          description: Missing or invalid access token provided.
+        500:
+          $ref: "#/responses/ServiceError"
+  /channels:
+    post:
+      summary: Creates new channel
+      description: |
+        Creates new channel. User identified by the provided access token will
+        be the channel's owner.
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - name: channel
+          description: JSON-formatted document describing the new channel.
+          in: body
+          schema:
+            $ref: "#/definitions/ChannelReq"
+          required: true
+      responses:
+        201:
+          description: Channel created.
+          headers:
+            Location:
+              type: string
+              description: Created channel's relative URL (i.e. /channels/{chanId}).
+        400:
+          description: Failed due to malformed JSON.
+        403:
+          description: Missing or invalid access token provided.
+        500:
+          $ref: "#/responses/ServiceError"
+    get:
+      summary: Retrieves managed channels
+      description: |
+        Retrieves a list of managed channels. Due to performance concerns, data
+        is retrieved in subsets. The API clients must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/Size"
+        - $ref: "#/parameters/Offset"
+      responses:
+        200:
+          description: Data retrieved.
+          headers:
+            X-Count:
+              type: integer
+              description: |
+                Total number of managed channels. This value can be used to
+                implement the paging strategy on API clients.
+          schema:
+            $ref: "#/definitions/ChannelList"
+        400:
+          description: Failed due to malformed query parameters.
+        403:
+          description: Missing or invalid access token provided.
+        500:
+          $ref: "#/responses/ServiceError"
+  /channels/{id}:
+    get:
+      summary: Retrieves channel info
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/Id"
+      responses:
+        200:
+          description: Data retrieved.
+          schema:
+            $ref: "#/definitions/ChannelRes"
+        403:
+          description: Missing or invalid access token provided.
+        404:
+          description: Channel does not exist.
+        500:
+          $ref: "#/responses/ServiceError"
+    put:
+      summary: Updates channel info
+      description: |
+        Update is performed by replacing the current resource data with values
+        provided in a request payload. Resource's unique identifier will not be
+        affected.
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/Id"
+        - name: channel
+          description: JSON-formatted document describing the updated channel.
+          in: body
+          schema:
+            $ref: "#/definitions/ChannelReq"
+          required: true
+      responses:
+        200:
+          description: Channel updated.
+        400:
+          description: Failed due to malformed JSON.
+        403:
+          description: Missing or invalid access token provided.
+        404:
+          description: Channel does not exist.
+        500:
+          $ref: "#/responses/ServiceError"
+    delete:
+      summary: Removes a channel
+      description: |
+        Removes a channel. The service will ensure that the subscribed apps and
+        devices are unsubscribed from the removed channel.
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/Id"
+      responses:
+        204:
+          description: Channel removed.
+        403:
+          description: Missing or invalid access token provided.
+        500:
+          $ref: "#/responses/ServiceError"
+  /channels/{id}/messages:
+    get:
+      summary: Checks whether a message can be read
+      description: |
+        Performs permission check on read request(s) redirected from message
+        reader service. Based on the response, the reader should either respond
+        with stored messages, or reject the request.
+      tags:
+        - messaging
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/Id"
+      responses:
+        202:
+          description: Message can be read from the channel.
+        403:
+          description: Message cannot be read from the channel.
+        500:
+          $ref: "#/responses/ServiceError"
+    post:
+      summary: Checks whether a message can be written
+      description: |
+        Performs permission check on write request(s) redirected from protocol
+        adapter(s). Based on the response, the adapter should either emit the
+        event, or reject the request.
+      tags:
+        - messaging
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/Id"
+      responses:
+        202:
+          description: Message can be written to the channel.
+        403:
+          description: Message cannot be written to the channel.
+        500:
+          $ref: "#/responses/ServiceError"
+
+parameters:
+  Authorization:
+    name: Authorization
+    description: User's access token.
+    in: header
+    type: string
+    required: true
+  Id:
+    name: id
+    description: Unique resource identifier.
+    in: path
+    type: string
+    format: uuid
+    required: true
+  Size:
+    name: size
+    description: Size of the subset to retrieve.
+    in: query
+    type: integer
+    default: 10
+    required: false
+  Offset:
+    name: offset
+    description: Number of items to skip during retrieval.
+    in: query
+    type: integer
+    default: 0
+    required: false
+
+responses:
+  ServiceError:
+    description: Unexpected server-side error occured.
+
+definitions:
+  ChannelList:
+    type: object
+    properties:
+      channels:
+        type: array
+        minItems: 0
+        uniqueItems: true
+        items:
+          $ref: "#/definitions/ChannelRes"
+    required:
+      - channels
+  ChannelRes:
+    type: object
+    properties:
+      id:
+        type: string
+        description: Unique channel identifier generated by the service.
+      name:
+        type: string
+        description: Free-form channel name.
+      connected:
+        type: array
+        minItems: 0
+        uniqueItems: true
+        items:
+          type: string
+    required:
+      - id
+      - name
+      - connected
+  ChannelReq:
+    type: object
+    properties:
+      name:
+        type: string
+        description: Free-form channel name.
+      connected:
+        type: array
+        minItems: 0
+        uniqueItems: true
+        items:
+          type: string
+  ClientList:
+    type: object
+    properties:
+      clients:
+        type: array
+        minItems: 0
+        uniqueItems: true
+        items:
+          $ref: "#/definitions/ClientRes"
+    required:
+      - clients
+  ClientRes:
+    type: object
+    properties:
+      id:
+        type: string
+        description: Unique client identifier generated by the service.
+      type:
+        type: string
+        enum:
+          - app
+          - device
+        description: Type of the client.
+      name:
+        type: string
+        description: Free-form client name.
+      key:
+        type: string
+        description: Auto-generated access key.
+      meta:
+        type: object
+        description: Client's meta-data.
+        additionalProperties:
+          type: string
+    required:
+      - id
+      - type
+      - key
+  ClientReq:
+    type: object
+    properties:
+      type:
+        type: string
+        enum:
+          - app
+          - device
+        description: Type of the client.
+      name:
+        type: string
+        description: Free-form client name.
+      meta:
+        type: object
+        description: Client's meta-data.
+        additionalProperties:
+          type: string
+    required:
+      - type
+  Token:
+    type: object
+    properties:
+      token:
+        type: string
+        description: Generated access token.
+    required:
+      - token
+  User:
+    type: object
+    properties:
+      email:
+        type: string
+        format: email
+        example: "test@example.com"
+        description: User's email address will be used as its unique identifier
+      password:
+        type: string
+        format: password
+        description: Free-form account password used for acquiring auth token(s).
+    required:
+      - email
+      - password

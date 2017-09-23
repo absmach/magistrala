@@ -1,0 +1,106 @@
+swagger: "2.0"
+info:
+  title: Mainflux http adapter
+  description: HTTP API for sending messages through communication channels.
+  version: "1.0.0"
+paths:
+  /channels/{id}/messages:
+    post:
+      summary: Sends message to the communication channel
+      description: |
+        Sends message to the communication channel. Messages can be sent as
+        JSON formatted SenML or as blob.
+      tags:
+        - messages
+      consumes:
+        - "application/senml+json"
+      produces: []
+      parameters:
+        - name: Authorization
+          description: Access token.
+          in: header
+          type: string
+          required: true
+        - name: id
+          description: Unique channel identifier.
+          in: path
+          type: string
+          format: uuid
+          required: true
+        - name: message
+          description: Message to be sent.
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/Message'
+      responses:
+        202:
+          description: Message is accepted for processing.
+        400:
+          description: Message discarded due to its malformed content.
+        403:
+          description: Message discarded due to missing or invalid credentials.
+        415:
+          description: Message discarded due to invalid content type.
+        500:
+          description: Unexpected server-side error occured.
+
+definitions:
+  Message:
+    type: array
+    minItems: 1
+    uniqueItems: true
+    items:
+      type: object
+      properties:
+        bn:
+          type: string
+          description: Base name
+        bt:
+          type: number
+          format: double
+          description: Base time
+        bu:
+          type: string
+          description: Base unit
+        bv:
+          type: number
+          format: double
+          description: Base value
+        bver:
+          type: integer
+          description: Base version
+        n:
+          type: string
+          description: Name
+        u:
+          type: string
+          description: Unit
+        v:
+          type: number
+          format: double
+          description: Value
+        vs:
+          type: string
+          description: String value
+        vb:
+          type: boolean
+          description: Boolean value
+        vd:
+          type: string
+          description: Data value
+        s:
+          type: number
+          format: double
+          description: Value sum
+        t:
+          type: number
+          format: double
+          description: Time
+        ut:
+          type: number
+          format: double
+          description: Update time
+        l:
+          type: string
+          description: Link

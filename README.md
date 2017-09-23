@@ -7,31 +7,20 @@
 
 ![banner][banner]
 
-Mainflux is modern, massively-scalable, highly-secured open source and patent-free IoT cloud
-platform written in Go.
+Mainflux is modern, scalable, secure open source and patent-free IoT cloud platform written in Go.
 
-It allows device, user and application connections over various network protocols, like HTTP, MQTT,
-WebSocket, and CoAP, making a seamless bridge between them. It is used as the IoT middleware for
-building complex IoT solutions.
+It accepts user, device, and application connections over various network protocols (i.e. HTTP,
+MQTT, WebSocket, CoAP), thus making a seamless bridge between them. It is used as the IoT middleware
+for building complex IoT solutions.
 
 For more details, check out the [official documentation][docs].
 
 ## Features
 
-An extensive (and incomplete) list of features includes:
-- Responsive and scalable microservice architecture
-- Set of clean APIs: HTTP RESTful, MQTT, WebSocket and CoAP
-- SDK - set of client libraries for many HW platforms in several programming languages: C/C++, JavaScript, Go and Python
-- Device management and provisioning and OTA FW updates
-- Highly secured connections via TLS and DTLS
-- Enhanced and fine-grained security with Access Control Lists
-- Easy deployment and high system scalability via [Docker][docker] images
-- Clear project roadmap, extensive development ecosystem and highly skilled developer community
-- And many more
-
-## Architecture
-
-TBD
+- Protocol bridging (i.e. HTTP, MQTT, WebSocket, CoAP)
+- Device management and provisioning
+- Fine-grained access control
+- Container-based deployment using [Docker][docker]
 
 ## Quickstart
 
@@ -59,6 +48,14 @@ Use script [`install_sources.sh`](install_sources.sh).
 This will create `./mainflux_sources` dir, git-clone all the sources from GitHub repos and place them in appropriate destination (Go code goes to $GOPATH, symlinks are created).
 
 It will also give you the instructions how to finish the installation manually.
+
+## Contributing
+
+Thank you for your interest in Mainflux and wish to contribute!
+
+1. Take a look at our [open issues](https://github.com/mainflux/mainflux/issues).
+2. Checkout the [contribution guide](CONTRIBUTING.md) to learn more about our style and conventions.
+3. Make your changes compatible to our workflow.
 
 ## Community
 

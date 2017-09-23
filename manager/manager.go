@@ -22,14 +22,6 @@ func NewService(users UserRepository, clients ClientRepository, channels Channel
 	}
 }
 
-func (ms *managerService) Info() (Info, error) {
-	info, err := getInfo()
-	if err != nil {
-		return Info{}, err
-	}
-	return info, nil
-}
-
 func (ms *managerService) Register(user User) error {
 	if err := user.validate(); err != nil {
 		return err

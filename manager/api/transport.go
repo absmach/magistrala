@@ -7,6 +7,7 @@ import (
 
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
+	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/manager"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -18,13 +19,6 @@ func MakeHandler(svc manager.Service) http.Handler {
 	}
 
 	r := bone.New()
-
-	r.Get("/info", kithttp.NewServer(
-		infoEndpoint(svc),
-		decodeInfo,
-		encodeResponse,
-		opts...,
-	))
 
 	r.Post("/users", kithttp.NewServer(
 		registrationEndpoint(svc),
@@ -124,14 +118,10 @@ func MakeHandler(svc manager.Service) http.Handler {
 		opts...,
 	))
 
+	r.GetFunc("/version", mainflux.Version())
 	r.Handle("/metrics", promhttp.Handler())
 
 	return r
-}
-
-func decodeInfo(_ context.Context, r *http.Request) (interface{}, error) {
-	req := infoReq{}
-	return req, nil
 }
 
 func decodeCredentials(_ context.Context, r *http.Request) (interface{}, error) {

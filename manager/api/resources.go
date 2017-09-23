@@ -15,25 +15,6 @@ type apiResponse interface {
 	empty() bool
 }
 
-// Info
-type infoReq struct{}
-
-type infoRes struct {
-	Version string `json:"version"`
-}
-
-func (res infoRes) headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res infoRes) code() int {
-	return http.StatusOK
-}
-
-func (res infoRes) empty() bool {
-	return false
-}
-
 type clientReq struct {
 	key    string
 	id     string

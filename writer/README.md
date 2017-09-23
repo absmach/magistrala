@@ -1,9 +1,5 @@
 # Mainflux message writer
 
-[![license][badge:license]](LICENSE)
-[![build][badge:ci]][www:ci]
-[![go report card][badge:grc]][www:grc]
-
 Mainflux message writer consumes channel events published on message broker,
 and stores them into the database.
 
@@ -59,9 +55,4 @@ CGO_ENABLED=0 GOOS=[platform identifier] go build -ldflags "-s" -a -installsuffi
 MESSAGE_WRITER_DB_CLUSTER=[comma-separated Cassandra endpoints] MESSAGE_WRITER_DB_KEYSPACE=[name of Cassandra keyspace] MESSAGE_WRITER_NATS_URL=[NATS instance URL] app
 ```
 
-[badge:license]: https://img.shields.io/badge/license-Apache%20v2.0-blue.svg
-[badge:ci]: https://travis-ci.org/mainflux/message-writer.svg?branch=master
-[badge:grc]: https://goreportcard.com/badge/github.com/mainflux/message-writer
 [www:cassandra]: http://docs.datastax.com
-[www:ci]: https://travis-ci.org/mainflux/message-writer
-[www:grc]: https://goreportcard.com/report/github.com/mainflux/message-writer

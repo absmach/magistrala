@@ -1,9 +1,5 @@
 # Mainflux manager
 
-[![license][badge:license]](LICENSE)
-[![build][badge:ci]][www:ci]
-[![go report card][badge:grc]][www:grc]
-
 Mainflux manager provides an HTTP API for managing platform resources: users,
 devices, applications and channels. Through this API clients are able to do
 the following actions:
@@ -75,10 +71,5 @@ MANAGER_DB_CLUSTER=[comma-separated Cassandra endpoints] MANAGER_DB_KEYSPACE=[na
 For more information about service capabilities and its usage, please check out
 the [API documentation](swagger.yaml).
 
-[badge:license]: https://img.shields.io/badge/license-Apache%20v2.0-blue.svg
-[badge:ci]: https://travis-ci.org/mainflux/manager.svg?branch=master
-[badge:grc]: https://goreportcard.com/badge/github.com/mainflux/manager
 [doc]: http://mainflux.readthedocs.io
 [www:cassandra]: http://docs.datastax.com
-[www:ci]: https://travis-ci.org/mainflux/manager
-[www:grc]: https://goreportcard.com/report/github.com/mainflux/manager

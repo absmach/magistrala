@@ -1,9 +1,5 @@
 # Mainflux HTTP adapter
 
-[![license][badge:license]](LICENSE)
-[![build][badge:ci]][www:ci]
-[![go report card][badge:grc]][www:grc]
-
 Mainflux HTTP adapter provides an HTTP API for sending messages through the
 platform.
 
@@ -53,10 +49,3 @@ ADAPTER_NATS_URL=[NATS instance URL] app
 
 For more information about service capabilities and its usage, please check out
 the [API documentation](swagger.yaml).
-
-[badge:license]: https://img.shields.io/badge/license-Apache%20v2.0-blue.svg
-[badge:ci]: https://travis-ci.org/mainflux/http-adapter.svg?branch=master
-[badge:grc]: https://goreportcard.com/badge/github.com/mainflux/http-adapter
-[doc]: http://mainflux.io
-[www:ci]: https://travis-ci.org/mainflux/http-adapter
-[www:grc]: https://goreportcard.com/report/github.com/mainflux/http-adapter

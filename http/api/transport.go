@@ -10,6 +10,7 @@ import (
 	"github.com/cisco/senml"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
+	"github.com/mainflux/mainflux"
 	adapter "github.com/mainflux/mainflux/http"
 	"github.com/mainflux/mainflux/writer"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -41,6 +42,7 @@ func MakeHandler(svc adapter.Service) http.Handler {
 		opts...,
 	))
 
+	r.GetFunc("/version", mainflux.Version())
 	r.Handle("/metrics", promhttp.Handler())
 
 	return r

@@ -73,6 +73,23 @@ func TestAddClient(t *testing.T) {
 	}
 }
 
+func TestIdentity(t *testing.T) {
+	var cases = []struct {
+		key string
+		id  string
+		err error
+	}{
+		{"foo@bar.com", "foo@bar.com", nil},
+		{"", "", manager.ErrUnauthorizedAccess},
+	}
+
+	for _, tc := range cases {
+		id, err := svc.Identity(tc.key)
+		assert.Equal(t, tc.id, id, "unexpected id retrieved")
+		assert.Equal(t, tc.err, err, "unexpected error occurred")
+	}
+}
+
 func TestUpdateClient(t *testing.T) {
 	var cases = []struct {
 		key    string

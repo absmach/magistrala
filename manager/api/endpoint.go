@@ -167,3 +167,17 @@ func canAccessEndpoint(svc manager.Service) endpoint.Endpoint {
 		return accessRes{}, nil
 	}
 }
+
+func identityEndpoint(svc manager.Service) endpoint.Endpoint {
+	return func(_ context.Context, request interface{}) (interface{}, error) {
+		req := request.(identityReq)
+
+		id, err := svc.Identity(req.key)
+		if err != nil {
+			return nil, err
+		}
+
+		res := identityRes{id: id}
+		return res, nil
+	}
+}

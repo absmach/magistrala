@@ -74,4 +74,7 @@ type Service interface {
 	// CanAccess determines whether or not the channel can be accessed with the
 	// provided key.
 	CanAccess(string, string) bool
+
+	// Identity retrieves Client ID for a given client token
+	Identity(string) (string, error)
 }

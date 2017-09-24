@@ -56,6 +56,24 @@ paths:
             Failed due to malformed JSON or using an invalid credentials.
         500:
           $ref: "#/responses/ServiceError"
+  /identity:
+    post:
+      summary: Identity retrieval
+      description: |
+        Retrieves the entity identifier given its secret key.
+      tags:
+        - identity
+      parameters:
+        - $ref: "#/parameters/Authorization"
+      responses:
+        200:
+          description: ID retrieved
+          headers:
+            X-Client-Id:
+              type: string
+              description: ID of the entity
+        403:
+          description: Missing or invalid access token provided.
   /clients:
     post:
       summary: Adds new client

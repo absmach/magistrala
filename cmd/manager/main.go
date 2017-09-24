@@ -57,8 +57,6 @@ func main() {
 	logger = log.NewJSONLogger(log.NewSyncWriter(os.Stdout))
 	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 
-	logger.Log("start", "manager")
-
 	session, err := cassandra.Connect(strings.Split(cfg.Cluster, sep), cfg.Keyspace)
 	if err != nil {
 		logger.Log("error", err)
@@ -80,25 +78,26 @@ func main() {
 	var svc manager.Service
 	svc = manager.NewService(users, clients, channels, hasher, idp)
 	svc = api.NewLoggingService(logger, svc)
+
+	fields := []string{"method"}
 	svc = api.NewMetricService(
 		kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
 			Namespace: "manager",
 			Subsystem: "api",
 			Name:      "request_count",
 			Help:      "Number of requests received.",
-		}, []string{}),
+		}, fields),
 		kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
 			Namespace: "manager",
 			Subsystem: "api",
 			Name:      "request_latency_microseconds",
 			Help:      "Total duration of requests in microseconds.",
-		}, []string{}),
+		}, fields),
 		svc,
 	)
 
 	errs := make(chan error, 2)
 
-	logger.Log("http_port", cfg.Port)
 	go func() {
 		p := fmt.Sprintf(":%d", cfg.Port)
 		errs <- http.ListenAndServe(p, api.MakeHandler(svc))

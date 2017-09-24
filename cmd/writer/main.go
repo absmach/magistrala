@@ -12,12 +12,12 @@ import (
 	"github.com/mainflux/mainflux/writer"
 	"github.com/mainflux/mainflux/writer/cassandra"
 	nats "github.com/nats-io/go-nats"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 const (
 	sep         string = ","
-	subject     string = "msg.*"
+	subject     string = "normalizer.senml"
 	queue       string = "message_writers"
 	defCluster  string = "127.0.0.1"
 	defKeyspace string = "message_writer"
@@ -33,14 +33,13 @@ type config struct {
 	NatsURL  string
 }
 
-func init() {
-	log.SetFormatter(&log.JSONFormatter{})
-	log.SetOutput(os.Stdout)
-	log.SetLevel(log.WarnLevel)
-}
+var logger *zap.Logger = nil
 
 func main() {
 	cfg := loadConfig()
+
+	logger, _ = zap.NewProduction()
+	defer logger.Sync()
 
 	session := connectToCassandra(cfg)
 	defer session.Close()
@@ -83,7 +82,7 @@ func connectToCassandra(cfg *config) *gocql.Session {
 
 	s, err := cassandra.Connect(hosts, cfg.Keyspace)
 	if err != nil {
-		log.WithField("error", err).Fatalf("Failed to connect to DB.")
+		logger.Error("Failed to connect to DB", zap.Error(err))
 	}
 
 	return s
@@ -91,7 +90,7 @@ func connectToCassandra(cfg *config) *gocql.Session {
 
 func makeRepository(session *gocql.Session) writer.MessageRepository {
 	if err := cassandra.Initialize(session); err != nil {
-		log.WithField("error", err).Fatalf("Failed to initialize message repository.")
+		logger.Error("Failed to initialize message repository.", zap.Error(err))
 	}
 
 	return cassandra.NewMessageRepository(session)
@@ -100,7 +99,7 @@ func makeRepository(session *gocql.Session) writer.MessageRepository {
 func connectToNats(cfg *config) *nats.Conn {
 	nc, err := nats.Connect(cfg.NatsURL)
 	if err != nil {
-		log.WithField("error", err).Fatalf("Failed to connect to NATS.")
+		logger.Error("Failed to connect to NATS.", zap.Error(err))
 	}
 
 	return nc

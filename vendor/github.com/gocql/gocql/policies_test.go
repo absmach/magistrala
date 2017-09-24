@@ -219,7 +219,7 @@ func TestTokenAwareNilHostInfo(t *testing.T) {
 func TestCOWList_Add(t *testing.T) {
 	var cow cowHostList
 
-	toAdd := [...]net.IP{net.IPv4(0, 0, 0, 0), net.IPv4(1, 0, 0, 0), net.IPv4(2, 0, 0, 0)}
+	toAdd := [...]net.IP{net.IPv4(10, 0, 0, 1), net.IPv4(10, 0, 0, 2), net.IPv4(10, 0, 0, 3)}
 
 	for _, addr := range toAdd {
 		if !cow.add(&HostInfo{connectAddress: addr}) {
@@ -299,5 +299,22 @@ func TestExponentialBackoffPolicy(t *testing.T) {
 				t.Fatalf("Delay %d greater than jitter max of %d", d, c.delay+100*time.Millisecond/2)
 			}
 		}
+	}
+}
+
+func TestDCAwareRR(t *testing.T) {
+	p := DCAwareRoundRobinPolicy("local")
+	p.AddHost(&HostInfo{connectAddress: net.ParseIP("10.0.0.1"), dataCenter: "local"})
+	p.AddHost(&HostInfo{connectAddress: net.ParseIP("10.0.0.2"), dataCenter: "remote"})
+
+	iter := p.Pick(nil)
+
+	h := iter()
+	if h.Info().DataCenter() != "local" {
+		t.Fatalf("expected to get local DC first, got %v", h.Info())
+	}
+	h = iter()
+	if h.Info().DataCenter() != "remote" {
+		t.Fatalf("expected to get remote DC, got %v", h.Info())
 	}
 }

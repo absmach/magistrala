@@ -4,8 +4,9 @@ package normalizer
 import (
 	"github.com/cisco/senml"
 	"github.com/mainflux/mainflux/writer"
-	"go.uber.org/zap"
 )
+
+var _ Service = (*normalizerService)(nil)
 
 // Message represents a message emitted by the mainflux adapters layer.
 type Message struct {
@@ -16,11 +17,25 @@ type Message struct {
 	Payload     []byte `json:"payload"`
 }
 
-func Normalize(logger *zap.Logger, msg Message) (msgs []writer.Message, err error) {
+type normalizerService struct {
+	mr writer.MessageRepository
+}
+
+// NewService instantiates the domain service implementation.
+func NewService(mr writer.MessageRepository) Service {
+	return &normalizerService{mr}
+}
+
+func (ns *normalizerService) Send(msgs []writer.Message) {
+	for _, msg := range msgs {
+		ns.mr.Save(msg)
+	}
+}
+
+func Normalize(msg Message) (msgs []writer.Message, err error) {
 	var s, n senml.SenML
 
 	if s, err = senml.Decode(msg.Payload, senml.JSON); err != nil {
-		logger.Error("Failed to decode SenML", zap.Error(err))
 		return nil, err
 	}
 

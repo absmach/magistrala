@@ -8,15 +8,15 @@ import (
 	"syscall"
 
 	"github.com/mainflux/mainflux/normalizer"
-	nats "github.com/nats-io/go-nats"
+	"github.com/mainflux/mainflux/normalizer/nats"
+	broker "github.com/nats-io/go-nats"
 	"go.uber.org/zap"
 )
 
 const (
-	subSubject string = "adapter.*"
-	pubSubject string = "normalizer.senml"
+	subject    string = "adapter.*"
 	queue      string = "normalizers"
-	defNatsURL string = nats.DefaultURL
+	defNatsURL string = broker.DefaultURL
 	envNatsURL string = "MESSAGE_WRITER_NATS_URL"
 )
 
@@ -35,7 +35,10 @@ func main() {
 	nc := connectToNats(cfg)
 	defer nc.Close()
 
-	nc.QueueSubscribe(subSubject, queue, func(m *nats.Msg) {
+	repo := nats.NewMessageRepository(nc)
+	svc := normalizer.NewService(repo)
+
+	nc.QueueSubscribe(subject, queue, func(m *broker.Msg) {
 		msg := normalizer.Message{}
 
 		if err := json.Unmarshal(m.Data, &msg); err != nil {
@@ -43,16 +46,10 @@ func main() {
 			return
 		}
 
-		if msgs, err := normalizer.Normalize(logger, msg); err != nil {
+		if msgs, err := normalizer.Normalize(msg); err != nil {
 			logger.Error("Failed to normalize message", zap.Error(err))
 		} else {
-			for _, v := range msgs {
-				if b, err := json.Marshal(v); err != nil {
-					logger.Error("Failed to marshal writer message", zap.Error(err))
-				} else {
-					nc.Publish(pubSubject, b)
-				}
-			}
+			svc.Send(msgs)
 		}
 	})
 
@@ -76,8 +73,8 @@ func env(key, fallback string) string {
 	return value
 }
 
-func connectToNats(cfg *config) *nats.Conn {
-	nc, err := nats.Connect(cfg.NatsURL)
+func connectToNats(cfg *config) *broker.Conn {
+	nc, err := broker.Connect(cfg.NatsURL)
 	if err != nil {
 		logger.Error("Failed to connect to NATS", zap.Error(err))
 		os.Exit(1)

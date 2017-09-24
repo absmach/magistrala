@@ -13,8 +13,8 @@ import:
     version: 1.3.0
   - package: github.com/prometheus/client_golang
     version: 0.8.0
-  - package: github.com/sirupsen/logrus
-    version: 1.0.3
+  - package: go.uber.org/zap
+    version: 1.7.0
   - package: golang.org/x/crypto
     subpackages:
       - bcrypt

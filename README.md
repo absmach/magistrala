@@ -26,7 +26,7 @@ For more details, check out the [official documentation][docs].
 
 #### Docker
 
-To start the docker composition, execute the [startup script](bin/mainflux-docker) from `bin`
+To start the docker composition, execute the [startup script](bin/mainflux-docker.sh) from `bin`
 directory:
 
 ```

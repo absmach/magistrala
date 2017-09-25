@@ -29,7 +29,7 @@ services:
   # Message Writer
   ###
   message-writer:
-    image: mainflux/message-writer:latest
+    image: mainflux/writer:latest
     container_name: mainflux-message-writer
     network_mode: bridge
     external_links:
@@ -58,7 +58,7 @@ services:
   # HTTP Server
   ###
   http-adapter:
-    image: mainflux/http-adapter:latest
+    image: mainflux/http:latest
     container_name: mainflux-http
     network_mode: bridge
     ports:

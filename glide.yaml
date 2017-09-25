@@ -20,6 +20,8 @@ import:
   - package: golang.org/x/crypto
     subpackages:
       - bcrypt
+  - package: github.com/dustin/go-coap
+  - package: github.com/dereulenspiegel/coap-mux
 testImport:
   - package: github.com/stretchr/testify
     version: 1.1.4

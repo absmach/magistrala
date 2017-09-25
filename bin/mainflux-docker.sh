@@ -67,15 +67,15 @@ HEREDOC
 _start() {
 
   # Start NATS, Cassandra and Nginx
-  printf "Starting NATS, Cassandra and Nginx...\n\n"
+  printf "Starting NATS and Cassandra...\n\n"
 
   NB_DOCKERS=$(docker ps -a -f name=mainflux-nats -f name=mainflux-cassandra | wc -l)
   if [[ $NB_DOCKERS -lt 3 ]]
   then
-    docker-compose -f docker-compose-nats-cassandra.yml pull
-    docker-compose -f docker-compose-nats-cassandra.yml create
+    docker-compose -f docker/docker-compose.infrastructure.yml pull
+    docker-compose -f docker/docker-compose.infrastructure.yml create
   fi
-  docker-compose -f docker-compose-nats-cassandra.yml start
+  docker-compose -f docker/docker-compose.infrastructure.yml start
 
   # Check if C* is alive
   printf "\nWaiting for Cassandra to start. This takes time, please be patient...\n"
@@ -103,7 +103,7 @@ _start() {
   if [[ $c_on -eq 0 ]]
   then
     printf "\nCassandra did not start - shuting down everything.\n"
-    docker-compose -f docker-compose-nats-cassandra.yml stop
+    docker-compose -f docker/docker-compose.infrastructure.yml stop
     exit 0
   else
     printf "OK\n"
@@ -119,10 +119,10 @@ _start() {
   NB_DOCKERS=$(docker ps -a -f name=mainflux-manager -f name=mainflux-http -f name=mainflux-mqtt -f name=mainflux-coap -f name=mainflux-message-writer | wc -l)
   if [[ $NB_DOCKERS -lt 6 ]]
   then
-    docker-compose -f docker-compose-mainflux.yml pull
-    docker-compose -f docker-compose-mainflux.yml create
+    docker-compose -f docker/docker-compose.mainflux.yml pull
+    docker-compose -f docker/docker-compose.mainflux.yml create
   fi
-  docker-compose -f docker-compose-mainflux.yml start
+  docker-compose -f docker/docker-compose.mainflux.yml start
 
   # Start Nginx
   printf "\nStarting Nginx...\n\n"
@@ -130,10 +130,10 @@ _start() {
   NB_DOCKERS=$(docker ps -a -f name=nginx | wc -l)
   if [[ $NB_DOCKERS -lt 2 ]]
   then
-    docker-compose -f docker-compose-nginx.yml pull
-    docker-compose -f docker-compose-nginx.yml create
+    docker-compose -f docker/docker-compose.nginx.yml pull
+    docker-compose -f docker/docker-compose.nginx.yml create
   fi
-  docker-compose -f docker-compose-nginx.yml start
+  docker-compose -f docker/docker-compose.nginx.yml start
 
   if [[ $? -ne 0 ]]
   then
@@ -148,13 +148,13 @@ _start() {
 
 _stop() {
   printf "\nStopping Nginx...\n\n"
-  docker-compose -f docker-compose-nginx.yml stop
+  docker-compose -f docker/docker-compose.nginx.yml stop
 
   printf "Stopping Mainflux composition...\n\n"
-  docker-compose -f docker-compose-mainflux.yml stop
+  docker-compose -f docker/docker-compose.mainflux.yml stop
 
   printf "\nStopping NATS and Cassandra...\n\n"
-  docker-compose -f docker-compose-nats-cassandra.yml stop
+  docker-compose -f docker/docker-compose.infrastructure.yml stop
 
   printf "\n*** MAINFLUX IS OFF ***\n\n"
 }

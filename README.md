@@ -25,29 +25,32 @@ For more details, check out the [official documentation][docs].
 ## Quickstart
 
 #### Docker
-- Clone the repo:
-```bash
-git clone https://github.com/mainflux/mainflux.git
+
+To start the docker composition, execute the [startup script](bin/mainflux-docker) from `bin`
+directory:
+
+```
+./mainflux-docker.sh start  
 ```
 
-- Go to `mainflux/docker` dir:
+If the command successfully completes, you can verify that the all images are up & running by
+executing the following command in the terminal window:
+
 ```
-cd mainflux/docker
+docker ps
 ```
 
-- Use [`mainflux-docker.sh`](docker/mainflux-docker.sh) script to start the Docker composition:
-```bash
-./mainflux-docker.sh start
-```
+The composition can be terminated in the following way:
 
-Once started, the script will download and start Docker images required by the composition.
+```
+./mainflux-docker.sh stop
+```
 
 #### From sources
-Use script [`install_sources.sh`](install_sources.sh).
 
-This will create `./mainflux_sources` dir, git-clone all the sources from GitHub repos and place them in appropriate destination (Go code goes to $GOPATH, symlinks are created).
-
-It will also give you the instructions how to finish the installation manually.
+To download all the sources, and place them in appropriate locations (i.e. $GOPATH), use the
+[installation script](bin/mainflux-install.sh). Once it completes, the script will provide the
+instructions on how to finish the manual installation (i.e. install the required infrastructure).
 
 ## Contributing
 

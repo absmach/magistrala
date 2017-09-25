@@ -14,7 +14,7 @@ services:
   # NGINX
   ###
   nginx:
-    image: nginx:alpine
+    image: nginx:1.13-alpine
     container_name: mainflux-nginx
     volumes:
       - $PWD/nginx.conf:/etc/nginx/nginx.conf
@@ -30,3 +30,4 @@ services:
       - mainflux-manager
       - mainflux-http
       - mainflux-mqtt
+

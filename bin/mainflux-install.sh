@@ -13,20 +13,13 @@ fi
 export GOBIN=$GOPATH/bin
 export PATH=$PATH:$GOBIN
 
-# Manager
-go get -v github.com/mainflux/manager
+# Mainflux Go microservices
+go get -d github.com/mainflux/mainflux
+cd $GOPATH/src/github.com/mainflux/mainflux
+make
+make install
+cd -
 
-# Message Writer
-go get -v github.com/mainflux/message-writer
-
-# HTTP
-go get -v github.com/mainflux/http-adapter
-
-# CoAP
-go get -v github.com/mainflux/coap-adapter
-
-# Cli
-go get -v github.com/mainflux/mainflux-cli
 
 # MQTT
 git clone https://github.com/mainflux/mqtt-adapter
@@ -35,7 +28,7 @@ npm install
 cd ..
 
 # NGINX Conf
-git clone https://github.com/mainflux/nginx-conf
+git clone https://github.com/mainflux/proxy
 
 # NATS
 go get -v github.com/nats-io/gnatsd

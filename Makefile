@@ -1,8 +1,7 @@
-
 BUILD_DIR=build
 
-all: manager http normalizer writer coap
-.PHONY: all manager http normalizer writer coap
+all: manager http normalizer writer
+.PHONY: all manager http normalizer writer
 
 manager: 
 	go build -o ${BUILD_DIR}/mainflux-manager cmd/manager/main.go
@@ -15,9 +14,6 @@ normalizer:
 
 writer: 
 	go build -o ${BUILD_DIR}/mainflux-writer cmd/writer/main.go
-
-coap:
-	go build -o ${BUILD_DIR}/mainflux-coap cmd/coap/main.go
 
 clean:
 	rm -rf ${BUILD_DIR}

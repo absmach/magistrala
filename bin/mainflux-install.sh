@@ -12,9 +12,10 @@ fi
 
 export GOBIN=$GOPATH/bin
 export PATH=$PATH:$GOBIN
+mkdir -p $GOBIN
 
 # Mainflux Go microservices
-go get -d github.com/mainflux/mainflux
+go get -d -v github.com/mainflux/mainflux
 cd $GOPATH/src/github.com/mainflux/mainflux
 make
 make install

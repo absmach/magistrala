@@ -1,23 +1,28 @@
 #!/bin/bash
 
 ###
-# Launches all Mainflux Go binaries
-# when they are installed globally.
+# Launches all Mainflux Go binaries when they are installed globally.
+# Also launches NATS broker instance, expecting that
+# `gnatsd` is installed globally.
 #
-# Expects that influxDB and MongoDB are already installed and running.
+# Expects that Cassandra is already installed and running.
 #
 # Does not launch NodeJS MQTT service - this one must be launched by hand for now.
 ###
 
-# Kil all mainflux-* stuff
+# Kill all mainflux-* stuff
 function cleanup {
 	pkill mainflux
 }
 
 gnatsd &
-http-adapter &
-message-writer &
-manager &
+# Wait a bit for NATS to be on
+sleep 0.1
+mainflux-http &
+mainflux-manager &
+mainflux-normalizer &
+mainflux-writer &
+mainflux-coap &
 
 trap cleanup EXIT
 

@@ -24,7 +24,7 @@ func NewMessageRepository(nc *broker.Conn) writer.MessageRepository {
 	return &natsRepository{nc}
 }
 
-func (repo *natsRepository) Save(msg writer.Message) error {
+func (repo *natsRepository) Save(msg writer.RawMessage) error {
 	b, err := json.Marshal(msg)
 	if err != nil {
 		return err

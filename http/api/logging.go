@@ -20,7 +20,7 @@ func NewLoggingService(logger log.Logger, s http.Service) http.Service {
 	return &loggingService{logger, s}
 }
 
-func (ls *loggingService) Send(msgs []writer.Message) {
+func (ls *loggingService) Send(msg writer.RawMessage) {
 	defer func(begin time.Time) {
 		ls.logger.Log(
 			"method", "send",
@@ -28,5 +28,5 @@ func (ls *loggingService) Send(msgs []writer.Message) {
 		)
 	}(time.Now())
 
-	ls.Service.Send(msgs)
+	ls.Service.Send(msg)
 }

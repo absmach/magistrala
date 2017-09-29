@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/cisco/senml"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
@@ -17,7 +16,7 @@ import (
 )
 
 const (
-	protocol string = "HTTP"
+	protocol string = "http"
 	ctJson   string = "application/senml+json"
 )
 
@@ -49,7 +48,9 @@ func MakeHandler(svc adapter.Service) http.Handler {
 }
 
 func decodeRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	if _, err := checkContentType(r); err != nil {
+
+	ct, err := checkContentType(r)
+	if err != nil {
 		return nil, err
 	}
 
@@ -63,7 +64,17 @@ func decodeRequest(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
-	return buildMessages(bone.GetValue(r, "id"), publisher, payload), nil
+	channel := bone.GetValue(r, "id")
+
+	msg := writer.RawMessage{
+		Publisher:   publisher,
+		Protocol:    protocol,
+		ContentType: ct,
+		Channel:     channel,
+		Payload:     payload,
+	}
+
+	return msg, nil
 }
 
 // TODO: contact an auth provider
@@ -86,58 +97,14 @@ func checkContentType(r *http.Request) (string, error) {
 	return ct, nil
 }
 
-func decodePayload(body io.ReadCloser) (senml.SenML, error) {
-	b, err := ioutil.ReadAll(body)
+func decodePayload(body io.ReadCloser) ([]byte, error) {
+	payload, err := ioutil.ReadAll(body)
 	if err != nil {
-		return senml.SenML{}, errMalformedData
+		return nil, errMalformedData
 	}
 	defer body.Close()
 
-	var payload senml.SenML
-	if payload, err = senml.Decode(b, senml.JSON); err != nil {
-		return senml.SenML{}, errMalformedData
-	}
-
 	return payload, nil
-}
-
-func buildMessages(channel, publisher string, data senml.SenML) []writer.Message {
-	messages := make([]writer.Message, len(data.Records))
-
-	// NOTE:
-	// Due to the deficiencies in cisco's senml library, base value and base
-	// sum are set to 0. Once the library is updates, these value will be
-	// properly set.
-	for k, v := range data.Records {
-		messages[k] = writer.Message{
-			Channel:     channel,
-			Publisher:   publisher,
-			Protocol:    protocol,
-			BaseName:    v.BaseName,
-			BaseTime:    v.BaseTime,
-			BaseUnit:    v.BaseUnit,
-			BaseValue:   0,
-			BaseSum:     0,
-			Version:     v.BaseVersion,
-			Name:        v.Name,
-			Unit:        v.Unit,
-			StringValue: v.StringValue,
-			DataValue:   v.DataValue,
-			Time:        v.Time,
-			UpdateTime:  v.UpdateTime,
-			Link:        v.Link,
-		}
-		if v.Value != nil {
-			messages[k].Value = *v.Value
-		}
-		if v.BoolValue != nil {
-			messages[k].BoolValue = *v.BoolValue
-		}
-		if v.Sum != nil {
-			messages[k].ValueSum = *v.Sum
-		}
-	}
-	return messages
 }
 
 func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {

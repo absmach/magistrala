@@ -17,7 +17,7 @@ import (
 
 const (
 	sep         string = ","
-	subject     string = "normalizer.senml"
+	subject     string = "msg.*"
 	queue       string = "message_writers"
 	defCluster  string = "127.0.0.1"
 	defKeyspace string = "message_writer"
@@ -50,10 +50,16 @@ func main() {
 	repo := makeRepository(session)
 
 	nc.QueueSubscribe(subject, queue, func(m *nats.Msg) {
-		msg := writer.Message{}
+		msg := writer.RawMessage{}
 
-		if err := json.Unmarshal(m.Data, &msg); err == nil {
-			repo.Save(msg)
+		if err := json.Unmarshal(m.Data, &msg); err != nil {
+			logger.Error("Failed to unmarshal raw message.", zap.Error(err))
+			return
+		}
+
+		if err := repo.Save(msg); err != nil {
+			logger.Error("Failed to save message.", zap.Error(err))
+			return
 		}
 	})
 

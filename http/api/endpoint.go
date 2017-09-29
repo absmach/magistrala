@@ -10,8 +10,8 @@ import (
 
 func sendMessageEndpoint(svc http.Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
-		messages := request.([]writer.Message)
-		svc.Send(messages)
+		msg := request.(writer.RawMessage)
+		svc.Send(msg)
 		return nil, nil
 	}
 }

@@ -23,13 +23,9 @@ func NewService(users UserRepository, clients ClientRepository, channels Channel
 }
 
 func (ms *managerService) Register(user User) error {
-	if err := user.validate(); err != nil {
-		return err
-	}
-
 	hash, err := ms.hasher.Hash(user.Password)
 	if err != nil {
-		return ErrInvalidCredentials
+		return ErrMalformedEntity
 	}
 
 	user.Password = hash
@@ -39,11 +35,11 @@ func (ms *managerService) Register(user User) error {
 func (ms *managerService) Login(user User) (string, error) {
 	dbUser, err := ms.users.One(user.Email)
 	if err != nil {
-		return "", ErrInvalidCredentials
+		return "", ErrUnauthorizedAccess
 	}
 
 	if err := ms.hasher.Compare(user.Password, dbUser.Password); err != nil {
-		return "", ErrInvalidCredentials
+		return "", ErrUnauthorizedAccess
 	}
 
 	return ms.idp.TemporaryKey(user.Email)
@@ -59,10 +55,6 @@ func (ms *managerService) Identity(key string) (string, error) {
 }
 
 func (ms *managerService) AddClient(key string, client Client) (string, error) {
-	if err := client.validate(); err != nil {
-		return "", err
-	}
-
 	sub, err := ms.idp.Identity(key)
 	if err != nil {
 		return "", err
@@ -80,10 +72,6 @@ func (ms *managerService) AddClient(key string, client Client) (string, error) {
 }
 
 func (ms *managerService) UpdateClient(key string, client Client) error {
-	if err := client.validate(); err != nil {
-		return err
-	}
-
 	sub, err := ms.idp.Identity(key)
 	if err != nil {
 		return err

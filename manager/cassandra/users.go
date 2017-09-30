@@ -34,7 +34,7 @@ func (repo *userRepository) One(email string) (manager.User, error) {
 
 	if err := repo.session.Query(cql, email).
 		Scan(&user.Email, &user.Password); err != nil {
-		return user, manager.ErrInvalidCredentials
+		return user, manager.ErrUnauthorizedAccess
 	}
 
 	return user, nil

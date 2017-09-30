@@ -43,14 +43,14 @@ func MakeHandler(svc manager.Service) http.Handler {
 
 	r.Post("/clients", kithttp.NewServer(
 		addClientEndpoint(svc),
-		decodeClient,
+		decodeClientCreation,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Put("/clients/:id", kithttp.NewServer(
 		updateClientEndpoint(svc),
-		decodeClient,
+		decodeClientUpdate,
 		encodeResponse,
 		opts...,
 	))
@@ -78,14 +78,14 @@ func MakeHandler(svc manager.Service) http.Handler {
 
 	r.Post("/channels", kithttp.NewServer(
 		createChannelEndpoint(svc),
-		decodeChannel,
+		decodeChannelCreation,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Put("/channels/:id", kithttp.NewServer(
 		updateChannelEndpoint(svc),
-		decodeChannel,
+		decodeChannelUpdate,
 		encodeResponse,
 		opts...,
 	))
@@ -145,16 +145,30 @@ func decodeCredentials(_ context.Context, r *http.Request) (interface{}, error) 
 		return nil, err
 	}
 
-	return user, nil
+	return userReq{user}, nil
 }
 
-func decodeClient(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeClientCreation(_ context.Context, r *http.Request) (interface{}, error) {
 	var client manager.Client
 	if err := json.NewDecoder(r.Body).Decode(&client); err != nil {
 		return nil, err
 	}
 
-	req := clientReq{
+	req := addClientReq{
+		key:    r.Header.Get("Authorization"),
+		client: client,
+	}
+
+	return req, nil
+}
+
+func decodeClientUpdate(_ context.Context, r *http.Request) (interface{}, error) {
+	var client manager.Client
+	if err := json.NewDecoder(r.Body).Decode(&client); err != nil {
+		return nil, err
+	}
+
+	req := updateClientReq{
 		key:    r.Header.Get("Authorization"),
 		id:     bone.GetValue(r, "id"),
 		client: client,
@@ -163,13 +177,27 @@ func decodeClient(_ context.Context, r *http.Request) (interface{}, error) {
 	return req, nil
 }
 
-func decodeChannel(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeChannelCreation(_ context.Context, r *http.Request) (interface{}, error) {
 	var channel manager.Channel
 	if err := json.NewDecoder(r.Body).Decode(&channel); err != nil {
 		return nil, err
 	}
 
-	req := channelReq{
+	req := createChannelReq{
+		key:     r.Header.Get("Authorization"),
+		channel: channel,
+	}
+
+	return req, nil
+}
+
+func decodeChannelUpdate(_ context.Context, r *http.Request) (interface{}, error) {
+	var channel manager.Channel
+	if err := json.NewDecoder(r.Body).Decode(&channel); err != nil {
+		return nil, err
+	}
+
+	req := updateChannelReq{
 		key:     r.Header.Get("Authorization"),
 		id:      bone.GetValue(r, "id"),
 		channel: channel,
@@ -190,7 +218,7 @@ func decodeView(_ context.Context, r *http.Request) (interface{}, error) {
 func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 	req := listResourcesReq{
 		key:    r.Header.Get("Authorization"),
-		size:   0,
+		size:   10,
 		offset: 0,
 	}
 
@@ -200,7 +228,7 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-Type", contentType)
 
-	if ar, ok := response.(apiResponse); ok {
+	if ar, ok := response.(apiRes); ok {
 		for k, v := range ar.headers() {
 			w.Header().Set(k, v)
 		}
@@ -219,7 +247,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", contentType)
 
 	switch err {
-	case manager.ErrInvalidCredentials, manager.ErrMalformedClient:
+	case manager.ErrMalformedEntity:
 		w.WriteHeader(http.StatusBadRequest)
 	case manager.ErrUnauthorizedAccess:
 		w.WriteHeader(http.StatusForbidden)

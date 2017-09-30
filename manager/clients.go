@@ -18,9 +18,9 @@ var clientTypes map[string]bool = map[string]bool{
 	"device": true,
 }
 
-func (c *Client) validate() error {
+func (c *Client) Validate() error {
 	if c.Type = strings.ToLower(c.Type); !clientTypes[c.Type] {
-		return ErrMalformedClient
+		return ErrMalformedEntity
 	}
 
 	return nil

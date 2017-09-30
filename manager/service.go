@@ -7,11 +7,9 @@ var (
 	// registration.
 	ErrConflict error = errors.New("email already taken")
 
-	// ErrInvalidCredentials indicates malformed account credentials.
-	ErrInvalidCredentials error = errors.New("invalid email or password")
-
-	// ErrMalformedClient indicates malformed client specification (e.g. empty name).
-	ErrMalformedClient error = errors.New("malformed client specification")
+	// ErrMalformedEntity indicates malformed entity specification (e.g.
+	// invalid username or password).
+	ErrMalformedEntity error = errors.New("malformed entity specification")
 
 	// ErrUnauthorizedAccess indicates missing or invalid credentials provided
 	// when accessing a protected resource.

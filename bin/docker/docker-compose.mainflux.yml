@@ -49,10 +49,15 @@ services:
     ports:
       - "1883:1883"
     network_mode: bridge
+    depends_on:
+        - manager
     external_links:
       - mainflux-nats:nats
+      - mainflux-manager:manager
     environment:
       - MQTT_ADAPTER_NATS_URL=nats://nats:4222
+      - AUTH_URL=http://manager
+      - AUTH_PORT=8180
 
   ###
   # HTTP Server
@@ -61,6 +66,8 @@ services:
     image: mainflux/http:latest
     container_name: mainflux-http
     network_mode: bridge
+    depends_on:
+        - manager
     ports:
       - "7070:7070"
     external_links:

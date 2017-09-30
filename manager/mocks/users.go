@@ -40,5 +40,5 @@ func (ur *userRepositoryMock) One(email string) (manager.User, error) {
 		return val, nil
 	}
 
-	return manager.User{}, manager.ErrInvalidCredentials
+	return manager.User{}, manager.ErrUnauthorizedAccess
 }

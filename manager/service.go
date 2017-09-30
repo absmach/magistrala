@@ -7,11 +7,9 @@ var (
 	// registration.
 	ErrConflict error = errors.New("email already taken")
 
-	// ErrInvalidCredentials indicates malformed account credentials.
-	ErrInvalidCredentials error = errors.New("invalid email or password")
-
-	// ErrMalformedClient indicates malformed client specification (e.g. empty name).
-	ErrMalformedClient error = errors.New("malformed client specification")
+	// ErrMalformedEntity indicates malformed entity specification (e.g.
+	// invalid username or password).
+	ErrMalformedEntity error = errors.New("malformed entity specification")
 
 	// ErrUnauthorizedAccess indicates missing or invalid credentials provided
 	// when accessing a protected resource.
@@ -32,6 +30,9 @@ type Service interface {
 	// authentication generates new access token. Failed invocations are
 	// identified by the non-nil error values in the response.
 	Login(User) (string, error)
+
+	// Identity retrieves Client ID for a given client token
+	Identity(string) (string, error)
 
 	// AddClient adds new client to the user identified by the provided key.
 	AddClient(string, Client) (string, error)
@@ -74,7 +75,4 @@ type Service interface {
 	// CanAccess determines whether or not the channel can be accessed with the
 	// provided key.
 	CanAccess(string, string) bool
-
-	// Identity retrieves Client ID for a given client token
-	Identity(string) (string, error)
 }

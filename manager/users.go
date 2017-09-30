@@ -1,5 +1,7 @@
 package manager
 
+import "github.com/asaskevich/govalidator"
+
 // User represents a Mainflux user account. Each user is identified given its
 // email and password.
 type User struct {
@@ -7,9 +9,13 @@ type User struct {
 	Password string
 }
 
-func (u *User) validate() error {
+func (u *User) Validate() error {
 	if u.Email == "" || u.Password == "" {
-		return ErrInvalidCredentials
+		return ErrMalformedEntity
+	}
+
+	if !govalidator.IsEmail(u.Email) {
+		return ErrMalformedEntity
 	}
 
 	return nil

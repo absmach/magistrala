@@ -1,6 +1,7 @@
 package manager_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/mainflux/mainflux/manager"
@@ -18,63 +19,40 @@ var (
 )
 
 func TestRegister(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		user manager.User
 		err  error
 	}{
 		{manager.User{"foo@bar.com", "pass"}, nil},
 		{manager.User{"foo@bar.com", "pass"}, manager.ErrConflict},
-		{manager.User{"", "pass"}, manager.ErrInvalidCredentials},
-		{manager.User{"abc@bar.com", ""}, manager.ErrInvalidCredentials},
-		{manager.User{"abc@bar.com", "pass"}, nil},
 	}
 
-	for _, tc := range cases {
+	for i, tc := range cases {
 		e := svc.Register(tc.user)
-		assert.Equal(t, tc.err, e, "unexpected error occurred")
+		assert.Equal(t, tc.err, e, fmt.Sprintf("failed %d\n", i))
 	}
 }
 
 func TestLogin(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		user manager.User
 		key  string
 		err  error
 	}{
 		{manager.User{"foo@bar.com", "pass"}, "foo@bar.com", nil},
-		{manager.User{"new@bar.com", "pass"}, "", manager.ErrInvalidCredentials},
-		{manager.User{"foo@bar.com", ""}, "", manager.ErrInvalidCredentials},
+		{manager.User{"new@bar.com", "pass"}, "", manager.ErrUnauthorizedAccess},
+		{manager.User{"foo@bar.com", ""}, "", manager.ErrUnauthorizedAccess},
 	}
 
-	for _, tc := range cases {
+	for i, tc := range cases {
 		k, e := svc.Login(tc.user)
-		assert.Equal(t, tc.key, k, "unexpected key retrieved")
-		assert.Equal(t, tc.err, e, "unexpected error occurred")
-	}
-}
-
-func TestAddClient(t *testing.T) {
-	var cases = []struct {
-		key    string
-		client manager.Client
-		id     string
-		err    error
-	}{
-		{"foo@bar.com", manager.Client{Type: "app", Name: "a"}, "1", nil},
-		{"foo@bar.com", manager.Client{Type: "device", Name: "b"}, "2", nil},
-		{"", manager.Client{Type: "app", Name: "d"}, "", manager.ErrUnauthorizedAccess},
-		{"foo@bar.com", manager.Client{Type: "invalid", Name: "d"}, "", manager.ErrMalformedClient},
-	}
-
-	for _, tc := range cases {
-		id, err := svc.AddClient(tc.key, tc.client)
-		assert.Equal(t, tc.id, id, "unexpected id retrieved")
-		assert.Equal(t, tc.err, err, "unexpected error occurred")
+		assert.Equal(t, tc.key, k, fmt.Sprintf("bad key at %d\n", i))
+		assert.Equal(t, tc.err, e, fmt.Sprintf("failed %d\n", i))
 	}
 }
 
 func TestIdentity(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		key string
 		id  string
 		err error
@@ -83,15 +61,34 @@ func TestIdentity(t *testing.T) {
 		{"", "", manager.ErrUnauthorizedAccess},
 	}
 
-	for _, tc := range cases {
+	for i, tc := range cases {
 		id, err := svc.Identity(tc.key)
-		assert.Equal(t, tc.id, id, "unexpected id retrieved")
-		assert.Equal(t, tc.err, err, "unexpected error occurred")
+		assert.Equal(t, tc.id, id, fmt.Sprintf("unexpected id at %d\n", i))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("failed at %d\n", i))
+	}
+}
+
+func TestAddClient(t *testing.T) {
+	cases := []struct {
+		key    string
+		client manager.Client
+		id     string
+		err    error
+	}{
+		{"foo@bar.com", manager.Client{Type: "app", Name: "a"}, "1", nil},
+		{"foo@bar.com", manager.Client{Type: "device", Name: "b"}, "2", nil},
+		{"", manager.Client{Type: "app", Name: "d"}, "", manager.ErrUnauthorizedAccess},
+	}
+
+	for i, tc := range cases {
+		id, err := svc.AddClient(tc.key, tc.client)
+		assert.Equal(t, tc.id, id, fmt.Sprintf("unexpected id at %d\n", i))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("failed at %d\n", i))
 	}
 }
 
 func TestUpdateClient(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		key    string
 		client manager.Client
 		err    error
@@ -99,18 +96,17 @@ func TestUpdateClient(t *testing.T) {
 		{"foo@bar.com", manager.Client{ID: "1", Type: "app", Name: "aa"}, nil},
 		{"foo@bar.com", manager.Client{ID: "2", Type: "device", Name: "bb"}, nil},
 		{"", manager.Client{ID: "2", Type: "app", Name: "cc"}, manager.ErrUnauthorizedAccess},
-		{"foo@bar.com", manager.Client{ID: "2", Type: "invalid", Name: "d"}, manager.ErrMalformedClient},
 		{"foo@bar.com", manager.Client{ID: "3", Type: "app", Name: "d"}, manager.ErrNotFound},
 	}
 
-	for _, tc := range cases {
+	for i, tc := range cases {
 		err := svc.UpdateClient(tc.key, tc.client)
-		assert.Equal(t, tc.err, err, "unexpected error occurred")
+		assert.Equal(t, tc.err, err, fmt.Sprintf("failed at %d\n", i))
 	}
 }
 
 func TestViewClient(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		id  string
 		key string
 		err error
@@ -120,14 +116,14 @@ func TestViewClient(t *testing.T) {
 		{"5", "foo@bar.com", manager.ErrNotFound},
 	}
 
-	for _, tc := range cases {
+	for i, tc := range cases {
 		_, err := svc.ViewClient(tc.key, tc.id)
-		assert.Equal(t, tc.err, err, "unexpected error occurred")
+		assert.Equal(t, tc.err, err, fmt.Sprintf("failed at %d\n", i))
 	}
 }
 
 func TestListClients(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		key string
 		err error
 	}{
@@ -135,14 +131,14 @@ func TestListClients(t *testing.T) {
 		{"", manager.ErrUnauthorizedAccess},
 	}
 
-	for _, tc := range cases {
+	for i, tc := range cases {
 		_, err := svc.ListClients(tc.key)
-		assert.Equal(t, tc.err, err, "unexpected error occurred")
+		assert.Equal(t, tc.err, err, fmt.Sprintf("failed at %d\n", i))
 	}
 }
 
 func TestRemoveClient(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		id  string
 		key string
 		err error
@@ -153,14 +149,14 @@ func TestRemoveClient(t *testing.T) {
 		{"2", "foo@bar.com", nil},
 	}
 
-	for _, tc := range cases {
+	for i, tc := range cases {
 		err := svc.RemoveClient(tc.key, tc.id)
-		assert.Equal(t, tc.err, err, "unexpected error occurred")
+		assert.Equal(t, tc.err, err, fmt.Sprintf("failed at %d\n", i))
 	}
 }
 
 func TestCreateChannel(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		key     string
 		channel manager.Channel
 		id      string
@@ -171,15 +167,15 @@ func TestCreateChannel(t *testing.T) {
 		{"", manager.Channel{Connected: []string{"1"}}, "", manager.ErrUnauthorizedAccess},
 	}
 
-	for _, tc := range cases {
+	for i, tc := range cases {
 		id, err := svc.CreateChannel(tc.key, tc.channel)
-		assert.Equal(t, tc.id, id, "unexpected id retrieved")
-		assert.Equal(t, tc.err, err, "unexpected error occurred")
+		assert.Equal(t, tc.id, id, fmt.Sprintf("unexpected id at %d\n", i))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("failed at %d\n", i))
 	}
 }
 
 func TestUpdateChannel(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		key     string
 		channel manager.Channel
 		err     error
@@ -190,14 +186,14 @@ func TestUpdateChannel(t *testing.T) {
 		{"foo@bar.com", manager.Channel{ID: "3", Connected: []string{"1"}}, manager.ErrNotFound},
 	}
 
-	for _, tc := range cases {
+	for i, tc := range cases {
 		err := svc.UpdateChannel(tc.key, tc.channel)
-		assert.Equal(t, tc.err, err, "unexpected error occurred")
+		assert.Equal(t, tc.err, err, fmt.Sprintf("failed at %d\n", i))
 	}
 }
 
 func TestViewChannel(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		id  string
 		key string
 		err error
@@ -207,14 +203,14 @@ func TestViewChannel(t *testing.T) {
 		{"5", "foo@bar.com", manager.ErrNotFound},
 	}
 
-	for _, tc := range cases {
+	for i, tc := range cases {
 		_, err := svc.ViewChannel(tc.key, tc.id)
-		assert.Equal(t, tc.err, err, "unexpected error occurred")
+		assert.Equal(t, tc.err, err, fmt.Sprintf("failed at %d\n", i))
 	}
 }
 
 func TestListChannels(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		key string
 		err error
 	}{
@@ -222,14 +218,14 @@ func TestListChannels(t *testing.T) {
 		{"", manager.ErrUnauthorizedAccess},
 	}
 
-	for _, tc := range cases {
+	for i, tc := range cases {
 		_, err := svc.ListChannels(tc.key)
-		assert.Equal(t, tc.err, err, "unexpected error occurred")
+		assert.Equal(t, tc.err, err, fmt.Sprintf("failed at %d\n", i))
 	}
 }
 
 func TestCanAccess(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		client  string
 		channel string
 		allowed bool
@@ -239,14 +235,14 @@ func TestCanAccess(t *testing.T) {
 		{"", "1", false},
 	}
 
-	for _, tc := range cases {
+	for i, tc := range cases {
 		allowed := svc.CanAccess(tc.client, tc.channel)
-		assert.Equal(t, tc.allowed, allowed, "unexpected value occurred")
+		assert.Equal(t, tc.allowed, allowed, fmt.Sprintf("failed at %d\n", i))
 	}
 }
 
 func TestRemoveChannel(t *testing.T) {
-	var cases = []struct {
+	cases := []struct {
 		id  string
 		key string
 		err error
@@ -257,8 +253,8 @@ func TestRemoveChannel(t *testing.T) {
 		{"2", "foo@bar.com", nil},
 	}
 
-	for _, tc := range cases {
+	for i, tc := range cases {
 		err := svc.RemoveChannel(tc.key, tc.id)
-		assert.Equal(t, tc.err, err, "unexpected error occurred")
+		assert.Equal(t, tc.err, err, fmt.Sprintf("failed at %d\n", i))
 	}
 }

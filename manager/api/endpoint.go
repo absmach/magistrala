@@ -9,17 +9,26 @@ import (
 
 func registrationEndpoint(svc manager.Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
-		user := request.(manager.User)
-		err := svc.Register(user)
+		req := request.(userReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		err := svc.Register(req.user)
 		return tokenRes{}, err
 	}
 }
 
 func loginEndpoint(svc manager.Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
-		user := request.(manager.User)
+		req := request.(userReq)
 
-		token, err := svc.Login(user)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		token, err := svc.Login(req.user)
 		if err != nil {
 			return nil, err
 		}
@@ -28,9 +37,31 @@ func loginEndpoint(svc manager.Service) endpoint.Endpoint {
 	}
 }
 
+func identityEndpoint(svc manager.Service) endpoint.Endpoint {
+	return func(_ context.Context, request interface{}) (interface{}, error) {
+		req := request.(identityReq)
+
+		if err := req.validate(); err != nil {
+			return nil, manager.ErrUnauthorizedAccess
+		}
+
+		id, err := svc.Identity(req.key)
+		if err != nil {
+			return nil, err
+		}
+
+		res := identityRes{id: id}
+		return res, nil
+	}
+}
+
 func addClientEndpoint(svc manager.Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
-		req := request.(clientReq)
+		req := request.(addClientReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
 
 		id, err := svc.AddClient(req.key, req.client)
 		if err != nil {
@@ -43,7 +74,12 @@ func addClientEndpoint(svc manager.Service) endpoint.Endpoint {
 
 func updateClientEndpoint(svc manager.Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
-		req := request.(clientReq)
+		req := request.(updateClientReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
 		req.client.ID = req.id
 
 		if err := svc.UpdateClient(req.key, req.client); err != nil {
@@ -58,6 +94,10 @@ func viewClientEndpoint(svc manager.Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
 		req := request.(viewResourceReq)
 
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
 		client, err := svc.ViewClient(req.key, req.id)
 		if err != nil {
 			return nil, err
@@ -70,6 +110,10 @@ func viewClientEndpoint(svc manager.Service) endpoint.Endpoint {
 func listClientsEndpoint(svc manager.Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
 		req := request.(listResourcesReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
 
 		clients, err := svc.ListClients(req.key)
 		if err != nil {
@@ -84,7 +128,16 @@ func removeClientEndpoint(svc manager.Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
 		req := request.(viewResourceReq)
 
-		if err := svc.RemoveClient(req.key, req.id); err != nil {
+		err := req.validate()
+		if err == manager.ErrNotFound {
+			return removeRes{}, nil
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		if err = svc.RemoveClient(req.key, req.id); err != nil {
 			return nil, err
 		}
 
@@ -94,7 +147,11 @@ func removeClientEndpoint(svc manager.Service) endpoint.Endpoint {
 
 func createChannelEndpoint(svc manager.Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
-		req := request.(channelReq)
+		req := request.(createChannelReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
 
 		id, err := svc.CreateChannel(req.key, req.channel)
 		if err != nil {
@@ -107,7 +164,12 @@ func createChannelEndpoint(svc manager.Service) endpoint.Endpoint {
 
 func updateChannelEndpoint(svc manager.Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
-		req := request.(channelReq)
+		req := request.(updateChannelReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
 		req.channel.ID = req.id
 
 		if err := svc.UpdateChannel(req.key, req.channel); err != nil {
@@ -122,6 +184,10 @@ func viewChannelEndpoint(svc manager.Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
 		req := request.(viewResourceReq)
 
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
 		channel, err := svc.ViewChannel(req.key, req.id)
 		if err != nil {
 			return nil, err
@@ -134,6 +200,10 @@ func viewChannelEndpoint(svc manager.Service) endpoint.Endpoint {
 func listChannelsEndpoint(svc manager.Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
 		req := request.(listResourcesReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
 
 		channels, err := svc.ListChannels(req.key)
 		if err != nil {
@@ -148,7 +218,16 @@ func removeChannelEndpoint(svc manager.Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
 		req := request.(viewResourceReq)
 
-		if err := svc.RemoveChannel(req.key, req.id); err != nil {
+		err := req.validate()
+		if err == manager.ErrNotFound {
+			return removeRes{}, nil
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		if err = svc.RemoveChannel(req.key, req.id); err != nil {
 			return nil, err
 		}
 
@@ -160,24 +239,14 @@ func canAccessEndpoint(svc manager.Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
 		req := request.(viewResourceReq)
 
+		if err := req.validate(); err != nil {
+			return nil, manager.ErrUnauthorizedAccess
+		}
+
 		if allowed := svc.CanAccess(req.key, req.id); !allowed {
 			return nil, manager.ErrUnauthorizedAccess
 		}
 
 		return accessRes{}, nil
-	}
-}
-
-func identityEndpoint(svc manager.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
-		req := request.(identityReq)
-
-		id, err := svc.Identity(req.key)
-		if err != nil {
-			return nil, err
-		}
-
-		res := identityRes{id: id}
-		return res, nil
 	}
 }

@@ -33,6 +33,9 @@ type Service interface {
 	// identified by the non-nil error values in the response.
 	Login(User) (string, error)
 
+	// Identity retrieves Client ID for a given client token
+	Identity(string) (string, error)
+
 	// AddClient adds new client to the user identified by the provided key.
 	AddClient(string, Client) (string, error)
 
@@ -74,7 +77,4 @@ type Service interface {
 	// CanAccess determines whether or not the channel can be accessed with the
 	// provided key.
 	CanAccess(string, string) bool
-
-	// Identity retrieves Client ID for a given client token
-	Identity(string) (string, error)
 }

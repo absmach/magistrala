@@ -49,6 +49,15 @@ func (ms *managerService) Login(user User) (string, error) {
 	return ms.idp.TemporaryKey(user.Email)
 }
 
+func (ms *managerService) Identity(key string) (string, error) {
+	client, err := ms.idp.Identity(key)
+	if err != nil {
+		return "", err
+	}
+
+	return client, nil
+}
+
 func (ms *managerService) AddClient(key string, client Client) (string, error) {
 	if err := client.validate(); err != nil {
 		return "", err
@@ -202,13 +211,4 @@ func (ms *managerService) CanAccess(key, channel string) bool {
 	}
 
 	return ms.channels.HasClient(channel, client)
-}
-
-func (ms *managerService) Identity(key string) (string, error) {
-	client, err := ms.idp.Identity(key)
-	if err != nil {
-		return "", err
-	}
-
-	return client, nil
 }

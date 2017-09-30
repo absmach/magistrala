@@ -20,13 +20,6 @@ func MakeHandler(svc manager.Service) http.Handler {
 
 	r := bone.New()
 
-	r.Post("/identity", kithttp.NewServer(
-		identityEndpoint(svc),
-		decodeIdentity,
-		encodeResponse,
-		opts...,
-	))
-
 	r.Post("/users", kithttp.NewServer(
 		registrationEndpoint(svc),
 		decodeCredentials,
@@ -37,6 +30,13 @@ func MakeHandler(svc manager.Service) http.Handler {
 	r.Post("/tokens", kithttp.NewServer(
 		loginEndpoint(svc),
 		decodeCredentials,
+		encodeResponse,
+		opts...,
+	))
+
+	r.Post("/identity", kithttp.NewServer(
+		identityEndpoint(svc),
+		decodeIdentity,
 		encodeResponse,
 		opts...,
 	))

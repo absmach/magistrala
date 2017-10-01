@@ -20,7 +20,6 @@ gnatsd &
 sleep 0.1
 mainflux-http &
 mainflux-manager &
-mainflux-normalizer &
 mainflux-writer &
 mainflux-coap &
 

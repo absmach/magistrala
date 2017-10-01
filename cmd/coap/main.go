@@ -33,9 +33,8 @@ func main() {
 	nc := connectToNats(cfg, logger)
 	defer nc.Close()
 
-	nats.StoreConnection(nc)
-
-	ca := adapter.NewCoAPAdapter(logger)
+	repo := nats.NewMessageRepository(nc)
+	ca := adapter.NewCoAPAdapter(logger, repo)
 
 	nc.Subscribe("msg.http", ca.MsgHandler)
 	nc.Subscribe("msg.mqtt", ca.MsgHandler)

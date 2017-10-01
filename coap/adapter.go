@@ -20,12 +20,14 @@ type Observer struct {
 type CoAPAdapter struct {
 	obsMap map[string][]Observer
 	logger *zap.Logger
+	repo   writer.MessageRepository
 }
 
 // NewCoAPAdapter creates new CoAP adapter struct
-func NewCoAPAdapter(logger *zap.Logger) *CoAPAdapter {
+func NewCoAPAdapter(logger *zap.Logger, repo writer.MessageRepository) *CoAPAdapter {
 	ca := &CoAPAdapter{
 		logger: logger,
+		repo:   repo,
 	}
 
 	ca.obsMap = make(map[string][]Observer)

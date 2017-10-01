@@ -10,18 +10,25 @@ import (
 
 const topic string = "msg.coap"
 
-// Stored NATS connection
-var snc *broker.Conn
+var _ writer.MessageRepository = (*natsRepository)(nil)
 
-func StoreConnection(nc *broker.Conn) {
-	snc = nc
+type natsRepository struct {
+	nc *broker.Conn
 }
 
-func Send(msg writer.RawMessage) error {
+// NewMessageRepository instantiates NATS message repository. Note that the
+// repository will not truly persist messages, but instead they will be
+// published to the topic and made available for persisting by all interested
+// parties, i.e. the message-writer service.
+func NewMessageRepository(nc *broker.Conn) writer.MessageRepository {
+	return &natsRepository{nc}
+}
+
+func (repo *natsRepository) Save(msg writer.RawMessage) error {
 	b, err := json.Marshal(msg)
 	if err != nil {
 		return err
 	}
 
-	return snc.Publish(topic, b)
+	return repo.nc.Publish(topic, b)
 }

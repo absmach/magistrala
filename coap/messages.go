@@ -7,14 +7,13 @@ import (
 
 	mux "github.com/dereulenspiegel/coap-mux"
 	coap "github.com/dustin/go-coap"
-	"github.com/mainflux/mainflux/coap/nats"
 	"github.com/mainflux/mainflux/writer"
 )
 
 // sendMessage sends the message to NATS
 func (ca *CoAPAdapter) sendMessage(l *net.UDPConn, a *net.UDPAddr, m *coap.Message) *coap.Message {
 	log.Printf("Got message in sendMessage: path=%q: %#v from %v", m.Path(), m, a)
-	var res *coap.Message = nil
+	var res *coap.Message
 	if m.IsConfirmable() {
 		res = &coap.Message{
 			Type:      coap.Acknowledgement,
@@ -43,15 +42,15 @@ func (ca *CoAPAdapter) sendMessage(l *net.UDPConn, a *net.UDPAddr, m *coap.Messa
 	n.Protocol = "coap"
 	n.Payload = m.Payload
 
-	if err := nats.Send(n); err != nil {
+	if err := ca.repo.Save(n); err != nil {
 		if m.IsConfirmable() {
-			res.Payload = []byte("{\"error\": \"cannot publish\"}")
+			res.Code = coap.InternalServerError
 		}
 		return res
 	}
 
 	if m.IsConfirmable() {
-		res.Payload = []byte("{\"res\": \"sent\"}")
+		res.Code = coap.Changed
 	}
 	return res
 }
@@ -86,7 +85,7 @@ func (ca *CoAPAdapter) deregisterObserver(o Observer, cid string) {
 // observeMessage adds client to the observers map
 func (ca *CoAPAdapter) observeMessage(l *net.UDPConn, a *net.UDPAddr, m *coap.Message) *coap.Message {
 	log.Printf("Got message in observeMessage: path=%q: %#v from %v", m.Path(), m, a)
-	var res *coap.Message = nil
+	var res *coap.Message
 
 	if m.IsConfirmable() {
 		res = &coap.Message{
@@ -109,30 +108,33 @@ func (ca *CoAPAdapter) observeMessage(l *net.UDPConn, a *net.UDPAddr, m *coap.Me
 		message: m,
 	}
 
-	if m.Option(coap.Observe) != nil {
-		if value, ok := m.Option(coap.Observe).(uint32); ok {
-			if value == 0 {
-				ca.registerObserver(o, cid)
-			} else {
-				ca.deregisterObserver(o, cid)
-			}
+	if m.Option(coap.Observe) == nil {
+		if m.IsConfirmable() {
+			res.Code = coap.BadRequest
+		}
+		return res
+	}
+
+	if value, ok := m.Option(coap.Observe).(uint32); ok {
+		if value == 0 {
+			ca.registerObserver(o, cid)
 		} else {
-			// Interop - old deregister was when there was no Observe option provided
 			ca.deregisterObserver(o, cid)
 		}
+	} else {
+		// Interop - old deregister was when there was no Observe option provided
+		ca.deregisterObserver(o, cid)
 	}
 
 	if m.IsConfirmable() {
-		res.Payload = []byte("{\"res\": \"observing\"}")
+		res.Code = coap.Valid
 	}
 	return res
 }
 
 // obsTransmit transmits the message to observing clients
 func (ca *CoAPAdapter) obsTransmit(n writer.RawMessage) {
-
 	for _, v := range ca.obsMap[n.Channel] {
-
 		msg := *(v.message)
 		msg.Payload = n.Payload
 

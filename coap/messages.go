@@ -56,6 +56,33 @@ func (ca *CoAPAdapter) sendMessage(l *net.UDPConn, a *net.UDPAddr, m *coap.Messa
 	return res
 }
 
+// registerObserver functions adds observer struct to the observers map
+func (ca *CoAPAdapter) registerObserver(o Observer, cid string) {
+	found := false
+	for _, v := range ca.obsMap[cid] {
+		if v.addr == o.addr && bytes.Compare(v.message.Token, o.message.Token) == 0 {
+			found = true
+			break
+		}
+	}
+	if !found {
+		log.Println("Register " + cid)
+		log.Printf("o.message = %v", o.message)
+		ca.obsMap[cid] = append(ca.obsMap[cid], o)
+	}
+}
+
+// deregisterObserver functions removes observer struct from the observers map
+func (ca *CoAPAdapter) deregisterObserver(o Observer, cid string) {
+	for k, v := range ca.obsMap[cid] {
+		if bytes.Compare(v.message.Token, o.message.Token) == 0 {
+			// Observer found, remove it from array
+			log.Println("Deregister " + cid)
+			ca.obsMap[cid] = append((ca.obsMap[cid])[:k], (ca.obsMap[cid])[k+1:]...)
+		}
+	}
+}
+
 // observeMessage adds client to the observers map
 func (ca *CoAPAdapter) observeMessage(l *net.UDPConn, a *net.UDPAddr, m *coap.Message) *coap.Message {
 	log.Printf("Got message in observeMessage: path=%q: %#v from %v", m.Path(), m, a)
@@ -85,41 +112,13 @@ func (ca *CoAPAdapter) observeMessage(l *net.UDPConn, a *net.UDPAddr, m *coap.Me
 	if m.Option(coap.Observe) != nil {
 		if value, ok := m.Option(coap.Observe).(uint32); ok {
 			if value == 0 {
-				// Register
-				found := false
-				for _, v := range ca.obsMap[cid] {
-					if v.addr == o.addr && bytes.Compare(v.message.Token, o.message.Token) == 0 {
-						found = true
-						break
-					}
-				}
-				if !found {
-					log.Println("Register " + cid)
-					log.Printf("o.message = %v", o.message)
-					ca.obsMap[cid] = append(ca.obsMap[cid], o)
-				}
+				ca.registerObserver(o, cid)
 			} else {
-				// Deregister
-				for k, v := range ca.obsMap[cid] {
-					if bytes.Compare(v.message.Token, o.message.Token) == 0 {
-						// Observer found, remove it from array
-						log.Println("Deregister " + cid)
-						arr := ca.obsMap[cid]
-						arr = append(arr[:k], arr[k+1:]...)
-					}
-				}
+				ca.deregisterObserver(o, cid)
 			}
 		} else {
-			log.Printf("%v", value)
-		}
-	} else {
-		// Interop - old deregister was when there was no Observe option provided
-		for k, v := range ca.obsMap[cid] {
-			if bytes.Compare(v.message.Token, o.message.Token) == 0 {
-				// Observer found, remove it from array
-				log.Println("Interop - Deregister " + cid)
-				ca.obsMap[cid] = append((ca.obsMap[cid])[:k], (ca.obsMap[cid])[k+1:]...)
-			}
+			// Interop - old deregister was when there was no Observe option provided
+			ca.deregisterObserver(o, cid)
 		}
 	}
 

@@ -18,6 +18,7 @@ var clientTypes map[string]bool = map[string]bool{
 	"device": true,
 }
 
+// Validate returns an error if client representation is invalid.
 func (c *Client) Validate() error {
 	if c.Type = strings.ToLower(c.Type); !clientTypes[c.Type] {
 		return ErrMalformedEntity

@@ -48,7 +48,6 @@ func MakeHandler(svc adapter.Service) http.Handler {
 }
 
 func decodeRequest(_ context.Context, r *http.Request) (interface{}, error) {
-
 	ct, err := checkContentType(r)
 	if err != nil {
 		return nil, err

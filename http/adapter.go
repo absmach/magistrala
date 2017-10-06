@@ -13,6 +13,6 @@ func NewService(mr writer.MessageRepository) Service {
 	return &adapterService{mr}
 }
 
-func (as *adapterService) Send(msg writer.RawMessage) {
-	as.mr.Save(msg)
+func (as *adapterService) Publish(msg writer.RawMessage) error {
+	return as.mr.Save(msg)
 }

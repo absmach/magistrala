@@ -31,28 +31,31 @@ func normalize(msg writer.RawMessage) ([]writer.Message, error) {
 
 	msgs := make([]writer.Message, len(nm.Records))
 	for k, v := range nm.Records {
-		m := writer.Message{}
-		m.Channel = msg.Channel
-		m.Publisher = msg.Publisher
-		m.Protocol = msg.Protocol
+		m := writer.Message{
+			Channel:     msg.Channel,
+			Publisher:   msg.Publisher,
+			Protocol:    msg.Protocol,
+			Version:     v.BaseVersion,
+			Name:        v.Name,
+			Unit:        v.Unit,
+			StringValue: v.StringValue,
+			DataValue:   v.DataValue,
+			Time:        v.Time,
+			UpdateTime:  v.UpdateTime,
+			Link:        v.Link,
+		}
 
-		m.Version = v.BaseVersion
-		m.Name = v.Name
-		m.Unit = v.Unit
 		if v.Value != nil {
 			m.Value = *v.Value
 		}
-		m.StringValue = v.StringValue
+
 		if v.BoolValue != nil {
 			m.BoolValue = *v.BoolValue
 		}
-		m.DataValue = v.DataValue
+
 		if v.Sum != nil {
 			m.ValueSum = *v.Sum
 		}
-		m.Time = v.Time
-		m.UpdateTime = v.UpdateTime
-		m.Link = v.Link
 
 		msgs[k] = m
 	}
@@ -71,7 +74,6 @@ func (repo *msgRepository) Save(raw writer.RawMessage) error {
 	}
 
 	for _, msg := range msgs {
-
 		cql := `INSERT INTO messages_by_channel
 				(channel, id, publisher, protocol, bver, n, u, v, vs, vb, vd, s, t, ut, l)
 				VALUES (?, now(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -79,6 +81,7 @@ func (repo *msgRepository) Save(raw writer.RawMessage) error {
 		err = repo.session.Query(cql, msg.Channel, msg.Publisher, msg.Protocol,
 			msg.Version, msg.Name, msg.Unit, msg.Value, msg.StringValue, msg.BoolValue,
 			msg.DataValue, msg.ValueSum, msg.Time, msg.UpdateTime, msg.Link).Exec()
+
 		if err != nil {
 			return err
 		}

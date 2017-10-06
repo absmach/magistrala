@@ -11,7 +11,7 @@ import (
 func sendMessageEndpoint(svc http.Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
 		msg := request.(writer.RawMessage)
-		svc.Send(msg)
-		return nil, nil
+		err := svc.Publish(msg)
+		return nil, err
 	}
 }

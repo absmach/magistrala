@@ -25,11 +25,11 @@ func NewMetricService(counter metrics.Counter, latency metrics.Histogram, s http
 	}
 }
 
-func (ms *metricService) Send(msg writer.RawMessage) {
+func (ms *metricService) Publish(msg writer.RawMessage) error {
 	defer func(begin time.Time) {
-		ms.counter.With("method", "send").Add(1)
-		ms.latency.With("method", "send").Observe(time.Since(begin).Seconds())
+		ms.counter.With("method", "publish").Add(1)
+		ms.latency.With("method", "publish").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	ms.Service.Send(msg)
+	return ms.Service.Publish(msg)
 }

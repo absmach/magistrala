@@ -27,13 +27,13 @@ const (
 	envNatsURL  string = "MESSAGE_WRITER_NATS_URL"
 )
 
+var logger *zap.Logger
+
 type config struct {
 	Cluster  string
 	Keyspace string
 	NatsURL  string
 }
-
-var logger *zap.Logger = nil
 
 func main() {
 	cfg := loadConfig()

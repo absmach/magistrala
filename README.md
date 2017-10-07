@@ -19,7 +19,9 @@ For more details, check out the [official documentation][docs].
 
 - Protocol bridging (i.e. HTTP, MQTT, WebSocket, CoAP)
 - Device management and provisioning
+- Linearly scalable [data storage][cassandra]
 - Fine-grained access control
+- Platform logging and instrumentation support
 - Container-based deployment using [Docker][docker]
 
 ## Quickstart
@@ -78,3 +80,4 @@ Thank you for your interest in Mainflux and wish to contribute!
 [grc-url]: https://goreportcard.com/report/github.com/mainflux/mainflux
 [license]: https://img.shields.io/badge/license-Apache%20v2.0-blue.svg
 [twitter]: https://twitter.com/mainflux
+[cassandra]: http://cassandra.apache.org

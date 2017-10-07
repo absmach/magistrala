@@ -8,7 +8,6 @@ import (
 	"github.com/dustin/go-coap"
 )
 
-// NotFound Handler - useful for ACK-EMPTY
 func notFoundHandler(l *net.UDPConn, a *net.UDPAddr, m *coap.Message) *coap.Message {
 	log.Printf("Got message in notFoundHandler: path=%q: %#v from %v", m.Path(), m, a)
 	if m.IsConfirmable() {

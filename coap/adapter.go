@@ -11,6 +11,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const protocol string = "coap"
+
 type Observer struct {
 	conn    *net.UDPConn
 	addr    *net.UDPAddr
@@ -41,8 +43,8 @@ func (ca *CoAPAdapter) Serve(addr string) error {
 	return coap.ListenAndServe("udp", addr, ca.COAPServer())
 }
 
-// MsgHandler functions is a handler for messages recieved via NATS
-func (ca *CoAPAdapter) MsgHandler(nm *broker.Msg) {
+// BridgeHandler functions is a handler for messages recieved via NATS
+func (ca *CoAPAdapter) BridgeHandler(nm *broker.Msg) {
 	log.Printf("Received a message: %s\n", string(nm.Data))
 
 	// And write it into the database

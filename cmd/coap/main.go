@@ -36,8 +36,8 @@ func main() {
 	repo := nats.NewMessageRepository(nc)
 	ca := adapter.NewCoAPAdapter(logger, repo)
 
-	nc.Subscribe("msg.http", ca.MsgHandler)
-	nc.Subscribe("msg.mqtt", ca.MsgHandler)
+	nc.Subscribe("msg.http", ca.BridgeHandler)
+	nc.Subscribe("msg.mqtt", ca.BridgeHandler)
 
 	errs := make(chan error, 2)
 

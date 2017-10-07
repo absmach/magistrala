@@ -10,7 +10,6 @@ import (
 	"github.com/mainflux/mainflux/writer"
 )
 
-// sendMessage sends the message to NATS
 func (ca *CoAPAdapter) sendMessage(l *net.UDPConn, a *net.UDPAddr, m *coap.Message) *coap.Message {
 	log.Printf("Got message in sendMessage: path=%q: %#v from %v", m.Path(), m, a)
 	var res *coap.Message
@@ -27,7 +26,7 @@ func (ca *CoAPAdapter) sendMessage(l *net.UDPConn, a *net.UDPAddr, m *coap.Messa
 
 	if len(m.Payload) == 0 {
 		if m.IsConfirmable() {
-			res.Payload = []byte("{\"res\": \"Error: msg len can not be 0\"}")
+			res.Code = coap.BadRequest
 		}
 		return res
 	}
@@ -35,12 +34,12 @@ func (ca *CoAPAdapter) sendMessage(l *net.UDPConn, a *net.UDPAddr, m *coap.Messa
 	// Channel ID
 	cid := mux.Var(m, "channel_id")
 
-	// Publish message via NATS
-	n := writer.RawMessage{}
-	n.Channel = cid
-	n.Publisher = ""
-	n.Protocol = "coap"
-	n.Payload = m.Payload
+	n := writer.RawMessage{
+		Channel:   cid,
+		Publisher: "",
+		Protocol:  protocol,
+		Payload:   m.Payload,
+	}
 
 	if err := ca.repo.Save(n); err != nil {
 		if m.IsConfirmable() {
@@ -55,7 +54,6 @@ func (ca *CoAPAdapter) sendMessage(l *net.UDPConn, a *net.UDPAddr, m *coap.Messa
 	return res
 }
 
-// registerObserver functions adds observer struct to the observers map
 func (ca *CoAPAdapter) registerObserver(o Observer, cid string) {
 	found := false
 	for _, v := range ca.obsMap[cid] {
@@ -71,7 +69,6 @@ func (ca *CoAPAdapter) registerObserver(o Observer, cid string) {
 	}
 }
 
-// deregisterObserver functions removes observer struct from the observers map
 func (ca *CoAPAdapter) deregisterObserver(o Observer, cid string) {
 	for k, v := range ca.obsMap[cid] {
 		if bytes.Compare(v.message.Token, o.message.Token) == 0 {
@@ -82,7 +79,6 @@ func (ca *CoAPAdapter) deregisterObserver(o Observer, cid string) {
 	}
 }
 
-// observeMessage adds client to the observers map
 func (ca *CoAPAdapter) observeMessage(l *net.UDPConn, a *net.UDPAddr, m *coap.Message) *coap.Message {
 	log.Printf("Got message in observeMessage: path=%q: %#v from %v", m.Path(), m, a)
 	var res *coap.Message
@@ -115,14 +111,9 @@ func (ca *CoAPAdapter) observeMessage(l *net.UDPConn, a *net.UDPAddr, m *coap.Me
 		return res
 	}
 
-	if value, ok := m.Option(coap.Observe).(uint32); ok {
-		if value == 0 {
-			ca.registerObserver(o, cid)
-		} else {
-			ca.deregisterObserver(o, cid)
-		}
+	if value, ok := m.Option(coap.Observe).(uint32); ok && value == 0 {
+		ca.registerObserver(o, cid)
 	} else {
-		// Interop - old deregister was when there was no Observe option provided
 		ca.deregisterObserver(o, cid)
 	}
 
@@ -132,7 +123,6 @@ func (ca *CoAPAdapter) observeMessage(l *net.UDPConn, a *net.UDPAddr, m *coap.Me
 	return res
 }
 
-// obsTransmit transmits the message to observing clients
 func (ca *CoAPAdapter) obsTransmit(n writer.RawMessage) {
 	for _, v := range ca.obsMap[n.Channel] {
 		msg := *(v.message)

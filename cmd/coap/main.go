@@ -75,7 +75,6 @@ func env(key, fallback string) string {
 func connectToNats(cfg *config, logger *zap.Logger) *broker.Conn {
 	nc, err := broker.Connect(cfg.NatsURL)
 	if err != nil {
-		println(logger)
 		logger.Error("Failed to connect to NATS", zap.Error(err))
 		os.Exit(1)
 	}

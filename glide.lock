@@ -1,5 +1,5 @@
-hash: 544a3813b956cc6b3f307a77900811c855008eb73b8d3e86719b3a5781e00453
-updated: 2017-09-30T22:21:04.077702738+02:00
+hash: add728e0810bc67a9b637777d80b2adf28bbae43b9407ae35c63a66af2fa3d62
+updated: 2017-09-25T18:09:01.605294277+02:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 73945b6115bfbbcc57d89b7316e28109364124e1
@@ -9,8 +9,12 @@ imports:
   - quantile
 - name: github.com/cisco/senml
   version: eb356817a51441202197049d8e7ae3c3755d8965
+- name: github.com/dereulenspiegel/coap-mux
+  version: e137e310a99955be01d60b2237da89153ea40987
 - name: github.com/dgrijalva/jwt-go
   version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
+- name: github.com/dustin/go-coap
+  version: ddcc80675fa42611359d91a6dfa5aa57fb90e72b
 - name: github.com/go-kit/kit
   version: fadad6fffe0466b19df9efd9acde5c9a52df5fa4
   subpackages:

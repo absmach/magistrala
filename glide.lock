@@ -1,5 +1,5 @@
-hash: add728e0810bc67a9b637777d80b2adf28bbae43b9407ae35c63a66af2fa3d62
-updated: 2017-09-25T18:09:01.605294277+02:00
+hash: f1fa694ac6ace208a0ae0aefc479ed2a043a4774a2cafb602e4de28cd2baa551
+updated: 2017-10-15T14:13:14.667686752+02:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 73945b6115bfbbcc57d89b7316e28109364124e1
@@ -31,7 +31,7 @@ imports:
 - name: github.com/go-zoo/bone
   version: fd0aebc74e908868b09ac140fb5a53cb363884c1
 - name: github.com/gocql/gocql
-  version: ce5020aabae349deda77bc1d559ef2300d3c93c5
+  version: 2416cf340d32ee20794e739fa794968858295098
   subpackages:
   - internal/lru
   - internal/murmur
@@ -44,6 +44,10 @@ imports:
   version: 553a641470496b2327abcac10b36396bd98e45c9
 - name: github.com/hailocab/go-hostpool
   version: e80d13ce29ede4452c43dea11e79b9bc8a15b478
+- name: github.com/hashicorp/consul
+  version: 112c0603d3d6fb23ab5f15e8fdb1a761da8eaf9a
+  subpackages:
+  - api
 - name: github.com/kr/logfmt
   version: b84e30acd515aadc4b783ad4ff83aff3299bdfe0
 - name: github.com/matttproud/golang_protobuf_extensions
@@ -67,7 +71,7 @@ imports:
   subpackages:
   - go
 - name: github.com/prometheus/common
-  version: 2f17f4a9d485bf34b4bfaccc273805040e4f86c8
+  version: 1bab55dd05dbff384524a6a1c99006d9eb5f139b
   subpackages:
   - expfmt
   - internal/bitbucket.org/ww/goautoneg
@@ -77,7 +81,7 @@ imports:
   subpackages:
   - xfs
 - name: github.com/ugorji/go
-  version: 54210f4e076c57f351166f0ed60e67d3fca57a36
+  version: f26fc641ec9d52a2161443cf9bb9fd53b9062a22
   subpackages:
   - codec
 - name: go.uber.org/atomic
@@ -98,7 +102,7 @@ imports:
   - bcrypt
   - blowfish
 - name: golang.org/x/net
-  version: 0a9397675ba34b2845f758fe3cd68828369c6517
+  version: a04bdaca5b32abe1c069418fb7088ae607de5bd0
   subpackages:
   - context
   - context/ctxhttp

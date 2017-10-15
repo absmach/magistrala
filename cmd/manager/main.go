@@ -10,6 +10,8 @@ import (
 
 	"github.com/go-kit/kit/log"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+	kitconsul "github.com/go-kit/kit/sd/consul"
+	stdconsul "github.com/hashicorp/consul/api"
 	"github.com/mainflux/mainflux/manager"
 	"github.com/mainflux/mainflux/manager/api"
 	"github.com/mainflux/mainflux/manager/bcrypt"
@@ -19,45 +21,66 @@ import (
 )
 
 const (
-	port        int    = 8180
-	sep         string = ","
-	defCluster  string = "127.0.0.1"
-	defKeyspace string = "manager"
-	defSecret   string = "manager"
-	envCluster  string = "MANAGER_DB_CLUSTER"
-	envKeyspace string = "MANAGER_DB_KEYSPACE"
-	envSecret   string = "MANAGER_SECRET"
+	port     int    = 9000
+	keyspace string = "manager"
+	sep      string = ","
 )
 
-type config struct {
-	Port     int
-	Cluster  string
-	Keyspace string
-	Secret   string
-}
+var (
+	kv     *stdconsul.KV
+	logger log.Logger
+)
 
 func main() {
-	cfg := config{
-		Port:     port,
-		Cluster:  env(envCluster, defCluster),
-		Keyspace: env(envKeyspace, defKeyspace),
-		Secret:   env(envSecret, defSecret),
-	}
-
-	var logger log.Logger
 	logger = log.NewJSONLogger(log.NewSyncWriter(os.Stdout))
 	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 
-	session, err := cassandra.Connect(strings.Split(cfg.Cluster, sep), cfg.Keyspace)
+	consulAddr := os.Getenv("CONSUL_ADDR")
+	if consulAddr == "" {
+		logger.Log("status", "Cannot start the service: CONSUL_ADDR not set.")
+		os.Exit(1)
+	}
+
+	consul, err := stdconsul.NewClient(&stdconsul.Config{
+		Address: consulAddr,
+	})
+
 	if err != nil {
-		status := fmt.Sprintf("Cannot connect to Cassandra due to %s", err.Error())
+		status := fmt.Sprintf("Cannot connect to Consul due to %s", err)
+		logger.Log("status", status)
+		os.Exit(1)
+	}
+
+	kv = consul.KV()
+
+	asr := &stdconsul.AgentServiceRegistration{
+		ID:                "",
+		Name:              "manager",
+		Tags:              []string{"prod"},
+		Port:              port,
+		Address:           address(),
+		EnableTagOverride: false,
+	}
+
+	sd := kitconsul.NewClient(consul)
+	if err = sd.Register(asr); err != nil {
+		status := fmt.Sprintf("Cannot register service due to %s", err)
+		logger.Log("status", status)
+		os.Exit(1)
+	}
+
+	hosts := strings.Split(get("cassandra"), sep)
+
+	session, err := cassandra.Connect(hosts, keyspace)
+	if err != nil {
+		status := fmt.Sprintf("Cannot connect to Cassandra due to %s", err)
 		logger.Log("status", status)
 		os.Exit(1)
 	}
 	defer session.Close()
 
 	if err := cassandra.Initialize(session); err != nil {
-		status := fmt.Sprintf("Cannot initialize Cassandra session due to %s", err.Error())
+		status := fmt.Sprintf("Cannot initialize Cassandra session due to %s", err)
 		logger.Log("status", status)
 		os.Exit(1)
 	}
@@ -66,7 +89,7 @@ func main() {
 	clients := cassandra.NewClientRepository(session)
 	channels := cassandra.NewChannelRepository(session)
 	hasher := bcrypt.NewHasher()
-	idp := jwt.NewIdentityProvider(cfg.Secret)
+	idp := jwt.NewIdentityProvider(get("manager/secret"))
 
 	var svc manager.Service
 	svc = manager.NewService(users, clients, channels, hasher, idp)
@@ -92,7 +115,7 @@ func main() {
 	errs := make(chan error, 2)
 
 	go func() {
-		p := fmt.Sprintf(":%d", cfg.Port)
+		p := fmt.Sprintf(":%d", port)
 		logger.Log("status", "Manager started.")
 		errs <- http.ListenAndServe(p, api.MakeHandler(svc))
 	}()
@@ -105,13 +128,21 @@ func main() {
 
 	status := fmt.Sprintf("Manager stopped due to %s", <-errs)
 	logger.Log("status", status)
+	sd.Deregister(asr)
 }
 
-func env(key, fallback string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		return fallback
+func get(key string) string {
+	pair, _, err := kv.Get(key, nil)
+	if err != nil {
+		status := fmt.Sprintf("Cannot retrieve %s due to %s", key, err)
+		logger.Log("status", status)
+		os.Exit(1)
 	}
 
-	return value
+	return string(pair.Value)
+}
+
+// TODO: retrieve proper IP address
+func address() string {
+	return "127.0.0.1"
 }

@@ -35,6 +35,9 @@ func testSuite(t *testing.T, f func(t *testing.T)) {
 
 	testReinit() // so flag.Parse() is called first, and never called again
 
+	testDecodeOptions = DecodeOptions{}
+	testEncodeOptions = EncodeOptions{}
+
 	testUseMust = false
 	testCanonical = false
 	testUseMust = false
@@ -47,6 +50,9 @@ func testSuite(t *testing.T, f func(t *testing.T)) {
 	testUseReset = false
 	testMaxInitLen = 0
 	testJsonIndent = 0
+	testUseIoWrapper = false
+	testNumRepeatString = 8
+
 	testReinit()
 	t.Run("optionsFalse", f)
 
@@ -70,8 +76,43 @@ func testSuite(t *testing.T, f func(t *testing.T)) {
 	testCheckCircRef = true
 	testJsonHTMLCharsAsIs = true
 	testUseReset = true
+	testDecodeOptions.MapValueReset = true
 	testReinit()
 	t.Run("optionsTrue", f)
+
+	testUseIoWrapper = true
+	testReinit()
+	t.Run("optionsTrue-ioWrapper", f)
+
+	testDepth = 6
+	testReinit()
+	t.Run("optionsTrue-deepstruct", f)
+
+	// make buffer small enough so that we have to re-fill multiple times.
+	testSkipRPCTests = true
+	testUseIoEncDec = true
+	testDecodeOptions.ReaderBufferSize = 128
+	testEncodeOptions.WriterBufferSize = 128
+	testReinit()
+	t.Run("optionsTrue-bufio", f)
+	testDecodeOptions.ReaderBufferSize = 0
+	testEncodeOptions.WriterBufferSize = 0
+	testSkipRPCTests = false
+
+	testNumRepeatString = 32
+	testReinit()
+	t.Run("optionsTrue-largestrings", f)
+
+	// The following here MUST be tested individually, as they create
+	// side effects i.e. the decoded value is different.
+	// testDecodeOptions.MapValueReset = true // ok - no side effects
+	// testDecodeOptions.InterfaceReset = true // error??? because we do deepEquals to verify
+	// testDecodeOptions.ErrorIfNoField = true // error, as expected, as fields not there
+	// testDecodeOptions.ErrorIfNoArrayExpand = true // no error, but no error case either
+	// testDecodeOptions.PreferArrayOverSlice = true // error??? because slice != array.
+	// .... however, update deepEqual to take this option
+	// testReinit()
+	// t.Run("optionsTrue-resetOptions", f)
 }
 
 /*
@@ -84,6 +125,7 @@ find . -name "$z" | xargs grep -e '^func Test' | \
 func testCodecGroup(t *testing.T) {
 	// println("running testcodecsuite")
 	// <setup code>
+
 	t.Run("TestBincCodecsTable", TestBincCodecsTable)
 	t.Run("TestBincCodecsMisc", TestBincCodecsMisc)
 	t.Run("TestBincCodecsEmbeddedPointer", TestBincCodecsEmbeddedPointer)
@@ -133,3 +175,18 @@ func testCodecGroup(t *testing.T) {
 }
 
 func TestCodecSuite(t *testing.T) { testSuite(t, testCodecGroup) }
+
+// func TestCodecSuite(t *testing.T) { testSuite2(t, testCodecGroup2) }
+// func testCodecGroup2(t *testing.T) {
+// 	t.Run("TestJsonCodecsTable", TestJsonCodecsTable)
+// 	t.Run("TestJsonCodecsMisc", TestJsonCodecsMisc)
+// }
+// func testSuite2(t *testing.T, f func(t *testing.T)) {
+// 	testUseIoEncDec = true
+// 	testDecodeOptions = DecodeOptions{}
+// 	testEncodeOptions = EncodeOptions{}
+// 	testDecodeOptions.ReaderBufferSize = 128
+// 	testEncodeOptions.WriterBufferSize = 128
+// 	testReinit()
+// 	t.Run("optionsTrue-bufio", f)
+// }

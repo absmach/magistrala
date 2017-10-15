@@ -433,7 +433,7 @@ func (d *simpleDecDriver) DecodeNaked() {
 		d.readNextBd()
 	}
 
-	n := &d.d.n
+	n := d.d.n
 	var decodeFurther bool
 
 	switch d.bd {

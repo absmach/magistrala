@@ -512,7 +512,7 @@ func (d *bincDecDriver) DecodeInt(bitsize uint8) (i int64) {
 		i = -i
 	}
 	if chkOvf.Int(i, bitsize) {
-		d.d.errorf("binc: overflow integer: %v", i)
+		d.d.errorf("binc: overflow integer: %v for num bits: %v", i, bitsize)
 		return
 	}
 	d.bdRead = false
@@ -804,7 +804,7 @@ func (d *bincDecDriver) DecodeNaked() {
 		d.readNextBd()
 	}
 
-	n := &d.d.n
+	n := d.d.n
 	var decodeFurther bool
 
 	switch d.vd {
@@ -921,6 +921,10 @@ func (h *BincHandle) newEncDriver(e *Encoder) encDriver {
 
 func (h *BincHandle) newDecDriver(d *Decoder) decDriver {
 	return &bincDecDriver{d: d, h: h, r: d.r, br: d.bytes}
+}
+
+func (_ *BincHandle) IsBuiltinType(rt uintptr) bool {
+	return rt == timeTypId
 }
 
 func (e *bincEncDriver) reset() {

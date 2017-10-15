@@ -42,6 +42,11 @@ import (
 
 func init() {
 	testPreInitFns = append(testPreInitFns, testInit)
+	fmt.Printf("sizeof: Decoder: %v, Encoder: %v, decNaked: %v\n",
+		reflect.TypeOf((*Decoder)(nil)).Elem().Size(),
+		reflect.TypeOf((*Encoder)(nil)).Elem().Size(),
+		reflect.TypeOf((*decNaked)(nil)).Elem().Size(),
+	)
 }
 
 // make this a mapbyslice
@@ -59,12 +64,15 @@ const (
 	testVerifyForPython
 )
 
-const testSkipRPCTests = false
+// const testSkipRPCTests = false
 
 var (
 	testTableNumPrimitives int
 	testTableIdxTime       int
 	testTableNumMaps       int
+
+	// set this when running using bufio, etc
+	testSkipRPCTests = false
 )
 
 var (
@@ -186,7 +194,6 @@ func (x *testUnixNanoTimeExt) ConvertExt(v interface{}) interface{} {
 	return &x.ts
 }
 func (x *testUnixNanoTimeExt) UpdateExt(dest interface{}, v interface{}) {
-	// fmt.Printf("testUnixNanoTimeExt.UpdateExt: v: %v\n", v)
 	tt := dest.(*time.Time)
 	switch v2 := v.(type) {
 	case int64:
@@ -202,7 +209,6 @@ func (x *testUnixNanoTimeExt) UpdateExt(dest interface{}, v interface{}) {
 	default:
 		panic(fmt.Sprintf("unsupported format for time conversion: expecting int64/uint64; got %T", v))
 	}
-	// fmt.Printf("testUnixNanoTimeExt.UpdateExt: v: %v, tt: %#v\n", v, tt)
 }
 
 func testVerifyVal(v interface{}, arg testVerifyArg) (v2 interface{}) {
@@ -324,14 +330,20 @@ func testVerifyVal(v interface{}, arg testVerifyArg) (v2 interface{}) {
 }
 
 func testInit() {
-	gob.Register(new(TestStruc))
+	gob.Register(new(TestStrucFlex))
 	if testInitDebug {
-		ts0 := newTestStruc(2, false, !testSkipIntf, false)
-		fmt.Printf("====> depth: %v, ts: %#v\n", 2, ts0)
+		ts0 := newTestStrucFlex(2, testNumRepeatString, false, !testSkipIntf, false)
+		logT(nil, "====> depth: %v, ts: %#v\n", 2, ts0)
 	}
 
 	for _, v := range testHandles {
 		bh := v.getBasicHandle()
+		// pre-fill them first
+		bh.EncodeOptions = testEncodeOptions
+		bh.DecodeOptions = testDecodeOptions
+		// bh.InterfaceReset = true // TODO: remove
+		// bh.PreferArrayOverSlice = true // TODO: remove
+		// modify from flag'ish things
 		bh.InternString = testInternStr
 		bh.Canonical = testCanonical
 		bh.CheckCircularRef = testCheckCircRef
@@ -464,7 +476,7 @@ ugorji
 	table = append(table, primitives)
 	table = append(table, testMbsT(primitives))
 	table = append(table, maps...)
-	table = append(table, newTestStruc(0, false, !testSkipIntf, false))
+	table = append(table, newTestStrucFlex(0, testNumRepeatString, false, !testSkipIntf, false))
 
 	tableVerify = make([]interface{}, len(table))
 	tableTestNilVerify = make([]interface{}, len(table))
@@ -561,10 +573,14 @@ func doTestCodecTableOne(t *testing.T, testNil bool, h Handle,
 		if err != nil {
 			continue
 		}
+		var b1 = b0
+		if len(b1) > 256 {
+			b1 = b1[:256]
+		}
 		if h.isBinary() {
-			logT(t, "         Encoded bytes: len: %v, %v\n", len(b0), b0)
+			logT(t, "         Encoded bytes: len: %v, %v\n", len(b0), b1)
 		} else {
-			logT(t, "         Encoded string: len: %v, %v\n", len(string(b0)), string(b0))
+			logT(t, "         Encoded string: len: %v, %v\n", len(b0), string(b1))
 			// println("########### encoded string: " + string(b0))
 		}
 		var v1 interface{}
@@ -574,10 +590,15 @@ func doTestCodecTableOne(t *testing.T, testNil bool, h Handle,
 		} else {
 			if v0 != nil {
 				v0rt := reflect.TypeOf(v0) // ptr
-				rv1 := reflect.New(v0rt)
-				err = testUnmarshal(rv1.Interface(), b0, h)
-				v1 = rv1.Elem().Interface()
-				// v1 = reflect.Indirect(reflect.ValueOf(v1)).Interface()
+				if v0rt.Kind() == reflect.Ptr {
+					err = testUnmarshal(v0, b0, h)
+					v1 = v0
+				} else {
+					rv1 := reflect.New(v0rt)
+					err = testUnmarshal(rv1.Interface(), b0, h)
+					v1 = rv1.Elem().Interface()
+					// v1 = reflect.Indirect(reflect.ValueOf(v1)).Interface()
+				}
 			}
 		}
 
@@ -603,7 +624,7 @@ func doTestCodecTableOne(t *testing.T, testNil bool, h Handle,
 		} else {
 			// logT(t, "-------- Before and After marshal do not match: Error: %v"+
 			// 	" ====> GOLDEN: (%T) %#v, DECODED: (%T) %#v\n", err, v0check, v0check, v1, v1)
-			logT(t, "-------- Before and After marshal do not match: Error: %v", err)
+			logT(t, "-------- FAIL: Before and After marshal do not match: Error: %v", err)
 			logT(t, "    ....... GOLDEN:  (%T) %#v", v0check, v0check)
 			logT(t, "    ....... DECODED: (%T) %#v", v1, v1)
 			failT(t)
@@ -624,6 +645,7 @@ func testCodecTableOne(t *testing.T, h Handle) {
 		var oldWriteExt, oldRawToString bool
 		oldWriteExt, v.WriteExt = v.WriteExt, true
 		oldRawToString, v.RawToString = v.RawToString, true
+		// defer func() { v.WriteExt, v.RawToString = oldWriteExt, oldRawToString }()
 		doTestCodecTableOne(t, false, h, table, tableVerify)
 		v.WriteExt, v.RawToString = oldWriteExt, oldRawToString
 	case *JsonHandle:
@@ -644,13 +666,11 @@ func testCodecTableOne(t *testing.T, h Handle) {
 	v := h.getBasicHandle()
 
 	oldMapType, v.MapType = v.MapType, testMapStrIntfTyp
-
+	// defer func() { v.MapType = oldMapType }()
 	//skip time.Time, []interface{} containing time.Time, last map, and newStruc
 	doTestCodecTableOne(t, true, h, table[:idxTime], tableTestNilVerify[:idxTime])
 	doTestCodecTableOne(t, true, h, table[idxMap:idxMap+numMap-1], tableTestNilVerify[idxMap:idxMap+numMap-1])
-
 	v.MapType = oldMapType
-
 	// func TestMsgpackNilIntf(t *testing.T) {
 
 	//do last map and newStruc
@@ -677,18 +697,22 @@ func testCodecMiscOne(t *testing.T, h Handle) {
 	}
 
 	// func TestMsgpackDecodePtr(t *testing.T) {
-	ts := newTestStruc(0, false, !testSkipIntf, false)
+	ts := newTestStrucFlex(testDepth, testNumRepeatString, false, !testSkipIntf, false)
 	b, err = testMarshalErr(ts, h, t, "pointer-to-struct")
 	if len(b) < 40 {
 		logT(t, "------- Size must be > 40. Size: %d", len(b))
 		failT(t)
 	}
-	if h.isBinary() {
-		logT(t, "------- b: %v", b)
-	} else {
-		logT(t, "------- b: %s", b)
+	var b1 = b
+	if len(b1) > 256 {
+		b1 = b1[:256]
 	}
-	ts2 := new(TestStruc)
+	if h.isBinary() {
+		logT(t, "------- b: size: %v, value: %v", len(b), b1)
+	} else {
+		logT(t, "------- b: size: %v, value: %s", len(b), b1)
+	}
+	ts2 := new(TestStrucFlex)
 	err = testUnmarshalErr(ts2, b, h, t, "pointer-to-struct")
 	if ts2.I64 != math.MaxInt64*2/3 {
 		logT(t, "------- Unmarshal wrong. Expect I64 = 64. Got: %v", ts2.I64)
@@ -705,9 +729,10 @@ func testCodecMiscOne(t *testing.T, h Handle) {
 	err = testUnmarshalErr(&p2, bs, h, t, "&p2")
 
 	if m2["A"] != 2 || m2["B"] != 3 {
-		logT(t, "m2 not as expected: expecting: %v, got: %v", m, m2)
+		logT(t, "FAIL: m2 not as expected: expecting: %v, got: %v", m, m2)
 		failT(t)
 	}
+
 	// log("m: %v, m2: %v, p: %v, p2: %v", m, m2, p, p2)
 	checkEqualT(t, p, p2, "p=p2")
 	checkEqualT(t, m, m2, "m=m2")
@@ -759,7 +784,6 @@ func testCodecMiscOne(t *testing.T, h Handle) {
 		var tarr2 tarr
 		testUnmarshalErr(&tarr2, bs, h, t, "tarr2")
 		checkEqualT(t, tarr0, tarr2, "tarr0=tarr2")
-		// fmt.Printf(">>>> err: %v. tarr1: %v, tarr2: %v\n", err, tarr0, tarr2)
 	}
 
 	// test byte array, even if empty (msgpack only)
@@ -786,7 +810,6 @@ func testCodecEmbeddedPointer(t *testing.T, h Handle) {
 	var z Z = 4
 	x1 := &B{&z, &A{5}, 6}
 	bs, err := testMarshalErr(x1, h, t, "x1")
-	// fmt.Printf("buf: len(%v): %x\n", buf.Len(), buf.Bytes())
 	var x2 = new(B)
 	err = testUnmarshalErr(x2, bs, h, t, "x2")
 	err = checkEqualT(t, x1, x2, "x1=x2")
@@ -816,40 +839,115 @@ func testCodecUnderlyingType(t *testing.T, h Handle) {
 }
 
 func testCodecChan(t *testing.T, h Handle) {
+	testOnce.Do(testInitAll)
 	// - send a slice []*int64 (sl1) into an chan (ch1) with cap > len(s1)
 	// - encode ch1 as a stream array
 	// - decode a chan (ch2), with cap > len(s1) from the stream array
 	// - receive from ch2 into slice sl2
 	// - compare sl1 and sl2
 	// - do this for codecs: json, cbor (covers all types)
-	sl1 := make([]*int64, 4)
-	for i := range sl1 {
-		var j int64 = int64(i)
-		sl1[i] = &j
+
+	if true {
+		sl1 := make([]*int64, 4)
+		for i := range sl1 {
+			var j int64 = int64(i)
+			sl1[i] = &j
+		}
+		ch1 := make(chan *int64, 4)
+		for _, j := range sl1 {
+			ch1 <- j
+		}
+		var bs []byte
+		NewEncoderBytes(&bs, h).MustEncode(ch1)
+		ch2 := make(chan *int64, 8)
+		NewDecoderBytes(bs, h).MustDecode(&ch2)
+		close(ch2)
+		var sl2 []*int64
+		for j := range ch2 {
+			sl2 = append(sl2, j)
+		}
+		if err := deepEqual(sl1, sl2); err != nil {
+			logT(t, "FAIL: Not Match: %v; len: %v, %v", err, len(sl1), len(sl2))
+			failT(t)
+		}
 	}
-	ch1 := make(chan *int64, 4)
-	for _, j := range sl1 {
-		ch1 <- j
+
+	if true {
+		type testBytesT []byte
+		sl1 := make([]testBytesT, 4)
+		for i := range sl1 {
+			var j = []byte(strings.Repeat(strconv.FormatInt(int64(i), 10), i))
+			sl1[i] = j
+		}
+		ch1 := make(chan testBytesT, 4)
+		for _, j := range sl1 {
+			ch1 <- j
+		}
+		var bs []byte
+		NewEncoderBytes(&bs, h).MustEncode(ch1)
+		ch2 := make(chan testBytesT, 8)
+		NewDecoderBytes(bs, h).MustDecode(&ch2)
+		close(ch2)
+		var sl2 []testBytesT
+		for j := range ch2 {
+			sl2 = append(sl2, j)
+		}
+		if err := deepEqual(sl1, sl2); err != nil {
+			logT(t, "FAIL: Not Match: %v; len: %v, %v", err, len(sl1), len(sl2))
+			failT(t)
+		}
 	}
-	var bs []byte
-	NewEncoderBytes(&bs, h).MustEncode(ch1)
-	// if !h.isBinary() {
-	// 	fmt.Printf("before: len(ch1): %v, bs: %s\n", len(ch1), bs)
-	// }
-	// var ch2 chan *int64 // this will block if json, etc.
-	ch2 := make(chan *int64, 8)
-	NewDecoderBytes(bs, h).MustDecode(&ch2)
-	// logT(t, "Len(ch2): %v", len(ch2))
-	// fmt.Printf("after:  len(ch2): %v, ch2: %v\n", len(ch2), ch2)
-	close(ch2)
-	var sl2 []*int64
-	for j := range ch2 {
-		sl2 = append(sl2, j)
+	if true {
+		type testBytesT byte
+		sl1 := make([]testBytesT, 4)
+		for i := range sl1 {
+			var j = strconv.FormatInt(int64(i), 10)[0]
+			sl1[i] = testBytesT(j)
+		}
+		ch1 := make(chan testBytesT, 4)
+		for _, j := range sl1 {
+			ch1 <- j
+		}
+		var bs []byte
+		NewEncoderBytes(&bs, h).MustEncode(ch1)
+		ch2 := make(chan testBytesT, 8)
+		NewDecoderBytes(bs, h).MustDecode(&ch2)
+		close(ch2)
+		var sl2 []testBytesT
+		for j := range ch2 {
+			sl2 = append(sl2, j)
+		}
+		if err := deepEqual(sl1, sl2); err != nil {
+			logT(t, "FAIL: Not Match: %v; len: %v, %v", err, len(sl1), len(sl2))
+			failT(t)
+		}
 	}
-	if err := deepEqual(sl1, sl2); err != nil {
-		logT(t, "Not Match: %v; len: %v, %v", err, len(sl1), len(sl2))
-		failT(t)
+
+	if true {
+		sl1 := make([]byte, 4)
+		for i := range sl1 {
+			var j = strconv.FormatInt(int64(i), 10)[0]
+			sl1[i] = byte(j)
+		}
+		ch1 := make(chan byte, 4)
+		for _, j := range sl1 {
+			ch1 <- j
+		}
+		var bs []byte
+		NewEncoderBytes(&bs, h).MustEncode(ch1)
+		ch2 := make(chan byte, 8)
+		NewDecoderBytes(bs, h).MustDecode(&ch2)
+		close(ch2)
+		var sl2 []byte
+		for j := range ch2 {
+			sl2 = append(sl2, j)
+		}
+		if err := deepEqual(sl1, sl2); err != nil {
+			logT(t, "FAIL: Not Match: %v; len: %v, %v", err, len(sl1), len(sl2))
+			failT(t)
+		}
 	}
+
 }
 
 func testCodecRpcOne(t *testing.T, rr Rpc, h Handle, doRequest bool, exitSleepMs time.Duration,
@@ -918,7 +1016,6 @@ func testCodecRpcOne(t *testing.T, rr Rpc, h Handle, doRequest bool, exitSleepMs
 	connFn := func() (bs net.Conn) {
 		// log("calling f1")
 		bs, err2 := net.Dial(ln.Addr().Network(), ln.Addr().String())
-		//fmt.Printf("f1. bs: %v, err2: %v\n", bs, err2)
 		checkErrT(t, err2)
 		return
 	}
@@ -954,10 +1051,12 @@ func testCodecRpcOne(t *testing.T, rr Rpc, h Handle, doRequest bool, exitSleepMs
 }
 
 func doTestMapEncodeForCanonical(t *testing.T, name string, h Handle) {
-	v1 := map[string]interface{}{
-		"a": 1,
-		"b": "hello",
-		"c": map[string]interface{}{
+	testOnce.Do(testInitAll)
+	// println("doTestMapEncodeForCanonical")
+	v1 := map[stringUint64T]interface{}{
+		{"a", 1}: 1,
+		{"b", 2}: "hello",
+		{"c", 3}: map[string]interface{}{
 			"c/a": 1,
 			"c/b": "world",
 			"c/c": []int{1, 2, 3, 4},
@@ -985,7 +1084,7 @@ func doTestMapEncodeForCanonical(t *testing.T, name string, h Handle) {
 			},
 		},
 	}
-	var v2 map[string]interface{}
+	var v2 map[stringUint64T]interface{}
 	var b1, b2 []byte
 
 	// encode v1 into b1, decode b1 into v2, encode v2 into b2, compare b1 and b2
@@ -1009,6 +1108,7 @@ func doTestMapEncodeForCanonical(t *testing.T, name string, h Handle) {
 }
 
 func doTestStdEncIntf(t *testing.T, name string, h Handle) {
+	testOnce.Do(testInitAll)
 	args := [][2]interface{}{
 		{&TestABC{"A", "BB", "CCC"}, new(TestABC)},
 		{&TestABC2{"AAA", "BB", "C"}, new(TestABC2)},
@@ -1022,13 +1122,14 @@ func doTestStdEncIntf(t *testing.T, name string, h Handle) {
 		if err := deepEqual(a[0], a[1]); err == nil {
 			logT(t, "++++ Objects match")
 		} else {
-			logT(t, "---- Objects do not match: y1: %v, err: %v", a[1], err)
+			logT(t, "---- FAIL: Objects do not match: y1: %v, err: %v", a[1], err)
 			failT(t)
 		}
 	}
 }
 
 func doTestEncCircularRef(t *testing.T, name string, h Handle) {
+	testOnce.Do(testInitAll)
 	type T1 struct {
 		S string
 		B bool
@@ -1063,7 +1164,7 @@ func doTestEncCircularRef(t *testing.T, name string, h Handle) {
 	if x := err.Error(); strings.Contains(x, "circular") || strings.Contains(x, "cyclic") {
 		logT(t, "error detected as expected: %v", x)
 	} else {
-		logT(t, "error detected was not as expected: %v", x)
+		logT(t, "FAIL: error detected was not as expected: %v", x)
 		failT(t)
 	}
 }
@@ -1085,6 +1186,7 @@ type (
 )
 
 func doTestAnonCycle(t *testing.T, name string, h Handle) {
+	testOnce.Do(testInitAll)
 	var x TestAnonCycleT1
 	x.S = "hello"
 	x.TestAnonCycleT2.S2 = "hello.2"
@@ -1098,6 +1200,7 @@ func doTestAnonCycle(t *testing.T, name string, h Handle) {
 }
 
 func doTestJsonLargeInteger(t *testing.T, v interface{}, ias uint8) {
+	testOnce.Do(testInitAll)
 	logT(t, "Running doTestJsonLargeInteger: v: %#v, ias: %c", v, ias)
 	oldIAS := testJsonH.IntegerAsString
 	defer func() { testJsonH.IntegerAsString = oldIAS }()
@@ -1163,11 +1266,11 @@ func doTestJsonLargeInteger(t *testing.T, v interface{}, ias uint8) {
 			logT(t, "Expecting equal values from %s: got golden: %v, decoded: %v", b, v2, vu)
 			failT(t)
 		}
-		// fmt.Printf("%v: %s, decode: %d, bool: %v, equal_on_decode: %v\n", v, b, vu, vb, vu == v.(uint))
 	}
 }
 
 func doTestRawValue(t *testing.T, name string, h Handle) {
+	testOnce.Do(testInitAll)
 	bh := h.getBasicHandle()
 	if !bh.Raw {
 		bh.Raw = true
@@ -1208,6 +1311,7 @@ func doTestRawValue(t *testing.T, name string, h Handle) {
 // We keep this unexported here, and put actual test in ext_dep_test.go.
 // This way, it can be excluded by excluding file completely.
 func doTestPythonGenStreams(t *testing.T, name string, h Handle) {
+	testOnce.Do(testInitAll)
 	logT(t, "TestPythonGenStreams-%v", name)
 	tmpdir, err := ioutil.TempDir("", "golang-"+name+"-test")
 	if err != nil {
@@ -1264,7 +1368,7 @@ func doTestPythonGenStreams(t *testing.T, name string, h Handle) {
 		if err = deepEqual(v, v1); err == nil {
 			logT(t, "++++++++ Objects match: %T, %v", v, v)
 		} else {
-			logT(t, "-------- Objects do not match: %v. Source: %T. Decoded: %T", err, v, v1)
+			logT(t, "-------- FAIL: Objects do not match: %v. Source: %T. Decoded: %T", err, v, v1)
 			logT(t, "--------   GOLDEN: %#v", v)
 			// logT(t, "--------   DECODED: %#v <====> %#v", v1, reflect.Indirect(reflect.ValueOf(v1)).Interface())
 			logT(t, "--------   DECODED: %#v <====> %#v", v1, reflect.Indirect(reflect.ValueOf(v1)).Interface())
@@ -1279,7 +1383,7 @@ func doTestPythonGenStreams(t *testing.T, name string, h Handle) {
 		if err = deepEqual(bsb, bss); err == nil {
 			logT(t, "++++++++ Bytes match")
 		} else {
-			logT(t, "???????? Bytes do not match. %v.", err)
+			logT(t, "???????? FAIL: Bytes do not match. %v.", err)
 			xs := "--------"
 			if reflect.ValueOf(v).Kind() == reflect.Map {
 				xs = "        "
@@ -1308,6 +1412,7 @@ func doTestMsgpackRpcSpecGoClientToPythonSvc(t *testing.T) {
 	if testSkipRPCTests {
 		return
 	}
+	testOnce.Do(testInitAll)
 	// openPorts are between 6700 and 6800
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	openPort := strconv.FormatInt(6700+r.Int63n(99), 10)
@@ -1336,6 +1441,7 @@ func doTestMsgpackRpcSpecPythonClientToGoSvc(t *testing.T) {
 	if testSkipRPCTests {
 		return
 	}
+	testOnce.Do(testInitAll)
 	port := testCodecRpcOne(t, MsgpackSpecRpc, testMsgpackH, false, 1*time.Second)
 	//time.Sleep(1000 * time.Millisecond)
 	cmd := exec.Command("python", "test.py", "rpc-client-go-service", strconv.Itoa(port))
@@ -1350,7 +1456,167 @@ func doTestMsgpackRpcSpecPythonClientToGoSvc(t *testing.T) {
 		fmt.Sprintf("%#v\n%#v\n", []string{"A1", "B2", "C3"}, TestRpcABC{"Aa", "Bb", "Cc"}), "cmdout=")
 }
 
+func doTestSwallowAndZero(t *testing.T, h Handle) {
+	testOnce.Do(testInitAll)
+	v1 := newTestStrucFlex(testDepth, testNumRepeatString, false, false, false)
+	var b1 []byte
+
+	e1 := NewEncoderBytes(&b1, h)
+	e1.MustEncode(v1)
+	d1 := NewDecoderBytes(b1, h)
+	d1.swallow()
+	if d1.r.numread() != len(b1) {
+		logT(t, "swallow didn't consume all encoded bytes: %v out of %v", d1.r.numread(), len(b1))
+		failT(t)
+	}
+	d1.setZero(v1)
+	testDeepEqualErr(v1, &TestStrucFlex{}, t, "filled-and-zeroed")
+}
+
+func doTestRawExt(t *testing.T, h Handle) {
+	testOnce.Do(testInitAll)
+	// return // TODO: need to fix this ...
+	var b []byte
+	var v interface{}
+	_, isJson := h.(*JsonHandle)
+	_, isCbor := h.(*CborHandle)
+	isValuer := isJson || isCbor
+	_ = isValuer
+	for _, r := range []RawExt{
+		{Tag: 99, Value: "9999", Data: []byte("9999")},
+	} {
+		e := NewEncoderBytes(&b, h)
+		e.MustEncode(&r)
+		d := NewDecoderBytes(b, h)
+		d.MustDecode(&v)
+		switch h.(type) {
+		case *JsonHandle:
+			testDeepEqualErr(r.Value, v, t, "rawext-json")
+		default:
+			r2 := r
+			if isValuer {
+				r2.Data = nil
+			} else {
+				r2.Value = nil
+			}
+			testDeepEqualErr(v, r2, t, "rawext-default")
+		}
+	}
+}
+
+func doTestMapStructKey(t *testing.T, h Handle) {
+	testOnce.Do(testInitAll)
+	var b []byte
+	var v interface{} // map[stringUint64T]wrapUint64Slice // interface{}
+	bh := h.getBasicHandle()
+	m := map[stringUint64T]wrapUint64Slice{
+		{"55555", 55555}: []wrapUint64{12345},
+		{"333", 333}:     []wrapUint64{123},
+	}
+	oldCanonical := bh.Canonical
+	oldMapType := bh.MapType
+	defer func() {
+		bh.Canonical = oldCanonical
+		bh.MapType = oldMapType
+	}()
+
+	bh.MapType = reflect.TypeOf((*map[stringUint64T]wrapUint64Slice)(nil)).Elem()
+	for _, bv := range [2]bool{true, false} {
+		b, v = nil, nil
+		bh.Canonical = bv
+		e := NewEncoderBytes(&b, h)
+		e.MustEncode(m)
+		d := NewDecoderBytes(b, h)
+		d.MustDecode(&v)
+		testDeepEqualErr(v, m, t, "map-structkey")
+	}
+}
+
+func doTestDecodeNilMapValue(t *testing.T, handle Handle) {
+	type Struct struct {
+		Field map[uint16]map[uint32]struct{}
+	}
+
+	bh := handle.getBasicHandle()
+	oldMapType := bh.MapType
+	oldDeleteOnNilMapValue := bh.DeleteOnNilMapValue
+	defer func() {
+		bh.MapType = oldMapType
+		bh.DeleteOnNilMapValue = oldDeleteOnNilMapValue
+	}()
+	bh.MapType = reflect.TypeOf(map[interface{}]interface{}(nil))
+	bh.DeleteOnNilMapValue = false
+
+	_, isJsonHandle := handle.(*JsonHandle)
+
+	toEncode := Struct{Field: map[uint16]map[uint32]struct{}{
+		1: nil,
+	}}
+
+	bs, err := testMarshal(toEncode, handle)
+	if err != nil {
+		logT(t, "Error encoding: %v, Err: %v", toEncode, err)
+		failT(t)
+	}
+	if isJsonHandle {
+		logT(t, "json encoded: %s\n", bs)
+	}
+
+	var decoded Struct
+	err = testUnmarshal(&decoded, bs, handle)
+	if err != nil {
+		logT(t, "Error decoding: %v", err)
+		failT(t)
+	}
+	if !reflect.DeepEqual(decoded, toEncode) {
+		logT(t, "Decoded value %#v != %#v", decoded, toEncode)
+		failT(t)
+	}
+}
+
+func doTestEmbeddedFieldPrecedence(t *testing.T, h Handle) {
+	type Embedded struct {
+		Field byte
+	}
+	type Struct struct {
+		Field byte
+		Embedded
+	}
+	toEncode := Struct{
+		Field:    1,
+		Embedded: Embedded{Field: 2},
+	}
+	_, isJsonHandle := h.(*JsonHandle)
+	handle := h.getBasicHandle()
+	oldMapType := handle.MapType
+	defer func() { handle.MapType = oldMapType }()
+
+	handle.MapType = reflect.TypeOf(map[interface{}]interface{}(nil))
+
+	bs, err := testMarshal(toEncode, h)
+	if err != nil {
+		logT(t, "Error encoding: %v, Err: %v", toEncode, err)
+		failT(t)
+	}
+
+	var decoded Struct
+	err = testUnmarshal(&decoded, bs, h)
+	if err != nil {
+		logT(t, "Error decoding: %v", err)
+		failT(t)
+	}
+
+	if decoded.Field != toEncode.Field {
+		logT(t, "Decoded result %v != %v", decoded.Field, toEncode.Field) // hex to look at what was encoded
+		if isJsonHandle {
+			logT(t, "JSON encoded as: %s", bs) // hex to look at what was encoded
+		}
+		failT(t)
+	}
+}
+
 func testRandomFillRV(v reflect.Value) {
+	testOnce.Do(testInitAll)
 	fneg := func() int64 {
 		i := rand.Intn(1)
 		if i == 1 {
@@ -1428,7 +1694,6 @@ func testMammoth(t *testing.T, name string, h Handle) {
 	testRandomFillRV(reflect.ValueOf(&m).Elem())
 	b, _ := testMarshalErr(&m, h, t, "mammoth-"+name)
 	testUnmarshalErr(&m2, b, h, t, "mammoth-"+name)
-	// fmt.Printf("m2: %v", &m2)
 	testDeepEqualErr(&m, &m2, t, "mammoth-"+name)
 }
 
@@ -1603,6 +1868,106 @@ func TestBincUnderlyingType(t *testing.T) {
 	testCodecUnderlyingType(t, testBincH)
 }
 
+func TestJsonSwallowAndZero(t *testing.T) {
+	doTestSwallowAndZero(t, testJsonH)
+}
+
+func TestCborSwallowAndZero(t *testing.T) {
+	doTestSwallowAndZero(t, testCborH)
+}
+
+func TestMsgpackSwallowAndZero(t *testing.T) {
+	doTestSwallowAndZero(t, testMsgpackH)
+}
+
+func TestBincSwallowAndZero(t *testing.T) {
+	doTestSwallowAndZero(t, testBincH)
+}
+
+func TestSimpleSwallowAndZero(t *testing.T) {
+	doTestSwallowAndZero(t, testSimpleH)
+}
+
+func TestJsonRawExt(t *testing.T) {
+	doTestRawExt(t, testJsonH)
+}
+
+func TestCborRawExt(t *testing.T) {
+	doTestRawExt(t, testCborH)
+}
+
+func TestMsgpackRawExt(t *testing.T) {
+	doTestRawExt(t, testMsgpackH)
+}
+
+func TestBincRawExt(t *testing.T) {
+	doTestRawExt(t, testBincH)
+}
+
+func TestSimpleRawExt(t *testing.T) {
+	doTestRawExt(t, testSimpleH)
+}
+
+func TestJsonMapStructKey(t *testing.T) {
+	doTestMapStructKey(t, testJsonH)
+}
+
+func TestCborMapStructKey(t *testing.T) {
+	doTestMapStructKey(t, testCborH)
+}
+
+func TestMsgpackMapStructKey(t *testing.T) {
+	doTestMapStructKey(t, testMsgpackH)
+}
+
+func TestBincMapStructKey(t *testing.T) {
+	doTestMapStructKey(t, testBincH)
+}
+
+func TestSimpleMapStructKey(t *testing.T) {
+	doTestMapStructKey(t, testSimpleH)
+}
+
+func TestJsonDecodeNilMapValue(t *testing.T) {
+	doTestDecodeNilMapValue(t, testJsonH)
+}
+
+func TestCborDecodeNilMapValue(t *testing.T) {
+	doTestDecodeNilMapValue(t, testCborH)
+}
+
+func TestMsgpackDecodeNilMapValue(t *testing.T) {
+	doTestDecodeNilMapValue(t, testMsgpackH)
+}
+
+func TestBincDecodeNilMapValue(t *testing.T) {
+	doTestDecodeNilMapValue(t, testBincH)
+}
+
+func TestSimpleDecodeNilMapValue(t *testing.T) {
+	doTestDecodeNilMapValue(t, testSimpleH)
+}
+
+func TestJsonEmbeddedFieldPrecedence(t *testing.T) {
+	doTestEmbeddedFieldPrecedence(t, testJsonH)
+}
+
+func TestCborEmbeddedFieldPrecedence(t *testing.T) {
+	doTestEmbeddedFieldPrecedence(t, testCborH)
+}
+
+func TestMsgpackEmbeddedFieldPrecedence(t *testing.T) {
+	doTestEmbeddedFieldPrecedence(t, testMsgpackH)
+}
+
+func TestBincEmbeddedFieldPrecedence(t *testing.T) {
+	doTestEmbeddedFieldPrecedence(t, testBincH)
+}
+
+func TestSimpleEmbeddedFieldPrecedence(t *testing.T) {
+	doTestEmbeddedFieldPrecedence(t, testSimpleH)
+}
+
 func TestJsonLargeInteger(t *testing.T) {
 	for _, i := range []uint8{'L', 'A', 0} {
 		for _, j := range []interface{}{
@@ -1746,6 +2111,70 @@ after the new line
 		logT(t, "decoded indented with spaces != expected: \nexpected: %s\nencoded: %s", goldenResultTab, txtSpaces)
 		failT(t)
 	}
+}
+
+func TestBufioDecReader(t *testing.T) {
+	// try to read 85 bytes in chunks of 7 at a time.
+	var s = strings.Repeat("01234'56789      ", 5)
+	// fmt.Printf("s: %s\n", s)
+	var r = strings.NewReader(s)
+	var br = &bufioDecReader{r: r, buf: make([]byte, 0, 13)}
+	b, err := ioutil.ReadAll(br)
+	if err != nil {
+		panic(err)
+	}
+	var s2 = string(b)
+	// fmt.Printf("s==s2: %v, len(s): %v, len(b): %v, len(s2): %v\n", s == s2, len(s), len(b), len(s2))
+	if s != s2 {
+		logT(t, "not equal: \ns:  %s\ns2: %s", s, s2)
+		failT(t)
+	}
+	// Now, test search functions for skip, readTo and readUntil
+	// readUntil ', readTo ', skip whitespace. 3 times in a loop, each time compare the token and/or outs
+	// readUntil: see: 56789
+	var out []byte
+	var token byte
+	br = &bufioDecReader{r: strings.NewReader(s), buf: make([]byte, 0, 7)}
+	// println()
+	for _, v2 := range [...]string{
+		`01234'`,
+		`56789      01234'`,
+		`56789      01234'`,
+		`56789      01234'`,
+	} {
+		out = br.readUntil(nil, '\'')
+		testDeepEqualErr(string(out), v2, t, "-")
+		// fmt.Printf("readUntil: out: `%s`\n", out)
+	}
+	br = &bufioDecReader{r: strings.NewReader(s), buf: make([]byte, 0, 7)}
+	// println()
+	for range [4]struct{}{} {
+		out = br.readTo(nil, &jsonNumSet)
+		testDeepEqualErr(string(out), `01234`, t, "-")
+		// fmt.Printf("readTo: out: `%s`\n", out)
+		out = br.readUntil(nil, '\'')
+		testDeepEqualErr(string(out), "'", t, "-")
+		// fmt.Printf("readUntil: out: `%s`\n", out)
+		out = br.readTo(nil, &jsonNumSet)
+		testDeepEqualErr(string(out), `56789`, t, "-")
+		// fmt.Printf("readTo: out: `%s`\n", out)
+		out = br.readUntil(nil, '0')
+		testDeepEqualErr(string(out), `      0`, t, "-")
+		// fmt.Printf("readUntil: out: `%s`\n", out)
+		br.UnreadByte()
+	}
+	br = &bufioDecReader{r: strings.NewReader(s), buf: make([]byte, 0, 7)}
+	// println()
+	for range [4]struct{}{} {
+		out = br.readUntil(nil, ' ')
+		testDeepEqualErr(string(out), `01234'56789 `, t, "-")
+		// fmt.Printf("readUntil: out: |%s|\n", out)
+		token = br.skip(&jsonCharWhitespaceSet)
+		testDeepEqualErr(token, byte('0'), t, "-")
+		// fmt.Printf("skip: token: '%c'\n", token)
+		br.UnreadByte()
+	}
+	// println()
 }
 
 // TODO:

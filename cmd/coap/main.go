@@ -6,34 +6,65 @@ import (
 	"os/signal"
 	"syscall"
 
+	kitconsul "github.com/go-kit/kit/sd/consul"
+	stdconsul "github.com/hashicorp/consul/api"
 	"github.com/mainflux/mainflux/coap"
 	"github.com/mainflux/mainflux/coap/nats"
-
 	broker "github.com/nats-io/go-nats"
+	uuid "github.com/satori/go.uuid"
+
 	"go.uber.org/zap"
 )
 
 const (
-	port       int    = 5683
-	defNatsURL string = broker.DefaultURL
-	envNatsURL string = "COAP_ADAPTER_NATS_URL"
+	port    int    = 9003
+	natsKey string = "nats"
 )
 
-type config struct {
-	Port    int
-	NatsURL string
-}
+var (
+	kv     *stdconsul.KV
+	logger *zap.Logger
+)
 
 func main() {
-	cfg := &config{
-		NatsURL: env(envNatsURL, defNatsURL),
-		Port:    port,
-	}
-
-	logger, _ := zap.NewProduction()
+	logger, _ = zap.NewProduction()
 	defer logger.Sync()
 
-	nc := connectToNats(cfg, logger)
+	consulAddr := os.Getenv("CONSUL_ADDR")
+	if consulAddr == "" {
+		logger.Fatal("Cannot start the service: CONSUL_ADDR not set.")
+	}
+
+	consul, err := stdconsul.NewClient(&stdconsul.Config{
+		Address: consulAddr,
+	})
+
+	if err != nil {
+		status := fmt.Sprintf("Cannot connect to Consul due to %s", err)
+		logger.Fatal(status)
+	}
+
+	kv = consul.KV()
+
+	asr := &stdconsul.AgentServiceRegistration{
+		ID:                uuid.NewV4().String(),
+		Name:              "coap-adapter",
+		Tags:              []string{},
+		Port:              port,
+		Address:           "",
+		EnableTagOverride: false,
+	}
+
+	sd := kitconsul.NewClient(consul)
+	if err = sd.Register(asr); err != nil {
+		status := fmt.Sprintf("Cannot register service due to %s", err)
+		logger.Fatal(status)
+	}
+
+	nc, err := broker.Connect(get(natsKey))
+	if err != nil {
+		logger.Fatal("Cannot connect to NATS.", zap.Error(err))
+	}
 	defer nc.Close()
 
 	repo := nats.NewMessageRepository(nc)
@@ -42,39 +73,34 @@ func main() {
 	nc.Subscribe("msg.http", ca.BridgeHandler)
 	nc.Subscribe("msg.mqtt", ca.BridgeHandler)
 
-	errs := make(chan error, 2)
+	errChan := make(chan error, 10)
 
 	go func() {
-		coapAddr := fmt.Sprintf(":%d", cfg.Port)
+		p := fmt.Sprintf(":%d", port)
 		logger.Info("CoAP adapter started.")
-		errs <- ca.Serve(coapAddr)
+		errChan <- ca.Serve(p)
 	}()
 
-	go func() {
-		c := make(chan os.Signal)
-		signal.Notify(c, syscall.SIGINT)
-		errs <- fmt.Errorf("%s", <-c)
-	}()
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	c := <-errs
-	logger.Info("CoAP adapter terminated.", zap.String("error", c.Error()))
-}
-
-func env(key, fallback string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		return fallback
+	for {
+		select {
+		case err := <-errChan:
+			status := fmt.Sprintf("CoAP adapter terminated due to %s", err)
+			logger.Fatal(status)
+		case <-sigChan:
+			logger.Info("CoAP adapter terminated.")
+		}
 	}
-
-	return value
 }
 
-func connectToNats(cfg *config, logger *zap.Logger) *broker.Conn {
-	nc, err := broker.Connect(cfg.NatsURL)
+func get(key string) string {
+	pair, _, err := kv.Get(key, nil)
 	if err != nil {
-		logger.Error("Cannot connect to NATS.", zap.Error(err))
-		os.Exit(1)
+		status := fmt.Sprintf("Cannot retrieve %s due to %s", key, err)
+		logger.Fatal(status)
 	}
 
-	return nc
+	return string(pair.Value)
 }

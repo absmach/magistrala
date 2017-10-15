@@ -36,21 +36,12 @@ type config struct {
 	Secret   string
 }
 
-func getenv(key, fallback string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		return fallback
-	}
-
-	return value
-}
-
 func main() {
 	cfg := config{
 		Port:     port,
-		Cluster:  getenv(envCluster, defCluster),
-		Keyspace: getenv(envKeyspace, defKeyspace),
-		Secret:   getenv(envSecret, defSecret),
+		Cluster:  env(envCluster, defCluster),
+		Keyspace: env(envKeyspace, defKeyspace),
+		Secret:   env(envSecret, defSecret),
 	}
 
 	var logger log.Logger
@@ -59,13 +50,15 @@ func main() {
 
 	session, err := cassandra.Connect(strings.Split(cfg.Cluster, sep), cfg.Keyspace)
 	if err != nil {
-		logger.Log("error", err)
+		status := fmt.Sprintf("Cannot connect to Cassandra due to %s", err.Error())
+		logger.Log("status", status)
 		os.Exit(1)
 	}
 	defer session.Close()
 
 	if err := cassandra.Initialize(session); err != nil {
-		logger.Log("error", err)
+		status := fmt.Sprintf("Cannot initialize Cassandra session due to %s", err.Error())
+		logger.Log("status", status)
 		os.Exit(1)
 	}
 
@@ -100,6 +93,7 @@ func main() {
 
 	go func() {
 		p := fmt.Sprintf(":%d", cfg.Port)
+		logger.Log("status", "Manager started.")
 		errs <- http.ListenAndServe(p, api.MakeHandler(svc))
 	}()
 
@@ -109,5 +103,15 @@ func main() {
 		errs <- fmt.Errorf("%s", <-c)
 	}()
 
-	logger.Log("terminated", <-errs)
+	status := fmt.Sprintf("Manager stopped due to %s", <-errs)
+	logger.Log("status", status)
+}
+
+func env(key, fallback string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
+	}
+
+	return value
 }

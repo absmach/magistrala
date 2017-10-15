@@ -18,7 +18,7 @@ import (
 const (
 	sep         string = ","
 	subject     string = "msg.*"
-	queue       string = "message_writers"
+	queue       string = "writers"
 	defCluster  string = "127.0.0.1"
 	defKeyspace string = "message_writer"
 	defNatsURL  string = nats.DefaultURL
@@ -36,7 +36,11 @@ type config struct {
 }
 
 func main() {
-	cfg := loadConfig()
+	cfg := &config{
+		Cluster:  env(envCluster, defCluster),
+		Keyspace: env(envKeyspace, defKeyspace),
+		NatsURL:  env(envNatsURL, defNatsURL),
+	}
 
 	logger, _ = zap.NewProduction()
 	defer logger.Sync()
@@ -59,19 +63,11 @@ func main() {
 
 		if err := repo.Save(msg); err != nil {
 			logger.Error("Failed to save message.", zap.Error(err))
-			return
 		}
 	})
 
+	logger.Info("Writer started.")
 	forever()
-}
-
-func loadConfig() *config {
-	return &config{
-		Cluster:  env(envCluster, defCluster),
-		Keyspace: env(envKeyspace, defKeyspace),
-		NatsURL:  env(envNatsURL, defNatsURL),
-	}
 }
 
 func env(key, fallback string) string {
@@ -85,30 +81,29 @@ func env(key, fallback string) string {
 
 func connectToCassandra(cfg *config) *gocql.Session {
 	hosts := strings.Split(cfg.Cluster, sep)
-
 	s, err := cassandra.Connect(hosts, cfg.Keyspace)
 	if err != nil {
-		logger.Error("Failed to connect to DB", zap.Error(err))
+		logger.Fatal("Cannot connect to DB.", zap.Error(err))
 	}
 
 	return s
 }
 
-func makeRepository(session *gocql.Session) writer.MessageRepository {
-	if err := cassandra.Initialize(session); err != nil {
-		logger.Error("Failed to initialize message repository.", zap.Error(err))
-	}
-
-	return cassandra.NewMessageRepository(session)
-}
-
 func connectToNats(cfg *config) *nats.Conn {
 	nc, err := nats.Connect(cfg.NatsURL)
 	if err != nil {
-		logger.Error("Failed to connect to NATS.", zap.Error(err))
+		logger.Fatal("Cannot connect to NATS.", zap.Error(err))
 	}
 
 	return nc
+}
+
+func makeRepository(session *gocql.Session) writer.MessageRepository {
+	if err := cassandra.Initialize(session); err != nil {
+		logger.Fatal("Cannot initialize message repository.", zap.Error(err))
+	}
+
+	return cassandra.NewMessageRepository(session)
 }
 
 func forever() {
@@ -120,5 +115,5 @@ func forever() {
 		errs <- fmt.Errorf("%s", <-c)
 	}()
 
-	<-errs
+	logger.Fatal("Writer terminated.", zap.Error(<-errs))
 }

@@ -25,10 +25,13 @@ type config struct {
 }
 
 func main() {
-	cfg := loadConfig()
+	cfg := &config{
+		NatsURL: env(envNatsURL, defNatsURL),
+		Port:    port,
+	}
 
 	logger, _ := zap.NewProduction()
-	defer logger.Sync() // flushes buffer, if any
+	defer logger.Sync()
 
 	nc := connectToNats(cfg, logger)
 	defer nc.Close()
@@ -43,6 +46,7 @@ func main() {
 
 	go func() {
 		coapAddr := fmt.Sprintf(":%d", cfg.Port)
+		logger.Info("CoAP adapter started.")
 		errs <- ca.Serve(coapAddr)
 	}()
 
@@ -53,14 +57,7 @@ func main() {
 	}()
 
 	c := <-errs
-	logger.Info("terminated", zap.String("error", c.Error()))
-}
-
-func loadConfig() *config {
-	return &config{
-		NatsURL: env(envNatsURL, defNatsURL),
-		Port:    port,
-	}
+	logger.Info("CoAP adapter terminated.", zap.String("error", c.Error()))
 }
 
 func env(key, fallback string) string {
@@ -75,7 +72,7 @@ func env(key, fallback string) string {
 func connectToNats(cfg *config, logger *zap.Logger) *broker.Conn {
 	nc, err := broker.Connect(cfg.NatsURL)
 	if err != nil {
-		logger.Error("Failed to connect to NATS", zap.Error(err))
+		logger.Error("Cannot connect to NATS.", zap.Error(err))
 		os.Exit(1)
 	}
 

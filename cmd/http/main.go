@@ -30,7 +30,7 @@ type config struct {
 func main() {
 	cfg := config{
 		Port:    port,
-		NatsURL: getenv(envNatsURL, defNatsURL),
+		NatsURL: env(envNatsURL, defNatsURL),
 	}
 
 	logger := log.NewJSONLogger(log.NewSyncWriter(os.Stdout))
@@ -38,7 +38,8 @@ func main() {
 
 	nc, err := broker.Connect(cfg.NatsURL)
 	if err != nil {
-		logger.Log("aborted", err)
+		status := fmt.Sprintf("Cannot connect to NATS due to %s", err.Error())
+		logger.Log("status", status)
 		os.Exit(1)
 	}
 	defer nc.Close()
@@ -69,6 +70,7 @@ func main() {
 
 	go func() {
 		p := fmt.Sprintf(":%d", cfg.Port)
+		logger.Log("status", "HTTP adapter started.")
 		errs <- http.ListenAndServe(p, api.MakeHandler(svc))
 	}()
 
@@ -78,10 +80,11 @@ func main() {
 		errs <- fmt.Errorf("%s", <-c)
 	}()
 
-	logger.Log("terminated", <-errs)
+	status := fmt.Sprintf("HTTP adapter stopped due to %s", <-errs)
+	logger.Log("status", status)
 }
 
-func getenv(key, fallback string) string {
+func env(key, fallback string) string {
 	value := os.Getenv(key)
 	if value == "" {
 		return fallback

@@ -1,5 +1,5 @@
-hash: f1fa694ac6ace208a0ae0aefc479ed2a043a4774a2cafb602e4de28cd2baa551
-updated: 2017-10-15T14:13:14.667686752+02:00
+hash: ddfd322874bad9e1a428c4a7121b4626a86613d0877ff62254bb0a3ea4a8c2b3
+updated: 2017-10-15T17:33:15.853715949+02:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 73945b6115bfbbcc57d89b7316e28109364124e1
@@ -23,6 +23,9 @@ imports:
   - metrics
   - metrics/internal/lv
   - metrics/prometheus
+  - sd
+  - sd/cache
+  - sd/consul
   - transport/http
 - name: github.com/go-logfmt/logfmt
   version: 390ab7935ee28ec6b286364bba9b4dd6410cb3d5
@@ -48,12 +51,22 @@ imports:
   version: 112c0603d3d6fb23ab5f15e8fdb1a761da8eaf9a
   subpackages:
   - api
+- name: github.com/hashicorp/go-cleanhttp
+  version: 3573b8b52aa7b37b9358d966a898feb387f62437
+- name: github.com/hashicorp/go-rootcerts
+  version: 6bb64b370b90e7ef1fa532be9e591a81c3493e00
+- name: github.com/hashicorp/serf
+  version: 555c6fa2a11d1f8e08ac9964015e864a3f61e7c3
+  subpackages:
+  - coordinate
 - name: github.com/kr/logfmt
   version: b84e30acd515aadc4b783ad4ff83aff3299bdfe0
 - name: github.com/matttproud/golang_protobuf_extensions
   version: c12348ce28de40eed0136aa2b644d0ee0650e56c
   subpackages:
   - pbutil
+- name: github.com/mitchellh/go-homedir
+  version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/nats-io/go-nats
   version: 29f9728a183bf3fa7e809e14edac00b33be72088
   subpackages:
@@ -80,6 +93,8 @@ imports:
   version: e645f4e5aaa8506fc71d6edbc5c4ff02c04c46f2
   subpackages:
   - xfs
+- name: github.com/satori/go.uuid
+  version: 879c5887cd475cd7864858769793b2ceb0d44feb
 - name: github.com/ugorji/go
   version: f26fc641ec9d52a2161443cf9bb9fd53b9062a22
   subpackages:

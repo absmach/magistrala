@@ -18,12 +18,15 @@ import (
 	"github.com/mainflux/mainflux/manager/cassandra"
 	"github.com/mainflux/mainflux/manager/jwt"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	uuid "github.com/satori/go.uuid"
 )
 
 const (
-	port     int    = 9000
-	keyspace string = "manager"
-	sep      string = ","
+	port      int    = 9000
+	dbKey     string = "cassandra"
+	secretKey string = "manager/secret"
+	keyspace  string = "manager"
+	sep       string = ","
 )
 
 var (
@@ -54,11 +57,11 @@ func main() {
 	kv = consul.KV()
 
 	asr := &stdconsul.AgentServiceRegistration{
-		ID:                "",
+		ID:                uuid.NewV4().String(),
 		Name:              "manager",
-		Tags:              []string{"prod"},
+		Tags:              []string{},
 		Port:              port,
-		Address:           address(),
+		Address:           "",
 		EnableTagOverride: false,
 	}
 
@@ -69,7 +72,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	hosts := strings.Split(get("cassandra"), sep)
+	hosts := strings.Split(get(dbKey), sep)
 
 	session, err := cassandra.Connect(hosts, keyspace)
 	if err != nil {
@@ -89,7 +92,7 @@ func main() {
 	clients := cassandra.NewClientRepository(session)
 	channels := cassandra.NewChannelRepository(session)
 	hasher := bcrypt.NewHasher()
-	idp := jwt.NewIdentityProvider(get("manager/secret"))
+	idp := jwt.NewIdentityProvider(get(secretKey))
 
 	var svc manager.Service
 	svc = manager.NewService(users, clients, channels, hasher, idp)
@@ -112,23 +115,31 @@ func main() {
 		svc,
 	)
 
-	errs := make(chan error, 2)
+	errChan := make(chan error, 10)
 
 	go func() {
 		p := fmt.Sprintf(":%d", port)
 		logger.Log("status", "Manager started.")
-		errs <- http.ListenAndServe(p, api.MakeHandler(svc))
+		errChan <- http.ListenAndServe(p, api.MakeHandler(svc))
 	}()
 
-	go func() {
-		c := make(chan os.Signal)
-		signal.Notify(c, syscall.SIGINT)
-		errs <- fmt.Errorf("%s", <-c)
-	}()
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	status := fmt.Sprintf("Manager stopped due to %s", <-errs)
-	logger.Log("status", status)
-	sd.Deregister(asr)
+	for {
+		select {
+		case err := <-errChan:
+			status := fmt.Sprintf("Manager stopped due to %s", err)
+			logger.Log("status", status)
+			sd.Deregister(asr)
+			os.Exit(1)
+		case <-sigChan:
+			status := fmt.Sprintf("Manager terminated.")
+			logger.Log("status", status)
+			sd.Deregister(asr)
+			os.Exit(0)
+		}
+	}
 }
 
 func get(key string) string {
@@ -140,9 +151,4 @@ func get(key string) string {
 	}
 
 	return string(pair.Value)
-}
-
-// TODO: retrieve proper IP address
-func address() string {
-	return "127.0.0.1"
 }

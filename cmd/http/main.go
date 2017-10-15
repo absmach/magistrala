@@ -9,34 +9,65 @@ import (
 
 	"github.com/go-kit/kit/log"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+	kitconsul "github.com/go-kit/kit/sd/consul"
+	stdconsul "github.com/hashicorp/consul/api"
 	adapter "github.com/mainflux/mainflux/http"
 	"github.com/mainflux/mainflux/http/api"
 	"github.com/mainflux/mainflux/http/nats"
 	broker "github.com/nats-io/go-nats"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	uuid "github.com/satori/go.uuid"
 )
 
 const (
-	port       int    = 7070
-	defNatsURL string = broker.DefaultURL
-	envNatsURL string = "HTTP_ADAPTER_NATS_URL"
+	port    int    = 9002
+	natsKey string = "nats"
 )
 
-type config struct {
-	Port    int
-	NatsURL string
-}
+var (
+	kv     *stdconsul.KV
+	logger log.Logger
+)
 
 func main() {
-	cfg := config{
-		Port:    port,
-		NatsURL: env(envNatsURL, defNatsURL),
-	}
-
-	logger := log.NewJSONLogger(log.NewSyncWriter(os.Stdout))
+	logger = log.NewJSONLogger(log.NewSyncWriter(os.Stdout))
 	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 
-	nc, err := broker.Connect(cfg.NatsURL)
+	consulAddr := os.Getenv("CONSUL_ADDR")
+	if consulAddr == "" {
+		logger.Log("status", "Cannot start the service: CONSUL_ADDR not set.")
+		os.Exit(1)
+	}
+
+	consul, err := stdconsul.NewClient(&stdconsul.Config{
+		Address: consulAddr,
+	})
+
+	if err != nil {
+		status := fmt.Sprintf("Cannot connect to Consul due to %s", err)
+		logger.Log("status", status)
+		os.Exit(1)
+	}
+
+	kv = consul.KV()
+
+	asr := &stdconsul.AgentServiceRegistration{
+		ID:                uuid.NewV4().String(),
+		Name:              "http-adapter",
+		Tags:              []string{},
+		Port:              port,
+		Address:           "",
+		EnableTagOverride: false,
+	}
+
+	sd := kitconsul.NewClient(consul)
+	if err = sd.Register(asr); err != nil {
+		status := fmt.Sprintf("Cannot register service due to %s", err)
+		logger.Log("status", status)
+		os.Exit(1)
+	}
+
+	nc, err := broker.Connect(get(natsKey))
 	if err != nil {
 		status := fmt.Sprintf("Cannot connect to NATS due to %s", err.Error())
 		logger.Log("status", status)
@@ -66,29 +97,40 @@ func main() {
 		svc,
 	)
 
-	errs := make(chan error, 2)
+	errChan := make(chan error, 10)
 
 	go func() {
-		p := fmt.Sprintf(":%d", cfg.Port)
+		p := fmt.Sprintf(":%d", port)
 		logger.Log("status", "HTTP adapter started.")
-		errs <- http.ListenAndServe(p, api.MakeHandler(svc))
+		errChan <- http.ListenAndServe(p, api.MakeHandler(svc))
 	}()
 
-	go func() {
-		c := make(chan os.Signal)
-		signal.Notify(c, syscall.SIGINT)
-		errs <- fmt.Errorf("%s", <-c)
-	}()
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	status := fmt.Sprintf("HTTP adapter stopped due to %s", <-errs)
-	logger.Log("status", status)
+	for {
+		select {
+		case err := <-errChan:
+			status := fmt.Sprintf("HTTP adapter stopped due to %s", err)
+			logger.Log("status", status)
+			sd.Deregister(asr)
+			os.Exit(1)
+		case <-sigChan:
+			status := fmt.Sprintf("HTTP adapter terminated.")
+			logger.Log("status", status)
+			sd.Deregister(asr)
+			os.Exit(0)
+		}
+	}
 }
 
-func env(key, fallback string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		return fallback
+func get(key string) string {
+	pair, _, err := kv.Get(key, nil)
+	if err != nil {
+		status := fmt.Sprintf("Cannot retrieve %s due to %s", key, err)
+		logger.Log("status", status)
+		os.Exit(1)
 	}
 
-	return value
+	return string(pair.Value)
 }

@@ -3,92 +3,53 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 
-	kitconsul "github.com/go-kit/kit/sd/consul"
-	stdconsul "github.com/hashicorp/consul/api"
-	"github.com/mainflux/mainflux"
+	"github.com/gocql/gocql"
 	"github.com/mainflux/mainflux/writer"
 	"github.com/mainflux/mainflux/writer/cassandra"
 	nats "github.com/nats-io/go-nats"
-	uuid "github.com/satori/go.uuid"
 	"go.uber.org/zap"
 )
 
 const (
-	port     int    = 9001
-	dbKey    string = "cassandra"
-	natsKey  string = "nats"
-	sep      string = ","
-	keyspace string = "message_writer"
-	group    string = "writers"
-	subject  string = "msg.*"
+	sep         string = ","
+	subject     string = "msg.*"
+	queue       string = "message_writers"
+	defCluster  string = "127.0.0.1"
+	defKeyspace string = "message_writer"
+	defNatsURL  string = nats.DefaultURL
+	envCluster  string = "MESSAGE_WRITER_DB_CLUSTER"
+	envKeyspace string = "MESSAGE_WRITER_DB_KEYSPACE"
+	envNatsURL  string = "MESSAGE_WRITER_NATS_URL"
 )
 
-var (
-	kv     *stdconsul.KV
-	logger *zap.Logger
-)
+var logger *zap.Logger
+
+type config struct {
+	Cluster  string
+	Keyspace string
+	NatsURL  string
+}
 
 func main() {
+	cfg := loadConfig()
+
 	logger, _ = zap.NewProduction()
 	defer logger.Sync()
 
-	consulAddr := os.Getenv("CONSUL_ADDR")
-	if consulAddr == "" {
-		logger.Fatal("Cannot start the service: CONSUL_ADDR not set.")
-	}
-
-	consul, err := stdconsul.NewClient(&stdconsul.Config{
-		Address: consulAddr,
-	})
-
-	if err != nil {
-		status := fmt.Sprintf("Cannot connect to Consul due to %s", err)
-		logger.Fatal(status)
-	}
-
-	kv = consul.KV()
-
-	asr := &stdconsul.AgentServiceRegistration{
-		ID:                uuid.NewV4().String(),
-		Name:              "writer",
-		Tags:              []string{},
-		Port:              port,
-		Address:           "",
-		EnableTagOverride: false,
-	}
-
-	sd := kitconsul.NewClient(consul)
-	if err = sd.Register(asr); err != nil {
-		status := fmt.Sprintf("Cannot register service due to %s", err)
-		logger.Fatal(status)
-	}
-
-	hosts := strings.Split(get(dbKey), sep)
-	session, err := cassandra.Connect(hosts, keyspace)
-	if err != nil {
-		logger.Fatal("Cannot connect to DB.", zap.Error(err))
-	}
+	session := connectToCassandra(cfg)
 	defer session.Close()
 
-	nc, err := nats.Connect(get(natsKey))
-	if err != nil {
-		logger.Fatal("Cannot connect to NATS.", zap.Error(err))
-	}
+	nc := connectToNats(cfg)
 	defer nc.Close()
 
-	if err := cassandra.Initialize(session); err != nil {
-		logger.Fatal("Cannot initialize message repository.", zap.Error(err))
-	}
+	repo := makeRepository(session)
 
-	repo := cassandra.NewMessageRepository(session)
-
-	nc.QueueSubscribe(subject, group, func(m *nats.Msg) {
+	nc.QueueSubscribe(subject, queue, func(m *nats.Msg) {
 		msg := writer.RawMessage{}
 
 		if err := json.Unmarshal(m.Data, &msg); err != nil {
@@ -98,42 +59,66 @@ func main() {
 
 		if err := repo.Save(msg); err != nil {
 			logger.Error("Failed to save message.", zap.Error(err))
+			return
 		}
 	})
 
-	errChan := make(chan error, 10)
+	forever()
+}
 
-	go func() {
-		server := &http.Server{
-			Addr:    fmt.Sprintf(":%d", port),
-			Handler: mainflux.Version(),
-		}
-
-		logger.Info("Writer started.")
-
-		errChan <- server.ListenAndServe()
-	}()
-
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-
-	for {
-		select {
-		case err := <-errChan:
-			status := fmt.Sprintf("Writer terminated due to %s", err)
-			logger.Fatal(status)
-		case <-sigChan:
-			logger.Info("Writer terminated.")
-		}
+func loadConfig() *config {
+	return &config{
+		Cluster:  env(envCluster, defCluster),
+		Keyspace: env(envKeyspace, defKeyspace),
+		NatsURL:  env(envNatsURL, defNatsURL),
 	}
 }
 
-func get(key string) string {
-	pair, _, err := kv.Get(key, nil)
-	if err != nil {
-		status := fmt.Sprintf("Cannot retrieve %s due to %s", key, err)
-		logger.Fatal(status)
+func env(key, fallback string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
 	}
 
-	return string(pair.Value)
+	return value
+}
+
+func connectToCassandra(cfg *config) *gocql.Session {
+	hosts := strings.Split(cfg.Cluster, sep)
+
+	s, err := cassandra.Connect(hosts, cfg.Keyspace)
+	if err != nil {
+		logger.Error("Failed to connect to DB", zap.Error(err))
+	}
+
+	return s
+}
+
+func makeRepository(session *gocql.Session) writer.MessageRepository {
+	if err := cassandra.Initialize(session); err != nil {
+		logger.Error("Failed to initialize message repository.", zap.Error(err))
+	}
+
+	return cassandra.NewMessageRepository(session)
+}
+
+func connectToNats(cfg *config) *nats.Conn {
+	nc, err := nats.Connect(cfg.NatsURL)
+	if err != nil {
+		logger.Error("Failed to connect to NATS.", zap.Error(err))
+	}
+
+	return nc
+}
+
+func forever() {
+	errs := make(chan error, 1)
+
+	go func() {
+		c := make(chan os.Signal)
+		signal.Notify(c, syscall.SIGINT)
+		errs <- fmt.Errorf("%s", <-c)
+	}()
+
+	<-errs
 }

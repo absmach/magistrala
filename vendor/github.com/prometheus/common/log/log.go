@@ -345,11 +345,6 @@ func Fatalf(format string, args ...interface{}) {
 	baseLogger.sourced().Fatalf(format, args...)
 }
 
-// AddHook adds hook to Prometheus' original logger.
-func AddHook(hook logrus.Hook) {
-	origLogger.Hooks.Add(hook)
-}
-
 type errorLogWriter struct{}
 
 func (errorLogWriter) Write(b []byte) (int, error) {

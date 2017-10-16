@@ -134,12 +134,12 @@ func (e *cborEncDriver) EncodeExt(rv interface{}, xtag uint64, ext Ext, en *Enco
 
 func (e *cborEncDriver) EncodeRawExt(re *RawExt, en *Encoder) {
 	e.encUint(uint64(re.Tag), cborBaseTag)
-	if false && re.Data != nil {
+	if re.Data != nil {
 		en.encode(re.Data)
-	} else if re.Value != nil {
-		en.encode(re.Value)
-	} else {
+	} else if re.Value == nil {
 		e.EncodeNil()
+	} else {
+		en.encode(re.Value)
 	}
 }
 
@@ -469,7 +469,7 @@ func (d *cborDecDriver) DecodeNaked() {
 		d.readNextBd()
 	}
 
-	n := d.d.n
+	n := &d.d.n
 	var decodeFurther bool
 
 	switch d.bd {

@@ -62,7 +62,7 @@ func CodecGenTempWrite{{ .RandString }}() {
 	var t{{ $index }} {{ . }}
 	typs = append(typs, reflect.TypeOf(t{{ $index }}))
 {{ end }}
-	{{ if not .CodecPkgFiles }}{{ .CodecPkgName }}.{{ end }}Gen(&out, "{{ .BuildTag }}", "{{ .PackageName }}", "{{ .RandString }}", {{ .NoExtensions }}, {{ if not .CodecPkgFiles }}{{ .CodecPkgName }}.{{ end }}NewTypeInfos(strings.Split("{{ .StructTags }}", ",")), typs...)
+	{{ if not .CodecPkgFiles }}{{ .CodecPkgName }}.{{ end }}Gen(&out, "{{ .BuildTag }}", "{{ .PackageName }}", "{{ .RandString }}", {{ if not .CodecPkgFiles }}{{ .CodecPkgName }}.{{ end }}NewTypeInfos(strings.Split("{{ .StructTags }}", ",")), typs...)
 	bout, err := format.Source(out.Bytes())
 	if err != nil {
 		fout.Write(out.Bytes())
@@ -82,12 +82,8 @@ func CodecGenTempWrite{{ .RandString }}() {
 // Tool then executes: "go run __frun__" which creates fout.
 // fout contains Codec(En|De)codeSelf implementations for every type T.
 //
-func Generate(outfile, buildTag, codecPkgPath string,
-	uid int64,
-	goRunTag string, st string,
-	regexName, notRegexName *regexp.Regexp,
-	deleteTempFile, noExtensions bool,
-	infiles ...string) (err error) {
+func Generate(outfile, buildTag, codecPkgPath string, uid int64, goRunTag string,
+	st string, regexName *regexp.Regexp, notRegexName *regexp.Regexp, deleteTempFile bool, infiles ...string) (err error) {
 	// For each file, grab AST, find each type, and write a call to it.
 	if len(infiles) == 0 {
 		return
@@ -125,7 +121,6 @@ func Generate(outfile, buildTag, codecPkgPath string,
 		StructTags      string
 		Types           []string
 		CodecPkgFiles   bool
-		NoExtensions    bool
 	}
 	tv := tmplT{
 		CodecPkgName:    genCodecPkg,
@@ -134,7 +129,6 @@ func Generate(outfile, buildTag, codecPkgPath string,
 		BuildTag:        buildTag,
 		RandString:      strconv.FormatInt(uid, 10),
 		StructTags:      st,
-		NoExtensions:    noExtensions,
 	}
 	tv.ImportPath = pkg.ImportPath
 	if tv.ImportPath == tv.CodecImportPath {
@@ -319,12 +313,9 @@ func main() {
 	x := flag.Bool("x", false, "keep temp file")
 	_ = flag.Bool("u", false, "*IGNORED - kept for backwards compatibility*: Allow unsafe use")
 	d := flag.Int64("d", 0, "random identifier for use in generated code")
-	nx := flag.Bool("nx", false, "no extensions")
-
 	flag.Parse()
 	if err := Generate(*o, *t, *c, *d, *rt, *st,
-		regexp.MustCompile(*r), regexp.MustCompile(*nr), !*x, *nx,
-		flag.Args()...); err != nil {
+		regexp.MustCompile(*r), regexp.MustCompile(*nr), !*x, flag.Args()...); err != nil {
 		fmt.Fprintf(os.Stderr, "codecgen error: %v\n", err)
 		os.Exit(1)
 	}

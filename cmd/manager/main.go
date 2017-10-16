@@ -10,81 +10,62 @@ import (
 
 	"github.com/go-kit/kit/log"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
-	kitconsul "github.com/go-kit/kit/sd/consul"
-	stdconsul "github.com/hashicorp/consul/api"
 	"github.com/mainflux/mainflux/manager"
 	"github.com/mainflux/mainflux/manager/api"
 	"github.com/mainflux/mainflux/manager/bcrypt"
 	"github.com/mainflux/mainflux/manager/cassandra"
 	"github.com/mainflux/mainflux/manager/jwt"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
-	uuid "github.com/satori/go.uuid"
 )
 
 const (
-	port      int    = 9000
-	dbKey     string = "cassandra"
-	secretKey string = "manager/secret"
-	keyspace  string = "manager"
-	sep       string = ","
+	port        int    = 8180
+	sep         string = ","
+	defCluster  string = "127.0.0.1"
+	defKeyspace string = "manager"
+	defSecret   string = "manager"
+	envCluster  string = "MANAGER_DB_CLUSTER"
+	envKeyspace string = "MANAGER_DB_KEYSPACE"
+	envSecret   string = "MANAGER_SECRET"
 )
 
-var (
-	kv     *stdconsul.KV
-	logger log.Logger
-)
+type config struct {
+	Port     int
+	Cluster  string
+	Keyspace string
+	Secret   string
+}
+
+func getenv(key, fallback string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
+	}
+
+	return value
+}
 
 func main() {
+	cfg := config{
+		Port:     port,
+		Cluster:  getenv(envCluster, defCluster),
+		Keyspace: getenv(envKeyspace, defKeyspace),
+		Secret:   getenv(envSecret, defSecret),
+	}
+
+	var logger log.Logger
 	logger = log.NewJSONLogger(log.NewSyncWriter(os.Stdout))
 	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 
-	consulAddr := os.Getenv("CONSUL_ADDR")
-	if consulAddr == "" {
-		logger.Log("status", "Cannot start the service: CONSUL_ADDR not set.")
-		os.Exit(1)
-	}
-
-	consul, err := stdconsul.NewClient(&stdconsul.Config{
-		Address: consulAddr,
-	})
-
+	session, err := cassandra.Connect(strings.Split(cfg.Cluster, sep), cfg.Keyspace)
 	if err != nil {
-		status := fmt.Sprintf("Cannot connect to Consul due to %s", err)
-		logger.Log("status", status)
-		os.Exit(1)
-	}
-
-	kv = consul.KV()
-
-	asr := &stdconsul.AgentServiceRegistration{
-		ID:                uuid.NewV4().String(),
-		Name:              "manager",
-		Tags:              []string{},
-		Port:              port,
-		Address:           "",
-		EnableTagOverride: false,
-	}
-
-	sd := kitconsul.NewClient(consul)
-	if err = sd.Register(asr); err != nil {
-		status := fmt.Sprintf("Cannot register service due to %s", err)
-		logger.Log("status", status)
-		os.Exit(1)
-	}
-
-	hosts := strings.Split(get(dbKey), sep)
-
-	session, err := cassandra.Connect(hosts, keyspace)
-	if err != nil {
-		status := fmt.Sprintf("Cannot connect to Cassandra due to %s", err)
-		logger.Log("status", status)
+		logger.Log("error", err)
 		os.Exit(1)
 	}
 	defer session.Close()
 
 	if err := cassandra.Initialize(session); err != nil {
-		status := fmt.Sprintf("Cannot initialize Cassandra session due to %s", err)
-		logger.Log("status", status)
+		logger.Log("error", err)
 		os.Exit(1)
 	}
 
@@ -92,7 +73,7 @@ func main() {
 	clients := cassandra.NewClientRepository(session)
 	channels := cassandra.NewChannelRepository(session)
 	hasher := bcrypt.NewHasher()
-	idp := jwt.NewIdentityProvider(get(secretKey))
+	idp := jwt.NewIdentityProvider(cfg.Secret)
 
 	var svc manager.Service
 	svc = manager.NewService(users, clients, channels, hasher, idp)
@@ -115,40 +96,18 @@ func main() {
 		svc,
 	)
 
-	errChan := make(chan error, 10)
+	errs := make(chan error, 2)
 
 	go func() {
-		p := fmt.Sprintf(":%d", port)
-		logger.Log("status", "Manager started.")
-		errChan <- http.ListenAndServe(p, api.MakeHandler(svc))
+		p := fmt.Sprintf(":%d", cfg.Port)
+		errs <- http.ListenAndServe(p, api.MakeHandler(svc))
 	}()
 
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		c := make(chan os.Signal)
+		signal.Notify(c, syscall.SIGINT)
+		errs <- fmt.Errorf("%s", <-c)
+	}()
 
-	for {
-		select {
-		case err := <-errChan:
-			status := fmt.Sprintf("Manager stopped due to %s", err)
-			logger.Log("status", status)
-			sd.Deregister(asr)
-			os.Exit(1)
-		case <-sigChan:
-			status := fmt.Sprintf("Manager terminated.")
-			logger.Log("status", status)
-			sd.Deregister(asr)
-			os.Exit(0)
-		}
-	}
-}
-
-func get(key string) string {
-	pair, _, err := kv.Get(key, nil)
-	if err != nil {
-		status := fmt.Sprintf("Cannot retrieve %s due to %s", key, err)
-		logger.Log("status", status)
-		os.Exit(1)
-	}
-
-	return string(pair.Value)
+	logger.Log("terminated", <-errs)
 }

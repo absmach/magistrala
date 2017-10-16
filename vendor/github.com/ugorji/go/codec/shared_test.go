@@ -43,7 +43,6 @@ package codec
 import (
 	"bytes"
 	"flag"
-	"io"
 	"sync"
 )
 
@@ -55,24 +54,8 @@ type testHED struct {
 	D *Decoder
 }
 
-type ioReaderWrapper struct {
-	r io.Reader
-}
-
-func (x ioReaderWrapper) Read(p []byte) (n int, err error) {
-	return x.r.Read(p)
-}
-
-type ioWriterWrapper struct {
-	w io.Writer
-}
-
-func (x ioWriterWrapper) Write(p []byte) (n int, err error) {
-	return x.w.Write(p)
-}
-
 var (
-	// testNoopH    = NoopHandle(8)
+	testNoopH    = NoopHandle(8)
 	testMsgpackH = &MsgpackHandle{}
 	testBincH    = &BincHandle{}
 	testSimpleH  = &SimpleHandle{}
@@ -90,10 +73,9 @@ var (
 
 // flag variables used by tests (and bench)
 var (
-	testDepth int
-
 	testVerbose        bool
 	testInitDebug      bool
+	testUseIoEncDec    bool
 	testStructToArray  bool
 	testCanonical      bool
 	testUseReset       bool
@@ -102,23 +84,11 @@ var (
 	testInternStr      bool
 	testUseMust        bool
 	testCheckCircRef   bool
-
-	testUseIoEncDec  bool
-	testUseIoWrapper bool
-
-	testJsonIndent int
-	testMaxInitLen int
+	testJsonIndent     int
+	testMaxInitLen     int
 
 	testJsonHTMLCharsAsIs bool
 	testJsonPreferFloat   bool
-
-	testNumRepeatString int
-)
-
-// variables that are not flags, but which can configure the handles
-var (
-	testEncodeOptions EncodeOptions
-	testDecodeOptions DecodeOptions
 )
 
 // flag variables used by bench
@@ -136,8 +106,7 @@ var (
 func init() {
 	testHEDs = make([]testHED, 0, 32)
 	testHandles = append(testHandles,
-		// testNoopH,
-		testMsgpackH, testBincH, testSimpleH,
+		testNoopH, testMsgpackH, testBincH, testSimpleH,
 		testCborH, testJsonH)
 	testInitFlags()
 	benchInitFlags()
@@ -145,11 +114,9 @@ func init() {
 
 func testInitFlags() {
 	// delete(testDecOpts.ExtFuncs, timeTyp)
-	flag.IntVar(&testDepth, "tsd", 0, "Test Struc Depth")
 	flag.BoolVar(&testVerbose, "tv", false, "Test Verbose")
 	flag.BoolVar(&testInitDebug, "tg", false, "Test Init Debug")
 	flag.BoolVar(&testUseIoEncDec, "ti", false, "Use IO Reader/Writer for Marshal/Unmarshal")
-	flag.BoolVar(&testUseIoWrapper, "tiw", false, "Wrap the IO Reader/Writer with a base pass-through reader/writer")
 	flag.BoolVar(&testStructToArray, "ts", false, "Set StructToArray option")
 	flag.BoolVar(&testWriteNoSymbols, "tn", false, "Set NoSymbols option")
 	flag.BoolVar(&testCanonical, "tc", false, "Set Canonical option")
@@ -157,7 +124,6 @@ func testInitFlags() {
 	flag.BoolVar(&testSkipIntf, "tf", false, "Skip Interfaces")
 	flag.BoolVar(&testUseReset, "tr", false, "Use Reset")
 	flag.IntVar(&testJsonIndent, "td", 0, "Use JSON Indent")
-	flag.IntVar(&testNumRepeatString, "trs", 8, "Create string variables by repeating a string N times")
 	flag.IntVar(&testMaxInitLen, "tx", 0, "Max Init Len")
 	flag.BoolVar(&testUseMust, "tm", true, "Use Must(En|De)code")
 	flag.BoolVar(&testCheckCircRef, "tl", false, "Use Check Circular Ref")
@@ -194,7 +160,6 @@ func testInitAll() {
 	// only parse it once.
 	if !flag.Parsed() {
 		flag.Parse()
-		testNumRepeatStringMirror = testNumRepeatString
 	}
 	for _, f := range testPreInitFns {
 		f()
@@ -216,11 +181,7 @@ func testCodecEncode(ts interface{}, bsIn []byte,
 	}
 	if testUseIoEncDec {
 		buf = fn(bsIn)
-		if testUseIoWrapper {
-			e.Reset(ioWriterWrapper{buf})
-		} else {
-			e.Reset(buf)
-		}
+		e.Reset(buf)
 	} else {
 		bs = bsIn
 		e.ResetBytes(&bs)
@@ -238,19 +199,15 @@ func testCodecEncode(ts interface{}, bsIn []byte,
 
 func testCodecDecode(bs []byte, ts interface{}, h Handle) (err error) {
 	var d *Decoder
-	// var buf *bytes.Reader
+	var buf *bytes.Reader
 	if testUseReset {
 		d = testHEDGet(h).D
 	} else {
 		d = NewDecoder(nil, h)
 	}
 	if testUseIoEncDec {
-		buf := bytes.NewReader(bs)
-		if testUseIoWrapper {
-			d.Reset(ioReaderWrapper{buf})
-		} else {
-			d.Reset(buf)
-		}
+		buf = bytes.NewReader(bs)
+		d.Reset(buf)
 	} else {
 		d.ResetBytes(bs)
 	}

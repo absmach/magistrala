@@ -196,51 +196,45 @@ func (c Consistency) String() string {
 	}
 }
 
-func (c Consistency) MarshalText() (text []byte, err error) {
-	return []byte(c.String()), nil
-}
-
-func (c *Consistency) UnmarshalText(text []byte) error {
-	switch string(text) {
+func ParseConsistency(s string) Consistency {
+	switch strings.ToUpper(s) {
 	case "ANY":
-		*c = Any
+		return Any
 	case "ONE":
-		*c = One
+		return One
 	case "TWO":
-		*c = Two
+		return Two
 	case "THREE":
-		*c = Three
+		return Three
 	case "QUORUM":
-		*c = Quorum
+		return Quorum
 	case "ALL":
-		*c = All
+		return All
 	case "LOCAL_QUORUM":
-		*c = LocalQuorum
+		return LocalQuorum
 	case "EACH_QUORUM":
-		*c = EachQuorum
+		return EachQuorum
 	case "LOCAL_ONE":
-		*c = LocalOne
+		return LocalOne
 	default:
-		return fmt.Errorf("invalid consistency %q", string(text))
+		panic("invalid consistency: " + s)
 	}
-
-	return nil
 }
 
-func ParseConsistency(s string) (consistency Consistency, err error) {
-	err = consistency.UnmarshalText([]byte(strings.ToUpper(s)))
-	return
-}
-
-// ParseConsistencyWrapper is deprecated use ParseConsistency instead.
-var ParseConsistencyWrapper = ParseConsistency
-
-func MustParseConsistency(s string) Consistency {
-	c, err := ParseConsistency(s)
-	if err != nil {
-		panic(err)
-	}
-	return c
+// ParseConsistencyWrapper wraps gocql.ParseConsistency to provide an err
+// return instead of a panic
+func ParseConsistencyWrapper(s string) (consistency Consistency, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			var ok bool
+			err, ok = r.(error)
+			if !ok {
+				err = fmt.Errorf("ParseConsistencyWrapper: %v", r)
+			}
+		}
+	}()
+	consistency = ParseConsistency(s)
+	return consistency, nil
 }
 
 type SerialConsistency uint16
@@ -259,23 +253,6 @@ func (s SerialConsistency) String() string {
 	default:
 		return fmt.Sprintf("UNKNOWN_SERIAL_CONS_0x%x", uint16(s))
 	}
-}
-
-func (s SerialConsistency) MarshalText() (text []byte, err error) {
-	return []byte(s.String()), nil
-}
-
-func (s *SerialConsistency) UnmarshalText(text []byte) error {
-	switch string(text) {
-	case "SERIAL":
-		*s = Serial
-	case "LOCAL_SERIAL":
-		*s = LocalSerial
-	default:
-		return fmt.Errorf("invalid consistency %q", string(text))
-	}
-
-	return nil
 }
 
 const (

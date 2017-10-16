@@ -61,14 +61,13 @@ func (f genHelperEncoder) EncBasicHandle() *BasicHandle {
 
 // FOR USE BY CODECGEN ONLY. IT *WILL* CHANGE WITHOUT NOTICE. *DO NOT USE*
 func (f genHelperEncoder) EncBinary() bool {
-	return f.e.cf.be // f.e.hh.isBinaryEncoding()
+	return f.e.be // f.e.hh.isBinaryEncoding()
 }
 
 // FOR USE BY CODECGEN ONLY. IT *WILL* CHANGE WITHOUT NOTICE. *DO NOT USE*
 func (f genHelperEncoder) EncFallback(iv interface{}) {
 	// println(">>>>>>>>> EncFallback")
-	// f.e.encodeI(iv, false, false)
-	f.e.encodeValue(reflect.ValueOf(iv), nil, false)
+	f.e.encodeI(iv, false, false)
 }
 
 // FOR USE BY CODECGEN ONLY. IT *WILL* CHANGE WITHOUT NOTICE. *DO NOT USE*
@@ -91,7 +90,7 @@ func (f genHelperEncoder) EncBinaryMarshal(iv encoding.BinaryMarshaler) {
 
 // FOR USE BY CODECGEN ONLY. IT *WILL* CHANGE WITHOUT NOTICE. *DO NOT USE*
 func (f genHelperEncoder) EncRaw(iv Raw) {
-	f.e.rawBytes(iv)
+	f.e.raw(iv)
 }
 
 // FOR USE BY CODECGEN ONLY. IT *WILL* CHANGE WITHOUT NOTICE. *DO NOT USE*
@@ -104,7 +103,7 @@ func (f genHelperEncoder) TimeRtidIfBinc() uintptr {
 
 // FOR USE BY CODECGEN ONLY. IT *WILL* CHANGE WITHOUT NOTICE. *DO NOT USE*
 func (f genHelperEncoder) IsJSONHandle() bool {
-	return f.e.cf.js
+	return f.e.js
 }
 
 // FOR USE BY CODECGEN ONLY. IT *WILL* CHANGE WITHOUT NOTICE. *DO NOT USE*
@@ -158,12 +157,7 @@ func (f genHelperDecoder) DecScratchBuffer() []byte {
 // FOR USE BY CODECGEN ONLY. IT *WILL* CHANGE WITHOUT NOTICE. *DO NOT USE*
 func (f genHelperDecoder) DecFallback(iv interface{}, chkPtr bool) {
 	// println(">>>>>>>>> DecFallback")
-	rv := reflect.ValueOf(iv)
-	if chkPtr {
-		rv = f.d.ensureDecodeable(rv)
-	}
-	f.d.decodeValue(rv, nil, false, false)
-	// f.d.decodeValueFallback(rv)
+	f.d.decodeI(iv, chkPtr, false, false, false)
 }
 
 // FOR USE BY CODECGEN ONLY. IT *WILL* CHANGE WITHOUT NOTICE. *DO NOT USE*
@@ -209,7 +203,7 @@ func (f genHelperDecoder) DecBinaryUnmarshal(bm encoding.BinaryUnmarshaler) {
 
 // FOR USE BY CODECGEN ONLY. IT *WILL* CHANGE WITHOUT NOTICE. *DO NOT USE*
 func (f genHelperDecoder) DecRaw() []byte {
-	return f.d.rawBytes()
+	return f.d.raw()
 }
 
 // FOR USE BY CODECGEN ONLY. IT *WILL* CHANGE WITHOUT NOTICE. *DO NOT USE*

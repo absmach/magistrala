@@ -44,9 +44,9 @@ To start the service outside of the container, execute the following shell scrip
 
 ```bash
 # download the latest version of the service
-go get github.com/mainflux/message-writer
+go get github.com/mainflux/mainflux
 
-cd $GOPATH/github.com/mainflux/message-writer/cmd
+cd $GOPATH/src/github.com/mainflux/mainflux/cmd/writer
 
 # compile the app; make sure to set the proper GOOS value
 CGO_ENABLED=0 GOOS=[platform identifier] go build -ldflags "-s" -a -installsuffix cgo -o app

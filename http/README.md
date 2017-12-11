@@ -9,9 +9,9 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable         | Description       | Default               |
-|------------------|-------------------|-----------------------|
-| ADAPTER_NATS_URL | NATS instance URL | nats://localhost:4222 |
+| Variable              | Description       | Default               |
+|-----------------------|-------------------|-----------------------|
+| HTTP_ADAPTER_NATS_URL | NATS instance URL | nats://localhost:4222 |
 
 ## Deployment
 
@@ -27,7 +27,7 @@ services:
     ports:
       - [host machine port]:8180
     environment:
-      ADAPTER_NATS_URL: [NATS instance URL]
+      HTTP_ADAPTER_NATS_URL: [NATS instance URL]
 ```
 
 To start the service outside of the container, execute the following shell script:
@@ -42,7 +42,7 @@ cd $GOPATH/src/github.com/mainflux/mainflux/cmd/http
 CGO_ENABLED=0 GOOS=[platform identifier] go build -ldflags "-s" -a -installsuffix cgo -o app
 
 # set the environment variables and run the service
-ADAPTER_NATS_URL=[NATS instance URL] app
+HTTP_ADAPTER_NATS_URL=[NATS instance URL] app
 ```
 
 ## Usage

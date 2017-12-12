@@ -1,5 +1,5 @@
-hash: add728e0810bc67a9b637777d80b2adf28bbae43b9407ae35c63a66af2fa3d62
-updated: 2017-09-25T18:09:01.605294277+02:00
+hash: 2bd0e9007d1115350f3e2655edcbcbae3ff1b17aba67dd1969e39053e46edc3a
+updated: 2017-12-12T10:55:40.279190033+01:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 73945b6115bfbbcc57d89b7316e28109364124e1
@@ -27,17 +27,17 @@ imports:
 - name: github.com/go-logfmt/logfmt
   version: 390ab7935ee28ec6b286364bba9b4dd6410cb3d5
 - name: github.com/go-stack/stack
-  version: 7a2f19628aabfe68f0766b59e74d6315f8347d22
+  version: 259ab82a6cad3992b4e21ff5cac294ccb06474bc
 - name: github.com/go-zoo/bone
   version: fd0aebc74e908868b09ac140fb5a53cb363884c1
 - name: github.com/gocql/gocql
-  version: ce5020aabae349deda77bc1d559ef2300d3c93c5
+  version: 9ce8b08dfa5559eb86592129986654503cf40cf7
   subpackages:
   - internal/lru
   - internal/murmur
   - internal/streams
 - name: github.com/golang/protobuf
-  version: 130e6b02ab059e7b717a096f397c5b60111cae74
+  version: 1e59b77b52bf8e4b449a57e6f79f21226d571845
   subpackages:
   - proto
 - name: github.com/golang/snappy
@@ -56,32 +56,34 @@ imports:
   - encoders/builtin
   - util
 - name: github.com/nats-io/nuid
-  version: 3cf34f9fca4e88afa9da8eabd75e3326c9941b44
+  version: 33c603157d6fd1b0ac2599bcc4a286b36479a06d
 - name: github.com/prometheus/client_golang
   version: c5b7fccd204277076155f10851dad72b76a49317
   subpackages:
   - prometheus
   - prometheus/promhttp
 - name: github.com/prometheus/client_model
-  version: 6f3806018612930941127f2a7c6c453ba2c527d2
+  version: 99fa1f4be8e564e8a6b613da7fa6f46c9edafc6c
   subpackages:
   - go
 - name: github.com/prometheus/common
-  version: 2f17f4a9d485bf34b4bfaccc273805040e4f86c8
+  version: 2e54d0b93cba2fd133edc32211dcc32c06ef72ca
   subpackages:
   - expfmt
   - internal/bitbucket.org/ww/goautoneg
   - model
 - name: github.com/prometheus/procfs
-  version: e645f4e5aaa8506fc71d6edbc5c4ff02c04c46f2
+  version: a6e9df898b1336106c743392c48ee0b71f5c4efa
   subpackages:
   - xfs
+- name: github.com/sony/gobreaker
+  version: e9556a45379ef1da12e54847edb2fb3d7d566f36
 - name: github.com/ugorji/go
-  version: 54210f4e076c57f351166f0ed60e67d3fca57a36
+  version: f57d8945648dbfe4c332cff9c50fb57548958e3f
   subpackages:
   - codec
 - name: go.uber.org/atomic
-  version: 4e336646b2ef9fc6e47be8e21594178f98e5ebcf
+  version: 8474b86a5a6f79c443ce4b2992817ff32cf208b8
 - name: go.uber.org/multierr
   version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
 - name: go.uber.org/zap
@@ -93,12 +95,12 @@ imports:
   - internal/exit
   - zapcore
 - name: golang.org/x/crypto
-  version: 14f9af67c679edd414f72f13d67c917447113df2
+  version: 94eea52f7b742c7cbe0b03b22f0c4c8631ece122
   subpackages:
   - bcrypt
   - blowfish
 - name: golang.org/x/net
-  version: 0a9397675ba34b2845f758fe3cd68828369c6517
+  version: d866cfc389cec985d6fda2859936a575a55a3ab6
   subpackages:
   - context
   - context/ctxhttp

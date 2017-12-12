@@ -45,7 +45,7 @@ benchmark you can use to test performance on your own hardware.
 
 (The MIT License)
 
-Copyright (c) 2016 Apcera Inc.
+Copyright (c) 2016-2017 Apcera Inc.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to

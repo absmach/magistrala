@@ -13,13 +13,192 @@ import (
 	"github.com/go-stack/stack"
 )
 
+func TestCaller(t *testing.T) {
+	t.Parallel()
+
+	c := stack.Caller(0)
+	_, file, line, ok := runtime.Caller(0)
+	line--
+	if !ok {
+		t.Fatal("runtime.Caller(0) failed")
+	}
+
+	if got, want := c.Frame().File, file; got != want {
+		t.Errorf("got file == %v, want file == %v", got, want)
+	}
+
+	if got, want := c.Frame().Line, line; got != want {
+		t.Errorf("got line == %v, want line == %v", got, want)
+	}
+}
+
+func f3(f1 func() stack.Call) stack.Call {
+	return f2(f1)
+}
+
+func f2(f1 func() stack.Call) stack.Call {
+	return f1()
+}
+
+func TestCallerMidstackInlined(t *testing.T) {
+	t.Parallel()
+
+	_, _, line, ok := runtime.Caller(0)
+	line -= 10 // adjust to return f1() line inside f2()
+	if !ok {
+		t.Fatal("runtime.Caller(0) failed")
+	}
+
+	c := f3(func() stack.Call {
+		return stack.Caller(2)
+	})
+
+	if got, want := c.Frame().Line, line; got != want {
+		t.Errorf("got line == %v, want line == %v", got, want)
+	}
+	if got, want := c.Frame().Function, "github.com/go-stack/stack_test.f3"; got != want {
+		t.Errorf("got func name == %v, want func name == %v", got, want)
+	}
+}
+
+func TestCallerPanic(t *testing.T) {
+	t.Parallel()
+
+	var (
+		line int
+		ok   bool
+	)
+
+	defer func() {
+		if recover() != nil {
+			var pcs [32]uintptr
+			n := runtime.Callers(1, pcs[:])
+			frames := runtime.CallersFrames(pcs[:n])
+			// count frames to runtime.sigpanic
+			panicIdx := 0
+			for {
+				f, more := frames.Next()
+				if f.Function == "runtime.sigpanic" {
+					break
+				}
+				panicIdx++
+				if !more {
+					t.Fatal("no runtime.sigpanic entry on the stack")
+				}
+			}
+			c := stack.Caller(panicIdx)
+			if got, want := c.Frame().Function, "runtime.sigpanic"; got != want {
+				t.Errorf("sigpanic frame: got name == %v, want name == %v", got, want)
+			}
+			c1 := stack.Caller(panicIdx + 1)
+			if got, want := c1.Frame().Function, "github.com/go-stack/stack_test.TestCallerPanic"; got != want {
+				t.Errorf("TestCallerPanic frame: got name == %v, want name == %v", got, want)
+			}
+			if got, want := c1.Frame().Line, line; got != want {
+				t.Errorf("TestCallerPanic frame: got line == %v, want line == %v", got, want)
+			}
+		}
+	}()
+
+	_, _, line, ok = runtime.Caller(0)
+	line += 7 // adjust to match line of panic below
+	if !ok {
+		t.Fatal("runtime.Caller(0) failed")
+	}
+	// Initiate a sigpanic.
+	var x *uintptr
+	_ = *x
+}
+
+type tholder struct {
+	trace func() stack.CallStack
+}
+
+func (th *tholder) traceLabyrinth() stack.CallStack {
+	for {
+		return th.trace()
+	}
+}
+
+func TestTrace(t *testing.T) {
+	t.Parallel()
+
+	_, _, line, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller(0) failed")
+	}
+
+	fh := tholder{
+		trace: func() stack.CallStack {
+			cs := stack.Trace()
+			return cs
+		},
+	}
+
+	cs := fh.traceLabyrinth()
+
+	lines := []int{line + 7, line - 7, line + 12}
+
+	for i, line := range lines {
+		if got, want := cs[i].Frame().Line, line; got != want {
+			t.Errorf("got line[%d] == %v, want line[%d] == %v", i, got, i, want)
+		}
+	}
+}
+
+// Test stack handling originating from a sigpanic.
+func TestTracePanic(t *testing.T) {
+	t.Parallel()
+
+	var (
+		line int
+		ok   bool
+	)
+
+	defer func() {
+		if recover() != nil {
+			trace := stack.Trace()
+
+			// find runtime.sigpanic
+			panicIdx := -1
+			for i, c := range trace {
+				if c.Frame().Function == "runtime.sigpanic" {
+					panicIdx = i
+					break
+				}
+			}
+			if panicIdx == -1 {
+				t.Fatal("no runtime.sigpanic entry on the stack")
+			}
+			if got, want := trace[panicIdx].Frame().Function, "runtime.sigpanic"; got != want {
+				t.Errorf("sigpanic frame: got name == %v, want name == %v", got, want)
+			}
+			if got, want := trace[panicIdx+1].Frame().Function, "github.com/go-stack/stack_test.TestTracePanic"; got != want {
+				t.Errorf("TestTracePanic frame: got name == %v, want name == %v", got, want)
+			}
+			if got, want := trace[panicIdx+1].Frame().Line, line; got != want {
+				t.Errorf("TestTracePanic frame: got line == %v, want line == %v", got, want)
+			}
+		}
+	}()
+
+	_, _, line, ok = runtime.Caller(0)
+	line += 7 // adjust to match line of panic below
+	if !ok {
+		t.Fatal("runtime.Caller(0) failed")
+	}
+	// Initiate a sigpanic.
+	var x *uintptr
+	_ = *x
+}
+
 const importPath = "github.com/go-stack/stack"
 
 type testType struct{}
 
-func (tt testType) testMethod() (c stack.Call, pc uintptr, file string, line int, ok bool) {
+func (tt testType) testMethod() (c stack.Call, file string, line int, ok bool) {
 	c = stack.Caller(0)
-	pc, file, line, ok = runtime.Caller(0)
+	_, file, line, ok = runtime.Caller(0)
 	line--
 	return
 }
@@ -28,14 +207,14 @@ func TestCallFormat(t *testing.T) {
 	t.Parallel()
 
 	c := stack.Caller(0)
-	pc, file, line, ok := runtime.Caller(0)
+	_, file, line, ok := runtime.Caller(0)
 	line--
 	if !ok {
 		t.Fatal("runtime.Caller(0) failed")
 	}
 	relFile := path.Join(importPath, filepath.Base(file))
 
-	c2, pc2, file2, line2, ok2 := testType{}.testMethod()
+	c2, file2, line2, ok2 := testType{}.testMethod()
 	if !ok2 {
 		t.Fatal("runtime.Caller(0) failed")
 	}
@@ -54,7 +233,9 @@ func TestCallFormat(t *testing.T) {
 		{c, "func", "%#s", file},
 		{c, "func", "%d", fmt.Sprint(line)},
 		{c, "func", "%n", "TestCallFormat"},
-		{c, "func", "%+n", runtime.FuncForPC(pc - 1).Name()},
+		{c, "func", "%+n", "github.com/go-stack/stack_test.TestCallFormat"},
+		{c, "func", "%k", "stack_test"},
+		{c, "func", "%+k", "github.com/go-stack/stack_test"},
 		{c, "func", "%v", fmt.Sprint(path.Base(file), ":", line)},
 		{c, "func", "%+v", fmt.Sprint(relFile, ":", line)},
 		{c, "func", "%#v", fmt.Sprint(file, ":", line)},
@@ -64,7 +245,9 @@ func TestCallFormat(t *testing.T) {
 		{c2, "meth", "%#s", file2},
 		{c2, "meth", "%d", fmt.Sprint(line2)},
 		{c2, "meth", "%n", "testType.testMethod"},
-		{c2, "meth", "%+n", runtime.FuncForPC(pc2).Name()},
+		{c2, "meth", "%+n", "github.com/go-stack/stack_test.testType.testMethod"},
+		{c2, "meth", "%k", "stack_test"},
+		{c2, "meth", "%+k", "github.com/go-stack/stack_test"},
 		{c2, "meth", "%v", fmt.Sprint(path.Base(file2), ":", line2)},
 		{c2, "meth", "%+v", fmt.Sprint(relFile2, ":", line2)},
 		{c2, "meth", "%#v", fmt.Sprint(file2, ":", line2)},
@@ -88,7 +271,7 @@ func TestCallString(t *testing.T) {
 		t.Fatal("runtime.Caller(0) failed")
 	}
 
-	c2, _, file2, line2, ok2 := testType{}.testMethod()
+	c2, file2, line2, ok2 := testType{}.testMethod()
 	if !ok2 {
 		t.Fatal("runtime.Caller(0) failed")
 	}
@@ -121,7 +304,7 @@ func TestCallMarshalText(t *testing.T) {
 		t.Fatal("runtime.Caller(0) failed")
 	}
 
-	c2, _, file2, line2, ok2 := testType{}.testMethod()
+	c2, file2, line2, ok2 := testType{}.testMethod()
 	if !ok2 {
 		t.Fatal("runtime.Caller(0) failed")
 	}
@@ -174,6 +357,7 @@ func TestCallStackMarshalText(t *testing.T) {
 		t.Errorf("\n got %v\nwant %v", got, want)
 	}
 }
+
 func getTrace(t *testing.T) (stack.CallStack, int) {
 	cs := stack.Trace().TrimRuntime()
 	_, _, line, ok := runtime.Caller(0)
@@ -187,7 +371,7 @@ func getTrace(t *testing.T) (stack.CallStack, int) {
 func TestTrimAbove(t *testing.T) {
 	trace := trimAbove()
 	if got, want := len(trace), 2; got != want {
-		t.Errorf("got len(trace) == %v, want %v, trace: %n", got, want, trace)
+		t.Fatalf("got len(trace) == %v, want %v, trace: %n", got, want, trace)
 	}
 	if got, want := fmt.Sprintf("%n", trace[1]), "TestTrimAbove"; got != want {
 		t.Errorf("got %q, want %q", got, want)

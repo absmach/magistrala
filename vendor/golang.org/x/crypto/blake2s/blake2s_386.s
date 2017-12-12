@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build 386, !gccgo, !appengine
+// +build 386,!gccgo,!appengine
 
 #include "textflag.h"
 
@@ -290,7 +290,7 @@ GLOBL counter<>(SB), (NOPTR+RODATA), $16
 	MOVL t, 8*4+off+576(dst)
 
 // func hashBlocksSSE2(h *[8]uint32, c *[2]uint32, flag uint32, blocks []byte)
-TEXT ·hashBlocksSSE2(SB), 4, $0-24
+TEXT ·hashBlocksSSE2(SB), 0, $672-24 // frame = 656 + 16 byte alignment
 	MOVL h+0(FP), AX
 	MOVL c+4(FP), BX
 	MOVL flag+8(FP), CX
@@ -298,8 +298,10 @@ TEXT ·hashBlocksSSE2(SB), 4, $0-24
 	MOVL blocks_len+16(FP), DX
 
 	MOVL SP, BP
-	ANDL $0xFFFFFFF0, SP
-	SUBL $(16+16+640), SP
+	MOVL SP, DI
+	ADDL $15, DI
+	ANDL $~15, DI
+	MOVL DI, SP
 
 	MOVL CX, 8(SP)
 	MOVL 0(BX), CX
@@ -357,7 +359,7 @@ loop:
 	RET
 
 // func hashBlocksSSSE3(h *[8]uint32, c *[2]uint32, flag uint32, blocks []byte)
-TEXT ·hashBlocksSSSE3(SB), 4, $0-24
+TEXT ·hashBlocksSSSE3(SB), 0, $704-24 // frame = 688 + 16 byte alignment
 	MOVL h+0(FP), AX
 	MOVL c+4(FP), BX
 	MOVL flag+8(FP), CX
@@ -365,8 +367,10 @@ TEXT ·hashBlocksSSSE3(SB), 4, $0-24
 	MOVL blocks_len+16(FP), DX
 
 	MOVL SP, BP
-	ANDL $0xFFFFFFF0, SP
-	SUBL $(16+16+640+32), SP
+	MOVL SP, DI
+	ADDL $15, DI
+	ANDL $~15, DI
+	MOVL DI, SP
 
 	MOVL CX, 8(SP)
 	MOVL 0(BX), CX

@@ -127,7 +127,7 @@ _start() {
   # Start Nginx
   printf "\nStarting Nginx...\n\n"
 
-  NB_DOCKERS=$(docker ps -a -f name=nginx | wc -l)
+  NB_DOCKERS=$(docker ps -a -f name=mainflux-nginx | wc -l)
   if [[ $NB_DOCKERS -lt 2 ]]
   then
     docker-compose -f docker/docker-compose.nginx.yml pull

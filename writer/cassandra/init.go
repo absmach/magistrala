@@ -25,7 +25,7 @@ var tables []string = []string{
 		ut double,
 		l text,
 		PRIMARY KEY ((channel), id)
-	) WITH default_time_to_live = 86400`,
+	) WITH CLUSTERING ORDER BY (id DESC)`,
 }
 
 // Connect establishes connection to the Cassandra cluster.

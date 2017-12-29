@@ -43,15 +43,6 @@ func (ms *metricService) Login(user manager.User) (string, error) {
 	return ms.Service.Login(user)
 }
 
-func (ms *metricService) Identity(key string) (string, error) {
-	defer func(begin time.Time) {
-		ms.counter.With("method", "identity").Add(1)
-		ms.latency.With("method", "identity").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
-	return ms.Service.Identity(key)
-}
-
 func (ms *metricService) AddClient(key string, client manager.Client) (string, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "add_client").Add(1)
@@ -140,6 +131,15 @@ func (ms *metricService) RemoveChannel(key string, id string) error {
 	}(time.Now())
 
 	return ms.Service.RemoveChannel(key, id)
+}
+
+func (ms *metricService) Identity(key string) (string, error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "identity").Add(1)
+		ms.latency.With("method", "identity").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.Service.Identity(key)
 }
 
 func (ms *metricService) CanAccess(key string, id string) bool {

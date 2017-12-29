@@ -45,19 +45,6 @@ func (ls *loggingService) Login(user manager.User) (token string, err error) {
 	return ls.Service.Login(user)
 }
 
-func (ls *loggingService) Identity(key string) (id string, err error) {
-	defer func(begin time.Time) {
-		ls.logger.Log(
-			"method", "identity",
-			"id", id,
-			"error", err,
-			"took", time.Since(begin),
-		)
-	}(time.Now())
-
-	return ls.Service.Identity(key)
-}
-
 func (ls *loggingService) AddClient(key string, client manager.Client) (id string, err error) {
 	defer func(begin time.Time) {
 		ls.logger.Log(
@@ -194,6 +181,19 @@ func (ls *loggingService) RemoveChannel(key string, id string) (err error) {
 	}(time.Now())
 
 	return ls.Service.RemoveChannel(key, id)
+}
+
+func (ls *loggingService) Identity(key string) (id string, err error) {
+	defer func(begin time.Time) {
+		ls.logger.Log(
+			"method", "identity",
+			"id", id,
+			"error", err,
+			"took", time.Since(begin),
+		)
+	}(time.Now())
+
+	return ls.Service.Identity(key)
 }
 
 func (ls *loggingService) CanAccess(key string, id string) (allowed bool) {

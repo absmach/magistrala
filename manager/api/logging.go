@@ -196,13 +196,14 @@ func (ls *loggingService) Identity(key string) (id string, err error) {
 	return ls.Service.Identity(key)
 }
 
-func (ls *loggingService) CanAccess(key string, id string) (allowed bool) {
+func (ls *loggingService) CanAccess(key string, id string) (pub string, err error) {
 	defer func(begin time.Time) {
 		ls.logger.Log(
 			"method", "can_access",
 			"key", key,
 			"id", id,
-			"allowed", allowed,
+			"publisher", pub,
+			"error", err,
 			"took", time.Since(begin),
 		)
 	}(time.Now())

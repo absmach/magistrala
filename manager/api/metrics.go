@@ -142,7 +142,7 @@ func (ms *metricService) Identity(key string) (string, error) {
 	return ms.Service.Identity(key)
 }
 
-func (ms *metricService) CanAccess(key string, id string) bool {
+func (ms *metricService) CanAccess(key string, id string) (string, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "can_access").Add(1)
 		ms.latency.With("method", "can_access").Observe(time.Since(begin).Seconds())

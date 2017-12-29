@@ -2,7 +2,6 @@ package mocks
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"sync"
@@ -52,7 +51,6 @@ func (repo *clientRepositoryMock) Update(client manager.Client) error {
 		return manager.ErrNotFound
 	}
 
-	log.Print("c")
 	repo.clients[dbKey] = client
 
 	return nil

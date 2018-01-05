@@ -34,13 +34,6 @@ func MakeHandler(svc manager.Service) http.Handler {
 		opts...,
 	))
 
-	r.Post("/identity", kithttp.NewServer(
-		identityEndpoint(svc),
-		decodeIdentity,
-		encodeResponse,
-		opts...,
-	))
-
 	r.Post("/clients", kithttp.NewServer(
 		addClientEndpoint(svc),
 		decodeClientCreation,
@@ -111,14 +104,14 @@ func MakeHandler(svc manager.Service) http.Handler {
 		opts...,
 	))
 
-	r.Get("/channels/:id/messages", kithttp.NewServer(
-		canAccessEndpoint(svc),
-		decodeView,
+	r.Get("/access-grant", kithttp.NewServer(
+		identityEndpoint(svc),
+		decodeIdentity,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Post("/channels/:id/messages", kithttp.NewServer(
+	r.Get("/channels/:id/access-grant", kithttp.NewServer(
 		canAccessEndpoint(svc),
 		decodeView,
 		encodeResponse,

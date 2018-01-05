@@ -56,24 +56,6 @@ paths:
             Failed due to malformed JSON or using an invalid credentials.
         500:
           $ref: "#/responses/ServiceError"
-  /identity:
-    post:
-      summary: Identity retrieval
-      description: |
-        Retrieves the entity identifier given its secret key.
-      tags:
-        - identity
-      parameters:
-        - $ref: "#/parameters/Authorization"
-      responses:
-        200:
-          description: ID retrieved
-          headers:
-            X-Client-Id:
-              type: string
-              description: ID of the entity
-        403:
-          description: Missing or invalid access token provided.
   /clients:
     post:
       summary: Adds new client
@@ -320,41 +302,46 @@ paths:
           description: Missing or invalid access token provided.
         500:
           $ref: "#/responses/ServiceError"
-  /channels/{id}/messages:
+  /access-grant:
     get:
-      summary: Checks whether a message can be read
+      summary: Checks the token validity
       description: |
-        Performs permission check on read request(s) redirected from message
-        reader service. Based on the response, the reader should either respond
-        with stored messages, or reject the request.
+        Internal endpoint used to verify requests forwarded by stateful adapters
+        like MQTT. If the request is made using valid token, an identifier bound
+        to that token will be returned.
       tags:
-        - messaging
+        - access control
+      parameters:
+        - $ref: "#/parameters/Authorization"
+      responses:
+        200:
+          description: ID retrieved
+          headers:
+            X-client-id:
+              type: string
+              description: ID of the entity bound to the provided access key.
+        403:
+          description: Missing or invalid access token provided.
+  /channels/{id}/access-grant:
+    get:
+      summary: Checks channel accessibility
+      description: |
+        Internal endpoint used to determine whether or not a channel can be
+        accessed using credentials provided as part of the request.
+      tags:
+        - access control
       parameters:
         - $ref: "#/parameters/Authorization"
         - $ref: "#/parameters/Id"
       responses:
-        202:
-          description: Message can be read from the channel.
+        200:
+          description: Client can access the channel.
+          headers:
+            X-client-id:
+              type: string
+              description: ID of the entity bound to the provided access key.
         403:
-          description: Message cannot be read from the channel.
-        500:
-          $ref: "#/responses/ServiceError"
-    post:
-      summary: Checks whether a message can be written
-      description: |
-        Performs permission check on write request(s) redirected from protocol
-        adapter(s). Based on the response, the adapter should either emit the
-        event, or reject the request.
-      tags:
-        - messaging
-      parameters:
-        - $ref: "#/parameters/Authorization"
-        - $ref: "#/parameters/Id"
-      responses:
-        202:
-          description: Message can be written to the channel.
-        403:
-          description: Message cannot be written to the channel.
+          description: Client cannot access the channel.
         500:
           $ref: "#/responses/ServiceError"
 

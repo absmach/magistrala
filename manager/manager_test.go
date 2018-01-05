@@ -51,23 +51,6 @@ func TestLogin(t *testing.T) {
 	}
 }
 
-func TestIdentity(t *testing.T) {
-	cases := []struct {
-		key string
-		id  string
-		err error
-	}{
-		{"foo@bar.com", "foo@bar.com", nil},
-		{"", "", manager.ErrUnauthorizedAccess},
-	}
-
-	for i, tc := range cases {
-		id, err := svc.Identity(tc.key)
-		assert.Equal(t, tc.id, id, fmt.Sprintf("unexpected id at %d\n", i))
-		assert.Equal(t, tc.err, err, fmt.Sprintf("failed at %d\n", i))
-	}
-}
-
 func TestAddClient(t *testing.T) {
 	cases := []struct {
 		key    string
@@ -224,20 +207,39 @@ func TestListChannels(t *testing.T) {
 	}
 }
 
-func TestCanAccess(t *testing.T) {
+func TestIdentity(t *testing.T) {
 	cases := []struct {
-		client  string
-		channel string
-		allowed bool
+		key string
+		id  string
+		err error
 	}{
-		{"1", "1", true},
-		{"1", "2", false},
-		{"", "1", false},
+		{"foo@bar.com", "foo@bar.com", nil},
+		{"", "", manager.ErrUnauthorizedAccess},
 	}
 
 	for i, tc := range cases {
-		allowed := svc.CanAccess(tc.client, tc.channel)
-		assert.Equal(t, tc.allowed, allowed, fmt.Sprintf("failed at %d\n", i))
+		id, err := svc.Identity(tc.key)
+		assert.Equal(t, tc.id, id, fmt.Sprintf("unexpected id at %d\n", i))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("failed at %d\n", i))
+	}
+}
+
+func TestCanAccess(t *testing.T) {
+	cases := []struct {
+		key     string
+		channel string
+		id      string
+		err     error
+	}{
+		{"1", "1", "1", nil},
+		{"1", "2", "", manager.ErrUnauthorizedAccess},
+		{"", "1", "", manager.ErrUnauthorizedAccess},
+	}
+
+	for i, tc := range cases {
+		id, err := svc.CanAccess(tc.key, tc.channel)
+		assert.Equal(t, tc.id, id, fmt.Sprintf("unexpected id at %d\n", i))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("failed at %d\n", i))
 	}
 }
 

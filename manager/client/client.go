@@ -4,6 +4,7 @@ package client
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -43,18 +44,28 @@ func NewClient(url string) managerClient {
 	return mc
 }
 
-func (mc managerClient) Authenticate(req *http.Request) (string, error) {
+func (mc managerClient) VerifyToken(token string) (string, error) {
+	url := fmt.Sprintf("%s/access-grant", mc.url)
+	return mc.makeRequest(url, token)
+}
+
+func (mc managerClient) CanAccess(channel, token string) (string, error) {
+	url := fmt.Sprintf("%s/channels/%s/access-grant", mc.url, channel)
+	return mc.makeRequest(url, token)
+}
+
+func (mc managerClient) makeRequest(url, token string) (string, error) {
 	response, err := mc.cb.Execute(func() (interface{}, error) {
 		hc := &http.Client{
 			Timeout: timeout,
 		}
 
-		mgReq, err := http.NewRequest("POST", mc.url+"/identity", nil)
+		mgReq, err := http.NewRequest("GET", url, nil)
 		if err != nil {
 			return "", ErrServiceUnreachable
 		}
 
-		mgReq.Header.Set("Authorization", req.Header.Get("Authorization"))
+		mgReq.Header.Set("Authorization", token)
 
 		res, err := hc.Do(mgReq)
 		defer res.Body.Close()
@@ -67,16 +78,16 @@ func (mc managerClient) Authenticate(req *http.Request) (string, error) {
 			return manager.ErrUnauthorizedAccess, nil
 		}
 
-		return res.Header.Get("X-Client-Id"), nil
+		return res.Header.Get("X-client-id"), nil
 	})
 
 	if err != nil {
 		return "", err
 	}
 
-	if key, ok := response.(string); !ok {
+	if id, ok := response.(string); !ok {
 		return "", manager.ErrUnauthorizedAccess
 	} else {
-		return key, nil
+		return id, nil
 	}
 }

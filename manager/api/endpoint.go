@@ -37,24 +37,6 @@ func loginEndpoint(svc manager.Service) endpoint.Endpoint {
 	}
 }
 
-func identityEndpoint(svc manager.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
-		req := request.(identityReq)
-
-		if err := req.validate(); err != nil {
-			return nil, manager.ErrUnauthorizedAccess
-		}
-
-		id, err := svc.Identity(req.key)
-		if err != nil {
-			return nil, err
-		}
-
-		res := identityRes{id: id}
-		return res, nil
-	}
-}
-
 func addClientEndpoint(svc manager.Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
 		req := request.(addClientReq)
@@ -235,6 +217,23 @@ func removeChannelEndpoint(svc manager.Service) endpoint.Endpoint {
 	}
 }
 
+func identityEndpoint(svc manager.Service) endpoint.Endpoint {
+	return func(_ context.Context, request interface{}) (interface{}, error) {
+		req := request.(identityReq)
+
+		if err := req.validate(); err != nil {
+			return nil, manager.ErrUnauthorizedAccess
+		}
+
+		id, err := svc.Identity(req.key)
+		if err != nil {
+			return nil, err
+		}
+
+		return identityRes{id: id}, nil
+	}
+}
+
 func canAccessEndpoint(svc manager.Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
 		req := request.(viewResourceReq)
@@ -243,10 +242,11 @@ func canAccessEndpoint(svc manager.Service) endpoint.Endpoint {
 			return nil, manager.ErrUnauthorizedAccess
 		}
 
-		if allowed := svc.CanAccess(req.key, req.id); !allowed {
-			return nil, manager.ErrUnauthorizedAccess
+		id, err := svc.CanAccess(req.key, req.id)
+		if err != nil {
+			return nil, err
 		}
 
-		return accessRes{}, nil
+		return identityRes{id: id}, nil
 	}
 }

@@ -6,7 +6,6 @@ type Message struct {
 	Channel     string
 	Publisher   string
 	Protocol    string
-	Version     int     `json:"bver,omitempty"`
 	Name        string  `json:"n,omitempty"`
 	Unit        string  `json:"u,omitempty"`
 	Value       float64 `json:"v,omitempty"`

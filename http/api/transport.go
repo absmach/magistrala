@@ -6,11 +6,13 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
 	adapter "github.com/mainflux/mainflux/http"
+	manager "github.com/mainflux/mainflux/manager/client"
 	"github.com/mainflux/mainflux/writer"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -24,10 +26,13 @@ var (
 	errMalformedData      error = errors.New("malformed SenML data")
 	errUnknownType        error = errors.New("unknown content type")
 	errUnauthorizedAccess error = errors.New("missing or invalid credentials provided")
+	auth                  manager.ManagerClient
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc adapter.Service) http.Handler {
+func MakeHandler(svc adapter.Service, mc manager.ManagerClient) http.Handler {
+	auth = mc
+
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
 	}
@@ -76,14 +81,22 @@ func decodeRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	return msg, nil
 }
 
-// TODO: contact an auth provider
 func authorize(r *http.Request) (string, error) {
-	var apiKey string
-	if apiKey = r.Header.Get("Authorization"); apiKey == "" {
+	apiKey := r.Header.Get("Authorization")
+
+	if apiKey == "" {
 		return "", errUnauthorizedAccess
 	}
 
-	return apiKey, nil
+	// Path is `/channels/:id/messages`, we need chanID.
+	c := strings.Split(r.URL.Path, "/")[2]
+
+	id, err := auth.CanAccess(c, apiKey)
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
 }
 
 func checkContentType(r *http.Request) (string, error) {

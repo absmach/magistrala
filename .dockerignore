@@ -1,9 +1,8 @@
 .git/
+.github/
 bin/
-docker/
 glide.lock
 glide.yaml
 LICENSE
 MAINTAINERS
 README.md
-swagger.yml

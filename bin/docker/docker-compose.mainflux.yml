@@ -74,3 +74,4 @@ services:
       - mainflux-nats:nats
     environment:
       - HTTP_ADAPTER_NATS_URL=nats://nats:4222
+      - HTTP_ADAPTER_MANAGER_URL=http://manager:8180

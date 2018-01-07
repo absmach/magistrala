@@ -21,13 +21,13 @@ const (
 // ErrServiceUnreachable indicates that the service instance is not available.
 var ErrServiceUnreachable = errors.New("manager service unavailable")
 
-type managerClient struct {
+type ManagerClient struct {
 	url string
 	cb  *gobreaker.CircuitBreaker
 }
 
 // NewClient instantiates the manager service client given its base URL.
-func NewClient(url string) managerClient {
+func NewClient(url string) ManagerClient {
 	st := gobreaker.Settings{
 		Name: "Manager",
 		ReadyToTrip: func(counts gobreaker.Counts) bool {
@@ -36,7 +36,7 @@ func NewClient(url string) managerClient {
 		},
 	}
 
-	mc := managerClient{
+	mc := ManagerClient{
 		url: url,
 		cb:  gobreaker.NewCircuitBreaker(st),
 	}
@@ -44,17 +44,17 @@ func NewClient(url string) managerClient {
 	return mc
 }
 
-func (mc managerClient) VerifyToken(token string) (string, error) {
+func (mc ManagerClient) VerifyToken(token string) (string, error) {
 	url := fmt.Sprintf("%s/access-grant", mc.url)
 	return mc.makeRequest(url, token)
 }
 
-func (mc managerClient) CanAccess(channel, token string) (string, error) {
+func (mc ManagerClient) CanAccess(channel, token string) (string, error) {
 	url := fmt.Sprintf("%s/channels/%s/access-grant", mc.url, channel)
 	return mc.makeRequest(url, token)
 }
 
-func (mc managerClient) makeRequest(url, token string) (string, error) {
+func (mc ManagerClient) makeRequest(url, token string) (string, error) {
 	response, err := mc.cb.Execute(func() (interface{}, error) {
 		hc := &http.Client{
 			Timeout: timeout,

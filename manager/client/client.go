@@ -21,6 +21,8 @@ const (
 // ErrServiceUnreachable indicates that the service instance is not available.
 var ErrServiceUnreachable = errors.New("manager service unavailable")
 
+// ManagerClient provides an access to the manager service authorization
+// endpoints.
 type ManagerClient struct {
 	url string
 	cb  *gobreaker.CircuitBreaker
@@ -44,11 +46,14 @@ func NewClient(url string) ManagerClient {
 	return mc
 }
 
+// VerifyToken tries to extract an identity from the provided token.
 func (mc ManagerClient) VerifyToken(token string) (string, error) {
 	url := fmt.Sprintf("%s/access-grant", mc.url)
 	return mc.makeRequest(url, token)
 }
 
+// CanAccess checks whether or not the client having a provided token has
+// access to the specified channel.
 func (mc ManagerClient) CanAccess(channel, token string) (string, error) {
 	url := fmt.Sprintf("%s/channels/%s/access-grant", mc.url, channel)
 	return mc.makeRequest(url, token)
@@ -84,9 +89,10 @@ func (mc ManagerClient) makeRequest(url, token string) (string, error) {
 		return "", err
 	}
 
-	if id, ok := response.(string); !ok {
+	id, ok := response.(string)
+	if !ok {
 		return "", manager.ErrUnauthorizedAccess
-	} else {
-		return id, nil
 	}
+
+	return id, nil
 }

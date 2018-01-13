@@ -68,11 +68,10 @@ func (mc ManagerClient) makeRequest(url, token string) (string, error) {
 		mgReq.Header.Set("Authorization", token)
 
 		res, err := hc.Do(mgReq)
-		defer res.Body.Close()
-
 		if err != nil {
 			return "", ErrServiceUnreachable
 		}
+		defer res.Body.Close()
 
 		if res.StatusCode != http.StatusOK {
 			return manager.ErrUnauthorizedAccess, nil

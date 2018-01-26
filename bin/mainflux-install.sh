@@ -57,7 +57,7 @@ External dependencies needed for Mainflux are:
 - NATS
 - NGINX
 
-NATS have been installed.
+NATS has been installed.
 For Cassandra follow the instructions at http://cassandra.apache.org/download/
 For NGINX follow the instructions here: http://nginx.org/en/docs/install.html
 
@@ -71,4 +71,3 @@ sudo systemctl restart nginx.service
 ***
 
 EOF
-

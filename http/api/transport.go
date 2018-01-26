@@ -130,7 +130,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusBadRequest)
 	case errUnknownType:
 		w.WriteHeader(http.StatusUnsupportedMediaType)
-	case errUnauthorizedAccess:
+	case manager.ErrUnauthorizedAccess:
 		w.WriteHeader(http.StatusForbidden)
 	default:
 		w.WriteHeader(http.StatusInternalServerError)

@@ -32,7 +32,7 @@ To start the docker composition, execute the [startup script](bin/mainflux-docke
 directory:
 
 ```
-./mainflux-docker.sh start  
+./mainflux-docker.sh start
 ```
 
 If the command successfully completes, you can verify that the all images are up & running by
@@ -59,7 +59,7 @@ instructions on how to finish the manual installation (i.e. install the required
 Thank you for your interest in Mainflux and wish to contribute!
 
 1. Take a look at our [open issues](https://github.com/mainflux/mainflux/issues).
-2. Checkout the [contribution guide](CONTRIBUTING.md) to learn more about our style and conventions.
+2. Checkout the [contribution guide](.github/CONTRIBUTING.md) to learn more about our style and conventions.
 3. Make your changes compatible to our workflow.
 
 ## Community

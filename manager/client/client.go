@@ -18,8 +18,14 @@ const (
 	maxFailureRatio = 0.6
 )
 
-// ErrServiceUnreachable indicates that the service instance is not available.
-var ErrServiceUnreachable = errors.New("manager service unavailable")
+var (
+	// ErrServiceUnreachable indicates that the service instance is not available.
+	ErrServiceUnreachable = errors.New("manager service unavailable")
+
+	// ErrUnauthorizedAccess indicates missing or invalid credentials provided
+	// when accessing a protected resource.
+	ErrUnauthorizedAccess = manager.ErrUnauthorizedAccess
+)
 
 // ManagerClient provides an access to the manager service authorization
 // endpoints.
@@ -79,7 +85,7 @@ func (mc ManagerClient) makeRequest(url, token string) (string, error) {
 		defer res.Body.Close()
 
 		if res.StatusCode != http.StatusOK {
-			return manager.ErrUnauthorizedAccess, nil
+			return ErrUnauthorizedAccess, nil
 		}
 
 		return res.Header.Get("X-client-id"), nil

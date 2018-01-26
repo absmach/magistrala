@@ -203,6 +203,7 @@ _main() {
   # No arguments provided
   if [[ $# -eq 0 ]] ; then
     _print_help
+    exit 1
   fi
 
   # Avoid complex option parsing when only one program option is expected.

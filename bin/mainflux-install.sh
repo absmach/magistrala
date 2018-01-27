@@ -61,6 +61,13 @@ External dependencies needed for Mainflux are:
 
 NATS has been installed.
 For Cassandra follow the instructions at http://cassandra.apache.org/download/
+
+After installing Cassandra you should create the two keypspaces that Mainflux uses:
+
+cqlsh> CREATE KEYSPACE IF NOT EXISTS manager WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+cqlsh> CREATE KEYSPACE IF NOT EXISTS message_writer WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+
+
 For NGINX follow the instructions here: http://nginx.org/en/docs/install.html
 
 NGINX config has been cloned in nginx-conf,

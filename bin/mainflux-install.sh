@@ -17,8 +17,10 @@ mkdir -p $GOBIN
 # Mainflux Go microservices
 go get -d -v github.com/mainflux/mainflux
 cd $GOPATH/src/github.com/mainflux/mainflux
+make clean
 make
 make install
+make clean
 cd -
 
 

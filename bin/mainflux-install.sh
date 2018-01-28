@@ -60,10 +60,15 @@ External dependencies needed for Mainflux are:
 NATS has been installed.
 For Cassandra follow the instructions at http://cassandra.apache.org/download/
 
-After installing Cassandra you should create the two keypspaces that Mainflux uses:
+After installing Cassandra you should create the two keyspaces that Mainflux uses. This can be done with something similar to:
 
 cqlsh> CREATE KEYSPACE IF NOT EXISTS manager WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
 cqlsh> CREATE KEYSPACE IF NOT EXISTS message_writer WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+
+Please note that in the example SQL statment above, the keyspaces will be created in a single datacenter (single cluster) and there will
+only be one replica (copy) of the data. You should create the keyspaces with parameters appropriate for your Cassandra installation. Take a look
+at the Cassandra documentation for creating keyspaces for more details. For production usage you should always configure multiple replicas in order
+to have data redundancy and be safe in case one or more Cassandra cluster nodes fail.
 
 
 For NGINX follow the instructions here: http://nginx.org/en/docs/install.html

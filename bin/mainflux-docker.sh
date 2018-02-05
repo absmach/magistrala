@@ -150,13 +150,26 @@ _stop() {
   printf "\nStopping Nginx...\n\n"
   docker-compose -f docker/docker-compose.nginx.yml stop
 
-  printf "Stopping Mainflux composition...\n\n"
+  printf "\nStopping Mainflux composition...\n\n"
   docker-compose -f docker/docker-compose.mainflux.yml stop
 
   printf "\nStopping NATS and Cassandra...\n\n"
   docker-compose -f docker/docker-compose.infrastructure.yml stop
 
   printf "\n*** MAINFLUX IS OFF ***\n\n"
+}
+
+_clean() {
+  printf "\nCleaning NATS and Cassandra containers...\n\n"
+  docker-compose -f docker/docker-compose.infrastructure.yml rm -f
+
+  printf "\nCleaning Mainflux containers...\n\n"
+  docker-compose -f docker/docker-compose.mainflux.yml rm -f
+
+  printf "\nCleaning Nginx container...\n\n"
+  docker-compose -f docker/docker-compose.nginx.yml rm -f
+
+  printf "\n*** Docker containers cleaned ***\n\n"
 }
 
 _mainflux_docker() {
@@ -166,6 +179,9 @@ _mainflux_docker() {
   elif [[ $1 == "stop" ]]
   then
     _stop
+  elif [[ $1 == "clean" ]]
+  then
+    _clean
   else
     printf "Unknown command.\n"
   fi

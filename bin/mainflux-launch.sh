@@ -21,7 +21,10 @@ sleep 0.1
 mainflux-http &
 mainflux-manager &
 mainflux-writer &
+mainflux-coap &
 
 trap cleanup EXIT
 
 while : ; do sleep 1 ; done
+
+

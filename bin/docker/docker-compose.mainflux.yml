@@ -76,3 +76,17 @@ services:
     environment:
       - HTTP_ADAPTER_NATS_URL=nats://nats:4222
       - HTTP_ADAPTER_MANAGER_URL=http://manager:8180
+
+  ###
+  # CoAP Server
+  ###
+  coap-adapter:
+    image: mainflux/coap:latest
+    container_name: mainflux-coap
+    network_mode: bridge
+    ports:
+      - "5683:5683"
+    external_links:
+      - mainflux-nats:nats
+    environment:
+      - COAP_ADAPTER_NATS_URL=nats://nats:4222

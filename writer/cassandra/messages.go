@@ -17,7 +17,9 @@ func NewMessageRepository(session *gocql.Session) writer.MessageRepository {
 	return &msgRepository{session}
 }
 
-func normalize(msg writer.RawMessage) ([]writer.Message, error) {
+// Normalize decodes and normalizes message emitted by the mainflux adapters layer
+// into Message structure. A non-nil error is returned to indicate operation failure.
+func Normalize(msg writer.RawMessage) ([]writer.Message, error) {
 	var (
 		rm, nm senml.SenML // raw and normalized message
 		err    error
@@ -68,7 +70,7 @@ func (repo *msgRepository) Save(raw writer.RawMessage) error {
 		err  error
 	)
 
-	if msgs, err = normalize(raw); err != nil {
+	if msgs, err = Normalize(raw); err != nil {
 		return err
 	}
 

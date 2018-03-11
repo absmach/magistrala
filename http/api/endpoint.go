@@ -4,13 +4,12 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/mainflux/mainflux/http"
-	"github.com/mainflux/mainflux/writer"
+	"github.com/mainflux/mainflux"
 )
 
-func sendMessageEndpoint(svc http.Service) endpoint.Endpoint {
+func sendMessageEndpoint(svc mainflux.MessagePublisher) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
-		msg := request.(writer.RawMessage)
+		msg := request.(mainflux.RawMessage)
 		err := svc.Publish(msg)
 		return nil, err
 	}

@@ -5,12 +5,12 @@ import "strings"
 // Client represents a Mainflux client. Each client is owned by one user, and
 // it is assigned with the unique identifier and (temporary) access key.
 type Client struct {
-	Owner string            `json:"-"`
-	ID    string            `json:"id"`
-	Type  string            `json:"type"`
-	Name  string            `json:"name,omitempty"`
-	Key   string            `json:"key"`
-	Meta  map[string]string `json:"meta,omitempty"`
+	ID      string `gorm:"type:char(36);primary_key" json:"id"`
+	Owner   string `gorm:"type:varchar(254);not null" json:"-"`
+	Type    string `gorm:"type:varchar(10);not null" json:"type"`
+	Name    string `json:"name,omitempty"`
+	Key     string `json:"key"`
+	Payload string `json:"payload,omitempty"`
 }
 
 var clientTypes map[string]bool = map[string]bool{

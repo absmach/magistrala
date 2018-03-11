@@ -69,6 +69,13 @@ type Service interface {
 	// belongs to the user identified by the provided key.
 	RemoveChannel(string, string) error
 
+	// Connect adds client to the channel's list of connected clients.
+	Connect(string, string, string) error
+
+	// Disconnect removes client from the channel's list of connected
+	// clients.
+	Disconnect(string, string, string) error
+
 	// Identity retrieves Client ID for provided client token.
 	Identity(string) (string, error)
 

@@ -33,11 +33,11 @@ func main() {
 	nc := connectToNats(cfg, logger)
 	defer nc.Close()
 
-	repo := nats.NewMessageRepository(nc)
-	ca := adapter.NewCoAPAdapter(logger, repo)
+	pub := nats.NewMessagePublisher(nc)
+	ca := adapter.NewCoAPAdapter(logger, pub)
 
-	nc.Subscribe("msg.http", ca.BridgeHandler)
-	nc.Subscribe("msg.mqtt", ca.BridgeHandler)
+	nc.Subscribe("src.http", ca.BridgeHandler)
+	nc.Subscribe("src.mqtt", ca.BridgeHandler)
 
 	errs := make(chan error, 2)
 

@@ -1457,7 +1457,7 @@ func fastpathEncodeTypeSwitch(iv interface{}, e *Encoder) bool {
 		fastpathTV.EncMapBoolBoolV(*v, e)
 
 	default:
-		_ = v // TODO: workaround https://github.com/golang/go/issues/12927 (remove after go 1.6 release)
+		_ = v // workaround https://github.com/golang/go/issues/12927 seen in go1.4
 		return false
 	}
 	return true
@@ -1479,11 +1479,15 @@ func (_ fastpathT) EncSliceIntfV(v []interface{}, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteArrayStart(len(v))
-	for _, v2 := range v {
-		if esep {
+	if esep {
+		for _, v2 := range v {
 			ee.WriteArrayElem()
+			e.encode(v2)
 		}
-		e.encode(v2)
+	} else {
+		for _, v2 := range v {
+			e.encode(v2)
+		}
 	}
 	ee.WriteArrayEnd()
 }
@@ -1494,15 +1498,19 @@ func (_ fastpathT) EncAsMapSliceIntfV(v []interface{}, e *Encoder) {
 		return
 	}
 	ee.WriteMapStart(len(v) / 2)
-	for j, v2 := range v {
-		if esep {
+	if esep {
+		for j, v2 := range v {
 			if j%2 == 0 {
 				ee.WriteMapElemKey()
 			} else {
 				ee.WriteMapElemValue()
 			}
+			e.encode(v2)
 		}
-		e.encode(v2)
+	} else {
+		for _, v2 := range v {
+			e.encode(v2)
+		}
 	}
 	ee.WriteMapEnd()
 }
@@ -1521,11 +1529,15 @@ func (_ fastpathT) EncSliceStringV(v []string, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteArrayStart(len(v))
-	for _, v2 := range v {
-		if esep {
+	if esep {
+		for _, v2 := range v {
 			ee.WriteArrayElem()
+			ee.EncodeString(cUTF8, v2)
 		}
-		ee.EncodeString(cUTF8, v2)
+	} else {
+		for _, v2 := range v {
+			ee.EncodeString(cUTF8, v2)
+		}
 	}
 	ee.WriteArrayEnd()
 }
@@ -1536,15 +1548,19 @@ func (_ fastpathT) EncAsMapSliceStringV(v []string, e *Encoder) {
 		return
 	}
 	ee.WriteMapStart(len(v) / 2)
-	for j, v2 := range v {
-		if esep {
+	if esep {
+		for j, v2 := range v {
 			if j%2 == 0 {
 				ee.WriteMapElemKey()
 			} else {
 				ee.WriteMapElemValue()
 			}
+			ee.EncodeString(cUTF8, v2)
 		}
-		ee.EncodeString(cUTF8, v2)
+	} else {
+		for _, v2 := range v {
+			ee.EncodeString(cUTF8, v2)
+		}
 	}
 	ee.WriteMapEnd()
 }
@@ -1563,11 +1579,15 @@ func (_ fastpathT) EncSliceFloat32V(v []float32, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteArrayStart(len(v))
-	for _, v2 := range v {
-		if esep {
+	if esep {
+		for _, v2 := range v {
 			ee.WriteArrayElem()
+			ee.EncodeFloat32(v2)
 		}
-		ee.EncodeFloat32(v2)
+	} else {
+		for _, v2 := range v {
+			ee.EncodeFloat32(v2)
+		}
 	}
 	ee.WriteArrayEnd()
 }
@@ -1578,15 +1598,19 @@ func (_ fastpathT) EncAsMapSliceFloat32V(v []float32, e *Encoder) {
 		return
 	}
 	ee.WriteMapStart(len(v) / 2)
-	for j, v2 := range v {
-		if esep {
+	if esep {
+		for j, v2 := range v {
 			if j%2 == 0 {
 				ee.WriteMapElemKey()
 			} else {
 				ee.WriteMapElemValue()
 			}
+			ee.EncodeFloat32(v2)
 		}
-		ee.EncodeFloat32(v2)
+	} else {
+		for _, v2 := range v {
+			ee.EncodeFloat32(v2)
+		}
 	}
 	ee.WriteMapEnd()
 }
@@ -1605,11 +1629,15 @@ func (_ fastpathT) EncSliceFloat64V(v []float64, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteArrayStart(len(v))
-	for _, v2 := range v {
-		if esep {
+	if esep {
+		for _, v2 := range v {
 			ee.WriteArrayElem()
+			ee.EncodeFloat64(v2)
 		}
-		ee.EncodeFloat64(v2)
+	} else {
+		for _, v2 := range v {
+			ee.EncodeFloat64(v2)
+		}
 	}
 	ee.WriteArrayEnd()
 }
@@ -1620,15 +1648,19 @@ func (_ fastpathT) EncAsMapSliceFloat64V(v []float64, e *Encoder) {
 		return
 	}
 	ee.WriteMapStart(len(v) / 2)
-	for j, v2 := range v {
-		if esep {
+	if esep {
+		for j, v2 := range v {
 			if j%2 == 0 {
 				ee.WriteMapElemKey()
 			} else {
 				ee.WriteMapElemValue()
 			}
+			ee.EncodeFloat64(v2)
 		}
-		ee.EncodeFloat64(v2)
+	} else {
+		for _, v2 := range v {
+			ee.EncodeFloat64(v2)
+		}
 	}
 	ee.WriteMapEnd()
 }
@@ -1647,11 +1679,15 @@ func (_ fastpathT) EncSliceUintV(v []uint, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteArrayStart(len(v))
-	for _, v2 := range v {
-		if esep {
+	if esep {
+		for _, v2 := range v {
 			ee.WriteArrayElem()
+			ee.EncodeUint(uint64(v2))
 		}
-		ee.EncodeUint(uint64(v2))
+	} else {
+		for _, v2 := range v {
+			ee.EncodeUint(uint64(v2))
+		}
 	}
 	ee.WriteArrayEnd()
 }
@@ -1662,15 +1698,19 @@ func (_ fastpathT) EncAsMapSliceUintV(v []uint, e *Encoder) {
 		return
 	}
 	ee.WriteMapStart(len(v) / 2)
-	for j, v2 := range v {
-		if esep {
+	if esep {
+		for j, v2 := range v {
 			if j%2 == 0 {
 				ee.WriteMapElemKey()
 			} else {
 				ee.WriteMapElemValue()
 			}
+			ee.EncodeUint(uint64(v2))
 		}
-		ee.EncodeUint(uint64(v2))
+	} else {
+		for _, v2 := range v {
+			ee.EncodeUint(uint64(v2))
+		}
 	}
 	ee.WriteMapEnd()
 }
@@ -1689,11 +1729,15 @@ func (_ fastpathT) EncSliceUint8V(v []uint8, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteArrayStart(len(v))
-	for _, v2 := range v {
-		if esep {
+	if esep {
+		for _, v2 := range v {
 			ee.WriteArrayElem()
+			ee.EncodeUint(uint64(v2))
 		}
-		ee.EncodeUint(uint64(v2))
+	} else {
+		for _, v2 := range v {
+			ee.EncodeUint(uint64(v2))
+		}
 	}
 	ee.WriteArrayEnd()
 }
@@ -1704,15 +1748,19 @@ func (_ fastpathT) EncAsMapSliceUint8V(v []uint8, e *Encoder) {
 		return
 	}
 	ee.WriteMapStart(len(v) / 2)
-	for j, v2 := range v {
-		if esep {
+	if esep {
+		for j, v2 := range v {
 			if j%2 == 0 {
 				ee.WriteMapElemKey()
 			} else {
 				ee.WriteMapElemValue()
 			}
+			ee.EncodeUint(uint64(v2))
 		}
-		ee.EncodeUint(uint64(v2))
+	} else {
+		for _, v2 := range v {
+			ee.EncodeUint(uint64(v2))
+		}
 	}
 	ee.WriteMapEnd()
 }
@@ -1731,11 +1779,15 @@ func (_ fastpathT) EncSliceUint16V(v []uint16, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteArrayStart(len(v))
-	for _, v2 := range v {
-		if esep {
+	if esep {
+		for _, v2 := range v {
 			ee.WriteArrayElem()
+			ee.EncodeUint(uint64(v2))
 		}
-		ee.EncodeUint(uint64(v2))
+	} else {
+		for _, v2 := range v {
+			ee.EncodeUint(uint64(v2))
+		}
 	}
 	ee.WriteArrayEnd()
 }
@@ -1746,15 +1798,19 @@ func (_ fastpathT) EncAsMapSliceUint16V(v []uint16, e *Encoder) {
 		return
 	}
 	ee.WriteMapStart(len(v) / 2)
-	for j, v2 := range v {
-		if esep {
+	if esep {
+		for j, v2 := range v {
 			if j%2 == 0 {
 				ee.WriteMapElemKey()
 			} else {
 				ee.WriteMapElemValue()
 			}
+			ee.EncodeUint(uint64(v2))
 		}
-		ee.EncodeUint(uint64(v2))
+	} else {
+		for _, v2 := range v {
+			ee.EncodeUint(uint64(v2))
+		}
 	}
 	ee.WriteMapEnd()
 }
@@ -1773,11 +1829,15 @@ func (_ fastpathT) EncSliceUint32V(v []uint32, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteArrayStart(len(v))
-	for _, v2 := range v {
-		if esep {
+	if esep {
+		for _, v2 := range v {
 			ee.WriteArrayElem()
+			ee.EncodeUint(uint64(v2))
 		}
-		ee.EncodeUint(uint64(v2))
+	} else {
+		for _, v2 := range v {
+			ee.EncodeUint(uint64(v2))
+		}
 	}
 	ee.WriteArrayEnd()
 }
@@ -1788,15 +1848,19 @@ func (_ fastpathT) EncAsMapSliceUint32V(v []uint32, e *Encoder) {
 		return
 	}
 	ee.WriteMapStart(len(v) / 2)
-	for j, v2 := range v {
-		if esep {
+	if esep {
+		for j, v2 := range v {
 			if j%2 == 0 {
 				ee.WriteMapElemKey()
 			} else {
 				ee.WriteMapElemValue()
 			}
+			ee.EncodeUint(uint64(v2))
 		}
-		ee.EncodeUint(uint64(v2))
+	} else {
+		for _, v2 := range v {
+			ee.EncodeUint(uint64(v2))
+		}
 	}
 	ee.WriteMapEnd()
 }
@@ -1815,11 +1879,15 @@ func (_ fastpathT) EncSliceUint64V(v []uint64, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteArrayStart(len(v))
-	for _, v2 := range v {
-		if esep {
+	if esep {
+		for _, v2 := range v {
 			ee.WriteArrayElem()
+			ee.EncodeUint(uint64(v2))
 		}
-		ee.EncodeUint(uint64(v2))
+	} else {
+		for _, v2 := range v {
+			ee.EncodeUint(uint64(v2))
+		}
 	}
 	ee.WriteArrayEnd()
 }
@@ -1830,15 +1898,19 @@ func (_ fastpathT) EncAsMapSliceUint64V(v []uint64, e *Encoder) {
 		return
 	}
 	ee.WriteMapStart(len(v) / 2)
-	for j, v2 := range v {
-		if esep {
+	if esep {
+		for j, v2 := range v {
 			if j%2 == 0 {
 				ee.WriteMapElemKey()
 			} else {
 				ee.WriteMapElemValue()
 			}
+			ee.EncodeUint(uint64(v2))
 		}
-		ee.EncodeUint(uint64(v2))
+	} else {
+		for _, v2 := range v {
+			ee.EncodeUint(uint64(v2))
+		}
 	}
 	ee.WriteMapEnd()
 }
@@ -1857,11 +1929,15 @@ func (_ fastpathT) EncSliceUintptrV(v []uintptr, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteArrayStart(len(v))
-	for _, v2 := range v {
-		if esep {
+	if esep {
+		for _, v2 := range v {
 			ee.WriteArrayElem()
+			e.encode(v2)
 		}
-		e.encode(v2)
+	} else {
+		for _, v2 := range v {
+			e.encode(v2)
+		}
 	}
 	ee.WriteArrayEnd()
 }
@@ -1872,15 +1948,19 @@ func (_ fastpathT) EncAsMapSliceUintptrV(v []uintptr, e *Encoder) {
 		return
 	}
 	ee.WriteMapStart(len(v) / 2)
-	for j, v2 := range v {
-		if esep {
+	if esep {
+		for j, v2 := range v {
 			if j%2 == 0 {
 				ee.WriteMapElemKey()
 			} else {
 				ee.WriteMapElemValue()
 			}
+			e.encode(v2)
 		}
-		e.encode(v2)
+	} else {
+		for _, v2 := range v {
+			e.encode(v2)
+		}
 	}
 	ee.WriteMapEnd()
 }
@@ -1899,11 +1979,15 @@ func (_ fastpathT) EncSliceIntV(v []int, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteArrayStart(len(v))
-	for _, v2 := range v {
-		if esep {
+	if esep {
+		for _, v2 := range v {
 			ee.WriteArrayElem()
+			ee.EncodeInt(int64(v2))
 		}
-		ee.EncodeInt(int64(v2))
+	} else {
+		for _, v2 := range v {
+			ee.EncodeInt(int64(v2))
+		}
 	}
 	ee.WriteArrayEnd()
 }
@@ -1914,15 +1998,19 @@ func (_ fastpathT) EncAsMapSliceIntV(v []int, e *Encoder) {
 		return
 	}
 	ee.WriteMapStart(len(v) / 2)
-	for j, v2 := range v {
-		if esep {
+	if esep {
+		for j, v2 := range v {
 			if j%2 == 0 {
 				ee.WriteMapElemKey()
 			} else {
 				ee.WriteMapElemValue()
 			}
+			ee.EncodeInt(int64(v2))
 		}
-		ee.EncodeInt(int64(v2))
+	} else {
+		for _, v2 := range v {
+			ee.EncodeInt(int64(v2))
+		}
 	}
 	ee.WriteMapEnd()
 }
@@ -1941,11 +2029,15 @@ func (_ fastpathT) EncSliceInt8V(v []int8, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteArrayStart(len(v))
-	for _, v2 := range v {
-		if esep {
+	if esep {
+		for _, v2 := range v {
 			ee.WriteArrayElem()
+			ee.EncodeInt(int64(v2))
 		}
-		ee.EncodeInt(int64(v2))
+	} else {
+		for _, v2 := range v {
+			ee.EncodeInt(int64(v2))
+		}
 	}
 	ee.WriteArrayEnd()
 }
@@ -1956,15 +2048,19 @@ func (_ fastpathT) EncAsMapSliceInt8V(v []int8, e *Encoder) {
 		return
 	}
 	ee.WriteMapStart(len(v) / 2)
-	for j, v2 := range v {
-		if esep {
+	if esep {
+		for j, v2 := range v {
 			if j%2 == 0 {
 				ee.WriteMapElemKey()
 			} else {
 				ee.WriteMapElemValue()
 			}
+			ee.EncodeInt(int64(v2))
 		}
-		ee.EncodeInt(int64(v2))
+	} else {
+		for _, v2 := range v {
+			ee.EncodeInt(int64(v2))
+		}
 	}
 	ee.WriteMapEnd()
 }
@@ -1983,11 +2079,15 @@ func (_ fastpathT) EncSliceInt16V(v []int16, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteArrayStart(len(v))
-	for _, v2 := range v {
-		if esep {
+	if esep {
+		for _, v2 := range v {
 			ee.WriteArrayElem()
+			ee.EncodeInt(int64(v2))
 		}
-		ee.EncodeInt(int64(v2))
+	} else {
+		for _, v2 := range v {
+			ee.EncodeInt(int64(v2))
+		}
 	}
 	ee.WriteArrayEnd()
 }
@@ -1998,15 +2098,19 @@ func (_ fastpathT) EncAsMapSliceInt16V(v []int16, e *Encoder) {
 		return
 	}
 	ee.WriteMapStart(len(v) / 2)
-	for j, v2 := range v {
-		if esep {
+	if esep {
+		for j, v2 := range v {
 			if j%2 == 0 {
 				ee.WriteMapElemKey()
 			} else {
 				ee.WriteMapElemValue()
 			}
+			ee.EncodeInt(int64(v2))
 		}
-		ee.EncodeInt(int64(v2))
+	} else {
+		for _, v2 := range v {
+			ee.EncodeInt(int64(v2))
+		}
 	}
 	ee.WriteMapEnd()
 }
@@ -2025,11 +2129,15 @@ func (_ fastpathT) EncSliceInt32V(v []int32, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteArrayStart(len(v))
-	for _, v2 := range v {
-		if esep {
+	if esep {
+		for _, v2 := range v {
 			ee.WriteArrayElem()
+			ee.EncodeInt(int64(v2))
 		}
-		ee.EncodeInt(int64(v2))
+	} else {
+		for _, v2 := range v {
+			ee.EncodeInt(int64(v2))
+		}
 	}
 	ee.WriteArrayEnd()
 }
@@ -2040,15 +2148,19 @@ func (_ fastpathT) EncAsMapSliceInt32V(v []int32, e *Encoder) {
 		return
 	}
 	ee.WriteMapStart(len(v) / 2)
-	for j, v2 := range v {
-		if esep {
+	if esep {
+		for j, v2 := range v {
 			if j%2 == 0 {
 				ee.WriteMapElemKey()
 			} else {
 				ee.WriteMapElemValue()
 			}
+			ee.EncodeInt(int64(v2))
 		}
-		ee.EncodeInt(int64(v2))
+	} else {
+		for _, v2 := range v {
+			ee.EncodeInt(int64(v2))
+		}
 	}
 	ee.WriteMapEnd()
 }
@@ -2067,11 +2179,15 @@ func (_ fastpathT) EncSliceInt64V(v []int64, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteArrayStart(len(v))
-	for _, v2 := range v {
-		if esep {
+	if esep {
+		for _, v2 := range v {
 			ee.WriteArrayElem()
+			ee.EncodeInt(int64(v2))
 		}
-		ee.EncodeInt(int64(v2))
+	} else {
+		for _, v2 := range v {
+			ee.EncodeInt(int64(v2))
+		}
 	}
 	ee.WriteArrayEnd()
 }
@@ -2082,15 +2198,19 @@ func (_ fastpathT) EncAsMapSliceInt64V(v []int64, e *Encoder) {
 		return
 	}
 	ee.WriteMapStart(len(v) / 2)
-	for j, v2 := range v {
-		if esep {
+	if esep {
+		for j, v2 := range v {
 			if j%2 == 0 {
 				ee.WriteMapElemKey()
 			} else {
 				ee.WriteMapElemValue()
 			}
+			ee.EncodeInt(int64(v2))
 		}
-		ee.EncodeInt(int64(v2))
+	} else {
+		for _, v2 := range v {
+			ee.EncodeInt(int64(v2))
+		}
 	}
 	ee.WriteMapEnd()
 }
@@ -2109,11 +2229,15 @@ func (_ fastpathT) EncSliceBoolV(v []bool, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteArrayStart(len(v))
-	for _, v2 := range v {
-		if esep {
+	if esep {
+		for _, v2 := range v {
 			ee.WriteArrayElem()
+			ee.EncodeBool(v2)
 		}
-		ee.EncodeBool(v2)
+	} else {
+		for _, v2 := range v {
+			ee.EncodeBool(v2)
+		}
 	}
 	ee.WriteArrayEnd()
 }
@@ -2124,15 +2248,19 @@ func (_ fastpathT) EncAsMapSliceBoolV(v []bool, e *Encoder) {
 		return
 	}
 	ee.WriteMapStart(len(v) / 2)
-	for j, v2 := range v {
-		if esep {
+	if esep {
+		for j, v2 := range v {
 			if j%2 == 0 {
 				ee.WriteMapElemKey()
 			} else {
 				ee.WriteMapElemValue()
 			}
+			ee.EncodeBool(v2)
 		}
-		ee.EncodeBool(v2)
+	} else {
+		for _, v2 := range v {
+			ee.EncodeBool(v2)
+		}
 	}
 	ee.WriteMapEnd()
 }
@@ -2162,26 +2290,32 @@ func (_ fastpathT) EncMapIntfIntfV(v map[interface{}]interface{}, e *Encoder) {
 			i++
 		}
 		sort.Sort(bytesISlice(v2))
-		for j := range v2 {
-			if esep {
+		if esep {
+			for j := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.asis(v2[j].v)
-			if esep {
+				e.asis(v2[j].v)
 				ee.WriteMapElemValue()
+				e.encode(v[v2[j].i])
 			}
-			e.encode(v[v2[j].i])
+		} else {
+			for j := range v2 {
+				e.asis(v2[j].v)
+				e.encode(v[v2[j].i])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -2212,26 +2346,32 @@ func (_ fastpathT) EncMapIntfStringV(v map[interface{}]string, e *Encoder) {
 			i++
 		}
 		sort.Sort(bytesISlice(v2))
-		for j := range v2 {
-			if esep {
+		if esep {
+			for j := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.asis(v2[j].v)
-			if esep {
+				e.asis(v2[j].v)
 				ee.WriteMapElemValue()
+				e.encode(v[v2[j].i])
 			}
-			e.encode(v[v2[j].i])
+		} else {
+			for j := range v2 {
+				e.asis(v2[j].v)
+				e.encode(v[v2[j].i])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v2)
 			}
-			ee.EncodeString(cUTF8, v2)
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeString(cUTF8, v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -2262,26 +2402,32 @@ func (_ fastpathT) EncMapIntfUintV(v map[interface{}]uint, e *Encoder) {
 			i++
 		}
 		sort.Sort(bytesISlice(v2))
-		for j := range v2 {
-			if esep {
+		if esep {
+			for j := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.asis(v2[j].v)
-			if esep {
+				e.asis(v2[j].v)
 				ee.WriteMapElemValue()
+				e.encode(v[v2[j].i])
 			}
-			e.encode(v[v2[j].i])
+		} else {
+			for j := range v2 {
+				e.asis(v2[j].v)
+				e.encode(v[v2[j].i])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -2312,26 +2458,32 @@ func (_ fastpathT) EncMapIntfUint8V(v map[interface{}]uint8, e *Encoder) {
 			i++
 		}
 		sort.Sort(bytesISlice(v2))
-		for j := range v2 {
-			if esep {
+		if esep {
+			for j := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.asis(v2[j].v)
-			if esep {
+				e.asis(v2[j].v)
 				ee.WriteMapElemValue()
+				e.encode(v[v2[j].i])
 			}
-			e.encode(v[v2[j].i])
+		} else {
+			for j := range v2 {
+				e.asis(v2[j].v)
+				e.encode(v[v2[j].i])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -2362,26 +2514,32 @@ func (_ fastpathT) EncMapIntfUint16V(v map[interface{}]uint16, e *Encoder) {
 			i++
 		}
 		sort.Sort(bytesISlice(v2))
-		for j := range v2 {
-			if esep {
+		if esep {
+			for j := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.asis(v2[j].v)
-			if esep {
+				e.asis(v2[j].v)
 				ee.WriteMapElemValue()
+				e.encode(v[v2[j].i])
 			}
-			e.encode(v[v2[j].i])
+		} else {
+			for j := range v2 {
+				e.asis(v2[j].v)
+				e.encode(v[v2[j].i])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -2412,26 +2570,32 @@ func (_ fastpathT) EncMapIntfUint32V(v map[interface{}]uint32, e *Encoder) {
 			i++
 		}
 		sort.Sort(bytesISlice(v2))
-		for j := range v2 {
-			if esep {
+		if esep {
+			for j := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.asis(v2[j].v)
-			if esep {
+				e.asis(v2[j].v)
 				ee.WriteMapElemValue()
+				e.encode(v[v2[j].i])
 			}
-			e.encode(v[v2[j].i])
+		} else {
+			for j := range v2 {
+				e.asis(v2[j].v)
+				e.encode(v[v2[j].i])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -2462,26 +2626,32 @@ func (_ fastpathT) EncMapIntfUint64V(v map[interface{}]uint64, e *Encoder) {
 			i++
 		}
 		sort.Sort(bytesISlice(v2))
-		for j := range v2 {
-			if esep {
+		if esep {
+			for j := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.asis(v2[j].v)
-			if esep {
+				e.asis(v2[j].v)
 				ee.WriteMapElemValue()
+				e.encode(v[v2[j].i])
 			}
-			e.encode(v[v2[j].i])
+		} else {
+			for j := range v2 {
+				e.asis(v2[j].v)
+				e.encode(v[v2[j].i])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -2512,26 +2682,32 @@ func (_ fastpathT) EncMapIntfUintptrV(v map[interface{}]uintptr, e *Encoder) {
 			i++
 		}
 		sort.Sort(bytesISlice(v2))
-		for j := range v2 {
-			if esep {
+		if esep {
+			for j := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.asis(v2[j].v)
-			if esep {
+				e.asis(v2[j].v)
 				ee.WriteMapElemValue()
+				e.encode(v[v2[j].i])
 			}
-			e.encode(v[v2[j].i])
+		} else {
+			for j := range v2 {
+				e.asis(v2[j].v)
+				e.encode(v[v2[j].i])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -2562,26 +2738,32 @@ func (_ fastpathT) EncMapIntfIntV(v map[interface{}]int, e *Encoder) {
 			i++
 		}
 		sort.Sort(bytesISlice(v2))
-		for j := range v2 {
-			if esep {
+		if esep {
+			for j := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.asis(v2[j].v)
-			if esep {
+				e.asis(v2[j].v)
 				ee.WriteMapElemValue()
+				e.encode(v[v2[j].i])
 			}
-			e.encode(v[v2[j].i])
+		} else {
+			for j := range v2 {
+				e.asis(v2[j].v)
+				e.encode(v[v2[j].i])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -2612,26 +2794,32 @@ func (_ fastpathT) EncMapIntfInt8V(v map[interface{}]int8, e *Encoder) {
 			i++
 		}
 		sort.Sort(bytesISlice(v2))
-		for j := range v2 {
-			if esep {
+		if esep {
+			for j := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.asis(v2[j].v)
-			if esep {
+				e.asis(v2[j].v)
 				ee.WriteMapElemValue()
+				e.encode(v[v2[j].i])
 			}
-			e.encode(v[v2[j].i])
+		} else {
+			for j := range v2 {
+				e.asis(v2[j].v)
+				e.encode(v[v2[j].i])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -2662,26 +2850,32 @@ func (_ fastpathT) EncMapIntfInt16V(v map[interface{}]int16, e *Encoder) {
 			i++
 		}
 		sort.Sort(bytesISlice(v2))
-		for j := range v2 {
-			if esep {
+		if esep {
+			for j := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.asis(v2[j].v)
-			if esep {
+				e.asis(v2[j].v)
 				ee.WriteMapElemValue()
+				e.encode(v[v2[j].i])
 			}
-			e.encode(v[v2[j].i])
+		} else {
+			for j := range v2 {
+				e.asis(v2[j].v)
+				e.encode(v[v2[j].i])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -2712,26 +2906,32 @@ func (_ fastpathT) EncMapIntfInt32V(v map[interface{}]int32, e *Encoder) {
 			i++
 		}
 		sort.Sort(bytesISlice(v2))
-		for j := range v2 {
-			if esep {
+		if esep {
+			for j := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.asis(v2[j].v)
-			if esep {
+				e.asis(v2[j].v)
 				ee.WriteMapElemValue()
+				e.encode(v[v2[j].i])
 			}
-			e.encode(v[v2[j].i])
+		} else {
+			for j := range v2 {
+				e.asis(v2[j].v)
+				e.encode(v[v2[j].i])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -2762,26 +2962,32 @@ func (_ fastpathT) EncMapIntfInt64V(v map[interface{}]int64, e *Encoder) {
 			i++
 		}
 		sort.Sort(bytesISlice(v2))
-		for j := range v2 {
-			if esep {
+		if esep {
+			for j := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.asis(v2[j].v)
-			if esep {
+				e.asis(v2[j].v)
 				ee.WriteMapElemValue()
+				e.encode(v[v2[j].i])
 			}
-			e.encode(v[v2[j].i])
+		} else {
+			for j := range v2 {
+				e.asis(v2[j].v)
+				e.encode(v[v2[j].i])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -2812,26 +3018,32 @@ func (_ fastpathT) EncMapIntfFloat32V(v map[interface{}]float32, e *Encoder) {
 			i++
 		}
 		sort.Sort(bytesISlice(v2))
-		for j := range v2 {
-			if esep {
+		if esep {
+			for j := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.asis(v2[j].v)
-			if esep {
+				e.asis(v2[j].v)
 				ee.WriteMapElemValue()
+				e.encode(v[v2[j].i])
 			}
-			e.encode(v[v2[j].i])
+		} else {
+			for j := range v2 {
+				e.asis(v2[j].v)
+				e.encode(v[v2[j].i])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v2)
 			}
-			ee.EncodeFloat32(v2)
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeFloat32(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -2862,26 +3074,32 @@ func (_ fastpathT) EncMapIntfFloat64V(v map[interface{}]float64, e *Encoder) {
 			i++
 		}
 		sort.Sort(bytesISlice(v2))
-		for j := range v2 {
-			if esep {
+		if esep {
+			for j := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.asis(v2[j].v)
-			if esep {
+				e.asis(v2[j].v)
 				ee.WriteMapElemValue()
+				e.encode(v[v2[j].i])
 			}
-			e.encode(v[v2[j].i])
+		} else {
+			for j := range v2 {
+				e.asis(v2[j].v)
+				e.encode(v[v2[j].i])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v2)
 			}
-			ee.EncodeFloat64(v2)
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeFloat64(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -2912,26 +3130,32 @@ func (_ fastpathT) EncMapIntfBoolV(v map[interface{}]bool, e *Encoder) {
 			i++
 		}
 		sort.Sort(bytesISlice(v2))
-		for j := range v2 {
-			if esep {
+		if esep {
+			for j := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.asis(v2[j].v)
-			if esep {
+				e.asis(v2[j].v)
 				ee.WriteMapElemValue()
+				e.encode(v[v2[j].i])
 			}
-			e.encode(v[v2[j].i])
+		} else {
+			for j := range v2 {
+				e.asis(v2[j].v)
+				e.encode(v[v2[j].i])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v2)
 			}
-			ee.EncodeBool(v2)
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeBool(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -2947,7 +3171,6 @@ func (_ fastpathT) EncMapStringIntfV(v map[string]interface{}, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteMapStart(len(v))
-	asSymbols := e.h.AsSymbols&AsSymbolMapStringKeysFlag != 0
 	if e.h.Canonical {
 		v2 := make([]string, len(v))
 		var i int
@@ -2956,34 +3179,32 @@ func (_ fastpathT) EncMapStringIntfV(v map[string]interface{}, e *Encoder) {
 			i++
 		}
 		sort.Sort(stringSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				e.encode(v[string(k2)])
 			}
-			e.encode(v[string(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeString(cUTF8, k2)
+				e.encode(v[string(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeString(cUTF8, k2)
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -2999,7 +3220,6 @@ func (_ fastpathT) EncMapStringStringV(v map[string]string, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteMapStart(len(v))
-	asSymbols := e.h.AsSymbols&AsSymbolMapStringKeysFlag != 0
 	if e.h.Canonical {
 		v2 := make([]string, len(v))
 		var i int
@@ -3008,34 +3228,32 @@ func (_ fastpathT) EncMapStringStringV(v map[string]string, e *Encoder) {
 			i++
 		}
 		sort.Sort(stringSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v[string(k2)])
 			}
-			ee.EncodeString(cUTF8, v[string(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeString(cUTF8, v[string(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v2)
 			}
-			ee.EncodeString(cUTF8, v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeString(cUTF8, v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -3051,7 +3269,6 @@ func (_ fastpathT) EncMapStringUintV(v map[string]uint, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteMapStart(len(v))
-	asSymbols := e.h.AsSymbols&AsSymbolMapStringKeysFlag != 0
 	if e.h.Canonical {
 		v2 := make([]string, len(v))
 		var i int
@@ -3060,34 +3277,32 @@ func (_ fastpathT) EncMapStringUintV(v map[string]uint, e *Encoder) {
 			i++
 		}
 		sort.Sort(stringSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[string(k2)]))
 			}
-			ee.EncodeUint(uint64(v[string(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeUint(uint64(v[string(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -3103,7 +3318,6 @@ func (_ fastpathT) EncMapStringUint8V(v map[string]uint8, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteMapStart(len(v))
-	asSymbols := e.h.AsSymbols&AsSymbolMapStringKeysFlag != 0
 	if e.h.Canonical {
 		v2 := make([]string, len(v))
 		var i int
@@ -3112,34 +3326,32 @@ func (_ fastpathT) EncMapStringUint8V(v map[string]uint8, e *Encoder) {
 			i++
 		}
 		sort.Sort(stringSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[string(k2)]))
 			}
-			ee.EncodeUint(uint64(v[string(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeUint(uint64(v[string(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -3155,7 +3367,6 @@ func (_ fastpathT) EncMapStringUint16V(v map[string]uint16, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteMapStart(len(v))
-	asSymbols := e.h.AsSymbols&AsSymbolMapStringKeysFlag != 0
 	if e.h.Canonical {
 		v2 := make([]string, len(v))
 		var i int
@@ -3164,34 +3375,32 @@ func (_ fastpathT) EncMapStringUint16V(v map[string]uint16, e *Encoder) {
 			i++
 		}
 		sort.Sort(stringSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[string(k2)]))
 			}
-			ee.EncodeUint(uint64(v[string(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeUint(uint64(v[string(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -3207,7 +3416,6 @@ func (_ fastpathT) EncMapStringUint32V(v map[string]uint32, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteMapStart(len(v))
-	asSymbols := e.h.AsSymbols&AsSymbolMapStringKeysFlag != 0
 	if e.h.Canonical {
 		v2 := make([]string, len(v))
 		var i int
@@ -3216,34 +3424,32 @@ func (_ fastpathT) EncMapStringUint32V(v map[string]uint32, e *Encoder) {
 			i++
 		}
 		sort.Sort(stringSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[string(k2)]))
 			}
-			ee.EncodeUint(uint64(v[string(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeUint(uint64(v[string(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -3259,7 +3465,6 @@ func (_ fastpathT) EncMapStringUint64V(v map[string]uint64, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteMapStart(len(v))
-	asSymbols := e.h.AsSymbols&AsSymbolMapStringKeysFlag != 0
 	if e.h.Canonical {
 		v2 := make([]string, len(v))
 		var i int
@@ -3268,34 +3473,32 @@ func (_ fastpathT) EncMapStringUint64V(v map[string]uint64, e *Encoder) {
 			i++
 		}
 		sort.Sort(stringSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[string(k2)]))
 			}
-			ee.EncodeUint(uint64(v[string(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeUint(uint64(v[string(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -3311,7 +3514,6 @@ func (_ fastpathT) EncMapStringUintptrV(v map[string]uintptr, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteMapStart(len(v))
-	asSymbols := e.h.AsSymbols&AsSymbolMapStringKeysFlag != 0
 	if e.h.Canonical {
 		v2 := make([]string, len(v))
 		var i int
@@ -3320,34 +3522,32 @@ func (_ fastpathT) EncMapStringUintptrV(v map[string]uintptr, e *Encoder) {
 			i++
 		}
 		sort.Sort(stringSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				e.encode(v[string(k2)])
 			}
-			e.encode(v[string(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeString(cUTF8, k2)
+				e.encode(v[string(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeString(cUTF8, k2)
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -3363,7 +3563,6 @@ func (_ fastpathT) EncMapStringIntV(v map[string]int, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteMapStart(len(v))
-	asSymbols := e.h.AsSymbols&AsSymbolMapStringKeysFlag != 0
 	if e.h.Canonical {
 		v2 := make([]string, len(v))
 		var i int
@@ -3372,34 +3571,32 @@ func (_ fastpathT) EncMapStringIntV(v map[string]int, e *Encoder) {
 			i++
 		}
 		sort.Sort(stringSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[string(k2)]))
 			}
-			ee.EncodeInt(int64(v[string(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeInt(int64(v[string(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -3415,7 +3612,6 @@ func (_ fastpathT) EncMapStringInt8V(v map[string]int8, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteMapStart(len(v))
-	asSymbols := e.h.AsSymbols&AsSymbolMapStringKeysFlag != 0
 	if e.h.Canonical {
 		v2 := make([]string, len(v))
 		var i int
@@ -3424,34 +3620,32 @@ func (_ fastpathT) EncMapStringInt8V(v map[string]int8, e *Encoder) {
 			i++
 		}
 		sort.Sort(stringSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[string(k2)]))
 			}
-			ee.EncodeInt(int64(v[string(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeInt(int64(v[string(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -3467,7 +3661,6 @@ func (_ fastpathT) EncMapStringInt16V(v map[string]int16, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteMapStart(len(v))
-	asSymbols := e.h.AsSymbols&AsSymbolMapStringKeysFlag != 0
 	if e.h.Canonical {
 		v2 := make([]string, len(v))
 		var i int
@@ -3476,34 +3669,32 @@ func (_ fastpathT) EncMapStringInt16V(v map[string]int16, e *Encoder) {
 			i++
 		}
 		sort.Sort(stringSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[string(k2)]))
 			}
-			ee.EncodeInt(int64(v[string(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeInt(int64(v[string(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -3519,7 +3710,6 @@ func (_ fastpathT) EncMapStringInt32V(v map[string]int32, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteMapStart(len(v))
-	asSymbols := e.h.AsSymbols&AsSymbolMapStringKeysFlag != 0
 	if e.h.Canonical {
 		v2 := make([]string, len(v))
 		var i int
@@ -3528,34 +3718,32 @@ func (_ fastpathT) EncMapStringInt32V(v map[string]int32, e *Encoder) {
 			i++
 		}
 		sort.Sort(stringSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[string(k2)]))
 			}
-			ee.EncodeInt(int64(v[string(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeInt(int64(v[string(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -3571,7 +3759,6 @@ func (_ fastpathT) EncMapStringInt64V(v map[string]int64, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteMapStart(len(v))
-	asSymbols := e.h.AsSymbols&AsSymbolMapStringKeysFlag != 0
 	if e.h.Canonical {
 		v2 := make([]string, len(v))
 		var i int
@@ -3580,34 +3767,32 @@ func (_ fastpathT) EncMapStringInt64V(v map[string]int64, e *Encoder) {
 			i++
 		}
 		sort.Sort(stringSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[string(k2)]))
 			}
-			ee.EncodeInt(int64(v[string(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeInt(int64(v[string(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -3623,7 +3808,6 @@ func (_ fastpathT) EncMapStringFloat32V(v map[string]float32, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteMapStart(len(v))
-	asSymbols := e.h.AsSymbols&AsSymbolMapStringKeysFlag != 0
 	if e.h.Canonical {
 		v2 := make([]string, len(v))
 		var i int
@@ -3632,34 +3816,32 @@ func (_ fastpathT) EncMapStringFloat32V(v map[string]float32, e *Encoder) {
 			i++
 		}
 		sort.Sort(stringSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v[string(k2)])
 			}
-			ee.EncodeFloat32(v[string(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeFloat32(v[string(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v2)
 			}
-			ee.EncodeFloat32(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeFloat32(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -3675,7 +3857,6 @@ func (_ fastpathT) EncMapStringFloat64V(v map[string]float64, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteMapStart(len(v))
-	asSymbols := e.h.AsSymbols&AsSymbolMapStringKeysFlag != 0
 	if e.h.Canonical {
 		v2 := make([]string, len(v))
 		var i int
@@ -3684,34 +3865,32 @@ func (_ fastpathT) EncMapStringFloat64V(v map[string]float64, e *Encoder) {
 			i++
 		}
 		sort.Sort(stringSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v[string(k2)])
 			}
-			ee.EncodeFloat64(v[string(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeFloat64(v[string(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v2)
 			}
-			ee.EncodeFloat64(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeFloat64(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -3727,7 +3906,6 @@ func (_ fastpathT) EncMapStringBoolV(v map[string]bool, e *Encoder) {
 	}
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteMapStart(len(v))
-	asSymbols := e.h.AsSymbols&AsSymbolMapStringKeysFlag != 0
 	if e.h.Canonical {
 		v2 := make([]string, len(v))
 		var i int
@@ -3736,34 +3914,32 @@ func (_ fastpathT) EncMapStringBoolV(v map[string]bool, e *Encoder) {
 			i++
 		}
 		sort.Sort(stringSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v[string(k2)])
 			}
-			ee.EncodeBool(v[string(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeBool(v[string(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
 				ee.EncodeString(cUTF8, k2)
-			}
-			if esep {
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v2)
 			}
-			ee.EncodeBool(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeString(cUTF8, k2)
+				ee.EncodeBool(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -3787,26 +3963,32 @@ func (_ fastpathT) EncMapFloat32IntfV(v map[float32]interface{}, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(float32(k2))
-			if esep {
+				ee.EncodeFloat32(float32(k2))
 				ee.WriteMapElemValue()
+				e.encode(v[float32(k2)])
 			}
-			e.encode(v[float32(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat32(float32(k2))
+				e.encode(v[float32(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(k2)
-			if esep {
+				ee.EncodeFloat32(k2)
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat32(k2)
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -3830,26 +4012,32 @@ func (_ fastpathT) EncMapFloat32StringV(v map[float32]string, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(float32(k2))
-			if esep {
+				ee.EncodeFloat32(float32(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v[float32(k2)])
 			}
-			ee.EncodeString(cUTF8, v[float32(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat32(float32(k2))
+				ee.EncodeString(cUTF8, v[float32(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(k2)
-			if esep {
+				ee.EncodeFloat32(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v2)
 			}
-			ee.EncodeString(cUTF8, v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat32(k2)
+				ee.EncodeString(cUTF8, v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -3873,26 +4061,32 @@ func (_ fastpathT) EncMapFloat32UintV(v map[float32]uint, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(float32(k2))
-			if esep {
+				ee.EncodeFloat32(float32(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[float32(k2)]))
 			}
-			ee.EncodeUint(uint64(v[float32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat32(float32(k2))
+				ee.EncodeUint(uint64(v[float32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(k2)
-			if esep {
+				ee.EncodeFloat32(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat32(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -3916,26 +4110,32 @@ func (_ fastpathT) EncMapFloat32Uint8V(v map[float32]uint8, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(float32(k2))
-			if esep {
+				ee.EncodeFloat32(float32(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[float32(k2)]))
 			}
-			ee.EncodeUint(uint64(v[float32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat32(float32(k2))
+				ee.EncodeUint(uint64(v[float32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(k2)
-			if esep {
+				ee.EncodeFloat32(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat32(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -3959,26 +4159,32 @@ func (_ fastpathT) EncMapFloat32Uint16V(v map[float32]uint16, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(float32(k2))
-			if esep {
+				ee.EncodeFloat32(float32(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[float32(k2)]))
 			}
-			ee.EncodeUint(uint64(v[float32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat32(float32(k2))
+				ee.EncodeUint(uint64(v[float32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(k2)
-			if esep {
+				ee.EncodeFloat32(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat32(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4002,26 +4208,32 @@ func (_ fastpathT) EncMapFloat32Uint32V(v map[float32]uint32, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(float32(k2))
-			if esep {
+				ee.EncodeFloat32(float32(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[float32(k2)]))
 			}
-			ee.EncodeUint(uint64(v[float32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat32(float32(k2))
+				ee.EncodeUint(uint64(v[float32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(k2)
-			if esep {
+				ee.EncodeFloat32(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat32(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4045,26 +4257,32 @@ func (_ fastpathT) EncMapFloat32Uint64V(v map[float32]uint64, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(float32(k2))
-			if esep {
+				ee.EncodeFloat32(float32(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[float32(k2)]))
 			}
-			ee.EncodeUint(uint64(v[float32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat32(float32(k2))
+				ee.EncodeUint(uint64(v[float32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(k2)
-			if esep {
+				ee.EncodeFloat32(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat32(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4088,26 +4306,32 @@ func (_ fastpathT) EncMapFloat32UintptrV(v map[float32]uintptr, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(float32(k2))
-			if esep {
+				ee.EncodeFloat32(float32(k2))
 				ee.WriteMapElemValue()
+				e.encode(v[float32(k2)])
 			}
-			e.encode(v[float32(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat32(float32(k2))
+				e.encode(v[float32(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(k2)
-			if esep {
+				ee.EncodeFloat32(k2)
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat32(k2)
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4131,26 +4355,32 @@ func (_ fastpathT) EncMapFloat32IntV(v map[float32]int, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(float32(k2))
-			if esep {
+				ee.EncodeFloat32(float32(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[float32(k2)]))
 			}
-			ee.EncodeInt(int64(v[float32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat32(float32(k2))
+				ee.EncodeInt(int64(v[float32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(k2)
-			if esep {
+				ee.EncodeFloat32(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat32(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4174,26 +4404,32 @@ func (_ fastpathT) EncMapFloat32Int8V(v map[float32]int8, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(float32(k2))
-			if esep {
+				ee.EncodeFloat32(float32(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[float32(k2)]))
 			}
-			ee.EncodeInt(int64(v[float32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat32(float32(k2))
+				ee.EncodeInt(int64(v[float32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(k2)
-			if esep {
+				ee.EncodeFloat32(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat32(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4217,26 +4453,32 @@ func (_ fastpathT) EncMapFloat32Int16V(v map[float32]int16, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(float32(k2))
-			if esep {
+				ee.EncodeFloat32(float32(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[float32(k2)]))
 			}
-			ee.EncodeInt(int64(v[float32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat32(float32(k2))
+				ee.EncodeInt(int64(v[float32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(k2)
-			if esep {
+				ee.EncodeFloat32(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat32(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4260,26 +4502,32 @@ func (_ fastpathT) EncMapFloat32Int32V(v map[float32]int32, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(float32(k2))
-			if esep {
+				ee.EncodeFloat32(float32(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[float32(k2)]))
 			}
-			ee.EncodeInt(int64(v[float32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat32(float32(k2))
+				ee.EncodeInt(int64(v[float32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(k2)
-			if esep {
+				ee.EncodeFloat32(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat32(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4303,26 +4551,32 @@ func (_ fastpathT) EncMapFloat32Int64V(v map[float32]int64, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(float32(k2))
-			if esep {
+				ee.EncodeFloat32(float32(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[float32(k2)]))
 			}
-			ee.EncodeInt(int64(v[float32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat32(float32(k2))
+				ee.EncodeInt(int64(v[float32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(k2)
-			if esep {
+				ee.EncodeFloat32(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat32(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4346,26 +4600,32 @@ func (_ fastpathT) EncMapFloat32Float32V(v map[float32]float32, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(float32(k2))
-			if esep {
+				ee.EncodeFloat32(float32(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v[float32(k2)])
 			}
-			ee.EncodeFloat32(v[float32(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat32(float32(k2))
+				ee.EncodeFloat32(v[float32(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(k2)
-			if esep {
+				ee.EncodeFloat32(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v2)
 			}
-			ee.EncodeFloat32(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat32(k2)
+				ee.EncodeFloat32(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4389,26 +4649,32 @@ func (_ fastpathT) EncMapFloat32Float64V(v map[float32]float64, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(float32(k2))
-			if esep {
+				ee.EncodeFloat32(float32(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v[float32(k2)])
 			}
-			ee.EncodeFloat64(v[float32(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat32(float32(k2))
+				ee.EncodeFloat64(v[float32(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(k2)
-			if esep {
+				ee.EncodeFloat32(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v2)
 			}
-			ee.EncodeFloat64(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat32(k2)
+				ee.EncodeFloat64(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4432,26 +4698,32 @@ func (_ fastpathT) EncMapFloat32BoolV(v map[float32]bool, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(float32(k2))
-			if esep {
+				ee.EncodeFloat32(float32(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v[float32(k2)])
 			}
-			ee.EncodeBool(v[float32(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat32(float32(k2))
+				ee.EncodeBool(v[float32(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat32(k2)
-			if esep {
+				ee.EncodeFloat32(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v2)
 			}
-			ee.EncodeBool(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat32(k2)
+				ee.EncodeBool(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4475,26 +4747,32 @@ func (_ fastpathT) EncMapFloat64IntfV(v map[float64]interface{}, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(float64(k2))
-			if esep {
+				ee.EncodeFloat64(float64(k2))
 				ee.WriteMapElemValue()
+				e.encode(v[float64(k2)])
 			}
-			e.encode(v[float64(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat64(float64(k2))
+				e.encode(v[float64(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(k2)
-			if esep {
+				ee.EncodeFloat64(k2)
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat64(k2)
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4518,26 +4796,32 @@ func (_ fastpathT) EncMapFloat64StringV(v map[float64]string, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(float64(k2))
-			if esep {
+				ee.EncodeFloat64(float64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v[float64(k2)])
 			}
-			ee.EncodeString(cUTF8, v[float64(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat64(float64(k2))
+				ee.EncodeString(cUTF8, v[float64(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(k2)
-			if esep {
+				ee.EncodeFloat64(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v2)
 			}
-			ee.EncodeString(cUTF8, v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat64(k2)
+				ee.EncodeString(cUTF8, v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4561,26 +4845,32 @@ func (_ fastpathT) EncMapFloat64UintV(v map[float64]uint, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(float64(k2))
-			if esep {
+				ee.EncodeFloat64(float64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[float64(k2)]))
 			}
-			ee.EncodeUint(uint64(v[float64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat64(float64(k2))
+				ee.EncodeUint(uint64(v[float64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(k2)
-			if esep {
+				ee.EncodeFloat64(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat64(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4604,26 +4894,32 @@ func (_ fastpathT) EncMapFloat64Uint8V(v map[float64]uint8, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(float64(k2))
-			if esep {
+				ee.EncodeFloat64(float64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[float64(k2)]))
 			}
-			ee.EncodeUint(uint64(v[float64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat64(float64(k2))
+				ee.EncodeUint(uint64(v[float64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(k2)
-			if esep {
+				ee.EncodeFloat64(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat64(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4647,26 +4943,32 @@ func (_ fastpathT) EncMapFloat64Uint16V(v map[float64]uint16, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(float64(k2))
-			if esep {
+				ee.EncodeFloat64(float64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[float64(k2)]))
 			}
-			ee.EncodeUint(uint64(v[float64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat64(float64(k2))
+				ee.EncodeUint(uint64(v[float64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(k2)
-			if esep {
+				ee.EncodeFloat64(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat64(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4690,26 +4992,32 @@ func (_ fastpathT) EncMapFloat64Uint32V(v map[float64]uint32, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(float64(k2))
-			if esep {
+				ee.EncodeFloat64(float64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[float64(k2)]))
 			}
-			ee.EncodeUint(uint64(v[float64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat64(float64(k2))
+				ee.EncodeUint(uint64(v[float64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(k2)
-			if esep {
+				ee.EncodeFloat64(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat64(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4733,26 +5041,32 @@ func (_ fastpathT) EncMapFloat64Uint64V(v map[float64]uint64, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(float64(k2))
-			if esep {
+				ee.EncodeFloat64(float64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[float64(k2)]))
 			}
-			ee.EncodeUint(uint64(v[float64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat64(float64(k2))
+				ee.EncodeUint(uint64(v[float64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(k2)
-			if esep {
+				ee.EncodeFloat64(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat64(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4776,26 +5090,32 @@ func (_ fastpathT) EncMapFloat64UintptrV(v map[float64]uintptr, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(float64(k2))
-			if esep {
+				ee.EncodeFloat64(float64(k2))
 				ee.WriteMapElemValue()
+				e.encode(v[float64(k2)])
 			}
-			e.encode(v[float64(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat64(float64(k2))
+				e.encode(v[float64(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(k2)
-			if esep {
+				ee.EncodeFloat64(k2)
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat64(k2)
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4819,26 +5139,32 @@ func (_ fastpathT) EncMapFloat64IntV(v map[float64]int, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(float64(k2))
-			if esep {
+				ee.EncodeFloat64(float64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[float64(k2)]))
 			}
-			ee.EncodeInt(int64(v[float64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat64(float64(k2))
+				ee.EncodeInt(int64(v[float64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(k2)
-			if esep {
+				ee.EncodeFloat64(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat64(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4862,26 +5188,32 @@ func (_ fastpathT) EncMapFloat64Int8V(v map[float64]int8, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(float64(k2))
-			if esep {
+				ee.EncodeFloat64(float64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[float64(k2)]))
 			}
-			ee.EncodeInt(int64(v[float64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat64(float64(k2))
+				ee.EncodeInt(int64(v[float64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(k2)
-			if esep {
+				ee.EncodeFloat64(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat64(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4905,26 +5237,32 @@ func (_ fastpathT) EncMapFloat64Int16V(v map[float64]int16, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(float64(k2))
-			if esep {
+				ee.EncodeFloat64(float64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[float64(k2)]))
 			}
-			ee.EncodeInt(int64(v[float64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat64(float64(k2))
+				ee.EncodeInt(int64(v[float64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(k2)
-			if esep {
+				ee.EncodeFloat64(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat64(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4948,26 +5286,32 @@ func (_ fastpathT) EncMapFloat64Int32V(v map[float64]int32, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(float64(k2))
-			if esep {
+				ee.EncodeFloat64(float64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[float64(k2)]))
 			}
-			ee.EncodeInt(int64(v[float64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat64(float64(k2))
+				ee.EncodeInt(int64(v[float64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(k2)
-			if esep {
+				ee.EncodeFloat64(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat64(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -4991,26 +5335,32 @@ func (_ fastpathT) EncMapFloat64Int64V(v map[float64]int64, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(float64(k2))
-			if esep {
+				ee.EncodeFloat64(float64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[float64(k2)]))
 			}
-			ee.EncodeInt(int64(v[float64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat64(float64(k2))
+				ee.EncodeInt(int64(v[float64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(k2)
-			if esep {
+				ee.EncodeFloat64(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat64(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5034,26 +5384,32 @@ func (_ fastpathT) EncMapFloat64Float32V(v map[float64]float32, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(float64(k2))
-			if esep {
+				ee.EncodeFloat64(float64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v[float64(k2)])
 			}
-			ee.EncodeFloat32(v[float64(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat64(float64(k2))
+				ee.EncodeFloat32(v[float64(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(k2)
-			if esep {
+				ee.EncodeFloat64(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v2)
 			}
-			ee.EncodeFloat32(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat64(k2)
+				ee.EncodeFloat32(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5077,26 +5433,32 @@ func (_ fastpathT) EncMapFloat64Float64V(v map[float64]float64, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(float64(k2))
-			if esep {
+				ee.EncodeFloat64(float64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v[float64(k2)])
 			}
-			ee.EncodeFloat64(v[float64(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat64(float64(k2))
+				ee.EncodeFloat64(v[float64(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(k2)
-			if esep {
+				ee.EncodeFloat64(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v2)
 			}
-			ee.EncodeFloat64(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat64(k2)
+				ee.EncodeFloat64(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5120,26 +5482,32 @@ func (_ fastpathT) EncMapFloat64BoolV(v map[float64]bool, e *Encoder) {
 			i++
 		}
 		sort.Sort(floatSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(float64(k2))
-			if esep {
+				ee.EncodeFloat64(float64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v[float64(k2)])
 			}
-			ee.EncodeBool(v[float64(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeFloat64(float64(k2))
+				ee.EncodeBool(v[float64(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeFloat64(k2)
-			if esep {
+				ee.EncodeFloat64(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v2)
 			}
-			ee.EncodeBool(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeFloat64(k2)
+				ee.EncodeBool(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5163,26 +5531,32 @@ func (_ fastpathT) EncMapUintIntfV(v map[uint]interface{}, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint(k2)))
 				ee.WriteMapElemValue()
+				e.encode(v[uint(k2)])
 			}
-			e.encode(v[uint(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint(k2)))
+				e.encode(v[uint(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5206,26 +5580,32 @@ func (_ fastpathT) EncMapUintStringV(v map[uint]string, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v[uint(k2)])
 			}
-			ee.EncodeString(cUTF8, v[uint(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint(k2)))
+				ee.EncodeString(cUTF8, v[uint(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v2)
 			}
-			ee.EncodeString(cUTF8, v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeString(cUTF8, v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5249,26 +5629,32 @@ func (_ fastpathT) EncMapUintUintV(v map[uint]uint, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint(k2)))
+				ee.EncodeUint(uint64(v[uint(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5292,26 +5678,32 @@ func (_ fastpathT) EncMapUintUint8V(v map[uint]uint8, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint(k2)))
+				ee.EncodeUint(uint64(v[uint(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5335,26 +5727,32 @@ func (_ fastpathT) EncMapUintUint16V(v map[uint]uint16, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint(k2)))
+				ee.EncodeUint(uint64(v[uint(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5378,26 +5776,32 @@ func (_ fastpathT) EncMapUintUint32V(v map[uint]uint32, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint(k2)))
+				ee.EncodeUint(uint64(v[uint(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5421,26 +5825,32 @@ func (_ fastpathT) EncMapUintUint64V(v map[uint]uint64, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint(k2)))
+				ee.EncodeUint(uint64(v[uint(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5464,26 +5874,32 @@ func (_ fastpathT) EncMapUintUintptrV(v map[uint]uintptr, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint(k2)))
 				ee.WriteMapElemValue()
+				e.encode(v[uint(k2)])
 			}
-			e.encode(v[uint(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint(k2)))
+				e.encode(v[uint(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5507,26 +5923,32 @@ func (_ fastpathT) EncMapUintIntV(v map[uint]int, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint(k2)))
+				ee.EncodeInt(int64(v[uint(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5550,26 +5972,32 @@ func (_ fastpathT) EncMapUintInt8V(v map[uint]int8, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint(k2)))
+				ee.EncodeInt(int64(v[uint(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5593,26 +6021,32 @@ func (_ fastpathT) EncMapUintInt16V(v map[uint]int16, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint(k2)))
+				ee.EncodeInt(int64(v[uint(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5636,26 +6070,32 @@ func (_ fastpathT) EncMapUintInt32V(v map[uint]int32, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint(k2)))
+				ee.EncodeInt(int64(v[uint(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5679,26 +6119,32 @@ func (_ fastpathT) EncMapUintInt64V(v map[uint]int64, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint(k2)))
+				ee.EncodeInt(int64(v[uint(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5722,26 +6168,32 @@ func (_ fastpathT) EncMapUintFloat32V(v map[uint]float32, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v[uint(k2)])
 			}
-			ee.EncodeFloat32(v[uint(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint(k2)))
+				ee.EncodeFloat32(v[uint(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v2)
 			}
-			ee.EncodeFloat32(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeFloat32(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5765,26 +6217,32 @@ func (_ fastpathT) EncMapUintFloat64V(v map[uint]float64, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v[uint(k2)])
 			}
-			ee.EncodeFloat64(v[uint(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint(k2)))
+				ee.EncodeFloat64(v[uint(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v2)
 			}
-			ee.EncodeFloat64(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeFloat64(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5808,26 +6266,32 @@ func (_ fastpathT) EncMapUintBoolV(v map[uint]bool, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v[uint(k2)])
 			}
-			ee.EncodeBool(v[uint(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint(k2)))
+				ee.EncodeBool(v[uint(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v2)
 			}
-			ee.EncodeBool(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeBool(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5851,26 +6315,32 @@ func (_ fastpathT) EncMapUint8IntfV(v map[uint8]interface{}, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint8(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint8(k2)))
 				ee.WriteMapElemValue()
+				e.encode(v[uint8(k2)])
 			}
-			e.encode(v[uint8(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint8(k2)))
+				e.encode(v[uint8(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5894,26 +6364,32 @@ func (_ fastpathT) EncMapUint8StringV(v map[uint8]string, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint8(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v[uint8(k2)])
 			}
-			ee.EncodeString(cUTF8, v[uint8(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint8(k2)))
+				ee.EncodeString(cUTF8, v[uint8(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v2)
 			}
-			ee.EncodeString(cUTF8, v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeString(cUTF8, v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5937,26 +6413,32 @@ func (_ fastpathT) EncMapUint8UintV(v map[uint8]uint, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint8(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint8(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint8(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint8(k2)))
+				ee.EncodeUint(uint64(v[uint8(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -5980,26 +6462,32 @@ func (_ fastpathT) EncMapUint8Uint8V(v map[uint8]uint8, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint8(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint8(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint8(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint8(k2)))
+				ee.EncodeUint(uint64(v[uint8(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6023,26 +6511,32 @@ func (_ fastpathT) EncMapUint8Uint16V(v map[uint8]uint16, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint8(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint8(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint8(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint8(k2)))
+				ee.EncodeUint(uint64(v[uint8(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6066,26 +6560,32 @@ func (_ fastpathT) EncMapUint8Uint32V(v map[uint8]uint32, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint8(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint8(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint8(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint8(k2)))
+				ee.EncodeUint(uint64(v[uint8(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6109,26 +6609,32 @@ func (_ fastpathT) EncMapUint8Uint64V(v map[uint8]uint64, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint8(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint8(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint8(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint8(k2)))
+				ee.EncodeUint(uint64(v[uint8(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6152,26 +6658,32 @@ func (_ fastpathT) EncMapUint8UintptrV(v map[uint8]uintptr, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint8(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint8(k2)))
 				ee.WriteMapElemValue()
+				e.encode(v[uint8(k2)])
 			}
-			e.encode(v[uint8(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint8(k2)))
+				e.encode(v[uint8(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6195,26 +6707,32 @@ func (_ fastpathT) EncMapUint8IntV(v map[uint8]int, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint8(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint8(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint8(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint8(k2)))
+				ee.EncodeInt(int64(v[uint8(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6238,26 +6756,32 @@ func (_ fastpathT) EncMapUint8Int8V(v map[uint8]int8, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint8(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint8(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint8(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint8(k2)))
+				ee.EncodeInt(int64(v[uint8(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6281,26 +6805,32 @@ func (_ fastpathT) EncMapUint8Int16V(v map[uint8]int16, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint8(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint8(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint8(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint8(k2)))
+				ee.EncodeInt(int64(v[uint8(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6324,26 +6854,32 @@ func (_ fastpathT) EncMapUint8Int32V(v map[uint8]int32, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint8(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint8(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint8(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint8(k2)))
+				ee.EncodeInt(int64(v[uint8(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6367,26 +6903,32 @@ func (_ fastpathT) EncMapUint8Int64V(v map[uint8]int64, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint8(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint8(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint8(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint8(k2)))
+				ee.EncodeInt(int64(v[uint8(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6410,26 +6952,32 @@ func (_ fastpathT) EncMapUint8Float32V(v map[uint8]float32, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint8(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v[uint8(k2)])
 			}
-			ee.EncodeFloat32(v[uint8(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint8(k2)))
+				ee.EncodeFloat32(v[uint8(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v2)
 			}
-			ee.EncodeFloat32(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeFloat32(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6453,26 +7001,32 @@ func (_ fastpathT) EncMapUint8Float64V(v map[uint8]float64, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint8(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v[uint8(k2)])
 			}
-			ee.EncodeFloat64(v[uint8(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint8(k2)))
+				ee.EncodeFloat64(v[uint8(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v2)
 			}
-			ee.EncodeFloat64(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeFloat64(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6496,26 +7050,32 @@ func (_ fastpathT) EncMapUint8BoolV(v map[uint8]bool, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint8(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v[uint8(k2)])
 			}
-			ee.EncodeBool(v[uint8(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint8(k2)))
+				ee.EncodeBool(v[uint8(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v2)
 			}
-			ee.EncodeBool(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeBool(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6539,26 +7099,32 @@ func (_ fastpathT) EncMapUint16IntfV(v map[uint16]interface{}, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint16(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint16(k2)))
 				ee.WriteMapElemValue()
+				e.encode(v[uint16(k2)])
 			}
-			e.encode(v[uint16(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint16(k2)))
+				e.encode(v[uint16(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6582,26 +7148,32 @@ func (_ fastpathT) EncMapUint16StringV(v map[uint16]string, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint16(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v[uint16(k2)])
 			}
-			ee.EncodeString(cUTF8, v[uint16(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint16(k2)))
+				ee.EncodeString(cUTF8, v[uint16(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v2)
 			}
-			ee.EncodeString(cUTF8, v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeString(cUTF8, v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6625,26 +7197,32 @@ func (_ fastpathT) EncMapUint16UintV(v map[uint16]uint, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint16(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint16(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint16(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint16(k2)))
+				ee.EncodeUint(uint64(v[uint16(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6668,26 +7246,32 @@ func (_ fastpathT) EncMapUint16Uint8V(v map[uint16]uint8, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint16(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint16(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint16(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint16(k2)))
+				ee.EncodeUint(uint64(v[uint16(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6711,26 +7295,32 @@ func (_ fastpathT) EncMapUint16Uint16V(v map[uint16]uint16, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint16(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint16(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint16(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint16(k2)))
+				ee.EncodeUint(uint64(v[uint16(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6754,26 +7344,32 @@ func (_ fastpathT) EncMapUint16Uint32V(v map[uint16]uint32, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint16(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint16(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint16(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint16(k2)))
+				ee.EncodeUint(uint64(v[uint16(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6797,26 +7393,32 @@ func (_ fastpathT) EncMapUint16Uint64V(v map[uint16]uint64, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint16(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint16(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint16(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint16(k2)))
+				ee.EncodeUint(uint64(v[uint16(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6840,26 +7442,32 @@ func (_ fastpathT) EncMapUint16UintptrV(v map[uint16]uintptr, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint16(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint16(k2)))
 				ee.WriteMapElemValue()
+				e.encode(v[uint16(k2)])
 			}
-			e.encode(v[uint16(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint16(k2)))
+				e.encode(v[uint16(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6883,26 +7491,32 @@ func (_ fastpathT) EncMapUint16IntV(v map[uint16]int, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint16(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint16(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint16(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint16(k2)))
+				ee.EncodeInt(int64(v[uint16(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6926,26 +7540,32 @@ func (_ fastpathT) EncMapUint16Int8V(v map[uint16]int8, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint16(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint16(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint16(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint16(k2)))
+				ee.EncodeInt(int64(v[uint16(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -6969,26 +7589,32 @@ func (_ fastpathT) EncMapUint16Int16V(v map[uint16]int16, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint16(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint16(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint16(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint16(k2)))
+				ee.EncodeInt(int64(v[uint16(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7012,26 +7638,32 @@ func (_ fastpathT) EncMapUint16Int32V(v map[uint16]int32, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint16(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint16(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint16(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint16(k2)))
+				ee.EncodeInt(int64(v[uint16(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7055,26 +7687,32 @@ func (_ fastpathT) EncMapUint16Int64V(v map[uint16]int64, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint16(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint16(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint16(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint16(k2)))
+				ee.EncodeInt(int64(v[uint16(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7098,26 +7736,32 @@ func (_ fastpathT) EncMapUint16Float32V(v map[uint16]float32, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint16(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v[uint16(k2)])
 			}
-			ee.EncodeFloat32(v[uint16(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint16(k2)))
+				ee.EncodeFloat32(v[uint16(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v2)
 			}
-			ee.EncodeFloat32(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeFloat32(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7141,26 +7785,32 @@ func (_ fastpathT) EncMapUint16Float64V(v map[uint16]float64, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint16(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v[uint16(k2)])
 			}
-			ee.EncodeFloat64(v[uint16(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint16(k2)))
+				ee.EncodeFloat64(v[uint16(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v2)
 			}
-			ee.EncodeFloat64(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeFloat64(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7184,26 +7834,32 @@ func (_ fastpathT) EncMapUint16BoolV(v map[uint16]bool, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint16(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v[uint16(k2)])
 			}
-			ee.EncodeBool(v[uint16(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint16(k2)))
+				ee.EncodeBool(v[uint16(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v2)
 			}
-			ee.EncodeBool(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeBool(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7227,26 +7883,32 @@ func (_ fastpathT) EncMapUint32IntfV(v map[uint32]interface{}, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint32(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint32(k2)))
 				ee.WriteMapElemValue()
+				e.encode(v[uint32(k2)])
 			}
-			e.encode(v[uint32(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint32(k2)))
+				e.encode(v[uint32(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7270,26 +7932,32 @@ func (_ fastpathT) EncMapUint32StringV(v map[uint32]string, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint32(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v[uint32(k2)])
 			}
-			ee.EncodeString(cUTF8, v[uint32(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint32(k2)))
+				ee.EncodeString(cUTF8, v[uint32(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v2)
 			}
-			ee.EncodeString(cUTF8, v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeString(cUTF8, v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7313,26 +7981,32 @@ func (_ fastpathT) EncMapUint32UintV(v map[uint32]uint, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint32(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint32(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint32(k2)))
+				ee.EncodeUint(uint64(v[uint32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7356,26 +8030,32 @@ func (_ fastpathT) EncMapUint32Uint8V(v map[uint32]uint8, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint32(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint32(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint32(k2)))
+				ee.EncodeUint(uint64(v[uint32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7399,26 +8079,32 @@ func (_ fastpathT) EncMapUint32Uint16V(v map[uint32]uint16, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint32(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint32(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint32(k2)))
+				ee.EncodeUint(uint64(v[uint32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7442,26 +8128,32 @@ func (_ fastpathT) EncMapUint32Uint32V(v map[uint32]uint32, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint32(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint32(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint32(k2)))
+				ee.EncodeUint(uint64(v[uint32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7485,26 +8177,32 @@ func (_ fastpathT) EncMapUint32Uint64V(v map[uint32]uint64, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint32(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint32(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint32(k2)))
+				ee.EncodeUint(uint64(v[uint32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7528,26 +8226,32 @@ func (_ fastpathT) EncMapUint32UintptrV(v map[uint32]uintptr, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint32(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint32(k2)))
 				ee.WriteMapElemValue()
+				e.encode(v[uint32(k2)])
 			}
-			e.encode(v[uint32(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint32(k2)))
+				e.encode(v[uint32(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7571,26 +8275,32 @@ func (_ fastpathT) EncMapUint32IntV(v map[uint32]int, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint32(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint32(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint32(k2)))
+				ee.EncodeInt(int64(v[uint32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7614,26 +8324,32 @@ func (_ fastpathT) EncMapUint32Int8V(v map[uint32]int8, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint32(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint32(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint32(k2)))
+				ee.EncodeInt(int64(v[uint32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7657,26 +8373,32 @@ func (_ fastpathT) EncMapUint32Int16V(v map[uint32]int16, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint32(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint32(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint32(k2)))
+				ee.EncodeInt(int64(v[uint32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7700,26 +8422,32 @@ func (_ fastpathT) EncMapUint32Int32V(v map[uint32]int32, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint32(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint32(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint32(k2)))
+				ee.EncodeInt(int64(v[uint32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7743,26 +8471,32 @@ func (_ fastpathT) EncMapUint32Int64V(v map[uint32]int64, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint32(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint32(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint32(k2)))
+				ee.EncodeInt(int64(v[uint32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7786,26 +8520,32 @@ func (_ fastpathT) EncMapUint32Float32V(v map[uint32]float32, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint32(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v[uint32(k2)])
 			}
-			ee.EncodeFloat32(v[uint32(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint32(k2)))
+				ee.EncodeFloat32(v[uint32(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v2)
 			}
-			ee.EncodeFloat32(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeFloat32(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7829,26 +8569,32 @@ func (_ fastpathT) EncMapUint32Float64V(v map[uint32]float64, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint32(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v[uint32(k2)])
 			}
-			ee.EncodeFloat64(v[uint32(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint32(k2)))
+				ee.EncodeFloat64(v[uint32(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v2)
 			}
-			ee.EncodeFloat64(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeFloat64(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7872,26 +8618,32 @@ func (_ fastpathT) EncMapUint32BoolV(v map[uint32]bool, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint32(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v[uint32(k2)])
 			}
-			ee.EncodeBool(v[uint32(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint32(k2)))
+				ee.EncodeBool(v[uint32(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v2)
 			}
-			ee.EncodeBool(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeBool(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7915,26 +8667,32 @@ func (_ fastpathT) EncMapUint64IntfV(v map[uint64]interface{}, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint64(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint64(k2)))
 				ee.WriteMapElemValue()
+				e.encode(v[uint64(k2)])
 			}
-			e.encode(v[uint64(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint64(k2)))
+				e.encode(v[uint64(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -7958,26 +8716,32 @@ func (_ fastpathT) EncMapUint64StringV(v map[uint64]string, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint64(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v[uint64(k2)])
 			}
-			ee.EncodeString(cUTF8, v[uint64(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint64(k2)))
+				ee.EncodeString(cUTF8, v[uint64(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v2)
 			}
-			ee.EncodeString(cUTF8, v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeString(cUTF8, v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8001,26 +8765,32 @@ func (_ fastpathT) EncMapUint64UintV(v map[uint64]uint, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint64(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint64(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint64(k2)))
+				ee.EncodeUint(uint64(v[uint64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8044,26 +8814,32 @@ func (_ fastpathT) EncMapUint64Uint8V(v map[uint64]uint8, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint64(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint64(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint64(k2)))
+				ee.EncodeUint(uint64(v[uint64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8087,26 +8863,32 @@ func (_ fastpathT) EncMapUint64Uint16V(v map[uint64]uint16, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint64(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint64(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint64(k2)))
+				ee.EncodeUint(uint64(v[uint64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8130,26 +8912,32 @@ func (_ fastpathT) EncMapUint64Uint32V(v map[uint64]uint32, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint64(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint64(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint64(k2)))
+				ee.EncodeUint(uint64(v[uint64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8173,26 +8961,32 @@ func (_ fastpathT) EncMapUint64Uint64V(v map[uint64]uint64, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint64(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uint64(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uint64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint64(k2)))
+				ee.EncodeUint(uint64(v[uint64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8216,26 +9010,32 @@ func (_ fastpathT) EncMapUint64UintptrV(v map[uint64]uintptr, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint64(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint64(k2)))
 				ee.WriteMapElemValue()
+				e.encode(v[uint64(k2)])
 			}
-			e.encode(v[uint64(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint64(k2)))
+				e.encode(v[uint64(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8259,26 +9059,32 @@ func (_ fastpathT) EncMapUint64IntV(v map[uint64]int, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint64(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint64(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint64(k2)))
+				ee.EncodeInt(int64(v[uint64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8302,26 +9108,32 @@ func (_ fastpathT) EncMapUint64Int8V(v map[uint64]int8, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint64(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint64(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint64(k2)))
+				ee.EncodeInt(int64(v[uint64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8345,26 +9157,32 @@ func (_ fastpathT) EncMapUint64Int16V(v map[uint64]int16, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint64(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint64(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint64(k2)))
+				ee.EncodeInt(int64(v[uint64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8388,26 +9206,32 @@ func (_ fastpathT) EncMapUint64Int32V(v map[uint64]int32, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint64(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint64(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint64(k2)))
+				ee.EncodeInt(int64(v[uint64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8431,26 +9255,32 @@ func (_ fastpathT) EncMapUint64Int64V(v map[uint64]int64, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint64(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uint64(k2)]))
 			}
-			ee.EncodeInt(int64(v[uint64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint64(k2)))
+				ee.EncodeInt(int64(v[uint64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8474,26 +9304,32 @@ func (_ fastpathT) EncMapUint64Float32V(v map[uint64]float32, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint64(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v[uint64(k2)])
 			}
-			ee.EncodeFloat32(v[uint64(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint64(k2)))
+				ee.EncodeFloat32(v[uint64(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v2)
 			}
-			ee.EncodeFloat32(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeFloat32(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8517,26 +9353,32 @@ func (_ fastpathT) EncMapUint64Float64V(v map[uint64]float64, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint64(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v[uint64(k2)])
 			}
-			ee.EncodeFloat64(v[uint64(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint64(k2)))
+				ee.EncodeFloat64(v[uint64(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v2)
 			}
-			ee.EncodeFloat64(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeFloat64(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8560,26 +9402,32 @@ func (_ fastpathT) EncMapUint64BoolV(v map[uint64]bool, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(uint64(k2)))
-			if esep {
+				ee.EncodeUint(uint64(uint64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v[uint64(k2)])
 			}
-			ee.EncodeBool(v[uint64(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeUint(uint64(uint64(k2)))
+				ee.EncodeBool(v[uint64(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeUint(uint64(k2))
-			if esep {
+				ee.EncodeUint(uint64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v2)
 			}
-			ee.EncodeBool(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeUint(uint64(k2))
+				ee.EncodeBool(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8603,26 +9451,32 @@ func (_ fastpathT) EncMapUintptrIntfV(v map[uintptr]interface{}, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.encode(uintptr(k2))
-			if esep {
+				e.encode(uintptr(k2))
 				ee.WriteMapElemValue()
+				e.encode(v[uintptr(k2)])
 			}
-			e.encode(v[uintptr(k2)])
+		} else {
+			for _, k2 := range v2 {
+				e.encode(uintptr(k2))
+				e.encode(v[uintptr(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8646,26 +9500,32 @@ func (_ fastpathT) EncMapUintptrStringV(v map[uintptr]string, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.encode(uintptr(k2))
-			if esep {
+				e.encode(uintptr(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v[uintptr(k2)])
 			}
-			ee.EncodeString(cUTF8, v[uintptr(k2)])
+		} else {
+			for _, k2 := range v2 {
+				e.encode(uintptr(k2))
+				ee.EncodeString(cUTF8, v[uintptr(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v2)
 			}
-			ee.EncodeString(cUTF8, v2)
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeString(cUTF8, v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8689,26 +9549,32 @@ func (_ fastpathT) EncMapUintptrUintV(v map[uintptr]uint, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.encode(uintptr(k2))
-			if esep {
+				e.encode(uintptr(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uintptr(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uintptr(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				e.encode(uintptr(k2))
+				ee.EncodeUint(uint64(v[uintptr(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8732,26 +9598,32 @@ func (_ fastpathT) EncMapUintptrUint8V(v map[uintptr]uint8, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.encode(uintptr(k2))
-			if esep {
+				e.encode(uintptr(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uintptr(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uintptr(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				e.encode(uintptr(k2))
+				ee.EncodeUint(uint64(v[uintptr(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8775,26 +9647,32 @@ func (_ fastpathT) EncMapUintptrUint16V(v map[uintptr]uint16, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.encode(uintptr(k2))
-			if esep {
+				e.encode(uintptr(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uintptr(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uintptr(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				e.encode(uintptr(k2))
+				ee.EncodeUint(uint64(v[uintptr(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8818,26 +9696,32 @@ func (_ fastpathT) EncMapUintptrUint32V(v map[uintptr]uint32, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.encode(uintptr(k2))
-			if esep {
+				e.encode(uintptr(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uintptr(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uintptr(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				e.encode(uintptr(k2))
+				ee.EncodeUint(uint64(v[uintptr(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8861,26 +9745,32 @@ func (_ fastpathT) EncMapUintptrUint64V(v map[uintptr]uint64, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.encode(uintptr(k2))
-			if esep {
+				e.encode(uintptr(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[uintptr(k2)]))
 			}
-			ee.EncodeUint(uint64(v[uintptr(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				e.encode(uintptr(k2))
+				ee.EncodeUint(uint64(v[uintptr(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8904,26 +9794,32 @@ func (_ fastpathT) EncMapUintptrUintptrV(v map[uintptr]uintptr, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.encode(uintptr(k2))
-			if esep {
+				e.encode(uintptr(k2))
 				ee.WriteMapElemValue()
+				e.encode(v[uintptr(k2)])
 			}
-			e.encode(v[uintptr(k2)])
+		} else {
+			for _, k2 := range v2 {
+				e.encode(uintptr(k2))
+				e.encode(v[uintptr(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8947,26 +9843,32 @@ func (_ fastpathT) EncMapUintptrIntV(v map[uintptr]int, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.encode(uintptr(k2))
-			if esep {
+				e.encode(uintptr(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uintptr(k2)]))
 			}
-			ee.EncodeInt(int64(v[uintptr(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				e.encode(uintptr(k2))
+				ee.EncodeInt(int64(v[uintptr(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -8990,26 +9892,32 @@ func (_ fastpathT) EncMapUintptrInt8V(v map[uintptr]int8, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.encode(uintptr(k2))
-			if esep {
+				e.encode(uintptr(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uintptr(k2)]))
 			}
-			ee.EncodeInt(int64(v[uintptr(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				e.encode(uintptr(k2))
+				ee.EncodeInt(int64(v[uintptr(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9033,26 +9941,32 @@ func (_ fastpathT) EncMapUintptrInt16V(v map[uintptr]int16, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.encode(uintptr(k2))
-			if esep {
+				e.encode(uintptr(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uintptr(k2)]))
 			}
-			ee.EncodeInt(int64(v[uintptr(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				e.encode(uintptr(k2))
+				ee.EncodeInt(int64(v[uintptr(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9076,26 +9990,32 @@ func (_ fastpathT) EncMapUintptrInt32V(v map[uintptr]int32, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.encode(uintptr(k2))
-			if esep {
+				e.encode(uintptr(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uintptr(k2)]))
 			}
-			ee.EncodeInt(int64(v[uintptr(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				e.encode(uintptr(k2))
+				ee.EncodeInt(int64(v[uintptr(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9119,26 +10039,32 @@ func (_ fastpathT) EncMapUintptrInt64V(v map[uintptr]int64, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.encode(uintptr(k2))
-			if esep {
+				e.encode(uintptr(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[uintptr(k2)]))
 			}
-			ee.EncodeInt(int64(v[uintptr(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				e.encode(uintptr(k2))
+				ee.EncodeInt(int64(v[uintptr(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9162,26 +10088,32 @@ func (_ fastpathT) EncMapUintptrFloat32V(v map[uintptr]float32, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.encode(uintptr(k2))
-			if esep {
+				e.encode(uintptr(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v[uintptr(k2)])
 			}
-			ee.EncodeFloat32(v[uintptr(k2)])
+		} else {
+			for _, k2 := range v2 {
+				e.encode(uintptr(k2))
+				ee.EncodeFloat32(v[uintptr(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v2)
 			}
-			ee.EncodeFloat32(v2)
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeFloat32(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9205,26 +10137,32 @@ func (_ fastpathT) EncMapUintptrFloat64V(v map[uintptr]float64, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.encode(uintptr(k2))
-			if esep {
+				e.encode(uintptr(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v[uintptr(k2)])
 			}
-			ee.EncodeFloat64(v[uintptr(k2)])
+		} else {
+			for _, k2 := range v2 {
+				e.encode(uintptr(k2))
+				ee.EncodeFloat64(v[uintptr(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v2)
 			}
-			ee.EncodeFloat64(v2)
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeFloat64(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9248,26 +10186,32 @@ func (_ fastpathT) EncMapUintptrBoolV(v map[uintptr]bool, e *Encoder) {
 			i++
 		}
 		sort.Sort(uintSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			e.encode(uintptr(k2))
-			if esep {
+				e.encode(uintptr(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v[uintptr(k2)])
 			}
-			ee.EncodeBool(v[uintptr(k2)])
+		} else {
+			for _, k2 := range v2 {
+				e.encode(uintptr(k2))
+				ee.EncodeBool(v[uintptr(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			e.encode(k2)
-			if esep {
+				e.encode(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v2)
 			}
-			ee.EncodeBool(v2)
+		} else {
+			for k2, v2 := range v {
+				e.encode(k2)
+				ee.EncodeBool(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9291,26 +10235,32 @@ func (_ fastpathT) EncMapIntIntfV(v map[int]interface{}, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int(k2)))
-			if esep {
+				ee.EncodeInt(int64(int(k2)))
 				ee.WriteMapElemValue()
+				e.encode(v[int(k2)])
 			}
-			e.encode(v[int(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int(k2)))
+				e.encode(v[int(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9334,26 +10284,32 @@ func (_ fastpathT) EncMapIntStringV(v map[int]string, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int(k2)))
-			if esep {
+				ee.EncodeInt(int64(int(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v[int(k2)])
 			}
-			ee.EncodeString(cUTF8, v[int(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int(k2)))
+				ee.EncodeString(cUTF8, v[int(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v2)
 			}
-			ee.EncodeString(cUTF8, v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeString(cUTF8, v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9377,26 +10333,32 @@ func (_ fastpathT) EncMapIntUintV(v map[int]uint, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int(k2)))
-			if esep {
+				ee.EncodeInt(int64(int(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int(k2)))
+				ee.EncodeUint(uint64(v[int(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9420,26 +10382,32 @@ func (_ fastpathT) EncMapIntUint8V(v map[int]uint8, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int(k2)))
-			if esep {
+				ee.EncodeInt(int64(int(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int(k2)))
+				ee.EncodeUint(uint64(v[int(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9463,26 +10431,32 @@ func (_ fastpathT) EncMapIntUint16V(v map[int]uint16, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int(k2)))
-			if esep {
+				ee.EncodeInt(int64(int(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int(k2)))
+				ee.EncodeUint(uint64(v[int(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9506,26 +10480,32 @@ func (_ fastpathT) EncMapIntUint32V(v map[int]uint32, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int(k2)))
-			if esep {
+				ee.EncodeInt(int64(int(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int(k2)))
+				ee.EncodeUint(uint64(v[int(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9549,26 +10529,32 @@ func (_ fastpathT) EncMapIntUint64V(v map[int]uint64, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int(k2)))
-			if esep {
+				ee.EncodeInt(int64(int(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int(k2)))
+				ee.EncodeUint(uint64(v[int(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9592,26 +10578,32 @@ func (_ fastpathT) EncMapIntUintptrV(v map[int]uintptr, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int(k2)))
-			if esep {
+				ee.EncodeInt(int64(int(k2)))
 				ee.WriteMapElemValue()
+				e.encode(v[int(k2)])
 			}
-			e.encode(v[int(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int(k2)))
+				e.encode(v[int(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9635,26 +10627,32 @@ func (_ fastpathT) EncMapIntIntV(v map[int]int, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int(k2)))
-			if esep {
+				ee.EncodeInt(int64(int(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int(k2)]))
 			}
-			ee.EncodeInt(int64(v[int(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int(k2)))
+				ee.EncodeInt(int64(v[int(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9678,26 +10676,32 @@ func (_ fastpathT) EncMapIntInt8V(v map[int]int8, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int(k2)))
-			if esep {
+				ee.EncodeInt(int64(int(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int(k2)]))
 			}
-			ee.EncodeInt(int64(v[int(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int(k2)))
+				ee.EncodeInt(int64(v[int(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9721,26 +10725,32 @@ func (_ fastpathT) EncMapIntInt16V(v map[int]int16, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int(k2)))
-			if esep {
+				ee.EncodeInt(int64(int(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int(k2)]))
 			}
-			ee.EncodeInt(int64(v[int(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int(k2)))
+				ee.EncodeInt(int64(v[int(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9764,26 +10774,32 @@ func (_ fastpathT) EncMapIntInt32V(v map[int]int32, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int(k2)))
-			if esep {
+				ee.EncodeInt(int64(int(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int(k2)]))
 			}
-			ee.EncodeInt(int64(v[int(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int(k2)))
+				ee.EncodeInt(int64(v[int(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9807,26 +10823,32 @@ func (_ fastpathT) EncMapIntInt64V(v map[int]int64, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int(k2)))
-			if esep {
+				ee.EncodeInt(int64(int(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int(k2)]))
 			}
-			ee.EncodeInt(int64(v[int(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int(k2)))
+				ee.EncodeInt(int64(v[int(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9850,26 +10872,32 @@ func (_ fastpathT) EncMapIntFloat32V(v map[int]float32, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int(k2)))
-			if esep {
+				ee.EncodeInt(int64(int(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v[int(k2)])
 			}
-			ee.EncodeFloat32(v[int(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int(k2)))
+				ee.EncodeFloat32(v[int(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v2)
 			}
-			ee.EncodeFloat32(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeFloat32(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9893,26 +10921,32 @@ func (_ fastpathT) EncMapIntFloat64V(v map[int]float64, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int(k2)))
-			if esep {
+				ee.EncodeInt(int64(int(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v[int(k2)])
 			}
-			ee.EncodeFloat64(v[int(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int(k2)))
+				ee.EncodeFloat64(v[int(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v2)
 			}
-			ee.EncodeFloat64(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeFloat64(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9936,26 +10970,32 @@ func (_ fastpathT) EncMapIntBoolV(v map[int]bool, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int(k2)))
-			if esep {
+				ee.EncodeInt(int64(int(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v[int(k2)])
 			}
-			ee.EncodeBool(v[int(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int(k2)))
+				ee.EncodeBool(v[int(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v2)
 			}
-			ee.EncodeBool(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeBool(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -9979,26 +11019,32 @@ func (_ fastpathT) EncMapInt8IntfV(v map[int8]interface{}, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int8(k2)))
-			if esep {
+				ee.EncodeInt(int64(int8(k2)))
 				ee.WriteMapElemValue()
+				e.encode(v[int8(k2)])
 			}
-			e.encode(v[int8(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int8(k2)))
+				e.encode(v[int8(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10022,26 +11068,32 @@ func (_ fastpathT) EncMapInt8StringV(v map[int8]string, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int8(k2)))
-			if esep {
+				ee.EncodeInt(int64(int8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v[int8(k2)])
 			}
-			ee.EncodeString(cUTF8, v[int8(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int8(k2)))
+				ee.EncodeString(cUTF8, v[int8(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v2)
 			}
-			ee.EncodeString(cUTF8, v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeString(cUTF8, v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10065,26 +11117,32 @@ func (_ fastpathT) EncMapInt8UintV(v map[int8]uint, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int8(k2)))
-			if esep {
+				ee.EncodeInt(int64(int8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int8(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int8(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int8(k2)))
+				ee.EncodeUint(uint64(v[int8(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10108,26 +11166,32 @@ func (_ fastpathT) EncMapInt8Uint8V(v map[int8]uint8, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int8(k2)))
-			if esep {
+				ee.EncodeInt(int64(int8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int8(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int8(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int8(k2)))
+				ee.EncodeUint(uint64(v[int8(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10151,26 +11215,32 @@ func (_ fastpathT) EncMapInt8Uint16V(v map[int8]uint16, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int8(k2)))
-			if esep {
+				ee.EncodeInt(int64(int8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int8(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int8(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int8(k2)))
+				ee.EncodeUint(uint64(v[int8(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10194,26 +11264,32 @@ func (_ fastpathT) EncMapInt8Uint32V(v map[int8]uint32, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int8(k2)))
-			if esep {
+				ee.EncodeInt(int64(int8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int8(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int8(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int8(k2)))
+				ee.EncodeUint(uint64(v[int8(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10237,26 +11313,32 @@ func (_ fastpathT) EncMapInt8Uint64V(v map[int8]uint64, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int8(k2)))
-			if esep {
+				ee.EncodeInt(int64(int8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int8(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int8(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int8(k2)))
+				ee.EncodeUint(uint64(v[int8(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10280,26 +11362,32 @@ func (_ fastpathT) EncMapInt8UintptrV(v map[int8]uintptr, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int8(k2)))
-			if esep {
+				ee.EncodeInt(int64(int8(k2)))
 				ee.WriteMapElemValue()
+				e.encode(v[int8(k2)])
 			}
-			e.encode(v[int8(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int8(k2)))
+				e.encode(v[int8(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10323,26 +11411,32 @@ func (_ fastpathT) EncMapInt8IntV(v map[int8]int, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int8(k2)))
-			if esep {
+				ee.EncodeInt(int64(int8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int8(k2)]))
 			}
-			ee.EncodeInt(int64(v[int8(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int8(k2)))
+				ee.EncodeInt(int64(v[int8(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10366,26 +11460,32 @@ func (_ fastpathT) EncMapInt8Int8V(v map[int8]int8, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int8(k2)))
-			if esep {
+				ee.EncodeInt(int64(int8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int8(k2)]))
 			}
-			ee.EncodeInt(int64(v[int8(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int8(k2)))
+				ee.EncodeInt(int64(v[int8(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10409,26 +11509,32 @@ func (_ fastpathT) EncMapInt8Int16V(v map[int8]int16, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int8(k2)))
-			if esep {
+				ee.EncodeInt(int64(int8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int8(k2)]))
 			}
-			ee.EncodeInt(int64(v[int8(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int8(k2)))
+				ee.EncodeInt(int64(v[int8(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10452,26 +11558,32 @@ func (_ fastpathT) EncMapInt8Int32V(v map[int8]int32, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int8(k2)))
-			if esep {
+				ee.EncodeInt(int64(int8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int8(k2)]))
 			}
-			ee.EncodeInt(int64(v[int8(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int8(k2)))
+				ee.EncodeInt(int64(v[int8(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10495,26 +11607,32 @@ func (_ fastpathT) EncMapInt8Int64V(v map[int8]int64, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int8(k2)))
-			if esep {
+				ee.EncodeInt(int64(int8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int8(k2)]))
 			}
-			ee.EncodeInt(int64(v[int8(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int8(k2)))
+				ee.EncodeInt(int64(v[int8(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10538,26 +11656,32 @@ func (_ fastpathT) EncMapInt8Float32V(v map[int8]float32, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int8(k2)))
-			if esep {
+				ee.EncodeInt(int64(int8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v[int8(k2)])
 			}
-			ee.EncodeFloat32(v[int8(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int8(k2)))
+				ee.EncodeFloat32(v[int8(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v2)
 			}
-			ee.EncodeFloat32(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeFloat32(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10581,26 +11705,32 @@ func (_ fastpathT) EncMapInt8Float64V(v map[int8]float64, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int8(k2)))
-			if esep {
+				ee.EncodeInt(int64(int8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v[int8(k2)])
 			}
-			ee.EncodeFloat64(v[int8(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int8(k2)))
+				ee.EncodeFloat64(v[int8(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v2)
 			}
-			ee.EncodeFloat64(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeFloat64(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10624,26 +11754,32 @@ func (_ fastpathT) EncMapInt8BoolV(v map[int8]bool, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int8(k2)))
-			if esep {
+				ee.EncodeInt(int64(int8(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v[int8(k2)])
 			}
-			ee.EncodeBool(v[int8(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int8(k2)))
+				ee.EncodeBool(v[int8(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v2)
 			}
-			ee.EncodeBool(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeBool(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10667,26 +11803,32 @@ func (_ fastpathT) EncMapInt16IntfV(v map[int16]interface{}, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int16(k2)))
-			if esep {
+				ee.EncodeInt(int64(int16(k2)))
 				ee.WriteMapElemValue()
+				e.encode(v[int16(k2)])
 			}
-			e.encode(v[int16(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int16(k2)))
+				e.encode(v[int16(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10710,26 +11852,32 @@ func (_ fastpathT) EncMapInt16StringV(v map[int16]string, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int16(k2)))
-			if esep {
+				ee.EncodeInt(int64(int16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v[int16(k2)])
 			}
-			ee.EncodeString(cUTF8, v[int16(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int16(k2)))
+				ee.EncodeString(cUTF8, v[int16(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v2)
 			}
-			ee.EncodeString(cUTF8, v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeString(cUTF8, v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10753,26 +11901,32 @@ func (_ fastpathT) EncMapInt16UintV(v map[int16]uint, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int16(k2)))
-			if esep {
+				ee.EncodeInt(int64(int16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int16(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int16(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int16(k2)))
+				ee.EncodeUint(uint64(v[int16(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10796,26 +11950,32 @@ func (_ fastpathT) EncMapInt16Uint8V(v map[int16]uint8, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int16(k2)))
-			if esep {
+				ee.EncodeInt(int64(int16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int16(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int16(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int16(k2)))
+				ee.EncodeUint(uint64(v[int16(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10839,26 +11999,32 @@ func (_ fastpathT) EncMapInt16Uint16V(v map[int16]uint16, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int16(k2)))
-			if esep {
+				ee.EncodeInt(int64(int16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int16(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int16(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int16(k2)))
+				ee.EncodeUint(uint64(v[int16(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10882,26 +12048,32 @@ func (_ fastpathT) EncMapInt16Uint32V(v map[int16]uint32, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int16(k2)))
-			if esep {
+				ee.EncodeInt(int64(int16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int16(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int16(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int16(k2)))
+				ee.EncodeUint(uint64(v[int16(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10925,26 +12097,32 @@ func (_ fastpathT) EncMapInt16Uint64V(v map[int16]uint64, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int16(k2)))
-			if esep {
+				ee.EncodeInt(int64(int16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int16(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int16(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int16(k2)))
+				ee.EncodeUint(uint64(v[int16(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -10968,26 +12146,32 @@ func (_ fastpathT) EncMapInt16UintptrV(v map[int16]uintptr, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int16(k2)))
-			if esep {
+				ee.EncodeInt(int64(int16(k2)))
 				ee.WriteMapElemValue()
+				e.encode(v[int16(k2)])
 			}
-			e.encode(v[int16(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int16(k2)))
+				e.encode(v[int16(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11011,26 +12195,32 @@ func (_ fastpathT) EncMapInt16IntV(v map[int16]int, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int16(k2)))
-			if esep {
+				ee.EncodeInt(int64(int16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int16(k2)]))
 			}
-			ee.EncodeInt(int64(v[int16(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int16(k2)))
+				ee.EncodeInt(int64(v[int16(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11054,26 +12244,32 @@ func (_ fastpathT) EncMapInt16Int8V(v map[int16]int8, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int16(k2)))
-			if esep {
+				ee.EncodeInt(int64(int16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int16(k2)]))
 			}
-			ee.EncodeInt(int64(v[int16(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int16(k2)))
+				ee.EncodeInt(int64(v[int16(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11097,26 +12293,32 @@ func (_ fastpathT) EncMapInt16Int16V(v map[int16]int16, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int16(k2)))
-			if esep {
+				ee.EncodeInt(int64(int16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int16(k2)]))
 			}
-			ee.EncodeInt(int64(v[int16(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int16(k2)))
+				ee.EncodeInt(int64(v[int16(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11140,26 +12342,32 @@ func (_ fastpathT) EncMapInt16Int32V(v map[int16]int32, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int16(k2)))
-			if esep {
+				ee.EncodeInt(int64(int16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int16(k2)]))
 			}
-			ee.EncodeInt(int64(v[int16(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int16(k2)))
+				ee.EncodeInt(int64(v[int16(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11183,26 +12391,32 @@ func (_ fastpathT) EncMapInt16Int64V(v map[int16]int64, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int16(k2)))
-			if esep {
+				ee.EncodeInt(int64(int16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int16(k2)]))
 			}
-			ee.EncodeInt(int64(v[int16(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int16(k2)))
+				ee.EncodeInt(int64(v[int16(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11226,26 +12440,32 @@ func (_ fastpathT) EncMapInt16Float32V(v map[int16]float32, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int16(k2)))
-			if esep {
+				ee.EncodeInt(int64(int16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v[int16(k2)])
 			}
-			ee.EncodeFloat32(v[int16(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int16(k2)))
+				ee.EncodeFloat32(v[int16(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v2)
 			}
-			ee.EncodeFloat32(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeFloat32(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11269,26 +12489,32 @@ func (_ fastpathT) EncMapInt16Float64V(v map[int16]float64, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int16(k2)))
-			if esep {
+				ee.EncodeInt(int64(int16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v[int16(k2)])
 			}
-			ee.EncodeFloat64(v[int16(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int16(k2)))
+				ee.EncodeFloat64(v[int16(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v2)
 			}
-			ee.EncodeFloat64(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeFloat64(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11312,26 +12538,32 @@ func (_ fastpathT) EncMapInt16BoolV(v map[int16]bool, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int16(k2)))
-			if esep {
+				ee.EncodeInt(int64(int16(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v[int16(k2)])
 			}
-			ee.EncodeBool(v[int16(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int16(k2)))
+				ee.EncodeBool(v[int16(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v2)
 			}
-			ee.EncodeBool(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeBool(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11355,26 +12587,32 @@ func (_ fastpathT) EncMapInt32IntfV(v map[int32]interface{}, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int32(k2)))
-			if esep {
+				ee.EncodeInt(int64(int32(k2)))
 				ee.WriteMapElemValue()
+				e.encode(v[int32(k2)])
 			}
-			e.encode(v[int32(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int32(k2)))
+				e.encode(v[int32(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11398,26 +12636,32 @@ func (_ fastpathT) EncMapInt32StringV(v map[int32]string, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int32(k2)))
-			if esep {
+				ee.EncodeInt(int64(int32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v[int32(k2)])
 			}
-			ee.EncodeString(cUTF8, v[int32(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int32(k2)))
+				ee.EncodeString(cUTF8, v[int32(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v2)
 			}
-			ee.EncodeString(cUTF8, v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeString(cUTF8, v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11441,26 +12685,32 @@ func (_ fastpathT) EncMapInt32UintV(v map[int32]uint, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int32(k2)))
-			if esep {
+				ee.EncodeInt(int64(int32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int32(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int32(k2)))
+				ee.EncodeUint(uint64(v[int32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11484,26 +12734,32 @@ func (_ fastpathT) EncMapInt32Uint8V(v map[int32]uint8, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int32(k2)))
-			if esep {
+				ee.EncodeInt(int64(int32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int32(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int32(k2)))
+				ee.EncodeUint(uint64(v[int32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11527,26 +12783,32 @@ func (_ fastpathT) EncMapInt32Uint16V(v map[int32]uint16, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int32(k2)))
-			if esep {
+				ee.EncodeInt(int64(int32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int32(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int32(k2)))
+				ee.EncodeUint(uint64(v[int32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11570,26 +12832,32 @@ func (_ fastpathT) EncMapInt32Uint32V(v map[int32]uint32, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int32(k2)))
-			if esep {
+				ee.EncodeInt(int64(int32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int32(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int32(k2)))
+				ee.EncodeUint(uint64(v[int32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11613,26 +12881,32 @@ func (_ fastpathT) EncMapInt32Uint64V(v map[int32]uint64, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int32(k2)))
-			if esep {
+				ee.EncodeInt(int64(int32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int32(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int32(k2)))
+				ee.EncodeUint(uint64(v[int32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11656,26 +12930,32 @@ func (_ fastpathT) EncMapInt32UintptrV(v map[int32]uintptr, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int32(k2)))
-			if esep {
+				ee.EncodeInt(int64(int32(k2)))
 				ee.WriteMapElemValue()
+				e.encode(v[int32(k2)])
 			}
-			e.encode(v[int32(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int32(k2)))
+				e.encode(v[int32(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11699,26 +12979,32 @@ func (_ fastpathT) EncMapInt32IntV(v map[int32]int, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int32(k2)))
-			if esep {
+				ee.EncodeInt(int64(int32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int32(k2)]))
 			}
-			ee.EncodeInt(int64(v[int32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int32(k2)))
+				ee.EncodeInt(int64(v[int32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11742,26 +13028,32 @@ func (_ fastpathT) EncMapInt32Int8V(v map[int32]int8, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int32(k2)))
-			if esep {
+				ee.EncodeInt(int64(int32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int32(k2)]))
 			}
-			ee.EncodeInt(int64(v[int32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int32(k2)))
+				ee.EncodeInt(int64(v[int32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11785,26 +13077,32 @@ func (_ fastpathT) EncMapInt32Int16V(v map[int32]int16, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int32(k2)))
-			if esep {
+				ee.EncodeInt(int64(int32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int32(k2)]))
 			}
-			ee.EncodeInt(int64(v[int32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int32(k2)))
+				ee.EncodeInt(int64(v[int32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11828,26 +13126,32 @@ func (_ fastpathT) EncMapInt32Int32V(v map[int32]int32, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int32(k2)))
-			if esep {
+				ee.EncodeInt(int64(int32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int32(k2)]))
 			}
-			ee.EncodeInt(int64(v[int32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int32(k2)))
+				ee.EncodeInt(int64(v[int32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11871,26 +13175,32 @@ func (_ fastpathT) EncMapInt32Int64V(v map[int32]int64, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int32(k2)))
-			if esep {
+				ee.EncodeInt(int64(int32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int32(k2)]))
 			}
-			ee.EncodeInt(int64(v[int32(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int32(k2)))
+				ee.EncodeInt(int64(v[int32(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11914,26 +13224,32 @@ func (_ fastpathT) EncMapInt32Float32V(v map[int32]float32, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int32(k2)))
-			if esep {
+				ee.EncodeInt(int64(int32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v[int32(k2)])
 			}
-			ee.EncodeFloat32(v[int32(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int32(k2)))
+				ee.EncodeFloat32(v[int32(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v2)
 			}
-			ee.EncodeFloat32(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeFloat32(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -11957,26 +13273,32 @@ func (_ fastpathT) EncMapInt32Float64V(v map[int32]float64, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int32(k2)))
-			if esep {
+				ee.EncodeInt(int64(int32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v[int32(k2)])
 			}
-			ee.EncodeFloat64(v[int32(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int32(k2)))
+				ee.EncodeFloat64(v[int32(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v2)
 			}
-			ee.EncodeFloat64(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeFloat64(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12000,26 +13322,32 @@ func (_ fastpathT) EncMapInt32BoolV(v map[int32]bool, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int32(k2)))
-			if esep {
+				ee.EncodeInt(int64(int32(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v[int32(k2)])
 			}
-			ee.EncodeBool(v[int32(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int32(k2)))
+				ee.EncodeBool(v[int32(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v2)
 			}
-			ee.EncodeBool(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeBool(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12043,26 +13371,32 @@ func (_ fastpathT) EncMapInt64IntfV(v map[int64]interface{}, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int64(k2)))
-			if esep {
+				ee.EncodeInt(int64(int64(k2)))
 				ee.WriteMapElemValue()
+				e.encode(v[int64(k2)])
 			}
-			e.encode(v[int64(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int64(k2)))
+				e.encode(v[int64(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12086,26 +13420,32 @@ func (_ fastpathT) EncMapInt64StringV(v map[int64]string, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int64(k2)))
-			if esep {
+				ee.EncodeInt(int64(int64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v[int64(k2)])
 			}
-			ee.EncodeString(cUTF8, v[int64(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int64(k2)))
+				ee.EncodeString(cUTF8, v[int64(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v2)
 			}
-			ee.EncodeString(cUTF8, v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeString(cUTF8, v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12129,26 +13469,32 @@ func (_ fastpathT) EncMapInt64UintV(v map[int64]uint, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int64(k2)))
-			if esep {
+				ee.EncodeInt(int64(int64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int64(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int64(k2)))
+				ee.EncodeUint(uint64(v[int64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12172,26 +13518,32 @@ func (_ fastpathT) EncMapInt64Uint8V(v map[int64]uint8, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int64(k2)))
-			if esep {
+				ee.EncodeInt(int64(int64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int64(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int64(k2)))
+				ee.EncodeUint(uint64(v[int64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12215,26 +13567,32 @@ func (_ fastpathT) EncMapInt64Uint16V(v map[int64]uint16, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int64(k2)))
-			if esep {
+				ee.EncodeInt(int64(int64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int64(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int64(k2)))
+				ee.EncodeUint(uint64(v[int64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12258,26 +13616,32 @@ func (_ fastpathT) EncMapInt64Uint32V(v map[int64]uint32, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int64(k2)))
-			if esep {
+				ee.EncodeInt(int64(int64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int64(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int64(k2)))
+				ee.EncodeUint(uint64(v[int64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12301,26 +13665,32 @@ func (_ fastpathT) EncMapInt64Uint64V(v map[int64]uint64, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int64(k2)))
-			if esep {
+				ee.EncodeInt(int64(int64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[int64(k2)]))
 			}
-			ee.EncodeUint(uint64(v[int64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int64(k2)))
+				ee.EncodeUint(uint64(v[int64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12344,26 +13714,32 @@ func (_ fastpathT) EncMapInt64UintptrV(v map[int64]uintptr, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int64(k2)))
-			if esep {
+				ee.EncodeInt(int64(int64(k2)))
 				ee.WriteMapElemValue()
+				e.encode(v[int64(k2)])
 			}
-			e.encode(v[int64(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int64(k2)))
+				e.encode(v[int64(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12387,26 +13763,32 @@ func (_ fastpathT) EncMapInt64IntV(v map[int64]int, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int64(k2)))
-			if esep {
+				ee.EncodeInt(int64(int64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int64(k2)]))
 			}
-			ee.EncodeInt(int64(v[int64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int64(k2)))
+				ee.EncodeInt(int64(v[int64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12430,26 +13812,32 @@ func (_ fastpathT) EncMapInt64Int8V(v map[int64]int8, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int64(k2)))
-			if esep {
+				ee.EncodeInt(int64(int64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int64(k2)]))
 			}
-			ee.EncodeInt(int64(v[int64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int64(k2)))
+				ee.EncodeInt(int64(v[int64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12473,26 +13861,32 @@ func (_ fastpathT) EncMapInt64Int16V(v map[int64]int16, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int64(k2)))
-			if esep {
+				ee.EncodeInt(int64(int64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int64(k2)]))
 			}
-			ee.EncodeInt(int64(v[int64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int64(k2)))
+				ee.EncodeInt(int64(v[int64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12516,26 +13910,32 @@ func (_ fastpathT) EncMapInt64Int32V(v map[int64]int32, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int64(k2)))
-			if esep {
+				ee.EncodeInt(int64(int64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int64(k2)]))
 			}
-			ee.EncodeInt(int64(v[int64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int64(k2)))
+				ee.EncodeInt(int64(v[int64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12559,26 +13959,32 @@ func (_ fastpathT) EncMapInt64Int64V(v map[int64]int64, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int64(k2)))
-			if esep {
+				ee.EncodeInt(int64(int64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[int64(k2)]))
 			}
-			ee.EncodeInt(int64(v[int64(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int64(k2)))
+				ee.EncodeInt(int64(v[int64(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12602,26 +14008,32 @@ func (_ fastpathT) EncMapInt64Float32V(v map[int64]float32, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int64(k2)))
-			if esep {
+				ee.EncodeInt(int64(int64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v[int64(k2)])
 			}
-			ee.EncodeFloat32(v[int64(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int64(k2)))
+				ee.EncodeFloat32(v[int64(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v2)
 			}
-			ee.EncodeFloat32(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeFloat32(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12645,26 +14057,32 @@ func (_ fastpathT) EncMapInt64Float64V(v map[int64]float64, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int64(k2)))
-			if esep {
+				ee.EncodeInt(int64(int64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v[int64(k2)])
 			}
-			ee.EncodeFloat64(v[int64(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int64(k2)))
+				ee.EncodeFloat64(v[int64(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v2)
 			}
-			ee.EncodeFloat64(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeFloat64(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12688,26 +14106,32 @@ func (_ fastpathT) EncMapInt64BoolV(v map[int64]bool, e *Encoder) {
 			i++
 		}
 		sort.Sort(intSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(int64(k2)))
-			if esep {
+				ee.EncodeInt(int64(int64(k2)))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v[int64(k2)])
 			}
-			ee.EncodeBool(v[int64(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeInt(int64(int64(k2)))
+				ee.EncodeBool(v[int64(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeInt(int64(k2))
-			if esep {
+				ee.EncodeInt(int64(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v2)
 			}
-			ee.EncodeBool(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeInt(int64(k2))
+				ee.EncodeBool(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12731,26 +14155,32 @@ func (_ fastpathT) EncMapBoolIntfV(v map[bool]interface{}, e *Encoder) {
 			i++
 		}
 		sort.Sort(boolSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(bool(k2))
-			if esep {
+				ee.EncodeBool(bool(k2))
 				ee.WriteMapElemValue()
+				e.encode(v[bool(k2)])
 			}
-			e.encode(v[bool(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeBool(bool(k2))
+				e.encode(v[bool(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(k2)
-			if esep {
+				ee.EncodeBool(k2)
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeBool(k2)
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12774,26 +14204,32 @@ func (_ fastpathT) EncMapBoolStringV(v map[bool]string, e *Encoder) {
 			i++
 		}
 		sort.Sort(boolSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(bool(k2))
-			if esep {
+				ee.EncodeBool(bool(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v[bool(k2)])
 			}
-			ee.EncodeString(cUTF8, v[bool(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeBool(bool(k2))
+				ee.EncodeString(cUTF8, v[bool(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(k2)
-			if esep {
+				ee.EncodeBool(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeString(cUTF8, v2)
 			}
-			ee.EncodeString(cUTF8, v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeBool(k2)
+				ee.EncodeString(cUTF8, v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12817,26 +14253,32 @@ func (_ fastpathT) EncMapBoolUintV(v map[bool]uint, e *Encoder) {
 			i++
 		}
 		sort.Sort(boolSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(bool(k2))
-			if esep {
+				ee.EncodeBool(bool(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[bool(k2)]))
 			}
-			ee.EncodeUint(uint64(v[bool(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeBool(bool(k2))
+				ee.EncodeUint(uint64(v[bool(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(k2)
-			if esep {
+				ee.EncodeBool(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeBool(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12860,26 +14302,32 @@ func (_ fastpathT) EncMapBoolUint8V(v map[bool]uint8, e *Encoder) {
 			i++
 		}
 		sort.Sort(boolSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(bool(k2))
-			if esep {
+				ee.EncodeBool(bool(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[bool(k2)]))
 			}
-			ee.EncodeUint(uint64(v[bool(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeBool(bool(k2))
+				ee.EncodeUint(uint64(v[bool(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(k2)
-			if esep {
+				ee.EncodeBool(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeBool(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12903,26 +14351,32 @@ func (_ fastpathT) EncMapBoolUint16V(v map[bool]uint16, e *Encoder) {
 			i++
 		}
 		sort.Sort(boolSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(bool(k2))
-			if esep {
+				ee.EncodeBool(bool(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[bool(k2)]))
 			}
-			ee.EncodeUint(uint64(v[bool(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeBool(bool(k2))
+				ee.EncodeUint(uint64(v[bool(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(k2)
-			if esep {
+				ee.EncodeBool(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeBool(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12946,26 +14400,32 @@ func (_ fastpathT) EncMapBoolUint32V(v map[bool]uint32, e *Encoder) {
 			i++
 		}
 		sort.Sort(boolSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(bool(k2))
-			if esep {
+				ee.EncodeBool(bool(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[bool(k2)]))
 			}
-			ee.EncodeUint(uint64(v[bool(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeBool(bool(k2))
+				ee.EncodeUint(uint64(v[bool(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(k2)
-			if esep {
+				ee.EncodeBool(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeBool(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -12989,26 +14449,32 @@ func (_ fastpathT) EncMapBoolUint64V(v map[bool]uint64, e *Encoder) {
 			i++
 		}
 		sort.Sort(boolSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(bool(k2))
-			if esep {
+				ee.EncodeBool(bool(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v[bool(k2)]))
 			}
-			ee.EncodeUint(uint64(v[bool(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeBool(bool(k2))
+				ee.EncodeUint(uint64(v[bool(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(k2)
-			if esep {
+				ee.EncodeBool(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeUint(uint64(v2))
 			}
-			ee.EncodeUint(uint64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeBool(k2)
+				ee.EncodeUint(uint64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -13032,26 +14498,32 @@ func (_ fastpathT) EncMapBoolUintptrV(v map[bool]uintptr, e *Encoder) {
 			i++
 		}
 		sort.Sort(boolSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(bool(k2))
-			if esep {
+				ee.EncodeBool(bool(k2))
 				ee.WriteMapElemValue()
+				e.encode(v[bool(k2)])
 			}
-			e.encode(v[bool(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeBool(bool(k2))
+				e.encode(v[bool(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(k2)
-			if esep {
+				ee.EncodeBool(k2)
 				ee.WriteMapElemValue()
+				e.encode(v2)
 			}
-			e.encode(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeBool(k2)
+				e.encode(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -13075,26 +14547,32 @@ func (_ fastpathT) EncMapBoolIntV(v map[bool]int, e *Encoder) {
 			i++
 		}
 		sort.Sort(boolSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(bool(k2))
-			if esep {
+				ee.EncodeBool(bool(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[bool(k2)]))
 			}
-			ee.EncodeInt(int64(v[bool(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeBool(bool(k2))
+				ee.EncodeInt(int64(v[bool(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(k2)
-			if esep {
+				ee.EncodeBool(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeBool(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -13118,26 +14596,32 @@ func (_ fastpathT) EncMapBoolInt8V(v map[bool]int8, e *Encoder) {
 			i++
 		}
 		sort.Sort(boolSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(bool(k2))
-			if esep {
+				ee.EncodeBool(bool(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[bool(k2)]))
 			}
-			ee.EncodeInt(int64(v[bool(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeBool(bool(k2))
+				ee.EncodeInt(int64(v[bool(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(k2)
-			if esep {
+				ee.EncodeBool(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeBool(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -13161,26 +14645,32 @@ func (_ fastpathT) EncMapBoolInt16V(v map[bool]int16, e *Encoder) {
 			i++
 		}
 		sort.Sort(boolSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(bool(k2))
-			if esep {
+				ee.EncodeBool(bool(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[bool(k2)]))
 			}
-			ee.EncodeInt(int64(v[bool(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeBool(bool(k2))
+				ee.EncodeInt(int64(v[bool(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(k2)
-			if esep {
+				ee.EncodeBool(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeBool(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -13204,26 +14694,32 @@ func (_ fastpathT) EncMapBoolInt32V(v map[bool]int32, e *Encoder) {
 			i++
 		}
 		sort.Sort(boolSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(bool(k2))
-			if esep {
+				ee.EncodeBool(bool(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[bool(k2)]))
 			}
-			ee.EncodeInt(int64(v[bool(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeBool(bool(k2))
+				ee.EncodeInt(int64(v[bool(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(k2)
-			if esep {
+				ee.EncodeBool(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeBool(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -13247,26 +14743,32 @@ func (_ fastpathT) EncMapBoolInt64V(v map[bool]int64, e *Encoder) {
 			i++
 		}
 		sort.Sort(boolSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(bool(k2))
-			if esep {
+				ee.EncodeBool(bool(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v[bool(k2)]))
 			}
-			ee.EncodeInt(int64(v[bool(k2)]))
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeBool(bool(k2))
+				ee.EncodeInt(int64(v[bool(k2)]))
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(k2)
-			if esep {
+				ee.EncodeBool(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeInt(int64(v2))
 			}
-			ee.EncodeInt(int64(v2))
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeBool(k2)
+				ee.EncodeInt(int64(v2))
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -13290,26 +14792,32 @@ func (_ fastpathT) EncMapBoolFloat32V(v map[bool]float32, e *Encoder) {
 			i++
 		}
 		sort.Sort(boolSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(bool(k2))
-			if esep {
+				ee.EncodeBool(bool(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v[bool(k2)])
 			}
-			ee.EncodeFloat32(v[bool(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeBool(bool(k2))
+				ee.EncodeFloat32(v[bool(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(k2)
-			if esep {
+				ee.EncodeBool(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeFloat32(v2)
 			}
-			ee.EncodeFloat32(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeBool(k2)
+				ee.EncodeFloat32(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -13333,26 +14841,32 @@ func (_ fastpathT) EncMapBoolFloat64V(v map[bool]float64, e *Encoder) {
 			i++
 		}
 		sort.Sort(boolSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(bool(k2))
-			if esep {
+				ee.EncodeBool(bool(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v[bool(k2)])
 			}
-			ee.EncodeFloat64(v[bool(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeBool(bool(k2))
+				ee.EncodeFloat64(v[bool(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(k2)
-			if esep {
+				ee.EncodeBool(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeFloat64(v2)
 			}
-			ee.EncodeFloat64(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeBool(k2)
+				ee.EncodeFloat64(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -13376,26 +14890,32 @@ func (_ fastpathT) EncMapBoolBoolV(v map[bool]bool, e *Encoder) {
 			i++
 		}
 		sort.Sort(boolSlice(v2))
-		for _, k2 := range v2 {
-			if esep {
+		if esep {
+			for _, k2 := range v2 {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(bool(k2))
-			if esep {
+				ee.EncodeBool(bool(k2))
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v[bool(k2)])
 			}
-			ee.EncodeBool(v[bool(k2)])
+		} else {
+			for _, k2 := range v2 {
+				ee.EncodeBool(bool(k2))
+				ee.EncodeBool(v[bool(k2)])
+			}
 		}
 	} else {
-		for k2, v2 := range v {
-			if esep {
+		if esep {
+			for k2, v2 := range v {
 				ee.WriteMapElemKey()
-			}
-			ee.EncodeBool(k2)
-			if esep {
+				ee.EncodeBool(k2)
 				ee.WriteMapElemValue()
+				ee.EncodeBool(v2)
 			}
-			ee.EncodeBool(v2)
+		} else {
+			for k2, v2 := range v {
+				ee.EncodeBool(k2)
+				ee.EncodeBool(v2)
+			}
 		}
 	}
 	ee.WriteMapEnd()
@@ -15638,7 +17158,7 @@ func fastpathDecodeTypeSwitch(iv interface{}, d *Decoder) bool {
 			*v = v2
 		}
 	default:
-		_ = v // TODO: workaround https://github.com/golang/go/issues/12927 (remove after go 1.6 release)
+		_ = v // workaround https://github.com/golang/go/issues/12927 seen in go1.4
 		return false
 	}
 	return true
@@ -16193,7 +17713,7 @@ func fastpathDecodeSetZeroTypeSwitch(iv interface{}) bool {
 	case *map[bool]bool:
 		*v = nil
 	default:
-		_ = v // TODO: workaround https://github.com/golang/go/issues/12927 (remove after go 1.6 release)
+		_ = v // workaround https://github.com/golang/go/issues/12927 seen in go1.4
 		return false
 	}
 	return true
@@ -16473,7 +17993,7 @@ func (_ fastpathT) DecSliceFloat32V(v []float32, canChange bool, d *Decoder) (_ 
 		} else if dd.TryDecodeAsNil() {
 			v[j] = 0
 		} else {
-			v[j] = float32(chkFloat32(dd.DecodeFloat64()))
+			v[j] = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		}
 	}
 	if canChange {
@@ -16665,7 +18185,7 @@ func (_ fastpathT) DecSliceUintV(v []uint, canChange bool, d *Decoder) (_ []uint
 		} else if dd.TryDecodeAsNil() {
 			v[j] = 0
 		} else {
-			v[j] = uint(dd.DecodeUint(uintBitsize))
+			v[j] = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		}
 	}
 	if canChange {
@@ -16761,7 +18281,7 @@ func (_ fastpathT) DecSliceUint8V(v []uint8, canChange bool, d *Decoder) (_ []ui
 		} else if dd.TryDecodeAsNil() {
 			v[j] = 0
 		} else {
-			v[j] = uint8(dd.DecodeUint(8))
+			v[j] = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		}
 	}
 	if canChange {
@@ -16857,7 +18377,7 @@ func (_ fastpathT) DecSliceUint16V(v []uint16, canChange bool, d *Decoder) (_ []
 		} else if dd.TryDecodeAsNil() {
 			v[j] = 0
 		} else {
-			v[j] = uint16(dd.DecodeUint(16))
+			v[j] = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		}
 	}
 	if canChange {
@@ -16953,7 +18473,7 @@ func (_ fastpathT) DecSliceUint32V(v []uint32, canChange bool, d *Decoder) (_ []
 		} else if dd.TryDecodeAsNil() {
 			v[j] = 0
 		} else {
-			v[j] = uint32(dd.DecodeUint(32))
+			v[j] = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		}
 	}
 	if canChange {
@@ -17049,7 +18569,7 @@ func (_ fastpathT) DecSliceUint64V(v []uint64, canChange bool, d *Decoder) (_ []
 		} else if dd.TryDecodeAsNil() {
 			v[j] = 0
 		} else {
-			v[j] = dd.DecodeUint(64)
+			v[j] = dd.DecodeUint64()
 		}
 	}
 	if canChange {
@@ -17145,7 +18665,7 @@ func (_ fastpathT) DecSliceUintptrV(v []uintptr, canChange bool, d *Decoder) (_ 
 		} else if dd.TryDecodeAsNil() {
 			v[j] = 0
 		} else {
-			v[j] = uintptr(dd.DecodeUint(uintBitsize))
+			v[j] = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		}
 	}
 	if canChange {
@@ -17241,7 +18761,7 @@ func (_ fastpathT) DecSliceIntV(v []int, canChange bool, d *Decoder) (_ []int, c
 		} else if dd.TryDecodeAsNil() {
 			v[j] = 0
 		} else {
-			v[j] = int(dd.DecodeInt(intBitsize))
+			v[j] = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		}
 	}
 	if canChange {
@@ -17337,7 +18857,7 @@ func (_ fastpathT) DecSliceInt8V(v []int8, canChange bool, d *Decoder) (_ []int8
 		} else if dd.TryDecodeAsNil() {
 			v[j] = 0
 		} else {
-			v[j] = int8(dd.DecodeInt(8))
+			v[j] = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		}
 	}
 	if canChange {
@@ -17433,7 +18953,7 @@ func (_ fastpathT) DecSliceInt16V(v []int16, canChange bool, d *Decoder) (_ []in
 		} else if dd.TryDecodeAsNil() {
 			v[j] = 0
 		} else {
-			v[j] = int16(dd.DecodeInt(16))
+			v[j] = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		}
 	}
 	if canChange {
@@ -17529,7 +19049,7 @@ func (_ fastpathT) DecSliceInt32V(v []int32, canChange bool, d *Decoder) (_ []in
 		} else if dd.TryDecodeAsNil() {
 			v[j] = 0
 		} else {
-			v[j] = int32(dd.DecodeInt(32))
+			v[j] = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		}
 	}
 	if canChange {
@@ -17625,7 +19145,7 @@ func (_ fastpathT) DecSliceInt64V(v []int64, canChange bool, d *Decoder) (_ []in
 		} else if dd.TryDecodeAsNil() {
 			v[j] = 0
 		} else {
-			v[j] = dd.DecodeInt(64)
+			v[j] = dd.DecodeInt64()
 		}
 	}
 	if canChange {
@@ -17923,7 +19443,7 @@ func (_ fastpathT) DecMapIntfUintV(v map[interface{}]uint, canChange bool,
 			}
 			continue
 		}
-		mv = uint(dd.DecodeUint(uintBitsize))
+		mv = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -17986,7 +19506,7 @@ func (_ fastpathT) DecMapIntfUint8V(v map[interface{}]uint8, canChange bool,
 			}
 			continue
 		}
-		mv = uint8(dd.DecodeUint(8))
+		mv = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -18049,7 +19569,7 @@ func (_ fastpathT) DecMapIntfUint16V(v map[interface{}]uint16, canChange bool,
 			}
 			continue
 		}
-		mv = uint16(dd.DecodeUint(16))
+		mv = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -18112,7 +19632,7 @@ func (_ fastpathT) DecMapIntfUint32V(v map[interface{}]uint32, canChange bool,
 			}
 			continue
 		}
-		mv = uint32(dd.DecodeUint(32))
+		mv = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -18175,7 +19695,7 @@ func (_ fastpathT) DecMapIntfUint64V(v map[interface{}]uint64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeUint(64)
+		mv = dd.DecodeUint64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -18238,7 +19758,7 @@ func (_ fastpathT) DecMapIntfUintptrV(v map[interface{}]uintptr, canChange bool,
 			}
 			continue
 		}
-		mv = uintptr(dd.DecodeUint(uintBitsize))
+		mv = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -18301,7 +19821,7 @@ func (_ fastpathT) DecMapIntfIntV(v map[interface{}]int, canChange bool,
 			}
 			continue
 		}
-		mv = int(dd.DecodeInt(intBitsize))
+		mv = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -18364,7 +19884,7 @@ func (_ fastpathT) DecMapIntfInt8V(v map[interface{}]int8, canChange bool,
 			}
 			continue
 		}
-		mv = int8(dd.DecodeInt(8))
+		mv = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -18427,7 +19947,7 @@ func (_ fastpathT) DecMapIntfInt16V(v map[interface{}]int16, canChange bool,
 			}
 			continue
 		}
-		mv = int16(dd.DecodeInt(16))
+		mv = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -18490,7 +20010,7 @@ func (_ fastpathT) DecMapIntfInt32V(v map[interface{}]int32, canChange bool,
 			}
 			continue
 		}
-		mv = int32(dd.DecodeInt(32))
+		mv = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -18553,7 +20073,7 @@ func (_ fastpathT) DecMapIntfInt64V(v map[interface{}]int64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeInt(64)
+		mv = dd.DecodeInt64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -18616,7 +20136,7 @@ func (_ fastpathT) DecMapIntfFloat32V(v map[interface{}]float32, canChange bool,
 			}
 			continue
 		}
-		mv = float32(chkFloat32(dd.DecodeFloat64()))
+		mv = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -18925,7 +20445,7 @@ func (_ fastpathT) DecMapStringUintV(v map[string]uint, canChange bool,
 			}
 			continue
 		}
-		mv = uint(dd.DecodeUint(uintBitsize))
+		mv = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -18984,7 +20504,7 @@ func (_ fastpathT) DecMapStringUint8V(v map[string]uint8, canChange bool,
 			}
 			continue
 		}
-		mv = uint8(dd.DecodeUint(8))
+		mv = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -19043,7 +20563,7 @@ func (_ fastpathT) DecMapStringUint16V(v map[string]uint16, canChange bool,
 			}
 			continue
 		}
-		mv = uint16(dd.DecodeUint(16))
+		mv = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -19102,7 +20622,7 @@ func (_ fastpathT) DecMapStringUint32V(v map[string]uint32, canChange bool,
 			}
 			continue
 		}
-		mv = uint32(dd.DecodeUint(32))
+		mv = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -19161,7 +20681,7 @@ func (_ fastpathT) DecMapStringUint64V(v map[string]uint64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeUint(64)
+		mv = dd.DecodeUint64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -19220,7 +20740,7 @@ func (_ fastpathT) DecMapStringUintptrV(v map[string]uintptr, canChange bool,
 			}
 			continue
 		}
-		mv = uintptr(dd.DecodeUint(uintBitsize))
+		mv = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -19279,7 +20799,7 @@ func (_ fastpathT) DecMapStringIntV(v map[string]int, canChange bool,
 			}
 			continue
 		}
-		mv = int(dd.DecodeInt(intBitsize))
+		mv = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -19338,7 +20858,7 @@ func (_ fastpathT) DecMapStringInt8V(v map[string]int8, canChange bool,
 			}
 			continue
 		}
-		mv = int8(dd.DecodeInt(8))
+		mv = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -19397,7 +20917,7 @@ func (_ fastpathT) DecMapStringInt16V(v map[string]int16, canChange bool,
 			}
 			continue
 		}
-		mv = int16(dd.DecodeInt(16))
+		mv = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -19456,7 +20976,7 @@ func (_ fastpathT) DecMapStringInt32V(v map[string]int32, canChange bool,
 			}
 			continue
 		}
-		mv = int32(dd.DecodeInt(32))
+		mv = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -19515,7 +21035,7 @@ func (_ fastpathT) DecMapStringInt64V(v map[string]int64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeInt(64)
+		mv = dd.DecodeInt64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -19574,7 +21094,7 @@ func (_ fastpathT) DecMapStringFloat32V(v map[string]float32, canChange bool,
 			}
 			continue
 		}
-		mv = float32(chkFloat32(dd.DecodeFloat64()))
+		mv = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -19739,7 +21259,7 @@ func (_ fastpathT) DecMapFloat32IntfV(v map[float32]interface{}, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = float32(chkFloat32(dd.DecodeFloat64()))
+		mk = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -19803,7 +21323,7 @@ func (_ fastpathT) DecMapFloat32StringV(v map[float32]string, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = float32(chkFloat32(dd.DecodeFloat64()))
+		mk = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -19862,7 +21382,7 @@ func (_ fastpathT) DecMapFloat32UintV(v map[float32]uint, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = float32(chkFloat32(dd.DecodeFloat64()))
+		mk = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -19875,7 +21395,7 @@ func (_ fastpathT) DecMapFloat32UintV(v map[float32]uint, canChange bool,
 			}
 			continue
 		}
-		mv = uint(dd.DecodeUint(uintBitsize))
+		mv = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -19921,7 +21441,7 @@ func (_ fastpathT) DecMapFloat32Uint8V(v map[float32]uint8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = float32(chkFloat32(dd.DecodeFloat64()))
+		mk = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -19934,7 +21454,7 @@ func (_ fastpathT) DecMapFloat32Uint8V(v map[float32]uint8, canChange bool,
 			}
 			continue
 		}
-		mv = uint8(dd.DecodeUint(8))
+		mv = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -19980,7 +21500,7 @@ func (_ fastpathT) DecMapFloat32Uint16V(v map[float32]uint16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = float32(chkFloat32(dd.DecodeFloat64()))
+		mk = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -19993,7 +21513,7 @@ func (_ fastpathT) DecMapFloat32Uint16V(v map[float32]uint16, canChange bool,
 			}
 			continue
 		}
-		mv = uint16(dd.DecodeUint(16))
+		mv = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -20039,7 +21559,7 @@ func (_ fastpathT) DecMapFloat32Uint32V(v map[float32]uint32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = float32(chkFloat32(dd.DecodeFloat64()))
+		mk = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -20052,7 +21572,7 @@ func (_ fastpathT) DecMapFloat32Uint32V(v map[float32]uint32, canChange bool,
 			}
 			continue
 		}
-		mv = uint32(dd.DecodeUint(32))
+		mv = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -20098,7 +21618,7 @@ func (_ fastpathT) DecMapFloat32Uint64V(v map[float32]uint64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = float32(chkFloat32(dd.DecodeFloat64()))
+		mk = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -20111,7 +21631,7 @@ func (_ fastpathT) DecMapFloat32Uint64V(v map[float32]uint64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeUint(64)
+		mv = dd.DecodeUint64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -20157,7 +21677,7 @@ func (_ fastpathT) DecMapFloat32UintptrV(v map[float32]uintptr, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = float32(chkFloat32(dd.DecodeFloat64()))
+		mk = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -20170,7 +21690,7 @@ func (_ fastpathT) DecMapFloat32UintptrV(v map[float32]uintptr, canChange bool,
 			}
 			continue
 		}
-		mv = uintptr(dd.DecodeUint(uintBitsize))
+		mv = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -20216,7 +21736,7 @@ func (_ fastpathT) DecMapFloat32IntV(v map[float32]int, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = float32(chkFloat32(dd.DecodeFloat64()))
+		mk = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -20229,7 +21749,7 @@ func (_ fastpathT) DecMapFloat32IntV(v map[float32]int, canChange bool,
 			}
 			continue
 		}
-		mv = int(dd.DecodeInt(intBitsize))
+		mv = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -20275,7 +21795,7 @@ func (_ fastpathT) DecMapFloat32Int8V(v map[float32]int8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = float32(chkFloat32(dd.DecodeFloat64()))
+		mk = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -20288,7 +21808,7 @@ func (_ fastpathT) DecMapFloat32Int8V(v map[float32]int8, canChange bool,
 			}
 			continue
 		}
-		mv = int8(dd.DecodeInt(8))
+		mv = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -20334,7 +21854,7 @@ func (_ fastpathT) DecMapFloat32Int16V(v map[float32]int16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = float32(chkFloat32(dd.DecodeFloat64()))
+		mk = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -20347,7 +21867,7 @@ func (_ fastpathT) DecMapFloat32Int16V(v map[float32]int16, canChange bool,
 			}
 			continue
 		}
-		mv = int16(dd.DecodeInt(16))
+		mv = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -20393,7 +21913,7 @@ func (_ fastpathT) DecMapFloat32Int32V(v map[float32]int32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = float32(chkFloat32(dd.DecodeFloat64()))
+		mk = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -20406,7 +21926,7 @@ func (_ fastpathT) DecMapFloat32Int32V(v map[float32]int32, canChange bool,
 			}
 			continue
 		}
-		mv = int32(dd.DecodeInt(32))
+		mv = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -20452,7 +21972,7 @@ func (_ fastpathT) DecMapFloat32Int64V(v map[float32]int64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = float32(chkFloat32(dd.DecodeFloat64()))
+		mk = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -20465,7 +21985,7 @@ func (_ fastpathT) DecMapFloat32Int64V(v map[float32]int64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeInt(64)
+		mv = dd.DecodeInt64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -20511,7 +22031,7 @@ func (_ fastpathT) DecMapFloat32Float32V(v map[float32]float32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = float32(chkFloat32(dd.DecodeFloat64()))
+		mk = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -20524,7 +22044,7 @@ func (_ fastpathT) DecMapFloat32Float32V(v map[float32]float32, canChange bool,
 			}
 			continue
 		}
-		mv = float32(chkFloat32(dd.DecodeFloat64()))
+		mv = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -20570,7 +22090,7 @@ func (_ fastpathT) DecMapFloat32Float64V(v map[float32]float64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = float32(chkFloat32(dd.DecodeFloat64()))
+		mk = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -20629,7 +22149,7 @@ func (_ fastpathT) DecMapFloat32BoolV(v map[float32]bool, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = float32(chkFloat32(dd.DecodeFloat64()))
+		mk = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -20825,7 +22345,7 @@ func (_ fastpathT) DecMapFloat64UintV(v map[float64]uint, canChange bool,
 			}
 			continue
 		}
-		mv = uint(dd.DecodeUint(uintBitsize))
+		mv = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -20884,7 +22404,7 @@ func (_ fastpathT) DecMapFloat64Uint8V(v map[float64]uint8, canChange bool,
 			}
 			continue
 		}
-		mv = uint8(dd.DecodeUint(8))
+		mv = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -20943,7 +22463,7 @@ func (_ fastpathT) DecMapFloat64Uint16V(v map[float64]uint16, canChange bool,
 			}
 			continue
 		}
-		mv = uint16(dd.DecodeUint(16))
+		mv = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -21002,7 +22522,7 @@ func (_ fastpathT) DecMapFloat64Uint32V(v map[float64]uint32, canChange bool,
 			}
 			continue
 		}
-		mv = uint32(dd.DecodeUint(32))
+		mv = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -21061,7 +22581,7 @@ func (_ fastpathT) DecMapFloat64Uint64V(v map[float64]uint64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeUint(64)
+		mv = dd.DecodeUint64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -21120,7 +22640,7 @@ func (_ fastpathT) DecMapFloat64UintptrV(v map[float64]uintptr, canChange bool,
 			}
 			continue
 		}
-		mv = uintptr(dd.DecodeUint(uintBitsize))
+		mv = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -21179,7 +22699,7 @@ func (_ fastpathT) DecMapFloat64IntV(v map[float64]int, canChange bool,
 			}
 			continue
 		}
-		mv = int(dd.DecodeInt(intBitsize))
+		mv = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -21238,7 +22758,7 @@ func (_ fastpathT) DecMapFloat64Int8V(v map[float64]int8, canChange bool,
 			}
 			continue
 		}
-		mv = int8(dd.DecodeInt(8))
+		mv = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -21297,7 +22817,7 @@ func (_ fastpathT) DecMapFloat64Int16V(v map[float64]int16, canChange bool,
 			}
 			continue
 		}
-		mv = int16(dd.DecodeInt(16))
+		mv = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -21356,7 +22876,7 @@ func (_ fastpathT) DecMapFloat64Int32V(v map[float64]int32, canChange bool,
 			}
 			continue
 		}
-		mv = int32(dd.DecodeInt(32))
+		mv = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -21415,7 +22935,7 @@ func (_ fastpathT) DecMapFloat64Int64V(v map[float64]int64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeInt(64)
+		mv = dd.DecodeInt64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -21474,7 +22994,7 @@ func (_ fastpathT) DecMapFloat64Float32V(v map[float64]float32, canChange bool,
 			}
 			continue
 		}
-		mv = float32(chkFloat32(dd.DecodeFloat64()))
+		mv = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -21639,7 +23159,7 @@ func (_ fastpathT) DecMapUintIntfV(v map[uint]interface{}, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint(dd.DecodeUint(uintBitsize))
+		mk = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -21703,7 +23223,7 @@ func (_ fastpathT) DecMapUintStringV(v map[uint]string, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint(dd.DecodeUint(uintBitsize))
+		mk = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -21762,7 +23282,7 @@ func (_ fastpathT) DecMapUintUintV(v map[uint]uint, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint(dd.DecodeUint(uintBitsize))
+		mk = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -21775,7 +23295,7 @@ func (_ fastpathT) DecMapUintUintV(v map[uint]uint, canChange bool,
 			}
 			continue
 		}
-		mv = uint(dd.DecodeUint(uintBitsize))
+		mv = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -21821,7 +23341,7 @@ func (_ fastpathT) DecMapUintUint8V(v map[uint]uint8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint(dd.DecodeUint(uintBitsize))
+		mk = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -21834,7 +23354,7 @@ func (_ fastpathT) DecMapUintUint8V(v map[uint]uint8, canChange bool,
 			}
 			continue
 		}
-		mv = uint8(dd.DecodeUint(8))
+		mv = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -21880,7 +23400,7 @@ func (_ fastpathT) DecMapUintUint16V(v map[uint]uint16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint(dd.DecodeUint(uintBitsize))
+		mk = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -21893,7 +23413,7 @@ func (_ fastpathT) DecMapUintUint16V(v map[uint]uint16, canChange bool,
 			}
 			continue
 		}
-		mv = uint16(dd.DecodeUint(16))
+		mv = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -21939,7 +23459,7 @@ func (_ fastpathT) DecMapUintUint32V(v map[uint]uint32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint(dd.DecodeUint(uintBitsize))
+		mk = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -21952,7 +23472,7 @@ func (_ fastpathT) DecMapUintUint32V(v map[uint]uint32, canChange bool,
 			}
 			continue
 		}
-		mv = uint32(dd.DecodeUint(32))
+		mv = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -21998,7 +23518,7 @@ func (_ fastpathT) DecMapUintUint64V(v map[uint]uint64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint(dd.DecodeUint(uintBitsize))
+		mk = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -22011,7 +23531,7 @@ func (_ fastpathT) DecMapUintUint64V(v map[uint]uint64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeUint(64)
+		mv = dd.DecodeUint64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -22057,7 +23577,7 @@ func (_ fastpathT) DecMapUintUintptrV(v map[uint]uintptr, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint(dd.DecodeUint(uintBitsize))
+		mk = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -22070,7 +23590,7 @@ func (_ fastpathT) DecMapUintUintptrV(v map[uint]uintptr, canChange bool,
 			}
 			continue
 		}
-		mv = uintptr(dd.DecodeUint(uintBitsize))
+		mv = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -22116,7 +23636,7 @@ func (_ fastpathT) DecMapUintIntV(v map[uint]int, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint(dd.DecodeUint(uintBitsize))
+		mk = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -22129,7 +23649,7 @@ func (_ fastpathT) DecMapUintIntV(v map[uint]int, canChange bool,
 			}
 			continue
 		}
-		mv = int(dd.DecodeInt(intBitsize))
+		mv = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -22175,7 +23695,7 @@ func (_ fastpathT) DecMapUintInt8V(v map[uint]int8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint(dd.DecodeUint(uintBitsize))
+		mk = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -22188,7 +23708,7 @@ func (_ fastpathT) DecMapUintInt8V(v map[uint]int8, canChange bool,
 			}
 			continue
 		}
-		mv = int8(dd.DecodeInt(8))
+		mv = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -22234,7 +23754,7 @@ func (_ fastpathT) DecMapUintInt16V(v map[uint]int16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint(dd.DecodeUint(uintBitsize))
+		mk = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -22247,7 +23767,7 @@ func (_ fastpathT) DecMapUintInt16V(v map[uint]int16, canChange bool,
 			}
 			continue
 		}
-		mv = int16(dd.DecodeInt(16))
+		mv = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -22293,7 +23813,7 @@ func (_ fastpathT) DecMapUintInt32V(v map[uint]int32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint(dd.DecodeUint(uintBitsize))
+		mk = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -22306,7 +23826,7 @@ func (_ fastpathT) DecMapUintInt32V(v map[uint]int32, canChange bool,
 			}
 			continue
 		}
-		mv = int32(dd.DecodeInt(32))
+		mv = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -22352,7 +23872,7 @@ func (_ fastpathT) DecMapUintInt64V(v map[uint]int64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint(dd.DecodeUint(uintBitsize))
+		mk = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -22365,7 +23885,7 @@ func (_ fastpathT) DecMapUintInt64V(v map[uint]int64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeInt(64)
+		mv = dd.DecodeInt64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -22411,7 +23931,7 @@ func (_ fastpathT) DecMapUintFloat32V(v map[uint]float32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint(dd.DecodeUint(uintBitsize))
+		mk = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -22424,7 +23944,7 @@ func (_ fastpathT) DecMapUintFloat32V(v map[uint]float32, canChange bool,
 			}
 			continue
 		}
-		mv = float32(chkFloat32(dd.DecodeFloat64()))
+		mv = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -22470,7 +23990,7 @@ func (_ fastpathT) DecMapUintFloat64V(v map[uint]float64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint(dd.DecodeUint(uintBitsize))
+		mk = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -22529,7 +24049,7 @@ func (_ fastpathT) DecMapUintBoolV(v map[uint]bool, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint(dd.DecodeUint(uintBitsize))
+		mk = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -22589,7 +24109,7 @@ func (_ fastpathT) DecMapUint8IntfV(v map[uint8]interface{}, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint8(dd.DecodeUint(8))
+		mk = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -22653,7 +24173,7 @@ func (_ fastpathT) DecMapUint8StringV(v map[uint8]string, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint8(dd.DecodeUint(8))
+		mk = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -22712,7 +24232,7 @@ func (_ fastpathT) DecMapUint8UintV(v map[uint8]uint, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint8(dd.DecodeUint(8))
+		mk = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -22725,7 +24245,7 @@ func (_ fastpathT) DecMapUint8UintV(v map[uint8]uint, canChange bool,
 			}
 			continue
 		}
-		mv = uint(dd.DecodeUint(uintBitsize))
+		mv = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -22771,7 +24291,7 @@ func (_ fastpathT) DecMapUint8Uint8V(v map[uint8]uint8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint8(dd.DecodeUint(8))
+		mk = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -22784,7 +24304,7 @@ func (_ fastpathT) DecMapUint8Uint8V(v map[uint8]uint8, canChange bool,
 			}
 			continue
 		}
-		mv = uint8(dd.DecodeUint(8))
+		mv = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -22830,7 +24350,7 @@ func (_ fastpathT) DecMapUint8Uint16V(v map[uint8]uint16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint8(dd.DecodeUint(8))
+		mk = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -22843,7 +24363,7 @@ func (_ fastpathT) DecMapUint8Uint16V(v map[uint8]uint16, canChange bool,
 			}
 			continue
 		}
-		mv = uint16(dd.DecodeUint(16))
+		mv = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -22889,7 +24409,7 @@ func (_ fastpathT) DecMapUint8Uint32V(v map[uint8]uint32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint8(dd.DecodeUint(8))
+		mk = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -22902,7 +24422,7 @@ func (_ fastpathT) DecMapUint8Uint32V(v map[uint8]uint32, canChange bool,
 			}
 			continue
 		}
-		mv = uint32(dd.DecodeUint(32))
+		mv = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -22948,7 +24468,7 @@ func (_ fastpathT) DecMapUint8Uint64V(v map[uint8]uint64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint8(dd.DecodeUint(8))
+		mk = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -22961,7 +24481,7 @@ func (_ fastpathT) DecMapUint8Uint64V(v map[uint8]uint64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeUint(64)
+		mv = dd.DecodeUint64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -23007,7 +24527,7 @@ func (_ fastpathT) DecMapUint8UintptrV(v map[uint8]uintptr, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint8(dd.DecodeUint(8))
+		mk = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -23020,7 +24540,7 @@ func (_ fastpathT) DecMapUint8UintptrV(v map[uint8]uintptr, canChange bool,
 			}
 			continue
 		}
-		mv = uintptr(dd.DecodeUint(uintBitsize))
+		mv = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -23066,7 +24586,7 @@ func (_ fastpathT) DecMapUint8IntV(v map[uint8]int, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint8(dd.DecodeUint(8))
+		mk = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -23079,7 +24599,7 @@ func (_ fastpathT) DecMapUint8IntV(v map[uint8]int, canChange bool,
 			}
 			continue
 		}
-		mv = int(dd.DecodeInt(intBitsize))
+		mv = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -23125,7 +24645,7 @@ func (_ fastpathT) DecMapUint8Int8V(v map[uint8]int8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint8(dd.DecodeUint(8))
+		mk = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -23138,7 +24658,7 @@ func (_ fastpathT) DecMapUint8Int8V(v map[uint8]int8, canChange bool,
 			}
 			continue
 		}
-		mv = int8(dd.DecodeInt(8))
+		mv = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -23184,7 +24704,7 @@ func (_ fastpathT) DecMapUint8Int16V(v map[uint8]int16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint8(dd.DecodeUint(8))
+		mk = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -23197,7 +24717,7 @@ func (_ fastpathT) DecMapUint8Int16V(v map[uint8]int16, canChange bool,
 			}
 			continue
 		}
-		mv = int16(dd.DecodeInt(16))
+		mv = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -23243,7 +24763,7 @@ func (_ fastpathT) DecMapUint8Int32V(v map[uint8]int32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint8(dd.DecodeUint(8))
+		mk = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -23256,7 +24776,7 @@ func (_ fastpathT) DecMapUint8Int32V(v map[uint8]int32, canChange bool,
 			}
 			continue
 		}
-		mv = int32(dd.DecodeInt(32))
+		mv = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -23302,7 +24822,7 @@ func (_ fastpathT) DecMapUint8Int64V(v map[uint8]int64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint8(dd.DecodeUint(8))
+		mk = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -23315,7 +24835,7 @@ func (_ fastpathT) DecMapUint8Int64V(v map[uint8]int64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeInt(64)
+		mv = dd.DecodeInt64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -23361,7 +24881,7 @@ func (_ fastpathT) DecMapUint8Float32V(v map[uint8]float32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint8(dd.DecodeUint(8))
+		mk = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -23374,7 +24894,7 @@ func (_ fastpathT) DecMapUint8Float32V(v map[uint8]float32, canChange bool,
 			}
 			continue
 		}
-		mv = float32(chkFloat32(dd.DecodeFloat64()))
+		mv = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -23420,7 +24940,7 @@ func (_ fastpathT) DecMapUint8Float64V(v map[uint8]float64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint8(dd.DecodeUint(8))
+		mk = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -23479,7 +24999,7 @@ func (_ fastpathT) DecMapUint8BoolV(v map[uint8]bool, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint8(dd.DecodeUint(8))
+		mk = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -23539,7 +25059,7 @@ func (_ fastpathT) DecMapUint16IntfV(v map[uint16]interface{}, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint16(dd.DecodeUint(16))
+		mk = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -23603,7 +25123,7 @@ func (_ fastpathT) DecMapUint16StringV(v map[uint16]string, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint16(dd.DecodeUint(16))
+		mk = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -23662,7 +25182,7 @@ func (_ fastpathT) DecMapUint16UintV(v map[uint16]uint, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint16(dd.DecodeUint(16))
+		mk = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -23675,7 +25195,7 @@ func (_ fastpathT) DecMapUint16UintV(v map[uint16]uint, canChange bool,
 			}
 			continue
 		}
-		mv = uint(dd.DecodeUint(uintBitsize))
+		mv = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -23721,7 +25241,7 @@ func (_ fastpathT) DecMapUint16Uint8V(v map[uint16]uint8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint16(dd.DecodeUint(16))
+		mk = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -23734,7 +25254,7 @@ func (_ fastpathT) DecMapUint16Uint8V(v map[uint16]uint8, canChange bool,
 			}
 			continue
 		}
-		mv = uint8(dd.DecodeUint(8))
+		mv = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -23780,7 +25300,7 @@ func (_ fastpathT) DecMapUint16Uint16V(v map[uint16]uint16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint16(dd.DecodeUint(16))
+		mk = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -23793,7 +25313,7 @@ func (_ fastpathT) DecMapUint16Uint16V(v map[uint16]uint16, canChange bool,
 			}
 			continue
 		}
-		mv = uint16(dd.DecodeUint(16))
+		mv = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -23839,7 +25359,7 @@ func (_ fastpathT) DecMapUint16Uint32V(v map[uint16]uint32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint16(dd.DecodeUint(16))
+		mk = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -23852,7 +25372,7 @@ func (_ fastpathT) DecMapUint16Uint32V(v map[uint16]uint32, canChange bool,
 			}
 			continue
 		}
-		mv = uint32(dd.DecodeUint(32))
+		mv = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -23898,7 +25418,7 @@ func (_ fastpathT) DecMapUint16Uint64V(v map[uint16]uint64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint16(dd.DecodeUint(16))
+		mk = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -23911,7 +25431,7 @@ func (_ fastpathT) DecMapUint16Uint64V(v map[uint16]uint64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeUint(64)
+		mv = dd.DecodeUint64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -23957,7 +25477,7 @@ func (_ fastpathT) DecMapUint16UintptrV(v map[uint16]uintptr, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint16(dd.DecodeUint(16))
+		mk = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -23970,7 +25490,7 @@ func (_ fastpathT) DecMapUint16UintptrV(v map[uint16]uintptr, canChange bool,
 			}
 			continue
 		}
-		mv = uintptr(dd.DecodeUint(uintBitsize))
+		mv = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -24016,7 +25536,7 @@ func (_ fastpathT) DecMapUint16IntV(v map[uint16]int, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint16(dd.DecodeUint(16))
+		mk = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -24029,7 +25549,7 @@ func (_ fastpathT) DecMapUint16IntV(v map[uint16]int, canChange bool,
 			}
 			continue
 		}
-		mv = int(dd.DecodeInt(intBitsize))
+		mv = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -24075,7 +25595,7 @@ func (_ fastpathT) DecMapUint16Int8V(v map[uint16]int8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint16(dd.DecodeUint(16))
+		mk = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -24088,7 +25608,7 @@ func (_ fastpathT) DecMapUint16Int8V(v map[uint16]int8, canChange bool,
 			}
 			continue
 		}
-		mv = int8(dd.DecodeInt(8))
+		mv = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -24134,7 +25654,7 @@ func (_ fastpathT) DecMapUint16Int16V(v map[uint16]int16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint16(dd.DecodeUint(16))
+		mk = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -24147,7 +25667,7 @@ func (_ fastpathT) DecMapUint16Int16V(v map[uint16]int16, canChange bool,
 			}
 			continue
 		}
-		mv = int16(dd.DecodeInt(16))
+		mv = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -24193,7 +25713,7 @@ func (_ fastpathT) DecMapUint16Int32V(v map[uint16]int32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint16(dd.DecodeUint(16))
+		mk = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -24206,7 +25726,7 @@ func (_ fastpathT) DecMapUint16Int32V(v map[uint16]int32, canChange bool,
 			}
 			continue
 		}
-		mv = int32(dd.DecodeInt(32))
+		mv = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -24252,7 +25772,7 @@ func (_ fastpathT) DecMapUint16Int64V(v map[uint16]int64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint16(dd.DecodeUint(16))
+		mk = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -24265,7 +25785,7 @@ func (_ fastpathT) DecMapUint16Int64V(v map[uint16]int64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeInt(64)
+		mv = dd.DecodeInt64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -24311,7 +25831,7 @@ func (_ fastpathT) DecMapUint16Float32V(v map[uint16]float32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint16(dd.DecodeUint(16))
+		mk = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -24324,7 +25844,7 @@ func (_ fastpathT) DecMapUint16Float32V(v map[uint16]float32, canChange bool,
 			}
 			continue
 		}
-		mv = float32(chkFloat32(dd.DecodeFloat64()))
+		mv = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -24370,7 +25890,7 @@ func (_ fastpathT) DecMapUint16Float64V(v map[uint16]float64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint16(dd.DecodeUint(16))
+		mk = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -24429,7 +25949,7 @@ func (_ fastpathT) DecMapUint16BoolV(v map[uint16]bool, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint16(dd.DecodeUint(16))
+		mk = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -24489,7 +26009,7 @@ func (_ fastpathT) DecMapUint32IntfV(v map[uint32]interface{}, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint32(dd.DecodeUint(32))
+		mk = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -24553,7 +26073,7 @@ func (_ fastpathT) DecMapUint32StringV(v map[uint32]string, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint32(dd.DecodeUint(32))
+		mk = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -24612,7 +26132,7 @@ func (_ fastpathT) DecMapUint32UintV(v map[uint32]uint, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint32(dd.DecodeUint(32))
+		mk = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -24625,7 +26145,7 @@ func (_ fastpathT) DecMapUint32UintV(v map[uint32]uint, canChange bool,
 			}
 			continue
 		}
-		mv = uint(dd.DecodeUint(uintBitsize))
+		mv = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -24671,7 +26191,7 @@ func (_ fastpathT) DecMapUint32Uint8V(v map[uint32]uint8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint32(dd.DecodeUint(32))
+		mk = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -24684,7 +26204,7 @@ func (_ fastpathT) DecMapUint32Uint8V(v map[uint32]uint8, canChange bool,
 			}
 			continue
 		}
-		mv = uint8(dd.DecodeUint(8))
+		mv = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -24730,7 +26250,7 @@ func (_ fastpathT) DecMapUint32Uint16V(v map[uint32]uint16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint32(dd.DecodeUint(32))
+		mk = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -24743,7 +26263,7 @@ func (_ fastpathT) DecMapUint32Uint16V(v map[uint32]uint16, canChange bool,
 			}
 			continue
 		}
-		mv = uint16(dd.DecodeUint(16))
+		mv = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -24789,7 +26309,7 @@ func (_ fastpathT) DecMapUint32Uint32V(v map[uint32]uint32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint32(dd.DecodeUint(32))
+		mk = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -24802,7 +26322,7 @@ func (_ fastpathT) DecMapUint32Uint32V(v map[uint32]uint32, canChange bool,
 			}
 			continue
 		}
-		mv = uint32(dd.DecodeUint(32))
+		mv = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -24848,7 +26368,7 @@ func (_ fastpathT) DecMapUint32Uint64V(v map[uint32]uint64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint32(dd.DecodeUint(32))
+		mk = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -24861,7 +26381,7 @@ func (_ fastpathT) DecMapUint32Uint64V(v map[uint32]uint64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeUint(64)
+		mv = dd.DecodeUint64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -24907,7 +26427,7 @@ func (_ fastpathT) DecMapUint32UintptrV(v map[uint32]uintptr, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint32(dd.DecodeUint(32))
+		mk = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -24920,7 +26440,7 @@ func (_ fastpathT) DecMapUint32UintptrV(v map[uint32]uintptr, canChange bool,
 			}
 			continue
 		}
-		mv = uintptr(dd.DecodeUint(uintBitsize))
+		mv = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -24966,7 +26486,7 @@ func (_ fastpathT) DecMapUint32IntV(v map[uint32]int, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint32(dd.DecodeUint(32))
+		mk = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -24979,7 +26499,7 @@ func (_ fastpathT) DecMapUint32IntV(v map[uint32]int, canChange bool,
 			}
 			continue
 		}
-		mv = int(dd.DecodeInt(intBitsize))
+		mv = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -25025,7 +26545,7 @@ func (_ fastpathT) DecMapUint32Int8V(v map[uint32]int8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint32(dd.DecodeUint(32))
+		mk = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -25038,7 +26558,7 @@ func (_ fastpathT) DecMapUint32Int8V(v map[uint32]int8, canChange bool,
 			}
 			continue
 		}
-		mv = int8(dd.DecodeInt(8))
+		mv = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -25084,7 +26604,7 @@ func (_ fastpathT) DecMapUint32Int16V(v map[uint32]int16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint32(dd.DecodeUint(32))
+		mk = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -25097,7 +26617,7 @@ func (_ fastpathT) DecMapUint32Int16V(v map[uint32]int16, canChange bool,
 			}
 			continue
 		}
-		mv = int16(dd.DecodeInt(16))
+		mv = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -25143,7 +26663,7 @@ func (_ fastpathT) DecMapUint32Int32V(v map[uint32]int32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint32(dd.DecodeUint(32))
+		mk = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -25156,7 +26676,7 @@ func (_ fastpathT) DecMapUint32Int32V(v map[uint32]int32, canChange bool,
 			}
 			continue
 		}
-		mv = int32(dd.DecodeInt(32))
+		mv = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -25202,7 +26722,7 @@ func (_ fastpathT) DecMapUint32Int64V(v map[uint32]int64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint32(dd.DecodeUint(32))
+		mk = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -25215,7 +26735,7 @@ func (_ fastpathT) DecMapUint32Int64V(v map[uint32]int64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeInt(64)
+		mv = dd.DecodeInt64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -25261,7 +26781,7 @@ func (_ fastpathT) DecMapUint32Float32V(v map[uint32]float32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint32(dd.DecodeUint(32))
+		mk = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -25274,7 +26794,7 @@ func (_ fastpathT) DecMapUint32Float32V(v map[uint32]float32, canChange bool,
 			}
 			continue
 		}
-		mv = float32(chkFloat32(dd.DecodeFloat64()))
+		mv = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -25320,7 +26840,7 @@ func (_ fastpathT) DecMapUint32Float64V(v map[uint32]float64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint32(dd.DecodeUint(32))
+		mk = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -25379,7 +26899,7 @@ func (_ fastpathT) DecMapUint32BoolV(v map[uint32]bool, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uint32(dd.DecodeUint(32))
+		mk = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -25439,7 +26959,7 @@ func (_ fastpathT) DecMapUint64IntfV(v map[uint64]interface{}, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeUint(64)
+		mk = dd.DecodeUint64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -25503,7 +27023,7 @@ func (_ fastpathT) DecMapUint64StringV(v map[uint64]string, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeUint(64)
+		mk = dd.DecodeUint64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -25562,7 +27082,7 @@ func (_ fastpathT) DecMapUint64UintV(v map[uint64]uint, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeUint(64)
+		mk = dd.DecodeUint64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -25575,7 +27095,7 @@ func (_ fastpathT) DecMapUint64UintV(v map[uint64]uint, canChange bool,
 			}
 			continue
 		}
-		mv = uint(dd.DecodeUint(uintBitsize))
+		mv = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -25621,7 +27141,7 @@ func (_ fastpathT) DecMapUint64Uint8V(v map[uint64]uint8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeUint(64)
+		mk = dd.DecodeUint64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -25634,7 +27154,7 @@ func (_ fastpathT) DecMapUint64Uint8V(v map[uint64]uint8, canChange bool,
 			}
 			continue
 		}
-		mv = uint8(dd.DecodeUint(8))
+		mv = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -25680,7 +27200,7 @@ func (_ fastpathT) DecMapUint64Uint16V(v map[uint64]uint16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeUint(64)
+		mk = dd.DecodeUint64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -25693,7 +27213,7 @@ func (_ fastpathT) DecMapUint64Uint16V(v map[uint64]uint16, canChange bool,
 			}
 			continue
 		}
-		mv = uint16(dd.DecodeUint(16))
+		mv = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -25739,7 +27259,7 @@ func (_ fastpathT) DecMapUint64Uint32V(v map[uint64]uint32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeUint(64)
+		mk = dd.DecodeUint64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -25752,7 +27272,7 @@ func (_ fastpathT) DecMapUint64Uint32V(v map[uint64]uint32, canChange bool,
 			}
 			continue
 		}
-		mv = uint32(dd.DecodeUint(32))
+		mv = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -25798,7 +27318,7 @@ func (_ fastpathT) DecMapUint64Uint64V(v map[uint64]uint64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeUint(64)
+		mk = dd.DecodeUint64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -25811,7 +27331,7 @@ func (_ fastpathT) DecMapUint64Uint64V(v map[uint64]uint64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeUint(64)
+		mv = dd.DecodeUint64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -25857,7 +27377,7 @@ func (_ fastpathT) DecMapUint64UintptrV(v map[uint64]uintptr, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeUint(64)
+		mk = dd.DecodeUint64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -25870,7 +27390,7 @@ func (_ fastpathT) DecMapUint64UintptrV(v map[uint64]uintptr, canChange bool,
 			}
 			continue
 		}
-		mv = uintptr(dd.DecodeUint(uintBitsize))
+		mv = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -25916,7 +27436,7 @@ func (_ fastpathT) DecMapUint64IntV(v map[uint64]int, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeUint(64)
+		mk = dd.DecodeUint64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -25929,7 +27449,7 @@ func (_ fastpathT) DecMapUint64IntV(v map[uint64]int, canChange bool,
 			}
 			continue
 		}
-		mv = int(dd.DecodeInt(intBitsize))
+		mv = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -25975,7 +27495,7 @@ func (_ fastpathT) DecMapUint64Int8V(v map[uint64]int8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeUint(64)
+		mk = dd.DecodeUint64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -25988,7 +27508,7 @@ func (_ fastpathT) DecMapUint64Int8V(v map[uint64]int8, canChange bool,
 			}
 			continue
 		}
-		mv = int8(dd.DecodeInt(8))
+		mv = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -26034,7 +27554,7 @@ func (_ fastpathT) DecMapUint64Int16V(v map[uint64]int16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeUint(64)
+		mk = dd.DecodeUint64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -26047,7 +27567,7 @@ func (_ fastpathT) DecMapUint64Int16V(v map[uint64]int16, canChange bool,
 			}
 			continue
 		}
-		mv = int16(dd.DecodeInt(16))
+		mv = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -26093,7 +27613,7 @@ func (_ fastpathT) DecMapUint64Int32V(v map[uint64]int32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeUint(64)
+		mk = dd.DecodeUint64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -26106,7 +27626,7 @@ func (_ fastpathT) DecMapUint64Int32V(v map[uint64]int32, canChange bool,
 			}
 			continue
 		}
-		mv = int32(dd.DecodeInt(32))
+		mv = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -26152,7 +27672,7 @@ func (_ fastpathT) DecMapUint64Int64V(v map[uint64]int64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeUint(64)
+		mk = dd.DecodeUint64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -26165,7 +27685,7 @@ func (_ fastpathT) DecMapUint64Int64V(v map[uint64]int64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeInt(64)
+		mv = dd.DecodeInt64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -26211,7 +27731,7 @@ func (_ fastpathT) DecMapUint64Float32V(v map[uint64]float32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeUint(64)
+		mk = dd.DecodeUint64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -26224,7 +27744,7 @@ func (_ fastpathT) DecMapUint64Float32V(v map[uint64]float32, canChange bool,
 			}
 			continue
 		}
-		mv = float32(chkFloat32(dd.DecodeFloat64()))
+		mv = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -26270,7 +27790,7 @@ func (_ fastpathT) DecMapUint64Float64V(v map[uint64]float64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeUint(64)
+		mk = dd.DecodeUint64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -26329,7 +27849,7 @@ func (_ fastpathT) DecMapUint64BoolV(v map[uint64]bool, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeUint(64)
+		mk = dd.DecodeUint64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -26389,7 +27909,7 @@ func (_ fastpathT) DecMapUintptrIntfV(v map[uintptr]interface{}, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uintptr(dd.DecodeUint(uintBitsize))
+		mk = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -26453,7 +27973,7 @@ func (_ fastpathT) DecMapUintptrStringV(v map[uintptr]string, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uintptr(dd.DecodeUint(uintBitsize))
+		mk = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -26512,7 +28032,7 @@ func (_ fastpathT) DecMapUintptrUintV(v map[uintptr]uint, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uintptr(dd.DecodeUint(uintBitsize))
+		mk = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -26525,7 +28045,7 @@ func (_ fastpathT) DecMapUintptrUintV(v map[uintptr]uint, canChange bool,
 			}
 			continue
 		}
-		mv = uint(dd.DecodeUint(uintBitsize))
+		mv = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -26571,7 +28091,7 @@ func (_ fastpathT) DecMapUintptrUint8V(v map[uintptr]uint8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uintptr(dd.DecodeUint(uintBitsize))
+		mk = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -26584,7 +28104,7 @@ func (_ fastpathT) DecMapUintptrUint8V(v map[uintptr]uint8, canChange bool,
 			}
 			continue
 		}
-		mv = uint8(dd.DecodeUint(8))
+		mv = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -26630,7 +28150,7 @@ func (_ fastpathT) DecMapUintptrUint16V(v map[uintptr]uint16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uintptr(dd.DecodeUint(uintBitsize))
+		mk = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -26643,7 +28163,7 @@ func (_ fastpathT) DecMapUintptrUint16V(v map[uintptr]uint16, canChange bool,
 			}
 			continue
 		}
-		mv = uint16(dd.DecodeUint(16))
+		mv = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -26689,7 +28209,7 @@ func (_ fastpathT) DecMapUintptrUint32V(v map[uintptr]uint32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uintptr(dd.DecodeUint(uintBitsize))
+		mk = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -26702,7 +28222,7 @@ func (_ fastpathT) DecMapUintptrUint32V(v map[uintptr]uint32, canChange bool,
 			}
 			continue
 		}
-		mv = uint32(dd.DecodeUint(32))
+		mv = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -26748,7 +28268,7 @@ func (_ fastpathT) DecMapUintptrUint64V(v map[uintptr]uint64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uintptr(dd.DecodeUint(uintBitsize))
+		mk = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -26761,7 +28281,7 @@ func (_ fastpathT) DecMapUintptrUint64V(v map[uintptr]uint64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeUint(64)
+		mv = dd.DecodeUint64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -26807,7 +28327,7 @@ func (_ fastpathT) DecMapUintptrUintptrV(v map[uintptr]uintptr, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uintptr(dd.DecodeUint(uintBitsize))
+		mk = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -26820,7 +28340,7 @@ func (_ fastpathT) DecMapUintptrUintptrV(v map[uintptr]uintptr, canChange bool,
 			}
 			continue
 		}
-		mv = uintptr(dd.DecodeUint(uintBitsize))
+		mv = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -26866,7 +28386,7 @@ func (_ fastpathT) DecMapUintptrIntV(v map[uintptr]int, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uintptr(dd.DecodeUint(uintBitsize))
+		mk = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -26879,7 +28399,7 @@ func (_ fastpathT) DecMapUintptrIntV(v map[uintptr]int, canChange bool,
 			}
 			continue
 		}
-		mv = int(dd.DecodeInt(intBitsize))
+		mv = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -26925,7 +28445,7 @@ func (_ fastpathT) DecMapUintptrInt8V(v map[uintptr]int8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uintptr(dd.DecodeUint(uintBitsize))
+		mk = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -26938,7 +28458,7 @@ func (_ fastpathT) DecMapUintptrInt8V(v map[uintptr]int8, canChange bool,
 			}
 			continue
 		}
-		mv = int8(dd.DecodeInt(8))
+		mv = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -26984,7 +28504,7 @@ func (_ fastpathT) DecMapUintptrInt16V(v map[uintptr]int16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uintptr(dd.DecodeUint(uintBitsize))
+		mk = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -26997,7 +28517,7 @@ func (_ fastpathT) DecMapUintptrInt16V(v map[uintptr]int16, canChange bool,
 			}
 			continue
 		}
-		mv = int16(dd.DecodeInt(16))
+		mv = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -27043,7 +28563,7 @@ func (_ fastpathT) DecMapUintptrInt32V(v map[uintptr]int32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uintptr(dd.DecodeUint(uintBitsize))
+		mk = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -27056,7 +28576,7 @@ func (_ fastpathT) DecMapUintptrInt32V(v map[uintptr]int32, canChange bool,
 			}
 			continue
 		}
-		mv = int32(dd.DecodeInt(32))
+		mv = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -27102,7 +28622,7 @@ func (_ fastpathT) DecMapUintptrInt64V(v map[uintptr]int64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uintptr(dd.DecodeUint(uintBitsize))
+		mk = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -27115,7 +28635,7 @@ func (_ fastpathT) DecMapUintptrInt64V(v map[uintptr]int64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeInt(64)
+		mv = dd.DecodeInt64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -27161,7 +28681,7 @@ func (_ fastpathT) DecMapUintptrFloat32V(v map[uintptr]float32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uintptr(dd.DecodeUint(uintBitsize))
+		mk = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -27174,7 +28694,7 @@ func (_ fastpathT) DecMapUintptrFloat32V(v map[uintptr]float32, canChange bool,
 			}
 			continue
 		}
-		mv = float32(chkFloat32(dd.DecodeFloat64()))
+		mv = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -27220,7 +28740,7 @@ func (_ fastpathT) DecMapUintptrFloat64V(v map[uintptr]float64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uintptr(dd.DecodeUint(uintBitsize))
+		mk = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -27279,7 +28799,7 @@ func (_ fastpathT) DecMapUintptrBoolV(v map[uintptr]bool, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = uintptr(dd.DecodeUint(uintBitsize))
+		mk = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -27339,7 +28859,7 @@ func (_ fastpathT) DecMapIntIntfV(v map[int]interface{}, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int(dd.DecodeInt(intBitsize))
+		mk = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -27403,7 +28923,7 @@ func (_ fastpathT) DecMapIntStringV(v map[int]string, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int(dd.DecodeInt(intBitsize))
+		mk = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -27462,7 +28982,7 @@ func (_ fastpathT) DecMapIntUintV(v map[int]uint, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int(dd.DecodeInt(intBitsize))
+		mk = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -27475,7 +28995,7 @@ func (_ fastpathT) DecMapIntUintV(v map[int]uint, canChange bool,
 			}
 			continue
 		}
-		mv = uint(dd.DecodeUint(uintBitsize))
+		mv = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -27521,7 +29041,7 @@ func (_ fastpathT) DecMapIntUint8V(v map[int]uint8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int(dd.DecodeInt(intBitsize))
+		mk = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -27534,7 +29054,7 @@ func (_ fastpathT) DecMapIntUint8V(v map[int]uint8, canChange bool,
 			}
 			continue
 		}
-		mv = uint8(dd.DecodeUint(8))
+		mv = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -27580,7 +29100,7 @@ func (_ fastpathT) DecMapIntUint16V(v map[int]uint16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int(dd.DecodeInt(intBitsize))
+		mk = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -27593,7 +29113,7 @@ func (_ fastpathT) DecMapIntUint16V(v map[int]uint16, canChange bool,
 			}
 			continue
 		}
-		mv = uint16(dd.DecodeUint(16))
+		mv = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -27639,7 +29159,7 @@ func (_ fastpathT) DecMapIntUint32V(v map[int]uint32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int(dd.DecodeInt(intBitsize))
+		mk = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -27652,7 +29172,7 @@ func (_ fastpathT) DecMapIntUint32V(v map[int]uint32, canChange bool,
 			}
 			continue
 		}
-		mv = uint32(dd.DecodeUint(32))
+		mv = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -27698,7 +29218,7 @@ func (_ fastpathT) DecMapIntUint64V(v map[int]uint64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int(dd.DecodeInt(intBitsize))
+		mk = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -27711,7 +29231,7 @@ func (_ fastpathT) DecMapIntUint64V(v map[int]uint64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeUint(64)
+		mv = dd.DecodeUint64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -27757,7 +29277,7 @@ func (_ fastpathT) DecMapIntUintptrV(v map[int]uintptr, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int(dd.DecodeInt(intBitsize))
+		mk = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -27770,7 +29290,7 @@ func (_ fastpathT) DecMapIntUintptrV(v map[int]uintptr, canChange bool,
 			}
 			continue
 		}
-		mv = uintptr(dd.DecodeUint(uintBitsize))
+		mv = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -27816,7 +29336,7 @@ func (_ fastpathT) DecMapIntIntV(v map[int]int, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int(dd.DecodeInt(intBitsize))
+		mk = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -27829,7 +29349,7 @@ func (_ fastpathT) DecMapIntIntV(v map[int]int, canChange bool,
 			}
 			continue
 		}
-		mv = int(dd.DecodeInt(intBitsize))
+		mv = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -27875,7 +29395,7 @@ func (_ fastpathT) DecMapIntInt8V(v map[int]int8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int(dd.DecodeInt(intBitsize))
+		mk = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -27888,7 +29408,7 @@ func (_ fastpathT) DecMapIntInt8V(v map[int]int8, canChange bool,
 			}
 			continue
 		}
-		mv = int8(dd.DecodeInt(8))
+		mv = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -27934,7 +29454,7 @@ func (_ fastpathT) DecMapIntInt16V(v map[int]int16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int(dd.DecodeInt(intBitsize))
+		mk = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -27947,7 +29467,7 @@ func (_ fastpathT) DecMapIntInt16V(v map[int]int16, canChange bool,
 			}
 			continue
 		}
-		mv = int16(dd.DecodeInt(16))
+		mv = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -27993,7 +29513,7 @@ func (_ fastpathT) DecMapIntInt32V(v map[int]int32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int(dd.DecodeInt(intBitsize))
+		mk = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -28006,7 +29526,7 @@ func (_ fastpathT) DecMapIntInt32V(v map[int]int32, canChange bool,
 			}
 			continue
 		}
-		mv = int32(dd.DecodeInt(32))
+		mv = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -28052,7 +29572,7 @@ func (_ fastpathT) DecMapIntInt64V(v map[int]int64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int(dd.DecodeInt(intBitsize))
+		mk = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -28065,7 +29585,7 @@ func (_ fastpathT) DecMapIntInt64V(v map[int]int64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeInt(64)
+		mv = dd.DecodeInt64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -28111,7 +29631,7 @@ func (_ fastpathT) DecMapIntFloat32V(v map[int]float32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int(dd.DecodeInt(intBitsize))
+		mk = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -28124,7 +29644,7 @@ func (_ fastpathT) DecMapIntFloat32V(v map[int]float32, canChange bool,
 			}
 			continue
 		}
-		mv = float32(chkFloat32(dd.DecodeFloat64()))
+		mv = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -28170,7 +29690,7 @@ func (_ fastpathT) DecMapIntFloat64V(v map[int]float64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int(dd.DecodeInt(intBitsize))
+		mk = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -28229,7 +29749,7 @@ func (_ fastpathT) DecMapIntBoolV(v map[int]bool, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int(dd.DecodeInt(intBitsize))
+		mk = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -28289,7 +29809,7 @@ func (_ fastpathT) DecMapInt8IntfV(v map[int8]interface{}, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int8(dd.DecodeInt(8))
+		mk = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -28353,7 +29873,7 @@ func (_ fastpathT) DecMapInt8StringV(v map[int8]string, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int8(dd.DecodeInt(8))
+		mk = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -28412,7 +29932,7 @@ func (_ fastpathT) DecMapInt8UintV(v map[int8]uint, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int8(dd.DecodeInt(8))
+		mk = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -28425,7 +29945,7 @@ func (_ fastpathT) DecMapInt8UintV(v map[int8]uint, canChange bool,
 			}
 			continue
 		}
-		mv = uint(dd.DecodeUint(uintBitsize))
+		mv = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -28471,7 +29991,7 @@ func (_ fastpathT) DecMapInt8Uint8V(v map[int8]uint8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int8(dd.DecodeInt(8))
+		mk = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -28484,7 +30004,7 @@ func (_ fastpathT) DecMapInt8Uint8V(v map[int8]uint8, canChange bool,
 			}
 			continue
 		}
-		mv = uint8(dd.DecodeUint(8))
+		mv = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -28530,7 +30050,7 @@ func (_ fastpathT) DecMapInt8Uint16V(v map[int8]uint16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int8(dd.DecodeInt(8))
+		mk = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -28543,7 +30063,7 @@ func (_ fastpathT) DecMapInt8Uint16V(v map[int8]uint16, canChange bool,
 			}
 			continue
 		}
-		mv = uint16(dd.DecodeUint(16))
+		mv = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -28589,7 +30109,7 @@ func (_ fastpathT) DecMapInt8Uint32V(v map[int8]uint32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int8(dd.DecodeInt(8))
+		mk = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -28602,7 +30122,7 @@ func (_ fastpathT) DecMapInt8Uint32V(v map[int8]uint32, canChange bool,
 			}
 			continue
 		}
-		mv = uint32(dd.DecodeUint(32))
+		mv = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -28648,7 +30168,7 @@ func (_ fastpathT) DecMapInt8Uint64V(v map[int8]uint64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int8(dd.DecodeInt(8))
+		mk = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -28661,7 +30181,7 @@ func (_ fastpathT) DecMapInt8Uint64V(v map[int8]uint64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeUint(64)
+		mv = dd.DecodeUint64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -28707,7 +30227,7 @@ func (_ fastpathT) DecMapInt8UintptrV(v map[int8]uintptr, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int8(dd.DecodeInt(8))
+		mk = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -28720,7 +30240,7 @@ func (_ fastpathT) DecMapInt8UintptrV(v map[int8]uintptr, canChange bool,
 			}
 			continue
 		}
-		mv = uintptr(dd.DecodeUint(uintBitsize))
+		mv = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -28766,7 +30286,7 @@ func (_ fastpathT) DecMapInt8IntV(v map[int8]int, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int8(dd.DecodeInt(8))
+		mk = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -28779,7 +30299,7 @@ func (_ fastpathT) DecMapInt8IntV(v map[int8]int, canChange bool,
 			}
 			continue
 		}
-		mv = int(dd.DecodeInt(intBitsize))
+		mv = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -28825,7 +30345,7 @@ func (_ fastpathT) DecMapInt8Int8V(v map[int8]int8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int8(dd.DecodeInt(8))
+		mk = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -28838,7 +30358,7 @@ func (_ fastpathT) DecMapInt8Int8V(v map[int8]int8, canChange bool,
 			}
 			continue
 		}
-		mv = int8(dd.DecodeInt(8))
+		mv = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -28884,7 +30404,7 @@ func (_ fastpathT) DecMapInt8Int16V(v map[int8]int16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int8(dd.DecodeInt(8))
+		mk = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -28897,7 +30417,7 @@ func (_ fastpathT) DecMapInt8Int16V(v map[int8]int16, canChange bool,
 			}
 			continue
 		}
-		mv = int16(dd.DecodeInt(16))
+		mv = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -28943,7 +30463,7 @@ func (_ fastpathT) DecMapInt8Int32V(v map[int8]int32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int8(dd.DecodeInt(8))
+		mk = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -28956,7 +30476,7 @@ func (_ fastpathT) DecMapInt8Int32V(v map[int8]int32, canChange bool,
 			}
 			continue
 		}
-		mv = int32(dd.DecodeInt(32))
+		mv = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -29002,7 +30522,7 @@ func (_ fastpathT) DecMapInt8Int64V(v map[int8]int64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int8(dd.DecodeInt(8))
+		mk = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -29015,7 +30535,7 @@ func (_ fastpathT) DecMapInt8Int64V(v map[int8]int64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeInt(64)
+		mv = dd.DecodeInt64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -29061,7 +30581,7 @@ func (_ fastpathT) DecMapInt8Float32V(v map[int8]float32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int8(dd.DecodeInt(8))
+		mk = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -29074,7 +30594,7 @@ func (_ fastpathT) DecMapInt8Float32V(v map[int8]float32, canChange bool,
 			}
 			continue
 		}
-		mv = float32(chkFloat32(dd.DecodeFloat64()))
+		mv = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -29120,7 +30640,7 @@ func (_ fastpathT) DecMapInt8Float64V(v map[int8]float64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int8(dd.DecodeInt(8))
+		mk = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -29179,7 +30699,7 @@ func (_ fastpathT) DecMapInt8BoolV(v map[int8]bool, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int8(dd.DecodeInt(8))
+		mk = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -29239,7 +30759,7 @@ func (_ fastpathT) DecMapInt16IntfV(v map[int16]interface{}, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int16(dd.DecodeInt(16))
+		mk = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -29303,7 +30823,7 @@ func (_ fastpathT) DecMapInt16StringV(v map[int16]string, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int16(dd.DecodeInt(16))
+		mk = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -29362,7 +30882,7 @@ func (_ fastpathT) DecMapInt16UintV(v map[int16]uint, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int16(dd.DecodeInt(16))
+		mk = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -29375,7 +30895,7 @@ func (_ fastpathT) DecMapInt16UintV(v map[int16]uint, canChange bool,
 			}
 			continue
 		}
-		mv = uint(dd.DecodeUint(uintBitsize))
+		mv = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -29421,7 +30941,7 @@ func (_ fastpathT) DecMapInt16Uint8V(v map[int16]uint8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int16(dd.DecodeInt(16))
+		mk = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -29434,7 +30954,7 @@ func (_ fastpathT) DecMapInt16Uint8V(v map[int16]uint8, canChange bool,
 			}
 			continue
 		}
-		mv = uint8(dd.DecodeUint(8))
+		mv = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -29480,7 +31000,7 @@ func (_ fastpathT) DecMapInt16Uint16V(v map[int16]uint16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int16(dd.DecodeInt(16))
+		mk = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -29493,7 +31013,7 @@ func (_ fastpathT) DecMapInt16Uint16V(v map[int16]uint16, canChange bool,
 			}
 			continue
 		}
-		mv = uint16(dd.DecodeUint(16))
+		mv = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -29539,7 +31059,7 @@ func (_ fastpathT) DecMapInt16Uint32V(v map[int16]uint32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int16(dd.DecodeInt(16))
+		mk = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -29552,7 +31072,7 @@ func (_ fastpathT) DecMapInt16Uint32V(v map[int16]uint32, canChange bool,
 			}
 			continue
 		}
-		mv = uint32(dd.DecodeUint(32))
+		mv = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -29598,7 +31118,7 @@ func (_ fastpathT) DecMapInt16Uint64V(v map[int16]uint64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int16(dd.DecodeInt(16))
+		mk = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -29611,7 +31131,7 @@ func (_ fastpathT) DecMapInt16Uint64V(v map[int16]uint64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeUint(64)
+		mv = dd.DecodeUint64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -29657,7 +31177,7 @@ func (_ fastpathT) DecMapInt16UintptrV(v map[int16]uintptr, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int16(dd.DecodeInt(16))
+		mk = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -29670,7 +31190,7 @@ func (_ fastpathT) DecMapInt16UintptrV(v map[int16]uintptr, canChange bool,
 			}
 			continue
 		}
-		mv = uintptr(dd.DecodeUint(uintBitsize))
+		mv = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -29716,7 +31236,7 @@ func (_ fastpathT) DecMapInt16IntV(v map[int16]int, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int16(dd.DecodeInt(16))
+		mk = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -29729,7 +31249,7 @@ func (_ fastpathT) DecMapInt16IntV(v map[int16]int, canChange bool,
 			}
 			continue
 		}
-		mv = int(dd.DecodeInt(intBitsize))
+		mv = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -29775,7 +31295,7 @@ func (_ fastpathT) DecMapInt16Int8V(v map[int16]int8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int16(dd.DecodeInt(16))
+		mk = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -29788,7 +31308,7 @@ func (_ fastpathT) DecMapInt16Int8V(v map[int16]int8, canChange bool,
 			}
 			continue
 		}
-		mv = int8(dd.DecodeInt(8))
+		mv = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -29834,7 +31354,7 @@ func (_ fastpathT) DecMapInt16Int16V(v map[int16]int16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int16(dd.DecodeInt(16))
+		mk = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -29847,7 +31367,7 @@ func (_ fastpathT) DecMapInt16Int16V(v map[int16]int16, canChange bool,
 			}
 			continue
 		}
-		mv = int16(dd.DecodeInt(16))
+		mv = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -29893,7 +31413,7 @@ func (_ fastpathT) DecMapInt16Int32V(v map[int16]int32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int16(dd.DecodeInt(16))
+		mk = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -29906,7 +31426,7 @@ func (_ fastpathT) DecMapInt16Int32V(v map[int16]int32, canChange bool,
 			}
 			continue
 		}
-		mv = int32(dd.DecodeInt(32))
+		mv = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -29952,7 +31472,7 @@ func (_ fastpathT) DecMapInt16Int64V(v map[int16]int64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int16(dd.DecodeInt(16))
+		mk = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -29965,7 +31485,7 @@ func (_ fastpathT) DecMapInt16Int64V(v map[int16]int64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeInt(64)
+		mv = dd.DecodeInt64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -30011,7 +31531,7 @@ func (_ fastpathT) DecMapInt16Float32V(v map[int16]float32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int16(dd.DecodeInt(16))
+		mk = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -30024,7 +31544,7 @@ func (_ fastpathT) DecMapInt16Float32V(v map[int16]float32, canChange bool,
 			}
 			continue
 		}
-		mv = float32(chkFloat32(dd.DecodeFloat64()))
+		mv = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -30070,7 +31590,7 @@ func (_ fastpathT) DecMapInt16Float64V(v map[int16]float64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int16(dd.DecodeInt(16))
+		mk = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -30129,7 +31649,7 @@ func (_ fastpathT) DecMapInt16BoolV(v map[int16]bool, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int16(dd.DecodeInt(16))
+		mk = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -30189,7 +31709,7 @@ func (_ fastpathT) DecMapInt32IntfV(v map[int32]interface{}, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int32(dd.DecodeInt(32))
+		mk = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -30253,7 +31773,7 @@ func (_ fastpathT) DecMapInt32StringV(v map[int32]string, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int32(dd.DecodeInt(32))
+		mk = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -30312,7 +31832,7 @@ func (_ fastpathT) DecMapInt32UintV(v map[int32]uint, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int32(dd.DecodeInt(32))
+		mk = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -30325,7 +31845,7 @@ func (_ fastpathT) DecMapInt32UintV(v map[int32]uint, canChange bool,
 			}
 			continue
 		}
-		mv = uint(dd.DecodeUint(uintBitsize))
+		mv = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -30371,7 +31891,7 @@ func (_ fastpathT) DecMapInt32Uint8V(v map[int32]uint8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int32(dd.DecodeInt(32))
+		mk = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -30384,7 +31904,7 @@ func (_ fastpathT) DecMapInt32Uint8V(v map[int32]uint8, canChange bool,
 			}
 			continue
 		}
-		mv = uint8(dd.DecodeUint(8))
+		mv = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -30430,7 +31950,7 @@ func (_ fastpathT) DecMapInt32Uint16V(v map[int32]uint16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int32(dd.DecodeInt(32))
+		mk = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -30443,7 +31963,7 @@ func (_ fastpathT) DecMapInt32Uint16V(v map[int32]uint16, canChange bool,
 			}
 			continue
 		}
-		mv = uint16(dd.DecodeUint(16))
+		mv = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -30489,7 +32009,7 @@ func (_ fastpathT) DecMapInt32Uint32V(v map[int32]uint32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int32(dd.DecodeInt(32))
+		mk = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -30502,7 +32022,7 @@ func (_ fastpathT) DecMapInt32Uint32V(v map[int32]uint32, canChange bool,
 			}
 			continue
 		}
-		mv = uint32(dd.DecodeUint(32))
+		mv = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -30548,7 +32068,7 @@ func (_ fastpathT) DecMapInt32Uint64V(v map[int32]uint64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int32(dd.DecodeInt(32))
+		mk = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -30561,7 +32081,7 @@ func (_ fastpathT) DecMapInt32Uint64V(v map[int32]uint64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeUint(64)
+		mv = dd.DecodeUint64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -30607,7 +32127,7 @@ func (_ fastpathT) DecMapInt32UintptrV(v map[int32]uintptr, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int32(dd.DecodeInt(32))
+		mk = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -30620,7 +32140,7 @@ func (_ fastpathT) DecMapInt32UintptrV(v map[int32]uintptr, canChange bool,
 			}
 			continue
 		}
-		mv = uintptr(dd.DecodeUint(uintBitsize))
+		mv = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -30666,7 +32186,7 @@ func (_ fastpathT) DecMapInt32IntV(v map[int32]int, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int32(dd.DecodeInt(32))
+		mk = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -30679,7 +32199,7 @@ func (_ fastpathT) DecMapInt32IntV(v map[int32]int, canChange bool,
 			}
 			continue
 		}
-		mv = int(dd.DecodeInt(intBitsize))
+		mv = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -30725,7 +32245,7 @@ func (_ fastpathT) DecMapInt32Int8V(v map[int32]int8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int32(dd.DecodeInt(32))
+		mk = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -30738,7 +32258,7 @@ func (_ fastpathT) DecMapInt32Int8V(v map[int32]int8, canChange bool,
 			}
 			continue
 		}
-		mv = int8(dd.DecodeInt(8))
+		mv = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -30784,7 +32304,7 @@ func (_ fastpathT) DecMapInt32Int16V(v map[int32]int16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int32(dd.DecodeInt(32))
+		mk = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -30797,7 +32317,7 @@ func (_ fastpathT) DecMapInt32Int16V(v map[int32]int16, canChange bool,
 			}
 			continue
 		}
-		mv = int16(dd.DecodeInt(16))
+		mv = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -30843,7 +32363,7 @@ func (_ fastpathT) DecMapInt32Int32V(v map[int32]int32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int32(dd.DecodeInt(32))
+		mk = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -30856,7 +32376,7 @@ func (_ fastpathT) DecMapInt32Int32V(v map[int32]int32, canChange bool,
 			}
 			continue
 		}
-		mv = int32(dd.DecodeInt(32))
+		mv = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -30902,7 +32422,7 @@ func (_ fastpathT) DecMapInt32Int64V(v map[int32]int64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int32(dd.DecodeInt(32))
+		mk = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -30915,7 +32435,7 @@ func (_ fastpathT) DecMapInt32Int64V(v map[int32]int64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeInt(64)
+		mv = dd.DecodeInt64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -30961,7 +32481,7 @@ func (_ fastpathT) DecMapInt32Float32V(v map[int32]float32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int32(dd.DecodeInt(32))
+		mk = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -30974,7 +32494,7 @@ func (_ fastpathT) DecMapInt32Float32V(v map[int32]float32, canChange bool,
 			}
 			continue
 		}
-		mv = float32(chkFloat32(dd.DecodeFloat64()))
+		mv = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -31020,7 +32540,7 @@ func (_ fastpathT) DecMapInt32Float64V(v map[int32]float64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int32(dd.DecodeInt(32))
+		mk = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -31079,7 +32599,7 @@ func (_ fastpathT) DecMapInt32BoolV(v map[int32]bool, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = int32(dd.DecodeInt(32))
+		mk = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -31139,7 +32659,7 @@ func (_ fastpathT) DecMapInt64IntfV(v map[int64]interface{}, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeInt(64)
+		mk = dd.DecodeInt64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -31203,7 +32723,7 @@ func (_ fastpathT) DecMapInt64StringV(v map[int64]string, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeInt(64)
+		mk = dd.DecodeInt64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -31262,7 +32782,7 @@ func (_ fastpathT) DecMapInt64UintV(v map[int64]uint, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeInt(64)
+		mk = dd.DecodeInt64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -31275,7 +32795,7 @@ func (_ fastpathT) DecMapInt64UintV(v map[int64]uint, canChange bool,
 			}
 			continue
 		}
-		mv = uint(dd.DecodeUint(uintBitsize))
+		mv = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -31321,7 +32841,7 @@ func (_ fastpathT) DecMapInt64Uint8V(v map[int64]uint8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeInt(64)
+		mk = dd.DecodeInt64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -31334,7 +32854,7 @@ func (_ fastpathT) DecMapInt64Uint8V(v map[int64]uint8, canChange bool,
 			}
 			continue
 		}
-		mv = uint8(dd.DecodeUint(8))
+		mv = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -31380,7 +32900,7 @@ func (_ fastpathT) DecMapInt64Uint16V(v map[int64]uint16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeInt(64)
+		mk = dd.DecodeInt64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -31393,7 +32913,7 @@ func (_ fastpathT) DecMapInt64Uint16V(v map[int64]uint16, canChange bool,
 			}
 			continue
 		}
-		mv = uint16(dd.DecodeUint(16))
+		mv = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -31439,7 +32959,7 @@ func (_ fastpathT) DecMapInt64Uint32V(v map[int64]uint32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeInt(64)
+		mk = dd.DecodeInt64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -31452,7 +32972,7 @@ func (_ fastpathT) DecMapInt64Uint32V(v map[int64]uint32, canChange bool,
 			}
 			continue
 		}
-		mv = uint32(dd.DecodeUint(32))
+		mv = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -31498,7 +33018,7 @@ func (_ fastpathT) DecMapInt64Uint64V(v map[int64]uint64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeInt(64)
+		mk = dd.DecodeInt64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -31511,7 +33031,7 @@ func (_ fastpathT) DecMapInt64Uint64V(v map[int64]uint64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeUint(64)
+		mv = dd.DecodeUint64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -31557,7 +33077,7 @@ func (_ fastpathT) DecMapInt64UintptrV(v map[int64]uintptr, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeInt(64)
+		mk = dd.DecodeInt64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -31570,7 +33090,7 @@ func (_ fastpathT) DecMapInt64UintptrV(v map[int64]uintptr, canChange bool,
 			}
 			continue
 		}
-		mv = uintptr(dd.DecodeUint(uintBitsize))
+		mv = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -31616,7 +33136,7 @@ func (_ fastpathT) DecMapInt64IntV(v map[int64]int, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeInt(64)
+		mk = dd.DecodeInt64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -31629,7 +33149,7 @@ func (_ fastpathT) DecMapInt64IntV(v map[int64]int, canChange bool,
 			}
 			continue
 		}
-		mv = int(dd.DecodeInt(intBitsize))
+		mv = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -31675,7 +33195,7 @@ func (_ fastpathT) DecMapInt64Int8V(v map[int64]int8, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeInt(64)
+		mk = dd.DecodeInt64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -31688,7 +33208,7 @@ func (_ fastpathT) DecMapInt64Int8V(v map[int64]int8, canChange bool,
 			}
 			continue
 		}
-		mv = int8(dd.DecodeInt(8))
+		mv = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -31734,7 +33254,7 @@ func (_ fastpathT) DecMapInt64Int16V(v map[int64]int16, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeInt(64)
+		mk = dd.DecodeInt64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -31747,7 +33267,7 @@ func (_ fastpathT) DecMapInt64Int16V(v map[int64]int16, canChange bool,
 			}
 			continue
 		}
-		mv = int16(dd.DecodeInt(16))
+		mv = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -31793,7 +33313,7 @@ func (_ fastpathT) DecMapInt64Int32V(v map[int64]int32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeInt(64)
+		mk = dd.DecodeInt64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -31806,7 +33326,7 @@ func (_ fastpathT) DecMapInt64Int32V(v map[int64]int32, canChange bool,
 			}
 			continue
 		}
-		mv = int32(dd.DecodeInt(32))
+		mv = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -31852,7 +33372,7 @@ func (_ fastpathT) DecMapInt64Int64V(v map[int64]int64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeInt(64)
+		mk = dd.DecodeInt64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -31865,7 +33385,7 @@ func (_ fastpathT) DecMapInt64Int64V(v map[int64]int64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeInt(64)
+		mv = dd.DecodeInt64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -31911,7 +33431,7 @@ func (_ fastpathT) DecMapInt64Float32V(v map[int64]float32, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeInt(64)
+		mk = dd.DecodeInt64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -31924,7 +33444,7 @@ func (_ fastpathT) DecMapInt64Float32V(v map[int64]float32, canChange bool,
 			}
 			continue
 		}
-		mv = float32(chkFloat32(dd.DecodeFloat64()))
+		mv = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -31970,7 +33490,7 @@ func (_ fastpathT) DecMapInt64Float64V(v map[int64]float64, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeInt(64)
+		mk = dd.DecodeInt64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -32029,7 +33549,7 @@ func (_ fastpathT) DecMapInt64BoolV(v map[int64]bool, canChange bool,
 		if esep {
 			dd.ReadMapElemKey()
 		}
-		mk = dd.DecodeInt(64)
+		mk = dd.DecodeInt64()
 		if esep {
 			dd.ReadMapElemValue()
 		}
@@ -32225,7 +33745,7 @@ func (_ fastpathT) DecMapBoolUintV(v map[bool]uint, canChange bool,
 			}
 			continue
 		}
-		mv = uint(dd.DecodeUint(uintBitsize))
+		mv = uint(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -32284,7 +33804,7 @@ func (_ fastpathT) DecMapBoolUint8V(v map[bool]uint8, canChange bool,
 			}
 			continue
 		}
-		mv = uint8(dd.DecodeUint(8))
+		mv = uint8(chkOvf.UintV(dd.DecodeUint64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -32343,7 +33863,7 @@ func (_ fastpathT) DecMapBoolUint16V(v map[bool]uint16, canChange bool,
 			}
 			continue
 		}
-		mv = uint16(dd.DecodeUint(16))
+		mv = uint16(chkOvf.UintV(dd.DecodeUint64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -32402,7 +33922,7 @@ func (_ fastpathT) DecMapBoolUint32V(v map[bool]uint32, canChange bool,
 			}
 			continue
 		}
-		mv = uint32(dd.DecodeUint(32))
+		mv = uint32(chkOvf.UintV(dd.DecodeUint64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -32461,7 +33981,7 @@ func (_ fastpathT) DecMapBoolUint64V(v map[bool]uint64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeUint(64)
+		mv = dd.DecodeUint64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -32520,7 +34040,7 @@ func (_ fastpathT) DecMapBoolUintptrV(v map[bool]uintptr, canChange bool,
 			}
 			continue
 		}
-		mv = uintptr(dd.DecodeUint(uintBitsize))
+		mv = uintptr(chkOvf.UintV(dd.DecodeUint64(), uintBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -32579,7 +34099,7 @@ func (_ fastpathT) DecMapBoolIntV(v map[bool]int, canChange bool,
 			}
 			continue
 		}
-		mv = int(dd.DecodeInt(intBitsize))
+		mv = int(chkOvf.IntV(dd.DecodeInt64(), intBitsize))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -32638,7 +34158,7 @@ func (_ fastpathT) DecMapBoolInt8V(v map[bool]int8, canChange bool,
 			}
 			continue
 		}
-		mv = int8(dd.DecodeInt(8))
+		mv = int8(chkOvf.IntV(dd.DecodeInt64(), 8))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -32697,7 +34217,7 @@ func (_ fastpathT) DecMapBoolInt16V(v map[bool]int16, canChange bool,
 			}
 			continue
 		}
-		mv = int16(dd.DecodeInt(16))
+		mv = int16(chkOvf.IntV(dd.DecodeInt64(), 16))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -32756,7 +34276,7 @@ func (_ fastpathT) DecMapBoolInt32V(v map[bool]int32, canChange bool,
 			}
 			continue
 		}
-		mv = int32(dd.DecodeInt(32))
+		mv = int32(chkOvf.IntV(dd.DecodeInt64(), 32))
 		if v != nil {
 			v[mk] = mv
 		}
@@ -32815,7 +34335,7 @@ func (_ fastpathT) DecMapBoolInt64V(v map[bool]int64, canChange bool,
 			}
 			continue
 		}
-		mv = dd.DecodeInt(64)
+		mv = dd.DecodeInt64()
 		if v != nil {
 			v[mk] = mv
 		}
@@ -32874,7 +34394,7 @@ func (_ fastpathT) DecMapBoolFloat32V(v map[bool]float32, canChange bool,
 			}
 			continue
 		}
-		mv = float32(chkFloat32(dd.DecodeFloat64()))
+		mv = float32(chkOvf.Float32V(dd.DecodeFloat64()))
 		if v != nil {
 			v[mk] = mv
 		}

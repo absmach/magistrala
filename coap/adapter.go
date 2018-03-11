@@ -6,7 +6,7 @@ import (
 	"net"
 
 	"github.com/dustin/go-coap"
-	"github.com/mainflux/mainflux/writer"
+	"github.com/mainflux/mainflux"
 	broker "github.com/nats-io/go-nats"
 	"go.uber.org/zap"
 )
@@ -22,17 +22,16 @@ type Observer struct {
 type CoAPAdapter struct {
 	obsMap map[string][]Observer
 	logger *zap.Logger
-	repo   writer.MessageRepository
+	pub    mainflux.MessagePublisher
 }
 
 // NewCoAPAdapter creates new CoAP adapter struct
-func NewCoAPAdapter(logger *zap.Logger, repo writer.MessageRepository) *CoAPAdapter {
+func NewCoAPAdapter(logger *zap.Logger, pub mainflux.MessagePublisher) *CoAPAdapter {
 	ca := &CoAPAdapter{
 		logger: logger,
-		repo:   repo,
+		pub:    pub,
+		obsMap: make(map[string][]Observer),
 	}
-
-	ca.obsMap = make(map[string][]Observer)
 
 	return ca
 }
@@ -48,7 +47,7 @@ func (ca *CoAPAdapter) BridgeHandler(nm *broker.Msg) {
 	log.Printf("Received a message: %s\n", string(nm.Data))
 
 	// And write it into the database
-	m := writer.RawMessage{}
+	m := mainflux.RawMessage{}
 	if len(nm.Data) > 0 {
 		if err := json.Unmarshal(nm.Data, &m); err != nil {
 			log.Println("Can not decode adapter msg")

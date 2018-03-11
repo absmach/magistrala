@@ -23,4 +23,3 @@ The -expand is needed to expand base values into each line of the Line Protocol
 
 senmlCat -ijsons -http 8880 -expand -linp -print -post http://localhost:8086/write?db=junk
 
-

@@ -4,29 +4,28 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/log"
-	"github.com/mainflux/mainflux/http"
-	"github.com/mainflux/mainflux/writer"
+	"github.com/mainflux/mainflux"
 )
 
-var _ http.Service = (*loggingService)(nil)
+var _ mainflux.MessagePublisher = (*loggingMiddleware)(nil)
 
-type loggingService struct {
+type loggingMiddleware struct {
 	logger log.Logger
-	http.Service
+	svc    mainflux.MessagePublisher
 }
 
-// NewLoggingService adds logging facilities to the adapter.
-func NewLoggingService(logger log.Logger, s http.Service) http.Service {
-	return &loggingService{logger, s}
+// LoggingMiddleware adds logging facilities to the adapter.
+func LoggingMiddleware(svc mainflux.MessagePublisher, logger log.Logger) mainflux.MessagePublisher {
+	return &loggingMiddleware{logger, svc}
 }
 
-func (ls *loggingService) Publish(msg writer.RawMessage) error {
+func (lm *loggingMiddleware) Publish(msg mainflux.RawMessage) error {
 	defer func(begin time.Time) {
-		ls.logger.Log(
+		lm.logger.Log(
 			"method", "publish",
 			"took", time.Since(begin),
 		)
 	}(time.Now())
 
-	return ls.Service.Publish(msg)
+	return lm.svc.Publish(msg)
 }

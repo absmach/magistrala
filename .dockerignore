@@ -1,8 +1,0 @@
-.git/
-.github/
-bin/
-glide.lock
-glide.yaml
-LICENSE
-MAINTAINERS
-README.md

@@ -125,3 +125,21 @@ func (req listResourcesReq) validate() error {
 
 	return manager.ErrMalformedEntity
 }
+
+type connectionReq struct {
+	key      string
+	chanId   string
+	clientId string
+}
+
+func (req connectionReq) validate() error {
+	if req.key == "" {
+		return manager.ErrUnauthorizedAccess
+	}
+
+	if !govalidator.IsUUID(req.chanId) && !govalidator.IsUUID(req.clientId) {
+		return manager.ErrNotFound
+	}
+
+	return nil
+}

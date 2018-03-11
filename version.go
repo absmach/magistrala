@@ -1,5 +1,3 @@
-// Package mainflux acts as an umbrella package containing multiple different
-// microservices / deliverables. It provides the top-level platform versioning.
 package mainflux
 
 import (
@@ -7,7 +5,7 @@ import (
 	"net/http"
 )
 
-const version string = "1.0.0-rc.1"
+const version string = "0.1.0"
 
 type response struct {
 	Version string

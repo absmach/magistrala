@@ -48,7 +48,7 @@
 //        Namespace: "myteam",
 //        Subsystem: "foosvc",
 //        Name:      "request_latency_seconds",
-//        Help:      "Incoming request latency in seconds."
+//        Help:      "Incoming request latency in seconds.",
 //    }, []string{"method", "status_code"})
 //
 // Write your components to take the metrics they will use as parameters to
@@ -92,5 +92,6 @@
 //    influx      n    custom                 custom                 custom
 //    prometheus  n    native                 native                 native
 //    pcp         1    native                 native                 native
+//    cloudwatch  n    batch push-aggregate   batch push-aggregate   synthetic, batch, push-aggregate
 //
 package metrics

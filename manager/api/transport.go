@@ -104,6 +104,20 @@ func MakeHandler(svc manager.Service) http.Handler {
 		opts...,
 	))
 
+	r.Put("/channels/:chanId/clients/:clientId", kithttp.NewServer(
+		connectEndpoint(svc),
+		decodeConnection,
+		encodeResponse,
+		opts...,
+	))
+
+	r.Delete("/channels/:chanId/clients/:clientId", kithttp.NewServer(
+		disconnectEndpoint(svc),
+		decodeConnection,
+		encodeResponse,
+		opts...,
+	))
+
 	r.Get("/access-grant", kithttp.NewServer(
 		identityEndpoint(svc),
 		decodeIdentity,
@@ -213,6 +227,16 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 		key:    r.Header.Get("Authorization"),
 		size:   10,
 		offset: 0,
+	}
+
+	return req, nil
+}
+
+func decodeConnection(_ context.Context, r *http.Request) (interface{}, error) {
+	req := connectionReq{
+		key:      r.Header.Get("Authorization"),
+		chanId:   bone.GetValue(r, "chanId"),
+		clientId: bone.GetValue(r, "clientId"),
 	}
 
 	return req, nil

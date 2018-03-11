@@ -10,9 +10,8 @@ type managerService struct {
 	idp      IdentityProvider
 }
 
-// NewService instantiates the domain service implementation.
-func NewService(users UserRepository, clients ClientRepository, channels ChannelRepository,
-	hasher Hasher, idp IdentityProvider) Service {
+// New instantiates the domain service implementation.
+func New(users UserRepository, clients ClientRepository, channels ChannelRepository, hasher Hasher, idp IdentityProvider) Service {
 	return &managerService{
 		users:    users,
 		clients:  clients,
@@ -181,6 +180,32 @@ func (ms *managerService) RemoveChannel(key, id string) error {
 	}
 
 	return ms.channels.Remove(sub, id)
+}
+
+func (ms *managerService) Connect(key, chanId, clientId string) error {
+	owner, err := ms.idp.Identity(key)
+	if err != nil {
+		return err
+	}
+
+	if _, err := ms.users.One(owner); err != nil {
+		return ErrUnauthorizedAccess
+	}
+
+	return ms.channels.Connect(owner, chanId, clientId)
+}
+
+func (ms *managerService) Disconnect(key, chanId, clientId string) error {
+	owner, err := ms.idp.Identity(key)
+	if err != nil {
+		return err
+	}
+
+	if _, err := ms.users.One(owner); err != nil {
+		return ErrUnauthorizedAccess
+	}
+
+	return ms.channels.Disconnect(owner, chanId, clientId)
 }
 
 func (ms *managerService) Identity(key string) (string, error) {

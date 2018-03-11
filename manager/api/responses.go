@@ -186,3 +186,31 @@ func (res listChannelsRes) headers() map[string]string {
 func (res listChannelsRes) empty() bool {
 	return false
 }
+
+type connectionRes struct{}
+
+func (res connectionRes) code() int {
+	return http.StatusOK
+}
+
+func (res connectionRes) headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res connectionRes) empty() bool {
+	return true
+}
+
+type disconnectionRes struct{}
+
+func (res disconnectionRes) code() int {
+	return http.StatusNoContent
+}
+
+func (res disconnectionRes) headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res disconnectionRes) empty() bool {
+	return true
+}

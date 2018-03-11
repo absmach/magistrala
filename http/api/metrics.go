@@ -4,32 +4,31 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/metrics"
-	"github.com/mainflux/mainflux/http"
-	"github.com/mainflux/mainflux/writer"
+	"github.com/mainflux/mainflux"
 )
 
-var _ http.Service = (*metricService)(nil)
+var _ mainflux.MessagePublisher = (*metricsMiddleware)(nil)
 
-type metricService struct {
+type metricsMiddleware struct {
 	counter metrics.Counter
 	latency metrics.Histogram
-	http.Service
+	svc     mainflux.MessagePublisher
 }
 
-// NewMetricService instruments adapter by tracking request count and latency.
-func NewMetricService(counter metrics.Counter, latency metrics.Histogram, s http.Service) http.Service {
-	return &metricService{
+// MetricsMiddleware instruments adapter by tracking request count and latency.
+func MetricsMiddleware(svc mainflux.MessagePublisher, counter metrics.Counter, latency metrics.Histogram) mainflux.MessagePublisher {
+	return &metricsMiddleware{
 		counter: counter,
 		latency: latency,
-		Service: s,
+		svc:     svc,
 	}
 }
 
-func (ms *metricService) Publish(msg writer.RawMessage) error {
+func (mm *metricsMiddleware) Publish(msg mainflux.RawMessage) error {
 	defer func(begin time.Time) {
-		ms.counter.With("method", "publish").Add(1)
-		ms.latency.With("method", "publish").Observe(time.Since(begin).Seconds())
+		mm.counter.With("method", "publish").Add(1)
+		mm.latency.With("method", "publish").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.Service.Publish(msg)
+	return mm.svc.Publish(msg)
 }

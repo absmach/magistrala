@@ -5,8 +5,8 @@ import "github.com/asaskevich/govalidator"
 // User represents a Mainflux user account. Each user is identified given its
 // email and password.
 type User struct {
-	Email    string
-	Password string
+	Email    string `gorm:"type:varchar(254);primary_key"`
+	Password string `gorm:"type:char(60)"`
 }
 
 // Validate returns an error if user representation is invalid.

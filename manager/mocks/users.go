@@ -20,23 +20,23 @@ func NewUserRepository() manager.UserRepository {
 	}
 }
 
-func (ur *userRepositoryMock) Save(user manager.User) error {
-	ur.mu.Lock()
-	defer ur.mu.Unlock()
+func (urm *userRepositoryMock) Save(user manager.User) error {
+	urm.mu.Lock()
+	defer urm.mu.Unlock()
 
-	if _, ok := ur.users[user.Email]; ok {
+	if _, ok := urm.users[user.Email]; ok {
 		return manager.ErrConflict
 	}
 
-	ur.users[user.Email] = user
+	urm.users[user.Email] = user
 	return nil
 }
 
-func (ur *userRepositoryMock) One(email string) (manager.User, error) {
-	ur.mu.Lock()
-	defer ur.mu.Unlock()
+func (urm *userRepositoryMock) One(email string) (manager.User, error) {
+	urm.mu.Lock()
+	defer urm.mu.Unlock()
 
-	if val, ok := ur.users[email]; ok {
+	if val, ok := urm.users[email]; ok {
 		return val, nil
 	}
 

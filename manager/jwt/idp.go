@@ -18,8 +18,8 @@ type jwtIdentityProvider struct {
 	secret string
 }
 
-// NewIdentityProvider instantiates a JWT identity provider.
-func NewIdentityProvider(secret string) manager.IdentityProvider {
+// New instantiates a JWT identity provider.
+func New(secret string) manager.IdentityProvider {
 	return &jwtIdentityProvider{}
 }
 

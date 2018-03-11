@@ -1,8 +1,8 @@
-# Mainflux manager
+# Manager
 
-Mainflux manager provides an HTTP API for managing platform resources: users,
-devices, applications and channels. Through this API clients are able to do
-the following actions:
+Manager provides an HTTP API for managing platform resources: users, devices,
+applications and channels. Through this API clients are able to do the following
+actions:
 
 - register new accounts and obtain access tokens
 - provision new clients (i.e. devices & applications)
@@ -18,20 +18,17 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable            | Description                              | Default   |
-|---------------------|------------------------------------------|-----------|
-| MANAGER_DB_CLUSTER  | comma-separated Cassandra contact points | 127.0.0.1 |
-| MANAGER_DB_KEYSPACE | name of the Cassandra keyspace           | manager   |
-| MANAGER_SECRET      | string used for signing tokens           | manager   |
+| Variable          | Description                              | Default   |
+|-------------------|------------------------------------------|-----------|
+| MF_DB_HOST        | Database host address                    | localhost |
+| MF_DB_PORT        | Database host port                       | 5432      |
+| MF_DB_USER        | Database user                            | mainflux  |
+| MF_DB_PASSWORD    | Database password                        | mainflux  |
+| MF_MANAGER_DB     | Name of the database used by the service | manager   |
+| MF_MANAGER_PORT   | Manager service HTTP port                | 8180      |
+| MF_MANAGER_SECRET | string used for signing tokens           | manager   |
 
 ## Deployment
-
-Before proceeding to deployment, make sure to check out the [Apache Cassandra 3.0.x
-documentation][www:cassandra]. Developers are advised to get acquainted with
-basic architectural concepts, data modeling techniques and deployment strategies.
-
-> Prior to deploying the service, make sure to set up the database and create
-the keyspace that will be used by the service.
 
 The service itself is distributed as Docker container. The following snippet
 provides a compose file template that can be used to deploy the service container
@@ -44,11 +41,15 @@ services:
     image: mainflux/manager:[version]
     container_name: [instance name]
     ports:
-      - [host machine port]:8180
+      - [host machine port]:[configured HTTP port]
     environment:
-      MANAGER_DB_CLUSTER: [comma-separated Cassandra endpoints]
-      MANAGER_DB_KEYSPACE: [name of Cassandra keyspace]
-      MANAGER_SECRET: [string used for signing tokens]
+      MF_DB_HOST: [Database host address]
+      MF_DB_PORT: [Database host port]
+      MF_DB_USER: [Database user]
+      MF_DB_PASS: [Database password]
+      MF_MANAGER_DB: [Name of the database used by the service]
+      MF_MANAGER_PORT: [Service HTTP port]
+      MF_MANAGER_SECRET: [String used for signing tokens]
 ```
 
 To start the service outside of the container, execute the following shell script:
@@ -63,7 +64,7 @@ cd $GOPATH/src/github.com/mainflux/mainflux/cmd/manager
 CGO_ENABLED=0 GOOS=[platform identifier] go build -ldflags "-s" -a -installsuffix cgo -o app
 
 # set the environment variables and run the service
-MANAGER_DB_CLUSTER=[comma-separated Cassandra endpoints] MANAGER_DB_KEYSPACE=[name of Cassandra keyspace] MANAGER_SECRET=[string used for signing tokens] app
+MF_DB_HOST=[Database host address] MF_DB_PORT=[Database host port] MF_DB_USER=[Database user] MF_DB_PASS=[Database password] MF_MANAGER_DB=[Name of the database used by the service] MF_MANAGER_PORT=[Service HTTP port] MF_MANAGER_SECRET=[String used for signing tokens] app
 ```
 
 ## Usage
@@ -72,4 +73,3 @@ For more information about service capabilities and its usage, please check out
 the [API documentation](swagger.yaml).
 
 [doc]: http://mainflux.readthedocs.io
-[www:cassandra]: http://docs.datastax.com

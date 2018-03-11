@@ -7,7 +7,7 @@ import (
 
 	mux "github.com/dereulenspiegel/coap-mux"
 	coap "github.com/dustin/go-coap"
-	"github.com/mainflux/mainflux/writer"
+	"github.com/mainflux/mainflux"
 )
 
 func (ca *CoAPAdapter) sendMessage(l *net.UDPConn, a *net.UDPAddr, m *coap.Message) *coap.Message {
@@ -34,14 +34,14 @@ func (ca *CoAPAdapter) sendMessage(l *net.UDPConn, a *net.UDPAddr, m *coap.Messa
 	// Channel ID
 	cid := mux.Var(m, "channel_id")
 
-	n := writer.RawMessage{
+	n := mainflux.RawMessage{
 		Channel:   cid,
 		Publisher: "",
 		Protocol:  protocol,
 		Payload:   m.Payload,
 	}
 
-	if err := ca.repo.Save(n); err != nil {
+	if err := ca.pub.Publish(n); err != nil {
 		if m.IsConfirmable() {
 			res.Code = coap.InternalServerError
 		}
@@ -123,7 +123,7 @@ func (ca *CoAPAdapter) observeMessage(l *net.UDPConn, a *net.UDPAddr, m *coap.Me
 	return res
 }
 
-func (ca *CoAPAdapter) obsTransmit(n writer.RawMessage) {
+func (ca *CoAPAdapter) obsTransmit(n mainflux.RawMessage) {
 	for _, v := range ca.obsMap[n.Channel] {
 		msg := *(v.message)
 		msg.Payload = n.Payload

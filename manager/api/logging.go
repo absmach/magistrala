@@ -7,21 +7,21 @@ import (
 	"github.com/mainflux/mainflux/manager"
 )
 
-var _ manager.Service = (*loggingService)(nil)
+var _ manager.Service = (*loggingMiddleware)(nil)
 
-type loggingService struct {
+type loggingMiddleware struct {
 	logger log.Logger
-	manager.Service
+	svc    manager.Service
 }
 
-// NewLoggingService adds logging facilities to the core service.
-func NewLoggingService(logger log.Logger, s manager.Service) manager.Service {
-	return &loggingService{logger, s}
+// LoggingMiddleware adds logging facilities to the core service.
+func LoggingMiddleware(svc manager.Service, logger log.Logger) manager.Service {
+	return &loggingMiddleware{logger, svc}
 }
 
-func (ls *loggingService) Register(user manager.User) (err error) {
+func (lm *loggingMiddleware) Register(user manager.User) (err error) {
 	defer func(begin time.Time) {
-		ls.logger.Log(
+		lm.logger.Log(
 			"method", "register",
 			"email", user.Email,
 			"error", err,
@@ -29,12 +29,12 @@ func (ls *loggingService) Register(user manager.User) (err error) {
 		)
 	}(time.Now())
 
-	return ls.Service.Register(user)
+	return lm.svc.Register(user)
 }
 
-func (ls *loggingService) Login(user manager.User) (token string, err error) {
+func (lm *loggingMiddleware) Login(user manager.User) (token string, err error) {
 	defer func(begin time.Time) {
-		ls.logger.Log(
+		lm.logger.Log(
 			"method", "login",
 			"email", user.Email,
 			"error", err,
@@ -42,12 +42,12 @@ func (ls *loggingService) Login(user manager.User) (token string, err error) {
 		)
 	}(time.Now())
 
-	return ls.Service.Login(user)
+	return lm.svc.Login(user)
 }
 
-func (ls *loggingService) AddClient(key string, client manager.Client) (id string, err error) {
+func (lm *loggingMiddleware) AddClient(key string, client manager.Client) (id string, err error) {
 	defer func(begin time.Time) {
-		ls.logger.Log(
+		lm.logger.Log(
 			"method", "add_client",
 			"key", key,
 			"id", id,
@@ -56,12 +56,12 @@ func (ls *loggingService) AddClient(key string, client manager.Client) (id strin
 		)
 	}(time.Now())
 
-	return ls.Service.AddClient(key, client)
+	return lm.svc.AddClient(key, client)
 }
 
-func (ls *loggingService) UpdateClient(key string, client manager.Client) (err error) {
+func (lm *loggingMiddleware) UpdateClient(key string, client manager.Client) (err error) {
 	defer func(begin time.Time) {
-		ls.logger.Log(
+		lm.logger.Log(
 			"method", "update_client",
 			"key", key,
 			"id", client.ID,
@@ -70,12 +70,12 @@ func (ls *loggingService) UpdateClient(key string, client manager.Client) (err e
 		)
 	}(time.Now())
 
-	return ls.Service.UpdateClient(key, client)
+	return lm.svc.UpdateClient(key, client)
 }
 
-func (ls *loggingService) ViewClient(key string, id string) (client manager.Client, err error) {
+func (lm *loggingMiddleware) ViewClient(key string, id string) (client manager.Client, err error) {
 	defer func(begin time.Time) {
-		ls.logger.Log(
+		lm.logger.Log(
 			"method", "view_client",
 			"key", key,
 			"id", id,
@@ -84,12 +84,12 @@ func (ls *loggingService) ViewClient(key string, id string) (client manager.Clie
 		)
 	}(time.Now())
 
-	return ls.Service.ViewClient(key, id)
+	return lm.svc.ViewClient(key, id)
 }
 
-func (ls *loggingService) ListClients(key string) (clients []manager.Client, err error) {
+func (lm *loggingMiddleware) ListClients(key string) (clients []manager.Client, err error) {
 	defer func(begin time.Time) {
-		ls.logger.Log(
+		lm.logger.Log(
 			"method", "list_clients",
 			"key", key,
 			"error", err,
@@ -97,12 +97,12 @@ func (ls *loggingService) ListClients(key string) (clients []manager.Client, err
 		)
 	}(time.Now())
 
-	return ls.Service.ListClients(key)
+	return lm.svc.ListClients(key)
 }
 
-func (ls *loggingService) RemoveClient(key string, id string) (err error) {
+func (lm *loggingMiddleware) RemoveClient(key string, id string) (err error) {
 	defer func(begin time.Time) {
-		ls.logger.Log(
+		lm.logger.Log(
 			"method", "remove_client",
 			"key", key,
 			"id", id,
@@ -111,12 +111,12 @@ func (ls *loggingService) RemoveClient(key string, id string) (err error) {
 		)
 	}(time.Now())
 
-	return ls.Service.RemoveClient(key, id)
+	return lm.svc.RemoveClient(key, id)
 }
 
-func (ls *loggingService) CreateChannel(key string, channel manager.Channel) (id string, err error) {
+func (lm *loggingMiddleware) CreateChannel(key string, channel manager.Channel) (id string, err error) {
 	defer func(begin time.Time) {
-		ls.logger.Log(
+		lm.logger.Log(
 			"method", "create_channel",
 			"key", key,
 			"id", id,
@@ -125,12 +125,12 @@ func (ls *loggingService) CreateChannel(key string, channel manager.Channel) (id
 		)
 	}(time.Now())
 
-	return ls.Service.CreateChannel(key, channel)
+	return lm.svc.CreateChannel(key, channel)
 }
 
-func (ls *loggingService) UpdateChannel(key string, channel manager.Channel) (err error) {
+func (lm *loggingMiddleware) UpdateChannel(key string, channel manager.Channel) (err error) {
 	defer func(begin time.Time) {
-		ls.logger.Log(
+		lm.logger.Log(
 			"method", "update_channel",
 			"key", key,
 			"id", channel.ID,
@@ -139,12 +139,12 @@ func (ls *loggingService) UpdateChannel(key string, channel manager.Channel) (er
 		)
 	}(time.Now())
 
-	return ls.Service.UpdateChannel(key, channel)
+	return lm.svc.UpdateChannel(key, channel)
 }
 
-func (ls *loggingService) ViewChannel(key string, id string) (channel manager.Channel, err error) {
+func (lm *loggingMiddleware) ViewChannel(key string, id string) (channel manager.Channel, err error) {
 	defer func(begin time.Time) {
-		ls.logger.Log(
+		lm.logger.Log(
 			"method", "view_channel",
 			"key", key,
 			"id", id,
@@ -153,12 +153,12 @@ func (ls *loggingService) ViewChannel(key string, id string) (channel manager.Ch
 		)
 	}(time.Now())
 
-	return ls.Service.ViewChannel(key, id)
+	return lm.svc.ViewChannel(key, id)
 }
 
-func (ls *loggingService) ListChannels(key string) (channels []manager.Channel, err error) {
+func (lm *loggingMiddleware) ListChannels(key string) (channels []manager.Channel, err error) {
 	defer func(begin time.Time) {
-		ls.logger.Log(
+		lm.logger.Log(
 			"method", "list_channels",
 			"key", key,
 			"error", err,
@@ -166,12 +166,12 @@ func (ls *loggingService) ListChannels(key string) (channels []manager.Channel, 
 		)
 	}(time.Now())
 
-	return ls.Service.ListChannels(key)
+	return lm.svc.ListChannels(key)
 }
 
-func (ls *loggingService) RemoveChannel(key string, id string) (err error) {
+func (lm *loggingMiddleware) RemoveChannel(key string, id string) (err error) {
 	defer func(begin time.Time) {
-		ls.logger.Log(
+		lm.logger.Log(
 			"method", "remove_channel",
 			"key", key,
 			"id", id,
@@ -180,12 +180,42 @@ func (ls *loggingService) RemoveChannel(key string, id string) (err error) {
 		)
 	}(time.Now())
 
-	return ls.Service.RemoveChannel(key, id)
+	return lm.svc.RemoveChannel(key, id)
 }
 
-func (ls *loggingService) Identity(key string) (id string, err error) {
+func (lm *loggingMiddleware) Connect(key, chanId, clientId string) (err error) {
 	defer func(begin time.Time) {
-		ls.logger.Log(
+		lm.logger.Log(
+			"method", "connect",
+			"key", key,
+			"channel", chanId,
+			"client", clientId,
+			"error", err,
+			"took", time.Since(begin),
+		)
+	}(time.Now())
+
+	return lm.svc.Connect(key, chanId, clientId)
+}
+
+func (lm *loggingMiddleware) Disconnect(key, chanId, clientId string) (err error) {
+	defer func(begin time.Time) {
+		lm.logger.Log(
+			"method", "disconnect",
+			"key", key,
+			"channel", chanId,
+			"client", clientId,
+			"error", err,
+			"took", time.Since(begin),
+		)
+	}(time.Now())
+
+	return lm.svc.Disconnect(key, chanId, clientId)
+}
+
+func (lm *loggingMiddleware) Identity(key string) (id string, err error) {
+	defer func(begin time.Time) {
+		lm.logger.Log(
 			"method", "identity",
 			"id", id,
 			"error", err,
@@ -193,12 +223,12 @@ func (ls *loggingService) Identity(key string) (id string, err error) {
 		)
 	}(time.Now())
 
-	return ls.Service.Identity(key)
+	return lm.svc.Identity(key)
 }
 
-func (ls *loggingService) CanAccess(key string, id string) (pub string, err error) {
+func (lm *loggingMiddleware) CanAccess(key string, id string) (pub string, err error) {
 	defer func(begin time.Time) {
-		ls.logger.Log(
+		lm.logger.Log(
 			"method", "can_access",
 			"key", key,
 			"id", id,
@@ -208,5 +238,5 @@ func (ls *loggingService) CanAccess(key string, id string) (pub string, err erro
 		)
 	}(time.Now())
 
-	return ls.Service.CanAccess(key, id)
+	return lm.svc.CanAccess(key, id)
 }

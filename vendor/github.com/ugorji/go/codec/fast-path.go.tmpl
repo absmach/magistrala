@@ -118,7 +118,7 @@ func fastpathEncodeTypeSwitch(iv interface{}, e *Encoder) bool {
 */}}{{end}}{{end}}{{end}}
 
 	default:
-        _ = v // TODO: workaround https://github.com/golang/go/issues/12927 (remove after go 1.6 release)
+        _ = v // workaround https://github.com/golang/go/issues/12927 seen in go1.4
 		return false
 	}
 	return true
@@ -142,7 +142,7 @@ func fastpathEncodeTypeSwitchSlice(iv interface{}, e *Encoder) bool {
 		fastpathTV.{{ .MethodNamePfx "Enc" false }}V(*v, e)
 {{end}}{{end}}{{end}}
 	default:
-        _ = v // TODO: workaround https://github.com/golang/go/issues/12927 (remove after go 1.6 release)
+        _ = v // workaround https://github.com/golang/go/issues/12927 seen in go1.4
 		return false
 	}
 	return true
@@ -157,7 +157,7 @@ func fastpathEncodeTypeSwitchMap(iv interface{}, e *Encoder) bool {
 		fastpathTV.{{ .MethodNamePfx "Enc" false }}V(*v, e)
 {{end}}{{end}}{{end}}
 	default:
-        _ = v // TODO: workaround https://github.com/golang/go/issues/12927 (remove after go 1.6 release)
+        _ = v // workaround https://github.com/golang/go/issues/12927 seen in go1.4
 		return false
 	}
 	return true
@@ -185,10 +185,20 @@ func (_ fastpathT) {{ .MethodNamePfx "Enc" false }}V(v []{{ .Elem }}, e *Encoder
 	if v == nil { e.e.EncodeNil(); return }
 	ee, esep := e.e, e.hh.hasElemSeparators()
 	ee.WriteArrayStart(len(v))
+	if esep {
+		for _, v2 := range v {
+			ee.WriteArrayElem()
+			{{ encmd .Elem "v2"}}
+		}
+	} else {
+		for _, v2 := range v {
+			{{ encmd .Elem "v2"}}
+		}
+	} {{/*
 	for _, v2 := range v {
 		if esep { ee.WriteArrayElem() }
 		{{ encmd .Elem "v2"}}
-	}
+	} */}}
 	ee.WriteArrayEnd()
 }
 func (_ fastpathT) {{ .MethodNamePfx "EncAsMap" false }}V(v []{{ .Elem }}, e *Encoder) {
@@ -198,6 +208,20 @@ func (_ fastpathT) {{ .MethodNamePfx "EncAsMap" false }}V(v []{{ .Elem }}, e *En
 		return
 	}
 	ee.WriteMapStart(len(v) / 2)
+	if esep {
+		for j, v2 := range v {
+			if j%2 == 0 {
+				ee.WriteMapElemKey()
+			} else {
+				ee.WriteMapElemValue()
+			}
+			{{ encmd .Elem "v2"}}
+		}
+	} else {
+		for _, v2 := range v {
+			{{ encmd .Elem "v2"}}
+		}
+	} {{/*
 	for j, v2 := range v {
 		if esep {
 			if j%2 == 0 {
@@ -207,7 +231,7 @@ func (_ fastpathT) {{ .MethodNamePfx "EncAsMap" false }}V(v []{{ .Elem }}, e *En
 			}
 		}
 		{{ encmd .Elem "v2"}}
-	}
+	} */}}
 	ee.WriteMapEnd()
 }
 {{end}}{{end}}{{end}}
@@ -220,8 +244,7 @@ func (_ fastpathT) {{ .MethodNamePfx "Enc" false }}V(v map[{{ .MapKey }}]{{ .Ele
 	if v == nil { e.e.EncodeNil(); return }
 	ee, esep := e.e, e.hh.hasElemSeparators() 
 	ee.WriteMapStart(len(v))
-	{{if eq .MapKey "string"}}asSymbols := e.h.AsSymbols&AsSymbolMapStringKeysFlag != 0
-	{{end}}if e.h.Canonical {
+	if e.h.Canonical {
 		{{if eq .MapKey "interface{}"}}{{/* out of band 
 		*/}}var mksv []byte = make([]byte, 0, len(v)*16) // temporary byte slice for the encoding
 		e2 := NewEncoderBytes(&mksv, e.hh)
@@ -237,39 +260,70 @@ func (_ fastpathT) {{ .MethodNamePfx "Enc" false }}V(v map[{{ .MapKey }}]{{ .Ele
 			i++
 		}
 		sort.Sort(bytesISlice(v2))
+		if esep {
+			for j := range v2 {
+				ee.WriteMapElemKey()
+				e.asis(v2[j].v)
+				ee.WriteMapElemValue()
+				e.encode(v[v2[j].i])
+			}
+		} else {
+			for j := range v2 {
+				e.asis(v2[j].v)
+				e.encode(v[v2[j].i])
+			}
+		} {{/*
 		for j := range v2 {
 			if esep { ee.WriteMapElemKey() }
 			e.asis(v2[j].v)
 			if esep { ee.WriteMapElemValue() }
 			e.encode(v[v2[j].i])
-		} {{else}}{{ $x := sorttype .MapKey true}}v2 := make([]{{ $x }}, len(v))
+		} */}} {{else}}{{ $x := sorttype .MapKey true}}v2 := make([]{{ $x }}, len(v))
 		var i int 
 		for k, _ := range v {
 			v2[i] = {{ $x }}(k)
 			i++
 		}
 		sort.Sort({{ sorttype .MapKey false}}(v2))
+		if esep {
+			for _, k2 := range v2 {
+				ee.WriteMapElemKey()
+				{{if eq .MapKey "string"}}ee.EncodeString(cUTF8, k2){{else}}{{ $y := printf "%s(k2)" .MapKey }}{{ encmd .MapKey $y }}{{end}}
+				ee.WriteMapElemValue()
+				{{ $y := printf "v[%s(k2)]" .MapKey }}{{ encmd .Elem $y }}
+			} 
+		} else {
+			for _, k2 := range v2 {
+				{{if eq .MapKey "string"}}ee.EncodeString(cUTF8, k2){{else}}{{ $y := printf "%s(k2)" .MapKey }}{{ encmd .MapKey $y }}{{end}}
+				{{ $y := printf "v[%s(k2)]" .MapKey }}{{ encmd .Elem $y }}
+			} 
+		} {{/*
 		for _, k2 := range v2 {
 			if esep { ee.WriteMapElemKey() }
-			{{if eq .MapKey "string"}}if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
-				ee.EncodeString(cUTF8, k2)
-			}{{else}}{{ $y := printf "%s(k2)" .MapKey }}{{ encmd .MapKey $y }}{{end}}
+			{{if eq .MapKey "string"}}ee.EncodeString(cUTF8, k2){{else}}{{ $y := printf "%s(k2)" .MapKey }}{{ encmd .MapKey $y }}{{end}}
 			if esep { ee.WriteMapElemValue() }
 			{{ $y := printf "v[%s(k2)]" .MapKey }}{{ encmd .Elem $y }}
-		} {{end}}
+		} */}} {{end}}
 	} else {
+		if esep {
+			for k2, v2 := range v {
+				ee.WriteMapElemKey()
+				{{if eq .MapKey "string"}}ee.EncodeString(cUTF8, k2){{else}}{{ encmd .MapKey "k2"}}{{end}}
+				ee.WriteMapElemValue()
+				{{ encmd .Elem "v2"}}
+			}
+		} else {
+			for k2, v2 := range v {
+				{{if eq .MapKey "string"}}ee.EncodeString(cUTF8, k2){{else}}{{ encmd .MapKey "k2"}}{{end}}
+				{{ encmd .Elem "v2"}}
+			}
+		} {{/*
 		for k2, v2 := range v {
 			if esep { ee.WriteMapElemKey() }
-			{{if eq .MapKey "string"}}if asSymbols {
-				ee.EncodeSymbol(k2)
-			} else {
-				ee.EncodeString(cUTF8, k2)
-			}{{else}}{{ encmd .MapKey "k2"}}{{end}}
+			{{if eq .MapKey "string"}}ee.EncodeString(cUTF8, k2){{else}}{{ encmd .MapKey "k2"}}{{end}}
 			if esep { ee.WriteMapElemValue() }
 			{{ encmd .Elem "v2"}}
-		}
+		} */}}
 	}
 	ee.WriteMapEnd()
 }
@@ -308,7 +362,7 @@ func fastpathDecodeTypeSwitch(iv interface{}, d *Decoder) bool {
 		}{{/*
 */}}{{end}}{{end}}{{end}}
 	default:
-        _ = v // TODO: workaround https://github.com/golang/go/issues/12927 (remove after go 1.6 release)
+        _ = v // workaround https://github.com/golang/go/issues/12927 seen in go1.4
 		return false
 	}
 	return true
@@ -325,7 +379,7 @@ func fastpathDecodeSetZeroTypeSwitch(iv interface{}) bool {
 		*v = nil {{/*
 */}}{{end}}{{end}}{{end}}
 	default:
-        _ = v // TODO: workaround https://github.com/golang/go/issues/12927 (remove after go 1.6 release)
+        _ = v // workaround https://github.com/golang/go/issues/12927 seen in go1.4
 		return false
 	}
 	return true

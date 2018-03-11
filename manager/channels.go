@@ -3,10 +3,10 @@ package manager
 // Channel represents a Mainflux "communication group". This group contains the
 // clients that can exchange messages between eachother.
 type Channel struct {
-	Owner     string   `json:"-"`
-	ID        string   `json:"id"`
-	Name      string   `json:"name,omitempty"`
-	Connected []string `json:"connected"`
+	ID      string   `gorm:"type:char(36);primary_key" json:"id"`
+	Owner   string   `gorm:"type:varchar(254);not null" json:"-"`
+	Name    string   `json:"name,omitempty"`
+	Clients []Client `gorm:"many2many:channel_clients" json:"connected,omitempty"`
 }
 
 // ChannelRepository specifies a channel persistence API.
@@ -30,6 +30,13 @@ type ChannelRepository interface {
 	// Remove removes the channel having the provided identifier, that is owned
 	// by the specified user.
 	Remove(string, string) error
+
+	// Connect adds client to the channel's list of connected clients.
+	Connect(string, string, string) error
+
+	// Disconnect removes client from the channel's list of connected
+	// clients.
+	Disconnect(string, string, string) error
 
 	// HasClient determines whether the client with the provided identifier, is
 	// "connected" to the specified channel.

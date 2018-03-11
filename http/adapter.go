@@ -1,18 +1,18 @@
 package http
 
-import "github.com/mainflux/mainflux/writer"
+import "github.com/mainflux/mainflux"
 
-var _ Service = (*adapterService)(nil)
+var _ mainflux.MessagePublisher = (*adapterService)(nil)
 
 type adapterService struct {
-	mr writer.MessageRepository
+	pub mainflux.MessagePublisher
 }
 
-// NewService instantiates the domain service implementation.
-func NewService(mr writer.MessageRepository) Service {
-	return &adapterService{mr}
+// New instantiates the domain service implementation.
+func New(pub mainflux.MessagePublisher) mainflux.MessagePublisher {
+	return &adapterService{pub}
 }
 
-func (as *adapterService) Publish(msg writer.RawMessage) error {
-	return as.mr.Save(msg)
+func (as *adapterService) Publish(msg mainflux.RawMessage) error {
+	return as.pub.Publish(msg)
 }

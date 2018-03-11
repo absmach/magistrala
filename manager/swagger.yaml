@@ -115,14 +115,14 @@ paths:
           description: Missing or invalid access token provided.
         500:
           $ref: "#/responses/ServiceError"
-  /clients/{id}:
+  /clients/{clientId}:
     get:
       summary: Retrieves client info
       tags:
         - clients
       parameters:
         - $ref: "#/parameters/Authorization"
-        - $ref: "#/parameters/Id"
+        - $ref: "#/parameters/ClientId"
       responses:
         200:
           description: Data retrieved.
@@ -138,13 +138,13 @@ paths:
       summary: Updates client info
       description: |
         Update is performed by replacing the current resource data with values
-        provided in a request payload. Resource's unique identifier will not be
-        affected. Note that the client's type and ID cannot be changed.
+        provided in a request payload. Note that the client's type and ID
+        cannot be changed.
       tags:
         - clients
       parameters:
         - $ref: "#/parameters/Authorization"
-        - $ref: "#/parameters/Id"
+        - $ref: "#/parameters/ClientId"
         - name: client
           description: JSON-formatted document describing the updated client.
           in: body
@@ -171,7 +171,7 @@ paths:
         - clients
       parameters:
         - $ref: "#/parameters/Authorization"
-        - $ref: "#/parameters/Id"
+        - $ref: "#/parameters/ClientId"
       responses:
         204:
           description: Client removed.
@@ -238,14 +238,14 @@ paths:
           description: Missing or invalid access token provided.
         500:
           $ref: "#/responses/ServiceError"
-  /channels/{id}:
+  /channels/{chanId}:
     get:
       summary: Retrieves channel info
       tags:
         - channels
       parameters:
         - $ref: "#/parameters/Authorization"
-        - $ref: "#/parameters/Id"
+        - $ref: "#/parameters/ChanId"
       responses:
         200:
           description: Data retrieved.
@@ -261,13 +261,13 @@ paths:
       summary: Updates channel info
       description: |
         Update is performed by replacing the current resource data with values
-        provided in a request payload. Resource's unique identifier will not be
+        provided in a request payload. Note that the channel's ID will not be
         affected.
       tags:
         - channels
       parameters:
         - $ref: "#/parameters/Authorization"
-        - $ref: "#/parameters/Id"
+        - $ref: "#/parameters/ChanId"
         - name: channel
           description: JSON-formatted document describing the updated channel.
           in: body
@@ -294,12 +294,53 @@ paths:
         - channels
       parameters:
         - $ref: "#/parameters/Authorization"
-        - $ref: "#/parameters/Id"
+        - $ref: "#/parameters/ChanId"
       responses:
         204:
           description: Channel removed.
         403:
           description: Missing or invalid access token provided.
+        500:
+          $ref: "#/responses/ServiceError"
+  /channels/{chanId}/clients/{clientId}:
+    put:
+      summary: Connects the client to the channel
+      description: |
+        Creates connection between a client and a channel. Once connected to
+        the channel, clients are allowed to exchange messages through it.
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/ChanId"
+        - $ref: "#/parameters/ClientId"
+      responses:
+        200:
+          description: Client connected.
+        403:
+          description: Missing or invalid access token provided.
+        404:
+          description: Channel or client does not exist.
+        500:
+          $ref: "#/responses/ServiceError"
+    delete:
+      summary: Disconnects the client from the channel
+      description: |
+        Removes connection between a client and a channel. Once connection is
+        removed, client can no longer exchange messages through the channel.
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/ChanId"
+        - $ref: "#/parameters/ClientId"
+      responses:
+        204:
+          description: Client disconnected.
+        403:
+          description: Missing or invalid access token provided.
+        404:
+          description: Channel or client does not exist.
         500:
           $ref: "#/responses/ServiceError"
   /access-grant:
@@ -322,7 +363,7 @@ paths:
               description: ID of the entity bound to the provided access key.
         403:
           description: Missing or invalid access token provided.
-  /channels/{id}/access-grant:
+  /channels/{chanId}/access-grant:
     get:
       summary: Checks channel accessibility
       description: |
@@ -332,7 +373,7 @@ paths:
         - access control
       parameters:
         - $ref: "#/parameters/Authorization"
-        - $ref: "#/parameters/Id"
+        - $ref: "#/parameters/ChanId"
       responses:
         200:
           description: Client can access the channel.
@@ -352,9 +393,16 @@ parameters:
     in: header
     type: string
     required: true
-  Id:
-    name: id
-    description: Unique resource identifier.
+  ChanId:
+    name: chanId
+    description: Unique channel identifier.
+    in: path
+    type: string
+    format: uuid
+    required: true
+  ClientId:
+    name: clientId
+    description: Unique client identifier.
     in: path
     type: string
     format: uuid
@@ -387,7 +435,16 @@ definitions:
         minItems: 0
         uniqueItems: true
         items:
-          $ref: "#/definitions/ChannelRes"
+          type: object
+          properties:
+            id:
+              type: string
+              description: Unique channel identifier generated by the service.
+            name:
+              type: string
+              description: Free-form channel name.
+          required:
+            - id
     required:
       - channels
   ChannelRes:
@@ -404,23 +461,15 @@ definitions:
         minItems: 0
         uniqueItems: true
         items:
-          type: string
+          $ref: '#/definitions/ClientRes'
     required:
       - id
-      - name
-      - connected
   ChannelReq:
     type: object
     properties:
       name:
         type: string
         description: Free-form channel name.
-      connected:
-        type: array
-        minItems: 0
-        uniqueItems: true
-        items:
-          type: string
   ClientList:
     type: object
     properties:
@@ -450,11 +499,9 @@ definitions:
       key:
         type: string
         description: Auto-generated access key.
-      meta:
-        type: object
-        description: Client's meta-data.
-        additionalProperties:
-          type: string
+      payload:
+        type: string
+        description: Arbitrary, string-encoded client's data.
     required:
       - id
       - type
@@ -471,11 +518,9 @@ definitions:
       name:
         type: string
         description: Free-form client name.
-      meta:
-        type: object
-        description: Client's meta-data.
-        additionalProperties:
-          type: string
+      payload:
+        type: string
+        description: Arbitrary, string-encoded client's data.
     required:
       - type
   Token:

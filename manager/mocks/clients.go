@@ -24,52 +24,54 @@ func NewClientRepository() manager.ClientRepository {
 	}
 }
 
-func (repo *clientRepositoryMock) Id() string {
-	repo.mu.Lock()
-	defer repo.mu.Unlock()
+func (crm *clientRepositoryMock) Id() string {
+	crm.mu.Lock()
+	defer crm.mu.Unlock()
 
-	repo.counter += 1
-	return strconv.Itoa(repo.counter)
+	crm.counter += 1
+	return strconv.Itoa(crm.counter)
 }
 
-func (repo *clientRepositoryMock) Save(client manager.Client) error {
-	repo.mu.Lock()
-	defer repo.mu.Unlock()
+func (crm *clientRepositoryMock) Save(client manager.Client) error {
+	crm.mu.Lock()
+	defer crm.mu.Unlock()
 
-	repo.clients[key(client.Owner, client.ID)] = client
+	crm.clients[key(client.Owner, client.ID)] = client
 
 	return nil
 }
 
-func (repo *clientRepositoryMock) Update(client manager.Client) error {
-	repo.mu.Lock()
-	defer repo.mu.Unlock()
+func (crm *clientRepositoryMock) Update(client manager.Client) error {
+	crm.mu.Lock()
+	defer crm.mu.Unlock()
 
 	dbKey := key(client.Owner, client.ID)
 
-	if _, ok := repo.clients[dbKey]; !ok {
+	if _, ok := crm.clients[dbKey]; !ok {
 		return manager.ErrNotFound
 	}
 
-	repo.clients[dbKey] = client
+	crm.clients[dbKey] = client
 
 	return nil
 }
 
-func (repo *clientRepositoryMock) One(owner, id string) (manager.Client, error) {
-	if c, ok := repo.clients[key(owner, id)]; ok {
+func (crm *clientRepositoryMock) One(owner, id string) (manager.Client, error) {
+	if c, ok := crm.clients[key(owner, id)]; ok {
 		return c, nil
 	}
 
 	return manager.Client{}, manager.ErrNotFound
 }
 
-func (repo *clientRepositoryMock) All(owner string) []manager.Client {
+func (crm *clientRepositoryMock) All(owner string) []manager.Client {
+	// This obscure way to examine map keys is enforced by the key structure
+	// itself (see mocks/commons.go).
 	prefix := fmt.Sprintf("%s-", owner)
 
 	clients := make([]manager.Client, 0)
 
-	for k, v := range repo.clients {
+	for k, v := range crm.clients {
 		if strings.HasPrefix(k, prefix) {
 			clients = append(clients, v)
 		}
@@ -78,7 +80,7 @@ func (repo *clientRepositoryMock) All(owner string) []manager.Client {
 	return clients
 }
 
-func (repo *clientRepositoryMock) Remove(owner, id string) error {
-	delete(repo.clients, key(owner, id))
+func (crm *clientRepositoryMock) Remove(owner, id string) error {
+	delete(crm.clients, key(owner, id))
 	return nil
 }

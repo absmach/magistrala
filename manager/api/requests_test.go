@@ -4,88 +4,93 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/gocql/gocql"
 	"github.com/mainflux/mainflux/manager"
+	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 )
 
+const wrong string = "?"
+
+var (
+	client  manager.Client  = manager.Client{Type: "app"}
+	channel manager.Channel = manager.Channel{}
+)
+
 func TestUserReqValidation(t *testing.T) {
-	cases := []struct {
+	cases := map[string]struct {
 		user manager.User
 		err  error
 	}{
-		{manager.User{"foo@example.com", "pass"}, nil},
-		{manager.User{"invalid", "pass"}, manager.ErrMalformedEntity},
-		{manager.User{"", "pass"}, manager.ErrMalformedEntity},
-		{manager.User{"foo@example.com", ""}, manager.ErrMalformedEntity},
+		"valid user request": {manager.User{"foo@example.com", "pass"}, nil},
+		"malformed e-mail":   {manager.User{wrong, "pass"}, manager.ErrMalformedEntity},
+		"empty e-mail":       {manager.User{"", "pass"}, manager.ErrMalformedEntity},
+		"empty password":     {manager.User{"foo@example.com", ""}, manager.ErrMalformedEntity},
 	}
 
-	for i, tc := range cases {
+	for desc, tc := range cases {
 		req := userReq{tc.user}
 		err := req.validate()
-		assert.Equal(t, tc.err, err, fmt.Sprintf("failed at %d\n", i))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
 
 func TestIdentityReqValidation(t *testing.T) {
-	cases := []struct {
+	cases := map[string]struct {
 		key string
 		err error
 	}{
-		{"valid", nil},
-		{"", manager.ErrUnauthorizedAccess},
+		"non-empty token": {uuid.NewV4().String(), nil},
+		"empty token":     {"", manager.ErrUnauthorizedAccess},
 	}
 
-	for i, tc := range cases {
+	for desc, tc := range cases {
 		req := identityReq{tc.key}
 		err := req.validate()
-		assert.Equal(t, tc.err, err, fmt.Sprintf("failed at %d\n", i))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
 
 func TestAddClientReqValidation(t *testing.T) {
-	key := "key"
-	vc := manager.Client{Type: "app"}
+	key := uuid.NewV4().String()
 
-	cases := []struct {
-		key    string
+	cases := map[string]struct {
 		client manager.Client
+		key    string
 		err    error
 	}{
-		{key, vc, nil},
-		{"", vc, manager.ErrUnauthorizedAccess},
-		{key, manager.Client{Type: "invalid"}, manager.ErrMalformedEntity},
+		"valid client addition request": {client, key, nil},
+		"missing token":                 {client, "", manager.ErrUnauthorizedAccess},
+		"wrong client type":             {manager.Client{Type: wrong}, key, manager.ErrMalformedEntity},
 	}
 
-	for i, tc := range cases {
+	for desc, tc := range cases {
 		req := addClientReq{
 			key:    tc.key,
 			client: tc.client,
 		}
 
 		err := req.validate()
-		assert.Equal(t, tc.err, err, fmt.Sprintf("failed at %d\n", i))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
 
 func TestUpdateClientReqValidation(t *testing.T) {
-	key := "key"
-	uuid := gocql.TimeUUID().String()
-	vc := manager.Client{Type: "app"}
+	key := uuid.NewV4().String()
+	id := uuid.NewV4().String()
 
-	cases := []struct {
-		key    string
-		id     string
+	cases := map[string]struct {
 		client manager.Client
+		id     string
+		key    string
 		err    error
 	}{
-		{key, uuid, vc, nil},
-		{key, "non-uuid", vc, manager.ErrNotFound},
-		{"", uuid, vc, manager.ErrUnauthorizedAccess},
-		{key, uuid, manager.Client{Type: "invalid"}, manager.ErrMalformedEntity},
+		"valid client update request": {client, id, key, nil},
+		"non-uuid client ID":          {client, wrong, key, manager.ErrNotFound},
+		"missing token":               {client, id, "", manager.ErrUnauthorizedAccess},
+		"wrong client type":           {manager.Client{Type: "invalid"}, id, key, manager.ErrMalformedEntity},
 	}
 
-	for i, tc := range cases {
+	for desc, tc := range cases {
 		req := updateClientReq{
 			key:    tc.key,
 			id:     tc.id,
@@ -93,51 +98,49 @@ func TestUpdateClientReqValidation(t *testing.T) {
 		}
 
 		err := req.validate()
-		assert.Equal(t, tc.err, err, fmt.Sprintf("failed at %d\n", i))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
 
 func TestCreateChannelReqValidation(t *testing.T) {
-	key := "key"
-	vc := manager.Channel{}
+	key := uuid.NewV4().String()
 
-	cases := []struct {
-		key     string
+	cases := map[string]struct {
 		channel manager.Channel
+		key     string
 		err     error
 	}{
-		{key, vc, nil},
-		{"", vc, manager.ErrUnauthorizedAccess},
+		"valid channel creation request": {channel, key, nil},
+		"missing token":                  {channel, "", manager.ErrUnauthorizedAccess},
 	}
 
-	for i, tc := range cases {
+	for desc, tc := range cases {
 		req := createChannelReq{
 			key:     tc.key,
 			channel: tc.channel,
 		}
 
 		err := req.validate()
-		assert.Equal(t, tc.err, err, fmt.Sprintf("failed at %d\n", i))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
 
 func TestUpdateChannelReqValidation(t *testing.T) {
-	key := "key"
-	uuid := gocql.TimeUUID().String()
-	vc := manager.Channel{}
+	key := uuid.NewV4().String()
+	id := uuid.NewV4().String()
 
-	cases := []struct {
-		key     string
-		id      string
+	cases := map[string]struct {
 		channel manager.Channel
+		id      string
+		key     string
 		err     error
 	}{
-		{key, uuid, vc, nil},
-		{key, "non-uuid", vc, manager.ErrNotFound},
-		{"", uuid, vc, manager.ErrUnauthorizedAccess},
+		"valid channel update request": {channel, id, key, nil},
+		"non-uuid channel ID":          {channel, wrong, key, manager.ErrNotFound},
+		"missing token":                {channel, id, "", manager.ErrUnauthorizedAccess},
 	}
 
-	for i, tc := range cases {
+	for desc, tc := range cases {
 		req := updateChannelReq{
 			key:     tc.key,
 			id:      tc.id,
@@ -145,46 +148,49 @@ func TestUpdateChannelReqValidation(t *testing.T) {
 		}
 
 		err := req.validate()
-		assert.Equal(t, tc.err, err, fmt.Sprintf("failed at %d\n", i))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
 
 func TestViewResourceReqValidation(t *testing.T) {
-	key := "key"
-	uuid := gocql.TimeUUID().String()
+	key := uuid.NewV4().String()
+	id := uuid.NewV4().String()
 
-	cases := []struct {
-		key string
+	cases := map[string]struct {
 		id  string
+		key string
 		err error
 	}{
-		{key, uuid, nil},
-		{"", uuid, manager.ErrUnauthorizedAccess},
-		{key, "non-uuid", manager.ErrNotFound},
+		"valid resource viewing request": {id, key, nil},
+		"missing token":                  {id, "", manager.ErrUnauthorizedAccess},
+		"non-uuid resource ID":           {wrong, key, manager.ErrNotFound},
 	}
 
-	for i, tc := range cases {
+	for desc, tc := range cases {
 		req := viewResourceReq{tc.key, tc.id}
 		err := req.validate()
-		assert.Equal(t, tc.err, err, fmt.Sprintf("failed at %d\n", i))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
 
 func TestListResourcesReqValidation(t *testing.T) {
-	cases := []struct {
+	key := uuid.NewV4().String()
+	value := 10
+
+	cases := map[string]struct {
 		key    string
 		size   int
 		offset int
 		err    error
 	}{
-		{"key", 10, 10, nil},
-		{"", 10, 10, manager.ErrUnauthorizedAccess},
-		{"key", 10, -10, manager.ErrMalformedEntity},
-		{"key", 0, 10, manager.ErrMalformedEntity},
-		{"key", -10, 10, manager.ErrMalformedEntity},
+		"valid listing request": {key, value, value, nil},
+		"missing token":         {"", value, value, manager.ErrUnauthorizedAccess},
+		"negative offset":       {key, value, -value, manager.ErrMalformedEntity},
+		"zero size":             {key, 0, value, manager.ErrMalformedEntity},
+		"negative size":         {key, -value, value, manager.ErrMalformedEntity},
 	}
 
-	for i, tc := range cases {
+	for desc, tc := range cases {
 		req := listResourcesReq{
 			key:    tc.key,
 			size:   tc.size,
@@ -192,6 +198,6 @@ func TestListResourcesReqValidation(t *testing.T) {
 		}
 
 		err := req.validate()
-		assert.Equal(t, tc.err, err, fmt.Sprintf("failed at %d\n", i))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }

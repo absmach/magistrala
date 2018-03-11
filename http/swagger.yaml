@@ -14,6 +14,7 @@ paths:
         - messages
       consumes:
         - "application/senml+json"
+        - "text/plain"
       produces: []
       parameters:
         - name: Authorization
@@ -28,11 +29,15 @@ paths:
           format: uuid
           required: true
         - name: message
-          description: Message to be sent.
+          description: |
+            Message to be distributed. Since the platform expects messages to be
+            properly formatted SenML in order to be post-processed, clients are
+            obliged to specify Content-Type header for each published message.
+            Note that all messages that aren't SenML will be accepted and published,
+            but no post-processing will be applied.
           in: body
           required: true
-          schema:
-            $ref: '#/definitions/Message'
+          type: string
       responses:
         202:
           description: Message is accepted for processing.
@@ -41,66 +46,6 @@ paths:
         403:
           description: Message discarded due to missing or invalid credentials.
         415:
-          description: Message discarded due to invalid content type.
+          description: Message discarded due to invalid or missing content type.
         500:
           description: Unexpected server-side error occured.
-
-definitions:
-  Message:
-    type: array
-    minItems: 1
-    uniqueItems: true
-    items:
-      type: object
-      properties:
-        bn:
-          type: string
-          description: Base name
-        bt:
-          type: number
-          format: double
-          description: Base time
-        bu:
-          type: string
-          description: Base unit
-        bv:
-          type: number
-          format: double
-          description: Base value
-        bver:
-          type: integer
-          description: Base version
-        n:
-          type: string
-          description: Name
-        u:
-          type: string
-          description: Unit
-        v:
-          type: number
-          format: double
-          description: Value
-        vs:
-          type: string
-          description: String value
-        vb:
-          type: boolean
-          description: Boolean value
-        vd:
-          type: string
-          description: Data value
-        s:
-          type: number
-          format: double
-          description: Value sum
-        t:
-          type: number
-          format: double
-          description: Time
-        ut:
-          type: number
-          format: double
-          description: Update time
-        l:
-          type: string
-          description: Link

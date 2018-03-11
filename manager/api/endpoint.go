@@ -200,20 +200,49 @@ func removeChannelEndpoint(svc manager.Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
 		req := request.(viewResourceReq)
 
-		err := req.validate()
-		if err == manager.ErrNotFound {
-			return removeRes{}, nil
-		}
-
-		if err != nil {
+		if err := req.validate(); err != nil {
+			if err == manager.ErrNotFound {
+				return removeRes{}, nil
+			}
 			return nil, err
 		}
 
-		if err = svc.RemoveChannel(req.key, req.id); err != nil {
+		if err := svc.RemoveChannel(req.key, req.id); err != nil {
 			return nil, err
 		}
 
 		return removeRes{}, nil
+	}
+}
+func connectEndpoint(svc manager.Service) endpoint.Endpoint {
+	return func(_ context.Context, request interface{}) (interface{}, error) {
+		cr := request.(connectionReq)
+
+		if err := cr.validate(); err != nil {
+			return nil, err
+		}
+
+		if err := svc.Connect(cr.key, cr.chanId, cr.clientId); err != nil {
+			return nil, err
+		}
+
+		return connectionRes{}, nil
+	}
+}
+
+func disconnectEndpoint(svc manager.Service) endpoint.Endpoint {
+	return func(_ context.Context, request interface{}) (interface{}, error) {
+		cr := request.(connectionReq)
+
+		if err := cr.validate(); err != nil {
+			return nil, err
+		}
+
+		if err := svc.Disconnect(cr.key, cr.chanId, cr.clientId); err != nil {
+			return nil, err
+		}
+
+		return disconnectionRes{}, nil
 	}
 }
 

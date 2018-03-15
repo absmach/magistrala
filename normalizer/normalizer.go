@@ -57,7 +57,7 @@ func (ef eventFlow) publish(msg mainflux.RawMessage) error {
 			return err
 		}
 
-		if err = ef.nc.Publish(subject, data); err != nil {
+		if err = ef.nc.Publish(output, data); err != nil {
 			ef.logger.Log("error", fmt.Sprintf("Publishing failed: %s", err))
 			return err
 		}

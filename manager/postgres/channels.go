@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	_ "github.com/jinzhu/gorm/dialects/postgres" // required by GORM
 	"github.com/mainflux/mainflux/manager"
 	uuid "github.com/satori/go.uuid"
 )
@@ -13,6 +13,8 @@ type channelRepository struct {
 	db *gorm.DB
 }
 
+// NewChannelRepository instantiates a PostgreSQL implementation of channel
+// repository.
 func NewChannelRepository(db *gorm.DB) manager.ChannelRepository {
 	return &channelRepository{db}
 }

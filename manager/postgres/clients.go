@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	_ "github.com/jinzhu/gorm/dialects/postgres" // required by GORM
 	"github.com/mainflux/mainflux/manager"
 	uuid "github.com/satori/go.uuid"
 )
@@ -24,11 +24,7 @@ func (cr *clientRepository) Id() string {
 }
 
 func (cr *clientRepository) Save(client manager.Client) error {
-	if err := cr.db.Create(&client).Error; err != nil {
-		return err
-	}
-
-	return nil
+	return cr.db.Create(&client).Error
 }
 
 func (cr *clientRepository) Update(client manager.Client) error {

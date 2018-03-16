@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	_ "github.com/jinzhu/gorm/dialects/postgres" // required by GORM
 	"github.com/lib/pq"
 	"github.com/mainflux/mainflux/manager"
 )

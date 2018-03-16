@@ -39,6 +39,8 @@ services:
       POSTGRES_USER: mainflux
       POSTGRES_PASSWORD: mainflux
       POSTGRES_DB: mainflux
+    ports:
+        - "5432:5432"
 
   manager:
     image: mainflux/manager:latest
@@ -89,3 +91,5 @@ services:
       MQTT_ADAPTER_NATS_URL: "nats://nats:4222"
       AUTH_URL: "http://manager"
       AUTH_PORT: 8180
+    ports:
+      - "1883:1883"

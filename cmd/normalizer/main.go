@@ -45,6 +45,7 @@ func main() {
 
 	go func() {
 		p := fmt.Sprintf(":%s", cfg.Port)
+		logger.Log("message", fmt.Sprintf("Normalizer service started, exposed port %s", cfg.Port))
 		errs <- http.ListenAndServe(p, normalizer.MakeHandler())
 	}()
 

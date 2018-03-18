@@ -94,6 +94,7 @@ func main() {
 
 	go func() {
 		p := fmt.Sprintf(":%s", cfg.Port)
+		logger.Log("message", fmt.Sprintf("Manager service started, exposed port %s", cfg.Port))
 		errs <- http.ListenAndServe(p, api.MakeHandler(svc))
 	}()
 

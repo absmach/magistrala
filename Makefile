@@ -1,12 +1,14 @@
-BUILD_DIR=build
-SERVICES=manager http normalizer coap
-DOCKERS=$(addprefix docker_,$(SERVICES))
+BUILD_DIR = build
+SERVICES = manager http normalizer coap
+DOCKERS = $(addprefix docker_,$(SERVICES))
+CGO_ENABLED ?= 0
+GOOS ?= linux
 
 all: $(SERVICES)
 .PHONY: all $(SERVICES) docker
 
 define compile_service
-	GOOS=$(GOOS) GOARCH=$(GOARCH) GOARM=$(GOARM) go build -ldflags "-s -w" -o ${BUILD_DIR}/mainflux-$(1) cmd/$(1)/main.go
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) GOARM=$(GOARM) go build -ldflags "-s -w" -o ${BUILD_DIR}/mainflux-$(1) cmd/$(1)/main.go
 endef
 
 define make_docker

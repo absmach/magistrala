@@ -1,11 +1,11 @@
 package normalizer
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/cisco/senml"
 	"github.com/go-kit/kit/log"
+	"github.com/golang/protobuf/proto"
 	"github.com/mainflux/mainflux"
 	nats "github.com/nats-io/go-nats"
 )
@@ -31,7 +31,7 @@ func (ef eventFlow) start() {
 	ef.nc.QueueSubscribe(subject, queue, func(m *nats.Msg) {
 		msg := mainflux.RawMessage{}
 
-		if err := json.Unmarshal(m.Data, &msg); err != nil {
+		if err := proto.Unmarshal(m.Data, &msg); err != nil {
 			ef.logger.Log("error", fmt.Sprintf("Unmarshalling failed: %s", err))
 			return
 		}
@@ -51,7 +51,7 @@ func (ef eventFlow) publish(msg mainflux.RawMessage) error {
 	}
 
 	for _, v := range normalized {
-		data, err := json.Marshal(v)
+		data, err := proto.Marshal(&v)
 		if err != nil {
 			ef.logger.Log("error", fmt.Sprintf("Marshalling failed: %s", err))
 			return err

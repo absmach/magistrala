@@ -25,8 +25,8 @@
 [[projects]]
   name = "github.com/asaskevich/govalidator"
   packages = ["."]
-  revision = "73945b6115bfbbcc57d89b7316e28109364124e1"
-  version = "v7"
+  revision = "ccb8e960c48f04d6935e72476ae4a51028f9e22f"
+  version = "v9"
 
 [[projects]]
   branch = "master"
@@ -67,8 +67,8 @@
 [[projects]]
   name = "github.com/dgrijalva/jwt-go"
   packages = ["."]
-  revision = "dbeaa9332f19a944acb5736b4456cfcc02140e29"
-  version = "v3.1.0"
+  revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
+  version = "v3.2.0"
 
 [[projects]]
   branch = "master"
@@ -100,7 +100,7 @@
     "pkg/term",
     "pkg/term/windows"
   ]
-  revision = "4d9beb4607404e4d756052aca7041517788f7e75"
+  revision = "72ba7f593fa4dbb628cf5ee83cd7daf955934cf5"
 
 [[projects]]
   name = "github.com/docker/go-connections"
@@ -124,7 +124,7 @@
   name = "github.com/fsouza/go-dockerclient"
   packages = ["."]
   revision = "ca33ff277b527ce11b793e62f9ba244129b01caf"
-  version = "1.2.0"
+  version = "v1.2.0"
 
 [[projects]]
   name = "github.com/go-kit/kit"
@@ -170,19 +170,19 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/jinzhu/gorm"
   packages = [
     ".",
     "dialects/postgres"
   ]
-  revision = "58e34726dfc069b558038efbaa25555f182d1f7a"
+  revision = "6ed508ec6a4ecb3531899a69cbc746ccf65a4166"
+  version = "v1.9.1"
 
 [[projects]]
   branch = "master"
   name = "github.com/jinzhu/inflection"
   packages = ["."]
-  revision = "1c35d901db3da928c72a72d8458480cc9ade058f"
+  revision = "04140366298a54a039076d798123ffa108fff46c"
 
 [[projects]]
   branch = "master"
@@ -281,7 +281,7 @@
     "internal/bitbucket.org/ww/goautoneg",
     "model"
   ]
-  revision = "89604d197083d4781071d3c65855d24ecfb0a563"
+  revision = "e4aa40a9169a88835b849a6efb71e05dc04b88f0"
 
 [[projects]]
   branch = "master"
@@ -292,7 +292,7 @@
     "nfs",
     "xfs"
   ]
-  revision = "282c8707aa210456a825798969cc27edda34992a"
+  revision = "54d17b57dd7d4a3aa092476596b3f8a933bde349"
 
 [[projects]]
   name = "github.com/satori/go.uuid"
@@ -303,8 +303,8 @@
 [[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
-  revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
-  version = "v1.0.4"
+  revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
+  version = "v1.0.5"
 
 [[projects]]
   name = "github.com/sony/gobreaker"
@@ -357,7 +357,7 @@
     "blowfish",
     "ssh/terminal"
   ]
-  revision = "650f4a345ab4e5b245a3034b110ebc7299e68186"
+  revision = "374053ea96cb300f8671b8d3b07edeeb06e203b4"
 
 [[projects]]
   branch = "master"
@@ -366,7 +366,7 @@
     "context",
     "context/ctxhttp"
   ]
-  revision = "cbe0f9307d0156177f9dd5dc85da1a31abc5f2fb"
+  revision = "24dd3780ca4f75fed9f321890729414a4b5d3f13"
 
 [[projects]]
   branch = "master"
@@ -375,7 +375,7 @@
     "unix",
     "windows"
   ]
-  revision = "88d2dcc510266da9f7f8c7f34e1940716cab5f5c"
+  revision = "01acb38716e021ed1fc03a602bdb5838e1358c5e"
 
 [[projects]]
   name = "gopkg.in/ory-am/dockertest.v3"
@@ -386,6 +386,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9df3ffee2bc61a6ce786baa7570eb61d8275197ea36560cf0cfd7cc0ea53af96"
+  inputs-digest = "4e63aed76d583f60bc060ff95e4b057fa319c8e01cd55c55760280ac2e00acbd"
   solver-name = "gps-cdcl"
   solver-version = 1

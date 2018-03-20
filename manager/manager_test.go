@@ -30,17 +30,18 @@ func newService() manager.Service {
 func TestRegister(t *testing.T) {
 	svc := newService()
 
-	cases := map[string]struct {
+	cases := []struct {
+		desc string
 		user manager.User
 		err  error
 	}{
-		"register new user":      {user, nil},
-		"register existing user": {user, manager.ErrConflict},
+		{"register new user", user, nil},
+		{"register existing user", user, manager.ErrConflict},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		err := svc.Register(tc.user)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -311,22 +312,23 @@ func TestDisconnect(t *testing.T) {
 
 	svc.Connect(key, chanId, clientId)
 
-	cases := map[string]struct {
+	cases := []struct {
+		desc     string
 		key      string
 		chanId   string
 		clientId string
 		err      error
 	}{
-		"disconnect connected client":                 {key, chanId, clientId, nil},
-		"disconnect disconnected client":              {key, chanId, clientId, manager.ErrNotFound},
-		"disconnect client with wrong credentials":    {wrong, chanId, clientId, manager.ErrUnauthorizedAccess},
-		"disconnect client from non-existing channel": {key, wrong, clientId, manager.ErrNotFound},
-		"disconnect non-existing client":              {key, chanId, wrong, manager.ErrNotFound},
+		{"disconnect connected client", key, chanId, clientId, nil},
+		{"disconnect disconnected client", key, chanId, clientId, manager.ErrNotFound},
+		{"disconnect client with wrong credentials", wrong, chanId, clientId, manager.ErrUnauthorizedAccess},
+		{"disconnect client from non-existing channel", key, wrong, clientId, manager.ErrNotFound},
+		{"disconnect non-existing client", key, chanId, wrong, manager.ErrNotFound},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		err := svc.Disconnect(tc.key, tc.chanId, tc.clientId)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 
 }

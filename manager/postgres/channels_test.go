@@ -192,22 +192,23 @@ func TestChannelDisconnect(t *testing.T) {
 
 	chanRepo.Connect(email, chanId, client.ID)
 
-	cases := map[string]struct {
+	cases := []struct {
+		desc     string
 		owner    string
 		chanId   string
 		clientId string
 		err      error
 	}{
-		"connected client":     {email, chanId, client.ID, nil},
-		"non-connected client": {email, chanId, client.ID, manager.ErrNotFound},
-		"non-existing user":    {wrong, chanId, client.ID, manager.ErrNotFound},
-		"non-existing channel": {email, wrong, client.ID, manager.ErrNotFound},
-		"non-existing client":  {email, chanId, wrong, manager.ErrNotFound},
+		{"connected client", email, chanId, client.ID, nil},
+		{"non-connected client", email, chanId, client.ID, manager.ErrNotFound},
+		{"non-existing user", wrong, chanId, client.ID, manager.ErrNotFound},
+		{"non-existing channel", email, wrong, client.ID, manager.ErrNotFound},
+		{"non-existing client", email, chanId, wrong, manager.ErrNotFound},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		err := chanRepo.Disconnect(tc.owner, tc.chanId, tc.clientId)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 

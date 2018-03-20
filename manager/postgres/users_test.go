@@ -12,19 +12,20 @@ import (
 func TestUserSave(t *testing.T) {
 	email := "user-save@example.com"
 
-	cases := map[string]struct {
+	cases := []struct {
+		desc string
 		user manager.User
 		err  error
 	}{
-		"new user":       {manager.User{email, "pass"}, nil},
-		"duplicate user": {manager.User{email, "pass"}, manager.ErrConflict},
+		{"new user", manager.User{email, "pass"}, nil},
+		{"duplicate user", manager.User{email, "pass"}, manager.ErrConflict},
 	}
 
 	repo := postgres.NewUserRepository(db)
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		err := repo.Save(tc.user)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 

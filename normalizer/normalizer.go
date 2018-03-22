@@ -12,7 +12,7 @@ import (
 
 const (
 	queue   string = "normalizers"
-	subject string = "src.*"
+	subject string = "channel.*"
 	output  string = "normalized"
 )
 

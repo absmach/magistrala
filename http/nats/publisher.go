@@ -2,12 +2,12 @@
 package nats
 
 import (
+	"fmt"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/mainflux/mainflux"
 	broker "github.com/nats-io/go-nats"
 )
-
-const topic string = "src.http"
 
 var _ mainflux.MessagePublisher = (*natsPublisher)(nil)
 
@@ -26,5 +26,6 @@ func (pub *natsPublisher) Publish(msg mainflux.RawMessage) error {
 		return err
 	}
 
-	return pub.nc.Publish(topic, data)
+	subject := fmt.Sprintf("channel.%s", msg.Channel)
+	return pub.nc.Publish(subject, data)
 }

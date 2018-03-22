@@ -5,7 +5,7 @@ CGO_ENABLED ?= 0
 GOOS ?= linux
 
 all: $(SERVICES)
-.PHONY: all $(SERVICES) docker
+.PHONY: all $(SERVICES) dockers
 
 define compile_service
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) GOARM=$(GOARM) go build -ldflags "-s -w" -o ${BUILD_DIR}/mainflux-$(1) cmd/$(1)/main.go
@@ -18,16 +18,7 @@ endef
 proto:
 	protoc --go_out=. *.proto
 
-manager: proto
-	$(call compile_service,$(@))
-
-http: proto
-	$(call compile_service,$(@))
-
-normalizer: proto
-	$(call compile_service,$(@))
-
-coap: proto
+$(SERVICES): proto
 	$(call compile_service,$(@))
 
 clean:
@@ -36,17 +27,7 @@ clean:
 install:
 	cp ${BUILD_DIR}/* $(GOBIN)
 
-# Docker
-docker_manager:
+$(DOCKERS):
 	$(call make_docker,$(@))
 
-docker_http:
-	$(call make_docker,$(@))
-
-docker_normalizer:
-	$(call make_docker,$(@))
-
-docker_coap:
-	$(call make_docker,$(@))
-
-docker: $(DOCKERS)
+dockers: $(DOCKERS)

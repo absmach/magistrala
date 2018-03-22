@@ -273,11 +273,13 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	case manager.ErrConflict:
 		w.WriteHeader(http.StatusConflict)
 	default:
-		if _, ok := err.(*json.SyntaxError); ok {
+		switch err.(type) {
+		case *json.SyntaxError:
 			w.WriteHeader(http.StatusBadRequest)
-			return
+		case *json.UnmarshalTypeError:
+			w.WriteHeader(http.StatusBadRequest)
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
 		}
-
-		w.WriteHeader(http.StatusInternalServerError)
 	}
 }

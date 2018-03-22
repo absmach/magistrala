@@ -1,7 +1,7 @@
 # Contributing to Mainflux
 
 The following is a set of guidelines for contributing to Mainflux and its libraries, which are
-hosted in the [Mainflux Organization](https://github.com/mainflux) on GitHub. 
+hosted in the [Mainflux Organization](https://github.com/mainflux) on GitHub.
 
 This project adheres to the [Contributor Covenant 1.2](http://contributor-covenant.org/version/1/2/0).
 By participating, you are expected to uphold this code. Please report unacceptable behavior to
@@ -10,7 +10,7 @@ By participating, you are expected to uphold this code. Please report unacceptab
 ## Reporting issues
 
 Reporting issues is a great way to contribute to the project. We always appreciate a well-written,
-thorough bug reports. 
+thorough bug reports.
 
 Prior to raising a new issue, check out [our issue
 list](https://github.com/mainflux/mainflux/issues) to determine whether it already include the
@@ -36,10 +36,7 @@ refactoring code etc.), otherwise you risk spending a lot of time working on som
 maintainers might not want to merge into the project.
 
 Please adhere to the coding conventions used throughout the project. If in doubt, consult the
-following style guides:
-
-- [Effective Go](https://golang.org/doc/effective_go.html)
-- [Google's JavaScript styleguide](https://google.github.io/styleguide/jsguide.html)
+[Effective Go](https://golang.org/doc/effective_go.html) style guide.
 
 Adhering to the following process is the best way to get your work included in the project:
 
@@ -61,18 +58,18 @@ Adhering to the following process is the best way to get your work included in t
 
    ```bash
    git checkout master
-   git pull upstream master
+   git pull --rebase upstream master
    ```
 
-3. Create a new topic branch from `master` using the naming convention `mainflux-[issue-num]` to
+3. Create a new topic branch from `master` using the naming convention `MF-[issue-number]` to
    help us keep track of your contribution scope:
 
    ```bash
-   git checkout -b mainflux-[issue-num]
+   git checkout -b MF-[issue-number]
    ```
 
 4. Commit your changes in logical chunks. When you are ready to commit, make sure to write a Good
-   Commit Message™. Consult the [https://github.com/erlang/otp/wiki/Writing-good-commit-messages](https://github.com/erlang/otp/wiki/Writing-good-commit-messages)
+   Commit Message™. Consult the [Erlang's contributing guide](https://github.com/erlang/otp/wiki/Writing-good-commit-messages)
    if you're not sure what constitutes a Good Commit Message™. Use [interactive rebase](https://help.github.com/articles/about-git-rebase)
    to group your commits into logical units of working before making them public.
 
@@ -85,13 +82,13 @@ Adhering to the following process is the best way to get your work included in t
 5. Locally merge (or rebase) the upstream development branch into your topic branch:
 
    ```bash
-   git pull [--rebase] upstream master
+   git pull --rebase upstream master
    ```
 
 6. Push your topic branch up to your fork:
 
    ```bash
-   git push origin mainflux-[issue-num]
+   git push origin MF-[issue-number]
    ```
 
 7. [Open a Pull Request](https://help.github.com/articles/using-pull-requests/) with a clear title

@@ -11,6 +11,9 @@ import (
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/normalizer"
 	nats "github.com/nats-io/go-nats"
+
+	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
 const (
@@ -55,6 +58,20 @@ func main() {
 		errs <- fmt.Errorf("%s", <-c)
 	}()
 
-	normalizer.Subscribe(nc, logger)
+	counter := kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
+		Namespace: "normalizer",
+		Subsystem: "api",
+		Name:      "request_count",
+		Help:      "Number of requests received.",
+	}, []string{"method"})
+
+	latency := kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
+		Namespace: "normalizer",
+		Subsystem: "api",
+		Name:      "request_latency_microseconds",
+		Help:      "Total duration of requests in microseconds.",
+	}, []string{"method"})
+
+	normalizer.Subscribe(nc, logger, counter, latency)
 	logger.Log("terminated", <-errs)
 }

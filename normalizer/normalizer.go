@@ -5,6 +5,7 @@ import (
 
 	"github.com/cisco/senml"
 	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/metrics"
 	"github.com/golang/protobuf/proto"
 	"github.com/mainflux/mainflux"
 	nats "github.com/nats-io/go-nats"
@@ -22,25 +23,24 @@ type eventFlow struct {
 }
 
 // Subscribe instantiates and starts a new NATS message flow.
-func Subscribe(nc *nats.Conn, logger log.Logger) {
+func Subscribe(nc *nats.Conn, logger log.Logger, counter metrics.Counter, latency metrics.Histogram) {
 	flow := eventFlow{nc, logger}
-	flow.start()
+	mm := newMetricsMiddleware(flow, counter, latency)
+	flow.nc.QueueSubscribe(subject, queue, mm.handleMessage)
 }
 
-func (ef eventFlow) start() {
-	ef.nc.QueueSubscribe(subject, queue, func(m *nats.Msg) {
-		msg := mainflux.RawMessage{}
+func (ef eventFlow) handleMsg(m *nats.Msg) {
+	msg := mainflux.RawMessage{}
 
-		if err := proto.Unmarshal(m.Data, &msg); err != nil {
-			ef.logger.Log("error", fmt.Sprintf("Unmarshalling failed: %s", err))
-			return
-		}
+	if err := proto.Unmarshal(m.Data, &msg); err != nil {
+		ef.logger.Log("error", fmt.Sprintf("Unmarshalling failed: %s", err))
+		return
+	}
 
-		if err := ef.publish(msg); err != nil {
-			ef.logger.Log("error", fmt.Sprintf("Publishing failed: %s", err))
-			return
-		}
-	})
+	if err := ef.publish(msg); err != nil {
+		ef.logger.Log("error", fmt.Sprintf("Publishing failed: %s", err))
+		return
+	}
 }
 
 func (ef eventFlow) publish(msg mainflux.RawMessage) error {

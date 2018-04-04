@@ -4,10 +4,10 @@ import (
 	"fmt"
 
 	"github.com/cisco/senml"
-	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics"
 	"github.com/golang/protobuf/proto"
 	"github.com/mainflux/mainflux"
+	log "github.com/mainflux/mainflux/logger"
 	nats "github.com/nats-io/go-nats"
 )
 
@@ -33,12 +33,12 @@ func (ef eventFlow) handleMsg(m *nats.Msg) {
 	msg := mainflux.RawMessage{}
 
 	if err := proto.Unmarshal(m.Data, &msg); err != nil {
-		ef.logger.Log("error", fmt.Sprintf("Unmarshalling failed: %s", err))
+		ef.logger.Warn(fmt.Sprintf("Unmarshalling failed: %s", err))
 		return
 	}
 
 	if err := ef.publish(msg); err != nil {
-		ef.logger.Log("error", fmt.Sprintf("Publishing failed: %s", err))
+		ef.logger.Warn(fmt.Sprintf("Publishing failed: %s", err))
 		return
 	}
 }
@@ -46,19 +46,19 @@ func (ef eventFlow) handleMsg(m *nats.Msg) {
 func (ef eventFlow) publish(msg mainflux.RawMessage) error {
 	normalized, err := ef.normalize(msg)
 	if err != nil {
-		ef.logger.Log("error", fmt.Sprintf("Normalization failed: %s", err))
+		ef.logger.Warn(fmt.Sprintf("Normalization failed: %s", err))
 		return err
 	}
 
 	for _, v := range normalized {
 		data, err := proto.Marshal(&v)
 		if err != nil {
-			ef.logger.Log("error", fmt.Sprintf("Marshalling failed: %s", err))
+			ef.logger.Warn(fmt.Sprintf("Marshalling failed: %s", err))
 			return err
 		}
 
 		if err = ef.nc.Publish(output, data); err != nil {
-			ef.logger.Log("error", fmt.Sprintf("Publishing failed: %s", err))
+			ef.logger.Warn(fmt.Sprintf("Publishing failed: %s", err))
 			return err
 		}
 	}

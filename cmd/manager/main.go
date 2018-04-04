@@ -7,9 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/go-kit/kit/log"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/mainflux/mainflux"
+	log "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/manager"
 	"github.com/mainflux/mainflux/manager/api"
 	"github.com/mainflux/mainflux/manager/bcrypt"
@@ -56,12 +56,11 @@ func main() {
 		Secret: mainflux.Env(envSecret, defSecret),
 	}
 
-	logger := log.NewJSONLogger(log.NewSyncWriter(os.Stdout))
-	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
+	logger := log.New(os.Stdout)
 
 	db, err := postgres.Connect(cfg.DBHost, cfg.DBPort, cfg.DBName, cfg.DBUser, cfg.DBPass)
 	if err != nil {
-		logger.Log("error", err)
+		logger.Error(fmt.Sprintf("Failed to connect to postgres: %s", err))
 		os.Exit(1)
 	}
 	defer db.Close()
@@ -94,7 +93,7 @@ func main() {
 
 	go func() {
 		p := fmt.Sprintf(":%s", cfg.Port)
-		logger.Log("message", fmt.Sprintf("Manager service started, exposed port %s", cfg.Port))
+		logger.Info(fmt.Sprintf("Manager service started, exposed port %s", cfg.Port))
 		errs <- http.ListenAndServe(p, api.MakeHandler(svc))
 	}()
 
@@ -104,5 +103,6 @@ func main() {
 		errs <- fmt.Errorf("%s", <-c)
 	}()
 
-	logger.Log("terminated", <-errs)
+	err = <-errs
+	logger.Error(fmt.Sprintf("Manager service terminated: %s", err))
 }

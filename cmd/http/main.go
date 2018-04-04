@@ -7,12 +7,12 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/go-kit/kit/log"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/mainflux/mainflux"
 	adapter "github.com/mainflux/mainflux/http"
 	"github.com/mainflux/mainflux/http/api"
 	"github.com/mainflux/mainflux/http/nats"
+	log "github.com/mainflux/mainflux/logger"
 	manager "github.com/mainflux/mainflux/manager/client"
 	broker "github.com/nats-io/go-nats"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
@@ -40,12 +40,11 @@ func main() {
 		Port:       mainflux.Env(envPort, defPort),
 	}
 
-	logger := log.NewJSONLogger(log.NewSyncWriter(os.Stdout))
-	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
+	logger := log.New(os.Stdout)
 
 	nc, err := broker.Connect(cfg.NatsURL)
 	if err != nil {
-		logger.Log("error", err)
+		logger.Error(fmt.Sprintf("Failed to connect to NATS: %s", err))
 		os.Exit(1)
 	}
 	defer nc.Close()
@@ -75,7 +74,7 @@ func main() {
 	go func() {
 		p := fmt.Sprintf(":%s", cfg.Port)
 		mc := manager.NewClient(cfg.ManagerURL)
-		logger.Log("message", fmt.Sprintf("HTTP adapter service started, exposed port %s", cfg.Port))
+		logger.Info(fmt.Sprintf("HTTP adapter service started, exposed port %s", cfg.Port))
 		errs <- http.ListenAndServe(p, api.MakeHandler(svc, mc))
 	}()
 
@@ -85,5 +84,6 @@ func main() {
 		errs <- fmt.Errorf("%s", <-c)
 	}()
 
-	logger.Log("terminated", <-errs)
+	err = <-errs
+	logger.Error(fmt.Sprintf("HTTP adapter terminated: %s", err))
 }

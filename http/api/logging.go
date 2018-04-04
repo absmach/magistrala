@@ -1,10 +1,11 @@
 package api
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/go-kit/kit/log"
 	"github.com/mainflux/mainflux"
+	log "github.com/mainflux/mainflux/logger"
 )
 
 var _ mainflux.MessagePublisher = (*loggingMiddleware)(nil)
@@ -19,12 +20,14 @@ func LoggingMiddleware(svc mainflux.MessagePublisher, logger log.Logger) mainflu
 	return &loggingMiddleware{logger, svc}
 }
 
-func (lm *loggingMiddleware) Publish(msg mainflux.RawMessage) error {
+func (lm *loggingMiddleware) Publish(msg mainflux.RawMessage) (err error) {
 	defer func(begin time.Time) {
-		lm.logger.Log(
-			"method", "publish",
-			"took", time.Since(begin),
-		)
+		message := fmt.Sprintf("Method publish took %s to complete", time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
 	return lm.svc.Publish(msg)

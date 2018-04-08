@@ -2,7 +2,6 @@ package mocks
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -15,12 +14,14 @@ type channelRepositoryMock struct {
 	mu       sync.Mutex
 	counter  int
 	channels map[string]manager.Channel
+	clients  manager.ClientRepository
 }
 
 // NewChannelRepository creates in-memory channel repository.
-func NewChannelRepository() manager.ChannelRepository {
+func NewChannelRepository(clients manager.ClientRepository) manager.ChannelRepository {
 	return &channelRepositoryMock{
 		channels: make(map[string]manager.Channel),
+		clients:  clients,
 	}
 }
 
@@ -29,7 +30,7 @@ func (crm *channelRepositoryMock) Save(channel manager.Channel) (string, error) 
 	defer crm.mu.Unlock()
 
 	crm.counter += 1
-	channel.ID = strconv.Itoa(crm.counter)
+	channel.ID = fmt.Sprintf("123e4567-e89b-12d3-a456-%012d", crm.counter)
 
 	crm.channels[key(channel.Owner, channel.ID)] = channel
 
@@ -85,10 +86,11 @@ func (crm *channelRepositoryMock) Connect(owner, chanId, clientId string) error 
 		return err
 	}
 
-	// Since the current implementation has no way to retrieve a real client
-	// instance, the implementation will assume client always exist and create
-	// a dummy one, containing only the provided ID.
-	channel.Clients = append(channel.Clients, manager.Client{ID: clientId})
+	client, err := crm.clients.One(owner, clientId)
+	if err != nil {
+		return err
+	}
+	channel.Clients = append(channel.Clients, client)
 	return crm.Update(channel)
 }
 

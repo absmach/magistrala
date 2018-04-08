@@ -137,7 +137,7 @@ func (req connectionReq) validate() error {
 		return manager.ErrUnauthorizedAccess
 	}
 
-	if !govalidator.IsUUID(req.chanId) && !govalidator.IsUUID(req.clientId) {
+	if !govalidator.IsUUID(req.chanId) || !govalidator.IsUUID(req.clientId) {
 		return manager.ErrNotFound
 	}
 

@@ -2,6 +2,7 @@
 
 [![build][ci-badge]][ci-url]
 [![go report card][grc-badge]][grc-url]
+[![coverage][cov-badge]][cov-url]
 [![license][license]](LICENSE)
 [![chat][gitter-badge]][gitter]
 
@@ -61,5 +62,7 @@ Thank you for your interest in Mainflux and wish to contribute!
 [gitter-badge]: https://badges.gitter.im/Join%20Chat.svg
 [grc-badge]: https://goreportcard.com/badge/github.com/mainflux/mainflux
 [grc-url]: https://goreportcard.com/report/github.com/mainflux/mainflux
+[cov-badge]: https://codecov.io/gh/mainflux/mainflux/branch/master/graph/badge.svg
+[cov-url]: https://codecov.io/gh/mainflux/mainflux
 [license]: https://img.shields.io/badge/license-Apache%20v2.0-blue.svg
 [twitter]: https://twitter.com/mainflux

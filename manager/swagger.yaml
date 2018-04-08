@@ -30,6 +30,8 @@ paths:
           description: Failed due to malformed JSON.
         409:
           description: Failed due to using an existing email address.
+        415:
+          description: Missing or invalid content type.
         500:
           $ref: "#/responses/ServiceError"
   /tokens:
@@ -53,7 +55,12 @@ paths:
             $ref: "#/definitions/Token"
         400:
           description: |
-            Failed due to malformed JSON or using an invalid credentials.
+            Failed due to malformed JSON.
+        403:
+          description: |
+            Failed due to using invalid credentials.
+        415:
+          description: Missing or invalid content type.
         500:
           $ref: "#/responses/ServiceError"
   /clients:
@@ -83,6 +90,8 @@ paths:
           description: Failed due to malformed JSON.
         403:
           description: Missing or invalid access token provided.
+        415:
+          description: Missing or invalid content type.
         500:
           $ref: "#/responses/ServiceError"
     get:
@@ -160,6 +169,8 @@ paths:
           description: Missing or invalid access token provided.
         404:
           description: Client does not exist.
+        415:
+          description: Missing or invalid content type.
         500:
           $ref: "#/responses/ServiceError"
     delete:
@@ -206,6 +217,8 @@ paths:
           description: Failed due to malformed JSON.
         403:
           description: Missing or invalid access token provided.
+        415:
+          description: Missing or invalid content type.
         500:
           $ref: "#/responses/ServiceError"
     get:
@@ -283,6 +296,8 @@ paths:
           description: Missing or invalid access token provided.
         404:
           description: Channel does not exist.
+        415:
+          description: Missing or invalid content type.
         500:
           $ref: "#/responses/ServiceError"
     delete:

@@ -2,7 +2,6 @@ package mocks
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -29,7 +28,7 @@ func (crm *clientRepositoryMock) Id() string {
 	defer crm.mu.Unlock()
 
 	crm.counter += 1
-	return strconv.Itoa(crm.counter)
+	return fmt.Sprintf("123e4567-e89b-12d3-a456-%012d", crm.counter)
 }
 
 func (crm *clientRepositoryMock) Save(client manager.Client) error {

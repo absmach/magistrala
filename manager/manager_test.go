@@ -13,14 +13,14 @@ const wrong string = "wrong-value"
 
 var (
 	user    manager.User    = manager.User{"user@example.com", "password"}
-	client  manager.Client  = manager.Client{ID: "1", Type: "app", Name: "test", Key: "1"}
-	channel manager.Channel = manager.Channel{ID: "1", Name: "test", Clients: []manager.Client{client}}
+	client  manager.Client  = manager.Client{Type: "app", Name: "test"}
+	channel manager.Channel = manager.Channel{Name: "test", Clients: []manager.Client{}}
 )
 
 func newService() manager.Service {
 	users := mocks.NewUserRepository()
 	clients := mocks.NewClientRepository()
-	channels := mocks.NewChannelRepository()
+	channels := mocks.NewChannelRepository(clients)
 	hasher := mocks.NewHasher()
 	idp := mocks.NewIdentityProvider()
 
@@ -89,7 +89,8 @@ func TestUpdateClient(t *testing.T) {
 	svc := newService()
 	svc.Register(user)
 	key, _ := svc.Login(user)
-	svc.AddClient(key, client)
+	clientId, _ := svc.AddClient(key, client)
+	client.ID = clientId
 
 	cases := map[string]struct {
 		client manager.Client
@@ -111,7 +112,8 @@ func TestViewClient(t *testing.T) {
 	svc := newService()
 	svc.Register(user)
 	key, _ := svc.Login(user)
-	svc.AddClient(key, client)
+	clientId, _ := svc.AddClient(key, client)
+	client.ID = clientId
 
 	cases := map[string]struct {
 		id  string
@@ -152,7 +154,8 @@ func TestRemoveClient(t *testing.T) {
 	svc := newService()
 	svc.Register(user)
 	key, _ := svc.Login(user)
-	svc.AddClient(key, client)
+	clientId, _ := svc.AddClient(key, client)
+	client.ID = clientId
 
 	cases := map[string]struct {
 		id  string
@@ -195,7 +198,8 @@ func TestUpdateChannel(t *testing.T) {
 	svc := newService()
 	svc.Register(user)
 	key, _ := svc.Login(user)
-	svc.CreateChannel(key, channel)
+	chanId, _ := svc.CreateChannel(key, channel)
+	channel.ID = chanId
 
 	cases := map[string]struct {
 		channel manager.Channel
@@ -217,7 +221,8 @@ func TestViewChannel(t *testing.T) {
 	svc := newService()
 	svc.Register(user)
 	key, _ := svc.Login(user)
-	svc.CreateChannel(key, channel)
+	chanId, _ := svc.CreateChannel(key, channel)
+	channel.ID = chanId
 
 	cases := map[string]struct {
 		id  string
@@ -258,7 +263,8 @@ func TestRemoveChannel(t *testing.T) {
 	svc := newService()
 	svc.Register(user)
 	key, _ := svc.Login(user)
-	svc.CreateChannel(key, channel)
+	chanId, _ := svc.CreateChannel(key, channel)
+	channel.ID = chanId
 
 	cases := map[string]struct {
 		id  string
@@ -283,7 +289,9 @@ func TestConnect(t *testing.T) {
 	key, _ := svc.Login(user)
 
 	clientId, _ := svc.AddClient(key, client)
+	client.ID = clientId
 	chanId, _ := svc.CreateChannel(key, channel)
+	channel.ID = chanId
 
 	cases := map[string]struct {
 		key      string
@@ -291,9 +299,9 @@ func TestConnect(t *testing.T) {
 		clientId string
 		err      error
 	}{
-		"connect client":                         {key, chanId, clientId, nil},
-		"connect client with wrong credentials":  {wrong, chanId, clientId, manager.ErrUnauthorizedAccess},
-		"connect client to non-existing channel": {key, wrong, clientId, manager.ErrNotFound},
+		"connect client":                         {key, channel.ID, client.ID, nil},
+		"connect client with wrong credentials":  {wrong, channel.ID, client.ID, manager.ErrUnauthorizedAccess},
+		"connect client to non-existing channel": {key, wrong, client.ID, manager.ErrNotFound},
 	}
 
 	for desc, tc := range cases {
@@ -308,7 +316,9 @@ func TestDisconnect(t *testing.T) {
 	key, _ := svc.Login(user)
 
 	clientId, _ := svc.AddClient(key, client)
+	client.ID = clientId
 	chanId, _ := svc.CreateChannel(key, channel)
+	channel.ID = chanId
 
 	svc.Connect(key, chanId, clientId)
 
@@ -319,11 +329,11 @@ func TestDisconnect(t *testing.T) {
 		clientId string
 		err      error
 	}{
-		{"disconnect connected client", key, chanId, clientId, nil},
-		{"disconnect disconnected client", key, chanId, clientId, manager.ErrNotFound},
-		{"disconnect client with wrong credentials", wrong, chanId, clientId, manager.ErrUnauthorizedAccess},
-		{"disconnect client from non-existing channel", key, wrong, clientId, manager.ErrNotFound},
-		{"disconnect non-existing client", key, chanId, wrong, manager.ErrNotFound},
+		{"disconnect connected client", key, channel.ID, client.ID, nil},
+		{"disconnect disconnected client", key, channel.ID, client.ID, manager.ErrNotFound},
+		{"disconnect client with wrong credentials", wrong, channel.ID, client.ID, manager.ErrUnauthorizedAccess},
+		{"disconnect client from non-existing channel", key, wrong, client.ID, manager.ErrNotFound},
+		{"disconnect non-existing client", key, channel.ID, wrong, manager.ErrNotFound},
 	}
 
 	for _, tc := range cases {
@@ -357,8 +367,13 @@ func TestCanAccess(t *testing.T) {
 	svc.Register(user)
 	key, _ := svc.Login(user)
 
-	svc.AddClient(key, client)
-	svc.CreateChannel(key, channel)
+	clientId, _ := svc.AddClient(key, client)
+	client.ID = clientId
+	client.Key = clientId
+
+	channel.Clients = []manager.Client{client}
+	chanId, _ := svc.CreateChannel(key, channel)
+	channel.ID = chanId
 
 	cases := map[string]struct {
 		key     string

@@ -38,58 +38,51 @@ maintainers might not want to merge into the project.
 Please adhere to the coding conventions used throughout the project. If in doubt, consult the
 [Effective Go](https://golang.org/doc/effective_go.html) style guide.
 
-Adhering to the following process is the best way to get your work included in the project:
+To start contributing to the project, [fork](https://help.github.com/articles/fork-a-repo/) it,
+clone your fork repository, and configure the remotes:
 
-1. [Fork](https://help.github.com/articles/fork-a-repo/) the project, clone your fork, and configure
-   the remotes:
+```
+git clone https://github.com/<your-username>/mainflux.git
+cd mainflux
+git remote add upstream https://github.com/mainflux/mainflux.git
+```
 
-   ```bash
-   # Clone your fork of the repo into the current directory
-   git clone https://github.com/<your-username>/mainflux.git
+If you cloned a while ago, get the latest changes from upstream:
 
-   # Navigate to the newly cloned directory
-   cd mainflux
+```
+git checkout master
+git pull --rebase upstream master
+```
 
-   # Assign the original repo to a remote called "upstream"
-   git remote add upstream https://github.com/mainflux/mainflux.git
-   ```
+Create a new topic branch from `master` using the naming convention `MF-[issue-number]`
+to help us keep track of your contribution scope:
 
-2. If you cloned a while ago, get the latest changes from upstream:
+```
+git checkout -b MF-[issue-number]
+```
 
-   ```bash
-   git checkout master
-   git pull --rebase upstream master
-   ```
+Commit your changes in logical chunks. When you are ready to commit, make sure
+to write a Good Commit Message™. Consult the [Erlang's contributing guide](https://github.com/erlang/otp/wiki/Writing-good-commit-messages)
+if you're not sure what constitutes a Good Commit Message™. Use [interactive rebase](https://help.github.com/articles/about-git-rebase)
+to group your commits into logical units of working before making them public.
 
-3. Create a new topic branch from `master` using the naming convention `MF-[issue-number]` to
-   help us keep track of your contribution scope:
+Note that every commit you make must be signed. By signing off your work you indicate that you
+are accepting the [Developer Certificate of Origin](https://developercertificate.org/).
 
-   ```bash
-   git checkout -b MF-[issue-number]
-   ```
+Use your real name (sorry, no pseudonyms or anonymous contributions). If you set your `user.name`
+and `user.email` git configs, you can sign your commit automatically with `git commit -s`.
 
-4. Commit your changes in logical chunks. When you are ready to commit, make sure to write a Good
-   Commit Message™. Consult the [Erlang's contributing guide](https://github.com/erlang/otp/wiki/Writing-good-commit-messages)
-   if you're not sure what constitutes a Good Commit Message™. Use [interactive rebase](https://help.github.com/articles/about-git-rebase)
-   to group your commits into logical units of working before making them public.
+Locally merge (or rebase) the upstream development branch into your topic branch:
 
-   Note that every commit you make must be signed. By signing off your work you indicate that you
-   are accepting the [Developer Certificate of Origin](https://developercertificate.org/).
+```
+git pull --rebase upstream master
+```
 
-   Use your real name (sorry, no pseudonyms or anonymous contributions). If you set your `user.name`
-   and `user.email` git configs, you can sign your commit automatically with `git commit -s`.
+Push your topic branch up to your fork:
 
-5. Locally merge (or rebase) the upstream development branch into your topic branch:
+```
+git push origin MF-[issue-number]
+```
 
-   ```bash
-   git pull --rebase upstream master
-   ```
-
-6. Push your topic branch up to your fork:
-
-   ```bash
-   git push origin MF-[issue-number]
-   ```
-
-7. [Open a Pull Request](https://help.github.com/articles/using-pull-requests/) with a clear title
-   and detailed description.
+[Open a Pull Request](https://help.github.com/articles/using-pull-requests/) with a clear title
+and detailed description.

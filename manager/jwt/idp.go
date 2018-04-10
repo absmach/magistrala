@@ -20,7 +20,7 @@ type jwtIdentityProvider struct {
 
 // New instantiates a JWT identity provider.
 func New(secret string) manager.IdentityProvider {
-	return &jwtIdentityProvider{}
+	return &jwtIdentityProvider{secret}
 }
 
 func (idp *jwtIdentityProvider) TemporaryKey(id string) (string, error) {

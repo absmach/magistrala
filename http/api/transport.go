@@ -18,10 +18,9 @@ import (
 const protocol string = "http"
 
 var (
-	errMalformedData      error = errors.New("malformed SenML data")
-	errUnknownType        error = errors.New("unknown content type")
-	errUnauthorizedAccess error = errors.New("missing or invalid credentials provided")
-	auth                  manager.ManagerClient
+	errMalformedData error = errors.New("malformed SenML data")
+	errUnknownType   error = errors.New("unknown content type")
+	auth             manager.ManagerClient
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
@@ -73,7 +72,7 @@ func authorize(r *http.Request) (string, error) {
 	apiKey := r.Header.Get("Authorization")
 
 	if apiKey == "" {
-		return "", errUnauthorizedAccess
+		return "", manager.ErrUnauthorizedAccess
 	}
 
 	// extract ID from /channels/:id/messages

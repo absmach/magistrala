@@ -20,6 +20,7 @@ const (
 	contentType  = "application/json; charset=utf-8"
 	invalidEmail = "userexample.com"
 	wrongID      = "123e4567-e89b-12d3-a456-000000000042"
+	id           = "123e4567-e89b-12d3-a456-000000000001"
 )
 
 var (
@@ -178,14 +179,15 @@ func TestAddClient(t *testing.T) {
 		contentType string
 		auth        string
 		status      int
+		location    string
 	}{
-		{"add valid client", data, contentType, user.Email, http.StatusCreated},
-		{"add client with invalid data", invalidData, contentType, user.Email, http.StatusBadRequest},
-		{"add client with invalid auth token", data, contentType, "invalid_token", http.StatusForbidden},
-		{"add client with invalid request format", "}", contentType, user.Email, http.StatusBadRequest},
-		{"add client with empty JSON request", "{}", contentType, user.Email, http.StatusBadRequest},
-		{"add client with empty request", "", contentType, user.Email, http.StatusBadRequest},
-		{"add client with missing content type", data, "", user.Email, http.StatusUnsupportedMediaType},
+		{"add valid client", data, contentType, user.Email, http.StatusCreated, fmt.Sprintf("/clients/%s", id)},
+		{"add client with invalid data", invalidData, contentType, user.Email, http.StatusBadRequest, ""},
+		{"add client with invalid auth token", data, contentType, "invalid_token", http.StatusForbidden, ""},
+		{"add client with invalid request format", "}", contentType, user.Email, http.StatusBadRequest, ""},
+		{"add client with empty JSON request", "{}", contentType, user.Email, http.StatusBadRequest, ""},
+		{"add client with empty request", "", contentType, user.Email, http.StatusBadRequest, ""},
+		{"add client with missing content type", data, "", user.Email, http.StatusUnsupportedMediaType, ""},
 	}
 
 	for _, tc := range cases {
@@ -199,7 +201,10 @@ func TestAddClient(t *testing.T) {
 		}
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+
+		location := res.Header.Get("Location")
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+		assert.Equal(t, tc.location, location, fmt.Sprintf("%s: expected location %s got %s", tc.desc, tc.location, location))
 	}
 }
 
@@ -388,13 +393,14 @@ func TestCreateChannel(t *testing.T) {
 		contentType string
 		auth        string
 		status      int
+		location    string
 	}{
-		{"create new channel", data, contentType, user.Email, http.StatusCreated},
-		{"create new channel with invalid token", data, contentType, invalidEmail, http.StatusForbidden},
-		{"create new channel with invalid data format", "{", contentType, user.Email, http.StatusBadRequest},
-		{"create new channel with empty JSON request", "{}", contentType, user.Email, http.StatusCreated},
-		{"create new channel with empty request", "", contentType, user.Email, http.StatusBadRequest},
-		{"create new channel with missing content type", data, "", user.Email, http.StatusUnsupportedMediaType},
+		{"create new channel", data, contentType, user.Email, http.StatusCreated, fmt.Sprintf("/channels/%s", id)},
+		{"create new channel with invalid token", data, contentType, invalidEmail, http.StatusForbidden, ""},
+		{"create new channel with invalid data format", "{", contentType, user.Email, http.StatusBadRequest, ""},
+		{"create new channel with empty JSON request", "{}", contentType, user.Email, http.StatusCreated, "/channels/123e4567-e89b-12d3-a456-000000000002"},
+		{"create new channel with empty request", "", contentType, user.Email, http.StatusBadRequest, ""},
+		{"create new channel with missing content type", data, "", user.Email, http.StatusUnsupportedMediaType, ""},
 	}
 
 	for _, tc := range cases {
@@ -408,7 +414,10 @@ func TestCreateChannel(t *testing.T) {
 		}
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+
+		location := res.Header.Get("Location")
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+		assert.Equal(t, tc.location, location, fmt.Sprintf("%s: expected location %s got %s", tc.desc, tc.location, location))
 	}
 }
 

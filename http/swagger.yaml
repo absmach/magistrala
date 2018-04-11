@@ -45,6 +45,8 @@ paths:
           description: Message discarded due to its malformed content.
         403:
           description: Message discarded due to missing or invalid credentials.
+        404:
+          description: Message discarded due to invalid channel id.
         415:
           description: Message discarded due to invalid or missing content type.
         500:

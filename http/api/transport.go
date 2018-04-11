@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/asaskevich/govalidator"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
@@ -19,7 +20,7 @@ const protocol string = "http"
 
 var (
 	errMalformedData error = errors.New("malformed SenML data")
-	errUnknownType   error = errors.New("unknown content type")
+	errNotFound      error = errors.New("non-existent entity")
 	auth             manager.ManagerClient
 )
 
@@ -77,6 +78,9 @@ func authorize(r *http.Request) (string, error) {
 
 	// extract ID from /channels/:id/messages
 	c := strings.Split(r.URL.Path, "/")[2]
+	if !govalidator.IsUUID(c) {
+		return "", errNotFound
+	}
 
 	id, err := auth.CanAccess(c, apiKey)
 	if err != nil {
@@ -105,8 +109,8 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch err {
 	case errMalformedData:
 		w.WriteHeader(http.StatusBadRequest)
-	case errUnknownType:
-		w.WriteHeader(http.StatusUnsupportedMediaType)
+	case errNotFound:
+		w.WriteHeader(http.StatusNotFound)
 	case manager.ErrUnauthorizedAccess:
 		w.WriteHeader(http.StatusForbidden)
 	default:

@@ -12,8 +12,8 @@ import (
 const wrong string = "?"
 
 var (
-	client  manager.Client  = manager.Client{Type: "app"}
-	channel manager.Channel = manager.Channel{}
+	client  = manager.Client{Type: "app"}
+	channel = manager.Channel{}
 )
 
 func TestUserReqValidation(t *testing.T) {
@@ -186,8 +186,9 @@ func TestListResourcesReqValidation(t *testing.T) {
 		"valid listing request": {key, value, value, nil},
 		"missing token":         {"", value, value, manager.ErrUnauthorizedAccess},
 		"negative offset":       {key, -value, value, manager.ErrMalformedEntity},
-		"zero size":             {key, value, 0, manager.ErrMalformedEntity},
-		"negative size":         {key, value, -value, manager.ErrMalformedEntity},
+		"zero limit":            {key, value, 0, manager.ErrMalformedEntity},
+		"negative limit":        {key, value, -value, manager.ErrMalformedEntity},
+		"too big limit":         {key, value, 20 * value, manager.ErrMalformedEntity},
 	}
 
 	for desc, tc := range cases {

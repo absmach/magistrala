@@ -124,13 +124,16 @@ Content-Length: 1105
 }
 ```
 
-You can specify  `offset` and  `limit` parameters in order to fetch specific group of channels. In that case, your request should look like:
+You can specify `offset` and `limit` parameters in order to fetch specific
+group of clients. In that case, your request should look like:
 
 ```
-curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -H "Authorization: <user_auth_token>" https://localhost/channels?offset=0&limit=5
+curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -H "Authorization: <user_auth_token>" https://localhost/clients?offset=0&limit=5
 ```
-If you don't provide these params, default values will be used insted. Default value for
-offset is 0, and for limit is 10. Max value for limit is 100, and every value above that will be replaced by limit max value. Providing invalid values for these two params will be considered malformed request, so bad request will be received as response.
+
+If you don't provide them, default values will be used instead: 0 for `offset`,
+and 10 for `limit`. Note that `limit` cannot be set to values greater than 100. Providing
+invalid values will be considered malformed request.
 
 ### Removing clients
 
@@ -187,13 +190,16 @@ Content-Length: 139
 }
 ```
 
-You can specify  `offset` and  `limit` parameters in order to fetch specific group of channels. In that case, your request should look like:
+You can specify  `offset` and  `limit` parameters in order to fetch specific
+group of channels. In that case, your request should look like:
 
 ```
 curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -H "Authorization: <user_auth_token>" https://localhost/channels?offset=0&limit=5
 ```
-If you don't provide these params, default values will be used insted. Default value for
-offset is 0, and for limit is 10. Max value for limit is 100, and every value above that will be replaced by limit max value. Providing invalid values for these two params will be considered malformed request, so bad request will be received as response.
+
+If you don't provide them, default values will be used instead: 0 for `offset`,
+and 10 for `limit`. Note that `limit` cannot be set to values greater than 100. Providing
+invalid values will be considered malformed request.
 
 ### Removing channels
 

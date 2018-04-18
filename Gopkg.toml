@@ -70,6 +70,10 @@
   name = "gopkg.in/ory-am/dockertest.v3"
   version = "3.1.6"
 
+[[constraint]]
+  name = "github.com/gorilla/websocket"
+  version = "1.2.0"
+
 [prune]
   go-tests = true
   unused-packages = true

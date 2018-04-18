@@ -253,3 +253,14 @@ curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -
 ```
 
 Note that you should always send array of messages in senML format.
+
+### WebSocket
+
+To publish and receive messages over channel using web socket, you should first 
+send handshake request to `/channels/<channel_id>/messages` path. Don't forget
+to send `Authorization` header with client authorization token. 
+
+If you are not able to send custom headers in your handshake request, send it as 
+query parameter `authorization`. Then your path should look like this 
+`/channels/<channel_id>/messages?authorization=<client_auth_key>`.
+

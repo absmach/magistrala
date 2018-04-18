@@ -136,16 +136,31 @@ func TestListClients(t *testing.T) {
 	svc.Register(user)
 	key, _ := svc.Login(user)
 
+	n := 10
+	for i := 0; i < n; i++ {
+		svc.AddClient(key, client)
+	}
 	cases := map[string]struct {
-		key string
-		err error
+		key    string
+		offset int
+		limit  int
+		size   int
+		err    error
 	}{
-		"list clients":                        {key, nil},
-		"list clients with wrong credentials": {wrong, manager.ErrUnauthorizedAccess},
+		"list clients":                        {key, 0, 5, 5, nil},
+		"list clients 5-10":                   {key, 5, 10, 5, nil},
+		"list last client":                    {key, 9, 10, 1, nil},
+		"list empty response":                 {key, 11, 10, 0, nil},
+		"list offset < 0":                     {key, -1, 10, 0, nil},
+		"list limit < 0":                      {key, 1, -10, 0, nil},
+		"list limit = 0":                      {key, 1, 0, 0, nil},
+		"list clients with wrong credentials": {wrong, 0, 0, 0, manager.ErrUnauthorizedAccess},
 	}
 
 	for desc, tc := range cases {
-		_, err := svc.ListClients(tc.key)
+		cl, err := svc.ListClients(tc.key, tc.offset, tc.limit)
+		size := len(cl)
+		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
@@ -245,16 +260,30 @@ func TestListChannels(t *testing.T) {
 	svc.Register(user)
 	key, _ := svc.Login(user)
 
+	n := 10
+	for i := 0; i < n; i++ {
+		svc.CreateChannel(key, channel)
+	}
 	cases := map[string]struct {
-		key string
-		err error
+		key    string
+		offset int
+		limit  int
+		size   int
+		err    error
 	}{
-		"list channels":                        {key, nil},
-		"list channels with wrong credentials": {wrong, manager.ErrUnauthorizedAccess},
+		"list first 5 channels":                {key, 0, 5, 5, nil},
+		"list channels 5-10 channels":          {key, 5, 10, 5, nil},
+		"list last channel":                    {key, 6, 10, 4, nil},
+		"list offset < 0":                      {key, -1, 10, 0, nil},
+		"list limit < 0":                       {key, 1, -10, 0, nil},
+		"list limit = 0":                       {key, 1, 0, 0, nil},
+		"list channels with wrong credentials": {wrong, 0, 0, 0, manager.ErrUnauthorizedAccess},
 	}
 
 	for desc, tc := range cases {
-		_, err := svc.ListChannels(tc.key)
+		ch, err := svc.ListChannels(tc.key, tc.offset, tc.limit)
+		size := len(ch)
+		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }

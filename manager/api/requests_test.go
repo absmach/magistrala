@@ -179,22 +179,22 @@ func TestListResourcesReqValidation(t *testing.T) {
 
 	cases := map[string]struct {
 		key    string
-		size   int
 		offset int
+		limit  int
 		err    error
 	}{
 		"valid listing request": {key, value, value, nil},
 		"missing token":         {"", value, value, manager.ErrUnauthorizedAccess},
-		"negative offset":       {key, value, -value, manager.ErrMalformedEntity},
-		"zero size":             {key, 0, value, manager.ErrMalformedEntity},
-		"negative size":         {key, -value, value, manager.ErrMalformedEntity},
+		"negative offset":       {key, -value, value, manager.ErrMalformedEntity},
+		"zero size":             {key, value, 0, manager.ErrMalformedEntity},
+		"negative size":         {key, value, -value, manager.ErrMalformedEntity},
 	}
 
 	for desc, tc := range cases {
 		req := listResourcesReq{
 			key:    tc.key,
-			size:   tc.size,
 			offset: tc.offset,
+			limit:  tc.limit,
 		}
 
 		err := req.validate()

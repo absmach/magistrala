@@ -42,7 +42,7 @@ func (ca *CoAPAdapter) Serve(addr string) error {
 	return coap.ListenAndServe("udp", addr, ca.COAPServer())
 }
 
-// BridgeHandler functions is a handler for messages recieved via NATS
+// BridgeHandler functions is a handler for messages received via NATS
 func (ca *CoAPAdapter) BridgeHandler(nm *broker.Msg) {
 	log.Printf("Received a message: %s\n", string(nm.Data))
 

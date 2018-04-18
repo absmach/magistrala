@@ -105,16 +105,18 @@ func TestMultiChannelRetrieval(t *testing.T) {
 	}
 
 	cases := map[string]struct {
-		owner string
-		len   int
+		owner  string
+		offset int
+		limit  int
+		size   int
 	}{
-		"existing owner":     {email, n},
-		"non-existing owner": {wrong, 0},
+		"existing owner":     {email, 0, n, n},
+		"non-existing owner": {wrong, 1, 6, 0},
 	}
 
 	for desc, tc := range cases {
-		n := len(chanRepo.All(tc.owner))
-		assert.Equal(t, tc.len, n, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.len, n))
+		size := len(chanRepo.All(tc.owner, tc.offset, tc.limit))
+		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 	}
 }
 

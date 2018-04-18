@@ -22,7 +22,7 @@ Use the Mainflux API to create user account:
 curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json; charset=utf-8" https://localhost/users -d '{"email":"john.doe@email.com", "password":"123"}'
 ```
 
-Note that when using official `docker-compose`, all services are behind `nginx` 
+Note that when using official `docker-compose`, all services are behind `nginx`
 proxy and all traffic is `TLS` encrypted.
 
 ### Obtaining an authorization key
@@ -48,16 +48,16 @@ an authorization key.
 
 ### Provisioning devices
 
-Devices are provisioned by executing request `POST /clients`, with a 
-`"type":"device"` specified in JSON payload. Note that you will also need 
-`user_auth_token` in order to provision clients (both devices and application) 
+Devices are provisioned by executing request `POST /clients`, with a
+`"type":"device"` specified in JSON payload. Note that you will also need
+`user_auth_token` in order to provision clients (both devices and application)
 that belong to this particular user.
 
 ```
 curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json; charset=utf-8" -H "Authorization: <user_auth_token>" https://localhost/clients -d '{"type":"device", "name":"weio"}'
 ```
 
-Response will contain `Location` header whose value represents path to newly 
+Response will contain `Location` header whose value represents path to newly
 created client:
 
 ```
@@ -70,14 +70,14 @@ Content-Length: 0
 
 ### Provisioning applications
 
-Applications are provisioned by executing HTTP request `POST /clients`, with 
+Applications are provisioned by executing HTTP request `POST /clients`, with
 `"type":"app"` specified in JSON payload.
 
 ```
 curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json; charset=utf-8" -H "Authorization: <user_auth_token>" https://localhost/clients -d '{"type":"app", "name":"myapp"}'
 ```
 
-Response will contain `Location` header whose value represents path to newly 
+Response will contain `Location` header whose value represents path to newly
 created client (same as for devices):
 
 ```
@@ -90,20 +90,19 @@ Content-Length: 0
 
 ### Retrieving provisioned clients
 
-In order to retrieve data of provisioned clients that is written in database, you 
+In order to retrieve data of provisioned clients that is written in database, you
 can send following request:
 
 ```
 curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -H "Authorization: <user_auth_token>" https://localhost/clients
 ```
 
-Notice that you will receive only those clients that were provisioned by 
+Notice that you will receive only those clients that were provisioned by
 `user_auth_token` owner.
 
 ```
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=utf-8
-X-Count: 4
 Date: Tue, 10 Apr 2018 10:50:12 GMT
 Content-Length: 1105
 
@@ -125,6 +124,14 @@ Content-Length: 1105
 }
 ```
 
+You can specify  `offset` and  `limit` parameters in order to fetch specific group of channels. In that case, your request should look like:
+
+```
+curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -H "Authorization: <user_auth_token>" https://localhost/channels?offset=0&limit=5
+```
+If you don't provide these params, default values will be used insted. Default value for
+offset is 0, and for limit is 10. Max value for limit is 100, and every value above that will be replaced by limit max value. Providing invalid values for these two params will be considered malformed request, so bad request will be received as response.
+
 ### Removing clients
 
 In order to remove you own client you can send following request:
@@ -141,7 +148,7 @@ Channels are provisioned by executing request `POST /channels`:
 curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json; charset=utf-8" -H "Authorization: <user_auth_token>" https://localhost/channels -d '{"name":"mychan"}'
 ```
 
-After sending request you should receive response with `Location` header that 
+After sending request you should receive response with `Location` header that
 contains path to newly created channel:
 
 ```
@@ -161,12 +168,12 @@ authorization token in `Authorization` header:
 curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -H "Authorization: <user_auth_token>" https://localhost/channels
 ```
 
-You should receive response similar to this:
+Note that you will receive only those channels that were created by authorization
+token's owner.
 
 ```
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=utf-8
-X-Count: 2
 Date: Tue, 10 Apr 2018 11:38:06 GMT
 Content-Length: 139
 
@@ -180,8 +187,13 @@ Content-Length: 139
 }
 ```
 
-Note that you will receive only those channels that were created by authorization
-token's owner.
+You can specify  `offset` and  `limit` parameters in order to fetch specific group of channels. In that case, your request should look like:
+
+```
+curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -H "Authorization: <user_auth_token>" https://localhost/channels?offset=0&limit=5
+```
+If you don't provide these params, default values will be used insted. Default value for
+offset is 0, and for limit is 10. Max value for limit is 100, and every value above that will be replaced by limit max value. Providing invalid values for these two params will be considered malformed request, so bad request will be received as response.
 
 ### Removing channels
 
@@ -198,8 +210,8 @@ are connected to the channel can send and receive messages from other clients
 in this channel. Clients that are not connected to this channel are not allowed
 to communicate over it.
 
-Only user, who is the owner of a channel and of the clients, can connect the 
-clients to the channel (which is equivalent of giving permissions to these clients 
+Only user, who is the owner of a channel and of the clients, can connect the
+clients to the channel (which is equivalent of giving permissions to these clients
 to communicate over given communication group).
 
 To connect client to the channel you should send following request:
@@ -256,11 +268,11 @@ Note that you should always send array of messages in senML format.
 
 ### WebSocket
 
-To publish and receive messages over channel using web socket, you should first 
+To publish and receive messages over channel using web socket, you should first
 send handshake request to `/channels/<channel_id>/messages` path. Don't forget
-to send `Authorization` header with client authorization token. 
+to send `Authorization` header with client authorization token.
 
-If you are not able to send custom headers in your handshake request, send it as 
-query parameter `authorization`. Then your path should look like this 
+If you are not able to send custom headers in your handshake request, send it as
+query parameter `authorization`. Then your path should look like this
 `/channels/<channel_id>/messages?authorization=<client_auth_key>`.
 

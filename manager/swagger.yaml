@@ -105,7 +105,7 @@ paths:
         - clients
       parameters:
         - $ref: "#/parameters/Authorization"
-        - $ref: "#/parameters/Size"
+        - $ref: "#/parameters/Limit"
         - $ref: "#/parameters/Offset"
       responses:
         200:
@@ -232,7 +232,7 @@ paths:
         - channels
       parameters:
         - $ref: "#/parameters/Authorization"
-        - $ref: "#/parameters/Size"
+        - $ref: "#/parameters/Limit"
         - $ref: "#/parameters/Offset"
       responses:
         200:
@@ -422,12 +422,14 @@ parameters:
     type: string
     format: uuid
     required: true
-  Size:
-    name: size
+  Limit:
+    name: limit
     description: Size of the subset to retrieve.
     in: query
     type: integer
     default: 10
+    maximum: 100
+    minimum: 1
     required: false
   Offset:
     name: offset
@@ -435,6 +437,7 @@ parameters:
     in: query
     type: integer
     default: 0
+    minimum: 0
     required: false
 
 responses:

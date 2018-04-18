@@ -70,13 +70,13 @@ func (ms *metricsMiddleware) ViewClient(key string, id string) (manager.Client, 
 	return ms.svc.ViewClient(key, id)
 }
 
-func (ms *metricsMiddleware) ListClients(key string) ([]manager.Client, error) {
+func (ms *metricsMiddleware) ListClients(key string, offset, limit int) ([]manager.Client, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_clients").Add(1)
 		ms.latency.With("method", "list_clients").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListClients(key)
+	return ms.svc.ListClients(key, offset, limit)
 }
 
 func (ms *metricsMiddleware) RemoveClient(key string, id string) error {
@@ -115,13 +115,13 @@ func (ms *metricsMiddleware) ViewChannel(key string, id string) (manager.Channel
 	return ms.svc.ViewChannel(key, id)
 }
 
-func (ms *metricsMiddleware) ListChannels(key string) ([]manager.Channel, error) {
+func (ms *metricsMiddleware) ListChannels(key string, offset, limit int) ([]manager.Channel, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_channels").Add(1)
 		ms.latency.With("method", "list_channels").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListChannels(key)
+	return ms.svc.ListChannels(key, offset, limit)
 }
 
 func (ms *metricsMiddleware) RemoveChannel(key string, id string) error {

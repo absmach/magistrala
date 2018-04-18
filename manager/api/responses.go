@@ -108,7 +108,6 @@ func (res viewClientRes) empty() bool {
 
 type listClientsRes struct {
 	Clients []manager.Client `json:"clients"`
-	count   int
 }
 
 func (res listClientsRes) code() int {
@@ -116,9 +115,7 @@ func (res listClientsRes) code() int {
 }
 
 func (res listClientsRes) headers() map[string]string {
-	return map[string]string{
-		"X-Count": fmt.Sprintf("%d", res.count),
-	}
+	return map[string]string{}
 }
 
 func (res listClientsRes) empty() bool {
@@ -170,7 +167,6 @@ func (res viewChannelRes) empty() bool {
 
 type listChannelsRes struct {
 	Channels []manager.Channel `json:"channels"`
-	count    int
 }
 
 func (res listChannelsRes) code() int {
@@ -178,9 +174,7 @@ func (res listChannelsRes) code() int {
 }
 
 func (res listChannelsRes) headers() map[string]string {
-	return map[string]string{
-		"X-Count": fmt.Sprintf("%d", res.count),
-	}
+	return map[string]string{}
 }
 
 func (res listChannelsRes) empty() bool {

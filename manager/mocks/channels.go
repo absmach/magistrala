@@ -10,6 +10,8 @@ import (
 
 var _ manager.ChannelRepository = (*channelRepositoryMock)(nil)
 
+const chanId = "123e4567-e89b-12d3-a456-"
+
 type channelRepositoryMock struct {
 	mu       sync.Mutex
 	counter  int
@@ -30,7 +32,7 @@ func (crm *channelRepositoryMock) Save(channel manager.Channel) (string, error) 
 	defer crm.mu.Unlock()
 
 	crm.counter += 1
-	channel.ID = fmt.Sprintf("123e4567-e89b-12d3-a456-%012d", crm.counter)
+	channel.ID = fmt.Sprintf("%s%012d", chanId, crm.counter)
 
 	crm.channels[key(channel.Owner, channel.ID)] = channel
 
@@ -59,15 +61,21 @@ func (crm *channelRepositoryMock) One(owner, id string) (manager.Channel, error)
 	return manager.Channel{}, manager.ErrNotFound
 }
 
-func (crm *channelRepositoryMock) All(owner string) []manager.Channel {
+func (crm *channelRepositoryMock) All(owner string, offset, limit int) []manager.Channel {
 	// This obscure way to examine map keys is enforced by the key structure
 	// itself (see mocks/commons.go).
 	prefix := fmt.Sprintf("%s-", owner)
-
 	channels := make([]manager.Channel, 0)
 
+	if offset < 0 || limit <= 0 {
+		return channels
+	}
+
+	first := fmt.Sprintf("%s%012d", chanId, offset)
+	last := fmt.Sprintf("%s%012d", chanId, offset+limit)
+
 	for k, v := range crm.channels {
-		if strings.HasPrefix(k, prefix) {
+		if strings.HasPrefix(k, prefix) && v.ID > first && v.ID <= last {
 			channels = append(channels, v)
 		}
 	}

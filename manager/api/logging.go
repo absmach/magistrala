@@ -86,7 +86,7 @@ func (lm *loggingMiddleware) ViewClient(key string, id string) (client manager.C
 	return lm.svc.ViewClient(key, id)
 }
 
-func (lm *loggingMiddleware) ListClients(key string) (clients []manager.Client, err error) {
+func (lm *loggingMiddleware) ListClients(key string, offset, limit int) (clients []manager.Client, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list_clients for key %s took %s to complete", key, time.Since(begin))
 		if err != nil {
@@ -96,7 +96,7 @@ func (lm *loggingMiddleware) ListClients(key string) (clients []manager.Client, 
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.ListClients(key)
+	return lm.svc.ListClients(key, offset, limit)
 }
 
 func (lm *loggingMiddleware) RemoveClient(key string, id string) (err error) {
@@ -151,7 +151,7 @@ func (lm *loggingMiddleware) ViewChannel(key string, id string) (channel manager
 	return lm.svc.ViewChannel(key, id)
 }
 
-func (lm *loggingMiddleware) ListChannels(key string) (channels []manager.Channel, err error) {
+func (lm *loggingMiddleware) ListChannels(key string, offset, limit int) (channels []manager.Channel, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list_channels for key %s took %s to complete", key, time.Since(begin))
 		if err != nil {
@@ -161,7 +161,7 @@ func (lm *loggingMiddleware) ListChannels(key string) (channels []manager.Channe
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.ListChannels(key)
+	return lm.svc.ListChannels(key, offset, limit)
 }
 
 func (lm *loggingMiddleware) RemoveChannel(key string, id string) (err error) {

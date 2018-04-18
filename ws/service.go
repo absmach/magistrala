@@ -24,7 +24,7 @@ type Service interface {
 	Subscribe(string, Channel) error
 }
 
-// Channel is used for recieving and sending messages.
+// Channel is used for receiving and sending messages.
 type Channel struct {
 	Messages chan mainflux.RawMessage
 	Closed   chan bool

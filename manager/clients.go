@@ -44,8 +44,8 @@ type ClientRepository interface {
 	// by the specified user.
 	One(string, string) (Client, error)
 
-	// All retrieves the clients owned by the specified user.
-	All(string) []Client
+	// All retrieves the subset of clients owned by the specified user.
+	All(string, int, int) []Client
 
 	// Remove removes the client having the provided identifier, that is owned
 	// by the specified user.

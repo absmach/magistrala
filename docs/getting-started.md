@@ -9,7 +9,7 @@ Before proceeding, install the following prerequisites:
 Once everything is installed, execute the following commands from project root:
 
 ```bash
-docker-compose up -f docker/docker-compose.yml -d
+docker-compose -f docker/docker-compose.yml up -d
 ```
 
 ## User management
@@ -249,7 +249,7 @@ of message publishing for each of the supported protocols.
 To publish message over channel, client should send following request:
 
 ```
-curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/senml+json" -H "Authorization: <client_token>" https://localhost/channels/<channel_id>/messages -d -d '[{"bn":"some-base-name:","bt":1.276020076001e+09, "bu":"A","bver":5, "n":"voltage","u":"V","v":120.1}, {"n":"current","t":-5,"v":1.2}, {"n":"current","t":-4,"v":1.3}]'
+curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/senml+json" -H "Authorization: <client_token>" https://localhost/channels/<channel_id>/messages -d '[{"bn":"some-base-name:","bt":1.276020076001e+09, "bu":"A","bver":5, "n":"voltage","u":"V","v":120.1}, {"n":"current","t":-5,"v":1.2}, {"n":"current","t":-4,"v":1.3}]'
 ```
 
 Note that you should always send array of messages in senML format.

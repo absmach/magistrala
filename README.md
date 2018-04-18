@@ -34,7 +34,7 @@ Before proceeding, install the following prerequisites:
 Once everything is installed, execute the following commands from project root:
 
 ```bash
-docker-compose up -f docker/docker-compose.yml -d
+docker-compose -f docker/docker-compose.yml up -d
 ```
 
 ## Contributing

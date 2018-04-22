@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	contentType  = "application/json; charset=utf-8"
+	contentType  = "application/json"
 	invalidEmail = "userexample.com"
 	wrongID      = "123e4567-e89b-12d3-a456-000000000042"
 	id           = "123e4567-e89b-12d3-a456-000000000001"

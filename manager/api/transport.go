@@ -16,8 +16,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-var errUnsupportedContentType = errors.New("unsupported content type")
-var errInvalidQueryParams = errors.New("invalid query params")
+const contentType = "application/json"
+
+var (
+	errUnsupportedContentType = errors.New("unsupported content type")
+	errInvalidQueryParams     = errors.New("invalid query params")
+)
 
 // MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler(svc manager.Service) http.Handler {

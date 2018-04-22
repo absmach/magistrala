@@ -7,8 +7,6 @@ import (
 	"github.com/mainflux/mainflux/manager"
 )
 
-const contentType = "application/json; charset=utf-8"
-
 type apiRes interface {
 	code() int
 	headers() map[string]string

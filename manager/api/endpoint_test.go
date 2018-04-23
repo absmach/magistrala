@@ -316,28 +316,35 @@ func TestListClients(t *testing.T) {
 		client.Key = id
 		clients = append(clients, client)
 	}
-
+	clientURL := fmt.Sprintf("%s/clients", ts.URL)
 	cases := []struct {
 		desc   string
 		auth   string
 		status int
-		offset int
-		limit  int
+		url    string
 		res    []manager.Client
 	}{
-		{"get a list of clients", user.Email, http.StatusOK, 1, 5, clients[1:6]},
-		{"get a list of clients with invalid token", invalidEmail, http.StatusForbidden, 0, 1, nil},
-		{"get a list of clients with invalid offset", user.Email, http.StatusBadRequest, -1, 5, nil},
-		{"get a list of clients with invalid limit", user.Email, http.StatusBadRequest, 1, -5, nil},
-		{"get a list of clients with zero limit", user.Email, http.StatusBadRequest, 1, 0, nil},
-		{"get a list of clients with limit greater than max", user.Email, http.StatusBadRequest, 0, 110, nil},
+		{"get a list of clients", user.Email, http.StatusOK, fmt.Sprintf("%s?offset=%d&limit=%d", clientURL, 0, 5), clients[0:5]},
+		{"get a list of clients with invalid token", invalidEmail, http.StatusForbidden, fmt.Sprintf("%s?offset=%d&limit=%d", clientURL, 0, 1), nil},
+		{"get a list of clients with invalid offset", user.Email, http.StatusBadRequest, fmt.Sprintf("%s?offset=%d&limit=%d", clientURL, -1, 5), nil},
+		{"get a list of clients with invalid limit", user.Email, http.StatusBadRequest, fmt.Sprintf("%s?offset=%d&limit=%d", clientURL, 1, -5), nil},
+		{"get a list of clients with zero limit", user.Email, http.StatusBadRequest, fmt.Sprintf("%s?offset=%d&limit=%d", clientURL, 1, 0), nil},
+		{"get a list of clients with no offset provided", user.Email, http.StatusOK, fmt.Sprintf("%s?limit=%d", clientURL, 5), clients[0:5]},
+		{"get a list of clients with no limit provided", user.Email, http.StatusOK, fmt.Sprintf("%s?offset=%d", clientURL, 1), clients[1:11]},
+		{"get a list of clients with redundant query params", user.Email, http.StatusOK, fmt.Sprintf("%s?offset=%d&limit=%d&value=something", clientURL, 0, 5), clients[0:5]},
+		{"get a list of clients with limit greater than max", user.Email, http.StatusBadRequest, fmt.Sprintf("%s?offset=%d&limit=%d", clientURL, 0, 110), nil},
+		{"get a list of clients with default URL", user.Email, http.StatusOK, fmt.Sprintf("%s%s", clientURL, ""), clients[0:10]},
+		{"get a list of clients with invalid URL", user.Email, http.StatusBadRequest, fmt.Sprintf("%s%s", clientURL, "?%%"), nil},
+		{"get a list of clients with invalid number of params", user.Email, http.StatusBadRequest, fmt.Sprintf("%s%s", clientURL, "?offset=4&limit=4&limit=5&offset=5"), nil},
+		{"get a list of clients with invalid offset", user.Email, http.StatusBadRequest, fmt.Sprintf("%s%s", clientURL, "?offset=e&limit=5"), nil},
+		{"get a list of clients with invalid limit", user.Email, http.StatusBadRequest, fmt.Sprintf("%s%s", clientURL, "?offset=5&limit=e"), nil},
 	}
 
 	for _, tc := range cases {
 		req := testRequest{
 			client: cli,
 			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/clients?offset=%d&limit=%d", ts.URL, tc.offset, tc.limit),
+			url:    tc.url,
 			token:  tc.auth,
 		}
 		res, err := req.make()
@@ -347,19 +354,6 @@ func TestListClients(t *testing.T) {
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		assert.ElementsMatch(t, tc.res, data["clients"], fmt.Sprintf("%s: expected body %s got %s", tc.desc, tc.res, data["clients"]))
 	}
-	req := testRequest{
-		client: cli,
-		method: http.MethodGet,
-		url:    fmt.Sprintf("%s/clients", ts.URL),
-		token:  user.Email,
-	}
-	defaults := "get a list of clients with no limit and offset params"
-	res, err := req.make()
-	assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", defaults, err))
-	var data map[string][]manager.Client
-	json.NewDecoder(res.Body).Decode(&data)
-	assert.Equal(t, http.StatusOK, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", defaults, http.StatusOK, res.StatusCode))
-	assert.ElementsMatch(t, clients[0:10], data["clients"], fmt.Sprintf("%s: expected body %s got %s", defaults, clients[0:10], data["clients"]))
 }
 
 func TestRemoveClient(t *testing.T) {
@@ -538,28 +532,36 @@ func TestListChannels(t *testing.T) {
 		channel.ID = id
 		channels = append(channels, channel)
 	}
+	channelURL := fmt.Sprintf("%s/channels", ts.URL)
 
 	cases := []struct {
 		desc   string
 		auth   string
 		status int
-		offset int
-		limit  int
+		url    string
 		res    []manager.Channel
 	}{
-		{"get a list of channels", user.Email, http.StatusOK, 1, 5, channels[1:6]},
-		{"get a list of channels with invalid token", invalidEmail, http.StatusForbidden, 0, 1, nil},
-		{"get a list of channels with invalid offset", user.Email, http.StatusBadRequest, -1, 5, nil},
-		{"get a list of channels with invalid limit", user.Email, http.StatusBadRequest, 1, -5, nil},
-		{"get a list of channels with zero limit", user.Email, http.StatusBadRequest, 1, 0, nil},
-		{"get a list of channels with limit greater than max", user.Email, http.StatusBadRequest, 0, 110, nil},
+		{"get a list of channels", user.Email, http.StatusOK, fmt.Sprintf("%s?offset=%d&limit=%d", channelURL, 0, 6), channels[0:6]},
+		{"get a list of channels with invalid token", invalidEmail, http.StatusForbidden, fmt.Sprintf("%s?offset=%d&limit=%d", channelURL, 0, 1), nil},
+		{"get a list of channels with invalid offset", user.Email, http.StatusBadRequest, fmt.Sprintf("%s?offset=%d&limit=%d", channelURL, -1, 5), nil},
+		{"get a list of channels with invalid limit", user.Email, http.StatusBadRequest, fmt.Sprintf("%s?offset=%d&limit=%d", channelURL, -1, 5), nil},
+		{"get a list of channels with zero limit", user.Email, http.StatusBadRequest, fmt.Sprintf("%s?offset=%d&limit=%d", channelURL, 1, 0), nil},
+		{"get a list of channels with no offset provided", user.Email, http.StatusOK, fmt.Sprintf("%s?limit=%d", channelURL, 5), channels[0:5]},
+		{"get a list of channels with no limit provided", user.Email, http.StatusOK, fmt.Sprintf("%s?offset=%d", channelURL, 1), channels[1:11]},
+		{"get a list of channels with redundant query params", user.Email, http.StatusOK, fmt.Sprintf("%s?offset=%d&limit=%d&value=something", channelURL, 0, 5), channels[0:5]},
+		{"get a list of channels with limit greater than max", user.Email, http.StatusBadRequest, fmt.Sprintf("%s?offset=%d&limit=%d", channelURL, 0, 110), nil},
+		{"get a list of channels with default URL", user.Email, http.StatusOK, fmt.Sprintf("%s%s", channelURL, ""), channels[0:10]},
+		{"get a list of channels with invalid URL", user.Email, http.StatusBadRequest, fmt.Sprintf("%s%s", channelURL, "?%%"), nil},
+		{"get a list of channels with invalid number of params", user.Email, http.StatusBadRequest, fmt.Sprintf("%s%s", channelURL, "?offset=4&limit=4&limit=5&offset=5"), nil},
+		{"get a list of channels with invalid offset", user.Email, http.StatusBadRequest, fmt.Sprintf("%s%s", channelURL, "?offset=e&limit=5"), nil},
+		{"get a list of channels with invalid limit", user.Email, http.StatusBadRequest, fmt.Sprintf("%s%s", channelURL, "?offset=5&limit=e"), nil},
 	}
 
 	for _, tc := range cases {
 		req := testRequest{
 			client: client,
 			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/channels?offset=%d&limit=%d", ts.URL, tc.offset, tc.limit),
+			url:    tc.url,
 			token:  tc.auth,
 		}
 		res, err := req.make()
@@ -569,19 +571,6 @@ func TestListChannels(t *testing.T) {
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		assert.ElementsMatch(t, tc.res, body["channels"], fmt.Sprintf("%s: expected body %s got %s", tc.desc, tc.res, body["channels"]))
 	}
-	req := testRequest{
-		client: client,
-		method: http.MethodGet,
-		url:    fmt.Sprintf("%s/channels", ts.URL),
-		token:  user.Email,
-	}
-	defaults := "get a list of channels with no limit and offset params"
-	res, err := req.make()
-	assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", defaults, err))
-	var data map[string][]manager.Channel
-	json.NewDecoder(res.Body).Decode(&data)
-	assert.Equal(t, http.StatusOK, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", defaults, http.StatusOK, res.StatusCode))
-	assert.ElementsMatch(t, channels[0:10], data["channels"], fmt.Sprintf("%s: expected body %s got %s", defaults, channels[0:10], data["channels"]))
 }
 
 func TestRemoveChannel(t *testing.T) {

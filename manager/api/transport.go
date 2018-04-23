@@ -254,27 +254,12 @@ func decodeView(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
-
 	q, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
-		return nil, err
+		return nil, errInvalidQueryParams
 	}
 	offset := 0
 	limit := 10
-
-	n := len(q)
-	if n == 0 {
-		req := listResourcesReq{
-			key:    r.Header.Get("Authorization"),
-			offset: offset,
-			limit:  limit,
-		}
-		return req, nil
-	}
-
-	if n > 2 {
-		return nil, errInvalidQueryParams
-	}
 
 	off, lmt := q["offset"], q["limit"]
 
@@ -285,14 +270,14 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 	if len(off) == 1 {
 		offset, err = strconv.Atoi(off[0])
 		if err != nil {
-			return nil, err
+			return nil, errInvalidQueryParams
 		}
 	}
 
 	if len(lmt) == 1 {
 		limit, err = strconv.Atoi(lmt[0])
 		if err != nil {
-			return nil, err
+			return nil, errInvalidQueryParams
 		}
 	}
 	req := listResourcesReq{
@@ -346,6 +331,8 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusConflict)
 	case errUnsupportedContentType:
 		w.WriteHeader(http.StatusUnsupportedMediaType)
+	case errInvalidQueryParams:
+		w.WriteHeader(http.StatusBadRequest)
 	case io.ErrUnexpectedEOF:
 		w.WriteHeader(http.StatusBadRequest)
 	case io.EOF:

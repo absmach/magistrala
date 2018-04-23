@@ -71,11 +71,12 @@ func (crm *channelRepositoryMock) All(owner string, offset, limit int) []manager
 		return channels
 	}
 
-	first := fmt.Sprintf("%s%012d", chanId, offset)
-	last := fmt.Sprintf("%s%012d", chanId, offset+limit)
+	// Since IDs starts from 1, shift everything by one.
+	first := fmt.Sprintf("%s%012d", chanId, offset+1)
+	last := fmt.Sprintf("%s%012d", chanId, offset+limit+1)
 
 	for k, v := range crm.channels {
-		if strings.HasPrefix(k, prefix) && v.ID > first && v.ID <= last {
+		if strings.HasPrefix(k, prefix) && v.ID >= first && v.ID < last {
 			channels = append(channels, v)
 		}
 	}

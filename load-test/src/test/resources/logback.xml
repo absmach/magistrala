@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+	<appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS} [%-5level] %logger{15} - %msg%n%rEx</pattern>
+		</encoder>
+        <immediateFlush>false</immediateFlush>
+	</appender>
+	<appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+		<appender-ref ref="CONSOLE" />
+	</appender>
+	<root level="WARN">
+		<appender-ref ref="ASYNC" />
+	</root>
+</configuration>

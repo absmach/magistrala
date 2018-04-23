@@ -41,3 +41,4 @@ pages:
     - License: LICENSE.txt
 - Architecture: architecture.md
 - Getting started: getting-started.md
+- Load test: load-test.md

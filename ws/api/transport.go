@@ -38,7 +38,7 @@ func MakeHandler(svc ws.Service, mc manager.ManagerClient, l log.Logger) http.Ha
 
 	mux := bone.New()
 	mux.GetFunc("/channels/:id/messages", handshake(svc))
-	mux.GetFunc("/version", mainflux.Version())
+	mux.GetFunc("/version", mainflux.Version("websocket"))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux

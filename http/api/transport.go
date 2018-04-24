@@ -41,7 +41,7 @@ func MakeHandler(svc mainflux.MessagePublisher, mc manager.ManagerClient) http.H
 		opts...,
 	))
 
-	r.GetFunc("/version", mainflux.Version())
+	r.GetFunc("/version", mainflux.Version("http"))
 	r.Handle("/metrics", promhttp.Handler())
 
 	return r

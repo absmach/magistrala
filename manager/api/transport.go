@@ -143,7 +143,7 @@ func MakeHandler(svc manager.Service) http.Handler {
 		opts...,
 	))
 
-	r.GetFunc("/version", mainflux.Version())
+	r.GetFunc("/version", mainflux.Version("manager"))
 	r.Handle("/metrics", promhttp.Handler())
 
 	return r

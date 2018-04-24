@@ -6,6 +6,7 @@ import (
 
 	"github.com/mainflux/mainflux/ws"
 	"github.com/mainflux/mainflux/ws/mocks"
+	broker "github.com/nats-io/go-nats"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/mainflux/mainflux"
@@ -29,7 +30,7 @@ var (
 
 func newService() ws.Service {
 	subs := map[string]ws.Channel{chanID: channel}
-	pubsub := mocks.NewService(subs)
+	pubsub := mocks.NewService(subs, broker.ErrInvalidMsg)
 	return ws.New(pubsub)
 }
 

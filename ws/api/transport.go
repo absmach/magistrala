@@ -69,9 +69,9 @@ func handshake(svc ws.Service) http.HandlerFunc {
 		// Subscribe to channel
 		channel := ws.Channel{make(chan mainflux.RawMessage), make(chan bool)}
 		sub.channel = channel
-		if err = svc.Subscribe(sub.chanID, sub.channel); err != nil {
+		if err := svc.Subscribe(sub.chanID, sub.channel); err != nil {
 			logger.Warn(fmt.Sprintf("Failed to subscribe to NATS subject: %s", err))
-			w.WriteHeader(http.StatusExpectationFailed)
+			conn.Close()
 			return
 		}
 		go sub.listen()
@@ -137,6 +137,7 @@ func (sub subscription) broadcast(svc ws.Service) {
 		if err := svc.Publish(msg); err != nil {
 			logger.Warn(fmt.Sprintf("Failed to publish message to NATS: %s", err))
 			if err == ws.ErrFailedConnection {
+				sub.conn.Close()
 				sub.channel.Closed <- true
 				return
 			}

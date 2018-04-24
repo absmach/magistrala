@@ -15,6 +15,7 @@ import (
 	"github.com/mainflux/mainflux/ws"
 	"github.com/mainflux/mainflux/ws/api"
 	"github.com/mainflux/mainflux/ws/mocks"
+	broker "github.com/nats-io/go-nats"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,7 +32,7 @@ var (
 
 func newService() ws.Service {
 	subs := map[string]ws.Channel{chanID: channel}
-	pubsub := mocks.NewService(subs)
+	pubsub := mocks.NewService(subs, broker.ErrConnectionClosed)
 	return ws.New(pubsub)
 }
 
@@ -88,11 +89,14 @@ func TestHandshake(t *testing.T) {
 		header bool
 		token  string
 		status int
+		msg    []byte
 	}{
-		{"connect and send message", chanID, true, token, http.StatusSwitchingProtocols},
-		{"connect with invalid token", chanID, true, "", http.StatusForbidden},
-		{"connect with invalid channel id", "1", true, token, http.StatusNotFound},
-		{"connect and send message with token as query parameter", chanID, false, token, http.StatusSwitchingProtocols},
+		{"connect and send message", chanID, true, token, http.StatusSwitchingProtocols, msg},
+		{"connect to non-existent channel", "123e4567-e89b-12d3-a456-000000000042", true, token, http.StatusSwitchingProtocols, []byte{}},
+		{"connect with invalid token", chanID, true, "", http.StatusForbidden, []byte{}},
+		{"connect with invalid channel id", "1", true, token, http.StatusNotFound, []byte{}},
+		{"connect and send message with token as query parameter", chanID, false, token, http.StatusSwitchingProtocols, msg},
+		{"connect and send message that cannot be published", chanID, true, token, http.StatusSwitchingProtocols, []byte{}},
 	}
 
 	for _, tc := range cases {
@@ -101,7 +105,7 @@ func TestHandshake(t *testing.T) {
 		if err != nil {
 			continue
 		}
-		err = conn.WriteMessage(websocket.TextMessage, msg)
+		err = conn.WriteMessage(websocket.TextMessage, tc.msg)
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s\n", tc.desc, err))
 	}
 }

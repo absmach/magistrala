@@ -59,13 +59,20 @@ func (pubsub *natsPubSub) Subscribe(chanID string, channel ws.Channel) error {
 			return
 		}
 
+		// Prevents sending message to closed channel
 		select {
 		case channel.Messages <- rawMsg:
 		case <-channel.Closed:
 			sub.Unsubscribe()
-			channel.Close()
 		}
 	})
+
+	// Check if subscription should be closed
+	go func() {
+		<-channel.Closed
+		sub.Unsubscribe()
+		channel.Close()
+	}()
 
 	return err
 }

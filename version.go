@@ -5,17 +5,17 @@ import (
 	"net/http"
 )
 
-const version string = "0.2.2"
+const version string = "0.2.3"
 
 type response struct {
-	Version string
-	Service string
+	Service string `json:"service"`
+	Version string `json:"version"`
 }
 
 // Version exposes an HTTP handler for retrieving service version.
 func Version(service string) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
-		res := response{Version: version, Service: service}
+		res := response{service, version}
 
 		data, _ := json.Marshal(res)
 

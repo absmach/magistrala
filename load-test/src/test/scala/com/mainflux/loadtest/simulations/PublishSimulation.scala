@@ -90,7 +90,7 @@ class PublishSimulation extends Simulation {
 }
 
 object PublishSimulation {
-  val ContentType = "application/json; charset=utf-8"
+  val ContentType = "application/json"
   val User = """{"email":"john.doe@email.com", "password":"123"}"""
   val Client = """{"type":"device", "name":"weio"}"""
   val Channel = """{"name":"mychan"}"""

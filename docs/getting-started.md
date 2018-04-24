@@ -19,7 +19,7 @@ docker-compose -f docker/docker-compose.yml up -d
 Use the Mainflux API to create user account:
 
 ```
-curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json; charset=utf-8" https://localhost/users -d '{"email":"john.doe@email.com", "password":"123"}'
+curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json" https://localhost/users -d '{"email":"john.doe@email.com", "password":"123"}'
 ```
 
 Note that when using official `docker-compose`, all services are behind `nginx`
@@ -31,7 +31,7 @@ In order for this user to be able to authenticate to the system, you will have
 to create an authorization token for him:
 
 ```
-curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json; charset=utf-8" https://localhost/tokens -d '{"email":"john.doe@email.com", "password":"123"}'
+curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json" https://localhost/tokens -d '{"email":"john.doe@email.com", "password":"123"}'
 ```
 
 Response should look like this:
@@ -54,7 +54,7 @@ Devices are provisioned by executing request `POST /clients`, with a
 that belong to this particular user.
 
 ```
-curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json; charset=utf-8" -H "Authorization: <user_auth_token>" https://localhost/clients -d '{"type":"device", "name":"weio"}'
+curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json" -H "Authorization: <user_auth_token>" https://localhost/clients -d '{"type":"device", "name":"weio"}'
 ```
 
 Response will contain `Location` header whose value represents path to newly
@@ -62,7 +62,7 @@ created client:
 
 ```
 HTTP/1.1 201 Created
-Content-Type: application/json; charset=utf-8
+Content-Type: application/json
 Location: /clients/81380742-7116-4f6f-9800-14fe464f6773
 Date: Tue, 10 Apr 2018 10:02:59 GMT
 Content-Length: 0
@@ -74,7 +74,7 @@ Applications are provisioned by executing HTTP request `POST /clients`, with
 `"type":"app"` specified in JSON payload.
 
 ```
-curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json; charset=utf-8" -H "Authorization: <user_auth_token>" https://localhost/clients -d '{"type":"app", "name":"myapp"}'
+curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json" -H "Authorization: <user_auth_token>" https://localhost/clients -d '{"type":"app", "name":"myapp"}'
 ```
 
 Response will contain `Location` header whose value represents path to newly
@@ -82,7 +82,7 @@ created client (same as for devices):
 
 ```
 HTTP/1.1 201 Created
-Content-Type: application/json; charset=utf-8
+Content-Type: application/json
 Location: /clients/cb63f852-2d48-44f0-a0cf-e450496c6c92
 Date: Tue, 10 Apr 2018 10:33:17 GMT
 Content-Length: 0
@@ -102,7 +102,7 @@ Notice that you will receive only those clients that were provisioned by
 
 ```
 HTTP/1.1 200 OK
-Content-Type: application/json; charset=utf-8
+Content-Type: application/json
 Date: Tue, 10 Apr 2018 10:50:12 GMT
 Content-Length: 1105
 
@@ -148,7 +148,7 @@ curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X DELETE
 Channels are provisioned by executing request `POST /channels`:
 
 ```
-curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json; charset=utf-8" -H "Authorization: <user_auth_token>" https://localhost/channels -d '{"name":"mychan"}'
+curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json" -H "Authorization: <user_auth_token>" https://localhost/channels -d '{"name":"mychan"}'
 ```
 
 After sending request you should receive response with `Location` header that
@@ -156,7 +156,7 @@ contains path to newly created channel:
 
 ```
 HTTP/1.1 201 Created
-Content-Type: application/json; charset=utf-8
+Content-Type: application/json
 Location: /channels/19daa7a8-a489-4571-8714-ef1a214ed914
 Date: Tue, 10 Apr 2018 11:30:07 GMT
 Content-Length: 0
@@ -176,7 +176,7 @@ token's owner.
 
 ```
 HTTP/1.1 200 OK
-Content-Type: application/json; charset=utf-8
+Content-Type: application/json
 Date: Tue, 10 Apr 2018 11:38:06 GMT
 Content-Length: 139
 

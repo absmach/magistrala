@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nats
+  labels:
+    component: nats
+spec:
+  selector:
+    component: nats
+  clusterIP: None
+  ports:
+  - name: client
+    port: 4222
+  - name: cluster
+    port: 6222
+  - name: monitor
+    port: 8222
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: nats
+  labels:
+    component: nats
+spec:
+  serviceName: nats
+  replicas: 5
+  template:
+    metadata:
+      labels:
+        component: nats
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                    - nats
+            topologyKey: kubernetes.io/hostname
+      containers:
+      - name: nats
+        image: nats:1.0.4
+        args: [ "--config", "/etc/nats/nats.conf"]
+        volumeMounts:
+          - name: tls-volume
+            mountPath: /etc/nats/tls
+          - name: config-volume
+            mountPath: /etc/nats
+        ports:
+        - containerPort: 4222
+          name: client
+        - containerPort: 6222
+          name: cluster
+        - containerPort: 8222
+          name: monitor
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8222
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+      volumes:
+      - name: tls-volume
+        secret:
+          secretName: tls-nats-server
+      - name: config-volume
+        configMap:
+          name: nats-config

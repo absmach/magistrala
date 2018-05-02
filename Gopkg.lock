@@ -32,13 +32,13 @@
   branch = "master"
   name = "github.com/beorn7/perks"
   packages = ["quantile"]
-  revision = "4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9"
+  revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
 
 [[projects]]
   name = "github.com/cenkalti/backoff"
   packages = ["."]
-  revision = "61153c768f31ee5f130071d08fc82b85208528de"
-  version = "v1.1.0"
+  revision = "2ea60e5f094469f9e65adb9cd103795b73ae743e"
+  version = "v2.0.0"
 
 [[projects]]
   branch = "master"
@@ -50,7 +50,7 @@
   branch = "master"
   name = "github.com/containerd/continuity"
   packages = ["pathdriver"]
-  revision = "d8fb8589b0e8e85b8c8bbaa8840226d0dfeb7371"
+  revision = "c6cef34830231743494fe2969284df7b82cc0ad0"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -71,38 +71,6 @@
   version = "v3.2.0"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/docker/docker"
-  packages = [
-    "api/types",
-    "api/types/blkiodev",
-    "api/types/container",
-    "api/types/filters",
-    "api/types/mount",
-    "api/types/network",
-    "api/types/registry",
-    "api/types/strslice",
-    "api/types/swarm",
-    "api/types/swarm/runtime",
-    "api/types/versions",
-    "opts",
-    "pkg/archive",
-    "pkg/fileutils",
-    "pkg/homedir",
-    "pkg/idtools",
-    "pkg/ioutils",
-    "pkg/jsonmessage",
-    "pkg/longpath",
-    "pkg/mount",
-    "pkg/pools",
-    "pkg/stdcopy",
-    "pkg/system",
-    "pkg/term",
-    "pkg/term/windows"
-  ]
-  revision = "72ba7f593fa4dbb628cf5ee83cd7daf955934cf5"
-
-[[projects]]
   name = "github.com/docker/go-connections"
   packages = ["nat"]
   revision = "3ede32e2033de7505e6500d6c868c2b9ed9f169d"
@@ -111,20 +79,14 @@
 [[projects]]
   name = "github.com/docker/go-units"
   packages = ["."]
-  revision = "0dadbb0345b35ec7ef35e228dabb8de89a65bf52"
-  version = "v0.3.2"
+  revision = "47565b4f722fb6ceae66b95f853feed578a4a51c"
+  version = "v0.3.3"
 
 [[projects]]
   branch = "master"
   name = "github.com/dustin/go-coap"
   packages = ["."]
   revision = "ddcc80675fa42611359d91a6dfa5aa57fb90e72b"
-
-[[projects]]
-  name = "github.com/fsouza/go-dockerclient"
-  packages = ["."]
-  revision = "ca33ff277b527ce11b793e62f9ba244129b01caf"
-  version = "v1.2.0"
 
 [[projects]]
   name = "github.com/go-kit/kit"
@@ -166,8 +128,8 @@
 [[projects]]
   name = "github.com/golang/protobuf"
   packages = ["proto"]
-  revision = "925541529c1fa6821df4e44ce2723319eb2be768"
-  version = "v1.0.0"
+  revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
+  version = "v1.1.0"
 
 [[projects]]
   name = "github.com/gorilla/websocket"
@@ -204,7 +166,7 @@
     "hstore",
     "oid"
   ]
-  revision = "88edab0803230a3898347e77b474f8c1820a1f20"
+  revision = "d34b9ff171c21ad295489235aec8b6626023cd04"
 
 [[projects]]
   name = "github.com/matttproud/golang_protobuf_extensions"
@@ -219,8 +181,8 @@
     "encoders/builtin",
     "util"
   ]
-  revision = "d66cb54e6b7bdd93f0b28afc8450d84c780dfb68"
-  version = "v1.4.0"
+  revision = "062418ea1c2181f52dc0f954f6204370519a868b"
+  version = "v1.5.0"
 
 [[projects]]
   name = "github.com/nats-io/nuid"
@@ -251,6 +213,37 @@
   ]
   revision = "baf6536d6259209c3edfa2b22237af82942d3dfa"
   version = "v0.1.1"
+
+[[projects]]
+  name = "github.com/ory/dockertest"
+  packages = [
+    "docker",
+    "docker/opts",
+    "docker/pkg/archive",
+    "docker/pkg/fileutils",
+    "docker/pkg/homedir",
+    "docker/pkg/idtools",
+    "docker/pkg/ioutils",
+    "docker/pkg/jsonmessage",
+    "docker/pkg/longpath",
+    "docker/pkg/mount",
+    "docker/pkg/pools",
+    "docker/pkg/stdcopy",
+    "docker/pkg/system",
+    "docker/pkg/term",
+    "docker/pkg/term/windows",
+    "docker/types",
+    "docker/types/blkiodev",
+    "docker/types/container",
+    "docker/types/filters",
+    "docker/types/mount",
+    "docker/types/network",
+    "docker/types/registry",
+    "docker/types/strslice",
+    "docker/types/versions"
+  ]
+  revision = "2e92e7784b6fb199fd168aa46269a2f1b34f299e"
+  version = "v3.3.0"
 
 [[projects]]
   name = "github.com/pkg/errors"
@@ -287,7 +280,7 @@
     "internal/bitbucket.org/ww/goautoneg",
     "model"
   ]
-  revision = "e4aa40a9169a88835b849a6efb71e05dc04b88f0"
+  revision = "d811d2e9bf898806ecfb6ef6296774b13ffc314c"
 
 [[projects]]
   branch = "master"
@@ -298,7 +291,7 @@
     "nfs",
     "xfs"
   ]
-  revision = "54d17b57dd7d4a3aa092476596b3f8a933bde349"
+  revision = "8b1c2da0d56deffdbb9e48d4414b4e674bd8083e"
 
 [[projects]]
   name = "github.com/satori/go.uuid"
@@ -327,8 +320,8 @@
 [[projects]]
   name = "github.com/ugorji/go"
   packages = ["codec"]
-  revision = "9831f2c3ac1068a78f50999a30db84270f647af6"
-  version = "v1.1"
+  revision = "b4c50a2b199d93b13dc15e78929cfb23bfdf21ab"
+  version = "v1.1.1"
 
 [[projects]]
   name = "go.uber.org/atomic"
@@ -352,8 +345,8 @@
     "internal/exit",
     "zapcore"
   ]
-  revision = "35aad584952c3e7020db7b839f6b102de6271f89"
-  version = "v1.7.1"
+  revision = "eeedf312bc6c57391d84767a4cd413f02a917974"
+  version = "v1.8.0"
 
 [[projects]]
   branch = "master"
@@ -363,16 +356,13 @@
     "blowfish",
     "ssh/terminal"
   ]
-  revision = "374053ea96cb300f8671b8d3b07edeeb06e203b4"
+  revision = "613d6eafa307c6881a737a3c35c0e312e8d3a8c5"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = [
-    "context",
-    "context/ctxhttp"
-  ]
-  revision = "24dd3780ca4f75fed9f321890729414a4b5d3f13"
+  packages = ["context"]
+  revision = "5f9ae10d9af5b1c89ae6904293b14b064d4ada23"
 
 [[projects]]
   branch = "master"
@@ -381,17 +371,17 @@
     "unix",
     "windows"
   ]
-  revision = "01acb38716e021ed1fc03a602bdb5838e1358c5e"
+  revision = "78d5f264b493f125018180c204871ecf58a2dce1"
 
 [[projects]]
   name = "gopkg.in/ory-am/dockertest.v3"
   packages = ["."]
-  revision = "15c8e8835bba04e0d7c2b57958ffe294d5e643dc"
-  version = "v3.1.6"
+  revision = "2e92e7784b6fb199fd168aa46269a2f1b34f299e"
+  version = "v3.3.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c1b28e90e21e838cec2d16c95d8eb414b5de9bbe9667acb01b5375db047cc6db"
+  inputs-digest = "23b9bae94a860be71d614c25603b0ac95242146462aeb5c88e556534d22a7152"
   solver-name = "gps-cdcl"
   solver-version = 1

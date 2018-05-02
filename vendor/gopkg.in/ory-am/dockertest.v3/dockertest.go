@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff"
-	dc "github.com/fsouza/go-dockerclient"
+	dc "github.com/ory/dockertest/docker"
 	"github.com/pkg/errors"
 )
 
@@ -132,6 +132,7 @@ type RunOptions struct {
 	Links        []string
 	ExposedPorts []string
 	ExtraHosts   []string
+	WorkingDir   string
 	Auth         dc.AuthConfiguration
 	PortBindings map[dc.Port][]dc.PortBinding
 }
@@ -171,6 +172,7 @@ func (d *Pool) RunWithOptions(opts *RunOptions) (*Resource, error) {
 	env := opts.Env
 	cmd := opts.Cmd
 	ep := opts.Entrypoint
+	wd := opts.WorkingDir
 	var exp map[dc.Port]struct{}
 
 	if len(opts.ExposedPorts) > 0 {
@@ -219,6 +221,7 @@ func (d *Pool) RunWithOptions(opts *RunOptions) (*Resource, error) {
 			Cmd:          cmd,
 			Mounts:       mounts,
 			ExposedPorts: exp,
+			WorkingDir: wd,
 		},
 		HostConfig: &dc.HostConfig{
 			PublishAllPorts: true,
@@ -255,10 +258,6 @@ func (d *Pool) Run(repository, tag string, env []string) (*Resource, error) {
 
 // Purge removes a container and linked volumes from docker.
 func (d *Pool) Purge(r *Resource) error {
-	if err := d.Client.KillContainer(dc.KillContainerOptions{ID: r.Container.ID}); err != nil {
-		return errors.Wrap(err, "")
-	}
-
 	if err := d.Client.RemoveContainer(dc.RemoveContainerOptions{ID: r.Container.ID, Force: true, RemoveVolumes: true}); err != nil {
 		return errors.Wrap(err, "")
 	}

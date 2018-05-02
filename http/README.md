@@ -39,13 +39,16 @@ To start the service outside of the container, execute the following shell scrip
 # download the latest version of the service
 go get github.com/mainflux/mainflux
 
-cd $GOPATH/src/github.com/mainflux/mainflux/cmd/http
+cd $GOPATH/src/github.com/mainflux/mainflux
 
-# compile the app; make sure to set the proper GOOS value
-CGO_ENABLED=0 GOOS=[platform identifier] go build -ldflags "-s" -a -installsuffix cgo -o app
+# compile the http
+make http
+
+# copy binary to bin
+make install
 
 # set the environment variables and run the service
-MF_MANAGER_URL=[Manager service URL] MF_NATS_URL=[NATS instance URL] MF_HTTP_ADAPTER_PORT=[Service HTTP port] app
+MF_MANAGER_URL=[Manager service URL] MF_NATS_URL=[NATS instance URL] MF_HTTP_ADAPTER_PORT=[Service HTTP port] $GOBIN/mainflux-http
 ```
 
 ## Usage

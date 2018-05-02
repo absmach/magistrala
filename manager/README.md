@@ -58,13 +58,16 @@ To start the service outside of the container, execute the following shell scrip
 # download the latest version of the service
 go get github.com/mainflux/mainflux
 
-cd $GOPATH/src/github.com/mainflux/mainflux/cmd/manager
+cd $GOPATH/src/github.com/mainflux/mainflux
 
-# compile the app; make sure to set the proper GOOS value
-CGO_ENABLED=0 GOOS=[platform identifier] go build -ldflags "-s" -a -installsuffix cgo -o app
+# compile the manager
+make manager
+
+# copy binary to bin
+make install
 
 # set the environment variables and run the service
-MF_DB_HOST=[Database host address] MF_DB_PORT=[Database host port] MF_DB_USER=[Database user] MF_DB_PASS=[Database password] MF_MANAGER_DB=[Name of the database used by the service] MF_MANAGER_PORT=[Service HTTP port] MF_MANAGER_SECRET=[String used for signing tokens] app
+MF_DB_HOST=[Database host address] MF_DB_PORT=[Database host port] MF_DB_USER=[Database user] MF_DB_PASS=[Database password] MF_MANAGER_DB=[Name of the database used by the service] MF_MANAGER_PORT=[Service HTTP port] MF_MANAGER_SECRET=[String used for signing tokens] $GOBIN/mainflux-manager
 ```
 
 ## Usage

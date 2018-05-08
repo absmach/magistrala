@@ -9,9 +9,11 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable              | Description       | Default               |
-|-----------------------|-------------------|-----------------------|
-| COAP_ADAPTER_NATS_URL | NATS instance URL | nats://localhost:4222 |
+| Variable              | Description            | Default                 |
+|-----------------------|------------------------|-------------------------|
+| MF_COAP_ADAPTER_PORT  | adapter listening port | `5683`                  |
+| MF_NATS_URL           | NATS instance URL      | `nats://localhost:4222` |
+| MF_MANAGER_URL        | manager service URL    | `http://localhost:8180` |
 
 ## Deployment
 
@@ -25,28 +27,33 @@ services:
     image: mainflux/coap-adapter:[version]
     container_name: [instance name]
     ports:
-      - [host machine port]:5683
+      - [host machine port]:[configured port]
     environment:
-      COAP_ADAPTER_NATS_URL: [NATS instance URL]
+      MF_MANAGER_URL: [Manager service URL]
+      MF_NATS_URL: [NATS instance URL]
+      MF_COAP_ADAPTER_PORT: [Service HTTP port]
 ```
 
+Running this service outside of container requires working instance of the NATS service.
 To start the service outside of the container, execute the following shell script:
 
 ```bash
 # download the latest version of the service
 go get github.com/mainflux/mainflux
 
-cd $GOPATH/src/github.com/mainflux/mainflux/cmd/coap
+cd $GOPATH/src/github.com/mainflux/mainflux
 
-# compile the app; make sure to set the proper GOOS value
-CGO_ENABLED=0 GOOS=[platform identifier] go build -ldflags "-s" -a -installsuffix cgo -o app
+# compile the http
+make coap
+
+# copy binary to bin
+make install
 
 # set the environment variables and run the service
-COAP_ADAPTER_NATS_URL=[NATS instance URL] app
+MF_MANAGER_URL=[Manager service URL] MF_NATS_URL=[NATS instance URL] MF_COAP_ADAPTER_PORT=[Service HTTP port] $GOBIN/mainflux-coap
 ```
 
 ## Usage
 
-For more information about service capabilities and its usage, please check out
-the [API documentation](swagger.yaml).
-
+Since CoAP protocol does not support `Authorization` header (option), in order to send CoAP messages,
+client valid key must be present in `Uri-Query` option.

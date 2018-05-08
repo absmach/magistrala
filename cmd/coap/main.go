@@ -6,44 +6,76 @@ import (
 	"os/signal"
 	"syscall"
 
+	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/coap"
+	"github.com/mainflux/mainflux/coap/api"
 	"github.com/mainflux/mainflux/coap/nats"
+	log "github.com/mainflux/mainflux/logger"
+	manager "github.com/mainflux/mainflux/manager/client"
+	stdprometheus "github.com/prometheus/client_golang/prometheus"
 
 	broker "github.com/nats-io/go-nats"
-	"go.uber.org/zap"
 )
 
 const (
-	port       int    = 5683
-	defNatsURL string = broker.DefaultURL
-	envNatsURL string = "COAP_ADAPTER_NATS_URL"
+	defPort       int    = 5683
+	defNatsURL    string = broker.DefaultURL
+	defManagerURL string = "http://localhost:8180"
+	envPort       string = "MF_COAP_ADAPTER_PORT"
+	envNatsURL    string = "MF_NATS_URL"
+	envManagerURL string = "MF_MANAGER_URL"
 )
 
 type config struct {
-	Port    int
-	NatsURL string
+	ManagerURL string
+	NatsURL    string
+	Port       int
 }
 
 func main() {
-	cfg := loadConfig()
+	cfg := config{
+		ManagerURL: mainflux.Env(envManagerURL, defManagerURL),
+		NatsURL:    mainflux.Env(envNatsURL, defNatsURL),
+		Port:       defPort,
+	}
 
-	logger, _ := zap.NewProduction()
-	defer logger.Sync() // flushes buffer, if any
+	logger := log.New(os.Stdout)
 
-	nc := connectToNats(cfg, logger)
+	nc, err := broker.Connect(cfg.NatsURL)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to connect to NATS: %s", err))
+		os.Exit(1)
+	}
 	defer nc.Close()
 
-	pub := nats.NewMessagePublisher(nc)
-	ca := adapter.NewCoAPAdapter(logger, pub)
+	pubsub := nats.New(nc, logger)
+	svc := coap.New(pubsub)
+	svc = api.LoggingMiddleware(svc, logger)
 
-	nc.Subscribe("src.http", ca.BridgeHandler)
-	nc.Subscribe("src.mqtt", ca.BridgeHandler)
+	svc = api.MetricsMiddleware(
+		svc,
+		kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
+			Namespace: "ws_adapter",
+			Subsystem: "api",
+			Name:      "request_count",
+			Help:      "Number of requests received.",
+		}, []string{"method"}),
+		kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
+			Namespace: "ws_adapter",
+			Subsystem: "api",
+			Name:      "request_latency_microseconds",
+			Help:      "Total duration of requests in microseconds.",
+		}, []string{"method"}),
+	)
 
 	errs := make(chan error, 2)
 
 	go func() {
+		mgr := manager.NewClient(cfg.ManagerURL)
 		coapAddr := fmt.Sprintf(":%d", cfg.Port)
-		errs <- ca.Serve(coapAddr)
+		logger.Info(fmt.Sprintf("CoAP adapter service started, exposed port %d", cfg.Port))
+		errs <- api.ListenAndServe(svc, mgr, coapAddr, api.MakeHandler(svc))
 	}()
 
 	go func() {
@@ -53,14 +85,7 @@ func main() {
 	}()
 
 	c := <-errs
-	logger.Info("terminated", zap.String("error", c.Error()))
-}
-
-func loadConfig() *config {
-	return &config{
-		NatsURL: env(envNatsURL, defNatsURL),
-		Port:    port,
-	}
+	logger.Info(fmt.Sprintf("Proces exited: %s", c.Error()))
 }
 
 func env(key, fallback string) string {
@@ -70,14 +95,4 @@ func env(key, fallback string) string {
 	}
 
 	return value
-}
-
-func connectToNats(cfg *config, logger *zap.Logger) *broker.Conn {
-	nc, err := broker.Connect(cfg.NatsURL)
-	if err != nil {
-		logger.Error("Failed to connect to NATS", zap.Error(err))
-		os.Exit(1)
-	}
-
-	return nc
 }

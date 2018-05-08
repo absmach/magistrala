@@ -59,10 +59,6 @@
   version = "1.2.1"
 
 [[constraint]]
-  name = "go.uber.org/zap"
-  version = "1.7.1"
-
-[[constraint]]
   branch = "master"
   name = "golang.org/x/crypto"
 

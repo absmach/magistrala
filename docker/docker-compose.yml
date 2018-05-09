@@ -81,7 +81,7 @@ services:
       MF_HTTP_ADAPTER_PORT: 8182
 
   mqtt-adapter:
-    image: mainflux/mqtt-adapter:latest
+    image: mainflux/mqtt:latest
     container_name: mainflux-mqtt
     depends_on:
       - manager

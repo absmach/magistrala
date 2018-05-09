@@ -1,0 +1,34 @@
+<form [formGroup]="addClientForm" (ngSubmit)="onAddClient()">
+  <h1 mat-dialog-title>Add client</h1>
+  <div mat-dialog-content fxLayout="column">
+    <input type="hidden" formControlName="id">
+    <mat-form-field>
+      <mat-select placeholder="Client type" formControlName="type">
+        <mat-option value="app">
+          App
+        </mat-option>
+        <mat-option value="device">
+          Device
+        </mat-option>
+      </mat-select>
+      <mat-error *ngIf="addClientForm.get('type').errors?.required">
+        Type is required
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field>
+      <input matInput tabindex="1" placeholder="Name" formControlName="name" />
+      <mat-error *ngIf="addClientForm.get('name').errors?.required">
+        Name is required
+      </mat-error>
+    </mat-form-field>
+    <mat-form-field>
+      <textarea formControlName="payload" matInput placeholder="Payload" matTextareaAutosize matAutosizeMinRows="2"
+                matAutosizeMaxRows="5"></textarea>
+    </mat-form-field>
+  </div>
+  <div mat-dialog-actions>
+    <button mat-button mat-dialog-close>Cancel</button>
+    <button mat-button mat-raised-button color="primary" type="submit" [disabled]="addClientForm.invalid">Ok</button>
+  </div>
+</form>

@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../out-tsc/app",
+    "baseUrl": "./",
+    "module": "es2015",
+    "types": []
+  },
+  "include": [ "../node_modules/ngx-auth/**/*", "**/*"],
+  "exclude": [
+    "test.ts",
+    "**/*.spec.ts"
+  ]
+}

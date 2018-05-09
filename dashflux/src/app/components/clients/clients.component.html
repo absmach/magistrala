@@ -1,0 +1,51 @@
+<div class="clientsContainer" fxLayout="row" fxLayoutWrap>
+  <ng-container [ngSwitch]="clientsStore.clients?.length > 0">
+    <ng-container *ngSwitchCase="true">
+      <!-- List -->
+      <div class="client-list-container">
+        <mat-table #table [dataSource]="clientsStore.clients.toJS()" matSort class="mat-cell">
+          <!-- Columns -->
+          <ng-container matColumnDef="id">
+            <mat-header-cell fxFlex="32%" *matHeaderCellDef mat-sort-header>Id</mat-header-cell>
+            <mat-cell fxFlex="32%" *matCellDef="let row" >{{row.id}}</mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="name">
+            <mat-header-cell fxFlex="15%" *matHeaderCellDef mat-sort-header>Name</mat-header-cell>
+            <mat-cell fxFlex="15%" *matCellDef="let row"> {{row.name}}</mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="type">
+            <mat-header-cell fxFlex="10%" *matHeaderCellDef mat-sort-header>Type</mat-header-cell>
+            <mat-cell fxFlex="10%" *matCellDef="let row"> {{row.type}}</mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="payload">
+            <mat-header-cell fxFlex="35%" *matHeaderCellDef mat-sort-header>Payload</mat-header-cell>
+            <mat-cell fxFlex="35%" *matCellDef="let row"> {{row.payload | json}}</mat-cell>
+          </ng-container>
+          <!-- Actions -->
+          <ng-container matColumnDef="actions">
+            <mat-header-cell fxFlex="8%" *matHeaderCellDef mat-sort-header></mat-header-cell>
+            <mat-cell fxFlex="8%" *matCellDef="let row" >
+              <button mat-icon-button color="accent" (click)="editClient(row)">
+                <mat-icon aria-label="Delete">edit</mat-icon>
+              </button>
+              <button mat-icon-button color="accent" (click)="deleteClient(row)">
+                <mat-icon aria-label="Delete">delete</mat-icon>
+              </button>
+            </mat-cell>
+          </ng-container>
+
+          <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+          <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+      </mat-table>
+    </div>
+
+    </ng-container>
+    <ng-container *ngSwitchDefault>
+      <h3 >It looks like you don't have any device in your account.</h3>
+    </ng-container>
+  </ng-container>
+</div>
+
+<button mat-mini-fab class="addButton" (click)="addClient()">
+  <mat-icon>add</mat-icon>
+</button>

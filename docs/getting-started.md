@@ -282,3 +282,26 @@ If you are not able to send custom headers in your handshake request, send it as
 query parameter `authorization`. Then your path should look like this
 `/channels/<channel_id>/messages?authorization=<client_auth_key>`.
 
+### CoAP
+
+These are two useful tools for sending CoAP messages:
+
+- [Copper](https://github.com/mkovatsc/Copper)
+- [coap-cli](https://github.com/mcollina/coap-cli)
+
+To publish message over channel, client should send following confirmable message:
+
+```
+coap post coap://localhost/channels/<channel_id>/messages?key=<client_token>
+```
+
+Client token must be present in `Uri-Query` option. Otherwise, message will be considered unauthorized.
+
+To subscribe to channel, client should send following confirmable message:
+
+```
+coap get coap://localhost/channels/<channel_id>/messages?key=<client_token> -o
+```
+
+where `-o` in indicates that value of `Observe` option is 0.
+To unsubscribe from channel, client should send same message with value of `Observe` option set to 1, ignore confirmable message received from service or send `Reset` message with appropriate token.

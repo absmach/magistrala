@@ -56,13 +56,13 @@ func main() {
 	svc = api.MetricsMiddleware(
 		svc,
 		kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
-			Namespace: "ws_adapter",
+			Namespace: "coap_adapter",
 			Subsystem: "api",
 			Name:      "request_count",
 			Help:      "Number of requests received.",
 		}, []string{"method"}),
 		kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
-			Namespace: "ws_adapter",
+			Namespace: "coap_adapter",
 			Subsystem: "api",
 			Name:      "request_latency_microseconds",
 			Help:      "Total duration of requests in microseconds.",
@@ -72,10 +72,10 @@ func main() {
 	errs := make(chan error, 2)
 
 	go func() {
-		mgr := manager.NewClient(cfg.ManagerURL)
-		coapAddr := fmt.Sprintf(":%d", cfg.Port)
+		p := fmt.Sprintf(":%d", cfg.Port)
+		mc := manager.NewClient(cfg.ManagerURL)
 		logger.Info(fmt.Sprintf("CoAP adapter service started, exposed port %d", cfg.Port))
-		errs <- api.ListenAndServe(svc, mgr, coapAddr, api.MakeHandler(svc))
+		errs <- api.ListenAndServe(svc, mc, p, api.MakeHandler(svc))
 	}()
 
 	go func() {
@@ -84,15 +84,6 @@ func main() {
 		errs <- fmt.Errorf("%s", <-c)
 	}()
 
-	c := <-errs
-	logger.Info(fmt.Sprintf("Proces exited: %s", c.Error()))
-}
-
-func env(key, fallback string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		return fallback
-	}
-
-	return value
+	err = <-errs
+	logger.Error(fmt.Sprintf("CoAP adapter terminated: %s", err))
 }

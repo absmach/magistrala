@@ -33,12 +33,14 @@ $(DOCKERS):
 
 dockers: $(DOCKERS)
 	docker build --tag=mainflux/dashflux -f dashflux/docker/Dockerfile dashflux
+	docker build --tag=mainflux/mqtt -f mqtt/Dockerfile mqtt
 
 latest: dockers
 	for svc in $(SERVICES); do \
 		docker push mainflux/$$svc; \
 	done
 	docker push mainflux/dashflux
+	docker push mainflux/mqtt
 
 release:
 	$(eval version = $(shell git describe --abbrev=0 --tags))
@@ -50,3 +52,5 @@ release:
 	done
 	docker tag mainflux/dashflux mainflux/dashflux:$(version)
 	docker push mainflux/dashflux:$(version)
+	docker tag mainflux/mqtt mainflux/mqtt:$(version)
+	docker push mainflux/mqtt:$(version)

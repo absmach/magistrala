@@ -1,3 +1,7 @@
 export const environment = {
-  production: true
+  production: true,
+  signupUrl: '/api/users',
+  loginUrl: '/api/tokens',
+  clientsUrl: '/api/clients',
+  channelsUrl: '/api/channels'
 };

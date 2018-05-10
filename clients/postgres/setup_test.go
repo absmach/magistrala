@@ -9,14 +9,17 @@ import (
 	"os"
 	"testing"
 
-	"github.com/jinzhu/gorm"
 	"github.com/mainflux/mainflux/clients/postgres"
+	"github.com/mainflux/mainflux/logger"
 	"gopkg.in/ory-am/dockertest.v3"
 )
 
 const wrong string = "wrong-value"
 
-var db *gorm.DB
+var (
+	testLog = logger.New(os.Stdout)
+	db      *sql.DB
+)
 
 func TestMain(m *testing.M) {
 	pool, err := dockertest.NewPool("")

@@ -1,50 +1,51 @@
 package postgres
 
 import (
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres" // required by GORM
+	"database/sql"
+
 	"github.com/lib/pq"
 	"github.com/mainflux/mainflux/users"
 )
 
-const errDuplicate string = "unique_violation"
-
 var _ users.UserRepository = (*userRepository)(nil)
 
+const errDuplicate = "unique_violation"
+
 type userRepository struct {
-	db *gorm.DB
+	db *sql.DB
 }
 
 // New instantiates a PostgreSQL implementation of user
 // repository.
-func New(db *gorm.DB) users.UserRepository {
+func New(db *sql.DB) users.UserRepository {
 	return &userRepository{db}
 }
 
-func (ur *userRepository) Save(user users.User) error {
-	if err := ur.db.Create(&user).Error; err != nil {
+func (ur userRepository) Save(user users.User) error {
+	q := `INSERT INTO users (email, password) VALUES ($1, $2)`
+
+	if _, err := ur.db.Exec(q, user.Email, user.Password); err != nil {
 		if pqErr, ok := err.(*pq.Error); ok && errDuplicate == pqErr.Code.Name() {
 			return users.ErrConflict
 		}
-
 		return err
 	}
 
 	return nil
 }
 
-func (ur *userRepository) One(email string) (users.User, error) {
+func (ur userRepository) One(email string) (users.User, error) {
+	q := `SELECT password FROM users WHERE email = $1`
+
 	user := users.User{}
-
-	q := ur.db.First(&user, "email = ?", email)
-
-	if err := q.Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
+	if err := ur.db.QueryRow(q, email).Scan(&user.Password); err != nil {
+		if err == sql.ErrNoRows {
 			return user, users.ErrNotFound
 		}
-
 		return user, err
 	}
+
+	user.Email = email
 
 	return user, nil
 }

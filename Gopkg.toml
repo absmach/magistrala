@@ -70,6 +70,10 @@
   name = "github.com/gorilla/websocket"
   version = "1.2.0"
 
+[[constraint]]
+  branch = "master"
+  name = "github.com/rubenv/sql-migrate"
+
 [prune]
   go-tests = true
   unused-packages = true

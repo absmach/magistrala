@@ -1,40 +1,72 @@
 package postgres
 
 import (
+	"database/sql"
 	"fmt"
 
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres" // required by GORM
-	"github.com/mainflux/mainflux/clients"
+	_ "github.com/lib/pq" // required for SQL access
+	migrate "github.com/rubenv/sql-migrate"
 )
 
-const errDuplicate string = "unique_violation"
-
-type connection struct {
-	ClientID  string `gorm:"primary_key"`
-	ChannelID string `gorm:"primary_key"`
-}
-
-func (c connection) TableName() string {
-	return "channel_clients"
-}
-
-// Connect creates a connection to the PostgreSQL instance. A non-nil error
-// is returned to indicate failure.
-func Connect(host, port, name, user, pass string) (*gorm.DB, error) {
+// Connect creates a connection to the PostgreSQL instance and applies any
+// unapplied database migrations. A non-nil error is returned to indicate
+// failure.
+func Connect(host, port, name, user, pass string) (*sql.DB, error) {
 	t := "host=%s port=%s user=%s dbname=%s password=%s sslmode=disable"
 	url := fmt.Sprintf(t, host, port, user, name, pass)
 
-	db, err := gorm.Open("postgres", url)
+	db, err := sql.Open("postgres", url)
 	if err != nil {
 		return nil, err
 	}
 
-	db = db.AutoMigrate(&clients.Client{}, &clients.Channel{}, &connection{})
+	if err := migrateDB(db); err != nil {
+		return nil, err
+	}
 
-	db = db.Model(&connection{}).
-		AddForeignKey("client_id", "clients(id)", "CASCADE", "CASCADE").
-		AddForeignKey("channel_id", "channels(id)", "CASCADE", "CASCADE")
+	return db, nil
+}
 
-	return db.LogMode(false), nil
+func migrateDB(db *sql.DB) error {
+	migrations := &migrate.MemoryMigrationSource{
+		Migrations: []*migrate.Migration{
+			&migrate.Migration{
+				Id: "clients_1",
+				Up: []string{
+					`CREATE TABLE clients (
+						id      CHAR(36),
+						owner   VARCHAR(254),
+						type    VARCHAR(10) NOT NULL,
+						name    TEXT,
+						key     TEXT,
+						payload TEXT,
+						PRIMARY KEY (id, owner)
+					)`,
+					`CREATE TABLE channels (
+						id    CHAR(36),
+						owner VARCHAR(254),
+						name  TEXT,
+						PRIMARY KEY (id, owner)
+					)`,
+					`CREATE TABLE connections (
+						channel_id    CHAR(36),
+						channel_owner VARCHAR(254),
+						client_id     CHAR(36),
+						client_owner  VARCHAR(254),
+						FOREIGN KEY (channel_id, channel_owner) REFERENCES channels (id, owner) ON DELETE CASCADE ON UPDATE CASCADE,
+						FOREIGN KEY (client_id, client_owner) REFERENCES clients (id, owner) ON DELETE CASCADE ON UPDATE CASCADE,
+						PRIMARY KEY (channel_id, channel_owner, client_id, client_owner)
+					)`,
+				},
+				Down: []string{
+					"DROP TABLE connections",
+					"DROP TABLE clients",
+					"DROP TABLE channels",
+				},
+			},
+		},
+	}
+
+	_, err := migrate.Exec(db, "postgres", migrations, migrate.Up)
+	return err
 }

@@ -1,3 +1,6 @@
+// Package coap contains the domain concept definitions needed to support
+// Mainflux coap adapter service functionality. All constant values are taken
+// from RFC, and could be adjusted based on specific use case.
 package coap
 
 import (
@@ -11,34 +14,58 @@ import (
 	broker "github.com/nats-io/go-nats"
 )
 
-var (
-	errEntryNotFound = errors.New("observer entry not founds")
-)
-
 const (
-	// Default service transmission settings from RFC.
-	// It could be changed depending on specific use-case.
+	responseBackoffMultiplier = 1.5
+
+	// AckTimeout is the amount of time to wait for a response.
+	AckTimeout = int(2 * time.Second)
 
 	// MaxRetransmit is the maximum number of times a message will be retransmitted.
 	MaxRetransmit = 4
-	// AckRandomFactor is a multiplier for response backoff.
-	AckRandomFactor = 1.5
-	// AckTimeout is the amount of time to wait for a response.
-	AckTimeout = int(2 * time.Second)
 )
 
-// MaxTimeout is extracted to into a separate variable so there is no
-// need for it to be calculated over again.
-var MaxTimeout = int(float64(AckTimeout) * ((math.Pow(2, float64(MaxRetransmit))) - 1) * AckRandomFactor)
+var (
+	// ErrFailedMessagePublish indicates that message publishing failed.
+	ErrFailedMessagePublish = errors.New("failed to publish message")
 
-// AdapterService struct represents CoAP adapter service implementation.
+	// ErrFailedSubscription indicates that client couldn't subscribe to specified channel.
+	ErrFailedSubscription = errors.New("failed to subscribe to a channel")
+
+	// ErrFailedConnection indicates that service couldn't connect to message broker.
+	ErrFailedConnection = errors.New("failed to connect to message broker")
+
+	// extracted to avoid recomputation
+	maxTimeout = int(float64(AckTimeout) * ((math.Pow(2, float64(MaxRetransmit))) - 1) * responseBackoffMultiplier)
+)
+
+// Service specifies coap service API.
+type Service interface {
+	mainflux.MessagePublisher
+
+	// Subscribes to channel with specified id and adds subscription to
+	// service map of subscriptions under given ID.
+	Subscribe(string, string, nats.Channel) error
+
+	// Unsubscribe method is used to stop observing resource.
+	Unsubscribe(string)
+
+	// SetTimeout sets timeout to wait CONF messages.
+	SetTimeout(string, *time.Timer, int) (chan bool, error)
+
+	// RemoveTimeout removes timeout when ACK message is received from client
+	// if timeout existed.
+	RemoveTimeout(string)
+}
+
+var _ Service = (*adapterService)(nil)
+
 type adapterService struct {
 	pubsub nats.Service
 	subs   map[string]nats.Channel
 	mu     sync.Mutex
 }
 
-// New creates new CoAP adapter service struct.
+// New instantiates the CoAP adapter implementation.
 func New(pubsub nats.Service) Service {
 	return &adapterService{
 		pubsub: pubsub,
@@ -99,7 +126,7 @@ func (svc *adapterService) Unsubscribe(clientID string) {
 func (svc *adapterService) SetTimeout(clientID string, timer *time.Timer, duration int) (chan bool, error) {
 	sub, ok := svc.get(clientID)
 	if !ok {
-		return nil, errEntryNotFound
+		return nil, errors.New("observer entry not found")
 	}
 	go func() {
 		for {
@@ -112,7 +139,7 @@ func (svc *adapterService) SetTimeout(clientID string, timer *time.Timer, durati
 				return
 			case <-timer.C:
 				duration *= 2
-				if duration >= MaxTimeout {
+				if duration >= maxTimeout {
 					timer.Stop()
 					sub.Notify <- false
 					svc.Unsubscribe(clientID)

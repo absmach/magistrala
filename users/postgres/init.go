@@ -1,25 +1,47 @@
 package postgres
 
 import (
+	"database/sql"
 	"fmt"
 
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres" // required by GORM
-	"github.com/mainflux/mainflux/users"
+	_ "github.com/lib/pq" // required for SQL access
+	migrate "github.com/rubenv/sql-migrate"
 )
 
-// Connect creates a connection to the PostgreSQL instance. A non-nil error
-// is returned to indicate failure.
-func Connect(host, port, name, user, pass string) (*gorm.DB, error) {
+// Connect creates a connection to the PostgreSQL instance and applies any
+// unapplied database migrations. A non-nil error is returned to indicate
+// failure.
+func Connect(host, port, name, user, pass string) (*sql.DB, error) {
 	t := "host=%s port=%s user=%s dbname=%s password=%s sslmode=disable"
 	url := fmt.Sprintf(t, host, port, user, name, pass)
 
-	db, err := gorm.Open("postgres", url)
+	db, err := sql.Open("postgres", url)
 	if err != nil {
 		return nil, err
 	}
 
-	db = db.AutoMigrate(&users.User{})
+	if err := migrateDB(db); err != nil {
+		return nil, err
+	}
+	return db, nil
+}
 
-	return db.LogMode(false), nil
+func migrateDB(db *sql.DB) error {
+	migrations := &migrate.MemoryMigrationSource{
+		Migrations: []*migrate.Migration{
+			&migrate.Migration{
+				Id: "users_1",
+				Up: []string{
+					`CREATE TABLE users (
+						email	 VARCHAR(254) PRIMARY KEY,
+						password CHAR(60)	  NOT NULL
+					)`,
+				},
+				Down: []string{"DROP TABLE users"},
+			},
+		},
+	}
+
+	_, err := migrate.Exec(db, "postgres", migrations, migrate.Up)
+	return err
 }

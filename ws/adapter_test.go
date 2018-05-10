@@ -77,3 +77,12 @@ func TestSubscribe(t *testing.T) {
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
+
+func TestClose(t *testing.T) {
+	channel := ws.Channel{make(chan mainflux.RawMessage), make(chan bool)}
+	channel.Close()
+	_, closed := <-channel.Closed
+	_, messagesClosed := <-channel.Messages
+	assert.False(t, closed, "channel closed stayed open")
+	assert.False(t, messagesClosed, "channel messages stayed open")
+}

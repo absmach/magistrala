@@ -47,7 +47,7 @@ func authorize(msg *gocoap.Message, res *gocoap.Message, cid string) (publisher 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	publisher, err = auth.CanAccess(ctx, &mainflux.AccessReq{key, cid})
+	publisher, err = auth.CanAccess(ctx, &mainflux.AccessReq{Token: key, ChanID: cid})
 
 	if err != nil {
 		res.Code = gocoap.Unauthorized

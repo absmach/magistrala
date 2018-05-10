@@ -13,7 +13,7 @@ func TestChannelSave(t *testing.T) {
 	email := "channel-save@example.com"
 	channel := clients.Channel{Owner: email}
 
-	channelRepo := postgres.NewChannelRepository(db)
+	channelRepo := postgres.NewChannelRepository(db, testLog)
 
 	_, err := channelRepo.Save(channel)
 	hasErr := err != nil
@@ -23,7 +23,7 @@ func TestChannelSave(t *testing.T) {
 func TestChannelUpdate(t *testing.T) {
 	email := "channel-update@example.com"
 
-	chanRepo := postgres.NewChannelRepository(db)
+	chanRepo := postgres.NewChannelRepository(db, testLog)
 
 	c := clients.Channel{Owner: email}
 	id, _ := chanRepo.Save(c)
@@ -47,7 +47,7 @@ func TestChannelUpdate(t *testing.T) {
 func TestSingleChannelRetrieval(t *testing.T) {
 	email := "channel-single-retrieval@example.com"
 
-	chanRepo := postgres.NewChannelRepository(db)
+	chanRepo := postgres.NewChannelRepository(db, testLog)
 
 	c := clients.Channel{Owner: email}
 	id, _ := chanRepo.Save(c)
@@ -71,7 +71,7 @@ func TestSingleChannelRetrieval(t *testing.T) {
 func TestMultiChannelRetrieval(t *testing.T) {
 	email := "channel-multi-retrieval@example.com"
 
-	chanRepo := postgres.NewChannelRepository(db)
+	chanRepo := postgres.NewChannelRepository(db, testLog)
 
 	n := 10
 
@@ -99,7 +99,7 @@ func TestMultiChannelRetrieval(t *testing.T) {
 func TestChannelRemoval(t *testing.T) {
 	email := "channel-removal@example.com"
 
-	chanRepo := postgres.NewChannelRepository(db)
+	chanRepo := postgres.NewChannelRepository(db, testLog)
 	chanID, _ := chanRepo.Save(clients.Channel{Owner: email})
 
 	// show that the removal works the same for both existing and non-existing
@@ -118,45 +118,47 @@ func TestChannelRemoval(t *testing.T) {
 func TestChannelConnect(t *testing.T) {
 	email := "channel-connect@example.com"
 
-	clientRepo := postgres.NewClientRepository(db)
+	clientRepo := postgres.NewClientRepository(db, testLog)
 	client := clients.Client{
 		ID:    clientRepo.ID(),
 		Owner: email,
 	}
 	clientRepo.Save(client)
 
-	chanRepo := postgres.NewChannelRepository(db)
+	chanRepo := postgres.NewChannelRepository(db, testLog)
 	chanID, _ := chanRepo.Save(clients.Channel{Owner: email})
 
-	cases := map[string]struct {
+	cases := []struct {
+		desc     string
 		owner    string
 		chanID   string
 		clientID string
 		err      error
 	}{
-		"existing user, channel and client": {email, chanID, client.ID, nil},
-		"with non-existing user":            {wrong, chanID, client.ID, clients.ErrNotFound},
-		"non-existing channel":              {email, wrong, client.ID, clients.ErrNotFound},
-		"non-existing client":               {email, chanID, wrong, clients.ErrNotFound},
+		{"existing user, channel and client", email, chanID, client.ID, nil},
+		{"connected channel and client", email, chanID, client.ID, nil},
+		{"with non-existing user", wrong, chanID, client.ID, clients.ErrNotFound},
+		{"non-existing channel", email, wrong, client.ID, clients.ErrNotFound},
+		{"non-existing client", email, chanID, wrong, clients.ErrNotFound},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		err := chanRepo.Connect(tc.owner, tc.chanID, tc.clientID)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
 func TestChannelDisconnect(t *testing.T) {
 	email := "channel-disconnect@example.com"
 
-	clientRepo := postgres.NewClientRepository(db)
+	clientRepo := postgres.NewClientRepository(db, testLog)
 	client := clients.Client{
 		ID:    clientRepo.ID(),
 		Owner: email,
 	}
 	clientRepo.Save(client)
 
-	chanRepo := postgres.NewChannelRepository(db)
+	chanRepo := postgres.NewChannelRepository(db, testLog)
 	chanID, _ := chanRepo.Save(clients.Channel{Owner: email})
 
 	chanRepo.Connect(email, chanID, client.ID)
@@ -184,14 +186,14 @@ func TestChannelDisconnect(t *testing.T) {
 func TestChannelAccessCheck(t *testing.T) {
 	email := "channel-access-check@example.com"
 
-	clientRepo := postgres.NewClientRepository(db)
+	clientRepo := postgres.NewClientRepository(db, testLog)
 	client := clients.Client{
 		ID:    clientRepo.ID(),
 		Owner: email,
 	}
 	clientRepo.Save(client)
 
-	chanRepo := postgres.NewChannelRepository(db)
+	chanRepo := postgres.NewChannelRepository(db, testLog)
 	chanID, _ := chanRepo.Save(clients.Channel{Owner: email})
 
 	chanRepo.Connect(email, chanID, client.ID)

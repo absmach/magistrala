@@ -21,7 +21,7 @@ func NewUsersService(users map[string]string) mainflux.UsersServiceClient {
 
 func (svc usersServiceMock) Identify(ctx context.Context, in *mainflux.Token, opts ...grpc.CallOption) (*mainflux.Identity, error) {
 	if id, ok := svc.users[in.Value]; ok {
-		return &mainflux.Identity{id}, nil
+		return &mainflux.Identity{Value: id}, nil
 	}
 	return nil, users.ErrUnauthorizedAccess
 }

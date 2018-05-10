@@ -30,5 +30,5 @@ func (client clientsClient) CanAccess(ctx context.Context, req *mainflux.AccessR
 		return nil, clients.ErrUnauthorizedAccess
 	}
 
-	return &mainflux.Identity{id}, nil
+	return &mainflux.Identity{Value: id}, nil
 }

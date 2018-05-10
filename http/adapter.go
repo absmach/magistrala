@@ -1,3 +1,5 @@
+// Package http contains the domain concept definitions needed to support
+// Mainflux http adapter service functionality.
 package http
 
 import "github.com/mainflux/mainflux"
@@ -8,7 +10,7 @@ type adapterService struct {
 	pub mainflux.MessagePublisher
 }
 
-// New instantiates the domain service implementation.
+// New instantiates the HTTP adapter implementation.
 func New(pub mainflux.MessagePublisher) mainflux.MessagePublisher {
 	return &adapterService{pub}
 }

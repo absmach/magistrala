@@ -78,7 +78,7 @@ func TestCanAccess(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		id, err := cli.CanAccess(ctx, &mainflux.AccessReq{tc.clientKey, tc.chanID})
+		id, err := cli.CanAccess(ctx, &mainflux.AccessReq{Token: tc.clientKey, ChanID: tc.chanID})
 		assert.Equal(t, tc.id, id.GetValue(), fmt.Sprintf("%s: expected %s got %s", desc, tc.id, id.GetValue()))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s", desc, tc.err, err))
 	}

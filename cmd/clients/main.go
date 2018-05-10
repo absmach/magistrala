@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"net"
 	"net/http"
@@ -9,7 +10,6 @@ import (
 	"syscall"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
-	"github.com/jinzhu/gorm"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/clients"
 	"github.com/mainflux/mainflux/clients/api"
@@ -69,11 +69,9 @@ func main() {
 	defer conn.Close()
 
 	svc := newService(conn, db, cfg.Secret, logger)
-
 	errs := make(chan error, 2)
 
 	go startHTTPServer(svc, cfg.HTTPPort, logger, errs)
-
 	go startGRPCServer(svc, cfg.GRPCPort, logger, errs)
 
 	go func() {
@@ -100,7 +98,7 @@ func loadConfig() config {
 	}
 }
 
-func connectToDB(cfg config, logger log.Logger) *gorm.DB {
+func connectToDB(cfg config, logger log.Logger) *sql.DB {
 	db, err := postgres.Connect(cfg.DBHost, cfg.DBPort, cfg.DBName, cfg.DBUser, cfg.DBPass)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to postgres: %s", err))
@@ -118,10 +116,10 @@ func connectToUsersService(usersAddr string, logger log.Logger) *grpc.ClientConn
 	return conn
 }
 
-func newService(conn *grpc.ClientConn, db *gorm.DB, secret string, logger log.Logger) clients.Service {
+func newService(conn *grpc.ClientConn, db *sql.DB, secret string, logger log.Logger) clients.Service {
 	users := usersapi.NewClient(conn)
-	clientsRepo := postgres.NewClientRepository(db)
-	channelsRepo := postgres.NewChannelRepository(db)
+	clientsRepo := postgres.NewClientRepository(db, logger)
+	channelsRepo := postgres.NewChannelRepository(db, logger)
 	hasher := bcrypt.New()
 	idp := jwt.New(secret)
 

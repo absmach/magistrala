@@ -1,5 +1,5 @@
 BUILD_DIR = build
-SERVICES = manager http normalizer ws coap
+SERVICES = users clients http normalizer ws coap
 DOCKERS = $(addprefix docker_,$(SERVICES))
 CGO_ENABLED ?= 0
 GOOS ?= linux
@@ -23,7 +23,7 @@ install:
 	cp ${BUILD_DIR}/* $(GOBIN)
 
 proto:
-	protoc --go_out=. *.proto
+	protoc --go_out=plugins=grpc:. *.proto
 
 $(SERVICES): proto
 	$(call compile_service,$(@))
@@ -32,15 +32,13 @@ $(DOCKERS):
 	$(call make_docker,$(@))
 
 dockers: $(DOCKERS)
-	docker build --tag=mainflux/dashflux -f ./dashflux/docker/Dockerfile ./dashflux
-
+	docker build --tag=mainflux/dashflux -f dashflux/docker/Dockerfile dashflux
 
 latest: dockers
 	for svc in $(SERVICES); do \
 		docker push mainflux/$$svc; \
 	done
 	docker push mainflux/dashflux
-
 
 release:
 	$(eval version = $(shell git describe --abbrev=0 --tags))
@@ -50,5 +48,5 @@ release:
 		docker tag mainflux/$$svc mainflux/$$svc:$(version); \
 		docker push mainflux/$$svc:$(version); \
 	done
-	docker tag mainflux/dashflux mainflux/dashflux:$(version); \
-	docker push mainflux/dashflux:$(version); \
+	docker tag mainflux/dashflux mainflux/dashflux:$(version)
+	docker push mainflux/dashflux:$(version)

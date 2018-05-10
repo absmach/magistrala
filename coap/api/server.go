@@ -1,14 +1,15 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"strings"
 	"time"
 
 	mux "github.com/dereulenspiegel/coap-mux"
+	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/coap"
-	manager "github.com/mainflux/mainflux/manager/client"
 
 	gocoap "github.com/dustin/go-coap"
 )
@@ -30,7 +31,7 @@ func authKey(opt interface{}) (string, error) {
 	return arr[1], nil
 }
 
-func authorize(msg *gocoap.Message, res *gocoap.Message, cid string) (publisher string, err error) {
+func authorize(msg *gocoap.Message, res *gocoap.Message, cid string) (publisher *mainflux.Identity, err error) {
 	// Device Key is passed as Uri-Query parameter, which option ID is 15 (0xf).
 	key, err := authKey(msg.Option(gocoap.URIQuery))
 	if err != nil {
@@ -43,14 +44,13 @@ func authorize(msg *gocoap.Message, res *gocoap.Message, cid string) (publisher 
 		return
 	}
 
-	publisher, err = auth.CanAccess(cid, key)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	publisher, err = auth.CanAccess(ctx, &mainflux.AccessReq{key, cid})
+
 	if err != nil {
-		switch err {
-		case manager.ErrServiceUnreachable:
-			res.Code = gocoap.ServiceUnavailable
-		default:
-			res.Code = gocoap.Unauthorized
-		}
+		res.Code = gocoap.Unauthorized
 	}
 	return
 }
@@ -103,8 +103,8 @@ func serve(svc coap.Service, conn *net.UDPConn, data []byte, addr *net.UDPAddr, 
 }
 
 // ListenAndServe binds to the given address and serve requests forever.
-func ListenAndServe(svc coap.Service, mgr manager.ManagerClient, addr string, rh gocoap.Handler) error {
-	auth = mgr
+func ListenAndServe(svc coap.Service, csc mainflux.ClientsServiceClient, addr string, rh gocoap.Handler) error {
+	auth = csc
 	uaddr, err := net.ResolveUDPAddr(network, addr)
 	if err != nil {
 		return err

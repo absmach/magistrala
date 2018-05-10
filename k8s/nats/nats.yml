@@ -30,23 +30,11 @@ spec:
       labels:
         component: nats
     spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-                - key: component
-                  operator: In
-                  values:
-                    - nats
-            topologyKey: kubernetes.io/hostname
       containers:
       - name: nats
         image: nats:1.0.4
         args: [ "--config", "/etc/nats/nats.conf"]
         volumeMounts:
-          - name: tls-volume
-            mountPath: /etc/nats/tls
           - name: config-volume
             mountPath: /etc/nats
         ports:
@@ -63,9 +51,6 @@ spec:
           initialDelaySeconds: 10
           timeoutSeconds: 5
       volumes:
-      - name: tls-volume
-        secret:
-          secretName: tls-nats-server
       - name: config-volume
         configMap:
           name: nats-config

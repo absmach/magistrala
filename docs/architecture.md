@@ -4,11 +4,11 @@ Mainflux IoT platform is comprised of the following services:
 
 | Service                                                                   | Description                                                             |
 |:--------------------------------------------------------------------------|:------------------------------------------------------------------------|
-| [manager](https://github.com/mainflux/mainflux/tree/master/manager)       | Manages platform entities, and auth concerns                            |
-| [http-adapter](https://github.com/mainflux/mainflux/tree/master/http)     | Provides an HTTP interface for accessing communication channels         |
+| [users](https://github.com/mainflux/mainflux/tree/master/users)           | Manages platform's users and auth concerns                              |
+| [clients](https://github.com/mainflux/mainflux/tree/master/clients)       | Manages platform's clients, channels and access policies                |
 | [normalizer](https://github.com/mainflux/mainflux/tree/master/normalizer) | Normalizes SenML messages and generates the "processed" messages stream |
-
-> The following diagram is an (obsolete) overview of platform architecture
+| [http-adapter](https://github.com/mainflux/mainflux/tree/master/http)     | Provides an HTTP interface for accessing communication channels         |
+| [ws-adapter](https://github.com/mainflux/mainflux/tree/master/ws)         | Provides a WebSocket interface for accessing communication channels     |
 
 ![arch](img/architecture.jpg)
 

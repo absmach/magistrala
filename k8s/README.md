@@ -3,105 +3,94 @@ Scripts to deploy Mainflux on Kubernetes (https://kubernetes.io). Work in progre
 
 ## Steps
 
-### 1. Setup PosgreSQL
+### 1. Setup NATS
 
-- Create Persistent Volume for PosgreSQL to store data to.
+- Update `nats.conf` according to your needs.
 
-```bash
-kubectl create -f 1-mainflux-postgres-persistence.yml
+- Create Kubernetes configmap to store NATS configuration:
+
 ```
-
-- Claim Persistent Volume
-
-```bash
-kubectl create -f 2-mainflux-postgres-claim.yml
-```
-
-- Create PosgreSQL Pod
-
-```bash
-kubectl create -f 3-mainflux-postgres-pod.yml
-```
-
-- Create PosgreSQL Service
-
-```bash
-kubectl create -f 4-mainflux-postgres-service.yml
-```
-
-### 2. Setup NATS
-
-- Change `nats.conf` according to your needs.
-
-Create a Kubernetes configmap to store it:
-
-```bash
-kubectl create configmap nats-config --from-file nats.conf
+kubectl create configmap nats-config --from-file k8s/nats/nats.conf
 ```
 
 - Deploy NATS:
 
-```bash
-kubectl create -f nats.yml
+```
+kubectl create -f k8s/nats/nats.yml
 ```
 
-### 3. Setup Mainflux Services
+### 2. Setup Users service
 
-- Create Manager Service
-
-```bash
-kubectl create -f 1-mainflux-manager.yml
-```
-
-- Create HTTP Service
-
-```bash
-kubectl create -f 2-mainflux-http.yml
+- Deploy PostgreSQL service for Users service to use:
 
 ```
-
-- Create CoAP Service
-
-```bash
-kubectl create -f 4-mainflux-coap.yml
+kubectl create -f k8s/mainflux/users-postgres.yml
 ```
 
-- Create Normalizer Service
+- Deploy Users service:
 
-```bash
-kubectl create -f 5-mainflux-normalizer.yml
+```
+kubectl create -f k8s/mainflux/users.yml
 ```
 
-### 4. Setup Dashflux Services
+### 3. Setup Clients service
 
-- Create Dashflux Deployment and Service
+- Deploy PostgreSQL service for Clients service to use:
 
-```bash
-kubectl create -f mainflux-dashflux.yaml
+```
+kubectl create -f k8s/mainflux/clients-postgres.yml
 ```
 
-### 5. Setup NginX Reverse Proxy for Mainflux Services
+- Deploy Clients service:
 
-- Create TLS server side certificate and keys
-
-```bash
-cd certs
-kubectl create secret tls mainflux-secret --key mainflux-server.key --cert mainflux-server.crt
+```
+kubectl create -f k8s/mainflux/clients.yml
 ```
 
-- Create Config Map based on the default.conf file.
+### 4. Setup Normalizer service
 
-```bash
-cd ..
-kubectl create configmap mainflux-nginx-config --from-file=default.conf
+- Deploy Normalizer service:
+
+```
+kubectl create -f k8s/mainflux/normalizer.yml
 ```
 
-- Create Deployment and Service from mainflux-dashflux.yaml file.
+### 5. Setup adapter services
 
-```bash
-kubectl create -f mainflux-nginx.yaml
+- Deploy adapter service:
+
+```
+kubectl create -f k8s/mainflux/<adapter_service_name>.yml
 ```
 
-### 6. Configure Internet Access
+### 6. Setup Dashflux
+
+- Deploy Dashflux service:
+
+```
+kubectl create -f k8s/mainflux/dashflux.yml
+```
+
+### 7. Setup NginX Reverse Proxy for Mainflux Services
+
+- Create TLS server side certificate and keys:
+
+```
+kubectl create secret tls mainflux-secret --key k8s/nginx/certs/mainflux-server.key --cert k8s/nginx/certs/mainflux-server.crt
+```
+
+- Create Kubernetes configmap to store NginX configuration:
+
+```
+kubectl create configmap mainflux-nginx-config --from-file=k8s/nginx/default.conf
+```
+
+- Deploy NginX service:
+
+```
+kubectl create -f k8s/nginx/nginx.yml
+```
+
+### 8. Configure Internet Access
 
 Configure NAT on your Firewall to forward ports 80 (HTTP) and 443 (HTTPS) to mainflux-nginx service

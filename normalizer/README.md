@@ -23,7 +23,7 @@ locally:
 ```yaml
 version: "2"
 services:
-  manager:
+  normalizer:
     image: mainflux/normalizer:[version]
     container_name: [instance name]
     environment:

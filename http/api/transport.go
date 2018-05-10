@@ -3,30 +3,32 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/asaskevich/govalidator"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
-	manager "github.com/mainflux/mainflux/manager/client"
+	"github.com/mainflux/mainflux/clients"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const protocol string = "http"
 
 var (
-	errMalformedData error = errors.New("malformed SenML data")
-	errNotFound      error = errors.New("non-existent entity")
-	auth             manager.ManagerClient
+	errMalformedData = errors.New("malformed SenML data")
+	errNotFound      = errors.New("non-existent entity")
+	auth             mainflux.ClientsServiceClient
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc mainflux.MessagePublisher, mc manager.ManagerClient) http.Handler {
-	auth = mc
+func MakeHandler(svc mainflux.MessagePublisher, cc mainflux.ClientsServiceClient) http.Handler {
+	auth = cc
 
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
@@ -73,7 +75,7 @@ func authorize(r *http.Request) (string, error) {
 	apiKey := r.Header.Get("Authorization")
 
 	if apiKey == "" {
-		return "", manager.ErrUnauthorizedAccess
+		return "", clients.ErrUnauthorizedAccess
 	}
 
 	// extract ID from /channels/:id/messages
@@ -82,12 +84,15 @@ func authorize(r *http.Request) (string, error) {
 		return "", errNotFound
 	}
 
-	id, err := auth.CanAccess(c, apiKey)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	id, err := auth.CanAccess(ctx, &mainflux.AccessReq{Token: apiKey, ChanID: c})
 	if err != nil {
 		return "", err
 	}
 
-	return id, nil
+	return id.GetValue(), nil
 }
 
 func decodePayload(body io.ReadCloser) ([]byte, error) {
@@ -111,9 +116,10 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusBadRequest)
 	case errNotFound:
 		w.WriteHeader(http.StatusNotFound)
-	case manager.ErrUnauthorizedAccess:
+	case clients.ErrUnauthorizedAccess:
 		w.WriteHeader(http.StatusForbidden)
 	default:
+		fmt.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }

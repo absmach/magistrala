@@ -10,7 +10,6 @@ import (
 
 	"github.com/mainflux/mainflux/coap"
 	"github.com/mainflux/mainflux/coap/nats"
-	manager "github.com/mainflux/mainflux/manager/client"
 
 	"math/rand"
 
@@ -22,7 +21,7 @@ import (
 var (
 	errBadRequest = errors.New("bad request")
 	errBadOption  = errors.New("bad option")
-	auth          manager.ManagerClient
+	auth          mainflux.ClientsServiceClient
 )
 
 const (
@@ -86,7 +85,7 @@ func receive(svc coap.Service) handler {
 
 		rawMsg := mainflux.RawMessage{
 			Channel:   cid,
-			Publisher: publisher,
+			Publisher: publisher.GetValue(),
 			Protocol:  protocol,
 			Payload:   msg.Payload,
 		}

@@ -1,0 +1,51 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: users
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      component: users
+  template:
+    metadata:
+      labels:
+        component: users
+    spec:
+      containers:
+      - name: users
+        image: mainflux/users:latest
+        ports:
+        - containerPort: 8180
+          name: users-http
+        - containerPort: 8181
+          name: users-grpc
+        env:
+        - name: MF_USERS_DB_HOST
+          value: "mainflux-users-postgres"
+        - name: MF_USERS_HTTP_PORT
+          value: "8180"
+        - name: MF_USERS_GRPC_PORT
+          value: "8181"
+        - name: MF_USERS_SECRET
+          value: "test-secret"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: users
+  labels:
+    component: users
+spec:
+  ports:
+  - port: 8180
+    targetPort: 8180
+    protocol: TCP
+    name: http
+  - port: 8181
+    targetPort: 8181
+    protocol: TCP
+    name: grpc
+  selector:
+    component: users
+  type: LoadBalancer

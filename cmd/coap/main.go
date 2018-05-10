@@ -8,12 +8,13 @@ import (
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/mainflux/mainflux"
+	clientsapi "github.com/mainflux/mainflux/clients/api/grpc"
 	"github.com/mainflux/mainflux/coap"
 	"github.com/mainflux/mainflux/coap/api"
 	"github.com/mainflux/mainflux/coap/nats"
 	log "github.com/mainflux/mainflux/logger"
-	manager "github.com/mainflux/mainflux/manager/client"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	"google.golang.org/grpc"
 
 	broker "github.com/nats-io/go-nats"
 )
@@ -21,21 +22,21 @@ import (
 const (
 	defPort       int    = 5683
 	defNatsURL    string = broker.DefaultURL
-	defManagerURL string = "http://localhost:8180"
+	defClientsURL string = "localhost:8181"
 	envPort       string = "MF_COAP_ADAPTER_PORT"
 	envNatsURL    string = "MF_NATS_URL"
-	envManagerURL string = "MF_MANAGER_URL"
+	envClientsURL string = "MF_CLIENTS_URL"
 )
 
 type config struct {
-	ManagerURL string
+	ClientsURL string
 	NatsURL    string
 	Port       int
 }
 
 func main() {
 	cfg := config{
-		ManagerURL: mainflux.Env(envManagerURL, defManagerURL),
+		ClientsURL: mainflux.Env(envClientsURL, defClientsURL),
 		NatsURL:    mainflux.Env(envNatsURL, defNatsURL),
 		Port:       defPort,
 	}
@@ -48,6 +49,15 @@ func main() {
 		os.Exit(1)
 	}
 	defer nc.Close()
+
+	conn, err := grpc.Dial(cfg.ClientsURL, grpc.WithInsecure())
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to connect to users service: %s", err))
+		os.Exit(1)
+	}
+	defer conn.Close()
+
+	cc := clientsapi.NewClient(conn)
 
 	pubsub := nats.New(nc, logger)
 	svc := coap.New(pubsub)
@@ -73,9 +83,8 @@ func main() {
 
 	go func() {
 		p := fmt.Sprintf(":%d", cfg.Port)
-		mc := manager.NewClient(cfg.ManagerURL)
 		logger.Info(fmt.Sprintf("CoAP adapter service started, exposed port %d", cfg.Port))
-		errs <- api.ListenAndServe(svc, mc, p, api.MakeHandler(svc))
+		errs <- api.ListenAndServe(svc, cc, p, api.MakeHandler(svc))
 	}()
 
 	go func() {

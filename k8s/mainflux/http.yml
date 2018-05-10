@@ -1,0 +1,41 @@
+apiVersion: apps/v1beta1 
+kind: Deployment 
+metadata:
+  name: http-adapter
+  labels:
+    component: http-adapter 
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        component: http-adapter
+    spec:
+      containers:
+      - name: mainflux-http
+        image: mainflux/http:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8185
+        env:
+        - name: MF_CLIENTS_URL
+          value: "clients:8181"
+        - name: MF_NATS_URL
+          value: "nats://nats:4222"
+        - name:  MF_HTTP_ADAPTER_PORT
+          value: "8185"
+---
+apiVersion: v1 
+kind: Service 
+metadata:
+  name: http-adapter
+  labels:
+    component: http-adapter 
+spec:
+  selector:
+    component: http-adapter
+  ports:
+  - port: 8185
+    targetPort: 8185
+  type: LoadBalancer
+

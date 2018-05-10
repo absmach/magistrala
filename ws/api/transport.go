@@ -1,16 +1,18 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/go-zoo/bone"
 	"github.com/gorilla/websocket"
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/clients"
 	log "github.com/mainflux/mainflux/logger"
-	manager "github.com/mainflux/mainflux/manager/client"
 	"github.com/mainflux/mainflux/ws"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -27,13 +29,13 @@ var (
 			return true
 		},
 	}
-	auth   manager.ManagerClient
+	auth   mainflux.ClientsServiceClient
 	logger log.Logger
 )
 
 // MakeHandler returns http handler with handshake endpoint.
-func MakeHandler(svc ws.Service, mc manager.ManagerClient, l log.Logger) http.Handler {
-	auth = mc
+func MakeHandler(svc ws.Service, cc mainflux.ClientsServiceClient, l log.Logger) http.Handler {
+	auth = cc
 	logger = l
 
 	mux := bone.New()
@@ -86,7 +88,7 @@ func authorize(r *http.Request) (subscription, error) {
 	if authKey == "" {
 		authKeys := bone.GetQuery(r, "authorization")
 		if len(authKeys) == 0 {
-			return subscription{}, manager.ErrUnauthorizedAccess
+			return subscription{}, clients.ErrUnauthorizedAccess
 		}
 		authKey = authKeys[0]
 	}
@@ -97,13 +99,16 @@ func authorize(r *http.Request) (subscription, error) {
 		return subscription{}, errNotFound
 	}
 
-	pubID, err := auth.CanAccess(chanID, authKey)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	id, err := auth.CanAccess(ctx, &mainflux.AccessReq{Token: authKey, ChanID: chanID})
 	if err != nil {
-		return subscription{}, manager.ErrUnauthorizedAccess
+		return subscription{}, clients.ErrUnauthorizedAccess
 	}
 
 	sub := subscription{
-		pubID:  pubID,
+		pubID:  id.GetValue(),
 		chanID: chanID,
 	}
 

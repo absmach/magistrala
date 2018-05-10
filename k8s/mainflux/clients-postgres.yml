@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mainflux-clients-postgres-data-disk
+  labels:
+    name: mainflux-clients-postgres-data-disk
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /tmp/data/clients-postgres-0
+  persistentVolumeReclaimPolicy: Recycle
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: mainflux-clients-postgres-data-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mainflux-clients-postgres
+  labels:
+    name: mainflux-clients-postgres
+spec:
+  containers:
+    - name: mainflux-clients-postgres
+      image: postgres:10.2-alpine
+      env:
+        - name: POSTGRES_USER
+          value: "mainflux"
+        - name: POSTGRES_PASSWORD
+          value: "mainflux"
+        - name: POSTGRES_DB
+          value: "clients"
+        - name: PGDATA
+          value: /var/lib/postgresql/data/mainflux-clients-postgres-data
+      ports:
+        - containerPort: 5433
+      volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: mainflux-clients-postgres-data
+  volumes:
+    - name: mainflux-clients-postgres-data
+      persistentVolumeClaim:
+        claimName: mainflux-clients-postgres-data-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mainflux-clients-postgres
+  labels:
+    name: mainflux-clients-postgres
+spec:
+  ports:
+    - port: 5433
+  selector:
+    name: mainflux-clients-postgres

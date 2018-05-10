@@ -1,0 +1,92 @@
+swagger: "2.0"
+info:
+  title: Mainflux users service
+  description: HTTP API for managing platform users.
+  version: "1.0.0"
+consumes:
+  - "application/json"
+produces:
+  - "application/json"
+paths:
+  /users:
+    post:
+      summary: Registers user account
+      description: |
+        Registers new user account given email and password. New account will
+        be uniquely identified by its email address.
+      tags:
+        - users
+      parameters:
+        - name: user
+          description: JSON-formatted document describing the new user.
+          in: body
+          schema:
+            $ref: "#/definitions/User"
+          required: true
+      responses:
+        201:
+          description: Registered new user.
+        400:
+          description: Failed due to malformed JSON.
+        409:
+          description: Failed due to using an existing email address.
+        415:
+          description: Missing or invalid content type.
+        500:
+          $ref: "#/responses/ServiceError"
+  /tokens:
+    post:
+      summary: User authentication
+      description: |
+        Generates an access token when provided with proper credentials.
+      tags:
+        - users
+      parameters:
+        - name: credentials
+          description: JSON-formatted document containing user credentials.
+          in: body
+          schema:
+            $ref: "#/definitions/User"
+          required: true
+      responses:
+        201:
+          description: User authenticated.
+          schema:
+            $ref: "#/definitions/Token"
+        400:
+          description: |
+            Failed due to malformed JSON.
+        403:
+          description: |
+            Failed due to using invalid credentials.
+        415:
+          description: Missing or invalid content type.
+        500:
+          $ref: "#/responses/ServiceError"
+responses:
+  ServiceError:
+    description: Unexpected server-side error occured.
+definitions:
+  Token:
+    type: object
+    properties:
+      token:
+        type: string
+        description: Generated access token.
+    required:
+      - token
+  User:
+    type: object
+    properties:
+      email:
+        type: string
+        format: email
+        example: "test@example.com"
+        description: User's email address will be used as its unique identifier
+      password:
+        type: string
+        format: password
+        description: Free-form account password used for acquiring auth token(s).
+    required:
+      - email
+      - password

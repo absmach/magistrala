@@ -1,0 +1,78 @@
+# Users service
+
+Users service provides an HTTP API for managing users. Through this API clients 
+are able to do the following actions:
+
+- register new accounts
+- obtain access tokens
+- verify access tokens
+
+For in-depth explanation of the aforementioned scenarios, as well as thorough
+understanding of Mainflux, please check out the [official documentation][doc].
+
+## Configuration
+
+The service is configured using the environment variables presented in the
+following table. Note that any unset variables will be replaced with their
+default values.
+
+| Variable             | Description                              | Default      |
+|----------------------|------------------------------------------|--------------|
+| MF_USERS_DB_HOST     | Database host address                    | localhost    |
+| MF_USERS_DB_PORT     | Database host port                       | 5432         |
+| MF_USERS_DB_USER     | Database user                            | mainflux     |
+| MF_USERS_DB_PASSWORD | Database password                        | mainflux     |
+| MF_USERS_DB          | Name of the database used by the service | users        |
+| MF_USERS_HTTP_PORT   | Users service HTTP port                  | 8180         |
+| MF_USERS_GRPC_PORT   | Users service gRPC port                  | 8181         |
+| MF_USERS_SECRET      | String used for signing tokens           | users        |
+
+## Deployment
+
+The service itself is distributed as Docker container. The following snippet
+provides a compose file template that can be used to deploy the service container
+locally:
+
+```yaml
+version: "2"
+services:
+  users:
+    image: mainflux/users:[version]
+    container_name: [instance name]
+    ports:
+      - [host machine port]:[configured HTTP port]
+    environment:
+      MF_USERS_DB_HOST: [Database host address]
+      MF_USERS_DB_PORT: [Database host port]
+      MF_USERS_DB_USER: [Database user]
+      MF_USERS_DB_PASS: [Database password]
+      MF_USERS_DB: [Name of the database used by the service]
+      MF_USERS_HTTP_PORT: [Service HTTP port]
+      MF_USERS_GRPC_PORT: [Service gRPC port]
+      MF_USERS_SECRET: [String used for signing tokens]
+```
+
+To start the service outside of the container, execute the following shell script:
+
+```bash
+# download the latest version of the service
+go get github.com/mainflux/mainflux
+
+cd $GOPATH/src/github.com/mainflux/mainflux
+
+# compile the app
+make users
+
+# copy binary to bin
+make install
+
+# set the environment variables and run the service
+MF_USERS_DB_HOST=[Database host address] MF_USERS_DB_PORT=[Database host port] MF_USERS_DB_USER=[Database user] MF_USERS_DB_PASS=[Database password] MF_USERS_DB=[Name of the database used by the service] MF_USERS_HTTP_PORT=[Service HTTP port] MF_USERS_GRPC_PORT=[Service gRPC port] MF_USERS_SECRET=[String used for signing tokens] $GOBIN/mainflux-users
+```
+
+## Usage
+
+For more information about service capabilities and its usage, please check out
+the [API documentation](swagger.yaml).
+
+[doc]: http://mainflux.readthedocs.io

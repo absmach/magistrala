@@ -10,7 +10,7 @@ Scripts to deploy Mainflux on Kubernetes (https://kubernetes.io). Work in progre
 - Create Kubernetes configmap to store NATS configuration:
 
 ```
-kubectl create configmap nats-config --from-file k8s/nats/nats.conf
+kubectl create configmap nats-config --from-file=k8s/nats/nats.conf
 ```
 
 - Deploy NATS:

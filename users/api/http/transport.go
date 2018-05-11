@@ -47,7 +47,7 @@ func MakeHandler(svc users.Service, l log.Logger) http.Handler {
 		opts...,
 	))
 
-	mux.GetFunc("/version", mainflux.Version("clients"))
+	mux.GetFunc("/version", mainflux.Version("users"))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux

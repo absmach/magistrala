@@ -44,7 +44,7 @@ spec:
         - name: PGDATA
           value: /var/lib/postgresql/data/mainflux-clients-postgres-data
       ports:
-        - containerPort: 5433
+        - containerPort: 5432
       volumeMounts:
         - mountPath: /var/lib/postgresql/data
           name: mainflux-clients-postgres-data
@@ -61,6 +61,6 @@ metadata:
     name: mainflux-clients-postgres
 spec:
   ports:
-    - port: 5433
+    - port: 5432
   selector:
     name: mainflux-clients-postgres

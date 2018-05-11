@@ -38,8 +38,8 @@ spec:
         image: ymqytw/nginxhttps:1.5
         command: ["/home/auto-reload-nginx.sh"]
         ports:
-        - containerPort: 443
         - containerPort: 80
+        - containerPort: 443
         volumeMounts:
         - mountPath: /etc/nginx/ssl
           name: secret-volume

@@ -27,7 +27,7 @@ func (client clientsClient) CanAccess(ctx context.Context, req *mainflux.AccessR
 
 	id, ok := client.clients[key]
 	if !ok {
-		return nil, clients.ErrUnauthorizedAccess
+		return nil, clients.ErrAccessForbidden
 	}
 
 	return &mainflux.Identity{Value: id}, nil

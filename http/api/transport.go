@@ -3,11 +3,9 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/asaskevich/govalidator"
@@ -16,6 +14,8 @@ import (
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/clients"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const protocol string = "http"
@@ -79,7 +79,7 @@ func authorize(r *http.Request) (string, error) {
 	}
 
 	// extract ID from /channels/:id/messages
-	c := strings.Split(r.URL.Path, "/")[2]
+	c := bone.GetValue(r, "id")
 	if !govalidator.IsUUID(c) {
 		return "", errNotFound
 	}
@@ -117,9 +117,23 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	case errNotFound:
 		w.WriteHeader(http.StatusNotFound)
 	case clients.ErrUnauthorizedAccess:
+		w.WriteHeader(http.StatusUnauthorized)
+	case clients.ErrAccessForbidden:
 		w.WriteHeader(http.StatusForbidden)
+	case errNotFound:
+		w.WriteHeader(http.StatusNotFound)
 	default:
-		fmt.Println(err)
+		if e, ok := status.FromError(err); ok {
+			switch e.Code() {
+			case codes.Unauthenticated:
+				w.WriteHeader(http.StatusUnauthorized)
+			case codes.PermissionDenied:
+				w.WriteHeader(http.StatusForbidden)
+			default:
+				w.WriteHeader(http.StatusServiceUnavailable)
+			}
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }

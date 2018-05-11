@@ -15,6 +15,8 @@ import (
 	log "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/ws"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const protocol = "ws"
@@ -55,9 +57,28 @@ func handshake(svc ws.Service) http.HandlerFunc {
 			return
 		}
 		if err != nil {
-			logger.Warn(fmt.Sprintf("Failed to authorize: %s", err))
-			w.WriteHeader(http.StatusForbidden)
-			return
+			switch err {
+			case errNotFound:
+				logger.Warn(fmt.Sprintf("Invalid channel id: %s", err))
+				w.WriteHeader(http.StatusNotFound)
+				return
+			default:
+				logger.Warn(fmt.Sprintf("Failed to authorize: %s", err))
+				e, ok := status.FromError(err)
+				if ok {
+					switch e.Code() {
+					case codes.Unauthenticated:
+						w.WriteHeader(http.StatusUnauthorized)
+					case codes.PermissionDenied:
+						w.WriteHeader(http.StatusForbidden)
+					default:
+						w.WriteHeader(http.StatusServiceUnavailable)
+					}
+					return
+				}
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
 		}
 
 		// Create new ws connection.
@@ -104,7 +125,7 @@ func authorize(r *http.Request) (subscription, error) {
 
 	id, err := auth.CanAccess(ctx, &mainflux.AccessReq{Token: authKey, ChanID: chanID})
 	if err != nil {
-		return subscription{}, clients.ErrUnauthorizedAccess
+		return subscription{}, err
 	}
 
 	sub := subscription{

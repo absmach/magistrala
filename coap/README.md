@@ -13,7 +13,7 @@ default values.
 |-----------------------|------------------------|-------------------------|
 | MF_COAP_ADAPTER_PORT  | adapter listening port | `5683`                  |
 | MF_NATS_URL           | NATS instance URL      | `nats://localhost:4222` |
-| MF_MANAGER_URL        | manager service URL    | `http://localhost:8180` |
+| MF_CLIENTS_URL        | clients service URL    | `http://localhost:8181` |
 
 ## Deployment
 
@@ -29,9 +29,9 @@ services:
     ports:
       - [host machine port]:[configured port]
     environment:
-      MF_MANAGER_URL: [Manager service URL]
-      MF_NATS_URL: [NATS instance URL]
       MF_COAP_ADAPTER_PORT: [Service HTTP port]
+      MF_NATS_URL: [NATS instance URL]
+      MF_CLIENTS_URL: [Manager service URL]
 ```
 
 Running this service outside of container requires working instance of the NATS service.

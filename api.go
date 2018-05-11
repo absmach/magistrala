@@ -1,6 +1,6 @@
 package mainflux
 
-// Response contains HTTP response specifig methods.
+// Response contains HTTP response specific methods.
 type Response interface {
 	// Code returns HTTP response code.
 	Code() int

@@ -24,10 +24,8 @@ const (
 )
 
 var (
-	client                = clients.Client{Type: "app", Name: "test_app", Payload: "test_payload"}
-	channel               = clients.Channel{Name: "test"}
-	errMalformedReq       = status.Error(codes.InvalidArgument, "received invalid can access request")
-	errUnauthorizedAccess = status.Error(codes.PermissionDenied, "failed to identify client or client isn't connected to specified channel")
+	client  = clients.Client{Type: "app", Name: "test_app", Payload: "test_payload"}
+	channel = clients.Channel{Name: "test"}
 )
 
 func newService(tokens map[string]string) clients.Service {
@@ -70,16 +68,19 @@ func TestCanAccess(t *testing.T) {
 		clientKey string
 		chanID    string
 		id        string
-		err       error
+		code      codes.Code
 	}{
-		"check if connected client can access existing channel":     {connectedClient.Key, chanID, connectedClientID, nil},
-		"check if unconnected client can access existing channel":   {client.Key, chanID, "", errUnauthorizedAccess},
-		"check if connected client can access non-existent channel": {connectedClient.Key, "1", "", errMalformedReq},
+		"check if connected client can access existing channel":     {connectedClient.Key, chanID, connectedClientID, codes.OK},
+		"check if unconnected client can access existing channel":   {client.Key, chanID, "", codes.PermissionDenied},
+		"check if wrong client can access existing channel":         {mocks.UnauthorizedToken, chanID, "", codes.Unauthenticated},
+		"check if connected client can access non-existent channel": {connectedClient.Key, "1", "", codes.InvalidArgument},
 	}
 
 	for desc, tc := range cases {
-		id, err := cli.CanAccess(ctx, &mainflux.AccessReq{Token: tc.clientKey, ChanID: tc.chanID})
+		id, err := cli.CanAccess(ctx, &mainflux.AccessReq{tc.clientKey, tc.chanID})
+		e, ok := status.FromError(err)
+		assert.True(t, ok, "OK expected to be true")
 		assert.Equal(t, tc.id, id.GetValue(), fmt.Sprintf("%s: expected %s got %s", desc, tc.id, id.GetValue()))
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s", desc, tc.err, err))
+		assert.Equal(t, tc.code, e.Code(), fmt.Sprintf("%s: expected %s got %s", desc, tc.code, e.Code()))
 	}
 }

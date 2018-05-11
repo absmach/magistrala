@@ -7,11 +7,14 @@ import (
 	"strings"
 	"time"
 
+	"google.golang.org/grpc/codes"
+
+	"github.com/asaskevich/govalidator"
 	mux "github.com/dereulenspiegel/coap-mux"
+	gocoap "github.com/dustin/go-coap"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/coap"
-
-	gocoap "github.com/dustin/go-coap"
+	"google.golang.org/grpc/status"
 )
 
 const (
@@ -32,6 +35,11 @@ func authKey(opt interface{}) (string, error) {
 }
 
 func authorize(msg *gocoap.Message, res *gocoap.Message, cid string) (publisher *mainflux.Identity, err error) {
+	if !govalidator.IsUUID(cid) {
+		res.Code = gocoap.NotFound
+		return
+	}
+
 	// Device Key is passed as Uri-Query parameter, which option ID is 15 (0xf).
 	key, err := authKey(msg.Option(gocoap.URIQuery))
 	if err != nil {
@@ -50,7 +58,19 @@ func authorize(msg *gocoap.Message, res *gocoap.Message, cid string) (publisher 
 	publisher, err = auth.CanAccess(ctx, &mainflux.AccessReq{Token: key, ChanID: cid})
 
 	if err != nil {
-		res.Code = gocoap.Unauthorized
+		e, ok := status.FromError(err)
+		if ok {
+			switch e.Code() {
+			case codes.Unauthenticated:
+				res.Code = gocoap.Unauthorized
+			case codes.PermissionDenied:
+				res.Code = gocoap.Forbidden
+			default:
+				res.Code = gocoap.ServiceUnavailable
+			}
+			return
+		}
+		res.Code = gocoap.InternalServerError
 	}
 	return
 }
@@ -78,7 +98,6 @@ func serve(svc coap.Service, conn *net.UDPConn, data []byte, addr *net.UDPAddr, 
 		res.Type = gocoap.Acknowledgement
 		publisher, err := authorize(&msg, res, cid)
 		if err != nil {
-			res.Code = gocoap.Unauthorized
 			break
 		}
 		id := fmt.Sprintf("%s-%x", publisher, msg.Token)
@@ -89,7 +108,6 @@ func serve(svc coap.Service, conn *net.UDPConn, data []byte, addr *net.UDPAddr, 
 		res.Type = gocoap.Acknowledgement
 		publisher, err := authorize(&msg, res, cid)
 		if err != nil {
-			res.Code = gocoap.Unauthorized
 			break
 		}
 		id := fmt.Sprintf("%s-%x", publisher, msg.Token)

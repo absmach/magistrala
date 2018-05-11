@@ -1,11 +1,16 @@
 package mocks
 
-import "github.com/mainflux/mainflux/clients"
+import (
+	"github.com/mainflux/mainflux/clients"
+)
 
 var (
 	_ clients.Hasher           = (*hasherMock)(nil)
 	_ clients.IdentityProvider = (*identityProviderMock)(nil)
 )
+
+// UnauthorizedToken is used to mock Identity method failure.
+const UnauthorizedToken = "bd2a557f-27e6-4377-9e40-3c75f3f5211f"
 
 type hasherMock struct{}
 
@@ -24,7 +29,7 @@ func (hm *hasherMock) Compare(plain, hashed string) error {
 type identityProviderMock struct{}
 
 func (idp *identityProviderMock) TemporaryKey(id string) (string, error) {
-	if id == "" {
+	if id == "" || id == UnauthorizedToken {
 		return "", clients.ErrUnauthorizedAccess
 	}
 

@@ -84,7 +84,7 @@ func main() {
 	go func() {
 		p := fmt.Sprintf(":%d", cfg.Port)
 		logger.Info(fmt.Sprintf("CoAP adapter service started, exposed port %d", cfg.Port))
-		errs <- api.ListenAndServe(svc, cc, p, api.MakeHandler(svc))
+		errs <- api.ListenAndServe(svc, cc, p)
 	}()
 
 	go func() {

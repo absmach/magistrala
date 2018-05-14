@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"time"
 
+	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux/coap"
 	"github.com/mainflux/mainflux/coap/nats"
 
@@ -48,8 +50,15 @@ func NotFoundHandler(l *net.UDPConn, a *net.UDPAddr, m *gocoap.Message) *gocoap.
 	return nil
 }
 
-// MakeHandler function return new CoAP server with GET, POST and NOT_FOUND handlers.
-func MakeHandler(svc coap.Service) gocoap.Handler {
+func version(port string) {
+	b := bone.New()
+	b.GetFunc("/version", mainflux.Version("CoAP"))
+	http.ListenAndServe(port, b)
+}
+
+func makeHandler(port string, svc coap.Service) gocoap.Handler {
+	go version(port)
+
 	r := mux.NewRouter()
 	r.Handle("/channels/{id}/messages", gocoap.FuncHandler(receive(svc))).Methods(gocoap.POST)
 	r.Handle("/channels/{id}/messages", gocoap.FuncHandler(observe(svc))).Methods(gocoap.GET)

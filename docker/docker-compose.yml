@@ -95,12 +95,12 @@ services:
     container_name: mainflux-normalizer
     restart: on-failure
     expose:
-      - 8181
+      - 8184
     environment:
       MF_NATS_URL: nats://nats:4222
-      MF_NORMALIZER_PORT: 8181
+      MF_NORMALIZER_PORT: 8184
 
-  coap:
+  coap-adapter:
     image: mainflux/coap:latest
     container_name: mainflux-coap
     depends_on:
@@ -115,20 +115,20 @@ services:
     ports:
       - 5683:5683/udp
 
-  ws:
+  ws-adapter:
     image: mainflux/ws:latest
     container_name: mainflux-ws
     depends_on:
       - clients
     expose:
-      - 8184
+      - 8186
     restart: on-failure
     environment:
-      MF_WS_ADAPTER_PORT: 8184
+      MF_WS_ADAPTER_PORT: 8186
       MF_NATS_URL: nats://nats:4222
       MF_CLIENTS_URL: clients:8183
     ports:
-      - 8184:8184
+      - 8186:8186
 
   http-adapter:
     image: mainflux/http:latest

@@ -17,13 +17,13 @@ import com.mainflux.loadtest.simulations.Constants._
 class PublishSimulation extends Simulation {
 
   // Register user
-  Http(s"${ManagerUrl}/users")
+  Http(s"${UsersUrl}/users")
     .postData(User)
     .header(HttpHeaderNames.ContentType, ContentType)
     .asString
 
   // Login user
-  val tokenRes = Http(s"${ManagerUrl}/tokens")
+  val tokenRes = Http(s"${UsersUrl}/tokens")
     .postData(User)
     .header(HttpHeaderNames.ContentType, ContentType)
     .asString
@@ -33,7 +33,7 @@ class PublishSimulation extends Simulation {
   val token = tokenCursor.downField("token").as[String].getOrElse("")
 
   // Register client
-  val clientLocation = Http(s"${ManagerUrl}/clients")
+  val clientLocation = Http(s"${ClientsUrl}/clients")
     .postData(Client)
     .header(HttpHeaderNames.Authorization, token)
     .header(HttpHeaderNames.ContentType, ContentType)
@@ -43,7 +43,7 @@ class PublishSimulation extends Simulation {
   val clientId = clientLocation.split("/")(2)
 
   // Get client key
-  val clientRes = Http(s"${ManagerUrl}/clients/${clientId}")
+  val clientRes = Http(s"${ClientsUrl}/clients/${clientId}")
     .header(HttpHeaderNames.Authorization, token)
     .header(HttpHeaderNames.ContentType, ContentType)
     .asString
@@ -53,7 +53,7 @@ class PublishSimulation extends Simulation {
   val clientKey = clientCursor.downField("key").as[String].getOrElse("")
 
   // Register channel
-  val chanLocation = Http(s"${ManagerUrl}/channels")
+  val chanLocation = Http(s"${ClientsUrl}/channels")
     .postData(Channel)
     .header(HttpHeaderNames.Authorization, token)
     .header(HttpHeaderNames.ContentType, ContentType)
@@ -63,7 +63,7 @@ class PublishSimulation extends Simulation {
   val chanId = chanLocation.split("/")(2)
 
   // Connect client to channel
-  Http(s"${ManagerUrl}/channels/${chanId}/clients/${clientId}")
+  Http(s"${ClientsUrl}/channels/${chanId}/clients/${clientId}")
     .method("PUT")
     .header(HttpHeaderNames.Authorization, token)
     .asString

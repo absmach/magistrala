@@ -14,8 +14,9 @@ default values.
 
 | Variable | Description                              | Default               |
 |----------|------------------------------------------|-----------------------|
-| manager  | Manager service URL                      | http://localhost:8180 |
-| http     | HTTP adapter service URL                 | http://localhost:8182 |
+| users    | Users service URL                        | http://localhost:8180 |
+| clients  | Clients service URL                      | http://localhost:8182 |
+| http     | HTTP adapter service URL                 | http://localhost:8185 |
 | requests | Number of requests to be sent per second | 100                   |
 
 ## Usage

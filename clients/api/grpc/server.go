@@ -52,9 +52,7 @@ func encodeError(err error) error {
 	case clients.ErrMalformedEntity:
 		return status.Error(codes.InvalidArgument, "received invalid can access request")
 	case clients.ErrUnauthorizedAccess:
-		return status.Error(codes.Unauthenticated, "failed to identify client")
-	case clients.ErrAccessForbidden:
-		return status.Error(codes.PermissionDenied, "client isn't connected to specified channel")
+		return status.Error(codes.PermissionDenied, "missing or invalid credentials provided")
 	default:
 		return status.Error(codes.Internal, "internal server error")
 	}

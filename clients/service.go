@@ -21,10 +21,6 @@ var (
 	// when accessing a protected resource.
 	ErrUnauthorizedAccess = errors.New("missing or invalid credentials provided")
 
-	// ErrAccessForbidden indicates valid credentials provided but
-	// accessing a protected resource is not able due to permission issue.
-	ErrAccessForbidden = errors.New("access forbidden")
-
 	// ErrNotFound indicates a non-existent entity request.
 	ErrNotFound = errors.New("non-existent entity")
 )
@@ -262,7 +258,7 @@ func (ms *clientsService) CanAccess(key, channel string) (string, error) {
 	}
 
 	if !ms.channels.HasClient(channel, client) {
-		return "", ErrAccessForbidden
+		return "", ErrUnauthorizedAccess
 	}
 
 	return client, nil

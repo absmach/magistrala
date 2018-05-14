@@ -267,7 +267,7 @@ of message publishing for each of the supported protocols.
 To publish message over channel, client should send following request:
 
 ```
-curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/senml+json" -H "Authorization: <client_token>" https://localhost/channels/<channel_id>/messages -d '[{"bn":"some-base-name:","bt":1.276020076001e+09, "bu":"A","bver":5, "n":"voltage","u":"V","v":120.1}, {"n":"current","t":-5,"v":1.2}, {"n":"current","t":-4,"v":1.3}]'
+curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/senml+json" -H "Authorization: <client_token>" https://localhost/http/channels/<channel_id>/messages -d '[{"bn":"some-base-name:","bt":1.276020076001e+09, "bu":"A","bver":5, "n":"voltage","u":"V","v":120.1}, {"n":"current","t":-5,"v":1.2}, {"n":"current","t":-4,"v":1.3}]'
 ```
 
 Note that you should always send array of messages in senML format.
@@ -304,4 +304,4 @@ coap get coap://localhost/channels/<channel_id>/messages?key=<client_token> -o
 ```
 
 where `-o` in indicates that value of `Observe` option is 0.
-To unsubscribe from channel, client should send same message with value of `Observe` option set to 1, ignore confirmable message received from service or send `Reset` message with appropriate token.
+To unsubscribe from channel, client should send same message with value of `Observe` option set to 1, ignore confirmable message received from service (by default, server will attempt to send confirmable message multiple times, as described in [RFC 7252](https://tools.ietf.org/html/rfc7252#page-28) or send `Reset` message with appropriate token.

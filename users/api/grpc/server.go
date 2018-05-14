@@ -52,7 +52,7 @@ func encodeError(err error) error {
 	case users.ErrMalformedEntity:
 		return status.Error(codes.InvalidArgument, "received invalid token request")
 	case users.ErrUnauthorizedAccess:
-		return status.Error(codes.PermissionDenied, "failed to identify user from token")
+		return status.Error(codes.Unauthenticated, "failed to identify user from token")
 	default:
 		return status.Error(codes.Internal, "internal server error")
 	}

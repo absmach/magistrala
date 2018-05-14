@@ -67,8 +67,6 @@ func handshake(svc ws.Service) http.HandlerFunc {
 				e, ok := status.FromError(err)
 				if ok {
 					switch e.Code() {
-					case codes.Unauthenticated:
-						w.WriteHeader(http.StatusUnauthorized)
 					case codes.PermissionDenied:
 						w.WriteHeader(http.StatusForbidden)
 					default:

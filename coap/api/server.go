@@ -61,8 +61,6 @@ func authorize(msg *gocoap.Message, res *gocoap.Message, cid string) (publisher 
 		e, ok := status.FromError(err)
 		if ok {
 			switch e.Code() {
-			case codes.Unauthenticated:
-				res.Code = gocoap.Unauthorized
 			case codes.PermissionDenied:
 				res.Code = gocoap.Forbidden
 			default:

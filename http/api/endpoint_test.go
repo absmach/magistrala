@@ -75,7 +75,7 @@ func TestPublish(t *testing.T) {
 		status      int
 	}{
 		"publish message":                                  {id, msg, "application/senml+json", token, http.StatusAccepted},
-		"publish message with no authorization token":      {id, msg, "application/senml+json", "", http.StatusUnauthorized},
+		"publish message with no authorization token":      {id, msg, "application/senml+json", "", http.StatusForbidden},
 		"publish message with invalid authorization token": {id, msg, "application/senml+json", invalidToken, http.StatusForbidden},
 		"publish message with no content type":             {id, msg, "", token, http.StatusAccepted},
 		"publish message with invalid channel id":          {"1", msg, "application/senml+json", token, http.StatusNotFound},

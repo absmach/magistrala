@@ -332,7 +332,7 @@ func TestCanAccess(t *testing.T) {
 	}{
 		"allowed access":              {client.Key, channel.ID, nil},
 		"not-connected cannot access": {"", channel.ID, clients.ErrUnauthorizedAccess},
-		"access non-existing channel": {client.Key, wrong, clients.ErrAccessForbidden},
+		"access non-existing channel": {client.Key, wrong, clients.ErrUnauthorizedAccess},
 	}
 
 	for desc, tc := range cases {

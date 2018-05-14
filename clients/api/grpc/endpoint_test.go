@@ -20,6 +20,7 @@ import (
 const (
 	port  = 8080
 	token = "token"
+	wrong = "wrong"
 	email = "john.doe@email.com"
 )
 
@@ -72,7 +73,7 @@ func TestCanAccess(t *testing.T) {
 	}{
 		"check if connected client can access existing channel":     {connectedClient.Key, chanID, connectedClientID, codes.OK},
 		"check if unconnected client can access existing channel":   {client.Key, chanID, "", codes.PermissionDenied},
-		"check if wrong client can access existing channel":         {mocks.UnauthorizedToken, chanID, "", codes.Unauthenticated},
+		"check if wrong client can access existing channel":         {wrong, chanID, "", codes.PermissionDenied},
 		"check if connected client can access non-existent channel": {connectedClient.Key, "1", "", codes.InvalidArgument},
 	}
 

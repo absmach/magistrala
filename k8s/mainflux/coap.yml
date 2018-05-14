@@ -1,40 +1,41 @@
 apiVersion: apps/v1beta1 
 kind: Deployment 
 metadata:
-  name: http-adapter
+  name: coap-adapter
   labels:
-    component: http-adapter 
+    component: coap-adapter 
 spec:
   replicas: 3
   template:
     metadata:
       labels:
-        component: http-adapter
+        component: coap-adapter
     spec:
       containers:
-      - name: mainflux-http
-        image: mainflux/http:latest
+      - name: mainflux-coap
+        image: mainflux/coap:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 8185
+        - containerPort: 5683
+          protocol: UDP
         env:
         - name: MF_CLIENTS_URL
           value: "clients:8183"
         - name: MF_NATS_URL
           value: "nats://nats:4222"
-        - name:  MF_HTTP_ADAPTER_PORT
-          value: "8185"
+        - name:  MF_COAP_ADAPTER_PORT
+          value: "5683"
 ---
 apiVersion: v1 
 kind: Service 
 metadata:
-  name: http-adapter
+  name: coap-adapter
   labels:
-    component: http-adapter 
+    component: coap-adapter 
 spec:
   selector:
-    component: http-adapter
+    component: coap-adapter
   ports:
-  - port: 8185
+  - port: 5683
+    protocol: UDP
   type: LoadBalancer
-

@@ -1,40 +1,39 @@
 apiVersion: apps/v1beta1 
 kind: Deployment 
 metadata:
-  name: http-adapter
+  name: ws-adapter
   labels:
-    component: http-adapter 
+    component: ws-adapter 
 spec:
   replicas: 3
   template:
     metadata:
       labels:
-        component: http-adapter
+        component: ws-adapter
     spec:
       containers:
-      - name: mainflux-http
-        image: mainflux/http:latest
+      - name: mainflux-ws
+        image: mainflux/ws:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 8185
+        - containerPort: 8186
         env:
         - name: MF_CLIENTS_URL
           value: "clients:8183"
         - name: MF_NATS_URL
           value: "nats://nats:4222"
-        - name:  MF_HTTP_ADAPTER_PORT
-          value: "8185"
+        - name:  MF_WS_ADAPTER_PORT
+          value: "8186"
 ---
 apiVersion: v1 
 kind: Service 
 metadata:
-  name: http-adapter
+  name: ws-adapter
   labels:
-    component: http-adapter 
+    component: ws-adapter 
 spec:
   selector:
-    component: http-adapter
+    component: ws-adapter
   ports:
-  - port: 8185
+  - port: 8186
   type: LoadBalancer
-

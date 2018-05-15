@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package mainflux;
 
-service ClientsService {
+service ThingsService {
     rpc CanAccess(AccessReq) returns (Identity) {}
 }
 

@@ -10,9 +10,9 @@ default values.
 
 | Variable             | Description         | Default               |
 |----------------------|---------------------|-----------------------|
-| MF_CLIENTS_URL       | Clients service URL | localhost:8181        |
-| MF_NATS_URL          | NATS instance URL   | nats://localhost:4222 |
 | MF_HTTP_ADAPTER_PORT | Service HTTP port   | 8180                  |
+| MF_NATS_URL          | NATS instance URL   | nats://localhost:4222 |
+| MF_THINGS_URL        | Things service URL  | localhost:8181        |
 
 ## Deployment
 
@@ -28,7 +28,7 @@ services:
     ports:
       - [host machine port]:8180
     environment:
-      MF_CLIENTS_URL: [Clients service URL]
+      MF_THINGS_URL: [Things service URL]
       MF_NATS_URL: [NATS instance URL]
       MF_HTTP_ADAPTER_PORT: [Service HTTP port]
 ```
@@ -48,7 +48,7 @@ make http
 make install
 
 # set the environment variables and run the service
-MF_CLIENTS_URL=[Clients service URL] MF_NATS_URL=[NATS instance URL] MF_HTTP_ADAPTER_PORT=[Service HTTP port] $GOBIN/mainflux-http
+MF_THINGS_URL=[Things service URL] MF_NATS_URL=[NATS instance URL] MF_HTTP_ADAPTER_PORT=[Service HTTP port] $GOBIN/mainflux-http
 ```
 
 ## Usage

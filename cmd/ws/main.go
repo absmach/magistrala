@@ -9,8 +9,8 @@ import (
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/mainflux/mainflux"
-	clientsapi "github.com/mainflux/mainflux/clients/api/grpc"
 	log "github.com/mainflux/mainflux/logger"
+	thingsapi "github.com/mainflux/mainflux/things/api/grpc"
 	adapter "github.com/mainflux/mainflux/ws"
 	"github.com/mainflux/mainflux/ws/api"
 	"github.com/mainflux/mainflux/ws/nats"
@@ -20,25 +20,25 @@ import (
 )
 
 const (
-	defPort       = "8180"
-	defNatsURL    = broker.DefaultURL
-	defClientsURL = "localhost:8181"
-	envPort       = "MF_WS_ADAPTER_PORT"
-	envNatsURL    = "MF_NATS_URL"
-	envClientsURL = "MF_CLIENTS_URL"
+	defPort      = "8180"
+	defNatsURL   = broker.DefaultURL
+	defThingsURL = "localhost:8181"
+	envPort      = "MF_WS_ADAPTER_PORT"
+	envNatsURL   = "MF_NATS_URL"
+	envThingsURL = "MF_THINGS_URL"
 )
 
 type config struct {
-	ClientsURL string
-	NatsURL    string
-	Port       string
+	ThingsURL string
+	NatsURL   string
+	Port      string
 }
 
 func main() {
 	cfg := config{
-		ClientsURL: mainflux.Env(envClientsURL, defClientsURL),
-		NatsURL:    mainflux.Env(envNatsURL, defNatsURL),
-		Port:       mainflux.Env(envPort, defPort),
+		ThingsURL: mainflux.Env(envThingsURL, defThingsURL),
+		NatsURL:   mainflux.Env(envNatsURL, defNatsURL),
+		Port:      mainflux.Env(envPort, defPort),
 	}
 
 	logger := log.New(os.Stdout)
@@ -50,14 +50,14 @@ func main() {
 	}
 	defer nc.Close()
 
-	conn, err := grpc.Dial(cfg.ClientsURL, grpc.WithInsecure())
+	conn, err := grpc.Dial(cfg.ThingsURL, grpc.WithInsecure())
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to users service: %s", err))
 		os.Exit(1)
 	}
 	defer conn.Close()
 
-	cc := clientsapi.NewClient(conn)
+	cc := thingsapi.NewClient(conn)
 	pubsub := nats.New(nc)
 	svc := adapter.New(pubsub)
 	svc = api.LoggingMiddleware(svc, logger)

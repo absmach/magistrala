@@ -12,7 +12,7 @@ import (
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/clients"
+	"github.com/mainflux/mainflux/things"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -23,11 +23,11 @@ const protocol string = "http"
 var (
 	errMalformedData = errors.New("malformed SenML data")
 	errNotFound      = errors.New("non-existent entity")
-	auth             mainflux.ClientsServiceClient
+	auth             mainflux.ThingsServiceClient
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc mainflux.MessagePublisher, cc mainflux.ClientsServiceClient) http.Handler {
+func MakeHandler(svc mainflux.MessagePublisher, cc mainflux.ThingsServiceClient) http.Handler {
 	auth = cc
 
 	opts := []kithttp.ServerOption{
@@ -75,7 +75,7 @@ func authorize(r *http.Request) (string, error) {
 	apiKey := r.Header.Get("Authorization")
 
 	if apiKey == "" {
-		return "", clients.ErrUnauthorizedAccess
+		return "", things.ErrUnauthorizedAccess
 	}
 
 	// extract ID from /channels/:id/messages
@@ -116,7 +116,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusBadRequest)
 	case errNotFound:
 		w.WriteHeader(http.StatusNotFound)
-	case clients.ErrUnauthorizedAccess:
+	case things.ErrUnauthorizedAccess:
 		w.WriteHeader(http.StatusForbidden)
 	default:
 		if e, ok := status.FromError(err); ok {

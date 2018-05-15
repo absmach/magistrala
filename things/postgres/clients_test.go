@@ -1,0 +1,133 @@
+package postgres_test
+
+import (
+	"fmt"
+	"testing"
+
+	"github.com/mainflux/mainflux/things"
+	"github.com/mainflux/mainflux/things/postgres"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestThingSave(t *testing.T) {
+	email := "thing-save@example.com"
+	thingRepo := postgres.NewThingRepository(db, testLog)
+	thing := things.Thing{
+		ID:    thingRepo.ID(),
+		Owner: email,
+	}
+
+	hasErr := thingRepo.Save(thing) != nil
+	assert.False(t, hasErr, fmt.Sprintf("create new thing: expected false got %t\n", hasErr))
+}
+
+func TestThingUpdate(t *testing.T) {
+	email := "thing-update@example.com"
+
+	thingRepo := postgres.NewThingRepository(db, testLog)
+
+	c := things.Thing{
+		ID:    thingRepo.ID(),
+		Owner: email,
+	}
+
+	thingRepo.Save(c)
+
+	cases := map[string]struct {
+		thing things.Thing
+		err   error
+	}{
+		"existing thing":                            {c, nil},
+		"non-existing thing with existing user":     {things.Thing{ID: wrong, Owner: email}, things.ErrNotFound},
+		"non-existing thing with non-existing user": {things.Thing{ID: wrong, Owner: wrong}, things.ErrNotFound},
+	}
+
+	for desc, tc := range cases {
+		err := thingRepo.Update(tc.thing)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+	}
+}
+
+func TestSingleThingRetrieval(t *testing.T) {
+	email := "thing-single-retrieval@example.com"
+
+	thingRepo := postgres.NewThingRepository(db, testLog)
+
+	c := things.Thing{
+		ID:    thingRepo.ID(),
+		Owner: email,
+	}
+
+	thingRepo.Save(c)
+
+	cases := map[string]struct {
+		owner string
+		ID    string
+		err   error
+	}{
+		"existing user":                     {c.Owner, c.ID, nil},
+		"existing user, non-existing thing": {c.Owner, wrong, things.ErrNotFound},
+		"non-existing owner":                {wrong, c.ID, things.ErrNotFound},
+	}
+
+	for desc, tc := range cases {
+		_, err := thingRepo.One(tc.owner, tc.ID)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+	}
+}
+
+func TestMultiThingRetrieval(t *testing.T) {
+	email := "thing-multi-retrieval@example.com"
+
+	thingRepo := postgres.NewThingRepository(db, testLog)
+
+	n := 10
+
+	for i := 0; i < n; i++ {
+		c := things.Thing{
+			ID:    thingRepo.ID(),
+			Owner: email,
+		}
+
+		thingRepo.Save(c)
+	}
+
+	cases := map[string]struct {
+		owner  string
+		offset int
+		limit  int
+		size   int
+	}{
+		"existing owner, retrieve all":    {email, 0, n, n},
+		"existing owner, retrieve subset": {email, 1, 6, 6},
+		"non-existing owner":              {wrong, 1, 6, 0},
+	}
+
+	for desc, tc := range cases {
+		n := len(thingRepo.All(tc.owner, tc.offset, tc.limit))
+		assert.Equal(t, tc.size, n, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, n))
+	}
+}
+
+func TestThingRemoval(t *testing.T) {
+	email := "thing-removal@example.com"
+
+	thingRepo := postgres.NewThingRepository(db, testLog)
+	thing := things.Thing{
+		ID:    thingRepo.ID(),
+		Owner: email,
+	}
+	thingRepo.Save(thing)
+
+	// show that the removal works the same for both existing and non-existing
+	// (removed) thing
+	for i := 0; i < 2; i++ {
+		if err := thingRepo.Remove(email, thing.ID); err != nil {
+			t.Fatalf("#%d: failed to remove thing due to: %s", i, err)
+		}
+
+		if _, err := thingRepo.One(email, thing.ID); err != things.ErrNotFound {
+			t.Fatalf("#%d: expected %s got %s", i, things.ErrNotFound, err)
+		}
+	}
+}

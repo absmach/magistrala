@@ -58,35 +58,35 @@ services:
     ports:
       - 8180:8180
 
-  clients-db:
+  things-db:
     image: postgres:10.2-alpine
-    container_name: mainflux-clients-db
+    container_name: mainflux-things-db
     restart: on-failure
     environment:
       POSTGRES_USER: mainflux
       POSTGRES_PASSWORD: mainflux
-      POSTGRES_DB: clients
+      POSTGRES_DB: things
 
-  clients:
-    image: mainflux/clients:latest
-    container_name: mainflux-clients
+  things:
+    image: mainflux/things:latest
+    container_name: mainflux-things
     depends_on:
-      - clients-db
+      - things-db
       - users
     expose:
       - 8182
       - 8183
     restart: on-failure
     environment:
-      MF_CLIENTS_DB_HOST: clients-db
-      MF_CLIENTS_DB_PORT: 5432
-      MF_CLIENTS_DB_USER: mainflux
-      MF_CLIENTS_DB_PASS: mainflux
-      MF_CLIENTS_DB: clients
-      MF_CLIENTS_HTTP_PORT: 8182
-      MF_CLIENTS_GRPC_PORT: 8183
+      MF_THINGS_DB_HOST: things-db
+      MF_THINGS_DB_PORT: 5432
+      MF_THINGS_DB_USER: mainflux
+      MF_THINGS_DB_PASS: mainflux
+      MF_THINGS_DB: things
+      MF_THINGS_HTTP_PORT: 8182
+      MF_THINGS_GRPC_PORT: 8183
       MF_USERS_URL: users:8181
-      MF_CLIENTS_SECRET: secret
+      MF_THINGS_SECRET: secret
     ports:
       - 8182:8182
 
@@ -104,14 +104,14 @@ services:
     image: mainflux/coap:latest
     container_name: mainflux-coap
     depends_on:
-      - clients
+      - things
     expose:
       - 5683
     restart: on-failure
     environment:
       MF_COAP_ADAPTER_PORT: 5683
       MF_NATS_URL: nats://nats:4222
-      MF_CLIENTS_URL: clients:8183
+      MF_THINGS_URL: things:8183
     ports:
       - 5683:5683/udp
 
@@ -119,14 +119,14 @@ services:
     image: mainflux/ws:latest
     container_name: mainflux-ws
     depends_on:
-      - clients
+      - things
     expose:
       - 8186
     restart: on-failure
     environment:
       MF_WS_ADAPTER_PORT: 8186
       MF_NATS_URL: nats://nats:4222
-      MF_CLIENTS_URL: clients:8183
+      MF_THINGS_URL: things:8183
     ports:
       - 8186:8186
 
@@ -134,13 +134,13 @@ services:
     image: mainflux/http:latest
     container_name: mainflux-http
     depends_on:
-      - clients
+      - things
     restart: on-failure
     expose:
       - 8185
     environment:
       MF_HTTP_ADAPTER_PORT: 8185
       MF_NATS_URL: nats://nats:4222
-      MF_CLIENTS_URL: clients:8183
+      MF_THINGS_URL: things:8183
     ports:
       - 8185:8185

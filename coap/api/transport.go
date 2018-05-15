@@ -23,7 +23,7 @@ import (
 var (
 	errBadRequest = errors.New("bad request")
 	errBadOption  = errors.New("bad option")
-	auth          mainflux.ClientsServiceClient
+	auth          mainflux.ThingsServiceClient
 )
 
 const (

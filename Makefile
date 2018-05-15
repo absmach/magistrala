@@ -1,5 +1,5 @@
 BUILD_DIR = build
-SERVICES = users clients http normalizer ws coap
+SERVICES = users things http normalizer ws coap
 DOCKERS = $(addprefix docker_,$(SERVICES))
 CGO_ENABLED ?= 0
 GOOS ?= linux

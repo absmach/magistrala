@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-const version string = "0.3.0"
+const version string = "0.3.1"
 
 type response struct {
 	Service string `json:"service"`

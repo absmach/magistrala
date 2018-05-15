@@ -18,8 +18,8 @@ spec:
         ports:
         - containerPort: 8185
         env:
-        - name: MF_CLIENTS_URL
-          value: "clients:8183"
+        - name: MF_THINGS_URL
+          value: "things:8183"
         - name: MF_NATS_URL
           value: "nats://nats:4222"
         - name:  MF_HTTP_ADAPTER_PORT

@@ -11,8 +11,8 @@ import (
 	"github.com/go-zoo/bone"
 	"github.com/gorilla/websocket"
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/clients"
 	log "github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/things"
 	"github.com/mainflux/mainflux/ws"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc/codes"
@@ -31,12 +31,12 @@ var (
 			return true
 		},
 	}
-	auth   mainflux.ClientsServiceClient
+	auth   mainflux.ThingsServiceClient
 	logger log.Logger
 )
 
 // MakeHandler returns http handler with handshake endpoint.
-func MakeHandler(svc ws.Service, cc mainflux.ClientsServiceClient, l log.Logger) http.Handler {
+func MakeHandler(svc ws.Service, cc mainflux.ThingsServiceClient, l log.Logger) http.Handler {
 	auth = cc
 	logger = l
 
@@ -107,7 +107,7 @@ func authorize(r *http.Request) (subscription, error) {
 	if authKey == "" {
 		authKeys := bone.GetQuery(r, "authorization")
 		if len(authKeys) == 0 {
-			return subscription{}, clients.ErrUnauthorizedAccess
+			return subscription{}, things.ErrUnauthorizedAccess
 		}
 		authKey = authKeys[0]
 	}
@@ -172,7 +172,7 @@ func (sub subscription) broadcast(svc ws.Service) {
 func (sub subscription) listen() {
 	for msg := range sub.channel.Messages {
 		if err := sub.conn.WriteMessage(websocket.TextMessage, msg.Payload); err != nil {
-			logger.Warn(fmt.Sprintf("Failed to broadcast message to client: %s", err))
+			logger.Warn(fmt.Sprintf("Failed to broadcast message to thing: %s", err))
 		}
 	}
 }

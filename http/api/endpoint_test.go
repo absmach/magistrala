@@ -27,13 +27,13 @@ func newService() mainflux.MessagePublisher {
 	return adapter.New(pub)
 }
 
-func newHTTPServer(pub mainflux.MessagePublisher, cc mainflux.ClientsServiceClient) *httptest.Server {
+func newHTTPServer(pub mainflux.MessagePublisher, cc mainflux.ThingsServiceClient) *httptest.Server {
 	mux := api.MakeHandler(pub, cc)
 	return httptest.NewServer(mux)
 }
 
-func newClientsClient() mainflux.ClientsServiceClient {
-	return mocks.NewClientsClient(map[string]string{token: id})
+func newThingsClient() mainflux.ThingsServiceClient {
+	return mocks.NewThingsClient(map[string]string{token: id})
 }
 
 type testRequest struct {
@@ -60,12 +60,11 @@ func (tr testRequest) make() (*http.Response, error) {
 }
 
 func TestPublish(t *testing.T) {
-	clientsClient := newClientsClient()
+	thingsClient := newThingsClient()
 
 	pub := newService()
-	ts := newHTTPServer(pub, clientsClient)
+	ts := newHTTPServer(pub, thingsClient)
 	defer ts.Close()
-	client := ts.Client()
 
 	cases := map[string]struct {
 		chanID      string
@@ -83,7 +82,7 @@ func TestPublish(t *testing.T) {
 
 	for desc, tc := range cases {
 		req := testRequest{
-			client:      client,
+			client:      ts.Client(),
 			method:      http.MethodPost,
 			url:         fmt.Sprintf("%s/channels/%s/messages", ts.URL, tc.chanID),
 			contentType: tc.contentType,

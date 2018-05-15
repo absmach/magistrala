@@ -1,0 +1,445 @@
+swagger: "2.0"
+info:
+  title: Mainflux things service
+  description: HTTP API for managing platform devices, applications and channels.
+  version: "1.0.0"
+consumes:
+  - "application/json"
+produces:
+  - "application/json"
+paths:
+  /things:
+    post:
+      summary: Adds new thing
+      description: |
+        Adds new thing to the list of things owned by user identified using
+        the provided access token.
+      tags:
+        - things
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - name: thing
+          description: JSON-formatted document describing the new thing.
+          in: body
+          schema:
+            $ref: "#/definitions/ThingReq"
+          required: true
+      responses:
+        201:
+          description: Thing registered.
+          headers:
+            Location:
+              type: string
+              description: Created thing's relative URL (i.e. /things/{thingId}).
+        400:
+          description: Failed due to malformed JSON.
+        403:
+          description: Missing or invalid access token provided.
+        415:
+          description: Missing or invalid content type.
+        500:
+          $ref: "#/responses/ServiceError"
+    get:
+      summary: Retrieves managed things
+      description: |
+        Retrieves a list of managed things. Due to performance concerns, data
+        is retrieved in subsets. The API things must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
+      tags:
+        - things
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/Limit"
+        - $ref: "#/parameters/Offset"
+      responses:
+        200:
+          description: Data retrieved.
+          headers:
+            X-Count:
+              type: integer
+              description: |
+                Total number of managed things. This value can be used to
+                implement the paging strategy on API things.
+          schema:
+            $ref: "#/definitions/ThingList"
+        400:
+          description: Failed due to malformed query parameters.
+        403:
+          description: Missing or invalid access token provided.
+        500:
+          $ref: "#/responses/ServiceError"
+  /things/{thingId}:
+    get:
+      summary: Retrieves thing info
+      tags:
+        - things
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/ThingId"
+      responses:
+        200:
+          description: Data retrieved.
+          schema:
+            $ref: "#/definitions/ThingRes"
+        403:
+          description: Missing or invalid access token provided.
+        404:
+          description: Thing does not exist.
+        500:
+          $ref: "#/responses/ServiceError"
+    put:
+      summary: Updates thing info
+      description: |
+        Update is performed by replacing the current resource data with values
+        provided in a request payload. Note that the thing's type and ID
+        cannot be changed.
+      tags:
+        - things
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/ThingId"
+        - name: thing
+          description: JSON-formatted document describing the updated thing.
+          in: body
+          schema:
+            $ref: "#/definitions/ThingReq"
+          required: true
+      responses:
+        200:
+          description: Thing updated.
+        400:
+          description: Failed due to malformed JSON.
+        403:
+          description: Missing or invalid access token provided.
+        404:
+          description: Thing does not exist.
+        415:
+          description: Missing or invalid content type.
+        500:
+          $ref: "#/responses/ServiceError"
+    delete:
+      summary: Removes a thing
+      description: |
+        Removes a thing. The service will ensure that the removed thing is
+        disconnected from all of the existing channels.
+      tags:
+        - things
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/ThingId"
+      responses:
+        204:
+          description: Thing removed.
+        403:
+          description: Missing or invalid access token provided.
+        500:
+          $ref: "#/responses/ServiceError"
+  /channels:
+    post:
+      summary: Creates new channel
+      description: |
+        Creates new channel. User identified by the provided access token will
+        be the channel's owner.
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - name: channel
+          description: JSON-formatted document describing the new channel.
+          in: body
+          schema:
+            $ref: "#/definitions/ChannelReq"
+          required: true
+      responses:
+        201:
+          description: Channel created.
+          headers:
+            Location:
+              type: string
+              description: Created channel's relative URL (i.e. /channels/{chanId}).
+        400:
+          description: Failed due to malformed JSON.
+        403:
+          description: Missing or invalid access token provided.
+        415:
+          description: Missing or invalid content type.
+        500:
+          $ref: "#/responses/ServiceError"
+    get:
+      summary: Retrieves managed channels
+      description: |
+        Retrieves a list of managed channels. Due to performance concerns, data
+        is retrieved in subsets. The API things must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/Limit"
+        - $ref: "#/parameters/Offset"
+      responses:
+        200:
+          description: Data retrieved.
+          headers:
+            X-Count:
+              type: integer
+              description: |
+                Total number of managed channels. This value can be used to
+                implement the paging strategy on API things.
+          schema:
+            $ref: "#/definitions/ChannelList"
+        400:
+          description: Failed due to malformed query parameters.
+        403:
+          description: Missing or invalid access token provided.
+        500:
+          $ref: "#/responses/ServiceError"
+  /channels/{chanId}:
+    get:
+      summary: Retrieves channel info
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/ChanId"
+      responses:
+        200:
+          description: Data retrieved.
+          schema:
+            $ref: "#/definitions/ChannelRes"
+        403:
+          description: Missing or invalid access token provided.
+        404:
+          description: Channel does not exist.
+        500:
+          $ref: "#/responses/ServiceError"
+    put:
+      summary: Updates channel info
+      description: |
+        Update is performed by replacing the current resource data with values
+        provided in a request payload. Note that the channel's ID will not be
+        affected.
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/ChanId"
+        - name: channel
+          description: JSON-formatted document describing the updated channel.
+          in: body
+          schema:
+            $ref: "#/definitions/ChannelReq"
+          required: true
+      responses:
+        200:
+          description: Channel updated.
+        400:
+          description: Failed due to malformed JSON.
+        403:
+          description: Missing or invalid access token provided.
+        404:
+          description: Channel does not exist.
+        415:
+          description: Missing or invalid content type.
+        500:
+          $ref: "#/responses/ServiceError"
+    delete:
+      summary: Removes a channel
+      description: |
+        Removes a channel. The service will ensure that the subscribed apps and
+        devices are unsubscribed from the removed channel.
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/ChanId"
+      responses:
+        204:
+          description: Channel removed.
+        403:
+          description: Missing or invalid access token provided.
+        500:
+          $ref: "#/responses/ServiceError"
+  /channels/{chanId}/things/{thingId}:
+    put:
+      summary: Connects the thing to the channel
+      description: |
+        Creates connection between a thing and a channel. Once connected to
+        the channel, things are allowed to exchange messages through it.
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/ChanId"
+        - $ref: "#/parameters/ThingId"
+      responses:
+        200:
+          description: Thing connected.
+        403:
+          description: Missing or invalid access token provided.
+        404:
+          description: Channel or thing does not exist.
+        500:
+          $ref: "#/responses/ServiceError"
+    delete:
+      summary: Disconnects the thing from the channel
+      description: |
+        Removes connection between a thing and a channel. Once connection is
+        removed, thing can no longer exchange messages through the channel.
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/ChanId"
+        - $ref: "#/parameters/ThingId"
+      responses:
+        204:
+          description: Thing disconnected.
+        403:
+          description: Missing or invalid access token provided.
+        404:
+          description: Channel or thing does not exist.
+        500:
+          $ref: "#/responses/ServiceError"
+parameters:
+  Authorization:
+    name: Authorization
+    description: User's access token.
+    in: header
+    type: string
+    required: true
+  ChanId:
+    name: chanId
+    description: Unique channel identifier.
+    in: path
+    type: string
+    format: uuid
+    required: true
+  ThingId:
+    name: thingId
+    description: Unique thing identifier.
+    in: path
+    type: string
+    format: uuid
+    required: true
+  Limit:
+    name: limit
+    description: Size of the subset to retrieve.
+    in: query
+    type: integer
+    default: 10
+    maximum: 100
+    minimum: 1
+    required: false
+  Offset:
+    name: offset
+    description: Number of items to skip during retrieval.
+    in: query
+    type: integer
+    default: 0
+    minimum: 0
+    required: false
+
+responses:
+  ServiceError:
+    description: Unexpected server-side error occured.
+
+definitions:
+  ChannelList:
+    type: object
+    properties:
+      channels:
+        type: array
+        minItems: 0
+        uniqueItems: true
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+              description: Unique channel identifier generated by the service.
+            name:
+              type: string
+              description: Free-form channel name.
+          required:
+            - id
+    required:
+      - channels
+  ChannelRes:
+    type: object
+    properties:
+      id:
+        type: string
+        description: Unique channel identifier generated by the service.
+      name:
+        type: string
+        description: Free-form channel name.
+      connected:
+        type: array
+        minItems: 0
+        uniqueItems: true
+        items:
+          $ref: '#/definitions/ThingRes'
+    required:
+      - id
+  ChannelReq:
+    type: object
+    properties:
+      name:
+        type: string
+        description: Free-form channel name.
+  ThingList:
+    type: object
+    properties:
+      things:
+        type: array
+        minItems: 0
+        uniqueItems: true
+        items:
+          $ref: "#/definitions/ThingRes"
+    required:
+      - things
+  ThingRes:
+    type: object
+    properties:
+      id:
+        type: string
+        description: Unique thing identifier generated by the service.
+      type:
+        type: string
+        enum:
+          - app
+          - device
+        description: Type of the thing.
+      name:
+        type: string
+        description: Free-form thing name.
+      key:
+        type: string
+        description: Auto-generated access key.
+      payload:
+        type: string
+        description: Arbitrary, string-encoded thing's data.
+    required:
+      - id
+      - type
+      - key
+  ThingReq:
+    type: object
+    properties:
+      type:
+        type: string
+        enum:
+          - app
+          - device
+        description: Type of the thing.
+      name:
+        type: string
+        description: Free-form thing name.
+      payload:
+        type: string
+        description: Arbitrary, string-encoded thing's data.
+    required:
+      - type

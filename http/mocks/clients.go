@@ -4,30 +4,30 @@ import (
 	"context"
 
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/clients"
+	"github.com/mainflux/mainflux/things"
 	"google.golang.org/grpc"
 )
 
-var _ mainflux.ClientsServiceClient = (*clientsClient)(nil)
+var _ mainflux.ThingsServiceClient = (*thingsClient)(nil)
 
-type clientsClient struct {
-	clients map[string]string
+type thingsClient struct {
+	things map[string]string
 }
 
-// NewClientsClient returns mock implementation of clients service client.
-func NewClientsClient(data map[string]string) mainflux.ClientsServiceClient {
-	return &clientsClient{data}
+// NewThingsClient returns mock implementation of things service client.
+func NewThingsClient(data map[string]string) mainflux.ThingsServiceClient {
+	return &thingsClient{data}
 }
 
-func (client clientsClient) CanAccess(ctx context.Context, req *mainflux.AccessReq, opts ...grpc.CallOption) (*mainflux.Identity, error) {
+func (tc thingsClient) CanAccess(ctx context.Context, req *mainflux.AccessReq, opts ...grpc.CallOption) (*mainflux.Identity, error) {
 	key := req.GetToken()
 	if key == "" {
-		return nil, clients.ErrUnauthorizedAccess
+		return nil, things.ErrUnauthorizedAccess
 	}
 
-	id, ok := client.clients[key]
+	id, ok := tc.things[key]
 	if !ok {
-		return nil, clients.ErrUnauthorizedAccess
+		return nil, things.ErrUnauthorizedAccess
 	}
 
 	return &mainflux.Identity{Value: id}, nil

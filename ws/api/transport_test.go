@@ -35,14 +35,14 @@ func newService() ws.Service {
 	return ws.New(pubsub)
 }
 
-func newHTTPServer(svc ws.Service, cc mainflux.ClientsServiceClient) *httptest.Server {
-	mux := api.MakeHandler(svc, cc, log.New(os.Stdout))
+func newHTTPServer(svc ws.Service, tc mainflux.ThingsServiceClient) *httptest.Server {
+	mux := api.MakeHandler(svc, tc, log.New(os.Stdout))
 	return httptest.NewServer(mux)
 }
 
-func newClientsClient() mainflux.ClientsServiceClient {
-	clientID := chanID
-	return mocks.NewClientsClient(map[string]string{token: clientID})
+func newThingsClient() mainflux.ThingsServiceClient {
+	thingID := chanID
+	return mocks.NewThingsClient(map[string]string{token: thingID})
 }
 
 func makeURL(tsURL, chanID, auth string, header bool) string {
@@ -65,9 +65,9 @@ func handshake(tsURL, chanID, token string, addHeader bool) (*websocket.Conn, *h
 }
 
 func TestHandshake(t *testing.T) {
-	clientsClient := newClientsClient()
+	thingsClient := newThingsClient()
 	svc := newService()
-	ts := newHTTPServer(svc, clientsClient)
+	ts := newHTTPServer(svc, thingsClient)
 	defer ts.Close()
 
 	cases := []struct {

@@ -48,14 +48,10 @@ func TestCanAccess(t *testing.T) {
 	svc := newService(map[string]string{token: email})
 	startGRPCServer(svc, port)
 
-	connectedThingID, _ := svc.AddThing(token, thing)
-	connectedThing, _ := svc.ViewThing(token, connectedThingID)
-
-	thingID, _ := svc.AddThing(token, thing)
-	thing, _ := svc.ViewThing(token, thingID)
-
-	chanID, _ := svc.CreateChannel(token, channel)
-	svc.Connect(token, chanID, connectedThingID)
+	oth, _ := svc.AddThing(token, thing)
+	cth, _ := svc.AddThing(token, thing)
+	sch, _ := svc.CreateChannel(token, channel)
+	svc.Connect(token, sch.ID, cth.ID)
 
 	usersAddr := fmt.Sprintf("localhost:%d", port)
 	conn, _ := grpc.Dial(usersAddr, grpc.WithInsecure())
@@ -69,10 +65,10 @@ func TestCanAccess(t *testing.T) {
 		id       string
 		code     codes.Code
 	}{
-		"check if connected thing can access existing channel":     {connectedThing.Key, chanID, connectedThingID, codes.OK},
-		"check if unconnected thing can access existing channel":   {thing.Key, chanID, "", codes.PermissionDenied},
-		"check if wrong thing can access existing channel":         {wrong, chanID, "", codes.PermissionDenied},
-		"check if connected thing can access non-existent channel": {connectedThing.Key, "1", "", codes.InvalidArgument},
+		"check if connected thing can access existing channel":             {cth.Key, sch.ID, cth.ID, codes.OK},
+		"check if unconnected thing can access existing channel":           {oth.Key, sch.ID, "", codes.PermissionDenied},
+		"check if thing with wrong access key can access existing channel": {wrong, sch.ID, "", codes.PermissionDenied},
+		"check if connected thing can access non-existent channel":         {cth.Key, wrong, "", codes.InvalidArgument},
 	}
 
 	for desc, tc := range cases {

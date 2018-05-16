@@ -29,7 +29,7 @@ var (
 // implementation, and all of its decorators (e.g. logging & metrics).
 type Service interface {
 	// AddThing adds new thing to the user identified by the provided key.
-	AddThing(string, Thing) (string, error)
+	AddThing(string, Thing) (Thing, error)
 
 	// UpdateThing updates the thing identified by the provided ID, that
 	// belongs to the user identified by the provided key.
@@ -48,7 +48,7 @@ type Service interface {
 	RemoveThing(string, string) error
 
 	// CreateChannel adds new channel to the user identified by the provided key.
-	CreateChannel(string, Channel) (string, error)
+	CreateChannel(string, Channel) (Channel, error)
 
 	// UpdateChannel updates the channel identified by the provided ID, that
 	// belongs to the user identified by the provided key.
@@ -74,7 +74,7 @@ type Service interface {
 	Disconnect(string, string, string) error
 
 	// CanAccess determines whether the channel can be accessed using the
-	// provided key and returns thing's id.
+	// provided key and returns thing's id if access is allowed.
 	CanAccess(string, string) (string, error)
 }
 
@@ -97,167 +97,175 @@ func New(users mainflux.UsersServiceClient, things ThingRepository, channels Cha
 	}
 }
 
-func (ms *thingsService) AddThing(key string, thing Thing) (string, error) {
+func (ts *thingsService) AddThing(key string, thing Thing) (Thing, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	res, err := ms.users.Identify(ctx, &mainflux.Token{Value: key})
-	if err != nil {
-		return "", ErrUnauthorizedAccess
-	}
-
-	thing.ID = ms.things.ID()
-	thing.Owner = res.GetValue()
-	thing.Key, _ = ms.idp.PermanentKey(thing.ID)
-
-	return thing.ID, ms.things.Save(thing)
-}
-
-func (ms *thingsService) UpdateThing(key string, thing Thing) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	res, err := ms.users.Identify(ctx, &mainflux.Token{Value: key})
-	if err != nil {
-		return ErrUnauthorizedAccess
-	}
-
-	thing.Owner = res.GetValue()
-
-	return ms.things.Update(thing)
-}
-
-func (ms *thingsService) ViewThing(key, id string) (Thing, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	res, err := ms.users.Identify(ctx, &mainflux.Token{Value: key})
+	res, err := ts.users.Identify(ctx, &mainflux.Token{Value: key})
 	if err != nil {
 		return Thing{}, ErrUnauthorizedAccess
 	}
 
-	return ms.things.One(res.GetValue(), id)
+	// TODO: drop completely in a separate ticket
+	thing.ID = ts.idp.ID()
+	thing.Owner = res.GetValue()
+	thing.Key = ts.idp.ID()
+
+	if _, err := ts.things.Save(thing); err != nil {
+		return Thing{}, err
+	}
+
+	return thing, nil
 }
 
-func (ms *thingsService) ListThings(key string, offset, limit int) ([]Thing, error) {
+func (ts *thingsService) UpdateThing(key string, thing Thing) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	res, err := ms.users.Identify(ctx, &mainflux.Token{Value: key})
+	res, err := ts.users.Identify(ctx, &mainflux.Token{Value: key})
+	if err != nil {
+		return ErrUnauthorizedAccess
+	}
+
+	thing.Owner = res.GetValue()
+
+	return ts.things.Update(thing)
+}
+
+func (ts *thingsService) ViewThing(key, id string) (Thing, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	res, err := ts.users.Identify(ctx, &mainflux.Token{Value: key})
+	if err != nil {
+		return Thing{}, ErrUnauthorizedAccess
+	}
+
+	return ts.things.One(res.GetValue(), id)
+}
+
+func (ts *thingsService) ListThings(key string, offset, limit int) ([]Thing, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	res, err := ts.users.Identify(ctx, &mainflux.Token{Value: key})
 	if err != nil {
 		return nil, ErrUnauthorizedAccess
 	}
 
-	return ms.things.All(res.GetValue(), offset, limit), nil
+	return ts.things.All(res.GetValue(), offset, limit), nil
 }
 
-func (ms *thingsService) RemoveThing(key, id string) error {
+func (ts *thingsService) RemoveThing(key, id string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	res, err := ms.users.Identify(ctx, &mainflux.Token{Value: key})
+	res, err := ts.users.Identify(ctx, &mainflux.Token{Value: key})
 	if err != nil {
 		return ErrUnauthorizedAccess
 	}
 
-	return ms.things.Remove(res.GetValue(), id)
+	return ts.things.Remove(res.GetValue(), id)
 }
 
-func (ms *thingsService) CreateChannel(key string, channel Channel) (string, error) {
+func (ts *thingsService) CreateChannel(key string, channel Channel) (Channel, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	res, err := ms.users.Identify(ctx, &mainflux.Token{Value: key})
-	if err != nil {
-		return "", ErrUnauthorizedAccess
-	}
-
-	channel.Owner = res.GetValue()
-	return ms.channels.Save(channel)
-}
-
-func (ms *thingsService) UpdateChannel(key string, channel Channel) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	res, err := ms.users.Identify(ctx, &mainflux.Token{Value: key})
-	if err != nil {
-		return ErrUnauthorizedAccess
-	}
-
-	channel.Owner = res.GetValue()
-	return ms.channels.Update(channel)
-}
-
-func (ms *thingsService) ViewChannel(key, id string) (Channel, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	res, err := ms.users.Identify(ctx, &mainflux.Token{Value: key})
+	res, err := ts.users.Identify(ctx, &mainflux.Token{Value: key})
 	if err != nil {
 		return Channel{}, ErrUnauthorizedAccess
 	}
 
-	return ms.channels.One(res.GetValue(), id)
+	// TODO: drop completely in a separate ticket
+	channel.ID = ts.idp.ID()
+	channel.Owner = res.GetValue()
+
+	if _, err := ts.channels.Save(channel); err != nil {
+		return Channel{}, err
+	}
+
+	return channel, nil
 }
 
-func (ms *thingsService) ListChannels(key string, offset, limit int) ([]Channel, error) {
+func (ts *thingsService) UpdateChannel(key string, channel Channel) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	res, err := ms.users.Identify(ctx, &mainflux.Token{Value: key})
+	res, err := ts.users.Identify(ctx, &mainflux.Token{Value: key})
+	if err != nil {
+		return ErrUnauthorizedAccess
+	}
+
+	channel.Owner = res.GetValue()
+	return ts.channels.Update(channel)
+}
+
+func (ts *thingsService) ViewChannel(key, id string) (Channel, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	res, err := ts.users.Identify(ctx, &mainflux.Token{Value: key})
+	if err != nil {
+		return Channel{}, ErrUnauthorizedAccess
+	}
+
+	return ts.channels.One(res.GetValue(), id)
+}
+
+func (ts *thingsService) ListChannels(key string, offset, limit int) ([]Channel, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	res, err := ts.users.Identify(ctx, &mainflux.Token{Value: key})
 	if err != nil {
 		return nil, ErrUnauthorizedAccess
 	}
 
-	return ms.channels.All(res.GetValue(), offset, limit), nil
+	return ts.channels.All(res.GetValue(), offset, limit), nil
 }
 
-func (ms *thingsService) RemoveChannel(key, id string) error {
+func (ts *thingsService) RemoveChannel(key, id string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	res, err := ms.users.Identify(ctx, &mainflux.Token{Value: key})
+	res, err := ts.users.Identify(ctx, &mainflux.Token{Value: key})
 	if err != nil {
 		return ErrUnauthorizedAccess
 	}
 
-	return ms.channels.Remove(res.GetValue(), id)
+	return ts.channels.Remove(res.GetValue(), id)
 }
 
-func (ms *thingsService) Connect(key, chanID, thingID string) error {
+func (ts *thingsService) Connect(key, chanID, thingID string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	res, err := ms.users.Identify(ctx, &mainflux.Token{Value: key})
+	res, err := ts.users.Identify(ctx, &mainflux.Token{Value: key})
 	if err != nil {
 		return ErrUnauthorizedAccess
 	}
 
-	return ms.channels.Connect(res.GetValue(), chanID, thingID)
+	return ts.channels.Connect(res.GetValue(), chanID, thingID)
 }
 
-func (ms *thingsService) Disconnect(key, chanID, thingID string) error {
+func (ts *thingsService) Disconnect(key, chanID, thingID string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	res, err := ms.users.Identify(ctx, &mainflux.Token{Value: key})
+	res, err := ts.users.Identify(ctx, &mainflux.Token{Value: key})
 	if err != nil {
 		return ErrUnauthorizedAccess
 	}
 
-	return ms.channels.Disconnect(res.GetValue(), chanID, thingID)
+	return ts.channels.Disconnect(res.GetValue(), chanID, thingID)
 }
 
-func (ms *thingsService) CanAccess(key, channel string) (string, error) {
-	thing, err := ms.idp.Identity(key)
+func (ts *thingsService) CanAccess(key, channel string) (string, error) {
+	thingID, err := ts.channels.HasThing(channel, key)
 	if err != nil {
-		return "", err
-	}
-
-	if !ms.channels.HasThing(channel, thing) {
 		return "", ErrUnauthorizedAccess
 	}
 
-	return thing, nil
+	return thingID, nil
 }

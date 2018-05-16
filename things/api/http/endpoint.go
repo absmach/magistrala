@@ -15,12 +15,12 @@ func addThingEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		id, err := svc.AddThing(req.key, req.thing)
+		saved, err := svc.AddThing(req.key, req.thing)
 		if err != nil {
 			return nil, err
 		}
 
-		return thingRes{id: id, created: true}, nil
+		return thingRes{id: saved.ID, created: true}, nil
 	}
 }
 
@@ -105,12 +105,12 @@ func createChannelEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		id, err := svc.CreateChannel(req.key, req.channel)
+		saved, err := svc.CreateChannel(req.key, req.channel)
 		if err != nil {
 			return nil, err
 		}
 
-		return channelRes{id: id, created: true}, nil
+		return channelRes{id: saved.ID, created: true}, nil
 	}
 }
 

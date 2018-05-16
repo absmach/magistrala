@@ -7,7 +7,6 @@ import (
 	_ "github.com/lib/pq" // required for DB access
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/things"
-	uuid "github.com/satori/go.uuid"
 )
 
 var _ things.ThingRepository = (*thingRepository)(nil)
@@ -23,14 +22,14 @@ func NewThingRepository(db *sql.DB, log logger.Logger) things.ThingRepository {
 	return &thingRepository{db: db, log: log}
 }
 
-func (tr thingRepository) ID() string {
-	return uuid.NewV4().String()
-}
-
-func (tr thingRepository) Save(thing things.Thing) error {
+func (tr thingRepository) Save(thing things.Thing) (string, error) {
 	q := `INSERT INTO things (id, owner, type, name, key, payload) VALUES ($1, $2, $3, $4, $5, $6)`
-	_, err := tr.db.Exec(q, thing.ID, thing.Owner, thing.Type, thing.Name, thing.Key, thing.Payload)
-	return err
+
+	if _, err := tr.db.Exec(q, thing.ID, thing.Owner, thing.Type, thing.Name, thing.Key, thing.Payload); err != nil {
+		return "", err
+	}
+
+	return thing.ID, nil
 }
 
 func (tr thingRepository) Update(thing things.Thing) error {
@@ -72,7 +71,7 @@ func (tr thingRepository) One(owner, id string) (things.Thing, error) {
 }
 
 func (tr thingRepository) All(owner string, offset, limit int) []things.Thing {
-	q := `SELECT id, name, type, key, payload FROM things WHERE owner = $1 LIMIT $2 OFFSET $3`
+	q := `SELECT id, name, type, key, payload FROM things WHERE owner = $1 ORDER BY id LIMIT $2 OFFSET $3`
 	items := []things.Thing{}
 
 	rows, err := tr.db.Query(q, owner, limit, offset)

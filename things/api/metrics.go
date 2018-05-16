@@ -27,7 +27,7 @@ func MetricsMiddleware(svc things.Service, counter metrics.Counter, latency metr
 	}
 }
 
-func (ms *metricsMiddleware) AddThing(key string, thing things.Thing) (string, error) {
+func (ms *metricsMiddleware) AddThing(key string, thing things.Thing) (things.Thing, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "add_thing").Add(1)
 		ms.latency.With("method", "add_thing").Observe(time.Since(begin).Seconds())
@@ -72,7 +72,7 @@ func (ms *metricsMiddleware) RemoveThing(key string, id string) error {
 	return ms.svc.RemoveThing(key, id)
 }
 
-func (ms *metricsMiddleware) CreateChannel(key string, channel things.Channel) (string, error) {
+func (ms *metricsMiddleware) CreateChannel(key string, channel things.Channel) (things.Channel, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "create_channel").Add(1)
 		ms.latency.With("method", "create_channel").Observe(time.Since(begin).Seconds())

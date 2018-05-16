@@ -16,8 +16,8 @@ import (
 	"github.com/mainflux/mainflux/things/api"
 	grpcapi "github.com/mainflux/mainflux/things/api/grpc"
 	httpapi "github.com/mainflux/mainflux/things/api/http"
-	"github.com/mainflux/mainflux/things/jwt"
 	"github.com/mainflux/mainflux/things/postgres"
+	"github.com/mainflux/mainflux/things/uuid"
 	usersapi "github.com/mainflux/mainflux/users/api/grpc"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
@@ -32,7 +32,6 @@ const (
 	defHTTPPort = "8180"
 	defGRPCPort = "8181"
 	defUsersURL = "localhost:8181"
-	defSecret   = "things"
 	envDBHost   = "MF_THINGS_DB_HOST"
 	envDBPort   = "MF_THINGS_DB_PORT"
 	envDBUser   = "MF_THINGS_DB_USER"
@@ -41,7 +40,6 @@ const (
 	envHTTPPort = "MF_THINGS_HTTP_PORT"
 	envGRPCPort = "MF_THINGS_GRPC_PORT"
 	envUsersURL = "MF_USERS_URL"
-	envSecret   = "MF_THINGS_SECRET"
 )
 
 type config struct {
@@ -53,7 +51,6 @@ type config struct {
 	HTTPPort string
 	GRPCPort string
 	UsersURL string
-	Secret   string
 }
 
 func main() {
@@ -67,7 +64,7 @@ func main() {
 	conn := connectToUsersService(cfg.UsersURL, logger)
 	defer conn.Close()
 
-	svc := newService(conn, db, cfg.Secret, logger)
+	svc := newService(conn, db, logger)
 	errs := make(chan error, 2)
 
 	go startHTTPServer(svc, cfg.HTTPPort, logger, errs)
@@ -93,7 +90,6 @@ func loadConfig() config {
 		HTTPPort: mainflux.Env(envHTTPPort, defHTTPPort),
 		GRPCPort: mainflux.Env(envGRPCPort, defGRPCPort),
 		UsersURL: mainflux.Env(envUsersURL, defUsersURL),
-		Secret:   mainflux.Env(envSecret, defSecret),
 	}
 }
 
@@ -115,11 +111,11 @@ func connectToUsersService(usersAddr string, logger log.Logger) *grpc.ClientConn
 	return conn
 }
 
-func newService(conn *grpc.ClientConn, db *sql.DB, secret string, logger log.Logger) things.Service {
+func newService(conn *grpc.ClientConn, db *sql.DB, logger log.Logger) things.Service {
 	users := usersapi.NewClient(conn)
 	thingsRepo := postgres.NewThingRepository(db, logger)
 	channelsRepo := postgres.NewChannelRepository(db, logger)
-	idp := jwt.New(secret)
+	idp := uuid.New()
 
 	svc := things.New(users, thingsRepo, channelsRepo, idp)
 	svc = api.LoggingMiddleware(svc, logger)

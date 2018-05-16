@@ -1,14 +1,14 @@
-# Clients
+# Things
 
-Clients service provides an HTTP API for managing platform resources: devices,
+Things service provides an HTTP API for managing platform resources: devices,
 applications and channels. Through this API clients are able to do the following
 actions:
 
-- provision new clients (i.e. devices & applications)
+- provision new things (i.e. devices & applications)
 - create new channels
-- "connect" clients into the channels
+- "connect" things into the channels
 
-For in-depth explanation of the aforementioned scenarios, as well as thorough
+For an in-depth explanation of the aforementioned scenarios, as well as thorough
 understanding of Mainflux, please check out the [official documentation][doc].
 
 ## Configuration
@@ -17,17 +17,16 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable               | Description                              | Default        |
-|------------------------|------------------------------------------|----------------|
-| MF_CLIENTS_DB_HOST     | Database host address                    | localhost      |
-| MF_CLIENTS_DB_PORT     | Database host port                       | 5432           |
-| MF_CLIENTS_DB_USER     | Database user                            | mainflux       |
-| MF_CLIENTS_DB_PASSWORD | Database password                        | mainflux       |
-| MF_CLIENTS_DB          | Name of the database used by the service | clients        |
-| MF_CLIENTS_HTTP_PORT   | Clients service HTTP port                | 8180           |
-| MF_CLIENTS_GRPC_PORT   | Clients service gRPC port                | 8181           |
-| MF_USERS_URL           | Users service URL                        | localhost:8181 |
-| MF_CLIENTS_SECRET      | String used for signing tokens           | clients        |
+| Variable              | Description                              | Default        |
+|-----------------------|------------------------------------------|----------------|
+| MF_THINGS_DB_HOST     | Database host address                    | localhost      |
+| MF_THINGS_DB_PORT     | Database host port                       | 5432           |
+| MF_THINGS_DB_USER     | Database user                            | mainflux       |
+| MF_THINGS_DB_PASS     | Database password                        | mainflux       |
+| MF_THINGS_DB          | Name of the database used by the service | things         |
+| MF_THINGS_HTTP_PORT   | Things service HTTP port                 | 8180           |
+| MF_THINGS_GRPC_PORT   | Things service gRPC port                 | 8181           |
+| MF_USERS_URL          | Users service URL                        | localhost:8181 |
 
 ## Deployment
 
@@ -38,21 +37,21 @@ locally:
 ```yaml
 version: "2"
 services:
-  clients:
-    image: mainflux/clients:[version]
+  things:
+    image: mainflux/things:[version]
     container_name: [instance name]
     ports:
       - [host machine port]:[configured HTTP port]
     environment:
-      MF_CLIENTS_DB_HOST: [Database host address]
-      MF_CLIENTS_DB_PORT: [Database host port]
-      MF_CLIENTS_DB_USER: [Database user]
-      MF_CLIENTS_DB_PASS: [Database password]
-      MF_CLIENTS_DB: [Name of the database used by the service]
-      MF_CLIENTS_HTTP_PORT: [Service HTTP port]
-      MF_CLIENTS_GRPC_PORT: [Service gRPC port]
+      MF_THINGS_DB_HOST: [Database host address]
+      MF_THINGS_DB_PORT: [Database host port]
+      MF_THINGS_DB_USER: [Database user]
+      MF_THINGS_DB_PASS: [Database password]
+      MF_THINGS_DB: [Name of the database used by the service]
+      MF_THINGS_HTTP_PORT: [Service HTTP port]
+      MF_THINGS_GRPC_PORT: [Service gRPC port]
       MF_USERS_URL: [Users service URL]
-      MF_CLIENTS_SECRET: [String used for signing tokens]
+      MF_THINGS_SECRET: [String used for signing tokens]
 ```
 
 To start the service outside of the container, execute the following shell script:
@@ -63,14 +62,14 @@ go get github.com/mainflux/mainflux
 
 cd $GOPATH/src/github.com/mainflux/mainflux
 
-# compile the clients
-make clients
+# compile the things
+make things
 
 # copy binary to bin
 make install
 
 # set the environment variables and run the service
-MF_CLIENTS_DB_HOST=[Database host address] MF_CLIENTS_DB_PORT=[Database host port] MF_CLIENTS_DB_USER=[Database user] MF_CLIENTS_DB_PASS=[Database password] MF_CLIENTS_DB=[Name of the database used by the service] MF_CLIENTS_HTTP_PORT=[Service HTTP port] MF_CLIENTS_GRPC_PORT=[Service gRPC port] MF_USERS_URL=[Users service URL] MF_CLIENTS_SECRET=[String used for signing tokens] $GOBIN/mainflux-clients
+MF_THINGS_DB_HOST=[Database host address] MF_THINGS_DB_PORT=[Database host port] MF_THINGS_DB_USER=[Database user] MF_THINGS_DB_PASS=[Database password] MF_THINGS_DB=[Name of the database used by the service] MF_THINGS_HTTP_PORT=[Service HTTP port] MF_THINGS_GRPC_PORT=[Service gRPC port] MF_USERS_URL=[Users service URL] $GOBIN/mainflux-things
 ```
 
 ## Usage

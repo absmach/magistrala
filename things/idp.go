@@ -1,14 +1,7 @@
 package things
 
-// IdentityProvider specifies an API for identity management via security
-// tokens.
+// IdentityProvider specifies an API for generating unique identifiers.
 type IdentityProvider interface {
-	// TemporaryKey generates the temporary access token.
-	TemporaryKey(string) (string, error)
-
-	// PermanentKey generates the non-expiring access token.
-	PermanentKey(string) (string, error)
-
-	// Identity extracts the entity identifier given its secret key.
-	Identity(string) (string, error)
+	// ID generates the unique identifier.
+	ID() string
 }

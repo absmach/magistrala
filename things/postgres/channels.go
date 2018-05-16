@@ -7,7 +7,6 @@ import (
 	"github.com/lib/pq"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/things"
-	uuid "github.com/satori/go.uuid"
 )
 
 var _ things.ChannelRepository = (*channelRepository)(nil)
@@ -29,8 +28,6 @@ func NewChannelRepository(db *sql.DB, log logger.Logger) things.ChannelRepositor
 }
 
 func (cr channelRepository) Save(channel things.Channel) (string, error) {
-	channel.ID = uuid.NewV4().String()
-
 	q := `INSERT INTO channels (id, owner, name) VALUES ($1, $2, $3)`
 
 	_, err := cr.db.Exec(q, channel.ID, channel.Owner, channel.Name)
@@ -97,7 +94,7 @@ func (cr channelRepository) One(owner, id string) (things.Channel, error) {
 }
 
 func (cr channelRepository) All(owner string, offset, limit int) []things.Channel {
-	q := `SELECT id, name FROM channels WHERE owner = $1 LIMIT $2 OFFSET $3`
+	q := `SELECT id, name FROM channels WHERE owner = $1 ORDER BY id LIMIT $2 OFFSET $3`
 	items := []things.Channel{}
 
 	rows, err := cr.db.Query(q, owner, limit, offset)
@@ -168,12 +165,25 @@ func (cr channelRepository) Disconnect(owner, chanID, thingID string) error {
 	return nil
 }
 
-func (cr channelRepository) HasThing(chanID, thingID string) bool {
-	q := "SELECT EXISTS (SELECT 1 FROM connections WHERE channel_id = $1 AND thing_id = $2);"
+func (cr channelRepository) HasThing(chanID, key string) (string, error) {
+	var thingID string
 
+	q := `SELECT id FROM things WHERE key = $1`
+	if err := cr.db.QueryRow(q, key).Scan(&thingID); err != nil {
+		cr.log.Error(fmt.Sprintf("Failed to obtain thing's ID due to %s", err))
+		return "", err
+	}
+
+	q = `SELECT EXISTS (SELECT 1 FROM connections WHERE channel_id = $1 AND thing_id = $2);`
 	exists := false
 	if err := cr.db.QueryRow(q, chanID, thingID).Scan(&exists); err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to check thing existence due to %s", err))
+		return "", err
 	}
-	return exists
+
+	if !exists {
+		return "", things.ErrUnauthorizedAccess
+	}
+
+	return thingID, nil
 }

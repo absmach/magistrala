@@ -2,6 +2,7 @@ package mocks
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 
@@ -9,8 +10,6 @@ import (
 )
 
 var _ things.ChannelRepository = (*channelRepositoryMock)(nil)
-
-const chanID = "123e4567-e89b-12d3-a456-"
 
 type channelRepositoryMock struct {
 	mu       sync.Mutex
@@ -30,9 +29,6 @@ func NewChannelRepository(repo things.ThingRepository) things.ChannelRepository 
 func (crm *channelRepositoryMock) Save(channel things.Channel) (string, error) {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
-
-	crm.counter++
-	channel.ID = fmt.Sprintf("%s%012d", chanID, crm.counter)
 
 	crm.channels[key(channel.Owner, channel.ID)] = channel
 
@@ -72,14 +68,18 @@ func (crm *channelRepositoryMock) All(owner string, offset, limit int) []things.
 	}
 
 	// Since IDs starts from 1, shift everything by one.
-	first := fmt.Sprintf("%s%012d", chanID, offset+1)
-	last := fmt.Sprintf("%s%012d", chanID, offset+limit+1)
+	first := fmt.Sprintf("%s%012d", startID, offset+1)
+	last := fmt.Sprintf("%s%012d", startID, offset+limit+1)
 
 	for k, v := range crm.channels {
 		if strings.HasPrefix(k, prefix) && v.ID >= first && v.ID < last {
 			channels = append(channels, v)
 		}
 	}
+
+	sort.SliceStable(channels, func(i, j int) bool {
+		return channels[i].ID < channels[j].ID
+	})
 
 	return channels
 }
@@ -109,36 +109,38 @@ func (crm *channelRepositoryMock) Disconnect(owner, chanID, thingID string) erro
 		return err
 	}
 
-	if !crm.HasThing(chanID, thingID) {
-		return things.ErrNotFound
-	}
+	for _, t := range channel.Things {
+		if t.ID == thingID {
+			connected := make([]things.Thing, len(channel.Things)-1)
+			for _, thing := range channel.Things {
+				if thing.ID != thingID {
+					connected = append(connected, thing)
+				}
+			}
 
-	connected := make([]things.Thing, len(channel.Things)-1)
-	for _, thing := range channel.Things {
-		if thing.ID != thingID {
-			connected = append(connected, thing)
+			channel.Things = connected
+			return crm.Update(channel)
 		}
 	}
 
-	channel.Things = connected
-	return crm.Update(channel)
+	return things.ErrNotFound
 }
 
-func (crm *channelRepositoryMock) HasThing(channel, thing string) bool {
+func (crm *channelRepositoryMock) HasThing(chanID, key string) (string, error) {
 	// This obscure way to examine map keys is enforced by the key structure
 	// itself (see mocks/commons.go).
-	suffix := fmt.Sprintf("-%s", channel)
+	suffix := fmt.Sprintf("-%s", chanID)
 
 	for k, v := range crm.channels {
 		if strings.HasSuffix(k, suffix) {
-			for _, c := range v.Things {
-				if c.ID == thing {
-					return true
+			for _, t := range v.Things {
+				if t.Key == key {
+					return t.ID, nil
 				}
 			}
 			break
 		}
 	}
 
-	return false
+	return "", things.ErrNotFound
 }

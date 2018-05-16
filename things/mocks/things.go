@@ -2,6 +2,7 @@ package mocks
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 
@@ -10,12 +11,9 @@ import (
 
 var _ things.ThingRepository = (*thingRepositoryMock)(nil)
 
-const cliID = "123e4567-e89b-12d3-a456-"
-
 type thingRepositoryMock struct {
-	mu      sync.Mutex
-	counter int
-	things  map[string]things.Thing
+	mu     sync.Mutex
+	things map[string]things.Thing
 }
 
 // NewThingRepository creates in-memory thing repository.
@@ -25,21 +23,13 @@ func NewThingRepository() things.ThingRepository {
 	}
 }
 
-func (trm *thingRepositoryMock) ID() string {
-	trm.mu.Lock()
-	defer trm.mu.Unlock()
-
-	trm.counter++
-	return fmt.Sprintf("%s%012d", cliID, trm.counter)
-}
-
-func (trm *thingRepositoryMock) Save(thing things.Thing) error {
+func (trm *thingRepositoryMock) Save(thing things.Thing) (string, error) {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
 	trm.things[key(thing.Owner, thing.ID)] = thing
 
-	return nil
+	return thing.ID, nil
 }
 
 func (trm *thingRepositoryMock) Update(thing things.Thing) error {
@@ -75,15 +65,27 @@ func (trm *thingRepositoryMock) All(owner string, offset, limit int) []things.Th
 		return things
 	}
 
-	// Since IDs start from 1, shift everything by one.
-	first := fmt.Sprintf("%s%012d", cliID, offset+1)
-	last := fmt.Sprintf("%s%012d", cliID, offset+limit+1)
+	// Since both ID and key are generated via the identity provider mock, all
+	// identifiers will be at "odd" positions. The following loop skips all
+	// values used for keys. Starting value of 1 indicates the first usable
+	// UUID produced by mocked identity provider.
+	skip := 1
+	for i := 0; i < offset; i++ {
+		skip += 2
+	}
+
+	first := fmt.Sprintf("%s%012d", startID, skip)
+	last := fmt.Sprintf("%s%012d", startID, skip+2*(limit-1))
 
 	for k, v := range trm.things {
-		if strings.HasPrefix(k, prefix) && v.ID >= first && v.ID < last {
+		if strings.HasPrefix(k, prefix) && v.ID >= first && v.ID <= last {
 			things = append(things, v)
 		}
 	}
+
+	sort.SliceStable(things, func(i, j int) bool {
+		return things[i].ID < things[j].ID
+	})
 
 	return things
 }

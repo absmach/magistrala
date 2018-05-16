@@ -22,9 +22,9 @@ func LoggingMiddleware(svc things.Service, logger log.Logger) things.Service {
 	return &loggingMiddleware{logger, svc}
 }
 
-func (lm *loggingMiddleware) AddThing(key string, thing things.Thing) (id string, err error) {
+func (lm *loggingMiddleware) AddThing(key string, thing things.Thing) (saved things.Thing, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method add_thing for key %s and thing %s took %s to complete", key, id, time.Since(begin))
+		message := fmt.Sprintf("Method add_thing for key %s and thing %s took %s to complete", key, saved.ID, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -87,9 +87,9 @@ func (lm *loggingMiddleware) RemoveThing(key string, id string) (err error) {
 	return lm.svc.RemoveThing(key, id)
 }
 
-func (lm *loggingMiddleware) CreateChannel(key string, channel things.Channel) (id string, err error) {
+func (lm *loggingMiddleware) CreateChannel(key string, channel things.Channel) (saved things.Channel, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method create_channel for key %s and channel %s took %s to complete", key, id, time.Since(begin))
+		message := fmt.Sprintf("Method create_channel for key %s and channel %s took %s to complete", key, channel.ID, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return

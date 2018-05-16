@@ -29,12 +29,9 @@ func (c *Thing) Validate() error {
 
 // ThingRepository specifies a thing persistence API.
 type ThingRepository interface {
-	// ID generates new resource identifier.
-	ID() string
-
 	// Save persists the thing. Successful operation is indicated by non-nil
 	// error response.
-	Save(Thing) error
+	Save(Thing) (string, error)
 
 	// Update performs an update to the existing thing. A non-nil error is
 	// returned to indicate operation failure.

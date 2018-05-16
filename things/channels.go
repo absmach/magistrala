@@ -38,7 +38,7 @@ type ChannelRepository interface {
 	// things.
 	Disconnect(string, string, string) error
 
-	// HasThing determines whether the thing with the provided identifier, is
+	// HasThing determines whether the thing with the provided access key, is
 	// "connected" to the specified channel.
-	HasThing(string, string) bool
+	HasThing(string, string) (string, error)
 }

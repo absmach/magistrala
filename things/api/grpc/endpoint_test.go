@@ -79,3 +79,33 @@ func TestCanAccess(t *testing.T) {
 		assert.Equal(t, tc.code, e.Code(), fmt.Sprintf("%s: expected %s got %s", desc, tc.code, e.Code()))
 	}
 }
+
+func TestIdentify(t *testing.T) {
+	svc := newService(map[string]string{token: email})
+	startGRPCServer(svc, port)
+
+	sth, _ := svc.AddThing(token, thing)
+
+	usersAddr := fmt.Sprintf("localhost:%d", port)
+	conn, _ := grpc.Dial(usersAddr, grpc.WithInsecure())
+	cli := grpcapi.NewClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	cases := map[string]struct {
+		key  string
+		id   string
+		code codes.Code
+	}{
+		"identify existing thing":     {sth.Key, sth.ID, codes.OK},
+		"identify non-existent thing": {wrong, "", codes.PermissionDenied},
+	}
+
+	for desc, tc := range cases {
+		id, err := cli.Identify(ctx, &mainflux.Token{Value: tc.key})
+		e, ok := status.FromError(err)
+		assert.True(t, ok, "OK expected to be true")
+		assert.Equal(t, tc.id, id.GetValue(), fmt.Sprintf("%s: expected %s got %s", desc, tc.id, id.GetValue()))
+		assert.Equal(t, tc.code, e.Code(), fmt.Sprintf("%s: expected %s got %s", desc, tc.code, e.Code()))
+	}
+}

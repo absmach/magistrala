@@ -34,7 +34,7 @@ func (ur userRepository) Save(user users.User) error {
 	return nil
 }
 
-func (ur userRepository) One(email string) (users.User, error) {
+func (ur userRepository) RetrieveByID(email string) (users.User, error) {
 	q := `SELECT password FROM users WHERE email = $1`
 
 	user := users.User{}

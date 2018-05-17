@@ -4,10 +4,11 @@ package mainflux;
 
 service ThingsService {
     rpc CanAccess(AccessReq) returns (Identity) {}
+    rpc Identify(Token) returns (Identity) {}
 }
 
 service UsersService {
-    rpc Identify(Token) returns (mainflux.Identity) {}
+    rpc Identify(Token) returns (Identity) {}
 }
 
 message AccessReq {

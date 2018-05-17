@@ -190,3 +190,16 @@ func (lm *loggingMiddleware) CanAccess(key string, id string) (pub string, err e
 
 	return lm.svc.CanAccess(key, id)
 }
+
+func (lm *loggingMiddleware) Identify(key string) (id string, err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method identify for key %s and publisher %s took %s to complete", key, id, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.Identify(key)
+}

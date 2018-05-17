@@ -61,7 +61,7 @@ func (svc usersService) Register(user User) error {
 }
 
 func (svc usersService) Login(user User) (string, error) {
-	dbUser, err := svc.users.One(user.Email)
+	dbUser, err := svc.users.RetrieveByID(user.Email)
 	if err != nil {
 		return "", ErrUnauthorizedAccess
 	}

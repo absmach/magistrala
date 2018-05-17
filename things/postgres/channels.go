@@ -58,7 +58,7 @@ func (cr channelRepository) Update(channel things.Channel) error {
 	return nil
 }
 
-func (cr channelRepository) One(owner, id string) (things.Channel, error) {
+func (cr channelRepository) RetrieveByID(owner, id string) (things.Channel, error) {
 	q := `SELECT name FROM channels WHERE id = $1 AND owner = $2`
 	channel := things.Channel{ID: id, Owner: owner}
 	if err := cr.db.QueryRow(q, id, owner).Scan(&channel.Name); err != nil {
@@ -93,7 +93,7 @@ func (cr channelRepository) One(owner, id string) (things.Channel, error) {
 	return channel, nil
 }
 
-func (cr channelRepository) All(owner string, offset, limit int) []things.Channel {
+func (cr channelRepository) RetrieveAll(owner string, offset, limit int) []things.Channel {
 	q := `SELECT id, name FROM channels WHERE owner = $1 ORDER BY id LIMIT $2 OFFSET $3`
 	items := []things.Channel{}
 

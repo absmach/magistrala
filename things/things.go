@@ -37,12 +37,15 @@ type ThingRepository interface {
 	// returned to indicate operation failure.
 	Update(Thing) error
 
-	// One retrieves the thing having the provided identifier, that is owned
+	// RetrieveByID retrieves the thing having the provided identifier, that is owned
 	// by the specified user.
-	One(string, string) (Thing, error)
+	RetrieveByID(string, string) (Thing, error)
 
-	// All retrieves the subset of things owned by the specified user.
-	All(string, int, int) []Thing
+	// RetrieveByKey returns thing ID for given thing key.
+	RetrieveByKey(string) (string, error)
+
+	// RetrieveAll retrieves the subset of things owned by the specified user.
+	RetrieveAll(string, int, int) []Thing
 
 	// Remove removes the thing having the provided identifier, that is owned
 	// by the specified user.

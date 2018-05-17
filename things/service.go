@@ -76,6 +76,9 @@ type Service interface {
 	// CanAccess determines whether the channel can be accessed using the
 	// provided key and returns thing's id if access is allowed.
 	CanAccess(string, string) (string, error)
+
+	// Identify returns thing ID for given thing key.
+	Identify(string) (string, error)
 }
 
 var _ Service = (*thingsService)(nil)
@@ -141,7 +144,7 @@ func (ts *thingsService) ViewThing(key, id string) (Thing, error) {
 		return Thing{}, ErrUnauthorizedAccess
 	}
 
-	return ts.things.One(res.GetValue(), id)
+	return ts.things.RetrieveByID(res.GetValue(), id)
 }
 
 func (ts *thingsService) ListThings(key string, offset, limit int) ([]Thing, error) {
@@ -153,7 +156,7 @@ func (ts *thingsService) ListThings(key string, offset, limit int) ([]Thing, err
 		return nil, ErrUnauthorizedAccess
 	}
 
-	return ts.things.All(res.GetValue(), offset, limit), nil
+	return ts.things.RetrieveAll(res.GetValue(), offset, limit), nil
 }
 
 func (ts *thingsService) RemoveThing(key, id string) error {
@@ -210,7 +213,7 @@ func (ts *thingsService) ViewChannel(key, id string) (Channel, error) {
 		return Channel{}, ErrUnauthorizedAccess
 	}
 
-	return ts.channels.One(res.GetValue(), id)
+	return ts.channels.RetrieveByID(res.GetValue(), id)
 }
 
 func (ts *thingsService) ListChannels(key string, offset, limit int) ([]Channel, error) {
@@ -222,7 +225,7 @@ func (ts *thingsService) ListChannels(key string, offset, limit int) ([]Channel,
 		return nil, ErrUnauthorizedAccess
 	}
 
-	return ts.channels.All(res.GetValue(), offset, limit), nil
+	return ts.channels.RetrieveAll(res.GetValue(), offset, limit), nil
 }
 
 func (ts *thingsService) RemoveChannel(key, id string) error {
@@ -268,4 +271,13 @@ func (ts *thingsService) CanAccess(key, channel string) (string, error) {
 	}
 
 	return thingID, nil
+}
+
+func (ts *thingsService) Identify(key string) (string, error) {
+	id, err := ts.things.RetrieveByKey(key)
+	if err != nil {
+		return "", ErrUnauthorizedAccess
+	}
+
+	return id, nil
 }

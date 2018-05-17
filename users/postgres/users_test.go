@@ -44,7 +44,7 @@ func TestSingleUserRetrieval(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		_, err := repo.One(tc.email)
+		_, err := repo.RetrieveByID(tc.email)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }

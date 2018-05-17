@@ -326,3 +326,24 @@ func TestCanAccess(t *testing.T) {
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
+
+func TestIdentify(t *testing.T) {
+	svc := newService(map[string]string{token: email})
+
+	th, _ := svc.AddThing(token, thing)
+
+	cases := map[string]struct {
+		key string
+		id  string
+		err error
+	}{
+		"identify existing thing":     {th.Key, th.ID, nil},
+		"identify non-existent thing": {token, "", things.ErrUnauthorizedAccess},
+	}
+
+	for desc, tc := range cases {
+		id, err := svc.Identify(tc.key)
+		assert.Equal(t, tc.id, id, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.id, id))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+	}
+}

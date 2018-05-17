@@ -1,6 +1,6 @@
 package grpc
 
-type accessRes struct {
+type identityRes struct {
 	id  string
 	err error
 }

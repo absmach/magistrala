@@ -49,7 +49,7 @@ func (crm *channelRepositoryMock) Update(channel things.Channel) error {
 	return nil
 }
 
-func (crm *channelRepositoryMock) One(owner, id string) (things.Channel, error) {
+func (crm *channelRepositoryMock) RetrieveByID(owner, id string) (things.Channel, error) {
 	if c, ok := crm.channels[key(owner, id)]; ok {
 		return c, nil
 	}
@@ -57,7 +57,7 @@ func (crm *channelRepositoryMock) One(owner, id string) (things.Channel, error) 
 	return things.Channel{}, things.ErrNotFound
 }
 
-func (crm *channelRepositoryMock) All(owner string, offset, limit int) []things.Channel {
+func (crm *channelRepositoryMock) RetrieveAll(owner string, offset, limit int) []things.Channel {
 	// This obscure way to examine map keys is enforced by the key structure
 	// itself (see mocks/commons.go).
 	prefix := fmt.Sprintf("%s-", owner)
@@ -90,12 +90,12 @@ func (crm *channelRepositoryMock) Remove(owner, id string) error {
 }
 
 func (crm *channelRepositoryMock) Connect(owner, chanID, thingID string) error {
-	channel, err := crm.One(owner, chanID)
+	channel, err := crm.RetrieveByID(owner, chanID)
 	if err != nil {
 		return err
 	}
 
-	thing, err := crm.things.One(owner, thingID)
+	thing, err := crm.things.RetrieveByID(owner, thingID)
 	if err != nil {
 		return err
 	}
@@ -104,7 +104,7 @@ func (crm *channelRepositoryMock) Connect(owner, chanID, thingID string) error {
 }
 
 func (crm *channelRepositoryMock) Disconnect(owner, chanID, thingID string) error {
-	channel, err := crm.One(owner, chanID)
+	channel, err := crm.RetrieveByID(owner, chanID)
 	if err != nil {
 		return err
 	}

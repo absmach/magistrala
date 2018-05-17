@@ -16,3 +16,7 @@ func (req accessReq) validate() error {
 	}
 	return nil
 }
+
+type identifyReq struct {
+	key string
+}

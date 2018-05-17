@@ -20,12 +20,12 @@ type ChannelRepository interface {
 	// returned to indicate operation failure.
 	Update(Channel) error
 
-	// One retrieves the channel having the provided identifier, that is owned
+	// RetrieveByID retrieves the channel having the provided identifier, that is owned
 	// by the specified user.
-	One(string, string) (Channel, error)
+	RetrieveByID(string, string) (Channel, error)
 
-	// All retrieves the subset of channels owned by the specified user.
-	All(string, int, int) []Channel
+	// RetrieveAll retrieves the subset of channels owned by the specified user.
+	RetrieveAll(string, int, int) []Channel
 
 	// Remove removes the channel having the provided identifier, that is owned
 	// by the specified user.

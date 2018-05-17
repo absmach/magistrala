@@ -12,24 +12,41 @@ import (
 var _ mainflux.ThingsServiceServer = (*grpcServer)(nil)
 
 type grpcServer struct {
-	handler kitgrpc.Handler
+	canAccess kitgrpc.Handler
+	identify  kitgrpc.Handler
 }
 
 // NewServer returns new ThingsServiceServer instance.
 func NewServer(svc things.Service) mainflux.ThingsServiceServer {
-	handler := kitgrpc.NewServer(
-		canAccessEndpoint(svc),
-		decodeCanAccessRequest,
-		encodeCanAccessResponse,
-	)
-	return &grpcServer{handler}
+	return &grpcServer{
+		canAccess: kitgrpc.NewServer(
+			canAccessEndpoint(svc),
+			decodeCanAccessRequest,
+			encodeIdentityResponse,
+		),
+		identify: kitgrpc.NewServer(
+			identifyEndpoint(svc),
+			decodeIdentifyRequest,
+			encodeIdentityResponse,
+		),
+	}
 }
 
-func (s *grpcServer) CanAccess(ctx context.Context, req *mainflux.AccessReq) (*mainflux.Identity, error) {
-	_, res, err := s.handler.ServeGRPC(ctx, req)
+func (gs *grpcServer) CanAccess(ctx context.Context, req *mainflux.AccessReq) (*mainflux.Identity, error) {
+	_, res, err := gs.canAccess.ServeGRPC(ctx, req)
 	if err != nil {
 		return nil, encodeError(err)
 	}
+
+	return res.(*mainflux.Identity), nil
+}
+
+func (gs *grpcServer) Identify(ctx context.Context, req *mainflux.Token) (*mainflux.Identity, error) {
+	_, res, err := gs.identify.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, encodeError(err)
+	}
+
 	return res.(*mainflux.Identity), nil
 }
 
@@ -38,8 +55,13 @@ func decodeCanAccessRequest(_ context.Context, grpcReq interface{}) (interface{}
 	return accessReq{req.GetToken(), req.GetChanID()}, nil
 }
 
-func encodeCanAccessResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(accessRes)
+func decodeIdentifyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req := grpcReq.(*mainflux.Token)
+	return identifyReq{req.GetValue()}, nil
+}
+
+func encodeIdentityResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+	res := grpcRes.(identityRes)
 	return &mainflux.Identity{Value: res.id}, encodeError(res.err)
 }
 

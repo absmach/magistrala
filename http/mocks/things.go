@@ -5,7 +5,6 @@ import (
 
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/things"
-
 	"google.golang.org/grpc"
 )
 
@@ -32,4 +31,8 @@ func (tc thingsClient) CanAccess(ctx context.Context, req *mainflux.AccessReq, o
 	}
 
 	return &mainflux.Identity{Value: id}, nil
+}
+
+func (tc thingsClient) Identify(ctx context.Context, req *mainflux.Token, opts ...grpc.CallOption) (*mainflux.Identity, error) {
+	return nil, nil
 }

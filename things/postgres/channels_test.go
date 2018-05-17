@@ -64,7 +64,7 @@ func TestSingleChannelRetrieval(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		_, err := chanRepo.One(tc.owner, tc.ID)
+		_, err := chanRepo.RetrieveByID(tc.owner, tc.ID)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
@@ -92,7 +92,7 @@ func TestMultiChannelRetrieval(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		size := len(chanRepo.All(tc.owner, tc.offset, tc.limit))
+		size := len(chanRepo.RetrieveAll(tc.owner, tc.offset, tc.limit))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 	}
 }
@@ -110,7 +110,7 @@ func TestChannelRemoval(t *testing.T) {
 			t.Fatalf("#%d: failed to remove channel due to: %s", i, err)
 		}
 
-		if _, err := chanRepo.One(email, chanID); err != things.ErrNotFound {
+		if _, err := chanRepo.RetrieveByID(email, chanID); err != things.ErrNotFound {
 			t.Fatalf("#%d: expected %s got %s", i, things.ErrNotFound, err)
 		}
 	}

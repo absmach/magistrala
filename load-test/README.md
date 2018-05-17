@@ -1,10 +1,11 @@
 # Load Test
 
-This SBT project contains load tests written for mainflux platform.
+This project contains platform's load tests.
 
-## Setup
+## Prerequisites
 
-In order to run load tests you must have [openjdk8](http://openjdk.java.net/install/) and [sbt](https://www.scala-sbt.org/1.0/docs/Setup.html) installed on your machine.
+To run the tests you must have [OpenJDK8](http://openjdk.java.net/install/) and
+[SBT](https://www.scala-sbt.org/1.0/docs/Setup.html) installed on your machine.
 
 ## Configuration
 
@@ -15,7 +16,7 @@ default values.
 | Variable | Description                              | Default               |
 |----------|------------------------------------------|-----------------------|
 | users    | Users service URL                        | http://localhost:8180 |
-| clients  | Clients service URL                      | http://localhost:8182 |
+| things   | Things service URL                       | http://localhost:8182 |
 | http     | HTTP adapter service URL                 | http://localhost:8185 |
 | requests | Number of requests to be sent per second | 100                   |
 
@@ -23,8 +24,8 @@ default values.
 
 This project contains two simulations:
 
-- `PublishSimulation`
-- `CreateAndRetrieveClientSimulation`
+- `CreateAndRetrieveThings`
+- `PublishMessages`
 
 To run all tests you will have to run following commands:
 
@@ -33,18 +34,20 @@ cd <path_to_mainflux_project>/load-test
 sbt gatling:test
 ```
 
-### Publish Simulation
+### Things creation and retrieval
 
-`PublishSimulation` contains load tests for publishing messages. To run this test use following command:
+`CreateAndRetrieveThings` contains load tests for creating and retrieving things.
+Execute the following command to run the suite:
 
 ```bash
-sbt "gatling:testOnly com.mainflux.loadtest.simulations.PublishSimulation"
+sbt "gatling:testOnly com.mainflux.loadtest.CreateAndRetrieveThings"
 ```
 
-### Create And Retrieve Client Simulation
+### Message publishing
 
-`CreateAndRetrieveClientSimulation` contains load tests for creating and retrieving clients. To run this test use following command:
+`PublishMessages` contains load tests for publishing messages. Execute the following
+command to run the suite:
 
 ```bash
-sbt "gatling:testOnly com.mainflux.loadtest.simulations.CreateAndRetrieveClientSimulation"
+sbt "gatling:testOnly com.mainflux.loadtest.PublishMessages"
 ```

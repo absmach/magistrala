@@ -27,6 +27,7 @@ const (
 var (
 	thing   = things.Thing{Type: "app", Name: "test_app", Payload: "test_payload"}
 	channel = things.Channel{Name: "test"}
+	svc     things.Service
 )
 
 func newService(tokens map[string]string) things.Service {
@@ -45,9 +46,6 @@ func startGRPCServer(svc things.Service, port int) {
 }
 
 func TestCanAccess(t *testing.T) {
-	svc := newService(map[string]string{token: email})
-	startGRPCServer(svc, port)
-
 	oth, _ := svc.AddThing(token, thing)
 	cth, _ := svc.AddThing(token, thing)
 	sch, _ := svc.CreateChannel(token, channel)
@@ -81,9 +79,6 @@ func TestCanAccess(t *testing.T) {
 }
 
 func TestIdentify(t *testing.T) {
-	svc := newService(map[string]string{token: email})
-	startGRPCServer(svc, port)
-
 	sth, _ := svc.AddThing(token, thing)
 
 	usersAddr := fmt.Sprintf("localhost:%d", port)

@@ -17,9 +17,12 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const port = 8080
+const port = 8081
 
-var user = users.User{"john.doe@email.com", "pass"}
+var (
+	user = users.User{"john.doe@email.com", "pass"}
+	svc users.Service
+)
 
 func newService() users.Service {
 	repo := mocks.NewUserRepository()
@@ -37,8 +40,6 @@ func startGRPCServer(svc users.Service, port int) {
 }
 
 func TestIdentify(t *testing.T) {
-	svc := newService()
-	startGRPCServer(svc, port)
 	svc.Register(user)
 
 	usersAddr := fmt.Sprintf("localhost:%d", port)

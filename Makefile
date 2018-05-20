@@ -33,7 +33,7 @@ $(DOCKERS):
 
 dockers: $(DOCKERS)
 	docker build --tag=mainflux/dashflux -f dashflux/docker/Dockerfile dashflux
-	docker build --tag=mainflux/mqtt -f mqtt/Dockerfile mqtt
+	docker build --tag=mainflux/mqtt -f mqtt/Dockerfile .
 
 latest: dockers
 	for svc in $(SERVICES); do \

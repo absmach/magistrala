@@ -43,12 +43,8 @@ metadata:
 spec:
   ports:
   - port: 8182
-    targetPort: 8182
-    protocol: TCP
     name: http
   - port: 8183
-    targetPort: 8183
-    protocol: TCP
     name: grpc
   selector:
     component: things

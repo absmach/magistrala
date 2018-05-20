@@ -1,18 +1,10 @@
-###
-# Mainflux Dockerfile
-###
-# Set the base image to Node, onbuild variant: https://registry.hub.docker.com/_/node/
-
 FROM node:boron-alpine
 MAINTAINER Mainflux
 
-COPY . .
-RUN npm install
+COPY *.proto mqtt/* ./
 
-EXPOSE 1883
-EXPOSE 8880
+RUN npm rebuild && npm install
 
-###
-# Run main command with dockerize
-###
+EXPOSE 1883 8880
+
 CMD ["node", "mqtt.js"]

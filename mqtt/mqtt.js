@@ -1,211 +1,142 @@
-/**
- * Copyright (c) Mainflux
- *
- * Mainflux server is licensed under an Apache license, version 2.0 license.
- * All rights not explicitly granted in the Apache license, version 2.0 are reserved.
- * See the included LICENSE file for more details.
- */
-
 'use strict';
 
-var http = require('http');
-var websocket = require('websocket-stream');
-var net = require('net');
-var aedes = require('aedes')();
-var logging = require('aedes-logging');
-var request = require('request');
-const util = require('util')
-
-var config = require('./mqtt.config');
-var nats = require('nats').connect(config.nats_url);
-
-var protobuf = require('protocol-buffers');
-const fs = require('fs');
+var http = require('http'),
+    net = require('net'),
+    aedes = require('aedes')(),
+    logging = require('aedes-logging'),
+    protobuf = require('protocol-buffers'),
+    websocket = require('websocket-stream'),
+    grpc = require('grpc'),
+    fs = require('fs'),
+    bunyan = require('bunyan');
 
 // pass a proto file as a buffer/string or pass a parsed protobuf-schema object
-var message = protobuf(fs.readFileSync('message.proto'));
-
-var servers = [
-    startWs(),
-    startMqtt()
-];
+var logger = bunyan.createLogger({name: "mqtt"}),
+    config = {
+        mqtt_port: process.env.MF_MQTT_ADAPTER_PORT || 1883,
+        ws_port: process.env.MF_MQTT_WS_PORT || 8880,
+        nats_url: process.env.MF_NATS_URL || 'nats://localhost:4222',
+        auth_url: process.env.MF_THINGS_URL || 'localhost:8181',
+        schema_dir: process.argv[2] || '.'
+    },
+    message = protobuf(fs.readFileSync(config.schema_dir + '/message.proto')),
+    thingsSchema = grpc.load(config.schema_dir + "/internal.proto").mainflux,
+    nats = require('nats').connect(config.nats_url),
+    things = new thingsSchema.ThingsService(config.auth_url, grpc.credentials.createInsecure()),
+    servers = [
+        startMqtt(),
+        startWs()
+    ];
 
 logging({
     instance: aedes,
     servers: servers
 });
 
-/**
- * WebSocket
- */
+// MQTT over WebSocket
 function startWs() {
     var server = http.createServer();
-    websocket.createServer({
-        server: server
-    }, aedes.handle);
+    websocket.createServer({server: server}, aedes.handle);
     server.listen(config.ws_port);
     return server;
 }
-/**
- * MQTT
- */
+
 function startMqtt() {
     return net.createServer(aedes.handle).listen(config.mqtt_port);
 }
-/**
- * NATS
- */
+
 nats.subscribe('channel.*', function (msg) {
-
-    var m = message.RawMessage.decode(Buffer.from(msg))
-
-    if (m.Protocol == 'mqtt') {
-        // Ignore MQTT loopback,
-        // packet has been already published by MQTT broker
-        // before sending it to NATS
-        return;
-    }
-
-    // Parse and adjust content-type
-    if (m.ContentType == "application/senml+json") {
-        m.ContentType = "senml-json"
-    }
-
-    var packet = {
-        cmd: 'publish',
-        qos: 2,
-        topic: 'mainflux/channels/' + m.Channel + '/messages/' + m.ContentType,
-        payload: m.Payload,
-        retain: false
-    };
+    var m = message.RawMessage.decode(Buffer.from(msg)),
+        packet = {
+            cmd: 'publish',
+            qos: 2,
+            topic: 'channels/' + m.Channel + '/messages',
+            payload: m.Payload,
+            retain: false
+        };
 
     aedes.publish(packet);
 });
 
-/**
- * Hooks
- */
-// AuthZ PUB
-aedes.authorizePublish = function (client, packet, callback) {
-    // Topics are in the form `mainflux/channels/<channel_id>/messages/senml-json`
-    var channel = packet.topic.split('/')[2];
+aedes.authorizePublish = function (client, packet, publish) {
+    // Topics are in the form `channels/<channel_id>/messages`
+    var channel = packet.topic.split('/')[1],
+        accessReq = {
+            token: client.password,
+            chanID: channel
+        },
+        onAuthorize = function (err, res) {
+            var rawMsg
+            if (!err) {
+                logger.info('authorized publish');
+                
+                rawMsg = message.RawMessage.encode({
+                    Publisher: client.id,
+                    Channel: channel,
+                    Protocol: 'mqtt',
+                    Payload: packet.payload
+                });
+                nats.publish('channel.' + channel, rawMsg);
+    
+                // Set empty topic for packet so that it won't be published two times.
+                packet.topic = '';
+                publish(0);
+            } else {
+                logger.warn("unauthorized publish: %s", err.message);
+                publish(4); // Bad username or password
+            }
+        };
 
-    /**
-     * Check if PUB is authorized
-     */
-    var options = {
-        url: config.auth_url + ':' + config.auth_port + '/channels/' + channel + '/access-grant',
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': client.password
-        }
-    };
-
-    request(options, function (err, res) {
-        var error = null;
-        var msg = {};
-        if (res && (res.statusCode === 200)) {
-            console.log('Publish authorized OK');
-
-          var msg = message.RawMessage.encode({
-              /**
-               * We must publish on NATS here, because on_publish() is also called
-               * when we receive message from NATS from other adapters (in nats.subscribe()),
-               * so we must avoid re-publishing on NATS what came from other adapters
-               */
-              Publisher: client.id,
-              Channel: channel,
-              Protocol: 'mqtt',
-              ContentType: packet.topic.split('/')[4],
-              Payload: packet.payload
-            });
-
-            console.log(msg);
-
-            console.log(util.inspect(packet, false, null))
-
-            // Pub on NATS
-            nats.publish('channel.' + channel, msg);
-        } else {
-            console.log('Publish not authorized');
-            error = 4; // Bad username or password
-        }
-        callback(error);
-    });
+    things.CanAccess(accessReq, onAuthorize);
 };
 
-// AuthZ SUB
-aedes.authorizeSubscribe = function (client, packet, callback) {
-    // Topics are in the form `mainflux/channels/<channel_id>/messages/senml-json`
-    var channel = packet.topic.split('/')[2];
-    /**
-    * Check if PUB is authorized
-    */
-    var options = {
-        url: config.auth_url + ':' + config.auth_port + '/channels/' + channel + '/access-grant',
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': client.password
-        }
-    };
 
-    request(options, function (err, res) {
-        var error = null;
-        if (res && (res.statusCode === 200)) {
-            console.log('Subscribe authorized OK');
-        } else {
-            console.log('Subscribe not authorized');
-            error = 4; // Bad username or password
-        }
-        callback(error, packet);
-    });
+aedes.authorizeSubscribe = function (client, packet, subscribe) {
+    // Topics are in the form `channels/<channel_id>/messages`
+    var channel = packet.topic.split('/')[1],
+        accessReq = {
+            token: client.password,
+            chanID: channel
+        },
+        onAuthorize = function (err, res) {
+            if (!err) {
+                logger.info('authorized subscribe');
+                subscribe(null, packet);
+            } else {
+                logger.warn('unauthorized subscribe: %s', err);
+                subscribe(4, packet); // Bad username or password
+            }
+        };
+    
+    things.canAccess(accessReq, onAuthorize);
 };
 
-// AuthX
-aedes.authenticate = function (client, username, password, callback) {
-    var c = client;
-    var options = {
-        url: config.auth_url + ':' + config.auth_port + '/access-grant',
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': password
-        }
-    };
-    request(options, function (err, res) {
-        var error = null;
-        var success = null;
-        if (res && (res.statusCode === 200)) {
-            // Set MQTT client.id to correspond to Mainflux device UUID
-            c.id = res.headers['x-client-id'];
-            // Store password for future references
-            c.password = password;
-            success = true;
-        } else {
-            error = new Error('Auth error');
-            error.returnCode = 4; // Bad username or password
-            success = false;
-        }
-        // Respond with auth error and success
-        callback(error, success);
-    });
+aedes.authenticate = function (client, username, password, acknowledge) {
+    var pass = (password || "").toString(),
+        identity = {value: pass},
+        onIdentify = function(err, res) {
+            if (!err) {
+                client.id = res.value.toString() || "";
+                client.password = pass;
+                acknowledge(null, true);
+            } else {
+                logger.warn('failed to authenticate client with key %s', password);
+                acknowledge(err, false);
+            }
+        };
+        
+    things.identify(identity, onIdentify);
 };
-/**
- * Handlers
- */
+
 aedes.on('clientDisconnect', function (client) {
-    var c = client;
-    console.log('client disconnect', client.id);
-    // Remove client password
-    c.password = null;
+    logger.info('disconnect client %s', client.id);
+    client.password = null;
 });
 
 aedes.on('clientError', function (client, err) {
-  console.log('client error', client.id, err.message, err.stack)
-})
+  logger.warn('client error: client: %s, error: %s', client.id, err.message);
+});
 
 aedes.on('connectionError', function (client, err) {
-  console.log('client error', client, err.message, err.stack)
-})
+  logger.warn('client error: client: %s, error: %s', client.id, err.message);
+});

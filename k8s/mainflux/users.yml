@@ -39,12 +39,8 @@ metadata:
 spec:
   ports:
   - port: 8180
-    targetPort: 8180
-    protocol: TCP
     name: http
   - port: 8181
-    targetPort: 8181
-    protocol: TCP
     name: grpc
   selector:
     component: users

@@ -1,0 +1,43 @@
+apiVersion: apps/v1beta1 
+kind: Deployment 
+metadata:
+  name: mqtt-adapter
+  labels:
+    component: mqtt-adapter 
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        component: mqtt-adapter
+    spec:
+      containers:
+      - name: mainflux-mqtt
+        image: mainflux/mqtt:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 1883
+          name: mqtt-mqtt
+        - containerPort: 8880
+          name: mqtt-ws
+        env:
+        - name: MF_THINGS_URL
+          value: "things:8183"
+        - name: MF_NATS_URL
+          value: "nats://nats:4222"
+---
+apiVersion: v1 
+kind: Service 
+metadata:
+  name: mqtt-adapter
+  labels:
+    component: mqtt-adapter 
+spec:
+  selector:
+    component: mqtt-adapter
+  ports:
+  - port: 1883
+    name: mqtt
+  - port: 8880
+    name: ws
+  type: LoadBalancer

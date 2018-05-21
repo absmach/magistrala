@@ -60,8 +60,7 @@ func handshake(tsURL string, chanID uint64, token string, addHeader bool) (*webs
 		header.Add("Authorization", token)
 	}
 	url := makeURL(tsURL, chanID, token, addHeader)
-	conn, resp, err := websocket.DefaultDialer.Dial(url, header)
-	return conn, resp, err
+	return websocket.DefaultDialer.Dial(url, header)
 }
 
 func TestHandshake(t *testing.T) {

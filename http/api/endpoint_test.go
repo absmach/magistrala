@@ -54,7 +54,6 @@ func TestPublish(t *testing.T) {
 	token := "auth_token"
 	invalidToken := "invalid_token"
 	msg := `[{"n":"current","t":-1,"v":1.6}]`
-	wrongID := uint64(0)
 
 	thingsClient := mocks.NewThingsClient(map[string]uint64{token: id})
 	pub := newService()

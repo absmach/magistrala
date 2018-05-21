@@ -11,6 +11,8 @@ spec:
     name: http
   - port: 443
     name: https
+  - port: 8883
+    name: mqtt
   selector:
     app: nginx
 ---
@@ -32,13 +34,22 @@ spec:
         configMap:
           name: mainflux-nginx-config
       containers:
-      - name: maiflux-nginx
-        image: nginx:1.14-alpine
+      - name: mainflux-nginx
+        image: nginx:1.13-alpine
         ports:
         - containerPort: 80
         - containerPort: 443
+        - containerPort: 8883
         volumeMounts:
-        - mountPath: /etc/nginx/ssl
+        - mountPath: /etc/ssl/certs/mainflux-server.crt
           name: secret-volume
-        - mountPath: /etc/nginx/conf.d
+          subPath: mainflux-server.crt
+        - mountPath: /etc/ssl/private/mainflux-server.key
+          name: secret-volume
+          subPath: mainflux-server.key
+        - mountPath: /etc/ssl/certs/dhparam.pem
+          name: secret-volume
+          subPath: dhparam.pem
+        - mountPath: /etc/nginx/nginx.conf
           name: configmap-volume
+          subPath: nginx.conf

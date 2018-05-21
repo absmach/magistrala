@@ -33,18 +33,18 @@ kubectl create -f k8s/mainflux/users-postgres.yml
 kubectl create -f k8s/mainflux/users.yml
 ```
 
-### 3. Setup Clients service
+### 3. Setup Things service
 
-- Deploy PostgreSQL service for Clients service to use:
-
-```
-kubectl create -f k8s/mainflux/clients-postgres.yml
-```
-
-- Deploy Clients service:
+- Deploy PostgreSQL service for Things service to use:
 
 ```
-kubectl create -f k8s/mainflux/clients.yml
+kubectl create -f k8s/mainflux/things-postgres.yml
+```
+
+- Deploy Things service:
+
+```
+kubectl create -f k8s/mainflux/things.yml
 ```
 
 ### 4. Setup Normalizer service
@@ -76,13 +76,13 @@ kubectl create -f k8s/mainflux/dashflux.yml
 - Create TLS server side certificate and keys:
 
 ```
-kubectl create secret tls mainflux-secret --key k8s/nginx/certs/mainflux-server.key --cert k8s/nginx/certs/mainflux-server.crt
+kubectl create secret generic mainflux-secret --from-file=k8s/nginx/ssl/certs/mainflux-server.crt --from-file=k8s/nginx/ssl/certs/mainflux-server.key --from-file=k8s/nginx/ssl/dhparam.pem
 ```
 
 - Create Kubernetes configmap to store NginX configuration:
 
 ```
-kubectl create configmap mainflux-nginx-config --from-file=k8s/nginx/default.conf
+kubectl create configmap mainflux-nginx-config --from-file=k8s/nginx/nginx.conf
 ```
 
 - Deploy NginX service:

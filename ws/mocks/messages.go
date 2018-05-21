@@ -8,12 +8,12 @@ import (
 var _ ws.Service = (*mockService)(nil)
 
 type mockService struct {
-	subscriptions map[string]ws.Channel
+	subscriptions map[uint64]ws.Channel
 	pubError      error
 }
 
 // NewService returns mock message publisher.
-func NewService(subs map[string]ws.Channel, pubError error) ws.Service {
+func NewService(subs map[uint64]ws.Channel, pubError error) ws.Service {
 	return mockService{subs, pubError}
 }
 
@@ -25,7 +25,7 @@ func (svc mockService) Publish(msg mainflux.RawMessage) error {
 	return nil
 }
 
-func (svc mockService) Subscribe(chanID string, channel ws.Channel) error {
+func (svc mockService) Subscribe(chanID uint64, channel ws.Channel) error {
 	if _, ok := svc.subscriptions[chanID]; !ok {
 		return ws.ErrFailedSubscription
 	}

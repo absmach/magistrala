@@ -149,9 +149,14 @@ func decodeThingUpdate(_ context.Context, r *http.Request) (interface{}, error) 
 		return nil, err
 	}
 
+	id, err := things.FromString(bone.GetValue(r, "id"))
+	if err != nil {
+		return nil, err
+	}
+
 	req := updateThingReq{
 		key:   r.Header.Get("Authorization"),
-		id:    bone.GetValue(r, "id"),
+		id:    id,
 		thing: thing,
 	}
 
@@ -186,9 +191,14 @@ func decodeChannelUpdate(_ context.Context, r *http.Request) (interface{}, error
 		return nil, err
 	}
 
+	id, err := things.FromString(bone.GetValue(r, "id"))
+	if err != nil {
+		return nil, err
+	}
+
 	req := updateChannelReq{
 		key:     r.Header.Get("Authorization"),
-		id:      bone.GetValue(r, "id"),
+		id:      id,
 		channel: channel,
 	}
 
@@ -196,9 +206,14 @@ func decodeChannelUpdate(_ context.Context, r *http.Request) (interface{}, error
 }
 
 func decodeView(_ context.Context, r *http.Request) (interface{}, error) {
+	id, err := things.FromString(bone.GetValue(r, "id"))
+	if err != nil {
+		return nil, err
+	}
+
 	req := viewResourceReq{
 		key: r.Header.Get("Authorization"),
-		id:  bone.GetValue(r, "id"),
+		id:  id,
 	}
 
 	return req, nil
@@ -241,10 +256,20 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func decodeConnection(_ context.Context, r *http.Request) (interface{}, error) {
+	thingID, err := things.FromString(bone.GetValue(r, "thingId"))
+	if err != nil {
+		return nil, err
+	}
+
+	chanID, err := things.FromString(bone.GetValue(r, "chanId"))
+	if err != nil {
+		return nil, err
+	}
+
 	req := connectionReq{
 		key:     r.Header.Get("Authorization"),
-		chanID:  bone.GetValue(r, "chanId"),
-		thingID: bone.GetValue(r, "thingId"),
+		chanID:  chanID,
+		thingID: thingID,
 	}
 
 	return req, nil

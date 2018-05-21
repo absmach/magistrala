@@ -3,23 +3,27 @@ syntax = "proto3";
 package mainflux;
 
 service ThingsService {
-    rpc CanAccess(AccessReq) returns (Identity) {}
-    rpc Identify(Token) returns (Identity) {}
+    rpc CanAccess(AccessReq) returns (ThingID) {}
+    rpc Identify(Token) returns (ThingID) {}
 }
 
 service UsersService {
-    rpc Identify(Token) returns (Identity) {}
+    rpc Identify(Token) returns (UserID) {}
 }
 
 message AccessReq {
     string token = 1;
-    string chanID = 2;
+    uint64 chanID = 2;
+}
+
+message ThingID {
+    uint64 value = 1;
 }
 
 message Token {
     string value = 1;
 }
 
-message Identity {
+message UserID {
     string value = 1;
 }

@@ -20,8 +20,8 @@ const (
 	contentType = "application/json"
 	email       = "user@example.com"
 	token       = "token"
-	invalid     = "invalid_value"
-	wrongID     = "123e4567-e89b-12d3-a456-000000000042"
+	wrongValue  = "wrong_value"
+	wrongID     = 0
 )
 
 var (
@@ -71,17 +71,12 @@ func toJSON(data interface{}) string {
 }
 
 func TestAddThing(t *testing.T) {
-	id := "123e4567-e89b-12d3-a456-000000000001"
 	svc := newService(map[string]string{token: email})
 	ts := newServer(svc)
 	defer ts.Close()
 
 	data := toJSON(thing)
-	invalidData := toJSON(things.Thing{
-		Type:    "foo",
-		Name:    "invalid_thing",
-		Payload: "some_payload",
-	})
+	invalidData := toJSON(things.Thing{Type: "foo"})
 
 	cases := []struct {
 		desc        string
@@ -91,13 +86,62 @@ func TestAddThing(t *testing.T) {
 		status      int
 		location    string
 	}{
-		{"add valid thing", data, contentType, token, http.StatusCreated, fmt.Sprintf("/things/%s", id)},
-		{"add thing with invalid data", invalidData, contentType, token, http.StatusBadRequest, ""},
-		{"add thing with invalid auth token", data, contentType, invalid, http.StatusForbidden, ""},
-		{"add thing with invalid request format", "}", contentType, token, http.StatusBadRequest, ""},
-		{"add thing with empty JSON request", "{}", contentType, token, http.StatusBadRequest, ""},
-		{"add thing with empty request", "", contentType, token, http.StatusBadRequest, ""},
-		{"add thing with missing content type", data, "", token, http.StatusUnsupportedMediaType, ""},
+		{
+			desc:        "add valid thing",
+			req:         data,
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusCreated,
+			location:    "/things/1",
+		},
+		{
+			desc:        "add thing with invalid data",
+			req:         invalidData,
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusBadRequest,
+			location:    "",
+		},
+		{
+			desc:        "add thing with invalid auth token",
+			req:         data,
+			contentType: contentType,
+			auth:        wrongValue,
+			status:      http.StatusForbidden,
+			location:    "",
+		},
+		{
+			desc:        "add thing with invalid request format",
+			req:         "}",
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusBadRequest,
+			location:    "",
+		},
+		{
+			desc:        "add thing with empty JSON request",
+			req:         "{}",
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusBadRequest,
+			location:    "",
+		},
+		{
+			desc:        "add thing with empty request",
+			req:         "",
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusBadRequest,
+			location:    "",
+		},
+		{
+			desc:        "add thing without content type",
+			req:         data,
+			contentType: "",
+			auth:        token,
+			status:      http.StatusUnsupportedMediaType,
+			location:    "",
+		},
 	}
 
 	for _, tc := range cases {
@@ -124,37 +168,88 @@ func TestUpdateThing(t *testing.T) {
 	defer ts.Close()
 
 	data := toJSON(thing)
-	invalidData := toJSON(things.Thing{
-		Type:    "foo",
-		Name:    thing.Name,
-		Payload: thing.Payload,
-	})
+	invalidData := toJSON(things.Thing{Type: "foo"})
 	sth, _ := svc.AddThing(token, thing)
 
 	cases := []struct {
 		desc        string
 		req         string
-		id          string
+		id          uint64
 		contentType string
 		auth        string
 		status      int
 	}{
-		{"update existing thing", data, sth.ID, contentType, token, http.StatusOK},
-		{"update non-existent thing", data, wrongID, contentType, token, http.StatusNotFound},
-		{"update thing with invalid id", data, invalid, contentType, token, http.StatusNotFound},
-		{"update thing with invalid data", invalidData, sth.ID, contentType, token, http.StatusBadRequest},
-		{"update thing with invalid user token", data, sth.ID, contentType, invalid, http.StatusForbidden},
-		{"update thing with invalid data format", "{", sth.ID, contentType, token, http.StatusBadRequest},
-		{"update thing with empty JSON request", "{}", sth.ID, contentType, token, http.StatusBadRequest},
-		{"update thing with empty request", "", sth.ID, contentType, token, http.StatusBadRequest},
-		{"update thing with missing content type", data, sth.ID, "", token, http.StatusUnsupportedMediaType},
+		{
+			desc:        "update existing thing",
+			req:         data,
+			id:          sth.ID,
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusOK,
+		},
+		{
+			desc:        "update non-existent thing",
+			req:         data,
+			id:          wrongID,
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusNotFound,
+		},
+		{
+			desc:        "update thing with invalid data",
+			req:         invalidData,
+			id:          sth.ID,
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusBadRequest,
+		},
+		{
+			desc:        "update thing with invalid user token",
+			req:         data,
+			id:          sth.ID,
+			contentType: contentType,
+			auth:        wrongValue,
+			status:      http.StatusForbidden,
+		},
+		{
+			desc:        "update thing with invalid data format",
+			req:         "{",
+			id:          sth.ID,
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusBadRequest,
+		},
+		{
+			desc:        "update thing with empty JSON request",
+			req:         "{}",
+			id:          sth.ID,
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusBadRequest,
+		},
+		{
+			desc:        "update thing with empty request",
+			req:         "",
+			id:          sth.ID,
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusBadRequest,
+		},
+		{
+			desc:        "update thing without content type",
+			req:         data,
+			id:          sth.ID,
+			contentType: "",
+			auth:        token,
+			status:      http.StatusUnsupportedMediaType,
+		},
 	}
 
 	for _, tc := range cases {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPut,
-			url:         fmt.Sprintf("%s/things/%s", ts.URL, tc.id),
+			url:         fmt.Sprintf("%s/things/%d", ts.URL, tc.id),
 			contentType: tc.contentType,
 			token:       tc.auth,
 			body:        strings.NewReader(tc.req),
@@ -175,22 +270,21 @@ func TestViewThing(t *testing.T) {
 
 	cases := []struct {
 		desc   string
-		id     string
+		id     uint64
 		auth   string
 		status int
 		res    string
 	}{
-		{"view existing thing", sth.ID, token, http.StatusOK, data},
-		{"view non-existent thing", wrongID, token, http.StatusNotFound, ""},
-		{"view thing by passing invalid id", invalid, token, http.StatusNotFound, ""},
-		{"view thing by passing invalid token", sth.ID, invalid, http.StatusForbidden, ""},
+		{desc: "view existing thing", id: sth.ID, auth: token, status: http.StatusOK, res: data},
+		{desc: "view non-existent thing", id: wrongID, auth: token, status: http.StatusNotFound, res: ""},
+		{desc: "view thing by passing invalid token", id: sth.ID, auth: wrongValue, status: http.StatusForbidden, res: ""},
 	}
 
 	for _, tc := range cases {
 		req := testRequest{
 			client: ts.Client(),
 			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/things/%s", ts.URL, tc.id),
+			url:    fmt.Sprintf("%s/things/%d", ts.URL, tc.id),
 			token:  tc.auth,
 		}
 		res, err := req.make()
@@ -223,20 +317,104 @@ func TestListThings(t *testing.T) {
 		url    string
 		res    []things.Thing
 	}{
-		{"get a list of things", token, http.StatusOK, fmt.Sprintf("%s?offset=%d&limit=%d", thingURL, 0, 5), data[0:5]},
-		{"get a list of things with invalid token", invalid, http.StatusForbidden, fmt.Sprintf("%s?offset=%d&limit=%d", thingURL, 0, 1), nil},
-		{"get a list of things with invalid offset", token, http.StatusBadRequest, fmt.Sprintf("%s?offset=%d&limit=%d", thingURL, -1, 5), nil},
-		{"get a list of things with invalid limit", token, http.StatusBadRequest, fmt.Sprintf("%s?offset=%d&limit=%d", thingURL, 1, -5), nil},
-		{"get a list of things with zero limit", token, http.StatusBadRequest, fmt.Sprintf("%s?offset=%d&limit=%d", thingURL, 1, 0), nil},
-		{"get a list of things with no offset provided", token, http.StatusOK, fmt.Sprintf("%s?limit=%d", thingURL, 5), data[0:5]},
-		{"get a list of things with no limit provided", token, http.StatusOK, fmt.Sprintf("%s?offset=%d", thingURL, 1), data[1:11]},
-		{"get a list of things with redundant query params", token, http.StatusOK, fmt.Sprintf("%s?offset=%d&limit=%d&value=something", thingURL, 0, 5), data[0:5]},
-		{"get a list of things with limit greater than max", token, http.StatusBadRequest, fmt.Sprintf("%s?offset=%d&limit=%d", thingURL, 0, 110), nil},
-		{"get a list of things with default URL", token, http.StatusOK, fmt.Sprintf("%s%s", thingURL, ""), data[0:10]},
-		{"get a list of things with invalid URL", token, http.StatusBadRequest, fmt.Sprintf("%s%s", thingURL, "?%%"), nil},
-		{"get a list of things with invalid number of params", token, http.StatusBadRequest, fmt.Sprintf("%s%s", thingURL, "?offset=4&limit=4&limit=5&offset=5"), nil},
-		{"get a list of things with invalid offset", token, http.StatusBadRequest, fmt.Sprintf("%s%s", thingURL, "?offset=e&limit=5"), nil},
-		{"get a list of things with invalid limit", token, http.StatusBadRequest, fmt.Sprintf("%s%s", thingURL, "?offset=5&limit=e"), nil},
+		{
+			desc:   "get a list of things",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d", thingURL, 0, 5),
+			res:    data[0:5],
+		},
+		{
+			desc:   "get a list of things with invalid token",
+			auth:   wrongValue,
+			status: http.StatusForbidden,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d", thingURL, 0, 1),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of things with negative offset",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d", thingURL, -1, 5),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of things with negative limit",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d", thingURL, 1, -5),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of things with zero limit",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d", thingURL, 1, 0),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of things without offset",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("%s?limit=%d", thingURL, 5),
+			res:    data[0:5],
+		},
+		{
+			desc:   "get a list of things without limit",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("%s?offset=%d", thingURL, 1),
+			res:    data[1:11],
+		},
+		{
+			desc:   "get a list of things with redundant query params",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d&value=something", thingURL, 0, 5),
+			res:    data[0:5],
+		},
+		{
+			desc:   "get a list of things with limit greater than max",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d", thingURL, 0, 110),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of things with default URL",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("%s%s", thingURL, ""),
+			res:    data[0:10],
+		},
+		{
+			desc:   "get a list of things with invalid URL",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s%s", thingURL, "?%%"),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of things with invalid number of params",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s%s", thingURL, "?offset=4&limit=4&limit=5&offset=5"),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of things with invalid offset",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s%s", thingURL, "?offset=e&limit=5"),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of things with invalid limit",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s%s", thingURL, "?offset=5&limit=e"),
+			res:    nil,
+		},
 	}
 
 	for _, tc := range cases {
@@ -251,7 +429,7 @@ func TestListThings(t *testing.T) {
 		var data map[string][]things.Thing
 		json.NewDecoder(res.Body).Decode(&data)
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		assert.ElementsMatch(t, tc.res, data["things"], fmt.Sprintf("%s: expected body %s got %s", tc.desc, tc.res, data["things"]))
+		assert.ElementsMatch(t, tc.res, data["things"], fmt.Sprintf("%s: expected body %v got %v", tc.desc, tc.res, data["things"]))
 	}
 }
 
@@ -264,21 +442,20 @@ func TestRemoveThing(t *testing.T) {
 
 	cases := []struct {
 		desc   string
-		id     string
+		id     uint64
 		auth   string
 		status int
 	}{
-		{"delete existing thing", sth.ID, token, http.StatusNoContent},
-		{"delete non-existent thing", wrongID, token, http.StatusNoContent},
-		{"delete thing with invalid id", invalid, token, http.StatusNoContent},
-		{"delete thing with invalid token", sth.ID, invalid, http.StatusForbidden},
+		{desc: "delete existing thing", id: sth.ID, auth: token, status: http.StatusNoContent},
+		{desc: "delete non-existent thing", id: wrongID, auth: token, status: http.StatusNoContent},
+		{desc: "delete thing with invalid token", id: sth.ID, auth: wrongValue, status: http.StatusForbidden},
 	}
 
 	for _, tc := range cases {
 		req := testRequest{
 			client: ts.Client(),
 			method: http.MethodDelete,
-			url:    fmt.Sprintf("%s/things/%s", ts.URL, tc.id),
+			url:    fmt.Sprintf("%s/things/%d", ts.URL, tc.id),
 			token:  tc.auth,
 		}
 		res, err := req.make()
@@ -288,7 +465,6 @@ func TestRemoveThing(t *testing.T) {
 }
 
 func TestCreateChannel(t *testing.T) {
-	id := "123e4567-e89b-12d3-a456-000000000001"
 	svc := newService(map[string]string{token: email})
 	ts := newServer(svc)
 	defer ts.Close()
@@ -303,12 +479,54 @@ func TestCreateChannel(t *testing.T) {
 		status      int
 		location    string
 	}{
-		{"create new channel", data, contentType, token, http.StatusCreated, fmt.Sprintf("/channels/%s", id)},
-		{"create new channel with invalid token", data, contentType, invalid, http.StatusForbidden, ""},
-		{"create new channel with invalid data format", "{", contentType, token, http.StatusBadRequest, ""},
-		{"create new channel with empty JSON request", "{}", contentType, token, http.StatusCreated, "/channels/123e4567-e89b-12d3-a456-000000000002"},
-		{"create new channel with empty request", "", contentType, token, http.StatusBadRequest, ""},
-		{"create new channel with missing content type", data, "", token, http.StatusUnsupportedMediaType, ""},
+		{
+			desc:        "create new channel",
+			req:         data,
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusCreated,
+			location:    "/channels/1",
+		},
+		{
+			desc:        "create new channel with invalid token",
+			req:         data,
+			contentType: contentType,
+			auth:        wrongValue,
+			status:      http.StatusForbidden,
+			location:    "",
+		},
+		{
+			desc:        "create new channel with invalid data format",
+			req:         "{",
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusBadRequest,
+			location:    "",
+		},
+		{
+			desc:        "create new channel with empty JSON request",
+			req:         "{}",
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusCreated,
+			location:    "/channels/2",
+		},
+		{
+			desc:        "create new channel with empty request",
+			req:         "",
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusBadRequest,
+			location:    "",
+		},
+		{
+			desc:        "create new channel without content type",
+			req:         data,
+			contentType: "",
+			auth:        token,
+			status:      http.StatusUnsupportedMediaType,
+			location:    "",
+		},
 	}
 
 	for _, tc := range cases {
@@ -334,34 +552,80 @@ func TestUpdateChannel(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	updateData := toJSON(map[string]string{
-		"name": "updated_channel",
-	})
+	updateData := toJSON(map[string]string{"name": "updated_channel"})
 	sch, _ := svc.CreateChannel(token, channel)
 
 	cases := []struct {
 		desc        string
 		req         string
-		id          string
+		id          uint64
 		contentType string
 		auth        string
 		status      int
 	}{
-		{"update existing channel", updateData, sch.ID, contentType, token, http.StatusOK},
-		{"update non-existing channel", updateData, wrongID, contentType, token, http.StatusNotFound},
-		{"update channel with invalid token", updateData, sch.ID, contentType, invalid, http.StatusForbidden},
-		{"update channel with invalid id", updateData, invalid, contentType, token, http.StatusNotFound},
-		{"update channel with invalid data format", "}", sch.ID, contentType, token, http.StatusBadRequest},
-		{"update channel with empty JSON object", "{}", sch.ID, contentType, token, http.StatusOK},
-		{"update channel with empty request", "", sch.ID, contentType, token, http.StatusBadRequest},
-		{"update channel with missing content type", updateData, sch.ID, "", token, http.StatusUnsupportedMediaType},
+		{
+			desc:        "update existing channel",
+			req:         updateData,
+			id:          sch.ID,
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusOK,
+		},
+		{
+			desc:        "update non-existing channel",
+			req:         updateData,
+			id:          wrongID,
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusNotFound,
+		},
+		{
+			desc:        "update channel with invalid token",
+			req:         updateData,
+			id:          sch.ID,
+			contentType: contentType,
+			auth:        wrongValue,
+			status:      http.StatusForbidden,
+		},
+		{
+			desc:        "update channel with invalid data format",
+			req:         "}",
+			id:          sch.ID,
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusBadRequest,
+		},
+		{
+			desc:        "update channel with empty JSON object",
+			req:         "{}",
+			id:          sch.ID,
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusOK,
+		},
+		{
+			desc:        "update channel with empty request",
+			req:         "",
+			id:          sch.ID,
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusBadRequest,
+		},
+		{
+			desc:        "update channel with missing content type",
+			req:         updateData,
+			id:          sch.ID,
+			contentType: "",
+			auth:        token,
+			status:      http.StatusUnsupportedMediaType,
+		},
 	}
 
 	for _, tc := range cases {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPut,
-			url:         fmt.Sprintf("%s/channels/%s", ts.URL, tc.id),
+			url:         fmt.Sprintf("%s/channels/%d", ts.URL, tc.id),
 			contentType: tc.contentType,
 			token:       tc.auth,
 			body:        strings.NewReader(tc.req),
@@ -382,22 +646,21 @@ func TestViewChannel(t *testing.T) {
 
 	cases := []struct {
 		desc   string
-		id     string
+		id     uint64
 		auth   string
 		status int
 		res    string
 	}{
-		{"view existing channel", sch.ID, token, http.StatusOK, data},
-		{"view non-existent channel", wrongID, token, http.StatusNotFound, ""},
-		{"view channel with invalid id", invalid, token, http.StatusNotFound, ""},
-		{"view channel with invalid token", sch.ID, invalid, http.StatusForbidden, ""},
+		{desc: "view existing channel", id: sch.ID, auth: token, status: http.StatusOK, res: data},
+		{desc: "view non-existent channel", id: wrongID, auth: token, status: http.StatusNotFound, res: ""},
+		{desc: "view channel with invalid token", id: sch.ID, auth: wrongValue, status: http.StatusForbidden, res: ""},
 	}
 
 	for _, tc := range cases {
 		req := testRequest{
 			client: ts.Client(),
 			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/channels/%s", ts.URL, tc.id),
+			url:    fmt.Sprintf("%s/channels/%d", ts.URL, tc.id),
 			token:  tc.auth,
 		}
 		res, err := req.make()
@@ -431,20 +694,104 @@ func TestListChannels(t *testing.T) {
 		url    string
 		res    []things.Channel
 	}{
-		{"get a list of channels", token, http.StatusOK, fmt.Sprintf("%s?offset=%d&limit=%d", channelURL, 0, 6), channels[0:6]},
-		{"get a list of channels with invalid token", invalid, http.StatusForbidden, fmt.Sprintf("%s?offset=%d&limit=%d", channelURL, 0, 1), nil},
-		{"get a list of channels with invalid offset", token, http.StatusBadRequest, fmt.Sprintf("%s?offset=%d&limit=%d", channelURL, -1, 5), nil},
-		{"get a list of channels with invalid limit", token, http.StatusBadRequest, fmt.Sprintf("%s?offset=%d&limit=%d", channelURL, -1, 5), nil},
-		{"get a list of channels with zero limit", token, http.StatusBadRequest, fmt.Sprintf("%s?offset=%d&limit=%d", channelURL, 1, 0), nil},
-		{"get a list of channels with no offset provided", token, http.StatusOK, fmt.Sprintf("%s?limit=%d", channelURL, 5), channels[0:5]},
-		{"get a list of channels with no limit provided", token, http.StatusOK, fmt.Sprintf("%s?offset=%d", channelURL, 1), channels[1:11]},
-		{"get a list of channels with redundant query params", token, http.StatusOK, fmt.Sprintf("%s?offset=%d&limit=%d&value=something", channelURL, 0, 5), channels[0:5]},
-		{"get a list of channels with limit greater than max", token, http.StatusBadRequest, fmt.Sprintf("%s?offset=%d&limit=%d", channelURL, 0, 110), nil},
-		{"get a list of channels with default URL", token, http.StatusOK, fmt.Sprintf("%s%s", channelURL, ""), channels[0:10]},
-		{"get a list of channels with invalid URL", token, http.StatusBadRequest, fmt.Sprintf("%s%s", channelURL, "?%%"), nil},
-		{"get a list of channels with invalid number of params", token, http.StatusBadRequest, fmt.Sprintf("%s%s", channelURL, "?offset=4&limit=4&limit=5&offset=5"), nil},
-		{"get a list of channels with invalid offset", token, http.StatusBadRequest, fmt.Sprintf("%s%s", channelURL, "?offset=e&limit=5"), nil},
-		{"get a list of channels with invalid limit", token, http.StatusBadRequest, fmt.Sprintf("%s%s", channelURL, "?offset=5&limit=e"), nil},
+		{
+			desc:   "get a list of channels",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d", channelURL, 0, 6),
+			res:    channels[0:6],
+		},
+		{
+			desc:   "get a list of channels with invalid token",
+			auth:   wrongValue,
+			status: http.StatusForbidden,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d", channelURL, 0, 1),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of channels with negative offset",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d", channelURL, -1, 5),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of channels with negative limit",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d", channelURL, -1, 5),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of channels with zero limit",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d", channelURL, 1, 0),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of channels with no offset provided",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("%s?limit=%d", channelURL, 5),
+			res:    channels[0:5],
+		},
+		{
+			desc:   "get a list of channels with no limit provided",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("%s?offset=%d", channelURL, 1),
+			res:    channels[1:11],
+		},
+		{
+			desc:   "get a list of channels with redundant query params",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d&value=something", channelURL, 0, 5),
+			res:    channels[0:5],
+		},
+		{
+			desc:   "get a list of channels with limit greater than max",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d", channelURL, 0, 110),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of channels with default URL",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("%s%s", channelURL, ""),
+			res:    channels[0:10],
+		},
+		{
+			desc:   "get a list of channels with invalid URL",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s%s", channelURL, "?%%"),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of channels with invalid number of params",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s%s", channelURL, "?offset=4&limit=4&limit=5&offset=5"),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of channels with invalid offset",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s%s", channelURL, "?offset=e&limit=5"),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of channels with invalid limit",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s%s", channelURL, "?offset=5&limit=e"),
+			res:    nil,
+		},
 	}
 
 	for _, tc := range cases {
@@ -459,7 +806,7 @@ func TestListChannels(t *testing.T) {
 		var body map[string][]things.Channel
 		json.NewDecoder(res.Body).Decode(&body)
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		assert.ElementsMatch(t, tc.res, body["channels"], fmt.Sprintf("%s: expected body %s got %s", tc.desc, tc.res, body["channels"]))
+		assert.ElementsMatch(t, tc.res, body["channels"], fmt.Sprintf("%s: expected body %v got %v", tc.desc, tc.res, body["channels"]))
 	}
 }
 
@@ -472,21 +819,20 @@ func TestRemoveChannel(t *testing.T) {
 
 	cases := []struct {
 		desc   string
-		id     string
+		id     uint64
 		auth   string
 		status int
 	}{
-		{"remove existing channel", sch.ID, token, http.StatusNoContent},
-		{"remove non-existent channel", sch.ID, token, http.StatusNoContent},
-		{"remove channel with invalid id", wrongID, token, http.StatusNoContent},
-		{"remove channel with invalid token", sch.ID, invalid, http.StatusForbidden},
+		{desc: "remove channel with invalid token", id: sch.ID, auth: wrongValue, status: http.StatusForbidden},
+		{desc: "remove existing channel", id: sch.ID, auth: token, status: http.StatusNoContent},
+		{desc: "remove removed channel", id: sch.ID, auth: token, status: http.StatusNoContent},
 	}
 
 	for _, tc := range cases {
 		req := testRequest{
 			client: ts.Client(),
 			method: http.MethodDelete,
-			url:    fmt.Sprintf("%s/channels/%s", ts.URL, tc.id),
+			url:    fmt.Sprintf("%s/channels/%d", ts.URL, tc.id),
 			token:  tc.auth,
 		}
 		res, err := req.make()
@@ -511,24 +857,53 @@ func TestConnect(t *testing.T) {
 
 	cases := []struct {
 		desc    string
-		chanID  string
-		thingID string
+		chanID  uint64
+		thingID uint64
 		auth    string
 		status  int
 	}{
-		{"connect existing thing to existing channel", ach.ID, ath.ID, token, http.StatusOK},
-		{"connect existing thing to non-existent channel", wrongID, ath.ID, token, http.StatusNotFound},
-		{"connect thing with invalid id to channel", ach.ID, invalid, token, http.StatusNotFound},
-		{"connect thing to channel with invalid id", invalid, ath.ID, token, http.StatusNotFound},
-		{"connect existing thing to existing channel with invalid token", ach.ID, ath.ID, invalid, http.StatusForbidden},
-		{"connect thing from owner to channel of other user", bch.ID, ath.ID, token, http.StatusNotFound},
+		{
+			desc:    "connect existing thing to existing channel",
+			chanID:  ach.ID,
+			thingID: ath.ID,
+			auth:    token,
+			status:  http.StatusOK,
+		},
+		{
+			desc:    "connect existing thing to non-existent channel",
+			chanID:  wrongID,
+			thingID: ath.ID,
+			auth:    token,
+			status:  http.StatusNotFound,
+		},
+		{
+			desc:    "connect non-existing thing to existing channel",
+			chanID:  ach.ID,
+			thingID: wrongID,
+			auth:    token,
+			status:  http.StatusNotFound,
+		},
+		{
+			desc:    "connect existing thing to existing channel with invalid token",
+			chanID:  ach.ID,
+			thingID: ath.ID,
+			auth:    wrongValue,
+			status:  http.StatusForbidden,
+		},
+		{
+			desc:    "connect thing from owner to channel of other user",
+			chanID:  bch.ID,
+			thingID: ath.ID,
+			auth:    token,
+			status:  http.StatusNotFound,
+		},
 	}
 
 	for _, tc := range cases {
 		req := testRequest{
 			client: ts.Client(),
 			method: http.MethodPut,
-			url:    fmt.Sprintf("%s/channels/%s/things/%s", ts.URL, tc.chanID, tc.thingID),
+			url:    fmt.Sprintf("%s/channels/%d/things/%d", ts.URL, tc.chanID, tc.thingID),
 			token:  tc.auth,
 		}
 		res, err := req.make()
@@ -554,24 +929,60 @@ func TestDisconnnect(t *testing.T) {
 
 	cases := []struct {
 		desc    string
-		chanID  string
-		thingID string
+		chanID  uint64
+		thingID uint64
 		auth    string
 		status  int
 	}{
-		{"disconnect connected thing from channel", ach.ID, ath.ID, token, http.StatusNoContent},
-		{"disconnect non-connected thing from channel", ach.ID, ath.ID, token, http.StatusNotFound},
-		{"disconnect non-existent thing from channel", ach.ID, invalid, token, http.StatusNotFound},
-		{"disconnect thing from non-existent channel", invalid, ath.ID, token, http.StatusNotFound},
-		{"disconnect thing from channel with invalid token", ach.ID, ath.ID, invalid, http.StatusForbidden},
-		{"disconnect owner's thing from someone elses channel", bch.ID, ath.ID, token, http.StatusNotFound},
+		{
+			desc:    "disconnect connected thing from channel",
+			chanID:  ach.ID,
+			thingID: ath.ID,
+			auth:    token,
+			status:  http.StatusNoContent,
+		},
+		{
+			desc:    "disconnect non-connected thing from channel",
+			chanID:  ach.ID,
+			thingID: ath.ID,
+			auth:    token,
+			status:  http.StatusNotFound,
+		},
+		{
+			desc:    "disconnect non-existent thing from channel",
+			chanID:  ach.ID,
+			thingID: wrongID,
+			auth:    token,
+			status:  http.StatusNotFound,
+		},
+		{
+			desc:    "disconnect thing from non-existent channel",
+			chanID:  wrongID,
+			thingID: ath.ID,
+			auth:    token,
+			status:  http.StatusNotFound,
+		},
+		{
+			desc:    "disconnect thing from channel with invalid token",
+			chanID:  ach.ID,
+			thingID: ath.ID,
+			auth:    wrongValue,
+			status:  http.StatusForbidden,
+		},
+		{
+			desc:    "disconnect owner's thing from someone elses channel",
+			chanID:  bch.ID,
+			thingID: ath.ID,
+			auth:    token,
+			status:  http.StatusNotFound,
+		},
 	}
 
 	for _, tc := range cases {
 		req := testRequest{
 			client: ts.Client(),
 			method: http.MethodDelete,
-			url:    fmt.Sprintf("%s/channels/%s/things/%s", ts.URL, tc.chanID, tc.thingID),
+			url:    fmt.Sprintf("%s/channels/%d/things/%d", ts.URL, tc.chanID, tc.thingID),
 			token:  tc.auth,
 		}
 		res, err := req.make()

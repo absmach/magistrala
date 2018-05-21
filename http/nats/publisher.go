@@ -26,6 +26,6 @@ func (pub *natsPublisher) Publish(msg mainflux.RawMessage) error {
 		return err
 	}
 
-	subject := fmt.Sprintf("channel.%s", msg.Channel)
+	subject := fmt.Sprintf("channel.%d", msg.Channel)
 	return pub.nc.Publish(subject, data)
 }

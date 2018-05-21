@@ -12,8 +12,9 @@ import (
 var _ things.ThingRepository = (*thingRepositoryMock)(nil)
 
 type thingRepositoryMock struct {
-	mu     sync.Mutex
-	things map[string]things.Thing
+	mu      sync.Mutex
+	counter uint64
+	things  map[string]things.Thing
 }
 
 // NewThingRepository creates in-memory thing repository.
@@ -23,10 +24,12 @@ func NewThingRepository() things.ThingRepository {
 	}
 }
 
-func (trm *thingRepositoryMock) Save(thing things.Thing) (string, error) {
+func (trm *thingRepositoryMock) Save(thing things.Thing) (uint64, error) {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
+	trm.counter++
+	thing.ID = trm.counter
 	trm.things[key(thing.Owner, thing.ID)] = thing
 
 	return thing.ID, nil
@@ -47,7 +50,7 @@ func (trm *thingRepositoryMock) Update(thing things.Thing) error {
 	return nil
 }
 
-func (trm *thingRepositoryMock) RetrieveByID(owner, id string) (things.Thing, error) {
+func (trm *thingRepositoryMock) RetrieveByID(owner string, id uint64) (things.Thing, error) {
 	if c, ok := trm.things[key(owner, id)]; ok {
 		return c, nil
 	}
@@ -56,29 +59,20 @@ func (trm *thingRepositoryMock) RetrieveByID(owner, id string) (things.Thing, er
 }
 
 func (trm *thingRepositoryMock) RetrieveAll(owner string, offset, limit int) []things.Thing {
-	// This obscure way to examine map keys is enforced by the key structure
-	// itself (see mocks/commons.go).
-	prefix := fmt.Sprintf("%s-", owner)
 	things := make([]things.Thing, 0)
 
 	if offset < 0 || limit <= 0 {
 		return things
 	}
 
-	// Since both ID and key are generated via the identity provider mock, all
-	// identifiers will be at "odd" positions. The following loop skips all
-	// values used for keys. Starting value of 1 indicates the first usable
-	// UUID produced by mocked identity provider.
-	skip := 1
-	for i := 0; i < offset; i++ {
-		skip += 2
-	}
+	first := uint64(offset) + 1
+	last := first + uint64(limit)
 
-	first := fmt.Sprintf("%s%012d", startID, skip)
-	last := fmt.Sprintf("%s%012d", startID, skip+2*(limit-1))
-
+	// This obscure way to examine map keys is enforced by the key structure
+	// itself (see mocks/commons.go).
+	prefix := fmt.Sprintf("%s-", owner)
 	for k, v := range trm.things {
-		if strings.HasPrefix(k, prefix) && v.ID >= first && v.ID <= last {
+		if strings.HasPrefix(k, prefix) && v.ID >= first && v.ID < last {
 			things = append(things, v)
 		}
 	}
@@ -90,16 +84,16 @@ func (trm *thingRepositoryMock) RetrieveAll(owner string, offset, limit int) []t
 	return things
 }
 
-func (trm *thingRepositoryMock) Remove(owner, id string) error {
+func (trm *thingRepositoryMock) Remove(owner string, id uint64) error {
 	delete(trm.things, key(owner, id))
 	return nil
 }
 
-func (trm *thingRepositoryMock) RetrieveByKey(key string) (string, error) {
+func (trm *thingRepositoryMock) RetrieveByKey(key string) (uint64, error) {
 	for _, thing := range trm.things {
 		if thing.Key == key {
 			return thing.ID, nil
 		}
 	}
-	return "", things.ErrNotFound
+	return 0, things.ErrNotFound
 }

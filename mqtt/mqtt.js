@@ -63,13 +63,13 @@ aedes.authorizePublish = function (client, packet, publish) {
     var channel = packet.topic.split('/')[1],
         accessReq = {
             token: client.password,
-            chanID: channel
+            chanID: Number(channel)
         },
         onAuthorize = function (err, res) {
-            var rawMsg
+            var rawMsg;
             if (!err) {
                 logger.info('authorized publish');
-                
+
                 rawMsg = message.RawMessage.encode({
                     Publisher: client.id,
                     Channel: channel,
@@ -77,7 +77,7 @@ aedes.authorizePublish = function (client, packet, publish) {
                     Payload: packet.payload
                 });
                 nats.publish('channel.' + channel, rawMsg);
-    
+
                 // Set empty topic for packet so that it won't be published two times.
                 packet.topic = '';
                 publish(0);
@@ -96,7 +96,7 @@ aedes.authorizeSubscribe = function (client, packet, subscribe) {
     var channel = packet.topic.split('/')[1],
         accessReq = {
             token: client.password,
-            chanID: channel
+            chanID: Number(channel)
         },
         onAuthorize = function (err, res) {
             if (!err) {
@@ -107,7 +107,7 @@ aedes.authorizeSubscribe = function (client, packet, subscribe) {
                 subscribe(4, packet); // Bad username or password
             }
         };
-    
+
     things.canAccess(accessReq, onAuthorize);
 };
 
@@ -124,7 +124,7 @@ aedes.authenticate = function (client, username, password, acknowledge) {
                 acknowledge(err, false);
             }
         };
-        
+
     things.identify(identity, onIdentify);
 };
 

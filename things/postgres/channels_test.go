@@ -12,31 +12,30 @@ import (
 
 func TestChannelSave(t *testing.T) {
 	email := "channel-save@example.com"
-	idp := uuid.New()
 	channelRepo := postgres.NewChannelRepository(db, testLog)
 
-	channel := things.Channel{ID: idp.ID(), Owner: email}
+	channel := things.Channel{Owner: email}
 	_, err := channelRepo.Save(channel)
-	hasErr := err != nil
 
-	assert.False(t, hasErr, fmt.Sprintf("create new channel: expected false got %t", hasErr))
+	assert.Nil(t, err, fmt.Sprintf("create new channel: expected no error got %s", err))
 }
 
 func TestChannelUpdate(t *testing.T) {
 	email := "channel-update@example.com"
-	idp := uuid.New()
 	chanRepo := postgres.NewChannelRepository(db, testLog)
 
-	c := things.Channel{ID: idp.ID(), Owner: email}
-	chanRepo.Save(c)
+	c := things.Channel{Owner: email}
+	id, _ := chanRepo.Save(c)
+	c.ID = id
 
 	cases := map[string]struct {
 		channel things.Channel
 		err     error
 	}{
-		"existing channel":                            {c, nil},
-		"non-existing channel with existing user":     {things.Channel{ID: wrong, Owner: email}, things.ErrNotFound},
-		"non-existing channel with non-existing user": {things.Channel{ID: wrong, Owner: wrong}, things.ErrNotFound},
+		"update existing channel":                            {channel: c, err: nil},
+		"update non-existing channel with existing user":     {channel: things.Channel{ID: wrongID, Owner: email}, err: things.ErrNotFound},
+		"update existing channel ID with non-existing user":  {channel: things.Channel{ID: c.ID, Owner: wrongValue}, err: things.ErrNotFound},
+		"update non-existing channel with non-existing user": {channel: things.Channel{ID: wrongID, Owner: wrongValue}, err: things.ErrNotFound},
 	}
 
 	for desc, tc := range cases {
@@ -47,20 +46,20 @@ func TestChannelUpdate(t *testing.T) {
 
 func TestSingleChannelRetrieval(t *testing.T) {
 	email := "channel-single-retrieval@example.com"
-	idp := uuid.New()
 	chanRepo := postgres.NewChannelRepository(db, testLog)
 
-	c := things.Channel{ID: idp.ID(), Owner: email}
-	chanRepo.Save(c)
+	c := things.Channel{Owner: email}
+	id, _ := chanRepo.Save(c)
+	c.ID = id
 
 	cases := map[string]struct {
 		owner string
-		ID    string
+		ID    uint64
 		err   error
 	}{
-		"existing user":                       {c.Owner, c.ID, nil},
-		"existing user, non-existing channel": {c.Owner, wrong, things.ErrNotFound},
-		"non-existing owner":                  {wrong, c.ID, things.ErrNotFound},
+		"retrieve channel with existing user":                       {owner: c.Owner, ID: c.ID, err: nil},
+		"retrieve channel with existing user, non-existing channel": {owner: c.Owner, ID: wrongID, err: things.ErrNotFound},
+		"retrieve channel with non-existing owner":                  {owner: wrongValue, ID: c.ID, err: things.ErrNotFound},
 	}
 
 	for desc, tc := range cases {
@@ -71,13 +70,12 @@ func TestSingleChannelRetrieval(t *testing.T) {
 
 func TestMultiChannelRetrieval(t *testing.T) {
 	email := "channel-multi-retrieval@example.com"
-	idp := uuid.New()
 	chanRepo := postgres.NewChannelRepository(db, testLog)
 
 	n := 10
 
 	for i := 0; i < n; i++ {
-		c := things.Channel{ID: idp.ID(), Owner: email}
+		c := things.Channel{Owner: email}
 		chanRepo.Save(c)
 	}
 
@@ -87,8 +85,9 @@ func TestMultiChannelRetrieval(t *testing.T) {
 		limit  int
 		size   int
 	}{
-		"existing owner":     {email, 0, n, n},
-		"non-existing owner": {wrong, 1, 6, 0},
+		"retrieve all channels with existing owner":       {owner: email, offset: 0, limit: n, size: n},
+		"retrieve subset of channels with existing owner": {owner: email, offset: n / 2, limit: n, size: n / 2},
+		"retrieve channels with non-existing owner":       {owner: wrongValue, offset: n / 2, limit: n, size: 0},
 	}
 
 	for desc, tc := range cases {
@@ -99,9 +98,8 @@ func TestMultiChannelRetrieval(t *testing.T) {
 
 func TestChannelRemoval(t *testing.T) {
 	email := "channel-removal@example.com"
-	idp := uuid.New()
 	chanRepo := postgres.NewChannelRepository(db, testLog)
-	chanID, _ := chanRepo.Save(things.Channel{ID: idp.ID(), Owner: email})
+	chanID, _ := chanRepo.Save(things.Channel{Owner: email})
 
 	// show that the removal works the same for both existing and non-existing
 	// (removed) channel
@@ -118,31 +116,29 @@ func TestChannelRemoval(t *testing.T) {
 
 func TestConnect(t *testing.T) {
 	email := "channel-connect@example.com"
-	idp := uuid.New()
 	thingRepo := postgres.NewThingRepository(db, testLog)
 
 	thing := things.Thing{
-		ID:    idp.ID(),
 		Owner: email,
-		Key:   idp.ID(),
+		Key:   uuid.New().ID(),
 	}
-	thingRepo.Save(thing)
+	thingID, _ := thingRepo.Save(thing)
 
 	chanRepo := postgres.NewChannelRepository(db, testLog)
-	chanID, _ := chanRepo.Save(things.Channel{ID: idp.ID(), Owner: email})
+	chanID, _ := chanRepo.Save(things.Channel{Owner: email})
 
 	cases := []struct {
 		desc    string
 		owner   string
-		chanID  string
-		thingID string
+		chanID  uint64
+		thingID uint64
 		err     error
 	}{
-		{"existing user, channel and thing", email, chanID, thing.ID, nil},
-		{"connected channel and thing", email, chanID, thing.ID, nil},
-		{"with non-existing user", wrong, chanID, thing.ID, things.ErrNotFound},
-		{"non-existing channel", email, wrong, thing.ID, things.ErrNotFound},
-		{"non-existing thing", email, chanID, wrong, things.ErrNotFound},
+		{desc: "connect existing user, channel and thing", owner: email, chanID: chanID, thingID: thingID, err: nil},
+		{desc: "connect connected channel and thing", owner: email, chanID: chanID, thingID: thingID, err: nil},
+		{desc: "connect with non-existing user", owner: wrongValue, chanID: chanID, thingID: thingID, err: things.ErrNotFound},
+		{desc: "connect non-existing channel", owner: email, chanID: wrongID, thingID: thingID, err: things.ErrNotFound},
+		{desc: "connect non-existing thing", owner: email, chanID: chanID, thingID: wrongID, err: things.ErrNotFound},
 	}
 
 	for _, tc := range cases {
@@ -153,31 +149,29 @@ func TestConnect(t *testing.T) {
 
 func TestDisconnect(t *testing.T) {
 	email := "channel-disconnect@example.com"
-	idp := uuid.New()
 	thingRepo := postgres.NewThingRepository(db, testLog)
 	thing := things.Thing{
-		ID:    idp.ID(),
 		Owner: email,
-		Key:   idp.ID(),
+		Key:   uuid.New().ID(),
 	}
-	thingRepo.Save(thing)
+	thingID, _ := thingRepo.Save(thing)
 
 	chanRepo := postgres.NewChannelRepository(db, testLog)
-	chanID, _ := chanRepo.Save(things.Channel{ID: idp.ID(), Owner: email})
-	chanRepo.Connect(email, chanID, thing.ID)
+	chanID, _ := chanRepo.Save(things.Channel{Owner: email})
+	chanRepo.Connect(email, chanID, thingID)
 
 	cases := []struct {
 		desc    string
 		owner   string
-		chanID  string
-		thingID string
+		chanID  uint64
+		thingID uint64
 		err     error
 	}{
-		{"connected thing", email, chanID, thing.ID, nil},
-		{"non-connected thing", email, chanID, thing.ID, things.ErrNotFound},
-		{"non-existing user", wrong, chanID, thing.ID, things.ErrNotFound},
-		{"non-existing channel", email, wrong, thing.ID, things.ErrNotFound},
-		{"non-existing thing", email, chanID, wrong, things.ErrNotFound},
+		{desc: "disconnect connected thing", owner: email, chanID: chanID, thingID: thingID, err: nil},
+		{desc: "disconnect non-connected thing", owner: email, chanID: chanID, thingID: thingID, err: things.ErrNotFound},
+		{desc: "disconnect non-existing user", owner: wrongValue, chanID: chanID, thingID: thingID, err: things.ErrNotFound},
+		{desc: "disconnect non-existing channel", owner: email, chanID: wrongID, thingID: thingID, err: things.ErrNotFound},
+		{desc: "disconnect non-existing thing", owner: email, chanID: chanID, thingID: wrongID, err: things.ErrNotFound},
 	}
 
 	for _, tc := range cases {
@@ -188,27 +182,25 @@ func TestDisconnect(t *testing.T) {
 
 func TestHasThing(t *testing.T) {
 	email := "channel-access-check@example.com"
-	idp := uuid.New()
 	thingRepo := postgres.NewThingRepository(db, testLog)
 	thing := things.Thing{
-		ID:    idp.ID(),
 		Owner: email,
-		Key:   idp.ID(),
+		Key:   uuid.New().ID(),
 	}
-	thingRepo.Save(thing)
+	thingID, _ := thingRepo.Save(thing)
 
 	chanRepo := postgres.NewChannelRepository(db, testLog)
-	chanID, _ := chanRepo.Save(things.Channel{ID: idp.ID(), Owner: email})
-	chanRepo.Connect(email, chanID, thing.ID)
+	chanID, _ := chanRepo.Save(things.Channel{Owner: email})
+	chanRepo.Connect(email, chanID, thingID)
 
 	cases := map[string]struct {
-		chanID    string
+		chanID    uint64
 		key       string
 		hasAccess bool
 	}{
-		"thing that has access":                {chanID, thing.Key, true},
-		"thing without access":                 {chanID, wrong, false},
-		"check access to non-existing channel": {wrong, thing.Key, false},
+		"access check for thing that has access": {chanID: chanID, key: thing.Key, hasAccess: true},
+		"access check for thing without access":  {chanID: chanID, key: wrongValue, hasAccess: false},
+		"access check for non-existing channel":  {chanID: wrongID, key: thing.Key, hasAccess: false},
 	}
 
 	for desc, tc := range cases {

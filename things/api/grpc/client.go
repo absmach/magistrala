@@ -26,7 +26,7 @@ func NewClient(conn *grpc.ClientConn) mainflux.ThingsServiceClient {
 			"CanAccess",
 			encodeCanAccessRequest,
 			decodeIdentityResponse,
-			mainflux.Identity{},
+			mainflux.ThingID{},
 		).Endpoint(),
 		identify: kitgrpc.NewClient(
 			conn,
@@ -34,29 +34,30 @@ func NewClient(conn *grpc.ClientConn) mainflux.ThingsServiceClient {
 			"Identify",
 			encodeIdentifyRequest,
 			decodeIdentityResponse,
-			mainflux.Identity{},
+			mainflux.ThingID{},
 		).Endpoint(),
 	}
 }
 
-func (client grpcClient) CanAccess(ctx context.Context, req *mainflux.AccessReq, _ ...grpc.CallOption) (*mainflux.Identity, error) {
-	res, err := client.canAccess(ctx, accessReq{req.GetToken(), req.GetChanID()})
+func (client grpcClient) CanAccess(ctx context.Context, req *mainflux.AccessReq, _ ...grpc.CallOption) (*mainflux.ThingID, error) {
+	ar := accessReq{thingKey: req.GetToken(), chanID: req.GetChanID()}
+	res, err := client.canAccess(ctx, ar)
 	if err != nil {
 		return nil, err
 	}
 
 	ir := res.(identityRes)
-	return &mainflux.Identity{Value: ir.id}, ir.err
+	return &mainflux.ThingID{Value: ir.id}, ir.err
 }
 
-func (client grpcClient) Identify(ctx context.Context, req *mainflux.Token, _ ...grpc.CallOption) (*mainflux.Identity, error) {
+func (client grpcClient) Identify(ctx context.Context, req *mainflux.Token, _ ...grpc.CallOption) (*mainflux.ThingID, error) {
 	res, err := client.identify(ctx, identifyReq{req.GetValue()})
 	if err != nil {
 		return nil, err
 	}
 
 	ir := res.(identityRes)
-	return &mainflux.Identity{Value: ir.id}, ir.err
+	return &mainflux.ThingID{Value: ir.id}, ir.err
 }
 
 func encodeCanAccessRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
@@ -70,6 +71,6 @@ func encodeIdentifyRequest(_ context.Context, grpcReq interface{}) (interface{},
 }
 
 func decodeIdentityResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(*mainflux.Identity)
-	return identityRes{res.GetValue(), nil}, nil
+	res := grpcRes.(*mainflux.ThingID)
+	return identityRes{id: res.GetValue(), err: nil}, nil
 }

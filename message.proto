@@ -3,26 +3,26 @@ package mainflux;
 
 // RawMessage represents a message emitted by the Mainflux adapters layer.
 message RawMessage {
-	string  Channel     = 1;
-	string  Publisher   = 2;
-	string  Protocol    = 3;
-	string  ContentType = 4;
-	bytes   Payload     = 5;
+	uint64 Channel     = 1;
+	uint64 Publisher   = 2;
+	string Protocol    = 3;
+	string ContentType = 4;
+	bytes  Payload     = 5;
 }
 
 // Message represents a resolved (normalized) raw message.
 message Message {
-	string  Channel     = 1;
-	string  Publisher   = 2;
-	string  Protocol    = 3;
-	string  Name        = 4;
-	string  Unit        = 5;
-	double  Value       = 6;
-	string  StringValue = 7;
-	bool    BoolValue   = 8;
-	string  DataValue   = 9;
-	double  ValueSum    = 10;
-	double  Time        = 11;
-	double  UpdateTime  = 12;
-	string  Link        = 13;
+	uint64 Channel     = 1;
+	uint64 Publisher   = 2;
+	string Protocol    = 3;
+	string Name        = 4;
+	string Unit        = 5;
+	double Value       = 6;
+	string StringValue = 7;
+	bool   BoolValue   = 8;
+	string DataValue   = 9;
+	double ValueSum    = 10;
+	double Time        = 11;
+	double UpdateTime  = 12;
+	string Link        = 13;
 }

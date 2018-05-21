@@ -72,7 +72,7 @@ func listThingsEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		return listThingsRes{things}, nil
+		return listThingsRes{Things: things}, nil
 	}
 }
 
@@ -162,7 +162,7 @@ func listChannelsEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		return listChannelsRes{channels}, nil
+		return listChannelsRes{Channels: channels}, nil
 	}
 }
 

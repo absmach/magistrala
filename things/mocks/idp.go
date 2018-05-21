@@ -9,8 +9,6 @@ import (
 
 var _ things.IdentityProvider = (*identityProviderMock)(nil)
 
-const startID = "123e4567-e89b-12d3-a456-"
-
 type identityProviderMock struct {
 	mu      sync.Mutex
 	counter int
@@ -21,7 +19,7 @@ func (idp *identityProviderMock) ID() string {
 	defer idp.mu.Unlock()
 
 	idp.counter++
-	return fmt.Sprintf("%s%012d", startID, idp.counter)
+	return fmt.Sprintf("%s%012d", "123e4567-e89b-12d3-a456-", idp.counter)
 }
 
 // NewIdentityProvider creates "mirror" identity provider, i.e. generated

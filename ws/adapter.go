@@ -25,7 +25,7 @@ type Service interface {
 	mainflux.MessagePublisher
 
 	// Subscribes to channel with specified id.
-	Subscribe(string, Channel) error
+	Subscribe(uint64, Channel) error
 }
 
 // Channel is used for receiving and sending messages.
@@ -63,7 +63,7 @@ func (as *adapterService) Publish(msg mainflux.RawMessage) error {
 	return nil
 }
 
-func (as *adapterService) Subscribe(chanID string, channel Channel) error {
+func (as *adapterService) Subscribe(chanID uint64, channel Channel) error {
 	if err := as.pubsub.Subscribe(chanID, channel); err != nil {
 		return ErrFailedSubscription
 	}

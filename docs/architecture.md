@@ -9,7 +9,6 @@ Mainflux IoT platform is comprised of the following services:
 | [normalizer](https://github.com/mainflux/mainflux/tree/master/normalizer) | Normalizes SenML messages and generates the "processed" messages stream |
 | [http-adapter](https://github.com/mainflux/mainflux/tree/master/http)     | Provides an HTTP interface for accessing communication channels         |
 | [ws-adapter](https://github.com/mainflux/mainflux/tree/master/ws)         | Provides a WebSocket interface for accessing communication channels     |
-| [coap-adapter](https://github.com/mainflux/mainflux/tree/master/coap)     | Provides a CoAP interface for accessing communication channels          |
 
 ![arch](img/architecture.jpg)
 

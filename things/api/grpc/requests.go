@@ -1,17 +1,16 @@
 package grpc
 
 import (
-	"github.com/asaskevich/govalidator"
 	"github.com/mainflux/mainflux/things"
 )
 
 type accessReq struct {
 	thingKey string
-	chanID   string
+	chanID   uint64
 }
 
 func (req accessReq) validate() error {
-	if !govalidator.IsUUID(req.chanID) || req.thingKey == "" {
+	if req.chanID == 0 || req.thingKey == "" {
 		return things.ErrMalformedEntity
 	}
 	return nil

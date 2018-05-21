@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	chanID   = "123e4567-e89b-12d3-a456-000000000001"
-	pubID    = "1"
+	chanID   = 1
+	pubID    = 1
 	protocol = "ws"
 )
 
@@ -29,7 +29,7 @@ var (
 )
 
 func newService() ws.Service {
-	subs := map[string]ws.Channel{chanID: channel}
+	subs := map[uint64]ws.Channel{chanID: channel}
 	pubsub := mocks.NewService(subs, broker.ErrInvalidMsg)
 	return ws.New(pubsub)
 }
@@ -64,12 +64,12 @@ func TestSubscribe(t *testing.T) {
 
 	cases := []struct {
 		desc    string
-		chanID  string
+		chanID  uint64
 		channel ws.Channel
 		err     error
 	}{
 		{"subscription to valid channel", chanID, channel, nil},
-		{"subscription to channel that should fail", "non-existent-chan-id", channel, ws.ErrFailedSubscription},
+		{"subscription to channel that should fail", 0, channel, ws.ErrFailedSubscription},
 	}
 
 	for _, tc := range cases {

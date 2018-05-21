@@ -14,7 +14,7 @@ final class PublishMessages extends TestCase {
     def makeThing(token: String): (String, String) = {
       val thing = """{"type":"device", "name":"weio"}"""
 
-      val id = Http(s"$ThingsURL/clients")
+      val id = Http(s"$ThingsURL/things")
         .postData(thing)
         .header(HttpHeaderNames.Authorization, token)
         .header(HttpHeaderNames.ContentType, jsonType)

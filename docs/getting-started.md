@@ -282,30 +282,6 @@ If you are not able to send custom headers in your handshake request, send it as
 query parameter `authorization`. Then your path should look like this
 `/channels/<channel_id>/messages?authorization=<client_auth_key>`.
 
-### CoAP
-
-These are two useful tools for sending CoAP messages:
-
-- [Copper](https://github.com/mkovatsc/Copper)
-- [coap-cli](https://github.com/mcollina/coap-cli)
-
-To publish message over channel, client should send following confirmable message:
-
-```
-coap post coap://localhost/channels/<channel_id>/messages?key=<client_token>
-```
-
-Client token must be present in `Uri-Query` option. Otherwise, message will be considered unauthorized.
-
-To subscribe to channel, client should send following confirmable message:
-
-```
-coap get coap://localhost/channels/<channel_id>/messages?key=<client_token> -o
-```
-
-where `-o` in indicates that value of `Observe` option is 0.
-To unsubscribe from channel, client should send same message with value of `Observe` option set to 1, ignore confirmable message received from service (by default, server will attempt to send confirmable message multiple times, as described in [RFC 7252](https://tools.ietf.org/html/rfc7252#page-28) or send `Reset` message with appropriate token.
-
 ### MQTT
 
 To send and receive messages over MQTT you could use [Mosquitto tools](https://mosquitto.org),
@@ -323,5 +299,5 @@ To subscribe to channel, client should call following command:
 mosquitto_sub -u <thing_id> -P <thing_key> -t channels/<channel_id>/messages -h localhost
 ```
 
-If you are using TLS to secure MQTT connection, add `--cafile docker/ssl/certs/ca.crt` 
+If you are using TLS to secure MQTT connection, add `--cafile docker/ssl/certs/ca.crt`
 to every command.

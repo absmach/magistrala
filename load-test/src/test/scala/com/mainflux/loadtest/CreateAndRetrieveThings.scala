@@ -13,7 +13,7 @@ final class CreateAndRetrieveThings extends TestCase {
 
     val scn = scenario("create and retrieve things")
       .exec(http("create thing")
-        .post("/clients")
+        .post("/things")
         .header(HttpHeaderNames.ContentType, jsonType)
         .header(HttpHeaderNames.Authorization, token)
         .body(StringBody(thing))

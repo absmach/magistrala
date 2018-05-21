@@ -1,7 +1,6 @@
 package http
 
 import (
-	"github.com/asaskevich/govalidator"
 	"github.com/mainflux/mainflux/things"
 )
 
@@ -38,7 +37,7 @@ func (req addThingReq) validate() error {
 
 type updateThingReq struct {
 	key   string
-	id    string
+	id    uint64
 	thing things.Thing
 }
 
@@ -47,7 +46,7 @@ func (req updateThingReq) validate() error {
 		return things.ErrUnauthorizedAccess
 	}
 
-	if !govalidator.IsUUID(req.id) {
+	if req.id < 1 {
 		return things.ErrNotFound
 	}
 
@@ -69,7 +68,7 @@ func (req createChannelReq) validate() error {
 
 type updateChannelReq struct {
 	key     string
-	id      string
+	id      uint64
 	channel things.Channel
 }
 
@@ -78,7 +77,7 @@ func (req updateChannelReq) validate() error {
 		return things.ErrUnauthorizedAccess
 	}
 
-	if !govalidator.IsUUID(req.id) {
+	if req.id < 1 {
 		return things.ErrNotFound
 	}
 
@@ -87,7 +86,7 @@ func (req updateChannelReq) validate() error {
 
 type viewResourceReq struct {
 	key string
-	id  string
+	id  uint64
 }
 
 func (req viewResourceReq) validate() error {
@@ -95,7 +94,7 @@ func (req viewResourceReq) validate() error {
 		return things.ErrUnauthorizedAccess
 	}
 
-	if !govalidator.IsUUID(req.id) {
+	if req.id < 1 {
 		return things.ErrNotFound
 	}
 
@@ -122,8 +121,8 @@ func (req *listResourcesReq) validate() error {
 
 type connectionReq struct {
 	key     string
-	chanID  string
-	thingID string
+	chanID  uint64
+	thingID uint64
 }
 
 func (req connectionReq) validate() error {
@@ -131,7 +130,7 @@ func (req connectionReq) validate() error {
 		return things.ErrUnauthorizedAccess
 	}
 
-	if !govalidator.IsUUID(req.chanID) || !govalidator.IsUUID(req.thingID) {
+	if req.chanID == 0 || req.thingID == 0 {
 		return things.ErrNotFound
 	}
 

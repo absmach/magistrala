@@ -12,40 +12,37 @@ import (
 
 func TestThingSave(t *testing.T) {
 	email := "thing-save@example.com"
-	idp := uuid.New()
 	thingRepo := postgres.NewThingRepository(db, testLog)
+
 	thing := things.Thing{
-		ID:    idp.ID(),
 		Owner: email,
-		Key:   idp.ID(),
+		Key:   uuid.New().ID(),
 	}
 
 	_, err := thingRepo.Save(thing)
-	hasErr := err != nil
-
-	assert.False(t, hasErr, fmt.Sprintf("create new thing: expected false got %t\n", hasErr))
+	assert.Nil(t, err, fmt.Sprintf("create new thing: expected no error got %s\n", err))
 }
 
 func TestThingUpdate(t *testing.T) {
 	email := "thing-update@example.com"
-	idp := uuid.New()
 	thingRepo := postgres.NewThingRepository(db, testLog)
 
 	thing := things.Thing{
-		ID:    idp.ID(),
 		Owner: email,
-		Key:   idp.ID(),
+		Key:   uuid.New().ID(),
 	}
 
-	thingRepo.Save(thing)
+	id, _ := thingRepo.Save(thing)
+	thing.ID = id
 
 	cases := map[string]struct {
 		thing things.Thing
 		err   error
 	}{
-		"existing thing":                            {thing, nil},
-		"non-existing thing with existing user":     {things.Thing{ID: wrong, Owner: email}, things.ErrNotFound},
-		"non-existing thing with non-existing user": {things.Thing{ID: wrong, Owner: wrong}, things.ErrNotFound},
+		"update existing thing":                            {thing: thing, err: nil},
+		"update non-existing thing with existing user":     {thing: things.Thing{ID: wrongID, Owner: email}, err: things.ErrNotFound},
+		"update existing thing ID with non-existing user":  {thing: things.Thing{ID: id, Owner: wrongValue}, err: things.ErrNotFound},
+		"update non-existing thing with non-existing user": {thing: things.Thing{ID: wrongID, Owner: wrongValue}, err: things.ErrNotFound},
 	}
 
 	for desc, tc := range cases {
@@ -56,25 +53,24 @@ func TestThingUpdate(t *testing.T) {
 
 func TestSingleThingRetrieval(t *testing.T) {
 	email := "thing-single-retrieval@example.com"
-	idp := uuid.New()
 	thingRepo := postgres.NewThingRepository(db, testLog)
 
 	thing := things.Thing{
-		ID:    idp.ID(),
 		Owner: email,
-		Key:   idp.ID(),
+		Key:   uuid.New().ID(),
 	}
 
-	thingRepo.Save(thing)
+	id, _ := thingRepo.Save(thing)
+	thing.ID = id
 
 	cases := map[string]struct {
 		owner string
-		ID    string
+		ID    uint64
 		err   error
 	}{
-		"existing user":                     {thing.Owner, thing.ID, nil},
-		"existing user, non-existing thing": {thing.Owner, wrong, things.ErrNotFound},
-		"non-existing owner":                {wrong, thing.ID, things.ErrNotFound},
+		"retrieve thing with existing user":              {owner: thing.Owner, ID: thing.ID, err: nil},
+		"retrieve non-existing thing with existing user": {owner: thing.Owner, ID: wrongID, err: things.ErrNotFound},
+		"retrieve thing with non-existing owner":         {owner: wrongValue, ID: thing.ID, err: things.ErrNotFound},
 	}
 
 	for desc, tc := range cases {
@@ -85,27 +81,28 @@ func TestSingleThingRetrieval(t *testing.T) {
 
 func TestThingRetrieveByKey(t *testing.T) {
 	email := "thing-retrieved-by-key@example.com"
-	idp := uuid.New()
 	thingRepo := postgres.NewThingRepository(db, testLog)
+
 	thing := things.Thing{
-		ID:    idp.ID(),
 		Owner: email,
-		Key:   idp.ID(),
+		Key:   uuid.New().ID(),
 	}
-	thingRepo.Save(thing)
+
+	id, _ := thingRepo.Save(thing)
+	thing.ID = id
 
 	cases := map[string]struct {
 		key string
-		id  string
+		ID  uint64
 		err error
 	}{
-		"retrieve existing thing by key":     {thing.Key, thing.ID, nil},
-		"retrieve non-existent thing by key": {wrong, "", things.ErrNotFound},
+		"retrieve existing thing by key":     {key: thing.Key, ID: thing.ID, err: nil},
+		"retrieve non-existent thing by key": {key: wrongValue, ID: wrongID, err: things.ErrNotFound},
 	}
 
 	for desc, tc := range cases {
 		id, err := thingRepo.RetrieveByKey(tc.key)
-		assert.Equal(t, tc.id, id, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.id, id))
+		assert.Equal(t, tc.ID, id, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.ID, id))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
@@ -119,7 +116,6 @@ func TestMultiThingRetrieval(t *testing.T) {
 
 	for i := 0; i < n; i++ {
 		t := things.Thing{
-			ID:    idp.ID(),
 			Owner: email,
 			Key:   idp.ID(),
 		}
@@ -133,9 +129,9 @@ func TestMultiThingRetrieval(t *testing.T) {
 		limit  int
 		size   int
 	}{
-		"existing owner, retrieve all":    {email, 0, n, n},
-		"existing owner, retrieve subset": {email, 1, 6, 6},
-		"non-existing owner":              {wrong, 1, 6, 0},
+		"retrieve all things with existing owner":       {owner: email, offset: 0, limit: n, size: n},
+		"retrieve subset of things with existing owner": {owner: email, offset: n / 2, limit: n, size: n / 2},
+		"retrieve things with non-existing owner":       {owner: wrongValue, offset: 0, limit: n, size: 0},
 	}
 
 	for desc, tc := range cases {
@@ -146,14 +142,15 @@ func TestMultiThingRetrieval(t *testing.T) {
 
 func TestThingRemoval(t *testing.T) {
 	email := "thing-removal@example.com"
-	idp := uuid.New()
 	thingRepo := postgres.NewThingRepository(db, testLog)
+
 	thing := things.Thing{
-		ID:    idp.ID(),
 		Owner: email,
-		Key:   idp.ID(),
+		Key:   uuid.New().ID(),
 	}
-	thingRepo.Save(thing)
+
+	id, _ := thingRepo.Save(thing)
+	thing.ID = id
 
 	// show that the removal works the same for both existing and non-existing
 	// (removed) thing

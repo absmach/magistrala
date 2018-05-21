@@ -59,12 +59,6 @@
   version = "v1.1.0"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/dereulenspiegel/coap-mux"
-  packages = ["."]
-  revision = "e137e310a99955be01d60b2237da89153ea40987"
-
-[[projects]]
   name = "github.com/dgrijalva/jwt-go"
   packages = ["."]
   revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
@@ -81,12 +75,6 @@
   packages = ["."]
   revision = "47565b4f722fb6ceae66b95f853feed578a4a51c"
   version = "v0.3.3"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/dustin/go-coap"
-  packages = ["."]
-  revision = "ddcc80675fa42611359d91a6dfa5aa57fb90e72b"
 
 [[projects]]
   name = "github.com/go-kit/kit"
@@ -429,6 +417,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "cce4c6cd08b6213615afc135d8e7d4f255d4ee32b42062e1f3208de246366418"
+  inputs-digest = "2025ce1052df88741bd920f1afa33b828a1222b41474716be88fbdce2f51badc"
   solver-name = "gps-cdcl"
   solver-version = 1

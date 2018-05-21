@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	chanID   = "123e4567-e89b-12d3-a456-000000000001"
+	chanID   = 1
 	token    = "token"
 	protocol = "ws"
 )
@@ -30,7 +30,7 @@ var (
 )
 
 func newService() ws.Service {
-	subs := map[string]ws.Channel{chanID: channel}
+	subs := map[uint64]ws.Channel{chanID: channel}
 	pubsub := mocks.NewService(subs, broker.ErrConnectionClosed)
 	return ws.New(pubsub)
 }
@@ -41,20 +41,20 @@ func newHTTPServer(svc ws.Service, tc mainflux.ThingsServiceClient) *httptest.Se
 }
 
 func newThingsClient() mainflux.ThingsServiceClient {
-	thingID := chanID
-	return mocks.NewThingsClient(map[string]string{token: thingID})
+	thingID := uint64(chanID)
+	return mocks.NewThingsClient(map[string]uint64{token: thingID})
 }
 
-func makeURL(tsURL, chanID, auth string, header bool) string {
+func makeURL(tsURL string, chanID uint64, auth string, header bool) string {
 	u, _ := url.Parse(tsURL)
 	u.Scheme = protocol
 	if header {
-		return fmt.Sprintf("%s/channels/%s/messages", u, chanID)
+		return fmt.Sprintf("%s/channels/%d/messages", u, chanID)
 	}
-	return fmt.Sprintf("%s/channels/%s/messages?authorization=%s", u, chanID, auth)
+	return fmt.Sprintf("%s/channels/%d/messages?authorization=%s", u, chanID, auth)
 }
 
-func handshake(tsURL, chanID, token string, addHeader bool) (*websocket.Conn, *http.Response, error) {
+func handshake(tsURL string, chanID uint64, token string, addHeader bool) (*websocket.Conn, *http.Response, error) {
 	header := http.Header{}
 	if addHeader {
 		header.Add("Authorization", token)
@@ -72,16 +72,15 @@ func TestHandshake(t *testing.T) {
 
 	cases := []struct {
 		desc   string
-		chanID string
+		chanID uint64
 		header bool
 		token  string
 		status int
 		msg    []byte
 	}{
 		{"connect and send message", chanID, true, token, http.StatusSwitchingProtocols, msg},
-		{"connect to non-existent channel", "123e4567-e89b-12d3-a456-000000000042", true, token, http.StatusSwitchingProtocols, []byte{}},
+		{"connect to non-existent channel", 0, true, token, http.StatusSwitchingProtocols, []byte{}},
 		{"connect with invalid token", chanID, true, "", http.StatusForbidden, []byte{}},
-		{"connect with invalid channel id", "1", true, token, http.StatusNotFound, []byte{}},
 		{"connect and send message with token as query parameter", chanID, false, token, http.StatusSwitchingProtocols, msg},
 		{"connect and send message that cannot be published", chanID, true, token, http.StatusSwitchingProtocols, []byte{}},
 	}

@@ -25,12 +25,12 @@ func NewServer(svc users.Service) mainflux.UsersServiceServer {
 	return &grpcServer{handler}
 }
 
-func (s *grpcServer) Identify(ctx context.Context, token *mainflux.Token) (*mainflux.Identity, error) {
+func (s *grpcServer) Identify(ctx context.Context, token *mainflux.Token) (*mainflux.UserID, error) {
 	_, res, err := s.handler.ServeGRPC(ctx, token)
 	if err != nil {
 		return nil, encodeError(err)
 	}
-	return res.(*mainflux.Identity), nil
+	return res.(*mainflux.UserID), nil
 }
 
 func decodeIdentifyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
@@ -40,7 +40,7 @@ func decodeIdentifyRequest(_ context.Context, grpcReq interface{}) (interface{},
 
 func encodeIdentifyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(identityRes)
-	return &mainflux.Identity{Value: res.id}, encodeError(res.err)
+	return &mainflux.UserID{Value: res.id}, encodeError(res.err)
 }
 
 func encodeError(err error) error {

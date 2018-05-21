@@ -314,15 +314,15 @@ parameters:
     name: chanId
     description: Unique channel identifier.
     in: path
-    type: string
-    format: uuid
+    type: integera
+    minimum: 1
     required: true
   ThingId:
     name: thingId
     description: Unique thing identifier.
     in: path
-    type: string
-    format: uuid
+    type: integer
+    minimum: 1
     required: true
   Limit:
     name: limit

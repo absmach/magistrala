@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/asaskevich/govalidator"
 	"github.com/go-zoo/bone"
 	"github.com/gorilla/websocket"
 	"github.com/mainflux/mainflux"
@@ -113,8 +112,8 @@ func authorize(r *http.Request) (subscription, error) {
 	}
 
 	// Extract ID from /channels/:id/messages.
-	chanID := bone.GetValue(r, "id")
-	if !govalidator.IsUUID(chanID) {
+	chanID, err := things.FromString(bone.GetValue(r, "id"))
+	if err != nil {
 		return subscription{}, errNotFound
 	}
 
@@ -135,8 +134,8 @@ func authorize(r *http.Request) (subscription, error) {
 }
 
 type subscription struct {
-	pubID   string
-	chanID  string
+	pubID   uint64
+	chanID  uint64
 	conn    *websocket.Conn
 	channel ws.Channel
 }

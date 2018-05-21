@@ -100,21 +100,6 @@ services:
       MF_NATS_URL: nats://nats:4222
       MF_NORMALIZER_PORT: 8184
 
-  coap-adapter:
-    image: mainflux/coap:latest
-    container_name: mainflux-coap
-    depends_on:
-      - things
-    expose:
-      - 5683
-    restart: on-failure
-    environment:
-      MF_COAP_ADAPTER_PORT: 5683
-      MF_NATS_URL: nats://nats:4222
-      MF_THINGS_URL: things:8183
-    ports:
-      - 5683:5683/udp
-
   ws-adapter:
     image: mainflux/ws:latest
     container_name: mainflux-ws

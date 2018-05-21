@@ -21,7 +21,7 @@ const port = 8081
 
 var (
 	user = users.User{"john.doe@email.com", "pass"}
-	svc users.Service
+	svc  users.Service
 )
 
 func newService() users.Service {

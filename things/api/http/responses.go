@@ -22,12 +22,12 @@ var (
 )
 
 type identityRes struct {
-	id string
+	id uint64
 }
 
 func (res identityRes) Headers() map[string]string {
 	return map[string]string{
-		"X-thing-id": res.id,
+		"X-thing-id": fmt.Sprint(res.id),
 	}
 }
 
@@ -54,7 +54,7 @@ func (res removeRes) Empty() bool {
 }
 
 type thingRes struct {
-	id      string
+	id      uint64
 	created bool
 }
 
@@ -69,7 +69,7 @@ func (res thingRes) Code() int {
 func (res thingRes) Headers() map[string]string {
 	if res.created {
 		return map[string]string{
-			"Location": fmt.Sprint("/things/", res.id),
+			"Location": fmt.Sprintf("/things/%d", res.id),
 		}
 	}
 
@@ -113,7 +113,7 @@ func (res listThingsRes) Empty() bool {
 }
 
 type channelRes struct {
-	id      string
+	id      uint64
 	created bool
 }
 
@@ -128,7 +128,7 @@ func (res channelRes) Code() int {
 func (res channelRes) Headers() map[string]string {
 	if res.created {
 		return map[string]string{
-			"Location": fmt.Sprint("/channels/", res.id),
+			"Location": fmt.Sprintf("/channels/%d", res.id),
 		}
 	}
 

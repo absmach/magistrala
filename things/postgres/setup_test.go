@@ -14,7 +14,10 @@ import (
 	"gopkg.in/ory-am/dockertest.v3"
 )
 
-const wrong string = "wrong-value"
+const (
+	wrongID    = 0
+	wrongValue = "wrong-value"
+)
 
 var (
 	testLog = logger.New(os.Stdout)

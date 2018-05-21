@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/asaskevich/govalidator"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
@@ -18,7 +17,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const protocol string = "http"
+const protocol = "http"
 
 var (
 	errMalformedData = errors.New("malformed SenML data")
@@ -60,36 +59,41 @@ func decodeRequest(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
+	channel, err := things.FromString(bone.GetValue(r, "id"))
+	if err != nil {
+		return nil, err
+	}
+
 	msg := mainflux.RawMessage{
 		Publisher:   publisher,
 		Protocol:    protocol,
 		ContentType: r.Header.Get("Content-Type"),
-		Channel:     bone.GetValue(r, "id"),
+		Channel:     channel,
 		Payload:     payload,
 	}
 
 	return msg, nil
 }
 
-func authorize(r *http.Request) (string, error) {
+func authorize(r *http.Request) (uint64, error) {
 	apiKey := r.Header.Get("Authorization")
 
 	if apiKey == "" {
-		return "", things.ErrUnauthorizedAccess
+		return 0, things.ErrUnauthorizedAccess
 	}
 
 	// extract ID from /channels/:id/messages
-	c := bone.GetValue(r, "id")
-	if !govalidator.IsUUID(c) {
-		return "", errNotFound
+	chanID, err := things.FromString(bone.GetValue(r, "id"))
+	if err != nil {
+		return 0, things.ErrNotFound
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	id, err := auth.CanAccess(ctx, &mainflux.AccessReq{Token: apiKey, ChanID: c})
+	id, err := auth.CanAccess(ctx, &mainflux.AccessReq{Token: apiKey, ChanID: chanID})
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 
 	return id.GetValue(), nil

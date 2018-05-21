@@ -41,10 +41,7 @@ func (repo *influxRepo) Save(msg mainflux.Message) error {
 	}
 
 	bp.AddPoint(pt)
-	if err := repo.client.Write(bp); err != nil {
-		return err
-	}
-	return nil
+	return repo.client.Write(bp)
 }
 
 func (repo *influxRepo) tagsOf(msg *mainflux.Message) tags {

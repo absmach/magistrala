@@ -25,17 +25,18 @@ func (svc *mockService) Publish(msg mainflux.RawMessage) error {
 		return svc.pubError
 	}
 	svc.mutex.Lock()
+	defer svc.mutex.Unlock()
 	svc.subscriptions[msg.Channel].Messages <- msg
-	svc.mutex.Unlock()
 	return nil
 }
 
 func (svc *mockService) Subscribe(chanID uint64, channel ws.Channel) error {
+	svc.mutex.Lock()
+	defer svc.mutex.Unlock()
 	if _, ok := svc.subscriptions[chanID]; !ok {
 		return ws.ErrFailedSubscription
 	}
-	svc.mutex.Lock()
 	svc.subscriptions[chanID] = channel
-	svc.mutex.Unlock()
+
 	return nil
 }

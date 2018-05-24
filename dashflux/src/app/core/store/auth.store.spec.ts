@@ -7,7 +7,7 @@ import { Observable } from 'rxjs/Observable';
 import { AuthenticationService } from '../services/auth/authentication.service';
 import { TokenStorage } from '../services/auth/token-storage.service';
 import { ChannelsService } from '../services/channels/channels.service';
-import { ClientsService } from '../services/clients/clients.service';
+import { ThingsService } from '../services/things/things.service';
 import { AuthStore } from './auth.store';
 import { UiStore } from './ui.store';
 
@@ -23,7 +23,7 @@ describe('AuthStore', () => {
                 UiStore,
                 TokenStorage,
                 AuthenticationService,
-                ClientsService,
+                ThingsService,
                 ChannelsService,
             ]
         });
@@ -59,14 +59,14 @@ describe('AuthStore', () => {
             }));
 
 
-        it('should navigate to /clients when successfully authenticated', inject([AuthStore, AuthenticationService, Router],
+        it('should navigate to /things when successfully authenticated', inject([AuthStore, AuthenticationService, Router],
             (authStore: AuthStore, authService: AuthenticationService, router: Router) => {
                 const spy = spyOn(authService, 'login').and.returnValue(Observable.of(true));
                 const routerSpy = spyOn(router, 'navigate').and.stub();
 
                 authStore.login(user);
 
-                expect(routerSpy).toHaveBeenCalledWith(['/clients']);
+                expect(routerSpy).toHaveBeenCalledWith(['/things']);
             }));
 
         it('should set the loading flag to false when successfully authenticated',

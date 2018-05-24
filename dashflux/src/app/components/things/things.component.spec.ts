@@ -9,19 +9,19 @@ import { MaterialModule } from '../../core/material/material.module';
 import { AuthenticationService } from '../../core/services/auth/authentication.service';
 import { TokenStorage } from '../../core/services/auth/token-storage.service';
 import { ChannelsService } from '../../core/services/channels/channels.service';
-import { ClientsService } from '../../core/services/clients/clients.service';
-import { ClientsComponent } from './clients.component';
+import { ThingsService } from '../../core/services/things/things.service';
+import { ThingsComponent } from './things.component';
 import { UiStore } from '../../core/store/ui.store';
-import { ClientsStore } from '../../core/store/clients.store';
+import { ThingsStore } from '../../core/store/things.store';
 import { ChannelsStore } from '../../core/store/channels.store';
 
-describe('ClientsComponent', () => {
-  let component: ClientsComponent;
-  let fixture: ComponentFixture<ClientsComponent>;
+describe('ThingsComponent', () => {
+  let component: ThingsComponent;
+  let fixture: ComponentFixture<ThingsComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ClientsComponent ],
+      declarations: [ ThingsComponent ],
       imports: [
         MaterialModule,
         MatDialogModule,
@@ -34,15 +34,15 @@ describe('ClientsComponent', () => {
       providers: [
         UiStore,
         {
-          provide: ClientsStore,
+          provide: ThingsStore,
           useClass: class {
-            getClients = jasmine.createSpy('getClients');
+            getThings = jasmine.createSpy('getThings');
           }
         },
         ChannelsStore,
         AuthenticationService,
         TokenStorage,
-        ClientsService,
+        ThingsService,
         ChannelsService,
         { provide: MatDialogRef, useValue: {} },
         { provide: MAT_DIALOG_DATA, useValue: [] },
@@ -52,7 +52,7 @@ describe('ClientsComponent', () => {
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(ClientsComponent);
+    fixture = TestBed.createComponent(ThingsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

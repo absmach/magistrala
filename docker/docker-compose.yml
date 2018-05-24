@@ -19,9 +19,9 @@ services:
       - ./ssl/certs/mainflux-server.key:/etc/ssl/private/mainflux-server.key
       - ./ssl/dhparam.pem:/etc/ssl/certs/dhparam.pem
     ports:
-      - "80:80"
-      - "443:443"
-      - "8883:8883"
+      - 80:80
+      - 443:443
+      - 8883:8883
 
   nats:
     image: nats:1.0.2
@@ -99,6 +99,13 @@ services:
     environment:
       MF_NATS_URL: nats://nats:4222
       MF_NORMALIZER_PORT: 8184
+
+  dashflux:
+    image: mainflux/dashflux:latest
+    container_name: mainflux-dashflux
+    restart: on-failure
+    ports:
+      - 3000:3000
 
   ws-adapter:
     image: mainflux/ws:latest

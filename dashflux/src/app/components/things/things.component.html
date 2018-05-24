@@ -1,9 +1,9 @@
-<div class="clientsContainer" fxLayout="row" fxLayoutWrap>
-  <ng-container [ngSwitch]="clientsStore.clients?.length > 0">
+<div class="thingsContainer" fxLayout="row" fxLayoutWrap>
+  <ng-container [ngSwitch]="thingsStore.things?.length > 0">
     <ng-container *ngSwitchCase="true">
       <!-- List -->
-      <div class="client-list-container">
-        <mat-table #table [dataSource]="clientsStore.clients.toJS()" matSort class="mat-cell">
+      <div class="things-list-container">
+        <mat-table #table [dataSource]="thingsStore.things.toJS()" matSort class="mat-cell">
           <!-- Columns -->
           <ng-container matColumnDef="id">
             <mat-header-cell fxFlex="32%" *matHeaderCellDef mat-sort-header>Id</mat-header-cell>
@@ -25,10 +25,10 @@
           <ng-container matColumnDef="actions">
             <mat-header-cell fxFlex="8%" *matHeaderCellDef mat-sort-header></mat-header-cell>
             <mat-cell fxFlex="8%" *matCellDef="let row" >
-              <button mat-icon-button color="accent" (click)="editClient(row)">
+              <button mat-icon-button color="accent" (click)="editThing(row)">
                 <mat-icon aria-label="Delete">edit</mat-icon>
               </button>
-              <button mat-icon-button color="accent" (click)="deleteClient(row)">
+              <button mat-icon-button color="accent" (click)="deleteThing(row)">
                 <mat-icon aria-label="Delete">delete</mat-icon>
               </button>
             </mat-cell>
@@ -46,6 +46,6 @@
   </ng-container>
 </div>
 
-<button mat-mini-fab class="addButton" (click)="addClient()">
+<button mat-mini-fab class="addButton" (click)="addThing()">
   <mat-icon>add</mat-icon>
 </button>

@@ -6,7 +6,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { AuthenticationService } from '../services/auth/authentication.service';
 import { TokenStorage } from '../services/auth/token-storage.service';
 import { ChannelsService } from '../services/channels/channels.service';
-import { ClientsService } from '../services/clients/clients.service';
+import { ThingsService } from '../services/things/things.service';
 import { UiStore } from './ui.store';
 
 describe('State', () => {
@@ -21,7 +21,7 @@ describe('State', () => {
                 UiStore,
                 TokenStorage,
                 AuthenticationService,
-                ClientsService,
+                ThingsService,
                 ChannelsService,
             ]
         });

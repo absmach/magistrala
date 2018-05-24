@@ -31,7 +31,7 @@ export class AuthStore {
             .subscribe(() => {
                 this.uiState.loading = false;
                 this.isAuthenticated = true;
-                this.router.navigate(['/clients']);
+                this.router.navigate(['/things']);
             },
             (error) => {
                 this.uiState.loading = false;

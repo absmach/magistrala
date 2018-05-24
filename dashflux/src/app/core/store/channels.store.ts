@@ -29,8 +29,10 @@ export class ChannelsStore {
     @action
     addChannel(channel: Channel) {
         this.uiState.loading = true;
+        console.log('add ch');
         this.channelsService.addChannel(channel)
-            .subscribe(() => {
+            .subscribe(resp => {
+                console.log(resp);
                 this.uiState.loading = false;
                 this.getChannels();
             }, () => {

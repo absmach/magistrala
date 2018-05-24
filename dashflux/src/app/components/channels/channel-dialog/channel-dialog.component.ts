@@ -3,24 +3,24 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material';
 import { toJS } from 'mobx';
 
-import { ClientsStore } from '../../../core/store/clients.store';
-import { Channel, Client } from '../../../core/store/models';
+import { ThingsStore } from '../../../core/store/things.store';
+import { Channel, Thing } from '../../../core/store/models';
 
 @Component({
-  selector: 'app-add-channel-dialog',
-  templateUrl: './add-channel-dialog.component.html',
-  styleUrls: ['./add-channel-dialog.component.scss']
+  selector: 'app-channel-dialog',
+  templateUrl: './channel-dialog.component.html',
+  styleUrls: ['./channel-dialog.component.scss']
 })
-export class AddChannelDialogComponent implements OnInit {
+export class ChannelDialogComponent implements OnInit {
   addChannelForm: FormGroup;
   @Output() submit: EventEmitter<Channel> = new EventEmitter<Channel>();
   editMode: boolean;
 
   constructor(
     private fb: FormBuilder,
-    private dialogRef: MatDialogRef<AddChannelDialogComponent>,
+    private dialogRef: MatDialogRef<ChannelDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: Channel,
-    public clientsStore: ClientsStore,
+    public thingsStore: ThingsStore,
   ) { }
 
   ngOnInit() {
@@ -46,7 +46,7 @@ export class AddChannelDialogComponent implements OnInit {
     this.dialogRef.close();
   }
 
-  compareFunction(obj1: Client, obj2: Client) {
+  compareFunction(obj1: Thing, obj2: Thing) {
     return obj1.id === obj2.id;
   }
 }

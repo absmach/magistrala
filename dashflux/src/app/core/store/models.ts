@@ -1,10 +1,10 @@
 export interface Channel {
     id?: '';
     name: string;
-    connected: Client[];
+    connected: Thing[];
 }
 
-export interface Client {
+export interface Thing {
     id?: '';
     type: string;
     name: string;

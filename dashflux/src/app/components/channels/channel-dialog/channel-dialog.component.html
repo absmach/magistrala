@@ -10,8 +10,8 @@
         </mat-error>
       </mat-form-field>
       <mat-form-field>
-          <mat-select placeholder="Connected clients" formControlName="connected" [compareWith]="compareFunction" multiple>
-            <mat-option *ngFor="let client of clientsStore.clients" [value]="client">{{client.name}}</mat-option>
+          <mat-select placeholder="Connected things" formControlName="connected" [compareWith]="compareFunction" multiple>
+            <mat-option *ngFor="let thing of thingsStore.things" [value]="thing">{{thing.name}}</mat-option>
           </mat-select>
         </mat-form-field>
     </div>

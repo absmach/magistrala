@@ -5,11 +5,11 @@
     <mat-toolbar color="primary" class="mat-elevation-z6">
         <h1 fxFlex>Mainflux</h1>
         <ng-container *ngIf="authStore.isAuthenticated">
-            <a [routerLink]="['/clients']" mat-button>Clients</a>
+            <a [routerLink]="['/things']" mat-button>Things</a>
             <a [routerLink]="['/channels']" mat-button>Channels</a>
             <a (click)="logout()" mat-button>Logout</a>
         </ng-container>
-    
+
     </mat-toolbar>
     <router-outlet></router-outlet>
 </div>

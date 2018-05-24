@@ -7,6 +7,6 @@ export const environment = {
   production: false,
   signupUrl: '/users',
   loginUrl: '/tokens',
-  clientsUrl: '/clients',
+  thingsUrl: '/things',
   channelsUrl: '/channels'
 };

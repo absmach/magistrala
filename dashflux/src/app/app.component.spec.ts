@@ -7,7 +7,7 @@ import { MaterialModule } from './core/material/material.module';
 import { AuthenticationService } from './core/services/auth/authentication.service';
 import { TokenStorage } from './core/services/auth/token-storage.service';
 import { ChannelsService } from './core/services/channels/channels.service';
-import { ClientsService } from './core/services/clients/clients.service';
+import { ThingsService } from './core/services/things/things.service';
 import { UiStore } from './core/store/ui.store';
 import { AuthStore } from './core/store/auth.store';
 
@@ -27,7 +27,7 @@ describe('AppComponent', () => {
         AuthStore,
         AuthenticationService,
         TokenStorage,
-        ClientsService,
+        ThingsService,
         ChannelsService,
       ]
     }).compileComponents();

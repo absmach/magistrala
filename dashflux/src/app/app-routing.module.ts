@@ -6,13 +6,13 @@ import { ProtectedGuard, PublicGuard } from 'ngx-auth';
 import { LoginComponent } from './components/auth/login/login.component';
 import { SignupComponent } from './components/auth/signup/signup.component';
 import { ChannelsComponent } from './components/channels/channels.component';
-import { ClientsComponent } from './components/clients/clients.component';
+import { ThingsComponent } from './components/things/things.component';
 
 const routes: Route[] = [
-  { path: '', redirectTo: 'clients', pathMatch: 'full'},
+  { path: '', redirectTo: 'things', pathMatch: 'full'},
   { path: 'login', component: LoginComponent, canActivate: [PublicGuard]},
   { path: 'signup', component: SignupComponent, canActivate: [PublicGuard]},
-  { path: 'clients', component: ClientsComponent, canActivate: [ProtectedGuard]},
+  { path: 'things', component: ThingsComponent, canActivate: [ProtectedGuard]},
   { path: 'channels', component: ChannelsComponent, canActivate: [ProtectedGuard]}
 ];
 

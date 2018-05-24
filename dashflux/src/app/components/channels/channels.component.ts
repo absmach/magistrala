@@ -3,10 +3,10 @@ import { MatDialog } from '@angular/material';
 import { Observable } from 'rxjs/Observable';
 
 import { ChannelsStore } from '../../core/store/channels.store';
-import { ClientsStore } from '../../core/store/clients.store';
+import { ThingsStore } from '../../core/store/things.store';
 import { Channel } from '../../core/store/models';
 import { ConfirmationDialogComponent } from '../shared/confirmation-dialog/confirmation-dialog.component';
-import { AddChannelDialogComponent } from './add-channel-dialog/add-channel-dialog.component';
+import { ChannelDialogComponent } from './channel-dialog/channel-dialog.component';
 
 @Component({
   selector: 'app-channels',
@@ -19,17 +19,17 @@ export class ChannelsComponent implements OnInit {
 
   constructor(
     private dialog: MatDialog,
-    public clientsStore: ClientsStore,
+    public thingsStore: ThingsStore,
     public channelsStore: ChannelsStore,
   ) { }
 
   ngOnInit() {
     this.channelsStore.getChannels();
-    this.clientsStore.getClients();
+    this.thingsStore.getThings();
   }
 
   addChannel() {
-    const dialogRef = this.dialog.open(AddChannelDialogComponent);
+    const dialogRef = this.dialog.open(ChannelDialogComponent);
 
     dialogRef.componentInstance.submit.subscribe((channel: Channel) => {
       this.channelsStore.addChannel(channel);
@@ -37,7 +37,7 @@ export class ChannelsComponent implements OnInit {
   }
 
   editChannel(channel: Channel) {
-    const dialogRef = this.dialog.open(AddChannelDialogComponent, {
+    const dialogRef = this.dialog.open(ChannelDialogComponent, {
       data: channel
     });
 

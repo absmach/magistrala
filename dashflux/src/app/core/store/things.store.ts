@@ -1,62 +1,62 @@
 import { Injectable } from '@angular/core';
 import { action, observable } from 'mobx';
 
-import { ClientsService } from '../services/clients/clients.service';
-import { Client } from './models';
+import { ThingsService } from '../services/things/things.service';
+import { Thing } from './models';
 import { UiStore } from './ui.store';
 
 @Injectable()
-export class ClientsStore {
-    @observable clients: Client[] = [];
+export class ThingsStore {
+    @observable things: Thing[] = [];
 
     constructor(
         private uiState: UiStore,
-        private clientsService: ClientsService,
+        private thingsService: ThingsService,
     ) { }
 
     @action
-    getClients() {
+    getThings() {
         this.uiState.loading = true;
-        this.clientsService.getClients()
+        this.thingsService.getThings()
             .subscribe((payload: any) => {
                 this.uiState.loading = false;
-                this.clients = payload.clients;
+                this.things = payload.things;
             }, () => {
                 this.uiState.loading = false;
             });
     }
 
     @action
-    addClient(client: Client) {
+    addThing(thing: Thing) {
         this.uiState.loading = true;
-        this.clientsService.addClient(client)
+        this.thingsService.addThing(thing)
             .subscribe(() => {
                 this.uiState.loading = false;
-                this.getClients();
+                this.getThings();
             }, () => {
                 this.uiState.loading = false;
             });
     }
 
     @action
-    editClient(client: Client) {
+    editThing(thing: Thing) {
         this.uiState.loading = true;
-        this.clientsService.editClient(client)
+        this.thingsService.editThing(thing)
             .subscribe(() => {
                 this.uiState.loading = false;
-                this.getClients();
+                this.getThings();
             }, () => {
                 this.uiState.loading = false;
             });
     }
 
     @action
-    deleteClient(client: Client) {
+    deleteThing(thing: Thing) {
         this.uiState.loading = true;
-        this.clientsService.deleteClient(client)
+        this.thingsService.deleteThing(thing)
             .subscribe(() => {
                 this.uiState.loading = false;
-                this.getClients();
+                this.getThings();
             }, () => {
                 this.uiState.loading = false;
             });

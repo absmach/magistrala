@@ -14,21 +14,21 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { LoginComponent } from './components/auth/login/login.component';
 import { SignupComponent } from './components/auth/signup/signup.component';
-import { AddChannelDialogComponent } from './components/channels/add-channel-dialog/add-channel-dialog.component';
+import { ChannelDialogComponent } from './components/channels/channel-dialog/channel-dialog.component';
 import { ChannelsComponent } from './components/channels/channels.component';
-import { AddClientDialogComponent } from './components/clients/add-client-dialog/add-client-dialog.component';
-import { ClientsComponent } from './components/clients/clients.component';
+import { ThingDialogComponent } from './components/things/thing-dialog/thing-dialog.component';
+import { ThingsComponent } from './components/things/things.component';
 import { ConfirmationDialogComponent } from './components/shared/confirmation-dialog/confirmation-dialog.component';
 import { MaterialModule } from './core/material/material.module';
 import { AuthenticationService } from './core/services/auth/authentication.service';
 import { TokenStorage } from './core/services/auth/token-storage.service';
 import { ChannelsService } from './core/services/channels/channels.service';
-import { ClientsService } from './core/services/clients/clients.service';
+import { ThingsService } from './core/services/things/things.service';
 import { MockAuthService } from './core/services/mock-auth.service';
 import { MockChannelsService } from './core/services/mock-channels.service';
-import { MockClientsService } from './core/services/mock-clients.service';
+import { MockThingsService } from './core/services/mock-things.service';
 import { ChannelsStore } from './core/store/channels.store';
-import { ClientsStore } from './core/store/clients.store';
+import { ThingsStore } from './core/store/things.store';
 import { UiStore } from './core/store/ui.store';
 import { AuthStore } from './core/store/auth.store';
 import { UnauthorizedInterceptor } from './core/services/auth/unauthorized.interceptor';
@@ -40,13 +40,13 @@ export function factory(authenticationService: AuthenticationService) {
 @NgModule({
   declarations: [
     AppComponent,
-    ClientsComponent,
+    ThingsComponent,
     ChannelsComponent,
     SignupComponent,
     LoginComponent,
-    AddClientDialogComponent,
+    ThingDialogComponent,
     ConfirmationDialogComponent,
-    AddChannelDialogComponent,
+    ChannelDialogComponent,
   ],
   imports: [
     AuthModule,
@@ -61,13 +61,13 @@ export function factory(authenticationService: AuthenticationService) {
   ],
   providers: [
     UiStore,
-    ClientsStore,
+    ThingsStore,
     ChannelsStore,
     AuthStore,
     MockAuthService,
-    MockClientsService,
+    MockThingsService,
     MockChannelsService,
-    ClientsService,
+    ThingsService,
     ChannelsService,
     TokenStorage,
     AuthenticationService,
@@ -82,8 +82,8 @@ export function factory(authenticationService: AuthenticationService) {
   ],
   bootstrap: [AppComponent],
   entryComponents: [
-    AddClientDialogComponent,
-    AddChannelDialogComponent,
+    ThingDialogComponent,
+    ChannelDialogComponent,
     ConfirmationDialogComponent
   ]
 })

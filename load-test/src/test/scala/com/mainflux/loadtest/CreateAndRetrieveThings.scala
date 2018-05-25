@@ -1,10 +1,10 @@
 package com.mainflux.loadtest
 
+import scala.concurrent.duration._
+
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import io.gatling.http.request.builder.HttpRequestBuilder.toActionBuilder
-
-import scala.concurrent.duration._
 
 final class CreateAndRetrieveThings extends TestCase {
   override def prepareAndExecute(): SetUp = {
@@ -27,4 +27,3 @@ final class CreateAndRetrieveThings extends TestCase {
     setUp(scn.inject(constantUsersPerSec(RequestsPerSecond) during 15.seconds)).protocols(httpProtocol(ThingsURL))
   }
 }
-

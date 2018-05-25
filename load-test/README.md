@@ -18,14 +18,16 @@ default values.
 | users    | Users service URL                        | http://localhost:8180 |
 | things   | Things service URL                       | http://localhost:8182 |
 | http     | HTTP adapter service URL                 | http://localhost:8185 |
+| ws       | WebSocket adapter service URL            | localhost:8186        |
 | requests | Number of requests to be sent per second | 100                   |
 
 ## Usage
 
-This project contains two simulations:
+This project contains three simulations:
 
 - `CreateAndRetrieveThings`
-- `PublishMessages`
+- `PublishHttpMessages`
+- `PublishWsMessages`
 
 To run all tests you will have to run following commands:
 
@@ -43,11 +45,20 @@ Execute the following command to run the suite:
 sbt "gatling:testOnly com.mainflux.loadtest.CreateAndRetrieveThings"
 ```
 
-### Message publishing
+### Message publishing over HTTP adapter
 
-`PublishMessages` contains load tests for publishing messages. Execute the following
-command to run the suite:
+`PublishHttpMessages` contains load tests for publishing messages over HTTP.
+Execute the following command to run the suite:
 
 ```bash
-sbt "gatling:testOnly com.mainflux.loadtest.PublishMessages"
+sbt "gatling:testOnly com.mainflux.loadtest.PublishHttpMessages"
+```
+
+### Message publishing over WebSocket adapter
+
+`PublishWsMessages` contains load tests for publishing messages over WebSocket.
+Execute the following command to run the suite:
+
+```bash
+sbt "gatling:testOnly com.mainflux.loadtest.PublishWsMessages"
 ```

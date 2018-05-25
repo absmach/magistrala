@@ -12,7 +12,7 @@ trait TestCase extends Simulation {
   protected lazy val ThingsURL: String = System.getProperty("things", "http://localhost:8182")
   protected lazy val RequestsPerSecond: Double = Integer.getInteger("requests", 100).toDouble
 
-  protected val jsonType: String = "application/jsonType"
+  protected val jsonType: String = "application/json"
 
   def authenticate(): String = {
     val user = """{"email":"john.doe@email.com", "password":"123"}"""
@@ -40,6 +40,14 @@ trait TestCase extends Simulation {
     .acceptHeader("*/*")
     .contentTypeHeader(jsonType)
     .userAgentHeader("curl/7.54.0")
+    .build
+
+  def wsProtocol(url: String): HttpProtocol = http
+    .baseURL(s"http://$url")
+    .inferHtmlResources()
+    .acceptHeader("*/*")
+    .userAgentHeader("Gatling2")
+    .wsBaseURL(s"ws://$url")
     .build
 
   def prepareAndExecute(): SetUp

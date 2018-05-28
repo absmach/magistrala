@@ -36,7 +36,7 @@ func (lm *loggingMiddleware) Publish(msg mainflux.RawMessage) (err error) {
 	return lm.svc.Publish(msg)
 }
 
-func (lm *loggingMiddleware) Subscribe(chanID uint64, channel ws.Channel) (err error) {
+func (lm *loggingMiddleware) Subscribe(chanID uint64, channel *ws.Channel) (err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method subscribe to channel %d took %s to complete", chanID, time.Since(begin))
 		if err != nil {

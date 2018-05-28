@@ -4,6 +4,7 @@ package ws
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/mainflux/mainflux"
 	broker "github.com/nats-io/go-nats"
@@ -25,17 +26,44 @@ type Service interface {
 	mainflux.MessagePublisher
 
 	// Subscribes to channel with specified id.
-	Subscribe(uint64, Channel) error
+	Subscribe(uint64, *Channel) error
 }
 
 // Channel is used for receiving and sending messages.
 type Channel struct {
 	Messages chan mainflux.RawMessage
 	Closed   chan bool
+	closed   bool
+	mutex    sync.Mutex
+}
+
+// NewChannel instantiates empty channel.
+func NewChannel() *Channel {
+	return &Channel{
+		Messages: make(chan mainflux.RawMessage),
+		Closed:   make(chan bool),
+		closed:   false,
+		mutex:    sync.Mutex{},
+	}
+}
+
+// Send method send message over Messages channel.
+func (channel *Channel) Send(msg mainflux.RawMessage) {
+	channel.mutex.Lock()
+	defer channel.mutex.Unlock()
+
+	if !channel.closed {
+		channel.Messages <- msg
+	}
 }
 
 // Close channel and stop message transfer.
-func (channel Channel) Close() {
+func (channel *Channel) Close() {
+	channel.mutex.Lock()
+	defer channel.mutex.Unlock()
+
+	channel.closed = true
+	channel.Closed <- true
 	close(channel.Messages)
 	close(channel.Closed)
 }
@@ -63,7 +91,7 @@ func (as *adapterService) Publish(msg mainflux.RawMessage) error {
 	return nil
 }
 
-func (as *adapterService) Subscribe(chanID uint64, channel Channel) error {
+func (as *adapterService) Subscribe(chanID uint64, channel *Channel) error {
 	if err := as.pubsub.Subscribe(chanID, channel); err != nil {
 		return ErrFailedSubscription
 	}

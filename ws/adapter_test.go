@@ -18,24 +18,22 @@ const (
 	protocol = "ws"
 )
 
-var (
-	msg = mainflux.RawMessage{
-		Channel:   chanID,
-		Publisher: pubID,
-		Protocol:  protocol,
-		Payload:   []byte(`[{"n":"current","t":-5,"v":1.2}]`),
-	}
-	channel = ws.Channel{make(chan mainflux.RawMessage), make(chan bool)}
-)
+var msg = mainflux.RawMessage{
+	Channel:   chanID,
+	Publisher: pubID,
+	Protocol:  protocol,
+	Payload:   []byte(`[{"n":"current","t":-5,"v":1.2}]`),
+}
 
-func newService() ws.Service {
-	subs := map[uint64]ws.Channel{chanID: channel}
+func newService(channel *ws.Channel) ws.Service {
+	subs := map[uint64]*ws.Channel{chanID: channel}
 	pubsub := mocks.NewService(subs, broker.ErrInvalidMsg)
 	return ws.New(pubsub)
 }
 
 func TestPublish(t *testing.T) {
-	svc := newService()
+	channel := ws.NewChannel()
+	svc := newService(channel)
 
 	cases := []struct {
 		desc string
@@ -49,8 +47,8 @@ func TestPublish(t *testing.T) {
 	for _, tc := range cases {
 		// Check if message was sent.
 		go func(desc string, tcMsg mainflux.RawMessage) {
-			msg := <-channel.Messages
-			assert.Equal(t, tcMsg, msg, fmt.Sprintf("%s: expected %v got %v\n", desc, tcMsg, msg))
+			receivedMsg := <-channel.Messages
+			assert.Equal(t, tcMsg, receivedMsg, fmt.Sprintf("%s: expected %v got %v\n", desc, tcMsg, receivedMsg))
 		}(tc.desc, tc.msg)
 
 		// Check if publish succeeded.
@@ -60,12 +58,13 @@ func TestPublish(t *testing.T) {
 }
 
 func TestSubscribe(t *testing.T) {
-	svc := newService()
+	channel := ws.NewChannel()
+	svc := newService(channel)
 
 	cases := []struct {
 		desc    string
 		chanID  uint64
-		channel ws.Channel
+		channel *ws.Channel
 		err     error
 	}{
 		{"subscription to valid channel", chanID, channel, nil},
@@ -78,11 +77,21 @@ func TestSubscribe(t *testing.T) {
 	}
 }
 
+func TestSend(t *testing.T) {
+	channel := ws.NewChannel()
+	go func(channel *ws.Channel) {
+		receivedMsg := <-channel.Messages
+		assert.Equal(t, msg, receivedMsg, fmt.Sprintf("send message to channel: expected %v got %v\n", msg, receivedMsg))
+	}(channel)
+
+	channel.Send(msg)
+}
+
 func TestClose(t *testing.T) {
-	channel := ws.Channel{make(chan mainflux.RawMessage), make(chan bool)}
+	channel := ws.NewChannel()
+	go func() {
+		closed := <-channel.Closed
+		assert.True(t, closed, "channel closed stayed open")
+	}()
 	channel.Close()
-	_, closed := <-channel.Closed
-	_, messagesClosed := <-channel.Messages
-	assert.False(t, closed, "channel closed stayed open")
-	assert.False(t, messagesClosed, "channel messages stayed open")
 }

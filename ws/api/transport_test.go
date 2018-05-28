@@ -26,11 +26,11 @@ const (
 
 var (
 	msg     = []byte(`[{"n":"current","t":-5,"v":1.2}]`)
-	channel = ws.Channel{make(chan mainflux.RawMessage), make(chan bool)}
+	channel = ws.NewChannel()
 )
 
 func newService() ws.Service {
-	subs := map[uint64]ws.Channel{chanID: channel}
+	subs := map[uint64]*ws.Channel{chanID: channel}
 	pubsub := mocks.NewService(subs, broker.ErrConnectionClosed)
 	return ws.New(pubsub)
 }

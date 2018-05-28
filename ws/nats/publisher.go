@@ -47,7 +47,7 @@ func (pubsub *natsPubSub) Publish(msg mainflux.RawMessage) error {
 	return pubsub.nc.Publish(fmt.Sprintf("%s.%d", prefix, msg.Channel), data)
 }
 
-func (pubsub *natsPubSub) Subscribe(chanID uint64, channel ws.Channel) error {
+func (pubsub *natsPubSub) Subscribe(chanID uint64, channel *ws.Channel) error {
 	var sub *broker.Subscription
 	sub, err := pubsub.nc.Subscribe(fmt.Sprintf("%s.%d", prefix, chanID), func(msg *broker.Msg) {
 		if msg == nil {
@@ -59,19 +59,14 @@ func (pubsub *natsPubSub) Subscribe(chanID uint64, channel ws.Channel) error {
 			return
 		}
 
-		// Prevents sending message to closed channel
-		select {
-		case channel.Messages <- rawMsg:
-		case <-channel.Closed:
-			sub.Unsubscribe()
-		}
+		// Sends message to messages channel
+		channel.Send(rawMsg)
 	})
 
 	// Check if subscription should be closed
 	go func() {
 		<-channel.Closed
 		sub.Unsubscribe()
-		channel.Close()
 	}()
 
 	return err

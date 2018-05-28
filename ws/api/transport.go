@@ -50,30 +50,18 @@ func MakeHandler(svc ws.Service, cc mainflux.ThingsServiceClient, l log.Logger) 
 func handshake(svc ws.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sub, err := authorize(r)
-		if err == errNotFound {
-			logger.Warn(fmt.Sprintf("Invalid channel id: %s", err))
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
 		if err != nil {
 			switch err {
 			case errNotFound:
 				logger.Warn(fmt.Sprintf("Invalid channel id: %s", err))
 				w.WriteHeader(http.StatusNotFound)
 				return
+			case things.ErrUnauthorizedAccess:
+				w.WriteHeader(http.StatusForbidden)
+				return
 			default:
 				logger.Warn(fmt.Sprintf("Failed to authorize: %s", err))
-				e, ok := status.FromError(err)
-				if ok {
-					switch e.Code() {
-					case codes.PermissionDenied:
-						w.WriteHeader(http.StatusForbidden)
-					default:
-						w.WriteHeader(http.StatusServiceUnavailable)
-					}
-					return
-				}
-				w.WriteHeader(http.StatusForbidden)
+				w.WriteHeader(http.StatusServiceUnavailable)
 				return
 			}
 		}
@@ -86,9 +74,7 @@ func handshake(svc ws.Service) http.HandlerFunc {
 		}
 		sub.conn = conn
 
-		// Subscribe to channel
-		channel := ws.Channel{make(chan mainflux.RawMessage), make(chan bool)}
-		sub.channel = channel
+		sub.channel = ws.NewChannel()
 		if err := svc.Subscribe(sub.chanID, sub.channel); err != nil {
 			logger.Warn(fmt.Sprintf("Failed to subscribe to NATS subject: %s", err))
 			conn.Close()
@@ -122,6 +108,10 @@ func authorize(r *http.Request) (subscription, error) {
 
 	id, err := auth.CanAccess(ctx, &mainflux.AccessReq{Token: authKey, ChanID: chanID})
 	if err != nil {
+		e, ok := status.FromError(err)
+		if ok && e.Code() == codes.PermissionDenied {
+			return subscription{}, things.ErrUnauthorizedAccess
+		}
 		return subscription{}, err
 	}
 
@@ -137,14 +127,14 @@ type subscription struct {
 	pubID   uint64
 	chanID  uint64
 	conn    *websocket.Conn
-	channel ws.Channel
+	channel *ws.Channel
 }
 
 func (sub subscription) broadcast(svc ws.Service) {
 	for {
 		_, payload, err := sub.conn.ReadMessage()
 		if websocket.IsUnexpectedCloseError(err) {
-			sub.channel.Closed <- true
+			sub.channel.Close()
 			return
 		}
 		if err != nil {

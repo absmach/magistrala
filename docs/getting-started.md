@@ -48,56 +48,56 @@ an authorization key.
 
 ### Provisioning devices
 
-Devices are provisioned by executing request `POST /clients`, with a
+Devices are provisioned by executing request `POST /things`, with a
 `"type":"device"` specified in JSON payload. Note that you will also need
-`user_auth_token` in order to provision clients (both devices and application)
+`user_auth_token` in order to provision things (both devices and application)
 that belong to this particular user.
 
 ```
-curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json" -H "Authorization: <user_auth_token>" https://localhost/clients -d '{"type":"device", "name":"weio"}'
+curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json" -H "Authorization: <user_auth_token>" https://localhost/things -d '{"type":"device", "name":"weio"}'
 ```
 
 Response will contain `Location` header whose value represents path to newly
-created client:
+created thing:
 
 ```
 HTTP/1.1 201 Created
 Content-Type: application/json
-Location: /clients/81380742-7116-4f6f-9800-14fe464f6773
+Location: /things/81380742-7116-4f6f-9800-14fe464f6773
 Date: Tue, 10 Apr 2018 10:02:59 GMT
 Content-Length: 0
 ```
 
 ### Provisioning applications
 
-Applications are provisioned by executing HTTP request `POST /clients`, with
+Applications are provisioned by executing HTTP request `POST /things`, with
 `"type":"app"` specified in JSON payload.
 
 ```
-curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json" -H "Authorization: <user_auth_token>" https://localhost/clients -d '{"type":"app", "name":"myapp"}'
+curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json" -H "Authorization: <user_auth_token>" https://localhost/things -d '{"type":"app", "name":"myapp"}'
 ```
 
 Response will contain `Location` header whose value represents path to newly
-created client (same as for devices):
+created thing (same as for devices):
 
 ```
 HTTP/1.1 201 Created
 Content-Type: application/json
-Location: /clients/cb63f852-2d48-44f0-a0cf-e450496c6c92
+Location: /things/cb63f852-2d48-44f0-a0cf-e450496c6c92
 Date: Tue, 10 Apr 2018 10:33:17 GMT
 Content-Length: 0
 ```
 
-### Retrieving provisioned clients
+### Retrieving provisioned things
 
-In order to retrieve data of provisioned clients that is written in database, you
+In order to retrieve data of provisioned things that is written in database, you
 can send following request:
 
 ```
-curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -H "Authorization: <user_auth_token>" https://localhost/clients
+curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -H "Authorization: <user_auth_token>" https://localhost/things
 ```
 
-Notice that you will receive only those clients that were provisioned by
+Notice that you will receive only those things that were provisioned by
 `user_auth_token` owner.
 
 ```
@@ -107,7 +107,7 @@ Date: Tue, 10 Apr 2018 10:50:12 GMT
 Content-Length: 1105
 
 {
-  "clients": [
+  "things": [
     {
       "id": "81380742-7116-4f6f-9800-14fe464f6773",
       "type": "device",
@@ -125,22 +125,22 @@ Content-Length: 1105
 ```
 
 You can specify `offset` and `limit` parameters in order to fetch specific
-group of clients. In that case, your request should look like:
+group of things. In that case, your request should look like:
 
 ```
-curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -H "Authorization: <user_auth_token>" https://localhost/clients?offset=0&limit=5
+curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -H "Authorization: <user_auth_token>" https://localhost/things?offset=0&limit=5
 ```
 
 If you don't provide them, default values will be used instead: 0 for `offset`,
 and 10 for `limit`. Note that `limit` cannot be set to values greater than 100. Providing
 invalid values will be considered malformed request.
 
-### Removing clients
+### Removing things
 
-In order to remove you own client you can send following request:
+In order to remove you own thing you can send following request:
 
 ```
-curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X DELETE -H "Authorization: <user_auth_token>" https://localhost/clients/<client_id>
+curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X DELETE -H "Authorization: <user_auth_token>" https://localhost/things/<thing_id>
 ```
 
 ### Provisioning channels
@@ -211,28 +211,28 @@ curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X DELETE
 
 ## Access control
 
-Channel can be observed as a communication group of clients. Only clients that
-are connected to the channel can send and receive messages from other clients
-in this channel. Clients that are not connected to this channel are not allowed
+Channel can be observed as a communication group of things. Only things that
+are connected to the channel can send and receive messages from other things
+in this channel. things that are not connected to this channel are not allowed
 to communicate over it.
 
-Only user, who is the owner of a channel and of the clients, can connect the
-clients to the channel (which is equivalent of giving permissions to these clients
+Only user, who is the owner of a channel and of the things, can connect the
+things to the channel (which is equivalent of giving permissions to these things
 to communicate over given communication group).
 
-To connect client to the channel you should send following request:
+To connect thing to the channel you should send following request:
 
 ```
-curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X PUT -H "Authorization: <user_auth_token>" https://localhost/channels/<channel_id>/clients/<client_id>
+curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X PUT -H "Authorization: <user_auth_token>" https://localhost/channels/<channel_id>/things/<thing_id>
 ```
 
-You can observe which clients are connected to specific channel:
+You can observe which things are connected to specific channel:
 
 ```
 curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -H "Authorization: <user_auth_token>" https://localhost/channels/<channel_id>
 ```
 
-You should receive response with the lists of connected clients in `connected` field
+You should receive response with the lists of connected things in `connected` field
 similar to this one:
 
 ```
@@ -253,21 +253,21 @@ similar to this one:
 If you want to disconnect your device from the channel, send following request:
 
 ```
-curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X DELETE -H "Authorization: <user_auth_token>" https://localhost/channels/<channel_id>/clients/<client_id>
+curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X DELETE -H "Authorization: <user_auth_token>" https://localhost/channels/<channel_id>/things/<thing_id>
 ```
 
 ## Sending messages
 
-Once a channel is provisioned and client is connected to it, it can start to
+Once a channel is provisioned and thing is connected to it, it can start to
 publish messages on the channel. The following sections will provide an example
 of message publishing for each of the supported protocols.
 
 ### HTTP
 
-To publish message over channel, client should send following request:
+To publish message over channel, thing should send following request:
 
 ```
-curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/senml+json" -H "Authorization: <client_token>" https://localhost/http/channels/<channel_id>/messages -d '[{"bn":"some-base-name:","bt":1.276020076001e+09, "bu":"A","bver":5, "n":"voltage","u":"V","v":120.1}, {"n":"current","t":-5,"v":1.2}, {"n":"current","t":-4,"v":1.3}]'
+curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/senml+json" -H "Authorization: <thing_token>" https://localhost/http/channels/<channel_id>/messages -d '[{"bn":"some-base-name:","bt":1.276020076001e+09, "bu":"A","bver":5, "n":"voltage","u":"V","v":120.1}, {"n":"current","t":-5,"v":1.2}, {"n":"current","t":-4,"v":1.3}]'
 ```
 
 Note that you should always send array of messages in senML format.
@@ -276,24 +276,24 @@ Note that you should always send array of messages in senML format.
 
 To publish and receive messages over channel using web socket, you should first
 send handshake request to `/channels/<channel_id>/messages` path. Don't forget
-to send `Authorization` header with client authorization token.
+to send `Authorization` header with thing authorization token.
 
 If you are not able to send custom headers in your handshake request, send it as
 query parameter `authorization`. Then your path should look like this
-`/channels/<channel_id>/messages?authorization=<client_auth_key>`.
+`/channels/<channel_id>/messages?authorization=<thing_auth_key>`.
 
 ### MQTT
 
 To send and receive messages over MQTT you could use [Mosquitto tools](https://mosquitto.org),
 or [Paho](https://www.eclipse.org/paho/) if you want to use MQTT over WebSocket.
 
-To publish message over channel, client should call following command:
+To publish message over channel, thing should call following command:
 
 ```
 mosquitto_pub -u <thing_id> -P <thing_key> -t channels/<channel_id>/messages -h localhost -m [{"bn":"some-base-name:","bt":1.276020076001e+09, "bu":"A","bver":5, "n":"voltage","u":"V","v":120.1}, {"n":"current","t":-5,"v":1.2}, {"n":"current","t":-4,"v":1.3}]
 ```
 
-To subscribe to channel, client should call following command:
+To subscribe to channel, thing should call following command:
 
 ```
 mosquitto_sub -u <thing_id> -P <thing_key> -t channels/<channel_id>/messages -h localhost

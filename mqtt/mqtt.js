@@ -71,7 +71,7 @@ aedes.authorizePublish = function (client, packet, publish) {
                 logger.info('authorized publish');
 
                 rawMsg = message.RawMessage.encode({
-                    Publisher: client.id,
+                    Publisher: client.thingId,
                     Channel: channel,
                     Protocol: 'mqtt',
                     Payload: packet.payload
@@ -116,11 +116,12 @@ aedes.authenticate = function (client, username, password, acknowledge) {
         identity = {value: pass},
         onIdentify = function(err, res) {
             if (!err) {
-                client.id = res.value.toString() || "";
+                client.thingId = res.value.toString() || "";
+                client.id = client.id || client.thingId;
                 client.password = pass;
                 acknowledge(null, true);
             } else {
-                logger.warn('failed to authenticate client with key %s', password);
+                logger.warn('failed to authenticate client with key %s', pass);
                 acknowledge(err, false);
             }
         };

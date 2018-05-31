@@ -2,6 +2,7 @@ import './rxjs-extensions.ts';
 import 'hammerjs';
 
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { APP_BASE_HREF } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -79,6 +80,7 @@ export function factory(authenticationService: AuthenticationService) {
       useFactory: factory
     },
     { provide: HTTP_INTERCEPTORS, useClass: UnauthorizedInterceptor, multi: true },
+    { provide: APP_BASE_HREF, useValue: '/app/' }
   ],
   bootstrap: [AppComponent],
   entryComponents: [

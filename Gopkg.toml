@@ -66,6 +66,9 @@
   name = "github.com/influxdata/influxdb"
   version = "1.5.2"
 
+[[constraint]]
+  name = "github.com/mongodb/mongo-go-driver"
+  version = "0.0.5"
 
 [prune]
   go-tests = true

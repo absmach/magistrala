@@ -3,7 +3,6 @@ package writers
 import (
 	"fmt"
 
-	"github.com/go-kit/kit/metrics"
 	"github.com/gogo/protobuf/proto"
 	"github.com/mainflux/mainflux"
 	log "github.com/mainflux/mainflux/logger"
@@ -20,8 +19,7 @@ type consumer struct {
 }
 
 // Start method starts to consume normalized messages received from NATS.
-func Start(name string, nc *nats.Conn, logger log.Logger, repo MessageRepository, counter metrics.Counter, latency metrics.Histogram) error {
-	repo = newMetricsMiddleware(repo, counter, latency)
+func Start(name string, nc *nats.Conn, logger log.Logger, repo MessageRepository) error {
 	consumer := consumer{
 		nc:     nc,
 		logger: logger,

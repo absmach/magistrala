@@ -13,7 +13,9 @@ type metricsMiddleware struct {
 	repo    MessageRepository
 }
 
-func newMetricsMiddleware(repo MessageRepository, counter metrics.Counter, latency metrics.Histogram) *metricsMiddleware {
+// MetricsMiddleware returns new message repository
+// with Save method wrapped to expose metrics.
+func MetricsMiddleware(repo MessageRepository, counter metrics.Counter, latency metrics.Histogram) MessageRepository {
 	return &metricsMiddleware{
 		counter: counter,
 		latency: latency,

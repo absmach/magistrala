@@ -1,5 +1,5 @@
 BUILD_DIR = build
-SERVICES = users things http normalizer ws influxdb
+SERVICES = users things http normalizer ws influxdb mongodb
 DOCKERS = $(addprefix docker_,$(SERVICES))
 CGO_ENABLED ?= 0
 GOOS ?= linux

@@ -64,7 +64,7 @@ func TestSave(t *testing.T) {
 	client, err := influxdata.NewHTTPClient(clientCfg)
 	assert.Nil(t, err, fmt.Sprintf("Creation of InfluxDB client expected to succeed.\n"))
 
-	repo, err := writer.New(client, testDB, "messages")
+	repo, err := writer.New(client, testDB)
 	assert.Nil(t, err, fmt.Sprintf("InfluxDB repo creation expected to succeed.\n"))
 
 	err = repo.Save(msg)

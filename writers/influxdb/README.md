@@ -13,7 +13,6 @@ default values.
 | MF_NATS_URL               | NATS instance URL                 | nats://localhost:4222 |
 | MF_INFLUX_WRITER_PORT     | Service HTTP port                 | 8180                  |
 | MF_INFLUX_WRITER_DB_NAME  | InfluxDB database name            | mainflux              |
-| MF_INFLUX_WRITER_DB_POINT | InfluxDB point to write data to   | messages              |
 | MF_INFLUX_WRITER_DB_HOST  | InfluxDB host                     | localhost             |
 | MF_INFLUX_WRITER_DB_PORT  | Default port of InfluxDB database | 8086                  |
 | MF_INFLUX_WRITER_DB_USER  | Default user of InfluxDB database | mainflux              |
@@ -33,7 +32,6 @@ default values.
       MF_NATS_URL: [NATS instance URL]
       MF_INFLUX_WRITER_PORT: [Service HTTP port]
       MF_INFLUX_WRITER_DB_NAME: [InfluxDB database name]
-      MF_INFLUX_WRITER_DB_POINT: [point name]
       MF_INFLUX_WRITER_DB_HOST: [InfluxDB database host]
       MF_INFLUX_WRITER_DB_PORT: [InfluxDB port]
       MF_INFLUX_WRITER_DB_USER: [InfluxDB admin user]
@@ -58,9 +56,22 @@ make influxdb
 make install
 
 # Set the environment variables and run the service
-MF_NATS_URL=[NATS instance URL] MF_INFLUX_WRITER_PORT=[Service HTTP port] MF_INFLUX_WRITER_DB_NAME=[InfluxDB database name] MF_INFLUX_WRITER_DB_POINT=[point name] MF_INFLUX_WRITER_DB_HOST=[InfluxDB database host] MF_INFLUX_WRITER_DB_PORT=[InfluxDB port] MF_INFLUX_WRITER_DB_USER=[InfluxDB admin user] MF_INFLUX_WRITER_DB_PASS=[InfluxDB admin password] $GOBIN/mainflux-influxdb
+MF_NATS_URL=[NATS instance URL] MF_INFLUX_WRITER_PORT=[Service HTTP port] MF_INFLUX_WRITER_DB_NAME=[InfluxDB database name] MF_INFLUX_WRITER_DB_HOST=[InfluxDB database host] MF_INFLUX_WRITER_DB_PORT=[InfluxDB port] MF_INFLUX_WRITER_DB_USER=[InfluxDB admin user] MF_INFLUX_WRITER_DB_PASS=[InfluxDB admin password] $GOBIN/mainflux-influxdb
 
 ```
+
+### Using docker-compose
+
+This service can be deployed using docker containers.
+Docker compose file is available in <project_root>/docker/addons/influxdb/docker-compose.yml. Besides database
+and writer service, it contains [Grafana platform](https://grafana.com/) which can be used for database
+exploration and data visualization and analytics. In order to run all Mainflux core services, as well as mentioned optional ones, execute following command:
+
+```bash
+docker-compose -f docker/docker-compose.yml -f docker/addons/influxdb/docker-compose.yml up -d
+```
+
+_Please note that order matters here. You need to start core services before additional ones, i. e. core services compose file needs to be the first param of the command. Since all services need to be in the same network and writer services are dependent of core ones, you need to start all of them using single command._
 
 ## Usage
 

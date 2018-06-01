@@ -10,20 +10,21 @@ import (
 	"github.com/mainflux/mainflux"
 )
 
+const pointName = "messages"
+
 var _ writers.MessageRepository = (*influxRepo)(nil)
 
 type influxRepo struct {
-	database  string
-	pointName string
-	client    influxdata.Client
+	database string
+	client   influxdata.Client
 }
 
 type fields map[string]interface{}
 type tags map[string]string
 
 // New returns new InfluxDB writer.
-func New(client influxdata.Client, database, pointName string) (writers.MessageRepository, error) {
-	return &influxRepo{database, pointName, client}, nil
+func New(client influxdata.Client, database string) (writers.MessageRepository, error) {
+	return &influxRepo{database, client}, nil
 }
 
 func (repo *influxRepo) Save(msg mainflux.Message) error {
@@ -35,7 +36,7 @@ func (repo *influxRepo) Save(msg mainflux.Message) error {
 	}
 
 	tags, fields := repo.tagsOf(&msg), repo.fieldsOf(&msg)
-	pt, err := influxdata.NewPoint(repo.pointName, tags, fields, time.Now())
+	pt, err := influxdata.NewPoint(pointName, tags, fields, time.Now())
 	if err != nil {
 		return err
 	}

@@ -1,0 +1,49 @@
+###
+# This docker-compose file contains optional InfluxDB, InfluxDB-writer and Grafana services
+# for Mainflux platform. Since these are optional, this file is dependent of docker-compose file
+# from <project_root>/docker. In order to run these optional service, execute command:
+# docker-compose -f docker/docker-compose.yml -f docker/addons/influxdb/docker-compose.yml up
+# from project root.
+###
+
+version: "3"
+
+services:
+
+  influxdb:
+    image: influxdb:1.5.2-alpine
+    container_name: mainflux-influxdb
+    restart: on-failure
+    environment:
+      INFLUXDB_DB: mainflux
+      INFLUXDB_ADMIN_USER: mainflux
+      INFLUXDB_ADMIN_PASSWORD: mainflux
+
+  influxdb-writer:
+    image: mainflux/influxdb:latest
+    container_name: mainflux-influxdb-writer
+    depends_on:
+      - influxdb
+      - nats
+    expose:
+      - 8900
+    restart: on-failure
+    environment:
+      MF_NATS_URL: nats://nats:4222
+      MF_INFLUX_WRITER_PORT: 8900
+      MF_INFLUX_WRITER_DB_NAME: mainflux
+      MF_INFLUX_WRITER_DB_HOST: influxdb
+      MF_INFLUX_WRITER_DB_PORT: 8086
+      MF_INFLUX_WRITER_DB_USER: mainflux
+      MF_INFLUX_WRITER_DB_PASS: mainflux
+    ports:
+      - 8900:8900
+
+  grafana:
+    image: grafana/grafana:5.1.3
+    container_name: mainflux-grafana
+    depends_on:
+      - influxdb
+    restart: on-failure
+    ports:
+      - 3001:3000

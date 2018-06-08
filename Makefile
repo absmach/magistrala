@@ -1,5 +1,5 @@
 BUILD_DIR = build
-SERVICES = users things http normalizer ws influxdb mongodb
+SERVICES = users things http normalizer ws influxdb mongodb cassandra
 DOCKERS = $(addprefix docker_,$(SERVICES))
 CGO_ENABLED ?= 0
 GOOS ?= linux

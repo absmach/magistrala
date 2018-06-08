@@ -18,9 +18,6 @@ import (
 )
 
 const (
-	name         = "influxdb-writer"
-	senML        = "out.senml"
-	prefix       = "http://"
 	defNatsURL   = nats.DefaultURL
 	defPort      = "8180"
 	defPointName = "messages"
@@ -76,7 +73,7 @@ func main() {
 	counter, latency := makeMetrics()
 	repo = writers.LoggingMiddleware(repo, logger)
 	repo = writers.MetricsMiddleware(repo, counter, latency)
-	if err := writers.Start(name, nc, logger, repo); err != nil {
+	if err := writers.Start(nc, logger, repo); err != nil {
 		logger.Error(fmt.Sprintf("Failed to start message writer: %s", err))
 		os.Exit(1)
 	}
@@ -106,7 +103,7 @@ func loadConfigs() (config, influxdata.HTTPConfig) {
 	}
 
 	clientCfg := influxdata.HTTPConfig{
-		Addr:     fmt.Sprintf("%s%s:%s", prefix, cfg.DBHost, cfg.DBPort),
+		Addr:     fmt.Sprintf("http://%s:%s", cfg.DBHost, cfg.DBPort),
 		Username: cfg.DBUser,
 		Password: cfg.DBPass,
 	}

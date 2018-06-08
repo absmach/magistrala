@@ -1,0 +1,32 @@
+###
+# This docker-compose file contains optional Cassandra and cassandra-writer. Since these are optional, this file is
+# dependent of docker-compose file from <project_root>/docker. In order to run
+# these optional service, execute command:
+# docker-compose -f docker/docker-compose.yml -f docker/addons/cassandra/docker-compose.yml up
+# from project root.
+###
+
+version: "3"
+
+services:
+  cassandra:
+    image: cassandra:3.11.2
+    container_name: mainflux-cassandra
+    restart: on-failure
+
+  cassandra-writer:
+    image: mainflux/cassandra:latest
+    container_name: mainflux-cassandra-writer
+    depends_on:
+      - cassandra
+      - nats
+    expose:
+      - 8902
+    restart: on-failure
+    environment:
+      MF_NATS_URL: nats://nats:4222
+      MF_CASSANDRA_WRITER_PORT: 8902
+      MF_CASSANDRA_WRITER_DB_CLUSTER: mainflux-cassandra
+      MF_CASSANDRA_WRITER_DB_KEYSPACE: mainflux
+    ports:
+      - 8902:8902

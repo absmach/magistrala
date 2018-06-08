@@ -1,6 +1,6 @@
 // +build !test
 
-package mongodb
+package cassandra
 
 import (
 	"net/http"
@@ -10,10 +10,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-// MakeHandler returns a HTTP handler for API endpoints.
+// MakeHandler returns a HTTP API handler with version and metrics.
 func MakeHandler() http.Handler {
 	r := bone.New()
-	r.GetFunc("/version", mainflux.Version("mongodb-writer"))
+	r.GetFunc("/version", mainflux.Version("cassandra-writer"))
 	r.Handle("/metrics", promhttp.Handler())
 
 	return r

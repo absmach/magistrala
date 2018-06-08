@@ -70,6 +70,10 @@
   name = "github.com/mongodb/mongo-go-driver"
   version = "0.0.5"
 
+[[constraint]]
+  branch = "master"
+  name = "github.com/gocql/gocql"
+
 [prune]
   go-tests = true
   unused-packages = true

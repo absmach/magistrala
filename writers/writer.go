@@ -14,20 +14,18 @@ const senML = "out.senml"
 type consumer struct {
 	nc     *nats.Conn
 	logger log.Logger
-	name   string
 	repo   MessageRepository
 }
 
 // Start method starts to consume normalized messages received from NATS.
-func Start(name string, nc *nats.Conn, logger log.Logger, repo MessageRepository) error {
-	consumer := consumer{
+func Start(nc *nats.Conn, logger log.Logger, repo MessageRepository) error {
+	c := consumer{
 		nc:     nc,
 		logger: logger,
-		name:   name,
 		repo:   repo,
 	}
 
-	_, err := nc.Subscribe(senML, consumer.consume)
+	_, err := nc.Subscribe(senML, c.consume)
 	return err
 }
 
@@ -35,12 +33,12 @@ func (c *consumer) consume(m *nats.Msg) {
 	msg := &mainflux.Message{}
 
 	if err := proto.Unmarshal(m.Data, msg); err != nil {
-		c.logger.Warn(fmt.Sprintf("%s failed to unmarshal received message: %s", c.name, err))
+		c.logger.Warn(fmt.Sprintf("Failed to unmarshal received message: %s", err))
 		return
 	}
 
 	if err := c.repo.Save(*msg); err != nil {
-		c.logger.Warn(fmt.Sprintf("%s failed to save message: %s", c.name, err))
+		c.logger.Warn(fmt.Sprintf("Failed to save message: %s", err))
 		return
 	}
 }

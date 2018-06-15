@@ -24,7 +24,7 @@ services:
       - 8883:8883
 
   nats:
-    image: nats:1.0.2
+    image: nats:1.1.0
     container_name: mainflux-nats
     restart: on-failure
 

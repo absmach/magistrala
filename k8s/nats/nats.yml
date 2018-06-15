@@ -32,7 +32,7 @@ spec:
     spec:
       containers:
       - name: nats
-        image: nats:1.0.4
+        image: nats:1.1.0
         args: [ "--config", "/etc/nats/nats.conf"]
         volumeMounts:
           - name: config-volume

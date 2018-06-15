@@ -1,0 +1,32 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: mainflux-grafana
+  labels:
+    component: mainflux-grafana
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: mainflux-grafana
+    spec:
+      containers:
+      - name: mainflux-grafana
+        image: grafana/grafana:5.1.3
+        imagePullPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mainflux-grafana
+  labels:
+    component: mainflux-grafana
+spec:
+  selector:
+    component: mainflux-grafana
+  ports:
+  - port: 3001
+    targetPort: 3000
+  type: LoadBalancer
+

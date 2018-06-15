@@ -2,26 +2,38 @@
 
 var http = require('http'),
     net = require('net'),
-    aedes = require('aedes')(),
-    logging = require('aedes-logging'),
     protobuf = require('protocol-buffers'),
     websocket = require('websocket-stream'),
     grpc = require('grpc'),
     fs = require('fs'),
-    bunyan = require('bunyan');
+    bunyan = require('bunyan'),
+    logging = require('aedes-logging');
 
 // pass a proto file as a buffer/string or pass a parsed protobuf-schema object
 var logger = bunyan.createLogger({name: "mqtt"}),
     config = {
-        mqtt_port: process.env.MF_MQTT_ADAPTER_PORT || 1883,
-        ws_port: process.env.MF_MQTT_WS_PORT || 8880,
+        mqtt_port: Number(process.env.MF_MQTT_ADAPTER_PORT) || 1883,
+        ws_port: Number(process.env.MF_MQTT_WS_PORT) || 8880,
         nats_url: process.env.MF_NATS_URL || 'nats://localhost:4222',
+        redis_port: Number(process.env.MF_MQTT_REDIS_PORT) || 6379,
+        redis_host: process.env.MF_MQTT_REDIS_HOST || 'localhost',
+        redis_pass: process.env.MF_MQTT_REDIS_PASS || 'mqtt',
+        redis_db: Number(process.env.MF_MQTT_REDIS_DB) || 0,
         auth_url: process.env.MF_THINGS_URL || 'localhost:8181',
-        schema_dir: process.argv[2] || '.'
+        schema_dir: process.argv[2] || '.',
     },
     message = protobuf(fs.readFileSync(config.schema_dir + '/message.proto')),
     thingsSchema = grpc.load(config.schema_dir + "/internal.proto").mainflux,
     nats = require('nats').connect(config.nats_url),
+    aedesRedis = require('aedes-persistence-redis')({
+        port: config.redis_port,
+        host: config.redis_host,
+        password: config.redis_pass,
+        db: config.redis_db
+    }),
+    aedes = require('aedes')({
+        persistence: aedesRedis
+    }),
     things = new thingsSchema.ThingsService(config.auth_url, grpc.credentials.createInsecure()),
     servers = [
         startMqtt(),

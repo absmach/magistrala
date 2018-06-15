@@ -94,6 +94,8 @@ services:
     image: mainflux/normalizer:latest
     container_name: mainflux-normalizer
     restart: on-failure
+    depends_on:
+      - nats
     expose:
       - 8184
     environment:
@@ -112,6 +114,7 @@ services:
     container_name: mainflux-ws
     depends_on:
       - things
+      - nats
     expose:
       - 8186
     restart: on-failure
@@ -127,6 +130,7 @@ services:
     container_name: mainflux-http
     depends_on:
       - things
+      - nats
     restart: on-failure
     expose:
       - 8185
@@ -137,15 +141,23 @@ services:
     ports:
       - 8185:8185
 
+  redis:
+    image: redis:4.0.9-alpine
+    container_name: mainflux-redis
+    restart: on-failure
+
   mqtt-adapter:
     image: mainflux/mqtt:latest
     container_name: mainflux-mqtt
     depends_on:
       - things
+      - nats
+      - redis
     restart: on-failure
     environment:
       MF_MQTT_ADAPTER_PORT: 1883
       MF_MQTT_WS_PORT: 8880
+      MF_MQTT_REDIS_HOST: redis
       MF_NATS_URL: nats://nats:4222
       MF_THINGS_URL: things:8183
     ports:

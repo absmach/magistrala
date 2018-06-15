@@ -1,6 +1,6 @@
 # MQTT adapter
 
-MQTT adapter provides an MQTT API for sending and receiving messages through the 
+MQTT adapter provides an MQTT API for sending and receiving messages through the
 platform.
 
 ## Configuration
@@ -14,6 +14,10 @@ default values.
 | MF_MQTT_ADAPTER_PORT | Service MQTT port   | 1883                  |
 | MF_MQTT_WS_PORT      | WebSocket port      | 8880                  |
 | MF_NATS_URL          | NATS instance URL   | nats://localhost:4222 |
+| MF_MQTT_REDIS_PORT   | Redis port          | 6379                  |
+| MF_MQTT_REDIS_HOST   | Redis host          | localhost             |
+| MF_MQTT_REDIS_PASS   | Redis pass          | mqtt                  |
+| MF_MQTT_REDIS_DB     | Redis db            | 0                     |
 | MF_THINGS_URL        | Things service URL  | localhost:8181        |
 
 ## Deployment
@@ -34,6 +38,10 @@ services:
       MF_NATS_URL: [NATS instance URL]
       MF_MQTT_ADAPTER_PORT: [Service MQTT port]
       MF_MQTT_WS_PORT: [Service WS port]
+      MF_MQTT_REDIS_PORT: [Redis port]
+      MF_MQTT_REDIS_HOST: [Redis host]
+      MF_MQTT_REDIS_PASS: [Redis pass]
+      MF_MQTT_REDIS_DB: [Redis db]
 ```
 
 To start the service outside of the container, execute the following shell script:
@@ -48,7 +56,7 @@ cd $GOPATH/src/github.com/mainflux/mainflux/mqtt
 npm install
 
 # set the environment variables and run the service
-MF_THINGS_URL=[Things service URL] MF_NATS_URL=[NATS instance URL] MF_MQTT_ADAPTER_PORT=[Service MQTT port] MF_MQTT_WS_PORT=[Service WS port] node mqtt.js ..
+MF_THINGS_URL=[Things service URL] MF_NATS_URL=[NATS instance URL] MF_MQTT_ADAPTER_PORT=[Service MQTT port] MF_MQTT_WS_PORT=[Service WS port] MF_MQTT_REDIS_PORT=[Redis port] MF_MQTT_REDIS_HOST=[Redis host] MF_MQTT_REDIS_PASS=[Redis pass] MF_MQTT_REDIS_DB=[Redis db] node mqtt.js ..
 ```
 
 ## Usage

@@ -1,0 +1,9 @@
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'mainflux'
+
+    static_configs:
+    - targets: ['localhost:8180', 'localhost:8182', 'localhost:8184', 'localhost:8185', 'localhost:8186', 'localhost:8187']

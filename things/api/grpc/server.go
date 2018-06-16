@@ -67,14 +67,13 @@ func encodeIdentityResponse(_ context.Context, grpcRes interface{}) (interface{}
 
 func encodeError(err error) error {
 	switch err {
+	case nil:
+		return nil
 	case things.ErrMalformedEntity:
 		return status.Error(codes.InvalidArgument, "received invalid can access request")
 	case things.ErrUnauthorizedAccess:
 		return status.Error(codes.PermissionDenied, "missing or invalid credentials provided")
 	default:
-		if err == nil {
-			return nil
-		}
 		return status.Error(codes.Internal, "internal server error")
 	}
 }

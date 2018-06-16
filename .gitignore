@@ -1,4 +1,4 @@
 build
-*.pb.go
+/*.pb.go
 
 site/

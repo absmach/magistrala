@@ -11,6 +11,7 @@ import (
 	log "github.com/mainflux/mainflux/logger"
 	writer "github.com/mainflux/mainflux/writers/influxdb"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -62,10 +63,10 @@ func TestSave(t *testing.T) {
 	q := fmt.Sprintf("SELECT * FROM test..messages\n")
 
 	client, err := influxdata.NewHTTPClient(clientCfg)
-	assert.Nil(t, err, fmt.Sprintf("Creating new InfluxDB client expected to succeed: %s.\n", err))
+	require.Nil(t, err, fmt.Sprintf("Creating new InfluxDB client expected to succeed: %s.\n", err))
 
 	repo, err := writer.New(client, testDB)
-	assert.Nil(t, err, fmt.Sprintf("Creating new InfluxDB repo expected to succeed: %s.\n", err))
+	require.Nil(t, err, fmt.Sprintf("Creating new InfluxDB repo expected to succeed: %s.\n", err))
 
 	err = repo.Save(msg)
 	assert.Nil(t, err, fmt.Sprintf("Save operation expected to succeed: %s.\n", err))

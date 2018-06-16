@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/writers/mongodb"
@@ -42,11 +43,11 @@ func TestSave(t *testing.T) {
 	}
 
 	client, err := mongo.Connect(context.Background(), addr, nil)
-	assert.Nil(t, err, fmt.Sprintf("Creating new MongoDB client expected to succeed: %s.\n", err))
+	require.Nil(t, err, fmt.Sprintf("Creating new MongoDB client expected to succeed: %s.\n", err))
 
 	db := client.Database(testDB)
 	repo, err := mongodb.New(db)
-	assert.Nil(t, err, fmt.Sprintf("Creating new MongoDB repo expected to succeed: %s.\n", err))
+	require.Nil(t, err, fmt.Sprintf("Creating new MongoDB repo expected to succeed: %s.\n", err))
 
 	err = repo.Save(msg)
 	assert.Nil(t, err, fmt.Sprintf("Save operation expected to succeed: %s.\n", err))

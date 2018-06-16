@@ -184,6 +184,7 @@ func removeChannelEndpoint(svc things.Service) endpoint.Endpoint {
 		return removeRes{}, nil
 	}
 }
+
 func connectEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
 		cr := request.(connectionReq)

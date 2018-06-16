@@ -45,7 +45,7 @@ func newThingsClient() mainflux.ThingsServiceClient {
 	return mocks.NewThingsClient(map[string]uint64{token: thingID})
 }
 
-func makeURL(tsURL string, chanID uint64, auth string, header bool) string {
+func makeURL(tsURL string, chanID int64, auth string, header bool) string {
 	u, _ := url.Parse(tsURL)
 	u.Scheme = protocol
 	if header {
@@ -54,7 +54,7 @@ func makeURL(tsURL string, chanID uint64, auth string, header bool) string {
 	return fmt.Sprintf("%s/channels/%d/messages?authorization=%s", u, chanID, auth)
 }
 
-func handshake(tsURL string, chanID uint64, token string, addHeader bool) (*websocket.Conn, *http.Response, error) {
+func handshake(tsURL string, chanID int64, token string, addHeader bool) (*websocket.Conn, *http.Response, error) {
 	header := http.Header{}
 	if addHeader {
 		header.Add("Authorization", token)
@@ -71,7 +71,7 @@ func TestHandshake(t *testing.T) {
 
 	cases := []struct {
 		desc   string
-		chanID uint64
+		chanID int64
 		header bool
 		token  string
 		status int
@@ -79,7 +79,10 @@ func TestHandshake(t *testing.T) {
 	}{
 		{"connect and send message", chanID, true, token, http.StatusSwitchingProtocols, msg},
 		{"connect to non-existent channel", 0, true, token, http.StatusSwitchingProtocols, []byte{}},
-		{"connect with invalid token", chanID, true, "", http.StatusForbidden, []byte{}},
+		{"connect to invalid channel id", -5, true, token, http.StatusNotFound, []byte{}},
+		{"connect with empty token", chanID, true, "", http.StatusForbidden, []byte{}},
+		{"connect with invalid token", chanID, true, "invalid", http.StatusForbidden, []byte{}},
+		{"connect unable to authorize", chanID, true, mocks.ServiceErrToken, http.StatusServiceUnavailable, []byte{}},
 		{"connect and send message with token as query parameter", chanID, false, token, http.StatusSwitchingProtocols, msg},
 		{"connect and send message that cannot be published", chanID, true, token, http.StatusSwitchingProtocols, []byte{}},
 	}

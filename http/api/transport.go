@@ -21,13 +21,12 @@ const protocol = "http"
 
 var (
 	errMalformedData = errors.New("malformed SenML data")
-	errNotFound      = errors.New("non-existent entity")
 	auth             mainflux.ThingsServiceClient
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc mainflux.MessagePublisher, cc mainflux.ThingsServiceClient) http.Handler {
-	auth = cc
+func MakeHandler(svc mainflux.MessagePublisher, tc mainflux.ThingsServiceClient) http.Handler {
+	auth = tc
 
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
@@ -118,7 +117,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch err {
 	case errMalformedData:
 		w.WriteHeader(http.StatusBadRequest)
-	case errNotFound:
+	case things.ErrNotFound:
 		w.WriteHeader(http.StatusNotFound)
 	case things.ErrUnauthorizedAccess:
 		w.WriteHeader(http.StatusForbidden)

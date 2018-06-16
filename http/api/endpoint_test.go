@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -49,51 +50,66 @@ func (tr testRequest) make() (*http.Response, error) {
 }
 
 func TestPublish(t *testing.T) {
-	id := uint64(1)
+	chanID := "1"
+	invalidID := "wrong"
 	contentType := "application/senml+json"
 	token := "auth_token"
 	invalidToken := "invalid_token"
 	msg := `[{"n":"current","t":-1,"v":1.6}]`
-
+	id, _ := strconv.ParseUint(chanID, 10, 64)
 	thingsClient := mocks.NewThingsClient(map[string]uint64{token: id})
 	pub := newService()
 	ts := newHTTPServer(pub, thingsClient)
 	defer ts.Close()
 
 	cases := map[string]struct {
-		chanID      uint64
+		chanID      string
 		msg         string
 		contentType string
 		auth        string
 		status      int
 	}{
 		"publish message": {
-			chanID:      id,
+			chanID:      chanID,
 			msg:         msg,
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusAccepted,
 		},
 		"publish message without authorization token": {
-			chanID:      id,
+			chanID:      chanID,
 			msg:         msg,
 			contentType: contentType,
 			auth:        "",
 			status:      http.StatusForbidden,
 		},
 		"publish message with invalid authorization token": {
-			chanID:      id,
+			chanID:      chanID,
 			msg:         msg,
 			contentType: contentType,
 			auth:        invalidToken,
 			status:      http.StatusForbidden,
 		},
 		"publish message without content type": {
-			chanID:      id,
+			chanID:      chanID,
 			msg:         msg,
 			contentType: "",
 			auth:        token,
 			status:      http.StatusAccepted,
+		},
+		"publish message to wrong channel": {
+			chanID:      invalidID,
+			msg:         msg,
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusNotFound,
+		},
+		"publish message unable to authorize": {
+			chanID:      chanID,
+			msg:         msg,
+			contentType: contentType,
+			auth:        mocks.ServiceErrToken,
+			status:      http.StatusServiceUnavailable,
 		},
 	}
 
@@ -101,7 +117,7 @@ func TestPublish(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/channels/%d/messages", ts.URL, tc.chanID),
+			url:         fmt.Sprintf("%s/channels/%s/messages", ts.URL, tc.chanID),
 			contentType: tc.contentType,
 			token:       tc.auth,
 			body:        strings.NewReader(tc.msg),

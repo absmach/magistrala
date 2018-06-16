@@ -35,8 +35,8 @@ var (
 )
 
 // MakeHandler returns http handler with handshake endpoint.
-func MakeHandler(svc ws.Service, cc mainflux.ThingsServiceClient, l log.Logger) http.Handler {
-	auth = cc
+func MakeHandler(svc ws.Service, tc mainflux.ThingsServiceClient, l log.Logger) http.Handler {
+	auth = tc
 	logger = l
 
 	mux := bone.New()

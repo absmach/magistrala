@@ -15,7 +15,6 @@ import (
 const (
 	queue         = "normalizers"
 	input         = "channel.*"
-	outputSenML   = "out.senml"
 	outputUnknown = "out.unknown"
 	senML         = "application/senml+json"
 )
@@ -47,7 +46,7 @@ func (ef eventFlow) handleMsg(m *nats.Msg) {
 }
 
 func (ef eventFlow) publish(msg mainflux.RawMessage) error {
-	output := outputSenML
+	output := mainflux.OutputSenML
 	normalized, err := ef.normalize(msg)
 	if err != nil {
 		ef.logger.Warn(fmt.Sprintf("Normalization failed: %s", err))

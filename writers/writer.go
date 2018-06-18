@@ -9,8 +9,6 @@ import (
 	nats "github.com/nats-io/go-nats"
 )
 
-const senML = "out.senml"
-
 type consumer struct {
 	nc     *nats.Conn
 	logger log.Logger
@@ -25,7 +23,7 @@ func Start(nc *nats.Conn, logger log.Logger, repo MessageRepository) error {
 		repo:   repo,
 	}
 
-	_, err := nc.Subscribe(senML, c.consume)
+	_, err := nc.Subscribe(mainflux.OutputSenML, c.consume)
 	return err
 }
 

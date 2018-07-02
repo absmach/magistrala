@@ -1,5 +1,5 @@
-apiVersion: apps/v1beta1 
-kind: Deployment 
+apiVersion: apps/v1beta1
+kind: Deployment
 metadata:
   name: normalizer
   labels:
@@ -21,16 +21,15 @@ spec:
         - name: MF_NORMALIZER_PORT
           value: "8184"
 ---
-apiVersion: v1 
-kind: Service 
+apiVersion: v1
+kind: Service
 metadata:
   name: normalizer
   labels:
-    component: normalizer 
+    component: normalizer
 spec:
   selector:
     component: normalizer
   ports:
-  - port: 8183
-    targetPort: 8183
+  - port: 8184
   clusterIP: None

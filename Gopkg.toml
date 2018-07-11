@@ -11,6 +11,10 @@
   version = "3.2.0"
 
 [[constraint]]
+  name = "github.com/fatih/color"
+  version = "1.7.0"
+
+[[constraint]]
   name = "github.com/go-kit/kit"
   version = "0.6.0"
 
@@ -21,6 +25,10 @@
 [[constraint]]
   name = "github.com/golang/protobuf"
   version = "1.1.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/hokaccha/go-prettyjson"
 
 [[constraint]]
   branch = "master"
@@ -41,6 +49,10 @@
 [[constraint]]
   name = "github.com/sony/gobreaker"
   version = "0.3.0"
+
+[[constraint]]
+  name = "github.com/spf13/cobra"
+  version = "0.0.3"
 
 [[constraint]]
   name = "github.com/stretchr/testify"

@@ -118,7 +118,7 @@ Content-Length: 1105
       "id": "cb63f852-2d48-44f0-a0cf-e450496c6c92",
       "type": "app",
       "name": "myapp",
-      "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1MjMzNTYzOTcsImlzcyI6Im1haW5mbHV4Iiwic3ViIjoiY2I2M2Y4NTItMmQ0OC00NGYwLWEwY2YtZTQ1MDQ5NmM2YzkyIn0.FE6DWB3yJmBb8uojpQJaKUEbD0Elrjx0HhJA28bVzkU"
+      "key": "cbf02d60-72f2-4180-9f82-2c957db929d1"
     }
   ]
 }
@@ -281,6 +281,32 @@ to send `Authorization` header with thing authorization token.
 If you are not able to send custom headers in your handshake request, send it as
 query parameter `authorization`. Then your path should look like this
 `/channels/<channel_id>/messages?authorization=<thing_auth_key>`.
+
+If you are using the docker environment prepend the url with `ws`. So for example
+`/ws/channels/<channel_id>/messages?authorization=<thing_auth_key>`
+
+#### Basic nodejs example
+
+```javascript
+const WebSocket = require('ws');
+
+// do not verify self-signed certificates if you are using one
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+
+// cbf02d60-72f2-4180-9f82-2c957db929d1  is an example of a thing_auth_key
+const ws = new WebSocket('wss://localhost/ws/channels/1/messages?authorization=cbf02d60-72f2-4180-9f82-2c957db929d1')
+
+ws.on('open', () => {
+    ws.send('something')
+})
+
+ws.on('message', (data) => {
+    console.log(data)
+})
+ws.on('error', (e) => {
+    console.log(e)
+})
+```
 
 ### MQTT
 

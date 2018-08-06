@@ -20,7 +20,7 @@ default values.
 ```yaml
   version: "2"
   cassandra-writer:
-    image: mainflux/cassandra:[version]
+    image: mainflux/cassandra-writer:[version]
     container_name: [instance name]
     expose:
       - [Service HTTP port]
@@ -43,26 +43,26 @@ go get github.com/mainflux/mainflux
 
 cd $GOPATH/src/github.com/mainflux/mainflux
 
-# compile the cassandra
-make cassandra
+# compile the cassandra writer
+make cassandra-writer
 
 # copy binary to bin
 make install
 
 # Set the environment variables and run the service
-MF_NATS_URL=[NATS instance URL] MF_CASSANDRA_WRITER_PORT=[Service HTTP port] MF_CASSANDRA_WRITER_DB_CLUSTER=[Cassandra cluster comma separated addresses] MF_CASSANDRA_WRITER_DB_KEYSPACE=[Cassandra keyspace name] $GOBIN/mainflux-cassandra
+MF_NATS_URL=[NATS instance URL] MF_CASSANDRA_WRITER_PORT=[Service HTTP port] MF_CASSANDRA_WRITER_DB_CLUSTER=[Cassandra cluster comma separated addresses] MF_CASSANDRA_WRITER_DB_KEYSPACE=[Cassandra keyspace name] $GOBIN/mainflux-cassandra-writer
 
 ```
 
 ### Using docker-compose
 
 This service can be deployed using docker containers. Docker compose file is
-available in `<project_root>/docker/addons/cassandra/docker-compose.yml`. In
-order to run all Mainflux core services, as well as mentioned optional ones,
+available in `<project_root>/docker/addons/cassandra-writer/docker-compose.yml`.
+In order to run all Mainflux core services, as well as mentioned optional ones,
 execute following command:
 
 ```bash
-./docker/addons/cassandra/init.sh
+./docker/addons/cassandra-writer/init.sh
 ```
 
 ## Usage

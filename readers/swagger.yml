@@ -1,0 +1,122 @@
+swagger: "2.0"
+info:
+  title: Mainflux reader service
+  description: HTTP API for reading messages.
+  version: "1.0.0"
+consumes:
+  - "application/json"
+produces:
+  - "application/json"
+paths:
+  /channels/{chanId}/messages:
+    get:
+      summary: Retrieves messages sent to single channel
+      description: |
+        Retrieves a list of messages sent to specific channel. Due to
+        performance concerns, data is retrieved in subsets. The API readers must
+        ensure that the entire dataset is consumed either by making subsequent
+        requests, or by increasing the subset size of the initial request.
+      tags:
+        - messages
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/Limit"
+        - $ref: "#/parameters/Offset"
+        - $ref: "#/parameters/ChanId"
+      responses:
+        200:
+          description: Data retrieved.
+          schema:
+            $ref: "#/definitions/MessageList"
+        400:
+          description: Failed due to malformed query parameters.
+        403:
+          description: Missing or invalid access token provided.
+        500:
+          $ref: "#/responses/ServiceError"
+
+responses:
+  ServiceError:
+    description: Unexpected server-side error occured.
+
+definitions:
+  MessageList:
+    type: object
+    properties:
+      channels:
+        type: array
+        minItems: 0
+        uniqueItems: true
+        items:
+          type: object
+          properties:
+            Channel:
+              type: integer
+              description: Unique channel id.
+            Publisher:
+              type: integer
+              description: Unique publisher id.
+            Protocol:
+              type: string
+              description: Protocol name.
+            Name:
+              type: string
+              description: Measured parameter name.
+            Unit:
+              type: string
+              description: Value unit.
+            Value:
+              type: number
+              description: Measured value in number.
+            StringValue:
+              type: string
+              description: Measured value in string format.
+            BoolValue:
+              type: boolean
+              description: Measured value in boolean format.
+            DataValue:
+              type: string
+              description: Measured value in binary format.
+            ValueSum:
+              type: number
+              description: Sum value.
+            Time:
+              type: number
+              description: Time of measurement.
+            UpdateTime:
+              type: number
+              description: Time of updating measurement.
+            Link:
+              type: string
+
+parameters:
+  Authorization:
+    name: Authorization
+    description: Thing access token.
+    in: header
+    type: string
+    required: true
+  ChanId:
+    name: chanId
+    description: Unique channel identifier.
+    in: path
+    type: integer
+    minimum: 1
+    required: true
+  Limit:
+    name: limit
+    description: Size of the subset to retrieve.
+    in: query
+    type: integer
+    default: 10
+    maximum: 100
+    minimum: 1
+    required: false
+  Offset:
+    name: offset
+    description: Number of items to skip during retrieval.
+    in: query
+    type: integer
+    default: 0
+    minimum: 0
+    required: false

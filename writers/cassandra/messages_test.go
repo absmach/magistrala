@@ -13,8 +13,12 @@ import (
 const keyspace = "mainflux"
 
 var (
-	msg  = mainflux.Message{}
 	addr = "localhost"
+	msg  = mainflux.Message{
+		Channel:   1,
+		Publisher: 1,
+		Protocol:  "mqtt",
+	}
 )
 
 func TestSave(t *testing.T) {

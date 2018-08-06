@@ -52,7 +52,7 @@ func main() {
 
 	conn, err := grpc.Dial(cfg.ThingsURL, grpc.WithInsecure())
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to users service: %s", err))
+		logger.Error(fmt.Sprintf("Failed to connect to things service: %s", err))
 		os.Exit(1)
 	}
 	defer conn.Close()

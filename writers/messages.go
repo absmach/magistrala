@@ -1,10 +1,8 @@
 package writers
 
-import (
-	"github.com/mainflux/mainflux"
-)
+import "github.com/mainflux/mainflux"
 
-// MessageRepository specifies message reading API.
+// MessageRepository specifies message writing API.
 type MessageRepository interface {
 
 	// Save method is used to save published message. A non-nil

@@ -16,7 +16,7 @@ const table = `CREATE TABLE IF NOT EXISTS messages (
     	value_sum double,
     	time double,
     	update_time double,
-    	link text,
+    	link text
     )`
 
 // Connect establishes connection to the Cassandra cluster.
@@ -30,8 +30,7 @@ func Connect(hosts []string, keyspace string) (*gocql.Session, error) {
 		return nil, err
 	}
 
-	err = session.Query(table).Exec()
-	if err != nil {
+	if err := session.Query(table).Exec(); err != nil {
 		return nil, err
 	}
 

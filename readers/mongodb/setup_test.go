@@ -1,0 +1,46 @@
+package mongodb_test
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"testing"
+
+	"github.com/mongodb/mongo-go-driver/mongo"
+
+	dockertest "gopkg.in/ory-am/dockertest.v3"
+)
+
+func TestMain(m *testing.M) {
+	pool, err := dockertest.NewPool("")
+	if err != nil {
+		testLog.Error(fmt.Sprintf("Could not connect to docker: %s", err))
+	}
+
+	cfg := []string{
+		"MONGO_INITDB_DATABASE=test",
+	}
+
+	container, err := pool.Run("mongo", "3.6-jessie", cfg)
+	if err != nil {
+		testLog.Error(fmt.Sprintf("Could not start container: %s", err))
+	}
+
+	port = container.GetPort("27017/tcp")
+	addr = fmt.Sprintf("mongodb://localhost:%s", port)
+
+	if err := pool.Retry(func() error {
+		_, err := mongo.Connect(context.Background(), addr, nil)
+		return err
+	}); err != nil {
+		testLog.Error(fmt.Sprintf("Could not connect to docker: %s", err))
+	}
+
+	code := m.Run()
+
+	if err := pool.Purge(container); err != nil {
+		testLog.Error(fmt.Sprintf("Could not purge container: %s", err))
+	}
+
+	os.Exit(code)
+}

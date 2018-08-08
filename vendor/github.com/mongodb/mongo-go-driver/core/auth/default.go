@@ -29,14 +29,14 @@ type DefaultAuthenticator struct {
 func (a *DefaultAuthenticator) Auth(ctx context.Context, desc description.Server, rw wiremessage.ReadWriter) error {
 	var actual Authenticator
 	var err error
-	if err = description.ScramSHA1Supported(desc.Version); err != nil {
+	if err = description.ScramSHA1Supported(desc.WireVersion); err != nil {
 		actual, err = newMongoDBCRAuthenticator(a.Cred)
 	} else {
 		actual, err = newScramSHA1Authenticator(a.Cred)
 	}
 
 	if err != nil {
-		return err
+		return newAuthError("error creating authenticator", err)
 	}
 
 	return actual.Auth(ctx, desc, rw)

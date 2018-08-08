@@ -11,8 +11,10 @@ import (
 
 	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/core/description"
-	"github.com/mongodb/mongo-go-driver/core/options"
+	"github.com/mongodb/mongo-go-driver/core/option"
+	"github.com/mongodb/mongo-go-driver/core/readconcern"
 	"github.com/mongodb/mongo-go-driver/core/readpref"
+	"github.com/mongodb/mongo-go-driver/core/session"
 	"github.com/mongodb/mongo-go-driver/core/wiremessage"
 )
 
@@ -20,10 +22,13 @@ import (
 //
 // The find command finds documents within a collection that match a filter.
 type Find struct {
-	NS       Namespace
-	Filter   *bson.Document
-	Opts     []options.FindOptioner
-	ReadPref *readpref.ReadPref
+	NS          Namespace
+	Filter      *bson.Document
+	Opts        []option.FindOptioner
+	ReadPref    *readpref.ReadPref
+	ReadConcern *readconcern.ReadConcern
+	Clock       *session.ClusterClock
+	Session     *session.Client
 
 	result Cursor
 	err    error
@@ -31,6 +36,15 @@ type Find struct {
 
 // Encode will encode this command into a wire message for the given server description.
 func (f *Find) Encode(desc description.SelectedServer) (wiremessage.WireMessage, error) {
+	cmd, err := f.encode(desc)
+	if err != nil {
+		return nil, err
+	}
+
+	return cmd.Encode(desc)
+}
+
+func (f *Find) encode(desc description.SelectedServer) (*Read, error) {
 	if err := f.NS.Validate(); err != nil {
 		return nil, err
 	}
@@ -45,20 +59,20 @@ func (f *Find) Encode(desc description.SelectedServer) (wiremessage.WireMessage,
 	var batchSize int32
 	var err error
 
-	for _, option := range f.Opts {
-		switch t := option.(type) {
+	for _, opt := range f.Opts {
+		switch t := opt.(type) {
 		case nil:
 			continue
-		case options.OptLimit:
+		case option.OptLimit:
 			limit = int64(t)
-			err = option.Option(command)
-		case options.OptBatchSize:
+			err = opt.Option(command)
+		case option.OptBatchSize:
 			batchSize = int32(t)
-			err = option.Option(command)
-		case options.OptProjection:
-			err = t.IsFind().Option(command)
+			err = opt.Option(command)
+		case option.OptProjection:
+			err = t.Option(command)
 		default:
-			err = option.Option(command)
+			err = opt.Option(command)
 		}
 		if err != nil {
 			return nil, err
@@ -69,28 +83,39 @@ func (f *Find) Encode(desc description.SelectedServer) (wiremessage.WireMessage,
 		command.Append(bson.EC.Boolean("singleBatch", true))
 	}
 
-	return (&Command{DB: f.NS.DB, ReadPref: f.ReadPref, Command: command}).Encode(desc)
+	return &Read{
+		Clock:       f.Clock,
+		DB:          f.NS.DB,
+		ReadPref:    f.ReadPref,
+		Command:     command,
+		ReadConcern: f.ReadConcern,
+		Session:     f.Session,
+	}, nil
 }
 
 // Decode will decode the wire message using the provided server description. Errors during decoding
 // are deferred until either the Result or Err methods are called.
 func (f *Find) Decode(desc description.SelectedServer, cb CursorBuilder, wm wiremessage.WireMessage) *Find {
-	rdr, err := (&Command{}).Decode(desc, wm).Result()
+	rdr, err := (&Read{}).Decode(desc, wm).Result()
 	if err != nil {
 		f.err = err
 		return f
 	}
 
-	opts := make([]options.CursorOptioner, 0)
+	return f.decode(desc, cb, rdr)
+}
+
+func (f *Find) decode(desc description.SelectedServer, cb CursorBuilder, rdr bson.Reader) *Find {
+	opts := make([]option.CursorOptioner, 0)
 	for _, opt := range f.Opts {
-		curOpt, ok := opt.(options.CursorOptioner)
+		curOpt, ok := opt.(option.CursorOptioner)
 		if !ok {
 			continue
 		}
 		opts = append(opts, curOpt)
 	}
 
-	f.result, f.err = cb.BuildCursor(rdr, opts...)
+	f.result, f.err = cb.BuildCursor(rdr, f.Session, f.Clock, opts...)
 	return f
 }
 
@@ -99,6 +124,7 @@ func (f *Find) Result() (Cursor, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
+
 	return f.result, nil
 }
 
@@ -107,18 +133,15 @@ func (f *Find) Err() error { return f.err }
 
 // RoundTrip handles the execution of this command using the provided wiremessage.ReadWriter.
 func (f *Find) RoundTrip(ctx context.Context, desc description.SelectedServer, cb CursorBuilder, rw wiremessage.ReadWriter) (Cursor, error) {
-	wm, err := f.Encode(desc)
+	cmd, err := f.encode(desc)
 	if err != nil {
 		return nil, err
 	}
 
-	err = rw.WriteWireMessage(ctx, wm)
+	rdr, err := cmd.RoundTrip(ctx, desc, rw)
 	if err != nil {
 		return nil, err
 	}
-	wm, err = rw.ReadWireMessage(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return f.Decode(desc, cb, wm).Result()
+
+	return f.decode(desc, cb, rdr).Result()
 }

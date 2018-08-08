@@ -10,7 +10,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/mongodb/mongo-go-driver/core/addr"
+	"github.com/mongodb/mongo-go-driver/core/address"
 	"github.com/mongodb/mongo-go-driver/core/command"
 	"github.com/mongodb/mongo-go-driver/core/connection"
 	"github.com/mongodb/mongo-go-driver/core/description"
@@ -37,7 +37,7 @@ func CreateAuthenticator(name string, cred *Cred) (Authenticator, error) {
 		return f(cred)
 	}
 
-	return nil, fmt.Errorf("unknown authenticator: %s", name)
+	return nil, newAuthError(fmt.Sprintf("unknown authenticator: %s", name), nil)
 }
 
 // RegisterAuthenticatorFactory registers the authenticator factory.
@@ -90,23 +90,33 @@ func RegisterAuthenticatorFactory(name string, factory AuthenticatorFactory) {
 // 	})
 // }
 
-// Handshaker creates a connection handshaker for the given authenticator. The
-// handshaker will handle calling isMaster and buildInfo.
-func Handshaker(appName string, h connection.Handshaker, authenticator Authenticator) connection.Handshaker {
-	return connection.HandshakerFunc(func(ctx context.Context, address addr.Addr, rw wiremessage.ReadWriter) (description.Server, error) {
-		desc, err := (&command.Handshake{Client: command.ClientDoc(appName)}).Handshake(ctx, address, rw)
+// HandshakeOptions packages options that can be passed to the Handshaker() function
+type HandshakeOptions struct {
+	AppName       string
+	Authenticator Authenticator
+	Compressors   []string
+}
+
+// Handshaker creates a connection handshaker for the given authenticator.
+func Handshaker(h connection.Handshaker, options *HandshakeOptions) connection.Handshaker {
+	return connection.HandshakerFunc(func(ctx context.Context, addr address.Address, rw wiremessage.ReadWriter) (description.Server, error) {
+		desc, err := (&command.Handshake{
+			Client:      command.ClientDoc(options.AppName),
+			Compressors: options.Compressors,
+		}).Handshake(ctx, addr, rw)
+
 		if err != nil {
-			return description.Server{}, err
+			return description.Server{}, newAuthError("handshake failure", err)
 		}
 
-		err = authenticator.Auth(ctx, desc, rw)
+		err = options.Authenticator.Auth(ctx, desc, rw)
 		if err != nil {
-			return description.Server{}, err
+			return description.Server{}, newAuthError("auth error", err)
 		}
 		if h == nil {
 			return desc, nil
 		}
-		return h.Handshake(ctx, address, rw)
+		return h.Handshake(ctx, addr, rw)
 	})
 }
 
@@ -114,6 +124,13 @@ func Handshaker(appName string, h connection.Handshaker, authenticator Authentic
 type Authenticator interface {
 	// Auth authenticates the connection.
 	Auth(context.Context, description.Server, wiremessage.ReadWriter) error
+}
+
+func newAuthError(msg string, inner error) error {
+	return &Error{
+		message: msg,
+		inner:   inner,
+	}
 }
 
 func newError(err error, mech string) error {
@@ -130,6 +147,9 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
+	if e.inner == nil {
+		return e.message
+	}
 	return fmt.Sprintf("%s: %s", e.message, e.inner)
 }
 

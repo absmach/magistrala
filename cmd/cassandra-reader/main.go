@@ -66,7 +66,7 @@ func main() {
 	}()
 
 	err := <-errs
-	logger.Error(fmt.Sprintf("Cassandra writer service terminated: %s", err))
+	logger.Error(fmt.Sprintf("Cassandra reader service terminated: %s", err))
 }
 
 func loadConfig() config {
@@ -122,6 +122,6 @@ func newService(session *gocql.Session, logger log.Logger) readers.MessageReposi
 
 func startHTTPServer(repo readers.MessageRepository, tc mainflux.ThingsServiceClient, port string, errs chan error, logger log.Logger) {
 	p := fmt.Sprintf(":%s", port)
-	logger.Info(fmt.Sprintf("Cassandra writer service started, exposed port %s", port))
+	logger.Info(fmt.Sprintf("Cassandra reader service started, exposed port %s", port))
 	errs <- http.ListenAndServe(p, api.MakeHandler(repo, tc, "cassandra-reader"))
 }

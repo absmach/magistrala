@@ -10,20 +10,21 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/mongodb/mongo-go-driver/core/addr"
+	"github.com/mongodb/mongo-go-driver/core/address"
 )
 
 // Topology represents a description of a mongodb topology
 type Topology struct {
-	Servers []Server
-	Kind    TopologyKind
+	Servers               []Server
+	Kind                  TopologyKind
+	SessionTimeoutMinutes uint32
 }
 
 // Server returns the server for the given address. Returns false if the server
 // could not be found.
-func (t Topology) Server(address addr.Addr) (Server, bool) {
+func (t Topology) Server(addr address.Address) (Server, bool) {
 	for _, server := range t.Servers {
-		if server.Addr.String() == address.String() {
+		if server.Addr.String() == addr.String() {
 			return server, true
 		}
 	}

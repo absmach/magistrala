@@ -62,6 +62,7 @@ In order to run all Mainflux core services, as well as mentioned optional ones,
 execute following command:
 
 ```bash
+docker-compose -f docker/docker-compose.yml up -d
 ./docker/addons/cassandra-reader/init.sh
 ```
 

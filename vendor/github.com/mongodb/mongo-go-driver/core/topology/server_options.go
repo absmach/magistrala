@@ -10,9 +10,12 @@ import (
 	"time"
 
 	"github.com/mongodb/mongo-go-driver/core/connection"
+	"github.com/mongodb/mongo-go-driver/core/session"
 )
 
 type serverConfig struct {
+	clock             *session.ClusterClock
+	compressionOpts   []string
 	connectionOpts    []connection.Option
 	appname           string
 	heartbeatInterval time.Duration
@@ -50,6 +53,14 @@ func WithConnectionOptions(fn func(...connection.Option) []connection.Option) Se
 	}
 }
 
+// WithCompressionOptions configures the server's compressors.
+func WithCompressionOptions(fn func(...string) []string) ServerOption {
+	return func(cfg *serverConfig) error {
+		cfg.compressionOpts = fn(cfg.compressionOpts...)
+		return nil
+	}
+}
+
 // WithHeartbeatInterval configures a server's heartbeat interval.
 func WithHeartbeatInterval(fn func(time.Duration) time.Duration) ServerOption {
 	return func(cfg *serverConfig) error {
@@ -82,6 +93,14 @@ func WithMaxConnections(fn func(uint16) uint16) ServerOption {
 func WithMaxIdleConnections(fn func(uint16) uint16) ServerOption {
 	return func(cfg *serverConfig) error {
 		cfg.maxIdleConns = fn(cfg.maxIdleConns)
+		return nil
+	}
+}
+
+// WithClock configures the ClusterClock for the server to use.
+func WithClock(fn func(clock *session.ClusterClock) *session.ClusterClock) ServerOption {
+	return func(cfg *serverConfig) error {
+		cfg.clock = fn(cfg.clock)
 		return nil
 	}
 }

@@ -30,7 +30,6 @@ type SaslClientCloser interface {
 
 // ConductSaslConversation handles running a sasl conversation with MongoDB.
 func ConductSaslConversation(ctx context.Context, desc description.Server, rw wiremessage.ReadWriter, db string, client SaslClient) error {
-
 	// Arbiters cannot be authenticated
 	if desc.Kind == description.RSArbiter {
 		return nil
@@ -49,7 +48,7 @@ func ConductSaslConversation(ctx context.Context, desc description.Server, rw wi
 		return newError(err, mech)
 	}
 
-	saslStartCmd := command.Command{
+	saslStartCmd := command.Read{
 		DB: db,
 		Command: bson.NewDocument(
 			bson.EC.Int32("saslStart", 1),
@@ -75,7 +74,7 @@ func ConductSaslConversation(ctx context.Context, desc description.Server, rw wi
 
 	err = bson.Unmarshal(rdr, &saslResp)
 	if err != nil {
-		return err
+		return newAuthError("unmarshall error", err)
 	}
 
 	cid := saslResp.ConversationID
@@ -98,7 +97,7 @@ func ConductSaslConversation(ctx context.Context, desc description.Server, rw wi
 			return nil
 		}
 
-		saslContinueCmd := command.Command{
+		saslContinueCmd := command.Read{
 			DB: db,
 			Command: bson.NewDocument(
 				bson.EC.Int32("saslContinue", 1),
@@ -114,7 +113,7 @@ func ConductSaslConversation(ctx context.Context, desc description.Server, rw wi
 
 		err = bson.Unmarshal(rdr, &saslResp)
 		if err != nil {
-			return err
+			return newAuthError("unmarshal error", err)
 		}
 	}
 }

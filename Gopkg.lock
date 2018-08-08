@@ -35,6 +35,12 @@
   revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/buger/jsonparser"
+  packages = ["."]
+  revision = "2cac668e8456b4284edb0715e17e2af02d3ec993"
+
+[[projects]]
   name = "github.com/cenkalti/backoff"
   packages = ["."]
   revision = "2ea60e5f094469f9e65adb9cd103795b73ae743e"
@@ -223,28 +229,52 @@
     "bson/decimal",
     "bson/elements",
     "bson/objectid",
-    "core/addr",
+    "bson/parser",
+    "bson/parser/ast",
+    "core/address",
     "core/auth",
     "core/auth/internal/gssapi",
     "core/command",
+    "core/compressor",
     "core/connection",
     "core/connstring",
     "core/description",
     "core/dispatch",
-    "core/options",
+    "core/event",
+    "core/option",
     "core/readconcern",
     "core/readpref",
     "core/result",
+    "core/session",
     "core/tag",
     "core/topology",
+    "core/uuid",
     "core/version",
     "core/wiremessage",
     "core/writeconcern",
     "internal",
-    "mongo"
+    "mongo",
+    "mongo/aggregateopt",
+    "mongo/changestreamopt",
+    "mongo/clientopt",
+    "mongo/collectionopt",
+    "mongo/countopt",
+    "mongo/dbopt",
+    "mongo/deleteopt",
+    "mongo/distinctopt",
+    "mongo/dropcollopt",
+    "mongo/findopt",
+    "mongo/indexopt",
+    "mongo/insertopt",
+    "mongo/listcollectionopt",
+    "mongo/listdbopt",
+    "mongo/mongoopt",
+    "mongo/replaceopt",
+    "mongo/runcmdopt",
+    "mongo/updateopt"
   ]
-  revision = "29a4d7d5b648e5b0b60e03e3bd71c11703f0c203"
-  version = "v0.0.5"
+  revision = "8df56f107cdd485351eb2523992c3364114b4b2e"
+  version = "v0.0.10"
 
 [[projects]]
   name = "github.com/nats-io/go-nats"
@@ -538,6 +568,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "10d518d85825e0ce1a8952c7fc71194db144403ed6a53cb5f3b3b3587cf3167c"
+  inputs-digest = "e3b07d2098253644fc2f77fede1f00fcc077a20e4f46c59466ffd61c4998bb00"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -9,6 +9,9 @@ package connection
 import (
 	"net"
 	"time"
+
+	"github.com/mongodb/mongo-go-driver/core/compressor"
+	"github.com/mongodb/mongo-go-driver/core/event"
 )
 
 type config struct {
@@ -18,9 +21,11 @@ type config struct {
 	handshaker     Handshaker
 	idleTimeout    time.Duration
 	lifeTimeout    time.Duration
+	cmdMonitor     *event.CommandMonitor
 	readTimeout    time.Duration
 	writeTimeout   time.Duration
 	tlsConfig      *TLSConfig
+	compressors    []compressor.Compressor
 }
 
 func newConfig(opts ...Option) (*config, error) {
@@ -53,6 +58,14 @@ type Option func(*config) error
 func WithAppName(fn func(string) string) Option {
 	return func(c *config) error {
 		c.appName = fn(c.appName)
+		return nil
+	}
+}
+
+// WithCompressors sets the compressors that can be used for communication.
+func WithCompressors(fn func([]compressor.Compressor) []compressor.Compressor) Option {
+	return func(c *config) error {
+		c.compressors = fn(c.compressors)
 		return nil
 	}
 }
@@ -119,6 +132,14 @@ func WithWriteTimeout(fn func(time.Duration) time.Duration) Option {
 func WithTLSConfig(fn func(*TLSConfig) *TLSConfig) Option {
 	return func(c *config) error {
 		c.tlsConfig = fn(c.tlsConfig)
+		return nil
+	}
+}
+
+// WithMonitor configures a event for command monitoring.
+func WithMonitor(fn func(*event.CommandMonitor) *event.CommandMonitor) Option {
+	return func(c *config) error {
+		c.cmdMonitor = fn(c.cmdMonitor)
 		return nil
 	}
 }

@@ -46,8 +46,7 @@ func TestSave(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Creating new MongoDB client expected to succeed: %s.\n", err))
 
 	db := client.Database(testDB)
-	repo, err := mongodb.New(db)
-	require.Nil(t, err, fmt.Sprintf("Creating new MongoDB repo expected to succeed: %s.\n", err))
+	repo := mongodb.New(db)
 
 	err = repo.Save(msg)
 	assert.Nil(t, err, fmt.Sprintf("Save operation expected to succeed: %s.\n", err))

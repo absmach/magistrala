@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/mongodb/mongo-go-driver/bson/objectid"
-	"github.com/mongodb/mongo-go-driver/core/addr"
+	"github.com/mongodb/mongo-go-driver/core/address"
 	"github.com/mongodb/mongo-go-driver/core/result"
 	"github.com/mongodb/mongo-go-driver/core/tag"
 )
@@ -28,55 +28,51 @@ type SelectedServer struct {
 // Server represents a description of a server. This is created from an isMaster
 // command.
 type Server struct {
-	Addr addr.Addr
+	Addr address.Address
 
-	AverageRTT        time.Duration
-	AverageRTTSet     bool
-	CanonicalAddr     addr.Addr
-	ElectionID        objectid.ObjectID
-	GitVersion        string
-	HeartbeatInterval time.Duration
-	LastError         error
-	LastUpdateTime    time.Time
-	LastWriteTime     time.Time
-	MaxBatchCount     uint16
-	MaxDocumentSize   uint32
-	MaxMessageSize    uint32
-	Members           []addr.Addr
-	ReadOnly          bool
-	SetName           string
-	SetVersion        uint32
-	Tags              tag.Set
-	Kind              ServerKind
-	WireVersion       *VersionRange
-	Version           Version
+	AverageRTT            time.Duration
+	AverageRTTSet         bool
+	Compression           []string // compression methods returned by server
+	CanonicalAddr         address.Address
+	ElectionID            objectid.ObjectID
+	HeartbeatInterval     time.Duration
+	LastError             error
+	LastUpdateTime        time.Time
+	LastWriteTime         time.Time
+	MaxBatchCount         uint32
+	MaxDocumentSize       uint32
+	MaxMessageSize        uint32
+	Members               []address.Address
+	ReadOnly              bool
+	SessionTimeoutMinutes uint32
+	SetName               string
+	SetVersion            uint32
+	Tags                  tag.Set
+	Kind                  ServerKind
+	WireVersion           *VersionRange
 }
 
 // NewServer creates a new server description from the given parameters.
-func NewServer(address addr.Addr, isMaster result.IsMaster, buildInfo result.BuildInfo) Server {
+func NewServer(addr address.Address, isMaster result.IsMaster) Server {
 	i := Server{
-		Addr: address,
+		Addr: addr,
 
-		CanonicalAddr:   addr.Addr(isMaster.Me).Canonicalize(),
-		ElectionID:      isMaster.ElectionID,
-		LastUpdateTime:  time.Now().UTC(),
-		LastWriteTime:   isMaster.LastWriteTimestamp,
-		MaxBatchCount:   isMaster.MaxWriteBatchSize,
-		MaxDocumentSize: isMaster.MaxBSONObjectSize,
-		MaxMessageSize:  isMaster.MaxMessageSizeBytes,
-		SetName:         isMaster.SetName,
-		SetVersion:      isMaster.SetVersion,
-		Tags:            tag.NewTagSetFromMap(isMaster.Tags),
-	}
-
-	if !buildInfo.IsZero() {
-		i.GitVersion = buildInfo.GitVersion
-		i.Version.Desc = buildInfo.Version
-		i.Version.Parts = buildInfo.VersionArray
+		CanonicalAddr:         address.Address(isMaster.Me).Canonicalize(),
+		Compression:           isMaster.Compression,
+		ElectionID:            isMaster.ElectionID,
+		LastUpdateTime:        time.Now().UTC(),
+		LastWriteTime:         isMaster.LastWriteTimestamp,
+		MaxBatchCount:         isMaster.MaxWriteBatchSize,
+		MaxDocumentSize:       isMaster.MaxBSONObjectSize,
+		MaxMessageSize:        isMaster.MaxMessageSizeBytes,
+		SessionTimeoutMinutes: isMaster.LogicalSessionTimeoutMinutes,
+		SetName:               isMaster.SetName,
+		SetVersion:            isMaster.SetVersion,
+		Tags:                  tag.NewTagSetFromMap(isMaster.Tags),
 	}
 
 	if i.CanonicalAddr == "" {
-		i.CanonicalAddr = address
+		i.CanonicalAddr = addr
 	}
 
 	if isMaster.OK != 1 {
@@ -85,15 +81,15 @@ func NewServer(address addr.Addr, isMaster result.IsMaster, buildInfo result.Bui
 	}
 
 	for _, host := range isMaster.Hosts {
-		i.Members = append(i.Members, addr.Addr(host).Canonicalize())
+		i.Members = append(i.Members, address.Address(host).Canonicalize())
 	}
 
 	for _, passive := range isMaster.Passives {
-		i.Members = append(i.Members, addr.Addr(passive).Canonicalize())
+		i.Members = append(i.Members, address.Address(passive).Canonicalize())
 	}
 
 	for _, arbiter := range isMaster.Arbiters {
-		i.Members = append(i.Members, addr.Addr(arbiter).Canonicalize())
+		i.Members = append(i.Members, address.Address(arbiter).Canonicalize())
 	}
 
 	i.Kind = Standalone
@@ -134,4 +130,12 @@ func (s Server) SetAverageRTT(rtt time.Duration) Server {
 	}
 
 	return s
+}
+
+// DataBearing returns true if the server is a data bearing server.
+func (s Server) DataBearing() bool {
+	return s.Kind == RSPrimary ||
+		s.Kind == RSSecondary ||
+		s.Kind == Mongos ||
+		s.Kind == Standalone
 }

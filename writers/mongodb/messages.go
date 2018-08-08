@@ -18,8 +18,8 @@ type mongoRepo struct {
 }
 
 // New returns new MongoDB writer.
-func New(db *mongo.Database) (writers.MessageRepository, error) {
-	return &mongoRepo{db}, nil
+func New(db *mongo.Database) writers.MessageRepository {
+	return &mongoRepo{db}
 }
 
 func (repo *mongoRepo) Save(msg mainflux.Message) error {

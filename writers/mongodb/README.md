@@ -19,8 +19,8 @@ default values.
 ## Deployment
 
 ```yaml
-  mongo-writer:
-    image: mainflux/mongodb:[version]
+  mongodb-writer:
+    image: mainflux/mongodb-writer:[version]
     container_name: [instance name]
     depends_on:
       - mongodb
@@ -47,14 +47,14 @@ go get github.com/mainflux/mainflux
 
 cd $GOPATH/src/github.com/mainflux/mainflux
 
-# compile the mongodb
-make mongodb
+# compile the mongodb writer
+make mongodb-writer
 
 # copy binary to bin
 make install
 
 # Set the environment variables and run the service
-MF_NATS_URL=[NATS instance URL] MF_MONGO_WRITER_PORT=[Service HTTP port] MF_MONGO_WRITER_DB_NAME=[MongoDB database name] MF_MONGO_WRITER_DB_HOST=[MongoDB database host] MF_MONGO_WRITER_DB_PORT=[MongoDB database port] $GOBIN/mainflux-mongodb
+MF_NATS_URL=[NATS instance URL] MF_MONGO_WRITER_PORT=[Service HTTP port] MF_MONGO_WRITER_DB_NAME=[MongoDB database name] MF_MONGO_WRITER_DB_HOST=[MongoDB database host] MF_MONGO_WRITER_DB_PORT=[MongoDB database port] $GOBIN/mainflux-mongodb-writer
 ```
 
 ## Usage

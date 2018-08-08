@@ -92,7 +92,7 @@ func (a *Array) lookupTraverse(index uint, keys ...string) (*Value, error) {
 
 	switch value.Type() {
 	case TypeEmbeddedDocument:
-		element, err := value.MutableDocument().Lookup(keys...)
+		element, err := value.MutableDocument().LookupElementErr(keys...)
 		if err != nil {
 			return nil, err
 		}
@@ -327,4 +327,10 @@ func (a *Array) MarshalBSON() ([]byte, error) {
 		return nil, err
 	}
 	return b, nil
+}
+
+// Iterator returns a ArrayIterator that can be used to iterate through the
+// elements of this Array.
+func (a *Array) Iterator() (*ArrayIterator, error) {
+	return NewArrayIterator(a)
 }

@@ -8,7 +8,6 @@ package auth
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/mongodb/mongo-go-driver/core/description"
 	"github.com/mongodb/mongo-go-driver/core/wiremessage"
@@ -18,10 +17,6 @@ import (
 const PLAIN = "PLAIN"
 
 func newPlainAuthenticator(cred *Cred) (Authenticator, error) {
-	if cred.Source != "" && cred.Source != "$external" {
-		return nil, fmt.Errorf("PLAIN source must be empty or $external")
-	}
-
 	return &PlainAuthenticator{
 		Username: cred.Username,
 		Password: cred.Password,
@@ -53,7 +48,7 @@ func (c *plainSaslClient) Start() (string, []byte, error) {
 }
 
 func (c *plainSaslClient) Next(challenge []byte) ([]byte, error) {
-	return nil, fmt.Errorf("unexpected server challenge")
+	return nil, newAuthError("unexpected server challenge", nil)
 }
 
 func (c *plainSaslClient) Completed() bool {

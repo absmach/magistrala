@@ -12,8 +12,8 @@ import (
 
 // MaxStalenessSupported returns an error if the given server version
 // does not support max staleness.
-func MaxStalenessSupported(serverVersion Version, wireVersion *VersionRange) error {
-	if !serverVersion.AtLeast(3, 4, 0) || (wireVersion != nil && wireVersion.Max < 5) {
+func MaxStalenessSupported(wireVersion *VersionRange) error {
+	if wireVersion != nil && wireVersion.Max < 5 {
 		return fmt.Errorf("max staleness is only supported for servers 3.4 or newer")
 	}
 
@@ -22,10 +22,15 @@ func MaxStalenessSupported(serverVersion Version, wireVersion *VersionRange) err
 
 // ScramSHA1Supported returns an error if the given server version
 // does not support scram-sha-1.
-func ScramSHA1Supported(version Version) error {
-	if !version.AtLeast(3, 0, 0) {
+func ScramSHA1Supported(wireVersion *VersionRange) error {
+	if wireVersion != nil && wireVersion.Max < 3 {
 		return fmt.Errorf("SCRAM-SHA-1 is only supported for servers 3.0 or newer")
 	}
 
 	return nil
+}
+
+// SessionsSupported returns true of the given server version indicates that it supports sessions.
+func SessionsSupported(wireVersion *VersionRange) bool {
+	return wireVersion != nil && wireVersion.Max >= 6
 }

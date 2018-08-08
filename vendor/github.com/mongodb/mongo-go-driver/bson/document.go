@@ -90,6 +90,24 @@ func ReadDocument(b []byte) (*Document, error) {
 	return doc, nil
 }
 
+// Copy makes a shallow copy of this document.
+func (d *Document) Copy() *Document {
+	if d == nil {
+		return nil
+	}
+
+	doc := &Document{
+		IgnoreNilInsert: d.IgnoreNilInsert,
+		elems:           make([]*Element, len(d.elems), cap(d.elems)),
+		index:           make([]uint32, len(d.index), cap(d.index)),
+	}
+
+	copy(doc.elems, d.elems)
+	copy(doc.index, d.index)
+
+	return doc
+}
+
 // Len returns the number of elements in the document.
 func (d *Document) Len() int {
 	if d == nil {
@@ -217,6 +235,9 @@ func (d *Document) Prepend(elems ...*Element) *Document {
 		}
 		remaining--
 		d.elems[idx] = elem
+		for idx := range d.index {
+			d.index[idx]++
+		}
 		i := sort.Search(len(d.index), func(i int) bool {
 			return bytes.Compare(
 				d.keyFromIndex(i), elem.value.data[elem.value.start+1:elem.value.offset]) >= 0
@@ -224,9 +245,9 @@ func (d *Document) Prepend(elems ...*Element) *Document {
 		if i < len(d.index) {
 			d.index = append(d.index, 0)
 			copy(d.index[i+1:], d.index[i:])
-			d.index[i] = uint32(len(d.elems) - 1)
+			d.index[i] = 0
 		} else {
-			d.index = append(d.index, uint32(len(d.elems)-1))
+			d.index = append(d.index, 0)
 		}
 	}
 	return d
@@ -275,7 +296,44 @@ func (d *Document) Set(elem *Element) *Document {
 
 // Lookup searches the document and potentially subdocuments or arrays for the
 // provided key. Each key provided to this method represents a layer of depth.
-func (d *Document) Lookup(key ...string) (*Element, error) {
+//
+// Lookup will return nil if it encounters an error.
+func (d *Document) Lookup(key ...string) *Value {
+	elem, err := d.LookupElementErr(key...)
+	if err != nil {
+		return nil
+	}
+
+	return elem.value
+}
+
+// LookupErr searches the document and potentially subdocuments or arrays for the
+// provided key. Each key provided to this method represents a layer of depth.
+func (d *Document) LookupErr(key ...string) (*Value, error) {
+	elem, err := d.LookupElementErr(key...)
+	if err != nil {
+		return nil, err
+	}
+
+	return elem.value, nil
+}
+
+// LookupElement searches the document and potentially subdocuments or arrays for the
+// provided key. Each key provided to this method represents a layer of depth.
+//
+// LookupElement will return nil if it encounters an error.
+func (d *Document) LookupElement(key ...string) *Element {
+	elem, err := d.LookupElementErr(key...)
+	if err != nil {
+		return nil
+	}
+
+	return elem
+}
+
+// LookupElementErr searches the document and potentially subdocuments or arrays for the
+// provided key. Each key provided to this method represents a layer of depth.
+func (d *Document) LookupElementErr(key ...string) (*Element, error) {
 	if d == nil {
 		return nil, ErrNilDocument
 	}
@@ -294,7 +352,7 @@ func (d *Document) Lookup(key ...string) (*Element, error) {
 		}
 		switch elem.value.Type() {
 		case '\x03':
-			elem, err = elem.value.MutableDocument().Lookup(key[1:]...)
+			elem, err = elem.value.MutableDocument().LookupElementErr(key[1:]...)
 		case '\x04':
 			index, err := strconv.ParseUint(key[1], 10, 0)
 			if err != nil {
@@ -330,9 +388,6 @@ func (d *Document) Lookup(key ...string) (*Element, error) {
 // returned. If the key does not exist, then nil is returned and the delete is
 // a no-op. The same is true if something along the depth tree does not exist
 // or is not a traversable type.
-//
-// TODO(skriptble): This method differs from Lookup when it comes to errors.
-// Should this method return errors to be consistent?
 func (d *Document) Delete(key ...string) *Element {
 	if d == nil {
 		panic(ErrNilDocument)
@@ -352,6 +407,11 @@ func (d *Document) Delete(key ...string) *Element {
 		if len(key) == 1 {
 			d.index = append(d.index[:i], d.index[i+1:]...)
 			d.elems = append(d.elems[:keyIndex], d.elems[keyIndex+1:]...)
+			for j := range d.index {
+				if d.index[j] > keyIndex {
+					d.index[j]--
+				}
+			}
 			return elem
 		}
 		switch elem.value.Type() {
@@ -717,4 +777,29 @@ func (d *Document) String() string {
 	buf.WriteByte('}')
 
 	return buf.String()
+}
+
+// ToExtJSON marshals this document to BSON and transforms that BSON to
+// extended JSON. If there is an error during the conversion, this method
+// will return an empty string. To receive the error, use the ToExtJSONErr
+// method.
+func (d *Document) ToExtJSON(canonical bool) string {
+	s, err := d.ToExtJSONErr(canonical)
+	if err != nil {
+		return ""
+	}
+	return s
+}
+
+// ToExtJSONErr marshals this document to BSON and transforms that BSON to
+// extended JSON.
+func (d *Document) ToExtJSONErr(canonical bool) (string, error) {
+	// We don't check for a nil document here because that's the first thing
+	// that MarshalBSON does.
+	b, err := d.MarshalBSON()
+	if err != nil {
+		return "", err
+	}
+
+	return ToExtJSON(canonical, b)
 }

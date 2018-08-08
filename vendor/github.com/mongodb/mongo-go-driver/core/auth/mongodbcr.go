@@ -20,6 +20,8 @@ import (
 )
 
 // MONGODBCR is the mechanism name for MONGODB-CR.
+//
+// The MONGODB-CR authentication mechanism is deprecated in MongoDB 4.0.
 const MONGODBCR = "MONGODB-CR"
 
 func newMongoDBCRAuthenticator(cred *Cred) (Authenticator, error) {
@@ -31,6 +33,8 @@ func newMongoDBCRAuthenticator(cred *Cred) (Authenticator, error) {
 }
 
 // MongoDBCRAuthenticator uses the MONGODB-CR algorithm to authenticate a connection.
+//
+// The MONGODB-CR authentication mechanism is deprecated in MongoDB 4.0.
 type MongoDBCRAuthenticator struct {
 	DB       string
 	Username string
@@ -38,6 +42,8 @@ type MongoDBCRAuthenticator struct {
 }
 
 // Auth authenticates the connection.
+//
+// The MONGODB-CR authentication mechanism is deprecated in MongoDB 4.0.
 func (a *MongoDBCRAuthenticator) Auth(ctx context.Context, desc description.Server, rw wiremessage.ReadWriter) error {
 
 	// Arbiters cannot be authenticated
@@ -50,7 +56,7 @@ func (a *MongoDBCRAuthenticator) Auth(ctx context.Context, desc description.Serv
 		db = defaultAuthDB
 	}
 
-	cmd := command.Command{DB: db, Command: bson.NewDocument(bson.EC.Int32("getnonce", 1))}
+	cmd := command.Read{DB: db, Command: bson.NewDocument(bson.EC.Int32("getnonce", 1))}
 	ssdesc := description.SelectedServer{Server: desc}
 	rdr, err := cmd.RoundTrip(ctx, ssdesc, rw)
 	if err != nil {
@@ -63,10 +69,10 @@ func (a *MongoDBCRAuthenticator) Auth(ctx context.Context, desc description.Serv
 
 	err = bson.Unmarshal(rdr, &getNonceResult)
 	if err != nil {
-		return err
+		return newAuthError("unmarshal error", err)
 	}
 
-	cmd = command.Command{
+	cmd = command.Read{
 		DB: db,
 		Command: bson.NewDocument(
 			bson.EC.Int32("authenticate", 1),

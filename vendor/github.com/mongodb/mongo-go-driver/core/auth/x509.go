@@ -34,15 +34,15 @@ func (a *MongoDBX509Authenticator) Auth(ctx context.Context, desc description.Se
 		bson.EC.String("mechanism", MongoDBX509),
 	)
 
-	if !desc.Version.AtLeast(3, 4) {
+	if desc.WireVersion.Max < 5 {
 		authRequestDoc.Append(bson.EC.String("user", a.User))
 	}
 
-	authCmd := command.Command{DB: "$external", Command: authRequestDoc}
+	authCmd := command.Read{DB: "$external", Command: authRequestDoc}
 	ssdesc := description.SelectedServer{Server: desc}
 	_, err := authCmd.RoundTrip(ctx, ssdesc, rw)
 	if err != nil {
-		return err
+		return newAuthError("round trip error", err)
 	}
 
 	return nil

@@ -75,6 +75,12 @@ cd mqtt
 npm install
 ```
 
+Note that there is a shorthand for doing these commands with `make` tool:
+
+```
+make mqtt
+```
+
 After that MQTT Adapter can be started from top directory (as it needs to find `*.proto` files) with:
 ```
 node mqtt/mqtt.js
@@ -110,7 +116,17 @@ GOOS=linux GOARCH=arm GOARM=7 make
 ```
 
 ## Installing
-Installing Go binaries is simple: just move them to `$GOBIN` (do not fortget to add `$GOBIN` to your `$PATH`).
+Installing Go binaries is simple: just move them from `build` to `$GOBIN` (do not fortget to add `$GOBIN` to your `$PATH`).
+
+You can execute:
+
+```
+make install
+```
+
+which will do this copy of binaries.
+
+> N.B. Only Go binaries will be installed this way. MQTT adapter is NodeJS script and will stay in `mqtt` dir.
 
 ## Deployment
 

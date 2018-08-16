@@ -13,13 +13,14 @@
     "lint": "eslint mqtt.js"
   },
   "dependencies": {
-    "aedes": "^0.34.0",
+    "2": "^1.0.2",
+    "aedes": "^0.35.2",
     "aedes-logging": "^1.0.1",
     "aedes-persistence-redis": "^5.1.0",
     "atob": "^2.0.3",
     "bunyan": "^1.5.1",
     "grpc": "^1.11.3",
-    "lodash": "~3.10.1",
+    "lodash": "^4.17.10",
     "nats": "^0.6.8",
     "protocol-buffers": "^4.0.4",
     "request": "^2.81.0",
@@ -32,7 +33,7 @@
     "eslint-config-airbnb-base": "^12.0.1",
     "eslint-plugin-import": "^2.7.0",
     "jshint-stylish": "^2.0.1",
-    "mocha": "^2.3.3",
-    "supertest": "^1.1.0"
+    "mocha": "^5.2.0",
+    "supertest": "^3.1.0"
   }
 }

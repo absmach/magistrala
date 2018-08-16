@@ -32,7 +32,7 @@ services:
       MF_NATS_URL: nats://nats:4222
       MF_INFLUX_WRITER_PORT: 8900
       MF_INFLUX_WRITER_DB_NAME: mainflux
-      MF_INFLUX_WRITER_DB_HOST: influxdb
+      MF_INFLUX_WRITER_DB_HOST: mainflux-influxdb
       MF_INFLUX_WRITER_DB_PORT: 8086
       MF_INFLUX_WRITER_DB_USER: mainflux
       MF_INFLUX_WRITER_DB_PASS: mainflux

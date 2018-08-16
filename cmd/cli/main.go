@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	bf "github.com/mainflux/mainflux/bashflux"
+	"github.com/mainflux/mainflux/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -19,19 +19,19 @@ func main() {
 
 	// Root
 	var rootCmd = &cobra.Command{
-		Use: "bashflux",
+		Use: "mainflux-cli",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			// Set HTTP server address
-			bf.SetServerAddr(conf.Host, conf.Port)
+			cli.SetServerAddr(conf.Host, conf.Port)
 		},
 	}
 
 	// API commands
-	versionCmd := bf.NewVersionCmd()
-	usersCmd := bf.NewUsersCmd()
-	thingsCmd := bf.NewThingsCmd()
-	channelsCmd := bf.NewChannelsCmd()
-	messagesCmd := bf.NewMessagesCmd()
+	versionCmd := cli.NewVersionCmd()
+	usersCmd := cli.NewUsersCmd()
+	thingsCmd := cli.NewThingsCmd()
+	channelsCmd := cli.NewChannelsCmd()
+	messagesCmd := cli.NewMessagesCmd()
 
 	// Root Commands
 	rootCmd.AddCommand(versionCmd)
@@ -48,12 +48,12 @@ func main() {
 
 	// Client and Channels Flags
 	rootCmd.PersistentFlags().IntVarP(
-		&bf.Limit, "limit", "l", 100, "limit query parameter")
+		&cli.Limit, "limit", "l", 100, "limit query parameter")
 	rootCmd.PersistentFlags().IntVarP(
-		&bf.Offset, "offset", "o", 0, "offset query parameter")
+		&cli.Offset, "offset", "o", 0, "offset query parameter")
 
 	// Set TLS certificates
-	bf.SetCerts()
+	cli.SetCerts()
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)

@@ -1,4 +1,4 @@
-package cmd
+package cli
 
 import (
 	"crypto/tls"
@@ -14,21 +14,19 @@ import (
 )
 
 const (
-	envCertFile = "MF_CERT_FILE"
-	envKeyFile  = "MF_KEY_FILE"
-	envCaFile   = "MF_CA_FILE"
+	defCertsPath = "/src/github.com/mainflux/mainflux/docker/ssl/certs/"
+	envCertFile  = "MF_CERT_FILE"
+	envKeyFile   = "MF_KEY_FILE"
+	envCaFile    = "MF_CA_FILE"
 )
 
 var (
 	httpClient = &http.Client{}
 	serverAddr = fmt.Sprintf("https://%s", "localhost")
 
-	defCertFile = fmt.Sprintf("%s%s", os.Getenv("GOPATH"),
-		"src/github.com/mainflux/mainflux/docker/ssl/certs/mainflux-server.crt")
-	defKeyFile = fmt.Sprintf("%s%s", os.Getenv("GOPATH"),
-		"src/github.com/mainflux/mainflux/docker/ssl/certs/mainflux-server.key")
-	defCaFile = fmt.Sprintf("%s%s", os.Getenv("GOPATH"),
-		"src/github.com/mainflux/mainflux/docker/ssl/certs/ca.crt")
+	defCertFile = fmt.Sprintf("%s%s%s", os.Getenv("GOPATH"), defCertsPath, "mainflux-server.crt")
+	defKeyFile  = fmt.Sprintf("%s%s%s", os.Getenv("GOPATH"), defCertsPath, "mainflux-server.key")
+	defCaFile   = fmt.Sprintf("%s%s%s", os.Getenv("GOPATH"), defCertsPath, "ca.crt")
 )
 
 // SetServerAddr - set addr using host and port

@@ -30,8 +30,8 @@ var (
 )
 
 // SetServerAddr - set addr using host and port
-func SetServerAddr(host string, port int) {
-	serverAddr = fmt.Sprintf("https://%s", host)
+func SetServerAddr(proto string, host string, port int) {
+	serverAddr = fmt.Sprintf("%s://%s", proto, host)
 
 	if port != 0 {
 		serverAddr = fmt.Sprintf("%s:%s", serverAddr, strconv.Itoa(port))

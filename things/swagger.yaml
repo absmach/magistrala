@@ -419,7 +419,7 @@ definitions:
       key:
         type: string
         description: Auto-generated access key.
-      payload:
+      metadata:
         type: string
         description: Arbitrary, string-encoded thing's data.
     required:
@@ -438,7 +438,7 @@ definitions:
       name:
         type: string
         description: Free-form thing name.
-      payload:
+      metadata:
         type: string
         description: Arbitrary, string-encoded thing's data.
     required:

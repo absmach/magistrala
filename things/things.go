@@ -5,12 +5,12 @@ import "strings"
 // Thing represents a Mainflux thing. Each thing is owned by one user, and
 // it is assigned with the unique identifier and (temporary) access key.
 type Thing struct {
-	ID      uint64 `json:"id"`
-	Owner   string `json:"-"`
-	Type    string `json:"type"`
-	Name    string `json:"name,omitempty"`
-	Key     string `json:"key"`
-	Payload string `json:"payload,omitempty"`
+	ID       uint64 `json:"id"`
+	Owner    string `json:"-"`
+	Type     string `json:"type"`
+	Name     string `json:"name,omitempty"`
+	Key      string `json:"key"`
+	Metadata string `json:"metadata,omitempty"`
 }
 
 var thingTypes = map[string]bool{

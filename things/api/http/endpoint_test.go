@@ -25,7 +25,7 @@ const (
 )
 
 var (
-	thing   = things.Thing{Type: "app", Name: "test_app", Payload: "test_payload"}
+	thing   = things.Thing{Type: "app", Name: "test_app", Metadata: "test_metadata"}
 	channel = things.Channel{Name: "test"}
 )
 

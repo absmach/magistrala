@@ -17,9 +17,9 @@
             <mat-header-cell fxFlex="10%" *matHeaderCellDef mat-sort-header>Type</mat-header-cell>
             <mat-cell fxFlex="10%" *matCellDef="let row"> {{row.type}}</mat-cell>
           </ng-container>
-          <ng-container matColumnDef="payload">
-            <mat-header-cell fxFlex="35%" *matHeaderCellDef mat-sort-header>Payload</mat-header-cell>
-            <mat-cell fxFlex="35%" *matCellDef="let row"> {{row.payload | json}}</mat-cell>
+          <ng-container matColumnDef="metadata">
+            <mat-header-cell fxFlex="35%" *matHeaderCellDef mat-sort-header>Metadata</mat-header-cell>
+            <mat-cell fxFlex="35%" *matCellDef="let row"> {{row.metadata | json}}</mat-cell>
           </ng-container>
           <!-- Actions -->
           <ng-container matColumnDef="actions">

@@ -8,7 +8,7 @@ export interface Thing {
     id?: '';
     type: string;
     name: string;
-    payload: string;
+    metadata: string;
 }
 
 export interface User {

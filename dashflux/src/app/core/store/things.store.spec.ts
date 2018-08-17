@@ -74,7 +74,7 @@ describe('ThingsStore', () => {
                 const newThing: Thing = {
                     name: 'new thing',
                     type: 'app',
-                    payload: '',
+                    metadata: '',
                 };
 
                 thingsStore.addThing(newThing);
@@ -89,7 +89,7 @@ describe('ThingsStore', () => {
                 const newThing: Thing = {
                     name: 'new thing',
                     type: 'app',
-                    payload: '',
+                    metadata: '',
                 };
 
                 thingsStore.addThing(newThing);
@@ -104,7 +104,7 @@ describe('ThingsStore', () => {
                 const newThing: Thing = {
                     name: 'new thing',
                     type: 'app',
-                    payload: '',
+                    metadata: '',
                 };
 
                 thingsStore.addThing(newThing);
@@ -120,7 +120,7 @@ describe('ThingsStore', () => {
                 const newThing: Thing = {
                     name: 'new thing',
                     type: 'app',
-                    payload: '',
+                    metadata: '',
                 };
 
                 thingsStore.addThing(newThing);
@@ -136,7 +136,7 @@ describe('ThingsStore', () => {
                 const editedThing: Thing = {
                     name: 'edited thing',
                     type: 'app',
-                    payload: '',
+                    metadata: '',
                 };
 
                 thingsStore.editThing(editedThing);
@@ -151,7 +151,7 @@ describe('ThingsStore', () => {
                 const editedThing: Thing = {
                     name: 'edited thing',
                     type: 'app',
-                    payload: '',
+                    metadata: '',
                 };
 
                 thingsStore.editThing(editedThing);
@@ -167,7 +167,7 @@ describe('ThingsStore', () => {
                 const editedThing: Thing = {
                     name: 'edited thing',
                     type: 'app',
-                    payload: '',
+                    metadata: '',
                 };
 
                 thingsStore.editThing(editedThing);
@@ -182,7 +182,7 @@ describe('ThingsStore', () => {
                 const editedThing: Thing = {
                     name: 'edited thing',
                     type: 'app',
-                    payload: '',
+                    metadata: '',
                 };
 
                 thingsStore.editThing(editedThing);
@@ -198,7 +198,7 @@ describe('ThingsStore', () => {
                 const thingToBeDeleted: Thing = {
                     name: 'thingToBeDeleted',
                     type: 'app',
-                    payload: ''
+                    metadata: ''
                 };
 
                 thingsStore.deleteThing(thingToBeDeleted);
@@ -213,7 +213,7 @@ describe('ThingsStore', () => {
                 const thingToBeDeleted: Thing = {
                     name: 'thingToBeDeleted',
                     type: 'app',
-                    payload: ''
+                    metadata: ''
                 };
 
 
@@ -230,7 +230,7 @@ describe('ThingsStore', () => {
                 const thingToBeDeleted: Thing = {
                     name: 'thingToBeDeleted',
                     type: 'app',
-                    payload: ''
+                    metadata: ''
                 };
 
                 thingsStore.deleteThing(thingToBeDeleted);
@@ -245,7 +245,7 @@ describe('ThingsStore', () => {
                 const thingToBeDeleted: Thing = {
                     name: 'thingToBeDeleted',
                     type: 'app',
-                    payload: ''
+                    metadata: ''
                 };
 
                 thingsStore.deleteThing(thingToBeDeleted);

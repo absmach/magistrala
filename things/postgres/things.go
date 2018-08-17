@@ -23,9 +23,9 @@ func NewThingRepository(db *sql.DB, log logger.Logger) things.ThingRepository {
 }
 
 func (tr thingRepository) Save(thing things.Thing) (uint64, error) {
-	q := `INSERT INTO things (owner, type, name, key, payload) VALUES ($1, $2, $3, $4, $5) RETURNING id`
+	q := `INSERT INTO things (owner, type, name, key, metadata) VALUES ($1, $2, $3, $4, $5) RETURNING id`
 
-	if err := tr.db.QueryRow(q, thing.Owner, thing.Type, thing.Name, thing.Key, thing.Payload).Scan(&thing.ID); err != nil {
+	if err := tr.db.QueryRow(q, thing.Owner, thing.Type, thing.Name, thing.Key, thing.Metadata).Scan(&thing.ID); err != nil {
 		return 0, err
 	}
 
@@ -33,9 +33,9 @@ func (tr thingRepository) Save(thing things.Thing) (uint64, error) {
 }
 
 func (tr thingRepository) Update(thing things.Thing) error {
-	q := `UPDATE things SET name = $1, payload = $2 WHERE owner = $3 AND id = $4;`
+	q := `UPDATE things SET name = $1, metadata = $2 WHERE owner = $3 AND id = $4;`
 
-	res, err := tr.db.Exec(q, thing.Name, thing.Payload, thing.Owner, thing.ID)
+	res, err := tr.db.Exec(q, thing.Name, thing.Metadata, thing.Owner, thing.ID)
 	if err != nil {
 		return err
 	}
@@ -53,11 +53,11 @@ func (tr thingRepository) Update(thing things.Thing) error {
 }
 
 func (tr thingRepository) RetrieveByID(owner string, id uint64) (things.Thing, error) {
-	q := `SELECT name, type, key, payload FROM things WHERE id = $1 AND owner = $2`
+	q := `SELECT name, type, key, metadata FROM things WHERE id = $1 AND owner = $2`
 	thing := things.Thing{ID: id, Owner: owner}
 	err := tr.db.
 		QueryRow(q, id, owner).
-		Scan(&thing.Name, &thing.Type, &thing.Key, &thing.Payload)
+		Scan(&thing.Name, &thing.Type, &thing.Key, &thing.Metadata)
 
 	if err != nil {
 		empty := things.Thing{}
@@ -84,7 +84,7 @@ func (tr thingRepository) RetrieveByKey(key string) (uint64, error) {
 }
 
 func (tr thingRepository) RetrieveAll(owner string, offset, limit int) []things.Thing {
-	q := `SELECT id, name, type, key, payload FROM things WHERE owner = $1 ORDER BY id LIMIT $2 OFFSET $3`
+	q := `SELECT id, name, type, key, metadata FROM things WHERE owner = $1 ORDER BY id LIMIT $2 OFFSET $3`
 	items := []things.Thing{}
 
 	rows, err := tr.db.Query(q, owner, limit, offset)
@@ -96,7 +96,7 @@ func (tr thingRepository) RetrieveAll(owner string, offset, limit int) []things.
 
 	for rows.Next() {
 		c := things.Thing{Owner: owner}
-		if err = rows.Scan(&c.ID, &c.Name, &c.Type, &c.Key, &c.Payload); err != nil {
+		if err = rows.Scan(&c.ID, &c.Name, &c.Type, &c.Key, &c.Metadata); err != nil {
 			tr.log.Error(fmt.Sprintf("Failed to read retrieved thing due to %s", err))
 			return []things.Thing{}
 		}

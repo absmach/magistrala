@@ -26,7 +26,7 @@ export class ThingDialogComponent implements OnInit {
         id: null,
         type: ['', [Validators.required]],
         name: ['', [Validators.required, Validators.minLength(5)]],
-        payload: ['']
+        metadata: ['']
       }
     );
 

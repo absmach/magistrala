@@ -8,6 +8,10 @@
 
 version: "3"
 
+networks:
+  docker_mainflux-base-net:
+    external: true
+
 services:
 
   influxdb:
@@ -18,6 +22,8 @@ services:
       INFLUXDB_DB: mainflux
       INFLUXDB_ADMIN_USER: mainflux
       INFLUXDB_ADMIN_PASSWORD: mainflux
+    networks:
+      - docker_mainflux-base-net
 
   influxdb-writer:
     image: mainflux/influxdb:latest
@@ -38,6 +44,8 @@ services:
       MF_INFLUX_WRITER_DB_PASS: mainflux
     ports:
       - 8900:8900
+    networks:
+      - docker_mainflux-base-net
 
   grafana:
     image: grafana/grafana:5.1.3
@@ -47,3 +55,5 @@ services:
     restart: on-failure
     ports:
       - 3001:3000
+    networks:
+      - docker_mainflux-base-net

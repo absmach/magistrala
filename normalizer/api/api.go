@@ -1,4 +1,4 @@
-package normalizer
+package api
 
 import (
 	"net/http"

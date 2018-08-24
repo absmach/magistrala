@@ -26,7 +26,7 @@ install:
 proto:
 	protoc --go_out=plugins=grpc:. *.proto
 
-$(SERVICES): proto
+$(SERVICES):
 	$(call compile_service,$(@))
 
 $(DOCKERS):

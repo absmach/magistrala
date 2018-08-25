@@ -3,10 +3,8 @@
 Mainflux can be fetched from official [Mainflux GitHub repository](https://github.com/Mainflux/mainflux):
 
 ```
-mkdir -p $GOPATH/src/github.com/mainflux
-cd $GOPATH/src/github.com/mainflux
-git clone https://github.com/mainflux/mainflux.git
-cd mainflux
+go get github.com/mainflux/mainflux
+cd $GOPATH/src/github.com/mainflux/mainflux
 ```
 
 ## Building

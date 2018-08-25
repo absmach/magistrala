@@ -1,9 +1,8 @@
 ###
 # This docker-compose file contains optional InfluxDB, InfluxDB-writer and Grafana services
-# for Mainflux platform. Since these are optional, this file is dependent of docker-compose file
-# from <project_root>/docker. In order to run these optional service, execute command:
-# docker-compose -f docker/docker-compose.yml -f docker/addons/influxdb/docker-compose.yml up
-# from project root.
+# for the Mainflux platform. Since this services are optional, this file is dependent on the
+# docker-compose.yml file from <project_root>/docker/. In order to run these services,
+# core services, as well as the network from the core composition, should be already running.
 ###
 
 version: "3"
@@ -26,11 +25,10 @@ services:
       - docker_mainflux-base-net
 
   influxdb-writer:
-    image: mainflux/influxdb:latest
+    image: mainflux/influxdb-writer:latest
     container_name: mainflux-influxdb-writer
     depends_on:
       - influxdb
-      - nats
     expose:
       - 8900
     restart: on-failure

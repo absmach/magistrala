@@ -1,3 +1,10 @@
+//
+// Copyright (c) 2018
+// Mainflux
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+
 // Package postgres_test contains tests for PostgreSQL repository
 // implementations.
 package postgres_test

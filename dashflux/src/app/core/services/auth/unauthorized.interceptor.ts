@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2018
+ * Mainflux
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+ 
 import { Injectable } from '@angular/core';
 import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent, HttpErrorResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';

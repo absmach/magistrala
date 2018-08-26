@@ -1,3 +1,10 @@
+//
+// Copyright (c) 2018
+// Mainflux
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+
 package users
 
 // IdentityProvider specifies an API for identity management via security

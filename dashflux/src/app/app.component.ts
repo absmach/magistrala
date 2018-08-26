@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2018
+ * Mainflux
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { Component, OnInit } from '@angular/core';
 import { MatSnackBar } from '@angular/material';
 import { reaction } from 'mobx';

@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2018
+ * Mainflux
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+ 
 import '../../../rxjs-extensions';
 
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';

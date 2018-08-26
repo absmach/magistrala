@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2018
+ * Mainflux
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import 'rxjs/add/observable/combineLatest';
 import 'rxjs/add/observable/interval';
 import 'rxjs/add/observable/of';

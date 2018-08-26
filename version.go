@@ -1,3 +1,10 @@
+//
+// Copyright (c) 2018
+// Mainflux
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+
 package mainflux
 
 import (
@@ -5,7 +12,7 @@ import (
 	"net/http"
 )
 
-const version string = "0.4.0"
+const version string = "0.5.0"
 
 type response struct {
 	Service string `json:"service"`

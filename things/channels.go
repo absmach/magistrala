@@ -1,3 +1,10 @@
+//
+// Copyright (c) 2018
+// Mainflux
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+
 package things
 
 // Channel represents a Mainflux "communication group". This group contains the

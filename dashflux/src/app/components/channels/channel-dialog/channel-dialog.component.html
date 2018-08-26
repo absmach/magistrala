@@ -1,3 +1,10 @@
+<!--
+ Copyright (c) 2018
+ Mainflux
+
+ SPDX-License-Identifier: Apache-2.0
+-->
+
 <form [formGroup]="addChannelForm" (ngSubmit)="onAddChannel()">
     <h1 *ngIf="!editMode" mat-dialog-title>Add channel</h1>
     <h1 *ngIf="editMode" mat-dialog-title>Edit channel</h1>

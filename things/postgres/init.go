@@ -39,7 +39,7 @@ func migrateDB(db *sql.DB) error {
 			{
 				Id: "things_1",
 				Up: []string{
-					`CREATE TABLE things (
+					`CREATE TABLE IF NOT EXISTS things (
 						id      BIGSERIAL,
 						owner   VARCHAR(254),
 						type    VARCHAR(10) NOT NULL,
@@ -48,13 +48,13 @@ func migrateDB(db *sql.DB) error {
 						metadata TEXT,
 						PRIMARY KEY (id, owner)
 					)`,
-					`CREATE TABLE channels (
+					`CREATE TABLE IF NOT EXISTS channels (
 						id    BIGSERIAL,
 						owner VARCHAR(254),
 						name  TEXT,
 						PRIMARY KEY (id, owner)
 					)`,
-					`CREATE TABLE connections (
+					`CREATE TABLE IF NOT EXISTS connections (
 						channel_id    BIGINT,
 						channel_owner VARCHAR(254),
 						thing_id     BIGINT,

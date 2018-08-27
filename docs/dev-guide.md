@@ -64,6 +64,9 @@ make docker_http
 
 > N.B. Mainflux creates `FROM scratch` docker containers which as compact and small in size.
 
+> N.B. The `things-db` and `users-db` containers are built from a vanilla PostgreSQL Docker image downloaded from Docker Hub which does not persist the data when these containers are rebuilt. Thus, __rebuilding of all Docker containers with `make dockers` or rebuilding the `things-db` and `users-db` containers separately with `make docker_things-db` and `make docker_users-db` respectively, will cause data loss. All your users, things, channels and connections between them will be lost!__ As we use this setup only for development, we don't guarantee any permanent data persistence. If you need to retain the data between the container rebuilds you can attach volume to the `things-db` and `users-db` containers. Check the official docs on how to use volumes [here](https
+://docs.docker.com/storage/volumes/) and [here](https://docs.docker.com/compose/compose-file/#volumes).
+
 ### MQTT Microservice
 MQTT Microservice in Mainflux is special, as it is currently the only microservice written in NodeJS. It is not compiled,
 but node modules need to be downloaded in order to start the service:
@@ -112,6 +115,13 @@ Cross-compilation for ARM with Mainflux make:
 ```
 GOOS=linux GOARCH=arm GOARM=7 make
 ```
+
+## Running tests
+To run all of the test you  can execute:
+```
+make test
+```
+Dockertest is used for the test, so to run the tests you will need the Docker deamon/service running.
 
 ## Installing
 Installing Go binaries is simple: just move them from `build` to `$GOBIN` (do not fortget to add `$GOBIN` to your `$PATH`).

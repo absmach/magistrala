@@ -23,6 +23,9 @@ clean:
 install:
 	cp ${BUILD_DIR}/* $(GOBIN)
 
+test:
+	GOCACHE=off go test -v -race -tags test $(shell go list ./... | grep -v 'vendor\|cmd')
+
 proto:
 	protoc --go_out=plugins=grpc:. *.proto
 

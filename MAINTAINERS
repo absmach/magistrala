@@ -24,12 +24,12 @@
 
 [maintainers]
 
-    [[aleksandar]]
+	[[aleksandar]]
 	Name	= "Aleksandar NOVAKOVIC"
 	Email	= "aleksandar@mainflux.com"
 	GitHub	= "anovakovic01"
  
-    [[dusan]]
+ 	[[dusan]]
 	Name	= "Dusan BOROVCANIN"
 	Email	= "dusan@mainflux.com"
 	GitHub	= "dusanb94"

@@ -7,7 +7,7 @@
 	
 	[[drasko]]
 	Name	= "Drasko DRASKOVIC"
-	Email	= "drasko.draskovic@mainflux.com"
+	Email	= "drasko@mainflux.com"
 	GitHub	= "drasko"
 
 # However, this role serves only in dead-lock events, or in a special and very rare cases
@@ -24,22 +24,23 @@
 
 [maintainers]
 
+    [[aleksandar]]
+	Name	= "Aleksandar NOVAKOVIC"
+	Email	= "aleksandar@mainflux.com"
+	GitHub	= "anovakovic01"
+ 
+    [[dusan]]
+	Name	= "Dusan BOROVCANIN"
+	Email	= "dusan@mainflux.com"
+	GitHub	= "dusanb94"
+
 	[[manuel]]
 	Name	= "Manuel IMPERIALE"
-	Email	= "manuel.imperiale@gmail.com"
+	Email	= "manuel@mainflux.com"
 	GitHub	= "manuIO"
-
-	[[janko]]
-	Name	= "Janko ISIDOROVIC"
-	Email	= "janko.isidorovic@mainflux.com"
-	GitHub	= "janko-isidorovic"
 
 	[[nikola]]
 	Name	= "Nikola MARCETIC"
-	Email	= "nikola.marcetic@mainflux.com"
+	Email	= "nikola@mainflux.com"
 	GitHub	= "nmarcetic"
-	
-	[[dejan]]
-	Name	= "Dejan MIJIC"
-	Email	= "dejan.mijic@mainflux.com"
-	GitHub	= "mijicd"
+

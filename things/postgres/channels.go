@@ -75,7 +75,7 @@ func (cr channelRepository) RetrieveByID(owner string, id uint64) (things.Channe
 		return empty, err
 	}
 
-	q = `SELECT id, type, name, key, metadata FROM things t
+	q = `SELECT id, name, type, key, metadata FROM things t
 	INNER JOIN connections conn
 	ON t.id = conn.thing_id AND t.owner = conn.thing_owner
 	WHERE conn.channel_id = $1 AND conn.channel_owner = $2`

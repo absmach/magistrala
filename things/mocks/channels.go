@@ -152,3 +152,46 @@ func (crm *channelRepositoryMock) HasThing(chanID uint64, key string) (uint64, e
 
 	return 0, things.ErrNotFound
 }
+
+type channelCacheMock struct {
+	mu       sync.Mutex
+	channels map[uint64]uint64
+}
+
+// NewChannelCache returns mock cache instance.
+func NewChannelCache() things.ChannelCache {
+	return &channelCacheMock{
+		channels: make(map[uint64]uint64),
+	}
+}
+
+func (ccm *channelCacheMock) Connect(chanID uint64, thingID uint64) error {
+	ccm.mu.Lock()
+	defer ccm.mu.Unlock()
+
+	ccm.channels[chanID] = thingID
+	return nil
+}
+
+func (ccm *channelCacheMock) HasThing(chanID uint64, thingID uint64) bool {
+	ccm.mu.Lock()
+	defer ccm.mu.Unlock()
+
+	return ccm.channels[chanID] == thingID
+}
+
+func (ccm *channelCacheMock) Disconnect(chanID uint64, thingID uint64) error {
+	ccm.mu.Lock()
+	defer ccm.mu.Unlock()
+
+	delete(ccm.channels, chanID)
+	return nil
+}
+
+func (ccm *channelCacheMock) Remove(chanID uint64) error {
+	ccm.mu.Lock()
+	defer ccm.mu.Unlock()
+
+	delete(ccm.channels, chanID)
+	return nil
+}

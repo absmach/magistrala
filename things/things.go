@@ -58,3 +58,15 @@ type ThingRepository interface {
 	// by the specified user.
 	Remove(string, uint64) error
 }
+
+// ThingCache contains thing caching interface.
+type ThingCache interface {
+	// Save stores pair thing key, thing id.
+	Save(string, uint64) error
+
+	// ID returns thing ID for given key.
+	ID(string) (uint64, error)
+
+	// Removes thing from cache.
+	Remove(uint64) error
+}

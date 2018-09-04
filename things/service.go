@@ -91,19 +91,23 @@ type Service interface {
 var _ Service = (*thingsService)(nil)
 
 type thingsService struct {
-	users    mainflux.UsersServiceClient
-	things   ThingRepository
-	channels ChannelRepository
-	idp      IdentityProvider
+	users        mainflux.UsersServiceClient
+	things       ThingRepository
+	channels     ChannelRepository
+	channelCache ChannelCache
+	thingCache   ThingCache
+	idp          IdentityProvider
 }
 
 // New instantiates the things service implementation.
-func New(users mainflux.UsersServiceClient, things ThingRepository, channels ChannelRepository, idp IdentityProvider) Service {
+func New(users mainflux.UsersServiceClient, things ThingRepository, channels ChannelRepository, ccache ChannelCache, tcache ThingCache, idp IdentityProvider) Service {
 	return &thingsService{
-		users:    users,
-		things:   things,
-		channels: channels,
-		idp:      idp,
+		users:        users,
+		things:       things,
+		channels:     channels,
+		channelCache: ccache,
+		thingCache:   tcache,
+		idp:          idp,
 	}
 }
 
@@ -175,6 +179,7 @@ func (ts *thingsService) RemoveThing(key string, id uint64) error {
 		return ErrUnauthorizedAccess
 	}
 
+	ts.thingCache.Remove(id)
 	return ts.things.Remove(res.GetValue(), id)
 }
 
@@ -244,6 +249,7 @@ func (ts *thingsService) RemoveChannel(key string, id uint64) error {
 		return ErrUnauthorizedAccess
 	}
 
+	ts.channelCache.Remove(id)
 	return ts.channels.Remove(res.GetValue(), id)
 }
 
@@ -268,23 +274,50 @@ func (ts *thingsService) Disconnect(key string, chanID, thingID uint64) error {
 		return ErrUnauthorizedAccess
 	}
 
+	ts.channelCache.Disconnect(chanID, thingID)
 	return ts.channels.Disconnect(res.GetValue(), chanID, thingID)
 }
 
 func (ts *thingsService) CanAccess(chanID uint64, key string) (uint64, error) {
-	thingID, err := ts.channels.HasThing(chanID, key)
+	thingID, err := ts.hasThing(chanID, key)
+	if err == nil {
+		return thingID, nil
+	}
+
+	thingID, err = ts.channels.HasThing(chanID, key)
 	if err != nil {
 		return 0, ErrUnauthorizedAccess
 	}
 
+	ts.thingCache.Save(key, thingID)
+	ts.channelCache.Connect(chanID, thingID)
 	return thingID, nil
 }
 
 func (ts *thingsService) Identify(key string) (uint64, error) {
-	id, err := ts.things.RetrieveByKey(key)
+	id, err := ts.thingCache.ID(key)
+	if err == nil {
+		return id, nil
+	}
+
+	id, err = ts.things.RetrieveByKey(key)
 	if err != nil {
 		return 0, ErrUnauthorizedAccess
 	}
 
+	ts.thingCache.Save(key, id)
 	return id, nil
+}
+
+func (ts *thingsService) hasThing(chanID uint64, key string) (uint64, error) {
+	thingID, err := ts.thingCache.ID(key)
+	if err != nil {
+		return 0, err
+	}
+
+	if connected := ts.channelCache.HasThing(chanID, thingID); !connected {
+		return 0, ErrUnauthorizedAccess
+	}
+
+	return thingID, nil
 }

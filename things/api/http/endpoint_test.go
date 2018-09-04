@@ -63,8 +63,11 @@ func newService(tokens map[string]string) things.Service {
 	users := mocks.NewUsersService(tokens)
 	thingsRepo := mocks.NewThingRepository()
 	channelsRepo := mocks.NewChannelRepository(thingsRepo)
+	chanCache := mocks.NewChannelCache()
+	thingCache := mocks.NewThingCache()
 	idp := mocks.NewIdentityProvider()
-	return things.New(users, thingsRepo, channelsRepo, idp)
+
+	return things.New(users, thingsRepo, channelsRepo, chanCache, thingCache, idp)
 }
 
 func newServer(svc things.Service) *httptest.Server {

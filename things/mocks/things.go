@@ -104,3 +104,49 @@ func (trm *thingRepositoryMock) RetrieveByKey(key string) (uint64, error) {
 	}
 	return 0, things.ErrNotFound
 }
+
+type thingCacheMock struct {
+	mu     sync.Mutex
+	things map[string]uint64
+}
+
+// NewThingCache returns mock cache instance.
+func NewThingCache() things.ThingCache {
+	return &thingCacheMock{
+		things: make(map[string]uint64),
+	}
+}
+
+func (tcm *thingCacheMock) Save(key string, id uint64) error {
+	tcm.mu.Lock()
+	defer tcm.mu.Unlock()
+
+	tcm.things[key] = id
+	return nil
+}
+
+func (tcm *thingCacheMock) ID(key string) (uint64, error) {
+	tcm.mu.Lock()
+	defer tcm.mu.Unlock()
+
+	id, ok := tcm.things[key]
+	if !ok {
+		return 0, things.ErrNotFound
+	}
+
+	return id, nil
+}
+
+func (tcm *thingCacheMock) Remove(id uint64) error {
+	tcm.mu.Lock()
+	defer tcm.mu.Unlock()
+
+	for key, val := range tcm.things {
+		if val == id {
+			delete(tcm.things, key)
+			return nil
+		}
+	}
+
+	return things.ErrNotFound
+}

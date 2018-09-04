@@ -72,10 +72,16 @@ nats.subscribe('channel.*', function (msg) {
 
 aedes.authorizePublish = function (client, packet, publish) {
     // Topics are in the form `channels/<channel_id>/messages`
-    var channel = packet.topic.split('/')[1],
+    var channel = /^channels\/(.+?)\/messages$/.exec(packet.topic);
+    if (!channel) {
+        logger.warn('unknown topic');
+        publish(4); // Bad username or password
+        return;
+    }
+    var channelId = channel[1],
         accessReq = {
             token: client.password,
-            chanID: Number(channel)
+            chanID: Number(channelId)
         },
         onAuthorize = function (err, res) {
             var rawMsg;
@@ -84,11 +90,11 @@ aedes.authorizePublish = function (client, packet, publish) {
 
                 rawMsg = message.RawMessage.encode({
                     Publisher: client.thingId,
-                    Channel: channel,
+                    Channel: channelId,
                     Protocol: 'mqtt',
                     Payload: packet.payload
                 });
-                nats.publish('channel.' + channel, rawMsg);
+                nats.publish('channel.' + channelId, rawMsg);
 
                 // Set empty topic for packet so that it won't be published two times.
                 packet.topic = '';

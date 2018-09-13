@@ -26,6 +26,8 @@ import (
 )
 
 const (
+	queue = "mongodb-writer"
+
 	defNatsURL = nats.DefaultURL
 	defPort    = "8180"
 	defDBName  = "mainflux"
@@ -70,7 +72,7 @@ func main() {
 	counter, latency := makeMetrics()
 	repo = writers.LoggingMiddleware(repo, logger)
 	repo = writers.MetricsMiddleware(repo, counter, latency)
-	if err := writers.Start(nc, logger, repo); err != nil {
+	if err := writers.Start(nc, repo, queue, logger); err != nil {
 		logger.Error(fmt.Sprintf("Failed to start message writer: %s", err))
 		os.Exit(1)
 	}

@@ -26,7 +26,8 @@ import (
 )
 
 const (
-	sep = ","
+	queue = "cassandra-writer"
+	sep   = ","
 
 	defNatsURL  = nats.DefaultURL
 	defPort     = "8180"
@@ -58,7 +59,7 @@ func main() {
 	defer session.Close()
 
 	repo := newService(session, logger)
-	if err := writers.Start(nc, logger, repo); err != nil {
+	if err := writers.Start(nc, repo, queue, logger); err != nil {
 		logger.Error(fmt.Sprintf("Failed to create Cassandra writer: %s", err))
 	}
 

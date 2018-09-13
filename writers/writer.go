@@ -23,14 +23,14 @@ type consumer struct {
 }
 
 // Start method starts to consume normalized messages received from NATS.
-func Start(nc *nats.Conn, logger log.Logger, repo MessageRepository) error {
+func Start(nc *nats.Conn, repo MessageRepository, queue string, logger log.Logger) error {
 	c := consumer{
 		nc:     nc,
 		logger: logger,
 		repo:   repo,
 	}
 
-	_, err := nc.Subscribe(mainflux.OutputSenML, c.consume)
+	_, err := nc.QueueSubscribe(mainflux.OutputSenML, queue, c.consume)
 	return err
 }
 

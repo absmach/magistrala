@@ -42,12 +42,16 @@ dockers: $(DOCKERS)
 mqtt:
 	cd mqtt && npm install
 
-latest: dockers
+define docker_push
 	for svc in $(SERVICES); do \
-		docker push mainflux/$$svc; \
+		docker push mainflux/$$svc:$(1); \
 	done
-	docker push mainflux/dashflux
-	docker push mainflux/mqtt
+	docker push mainflux/dashflux:$(1)
+	docker push mainflux/mqtt:$(1)
+endef
+
+latest: dockers
+	$(call docker_push,latest)
 
 release:
 	$(eval version = $(shell git describe --abbrev=0 --tags))
@@ -55,12 +59,10 @@ release:
 	$(MAKE) dockers
 	for svc in $(SERVICES); do \
 		docker tag mainflux/$$svc mainflux/$$svc:$(version); \
-		docker push mainflux/$$svc:$(version); \
 	done
 	docker tag mainflux/dashflux mainflux/dashflux:$(version)
-	docker push mainflux/dashflux:$(version)
 	docker tag mainflux/mqtt mainflux/mqtt:$(version)
-	docker push mainflux/mqtt:$(version)
+	$(call docker_push,$(version))
 
 run:
 	cd scripts && ./run.sh

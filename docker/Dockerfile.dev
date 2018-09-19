@@ -1,0 +1,4 @@
+FROM scratch
+ARG SVC_NAME
+COPY mainflux-$SVC_NAME /exe
+ENTRYPOINT ["/exe"]

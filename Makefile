@@ -1,6 +1,7 @@
 BUILD_DIR = build
 SERVICES = users things http normalizer ws influxdb-writer influxdb-reader mongodb-writer mongodb-reader cassandra-writer cassandra-reader cli
 DOCKERS = $(addprefix docker_,$(SERVICES))
+DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
 CGO_ENABLED ?= 0
 GOOS ?= linux
 
@@ -9,12 +10,16 @@ define compile_service
 endef
 
 define make_docker
-	docker build --build-arg SVC_NAME=$(subst docker_,,$(1)) --tag=mainflux/$(subst docker_,,$(1)) -f docker/Dockerfile .
+	docker build --no-cache --build-arg SVC_NAME=$(subst docker_,,$(1)) --tag=mainflux/$(subst docker_,,$(1)) -f docker/Dockerfile .
+endef
+
+define make_docker_dev
+	docker build --build-arg SVC_NAME=$(subst docker_dev_,,$(1)) --tag=mainflux/$(subst docker_dev_,,$(1)) -f docker/Dockerfile.dev ./build
 endef
 
 all: $(SERVICES) mqtt
 
-.PHONY: all $(SERVICES) dockers latest release mqtt
+.PHONY: all $(SERVICES) dockers dockers_dev latest release mqtt
 
 clean:
 	rm -rf ${BUILD_DIR}
@@ -38,6 +43,11 @@ $(DOCKERS):
 dockers: $(DOCKERS)
 	docker build --tag=mainflux/dashflux -f dashflux/docker/Dockerfile dashflux
 	docker build --tag=mainflux/mqtt -f mqtt/Dockerfile .
+
+$(DOCKERS_DEV):
+	$(call make_docker_dev,$(@))
+
+dockers_dev: $(DOCKERS_DEV)
 
 mqtt:
 	cd mqtt && npm install

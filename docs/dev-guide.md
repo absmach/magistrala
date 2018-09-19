@@ -66,6 +66,22 @@ make docker_http
 
 > N.B. The `things-db` and `users-db` containers are built from a vanilla PostgreSQL docker image downloaded from docker hub which does not persist the data when these containers are rebuilt. Thus, __rebuilding of all docker containers with `make dockers` or rebuilding the `things-db` and `users-db` containers separately with `make docker_things-db` and `make docker_users-db` respectively, will cause data loss. All your users, things, channels and connections between them will be lost!__ As we use this setup only for development, we don't guarantee any permanent data persistence. If you need to retain the data between the container rebuilds you can attach volume to the `things-db` and `users-db` containers. Check the official docs on how to use volumes [here](https://docs.docker.com/storage/volumes/) and [here](https://docs.docker.com/compose/compose-file/#volumes).
 
+#### Building Docker images for development
+
+In order to speed up build process, you can use commands such as:
+
+```bash
+make dockers_dev
+```
+
+or individually with
+
+```bash
+make docker_dev_<microservice_name>
+```
+
+Commands `make dockers` and `make dockers_dev` are similar. The main difference is that building images in the development mode is done on the local machine, rather than an intermediate image, which makes building images much faster. Before running this command, corresponding binary needs to be built in order to make changes visible. This can be done using `make` or `make <service_name>` command. Commands `make dockers_dev` and `make docker_dev_<service_name>` should be used only for development to speed up the process of image building. **For deployment images, commands from section above should be used.**
+
 ### MQTT Microservice
 The MQTT Microservice in Mainflux is special, as it is currently the only microservice written in NodeJS. It is not compiled, but node modules need to be downloaded in order to start the service:
 

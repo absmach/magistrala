@@ -63,11 +63,12 @@ execute following command:
 
 ```bash
 docker-compose -f docker/docker-compose.yml up -d
-./docker/addons/cassandra-reader/init.sh
+./docker/addons/cassandra-writer/init.sh
+docker-compose -f docker/addons/casandra-reader/docker-compose.yml up -d
 ```
 
 ## Usage
 
-Service exposes HTTP API for fetching messages.
+Service exposes [HTTP API][doc]  for fetching messages.
 
 [doc]: ../swagger.yml

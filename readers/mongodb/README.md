@@ -69,6 +69,6 @@ docker-compose -f docker/addons/mongodb-reader/docker-compose.yml up -d
 
 ## Usage
 
-Service exposes HTTP API for fetching messages.
+Service exposes [HTTP API][doc] for fetching messages.
 
 [doc]: ../swagger.yml

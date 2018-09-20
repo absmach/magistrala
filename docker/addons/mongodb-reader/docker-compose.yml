@@ -16,8 +16,6 @@ services:
   mongodb-reader:
     image: mainflux/mongodb-reader:latest
     container_name: mainflux-mongodb-reader
-    expose:
-      - 8901
     restart: on-failure
     environment:
       MF_THINGS_URL: things:8183

@@ -12,8 +12,8 @@ spec:
         component: influxdb-writer
     spec:
       containers:
-      - name: mainflux-influxdb
-        image: mainflux/influxdb:latest
+      - name: mainflux-influxdb-writer
+        image: mainflux/influxdb-writer:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8900
@@ -22,6 +22,10 @@ spec:
             value: "nats://nats:4222"
           - name: MF_INFLUX_WRITER_PORT
             value: "8900"
+          - name: MF_INFLUX_WRITER_BATCH_SIZE
+            value: "5000"
+          - name: MF_INFLUX_WRITER_BATCH_TIMEOUT
+            value: "5"
           - name: MF_INFLUX_WRITER_DB_NAME
             value: "mainflux"
           - name: MF_INFLUX_WRITER_DB_HOST

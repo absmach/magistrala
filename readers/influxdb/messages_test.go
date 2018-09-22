@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	influxdata "github.com/influxdata/influxdb/client/v2"
 	"github.com/mainflux/mainflux"
@@ -40,7 +41,7 @@ func TestReadAll(t *testing.T) {
 	client, err := influxdata.NewHTTPClient(clientCfg)
 	require.Nil(t, err, fmt.Sprintf("Creating new InfluxDB client expected to succeed: %s.\n", err))
 
-	writer, err := writer.New(client, testDB)
+	writer, err := writer.New(client, testDB, 1, time.Second)
 	require.Nil(t, err, fmt.Sprintf("Creating new InfluxDB writer expected to succeed: %s.\n", err))
 
 	messages := []mainflux.Message{}

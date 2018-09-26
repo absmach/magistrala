@@ -12,8 +12,8 @@ func TestUnmarshalText(t *testing.T) {
 		output Level
 		err    error
 	}{
-		"select log level Not_A_Level": {"Not_A_Level", 1, ErrInvalidLogLevel},
-		"select log level Bad_Input":   {"Bad_Input", 1, ErrInvalidLogLevel},
+		"select log level Not_A_Level": {"Not_A_Level", 0, ErrInvalidLogLevel},
+		"select log level Bad_Input":   {"Bad_Input", 0, ErrInvalidLogLevel},
 
 		"select log level debug": {"debug", Debug, nil},
 		"select log level DEBUG": {"DEBUG", Debug, nil},
@@ -25,8 +25,8 @@ func TestUnmarshalText(t *testing.T) {
 		"select log level ERROR": {"ERROR", Error, nil},
 	}
 
-	var logLevel Level
 	for desc, tc := range cases {
+		var logLevel Level
 		err := logLevel.UnmarshalText(tc.input)
 		assert.Equal(t, tc.output, logLevel, fmt.Sprintf("%s: expected %s got %d", desc, tc.output, logLevel))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %d", desc, tc.err, err))

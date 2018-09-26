@@ -9,10 +9,11 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable           | Description                  | Default               |
-|--------------------|------------------------------|-----------------------|
-| MF_NATS_URL        | NATS instance URL            | nats://localhost:4222 |
-| MF_NORMALIZER_PORT | Normalizer service HTTP port | 8180                  |
+| Variable                  | Description                  | Default               |
+|---------------------------|------------------------------|-----------------------|
+| MF_NATS_URL               | NATS instance URL            | nats://localhost:4222 |
+| MF_NORMALIZER_LOG_LEVEL   | Log level for the Normalizer | error                 |
+| MF_NORMALIZER_PORT        | Normalizer service HTTP port | 8180                  |
 
 ## Deployment
 
@@ -28,6 +29,7 @@ services:
     container_name: [instance name]
     environment:
       MF_NATS_URL: [NATS instance URL]
+      MF_NORMALIZER_LOG_LEVEL: [Normalizer log level]
       MF_NORMALIZER_PORT: [Service HTTP port]
 ```
 
@@ -46,5 +48,5 @@ make normalizer
 make install
 
 # set the environment variables and run the service
-MF_NATS_URL=[NATS instance URL] MF_NORMALIZER_PORT=[Service HTTP port] $GOBIN/mainflux-normalizer
+MF_NATS_URL=[NATS instance URL] MF_NORMALIZER_LOG_LEVEL=[Normalizer log level] MF_NORMALIZER_PORT=[Service HTTP port] $GOBIN/mainflux-normalizer
 ```

@@ -12,19 +12,19 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux"
-	log "github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/normalizer"
 )
 
 var _ normalizer.Service = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
-	logger log.Logger
+	logger logger.Logger
 	svc    normalizer.Service
 }
 
 // LoggingMiddleware adds logging facilities to the core service.
-func LoggingMiddleware(svc normalizer.Service, logger log.Logger) normalizer.Service {
+func LoggingMiddleware(svc normalizer.Service, logger logger.Logger) normalizer.Service {
 	return &loggingMiddleware{
 		logger: logger,
 		svc:    svc,

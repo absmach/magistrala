@@ -9,13 +9,14 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/mainflux/mainflux"
-	log "github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/normalizer"
 	"github.com/mainflux/mainflux/normalizer/api"
 	"github.com/mainflux/mainflux/normalizer/nats"
@@ -26,25 +27,27 @@ import (
 )
 
 const (
-	defNatsURL string = broker.DefaultURL
-	defPort    string = "8180"
-	envNatsURL string = "MF_NATS_URL"
-	envPort    string = "MF_NORMALIZER_PORT"
+	defNatsURL  string = broker.DefaultURL
+	defLogLevel string = "error"
+	defPort     string = "8180"
+	envNatsURL  string = "MF_NATS_URL"
+	envLogLevel string = "MF_NORMALIZER_LOG_LEVEL"
+	envPort     string = "MF_NORMALIZER_PORT"
 )
 
 type config struct {
-	NatsURL string
-	Port    string
+	NatsURL  string
+	LogLevel string
+	Port     string
 }
 
 func main() {
-	cfg := config{
-		NatsURL: mainflux.Env(envNatsURL, defNatsURL),
-		Port:    mainflux.Env(envPort, defPort),
+	cfg := loadConfig()
+
+	logger, err := logger.New(os.Stdout, cfg.LogLevel)
+	if err != nil {
+		log.Fatalf(err.Error())
 	}
-
-	logger := log.New(os.Stdout)
-
 	nc, err := broker.Connect(cfg.NatsURL)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to NATS: %s", err))
@@ -88,4 +91,12 @@ func main() {
 
 	err = <-errs
 	logger.Error(fmt.Sprintf("Normalizer service terminated: %s", err))
+}
+
+func loadConfig() config {
+	return config{
+		NatsURL:  mainflux.Env(envNatsURL, defNatsURL),
+		LogLevel: mainflux.Env(envLogLevel, defLogLevel),
+		Port:     mainflux.Env(envPort, defPort),
+	}
 }

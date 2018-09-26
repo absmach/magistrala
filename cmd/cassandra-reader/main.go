@@ -9,6 +9,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -18,7 +19,7 @@ import (
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/gocql/gocql"
 	"github.com/mainflux/mainflux"
-	log "github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/readers"
 	"github.com/mainflux/mainflux/readers/api"
 	"github.com/mainflux/mainflux/readers/cassandra"
@@ -30,11 +31,13 @@ import (
 const (
 	sep = ","
 
+	defLogLevel  = "error"
 	defPort      = "8180"
 	defCluster   = "127.0.0.1"
 	defKeyspace  = "mainflux"
 	defThingsURL = "localhost:8181"
 
+	envLogLevel  = "MF_CASSANDRA_READER_LOG_LEVEL"
 	envPort      = "MF_CASSANDRA_READER_PORT"
 	envCluster   = "MF_CASSANDRA_READER_DB_CLUSTER"
 	envKeyspace  = "MF_CASSANDRA_READER_DB_KEYSPACE"
@@ -42,6 +45,7 @@ const (
 )
 
 type config struct {
+	logLevel  string
 	port      string
 	cluster   string
 	keyspace  string
@@ -51,7 +55,10 @@ type config struct {
 func main() {
 	cfg := loadConfig()
 
-	logger := log.New(os.Stdout)
+	logger, err := logger.New(os.Stdout, cfg.logLevel)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
 
 	session := connectToCassandra(cfg.cluster, cfg.keyspace, logger)
 	defer session.Close()
@@ -72,12 +79,13 @@ func main() {
 		errs <- fmt.Errorf("%s", <-c)
 	}()
 
-	err := <-errs
+	err = <-errs
 	logger.Error(fmt.Sprintf("Cassandra reader service terminated: %s", err))
 }
 
 func loadConfig() config {
 	return config{
+		logLevel:  mainflux.Env(envLogLevel, defLogLevel),
 		port:      mainflux.Env(envPort, defPort),
 		cluster:   mainflux.Env(envCluster, defCluster),
 		keyspace:  mainflux.Env(envKeyspace, defKeyspace),
@@ -85,7 +93,7 @@ func loadConfig() config {
 	}
 }
 
-func connectToCassandra(cluster, keyspace string, logger log.Logger) *gocql.Session {
+func connectToCassandra(cluster, keyspace string, logger logger.Logger) *gocql.Session {
 	session, err := cassandra.Connect(strings.Split(cluster, sep), keyspace)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to Cassandra cluster: %s", err))
@@ -95,7 +103,7 @@ func connectToCassandra(cluster, keyspace string, logger log.Logger) *gocql.Sess
 	return session
 }
 
-func connectToThings(url string, logger log.Logger) *grpc.ClientConn {
+func connectToThings(url string, logger logger.Logger) *grpc.ClientConn {
 	conn, err := grpc.Dial(url, grpc.WithInsecure())
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to things service: %s", err))
@@ -105,7 +113,7 @@ func connectToThings(url string, logger log.Logger) *grpc.ClientConn {
 	return conn
 }
 
-func newService(session *gocql.Session, logger log.Logger) readers.MessageRepository {
+func newService(session *gocql.Session, logger logger.Logger) readers.MessageRepository {
 	repo := cassandra.New(session)
 	repo = api.LoggingMiddleware(repo, logger)
 	repo = api.MetricsMiddleware(
@@ -127,7 +135,7 @@ func newService(session *gocql.Session, logger log.Logger) readers.MessageReposi
 	return repo
 }
 
-func startHTTPServer(repo readers.MessageRepository, tc mainflux.ThingsServiceClient, port string, errs chan error, logger log.Logger) {
+func startHTTPServer(repo readers.MessageRepository, tc mainflux.ThingsServiceClient, port string, errs chan error, logger logger.Logger) {
 	p := fmt.Sprintf(":%s", port)
 	logger.Info(fmt.Sprintf("Cassandra reader service started, exposed port %s", port))
 	errs <- http.ListenAndServe(p, api.MakeHandler(repo, tc, "cassandra-reader"))

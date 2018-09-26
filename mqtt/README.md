@@ -9,16 +9,17 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable             | Description         | Default               |
-|----------------------|---------------------|-----------------------|
-| MF_MQTT_ADAPTER_PORT | Service MQTT port   | 1883                  |
-| MF_MQTT_WS_PORT      | WebSocket port      | 8880                  |
-| MF_NATS_URL          | NATS instance URL   | nats://localhost:4222 |
-| MF_MQTT_REDIS_PORT   | Redis port          | 6379                  |
-| MF_MQTT_REDIS_HOST   | Redis host          | localhost             |
-| MF_MQTT_REDIS_PASS   | Redis pass          | mqtt                  |
-| MF_MQTT_REDIS_DB     | Redis db            | 0                     |
-| MF_THINGS_URL        | Things service URL  | localhost:8181        |
+| Variable                    | Description            | Default               |
+|-----------------------------|------------------------|-----------------------|
+| MF_MQTT_ADAPTER_LOG_LEVEL   | MQTT adapter log level | error                 |
+| MF_MQTT_ADAPTER_PORT        | Service MQTT port      | 1883                  |
+| MF_MQTT_WS_PORT             | WebSocket port         | 8880                  |
+| MF_NATS_URL                 | NATS instance URL      | nats://localhost:4222 |
+| MF_MQTT_REDIS_PORT          | Redis port             | 6379                  |
+| MF_MQTT_REDIS_HOST          | Redis host             | localhost             |
+| MF_MQTT_REDIS_PASS          | Redis pass             | mqtt                  |
+| MF_MQTT_REDIS_DB            | Redis db               | 0                     |
+| MF_THINGS_URL               | Things service URL     | localhost:8181        |
 
 ## Deployment
 
@@ -36,6 +37,7 @@ services:
     environment:
       MF_THINGS_URL: [Things service URL]
       MF_NATS_URL: [NATS instance URL]
+      MF_MQTT_ADAPTER_LOG_LEVEL: [MQTT adapter log level]
       MF_MQTT_ADAPTER_PORT: [Service MQTT port]
       MF_MQTT_WS_PORT: [Service WS port]
       MF_MQTT_REDIS_PORT: [Redis port]
@@ -56,7 +58,7 @@ cd $GOPATH/src/github.com/mainflux/mainflux/mqtt
 npm install
 
 # set the environment variables and run the service
-MF_THINGS_URL=[Things service URL] MF_NATS_URL=[NATS instance URL] MF_MQTT_ADAPTER_PORT=[Service MQTT port] MF_MQTT_WS_PORT=[Service WS port] MF_MQTT_REDIS_PORT=[Redis port] MF_MQTT_REDIS_HOST=[Redis host] MF_MQTT_REDIS_PASS=[Redis pass] MF_MQTT_REDIS_DB=[Redis db] node mqtt.js ..
+MF_THINGS_URL=[Things service URL] MF_NATS_URL=[NATS instance URL] MF_MQTT_ADAPTER_LOG_LEVEL=[MQTT adapter log level] MF_MQTT_ADAPTER_PORT=[Service MQTT port] MF_MQTT_WS_PORT=[Service WS port] MF_MQTT_REDIS_PORT=[Redis port] MF_MQTT_REDIS_HOST=[Redis host] MF_MQTT_REDIS_PASS=[Redis pass] MF_MQTT_REDIS_DB=[Redis db] node mqtt.js ..
 ```
 
 ## Usage

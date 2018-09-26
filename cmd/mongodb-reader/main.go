@@ -10,6 +10,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -17,7 +18,7 @@ import (
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/mainflux/mainflux"
-	log "github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/readers"
 	"github.com/mainflux/mainflux/readers/api"
 	"github.com/mainflux/mainflux/readers/mongodb"
@@ -29,12 +30,14 @@ import (
 
 const (
 	defThingsURL = "localhost:8181"
+	defLogLevel  = "error"
 	defPort      = "8180"
 	defDBName    = "mainflux"
 	defDBHost    = "localhost"
 	defDBPort    = "27017"
 
 	envThingsURL = "MF_THINGS_URL"
+	envLogLevel  = "MF_MONGO_READER_LOG_LEVEL"
 	envPort      = "MF_MONGO_READER_PORT"
 	envDBName    = "MF_MONGO_READER_DB_NAME"
 	envDBHost    = "MF_MONGO_READER_DB_HOST"
@@ -43,6 +46,7 @@ const (
 
 type config struct {
 	thingsURL string
+	logLevel  string
 	port      string
 	dbName    string
 	dbHost    string
@@ -51,8 +55,10 @@ type config struct {
 
 func main() {
 	cfg := loadConfigs()
-	logger := log.New(os.Stdout)
-
+	logger, err := logger.New(os.Stdout, cfg.logLevel)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
 	conn := connectToThings(cfg.thingsURL, logger)
 	defer conn.Close()
 
@@ -71,13 +77,14 @@ func main() {
 
 	go startHTTPServer(repo, tc, cfg.port, logger, errs)
 
-	err := <-errs
+	err = <-errs
 	logger.Error(fmt.Sprintf("MongoDB reader service terminated: %s", err))
 }
 
 func loadConfigs() config {
 	return config{
 		thingsURL: mainflux.Env(envThingsURL, defThingsURL),
+		logLevel:  mainflux.Env(envLogLevel, defLogLevel),
 		port:      mainflux.Env(envPort, defPort),
 		dbName:    mainflux.Env(envDBName, defDBName),
 		dbHost:    mainflux.Env(envDBHost, defDBHost),
@@ -85,7 +92,7 @@ func loadConfigs() config {
 	}
 }
 
-func connectToMongoDB(host, port, name string, logger log.Logger) *mongo.Database {
+func connectToMongoDB(host, port, name string, logger logger.Logger) *mongo.Database {
 	client, err := mongo.Connect(context.Background(), fmt.Sprintf("mongodb://%s:%s", host, port), nil)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to database: %s", err))
@@ -95,7 +102,7 @@ func connectToMongoDB(host, port, name string, logger log.Logger) *mongo.Databas
 	return client.Database(name)
 }
 
-func connectToThings(url string, logger log.Logger) *grpc.ClientConn {
+func connectToThings(url string, logger logger.Logger) *grpc.ClientConn {
 	conn, err := grpc.Dial(url, grpc.WithInsecure())
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to things service: %s", err))
@@ -105,7 +112,7 @@ func connectToThings(url string, logger log.Logger) *grpc.ClientConn {
 	return conn
 }
 
-func newService(db *mongo.Database, logger log.Logger) readers.MessageRepository {
+func newService(db *mongo.Database, logger logger.Logger) readers.MessageRepository {
 	repo := mongodb.New(db)
 	repo = api.LoggingMiddleware(repo, logger)
 	repo = api.MetricsMiddleware(
@@ -127,7 +134,7 @@ func newService(db *mongo.Database, logger log.Logger) readers.MessageRepository
 	return repo
 }
 
-func startHTTPServer(repo readers.MessageRepository, tc mainflux.ThingsServiceClient, port string, logger log.Logger, errs chan error) {
+func startHTTPServer(repo readers.MessageRepository, tc mainflux.ThingsServiceClient, port string, logger logger.Logger, errs chan error) {
 	p := fmt.Sprintf(":%s", port)
 	logger.Info(fmt.Sprintf("Mongo reader service started, exposed port %s", port))
 	errs <- http.ListenAndServe(p, api.MakeHandler(repo, tc, "cassandra-reader"))

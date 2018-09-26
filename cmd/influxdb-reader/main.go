@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -10,7 +11,7 @@ import (
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	influxdata "github.com/influxdata/influxdb/client/v2"
 	"github.com/mainflux/mainflux"
-	log "github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/readers"
 	"github.com/mainflux/mainflux/readers/api"
 	"github.com/mainflux/mainflux/readers/influxdb"
@@ -21,6 +22,7 @@ import (
 
 const (
 	defThingsURL = "localhost:8181"
+	defLogLevel  = "error"
 	defPort      = "8180"
 	defDBName    = "mainflux"
 	defDBHost    = "localhost"
@@ -29,6 +31,7 @@ const (
 	defDBPass    = "mainflux"
 
 	envThingsURL = "MF_THINGS_URL"
+	envLogLevel  = "MF_INFLUX_READER_LOG_LEVEL"
 	envPort      = "MF_INFLUX_READER_PORT"
 	envDBName    = "MF_INFLUX_READER_DB_NAME"
 	envDBHost    = "MF_INFLUX_READER_DB_HOST"
@@ -39,6 +42,7 @@ const (
 
 type config struct {
 	ThingsURL string
+	LogLevel  string
 	Port      string
 	DBName    string
 	DBHost    string
@@ -49,8 +53,10 @@ type config struct {
 
 func main() {
 	cfg, clientCfg := loadConfigs()
-	logger := log.New(os.Stdout)
-
+	logger, err := logger.New(os.Stdout, cfg.LogLevel)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
 	conn := connectToThings(cfg.ThingsURL, logger)
 	defer conn.Close()
 
@@ -85,6 +91,7 @@ func main() {
 func loadConfigs() (config, influxdata.HTTPConfig) {
 	cfg := config{
 		ThingsURL: mainflux.Env(envThingsURL, defThingsURL),
+		LogLevel:  mainflux.Env(envLogLevel, defLogLevel),
 		Port:      mainflux.Env(envPort, defPort),
 		DBName:    mainflux.Env(envDBName, defDBName),
 		DBHost:    mainflux.Env(envDBHost, defDBHost),
@@ -102,7 +109,7 @@ func loadConfigs() (config, influxdata.HTTPConfig) {
 	return cfg, clientCfg
 }
 
-func connectToThings(url string, logger log.Logger) *grpc.ClientConn {
+func connectToThings(url string, logger logger.Logger) *grpc.ClientConn {
 	conn, err := grpc.Dial(url, grpc.WithInsecure())
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to things service: %s", err))
@@ -112,7 +119,7 @@ func connectToThings(url string, logger log.Logger) *grpc.ClientConn {
 	return conn
 }
 
-func newService(client influxdata.Client, logger log.Logger) readers.MessageRepository {
+func newService(client influxdata.Client, logger logger.Logger) readers.MessageRepository {
 	repo, _ := influxdb.New(client, "mainflux")
 	repo = api.LoggingMiddleware(repo, logger)
 	repo = api.MetricsMiddleware(
@@ -134,7 +141,7 @@ func newService(client influxdata.Client, logger log.Logger) readers.MessageRepo
 	return repo
 }
 
-func startHTTPServer(repo readers.MessageRepository, tc mainflux.ThingsServiceClient, port string, logger log.Logger, errs chan error) {
+func startHTTPServer(repo readers.MessageRepository, tc mainflux.ThingsServiceClient, port string, logger logger.Logger, errs chan error) {
 	p := fmt.Sprintf(":%s", port)
 	logger.Info(fmt.Sprintf("InfluxDB reader service started, exposed port %s", port))
 	errs <- http.ListenAndServe(p, api.MakeHandler(repo, tc, "influxdb-reader"))

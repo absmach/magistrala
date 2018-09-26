@@ -10,6 +10,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -18,7 +19,7 @@ import (
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/mainflux/mainflux"
-	log "github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/users"
 	"github.com/mainflux/mainflux/users/api"
 	grpcapi "github.com/mainflux/mainflux/users/api/grpc"
@@ -31,6 +32,7 @@ import (
 )
 
 const (
+	defLogLevel = "error"
 	defDBHost   = "localhost"
 	defDBPort   = "5432"
 	defDBUser   = "mainflux"
@@ -39,6 +41,7 @@ const (
 	defHTTPPort = "8180"
 	defGRPCPort = "8181"
 	defSecret   = "users"
+	envLogLevel = "MF_USERS_LOG_LEVEL"
 	envDBHost   = "MF_USERS_DB_HOST"
 	envDBPort   = "MF_USERS_DB_PORT"
 	envDBUser   = "MF_USERS_DB_USER"
@@ -50,6 +53,7 @@ const (
 )
 
 type config struct {
+	LogLevel string
 	DBHost   string
 	DBPort   string
 	DBUser   string
@@ -63,8 +67,10 @@ type config struct {
 func main() {
 	cfg := loadConfig()
 
-	logger := log.New(os.Stdout)
-
+	logger, err := logger.New(os.Stdout, cfg.LogLevel)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
 	db := connectToDB(cfg, logger)
 	defer db.Close()
 
@@ -80,12 +86,13 @@ func main() {
 		errs <- fmt.Errorf("%s", <-c)
 	}()
 
-	err := <-errs
+	err = <-errs
 	logger.Error(fmt.Sprintf("Users service terminated: %s", err))
 }
 
 func loadConfig() config {
 	return config{
+		LogLevel: mainflux.Env(envLogLevel, defLogLevel),
 		DBHost:   mainflux.Env(envDBHost, defDBHost),
 		DBPort:   mainflux.Env(envDBPort, defDBPort),
 		DBUser:   mainflux.Env(envDBUser, defDBUser),
@@ -97,7 +104,7 @@ func loadConfig() config {
 	}
 }
 
-func connectToDB(cfg config, logger log.Logger) *sql.DB {
+func connectToDB(cfg config, logger logger.Logger) *sql.DB {
 	db, err := postgres.Connect(cfg.DBHost, cfg.DBPort, cfg.DBName, cfg.DBUser, cfg.DBPass)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to postgres: %s", err))
@@ -106,7 +113,7 @@ func connectToDB(cfg config, logger log.Logger) *sql.DB {
 	return db
 }
 
-func newService(db *sql.DB, secret string, logger log.Logger) users.Service {
+func newService(db *sql.DB, secret string, logger logger.Logger) users.Service {
 	repo := postgres.New(db)
 	hasher := bcrypt.New()
 	idp := jwt.New(secret)
@@ -131,13 +138,13 @@ func newService(db *sql.DB, secret string, logger log.Logger) users.Service {
 	return svc
 }
 
-func startHTTPServer(svc users.Service, port string, logger log.Logger, errs chan error) {
+func startHTTPServer(svc users.Service, port string, logger logger.Logger, errs chan error) {
 	p := fmt.Sprintf(":%s", port)
 	logger.Info(fmt.Sprintf("Users HTTP service started, exposed port %s", port))
 	errs <- http.ListenAndServe(p, httpapi.MakeHandler(svc, logger))
 }
 
-func startGRPCServer(svc users.Service, port string, logger log.Logger, errs chan error) {
+func startGRPCServer(svc users.Service, port string, logger logger.Logger, errs chan error) {
 	p := fmt.Sprintf(":%s", port)
 	listener, err := net.Listen("tcp", p)
 	if err != nil {

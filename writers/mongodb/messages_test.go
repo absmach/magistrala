@@ -26,7 +26,7 @@ import (
 var (
 	port       string
 	addr       string
-	testLog    = log.New(os.Stdout)
+	testLog, _ = log.New(os.Stdout, log.Info.String())
 	testDB     = "test"
 	collection = "mainflux"
 	db         mongo.Database

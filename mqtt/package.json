@@ -15,7 +15,7 @@
   "dependencies": {
     "2": "^1.0.2",
     "aedes": "^0.35.2",
-    "aedes-logging": "^1.0.1",
+    "aedes-logging": "^2.0.1",
     "aedes-persistence-redis": "^5.1.0",
     "atob": "^2.0.3",
     "bunyan": "^1.5.1",

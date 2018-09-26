@@ -10,6 +10,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -20,7 +21,7 @@ import (
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/go-redis/redis"
 	"github.com/mainflux/mainflux"
-	log "github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/things"
 	"github.com/mainflux/mainflux/things/api"
 	grpcapi "github.com/mainflux/mainflux/things/api/grpc"
@@ -34,6 +35,7 @@ import (
 )
 
 const (
+	defLogLevel  = "error"
 	defDBHost    = "localhost"
 	defDBPort    = "5432"
 	defDBUser    = "mainflux"
@@ -45,6 +47,7 @@ const (
 	defHTTPPort  = "8180"
 	defGRPCPort  = "8181"
 	defUsersURL  = "localhost:8181"
+	envLogLevel  = "MF_THINGS_LOG_LEVEL"
 	envDBHost    = "MF_THINGS_DB_HOST"
 	envDBPort    = "MF_THINGS_DB_PORT"
 	envDBUser    = "MF_THINGS_DB_USER"
@@ -59,6 +62,7 @@ const (
 )
 
 type config struct {
+	LogLevel  string
 	DBHost    string
 	DBPort    string
 	DBUser    string
@@ -66,18 +70,20 @@ type config struct {
 	DBName    string
 	CacheURL  string
 	CachePass string
-	CacheDB   int
+	CacheDB   string
 	HTTPPort  string
 	GRPCPort  string
 	UsersURL  string
 }
 
 func main() {
-	logger := log.New(os.Stdout)
+	cfg := loadConfig()
 
-	cfg := loadConfig(logger)
-
-	cache := connectToCache(cfg.CacheURL, cfg.CachePass, cfg.CacheDB)
+	logger, err := logger.New(os.Stdout, cfg.LogLevel)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	cache := connectToCache(cfg.CacheURL, cfg.CachePass, cfg.CacheDB, logger)
 
 	db := connectToDB(cfg, logger)
 	defer db.Close()
@@ -97,18 +103,13 @@ func main() {
 		errs <- fmt.Errorf("%s", <-c)
 	}()
 
-	err := <-errs
+	err = <-errs
 	logger.Error(fmt.Sprintf("Things service terminated: %s", err))
 }
 
-func loadConfig(logger log.Logger) config {
-	db, err := strconv.Atoi(mainflux.Env(envCacheDB, defCacheDB))
-	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to cache: %s", err))
-		os.Exit(1)
-	}
-
+func loadConfig() config {
 	return config{
+		LogLevel:  mainflux.Env(envLogLevel, defLogLevel),
 		DBHost:    mainflux.Env(envDBHost, defDBHost),
 		DBPort:    mainflux.Env(envDBPort, defDBPort),
 		DBUser:    mainflux.Env(envDBUser, defDBUser),
@@ -116,22 +117,29 @@ func loadConfig(logger log.Logger) config {
 		DBName:    mainflux.Env(envDBName, defDBName),
 		CacheURL:  mainflux.Env(envCacheURL, defCacheURL),
 		CachePass: mainflux.Env(envCachePass, defCachePass),
-		CacheDB:   db,
+		CacheDB:   mainflux.Env(envCacheDB, defCacheDB),
 		HTTPPort:  mainflux.Env(envHTTPPort, defHTTPPort),
 		GRPCPort:  mainflux.Env(envGRPCPort, defGRPCPort),
 		UsersURL:  mainflux.Env(envUsersURL, defUsersURL),
 	}
 }
 
-func connectToCache(cacheURL, cachePass string, cacheDB int) *redis.Client {
+func connectToCache(cacheURL, cachePass string, cacheDB string, logger logger.Logger) *redis.Client {
+
+	db, err := strconv.Atoi(cacheDB)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to connect to cache: %s", err))
+		os.Exit(1)
+	}
+
 	return redis.NewClient(&redis.Options{
 		Addr:     cacheURL,
 		Password: cachePass,
-		DB:       cacheDB,
+		DB:       db,
 	})
 }
 
-func connectToDB(cfg config, logger log.Logger) *sql.DB {
+func connectToDB(cfg config, logger logger.Logger) *sql.DB {
 	db, err := postgres.Connect(cfg.DBHost, cfg.DBPort, cfg.DBName, cfg.DBUser, cfg.DBPass)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to postgres: %s", err))
@@ -140,7 +148,7 @@ func connectToDB(cfg config, logger log.Logger) *sql.DB {
 	return db
 }
 
-func connectToUsersService(usersAddr string, logger log.Logger) *grpc.ClientConn {
+func connectToUsersService(usersAddr string, logger logger.Logger) *grpc.ClientConn {
 	conn, err := grpc.Dial(usersAddr, grpc.WithInsecure())
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to users service: %s", err))
@@ -149,7 +157,7 @@ func connectToUsersService(usersAddr string, logger log.Logger) *grpc.ClientConn
 	return conn
 }
 
-func newService(conn *grpc.ClientConn, db *sql.DB, client *redis.Client, logger log.Logger) things.Service {
+func newService(conn *grpc.ClientConn, db *sql.DB, client *redis.Client, logger logger.Logger) things.Service {
 	users := usersapi.NewClient(conn)
 	thingsRepo := postgres.NewThingRepository(db, logger)
 	channelsRepo := postgres.NewChannelRepository(db, logger)
@@ -177,13 +185,13 @@ func newService(conn *grpc.ClientConn, db *sql.DB, client *redis.Client, logger 
 	return svc
 }
 
-func startHTTPServer(svc things.Service, port string, logger log.Logger, errs chan error) {
+func startHTTPServer(svc things.Service, port string, logger logger.Logger, errs chan error) {
 	p := fmt.Sprintf(":%s", port)
 	logger.Info(fmt.Sprintf("Things service started, exposed port %s", port))
 	errs <- http.ListenAndServe(p, httpapi.MakeHandler(svc))
 }
 
-func startGRPCServer(svc things.Service, port string, logger log.Logger, errs chan error) {
+func startGRPCServer(svc things.Service, port string, logger logger.Logger, errs chan error) {
 	p := fmt.Sprintf(":%s", port)
 	listener, err := net.Listen("tcp", p)
 	if err != nil {

@@ -43,7 +43,8 @@ func newService() ws.Service {
 }
 
 func newHTTPServer(svc ws.Service, tc mainflux.ThingsServiceClient) *httptest.Server {
-	mux := api.MakeHandler(svc, tc, log.New(os.Stdout))
+	logger, _ := log.New(os.Stdout, log.Info.String())
+	mux := api.MakeHandler(svc, tc, logger)
 	return httptest.NewServer(mux)
 }
 

@@ -24,7 +24,7 @@ import (
 
 var (
 	port          string
-	testLog       = log.New(os.Stdout)
+	testLog, _    = log.New(os.Stdout, log.Info.String())
 	testDB        = "test"
 	saveTimeout   = 2 * time.Second
 	saveBatchSize = 20
@@ -32,8 +32,7 @@ var (
 	client        influxdata.Client
 	selectMsgs    = fmt.Sprintf("SELECT * FROM test..messages")
 	dropMsgs      = fmt.Sprintf("DROP SERIES FROM messages")
-
-	clientCfg = influxdata.HTTPConfig{
+	clientCfg     = influxdata.HTTPConfig{
 		Username: "test",
 		Password: "test",
 	}

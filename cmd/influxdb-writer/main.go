@@ -9,6 +9,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,10 +20,10 @@ import (
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	influxdata "github.com/influxdata/influxdb/client/v2"
 	"github.com/mainflux/mainflux"
-	log "github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/writers"
 	"github.com/mainflux/mainflux/writers/influxdb"
-	nats "github.com/nats-io/go-nats"
+	"github.com/nats-io/go-nats"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
@@ -30,6 +31,7 @@ const (
 	queue = "influxdb-writer"
 
 	defNatsURL      = nats.DefaultURL
+	defLogLevel     = "error"
 	defPort         = "8180"
 	defBatchSize    = "5000"
 	defBatchTimeout = "5"
@@ -40,6 +42,7 @@ const (
 	defDBPass       = "mainflux"
 
 	envNatsURL      = "MF_NATS_URL"
+	envLogLevel     = "MF_INFLUX_WRITER_LOG_LEVEL"
 	envPort         = "MF_INFLUX_WRITER_PORT"
 	envBatchSize    = "MF_INFLUX_WRITER_BATCH_SIZE"
 	envBatchTimeout = "MF_INFLUX_WRITER_BATCH_TIMEOUT"
@@ -52,9 +55,10 @@ const (
 
 type config struct {
 	NatsURL      string
+	LogLevel     string
 	Port         string
-	BatchSize    int
-	BatchTimeout int
+	BatchSize    string
+	BatchTimeout string
 	DBName       string
 	DBHost       string
 	DBPort       string
@@ -63,9 +67,11 @@ type config struct {
 }
 
 func main() {
-	logger := log.New(os.Stdout)
-	cfg, clientCfg := loadConfigs(logger)
-
+	cfg, clientCfg := loadConfigs()
+	logger, err := logger.New(os.Stdout, cfg.LogLevel)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
 	nc, err := nats.Connect(cfg.NatsURL)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to NATS: %s", err))
@@ -80,8 +86,20 @@ func main() {
 	}
 	defer client.Close()
 
-	timeout := time.Duration(cfg.BatchTimeout) * time.Second
-	repo, err := influxdb.New(client, cfg.DBName, cfg.BatchSize, timeout)
+	batchTimeout, err := strconv.Atoi(cfg.BatchTimeout)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Invalid value for batch timeout: %s", err))
+		os.Exit(1)
+	}
+
+	batchSize, err := strconv.Atoi(cfg.BatchSize)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Invalid value of batch size: %s", err))
+		os.Exit(1)
+	}
+
+	timeout := time.Duration(batchTimeout) * time.Second
+	repo, err := influxdb.New(client, cfg.DBName, batchSize, timeout)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to create InfluxDB writer: %s", err))
 		os.Exit(1)
@@ -108,28 +126,16 @@ func main() {
 	logger.Error(fmt.Sprintf("InfluxDB writer service terminated: %s", err))
 }
 
-func loadConfigs(logger log.Logger) (config, influxdata.HTTPConfig) {
+func loadConfigs() (config, influxdata.HTTPConfig) {
 	cfg := config{
-		NatsURL: mainflux.Env(envNatsURL, defNatsURL),
-		Port:    mainflux.Env(envPort, defPort),
-		DBName:  mainflux.Env(envDBName, defDBName),
-		DBHost:  mainflux.Env(envDBHost, defDBHost),
-		DBPort:  mainflux.Env(envDBPort, defDBPort),
-		DBUser:  mainflux.Env(envDBUser, defDBUser),
-		DBPass:  mainflux.Env(envDBPass, defDBPass),
-	}
-
-	var err error
-	cfg.BatchSize, err = strconv.Atoi(mainflux.Env(envBatchSize, defBatchSize))
-	if err != nil {
-		logger.Error(fmt.Sprintf("Invalid value of batch size: %s", err))
-		os.Exit(1)
-	}
-
-	cfg.BatchTimeout, err = strconv.Atoi(mainflux.Env(envBatchTimeout, defBatchTimeout))
-	if err != nil {
-		logger.Error(fmt.Sprintf("Invalid value for batch timeout: %s", err))
-		os.Exit(1)
+		NatsURL:  mainflux.Env(envNatsURL, defNatsURL),
+		LogLevel: mainflux.Env(envLogLevel, defLogLevel),
+		Port:     mainflux.Env(envPort, defPort),
+		DBName:   mainflux.Env(envDBName, defDBName),
+		DBHost:   mainflux.Env(envDBHost, defDBHost),
+		DBPort:   mainflux.Env(envDBPort, defDBPort),
+		DBUser:   mainflux.Env(envDBUser, defDBUser),
+		DBPass:   mainflux.Env(envDBPass, defDBPass),
 	}
 
 	clientCfg := influxdata.HTTPConfig{
@@ -159,7 +165,7 @@ func makeMetrics() (*kitprometheus.Counter, *kitprometheus.Summary) {
 	return counter, latency
 }
 
-func startHTTPService(port string, logger log.Logger, errs chan error) {
+func startHTTPService(port string, logger logger.Logger, errs chan error) {
 	p := fmt.Sprintf(":%s", port)
 	logger.Info(fmt.Sprintf("InfluxDB writer service started, exposed port %s", p))
 	errs <- http.ListenAndServe(p, influxdb.MakeHandler())

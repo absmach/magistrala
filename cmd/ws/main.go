@@ -9,6 +9,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -16,7 +17,7 @@ import (
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/mainflux/mainflux"
-	log "github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/logger"
 	thingsapi "github.com/mainflux/mainflux/things/api/grpc"
 	adapter "github.com/mainflux/mainflux/ws"
 	"github.com/mainflux/mainflux/ws/api"
@@ -28,9 +29,11 @@ import (
 
 const (
 	defPort      = "8180"
+	defLogLevel  = "error"
 	defNatsURL   = broker.DefaultURL
 	defThingsURL = "localhost:8181"
 	envPort      = "MF_WS_ADAPTER_PORT"
+	envLogLevel  = "MF_WS_ADAPTER_LOG_LEVEL"
 	envNatsURL   = "MF_NATS_URL"
 	envThingsURL = "MF_THINGS_URL"
 )
@@ -38,18 +41,17 @@ const (
 type config struct {
 	ThingsURL string
 	NatsURL   string
+	LogLevel  string
 	Port      string
 }
 
 func main() {
-	cfg := config{
-		ThingsURL: mainflux.Env(envThingsURL, defThingsURL),
-		NatsURL:   mainflux.Env(envNatsURL, defNatsURL),
-		Port:      mainflux.Env(envPort, defPort),
+	cfg := loadConfig()
+
+	logger, err := logger.New(os.Stdout, cfg.LogLevel)
+	if err != nil {
+		log.Fatalf(err.Error())
 	}
-
-	logger := log.New(os.Stdout)
-
 	nc, err := broker.Connect(cfg.NatsURL)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to NATS: %s", err))
@@ -100,4 +102,12 @@ func main() {
 
 	err = <-errs
 	logger.Error(fmt.Sprintf("WebSocket adapter terminated: %s", err))
+}
+
+func loadConfig() config {
+	return config{
+		NatsURL:  mainflux.Env(envNatsURL, defNatsURL),
+		LogLevel: mainflux.Env(envLogLevel, defLogLevel),
+		Port:     mainflux.Env(envPort, defPort),
+	}
 }

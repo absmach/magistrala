@@ -12,6 +12,7 @@ var http = require('http'),
 // pass a proto file as a buffer/string or pass a parsed protobuf-schema object
 var logger = bunyan.createLogger({name: "mqtt"}),
     config = {
+        log_level: process.env.MF_MQTT_ADAPTER_LOG_LEVEL || 'error',
         mqtt_port: Number(process.env.MF_MQTT_ADAPTER_PORT) || 1883,
         ws_port: Number(process.env.MF_MQTT_WS_PORT) || 8880,
         nats_url: process.env.MF_NATS_URL || 'nats://localhost:4222',
@@ -42,8 +43,11 @@ var logger = bunyan.createLogger({name: "mqtt"}),
 
 logging({
     instance: aedes,
-    servers: servers
+    servers: servers,
+    pinoOptions: {level: config.log_level}
 });
+
+logger.level(config.log_level);
 
 // MQTT over WebSocket
 function startWs() {

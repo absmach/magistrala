@@ -9,6 +9,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,7 +20,7 @@ import (
 	adapter "github.com/mainflux/mainflux/http"
 	"github.com/mainflux/mainflux/http/api"
 	"github.com/mainflux/mainflux/http/nats"
-	log "github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/logger"
 	thingsapi "github.com/mainflux/mainflux/things/api/grpc"
 	broker "github.com/nats-io/go-nats"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
@@ -28,9 +29,11 @@ import (
 
 const (
 	defPort      string = "8180"
+	defLogLevel  string = "error"
 	defNatsURL   string = broker.DefaultURL
 	defThingsURL string = "localhost:8181"
 	envPort      string = "MF_HTTP_ADAPTER_PORT"
+	envLogLevel  string = "MF_HTTP_ADAPTER_LOG_LEVEL"
 	envNatsURL   string = "MF_NATS_URL"
 	envThingsURL string = "MF_THINGS_URL"
 )
@@ -38,17 +41,18 @@ const (
 type config struct {
 	ThingsURL string
 	NatsURL   string
+	LogLevel  string
 	Port      string
 }
 
 func main() {
-	cfg := config{
-		ThingsURL: mainflux.Env(envThingsURL, defThingsURL),
-		NatsURL:   mainflux.Env(envNatsURL, defNatsURL),
-		Port:      mainflux.Env(envPort, defPort),
-	}
 
-	logger := log.New(os.Stdout)
+	cfg := loadConfig()
+
+	logger, err := logger.New(os.Stdout, cfg.LogLevel)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
 
 	nc, err := broker.Connect(cfg.NatsURL)
 	if err != nil {
@@ -101,4 +105,14 @@ func main() {
 
 	err = <-errs
 	logger.Error(fmt.Sprintf("HTTP adapter terminated: %s", err))
+}
+
+func loadConfig() config {
+	return config{
+		ThingsURL: mainflux.Env(envThingsURL, defThingsURL),
+		NatsURL:   mainflux.Env(envNatsURL, defNatsURL),
+		LogLevel:  mainflux.Env(envLogLevel, defLogLevel),
+		Port:      mainflux.Env(envPort, defPort),
+	}
+
 }

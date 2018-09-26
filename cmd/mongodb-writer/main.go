@@ -10,6 +10,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -17,42 +18,47 @@ import (
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/mainflux/mainflux"
-	log "github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/writers"
-	mongodb "github.com/mainflux/mainflux/writers/mongodb"
+	"github.com/mainflux/mainflux/writers/mongodb"
 	"github.com/mongodb/mongo-go-driver/mongo"
-	nats "github.com/nats-io/go-nats"
+	"github.com/nats-io/go-nats"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
 const (
 	queue = "mongodb-writer"
 
-	defNatsURL = nats.DefaultURL
-	defPort    = "8180"
-	defDBName  = "mainflux"
-	defDBHost  = "localhost"
-	defDBPort  = "27017"
+	defNatsURL  = nats.DefaultURL
+	defLogLevel = "error"
+	defPort     = "8180"
+	defDBName   = "mainflux"
+	defDBHost   = "localhost"
+	defDBPort   = "27017"
 
-	envNatsURL = "MF_NATS_URL"
-	envPort    = "MF_MONGO_WRITER_PORT"
-	envDBName  = "MF_MONGO_WRITER_DB_NAME"
-	envDBHost  = "MF_MONGO_WRITER_DB_HOST"
-	envDBPort  = "MF_MONGO_WRITER_DB_PORT"
+	envNatsURL  = "MF_NATS_URL"
+	envLogLevel = "MF_MONGO_WRITER_LOG_LEVEL"
+	envPort     = "MF_MONGO_WRITER_PORT"
+	envDBName   = "MF_MONGO_WRITER_DB_NAME"
+	envDBHost   = "MF_MONGO_WRITER_DB_HOST"
+	envDBPort   = "MF_MONGO_WRITER_DB_PORT"
 )
 
 type config struct {
-	NatsURL string
-	Port    string
-	DBName  string
-	DBHost  string
-	DBPort  string
+	NatsURL  string
+	LogLevel string
+	Port     string
+	DBName   string
+	DBHost   string
+	DBPort   string
 }
 
 func main() {
 	cfg := loadConfigs()
-	logger := log.New(os.Stdout)
-
+	logger, err := logger.New(os.Stdout, cfg.LogLevel)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
 	nc, err := nats.Connect(cfg.NatsURL)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to NATS: %s", err))
@@ -92,11 +98,12 @@ func main() {
 
 func loadConfigs() config {
 	return config{
-		NatsURL: mainflux.Env(envNatsURL, defNatsURL),
-		Port:    mainflux.Env(envPort, defPort),
-		DBName:  mainflux.Env(envDBName, defDBName),
-		DBHost:  mainflux.Env(envDBHost, defDBHost),
-		DBPort:  mainflux.Env(envDBPort, defDBPort),
+		NatsURL:  mainflux.Env(envNatsURL, defNatsURL),
+		LogLevel: mainflux.Env(envLogLevel, defLogLevel),
+		Port:     mainflux.Env(envPort, defPort),
+		DBName:   mainflux.Env(envDBName, defDBName),
+		DBHost:   mainflux.Env(envDBHost, defDBHost),
+		DBPort:   mainflux.Env(envDBPort, defDBPort),
 	}
 }
 
@@ -118,7 +125,7 @@ func makeMetrics() (*kitprometheus.Counter, *kitprometheus.Summary) {
 	return counter, latency
 }
 
-func startHTTPService(port string, logger log.Logger, errs chan error) {
+func startHTTPService(port string, logger logger.Logger, errs chan error) {
 	p := fmt.Sprintf(":%s", port)
 	logger.Info(fmt.Sprintf("Mongodb writer service started, exposed port %s", p))
 	errs <- http.ListenAndServe(p, mongodb.MakeHandler())

@@ -17,19 +17,20 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable              | Description                              | Default        |
-|-----------------------|------------------------------------------|----------------|
-| MF_THINGS_DB_HOST     | Database host address                    | localhost      |
-| MF_THINGS_DB_PORT     | Database host port                       | 5432           |
-| MF_THINGS_DB_USER     | Database user                            | mainflux       |
-| MF_THINGS_DB_PASS     | Database password                        | mainflux       |
-| MF_THINGS_DB          | Name of the database used by the service | things         |
-| MF_THINGS_CACHE_URL   | Cache database URL                       | localhost:6379 |
-| MF_THINGS_CACHE_PASS  | Cache database password                  |                |
-| MF_THINGS_CACHE_DB    | Cache instance that should be used       | 0              |
-| MF_THINGS_HTTP_PORT   | Things service HTTP port                 | 8180           |
-| MF_THINGS_GRPC_PORT   | Things service gRPC port                 | 8181           |
-| MF_USERS_URL          | Users service URL                        | localhost:8181 |
+| Variable              | Description                                     | Default        |
+|-----------------------|-------------------------------------------------|----------------|
+| MF_THINGS_LOG_LEVEL   | Log level for Things (debug, info, warn, error) | error          |
+| MF_THINGS_DB_HOST     | Database host address                           | localhost      |
+| MF_THINGS_DB_PORT     | Database host port                              | 5432           |
+| MF_THINGS_DB_USER     | Database user                                   | mainflux       |
+| MF_THINGS_DB_PASS     | Database password                               | mainflux       |
+| MF_THINGS_DB          | Name of the database used by the service        | things         |
+| MF_THINGS_CACHE_URL   | Cache database URL                              | localhost:6379 |
+| MF_THINGS_CACHE_PASS  | Cache database password                         |                |
+| MF_THINGS_CACHE_DB    | Cache instance that should be used              | 0              |
+| MF_THINGS_HTTP_PORT   | Things service HTTP port                        | 8180           |
+| MF_THINGS_GRPC_PORT   | Things service gRPC port                        | 8181           |
+| MF_USERS_URL          | Users service URL                               | localhost:8181 |
 
 ## Deployment
 
@@ -46,6 +47,7 @@ services:
     ports:
       - [host machine port]:[configured HTTP port]
     environment:
+      MF_THINGS_LOG_LEVEL: [Things log level]
       MF_THINGS_DB_HOST: [Database host address]
       MF_THINGS_DB_PORT: [Database host port]
       MF_THINGS_DB_USER: [Database user]
@@ -75,7 +77,7 @@ make things
 make install
 
 # set the environment variables and run the service
-MF_THINGS_DB_HOST=[Database host address] MF_THINGS_DB_PORT=[Database host port] MF_THINGS_DB_USER=[Database user] MF_THINGS_DB_PASS=[Database password] MF_THINGS_DB=[Name of the database used by the service] MF_THINGS_CACHE_URL=[Cache database URL] MF_THINGS_CACHE_PASS=[Cache database password] MF_THINGS_CACHE_DB=[Cache instance that should be used] MF_THINGS_HTTP_PORT=[Service HTTP port] MF_THINGS_GRPC_PORT=[Service gRPC port] MF_USERS_URL=[Users service URL] $GOBIN/mainflux-things
+MF_THINGS_LOG_LEVEL=[Things log level] MF_THINGS_DB_HOST=[Database host address] MF_THINGS_DB_PORT=[Database host port] MF_THINGS_DB_USER=[Database user] MF_THINGS_DB_PASS=[Database password] MF_THINGS_DB=[Name of the database used by the service] MF_THINGS_CACHE_URL=[Cache database URL] MF_THINGS_CACHE_PASS=[Cache database password] MF_THINGS_CACHE_DB=[Cache instance that should be used] MF_THINGS_HTTP_PORT=[Service HTTP port] MF_THINGS_GRPC_PORT=[Service gRPC port] MF_USERS_URL=[Users service URL] $GOBIN/mainflux-things
 ```
 
 ## Usage

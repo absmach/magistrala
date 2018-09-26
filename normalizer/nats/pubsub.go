@@ -14,7 +14,7 @@ import (
 	"github.com/mainflux/mainflux"
 	log "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/normalizer"
-	nats "github.com/nats-io/go-nats"
+	"github.com/nats-io/go-nats"
 )
 
 const (

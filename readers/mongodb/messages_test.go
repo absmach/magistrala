@@ -39,7 +39,7 @@ var (
 		Publisher: 1,
 		Protocol:  "mqtt",
 	}
-	testLog = log.New(os.Stdout)
+	testLog, _ = log.New(os.Stdout, log.Info.String())
 )
 
 func TestReadAll(t *testing.T) {

@@ -63,6 +63,8 @@ function startMqtt() {
 
 nats.subscribe('channel.*', function (msg) {
     var m = message.RawMessage.decode(Buffer.from(msg)),
+        packet;
+    if (m && m.Protocol !== 'mqtt') {
         packet = {
             cmd: 'publish',
             qos: 2,
@@ -71,7 +73,8 @@ nats.subscribe('channel.*', function (msg) {
             retain: false
         };
 
-    aedes.publish(packet);
+        aedes.publish(packet);
+    }
 });
 
 aedes.authorizePublish = function (client, packet, publish) {
@@ -100,8 +103,6 @@ aedes.authorizePublish = function (client, packet, publish) {
                 });
                 nats.publish('channel.' + channelId, rawMsg);
 
-                // Set empty topic for packet so that it won't be published two times.
-                packet.topic = '';
                 publish(0);
             } else {
                 logger.warn("unauthorized publish: %s", err.message);

@@ -8,6 +8,7 @@
 package influxdb
 
 import (
+	"errors"
 	"strconv"
 	"sync"
 	"time"
@@ -21,6 +22,11 @@ import (
 const pointName = "messages"
 
 var _ writers.MessageRepository = (*influxRepo)(nil)
+
+var (
+	errZeroValueSize    = errors.New("zero value batch size")
+	errZeroValueTimeout = errors.New("zero value batch timeout")
+)
 
 type influxRepo struct {
 	client    influxdata.Client
@@ -36,6 +42,14 @@ type tags map[string]string
 
 // New returns new InfluxDB writer.
 func New(client influxdata.Client, database string, batchSize int, batchTimeout time.Duration) (writers.MessageRepository, error) {
+	if batchSize == 0 {
+		return &influxRepo{}, errZeroValueSize
+	}
+
+	if batchTimeout == 0 {
+		return &influxRepo{}, errZeroValueTimeout
+	}
+
 	repo := &influxRepo{
 		client: client,
 		cfg: influxdata.BatchPointsConfig{

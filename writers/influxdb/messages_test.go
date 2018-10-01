@@ -75,6 +75,37 @@ func queryDB(cmd string) ([][]interface{}, error) {
 	return response.Results[0].Series[0].Values, nil
 }
 
+func TestNewWriter(t *testing.T) {
+	client, err := influxdata.NewHTTPClient(clientCfg)
+	require.Nil(t, err, fmt.Sprintf("Creating new InfluxDB client expected to succeed: %s.\n", err))
+
+	cases := []struct {
+		desc         string
+		batchSize    int
+		err          error
+		batchTimeout time.Duration
+		errText      string
+	}{
+		{
+			desc:         "Create writer with zero value batch size",
+			batchSize:    0,
+			batchTimeout: time.Duration(5 * time.Second),
+			errText:      "zero value batch size",
+		},
+		{
+			desc:         "Create writer with zero value batch timeout",
+			batchSize:    5,
+			batchTimeout: time.Duration(0 * time.Second),
+			errText:      "zero value batch timeout",
+		},
+	}
+
+	for _, tc := range cases {
+		_, err := writer.New(client, testDB, tc.batchSize, tc.batchTimeout)
+		assert.Equal(t, tc.errText, err.Error(), fmt.Sprintf("%s expected to have error \"%s\", but got \"%s\"", tc.desc, tc.errText, err))
+	}
+}
+
 func TestSave(t *testing.T) {
 	client, err := influxdata.NewHTTPClient(clientCfg)
 	require.Nil(t, err, fmt.Sprintf("Creating new InfluxDB client expected to succeed: %s.\n", err))

@@ -128,14 +128,16 @@ func main() {
 
 func loadConfigs() (config, influxdata.HTTPConfig) {
 	cfg := config{
-		NatsURL:  mainflux.Env(envNatsURL, defNatsURL),
-		LogLevel: mainflux.Env(envLogLevel, defLogLevel),
-		Port:     mainflux.Env(envPort, defPort),
-		DBName:   mainflux.Env(envDBName, defDBName),
-		DBHost:   mainflux.Env(envDBHost, defDBHost),
-		DBPort:   mainflux.Env(envDBPort, defDBPort),
-		DBUser:   mainflux.Env(envDBUser, defDBUser),
-		DBPass:   mainflux.Env(envDBPass, defDBPass),
+		NatsURL:      mainflux.Env(envNatsURL, defNatsURL),
+		LogLevel:     mainflux.Env(envLogLevel, defLogLevel),
+		Port:         mainflux.Env(envPort, defPort),
+		BatchSize:    mainflux.Env(envBatchSize, defBatchSize),
+		BatchTimeout: mainflux.Env(envBatchTimeout, defBatchTimeout),
+		DBName:       mainflux.Env(envDBName, defDBName),
+		DBHost:       mainflux.Env(envDBHost, defDBHost),
+		DBPort:       mainflux.Env(envDBPort, defDBPort),
+		DBUser:       mainflux.Env(envDBUser, defDBUser),
+		DBPass:       mainflux.Env(envDBPass, defDBPass),
 	}
 
 	clientCfg := influxdata.HTTPConfig{

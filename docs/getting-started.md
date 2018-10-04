@@ -346,11 +346,13 @@ From the project root execute the following command:
 docker-compose -f docker/addons/influxdb-writer/docker-compose.yml up -d
 ``` 
 This will install and start:
+
 - [InfluxDB](https://docs.influxdata.com/influxdb) - time series database
 - InfluxDB writer - message repository implementation for InfluxDB
 - [Grafana](https://grafana.com) - tool for database exploration and data visualization and analytics
 
 Those new services will take some additional ports:
+
 - 8086 by InfluxDB
 - 8900 by InfluxDB writer service
 - 3001 by Grafana

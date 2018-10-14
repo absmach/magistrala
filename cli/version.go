@@ -8,8 +8,6 @@
 package cli
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
@@ -17,15 +15,14 @@ func NewVersionCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
 		Short: "Get version of Mainflux Things Service",
-		Long:  `Mainflux server health checkt.`,
+		Long:  `Mainflux server health check`,
 		Run: func(cmd *cobra.Command, args []string) {
-			Version()
+			v, err := sdk.Version()
+			if err != nil {
+				logError(err)
+				return
+			}
+			dump(v)
 		},
 	}
-}
-
-// Version - server health check
-func Version() {
-	url := fmt.Sprintf("%s/version", serverAddr)
-	FormatResLog(httpClient.Get(url))
 }

@@ -5,7 +5,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-package cli
+package sdk
 
 import (
 	"crypto/tls"
@@ -15,37 +15,34 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 
 	"github.com/mainflux/mainflux"
 )
 
 const (
+	contentTypeJSON      = "application/json"
+	contentTypeSenMLJSON = "application/senml+json"
+	contentTypeBinary    = "application/octet-stream"
+
 	defCertsPath = "/src/github.com/mainflux/mainflux/docker/ssl/certs/"
-	envCertFile  = "MF_CERT_FILE"
-	envKeyFile   = "MF_KEY_FILE"
-	envCaFile    = "MF_CA_FILE"
+
+	envCertFile = "MF_CERT_FILE"
+	envKeyFile  = "MF_KEY_FILE"
+	envCaFile   = "MF_CA_FILE"
 )
 
 var (
-	httpClient = &http.Client{}
-	serverAddr = fmt.Sprintf("https://%s", "localhost")
-
 	defCertFile = fmt.Sprintf("%s%s%s", os.Getenv("GOPATH"), defCertsPath, "mainflux-server.crt")
 	defKeyFile  = fmt.Sprintf("%s%s%s", os.Getenv("GOPATH"), defCertsPath, "mainflux-server.key")
 	defCaFile   = fmt.Sprintf("%s%s%s", os.Getenv("GOPATH"), defCertsPath, "ca.crt")
+
+	limit  = 10
+	offset = 0
 )
 
-// SetServerAddr - set addr using host and port
-func SetServerAddr(proto string, host string, port int) {
-	serverAddr = fmt.Sprintf("%s://%s", proto, host)
-
-	if port != 0 {
-		serverAddr = fmt.Sprintf("%s:%s", serverAddr, strconv.Itoa(port))
-	}
-}
-
-func SetCerts() {
+// setCerts - set TLS certs
+// Certs are provided via MF_CERT_FILE, MF_KEY_FILE and MF_CA_FILE env vars
+func setCerts() *http.Client {
 	// Set certificates paths
 	certFile := mainflux.Env(envCertFile, defCertFile)
 	keyFile := mainflux.Env(envKeyFile, defKeyFile)
@@ -72,5 +69,5 @@ func SetCerts() {
 	}
 	tlsConfig.BuildNameToCertificate()
 	transport := &http.Transport{TLSClientConfig: tlsConfig}
-	httpClient = &http.Client{Transport: transport}
+	return &http.Client{Transport: transport}
 }

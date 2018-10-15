@@ -30,7 +30,7 @@ services:
       - mainflux-base-net
 
   nats:
-    image: nats:1.1.0
+    image: nats:1.3.0
     container_name: mainflux-nats
     restart: on-failure
     networks:

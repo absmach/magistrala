@@ -159,7 +159,7 @@ Mainflux uses NATS as it's central message bus. For development purposes (when n
 To do this execute:
 
 ```
-go get github.com/nats-io/go-nats
+go get github.com/nats-io/gnatsd
 ```
 
 This will install `gnatsd` binary that can be simply run by executing:

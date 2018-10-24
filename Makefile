@@ -74,5 +74,8 @@ release:
 	docker tag mainflux/mqtt mainflux/mqtt:$(version)
 	$(call docker_push,$(version))
 
-run:
+rundev:
 	cd scripts && ./run.sh
+
+run:
+	docker-compose -f docker/docker-compose.yml up

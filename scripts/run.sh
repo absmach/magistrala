@@ -30,29 +30,29 @@ gnatsd &
 ###
 # Users
 ###
-$BUILD_DIR/mainflux-users &
+MF_USERS_LOG_LEVEL=info $BUILD_DIR/mainflux-users &
 
 ###
 # Things
 ###
-MF_THINGS_HTTP_PORT=8182 MF_THINGS_GRPC_PORT=8183 $BUILD_DIR/mainflux-things &
+MF_THINGS_LOG_LEVEL=info MF_THINGS_HTTP_PORT=8182 MF_THINGS_GRPC_PORT=8183 $BUILD_DIR/mainflux-things &
 
 ###
 # HTTP
 ###
-MF_HTTP_ADAPTER_PORT=8185 MF_THINGS_URL=localhost:8183 $BUILD_DIR/mainflux-http &
+MF_HTTP_ADAPTER_LOG_LEVEL=info MF_HTTP_ADAPTER_PORT=8185 MF_THINGS_URL=localhost:8183 $BUILD_DIR/mainflux-http &
 
 ###
 # WS
 ###
-MF_WS_ADAPTER_PORT=8186 MF_THINGS_URL=localhost:8183 $BUILD_DIR/mainflux-ws &
+MF_WS_ADAPTER_LOG_LEVEL=info MF_WS_ADAPTER_PORT=8186 MF_THINGS_URL=localhost:8183 $BUILD_DIR/mainflux-ws &
 
 ###
 # MQTT
 ###
 # Switch to top dir to find *.proto stuff when running MQTT broker
 cd ..
-MF_THINGS_URL=localhost:8183 node mqtt/mqtt.js &
+MF_MQTT_ADAPTER_LOG_LEVEL=info MF_THINGS_URL=localhost:8183 node mqtt/mqtt.js &
 cd -
 
 ###

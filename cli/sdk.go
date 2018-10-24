@@ -7,13 +7,12 @@
 
 package cli
 
-import (
-	mfxsdk "github.com/mainflux/mainflux/sdk/go"
-)
+import mfxsdk "github.com/mainflux/mainflux/sdk/go"
 
 // Keep SDK handle in global var
-var sdk *mfxsdk.MfxSDK
+var sdk mfxsdk.SDK
 
-func SetSDK(s *mfxsdk.MfxSDK) {
+// SetSDK sets mainflux SDK instance.
+func SetSDK(s mfxsdk.SDK) {
 	sdk = s
 }

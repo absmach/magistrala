@@ -68,7 +68,7 @@ func (lm *loggingMiddleware) ViewThing(key string, id uint64) (thing things.Thin
 	return lm.svc.ViewThing(key, id)
 }
 
-func (lm *loggingMiddleware) ListThings(key string, offset, limit int) (things []things.Thing, err error) {
+func (lm *loggingMiddleware) ListThings(key string, offset, limit uint64) (things []things.Thing, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list_things for key %s took %s to complete", key, time.Since(begin))
 		if err != nil {
@@ -133,7 +133,7 @@ func (lm *loggingMiddleware) ViewChannel(key string, id uint64) (channel things.
 	return lm.svc.ViewChannel(key, id)
 }
 
-func (lm *loggingMiddleware) ListChannels(key string, offset, limit int) (channels []things.Channel, err error) {
+func (lm *loggingMiddleware) ListChannels(key string, offset, limit uint64) (channels []things.Channel, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list_channels for key %s took %s to complete", key, time.Since(begin))
 		if err != nil {

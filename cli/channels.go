@@ -8,6 +8,9 @@
 package cli
 
 import (
+	"encoding/json"
+
+	mfxsdk "github.com/mainflux/mainflux/sdk/go"
 	"github.com/spf13/cobra"
 )
 
@@ -21,12 +24,20 @@ var cmdChannels = []cobra.Command{
 				logUsage(cmd.Short)
 				return
 			}
-			id, err := sdk.CreateChannel(args[0], args[1])
+
+			var channel mfxsdk.Channel
+			if err := json.Unmarshal([]byte(args[0]), &channel); err != nil {
+				logError(err)
+				return
+			}
+
+			id, err := sdk.CreateChannel(channel, args[1])
 			if err != nil {
 				logError(err)
 				return
 			}
-			dump(id)
+
+			flush(id)
 		},
 	},
 	cobra.Command{
@@ -38,36 +49,48 @@ var cmdChannels = []cobra.Command{
 				logUsage(cmd.Short)
 				return
 			}
+
 			if args[0] == "all" {
-				l, err := sdk.Channels(args[1])
+				l, err := sdk.Channels(args[1], uint64(Offset), uint64(Limit))
 				if err != nil {
 					logError(err)
 					return
 				}
-				dump(l)
+
+				flush(l)
 				return
 			}
+
 			c, err := sdk.Channel(args[0], args[1])
 			if err != nil {
 				logError(err)
 				return
 			}
-			dump(c)
+
+			flush(c)
 		},
 	},
 	cobra.Command{
 		Use:   "update",
-		Short: "update <channel_id> <JSON_string> <user_auth_token>",
+		Short: "update <JSON_string> <user_auth_token>",
 		Long:  `Updates channel record`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
 				logUsage(cmd.Short)
 				return
 			}
-			if err := sdk.UpdateChannel(args[0], args[1], args[2]); err != nil {
+
+			var channel mfxsdk.Channel
+			if err := json.Unmarshal([]byte(args[0]), &channel); err != nil {
 				logError(err)
 				return
 			}
+
+			if err := sdk.UpdateChannel(channel, args[1]); err != nil {
+				logError(err)
+				return
+			}
+
 			logOK()
 		},
 	},
@@ -80,15 +103,18 @@ var cmdChannels = []cobra.Command{
 				logUsage(cmd.Short)
 				return
 			}
+
 			if err := sdk.DeleteChannel(args[0], args[1]); err != nil {
 				logError(err)
 				return
 			}
+
 			logOK()
 		},
 	},
 }
 
+// NewChannelsCmd returns channels command.
 func NewChannelsCmd() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "channels",

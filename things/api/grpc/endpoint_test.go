@@ -47,10 +47,30 @@ func TestCanAccess(t *testing.T) {
 		thingID uint64
 		code    codes.Code
 	}{
-		"check if connected thing can access existing channel":             {key: cth.Key, chanID: sch.ID, thingID: cth.ID, code: codes.OK},
-		"check if unconnected thing can access existing channel":           {key: oth.Key, chanID: sch.ID, thingID: wrongID, code: codes.PermissionDenied},
-		"check if thing with wrong access key can access existing channel": {key: wrong, chanID: sch.ID, thingID: wrongID, code: codes.PermissionDenied},
-		"check if connected thing can access non-existent channel":         {key: cth.Key, chanID: wrongID, thingID: wrongID, code: codes.InvalidArgument},
+		"check if connected thing can access existing channel": {
+			key:     cth.Key,
+			chanID:  sch.ID,
+			thingID: cth.ID,
+			code:    codes.OK,
+		},
+		"check if unconnected thing can access existing channel": {
+			key:     oth.Key,
+			chanID:  sch.ID,
+			thingID: wrongID,
+			code:    codes.PermissionDenied,
+		},
+		"check if thing with wrong access key can access existing channel": {
+			key:     wrong,
+			chanID:  sch.ID,
+			thingID: wrongID,
+			code:    codes.PermissionDenied,
+		},
+		"check if connected thing can access non-existent channel": {
+			key:     cth.Key,
+			chanID:  wrongID,
+			thingID: wrongID,
+			code:    codes.InvalidArgument,
+		},
 	}
 
 	for desc, tc := range cases {
@@ -76,8 +96,16 @@ func TestIdentify(t *testing.T) {
 		id   uint64
 		code codes.Code
 	}{
-		"identify existing thing":     {key: sth.Key, id: sth.ID, code: codes.OK},
-		"identify non-existent thing": {key: wrong, id: wrongID, code: codes.PermissionDenied},
+		"identify existing thing": {
+			key:  sth.Key,
+			id:   sth.ID,
+			code: codes.OK,
+		},
+		"identify non-existent thing": {
+			key:  wrong,
+			id:   wrongID,
+			code: codes.PermissionDenied,
+		},
 	}
 
 	for desc, tc := range cases {

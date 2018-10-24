@@ -22,9 +22,7 @@ const (
 	wrongValue = "wrong-value"
 )
 
-var (
-	cacheClient *redis.Client
-)
+var cacheClient *redis.Client
 
 func TestMain(m *testing.M) {
 	pool, err := dockertest.NewPool("")

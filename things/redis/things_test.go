@@ -34,8 +34,18 @@ func TestThingSave(t *testing.T) {
 		key  string
 		err  error
 	}{
-		{desc: "Save thing to cache", ID: id, key: key, err: nil},
-		{desc: "Save already cached thing to cache", ID: id2, key: key, err: nil},
+		{
+			desc: "Save thing to cache",
+			ID:   id,
+			key:  key,
+			err:  nil,
+		},
+		{
+			desc: "Save already cached thing to cache",
+			ID:   id2,
+			key:  key,
+			err:  nil,
+		},
 	}
 
 	for _, tc := range cases {
@@ -58,8 +68,16 @@ func TestThingID(t *testing.T) {
 		key string
 		err error
 	}{
-		"Get ID by existing thing-key":     {ID: id, key: key, err: nil},
-		"Get ID by non-existing thing-key": {ID: 0, key: wrongValue, err: r.Nil},
+		"Get ID by existing thing-key": {
+			ID:  id,
+			key: key,
+			err: nil,
+		},
+		"Get ID by non-existing thing-key": {
+			ID:  0,
+			key: wrongValue,
+			err: r.Nil,
+		},
 	}
 
 	for desc, tc := range cases {
@@ -82,8 +100,16 @@ func TestThingRemove(t *testing.T) {
 		ID   uint64
 		err  error
 	}{
-		{desc: "Remove existing thing from cache", ID: id, err: nil},
-		{desc: "Remove non-existing thing from cache", ID: id2, err: r.Nil},
+		{
+			desc: "Remove existing thing from cache",
+			ID:   id,
+			err:  nil,
+		},
+		{
+			desc: "Remove non-existing thing from cache",
+			ID:   id2,
+			err:  r.Nil,
+		},
 	}
 
 	for _, tc := range cases {

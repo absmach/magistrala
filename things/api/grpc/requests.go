@@ -7,9 +7,7 @@
 
 package grpc
 
-import (
-	"github.com/mainflux/mainflux/things"
-)
+import "github.com/mainflux/mainflux/things"
 
 type accessReq struct {
 	thingKey string

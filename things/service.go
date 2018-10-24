@@ -48,7 +48,7 @@ type Service interface {
 
 	// ListThings retrieves data about subset of things that belongs to the
 	// user identified by the provided key.
-	ListThings(string, int, int) ([]Thing, error)
+	ListThings(string, uint64, uint64) ([]Thing, error)
 
 	// RemoveThing removes the thing identified with the provided ID, that
 	// belongs to the user identified by the provided key.
@@ -67,7 +67,7 @@ type Service interface {
 
 	// ListChannels retrieves data about subset of channels that belongs to the
 	// user identified by the provided key.
-	ListChannels(string, int, int) ([]Channel, error)
+	ListChannels(string, uint64, uint64) ([]Channel, error)
 
 	// RemoveChannel removes the thing identified by the provided ID, that
 	// belongs to the user identified by the provided key.
@@ -112,6 +112,10 @@ func New(users mainflux.UsersServiceClient, things ThingRepository, channels Cha
 }
 
 func (ts *thingsService) AddThing(key string, thing Thing) (Thing, error) {
+	if err := thing.Validate(); err != nil {
+		return Thing{}, ErrMalformedEntity
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
@@ -133,6 +137,10 @@ func (ts *thingsService) AddThing(key string, thing Thing) (Thing, error) {
 }
 
 func (ts *thingsService) UpdateThing(key string, thing Thing) error {
+	if err := thing.Validate(); err != nil {
+		return ErrMalformedEntity
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
@@ -158,7 +166,7 @@ func (ts *thingsService) ViewThing(key string, id uint64) (Thing, error) {
 	return ts.things.RetrieveByID(res.GetValue(), id)
 }
 
-func (ts *thingsService) ListThings(key string, offset, limit int) ([]Thing, error) {
+func (ts *thingsService) ListThings(key string, offset, limit uint64) ([]Thing, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
@@ -228,7 +236,7 @@ func (ts *thingsService) ViewChannel(key string, id uint64) (Channel, error) {
 	return ts.channels.RetrieveByID(res.GetValue(), id)
 }
 
-func (ts *thingsService) ListChannels(key string, offset, limit int) ([]Channel, error) {
+func (ts *thingsService) ListChannels(key string, offset, limit uint64) ([]Channel, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 

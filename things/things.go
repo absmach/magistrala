@@ -12,12 +12,12 @@ import "strings"
 // Thing represents a Mainflux thing. Each thing is owned by one user, and
 // it is assigned with the unique identifier and (temporary) access key.
 type Thing struct {
-	ID       uint64 `json:"id"`
-	Owner    string `json:"-"`
-	Type     string `json:"type"`
-	Name     string `json:"name,omitempty"`
-	Key      string `json:"key"`
-	Metadata string `json:"metadata,omitempty"`
+	ID       uint64
+	Owner    string
+	Type     string
+	Name     string
+	Key      string
+	Metadata string
 }
 
 var thingTypes = map[string]bool{
@@ -52,7 +52,7 @@ type ThingRepository interface {
 	RetrieveByKey(string) (uint64, error)
 
 	// RetrieveAll retrieves the subset of things owned by the specified user.
-	RetrieveAll(string, int, int) []Thing
+	RetrieveAll(string, uint64, uint64) []Thing
 
 	// Remove removes the thing having the provided identifier, that is owned
 	// by the specified user.

@@ -7,10 +7,9 @@
 
 package cli
 
-import (
-	"github.com/spf13/cobra"
-)
+import "github.com/spf13/cobra"
 
+// NewVersionCmd returns version command.
 func NewVersionCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
@@ -22,7 +21,8 @@ func NewVersionCmd() *cobra.Command {
 				logError(err)
 				return
 			}
-			dump(v)
+
+			flush(v)
 		},
 	}
 }

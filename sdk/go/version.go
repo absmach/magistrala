@@ -12,33 +12,34 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-
-	"github.com/mainflux/mainflux"
 )
 
-// Version - server health check
-func (sdk *MfxSDK) Version() (mainflux.VersionInfo, error) {
+type version struct {
+	Value string `json:"version"`
+}
+
+func (sdk mfSDK) Version() (string, error) {
 	url := fmt.Sprintf("%s/version", sdk.url)
 
-	resp, err := sdk.httpClient.Get(url)
+	resp, err := sdk.client.Get(url)
 	if err != nil {
-		return mainflux.VersionInfo{}, err
+		return "", err
 	}
-
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return mainflux.VersionInfo{}, err
+		return "", err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return mainflux.VersionInfo{}, fmt.Errorf("%d", resp.StatusCode)
+		return "", fmt.Errorf("%d", resp.StatusCode)
 	}
 
-	var ver mainflux.VersionInfo
+	var ver version
 	if err := json.Unmarshal(body, &ver); err != nil {
-		return mainflux.VersionInfo{}, err
+		return "", err
 	}
-	return ver, nil
+
+	return ver.Value, nil
 }

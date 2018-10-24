@@ -8,6 +8,9 @@
 package cli
 
 import (
+	"encoding/json"
+
+	mfxsdk "github.com/mainflux/mainflux/sdk/go"
 	"github.com/spf13/cobra"
 )
 
@@ -23,12 +26,20 @@ var cmdThings = []cobra.Command{
 				logUsage(cmd.Short)
 				return
 			}
-			id, err := sdk.CreateThing(args[0], args[1])
+
+			var thing mfxsdk.Thing
+			if err := json.Unmarshal([]byte(args[0]), &thing); err != nil {
+				logError(err)
+				return
+			}
+
+			id, err := sdk.CreateThing(thing, args[1])
 			if err != nil {
 				logError(err)
 				return
 			}
-			dump(id)
+
+			flush(id)
 		},
 	},
 	cobra.Command{
@@ -40,21 +51,24 @@ var cmdThings = []cobra.Command{
 				logUsage(cmd.Short)
 				return
 			}
+
 			if args[0] == "all" {
-				l, err := sdk.Things(args[1])
+				l, err := sdk.Things(args[1], uint64(Offset), uint64(Limit))
 				if err != nil {
 					logError(err)
 					return
 				}
-				dump(l)
+				flush(l)
 				return
 			}
+
 			t, err := sdk.Thing(args[0], args[1])
 			if err != nil {
 				logError(err)
 				return
 			}
-			dump(t)
+
+			flush(t)
 		},
 	},
 	cobra.Command{
@@ -66,26 +80,36 @@ var cmdThings = []cobra.Command{
 				logUsage(cmd.Short)
 				return
 			}
+
 			if err := sdk.DeleteThing(args[0], args[1]); err != nil {
 				logError(err)
 				return
 			}
+
 			logOK()
 		},
 	},
 	cobra.Command{
 		Use:   "update",
-		Short: "update <thing_id> <JSON_string> <user_auth_token>",
+		Short: "update <JSON_string> <user_auth_token>",
 		Long:  `Update thing record`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
 				logUsage(cmd.Short)
 				return
 			}
-			if err := sdk.UpdateThing(args[0], args[1], args[2]); err != nil {
+
+			var thing mfxsdk.Thing
+			if err := json.Unmarshal([]byte(args[0]), &thing); err != nil {
 				logError(err)
 				return
 			}
+
+			if err := sdk.UpdateThing(thing, args[1]); err != nil {
+				logError(err)
+				return
+			}
+
 			logOK()
 		},
 	},
@@ -98,10 +122,12 @@ var cmdThings = []cobra.Command{
 				logUsage(cmd.Short)
 				return
 			}
+
 			if err := sdk.ConnectThing(args[0], args[1], args[2]); err != nil {
 				logError(err)
 				return
 			}
+
 			logOK()
 		},
 	},
@@ -114,15 +140,18 @@ var cmdThings = []cobra.Command{
 				logUsage(cmd.Short)
 				return
 			}
+
 			if err := sdk.DisconnectThing(args[0], args[1], args[2]); err != nil {
 				logError(err)
 				return
 			}
+
 			logOK()
 		},
 	},
 }
 
+// NewThingsCmd returns things command.
 func NewThingsCmd() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "things",

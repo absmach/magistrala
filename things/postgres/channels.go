@@ -99,7 +99,7 @@ func (cr channelRepository) RetrieveByID(owner string, id uint64) (things.Channe
 	return channel, nil
 }
 
-func (cr channelRepository) RetrieveAll(owner string, offset, limit int) []things.Channel {
+func (cr channelRepository) RetrieveAll(owner string, offset, limit uint64) []things.Channel {
 	q := `SELECT id, name FROM channels WHERE owner = $1 ORDER BY id LIMIT $2 OFFSET $3`
 	items := []things.Channel{}
 

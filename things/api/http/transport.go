@@ -133,14 +133,9 @@ func decodeThingCreation(_ context.Context, r *http.Request) (interface{}, error
 		return nil, errUnsupportedContentType
 	}
 
-	var thing things.Thing
-	if err := json.NewDecoder(r.Body).Decode(&thing); err != nil {
+	req := addThingReq{key: r.Header.Get("Authorization")}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
-	}
-
-	req := addThingReq{
-		key:   r.Header.Get("Authorization"),
-		thing: thing,
 	}
 
 	return req, nil
@@ -151,20 +146,12 @@ func decodeThingUpdate(_ context.Context, r *http.Request) (interface{}, error) 
 		return nil, errUnsupportedContentType
 	}
 
-	var thing things.Thing
-	if err := json.NewDecoder(r.Body).Decode(&thing); err != nil {
-		return nil, err
-	}
-
-	id, err := things.FromString(bone.GetValue(r, "id"))
-	if err != nil {
-		return nil, err
-	}
-
 	req := updateThingReq{
-		key:   r.Header.Get("Authorization"),
-		id:    id,
-		thing: thing,
+		key: r.Header.Get("Authorization"),
+		id:  bone.GetValue(r, "id"),
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
 	}
 
 	return req, nil
@@ -175,14 +162,9 @@ func decodeChannelCreation(_ context.Context, r *http.Request) (interface{}, err
 		return nil, errUnsupportedContentType
 	}
 
-	var channel things.Channel
-	if err := json.NewDecoder(r.Body).Decode(&channel); err != nil {
+	req := createChannelReq{key: r.Header.Get("Authorization")}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
-	}
-
-	req := createChannelReq{
-		key:     r.Header.Get("Authorization"),
-		channel: channel,
 	}
 
 	return req, nil
@@ -193,34 +175,21 @@ func decodeChannelUpdate(_ context.Context, r *http.Request) (interface{}, error
 		return nil, errUnsupportedContentType
 	}
 
-	var channel things.Channel
-	if err := json.NewDecoder(r.Body).Decode(&channel); err != nil {
-		return nil, err
-	}
-
-	id, err := things.FromString(bone.GetValue(r, "id"))
-	if err != nil {
-		return nil, err
-	}
-
 	req := updateChannelReq{
-		key:     r.Header.Get("Authorization"),
-		id:      id,
-		channel: channel,
+		key: r.Header.Get("Authorization"),
+		id:  bone.GetValue(r, "id"),
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
 	}
 
 	return req, nil
 }
 
 func decodeView(_ context.Context, r *http.Request) (interface{}, error) {
-	id, err := things.FromString(bone.GetValue(r, "id"))
-	if err != nil {
-		return nil, err
-	}
-
 	req := viewResourceReq{
 		key: r.Header.Get("Authorization"),
-		id:  id,
+		id:  bone.GetValue(r, "id"),
 	}
 
 	return req, nil
@@ -231,8 +200,8 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 	if err != nil {
 		return nil, errInvalidQueryParams
 	}
-	offset := 0
-	limit := 10
+	offset := uint64(0)
+	limit := uint64(10)
 
 	off, lmt := q["offset"], q["limit"]
 
@@ -241,18 +210,19 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 	}
 
 	if len(off) == 1 {
-		offset, err = strconv.Atoi(off[0])
+		offset, err = strconv.ParseUint(off[0], 10, 64)
 		if err != nil {
 			return nil, errInvalidQueryParams
 		}
 	}
 
 	if len(lmt) == 1 {
-		limit, err = strconv.Atoi(lmt[0])
+		limit, err = strconv.ParseUint(lmt[0], 10, 64)
 		if err != nil {
 			return nil, errInvalidQueryParams
 		}
 	}
+
 	req := listResourcesReq{
 		key:    r.Header.Get("Authorization"),
 		offset: offset,
@@ -263,20 +233,10 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func decodeConnection(_ context.Context, r *http.Request) (interface{}, error) {
-	thingID, err := things.FromString(bone.GetValue(r, "thingId"))
-	if err != nil {
-		return nil, err
-	}
-
-	chanID, err := things.FromString(bone.GetValue(r, "chanId"))
-	if err != nil {
-		return nil, err
-	}
-
 	req := connectionReq{
 		key:     r.Header.Get("Authorization"),
-		chanID:  chanID,
-		thingID: thingID,
+		chanID:  bone.GetValue(r, "chanId"),
+		thingID: bone.GetValue(r, "thingId"),
 	}
 
 	return req, nil

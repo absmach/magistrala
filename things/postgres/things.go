@@ -90,7 +90,7 @@ func (tr thingRepository) RetrieveByKey(key string) (uint64, error) {
 	return id, nil
 }
 
-func (tr thingRepository) RetrieveAll(owner string, offset, limit int) []things.Thing {
+func (tr thingRepository) RetrieveAll(owner string, offset, limit uint64) []things.Thing {
 	q := `SELECT id, name, type, key, metadata FROM things WHERE owner = $1 ORDER BY id LIMIT $2 OFFSET $3`
 	items := []things.Thing{}
 

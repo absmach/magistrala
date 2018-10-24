@@ -21,7 +21,7 @@ var (
 	Offset uint
 )
 
-func dump(i interface{}) {
+func flush(i interface{}) {
 	fmt.Printf("%s", color.BlueString(spew.Sdump(i)))
 }
 

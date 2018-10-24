@@ -12,7 +12,6 @@ import (
 	"net/http"
 
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/things"
 )
 
 var (
@@ -61,7 +60,7 @@ func (res removeRes) Empty() bool {
 }
 
 type thingRes struct {
-	id      uint64
+	id      string
 	created bool
 }
 
@@ -76,7 +75,7 @@ func (res thingRes) Code() int {
 func (res thingRes) Headers() map[string]string {
 	if res.created {
 		return map[string]string{
-			"Location": fmt.Sprintf("/things/%d", res.id),
+			"Location": fmt.Sprintf("/things/%s", res.id),
 		}
 	}
 
@@ -88,7 +87,12 @@ func (res thingRes) Empty() bool {
 }
 
 type viewThingRes struct {
-	things.Thing
+	ID       string `json:"id"`
+	Owner    string `json:"-"`
+	Type     string `json:"type"`
+	Name     string `json:"name,omitempty"`
+	Key      string `json:"key"`
+	Metadata string `json:"metadata,omitempty"`
 }
 
 func (res viewThingRes) Code() int {
@@ -104,7 +108,7 @@ func (res viewThingRes) Empty() bool {
 }
 
 type listThingsRes struct {
-	Things []things.Thing `json:"things"`
+	Things []viewThingRes `json:"things"`
 }
 
 func (res listThingsRes) Code() int {
@@ -120,7 +124,7 @@ func (res listThingsRes) Empty() bool {
 }
 
 type channelRes struct {
-	id      uint64
+	id      string
 	created bool
 }
 
@@ -135,7 +139,7 @@ func (res channelRes) Code() int {
 func (res channelRes) Headers() map[string]string {
 	if res.created {
 		return map[string]string{
-			"Location": fmt.Sprintf("/channels/%d", res.id),
+			"Location": fmt.Sprintf("/channels/%s", res.id),
 		}
 	}
 
@@ -147,7 +151,10 @@ func (res channelRes) Empty() bool {
 }
 
 type viewChannelRes struct {
-	things.Channel
+	ID     string         `json:"id"`
+	Owner  string         `json:"-"`
+	Name   string         `json:"name,omitempty"`
+	Things []viewThingRes `json:"connected,omitempty"`
 }
 
 func (res viewChannelRes) Code() int {
@@ -163,7 +170,7 @@ func (res viewChannelRes) Empty() bool {
 }
 
 type listChannelsRes struct {
-	Channels []things.Channel `json:"channels"`
+	Channels []viewChannelRes `json:"channels"`
 }
 
 func (res listChannelsRes) Code() int {

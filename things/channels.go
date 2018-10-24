@@ -10,10 +10,10 @@ package things
 // Channel represents a Mainflux "communication group". This group contains the
 // things that can exchange messages between eachother.
 type Channel struct {
-	ID     uint64  `json:"id"`
-	Owner  string  `json:"-"`
-	Name   string  `json:"name,omitempty"`
-	Things []Thing `json:"connected,omitempty"`
+	ID     uint64
+	Owner  string
+	Name   string
+	Things []Thing
 }
 
 // ChannelRepository specifies a channel persistence API.
@@ -32,7 +32,7 @@ type ChannelRepository interface {
 	RetrieveByID(string, uint64) (Channel, error)
 
 	// RetrieveAll retrieves the subset of channels owned by the specified user.
-	RetrieveAll(string, int, int) []Channel
+	RetrieveAll(string, uint64, uint64) []Channel
 
 	// Remove removes the channel having the provided identifier, that is owned
 	// by the specified user.

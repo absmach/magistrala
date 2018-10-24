@@ -27,8 +27,16 @@ func TestConnect(t *testing.T) {
 		cid  uint64
 		tid  uint64
 	}{
-		{desc: "connect thing to channel", cid: cid, tid: tid},
-		{desc: "connect already connected thing to channel", cid: cid, tid: tid},
+		{
+			desc: "connect thing to channel",
+			cid:  cid,
+			tid:  tid,
+		},
+		{
+			desc: "connect already connected thing to channel",
+			cid:  cid,
+			tid:  tid,
+		},
 	}
 	for _, tc := range cases {
 		err := channelCache.Connect(cid, tid)
@@ -50,9 +58,21 @@ func TestHasThing(t *testing.T) {
 		tid       uint64
 		hasAccess bool
 	}{
-		"access check for thing that has access": {cid: cid, tid: tid, hasAccess: true},
-		"access check for thing without access":  {cid: cid, tid: cid, hasAccess: false},
-		"access check for non-existing channel":  {cid: tid, tid: tid, hasAccess: false},
+		"access check for thing that has access": {
+			cid:       cid,
+			tid:       tid,
+			hasAccess: true,
+		},
+		"access check for thing without access": {
+			cid:       cid,
+			tid:       cid,
+			hasAccess: false,
+		},
+		"access check for non-existing channel": {
+			cid:       tid,
+			tid:       tid,
+			hasAccess: false,
+		},
 	}
 
 	for desc, tc := range cases {
@@ -76,8 +96,18 @@ func TestDisconnect(t *testing.T) {
 		tid       uint64
 		hasAccess bool
 	}{
-		{desc: "disconnecting connected thing", cid: cid, tid: tid, hasAccess: false},
-		{desc: "disconnecting non-connected thing", cid: cid, tid: tid2, hasAccess: false},
+		{
+			desc:      "disconnecting connected thing",
+			cid:       cid,
+			tid:       tid,
+			hasAccess: false,
+		},
+		{
+			desc:      "disconnecting non-connected thing",
+			cid:       cid,
+			tid:       tid2,
+			hasAccess: false,
+		},
 	}
 	for _, tc := range cases {
 		err := channelCache.Disconnect(tc.cid, tc.tid)
@@ -105,8 +135,20 @@ func TestRemove(t *testing.T) {
 		err       error
 		hasAccess bool
 	}{
-		{desc: "Remove channel from cache", cid: cid, tid: tid, err: nil, hasAccess: false},
-		{desc: "Remove non-cached channel from cache", cid: cid2, tid: tid, err: nil, hasAccess: false},
+		{
+			desc:      "Remove channel from cache",
+			cid:       cid,
+			tid:       tid,
+			err:       nil,
+			hasAccess: false,
+		},
+		{
+			desc:      "Remove non-cached channel from cache",
+			cid:       cid2,
+			tid:       tid,
+			err:       nil,
+			hasAccess: false,
+		},
 	}
 
 	for _, tc := range cases {

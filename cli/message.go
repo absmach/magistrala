@@ -7,9 +7,7 @@
 
 package cli
 
-import (
-	"github.com/spf13/cobra"
-)
+import "github.com/spf13/cobra"
 
 const contentTypeSenml = "application/senml+json"
 
@@ -23,15 +21,18 @@ var cmdMessages = []cobra.Command{
 				logUsage(cmd.Short)
 				return
 			}
+
 			if err := sdk.SendMessage(args[0], args[1], args[2]); err != nil {
 				logError(err)
 				return
 			}
+
 			logOK()
 		},
 	},
 }
 
+// NewMessagesCmd returns messages command.
 func NewMessagesCmd() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "msg",

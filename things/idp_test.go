@@ -24,10 +24,26 @@ func TestFromString(t *testing.T) {
 		out uint64
 		err error
 	}{
-		"from valid number":     {in: big, out: math.MaxUint64, err: nil},
-		"from negative number":  {in: "-1", out: 0, err: things.ErrNotFound},
-		"from empty string":     {in: "", out: 0, err: things.ErrNotFound},
-		"from arbitrary string": {in: "dummy", out: 0, err: things.ErrNotFound},
+		"from valid number": {
+			in:  big,
+			out: math.MaxUint64,
+			err: nil,
+		},
+		"from negative number": {
+			in:  "-1",
+			out: 0,
+			err: things.ErrNotFound,
+		},
+		"from empty string": {
+			in:  "",
+			out: 0,
+			err: things.ErrNotFound,
+		},
+		"from arbitrary string": {
+			in:  "dummy",
+			out: 0,
+			err: things.ErrNotFound,
+		},
 	}
 
 	for desc, tc := range cases {

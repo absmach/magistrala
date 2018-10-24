@@ -65,7 +65,7 @@ func (trm *thingRepositoryMock) RetrieveByID(owner string, id uint64) (things.Th
 	return things.Thing{}, things.ErrNotFound
 }
 
-func (trm *thingRepositoryMock) RetrieveAll(owner string, offset, limit int) []things.Thing {
+func (trm *thingRepositoryMock) RetrieveAll(owner string, offset, limit uint64) []things.Thing {
 	things := make([]things.Thing, 0)
 
 	if offset < 0 || limit <= 0 {

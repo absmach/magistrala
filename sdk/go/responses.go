@@ -7,18 +7,14 @@
 
 package sdk
 
-import (
-	"github.com/mainflux/mainflux/things"
-)
-
 type tokenRes struct {
 	Token string `json:"token,omitempty"`
 }
 
 type listThingsRes struct {
-	Things []things.Thing `json:"things,omitempty"`
+	Things []Thing `json:"things,omitempty"`
 }
 
 type listChannelsRes struct {
-	Channels []things.Channel `json:"channels,omitempty"`
+	Channels []Channel `json:"channels,omitempty"`
 }

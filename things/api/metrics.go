@@ -61,7 +61,7 @@ func (ms *metricsMiddleware) ViewThing(key string, id uint64) (things.Thing, err
 	return ms.svc.ViewThing(key, id)
 }
 
-func (ms *metricsMiddleware) ListThings(key string, offset, limit int) ([]things.Thing, error) {
+func (ms *metricsMiddleware) ListThings(key string, offset, limit uint64) ([]things.Thing, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_things").Add(1)
 		ms.latency.With("method", "list_things").Observe(time.Since(begin).Seconds())
@@ -106,7 +106,7 @@ func (ms *metricsMiddleware) ViewChannel(key string, id uint64) (things.Channel,
 	return ms.svc.ViewChannel(key, id)
 }
 
-func (ms *metricsMiddleware) ListChannels(key string, offset, limit int) ([]things.Channel, error) {
+func (ms *metricsMiddleware) ListChannels(key string, offset, limit uint64) ([]things.Channel, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_channels").Add(1)
 		ms.latency.With("method", "list_channels").Observe(time.Since(begin).Seconds())

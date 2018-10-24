@@ -16,21 +16,22 @@ import (
 )
 
 func main() {
-	conf := struct {
-		host     string
-		port     string
-		insecure bool
-	}{
-		"localhost",
-		"",
-		false,
+	msgContentType := string(sdk.CTJSONSenML)
+	sdkConf := sdk.Config{
+		BaseURL:           "http://localhost",
+		UsersPrefix:       "",
+		ThingsPrefix:      "",
+		HTTPAdapterPrefix: "http",
+		MsgContentType:    sdk.ContentType(msgContentType),
+		TLSVerification:   false,
 	}
 
 	// Root
 	var rootCmd = &cobra.Command{
 		Use: "mainflux-cli",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			s := sdk.NewMfxSDK(conf.host, conf.port, !conf.insecure)
+			sdkConf.MsgContentType = sdk.ContentType(msgContentType)
+			s := sdk.NewSDK(sdkConf)
 			cli.SetSDK(s)
 		},
 	}
@@ -51,17 +52,69 @@ func main() {
 
 	// Root Flags
 	rootCmd.PersistentFlags().StringVarP(
-		&conf.host, "host", "m", conf.host, "HTTP Host address")
+		&sdkConf.BaseURL,
+		"mainflux-url",
+		"m",
+		sdkConf.BaseURL,
+		"Mainflux host URL",
+	)
+
 	rootCmd.PersistentFlags().StringVarP(
-		&conf.port, "port", "p", conf.port, "HTTP Host Port")
+		&sdkConf.UsersPrefix,
+		"users-prefix",
+		"u",
+		sdkConf.UsersPrefix,
+		"Mainflux users service prefix",
+	)
+
+	rootCmd.PersistentFlags().StringVarP(
+		&sdkConf.ThingsPrefix,
+		"things-prefix",
+		"t",
+		sdkConf.ThingsPrefix,
+		"Mainflux things service prefix",
+	)
+
+	rootCmd.PersistentFlags().StringVarP(
+		&sdkConf.HTTPAdapterPrefix,
+		"http-prefix",
+		"a",
+		sdkConf.HTTPAdapterPrefix,
+		"Mainflux http adapter prefix",
+	)
+
+	rootCmd.PersistentFlags().StringVarP(
+		&msgContentType,
+		"content-type",
+		"c",
+		msgContentType,
+		"Mainflux message content type",
+	)
+
 	rootCmd.PersistentFlags().BoolVarP(
-		&conf.insecure, "insecure", "i", false, "do not use TLS")
+		&sdkConf.TLSVerification,
+		"insecure",
+		"i",
+		sdkConf.TLSVerification,
+		"Do not check for TLS cert",
+	)
 
 	// Client and Channels Flags
 	rootCmd.PersistentFlags().UintVarP(
-		&cli.Limit, "limit", "l", 100, "limit query parameter")
+		&cli.Limit,
+		"limit",
+		"l",
+		100,
+		"limit query parameter",
+	)
+
 	rootCmd.PersistentFlags().UintVarP(
-		&cli.Offset, "offset", "o", 0, "offset query parameter")
+		&cli.Offset,
+		"offset",
+		"o",
+		0,
+		"offset query parameter",
+	)
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)

@@ -199,3 +199,21 @@ services:
       - 8880:8880
     networks:
       - mainflux-base-net
+
+  coap-adapter:
+    image: mainflux/coap:latest
+    container_name: mainflux-coap
+    depends_on:
+      - things
+      - nats
+    restart: on-failure
+    expose:
+      - 5683
+    environment:
+      MF_COAP_ADAPTER_PORT: 5683
+      MF_NATS_URL: nats://nats:4222
+      MF_THINGS_URL: things:8183
+    ports:
+      - 5683:5683
+    networks:
+      - mainflux-base-net

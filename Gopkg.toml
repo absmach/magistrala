@@ -86,6 +86,14 @@
   branch = "master"
   name = "github.com/gocql/gocql"
 
+[[constraint]]
+  branch = "master"
+  name = "github.com/dereulenspiegel/coap-mux"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/dustin/go-coap"
+
 [prune]
   go-tests = true
   unused-packages = true

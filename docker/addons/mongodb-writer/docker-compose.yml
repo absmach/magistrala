@@ -17,8 +17,6 @@ services:
   mongodb:
     image: mongo:3.6-jessie
     container_name: mainflux-mongodb
-    expose:
-      - 27017
     restart: on-failure
     environment:
       MONGO_INITDB_DATABASE: mainflux

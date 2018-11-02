@@ -23,14 +23,14 @@ services:
       INFLUXDB_ADMIN_PASSWORD: mainflux
     networks:
       - docker_mainflux-base-net
+    ports:
+      - 8086:8086
 
   influxdb-writer:
     image: mainflux/influxdb-writer:latest
     container_name: mainflux-influxdb-writer
     depends_on:
       - influxdb
-    expose:
-      - 8900
     restart: on-failure
     environment:
       MF_NATS_URL: nats://nats:4222

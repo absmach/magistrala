@@ -53,7 +53,6 @@ services:
     depends_on:
       - users-db
     expose:
-      - 8180
       - 8181
     restart: on-failure
     environment:
@@ -95,7 +94,6 @@ services:
       - things-db
       - users
     expose:
-      - 8182
       - 8183
     restart: on-failure
     environment:
@@ -143,8 +141,6 @@ services:
     depends_on:
       - things
       - nats
-    expose:
-      - 8186
     restart: on-failure
     environment:
       MF_WS_ADAPTER_PORT: 8186
@@ -162,8 +158,6 @@ services:
       - things
       - nats
     restart: on-failure
-    expose:
-      - 8185
     environment:
       MF_HTTP_ADAPTER_PORT: 8185
       MF_NATS_URL: nats://nats:4222
@@ -207,8 +201,6 @@ services:
       - things
       - nats
     restart: on-failure
-    expose:
-      - 5683
     environment:
       MF_COAP_ADAPTER_PORT: 5683
       MF_NATS_URL: nats://nats:4222

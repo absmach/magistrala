@@ -19,14 +19,14 @@ services:
     restart: on-failure
     networks:
       - docker_mainflux-base-net
+    ports:
+      - 9042:9042
 
   cassandra-writer:
     image: mainflux/cassandra-writer:latest
     container_name: mainflux-cassandra-writer
     depends_on:
       - cassandra
-    expose:
-      - 8902
     restart: on-failure
     environment:
       MF_NATS_URL: nats://nats:4222

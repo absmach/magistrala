@@ -25,10 +25,11 @@ import (
 )
 
 const (
-	testDB        = "test"
-	collection    = "mainflux"
-	chanID        = 1
-	numOfMessages = 42
+	testDB      = "test"
+	collection  = "mainflux"
+	chanID      = 1
+	msgsNum     = 42
+	valueFields = 6
 )
 
 var (
@@ -51,7 +52,24 @@ func TestReadAll(t *testing.T) {
 	writer := writers.New(db)
 
 	messages := []mainflux.Message{}
-	for i := 0; i < numOfMessages; i++ {
+	for i := 0; i < msgsNum; i++ {
+		// Mix possible values as well as value sum.
+		count := i % valueFields
+		switch count {
+		case 0:
+			msg.Value = &mainflux.Message_FloatValue{5}
+		case 1:
+			msg.Value = &mainflux.Message_BoolValue{false}
+		case 2:
+			msg.Value = &mainflux.Message_StringValue{"value"}
+		case 3:
+			msg.Value = &mainflux.Message_DataValue{"base64data"}
+		case 4:
+			msg.ValueSum = nil
+		case 5:
+			msg.ValueSum = &mainflux.SumValue{Value: 45}
+		}
+
 		err := writer.Save(msg)
 		require.Nil(t, err, fmt.Sprintf("failed to store message to Cassandra: %s", err))
 		messages = append(messages, msg)

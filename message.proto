@@ -24,12 +24,19 @@ message Message {
 	string Protocol    = 3;
 	string Name        = 4;
 	string Unit        = 5;
-	double Value       = 6;
-	string StringValue = 7;
-	bool   BoolValue   = 8;
-	string DataValue   = 9;
-	double ValueSum    = 10;
+	oneof value {
+		double FloatValue  = 6;
+		string StringValue = 7;
+		bool   BoolValue   = 8;
+		string DataValue   = 9;
+	}
+	SumValue ValueSum    = 10;
 	double Time        = 11;
 	double UpdateTime  = 12;
 	string Link        = 13;
+}
+
+// SumValue is a simple wrapper around the double value.
+message SumValue {
+	double Value = 1;
 }

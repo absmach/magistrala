@@ -14,6 +14,7 @@ Make sure that you have [Protocol Buffers](https://developers.google.com/protoco
 
 [Go Protobuf](https://github.com/golang/protobuf) installation instructions are [here](https://github.com/golang/protobuf#installation).
 Go Protobuf uses C bindings, so you will need to install [C++ protobuf](https://github.com/google/protobuf) as a prerequisite.
+Mainflux uses `Protocol Buffers for Go with Gadgets` to generate faster marshaling and unmarshaling Go code. Protocol Buffers for Go with Gadgets instalation instructions can be found (here)(https://github.com/gogo/protobuf).
 
 ### Build All Services
 
@@ -102,12 +103,12 @@ node mqtt/mqtt.js
 ```
 
 ### Protobuf
-Aforementioned  `make` (which is an alias for `make all` target) is calling `protoc` command prior to compiling individual microservices.
+If you've made any changes to `.proto` files, you should call `protoc` command prior to compiling individual microservices.
 
 To do this by hand, execute:
 
 ```
-protoc --go_out=plugins=grpc:. *.proto
+protoc --gofast_out=plugins=grpc:. *.proto
 ```
 
 A shorthand to do this via `make` tool is:
@@ -116,7 +117,7 @@ A shorthand to do this via `make` tool is:
 make proto
 ```
 
-> N.B. This must be done once at the beginning in order to generate protobuf Go structures needed for the build.
+> N.B. This must be done once at the beginning in order to generate protobuf Go structures needed for the build. However, if you don't change any of `.proto` files, this step is not mandatory, since all generated files are included in the repo (those are files with `.pb.go` extension).
 
 ### Cross-compiling for ARM
 Mainflux can be compiled for ARM platform and run on Raspberry Pi or other similar IoT gateways, by following the instructions [here](https://dave.cheney.net/2015/08/22/cross-compilation-with-go-1-5) or [here](https://www.alexruf.net/golang/arm/raspberrypi/2016/01/16/cross-compile-with-go-1-5-for-raspberry-pi.html) as well as information

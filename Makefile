@@ -32,7 +32,7 @@ test:
 	GOCACHE=off go test -v -race -tags test $(shell go list ./... | grep -v 'vendor\|cmd')
 
 proto:
-	protoc --go_out=plugins=grpc:. *.proto
+	protoc --gofast_out=plugins=grpc:. *.proto
 
 $(SERVICES):
 	$(call compile_service,$(@))

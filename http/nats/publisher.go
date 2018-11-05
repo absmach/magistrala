@@ -11,7 +11,7 @@ package nats
 import (
 	"fmt"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/gogo/protobuf/proto"
 	"github.com/mainflux/mainflux"
 	broker "github.com/nats-io/go-nats"
 )

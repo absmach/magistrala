@@ -17,7 +17,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var errUnathorized = status.Error(codes.PermissionDenied, "missing or invalid credentials provided")
+var errUnauthorized = status.Error(codes.PermissionDenied, "missing or invalid credentials provided")
 
 var _ mainflux.ThingsServiceClient = (*thingsServiceMock)(nil)
 
@@ -31,12 +31,12 @@ func NewThingsService() mainflux.ThingsServiceClient {
 func (svc thingsServiceMock) CanAccess(ctx context.Context, in *mainflux.AccessReq, opts ...grpc.CallOption) (*mainflux.ThingID, error) {
 	token := in.GetToken()
 	if token == "invalid" {
-		return nil, errUnathorized
+		return nil, errUnauthorized
 	}
 
 	id, err := strconv.ParseUint(token, 10, 64)
 	if err != nil {
-		return nil, errUnathorized
+		return nil, errUnauthorized
 	}
 
 	return &mainflux.ThingID{Value: id}, nil

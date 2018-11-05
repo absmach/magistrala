@@ -32,28 +32,29 @@ func (n normalizer) Normalize(msg mainflux.RawMessage) (NormalizedData, error) {
 	msgs := make([]mainflux.Message, len(normalized.Records))
 	for k, v := range normalized.Records {
 		m := mainflux.Message{
-			Channel:     msg.Channel,
-			Publisher:   msg.Publisher,
-			Protocol:    msg.Protocol,
-			Name:        v.Name,
-			Unit:        v.Unit,
-			StringValue: v.StringValue,
-			DataValue:   v.DataValue,
-			Time:        v.Time,
-			UpdateTime:  v.UpdateTime,
-			Link:        v.Link,
+			Channel:    msg.Channel,
+			Publisher:  msg.Publisher,
+			Protocol:   msg.Protocol,
+			Name:       v.Name,
+			Unit:       v.Unit,
+			Time:       v.Time,
+			UpdateTime: v.UpdateTime,
+			Link:       v.Link,
 		}
 
-		if v.Value != nil {
-			m.Value = *v.Value
-		}
-
-		if v.BoolValue != nil {
-			m.BoolValue = *v.BoolValue
+		switch {
+		case v.Value != nil:
+			m.Value = &mainflux.Message_FloatValue{*v.Value}
+		case v.BoolValue != nil:
+			m.Value = &mainflux.Message_BoolValue{*v.BoolValue}
+		case v.DataValue != "":
+			m.Value = &mainflux.Message_DataValue{v.DataValue}
+		case v.StringValue != "":
+			m.Value = &mainflux.Message_StringValue{v.StringValue}
 		}
 
 		if v.Sum != nil {
-			m.ValueSum = *v.Sum
+			m.ValueSum = &mainflux.SumValue{Value: *v.Sum}
 		}
 
 		msgs[k] = m

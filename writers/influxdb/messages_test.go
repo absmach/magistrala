@@ -22,6 +22,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const valueFields = 6
+
 var (
 	port          string
 	testLog, _    = log.New(os.Stdout, log.Info.String())
@@ -38,19 +40,16 @@ var (
 	}
 
 	msg = mainflux.Message{
-		Channel:     45,
-		Publisher:   2580,
-		Protocol:    "http",
-		Name:        "test name",
-		Unit:        "km",
-		Value:       24,
-		StringValue: "24",
-		BoolValue:   false,
-		DataValue:   "dataValue",
-		ValueSum:    24,
-		Time:        13451312,
-		UpdateTime:  5456565466,
-		Link:        "link",
+		Channel:    45,
+		Publisher:  2580,
+		Protocol:   "http",
+		Name:       "test name",
+		Unit:       "km",
+		Value:      &mainflux.Message_FloatValue{24},
+		ValueSum:   &mainflux.SumValue{Value: 22},
+		Time:       13451312,
+		UpdateTime: 5456565466,
+		Link:       "link",
 	}
 )
 
@@ -75,7 +74,7 @@ func queryDB(cmd string) ([][]interface{}, error) {
 	return response.Results[0].Series[0].Values, nil
 }
 
-func TestNewWriter(t *testing.T) {
+func TestNew(t *testing.T) {
 	client, err := influxdata.NewHTTPClient(clientCfg)
 	require.Nil(t, err, fmt.Sprintf("Creating new InfluxDB client expected to succeed: %s.\n", err))
 
@@ -121,22 +120,21 @@ func TestSave(t *testing.T) {
 	cases := []struct {
 		desc         string
 		repo         writers.MessageRepository
-		previousMsgs int
-		numOfMsg     int
+		msgsNum      int
 		expectedSize int
 		isBatch      bool
 	}{
 		{
 			desc:         "save a single message",
 			repo:         repo,
-			numOfMsg:     1,
+			msgsNum:      1,
 			expectedSize: 1,
 			isBatch:      false,
 		},
 		{
 			desc:         "save a batch of messages",
 			repo:         repo1,
-			numOfMsg:     streamsSize,
+			msgsNum:      streamsSize,
 			expectedSize: streamsSize - (streamsSize % saveBatchSize),
 			isBatch:      true,
 		},
@@ -147,7 +145,24 @@ func TestSave(t *testing.T) {
 		row, err := queryDB(dropMsgs)
 		require.Nil(t, err, fmt.Sprintf("Cleaning data from InfluxDB expected to succeed: %s.\n", err))
 
-		for i := 0; i < tc.numOfMsg; i++ {
+		for i := 0; i < tc.msgsNum; i++ {
+			// Mix possible values as well as value sum.
+			count := i % valueFields
+			switch count {
+			case 0:
+				msg.Value = &mainflux.Message_FloatValue{5}
+			case 1:
+				msg.Value = &mainflux.Message_BoolValue{false}
+			case 2:
+				msg.Value = &mainflux.Message_StringValue{"value"}
+			case 3:
+				msg.Value = &mainflux.Message_DataValue{"base64data"}
+			case 4:
+				msg.ValueSum = nil
+			case 5:
+				msg.ValueSum = &mainflux.SumValue{Value: 45}
+			}
+
 			err := tc.repo.Save(msg)
 			assert.Nil(t, err, fmt.Sprintf("Save operation expected to succeed: %s.\n", err))
 		}
@@ -165,7 +180,7 @@ func TestSave(t *testing.T) {
 			row, err = queryDB(selectMsgs)
 			assert.Nil(t, err, fmt.Sprintf("Querying InfluxDB to retrieve data count expected to succeed: %s.\n", err))
 			count = len(row)
-			assert.Equal(t, tc.numOfMsg, count, fmt.Sprintf("Expected to have %d messages, found %d instead.\n", tc.numOfMsg, count))
+			assert.Equal(t, tc.msgsNum, count, fmt.Sprintf("Expected to have %d messages, found %d instead.\n", tc.msgsNum, count))
 		}
 	}
 }

@@ -17,24 +17,34 @@ import (
 )
 
 const (
-	testDB        = "test"
-	chanID        = 1
-	numOfMessages = 101
+	testDB      = "test"
+	chanID      = 1
+	msgsNum     = 101
+	valueFields = 6
 )
 
 var (
-	port      string
-	client    influxdata.Client
+	port       string
+	client     influxdata.Client
+	testLog, _ = log.New(os.Stdout, log.Info.String())
+
 	clientCfg = influxdata.HTTPConfig{
 		Username: "test",
 		Password: "test",
 	}
+
 	msg = mainflux.Message{
-		Channel:   chanID,
-		Publisher: 1,
-		Protocol:  "mqtt",
+		Channel:    chanID,
+		Publisher:  1,
+		Protocol:   "mqtt",
+		Name:       "name",
+		Unit:       "U",
+		Value:      &mainflux.Message_FloatValue{5},
+		ValueSum:   &mainflux.SumValue{Value: 45},
+		Time:       123456,
+		UpdateTime: 1234567,
+		Link:       "link",
 	}
-	testLog, _ = log.New(os.Stdout, log.Info.String())
 )
 
 func TestReadAll(t *testing.T) {
@@ -45,7 +55,24 @@ func TestReadAll(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Creating new InfluxDB writer expected to succeed: %s.\n", err))
 
 	messages := []mainflux.Message{}
-	for i := 0; i < numOfMessages; i++ {
+	for i := 0; i < msgsNum; i++ {
+		// Mix possible values as well as value sum.
+		count := i % valueFields
+		switch count {
+		case 0:
+			msg.Value = &mainflux.Message_FloatValue{5}
+		case 1:
+			msg.Value = &mainflux.Message_BoolValue{false}
+		case 2:
+			msg.Value = &mainflux.Message_StringValue{"value"}
+		case 3:
+			msg.Value = &mainflux.Message_DataValue{"base64data"}
+		case 4:
+			msg.ValueSum = nil
+		case 5:
+			msg.ValueSum = &mainflux.SumValue{Value: 45}
+		}
+
 		err := writer.Save(msg)
 		require.Nil(t, err, fmt.Sprintf("failed to store message to InfluxDB: %s", err))
 		messages = append(messages, msg)

@@ -26,6 +26,8 @@ var (
 		Publisher: 1,
 		Protocol:  "mqtt",
 	}
+	msgsNum     = 42
+	valueFields = 6
 )
 
 func TestSave(t *testing.T) {
@@ -33,7 +35,25 @@ func TestSave(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("failed to connect to Cassandra: %s", err))
 
 	repo := cassandra.New(session)
+	for i := 0; i < msgsNum; i++ {
+		// Mix possible values as well as value sum.
+		count := i % valueFields
+		switch count {
+		case 0:
+			msg.Value = &mainflux.Message_FloatValue{5}
+		case 1:
+			msg.Value = &mainflux.Message_BoolValue{false}
+		case 2:
+			msg.Value = &mainflux.Message_StringValue{"value"}
+		case 3:
+			msg.Value = &mainflux.Message_DataValue{"base64data"}
+		case 4:
+			msg.ValueSum = nil
+		case 5:
+			msg.ValueSum = &mainflux.SumValue{Value: 45}
+		}
 
-	err = repo.Save(msg)
-	assert.Nil(t, err, fmt.Sprintf("expected no error, go %s", err))
+		err = repo.Save(msg)
+		assert.Nil(t, err, fmt.Sprintf("expected no error, got %s", err))
+	}
 }

@@ -43,50 +43,50 @@ definitions:
   MessageList:
     type: object
     properties:
-      channels:
+      messages:
         type: array
         minItems: 0
         uniqueItems: true
         items:
           type: object
           properties:
-            Channel:
+            channel:
               type: integer
               description: Unique channel id.
-            Publisher:
+            publisher:
               type: integer
               description: Unique publisher id.
-            Protocol:
+            protocol:
               type: string
               description: Protocol name.
-            Name:
+            name:
               type: string
               description: Measured parameter name.
-            Unit:
+            unit:
               type: string
               description: Value unit.
-            Value:
+            value:
               type: number
               description: Measured value in number.
-            StringValue:
+            stringValue:
               type: string
               description: Measured value in string format.
-            BoolValue:
+            boolValue:
               type: boolean
               description: Measured value in boolean format.
-            DataValue:
+            dataValue:
               type: string
               description: Measured value in binary format.
-            ValueSum:
+            valueSum:
               type: number
               description: Sum value.
-            Time:
+            time:
               type: number
               description: Time of measurement.
-            UpdateTime:
+            updateTime:
               type: number
               description: Time of updating measurement.
-            Link:
+            link:
               type: string
 
 parameters:

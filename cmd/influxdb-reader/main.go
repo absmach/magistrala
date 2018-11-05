@@ -69,11 +69,7 @@ func main() {
 	}
 	defer client.Close()
 
-	repo, err := influxdb.New(client, cfg.DBName)
-	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to create InfluxDB writer: %s", err))
-		os.Exit(1)
-	}
+	repo := newService(client, cfg.DBName, logger)
 
 	errs := make(chan error, 2)
 	go func() {
@@ -119,8 +115,13 @@ func connectToThings(url string, logger logger.Logger) *grpc.ClientConn {
 	return conn
 }
 
-func newService(client influxdata.Client, logger logger.Logger) readers.MessageRepository {
-	repo, _ := influxdb.New(client, "mainflux")
+func newService(client influxdata.Client, dbName string, logger logger.Logger) readers.MessageRepository {
+	repo, err := influxdb.New(client, dbName)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to create InfluxDB writer: %s", err))
+		os.Exit(1)
+	}
+
 	repo = api.LoggingMiddleware(repo, logger)
 	repo = api.MetricsMiddleware(
 		repo,

@@ -27,16 +27,34 @@ const (
 	invalid              = "invalid"
 	numOfMessages        = 42
 	chanID        uint64 = 1
+	valueFields          = 6
 )
 
 func newService() readers.MessageRepository {
 	messages := []mainflux.Message{}
 	for i := 0; i < numOfMessages; i++ {
-		messages = append(messages, mainflux.Message{
+		msg := mainflux.Message{
 			Channel:   chanID,
 			Publisher: 1,
 			Protocol:  "mqtt",
-		})
+		}
+		// Mix possible values as well as value sum.
+		count := i % valueFields
+		switch count {
+		case 0:
+			msg.Value = &mainflux.Message_FloatValue{5}
+		case 1:
+			msg.Value = &mainflux.Message_BoolValue{false}
+		case 2:
+			msg.Value = &mainflux.Message_StringValue{"value"}
+		case 3:
+			msg.Value = &mainflux.Message_DataValue{"base64data"}
+		case 4:
+			msg.ValueSum = nil
+		case 5:
+			msg.ValueSum = &mainflux.SumValue{Value: 45}
+		}
+		messages = append(messages, msg)
 	}
 
 	return mocks.NewMessageRepository(map[uint64][]mainflux.Message{

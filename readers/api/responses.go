@@ -15,8 +15,24 @@ import (
 
 var _ mainflux.Response = (*listMessagesRes)(nil)
 
+type message struct {
+	Channel     uint64   `json:"channel,omitempty"`
+	Publisher   uint64   `json:"publisher,omitempty"`
+	Protocol    string   `json:"protocol,omitempty"`
+	Name        string   `json:"name,omitempty"`
+	Unit        string   `json:"unit,omitempty"`
+	Value       *float64 `json:"value,omitempty"`
+	StringValue *string  `json:"stringValue,omitempty"`
+	BoolValue   *bool    `json:"boolValue,omitempty"`
+	DataValue   *string  `json:"dataValue,omitempty"`
+	ValueSum    *float64 `json:"valueSum,omitempty"`
+	Time        float64  `json:"time,omitempty"`
+	UpdateTime  float64  `json:"updateTime,omitempty"`
+	Link        string   `json:"link,omitempty"`
+}
+
 type listMessagesRes struct {
-	Messages []mainflux.Message `json:"messages"`
+	Messages []message `json:"messages"`
 }
 
 func (res listMessagesRes) Headers() map[string]string {

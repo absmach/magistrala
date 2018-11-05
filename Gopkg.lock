@@ -203,12 +203,12 @@
   revision = "651d6b1f343c6e168e45d119dcfe8f71e5bafb32"
 
 [[projects]]
-  digest = "1:9a688317f3231e0175b3429033f44411906c0ce119361b7b5019d01375f8cff7"
+  digest = "1:bbadccf3d3317ea03c0dac0b45b673b4b397c8f91a1d2eff550a3c51c4ad770e"
   name = "github.com/gogo/protobuf"
   packages = ["proto"]
   pruneopts = "UT"
-  revision = "1adfc126b41513cc696b209667c8656ea7aac67c"
-  version = "v1.0.0"
+  revision = "636bf0302bc95575d69441b25a2603156ffdddf1"
+  version = "v1.1.1"
 
 [[projects]]
   digest = "1:17fe264ee908afc795734e8c4e63db2accabaf57326dbf21763a7d6b86096260"
@@ -246,14 +246,6 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "e80d13ce29ede4452c43dea11e79b9bc8a15b478"
-
-[[projects]]
-  branch = "master"
-  digest = "1:51a6dbf048dc420793ec106b7c8d151d1ffb119285ce044cc41d2dbb7e23732e"
-  name = "github.com/hokaccha/go-prettyjson"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "e6b9231a2b1cc5798b336fdbf99c16cd8ad1e0c9"
 
 [[projects]]
   digest = "1:870d441fe217b8e689d7949fef6e43efbc787e50f200cb1e70dbca9204a1d6be"
@@ -730,6 +722,7 @@
   input-imports = [
     "github.com/asaskevich/govalidator",
     "github.com/cisco/senml",
+    "github.com/davecgh/go-spew/spew",
     "github.com/dereulenspiegel/coap-mux",
     "github.com/dgrijalva/jwt-go",
     "github.com/dustin/go-coap",
@@ -746,7 +739,6 @@
     "github.com/gogo/protobuf/proto",
     "github.com/golang/protobuf/proto",
     "github.com/gorilla/websocket",
-    "github.com/hokaccha/go-prettyjson",
     "github.com/influxdata/influxdb/client/v2",
     "github.com/lib/pq",
     "github.com/mongodb/mongo-go-driver/bson",

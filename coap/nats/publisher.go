@@ -5,13 +5,13 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-// Package ats contains NATS message publisher implementation.
+// Package nats contains NATS message publisher implementation.
 package nats
 
 import (
 	"fmt"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/gogo/protobuf/proto"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/coap"
 	broker "github.com/nats-io/go-nats"

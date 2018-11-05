@@ -25,6 +25,23 @@ type mongoRepository struct {
 	db *mongo.Database
 }
 
+// Message struct is used as a MongoDB representation of Mainflux message.
+type message struct {
+	Channel     uint64   `bson:"channel,omitempty"`
+	Publisher   uint64   `bson:"publisher,omitempty"`
+	Protocol    string   `bson:"protocol,omitempty"`
+	Name        string   `bson:"name,omitempty"`
+	Unit        string   `bson:"unit,omitempty"`
+	FloatValue  *float64 `bson:"value,omitempty"`
+	StringValue *string  `bson:"stringValue,omitempty"`
+	BoolValue   *bool    `bson:"boolValue,omitempty"`
+	DataValue   *string  `bson:"dataValue,omitempty"`
+	ValueSum    *float64 `bson:"valueSum,omitempty"`
+	Time        float64  `bson:"time,omitempty"`
+	UpdateTime  float64  `bson:"updateTime,omitempty"`
+	Link        string   `bson:"link,omitempty"`
+}
+
 // New returns new MongoDB reader.
 func New(db *mongo.Database) readers.MessageRepository {
 	return mongoRepository{db: db}
@@ -40,9 +57,35 @@ func (repo mongoRepository) ReadAll(chanID, offset, limit uint64) []mainflux.Mes
 
 	messages := []mainflux.Message{}
 	for cursor.Next(context.Background()) {
-		var msg mainflux.Message
-		if err := cursor.Decode(&msg); err != nil {
+		var m message
+		if err := cursor.Decode(&m); err != nil {
 			return []mainflux.Message{}
+		}
+
+		msg := mainflux.Message{
+			Channel:    m.Channel,
+			Publisher:  m.Publisher,
+			Protocol:   m.Protocol,
+			Name:       m.Name,
+			Unit:       m.Unit,
+			Time:       m.Time,
+			UpdateTime: m.UpdateTime,
+			Link:       m.Link,
+		}
+
+		switch {
+		case m.FloatValue != nil:
+			msg.Value = &mainflux.Message_FloatValue{*m.FloatValue}
+		case m.StringValue != nil:
+			msg.Value = &mainflux.Message_StringValue{*m.StringValue}
+		case m.DataValue != nil:
+			msg.Value = &mainflux.Message_DataValue{*m.DataValue}
+		case m.BoolValue != nil:
+			msg.Value = &mainflux.Message_BoolValue{*m.BoolValue}
+		}
+
+		if m.ValueSum != nil {
+			msg.ValueSum = &mainflux.SumValue{Value: *m.ValueSum}
 		}
 
 		messages = append(messages, msg)

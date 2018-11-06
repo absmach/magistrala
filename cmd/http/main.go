@@ -15,6 +15,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"google.golang.org/grpc/credentials"
+
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/mainflux/mainflux"
 	adapter "github.com/mainflux/mainflux/http"
@@ -28,10 +30,12 @@ import (
 )
 
 const (
+	defCACerts   string = ""
 	defPort      string = "8180"
 	defLogLevel  string = "error"
 	defNatsURL   string = broker.DefaultURL
 	defThingsURL string = "localhost:8181"
+	envCACerts   string = "MF_HTTP_ADAPTER_CA_CERTS"
 	envPort      string = "MF_HTTP_ADAPTER_PORT"
 	envLogLevel  string = "MF_HTTP_ADAPTER_LOG_LEVEL"
 	envNatsURL   string = "MF_NATS_URL"
@@ -43,6 +47,7 @@ type config struct {
 	NatsURL   string
 	LogLevel  string
 	Port      string
+	CACerts   string
 }
 
 func main() {
@@ -61,11 +66,7 @@ func main() {
 	}
 	defer nc.Close()
 
-	conn, err := grpc.Dial(cfg.ThingsURL, grpc.WithInsecure())
-	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to things service: %s", err))
-		os.Exit(1)
-	}
+	conn := connectToThingsService(cfg, logger)
 	defer conn.Close()
 
 	cc := thingsapi.NewClient(conn)
@@ -93,7 +94,7 @@ func main() {
 
 	go func() {
 		p := fmt.Sprintf(":%s", cfg.Port)
-		logger.Info(fmt.Sprintf("HTTP adapter service started, exposed port %s", cfg.Port))
+		logger.Info(fmt.Sprintf("HTTP adapter service started on port %s", cfg.Port))
 		errs <- http.ListenAndServe(p, api.MakeHandler(svc, cc))
 	}()
 
@@ -113,6 +114,28 @@ func loadConfig() config {
 		NatsURL:   mainflux.Env(envNatsURL, defNatsURL),
 		LogLevel:  mainflux.Env(envLogLevel, defLogLevel),
 		Port:      mainflux.Env(envPort, defPort),
+		CACerts:   mainflux.Env(envCACerts, defCACerts),
+	}
+}
+
+func connectToThingsService(cfg config, logger logger.Logger) *grpc.ClientConn {
+	var opts []grpc.DialOption
+	if cfg.CACerts != "" {
+		tpc, err := credentials.NewClientTLSFromFile(cfg.CACerts, "")
+		if err != nil {
+			logger.Error(fmt.Sprintf("Failed to load certs: %s", err))
+			os.Exit(1)
+		}
+		opts = append(opts, grpc.WithTransportCredentials(tpc))
+	} else {
+		logger.Info("gRPC communication is not encrypted")
+		opts = append(opts, grpc.WithInsecure())
 	}
 
+	conn, err := grpc.Dial(cfg.ThingsURL, opts...)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to connect to things service: %s", err))
+		os.Exit(1)
+	}
+	return conn
 }

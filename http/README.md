@@ -8,12 +8,13 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable                    | Description                    | Default               |
-|-----------------------------|--------------------------------|-----------------------|
-| MF_HTTP_ADAPTER_LOG_LEVEL   | Log level for the HTTP Adapter | error                 |
-| MF_HTTP_ADAPTER_PORT        | Service HTTP port              | 8180                  |
-| MF_NATS_URL                 | NATS instance URL              | nats://localhost:4222 |
-| MF_THINGS_URL               | Things service URL             | localhost:8181        |
+| Variable                   | Description                       | Default               |
+|----------------------------|-----------------------------------|-----------------------|
+| MF_HTTP_ADAPTER_LOG_LEVEL  | Log level for the HTTP Adapter    | error                 |
+| MF_HTTP_ADAPTER_PORT       | Service HTTP port                 | 8180                  |
+| MF_NATS_URL                | NATS instance URL                 | nats://localhost:4222 |
+| MF_THINGS_URL              | Things service URL                | localhost:8181        |
+| MF_HTTP_ADAPTER_CA_CERTS   | Path to trusted CAs in PEM format |                       |
 
 ## Deployment
 
@@ -33,6 +34,7 @@ services:
       MF_NATS_URL: [NATS instance URL]
       MF_HTTP_ADAPTER_LOG_LEVEL: [HTTP Adapter Log Level]
       MF_HTTP_ADAPTER_PORT: [Service HTTP port]
+      MF_HTTP_ADAPTER_CA_CERTS: [Path to trusted CAs in PEM format]
 ```
 
 To start the service outside of the container, execute the following shell script:
@@ -50,8 +52,10 @@ make http
 make install
 
 # set the environment variables and run the service
-MF_THINGS_URL=[Things service URL] MF_NATS_URL=[NATS instance URL] MF_HTTP_ADAPTER_LOG_LEVEL=[HTTP Adapter Log Level] MF_HTTP_ADAPTER_PORT=[Service HTTP port] $GOBIN/mainflux-http
+MF_THINGS_URL=[Things service URL] MF_NATS_URL=[NATS instance URL] MF_HTTP_ADAPTER_LOG_LEVEL=[HTTP Adapter Log Level] MF_HTTP_ADAPTER_PORT=[Service HTTP port] MF_HTTP_ADAPTER_CA_CERTS=[Path to trusted CAs in PEM format] $GOBIN/mainflux-http
 ```
+
+Setting `MF_HTTP_ADAPTER_CA_CERTS` expects a file in PEM format of trusted CAs. This will enable TLS against the Things gRPC endpoint trusting only those CAs that are provided.
 
 ## Usage
 

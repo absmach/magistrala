@@ -458,3 +458,37 @@ Aside from port, reading request is same as for other readers:
 ```
 curl -s -S -i  -H "Authorization: <thing_token>" http://localhost:8904/channels/<channel_id>/messages
 ```
+
+## TLS Configuration
+
+By default gRPC communication is not secure. 
+
+### Server configuration
+
+#### Users
+
+If either the cert or key is not set, the server will use insecure transport. 
+
+`MF_USERS_SERVER_CERT` the path to server certificate in pem format. 
+
+`MF_USERS_SERVER_KEY` the path to the server key in pem format.
+
+#### Things
+
+If either the cert or key is not set, the server will use insecure transport. 
+
+`MF_THINGS_SERVER_CERT` the path to server certificate in pem format. 
+
+`MF_THINGS_SERVER_KEY` the path to the server key in pem format.
+
+### Client configuration
+
+If you wish to secure the gRPC connection to `things` and `users` services you must define the CAs that you trust.  This does not support mutual certificate authentication. 
+
+#### HTTP Adapter
+
+`MF_HTTP_ADAPTER_CA_CERTS` - the path to a file that contains the CAs in PEM format. If not set, the default connection will be insecure. If it fails to read the file, the adapter will fail to start up.
+
+#### Things 
+
+`MF_THINGS_CA_CERTS` - the path to a file that contains the CAs in PEM format. If not set, the default connection will be insecure. If it fails to read the file, the service will fail to start up.

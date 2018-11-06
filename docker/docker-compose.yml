@@ -55,6 +55,9 @@ services:
     expose:
       - 8181
     restart: on-failure
+    volumes:
+      - ./ssl/certs/mainflux-server.crt:/etc/ssl/certs/mainflux-server.crt
+      - ./ssl/certs/mainflux-server.key:/etc/ssl/private/mainflux-server.key
     environment:
       MF_USERS_DB_HOST: users-db
       MF_USERS_DB_PORT: 5432
@@ -64,6 +67,8 @@ services:
       MF_USERS_HTTP_PORT: 8180
       MF_USERS_GRPC_PORT: 8181
       MF_USERS_SECRET: secret
+      MF_USERS_SERVER_CERT: /etc/ssl/certs/mainflux-server.crt
+      MF_USERS_SERVER_KEY: /etc/ssl/private/mainflux-server.key
     ports:
       - 8180:8180
     networks:
@@ -96,12 +101,19 @@ services:
     expose:
       - 8183
     restart: on-failure
+    volumes:
+    - ./ssl/certs/ca.crt:/etc/ssl/certs/ca.crt
+    - ./ssl/certs/mainflux-server.crt:/etc/ssl/certs/mainflux-server.crt
+    - ./ssl/certs/mainflux-server.key:/etc/ssl/private/mainflux-server.key
     environment:
       MF_THINGS_DB_HOST: things-db
       MF_THINGS_DB_PORT: 5432
       MF_THINGS_DB_USER: mainflux
       MF_THINGS_DB_PASS: mainflux
       MF_THINGS_DB: things
+      MF_THINGS_CA_CERTS: /etc/ssl/certs/ca.crt
+      MF_THINGS_SERVER_CERT: /etc/ssl/certs/mainflux-server.crt
+      MF_THINGS_SERVER_KEY: /etc/ssl/private/mainflux-server.key
       MF_THINGS_CACHE_URL: things-cache:6379
       MF_THINGS_HTTP_PORT: 8182
       MF_THINGS_GRPC_PORT: 8183
@@ -109,6 +121,7 @@ services:
       MF_THINGS_SECRET: secret
     ports:
       - 8182:8182
+      - 8183:8183
     networks:
       - mainflux-base-net
 
@@ -158,10 +171,15 @@ services:
       - things
       - nats
     restart: on-failure
+    expose:
+      - 8185
+    volumes:
+      - ./ssl/certs/ca.crt:/etc/ssl/certs/ca.crt
     environment:
       MF_HTTP_ADAPTER_PORT: 8185
       MF_NATS_URL: nats://nats:4222
       MF_THINGS_URL: things:8183
+      MF_HTTP_ADAPTER_CA_CERTS: /etc/ssl/certs/ca.crt
     ports:
       - 8185:8185
     networks:

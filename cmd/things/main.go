@@ -18,6 +18,8 @@ import (
 	"strconv"
 	"syscall"
 
+	"google.golang.org/grpc/credentials"
+
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/go-redis/redis"
 	"github.com/mainflux/mainflux"
@@ -35,45 +37,54 @@ import (
 )
 
 const (
-	defLogLevel  = "error"
-	defDBHost    = "localhost"
-	defDBPort    = "5432"
-	defDBUser    = "mainflux"
-	defDBPass    = "mainflux"
-	defDBName    = "things"
-	defCacheURL  = "localhost:6379"
-	defCachePass = ""
-	defCacheDB   = "0"
-	defHTTPPort  = "8180"
-	defGRPCPort  = "8181"
-	defUsersURL  = "localhost:8181"
-	envLogLevel  = "MF_THINGS_LOG_LEVEL"
-	envDBHost    = "MF_THINGS_DB_HOST"
-	envDBPort    = "MF_THINGS_DB_PORT"
-	envDBUser    = "MF_THINGS_DB_USER"
-	envDBPass    = "MF_THINGS_DB_PASS"
-	envDBName    = "MF_THINGS_DB"
-	envCacheURL  = "MF_THINGS_CACHE_URL"
-	envCachePass = "MF_THINGS_CACHE_PASS"
-	envCacheDB   = "MF_THINGS_CACHE_DB"
-	envHTTPPort  = "MF_THINGS_HTTP_PORT"
-	envGRPCPort  = "MF_THINGS_GRPC_PORT"
-	envUsersURL  = "MF_USERS_URL"
+	defLogLevel   = "error"
+	defDBHost     = "localhost"
+	defDBPort     = "5432"
+	defDBUser     = "mainflux"
+	defDBPass     = "mainflux"
+	defDBName     = "things"
+	defCACerts    = ""
+	defCacheURL   = "localhost:6379"
+	defCachePass  = ""
+	defCacheDB    = "0"
+	defHTTPPort   = "8180"
+	defGRPCPort   = "8181"
+	defServerCert = ""
+	defServerKey  = ""
+	defUsersURL   = "localhost:8181"
+	envLogLevel   = "MF_THINGS_LOG_LEVEL"
+	envDBHost     = "MF_THINGS_DB_HOST"
+	envDBPort     = "MF_THINGS_DB_PORT"
+	envDBUser     = "MF_THINGS_DB_USER"
+	envDBPass     = "MF_THINGS_DB_PASS"
+	envDBName     = "MF_THINGS_DB"
+	envCACerts    = "MF_THINGS_CA_CERTS"
+	envCacheURL   = "MF_THINGS_CACHE_URL"
+	envCachePass  = "MF_THINGS_CACHE_PASS"
+	envCacheDB    = "MF_THINGS_CACHE_DB"
+	envHTTPPort   = "MF_THINGS_HTTP_PORT"
+	envGRPCPort   = "MF_THINGS_GRPC_PORT"
+	envUsersURL   = "MF_USERS_URL"
+	envServerCert = "MF_THINGS_SERVER_CERT"
+	envServerKey  = "MF_THINGS_SERVER_KEY"
 )
 
 type config struct {
-	LogLevel  string
-	DBHost    string
-	DBPort    string
-	DBUser    string
-	DBPass    string
-	DBName    string
-	CacheURL  string
-	CachePass string
-	CacheDB   string
-	HTTPPort  string
-	GRPCPort  string
-	UsersURL  string
+	LogLevel   string
+	DBHost     string
+	DBPort     string
+	DBUser     string
+	DBPass     string
+	DBName     string
+	CACerts    string
+	CacheURL   string
+	CachePass  string
+	CacheDB    string
+	HTTPPort   string
+	GRPCPort   string
+	UsersURL   string
+	ServerCert string
+	ServerKey  string
 }
 
 func main() {
@@ -88,14 +99,14 @@ func main() {
 	db := connectToDB(cfg, logger)
 	defer db.Close()
 
-	conn := connectToUsersService(cfg.UsersURL, logger)
+	conn := connectToUsersService(cfg, logger)
 	defer conn.Close()
 
 	svc := newService(conn, db, cache, logger)
 	errs := make(chan error, 2)
 
-	go startHTTPServer(svc, cfg.HTTPPort, logger, errs)
-	go startGRPCServer(svc, cfg.GRPCPort, logger, errs)
+	go startHTTPServer(svc, cfg.HTTPPort, cfg.ServerCert, cfg.ServerKey, logger, errs)
+	go startGRPCServer(svc, cfg.GRPCPort, cfg.ServerCert, cfg.ServerKey, logger, errs)
 
 	go func() {
 		c := make(chan os.Signal)
@@ -109,18 +120,21 @@ func main() {
 
 func loadConfig() config {
 	return config{
-		LogLevel:  mainflux.Env(envLogLevel, defLogLevel),
-		DBHost:    mainflux.Env(envDBHost, defDBHost),
-		DBPort:    mainflux.Env(envDBPort, defDBPort),
-		DBUser:    mainflux.Env(envDBUser, defDBUser),
-		DBPass:    mainflux.Env(envDBPass, defDBPass),
-		DBName:    mainflux.Env(envDBName, defDBName),
-		CacheURL:  mainflux.Env(envCacheURL, defCacheURL),
-		CachePass: mainflux.Env(envCachePass, defCachePass),
-		CacheDB:   mainflux.Env(envCacheDB, defCacheDB),
-		HTTPPort:  mainflux.Env(envHTTPPort, defHTTPPort),
-		GRPCPort:  mainflux.Env(envGRPCPort, defGRPCPort),
-		UsersURL:  mainflux.Env(envUsersURL, defUsersURL),
+		LogLevel:   mainflux.Env(envLogLevel, defLogLevel),
+		DBHost:     mainflux.Env(envDBHost, defDBHost),
+		DBPort:     mainflux.Env(envDBPort, defDBPort),
+		DBUser:     mainflux.Env(envDBUser, defDBUser),
+		DBPass:     mainflux.Env(envDBPass, defDBPass),
+		DBName:     mainflux.Env(envDBName, defDBName),
+		CACerts:    mainflux.Env(envCACerts, defCACerts),
+		CacheURL:   mainflux.Env(envCacheURL, defCacheURL),
+		CachePass:  mainflux.Env(envCachePass, defCachePass),
+		CacheDB:    mainflux.Env(envCacheDB, defCacheDB),
+		HTTPPort:   mainflux.Env(envHTTPPort, defHTTPPort),
+		GRPCPort:   mainflux.Env(envGRPCPort, defGRPCPort),
+		UsersURL:   mainflux.Env(envUsersURL, defUsersURL),
+		ServerCert: mainflux.Env(envServerCert, defServerCert),
+		ServerKey:  mainflux.Env(envServerKey, defServerKey),
 	}
 }
 
@@ -148,8 +162,21 @@ func connectToDB(cfg config, logger logger.Logger) *sql.DB {
 	return db
 }
 
-func connectToUsersService(usersAddr string, logger logger.Logger) *grpc.ClientConn {
-	conn, err := grpc.Dial(usersAddr, grpc.WithInsecure())
+func connectToUsersService(cfg config, logger logger.Logger) *grpc.ClientConn {
+	var opts []grpc.DialOption
+	if cfg.CACerts != "" {
+		tpc, err := credentials.NewClientTLSFromFile(cfg.CACerts, "")
+		if err != nil {
+			logger.Error(fmt.Sprintf("Failed to create tls credentials: %s", err))
+			os.Exit(1)
+		}
+		opts = append(opts, grpc.WithTransportCredentials(tpc))
+	} else {
+		opts = append(opts, grpc.WithInsecure())
+		logger.Info("gRPC communication is not encrypted")
+	}
+
+	conn, err := grpc.Dial(cfg.UsersURL, opts...)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to users service: %s", err))
 		os.Exit(1)
@@ -185,20 +212,38 @@ func newService(conn *grpc.ClientConn, db *sql.DB, client *redis.Client, logger 
 	return svc
 }
 
-func startHTTPServer(svc things.Service, port string, logger logger.Logger, errs chan error) {
+func startHTTPServer(svc things.Service, port string, certFile string, keyFile string, logger logger.Logger, errs chan error) {
 	p := fmt.Sprintf(":%s", port)
-	logger.Info(fmt.Sprintf("Things service started, exposed port %s", port))
-	errs <- http.ListenAndServe(p, httpapi.MakeHandler(svc))
+	if certFile != "" || keyFile != "" {
+		logger.Info(fmt.Sprintf("Things service started using https on port %s with cert %s key %s", port, certFile, keyFile))
+		errs <- http.ListenAndServeTLS(p, certFile, keyFile, httpapi.MakeHandler(svc))
+	} else {
+		logger.Info(fmt.Sprintf("Things service started using http on port %s", port))
+		errs <- http.ListenAndServe(p, httpapi.MakeHandler(svc))
+	}
 }
 
-func startGRPCServer(svc things.Service, port string, logger logger.Logger, errs chan error) {
+func startGRPCServer(svc things.Service, port string, certFile string, keyFile string, logger logger.Logger, errs chan error) {
 	p := fmt.Sprintf(":%s", port)
 	listener, err := net.Listen("tcp", p)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to listen on port %s: %s", port, err))
 	}
-	server := grpc.NewServer()
+
+	var server *grpc.Server
+	if certFile != "" || keyFile != "" {
+		creds, err := credentials.NewServerTLSFromFile(certFile, keyFile)
+		if err != nil {
+			logger.Error(fmt.Sprintf("Failed to load things certificates: %s", err))
+			os.Exit(1)
+		}
+		logger.Info(fmt.Sprintf("Things gRPC service started using https on port %s with cert %s key %s", port, certFile, keyFile))
+		server = grpc.NewServer(grpc.Creds(creds))
+	} else {
+		logger.Info(fmt.Sprintf("Things gRPC service started using http on port %s", port))
+		server = grpc.NewServer()
+	}
+
 	mainflux.RegisterThingsServiceServer(server, grpcapi.NewServer(svc))
-	logger.Info(fmt.Sprintf("Things gRPC service started, exposed port %s", port))
 	errs <- server.Serve(listener)
 }

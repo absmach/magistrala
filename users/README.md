@@ -26,6 +26,8 @@ default values.
 | MF_USERS_DB          | Name of the database used by the service        | users        |
 | MF_USERS_HTTP_PORT   | Users service HTTP port                         | 8180         |
 | MF_USERS_GRPC_PORT   | Users service gRPC port                         | 8181         |
+| MF_USERS_SERVER_CERT | Path to server certificate in pem format        |              |
+| MF_USERS_SERVER_KEY  | Path to server key in pem format                |              |
 | MF_USERS_SECRET      | String used for signing tokens                  | users        |
 
 ## Deployment
@@ -52,6 +54,8 @@ services:
       MF_USERS_HTTP_PORT: [Service HTTP port]
       MF_USERS_GRPC_PORT: [Service gRPC port]
       MF_USERS_SECRET: [String used for signing tokens]
+      MF_USERS_SERVER_CERT: [String path to server certificate in pem format]
+      MF_USERS_SERVER_KEY: [String path to server key in pem format]
 ```
 
 To start the service outside of the container, execute the following shell script:
@@ -69,7 +73,7 @@ make users
 make install
 
 # set the environment variables and run the service
-MF_USERS_LOG_LEVEL=[Users log level] MF_USERS_DB_HOST=[Database host address] MF_USERS_DB_PORT=[Database host port] MF_USERS_DB_USER=[Database user] MF_USERS_DB_PASS=[Database password] MF_USERS_DB=[Name of the database used by the service] MF_USERS_HTTP_PORT=[Service HTTP port] MF_USERS_GRPC_PORT=[Service gRPC port] MF_USERS_SECRET=[String used for signing tokens] $GOBIN/mainflux-users
+MF_USERS_LOG_LEVEL=[Users log level] MF_USERS_DB_HOST=[Database host address] MF_USERS_DB_PORT=[Database host port] MF_USERS_DB_USER=[Database user] MF_USERS_DB_PASS=[Database password] MF_USERS_DB=[Name of the database used by the service] MF_USERS_HTTP_PORT=[Service HTTP port] MF_USERS_GRPC_PORT=[Service gRPC port] MF_USERS_SECRET=[String used for signing tokens] MF_USERS_SERVER_CERT=[Path to server certificate] MF_USERS_SERVER_KEY=[Path to server key] $GOBIN/mainflux-users
 ```
 
 ## Usage

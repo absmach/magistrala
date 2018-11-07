@@ -60,7 +60,7 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	if db, err = postgres.Connect("localhost", port, "test", "test", "test"); err != nil {
+	if db, err = postgres.Connect("localhost", port, "test", "test", "test", "disable"); err != nil {
 		log.Fatalf("Could not setup test DB connection: %s", err)
 	}
 	defer db.Close()

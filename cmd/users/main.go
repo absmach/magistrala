@@ -40,6 +40,7 @@ const (
 	defDBUser     = "mainflux"
 	defDBPass     = "mainflux"
 	defDBName     = "users"
+	defDBSSLMode  = "disable"
 	defHTTPPort   = "8180"
 	defGRPCPort   = "8181"
 	defSecret     = "users"
@@ -51,6 +52,7 @@ const (
 	envDBUser     = "MF_USERS_DB_USER"
 	envDBPass     = "MF_USERS_DB_PASS"
 	envDBName     = "MF_USERS_DB"
+	envDBSSLMode  = "MF_USERS_DB_SSL_MODE"
 	envHTTPPort   = "MF_USERS_HTTP_PORT"
 	envGRPCPort   = "MF_USERS_GRPC_PORT"
 	envSecret     = "MF_USERS_SECRET"
@@ -65,6 +67,7 @@ type config struct {
 	DBUser     string
 	DBPass     string
 	DBName     string
+	DBSSLMode  string
 	HTTPPort   string
 	GRPCPort   string
 	Secret     string
@@ -106,6 +109,7 @@ func loadConfig() config {
 		DBUser:     mainflux.Env(envDBUser, defDBUser),
 		DBPass:     mainflux.Env(envDBPass, defDBPass),
 		DBName:     mainflux.Env(envDBName, defDBName),
+		DBSSLMode:  mainflux.Env(envDBSSLMode, defDBSSLMode),
 		HTTPPort:   mainflux.Env(envHTTPPort, defHTTPPort),
 		GRPCPort:   mainflux.Env(envGRPCPort, defGRPCPort),
 		Secret:     mainflux.Env(envSecret, defSecret),
@@ -115,7 +119,7 @@ func loadConfig() config {
 }
 
 func connectToDB(cfg config, logger logger.Logger) *sql.DB {
-	db, err := postgres.Connect(cfg.DBHost, cfg.DBPort, cfg.DBName, cfg.DBUser, cfg.DBPass)
+	db, err := postgres.Connect(cfg.DBHost, cfg.DBPort, cfg.DBName, cfg.DBUser, cfg.DBPass, cfg.DBSSLMode)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to postgres: %s", err))
 		os.Exit(1)

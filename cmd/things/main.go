@@ -43,6 +43,7 @@ const (
 	defDBUser     = "mainflux"
 	defDBPass     = "mainflux"
 	defDBName     = "things"
+	defDBSSLMode  = "disable"
 	defCACerts    = ""
 	defCacheURL   = "localhost:6379"
 	defCachePass  = ""
@@ -58,6 +59,7 @@ const (
 	envDBUser     = "MF_THINGS_DB_USER"
 	envDBPass     = "MF_THINGS_DB_PASS"
 	envDBName     = "MF_THINGS_DB"
+	envDBSSLMode  = "MF_THINGS_DB_SSL_MODE"
 	envCACerts    = "MF_THINGS_CA_CERTS"
 	envCacheURL   = "MF_THINGS_CACHE_URL"
 	envCachePass  = "MF_THINGS_CACHE_PASS"
@@ -76,6 +78,7 @@ type config struct {
 	DBUser     string
 	DBPass     string
 	DBName     string
+	DBSSLMode  string
 	CACerts    string
 	CacheURL   string
 	CachePass  string
@@ -126,6 +129,7 @@ func loadConfig() config {
 		DBUser:     mainflux.Env(envDBUser, defDBUser),
 		DBPass:     mainflux.Env(envDBPass, defDBPass),
 		DBName:     mainflux.Env(envDBName, defDBName),
+		DBSSLMode:  mainflux.Env(envDBSSLMode, defDBSSLMode),
 		CACerts:    mainflux.Env(envCACerts, defCACerts),
 		CacheURL:   mainflux.Env(envCacheURL, defCacheURL),
 		CachePass:  mainflux.Env(envCachePass, defCachePass),
@@ -154,7 +158,7 @@ func connectToCache(cacheURL, cachePass string, cacheDB string, logger logger.Lo
 }
 
 func connectToDB(cfg config, logger logger.Logger) *sql.DB {
-	db, err := postgres.Connect(cfg.DBHost, cfg.DBPort, cfg.DBName, cfg.DBUser, cfg.DBPass)
+	db, err := postgres.Connect(cfg.DBHost, cfg.DBPort, cfg.DBName, cfg.DBUser, cfg.DBPass, cfg.DBSSLMode)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to postgres: %s", err))
 		os.Exit(1)

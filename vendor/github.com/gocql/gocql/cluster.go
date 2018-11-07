@@ -71,7 +71,7 @@ type ClusterConfig struct {
 	ReconnectInterval time.Duration
 
 	// The maximum amount of time to wait for schema agreement in a cluster after
-	// receiving a schema change frame. (deault: 60s)
+	// receiving a schema change frame. (default: 60s)
 	MaxWaitSchemaAgreement time.Duration
 
 	// HostFilter will filter all incoming events for host, any which don't pass
@@ -129,12 +129,19 @@ type ClusterConfig struct {
 	// created from this session.
 	ConnectObserver ConnectObserver
 
-  // FrameHeaderObserver will set the provided frame header observer on all frames' headers created from this session.
+	// FrameHeaderObserver will set the provided frame header observer on all frames' headers created from this session.
 	// Use it to collect metrics / stats from frames by providing an implementation of FrameHeaderObserver.
 	FrameHeaderObserver FrameHeaderObserver
 
 	// Default idempotence for queries
 	DefaultIdempotence bool
+
+	// The time to wait for frames before flushing the frames connection to Cassandra.
+	// Can help reduce syscall overhead by making less calls to write. Set to 0 to
+	// disable.
+	//
+	// (default: 200 microseconds)
+	WriteCoalesceWaitTime time.Duration
 
 	// internal config for testing
 	disableControlConn bool
@@ -166,6 +173,7 @@ func NewCluster(hosts ...string) *ClusterConfig {
 		ReconnectInterval:      60 * time.Second,
 		ConvictionPolicy:       &SimpleConvictionPolicy{},
 		ReconnectionPolicy:     &ConstantReconnectionPolicy{MaxRetries: 3, Interval: 1 * time.Second},
+		WriteCoalesceWaitTime:  200 * time.Microsecond,
 	}
 	return cfg
 }

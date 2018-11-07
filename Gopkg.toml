@@ -3,8 +3,8 @@
   version = "9.0.0"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/cisco/senml"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/dgrijalva/jwt-go"
@@ -16,7 +16,7 @@
 
 [[constraint]]
   name = "github.com/go-kit/kit"
-  version = "0.6.0"
+  version = "0.7.0"
 
 [[constraint]]
   name = "github.com/go-zoo/bone"
@@ -24,23 +24,19 @@
 
 [[constraint]]
   name = "github.com/golang/protobuf"
-  version = "1.1.0"
+  version = "1.2.0"
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/hokaccha/go-prettyjson"
-
-[[constraint]]
-  branch = "master"
   name = "github.com/lib/pq"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/nats-io/go-nats"
-  version = "1.4.0"
+  version = "1.6.0"
 
 [[constraint]]
   name = "github.com/prometheus/client_golang"
-  version = "0.8.0"
+  version = "0.9.1"
 
 [[constraint]]
   name = "github.com/satori/go.uuid"
@@ -48,7 +44,7 @@
 
 [[constraint]]
   name = "github.com/sony/gobreaker"
-  version = "0.3.0"
+  version = "0.4.0"
 
 [[constraint]]
   name = "github.com/spf13/cobra"
@@ -56,47 +52,51 @@
 
 [[constraint]]
   name = "github.com/stretchr/testify"
-  version = "1.2.1"
+  version = "1.2.2"
 
 [[constraint]]
-  branch = "master"
   name = "golang.org/x/crypto"
+  branch = "master"
 
 [[constraint]]
   name = "gopkg.in/ory-am/dockertest.v3"
-  version = "3.1.6"
+  version = "3.3.2"
 
 [[constraint]]
   name = "github.com/gorilla/websocket"
-  version = "1.2.0"
+  version = "1.4.0"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/rubenv/sql-migrate"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/influxdata/influxdb"
-  version = "1.5.2"
+  version = "1.6.4"
 
 [[constraint]]
   name = "github.com/mongodb/mongo-go-driver"
   version = "0.0.5"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/gocql/gocql"
+  branch = "master"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/dereulenspiegel/coap-mux"
+  branch = "master"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/dustin/go-coap"
+  branch = "master"
 
 [[constraint]]
   name = "github.com/gogo/protobuf"
   version = "1.1.1"
+
+[[constraint]]
+  name = "google.golang.org/grpc"
+  version = "1.16.0"
 
 [prune]
   go-tests = true

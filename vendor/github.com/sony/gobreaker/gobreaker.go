@@ -3,6 +3,7 @@
 package gobreaker
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -16,6 +17,13 @@ const (
 	StateClosed State = iota
 	StateHalfOpen
 	StateOpen
+)
+
+var (
+	// ErrTooManyRequests is returned when the CB state is half open and the requests count is over the cb maxRequests
+	ErrTooManyRequests = errors.New("too many requests")
+	// ErrOpenState is returned when the CB state is open
+	ErrOpenState = errors.New("circuit breaker is open")
 )
 
 // String implements stringer interface.
@@ -166,6 +174,11 @@ func defaultReadyToTrip(counts Counts) bool {
 	return counts.ConsecutiveFailures > 5
 }
 
+// Name returns the name of the CircuitBreaker.
+func (cb *CircuitBreaker) Name() string {
+	return cb.name
+}
+
 // State returns the current state of the CircuitBreaker.
 func (cb *CircuitBreaker) State() State {
 	cb.mutex.Lock()
@@ -200,9 +213,19 @@ func (cb *CircuitBreaker) Execute(req func() (interface{}, error)) (interface{},
 	return result, err
 }
 
+// Name returns the name of the TwoStepCircuitBreaker.
+func (tscb *TwoStepCircuitBreaker) Name() string {
+	return tscb.cb.Name()
+}
+
+// State returns the current state of the TwoStepCircuitBreaker.
+func (tscb *TwoStepCircuitBreaker) State() State {
+	return tscb.cb.State()
+}
+
 // Allow checks if a new request can proceed. It returns a callback that should be used to
-// register the success or failure in a separate step. If the Circuit Breaker doesn't allow
-// requests it returns an error.
+// register the success or failure in a separate step. If the circuit breaker doesn't allow
+// requests, it returns an error.
 func (tscb *TwoStepCircuitBreaker) Allow() (done func(success bool), err error) {
 	generation, err := tscb.cb.beforeRequest()
 	if err != nil {
@@ -214,11 +237,6 @@ func (tscb *TwoStepCircuitBreaker) Allow() (done func(success bool), err error) 
 	}, nil
 }
 
-// State returns the current state of the TwoStepCircuitBreaker.
-func (tscb *TwoStepCircuitBreaker) State() State {
-	return tscb.cb.State()
-}
-
 func (cb *CircuitBreaker) beforeRequest() (uint64, error) {
 	cb.mutex.Lock()
 	defer cb.mutex.Unlock()
@@ -227,9 +245,9 @@ func (cb *CircuitBreaker) beforeRequest() (uint64, error) {
 	state, generation := cb.currentState(now)
 
 	if state == StateOpen {
-		return generation, cb.errorStateOpen()
+		return generation, ErrOpenState
 	} else if state == StateHalfOpen && cb.counts.Requests >= cb.maxRequests {
-		return generation, fmt.Errorf("too many requests")
+		return generation, ErrTooManyRequests
 	}
 
 	cb.counts.onRequest()
@@ -323,12 +341,4 @@ func (cb *CircuitBreaker) toNewGeneration(now time.Time) {
 	default: // StateHalfOpen
 		cb.expiry = zero
 	}
-}
-
-func (cb *CircuitBreaker) errorStateOpen() error {
-	if cb.name == "" {
-		return fmt.Errorf("circuit breaker is open")
-	}
-
-	return fmt.Errorf("circuit breaker '%s' is open", cb.name)
 }

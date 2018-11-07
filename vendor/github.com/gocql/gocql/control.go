@@ -121,7 +121,7 @@ func hostInfo(addr string, defaultPort int) ([]*HostInfo, error) {
 	}
 
 	// Look up host in DNS
-	ips, err := net.LookupIP(host)
+	ips, err := LookupIP(host)
 	if err != nil {
 		return nil, err
 	} else if len(ips) == 0 {
@@ -271,7 +271,7 @@ func (c *controlConn) setupConn(conn *Conn) error {
 
 	// TODO(zariel): do we need to fetch host info everytime
 	// the control conn connects? Surely we have it cached?
-	host, err := conn.localHostInfo()
+	host, err := conn.localHostInfo(context.TODO())
 	if err != nil {
 		return err
 	}
@@ -446,14 +446,14 @@ func (c *controlConn) query(statement string, values ...interface{}) (iter *Iter
 
 	for {
 		iter = c.withConn(func(conn *Conn) *Iter {
-			return conn.executeQuery(q)
+			return conn.executeQuery(context.TODO(), q)
 		})
 
 		if gocqlDebug && iter.err != nil {
 			Logger.Printf("control: error executing %q: %v\n", statement, iter.err)
 		}
 
-		q.attempts++
+		q.AddAttempts(1, c.getConn().host)
 		if iter.err == nil || !c.retry.Attempt(q) {
 			break
 		}
@@ -464,7 +464,7 @@ func (c *controlConn) query(statement string, values ...interface{}) (iter *Iter
 
 func (c *controlConn) awaitSchemaAgreement() error {
 	return c.withConn(func(conn *Conn) *Iter {
-		return &Iter{err: conn.awaitSchemaAgreement()}
+		return &Iter{err: conn.awaitSchemaAgreement(context.TODO())}
 	}).err
 }
 

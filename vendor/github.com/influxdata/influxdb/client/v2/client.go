@@ -45,6 +45,9 @@ type HTTPConfig struct {
 	// TLSConfig allows the user to set their own TLS config for the HTTP
 	// Client. If set, this option overrides InsecureSkipVerify.
 	TLSConfig *tls.Config
+
+	// Proxy configures the Proxy function on the HTTP client.
+	Proxy func(req *http.Request) (*url.URL, error)
 }
 
 // BatchPointsConfig is the config data needed to create an instance of the BatchPoints struct.
@@ -99,6 +102,7 @@ func NewHTTPClient(conf HTTPConfig) (Client, error) {
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: conf.InsecureSkipVerify,
 		},
+		Proxy: conf.Proxy,
 	}
 	if conf.TLSConfig != nil {
 		tr.TLSClientConfig = conf.TLSConfig
@@ -359,6 +363,9 @@ func (c *client) Write(bp BatchPoints) error {
 	var b bytes.Buffer
 
 	for _, p := range bp.Points() {
+		if p == nil {
+			continue
+		}
 		if _, err := b.WriteString(p.pt.PrecisionString(bp.Precision())); err != nil {
 			return err
 		}
@@ -409,12 +416,13 @@ func (c *client) Write(bp BatchPoints) error {
 
 // Query defines a query to send to the server.
 type Query struct {
-	Command    string
-	Database   string
-	Precision  string
-	Chunked    bool
-	ChunkSize  int
-	Parameters map[string]interface{}
+	Command         string
+	Database        string
+	RetentionPolicy string
+	Precision       string
+	Chunked         bool
+	ChunkSize       int
+	Parameters      map[string]interface{}
 }
 
 // NewQuery returns a query object.
@@ -425,6 +433,19 @@ func NewQuery(command, database, precision string) Query {
 		Database:   database,
 		Precision:  precision,
 		Parameters: make(map[string]interface{}),
+	}
+}
+
+// NewQueryWithRP returns a query object.
+// The database, retention policy, and precision arguments can be empty strings if they are not needed
+// for the query. Setting the retention policy only works on InfluxDB versions 1.6 or greater.
+func NewQueryWithRP(command, database, retentionPolicy, precision string) Query {
+	return Query{
+		Command:         command,
+		Database:        database,
+		RetentionPolicy: retentionPolicy,
+		Precision:       precision,
+		Parameters:      make(map[string]interface{}),
 	}
 }
 
@@ -499,6 +520,9 @@ func (c *client) Query(q Query) (*Response, error) {
 	params := req.URL.Query()
 	params.Set("q", q.Command)
 	params.Set("db", q.Database)
+	if q.RetentionPolicy != "" {
+		params.Set("rp", q.RetentionPolicy)
+	}
 	params.Set("params", string(jsonParameters))
 	if q.Chunked {
 		params.Set("chunked", "true")

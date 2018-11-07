@@ -7,10 +7,11 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/ugorji/go/codec"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ugorji/go/codec"
 )
 
 type Format int
@@ -50,7 +51,7 @@ type SenMLRecord struct {
 	DataValue   string   `json:"vd,omitempty"  xml:"vd,attr,omitempty"`
 	BoolValue   *bool    `json:"vb,omitempty"  xml:"vb,attr,omitempty"`
 
-	Sum *float64 `json:"s,omitempty"  xml:"sum,,attr,omitempty"`
+	Sum *float64 `json:"s,omitempty"  xml:"s,attr,omitempty"`
 }
 
 type SenML struct {
@@ -277,7 +278,7 @@ func Normalize(senml SenML) SenML {
 
 	var totalRecords int = 0
 	for _, r := range senml.Records {
-		if (r.Value != nil) || (len(r.StringValue) > 0) || (r.BoolValue != nil) {
+		if (r.Value != nil) || (len(r.StringValue) > 0) || (len(r.DataValue) > 0) || (r.BoolValue != nil) {
 			totalRecords += 1
 		}
 	}
@@ -317,7 +318,7 @@ func Normalize(senml SenML) SenML {
 			r.Time = float64(t) + r.Time
 		}
 
-		if (r.Value != nil) || (len(r.StringValue) > 0) || (r.BoolValue != nil) {
+		if (r.Value != nil) || (len(r.StringValue) > 0) || (len(r.DataValue) > 0) || (r.BoolValue != nil) {
 			ret.Records[numRecords] = r
 			numRecords += 1
 		}

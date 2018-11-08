@@ -18,6 +18,7 @@ services:
     container_name: mainflux-mongodb-reader
     restart: on-failure
     environment:
+      MF_MONGO_READER_LOG_LEVEL: debug
       MF_THINGS_URL: things:8183
       MF_MONGO_READER_PORT: 8904
       MF_MONGO_READER_DB_NAME: mainflux

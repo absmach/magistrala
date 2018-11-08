@@ -18,6 +18,7 @@ services:
     container_name: mainflux-cassandra-reader
     restart: on-failure
     environment:
+      MF_CASSANDRA_READER_LOG_LEVEL: debug
       MF_THINGS_URL: things:8183
       MF_CASSANDRA_READER_PORT: 8903
       MF_CASSANDRA_READER_DB_CLUSTER: mainflux-cassandra

@@ -32,6 +32,7 @@ services:
       - mongodb
     restart: on-failure
     environment:
+      MF_MONGO_WRITER_LOG_LEVEL: debug
       MF_NATS_URL: nats://nats:4222
       MF_MONGO_WRITER_PORT: 8901
       MF_MONGO_WRITER_DB_NAME: mainflux

@@ -17,6 +17,7 @@ services:
     container_name: mainflux-influxdb-reader
     restart: on-failure
     environment:
+      MF_INFLUX_READER_LOG_LEVEL: debug
       MF_THINGS_URL: things:8183
       MF_INFLUX_READER_PORT: 8905
       MF_INFLUX_READER_DB_NAME: mainflux

@@ -29,6 +29,7 @@ services:
       - cassandra
     restart: on-failure
     environment:
+      MF_CASSANDRA_WRITER_LOG_LEVEL: debug
       MF_NATS_URL: nats://nats:4222
       MF_CASSANDRA_WRITER_PORT: 8902
       MF_CASSANDRA_WRITER_DB_CLUSTER: mainflux-cassandra

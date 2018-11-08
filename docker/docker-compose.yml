@@ -56,6 +56,7 @@ services:
       - 8181
     restart: on-failure
     environment:
+      MF_USERS_LOG_LEVEL: debug
       MF_USERS_DB_HOST: users-db
       MF_USERS_DB_PORT: 5432
       MF_USERS_DB_USER: mainflux
@@ -95,6 +96,7 @@ services:
       - users
     restart: on-failure
     environment:
+      MF_THINGS_LOG_LEVEL: debug
       MF_THINGS_DB_HOST: things-db
       MF_THINGS_DB_PORT: 5432
       MF_THINGS_DB_USER: mainflux
@@ -120,6 +122,7 @@ services:
     expose:
       - 8184
     environment:
+      MF_NORMALIZER_LOG_LEVEL: debug
       MF_NATS_URL: nats://nats:4222
       MF_NORMALIZER_PORT: 8184
     networks:
@@ -142,6 +145,7 @@ services:
       - nats
     restart: on-failure
     environment:
+      MF_WS_ADAPTER_LOG_LEVEL: debug
       MF_WS_ADAPTER_PORT: 8186
       MF_NATS_URL: nats://nats:4222
       MF_THINGS_URL: things:8183
@@ -160,6 +164,7 @@ services:
     expose:
       - 8185
     environment:
+      MF_HTTP_ADAPTER_LOG_LEVEL: debug
       MF_HTTP_ADAPTER_PORT: 8185
       MF_NATS_URL: nats://nats:4222
       MF_THINGS_URL: things:8183
@@ -184,6 +189,7 @@ services:
       - redis
     restart: on-failure
     environment:
+      MF_MQTT_ADAPTER_LOG_LEVEL: debug
       MF_MQTT_ADAPTER_PORT: 1883
       MF_MQTT_ADAPTER_WS_PORT: 8880
       MF_MQTT_ADAPTER_REDIS_HOST: redis
@@ -203,6 +209,7 @@ services:
       - nats
     restart: on-failure
     environment:
+      MF_COAP_ADAPTER_LOG_LEVEL: debug
       MF_COAP_ADAPTER_PORT: 5683
       MF_NATS_URL: nats://nats:4222
       MF_THINGS_URL: things:8183

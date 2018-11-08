@@ -26,6 +26,7 @@ default values.
 | MF_THINGS_DB_PASS     | Database password                                | mainflux       |
 | MF_THINGS_DB          | Name of the database used by the service         | things         |
 | MF_THINGS_DB_SSL_MODE | Database connection SSL mode (disable or require)| disable        |
+| MF_THINGS_CLIENT_TLS  | Flag that indicates if TLS should be turned on   | false          |
 | MF_THINGS_CA_CERTS    | Path to trusted CAs in PEM format                |                |
 | MF_THINGS_CACHE_URL   | Cache database URL                               | localhost:6379 |
 | MF_THINGS_CACHE_PASS  | Cache database password                          |                |

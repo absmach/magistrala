@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 
 	"google.golang.org/grpc/credentials"
@@ -30,43 +31,46 @@ import (
 )
 
 const (
-	defCACerts   string = ""
-	defPort      string = "8180"
-	defLogLevel  string = "error"
-	defNatsURL   string = broker.DefaultURL
-	defThingsURL string = "localhost:8181"
-	envCACerts   string = "MF_HTTP_ADAPTER_CA_CERTS"
-	envPort      string = "MF_HTTP_ADAPTER_PORT"
-	envLogLevel  string = "MF_HTTP_ADAPTER_LOG_LEVEL"
-	envNatsURL   string = "MF_NATS_URL"
-	envThingsURL string = "MF_THINGS_URL"
+	defClientTLS = "false"
+	defCACerts   = ""
+	defPort      = "8180"
+	defLogLevel  = "error"
+	defNatsURL   = broker.DefaultURL
+	defThingsURL = "localhost:8181"
+	envClientTLS = "MF_HTTP_ADAPTER_CLIENT_TLS"
+	envCACerts   = "MF_HTTP_ADAPTER_CA_CERTS"
+	envPort      = "MF_HTTP_ADAPTER_PORT"
+	envLogLevel  = "MF_HTTP_ADAPTER_LOG_LEVEL"
+	envNatsURL   = "MF_NATS_URL"
+	envThingsURL = "MF_THINGS_URL"
 )
 
 type config struct {
-	ThingsURL string
-	NatsURL   string
-	LogLevel  string
-	Port      string
-	CACerts   string
+	thingsURL string
+	natsURL   string
+	logLevel  string
+	port      string
+	clientTLS bool
+	caCerts   string
 }
 
 func main() {
 
 	cfg := loadConfig()
 
-	logger, err := logger.New(os.Stdout, cfg.LogLevel)
+	logger, err := logger.New(os.Stdout, cfg.logLevel)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 
-	nc, err := broker.Connect(cfg.NatsURL)
+	nc, err := broker.Connect(cfg.natsURL)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to NATS: %s", err))
 		os.Exit(1)
 	}
 	defer nc.Close()
 
-	conn := connectToThingsService(cfg, logger)
+	conn := connectToThings(cfg, logger)
 	defer conn.Close()
 
 	cc := thingsapi.NewClient(conn)
@@ -93,8 +97,8 @@ func main() {
 	errs := make(chan error, 2)
 
 	go func() {
-		p := fmt.Sprintf(":%s", cfg.Port)
-		logger.Info(fmt.Sprintf("HTTP adapter service started on port %s", cfg.Port))
+		p := fmt.Sprintf(":%s", cfg.port)
+		logger.Info(fmt.Sprintf("HTTP adapter service started on port %s", cfg.port))
 		errs <- http.ListenAndServe(p, api.MakeHandler(svc, cc))
 	}()
 
@@ -109,30 +113,38 @@ func main() {
 }
 
 func loadConfig() config {
+	tls, err := strconv.ParseBool(mainflux.Env(envClientTLS, defClientTLS))
+	if err != nil {
+		tls = false
+	}
+
 	return config{
-		ThingsURL: mainflux.Env(envThingsURL, defThingsURL),
-		NatsURL:   mainflux.Env(envNatsURL, defNatsURL),
-		LogLevel:  mainflux.Env(envLogLevel, defLogLevel),
-		Port:      mainflux.Env(envPort, defPort),
-		CACerts:   mainflux.Env(envCACerts, defCACerts),
+		thingsURL: mainflux.Env(envThingsURL, defThingsURL),
+		natsURL:   mainflux.Env(envNatsURL, defNatsURL),
+		logLevel:  mainflux.Env(envLogLevel, defLogLevel),
+		port:      mainflux.Env(envPort, defPort),
+		clientTLS: tls,
+		caCerts:   mainflux.Env(envCACerts, defCACerts),
 	}
 }
 
-func connectToThingsService(cfg config, logger logger.Logger) *grpc.ClientConn {
+func connectToThings(cfg config, logger logger.Logger) *grpc.ClientConn {
 	var opts []grpc.DialOption
-	if cfg.CACerts != "" {
-		tpc, err := credentials.NewClientTLSFromFile(cfg.CACerts, "")
-		if err != nil {
-			logger.Error(fmt.Sprintf("Failed to load certs: %s", err))
-			os.Exit(1)
+	if cfg.clientTLS {
+		if cfg.caCerts != "" {
+			tpc, err := credentials.NewClientTLSFromFile(cfg.caCerts, "")
+			if err != nil {
+				logger.Error(fmt.Sprintf("Failed to load certs: %s", err))
+				os.Exit(1)
+			}
+			opts = append(opts, grpc.WithTransportCredentials(tpc))
 		}
-		opts = append(opts, grpc.WithTransportCredentials(tpc))
 	} else {
 		logger.Info("gRPC communication is not encrypted")
 		opts = append(opts, grpc.WithInsecure())
 	}
 
-	conn, err := grpc.Dial(cfg.ThingsURL, opts...)
+	conn, err := grpc.Dial(cfg.thingsURL, opts...)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to things service: %s", err))
 		os.Exit(1)

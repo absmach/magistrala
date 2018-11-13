@@ -1,0 +1,10 @@
+.git
+.github
+build
+dashflux
+docker
+docs
+k8s
+load-test
+metrics
+scripts

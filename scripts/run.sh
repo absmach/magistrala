@@ -58,7 +58,7 @@ cd -
 ###
 # CoAP
 ###
-# TODO: add coap
+MF_COAP_ADAPTER_LOG_LEVEL=info MF_COAP_ADAPTER_PORT=5683 MF_THINGS_URL=localhost:8183 $BUILD_DIR/mainflux-coap &
 
 trap cleanup EXIT
 

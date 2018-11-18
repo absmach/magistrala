@@ -112,7 +112,9 @@ func (repo *influxRepo) savePoint(point *influxdata.Point) error {
 
 func (repo *influxRepo) Save(msg mainflux.Message) error {
 	tags, fields := repo.tagsOf(&msg), repo.fieldsOf(&msg)
-	pt, err := influxdata.NewPoint(pointName, tags, fields, time.Now())
+	t := time.Unix(int64(msg.Time), 0)
+
+	pt, err := influxdata.NewPoint(pointName, tags, fields, t)
 	if err != nil {
 		return err
 	}
@@ -121,38 +123,38 @@ func (repo *influxRepo) Save(msg mainflux.Message) error {
 }
 
 func (repo *influxRepo) tagsOf(msg *mainflux.Message) tags {
-	time := strconv.FormatFloat(msg.Time, 'f', -1, 64)
-	update := strconv.FormatFloat(msg.UpdateTime, 'f', -1, 64)
 	channel := strconv.FormatUint(msg.Channel, 10)
 	publisher := strconv.FormatUint(msg.Publisher, 10)
 
 	return tags{
-		"Channel":    channel,
-		"Publisher":  publisher,
-		"Protocol":   msg.Protocol,
-		"Name":       msg.Name,
-		"Unit":       msg.Unit,
-		"Link":       msg.Link,
-		"Time":       time,
-		"UpdateTime": update,
+		"channel":   channel,
+		"publisher": publisher,
 	}
 }
 
 func (repo *influxRepo) fieldsOf(msg *mainflux.Message) fields {
-	ret := fields{}
+	updateTime := strconv.FormatFloat(msg.UpdateTime, 'f', -1, 64)
+	ret := fields{
+		"protocol":   msg.Protocol,
+		"name":       msg.Name,
+		"unit":       msg.Unit,
+		"link":       msg.Link,
+		"updateTime": updateTime,
+	}
+
 	switch msg.Value.(type) {
 	case *mainflux.Message_FloatValue:
-		ret["Value"] = msg.GetFloatValue()
+		ret["value"] = msg.GetFloatValue()
 	case *mainflux.Message_StringValue:
-		ret["StringValue"] = msg.GetStringValue()
+		ret["stringValue"] = msg.GetStringValue()
 	case *mainflux.Message_DataValue:
-		ret["DataValue"] = msg.GetDataValue()
+		ret["dataValue"] = msg.GetDataValue()
 	case *mainflux.Message_BoolValue:
-		ret["BoolValue"] = msg.GetBoolValue()
+		ret["boolValue"] = msg.GetBoolValue()
 	}
 
 	if msg.ValueSum != nil {
-		ret["ValueSum"] = msg.GetValueSum().GetValue()
+		ret["valueSum"] = msg.GetValueSum().GetValue()
 	}
 
 	return ret

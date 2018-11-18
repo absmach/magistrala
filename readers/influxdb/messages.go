@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/mainflux/mainflux/readers"
 
@@ -22,9 +23,6 @@ type influxRepository struct {
 	client   influxdata.Client
 }
 
-type fields map[string]interface{}
-type tags map[string]string
-
 // New returns new InfluxDB reader.
 func New(client influxdata.Client, database string) (readers.MessageRepository, error) {
 	return &influxRepository{database, client}, nil
@@ -35,7 +33,7 @@ func (repo *influxRepository) ReadAll(chanID, offset, limit uint64) []mainflux.M
 		limit = maxLimit
 	}
 
-	cmd := fmt.Sprintf(`SELECT * from messages WHERE Channel='%d' LIMIT %d OFFSET %d`, chanID, limit, offset)
+	cmd := fmt.Sprintf(`SELECT * from messages WHERE channel='%d' LIMIT %d OFFSET %d`, chanID, limit, offset)
 	q := influxdata.Query{
 		Command:  cmd,
 		Database: repo.database,
@@ -51,6 +49,7 @@ func (repo *influxRepository) ReadAll(chanID, offset, limit uint64) []mainflux.M
 	if len(resp.Results) < 1 || len(resp.Results[0].Series) < 1 {
 		return ret
 	}
+
 	result := resp.Results[0].Series[0]
 	for _, v := range result.Values {
 		ret = append(ret, parseMessage(result.Columns, v))
@@ -63,17 +62,19 @@ func (repo *influxRepository) ReadAll(chanID, offset, limit uint64) []mainflux.M
 // results in form of rows and columns, this obscure message conversion is needed
 // to return actual []mainflux.Message from the query result.
 func parseValues(value interface{}, name string, msg *mainflux.Message) {
-	if name == "ValueSum" && value != nil {
+	if name == "valueSum" && value != nil {
 		if sum, ok := value.(json.Number); ok {
 			valSum, err := sum.Float64()
 			if err != nil {
 				return
 			}
+
 			msg.ValueSum = &mainflux.SumValue{Value: valSum}
 		}
 		return
 	}
-	if strings.HasSuffix(name, "Value") {
+
+	if strings.HasSuffix(strings.ToLower(name), "value") {
 		switch value.(type) {
 		case bool:
 			msg.Value = &mainflux.Message_BoolValue{value.(bool)}
@@ -85,12 +86,12 @@ func parseValues(value interface{}, name string, msg *mainflux.Message) {
 
 			msg.Value = &mainflux.Message_FloatValue{num}
 		case string:
-			if strings.HasPrefix(name, "String") {
+			if strings.HasPrefix(name, "string") {
 				msg.Value = &mainflux.Message_StringValue{value.(string)}
 				return
 			}
 
-			if strings.HasPrefix(name, "Data") {
+			if strings.HasPrefix(name, "data") {
 				msg.Value = &mainflux.Message_DataValue{value.(string)}
 			}
 		}
@@ -102,7 +103,7 @@ func parseMessage(names []string, fields []interface{}) mainflux.Message {
 	v := reflect.ValueOf(&m).Elem()
 	for i, name := range names {
 		parseValues(fields[i], name, &m)
-		msgField := v.FieldByName(name)
+		msgField := v.FieldByName(strings.Title(name))
 		if !msgField.IsValid() {
 			continue
 		}
@@ -117,6 +118,17 @@ func parseMessage(names []string, fields []interface{}) mainflux.Message {
 			u, _ := strconv.ParseUint(fields[i].(string), 10, 64)
 			msgField.SetUint(u)
 		case float64:
+			if name == "time" {
+				t, err := time.Parse(time.RFC3339, fields[i].(string))
+				if err != nil {
+					continue
+				}
+
+				v := float64(t.Unix())
+				msgField.SetFloat(v)
+				continue
+			}
+
 			val, _ := strconv.ParseFloat(fields[i].(string), 64)
 			msgField.SetFloat(val)
 		}

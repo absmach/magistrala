@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -53,6 +54,8 @@ func TestSave(t *testing.T) {
 
 	db := client.Database(testDB)
 	repo := mongodb.New(db)
+
+	now := time.Now().Unix()
 	for i := 0; i < msgsNum; i++ {
 		// Mix possible values as well as value sum.
 		count := i % valueFields
@@ -70,6 +73,7 @@ func TestSave(t *testing.T) {
 		case 5:
 			msg.ValueSum = &mainflux.SumValue{Value: 45}
 		}
+		msg.Time = float64(now + int64(i))
 
 		err = repo.Save(msg)
 	}

@@ -10,6 +10,7 @@ package cassandra_test
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/mainflux/mainflux"
 	readers "github.com/mainflux/mainflux/readers/cassandra"
@@ -41,6 +42,7 @@ func TestReadAll(t *testing.T) {
 	writer := writers.New(session)
 
 	messages := []mainflux.Message{}
+	now := time.Now().Unix()
 	for i := 0; i < msgsNum; i++ {
 		// Mix possible values as well as value sum.
 		count := i % valueFields
@@ -58,6 +60,7 @@ func TestReadAll(t *testing.T) {
 		case 5:
 			msg.ValueSum = &mainflux.SumValue{Value: 45}
 		}
+		msg.Time = float64(now + int64(i))
 
 		err := writer.Save(msg)
 		require.Nil(t, err, fmt.Sprintf("failed to store message to Cassandra: %s", err))

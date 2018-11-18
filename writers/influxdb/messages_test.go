@@ -47,7 +47,6 @@ var (
 		Unit:       "km",
 		Value:      &mainflux.Message_FloatValue{24},
 		ValueSum:   &mainflux.SumValue{Value: 22},
-		Time:       13451312,
 		UpdateTime: 5456565466,
 		Link:       "link",
 	}
@@ -145,6 +144,7 @@ func TestSave(t *testing.T) {
 		row, err := queryDB(dropMsgs)
 		require.Nil(t, err, fmt.Sprintf("Cleaning data from InfluxDB expected to succeed: %s.\n", err))
 
+		now := time.Now().Unix()
 		for i := 0; i < tc.msgsNum; i++ {
 			// Mix possible values as well as value sum.
 			count := i % valueFields
@@ -162,6 +162,7 @@ func TestSave(t *testing.T) {
 			case 5:
 				msg.ValueSum = &mainflux.SumValue{Value: 45}
 			}
+			msg.Time = float64(now + int64(i))
 
 			err := tc.repo.Save(msg)
 			assert.Nil(t, err, fmt.Sprintf("Save operation expected to succeed: %s.\n", err))

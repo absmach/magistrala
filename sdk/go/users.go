@@ -31,8 +31,6 @@ func (sdk mfSDK) CreateUser(user User) error {
 		switch resp.StatusCode {
 		case http.StatusBadRequest:
 			return ErrInvalidArgs
-		case http.StatusForbidden:
-			return ErrUnauthorized
 		case http.StatusConflict:
 			return ErrConflict
 		default:

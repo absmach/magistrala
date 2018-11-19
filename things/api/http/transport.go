@@ -270,8 +270,6 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusForbidden)
 	case things.ErrNotFound:
 		w.WriteHeader(http.StatusNotFound)
-	case things.ErrConflict:
-		w.WriteHeader(http.StatusConflict)
 	case errUnsupportedContentType:
 		w.WriteHeader(http.StatusUnsupportedMediaType)
 	case errInvalidQueryParams:

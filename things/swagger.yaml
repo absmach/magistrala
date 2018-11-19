@@ -131,6 +131,8 @@ paths:
       responses:
         204:
           description: Thing removed.
+        400:
+          description: Failed due to malformed thing's ID.
         403:
           description: Missing or invalid access token provided.
         500:
@@ -258,6 +260,8 @@ paths:
       responses:
         204:
           description: Channel removed.
+        400:
+          description: Failed due to malformed channel's ID.
         403:
           description: Missing or invalid access token provided.
         500:

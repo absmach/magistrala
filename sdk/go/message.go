@@ -36,7 +36,7 @@ func (sdk mfSDK) SendMessage(chanID, msg, token string) error {
 		case http.StatusNotFound:
 			return ErrNotFound
 		default:
-			return ErrFailedUpdate
+			return ErrFailedPublish
 		}
 	}
 

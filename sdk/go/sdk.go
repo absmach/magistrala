@@ -36,6 +36,9 @@ var (
 	// ErrFailedUpdate indicates that entity update failed.
 	ErrFailedUpdate = errors.New("failed to update entity")
 
+	// ErrFailedPublish indicates that publishing message failed.
+	ErrFailedPublish = errors.New("failed to publish message")
+
 	// ErrFailedRemoval indicates that entity removal failed.
 	ErrFailedRemoval = errors.New("failed to remove entity")
 
@@ -43,7 +46,7 @@ var (
 	ErrFailedConnection = errors.New("failed to connect thing to channel")
 
 	// ErrFailedDisconnect indicates that disconnecting thing from a channel failed.
-	ErrFailedDisconnect = errors.New("failed to connect thing to channel")
+	ErrFailedDisconnect = errors.New("failed to disconnect thing from channel")
 
 	// ErrInvalidArgs indicates that invalid argument was passed.
 	ErrInvalidArgs = errors.New("invalid argument passed")

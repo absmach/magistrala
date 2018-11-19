@@ -16,10 +16,6 @@ import (
 )
 
 var (
-	// ErrConflict indicates usage of the existing email during account
-	// registration.
-	ErrConflict = errors.New("email already taken")
-
 	// ErrMalformedEntity indicates malformed entity specification (e.g.
 	// invalid username or password).
 	ErrMalformedEntity = errors.New("malformed entity specification")

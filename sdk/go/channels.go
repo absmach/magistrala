@@ -181,8 +181,6 @@ func (sdk mfSDK) DeleteChannel(id, token string) error {
 			return ErrInvalidArgs
 		case http.StatusForbidden:
 			return ErrUnauthorized
-		case http.StatusNotFound:
-			return ErrNotFound
 		default:
 			return ErrFailedUpdate
 		}

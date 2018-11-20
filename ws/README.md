@@ -35,6 +35,8 @@ services:
       MF_NATS_URL: [NATS instance URL]
       MF_WS_ADAPTER_PORT: [Service WS port]
       MF_WS_ADAPTER_LOG_LEVEL: [WS adapter log level]
+      MF_WS_ADAPTER_CLIENT_TLS: [Flag that indicates if TLS should be turned on]
+      MF_WS_ADAPTER_CA_CERTS: [Path to trusted CAs in PEM format]
 ```
 
 To start the service outside of the container, execute the following shell script:
@@ -52,7 +54,7 @@ make ws
 make install
 
 # set the environment variables and run the service
-MF_THINGS_URL=[Things service URL] MF_NATS_URL=[NATS instance URL] MF_WS_ADAPTER_PORT=[Service WS port] MF_WS_ADAPTER_LOG_LEVEL=[WS adapter log level] $GOBIN/mainflux-ws
+MF_THINGS_URL=[Things service URL] MF_NATS_URL=[NATS instance URL] MF_WS_ADAPTER_PORT=[Service WS port] MF_WS_ADAPTER_LOG_LEVEL=[WS adapter log level] MF_WS_ADAPTER_CLIENT_TLS=[Flag that indicates if TLS should be turned on] MF_WS_ADAPTER_CA_CERTS=[Path to trusted CAs in PEM format] $GOBIN/mainflux-ws
 ```
 
 ## Usage

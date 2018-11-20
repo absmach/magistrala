@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 
 	gocoap "github.com/dustin/go-coap"
@@ -25,6 +26,7 @@ import (
 	thingsapi "github.com/mainflux/mainflux/things/api/grpc"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 
 	broker "github.com/nats-io/go-nats"
 )
@@ -34,11 +36,15 @@ const (
 	defNatsURL   = broker.DefaultURL
 	defThingsURL = "localhost:8181"
 	defLogLevel  = "error"
+	defClientTLS = "false"
+	defCACerts   = ""
 
 	envPort      = "MF_COAP_ADAPTER_PORT"
 	envNatsURL   = "MF_NATS_URL"
 	envThingsURL = "MF_THINGS_URL"
 	envLogLevel  = "MF_COAP_ADAPTER_LOG_LEVEL"
+	envClientTLS = "MF_COAP_ADAPTER_CLIENT_TLS"
+	envCACerts   = "MF_COAP_ADAPTER_CA_CERTS"
 )
 
 type config struct {
@@ -46,6 +52,8 @@ type config struct {
 	natsURL   string
 	thingsURL string
 	logLevel  string
+	clientTLS bool
+	caCerts   string
 }
 
 func main() {
@@ -63,11 +71,7 @@ func main() {
 	}
 	defer nc.Close()
 
-	conn, err := grpc.Dial(cfg.thingsURL, grpc.WithInsecure())
-	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to users service: %s", err))
-		os.Exit(1)
-	}
+	conn := connectToThings(cfg, logger)
 	defer conn.Close()
 
 	cc := thingsapi.NewClient(conn)
@@ -108,12 +112,43 @@ func main() {
 }
 
 func loadConfig() config {
+	tls, err := strconv.ParseBool(mainflux.Env(envClientTLS, defClientTLS))
+	if err != nil {
+		log.Fatalf("Invalid value passed for %s\n", envClientTLS)
+	}
+
 	return config{
 		thingsURL: mainflux.Env(envThingsURL, defThingsURL),
 		natsURL:   mainflux.Env(envNatsURL, defNatsURL),
 		port:      mainflux.Env(envPort, defPort),
 		logLevel:  mainflux.Env(envLogLevel, defLogLevel),
+		clientTLS: tls,
+		caCerts:   mainflux.Env(envCACerts, defCACerts),
 	}
+}
+
+func connectToThings(cfg config, logger logger.Logger) *grpc.ClientConn {
+	var opts []grpc.DialOption
+	if cfg.clientTLS {
+		if cfg.caCerts != "" {
+			tpc, err := credentials.NewClientTLSFromFile(cfg.caCerts, "")
+			if err != nil {
+				logger.Error(fmt.Sprintf("Failed to load certs: %s", err))
+				os.Exit(1)
+			}
+			opts = append(opts, grpc.WithTransportCredentials(tpc))
+		}
+	} else {
+		logger.Info("gRPC communication is not encrypted")
+		opts = append(opts, grpc.WithInsecure())
+	}
+
+	conn, err := grpc.Dial(cfg.thingsURL, opts...)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to connect to things service: %s", err))
+		os.Exit(1)
+	}
+	return conn
 }
 
 func startHTTPServer(port string, logger logger.Logger, errs chan error) {

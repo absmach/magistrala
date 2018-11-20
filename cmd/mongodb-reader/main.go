@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
@@ -26,6 +27,7 @@ import (
 	"github.com/mongodb/mongo-go-driver/mongo"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 const (
@@ -35,6 +37,8 @@ const (
 	defDBName    = "mainflux"
 	defDBHost    = "localhost"
 	defDBPort    = "27017"
+	defClientTLS = "false"
+	defCACerts   = ""
 
 	envThingsURL = "MF_THINGS_URL"
 	envLogLevel  = "MF_MONGO_READER_LOG_LEVEL"
@@ -42,6 +46,8 @@ const (
 	envDBName    = "MF_MONGO_READER_DB_NAME"
 	envDBHost    = "MF_MONGO_READER_DB_HOST"
 	envDBPort    = "MF_MONGO_READER_DB_PORT"
+	envClientTLS = "MF_MONGO_READER_CLIENT_TLS"
+	envCACerts   = "MF_MONGO_READER_CA_CERTS"
 )
 
 type config struct {
@@ -51,6 +57,8 @@ type config struct {
 	dbName    string
 	dbHost    string
 	dbPort    string
+	clientTLS bool
+	caCerts   string
 }
 
 func main() {
@@ -59,7 +67,8 @@ func main() {
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
-	conn := connectToThings(cfg.thingsURL, logger)
+
+	conn := connectToThings(cfg, logger)
 	defer conn.Close()
 
 	tc := thingsapi.NewClient(conn)
@@ -82,6 +91,11 @@ func main() {
 }
 
 func loadConfigs() config {
+	tls, err := strconv.ParseBool(mainflux.Env(envClientTLS, defClientTLS))
+	if err != nil {
+		log.Fatalf("Invalid value passed for %s\n", envClientTLS)
+	}
+
 	return config{
 		thingsURL: mainflux.Env(envThingsURL, defThingsURL),
 		logLevel:  mainflux.Env(envLogLevel, defLogLevel),
@@ -89,6 +103,8 @@ func loadConfigs() config {
 		dbName:    mainflux.Env(envDBName, defDBName),
 		dbHost:    mainflux.Env(envDBHost, defDBHost),
 		dbPort:    mainflux.Env(envDBPort, defDBPort),
+		clientTLS: tls,
+		caCerts:   mainflux.Env(envCACerts, defCACerts),
 	}
 }
 
@@ -102,13 +118,27 @@ func connectToMongoDB(host, port, name string, logger logger.Logger) *mongo.Data
 	return client.Database(name)
 }
 
-func connectToThings(url string, logger logger.Logger) *grpc.ClientConn {
-	conn, err := grpc.Dial(url, grpc.WithInsecure())
+func connectToThings(cfg config, logger logger.Logger) *grpc.ClientConn {
+	var opts []grpc.DialOption
+	if cfg.clientTLS {
+		if cfg.caCerts != "" {
+			tpc, err := credentials.NewClientTLSFromFile(cfg.caCerts, "")
+			if err != nil {
+				logger.Error(fmt.Sprintf("Failed to load certs: %s", err))
+				os.Exit(1)
+			}
+			opts = append(opts, grpc.WithTransportCredentials(tpc))
+		}
+	} else {
+		logger.Info("gRPC communication is not encrypted")
+		opts = append(opts, grpc.WithInsecure())
+	}
+
+	conn, err := grpc.Dial(cfg.thingsURL, opts...)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to things service: %s", err))
 		os.Exit(1)
 	}
-
 	return conn
 }
 

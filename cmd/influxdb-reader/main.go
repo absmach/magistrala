@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
@@ -18,6 +19,7 @@ import (
 	thingsapi "github.com/mainflux/mainflux/things/api/grpc"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 const (
@@ -29,6 +31,8 @@ const (
 	defDBPort    = "8086"
 	defDBUser    = "mainflux"
 	defDBPass    = "mainflux"
+	defClientTLS = "false"
+	defCACerts   = ""
 
 	envThingsURL = "MF_THINGS_URL"
 	envLogLevel  = "MF_INFLUX_READER_LOG_LEVEL"
@@ -38,26 +42,30 @@ const (
 	envDBPort    = "MF_INFLUX_READER_DB_PORT"
 	envDBUser    = "MF_INFLUX_READER_DB_USER"
 	envDBPass    = "MF_INFLUX_READER_DB_PASS"
+	envClientTLS = "MF_INFLUX_READER_CLIENT_TLS"
+	envCACerts   = "MF_INFLUX_READER_CA_CERTS"
 )
 
 type config struct {
-	ThingsURL string
-	LogLevel  string
-	Port      string
-	DBName    string
-	DBHost    string
-	DBPort    string
-	DBUser    string
-	DBPass    string
+	thingsURL string
+	logLevel  string
+	port      string
+	dbName    string
+	dbHost    string
+	dbPort    string
+	dbUser    string
+	dbPass    string
+	clientTLS bool
+	caCerts   string
 }
 
 func main() {
 	cfg, clientCfg := loadConfigs()
-	logger, err := logger.New(os.Stdout, cfg.LogLevel)
+	logger, err := logger.New(os.Stdout, cfg.logLevel)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
-	conn := connectToThings(cfg.ThingsURL, logger)
+	conn := connectToThings(cfg, logger)
 	defer conn.Close()
 
 	tc := thingsapi.NewClient(conn)
@@ -69,7 +77,7 @@ func main() {
 	}
 	defer client.Close()
 
-	repo := newService(client, cfg.DBName, logger)
+	repo := newService(client, cfg.dbName, logger)
 
 	errs := make(chan error, 2)
 	go func() {
@@ -78,40 +86,61 @@ func main() {
 		errs <- fmt.Errorf("%s", <-c)
 	}()
 
-	go startHTTPServer(repo, tc, cfg.Port, logger, errs)
+	go startHTTPServer(repo, tc, cfg.port, logger, errs)
 
 	err = <-errs
 	logger.Error(fmt.Sprintf("InfluxDB writer service terminated: %s", err))
 }
 
 func loadConfigs() (config, influxdata.HTTPConfig) {
+	tls, err := strconv.ParseBool(mainflux.Env(envClientTLS, defClientTLS))
+	if err != nil {
+		log.Fatalf("Invalid value passed for %s\n", envClientTLS)
+	}
+
 	cfg := config{
-		ThingsURL: mainflux.Env(envThingsURL, defThingsURL),
-		LogLevel:  mainflux.Env(envLogLevel, defLogLevel),
-		Port:      mainflux.Env(envPort, defPort),
-		DBName:    mainflux.Env(envDBName, defDBName),
-		DBHost:    mainflux.Env(envDBHost, defDBHost),
-		DBPort:    mainflux.Env(envDBPort, defDBPort),
-		DBUser:    mainflux.Env(envDBUser, defDBUser),
-		DBPass:    mainflux.Env(envDBPass, defDBPass),
+		thingsURL: mainflux.Env(envThingsURL, defThingsURL),
+		logLevel:  mainflux.Env(envLogLevel, defLogLevel),
+		port:      mainflux.Env(envPort, defPort),
+		dbName:    mainflux.Env(envDBName, defDBName),
+		dbHost:    mainflux.Env(envDBHost, defDBHost),
+		dbPort:    mainflux.Env(envDBPort, defDBPort),
+		dbUser:    mainflux.Env(envDBUser, defDBUser),
+		dbPass:    mainflux.Env(envDBPass, defDBPass),
+		clientTLS: tls,
+		caCerts:   mainflux.Env(envCACerts, defCACerts),
 	}
 
 	clientCfg := influxdata.HTTPConfig{
-		Addr:     fmt.Sprintf("http://%s:%s", cfg.DBHost, cfg.DBPort),
-		Username: cfg.DBUser,
-		Password: cfg.DBPass,
+		Addr:     fmt.Sprintf("http://%s:%s", cfg.dbHost, cfg.dbPort),
+		Username: cfg.dbUser,
+		Password: cfg.dbPass,
 	}
 
 	return cfg, clientCfg
 }
 
-func connectToThings(url string, logger logger.Logger) *grpc.ClientConn {
-	conn, err := grpc.Dial(url, grpc.WithInsecure())
+func connectToThings(cfg config, logger logger.Logger) *grpc.ClientConn {
+	var opts []grpc.DialOption
+	if cfg.clientTLS {
+		if cfg.caCerts != "" {
+			tpc, err := credentials.NewClientTLSFromFile(cfg.caCerts, "")
+			if err != nil {
+				logger.Error(fmt.Sprintf("Failed to load certs: %s", err))
+				os.Exit(1)
+			}
+			opts = append(opts, grpc.WithTransportCredentials(tpc))
+		}
+	} else {
+		logger.Info("gRPC communication is not encrypted")
+		opts = append(opts, grpc.WithInsecure())
+	}
+
+	conn, err := grpc.Dial(cfg.thingsURL, opts...)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to things service: %s", err))
 		os.Exit(1)
 	}
-
 	return conn
 }
 

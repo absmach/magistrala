@@ -127,7 +127,7 @@ func main() {
 func loadConfig() config {
 	tls, err := strconv.ParseBool(mainflux.Env(envClientTLS, defClientTLS))
 	if err != nil {
-		tls = false
+		log.Fatalf("Invalid value passed for %s\n", envClientTLS)
 	}
 
 	return config{

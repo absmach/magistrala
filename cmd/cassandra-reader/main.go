@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -26,6 +27,7 @@ import (
 	thingsapi "github.com/mainflux/mainflux/things/api/grpc"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 const (
@@ -36,12 +38,16 @@ const (
 	defCluster   = "127.0.0.1"
 	defKeyspace  = "mainflux"
 	defThingsURL = "localhost:8181"
+	defClientTLS = "false"
+	defCACerts   = ""
 
 	envLogLevel  = "MF_CASSANDRA_READER_LOG_LEVEL"
 	envPort      = "MF_CASSANDRA_READER_PORT"
 	envCluster   = "MF_CASSANDRA_READER_DB_CLUSTER"
 	envKeyspace  = "MF_CASSANDRA_READER_DB_KEYSPACE"
 	envThingsURL = "MF_THINGS_URL"
+	envClientTLS = "MF_CASSANDRA_READER_CLIENT_TLS"
+	envCACerts   = "MF_CASSANDRA_READER_CA_CERTS"
 )
 
 type config struct {
@@ -50,6 +56,8 @@ type config struct {
 	cluster   string
 	keyspace  string
 	thingsURL string
+	clientTLS bool
+	caCerts   string
 }
 
 func main() {
@@ -63,7 +71,7 @@ func main() {
 	session := connectToCassandra(cfg.cluster, cfg.keyspace, logger)
 	defer session.Close()
 
-	conn := connectToThings(cfg.thingsURL, logger)
+	conn := connectToThings(cfg, logger)
 	defer conn.Close()
 
 	tc := thingsapi.NewClient(conn)
@@ -84,12 +92,19 @@ func main() {
 }
 
 func loadConfig() config {
+	tls, err := strconv.ParseBool(mainflux.Env(envClientTLS, defClientTLS))
+	if err != nil {
+		log.Fatalf("Invalid value passed for %s\n", envClientTLS)
+	}
+
 	return config{
 		logLevel:  mainflux.Env(envLogLevel, defLogLevel),
 		port:      mainflux.Env(envPort, defPort),
 		cluster:   mainflux.Env(envCluster, defCluster),
 		keyspace:  mainflux.Env(envKeyspace, defKeyspace),
 		thingsURL: mainflux.Env(envThingsURL, defThingsURL),
+		clientTLS: tls,
+		caCerts:   mainflux.Env(envCACerts, defCACerts),
 	}
 }
 
@@ -103,13 +118,27 @@ func connectToCassandra(cluster, keyspace string, logger logger.Logger) *gocql.S
 	return session
 }
 
-func connectToThings(url string, logger logger.Logger) *grpc.ClientConn {
-	conn, err := grpc.Dial(url, grpc.WithInsecure())
+func connectToThings(cfg config, logger logger.Logger) *grpc.ClientConn {
+	var opts []grpc.DialOption
+	if cfg.clientTLS {
+		if cfg.caCerts != "" {
+			tpc, err := credentials.NewClientTLSFromFile(cfg.caCerts, "")
+			if err != nil {
+				logger.Error(fmt.Sprintf("Failed to load certs: %s", err))
+				os.Exit(1)
+			}
+			opts = append(opts, grpc.WithTransportCredentials(tpc))
+		}
+	} else {
+		logger.Info("gRPC communication is not encrypted")
+		opts = append(opts, grpc.WithInsecure())
+	}
+
+	conn, err := grpc.Dial(cfg.thingsURL, opts...)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to things service: %s", err))
 		os.Exit(1)
 	}
-
 	return conn
 }
 

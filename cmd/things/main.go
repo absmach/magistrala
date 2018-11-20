@@ -209,6 +209,7 @@ func newService(conn *grpc.ClientConn, db *sql.DB, client *redis.Client, logger 
 	idp := uuid.New()
 
 	svc := things.New(users, thingsRepo, channelsRepo, chanCache, thingCache, idp)
+	svc = rediscache.NewEventStoreMiddleware(svc, client)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,

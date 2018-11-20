@@ -17,7 +17,7 @@ import (
 )
 
 func TestConnect(t *testing.T) {
-	channelCache := redis.NewChannelCache(cacheClient)
+	channelCache := redis.NewChannelCache(redisClient)
 
 	cid := uint64(123)
 	tid := uint64(321)
@@ -45,7 +45,7 @@ func TestConnect(t *testing.T) {
 }
 
 func TestHasThing(t *testing.T) {
-	channelCache := redis.NewChannelCache(cacheClient)
+	channelCache := redis.NewChannelCache(redisClient)
 
 	cid := uint64(123)
 	tid := uint64(321)
@@ -81,7 +81,7 @@ func TestHasThing(t *testing.T) {
 	}
 }
 func TestDisconnect(t *testing.T) {
-	channelCache := redis.NewChannelCache(cacheClient)
+	channelCache := redis.NewChannelCache(redisClient)
 
 	cid := uint64(123)
 	tid := uint64(321)
@@ -119,7 +119,7 @@ func TestDisconnect(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	channelCache := redis.NewChannelCache(cacheClient)
+	channelCache := redis.NewChannelCache(redisClient)
 
 	cid := uint64(123)
 	cid2 := uint64(124)

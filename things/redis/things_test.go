@@ -19,8 +19,7 @@ import (
 )
 
 func TestThingSave(t *testing.T) {
-
-	thingCache := redis.NewThingCache(cacheClient)
+	thingCache := redis.NewThingCache(redisClient)
 	key := uuid.New().ID()
 	id := uint64(123)
 	id2 := uint64(124)
@@ -56,7 +55,7 @@ func TestThingSave(t *testing.T) {
 }
 
 func TestThingID(t *testing.T) {
-	thingCache := redis.NewThingCache(cacheClient)
+	thingCache := redis.NewThingCache(redisClient)
 
 	key := uuid.New().ID()
 	id := uint64(123)
@@ -88,7 +87,7 @@ func TestThingID(t *testing.T) {
 }
 
 func TestThingRemove(t *testing.T) {
-	thingCache := redis.NewThingCache(cacheClient)
+	thingCache := redis.NewThingCache(redisClient)
 
 	key := uuid.New().ID()
 	id := uint64(123)

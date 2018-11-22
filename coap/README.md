@@ -61,5 +61,5 @@ MF_THINGS_URL=[Things service URL] MF_NATS_URL=[NATS instance URL] MF_COAP_ADAPT
 
 ## Usage
 
-Since CoAP protocol does not support `Authorization` header (option), in order to send CoAP messages,
-client valid `authorization` value must be present in `Uri-Query` option.
+If CoAP adapter is running locally (on default 5683 port), a valid URL would be: `coap://localhost/channels/<channel_id>/messages?authorization=<thing_auth_key>`.
+Since CoAP protocol does not support `Authorization` header (option) and options have limited size, in order to send CoAP messages, valid `authorization` value must be present in `Uri-Query` option.

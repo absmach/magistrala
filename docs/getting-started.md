@@ -328,6 +328,24 @@ mosquitto_sub -u <thing_id> -P <thing_key> -t channels/<channel_id>/messages -h 
 If you are using TLS to secure MQTT connection, add `--cafile docker/ssl/certs/ca.crt`
 to every command.
 
+### CoAP
+
+CoAP adapter implements CoAP protocol using underlying UDP and according to [RFC 7252](https://tools.ietf.org/html/rfc7252). To send and receive messages over CoAP, you can use [Copper](https://github.com/mkovatsc/Copper) CoAP user-agent. To set the add-on, please follow the installation instructions provided [here](https://github.com/mkovatsc/Copper#how-to-integrate-the-copper-sources-into-firefox). Once the Mozilla Firefox and Copper are ready and CoAP adapter is running locally on the default port (5683), you can navigate to the appropriate URL and start using CoAP. The URL should look like this:
+
+```
+coap://localhost/channels/<channel_id>/messages?authorization=<thing_auth_key>
+```
+
+To send a message, use `POST` request. To subscribe, send `GET` request with Observe option set to 0. There are two ways to unsubscribe:
+  1) Send `GET` request with Observe option set to 1.
+  2) Forget the token and send `RST` message as a response to `CONF` message received by the server.
+
+The most of the notifications received from the Adapter are non-confirmable. By [RFC 7641](https://tools.ietf.org/html/rfc7641#page-18):
+
+> Server must send a notification in a confirmable message instead of a non-confirmable message at least every 24 hours. This prevents a client that went away or is no longer interested from remaining in the list of observers indefinitely.
+
+CoAP Adapter sends these notifications every 12 hours. To configure this period, please check [adapter documentation](../coap/README.md) If the client is no longer interested in receiving notifications, the second scenario described above can be used to unsubscribe
+
 ## Add-ons
 
 The `<project_root>/docker` folder contains an `addons` directory. This directory is used for various services that are not core to the Mainflux platform but could be used for providing additional features.
@@ -344,7 +362,7 @@ From the project root execute the following command:
 
 ```bash
 docker-compose -f docker/addons/influxdb-writer/docker-compose.yml up -d
-``` 
+```
 This will install and start:
 
 - [InfluxDB](https://docs.influxdata.com/influxdb) - time series database
@@ -363,7 +381,7 @@ To access Grafana, navigate to `http://localhost:3001` and login with: `admin`, 
 
 ```bash
 ./docker/addons/cassandra-writer/init.sh
-``` 
+```
 _Please note that Cassandra may not be suitable for your testing enviroment because it has high system requirements._
 
 #### MongoDB and MongoDB-writer
@@ -377,14 +395,14 @@ MongoDB default port (27017) is exposed, so you can use various tools for databa
 
 Readers provide an implementation of various `message readers`.
 Message readers are services that consume normalized (in `SenML` format) Mainflux messages from data storage and opens HTTP API for message consumption.
-Installing corresponding writer before reader is implied. 
+Installing corresponding writer before reader is implied.
 
 
-#### InfluxDB-reader 
+#### InfluxDB-reader
 
 ```bash
 docker-compose -f docker/addons/influxdb-reader/docker-compose.yml up -d
-``` 
+```
 Service exposes [HTTP API](https://github.com/mainflux/mainflux/blob/master/readers/swagger.yml) for fetching messages on port 8905
 
 
@@ -437,7 +455,7 @@ If you don't provide them, default values will be used instead: 0 for `offset`, 
 
 ```bash
 docker-compose -f docker/addons/cassandra-reader/docker-compose.yml up -d
-``` 
+```
 Service exposes [HTTP API](https://github.com/mainflux/mainflux/blob/master/readers/swagger.yml) for fetching messages on port 8903
 
 Aside from port, reading request is same as for other readers:
@@ -450,7 +468,7 @@ curl -s -S -i  -H "Authorization: <thing_token>" http://localhost:8903/channels/
 
 ```bash
 docker-compose -f docker/addons/mongodb-reader/docker-compose.yml up -d
-``` 
+```
 Service exposes [HTTP API](https://github.com/mainflux/mainflux/blob/master/readers/swagger.yml) for fetching messages on port 8904
 
 Aside from port, reading request is same as for other readers:
@@ -461,7 +479,7 @@ curl -s -S -i  -H "Authorization: <thing_token>" http://localhost:8904/channels/
 
 ## TLS Configuration
 
-By default gRPC communication is not secure. 
+By default gRPC communication is not secure.
 
 ### Server configuration
 
@@ -478,28 +496,28 @@ Currently supported modes are: `disabled` and `required`
 
 #### Users
 
-If either the cert or key is not set, the server will use insecure transport. 
+If either the cert or key is not set, the server will use insecure transport.
 
-`MF_USERS_SERVER_CERT` the path to server certificate in pem format. 
+`MF_USERS_SERVER_CERT` the path to server certificate in pem format.
 
 `MF_USERS_SERVER_KEY` the path to the server key in pem format.
 
 #### Things
 
-If either the cert or key is not set, the server will use insecure transport. 
+If either the cert or key is not set, the server will use insecure transport.
 
-`MF_THINGS_SERVER_CERT` the path to server certificate in pem format. 
+`MF_THINGS_SERVER_CERT` the path to server certificate in pem format.
 
 `MF_THINGS_SERVER_KEY` the path to the server key in pem format.
 
 ### Client configuration
 
-If you wish to secure the gRPC connection to `things` and `users` services you must define the CAs that you trust.  This does not support mutual certificate authentication. 
+If you wish to secure the gRPC connection to `things` and `users` services you must define the CAs that you trust.  This does not support mutual certificate authentication.
 
 #### HTTP Adapter
 
 `MF_HTTP_ADAPTER_CA_CERTS` - the path to a file that contains the CAs in PEM format. If not set, the default connection will be insecure. If it fails to read the file, the adapter will fail to start up.
 
-#### Things 
+#### Things
 
 `MF_THINGS_CA_CERTS` - the path to a file that contains the CAs in PEM format. If not set, the default connection will be insecure. If it fails to read the file, the service will fail to start up.

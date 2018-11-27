@@ -15,6 +15,7 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 
 	gocoap "github.com/dustin/go-coap"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
@@ -32,28 +33,31 @@ import (
 )
 
 const (
-	defPort      = "5683"
-	defNatsURL   = broker.DefaultURL
-	defThingsURL = "localhost:8181"
-	defLogLevel  = "error"
-	defClientTLS = "false"
-	defCACerts   = ""
+	defPort       = "5683"
+	defNatsURL    = broker.DefaultURL
+	defThingsURL  = "localhost:8181"
+	defLogLevel   = "error"
+	defClientTLS  = "false"
+	defCACerts    = ""
+	defPingPeriod = "12"
 
-	envPort      = "MF_COAP_ADAPTER_PORT"
-	envNatsURL   = "MF_NATS_URL"
-	envThingsURL = "MF_THINGS_URL"
-	envLogLevel  = "MF_COAP_ADAPTER_LOG_LEVEL"
-	envClientTLS = "MF_COAP_ADAPTER_CLIENT_TLS"
-	envCACerts   = "MF_COAP_ADAPTER_CA_CERTS"
+	envPort       = "MF_COAP_ADAPTER_PORT"
+	envNatsURL    = "MF_NATS_URL"
+	envThingsURL  = "MF_THINGS_URL"
+	envLogLevel   = "MF_COAP_ADAPTER_LOG_LEVEL"
+	envClientTLS  = "MF_COAP_ADAPTER_CLIENT_TLS"
+	envCACerts    = "MF_COAP_ADAPTER_CA_CERTS"
+	envPingPeriod = "MF_COAP_ADAPTER_PING_PERIOD"
 )
 
 type config struct {
-	port      string
-	natsURL   string
-	thingsURL string
-	logLevel  string
-	clientTLS bool
-	caCerts   string
+	port       string
+	natsURL    string
+	thingsURL  string
+	logLevel   string
+	clientTLS  bool
+	caCerts    string
+	pingPeriod time.Duration
 }
 
 func main() {
@@ -99,7 +103,7 @@ func main() {
 	errs := make(chan error, 2)
 
 	go startHTTPServer(cfg.port, logger, errs)
-	go startCOAPServer(cfg.port, svc, cc, respChan, logger, errs)
+	go startCOAPServer(cfg, svc, cc, respChan, logger, errs)
 
 	go func() {
 		c := make(chan os.Signal)
@@ -117,13 +121,23 @@ func loadConfig() config {
 		log.Fatalf("Invalid value passed for %s\n", envClientTLS)
 	}
 
+	pp, err := strconv.ParseInt(mainflux.Env(envPingPeriod, defPingPeriod), 10, 64)
+	if err != nil {
+		log.Fatalf("Invalid value passed for %s\n", envPingPeriod)
+	}
+
+	if pp < 1 || pp > 24 {
+		log.Fatalf("Value of %s must be between 1 and 24", envPingPeriod)
+	}
+
 	return config{
-		thingsURL: mainflux.Env(envThingsURL, defThingsURL),
-		natsURL:   mainflux.Env(envNatsURL, defNatsURL),
-		port:      mainflux.Env(envPort, defPort),
-		logLevel:  mainflux.Env(envLogLevel, defLogLevel),
-		clientTLS: tls,
-		caCerts:   mainflux.Env(envCACerts, defCACerts),
+		thingsURL:  mainflux.Env(envThingsURL, defThingsURL),
+		natsURL:    mainflux.Env(envNatsURL, defNatsURL),
+		port:       mainflux.Env(envPort, defPort),
+		logLevel:   mainflux.Env(envLogLevel, defLogLevel),
+		clientTLS:  tls,
+		caCerts:    mainflux.Env(envCACerts, defCACerts),
+		pingPeriod: time.Duration(pp),
 	}
 }
 
@@ -157,8 +171,8 @@ func startHTTPServer(port string, logger logger.Logger, errs chan error) {
 	errs <- http.ListenAndServe(p, api.MakeHTTPHandler())
 }
 
-func startCOAPServer(port string, svc coap.Service, auth mainflux.ThingsServiceClient, respChan chan<- string, l logger.Logger, errs chan error) {
-	p := fmt.Sprintf(":%s", port)
-	l.Info(fmt.Sprintf("CoAP adapter service started, exposed port %s", port))
-	errs <- gocoap.ListenAndServe("udp", p, api.MakeCOAPHandler(svc, auth, l, respChan))
+func startCOAPServer(cfg config, svc coap.Service, auth mainflux.ThingsServiceClient, respChan chan<- string, l logger.Logger, errs chan error) {
+	p := fmt.Sprintf(":%s", cfg.port)
+	l.Info(fmt.Sprintf("CoAP adapter service started, exposed port %s", cfg.port))
+	errs <- gocoap.ListenAndServe("udp", p, api.MakeCOAPHandler(svc, auth, l, respChan, cfg.pingPeriod))
 }

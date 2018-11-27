@@ -38,6 +38,7 @@ var (
 	errBadOption  = errors.New("bad option")
 	auth          mainflux.ThingsServiceClient
 	logger        log.Logger
+	pingPeriod    time.Duration
 )
 
 type handler func(conn *net.UDPConn, addr *net.UDPAddr, msg *gocoap.Message) *gocoap.Message
@@ -62,10 +63,10 @@ func MakeHTTPHandler() http.Handler {
 }
 
 // MakeCOAPHandler creates handler for CoAP messages.
-func MakeCOAPHandler(svc coap.Service, tc mainflux.ThingsServiceClient, l log.Logger, responses chan<- string) gocoap.Handler {
+func MakeCOAPHandler(svc coap.Service, tc mainflux.ThingsServiceClient, l log.Logger, responses chan<- string, pp time.Duration) gocoap.Handler {
 	auth = tc
 	logger = l
-
+	pingPeriod = pp
 	r := mux.NewRouter()
 	r.Handle("/channels/{id}/messages", gocoap.FuncHandler(receive(svc))).Methods(gocoap.POST)
 	r.Handle("/channels/{id}/messages", gocoap.FuncHandler(observe(svc, responses)))
@@ -262,8 +263,8 @@ func ping(svc coap.Service, obsID string, conn *net.UDPConn, addr *net.UDPAddr, 
 	pingMsg.Type = gocoap.Confirmable
 	pingMsg.RemoveOption(gocoap.URIQuery)
 	// According to RFC (https://tools.ietf.org/html/rfc7641#page-18), CON message must be sent at least every
-	// 24 hours. Since 24 hours is too long for our purposes, we use 12.
-	t := time.NewTicker(12 * time.Hour)
+	// 24 hours. Deafault value of pingPeriod is 12.
+	t := time.NewTicker(pingPeriod * time.Hour)
 	defer t.Stop()
 	for {
 		select {

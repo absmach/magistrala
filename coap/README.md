@@ -9,14 +9,15 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable                   | Description                                    | Default               |
-|----------------------------|------------------------------------------------|-----------------------|
-| MF_COAP_ADAPTER_PORT       | Service listening port                         | 5683                  |
-| MF_NATS_URL                | NATS instance URL                              | nats://localhost:4222 |
-| MF_THINGS_URL              | Things service URL                             | localhost:8181        |
-| MF_COAP_ADAPTER_LOG_LEVEL  | Service log level                              | error                 |
-| MF_COAP_ADAPTER_CLIENT_TLS | Flag that indicates if TLS should be turned on | false                 |
-| MF_COAP_ADAPTER_CA_CERTS   | Path to trusted CAs in PEM format              |                       |
+| Variable                    | Description                                            | Default               |
+|-----------------------------|--------------------------------------------------------|-----------------------|
+| MF_COAP_ADAPTER_PORT        | Service listening port                                 | 5683                  |
+| MF_NATS_URL                 | NATS instance URL                                      | nats://localhost:4222 |
+| MF_THINGS_URL               | Things service URL                                     | localhost:8181        |
+| MF_COAP_ADAPTER_LOG_LEVEL   | Service log level                                      | error                 |
+| MF_COAP_ADAPTER_CLIENT_TLS  | Flag that indicates if TLS should be turned on         | false                 |
+| MF_COAP_ADAPTER_CA_CERTS    | Path to trusted CAs in PEM format                      |                       |
+| MF_COAP_ADAPTER_PING_PERIOD | Hours between 1 and 24 to ping client with ACK message | 12                    |
 
 ## Deployment
 
@@ -38,6 +39,7 @@ services:
       MF_COAP_ADAPTER_LOG_LEVEL: [Service log level]
       MF_COAP_ADAPTER_CLIENT_TLS: [Flag that indicates if TLS should be turned on]
       MF_COAP_ADAPTER_CA_CERTS: [Path to trusted CAs in PEM format]
+      MF_COAP_ADAPTER_PING_PERIOD: [Hours between 1 and 24 to ping client with ACK message]
 ```
 
 Running this service outside of container requires working instance of the NATS service.
@@ -56,7 +58,7 @@ make coap
 make install
 
 # set the environment variables and run the service
-MF_THINGS_URL=[Things service URL] MF_NATS_URL=[NATS instance URL] MF_COAP_ADAPTER_PORT=[Service HTTP port] MF_COAP_ADAPTER_LOG_LEVEL=[Service log level] MF_COAP_ADAPTER_CLIENT_TLS=[Flag that indicates if TLS should be turned on] MF_COAP_ADAPTER_CA_CERTS=[Path to trusted CAs in PEM format] $GOBIN/mainflux-coap
+MF_THINGS_URL=[Things service URL] MF_NATS_URL=[NATS instance URL] MF_COAP_ADAPTER_PORT=[Service HTTP port] MF_COAP_ADAPTER_LOG_LEVEL=[Service log level] MF_COAP_ADAPTER_CLIENT_TLS=[Flag that indicates if TLS should be turned on] MF_COAP_ADAPTER_CA_CERTS=[Path to trusted CAs in PEM format]  MF_COAP_ADAPTER_PING_PERIOD: [Hours between 1 and 24 to ping client with ACK message] $GOBIN/mainflux-coap
 ```
 
 ## Usage

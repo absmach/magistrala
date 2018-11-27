@@ -1,9 +1,66 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: users
+  namespace: grpc-services
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  tls:
+  - hosts:
+    - mainflux-iot.ha.rs
+    secretName: mainflux-cert
+  rules:
+  - host: mainflux-iot.ha.rs
+    http:
+      paths:
+      - path: /users
+        backend:
+          serviceName: users
+          servicePort: 8180
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: users
+  namespace: grpc-services
+  labels:
+    component: users
+spec:
+  type: LoadBalancer
+  selector:
+    component: users
+  ports:
+  - port: 8180
+    name: http
+  - port: 8181
+    name: grpc
+---
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: users
+  namespace: grpc-services
+spec:
+  scaleTargetRef:
+    apiVersion: extensions/v1beta1
+    kind: Deployment
+    name: users
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: 80
+---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: users
+  namespace: grpc-services
 spec:
-  replicas: 3
   selector:
     matchLabels:
       component: users
@@ -22,26 +79,16 @@ spec:
           name: users-grpc
         env:
         - name: MF_USERS_DB_HOST
-          value: "mainflux-users-postgres"
+          value: "mainflux-users-postgres.default"
         - name: MF_USERS_HTTP_PORT
           value: "8180"
         - name: MF_USERS_GRPC_PORT
           value: "8181"
         - name: MF_USERS_SECRET
           value: "test-secret"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: users
-  labels:
-    component: users
-spec:
-  ports:
-  - port: 8180
-    name: http
-  - port: 8181
-    name: grpc
-  selector:
-    component: users
-  type: LoadBalancer
+        livenessProbe:
+          httpGet:
+            path: /version
+            port: 8180
+          initialDelaySeconds: 3
+          periodSeconds: 3

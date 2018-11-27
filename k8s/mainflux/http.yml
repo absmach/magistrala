@@ -1,11 +1,66 @@
-apiVersion: apps/v1beta1 
-kind: Deployment 
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
 metadata:
   name: http-adapter
-  labels:
-    component: http-adapter 
+  namespace: grpc-services
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
-  replicas: 3
+  tls:
+  - hosts:
+    - mainflux-iot.ha.rs
+    secretName: mainflux-secret
+  rules:
+  - host: mainflux-iot.ha.rs
+    http:
+      paths:
+      - path: /http
+        backend:
+          serviceName: http-adapter
+          servicePort: 8185
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: http-adapter
+  namespace: grpc-services
+  labels:
+    component: http-adapter
+spec:
+  type: LoadBalancer
+  selector:
+    component: http-adapter
+  ports:
+  - port: 8185
+    name: http
+---
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: http-adapter
+  namespace: grpc-services
+spec:
+  scaleTargetRef:
+    apiVersion: extensions/v1beta1
+    kind: Deployment
+    name: http-adapter
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: 80
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: http-adapter
+  namespace: grpc-services
+  labels:
+    component: http-adapter
+spec:
   template:
     metadata:
       labels:
@@ -14,27 +69,18 @@ spec:
       containers:
       - name: mainflux-http
         image: mainflux/http:latest
-        imagePullPolicy: Always
         ports:
         - containerPort: 8185
         env:
         - name: MF_THINGS_URL
           value: "things:8183"
         - name: MF_NATS_URL
-          value: "nats://nats:4222"
+          value: "nats://nats-cluster.nats-io:4222"
         - name:  MF_HTTP_ADAPTER_PORT
           value: "8185"
----
-apiVersion: v1 
-kind: Service 
-metadata:
-  name: http-adapter
-  labels:
-    component: http-adapter 
-spec:
-  selector:
-    component: http-adapter
-  ports:
-  - port: 8185
-  type: LoadBalancer
-
+        livenessProbe:
+          httpGet:
+            path: /version
+            port: 8185
+          initialDelaySeconds: 3
+          periodSeconds: 3

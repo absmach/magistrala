@@ -1,11 +1,66 @@
-apiVersion: apps/v1beta1 
-kind: Deployment 
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
 metadata:
   name: ws-adapter
-  labels:
-    component: ws-adapter 
+  namespace: grpc-services
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
-  replicas: 3
+  tls:
+  - hosts:
+    - mainflux-iot.ha.rs
+    secretName: mainflux-secret
+  rules:
+  - host: mainflux-iot.ha.rs
+    http:
+      paths:
+      - path: /ws
+        backend:
+          serviceName: ws-adapter
+          servicePort: 8186
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ws-adapter
+  namespace: grpc-services
+  labels:
+    component: ws-adapter
+spec:
+  type: LoadBalancer
+  selector:
+    component: ws-adapter
+  ports:
+  - port: 8186
+    name: http
+---
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ws-adapter
+  namespace: grpc-services
+spec:
+  scaleTargetRef:
+    apiVersion: extensions/v1beta1
+    kind: Deployment
+    name: ws-adapter
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: 80
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: ws-adapter
+  namespace: grpc-services
+  labels:
+    component: ws-adapter
+spec:
   template:
     metadata:
       labels:
@@ -14,26 +69,18 @@ spec:
       containers:
       - name: mainflux-ws
         image: mainflux/ws:latest
-        imagePullPolicy: Always
         ports:
         - containerPort: 8186
         env:
         - name: MF_THINGS_URL
           value: "things:8183"
         - name: MF_NATS_URL
-          value: "nats://nats:4222"
+          value: "nats://nats-cluster.nats-io:4222"
         - name:  MF_WS_ADAPTER_PORT
           value: "8186"
----
-apiVersion: v1 
-kind: Service 
-metadata:
-  name: ws-adapter
-  labels:
-    component: ws-adapter 
-spec:
-  selector:
-    component: ws-adapter
-  ports:
-  - port: 8186
-  type: LoadBalancer
+        livenessProbe:
+          httpGet:
+            path: /version
+            port: 8186
+          initialDelaySeconds: 3
+          periodSeconds: 3

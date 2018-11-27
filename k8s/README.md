@@ -5,18 +5,14 @@ Scripts to deploy Mainflux on Kubernetes (https://kubernetes.io). Work in progre
 
 ### 1. Setup NATS
 
-- Update `nats.conf` according to your needs.
+- To setup NATS cluster on k8s we recommend using [NATS operator](https://github.com/nats-io/nats-operator). NATS cluster should be deployed on namespace `nats-io` under the name `nats-cluster`.
 
-- Create Kubernetes configmap to store NATS configuration:
+### 2. Setup gRPC services Istio sidecar
 
-```
-kubectl create configmap nats-config --from-file=k8s/nats/nats.conf
-```
-
-- Deploy NATS:
+- To load balance gRPC services we recommend using [Istio](https://istio.io/docs/setup/kubernetes/download-release/) sidecar. In order to use automatic inject you should run following command:
 
 ```
-kubectl create -f k8s/nats/nats.yml
+kubectl create -f k8s/mainflux/namespace.yml
 ```
 
 ### 2. Setup Users service
@@ -60,6 +56,7 @@ kubectl create -f k8s/mainflux/normalizer.yml
 - Deploy adapter service:
 
 ```
+kubectl create -f k8s/mainflux/tcp-services.yml
 kubectl create -f k8s/mainflux/<adapter_service_name>.yml
 ```
 
@@ -71,26 +68,6 @@ kubectl create -f k8s/mainflux/<adapter_service_name>.yml
 kubectl create -f k8s/mainflux/dashflux.yml
 ```
 
-### 7. Setup NginX Reverse Proxy for Mainflux Services
+### 7. Configure Internet Access
 
-- Create TLS server side certificate and keys:
-
-```
-kubectl create secret generic mainflux-secret --from-file=k8s/nginx/ssl/certs/mainflux-server.crt --from-file=k8s/nginx/ssl/certs/mainflux-server.key --from-file=k8s/nginx/ssl/dhparam.pem
-```
-
-- Create Kubernetes configmap to store NginX configuration:
-
-```
-kubectl create configmap mainflux-nginx-config --from-file=k8s/nginx/nginx.conf
-```
-
-- Deploy NginX service:
-
-```
-kubectl create -f k8s/nginx/nginx.yml
-```
-
-### 8. Configure Internet Access
-
-Configure NAT on your Firewall to forward ports 80 (HTTP) and 443 (HTTPS) to mainflux-nginx service
+Configure NAT on your Firewall to forward ports 80 (HTTP) and 443 (HTTPS) to nginx ingress service

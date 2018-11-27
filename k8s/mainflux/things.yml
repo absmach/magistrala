@@ -1,9 +1,66 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: things
+  namespace: grpc-services
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  tls:
+  - hosts:
+    - mainflux-iot.ha.rs
+    secretName: mainflux-secret
+  rules:
+  - host: mainflux-iot.ha.rs
+    http:
+      paths:
+      - path: /things
+        backend:
+          serviceName: things
+          servicePort: 8182
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: things
+  namespace: grpc-services
+  labels:
+    component: things
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 8182
+    name: http
+  - port: 8183
+    name: grpc
+  selector:
+    component: things
+---
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: things
+  namespace: grpc-services
+spec:
+  scaleTargetRef:
+    apiVersion: extensions/v1beta1
+    kind: Deployment
+    name: things
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: 80
+---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: things
+  namespace: grpc-services
 spec:
-  replicas: 3
   selector:
     matchLabels:
       component: things
@@ -22,7 +79,7 @@ spec:
           name: things-grpc
         env:
         - name: MF_THINGS_DB_HOST
-          value: "mainflux-things-postgres"
+          value: "mainflux-things-postgres.default"
         - name: MF_THINGS_DB_PORT
           value: "5432"
         - name: MF_THINGS_HTTP_PORT
@@ -33,19 +90,11 @@ spec:
           value: "users:8181"
         - name: MF_THINGS_SECRET
           value: "test-secret"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: things
-  labels:
-    component: things
-spec:
-  ports:
-  - port: 8182
-    name: http
-  - port: 8183
-    name: grpc
-  selector:
-    component: things
-  type: LoadBalancer
+        - name: MF_THINGS_CACHE_URL
+          value: "redis-master.redis:6379"
+        livenessProbe:
+          httpGet:
+            path: /version
+            port: 8182
+          initialDelaySeconds: 3
+          periodSeconds: 3

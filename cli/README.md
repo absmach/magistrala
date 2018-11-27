@@ -41,7 +41,7 @@ mainflux-cli things get all --offset=1 --limit=5 <user_auth_token>
 
 #### Retrieve Thing By ID
 ```
-mainflux-cli things get <thing_id> --offset=1 --limit=5 <user_auth_token>
+mainflux-cli things get <thing_id> <user_auth_token>
 ```
 
 #### Remove Thing
@@ -61,7 +61,7 @@ mainflux-cli channels get all --offset=1 --limit=5 <user_auth_token>
 
 #### Retrievie Channel By ID
 ```
-mainflux-cli channels get <channel_id> --offset=1 --limit=5 <user_auth_token>
+mainflux-cli channels get <channel_id> <user_auth_token>
 ```
 
 #### Remove Channel

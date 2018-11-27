@@ -29,5 +29,6 @@ pages:
     - License: LICENSE.txt
 - Architecture: architecture.md
 - Getting Started: getting-started.md
-- Developer Guide: dev-guide.md
+- Developer's Guide: dev-guide.md
+- CLI: cli.md
 - Load Test: load-test.md

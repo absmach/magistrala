@@ -40,25 +40,26 @@ func migrateDB(db *sql.DB) error {
 				Id: "things_1",
 				Up: []string{
 					`CREATE TABLE IF NOT EXISTS things (
-						id      BIGSERIAL,
-						owner   VARCHAR(254),
-						type    VARCHAR(10) NOT NULL,
-						key     CHAR(36) UNIQUE NOT NULL,
-						name    TEXT,
-						metadata TEXT,
+						id       BIGSERIAL,
+						owner    VARCHAR(254),
+						type     VARCHAR(10) NOT NULL,
+						key      CHAR(36) UNIQUE NOT NULL,
+						name     TEXT,
+						metadata JSON,
 						PRIMARY KEY (id, owner)
 					)`,
 					`CREATE TABLE IF NOT EXISTS channels (
-						id    BIGSERIAL,
-						owner VARCHAR(254),
-						name  TEXT,
+						id       BIGSERIAL,
+						owner    VARCHAR(254),
+						name     TEXT,
+						metadata JSON,
 						PRIMARY KEY (id, owner)
 					)`,
 					`CREATE TABLE IF NOT EXISTS connections (
 						channel_id    BIGINT,
 						channel_owner VARCHAR(254),
-						thing_id     BIGINT,
-						thing_owner  VARCHAR(254),
+						thing_id      BIGINT,
+						thing_owner   VARCHAR(254),
 						FOREIGN KEY (channel_id, channel_owner) REFERENCES channels (id, owner) ON DELETE CASCADE ON UPDATE CASCADE,
 						FOREIGN KEY (thing_id, thing_owner) REFERENCES things (id, owner) ON DELETE CASCADE ON UPDATE CASCADE,
 						PRIMARY KEY (channel_id, channel_owner, thing_id, thing_owner)

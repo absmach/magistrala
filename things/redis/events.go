@@ -93,9 +93,10 @@ func (rte removeThingEvent) Encode() map[string]interface{} {
 }
 
 type createChannelEvent struct {
-	id    string
-	owner string
-	name  string
+	id       string
+	owner    string
+	name     string
+	metadata string
 }
 
 func (cce createChannelEvent) Encode() map[string]interface{} {
@@ -109,20 +110,34 @@ func (cce createChannelEvent) Encode() map[string]interface{} {
 		val["name"] = cce.name
 	}
 
+	if cce.metadata != "" {
+		val["metadata"] = cce.metadata
+	}
+
 	return val
 }
 
 type updateChannelEvent struct {
-	id   string
-	name string
+	id       string
+	name     string
+	metadata string
 }
 
 func (uce updateChannelEvent) Encode() map[string]interface{} {
-	return map[string]interface{}{
+	val := map[string]interface{}{
 		"id":        uce.id,
-		"name":      uce.name,
 		"operation": channelUpdate,
 	}
+
+	if uce.name != "" {
+		val["name"] = uce.name
+	}
+
+	if uce.metadata != "" {
+		val["metadata"] = uce.metadata
+	}
+
+	return val
 }
 
 type removeChannelEvent struct {

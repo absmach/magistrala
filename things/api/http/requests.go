@@ -67,8 +67,9 @@ func (req updateThingReq) validate() error {
 }
 
 type createChannelReq struct {
-	key  string
-	Name string `json:"name,omitempty"`
+	key      string
+	Name     string `json:"name,omitempty"`
+	Metadata string `json:"metadata,omitempty"`
 }
 
 func (req createChannelReq) validate() error {
@@ -80,9 +81,10 @@ func (req createChannelReq) validate() error {
 }
 
 type updateChannelReq struct {
-	key  string
-	id   string
-	Name string `json:"name,omitempty"`
+	key      string
+	id       string
+	Name     string `json:"name,omitempty"`
+	Metadata string `json:"metadata,omitempty"`
 }
 
 func (req updateChannelReq) validate() error {

@@ -11,7 +11,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	_ "github.com/lib/pq" // required for DB access
+	"github.com/lib/pq" // required for DB access
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/things"
 )
@@ -32,7 +32,18 @@ func NewThingRepository(db *sql.DB, log logger.Logger) things.ThingRepository {
 func (tr thingRepository) Save(thing things.Thing) (uint64, error) {
 	q := `INSERT INTO things (owner, type, name, key, metadata) VALUES ($1, $2, $3, $4, $5) RETURNING id`
 
-	if err := tr.db.QueryRow(q, thing.Owner, thing.Type, thing.Name, thing.Key, thing.Metadata).Scan(&thing.ID); err != nil {
+	metadata := thing.Metadata
+	if metadata == "" {
+		metadata = "{}"
+	}
+
+	err := tr.db.QueryRow(q, thing.Owner, thing.Type, thing.Name, thing.Key, metadata).Scan(&thing.ID)
+	if err != nil {
+		pqErr, ok := err.(*pq.Error)
+		if ok && errInvalid == pqErr.Code.Name() {
+			return 0, things.ErrMalformedEntity
+		}
+
 		return 0, err
 	}
 
@@ -42,8 +53,18 @@ func (tr thingRepository) Save(thing things.Thing) (uint64, error) {
 func (tr thingRepository) Update(thing things.Thing) error {
 	q := `UPDATE things SET name = $1, metadata = $2 WHERE owner = $3 AND id = $4;`
 
-	res, err := tr.db.Exec(q, thing.Name, thing.Metadata, thing.Owner, thing.ID)
+	metadata := thing.Metadata
+	if metadata == "" {
+		metadata = "{}"
+	}
+
+	res, err := tr.db.Exec(q, thing.Name, metadata, thing.Owner, thing.ID)
 	if err != nil {
+		pqErr, ok := err.(*pq.Error)
+		if ok && errInvalid == pqErr.Code.Name() {
+			return things.ErrMalformedEntity
+		}
+
 		return err
 	}
 

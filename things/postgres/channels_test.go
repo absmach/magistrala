@@ -24,9 +24,28 @@ func TestChannelSave(t *testing.T) {
 	channelRepo := postgres.NewChannelRepository(db, testLog)
 
 	channel := things.Channel{Owner: email}
-	_, err := channelRepo.Save(channel)
 
-	assert.Nil(t, err, fmt.Sprintf("create new channel: expected no error got %s", err))
+	cases := []struct {
+		desc    string
+		channel things.Channel
+		err     error
+	}{
+		{
+			desc:    "create valid channel",
+			channel: channel,
+			err:     nil,
+		},
+		{
+			desc:    "create invalid channel",
+			channel: things.Channel{Owner: email, Metadata: "invalid"},
+			err:     things.ErrMalformedEntity,
+		},
+	}
+
+	for _, tc := range cases {
+		_, err := channelRepo.Save(tc.channel)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	}
 }
 
 func TestChannelUpdate(t *testing.T) {
@@ -46,6 +65,11 @@ func TestChannelUpdate(t *testing.T) {
 			desc:    "update existing channel",
 			channel: c,
 			err:     nil,
+		},
+		{
+			desc:    "update channel with invalid data",
+			channel: things.Channel{Owner: email, Metadata: "invalid"},
+			err:     things.ErrMalformedEntity,
 		},
 		{
 			desc:    "update non-existing channel with existing user",
@@ -182,8 +206,9 @@ func TestConnect(t *testing.T) {
 	thingRepo := postgres.NewThingRepository(db, testLog)
 
 	thing := things.Thing{
-		Owner: email,
-		Key:   uuid.New().ID(),
+		Owner:    email,
+		Key:      uuid.New().ID(),
+		Metadata: "{}",
 	}
 	thingID, _ := thingRepo.Save(thing)
 
@@ -244,8 +269,9 @@ func TestDisconnect(t *testing.T) {
 	email := "channel-disconnect@example.com"
 	thingRepo := postgres.NewThingRepository(db, testLog)
 	thing := things.Thing{
-		Owner: email,
-		Key:   uuid.New().ID(),
+		Owner:    email,
+		Key:      uuid.New().ID(),
+		Metadata: "{}",
 	}
 	thingID, _ := thingRepo.Save(thing)
 

@@ -10,10 +10,11 @@ package things
 // Channel represents a Mainflux "communication group". This group contains the
 // things that can exchange messages between eachother.
 type Channel struct {
-	ID     uint64
-	Owner  string
-	Name   string
-	Things []Thing
+	ID       uint64
+	Owner    string
+	Name     string
+	Things   []Thing
+	Metadata string
 }
 
 // ChannelRepository specifies a channel persistence API.

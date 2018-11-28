@@ -28,8 +28,27 @@ func TestThingSave(t *testing.T) {
 		Key:   uuid.New().ID(),
 	}
 
-	_, err := thingRepo.Save(thing)
-	assert.Nil(t, err, fmt.Sprintf("create new thing: expected no error got %s\n", err))
+	cases := []struct {
+		desc  string
+		thing things.Thing
+		err   error
+	}{
+		{
+			desc:  "create new thing",
+			thing: thing,
+			err:   nil,
+		},
+		{
+			desc:  "create invalid thing",
+			thing: things.Thing{Owner: email, Key: uuid.New().ID(), Metadata: "invalid"},
+			err:   things.ErrMalformedEntity,
+		},
+	}
+
+	for _, tc := range cases {
+		_, err := thingRepo.Save(tc.thing)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	}
 }
 
 func TestThingUpdate(t *testing.T) {

@@ -151,10 +151,11 @@ func (res channelRes) Empty() bool {
 }
 
 type viewChannelRes struct {
-	ID     string         `json:"id"`
-	Owner  string         `json:"-"`
-	Name   string         `json:"name,omitempty"`
-	Things []viewThingRes `json:"connected,omitempty"`
+	ID       string         `json:"id"`
+	Owner    string         `json:"-"`
+	Name     string         `json:"name,omitempty"`
+	Things   []viewThingRes `json:"connected,omitempty"`
+	Metadata string         `json:"metadata,omitempty"`
 }
 
 func (res viewChannelRes) Code() int {

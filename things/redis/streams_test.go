@@ -238,19 +238,20 @@ func TestCreateChannel(t *testing.T) {
 	}{
 		{
 			desc:    "create channel successfully",
-			channel: things.Channel{Name: "a"},
+			channel: things.Channel{Name: "a", Metadata: "metadata"},
 			key:     token,
 			err:     nil,
 			event: map[string]interface{}{
 				"id":        "1",
 				"name":      "a",
+				"metadata":  "metadata",
 				"owner":     email,
 				"operation": channelCreate,
 			},
 		},
 		{
 			desc:    "create channel with invalid credentials",
-			channel: things.Channel{Name: "a"},
+			channel: things.Channel{Name: "a", Metadata: "metadata"},
 			key:     "",
 			err:     things.ErrUnauthorizedAccess,
 			event:   nil,
@@ -297,12 +298,13 @@ func TestUpdateChannel(t *testing.T) {
 	}{
 		{
 			desc:    "update channel successfully",
-			channel: things.Channel{ID: sch.ID, Name: "b"},
+			channel: things.Channel{ID: sch.ID, Name: "b", Metadata: "metadata"},
 			key:     token,
 			err:     nil,
 			event: map[string]interface{}{
 				"id":        strconv.FormatUint(sch.ID, 10),
 				"name":      "b",
+				"metadata":  "metadata",
 				"operation": channelUpdate,
 			},
 		},

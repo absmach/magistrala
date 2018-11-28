@@ -164,7 +164,7 @@ func createChannelEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		channel := things.Channel{Name: req.Name}
+		channel := things.Channel{Name: req.Name, Metadata: req.Metadata}
 		saved, err := svc.CreateChannel(req.key, channel)
 		if err != nil {
 			return nil, err
@@ -192,8 +192,9 @@ func updateChannelEndpoint(svc things.Service) endpoint.Endpoint {
 		}
 
 		channel := things.Channel{
-			ID:   id,
-			Name: req.Name,
+			ID:       id,
+			Name:     req.Name,
+			Metadata: req.Metadata,
 		}
 		if err := svc.UpdateChannel(req.key, channel); err != nil {
 			return nil, err
@@ -226,9 +227,10 @@ func viewChannelEndpoint(svc things.Service) endpoint.Endpoint {
 		}
 
 		res := viewChannelRes{
-			ID:    strconv.FormatUint(channel.ID, 10),
-			Owner: channel.Owner,
-			Name:  channel.Name,
+			ID:       strconv.FormatUint(channel.ID, 10),
+			Owner:    channel.Owner,
+			Name:     channel.Name,
+			Metadata: channel.Metadata,
 		}
 		for _, thing := range channel.Things {
 			view := viewThingRes{
@@ -263,9 +265,10 @@ func listChannelsEndpoint(svc things.Service) endpoint.Endpoint {
 		// Cast channels
 		for _, channel := range channels {
 			cView := viewChannelRes{
-				ID:    strconv.FormatUint(channel.ID, 10),
-				Owner: channel.Owner,
-				Name:  channel.Name,
+				ID:       strconv.FormatUint(channel.ID, 10),
+				Owner:    channel.Owner,
+				Name:     channel.Name,
+				Metadata: channel.Metadata,
 			}
 
 			// Cast things

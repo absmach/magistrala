@@ -87,9 +87,10 @@ type Thing struct {
 
 // Channel represents mainflux channel.
 type Channel struct {
-	ID     string  `json:"id,omitempty"`
-	Name   string  `json:"name"`
-	Things []Thing `json:"connected,omitempty"`
+	ID       string  `json:"id,omitempty"`
+	Name     string  `json:"name"`
+	Things   []Thing `json:"connected,omitempty"`
+	Metadata string  `json:"metadata,omitempty"`
 }
 
 // SDK contains Mainflux API.

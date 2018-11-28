@@ -34,7 +34,7 @@ const (
 
 var (
 	thing   = things.Thing{Type: "app", Name: "test_app", Metadata: "test_metadata"}
-	channel = things.Channel{Name: "test"}
+	channel = things.Channel{Name: "test", Metadata: "test_metadata"}
 )
 
 type testRequest struct {
@@ -801,6 +801,7 @@ func TestViewChannel(t *testing.T) {
 				Metadata: sth.Metadata,
 			},
 		},
+		Metadata: sch.Metadata,
 	}
 	data := toJSON(chres)
 
@@ -877,8 +878,9 @@ func TestListChannels(t *testing.T) {
 		svc.Connect(token, sch.ID, sth.ID)
 
 		chres := channelRes{
-			ID:   strconv.FormatUint(sch.ID, 10),
-			Name: sch.Name,
+			ID:       strconv.FormatUint(sch.ID, 10),
+			Name:     sch.Name,
+			Metadata: sch.Metadata,
 			Things: []thingRes{
 				{
 					ID:       strconv.FormatUint(sth.ID, 10),
@@ -1297,7 +1299,8 @@ type thingRes struct {
 }
 
 type channelRes struct {
-	ID     string     `json:"id"`
-	Name   string     `json:"name,omitempty"`
-	Things []thingRes `json:"connected,omitempty"`
+	ID       string     `json:"id"`
+	Name     string     `json:"name,omitempty"`
+	Things   []thingRes `json:"connected,omitempty"`
+	Metadata string     `json:"metadata,omitempty"`
 }

@@ -21,6 +21,7 @@ var _ things.ChannelRepository = (*channelRepository)(nil)
 const (
 	errDuplicate = "unique_violation"
 	errFK        = "foreign_key_violation"
+	errInvalid   = "invalid_text_representation"
 )
 
 type channelRepository struct {
@@ -31,13 +32,27 @@ type channelRepository struct {
 // NewChannelRepository instantiates a PostgreSQL implementation of channel
 // repository.
 func NewChannelRepository(db *sql.DB, log logger.Logger) things.ChannelRepository {
-	return &channelRepository{db: db, log: log}
+	return &channelRepository{
+		db:  db,
+		log: log,
+	}
 }
 
 func (cr channelRepository) Save(channel things.Channel) (uint64, error) {
-	q := `INSERT INTO channels (owner, name) VALUES ($1, $2) RETURNING id`
+	q := `INSERT INTO channels (owner, name, metadata) VALUES ($1, $2, $3) RETURNING id`
 
-	if err := cr.db.QueryRow(q, channel.Owner, channel.Name).Scan(&channel.ID); err != nil {
+	metadata := channel.Metadata
+	if metadata == "" {
+		metadata = "{}"
+	}
+
+	err := cr.db.QueryRow(q, channel.Owner, channel.Name, metadata).Scan(&channel.ID)
+	if err != nil {
+		pqErr, ok := err.(*pq.Error)
+		if ok && errInvalid == pqErr.Code.Name() {
+			return 0, things.ErrMalformedEntity
+		}
+
 		return 0, err
 	}
 
@@ -45,10 +60,20 @@ func (cr channelRepository) Save(channel things.Channel) (uint64, error) {
 }
 
 func (cr channelRepository) Update(channel things.Channel) error {
-	q := `UPDATE channels SET name = $1 WHERE owner = $2 AND id = $3;`
+	q := `UPDATE channels SET name = $1, metadata = $2 WHERE owner = $3 AND id = $4;`
 
-	res, err := cr.db.Exec(q, channel.Name, channel.Owner, channel.ID)
+	metadata := channel.Metadata
+	if metadata == "" {
+		metadata = "{}"
+	}
+
+	res, err := cr.db.Exec(q, channel.Name, metadata, channel.Owner, channel.ID)
 	if err != nil {
+		pqErr, ok := err.(*pq.Error)
+		if ok && errInvalid == pqErr.Code.Name() {
+			return things.ErrMalformedEntity
+		}
+
 		return err
 	}
 
@@ -65,9 +90,9 @@ func (cr channelRepository) Update(channel things.Channel) error {
 }
 
 func (cr channelRepository) RetrieveByID(owner string, id uint64) (things.Channel, error) {
-	q := `SELECT name FROM channels WHERE id = $1 AND owner = $2`
+	q := `SELECT name, metadata FROM channels WHERE id = $1 AND owner = $2`
 	channel := things.Channel{ID: id, Owner: owner}
-	if err := cr.db.QueryRow(q, id, owner).Scan(&channel.Name); err != nil {
+	if err := cr.db.QueryRow(q, id, owner).Scan(&channel.Name, &channel.Metadata); err != nil {
 		empty := things.Channel{}
 		if err == sql.ErrNoRows {
 			return empty, things.ErrNotFound
@@ -100,7 +125,7 @@ func (cr channelRepository) RetrieveByID(owner string, id uint64) (things.Channe
 }
 
 func (cr channelRepository) RetrieveAll(owner string, offset, limit uint64) []things.Channel {
-	q := `SELECT id, name FROM channels WHERE owner = $1 ORDER BY id LIMIT $2 OFFSET $3`
+	q := `SELECT id, name, metadata FROM channels WHERE owner = $1 ORDER BY id LIMIT $2 OFFSET $3`
 	items := []things.Channel{}
 
 	rows, err := cr.db.Query(q, owner, limit, offset)
@@ -112,7 +137,7 @@ func (cr channelRepository) RetrieveAll(owner string, offset, limit uint64) []th
 
 	for rows.Next() {
 		c := things.Channel{Owner: owner}
-		if err = rows.Scan(&c.ID, &c.Name); err != nil {
+		if err = rows.Scan(&c.ID, &c.Name, &c.Metadata); err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to read retrieved channel due to %s", err))
 			return []things.Channel{}
 		}

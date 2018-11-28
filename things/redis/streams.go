@@ -112,9 +112,10 @@ func (es eventStore) CreateChannel(key string, channel things.Channel) (things.C
 	}
 
 	event := createChannelEvent{
-		id:    strconv.FormatUint(sch.ID, 10),
-		owner: sch.Owner,
-		name:  sch.Name,
+		id:       strconv.FormatUint(sch.ID, 10),
+		owner:    sch.Owner,
+		name:     sch.Name,
+		metadata: sch.Metadata,
 	}
 	record := &redis.XAddArgs{
 		Stream:       streamID,
@@ -132,8 +133,9 @@ func (es eventStore) UpdateChannel(key string, channel things.Channel) error {
 	}
 
 	event := updateChannelEvent{
-		id:   strconv.FormatUint(channel.ID, 10),
-		name: channel.Name,
+		id:       strconv.FormatUint(channel.ID, 10),
+		name:     channel.Name,
+		metadata: channel.Metadata,
 	}
 	record := &redis.XAddArgs{
 		Stream:       streamID,

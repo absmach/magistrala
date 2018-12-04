@@ -81,9 +81,9 @@ services:
     networks:
       - mainflux-base-net
 
-  things-cache:
-    image: redis:4.0.9-alpine
-    container_name: mainflux-things-cache
+  things-redis:
+    image: redis:5.0-alpine
+    container_name: mainflux-things-redis
     restart: on-failure
     networks:
       - mainflux-base-net
@@ -102,7 +102,7 @@ services:
       MF_THINGS_DB_USER: mainflux
       MF_THINGS_DB_PASS: mainflux
       MF_THINGS_DB: things
-      MF_THINGS_CACHE_URL: things-cache:6379
+      MF_THINGS_CACHE_URL: things-redis:6379
       MF_THINGS_HTTP_PORT: 8182
       MF_THINGS_GRPC_PORT: 8183
       MF_USERS_URL: users:8181

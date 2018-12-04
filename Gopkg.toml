@@ -11,6 +11,10 @@
   version = "3.2.0"
 
 [[constraint]]
+  name = "github.com/eclipse/paho.mqtt.golang"
+  version = "1.1.1"
+
+[[constraint]]
   name = "github.com/fatih/color"
   version = "1.7.0"
 

@@ -27,7 +27,7 @@ services:
       MF_LORA_ADAPTER_LOG_LEVEL: debug
       MF_THINGS_ES_URL: things-redis:6379
       MF_LORA_ADAPTER_ROUTEMAP_URL: lora-redis:6379
-      MF_LORA_ADAPTER_LORA_MESSAGE_URL: tcp://159.65.205.240:1883
+      MF_LORA_ADAPTER_LORA_MESSAGE_URL: tcp://lora.mqtt.mainflux.io:1883
       MF_LORA_ADAPTER_HTTP_PORT: 8187
       MF_NATS_URL: nats://nats:4222
     ports:

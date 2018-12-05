@@ -22,10 +22,10 @@ var (
 	ErrMalformedMessage = errors.New("malformed message received")
 
 	// ErrNotFoundDev indicates a non-existent route map for a device EUI.
-	ErrNotFoundDev = errors.New("route map not found for device EUI")
+	ErrNotFoundDev = errors.New("route map not found for this device EUI")
 
 	// ErrNotFoundApp indicates a non-existent route map for an application ID.
-	ErrNotFoundApp = errors.New("route map not found for application ID")
+	ErrNotFoundApp = errors.New("route map not found for this application ID")
 )
 
 // Service specifies an API that must be fullfiled by the domain service

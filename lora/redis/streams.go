@@ -27,6 +27,14 @@ const (
 	channelRemove = channelPrefix + "remove"
 )
 
+var (
+	errMetadataType = errors.New("metadatada is not of type lora")
+
+	errMetadataAppID = errors.New("application ID not found in channel metadatada")
+
+	errMetadataDevEUI = errors.New("device EUI not found in thing metadatada")
+)
+
 // EventStore represents event source for things and channels provisioning.
 type EventStore interface {
 	// Subscribes to geven subject and receives events.
@@ -155,7 +163,10 @@ func (es eventStore) handleCreateThing(cte createThingEvent) error {
 	}
 
 	if em.Type != protocol {
-		return errors.New("Lora protocol not found in thing metadatada")
+		return errMetadataType
+	}
+	if em.DevEUI != "" {
+		return errMetadataDevEUI
 	}
 
 	return es.svc.CreateThing(cte.id, em.DevEUI)
@@ -168,7 +179,10 @@ func (es eventStore) handleUpdateThing(ute updateThingEvent) error {
 	}
 
 	if em.Type != protocol {
-		return errors.New("Lora protocol not found in thing metadatada")
+		return errMetadataType
+	}
+	if em.DevEUI != "" {
+		return errMetadataDevEUI
 	}
 
 	return es.svc.CreateThing(ute.id, em.DevEUI)
@@ -185,7 +199,10 @@ func (es eventStore) handleCreateChannel(cce createChannelEvent) error {
 	}
 
 	if cm.Type != protocol {
-		return errors.New("Lora protocol not found in channel metadatada")
+		return errMetadataType
+	}
+	if cm.AppID != "" {
+		return errMetadataAppID
 	}
 
 	return es.svc.CreateChannel(cce.id, cm.AppID)
@@ -198,7 +215,10 @@ func (es eventStore) handleUpdateChannel(uce updateChannelEvent) error {
 	}
 
 	if cm.Type != protocol {
-		return errors.New("Lora protocol not found in channel metadatada")
+		return errMetadataType
+	}
+	if cm.AppID != "" {
+		return errMetadataAppID
 	}
 
 	return es.svc.UpdateChannel(uce.id, cm.AppID)

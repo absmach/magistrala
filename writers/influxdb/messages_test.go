@@ -31,21 +31,21 @@ var (
 	saveTimeout   = 2 * time.Second
 	saveBatchSize = 20
 	streamsSize   = 250
-	client        influxdata.Client
 	selectMsgs    = fmt.Sprintf("SELECT * FROM test..messages")
 	dropMsgs      = fmt.Sprintf("DROP SERIES FROM messages")
+	client        influxdata.Client
 	clientCfg     = influxdata.HTTPConfig{
 		Username: "test",
 		Password: "test",
 	}
 
 	msg = mainflux.Message{
-		Channel:    45,
-		Publisher:  2580,
+		Channel:    "45",
+		Publisher:  "2580",
 		Protocol:   "http",
 		Name:       "test name",
 		Unit:       "km",
-		Value:      &mainflux.Message_FloatValue{24},
+		Value:      &mainflux.Message_FloatValue{FloatValue: 24},
 		ValueSum:   &mainflux.SumValue{Value: 22},
 		UpdateTime: 5456565466,
 		Link:       "link",
@@ -74,9 +74,6 @@ func queryDB(cmd string) ([][]interface{}, error) {
 }
 
 func TestNew(t *testing.T) {
-	client, err := influxdata.NewHTTPClient(clientCfg)
-	require.Nil(t, err, fmt.Sprintf("Creating new InfluxDB client expected to succeed: %s.\n", err))
-
 	cases := []struct {
 		desc         string
 		batchSize    int
@@ -105,9 +102,6 @@ func TestNew(t *testing.T) {
 }
 
 func TestSave(t *testing.T) {
-	client, err := influxdata.NewHTTPClient(clientCfg)
-	require.Nil(t, err, fmt.Sprintf("Creating new InfluxDB client expected to succeed: %s.\n", err))
-
 	// Set batch size to 1 to simulate single point insert.
 	repo, err := writer.New(client, testDB, 1, saveTimeout)
 	require.Nil(t, err, fmt.Sprintf("Creating new InfluxDB repo expected to succeed: %s.\n", err))
@@ -141,7 +135,7 @@ func TestSave(t *testing.T) {
 
 	for _, tc := range cases {
 		// Clean previously saved messages.
-		row, err := queryDB(dropMsgs)
+		_, err := queryDB(dropMsgs)
 		require.Nil(t, err, fmt.Sprintf("Cleaning data from InfluxDB expected to succeed: %s.\n", err))
 
 		now := time.Now().Unix()
@@ -150,13 +144,13 @@ func TestSave(t *testing.T) {
 			count := i % valueFields
 			switch count {
 			case 0:
-				msg.Value = &mainflux.Message_FloatValue{5}
+				msg.Value = &mainflux.Message_FloatValue{FloatValue: 5}
 			case 1:
-				msg.Value = &mainflux.Message_BoolValue{false}
+				msg.Value = &mainflux.Message_BoolValue{BoolValue: false}
 			case 2:
-				msg.Value = &mainflux.Message_StringValue{"value"}
+				msg.Value = &mainflux.Message_StringValue{StringValue: "value"}
 			case 3:
-				msg.Value = &mainflux.Message_DataValue{"base64data"}
+				msg.Value = &mainflux.Message_DataValue{DataValue: "base64data"}
 			case 4:
 				msg.ValueSum = nil
 			case 5:
@@ -168,7 +162,7 @@ func TestSave(t *testing.T) {
 			assert.Nil(t, err, fmt.Sprintf("Save operation expected to succeed: %s.\n", err))
 		}
 
-		row, err = queryDB(selectMsgs)
+		row, err := queryDB(selectMsgs)
 		assert.Nil(t, err, fmt.Sprintf("Querying InfluxDB to retrieve data expected to succeed: %s.\n", err))
 
 		count := len(row)

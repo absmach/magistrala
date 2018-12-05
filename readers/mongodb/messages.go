@@ -27,8 +27,8 @@ type mongoRepository struct {
 
 // Message struct is used as a MongoDB representation of Mainflux message.
 type message struct {
-	Channel     uint64   `bson:"channel,omitempty"`
-	Publisher   uint64   `bson:"publisher,omitempty"`
+	Channel     string   `bson:"channel,omitempty"`
+	Publisher   string   `bson:"publisher,omitempty"`
 	Protocol    string   `bson:"protocol,omitempty"`
 	Name        string   `bson:"name,omitempty"`
 	Unit        string   `bson:"unit,omitempty"`
@@ -47,9 +47,9 @@ func New(db *mongo.Database) readers.MessageRepository {
 	return mongoRepository{db: db}
 }
 
-func (repo mongoRepository) ReadAll(chanID, offset, limit uint64) []mainflux.Message {
+func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64) []mainflux.Message {
 	col := repo.db.Collection(collection)
-	cursor, err := col.Find(context.Background(), bson.NewDocument(bson.EC.Int64("channel", int64(chanID))), findopt.Limit(int64(limit)), findopt.Skip(int64(offset)))
+	cursor, err := col.Find(context.Background(), bson.NewDocument(bson.EC.String("channel", chanID)), findopt.Limit(int64(limit)), findopt.Skip(int64(offset)))
 	if err != nil {
 		return []mainflux.Message{}
 	}
@@ -75,13 +75,13 @@ func (repo mongoRepository) ReadAll(chanID, offset, limit uint64) []mainflux.Mes
 
 		switch {
 		case m.FloatValue != nil:
-			msg.Value = &mainflux.Message_FloatValue{*m.FloatValue}
+			msg.Value = &mainflux.Message_FloatValue{FloatValue: *m.FloatValue}
 		case m.StringValue != nil:
-			msg.Value = &mainflux.Message_StringValue{*m.StringValue}
+			msg.Value = &mainflux.Message_StringValue{StringValue: *m.StringValue}
 		case m.DataValue != nil:
-			msg.Value = &mainflux.Message_DataValue{*m.DataValue}
+			msg.Value = &mainflux.Message_DataValue{DataValue: *m.DataValue}
 		case m.BoolValue != nil:
-			msg.Value = &mainflux.Message_BoolValue{*m.BoolValue}
+			msg.Value = &mainflux.Message_BoolValue{BoolValue: *m.BoolValue}
 		}
 
 		if m.ValueSum != nil {

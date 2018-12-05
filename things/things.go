@@ -12,7 +12,7 @@ import "strings"
 // Thing represents a Mainflux thing. Each thing is owned by one user, and
 // it is assigned with the unique identifier and (temporary) access key.
 type Thing struct {
-	ID       uint64
+	ID       string
 	Owner    string
 	Type     string
 	Name     string
@@ -38,7 +38,7 @@ func (c *Thing) Validate() error {
 type ThingRepository interface {
 	// Save persists the thing. Successful operation is indicated by non-nil
 	// error response.
-	Save(Thing) (uint64, error)
+	Save(Thing) (string, error)
 
 	// Update performs an update to the existing thing. A non-nil error is
 	// returned to indicate operation failure.
@@ -46,27 +46,27 @@ type ThingRepository interface {
 
 	// RetrieveByID retrieves the thing having the provided identifier, that is owned
 	// by the specified user.
-	RetrieveByID(string, uint64) (Thing, error)
+	RetrieveByID(string, string) (Thing, error)
 
 	// RetrieveByKey returns thing ID for given thing key.
-	RetrieveByKey(string) (uint64, error)
+	RetrieveByKey(string) (string, error)
 
 	// RetrieveAll retrieves the subset of things owned by the specified user.
 	RetrieveAll(string, uint64, uint64) []Thing
 
 	// Remove removes the thing having the provided identifier, that is owned
 	// by the specified user.
-	Remove(string, uint64) error
+	Remove(string, string) error
 }
 
 // ThingCache contains thing caching interface.
 type ThingCache interface {
 	// Save stores pair thing key, thing id.
-	Save(string, uint64) error
+	Save(string, string) error
 
 	// ID returns thing ID for given key.
-	ID(string) (uint64, error)
+	ID(string) (string, error)
 
 	// Removes thing from cache.
-	Remove(uint64) error
+	Remove(string) error
 }

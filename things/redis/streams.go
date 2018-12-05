@@ -8,8 +8,6 @@
 package redis
 
 import (
-	"strconv"
-
 	"github.com/go-redis/redis"
 	"github.com/mainflux/mainflux/things"
 )
@@ -42,7 +40,7 @@ func (es eventStore) AddThing(key string, thing things.Thing) (things.Thing, err
 	}
 
 	event := createThingEvent{
-		id:       strconv.FormatUint(sth.ID, 10),
+		id:       sth.ID,
 		owner:    sth.Owner,
 		kind:     sth.Type,
 		name:     sth.Name,
@@ -64,7 +62,7 @@ func (es eventStore) UpdateThing(key string, thing things.Thing) error {
 	}
 
 	event := updateThingEvent{
-		id:       strconv.FormatUint(thing.ID, 10),
+		id:       thing.ID,
 		kind:     thing.Type,
 		name:     thing.Name,
 		metadata: thing.Metadata,
@@ -79,7 +77,7 @@ func (es eventStore) UpdateThing(key string, thing things.Thing) error {
 	return nil
 }
 
-func (es eventStore) ViewThing(key string, id uint64) (things.Thing, error) {
+func (es eventStore) ViewThing(key, id string) (things.Thing, error) {
 	return es.svc.ViewThing(key, id)
 }
 
@@ -87,13 +85,13 @@ func (es eventStore) ListThings(key string, offset, limit uint64) ([]things.Thin
 	return es.svc.ListThings(key, offset, limit)
 }
 
-func (es eventStore) RemoveThing(key string, id uint64) error {
+func (es eventStore) RemoveThing(key, id string) error {
 	if err := es.svc.RemoveThing(key, id); err != nil {
 		return err
 	}
 
 	event := removeThingEvent{
-		id: strconv.FormatUint(id, 10),
+		id: id,
 	}
 	record := &redis.XAddArgs{
 		Stream:       streamID,
@@ -112,7 +110,7 @@ func (es eventStore) CreateChannel(key string, channel things.Channel) (things.C
 	}
 
 	event := createChannelEvent{
-		id:       strconv.FormatUint(sch.ID, 10),
+		id:       sch.ID,
 		owner:    sch.Owner,
 		name:     sch.Name,
 		metadata: sch.Metadata,
@@ -133,7 +131,7 @@ func (es eventStore) UpdateChannel(key string, channel things.Channel) error {
 	}
 
 	event := updateChannelEvent{
-		id:       strconv.FormatUint(channel.ID, 10),
+		id:       channel.ID,
 		name:     channel.Name,
 		metadata: channel.Metadata,
 	}
@@ -147,7 +145,7 @@ func (es eventStore) UpdateChannel(key string, channel things.Channel) error {
 	return nil
 }
 
-func (es eventStore) ViewChannel(key string, id uint64) (things.Channel, error) {
+func (es eventStore) ViewChannel(key, id string) (things.Channel, error) {
 	return es.svc.ViewChannel(key, id)
 }
 
@@ -155,13 +153,13 @@ func (es eventStore) ListChannels(key string, offset, limit uint64) ([]things.Ch
 	return es.svc.ListChannels(key, offset, limit)
 }
 
-func (es eventStore) RemoveChannel(key string, id uint64) error {
+func (es eventStore) RemoveChannel(key, id string) error {
 	if err := es.svc.RemoveChannel(key, id); err != nil {
 		return err
 	}
 
 	event := removeChannelEvent{
-		id: strconv.FormatUint(id, 10),
+		id: id,
 	}
 	record := &redis.XAddArgs{
 		Stream:       streamID,
@@ -173,14 +171,14 @@ func (es eventStore) RemoveChannel(key string, id uint64) error {
 	return nil
 }
 
-func (es eventStore) Connect(key string, chanID, thingID uint64) error {
+func (es eventStore) Connect(key, chanID, thingID string) error {
 	if err := es.svc.Connect(key, chanID, thingID); err != nil {
 		return err
 	}
 
 	event := connectThingEvent{
-		chanID:  strconv.FormatUint(chanID, 10),
-		thingID: strconv.FormatUint(thingID, 10),
+		chanID:  chanID,
+		thingID: thingID,
 	}
 	record := &redis.XAddArgs{
 		Stream:       streamID,
@@ -192,14 +190,14 @@ func (es eventStore) Connect(key string, chanID, thingID uint64) error {
 	return nil
 }
 
-func (es eventStore) Disconnect(key string, chanID, thingID uint64) error {
+func (es eventStore) Disconnect(key, chanID, thingID string) error {
 	if err := es.svc.Disconnect(key, chanID, thingID); err != nil {
 		return err
 	}
 
 	event := disconnectThingEvent{
-		chanID:  strconv.FormatUint(chanID, 10),
-		thingID: strconv.FormatUint(thingID, 10),
+		chanID:  chanID,
+		thingID: thingID,
 	}
 	record := &redis.XAddArgs{
 		Stream:       streamID,
@@ -211,10 +209,10 @@ func (es eventStore) Disconnect(key string, chanID, thingID uint64) error {
 	return nil
 }
 
-func (es eventStore) CanAccess(chanID uint64, key string) (uint64, error) {
+func (es eventStore) CanAccess(chanID string, key string) (string, error) {
 	return es.svc.CanAccess(chanID, key)
 }
 
-func (es eventStore) Identify(key string) (uint64, error) {
+func (es eventStore) Identify(key string) (string, error) {
 	return es.svc.Identify(key)
 }

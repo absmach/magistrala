@@ -14,6 +14,7 @@ import (
 
 	"github.com/mainflux/mainflux/sdk/go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -80,6 +81,7 @@ func TestCreateChannel(t *testing.T) {
 		assert.Equal(t, tc.empty, loc == "", fmt.Sprintf("%s: expected empty result location, got: %s", tc.desc, loc))
 	}
 }
+
 func TestChannel(t *testing.T) {
 	svc := newThingsService(map[string]string{token: email})
 	ts := newThingsServer(svc)
@@ -94,47 +96,48 @@ func TestChannel(t *testing.T) {
 	}
 
 	mainfluxSDK := sdk.NewSDK(sdkConf)
-	mainfluxSDK.CreateChannel(channel, token)
+	id, err := mainfluxSDK.CreateChannel(channel, token)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := []struct {
 		desc     string
-		chId     string
+		chanID   string
 		token    string
 		err      error
 		response sdk.Channel
 	}{
 		{
-			desc:     "Get existing channel",
-			chId:     "1",
+			desc:     "get existing channel",
+			chanID:   id,
 			token:    token,
 			err:      nil,
 			response: channel,
 		},
 		{
-			desc:     "Get non-existent channel",
-			chId:     "43",
+			desc:     "get non-existent channel",
+			chanID:   "43",
 			token:    token,
 			err:      sdk.ErrNotFound,
 			response: sdk.Channel{},
 		},
 		{
-			desc:     "Get channel with invalid token",
-			chId:     "1",
-			token:    wrongValue,
+			desc:     "get channel with invalid token",
+			chanID:   id,
+			token:    "",
 			err:      sdk.ErrUnauthorized,
 			response: sdk.Channel{},
 		},
 	}
 
 	for _, tc := range cases {
-		respCh, err := mainfluxSDK.Channel(tc.chId, tc.token)
+		respCh, err := mainfluxSDK.Channel(tc.chanID, tc.token)
 
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, respCh, fmt.Sprintf("%s: expected response channel %s, got %s", tc.desc, tc.response, respCh))
 	}
 }
 
-func TestCahnnels(t *testing.T) {
+func TestChannels(t *testing.T) {
 	svc := newThingsService(map[string]string{token: email})
 	ts := newThingsServer(svc)
 	defer ts.Close()
@@ -149,9 +152,9 @@ func TestCahnnels(t *testing.T) {
 	var channels []sdk.Channel
 	mainfluxSDK := sdk.NewSDK(sdkConf)
 	for i := 1; i < 101; i++ {
-		channel := sdk.Channel{ID: strconv.Itoa(i), Name: "test"}
-		mainfluxSDK.CreateChannel(channel, token)
-		channels = append(channels, channel)
+		ch := sdk.Channel{ID: strconv.Itoa(i), Name: "test"}
+		mainfluxSDK.CreateChannel(ch, token)
+		channels = append(channels, ch)
 	}
 
 	cases := []struct {
@@ -240,7 +243,8 @@ func TestUpdateChannel(t *testing.T) {
 	}
 
 	mainfluxSDK := sdk.NewSDK(sdkConf)
-	mainfluxSDK.CreateChannel(channel, token)
+	id, err := mainfluxSDK.CreateChannel(channel, token)
+	require.Nil(t, err, fmt.Sprintf("unexpected error %s", err))
 
 	cases := []struct {
 		desc    string
@@ -250,7 +254,7 @@ func TestUpdateChannel(t *testing.T) {
 	}{
 		{
 			desc:    "update existing channel",
-			channel: sdk.Channel{ID: "1", Name: "test2"},
+			channel: sdk.Channel{ID: id, Name: "test2"},
 			token:   token,
 			err:     nil,
 		},
@@ -262,19 +266,19 @@ func TestUpdateChannel(t *testing.T) {
 		},
 		{
 			desc:    "update channel with invalid id",
-			channel: sdk.Channel{ID: "invalid", Name: "test2"},
+			channel: sdk.Channel{ID: "", Name: "test2"},
 			token:   token,
 			err:     sdk.ErrInvalidArgs,
 		},
 		{
 			desc:    "update channel with invalid token",
-			channel: sdk.Channel{ID: "1", Name: "test2"},
+			channel: sdk.Channel{ID: id, Name: "test2"},
 			token:   wrongValue,
 			err:     sdk.ErrUnauthorized,
 		},
 		{
 			desc:    "update channel with empty token",
-			channel: sdk.Channel{ID: "1", Name: "test2"},
+			channel: sdk.Channel{ID: id, Name: "test2"},
 			token:   "",
 			err:     sdk.ErrUnauthorized,
 		},
@@ -300,54 +304,55 @@ func TestDeleteChannel(t *testing.T) {
 	}
 
 	mainfluxSDK := sdk.NewSDK(sdkConf)
-	mainfluxSDK.CreateChannel(channel, token)
+	id, err := mainfluxSDK.CreateChannel(channel, token)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := []struct {
-		desc  string
-		chId  string
-		token string
-		err   error
+		desc   string
+		chanID string
+		token  string
+		err    error
 	}{
 		{
-			desc:  "delete channel with invalid token",
-			chId:  "1",
-			token: wrongValue,
-			err:   sdk.ErrUnauthorized,
+			desc:   "delete channel with invalid token",
+			chanID: id,
+			token:  wrongValue,
+			err:    sdk.ErrUnauthorized,
 		},
 		{
-			desc:  "delete non-existing channel",
-			chId:  "2",
-			token: token,
-			err:   nil,
+			desc:   "delete non-existing channel",
+			chanID: "2",
+			token:  token,
+			err:    nil,
 		},
 		{
-			desc:  "delete channel with invalid id",
-			chId:  "invalid",
-			token: token,
-			err:   sdk.ErrInvalidArgs,
+			desc:   "delete channel with invalid id",
+			chanID: "",
+			token:  token,
+			err:    sdk.ErrInvalidArgs,
 		},
 		{
-			desc:  "delete channel with empty token",
-			chId:  "1",
-			token: "",
-			err:   sdk.ErrUnauthorized,
+			desc:   "delete channel with empty token",
+			chanID: id,
+			token:  "",
+			err:    sdk.ErrUnauthorized,
 		},
 		{
-			desc:  "delete existing channel",
-			chId:  "1",
-			token: token,
-			err:   nil,
+			desc:   "delete existing channel",
+			chanID: id,
+			token:  token,
+			err:    nil,
 		},
 		{
-			desc:  "delete deleted channel",
-			chId:  "1",
-			token: token,
-			err:   nil,
+			desc:   "delete deleted channel",
+			chanID: id,
+			token:  token,
+			err:    nil,
 		},
 	}
 
 	for _, tc := range cases {
-		err := mainfluxSDK.DeleteChannel(tc.chId, tc.token)
+		err := mainfluxSDK.DeleteChannel(tc.chanID, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 	}
 }

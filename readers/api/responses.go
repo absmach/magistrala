@@ -16,8 +16,8 @@ import (
 var _ mainflux.Response = (*listMessagesRes)(nil)
 
 type message struct {
-	Channel     uint64   `json:"channel,omitempty"`
-	Publisher   uint64   `json:"publisher,omitempty"`
+	Channel     string   `json:"channel,omitempty"`
+	Publisher   string   `json:"publisher,omitempty"`
 	Protocol    string   `json:"protocol,omitempty"`
 	Name        string   `json:"name,omitempty"`
 	Unit        string   `json:"unit,omitempty"`

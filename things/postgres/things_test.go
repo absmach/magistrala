@@ -24,6 +24,7 @@ func TestThingSave(t *testing.T) {
 	thingRepo := postgres.NewThingRepository(db, testLog)
 
 	thing := things.Thing{
+		ID:    uuid.New().ID(),
 		Owner: email,
 		Key:   uuid.New().ID(),
 	}
@@ -39,9 +40,14 @@ func TestThingSave(t *testing.T) {
 			err:   nil,
 		},
 		{
-			desc:  "create invalid thing",
-			thing: things.Thing{Owner: email, Key: uuid.New().ID(), Metadata: "invalid"},
-			err:   things.ErrMalformedEntity,
+			desc: "create invalid thing",
+			thing: things.Thing{
+				ID:       uuid.New().ID(),
+				Owner:    email,
+				Key:      uuid.New().ID(),
+				Metadata: "invalid",
+			},
+			err: things.ErrMalformedEntity,
 		},
 	}
 
@@ -56,6 +62,7 @@ func TestThingUpdate(t *testing.T) {
 	thingRepo := postgres.NewThingRepository(db, testLog)
 
 	thing := things.Thing{
+		ID:    uuid.New().ID(),
 		Owner: email,
 		Key:   uuid.New().ID(),
 	}
@@ -74,19 +81,37 @@ func TestThingUpdate(t *testing.T) {
 			err:   nil,
 		},
 		{
-			desc:  "update non-existing thing with existing user",
-			thing: things.Thing{ID: wrongID, Owner: email},
-			err:   things.ErrNotFound,
+			desc: "update non-existing thing with existing user",
+			thing: things.Thing{
+				ID:    uuid.New().ID(),
+				Owner: email,
+			},
+			err: things.ErrNotFound,
 		},
 		{
-			desc:  "update existing thing ID with non-existing user",
-			thing: things.Thing{ID: id, Owner: wrongValue},
-			err:   things.ErrNotFound,
+			desc: "update existing thing ID with non-existing user",
+			thing: things.Thing{
+				ID:    id,
+				Owner: wrongValue,
+			},
+			err: things.ErrNotFound,
 		},
 		{
-			desc:  "update non-existing thing with non-existing user",
-			thing: things.Thing{ID: wrongID, Owner: wrongValue},
-			err:   things.ErrNotFound,
+			desc: "update non-existing thing with non-existing user",
+			thing: things.Thing{
+				ID:    uuid.New().ID(),
+				Owner: wrongValue,
+			},
+			err: things.ErrNotFound,
+		},
+		{
+			desc: "update thing with invalid data",
+			thing: things.Thing{
+				ID:       id,
+				Owner:    email,
+				Metadata: "invalid",
+			},
+			err: things.ErrMalformedEntity,
 		},
 	}
 
@@ -101,6 +126,7 @@ func TestSingleThingRetrieval(t *testing.T) {
 	thingRepo := postgres.NewThingRepository(db, testLog)
 
 	thing := things.Thing{
+		ID:    uuid.New().ID(),
 		Owner: email,
 		Key:   uuid.New().ID(),
 	}
@@ -110,7 +136,7 @@ func TestSingleThingRetrieval(t *testing.T) {
 
 	cases := map[string]struct {
 		owner string
-		ID    uint64
+		ID    string
 		err   error
 	}{
 		"retrieve thing with existing user": {
@@ -120,7 +146,7 @@ func TestSingleThingRetrieval(t *testing.T) {
 		},
 		"retrieve non-existing thing with existing user": {
 			owner: thing.Owner,
-			ID:    wrongID,
+			ID:    uuid.New().ID(),
 			err:   things.ErrNotFound,
 		},
 		"retrieve thing with non-existing owner": {
@@ -141,6 +167,7 @@ func TestThingRetrieveByKey(t *testing.T) {
 	thingRepo := postgres.NewThingRepository(db, testLog)
 
 	thing := things.Thing{
+		ID:    uuid.New().ID(),
 		Owner: email,
 		Key:   uuid.New().ID(),
 	}
@@ -150,7 +177,7 @@ func TestThingRetrieveByKey(t *testing.T) {
 
 	cases := map[string]struct {
 		key string
-		ID  uint64
+		ID  string
 		err error
 	}{
 		"retrieve existing thing by key": {
@@ -160,14 +187,14 @@ func TestThingRetrieveByKey(t *testing.T) {
 		},
 		"retrieve non-existent thing by key": {
 			key: wrongValue,
-			ID:  wrongID,
+			ID:  "",
 			err: things.ErrNotFound,
 		},
 	}
 
 	for desc, tc := range cases {
 		id, err := thingRepo.RetrieveByKey(tc.key)
-		assert.Equal(t, tc.ID, id, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.ID, id))
+		assert.Equal(t, tc.ID, id, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.ID, id))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
@@ -181,6 +208,7 @@ func TestMultiThingRetrieval(t *testing.T) {
 
 	for i := uint64(0); i < n; i++ {
 		t := things.Thing{
+			ID:    uuid.New().ID(),
 			Owner: email,
 			Key:   idp.ID(),
 		}
@@ -226,6 +254,7 @@ func TestThingRemoval(t *testing.T) {
 	thingRepo := postgres.NewThingRepository(db, testLog)
 
 	thing := things.Thing{
+		ID:    uuid.New().ID(),
 		Owner: email,
 		Key:   uuid.New().ID(),
 	}

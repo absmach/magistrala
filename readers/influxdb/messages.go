@@ -28,12 +28,12 @@ func New(client influxdata.Client, database string) (readers.MessageRepository, 
 	return &influxRepository{database, client}, nil
 }
 
-func (repo *influxRepository) ReadAll(chanID, offset, limit uint64) []mainflux.Message {
+func (repo *influxRepository) ReadAll(chanID string, offset, limit uint64) []mainflux.Message {
 	if limit > maxLimit {
 		limit = maxLimit
 	}
 
-	cmd := fmt.Sprintf(`SELECT * from messages WHERE channel='%d' LIMIT %d OFFSET %d`, chanID, limit, offset)
+	cmd := fmt.Sprintf(`SELECT * from messages WHERE channel='%s' LIMIT %d OFFSET %d`, chanID, limit, offset)
 	q := influxdata.Query{
 		Command:  cmd,
 		Database: repo.database,
@@ -77,22 +77,22 @@ func parseValues(value interface{}, name string, msg *mainflux.Message) {
 	if strings.HasSuffix(strings.ToLower(name), "value") {
 		switch value.(type) {
 		case bool:
-			msg.Value = &mainflux.Message_BoolValue{value.(bool)}
+			msg.Value = &mainflux.Message_BoolValue{BoolValue: value.(bool)}
 		case json.Number:
 			num, err := value.(json.Number).Float64()
 			if err != nil {
 				return
 			}
 
-			msg.Value = &mainflux.Message_FloatValue{num}
+			msg.Value = &mainflux.Message_FloatValue{FloatValue: num}
 		case string:
 			if strings.HasPrefix(name, "string") {
-				msg.Value = &mainflux.Message_StringValue{value.(string)}
+				msg.Value = &mainflux.Message_StringValue{StringValue: value.(string)}
 				return
 			}
 
 			if strings.HasPrefix(name, "data") {
-				msg.Value = &mainflux.Message_DataValue{value.(string)}
+				msg.Value = &mainflux.Message_DataValue{DataValue: value.(string)}
 			}
 		}
 	}
@@ -114,9 +114,6 @@ func parseMessage(names []string, fields []interface{}) mainflux.Message {
 			if s, ok := fields[i].(string); ok {
 				msgField.SetString(s)
 			}
-		case uint64:
-			u, _ := strconv.ParseUint(fields[i].(string), 10, 64)
-			msgField.SetUint(u)
 		case float64:
 			if name == "time" {
 				t, err := time.Parse(time.RFC3339, fields[i].(string))

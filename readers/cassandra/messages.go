@@ -24,7 +24,7 @@ func New(session *gocql.Session) readers.MessageRepository {
 	return cassandraRepository{session: session}
 }
 
-func (cr cassandraRepository) ReadAll(chanID, offset, limit uint64) []mainflux.Message {
+func (cr cassandraRepository) ReadAll(chanID string, offset, limit uint64) []mainflux.Message {
 	cql := `SELECT channel, publisher, protocol, name, unit,
 			value, string_value, bool_value, data_value, value_sum, time,
 			update_time, link FROM messages WHERE channel = ? LIMIT ?
@@ -53,13 +53,13 @@ func (cr cassandraRepository) ReadAll(chanID, offset, limit uint64) []mainflux.M
 
 		switch {
 		case floatVal != nil:
-			msg.Value = &mainflux.Message_FloatValue{*floatVal}
+			msg.Value = &mainflux.Message_FloatValue{FloatValue: *floatVal}
 		case strVal != nil:
-			msg.Value = &mainflux.Message_StringValue{*strVal}
+			msg.Value = &mainflux.Message_StringValue{StringValue: *strVal}
 		case boolVal != nil:
-			msg.Value = &mainflux.Message_BoolValue{*boolVal}
+			msg.Value = &mainflux.Message_BoolValue{BoolValue: *boolVal}
 		case dataVal != nil:
-			msg.Value = &mainflux.Message_DataValue{*dataVal}
+			msg.Value = &mainflux.Message_DataValue{DataValue: *dataVal}
 		}
 
 		if valueSum != nil {

@@ -13,6 +13,6 @@ import "fmt"
 // identifiers as much as possible, a key will be created as combination of
 // owner and their own identifiers. This will allow searching either by
 // prefix or suffix.
-func key(owner string, id uint64) string {
-	return fmt.Sprintf("%s-%d", owner, id)
+func key(owner string, id string) string {
+	return fmt.Sprintf("%s-%s", owner, id)
 }

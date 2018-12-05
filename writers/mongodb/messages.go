@@ -26,8 +26,8 @@ type mongoRepo struct {
 
 // Message struct is used as a MongoDB representation of Mainflux message.
 type message struct {
-	Channel     uint64   `bson:"channel,omitempty"`
-	Publisher   uint64   `bson:"publisher,omitempty"`
+	Channel     string   `bson:"channel,omitempty"`
+	Publisher   string   `bson:"publisher,omitempty"`
 	Protocol    string   `bson:"protocol,omitempty"`
 	Name        string   `bson:"name,omitempty"`
 	Unit        string   `bson:"unit,omitempty"`

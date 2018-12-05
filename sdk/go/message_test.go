@@ -10,7 +10,6 @@ package sdk_test
 import (
 	"fmt"
 	"net/http/httptest"
-	"strconv"
 	"testing"
 
 	"github.com/mainflux/mainflux"
@@ -19,7 +18,6 @@ import (
 	"github.com/mainflux/mainflux/http/mocks"
 	sdk "github.com/mainflux/mainflux/sdk/go"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func newMessageService() mainflux.MessagePublisher {
@@ -34,13 +32,10 @@ func newMessageServer(pub mainflux.MessagePublisher, cc mainflux.ThingsServiceCl
 
 func TestSendMessage(t *testing.T) {
 	chanID := "1"
-	invalidID := "wrong"
 	atoken := "auth_token"
 	invalidToken := "invalid_token"
 	msg := `[{"n":"current","t":-1,"v":1.6}]`
-	id, err := strconv.ParseUint(chanID, 10, 64)
-	require.Nil(t, err, "publish message: unexpected error when converting channel id to string: %s", err)
-	thingsClient := mocks.NewThingsClient(map[string]uint64{atoken: id})
+	thingsClient := mocks.NewThingsClient(map[string]string{atoken: chanID})
 	pub := newMessageService()
 	ts := newMessageServer(pub, thingsClient)
 	defer ts.Close()
@@ -86,10 +81,10 @@ func TestSendMessage(t *testing.T) {
 			err:    nil,
 		},
 		"publish message to wrong channel": {
-			chanID: invalidID,
+			chanID: "",
 			msg:    msg,
 			auth:   atoken,
-			err:    sdk.ErrNotFound,
+			err:    sdk.ErrInvalidArgs,
 		},
 		"publish message unable to authorize": {
 			chanID: chanID,
@@ -107,9 +102,7 @@ func TestSendMessage(t *testing.T) {
 func TestSetContentType(t *testing.T) {
 	chanID := "1"
 	atoken := "auth_token"
-	id, err := strconv.ParseUint(chanID, 10, 64)
-	require.Nil(t, err, "publish message: unexpected error when converting channel id to string: %s", err)
-	thingsClient := mocks.NewThingsClient(map[string]uint64{atoken: id})
+	thingsClient := mocks.NewThingsClient(map[string]string{atoken: chanID})
 
 	pub := newMessageService()
 	ts := newMessageServer(pub, thingsClient)

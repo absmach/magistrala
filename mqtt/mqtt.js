@@ -98,7 +98,7 @@ aedes.authorizePublish = function (client, packet, publish) {
     var channelId = channel[1],
         accessReq = {
             token: client.password,
-            chanID: Number(channelId)
+            chanID: channelId
         },
         onAuthorize = function (err, res) {
             var rawMsg;
@@ -126,10 +126,11 @@ aedes.authorizePublish = function (client, packet, publish) {
 
 aedes.authorizeSubscribe = function (client, packet, subscribe) {
     // Topics are in the form `channels/<channel_id>/messages`
-    var channel = packet.topic.split('/')[1],
+    var channel = /^channels\/(.+?)\/messages$/.exec(packet.topic),
+        channelId = channel[1],
         accessReq = {
             token: client.password,
-            chanID: Number(channel)
+            chanID: channelId
         },
         onAuthorize = function (err, res) {
             if (!err) {

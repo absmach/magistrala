@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	chanID   = 1
-	pubID    = 1
+	chanID   = "1"
+	pubID    = "1"
 	protocol = "ws"
 )
 
@@ -33,7 +33,7 @@ var msg = mainflux.RawMessage{
 }
 
 func newService(channel *ws.Channel) ws.Service {
-	subs := map[uint64]*ws.Channel{chanID: channel}
+	subs := map[string]*ws.Channel{chanID: channel}
 	pubsub := mocks.NewService(subs, broker.ErrInvalidMsg)
 	return ws.New(pubsub)
 }
@@ -47,8 +47,16 @@ func TestPublish(t *testing.T) {
 		msg  mainflux.RawMessage
 		err  error
 	}{
-		{"publish valid message", msg, nil},
-		{"publish empty message", mainflux.RawMessage{}, ws.ErrFailedMessagePublish},
+		{
+			desc: "publish valid message",
+			msg:  msg,
+			err:  nil,
+		},
+		{
+			desc: "publish empty message",
+			msg:  mainflux.RawMessage{},
+			err:  ws.ErrFailedMessagePublish,
+		},
 	}
 
 	for _, tc := range cases {
@@ -70,12 +78,22 @@ func TestSubscribe(t *testing.T) {
 
 	cases := []struct {
 		desc    string
-		chanID  uint64
+		chanID  string
 		channel *ws.Channel
 		err     error
 	}{
-		{"subscription to valid channel", chanID, channel, nil},
-		{"subscription to channel that should fail", 0, channel, ws.ErrFailedSubscription},
+		{
+			desc:    "subscription to valid channel",
+			chanID:  chanID,
+			channel: channel,
+			err:     nil,
+		},
+		{
+			desc:    "subscription to channel that should fail",
+			chanID:  "0",
+			channel: channel,
+			err:     ws.ErrFailedSubscription,
+		},
 	}
 
 	for _, tc := range cases {

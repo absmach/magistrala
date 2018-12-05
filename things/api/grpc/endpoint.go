@@ -22,7 +22,7 @@ func canAccessEndpoint(svc things.Service) endpoint.Endpoint {
 
 		id, err := svc.CanAccess(req.chanID, req.thingKey)
 		if err != nil {
-			return identityRes{id: 0, err: err}, err
+			return identityRes{err: err}, err
 		}
 		return identityRes{id: id, err: nil}, nil
 	}
@@ -33,7 +33,7 @@ func identifyEndpoint(svc things.Service) endpoint.Endpoint {
 		req := request.(identifyReq)
 		id, err := svc.Identify(req.key)
 		if err != nil {
-			return identityRes{id: 0, err: err}, err
+			return identityRes{err: err}, err
 		}
 		return identityRes{id: id, err: nil}, nil
 	}

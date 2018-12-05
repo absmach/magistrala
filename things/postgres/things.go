@@ -29,22 +29,22 @@ func NewThingRepository(db *sql.DB, log logger.Logger) things.ThingRepository {
 	return &thingRepository{db: db, log: log}
 }
 
-func (tr thingRepository) Save(thing things.Thing) (uint64, error) {
-	q := `INSERT INTO things (owner, type, name, key, metadata) VALUES ($1, $2, $3, $4, $5) RETURNING id`
+func (tr thingRepository) Save(thing things.Thing) (string, error) {
+	q := `INSERT INTO things (id, owner, type, name, key, metadata) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
 
 	metadata := thing.Metadata
 	if metadata == "" {
 		metadata = "{}"
 	}
 
-	err := tr.db.QueryRow(q, thing.Owner, thing.Type, thing.Name, thing.Key, metadata).Scan(&thing.ID)
+	_, err := tr.db.Exec(q, thing.ID, thing.Owner, thing.Type, thing.Name, thing.Key, metadata)
 	if err != nil {
 		pqErr, ok := err.(*pq.Error)
 		if ok && errInvalid == pqErr.Code.Name() {
-			return 0, things.ErrMalformedEntity
+			return "", things.ErrMalformedEntity
 		}
 
-		return 0, err
+		return "", err
 	}
 
 	return thing.ID, nil
@@ -80,7 +80,7 @@ func (tr thingRepository) Update(thing things.Thing) error {
 	return nil
 }
 
-func (tr thingRepository) RetrieveByID(owner string, id uint64) (things.Thing, error) {
+func (tr thingRepository) RetrieveByID(owner, id string) (things.Thing, error) {
 	q := `SELECT name, type, key, metadata FROM things WHERE id = $1 AND owner = $2`
 	thing := things.Thing{ID: id, Owner: owner}
 	err := tr.db.
@@ -98,14 +98,14 @@ func (tr thingRepository) RetrieveByID(owner string, id uint64) (things.Thing, e
 	return thing, nil
 }
 
-func (tr thingRepository) RetrieveByKey(key string) (uint64, error) {
+func (tr thingRepository) RetrieveByKey(key string) (string, error) {
 	q := `SELECT id FROM things WHERE key = $1`
-	var id uint64
+	var id string
 	if err := tr.db.QueryRow(q, key).Scan(&id); err != nil {
 		if err == sql.ErrNoRows {
-			return 0, things.ErrNotFound
+			return "", things.ErrNotFound
 		}
-		return 0, err
+		return "", err
 	}
 
 	return id, nil
@@ -134,7 +134,7 @@ func (tr thingRepository) RetrieveAll(owner string, offset, limit uint64) []thin
 	return items
 }
 
-func (tr thingRepository) Remove(owner string, id uint64) error {
+func (tr thingRepository) Remove(owner, id string) error {
 	q := `DELETE FROM things WHERE id = $1 AND owner = $2`
 	tr.db.Exec(q, id, owner)
 	return nil

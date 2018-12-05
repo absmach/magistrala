@@ -9,7 +9,6 @@ package mocks
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/mainflux/mainflux"
 	"google.golang.org/grpc"
@@ -34,12 +33,11 @@ func (svc thingsServiceMock) CanAccess(ctx context.Context, in *mainflux.AccessR
 		return nil, errUnauthorized
 	}
 
-	id, err := strconv.ParseUint(token, 10, 64)
-	if err != nil {
+	if token == "" {
 		return nil, errUnauthorized
 	}
 
-	return &mainflux.ThingID{Value: id}, nil
+	return &mainflux.ThingID{Value: token}, nil
 }
 
 func (svc thingsServiceMock) Identify(_ context.Context, _ *mainflux.Token, _ ...grpc.CallOption) (*mainflux.ThingID, error) {

@@ -3,7 +3,6 @@ package lora
 import (
 	"encoding/base64"
 	"errors"
-	"strconv"
 
 	"github.com/mainflux/mainflux"
 )
@@ -74,23 +73,15 @@ func New(pub mainflux.MessagePublisher, thingsRM, channelsRM RouteMapRepository)
 // Publish forwards messages from Lora MQTT broker to Mainflux NATS broker
 func (as *adapterService) Publish(m Message) error {
 	// Get route map of lora application
-	d, err := as.thingsRM.Get(m.DevEUI)
+	thing, err := as.thingsRM.Get(m.DevEUI)
 	if err != nil {
 		return ErrNotFoundDev
 	}
-	mfxDev, err := strconv.ParseUint(d, 10, 64)
-	if err != nil {
-		return ErrMalformedIdentity
-	}
 
 	// Get route map of lora application
-	c, err := as.channelsRM.Get(m.ApplicationID)
+	channel, err := as.channelsRM.Get(m.ApplicationID)
 	if err != nil {
 		return ErrNotFoundApp
-	}
-	mfxChan, err := strconv.ParseUint(c, 10, 64)
-	if err != nil {
-		return ErrMalformedIdentity
 	}
 
 	payload, err := base64.StdEncoding.DecodeString(m.Data)
@@ -100,10 +91,10 @@ func (as *adapterService) Publish(m Message) error {
 
 	// Publish on Mainflux NATS broker
 	msg := mainflux.RawMessage{
-		Publisher:   mfxDev,
+		Publisher:   thing,
 		Protocol:    protocol,
 		ContentType: "Content-Type",
-		Channel:     mfxChan,
+		Channel:     channel,
 		Payload:     payload,
 	}
 

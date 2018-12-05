@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 const channelsEndpoint = "channels"
@@ -45,7 +46,8 @@ func (sdk mfSDK) CreateChannel(channel Channel, token string) (string, error) {
 		}
 	}
 
-	return resp.Header.Get("Location"), nil
+	id := strings.TrimPrefix(resp.Header.Get("Location"), fmt.Sprintf("/%s/", channelsEndpoint))
+	return id, nil
 }
 
 func (sdk mfSDK) Channels(token string, offset, limit uint64) ([]Channel, error) {

@@ -12,7 +12,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -58,13 +57,11 @@ func (tr testRequest) make() (*http.Response, error) {
 
 func TestPublish(t *testing.T) {
 	chanID := "1"
-	invalidID := "wrong"
 	contentType := "application/senml+json"
 	token := "auth_token"
 	invalidToken := "invalid_token"
 	msg := `[{"n":"current","t":-1,"v":1.6}]`
-	id, _ := strconv.ParseUint(chanID, 10, 64)
-	thingsClient := mocks.NewThingsClient(map[string]uint64{token: id})
+	thingsClient := mocks.NewThingsClient(map[string]string{token: chanID})
 	pub := newService()
 	ts := newHTTPServer(pub, thingsClient)
 	defer ts.Close()
@@ -104,12 +101,12 @@ func TestPublish(t *testing.T) {
 			auth:        token,
 			status:      http.StatusAccepted,
 		},
-		"publish message to wrong channel": {
-			chanID:      invalidID,
+		"publish message to invalid channel": {
+			chanID:      "",
 			msg:         msg,
 			contentType: contentType,
 			auth:        token,
-			status:      http.StatusNotFound,
+			status:      http.StatusBadRequest,
 		},
 		"publish message unable to authorize": {
 			chanID:      chanID,

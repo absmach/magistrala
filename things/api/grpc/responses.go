@@ -8,6 +8,6 @@
 package grpc
 
 type identityRes struct {
-	id  uint64
+	id  string
 	err error
 }

@@ -12,7 +12,7 @@ type apiReq interface {
 }
 
 type listMessagesReq struct {
-	chanID uint64
+	chanID string
 	offset uint64
 	limit  uint64
 }

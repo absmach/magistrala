@@ -44,13 +44,13 @@ func (n normalizer) Normalize(msg mainflux.RawMessage) (NormalizedData, error) {
 
 		switch {
 		case v.Value != nil:
-			m.Value = &mainflux.Message_FloatValue{*v.Value}
+			m.Value = &mainflux.Message_FloatValue{FloatValue: *v.Value}
 		case v.BoolValue != nil:
-			m.Value = &mainflux.Message_BoolValue{*v.BoolValue}
+			m.Value = &mainflux.Message_BoolValue{BoolValue: *v.BoolValue}
 		case v.DataValue != "":
-			m.Value = &mainflux.Message_DataValue{v.DataValue}
+			m.Value = &mainflux.Message_DataValue{DataValue: v.DataValue}
 		case v.StringValue != "":
-			m.Value = &mainflux.Message_StringValue{v.StringValue}
+			m.Value = &mainflux.Message_StringValue{StringValue: v.StringValue}
 		}
 
 		if v.Sum != nil {

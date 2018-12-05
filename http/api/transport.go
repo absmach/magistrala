@@ -27,7 +27,7 @@ import (
 const protocol = "http"
 
 var (
-	errMalformedData = errors.New("malformed SenML data")
+	errMalformedData = errors.New("malformed request data")
 	auth             mainflux.ThingsServiceClient
 )
 
@@ -65,9 +65,9 @@ func decodeRequest(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
-	channel, err := things.FromString(bone.GetValue(r, "id"))
-	if err != nil {
-		return nil, err
+	channel := bone.GetValue(r, "id")
+	if channel == "" {
+		return nil, errMalformedData
 	}
 
 	msg := mainflux.RawMessage{
@@ -81,17 +81,17 @@ func decodeRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	return msg, nil
 }
 
-func authorize(r *http.Request) (uint64, error) {
+func authorize(r *http.Request) (string, error) {
 	apiKey := r.Header.Get("Authorization")
 
 	if apiKey == "" {
-		return 0, things.ErrUnauthorizedAccess
+		return "", things.ErrUnauthorizedAccess
 	}
 
 	// extract ID from /channels/:id/messages
-	chanID, err := things.FromString(bone.GetValue(r, "id"))
-	if err != nil {
-		return 0, things.ErrNotFound
+	chanID := bone.GetValue(r, "id")
+	if chanID == "" {
+		return "", errMalformedData
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -99,7 +99,7 @@ func authorize(r *http.Request) (uint64, error) {
 
 	id, err := auth.CanAccess(ctx, &mainflux.AccessReq{Token: apiKey, ChanID: chanID})
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
 	return id.GetValue(), nil
@@ -124,8 +124,6 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch err {
 	case errMalformedData:
 		w.WriteHeader(http.StatusBadRequest)
-	case things.ErrNotFound:
-		w.WriteHeader(http.StatusNotFound)
 	case things.ErrUnauthorizedAccess:
 		w.WriteHeader(http.StatusForbidden)
 	default:

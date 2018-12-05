@@ -17,13 +17,13 @@ import (
 var _ ws.Service = (*mockService)(nil)
 
 type mockService struct {
-	subscriptions map[uint64]*ws.Channel
+	subscriptions map[string]*ws.Channel
 	pubError      error
 	mutex         sync.Mutex
 }
 
 // NewService returns mock message publisher.
-func NewService(subs map[uint64]*ws.Channel, pubError error) ws.Service {
+func NewService(subs map[string]*ws.Channel, pubError error) ws.Service {
 	return &mockService{subs, pubError, sync.Mutex{}}
 }
 
@@ -37,7 +37,7 @@ func (svc *mockService) Publish(msg mainflux.RawMessage) error {
 	return nil
 }
 
-func (svc *mockService) Subscribe(chanID uint64, channel *ws.Channel) error {
+func (svc *mockService) Subscribe(chanID string, channel *ws.Channel) error {
 	svc.mutex.Lock()
 	defer svc.mutex.Unlock()
 	if _, ok := svc.subscriptions[chanID]; !ok {

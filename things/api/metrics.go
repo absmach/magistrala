@@ -52,7 +52,7 @@ func (ms *metricsMiddleware) UpdateThing(key string, thing things.Thing) error {
 	return ms.svc.UpdateThing(key, thing)
 }
 
-func (ms *metricsMiddleware) ViewThing(key string, id uint64) (things.Thing, error) {
+func (ms *metricsMiddleware) ViewThing(key, id string) (things.Thing, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "view_thing").Add(1)
 		ms.latency.With("method", "view_thing").Observe(time.Since(begin).Seconds())
@@ -70,7 +70,7 @@ func (ms *metricsMiddleware) ListThings(key string, offset, limit uint64) ([]thi
 	return ms.svc.ListThings(key, offset, limit)
 }
 
-func (ms *metricsMiddleware) RemoveThing(key string, id uint64) error {
+func (ms *metricsMiddleware) RemoveThing(key, id string) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "remove_thing").Add(1)
 		ms.latency.With("method", "remove_thing").Observe(time.Since(begin).Seconds())
@@ -97,7 +97,7 @@ func (ms *metricsMiddleware) UpdateChannel(key string, channel things.Channel) e
 	return ms.svc.UpdateChannel(key, channel)
 }
 
-func (ms *metricsMiddleware) ViewChannel(key string, id uint64) (things.Channel, error) {
+func (ms *metricsMiddleware) ViewChannel(key, id string) (things.Channel, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "view_channel").Add(1)
 		ms.latency.With("method", "view_channel").Observe(time.Since(begin).Seconds())
@@ -115,7 +115,7 @@ func (ms *metricsMiddleware) ListChannels(key string, offset, limit uint64) ([]t
 	return ms.svc.ListChannels(key, offset, limit)
 }
 
-func (ms *metricsMiddleware) RemoveChannel(key string, id uint64) error {
+func (ms *metricsMiddleware) RemoveChannel(key, id string) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "remove_channel").Add(1)
 		ms.latency.With("method", "remove_channel").Observe(time.Since(begin).Seconds())
@@ -124,7 +124,7 @@ func (ms *metricsMiddleware) RemoveChannel(key string, id uint64) error {
 	return ms.svc.RemoveChannel(key, id)
 }
 
-func (ms *metricsMiddleware) Connect(key string, chanID, thingID uint64) error {
+func (ms *metricsMiddleware) Connect(key, chanID, thingID string) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "connect").Add(1)
 		ms.latency.With("method", "connect").Observe(time.Since(begin).Seconds())
@@ -133,7 +133,7 @@ func (ms *metricsMiddleware) Connect(key string, chanID, thingID uint64) error {
 	return ms.svc.Connect(key, chanID, thingID)
 }
 
-func (ms *metricsMiddleware) Disconnect(key string, chanID, thingID uint64) error {
+func (ms *metricsMiddleware) Disconnect(key, chanID, thingID string) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "disconnect").Add(1)
 		ms.latency.With("method", "disconnect").Observe(time.Since(begin).Seconds())
@@ -142,7 +142,7 @@ func (ms *metricsMiddleware) Disconnect(key string, chanID, thingID uint64) erro
 	return ms.svc.Disconnect(key, chanID, thingID)
 }
 
-func (ms *metricsMiddleware) CanAccess(id uint64, key string) (uint64, error) {
+func (ms *metricsMiddleware) CanAccess(id, key string) (string, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "can_access").Add(1)
 		ms.latency.With("method", "can_access").Observe(time.Since(begin).Seconds())
@@ -151,7 +151,7 @@ func (ms *metricsMiddleware) CanAccess(id uint64, key string) (uint64, error) {
 	return ms.svc.CanAccess(id, key)
 }
 
-func (ms *metricsMiddleware) Identify(key string) (uint64, error) {
+func (ms *metricsMiddleware) Identify(key string) (string, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "identify").Add(1)
 		ms.latency.With("method", "identify").Observe(time.Since(begin).Seconds())

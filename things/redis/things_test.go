@@ -21,15 +21,15 @@ import (
 func TestThingSave(t *testing.T) {
 	thingCache := redis.NewThingCache(redisClient)
 	key := uuid.New().ID()
-	id := uint64(123)
-	id2 := uint64(124)
+	id := "123"
+	id2 := "124"
 
 	err := thingCache.Save(key, id2)
 	require.Nil(t, err, fmt.Sprintf("Save thing to cache: expected nil got %s", err))
 
 	cases := []struct {
 		desc string
-		ID   uint64
+		ID   string
 		key  string
 		err  error
 	}{
@@ -58,12 +58,12 @@ func TestThingID(t *testing.T) {
 	thingCache := redis.NewThingCache(redisClient)
 
 	key := uuid.New().ID()
-	id := uint64(123)
+	id := "123"
 	err := thingCache.Save(key, id)
 	require.Nil(t, err, fmt.Sprintf("Save thing to cache: expected nil got %s", err))
 
 	cases := map[string]struct {
-		ID  uint64
+		ID  string
 		key string
 		err error
 	}{
@@ -73,7 +73,7 @@ func TestThingID(t *testing.T) {
 			err: nil,
 		},
 		"Get ID by non-existing thing-key": {
-			ID:  0,
+			ID:  "",
 			key: wrongValue,
 			err: r.Nil,
 		},
@@ -81,7 +81,7 @@ func TestThingID(t *testing.T) {
 
 	for desc, tc := range cases {
 		cacheID, err := thingCache.ID(tc.key)
-		assert.Equal(t, tc.ID, cacheID, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.ID, cacheID))
+		assert.Equal(t, tc.ID, cacheID, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.ID, cacheID))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
@@ -90,13 +90,13 @@ func TestThingRemove(t *testing.T) {
 	thingCache := redis.NewThingCache(redisClient)
 
 	key := uuid.New().ID()
-	id := uint64(123)
-	id2 := uint64(321)
+	id := "123"
+	id2 := "321"
 	thingCache.Save(key, id)
 
 	cases := []struct {
 		desc string
-		ID   uint64
+		ID   string
 		err  error
 	}{
 		{

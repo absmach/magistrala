@@ -21,7 +21,7 @@ import (
 
 const (
 	keyspace    = "mainflux"
-	chanID      = 1
+	chanID      = "1"
 	msgsNum     = 42
 	valueFields = 6
 )
@@ -30,7 +30,7 @@ var (
 	addr = "localhost"
 	msg  = mainflux.Message{
 		Channel:   chanID,
-		Publisher: 1,
+		Publisher: "1",
 		Protocol:  "mqtt",
 	}
 )
@@ -48,13 +48,13 @@ func TestReadAll(t *testing.T) {
 		count := i % valueFields
 		switch count {
 		case 0:
-			msg.Value = &mainflux.Message_FloatValue{5}
+			msg.Value = &mainflux.Message_FloatValue{FloatValue: 5}
 		case 1:
-			msg.Value = &mainflux.Message_BoolValue{false}
+			msg.Value = &mainflux.Message_BoolValue{BoolValue: false}
 		case 2:
-			msg.Value = &mainflux.Message_StringValue{"value"}
+			msg.Value = &mainflux.Message_StringValue{StringValue: "value"}
 		case 3:
-			msg.Value = &mainflux.Message_DataValue{"base64data"}
+			msg.Value = &mainflux.Message_DataValue{DataValue: "base64data"}
 		case 4:
 			msg.ValueSum = nil
 		case 5:
@@ -73,7 +73,7 @@ func TestReadAll(t *testing.T) {
 	// cases that return subset of messages are only
 	// checking data result set size, but not content.
 	cases := map[string]struct {
-		chanID   uint64
+		chanID   string
 		offset   uint64
 		limit    uint64
 		messages []mainflux.Message
@@ -85,7 +85,7 @@ func TestReadAll(t *testing.T) {
 			messages: messages,
 		},
 		"read message page for non-existent channel": {
-			chanID:   2,
+			chanID:   "2",
 			offset:   0,
 			limit:    msgsNum,
 			messages: []mainflux.Message{},

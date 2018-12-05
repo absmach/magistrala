@@ -59,8 +59,8 @@ func MakeHandler(svc readers.MessageRepository, tc mainflux.ThingsServiceClient,
 }
 
 func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
-	chanID, err := strconv.ParseUint(bone.GetValue(r, "chanID"), 10, 64)
-	if err != nil {
+	chanID := bone.GetValue(r, "chanID")
+	if chanID == "" {
 		return nil, errInvalidRequest
 	}
 
@@ -117,7 +117,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	}
 }
 
-func authorize(r *http.Request, chanID uint64) error {
+func authorize(r *http.Request, chanID string) error {
 	token := r.Header.Get("Authorization")
 	if token == "" {
 		return errUnauthorizedAccess

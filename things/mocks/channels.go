@@ -10,6 +10,7 @@ package mocks
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -33,12 +34,12 @@ func NewChannelRepository(repo things.ThingRepository) things.ChannelRepository 
 	}
 }
 
-func (crm *channelRepositoryMock) Save(channel things.Channel) (uint64, error) {
+func (crm *channelRepositoryMock) Save(channel things.Channel) (string, error) {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 
 	crm.counter++
-	channel.ID = crm.counter
+	channel.ID = strconv.FormatUint(crm.counter, 10)
 	crm.channels[key(channel.Owner, channel.ID)] = channel
 
 	return channel.ID, nil
@@ -58,7 +59,7 @@ func (crm *channelRepositoryMock) Update(channel things.Channel) error {
 	return nil
 }
 
-func (crm *channelRepositoryMock) RetrieveByID(owner string, id uint64) (things.Channel, error) {
+func (crm *channelRepositoryMock) RetrieveByID(owner, id string) (things.Channel, error) {
 	if c, ok := crm.channels[key(owner, id)]; ok {
 		return c, nil
 	}
@@ -80,7 +81,8 @@ func (crm *channelRepositoryMock) RetrieveAll(owner string, offset, limit uint64
 	// itself (see mocks/commons.go).
 	prefix := fmt.Sprintf("%s-", owner)
 	for k, v := range crm.channels {
-		if strings.HasPrefix(k, prefix) && v.ID >= first && v.ID < last {
+		id, _ := strconv.ParseUint(v.ID, 10, 64)
+		if strings.HasPrefix(k, prefix) && id >= first && id < last {
 			channels = append(channels, v)
 		}
 	}
@@ -92,12 +94,12 @@ func (crm *channelRepositoryMock) RetrieveAll(owner string, offset, limit uint64
 	return channels
 }
 
-func (crm *channelRepositoryMock) Remove(owner string, id uint64) error {
+func (crm *channelRepositoryMock) Remove(owner, id string) error {
 	delete(crm.channels, key(owner, id))
 	return nil
 }
 
-func (crm *channelRepositoryMock) Connect(owner string, chanID, thingID uint64) error {
+func (crm *channelRepositoryMock) Connect(owner, chanID, thingID string) error {
 	channel, err := crm.RetrieveByID(owner, chanID)
 	if err != nil {
 		return err
@@ -111,7 +113,7 @@ func (crm *channelRepositoryMock) Connect(owner string, chanID, thingID uint64) 
 	return crm.Update(channel)
 }
 
-func (crm *channelRepositoryMock) Disconnect(owner string, chanID, thingID uint64) error {
+func (crm *channelRepositoryMock) Disconnect(owner, chanID, thingID string) error {
 	channel, err := crm.RetrieveByID(owner, chanID)
 	if err != nil {
 		return err
@@ -134,10 +136,10 @@ func (crm *channelRepositoryMock) Disconnect(owner string, chanID, thingID uint6
 	return things.ErrNotFound
 }
 
-func (crm *channelRepositoryMock) HasThing(chanID uint64, key string) (uint64, error) {
+func (crm *channelRepositoryMock) HasThing(chanID, key string) (string, error) {
 	// This obscure way to examine map keys is enforced by the key structure
 	// itself (see mocks/commons.go).
-	suffix := fmt.Sprintf("-%d", chanID)
+	suffix := fmt.Sprintf("-%s", chanID)
 
 	for k, v := range crm.channels {
 		if strings.HasSuffix(k, suffix) {
@@ -150,22 +152,22 @@ func (crm *channelRepositoryMock) HasThing(chanID uint64, key string) (uint64, e
 		}
 	}
 
-	return 0, things.ErrNotFound
+	return "", things.ErrNotFound
 }
 
 type channelCacheMock struct {
 	mu       sync.Mutex
-	channels map[uint64]uint64
+	channels map[string]string
 }
 
 // NewChannelCache returns mock cache instance.
 func NewChannelCache() things.ChannelCache {
 	return &channelCacheMock{
-		channels: make(map[uint64]uint64),
+		channels: make(map[string]string),
 	}
 }
 
-func (ccm *channelCacheMock) Connect(chanID uint64, thingID uint64) error {
+func (ccm *channelCacheMock) Connect(chanID, thingID string) error {
 	ccm.mu.Lock()
 	defer ccm.mu.Unlock()
 
@@ -173,14 +175,14 @@ func (ccm *channelCacheMock) Connect(chanID uint64, thingID uint64) error {
 	return nil
 }
 
-func (ccm *channelCacheMock) HasThing(chanID uint64, thingID uint64) bool {
+func (ccm *channelCacheMock) HasThing(chanID, thingID string) bool {
 	ccm.mu.Lock()
 	defer ccm.mu.Unlock()
 
 	return ccm.channels[chanID] == thingID
 }
 
-func (ccm *channelCacheMock) Disconnect(chanID uint64, thingID uint64) error {
+func (ccm *channelCacheMock) Disconnect(chanID, thingID string) error {
 	ccm.mu.Lock()
 	defer ccm.mu.Unlock()
 
@@ -188,7 +190,7 @@ func (ccm *channelCacheMock) Disconnect(chanID uint64, thingID uint64) error {
 	return nil
 }
 
-func (ccm *channelCacheMock) Remove(chanID uint64) error {
+func (ccm *channelCacheMock) Remove(chanID string) error {
 	ccm.mu.Lock()
 	defer ccm.mu.Unlock()
 

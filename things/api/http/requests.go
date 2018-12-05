@@ -59,7 +59,7 @@ func (req updateThingReq) validate() error {
 		return things.ErrUnauthorizedAccess
 	}
 
-	if req.Type == "" {
+	if req.id == "" || req.Type == "" {
 		return things.ErrMalformedEntity
 	}
 
@@ -92,6 +92,10 @@ func (req updateChannelReq) validate() error {
 		return things.ErrUnauthorizedAccess
 	}
 
+	if req.id == "" {
+		return things.ErrMalformedEntity
+	}
+
 	return nil
 }
 
@@ -103,6 +107,10 @@ type viewResourceReq struct {
 func (req viewResourceReq) validate() error {
 	if req.key == "" {
 		return things.ErrUnauthorizedAccess
+	}
+
+	if req.id == "" {
+		return things.ErrMalformedEntity
 	}
 
 	return nil
@@ -135,6 +143,10 @@ type connectionReq struct {
 func (req connectionReq) validate() error {
 	if req.key == "" {
 		return things.ErrUnauthorizedAccess
+	}
+
+	if req.chanID == "" || req.thingID == "" {
+		return things.ErrMalformedEntity
 	}
 
 	return nil

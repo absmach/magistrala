@@ -189,7 +189,6 @@ func TestUpdateThing(t *testing.T) {
 	data := toJSON(thing)
 	invalidData := toJSON(things.Thing{Type: "foo"})
 	sth, _ := svc.AddThing(token, thing)
-	sthID := strconv.FormatUint(sth.ID, 10)
 
 	cases := []struct {
 		desc        string
@@ -202,7 +201,7 @@ func TestUpdateThing(t *testing.T) {
 		{
 			desc:        "update existing thing",
 			req:         data,
-			id:          sthID,
+			id:          sth.ID,
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusOK,
@@ -218,7 +217,7 @@ func TestUpdateThing(t *testing.T) {
 		{
 			desc:        "update thing with invalid data",
 			req:         invalidData,
-			id:          sthID,
+			id:          sth.ID,
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusBadRequest,
@@ -229,12 +228,12 @@ func TestUpdateThing(t *testing.T) {
 			id:          "invalid",
 			contentType: contentType,
 			auth:        token,
-			status:      http.StatusBadRequest,
+			status:      http.StatusNotFound,
 		},
 		{
 			desc:        "update thing with invalid user token",
 			req:         data,
-			id:          sthID,
+			id:          sth.ID,
 			contentType: contentType,
 			auth:        wrongValue,
 			status:      http.StatusForbidden,
@@ -242,7 +241,7 @@ func TestUpdateThing(t *testing.T) {
 		{
 			desc:        "update thing with empty user token",
 			req:         data,
-			id:          sthID,
+			id:          sth.ID,
 			contentType: contentType,
 			auth:        "",
 			status:      http.StatusForbidden,
@@ -250,7 +249,7 @@ func TestUpdateThing(t *testing.T) {
 		{
 			desc:        "update thing with invalid data format",
 			req:         "{",
-			id:          sthID,
+			id:          sth.ID,
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusBadRequest,
@@ -258,7 +257,7 @@ func TestUpdateThing(t *testing.T) {
 		{
 			desc:        "update thing with empty JSON request",
 			req:         "{}",
-			id:          sthID,
+			id:          sth.ID,
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusBadRequest,
@@ -266,7 +265,7 @@ func TestUpdateThing(t *testing.T) {
 		{
 			desc:        "update thing with empty request",
 			req:         "",
-			id:          sthID,
+			id:          sth.ID,
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusBadRequest,
@@ -274,7 +273,7 @@ func TestUpdateThing(t *testing.T) {
 		{
 			desc:        "update thing without content type",
 			req:         data,
-			id:          sthID,
+			id:          sth.ID,
 			contentType: "",
 			auth:        token,
 			status:      http.StatusUnsupportedMediaType,
@@ -302,10 +301,9 @@ func TestViewThing(t *testing.T) {
 	defer ts.Close()
 
 	sth, _ := svc.AddThing(token, thing)
-	sthID := strconv.FormatUint(sth.ID, 10)
 
 	thres := thingRes{
-		ID:       sthID,
+		ID:       sth.ID,
 		Type:     sth.Type,
 		Name:     sth.Name,
 		Key:      sth.Key,
@@ -322,7 +320,7 @@ func TestViewThing(t *testing.T) {
 	}{
 		{
 			desc:   "view existing thing",
-			id:     sthID,
+			id:     sth.ID,
 			auth:   token,
 			status: http.StatusOK,
 			res:    data,
@@ -336,14 +334,14 @@ func TestViewThing(t *testing.T) {
 		},
 		{
 			desc:   "view thing by passing invalid token",
-			id:     sthID,
+			id:     sth.ID,
 			auth:   wrongValue,
 			status: http.StatusForbidden,
 			res:    "",
 		},
 		{
 			desc:   "view thing by passing empty token",
-			id:     sthID,
+			id:     sth.ID,
 			auth:   "",
 			status: http.StatusForbidden,
 			res:    "",
@@ -352,7 +350,7 @@ func TestViewThing(t *testing.T) {
 			desc:   "view thing by passing invalid id",
 			id:     "invalid",
 			auth:   token,
-			status: http.StatusBadRequest,
+			status: http.StatusNotFound,
 			res:    "",
 		},
 	}
@@ -383,7 +381,7 @@ func TestListThings(t *testing.T) {
 	for i := 0; i < 101; i++ {
 		sth, _ := svc.AddThing(token, thing)
 		thres := thingRes{
-			ID:       strconv.FormatUint(sth.ID, 10),
+			ID:       sth.ID,
 			Type:     sth.Type,
 			Name:     sth.Name,
 			Key:      sth.Key,
@@ -528,7 +526,6 @@ func TestRemoveThing(t *testing.T) {
 	defer ts.Close()
 
 	sth, _ := svc.AddThing(token, thing)
-	sthID := strconv.FormatUint(sth.ID, 10)
 
 	cases := []struct {
 		desc   string
@@ -538,7 +535,7 @@ func TestRemoveThing(t *testing.T) {
 	}{
 		{
 			desc:   "delete existing thing",
-			id:     sthID,
+			id:     sth.ID,
 			auth:   token,
 			status: http.StatusNoContent,
 		},
@@ -549,20 +546,14 @@ func TestRemoveThing(t *testing.T) {
 			status: http.StatusNoContent,
 		},
 		{
-			desc:   "remove thing with invalid id",
-			id:     "invalid",
-			auth:   token,
-			status: http.StatusBadRequest,
-		},
-		{
 			desc:   "delete thing with invalid token",
-			id:     sthID,
+			id:     sth.ID,
 			auth:   wrongValue,
 			status: http.StatusForbidden,
 		},
 		{
 			desc:   "delete thing with empty token",
-			id:     sthID,
+			id:     sth.ID,
 			auth:   "",
 			status: http.StatusForbidden,
 		},
@@ -679,7 +670,6 @@ func TestUpdateChannel(t *testing.T) {
 
 	updateData := toJSON(map[string]string{"name": "updated_channel"})
 	sch, _ := svc.CreateChannel(token, channel)
-	schID := strconv.FormatUint(sch.ID, 10)
 
 	cases := []struct {
 		desc        string
@@ -692,7 +682,7 @@ func TestUpdateChannel(t *testing.T) {
 		{
 			desc:        "update existing channel",
 			req:         updateData,
-			id:          schID,
+			id:          sch.ID,
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusOK,
@@ -711,12 +701,12 @@ func TestUpdateChannel(t *testing.T) {
 			id:          "invalid",
 			contentType: contentType,
 			auth:        token,
-			status:      http.StatusBadRequest,
+			status:      http.StatusNotFound,
 		},
 		{
 			desc:        "update channel with invalid token",
 			req:         updateData,
-			id:          schID,
+			id:          sch.ID,
 			contentType: contentType,
 			auth:        wrongValue,
 			status:      http.StatusForbidden,
@@ -724,7 +714,7 @@ func TestUpdateChannel(t *testing.T) {
 		{
 			desc:        "update channel with empty token",
 			req:         updateData,
-			id:          schID,
+			id:          sch.ID,
 			contentType: contentType,
 			auth:        "",
 			status:      http.StatusForbidden,
@@ -732,7 +722,7 @@ func TestUpdateChannel(t *testing.T) {
 		{
 			desc:        "update channel with invalid data format",
 			req:         "}",
-			id:          schID,
+			id:          sch.ID,
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusBadRequest,
@@ -740,7 +730,7 @@ func TestUpdateChannel(t *testing.T) {
 		{
 			desc:        "update channel with empty JSON object",
 			req:         "{}",
-			id:          schID,
+			id:          sch.ID,
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusOK,
@@ -748,7 +738,7 @@ func TestUpdateChannel(t *testing.T) {
 		{
 			desc:        "update channel with empty request",
 			req:         "",
-			id:          schID,
+			id:          sch.ID,
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusBadRequest,
@@ -756,7 +746,7 @@ func TestUpdateChannel(t *testing.T) {
 		{
 			desc:        "update channel with missing content type",
 			req:         updateData,
-			id:          schID,
+			id:          sch.ID,
 			contentType: "",
 			auth:        token,
 			status:      http.StatusUnsupportedMediaType,
@@ -784,17 +774,16 @@ func TestViewChannel(t *testing.T) {
 	defer ts.Close()
 
 	sch, _ := svc.CreateChannel(token, channel)
-	schID := strconv.FormatUint(sch.ID, 10)
 
 	sth, _ := svc.AddThing(token, thing)
 	svc.Connect(token, sch.ID, sth.ID)
 
 	chres := channelRes{
-		ID:   strconv.FormatUint(sch.ID, 10),
+		ID:   sch.ID,
 		Name: sch.Name,
 		Things: []thingRes{
 			{
-				ID:       strconv.FormatUint(sth.ID, 10),
+				ID:       sth.ID,
 				Type:     sth.Type,
 				Name:     sth.Name,
 				Key:      sth.Key,
@@ -814,7 +803,7 @@ func TestViewChannel(t *testing.T) {
 	}{
 		{
 			desc:   "view existing channel",
-			id:     schID,
+			id:     sch.ID,
 			auth:   token,
 			status: http.StatusOK,
 			res:    data,
@@ -828,14 +817,14 @@ func TestViewChannel(t *testing.T) {
 		},
 		{
 			desc:   "view channel with invalid token",
-			id:     schID,
+			id:     sch.ID,
 			auth:   wrongValue,
 			status: http.StatusForbidden,
 			res:    "",
 		},
 		{
 			desc:   "view channel with empty token",
-			id:     schID,
+			id:     sch.ID,
 			auth:   "",
 			status: http.StatusForbidden,
 			res:    "",
@@ -844,7 +833,7 @@ func TestViewChannel(t *testing.T) {
 			desc:   "view channel with invalid id",
 			id:     "invalid",
 			auth:   token,
-			status: http.StatusBadRequest,
+			status: http.StatusNotFound,
 			res:    "",
 		},
 	}
@@ -878,12 +867,12 @@ func TestListChannels(t *testing.T) {
 		svc.Connect(token, sch.ID, sth.ID)
 
 		chres := channelRes{
-			ID:       strconv.FormatUint(sch.ID, 10),
+			ID:       sch.ID,
 			Name:     sch.Name,
 			Metadata: sch.Metadata,
 			Things: []thingRes{
 				{
-					ID:       strconv.FormatUint(sth.ID, 10),
+					ID:       sth.ID,
 					Type:     sth.Type,
 					Name:     sth.Name,
 					Key:      sth.Key,
@@ -1031,7 +1020,6 @@ func TestRemoveChannel(t *testing.T) {
 	defer ts.Close()
 
 	sch, _ := svc.CreateChannel(token, channel)
-	schID := strconv.FormatUint(sch.ID, 10)
 
 	cases := []struct {
 		desc   string
@@ -1041,37 +1029,31 @@ func TestRemoveChannel(t *testing.T) {
 	}{
 		{
 			desc:   "remove channel with invalid token",
-			id:     schID,
+			id:     sch.ID,
 			auth:   wrongValue,
 			status: http.StatusForbidden,
 		},
 		{
 			desc:   "remove existing channel",
-			id:     schID,
+			id:     sch.ID,
 			auth:   token,
 			status: http.StatusNoContent,
 		},
 		{
 			desc:   "remove removed channel",
-			id:     schID,
+			id:     sch.ID,
 			auth:   token,
 			status: http.StatusNoContent,
 		},
 		{
-			desc:   "remove channel with invalid id",
-			id:     "invalid",
-			auth:   token,
-			status: http.StatusBadRequest,
-		},
-		{
 			desc:   "remove channel with invalid token",
-			id:     schID,
+			id:     sch.ID,
 			auth:   wrongValue,
 			status: http.StatusForbidden,
 		},
 		{
 			desc:   "remove channel with empty token",
-			id:     schID,
+			id:     sch.ID,
 			auth:   "",
 			status: http.StatusForbidden,
 		},
@@ -1101,11 +1083,8 @@ func TestConnect(t *testing.T) {
 	defer ts.Close()
 
 	ath, _ := svc.AddThing(token, thing)
-	athID := strconv.FormatUint(ath.ID, 10)
 	ach, _ := svc.CreateChannel(token, channel)
-	achID := strconv.FormatUint(ach.ID, 10)
 	bch, _ := svc.CreateChannel(otherToken, channel)
-	bchID := strconv.FormatUint(bch.ID, 10)
 
 	cases := []struct {
 		desc    string
@@ -1116,21 +1095,21 @@ func TestConnect(t *testing.T) {
 	}{
 		{
 			desc:    "connect existing thing to existing channel",
-			chanID:  achID,
-			thingID: athID,
+			chanID:  ach.ID,
+			thingID: ath.ID,
 			auth:    token,
 			status:  http.StatusOK,
 		},
 		{
 			desc:    "connect existing thing to non-existent channel",
 			chanID:  strconv.FormatUint(wrongID, 10),
-			thingID: athID,
+			thingID: ath.ID,
 			auth:    token,
 			status:  http.StatusNotFound,
 		},
 		{
 			desc:    "connect non-existing thing to existing channel",
-			chanID:  achID,
+			chanID:  ach.ID,
 			thingID: strconv.FormatUint(wrongID, 10),
 			auth:    token,
 			status:  http.StatusNotFound,
@@ -1138,35 +1117,35 @@ func TestConnect(t *testing.T) {
 		{
 			desc:    "connect existing thing to channel with invalid id",
 			chanID:  "invalid",
-			thingID: athID,
+			thingID: ath.ID,
 			auth:    token,
-			status:  http.StatusBadRequest,
+			status:  http.StatusNotFound,
 		},
 		{
 			desc:    "connect thing with invalid id to existing channel",
-			chanID:  achID,
+			chanID:  ach.ID,
 			thingID: "invalid",
 			auth:    token,
-			status:  http.StatusBadRequest,
+			status:  http.StatusNotFound,
 		},
 		{
 			desc:    "connect existing thing to existing channel with invalid token",
-			chanID:  achID,
-			thingID: athID,
+			chanID:  ach.ID,
+			thingID: ath.ID,
 			auth:    wrongValue,
 			status:  http.StatusForbidden,
 		},
 		{
 			desc:    "connect existing thing to existing channel with empty token",
-			chanID:  achID,
-			thingID: athID,
+			chanID:  ach.ID,
+			thingID: ath.ID,
 			auth:    "",
 			status:  http.StatusForbidden,
 		},
 		{
 			desc:    "connect thing from owner to channel of other user",
-			chanID:  bchID,
-			thingID: athID,
+			chanID:  bch.ID,
+			thingID: ath.ID,
 			auth:    token,
 			status:  http.StatusNotFound,
 		},
@@ -1196,14 +1175,9 @@ func TestDisconnnect(t *testing.T) {
 	defer ts.Close()
 
 	ath, _ := svc.AddThing(token, thing)
-	athID := strconv.FormatUint(ath.ID, 10)
-
 	ach, _ := svc.CreateChannel(token, channel)
-	achID := strconv.FormatUint(ach.ID, 10)
-
 	svc.Connect(token, ach.ID, ath.ID)
 	bch, _ := svc.CreateChannel(otherToken, channel)
-	bchID := strconv.FormatUint(bch.ID, 10)
 
 	cases := []struct {
 		desc    string
@@ -1214,21 +1188,21 @@ func TestDisconnnect(t *testing.T) {
 	}{
 		{
 			desc:    "disconnect connected thing from channel",
-			chanID:  achID,
-			thingID: athID,
+			chanID:  ach.ID,
+			thingID: ath.ID,
 			auth:    token,
 			status:  http.StatusNoContent,
 		},
 		{
 			desc:    "disconnect non-connected thing from channel",
-			chanID:  achID,
-			thingID: athID,
+			chanID:  ach.ID,
+			thingID: ath.ID,
 			auth:    token,
 			status:  http.StatusNotFound,
 		},
 		{
 			desc:    "disconnect non-existent thing from channel",
-			chanID:  achID,
+			chanID:  ach.ID,
 			thingID: strconv.FormatUint(wrongID, 10),
 			auth:    token,
 			status:  http.StatusNotFound,
@@ -1236,44 +1210,44 @@ func TestDisconnnect(t *testing.T) {
 		{
 			desc:    "disconnect thing from non-existent channel",
 			chanID:  strconv.FormatUint(wrongID, 10),
-			thingID: athID,
+			thingID: ath.ID,
 			auth:    token,
 			status:  http.StatusNotFound,
 		},
 		{
 			desc:    "disconnect thing from channel with invalid token",
-			chanID:  achID,
-			thingID: athID,
+			chanID:  ach.ID,
+			thingID: ath.ID,
 			auth:    wrongValue,
 			status:  http.StatusForbidden,
 		},
 		{
 			desc:    "disconnect thing from channel with empty token",
-			chanID:  achID,
-			thingID: athID,
+			chanID:  ach.ID,
+			thingID: ath.ID,
 			auth:    "",
 			status:  http.StatusForbidden,
 		},
 		{
 			desc:    "disconnect owner's thing from someone elses channel",
-			chanID:  bchID,
-			thingID: athID,
+			chanID:  bch.ID,
+			thingID: ath.ID,
 			auth:    token,
 			status:  http.StatusNotFound,
 		},
 		{
 			desc:    "disconnect thing with invalid id from channel",
-			chanID:  achID,
+			chanID:  ach.ID,
 			thingID: "invalid",
 			auth:    token,
-			status:  http.StatusBadRequest,
+			status:  http.StatusNotFound,
 		},
 		{
 			desc:    "disconnect thing from channel with invalid id",
 			chanID:  "invalid",
-			thingID: athID,
+			thingID: ath.ID,
 			auth:    token,
-			status:  http.StatusBadRequest,
+			status:  http.StatusNotFound,
 		},
 	}
 

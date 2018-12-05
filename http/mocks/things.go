@@ -23,11 +23,11 @@ var _ mainflux.ThingsServiceClient = (*thingsClient)(nil)
 const ServiceErrToken = "unavailable"
 
 type thingsClient struct {
-	things map[string]uint64
+	things map[string]string
 }
 
 // NewThingsClient returns mock implementation of things service client.
-func NewThingsClient(data map[string]uint64) mainflux.ThingsServiceClient {
+func NewThingsClient(data map[string]string) mainflux.ThingsServiceClient {
 	return &thingsClient{data}
 }
 

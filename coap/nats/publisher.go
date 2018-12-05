@@ -36,12 +36,12 @@ func (pubsub *natsPublisher) Publish(msg mainflux.RawMessage) error {
 		return err
 	}
 
-	subject := fmt.Sprintf("%s.%d", prefix, msg.Channel)
+	subject := fmt.Sprintf("%s.%s", prefix, msg.Channel)
 	return pubsub.nc.Publish(subject, data)
 }
 
-func (pubsub *natsPublisher) Subscribe(chanID uint64, obsID string, observer *coap.Observer) error {
-	sub, err := pubsub.nc.Subscribe(fmt.Sprintf("%s.%d", prefix, chanID), func(msg *broker.Msg) {
+func (pubsub *natsPublisher) Subscribe(chanID, obsID string, observer *coap.Observer) error {
+	sub, err := pubsub.nc.Subscribe(fmt.Sprintf("%s.%s", prefix, chanID), func(msg *broker.Msg) {
 		if msg == nil {
 			return
 		}

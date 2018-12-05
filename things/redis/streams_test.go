@@ -129,7 +129,7 @@ func TestUpdateThing(t *testing.T) {
 			key:   token,
 			err:   nil,
 			event: map[string]interface{}{
-				"id":        strconv.FormatUint(sth.ID, 10),
+				"id":        sth.ID,
 				"name":      "a",
 				"type":      "app",
 				"metadata":  "metadata1",
@@ -137,8 +137,12 @@ func TestUpdateThing(t *testing.T) {
 			},
 		},
 		{
-			desc:  "update invalid thing",
-			thing: things.Thing{ID: math.MaxUint64, Type: "a", Name: "a"},
+			desc: "update invalid thing",
+			thing: things.Thing{
+				ID:   strconv.FormatUint(math.MaxUint64, 10),
+				Type: "a",
+				Name: "a",
+			},
 			key:   token,
 			err:   things.ErrMalformedEntity,
 			event: nil,
@@ -178,7 +182,7 @@ func TestRemoveThing(t *testing.T) {
 
 	cases := []struct {
 		desc  string
-		id    uint64
+		id    string
 		key   string
 		err   error
 		event map[string]interface{}
@@ -189,13 +193,13 @@ func TestRemoveThing(t *testing.T) {
 			key:  token,
 			err:  nil,
 			event: map[string]interface{}{
-				"id":        strconv.FormatUint(sth.ID, 10),
+				"id":        sth.ID,
 				"operation": thingRemove,
 			},
 		},
 		{
 			desc:  "delete thing with invalid credentials",
-			id:    math.MaxUint64,
+			id:    strconv.FormatUint(math.MaxUint64, 10),
 			key:   "",
 			err:   things.ErrUnauthorizedAccess,
 			event: nil,
@@ -302,18 +306,21 @@ func TestUpdateChannel(t *testing.T) {
 			key:     token,
 			err:     nil,
 			event: map[string]interface{}{
-				"id":        strconv.FormatUint(sch.ID, 10),
+				"id":        sch.ID,
 				"name":      "b",
 				"metadata":  "metadata",
 				"operation": channelUpdate,
 			},
 		},
 		{
-			desc:    "create non-existent channel",
-			channel: things.Channel{ID: math.MaxUint64, Name: "c"},
-			key:     token,
-			err:     things.ErrNotFound,
-			event:   nil,
+			desc: "create non-existent channel",
+			channel: things.Channel{
+				ID:   strconv.FormatUint(math.MaxUint64, 10),
+				Name: "c",
+			},
+			key:   token,
+			err:   things.ErrNotFound,
+			event: nil,
 		},
 	}
 
@@ -350,7 +357,7 @@ func TestRemoveChannel(t *testing.T) {
 
 	cases := []struct {
 		desc  string
-		id    uint64
+		id    string
 		key   string
 		err   error
 		event map[string]interface{}
@@ -361,13 +368,13 @@ func TestRemoveChannel(t *testing.T) {
 			key:  token,
 			err:  nil,
 			event: map[string]interface{}{
-				"id":        strconv.FormatUint(sch.ID, 10),
+				"id":        sch.ID,
 				"operation": channelRemove,
 			},
 		},
 		{
 			desc:  "create non-existent channel",
-			id:    math.MaxUint64,
+			id:    strconv.FormatUint(math.MaxUint64, 10),
 			key:   "",
 			err:   things.ErrUnauthorizedAccess,
 			event: nil,
@@ -409,8 +416,8 @@ func TestConnectEvent(t *testing.T) {
 
 	cases := []struct {
 		desc    string
-		thingID uint64
-		chanID  uint64
+		thingID string
+		chanID  string
 		key     string
 		err     error
 		event   map[string]interface{}
@@ -422,14 +429,14 @@ func TestConnectEvent(t *testing.T) {
 			key:     token,
 			err:     nil,
 			event: map[string]interface{}{
-				"chan_id":   strconv.FormatUint(sch.ID, 10),
-				"thing_id":  strconv.FormatUint(sth.ID, 10),
+				"chan_id":   sch.ID,
+				"thing_id":  sth.ID,
 				"operation": thingConnect,
 			},
 		},
 		{
 			desc:    "connect non-existent thing to channel",
-			thingID: math.MaxUint64,
+			thingID: strconv.FormatUint(math.MaxUint64, 10),
 			chanID:  sch.ID,
 			key:     token,
 			err:     things.ErrNotFound,
@@ -474,8 +481,8 @@ func TestDisconnectEvent(t *testing.T) {
 
 	cases := []struct {
 		desc    string
-		thingID uint64
-		chanID  uint64
+		thingID string
+		chanID  string
 		key     string
 		err     error
 		event   map[string]interface{}
@@ -487,14 +494,14 @@ func TestDisconnectEvent(t *testing.T) {
 			key:     token,
 			err:     nil,
 			event: map[string]interface{}{
-				"chan_id":   strconv.FormatUint(sch.ID, 10),
-				"thing_id":  strconv.FormatUint(sth.ID, 10),
+				"chan_id":   sch.ID,
+				"thing_id":  sth.ID,
 				"operation": thingDisconnect,
 			},
 		},
 		{
 			desc:    "disconnect non-existent thing from channel",
-			thingID: math.MaxUint64,
+			thingID: strconv.FormatUint(math.MaxUint64, 10),
 			chanID:  sch.ID,
 			key:     token,
 			err:     things.ErrNotFound,

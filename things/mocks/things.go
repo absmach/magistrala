@@ -10,6 +10,7 @@ package mocks
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -31,12 +32,12 @@ func NewThingRepository() things.ThingRepository {
 	}
 }
 
-func (trm *thingRepositoryMock) Save(thing things.Thing) (uint64, error) {
+func (trm *thingRepositoryMock) Save(thing things.Thing) (string, error) {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
 	trm.counter++
-	thing.ID = trm.counter
+	thing.ID = strconv.FormatUint(trm.counter, 10)
 	trm.things[key(thing.Owner, thing.ID)] = thing
 
 	return thing.ID, nil
@@ -57,7 +58,7 @@ func (trm *thingRepositoryMock) Update(thing things.Thing) error {
 	return nil
 }
 
-func (trm *thingRepositoryMock) RetrieveByID(owner string, id uint64) (things.Thing, error) {
+func (trm *thingRepositoryMock) RetrieveByID(owner, id string) (things.Thing, error) {
 	if c, ok := trm.things[key(owner, id)]; ok {
 		return c, nil
 	}
@@ -79,7 +80,8 @@ func (trm *thingRepositoryMock) RetrieveAll(owner string, offset, limit uint64) 
 	// itself (see mocks/commons.go).
 	prefix := fmt.Sprintf("%s-", owner)
 	for k, v := range trm.things {
-		if strings.HasPrefix(k, prefix) && v.ID >= first && v.ID < last {
+		id, _ := strconv.ParseUint(v.ID, 10, 64)
+		if strings.HasPrefix(k, prefix) && id >= first && id < last {
 			things = append(things, v)
 		}
 	}
@@ -91,33 +93,34 @@ func (trm *thingRepositoryMock) RetrieveAll(owner string, offset, limit uint64) 
 	return things
 }
 
-func (trm *thingRepositoryMock) Remove(owner string, id uint64) error {
+func (trm *thingRepositoryMock) Remove(owner, id string) error {
 	delete(trm.things, key(owner, id))
 	return nil
 }
 
-func (trm *thingRepositoryMock) RetrieveByKey(key string) (uint64, error) {
+func (trm *thingRepositoryMock) RetrieveByKey(key string) (string, error) {
 	for _, thing := range trm.things {
 		if thing.Key == key {
 			return thing.ID, nil
 		}
 	}
-	return 0, things.ErrNotFound
+
+	return "", things.ErrNotFound
 }
 
 type thingCacheMock struct {
 	mu     sync.Mutex
-	things map[string]uint64
+	things map[string]string
 }
 
 // NewThingCache returns mock cache instance.
 func NewThingCache() things.ThingCache {
 	return &thingCacheMock{
-		things: make(map[string]uint64),
+		things: make(map[string]string),
 	}
 }
 
-func (tcm *thingCacheMock) Save(key string, id uint64) error {
+func (tcm *thingCacheMock) Save(key, id string) error {
 	tcm.mu.Lock()
 	defer tcm.mu.Unlock()
 
@@ -125,19 +128,19 @@ func (tcm *thingCacheMock) Save(key string, id uint64) error {
 	return nil
 }
 
-func (tcm *thingCacheMock) ID(key string) (uint64, error) {
+func (tcm *thingCacheMock) ID(key string) (string, error) {
 	tcm.mu.Lock()
 	defer tcm.mu.Unlock()
 
 	id, ok := tcm.things[key]
 	if !ok {
-		return 0, things.ErrNotFound
+		return "", things.ErrNotFound
 	}
 
 	return id, nil
 }
 
-func (tcm *thingCacheMock) Remove(id uint64) error {
+func (tcm *thingCacheMock) Remove(id string) error {
 	tcm.mu.Lock()
 	defer tcm.mu.Unlock()
 

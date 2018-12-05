@@ -23,8 +23,8 @@ const keyspace = "mainflux"
 var (
 	addr = "localhost"
 	msg  = mainflux.Message{
-		Channel:   1,
-		Publisher: 1,
+		Channel:   "1",
+		Publisher: "1",
 		Protocol:  "mqtt",
 	}
 	msgsNum     = 42
@@ -42,13 +42,13 @@ func TestSave(t *testing.T) {
 		count := i % valueFields
 		switch count {
 		case 0:
-			msg.Value = &mainflux.Message_FloatValue{5}
+			msg.Value = &mainflux.Message_FloatValue{FloatValue: 5}
 		case 1:
-			msg.Value = &mainflux.Message_BoolValue{false}
+			msg.Value = &mainflux.Message_BoolValue{BoolValue: false}
 		case 2:
-			msg.Value = &mainflux.Message_StringValue{"value"}
+			msg.Value = &mainflux.Message_StringValue{StringValue: "value"}
 		case 3:
-			msg.Value = &mainflux.Message_DataValue{"base64data"}
+			msg.Value = &mainflux.Message_DataValue{DataValue: "base64data"}
 		case 4:
 			msg.ValueSum = nil
 		case 5:

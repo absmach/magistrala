@@ -11,11 +11,11 @@ import "github.com/mainflux/mainflux/things"
 
 type accessReq struct {
 	thingKey string
-	chanID   uint64
+	chanID   string
 }
 
 func (req accessReq) validate() error {
-	if req.chanID == 0 || req.thingKey == "" {
+	if req.chanID == "" || req.thingKey == "" {
 		return things.ErrMalformedEntity
 	}
 	return nil

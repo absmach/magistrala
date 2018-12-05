@@ -40,7 +40,7 @@ type Service interface {
 
 	// ViewThing retrieves data about the thing identified with the provided
 	// ID, that belongs to the user identified by the provided key.
-	ViewThing(string, uint64) (Thing, error)
+	ViewThing(string, string) (Thing, error)
 
 	// ListThings retrieves data about subset of things that belongs to the
 	// user identified by the provided key.
@@ -48,7 +48,7 @@ type Service interface {
 
 	// RemoveThing removes the thing identified with the provided ID, that
 	// belongs to the user identified by the provided key.
-	RemoveThing(string, uint64) error
+	RemoveThing(string, string) error
 
 	// CreateChannel adds new channel to the user identified by the provided key.
 	CreateChannel(string, Channel) (Channel, error)
@@ -59,7 +59,7 @@ type Service interface {
 
 	// ViewChannel retrieves data about the channel identified by the provided
 	// ID, that belongs to the user identified by the provided key.
-	ViewChannel(string, uint64) (Channel, error)
+	ViewChannel(string, string) (Channel, error)
 
 	// ListChannels retrieves data about subset of channels that belongs to the
 	// user identified by the provided key.
@@ -67,21 +67,21 @@ type Service interface {
 
 	// RemoveChannel removes the thing identified by the provided ID, that
 	// belongs to the user identified by the provided key.
-	RemoveChannel(string, uint64) error
+	RemoveChannel(string, string) error
 
 	// Connect adds thing to the channel's list of connected things.
-	Connect(string, uint64, uint64) error
+	Connect(string, string, string) error
 
 	// Disconnect removes thing from the channel's list of connected
 	// things.
-	Disconnect(string, uint64, uint64) error
+	Disconnect(string, string, string) error
 
 	// CanAccess determines whether the channel can be accessed using the
 	// provided key and returns thing's id if access is allowed.
-	CanAccess(uint64, string) (uint64, error)
+	CanAccess(string, string) (string, error)
 
 	// Identify returns thing ID for given thing key.
-	Identify(string) (uint64, error)
+	Identify(string) (string, error)
 }
 
 var _ Service = (*thingsService)(nil)
@@ -120,6 +120,7 @@ func (ts *thingsService) AddThing(key string, thing Thing) (Thing, error) {
 		return Thing{}, ErrUnauthorizedAccess
 	}
 
+	thing.ID = ts.idp.ID()
 	thing.Owner = res.GetValue()
 	thing.Key = ts.idp.ID()
 
@@ -150,7 +151,7 @@ func (ts *thingsService) UpdateThing(key string, thing Thing) error {
 	return ts.things.Update(thing)
 }
 
-func (ts *thingsService) ViewThing(key string, id uint64) (Thing, error) {
+func (ts *thingsService) ViewThing(key, id string) (Thing, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
@@ -174,7 +175,7 @@ func (ts *thingsService) ListThings(key string, offset, limit uint64) ([]Thing, 
 	return ts.things.RetrieveAll(res.GetValue(), offset, limit), nil
 }
 
-func (ts *thingsService) RemoveThing(key string, id uint64) error {
+func (ts *thingsService) RemoveThing(key string, id string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
@@ -196,6 +197,7 @@ func (ts *thingsService) CreateChannel(key string, channel Channel) (Channel, er
 		return Channel{}, ErrUnauthorizedAccess
 	}
 
+	channel.ID = ts.idp.ID()
 	channel.Owner = res.GetValue()
 
 	id, err := ts.channels.Save(channel)
@@ -220,7 +222,7 @@ func (ts *thingsService) UpdateChannel(key string, channel Channel) error {
 	return ts.channels.Update(channel)
 }
 
-func (ts *thingsService) ViewChannel(key string, id uint64) (Channel, error) {
+func (ts *thingsService) ViewChannel(key, id string) (Channel, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
@@ -244,7 +246,7 @@ func (ts *thingsService) ListChannels(key string, offset, limit uint64) ([]Chann
 	return ts.channels.RetrieveAll(res.GetValue(), offset, limit), nil
 }
 
-func (ts *thingsService) RemoveChannel(key string, id uint64) error {
+func (ts *thingsService) RemoveChannel(key, id string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
@@ -257,7 +259,7 @@ func (ts *thingsService) RemoveChannel(key string, id uint64) error {
 	return ts.channels.Remove(res.GetValue(), id)
 }
 
-func (ts *thingsService) Connect(key string, chanID, thingID uint64) error {
+func (ts *thingsService) Connect(key, chanID, thingID string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
@@ -269,7 +271,7 @@ func (ts *thingsService) Connect(key string, chanID, thingID uint64) error {
 	return ts.channels.Connect(res.GetValue(), chanID, thingID)
 }
 
-func (ts *thingsService) Disconnect(key string, chanID, thingID uint64) error {
+func (ts *thingsService) Disconnect(key, chanID, thingID string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
@@ -282,7 +284,7 @@ func (ts *thingsService) Disconnect(key string, chanID, thingID uint64) error {
 	return ts.channels.Disconnect(res.GetValue(), chanID, thingID)
 }
 
-func (ts *thingsService) CanAccess(chanID uint64, key string) (uint64, error) {
+func (ts *thingsService) CanAccess(chanID, key string) (string, error) {
 	thingID, err := ts.hasThing(chanID, key)
 	if err == nil {
 		return thingID, nil
@@ -290,7 +292,7 @@ func (ts *thingsService) CanAccess(chanID uint64, key string) (uint64, error) {
 
 	thingID, err = ts.channels.HasThing(chanID, key)
 	if err != nil {
-		return 0, ErrUnauthorizedAccess
+		return "", ErrUnauthorizedAccess
 	}
 
 	ts.thingCache.Save(key, thingID)
@@ -298,7 +300,7 @@ func (ts *thingsService) CanAccess(chanID uint64, key string) (uint64, error) {
 	return thingID, nil
 }
 
-func (ts *thingsService) Identify(key string) (uint64, error) {
+func (ts *thingsService) Identify(key string) (string, error) {
 	id, err := ts.thingCache.ID(key)
 	if err == nil {
 		return id, nil
@@ -306,21 +308,21 @@ func (ts *thingsService) Identify(key string) (uint64, error) {
 
 	id, err = ts.things.RetrieveByKey(key)
 	if err != nil {
-		return 0, ErrUnauthorizedAccess
+		return "", ErrUnauthorizedAccess
 	}
 
 	ts.thingCache.Save(key, id)
 	return id, nil
 }
 
-func (ts *thingsService) hasThing(chanID uint64, key string) (uint64, error) {
+func (ts *thingsService) hasThing(chanID, key string) (string, error) {
 	thingID, err := ts.thingCache.ID(key)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
 	if connected := ts.channelCache.HasThing(chanID, thingID); !connected {
-		return 0, ErrUnauthorizedAccess
+		return "", ErrUnauthorizedAccess
 	}
 
 	return thingID, nil

@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"testing"
 
 	"github.com/mainflux/mainflux"
@@ -22,12 +21,12 @@ import (
 )
 
 const (
-	svcName              = "test-service"
-	token                = "1"
-	invalid              = "invalid"
-	numOfMessages        = 42
-	chanID        uint64 = 1
-	valueFields          = 6
+	svcName       = "test-service"
+	token         = "1"
+	invalid       = "invalid"
+	numOfMessages = 42
+	chanID        = "1"
+	valueFields   = 6
 )
 
 func newService() readers.MessageRepository {
@@ -35,20 +34,20 @@ func newService() readers.MessageRepository {
 	for i := 0; i < numOfMessages; i++ {
 		msg := mainflux.Message{
 			Channel:   chanID,
-			Publisher: 1,
+			Publisher: "1",
 			Protocol:  "mqtt",
 		}
 		// Mix possible values as well as value sum.
 		count := i % valueFields
 		switch count {
 		case 0:
-			msg.Value = &mainflux.Message_FloatValue{5}
+			msg.Value = &mainflux.Message_FloatValue{FloatValue: 5}
 		case 1:
-			msg.Value = &mainflux.Message_BoolValue{false}
+			msg.Value = &mainflux.Message_BoolValue{BoolValue: false}
 		case 2:
-			msg.Value = &mainflux.Message_StringValue{"value"}
+			msg.Value = &mainflux.Message_StringValue{StringValue: "value"}
 		case 3:
-			msg.Value = &mainflux.Message_DataValue{"base64data"}
+			msg.Value = &mainflux.Message_DataValue{DataValue: "base64data"}
 		case 4:
 			msg.ValueSum = nil
 		case 5:
@@ -57,7 +56,7 @@ func newService() readers.MessageRepository {
 		messages = append(messages, msg)
 	}
 
-	return mocks.NewMessageRepository(map[uint64][]mainflux.Message{
+	return mocks.NewMessageRepository(map[string][]mainflux.Message{
 		chanID: messages,
 	})
 }
@@ -92,75 +91,73 @@ func TestReadAll(t *testing.T) {
 	ts := newServer(svc, tc)
 	defer ts.Close()
 
-	id := strconv.FormatUint(chanID, 10)
-
 	cases := map[string]struct {
 		url    string
 		token  string
 		status int
 	}{
 		"read page with valid offset and limit": {
-			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=10", ts.URL, id),
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=10", ts.URL, chanID),
 			token:  token,
 			status: http.StatusOK,
 		},
 		"read page with negative offset": {
-			url:    fmt.Sprintf("%s/channels/%s/messages?offset=-1&limit=10", ts.URL, id),
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=-1&limit=10", ts.URL, chanID),
 			token:  token,
 			status: http.StatusBadRequest,
 		},
 		"read page with negative limit": {
-			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=-10", ts.URL, id),
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=-10", ts.URL, chanID),
 			token:  token,
 			status: http.StatusBadRequest,
 		},
 		"read page with zero limit": {
-			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=0", ts.URL, id),
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=0", ts.URL, chanID),
 			token:  token,
 			status: http.StatusBadRequest,
 		},
 		"read page with non-integer offset": {
-			url:    fmt.Sprintf("%s/channels/%s/messages?offset=abc&limit=10", ts.URL, id),
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=abc&limit=10", ts.URL, chanID),
 			token:  token,
 			status: http.StatusBadRequest,
 		},
 		"read page with non-integer limit": {
-			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=abc", ts.URL, id),
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=abc", ts.URL, chanID),
 			token:  token,
 			status: http.StatusBadRequest,
 		},
 		"read page with invalid channel id": {
-			url:    fmt.Sprintf("%s/channels/abc/messages?offset=0&limit=10", ts.URL),
+			url:    fmt.Sprintf("%s/channels//messages?offset=0&limit=10", ts.URL),
 			token:  token,
 			status: http.StatusBadRequest,
 		},
 		"read page with invalid token": {
-			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=10", ts.URL, id),
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=10", ts.URL, chanID),
 			token:  invalid,
 			status: http.StatusForbidden,
 		},
 		"read page with multiple offset": {
-			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&offset=1&limit=10", ts.URL, id),
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&offset=1&limit=10", ts.URL, chanID),
 			token:  token,
 			status: http.StatusBadRequest,
 		},
 		"read page with multiple limit": {
-			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=20&limit=10", ts.URL, id),
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=20&limit=10", ts.URL, chanID),
 			token:  token,
 			status: http.StatusBadRequest,
 		},
 		"read page with empty token": {
-			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=10", ts.URL, id),
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=10", ts.URL, chanID),
 			token:  "",
 			status: http.StatusForbidden,
 		},
 		"read page with default offset": {
-			url:    fmt.Sprintf("%s/channels/%s/messages?limit=10", ts.URL, id),
+			url:    fmt.Sprintf("%s/channels/%s/messages?limit=10", ts.URL, chanID),
 			token:  token,
 			status: http.StatusOK,
 		},
 		"read page with default limit": {
-			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0", ts.URL, id),
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0", ts.URL, chanID),
 			token:  token,
 			status: http.StatusOK,
 		},

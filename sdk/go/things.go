@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 const thingsEndpoint = "things"
@@ -47,7 +48,8 @@ func (sdk mfSDK) CreateThing(thing Thing, token string) (string, error) {
 		}
 	}
 
-	return resp.Header.Get("Location"), nil
+	id := strings.TrimPrefix(resp.Header.Get("Location"), fmt.Sprintf("/%s/", thingsEndpoint))
+	return id, nil
 }
 
 func (sdk mfSDK) Things(token string, offset, limit uint64) ([]Thing, error) {

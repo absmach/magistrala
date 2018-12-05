@@ -42,7 +42,7 @@ func TestIdentityReqValidation(t *testing.T) {
 func TestAddThingReqValidation(t *testing.T) {
 	key := uuid.NewV4().String()
 	valid := things.Thing{Type: "app"}
-	invalid := things.Thing{ID: 0, Type: ""}
+	invalid := things.Thing{ID: "0", Type: ""}
 
 	cases := map[string]struct {
 		thing things.Thing
@@ -80,8 +80,8 @@ func TestAddThingReqValidation(t *testing.T) {
 
 func TestUpdateThingReqValidation(t *testing.T) {
 	key := uuid.NewV4().String()
-	valid := things.Thing{ID: 1, Type: "app"}
-	invalid := things.Thing{ID: 0, Type: ""}
+	valid := things.Thing{ID: "1", Type: "app"}
+	invalid := things.Thing{ID: "0", Type: ""}
 
 	cases := map[string]struct {
 		thing things.Thing
@@ -91,19 +91,25 @@ func TestUpdateThingReqValidation(t *testing.T) {
 	}{
 		"valid thing update request": {
 			thing: valid,
-			id:    strconv.FormatUint(valid.ID, 10),
+			id:    valid.ID,
 			key:   key,
 			err:   nil,
 		},
 		"missing token": {
 			thing: valid,
-			id:    strconv.FormatUint(valid.ID, 10),
+			id:    valid.ID,
 			key:   "",
 			err:   things.ErrUnauthorizedAccess,
 		},
 		"empty thing type": {
 			thing: invalid,
-			id:    strconv.FormatUint(valid.ID, 10),
+			id:    valid.ID,
+			key:   key,
+			err:   things.ErrMalformedEntity,
+		},
+		"empty thing id": {
+			thing: valid,
+			id:    "",
 			key:   key,
 			err:   things.ErrMalformedEntity,
 		},
@@ -157,7 +163,7 @@ func TestCreateChannelReqValidation(t *testing.T) {
 
 func TestUpdateChannelReqValidation(t *testing.T) {
 	key := uuid.NewV4().String()
-	channel := things.Channel{ID: 1}
+	channel := things.Channel{ID: "1"}
 
 	cases := map[string]struct {
 		channel things.Channel
@@ -167,15 +173,21 @@ func TestUpdateChannelReqValidation(t *testing.T) {
 	}{
 		"valid channel update request": {
 			channel: channel,
-			id:      strconv.FormatUint(channel.ID, 10),
+			id:      channel.ID,
 			key:     key,
 			err:     nil,
 		},
 		"missing token": {
 			channel: channel,
-			id:      strconv.FormatUint(channel.ID, 10),
+			id:      channel.ID,
 			key:     "",
 			err:     things.ErrUnauthorizedAccess,
+		},
+		"empty channel id": {
+			channel: channel,
+			id:      "",
+			key:     key,
+			err:     things.ErrMalformedEntity,
 		},
 	}
 
@@ -209,6 +221,11 @@ func TestViewResourceReqValidation(t *testing.T) {
 			id:  strconv.FormatUint(id, 10),
 			key: "",
 			err: things.ErrUnauthorizedAccess,
+		},
+		"empty resource id": {
+			id:  "",
+			key: key,
+			err: things.ErrMalformedEntity,
 		},
 	}
 
@@ -285,6 +302,18 @@ func TestConnectionReqValidation(t *testing.T) {
 			chanID:  "1",
 			thingID: "1",
 			err:     things.ErrUnauthorizedAccess,
+		},
+		"empty channel id": {
+			key:     "valid-key",
+			chanID:  "",
+			thingID: "1",
+			err:     things.ErrMalformedEntity,
+		},
+		"empty thing id": {
+			key:     "valid-key",
+			chanID:  "1",
+			thingID: "",
+			err:     things.ErrMalformedEntity,
 		},
 	}
 

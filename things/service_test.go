@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	wrongID    = 0
+	wrongID    = ""
 	wrongValue = "wrong-value"
 	email      = "user@example.com"
 	token      = "token"
@@ -128,7 +128,7 @@ func TestViewThing(t *testing.T) {
 	saved, _ := svc.AddThing(token, thing)
 
 	cases := map[string]struct {
-		id  uint64
+		id  string
 		key string
 		err error
 	}{
@@ -228,7 +228,7 @@ func TestRemoveThing(t *testing.T) {
 
 	cases := []struct {
 		desc string
-		id   uint64
+		id   string
 		key  string
 		err  error
 	}{
@@ -335,7 +335,7 @@ func TestViewChannel(t *testing.T) {
 	saved, _ := svc.CreateChannel(token, channel)
 
 	cases := map[string]struct {
-		id  uint64
+		id  string
 		key string
 		err error
 	}{
@@ -434,7 +434,7 @@ func TestRemoveChannel(t *testing.T) {
 
 	cases := []struct {
 		desc string
-		id   uint64
+		id   string
 		key  string
 		err  error
 	}{
@@ -479,8 +479,8 @@ func TestConnect(t *testing.T) {
 	cases := []struct {
 		desc    string
 		key     string
-		chanID  uint64
-		thingID uint64
+		chanID  string
+		thingID string
 		err     error
 	}{
 		{
@@ -529,8 +529,8 @@ func TestDisconnect(t *testing.T) {
 	cases := []struct {
 		desc    string
 		key     string
-		chanID  uint64
-		thingID uint64
+		chanID  string
+		thingID string
 		err     error
 	}{
 		{
@@ -586,7 +586,7 @@ func TestCanAccess(t *testing.T) {
 
 	cases := map[string]struct {
 		key     string
-		channel uint64
+		channel string
 		err     error
 	}{
 		"allowed access": {
@@ -619,7 +619,7 @@ func TestIdentify(t *testing.T) {
 
 	cases := map[string]struct {
 		key string
-		id  uint64
+		id  string
 		err error
 	}{
 		"identify existing thing": {
@@ -636,7 +636,7 @@ func TestIdentify(t *testing.T) {
 
 	for desc, tc := range cases {
 		id, err := svc.Identify(tc.key)
-		assert.Equal(t, tc.id, id, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.id, id))
+		assert.Equal(t, tc.id, id, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.id, id))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }

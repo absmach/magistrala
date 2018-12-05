@@ -49,7 +49,7 @@ type Broker interface {
 
 	// Subscribes to channel with specified id and adds subscription to
 	// service map of subscriptions under given ID.
-	Subscribe(uint64, string, *Observer) error
+	Subscribe(string, string, *Observer) error
 }
 
 // Service specifies coap service API.
@@ -135,7 +135,7 @@ func (svc *adapterService) Publish(msg mainflux.RawMessage) error {
 	return nil
 }
 
-func (svc *adapterService) Subscribe(chanID uint64, obsID string, o *Observer) error {
+func (svc *adapterService) Subscribe(chanID, obsID string, o *Observer) error {
 	if err := svc.pubsub.Subscribe(chanID, obsID, o); err != nil {
 		return ErrFailedSubscription
 	}

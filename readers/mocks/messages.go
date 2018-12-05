@@ -18,18 +18,18 @@ var _ readers.MessageRepository = (*messageRepositoryMock)(nil)
 
 type messageRepositoryMock struct {
 	mutex    sync.Mutex
-	messages map[uint64][]mainflux.Message
+	messages map[string][]mainflux.Message
 }
 
 // NewMessageRepository returns mock implementation of message repository.
-func NewMessageRepository(messages map[uint64][]mainflux.Message) readers.MessageRepository {
+func NewMessageRepository(messages map[string][]mainflux.Message) readers.MessageRepository {
 	return &messageRepositoryMock{
 		mutex:    sync.Mutex{},
 		messages: messages,
 	}
 }
 
-func (repo *messageRepositoryMock) ReadAll(chanID, offset, limit uint64) []mainflux.Message {
+func (repo *messageRepositoryMock) ReadAll(chanID string, offset, limit uint64) []mainflux.Message {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 

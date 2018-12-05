@@ -20,11 +20,11 @@ service UsersService {
 
 message AccessReq {
     string token = 1;
-    uint64 chanID = 2;
+    string chanID = 2;
 }
 
 message ThingID {
-    uint64 value = 1;
+    string value = 1;
 }
 
 message Token {

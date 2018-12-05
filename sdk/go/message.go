@@ -33,8 +33,6 @@ func (sdk mfSDK) SendMessage(chanID, msg, token string) error {
 			return ErrInvalidArgs
 		case http.StatusForbidden:
 			return ErrUnauthorized
-		case http.StatusNotFound:
-			return ErrNotFound
 		default:
 			return ErrFailedPublish
 		}

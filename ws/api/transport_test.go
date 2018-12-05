@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	chanID   = 1
+	id       = "1"
 	token    = "token"
 	protocol = "ws"
 )
@@ -37,7 +37,7 @@ var (
 )
 
 func newService() ws.Service {
-	subs := map[uint64]*ws.Channel{chanID: channel}
+	subs := map[string]*ws.Channel{id: channel}
 	pubsub := mocks.NewService(subs, broker.ErrConnectionClosed)
 	return ws.New(pubsub)
 }
@@ -49,20 +49,19 @@ func newHTTPServer(svc ws.Service, tc mainflux.ThingsServiceClient) *httptest.Se
 }
 
 func newThingsClient() mainflux.ThingsServiceClient {
-	thingID := uint64(chanID)
-	return mocks.NewThingsClient(map[string]uint64{token: thingID})
+	return mocks.NewThingsClient(map[string]string{token: id})
 }
 
-func makeURL(tsURL string, chanID int64, auth string, header bool) string {
+func makeURL(tsURL, chanID, auth string, header bool) string {
 	u, _ := url.Parse(tsURL)
 	u.Scheme = protocol
 	if header {
-		return fmt.Sprintf("%s/channels/%d/messages", u, chanID)
+		return fmt.Sprintf("%s/channels/%s/messages", u, chanID)
 	}
-	return fmt.Sprintf("%s/channels/%d/messages?authorization=%s", u, chanID, auth)
+	return fmt.Sprintf("%s/channels/%s/messages?authorization=%s", u, chanID, auth)
 }
 
-func handshake(tsURL string, chanID int64, token string, addHeader bool) (*websocket.Conn, *http.Response, error) {
+func handshake(tsURL, chanID, token string, addHeader bool) (*websocket.Conn, *http.Response, error) {
 	header := http.Header{}
 	if addHeader {
 		header.Add("Authorization", token)
@@ -79,20 +78,20 @@ func TestHandshake(t *testing.T) {
 
 	cases := []struct {
 		desc   string
-		chanID int64
+		chanID string
 		header bool
 		token  string
 		status int
 		msg    []byte
 	}{
-		{"connect and send message", chanID, true, token, http.StatusSwitchingProtocols, msg},
-		{"connect to non-existent channel", 0, true, token, http.StatusSwitchingProtocols, []byte{}},
-		{"connect to invalid channel id", -5, true, token, http.StatusNotFound, []byte{}},
-		{"connect with empty token", chanID, true, "", http.StatusForbidden, []byte{}},
-		{"connect with invalid token", chanID, true, "invalid", http.StatusForbidden, []byte{}},
-		{"connect unable to authorize", chanID, true, mocks.ServiceErrToken, http.StatusServiceUnavailable, []byte{}},
-		{"connect and send message with token as query parameter", chanID, false, token, http.StatusSwitchingProtocols, msg},
-		{"connect and send message that cannot be published", chanID, true, token, http.StatusSwitchingProtocols, []byte{}},
+		{"connect and send message", id, true, token, http.StatusSwitchingProtocols, msg},
+		{"connect to non-existent channel", "0", true, token, http.StatusSwitchingProtocols, []byte{}},
+		{"connect to invalid channel id", "", true, token, http.StatusBadRequest, []byte{}},
+		{"connect with empty token", id, true, "", http.StatusForbidden, []byte{}},
+		{"connect with invalid token", id, true, "invalid", http.StatusForbidden, []byte{}},
+		{"connect unable to authorize", id, true, mocks.ServiceErrToken, http.StatusServiceUnavailable, []byte{}},
+		{"connect and send message with token as query parameter", id, false, token, http.StatusSwitchingProtocols, msg},
+		{"connect and send message that cannot be published", id, true, token, http.StatusSwitchingProtocols, []byte{}},
 	}
 
 	for _, tc := range cases {

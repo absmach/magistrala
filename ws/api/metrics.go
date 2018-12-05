@@ -43,6 +43,6 @@ func (mm *metricsMiddleware) Publish(msg mainflux.RawMessage) error {
 	return mm.svc.Publish(msg)
 }
 
-func (mm *metricsMiddleware) Subscribe(chanID uint64, channel *ws.Channel) error {
+func (mm *metricsMiddleware) Subscribe(chanID string, channel *ws.Channel) error {
 	return mm.svc.Subscribe(chanID, channel)
 }

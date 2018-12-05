@@ -18,7 +18,7 @@ import (
 
 const (
 	testDB      = "test"
-	chanID      = 1
+	chanID      = "1"
 	msgsNum     = 101
 	valueFields = 6
 )
@@ -35,11 +35,11 @@ var (
 
 	msg = mainflux.Message{
 		Channel:    chanID,
-		Publisher:  1,
+		Publisher:  "1",
 		Protocol:   "mqtt",
 		Name:       "name",
 		Unit:       "U",
-		Value:      &mainflux.Message_FloatValue{5},
+		Value:      &mainflux.Message_FloatValue{FloatValue: 5},
 		ValueSum:   &mainflux.SumValue{Value: 45},
 		Time:       123456,
 		UpdateTime: 1234,
@@ -48,9 +48,6 @@ var (
 )
 
 func TestReadAll(t *testing.T) {
-	client, err := influxdata.NewHTTPClient(clientCfg)
-	require.Nil(t, err, fmt.Sprintf("Creating new InfluxDB client expected to succeed: %s.\n", err))
-
 	writer, err := writer.New(client, testDB, 1, time.Second)
 	require.Nil(t, err, fmt.Sprintf("Creating new InfluxDB writer expected to succeed: %s.\n", err))
 
@@ -61,13 +58,13 @@ func TestReadAll(t *testing.T) {
 		count := i % valueFields
 		switch count {
 		case 0:
-			msg.Value = &mainflux.Message_FloatValue{5}
+			msg.Value = &mainflux.Message_FloatValue{FloatValue: 5}
 		case 1:
-			msg.Value = &mainflux.Message_BoolValue{false}
+			msg.Value = &mainflux.Message_BoolValue{BoolValue: false}
 		case 2:
-			msg.Value = &mainflux.Message_StringValue{"value"}
+			msg.Value = &mainflux.Message_StringValue{StringValue: "value"}
 		case 3:
-			msg.Value = &mainflux.Message_DataValue{"base64data"}
+			msg.Value = &mainflux.Message_DataValue{DataValue: "base64data"}
 		case 4:
 			msg.ValueSum = nil
 		case 5:
@@ -84,7 +81,7 @@ func TestReadAll(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Creating new InfluxDB reader expected to succeed: %s.\n", err))
 
 	cases := map[string]struct {
-		chanID   uint64
+		chanID   string
 		offset   uint64
 		limit    uint64
 		messages []mainflux.Message
@@ -102,7 +99,7 @@ func TestReadAll(t *testing.T) {
 			messages: messages[0:100],
 		},
 		"read message page for non-existent channel": {
-			chanID:   2,
+			chanID:   "2",
 			offset:   0,
 			limit:    10,
 			messages: []mainflux.Message{},

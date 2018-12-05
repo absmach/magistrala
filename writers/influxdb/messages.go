@@ -111,10 +111,10 @@ func (repo *influxRepo) savePoint(point *influxdata.Point) error {
 }
 
 func (repo *influxRepo) Save(msg mainflux.Message) error {
-	tags, fields := repo.tagsOf(&msg), repo.fieldsOf(&msg)
+	tgs, flds := repo.tagsOf(&msg), repo.fieldsOf(&msg)
 	t := time.Unix(int64(msg.Time), 0)
 
-	pt, err := influxdata.NewPoint(pointName, tags, fields, t)
+	pt, err := influxdata.NewPoint(pointName, tgs, flds, t)
 	if err != nil {
 		return err
 	}
@@ -123,12 +123,9 @@ func (repo *influxRepo) Save(msg mainflux.Message) error {
 }
 
 func (repo *influxRepo) tagsOf(msg *mainflux.Message) tags {
-	channel := strconv.FormatUint(msg.Channel, 10)
-	publisher := strconv.FormatUint(msg.Publisher, 10)
-
 	return tags{
-		"channel":   channel,
-		"publisher": publisher,
+		"channel":   msg.Channel,
+		"publisher": msg.Publisher,
 	}
 }
 

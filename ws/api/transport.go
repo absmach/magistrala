@@ -29,7 +29,7 @@ const protocol = "ws"
 
 var (
 	errUnauthorizedAccess = errors.New("missing or invalid credentials provided")
-	errNotFound           = errors.New("non-existent entity")
+	errMalformedData      = errors.New("malformed request data")
 	upgrader              = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -59,9 +59,9 @@ func handshake(svc ws.Service) http.HandlerFunc {
 		sub, err := authorize(r)
 		if err != nil {
 			switch err {
-			case errNotFound:
-				logger.Warn(fmt.Sprintf("Invalid channel id: %s", err))
-				w.WriteHeader(http.StatusNotFound)
+			case errMalformedData:
+				logger.Warn(fmt.Sprintf("Empty channel id"))
+				w.WriteHeader(http.StatusBadRequest)
 				return
 			case things.ErrUnauthorizedAccess:
 				w.WriteHeader(http.StatusForbidden)
@@ -105,9 +105,9 @@ func authorize(r *http.Request) (subscription, error) {
 	}
 
 	// Extract ID from /channels/:id/messages.
-	chanID, err := things.FromString(bone.GetValue(r, "id"))
-	if err != nil {
-		return subscription{}, errNotFound
+	chanID := bone.GetValue(r, "id")
+	if chanID == "" {
+		return subscription{}, errMalformedData
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -131,8 +131,8 @@ func authorize(r *http.Request) (subscription, error) {
 }
 
 type subscription struct {
-	pubID   uint64
-	chanID  uint64
+	pubID   string
+	chanID  string
 	conn    *websocket.Conn
 	channel *ws.Channel
 }

@@ -165,7 +165,7 @@ func (es eventStore) handleCreateThing(cte createThingEvent) error {
 	if em.Type != protocol {
 		return errMetadataType
 	}
-	if em.DevEUI != "" {
+	if em.DevEUI == "" {
 		return errMetadataDevEUI
 	}
 
@@ -181,7 +181,7 @@ func (es eventStore) handleUpdateThing(ute updateThingEvent) error {
 	if em.Type != protocol {
 		return errMetadataType
 	}
-	if em.DevEUI != "" {
+	if em.DevEUI == "" {
 		return errMetadataDevEUI
 	}
 
@@ -201,7 +201,7 @@ func (es eventStore) handleCreateChannel(cce createChannelEvent) error {
 	if cm.Type != protocol {
 		return errMetadataType
 	}
-	if cm.AppID != "" {
+	if cm.AppID == "" {
 		return errMetadataAppID
 	}
 
@@ -217,7 +217,7 @@ func (es eventStore) handleUpdateChannel(uce updateChannelEvent) error {
 	if cm.Type != protocol {
 		return errMetadataType
 	}
-	if cm.AppID != "" {
+	if cm.AppID == "" {
 		return errMetadataAppID
 	}
 

@@ -77,6 +77,9 @@ define docker_push
 	docker push mainflux/mqtt:$(1)
 endef
 
+changelog:
+	git log $(shell git describe --tags --abbrev=0)..HEAD --pretty=format:"- %s"
+
 latest: dockers
 	$(call docker_push,latest)
 

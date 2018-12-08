@@ -85,7 +85,7 @@ https://github.com/mainflux/mainflux/milestone/8?closed=1
 - Vendor correct gRPC version (#340)
 
 ### Summary
-https://github.com/mainflux/mainflux/milestone/8?closed=1
+https://github.com/mainflux/mainflux/milestone/6?closed=1
 
 
 ## 0.4.0 - 01. JUN 2018.

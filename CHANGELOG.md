@@ -45,7 +45,7 @@ git log --pretty=oneline --abbrev-commit
 - MF-407 - Values of zero are being omitted  (#434)
 
 ### Summary
-https://github.com/mainflux/mainflux/issues?q=is%3Aissue+milestone%3A0.7.0+is%3Aclosed
+https://github.com/mainflux/mainflux/milestone/8?closed=1
 
 
 ## 0.6.0 - 26. OCT 2018.

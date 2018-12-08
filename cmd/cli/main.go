@@ -42,6 +42,7 @@ func main() {
 	thingsCmd := cli.NewThingsCmd()
 	channelsCmd := cli.NewChannelsCmd()
 	messagesCmd := cli.NewMessagesCmd()
+	provisionCmd := cli.NewProvisionCmd()
 
 	// Root Commands
 	rootCmd.AddCommand(versionCmd)
@@ -49,6 +50,7 @@ func main() {
 	rootCmd.AddCommand(thingsCmd)
 	rootCmd.AddCommand(channelsCmd)
 	rootCmd.AddCommand(messagesCmd)
+	rootCmd.AddCommand(provisionCmd)
 
 	// Root Flags
 	rootCmd.PersistentFlags().StringVarP(

@@ -126,6 +126,7 @@ func (repo *influxRepo) tagsOf(msg *mainflux.Message) tags {
 	return tags{
 		"channel":   msg.Channel,
 		"publisher": msg.Publisher,
+		"name":      msg.Name,
 	}
 }
 
@@ -133,7 +134,6 @@ func (repo *influxRepo) fieldsOf(msg *mainflux.Message) fields {
 	updateTime := strconv.FormatFloat(msg.UpdateTime, 'f', -1, 64)
 	ret := fields{
 		"protocol":   msg.Protocol,
-		"name":       msg.Name,
 		"unit":       msg.Unit,
 		"link":       msg.Link,
 		"updateTime": updateTime,

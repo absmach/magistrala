@@ -486,13 +486,19 @@ By default gRPC communication is not secure.
 ### Securing PostgreSQL connections
 
 By default, Mainflux will connect to Postgres using insecure transport.
-If a secured connection is required, you can select the SSL mode.
+If a secured connection is required, you can select the SSL mode and set paths to any extra certificates and keys needed. 
 
 `MF_USERS_DB_SSL_MODE` the SSL connection mode for Users.
+`MF_USERS_DB_SSL_CERT` the path to the certificate file for Users.
+`MF_USERS_DB_SSL_KEY` the path to the key file for Users.
+`MF_USERS_DB_SSL_ROOT_CERT` the path to the root certificate file for Users.
 
 `MF_THINGS_DB_SSL_MODE` the SSL connection mode for Things.
+`MF_THINGS_DB_SSL_CERT` the path to the certificate file for Things.
+`MF_THINGS_DB_SSL_KEY` the path to the key file for Things.
+`MF_THINGS_DB_SSL_ROOT_CERT` the path to the root certificate file for Things.
 
-Currently supported modes are: `disabled` and `required`
+Supported database connection modes are: `disabled` (default), `required`, `verify-ca` and `verify-full`
 
 #### Users
 

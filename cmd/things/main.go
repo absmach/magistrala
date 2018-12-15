@@ -37,50 +37,51 @@ import (
 )
 
 const (
-	defLogLevel   = "error"
-	defDBHost     = "localhost"
-	defDBPort     = "5432"
-	defDBUser     = "mainflux"
-	defDBPass     = "mainflux"
-	defDBName     = "things"
-	defDBSSLMode  = "disable"
-	defClientTLS  = "false"
-	defCACerts    = ""
-	defCacheURL   = "localhost:6379"
-	defCachePass  = ""
-	defCacheDB    = "0"
-	defHTTPPort   = "8180"
-	defGRPCPort   = "8181"
-	defServerCert = ""
-	defServerKey  = ""
-	defUsersURL   = "localhost:8181"
-	envLogLevel   = "MF_THINGS_LOG_LEVEL"
-	envDBHost     = "MF_THINGS_DB_HOST"
-	envDBPort     = "MF_THINGS_DB_PORT"
-	envDBUser     = "MF_THINGS_DB_USER"
-	envDBPass     = "MF_THINGS_DB_PASS"
-	envDBName     = "MF_THINGS_DB"
-	envDBSSLMode  = "MF_THINGS_DB_SSL_MODE"
-	envClientTLS  = "MF_THINGS_CLIENT_TLS"
-	envCACerts    = "MF_THINGS_CA_CERTS"
-	envCacheURL   = "MF_THINGS_CACHE_URL"
-	envCachePass  = "MF_THINGS_CACHE_PASS"
-	envCacheDB    = "MF_THINGS_CACHE_DB"
-	envHTTPPort   = "MF_THINGS_HTTP_PORT"
-	envGRPCPort   = "MF_THINGS_GRPC_PORT"
-	envUsersURL   = "MF_USERS_URL"
-	envServerCert = "MF_THINGS_SERVER_CERT"
-	envServerKey  = "MF_THINGS_SERVER_KEY"
+	defLogLevel      = "error"
+	defDBHost        = "localhost"
+	defDBPort        = "5432"
+	defDBUser        = "mainflux"
+	defDBPass        = "mainflux"
+	defDBName        = "things"
+	defDBSSLMode     = "disable"
+	defDBSSLCert     = ""
+	defDBSSLKey      = ""
+	defDBSSLRootCert = ""
+	defClientTLS     = "false"
+	defCACerts       = ""
+	defCacheURL      = "localhost:6379"
+	defCachePass     = ""
+	defCacheDB       = "0"
+	defHTTPPort      = "8180"
+	defGRPCPort      = "8181"
+	defServerCert    = ""
+	defServerKey     = ""
+	defUsersURL      = "localhost:8181"
+	envLogLevel      = "MF_THINGS_LOG_LEVEL"
+	envDBHost        = "MF_THINGS_DB_HOST"
+	envDBPort        = "MF_THINGS_DB_PORT"
+	envDBUser        = "MF_THINGS_DB_USER"
+	envDBPass        = "MF_THINGS_DB_PASS"
+	envDBName        = "MF_THINGS_DB"
+	envDBSSLMode     = "MF_THINGS_DB_SSL_MODE"
+	envDBSSLCert     = "MF_THINGS_DB_SSL_CERT"
+	envDBSSLKey      = "MF_THINGS_DB_SSL_KEY"
+	envDBSSLRootCert = "MF_THINGS_DB_SSL_ROOT_CERT"
+	envClientTLS     = "MF_THINGS_CLIENT_TLS"
+	envCACerts       = "MF_THINGS_CA_CERTS"
+	envCacheURL      = "MF_THINGS_CACHE_URL"
+	envCachePass     = "MF_THINGS_CACHE_PASS"
+	envCacheDB       = "MF_THINGS_CACHE_DB"
+	envHTTPPort      = "MF_THINGS_HTTP_PORT"
+	envGRPCPort      = "MF_THINGS_GRPC_PORT"
+	envUsersURL      = "MF_USERS_URL"
+	envServerCert    = "MF_THINGS_SERVER_CERT"
+	envServerKey     = "MF_THINGS_SERVER_KEY"
 )
 
 type config struct {
 	logLevel   string
-	dbHost     string
-	dbPort     string
-	dbUser     string
-	dbPass     string
-	dbName     string
-	dbSSLMode  string
+	dbConfig   postgres.Config
 	clientTLS  bool
 	caCerts    string
 	cacheURL   string
@@ -102,7 +103,7 @@ func main() {
 	}
 	cache := connectToCache(cfg.cacheURL, cfg.cachePass, cfg.cacheDB, logger)
 
-	db := connectToDB(cfg, logger)
+	db := connectToDB(cfg.dbConfig, logger)
 	defer db.Close()
 
 	conn := connectToUsers(cfg, logger)
@@ -130,14 +131,21 @@ func loadConfig() config {
 		log.Fatalf("Invalid value passed for %s\n", envClientTLS)
 	}
 
+	dbConfig := postgres.Config{
+		Host:        mainflux.Env(envDBHost, defDBHost),
+		Port:        mainflux.Env(envDBPort, defDBPort),
+		User:        mainflux.Env(envDBUser, defDBUser),
+		Pass:        mainflux.Env(envDBPass, defDBPass),
+		Name:        mainflux.Env(envDBName, defDBName),
+		SSLMode:     mainflux.Env(envDBSSLMode, defDBSSLMode),
+		SSLCert:     mainflux.Env(envDBSSLCert, defDBSSLCert),
+		SSLKey:      mainflux.Env(envDBSSLKey, defDBSSLKey),
+		SSLRootCert: mainflux.Env(envDBSSLRootCert, defDBSSLRootCert),
+	}
+
 	return config{
 		logLevel:   mainflux.Env(envLogLevel, defLogLevel),
-		dbHost:     mainflux.Env(envDBHost, defDBHost),
-		dbPort:     mainflux.Env(envDBPort, defDBPort),
-		dbUser:     mainflux.Env(envDBUser, defDBUser),
-		dbPass:     mainflux.Env(envDBPass, defDBPass),
-		dbName:     mainflux.Env(envDBName, defDBName),
-		dbSSLMode:  mainflux.Env(envDBSSLMode, defDBSSLMode),
+		dbConfig:   dbConfig,
 		clientTLS:  tls,
 		caCerts:    mainflux.Env(envCACerts, defCACerts),
 		cacheURL:   mainflux.Env(envCacheURL, defCacheURL),
@@ -166,8 +174,8 @@ func connectToCache(cacheURL, cachePass string, cacheDB string, logger logger.Lo
 	})
 }
 
-func connectToDB(cfg config, logger logger.Logger) *sql.DB {
-	db, err := postgres.Connect(cfg.dbHost, cfg.dbPort, cfg.dbName, cfg.dbUser, cfg.dbPass, cfg.dbSSLMode)
+func connectToDB(dbConfig postgres.Config, logger logger.Logger) *sql.DB {
+	db, err := postgres.Connect(dbConfig)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to postgres: %s", err))
 		os.Exit(1)

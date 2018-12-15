@@ -17,25 +17,28 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable              | Description                                      | Default        |
-|-----------------------|--------------------------------------------------|----------------|
-| MF_THINGS_LOG_LEVEL   | Log level for Things (debug, info, warn, error)  | error          |
-| MF_THINGS_DB_HOST     | Database host address                            | localhost      |
-| MF_THINGS_DB_PORT     | Database host port                               | 5432           |
-| MF_THINGS_DB_USER     | Database user                                    | mainflux       |
-| MF_THINGS_DB_PASS     | Database password                                | mainflux       |
-| MF_THINGS_DB          | Name of the database used by the service         | things         |
-| MF_THINGS_DB_SSL_MODE | Database connection SSL mode (disable or require)| disable        |
-| MF_THINGS_CLIENT_TLS  | Flag that indicates if TLS should be turned on   | false          |
-| MF_THINGS_CA_CERTS    | Path to trusted CAs in PEM format                |                |
-| MF_THINGS_CACHE_URL   | Cache database URL                               | localhost:6379 |
-| MF_THINGS_CACHE_PASS  | Cache database password                          |                |
-| MF_THINGS_CACHE_DB    | Cache instance that should be used               | 0              |
-| MF_THINGS_HTTP_PORT   | Things service HTTP port                         | 8180           |
-| MF_THINGS_GRPC_PORT   | Things service gRPC port                         | 8181           |
-| MF_THINGS_SERVER_CERT | Path to server certificate in pem format         | 8181           |
-| MF_THINGS_SERVER_KEY  | Path to server key in pem format                 | 8181           |
-| MF_USERS_URL          | Users service URL                                | localhost:8181 |
+| Variable                   | Description                                                            | Default        |
+|----------------------------|------------------------------------------------------------------------|----------------|
+| MF_THINGS_LOG_LEVEL        | Log level for Things (debug, info, warn, error)                        | error          |
+| MF_THINGS_DB_HOST          | Database host address                                                  | localhost      |
+| MF_THINGS_DB_PORT          | Database host port                                                     | 5432           |
+| MF_THINGS_DB_USER          | Database user                                                          | mainflux       |
+| MF_THINGS_DB_PASS          | Database password                                                      | mainflux       |
+| MF_THINGS_DB               | Name of the database used by the service                               | things         |
+| MF_THINGS_DB_SSL_MODE      | Database connection SSL mode (disable, require, verify-ca, verify-full)| disable        |
+| MF_THINGS_DB_SSL_CERT      | Path to the PEM encoded certificate file                               |                |
+| MF_THINGS_DB_SSL_KEY       | Path to the PEM encoded key file                                       |                |
+| MF_THINGS_DB_SSL_ROOT_CERT | Path to the PEM encoded root certificate file                          |                |
+| MF_THINGS_CLIENT_TLS       | Flag that indicates if TLS should be turned on                         | false          |
+| MF_THINGS_CA_CERTS         | Path to trusted CAs in PEM format                                      |                |
+| MF_THINGS_CACHE_URL        | Cache database URL                                                     | localhost:6379 |
+| MF_THINGS_CACHE_PASS       | Cache database password                                                |                |
+| MF_THINGS_CACHE_DB         | Cache instance that should be used                                     | 0              |
+| MF_THINGS_HTTP_PORT        | Things service HTTP port                                               | 8180           |
+| MF_THINGS_GRPC_PORT        | Things service gRPC port                                               | 8181           |
+| MF_THINGS_SERVER_CERT      | Path to server certificate in pem format                               | 8181           |
+| MF_THINGS_SERVER_KEY       | Path to server key in pem format                                       | 8181           |
+| MF_USERS_URL               | Users service URL                                                      | localhost:8181 |
 
 ## Deployment
 
@@ -59,6 +62,9 @@ services:
       MF_THINGS_DB_PASS: [Database password]
       MF_THINGS_DB: [Name of the database used by the service]
       MF_THINGS_DB_SSL_MODE: [SSL mode to connect to the database with]
+      MF_THINGS_DB_SSL_CERT: [Path to the PEM encoded certificate file]
+      MF_THINGS_DB_SSL_KEY: [Path to the PEM encoded key file]
+      MF_THINGS_DB_SSL_ROOT_CERT: [Path to the PEM encoded root certificate file]
       MF_THINGS_CA_CERTS: [Path to trusted CAs in PEM format]
       MF_THINGS_CACHE_URL: [Cache database URL]
       MF_THINGS_CACHE_PASS: [Cache database password]
@@ -86,7 +92,7 @@ make things
 make install
 
 # set the environment variables and run the service
-MF_THINGS_LOG_LEVEL=[Things log level] MF_THINGS_DB_HOST=[Database host address] MF_THINGS_DB_PORT=[Database host port] MF_THINGS_DB_USER=[Database user] MF_THINGS_DB_PASS=[Database password] MF_THINGS_DB=[Name of the database used by the service] MF_THINGS_DB_SSL_MODE=[SSL mode to connect to the database with] MF_HTTP_ADAPTER_CA_CERTS=[Path to trusted CAs in PEM format] MF_THINGS_CACHE_URL=[Cache database URL] MF_THINGS_CACHE_PASS=[Cache database password] MF_THINGS_CACHE_DB=[Cache instance that should be used] MF_THINGS_HTTP_PORT=[Service HTTP port] MF_THINGS_GRPC_PORT=[Service gRPC port] MF_USERS_URL=[Users service URL] MF_THINGS_SERVER_CERT=[Path to server certificate] MF_THINGS_SERVER_KEY=[Path to server key] $GOBIN/mainflux-things
+MF_THINGS_LOG_LEVEL=[Things log level] MF_THINGS_DB_HOST=[Database host address] MF_THINGS_DB_PORT=[Database host port] MF_THINGS_DB_USER=[Database user] MF_THINGS_DB_PASS=[Database password] MF_THINGS_DB=[Name of the database used by the service] MF_THINGS_DB_SSL_MODE=[SSL mode to connect to the database with] MF_THINGS_DB_SSL_CERT=[Path to the PEM encoded certificate file] MF_THINGS_DB_SSL_KEY=[Path to the PEM encoded key file] MF_THINGS_DB_SSL_ROOT_CERT=[Path to the PEM encoded root certificate file] MF_HTTP_ADAPTER_CA_CERTS=[Path to trusted CAs in PEM format] MF_THINGS_CACHE_URL=[Cache database URL] MF_THINGS_CACHE_PASS=[Cache database password] MF_THINGS_CACHE_DB=[Cache instance that should be used] MF_THINGS_HTTP_PORT=[Service HTTP port] MF_THINGS_GRPC_PORT=[Service gRPC port] MF_USERS_URL=[Users service URL] MF_THINGS_SERVER_CERT=[Path to server certificate] MF_THINGS_SERVER_KEY=[Path to server key] $GOBIN/mainflux-things
 ```
 
 Setting `MF_THINGS_CA_CERTS` expects a file in PEM format of trusted CAs. This will enable TLS against the Users gRPC endpoint trusting only those CAs that are provided.

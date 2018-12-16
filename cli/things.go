@@ -39,12 +39,12 @@ var cmdThings = []cobra.Command{
 				return
 			}
 
-			flush(id)
+			logCreated(id)
 		},
 	},
 	cobra.Command{
 		Use:   "get",
-		Short: "get all/<thing_id> <user_auth_token>",
+		Short: "get <thing_id or all> <user_auth_token>",
 		Long:  `Get all things or thing by id`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
@@ -58,7 +58,7 @@ var cmdThings = []cobra.Command{
 					logError(err)
 					return
 				}
-				flush(l)
+				logJSON(l)
 				return
 			}
 
@@ -68,7 +68,7 @@ var cmdThings = []cobra.Command{
 				return
 			}
 
-			flush(t)
+			logJSON(t)
 		},
 	},
 	cobra.Command{
@@ -155,8 +155,8 @@ var cmdThings = []cobra.Command{
 func NewThingsCmd() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "things",
-		Short: "things <options>",
-		Long:  `Things handling: create, delete or update things`,
+		Short: "things <create, update, delete or connect>",
+		Long:  `Things management: create, update, delete or connect things`,
 		Run: func(cmd *cobra.Command, args []string) {
 			logUsage(cmd.Short)
 		},

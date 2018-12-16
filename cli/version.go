@@ -22,7 +22,7 @@ func NewVersionCmd() *cobra.Command {
 				return
 			}
 
-			flush(v)
+			logJSON(v)
 		},
 	}
 }

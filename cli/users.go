@@ -55,7 +55,7 @@ var cmdUsers = []cobra.Command{
 				return
 			}
 
-			flush(token)
+			logCreated(token)
 		},
 	},
 }

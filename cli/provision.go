@@ -101,7 +101,7 @@ var cmdProvision = []cobra.Command{
 				things = append(things, m)
 			}
 
-			flush(things)
+			logJSON(things)
 		},
 	},
 	cobra.Command{
@@ -147,7 +147,7 @@ var cmdProvision = []cobra.Command{
 				channels = append(channels, c)
 			}
 
-			flush(channels)
+			logJSON(channels)
 		},
 	},
 	cobra.Command{
@@ -230,10 +230,7 @@ var cmdProvision = []cobra.Command{
 				}
 			}
 
-			flush(user)
-			flush(ut)
-			flush(things)
-			flush(channels)
+			logJSON(user, ut, things, channels)
 		},
 	},
 }

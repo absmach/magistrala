@@ -31,6 +31,10 @@
   version = "1.2.0"
 
 [[constraint]]
+  name = "github.com/hokaccha/go-prettyjson"
+  branch = "master"
+
+[[constraint]]
   name = "github.com/lib/pq"
   branch = "master"
 

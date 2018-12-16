@@ -14,7 +14,7 @@ const contentTypeSenml = "application/senml+json"
 var cmdMessages = []cobra.Command{
 	cobra.Command{
 		Use:   "send",
-		Short: "send <channel_id> <JSON_string> <thing_token>",
+		Short: "send <channel_id> <JSON_string> <thing_key>",
 		Long:  `Sends message on the channel`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {

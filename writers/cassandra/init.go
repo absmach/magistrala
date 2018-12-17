@@ -10,9 +10,9 @@ package cassandra
 import "github.com/gocql/gocql"
 
 const table = `CREATE TABLE IF NOT EXISTS messages (
-        id uuid PRIMARY KEY,
-        channel bigint,
-    	publisher bigint,
+        id uuid,
+        channel text,
+    	publisher text,
         protocol text,
     	name text,
     	unit text,
@@ -23,8 +23,9 @@ const table = `CREATE TABLE IF NOT EXISTS messages (
     	value_sum double,
     	time double,
     	update_time double,
-    	link text
-    )`
+    	link text,
+        PRIMARY KEY (channel, time, id)
+    ) WITH CLUSTERING ORDER BY (time DESC)`
 
 // Connect establishes connection to the Cassandra cluster.
 func Connect(hosts []string, keyspace string) (*gocql.Session, error) {

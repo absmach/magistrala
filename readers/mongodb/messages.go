@@ -49,7 +49,10 @@ func New(db *mongo.Database) readers.MessageRepository {
 
 func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64) []mainflux.Message {
 	col := repo.db.Collection(collection)
-	cursor, err := col.Find(context.Background(), bson.NewDocument(bson.EC.String("channel", chanID)), findopt.Limit(int64(limit)), findopt.Skip(int64(offset)))
+	sortMap := map[string]interface{}{
+		"time": -1,
+	}
+	cursor, err := col.Find(context.Background(), bson.NewDocument(bson.EC.String("channel", chanID)), findopt.Sort(sortMap), findopt.Limit(int64(limit)), findopt.Skip(int64(offset)))
 	if err != nil {
 		return []mainflux.Message{}
 	}

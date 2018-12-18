@@ -70,7 +70,7 @@ func TestReadAll(t *testing.T) {
 		case 5:
 			msg.ValueSum = &mainflux.SumValue{Value: 45}
 		}
-		msg.Time = float64(now + int64(i))
+		msg.Time = float64(now - int64(i))
 
 		err := writer.Save(msg)
 		require.Nil(t, err, fmt.Sprintf("failed to store message to Cassandra: %s", err))

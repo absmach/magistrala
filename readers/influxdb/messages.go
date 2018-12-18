@@ -33,7 +33,7 @@ func (repo *influxRepository) ReadAll(chanID string, offset, limit uint64) []mai
 		limit = maxLimit
 	}
 
-	cmd := fmt.Sprintf(`SELECT * from messages WHERE channel='%s' LIMIT %d OFFSET %d`, chanID, limit, offset)
+	cmd := fmt.Sprintf(`SELECT * from messages WHERE channel='%s' ORDER BY time DESC LIMIT %d OFFSET %d`, chanID, limit, offset)
 	q := influxdata.Query{
 		Command:  cmd,
 		Database: repo.database,

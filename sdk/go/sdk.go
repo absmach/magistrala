@@ -39,6 +39,9 @@ var (
 	// ErrFailedPublish indicates that publishing message failed.
 	ErrFailedPublish = errors.New("failed to publish message")
 
+	// ErrFailedRead indicates that read messages failed.
+	ErrFailedRead = errors.New("failed to read messages")
+
 	// ErrFailedRemoval indicates that entity removal failed.
 	ErrFailedRemoval = errors.New("failed to remove entity")
 
@@ -93,6 +96,23 @@ type Channel struct {
 	Metadata string  `json:"metadata,omitempty"`
 }
 
+// Message represents mainflux message.
+type Message struct {
+	Channel     string   `json:"channel,omitempty"`
+	Publisher   string   `json:"publisher,omitempty"`
+	Protocol    string   `json:"protocol,omitempty"`
+	Name        string   `json:"name,omitempty"`
+	Unit        string   `json:"unit,omitempty"`
+	Value       *float64 `json:"value,omitempty"`
+	StringValue *string  `json:"stringValue,omitempty"`
+	BoolValue   *bool    `json:"boolValue,omitempty"`
+	DataValue   *string  `json:"dataValue,omitempty"`
+	ValueSum    *float64 `json:"valueSum,omitempty"`
+	Time        float64  `json:"time,omitempty"`
+	UpdateTime  float64  `json:"updateTime,omitempty"`
+	Link        string   `json:"link,omitempty"`
+}
+
 // SDK contains Mainflux API.
 type SDK interface {
 	// CreateUser registers mainflux user.
@@ -140,6 +160,9 @@ type SDK interface {
 	// SendMessage send message to specified channel.
 	SendMessage(chanID, msg, token string) error
 
+	// ReadMessages read messagea of specified channel.
+	ReadMessages(chanID, token string) ([]Message, error)
+
 	// SetContentType sets message content type.
 	SetContentType(ct ContentType) error
 
@@ -148,7 +171,9 @@ type SDK interface {
 }
 
 type mfSDK struct {
-	url               string
+	baseURL           string
+	readerURL         string
+	readerPrefix      string
 	usersPrefix       string
 	thingsPrefix      string
 	httpAdapterPrefix string
@@ -159,6 +184,8 @@ type mfSDK struct {
 // Config contains sdk configuration parameters.
 type Config struct {
 	BaseURL           string
+	ReaderURL         string
+	ReaderPrefix      string
 	UsersPrefix       string
 	ThingsPrefix      string
 	HTTPAdapterPrefix string
@@ -169,7 +196,9 @@ type Config struct {
 // NewSDK returns new mainflux SDK instance.
 func NewSDK(conf Config) SDK {
 	return &mfSDK{
-		url:               conf.BaseURL,
+		baseURL:           conf.BaseURL,
+		readerURL:         conf.ReaderURL,
+		readerPrefix:      conf.ReaderPrefix,
 		usersPrefix:       conf.UsersPrefix,
 		thingsPrefix:      conf.ThingsPrefix,
 		httpAdapterPrefix: conf.HTTPAdapterPrefix,

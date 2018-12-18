@@ -24,7 +24,7 @@ func (sdk mfSDK) CreateChannel(channel Channel, token string) (string, error) {
 		return "", ErrInvalidArgs
 	}
 
-	url := createURL(sdk.url, sdk.thingsPrefix, channelsEndpoint)
+	url := createURL(sdk.baseURL, sdk.thingsPrefix, channelsEndpoint)
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
 	if err != nil {
 		return "", err
@@ -52,7 +52,7 @@ func (sdk mfSDK) CreateChannel(channel Channel, token string) (string, error) {
 
 func (sdk mfSDK) Channels(token string, offset, limit uint64) ([]Channel, error) {
 	endpoint := fmt.Sprintf("%s?offset=%d&limit=%d", channelsEndpoint, offset, limit)
-	url := createURL(sdk.url, sdk.thingsPrefix, endpoint)
+	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -91,7 +91,7 @@ func (sdk mfSDK) Channels(token string, offset, limit uint64) ([]Channel, error)
 
 func (sdk mfSDK) Channel(id, token string) (Channel, error) {
 	endpoint := fmt.Sprintf("%s/%s", channelsEndpoint, id)
-	url := createURL(sdk.url, sdk.thingsPrefix, endpoint)
+	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -135,7 +135,7 @@ func (sdk mfSDK) UpdateChannel(channel Channel, token string) error {
 	}
 
 	endpoint := fmt.Sprintf("%s/%s", channelsEndpoint, channel.ID)
-	url := createURL(sdk.url, sdk.thingsPrefix, endpoint)
+	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
 
 	req, err := http.NewRequest(http.MethodPut, url, bytes.NewReader(data))
 	if err != nil {
@@ -165,7 +165,7 @@ func (sdk mfSDK) UpdateChannel(channel Channel, token string) error {
 
 func (sdk mfSDK) DeleteChannel(id, token string) error {
 	endpoint := fmt.Sprintf("%s/%s", channelsEndpoint, id)
-	url := createURL(sdk.url, sdk.thingsPrefix, endpoint)
+	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
 
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {

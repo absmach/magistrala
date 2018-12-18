@@ -19,6 +19,8 @@ func main() {
 	msgContentType := string(sdk.CTJSONSenML)
 	sdkConf := sdk.Config{
 		BaseURL:           "http://localhost",
+		ReaderURL:         "http://localhost:8905",
+		ReaderPrefix:      "",
 		UsersPrefix:       "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "http",

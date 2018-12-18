@@ -30,12 +30,31 @@ var cmdMessages = []cobra.Command{
 			logOK()
 		},
 	},
+	cobra.Command{
+		Use:   "read",
+		Short: "read <channel_id> <thing_key>",
+		Long:  `Reads all channel messages`,
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 2 {
+				logUsage(cmd.Short)
+				return
+			}
+
+			m, err := sdk.ReadMessages(args[0], args[1])
+			if err != nil {
+				logError(err)
+				return
+			}
+
+			logJSON(m)
+		},
+	},
 }
 
 // NewMessagesCmd returns messages command.
 func NewMessagesCmd() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "msg",
+		Use:   "messages",
 		Short: "Send or retrieve messages",
 		Long:  `Send or retrieve messages: control message flow on the channel`,
 	}

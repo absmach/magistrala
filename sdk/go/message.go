@@ -8,14 +8,16 @@
 package sdk
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 )
 
 func (sdk mfSDK) SendMessage(chanID, msg, token string) error {
 	endpoint := fmt.Sprintf("channels/%s/messages", chanID)
-	url := createURL(sdk.url, sdk.httpAdapterPrefix, endpoint)
+	url := createURL(sdk.baseURL, sdk.httpAdapterPrefix, endpoint)
 
 	req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(msg))
 	if err != nil {
@@ -39,6 +41,44 @@ func (sdk mfSDK) SendMessage(chanID, msg, token string) error {
 	}
 
 	return nil
+}
+
+func (sdk mfSDK) ReadMessages(chanID, token string) ([]Message, error) {
+	endpoint := fmt.Sprintf("channels/%s/messages", chanID)
+	url := createURL(sdk.readerURL, "", endpoint)
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := sdk.sendRequest(req, token, string(sdk.msgContentType))
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		switch resp.StatusCode {
+		case http.StatusBadRequest:
+			return nil, ErrInvalidArgs
+		case http.StatusForbidden:
+			return nil, ErrUnauthorized
+		default:
+			return nil, ErrFailedRead
+		}
+	}
+
+	var l listMessagesRes
+	if err := json.Unmarshal(body, &l); err != nil {
+		return nil, err
+	}
+
+	return l.Messages, nil
 }
 
 func (sdk *mfSDK) SetContentType(ct ContentType) error {

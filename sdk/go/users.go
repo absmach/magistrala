@@ -20,7 +20,7 @@ func (sdk mfSDK) CreateUser(user User) error {
 		return ErrInvalidArgs
 	}
 
-	url := createURL(sdk.url, sdk.usersPrefix, "users")
+	url := createURL(sdk.baseURL, sdk.usersPrefix, "users")
 
 	resp, err := sdk.client.Post(url, string(CTJSON), bytes.NewReader(data))
 	if err != nil {
@@ -47,7 +47,7 @@ func (sdk mfSDK) CreateToken(user User) (string, error) {
 		return "", ErrInvalidArgs
 	}
 
-	url := createURL(sdk.url, sdk.usersPrefix, "tokens")
+	url := createURL(sdk.baseURL, sdk.usersPrefix, "tokens")
 
 	resp, err := sdk.client.Post(url, string(CTJSON), bytes.NewReader(data))
 	if err != nil {

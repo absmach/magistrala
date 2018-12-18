@@ -18,3 +18,7 @@ type listThingsRes struct {
 type listChannelsRes struct {
 	Channels []Channel `json:"channels,omitempty"`
 }
+
+type listMessagesRes struct {
+	Messages []Message `json:"messages,omitempty"`
+}

@@ -19,7 +19,7 @@ type version struct {
 }
 
 func (sdk mfSDK) Version() (string, error) {
-	url := fmt.Sprintf("%s/version", sdk.url)
+	url := fmt.Sprintf("%s/version", sdk.baseURL)
 
 	resp, err := sdk.client.Get(url)
 	if err != nil {

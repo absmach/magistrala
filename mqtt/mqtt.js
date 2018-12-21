@@ -10,7 +10,7 @@ var http = require('http'),
     logging = require('aedes-logging');
 
 // pass a proto file as a buffer/string or pass a parsed protobuf-schema object
-var logger = bunyan.createLogger({name: "mqtt"}),
+var logger = bunyan.createLogger({name: "mqtt", pinoOptions: {level: 30}}),
     config = {
         log_level: process.env.MF_MQTT_ADAPTER_LOG_LEVEL || 'error',
         mqtt_port: Number(process.env.MF_MQTT_ADAPTER_PORT) || 1883,

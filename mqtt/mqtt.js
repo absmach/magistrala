@@ -10,8 +10,7 @@ var http = require('http'),
     logging = require('aedes-logging');
 
 // pass a proto file as a buffer/string or pass a parsed protobuf-schema object
-var logger = bunyan.createLogger({name: "mqtt", pinoOptions: {level: 30}}),
-    config = {
+var config = {
         log_level: process.env.MF_MQTT_ADAPTER_LOG_LEVEL || 'error',
         mqtt_port: Number(process.env.MF_MQTT_ADAPTER_PORT) || 1883,
         ws_port: Number(process.env.MF_MQTT_ADAPTER_WS_PORT) || 8880,
@@ -25,6 +24,7 @@ var logger = bunyan.createLogger({name: "mqtt", pinoOptions: {level: 30}}),
         auth_url: process.env.MF_THINGS_URL || 'localhost:8181',
         schema_dir: process.argv[2] || '.',
     },
+    logger = bunyan.createLogger({name: "mqtt", level: config.log_level}),
     message = protobuf(fs.readFileSync(config.schema_dir + '/message.proto')),
     thingsSchema = grpc.load(config.schema_dir + "/internal.proto").mainflux,
     nats = require('nats').connect(config.nats_url),
@@ -54,7 +54,7 @@ var logger = bunyan.createLogger({name: "mqtt", pinoOptions: {level: 30}}),
 logging({
     instance: aedes,
     servers: servers,
-    pinoOptions: {level: config.log_level}
+    pinoOptions: {level: 30}
 });
 
 logger.level(config.log_level);

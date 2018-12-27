@@ -21,6 +21,7 @@
     "bunyan": "^1.5.1",
     "grpc": "^1.11.3",
     "lodash": "^4.17.10",
+    "mqemitter-redis": "^3.0.0",
     "nats": "^0.6.8",
     "protocol-buffers": "^4.0.4",
     "request": "^2.81.0",

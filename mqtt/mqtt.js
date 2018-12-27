@@ -34,7 +34,14 @@ var config = {
         password: config.redis_pass,
         db: config.redis_db
     }),
+    mqRedis = require('mqemitter-redis')({
+        port: config.redis_port,
+        host: config.redis_host,
+        password: config.redis_pass,
+        db: config.redis_db
+    }),
     aedes = require('aedes')({
+        mq: mqRedis,
         persistence: aedesRedis
     }),
     things = (function() {

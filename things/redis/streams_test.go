@@ -12,6 +12,7 @@ import (
 	"math"
 	"strconv"
 	"testing"
+	"time"
 
 	r "github.com/go-redis/redis"
 	"github.com/mainflux/mainflux/things"
@@ -93,6 +94,7 @@ func TestAddThing(t *testing.T) {
 		streams := redisClient.XRead(&r.XReadArgs{
 			Streams: []string{streamID, lastID},
 			Count:   1,
+			Block:   time.Second,
 		}).Val()
 
 		var event map[string]interface{}
@@ -157,6 +159,7 @@ func TestUpdateThing(t *testing.T) {
 		streams := redisClient.XRead(&r.XReadArgs{
 			Streams: []string{streamID, lastID},
 			Count:   1,
+			Block:   time.Second,
 		}).Val()
 
 		var event map[string]interface{}
@@ -214,6 +217,7 @@ func TestRemoveThing(t *testing.T) {
 		streams := redisClient.XRead(&r.XReadArgs{
 			Streams: []string{streamID, lastID},
 			Count:   1,
+			Block:   time.Second,
 		}).Val()
 
 		var event map[string]interface{}
@@ -270,6 +274,7 @@ func TestCreateChannel(t *testing.T) {
 		streams := redisClient.XRead(&r.XReadArgs{
 			Streams: []string{streamID, lastID},
 			Count:   1,
+			Block:   time.Second,
 		}).Val()
 
 		var event map[string]interface{}
@@ -332,6 +337,7 @@ func TestUpdateChannel(t *testing.T) {
 		streams := redisClient.XRead(&r.XReadArgs{
 			Streams: []string{streamID, lastID},
 			Count:   1,
+			Block:   time.Second,
 		}).Val()
 
 		var event map[string]interface{}
@@ -389,6 +395,7 @@ func TestRemoveChannel(t *testing.T) {
 		streams := redisClient.XRead(&r.XReadArgs{
 			Streams: []string{streamID, lastID},
 			Count:   1,
+			Block:   time.Second,
 		}).Val()
 
 		var event map[string]interface{}
@@ -452,6 +459,7 @@ func TestConnectEvent(t *testing.T) {
 		streams := redisClient.XRead(&r.XReadArgs{
 			Streams: []string{streamID, lastID},
 			Count:   1,
+			Block:   time.Second,
 		}).Val()
 
 		var event map[string]interface{}
@@ -517,6 +525,7 @@ func TestDisconnectEvent(t *testing.T) {
 		streams := redisClient.XRead(&r.XReadArgs{
 			Streams: []string{streamID, lastID},
 			Count:   1,
+			Block:   time.Second,
 		}).Val()
 
 		var event map[string]interface{}

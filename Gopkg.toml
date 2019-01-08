@@ -106,6 +106,10 @@
   name = "google.golang.org/grpc"
   version = "1.16.0"
 
+[[constraint]]
+  name = "github.com/go-redis/redis"
+  version = "v6.15.0"
+
 [prune]
   go-tests = true
   unused-packages = true

@@ -69,7 +69,7 @@ func NewEventStore(svc lora.Service, client *redis.Client, consumer string, log 
 }
 
 func (es eventStore) Subscribe(subject string) {
-	es.client.XGroupCreate(stream, group, "$").Err()
+	es.client.XGroupCreateMkStream(stream, group, "$").Err()
 	for {
 		streams, err := es.client.XReadGroup(&redis.XReadGroupArgs{
 			Group:    group,
@@ -105,7 +105,7 @@ func (es eventStore) Subscribe(subject string) {
 				rce := decodeRemoveChannel(event)
 				err = es.handleRemoveChannel(rce)
 			}
-			if err != nil {
+			if err != nil && err != errMetadataType {
 				es.logger.Warn(fmt.Sprintf("Failed to handle event sourcing: %s", err.Error()))
 				break
 			}

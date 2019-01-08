@@ -103,6 +103,7 @@ services:
       MF_THINGS_DB_PASS: mainflux
       MF_THINGS_DB: things
       MF_THINGS_CACHE_URL: things-redis:6379
+      MF_THINGS_ES_URL: things-redis:6379
       MF_THINGS_HTTP_PORT: 8182
       MF_THINGS_GRPC_PORT: 8183
       MF_USERS_URL: users:8181

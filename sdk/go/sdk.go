@@ -88,12 +88,27 @@ type Thing struct {
 	Metadata string `json:"metadata,omitempty"`
 }
 
+// ThingsPage contains list of things in a page with proper metadata.
+type ThingsPage struct {
+	Things []Thing `json:"things"`
+	Total  uint64  `json:"total"`
+	Offset uint64  `json:"offset"`
+	Limit  uint64  `json:"limit"`
+}
+
 // Channel represents mainflux channel.
 type Channel struct {
-	ID       string  `json:"id,omitempty"`
-	Name     string  `json:"name"`
-	Things   []Thing `json:"connected,omitempty"`
-	Metadata string  `json:"metadata,omitempty"`
+	ID       string `json:"id,omitempty"`
+	Name     string `json:"name"`
+	Metadata string `json:"metadata,omitempty"`
+}
+
+// ChannelsPage contains list of channels in a page with proper metadata.
+type ChannelsPage struct {
+	Channels []Channel `json:"channels"`
+	Total    uint64    `json:"total"`
+	Offset   uint64    `json:"offset"`
+	Limit    uint64    `json:"limit"`
 }
 
 // Message represents mainflux message.
@@ -125,7 +140,11 @@ type SDK interface {
 	CreateThing(thing Thing, token string) (string, error)
 
 	// Things returns page of things.
-	Things(token string, offset, limit uint64) ([]Thing, error)
+	Things(token string, offset, limit uint64) (ThingsPage, error)
+
+	// ThingsByChannel returns page of things that are connected to specified
+	// channel.
+	ThingsByChannel(token, chanID string, offset, limit uint64) (ThingsPage, error)
 
 	// Thing returns thing object by id.
 	Thing(id, token string) (Thing, error)
@@ -146,7 +165,11 @@ type SDK interface {
 	CreateChannel(channel Channel, token string) (string, error)
 
 	// Channels returns page of channels.
-	Channels(token string, offset, limit uint64) ([]Channel, error)
+	Channels(token string, offset, limit uint64) (ChannelsPage, error)
+
+	// ChannelsByThing returns page of channels that are connected to specified
+	// thing.
+	ChannelsByThing(token, thingID string, offset, limit uint64) (ChannelsPage, error)
 
 	// Channel returns channel data by id.
 	Channel(id, token string) (Channel, error)

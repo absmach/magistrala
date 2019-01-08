@@ -22,14 +22,29 @@ var _ things.ThingRepository = (*thingRepositoryMock)(nil)
 type thingRepositoryMock struct {
 	mu      sync.Mutex
 	counter uint64
+	conns   chan Connection
+	tconns  map[string]map[string]things.Thing
 	things  map[string]things.Thing
 }
 
 // NewThingRepository creates in-memory thing repository.
-func NewThingRepository() things.ThingRepository {
-	return &thingRepositoryMock{
+func NewThingRepository(conns chan Connection) things.ThingRepository {
+	repo := &thingRepositoryMock{
+		conns:  conns,
 		things: make(map[string]things.Thing),
+		tconns: make(map[string]map[string]things.Thing),
 	}
+	go func(conns chan Connection, repo *thingRepositoryMock) {
+		for conn := range conns {
+			if !conn.connected {
+				repo.disconnect(conn)
+				continue
+			}
+			repo.connect(conn)
+		}
+	}(conns, repo)
+
+	return repo
 }
 
 func (trm *thingRepositoryMock) Save(thing things.Thing) (string, error) {
@@ -59,6 +74,9 @@ func (trm *thingRepositoryMock) Update(thing things.Thing) error {
 }
 
 func (trm *thingRepositoryMock) RetrieveByID(owner, id string) (things.Thing, error) {
+	trm.mu.Lock()
+	defer trm.mu.Unlock()
+
 	if c, ok := trm.things[key(owner, id)]; ok {
 		return c, nil
 	}
@@ -66,11 +84,14 @@ func (trm *thingRepositoryMock) RetrieveByID(owner, id string) (things.Thing, er
 	return things.Thing{}, things.ErrNotFound
 }
 
-func (trm *thingRepositoryMock) RetrieveAll(owner string, offset, limit uint64) []things.Thing {
-	things := make([]things.Thing, 0)
+func (trm *thingRepositoryMock) RetrieveAll(owner string, offset, limit uint64) things.ThingsPage {
+	trm.mu.Lock()
+	defer trm.mu.Unlock()
+
+	items := make([]things.Thing, 0)
 
 	if offset < 0 || limit <= 0 {
-		return things
+		return things.ThingsPage{}
 	}
 
 	first := uint64(offset) + 1
@@ -82,23 +103,78 @@ func (trm *thingRepositoryMock) RetrieveAll(owner string, offset, limit uint64) 
 	for k, v := range trm.things {
 		id, _ := strconv.ParseUint(v.ID, 10, 64)
 		if strings.HasPrefix(k, prefix) && id >= first && id < last {
-			things = append(things, v)
+			items = append(items, v)
 		}
 	}
 
-	sort.SliceStable(things, func(i, j int) bool {
-		return things[i].ID < things[j].ID
+	sort.SliceStable(items, func(i, j int) bool {
+		return items[i].ID < items[j].ID
 	})
 
-	return things
+	page := things.ThingsPage{
+		Things: items,
+		PageMetadata: things.PageMetadata{
+			Total:  trm.counter,
+			Offset: offset,
+			Limit:  limit,
+		},
+	}
+
+	return page
+}
+
+func (trm *thingRepositoryMock) RetrieveByChannel(owner, chanID string, offset, limit uint64) things.ThingsPage {
+	trm.mu.Lock()
+	defer trm.mu.Unlock()
+
+	items := make([]things.Thing, 0)
+
+	if offset < 0 || limit <= 0 {
+		return things.ThingsPage{}
+	}
+
+	first := uint64(offset) + 1
+	last := first + uint64(limit)
+
+	ths, ok := trm.tconns[chanID]
+	if !ok {
+		return things.ThingsPage{}
+	}
+
+	for _, v := range ths {
+		id, _ := strconv.ParseUint(v.ID, 10, 64)
+		if id >= first && id < last {
+			items = append(items, v)
+		}
+	}
+
+	sort.SliceStable(items, func(i, j int) bool {
+		return items[i].ID < items[j].ID
+	})
+
+	page := things.ThingsPage{
+		Things: items,
+		PageMetadata: things.PageMetadata{
+			Total:  trm.counter,
+			Offset: offset,
+			Limit:  limit,
+		},
+	}
+
+	return page
 }
 
 func (trm *thingRepositoryMock) Remove(owner, id string) error {
+	trm.mu.Lock()
+	defer trm.mu.Unlock()
 	delete(trm.things, key(owner, id))
 	return nil
 }
 
 func (trm *thingRepositoryMock) RetrieveByKey(key string) (string, error) {
+	trm.mu.Lock()
+	defer trm.mu.Unlock()
+
 	for _, thing := range trm.things {
 		if thing.Key == key {
 			return thing.ID, nil
@@ -106,6 +182,27 @@ func (trm *thingRepositoryMock) RetrieveByKey(key string) (string, error) {
 	}
 
 	return "", things.ErrNotFound
+}
+
+func (trm *thingRepositoryMock) connect(conn Connection) {
+	trm.mu.Lock()
+	defer trm.mu.Unlock()
+
+	if _, ok := trm.tconns[conn.chanID]; !ok {
+		trm.tconns[conn.chanID] = make(map[string]things.Thing)
+	}
+	trm.tconns[conn.chanID][conn.thing.ID] = conn.thing
+}
+
+func (trm *thingRepositoryMock) disconnect(conn Connection) {
+	trm.mu.Lock()
+	defer trm.mu.Unlock()
+
+	if conn.thing.ID == "" {
+		delete(trm.tconns, conn.chanID)
+		return
+	}
+	delete(trm.tconns[conn.chanID], conn.thing.ID)
 }
 
 type thingCacheMock struct {

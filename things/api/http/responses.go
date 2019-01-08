@@ -19,10 +19,10 @@ var (
 	_ mainflux.Response = (*removeRes)(nil)
 	_ mainflux.Response = (*thingRes)(nil)
 	_ mainflux.Response = (*viewThingRes)(nil)
-	_ mainflux.Response = (*listThingsRes)(nil)
+	_ mainflux.Response = (*thingsPageRes)(nil)
 	_ mainflux.Response = (*channelRes)(nil)
 	_ mainflux.Response = (*viewChannelRes)(nil)
-	_ mainflux.Response = (*listChannelsRes)(nil)
+	_ mainflux.Response = (*channelsPageRes)(nil)
 	_ mainflux.Response = (*connectionRes)(nil)
 	_ mainflux.Response = (*disconnectionRes)(nil)
 )
@@ -107,19 +107,20 @@ func (res viewThingRes) Empty() bool {
 	return false
 }
 
-type listThingsRes struct {
+type thingsPageRes struct {
+	pageRes
 	Things []viewThingRes `json:"things"`
 }
 
-func (res listThingsRes) Code() int {
+func (res thingsPageRes) Code() int {
 	return http.StatusOK
 }
 
-func (res listThingsRes) Headers() map[string]string {
+func (res thingsPageRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res listThingsRes) Empty() bool {
+func (res thingsPageRes) Empty() bool {
 	return false
 }
 
@@ -170,19 +171,20 @@ func (res viewChannelRes) Empty() bool {
 	return false
 }
 
-type listChannelsRes struct {
+type channelsPageRes struct {
+	pageRes
 	Channels []viewChannelRes `json:"channels"`
 }
 
-func (res listChannelsRes) Code() int {
+func (res channelsPageRes) Code() int {
 	return http.StatusOK
 }
 
-func (res listChannelsRes) Headers() map[string]string {
+func (res channelsPageRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res listChannelsRes) Empty() bool {
+func (res channelsPageRes) Empty() bool {
 	return false
 }
 
@@ -212,4 +214,10 @@ func (res disconnectionRes) Headers() map[string]string {
 
 func (res disconnectionRes) Empty() bool {
 	return true
+}
+
+type pageRes struct {
+	Total  uint64 `json:"total"`
+	Offset uint64 `json:"offset"`
+	Limit  uint64 `json:"limit"`
 }

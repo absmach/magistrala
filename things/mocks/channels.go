@@ -17,19 +17,31 @@ import (
 	"github.com/mainflux/mainflux/things"
 )
 
+// Connection represents connection between channel and thing that is used for
+// testing purposes.
+type Connection struct {
+	chanID    string
+	thing     things.Thing
+	connected bool
+}
+
 var _ things.ChannelRepository = (*channelRepositoryMock)(nil)
 
 type channelRepositoryMock struct {
 	mu       sync.Mutex
 	counter  uint64
 	channels map[string]things.Channel
+	tconns   chan Connection                      // used for syncronization with thing repo
+	cconns   map[string]map[string]things.Channel // used to track connections
 	things   things.ThingRepository
 }
 
 // NewChannelRepository creates in-memory channel repository.
-func NewChannelRepository(repo things.ThingRepository) things.ChannelRepository {
+func NewChannelRepository(repo things.ThingRepository, tconns chan Connection) things.ChannelRepository {
 	return &channelRepositoryMock{
 		channels: make(map[string]things.Channel),
+		tconns:   tconns,
+		cconns:   make(map[string]map[string]things.Channel),
 		things:   repo,
 	}
 }
@@ -67,11 +79,11 @@ func (crm *channelRepositoryMock) RetrieveByID(owner, id string) (things.Channel
 	return things.Channel{}, things.ErrNotFound
 }
 
-func (crm *channelRepositoryMock) RetrieveAll(owner string, offset, limit uint64) []things.Channel {
+func (crm *channelRepositoryMock) RetrieveAll(owner string, offset, limit uint64) things.ChannelsPage {
 	channels := make([]things.Channel, 0)
 
 	if offset < 0 || limit <= 0 {
-		return channels
+		return things.ChannelsPage{}
 	}
 
 	first := uint64(offset) + 1
@@ -91,11 +103,61 @@ func (crm *channelRepositoryMock) RetrieveAll(owner string, offset, limit uint64
 		return channels[i].ID < channels[j].ID
 	})
 
-	return channels
+	page := things.ChannelsPage{
+		Channels: channels,
+		PageMetadata: things.PageMetadata{
+			Total:  crm.counter,
+			Offset: offset,
+			Limit:  limit,
+		},
+	}
+
+	return page
+}
+
+func (crm *channelRepositoryMock) RetrieveByThing(owner, thingID string, offset, limit uint64) things.ChannelsPage {
+	channels := make([]things.Channel, 0)
+
+	if offset < 0 || limit <= 0 {
+		return things.ChannelsPage{}
+	}
+
+	first := uint64(offset) + 1
+	last := first + uint64(limit)
+
+	for _, v := range crm.cconns[thingID] {
+		id, _ := strconv.ParseUint(v.ID, 10, 64)
+		if id >= first && id < last {
+			channels = append(channels, v)
+		}
+	}
+
+	sort.SliceStable(channels, func(i, j int) bool {
+		return channels[i].ID < channels[j].ID
+	})
+
+	page := things.ChannelsPage{
+		Channels: channels,
+		PageMetadata: things.PageMetadata{
+			Total:  crm.counter,
+			Offset: offset,
+			Limit:  limit,
+		},
+	}
+
+	return page
 }
 
 func (crm *channelRepositoryMock) Remove(owner, id string) error {
 	delete(crm.channels, key(owner, id))
+	// delete channel from any thing list
+	for thk := range crm.cconns {
+		delete(crm.cconns[thk], key(owner, id))
+	}
+	crm.tconns <- Connection{
+		chanID:    id,
+		connected: false,
+	}
 	return nil
 }
 
@@ -109,50 +171,53 @@ func (crm *channelRepositoryMock) Connect(owner, chanID, thingID string) error {
 	if err != nil {
 		return err
 	}
-	channel.Things = append(channel.Things, thing)
-	return crm.Update(channel)
+
+	crm.tconns <- Connection{
+		chanID:    chanID,
+		thing:     thing,
+		connected: true,
+	}
+	if _, ok := crm.cconns[thingID]; !ok {
+		crm.cconns[thingID] = make(map[string]things.Channel)
+	}
+	crm.cconns[thingID][chanID] = channel
+	return nil
 }
 
 func (crm *channelRepositoryMock) Disconnect(owner, chanID, thingID string) error {
-	channel, err := crm.RetrieveByID(owner, chanID)
-	if err != nil {
-		return err
+	if _, ok := crm.cconns[thingID]; !ok {
+		return things.ErrNotFound
 	}
 
-	for _, t := range channel.Things {
-		if t.ID == thingID {
-			connected := make([]things.Thing, len(channel.Things)-1)
-			for _, thing := range channel.Things {
-				if thing.ID != thingID {
-					connected = append(connected, thing)
-				}
-			}
-
-			channel.Things = connected
-			return crm.Update(channel)
-		}
+	if _, ok := crm.cconns[thingID][chanID]; !ok {
+		return things.ErrNotFound
 	}
 
-	return things.ErrNotFound
+	crm.tconns <- Connection{
+		chanID:    chanID,
+		thing:     things.Thing{ID: thingID, Owner: owner},
+		connected: false,
+	}
+	delete(crm.cconns[thingID], chanID)
+	return nil
 }
 
-func (crm *channelRepositoryMock) HasThing(chanID, key string) (string, error) {
-	// This obscure way to examine map keys is enforced by the key structure
-	// itself (see mocks/commons.go).
-	suffix := fmt.Sprintf("-%s", chanID)
-
-	for k, v := range crm.channels {
-		if strings.HasSuffix(k, suffix) {
-			for _, t := range v.Things {
-				if t.Key == key {
-					return t.ID, nil
-				}
-			}
-			break
-		}
+func (crm *channelRepositoryMock) HasThing(chanID, token string) (string, error) {
+	tid, err := crm.things.RetrieveByKey(token)
+	if err != nil {
+		return "", things.ErrNotFound
 	}
 
-	return "", things.ErrNotFound
+	chans, ok := crm.cconns[tid]
+	if !ok {
+		return "", things.ErrNotFound
+	}
+
+	if _, ok := chans[chanID]; !ok {
+		return "", things.ErrNotFound
+	}
+
+	return tid, nil
 }
 
 type channelCacheMock struct {

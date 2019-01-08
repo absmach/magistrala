@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/mainflux/mainflux/sdk/go"
+	sdk "github.com/mainflux/mainflux/sdk/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -40,8 +40,9 @@ var (
 
 func newThingsService(tokens map[string]string) things.Service {
 	users := mocks.NewUsersService(tokens)
-	thingsRepo := mocks.NewThingRepository()
-	channelsRepo := mocks.NewChannelRepository(thingsRepo)
+	conns := make(chan mocks.Connection)
+	thingsRepo := mocks.NewThingRepository(conns)
+	channelsRepo := mocks.NewChannelRepository(thingsRepo, conns)
 	chanCache := mocks.NewChannelCache()
 	thingCache := mocks.NewThingCache()
 	idp := mocks.NewIdentityProvider()
@@ -260,9 +261,120 @@ func TestThings(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		respThs, err := mainfluxSDK.Things(tc.token, tc.offset, tc.limit)
+		page, err := mainfluxSDK.Things(tc.token, tc.offset, tc.limit)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
-		assert.Equal(t, tc.response, respThs, fmt.Sprintf("%s: expected response channel %s, got %s", tc.desc, tc.response, respThs))
+		assert.Equal(t, tc.response, page.Things, fmt.Sprintf("%s: expected response channel %s, got %s", tc.desc, tc.response, page.Things))
+	}
+}
+
+func TestThingsByChannel(t *testing.T) {
+	svc := newThingsService(map[string]string{token: email})
+	ts := newThingsServer(svc)
+	defer ts.Close()
+	sdkConf := sdk.Config{
+		BaseURL:           ts.URL,
+		UsersPrefix:       "",
+		ThingsPrefix:      "",
+		HTTPAdapterPrefix: "",
+		MsgContentType:    contentType,
+		TLSVerification:   false,
+	}
+	var things []sdk.Thing
+
+	mainfluxSDK := sdk.NewSDK(sdkConf)
+
+	ch := sdk.Channel{Name: "test_channel"}
+	cid, err := mainfluxSDK.CreateChannel(ch, token)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+
+	for i := 1; i < 101; i++ {
+		th := sdk.Thing{Type: "device", Name: "test_device", Metadata: "test_metadata"}
+		tid, err := mainfluxSDK.CreateThing(th, token)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		th.ID = tid
+		th.Key = fmt.Sprintf("%s%012d", keyPrefix, 2*i+1)
+		err = mainfluxSDK.ConnectThing(tid, cid, token)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		things = append(things, th)
+	}
+
+	cases := []struct {
+		desc     string
+		channel  string
+		token    string
+		offset   uint64
+		limit    uint64
+		err      error
+		response []sdk.Thing
+	}{
+		{
+			desc:     "get a list of things by channel",
+			channel:  cid,
+			token:    token,
+			offset:   0,
+			limit:    5,
+			err:      nil,
+			response: things[0:5],
+		},
+		{
+			desc:     "get a list of things by channel with invalid token",
+			channel:  cid,
+			token:    wrongValue,
+			offset:   0,
+			limit:    5,
+			err:      sdk.ErrUnauthorized,
+			response: nil,
+		},
+		{
+			desc:     "get a list of things by channel with empty token",
+			channel:  cid,
+			token:    "",
+			offset:   0,
+			limit:    5,
+			err:      sdk.ErrUnauthorized,
+			response: nil,
+		},
+		{
+			desc:     "get a list of things by channel with zero limit",
+			channel:  cid,
+			token:    token,
+			offset:   0,
+			limit:    0,
+			err:      sdk.ErrInvalidArgs,
+			response: nil,
+		},
+		{
+			desc:     "get a list of things by channel with limit greater than max",
+			channel:  cid,
+			token:    token,
+			offset:   0,
+			limit:    110,
+			err:      sdk.ErrInvalidArgs,
+			response: nil,
+		},
+		{
+			desc:     "get a list of things by channel with offset greater than max",
+			channel:  cid,
+			token:    token,
+			offset:   110,
+			limit:    5,
+			err:      nil,
+			response: nil,
+		},
+		{
+			desc:     "get a list of things by channel with invalid args (zero limit) and invalid token",
+			channel:  cid,
+			token:    wrongValue,
+			offset:   0,
+			limit:    0,
+			err:      sdk.ErrInvalidArgs,
+			response: nil,
+		},
+	}
+	for _, tc := range cases {
+		page, err := mainfluxSDK.ThingsByChannel(tc.token, tc.channel, tc.offset, tc.limit)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
+		assert.Equal(t, tc.response, page.Things, fmt.Sprintf("%s: expected response channel %s, got %s", tc.desc, tc.response, page.Things))
 	}
 }
 

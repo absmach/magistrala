@@ -130,9 +130,8 @@ func TestSingleChannelRetrieval(t *testing.T) {
 	th.ID, _ = thingRepo.Save(th)
 
 	c := things.Channel{
-		ID:     uuid.New().ID(),
-		Owner:  email,
-		Things: []things.Thing{th},
+		ID:    uuid.New().ID(),
+		Owner: email,
 	}
 
 	c.ID, _ = chanRepo.Save(c)
@@ -207,8 +206,76 @@ func TestMultiChannelRetrieval(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		result := chanRepo.RetrieveAll(tc.owner, tc.offset, tc.limit)
-		size := uint64(len(result))
+		page := chanRepo.RetrieveAll(tc.owner, tc.offset, tc.limit)
+		size := uint64(len(page.Channels))
+		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
+	}
+}
+
+func TestMultiChannelRetrievalByThing(t *testing.T) {
+	email := "channel-multi-retrieval-by-thing@example.com"
+	idp := uuid.New()
+	chanRepo := postgres.NewChannelRepository(db, testLog)
+	thingRepo := postgres.NewThingRepository(db, testLog)
+
+	tid, err := thingRepo.Save(things.Thing{
+		ID:    idp.ID(),
+		Owner: email,
+		Type:  "device",
+	})
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	n := uint64(10)
+	for i := uint64(0); i < n; i++ {
+		c := things.Channel{
+			ID:    idp.ID(),
+			Owner: email,
+		}
+		cid, err := chanRepo.Save(c)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		err = chanRepo.Connect(email, cid, tid)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	}
+
+	cases := map[string]struct {
+		owner  string
+		thing  string
+		offset uint64
+		limit  uint64
+		size   uint64
+	}{
+		"retrieve all channels by thing with existing owner": {
+			owner:  email,
+			thing:  tid,
+			offset: 0,
+			limit:  n,
+			size:   n,
+		},
+		"retrieve subset of channels by thing with existing owner": {
+			owner:  email,
+			thing:  tid,
+			offset: n / 2,
+			limit:  n,
+			size:   n / 2,
+		},
+		"retrieve channels by thing with non-existing owner": {
+			owner:  wrongValue,
+			thing:  tid,
+			offset: n / 2,
+			limit:  n,
+			size:   0,
+		},
+		"retrieve channels by non-existent thing": {
+			owner:  email,
+			thing:  "non-existent",
+			offset: 0,
+			limit:  n,
+			size:   0,
+		},
+	}
+
+	for desc, tc := range cases {
+		page := chanRepo.RetrieveByThing(tc.owner, tc.thing, tc.offset, tc.limit)
+		size := uint64(len(page.Channels))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 	}
 }

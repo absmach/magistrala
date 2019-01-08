@@ -13,7 +13,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"net/url"
 	"strconv"
 
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -23,7 +22,14 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-const contentType = "application/json"
+const (
+	contentType = "application/json"
+	offset      = "offset"
+	limit       = "limit"
+
+	defOffset = 0
+	defLimit  = 10
+)
 
 var (
 	errUnsupportedContentType = errors.New("unsupported content type")
@@ -66,6 +72,13 @@ func MakeHandler(svc things.Service) http.Handler {
 		opts...,
 	))
 
+	r.Get("/things/:id/channels", kithttp.NewServer(
+		listChannelsByThingEndpoint(svc),
+		decodeListByConnection,
+		encodeResponse,
+		opts...,
+	))
+
 	r.Get("/things", kithttp.NewServer(
 		listThingsEndpoint(svc),
 		decodeList,
@@ -97,6 +110,13 @@ func MakeHandler(svc things.Service) http.Handler {
 	r.Get("/channels/:id", kithttp.NewServer(
 		viewChannelEndpoint(svc),
 		decodeView,
+		encodeResponse,
+		opts...,
+	))
+
+	r.Get("/channels/:id/things", kithttp.NewServer(
+		listThingsByChannelEndpoint(svc),
+		decodeListByConnection,
 		encodeResponse,
 		opts...,
 	))
@@ -196,37 +216,41 @@ func decodeView(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
-	q, err := url.ParseQuery(r.URL.RawQuery)
+	o, err := readUintQuery(r, offset, defOffset)
 	if err != nil {
-		return nil, errInvalidQueryParams
-	}
-	offset := uint64(0)
-	limit := uint64(10)
-
-	off, lmt := q["offset"], q["limit"]
-
-	if len(off) > 1 || len(lmt) > 1 {
-		return nil, errInvalidQueryParams
+		return nil, err
 	}
 
-	if len(off) == 1 {
-		offset, err = strconv.ParseUint(off[0], 10, 64)
-		if err != nil {
-			return nil, errInvalidQueryParams
-		}
-	}
-
-	if len(lmt) == 1 {
-		limit, err = strconv.ParseUint(lmt[0], 10, 64)
-		if err != nil {
-			return nil, errInvalidQueryParams
-		}
+	l, err := readUintQuery(r, limit, defLimit)
+	if err != nil {
+		return nil, err
 	}
 
 	req := listResourcesReq{
 		key:    r.Header.Get("Authorization"),
-		offset: offset,
-		limit:  limit,
+		offset: o,
+		limit:  l,
+	}
+
+	return req, nil
+}
+
+func decodeListByConnection(_ context.Context, r *http.Request) (interface{}, error) {
+	o, err := readUintQuery(r, offset, defOffset)
+	if err != nil {
+		return nil, err
+	}
+
+	l, err := readUintQuery(r, limit, defLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	req := listByConnectionReq{
+		key:    r.Header.Get("Authorization"),
+		id:     bone.GetValue(r, "id"),
+		offset: o,
+		limit:  l,
 	}
 
 	return req, nil
@@ -288,4 +312,23 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}
+}
+
+func readUintQuery(r *http.Request, key string, def uint64) (uint64, error) {
+	vals := bone.GetQuery(r, key)
+	if len(vals) > 1 {
+		return 0, errInvalidQueryParams
+	}
+
+	if len(vals) == 0 {
+		return def, nil
+	}
+
+	strval := vals[0]
+	val, err := strconv.ParseUint(strval, 10, 64)
+	if err != nil {
+		return 0, errInvalidQueryParams
+	}
+
+	return val, nil
 }

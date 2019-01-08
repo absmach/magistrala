@@ -44,7 +44,12 @@ type Service interface {
 
 	// ListThings retrieves data about subset of things that belongs to the
 	// user identified by the provided key.
-	ListThings(string, uint64, uint64) ([]Thing, error)
+	ListThings(string, uint64, uint64) (ThingsPage, error)
+
+	// ListThingsByChannel retrieves data about subset of things that are
+	// connected to specified channel and belong to the user identified by
+	// the provided key.
+	ListThingsByChannel(string, string, uint64, uint64) (ThingsPage, error)
 
 	// RemoveThing removes the thing identified with the provided ID, that
 	// belongs to the user identified by the provided key.
@@ -63,7 +68,12 @@ type Service interface {
 
 	// ListChannels retrieves data about subset of channels that belongs to the
 	// user identified by the provided key.
-	ListChannels(string, uint64, uint64) ([]Channel, error)
+	ListChannels(string, uint64, uint64) (ChannelsPage, error)
+
+	// ListChannelsByThing retrieves data about subset of channels that have
+	// specified thing connected to them and belong to the user identified by
+	// the provided key.
+	ListChannelsByThing(string, string, uint64, uint64) (ChannelsPage, error)
 
 	// RemoveChannel removes the thing identified by the provided ID, that
 	// belongs to the user identified by the provided key.
@@ -82,6 +92,13 @@ type Service interface {
 
 	// Identify returns thing ID for given thing key.
 	Identify(string) (string, error)
+}
+
+// PageMetadata contains page metadata that helps navigation.
+type PageMetadata struct {
+	Total  uint64
+	Offset uint64
+	Limit  uint64
 }
 
 var _ Service = (*thingsService)(nil)
@@ -163,16 +180,28 @@ func (ts *thingsService) ViewThing(key, id string) (Thing, error) {
 	return ts.things.RetrieveByID(res.GetValue(), id)
 }
 
-func (ts *thingsService) ListThings(key string, offset, limit uint64) ([]Thing, error) {
+func (ts *thingsService) ListThings(key string, offset, limit uint64) (ThingsPage, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
 	res, err := ts.users.Identify(ctx, &mainflux.Token{Value: key})
 	if err != nil {
-		return nil, ErrUnauthorizedAccess
+		return ThingsPage{}, ErrUnauthorizedAccess
 	}
 
 	return ts.things.RetrieveAll(res.GetValue(), offset, limit), nil
+}
+
+func (ts *thingsService) ListThingsByChannel(key, channel string, offset, limit uint64) (ThingsPage, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	res, err := ts.users.Identify(ctx, &mainflux.Token{Value: key})
+	if err != nil {
+		return ThingsPage{}, ErrUnauthorizedAccess
+	}
+
+	return ts.things.RetrieveByChannel(res.GetValue(), channel, offset, limit), nil
 }
 
 func (ts *thingsService) RemoveThing(key string, id string) error {
@@ -234,16 +263,28 @@ func (ts *thingsService) ViewChannel(key, id string) (Channel, error) {
 	return ts.channels.RetrieveByID(res.GetValue(), id)
 }
 
-func (ts *thingsService) ListChannels(key string, offset, limit uint64) ([]Channel, error) {
+func (ts *thingsService) ListChannels(key string, offset, limit uint64) (ChannelsPage, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
 	res, err := ts.users.Identify(ctx, &mainflux.Token{Value: key})
 	if err != nil {
-		return nil, ErrUnauthorizedAccess
+		return ChannelsPage{}, ErrUnauthorizedAccess
 	}
 
 	return ts.channels.RetrieveAll(res.GetValue(), offset, limit), nil
+}
+
+func (ts *thingsService) ListChannelsByThing(key, thing string, offset, limit uint64) (ChannelsPage, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	res, err := ts.users.Identify(ctx, &mainflux.Token{Value: key})
+	if err != nil {
+		return ChannelsPage{}, ErrUnauthorizedAccess
+	}
+
+	return ts.channels.RetrieveByThing(res.GetValue(), thing, offset, limit), nil
 }
 
 func (ts *thingsService) RemoveChannel(key, id string) error {

@@ -11,12 +11,18 @@ type tokenRes struct {
 	Token string `json:"token,omitempty"`
 }
 
-type listThingsRes struct {
+type thingsPageRes struct {
 	Things []Thing `json:"things,omitempty"`
+	Total  uint64  `json:"total"`
+	Offset uint64  `json:"offset"`
+	Limit  uint64  `json:"limit"`
 }
 
-type listChannelsRes struct {
+type channelsPageRes struct {
 	Channels []Channel `json:"channels,omitempty"`
+	Total    uint64    `json:"total"`
+	Offset   uint64    `json:"offset"`
+	Limit    uint64    `json:"limit"`
 }
 
 type listMessagesRes struct {

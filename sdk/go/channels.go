@@ -50,43 +50,92 @@ func (sdk mfSDK) CreateChannel(channel Channel, token string) (string, error) {
 	return id, nil
 }
 
-func (sdk mfSDK) Channels(token string, offset, limit uint64) ([]Channel, error) {
+func (sdk mfSDK) Channels(token string, offset, limit uint64) (ChannelsPage, error) {
 	endpoint := fmt.Sprintf("%s?offset=%d&limit=%d", channelsEndpoint, offset, limit)
 	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return nil, err
+		return ChannelsPage{}, err
 	}
 
 	resp, err := sdk.sendRequest(req, token, string(CTJSON))
 	if err != nil {
-		return nil, err
+		return ChannelsPage{}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return ChannelsPage{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		switch resp.StatusCode {
 		case http.StatusBadRequest:
-			return nil, ErrInvalidArgs
+			return ChannelsPage{}, ErrInvalidArgs
 		case http.StatusForbidden:
-			return nil, ErrUnauthorized
+			return ChannelsPage{}, ErrUnauthorized
 		default:
-			return nil, ErrFetchFailed
+			return ChannelsPage{}, ErrFetchFailed
 		}
 	}
 
-	var l listChannelsRes
-	if err := json.Unmarshal(body, &l); err != nil {
-		return nil, err
+	var p channelsPageRes
+	if err := json.Unmarshal(body, &p); err != nil {
+		return ChannelsPage{}, err
 	}
 
-	return l.Channels, nil
+	return ChannelsPage{
+		Channels: p.Channels,
+		Total:    p.Total,
+		Offset:   p.Offset,
+		Limit:    p.Limit,
+	}, nil
+}
+
+func (sdk mfSDK) ChannelsByThing(token, thingID string, offset, limit uint64) (ChannelsPage, error) {
+	endpoint := fmt.Sprintf("things/%s/channels?offset=%d&limit=%d", thingID, offset, limit)
+	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return ChannelsPage{}, err
+	}
+
+	resp, err := sdk.sendRequest(req, token, string(CTJSON))
+	if err != nil {
+		return ChannelsPage{}, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return ChannelsPage{}, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		switch resp.StatusCode {
+		case http.StatusBadRequest:
+			return ChannelsPage{}, ErrInvalidArgs
+		case http.StatusForbidden:
+			return ChannelsPage{}, ErrUnauthorized
+		default:
+			return ChannelsPage{}, ErrFetchFailed
+		}
+	}
+
+	var p channelsPageRes
+	if err := json.Unmarshal(body, &p); err != nil {
+		return ChannelsPage{}, err
+	}
+
+	return ChannelsPage{
+		Channels: p.Channels,
+		Total:    p.Total,
+		Offset:   p.Offset,
+		Limit:    p.Limit,
+	}, nil
 }
 
 func (sdk mfSDK) Channel(id, token string) (Channel, error) {

@@ -61,13 +61,22 @@ func (ms *metricsMiddleware) ViewThing(key, id string) (things.Thing, error) {
 	return ms.svc.ViewThing(key, id)
 }
 
-func (ms *metricsMiddleware) ListThings(key string, offset, limit uint64) ([]things.Thing, error) {
+func (ms *metricsMiddleware) ListThings(key string, offset, limit uint64) (things.ThingsPage, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_things").Add(1)
 		ms.latency.With("method", "list_things").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
 	return ms.svc.ListThings(key, offset, limit)
+}
+
+func (ms *metricsMiddleware) ListThingsByChannel(key, id string, offset, limit uint64) (things.ThingsPage, error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "list_things_by_channel").Add(1)
+		ms.latency.With("method", "list_things_by_channel").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.ListThingsByChannel(key, id, offset, limit)
 }
 
 func (ms *metricsMiddleware) RemoveThing(key, id string) error {
@@ -106,13 +115,22 @@ func (ms *metricsMiddleware) ViewChannel(key, id string) (things.Channel, error)
 	return ms.svc.ViewChannel(key, id)
 }
 
-func (ms *metricsMiddleware) ListChannels(key string, offset, limit uint64) ([]things.Channel, error) {
+func (ms *metricsMiddleware) ListChannels(key string, offset, limit uint64) (things.ChannelsPage, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_channels").Add(1)
 		ms.latency.With("method", "list_channels").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
 	return ms.svc.ListChannels(key, offset, limit)
+}
+
+func (ms *metricsMiddleware) ListChannelsByThing(key, id string, offset, limit uint64) (things.ChannelsPage, error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "list_channels_by_thing").Add(1)
+		ms.latency.With("method", "list_channels_by_thing").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.ListChannelsByThing(key, id, offset, limit)
 }
 
 func (ms *metricsMiddleware) RemoveChannel(key, id string) error {

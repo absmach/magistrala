@@ -100,38 +100,17 @@ func (cr channelRepository) RetrieveByID(owner, id string) (things.Channel, erro
 		return empty, err
 	}
 
-	q = `SELECT id, name, type, key, metadata FROM things t
-	INNER JOIN connections conn
-	ON t.id = conn.thing_id AND t.owner = conn.thing_owner
-	WHERE conn.channel_id = $1 AND conn.channel_owner = $2`
-
-	rows, err := cr.db.Query(q, id, owner)
-	if err != nil {
-		cr.log.Error(fmt.Sprintf("Failed to retrieve connected due to %s", err))
-		return things.Channel{}, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		c := things.Thing{Owner: owner}
-		if err = rows.Scan(&c.ID, &c.Name, &c.Type, &c.Key, &c.Metadata); err != nil {
-			cr.log.Error(fmt.Sprintf("Failed to read connected thing due to %s", err))
-			return things.Channel{}, err
-		}
-		channel.Things = append(channel.Things, c)
-	}
-
 	return channel, nil
 }
 
-func (cr channelRepository) RetrieveAll(owner string, offset, limit uint64) []things.Channel {
+func (cr channelRepository) RetrieveAll(owner string, offset, limit uint64) things.ChannelsPage {
 	q := `SELECT id, name, metadata FROM channels WHERE owner = $1 ORDER BY id LIMIT $2 OFFSET $3`
 	items := []things.Channel{}
 
 	rows, err := cr.db.Query(q, owner, limit, offset)
 	if err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to retrieve channels due to %s", err))
-		return []things.Channel{}
+		return things.ChannelsPage{}
 	}
 	defer rows.Close()
 
@@ -139,12 +118,78 @@ func (cr channelRepository) RetrieveAll(owner string, offset, limit uint64) []th
 		c := things.Channel{Owner: owner}
 		if err = rows.Scan(&c.ID, &c.Name, &c.Metadata); err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to read retrieved channel due to %s", err))
-			return []things.Channel{}
+			return things.ChannelsPage{}
 		}
 		items = append(items, c)
 	}
 
-	return items
+	q = `SELECT COUNT(*) FROM channels WHERE owner = $1`
+
+	var total uint64
+	if err := cr.db.QueryRow(q, owner).Scan(&total); err != nil {
+		cr.log.Error(fmt.Sprintf("Failed to count channels due to %s", err))
+		return things.ChannelsPage{}
+	}
+
+	page := things.ChannelsPage{
+		Channels: items,
+		PageMetadata: things.PageMetadata{
+			Total:  total,
+			Offset: offset,
+			Limit:  limit,
+		},
+	}
+
+	return page
+}
+
+func (cr channelRepository) RetrieveByThing(owner, thing string, offset, limit uint64) things.ChannelsPage {
+	q := `SELECT id, name, metadata
+	      FROM channels ch
+	      INNER JOIN connections co
+		  ON ch.id = co.channel_id
+		  WHERE ch.owner = $1 AND co.thing_id = $2
+		  ORDER BY ch.id
+		  LIMIT $3
+		  OFFSET $4`
+	items := []things.Channel{}
+
+	rows, err := cr.db.Query(q, owner, thing, limit, offset)
+	if err != nil {
+		cr.log.Error(fmt.Sprintf("Failed to retrieve channels due to %s", err))
+		return things.ChannelsPage{}
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		c := things.Channel{Owner: owner}
+		if err := rows.Scan(&c.ID, &c.Name, &c.Metadata); err != nil {
+			cr.log.Error(fmt.Sprintf("Failed to read retrieved channel due to %s", err))
+			return things.ChannelsPage{}
+		}
+		items = append(items, c)
+	}
+
+	q = `SELECT COUNT(*)
+	     FROM channels ch
+	     INNER JOIN connections co
+	     ON ch.id = co.channel_id
+	     WHERE ch.owner = $1 AND co.thing_id = $2`
+
+	var total uint64
+	if err := cr.db.QueryRow(q, owner, thing).Scan(&total); err != nil {
+		cr.log.Error(fmt.Sprintf("Failed to count channels due to %s", err))
+		return things.ChannelsPage{}
+	}
+
+	return things.ChannelsPage{
+		Channels: items,
+		PageMetadata: things.PageMetadata{
+			Total:  total,
+			Offset: offset,
+			Limit:  limit,
+		},
+	}
 }
 
 func (cr channelRepository) Remove(owner, id string) error {

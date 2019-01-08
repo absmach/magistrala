@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/mainflux/mainflux/sdk/go"
+	sdk "github.com/mainflux/mainflux/sdk/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -223,9 +223,117 @@ func TestChannels(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		respChs, err := mainfluxSDK.Channels(tc.token, tc.offset, tc.limit)
+		page, err := mainfluxSDK.Channels(tc.token, tc.offset, tc.limit)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
-		assert.Equal(t, tc.response, respChs, fmt.Sprintf("%s: expected response channel %s, got %s", tc.desc, tc.response, respChs))
+		assert.Equal(t, tc.response, page.Channels, fmt.Sprintf("%s: expected response channel %s, got %s", tc.desc, tc.response, page.Channels))
+	}
+}
+
+func TestChannelsByThing(t *testing.T) {
+	svc := newThingsService(map[string]string{token: email})
+	ts := newThingsServer(svc)
+	defer ts.Close()
+	sdkConf := sdk.Config{
+		BaseURL:           ts.URL,
+		UsersPrefix:       "",
+		ThingsPrefix:      "",
+		HTTPAdapterPrefix: "",
+		MsgContentType:    contentType,
+		TLSVerification:   false,
+	}
+	var channels []sdk.Channel
+	mainfluxSDK := sdk.NewSDK(sdkConf)
+
+	th := sdk.Thing{Type: "device", Name: "test_device"}
+	tid, err := mainfluxSDK.CreateThing(th, token)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+
+	for i := 1; i < 101; i++ {
+		ch := sdk.Channel{ID: strconv.Itoa(i), Name: "test"}
+		cid, err := mainfluxSDK.CreateChannel(ch, token)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		err = mainfluxSDK.ConnectThing(tid, cid, token)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		channels = append(channels, ch)
+	}
+
+	cases := []struct {
+		desc     string
+		thing    string
+		token    string
+		offset   uint64
+		limit    uint64
+		err      error
+		response []sdk.Channel
+	}{
+		{
+			desc:     "get a list of channels by thing",
+			thing:    tid,
+			token:    token,
+			offset:   0,
+			limit:    5,
+			err:      nil,
+			response: channels[0:5],
+		},
+		{
+			desc:     "get a list of channels by thing with invalid token",
+			thing:    tid,
+			token:    wrongValue,
+			offset:   0,
+			limit:    5,
+			err:      sdk.ErrUnauthorized,
+			response: nil,
+		},
+		{
+			desc:     "get a list of channels by thing with empty token",
+			thing:    tid,
+			token:    "",
+			offset:   0,
+			limit:    5,
+			err:      sdk.ErrUnauthorized,
+			response: nil,
+		},
+		{
+			desc:     "get a list of channels by thing with zero limit",
+			thing:    tid,
+			token:    token,
+			offset:   0,
+			limit:    0,
+			err:      sdk.ErrInvalidArgs,
+			response: nil,
+		},
+		{
+			desc:     "get a list of channels by thing with limit greater than max",
+			thing:    tid,
+			token:    token,
+			offset:   0,
+			limit:    110,
+			err:      sdk.ErrInvalidArgs,
+			response: nil,
+		},
+		{
+			desc:     "get a list of channels by thing with offset greater than max",
+			thing:    tid,
+			token:    token,
+			offset:   110,
+			limit:    5,
+			err:      nil,
+			response: nil,
+		},
+		{
+			desc:     "get a list of channels by thing with invalid args (zero limit) and invalid token",
+			thing:    tid,
+			token:    wrongValue,
+			offset:   0,
+			limit:    0,
+			err:      sdk.ErrInvalidArgs,
+			response: nil,
+		},
+	}
+	for _, tc := range cases {
+		page, err := mainfluxSDK.ChannelsByThing(tc.token, tc.thing, tc.offset, tc.limit)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
+		assert.Equal(t, tc.response, page.Channels, fmt.Sprintf("%s: expected response channel %s, got %s", tc.desc, tc.response, page.Channels))
 	}
 }
 

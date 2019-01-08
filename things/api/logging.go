@@ -68,7 +68,7 @@ func (lm *loggingMiddleware) ViewThing(key, id string) (thing things.Thing, err 
 	return lm.svc.ViewThing(key, id)
 }
 
-func (lm *loggingMiddleware) ListThings(key string, offset, limit uint64) (things []things.Thing, err error) {
+func (lm *loggingMiddleware) ListThings(key string, offset, limit uint64) (_ things.ThingsPage, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list_things for key %s took %s to complete", key, time.Since(begin))
 		if err != nil {
@@ -79,6 +79,18 @@ func (lm *loggingMiddleware) ListThings(key string, offset, limit uint64) (thing
 	}(time.Now())
 
 	return lm.svc.ListThings(key, offset, limit)
+}
+
+func (lm *loggingMiddleware) ListThingsByChannel(key, id string, offset, limit uint64) (_ things.ThingsPage, err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method list_things_by_channel for channel %s took %s to complete", id, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s", message, err))
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.ListThingsByChannel(key, id, offset, limit)
 }
 
 func (lm *loggingMiddleware) RemoveThing(key, id string) (err error) {
@@ -133,7 +145,7 @@ func (lm *loggingMiddleware) ViewChannel(key, id string) (channel things.Channel
 	return lm.svc.ViewChannel(key, id)
 }
 
-func (lm *loggingMiddleware) ListChannels(key string, offset, limit uint64) (channels []things.Channel, err error) {
+func (lm *loggingMiddleware) ListChannels(key string, offset, limit uint64) (_ things.ChannelsPage, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list_channels for key %s took %s to complete", key, time.Since(begin))
 		if err != nil {
@@ -144,6 +156,18 @@ func (lm *loggingMiddleware) ListChannels(key string, offset, limit uint64) (cha
 	}(time.Now())
 
 	return lm.svc.ListChannels(key, offset, limit)
+}
+
+func (lm *loggingMiddleware) ListChannelsByThing(key, id string, offset, limit uint64) (_ things.ChannelsPage, err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method list_channels_by_thing for thing %s took %s to complete", id, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s", message, err))
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.ListChannelsByThing(key, id, offset, limit)
 }
 
 func (lm *loggingMiddleware) RemoveChannel(key, id string) (err error) {

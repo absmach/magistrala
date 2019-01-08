@@ -134,6 +134,29 @@ func (req *listResourcesReq) validate() error {
 	return nil
 }
 
+type listByConnectionReq struct {
+	key    string
+	id     string
+	offset uint64
+	limit  uint64
+}
+
+func (req listByConnectionReq) validate() error {
+	if req.key == "" {
+		return things.ErrUnauthorizedAccess
+	}
+
+	if req.id == "" {
+		return things.ErrMalformedEntity
+	}
+
+	if req.limit == 0 || req.limit > maxLimitSize {
+		return things.ErrMalformedEntity
+	}
+
+	return nil
+}
+
 type connectionReq struct {
 	key     string
 	chanID  string

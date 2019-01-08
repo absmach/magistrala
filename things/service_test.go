@@ -10,10 +10,12 @@ package things_test
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/mainflux/mainflux/things"
 	"github.com/mainflux/mainflux/things/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -25,13 +27,14 @@ const (
 
 var (
 	thing   = things.Thing{Type: "app", Name: "test"}
-	channel = things.Channel{Name: "test", Things: []things.Thing{}}
+	channel = things.Channel{Name: "test"}
 )
 
 func newService(tokens map[string]string) things.Service {
 	users := mocks.NewUsersService(tokens)
-	thingsRepo := mocks.NewThingRepository()
-	channelsRepo := mocks.NewChannelRepository(thingsRepo)
+	conns := make(chan mocks.Connection)
+	thingsRepo := mocks.NewThingRepository(conns)
+	channelsRepo := mocks.NewChannelRepository(thingsRepo, conns)
 	chanCache := mocks.NewChannelCache()
 	thingCache := mocks.NewThingCache()
 	idp := mocks.NewIdentityProvider()
@@ -215,8 +218,97 @@ func TestListThings(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		ts, err := svc.ListThings(tc.key, tc.offset, tc.limit)
-		size := uint64(len(ts))
+		page, err := svc.ListThings(tc.key, tc.offset, tc.limit)
+		size := uint64(len(page.Things))
+		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+	}
+}
+
+func TestListThingsByChannel(t *testing.T) {
+	svc := newService(map[string]string{token: email})
+
+	sch, err := svc.CreateChannel(token, channel)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	n := uint64(10)
+	for i := uint64(0); i < n; i++ {
+		sth, err := svc.AddThing(token, thing)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		svc.Connect(token, sch.ID, sth.ID)
+	}
+
+	// Wait for things and channels to connect
+	time.Sleep(time.Second)
+
+	cases := map[string]struct {
+		key     string
+		channel string
+		offset  uint64
+		limit   uint64
+		size    uint64
+		err     error
+	}{
+		"list all things by existing channel": {
+			key:     token,
+			channel: sch.ID,
+			offset:  0,
+			limit:   n,
+			size:    n,
+			err:     nil,
+		},
+		"list half of things by existing channel": {
+			key:     token,
+			channel: sch.ID,
+			offset:  n / 2,
+			limit:   n,
+			size:    n / 2,
+			err:     nil,
+		},
+		"list last thing by existing channel": {
+			key:     token,
+			channel: sch.ID,
+			offset:  n - 1,
+			limit:   n,
+			size:    1,
+			err:     nil,
+		},
+		"list empty set of things by existing channel": {
+			key:     token,
+			channel: sch.ID,
+			offset:  n + 1,
+			limit:   n,
+			size:    0,
+			err:     nil,
+		},
+		"list things by existing channel with zero limit": {
+			key:     token,
+			channel: sch.ID,
+			offset:  1,
+			limit:   0,
+			size:    0,
+			err:     nil,
+		},
+		"list things by existing channel with wrong credentials": {
+			key:     wrongValue,
+			channel: sch.ID,
+			offset:  0,
+			limit:   0,
+			size:    0,
+			err:     things.ErrUnauthorizedAccess,
+		},
+		"list things by non-existent channel with wrong credentials": {
+			key:     token,
+			channel: "non-existent",
+			offset:  0,
+			limit:   10,
+			size:    0,
+			err:     nil,
+		},
+	}
+
+	for desc, tc := range cases {
+		page, err := svc.ListThingsByChannel(tc.key, tc.channel, tc.offset, tc.limit)
+		size := uint64(len(page.Things))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
@@ -421,8 +513,97 @@ func TestListChannels(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		ch, err := svc.ListChannels(tc.key, tc.offset, tc.limit)
-		size := uint64(len(ch))
+		page, err := svc.ListChannels(tc.key, tc.offset, tc.limit)
+		size := uint64(len(page.Channels))
+		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+	}
+}
+
+func TestListChannelsByThing(t *testing.T) {
+	svc := newService(map[string]string{token: email})
+
+	sth, err := svc.AddThing(token, thing)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	n := uint64(10)
+	for i := uint64(0); i < n; i++ {
+		sch, err := svc.CreateChannel(token, channel)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		svc.Connect(token, sch.ID, sth.ID)
+	}
+
+	// Wait for things and channels to connect.
+	time.Sleep(time.Second)
+
+	cases := map[string]struct {
+		key    string
+		thing  string
+		offset uint64
+		limit  uint64
+		size   uint64
+		err    error
+	}{
+		"list all channels by existing thing": {
+			key:    token,
+			thing:  sth.ID,
+			offset: 0,
+			limit:  n,
+			size:   n,
+			err:    nil,
+		},
+		"list half of channels by existing thing": {
+			key:    token,
+			thing:  sth.ID,
+			offset: n / 2,
+			limit:  n,
+			size:   n / 2,
+			err:    nil,
+		},
+		"list last channel by existing thing": {
+			key:    token,
+			thing:  sth.ID,
+			offset: n - 1,
+			limit:  n,
+			size:   1,
+			err:    nil,
+		},
+		"list empty set of channels by existing thing": {
+			key:    token,
+			thing:  sth.ID,
+			offset: n + 1,
+			limit:  n,
+			size:   0,
+			err:    nil,
+		},
+		"list channels by existing thing with zero limit": {
+			key:    token,
+			thing:  sth.ID,
+			offset: 1,
+			limit:  0,
+			size:   0,
+			err:    nil,
+		},
+		"list channels by existing thing with wrong credentials": {
+			key:    wrongValue,
+			thing:  sth.ID,
+			offset: 0,
+			limit:  0,
+			size:   0,
+			err:    things.ErrUnauthorizedAccess,
+		},
+		"list channels by non-existent thing": {
+			key:    token,
+			thing:  "non-existent",
+			offset: 0,
+			limit:  10,
+			size:   0,
+			err:    nil,
+		},
+	}
+
+	for desc, tc := range cases {
+		page, err := svc.ListChannelsByThing(tc.key, tc.thing, tc.offset, tc.limit)
+		size := uint64(len(page.Channels))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}

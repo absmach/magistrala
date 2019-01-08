@@ -52,43 +52,92 @@ func (sdk mfSDK) CreateThing(thing Thing, token string) (string, error) {
 	return id, nil
 }
 
-func (sdk mfSDK) Things(token string, offset, limit uint64) ([]Thing, error) {
+func (sdk mfSDK) Things(token string, offset, limit uint64) (ThingsPage, error) {
 	endpoint := fmt.Sprintf("%s?offset=%d&limit=%d", thingsEndpoint, offset, limit)
 	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return nil, err
+		return ThingsPage{}, err
 	}
 
 	resp, err := sdk.sendRequest(req, token, string(CTJSON))
 	if err != nil {
-		return nil, err
+		return ThingsPage{}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return ThingsPage{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		switch resp.StatusCode {
 		case http.StatusBadRequest:
-			return nil, ErrInvalidArgs
+			return ThingsPage{}, ErrInvalidArgs
 		case http.StatusForbidden:
-			return nil, ErrUnauthorized
+			return ThingsPage{}, ErrUnauthorized
 		default:
-			return nil, ErrFetchFailed
+			return ThingsPage{}, ErrFetchFailed
 		}
 	}
 
-	var l listThingsRes
-	if err := json.Unmarshal(body, &l); err != nil {
-		return nil, err
+	var p thingsPageRes
+	if err := json.Unmarshal(body, &p); err != nil {
+		return ThingsPage{}, err
 	}
 
-	return l.Things, nil
+	return ThingsPage{
+		Things: p.Things,
+		Total:  p.Total,
+		Offset: p.Offset,
+		Limit:  p.Limit,
+	}, nil
+}
+
+func (sdk mfSDK) ThingsByChannel(token, chanID string, offset, limit uint64) (ThingsPage, error) {
+	endpoint := fmt.Sprintf("channels/%s/things?offset=%d&limit=%d", chanID, offset, limit)
+	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return ThingsPage{}, err
+	}
+
+	resp, err := sdk.sendRequest(req, token, string(CTJSON))
+	if err != nil {
+		return ThingsPage{}, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return ThingsPage{}, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		switch resp.StatusCode {
+		case http.StatusBadRequest:
+			return ThingsPage{}, ErrInvalidArgs
+		case http.StatusForbidden:
+			return ThingsPage{}, ErrUnauthorized
+		default:
+			return ThingsPage{}, ErrFetchFailed
+		}
+	}
+
+	var p thingsPageRes
+	if err := json.Unmarshal(body, &p); err != nil {
+		return ThingsPage{}, err
+	}
+
+	return ThingsPage{
+		Things: p.Things,
+		Total:  p.Total,
+		Offset: p.Offset,
+		Limit:  p.Limit,
+	}, nil
 }
 
 func (sdk mfSDK) Thing(id, token string) (Thing, error) {

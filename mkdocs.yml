@@ -29,6 +29,11 @@ pages:
     - License: LICENSE.txt
 - Architecture: architecture.md
 - Getting Started: getting-started.md
-- Developer's Guide: dev-guide.md
+- Provisioning: provisioning.md
+- Messaging: messaging.md
+- Storage: storage.md
+- LoRa: lora.md
+- TLS: tls.md
 - CLI: cli.md
+- Developer's Guide: dev-guide.md
 - Load Test: load-test.md

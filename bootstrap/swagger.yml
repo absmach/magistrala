@@ -1,0 +1,372 @@
+swagger: "2.0"
+info:
+  title: Mainflux Bootstrap service
+  description: HTTP API for managing platform devices and applications configuration.
+  version: "1.0.0"
+consumes:
+  - "application/json"
+produces:
+  - "application/json"
+paths:
+  /configs:
+    post:
+      summary: Adds new config
+      description: |
+        Adds new config to the list of config owned by user identified using
+        the provided access token.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - name: config
+          description: JSON-formatted document describing the new config.
+          in: body
+          schema:
+            $ref: "#/definitions/ConfigReq"
+          required: true
+      responses:
+        201:
+          description: Config registered.
+          headers:
+            Location:
+              type: string
+              description: Created config's relative URL (i.e. /configs/{configId}).
+        400:
+          description: Failed due to malformed JSON.
+        403:
+          description: Missing or invalid access token provided.
+        415:
+          description: Missing or invalid content type.
+        500:
+          $ref: "#/responses/ServiceError"
+    get:
+      summary: Retrieves managed configs
+      description: |
+        Retrieves a list of managed configs. Due to performance concerns, data
+        is retrieved in subsets. The API configs must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/Limit"
+        - $ref: "#/parameters/Offset"
+        - $ref: "#/parameters/State"
+      responses:
+        200:
+          description: Data retrieved.
+          schema:
+            $ref: "#/definitions/ConfigList"
+        400:
+          description: Failed due to malformed query parameters.
+        403:
+          description: Missing or invalid access token provided.
+        500:
+          $ref: "#/responses/ServiceError"
+  /bootstrap/{externalId}:
+    get:
+      summary: Retrieves configuration
+      description: |
+        Retrieves a configuration with given external ID and external key.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/parameters/ConfigAuthorization"
+        - $ref: "#/parameters/ExternalId"
+      responses:
+        200:
+          description: Data retrieved.
+          schema:
+            $ref: "#/definitions/BootstrapRes"
+        404:
+          description: |
+            Failed to retrieve corresponding config. Thing which attempted
+            to bootstrap is saved as an unknown Thing and can be listed and
+            added to the service later.
+        500:
+          $ref: "#/responses/ServiceError"
+  /configs/{configId}:
+    get:
+      summary: Retrieves config info
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/ConfigId"
+      responses:
+        200:
+          description: Data retrieved.
+          schema:
+            $ref: "#/definitions/ConfigRes"
+        403:
+          description: Missing or invalid access token provided.
+        404:
+          description: Config does not exist.
+        500:
+          $ref: "#/responses/ServiceError"
+    put:
+      summary: Updates config info
+      description: |
+        Update is performed by replacing the current resource data with values
+        provided in a request payload. Note that the owner, ID, external ID,
+        external key, Mainflux Thing ID and key cannot be changed.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/ConfigId"
+        - name: config
+          description: JSON-formatted document describing the updated thing.
+          in: body
+          schema:
+            $ref: "#/definitions/ConfigUpdateReq"
+          required: true
+      responses:
+        200:
+          description: Config updated.
+        400:
+          description: Failed due to malformed JSON.
+        403:
+          description: Missing or invalid access token provided.
+        404:
+          description: Config does not exist.
+        415:
+          description: Missing or invalid content type.
+        500:
+          $ref: "#/responses/ServiceError"
+    delete:
+      summary: Removes a Config
+      description: |
+        Removes a Config. In case of successfull removal the service will ensure
+        that the removed config is disconnected from all of the Maifnlux channels.
+      tags:
+        - confgis
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/ConfigId"
+      responses:
+        204:
+          description: Config removed.
+        400:
+          description: Failed due to malformed config's ID.
+        403:
+          description: Missing or invalid access token provided.
+        500:
+          $ref: "#/responses/ServiceError"
+  /state/{configId}:
+    put:
+      summary: Updates Config state.
+      description: |
+        Updating state represents enabling/disabling Config, i.e. connecting
+        and disconnecting corresponding Mainflux Thing to the list of Channels.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/ConfigId"
+        - name: state
+          description: New state of the Config.
+          in: body
+          schema:
+            type: object
+            properties:
+              state:
+                type: integer
+                enum:
+                  - inactive
+                  - active
+      responses:
+        204:
+          description: Config removed.
+        400:
+          description: Failed due to malformed config's ID.
+        403:
+          description: Missing or invalid access token provided.
+        500:
+          $ref: "#/responses/ServiceError"
+  /unknown:
+    get:
+      summary: Get a list of unsucessfully bootstrapped Things
+      description: |
+        Retrieves a list of unknown configs. Due to performance concerns, data
+        is retrieved in subsets. The API configs must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/Limit"
+        - $ref: "#/parameters/Offset"
+      responses:
+        200:
+          description: Data retrieved.
+          schema:
+            $ref: "#/definitions/ConfigList"
+        400:
+          description: Failed due to malformed query parameters.
+        403:
+          description: Missing or invalid access token provided.
+        500:
+          $ref: "#/responses/ServiceError"
+
+parameters:
+  Authorization:
+    name: Authorization
+    description: User's access token.
+    in: header
+    type: string
+    required: true
+  ConfigAuthorization:
+    name: configAuthorization
+    description: Configuration external key.
+    in: header
+    type: string
+    required: true
+  ConfigId:
+    name: configId
+    description: Unique Config identifier.
+    in: path
+    type: integer
+    minimum: 1
+    required: true
+  ExternalId:
+    name: externalId
+    description: Unique Config identifier provided by external entity.
+    in: path
+    type: string
+    required: true
+  Limit:
+    name: limit
+    description: Size of the subset to retrieve.
+    in: query
+    type: integer
+    default: 10
+    maximum: 100
+    minimum: 1
+    required: false
+  Offset:
+    name: offset
+    description: Number of items to skip during retrieval.
+    in: query
+    type: integer
+    default: 0
+    minimum: 0
+    required: false
+  State:
+    name: state
+    description: A state of items
+    in: query
+    type: integer
+    enum:
+      - inactive
+      - active
+    required: false
+
+responses:
+  ServiceError:
+    description: Unexpected server-side error occured.
+
+definitions:
+  ConfigList:
+    type: object
+    properties:
+      configs:
+        type: array
+        minItems: 0
+        uniqueItems: true
+        items:
+          $ref: "#/definitions/ConfigRes"
+    required:
+      - confgis
+  State:
+    type: integer
+    enum:
+      - active
+      - inactive
+  ConfigRes:
+    type: object
+    properties:
+      mainflux_thing:
+        type: string
+        description: Corresponding Mainflux Thing ID.
+      mainflux_key:
+        type: string
+        description: Corresponding Mainflux Thing key.
+      mainflux_channels:
+        type: array
+        minItems: 0
+        items:
+          type: string
+      external_id:
+        type: string
+        description: External ID (MAC address or some uinque identifier).
+      external_key:
+        type: string
+        description: External key.
+      content:
+        type: string
+        description: Free-form custom configuration
+      state:
+        $ref: '#/definitions/State'
+    required:
+      - external_id
+      - external_key
+  BootstrapRes:
+      type: object
+      properties:
+        mainflux_thing:
+          type: string
+          description: Corresponding Mainflux Thing ID.
+        mainflux_key:
+          type: string
+          description: Corresponding Mainflux Thing key.
+        mainflux_channels:
+          type: array
+          minItems: 0
+          items:
+            type: string
+        content:
+          type: string
+          description: Free-form custom configuration
+      required:
+        - mainflux_thing
+        - mainflux_key
+        - mainflux_channels
+        - content
+  ConfigReq:
+    type: object
+    properties:
+      external_id:
+        type: string
+        description: External ID (MAC address or some uinque identifier).
+      external_key:
+        type: string
+        description: External key.
+      channels:
+        type: array
+        minItems: 0
+        items:
+          type: string
+      content:
+        type: string
+    required:
+      - external_id
+      - external_key
+  ConfigUpdateReq:
+    type: object
+    properties:
+      channels:
+        type: array
+        minItems: 0
+        items:
+          type: string
+      content:
+        type: string
+      state:
+        $ref: '#/definitions/State'
+    required:
+      - channels
+      - content
+      - state

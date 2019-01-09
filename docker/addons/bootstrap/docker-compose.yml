@@ -1,0 +1,39 @@
+version: "3"
+
+networks:
+  docker_mainflux-base-net:
+    external: true
+
+services:
+  bootstrap-db:
+    image: postgres:10.2-alpine
+    container_name: mainflux-bootstrap-db
+    restart: on-failure
+    environment:
+      POSTGRES_USER: mainflux
+      POSTGRES_PASSWORD: mainflux
+      POSTGRES_DB: bootstrap
+    networks:
+      - docker_mainflux-base-net
+
+  bootstrap:
+    image: mainflux/bootstrap:latest
+    container_name: mainflux-bootstrap
+    depends_on:
+      - bootstrap-db
+    restart: on-failure
+    ports:
+      - 8900:8900
+    environment:
+      MF_BOOTSTRAP_LOG_LEVEL: debug
+      MF_BOOTSTRAP_DB_HOST: bootstrap-db
+      MF_BOOTSTRAP_DB_PORT: 5432
+      MF_BOOTSTRAP_DB_USER: mainflux
+      MF_BOOTSTRAP_DB_PASS: mainflux
+      MF_BOOTSTRAP_DB: bootstrap
+      MF_BOOTSTRAP_DB_SSL_MODE: disable
+      MF_BOOTSTRAP_PORT: 8900
+      MF_SDK_BASE_URL: http://mainflux-things:8182
+      MF_USERS_URL: mainflux-users:8181
+    networks:
+      - docker_mainflux-base-net

@@ -112,6 +112,25 @@ var cmdChannels = []cobra.Command{
 			logOK()
 		},
 	},
+	cobra.Command{
+		Use:   "connections",
+		Short: "connections <channel_id> <user_auth_token>",
+		Long:  `List of Things connected to Channel`,
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 2 {
+				logUsage(cmd.Short)
+				return
+			}
+
+			cl, err := sdk.ThingsByChannel(args[1], args[0], uint64(Offset), uint64(Limit))
+			if err != nil {
+				logError(err)
+				return
+			}
+
+			logJSON(cl)
+		},
+	},
 }
 
 // NewChannelsCmd returns channels command.

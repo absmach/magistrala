@@ -96,6 +96,9 @@ Date: Tue, 10 Apr 2018 10:50:12 GMT
 Content-Length: 1105
 
 {
+  "total": 2,
+  "offset": 0,
+  "limit": 10,
   "things": [
     {
       "id": "81380742-7116-4f6f-9800-14fe464f6773",
@@ -170,6 +173,9 @@ Date: Tue, 10 Apr 2018 11:38:06 GMT
 Content-Length: 139
 
 {
+  "total": 1,
+  "offset": 0,
+  "limit": 10,
   "channels": [
     {
       "id": "19daa7a8-a489-4571-8714-ef1a214ed914",
@@ -218,22 +224,58 @@ curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X PUT -H
 You can observe which things are connected to specific channel:
 
 ```
-curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -H "Authorization: <user_auth_token>" https://localhost/channels/<channel_id>
+curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -H "Authorization: <user_auth_token>" https://localhost/channels/<channel_id>/things
 ```
 
-You should receive response with the lists of connected things in `connected` field
-similar to this one:
+Response that you'll get should look like this:
 
 ```
 {
-  "id": "19daa7a8-a489-4571-8714-ef1a214ed914",
-  "name": "mychan",
-  "connected": [
+  "total": 2,
+  "offset": 0,
+  "limit": 10,
+  "things": [
     {
-      "id": "81380742-7116-4f6f-9800-14fe464f6773",
+      "id": "3ffb3880-d1e6-4edd-acd9-4294d013f35b",
       "type": "device",
-      "name": "weio",
-      "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1MjMzNTQ1NzksImlzcyI6Im1haW5mbHV4Iiwic3ViIjoiODEzODA3NDItNzExNi00ZjZmLTk4MDAtMTRmZTQ2NGY2NzczIn0.5s8s1hlK-l30kQAyHxEZO_M2NIQw53MQuy7b3Wf3OOE"
+      "name": "d0",
+      "key": "b1996995-237a-4552-94b2-83ec2e92a040",
+      "metadata": "{}"
+    },
+    {
+      "id": "94d166d6-6477-43dc-93b7-5c3707dbef1e",
+      "type": "app",
+      "name": "d1",
+      "key": "e4588a68-6028-4740-9f12-c356796aebe8",
+      "metadata": "{}"
+    }
+  ]
+}
+```
+
+You can also observe to which channels is specified thing connected:
+
+```
+curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -H "Authorization: <user_auth_token>" https://localhost/things/<thing_id>/channels
+```
+
+Response that you'll get should look like this:
+
+```
+{
+  "total": 2,
+  "offset": 0,
+  "limit": 10,
+  "channels": [
+    {
+      "id": "5e62eb13-2695-4860-8d87-85b8a2f80fd4",
+      "name": "c1",
+      "metadata": "{}"
+    },
+    {
+      "id": "c4b5e19a-7ffe-4172-b2c5-c8b9d570a165",
+      "name": "c0",
+      "metadata":"{}"
     }
   ]
 }

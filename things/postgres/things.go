@@ -152,7 +152,7 @@ func (tr thingRepository) RetrieveAll(owner string, offset, limit uint64) things
 }
 
 func (tr thingRepository) RetrieveByChannel(owner, channel string, offset, limit uint64) things.ThingsPage {
-	q := `SELECT id, type, name, metadata
+	q := `SELECT id, type, name, key, metadata
 	      FROM things th
 	      INNER JOIN connections co
 		  ON th.id = co.thing_id
@@ -171,7 +171,7 @@ func (tr thingRepository) RetrieveByChannel(owner, channel string, offset, limit
 
 	for rows.Next() {
 		t := things.Thing{Owner: owner}
-		if err := rows.Scan(&t.ID, &t.Type, &t.Name, &t.Metadata); err != nil {
+		if err := rows.Scan(&t.ID, &t.Type, &t.Name, &t.Key, &t.Metadata); err != nil {
 			tr.log.Error(fmt.Sprintf("Failed to read retrieved thing due to %s", err))
 			return things.ThingsPage{}
 		}

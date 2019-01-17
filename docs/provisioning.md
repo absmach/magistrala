@@ -104,7 +104,7 @@ Content-Length: 1105
       "id": "81380742-7116-4f6f-9800-14fe464f6773",
       "type": "device",
       "name": "weio",
-      "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE1MjMzNTQ1NzksImlzcyI6Im1haW5mbHV4Iiwic3ViIjoiODEzODA3NDItNzExNi00ZjZmLTk4MDAtMTRmZTQ2NGY2NzczIn0.5s8s1hlK-l30kQAyHxEZO_M2NIQw53MQuy7b3Wf3OOE"
+      "key": "7aa91f7a-cbea-4fed-b427-07e029577590"
     },
     {
       "id": "cb63f852-2d48-44f0-a0cf-e450496c6c92",

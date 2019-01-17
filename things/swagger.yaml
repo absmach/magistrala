@@ -414,12 +414,6 @@ definitions:
       name:
         type: string
         description: Free-form channel name.
-      connected:
-        type: array
-        minItems: 0
-        uniqueItems: true
-        items:
-          $ref: '#/definitions/ThingRes'
     required:
       - id
   ChannelReq:

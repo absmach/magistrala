@@ -21,6 +21,7 @@ var config = {
         redis_db: Number(process.env.MF_MQTT_ADAPTER_REDIS_DB) || 0,
         client_tls: (process.env.MF_MQTT_ADAPTER_CLIENT_TLS == "true") || false,
     	ca_certs: process.env.MF_MQTT_ADAPTER_CA_CERTS || "",
+        concurrency: Number(process.env.MF_MQTT_CONCURRENT_MESSAGES) || 100,
         auth_url: process.env.MF_THINGS_URL || 'localhost:8181',
         schema_dir: process.argv[2] || '.',
     },
@@ -42,7 +43,8 @@ var config = {
     }),
     aedes = require('aedes')({
         mq: mqRedis,
-        persistence: aedesRedis
+        persistence: aedesRedis,
+        concurrency: config.concurrency
     }),
     things = (function() {
         var certs;

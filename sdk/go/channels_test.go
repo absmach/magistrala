@@ -211,7 +211,7 @@ func TestChannels(t *testing.T) {
 			offset:   110,
 			limit:    5,
 			err:      nil,
-			response: nil,
+			response: []sdk.Channel{},
 		},
 		{
 			desc:     "get a list of channels with invalid args (zero limit) and invalid token",
@@ -318,7 +318,7 @@ func TestChannelsByThing(t *testing.T) {
 			offset:   110,
 			limit:    5,
 			err:      nil,
-			response: nil,
+			response: []sdk.Channel{},
 		},
 		{
 			desc:     "get a list of channels by thing with invalid args (zero limit) and invalid token",

@@ -108,6 +108,7 @@ func listThingsEndpoint(svc things.Service) endpoint.Endpoint {
 				Offset: page.Offset,
 				Limit:  page.Limit,
 			},
+			Things: []viewThingRes{},
 		}
 		for _, thing := range page.Things {
 			view := viewThingRes{
@@ -144,6 +145,7 @@ func listThingsByChannelEndpoint(svc things.Service) endpoint.Endpoint {
 				Offset: page.Offset,
 				Limit:  page.Limit,
 			},
+			Things: []viewThingRes{},
 		}
 		for _, thing := range page.Things {
 			view := viewThingRes{
@@ -272,6 +274,7 @@ func listChannelsEndpoint(svc things.Service) endpoint.Endpoint {
 				Offset: page.Offset,
 				Limit:  page.Limit,
 			},
+			Channels: []viewChannelRes{},
 		}
 		// Cast channels
 		for _, channel := range page.Channels {
@@ -308,6 +311,7 @@ func listChannelsByThingEndpoint(svc things.Service) endpoint.Endpoint {
 				Offset: page.Offset,
 				Limit:  page.Limit,
 			},
+			Channels: []viewChannelRes{},
 		}
 		for _, channel := range page.Channels {
 			view := viewChannelRes{

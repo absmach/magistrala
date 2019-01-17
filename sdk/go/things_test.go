@@ -249,7 +249,7 @@ func TestThings(t *testing.T) {
 			offset:   110,
 			limit:    5,
 			err:      nil,
-			response: nil,
+			response: []sdk.Thing{},
 		},
 		{
 			desc:     "get a list of things with invalid args (zero limit) and invalid token",
@@ -359,7 +359,7 @@ func TestThingsByChannel(t *testing.T) {
 			offset:   110,
 			limit:    5,
 			err:      nil,
-			response: nil,
+			response: []sdk.Thing{},
 		},
 		{
 			desc:     "get a list of things by channel with invalid args (zero limit) and invalid token",

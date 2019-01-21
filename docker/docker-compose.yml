@@ -126,6 +126,8 @@ services:
       MF_NORMALIZER_LOG_LEVEL: debug
       MF_NATS_URL: nats://nats:4222
       MF_NORMALIZER_PORT: 8184
+    ports:
+      - 8184:8184
     networks:
       - mainflux-base-net
 

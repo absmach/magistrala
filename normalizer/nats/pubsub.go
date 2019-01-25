@@ -19,7 +19,7 @@ import (
 
 const (
 	queue         = "normalizers"
-	input         = "channel.*"
+	input         = "channel.>"
 	outputUnknown = "out.unknown"
 	senML         = "application/senml+json"
 )

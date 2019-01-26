@@ -99,7 +99,7 @@ nats.subscribe('channel.*', function (msg) {
 aedes.authorizePublish = function (client, packet, publish) {
     // Topics are in the form `channels/<channel_id>/messages`
     // Subtopic's are in the form `channels/<channel_id>/messages/<subtopic>`
-    var channel = /^channels\/(.+?)\/messages\/?(.+?)?$/.exec(packet.topic);
+    var channel = /^channels\/(.+?)\/messages\/?.*$/.exec(packet.topic);
     if (!channel) {
         logger.warn('unknown topic');
         publish(4); // Bad username or password

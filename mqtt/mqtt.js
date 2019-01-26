@@ -149,7 +149,7 @@ aedes.authorizePublish = function (client, packet, publish) {
 aedes.authorizeSubscribe = function (client, packet, subscribe) {
     // Topics are in the form `channels/<channel_id>/messages`
     // Subtopic's are in the form `channels/<channel_id>/messages/<subtopic>`
-    var channel = /^channels\/(.+?)\/messages\/?(.+?)?$/.exec(packet.topic);
+    var channel = /^channels\/(.+?)\/messages\/?.*$/.exec(packet.topic);
     if (!channel) {
       logger.warn('unknown topic');
       subscribe(4, packet); // Bad username or password

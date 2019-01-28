@@ -80,7 +80,7 @@ function startMqtt() {
     return net.createServer(aedes.handle).listen(config.mqtt_port);
 }
 
-nats.subscribe('channel.*', function (msg) {
+nats.subscribe('channel.*', {'queue':'mqtts'}, function (msg) {
     var m = message.RawMessage.decode(Buffer.from(msg)),
         packet;
     if (m && m.Protocol !== 'mqtt') {

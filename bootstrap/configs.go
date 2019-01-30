@@ -23,11 +23,18 @@ type Config struct {
 	MFThing     string
 	Owner       string
 	MFKey       string
-	MFChannels  []string
+	MFChannels  []Channel
 	ExternalID  string
 	ExternalKey string
 	Content     string
 	State       State
+}
+
+// Channel represents Mainflux channel corresponding Mainflux Thing is connected to.
+type Channel struct {
+	ID       string
+	Name     string
+	Metadata interface{}
 }
 
 // Filter is used for the search filters.

@@ -34,12 +34,20 @@ const (
 	channelsNum  = 3
 )
 
-var config = bootstrap.Config{
-	ExternalID:  "external_id",
-	ExternalKey: "external_key",
-	MFChannels:  []string{"1"},
-	Content:     "config",
-}
+var (
+	channel = bootstrap.Channel{
+		ID:       "1",
+		Name:     "name",
+		Metadata: `{"name":"value"}`,
+	}
+
+	config = bootstrap.Config{
+		ExternalID:  "external_id",
+		ExternalKey: "external_key",
+		MFChannels:  []bootstrap.Channel{channel},
+		Content:     "config",
+	}
+)
 
 func newService(users mainflux.UsersServiceClient, url string) bootstrap.Service {
 	things := mocks.NewConfigsRepository(map[string]string{unknownID: unknownKey})
@@ -56,8 +64,9 @@ func newThingsService(users mainflux.UsersServiceClient) things.Service {
 	for i := 0; i < channelsNum; i++ {
 		id := strconv.Itoa(i + 1)
 		channels[id] = things.Channel{
-			ID:    id,
-			Owner: email,
+			ID:       id,
+			Owner:    email,
+			Metadata: `{"meta":"data"}`,
 		}
 	}
 
@@ -76,7 +85,9 @@ func TestAdd(t *testing.T) {
 	svc := newService(users, server.URL)
 
 	wrongChannels := config
-	wrongChannels.MFChannels = append(wrongChannels.MFChannels, "invalid")
+	ch := channel
+	ch.ID = "invalid"
+	wrongChannels.MFChannels = append(wrongChannels.MFChannels, ch)
 
 	cases := []struct {
 		desc   string
@@ -85,7 +96,7 @@ func TestAdd(t *testing.T) {
 		err    error
 	}{
 		{
-			desc:   "add a config thing",
+			desc:   "add a new config",
 			config: config,
 			key:    validToken,
 			err:    nil,
@@ -158,23 +169,29 @@ func TestUpdate(t *testing.T) {
 	svc := newService(users, server.URL)
 	c := config
 
-	c.MFChannels = []string{"1", "2"}
+	ch := channel
+	ch.ID = "2"
+	c.MFChannels = append(c.MFChannels, ch)
 	saved, err := svc.Add(validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	modifiedCreated := saved
 	modifiedCreated.Content = "new-config"
-	modifiedCreated.MFChannels = []string{"1", "3"}
+	ch.ID = "3"
+	modifiedCreated.MFChannels = []bootstrap.Channel{channel, ch}
 	modifiedCreated.State = bootstrap.Active
 
 	modifiedActive := modifiedCreated
-	modifiedActive.MFChannels = []string{"1", "2"}
+	ch.ID = "2"
+	modifiedActive.MFChannels = []bootstrap.Channel{channel, ch}
 
 	nonExisting := config
 	nonExisting.MFThing = unknown
 
 	wrongChannels := modifiedActive
-	wrongChannels.MFChannels = append(wrongChannels.MFChannels, unknown)
+	ch = channel
+	ch.ID = unknown
+	wrongChannels.MFChannels = append(wrongChannels.MFChannels, ch)
 
 	cases := []struct {
 		desc   string

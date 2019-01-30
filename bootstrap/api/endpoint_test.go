@@ -30,32 +30,43 @@ import (
 )
 
 const (
-	validToken   = "validToken"
-	invalidToken = "invalidToken"
-	email        = "test@example.com"
-	unknown      = "unknown"
-	channelsNum  = 3
-	contentType  = "application/json"
-	wrongID      = "wrong_id"
+	validToken     = "validToken"
+	invalidToken   = "invalidToken"
+	email          = "test@example.com"
+	unknown        = "unknown"
+	channelsNum    = 3
+	contentType    = "application/json"
+	wrongID        = "wrong_id"
+	metadata       = `{"meta": "data"}`
+	addExternalID  = "external-id"
+	addExternalKey = "external-key"
+	addContent     = "config"
 )
 
-type config struct {
-	MFThing     string          `json:"mainflux_id,omitempty"`
-	Owner       string          `json:"owner,omitempty"`
-	MFKey       string          `json:"mainflux_key,omitempty"`
-	MFChannels  []string        `json:"channels,omitempty"`
-	ExternalID  string          `json:"external_id,omitempty"`
-	ExternalKey string          `json:"external_key,omitempty"`
-	Content     string          `json:"content,omitempty"`
-	State       bootstrap.State `json:"state,omitempty"`
-}
+var (
+	addChannels = []string{"1"}
+	addReq      = struct {
+		ExternalID  string   `json:"external_id"`
+		ExternalKey string   `json:"external_key"`
+		Channels    []string `json:"channels"`
+		Content     string   `json:"content"`
+	}{
+		ExternalID:  addExternalID,
+		ExternalKey: addExternalKey,
+		Channels:    addChannels,
+		Content:     addContent,
+	}
 
-var cfg = config{
-	ExternalID:  "external-id",
-	ExternalKey: "external-key",
-	MFChannels:  []string{"1"},
-	Content:     "config",
-}
+	updateReq = struct {
+		Channels []string        `json:"channels"`
+		Content  string          `json:"content"`
+		State    bootstrap.State `json:"state"`
+	}{
+		Channels: []string{"2", "3"},
+		Content:  "config update",
+		State:    1,
+	}
+)
 
 type testRequest struct {
 	client      *http.Client
@@ -64,6 +75,15 @@ type testRequest struct {
 	contentType string
 	token       string
 	body        io.Reader
+}
+
+func newConfig(channels []bootstrap.Channel) bootstrap.Config {
+	return bootstrap.Config{
+		ExternalID:  addExternalID,
+		ExternalKey: addExternalKey,
+		MFChannels:  channels,
+		Content:     addContent,
+	}
 }
 
 func (tr testRequest) make() (*http.Response, error) {
@@ -90,17 +110,21 @@ func newService(users mainflux.UsersServiceClient, unknown map[string]string, ur
 	return bootstrap.New(users, things, sdk)
 }
 
-func newThingsService(users mainflux.UsersServiceClient) things.Service {
+func generateChannels() map[string]things.Channel {
 	channels := make(map[string]things.Channel, channelsNum)
 	for i := 0; i < channelsNum; i++ {
 		id := strconv.Itoa(i + 1)
 		channels[id] = things.Channel{
-			ID:    id,
-			Owner: email,
+			ID:       id,
+			Owner:    email,
+			Metadata: metadata,
 		}
 	}
+	return channels
+}
 
-	return mocks.NewThingsService(map[string]things.Thing{}, channels, users)
+func newThingsService(users mainflux.UsersServiceClient) things.Service {
+	return mocks.NewThingsService(map[string]things.Thing{}, generateChannels(), users)
 }
 
 func newThingsServer(svc things.Service) *httptest.Server {
@@ -125,10 +149,10 @@ func TestAdd(t *testing.T) {
 	svc := newService(users, nil, ts.URL)
 	bs := newBootstrapServer(svc)
 
-	data := toJSON(cfg)
+	data := toJSON(addReq)
 
-	invalidChannels := cfg
-	invalidChannels.MFChannels = []string{wrongID}
+	invalidChannels := addReq
+	invalidChannels.Channels = []string{wrongID}
 	wrongData := toJSON(invalidChannels)
 
 	cases := []struct {
@@ -236,23 +260,30 @@ func TestView(t *testing.T) {
 	ts := newThingsServer(newThingsService(users))
 	svc := newService(users, nil, ts.URL)
 	bs := newBootstrapServer(svc)
+	c := newConfig([]bootstrap.Channel{})
 
-	c := bootstrap.Config{
-		ExternalID:  cfg.ExternalID,
-		ExternalKey: cfg.ExternalKey,
-		MFChannels:  cfg.MFChannels,
-		Content:     cfg.Content,
+	mfChs := generateChannels()
+	for _, ch := range mfChs {
+		c.MFChannels = append(c.MFChannels, bootstrap.Channel{ID: ch.ID})
 	}
 
 	saved, err := svc.Add(validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
-	s := cfg
-	s.MFThing = saved.MFThing
-	s.MFThing = saved.MFThing
-	s.MFKey = saved.MFKey
-	s.State = saved.State
-	data := toJSON(s)
+	var channels []channel
+	for _, ch := range saved.MFChannels {
+		channels = append(channels, channel{ID: ch.ID, Name: ch.Name, Metadata: ch.Metadata})
+	}
+
+	data := toJSON(config{
+		MFThing:     saved.MFThing,
+		MFKey:       saved.MFKey,
+		State:       saved.State,
+		Channels:    channels,
+		ExternalID:  saved.ExternalID,
+		ExternalKey: saved.ExternalKey,
+		Content:     saved.Content,
+	})
 
 	cases := []struct {
 		desc   string
@@ -316,25 +347,15 @@ func TestUpdate(t *testing.T) {
 	svc := newService(users, nil, ts.URL)
 	bs := newBootstrapServer(svc)
 
-	c := bootstrap.Config{
-		ExternalID:  cfg.ExternalID,
-		ExternalKey: cfg.ExternalKey,
-		MFChannels:  cfg.MFChannels,
-		Content:     cfg.Content,
-	}
+	c := newConfig([]bootstrap.Channel{bootstrap.Channel{ID: "1"}})
 
 	saved, err := svc.Add(validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
-	update := config{
-		MFChannels: []string{"2", "3"},
-		Content:    "new config",
-		State:      bootstrap.Active,
-	}
-	data := toJSON(update)
+	data := toJSON(updateReq)
 
-	invalidChannels := update
-	invalidChannels.MFChannels = []string{wrongID}
+	invalidChannels := updateReq
+	invalidChannels.Channels = []string{wrongID}
 
 	wrongData := toJSON(invalidChannels)
 
@@ -403,14 +424,6 @@ func TestUpdate(t *testing.T) {
 			status:      http.StatusBadRequest,
 		},
 		{
-			desc:        "update a config with empty JSON",
-			req:         "{}",
-			id:          saved.MFThing,
-			auth:        validToken,
-			contentType: contentType,
-			status:      http.StatusBadRequest,
-		},
-		{
 			desc:        "update a config with an empty request",
 			id:          saved.MFThing,
 			req:         "",
@@ -446,12 +459,7 @@ func TestList(t *testing.T) {
 	svc := newService(users, nil, ts.URL)
 	bs := newBootstrapServer(svc)
 
-	c := bootstrap.Config{
-		ExternalID:  cfg.ExternalID,
-		ExternalKey: cfg.ExternalKey,
-		MFChannels:  cfg.MFChannels,
-		Content:     cfg.Content,
-	}
+	c := newConfig([]bootstrap.Channel{bootstrap.Channel{ID: "1"}})
 
 	for i := 0; i < configNum; i++ {
 		c.ExternalID = strconv.Itoa(i)
@@ -459,10 +467,14 @@ func TestList(t *testing.T) {
 		c.ExternalKey = fmt.Sprintf("%s%s", c.ExternalKey, strconv.Itoa(i))
 		saved, err := svc.Add(validToken, c)
 		require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+		var channels []channel
+		for _, ch := range saved.MFChannels {
+			channels = append(channels, channel{ID: ch.ID, Name: ch.Name, Metadata: ch.Metadata})
+		}
 		s := config{
 			MFThing:     saved.MFThing,
 			MFKey:       saved.MFKey,
-			MFChannels:  saved.MFChannels,
+			Channels:    channels,
 			ExternalID:  saved.ExternalID,
 			ExternalKey: saved.ExternalKey,
 			Content:     saved.Content,
@@ -627,12 +639,7 @@ func TestRemove(t *testing.T) {
 	svc := newService(users, nil, ts.URL)
 	bs := newBootstrapServer(svc)
 
-	c := bootstrap.Config{
-		ExternalID:  cfg.ExternalID,
-		ExternalKey: cfg.ExternalKey,
-		MFChannels:  cfg.MFChannels,
-		Content:     cfg.Content,
-	}
+	c := newConfig([]bootstrap.Channel{bootstrap.Channel{ID: "1"}})
 
 	saved, err := svc.Add(validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
@@ -695,7 +702,7 @@ func TestListUnknown(t *testing.T) {
 	for i := 0; i < unknownNum; i++ {
 		u := config{
 			ExternalID:  fmt.Sprintf("key-%s", strconv.Itoa(i)),
-			ExternalKey: fmt.Sprintf("%s%s", cfg.ExternalKey, strconv.Itoa(i)),
+			ExternalKey: fmt.Sprintf("%s%s", addExternalKey, strconv.Itoa(i)),
 		}
 		unknownConfigs[u.ExternalID] = u.ExternalKey
 		unknown[i] = u
@@ -790,25 +797,29 @@ func TestBootstrap(t *testing.T) {
 	svc := newService(users, map[string]string{}, ts.URL)
 	bs := newBootstrapServer(svc)
 
-	c := bootstrap.Config{
-		ExternalID:  cfg.ExternalID,
-		ExternalKey: cfg.ExternalKey,
-		MFChannels:  cfg.MFChannels,
-		Content:     cfg.Content,
-	}
+	c := newConfig([]bootstrap.Channel{bootstrap.Channel{ID: "1"}})
 
 	saved, err := svc.Add(validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
-	s := config{
+	var channels []channel
+	for _, ch := range saved.MFChannels {
+		channels = append(channels, channel{ID: ch.ID, Name: ch.Name, Metadata: ch.Metadata})
+	}
+
+	s := struct {
+		MFThing    string    `json:"mainflux_id"`
+		MFKey      string    `json:"mainflux_key"`
+		MFChannels []channel `json:"mainflux_channels"`
+		Content    string    `json:"content"`
+	}{
 		MFThing:    saved.MFThing,
 		MFKey:      saved.MFKey,
-		MFChannels: saved.MFChannels,
+		MFChannels: channels,
 		Content:    saved.Content,
 	}
-	data, _ := json.Marshal(s)
-	// Bootstrapping response includes mainflux_channels instead of channels.
-	res := strings.Replace(string(data), "channels", "mainflux_channels", 1)
+
+	data := toJSON(s)
 
 	cases := []struct {
 		desc         string
@@ -850,7 +861,7 @@ func TestBootstrap(t *testing.T) {
 			external_id:  c.ExternalID,
 			external_key: c.ExternalKey,
 			status:       http.StatusOK,
-			res:          res,
+			res:          data,
 		},
 	}
 
@@ -880,12 +891,7 @@ func TestChangeState(t *testing.T) {
 	svc := newService(users, nil, ts.URL)
 	bs := newBootstrapServer(svc)
 
-	c := bootstrap.Config{
-		ExternalID:  cfg.ExternalID,
-		ExternalKey: cfg.ExternalKey,
-		MFChannels:  cfg.MFChannels,
-		Content:     cfg.Content,
-	}
+	c := newConfig([]bootstrap.Channel{bootstrap.Channel{ID: "1"}})
 
 	saved, err := svc.Add(validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
@@ -980,4 +986,20 @@ func TestChangeState(t *testing.T) {
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 	}
+}
+
+type channel struct {
+	ID       string      `json:"id"`
+	Name     string      `json:"name,omitempty"`
+	Metadata interface{} `json:"metadata,omitempty"`
+}
+
+type config struct {
+	MFThing     string          `json:"mainflux_id,omitempty"`
+	MFKey       string          `json:"mainflux_key,omitempty"`
+	Channels    []channel       `json:"mainflux_channels,omitempty"`
+	ExternalID  string          `json:"external_id"`
+	ExternalKey string          `json:"external_key,omitempty"`
+	Content     string          `json:"content,omitempty"`
+	State       bootstrap.State `json:"state"`
 }

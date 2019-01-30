@@ -27,9 +27,12 @@ var config = bootstrap.Config{
 	ExternalID:  "external-id",
 	ExternalKey: "external-key",
 	Owner:       "user@email.com",
-	MFChannels:  []string{"1", "2"},
-	Content:     "content",
-	State:       bootstrap.Inactive,
+	MFChannels: []bootstrap.Channel{
+		bootstrap.Channel{ID: "1", Name: "name 1", Metadata: "{\"meta\":1}"},
+		bootstrap.Channel{ID: "2", Name: "name 2", Metadata: "{\"meta\":2}"},
+	},
+	Content: "content",
+	State:   bootstrap.Inactive,
 }
 
 func TestSave(t *testing.T) {
@@ -223,7 +226,7 @@ func TestUpdate(t *testing.T) {
 	c.MFThing = saved
 	c.ExternalID = id
 	c.ExternalKey = id
-	c.MFChannels = []string{"1", "2", "3", "4"}
+	c.MFChannels = append(config.MFChannels, bootstrap.Channel{ID: "3", Name: "name 3", Metadata: `{"meta": 3}`})
 	c.State = bootstrap.Active
 	c.Content = "new content"
 

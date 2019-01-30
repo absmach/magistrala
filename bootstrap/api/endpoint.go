@@ -21,10 +21,15 @@ func addEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
+		channels := []bootstrap.Channel{}
+		for _, c := range req.Channels {
+			channels = append(channels, bootstrap.Channel{ID: c})
+		}
+
 		config := bootstrap.Config{
 			ExternalID:  req.ExternalID,
 			ExternalKey: req.ExternalKey,
-			MFChannels:  req.Channels,
+			MFChannels:  channels,
 			Content:     req.Content,
 		}
 
@@ -55,10 +60,19 @@ func viewEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
+		var channels []channelRes
+		for _, ch := range config.MFChannels {
+			channels = append(channels, channelRes{
+				ID:       ch.ID,
+				Name:     ch.Name,
+				Metadata: ch.Metadata,
+			})
+		}
+
 		res := viewRes{
 			MFThing:     config.MFThing,
 			MFKey:       config.MFKey,
-			Channels:    config.MFChannels,
+			Channels:    channels,
 			ExternalID:  config.ExternalID,
 			ExternalKey: config.ExternalKey,
 			Content:     config.Content,
@@ -77,9 +91,14 @@ func updateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
+		channels := []bootstrap.Channel{}
+		for _, c := range req.Channels {
+			channels = append(channels, bootstrap.Channel{ID: c})
+		}
+
 		config := bootstrap.Config{
 			MFThing:    req.id,
-			MFChannels: req.Channels,
+			MFChannels: channels,
 			Content:    req.Content,
 			State:      req.State,
 		}
@@ -115,10 +134,19 @@ func listEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		}
 
 		for _, cfg := range configs {
+			var channels []channelRes
+			for _, ch := range cfg.MFChannels {
+				channels = append(channels, channelRes{
+					ID:       ch.ID,
+					Name:     ch.Name,
+					Metadata: ch.Metadata,
+				})
+			}
+
 			view := viewRes{
 				MFThing:     cfg.MFThing,
 				MFKey:       cfg.MFKey,
-				Channels:    cfg.MFChannels,
+				Channels:    channels,
 				ExternalID:  cfg.ExternalID,
 				ExternalKey: cfg.ExternalKey,
 				Content:     cfg.Content,

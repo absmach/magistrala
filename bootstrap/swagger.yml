@@ -298,7 +298,17 @@ definitions:
         type: array
         minItems: 0
         items:
-          type: string
+          type: object
+          properties:
+            id:
+              type: string
+              description: ID of the Channel.
+            name:
+              type: string
+              description: Name of the Channel.
+            metadata:
+              type: object
+              description: Custom metadata related to the Channel.
       external_id:
         type: string
         description: External ID (MAC address or some uinque identifier).

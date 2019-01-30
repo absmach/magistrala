@@ -65,14 +65,20 @@ func (res configRes) Empty() bool {
 	return true
 }
 
+type channelRes struct {
+	ID       string      `json:"id"`
+	Name     string      `json:"name,omitempty"`
+	Metadata interface{} `json:"metadata,omitempty"`
+}
+
 type viewRes struct {
 	MFThing     string          `json:"mainflux_id,omitempty"`
 	MFKey       string          `json:"mainflux_key,omitempty"`
-	Channels    []string        `json:"channels,omitempty"`
+	Channels    []channelRes    `json:"mainflux_channels,omitempty"`
 	ExternalID  string          `json:"external_id"`
 	ExternalKey string          `json:"external_key,omitempty"`
 	Content     string          `json:"content,omitempty"`
-	State       bootstrap.State `json:"state,omitempty"`
+	State       bootstrap.State `json:"state"`
 }
 
 func (res viewRes) Code() int {

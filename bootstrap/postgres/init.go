@@ -56,7 +56,7 @@ func migrateDB(db *sql.DB) error {
 						mainflux_thing    TEXT UNIQUE NOT NULL,
                         owner             VARCHAR(254),
 						mainflux_key      CHAR(36) UNIQUE NOT NULL,
-						mainflux_channels TEXT [],
+						mainflux_channels jsonb,
 						external_id       TEXT UNIQUE NOT NULL,
 						external_key 	  TEXT NOT NULL,
 						content  		  TEXT,

@@ -38,7 +38,7 @@ const (
 	defRouteMapDB   = "0"
 
 	envHTTPPort     = "MF_LORA_ADAPTER_HTTP_PORT"
-	envLoraMsgURL   = "MF_LORA_ADAPTER_LORA_MESSAGE_URL"
+	envLoraMsgURL   = "MF_LORA_ADAPTER_MESSAGES_URL"
 	envNatsURL      = "MF_NATS_URL"
 	envLogLevel     = "MF_LORA_ADAPTER_LOG_LEVEL"
 	envESURL        = "MF_THINGS_ES_URL"

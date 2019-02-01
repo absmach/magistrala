@@ -60,7 +60,7 @@ The lora-adapter uses the matadata of provision events emitted by Mainflux syste
   "name": "<channel name>",
   "metadata:":"{
     \"type\": \"lora\",
-    \"appID\": \"<application iD>\"
+    \"appID\": \"<application ID>\"
   }"
 }
 ```

@@ -58,10 +58,10 @@ The lora-adapter uses the matadata of provision events emitted by Mainflux syste
 ```
 {
   "name": "<channel name>",
-  "metadata:":{
-    "type": "lora",
-    "appID": "<application ID>"
-  }
+  "metadata:":"{
+    \"type\": \"lora\",
+    \"appID\": \"<application iD>\"
+  }"
 }
 ```
 
@@ -71,10 +71,10 @@ The lora-adapter uses the matadata of provision events emitted by Mainflux syste
 {
   "type": "device",
   "name": "<thing name>",
-  "metadata:":{
-    "type": "lora",
-    "devEUI": "<device EUI>"
-  }
+  "metadata:":"{
+    \"type\": \"lora\",
+    \"devEUI\": \"<device EUI>\"
+  }"
 }
 ```
 

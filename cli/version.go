@@ -13,8 +13,8 @@ import "github.com/spf13/cobra"
 func NewVersionCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
-		Short: "Get version of Mainflux Things Service",
-		Long:  `Mainflux server health check`,
+		Short: "Mainflux services version",
+		Long:  `Mainflux services version: get version of Mainflux Things Service`,
 		Run: func(cmd *cobra.Command, args []string) {
 			v, err := sdk.Version()
 			if err != nil {

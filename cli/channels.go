@@ -42,7 +42,7 @@ var cmdChannels = []cobra.Command{
 	},
 	cobra.Command{
 		Use:   "get",
-		Short: "get <channel_id or all> <user_auth_token>",
+		Short: "get [all | <channel_id>] <user_auth_token>",
 		Long:  `Gets list of all channels or gets channel by id`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
@@ -75,7 +75,7 @@ var cmdChannels = []cobra.Command{
 		Short: "update <JSON_string> <user_auth_token>",
 		Long:  `Updates channel record`,
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 3 {
+			if len(args) != 2 {
 				logUsage(cmd.Short)
 				return
 			}
@@ -137,10 +137,10 @@ var cmdChannels = []cobra.Command{
 func NewChannelsCmd() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "channels",
-		Short: "channels <create, update or delete>",
-		Long:  `Channels management: create, delete or update channels`,
+		Short: "Channels management",
+		Long:  `Channels management: create, get, update or delete Channel and get list of Things connected to Channel`,
 		Run: func(cmd *cobra.Command, args []string) {
-			logUsage(cmd.Short)
+			logUsage("channels [create | get | update | delete | connections]")
 		},
 	}
 

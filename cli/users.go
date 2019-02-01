@@ -64,10 +64,10 @@ var cmdUsers = []cobra.Command{
 func NewUsersCmd() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "users",
-		Short: "users create/token <email> <password>",
-		Long:  `Manages users in the system (create account or token)`,
+		Short: "Users management",
+		Long:  `Users management: create accounts and tokens"`,
 		Run: func(cmd *cobra.Command, args []string) {
-			logUsage(cmd.Short)
+			logUsage("Usage: users [create | token]")
 		},
 	}
 

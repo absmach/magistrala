@@ -44,7 +44,7 @@ var cmdThings = []cobra.Command{
 	},
 	cobra.Command{
 		Use:   "get",
-		Short: "get <thing_id or all> <user_auth_token>",
+		Short: "get [all | <thing_id>] <user_auth_token>",
 		Long:  `Get all things or thing by id`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
@@ -94,7 +94,7 @@ var cmdThings = []cobra.Command{
 		Short: "update <JSON_string> <user_auth_token>",
 		Long:  `Update thing record`,
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 3 {
+			if len(args) != 2 {
 				logUsage(cmd.Short)
 				return
 			}
@@ -174,10 +174,10 @@ var cmdThings = []cobra.Command{
 func NewThingsCmd() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "things",
-		Short: "things <create, update, delete or connect>",
-		Long:  `Things management: create, update, delete or connect things`,
+		Short: "Things management",
+		Long:  `Things management: create, get, update or delete Thing, connect or disconnect Thing from Channel and get the list of Channels connected to Thing`,
 		Run: func(cmd *cobra.Command, args []string) {
-			logUsage(cmd.Short)
+			logUsage("channels [create | get | update | delete | connect | disconnect | connections]")
 		},
 	}
 

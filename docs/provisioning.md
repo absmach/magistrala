@@ -1,7 +1,7 @@
 Provisioning is a process of configuration of an IoT platform in which system operator creates and sets-up different entities
 used in the platform - users, channels and things.
 
-## User management
+## Users management
 
 ### Account creation
 

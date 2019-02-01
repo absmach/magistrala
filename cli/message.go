@@ -55,8 +55,11 @@ var cmdMessages = []cobra.Command{
 func NewMessagesCmd() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "messages",
-		Short: "Send or retrieve messages",
-		Long:  `Send or retrieve messages: control message flow on the channel`,
+		Short: "Send or read messages",
+		Long:  `Send or read messages using the http-adapter and the configured database reader`,
+		Run: func(cmd *cobra.Command, args []string) {
+			logUsage("messages [send | read]")
+		},
 	}
 
 	for i := range cmdMessages {

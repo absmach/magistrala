@@ -70,9 +70,8 @@ Additional practical information, news and tutorials can be found on the [Mainfl
 ## Authors
 Main architect and BDFL of Mainflux project is [@drasko][drasko].
 
-
 Additionally, [@nmarcetic][nikola] and [@janko-isidorovic][janko] assured
-overall architecture and design, while [@manuIO][manu] and [@darkodraskovic][darko]
+overall architecture and design, while [@manuio][manu] and [@darkodraskovic][darko]
 helped with crafting initial implementation and continiusly work on the project evolutions.
 
 Besides them, Mainflux is constantly improved and actively
@@ -80,6 +79,10 @@ developed by [@anovakovic01][alex], [@dusanb94][dusan], [@srados][sava],
 [@gsaleh][george], [@blokovi][iva], [@chombium][kole] and a large set of contributors.
 
 Maintainers are listed in [MAINTAINERS](MAINTAINERS) file.
+
+Mainflux team would like to give special thanks to [@mijicd][dejan] for his monumental work
+on designing and implementing highly improved and optimized version of the platform,
+and [@malidukica][dusan] for his effort on implementing initial user interface.
 
 ## Contributing
 Thank you for your interest in Mainflux and wish to contribute!
@@ -136,3 +139,4 @@ Note that the best way to grab our attention is by sending PRs :sunglasses:.
 [george]: https://github.com/gesaleh
 [iva]: https://github.com/blokovi
 [kole]: https://github.com/chombium
+[dusan]: https://github.com/malidukica

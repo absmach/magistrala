@@ -82,7 +82,7 @@ Maintainers are listed in [MAINTAINERS](MAINTAINERS) file.
 
 Mainflux team would like to give special thanks to [@mijicd][dejan] for his monumental work
 on designing and implementing highly improved and optimized version of the platform,
-and [@malidukica][dusan] for his effort on implementing initial user interface.
+and [@malidukica][dusanm] for his effort on implementing initial user interface.
 
 ## Contributing
 Thank you for your interest in Mainflux and wish to contribute!
@@ -139,4 +139,4 @@ Note that the best way to grab our attention is by sending PRs :sunglasses:.
 [george]: https://github.com/gesaleh
 [iva]: https://github.com/blokovi
 [kole]: https://github.com/chombium
-[dusan]: https://github.com/malidukica
+[dusanm]: https://github.com/malidukica

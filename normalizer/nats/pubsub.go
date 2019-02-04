@@ -57,13 +57,18 @@ func (ps pubsub) publish(msg mainflux.RawMessage) error {
 	output := mainflux.OutputSenML
 	normalized, err := ps.svc.Normalize(msg)
 	if err != nil {
-		switch ct := normalized.ContentType; ct {
+		switch ct := msg.ContentType; ct {
 		case senML:
 			return err
 		case "":
 			output = outputUnknown
 		default:
 			output = fmt.Sprintf("out.%s", ct)
+		}
+
+		if err := ps.nc.Publish(output, msg.GetPayload()); err != nil {
+			ps.logger.Warn(fmt.Sprintf("Publishing failed: %s", err))
+			return err
 		}
 	}
 

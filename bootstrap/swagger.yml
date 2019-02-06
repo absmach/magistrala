@@ -53,6 +53,7 @@ paths:
         - $ref: "#/parameters/Limit"
         - $ref: "#/parameters/Offset"
         - $ref: "#/parameters/State"
+        - $ref: "#/parameters/Name"
       responses:
         200:
           description: Data retrieved.
@@ -262,6 +263,12 @@ parameters:
     enum:
       - inactive
       - active
+    required: false
+  Name:
+    name: name
+    description: Name of the config. Search by name is partial-match and case-insensitive.
+    in: query
+    type: string
     required: false
 
 responses:

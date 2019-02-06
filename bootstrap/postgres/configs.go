@@ -33,7 +33,7 @@ type configRepository struct {
 	log logger.Logger
 }
 
-type writeCh struct {
+type dbChannel struct {
 	ID       string      `json:"id"`
 	Name     string      `json:"name"`
 	Metadata interface{} `json:"metadata"`
@@ -57,17 +57,18 @@ func nullString(s string) sql.NullString {
 }
 
 func (cr configRepository) Save(cfg bootstrap.Config) (string, error) {
-	q := `INSERT INTO configs (mainflux_thing, owner, mainflux_key, external_id, external_key, content, state, mainflux_channels)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+	q := `INSERT INTO configs (mainflux_thing, owner, name, mainflux_key, external_id, external_key, content, state, mainflux_channels)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 
 	channels := toDBChannels(cfg.MFChannels)
-
 	jsn, err := json.Marshal(channels)
 	if err != nil {
 		return "", bootstrap.ErrMalformedEntity
 	}
+	content := nullString(cfg.Content)
+	name := nullString(cfg.Name)
 
-	if _, err := cr.db.Exec(q, cfg.MFThing, cfg.Owner, cfg.MFKey, cfg.ExternalID, cfg.ExternalKey, cfg.Content, cfg.State, jsn); err != nil {
+	if _, err := cr.db.Exec(q, cfg.MFThing, cfg.Owner, name, cfg.MFKey, cfg.ExternalID, cfg.ExternalKey, content, cfg.State, jsn); err != nil {
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code.Name() == duplicateErr {
 			return "", bootstrap.ErrConflict
 		}
@@ -78,12 +79,12 @@ func (cr configRepository) Save(cfg bootstrap.Config) (string, error) {
 }
 
 func (cr configRepository) RetrieveByID(key, id string) (bootstrap.Config, error) {
-	q := `SELECT mainflux_thing, mainflux_key, external_id, external_key, content, state, mainflux_channels FROM configs WHERE mainflux_thing = $1 AND owner = $2`
+	q := `SELECT mainflux_thing, mainflux_key, external_id, external_key, name, content, state, mainflux_channels FROM configs WHERE mainflux_thing = $1 AND owner = $2`
 	cfg := bootstrap.Config{MFThing: id, Owner: key, MFChannels: []bootstrap.Channel{}}
-	var content sql.NullString
+	var name, content sql.NullString
 	var chs []byte
 	if err := cr.db.QueryRow(q, id, key).
-		Scan(&cfg.MFThing, &cfg.MFKey, &cfg.ExternalID, &cfg.ExternalKey, &content, &cfg.State, &chs); err != nil {
+		Scan(&cfg.MFThing, &cfg.MFKey, &cfg.ExternalID, &cfg.ExternalKey, &name, &content, &cfg.State, &chs); err != nil {
 		empty := bootstrap.Config{}
 		if err == sql.ErrNoRows {
 			return empty, bootstrap.ErrNotFound
@@ -96,6 +97,7 @@ func (cr configRepository) RetrieveByID(key, id string) (bootstrap.Config, error
 	}
 
 	cfg.Content = content.String
+	cfg.Name = name.String
 
 	return cfg, nil
 }
@@ -108,13 +110,13 @@ func (cr configRepository) RetrieveAll(key string, filter bootstrap.Filter, offs
 	}
 	defer rows.Close()
 
-	var content sql.NullString
+	var name, content sql.NullString
 	configs := []bootstrap.Config{}
 
 	for rows.Next() {
 		var chs []byte
 		c := bootstrap.Config{Owner: key}
-		if err := rows.Scan(&c.MFThing, &c.MFKey, &c.ExternalID, &c.ExternalKey, &content, &c.State, &chs); err != nil {
+		if err := rows.Scan(&c.MFThing, &c.MFKey, &c.ExternalID, &c.ExternalKey, &name, &content, &c.State, &chs); err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to read retrieved config due to %s", err))
 			return []bootstrap.Config{}
 		}
@@ -124,6 +126,7 @@ func (cr configRepository) RetrieveAll(key string, filter bootstrap.Filter, offs
 			return []bootstrap.Config{}
 		}
 
+		c.Name = name.String
 		c.Content = content.String
 		configs = append(configs, c)
 	}
@@ -132,8 +135,10 @@ func (cr configRepository) RetrieveAll(key string, filter bootstrap.Filter, offs
 }
 
 func (cr configRepository) RetrieveByExternalID(externalKey, externalID string) (bootstrap.Config, error) {
-	q := `SELECT mainflux_thing, owner, mainflux_key, content, state, mainflux_channels FROM configs WHERE external_key = $1 AND external_id = $2`
-	var content sql.NullString
+	q := `SELECT mainflux_thing, owner, mainflux_key, name, content, state, mainflux_channels
+		  FROM configs WHERE external_key = $1 AND external_id = $2`
+
+	var name, content sql.NullString
 	cfg := bootstrap.Config{
 		ExternalID:  externalID,
 		ExternalKey: externalKey,
@@ -141,7 +146,7 @@ func (cr configRepository) RetrieveByExternalID(externalKey, externalID string) 
 
 	var chs []byte
 	if err := cr.db.QueryRow(q, externalKey, externalID).
-		Scan(&cfg.MFThing, &cfg.Owner, &cfg.MFKey, &content, &cfg.State, &chs); err != nil {
+		Scan(&cfg.MFThing, &cfg.Owner, &cfg.MFKey, &name, &content, &cfg.State, &chs); err != nil {
 		empty := bootstrap.Config{}
 		if err == sql.ErrNoRows {
 			return empty, bootstrap.ErrNotFound
@@ -159,7 +164,7 @@ func (cr configRepository) RetrieveByExternalID(externalKey, externalID string) 
 }
 
 func (cr configRepository) Update(cfg bootstrap.Config) error {
-	q := `UPDATE configs SET content = $1, state = $2, mainflux_channels = $3 WHERE mainflux_thing = $4 AND owner = $5`
+	q := `UPDATE configs SET name = $1, content = $2, state = $3, mainflux_channels = $4 WHERE mainflux_thing = $5 AND owner = $6`
 
 	channels := toDBChannels(cfg.MFChannels)
 
@@ -169,7 +174,10 @@ func (cr configRepository) Update(cfg bootstrap.Config) error {
 		return bootstrap.ErrMalformedEntity
 	}
 
-	res, err := cr.db.Exec(q, cfg.Content, cfg.State, jsn, cfg.MFThing, cfg.Owner)
+	name := nullString(cfg.Name)
+	content := nullString(cfg.Content)
+
+	res, err := cr.db.Exec(q, name, content, cfg.State, jsn, cfg.MFThing, cfg.Owner)
 	if err != nil {
 		return err
 	}
@@ -189,6 +197,7 @@ func (cr configRepository) Update(cfg bootstrap.Config) error {
 func (cr configRepository) Remove(key, id string) error {
 	q := `DELETE FROM configs WHERE mainflux_thing = $1 AND owner = $2`
 	cr.db.Exec(q, id, key)
+
 	return nil
 }
 
@@ -251,31 +260,45 @@ func (cr configRepository) RetrieveUnknown(offset, limit uint64) []bootstrap.Con
 func (cr configRepository) RemoveUnknown(key, id string) error {
 	q := `DELETE FROM unknown_configs WHERE external_id = $1 AND external_key = $2`
 	_, err := cr.db.Exec(q, id, key)
+
 	return err
 }
 
 func (cr configRepository) retrieveAll(key string, filter bootstrap.Filter, offset, limit uint64) (*sql.Rows, error) {
-	template := `SELECT mainflux_thing, mainflux_key, external_id, external_key, content, state, mainflux_channels FROM configs WHERE owner = $1 %s ORDER BY mainflux_thing LIMIT $2 OFFSET $3`
+	template := `SELECT mainflux_thing, mainflux_key, external_id, external_key, name, content, state, mainflux_channels
+				 FROM configs WHERE owner = $1 %s ORDER BY mainflux_thing LIMIT $2 OFFSET $3`
 	params := []interface{}{key, limit, offset}
 	// One empty string so that strings Join works if only one filter is applied.
 	queries := []string{""}
 	// Since key = 1, limit = 2, offset = 3, the next one is 4.
 	counter := len(params) + 1
-	for k, v := range filter {
+	for k, v := range filter.FullMatch {
 		queries = append(queries, fmt.Sprintf("%s = $%d", k, counter))
+		params = append(params, v)
+		counter++
+	}
+	for k, v := range filter.PartialMatch {
+		queries = append(queries, fmt.Sprintf("LOWER(%s) LIKE '%%' || $%d || '%%'", k, counter))
 		params = append(params, v)
 		counter++
 	}
 
 	f := strings.Join(queries, " AND ")
+
 	return cr.db.Query(fmt.Sprintf(template, f), params...)
 }
 
-func toDBChannels(channels []bootstrap.Channel) []writeCh {
-	ret := []writeCh{}
+func toDBChannels(channels []bootstrap.Channel) []dbChannel {
+	ret := []dbChannel{}
 	for _, ch := range channels {
-		c := writeCh{ID: ch.ID, Name: ch.Name, Metadata: ch.Metadata}
+		c := dbChannel{
+			ID:       ch.ID,
+			Name:     ch.Name,
+			Metadata: ch.Metadata,
+		}
+
 		ret = append(ret, c)
 	}
+
 	return ret
 }

@@ -40,6 +40,7 @@ const (
 	metadata       = `{"meta": "data"}`
 	addExternalID  = "external-id"
 	addExternalKey = "external-key"
+	addName        = "name"
 	addContent     = "config"
 )
 
@@ -49,12 +50,14 @@ var (
 		ExternalID  string   `json:"external_id"`
 		ExternalKey string   `json:"external_key"`
 		Channels    []string `json:"channels"`
+		Name        string   `json:"name"`
 		Content     string   `json:"content"`
 	}{
-		ExternalID:  addExternalID,
-		ExternalKey: addExternalKey,
-		Channels:    addChannels,
-		Content:     addContent,
+		ExternalID:  "external-id",
+		ExternalKey: "external-key",
+		Channels:    []string{"1"},
+		Name:        "name",
+		Content:     "config",
 	}
 
 	updateReq = struct {
@@ -82,6 +85,7 @@ func newConfig(channels []bootstrap.Channel) bootstrap.Config {
 		ExternalID:  addExternalID,
 		ExternalKey: addExternalKey,
 		MFChannels:  channels,
+		Name:        addName,
 		Content:     addContent,
 	}
 }
@@ -282,6 +286,7 @@ func TestView(t *testing.T) {
 		Channels:    channels,
 		ExternalID:  saved.ExternalID,
 		ExternalKey: saved.ExternalKey,
+		Name:        saved.Name,
 		Content:     saved.Content,
 	})
 
@@ -464,7 +469,8 @@ func TestList(t *testing.T) {
 	for i := 0; i < configNum; i++ {
 		c.ExternalID = strconv.Itoa(i)
 		c.MFKey = c.ExternalID
-		c.ExternalKey = fmt.Sprintf("%s%s", c.ExternalKey, strconv.Itoa(i))
+		c.Name = fmt.Sprintf("%s-%d", addName, i)
+		c.ExternalKey = fmt.Sprintf("%s%s", addExternalKey, strconv.Itoa(i))
 		saved, err := svc.Add(validToken, c)
 		require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 		var channels []channel
@@ -477,6 +483,7 @@ func TestList(t *testing.T) {
 			Channels:    channels,
 			ExternalID:  saved.ExternalID,
 			ExternalKey: saved.ExternalKey,
+			Name:        saved.Name,
 			Content:     saved.Content,
 			State:       saved.State,
 		}
@@ -526,6 +533,13 @@ func TestList(t *testing.T) {
 			url:    fmt.Sprintf("%s/configs?offset=%d&limit=%d", bs.URL, 0, 1),
 			status: http.StatusOK,
 			res:    list[0:1],
+		},
+		{
+			desc:   "view list searching by name",
+			auth:   validToken,
+			url:    fmt.Sprintf("%s/configs?offset=%d&limit=%d&name=%s", bs.URL, 0, 100, "95"),
+			status: http.StatusOK,
+			res:    list[95:96],
 		},
 		{
 			desc:   "view last page",
@@ -1001,5 +1015,6 @@ type config struct {
 	ExternalID  string          `json:"external_id"`
 	ExternalKey string          `json:"external_key,omitempty"`
 	Content     string          `json:"content,omitempty"`
+	Name        string          `json:"name"`
 	State       bootstrap.State `json:"state"`
 }

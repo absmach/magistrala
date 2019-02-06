@@ -59,11 +59,13 @@ func (r reader) ReadConfig(cfg Config) (mainflux.Response, error) {
 	for _, ch := range cfg.MFChannels {
 		channels = append(channels, channelRes{ID: ch.ID, Name: ch.Name, Metadata: ch.Metadata})
 	}
+
 	res := bootstrapRes{
 		MFKey:      cfg.MFKey,
 		MFThing:    cfg.MFThing,
 		MFChannels: channels,
 		Content:    cfg.Content,
 	}
+
 	return res, nil
 }

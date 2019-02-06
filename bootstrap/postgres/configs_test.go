@@ -114,6 +114,7 @@ func TestRetrieveAll(t *testing.T) {
 		// Use UUID to prevent conflict errors.
 		id := uuid.NewV4().String()
 		c.ExternalID = id
+		c.Name = fmt.Sprintf("name %d", i)
 		c.MFThing = id
 		c.MFKey = id
 		if i%2 == 0 {
@@ -156,8 +157,16 @@ func TestRetrieveAll(t *testing.T) {
 			owner:  config.Owner,
 			offset: 0,
 			limit:  uint64(numConfigs),
-			filter: bootstrap.Filter{"state": bootstrap.Active.String()},
+			filter: bootstrap.Filter{FullMatch: map[string]string{"state": bootstrap.Active.String()}},
 			size:   numConfigs / 2,
+		},
+		{
+			desc:   "retrieve search by name",
+			owner:  config.Owner,
+			offset: 0,
+			limit:  uint64(numConfigs),
+			filter: bootstrap.Filter{PartialMatch: map[string]string{"name": "1"}},
+			size:   1,
 		},
 	}
 	for _, tc := range cases {

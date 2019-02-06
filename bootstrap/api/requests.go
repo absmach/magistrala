@@ -18,6 +18,7 @@ type addReq struct {
 	ExternalID  string   `json:"external_id"`
 	ExternalKey string   `json:"external_key"`
 	Channels    []string `json:"channels"`
+	Name        string   `json:"name"`
 	Content     string   `json:"content"`
 }
 
@@ -46,6 +47,7 @@ type updateReq struct {
 	key      string
 	id       string
 	Channels []string        `json:"channels"`
+	Name     string          `json:"name"`
 	Content  string          `json:"content"`
 	State    bootstrap.State `json:"state"`
 }

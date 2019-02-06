@@ -250,6 +250,7 @@ func TestList(t *testing.T) {
 		id := uuid.NewV4().String()
 		c.ExternalID = id
 		c.ExternalKey = id
+		c.Name = fmt.Sprintf("%s-%d", config.Name, i)
 		s, err := svc.Add(validToken, c)
 		saved = append(saved, s)
 		require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
@@ -274,7 +275,7 @@ func TestList(t *testing.T) {
 		err    error
 	}{
 		{
-			desc:   "list config",
+			desc:   "list configs",
 			config: saved[0:10],
 			filter: bootstrap.Filter{},
 			key:    validToken,
@@ -283,22 +284,22 @@ func TestList(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:   "list config unauthorized",
+			desc:   "list configs with specified name",
+			config: saved[95:96],
+			filter: bootstrap.Filter{PartialMatch: map[string]string{"name": "95"}},
+			key:    validToken,
+			offset: 0,
+			limit:  100,
+			err:    nil,
+		},
+		{
+			desc:   "list configs unauthorized",
 			config: []bootstrap.Config{},
 			filter: bootstrap.Filter{},
 			key:    invalidToken,
 			offset: 0,
 			limit:  10,
 			err:    bootstrap.ErrUnauthorizedAccess,
-		},
-		{
-			desc:   "list config with invalid filter",
-			config: []bootstrap.Config{},
-			filter: nil,
-			key:    validToken,
-			offset: 0,
-			limit:  10,
-			err:    bootstrap.ErrMalformedEntity,
 		},
 		{
 			desc:   "list last page",
@@ -310,18 +311,18 @@ func TestList(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:   "list config with Active staate",
+			desc:   "list configs with Active staate",
 			config: []bootstrap.Config{saved[41]},
-			filter: bootstrap.Filter{"state": bootstrap.Active.String()},
+			filter: bootstrap.Filter{FullMatch: map[string]string{"state": bootstrap.Active.String()}},
 			key:    validToken,
 			offset: 35,
 			limit:  20,
 			err:    nil,
 		},
 		{
-			desc:   "list unknown config",
+			desc:   "list unknown configs",
 			config: []bootstrap.Config{unknownConfig},
-			filter: bootstrap.Filter{"unknown": "true"},
+			filter: bootstrap.Filter{Unknown: true},
 			key:    validToken,
 			offset: 0,
 			limit:  20,

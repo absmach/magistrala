@@ -78,6 +78,7 @@ type viewRes struct {
 	ExternalID  string          `json:"external_id"`
 	ExternalKey string          `json:"external_key,omitempty"`
 	Content     string          `json:"content,omitempty"`
+	Name        string          `json:"name,omitempty"`
 	State       bootstrap.State `json:"state"`
 }
 
@@ -90,6 +91,27 @@ func (res viewRes) Headers() map[string]string {
 }
 
 func (res viewRes) Empty() bool {
+	return false
+}
+
+type unknownRes struct {
+	ExternalID  string `json:"external_id"`
+	ExternalKey string `json:"external_key,omitempty"`
+}
+
+type listUnknownRes struct {
+	Configs []unknownRes `json:"configs"`
+}
+
+func (res listUnknownRes) Code() int {
+	return http.StatusOK
+}
+
+func (res listUnknownRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res listUnknownRes) Empty() bool {
 	return false
 }
 

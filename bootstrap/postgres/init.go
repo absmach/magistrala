@@ -54,7 +54,8 @@ func migrateDB(db *sql.DB) error {
 				Up: []string{
 					`CREATE TABLE IF NOT EXISTS configs (
 						mainflux_thing    TEXT UNIQUE NOT NULL,
-                        owner             VARCHAR(254),
+						owner             VARCHAR(254),
+						name 			  TEXT,
 						mainflux_key      CHAR(36) UNIQUE NOT NULL,
 						mainflux_channels jsonb,
 						external_id       TEXT UNIQUE NOT NULL,

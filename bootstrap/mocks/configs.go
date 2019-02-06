@@ -10,6 +10,7 @@ package mocks
 import (
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/mainflux/mainflux/bootstrap"
@@ -73,15 +74,22 @@ func (crm *configRepositoryMock) RetrieveAll(key string, filter bootstrap.Filter
 	first := uint64(offset) + 1
 	last := first + uint64(limit)
 	var state bootstrap.State = -1
-	if s, ok := filter["state"]; ok {
+	var name string
+	if s, ok := filter.FullMatch["state"]; ok {
 		val, _ := strconv.Atoi(s)
 		state = bootstrap.State(val)
+	}
+
+	if s, ok := filter.PartialMatch["name"]; ok {
+		name = strings.ToLower(s)
 	}
 
 	for _, v := range crm.configs {
 		id, _ := strconv.ParseUint(v.MFThing, 10, 64)
 		if id >= first && id < last {
-			if (state == -1 || v.State == state) && v.Owner == key {
+			if (state == -1 || v.State == state) &&
+				(name == "" || strings.Index(strings.ToLower(v.Name), name) != -1) &&
+				v.Owner == key {
 				configs = append(configs, v)
 			}
 		}

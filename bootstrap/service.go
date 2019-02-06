@@ -135,6 +135,7 @@ func (bs bootstrapService) Add(key string, cfg Config) (Config, error) {
 	bs.configs.RemoveUnknown(cfg.ExternalKey, cfg.ExternalID)
 
 	cfg.MFThing = id
+
 	return cfg, nil
 }
 
@@ -143,6 +144,7 @@ func (bs bootstrapService) View(key, id string) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+
 	return bs.configs.RetrieveByID(owner, id)
 }
 
@@ -208,10 +210,8 @@ func (bs bootstrapService) List(key string, filter Filter, offset, limit uint64)
 	if err != nil {
 		return []Config{}, err
 	}
-	if filter == nil {
-		return []Config{}, ErrMalformedEntity
-	}
-	if _, ok := filter["unknown"]; ok {
+
+	if filter.Unknown {
 		return bs.configs.RetrieveUnknown(offset, limit), nil
 	}
 

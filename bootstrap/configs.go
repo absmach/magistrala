@@ -22,6 +22,7 @@ const (
 type Config struct {
 	MFThing     string
 	Owner       string
+	Name        string
 	MFKey       string
 	MFChannels  []Channel
 	ExternalID  string
@@ -38,7 +39,11 @@ type Channel struct {
 }
 
 // Filter is used for the search filters.
-type Filter map[string]string
+type Filter struct {
+	Unknown      bool
+	FullMatch    map[string]string
+	PartialMatch map[string]string
+}
 
 // ConfigRepository specifies a Config persistence API.
 type ConfigRepository interface {

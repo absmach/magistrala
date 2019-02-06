@@ -13,6 +13,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/mainflux/mainflux"
 )
 
 func (sdk mfSDK) SendMessage(chanID, msg, token string) error {
@@ -43,7 +45,7 @@ func (sdk mfSDK) SendMessage(chanID, msg, token string) error {
 	return nil
 }
 
-func (sdk mfSDK) ReadMessages(chanID, token string) ([]Message, error) {
+func (sdk mfSDK) ReadMessages(chanID, token string) ([]mainflux.Message, error) {
 	endpoint := fmt.Sprintf("channels/%s/messages", chanID)
 	url := createURL(sdk.readerURL, "", endpoint)
 

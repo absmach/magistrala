@@ -10,33 +10,33 @@ package mainflux;
 
 // RawMessage represents a message emitted by the Mainflux adapters layer.
 message RawMessage {
-	string Channel     = 1;
-	string Publisher   = 2;
-	string Protocol    = 3;
-	string ContentType = 4;
-	bytes  Payload     = 5;
+	string channel     = 1;
+	string publisher   = 2;
+	string protocol    = 3;
+	string contentType = 4;
+	bytes  payload     = 5;
 }
 
 // Message represents a resolved (normalized) raw message.
 message Message {
-	string Channel     = 1;
-	string Publisher   = 2;
-	string Protocol    = 3;
-	string Name        = 4;
-	string Unit        = 5;
+	string channel     = 1;
+	string publisher   = 2;
+	string protocol    = 3;
+	string name        = 4;
+	string unit        = 5;
 	oneof value {
-		double FloatValue  = 6;
-		string StringValue = 7;
-		bool   BoolValue   = 8;
-		string DataValue   = 9;
+		double floatValue  = 6;
+		string stringValue = 7;
+		bool   boolValue   = 8;
+		string dataValue   = 9;
 	}
-	SumValue ValueSum    = 10;
-	double Time        = 11;
-	double UpdateTime  = 12;
-	string Link        = 13;
+	SumValue valueSum  = 10;
+	double time        = 11;
+	double updateTime  = 12;
+	string link        = 13;
 }
 
 // SumValue is a simple wrapper around the double value.
 message SumValue {
-	double Value = 1;
+	double value = 1;
 }

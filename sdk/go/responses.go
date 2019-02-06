@@ -7,6 +7,8 @@
 
 package sdk
 
+import "github.com/mainflux/mainflux"
+
 type tokenRes struct {
 	Token string `json:"token,omitempty"`
 }
@@ -26,5 +28,5 @@ type channelsPageRes struct {
 }
 
 type listMessagesRes struct {
-	Messages []Message `json:"messages,omitempty"`
+	Messages []mainflux.Message `json:"messages,omitempty"`
 }

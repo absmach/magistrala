@@ -12,6 +12,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/mainflux/mainflux"
 )
 
 const (
@@ -111,23 +113,6 @@ type ChannelsPage struct {
 	Limit    uint64    `json:"limit"`
 }
 
-// Message represents mainflux message.
-type Message struct {
-	Channel     string   `json:"channel,omitempty"`
-	Publisher   string   `json:"publisher,omitempty"`
-	Protocol    string   `json:"protocol,omitempty"`
-	Name        string   `json:"name,omitempty"`
-	Unit        string   `json:"unit,omitempty"`
-	Value       *float64 `json:"value,omitempty"`
-	StringValue *string  `json:"stringValue,omitempty"`
-	BoolValue   *bool    `json:"boolValue,omitempty"`
-	DataValue   *string  `json:"dataValue,omitempty"`
-	ValueSum    *float64 `json:"valueSum,omitempty"`
-	Time        float64  `json:"time,omitempty"`
-	UpdateTime  float64  `json:"updateTime,omitempty"`
-	Link        string   `json:"link,omitempty"`
-}
-
 // SDK contains Mainflux API.
 type SDK interface {
 	// CreateUser registers mainflux user.
@@ -183,8 +168,8 @@ type SDK interface {
 	// SendMessage send message to specified channel.
 	SendMessage(chanID, msg, token string) error
 
-	// ReadMessages read messagea of specified channel.
-	ReadMessages(chanID, token string) ([]Message, error)
+	// ReadMessages read messages of specified channel.
+	ReadMessages(chanID, token string) ([]mainflux.Message, error)
 
 	// SetContentType sets message content type.
 	SetContentType(ct ContentType) error

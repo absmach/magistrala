@@ -164,10 +164,10 @@ func newService(db *sql.DB, secret string, logger logger.Logger) users.Service {
 func startHTTPServer(svc users.Service, port string, certFile string, keyFile string, logger logger.Logger, errs chan error) {
 	p := fmt.Sprintf(":%s", port)
 	if certFile != "" || keyFile != "" {
-		logger.Info(fmt.Sprintf("Things service started using https, cert %s key %s, exposed port %s", certFile, keyFile, port))
+		logger.Info(fmt.Sprintf("Users service started using https, cert %s key %s, exposed port %s", certFile, keyFile, port))
 		errs <- http.ListenAndServeTLS(p, certFile, keyFile, httpapi.MakeHandler(svc, logger))
 	} else {
-		logger.Info(fmt.Sprintf("Things service started using http, exposed port %s", port))
+		logger.Info(fmt.Sprintf("Users service started using http, exposed port %s", port))
 		errs <- http.ListenAndServe(p, httpapi.MakeHandler(svc, logger))
 	}
 }
@@ -183,7 +183,7 @@ func startGRPCServer(svc users.Service, port string, certFile string, keyFile st
 	if certFile != "" || keyFile != "" {
 		creds, err := credentials.NewServerTLSFromFile(certFile, keyFile)
 		if err != nil {
-			logger.Error(fmt.Sprintf("Failed to load things certificates: %s", err))
+			logger.Error(fmt.Sprintf("Failed to load users certificates: %s", err))
 			os.Exit(1)
 		}
 		logger.Info(fmt.Sprintf("Users gRPC service started using https on port %s with cert %s key %s", port, certFile, keyFile))

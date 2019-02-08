@@ -177,7 +177,7 @@ func NewThingsCmd() *cobra.Command {
 		Short: "Things management",
 		Long:  `Things management: create, get, update or delete Thing, connect or disconnect Thing from Channel and get the list of Channels connected to Thing`,
 		Run: func(cmd *cobra.Command, args []string) {
-			logUsage("channels [create | get | update | delete | connect | disconnect | connections]")
+			logUsage("things [create | get | update | delete | connect | disconnect | connections]")
 		},
 	}
 

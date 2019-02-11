@@ -83,12 +83,12 @@ function startMqtt() {
 nats.subscribe('channel.*', {'queue':'mqtts'}, function (msg) {
     var m = message.RawMessage.decode(Buffer.from(msg)),
         packet;
-    if (m && m.Protocol !== 'mqtt') {
+    if (m && m.protocol !== 'mqtt') {
         packet = {
             cmd: 'publish',
             qos: 2,
-            topic: 'channels/' + m.Channel + '/messages',
-            payload: m.Payload,
+            topic: 'channels/' + m.channel + '/messages',
+            payload: m.payload,
             retain: false
         };
 
@@ -128,10 +128,10 @@ aedes.authorizePublish = function (client, packet, publish) {
                 logger.info('authorized publish');
 
                 rawMsg = message.RawMessage.encode({
-                    Publisher: client.thingId,
-                    Channel: channelId,
-                    Protocol: 'mqtt',
-                    Payload: packet.payload
+                    publisher: client.thingId,
+                    channel: channelId,
+                    protocol: 'mqtt',
+                    payload: packet.payload
                 });
                 nats.publish(channelTopic, rawMsg);
 

@@ -48,9 +48,15 @@ MF_HTTP_ADAPTER_LOG_LEVEL=info MF_HTTP_ADAPTER_PORT=8185 MF_THINGS_URL=localhost
 MF_WS_ADAPTER_LOG_LEVEL=info MF_WS_ADAPTER_PORT=8186 MF_THINGS_URL=localhost:8183 $BUILD_DIR/mainflux-ws &
 
 ###
+# NORMALIZER 
+###
+MF_NORMALIZER_LOG_LEVEL=INFO MF_NORMALIZER_PORT=8184 MF_NATS_URL=localhost:4222 $BUILD_DIR/mainflux-normalizer &
+
+###
 # MQTT
 ###
 # Switch to top dir to find *.proto stuff when running MQTT broker
+
 cd ..
 MF_MQTT_ADAPTER_LOG_LEVEL=info MF_THINGS_URL=localhost:8183 node mqtt/mqtt.js &
 cd -

@@ -1,7 +1,7 @@
 # This script contains commands to be executed by the CI tool.
 
 setup_protoc() {
-	echo "Setup protoc..."
+	echo "Setting up protoc..."
 	PROTOC_ZIP=protoc-3.6.1-linux-x86_64.zip
 	curl -0L https://github.com/google/protobuf/releases/download/v3.6.1/$PROTOC_ZIP -o $PROTOC_ZIP
 	unzip -o $PROTOC_ZIP -d protoc3
@@ -15,10 +15,23 @@ setup_protoc() {
 }
 
 setup_mf() {
-	echo "Setup Mainflux..."
-	go get -d github.com/mainflux/mainflux
-	cd $GOPATH/src/github.com/mainflux/mainflux
+	echo "Setting up Mainflux..."
+	MF_PATH=$GOPATH/src/github.com/mainflux/mainflux
+	if test $PWD != $MF_PATH; then
+		mkdir -p $MF_PATH
+		mv ./* $MF_PATH
+	fi
+	cd $MF_PATH
+	for p in $(ls *.pb.go); do
+		mv $p $p.tmp
+	done
 	make proto
+	for p in $(ls *.pb.go); do
+		if ! cmp -s $p $p.tmp; then
+			echo "Proto file and generated Go file $p are out of cync!"
+			exit 1
+		fi
+	done
 }
 
 setup() {
@@ -29,16 +42,25 @@ setup() {
 
 run_test() {
 	echo "Running tests..."
-	set -e; echo "" > coverage.txt; for d in $(go list ./... | grep -v 'vendor\|cmd'); do GOCACHE=off go test -v -race -tags test -coverprofile=profile.out -covermode=atomic $d; if [ -f profile.out ]; then cat profile.out >> coverage.txt; rm profile.out; fi done
+	echo "" > coverage.txt;
+	for d in $(go list ./... | grep -v 'vendor\|cmd'); do
+		GOCACHE=off
+		go test -v -race -tags test -coverprofile=profile.out -covermode=atomic $d
+		if [ -f profile.out ]; then
+			cat profile.out >> coverage.txt
+			rm profile.out
+		fi
+	done
 }
 
 push() {
-	echo "Pushing Docker images..."
 	if test -n "$BRANCH_NAME" && test "$BRANCH_NAME" = "master"; then
-	make latest
+		echo "Pushing Docker images..."
+		make latest
 	fi
 }
 
+set -e
 setup
 run_test
 push

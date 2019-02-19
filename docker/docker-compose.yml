@@ -217,6 +217,6 @@ services:
       MF_NATS_URL: nats://nats:4222
       MF_THINGS_URL: things:8183
     ports:
-      - 5683:5683
+      - 5683:5683/udp
     networks:
       - mainflux-base-net

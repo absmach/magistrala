@@ -194,11 +194,11 @@ Running of the Mainflux microservices can be tricky, as there is a lot of them a
 The whole system (set of microservices) can be run with one command:
 
 ```
-make run
+make rundev
 ```
 
 which will properly configure and run all microservices.
 
 Please assure that MQTT microservice has `node_modules` installed, as explained in _MQTT Microservice_ chapter.
 
-> N.B. `make run` actually calls helper script `scripts/run.sh`, so you can inspect this script for the details.
+> N.B. `make rundev` actually calls helper script `scripts/run.sh`, so you can inspect this script for the details.

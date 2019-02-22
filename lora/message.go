@@ -40,4 +40,5 @@ type Message struct {
 	FCnt                int    `json:"fCnt"`
 	FPort               int    `json:"fPort"`
 	Data                string `json:"data"`
+	Object              string `json:"object"`
 }

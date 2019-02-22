@@ -84,9 +84,17 @@ func (as *adapterService) Publish(m Message) error {
 		return ErrNotFoundApp
 	}
 
-	payload, err := base64.StdEncoding.DecodeString(m.Data)
-	if err != nil {
-		return ErrMalformedMessage
+	// Use the SenML message decoded on LoRa server application if
+	// field Object isn't empty. Otherwise, decode standard field Data.
+	var payload []byte
+	switch m.Object {
+	case "":
+		payload, err = base64.StdEncoding.DecodeString(m.Data)
+		if err != nil {
+			return ErrMalformedMessage
+		}
+	default:
+		payload = []byte(m.Object)
 	}
 
 	// Publish on Mainflux NATS broker

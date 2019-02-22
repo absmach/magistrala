@@ -171,7 +171,7 @@ func TestRetrieveAll(t *testing.T) {
 	}
 	for _, tc := range cases {
 		ret := repo.RetrieveAll(tc.owner, tc.filter, tc.offset, tc.limit)
-		size := len(ret)
+		size := len(ret.Configs)
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.size, size))
 	}
 }
@@ -397,7 +397,7 @@ func TestRetrieveUnknown(t *testing.T) {
 	}
 	for _, tc := range cases {
 		ret := repo.RetrieveUnknown(tc.offset, tc.limit)
-		size := len(ret)
+		size := len(ret.Configs)
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.size, size))
 	}
 }

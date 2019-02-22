@@ -84,6 +84,9 @@ func TestAdd(t *testing.T) {
 	server := newThingsServer(newThingsService(users))
 	svc := newService(users, server.URL)
 
+	neID := config
+	neID.MFThing = "non-existent"
+
 	wrongChannels := config
 	ch := channel
 	ch.ID = "invalid"
@@ -100,6 +103,12 @@ func TestAdd(t *testing.T) {
 			config: config,
 			key:    validToken,
 			err:    nil,
+		},
+		{
+			desc:   "add a config with an invalid ID",
+			config: neID,
+			key:    validToken,
+			err:    bootstrap.ErrNotFound,
 		},
 		{
 			desc:   "add a config with wrong credentials",
@@ -267,7 +276,7 @@ func TestList(t *testing.T) {
 
 	cases := []struct {
 		desc   string
-		config []bootstrap.Config
+		config bootstrap.ConfigsPage
 		filter bootstrap.Filter
 		offset uint64
 		limit  uint64
@@ -275,8 +284,13 @@ func TestList(t *testing.T) {
 		err    error
 	}{
 		{
-			desc:   "list configs",
-			config: saved[0:10],
+			desc: "list configs",
+			config: bootstrap.ConfigsPage{
+				Total:   uint64(len(saved)),
+				Offset:  0,
+				Limit:   10,
+				Configs: saved[0:10],
+			},
 			filter: bootstrap.Filter{},
 			key:    validToken,
 			offset: 0,
@@ -284,8 +298,13 @@ func TestList(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:   "list configs with specified name",
-			config: saved[95:96],
+			desc: "list configs with specified name",
+			config: bootstrap.ConfigsPage{
+				Total:   1,
+				Offset:  0,
+				Limit:   100,
+				Configs: saved[95:96],
+			},
 			filter: bootstrap.Filter{PartialMatch: map[string]string{"name": "95"}},
 			key:    validToken,
 			offset: 0,
@@ -294,7 +313,7 @@ func TestList(t *testing.T) {
 		},
 		{
 			desc:   "list configs unauthorized",
-			config: []bootstrap.Config{},
+			config: bootstrap.ConfigsPage{},
 			filter: bootstrap.Filter{},
 			key:    invalidToken,
 			offset: 0,
@@ -302,8 +321,13 @@ func TestList(t *testing.T) {
 			err:    bootstrap.ErrUnauthorizedAccess,
 		},
 		{
-			desc:   "list last page",
-			config: saved[95:],
+			desc: "list last page",
+			config: bootstrap.ConfigsPage{
+				Total:   uint64(len(saved)),
+				Offset:  95,
+				Limit:   10,
+				Configs: saved[95:],
+			},
 			filter: bootstrap.Filter{},
 			key:    validToken,
 			offset: 95,
@@ -311,8 +335,13 @@ func TestList(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:   "list configs with Active staate",
-			config: []bootstrap.Config{saved[41]},
+			desc: "list configs with Active staate",
+			config: bootstrap.ConfigsPage{
+				Total:   1,
+				Offset:  35,
+				Limit:   20,
+				Configs: []bootstrap.Config{saved[41]},
+			},
 			filter: bootstrap.Filter{FullMatch: map[string]string{"state": bootstrap.Active.String()}},
 			key:    validToken,
 			offset: 35,
@@ -320,8 +349,13 @@ func TestList(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:   "list unknown configs",
-			config: []bootstrap.Config{unknownConfig},
+			desc: "list unknown configs",
+			config: bootstrap.ConfigsPage{
+				Total:   1,
+				Offset:  0,
+				Limit:   20,
+				Configs: []bootstrap.Config{unknownConfig},
+			},
 			filter: bootstrap.Filter{Unknown: true},
 			key:    validToken,
 			offset: 0,
@@ -332,7 +366,8 @@ func TestList(t *testing.T) {
 
 	for _, tc := range cases {
 		result, err := svc.List(tc.key, tc.filter, tc.offset, tc.limit)
-		assert.ElementsMatch(t, tc.config, result, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.config, result))
+		assert.ElementsMatch(t, tc.config.Configs, result.Configs, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.config.Configs, result.Configs))
+		assert.Equal(t, tc.config.Total, result.Total, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.config.Total, result.Total))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }

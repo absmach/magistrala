@@ -16,6 +16,11 @@ import (
 	"github.com/mainflux/mainflux/bootstrap"
 )
 
+const (
+	emptyState  = -1
+	notFoundIdx = -1
+)
+
 var _ bootstrap.ConfigRepository = (*configRepositoryMock)(nil)
 
 type configRepositoryMock struct {
@@ -64,16 +69,16 @@ func (crm *configRepositoryMock) RetrieveByID(key, id string) (bootstrap.Config,
 
 }
 
-func (crm *configRepositoryMock) RetrieveAll(key string, filter bootstrap.Filter, offset, limit uint64) []bootstrap.Config {
+func (crm *configRepositoryMock) RetrieveAll(key string, filter bootstrap.Filter, offset, limit uint64) bootstrap.ConfigsPage {
 	configs := make([]bootstrap.Config, 0)
 
 	if offset < 0 || limit <= 0 {
-		return configs
+		return bootstrap.ConfigsPage{}
 	}
 
 	first := uint64(offset) + 1
 	last := first + uint64(limit)
-	var state bootstrap.State = -1
+	var state bootstrap.State = emptyState
 	var name string
 	if s, ok := filter.FullMatch["state"]; ok {
 		val, _ := strconv.Atoi(s)
@@ -84,14 +89,16 @@ func (crm *configRepositoryMock) RetrieveAll(key string, filter bootstrap.Filter
 		name = strings.ToLower(s)
 	}
 
+	var total uint64
 	for _, v := range crm.configs {
 		id, _ := strconv.ParseUint(v.MFThing, 10, 64)
-		if id >= first && id < last {
-			if (state == -1 || v.State == state) &&
-				(name == "" || strings.Index(strings.ToLower(v.Name), name) != -1) &&
-				v.Owner == key {
+		if (state == emptyState || v.State == state) &&
+			(name == "" || strings.Index(strings.ToLower(v.Name), name) != notFoundIdx) &&
+			v.Owner == key {
+			if id >= first && id < last {
 				configs = append(configs, v)
 			}
+			total++
 		}
 	}
 
@@ -99,7 +106,12 @@ func (crm *configRepositoryMock) RetrieveAll(key string, filter bootstrap.Filter
 		return configs[i].MFThing < configs[j].MFThing
 	})
 
-	return configs
+	return bootstrap.ConfigsPage{
+		Total:   total,
+		Offset:  offset,
+		Limit:   limit,
+		Configs: configs,
+	}
 }
 
 func (crm *configRepositoryMock) RetrieveByExternalID(externalKey, externalID string) (bootstrap.Config, error) {
@@ -153,8 +165,8 @@ func (crm *configRepositoryMock) ChangeState(key, id string, state bootstrap.Sta
 	return nil
 }
 
-func (crm *configRepositoryMock) RetrieveUnknown(offset, limit uint64) []bootstrap.Config {
-	res := []bootstrap.Config{}
+func (crm *configRepositoryMock) RetrieveUnknown(offset, limit uint64) bootstrap.ConfigsPage {
+	configs := []bootstrap.Config{}
 	i := uint64(0)
 	l := int(limit)
 	var keys []string
@@ -164,8 +176,8 @@ func (crm *configRepositoryMock) RetrieveUnknown(offset, limit uint64) []bootstr
 	sort.Strings(keys)
 
 	for _, k := range keys {
-		if i >= offset && len(res) < l {
-			res = append(res, bootstrap.Config{
+		if i >= offset && len(configs) < l {
+			configs = append(configs, bootstrap.Config{
 				ExternalID:  k,
 				ExternalKey: crm.unknown[k],
 			})
@@ -173,7 +185,12 @@ func (crm *configRepositoryMock) RetrieveUnknown(offset, limit uint64) []bootstr
 		i++
 	}
 
-	return res
+	return bootstrap.ConfigsPage{
+		Total:   uint64(len(crm.unknown)),
+		Offset:  offset,
+		Limit:   limit,
+		Configs: configs,
+	}
 }
 
 func (crm *configRepositoryMock) RemoveUnknown(key, id string) error {

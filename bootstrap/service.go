@@ -55,13 +55,14 @@ type Service interface {
 	// Update updates editable fields of the provided Thing.
 	Update(string, Config) error
 
-	// List returns subset of Things with given state that belong to the user identified by the given key.
-	List(string, Filter, uint64, uint64) ([]Config, error)
+	// List returns subset of Configs with given search params that belong to the
+	// user identified by the given key.
+	List(string, Filter, uint64, uint64) (ConfigsPage, error)
 
-	// Remove removes Thing with specified key that belongs to the user identified by the given key.
+	// Remove removes Config with specified key that belongs to the user identified by the given key.
 	Remove(string, string) error
 
-	// Bootstrap returns configuration to the Thing with provided external ID using external key.
+	// Bootstrap returns Config to the Thing with provided external ID using external key.
 	Bootstrap(string, string) (Config, error)
 
 	// ChangeState changes state of the Thing with given ID and owner.
@@ -96,6 +97,7 @@ func (bs bootstrapService) Add(key string, cfg Config) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+
 	// Check if channels exist. This is the way to prevent invalid configuration to be saved.
 	// However, channels deletion will eventually cause this; since Bootstrap service is not
 	// using events from the Things service at the moment. See #552.
@@ -118,7 +120,8 @@ func (bs bootstrapService) Add(key string, cfg Config) (Config, error) {
 		channels = append(channels, newCh)
 	}
 
-	mfThing, err := bs.add(key)
+	id := cfg.MFThing
+	mfThing, err := bs.thing(key, id)
 	if err != nil {
 		return Config{}, err
 	}
@@ -128,13 +131,17 @@ func (bs bootstrapService) Add(key string, cfg Config) (Config, error) {
 	cfg.State = Inactive
 	cfg.MFKey = mfThing.Key
 	cfg.MFChannels = channels
-	id, err := bs.configs.Save(cfg)
+	saved, err := bs.configs.Save(cfg)
+
 	if err != nil {
+		if id == "" {
+			bs.sdk.DeleteThing(cfg.MFThing, key)
+		}
 		return Config{}, err
 	}
 	bs.configs.RemoveUnknown(cfg.ExternalKey, cfg.ExternalID)
 
-	cfg.MFThing = id
+	cfg.MFThing = saved
 
 	return cfg, nil
 }
@@ -205,10 +212,10 @@ func (bs bootstrapService) Update(key string, cfg Config) error {
 	return bs.configs.Update(cfg)
 }
 
-func (bs bootstrapService) List(key string, filter Filter, offset, limit uint64) ([]Config, error) {
+func (bs bootstrapService) List(key string, filter Filter, offset, limit uint64) (ConfigsPage, error) {
 	owner, err := bs.identify(key)
 	if err != nil {
-		return []Config{}, err
+		return ConfigsPage{}, err
 	}
 
 	if filter.Unknown {
@@ -287,15 +294,29 @@ func (bs bootstrapService) ChangeState(key, id string, state State) error {
 	return bs.configs.ChangeState(owner, id, state)
 }
 
-func (bs bootstrapService) add(key string) (mfsdk.Thing, error) {
-	thingID, err := bs.sdk.CreateThing(mfsdk.Thing{Type: thingType}, key)
-	if err != nil {
-		return mfsdk.Thing{}, err
+// Method thing retrieves Mainflux Thing creating one if an empty ID is passed.
+func (bs bootstrapService) thing(key, id string) (mfsdk.Thing, error) {
+	thingID := id
+	var err error
+
+	if id == "" {
+		thingID, err = bs.sdk.CreateThing(mfsdk.Thing{Type: thingType}, key)
+		if err != nil {
+			return mfsdk.Thing{}, err
+		}
 	}
 
 	thing, err := bs.sdk.Thing(thingID, key)
 	if err != nil {
-		return mfsdk.Thing{}, bs.sdk.DeleteThing(thingID, key)
+		if err == mfsdk.ErrNotFound {
+			return mfsdk.Thing{}, ErrNotFound
+		}
+
+		if id != "" {
+			bs.sdk.DeleteThing(thingID, key)
+		}
+
+		return mfsdk.Thing{}, ErrThings
 	}
 
 	return thing, nil

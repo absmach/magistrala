@@ -13,9 +13,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/lib/pq"
 	"github.com/mainflux/mainflux/bootstrap"
-
-	"github.com/lib/pq" // required for DB access
 	"github.com/mainflux/mainflux/logger"
 )
 
@@ -102,11 +101,18 @@ func (cr configRepository) RetrieveByID(key, id string) (bootstrap.Config, error
 	return cfg, nil
 }
 
-func (cr configRepository) RetrieveAll(key string, filter bootstrap.Filter, offset, limit uint64) []bootstrap.Config {
-	rows, err := cr.retrieveAll(key, filter, offset, limit)
+func (cr configRepository) RetrieveAll(key string, filter bootstrap.Filter, offset, limit uint64) bootstrap.ConfigsPage {
+	search, params := cr.retrieveAll(key, filter)
+	n := len(params)
+
+	q := `SELECT mainflux_thing, mainflux_key, external_id, external_key, name, content, state, mainflux_channels
+	 			 FROM configs %s ORDER BY mainflux_thing LIMIT $%d OFFSET $%d`
+	q = fmt.Sprintf(q, search, n+1, n+2)
+
+	rows, err := cr.db.Query(q, append(params, limit, offset)...)
 	if err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to retrieve configs due to %s", err))
-		return []bootstrap.Config{}
+		return bootstrap.ConfigsPage{}
 	}
 	defer rows.Close()
 
@@ -118,12 +124,12 @@ func (cr configRepository) RetrieveAll(key string, filter bootstrap.Filter, offs
 		c := bootstrap.Config{Owner: key}
 		if err := rows.Scan(&c.MFThing, &c.MFKey, &c.ExternalID, &c.ExternalKey, &name, &content, &c.State, &chs); err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to read retrieved config due to %s", err))
-			return []bootstrap.Config{}
+			return bootstrap.ConfigsPage{}
 		}
 
 		if err := json.Unmarshal(chs, &c.MFChannels); err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to read retrieved config due to %s", err))
-			return []bootstrap.Config{}
+			return bootstrap.ConfigsPage{}
 		}
 
 		c.Name = name.String
@@ -131,7 +137,20 @@ func (cr configRepository) RetrieveAll(key string, filter bootstrap.Filter, offs
 		configs = append(configs, c)
 	}
 
-	return configs
+	q = fmt.Sprintf(`SELECT COUNT(*) FROM configs %s`, search)
+
+	var total uint64
+	if err := cr.db.QueryRow(q, params...).Scan(&total); err != nil {
+		cr.log.Error(fmt.Sprintf("Failed to count configs due to %s", err))
+		return bootstrap.ConfigsPage{}
+	}
+
+	return bootstrap.ConfigsPage{
+		Total:   total,
+		Limit:   limit,
+		Offset:  offset,
+		Configs: configs,
+	}
 }
 
 func (cr configRepository) RetrieveByExternalID(externalKey, externalID string) (bootstrap.Config, error) {
@@ -234,12 +253,12 @@ func (cr configRepository) SaveUnknown(key, id string) error {
 	return nil
 }
 
-func (cr configRepository) RetrieveUnknown(offset, limit uint64) []bootstrap.Config {
+func (cr configRepository) RetrieveUnknown(offset, limit uint64) bootstrap.ConfigsPage {
 	q := `SELECT external_id, external_key FROM unknown_configs LIMIT $1 OFFSET $2`
 	rows, err := cr.db.Query(q, limit, offset)
 	if err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to retrieve config due to %s", err))
-		return []bootstrap.Config{}
+		return bootstrap.ConfigsPage{}
 	}
 	defer rows.Close()
 
@@ -248,13 +267,26 @@ func (cr configRepository) RetrieveUnknown(offset, limit uint64) []bootstrap.Con
 		c := bootstrap.Config{}
 		if err = rows.Scan(&c.ExternalID, &c.ExternalKey); err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to read retrieved config due to %s", err))
-			return []bootstrap.Config{}
+			return bootstrap.ConfigsPage{}
 		}
 
 		items = append(items, c)
 	}
 
-	return items
+	q = fmt.Sprintf(`SELECT COUNT(*) FROM unknown_configs`)
+
+	var total uint64
+	if err := cr.db.QueryRow(q).Scan(&total); err != nil {
+		cr.log.Error(fmt.Sprintf("Failed to count unknown configs due to %s", err))
+		return bootstrap.ConfigsPage{}
+	}
+
+	return bootstrap.ConfigsPage{
+		Total:   total,
+		Offset:  offset,
+		Limit:   limit,
+		Configs: items,
+	}
 }
 
 func (cr configRepository) RemoveUnknown(key, id string) error {
@@ -264,14 +296,13 @@ func (cr configRepository) RemoveUnknown(key, id string) error {
 	return err
 }
 
-func (cr configRepository) retrieveAll(key string, filter bootstrap.Filter, offset, limit uint64) (*sql.Rows, error) {
-	template := `SELECT mainflux_thing, mainflux_key, external_id, external_key, name, content, state, mainflux_channels
-				 FROM configs WHERE owner = $1 %s ORDER BY mainflux_thing LIMIT $2 OFFSET $3`
-	params := []interface{}{key, limit, offset}
+func (cr configRepository) retrieveAll(key string, filter bootstrap.Filter) (string, []interface{}) {
+	template := `WHERE owner = $1 %s`
+	params := []interface{}{key}
 	// One empty string so that strings Join works if only one filter is applied.
 	queries := []string{""}
-	// Since key = 1, limit = 2, offset = 3, the next one is 4.
-	counter := len(params) + 1
+	// Since key is the first param, start from 2.
+	counter := 2
 	for k, v := range filter.FullMatch {
 		queries = append(queries, fmt.Sprintf("%s = $%d", k, counter))
 		params = append(params, v)
@@ -285,7 +316,7 @@ func (cr configRepository) retrieveAll(key string, filter bootstrap.Filter, offs
 
 	f := strings.Join(queries, " AND ")
 
-	return cr.db.Query(fmt.Sprintf(template, f), params...)
+	return fmt.Sprintf(template, f), params
 }
 
 func toDBChannels(channels []bootstrap.Channel) []dbChannel {

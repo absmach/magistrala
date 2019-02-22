@@ -8,7 +8,7 @@ consumes:
 produces:
   - "application/json"
 paths:
-  /configs:
+  /things/configs:
     post:
       summary: Adds new config
       description: |
@@ -65,7 +65,7 @@ paths:
           description: Missing or invalid access token provided.
         500:
           $ref: "#/responses/ServiceError"
-  /bootstrap/{externalId}:
+  /things/bootstrap/{externalId}:
     get:
       summary: Retrieves configuration
       description: |
@@ -87,7 +87,7 @@ paths:
             added to the service later.
         500:
           $ref: "#/responses/ServiceError"
-  /configs/{configId}:
+  /things/configs/{configId}:
     get:
       summary: Retrieves config info
       tags:
@@ -155,7 +155,7 @@ paths:
           description: Missing or invalid access token provided.
         500:
           $ref: "#/responses/ServiceError"
-  /state/{configId}:
+  /things/state/{configId}:
     put:
       summary: Updates Config state.
       description: |
@@ -186,7 +186,7 @@ paths:
           description: Missing or invalid access token provided.
         500:
           $ref: "#/responses/ServiceError"
-  /unknown:
+  /things/unknown/configs:
     get:
       summary: Get a list of unsucessfully bootstrapped Things
       description: |
@@ -279,6 +279,20 @@ definitions:
   ConfigList:
     type: object
     properties:
+      total:
+        type: integer
+        description: Total number of results.
+        minimum: 0
+      offset:
+        type: integer
+        description: Number of items to skip during retrieval.
+        minimum: 0
+        default: 0
+      limit:
+        type: integer
+        description: Size of the subset to retrieve.
+        maximum: 100
+        default: 10
       configs:
         type: array
         minItems: 0

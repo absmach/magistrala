@@ -27,6 +27,7 @@ func addEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		}
 
 		config := bootstrap.Config{
+			MFThing:     req.ThingID,
 			ExternalID:  req.ExternalID,
 			ExternalKey: req.ExternalKey,
 			MFChannels:  channels,
@@ -127,14 +128,14 @@ func listEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		configs, err := svc.List(req.key, req.filter, req.offset, req.limit)
+		page, err := svc.List(req.key, req.filter, req.offset, req.limit)
 		if err != nil {
 			return nil, err
 		}
 		switch {
 		case req.filter.Unknown:
 			res := listUnknownRes{}
-			for _, cfg := range configs {
+			for _, cfg := range page.Configs {
 				res.Configs = append(res.Configs, unknownRes{
 					ExternalID:  cfg.ExternalID,
 					ExternalKey: cfg.ExternalKey,
@@ -143,10 +144,13 @@ func listEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return res, nil
 		default:
 			res := listRes{
+				Total:   page.Total,
+				Offset:  page.Offset,
+				Limit:   page.Limit,
 				Configs: []viewRes{},
 			}
 
-			for _, cfg := range configs {
+			for _, cfg := range page.Configs {
 				var channels []channelRes
 				for _, ch := range cfg.MFChannels {
 					channels = append(channels, channelRes{

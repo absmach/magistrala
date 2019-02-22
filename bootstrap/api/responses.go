@@ -11,9 +11,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/mainflux/mainflux/bootstrap"
-
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/bootstrap"
 )
 
 var (
@@ -116,6 +115,9 @@ func (res listUnknownRes) Empty() bool {
 }
 
 type listRes struct {
+	Total   uint64    `json:"total"`
+	Offset  uint64    `json:"offset"`
+	Limit   uint64    `json:"limit"`
 	Configs []viewRes `json:"configs"`
 }
 

@@ -45,6 +45,15 @@ type Filter struct {
 	PartialMatch map[string]string
 }
 
+// ConfigsPage contains page related metadata as well as list of Configs that
+// belong to this page.
+type ConfigsPage struct {
+	Total   uint64
+	Offset  uint64
+	Limit   uint64
+	Configs []Config
+}
+
 // ConfigRepository specifies a Config persistence API.
 type ConfigRepository interface {
 	// Save persists the Config. Successful operation is indicated by non-nil
@@ -55,9 +64,9 @@ type ConfigRepository interface {
 	// by the specified user.
 	RetrieveByID(string, string) (Config, error)
 
-	// RetrieveAll retrieves the subset of Configs that are owned by the specific user,
-	// with given filter parameters.
-	RetrieveAll(string, Filter, uint64, uint64) []Config
+	// RetrieveAll retrieves a subset of Configs that are owned
+	// by the specific user, with given filter parameters.
+	RetrieveAll(string, Filter, uint64, uint64) ConfigsPage
 
 	// RetrieveByExternalID returns Config for given external ID.
 	RetrieveByExternalID(string, string) (Config, error)
@@ -76,8 +85,8 @@ type ConfigRepository interface {
 	// SaveUnknown saves Thing which unsuccessfully bootstrapped.
 	SaveUnknown(string, string) error
 
-	// RetrieveUnknown returns list of unsuccessfully bootstrapped Things.
-	RetrieveUnknown(uint64, uint64) []Config
+	// RetrieveUnknown returns a subset of unsuccessfully bootstrapped Things.
+	RetrieveUnknown(uint64, uint64) ConfigsPage
 
 	// RemoveUnknown removes unsuccessfully bootstrapped Thing. This is done once the
 	// corresponding Config is added to the list of existing configs (Save method).

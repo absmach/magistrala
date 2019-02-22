@@ -68,7 +68,7 @@ func (lm *loggingMiddleware) Update(key string, thing bootstrap.Config) (err err
 	return lm.svc.Update(key, thing)
 }
 
-func (lm *loggingMiddleware) List(key string, filter bootstrap.Filter, offset, limit uint64) (res []bootstrap.Config, err error) {
+func (lm *loggingMiddleware) List(key string, filter bootstrap.Filter, offset, limit uint64) (res bootstrap.ConfigsPage, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list for key %s and offset %d and limit %d took %s to complete", key, offset, limit, time.Since(begin))
 		if err != nil {

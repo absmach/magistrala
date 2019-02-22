@@ -2,6 +2,7 @@ package lora
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 
 	"github.com/mainflux/mainflux"
@@ -88,13 +89,17 @@ func (as *adapterService) Publish(m Message) error {
 	// field Object isn't empty. Otherwise, decode standard field Data.
 	var payload []byte
 	switch m.Object {
-	case "":
+	case nil:
 		payload, err = base64.StdEncoding.DecodeString(m.Data)
 		if err != nil {
 			return ErrMalformedMessage
 		}
 	default:
-		payload = []byte(m.Object)
+		jo, err := json.Marshal(m.Object)
+		if err != nil {
+			return err
+		}
+		payload = []byte(jo)
 	}
 
 	// Publish on Mainflux NATS broker

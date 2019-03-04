@@ -94,17 +94,10 @@ func updateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		channels := []bootstrap.Channel{}
-		for _, c := range req.Channels {
-			channels = append(channels, bootstrap.Channel{ID: c})
-		}
-
 		config := bootstrap.Config{
-			MFThing:    req.id,
-			MFChannels: channels,
-			Name:       req.Name,
-			Content:    req.Content,
-			State:      req.State,
+			MFThing: req.id,
+			Name:    req.Name,
+			Content: req.Content,
 		}
 
 		if err := svc.Update(req.key, config); err != nil {
@@ -113,6 +106,27 @@ func updateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 
 		res := configRes{
 			id:      config.MFThing,
+			created: false,
+		}
+
+		return res, nil
+	}
+}
+
+func updateConnEndpoint(svc bootstrap.Service) endpoint.Endpoint {
+	return func(_ context.Context, request interface{}) (interface{}, error) {
+		req := request.(updateConnReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		if err := svc.UpdateConnections(req.key, req.id, req.Channels); err != nil {
+			return nil, err
+		}
+
+		res := configRes{
+			id:      req.id,
 			created: false,
 		}
 

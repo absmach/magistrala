@@ -84,40 +84,61 @@ func TestEntityReqValidation(t *testing.T) {
 
 func TestUpdateReqValidation(t *testing.T) {
 	cases := []struct {
-		desc  string
-		key   string
-		id    string
-		state bootstrap.State
-		err   error
+		desc string
+		key  string
+		id   string
+		err  error
 	}{
 		{
-			desc:  "empty key",
-			key:   "",
-			id:    "id",
-			state: bootstrap.State(1),
-			err:   bootstrap.ErrUnauthorizedAccess,
+			desc: "empty key",
+			key:  "",
+			id:   "id",
+			err:  bootstrap.ErrUnauthorizedAccess,
 		},
 		{
-			desc:  "empty id",
-			key:   "key",
-			id:    "",
-			state: bootstrap.State(0),
-			err:   bootstrap.ErrMalformedEntity,
-		},
-		{
-			desc:  "invalid state",
-			key:   "key",
-			id:    "id",
-			state: bootstrap.State(14),
-			err:   bootstrap.ErrMalformedEntity,
+			desc: "empty id",
+			key:  "key",
+			id:   "",
+			err:  bootstrap.ErrMalformedEntity,
 		},
 	}
 
 	for _, tc := range cases {
 		req := updateReq{
-			key:   tc.key,
-			id:    tc.id,
-			State: tc.state,
+			key: tc.key,
+			id:  tc.id,
+		}
+
+		err := req.validate()
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	}
+}
+
+func TestUpdateConnReqValidation(t *testing.T) {
+	cases := []struct {
+		desc string
+		key  string
+		id   string
+		err  error
+	}{
+		{
+			desc: "empty key",
+			key:  "",
+			id:   "id",
+			err:  bootstrap.ErrUnauthorizedAccess,
+		},
+		{
+			desc: "empty id",
+			key:  "key",
+			id:   "",
+			err:  bootstrap.ErrMalformedEntity,
+		},
+	}
+
+	for _, tc := range cases {
+		req := updateReq{
+			key: tc.key,
+			id:  tc.id,
 		}
 
 		err := req.validate()

@@ -17,10 +17,12 @@ import (
 	"syscall"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+	r "github.com/go-redis/redis"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/bootstrap"
 	api "github.com/mainflux/mainflux/bootstrap/api"
 	"github.com/mainflux/mainflux/bootstrap/postgres"
+	"github.com/mainflux/mainflux/bootstrap/redis"
 	"github.com/mainflux/mainflux/logger"
 	mfsdk "github.com/mainflux/mainflux/sdk/go"
 	usersapi "github.com/mainflux/mainflux/users/api/grpc"
@@ -49,6 +51,11 @@ const (
 	defThingsPrefix  = ""
 	defUsersURL      = "localhost:8181"
 
+	defESURL        = "localhost:6379"
+	defESPass       = ""
+	defESDB         = "0"
+	defInstanceName = "bootstrap"
+
 	envLogLevel      = "MF_BOOTSTRAP_LOG_LEVEL"
 	envDBHost        = "MF_BOOTSTRAP_DB_HOST"
 	envDBPort        = "MF_BOOTSTRAP_DB_PORT"
@@ -67,6 +74,11 @@ const (
 	envBaseURL       = "MF_SDK_BASE_URL"
 	envThingsPrefix  = "MF_SDK_THINGS_PREFIX"
 	envUsersURL      = "MF_USERS_URL"
+
+	envESURL        = "MF_THINGS_ES_URL"
+	envESPass       = "MF_THINGS_ES_PASS"
+	envESDB         = "MF_THINGS_ES_DB"
+	envInstanceName = "MF_BOOTSTRAP_INSTANCE_NAME"
 )
 
 type config struct {
@@ -80,6 +92,11 @@ type config struct {
 	baseURL      string
 	thingsPrefix string
 	usersURL     string
+
+	esURL        string
+	esPass       string
+	esDB         string
+	instanceName string
 }
 
 func main() {
@@ -96,10 +113,14 @@ func main() {
 	conn := connectToUsers(cfg, logger)
 	defer conn.Close()
 
+	esConn := connectToRedis(cfg.esURL, cfg.esPass, cfg.esDB, logger)
+	defer esConn.Close()
+
 	svc := newService(conn, db, logger, cfg)
 	errs := make(chan error, 2)
 
 	go startHTTPServer(svc, cfg, logger, errs)
+	go subscribeToThingsES(svc, esConn, cfg.instanceName, logger)
 
 	go func() {
 		c := make(chan os.Signal)
@@ -139,6 +160,11 @@ func loadConfig() config {
 		baseURL:      mainflux.Env(envBaseURL, defBaseURL),
 		thingsPrefix: mainflux.Env(envThingsPrefix, defThingsPrefix),
 		usersURL:     mainflux.Env(envUsersURL, defUsersURL),
+
+		esURL:        mainflux.Env(envESURL, defESURL),
+		esPass:       mainflux.Env(envESPass, defESPass),
+		esDB:         mainflux.Env(envESDB, defESDB),
+		instanceName: mainflux.Env(envInstanceName, defInstanceName),
 	}
 }
 
@@ -149,6 +175,20 @@ func connectToDB(cfg postgres.Config, logger logger.Logger) *sql.DB {
 		os.Exit(1)
 	}
 	return db
+}
+
+func connectToRedis(redisURL, redisPass, redisDB string, logger logger.Logger) *r.Client {
+	db, err := strconv.Atoi(redisDB)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to connect to redis: %s", err))
+		os.Exit(1)
+	}
+
+	return r.NewClient(&r.Options{
+		Addr:     redisURL,
+		Password: redisPass,
+		DB:       db,
+	})
 }
 
 func newService(conn *grpc.ClientConn, db *sql.DB, logger logger.Logger, cfg config) bootstrap.Service {
@@ -217,4 +257,10 @@ func startHTTPServer(svc bootstrap.Service, cfg config, logger logger.Logger, er
 	}
 	logger.Info(fmt.Sprintf("Bootstrap service started using http on port %s", cfg.httpPort))
 	errs <- http.ListenAndServe(p, api.MakeHandler(svc, bootstrap.NewConfigReader()))
+}
+
+func subscribeToThingsES(svc bootstrap.Service, client *r.Client, consumer string, logger logger.Logger) {
+	eventStore := redis.NewEventStore(svc, client, consumer, logger)
+	logger.Info("Subscribed to Redis Event Store")
+	eventStore.Subscribe("mainflux.things")
 }

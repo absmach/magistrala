@@ -7,13 +7,6 @@
 
 package bootstrap
 
-const (
-	// Inactive Thing is created, but not able to exchange messages using Mainflux.
-	Inactive State = iota
-	// Active Thing is created, configured, and whitelisted.
-	Active
-)
-
 // Config represents Configuration entity. It wraps information about external entity
 // as well as info about corresponding Mainflux entities.
 // MFThing represents corresponding Mainflux Thing ID.
@@ -58,7 +51,7 @@ type ConfigsPage struct {
 type ConfigRepository interface {
 	// Save persists the Config. Successful operation is indicated by non-nil
 	// error response.
-	Save(Config) (string, error)
+	Save(Config, []string) (string, error)
 
 	// RetrieveByID retrieves the Config having the provided identifier, that is owned
 	// by the specified user.
@@ -75,6 +68,10 @@ type ConfigRepository interface {
 	// to indicate operation failure.
 	Update(Config) error
 
+	// UpdateConnections updates a list of Channels the Config is connected to
+	// adding new Channels if needed.
+	UpdateConnections(string, string, []Channel, []string) error
+
 	// Remove removes the Config having the provided identifier, that is owned
 	// by the specified user.
 	Remove(string, string) error
@@ -88,7 +85,22 @@ type ConfigRepository interface {
 	// RetrieveUnknown returns a subset of unsuccessfully bootstrapped Things.
 	RetrieveUnknown(uint64, uint64) ConfigsPage
 
-	// RemoveUnknown removes unsuccessfully bootstrapped Thing. This is done once the
-	// corresponding Config is added to the list of existing configs (Save method).
-	RemoveUnknown(string, string) error
+	// ListExisting retrieves those channels from the given list that exist in DB.
+	ListExisting(string, []string) ([]Channel, error)
+
+	// Methods RemoveThing, UpdateChannel, and RemoveChannel are related to
+	// event sourcing. That's why these methods surpass ownership check.
+
+	// RemoveThing removes Config of the Thing with the given ID.
+	RemoveThing(string) error
+
+	// UpdateChannel updates channel with the given ID.
+	UpdateChannel(Channel) error
+
+	// RemoveChannel removes channel with the given ID.
+	RemoveChannel(string) error
+
+	// DisconnectHandler changes state of the Config when the corresponding Thing is
+	// disconnected from the Channel.
+	DisconnectThing(string, string) error
 }

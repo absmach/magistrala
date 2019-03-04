@@ -53,12 +53,10 @@ func (req entityReq) validate() error {
 }
 
 type updateReq struct {
-	key      string
-	id       string
-	Channels []string        `json:"channels"`
-	Name     string          `json:"name"`
-	Content  string          `json:"content"`
-	State    bootstrap.State `json:"state"`
+	key     string
+	id      string
+	Name    string `json:"name"`
+	Content string `json:"content"`
 }
 
 func (req updateReq) validate() error {
@@ -70,9 +68,21 @@ func (req updateReq) validate() error {
 		return bootstrap.ErrMalformedEntity
 	}
 
-	// Can't explicitly update state to NewThing or Created.
-	if req.State != bootstrap.Inactive &&
-		req.State != bootstrap.Active {
+	return nil
+}
+
+type updateConnReq struct {
+	key      string
+	id       string
+	Channels []string `json:"channels"`
+}
+
+func (req updateConnReq) validate() error {
+	if req.key == "" {
+		return bootstrap.ErrUnauthorizedAccess
+	}
+
+	if req.id == "" {
 		return bootstrap.ErrMalformedEntity
 	}
 

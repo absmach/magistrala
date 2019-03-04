@@ -62,6 +62,12 @@ func MakeHandler(svc bootstrap.Service, reader bootstrap.ConfigReader) http.Hand
 		encodeResponse,
 		opts...))
 
+	r.Put("/things/configs/connections/:id", kithttp.NewServer(
+		updateConnEndpoint(svc),
+		decodeUpdateConnRequest,
+		encodeResponse,
+		opts...))
+
 	r.Get("/things/configs", kithttp.NewServer(
 		listEndpoint(svc),
 		decodeListRequest,
@@ -117,6 +123,20 @@ func decodeUpdateRequest(_ context.Context, r *http.Request) (interface{}, error
 	}
 
 	req := updateReq{key: r.Header.Get("Authorization")}
+	req.id = bone.GetValue(r, "id")
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+func decodeUpdateConnRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if r.Header.Get("Content-Type") != contentType {
+		return nil, errUnsupportedContentType
+	}
+
+	req := updateConnReq{key: r.Header.Get("Authorization")}
 	req.id = bone.GetValue(r, "id")
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err

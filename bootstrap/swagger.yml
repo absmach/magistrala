@@ -30,7 +30,7 @@ paths:
           headers:
             Location:
               type: string
-              description: Created config's relative URL (i.e. /configs/{configId}).
+              description: Created config's relative URL (i.e. /things/configs/{configId}).
         400:
           description: Failed due to malformed JSON.
         403:
@@ -56,7 +56,8 @@ paths:
         - $ref: "#/parameters/Name"
       responses:
         200:
-          description: Data retrieved.
+          description: | 
+            Data retrieved. Configs from this list don't contain channels.
           schema:
             $ref: "#/definitions/ConfigList"
         400:
@@ -89,7 +90,7 @@ paths:
           $ref: "#/responses/ServiceError"
   /things/configs/{configId}:
     get:
-      summary: Retrieves config info
+      summary: Retrieves config info (with channels)
       tags:
         - configs
       parameters:
@@ -153,6 +154,38 @@ paths:
           description: Failed due to malformed config's ID.
         403:
           description: Missing or invalid access token provided.
+        500:
+          $ref: "#/responses/ServiceError"
+  /things/configs/connections/{configId}:
+    put:
+      summary: Updates channels the thing is connected to
+      description: |
+        Update connections performs update of the channel list corresponding 
+        Thing is connected to.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/ConfigId"
+        - name: channels
+          description: Array if IDs the thing is be connected to.
+          in: body
+          schema:
+            type: array
+            items:
+              type: string
+          required: true
+      responses:
+        200:
+          description: Config updated.
+        400:
+          description: Failed due to malformed JSON.
+        403:
+          description: Missing or invalid access token provided.
+        404:
+          description: Config does not exist.
+        415:
+          description: Missing or invalid content type.
         500:
           $ref: "#/responses/ServiceError"
   /things/state/{configId}:
@@ -395,9 +428,8 @@ definitions:
           type: string
       content:
         type: string
-      state:
-        $ref: '#/definitions/State'
+      name:
+        type: string
     required:
-      - channels
       - content
-      - state
+      - name

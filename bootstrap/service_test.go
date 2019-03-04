@@ -186,21 +186,10 @@ func TestUpdate(t *testing.T) {
 
 	modifiedCreated := saved
 	modifiedCreated.Content = "new-config"
-	ch.ID = "3"
-	modifiedCreated.MFChannels = []bootstrap.Channel{channel, ch}
-	modifiedCreated.State = bootstrap.Active
-
-	modifiedActive := modifiedCreated
-	ch.ID = "2"
-	modifiedActive.MFChannels = []bootstrap.Channel{channel, ch}
+	modifiedCreated.Name = "new name"
 
 	nonExisting := config
 	nonExisting.MFThing = unknown
-
-	wrongChannels := modifiedActive
-	ch = channel
-	ch.ID = unknown
-	wrongChannels.MFChannels = append(wrongChannels.MFChannels, ch)
 
 	cases := []struct {
 		desc   string
@@ -211,12 +200,6 @@ func TestUpdate(t *testing.T) {
 		{
 			desc:   "update a config with state Created",
 			config: modifiedCreated,
-			key:    validToken,
-			err:    nil,
-		},
-		{
-			desc:   "update a config with state Active",
-			config: modifiedActive,
 			key:    validToken,
 			err:    nil,
 		},
@@ -232,16 +215,82 @@ func TestUpdate(t *testing.T) {
 			key:    invalidToken,
 			err:    bootstrap.ErrUnauthorizedAccess,
 		},
-		{
-			desc:   "update a config with invalid list of channels",
-			config: wrongChannels,
-			key:    validToken,
-			err:    bootstrap.ErrMalformedEntity,
-		},
 	}
 
 	for _, tc := range cases {
 		err := svc.Update(tc.key, tc.config)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	}
+}
+
+func TestUpdateConnections(t *testing.T) {
+	users := mocks.NewUsersService(map[string]string{validToken: email})
+
+	server := newThingsServer(newThingsService(users))
+	svc := newService(users, server.URL)
+	c := config
+
+	ch := channel
+	ch.ID = "2"
+	c.MFChannels = append(c.MFChannels, ch)
+	created, err := svc.Add(validToken, c)
+	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+
+	c.ExternalID = uuid.NewV4().String()
+	active, err := svc.Add(validToken, c)
+	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+	err = svc.ChangeState(validToken, active.MFThing, bootstrap.Active)
+	require.Nil(t, err, fmt.Sprintf("Changing state expected to succeed: %s.\n", err))
+
+	nonExisting := config
+	nonExisting.MFThing = unknown
+
+	cases := []struct {
+		desc        string
+		key         string
+		id          string
+		connections []string
+		err         error
+	}{
+		{
+			desc:        "update connections for config with state Created",
+			key:         validToken,
+			id:          created.MFThing,
+			connections: []string{"2"},
+			err:         nil,
+		},
+		{
+			desc:        "update connections for config with state Active",
+			key:         validToken,
+			id:          active.MFThing,
+			connections: []string{"3"},
+			err:         nil,
+		},
+		{
+			desc:        "update connections for non-existing config",
+			key:         validToken,
+			id:          "",
+			connections: []string{"3"},
+			err:         bootstrap.ErrNotFound,
+		},
+		{
+			desc:        "update connections with invalid channels",
+			key:         validToken,
+			id:          created.MFThing,
+			connections: []string{"wrong"},
+			err:         bootstrap.ErrMalformedEntity,
+		},
+		{
+			desc:        "update connections a config with wrong credentials",
+			key:         invalidToken,
+			id:          created.MFKey,
+			connections: []string{"2", "3"},
+			err:         bootstrap.ErrUnauthorizedAccess,
+		},
+	}
+
+	for _, tc := range cases {
+		err := svc.UpdateConnections(tc.key, tc.id, tc.connections)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -335,7 +384,7 @@ func TestList(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc: "list configs with Active staate",
+			desc: "list configs with Active state",
 			config: bootstrap.ConfigsPage{
 				Total:   1,
 				Offset:  35,
@@ -520,6 +569,142 @@ func TestChangeState(t *testing.T) {
 
 	for _, tc := range cases {
 		err := svc.ChangeState(tc.key, tc.id, tc.state)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	}
+}
+
+func TestUpdateChannelHandler(t *testing.T) {
+	users := mocks.NewUsersService(map[string]string{validToken: email})
+
+	server := newThingsServer(newThingsService(users))
+	svc := newService(users, server.URL)
+
+	_, err := svc.Add(validToken, config)
+	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+	ch := bootstrap.Channel{
+		ID:       channel.ID,
+		Name:     "new name",
+		Metadata: "new meta",
+	}
+
+	cases := []struct {
+		desc    string
+		channel bootstrap.Channel
+		err     error
+	}{
+		{
+			desc:    "update an existing channel",
+			channel: ch,
+			err:     nil,
+		},
+		{
+			desc:    "update a non-existing channel",
+			channel: bootstrap.Channel{ID: ""},
+			err:     nil,
+		},
+	}
+
+	for _, tc := range cases {
+		err := svc.UpdateChannelHandler(tc.channel)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	}
+}
+
+func TestRemoveChannelHandler(t *testing.T) {
+	users := mocks.NewUsersService(map[string]string{validToken: email})
+
+	server := newThingsServer(newThingsService(users))
+	svc := newService(users, server.URL)
+
+	_, err := svc.Add(validToken, config)
+	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+
+	cases := []struct {
+		desc string
+		id   string
+		err  error
+	}{
+		{
+			desc: "remove an existing channel",
+			id:   channel.ID,
+			err:  nil,
+		},
+		{
+			desc: "remove a non-existing channel",
+			id:   "unknown",
+			err:  nil,
+		},
+	}
+
+	for _, tc := range cases {
+		err := svc.RemoveChannelHandler(tc.id)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	}
+}
+
+func TestRemoveCoinfigHandler(t *testing.T) {
+	users := mocks.NewUsersService(map[string]string{validToken: email})
+
+	server := newThingsServer(newThingsService(users))
+	svc := newService(users, server.URL)
+
+	saved, err := svc.Add(validToken, config)
+	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+
+	cases := []struct {
+		desc string
+		id   string
+		err  error
+	}{
+		{
+			desc: "remove an existing conifg",
+			id:   saved.MFThing,
+			err:  nil,
+		},
+		{
+			desc: "remove a non-existing channel",
+			id:   "unknown",
+			err:  nil,
+		},
+	}
+
+	for _, tc := range cases {
+		err := svc.RemoveConfigHandler(tc.id)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	}
+}
+
+func TestDisconnectThingsHandler(t *testing.T) {
+	users := mocks.NewUsersService(map[string]string{validToken: email})
+
+	server := newThingsServer(newThingsService(users))
+	svc := newService(users, server.URL)
+
+	saved, err := svc.Add(validToken, config)
+	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+
+	cases := []struct {
+		desc      string
+		thingID   string
+		channelID string
+		err       error
+	}{
+		{
+			desc:      "disconnect",
+			channelID: channel.ID,
+			thingID:   saved.MFThing,
+			err:       nil,
+		},
+		{
+			desc:      "disconnect dicsonnected",
+			channelID: channel.ID,
+			thingID:   saved.MFThing,
+			err:       nil,
+		},
+	}
+
+	for _, tc := range cases {
+		err := svc.DisconnectThingHandler(tc.channelID, tc.thingID)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }

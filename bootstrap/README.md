@@ -45,9 +45,9 @@ The service is configured using the environment variables presented in the follo
 | MF_BOOTSTRAP_DB_SSL_ROOT_CERT | Path to the PEM encoded root certificate file                           |                       |
 | MF_BOOTSTRAP_CLIENT_TLS       | Flag that indicates if TLS should be turned on                          | false                 |
 | MF_BOOTSTRAP_CA_CERTS         | Path to trusted CAs in PEM format                                       |                       |
-| MF_BOOTSTRAP_PORT             | Bootstrap service HTTP port                                             | 8181                  |
-| MF_BOOTSTRAP_SERVER_CERT      | Path to server certificate in pem format                                | 8181                  |
-| MF_BOOTSTRAP_SERVER_KEY       | Path to server key in pem format                                        | 8181                  |
+| MF_BOOTSTRAP_PORT             | Bootstrap service HTTP port                                             | 8180                  |
+| MF_BOOTSTRAP_SERVER_CERT      | Path to server certificate in pem format                                |                       |
+| MF_BOOTSTRAP_SERVER_KEY       | Path to server key in pem format                                        |                       |
 | MF_SDK_BASE_URL               | Base url for Mainflux SDK                                               | http://localhost      |
 | MF_SDK_THINGS_PREFIX          | SDK prefix for Things service                                           |                       |
 | MF_USERS_URL                  | Users service URL                                                       | localhost:8181        |

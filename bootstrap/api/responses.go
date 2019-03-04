@@ -53,7 +53,7 @@ func (res configRes) Code() int {
 func (res configRes) Headers() map[string]string {
 	if res.created {
 		return map[string]string{
-			"Location": fmt.Sprintf("/configs/%s", res.id),
+			"Location": fmt.Sprintf("/things/configs/%s", res.id),
 		}
 	}
 

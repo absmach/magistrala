@@ -157,6 +157,11 @@ func TestSingleChannelRetrieval(t *testing.T) {
 			ID:    c.ID,
 			err:   things.ErrNotFound,
 		},
+		"retrieve channel with malformed ID": {
+			owner: c.Owner,
+			ID:    wrongValue,
+			err:   things.ErrNotFound,
+		},
 	}
 
 	for desc, tc := range cases {

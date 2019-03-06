@@ -154,6 +154,11 @@ func TestSingleThingRetrieval(t *testing.T) {
 			ID:    thing.ID,
 			err:   things.ErrNotFound,
 		},
+		"retrieve thing with malformed ID": {
+			owner: thing.Owner,
+			ID:    wrongValue,
+			err:   things.ErrNotFound,
+		},
 	}
 
 	for desc, tc := range cases {

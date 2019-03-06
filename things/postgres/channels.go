@@ -94,7 +94,8 @@ func (cr channelRepository) RetrieveByID(owner, id string) (things.Channel, erro
 	channel := things.Channel{ID: id, Owner: owner}
 	if err := cr.db.QueryRow(q, id, owner).Scan(&channel.Name, &channel.Metadata); err != nil {
 		empty := things.Channel{}
-		if err == sql.ErrNoRows {
+		pqErr, ok := err.(*pq.Error)
+		if err == sql.ErrNoRows || ok && errInvalid == pqErr.Code.Name() {
 			return empty, things.ErrNotFound
 		}
 		return empty, err

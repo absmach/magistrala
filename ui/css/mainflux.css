@@ -1,0 +1,29 @@
+/* Copyright (c) 2019
+   Mainflux
+   SPDX-License-Identifier: Apache-2.0 */
+
+   @import url('https://fonts.googleapis.com/css?family=Roboto');
+   @import url('https://fonts.googleapis.com/css?family=Montserrat:400,600,800');
+   
+   .btn-primary {
+     color: #fff;
+     background-color: #113f67;
+     border-color: #113f67;
+   }
+   .btn-primary:hover, .btn-primary:focus, .btn-primary:active, .btn-primary.active, .open>.dropdown-toggle.btn-primary {
+     color: #fff;
+     background-color: #408ab4;
+     border-color: #408ab4;
+   }
+   
+   body {
+     background-color: #f3f3f4 !important;
+     font-family: 'Roboto', sans-serif !important;
+   }
+   .title{
+     font-family: 'Montserrat', sans-serif;
+     font-weight: 800;
+     transform: scaleY(0.95);
+     text-align: center;
+     margin: 1rem 0;
+   }

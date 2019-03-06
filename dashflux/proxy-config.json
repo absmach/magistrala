@@ -1,9 +1,0 @@
-{
-    "/api/*": {
-       "target": "http://localhost:8180",
-       "secure":false,
-       "pathRewrite": {
-           "^/api": ""
-        }
-    }
-}

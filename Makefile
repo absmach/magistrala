@@ -1,3 +1,8 @@
+## Copyright (c) 2015-2019
+## Mainflux
+##
+## SPDX-License-Identifier: Apache-2.0
+
 BUILD_DIR = build
 SERVICES = users things http normalizer ws coap lora influxdb-writer influxdb-reader mongodb-writer mongodb-reader cassandra-writer cassandra-reader cli bootstrap
 DOCKERS = $(addprefix docker_,$(SERVICES))
@@ -19,7 +24,7 @@ endef
 
 all: $(SERVICES) mqtt
 
-.PHONY: all $(SERVICES) dockers dockers_dev latest release mqtt
+.PHONY: all $(SERVICES) dockers dockers_dev latest release mqtt ui
 
 clean:
 	rm -rf ${BUILD_DIR}
@@ -57,14 +62,22 @@ $(SERVICES):
 $(DOCKERS):
 	$(call make_docker,$(@))
 
-dockers: $(DOCKERS)
-	docker build --tag=mainflux/dashflux -f dashflux/docker/Dockerfile dashflux
+docker_ui:
+	$(MAKE) -C ui docker
+
+docker_mqtt:
+	# MQTT Docker build must be done from root dir because it copies .proto files
 	docker build --tag=mainflux/mqtt -f mqtt/Dockerfile .
+
+dockers: $(DOCKERS) docker_ui docker_mqtt
 
 $(DOCKERS_DEV):
 	$(call make_docker_dev,$(@))
 
 dockers_dev: $(DOCKERS_DEV)
+
+ui:
+	$(MAKE) -C ui
 
 mqtt:
 	cd mqtt && npm install
@@ -73,7 +86,7 @@ define docker_push
 	for svc in $(SERVICES); do \
 		docker push mainflux/$$svc:$(1); \
 	done
-	docker push mainflux/dashflux:$(1)
+	docker push mainflux/ui:$(1)
 	docker push mainflux/mqtt:$(1)
 endef
 
@@ -90,7 +103,7 @@ release:
 	for svc in $(SERVICES); do \
 		docker tag mainflux/$$svc mainflux/$$svc:$(version); \
 	done
-	docker tag mainflux/dashflux mainflux/dashflux:$(version)
+	docker tag mainflux/ui mainflux/ui:$(version)
 	docker tag mainflux/mqtt mainflux/mqtt:$(version)
 	$(call docker_push,$(version))
 
@@ -99,6 +112,9 @@ rundev:
 
 run:
 	docker-compose -f docker/docker-compose.yml up
+
+runui:
+	$(MAKE) -C ui run
 
 runlora:
 	docker-compose -f docker/docker-compose.yml up -d

@@ -1,3 +1,8 @@
+// Copyright (c) 2015-2019
+// Mainflux
+//
+// SPDX-License-Identifier: Apache-2.0
+
 'use strict';
 
 var http = require('http'),

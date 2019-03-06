@@ -14,7 +14,7 @@ networks:
 
 services:
   nginx:
-    image: nginx:1.13-alpine
+    image: nginx:1.14.2-alpine
     container_name: mainflux-nginx
     restart: on-failure
     volumes:
@@ -131,9 +131,9 @@ services:
     networks:
       - mainflux-base-net
 
-  dashflux:
-    image: mainflux/dashflux:latest
-    container_name: mainflux-dashflux
+  ui:
+    image: mainflux/ui:latest
+    container_name: mainflux-ui
     restart: on-failure
     ports:
       - 3000:3000

@@ -27,7 +27,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http
-import HttpMF
+import HttpMF exposing (path)
 import Json.Decode as D
 import Json.Encode as E
 import ModalMF
@@ -37,12 +37,6 @@ import Url.Builder as B
 query =
     { offset = 0
     , limit = 10
-    }
-
-
-url =
-    { base = "http://localhost"
-    , path = [ "things" ]
     }
 
 
@@ -149,7 +143,7 @@ update msg model token =
         ProvisionThing ->
             ( resetEdit model
             , HttpMF.provision
-                (B.crossOrigin url.base url.path [])
+                (B.relative [ path.things ] [])
                 token
                 { emptyThing
                     | name = Just model.name
@@ -187,7 +181,7 @@ update msg model token =
         UpdateThing ->
             ( resetEdit { model | editMode = False }
             , HttpMF.update
-                (B.crossOrigin url.base (List.append url.path [ model.thing.id ]) [])
+                (B.relative [ path.things, model.thing.id ] [])
                 token
                 { emptyThing
                     | name = Just model.name
@@ -209,7 +203,7 @@ update msg model token =
         RetrieveThing thingid ->
             ( model
             , HttpMF.retrieve
-                (B.crossOrigin url.base (List.append url.path [ thingid ]) [])
+                (B.relative [ path.things, thingid ] [])
                 token
                 RetrievedThing
                 thingDecoder
@@ -226,7 +220,7 @@ update msg model token =
         RetrieveThings ->
             ( model
             , HttpMF.retrieve
-                (B.crossOrigin url.base url.path (Helpers.buildQueryParamList model.offset model.limit))
+                (B.relative [ path.things ] (Helpers.buildQueryParamList model.offset model.limit))
                 token
                 RetrievedThings
                 thingsDecoder
@@ -243,7 +237,7 @@ update msg model token =
         RemoveThing id ->
             ( model
             , HttpMF.remove
-                (B.crossOrigin url.base (List.append url.path [ id ]) [])
+                (B.relative [ path.things, id ] [])
                 token
                 RemovedThing
             )
@@ -497,15 +491,12 @@ updateThingList model token =
     ( model
     , Cmd.batch
         [ HttpMF.retrieve
-            (B.crossOrigin url.base
-                url.path
-                (Helpers.buildQueryParamList model.offset model.limit)
-            )
+            (B.relative [ path.things ] (Helpers.buildQueryParamList model.offset model.limit))
             token
             RetrievedThings
             thingsDecoder
         , HttpMF.retrieve
-            (B.crossOrigin url.base (List.append url.path [ model.thing.id ]) [])
+            (B.relative [ path.things, model.thing.id ] [])
             token
             RetrievedThing
             thingDecoder

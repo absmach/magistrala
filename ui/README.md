@@ -54,7 +54,7 @@ if you want to launch just GUI.
 
 ### Contribute to the GUI development
 
-Install GUI as a part of Mainflux build or as a a standalone native GUI and run
+Install GUI as a part of Mainflux build or as a standalone native GUI and run
 it. Launch Mainflux without ui service, either natively or as a Docker
 composition. Follow the guidelines for Mainflux contributors found here
 https://mainflux.readthedocs.io/en/latest/CONTRIBUTING/.

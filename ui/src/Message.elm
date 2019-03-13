@@ -23,19 +23,10 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http
-import HttpMF
+import HttpMF exposing (path)
 import List.Extra
 import Thing
 import Url.Builder as B
-
-
-url =
-    { base = "http://localhost"
-    , httpPath = [ "http" ]
-    , thingsPath = [ "things" ]
-    , channelsPath = [ "channels" ]
-    , messagesPath = [ "messages" ]
-    }
 
 
 type alias Model =
@@ -81,7 +72,7 @@ update msg model token =
             ( { model | message = "", thingkey = "", response = "", thingid = "" }
             , Cmd.batch
                 (List.map
-                    (\channelId -> send channelId token model.message)
+                    (\channelid -> send channelid model.thingkey model.message)
                     model.checkedChannelsIds
                 )
             )
@@ -224,10 +215,10 @@ genChannelRows checkedChannelsIds channels =
 
 
 send : String -> String -> String -> Cmd Msg
-send channelId token message =
+send channelid thingkey message =
     HttpMF.request
-        (B.crossOrigin url.base (url.httpPath ++ url.channelsPath ++ [ channelId ] ++ url.messagesPath) [])
+        (B.relative [ "http", path.channels, channelid, path.messages ] [])
         "POST"
-        token
+        thingkey
         (Http.stringBody "application/json" message)
         SentMessage

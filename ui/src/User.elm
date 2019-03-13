@@ -19,17 +19,10 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http
-import HttpMF
+import HttpMF exposing (path)
 import Json.Decode as D
 import Json.Encode as E
 import Url.Builder as B
-
-
-url =
-    { base = "http://localhost"
-    , usersPath = [ "users" ]
-    , tokensPath = [ "tokens" ]
-    }
 
 
 type alias Model =
@@ -76,7 +69,7 @@ update msg model =
             , create
                 model.email
                 model.password
-                (B.crossOrigin url.base url.usersPath [])
+                (B.relative [ path.users ] [])
             )
 
         Created result ->
@@ -92,7 +85,7 @@ update msg model =
             , getToken
                 model.email
                 model.password
-                (B.crossOrigin url.base url.tokensPath [])
+                (B.relative [ path.tokens ] [])
             )
 
         GotToken result ->

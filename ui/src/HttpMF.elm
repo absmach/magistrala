@@ -4,7 +4,7 @@
 -- SPDX-License-Identifier: Apache-2.0
 
 
-module HttpMF exposing (expectID, expectRetrieve, expectStatus, provision, remove, request, retrieve, update, url)
+module HttpMF exposing (expectID, expectRetrieve, expectStatus, path, provision, remove, request, retrieve, update, url)
 
 import Dict
 import Helpers
@@ -16,6 +16,16 @@ import Url.Builder as B
 
 url =
     { base = "http://localhost"
+    }
+
+
+path =
+    { users = "users"
+    , tokens = "tokens"
+    , things = "things"
+    , channels = "channels"
+    , messages = "messages"
+    , version = "version"
     }
 
 

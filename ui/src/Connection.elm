@@ -24,15 +24,10 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http
-import HttpMF
+import HttpMF exposing (path)
 import List.Extra
 import Thing
 import Url.Builder as B
-
-
-url =
-    { base = "http://localhost"
-    }
 
 
 type alias Model =
@@ -208,11 +203,11 @@ connect checkedThingsIds checkedChannelsIds method token =
     List.foldr (++)
         []
         (List.map
-            (\thingId ->
+            (\thingid ->
                 List.map
-                    (\channelId ->
+                    (\channelid ->
                         HttpMF.request
-                            (B.crossOrigin url.base [ "channels", channelId, "things", thingId ] [])
+                            (B.relative [ path.channels, channelid, path.things, thingid ] [])
                             method
                             token
                             Http.emptyBody

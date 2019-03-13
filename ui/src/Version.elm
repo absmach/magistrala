@@ -10,15 +10,10 @@ import Error
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
+import HttpMF exposing (path)
 import Json.Decode as D
 import Json.Encode as E
 import Url.Builder as B
-
-
-url =
-    { base = "http://localhost"
-    , path = [ "version" ]
-    }
 
 
 type alias Model =
@@ -41,7 +36,7 @@ update msg model =
         GetVersion ->
             ( model
             , Http.get
-                { url = B.crossOrigin url.base url.path []
+                { url = B.relative [ path.version ] []
                 , expect = Http.expectJson GotVersion (D.field "version" D.string)
                 }
             )

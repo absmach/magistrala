@@ -24,18 +24,11 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http
-import HttpMF
+import HttpMF exposing (path)
 import Json.Decode as D
 import Json.Encode as E
 import ModalMF
 import Url.Builder as B
-
-
-url =
-    { base = "http://localhost"
-    , thingsPath = [ "things" ]
-    , channelsPath = [ "channels" ]
-    }
 
 
 query =
@@ -130,7 +123,7 @@ update msg model token =
         ProvisionChannel ->
             ( resetEdit model
             , HttpMF.provision
-                (B.crossOrigin url.base url.channelsPath [])
+                (B.relative [ path.channels ] [])
                 token
                 { emptyChannel
                     | name = Just model.name
@@ -167,7 +160,7 @@ update msg model token =
         UpdateChannel ->
             ( resetEdit { model | editMode = False }
             , HttpMF.update
-                (B.crossOrigin url.base (List.append url.channelsPath [ model.channel.id ]) [])
+                (B.relative [ path.channels, model.channel.id ] [])
                 token
                 { emptyChannel
                     | name = Just model.name
@@ -188,7 +181,7 @@ update msg model token =
         RetrieveChannel channelid ->
             ( model
             , HttpMF.retrieve
-                (B.crossOrigin url.base (List.append url.channelsPath [ channelid ]) [])
+                (B.relative [ path.channels, channelid ] [])
                 token
                 RetrievedChannel
                 channelDecoder
@@ -205,10 +198,7 @@ update msg model token =
         RetrieveChannels ->
             ( model
             , HttpMF.retrieve
-                (B.crossOrigin url.base
-                    url.channelsPath
-                    (Helpers.buildQueryParamList model.offset model.limit)
-                )
+                (B.relative [ path.channels ] (Helpers.buildQueryParamList model.offset model.limit))
                 token
                 RetrievedChannels
                 channelsDecoder
@@ -217,10 +207,7 @@ update msg model token =
         RetrieveChannelsForThing thingid ->
             ( model
             , HttpMF.retrieve
-                (B.crossOrigin url.base
-                    (url.thingsPath ++ [ thingid ] ++ url.channelsPath)
-                    (Helpers.buildQueryParamList model.offset model.limit)
-                )
+                (B.relative [ path.things, thingid, path.channels ] (Helpers.buildQueryParamList model.offset model.limit))
                 token
                 RetrievedChannels
                 channelsDecoder
@@ -237,7 +224,7 @@ update msg model token =
         RemoveChannel id ->
             ( resetEdit model
             , HttpMF.remove
-                (B.crossOrigin url.base (List.append url.channelsPath [ id ]) [])
+                (B.relative [ path.channels, id ] [])
                 token
                 RemovedChannel
             )
@@ -446,15 +433,12 @@ updateChannelList model token =
     ( model
     , Cmd.batch
         [ HttpMF.retrieve
-            (B.crossOrigin url.base
-                url.channelsPath
-                (Helpers.buildQueryParamList model.offset model.limit)
-            )
+            (B.relative [ path.channels ] (Helpers.buildQueryParamList model.offset model.limit))
             token
             RetrievedChannels
             channelsDecoder
         , HttpMF.retrieve
-            (B.crossOrigin url.base (List.append url.channelsPath [ model.channel.id ]) [])
+            (B.relative [ path.channels, model.channel.id ] [])
             token
             RetrievedChannel
             channelDecoder
@@ -466,15 +450,8 @@ updateChannelListForThing : Model -> String -> String -> ( Model, Cmd Msg )
 updateChannelListForThing model token thingid =
     ( model
     , HttpMF.retrieve
-        (buildUrl (url.thingsPath ++ [ thingid ] ++ url.channelsPath) model.offset model.limit)
+        (B.relative [ path.things, thingid, path.channels ] (Helpers.buildQueryParamList model.offset model.limit))
         token
         RetrievedChannels
         channelsDecoder
     )
-
-
-buildUrl : List String -> Int -> Int -> String
-buildUrl path offset limit =
-    B.crossOrigin url.base
-        path
-        (Helpers.buildQueryParamList offset limit)

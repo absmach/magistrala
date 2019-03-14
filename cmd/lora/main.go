@@ -203,7 +203,9 @@ func subscribeToLoRaBroker(svc lora.Service, mc mqtt.Client, logger logger.Logge
 func subscribeToThingsES(svc lora.Service, client *r.Client, consumer string, logger logger.Logger) {
 	eventStore := redis.NewEventStore(svc, client, consumer, logger)
 	logger.Info("Subscribed to Redis Event Store")
-	eventStore.Subscribe("mainflux.things")
+	if err := eventStore.Subscribe("mainflux.things"); err != nil {
+		logger.Warn(fmt.Sprintf("Lora-adapter service failed to subscribe to event sourcing: %s", err))
+	}
 }
 
 func newRouteMapRepositoy(client *r.Client, prefix string, logger logger.Logger) lora.RouteMapRepository {

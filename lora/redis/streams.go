@@ -25,6 +25,8 @@ const (
 	channelCreate = channelPrefix + "create"
 	channelUpdate = channelPrefix + "update"
 	channelRemove = channelPrefix + "remove"
+
+	exists = "BUSYGROUP Consumer Group name already exists"
 )
 
 var (
@@ -38,7 +40,7 @@ var (
 // EventStore represents event source for things and channels provisioning.
 type EventStore interface {
 	// Subscribes to geven subject and receives events.
-	Subscribe(string)
+	Subscribe(string) error
 }
 
 type thingLoraMetadata struct {
@@ -68,8 +70,12 @@ func NewEventStore(svc lora.Service, client *redis.Client, consumer string, log 
 	}
 }
 
-func (es eventStore) Subscribe(subject string) {
-	es.client.XGroupCreateMkStream(stream, group, "$").Err()
+func (es eventStore) Subscribe(subject string) error {
+	err := es.client.XGroupCreateMkStream(stream, group, "$").Err()
+	if err != nil && err.Error() != exists {
+		return err
+	}
+
 	for {
 		streams, err := es.client.XReadGroup(&redis.XReadGroupArgs{
 			Group:    group,

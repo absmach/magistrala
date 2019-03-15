@@ -37,10 +37,11 @@ func (svc *mockService) Publish(msg mainflux.RawMessage) error {
 	return nil
 }
 
-func (svc *mockService) Subscribe(chanID string, channel *ws.Channel) error {
+func (svc *mockService) Subscribe(chanID, subtopic string, channel *ws.Channel) error {
 	svc.mutex.Lock()
 	defer svc.mutex.Unlock()
-	if _, ok := svc.subscriptions[chanID]; !ok {
+
+	if _, ok := svc.subscriptions[chanID+subtopic]; !ok {
 		return ws.ErrFailedSubscription
 	}
 	svc.subscriptions[chanID] = channel

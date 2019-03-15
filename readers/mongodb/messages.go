@@ -28,6 +28,7 @@ type mongoRepository struct {
 // Message struct is used as a MongoDB representation of Mainflux message.
 type message struct {
 	Channel     string   `bson:"channel,omitempty"`
+	Subtopic    string   `bson:"subtopic,omitempty"`
 	Publisher   string   `bson:"publisher,omitempty"`
 	Protocol    string   `bson:"protocol,omitempty"`
 	Name        string   `bson:"name,omitempty"`
@@ -47,12 +48,14 @@ func New(db *mongo.Database) readers.MessageRepository {
 	return mongoRepository{db: db}
 }
 
-func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64) []mainflux.Message {
+func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64, query map[string]string) []mainflux.Message {
 	col := repo.db.Collection(collection)
 	sortMap := map[string]interface{}{
 		"time": -1,
 	}
-	cursor, err := col.Find(context.Background(), bson.NewDocument(bson.EC.String("channel", chanID)), findopt.Sort(sortMap), findopt.Limit(int64(limit)), findopt.Skip(int64(offset)))
+
+	filter := fmtCondition(chanID, query)
+	cursor, err := col.Find(context.Background(), filter, findopt.Sort(sortMap), findopt.Limit(int64(limit)), findopt.Skip(int64(offset)))
 	if err != nil {
 		return []mainflux.Message{}
 	}
@@ -67,6 +70,7 @@ func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64) []mainf
 
 		msg := mainflux.Message{
 			Channel:    m.Channel,
+			Subtopic:   m.Subtopic,
 			Publisher:  m.Publisher,
 			Protocol:   m.Protocol,
 			Name:       m.Name,
@@ -95,4 +99,20 @@ func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64) []mainf
 	}
 
 	return messages
+}
+
+func fmtCondition(chanID string, query map[string]string) *bson.Document {
+	filter := bson.NewDocument(bson.EC.String("channel", chanID))
+	for name, value := range query {
+		switch name {
+		case
+			"channel",
+			"subtopic",
+			"publisher",
+			"name",
+			"protocol":
+			filter.Append(bson.EC.String(name, value))
+		}
+	}
+	return filter
 }

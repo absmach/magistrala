@@ -52,21 +52,25 @@ func newThingsClient() mainflux.ThingsServiceClient {
 	return mocks.NewThingsClient(map[string]string{token: id})
 }
 
-func makeURL(tsURL, chanID, auth string, header bool) string {
+func makeURL(tsURL, chanID, subtopic, auth string, header bool) string {
 	u, _ := url.Parse(tsURL)
 	u.Scheme = protocol
-	if header {
-		return fmt.Sprintf("%s/channels/%s/messages", u, chanID)
+	subtopicPart := ""
+	if subtopic != "" {
+		subtopicPart = fmt.Sprintf("/%s", subtopic)
 	}
-	return fmt.Sprintf("%s/channels/%s/messages?authorization=%s", u, chanID, auth)
+	if header {
+		return fmt.Sprintf("%s/channels/%s/messages%s", u, chanID, subtopicPart)
+	}
+	return fmt.Sprintf("%s/channels/%s/messages%s?authorization=%s", u, chanID, subtopicPart, auth)
 }
 
-func handshake(tsURL, chanID, token string, addHeader bool) (*websocket.Conn, *http.Response, error) {
+func handshake(tsURL, chanID, subtopic, token string, addHeader bool) (*websocket.Conn, *http.Response, error) {
 	header := http.Header{}
 	if addHeader {
 		header.Add("Authorization", token)
 	}
-	url := makeURL(tsURL, chanID, token, addHeader)
+	url := makeURL(tsURL, chanID, subtopic, token, addHeader)
 	return websocket.DefaultDialer.Dial(url, header)
 }
 
@@ -77,25 +81,30 @@ func TestHandshake(t *testing.T) {
 	defer ts.Close()
 
 	cases := []struct {
-		desc   string
-		chanID string
-		header bool
-		token  string
-		status int
-		msg    []byte
+		desc     string
+		chanID   string
+		subtopic string
+		header   bool
+		token    string
+		status   int
+		msg      []byte
 	}{
-		{"connect and send message", id, true, token, http.StatusSwitchingProtocols, msg},
-		{"connect to non-existent channel", "0", true, token, http.StatusSwitchingProtocols, []byte{}},
-		{"connect to invalid channel id", "", true, token, http.StatusBadRequest, []byte{}},
-		{"connect with empty token", id, true, "", http.StatusForbidden, []byte{}},
-		{"connect with invalid token", id, true, "invalid", http.StatusForbidden, []byte{}},
-		{"connect unable to authorize", id, true, mocks.ServiceErrToken, http.StatusServiceUnavailable, []byte{}},
-		{"connect and send message with token as query parameter", id, false, token, http.StatusSwitchingProtocols, msg},
-		{"connect and send message that cannot be published", id, true, token, http.StatusSwitchingProtocols, []byte{}},
+		{"connect and send message", id, "", true, token, http.StatusSwitchingProtocols, msg},
+		{"connect to non-existent channel", "0", "", true, token, http.StatusSwitchingProtocols, []byte{}},
+		{"connect to invalid channel id", "", "", true, token, http.StatusBadRequest, []byte{}},
+		{"connect with empty token", id, "", true, "", http.StatusForbidden, []byte{}},
+		{"connect with invalid token", id, "", true, "invalid", http.StatusForbidden, []byte{}},
+		{"connect unable to authorize", id, "", true, mocks.ServiceErrToken, http.StatusServiceUnavailable, []byte{}},
+		{"connect and send message with token as query parameter", id, "", false, token, http.StatusSwitchingProtocols, msg},
+		{"connect and send message that cannot be published", id, "", true, token, http.StatusSwitchingProtocols, []byte{}},
+		{"connect and send message to subtopic", id, "subtopic", true, token, http.StatusSwitchingProtocols, msg},
+		{"connect and send message to subtopic with invalid name", id, "sub//topic", true, token, http.StatusBadRequest, msg},
+		{"connect and send message to nested subtopic", id, "subtopic/nested", true, token, http.StatusSwitchingProtocols, msg},
+		{"connect and send message to all subtopics", id, ">", true, token, http.StatusSwitchingProtocols, msg},
 	}
 
 	for _, tc := range cases {
-		conn, res, err := handshake(ts.URL, tc.chanID, tc.token, tc.header)
+		conn, res, err := handshake(ts.URL, tc.chanID, tc.subtopic, tc.token, tc.header)
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d\n", tc.desc, tc.status, res.StatusCode))
 		if err != nil {
 			continue

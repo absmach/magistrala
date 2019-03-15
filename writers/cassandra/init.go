@@ -12,6 +12,7 @@ import "github.com/gocql/gocql"
 const table = `CREATE TABLE IF NOT EXISTS messages (
         id uuid,
         channel text,
+        subtopic text,
     	publisher text,
         protocol text,
     	name text,

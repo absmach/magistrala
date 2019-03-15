@@ -19,6 +19,7 @@ import (
 const (
 	testDB      = "test"
 	chanID      = "1"
+	subtopic    = "topic"
 	msgsNum     = 101
 	valueFields = 6
 )
@@ -58,6 +59,7 @@ func TestReadAll(t *testing.T) {
 		count := i % valueFields
 		switch count {
 		case 0:
+			msg.Subtopic = subtopic
 			msg.Value = &mainflux.Message_FloatValue{FloatValue: 5}
 		case 1:
 			msg.Value = &mainflux.Message_BoolValue{BoolValue: false}
@@ -84,6 +86,7 @@ func TestReadAll(t *testing.T) {
 		chanID   string
 		offset   uint64
 		limit    uint64
+		query    map[string]string
 		messages []mainflux.Message
 	}{
 		"read message page for existing channel": {
@@ -110,10 +113,24 @@ func TestReadAll(t *testing.T) {
 			limit:    10,
 			messages: messages[95:101],
 		},
+		"read message with non-existent subtopic": {
+			chanID:   chanID,
+			offset:   0,
+			limit:    msgsNum,
+			query:    map[string]string{"subtopic": "not-present"},
+			messages: []mainflux.Message{},
+		},
+		"read message with subtopic": {
+			chanID:   chanID,
+			offset:   0,
+			limit:    10,
+			query:    map[string]string{"subtopic": subtopic},
+			messages: messages[0:10],
+		},
 	}
 
 	for desc, tc := range cases {
-		result := reader.ReadAll(tc.chanID, tc.offset, tc.limit)
+		result := reader.ReadAll(tc.chanID, tc.offset, tc.limit, tc.query)
 		assert.ElementsMatch(t, tc.messages, result, fmt.Sprintf("%s: expected: %v \n-------------\n got: %v", desc, tc.messages, result))
 	}
 }

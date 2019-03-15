@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-zoo/bone"
@@ -68,7 +69,9 @@ func MakeCOAPHandler(svc coap.Service, tc mainflux.ThingsServiceClient, l log.Lo
 	pingPeriod = pp
 	r := mux.NewRouter()
 	r.Handle("/channels/{id}/messages", gocoap.FuncHandler(receive(svc))).Methods(gocoap.POST)
+	r.Handle("/channels/{id}/messages/{subtopic:.+}", gocoap.FuncHandler(receive(svc))).Methods(gocoap.POST)
 	r.Handle("/channels/{id}/messages", gocoap.FuncHandler(observe(svc, responses)))
+	r.Handle("/channels/{id}/messages/{subtopic:.+}", gocoap.FuncHandler(observe(svc, responses)))
 	r.NotFoundHandler = gocoap.FuncHandler(notFoundHandler)
 
 	return r
@@ -109,6 +112,16 @@ func authorize(msg *gocoap.Message, res *gocoap.Message, cid string) (string, er
 	return id.GetValue(), nil
 }
 
+func fmtSubtopic(subtopic string) string {
+	if subtopic != "" {
+		if strings.HasSuffix(subtopic, "/") {
+			subtopic = subtopic[:len(subtopic)-1]
+		}
+		subtopic = strings.Replace(subtopic, "/", ".", -1)
+	}
+	return subtopic
+}
+
 func receive(svc coap.Service) handler {
 	return func(conn *net.UDPConn, addr *net.UDPAddr, msg *gocoap.Message) *gocoap.Message {
 		// By default message is NonConfirmable, so
@@ -138,6 +151,7 @@ func receive(svc coap.Service) handler {
 			res.Code = gocoap.NotFound
 			return res
 		}
+		subtopic := fmtSubtopic(mux.Var(msg, "subtopic"))
 
 		publisher, err := authorize(msg, res, chanID)
 		if err != nil {
@@ -147,6 +161,7 @@ func receive(svc coap.Service) handler {
 
 		rawMsg := mainflux.RawMessage{
 			Channel:   chanID,
+			Subtopic:  subtopic,
 			Publisher: publisher,
 			Protocol:  protocol,
 			Payload:   msg.Payload,
@@ -176,6 +191,7 @@ func observe(svc coap.Service, responses chan<- string) handler {
 			res.Code = gocoap.NotFound
 			return res
 		}
+		subtopic := fmtSubtopic(mux.Var(msg, "subtopic"))
 
 		publisher, err := authorize(msg, res, chanID)
 		if err != nil {
@@ -198,7 +214,7 @@ func observe(svc coap.Service, responses chan<- string) handler {
 		if value, ok := msg.Option(gocoap.Observe).(uint32); ok && value == 0 {
 			res.AddOption(gocoap.Observe, 1)
 			o := coap.NewObserver()
-			if err := svc.Subscribe(chanID, obsID, o); err != nil {
+			if err := svc.Subscribe(chanID, subtopic, obsID, o); err != nil {
 				logger.Warn(fmt.Sprintf("Failed to subscribe to NATS subject: %s", err))
 				res.Code = gocoap.InternalServerError
 				return res

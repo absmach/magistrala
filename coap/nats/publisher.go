@@ -30,18 +30,27 @@ func New(nc *broker.Conn) coap.Broker {
 	return &natsPublisher{nc}
 }
 
+func (pubsub *natsPublisher) fmtSubject(chanID, subtopic string) string {
+	subject := fmt.Sprintf("%s.%s", prefix, chanID)
+	if subtopic != "" {
+		subject = fmt.Sprintf("%s.%s", subject, subtopic)
+	}
+	return subject
+}
+
 func (pubsub *natsPublisher) Publish(msg mainflux.RawMessage) error {
 	data, err := proto.Marshal(&msg)
 	if err != nil {
 		return err
 	}
 
-	subject := fmt.Sprintf("%s.%s", prefix, msg.Channel)
+	subject := pubsub.fmtSubject(msg.Channel, msg.Subtopic)
 	return pubsub.nc.Publish(subject, data)
 }
 
-func (pubsub *natsPublisher) Subscribe(chanID, obsID string, observer *coap.Observer) error {
-	sub, err := pubsub.nc.Subscribe(fmt.Sprintf("%s.%s", prefix, chanID), func(msg *broker.Msg) {
+func (pubsub *natsPublisher) Subscribe(chanID, subtopic, obsID string, observer *coap.Observer) error {
+	subject := pubsub.fmtSubject(chanID, subtopic)
+	sub, err := pubsub.nc.Subscribe(subject, func(msg *broker.Msg) {
 		if msg == nil {
 			return
 		}

@@ -8,6 +8,7 @@
 package cassandra
 
 import (
+	"fmt"
 	"github.com/gocql/gocql"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/readers"
@@ -24,13 +25,10 @@ func New(session *gocql.Session) readers.MessageRepository {
 	return cassandraRepository{session: session}
 }
 
-func (cr cassandraRepository) ReadAll(chanID string, offset, limit uint64) []mainflux.Message {
-	cql := `SELECT channel, publisher, protocol, name, unit,
-			value, string_value, bool_value, data_value, value_sum, time,
-			update_time, link FROM messages WHERE channel = ? LIMIT ?
-			ALLOW FILTERING`
+func (cr cassandraRepository) ReadAll(chanID string, offset, limit uint64, query map[string]string) []mainflux.Message {
+	cql, values := buildQuery(chanID, offset, limit, query)
 
-	iter := cr.session.Query(cql, chanID, offset+limit).Iter()
+	iter := cr.session.Query(cql, values...).Iter()
 	scanner := iter.Scanner()
 
 	// skip first OFFSET rows
@@ -47,7 +45,7 @@ func (cr cassandraRepository) ReadAll(chanID string, offset, limit uint64) []mai
 	page := []mainflux.Message{}
 	for scanner.Next() {
 		var msg mainflux.Message
-		scanner.Scan(&msg.Channel, &msg.Publisher, &msg.Protocol,
+		scanner.Scan(&msg.Channel, &msg.Subtopic, &msg.Publisher, &msg.Protocol,
 			&msg.Name, &msg.Unit, &floatVal, &strVal, &boolVal,
 			&dataVal, &valueSum, &msg.Time, &msg.UpdateTime, &msg.Link)
 
@@ -74,4 +72,32 @@ func (cr cassandraRepository) ReadAll(chanID string, offset, limit uint64) []mai
 	}
 
 	return page
+}
+
+func buildQuery(chanID string, offset, limit uint64, query map[string]string) (string, []interface{}) {
+	var condSql string
+	var values []interface{}
+
+	cql := `SELECT channel, subtopic, publisher, protocol, name, unit,
+			value, string_value, bool_value, data_value, value_sum, time,
+			update_time, link FROM messages WHERE channel = ? %s LIMIT ?
+			ALLOW FILTERING`
+
+	values = append(values, chanID)
+
+	for name, value := range query {
+		switch name {
+		case
+			"channel",
+			"subtopic",
+			"publisher",
+			"name",
+			"protocol":
+			condSql = fmt.Sprintf(`%s AND %s = ?`, condSql, name)
+			values = append(values, value)
+		}
+	}
+
+	values = append(values, offset+limit)
+	return fmt.Sprintf(cql, condSql), values
 }

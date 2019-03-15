@@ -33,6 +33,7 @@ func (n normalizer) Normalize(msg mainflux.RawMessage) (NormalizedData, error) {
 	for k, v := range normalized.Records {
 		m := mainflux.Message{
 			Channel:    msg.Channel,
+			Subtopic:   msg.Subtopic,
 			Publisher:  msg.Publisher,
 			Protocol:   msg.Protocol,
 			Name:       v.Name,

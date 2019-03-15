@@ -45,18 +45,28 @@ func New(nc *broker.Conn) ws.Service {
 	return &natsPubSub{nc, cb}
 }
 
+func (pubsub *natsPubSub) fmtSubject(chanID, subtopic string) string {
+	subject := fmt.Sprintf("%s.%s", prefix, chanID)
+	if subtopic != "" {
+		subject = fmt.Sprintf("%s.%s", subject, subtopic)
+	}
+	return subject
+}
+
 func (pubsub *natsPubSub) Publish(msg mainflux.RawMessage) error {
 	data, err := proto.Marshal(&msg)
 	if err != nil {
 		return err
 	}
 
-	return pubsub.nc.Publish(fmt.Sprintf("%s.%s", prefix, msg.Channel), data)
+	subject := pubsub.fmtSubject(msg.Channel, msg.Subtopic)
+	return pubsub.nc.Publish(subject, data)
 }
 
-func (pubsub *natsPubSub) Subscribe(chanID string, channel *ws.Channel) error {
+func (pubsub *natsPubSub) Subscribe(chanID, subtopic string, channel *ws.Channel) error {
 	var sub *broker.Subscription
-	sub, err := pubsub.nc.Subscribe(fmt.Sprintf("%s.%s", prefix, chanID), func(msg *broker.Msg) {
+
+	sub, err := pubsub.nc.Subscribe(pubsub.fmtSubject(chanID, subtopic), func(msg *broker.Msg) {
 		if msg == nil {
 			return
 		}

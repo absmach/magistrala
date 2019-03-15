@@ -34,6 +34,7 @@ var (
 	errInvalidRequest     = errors.New("received invalid request")
 	errUnauthorizedAccess = errors.New("missing or invalid credentials provided")
 	auth                  mainflux.ThingsServiceClient
+	queryFields           = []string{"subtopic", "publisher", "protocol", "name", "value", "v", "vs", "vb", "vd"}
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
@@ -78,10 +79,18 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
+	query := map[string]string{}
+	for _, name := range queryFields {
+		if value := bone.GetQuery(r, name); len(value) == 1 {
+			query[name] = value[0]
+		}
+	}
+
 	req := listMessagesReq{
 		chanID: chanID,
 		offset: offset,
 		limit:  limit,
+		query:  query,
 	}
 
 	return req, nil

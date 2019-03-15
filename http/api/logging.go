@@ -31,7 +31,11 @@ func LoggingMiddleware(svc mainflux.MessagePublisher, logger log.Logger) mainflu
 
 func (lm *loggingMiddleware) Publish(msg mainflux.RawMessage) (err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method publish took %s to complete", time.Since(begin))
+		destChannel := msg.Channel
+		if msg.Subtopic != "" {
+			destChannel = fmt.Sprintf("%s.%s", destChannel, msg.Subtopic)
+		}
+		message := fmt.Sprintf("Method publish to channel %s took %s to complete", destChannel, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return

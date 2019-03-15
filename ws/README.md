@@ -60,4 +60,4 @@ MF_THINGS_URL=[Things service URL] MF_NATS_URL=[NATS instance URL] MF_WS_ADAPTER
 ## Usage
 
 For more information about service capabilities and its usage, please check out
-the [WebSocket paragraph](https://mainflux.readthedocs.io/en/latest/getting-started/#websocket) in the Getting Started guide.
+the [WebSocket paragraph](https://mainflux.readthedocs.io/en/latest/messaging/#websocket) in the Getting Started guide.

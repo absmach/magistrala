@@ -22,7 +22,7 @@ func listMessagesEndpoint(svc readers.MessageRepository) endpoint.Endpoint {
 			return nil, err
 		}
 
-		messages := svc.ReadAll(req.chanID, req.offset, req.limit)
+		messages := svc.ReadAll(req.chanID, req.offset, req.limit, req.query)
 
 		return listMessagesRes{Messages: messages}, nil
 	}

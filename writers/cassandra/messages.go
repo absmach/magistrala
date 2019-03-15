@@ -25,10 +25,10 @@ func New(session *gocql.Session) writers.MessageRepository {
 }
 
 func (cr *cassandraRepository) Save(msg mainflux.Message) error {
-	cql := `INSERT INTO messages (id, channel, publisher, protocol, name, unit,
-			value, string_value, bool_value, data_value, value_sum, time,
-			update_time, link)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	cql := `INSERT INTO messages (id, channel, subtopic, publisher, protocol,
+			name, unit, value, string_value, bool_value, data_value, value_sum,
+			time, update_time, link)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	id := gocql.TimeUUID()
 
 	var floatVal, valSum *float64
@@ -54,7 +54,7 @@ func (cr *cassandraRepository) Save(msg mainflux.Message) error {
 		valSum = &v
 	}
 
-	return cr.session.Query(cql, id, msg.GetChannel(), msg.GetPublisher(),
+	return cr.session.Query(cql, id, msg.GetChannel(), msg.GetSubtopic(), msg.GetPublisher(),
 		msg.GetProtocol(), msg.GetName(), msg.GetUnit(), floatVal,
 		strVal, boolVal, dataVal, valSum, msg.GetTime(), msg.GetUpdateTime(), msg.GetLink()).Exec()
 }

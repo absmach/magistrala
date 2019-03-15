@@ -13,6 +13,9 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"regexp"
+	"strings"
 	"time"
 
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -27,26 +30,22 @@ import (
 const protocol = "http"
 
 var (
-	errMalformedData = errors.New("malformed request data")
-	auth             mainflux.ThingsServiceClient
+	errMalformedData     = errors.New("malformed request data")
+	errMalformedSubtopic = errors.New("malformed subtopic")
+)
+
+var (
+	auth              mainflux.ThingsServiceClient
+	channelPartRegExp = regexp.MustCompile(`^/channels/([\w\-]+)/messages((/[^/?]+)*)?(\?.*)?$`)
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler(svc mainflux.MessagePublisher, tc mainflux.ThingsServiceClient) http.Handler {
 	auth = tc
 
-	opts := []kithttp.ServerOption{
-		kithttp.ServerErrorEncoder(encodeError),
-	}
-
 	r := bone.New()
-
-	r.Post("/channels/:id/messages", kithttp.NewServer(
-		sendMessageEndpoint(svc),
-		decodeRequest,
-		encodeResponse,
-		opts...,
-	))
+	r.Post("/channels/:id/messages", handshake(svc))
+	r.Post("/channels/:id/messages/*", handshake(svc))
 
 	r.GetFunc("/version", mainflux.Version("http"))
 	r.Handle("/metrics", promhttp.Handler())
@@ -54,8 +53,48 @@ func MakeHandler(svc mainflux.MessagePublisher, tc mainflux.ThingsServiceClient)
 	return r
 }
 
+func handshake(svc mainflux.MessagePublisher) *kithttp.Server {
+	opts := []kithttp.ServerOption{
+		kithttp.ServerErrorEncoder(encodeError),
+	}
+
+	return kithttp.NewServer(
+		sendMessageEndpoint(svc),
+		decodeRequest,
+		encodeResponse,
+		opts...,
+	)
+}
+
+func parseSubtopic(subtopic string) (string, error) {
+	if subtopic == "" {
+		return subtopic, nil
+	}
+
+	var err error
+	subtopic, err = url.QueryUnescape(subtopic)
+	if err != nil {
+		return "", errMalformedSubtopic
+	}
+	subtopic = strings.Replace(subtopic, "/", ".", -1)
+	// channelParts[2] contains the subtopic parts starting with char /
+	subtopic = subtopic[1:]
+	return subtopic, nil
+}
+
 func decodeRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	publisher, err := authorize(r)
+	channelParts := channelPartRegExp.FindStringSubmatch(r.RequestURI)
+	if len(channelParts) < 2 {
+		return nil, errMalformedData
+	}
+
+	chanID := bone.GetValue(r, "id")
+	subtopic, err := parseSubtopic(channelParts[2])
+	if err != nil {
+		return nil, err
+	}
+
+	publisher, err := authorize(r, chanID)
 	if err != nil {
 		return nil, err
 	}
@@ -65,33 +104,23 @@ func decodeRequest(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
-	channel := bone.GetValue(r, "id")
-	if channel == "" {
-		return nil, errMalformedData
-	}
-
 	msg := mainflux.RawMessage{
 		Publisher:   publisher,
 		Protocol:    protocol,
 		ContentType: r.Header.Get("Content-Type"),
-		Channel:     channel,
+		Channel:     chanID,
+		Subtopic:    subtopic,
 		Payload:     payload,
 	}
 
 	return msg, nil
 }
 
-func authorize(r *http.Request) (string, error) {
+func authorize(r *http.Request, chanID string) (string, error) {
 	apiKey := r.Header.Get("Authorization")
 
 	if apiKey == "" {
 		return "", things.ErrUnauthorizedAccess
-	}
-
-	// extract ID from /channels/:id/messages
-	chanID := bone.GetValue(r, "id")
-	if chanID == "" {
-		return "", errMalformedData
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)

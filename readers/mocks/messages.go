@@ -29,7 +29,7 @@ func NewMessageRepository(messages map[string][]mainflux.Message) readers.Messag
 	}
 }
 
-func (repo *messageRepositoryMock) ReadAll(chanID string, offset, limit uint64) []mainflux.Message {
+func (repo *messageRepositoryMock) ReadAll(chanID string, offset, limit uint64, query map[string]string) []mainflux.Message {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 

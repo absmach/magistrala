@@ -16,6 +16,8 @@ import (
 	broker "github.com/nats-io/go-nats"
 )
 
+const prefix = "channel"
+
 var _ mainflux.MessagePublisher = (*natsPublisher)(nil)
 
 type natsPublisher struct {
@@ -33,6 +35,9 @@ func (pub *natsPublisher) Publish(msg mainflux.RawMessage) error {
 		return err
 	}
 
-	subject := fmt.Sprintf("channel.%s", msg.Channel)
+	subject := fmt.Sprintf("%s.%s", prefix, msg.Channel)
+	if msg.Subtopic != "" {
+		subject = fmt.Sprintf("%s.%s", subject, msg.Subtopic)
+	}
 	return pub.nc.Publish(subject, data)
 }

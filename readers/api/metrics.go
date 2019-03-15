@@ -35,11 +35,11 @@ func MetricsMiddleware(svc readers.MessageRepository, counter metrics.Counter, l
 	}
 }
 
-func (mm *metricsMiddleware) ReadAll(chanID string, offset, limit uint64) []mainflux.Message {
+func (mm *metricsMiddleware) ReadAll(chanID string, offset, limit uint64, query map[string]string) []mainflux.Message {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "read_all").Add(1)
 		mm.latency.With("method", "read_all").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.ReadAll(chanID, offset, limit)
+	return mm.svc.ReadAll(chanID, offset, limit, query)
 }

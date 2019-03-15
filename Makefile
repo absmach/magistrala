@@ -51,7 +51,7 @@ install:
 	cp ${BUILD_DIR}/* $(GOBIN)
 
 test:
-	GOCACHE=off go test -v -race -tags test $(shell go list ./... | grep -v 'vendor\|cmd')
+	go test -v -race -count 1 -tags test $(shell go list ./... | grep -v 'vendor\|cmd')
 
 proto:
 	protoc --gofast_out=plugins=grpc:. *.proto

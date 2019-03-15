@@ -77,10 +77,11 @@ func TestSubscribe(t *testing.T) {
 	svc := newService(channel)
 
 	cases := []struct {
-		desc    string
-		chanID  string
-		channel *ws.Channel
-		err     error
+		desc     string
+		chanID   string
+		subtopic string
+		channel  *ws.Channel
+		err      error
 	}{
 		{
 			desc:    "subscription to valid channel",
@@ -97,7 +98,7 @@ func TestSubscribe(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := svc.Subscribe(tc.chanID, tc.channel)
+		err := svc.Subscribe(tc.chanID, tc.subtopic, tc.channel)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }

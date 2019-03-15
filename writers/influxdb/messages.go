@@ -125,6 +125,7 @@ func (repo *influxRepo) Save(msg mainflux.Message) error {
 func (repo *influxRepo) tagsOf(msg *mainflux.Message) tags {
 	return tags{
 		"channel":   msg.Channel,
+		"subtopic":  msg.Subtopic,
 		"publisher": msg.Publisher,
 		"name":      msg.Name,
 	}

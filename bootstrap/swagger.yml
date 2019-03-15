@@ -408,6 +408,9 @@ definitions:
       external_key:
         type: string
         description: External key.
+      thing_id:
+        type: string
+        description: ID of the corresponding Mainflux Thing.
       channels:
         type: array
         minItems: 0

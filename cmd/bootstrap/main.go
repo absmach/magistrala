@@ -50,11 +50,10 @@ const (
 	defBaseURL       = "http://localhost"
 	defThingsPrefix  = ""
 	defUsersURL      = "localhost:8181"
-
-	defESURL        = "localhost:6379"
-	defESPass       = ""
-	defESDB         = "0"
-	defInstanceName = "bootstrap"
+	defESURL         = "localhost:6379"
+	defESPass        = ""
+	defESDB          = "0"
+	defInstanceName  = "bootstrap"
 
 	envLogLevel      = "MF_BOOTSTRAP_LOG_LEVEL"
 	envDBHost        = "MF_BOOTSTRAP_DB_HOST"
@@ -74,11 +73,10 @@ const (
 	envBaseURL       = "MF_SDK_BASE_URL"
 	envThingsPrefix  = "MF_SDK_THINGS_PREFIX"
 	envUsersURL      = "MF_USERS_URL"
-
-	envESURL        = "MF_THINGS_ES_URL"
-	envESPass       = "MF_THINGS_ES_PASS"
-	envESDB         = "MF_THINGS_ES_DB"
-	envInstanceName = "MF_BOOTSTRAP_INSTANCE_NAME"
+	envESURL         = "MF_THINGS_ES_URL"
+	envESPass        = "MF_THINGS_ES_PASS"
+	envESDB          = "MF_THINGS_ES_DB"
+	envInstanceName  = "MF_BOOTSTRAP_INSTANCE_NAME"
 )
 
 type config struct {
@@ -262,5 +260,7 @@ func startHTTPServer(svc bootstrap.Service, cfg config, logger logger.Logger, er
 func subscribeToThingsES(svc bootstrap.Service, client *r.Client, consumer string, logger logger.Logger) {
 	eventStore := redis.NewEventStore(svc, client, consumer, logger)
 	logger.Info("Subscribed to Redis Event Store")
-	eventStore.Subscribe("mainflux.things")
+	if err := eventStore.Subscribe("mainflux.things"); err != nil {
+		logger.Warn(fmt.Sprintf("Botstrap service failed to subscribe to event sourcing: %s", err))
+	}
 }

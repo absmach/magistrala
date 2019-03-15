@@ -35,5 +35,6 @@ pages:
 - LoRa: lora.md
 - TLS: tls.md
 - CLI: cli.md
+- Bootstrap: bootstrap.md
 - Developer's Guide: dev-guide.md
 - Load Test: load-test.md

@@ -19,12 +19,14 @@ const (
 	channelPrefix = "channel."
 	channelUpdate = channelPrefix + "update"
 	channelRemove = channelPrefix + "remove"
+
+	exists = "BUSYGROUP Consumer Group name already exists"
 )
 
 // EventStore represents event source for things and channels provisioning.
 type EventStore interface {
 	// Subscribes to given subject and receives events.
-	Subscribe(string)
+	Subscribe(string) error
 }
 
 type eventStore struct {
@@ -44,8 +46,12 @@ func NewEventStore(svc bootstrap.Service, client *redis.Client, consumer string,
 	}
 }
 
-func (es eventStore) Subscribe(subject string) {
-	es.client.XGroupCreateMkStream(stream, group, "$").Err()
+func (es eventStore) Subscribe(subject string) error {
+	err := es.client.XGroupCreateMkStream(stream, group, "$").Err()
+	if err != nil && err.Error() != exists {
+		return err
+	}
+
 	for {
 		streams, err := es.client.XReadGroup(&redis.XReadGroupArgs{
 			Group:    group,

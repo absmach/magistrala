@@ -71,7 +71,7 @@ version: "2"
       - bootstrap-db
     restart: on-failure
     ports:
-      - 8900:8900
+      - 8200:8200
     environment:
       MF_BOOTSTRAP_LOG_LEVEL: [Bootstrap log level]
       MF_BOOTSTRAP_DB_HOST: [Database host address]
@@ -85,7 +85,7 @@ version: "2"
       MF_BOOTSTRAP_DB_SSL_ROOT_CERT: [Path to the PEM encoded root certificate file]
       MF_BOOTSTRAP_CLIENT_TLS: [Boolean value to enable/disable client TLS]
       MF_BOOTSTRAP_CA_CERTS: [Path to trusted CAs in PEM format]
-      MF_BOOTSTRAP_PORT: 8900
+      MF_BOOTSTRAP_PORT: 8200
       MF_BOOTSTRAP_SERVER_CERT: [String path to server cert in pem format]
       MF_BOOTSTRAP_SERVER_KEY: [String path to server key in pem format]
       MF_SDK_BASE_URL: [Base SDK URL for the Mainflux services]

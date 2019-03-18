@@ -21,7 +21,7 @@ Also, the configuration contains an external ID and external key, which will be 
 In order to enable the thing to start bootstrapping process, the user needs to upload a valid configuration for that specific thing. This can be done using the following HTTP request:
 
 ```
-curl -s -S -i -X POST -H "Authorization: <user_token>" -H "Content-Type: application/json" http://localhost:8900/things/configs -d '{
+curl -s -S -i -X POST -H "Authorization: <user_token>" -H "Content-Type: application/json" http://localhost:8200/things/configs -d '{
         "external_id":"09:6:0:sb:sa",
         "thing_id": "1b9b8fae-9035-4969-a240-7fe5bdc0ed28",
         "external_key":"key",
@@ -45,7 +45,7 @@ There are two more fields: `external_id` and `external_key`. External ID represe
 Currently, the bootstrapping procedure is executed over the HTTP protocol. Bootstrapping is nothing else but fetching and applying the configuration that corresponds to the given Mainflux thing. In order to fetch the configuration, _the thing_ needs to send a bootstrapping request:
 
 ```
-curl -s -S -i -H "Authorization: <external_key>" http://localhost:8900/things/bootstrap/<external_id>
+curl -s -S -i -H "Authorization: <external_key>" http://localhost:8200/things/bootstrap/<external_id>
 ```
 
 The response body should look something like:
@@ -82,7 +82,7 @@ The response consists of an ID and key of the Mainflux thing, the list of channe
 Uploading configuration does not automatically connect thing to the given list of channels. In order to connect the thing to the channels, user needs to send the following HTTP request:
 
 ```
-curl -s -S -i -X PUT -H "Authorization: <user_token>" -H "Content-Type: application/json" http://localhost:8900/things/state/<thing_id> -d '{"state": 1}'
+curl -s -S -i -X PUT -H "Authorization: <user_token>" -H "Content-Type: application/json" http://localhost:8200/things/state/<thing_id> -d '{"state": 1}'
 ```
 
 In order to disconnect, the same request should be sent with the value of `state` set to 0.

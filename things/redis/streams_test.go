@@ -175,6 +175,8 @@ func TestUpdateThing(t *testing.T) {
 }
 
 func TestViewThing(t *testing.T) {
+	redisClient.FlushAll().Err()
+
 	svc := newService(map[string]string{token: email})
 	// Create thing without sending event.
 	sth, err := svc.AddThing(token, things.Thing{Type: "app", Name: "a"})
@@ -188,6 +190,8 @@ func TestViewThing(t *testing.T) {
 }
 
 func TestListThings(t *testing.T) {
+	redisClient.FlushAll().Err()
+
 	svc := newService(map[string]string{token: email})
 	// Create thing without sending event.
 	_, err := svc.AddThing(token, things.Thing{Type: "app", Name: "a"})
@@ -201,6 +205,8 @@ func TestListThings(t *testing.T) {
 }
 
 func TestListThingsByChannel(t *testing.T) {
+	redisClient.FlushAll().Err()
+
 	svc := newService(map[string]string{token: email})
 	// Create thing without sending event.
 	sth, err := svc.AddThing(token, things.Thing{Type: "app", Name: "a"})
@@ -396,6 +402,8 @@ func TestUpdateChannel(t *testing.T) {
 }
 
 func TestViewChannel(t *testing.T) {
+	redisClient.FlushAll().Err()
+
 	svc := newService(map[string]string{token: email})
 	// Create channel without sending event.
 	sch, err := svc.CreateChannel(token, things.Channel{Name: "a"})
@@ -409,6 +417,8 @@ func TestViewChannel(t *testing.T) {
 }
 
 func TestListChannels(t *testing.T) {
+	redisClient.FlushAll().Err()
+
 	svc := newService(map[string]string{token: email})
 	// Create thing without sending event.
 	_, err := svc.CreateChannel(token, things.Channel{Name: "a"})
@@ -422,6 +432,8 @@ func TestListChannels(t *testing.T) {
 }
 
 func TestListChannelsByThing(t *testing.T) {
+	redisClient.FlushAll().Err()
+
 	svc := newService(map[string]string{token: email})
 	// Create thing without sending event.
 	sth, err := svc.AddThing(token, things.Thing{Type: "app", Name: "a"})

@@ -105,7 +105,7 @@ func MakeHandler(svc bootstrap.Service, reader bootstrap.ConfigReader) http.Hand
 }
 
 func decodeAddRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	if r.Header.Get("Content-Type") != contentType {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errUnsupportedContentType
 	}
 
@@ -118,7 +118,7 @@ func decodeAddRequest(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func decodeUpdateRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	if r.Header.Get("Content-Type") != contentType {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errUnsupportedContentType
 	}
 
@@ -132,7 +132,7 @@ func decodeUpdateRequest(_ context.Context, r *http.Request) (interface{}, error
 }
 
 func decodeUpdateConnRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	if r.Header.Get("Content-Type") != contentType {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errUnsupportedContentType
 	}
 
@@ -199,7 +199,7 @@ func decodeBootstrapRequest(_ context.Context, r *http.Request) (interface{}, er
 }
 
 func decodeStateRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	if r.Header.Get("Content-Type") != contentType {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errUnsupportedContentType
 	}
 

@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
@@ -61,7 +62,7 @@ func MakeHandler(svc users.Service, l log.Logger) http.Handler {
 }
 
 func decodeCredentials(_ context.Context, r *http.Request) (interface{}, error) {
-	if r.Header.Get("Content-Type") != contentType {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		logger.Warn("Invalid or missing content type.")
 		return nil, errUnsupportedContentType
 	}

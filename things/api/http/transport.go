@@ -14,6 +14,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
@@ -149,7 +150,7 @@ func MakeHandler(svc things.Service) http.Handler {
 }
 
 func decodeThingCreation(_ context.Context, r *http.Request) (interface{}, error) {
-	if r.Header.Get("Content-Type") != contentType {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errUnsupportedContentType
 	}
 
@@ -162,7 +163,7 @@ func decodeThingCreation(_ context.Context, r *http.Request) (interface{}, error
 }
 
 func decodeThingUpdate(_ context.Context, r *http.Request) (interface{}, error) {
-	if r.Header.Get("Content-Type") != contentType {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errUnsupportedContentType
 	}
 
@@ -178,7 +179,7 @@ func decodeThingUpdate(_ context.Context, r *http.Request) (interface{}, error) 
 }
 
 func decodeChannelCreation(_ context.Context, r *http.Request) (interface{}, error) {
-	if r.Header.Get("Content-Type") != contentType {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errUnsupportedContentType
 	}
 
@@ -191,7 +192,7 @@ func decodeChannelCreation(_ context.Context, r *http.Request) (interface{}, err
 }
 
 func decodeChannelUpdate(_ context.Context, r *http.Request) (interface{}, error) {
-	if r.Header.Get("Content-Type") != contentType {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errUnsupportedContentType
 	}
 

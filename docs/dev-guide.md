@@ -65,7 +65,7 @@ make docker_http
 
 > N.B. Mainflux creates `FROM scratch` docker containers which are compact and small in size.
 
-> N.B. The `things-db` and `users-db` containers are built from a vanilla PostgreSQL docker image downloaded from docker hub which does not persist the data when these containers are rebuilt. Thus, __rebuilding of all docker containers with `make dockers` or rebuilding the `things-db` and `users-db` containers separately with `make docker_things-db` and `make docker_users-db` respectively, will cause data loss. All your users, things, channels and connections between them will be lost!__ As we use this setup only for development, we don't guarantee any permanent data persistence. If you need to retain the data between the container rebuilds you can attach volume to the `things-db` and `users-db` containers. Check the official docs on how to use volumes [here](https://docs.docker.com/storage/volumes/) and [here](https://docs.docker.com/compose/compose-file/#volumes).
+> N.B. The `things-db` and `users-db` containers are built from a vanilla PostgreSQL docker image downloaded from docker hub which does not persist the data when these containers are rebuilt. Thus, __rebuilding of all docker containers with `make dockers` or rebuilding the `things-db` and `users-db` containers separately with `make docker_things-db` and `make docker_users-db` respectively, will cause data loss. All your users, things, channels and connections between them will be lost!__ As we use this setup only for development, we don't guarantee any permanent data persistence. If you need to retain the data between the container rebuilds you can attach volume to the `things-db` and `users-db` containers. Check the official docs on how to use volumes [here](https://docs.docker.com/storage/volumes/) and [here](https://docs.docker.com/compose/compose-file/#volumes). For examples on how to add persistent volumes check the [Overriding the default docker-compose configuration](#overriding-the-default-docker-compose-configuration) section.
 
 #### Building Docker images for development
 
@@ -82,6 +82,59 @@ make docker_dev_<microservice_name>
 ```
 
 Commands `make dockers` and `make dockers_dev` are similar. The main difference is that building images in the development mode is done on the local machine, rather than an intermediate image, which makes building images much faster. Before running this command, corresponding binary needs to be built in order to make changes visible. This can be done using `make` or `make <service_name>` command. Commands `make dockers_dev` and `make docker_dev_<service_name>` should be used only for development to speed up the process of image building. **For deployment images, commands from section above should be used.**
+
+### Overriding the default docker-compose configuration
+Sometimes, depending on the use case and the user's needs it might be useful to override or add some extra parameters to the docker-compose configuration. These configuration changes can be done by specifying multiple compose files with the [docker-compose command line option -f](https://docs.docker.com/compose/reference/overview/) as described [here](https://docs.docker.com/compose/extends/).
+The following format of the `docker-compose` can be used to extend or override the configuration:
+```
+docker-compose -f docker/docker-compose.yml -f docker/docker-compose.custom1.yml -f docker/docker-compose.custom2.yml up [-d]
+```
+In the command above each successive file overrides the previous parameters.
+
+A practical example in our case would be to add persistent volumes to the users-db, things-db, influxdb and grafana containers so that we don't loose data between updates of Mainflux. The volumes are mapped to the default location on the host machine, something like `/var/lib/docker/volumes/project-name_volume-name`:
+
+```yaml
+# docker/docker-compose.persistence.yml
+version: "3"
+
+volumes:
+  mainflux-users-db-volume:
+  mainflux-things-db-volume:
+
+services:
+  users-db:
+    volumes:
+      - mainflux-users-db-volume:/var/lib/postgresql/data
+
+  things-db:
+    volumes:
+      - mainflux-things-db-volume:/var/lib/postgresql/data
+```
+
+```yaml
+# docker/addons/influxdb-writer/docker-compose.persistence.yml
+version: "3"
+
+volumes:
+  influxdb-volume:
+  grafana-volume:
+
+services:
+  influxdb:
+    volumes:
+      - influxdb-volume:/var/lib/influxdb
+
+  grafana:
+    volumes:
+      - grafana-volume:/var/lib/grafana
+```
+When we have the override files in place, to compose the whole infrastructure including the persistent volumes we can execute:
+```
+docker-compose -f docker/docker-compose.yml -f docker/docker-compose.persistence.yml up -d
+docker-compose -f docker/addons/influxdb-writer/docker-compose.yml -f docker/addons/influxdb-writer/docker-compose.persistence.yml up -d
+```
+
+__Note:__ Please store your customizations to some folder outside the Mainflux's source folder and maybe add them to some other git repository. You can always apply your customizations by pointing to the right file using `docker-compose -f ...`. Also be sure not to use the `make cleandocker` and `make cleanghost` as they might delete something which you don't want to delete (i.e. the newly created persistent volumes).
 
 ### MQTT Microservice
 The MQTT Microservice in Mainflux is special, as it is currently the only microservice written in NodeJS. It is not compiled, but node modules need to be downloaded in order to start the service:

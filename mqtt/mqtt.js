@@ -123,16 +123,20 @@ aedes.authorizePublish = function (client, packet, publish) {
         },
         // Parse unlimited subtopics
         baseLength = 3, // First 3 elements which represents the base part of topic.
-        elements = packet.topic.split('/').slice(baseLength),
+        isEmpty = function(value) { 
+            return value !== ''; 
+        },
+        elements = packet.topic.split('/').slice(baseLength).join('.').split('.').filter(isEmpty),
         baseTopic = 'channel.' + channelId;
     // Remove empty elements
     for (var i = 0; i < elements.length; i++) {
-      if (elements[i] === '') {
-        elements.pop(i)
-      }
+        if (elements[i].length > 1 && (elements[i].includes('*') || elements[i].includes('>'))) {
+            logger.warn('invalid subtopic');
+            publish(4);
+            return;
+        }
     }
     var channelTopic = elements.length ? baseTopic + '.' + elements.join('.') : baseTopic,
-
         onAuthorize = function (err, res) {
             var rawMsg;
             if (!err) {
@@ -161,9 +165,9 @@ aedes.authorizePublish = function (client, packet, publish) {
 aedes.authorizeSubscribe = function (client, packet, subscribe) {
     var channel = parseTopic(packet.topic);
     if (!channel) {
-      logger.warn('unknown topic');
-      subscribe(4, packet); // Bad username or password
-      return;
+        logger.warn('unknown topic');
+        subscribe(4, packet); // Bad username or password
+        return;
     }
     var channelId = channel[1],
         accessReq = {
@@ -207,9 +211,9 @@ aedes.on('clientDisconnect', function (client) {
 });
 
 aedes.on('clientError', function (client, err) {
-  logger.warn('client error: client: %s, error: %s', client.id, err.message);
+    logger.warn('client error: client: %s, error: %s', client.id, err.message);
 });
 
 aedes.on('connectionError', function (client, err) {
-  logger.warn('client error: client: %s, error: %s', client.id, err.message);
+    logger.warn('client error: client: %s, error: %s', client.id, err.message);
 });

@@ -98,7 +98,7 @@ func TestHandshake(t *testing.T) {
 		{"connect and send message with token as query parameter", id, "", false, token, http.StatusSwitchingProtocols, msg},
 		{"connect and send message that cannot be published", id, "", true, token, http.StatusSwitchingProtocols, []byte{}},
 		{"connect and send message to subtopic", id, "subtopic", true, token, http.StatusSwitchingProtocols, msg},
-		{"connect and send message to subtopic with invalid name", id, "sub//topic", true, token, http.StatusBadRequest, msg},
+		{"connect and send message to subtopic with invalid name", id, "sub/a*b/topic", true, token, http.StatusBadRequest, msg},
 		{"connect and send message to nested subtopic", id, "subtopic/nested", true, token, http.StatusSwitchingProtocols, msg},
 		{"connect and send message to all subtopics", id, ">", true, token, http.StatusSwitchingProtocols, msg},
 	}

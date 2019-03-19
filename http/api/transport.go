@@ -36,7 +36,7 @@ var (
 
 var (
 	auth              mainflux.ThingsServiceClient
-	channelPartRegExp = regexp.MustCompile(`^/channels/([\w\-]+)/messages((/[^/?]+)*)?(\?.*)?$`)
+	channelPartRegExp = regexp.MustCompile(`^/channels/([\w\-]+)/messages(/[^?]*)?(\?.*)?$`)
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
@@ -77,8 +77,22 @@ func parseSubtopic(subtopic string) (string, error) {
 		return "", errMalformedSubtopic
 	}
 	subtopic = strings.Replace(subtopic, "/", ".", -1)
-	// channelParts[2] contains the subtopic parts starting with char /
-	subtopic = subtopic[1:]
+
+	elems := strings.Split(subtopic, ".")
+	filteredElems := []string{}
+	for _, elem := range elems {
+		if elem == "" {
+			continue
+		}
+
+		if len(elem) > 1 && (strings.Contains(elem, "*") || strings.Contains(elem, ">")) {
+			return "", errMalformedSubtopic
+		}
+
+		filteredElems = append(filteredElems, elem)
+	}
+
+	subtopic = strings.Join(filteredElems, ".")
 	return subtopic, nil
 }
 
@@ -151,7 +165,7 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch err {
-	case errMalformedData:
+	case errMalformedData, errMalformedSubtopic:
 		w.WriteHeader(http.StatusBadRequest)
 	case things.ErrUnauthorizedAccess:
 		w.WriteHeader(http.StatusForbidden)

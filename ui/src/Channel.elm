@@ -24,7 +24,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http
-import HttpMF exposing (path)
+import HttpMF exposing (paths)
 import Json.Decode as D
 import Json.Encode as E
 import ModalMF
@@ -123,7 +123,7 @@ update msg model token =
         ProvisionChannel ->
             ( resetEdit model
             , HttpMF.provision
-                (B.relative [ path.channels ] [])
+                (B.relative [ paths.channels ] [])
                 token
                 { emptyChannel
                     | name = Just model.name
@@ -160,7 +160,7 @@ update msg model token =
         UpdateChannel ->
             ( resetEdit { model | editMode = False }
             , HttpMF.update
-                (B.relative [ path.channels, model.channel.id ] [])
+                (B.relative [ paths.channels, model.channel.id ] [])
                 token
                 { emptyChannel
                     | name = Just model.name
@@ -181,7 +181,7 @@ update msg model token =
         RetrieveChannel channelid ->
             ( model
             , HttpMF.retrieve
-                (B.relative [ path.channels, channelid ] [])
+                (B.relative [ paths.channels, channelid ] [])
                 token
                 RetrievedChannel
                 channelDecoder
@@ -198,7 +198,7 @@ update msg model token =
         RetrieveChannels ->
             ( model
             , HttpMF.retrieve
-                (B.relative [ path.channels ] (Helpers.buildQueryParamList model.offset model.limit))
+                (B.relative [ paths.channels ] (Helpers.buildQueryParamList model.offset model.limit))
                 token
                 RetrievedChannels
                 channelsDecoder
@@ -207,7 +207,7 @@ update msg model token =
         RetrieveChannelsForThing thingid ->
             ( model
             , HttpMF.retrieve
-                (B.relative [ path.things, thingid, path.channels ] (Helpers.buildQueryParamList model.offset model.limit))
+                (B.relative [ paths.things, thingid, paths.channels ] (Helpers.buildQueryParamList model.offset model.limit))
                 token
                 RetrievedChannels
                 channelsDecoder
@@ -224,7 +224,7 @@ update msg model token =
         RemoveChannel id ->
             ( resetEdit model
             , HttpMF.remove
-                (B.relative [ path.channels, id ] [])
+                (B.relative [ paths.channels, id ] [])
                 token
                 RemovedChannel
             )
@@ -433,12 +433,12 @@ updateChannelList model token =
     ( model
     , Cmd.batch
         [ HttpMF.retrieve
-            (B.relative [ path.channels ] (Helpers.buildQueryParamList model.offset model.limit))
+            (B.relative [ paths.channels ] (Helpers.buildQueryParamList model.offset model.limit))
             token
             RetrievedChannels
             channelsDecoder
         , HttpMF.retrieve
-            (B.relative [ path.channels, model.channel.id ] [])
+            (B.relative [ paths.channels, model.channel.id ] [])
             token
             RetrievedChannel
             channelDecoder
@@ -450,7 +450,7 @@ updateChannelListForThing : Model -> String -> String -> ( Model, Cmd Msg )
 updateChannelListForThing model token thingid =
     ( model
     , HttpMF.retrieve
-        (B.relative [ path.things, thingid, path.channels ] (Helpers.buildQueryParamList model.offset model.limit))
+        (B.relative [ paths.things, thingid, paths.channels ] (Helpers.buildQueryParamList model.offset model.limit))
         token
         RetrievedChannels
         channelsDecoder

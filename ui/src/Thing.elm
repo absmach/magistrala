@@ -27,7 +27,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http
-import HttpMF exposing (path)
+import HttpMF exposing (paths)
 import Json.Decode as D
 import Json.Encode as E
 import ModalMF
@@ -143,7 +143,7 @@ update msg model token =
         ProvisionThing ->
             ( resetEdit model
             , HttpMF.provision
-                (B.relative [ path.things ] [])
+                (B.relative [ paths.things ] [])
                 token
                 { emptyThing
                     | name = Just model.name
@@ -181,7 +181,7 @@ update msg model token =
         UpdateThing ->
             ( resetEdit { model | editMode = False }
             , HttpMF.update
-                (B.relative [ path.things, model.thing.id ] [])
+                (B.relative [ paths.things, model.thing.id ] [])
                 token
                 { emptyThing
                     | name = Just model.name
@@ -203,7 +203,7 @@ update msg model token =
         RetrieveThing thingid ->
             ( model
             , HttpMF.retrieve
-                (B.relative [ path.things, thingid ] [])
+                (B.relative [ paths.things, thingid ] [])
                 token
                 RetrievedThing
                 thingDecoder
@@ -220,7 +220,7 @@ update msg model token =
         RetrieveThings ->
             ( model
             , HttpMF.retrieve
-                (B.relative [ path.things ] (Helpers.buildQueryParamList model.offset model.limit))
+                (B.relative [ paths.things ] (Helpers.buildQueryParamList model.offset model.limit))
                 token
                 RetrievedThings
                 thingsDecoder
@@ -237,7 +237,7 @@ update msg model token =
         RemoveThing id ->
             ( model
             , HttpMF.remove
-                (B.relative [ path.things, id ] [])
+                (B.relative [ paths.things, id ] [])
                 token
                 RemovedThing
             )
@@ -491,12 +491,12 @@ updateThingList model token =
     ( model
     , Cmd.batch
         [ HttpMF.retrieve
-            (B.relative [ path.things ] (Helpers.buildQueryParamList model.offset model.limit))
+            (B.relative [ paths.things ] (Helpers.buildQueryParamList model.offset model.limit))
             token
             RetrievedThings
             thingsDecoder
         , HttpMF.retrieve
-            (B.relative [ path.things, model.thing.id ] [])
+            (B.relative [ paths.things, model.thing.id ] [])
             token
             RetrievedThing
             thingDecoder

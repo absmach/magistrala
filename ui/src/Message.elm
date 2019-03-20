@@ -23,7 +23,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http
-import HttpMF exposing (path)
+import HttpMF exposing (paths)
 import List.Extra
 import Thing
 import Url.Builder as B
@@ -217,7 +217,7 @@ genChannelRows checkedChannelsIds channels =
 send : String -> String -> String -> Cmd Msg
 send channelid thingkey message =
     HttpMF.request
-        (B.relative [ "http", path.channels, channelid, path.messages ] [])
+        (B.relative [ "http", paths.channels, channelid, paths.messages ] [])
         "POST"
         thingkey
         (Http.stringBody "application/json" message)

@@ -299,7 +299,7 @@ mfStylesheet =
 
 view : Model -> Browser.Document Msg
 view model =
-    { title = "Gateflux"
+    { title = "Mainflux"
     , body =
         let
             buttonAttrs =

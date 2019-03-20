@@ -24,7 +24,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http
-import HttpMF exposing (path)
+import HttpMF exposing (paths)
 import List.Extra
 import Thing
 import Url.Builder as B
@@ -207,7 +207,7 @@ connect checkedThingsIds checkedChannelsIds method token =
                 List.map
                     (\channelid ->
                         HttpMF.request
-                            (B.relative [ path.channels, channelid, path.things, thingid ] [])
+                            (B.relative [ paths.channels, channelid, paths.things, thingid ] [])
                             method
                             token
                             Http.emptyBody

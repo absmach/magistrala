@@ -10,7 +10,7 @@ import Error
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
-import HttpMF exposing (path)
+import HttpMF exposing (paths)
 import Json.Decode as D
 import Json.Encode as E
 import Url.Builder as B
@@ -35,10 +35,10 @@ update msg model =
     case msg of
         GetVersion ->
             ( model
-            , Http.get
-                { url = B.relative [ path.version ] []
-                , expect = Http.expectJson GotVersion (D.field "version" D.string)
-                }
+            , HttpMF.version
+                (B.relative [ paths.version ] [])
+                GotVersion
+                (D.field "version" D.string)
             )
 
         GotVersion result ->

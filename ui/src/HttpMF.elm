@@ -4,9 +4,10 @@
 -- SPDX-License-Identifier: Apache-2.0
 
 
-module HttpMF exposing (expectID, expectRetrieve, expectStatus, path, provision, remove, request, retrieve, update, url)
+module HttpMF exposing (baseURL, expectID, expectRetrieve, expectStatus, paths, provision, remove, request, retrieve, update, user, version)
 
 import Dict
+import Env exposing (env)
 import Helpers
 import Http
 import Json.Decode as D
@@ -14,12 +15,11 @@ import Json.Encode as E
 import Url.Builder as B
 
 
-url =
-    { base = "http://localhost"
-    }
+baseURL =
+    env.url
 
 
-path =
+paths =
     { users = "users"
     , tokens = "tokens"
     , things = "things"
@@ -107,12 +107,30 @@ expectRetrieve toMsg decoder =
 -- REQUEST
 
 
+version : String -> (Result Http.Error String -> msg) -> D.Decoder String -> Cmd msg
+version path msg decoder =
+    Http.get
+        { url = baseURL ++ path
+        , expect = Http.expectJson msg decoder
+        }
+
+
+user : String -> String -> String -> E.Value -> Http.Expect msg -> Cmd msg
+user email password u value expect =
+    Http.post
+        { url = baseURL ++ u
+        , body =
+            value |> Http.jsonBody
+        , expect = expect
+        }
+
+
 request : String -> String -> String -> Http.Body -> (Result Http.Error String -> msg) -> Cmd msg
-request u method token b msg =
+request path method token b msg =
     Http.request
         { method = method
         , headers = [ Http.header "Authorization" token ]
-        , url = u
+        , url = baseURL ++ path
         , body = b
         , expect = expectStatus msg
         , timeout = Nothing
@@ -121,11 +139,11 @@ request u method token b msg =
 
 
 retrieve : String -> String -> (Result Http.Error a -> msg) -> D.Decoder a -> Cmd msg
-retrieve u token msg decoder =
+retrieve path token msg decoder =
     Http.request
         { method = "GET"
         , headers = [ Http.header "Authorization" token ]
-        , url = u
+        , url = baseURL ++ path
         , body = Http.emptyBody
         , expect = expectRetrieve msg decoder
         , timeout = Nothing
@@ -134,11 +152,11 @@ retrieve u token msg decoder =
 
 
 provision : String -> String -> entity -> (entity -> E.Value) -> (Result Http.Error String -> msg) -> String -> Cmd msg
-provision u token e encoder msg prefix =
+provision path token e encoder msg prefix =
     Http.request
         { method = "POST"
         , headers = [ Http.header "Authorization" token ]
-        , url = u
+        , url = baseURL ++ path
         , body =
             encoder e
                 |> Http.jsonBody
@@ -149,11 +167,11 @@ provision u token e encoder msg prefix =
 
 
 update : String -> String -> entity -> (entity -> E.Value) -> (Result Http.Error String -> msg) -> Cmd msg
-update u token e encoder msg =
+update path token e encoder msg =
     Http.request
         { method = "PUT"
         , headers = [ Http.header "Authorization" token ]
-        , url = u
+        , url = baseURL ++ path
         , body =
             encoder e
                 |> Http.jsonBody
@@ -164,11 +182,11 @@ update u token e encoder msg =
 
 
 remove : String -> String -> (Result Http.Error String -> msg) -> Cmd msg
-remove u token msg =
+remove path token msg =
     Http.request
         { method = "DELETE"
         , headers = [ Http.header "Authorization" token ]
-        , url = u
+        , url = baseURL ++ path
         , body = Http.emptyBody
         , expect = expectStatus msg
         , timeout = Nothing

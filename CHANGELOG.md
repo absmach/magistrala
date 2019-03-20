@@ -11,6 +11,73 @@ Otherwise, whole log in a similar format can be observed via:
 git log --pretty=oneline --abbrev-commit
 ```
 
+## 0.8.0 - 20. MAR 2019.
+### Features
+- MF-571 - Add Env.elm to set custom base URL (#654)
+- NOISSUE Added docs about docker-compose config overriding (#653)
+- MF-539 - Improve Bootstrap Service documentation (#646)
+- MF-596 - Add subtopic to RawMessage (#642)
+- NOISSUE - Prevent infinite loop in lora-adapter if Redis init fail (#647)
+- Corrected grammar and rephrased a few sentences to read nicely (#641)
+- MF-571 - Elm UI (#632)
+- MF-552 - Use event sourcing to keep Bootstrap service in sync with Things service (#603)
+- MF-540 - Add pagination in API responses for Bootstrap service (#575)
+- MF-600 - Handle custom LoRa Server application decoder (#608)
+- update docker-compose (#590)
+- Update generated code (#602)
+- Add generated files check (#601)
+- MF-597 - Removed legacy code as not needed anymore (#598)
+- NOISSUE - Added normalizer service to run script (#594)
+- Changed RawMessage (#587)
+- NOISSUE - fix CLI log (#581)
+- MF-519 - Refine Message (#567)
+- NOISSUE - Add name field for Bootstrap Config (#564)
+- Fix non-SenML message routing in normalizer (#573)
+- NOISSUE - Update authors list (#569)
+- Update lora.md (#568)
+- NOISSUE- Improve LoRa doc (#562)
+- MF-551 - Add metadata fields to Bootstrap Channels (#563)
+- Fix MQTT adapter by setting subscription queue (#561)
+- MF-558 - Add MQTT subtopics documentation (#559)
+- Fix regexp for SUB (#557)
+- Simplify MQTT topipc regexp (#555)
+- MF-429 -Enabled MQTT subtopic's (#554)
+- Add env var for number of concurrent messages (#545)
+- NOISSUE - Update doc and fix empty key bug (#544)
+- MF-370 - Simplify and refine CI (#541)
+- NOISSUE - Add connection commands to CLI (#542)
+- NOISSUE - Refine docs (#537)
+- Update licnese year (#533)
+- MF-513 - Add Bootstrapping service (#524)
+- Add dedicated env vars for event sourcing (#536)
+- NOISSUE - Fix docs (#535)
+- Add lora doc to getting-started.md (#529)
+- MF-483 - Enable channels and devices corresponding lists in backend (#520)
+- Add missing components doc to architecture.md (#531)
+
+### Bugfixes
+- MF-639 Split Content-Type header field on semicolon and evaluate all substrings (#644)
+- MF-656 - Change bootstrap service port to 8200 (#658)
+- Replace crossOrigin with relative path and fix messaging bug (#645)
+- MF-579 Things & Channels returns 404 when not found or ID is malformed, not 500 (#633)
+- Fix run command in dev guide (#605)
+- MF-583 - Correct cmd/mongodb-reader HTTPServer log Info (#584)
+- Fix Dusan Maldenovic GitHub (#570)
+- Fix CLI docs (#566)
+- Fix pagination response for empty page (#547)
+- Fix swagger and provisioning docs (#546)
+- NOISSUE - Fix event sourcing client on LoRa adapter (#527)
+- Fix MQTT adapter scaling issue (#526)
+- NOISSUE - Fix subtopic regex and restrict empty subtopic parts (#659)
+- Fix missing css in container ui (#638)
+- NOISSUE - Fix lora-adapter Object decode (#610)
+- NOISSUE - Fix users logs in main.go (#577)
+- NOISSUE - Fix normalizer exposed port in docker-compose (#548)
+
+### Summary
+https://github.com/mainflux/mainflux/milestone/9?closed=1
+
+
 ## 0.7.0 - 08. DEC 2018.
 ### Features
 
@@ -49,7 +116,7 @@ https://github.com/mainflux/mainflux/milestone/8?closed=1
 
 
 ## 0.6.0 - 26. OCT 2018.
-### Features 
+### Features
 
 - Added Go SDK (#357)
 - Updated NATS version (#412)
@@ -73,7 +140,7 @@ https://github.com/mainflux/mainflux/milestone/8?closed=1
 - Cassandra Reader (#313)
 - MongoDB Reader (#344)
 - MQTT Persistance via Redis (#328)
-- CLI integrated into monorepo (#216) 
+- CLI integrated into monorepo (#216)
 - Normalizer logging (#333)
 - WS swagger doc (#337)
 - Payload renamed to Metadata (#343)
@@ -90,10 +157,10 @@ https://github.com/mainflux/mainflux/milestone/6?closed=1
 
 ## 0.4.0 - 01. JUN 2018.
 * Integrated MQTT adapter (#165 )
-* Support for storing messages in MongoDB (#237) 
+* Support for storing messages in MongoDB (#237)
 * Support for storing messages in InfluxDB (#236)
 * Use UUID PKs with auto-incremented values (#269 )
-* Replaced JWT with plain string tokens in things service (#268 ) 
+* Replaced JWT with plain string tokens in things service (#268 )
 * Emit non-SenML messages (#239 )
 * Support for Grafana (#296)
 * Added WS Load test (#299 )
@@ -125,7 +192,7 @@ https://github.com/mainflux/mainflux/milestone/6?closed=1
 ## 0.2.0 - 18. APR 2018
 - Protobuf message serialization (#192)
 - Websocket API for exchanging messages (#188)
-- Channel & client retrieval paging (#227) 
+- Channel & client retrieval paging (#227)
 - Service instrumentation (#213)
 - `go-kit` based JSON logger (#212)
 - Project documentation (#218, #220)

@@ -68,27 +68,6 @@ mosquitto_sub -u <thing_id> -P <thing_key> -t channels/<channel_id>/messages -h 
 If you are using TLS to secure MQTT connection, add `--cafile docker/ssl/certs/ca.crt`
 to every command.
 
-###### Subtopics
-In order to use MQTT subtopics and extend the channel with subtopic or name the channel using your own naming convention, You can simply add any suffix on base ` /channels/<channel_id>/messages` topic.
-
-Example subtopic publish/subscribe for bedroom temperature would be
-
-`channels/<channel_id>/messages/bedroom/temperature`
-
-Subtopics are generic and multilevel, You can use any prefix with any level depth.
-
-Topic with subtopics are propagated to NATS broker in the following format
-
-`channel.<channel_id>.<optional_subtopic>`
-
-Subscription directly to NATS on our example channel with subtopic
-
-`channels/<channel_id>/messages/bedroom/temperature` would be in format `channel.<channel_id>.bedroom.temperature`
-
-
-For more information and examples checkout [official nats.io documentation](https://nats.io/documentation/writing_applications/subscribing/)
-
-
 ## CoAP
 
 CoAP adapter implements CoAP protocol using underlying UDP and according to [RFC 7252](https://tools.ietf.org/html/rfc7252). To send and receive messages over CoAP, you can use [Copper](https://github.com/mkovatsc/Copper) CoAP user-agent. To set the add-on, please follow the installation instructions provided [here](https://github.com/mkovatsc/Copper#how-to-integrate-the-copper-sources-into-firefox). Once the Mozilla Firefox and Copper are ready and CoAP adapter is running locally on the default port (5683), you can navigate to the appropriate URL and start using CoAP. The URL should look like this:
@@ -106,3 +85,27 @@ The most of the notifications received from the Adapter are non-confirmable. By 
 > Server must send a notification in a confirmable message instead of a non-confirmable message at least every 24 hours. This prevents a client that went away or is no longer interested from remaining in the list of observers indefinitely.
 
 CoAP Adapter sends these notifications every 12 hours. To configure this period, please check [adapter documentation](../coap/README.md) If the client is no longer interested in receiving notifications, the second scenario described above can be used to unsubscribe
+
+## Subtopics
+
+In order to use subtopics and give more meaning to your pub/sub channel, you can simply add any suffix to base `/channels/<channel_id>/messages` topic.
+
+Example subtopic publish/subscribe for bedroom temperature would be `channels/<channel_id>/messages/bedroom/temperature`.
+
+Subtopics are generic and multilevel. You can use almost any suffix with any depth.
+
+Topics with subtopics are propagated to NATS broker in the following format `channel.<channel_id>.<optional_subtopic>`.
+
+Our example topic `channels/<channel_id>/messages/bedroom/temperature` will be translated to appropriate NATS topic `channel.<channel_id>.bedroom.temperature`.
+
+You can use multilevel subtopics, that have multiple parts. These parts are seaprated by `.` or `/` separators. 
+When you use combination of these two, have in mind that behind the scene, `/` separator will be replaced with `.`. 
+Every empty part of subtopic will be removed. What this means is that subtopic `a///b` is equivalent to `a/b`.
+When you want to subscribe, you can use NATS wildcards `*` and `>`. Every subtopic part can have `*` or `>` as it's value, but if there is any other character beside these wildcards, subtopic will be invalid. What this means is that subtopics such as `a.b*c.d` will be invalid, while `a.b.*.c.d` will be valid.
+
+Authorization is done on channel level, so you only have to have access to channel in order to have access to
+it's subtopics.
+
+**Note:** When using MQTT, it's recommended that you use standard MQTT wildcards `+` and `#`.
+
+For more information and examples checkout [official nats.io documentation](https://nats.io/documentation/writing_applications/subscribing/)

@@ -8,5 +8,6 @@ module Env exposing (env)
 
 
 env =
-    { url = "http://localhost:80/"
+    { -- Leave empty to let browser prepend base URL to requests
+      url = ""
     }

@@ -271,12 +271,12 @@ update msg model token =
 view : Model -> Html Msg
 view model =
     Grid.container []
-        [ Grid.row []
+        ([ Grid.row []
             [ Grid.col [ Col.attrs [ align "right" ] ]
                 [ Button.button [ Button.outlinePrimary, Button.attrs [ Spacing.ml1, align "right" ], Button.onClick ShowProvisionModal ] [ text "ADD" ]
                 ]
             ]
-        , Grid.row []
+         , Grid.row []
             [ Grid.col []
                 [ Card.config []
                     |> Card.headerH3 [] [ text "Channels" ]
@@ -292,10 +292,12 @@ view model =
                     |> Card.view
                 ]
             ]
-        , Helpers.genPagination model.channels.total SubmitPage
-        , provisionModal model
-        , editModal model
-        ]
+         , provisionModal model
+         , editModal model
+         ]
+            |> Helpers.appendIf (model.channels.total > model.limit)
+                (Helpers.genPagination model.channels.total (Helpers.offsetToPage model.offset model.limit) SubmitPage)
+        )
 
 
 

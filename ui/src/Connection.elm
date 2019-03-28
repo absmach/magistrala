@@ -118,7 +118,7 @@ view model =
     Grid.container []
         [ Grid.row []
             [ Grid.col []
-                [ Card.config
+                ([ Card.config
                     []
                     |> Card.headerH3 [] [ text "Things" ]
                     |> Card.block []
@@ -135,10 +135,12 @@ view model =
                             )
                         ]
                     |> Card.view
-                , Html.map ThingMsg (Helpers.genPagination model.things.things.total Thing.SubmitPage)
-                ]
+                 ]
+                    |> Helpers.appendIf (model.things.things.total > model.things.limit)
+                        (Html.map ThingMsg (Helpers.genPagination model.things.things.total (Helpers.offsetToPage model.things.offset model.things.limit) Thing.SubmitPage))
+                )
             , Grid.col []
-                [ Card.config
+                ([ Card.config
                     []
                     |> Card.headerH3 [] [ text "Channels" ]
                     |> Card.block []
@@ -155,8 +157,10 @@ view model =
                             )
                         ]
                     |> Card.view
-                , Html.map ChannelMsg (Helpers.genPagination model.channels.channels.total Channel.SubmitPage)
-                ]
+                 ]
+                    |> Helpers.appendIf (model.channels.channels.total > model.channels.limit)
+                        (Html.map ChannelMsg (Helpers.genPagination model.channels.channels.total (Helpers.offsetToPage model.channels.offset model.channels.limit) Channel.SubmitPage))
+                )
             ]
         , Grid.row []
             [ Grid.col []

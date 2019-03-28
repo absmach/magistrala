@@ -19,7 +19,6 @@ import Bootstrap.Grid.Row as Row
 import Bootstrap.Modal as Modal
 import Bootstrap.Table as Table
 import Bootstrap.Utilities.Spacing as Spacing
-import Debug exposing (log)
 import Dict
 import Error
 import Helpers
@@ -290,16 +289,18 @@ update msg model token =
 view : Model -> Html Msg
 view model =
     Grid.container []
-        [ Grid.row []
+        ([ Grid.row []
             [ Grid.col [ Col.attrs [ align "right" ] ]
                 [ Button.button [ Button.outlinePrimary, Button.attrs [ Spacing.ml1, align "right" ], Button.onClick ShowProvisionModal ] [ text "ADD" ]
                 ]
             ]
-        , genTable model
-        , Helpers.genPagination model.things.total SubmitPage
-        , provisionModal model
-        , editModal model
-        ]
+         , genTable model
+         , provisionModal model
+         , editModal model
+         ]
+            |> Helpers.appendIf (model.things.total > model.limit)
+                (Helpers.genPagination model.things.total (Helpers.offsetToPage model.offset model.limit) SubmitPage)
+        )
 
 
 

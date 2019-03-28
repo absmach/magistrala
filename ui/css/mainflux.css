@@ -27,3 +27,13 @@
      text-align: center;
      margin: 1rem 0;
    }
+
+.page-link{
+  color: #113f67;
+}
+
+.page-item.active .page-link {
+  background-color: #113f67;
+  border-color: #113f67; 
+}
+

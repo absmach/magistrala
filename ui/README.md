@@ -46,7 +46,7 @@ Open the _src/Env.elm_ file and edit the values of the `env` record.
 
 Follow the instructions above to install and run GUI as a native build. In
 _src/Env.elm_ change a `url` field value of the `elm` record to
-`http://localhost:80`. Instead of `make run` you can install `elm-live`
+`http://localhost:80/` (trailing slash `/` is mandatory). Instead of `make run` you can install `elm-live`
 (https://github.com/wking-io/elm-live) and execute `elm-live src/Main.elm` to
 get a live reload when your `.Elm` files change.
 

@@ -4,15 +4,16 @@
 -- SPDX-License-Identifier: Apache-2.0
 
 
-module Helpers exposing (buildQueryParamList, checkEntity, faIcons, fontAwesome, genPagination, isChecked, pageToOffset, parseString, response, validateInt, validateOffset)
+module Helpers exposing (appendIf, buildQueryParamList, checkEntity, faIcons, fontAwesome, genPagination, isChecked, offsetToPage, pageToOffset, parseString, response, validateInt, validateOffset)
 
 import Bootstrap.Button as Button
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
 import Bootstrap.Utilities.Spacing as Spacing
-import Html exposing (Html, div, hr, node, p, strong, text)
+import Html exposing (Html, a, div, hr, li, nav, node, p, strong, text, ul)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onClick)
 import Http
 import List.Extra
 import Url.Builder as B
@@ -76,6 +77,11 @@ pageToOffset page limit =
     (page - 1) * limit
 
 
+offsetToPage : Int -> Int -> Int
+offsetToPage offset limit =
+    (offset // limit) + 1
+
+
 validateOffset : Int -> Int -> Int -> Int
 validateOffset offset total limit =
     if offset >= (total - 1) then
@@ -85,20 +91,43 @@ validateOffset offset total limit =
         offset
 
 
-genPagination : Int -> (Int -> msg) -> Html msg
-genPagination total msg =
+genPagination : Int -> Int -> (Int -> msg) -> Html msg
+genPagination total currPage msg =
     let
         pages =
             List.range 1 (Basics.ceiling (Basics.toFloat total / 10))
 
         cols =
-            List.map
-                (\page ->
-                    Grid.col [] [ Button.button [ Button.roleLink, Button.attrs [ Spacing.ml1 ], Button.onClick (msg page) ] [ text (String.fromInt page) ] ]
-                )
-                pages
+            nav []
+                [ ul [ class "pagination" ]
+                    ([ li [ classList [ ( "page-item", True ), ( "disabled", currPage == 1 ) ] ]
+                        [ a
+                            ([ class "page-link" ]
+                                |> appendIf (currPage > 1)
+                                    (onClick (msg (currPage - 1)))
+                            )
+                            [ text "Previous" ]
+                        ]
+                     ]
+                        ++ List.map
+                            (\page ->
+                                li [ classList [ ( "page-item", True ), ( "active", currPage == page ) ] ] [ a [ class "page-link", onClick (msg page) ] [ text (String.fromInt page) ] ]
+                            )
+                            pages
+                        ++ [ li [ classList [ ( "page-item", True ), ( "disabled", disableNext currPage total ) ] ]
+                                [ a
+                                    ([ class "page-link" ]
+                                        |> appendIf
+                                            (not (disableNext currPage total))
+                                            (onClick (msg (currPage + 1)))
+                                    )
+                                    [ text "Next" ]
+                                ]
+                           ]
+                    )
+                ]
     in
-    Grid.row [] cols
+    Grid.row [] [ Grid.col [] [ cols ] ]
 
 
 
@@ -143,3 +172,17 @@ isChecked id checkedEntitiesIds =
 
     else
         False
+
+
+appendIf : Bool -> a -> List a -> List a
+appendIf flag value list =
+    if flag == True then
+        list ++ [ value ]
+
+    else
+        list
+
+
+disableNext : Int -> Int -> Bool
+disableNext currPage total =
+    currPage == Basics.ceiling (Basics.toFloat total / 10)

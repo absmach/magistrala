@@ -85,7 +85,7 @@ offsetToPage offset limit =
 validateOffset : Int -> Int -> Int -> Int
 validateOffset offset total limit =
     if offset >= (total - 1) then
-        (total - 1) - limit
+        Basics.max ((total - 1) - limit) 0
 
     else
         offset

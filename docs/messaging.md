@@ -84,7 +84,7 @@ The most of the notifications received from the Adapter are non-confirmable. By 
 
 > Server must send a notification in a confirmable message instead of a non-confirmable message at least every 24 hours. This prevents a client that went away or is no longer interested from remaining in the list of observers indefinitely.
 
-CoAP Adapter sends these notifications every 12 hours. To configure this period, please check [adapter documentation](../coap/README.md) If the client is no longer interested in receiving notifications, the second scenario described above can be used to unsubscribe
+CoAP Adapter sends these notifications every 12 hours. To configure this period, please check (adapter documentation)[https://www.github.com/mainflux/mainflux/tree/master/coap/README.md) If the client is no longer interested in receiving notifications, the second scenario described above can be used to unsubscribe
 
 ## Subtopics
 

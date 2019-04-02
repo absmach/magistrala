@@ -14,12 +14,14 @@ networks:
 
 services:
   nginx:
-    image: nginx:1.14.2-alpine
+    image: nginx:1.14.2
     container_name: mainflux-nginx
     restart: on-failure
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/nginx-${AUTH-key}.conf:/etc/nginx/nginx.conf
+      - ./ssl/authorization.js:/etc/nginx/authorization.js
       - ./ssl/certs/mainflux-server.crt:/etc/ssl/certs/mainflux-server.crt
+      - ./ssl/certs/ca.crt:/etc/ssl/certs/ca.crt
       - ./ssl/certs/mainflux-server.key:/etc/ssl/private/mainflux-server.key
       - ./ssl/dhparam.pem:/etc/ssl/certs/dhparam.pem
     ports:

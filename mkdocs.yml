@@ -33,7 +33,7 @@ pages:
 - Messaging: messaging.md
 - Storage: storage.md
 - LoRa: lora.md
-- TLS: tls.md
+- Security: security.md
 - CLI: cli.md
 - Bootstrap: bootstrap.md
 - Developer's Guide: dev-guide.md

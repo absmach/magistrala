@@ -29,7 +29,7 @@ import Channel
 import Connection
 import Debug exposing (log)
 import Error
-import Helpers exposing (fontAwesome)
+import Helpers exposing (faIcons, fontAwesome)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
@@ -310,11 +310,13 @@ view model =
 
             menu =
                 if loggedIn then
-                    [ ButtonGroup.linkButton [ Button.primary, Button.onClick Version, buttonAttrs ] [ i [ class "fas fa-chart-bar" ] [], text " Dashboard" ]
-                    , ButtonGroup.linkButton [ Button.primary, Button.onClick Things, buttonAttrs ] [ i [ class "fas fa-sitemap" ] [], text " Things" ]
-                    , ButtonGroup.linkButton [ Button.primary, Button.onClick Channels, buttonAttrs ] [ i [ class "fas fa-broadcast-tower" ] [], text " Channels" ]
-                    , ButtonGroup.linkButton [ Button.primary, Button.onClick Connection, buttonAttrs ] [ i [ class "fas fa-plug" ] [], text " Connection" ]
-                    , ButtonGroup.linkButton [ Button.primary, Button.onClick Messages, buttonAttrs ] [ i [ class "far fa-paper-plane" ] [], text " Messages" ]
+                    [ ul [ class "nav-pills flex-column nav" ]
+                        [ menuItem "Dashboard" Version faIcons.dashboard (model.view == "dashboard")
+                        , menuItem "Things" Things faIcons.things (model.view == "things")
+                        , menuItem "Channels" Channels faIcons.channels (model.view == "channels")
+                        , menuItem "Connection" Connection faIcons.connection (model.view == "connection")
+                        , menuItem "Messages" Messages faIcons.messages (model.view == "messages")
+                        ]
                     ]
 
                 else
@@ -370,13 +372,8 @@ view model =
                         ]
                     , Grid.row []
                         [ Grid.col
-                            [ Col.attrs [] ]
-                            [ ButtonGroup.linkButtonGroup
-                                [ ButtonGroup.vertical
-                                , ButtonGroup.attrs [ style "width" "100%" ]
-                                ]
-                                menu
-                            ]
+                            []
+                            menu
                         ]
                     ]
                 , Grid.col
@@ -435,3 +432,8 @@ cardList model =
                 Button.button [ Button.dark, Button.onClick Channels ] [ text "Manage channels" ]
             ]
     ]
+
+
+menuItem : String -> Msg -> String -> Bool -> Html Msg
+menuItem name msg icon active =
+    li [ class "nav-item", class "text-left" ] [ a [ onClick msg, classList [ ( "nav-link", True ), ( "active", active ) ] ] [ i [ class icon ] [], text name ] ]

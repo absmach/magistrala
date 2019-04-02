@@ -37,3 +37,25 @@
   border-color: #113f67; 
 }
 
+ul.nav a:hover { 
+  color: #fff !important; 
+  background-color: #408ab4 !important; 
+  cursor: pointer;
+  transition: color .15s ease-in-out,background-color .15s ease-in-out;
+}
+
+.nav-pills .nav-link.active{
+  background-color: #408ab4 !important; 
+}
+
+.nav li a i {
+  margin-right: 10px;
+  font-size: 12px;
+  width: 25px;
+  height: 25px;
+  line-height: 25px;
+  text-align: center;
+  border-radius: 4px;
+  background:#154f82;
+ 
+}

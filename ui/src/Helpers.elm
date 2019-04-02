@@ -146,9 +146,14 @@ fontAwesome =
 
 
 faIcons =
-    { provision = class "fa fa-plus"
-    , edit = class "fa fa-pen"
-    , remove = class "fa fa-trash-alt"
+    { provision = "fa fa-plus"
+    , edit = "fa fa-pen"
+    , remove = "fa fa-trash-alt"
+    , dashboard = "fas fa-chart-bar"
+    , things = "fas fa-sitemap"
+    , channels = "fas fa-broadcast-tower"
+    , connection = "fas fa-plug"
+    , messages = "far fa-paper-plane"
     }
 
 

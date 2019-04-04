@@ -179,8 +179,9 @@ genThingRows checkedThingsIds things =
     List.map
         (\thing ->
             Table.tr []
-                [ Table.td [] [ input [ type_ "checkbox", onClick (CheckThing thing.id), checked (Helpers.isChecked thing.id checkedThingsIds) ] [], text (" " ++ Helpers.parseString thing.name) ]
+                [ Table.td [] [ text (" " ++ Helpers.parseString thing.name) ]
                 , Table.td [] [ text thing.id ]
+                , Table.td [] [ input [ type_ "checkbox", onClick (CheckThing thing.id), checked (Helpers.isChecked thing.id checkedThingsIds) ] [] ]
                 ]
         )
         things
@@ -191,8 +192,9 @@ genChannelRows checkedChannelsIds channels =
     List.map
         (\channel ->
             Table.tr []
-                [ Table.td [] [ input [ type_ "checkbox", onClick (CheckChannel channel.id), checked (Helpers.isChecked channel.id checkedChannelsIds) ] [], text (" " ++ Helpers.parseString channel.name) ]
+                [ Table.td [] [ text (" " ++ Helpers.parseString channel.name) ]
                 , Table.td [] [ text channel.id ]
+                , Table.td [] [ input [ type_ "checkbox", onClick (CheckChannel channel.id), checked (Helpers.isChecked channel.id checkedChannelsIds) ] [] ]
                 ]
         )
         channels

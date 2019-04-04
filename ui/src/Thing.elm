@@ -289,15 +289,11 @@ update msg model token =
 view : Model -> Html Msg
 view model =
     Grid.container []
-        ([ Grid.row []
-            [ Grid.col [ Col.attrs [ align "right" ] ]
-                [ Button.button [ Button.outlinePrimary, Button.attrs [ Spacing.ml1, align "right" ], Button.onClick ShowProvisionModal ] [ text "ADD" ]
-                ]
+        (
+            [ genTable model
+            , provisionModal model
+            , editModal model
             ]
-         , genTable model
-         , provisionModal model
-         , editModal model
-         ]
             |> Helpers.appendIf (model.things.total > model.limit)
                 (Helpers.genPagination model.things.total (Helpers.offsetToPage model.offset model.limit) SubmitPage)
         )
@@ -312,7 +308,16 @@ genTable model =
     Grid.row []
         [ Grid.col []
             [ Card.config []
-                |> Card.headerH3 [] [ text "Things" ]
+                |> Card.header []
+                    [ Grid.row []
+                        [ Grid.col [ Col.attrs [ align "left" ] ]
+                            [ h3 [ Spacing.mt2 ] [ text "Things"]
+                            ]
+                        , Grid.col [ Col.attrs [ align "right" ] ]
+                            [ Button.button [ Button.success, Button.attrs [ align "right" ], Button.onClick ShowProvisionModal ] [ text "ADD" ]
+                            ]
+                        ]
+                    ]
                 |> Card.block []
                     [ Block.custom
                         (Table.table

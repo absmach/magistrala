@@ -9,6 +9,7 @@ package influxdb
 
 import (
 	"errors"
+	"math"
 	"strconv"
 	"sync"
 	"time"
@@ -112,7 +113,9 @@ func (repo *influxRepo) savePoint(point *influxdata.Point) error {
 
 func (repo *influxRepo) Save(msg mainflux.Message) error {
 	tgs, flds := repo.tagsOf(&msg), repo.fieldsOf(&msg)
-	t := time.Unix(int64(msg.Time), 0)
+
+	sec, dec := math.Modf(msg.Time)
+	t := time.Unix(int64(sec), int64(dec*(1e9)))
 
 	pt, err := influxdata.NewPoint(pointName, tgs, flds, t)
 	if err != nil {

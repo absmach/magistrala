@@ -1,4 +1,4 @@
-## Authentication using Mainflux keys
+## Authentication with Mainflux keys
 By default, Mainflux uses Mainflux keys for authentication. The Мainflux key is a secret key that's generated at the Thing creation. In order to authenticate, the Thing needs to send its key with the message. The way the key is passed depends on the protocol used to send a message and differs from adapter to adapter. For more details on how this key is passed around, please check out [messaging section](https://mainflux.readthedocs.io/en/latest/messaging).
 This is the default Mainflux authentication mechanism and this method is used if the composition is started using the following command:
 
@@ -6,7 +6,7 @@ This is the default Mainflux authentication mechanism and this method is used if
 docker-compose -f docker/docker-compose.yml up
 ```
 
-## Mutual authentication
+## Mutual TLS Authentication with X.509 Certificates
 
 In most of the cases, HTTPS, WSS, MQTTS or secure CoAP are secure enough. However, sometimes you might need an even more secure connection. Mainflux supports mutual TLS authentication (_mTLS_) based on [X.509 certificates](https://tools.ietf.org/html/rfc5280). By default, the TLS protocol only proves the identity of the server to the client using the X.509 certificate and the authentication of the client to the server is left to the application layer. TLS also offers client-to-server authentication using client-side X.509 authentication. This is called two-way or mutual authentication. Mainflux currently supports mTLS over HTTP, WS, and MQTT protocols. In order to run Docker composition with mTLS turned on, you can execute the following command from the project root:
 

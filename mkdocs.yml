@@ -33,8 +33,9 @@ pages:
 - Messaging: messaging.md
 - Storage: storage.md
 - LoRa: lora.md
-- Security: security.md
-- Authentication: authentication.md
+- Security: 
+    - Secure commuincation: security.md
+    - Authentication: authentication.md
 - CLI: cli.md
 - Bootstrap: bootstrap.md
 - Developer's Guide: dev-guide.md

@@ -8,237 +8,25 @@ Mainflux platform supports bootstrapping process, but some of the preconditions 
 
 > Bootstrapping and provisioning are two different procedures. Provisioning refers to entities management while bootstrapping is related to entity configuration.
 
+Bootstrapping procedure is the following:
 
-<style>
-    .carousel {
-        margin-left: 15%;
-        margin-right: 15%;
-    }
+![Configure device](img/bootstrap/1.png)
+*1) Configure device with Bootstrap service URL, an external key and external ID*
+   
+> ![Provision Mainflux channels](img/bootstrap/2.png)
+*Optionally create Mainflux channels if they don't exist*
 
-    ul.slides {
-        display: block;
-        position: relative;
-        height: 600px;
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        list-style: none;
-    }
+> ![Provision Mainflux things](img/bootstrap/3.png)
+*Optionally create Mainflux thing if it doesn't exist*
 
-    .slides * {
-        user-select: none;
-        -ms-user-select: none;
-        -moz-user-select: none;
-        -khtml-user-select: none;
-        -webkit-user-select: none;
-        -webkit-touch-callout: none;
-    }
+![Upload configuration](img/bootstrap/4.png)
+*2) Upload configuration for the Mainflux thing*
 
-    ul.slides input {
-        display: none;
-    }
+![Bootstrap](img/bootstrap/5.png)
+*3) Bootstrap - send a request for the configuration*
 
-    .slide-container {
-        display: block;
-    }
-
-    .slide-image {
-        display: block;
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        top: 0;
-        opacity: 0;
-        transition: all .7s ease-in-out;
-    }
-
-    .slide-image img {
-        width: auto;
-        min-width: 100%;
-        height: 100%;
-    }
-
-    .carousel-controls {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 999;
-        font-size: 100px;
-        line-height: 600px;
-        color: #d2dade;
-    }
-
-    .carousel-controls label {
-        display: none;
-        position: absolute;
-        padding: 0 20px;
-        opacity: 0;
-        transition: opacity .2s;
-        cursor: pointer;
-    }
-
-    .slide-image:hover+.carousel-controls label {
-        opacity: 0.5;
-    }
-
-    .carousel-controls label:hover {
-        opacity: 1;
-    }
-
-    .carousel-controls .prev-slide {
-        width: 49%;
-        text-align: left;
-        left: 0;
-    }
-
-    .carousel-controls .next-slide {
-        width: 49%;
-        text-align: right;
-        right: 0;
-    }
-
-    .carousel-dots {
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 20px;
-        z-index: 999;
-        text-align: center;
-    }
-
-    .carousel-dots .carousel-dot {
-        display: inline-block;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        background-color: #ecf0f2;
-        opacity: 0.5;
-        margin: 10px;
-    }
-
-    input:checked+.slide-container .slide-image {
-        opacity: 1;
-        transform: scale(1);
-        transition: opacity 1s ease-in-out;
-    }
-
-    input:checked+.slide-container .carousel-controls label {
-        display: block;
-    }
-
-    input#img-1:checked~.carousel-dots label#img-dot-1,
-    input#img-2:checked~.carousel-dots label#img-dot-2,
-    input#img-3:checked~.carousel-dots label#img-dot-3,
-    input#img-4:checked~.carousel-dots label#img-dot-4,
-    input#img-5:checked~.carousel-dots label#img-dot-5,
-    input#img-6:checked~.carousel-dots label#img-dot-6 {
-        opacity: 1;
-    }
-
-    input:checked+.slide-container .nav label {
-        display: block;
-    }
-</style>
-<div>
-    <div class="carousel">
-        <ul class="slides">
-            <input type="radio" name="radio-buttons" id="img-1" checked />
-            <li class="slide-container">
-                <div class="slide-image">
-                    <img src="img/bootstrap/1.png">
-                </div>
-                <div class="carousel-controls">
-                    <label for="img-3" class="prev-slide">
-                        <span>&lsaquo;</span>
-                    </label>
-                    <label for="img-2" class="next-slide">
-                        <span>&rsaquo;</span>
-                    </label>
-                </div>
-            </li>
-            <input type="radio" name="radio-buttons" id="img-2" />
-            <li class="slide-container">
-                <div class="slide-image">
-                    <img src="img/bootstrap/2.png">
-                </div>
-                <div class="carousel-controls">
-                    <label for="img-1" class="prev-slide">
-                        <span>&lsaquo;</span>
-                    </label>
-                    <label for="img-3" class="next-slide">
-                        <span>&rsaquo;</span>
-                    </label>
-                </div>
-            </li>
-            <input type="radio" name="radio-buttons" id="img-3" />
-            <li class="slide-container">
-                <div class="slide-image">
-                    <img src="img/bootstrap/3.png">
-                </div>
-                <div class="carousel-controls">
-                    <label for="img-2" class="prev-slide">
-                        <span>&lsaquo;</span>
-                    </label>
-                    <label for="img-4" class="next-slide">
-                        <span>&rsaquo;</span>
-                    </label>
-                </div>
-            </li>
-            <input type="radio" name="radio-buttons" id="img-4" />
-            <li class="slide-container">
-                <div class="slide-image">
-                    <img src="img/bootstrap/4.png">
-                </div>
-                <div class="carousel-controls">
-                    <label for="img-3" class="prev-slide">
-                        <span>&lsaquo;</span>
-                    </label>
-                    <label for="img-5" class="next-slide">
-                        <span>&rsaquo;</span>
-                    </label>
-                </div>
-            </li>
-            <input type="radio" name="radio-buttons" id="img-5" />
-            <li class="slide-container">
-                <div class="slide-image">
-                    <img src="img/bootstrap/5.png">
-                </div>
-                <div class="carousel-controls">
-                    <label for="img-4" class="prev-slide">
-                        <span>&lsaquo;</span>
-                    </label>
-                    <label for="img-6" class="next-slide">
-                        <span>&rsaquo;</span>
-                    </label>
-                </div>
-            </li>
-            <input type="radio" name="radio-buttons" id="img-6" />
-            <li class="slide-container">
-                <div class="slide-image">
-                    <img src="img/bootstrap/6.png">
-                </div>
-                <div class="carousel-controls">
-                    <label for="img-5" class="prev-slide">
-                        <span>&lsaquo;</span>
-                    </label>
-                    <label for="img-1" class="next-slide">
-                        <span>&rsaquo;</span>
-                    </label>
-                </div>
-            </li>
-            <div class="carousel-dots">
-                <label for="img-1" class="carousel-dot" id="img-dot-1"></label>
-                <label for="img-2" class="carousel-dot" id="img-dot-2"></label>
-                <label for="img-3" class="carousel-dot" id="img-dot-3"></label>
-                <label for="img-4" class="carousel-dot" id="img-dot-4"></label>
-                <label for="img-5" class="carousel-dot" id="img-dot-5"></label>
-                <label for="img-6" class="carousel-dot" id="img-dot-6"></label>
-            </div>
-        </ul>
-    </div>
-</div>
-
+![Update, enable/disable, remove](img/bootstrap/6.png)
+*4) Connect/disconnect thing from channels, update or remove configuration*
 
 ### Configuration
 

@@ -12,6 +12,7 @@ default values.
 | Variable                    | Description                                           | Default               |
 |-----------------------------|-------------------------------------------------------|-----------------------|
 | MF_MQTT_ADAPTER_LOG_LEVEL   | MQTT adapter log level                                | error                 |
+| MF_MQTT_INSTANCE_ID         | ID of MQTT adapter instance                           |                       |
 | MF_MQTT_ADAPTER_PORT        | Service MQTT port                                     | 1883                  |
 | MF_MQTT_ADAPTER_WS_PORT     | WebSocket port                                        | 8880                  |
 | MF_NATS_URL                 | NATS instance URL                                     | nats://localhost:4222 |
@@ -41,6 +42,7 @@ services:
       MF_THINGS_URL: [Things service URL]
       MF_NATS_URL: [NATS instance URL]
       MF_MQTT_ADAPTER_LOG_LEVEL: [MQTT adapter log level]
+      MF_MQTT_INSTANCE_ID: [ID of MQTT adapter instance]
       MF_MQTT_ADAPTER_PORT: [Service MQTT port]
       MF_MQTT_WS_PORT: [Service WS port]
       MF_MQTT_REDIS_PORT: [Redis port]
@@ -64,7 +66,7 @@ cd $GOPATH/src/github.com/mainflux/mainflux/mqtt
 npm install
 
 # set the environment variables and run the service
-MF_THINGS_URL=[Things service URL] MF_NATS_URL=[NATS instance URL] MF_MQTT_ADAPTER_LOG_LEVEL=[MQTT adapter log level] MF_MQTT_ADAPTER_PORT=[Service MQTT port] MF_MQTT_WS_PORT=[Service WS port] MF_MQTT_REDIS_PORT=[Redis port] MF_MQTT_REDIS_HOST=[Redis host] MF_MQTT_REDIS_PASS=[Redis pass] MF_MQTT_REDIS_DB=[Redis db] MF_MQTT_CONCURRENT_MESSAGES=[Number of messages that can be concurrently exchanged] MF_MQTT_ADAPTER_CLIENT_TLS=[Flag that indicates if TLS should be turned on] MF_MQTT_ADAPTER_CA_CERTS=[Path to trusted CAs in PEM format] node mqtt.js ..
+MF_THINGS_URL=[Things service URL] MF_NATS_URL=[NATS instance URL] MF_MQTT_ADAPTER_LOG_LEVEL=[MQTT adapter log level] MF_MQTT_INSTANCE_ID=[ID of MQTT adapter instance] MF_MQTT_ADAPTER_PORT=[Service MQTT port] MF_MQTT_WS_PORT=[Service WS port] MF_MQTT_REDIS_PORT=[Redis port] MF_MQTT_REDIS_HOST=[Redis host] MF_MQTT_REDIS_PASS=[Redis pass] MF_MQTT_REDIS_DB=[Redis db] MF_MQTT_CONCURRENT_MESSAGES=[Number of messages that can be concurrently exchanged] MF_MQTT_ADAPTER_CLIENT_TLS=[Flag that indicates if TLS should be turned on] MF_MQTT_ADAPTER_CA_CERTS=[Path to trusted CAs in PEM format] node mqtt.js ..
 ```
 
 ## Usage

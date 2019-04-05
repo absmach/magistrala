@@ -24,6 +24,7 @@
     "mqemitter-redis": "^3.0.0",
     "nats": "^0.6.8",
     "protocol-buffers": "^4.0.4",
+    "redis": "^2.8.0",
     "request": "^2.81.0",
     "toml": "^2.3.0",
     "websocket-stream": "^5.1.2"

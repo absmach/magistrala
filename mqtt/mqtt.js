@@ -6,6 +6,7 @@
 'use strict';
 
 var http = require('http'),
+    redis = require("redis"),
     net = require('net'),
     protobuf = require('protocol-buffers'),
     websocket = require('websocket-stream'),
@@ -17,6 +18,8 @@ var http = require('http'),
 // pass a proto file as a buffer/string or pass a parsed protobuf-schema object
 var config = {
         log_level: process.env.MF_MQTT_ADAPTER_LOG_LEVEL || 'error',
+        instance_id: process.env.MF_MQTT_INSTANCE_ID || '',
+        event_stream: 'mainflux.mqtt',
         mqtt_port: Number(process.env.MF_MQTT_ADAPTER_PORT) || 1883,
         ws_port: Number(process.env.MF_MQTT_ADAPTER_WS_PORT) || 8880,
         nats_url: process.env.MF_NATS_URL || 'nats://localhost:4222',
@@ -24,15 +27,15 @@ var config = {
         redis_host: process.env.MF_MQTT_ADAPTER_REDIS_HOST || 'localhost',
         redis_pass: process.env.MF_MQTT_ADAPTER_REDIS_PASS || 'mqtt',
         redis_db: Number(process.env.MF_MQTT_ADAPTER_REDIS_DB) || 0,
-        client_tls: (process.env.MF_MQTT_ADAPTER_CLIENT_TLS == "true") || false,
-    	ca_certs: process.env.MF_MQTT_ADAPTER_CA_CERTS || "",
+        client_tls: (process.env.MF_MQTT_ADAPTER_CLIENT_TLS == 'true') || false,
+    	ca_certs: process.env.MF_MQTT_ADAPTER_CA_CERTS || '',
         concurrency: Number(process.env.MF_MQTT_CONCURRENT_MESSAGES) || 100,
         auth_url: process.env.MF_THINGS_URL || 'localhost:8181',
         schema_dir: process.argv[2] || '.',
     },
-    logger = bunyan.createLogger({name: "mqtt", level: config.log_level}),
+    logger = bunyan.createLogger({name: 'mqtt', level: config.log_level}),
     message = protobuf(fs.readFileSync(config.schema_dir + '/message.proto')),
-    thingsSchema = grpc.load(config.schema_dir + "/internal.proto").mainflux,
+    thingsSchema = grpc.load(config.schema_dir + '/internal.proto').mainflux,
     nats = require('nats').connect(config.nats_url),
     aedesRedis = require('aedes-persistence-redis')({
         port: config.redis_port,
@@ -60,6 +63,7 @@ var config = {
         }
         return new thingsSchema.ThingsService(config.auth_url, certs);
     })(),
+    esclient = redis.createClient(config.redis_port, config.redis_host),
     servers = [
         startMqtt(),
         startWs()
@@ -153,7 +157,7 @@ aedes.authorizePublish = function (client, packet, publish) {
 
                 publish(0);
             } else {
-                logger.warn("unauthorized publish: %s", err.message);
+                logger.warn('unauthorized publish: %s', err.message);
                 publish(4); // Bad username or password
             }
         };
@@ -188,14 +192,15 @@ aedes.authorizeSubscribe = function (client, packet, subscribe) {
 };
 
 aedes.authenticate = function (client, username, password, acknowledge) {
-    var pass = (password || "").toString(),
+    var pass = (password || '').toString(),
         identity = {value: pass},
         onIdentify = function(err, res) {
             if (!err) {
-                client.thingId = res.value.toString() || "";
+                client.thingId = res.value.toString() || '';
                 client.id = client.id || client.thingId;
                 client.password = pass;
                 acknowledge(null, true);
+                publishConnEvent(client.thingId, 'connect');
             } else {
                 logger.warn('failed to authenticate client with key %s', pass);
                 acknowledge(err, false);
@@ -208,6 +213,7 @@ aedes.authenticate = function (client, username, password, acknowledge) {
 aedes.on('clientDisconnect', function (client) {
     logger.info('disconnect client %s', client.id);
     client.password = null;
+    publishConnEvent(client.thingId, 'disconnect');
 });
 
 aedes.on('clientError', function (client, err) {
@@ -217,3 +223,17 @@ aedes.on('clientError', function (client, err) {
 aedes.on('connectionError', function (client, err) {
     logger.warn('client error: client: %s, error: %s', client.id, err.message);
 });
+
+function publishConnEvent(id, type) {
+    var onPublish = function(err) {
+        if (err) {
+            console.error(err);
+        }
+    };
+    esclient.xadd(config.event_stream, '*',
+        'thing_id', id,
+        'timestamp', Math.round((new Date()).getTime() / 1000),
+        'event_type', type,
+        'instance', config.instance_id,
+        onPublish);
+}

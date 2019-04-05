@@ -178,9 +178,9 @@ services:
     networks:
       - mainflux-base-net
 
-  redis:
-    image: redis:4.0.9-alpine
-    container_name: mainflux-redis
+  mqtt-redis:
+    image: redis:5.0-alpine
+    container_name: mainflux-mqtt-redis
     restart: on-failure
     networks:
       - mainflux-base-net
@@ -191,13 +191,14 @@ services:
     depends_on:
       - things
       - nats
-      - redis
+      - mqtt-redis
     restart: on-failure
     environment:
       MF_MQTT_ADAPTER_LOG_LEVEL: debug
+      MF_MQTT_INSTANCE_ID: mqtt-adapter-1
       MF_MQTT_ADAPTER_PORT: 1883
       MF_MQTT_ADAPTER_WS_PORT: 8880
-      MF_MQTT_ADAPTER_REDIS_HOST: redis
+      MF_MQTT_ADAPTER_REDIS_HOST: mqtt-redis
       MF_NATS_URL: nats://nats:4222
       MF_THINGS_URL: things:8183
     ports:

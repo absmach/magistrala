@@ -227,7 +227,7 @@ aedes.on('connectionError', function (client, err) {
 function publishConnEvent(id, type) {
     var onPublish = function(err) {
         if (err) {
-            console.error(err);
+            logger.warn('event publish failed: %s', err);
         }
     };
     esclient.xadd(config.event_stream, '*',

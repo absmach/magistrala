@@ -253,7 +253,7 @@ func TestUpdateConnections(t *testing.T) {
 		err         error
 	}{
 		{
-			desc:        "update connections for config with state Created",
+			desc:        "update connections for config with state Inactive",
 			key:         validToken,
 			id:          created.MFThing,
 			connections: []string{"2"},

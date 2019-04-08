@@ -29,7 +29,7 @@ func NewLoggingMiddleware(svc bootstrap.Service, logger log.Logger) bootstrap.Se
 	return &loggingMiddleware{logger, svc}
 }
 
-func (lm *loggingMiddleware) Add(key string, thing bootstrap.Config) (saved bootstrap.Config, err error) {
+func (lm *loggingMiddleware) Add(key string, cfg bootstrap.Config) (saved bootstrap.Config, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method add for key %s and thing %s took %s to complete", key, saved.MFThing, time.Since(begin))
 		if err != nil {
@@ -39,7 +39,7 @@ func (lm *loggingMiddleware) Add(key string, thing bootstrap.Config) (saved boot
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.Add(key, thing)
+	return lm.svc.Add(key, cfg)
 }
 
 func (lm *loggingMiddleware) View(key, id string) (saved bootstrap.Config, err error) {
@@ -55,9 +55,9 @@ func (lm *loggingMiddleware) View(key, id string) (saved bootstrap.Config, err e
 	return lm.svc.View(key, id)
 }
 
-func (lm *loggingMiddleware) Update(key string, thing bootstrap.Config) (err error) {
+func (lm *loggingMiddleware) Update(key string, cfg bootstrap.Config) (err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method update for key %s and thing %s took %s to complete", key, thing.MFThing, time.Since(begin))
+		message := fmt.Sprintf("Method update for key %s and thing %s took %s to complete", key, cfg.MFThing, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -65,7 +65,7 @@ func (lm *loggingMiddleware) Update(key string, thing bootstrap.Config) (err err
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.Update(key, thing)
+	return lm.svc.Update(key, cfg)
 }
 
 func (lm *loggingMiddleware) UpdateConnections(key, id string, connections []string) (err error) {

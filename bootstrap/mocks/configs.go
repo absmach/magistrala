@@ -31,7 +31,7 @@ type configRepositoryMock struct {
 	unknown  map[string]string
 }
 
-// NewConfigsRepository creates in-memory thing repository.
+// NewConfigsRepository creates in-memory config repository.
 func NewConfigsRepository(unknown map[string]string) bootstrap.ConfigRepository {
 	return &configRepositoryMock{
 		configs:  make(map[string]bootstrap.Config),
@@ -138,9 +138,9 @@ func (crm *configRepositoryMock) RetrieveByExternalID(externalKey, externalID st
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 
-	for _, thing := range crm.configs {
-		if thing.ExternalID == externalID && thing.ExternalKey == externalKey {
-			return thing, nil
+	for _, cfg := range crm.configs {
+		if cfg.ExternalID == externalID && cfg.ExternalKey == externalKey {
+			return cfg, nil
 		}
 	}
 

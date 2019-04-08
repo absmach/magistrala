@@ -36,7 +36,7 @@ type configRepository struct {
 	log logger.Logger
 }
 
-// NewConfigRepository instantiates a PostgreSQL implementation of thing
+// NewConfigRepository instantiates a PostgreSQL implementation of config
 // repository.
 func NewConfigRepository(db *sql.DB, log logger.Logger) bootstrap.ConfigRepository {
 	return &configRepository{db: db, log: log}

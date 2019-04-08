@@ -283,25 +283,25 @@ func (bs bootstrapService) ChangeState(key, id string, state State) error {
 		return err
 	}
 
-	thing, err := bs.configs.RetrieveByID(owner, id)
+	cfg, err := bs.configs.RetrieveByID(owner, id)
 	if err != nil {
 		return err
 	}
 
-	if thing.State == state {
+	if cfg.State == state {
 		return nil
 	}
 
 	switch state {
 	case Active:
-		for _, c := range thing.MFChannels {
-			if err := bs.sdk.ConnectThing(thing.MFThing, c.ID, key); err != nil {
+		for _, c := range cfg.MFChannels {
+			if err := bs.sdk.ConnectThing(cfg.MFThing, c.ID, key); err != nil {
 				return ErrThings
 			}
 		}
 	case Inactive:
-		for _, c := range thing.MFChannels {
-			if err := bs.sdk.DisconnectThing(thing.MFThing, c.ID, key); err != nil {
+		for _, c := range cfg.MFChannels {
+			if err := bs.sdk.DisconnectThing(cfg.MFThing, c.ID, key); err != nil {
 				if err == mfsdk.ErrNotFound {
 					continue
 				}

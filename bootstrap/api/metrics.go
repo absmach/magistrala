@@ -34,13 +34,13 @@ func MetricsMiddleware(svc bootstrap.Service, counter metrics.Counter, latency m
 	}
 }
 
-func (mm *metricsMiddleware) Add(key string, thing bootstrap.Config) (saved bootstrap.Config, err error) {
+func (mm *metricsMiddleware) Add(key string, cfg bootstrap.Config) (saved bootstrap.Config, err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "add").Add(1)
 		mm.latency.With("method", "add").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.Add(key, thing)
+	return mm.svc.Add(key, cfg)
 }
 
 func (mm *metricsMiddleware) View(id, key string) (saved bootstrap.Config, err error) {
@@ -52,13 +52,13 @@ func (mm *metricsMiddleware) View(id, key string) (saved bootstrap.Config, err e
 	return mm.svc.View(id, key)
 }
 
-func (mm *metricsMiddleware) Update(key string, thing bootstrap.Config) (err error) {
+func (mm *metricsMiddleware) Update(key string, cfg bootstrap.Config) (err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update").Add(1)
 		mm.latency.With("method", "update").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.Update(key, thing)
+	return mm.svc.Update(key, cfg)
 }
 
 func (mm *metricsMiddleware) UpdateConnections(key, id string, connections []string) (err error) {

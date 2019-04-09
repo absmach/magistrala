@@ -118,48 +118,14 @@ view model =
     Grid.container []
         [ Grid.row []
             [ Grid.col []
-                ([ Card.config
-                    []
-                    |> Card.headerH3 [] [ text "Things" ]
-                    |> Card.block []
-                        [ Block.custom
-                            (Table.table
-                                { options = [ Table.striped, Table.hover, Table.small ]
-                                , thead =
-                                    Table.simpleThead
-                                        [ Table.th [] [ text "Name" ]
-                                        , Table.th [] [ text "ID" ]
-                                        ]
-                                , tbody = Table.tbody [] <| genThingRows model.checkedThingsIds model.things.things.list
-                                }
-                            )
-                        ]
-                    |> Card.view
-                 ]
-                    |> Helpers.appendIf (model.things.things.total > model.things.limit)
-                        (Html.map ThingMsg (Helpers.genPagination model.things.things.total (Helpers.offsetToPage model.things.offset model.things.limit) Thing.SubmitPage))
+                (Helpers.appendIf (model.things.things.total > model.things.limit)
+                    [ Helpers.genCardConfig "Things" (genThingRows model.checkedThingsIds model.things.things.list) ]
+                    (Html.map ThingMsg (Helpers.genPagination model.things.things.total (Helpers.offsetToPage model.things.offset model.things.limit) Thing.SubmitPage))
                 )
             , Grid.col []
-                ([ Card.config
-                    []
-                    |> Card.headerH3 [] [ text "Channels" ]
-                    |> Card.block []
-                        [ Block.custom
-                            (Table.table
-                                { options = [ Table.striped, Table.hover, Table.small ]
-                                , thead =
-                                    Table.simpleThead
-                                        [ Table.th [] [ text "Name" ]
-                                        , Table.th [] [ text "ID" ]
-                                        ]
-                                , tbody = Table.tbody [] <| genChannelRows model.checkedChannelsIds model.channels.channels.list
-                                }
-                            )
-                        ]
-                    |> Card.view
-                 ]
-                    |> Helpers.appendIf (model.channels.channels.total > model.channels.limit)
-                        (Html.map ChannelMsg (Helpers.genPagination model.channels.channels.total (Helpers.offsetToPage model.channels.offset model.channels.limit) Channel.SubmitPage))
+                (Helpers.appendIf (model.channels.channels.total > model.channels.limit)
+                    [ Helpers.genCardConfig "Channels" (genChannelRows model.checkedChannelsIds model.channels.channels.list) ]
+                    (Html.map ChannelMsg (Helpers.genPagination model.channels.channels.total (Helpers.offsetToPage model.channels.offset model.channels.limit) Channel.SubmitPage))
                 )
             ]
         , Grid.row []

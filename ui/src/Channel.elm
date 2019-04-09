@@ -271,36 +271,37 @@ update msg model token =
 view : Model -> Html Msg
 view model =
     Grid.container []
-        ([ Grid.row []
-            [ Grid.col []
-                [ Card.config []
-                    |> Card.header []
-                        [ Grid.row []
-                            [ Grid.col [ Col.attrs [ align "left" ] ]
-                                [ h3 [ Spacing.mt2 ] [ text "Channels"]
-                                ]
-                            , Grid.col [ Col.attrs [ align "right" ] ]
-                                [ Button.button [ Button.success, Button.attrs [ align "right" ], Button.onClick ShowProvisionModal ] [ text "ADD" ]
+        (Helpers.appendIf (model.channels.total > model.limit)
+            [ Grid.row []
+                [ Grid.col []
+                    [ Card.config []
+                        |> Card.header []
+                            [ Grid.row []
+                                [ Grid.col [ Col.attrs [ align "left" ] ]
+                                    [ h3 [ Spacing.mt2 ] [ text "Channels" ]
+                                    ]
+                                , Grid.col [ Col.attrs [ align "right" ] ]
+                                    [ Button.button [ Button.success, Button.attrs [ align "right" ], Button.onClick ShowProvisionModal ] [ text "ADD" ]
+                                    ]
                                 ]
                             ]
-                        ]
-                    |> Card.block []
-                        [ Block.custom
-                            (Table.table
-                                { options = [ Table.striped, Table.hover, Table.small ]
-                                , thead = genTableHeader
-                                , tbody = genTableBody model
-                                }
-                            )
-                        ]
-                    |> Card.view
+                        |> Card.block []
+                            [ Block.custom
+                                (Table.table
+                                    { options = [ Table.striped, Table.hover, Table.small ]
+                                    , thead = genTableHeader
+                                    , tbody = genTableBody model
+                                    }
+                                )
+                            ]
+                        |> Card.view
+                    ]
                 ]
+            , provisionModal model
+            , editModal model
             ]
-         , provisionModal model
-         , editModal model
-         ]
-            |> Helpers.appendIf (model.channels.total > model.limit)
-                (Helpers.genPagination model.channels.total (Helpers.offsetToPage model.offset model.limit) SubmitPage)
+         <|
+            Helpers.genPagination model.channels.total (Helpers.offsetToPage model.offset model.limit) SubmitPage
         )
 
 

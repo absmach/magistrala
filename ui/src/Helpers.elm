@@ -4,12 +4,15 @@
 -- SPDX-License-Identifier: Apache-2.0
 
 
-module Helpers exposing (appendIf, buildQueryParamList, checkEntity, faIcons, fontAwesome, genPagination, isChecked, offsetToPage, pageToOffset, parseString, response, validateInt, validateOffset)
+module Helpers exposing (appendIf, buildQueryParamList, checkEntity, disableNext, faIcons, fontAwesome, genCardConfig, genPagination, isChecked, offsetToPage, pageToOffset, parseString, response, validateInt, validateOffset)
 
 import Bootstrap.Button as Button
+import Bootstrap.Card as Card
+import Bootstrap.Card.Block as Block
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
+import Bootstrap.Table as Table
 import Bootstrap.Utilities.Spacing as Spacing
 import Html exposing (Html, a, div, hr, li, nav, node, p, strong, text, ul)
 import Html.Attributes exposing (..)
@@ -102,9 +105,9 @@ genPagination total currPage msg =
                 [ ul [ class "pagination" ]
                     ([ li [ classList [ ( "page-item", True ), ( "disabled", currPage == 1 ) ] ]
                         [ a
-                            ([ class "page-link" ]
-                                |> appendIf (currPage > 1)
-                                    (onClick (msg (currPage - 1)))
+                            (appendIf (currPage > 1)
+                                [ class "page-link" ]
+                                (onClick (msg (currPage - 1)))
                             )
                             [ text "Previous" ]
                         ]
@@ -116,10 +119,10 @@ genPagination total currPage msg =
                             pages
                         ++ [ li [ classList [ ( "page-item", True ), ( "disabled", disableNext currPage total ) ] ]
                                 [ a
-                                    ([ class "page-link" ]
-                                        |> appendIf
-                                            (not (disableNext currPage total))
-                                            (onClick (msg (currPage + 1)))
+                                    (appendIf
+                                        (not (disableNext currPage total))
+                                        [ class "page-link" ]
+                                        (onClick (msg (currPage + 1)))
                                     )
                                     [ text "Next" ]
                                 ]
@@ -179,9 +182,9 @@ isChecked id checkedEntitiesIds =
         False
 
 
-appendIf : Bool -> a -> List a -> List a
-appendIf flag value list =
-    if flag == True then
+appendIf : Bool -> List a -> a -> List a
+appendIf flag list value =
+    if flag then
         list ++ [ value ]
 
     else
@@ -191,3 +194,24 @@ appendIf flag value list =
 disableNext : Int -> Int -> Bool
 disableNext currPage total =
     currPage == Basics.ceiling (Basics.toFloat total / 10)
+
+
+genCardConfig : String -> List (Table.Row msg) -> Html msg
+genCardConfig title rows =
+    Card.config
+        []
+        |> Card.headerH3 [] [ text title ]
+        |> Card.block []
+            [ Block.custom
+                (Table.table
+                    { options = [ Table.striped, Table.hover, Table.small ]
+                    , thead =
+                        Table.simpleThead
+                            [ Table.th [] [ text "Name" ]
+                            , Table.th [] [ text "ID" ]
+                            ]
+                    , tbody = Table.tbody [] <| rows
+                    }
+                )
+            ]
+        |> Card.view

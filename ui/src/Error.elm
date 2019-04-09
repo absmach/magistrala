@@ -6,7 +6,6 @@
 
 module Error exposing (handle)
 
-import Debug
 import Http
 
 
@@ -26,8 +25,4 @@ handle error =
             "Bad status: " ++ String.fromInt code
 
         Http.BadBody err ->
-            let
-                _ =
-                    Debug.log "Bad body error: " err
-            in
             "Invalid response body"

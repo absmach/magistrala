@@ -51,14 +51,14 @@ type createConfigEvent struct {
 
 func (cce createConfigEvent) encode() map[string]interface{} {
 	return map[string]interface{}{
-		"id":         cce.mfThing,
-		"owner":      cce.owner,
-		"name":       cce.name,
-		"channels":   strings.Join(cce.mfChannels, ", "),
-		"externalID": cce.externalID,
-		"content":    cce.content,
-		"timestamp":  cce.timestamp.Unix(),
-		"operation":  configCreate,
+		"id":          cce.mfThing,
+		"owner":       cce.owner,
+		"name":        cce.name,
+		"channels":    strings.Join(cce.mfChannels, ", "),
+		"external_id": cce.externalID,
+		"content":     cce.content,
+		"timestamp":   cce.timestamp.Unix(),
+		"operation":   configCreate,
 	}
 }
 
@@ -100,7 +100,7 @@ type bootstrapEvent struct {
 
 func (be bootstrapEvent) encode() map[string]interface{} {
 	return map[string]interface{}{
-		"externalID":  be.externalID,
+		"external_id": be.externalID,
 		"successfull": be.successfull,
 		"timestamp":   be.timestamp.Unix(),
 		"operation":   thingBootstrap,

@@ -1,3 +1,9 @@
+// Copyright (C) MongoDB, Inc. 2017-present.
+//
+// Licensed under the Apache License, Version 2.0 (the "License"); you may
+// not use this file except in compliance with the License. You may obtain
+// a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
 package mongo
 
 import (
@@ -34,10 +40,12 @@ type IndexModel struct {
 
 // List returns a cursor iterating over all the indexes in the collection.
 func (iv IndexView) List(ctx context.Context, opts ...indexopt.List) (Cursor, error) {
-	listOpts, sess, err := indexopt.BundleList(opts...).Unbundle(true)
+	listOpts, _, err := indexopt.BundleList(opts...).Unbundle(true)
 	if err != nil {
 		return nil, err
 	}
+
+	sess := sessionFromContext(ctx)
 
 	err = iv.coll.client.ValidSession(sess)
 	if err != nil {
@@ -102,10 +110,12 @@ func (iv IndexView) CreateMany(ctx context.Context, models []IndexModel, opts ..
 		indexes.Append(bson.VC.Document(index))
 	}
 
-	createOpts, sess, err := indexopt.BundleCreate(opts...).Unbundle(true)
+	createOpts, _, err := indexopt.BundleCreate(opts...).Unbundle(true)
 	if err != nil {
 		return nil, err
 	}
+
+	sess := sessionFromContext(ctx)
 
 	err = iv.coll.client.ValidSession(sess)
 	if err != nil {
@@ -140,10 +150,12 @@ func (iv IndexView) DropOne(ctx context.Context, name string, opts ...indexopt.D
 		return nil, ErrMultipleIndexDrop
 	}
 
-	dropOpts, sess, err := indexopt.BundleDrop(opts...).Unbundle(true)
+	dropOpts, _, err := indexopt.BundleDrop(opts...).Unbundle(true)
 	if err != nil {
 		return nil, err
 	}
+
+	sess := sessionFromContext(ctx)
 
 	err = iv.coll.client.ValidSession(sess)
 	if err != nil {
@@ -169,10 +181,12 @@ func (iv IndexView) DropOne(ctx context.Context, name string, opts ...indexopt.D
 
 // DropAll drops all indexes in the collection.
 func (iv IndexView) DropAll(ctx context.Context, opts ...indexopt.Drop) (bson.Reader, error) {
-	dropOpts, sess, err := indexopt.BundleDrop(opts...).Unbundle(true)
+	dropOpts, _, err := indexopt.BundleDrop(opts...).Unbundle(true)
 	if err != nil {
 		return nil, err
 	}
+
+	sess := sessionFromContext(ctx)
 
 	err = iv.coll.client.ValidSession(sess)
 	if err != nil {

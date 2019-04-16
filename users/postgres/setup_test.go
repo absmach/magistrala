@@ -16,13 +16,14 @@ import (
 	"os"
 	"testing"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/mainflux/mainflux/users/postgres"
-	"gopkg.in/ory-am/dockertest.v3"
+	dockertest "gopkg.in/ory-am/dockertest.v3"
 )
 
 const wrong string = "wrong-value"
 
-var db *sql.DB
+var db *sqlx.DB
 
 func TestMain(m *testing.M) {
 	pool, err := dockertest.NewPool("")

@@ -7,7 +7,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -21,6 +20,7 @@ import (
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	r "github.com/go-redis/redis"
+	"github.com/jmoiron/sqlx"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/bootstrap"
 	api "github.com/mainflux/mainflux/bootstrap/api"
@@ -181,7 +181,7 @@ func loadConfig() config {
 	}
 }
 
-func connectToDB(cfg postgres.Config, logger mflog.Logger) *sql.DB {
+func connectToDB(cfg postgres.Config, logger mflog.Logger) *sqlx.DB {
 	db, err := postgres.Connect(cfg)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to postgres: %s", err))
@@ -204,7 +204,7 @@ func connectToRedis(redisURL, redisPass, redisDB string, logger mflog.Logger) *r
 	})
 }
 
-func newService(conn *grpc.ClientConn, db *sql.DB, logger mflog.Logger, esClient *r.Client, cfg config) bootstrap.Service {
+func newService(conn *grpc.ClientConn, db *sqlx.DB, logger mflog.Logger, esClient *r.Client, cfg config) bootstrap.Service {
 	thingsRepo := postgres.NewConfigRepository(db, logger)
 
 	config := mfsdk.Config{

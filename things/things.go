@@ -17,7 +17,7 @@ type Thing struct {
 	Type     string
 	Name     string
 	Key      string
-	Metadata string
+	Metadata map[string]interface{}
 }
 
 // ThingsPage contains page related metadata as well as list of things that

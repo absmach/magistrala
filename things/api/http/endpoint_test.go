@@ -35,8 +35,8 @@ const (
 )
 
 var (
-	thing   = things.Thing{Type: "app", Name: "test_app", Metadata: "test_metadata"}
-	channel = things.Channel{Name: "test", Metadata: "test_metadata"}
+	thing   = things.Thing{Type: "app", Name: "test_app", Metadata: map[string]interface{}{"test": "data"}}
+	channel = things.Channel{Name: "test", Metadata: map[string]interface{}{"test": "data"}}
 )
 
 type testRequest struct {
@@ -303,7 +303,8 @@ func TestViewThing(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sth, _ := svc.AddThing(token, thing)
+	sth, err := svc.AddThing(token, thing)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	thres := thingRes{
 		ID:       sth.ID,
@@ -1538,17 +1539,17 @@ func TestDisconnnect(t *testing.T) {
 }
 
 type thingRes struct {
-	ID       string `json:"id"`
-	Type     string `json:"type"`
-	Name     string `json:"name,omitempty"`
-	Key      string `json:"key"`
-	Metadata string `json:"metadata,omitempty"`
+	ID       string                 `json:"id"`
+	Type     string                 `json:"type"`
+	Name     string                 `json:"name,omitempty"`
+	Key      string                 `json:"key"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
 type channelRes struct {
-	ID       string `json:"id"`
-	Name     string `json:"name,omitempty"`
-	Metadata string `json:"metadata,omitempty"`
+	ID       string                 `json:"id"`
+	Name     string                 `json:"name,omitempty"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
 type thingsPageRes struct {

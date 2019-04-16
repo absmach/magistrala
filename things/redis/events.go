@@ -1,5 +1,7 @@
 package redis
 
+import "encoding/json"
+
 const (
 	thingPrefix     = "thing."
 	thingCreate     = thingPrefix + "create"
@@ -34,7 +36,7 @@ type createThingEvent struct {
 	owner    string
 	kind     string
 	name     string
-	metadata string
+	metadata map[string]interface{}
 }
 
 func (cte createThingEvent) Encode() map[string]interface{} {
@@ -49,8 +51,13 @@ func (cte createThingEvent) Encode() map[string]interface{} {
 		val["name"] = cte.name
 	}
 
-	if cte.metadata != "" {
-		val["metadata"] = cte.metadata
+	if cte.metadata != nil {
+		metadata, err := json.Marshal(cte.metadata)
+		if err != nil {
+			return val
+		}
+
+		val["metadata"] = string(metadata)
 	}
 
 	return val
@@ -60,7 +67,7 @@ type updateThingEvent struct {
 	id       string
 	kind     string
 	name     string
-	metadata string
+	metadata map[string]interface{}
 }
 
 func (ute updateThingEvent) Encode() map[string]interface{} {
@@ -74,8 +81,13 @@ func (ute updateThingEvent) Encode() map[string]interface{} {
 		val["name"] = ute.name
 	}
 
-	if ute.metadata != "" {
-		val["metadata"] = ute.metadata
+	if ute.metadata != nil {
+		metadata, err := json.Marshal(ute.metadata)
+		if err != nil {
+			return val
+		}
+
+		val["metadata"] = string(metadata)
 	}
 
 	return val
@@ -96,7 +108,7 @@ type createChannelEvent struct {
 	id       string
 	owner    string
 	name     string
-	metadata string
+	metadata map[string]interface{}
 }
 
 func (cce createChannelEvent) Encode() map[string]interface{} {
@@ -110,8 +122,13 @@ func (cce createChannelEvent) Encode() map[string]interface{} {
 		val["name"] = cce.name
 	}
 
-	if cce.metadata != "" {
-		val["metadata"] = cce.metadata
+	if cce.metadata != nil {
+		metadata, err := json.Marshal(cce.metadata)
+		if err != nil {
+			return val
+		}
+
+		val["metadata"] = string(metadata)
 	}
 
 	return val
@@ -120,7 +137,7 @@ func (cce createChannelEvent) Encode() map[string]interface{} {
 type updateChannelEvent struct {
 	id       string
 	name     string
-	metadata string
+	metadata map[string]interface{}
 }
 
 func (uce updateChannelEvent) Encode() map[string]interface{} {
@@ -133,8 +150,13 @@ func (uce updateChannelEvent) Encode() map[string]interface{} {
 		val["name"] = uce.name
 	}
 
-	if uce.metadata != "" {
-		val["metadata"] = uce.metadata
+	if uce.metadata != nil {
+		metadata, err := json.Marshal(uce.metadata)
+		if err != nil {
+			return val
+		}
+
+		val["metadata"] = string(metadata)
 	}
 
 	return val

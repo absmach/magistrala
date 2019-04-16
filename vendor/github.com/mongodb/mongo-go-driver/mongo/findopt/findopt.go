@@ -31,7 +31,6 @@ var (
 	_ Find       = (*OptLimit)(nil)
 	_ Find       = (*OptMax)(nil)
 	_ Find       = (*OptMaxAwaitTime)(nil)
-	_ Find       = (*OptMaxScan)(nil)
 	_ Find       = (*OptMaxTime)(nil)
 	_ Find       = (*OptMin)(nil)
 	_ Find       = (*OptNoCursorTimeout)(nil)
@@ -40,7 +39,6 @@ var (
 	_ Find       = (*OptReturnKey)(nil)
 	_ Find       = (*OptShowRecordID)(nil)
 	_ Find       = (*OptSkip)(nil)
-	_ Find       = (*OptSnapshot)(nil)
 	_ Find       = (*OptSort)(nil)
 	_ One        = (*OneBundle)(nil)
 	_ One        = (*OptAllowPartialResults)(nil)
@@ -51,7 +49,6 @@ var (
 	_ One        = (*OptHint)(nil)
 	_ One        = (*OptMax)(nil)
 	_ One        = (*OptMaxAwaitTime)(nil)
-	_ One        = (*OptMaxScan)(nil)
 	_ One        = (*OptMaxTime)(nil)
 	_ One        = (*OptMin)(nil)
 	_ One        = (*OptNoCursorTimeout)(nil)
@@ -60,7 +57,6 @@ var (
 	_ One        = (*OptReturnKey)(nil)
 	_ One        = (*OptShowRecordID)(nil)
 	_ One        = (*OptSkip)(nil)
-	_ One        = (*OptSnapshot)(nil)
 	_ One        = (*OptSort)(nil)
 	_ ReplaceOne = (*ReplaceOneBundle)(nil)
 	_ ReplaceOne = (*OptBypassDocumentValidation)(nil)
@@ -92,7 +88,7 @@ func AllowPartialResults(b bool) OptAllowPartialResults {
 // ArrayFilters specifies which array elements an update should apply.
 // UpdateOne
 func ArrayFilters(filters ...interface{}) OptArrayFilters {
-	return OptArrayFilters(filters)
+	return OptArrayFilters{Filters: filters}
 }
 
 // BatchSize specifies the number of documents to return in each batch.
@@ -142,19 +138,13 @@ func Limit(i int64) OptLimit {
 // Max sets an exclusive upper bound for a specific index.
 // Find, One
 func Max(max interface{}) OptMax {
-	return OptMax{max}
+	return OptMax{Max: max}
 }
 
 // MaxAwaitTime specifies the max amount of time for the server to wait on new documents.
 // Find, One
 func MaxAwaitTime(d time.Duration) OptMaxAwaitTime {
 	return OptMaxAwaitTime(d)
-}
-
-// MaxScan specifies the maximum number of documents or index keys to scan.
-// Find, One
-func MaxScan(i int64) OptMaxScan {
-	return OptMaxScan(i)
 }
 
 // MaxTime specifies the max time to allow the query to run.
@@ -166,7 +156,7 @@ func MaxTime(d time.Duration) OptMaxTime {
 // Min specifies the inclusive lower bound for a specific index.
 // Find, One
 func Min(min interface{}) OptMin {
-	return OptMin{min}
+	return OptMin{Min: min}
 }
 
 // NoCursorTimeout prevents cursors from timing out after an inactivity period.
@@ -213,17 +203,10 @@ func Skip(i int64) OptSkip {
 	return OptSkip(i)
 }
 
-// Snapshot prevents the cursor from returning a document more than once because of an
-// intervening write operation.
-// Find, One
-func Snapshot(b bool) OptSnapshot {
-	return OptSnapshot(b)
-}
-
 // Sort specifies the order in which to return results.
 // Find, One, DeleteOne, ReplaceOne, UpdateOne
 func Sort(sort interface{}) OptSort {
-	return OptSort{sort}
+	return OptSort{Sort: sort}
 }
 
 // Upsert specifies whether a document should be inserted if no match is found.
@@ -436,22 +419,6 @@ func (opt OptMaxAwaitTime) ConvertFindOneOption() option.FindOptioner {
 	return option.OptMaxAwaitTime(opt)
 }
 
-// OptMaxScan specifies the maximum number of documents or index keys to scan.
-type OptMaxScan option.OptMaxScan
-
-func (OptMaxScan) find() {}
-func (OptMaxScan) one()  {}
-
-// ConvertFindOption implements the Find interface.
-func (opt OptMaxScan) ConvertFindOption() option.FindOptioner {
-	return option.OptMaxScan(opt)
-}
-
-// ConvertFindOneOption implements the One interface.
-func (opt OptMaxScan) ConvertFindOneOption() option.FindOptioner {
-	return option.OptMaxScan(opt)
-}
-
 // OptMaxTime specifies the max time to allow the query to run.
 type OptMaxTime option.OptMaxTime
 
@@ -636,23 +603,6 @@ func (opt OptSkip) ConvertFindOption() option.FindOptioner {
 // ConvertFindOneOption implements the One interface.
 func (opt OptSkip) ConvertFindOneOption() option.FindOptioner {
 	return option.OptSkip(opt)
-}
-
-// OptSnapshot prevents the cursor from returning a document more than once because of an
-// intervening write operation.
-type OptSnapshot option.OptSnapshot
-
-func (OptSnapshot) find() {}
-func (OptSnapshot) one()  {}
-
-// ConvertFindOption implements the Find interface.
-func (opt OptSnapshot) ConvertFindOption() option.FindOptioner {
-	return option.OptSnapshot(opt)
-}
-
-// ConvertFindOneOption implements the One interface.
-func (opt OptSnapshot) ConvertFindOneOption() option.FindOptioner {
-	return option.OptSnapshot(opt)
 }
 
 // OptSort specifies the order in which to return results.

@@ -8,7 +8,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"net"
@@ -18,6 +17,7 @@ import (
 	"strconv"
 	"syscall"
 
+	"github.com/jmoiron/sqlx"
 	"google.golang.org/grpc/credentials"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
@@ -187,7 +187,7 @@ func connectToRedis(cacheURL, cachePass string, cacheDB string, logger logger.Lo
 	})
 }
 
-func connectToDB(dbConfig postgres.Config, logger logger.Logger) *sql.DB {
+func connectToDB(dbConfig postgres.Config, logger logger.Logger) *sqlx.DB {
 	db, err := postgres.Connect(dbConfig)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to postgres: %s", err))
@@ -221,7 +221,7 @@ func connectToUsers(cfg config, logger logger.Logger) *grpc.ClientConn {
 	return conn
 }
 
-func newService(conn *grpc.ClientConn, db *sql.DB, cacheClient *redis.Client, esClient *redis.Client, logger logger.Logger) things.Service {
+func newService(conn *grpc.ClientConn, db *sqlx.DB, cacheClient *redis.Client, esClient *redis.Client, logger logger.Logger) things.Service {
 	users := usersapi.NewClient(conn)
 	thingsRepo := postgres.NewThingRepository(db, logger)
 	channelsRepo := postgres.NewChannelRepository(db, logger)

@@ -71,6 +71,12 @@ func (a *Array) Validate() (uint32, error) {
 }
 
 // Lookup returns the value in the array at the given index or an error if it cannot be found.
+//
+// TODO: We should fix this to align with the semantics of the *Document type,
+// e.g. have Lookup return just a *Value or panic if it's out of bounds and have
+// a LookupOK that returns a bool. Although if we want to align with the
+// semantics of how Go arrays and slices work, we would not provide a LookupOK
+// and force users to use the Len method before hand to avoid panics.
 func (a *Array) Lookup(index uint) (*Value, error) {
 	v, ok := a.doc.ElementAtOK(index)
 	if !ok {
@@ -333,4 +339,37 @@ func (a *Array) MarshalBSON() ([]byte, error) {
 // elements of this Array.
 func (a *Array) Iterator() (*ArrayIterator, error) {
 	return NewArrayIterator(a)
+}
+
+// Equal compares this document to another, returning true if they are equal.
+func (a *Array) Equal(a2 *Array) bool {
+	if a == nil && a2 == nil {
+		return true
+	}
+
+	if a == nil || a2 == nil {
+		return false
+	}
+
+	if a.doc == nil && a2.doc == nil {
+		return true
+	}
+
+	if a.doc == nil || a2.doc == nil {
+		return false
+	}
+
+	if (len(a.doc.elems) != len(a2.doc.elems)) || (len(a.doc.index) != len(a2.doc.index)) {
+		return false
+	}
+
+	for index := range a.doc.elems {
+		v1 := a.doc.elems[index].value
+		v2 := a2.doc.elems[index].value
+
+		if !v1.Equal(v2) {
+			return false
+		}
+	}
+	return true
 }

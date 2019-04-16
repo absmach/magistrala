@@ -25,8 +25,8 @@ import (
 const wrongID = ""
 
 var (
-	thing   = things.Thing{Type: "app", Name: "test_app", Metadata: "test_metadata"}
-	channel = things.Channel{Name: "test"}
+	thing   = things.Thing{Type: "app", Name: "test_app", Metadata: map[string]interface{}{"test": "test"}}
+	channel = things.Channel{Name: "test", Metadata: map[string]interface{}{"test": "test"}}
 )
 
 func TestCanAccess(t *testing.T) {

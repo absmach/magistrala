@@ -10,6 +10,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/mongodb/mongo-go-driver/bson"
+	"github.com/mongodb/mongo-go-driver/bson/bsoncodec"
 	"github.com/mongodb/mongo-go-driver/core/command"
 	"github.com/mongodb/mongo-go-driver/core/connstring"
 	"github.com/mongodb/mongo-go-driver/core/description"
@@ -24,9 +26,12 @@ import (
 	"github.com/mongodb/mongo-go-driver/mongo/clientopt"
 	"github.com/mongodb/mongo-go-driver/mongo/dbopt"
 	"github.com/mongodb/mongo-go-driver/mongo/listdbopt"
+	"github.com/mongodb/mongo-go-driver/mongo/sessionopt"
 )
 
 const defaultLocalThreshold = 15 * time.Millisecond
+
+var defaultRegistry = bson.NewRegistryBuilder().Build()
 
 // Client performs operations on a given topology.
 type Client struct {
@@ -35,10 +40,13 @@ type Client struct {
 	topology        *topology.Topology
 	connString      connstring.ConnString
 	localThreshold  time.Duration
+	retryWrites     bool
 	clock           *session.ClusterClock
 	readPreference  *readpref.ReadPref
 	readConcern     *readconcern.ReadConcern
 	writeConcern    *writeconcern.WriteConcern
+	registry        *bsoncodec.Registry
+	marshaller      BSONAppender
 }
 
 // Connect creates a new Client and then initializes it using the Connect method.
@@ -107,18 +115,52 @@ func (c *Client) Disconnect(ctx context.Context) error {
 	return c.topology.Disconnect(ctx)
 }
 
+// Ping verifies that the client can connect to the topology.
+// If readPreference is nil then will use the client's default read
+// preference.
+func (c *Client) Ping(ctx context.Context, rp *readpref.ReadPref) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	if rp == nil {
+		rp = c.readPreference
+	}
+
+	_, err := c.topology.SelectServer(ctx, description.ReadPrefSelector(rp))
+	return err
+}
+
 // StartSession starts a new session.
-func (c *Client) StartSession() (*Session, error) {
+func (c *Client) StartSession(opts ...sessionopt.Session) (Session, error) {
 	if c.topology.SessionPool == nil {
 		return nil, topology.ErrTopologyClosed
 	}
 
-	sess, err := session.NewClientSession(c.topology.SessionPool, c.id, session.Explicit)
+	// By default the session inherits the default read/write concerns of the client
+	defaultOpts := []sessionopt.Session{
+		sessionopt.DefaultReadConcern(c.readConcern),
+		sessionopt.DefaultReadPreference(c.readPreference),
+		sessionopt.DefaultWriteConcern(c.writeConcern),
+	}
+
+	// If the user provided the default read/write concerns explicitly, this will overwrite with them.
+	sessionOpts, err := sessionopt.BundleSession(append(defaultOpts, opts...)...).Unbundle(true)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Session{Client: sess}, nil
+	sess, err := session.NewClientSession(c.topology.SessionPool, c.id, session.Explicit, sessionOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	sess.RetryWrite = c.retryWrites
+
+	return &sessionImpl{
+		Client: sess,
+		topo:   c.topology,
+	}, nil
 }
 
 func (c *Client) endSessions(ctx context.Context) {
@@ -140,6 +182,7 @@ func newClient(cs connstring.ConnString, opts ...clientopt.Option) (*Client, err
 		topologyOptions: clientOpt.TopologyOptions,
 		connString:      clientOpt.ConnString,
 		localThreshold:  defaultLocalThreshold,
+		registry:        clientOpt.Registry,
 	}
 
 	uuid, err := uuid.New()
@@ -166,7 +209,13 @@ func newClient(cs connstring.ConnString, opts ...clientopt.Option) (*Client, err
 
 	if client.readConcern == nil {
 		client.readConcern = readConcernFromConnString(&client.connString)
+
+		if client.readConcern == nil {
+			// no read concern in conn string
+			client.readConcern = readconcern.New()
+		}
 	}
+
 	if client.writeConcern == nil {
 		client.writeConcern = writeConcernFromConnString(&client.connString)
 	}
@@ -180,6 +229,10 @@ func newClient(cs connstring.ConnString, opts ...clientopt.Option) (*Client, err
 		} else {
 			client.readPreference = readpref.Primary()
 		}
+	}
+
+	if client.registry == nil {
+		client.registry = defaultRegistry
 	}
 	return client, nil
 }
@@ -281,17 +334,19 @@ func (c *Client) ListDatabases(ctx context.Context, filter interface{}, opts ...
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	listDbOpts, sess, err := listdbopt.BundleListDatabases(opts...).Unbundle(true)
+	listDbOpts, _, err := listdbopt.BundleListDatabases(opts...).Unbundle(true)
 	if err != nil {
 		return ListDatabasesResult{}, err
 	}
+
+	sess := sessionFromContext(ctx)
 
 	err = c.ValidSession(sess)
 	if err != nil {
 		return ListDatabasesResult{}, err
 	}
 
-	f, err := TransformDocument(filter)
+	f, err := transformDocument(c.registry, filter)
 	if err != nil {
 		return ListDatabasesResult{}, err
 	}
@@ -331,4 +386,52 @@ func (c *Client) ListDatabaseNames(ctx context.Context, filter interface{}, opts
 	}
 
 	return names, nil
+}
+
+// WithSession allows a user to start a session themselves and manage
+// its lifetime. The only way to provide a session to a CRUD method is
+// to invoke that CRUD method with the mongo.SessionContext within the
+// closure. The mongo.SessionContext can be used as a regular context,
+// so methods like context.WithDeadline and context.WithTimeout are
+// supported.
+//
+// If the context.Context already has a mongo.Session attached, that
+// mongo.Session will be replaced with the one provided.
+//
+// Errors returned from the closure are transparently returned from
+// this function.
+func WithSession(ctx context.Context, sess Session, fn func(SessionContext) error) error {
+	return fn(contextWithSession(ctx, sess))
+}
+
+// UseSession creates a default session, that is only valid for the
+// lifetime of the closure. No cleanup outside of closing the session
+// is done upon exiting the closure. This means that an outstanding
+// transaction will be aborted, even if the closure returns an error.
+//
+// If ctx already contains a mongo.Session, that mongo.Session will be
+// replaced with the newly created mongo.Session.
+//
+// Errors returned from the closure are transparently returned from
+// this method.
+func (c *Client) UseSession(ctx context.Context, fn func(SessionContext) error) error {
+	return c.UseSessionWithOptions(ctx, []sessionopt.Session{}, fn)
+}
+
+// UseSessionWithOptions works like UseSession but allows the caller
+// to specify the options used to create the session.
+func (c *Client) UseSessionWithOptions(ctx context.Context, opts []sessionopt.Session, fn func(SessionContext) error) error {
+	defaultSess, err := c.StartSession(opts...)
+	if err != nil {
+		return err
+	}
+
+	defer defaultSess.EndSession(ctx)
+
+	sessCtx := sessionContext{
+		Context: context.WithValue(ctx, sessionKey{}, defaultSess),
+		Session: defaultSess,
+	}
+
+	return fn(sessCtx)
 }

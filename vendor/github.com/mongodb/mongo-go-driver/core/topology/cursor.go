@@ -7,12 +7,12 @@
 package topology
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
 
 	"github.com/mongodb/mongo-go-driver/bson"
+	"github.com/mongodb/mongo-go-driver/bson/bsoncodec"
 	"github.com/mongodb/mongo-go-driver/core/command"
 	"github.com/mongodb/mongo-go-driver/core/option"
 	"github.com/mongodb/mongo-go-driver/core/session"
@@ -28,6 +28,7 @@ type cursor struct {
 	err           error
 	server        *Server
 	opts          []option.CursorOptioner
+	registry      *bsoncodec.Registry
 }
 
 func newCursor(result bson.Reader, clientSession *session.Client, clock *session.ClusterClock, server *Server, opts ...option.CursorOptioner) (command.Cursor, error) {
@@ -49,6 +50,7 @@ func newCursor(result bson.Reader, clientSession *session.Client, clock *session
 		clock:         clock,
 		current:       -1,
 		server:        server,
+		registry:      server.cfg.registry,
 		opts:          opts,
 	}
 	var ok bool
@@ -107,12 +109,14 @@ func (c *cursor) Next(ctx context.Context) bool {
 	}
 
 	c.getMore(ctx)
-	if c.err != nil {
-		return false
-	}
 
-	if c.batch.Len() == 0 {
-		return false
+	// call the getMore command in a loop until at least one document is returned in the next batch
+	for c.batch.Len() == 0 {
+		if c.err != nil || (c.id == 0 && c.batch.Len() == 0) {
+			return false
+		}
+
+		c.getMore(ctx)
 	}
 
 	return true
@@ -123,7 +127,8 @@ func (c *cursor) Decode(v interface{}) error {
 	if err != nil {
 		return err
 	}
-	return bson.NewDecoder(bytes.NewReader(br)).Decode(v)
+
+	return bson.UnmarshalWithRegistry(c.registry, br, v)
 }
 
 func (c *cursor) DecodeBytes() (bson.Reader, error) {

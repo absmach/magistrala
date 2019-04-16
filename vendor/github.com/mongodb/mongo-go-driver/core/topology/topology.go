@@ -18,6 +18,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/mongodb/mongo-go-driver/bson/bsoncodec"
 	"github.com/mongodb/mongo-go-driver/core/address"
 	"github.com/mongodb/mongo-go-driver/core/description"
 	"github.com/mongodb/mongo-go-driver/core/session"
@@ -48,8 +49,10 @@ const (
 	SingleMode
 )
 
-// Topology respresents a MongoDB deployment.
+// Topology represents a MongoDB deployment.
 type Topology struct {
+	registry *bsoncodec.Registry
+
 	connectionstate int32
 
 	cfg *config

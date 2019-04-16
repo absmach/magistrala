@@ -1,3 +1,9 @@
+// Copyright (C) MongoDB, Inc. 2017-present.
+//
+// Licensed under the Apache License, Version 2.0 (the "License"); you may
+// not use this file except in compliance with the License. You may obtain
+// a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
 package session
 
 import (
@@ -14,6 +20,7 @@ var rander = rand.Reader
 // Server is an open session with the server.
 type Server struct {
 	SessionID *bson.Document
+	TxnNumber int64
 	LastUsed  time.Time
 }
 
@@ -47,6 +54,11 @@ func newServerSession() (*Server, error) {
 		SessionID: idDoc,
 		LastUsed:  time.Now(),
 	}, nil
+}
+
+// IncrementTxnNumber increments the transaction number.
+func (ss *Server) IncrementTxnNumber() {
+	ss.TxnNumber++
 }
 
 // UUIDSubtype is the BSON binary subtype that a UUID should be encoded as

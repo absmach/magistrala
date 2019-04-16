@@ -42,10 +42,9 @@ func TestThingSave(t *testing.T) {
 		{
 			desc: "create invalid thing",
 			thing: things.Thing{
-				ID:       uuid.New().ID(),
-				Owner:    email,
-				Key:      uuid.New().ID(),
-				Metadata: "invalid",
+				ID:    "invalid",
+				Owner: email,
+				Key:   uuid.New().ID(),
 			},
 			err: things.ErrMalformedEntity,
 		},
@@ -103,15 +102,6 @@ func TestThingUpdate(t *testing.T) {
 				Owner: wrongValue,
 			},
 			err: things.ErrNotFound,
-		},
-		{
-			desc: "update thing with invalid data",
-			thing: things.Thing{
-				ID:       id,
-				Owner:    email,
-				Metadata: "invalid",
-			},
-			err: things.ErrMalformedEntity,
 		},
 	}
 

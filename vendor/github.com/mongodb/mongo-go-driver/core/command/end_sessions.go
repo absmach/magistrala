@@ -1,3 +1,9 @@
+// Copyright (C) MongoDB, Inc. 2017-present.
+//
+// Licensed under the Apache License, Version 2.0 (the "License"); you may
+// not use this file except in compliance with the License. You may obtain
+// a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
 package command
 
 import (
@@ -110,7 +116,7 @@ func (es *EndSessions) Decode(desc description.SelectedServer, wm wiremessage.Wi
 
 func (es *EndSessions) decode(desc description.SelectedServer, rdr bson.Reader) *EndSessions {
 	var res result.EndSessions
-	es.errors = append(es.errors, bson.Unmarshal(rdr, res))
+	es.errors = append(es.errors, bson.Unmarshal(rdr, &res))
 	es.results = append(es.results, res)
 	return es
 }

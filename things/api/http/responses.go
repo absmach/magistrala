@@ -87,12 +87,12 @@ func (res thingRes) Empty() bool {
 }
 
 type viewThingRes struct {
-	ID       string `json:"id"`
-	Owner    string `json:"-"`
-	Type     string `json:"type"`
-	Name     string `json:"name,omitempty"`
-	Key      string `json:"key"`
-	Metadata string `json:"metadata,omitempty"`
+	ID       string                 `json:"id"`
+	Owner    string                 `json:"-"`
+	Type     string                 `json:"type"`
+	Name     string                 `json:"name,omitempty"`
+	Key      string                 `json:"key"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
 func (res viewThingRes) Code() int {
@@ -152,11 +152,11 @@ func (res channelRes) Empty() bool {
 }
 
 type viewChannelRes struct {
-	ID       string         `json:"id"`
-	Owner    string         `json:"-"`
-	Name     string         `json:"name,omitempty"`
-	Things   []viewThingRes `json:"connected,omitempty"`
-	Metadata string         `json:"metadata,omitempty"`
+	ID       string                 `json:"id"`
+	Owner    string                 `json:"-"`
+	Name     string                 `json:"name,omitempty"`
+	Things   []viewThingRes         `json:"connected,omitempty"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
 func (res viewChannelRes) Code() int {

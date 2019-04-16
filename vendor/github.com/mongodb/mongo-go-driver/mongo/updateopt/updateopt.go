@@ -64,7 +64,7 @@ func BundleUpdate(opts ...Update) *UpdateBundle {
 // ArrayFilters adds an option to specify which array elements an update should apply.
 func (ub *UpdateBundle) ArrayFilters(filter ...interface{}) *UpdateBundle {
 	bundle := &UpdateBundle{
-		option: ArrayFilters(filter),
+		option: ArrayFilters(filter...),
 		next:   ub,
 	}
 
@@ -231,7 +231,7 @@ func (ub *UpdateBundle) unbundle() ([]option.UpdateOptioner, *session.Client, er
 
 // ArrayFilters specifies which array elements an update should apply.
 func ArrayFilters(filter ...interface{}) OptArrayFilters {
-	return OptArrayFilters(filter)
+	return OptArrayFilters{Filters: filter}
 }
 
 // BypassDocumentValidation allows the write to opt-out of document-level validation.

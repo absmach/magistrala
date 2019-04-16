@@ -65,16 +65,20 @@ func TestAddThing(t *testing.T) {
 		event map[string]interface{}
 	}{
 		{
-			desc:  "create thing successfully",
-			thing: things.Thing{Type: "app", Name: "a", Metadata: "metadata"},
-			key:   token,
-			err:   nil,
+			desc: "create thing successfully",
+			thing: things.Thing{
+				Type:     "app",
+				Name:     "a",
+				Metadata: map[string]interface{}{"test": "test"},
+			},
+			key: token,
+			err: nil,
 			event: map[string]interface{}{
 				"id":        "1",
 				"name":      "a",
 				"owner":     email,
 				"type":      "app",
-				"metadata":  "metadata",
+				"metadata":  "{\"test\":\"test\"}",
 				"operation": thingCreate,
 			},
 		},
@@ -114,7 +118,8 @@ func TestUpdateThing(t *testing.T) {
 
 	svc := newService(map[string]string{token: email})
 	// Create thing without sending event.
-	sth, err := svc.AddThing(token, things.Thing{Type: "app", Name: "a", Metadata: "metadata"})
+	th := things.Thing{Type: "app", Name: "a", Metadata: map[string]interface{}{"test": "test"}}
+	sth, err := svc.AddThing(token, th)
 	require.Nil(t, err, fmt.Sprintf("unexpected error %s", err))
 
 	svc = redis.NewEventStoreMiddleware(svc, redisClient)
@@ -127,15 +132,20 @@ func TestUpdateThing(t *testing.T) {
 		event map[string]interface{}
 	}{
 		{
-			desc:  "update existing thing successfully",
-			thing: things.Thing{ID: sth.ID, Type: "app", Name: "a", Metadata: "metadata1"},
-			key:   token,
-			err:   nil,
+			desc: "update existing thing successfully",
+			thing: things.Thing{
+				ID:       sth.ID,
+				Type:     "app",
+				Name:     "a",
+				Metadata: map[string]interface{}{"test": "test"},
+			},
+			key: token,
+			err: nil,
 			event: map[string]interface{}{
 				"id":        sth.ID,
 				"name":      "a",
 				"type":      "app",
-				"metadata":  "metadata1",
+				"metadata":  "{\"test\":\"test\"}",
 				"operation": thingUpdate,
 			},
 		},
@@ -296,20 +306,20 @@ func TestCreateChannel(t *testing.T) {
 	}{
 		{
 			desc:    "create channel successfully",
-			channel: things.Channel{Name: "a", Metadata: "metadata"},
+			channel: things.Channel{Name: "a", Metadata: map[string]interface{}{"test": "test"}},
 			key:     token,
 			err:     nil,
 			event: map[string]interface{}{
 				"id":        "1",
 				"name":      "a",
-				"metadata":  "metadata",
+				"metadata":  "{\"test\":\"test\"}",
 				"owner":     email,
 				"operation": channelCreate,
 			},
 		},
 		{
 			desc:    "create channel with invalid credentials",
-			channel: things.Channel{Name: "a", Metadata: "metadata"},
+			channel: things.Channel{Name: "a", Metadata: map[string]interface{}{"test": "test"}},
 			key:     "",
 			err:     things.ErrUnauthorizedAccess,
 			event:   nil,
@@ -356,14 +366,18 @@ func TestUpdateChannel(t *testing.T) {
 		event   map[string]interface{}
 	}{
 		{
-			desc:    "update channel successfully",
-			channel: things.Channel{ID: sch.ID, Name: "b", Metadata: "metadata"},
-			key:     token,
-			err:     nil,
+			desc: "update channel successfully",
+			channel: things.Channel{
+				ID:       sch.ID,
+				Name:     "b",
+				Metadata: map[string]interface{}{"test": "test"},
+			},
+			key: token,
+			err: nil,
 			event: map[string]interface{}{
 				"id":        sch.ID,
 				"name":      "b",
-				"metadata":  "metadata",
+				"metadata":  "{\"test\":\"test\"}",
 				"operation": channelUpdate,
 			},
 		},

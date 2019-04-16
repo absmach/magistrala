@@ -8,6 +8,7 @@
 package consumer
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/go-redis/redis"
@@ -104,10 +105,16 @@ func decodeRemoveThing(event map[string]interface{}) removeEvent {
 }
 
 func decodeUpdateChannel(event map[string]interface{}) updateChannelEvent {
+	strmeta := read(event, "metadata", "{}")
+	var metadata map[string]interface{}
+	if err := json.Unmarshal([]byte(strmeta), metadata); err != nil {
+		metadata = map[string]interface{}{}
+	}
+
 	return updateChannelEvent{
 		id:       read(event, "id", ""),
 		name:     read(event, "name", ""),
-		metadata: read(event, "metadata", ""),
+		metadata: metadata,
 	}
 }
 

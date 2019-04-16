@@ -8,7 +8,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"net"
@@ -20,6 +19,7 @@ import (
 	"google.golang.org/grpc/credentials"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+	"github.com/jmoiron/sqlx"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/users"
@@ -127,7 +127,7 @@ func loadConfig() config {
 	}
 }
 
-func connectToDB(dbConfig postgres.Config, logger logger.Logger) *sql.DB {
+func connectToDB(dbConfig postgres.Config, logger logger.Logger) *sqlx.DB {
 	db, err := postgres.Connect(dbConfig)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to postgres: %s", err))
@@ -136,7 +136,7 @@ func connectToDB(dbConfig postgres.Config, logger logger.Logger) *sql.DB {
 	return db
 }
 
-func newService(db *sql.DB, secret string, logger logger.Logger) users.Service {
+func newService(db *sqlx.DB, secret string, logger logger.Logger) users.Service {
 	repo := postgres.New(db)
 	hasher := bcrypt.New()
 	idp := jwt.New(secret)

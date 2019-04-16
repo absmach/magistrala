@@ -7,14 +7,14 @@
 package option
 
 import (
+	"fmt"
+	"reflect"
 	"time"
 
-	"fmt"
-	"io"
-	"reflect"
 	"strconv"
 
 	"github.com/mongodb/mongo-go-driver/bson"
+	"github.com/mongodb/mongo-go-driver/bson/bsoncodec"
 )
 
 // Optioner is the interface implemented by types that can be used as options
@@ -185,6 +185,7 @@ var (
 	_ AggregateOptioner         = (*OptCollation)(nil)
 	_ AggregateOptioner         = (*OptComment)(nil)
 	_ AggregateOptioner         = (*OptMaxTime)(nil)
+	_ AggregateOptioner         = (*OptMaxAwaitTime)(nil)
 	_ CountOptioner             = (*OptCollation)(nil)
 	_ CountOptioner             = (*OptHint)(nil)
 	_ CountOptioner             = (*OptLimit)(nil)
@@ -192,6 +193,7 @@ var (
 	_ CountOptioner             = (*OptSkip)(nil)
 	_ CreateIndexesOptioner     = (*OptMaxTime)(nil)
 	_ CursorOptioner            = OptBatchSize(0)
+	_ CursorOptioner            = (*OptMaxAwaitTime)(nil)
 	_ DeleteOptioner            = (*OptCollation)(nil)
 	_ DistinctOptioner          = (*OptCollation)(nil)
 	_ DistinctOptioner          = (*OptMaxTime)(nil)
@@ -225,7 +227,6 @@ var (
 	_ FindOptioner              = (*OptHint)(nil)
 	_ FindOptioner              = (*OptLimit)(nil)
 	_ FindOptioner              = (*OptMaxAwaitTime)(nil)
-	_ FindOptioner              = (*OptMaxScan)(nil)
 	_ FindOptioner              = (*OptMaxTime)(nil)
 	_ FindOptioner              = (*OptMin)(nil)
 	_ FindOptioner              = (*OptNoCursorTimeout)(nil)
@@ -234,7 +235,6 @@ var (
 	_ FindOptioner              = (*OptReturnKey)(nil)
 	_ FindOptioner              = (*OptShowRecordID)(nil)
 	_ FindOptioner              = (*OptSkip)(nil)
-	_ FindOptioner              = (*OptSnapshot)(nil)
 	_ FindOptioner              = (*OptSort)(nil)
 	_ FindOneOptioner           = (*OptAllowPartialResults)(nil)
 	_ FindOneOptioner           = (*OptBatchSize)(nil)
@@ -243,7 +243,6 @@ var (
 	_ FindOneOptioner           = (*OptComment)(nil)
 	_ FindOneOptioner           = (*OptHint)(nil)
 	_ FindOneOptioner           = (*OptMaxAwaitTime)(nil)
-	_ FindOneOptioner           = (*OptMaxScan)(nil)
 	_ FindOneOptioner           = (*OptMaxTime)(nil)
 	_ FindOneOptioner           = (*OptMin)(nil)
 	_ FindOneOptioner           = (*OptNoCursorTimeout)(nil)
@@ -252,7 +251,6 @@ var (
 	_ FindOneOptioner           = (*OptReturnKey)(nil)
 	_ FindOneOptioner           = (*OptShowRecordID)(nil)
 	_ FindOneOptioner           = (*OptSkip)(nil)
-	_ FindOneOptioner           = (*OptSnapshot)(nil)
 	_ FindOneOptioner           = (*OptSort)(nil)
 	_ InsertManyOptioner        = (*OptBypassDocumentValidation)(nil)
 	_ InsertManyOptioner        = (*OptOrdered)(nil)
@@ -312,55 +310,55 @@ func (opt OptAllowPartialResults) String() string {
 	return "OptAllowPartialResults: " + strconv.FormatBool(bool(opt))
 }
 
-// TransformDocument handles transforming a document of an allowable type into
-// a *bson.Document. This method is called directly after most methods that
-// have one or more parameters that are documents.
-//
-// The supported types for document are:
-//
-//  bson.Marshaler
-//  bson.DocumentMarshaler
-//  bson.Reader
-//  []byte (must be a valid BSON document)
-//  io.Reader (only 1 BSON document will be read)
-//  A custom struct type
-//
-func TransformDocument(document interface{}) (*bson.Document, error) {
-	switch d := document.(type) {
-	case nil:
-		return bson.NewDocument(), nil
-	case *bson.Document:
-		return d, nil
-	case bson.Marshaler, bson.Reader, []byte, io.Reader:
-		return bson.NewDocumentEncoder().EncodeDocument(document)
-	case bson.DocumentMarshaler:
-		return d.MarshalBSONDocument()
-	default:
-		var kind reflect.Kind
-		if t := reflect.TypeOf(document); t.Kind() == reflect.Ptr {
-			kind = t.Elem().Kind()
-		}
-		if reflect.ValueOf(document).Kind() == reflect.Struct || kind == reflect.Struct {
-			return bson.NewDocumentEncoder().EncodeDocument(document)
-		}
-		if reflect.ValueOf(document).Kind() == reflect.Map &&
-			reflect.TypeOf(document).Key().Kind() == reflect.String {
-			return bson.NewDocumentEncoder().EncodeDocument(document)
-		}
+// MarshalError is returned when attempting to transform a value into a document
+// results in an error.
+type MarshalError struct {
+	Value interface{}
+	Err   error
+}
 
-		return nil, fmt.Errorf("cannot transform type %s to a *bson.Document", reflect.TypeOf(document))
+// Error implements the error interface.
+func (me MarshalError) Error() string {
+	return fmt.Sprintf("cannot transform type %s to a *bson.Document", reflect.TypeOf(me.Value))
+}
+
+var defaultRegistry = bson.NewRegistryBuilder().Build()
+
+func transformDocument(registry *bsoncodec.Registry, val interface{}) (*bson.Document, error) {
+	if val == nil {
+		return bson.NewDocument(), nil
 	}
+	reg := defaultRegistry
+	if registry != nil {
+		reg = registry
+	}
+
+	if bs, ok := val.([]byte); ok {
+		// Slight optimization so we'll just use MarshalBSON and not go through the codec machinery.
+		val = bson.Reader(bs)
+	}
+
+	// TODO(skriptble): Use a pool of these instead.
+	buf := make([]byte, 0, 256)
+	b, err := bson.MarshalAppendWithRegistry(reg, buf, val)
+	if err != nil {
+		return nil, MarshalError{Value: val, Err: err}
+	}
+	return bson.ReadDocument(b)
 }
 
 // OptArrayFilters is for internal use.
 //type OptArrayFilters []*bson.Document
-type OptArrayFilters []interface{}
+type OptArrayFilters struct {
+	Registry *bsoncodec.Registry
+	Filters  []interface{}
+}
 
 // Option implements the Optioner interface.
 func (opt OptArrayFilters) Option(d *bson.Document) error {
-	docs := make([]*bson.Document, 0, len(opt))
-	for _, f := range opt {
-		d, err := TransformDocument(f)
+	docs := make([]*bson.Document, 0, len(opt.Filters))
+	for _, f := range opt.Filters {
+		d, err := transformDocument(opt.Registry, f)
 		if err != nil {
 			return err
 		}
@@ -554,12 +552,13 @@ func (opt OptLimit) String() string {
 
 // OptMax is for internal use.
 type OptMax struct {
-	Max interface{}
+	Registry *bsoncodec.Registry
+	Max      interface{}
 }
 
 // Option implements the Optioner interface.
 func (opt OptMax) Option(d *bson.Document) error {
-	doc, err := TransformDocument(opt.Max)
+	doc, err := transformDocument(opt.Registry, opt.Max)
 	if err != nil {
 		return err
 	}
@@ -585,30 +584,15 @@ func (opt OptMaxAwaitTime) Option(d *bson.Document) error {
 	return nil
 }
 
+func (OptMaxAwaitTime) aggregateOption()    {}
 func (OptMaxAwaitTime) changeStreamOption() {}
+func (OptMaxAwaitTime) cursorOption()       {}
 func (OptMaxAwaitTime) findOption()         {}
 func (OptMaxAwaitTime) findOneOption()      {}
 
 // String implements the Stringer interface.
 func (opt OptMaxAwaitTime) String() string {
 	return "OptMaxAwaitTime: " + strconv.FormatInt(int64(opt), 10)
-}
-
-// OptMaxScan is for internal use.
-type OptMaxScan int64
-
-// Option implements the Optioner interface.
-func (opt OptMaxScan) Option(d *bson.Document) error {
-	d.Append(bson.EC.Int64("maxScan", int64(opt)))
-	return nil
-}
-
-func (OptMaxScan) findOption()    {}
-func (OptMaxScan) findOneOption() {}
-
-// String implements the Stringer interface.
-func (opt OptMaxScan) String() string {
-	return "OptMaxScan: " + strconv.FormatInt(int64(opt), 10)
 }
 
 // OptMaxTime is for internal use.
@@ -639,12 +623,13 @@ func (opt OptMaxTime) String() string {
 
 // OptMin is for internal use.
 type OptMin struct {
-	Min interface{}
+	Registry *bsoncodec.Registry
+	Min      interface{}
 }
 
 // Option implements the Optioner interface.
 func (opt OptMin) Option(d *bson.Document) error {
-	doc, err := TransformDocument(opt.Min)
+	doc, err := transformDocument(opt.Registry, opt.Min)
 	if err != nil {
 		return err
 	}
@@ -714,6 +699,7 @@ func (opt OptOrdered) String() string {
 
 // OptProjection is for internal use.
 type OptProjection struct {
+	Registry   *bsoncodec.Registry
 	Projection interface{}
 }
 
@@ -721,7 +707,7 @@ type OptProjection struct {
 func (opt OptProjection) Option(d *bson.Document) error {
 	var key = "projection"
 
-	doc, err := TransformDocument(opt.Projection)
+	doc, err := transformDocument(opt.Registry, opt.Projection)
 	if err != nil {
 		return err
 	}
@@ -743,13 +729,14 @@ func (opt OptProjection) String() string {
 
 // OptFields is for internal use.
 type OptFields struct {
-	Fields interface{}
+	Registry *bsoncodec.Registry
+	Fields   interface{}
 }
 
 // Option implements the Optioner interface.
 func (opt OptFields) Option(d *bson.Document) error {
 	var key = "fields"
-	doc, err := TransformDocument(opt.Fields)
+	doc, err := transformDocument(opt.Registry, opt.Fields)
 	if err != nil {
 		return err
 	}
@@ -854,31 +841,15 @@ func (opt OptSkip) String() string {
 	return "OptSkip: " + strconv.FormatInt(int64(opt), 10)
 }
 
-// OptSnapshot is for internal use.
-type OptSnapshot bool
-
-// Option implements the Optioner interface.
-func (opt OptSnapshot) Option(d *bson.Document) error {
-	d.Append(bson.EC.Boolean("snapshot", bool(opt)))
-	return nil
-}
-
-func (OptSnapshot) findOption()    {}
-func (OptSnapshot) findOneOption() {}
-
-// String implements the Stringer interface.
-func (opt OptSnapshot) String() string {
-	return "OptSnapshot: " + strconv.FormatBool(bool(opt))
-}
-
 // OptSort is for internal use.
 type OptSort struct {
-	Sort interface{}
+	Registry *bsoncodec.Registry
+	Sort     interface{}
 }
 
 // Option implements the Optioner interface.
 func (opt OptSort) Option(d *bson.Document) error {
-	doc, err := TransformDocument(opt.Sort)
+	doc, err := transformDocument(opt.Registry, opt.Sort)
 	if err != nil {
 		return err
 	}

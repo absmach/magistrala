@@ -83,11 +83,11 @@ type User struct {
 
 // Thing represents mainflux thing.
 type Thing struct {
-	ID       string `json:"id,omitempty"`
-	Type     string `json:"type"`
-	Name     string `json:"name,omitempty"`
-	Key      string `json:"key,omitempty"`
-	Metadata string `json:"metadata,omitempty"`
+	ID       string                 `json:"id,omitempty"`
+	Type     string                 `json:"type"`
+	Name     string                 `json:"name,omitempty"`
+	Key      string                 `json:"key,omitempty"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
 // ThingsPage contains list of things in a page with proper metadata.
@@ -100,9 +100,9 @@ type ThingsPage struct {
 
 // Channel represents mainflux channel.
 type Channel struct {
-	ID       string `json:"id,omitempty"`
-	Name     string `json:"name"`
-	Metadata string `json:"metadata,omitempty"`
+	ID       string                 `json:"id,omitempty"`
+	Name     string                 `json:"name"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
 // ChannelsPage contains list of channels in a page with proper metadata.

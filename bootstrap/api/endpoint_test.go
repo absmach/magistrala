@@ -37,7 +37,6 @@ const (
 	channelsNum    = 3
 	contentType    = "application/json"
 	wrongID        = "wrong_id"
-	metadata       = `{"meta": "data"}`
 	addExternalID  = "external-id"
 	addExternalKey = "external-key"
 	addName        = "name"
@@ -46,6 +45,7 @@ const (
 
 var (
 	addChannels = []string{"1"}
+	metadata    = map[string]interface{}{"meta": "data"}
 	addReq      = struct {
 		ThingID     string   `json:"thing_id"`
 		ExternalID  string   `json:"external_id"`
@@ -288,7 +288,7 @@ func TestView(t *testing.T) {
 		c.MFChannels = append(c.MFChannels, bootstrap.Channel{
 			ID:       ch.ID,
 			Name:     fmt.Sprintf("%s%s", "name ", id),
-			Metadata: fmt.Sprintf("{\"type\":\"some type %s\"}", id),
+			Metadata: map[string]interface{}{"type": fmt.Sprintf("some type %s", id)},
 		})
 	}
 

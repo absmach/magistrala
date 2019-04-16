@@ -51,17 +51,18 @@ docker-compose -f docker/addons/lora-adapter/docker-compose.yml up -d
 
 The lora-adapter use [Redis](https://redis.io/) database to create a route map between both systems. As in Mainflux we use Channels to connect Things, LoRa Server uses Applications to connect Devices.
 
-The lora-adapter uses the matadata of provision events emitted by Mainflux system to update his route map. For that, you must provision Mainflux Channels and Things with an extra metadata key in the JSON Body of the HTTP request. It must be a JSON object with keys `type` and `appID` or `devEUI`. In this case `type` must be `lora` and `appID` or `devEUI` must be an existent Lora application ID or device EUI:
+The lora-adapter uses the matadata of provision events emitted by Mainflux system to update his route map. For that, you must provision Mainflux Channels and Things with an extra metadata key in the JSON Body of the HTTP request. It must be a JSON object with key `lora` which value is another JSON object. This nested JSON object should contain `appID` or `devEUI` field. In this case `appID` or `devEUI` must be an existent Lora application ID or device EUI:
 
 **Channel structure:**
 
 ```
 {
   "name": "<channel name>",
-  "metadata:":"{
-    \"type\": \"lora\",
-    \"appID\": \"<application ID>\"
-  }"
+  "metadata:": {
+    "lora": {
+      "appID": "<application ID>"
+    }
+  }
 }
 ```
 
@@ -71,10 +72,11 @@ The lora-adapter uses the matadata of provision events emitted by Mainflux syste
 {
   "type": "device",
   "name": "<thing name>",
-  "metadata:":"{
-    \"type\": \"lora\",
-    \"devEUI\": \"<device EUI>\"
-  }"
+  "metadata:": {
+    "lora": {
+      "devEUI": "<device EUI>"
+    }
+  }
 }
 ```
 

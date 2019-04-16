@@ -13,7 +13,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/mongodb/mongo-go-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	dockertest "gopkg.in/ory-am/dockertest.v3"
 )
@@ -37,7 +38,7 @@ func TestMain(m *testing.M) {
 	addr = fmt.Sprintf("mongodb://localhost:%s", port)
 
 	if err := pool.Retry(func() error {
-		_, err := mongo.Connect(context.Background(), addr, nil)
+		_, err := mongo.Connect(context.Background(), options.Client().ApplyURI(addr))
 		return err
 	}); err != nil {
 		testLog.Error(fmt.Sprintf("Could not connect to docker: %s", err))

@@ -13,7 +13,7 @@ type Channel struct {
 	ID       string
 	Owner    string
 	Name     string
-	Metadata string
+	Metadata map[string]interface{}
 }
 
 // ChannelsPage contains page related metadata as well as list of channels that

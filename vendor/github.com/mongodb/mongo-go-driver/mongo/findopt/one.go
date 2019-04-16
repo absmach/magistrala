@@ -141,16 +141,6 @@ func (ob *OneBundle) MaxAwaitTime(d time.Duration) *OneBundle {
 	return bundle
 }
 
-// MaxScan adds an option to specify the number of documents or index keys to scan.
-func (ob *OneBundle) MaxScan(i int64) *OneBundle {
-	bundle := &OneBundle{
-		option: MaxScan(i),
-		next:   ob,
-	}
-
-	return bundle
-}
-
 // MaxTime adds an option to specify the max time to allow the query to run.
 func (ob *OneBundle) MaxTime(d time.Duration) *OneBundle {
 	bundle := &OneBundle{
@@ -225,17 +215,6 @@ func (ob *OneBundle) ShowRecordID(b bool) *OneBundle {
 func (ob *OneBundle) Skip(i int64) *OneBundle {
 	bundle := &OneBundle{
 		option: Skip(i),
-		next:   ob,
-	}
-
-	return bundle
-}
-
-// Snapshot adds an option to prevent the server from returning multiple copies because of an intervening
-// write operation
-func (ob *OneBundle) Snapshot(b bool) *OneBundle {
-	bundle := &OneBundle{
-		option: Snapshot(b),
 		next:   ob,
 	}
 

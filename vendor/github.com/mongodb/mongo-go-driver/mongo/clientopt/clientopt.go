@@ -1,3 +1,9 @@
+// Copyright (C) MongoDB, Inc. 2017-present.
+//
+// Licensed under the Apache License, Version 2.0 (the "License"); you may
+// not use this file except in compliance with the License. You may obtain
+// a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
 package clientopt
 
 import (
@@ -7,6 +13,7 @@ import (
 
 	"reflect"
 
+	"github.com/mongodb/mongo-go-driver/bson/bsoncodec"
 	"github.com/mongodb/mongo-go-driver/core/connection"
 	"github.com/mongodb/mongo-go-driver/core/connstring"
 	"github.com/mongodb/mongo-go-driver/core/event"
@@ -55,7 +62,7 @@ type SSLOpt struct {
 // Credential holds auth options.
 //
 // AuthMechanism indicates the mechanism to use for authentication.
-// Supported values include "SCRAM-SHA-1", "MONGODB-CR", "PLAIN", "GSSAPI", and "MONGODB-X509".
+// Supported values include "SCRAM-SHA-256", "SCRAM-SHA-1", "MONGODB-CR", "PLAIN", "GSSAPI", and "MONGODB-X509".
 //
 // AuthMechanismProperties specifies additional configuration options which may be used by certain
 // authentication mechanisms.
@@ -77,9 +84,12 @@ type Credential struct {
 type Client struct {
 	TopologyOptions []topology.Option
 	ConnString      connstring.ConnString
+	RetryWrites     bool
+	RetryWritesSet  bool
 	ReadPreference  *readpref.ReadPref
 	ReadConcern     *readconcern.ReadConcern
 	WriteConcern    *writeconcern.WriteConcern
+	Registry        *bsoncodec.Registry
 }
 
 // ClientBundle is a bundle of client options
@@ -222,10 +232,26 @@ func (cb *ClientBundle) ReadPreference(rp *readpref.ReadPref) *ClientBundle {
 	}
 }
 
+// Registry specifies the bsoncodec.Registry.
+func (cb *ClientBundle) Registry(registry *bsoncodec.Registry) *ClientBundle {
+	return &ClientBundle{
+		option: Registry(registry),
+		next:   cb,
+	}
+}
+
 // ReplicaSet specifies the name of the replica set of the cluster.
 func (cb *ClientBundle) ReplicaSet(s string) *ClientBundle {
 	return &ClientBundle{
 		option: ReplicaSet(s),
+		next:   cb,
+	}
+}
+
+// RetryWrites specifies whether the client has retryable writes enabled.
+func (cb *ClientBundle) RetryWrites(b bool) *ClientBundle {
+	return &ClientBundle{
+		option: RetryWrites(b),
 		next:   cb,
 	}
 }
@@ -514,7 +540,7 @@ func ReadConcern(rc *readconcern.ReadConcern) Option {
 	})
 }
 
-// ReadPreference specifies the read preference
+// ReadPreference specifies the read preference.
 func ReadPreference(rp *readpref.ReadPref) Option {
 	return optionFunc(
 		func(c *Client) error {
@@ -525,12 +551,34 @@ func ReadPreference(rp *readpref.ReadPref) Option {
 		})
 }
 
+// Registry specifies the bsoncodec.Registry.
+func Registry(registry *bsoncodec.Registry) Option {
+	return optionFunc(func(c *Client) error {
+		if c.Registry == nil {
+			c.Registry = registry
+		}
+		return nil
+	})
+}
+
 // ReplicaSet specifies the name of the replica set of the cluster.
 func ReplicaSet(s string) Option {
 	return optionFunc(
 		func(c *Client) error {
 			if c.ConnString.ReplicaSet == "" {
 				c.ConnString.ReplicaSet = s
+			}
+			return nil
+		})
+}
+
+// RetryWrites specifies whether the client has retryable writes enabled.
+func RetryWrites(b bool) Option {
+	return optionFunc(
+		func(c *Client) error {
+			if !c.RetryWritesSet {
+				c.RetryWrites = b
+				c.RetryWritesSet = true
 			}
 			return nil
 		})
@@ -587,7 +635,7 @@ func SSL(ssl *SSLOpt) Option {
 				c.ConnString.SSL = ssl.Enabled
 				c.ConnString.SSLSet = true
 			}
-			if !c.ConnString.SSLClientCertificateKeyFileSet {
+			if !c.ConnString.SSLClientCertificateKeyFileSet && ssl.ClientCertificateKeyFile != "" {
 				c.ConnString.SSLClientCertificateKeyFile = ssl.ClientCertificateKeyFile
 				c.ConnString.SSLClientCertificateKeyFileSet = true
 			}
@@ -599,7 +647,7 @@ func SSL(ssl *SSLOpt) Option {
 				c.ConnString.SSLInsecure = ssl.Insecure
 				c.ConnString.SSLInsecureSet = true
 			}
-			if !c.ConnString.SSLCaFileSet {
+			if !c.ConnString.SSLCaFileSet && ssl.CaFile != "" {
 				c.ConnString.SSLCaFile = ssl.CaFile
 				c.ConnString.SSLCaFileSet = true
 			}

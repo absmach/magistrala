@@ -9,8 +9,10 @@ package postgres
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq" // required for DB access
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/things"
@@ -19,25 +21,26 @@ import (
 var _ things.ThingRepository = (*thingRepository)(nil)
 
 type thingRepository struct {
-	db  *sql.DB
+	db  *sqlx.DB
 	log logger.Logger
 }
 
 // NewThingRepository instantiates a PostgreSQL implementation of thing
 // repository.
-func NewThingRepository(db *sql.DB, log logger.Logger) things.ThingRepository {
+func NewThingRepository(db *sqlx.DB, log logger.Logger) things.ThingRepository {
 	return &thingRepository{db: db, log: log}
 }
 
 func (tr thingRepository) Save(thing things.Thing) (string, error) {
-	q := `INSERT INTO things (id, owner, type, name, key, metadata) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
+	q := `INSERT INTO things (id, owner, type, name, key, metadata) 
+	      VALUES (:id, :owner, :type, :name, :key, :metadata);`
 
-	metadata := thing.Metadata
-	if metadata == "" {
-		metadata = "{}"
+	dbth, err := toDBThing(thing)
+	if err != nil {
+		return "", err
 	}
 
-	_, err := tr.db.Exec(q, thing.ID, thing.Owner, thing.Type, thing.Name, thing.Key, metadata)
+	_, err = tr.db.NamedExec(q, dbth)
 	if err != nil {
 		pqErr, ok := err.(*pq.Error)
 		if ok && errInvalid == pqErr.Code.Name() {
@@ -47,18 +50,18 @@ func (tr thingRepository) Save(thing things.Thing) (string, error) {
 		return "", err
 	}
 
-	return thing.ID, nil
+	return dbth.ID, nil
 }
 
 func (tr thingRepository) Update(thing things.Thing) error {
-	q := `UPDATE things SET name = $1, metadata = $2 WHERE owner = $3 AND id = $4;`
+	q := `UPDATE things SET name = :name, metadata = :metadata WHERE owner = :owner AND id = :id;`
 
-	metadata := thing.Metadata
-	if metadata == "" {
-		metadata = "{}"
+	dbth, err := toDBThing(thing)
+	if err != nil {
+		return err
 	}
 
-	res, err := tr.db.Exec(q, thing.Name, metadata, thing.Owner, thing.ID)
+	res, err := tr.db.NamedExec(q, dbth)
 	if err != nil {
 		pqErr, ok := err.(*pq.Error)
 		if ok && errInvalid == pqErr.Code.Name() {
@@ -81,17 +84,17 @@ func (tr thingRepository) Update(thing things.Thing) error {
 }
 
 func (tr thingRepository) RetrieveByID(owner, id string) (things.Thing, error) {
-	q := `SELECT name, type, key, metadata FROM things WHERE id = $1 AND owner = $2`
-	thing := things.Thing{ID: id, Owner: owner}
-	err := tr.db.
-		QueryRow(q, id, owner).
-		Scan(&thing.Name, &thing.Type, &thing.Key, &thing.Metadata)
+	q := `SELECT name, type, key, metadata FROM things WHERE id = $1 AND owner = $2;`
 
-	if err != nil {
+	dbth := dbThing{
+		ID:    id,
+		Owner: owner,
+	}
+
+	if err := tr.db.QueryRowx(q, id, owner).StructScan(&dbth); err != nil {
 		empty := things.Thing{}
 
 		pqErr, ok := err.(*pq.Error)
-
 		if err == sql.ErrNoRows || ok && errInvalid == pqErr.Code.Name() {
 			return empty, things.ErrNotFound
 		}
@@ -99,13 +102,13 @@ func (tr thingRepository) RetrieveByID(owner, id string) (things.Thing, error) {
 		return empty, err
 	}
 
-	return thing, nil
+	return toThing(dbth)
 }
 
 func (tr thingRepository) RetrieveByKey(key string) (string, error) {
-	q := `SELECT id FROM things WHERE key = $1`
+	q := `SELECT id FROM things WHERE key = $1;`
 	var id string
-	if err := tr.db.QueryRow(q, key).Scan(&id); err != nil {
+	if err := tr.db.QueryRowx(q, key).Scan(&id); err != nil {
 		if err == sql.ErrNoRows {
 			return "", things.ErrNotFound
 		}
@@ -116,29 +119,43 @@ func (tr thingRepository) RetrieveByKey(key string) (string, error) {
 }
 
 func (tr thingRepository) RetrieveAll(owner string, offset, limit uint64) things.ThingsPage {
-	q := `SELECT id, name, type, key, metadata FROM things WHERE owner = $1 ORDER BY id LIMIT $2 OFFSET $3`
-	items := []things.Thing{}
+	q := `SELECT id, name, type, key, metadata FROM things 
+	      WHERE owner = :owner ORDER BY id LIMIT :limit OFFSET :offset;`
 
-	rows, err := tr.db.Query(q, owner, limit, offset)
+	params := map[string]interface{}{
+		"owner":  owner,
+		"limit":  limit,
+		"offset": offset,
+	}
+
+	rows, err := tr.db.NamedQuery(q, params)
 	if err != nil {
 		tr.log.Error(fmt.Sprintf("Failed to retrieve things due to %s", err))
 		return things.ThingsPage{}
 	}
 	defer rows.Close()
 
+	items := []things.Thing{}
 	for rows.Next() {
-		c := things.Thing{Owner: owner}
-		if err = rows.Scan(&c.ID, &c.Name, &c.Type, &c.Key, &c.Metadata); err != nil {
+		dbth := dbThing{Owner: owner}
+		if err := rows.StructScan(&dbth); err != nil {
 			tr.log.Error(fmt.Sprintf("Failed to read retrieved thing due to %s", err))
 			return things.ThingsPage{}
 		}
-		items = append(items, c)
+
+		th, err := toThing(dbth)
+		if err != nil {
+			tr.log.Error(fmt.Sprintf("Failed to read retrieved thing due to %s", err))
+			return things.ThingsPage{}
+		}
+
+		items = append(items, th)
 	}
 
-	q = `SELECT COUNT(*) FROM things WHERE owner = $1`
+	q = `SELECT COUNT(*) FROM things WHERE owner = $1;`
 
 	var total uint64
-	if err := tr.db.QueryRow(q, owner).Scan(&total); err != nil {
+	if err := tr.db.Get(&total, q, owner); err != nil {
 		tr.log.Error(fmt.Sprintf("Failed to count things due to %s", err))
 		return things.ThingsPage{}
 	}
@@ -160,36 +177,50 @@ func (tr thingRepository) RetrieveByChannel(owner, channel string, offset, limit
 	      FROM things th
 	      INNER JOIN connections co
 		  ON th.id = co.thing_id
-		  WHERE th.owner = $1 AND co.channel_id = $2
+		  WHERE th.owner = :owner AND co.channel_id = :channel
 		  ORDER BY th.id
-		  LIMIT $3
-		  OFFSET $4`
-	items := []things.Thing{}
+		  LIMIT :limit
+		  OFFSET :offset;`
 
-	rows, err := tr.db.Query(q, owner, channel, limit, offset)
+	params := map[string]interface{}{
+		"owner":   owner,
+		"channel": channel,
+		"limit":   limit,
+		"offset":  offset,
+	}
+
+	rows, err := tr.db.NamedQuery(q, params)
 	if err != nil {
 		tr.log.Error(fmt.Sprintf("Failed to retrieve things due to %s", err))
 		return things.ThingsPage{}
 	}
 	defer rows.Close()
 
+	items := []things.Thing{}
 	for rows.Next() {
-		t := things.Thing{Owner: owner}
-		if err := rows.Scan(&t.ID, &t.Type, &t.Name, &t.Key, &t.Metadata); err != nil {
+		dbth := dbThing{Owner: owner}
+		if err := rows.StructScan(&dbth); err != nil {
 			tr.log.Error(fmt.Sprintf("Failed to read retrieved thing due to %s", err))
 			return things.ThingsPage{}
 		}
-		items = append(items, t)
+
+		th, err := toThing(dbth)
+		if err != nil {
+			tr.log.Error(fmt.Sprintf("Failed to read retrieved thing due to %s", err))
+			return things.ThingsPage{}
+		}
+
+		items = append(items, th)
 	}
 
 	q = `SELECT COUNT(*)
 	     FROM things th
 	     INNER JOIN connections co
 	     ON th.id = co.thing_id
-	     WHERE th.owner = $1 AND co.channel_id = $2`
+	     WHERE th.owner = $1 AND co.channel_id = $2;`
 
 	var total uint64
-	if err := tr.db.QueryRow(q, owner, channel).Scan(&total); err != nil {
+	if err := tr.db.Get(&total, q, owner, channel); err != nil {
 		tr.log.Error(fmt.Sprintf("Failed to count things due to %s", err))
 		return things.ThingsPage{}
 	}
@@ -205,7 +236,52 @@ func (tr thingRepository) RetrieveByChannel(owner, channel string, offset, limit
 }
 
 func (tr thingRepository) Remove(owner, id string) error {
-	q := `DELETE FROM things WHERE id = $1 AND owner = $2`
-	tr.db.Exec(q, id, owner)
+	dbth := dbThing{
+		ID:    id,
+		Owner: owner,
+	}
+	q := `DELETE FROM things WHERE id = :id AND owner = :owner;`
+	tr.db.NamedExec(q, dbth)
 	return nil
+}
+
+type dbThing struct {
+	ID       string `db:"id"`
+	Owner    string `db:"owner"`
+	Type     string `db:"type"`
+	Name     string `db:"name"`
+	Key      string `db:"key"`
+	Metadata string `db:"metadata"`
+}
+
+func toDBThing(th things.Thing) (dbThing, error) {
+	data, err := json.Marshal(th.Metadata)
+	if err != nil {
+		return dbThing{}, err
+	}
+
+	return dbThing{
+		ID:       th.ID,
+		Owner:    th.Owner,
+		Type:     th.Type,
+		Name:     th.Name,
+		Key:      th.Key,
+		Metadata: string(data),
+	}, nil
+}
+
+func toThing(dbth dbThing) (things.Thing, error) {
+	var metadata map[string]interface{}
+	if err := json.Unmarshal([]byte(dbth.Metadata), &metadata); err != nil {
+		return things.Thing{}, err
+	}
+
+	return things.Thing{
+		ID:       dbth.ID,
+		Owner:    dbth.Owner,
+		Type:     dbth.Type,
+		Name:     dbth.Name,
+		Key:      dbth.Key,
+		Metadata: metadata,
+	}, nil
 }

@@ -8,15 +8,15 @@
 package postgres_test
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"os"
 	"testing"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/mainflux/mainflux/bootstrap/postgres"
 	"github.com/mainflux/mainflux/logger"
-	"gopkg.in/ory-am/dockertest.v3"
+	dockertest "gopkg.in/ory-am/dockertest.v3"
 )
 
 const (
@@ -26,7 +26,7 @@ const (
 
 var (
 	testLog, _ = logger.New(os.Stdout, logger.Info.String())
-	db         *sql.DB
+	db         *sqlx.DB
 )
 
 func TestMain(m *testing.M) {
@@ -49,7 +49,7 @@ func TestMain(m *testing.M) {
 
 	if err := pool.Retry(func() error {
 		url := fmt.Sprintf("host=localhost port=%s user=test dbname=test password=test sslmode=disable", port)
-		db, err = sql.Open("postgres", url)
+		db, err = sqlx.Open("postgres", url)
 		if err != nil {
 			return err
 		}

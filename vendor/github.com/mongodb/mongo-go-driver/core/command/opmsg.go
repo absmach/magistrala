@@ -1,3 +1,9 @@
+// Copyright (C) MongoDB, Inc. 2017-present.
+//
+// Licensed under the Apache License, Version 2.0 (the "License"); you may
+// not use this file except in compliance with the License. You may obtain
+// a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
 package command
 
 import (
@@ -42,58 +48,9 @@ func decodeCommandOpMsg(msg wiremessage.Msg) (bson.Reader, error) {
 		return nil, NewCommandResponseError("malformed OP_MSG: invalid document", err)
 	}
 
-	ok := false
-	var errmsg, codeName string
-	var code int32
-	itr, err := rdr.Iterator()
+	err = extractError(rdr)
 	if err != nil {
-		return nil, NewCommandResponseError("malformed OP_MSG: cannot iterate document", err)
+		return nil, err
 	}
-
-	for itr.Next() {
-		elem := itr.Element()
-		switch elem.Key() {
-		case "ok":
-			switch elem.Value().Type() {
-			case bson.TypeInt32:
-				if elem.Value().Int32() == 1 {
-					ok = true
-				}
-			case bson.TypeInt64:
-				if elem.Value().Int64() == 1 {
-					ok = true
-				}
-			case bson.TypeDouble:
-				if elem.Value().Double() == 1 {
-					ok = true
-				}
-			}
-		case "errmsg":
-			if str, okay := elem.Value().StringValueOK(); okay {
-				errmsg = str
-			}
-		case "codeName":
-			if str, okay := elem.Value().StringValueOK(); okay {
-				codeName = str
-			}
-		case "code":
-			if c, okay := elem.Value().Int32OK(); okay {
-				code = c
-			}
-		}
-	}
-
-	if !ok {
-		if errmsg == "" {
-			errmsg = "command failed"
-		}
-
-		return nil, Error{
-			Code:    code,
-			Message: errmsg,
-			Name:    codeName,
-		}
-	}
-
 	return rdr, nil
 }

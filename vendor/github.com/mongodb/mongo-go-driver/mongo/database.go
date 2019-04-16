@@ -10,12 +10,12 @@ import (
 	"context"
 
 	"github.com/mongodb/mongo-go-driver/bson"
+	"github.com/mongodb/mongo-go-driver/bson/bsoncodec"
 	"github.com/mongodb/mongo-go-driver/core/command"
 	"github.com/mongodb/mongo-go-driver/core/description"
 	"github.com/mongodb/mongo-go-driver/core/dispatch"
 	"github.com/mongodb/mongo-go-driver/core/readconcern"
 	"github.com/mongodb/mongo-go-driver/core/readpref"
-	"github.com/mongodb/mongo-go-driver/core/session"
 	"github.com/mongodb/mongo-go-driver/core/writeconcern"
 	"github.com/mongodb/mongo-go-driver/mongo/collectionopt"
 	"github.com/mongodb/mongo-go-driver/mongo/dbopt"
@@ -32,6 +32,7 @@ type Database struct {
 	readPreference *readpref.ReadPref
 	readSelector   description.ServerSelector
 	writeSelector  description.ServerSelector
+	registry       *bsoncodec.Registry
 }
 
 func newDatabase(client *Client, name string, opts ...dbopt.Option) *Database {
@@ -61,6 +62,7 @@ func newDatabase(client *Client, name string, opts ...dbopt.Option) *Database {
 		readPreference: rp,
 		readConcern:    rc,
 		writeConcern:   wc,
+		registry:       client.registry,
 	}
 
 	db.readSelector = description.CompositeSelector([]description.ServerSelector{
@@ -96,16 +98,24 @@ func (db *Database) RunCommand(ctx context.Context, runCommand interface{}, opts
 		ctx = context.Background()
 	}
 
-	runCmd, sess, err := runcmdopt.BundleRunCmd(opts...).Unbundle()
+	runCmd, _, err := runcmdopt.BundleRunCmd(opts...).Unbundle()
 	if err != nil {
 		return nil, err
 	}
+
+	sess := sessionFromContext(ctx)
+
 	rp := runCmd.ReadPreference
 	if rp == nil {
-		rp = db.readPreference // inherit from db if nothing specified in options
+		if sess != nil && sess.TransactionRunning() {
+			rp = sess.CurrentRp // override with transaction read pref if specified
+		}
+		if rp == nil {
+			rp = db.readPreference // inherit from db if nothing specified in options
+		}
 	}
 
-	runCmdDoc, err := TransformDocument(runCommand)
+	runCmdDoc, err := transformDocument(db.registry, runCommand)
 	if err != nil {
 		return nil, err
 	}
@@ -130,12 +140,7 @@ func (db *Database) Drop(ctx context.Context, opts ...dbopt.DropDB) error {
 		ctx = context.Background()
 	}
 
-	var sess *session.Client
-	for _, opt := range opts {
-		if conv, ok := opt.(dbopt.DropDBSession); ok {
-			sess = conv.ConvertDropDBSession()
-		}
-	}
+	sess := sessionFromContext(ctx)
 
 	err := db.client.ValidSession(sess)
 	if err != nil {
@@ -165,10 +170,12 @@ func (db *Database) ListCollections(ctx context.Context, filter *bson.Document, 
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	listCollOpts, sess, err := listcollectionopt.BundleListCollections(opts...).Unbundle(true)
+	listCollOpts, _, err := listcollectionopt.BundleListCollections(opts...).Unbundle(true)
 	if err != nil {
 		return nil, err
 	}
+
+	sess := sessionFromContext(ctx)
 
 	err = db.client.ValidSession(sess)
 	if err != nil {
@@ -197,4 +204,19 @@ func (db *Database) ListCollections(ctx context.Context, filter *bson.Document, 
 
 	return cursor, nil
 
+}
+
+// ReadConcern returns the read concern of this database.
+func (db *Database) ReadConcern() *readconcern.ReadConcern {
+	return db.readConcern
+}
+
+// ReadPreference returns the read preference of this database.
+func (db *Database) ReadPreference() *readpref.ReadPref {
+	return db.readPreference
+}
+
+// WriteConcern returns the write concern of this database.
+func (db *Database) WriteConcern() *writeconcern.WriteConcern {
+	return db.writeConcern
 }

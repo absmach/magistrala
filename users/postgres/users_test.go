@@ -14,6 +14,7 @@ import (
 	"github.com/mainflux/mainflux/users"
 	"github.com/mainflux/mainflux/users/postgres"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUserSave(t *testing.T) {
@@ -24,8 +25,22 @@ func TestUserSave(t *testing.T) {
 		user users.User
 		err  error
 	}{
-		{"new user", users.User{email, "pass"}, nil},
-		{"duplicate user", users.User{email, "pass"}, users.ErrConflict},
+		{
+			desc: "new user",
+			user: users.User{
+				Email:    email,
+				Password: "pass",
+			},
+			err: nil,
+		},
+		{
+			desc: "duplicate user",
+			user: users.User{
+				Email:    email,
+				Password: "pass",
+			},
+			err: users.ErrConflict,
+		},
 	}
 
 	repo := postgres.New(db)
@@ -40,7 +55,11 @@ func TestSingleUserRetrieval(t *testing.T) {
 	email := "user-retrieval@example.com"
 
 	repo := postgres.New(db)
-	repo.Save(users.User{email, "pass"})
+	err := repo.Save(users.User{
+		Email:    email,
+		Password: "pass",
+	})
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := map[string]struct {
 		email string

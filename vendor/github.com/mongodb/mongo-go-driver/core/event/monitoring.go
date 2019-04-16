@@ -1,6 +1,13 @@
+// Copyright (C) MongoDB, Inc. 2017-present.
+//
+// Licensed under the Apache License, Version 2.0 (the "License"); you may
+// not use this file except in compliance with the License. You may obtain
+// a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
 package event
 
 import (
+	"context"
 	"time"
 
 	"github.com/mongodb/mongo-go-driver/bson"
@@ -58,7 +65,7 @@ type CommandFailedEvent struct {
 
 // CommandMonitor represents a monitor that is triggered for different events.
 type CommandMonitor struct {
-	Started   func(*CommandStartedEvent)
-	Succeeded func(*CommandSucceededEvent)
-	Failed    func(*CommandFailedEvent)
+	Started   func(context.Context, *CommandStartedEvent)
+	Succeeded func(context.Context, *CommandSucceededEvent)
+	Failed    func(context.Context, *CommandFailedEvent)
 }

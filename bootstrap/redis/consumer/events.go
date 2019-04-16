@@ -14,7 +14,7 @@ type removeEvent struct {
 type updateChannelEvent struct {
 	id       string
 	name     string
-	metadata string
+	metadata map[string]interface{}
 }
 
 // Connection event is either connect or disconnect event.

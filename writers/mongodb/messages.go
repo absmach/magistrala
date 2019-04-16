@@ -10,7 +10,7 @@ package mongodb
 import (
 	"context"
 
-	"github.com/mongodb/mongo-go-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/writers"

@@ -10,7 +10,10 @@ import (
 	"errors"
 	"fmt"
 
+	"strings"
+
 	"github.com/mongodb/mongo-go-driver/bson"
+	"github.com/mongodb/mongo-go-driver/core/result"
 )
 
 var (
@@ -22,7 +25,20 @@ var (
 	ErrMultiDocCommandResponse = errors.New("command returned multiple documents")
 	// ErrNoDocCommandResponse occurs when the server indicated a response existed, but none was found.
 	ErrNoDocCommandResponse = errors.New("command returned no documents")
+	// ErrDocumentTooLarge occurs when a document that is larger than the maximum size accepted by a
+	// server is passed to an insert command.
+	ErrDocumentTooLarge = errors.New("an inserted document is too large")
+	// ErrNonPrimaryRP occurs when a nonprimary read preference is used with a transaction.
+	ErrNonPrimaryRP = errors.New("read preference in a transaction must be primary")
+	// UnknownTransactionCommitResult is an error label for unknown transaction commit results.
+	UnknownTransactionCommitResult = "UnknownTransactionCommitResult"
+	// TransientTransactionError is an error label for transient errors with transactions.
+	TransientTransactionError = "TransientTransactionError"
+	// NetworkError is an error label for network errors.
+	NetworkError = "NetworkError"
 )
+
+var retryableCodes = []int32{11600, 11602, 10107, 13435, 13436, 189, 91, 7, 6, 89, 9001}
 
 // QueryFailureError is an error representing a command failure as a document.
 type QueryFailureError struct {
@@ -58,6 +74,7 @@ func (e ResponseError) Error() string {
 type Error struct {
 	Code    int32
 	Message string
+	Labels  []string
 	Name    string
 }
 
@@ -67,6 +84,51 @@ func (e Error) Error() string {
 		return fmt.Sprintf("(%v) %v", e.Name, e.Message)
 	}
 	return e.Message
+}
+
+// HasErrorLabel returns true if the error contains the specified label.
+func (e Error) HasErrorLabel(label string) bool {
+	if e.Labels != nil {
+		for _, l := range e.Labels {
+			if l == label {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// Retryable returns true if the error is retryable
+func (e Error) Retryable() bool {
+	for _, label := range e.Labels {
+		if label == NetworkError {
+			return true
+		}
+	}
+	for _, code := range retryableCodes {
+		if e.Code == code {
+			return true
+		}
+	}
+	if strings.Contains(e.Message, "not master") || strings.Contains(e.Message, "node is recovering") {
+		return true
+	}
+
+	return false
+}
+
+// IsWriteConcernErrorRetryable returns true if the write concern error is retryable.
+func IsWriteConcernErrorRetryable(wce *result.WriteConcernError) bool {
+	for _, code := range retryableCodes {
+		if int32(wce.Code) == code {
+			return true
+		}
+	}
+	if strings.Contains(wce.ErrMsg, "not master") || strings.Contains(wce.ErrMsg, "node is recovering") {
+		return true
+	}
+
+	return false
 }
 
 // IsNotFound indicates if the error is from a namespace not being found.

@@ -14,6 +14,7 @@ import (
 	"strconv"
 
 	"github.com/go-stack/stack"
+	"github.com/mongodb/mongo-go-driver/bson/bsontype"
 	"github.com/mongodb/mongo-go-driver/bson/elements"
 )
 
@@ -91,7 +92,7 @@ var ErrInvalidElement = errors.New("invalid Element")
 // ElementTypeError specifies that a method to obtain a BSON value an incorrect type was called on a bson.Value.
 type ElementTypeError struct {
 	Method string
-	Type   Type
+	Type   bsontype.Type
 }
 
 // Error implements the error interface.
@@ -100,6 +101,12 @@ func (ete ElementTypeError) Error() string {
 }
 
 // Element represents a BSON element, i.e. key-value pair of a BSON document.
+//
+// NOTE: Element cannot be the value of a map nor a property of a struct without special handling.
+// The default encoders and decoders will not process Element correctly. To do so would require
+// information loss since an Element contains a key, but the keys used when encoding a struct are
+// the struct field names. Instead of using an Element, use a Value as the property of a struct
+// field as that is the correct type in this circumstance.
 type Element struct {
 	value *Value
 }
@@ -294,10 +301,10 @@ func (e *Element) writeByteSlice(key bool, start uint, size uint32, b []byte) (i
 				return int64(n), err
 			}
 
-			typeAndKeyLength := e.value.offset - e.value.start
+			codeEnd := e.value.offset + uint32(lengthWithoutScope)
 			n += copy(
-				b[start:start+uint(typeAndKeyLength)+uint(lengthWithoutScope)],
-				e.value.data[e.value.start:e.value.start+typeAndKeyLength+uint32(lengthWithoutScope)])
+				b[start:],
+				e.value.data[startToWrite:codeEnd])
 			start += uint(n)
 
 			nn, err := e.value.d.writeByteSlice(start, scopeLength, b)
@@ -354,7 +361,8 @@ func (e *Element) String() string {
 	return fmt.Sprintf(`bson.Element{[%s]"%s": %v}`, e.Value().Type(), e.Key(), val)
 }
 
-func (e *Element) equal(e2 *Element) bool {
+// Equal compares this element to element and returns true if they are equal.
+func (e *Element) Equal(e2 *Element) bool {
 	if e == nil && e2 == nil {
 		return true
 	}
@@ -362,7 +370,10 @@ func (e *Element) equal(e2 *Element) bool {
 		return false
 	}
 
-	return e.value.equal(e2.value)
+	if e.Key() != e2.Key() {
+		return false
+	}
+	return e.value.Equal(e2.value)
 }
 
 func elemsFromValues(values []*Value) []*Element {
@@ -396,7 +407,10 @@ func convertValueToElem(key string, v *Value) *Element {
 
 	elem := newElement(0, uint32(keyLen+2))
 	elem.value.data = d
-	elem.value.d = v.d
+	elem.value.d = nil
+	if v.d != nil {
+		elem.value.d = v.d.Copy()
+	}
 
 	return elem
 }

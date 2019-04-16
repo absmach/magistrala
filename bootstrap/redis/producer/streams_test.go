@@ -51,7 +51,7 @@ var (
 	channel = bootstrap.Channel{
 		ID:       "1",
 		Name:     "name",
-		Metadata: `{"name":"value"}`,
+		Metadata: map[string]interface{}{"name": "value"},
 	}
 
 	config = bootstrap.Config{
@@ -79,7 +79,7 @@ func newThingsService(users mainflux.UsersServiceClient) things.Service {
 		channels[id] = things.Channel{
 			ID:       id,
 			Owner:    email,
-			Metadata: `{"meta":"data"}`,
+			Metadata: map[string]interface{}{"meta": "data"},
 		}
 	}
 

@@ -9,7 +9,6 @@ package bootstrap
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"time"
 
@@ -162,20 +161,7 @@ func (bs bootstrapService) View(key, id string) (Config, error) {
 		return Config{}, err
 	}
 
-	cfg, err := bs.configs.RetrieveByID(owner, id)
-	if err != nil {
-		return Config{}, err
-	}
-
-	for i, ch := range cfg.MFChannels {
-		if meta, ok := ch.Metadata.([]byte); ok {
-			if err := json.Unmarshal(meta, &cfg.MFChannels[i].Metadata); err != nil {
-				return Config{}, err
-			}
-		}
-	}
-
-	return cfg, nil
+	return bs.configs.RetrieveByID(owner, id)
 }
 
 func (bs bootstrapService) Update(key string, cfg Config) error {
@@ -264,14 +250,6 @@ func (bs bootstrapService) Bootstrap(externalKey, externalID string) (Config, er
 			bs.configs.SaveUnknown(externalKey, externalID)
 		}
 		return Config{}, ErrNotFound
-	}
-
-	for i, ch := range cfg.MFChannels {
-		if meta, ok := ch.Metadata.([]byte); ok {
-			if err := json.Unmarshal(meta, &cfg.MFChannels[i].Metadata); err != nil {
-				return Config{}, err
-			}
-		}
 	}
 
 	return cfg, nil

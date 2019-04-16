@@ -12,9 +12,9 @@ import (
 
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/readers"
-	"github.com/mongodb/mongo-go-driver/bson"
-	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/mongodb/mongo-go-driver/mongo/findopt"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 const collection = "mainflux"
@@ -55,7 +55,7 @@ func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64, query m
 	}
 
 	filter := fmtCondition(chanID, query)
-	cursor, err := col.Find(context.Background(), filter, findopt.Sort(sortMap), findopt.Limit(int64(limit)), findopt.Skip(int64(offset)))
+	cursor, err := col.Find(context.Background(), filter, options.Find().SetSort(sortMap).SetLimit(int64(limit)).SetSkip(int64(offset)))
 	if err != nil {
 		return []mainflux.Message{}
 	}
@@ -101,8 +101,13 @@ func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64, query m
 	return messages
 }
 
-func fmtCondition(chanID string, query map[string]string) *bson.Document {
-	filter := bson.NewDocument(bson.EC.String("channel", chanID))
+func fmtCondition(chanID string, query map[string]string) *bson.D {
+	filter := bson.D{
+		bson.E{
+			Key:   "channel",
+			Value: chanID,
+		},
+	}
 	for name, value := range query {
 		switch name {
 		case
@@ -111,8 +116,9 @@ func fmtCondition(chanID string, query map[string]string) *bson.Document {
 			"publisher",
 			"name",
 			"protocol":
-			filter.Append(bson.EC.String(name, value))
+			filter = append(filter, bson.E{Key: name, Value: value})
 		}
 	}
-	return filter
+
+	return &filter
 }

@@ -29,9 +29,9 @@ func (req identityReq) validate() error {
 
 type addThingReq struct {
 	key      string
-	Type     string `json:"type"`
-	Name     string `json:"name,omitempty"`
-	Metadata string `json:"metadata,omitempty"`
+	Type     string                 `json:"type"`
+	Name     string                 `json:"name,omitempty"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
 func (req addThingReq) validate() error {
@@ -49,9 +49,9 @@ func (req addThingReq) validate() error {
 type updateThingReq struct {
 	key      string
 	id       string
-	Type     string `json:"type"`
-	Name     string `json:"name,omitempty"`
-	Metadata string `json:"metadata,omitempty"`
+	Type     string                 `json:"type"`
+	Name     string                 `json:"name,omitempty"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
 func (req updateThingReq) validate() error {
@@ -68,8 +68,8 @@ func (req updateThingReq) validate() error {
 
 type createChannelReq struct {
 	key      string
-	Name     string `json:"name,omitempty"`
-	Metadata string `json:"metadata,omitempty"`
+	Name     string                 `json:"name,omitempty"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
 func (req createChannelReq) validate() error {
@@ -83,8 +83,8 @@ func (req createChannelReq) validate() error {
 type updateChannelReq struct {
 	key      string
 	id       string
-	Name     string `json:"name,omitempty"`
-	Metadata string `json:"metadata,omitempty"`
+	Name     string                 `json:"name,omitempty"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
 func (req updateChannelReq) validate() error {

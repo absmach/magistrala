@@ -151,16 +151,6 @@ func (fb *FindBundle) MaxAwaitTime(d time.Duration) *FindBundle {
 	return bundle
 }
 
-// MaxScan adds an option to specify the max number of documents or index keys to scan.
-func (fb *FindBundle) MaxScan(i int64) *FindBundle {
-	bundle := &FindBundle{
-		option: MaxScan(i),
-		next:   fb,
-	}
-
-	return bundle
-}
-
 // MaxTime adds an option to specify the max time to allow the query to run.
 func (fb *FindBundle) MaxTime(d time.Duration) *FindBundle {
 	bundle := &FindBundle{
@@ -235,17 +225,6 @@ func (fb *FindBundle) ShowRecordID(b bool) *FindBundle {
 func (fb *FindBundle) Skip(i int64) *FindBundle {
 	bundle := &FindBundle{
 		option: Skip(i),
-		next:   fb,
-	}
-
-	return bundle
-}
-
-// Snapshot adds an option to prevent the cursor from returning a document more than once because of an
-// intervening write operation.
-func (fb *FindBundle) Snapshot(b bool) *FindBundle {
-	bundle := &FindBundle{
-		option: Snapshot(b),
 		next:   fb,
 	}
 

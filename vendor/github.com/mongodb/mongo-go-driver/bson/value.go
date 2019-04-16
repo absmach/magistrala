@@ -7,12 +7,14 @@
 package bson
 
 import (
-	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"math"
 	"time"
 
+	"github.com/mongodb/mongo-go-driver/bson/bsoncore"
+	"github.com/mongodb/mongo-go-driver/bson/bsontype"
 	"github.com/mongodb/mongo-go-driver/bson/decimal"
 	"github.com/mongodb/mongo-go-driver/bson/objectid"
 )
@@ -58,9 +60,15 @@ func (v *Value) Interface() interface{} {
 	case TypeString:
 		return v.StringValue()
 	case TypeEmbeddedDocument:
-		return v.ReaderDocument().String()
+		if v.d == nil {
+			return v.ReaderDocument()
+		}
+		return v.d
 	case TypeArray:
-		return v.MutableArray().String()
+		if v.d == nil {
+			return v.ReaderArray()
+		}
+		return v.MutableArray()
 	case TypeBinary:
 		_, data := v.Binary()
 		return data
@@ -103,6 +111,12 @@ func (v *Value) Interface() interface{} {
 	default:
 		return nil
 	}
+}
+
+// Validate validates the value.
+func (v *Value) Validate() error {
+	_, err := v.validate(false)
+	return err
 }
 
 func (v *Value) validate(sizeOnly bool) (uint32, error) {
@@ -347,11 +361,11 @@ func (v *Value) valueSize() (uint32, error) {
 
 // Type returns the identifying element byte for this element.
 // It panics if e is uninitialized.
-func (v *Value) Type() Type {
+func (v *Value) Type() bsontype.Type {
 	if v == nil || v.offset == 0 || v.data == nil {
 		panic(ErrUninitializedElement)
 	}
-	return Type(v.data[v.start])
+	return bsontype.Type(v.data[v.start])
 }
 
 // IsNumber returns true if the type of v is a numberic BSON type.
@@ -371,14 +385,14 @@ func (v *Value) Double() float64 {
 		panic(ErrUninitializedElement)
 	}
 	if v.data[v.start] != '\x01' {
-		panic(ElementTypeError{"compact.Element.double", Type(v.data[v.start])})
+		panic(ElementTypeError{"compact.Element.double", bsontype.Type(v.data[v.start])})
 	}
 	return math.Float64frombits(v.getUint64())
 }
 
 // DoubleOK is the same as Double, but returns a boolean instead of panicking.
 func (v *Value) DoubleOK() (float64, bool) {
-	if v == nil || v.offset == 0 || v.data == nil || Type(v.data[v.start]) != TypeDouble {
+	if v == nil || v.offset == 0 || v.data == nil || bsontype.Type(v.data[v.start]) != TypeDouble {
 		return 0, false
 	}
 	return v.Double(), true
@@ -394,7 +408,7 @@ func (v *Value) StringValue() string {
 		panic(ErrUninitializedElement)
 	}
 	if v.data[v.start] != '\x02' {
-		panic(ElementTypeError{"compact.Element.String", Type(v.data[v.start])})
+		panic(ElementTypeError{"compact.Element.String", bsontype.Type(v.data[v.start])})
 	}
 	l := readi32(v.data[v.offset : v.offset+4])
 	return string(v.data[v.offset+4 : int32(v.offset)+4+l-1])
@@ -403,7 +417,7 @@ func (v *Value) StringValue() string {
 // StringValueOK is the same as StringValue, but returns a boolean instead of
 // panicking.
 func (v *Value) StringValueOK() (string, bool) {
-	if v == nil || v.offset == 0 || v.data == nil || Type(v.data[v.start]) != TypeString {
+	if v == nil || v.offset == 0 || v.data == nil || bsontype.Type(v.data[v.start]) != TypeString {
 		return "", false
 	}
 	return v.StringValue(), true
@@ -417,7 +431,7 @@ func (v *Value) ReaderDocument() Reader {
 	}
 
 	if v.data[v.start] != '\x03' {
-		panic(ElementTypeError{"compact.Element.Document", Type(v.data[v.start])})
+		panic(ElementTypeError{"compact.Element.Document", bsontype.Type(v.data[v.start])})
 	}
 
 	var r Reader
@@ -439,7 +453,7 @@ func (v *Value) ReaderDocument() Reader {
 // ReaderDocumentOK is the same as ReaderDocument, except it returns a boolean
 // instead of panicking.
 func (v *Value) ReaderDocumentOK() (Reader, bool) {
-	if v == nil || v.offset == 0 || v.data == nil || Type(v.data[v.start]) != TypeEmbeddedDocument {
+	if v == nil || v.offset == 0 || v.data == nil || bsontype.Type(v.data[v.start]) != TypeEmbeddedDocument {
 		return nil, false
 	}
 	return v.ReaderDocument(), true
@@ -451,7 +465,7 @@ func (v *Value) MutableDocument() *Document {
 		panic(ErrUninitializedElement)
 	}
 	if v.data[v.start] != '\x03' {
-		panic(ElementTypeError{"compact.Element.Document", Type(v.data[v.start])})
+		panic(ElementTypeError{"compact.Element.Document", bsontype.Type(v.data[v.start])})
 	}
 	if v.d == nil {
 		var err error
@@ -467,7 +481,7 @@ func (v *Value) MutableDocument() *Document {
 // MutableDocumentOK is the same as MutableDocument, except it returns a boolean
 // instead of panicking.
 func (v *Value) MutableDocumentOK() (*Document, bool) {
-	if v == nil || v.offset == 0 || v.data == nil || Type(v.data[v.start]) != TypeEmbeddedDocument {
+	if v == nil || v.offset == 0 || v.data == nil || bsontype.Type(v.data[v.start]) != TypeEmbeddedDocument {
 		return nil, false
 	}
 	return v.MutableDocument(), true
@@ -481,7 +495,7 @@ func (v *Value) ReaderArray() Reader {
 	}
 
 	if v.data[v.start] != '\x04' {
-		panic(ElementTypeError{"compact.Element.Array", Type(v.data[v.start])})
+		panic(ElementTypeError{"compact.Element.Array", bsontype.Type(v.data[v.start])})
 	}
 
 	var r Reader
@@ -503,7 +517,7 @@ func (v *Value) ReaderArray() Reader {
 // ReaderArrayOK is the same as ReaderArray, except it returns a boolean instead
 // of panicking.
 func (v *Value) ReaderArrayOK() (Reader, bool) {
-	if v == nil || v.offset == 0 || v.data == nil || Type(v.data[v.start]) != TypeArray {
+	if v == nil || v.offset == 0 || v.data == nil || bsontype.Type(v.data[v.start]) != TypeArray {
 		return nil, false
 	}
 	return v.ReaderArray(), true
@@ -515,7 +529,7 @@ func (v *Value) MutableArray() *Array {
 		panic(ErrUninitializedElement)
 	}
 	if v.data[v.start] != '\x04' {
-		panic(ElementTypeError{"compact.Element.Array", Type(v.data[v.start])})
+		panic(ElementTypeError{"compact.Element.Array", bsontype.Type(v.data[v.start])})
 	}
 	if v.d == nil {
 		var err error
@@ -531,7 +545,7 @@ func (v *Value) MutableArray() *Array {
 // MutableArrayOK is the same as MutableArray, except it returns a boolean
 // instead of panicking.
 func (v *Value) MutableArrayOK() (*Array, bool) {
-	if v == nil || v.offset == 0 || v.data == nil || Type(v.data[v.start]) != TypeArray {
+	if v == nil || v.offset == 0 || v.data == nil || bsontype.Type(v.data[v.start]) != TypeArray {
 		return nil, false
 	}
 	return v.MutableArray(), true
@@ -544,13 +558,28 @@ func (v *Value) Binary() (subtype byte, data []byte) {
 		panic(ErrUninitializedElement)
 	}
 	if v.data[v.start] != '\x05' {
-		panic(ElementTypeError{"compact.Element.binary", Type(v.data[v.start])})
+		panic(ElementTypeError{"compact.Element.binary", bsontype.Type(v.data[v.start])})
 	}
 	l := readi32(v.data[v.offset : v.offset+4])
 	st := v.data[v.offset+4]
+	offset := uint32(5)
+	if st == 0x02 {
+		offset += 4
+		l = readi32(v.data[v.offset+5 : v.offset+9])
+	}
 	b := make([]byte, l)
-	copy(b, v.data[v.offset+5:int32(v.offset)+5+l])
+	copy(b, v.data[v.offset+offset:int32(v.offset)+int32(offset)+l])
 	return st, b
+}
+
+// BinaryOK is the same as Binary, except it returns a boolean instead of
+// panicking.
+func (v *Value) BinaryOK() (subtype byte, data []byte, ok bool) {
+	if v == nil || v.offset == 0 || v.data == nil || bsontype.Type(v.data[v.start]) != TypeBinary {
+		return 0x00, nil, false
+	}
+	st, b := v.Binary()
+	return st, b, true
 }
 
 // ObjectID returns the BSON objectid value the Value represents. It panics if the value is a BSON
@@ -560,7 +589,7 @@ func (v *Value) ObjectID() objectid.ObjectID {
 		panic(ErrUninitializedElement)
 	}
 	if v.data[v.start] != '\x07' {
-		panic(ElementTypeError{"compact.Element.ObejctID", Type(v.data[v.start])})
+		panic(ElementTypeError{"compact.Element.ObejctID", bsontype.Type(v.data[v.start])})
 	}
 	var arr [12]byte
 	copy(arr[:], v.data[v.offset:v.offset+12])
@@ -571,7 +600,7 @@ func (v *Value) ObjectID() objectid.ObjectID {
 // panicking.
 func (v *Value) ObjectIDOK() (objectid.ObjectID, bool) {
 	var empty objectid.ObjectID
-	if v == nil || v.offset == 0 || v.data == nil || Type(v.data[v.start]) != TypeObjectID {
+	if v == nil || v.offset == 0 || v.data == nil || bsontype.Type(v.data[v.start]) != TypeObjectID {
 		return empty, false
 	}
 	return v.ObjectID(), true
@@ -584,7 +613,7 @@ func (v *Value) Boolean() bool {
 		panic(ErrUninitializedElement)
 	}
 	if v.data[v.start] != '\x08' {
-		panic(ElementTypeError{"compact.Element.Boolean", Type(v.data[v.start])})
+		panic(ElementTypeError{"compact.Element.Boolean", bsontype.Type(v.data[v.start])})
 	}
 	return v.data[v.offset] == '\x01'
 }
@@ -592,23 +621,38 @@ func (v *Value) Boolean() bool {
 // BooleanOK is the same as Boolean, except it returns a boolean instead of
 // panicking.
 func (v *Value) BooleanOK() (bool, bool) {
-	if v == nil || v.offset == 0 || v.data == nil || Type(v.data[v.start]) != TypeBoolean {
+	if v == nil || v.offset == 0 || v.data == nil || bsontype.Type(v.data[v.start]) != TypeBoolean {
 		return false, false
 	}
 	return v.Boolean(), true
 }
 
-// DateTime returns the BSON datetime value the Value represents. It panics if the value is a BSON
-// type other than datetime.
-func (v *Value) DateTime() time.Time {
+// DateTime returns the BSON datetime value the Value represents as a
+// unix timestamp. It panics if the value is a BSON type other than datetime.
+func (v *Value) DateTime() int64 {
 	if v == nil || v.offset == 0 || v.data == nil {
 		panic(ErrUninitializedElement)
 	}
 	if v.data[v.start] != '\x09' {
-		panic(ElementTypeError{"compact.Element.dateTime", Type(v.data[v.start])})
+		panic(ElementTypeError{"compact.Element.dateTime", bsontype.Type(v.data[v.start])})
 	}
-	i := v.getUint64()
+	return int64(v.getUint64())
+}
+
+// Time returns the BSON datetime value the Value represents. It panics if the value is a BSON
+// type other than datetime.
+func (v *Value) Time() time.Time {
+	i := v.DateTime()
 	return time.Unix(int64(i)/1000, int64(i)%1000*1000000)
+}
+
+// TimeOK is the same as Time, except it returns a boolean instead of
+// panicking.
+func (v *Value) TimeOK() (time.Time, bool) {
+	if v == nil || v.offset == 0 || v.data == nil || bsontype.Type(v.data[v.start]) != TypeDateTime {
+		return time.Time{}, false
+	}
+	return v.Time(), true
 }
 
 // Regex returns the BSON regex value the Value represents. It panics if the value is a BSON
@@ -618,7 +662,7 @@ func (v *Value) Regex() (pattern, options string) {
 		panic(ErrUninitializedElement)
 	}
 	if v.data[v.start] != '\x0B' {
-		panic(ElementTypeError{"compact.Element.regex", Type(v.data[v.start])})
+		panic(ElementTypeError{"compact.Element.regex", bsontype.Type(v.data[v.start])})
 	}
 	// TODO(skriptble): Use the elements package here.
 	var pstart, pend, ostart, oend uint32
@@ -638,9 +682,9 @@ func (v *Value) Regex() (pattern, options string) {
 
 // DateTimeOK is the same as DateTime, except it returns a boolean instead of
 // panicking.
-func (v *Value) DateTimeOK() (time.Time, bool) {
-	if v == nil || v.offset == 0 || v.data == nil || Type(v.data[v.start]) != TypeDateTime {
-		return time.Time{}, false
+func (v *Value) DateTimeOK() (int64, bool) {
+	if v == nil || v.offset == 0 || v.data == nil || bsontype.Type(v.data[v.start]) != TypeDateTime {
+		return 0, false
 	}
 	return v.DateTime(), true
 }
@@ -652,7 +696,7 @@ func (v *Value) DBPointer() (string, objectid.ObjectID) {
 		panic(ErrUninitializedElement)
 	}
 	if v.data[v.start] != '\x0C' {
-		panic(ElementTypeError{"compact.Element.dbPointer", Type(v.data[v.start])})
+		panic(ElementTypeError{"compact.Element.dbPointer", bsontype.Type(v.data[v.start])})
 	}
 	l := readi32(v.data[v.offset : v.offset+4])
 	var p [12]byte
@@ -664,7 +708,7 @@ func (v *Value) DBPointer() (string, objectid.ObjectID) {
 // instead of panicking.
 func (v *Value) DBPointerOK() (string, objectid.ObjectID, bool) {
 	var empty objectid.ObjectID
-	if v == nil || v.offset == 0 || v.data == nil || Type(v.data[v.start]) != TypeDBPointer {
+	if v == nil || v.offset == 0 || v.data == nil || bsontype.Type(v.data[v.start]) != TypeDBPointer {
 		return "", empty, false
 	}
 	s, o := v.DBPointer()
@@ -678,7 +722,7 @@ func (v *Value) JavaScript() string {
 		panic(ErrUninitializedElement)
 	}
 	if v.data[v.start] != '\x0D' {
-		panic(ElementTypeError{"compact.Element.JavaScript", Type(v.data[v.start])})
+		panic(ElementTypeError{"compact.Element.JavaScript", bsontype.Type(v.data[v.start])})
 	}
 	l := readi32(v.data[v.offset : v.offset+4])
 	return string(v.data[v.offset+4 : int32(v.offset)+4+l-1])
@@ -687,7 +731,7 @@ func (v *Value) JavaScript() string {
 // JavaScriptOK is the same as Javascript, excepti that it returns a boolean
 // instead of panicking.
 func (v *Value) JavaScriptOK() (string, bool) {
-	if v == nil || v.offset == 0 || v.data == nil || Type(v.data[v.start]) != TypeJavaScript {
+	if v == nil || v.offset == 0 || v.data == nil || bsontype.Type(v.data[v.start]) != TypeJavaScript {
 		return "", false
 	}
 	return v.JavaScript(), true
@@ -700,7 +744,7 @@ func (v *Value) Symbol() string {
 		panic(ErrUninitializedElement)
 	}
 	if v.data[v.start] != '\x0E' {
-		panic(ElementTypeError{"compact.Element.symbol", Type(v.data[v.start])})
+		panic(ElementTypeError{"compact.Element.symbol", bsontype.Type(v.data[v.start])})
 	}
 	l := readi32(v.data[v.offset : v.offset+4])
 	return string(v.data[v.offset+4 : int32(v.offset)+4+l-1])
@@ -715,7 +759,7 @@ func (v *Value) ReaderJavaScriptWithScope() (string, Reader) {
 	}
 
 	if v.data[v.start] != '\x0F' {
-		panic(ElementTypeError{"compact.Element.JavaScriptWithScope", Type(v.data[v.start])})
+		panic(ElementTypeError{"compact.Element.JavaScriptWithScope", bsontype.Type(v.data[v.start])})
 	}
 
 	sLength := readi32(v.data[v.offset+4 : v.offset+8])
@@ -743,7 +787,7 @@ func (v *Value) ReaderJavaScriptWithScope() (string, Reader) {
 // ReaderJavaScriptWithScopeOK is the same as ReaderJavaScriptWithScope,
 // except that it returns a boolean instead of panicking.
 func (v *Value) ReaderJavaScriptWithScopeOK() (string, Reader, bool) {
-	if v == nil || v.offset == 0 || v.data == nil || Type(v.data[v.start]) != TypeCodeWithScope {
+	if v == nil || v.offset == 0 || v.data == nil || bsontype.Type(v.data[v.start]) != TypeCodeWithScope {
 		return "", nil, false
 	}
 	s, r := v.ReaderJavaScriptWithScope()
@@ -757,7 +801,7 @@ func (v *Value) MutableJavaScriptWithScope() (code string, d *Document) {
 		panic(ErrUninitializedElement)
 	}
 	if v.data[v.start] != '\x0F' {
-		panic(ElementTypeError{"compact.Element.JavaScriptWithScope", Type(v.data[v.start])})
+		panic(ElementTypeError{"compact.Element.JavaScriptWithScope", bsontype.Type(v.data[v.start])})
 	}
 	// TODO(skriptble): This is wrong and could cause a panic.
 	l := int32(binary.LittleEndian.Uint32(v.data[v.offset : v.offset+4]))
@@ -766,10 +810,10 @@ func (v *Value) MutableJavaScriptWithScope() (code string, d *Document) {
 	// If the length of the string is larger than the total length of the
 	// field minus the int32 for length, 5 bytes for a minimum document
 	// size, and an int32 for the string length the value is invalid.
-	str := string(v.data[v.offset+4 : v.offset+4+uint32(sLength)])
+	str := string(v.data[v.offset+4+4 : v.offset+4+4+uint32(sLength)-1]) // offset + total length + string length + bytes - null byte
 	if v.d == nil {
 		var err error
-		v.d, err = ReadDocument(v.data[v.offset+4+uint32(sLength) : v.offset+uint32(l)])
+		v.d, err = ReadDocument(v.data[v.offset+4+4+uint32(sLength) : v.offset+uint32(l)])
 		if err != nil {
 			panic(err)
 		}
@@ -780,7 +824,7 @@ func (v *Value) MutableJavaScriptWithScope() (code string, d *Document) {
 // MutableJavaScriptWithScopeOK is the same as MutableJavascriptWithScope,
 // except that it returns a boolean instead of panicking.
 func (v *Value) MutableJavaScriptWithScopeOK() (string, *Document, bool) {
-	if v == nil || v.offset == 0 || v.data == nil || Type(v.data[v.start]) != TypeCodeWithScope {
+	if v == nil || v.offset == 0 || v.data == nil || bsontype.Type(v.data[v.start]) != TypeCodeWithScope {
 		return "", nil, false
 	}
 	s, d := v.MutableJavaScriptWithScope()
@@ -794,7 +838,7 @@ func (v *Value) Int32() int32 {
 		panic(ErrUninitializedElement)
 	}
 	if v.data[v.start] != '\x10' {
-		panic(ElementTypeError{"compact.Element.int32", Type(v.data[v.start])})
+		panic(ElementTypeError{"compact.Element.int32", bsontype.Type(v.data[v.start])})
 	}
 	return readi32(v.data[v.offset : v.offset+4])
 }
@@ -802,7 +846,7 @@ func (v *Value) Int32() int32 {
 // Int32OK is the same as Int32, except that it returns a boolean instead of
 // panicking.
 func (v *Value) Int32OK() (int32, bool) {
-	if v == nil || v.offset == 0 || v.data == nil || Type(v.data[v.start]) != TypeInt32 {
+	if v == nil || v.offset == 0 || v.data == nil || bsontype.Type(v.data[v.start]) != TypeInt32 {
 		return 0, false
 	}
 	return v.Int32(), true
@@ -815,7 +859,7 @@ func (v *Value) Timestamp() (uint32, uint32) {
 		panic(ErrUninitializedElement)
 	}
 	if v.data[v.start] != '\x11' {
-		panic(ElementTypeError{"compact.Element.timestamp", Type(v.data[v.start])})
+		panic(ElementTypeError{"compact.Element.timestamp", bsontype.Type(v.data[v.start])})
 	}
 	return binary.LittleEndian.Uint32(v.data[v.offset+4 : v.offset+8]), binary.LittleEndian.Uint32(v.data[v.offset : v.offset+4])
 }
@@ -823,7 +867,7 @@ func (v *Value) Timestamp() (uint32, uint32) {
 // TimestampOK is the same as Timestamp, except that it returns a boolean
 // instead of panicking.
 func (v *Value) TimestampOK() (uint32, uint32, bool) {
-	if v == nil || v.offset == 0 || v.data == nil || Type(v.data[v.start]) != TypeTimestamp {
+	if v == nil || v.offset == 0 || v.data == nil || bsontype.Type(v.data[v.start]) != TypeTimestamp {
 		return 0, 0, false
 	}
 	t, i := v.Timestamp()
@@ -837,7 +881,7 @@ func (v *Value) Int64() int64 {
 		panic(ErrUninitializedElement)
 	}
 	if v.data[v.start] != '\x12' {
-		panic(ElementTypeError{"compact.Element.int64Type", Type(v.data[v.start])})
+		panic(ElementTypeError{"compact.Element.int64Type", bsontype.Type(v.data[v.start])})
 	}
 	return int64(v.getUint64())
 }
@@ -849,7 +893,7 @@ func (v *Value) getUint64() uint64 {
 // Int64OK is the same as Int64, except that it returns a boolean instead of
 // panicking.
 func (v *Value) Int64OK() (int64, bool) {
-	if v == nil || v.offset == 0 || v.data == nil || Type(v.data[v.start]) != TypeInt64 {
+	if v == nil || v.offset == 0 || v.data == nil || bsontype.Type(v.data[v.start]) != TypeInt64 {
 		return 0, false
 	}
 	return v.Int64(), true
@@ -862,7 +906,7 @@ func (v *Value) Decimal128() decimal.Decimal128 {
 		panic(ErrUninitializedElement)
 	}
 	if v.data[v.start] != '\x13' {
-		panic(ElementTypeError{"compact.Element.Decimal128", Type(v.data[v.start])})
+		panic(ElementTypeError{"compact.Element.Decimal128", bsontype.Type(v.data[v.start])})
 	}
 	l := binary.LittleEndian.Uint64(v.data[v.offset : v.offset+8])
 	h := binary.LittleEndian.Uint64(v.data[v.offset+8 : v.offset+16])
@@ -872,7 +916,7 @@ func (v *Value) Decimal128() decimal.Decimal128 {
 // Decimal128OK is the same as Decimal128, except that it returns a boolean
 // instead of panicking.
 func (v *Value) Decimal128OK() (decimal.Decimal128, bool) {
-	if v == nil || v.offset == 0 || v.data == nil || Type(v.data[v.start]) != TypeDecimal128 {
+	if v == nil || v.offset == 0 || v.data == nil || bsontype.Type(v.data[v.start]) != TypeDecimal128 {
 		return decimal.NewDecimal128(0, 0), false
 	}
 	return v.Decimal128(), true
@@ -1010,7 +1054,12 @@ func (v *Value) Add(v2 *Value) error {
 	return fmt.Errorf("cannot Add values of types %s and %s yet", v.Type(), v2.Type())
 }
 
-func (v *Value) equal(v2 *Value) bool {
+// Equal compares v to v2 and returns true if they are equal. This method will
+// ensure that the values are logically equal, even if their internal structure
+// is different. This method should be used over reflect.DeepEqual which will
+// not return true for Values that are logically the same but not internally the
+// same.
+func (v *Value) Equal(v2 *Value) bool {
 	if v == nil && v2 == nil {
 		return true
 	}
@@ -1019,17 +1068,45 @@ func (v *Value) equal(v2 *Value) bool {
 		return false
 	}
 
-	if v.start != v2.start {
+	if v.data[v.start] != v2.data[v2.start] {
 		return false
 	}
 
-	if v.offset != v2.offset {
+	t1, t2 := bsontype.Type(v.data[v.start]), bsontype.Type(v2.data[v2.start])
+
+	data1, err := v.docToBytes(t1)
+	if err != nil {
+		return false
+	}
+	data2, err := v2.docToBytes(t2)
+	if err != nil {
 		return false
 	}
 
-	if v.d != nil && !v.d.Equal(v2.d) {
-		return false
+	return bsoncore.EqualValue(bsontype.Type(t1), bsontype.Type(t2), data1, data2)
+}
+
+func (v *Value) docToBytes(t bsontype.Type) ([]byte, error) {
+	if v.d == nil {
+		return v.data[v.offset:], nil
 	}
 
-	return bytes.Equal(v.data, v2.data)
+	switch t {
+	case bsontype.EmbeddedDocument:
+		return v.d.MarshalBSON()
+	case bsontype.Array:
+		return (&Array{doc: v.d}).MarshalBSON()
+	case bsontype.CodeWithScope:
+		scope, err := v.d.MarshalBSON()
+		if err != nil {
+			return nil, err
+		}
+		code, _, ok := bsoncore.ReadJavaScript(v.data[v.offset+4:])
+		if !ok {
+			return nil, errors.New("invalid code component")
+		}
+		return bsoncore.AppendCodeWithScope(nil, code, scope), nil
+	default:
+		return v.data[v.offset:], nil
+	}
 }

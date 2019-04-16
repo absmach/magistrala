@@ -41,9 +41,8 @@ func TestChannelSave(t *testing.T) {
 		{
 			desc: "create invalid channel",
 			channel: things.Channel{
-				ID:       uuid.New().ID(),
-				Owner:    email,
-				Metadata: "invalid",
+				ID:    "invalid",
+				Owner: email,
 			},
 			err: things.ErrMalformedEntity,
 		},
@@ -75,15 +74,6 @@ func TestChannelUpdate(t *testing.T) {
 			desc:    "update existing channel",
 			channel: c,
 			err:     nil,
-		},
-		{
-			desc: "update channel with invalid data",
-			channel: things.Channel{
-				ID:       c.ID,
-				Owner:    email,
-				Metadata: "invalid",
-			},
-			err: things.ErrMalformedEntity,
 		},
 		{
 			desc: "update non-existing channel with existing user",
@@ -312,7 +302,7 @@ func TestConnect(t *testing.T) {
 		ID:       uuid.New().ID(),
 		Owner:    email,
 		Key:      uuid.New().ID(),
-		Metadata: "{}",
+		Metadata: map[string]interface{}{},
 	}
 	thingID, _ := thingRepo.Save(thing)
 
@@ -379,7 +369,7 @@ func TestDisconnect(t *testing.T) {
 		ID:       uuid.New().ID(),
 		Owner:    email,
 		Key:      uuid.New().ID(),
-		Metadata: "{}",
+		Metadata: map[string]interface{}{},
 	}
 	thingID, _ := thingRepo.Save(thing)
 

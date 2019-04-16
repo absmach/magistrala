@@ -29,8 +29,8 @@ var (
 		ExternalKey: "external-key",
 		Owner:       "user@email.com",
 		MFChannels: []bootstrap.Channel{
-			bootstrap.Channel{ID: "1", Name: "name 1", Metadata: "{\"meta\":1}"},
-			bootstrap.Channel{ID: "2", Name: "name 2", Metadata: "{\"meta\":2}"},
+			bootstrap.Channel{ID: "1", Name: "name 1", Metadata: map[string]interface{}{"meta": 1.0}},
+			bootstrap.Channel{ID: "2", Name: "name 2", Metadata: map[string]interface{}{"meta": 2.0}},
 		},
 		Content: "content",
 		State:   bootstrap.Inactive,
@@ -479,7 +479,6 @@ func TestListExisting(t *testing.T) {
 
 	var chs []bootstrap.Channel
 	for _, ch := range config.MFChannels {
-		ch.Metadata = []byte(ch.Metadata.(string))
 		chs = append(chs, ch)
 	}
 
@@ -616,7 +615,7 @@ func TestUpdateChannel(t *testing.T) {
 	update := bootstrap.Channel{
 		ID:       id,
 		Name:     "update name",
-		Metadata: []byte("{\"update\":\"metadata update\"}"),
+		Metadata: map[string]interface{}{"update": "metadata update"},
 	}
 	err = repo.UpdateChannel(update)
 	assert.Nil(t, err, fmt.Sprintf("updating config expected to succeed: %s.\n", err))
@@ -640,11 +639,6 @@ func TestRemoveChannel(t *testing.T) {
 	require.Nil(t, err, "Channels cleanup expected to succeed.")
 
 	c := config
-	for i, ch := range c.MFChannels {
-		c.MFChannels[i].Metadata = []byte(ch.Metadata.(string))
-
-	}
-	// Use UUID to prevent conflicts.
 	id := uuid.NewV4().String()
 	c.MFKey = id
 	c.MFThing = id

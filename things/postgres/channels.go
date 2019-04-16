@@ -9,8 +9,10 @@ package postgres
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/things"
@@ -25,13 +27,13 @@ const (
 )
 
 type channelRepository struct {
-	db  *sql.DB
+	db  *sqlx.DB
 	log logger.Logger
 }
 
 // NewChannelRepository instantiates a PostgreSQL implementation of channel
 // repository.
-func NewChannelRepository(db *sql.DB, log logger.Logger) things.ChannelRepository {
+func NewChannelRepository(db *sqlx.DB, log logger.Logger) things.ChannelRepository {
 	return &channelRepository{
 		db:  db,
 		log: log,
@@ -39,15 +41,14 @@ func NewChannelRepository(db *sql.DB, log logger.Logger) things.ChannelRepositor
 }
 
 func (cr channelRepository) Save(channel things.Channel) (string, error) {
-	q := `INSERT INTO channels (id, owner, name, metadata) VALUES ($1, $2, $3, $4)`
+	q := `INSERT INTO channels (id, owner, name, metadata) VALUES (:id, :owner, :name, :metadata);`
 
-	metadata := channel.Metadata
-	if metadata == "" {
-		metadata = "{}"
+	dbch, err := toDBChannel(channel)
+	if err != nil {
+		return "", err
 	}
 
-	_, err := cr.db.Exec(q, channel.ID, channel.Owner, channel.Name, metadata)
-	if err != nil {
+	if _, err := cr.db.NamedExec(q, dbch); err != nil {
 		pqErr, ok := err.(*pq.Error)
 		if ok && errInvalid == pqErr.Code.Name() {
 			return "", things.ErrMalformedEntity
@@ -60,14 +61,14 @@ func (cr channelRepository) Save(channel things.Channel) (string, error) {
 }
 
 func (cr channelRepository) Update(channel things.Channel) error {
-	q := `UPDATE channels SET name = $1, metadata = $2 WHERE owner = $3 AND id = $4;`
+	q := `UPDATE channels SET name = :name, metadata = :metadata WHERE owner = :owner AND id = :id;`
 
-	metadata := channel.Metadata
-	if metadata == "" {
-		metadata = "{}"
+	dbch, err := toDBChannel(channel)
+	if err != nil {
+		return err
 	}
 
-	res, err := cr.db.Exec(q, channel.Name, metadata, channel.Owner, channel.ID)
+	res, err := cr.db.NamedExec(q, dbch)
 	if err != nil {
 		pqErr, ok := err.(*pq.Error)
 		if ok && errInvalid == pqErr.Code.Name() {
@@ -90,9 +91,12 @@ func (cr channelRepository) Update(channel things.Channel) error {
 }
 
 func (cr channelRepository) RetrieveByID(owner, id string) (things.Channel, error) {
-	q := `SELECT name, metadata FROM channels WHERE id = $1 AND owner = $2`
-	channel := things.Channel{ID: id, Owner: owner}
-	if err := cr.db.QueryRow(q, id, owner).Scan(&channel.Name, &channel.Metadata); err != nil {
+	q := `SELECT name, metadata FROM channels WHERE id = $1 AND owner = $2;`
+	dbch := dbChannel{
+		ID:    id,
+		Owner: owner,
+	}
+	if err := cr.db.QueryRowx(q, id, owner).StructScan(&dbch); err != nil {
 		empty := things.Channel{}
 		pqErr, ok := err.(*pq.Error)
 		if err == sql.ErrNoRows || ok && errInvalid == pqErr.Code.Name() {
@@ -101,33 +105,44 @@ func (cr channelRepository) RetrieveByID(owner, id string) (things.Channel, erro
 		return empty, err
 	}
 
-	return channel, nil
+	return toChannel(dbch)
 }
 
 func (cr channelRepository) RetrieveAll(owner string, offset, limit uint64) things.ChannelsPage {
-	q := `SELECT id, name, metadata FROM channels WHERE owner = $1 ORDER BY id LIMIT $2 OFFSET $3`
-	items := []things.Channel{}
+	q := `SELECT id, name, metadata FROM channels WHERE owner = :owner ORDER BY id LIMIT :limit OFFSET :offset;`
 
-	rows, err := cr.db.Query(q, owner, limit, offset)
+	params := map[string]interface{}{
+		"owner":  owner,
+		"limit":  limit,
+		"offset": offset,
+	}
+	rows, err := cr.db.NamedQuery(q, params)
 	if err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to retrieve channels due to %s", err))
 		return things.ChannelsPage{}
 	}
 	defer rows.Close()
 
+	items := []things.Channel{}
 	for rows.Next() {
-		c := things.Channel{Owner: owner}
-		if err = rows.Scan(&c.ID, &c.Name, &c.Metadata); err != nil {
+		dbch := dbChannel{Owner: owner}
+		if err := rows.StructScan(&dbch); err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to read retrieved channel due to %s", err))
 			return things.ChannelsPage{}
 		}
-		items = append(items, c)
+		ch, err := toChannel(dbch)
+		if err != nil {
+			cr.log.Error(fmt.Sprintf("Failed to read retrieved channel due to %s", err))
+			return things.ChannelsPage{}
+		}
+
+		items = append(items, ch)
 	}
 
-	q = `SELECT COUNT(*) FROM channels WHERE owner = $1`
+	q = `SELECT COUNT(*) FROM channels WHERE owner = $1;`
 
 	var total uint64
-	if err := cr.db.QueryRow(q, owner).Scan(&total); err != nil {
+	if err := cr.db.Get(&total, q, owner); err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to count channels due to %s", err))
 		return things.ChannelsPage{}
 	}
@@ -149,26 +164,40 @@ func (cr channelRepository) RetrieveByThing(owner, thing string, offset, limit u
 	      FROM channels ch
 	      INNER JOIN connections co
 		  ON ch.id = co.channel_id
-		  WHERE ch.owner = $1 AND co.thing_id = $2
+		  WHERE ch.owner = :owner AND co.thing_id = :thing
 		  ORDER BY ch.id
-		  LIMIT $3
-		  OFFSET $4`
-	items := []things.Channel{}
+		  LIMIT :limit
+		  OFFSET :offset`
 
-	rows, err := cr.db.Query(q, owner, thing, limit, offset)
+	params := map[string]interface{}{
+		"owner":  owner,
+		"thing":  thing,
+		"limit":  limit,
+		"offset": offset,
+	}
+
+	rows, err := cr.db.NamedQuery(q, params)
 	if err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to retrieve channels due to %s", err))
 		return things.ChannelsPage{}
 	}
 	defer rows.Close()
 
+	items := []things.Channel{}
 	for rows.Next() {
-		c := things.Channel{Owner: owner}
-		if err := rows.Scan(&c.ID, &c.Name, &c.Metadata); err != nil {
+		dbch := dbChannel{Owner: owner}
+		if err := rows.StructScan(&dbch); err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to read retrieved channel due to %s", err))
 			return things.ChannelsPage{}
 		}
-		items = append(items, c)
+
+		ch, err := toChannel(dbch)
+		if err != nil {
+			cr.log.Error(fmt.Sprintf("Failed to read retrieved channel due to %s", err))
+			return things.ChannelsPage{}
+		}
+
+		items = append(items, ch)
 	}
 
 	q = `SELECT COUNT(*)
@@ -178,7 +207,7 @@ func (cr channelRepository) RetrieveByThing(owner, thing string, offset, limit u
 	     WHERE ch.owner = $1 AND co.thing_id = $2`
 
 	var total uint64
-	if err := cr.db.QueryRow(q, owner, thing).Scan(&total); err != nil {
+	if err := cr.db.Get(&total, q, owner, thing); err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to count channels due to %s", err))
 		return things.ChannelsPage{}
 	}
@@ -194,15 +223,26 @@ func (cr channelRepository) RetrieveByThing(owner, thing string, offset, limit u
 }
 
 func (cr channelRepository) Remove(owner, id string) error {
-	q := `DELETE FROM channels WHERE id = $1 AND owner = $2`
-	cr.db.Exec(q, id, owner)
+	dbch := dbChannel{
+		ID:    id,
+		Owner: owner,
+	}
+	q := `DELETE FROM channels WHERE id = :id AND owner = :owner`
+	cr.db.NamedExec(q, dbch)
 	return nil
 }
 
 func (cr channelRepository) Connect(owner, chanID, thingID string) error {
-	q := `INSERT INTO connections (channel_id, channel_owner, thing_id, thing_owner) VALUES ($1, $2, $3, $2)`
+	q := `INSERT INTO connections (channel_id, channel_owner, thing_id, thing_owner) 
+	      VALUES (:channel, :owner, :thing, :owner);`
 
-	if _, err := cr.db.Exec(q, chanID, owner, thingID); err != nil {
+	conn := dbConnection{
+		Channel: chanID,
+		Thing:   thingID,
+		Owner:   owner,
+	}
+
+	if _, err := cr.db.NamedExec(q, conn); err != nil {
 		pqErr, ok := err.(*pq.Error)
 
 		if ok && errFK == pqErr.Code.Name() {
@@ -222,10 +262,16 @@ func (cr channelRepository) Connect(owner, chanID, thingID string) error {
 
 func (cr channelRepository) Disconnect(owner, chanID, thingID string) error {
 	q := `DELETE FROM connections
-	WHERE channel_id = $1 AND channel_owner = $2
-	AND thing_id = $3 AND thing_owner = $2`
+	      WHERE channel_id = :channel AND channel_owner = :owner
+	      AND thing_id = :thing AND thing_owner = :owner`
 
-	res, err := cr.db.Exec(q, chanID, owner, thingID)
+	conn := dbConnection{
+		Channel: chanID,
+		Thing:   thingID,
+		Owner:   owner,
+	}
+
+	res, err := cr.db.NamedExec(q, conn)
 	if err != nil {
 		return err
 	}
@@ -263,4 +309,45 @@ func (cr channelRepository) HasThing(chanID, key string) (string, error) {
 	}
 
 	return thingID, nil
+}
+
+type dbChannel struct {
+	ID       string `db:"id"`
+	Owner    string `db:"owner"`
+	Name     string `db:"name"`
+	Metadata string `db:"metadata"`
+}
+
+func toDBChannel(ch things.Channel) (dbChannel, error) {
+	data, err := json.Marshal(ch.Metadata)
+	if err != nil {
+		return dbChannel{}, err
+	}
+
+	return dbChannel{
+		ID:       ch.ID,
+		Owner:    ch.Owner,
+		Name:     ch.Name,
+		Metadata: string(data),
+	}, nil
+}
+
+func toChannel(ch dbChannel) (things.Channel, error) {
+	var metadata map[string]interface{}
+	if err := json.Unmarshal([]byte(ch.Metadata), &metadata); err != nil {
+		return things.Channel{}, err
+	}
+
+	return things.Channel{
+		ID:       ch.ID,
+		Owner:    ch.Owner,
+		Name:     ch.Name,
+		Metadata: metadata,
+	}, nil
+}
+
+type dbConnection struct {
+	Channel string `db:"channel"`
+	Thing   string `db:"thing"`
+	Owner   string `db:"owner"`
 }

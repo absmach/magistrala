@@ -21,7 +21,9 @@ import (
 	"github.com/mainflux/mainflux/writers/mongodb"
 
 	log "github.com/mainflux/mainflux/logger"
-	"github.com/mongodb/mongo-go-driver/mongo"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var (
@@ -42,14 +44,14 @@ func TestSave(t *testing.T) {
 		Protocol:   "http",
 		Name:       "test name",
 		Unit:       "km",
-		Value:      &mainflux.Message_FloatValue{24},
+		Value:      &mainflux.Message_FloatValue{FloatValue: 24},
 		ValueSum:   &mainflux.SumValue{Value: 24},
 		Time:       13451312,
 		UpdateTime: 5456565466,
 		Link:       "link",
 	}
 
-	client, err := mongo.Connect(context.Background(), addr, nil)
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(addr))
 	require.Nil(t, err, fmt.Sprintf("Creating new MongoDB client expected to succeed: %s.\n", err))
 
 	db := client.Database(testDB)
@@ -79,7 +81,7 @@ func TestSave(t *testing.T) {
 	}
 	assert.Nil(t, err, fmt.Sprintf("Save operation expected to succeed: %s.\n", err))
 
-	count, err := db.Collection(collection).Count(context.Background(), nil)
+	count, err := db.Collection(collection).CountDocuments(context.Background(), bson.D{})
 	assert.Nil(t, err, fmt.Sprintf("Querying database expected to succeed: %s.\n", err))
 	assert.Equal(t, int64(msgsNum), count, fmt.Sprintf("Expected to have %d value, found %d instead.\n", msgsNum, count))
 }

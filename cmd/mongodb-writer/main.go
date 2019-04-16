@@ -21,9 +21,10 @@ import (
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/writers"
 	"github.com/mainflux/mainflux/writers/mongodb"
-	"github.com/mongodb/mongo-go-driver/mongo"
-	"github.com/nats-io/go-nats"
+	nats "github.com/nats-io/go-nats"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 const (
@@ -66,7 +67,8 @@ func main() {
 	}
 	defer nc.Close()
 
-	client, err := mongo.Connect(context.Background(), fmt.Sprintf("mongodb://%s:%s", cfg.DBHost, cfg.DBPort), nil)
+	addr := fmt.Sprintf("mongodb://%s:%s", cfg.DBHost, cfg.DBPort)
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(addr))
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to database: %s", err))
 		os.Exit(1)

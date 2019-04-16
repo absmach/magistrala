@@ -1,3 +1,9 @@
+// Copyright (C) MongoDB, Inc. 2017-present.
+//
+// Licensed under the Apache License, Version 2.0 (the "License"); you may
+// not use this file except in compliance with the License. You may obtain
+// a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
 package command
 
 import (
@@ -115,7 +121,15 @@ func (w *Write) decodeOpMsg(wm wiremessage.WireMessage) {
 // Encode will encode this command into a wire message for the given server description.
 func (w *Write) Encode(desc description.SelectedServer) (wiremessage.WireMessage, error) {
 	cmd := w.Command.Copy()
-	err := addWriteConcern(cmd, w.WriteConcern)
+	var err error
+	if w.Session != nil && w.Session.TransactionStarting() {
+		// Starting transactions have a read concern, even in writes.
+		err = addReadConcern(cmd, desc, nil, w.Session)
+		if err != nil {
+			return nil, err
+		}
+	}
+	err = addWriteConcern(cmd, w.WriteConcern)
 	if err != nil {
 		return nil, err
 	}
@@ -130,10 +144,14 @@ func (w *Write) Encode(desc description.SelectedServer) (wiremessage.WireMessage
 		}
 	} else {
 		// only encode session ID for acknowledged writes
-		err = addSessionID(cmd, desc, w.Session)
+		err = addSessionFields(cmd, desc, w.Session)
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if w.Session != nil && w.Session.RetryWrite {
+		cmd.Append(bson.EC.Int64("txnNumber", w.Session.TxnNumber))
 	}
 
 	err = addClusterTime(cmd, desc, w.Session, w.Clock)
@@ -165,6 +183,11 @@ func (w *Write) Decode(desc description.SelectedServer, wm wiremessage.WireMessa
 	}
 
 	_ = updateClusterTimes(w.Session, w.Clock, w.result)
+
+	if writeconcern.AckWrite(w.WriteConcern) {
+		// don't update session operation time for unacknowledged write
+		_ = updateOperationTime(w.Session, w.result)
+	}
 	return w
 }
 
@@ -191,7 +214,11 @@ func (w *Write) RoundTrip(ctx context.Context, desc description.SelectedServer, 
 
 	err = rw.WriteWireMessage(ctx, wm)
 	if err != nil {
-		return nil, err
+		if _, ok := err.(Error); ok {
+			return nil, err
+		}
+		// Connection errors are transient
+		return nil, Error{Message: err.Error(), Labels: []string{TransientTransactionError, NetworkError}}
 	}
 
 	if msg, ok := wm.(wiremessage.Msg); ok {
@@ -203,7 +230,11 @@ func (w *Write) RoundTrip(ctx context.Context, desc description.SelectedServer, 
 
 	wm, err = rw.ReadWireMessage(ctx)
 	if err != nil {
-		return nil, err
+		if _, ok := err.(Error); ok {
+			return nil, err
+		}
+		// Connection errors are transient
+		return nil, Error{Message: err.Error(), Labels: []string{TransientTransactionError, NetworkError}}
 	}
 
 	if w.Session != nil {

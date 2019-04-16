@@ -121,13 +121,13 @@ func (es eventStore) Bootstrap(externalKey, externalID string) (bootstrap.Config
 	cfg, err := es.svc.Bootstrap(externalKey, externalID)
 
 	ev := bootstrapEvent{
-		externalID:  externalID,
-		timestamp:   time.Now(),
-		successfull: true,
+		externalID: externalID,
+		timestamp:  time.Now(),
+		success:    true,
 	}
 
 	if err != nil {
-		ev.successfull = false
+		ev.success = false
 	}
 
 	es.add(ev)

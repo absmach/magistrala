@@ -442,7 +442,7 @@ new `create` event. This event will have the following format:
    12) "1555404899"
    13) "operation"
    14) "config.create"
-   15) "id"
+   15) "thing_id"
    16) "63a110d4-2b77-48d2-aa46-2582681eeb82"
 ```
 
@@ -457,7 +457,7 @@ new `update` event. This event will have the following format:
     4) "1555405104"
     5) "operation"
     6) "config.update"
-    7) "id"
+    7) "thing_id"
     8) "63a110d4-2b77-48d2-aa46-2582681eeb82"
     9) "name"
    10) "weio"
@@ -468,7 +468,7 @@ Whenever configuration is removed, `bootstrap` service will generate and publish
 new `remove` event. This event will have the following format:
 ```
 1) "1555405464328-0"
-2) 1) "id"
+2) 1) "thing_id"
    2) "63a110d4-2b77-48d2-aa46-2582681eeb82"
    3) "timestamp"
    4) "1555405464"
@@ -483,7 +483,7 @@ new `bootstrap` event. This event will have the following format:
 1) "1555405173785-0"
 2) 1) "externalID"
    2) "9c:b6:d:eb:9f:fd"
-   3) "successful"
+   3) "success"
    4) "1"
    5) "timestamp"
    6) "1555405173"
@@ -496,7 +496,7 @@ Whenever thing's state changes, `bootstrap` service will generate and publish
 new `change state` event. This event will have the following format:
 ```
 1) "1555405294806-0"
-2) 1) "id"
+2) 1) "thing_id"
    2) "63a110d4-2b77-48d2-aa46-2582681eeb82"
    3) "state"
    4) "0"
@@ -513,7 +513,7 @@ and publish new `update connections` event. This event will have the following f
 1) "1555405373360-0"
 2) 1) "operation"
    2) "thing.update_connections"
-   3) "id"
+   3) "thing_id"
    4) "63a110d4-2b77-48d2-aa46-2582681eeb82"
    5) "channels"
    6) "ff13ca9c-7322-4c28-a25c-4fe5c7b753fc, 925461e6-edfb-4755-9242-8a57199b90a5, c3642289-501d-4974-82f2-ecccc71b2d82"

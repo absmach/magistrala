@@ -51,7 +51,7 @@ type createConfigEvent struct {
 
 func (cce createConfigEvent) encode() map[string]interface{} {
 	return map[string]interface{}{
-		"id":          cce.mfThing,
+		"thing_id":    cce.mfThing,
 		"owner":       cce.owner,
 		"name":        cce.name,
 		"channels":    strings.Join(cce.mfChannels, ", "),
@@ -71,7 +71,7 @@ type updateConfigEvent struct {
 
 func (uce updateConfigEvent) encode() map[string]interface{} {
 	return map[string]interface{}{
-		"id":        uce.mfThing,
+		"thing_id":  uce.mfThing,
 		"name":      uce.name,
 		"content":   uce.content,
 		"timestamp": uce.timestamp.Unix(),
@@ -86,22 +86,22 @@ type removeConfigEvent struct {
 
 func (rce removeConfigEvent) encode() map[string]interface{} {
 	return map[string]interface{}{
-		"id":        rce.mfThing,
+		"thing_id":  rce.mfThing,
 		"timestamp": rce.timestamp.Unix(),
 		"operation": configRemove,
 	}
 }
 
 type bootstrapEvent struct {
-	externalID  string
-	successfull bool
-	timestamp   time.Time
+	externalID string
+	success    bool
+	timestamp  time.Time
 }
 
 func (be bootstrapEvent) encode() map[string]interface{} {
 	return map[string]interface{}{
 		"external_id": be.externalID,
-		"successfull": be.successfull,
+		"success":     be.success,
 		"timestamp":   be.timestamp.Unix(),
 		"operation":   thingBootstrap,
 	}
@@ -115,7 +115,7 @@ type changeStateEvent struct {
 
 func (cse changeStateEvent) encode() map[string]interface{} {
 	return map[string]interface{}{
-		"id":        cse.mfThing,
+		"thing_id":  cse.mfThing,
 		"state":     cse.state.String(),
 		"timestamp": cse.timestamp.Unix(),
 		"operation": thingStateChange,
@@ -130,7 +130,7 @@ type updateConnectionsEvent struct {
 
 func (uce updateConnectionsEvent) encode() map[string]interface{} {
 	return map[string]interface{}{
-		"id":        uce.mfThing,
+		"thing_id":  uce.mfThing,
 		"channels":  strings.Join(uce.mfChannels, ", "),
 		"timestamp": uce.timestamp.Unix(),
 		"operation": thingUpdateConnections,

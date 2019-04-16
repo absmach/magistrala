@@ -119,7 +119,7 @@ func TestAdd(t *testing.T) {
 			key:    validToken,
 			err:    nil,
 			event: map[string]interface{}{
-				"id":          "1",
+				"thing_id":    "1",
 				"owner":       email,
 				"name":        config.Name,
 				"channels":    strings.Join(channels, ", "),
@@ -214,7 +214,7 @@ func TestUpdate(t *testing.T) {
 			key:    validToken,
 			err:    nil,
 			event: map[string]interface{}{
-				"id":        modified.MFThing,
+				"thing_id":  modified.MFThing,
 				"name":      modified.Name,
 				"content":   modified.Content,
 				"timestamp": strconv.FormatInt(time.Now().Unix(), 10),
@@ -279,7 +279,7 @@ func TestUpdateConnections(t *testing.T) {
 			connections: []string{"2"},
 			err:         nil,
 			event: map[string]interface{}{
-				"id":        saved.MFThing,
+				"thing_id":  saved.MFThing,
 				"channels":  "2",
 				"timestamp": strconv.FormatInt(time.Now().Unix(), 10),
 				"operation": thingUpdateConnections,
@@ -362,7 +362,7 @@ func TestRemove(t *testing.T) {
 			key:  validToken,
 			err:  nil,
 			event: map[string]interface{}{
-				"id":        saved.MFThing,
+				"thing_id":  saved.MFThing,
 				"timestamp": strconv.FormatInt(time.Now().Unix(), 10),
 				"operation": configRemove,
 			},
@@ -426,7 +426,7 @@ func TestBootstrap(t *testing.T) {
 			err:         nil,
 			event: map[string]interface{}{
 				"external_id": saved.ExternalID,
-				"successfull": "1",
+				"success":     "1",
 				"timestamp":   strconv.FormatInt(time.Now().Unix(), 10),
 				"operation":   thingBootstrap,
 			},
@@ -438,7 +438,7 @@ func TestBootstrap(t *testing.T) {
 			err:         bootstrap.ErrNotFound,
 			event: map[string]interface{}{
 				"external_id": saved.ExternalID,
-				"successfull": "0",
+				"success":     "0",
 				"timestamp":   strconv.FormatInt(time.Now().Unix(), 10),
 				"operation":   thingBootstrap,
 			},
@@ -496,7 +496,7 @@ func TestChangeState(t *testing.T) {
 			state: bootstrap.Active,
 			err:   nil,
 			event: map[string]interface{}{
-				"id":        saved.MFThing,
+				"thing_id":  saved.MFThing,
 				"state":     bootstrap.Active.String(),
 				"timestamp": strconv.FormatInt(time.Now().Unix(), 10),
 				"operation": thingStateChange,

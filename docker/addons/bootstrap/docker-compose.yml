@@ -15,13 +15,6 @@ services:
       POSTGRES_DB: bootstrap
     networks:
       - docker_mainflux-base-net
-  
-  bootstrap-redis:
-    image: redis:5.0-alpine
-    container_name: mainflux-bootstrap-redis
-    restart: on-failure
-    networks:
-      - docker_mainflux-base-net
 
   bootstrap:
     image: mainflux/bootstrap:latest
@@ -42,7 +35,7 @@ services:
       MF_BOOTSTRAP_PORT: 8200
       MF_SDK_BASE_URL: http://mainflux-things:8182
       MF_USERS_URL: mainflux-users:8181
-      MF_THINGS_ES_URL: things-redis:6379
-      MF_BOOTSTRAP_ES_URL: bootstrap-redis:6379
+      MF_THINGS_ES_URL: es-redis:6379
+      MF_BOOTSTRAP_ES_URL: es-redis:6379
     networks:
       - docker_mainflux-base-net

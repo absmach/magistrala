@@ -25,7 +25,7 @@ services:
     restart: on-failure
     environment:
       MF_LORA_ADAPTER_LOG_LEVEL: debug
-      MF_THINGS_ES_URL: things-redis:6379
+      MF_THINGS_ES_URL: es-redis:6379
       MF_LORA_ADAPTER_ROUTEMAP_URL: lora-redis:6379
       MF_LORA_ADAPTER_MESSAGES_URL: tcp://lora.mqtt.mainflux.io:1883
       MF_LORA_ADAPTER_HTTP_PORT: 8187

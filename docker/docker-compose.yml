@@ -105,7 +105,7 @@ services:
       MF_THINGS_DB_PASS: mainflux
       MF_THINGS_DB: things
       MF_THINGS_CACHE_URL: things-redis:6379
-      MF_THINGS_ES_URL: things-redis:6379
+      MF_THINGS_ES_URL: es-redis:6379
       MF_THINGS_HTTP_PORT: 8182
       MF_THINGS_GRPC_PORT: 8183
       MF_USERS_URL: users:8181
@@ -178,6 +178,13 @@ services:
     networks:
       - mainflux-base-net
 
+  es-redis:
+    image: redis:5.0-alpine
+    container_name: mainflux-es-redis
+    restart: on-failure
+    networks:
+      - mainflux-base-net
+
   mqtt-redis:
     image: redis:5.0-alpine
     container_name: mainflux-mqtt-redis
@@ -199,6 +206,7 @@ services:
       MF_MQTT_ADAPTER_PORT: 1883
       MF_MQTT_ADAPTER_WS_PORT: 8880
       MF_MQTT_ADAPTER_REDIS_HOST: mqtt-redis
+      MF_MQTT_ADAPTER_ES_HOST: es-redis
       MF_NATS_URL: nats://nats:4222
       MF_THINGS_URL: things:8183
     ports:

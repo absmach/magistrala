@@ -6,7 +6,7 @@
 'use strict';
 
 var http = require('http'),
-    redis = require("redis"),
+    redis = require('redis'),
     net = require('net'),
     protobuf = require('protocol-buffers'),
     websocket = require('websocket-stream'),
@@ -27,6 +27,10 @@ var config = {
         redis_host: process.env.MF_MQTT_ADAPTER_REDIS_HOST || 'localhost',
         redis_pass: process.env.MF_MQTT_ADAPTER_REDIS_PASS || 'mqtt',
         redis_db: Number(process.env.MF_MQTT_ADAPTER_REDIS_DB) || 0,
+        es_port: Number(process.env.MF_MQTT_ADAPTER_ES_PORT) || 6379,
+        es_host: process.env.MF_MQTT_ADAPTER_ES_HOST || 'localhost',
+        es_pass: process.env.MF_MQTT_ADAPTER_ES_PASS || 'mqtt',
+        es_db: Number(process.env.MF_MQTT_ADAPTER_ES_DB) || 0,
         client_tls: (process.env.MF_MQTT_ADAPTER_CLIENT_TLS == 'true') || false,
     	ca_certs: process.env.MF_MQTT_ADAPTER_CA_CERTS || '',
         concurrency: Number(process.env.MF_MQTT_CONCURRENT_MESSAGES) || 100,
@@ -63,7 +67,12 @@ var config = {
         }
         return new thingsSchema.ThingsService(config.auth_url, certs);
     })(),
-    esclient = redis.createClient(config.redis_port, config.redis_host),
+    esclient = redis.createClient({
+        port: config.es_port, 
+        host: config.es_host,
+        password: config.es_pass,
+        db: config.es_db
+    }),
     servers = [
         startMqtt(),
         startWs()
@@ -76,6 +85,10 @@ logging({
 });
 
 logger.level(config.log_level);
+
+esclient.on('error', function(err) {
+    logger.warn('error on redis connection: %s', err.message);
+});
 
 // MQTT over WebSocket
 function startWs() {
@@ -183,7 +196,7 @@ aedes.authorizeSubscribe = function (client, packet, subscribe) {
                 logger.info('authorized subscribe');
                 subscribe(null, packet);
             } else {
-                logger.warn('unauthorized subscribe: %s', err);
+                logger.warn('unauthorized subscribe: %s', err.message);
                 subscribe(4, packet); // Bad username or password
             }
         };
@@ -222,6 +235,10 @@ aedes.on('clientError', function (client, err) {
 
 aedes.on('connectionError', function (client, err) {
     logger.warn('client error: client: %s, error: %s', client.id, err.message);
+});
+
+aedes.on('error', function(err) {
+    logger.warn('aedes error: %s', err.message);
 });
 
 function publishConnEvent(id, type) {

@@ -279,7 +279,7 @@ By fetching and processing these events you can reconstruct `things` service sta
 If you store some of your custom data in `metadata` field, this is the perfect 
 way to fetch it and process it. If you want to integrate through 
 [docker-compose.yml](https://github.com/mainflux/mainflux/blob/master/docker/docker-compose.yml)
-you can use `mainflux-things-redis` service. Just connect to it and consume events 
+you can use `mainflux-es-redis` service. Just connect to it and consume events 
 from Redis Stream named `mainflux.things`.
 
 #### Thing create event
@@ -420,7 +420,7 @@ the following event types:
 
 If you want to integrate through 
 [docker-compose.yml](https://github.com/mainflux/mainflux/blob/master/docker/addons/bootstrap/docker-compose.yml)
-you can use `mainflux-bootstrap-redis` service. Just connect to it and consume events 
+you can use `mainflux-es-redis` service. Just connect to it and consume events 
 from Redis Stream named `mainflux.bootstrap`.
 
 #### Configuration create event
@@ -534,7 +534,7 @@ Events that are coming from MQTT adapter have following fields:
 
 If you want to integrate through 
 [docker-compose.yml](https://github.com/mainflux/mainflux/blob/master/docker/docker-compose.yml)
-you can use `mainflux-mqtt-redis` service. Just connect to it and consume events 
+you can use `mainflux-es-redis` service. Just connect to it and consume events 
 from Redis Stream named `mainflux.mqtt`.
 
 Example of connect event:

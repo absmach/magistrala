@@ -339,7 +339,7 @@ func TestUpdateConnections(t *testing.T) {
 	c.ExternalID = id
 	c.ExternalKey = id
 	c.MFChannels = []bootstrap.Channel{}
-	_, err = repo.Save(c, []string{channels[0]})
+	c2, err := repo.Save(c, []string{channels[0]})
 	require.Nil(t, err, fmt.Sprintf("Saving a config expected to succeed: %s.\n", err))
 
 	cases := []struct {
@@ -364,6 +364,14 @@ func TestUpdateConnections(t *testing.T) {
 			id:          c.MFThing,
 			channels:    nil,
 			connections: []string{channels[1]},
+			err:         nil,
+		},
+		{
+			desc:        "update connections with existing channels",
+			key:         config.Owner,
+			id:          c2,
+			channels:    nil,
+			connections: channels,
 			err:         nil,
 		},
 		{

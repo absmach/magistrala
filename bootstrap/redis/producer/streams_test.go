@@ -29,12 +29,13 @@ import (
 )
 
 const (
-	streamID    = "mainflux.bootstrap"
-	email       = "user@example.com"
-	validToken  = "validToken"
-	unknownID   = "1"
-	unknownKey  = "2"
-	channelsNum = 3
+	streamID      = "mainflux.bootstrap"
+	email         = "user@example.com"
+	validToken    = "validToken"
+	unknownID     = "1"
+	unknownKey    = "2"
+	channelsNum   = 3
+	defaultTimout = 5
 
 	configPrefix = "config."
 	configCreate = configPrefix + "create"
@@ -125,7 +126,7 @@ func TestAdd(t *testing.T) {
 				"channels":    strings.Join(channels, ", "),
 				"external_id": config.ExternalID,
 				"content":     config.Content,
-				"timestamp":   strconv.FormatInt(time.Now().Unix(), 10),
+				"timestamp":   time.Now().Unix(),
 				"operation":   configCreate,
 			},
 		},
@@ -156,7 +157,7 @@ func TestAdd(t *testing.T) {
 			lastID = msg.ID
 		}
 
-		assert.Equal(t, tc.event, event, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.event, event))
+		test(t, tc.event, event, tc.desc)
 	}
 }
 
@@ -217,7 +218,7 @@ func TestUpdate(t *testing.T) {
 				"thing_id":  modified.MFThing,
 				"name":      modified.Name,
 				"content":   modified.Content,
-				"timestamp": strconv.FormatInt(time.Now().Unix(), 10),
+				"timestamp": time.Now().Unix(),
 				"operation": configUpdate,
 			},
 		},
@@ -248,7 +249,7 @@ func TestUpdate(t *testing.T) {
 			lastID = msg.ID
 		}
 
-		assert.Equal(t, tc.event, event, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.event, event))
+		test(t, tc.event, event, tc.desc)
 	}
 }
 
@@ -281,7 +282,7 @@ func TestUpdateConnections(t *testing.T) {
 			event: map[string]interface{}{
 				"thing_id":  saved.MFThing,
 				"channels":  "2",
-				"timestamp": strconv.FormatInt(time.Now().Unix(), 10),
+				"timestamp": time.Now().Unix(),
 				"operation": thingUpdateConnections,
 			},
 		},
@@ -313,7 +314,7 @@ func TestUpdateConnections(t *testing.T) {
 			lastID = msg.ID
 		}
 
-		assert.Equal(t, tc.event, event, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.event, event))
+		test(t, tc.event, event, tc.desc)
 	}
 }
 func TestList(t *testing.T) {
@@ -363,7 +364,7 @@ func TestRemove(t *testing.T) {
 			err:  nil,
 			event: map[string]interface{}{
 				"thing_id":  saved.MFThing,
-				"timestamp": strconv.FormatInt(time.Now().Unix(), 10),
+				"timestamp": time.Now().Unix(),
 				"operation": configRemove,
 			},
 		},
@@ -394,7 +395,7 @@ func TestRemove(t *testing.T) {
 			lastID = msg.ID
 		}
 
-		assert.Equal(t, tc.event, event, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.event, event))
+		test(t, tc.event, event, tc.desc)
 	}
 }
 
@@ -427,7 +428,7 @@ func TestBootstrap(t *testing.T) {
 			event: map[string]interface{}{
 				"external_id": saved.ExternalID,
 				"success":     "1",
-				"timestamp":   strconv.FormatInt(time.Now().Unix(), 10),
+				"timestamp":   time.Now().Unix(),
 				"operation":   thingBootstrap,
 			},
 		},
@@ -439,7 +440,7 @@ func TestBootstrap(t *testing.T) {
 			event: map[string]interface{}{
 				"external_id": saved.ExternalID,
 				"success":     "0",
-				"timestamp":   strconv.FormatInt(time.Now().Unix(), 10),
+				"timestamp":   time.Now().Unix(),
 				"operation":   thingBootstrap,
 			},
 		},
@@ -463,7 +464,7 @@ func TestBootstrap(t *testing.T) {
 			lastID = msg.ID
 		}
 
-		assert.Equal(t, tc.event, event, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.event, event))
+		test(t, tc.event, event, tc.desc)
 	}
 }
 
@@ -498,7 +499,7 @@ func TestChangeState(t *testing.T) {
 			event: map[string]interface{}{
 				"thing_id":  saved.MFThing,
 				"state":     bootstrap.Active.String(),
-				"timestamp": strconv.FormatInt(time.Now().Unix(), 10),
+				"timestamp": time.Now().Unix(),
 				"operation": thingStateChange,
 			},
 		},
@@ -530,6 +531,19 @@ func TestChangeState(t *testing.T) {
 			lastID = msg.ID
 		}
 
-		assert.Equal(t, tc.event, event, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.event, event))
+		test(t, tc.event, event, tc.desc)
+	}
+}
+
+func test(t *testing.T, expected, actual map[string]interface{}, description string) {
+	if expected != nil && actual != nil {
+		ts1 := expected["timestamp"].(int64)
+		ts2, err := strconv.ParseInt(actual["timestamp"].(string), 10, 64)
+		require.Nil(t, err, fmt.Sprintf("%s: expected to get a valid timestamp, got %s", description, err))
+		val := ts1 == ts2 || ts2 <= ts1+defaultTimout
+		assert.True(t, val, fmt.Sprintf("%s: timestamp is not in valid range", description))
+		delete(expected, "timestamp")
+		delete(actual, "timestamp")
+		assert.Equal(t, expected, actual, fmt.Sprintf("%s: expected %v got %v\n", description, expected, actual))
 	}
 }

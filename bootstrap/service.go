@@ -117,7 +117,7 @@ func (bs bootstrapService) Add(key string, cfg Config) (Config, error) {
 
 	toConnect := bs.toIDList(cfg.MFChannels)
 
-	// Check if channels exist. This is the way to prevent invalid configuration to be saved.
+	// Check if channels exist. This is the way to prevent fetching channels that already exist.
 	existing, err := bs.configs.ListExisting(owner, toConnect)
 	if err != nil {
 		return Config{}, err
@@ -187,7 +187,14 @@ func (bs bootstrapService) UpdateConnections(key, id string, connections []strin
 	}
 
 	add, remove := bs.updateList(cfg, connections)
-	channels, err := bs.updateChannels(add, key)
+
+	// Check if channels exist. This is the way to prevent fetching channels that already exist.
+	existing, err := bs.configs.ListExisting(owner, connections)
+	if err != nil {
+		return err
+	}
+
+	channels, err := bs.connectionChannels(connections, bs.toIDList(existing), key)
 	if err != nil {
 		return err
 	}
@@ -347,6 +354,35 @@ func (bs bootstrapService) thing(key, id string) (mfsdk.Thing, error) {
 	return thing, nil
 }
 
+func (bs bootstrapService) connectionChannels(channels, existing []string, key string) ([]Channel, error) {
+	add := make(map[string]bool, len(channels))
+	for _, ch := range channels {
+		add[ch] = true
+	}
+
+	for _, ch := range existing {
+		if add[ch] == true {
+			delete(add, ch)
+		}
+	}
+
+	var ret []Channel
+	for id := range add {
+		ch, err := bs.sdk.Channel(id, key)
+		if err != nil {
+			return nil, ErrMalformedEntity
+		}
+
+		ret = append(ret, Channel{
+			ID:       ch.ID,
+			Name:     ch.Name,
+			Metadata: ch.Metadata,
+		})
+	}
+
+	return ret, nil
+}
+
 // Method updateList accepts config and channel IDs and returns three lists:
 // 1) IDs of Channels to be added
 // 2) IDs of Channels to be removed
@@ -382,51 +418,4 @@ func (bs bootstrapService) toIDList(channels []Channel) []string {
 	}
 
 	return ret
-}
-
-func (bs bootstrapService) updateChannels(add []string, key string) ([]Channel, error) {
-	var ret []Channel
-	for _, id := range add {
-		ch, err := bs.sdk.Channel(id, key)
-		if err != nil {
-			return []Channel{}, ErrMalformedEntity
-		}
-
-		ret = append(ret, Channel{
-			ID:       ch.ID,
-			Name:     ch.Name,
-			Metadata: ch.Metadata,
-		})
-	}
-
-	return ret, nil
-}
-
-func (bs bootstrapService) connectionChannels(channels, existing []string, key string) ([]Channel, error) {
-	add := make(map[string]bool, len(channels))
-	for _, ch := range channels {
-		add[ch] = true
-	}
-
-	for _, ch := range existing {
-		if add[ch] == true {
-			delete(add, ch)
-		}
-	}
-
-	var ret []Channel
-	for id := range add {
-		ch, err := bs.sdk.Channel(id, key)
-		if err != nil {
-			return nil, ErrMalformedEntity
-		}
-
-		ret = append(ret, Channel{
-			ID:       ch.ID,
-			Name:     ch.Name,
-			Metadata: ch.Metadata,
-		})
-	}
-
-	return ret, nil
 }

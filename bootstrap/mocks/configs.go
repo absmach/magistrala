@@ -171,6 +171,7 @@ func (crm *configRepositoryMock) UpdateConnections(key, id string, channels []bo
 	if !ok {
 		return bootstrap.ErrNotFound
 	}
+
 	for _, ch := range channels {
 		crm.channels[ch.ID] = ch
 	}

@@ -65,7 +65,7 @@ make docker_http
 
 > N.B. Mainflux creates `FROM scratch` docker containers which are compact and small in size.
 
-> N.B. The `things-db` and `users-db` containers are built from a vanilla PostgreSQL docker image downloaded from docker hub which does not persist the data when these containers are rebuilt. Thus, __rebuilding of all docker containers with `make dockers` or rebuilding the `things-db` and `users-db` containers separately with `make docker_things-db` and `make docker_users-db` respectively, will cause data loss. All your users, things, channels and connections between them will be lost!__ As we use this setup only for development, we don't guarantee any permanent data persistence. If you need to retain the data between the container rebuilds you can attach volume to the `things-db` and `users-db` containers. Check the official docs on how to use volumes [here](https://docs.docker.com/storage/volumes/) and [here](https://docs.docker.com/compose/compose-file/#volumes). For examples on how to add persistent volumes check the [Overriding the default docker-compose configuration](#overriding-the-default-docker-compose-configuration) section.
+> N.B. The `things-db` and `users-db` containers are built from a vanilla PostgreSQL docker image downloaded from docker hub which does not persist the data when these containers are rebuilt. Thus, __rebuilding of all docker containers with `make dockers` or rebuilding the `things-db` and `users-db` containers separately with `make docker_things-db` and `make docker_users-db` respectively, will cause data loss. All your users, things, channels and connections between them will be lost!__ As we use this setup only for development, we don't guarantee any permanent data persistence. If you want to update your Mainflux dockerized installation and want to keep your data, use `make spv=true cleandocker` to clean the containers and images and keep the data and then `make run` to update the images and the containers. Check the [Cleaning up your dockerized Mainflux setup](#cleaning-up-your-dockerized-mainflux-setup) section for details. Please note that this kind of updating might not work if there are database changes.
 
 #### Building Docker images for development
 
@@ -85,56 +85,34 @@ Commands `make dockers` and `make dockers_dev` are similar. The main difference 
 
 ### Overriding the default docker-compose configuration
 Sometimes, depending on the use case and the user's needs it might be useful to override or add some extra parameters to the docker-compose configuration. These configuration changes can be done by specifying multiple compose files with the [docker-compose command line option -f](https://docs.docker.com/compose/reference/overview/) as described [here](https://docs.docker.com/compose/extends/).
-The following format of the `docker-compose` can be used to extend or override the configuration:
+The following format of the `docker-compose` command can be used to extend or override the configuration:
 ```
 docker-compose -f docker/docker-compose.yml -f docker/docker-compose.custom1.yml -f docker/docker-compose.custom2.yml up [-d]
 ```
 In the command above each successive file overrides the previous parameters.
 
-A practical example in our case would be to add persistent volumes to the users-db, things-db, influxdb and grafana containers so that we don't loose data between updates of Mainflux. The volumes are mapped to the default location on the host machine, something like `/var/lib/docker/volumes/project-name_volume-name`:
+A practical example in our case would be to enable debugging and tracing in NATS so that we can see better how are the messages moving around.
 
+`docker-compose.nats-debugging.yml`
 ```yaml
-# docker/docker-compose.persistence.yml
 version: "3"
 
-volumes:
-  mainflux-users-db-volume:
-  mainflux-things-db-volume:
-
 services:
-  users-db:
-    volumes:
-      - mainflux-users-db-volume:/var/lib/postgresql/data
-
-  things-db:
-    volumes:
-      - mainflux-things-db-volume:/var/lib/postgresql/data
+  nats:
+    command: --debug -DV
 ```
 
-```yaml
-# docker/addons/influxdb-writer/docker-compose.persistence.yml
-version: "3"
-
-volumes:
-  influxdb-volume:
-  grafana-volume:
-
-services:
-  influxdb:
-    volumes:
-      - influxdb-volume:/var/lib/influxdb
-
-  grafana:
-    volumes:
-      - grafana-volume:/var/lib/grafana
-```
 When we have the override files in place, to compose the whole infrastructure including the persistent volumes we can execute:
 ```
-docker-compose -f docker/docker-compose.yml -f docker/docker-compose.persistence.yml up -d
-docker-compose -f docker/addons/influxdb-writer/docker-compose.yml -f docker/addons/influxdb-writer/docker-compose.persistence.yml up -d
+docker-compose -f docker/docker-compose.yml -f docker/docker-compose.nats-debugging.yml up -d
 ```
 
-__Note:__ Please store your customizations to some folder outside the Mainflux's source folder and maybe add them to some other git repository. You can always apply your customizations by pointing to the right file using `docker-compose -f ...`. Also be sure not to use the `make cleandocker` and `make cleanghost` as they might delete something which you don't want to delete (i.e. the newly created persistent volumes).
+__Note:__ Please store your customizations to some folder outside the Mainflux's source folder and maybe add them to some other git repository. You can always apply your customizations by pointing to the right file using `docker-compose -f ...`.
+
+
+### Cleaning up your dockerized Mainflux setup
+If you want to clean your whole dockerized Mainflux installation you can use the `make cleandocker` command. Please note that __by default the `make cleandocker` command will stop and delete all of the containers, images and persistent volumes__. If you want to keep gathered data in the system (the persistent volumes) please use the following command `make spv=true cleandocker` (spv = skip persistent volumes). This form of the command will stop and delete the containers and images, but won't delete the persistent volumes.
+
 
 ### MQTT Microservice
 The MQTT Microservice in Mainflux is special, as it is currently the only microservice written in NodeJS. It is not compiled, but node modules need to be downloaded in order to start the service:

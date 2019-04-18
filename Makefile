@@ -30,23 +30,25 @@ clean:
 	rm -rf ${BUILD_DIR}
 	rm -rf mqtt/node_modules
 
-cleandocker: cleanghost
+cleandocker:
 	# Stop all containers (if running)
 	docker-compose -f docker/docker-compose.yml stop
 	# Remove mainflux containers
 	docker ps -f name=mainflux -aq | xargs -r docker rm
+
+	# Remove exited containers
+	docker ps -f name=mainflux -f status=dead -f status=exited -aq | xargs -r docker rm -v
+
+	# Remove unused images
+	docker images "mainflux\/*" -f dangling=true -q | xargs -r docker rmi
+
 	# Remove old mainflux images
 	docker images -q mainflux\/* | xargs -r docker rmi
 
-# Clean ghost docker images
-cleanghost:
-	# Remove exited containers
-	docker ps -f status=dead -f status=exited -aq | xargs -r docker rm -v
-	# Remove unused images
-	docker images -f dangling=true -q | xargs -r docker rmi
+ifndef spv
 	# Remove unused volumes
-	docker volume ls -f dangling=true -q | xargs -r docker volume rm
-
+	docker volume ls -f name=mainflux -f dangling=true -q | xargs -r docker volume rm
+endif
 install:
 	cp ${BUILD_DIR}/* $(GOBIN)
 

@@ -12,6 +12,9 @@ networks:
   docker_mainflux-base-net:
     external: true
 
+volumes:
+  mainflux-cassandra-volume:
+
 services:
   cassandra:
     image: cassandra:3.11.3
@@ -21,6 +24,8 @@ services:
       - docker_mainflux-base-net
     ports:
       - 9042:9042
+    volumes:
+      - mainflux-cassandra-volume:/var/lib/cassandra
 
   cassandra-writer:
     image: mainflux/cassandra-writer:latest

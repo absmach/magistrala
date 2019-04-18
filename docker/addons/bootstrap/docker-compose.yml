@@ -4,6 +4,9 @@ networks:
   docker_mainflux-base-net:
     external: true
 
+volumes:
+  mainflux-bootstrap-db-volume:
+
 services:
   bootstrap-db:
     image: postgres:10.2-alpine
@@ -15,6 +18,8 @@ services:
       POSTGRES_DB: bootstrap
     networks:
       - docker_mainflux-base-net
+    volumes:
+      - mainflux-bootstrap-db-volume:/var/lib/postgresql/data
 
   bootstrap:
     image: mainflux/bootstrap:latest

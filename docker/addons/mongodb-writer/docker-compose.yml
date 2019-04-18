@@ -13,6 +13,10 @@ networks:
   docker_mainflux-base-net:
     external: true
 
+volumes:
+  mainflux-mongodb-db-volume:
+  mainflux-mongodb-configdb-volume:
+
 services:
   mongodb:
     image: mongo:3.6-jessie
@@ -24,6 +28,9 @@ services:
       - 27017:27017
     networks:
       - docker_mainflux-base-net
+    volumes:
+      - mainflux-mongodb-db-volume:/data/db
+      - mainflux-mongodb-configdb-volume:/data/configdb
 
   mongodb-writer:
     image: mainflux/mongodb-writer:latest

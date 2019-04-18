@@ -12,6 +12,13 @@ networks:
   mainflux-base-net:
     driver: bridge
 
+volumes:
+  mainflux-users-db-volume:
+  mainflux-things-db-volume:
+  mainflux-mqtt-redis-volume:
+  mainflux-things-redis-volume:
+  mainflux-es-redis-volume:
+
 services:
   nginx:
     image: nginx:1.14.2
@@ -48,6 +55,8 @@ services:
       POSTGRES_DB: users
     networks:
       - mainflux-base-net
+    volumes:
+      - mainflux-users-db-volume:/var/lib/postgresql/data
 
   users:
     image: mainflux/users:latest
@@ -82,6 +91,8 @@ services:
       POSTGRES_DB: things
     networks:
       - mainflux-base-net
+    volumes:
+      - mainflux-things-db-volume:/var/lib/postgresql/data
 
   things-redis:
     image: redis:5.0-alpine
@@ -89,6 +100,8 @@ services:
     restart: on-failure
     networks:
       - mainflux-base-net
+    volumes:
+      - mainflux-things-redis-volume:/data
 
   things:
     image: mainflux/things:latest
@@ -184,6 +197,8 @@ services:
     restart: on-failure
     networks:
       - mainflux-base-net
+    volumes:
+      - mainflux-es-redis-volume:/data
 
   mqtt-redis:
     image: redis:5.0-alpine
@@ -191,6 +206,8 @@ services:
     restart: on-failure
     networks:
       - mainflux-base-net
+    volumes:
+      - mainflux-mqtt-redis-volume:/data
 
   mqtt-adapter:
     image: mainflux/mqtt:latest

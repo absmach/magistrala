@@ -407,29 +407,23 @@ dashboard model =
 
 cardList : Model -> List (Card.Config Msg)
 cardList model =
-    [ Card.config
-        [ Card.secondary
-        , Card.textColor Text.white
-        ]
-        |> Card.headerH3 [] [ text "Version" ]
+    [ Card.config []
+        |> Card.headerH3 [] [ div [ class "table_header" ] [ i [ style "margin-right" "15px", class faIcons.version ] [], text "Version" ] ]
         |> Card.block []
             [ Block.titleH4 [] [ text model.dashboard.version ] ]
-    , Card.config
-        [ Card.info
-        , Card.textColor Text.white
-        ]
-        |> Card.headerH3 [] [ text "Things" ]
+    , Card.config []
+        |> Card.headerH3 [] [ div [ class "table_header" ] [ i [ style "margin-right" "15px", class faIcons.things ] [], text "Things" ] ]
         |> Card.block []
             [ Block.titleH4 [] [ text (String.fromInt model.thing.things.total) ]
             , Block.custom <|
-                Button.button [ Button.light, Button.onClick Things ] [ text "Manage things" ]
+                Button.button [ Button.secondary, Button.onClick Things ] [ text "Manage things" ]
             ]
     , Card.config []
-        |> Card.headerH3 [] [ text "Channels" ]
+        |> Card.headerH3 [] [ div [ class "table_header" ] [ i [ style "margin-right" "15px", class faIcons.channels ] [], text "Channels" ] ]
         |> Card.block []
             [ Block.titleH4 [] [ text (String.fromInt model.channel.channels.total) ]
             , Block.custom <|
-                Button.button [ Button.dark, Button.onClick Channels ] [ text "Manage channels" ]
+                Button.button [ Button.secondary, Button.onClick Channels ] [ text "Manage channels" ]
             ]
     ]
 

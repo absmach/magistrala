@@ -2,39 +2,50 @@
    Mainflux
    SPDX-License-Identifier: Apache-2.0 */
 
-   @import url('https://fonts.googleapis.com/css?family=Roboto');
-   @import url('https://fonts.googleapis.com/css?family=Montserrat:400,600,800');
-   
-   .btn-primary {
-     color: #fff;
-     background-color: #113f67;
-     border-color: #113f67;
-   }
-   .btn-primary:hover, .btn-primary:focus, .btn-primary:active, .btn-primary.active, .open>.dropdown-toggle.btn-primary {
-     color: #fff;
-     background-color: #408ab4;
-     border-color: #408ab4;
-   }
-   
-   body {
-     background-color: #f3f3f4 !important;
-     font-family: 'Montserrat', sans-serif !important;
-   }
-   .title{
-     font-family: 'Montserrat', sans-serif;
-     font-weight: 800;
-     transform: scaleY(0.95);
-     text-align: center;
-     margin: 1rem 0;
-   }
+@import url('https://fonts.googleapis.com/css?family=Roboto');
+@import url('https://fonts.googleapis.com/css?family=Montserrat:400,600,800');
+  
+.btn-primary {
+  color: #fff;
+  background-color: #113f67;
+  border-color: #113f67;
+}
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active, .btn-primary.active, .open>.dropdown-toggle.btn-primary {
+  color: #fff;
+  background-color: #408ab4;
+  border-color: #408ab4;
+}
+
+.btn-secondary {
+  color: #fff;
+  background-color: #408ab4;
+  border-color: #408ab4;
+}
+.btn-secondary:hover, .btn-secondary:focus, .btn-secondary:active, .btn-secondary.active, .open>.dropdown-toggle.btn-secondary {
+  color: #fff;
+  background-color: #113f67;
+  border-color: #113f67;
+}
+  
+body {
+  background-color: #f3f3f4 !important;
+  font-family: 'Montserrat', sans-serif !important;
+}
+.title{
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 800;
+  transform: scaleY(0.95);
+  text-align: center;
+  margin: 1rem 0;
+}
 
 .page-link{
   color: #113f67;
 }
 
 .page-item.active .page-link {
-  background-color: #113f67;
-  border-color: #113f67; 
+  background-color: #408ab4;
+  border-color: #408ab4; 
 }
 
 ul.nav a:hover { 
@@ -42,10 +53,12 @@ ul.nav a:hover {
   background-color: #408ab4 !important; 
   cursor: pointer;
   transition: color .15s ease-in-out,background-color .15s ease-in-out;
+  border-radius: 0;
 }
 
 .nav-pills .nav-link.active{
-  background-color: #408ab4 !important; 
+  background-color: #408ab4 !important;
+  border-radius: 0;
 }
 
 .nav li a i {
@@ -56,15 +69,32 @@ ul.nav a:hover {
   line-height: 25px;
   text-align: center;
   border-radius: 4px;
-  background:#154f82;
- 
+  background: transparent;
 }
 
 .card {
   margin-top: 30px;
   margin-bottom: 30px;
+  border: none;
+}
+
+.card-header {
+  background-color: white;
+  border-bottom: none;
+  margin-bottom: none;
 }
 
 .table thead th {
   border-top: none;
+}
+
+.table-hover tbody tr:hover > td {
+  cursor: pointer;
+  background:#408ab4;
+  color: white;
+}
+
+.table_header {
+  color: #408ab4;
+  font-weight: bold;
 }

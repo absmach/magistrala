@@ -14,7 +14,7 @@ import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
 import Bootstrap.Table as Table
 import Bootstrap.Utilities.Spacing as Spacing
-import Html exposing (Html, a, div, hr, li, nav, node, p, strong, text, ul)
+import Html exposing (Html, a, div, hr, li, nav, node, p, strong, text, ul, i)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http
@@ -157,6 +157,7 @@ faIcons =
     , channels = "fas fa-broadcast-tower"
     , connection = "fas fa-plug"
     , messages = "far fa-paper-plane"
+    , version = "fa fa-code-branch"
     }
 
 
@@ -196,11 +197,11 @@ disableNext currPage total =
     currPage == Basics.ceiling (Basics.toFloat total / 10)
 
 
-genCardConfig : String -> List (Table.Row msg) -> Html msg
-genCardConfig title rows =
+genCardConfig : String -> String -> List (Table.Row msg) -> Html msg
+genCardConfig faClass title rows =
     Card.config
         []
-        |> Card.headerH3 [] [ text title ]
+        |> Card.headerH3 [] [ div [ class "table_header" ] [ i [ style "margin-right" "15px", class faClass ] [], text title ] ]
         |> Card.block []
             [ Block.custom
                 (Table.table

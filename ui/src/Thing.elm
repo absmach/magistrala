@@ -21,7 +21,7 @@ import Bootstrap.Table as Table
 import Bootstrap.Utilities.Spacing as Spacing
 import Dict
 import Error
-import Helpers
+import Helpers exposing (faIcons, fontAwesome)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
@@ -307,10 +307,10 @@ genTable model =
                 |> Card.header []
                     [ Grid.row []
                         [ Grid.col [ Col.attrs [ align "left" ] ]
-                            [ h3 [ Spacing.mt2 ] [ text "Things" ]
+                            [ h3 [] [ div [ class "table_header" ] [ i [ style "margin-right" "15px", class faIcons.things ] [], text "Things" ] ]
                             ]
                         , Grid.col [ Col.attrs [ align "right" ] ]
-                            [ Button.button [ Button.success, Button.attrs [ align "right" ], Button.onClick ShowProvisionModal ] [ text "ADD" ]
+                            [ Button.button [ Button.secondary, Button.attrs [ align "right" ], Button.onClick ShowProvisionModal ] [ text "ADD" ]
                             ]
                         ]
                     ]

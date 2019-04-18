@@ -19,7 +19,7 @@ import Bootstrap.Utilities.Spacing as Spacing
 import Channel
 import Debug exposing (log)
 import Error
-import Helpers
+import Helpers exposing (faIcons, fontAwesome)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
@@ -119,12 +119,12 @@ view model =
         [ Grid.row []
             [ Grid.col []
                 (Helpers.appendIf (model.things.things.total > model.things.limit)
-                    [ Helpers.genCardConfig "Things" (genThingRows model.checkedThingsIds model.things.things.list) ]
+                    [ Helpers.genCardConfig faIcons.things "Things" (genThingRows model.checkedThingsIds model.things.things.list) ]
                     (Html.map ThingMsg (Helpers.genPagination model.things.things.total (Helpers.offsetToPage model.things.offset model.things.limit) Thing.SubmitPage))
                 )
             , Grid.col []
                 (Helpers.appendIf (model.channels.channels.total > model.channels.limit)
-                    [ Helpers.genCardConfig "Channels" (genChannelRows model.checkedChannelsIds model.channels.channels.list) ]
+                    [ Helpers.genCardConfig faIcons.channels "Channels" (genChannelRows model.checkedChannelsIds model.channels.channels.list) ]
                     (Html.map ChannelMsg (Helpers.genPagination model.channels.channels.total (Helpers.offsetToPage model.channels.offset model.channels.limit) Channel.SubmitPage))
                 )
             ]

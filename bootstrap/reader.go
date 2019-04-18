@@ -8,7 +8,6 @@
 package bootstrap
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/mainflux/mainflux"
@@ -51,10 +50,6 @@ func NewConfigReader() ConfigReader {
 }
 
 func (r reader) ReadConfig(cfg Config) (mainflux.Response, error) {
-	if len(cfg.MFChannels) < 1 {
-		return bootstrapRes{}, errors.New("Invalid configuration")
-	}
-
 	var channels []channelRes
 	for _, ch := range cfg.MFChannels {
 		channels = append(channels, channelRes{ID: ch.ID, Name: ch.Name, Metadata: ch.Metadata})

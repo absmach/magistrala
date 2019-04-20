@@ -45,7 +45,7 @@ cleandocker:
 	# Remove old mainflux images
 	docker images -q mainflux\/* | xargs -r docker rmi
 
-ifndef spv
+ifdef pv
 	# Remove unused volumes
 	docker volume ls -f name=mainflux -f dangling=true -q | xargs -r docker volume rm
 endif

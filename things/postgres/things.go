@@ -32,8 +32,8 @@ func NewThingRepository(db *sqlx.DB, log logger.Logger) things.ThingRepository {
 }
 
 func (tr thingRepository) Save(thing things.Thing) (string, error) {
-	q := `INSERT INTO things (id, owner, type, name, key, metadata) 
-	      VALUES (:id, :owner, :type, :name, :key, :metadata);`
+	q := `INSERT INTO things (id, owner, name, key, metadata)
+	      VALUES (:id, :owner, :name, :key, :metadata);`
 
 	dbth, err := toDBThing(thing)
 	if err != nil {
@@ -84,7 +84,7 @@ func (tr thingRepository) Update(thing things.Thing) error {
 }
 
 func (tr thingRepository) RetrieveByID(owner, id string) (things.Thing, error) {
-	q := `SELECT name, type, key, metadata FROM things WHERE id = $1 AND owner = $2;`
+	q := `SELECT name, key, metadata FROM things WHERE id = $1 AND owner = $2;`
 
 	dbth := dbThing{
 		ID:    id,
@@ -119,7 +119,7 @@ func (tr thingRepository) RetrieveByKey(key string) (string, error) {
 }
 
 func (tr thingRepository) RetrieveAll(owner string, offset, limit uint64) things.ThingsPage {
-	q := `SELECT id, name, type, key, metadata FROM things 
+	q := `SELECT id, name, key, metadata FROM things
 	      WHERE owner = :owner ORDER BY id LIMIT :limit OFFSET :offset;`
 
 	params := map[string]interface{}{
@@ -173,7 +173,7 @@ func (tr thingRepository) RetrieveAll(owner string, offset, limit uint64) things
 }
 
 func (tr thingRepository) RetrieveByChannel(owner, channel string, offset, limit uint64) things.ThingsPage {
-	q := `SELECT id, type, name, key, metadata
+	q := `SELECT id, name, key, metadata
 	      FROM things th
 	      INNER JOIN connections co
 		  ON th.id = co.thing_id
@@ -248,7 +248,6 @@ func (tr thingRepository) Remove(owner, id string) error {
 type dbThing struct {
 	ID       string `db:"id"`
 	Owner    string `db:"owner"`
-	Type     string `db:"type"`
 	Name     string `db:"name"`
 	Key      string `db:"key"`
 	Metadata string `db:"metadata"`
@@ -263,7 +262,6 @@ func toDBThing(th things.Thing) (dbThing, error) {
 	return dbThing{
 		ID:       th.ID,
 		Owner:    th.Owner,
-		Type:     th.Type,
 		Name:     th.Name,
 		Key:      th.Key,
 		Metadata: string(data),
@@ -279,7 +277,6 @@ func toThing(dbth dbThing) (things.Thing, error) {
 	return things.Thing{
 		ID:       dbth.ID,
 		Owner:    dbth.Owner,
-		Type:     dbth.Type,
 		Name:     dbth.Name,
 		Key:      dbth.Key,
 		Metadata: metadata,

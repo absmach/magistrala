@@ -9,6 +9,7 @@ package cassandra
 
 import (
 	"fmt"
+
 	"github.com/gocql/gocql"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/readers"

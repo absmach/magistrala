@@ -1,10 +1,9 @@
 # Things
 
-Things service provides an HTTP API for managing platform resources: devices,
-applications and channels. Through this API clients are able to do the following
-actions:
+Things service provides an HTTP API for managing platform resources: things and channels.
+Through this API clients are able to do the following actions:
 
-- provision new things (i.e. devices & applications)
+- provision new things
 - create new channels
 - "connect" things into the channels
 

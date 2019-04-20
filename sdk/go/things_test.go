@@ -36,7 +36,7 @@ const (
 var (
 	metadata   = map[string]interface{}{"meta": "data"}
 	metadata2  = map[string]interface{}{"meta": "data2"}
-	thing      = sdk.Thing{ID: "1", Type: "device", Name: "test_device", Metadata: metadata}
+	thing      = sdk.Thing{ID: "1", Name: "test_device", Metadata: metadata}
 	emptyThing = sdk.Thing{}
 )
 
@@ -88,6 +88,13 @@ func TestCreateThing(t *testing.T) {
 			location: "1",
 		},
 		{
+			desc:     "create new empty thing",
+			thing:    emptyThing,
+			token:    token,
+			err:      nil,
+			location: "2",
+		},
+		{
 			desc:     "create new thing with empty token",
 			thing:    thing,
 			token:    "",
@@ -99,13 +106,6 @@ func TestCreateThing(t *testing.T) {
 			thing:    thing,
 			token:    wrongValue,
 			err:      sdk.ErrUnauthorized,
-			location: "",
-		},
-		{
-			desc:     "create new epmty thing",
-			thing:    emptyThing,
-			token:    token,
-			err:      sdk.ErrInvalidArgs,
 			location: "",
 		},
 	}
@@ -191,7 +191,7 @@ func TestThings(t *testing.T) {
 	mainfluxSDK := sdk.NewSDK(sdkConf)
 	for i := 1; i < 101; i++ {
 
-		th := sdk.Thing{ID: strconv.Itoa(i), Type: "device", Name: "test_device", Metadata: metadata}
+		th := sdk.Thing{ID: strconv.Itoa(i), Name: "test_device", Metadata: metadata}
 		mainfluxSDK.CreateThing(th, token)
 		th.Key = fmt.Sprintf("%s%012d", keyPrefix, 2*i)
 		things = append(things, th)
@@ -290,7 +290,7 @@ func TestThingsByChannel(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	for i := 1; i < 101; i++ {
-		th := sdk.Thing{Type: "device", Name: "test_device", Metadata: metadata}
+		th := sdk.Thing{Name: "test_device", Metadata: metadata}
 		tid, err := mainfluxSDK.CreateThing(th, token)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		th.ID = tid
@@ -408,7 +408,6 @@ func TestUpdateThing(t *testing.T) {
 			desc: "update existing thing",
 			thing: sdk.Thing{
 				ID:       id,
-				Type:     "app",
 				Name:     "test_app",
 				Metadata: metadata2,
 			},
@@ -419,7 +418,6 @@ func TestUpdateThing(t *testing.T) {
 			desc: "update non-existing thing",
 			thing: sdk.Thing{
 				ID:       "0",
-				Type:     "device",
 				Name:     "test_device",
 				Metadata: metadata,
 			},
@@ -430,7 +428,6 @@ func TestUpdateThing(t *testing.T) {
 			desc: "update channel with invalid id",
 			thing: sdk.Thing{
 				ID:       "",
-				Type:     "device",
 				Name:     "test_device",
 				Metadata: metadata,
 			},
@@ -441,7 +438,6 @@ func TestUpdateThing(t *testing.T) {
 			desc: "update channel with invalid token",
 			thing: sdk.Thing{
 				ID:       id,
-				Type:     "app",
 				Name:     "test_app",
 				Metadata: metadata2,
 			},
@@ -452,7 +448,6 @@ func TestUpdateThing(t *testing.T) {
 			desc: "update channel with empty token",
 			thing: sdk.Thing{
 				ID:       id,
-				Type:     "app",
 				Name:     "test_app",
 				Metadata: metadata2,
 			},

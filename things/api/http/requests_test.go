@@ -41,8 +41,7 @@ func TestIdentityReqValidation(t *testing.T) {
 
 func TestAddThingReqValidation(t *testing.T) {
 	key := uuid.NewV4().String()
-	valid := things.Thing{Type: "app"}
-	invalid := things.Thing{ID: "0", Type: ""}
+	valid := things.Thing{}
 
 	cases := map[string]struct {
 		thing things.Thing
@@ -58,18 +57,12 @@ func TestAddThingReqValidation(t *testing.T) {
 			thing: valid,
 			key:   "", err: things.ErrUnauthorizedAccess,
 		},
-		"empty thing type": {
-			thing: invalid,
-			key:   key,
-			err:   things.ErrMalformedEntity,
-		},
 	}
 
 	for desc, tc := range cases {
 		req := addThingReq{
 			key:      tc.key,
 			Name:     tc.thing.Name,
-			Type:     tc.thing.Type,
 			Metadata: tc.thing.Metadata,
 		}
 
@@ -80,8 +73,7 @@ func TestAddThingReqValidation(t *testing.T) {
 
 func TestUpdateThingReqValidation(t *testing.T) {
 	key := uuid.NewV4().String()
-	valid := things.Thing{ID: "1", Type: "app"}
-	invalid := things.Thing{ID: "0", Type: ""}
+	valid := things.Thing{ID: "1"}
 
 	cases := map[string]struct {
 		thing things.Thing
@@ -101,12 +93,6 @@ func TestUpdateThingReqValidation(t *testing.T) {
 			key:   "",
 			err:   things.ErrUnauthorizedAccess,
 		},
-		"empty thing type": {
-			thing: invalid,
-			id:    valid.ID,
-			key:   key,
-			err:   things.ErrMalformedEntity,
-		},
 		"empty thing id": {
 			thing: valid,
 			id:    "",
@@ -120,7 +106,6 @@ func TestUpdateThingReqValidation(t *testing.T) {
 			key:      tc.key,
 			id:       tc.id,
 			Name:     tc.thing.Name,
-			Type:     tc.thing.Type,
 			Metadata: tc.thing.Metadata,
 		}
 

@@ -29,7 +29,6 @@ func (req identityReq) validate() error {
 
 type addThingReq struct {
 	key      string
-	Type     string                 `json:"type"`
 	Name     string                 `json:"name,omitempty"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
@@ -39,17 +38,12 @@ func (req addThingReq) validate() error {
 		return things.ErrUnauthorizedAccess
 	}
 
-	if req.Type == "" {
-		return things.ErrMalformedEntity
-	}
-
 	return nil
 }
 
 type updateThingReq struct {
 	key      string
 	id       string
-	Type     string                 `json:"type"`
 	Name     string                 `json:"name,omitempty"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
@@ -59,7 +53,7 @@ func (req updateThingReq) validate() error {
 		return things.ErrUnauthorizedAccess
 	}
 
-	if req.id == "" || req.Type == "" {
+	if req.id == "" {
 		return things.ErrMalformedEntity
 	}
 

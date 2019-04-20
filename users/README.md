@@ -1,6 +1,6 @@
 # Users service
 
-Users service provides an HTTP API for managing users. Through this API clients 
+Users service provides an HTTP API for managing users. Through this API clients
 are able to do the following actions:
 
 - register new accounts
@@ -74,7 +74,7 @@ go get github.com/mainflux/mainflux
 
 cd $GOPATH/src/github.com/mainflux/mainflux
 
-# compile the app
+# compile the service
 make users
 
 # copy binary to bin

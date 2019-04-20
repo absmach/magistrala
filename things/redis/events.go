@@ -34,7 +34,6 @@ var (
 type createThingEvent struct {
 	id       string
 	owner    string
-	kind     string
 	name     string
 	metadata map[string]interface{}
 }
@@ -43,7 +42,6 @@ func (cte createThingEvent) Encode() map[string]interface{} {
 	val := map[string]interface{}{
 		"id":        cte.id,
 		"owner":     cte.owner,
-		"type":      cte.kind,
 		"operation": thingCreate,
 	}
 
@@ -65,7 +63,6 @@ func (cte createThingEvent) Encode() map[string]interface{} {
 
 type updateThingEvent struct {
 	id       string
-	kind     string
 	name     string
 	metadata map[string]interface{}
 }
@@ -73,7 +70,6 @@ type updateThingEvent struct {
 func (ute updateThingEvent) Encode() map[string]interface{} {
 	val := map[string]interface{}{
 		"id":        ute.id,
-		"type":      ute.kind,
 		"operation": thingUpdate,
 	}
 

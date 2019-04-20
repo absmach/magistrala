@@ -50,13 +50,11 @@ Output of the command is something like this:
     "id": "513d02d2-16c1-4f23-98be-9e12f8fee898",
     "key": "69590b3a-9d76-4baa-adae-9b5fec0ea14f",
     "name": "d0",
-    "type": "device"
   },
   {
     "id": "bf78ca98-2fef-4cfc-9f26-e02da5ecdf67",
     "key": "840c1ea1-2e8d-4809-a6d3-3433a5c489d2",
     "name": "d1",
-    "type": "app"
   }
 ]
 
@@ -106,4 +104,4 @@ mainflux-http   | {"level":"info","message":"Method publish took 336.685µs to c
 mainflux-normalizer | {"level":"info","message":"Method normalize took 108.126µs to complete without errors.","ts":"2019-01-08T22:19:30.149500543Z"}
 ```
 
-This proves that messages have been well send through the system, via protocol adapter (`mainflux-http`) and `normalizer` service which corectly parsed messages.
+This proves that messages have been well send through the system, via protocol adapter (`mainflux-http`) and `normalizer` service which correctly parsed messages.

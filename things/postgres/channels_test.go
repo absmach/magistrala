@@ -216,7 +216,6 @@ func TestMultiChannelRetrievalByThing(t *testing.T) {
 	tid, err := thingRepo.Save(things.Thing{
 		ID:    idp.ID(),
 		Owner: email,
-		Type:  "device",
 	})
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	n := uint64(10)

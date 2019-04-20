@@ -89,7 +89,6 @@ func (res thingRes) Empty() bool {
 type viewThingRes struct {
 	ID       string                 `json:"id"`
 	Owner    string                 `json:"-"`
-	Type     string                 `json:"type"`
 	Name     string                 `json:"name,omitempty"`
 	Key      string                 `json:"key"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`

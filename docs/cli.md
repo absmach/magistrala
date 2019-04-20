@@ -81,14 +81,9 @@ mainflux-cli users token john.doe@email.com password
 ```
 
 ### System Provisioning
-#### Create Thing (type Device)
+#### Create Thing
 ```
-mainflux-cli things create '{"type":"device", "name":"myDevice"}' <user_auth_token>
-```
-
-#### Create Thing (type Application)
-```
-mainflux-cli things create '{"type":"app", "name":"myDevice"}' <user_auth_token>
+mainflux-cli things create '{"name":"myThing"}' <user_auth_token>
 ```
 
 #### Update Thing

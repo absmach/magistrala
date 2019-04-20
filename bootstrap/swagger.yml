@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
   title: Mainflux Bootstrap service
-  description: HTTP API for managing platform devices and applications configuration.
+  description: HTTP API for managing platform things configuration.
   version: "1.0.0"
 consumes:
   - "application/json"
@@ -56,7 +56,7 @@ paths:
         - $ref: "#/parameters/Name"
       responses:
         200:
-          description: | 
+          description: |
             Data retrieved. Configs from this list don't contain channels.
           schema:
             $ref: "#/definitions/ConfigList"
@@ -160,7 +160,7 @@ paths:
     put:
       summary: Updates channels the thing is connected to
       description: |
-        Update connections performs update of the channel list corresponding 
+        Update connections performs update of the channel list corresponding
         Thing is connected to.
       tags:
         - configs

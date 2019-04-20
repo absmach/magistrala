@@ -29,7 +29,7 @@ Enabling and disabling Thing (adding Thing to/from whitelist) is as simple as co
 
 Switching between states `Active` and `Inactive` enables and disables Thing, respectively.
 
-Thing configuration also contains the so-called `external ID` and `external key`. An external ID is a unique identifier of the device/app for the corresponding Thing. For example, the device MAC address is a good choice for external ID. External key is a secret key that is used for authentication during the bootstrapping procedure.
+Thing configuration also contains the so-called `external ID` and `external key`. An external ID is a unique identifier of corresponding Thing. For example, a device MAC address is a good choice for external ID. External key is a secret key that is used for authentication during the bootstrapping procedure.
 
 ## Configuration
 

@@ -35,7 +35,7 @@ const (
 )
 
 var (
-	thing   = things.Thing{Type: "app", Name: "test_app", Metadata: map[string]interface{}{"test": "data"}}
+	thing   = things.Thing{Name: "test_app", Metadata: map[string]interface{}{"test": "data"}}
 	channel = things.Channel{Name: "test", Metadata: map[string]interface{}{"test": "data"}}
 )
 
@@ -90,7 +90,6 @@ func TestAddThing(t *testing.T) {
 	defer ts.Close()
 
 	data := toJSON(thing)
-	invalidData := toJSON(things.Thing{Type: "foo"})
 
 	cases := []struct {
 		desc        string
@@ -109,12 +108,12 @@ func TestAddThing(t *testing.T) {
 			location:    "/things/1",
 		},
 		{
-			desc:        "add thing with invalid data",
-			req:         invalidData,
+			desc:        "add thing with empty JSON request",
+			req:         "{}",
 			contentType: contentType,
 			auth:        token,
-			status:      http.StatusBadRequest,
-			location:    "",
+			status:      http.StatusCreated,
+			location:    "/things/2",
 		},
 		{
 			desc:        "add thing with invalid auth token",
@@ -135,14 +134,6 @@ func TestAddThing(t *testing.T) {
 		{
 			desc:        "add thing with invalid request format",
 			req:         "}",
-			contentType: contentType,
-			auth:        token,
-			status:      http.StatusBadRequest,
-			location:    "",
-		},
-		{
-			desc:        "add thing with empty JSON request",
-			req:         "{}",
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusBadRequest,
@@ -190,7 +181,6 @@ func TestUpdateThing(t *testing.T) {
 	defer ts.Close()
 
 	data := toJSON(thing)
-	invalidData := toJSON(things.Thing{Type: "foo"})
 	sth, _ := svc.AddThing(token, thing)
 
 	cases := []struct {
@@ -210,20 +200,20 @@ func TestUpdateThing(t *testing.T) {
 			status:      http.StatusOK,
 		},
 		{
+			desc:        "update thing with empty JSON request",
+			req:         "{}",
+			id:          sth.ID,
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusOK,
+		},
+		{
 			desc:        "update non-existent thing",
 			req:         data,
 			id:          strconv.FormatUint(wrongID, 10),
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusNotFound,
-		},
-		{
-			desc:        "update thing with invalid data",
-			req:         invalidData,
-			id:          sth.ID,
-			contentType: contentType,
-			auth:        token,
-			status:      http.StatusBadRequest,
 		},
 		{
 			desc:        "update thing with invalid id",
@@ -252,14 +242,6 @@ func TestUpdateThing(t *testing.T) {
 		{
 			desc:        "update thing with invalid data format",
 			req:         "{",
-			id:          sth.ID,
-			contentType: contentType,
-			auth:        token,
-			status:      http.StatusBadRequest,
-		},
-		{
-			desc:        "update thing with empty JSON request",
-			req:         "{}",
 			id:          sth.ID,
 			contentType: contentType,
 			auth:        token,
@@ -308,7 +290,6 @@ func TestViewThing(t *testing.T) {
 
 	thres := thingRes{
 		ID:       sth.ID,
-		Type:     sth.Type,
 		Name:     sth.Name,
 		Key:      sth.Key,
 		Metadata: sth.Metadata,
@@ -387,7 +368,6 @@ func TestListThings(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		thres := thingRes{
 			ID:       sth.ID,
-			Type:     sth.Type,
 			Name:     sth.Name,
 			Key:      sth.Key,
 			Metadata: sth.Metadata,
@@ -535,7 +515,6 @@ func TestListThingsByChannel(t *testing.T) {
 
 		thres := thingRes{
 			ID:       sth.ID,
-			Type:     sth.Type,
 			Name:     sth.Name,
 			Key:      sth.Key,
 			Metadata: sth.Metadata,
@@ -1540,7 +1519,6 @@ func TestDisconnnect(t *testing.T) {
 
 type thingRes struct {
 	ID       string                 `json:"id"`
-	Type     string                 `json:"type"`
 	Name     string                 `json:"name,omitempty"`
 	Key      string                 `json:"key"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`

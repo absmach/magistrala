@@ -235,14 +235,14 @@ Please assure that MQTT microservice has `node_modules` installed, as explained 
 > N.B. `make rundev` actually calls helper script `scripts/run.sh`, so you can inspect this script for the details.
 
 ## Events
-In order to be easily integratable system, Mainflux is using [Redis Streams](https://redis.io/topics/streams-intro) 
-as an event log for event sourcing. Services that are publishing events to Redis Streams 
+In order to be easily integratable system, Mainflux is using [Redis Streams](https://redis.io/topics/streams-intro)
+as an event log for event sourcing. Services that are publishing events to Redis Streams
 are `things` service, `bootstrap` service, and `mqtt` adapter.
 
 ### Things Service
-For every operation that has side effects (that is changing service state) `things` 
-service will generate new event and publish it to Redis Stream called `mainflux.things`. 
-Every event has its own event ID that is automatically generated and `operation` 
+For every operation that has side effects (that is changing service state) `things`
+service will generate new event and publish it to Redis Stream called `mainflux.things`.
+Every event has its own event ID that is automatically generated and `operation`
 field that can have one of the following values:
 - `thing.create` for thing creation,
 - `thing.update` for thing update,
@@ -253,34 +253,32 @@ field that can have one of the following values:
 - `channel.update` for channel update,
 - `channel.remove` for channel removal.
 
-By fetching and processing these events you can reconstruct `things` service state. 
-If you store some of your custom data in `metadata` field, this is the perfect 
-way to fetch it and process it. If you want to integrate through 
+By fetching and processing these events you can reconstruct `things` service state.
+If you store some of your custom data in `metadata` field, this is the perfect
+way to fetch it and process it. If you want to integrate through
 [docker-compose.yml](https://github.com/mainflux/mainflux/blob/master/docker/docker-compose.yml)
-you can use `mainflux-es-redis` service. Just connect to it and consume events 
+you can use `mainflux-es-redis` service. Just connect to it and consume events
 from Redis Stream named `mainflux.things`.
 
 #### Thing create event
 
-Whenever thing is created, `things` service will generate new `create` event. This 
+Whenever thing is created, `things` service will generate new `create` event. This
 event will have the following format:
 ```
 1) "1555334740911-0"
-2)  1) "type"
-    2) "device"
-    3) "operation"
-    4) "thing.create"
-    5) "name"
-    6) "d0"
-    7) "id"
-    8) "3c36273a-94ea-4802-84d6-a51de140112e"
-    9) "owner"
-   10) "john.doe@email.com"
-   11) "metadata"
-   12) "{}"
+2)  1) "operation"
+    2) "thing.create"
+    3) "name"
+    4) "d0"
+    5) "id"
+    6) "3c36273a-94ea-4802-84d6-a51de140112e"
+    7) "owner"
+    8) "john.doe@email.com"
+    9) "metadata"
+   10) "{}"
 ```
 
-As you can see from this example, every odd field represents field name while every 
+As you can see from this example, every odd field represents field name while every
 even field represents field value. This is standard event format for Redis Streams.
 If you want to extract `metadata` field from this event, you'll have to read it as
 string first, and then you can deserialize it to some structured format.
@@ -296,8 +294,6 @@ This event will have the following format:
    4) "weio"
    5) "id"
    6) "3c36273a-94ea-4802-84d6-a51de140112e"
-   7) "type"
-   8) "device"
 ```
 Note that thing update event will contain only those fields that were updated using
 update endpoint.
@@ -340,7 +336,7 @@ Whenever channel instance is updated, `things` service will generate and publish
    5) "operation"
    6) "channel.update"
 ```
-Note that update channel event will contain only those fields that were updated using 
+Note that update channel event will contain only those fields that were updated using
 update channel endpoint.
 
 #### Channel remove event
@@ -381,8 +377,8 @@ format:
    6) "thing.disconnect"
 ```
 
-> **Note:** Every one of these events will omit fields that were not used or are not 
-relevant for specific operation. Also, field ordering is not guaranteed, so DO NOT 
+> **Note:** Every one of these events will omit fields that were not used or are not
+relevant for specific operation. Also, field ordering is not guaranteed, so DO NOT
 rely on it.
 
 ### Bootstrap Service
@@ -396,9 +392,9 @@ the following event types:
 - `thing.state_change` for device state change,
 - `thing.update_connections` for device connection update.
 
-If you want to integrate through 
+If you want to integrate through
 [docker-compose.yml](https://github.com/mainflux/mainflux/blob/master/docker/addons/bootstrap/docker-compose.yml)
-you can use `mainflux-es-redis` service. Just connect to it and consume events 
+you can use `mainflux-es-redis` service. Just connect to it and consume events
 from Redis Stream named `mainflux.bootstrap`.
 
 #### Configuration create event
@@ -510,9 +506,9 @@ Events that are coming from MQTT adapter have following fields:
 - `event_type` can have two possible values, connect and disconnect,
 - `instance` represents MQTT adapter instance.
 
-If you want to integrate through 
+If you want to integrate through
 [docker-compose.yml](https://github.com/mainflux/mainflux/blob/master/docker/docker-compose.yml)
-you can use `mainflux-es-redis` service. Just connect to it and consume events 
+you can use `mainflux-es-redis` service. Just connect to it and consume events
 from Redis Stream named `mainflux.mqtt`.
 
 Example of connect event:
@@ -526,7 +522,6 @@ Example of connect event:
    6) "connect"
    7) "instance"
    8) "mqtt-adapter-1"
-      
 ```
 
 Example of disconnect event:

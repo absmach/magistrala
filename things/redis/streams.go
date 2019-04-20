@@ -42,7 +42,6 @@ func (es eventStore) AddThing(key string, thing things.Thing) (things.Thing, err
 	event := createThingEvent{
 		id:       sth.ID,
 		owner:    sth.Owner,
-		kind:     sth.Type,
 		name:     sth.Name,
 		metadata: sth.Metadata,
 	}
@@ -63,7 +62,6 @@ func (es eventStore) UpdateThing(key string, thing things.Thing) error {
 
 	event := updateThingEvent{
 		id:       thing.ID,
-		kind:     thing.Type,
 		name:     thing.Name,
 		metadata: thing.Metadata,
 	}

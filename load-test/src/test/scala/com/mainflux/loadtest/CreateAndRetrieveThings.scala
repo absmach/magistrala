@@ -16,7 +16,7 @@ import io.gatling.http.request.builder.HttpRequestBuilder.toActionBuilder
 final class CreateAndRetrieveThings extends TestCase {
   override def prepareAndExecute(): SetUp = {
     val token = authenticate()
-    val thing = """{"type":"device", "name":"weio"}"""
+    val thing = """{"name":"weio"}"""
 
     val scn = scenario("create and retrieve things")
       .exec(http("create thing")

@@ -22,8 +22,8 @@ import (
 
 var errMalformedCSV = errors.New("malformed CSV")
 
-func createThing(name, kind, token string) (mfxsdk.Thing, error) {
-	id, err := sdk.CreateThing(mfxsdk.Thing{Name: name, Type: kind}, token)
+func createThing(name, token string) (mfxsdk.Thing, error) {
+	id, err := sdk.CreateThing(mfxsdk.Thing{Name: name}, token)
 	if err != nil {
 		return mfxsdk.Thing{}, err
 	}
@@ -36,7 +36,6 @@ func createThing(name, kind, token string) (mfxsdk.Thing, error) {
 	m := mfxsdk.Thing{
 		ID:   id,
 		Name: name,
-		Type: kind,
 		Key:  t.Key,
 	}
 
@@ -87,12 +86,12 @@ var cmdProvision = []cobra.Command{
 					return
 				}
 
-				if len(l) < 2 {
+				if len(l) < 1 {
 					logError(errMalformedCSV)
 					return
 				}
 
-				m, err := createThing(l[0], l[1], args[1])
+				m, err := createThing(l[0], args[1])
 				if err != nil {
 					logError(err)
 					return
@@ -187,12 +186,8 @@ var cmdProvision = []cobra.Command{
 			// Create things
 			for i := 0; i < numThings; i++ {
 				n := fmt.Sprintf("d%d", i)
-				k := "device"
-				if i%2 != 0 {
-					k = "app"
-				}
 
-				m, err := createThing(n, k, ut)
+				m, err := createThing(n, ut)
 				if err != nil {
 					logError(err)
 					return

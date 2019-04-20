@@ -26,11 +26,8 @@ an access token. Once logged into the system, user can manage his resources (i.e
 things and channels) in CRUD fashion, and define access control policies by
 connecting them.
 
-`Thing` represents devices and applications connected to Mainflux. There are
-two types of "things" supported at the moment: `device` and `app`. While device
-is used to represent any physical device connected to the platform, app represents
-any 3rd party service that uses the platform for message exchange with other
-"things". 
+`Thing` represents devices (or applications) connected to Mainflux that uses the
+platform for message exchange with other "things".
 
 `Channel` represents a communication channel. It serves as message topic that
 can be consumed by all of the things connected to it.

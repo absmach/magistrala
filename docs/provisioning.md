@@ -35,15 +35,14 @@ Response should look like this:
 Before proceeding, make sure that you have created a new account, and obtained
 an authorization key.
 
-### Provisioning devices
+### Provisioning things
 
-Devices are provisioned by executing request `POST /things`, with a
-`"type":"device"` specified in JSON payload. Note that you will also need
-`user_auth_token` in order to provision things (both devices and application)
+Things are provisioned by executing request `POST /things` with a JSON payload.
+Note that you will also need `user_auth_token` in order to provision things
 that belong to this particular user.
 
 ```
-curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json" -H "Authorization: <user_auth_token>" https://localhost/things -d '{"type":"device", "name":"weio"}'
+curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json" -H "Authorization: <user_auth_token>" https://localhost/things -d '{"name":"weio"}'
 ```
 
 Response will contain `Location` header whose value represents path to newly
@@ -54,26 +53,6 @@ HTTP/1.1 201 Created
 Content-Type: application/json
 Location: /things/81380742-7116-4f6f-9800-14fe464f6773
 Date: Tue, 10 Apr 2018 10:02:59 GMT
-Content-Length: 0
-```
-
-### Provisioning applications
-
-Applications are provisioned by executing HTTP request `POST /things`, with
-`"type":"app"` specified in JSON payload.
-
-```
-curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json" -H "Authorization: <user_auth_token>" https://localhost/things -d '{"type":"app", "name":"myapp"}'
-```
-
-Response will contain `Location` header whose value represents path to newly
-created thing (same as for devices):
-
-```
-HTTP/1.1 201 Created
-Content-Type: application/json
-Location: /things/cb63f852-2d48-44f0-a0cf-e450496c6c92
-Date: Tue, 10 Apr 2018 10:33:17 GMT
 Content-Length: 0
 ```
 
@@ -102,13 +81,11 @@ Content-Length: 1105
   "things": [
     {
       "id": "81380742-7116-4f6f-9800-14fe464f6773",
-      "type": "device",
       "name": "weio",
       "key": "7aa91f7a-cbea-4fed-b427-07e029577590"
     },
     {
       "id": "cb63f852-2d48-44f0-a0cf-e450496c6c92",
-      "type": "app",
       "name": "myapp",
       "key": "cbf02d60-72f2-4180-9f82-2c957db929d1"
     }
@@ -237,14 +214,12 @@ Response that you'll get should look like this:
   "things": [
     {
       "id": "3ffb3880-d1e6-4edd-acd9-4294d013f35b",
-      "type": "device",
       "name": "d0",
       "key": "b1996995-237a-4552-94b2-83ec2e92a040",
       "metadata": "{}"
     },
     {
       "id": "94d166d6-6477-43dc-93b7-5c3707dbef1e",
-      "type": "app",
       "name": "d1",
       "key": "e4588a68-6028-4740-9f12-c356796aebe8",
       "metadata": "{}"
@@ -281,7 +256,7 @@ Response that you'll get should look like this:
 }
 ```
 
-If you want to disconnect your device from the channel, send following request:
+If you want to disconnect your thing from the channel, send following request:
 
 ```
 curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X DELETE -H "Authorization: <user_auth_token>" https://localhost/channels/<channel_id>/things/<thing_id>

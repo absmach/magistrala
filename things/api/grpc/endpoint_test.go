@@ -25,7 +25,7 @@ import (
 const wrongID = ""
 
 var (
-	thing   = things.Thing{Type: "app", Name: "test_app", Metadata: map[string]interface{}{"test": "test"}}
+	thing   = things.Thing{Name: "test_app", Metadata: map[string]interface{}{"test": "test"}}
 	channel = things.Channel{Name: "test", Metadata: map[string]interface{}{"test": "test"}}
 )
 

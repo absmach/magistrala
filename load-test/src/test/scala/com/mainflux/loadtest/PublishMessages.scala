@@ -14,7 +14,7 @@ import scalaj.http.Http
 
 abstract class PublishMessages extends TestCase {
   def makeThing(token: String): (String, String) = {
-    val thing = """{"type":"device", "name":"weio"}"""
+    val thing = """{"name":"weio"}"""
 
     val id = Http(s"$ThingsURL/things")
       .postData(thing)

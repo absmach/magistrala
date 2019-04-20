@@ -26,7 +26,7 @@ const (
 )
 
 var (
-	thing   = things.Thing{Type: "app", Name: "test"}
+	thing   = things.Thing{Name: "test"}
 	channel = things.Channel{Name: "test"}
 )
 
@@ -52,28 +52,16 @@ func TestAddThing(t *testing.T) {
 		err   error
 	}{
 		{
-			desc:  "add new app",
-			thing: things.Thing{Type: "app", Name: "a"},
-			key:   token,
-			err:   nil,
-		},
-		{
-			desc:  "add new device",
-			thing: things.Thing{Type: "device", Name: "b"},
+			desc:  "add new thing",
+			thing: things.Thing{Name: "a"},
 			key:   token,
 			err:   nil,
 		},
 		{
 			desc:  "add thing with wrong credentials",
-			thing: things.Thing{Type: "app", Name: "d"},
+			thing: things.Thing{Name: "d"},
 			key:   wrongValue,
 			err:   things.ErrUnauthorizedAccess,
-		},
-		{
-			desc:  "add thing with invalid type",
-			thing: things.Thing{Type: "invalid", Name: "d"},
-			key:   wrongValue,
-			err:   things.ErrMalformedEntity,
 		},
 	}
 
@@ -86,7 +74,7 @@ func TestAddThing(t *testing.T) {
 func TestUpdateThing(t *testing.T) {
 	svc := newService(map[string]string{token: email})
 	saved, _ := svc.AddThing(token, thing)
-	other := things.Thing{ID: wrongID, Type: "app", Key: "x"}
+	other := things.Thing{ID: wrongID, Key: "x"}
 
 	cases := []struct {
 		desc  string
@@ -111,12 +99,6 @@ func TestUpdateThing(t *testing.T) {
 			thing: other,
 			key:   token,
 			err:   things.ErrNotFound,
-		},
-		{
-			desc:  "update thing with invalid type",
-			thing: things.Thing{Type: "invalid", Name: "d"},
-			key:   wrongValue,
-			err:   things.ErrMalformedEntity,
 		},
 	}
 

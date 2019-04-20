@@ -55,7 +55,6 @@ func migrateDB(db *sqlx.DB) error {
 					`CREATE TABLE IF NOT EXISTS things (
 						id       UUID,
 						owner    VARCHAR(254),
-						type     VARCHAR(10) NOT NULL,
 						key      CHAR(36) UNIQUE NOT NULL,
 						name     TEXT,
 						metadata JSON,

@@ -23,7 +23,6 @@ func addThingEndpoint(svc things.Service) endpoint.Endpoint {
 		}
 
 		thing := things.Thing{
-			Type:     req.Type,
 			Name:     req.Name,
 			Metadata: req.Metadata,
 		}
@@ -50,7 +49,6 @@ func updateThingEndpoint(svc things.Service) endpoint.Endpoint {
 
 		thing := things.Thing{
 			ID:       req.id,
-			Type:     req.Type,
 			Name:     req.Name,
 			Metadata: req.Metadata,
 		}
@@ -80,7 +78,6 @@ func viewThingEndpoint(svc things.Service) endpoint.Endpoint {
 		res := viewThingRes{
 			ID:       thing.ID,
 			Owner:    thing.Owner,
-			Type:     thing.Type,
 			Name:     thing.Name,
 			Key:      thing.Key,
 			Metadata: thing.Metadata,
@@ -114,7 +111,6 @@ func listThingsEndpoint(svc things.Service) endpoint.Endpoint {
 			view := viewThingRes{
 				ID:       thing.ID,
 				Owner:    thing.Owner,
-				Type:     thing.Type,
 				Name:     thing.Name,
 				Key:      thing.Key,
 				Metadata: thing.Metadata,
@@ -151,7 +147,6 @@ func listThingsByChannelEndpoint(svc things.Service) endpoint.Endpoint {
 			view := viewThingRes{
 				ID:       thing.ID,
 				Owner:    thing.Owner,
-				Type:     thing.Type,
 				Key:      thing.Key,
 				Name:     thing.Name,
 				Metadata: thing.Metadata,

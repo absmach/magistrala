@@ -16,11 +16,6 @@ import (
 	mfsdk "github.com/mainflux/mainflux/sdk/go"
 )
 
-const (
-	thingType = "device"
-	chanName  = "channel"
-)
-
 var (
 	// ErrNotFound indicates a non-existent entity request.
 	ErrNotFound = errors.New("non-existent entity")
@@ -332,7 +327,7 @@ func (bs bootstrapService) thing(key, id string) (mfsdk.Thing, error) {
 	var err error
 
 	if id == "" {
-		thingID, err = bs.sdk.CreateThing(mfsdk.Thing{Type: thingType}, key)
+		thingID, err = bs.sdk.CreateThing(mfsdk.Thing{}, key)
 		if err != nil {
 			return mfsdk.Thing{}, err
 		}

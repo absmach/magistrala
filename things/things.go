@@ -7,14 +7,11 @@
 
 package things
 
-import "strings"
-
 // Thing represents a Mainflux thing. Each thing is owned by one user, and
 // it is assigned with the unique identifier and (temporary) access key.
 type Thing struct {
 	ID       string
 	Owner    string
-	Type     string
 	Name     string
 	Key      string
 	Metadata map[string]interface{}
@@ -27,17 +24,8 @@ type ThingsPage struct {
 	Things []Thing
 }
 
-var thingTypes = map[string]bool{
-	"app":    true,
-	"device": true,
-}
-
 // Validate returns an error if thing representation is invalid.
 func (c *Thing) Validate() error {
-	if c.Type = strings.ToLower(c.Type); !thingTypes[c.Type] {
-		return ErrMalformedEntity
-	}
-
 	return nil
 }
 

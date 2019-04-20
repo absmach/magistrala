@@ -244,7 +244,7 @@ func TestChannelsByThing(t *testing.T) {
 	var channels []sdk.Channel
 	mainfluxSDK := sdk.NewSDK(sdkConf)
 
-	th := sdk.Thing{Type: "device", Name: "test_device"}
+	th := sdk.Thing{Name: "test_device"}
 	tid, err := mainfluxSDK.CreateThing(th, token)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 

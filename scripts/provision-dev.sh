@@ -7,7 +7,7 @@
 #
 
 ###
-# Provisions example user, device and channel on a clean Mainflux installation.
+# Provisions example user, thing and channel on a clean Mainflux installation.
 #
 # Expects a running Mainflux installation.
 #
@@ -33,11 +33,11 @@ curl -s -S --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "
 JWTTOKEN=$(curl -s -S --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json" https://localhost/tokens -d '{"email":"'"$EMAIL"'", "password":"'"$PASSWORD"'"}' | grep -Po "token\":\"\K(.*)(?=\")")
 printf "JWT TOKEN for user is $JWTTOKEN \n"
 
-#provision device
-printf "Provisioning device with name $DEVICE \n"
-curl -s -S --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json" -H "Authorization: $JWTTOKEN" https://localhost/things -d '{"type":"device", "name":"'"$DEVICE"'"}'
+#provision thing
+printf "Provisioning thing with name $DEVICE \n"
+curl -s -S --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json" -H "Authorization: $JWTTOKEN" https://localhost/things -d '{"name":"'"$DEVICE"'"}'
 
-#get device token
+#get thing token
 DEVICETOKEN=$(curl -s -S --cacert docker/ssl/certs/mainflux-server.crt --insecure -H "Authorization: $JWTTOKEN" https://localhost/things/1 | grep -Po "key\":\"\K(.*)(?=\")")
 printf "Device token is $DEVICETOKEN \n"
 
@@ -45,6 +45,6 @@ printf "Device token is $DEVICETOKEN \n"
 printf "Provisioning channel with name $CHANNEL \n"
 curl -s -S --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json" -H "Authorization: $JWTTOKEN" https://localhost/channels -d '{"name":"'"$CHANNEL"'"}'
 
-#connect device to channel
-printf "Connecting device to channel \n"
+#connect thing to channel
+printf "Connecting thing to channel \n"
 curl -s -S --cacert docker/ssl/certs/mainflux-server.crt --insecure -X PUT -H "Authorization: $JWTTOKEN" https://localhost/channels/1/things/1

@@ -4,7 +4,7 @@
 -- SPDX-License-Identifier: Apache-2.0
 
 
-module Main exposing (Model, Msg(..), init, main, subscriptions, update, view)
+port module Main exposing (Model, Msg(..), init, main, subscriptions, update, view)
 
 import Bootstrap.Button as Button
 import Bootstrap.ButtonGroup as ButtonGroup
@@ -279,8 +279,7 @@ updateMessage model msg =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Sub.map ThingMsg (Thing.subscriptions model.thing)
-        , Sub.map UserMsg (User.subscriptions model.user)
+        [ Sub.map UserMsg (User.subscriptions model.user)
         ]
 
 

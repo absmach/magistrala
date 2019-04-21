@@ -27,6 +27,7 @@ import Http
 import HttpMF exposing (paths)
 import Json.Decode as D
 import Json.Encode as E
+import JsonMF exposing (..)
 import ModalMF
 import Url.Builder as B
 
@@ -40,12 +41,12 @@ query =
 type alias Channel =
     { name : Maybe String
     , id : String
-    , metadata : Maybe String
+    , metadata : Maybe JsonValue
     }
 
 
 emptyChannel =
-    Channel (Just "") "" (Just "")
+    Channel (Just "") "" (Just ValueNull)
 
 
 type alias Channels =
@@ -127,7 +128,7 @@ update msg model token =
                 token
                 { emptyChannel
                     | name = Just model.name
-                    , metadata = Just model.metadata
+                    , metadata = stringToMaybeJsonValue model.metadata
                 }
                 channelEncoder
                 ProvisionedChannel
@@ -152,7 +153,7 @@ update msg model token =
             ( { model
                 | editMode = True
                 , name = Helpers.parseString model.channel.name
-                , metadata = Helpers.parseString model.channel.metadata
+                , metadata = maybeJsonValueToString model.channel.metadata
               }
             , Cmd.none
             )
@@ -164,7 +165,13 @@ update msg model token =
                 token
                 { emptyChannel
                     | name = Just model.name
-                    , metadata = Just model.metadata
+                    , metadata =
+                        case stringToJsonValue model.metadata of
+                            Ok jsonValue ->
+                                Just jsonValue
+
+                            Err err ->
+                                model.channel.metadata
                 }
                 channelEncoder
                 UpdatedChannel
@@ -392,11 +399,11 @@ editModalForm model =
     if model.editMode then
         ModalMF.modalForm
             [ ModalMF.FormRecord "name" SubmitName (Helpers.parseString model.channel.name) model.name
-            , ModalMF.FormRecord "metadata" SubmitMetadata (Helpers.parseString model.channel.metadata) model.metadata
+            , ModalMF.FormRecord "metadata" SubmitMetadata (maybeJsonValueToString model.channel.metadata) model.metadata
             ]
 
     else
-        ModalMF.modalDiv [ ( "name", Helpers.parseString model.channel.name ), ( "metadata", Helpers.parseString model.channel.metadata ) ]
+        ModalMF.modalDiv [ ( "name", Helpers.parseString model.channel.name ), ( "metadata", maybeJsonValueToString model.channel.metadata ) ]
 
 
 
@@ -408,7 +415,7 @@ channelDecoder =
     D.map3 Channel
         (D.maybe (D.field "name" D.string))
         (D.field "id" D.string)
-        (D.maybe (D.field "metadata" D.string))
+        (D.maybe (D.field "metadata" jsonValueDecoder))
 
 
 channelsDecoder : D.Decoder Channels
@@ -422,7 +429,7 @@ channelEncoder : Channel -> E.Value
 channelEncoder channel =
     E.object
         [ ( "name", E.string (Helpers.parseString channel.name) )
-        , ( "metadata", E.string (Helpers.parseString channel.metadata) )
+        , ( "metadata", jsonValueEncoder (maybeJsonValueToJsonValue channel.metadata) )
         ]
 
 

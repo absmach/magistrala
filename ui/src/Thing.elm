@@ -4,7 +4,7 @@
 -- SPDX-License-Identifier: Apache-2.0
 
 
-module Thing exposing (Model, Msg(..), Thing, initial, subscriptions, update, view)
+module Thing exposing (Model, Msg(..), Thing, initial, update, view)
 
 import Bootstrap.Button as Button
 import Bootstrap.ButtonGroup as ButtonGroup
@@ -19,6 +19,7 @@ import Bootstrap.Grid.Row as Row
 import Bootstrap.Modal as Modal
 import Bootstrap.Table as Table
 import Bootstrap.Utilities.Spacing as Spacing
+import Debug exposing (log)
 import Dict
 import Error
 import Helpers exposing (faIcons, fontAwesome)
@@ -29,6 +30,7 @@ import Http
 import HttpMF exposing (paths)
 import Json.Decode as D
 import Json.Encode as E
+import JsonMF exposing (..)
 import ModalMF
 import Url.Builder as B
 
@@ -39,17 +41,16 @@ query =
     }
 
 
-defaultType =
-    "app"
-
-
 type alias Thing =
-    { type_ : String
-    , name : Maybe String
+    { name : Maybe String
     , id : String
     , key : String
-    , metadata : Maybe String
+    , metadata : Maybe JsonValue
     }
+
+
+emptyThing =
+    Thing (Just "") "" "" (Just ValueNull)
 
 
 type alias Things =
@@ -61,7 +62,6 @@ type alias Things =
 type alias Model =
     { name : String
     , metadata : String
-    , type_ : String
     , offset : Int
     , limit : Int
     , response : String
@@ -71,19 +71,13 @@ type alias Model =
     , editMode : Bool
     , provisionModalVisibility : Modal.Visibility
     , editModalVisibility : Modal.Visibility
-    , provisionDropState : Dropdown.State
     }
-
-
-emptyThing =
-    Thing "" (Just "") "" "" (Just "")
 
 
 initial : Model
 initial =
     { name = ""
     , metadata = ""
-    , type_ = defaultType
     , offset = query.offset
     , limit = query.limit
     , response = ""
@@ -96,13 +90,11 @@ initial =
     , editMode = False
     , provisionModalVisibility = Modal.hidden
     , editModalVisibility = Modal.hidden
-    , provisionDropState = Dropdown.initialState
     }
 
 
 type Msg
-    = SubmitType String
-    | SubmitName String
+    = SubmitName String
     | SubmitMetadata String
     | ProvisionThing
     | ProvisionedThing (Result Http.Error String)
@@ -120,16 +112,11 @@ type Msg
     | CloseEditModal
     | ShowProvisionModal
     | ShowEditModal Thing
-    | ProvisionDropState Dropdown.State
-    | Type String
 
 
 update : Msg -> Model -> String -> ( Model, Cmd Msg )
 update msg model token =
     case msg of
-        SubmitType type_ ->
-            ( { model | type_ = type_ }, Cmd.none )
-
         SubmitName name ->
             ( { model | name = name }, Cmd.none )
 
@@ -146,8 +133,7 @@ update msg model token =
                 token
                 { emptyThing
                     | name = Just model.name
-                    , type_ = model.type_
-                    , metadata = Just model.metadata
+                    , metadata = stringToMaybeJsonValue model.metadata
                 }
                 thingEncoder
                 ProvisionedThing
@@ -172,7 +158,7 @@ update msg model token =
             ( { model
                 | editMode = True
                 , name = Helpers.parseString model.thing.name
-                , metadata = Helpers.parseString model.thing.metadata
+                , metadata = maybeJsonValueToString model.thing.metadata
               }
             , Cmd.none
             )
@@ -184,8 +170,13 @@ update msg model token =
                 token
                 { emptyThing
                     | name = Just model.name
-                    , type_ = model.thing.type_
-                    , metadata = Just model.metadata
+                    , metadata =
+                        case stringToJsonValue model.metadata of
+                            Ok jsonValue ->
+                                Just jsonValue
+
+                            Err err ->
+                                model.thing.metadata
                 }
                 thingEncoder
                 UpdatedThing
@@ -275,12 +266,6 @@ update msg model token =
             , Cmd.none
             )
 
-        ProvisionDropState state ->
-            ( { model | provisionDropState = state }, Cmd.none )
-
-        Type type_ ->
-            ( { model | type_ = type_ }, Cmd.none )
-
 
 
 -- VIEW
@@ -333,7 +318,6 @@ genTableHeader =
     Table.simpleThead
         [ Table.th [] [ text "Name" ]
         , Table.th [] [ text "ID" ]
-        , Table.th [] [ text "Type" ]
         ]
 
 
@@ -345,38 +329,10 @@ genTableBody model =
                 Table.tr [ Table.rowAttr (onClick (ShowEditModal thing)) ]
                     [ Table.td [] [ text (Helpers.parseString thing.name) ]
                     , Table.td [] [ text thing.id ]
-                    , Table.td [] [ text thing.type_ ]
                     ]
             )
             model.things.list
         )
-
-
-
--- Provision modal
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.batch
-        [ Dropdown.subscriptions model.provisionDropState ProvisionDropState ]
-
-
-provisionDropDiv : Model -> Html Msg
-provisionDropDiv model =
-    div []
-        [ Dropdown.dropdown
-            model.provisionDropState
-            { options = []
-            , toggleMsg = ProvisionDropState
-            , toggleButton =
-                Dropdown.toggle [ Button.outlinePrimary ] [ text model.type_ ]
-            , items =
-                [ Dropdown.buttonItem [ onClick (Type "app") ] [ text "app" ]
-                , Dropdown.buttonItem [ onClick (Type "device") ] [ text "device" ]
-                ]
-            }
-        ]
 
 
 provisionModal : Model -> Html Msg
@@ -393,8 +349,7 @@ provisionModalBody : Model -> (Modal.Config Msg -> Modal.Config Msg)
 provisionModalBody model =
     Modal.body []
         [ Grid.container []
-            [ Grid.row [] [ Grid.col [] [ provisionDropDiv model ] ]
-            , Grid.row [] [ Grid.col [] [ provisionModalForm model ] ]
+            [ Grid.row [] [ Grid.col [] [ provisionModalForm model ] ]
             , ModalMF.provisionModalButtons ProvisionThing ClosePorvisionModal
             ]
         ]
@@ -429,7 +384,7 @@ editModalBody model =
             [ Grid.row []
                 [ Grid.col []
                     [ editModalForm model
-                    , ModalMF.modalDiv [ ( "type", model.thing.type_ ), ( "id", model.thing.id ), ( "key", model.thing.key ) ]
+                    , ModalMF.modalDiv [ ( "id", model.thing.id ), ( "key", model.thing.key ) ]
                     ]
                 ]
             , ModalMF.editModalButtons model.editMode UpdateThing EditThing (ShowEditModal model.thing) (RemoveThing model.thing.id) CloseEditModal
@@ -442,11 +397,11 @@ editModalForm model =
     if model.editMode then
         ModalMF.modalForm
             [ ModalMF.FormRecord "name" SubmitName (Helpers.parseString model.thing.name) model.name
-            , ModalMF.FormRecord "metadata" SubmitMetadata (Helpers.parseString model.thing.metadata) model.metadata
+            , ModalMF.FormRecord "metadata" SubmitMetadata (maybeJsonValueToString model.thing.metadata) model.metadata
             ]
 
     else
-        ModalMF.modalDiv [ ( "name", Helpers.parseString model.thing.name ), ( "metadata", Helpers.parseString model.thing.metadata ) ]
+        ModalMF.modalDiv [ ( "name", Helpers.parseString model.thing.name ), ( "metadata", maybeJsonValueToString model.thing.metadata ) ]
 
 
 
@@ -455,12 +410,11 @@ editModalForm model =
 
 thingDecoder : D.Decoder Thing
 thingDecoder =
-    D.map5 Thing
-        (D.field "type" D.string)
+    D.map4 Thing
         (D.maybe (D.field "name" D.string))
         (D.field "id" D.string)
         (D.field "key" D.string)
-        (D.maybe (D.field "metadata" D.string))
+        (D.maybe (D.field "metadata" jsonValueDecoder))
 
 
 thingsDecoder : D.Decoder Things
@@ -473,9 +427,8 @@ thingsDecoder =
 thingEncoder : Thing -> E.Value
 thingEncoder thing =
     E.object
-        [ ( "type", E.string thing.type_ )
-        , ( "name", E.string (Helpers.parseString thing.name) )
-        , ( "metadata", E.string (Helpers.parseString thing.metadata) )
+        [ ( "name", E.string (Helpers.parseString thing.name) )
+        , ( "metadata", jsonValueEncoder (maybeJsonValueToJsonValue thing.metadata) )
         ]
 
 
@@ -485,7 +438,7 @@ thingEncoder thing =
 
 resetEdit : Model -> Model
 resetEdit model =
-    { model | name = "", type_ = defaultType, metadata = "" }
+    { model | name = "", metadata = "" }
 
 
 updateThingList : Model -> String -> ( Model, Cmd Msg )

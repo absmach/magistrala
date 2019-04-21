@@ -35,7 +35,7 @@ folder, enter
 
 and follow the instructions on screen.
 
-**NB:** `make` does `elm make src/Main.elm` and `make run` executes `elm
+**NB:** `make` does `elm make src/Main.elm --output=main.js` and `make run` executes `elm
 reactor`. Cf. _Makefile_ for more options.
 
 ## Configuration
@@ -48,7 +48,7 @@ Follow the instructions above to install and run GUI as a native build. In
 _src/Env.elm_ change a `url` field value of the `elm` record to
 `http://localhost:80/` (trailing slash `/` is mandatory). Instead of `make run`
 you can install [elm-live](https://github.com/wking-io/elm-live) and execute
-`elm-live src/Main.elm` to get a live reload when your `.Elm` files change.
+`elm-live src/Main.elm -- --output=main.js` to get a live reload when your `.Elm` files change.
 
 Launch Mainflux without ui service, either natively or as a Docker composition.
 If you have already launched Mainflux as a Docker composition, simply `cd` to

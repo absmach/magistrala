@@ -14,7 +14,7 @@ import Bootstrap.Grid.Col as Col
 import Bootstrap.Grid.Row as Row
 import Bootstrap.Table as Table
 import Bootstrap.Utilities.Spacing as Spacing
-import Html exposing (Html, a, div, hr, li, nav, node, p, strong, text, ul, i)
+import Html exposing (Html, a, div, hr, i, li, nav, node, p, strong, text, ul)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http
@@ -158,6 +158,7 @@ faIcons =
     , connection = "fas fa-plug"
     , messages = "far fa-paper-plane"
     , version = "fa fa-code-branch"
+    , websocket = "fas fa-arrows-alt-v"
     }
 
 

@@ -75,7 +75,7 @@ jsonValueEncoder json =
 
 jsonValueToString : JsonValue -> String
 jsonValueToString jsonValue =
-    jsonValue |> jsonValueEncoder |> E.encode 4
+    jsonValue |> jsonValueEncoder |> E.encode 1
 
 
 

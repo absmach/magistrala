@@ -134,8 +134,7 @@ func decodeCreateThing(event map[string]interface{}) (createThingEvent, error) {
 	}
 
 	cte := createThingEvent{
-		id:   read(event, "id", ""),
-		kind: read(event, "type", ""),
+		id: read(event, "id", ""),
 	}
 
 	val, ok := metadata["lora"]
@@ -158,8 +157,7 @@ func decodeUpdateThing(event map[string]interface{}) (updateThingEvent, error) {
 	}
 
 	ute := updateThingEvent{
-		id:   read(event, "id", ""),
-		kind: read(event, "type", ""),
+		id: read(event, "id", ""),
 	}
 
 	val, ok := metadata["lora"]

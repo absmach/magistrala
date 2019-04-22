@@ -2,13 +2,11 @@ package redis
 
 type createThingEvent struct {
 	id       string
-	kind     string
 	metadata thingMetadata
 }
 
 type updateThingEvent struct {
 	id       string
-	kind     string
 	metadata thingMetadata
 }
 

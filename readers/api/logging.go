@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/readers"
 )
@@ -33,7 +32,7 @@ func LoggingMiddleware(svc readers.MessageRepository, logger logger.Logger) read
 	}
 }
 
-func (lm *loggingMiddleware) ReadAll(chanID string, offset, limit uint64, query map[string]string) []mainflux.Message {
+func (lm *loggingMiddleware) ReadAll(chanID string, offset, limit uint64, query map[string]string) readers.MessagesPage {
 	defer func(begin time.Time) {
 		lm.logger.Info(fmt.Sprintf(`Method read_all for offset %d and limit %d took %s to complete without errors.`, offset, limit, time.Since(begin)))
 	}(time.Now())

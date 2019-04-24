@@ -20,5 +20,14 @@ var ErrNotFound = errors.New("entity not found")
 type MessageRepository interface {
 	// ReadAll skips given number of messages for given channel and returns next
 	// limited number of messages.
-	ReadAll(string, uint64, uint64, map[string]string) []mainflux.Message
+	ReadAll(string, uint64, uint64, map[string]string) MessagesPage
+}
+
+// MessagesPage contains page related metadata as well as list of messages that
+// belong to this page.
+type MessagesPage struct {
+	Total    uint64
+	Offset   uint64
+	Limit    uint64
+	Messages []mainflux.Message
 }

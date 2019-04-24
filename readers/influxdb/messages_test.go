@@ -8,6 +8,7 @@ import (
 
 	influxdata "github.com/influxdata/influxdb/client/v2"
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/readers"
 	reader "github.com/mainflux/mainflux/readers/influxdb"
 	writer "github.com/mainflux/mainflux/writers/influxdb"
 
@@ -53,10 +54,12 @@ func TestReadAll(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Creating new InfluxDB writer expected to succeed: %s.\n", err))
 
 	messages := []mainflux.Message{}
+	subtopicMsgs := []mainflux.Message{}
 	now := time.Now().Unix()
 	for i := 0; i < msgsNum; i++ {
 		// Mix possible values as well as value sum.
 		count := i % valueFields
+		msg.Subtopic = ""
 		switch count {
 		case 0:
 			msg.Subtopic = subtopic
@@ -77,60 +80,94 @@ func TestReadAll(t *testing.T) {
 		err := writer.Save(msg)
 		require.Nil(t, err, fmt.Sprintf("failed to store message to InfluxDB: %s", err))
 		messages = append(messages, msg)
+		if count == 0 {
+			subtopicMsgs = append(subtopicMsgs, msg)
+		}
 	}
 
 	reader, err := reader.New(client, testDB)
 	require.Nil(t, err, fmt.Sprintf("Creating new InfluxDB reader expected to succeed: %s.\n", err))
 
 	cases := map[string]struct {
-		chanID   string
-		offset   uint64
-		limit    uint64
-		query    map[string]string
-		messages []mainflux.Message
+		chanID string
+		offset uint64
+		limit  uint64
+		query  map[string]string
+		page   readers.MessagesPage
 	}{
 		"read message page for existing channel": {
-			chanID:   chanID,
-			offset:   0,
-			limit:    10,
-			messages: messages[0:10],
+			chanID: chanID,
+			offset: 0,
+			limit:  10,
+			page: readers.MessagesPage{
+				Total:    msgsNum,
+				Offset:   0,
+				Limit:    10,
+				Messages: messages[0:10],
+			},
 		},
 		"read message page for too large limit": {
-			chanID:   chanID,
-			offset:   0,
-			limit:    101,
-			messages: messages[0:100],
+			chanID: chanID,
+			offset: 0,
+			limit:  101,
+			page: readers.MessagesPage{
+				Total:    msgsNum,
+				Offset:   0,
+				Limit:    101,
+				Messages: messages[0:100],
+			},
 		},
 		"read message page for non-existent channel": {
-			chanID:   "2",
-			offset:   0,
-			limit:    10,
-			messages: []mainflux.Message{},
+			chanID: "2",
+			offset: 0,
+			limit:  10,
+			page: readers.MessagesPage{
+				Total:    0,
+				Offset:   0,
+				Limit:    10,
+				Messages: []mainflux.Message{},
+			},
 		},
 		"read message last page": {
-			chanID:   chanID,
-			offset:   95,
-			limit:    10,
-			messages: messages[95:101],
+			chanID: chanID,
+			offset: 95,
+			limit:  10,
+			page: readers.MessagesPage{
+				Total:    msgsNum,
+				Offset:   95,
+				Limit:    10,
+				Messages: messages[95:101],
+			},
 		},
 		"read message with non-existent subtopic": {
-			chanID:   chanID,
-			offset:   0,
-			limit:    msgsNum,
-			query:    map[string]string{"subtopic": "not-present"},
-			messages: []mainflux.Message{},
+			chanID: chanID,
+			offset: 0,
+			limit:  msgsNum,
+			query:  map[string]string{"subtopic": "not-present"},
+			page: readers.MessagesPage{
+				Total:    0,
+				Offset:   0,
+				Limit:    msgsNum,
+				Messages: []mainflux.Message{},
+			},
 		},
 		"read message with subtopic": {
-			chanID:   chanID,
-			offset:   0,
-			limit:    10,
-			query:    map[string]string{"subtopic": subtopic},
-			messages: messages[0:10],
+			chanID: chanID,
+			offset: 0,
+			limit:  10,
+			query:  map[string]string{"subtopic": subtopic},
+			page: readers.MessagesPage{
+				Total:    uint64(len(subtopicMsgs)),
+				Offset:   0,
+				Limit:    10,
+				Messages: subtopicMsgs[0:10],
+			},
 		},
 	}
 
 	for desc, tc := range cases {
 		result := reader.ReadAll(tc.chanID, tc.offset, tc.limit, tc.query)
-		assert.ElementsMatch(t, tc.messages, result, fmt.Sprintf("%s: expected: %v \n-------------\n got: %v", desc, tc.messages, result))
+		assert.ElementsMatch(t, tc.page.Messages, result.Messages, fmt.Sprintf("%s: expected: %v \n-------------\n got: %v", desc, tc.page.Messages, result.Messages))
+		assert.Equal(t, tc.page.Total, result.Total, fmt.Sprintf("%s: expected %d got %d", desc, tc.page.Total, result.Total))
 	}
 }

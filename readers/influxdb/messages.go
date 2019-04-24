@@ -14,7 +14,10 @@ import (
 	"github.com/mainflux/mainflux"
 )
 
-const maxLimit = 100
+const (
+	maxLimit = 100
+	countCol = "count"
+)
 
 var _ readers.MessageRepository = (*influxRepository)(nil)
 
@@ -28,13 +31,13 @@ func New(client influxdata.Client, database string) (readers.MessageRepository, 
 	return &influxRepository{database, client}, nil
 }
 
-func (repo *influxRepository) ReadAll(chanID string, offset, limit uint64, query map[string]string) []mainflux.Message {
+func (repo *influxRepository) ReadAll(chanID string, offset, limit uint64, query map[string]string) readers.MessagesPage {
 	if limit > maxLimit {
 		limit = maxLimit
 	}
 
 	condition := fmtCondition(chanID, query)
-	cmd := fmt.Sprintf(`SELECT * from messages WHERE %s ORDER BY time DESC LIMIT %d OFFSET %d`, condition, limit, offset)
+	cmd := fmt.Sprintf(`SELECT * FROM messages WHERE %s ORDER BY time DESC LIMIT %d OFFSET %d`, condition, limit, offset)
 	q := influxdata.Query{
 		Command:  cmd,
 		Database: repo.database,
@@ -44,11 +47,11 @@ func (repo *influxRepository) ReadAll(chanID string, offset, limit uint64, query
 
 	resp, err := repo.client.Query(q)
 	if err != nil || resp.Error() != nil {
-		return ret
+		return readers.MessagesPage{}
 	}
 
 	if len(resp.Results) < 1 || len(resp.Results[0].Series) < 1 {
-		return ret
+		return readers.MessagesPage{}
 	}
 
 	result := resp.Results[0].Series[0]
@@ -56,7 +59,59 @@ func (repo *influxRepository) ReadAll(chanID string, offset, limit uint64, query
 		ret = append(ret, parseMessage(result.Columns, v))
 	}
 
-	return ret
+	total, err := repo.count(condition)
+	if err != nil {
+		return readers.MessagesPage{}
+	}
+
+	return readers.MessagesPage{
+		Total:    total,
+		Offset:   offset,
+		Limit:    limit,
+		Messages: ret,
+	}
+}
+
+func (repo *influxRepository) count(condition string) (uint64, error) {
+	cmd := fmt.Sprintf(`SELECT COUNT(protocol) FROM messages WHERE %s`, condition)
+	q := influxdata.Query{
+		Command:  cmd,
+		Database: repo.database,
+	}
+
+	resp, err := repo.client.Query(q)
+	if err != nil {
+		return 0, err
+	}
+	if resp.Error() != nil {
+		return 0, resp.Error()
+	}
+
+	if len(resp.Results) < 1 ||
+		len(resp.Results[0].Series) < 1 ||
+		len(resp.Results[0].Series[0].Values) < 1 {
+		return 0, nil
+	}
+
+	countIndex := 0
+	for i, col := range resp.Results[0].Series[0].Columns {
+		if col == countCol {
+			countIndex = i
+			break
+		}
+	}
+
+	result := resp.Results[0].Series[0].Values[0]
+	if len(result) < countIndex+1 {
+		return 0, nil
+	}
+
+	count, ok := result[countIndex].(json.Number)
+	if !ok {
+		return 0, nil
+	}
+
+	return strconv.ParseUint(count.String(), 10, 64)
 }
 
 func fmtCondition(chanID string, query map[string]string) string {

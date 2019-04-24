@@ -13,20 +13,23 @@ import (
 	"github.com/mainflux/mainflux"
 )
 
-var _ mainflux.Response = (*listMessagesRes)(nil)
+var _ mainflux.Response = (*pageRes)(nil)
 
-type listMessagesRes struct {
+type pageRes struct {
+	Total    uint64             `json:"total"`
+	Offset   uint64             `json:"offset"`
+	Limit    uint64             `json:"limit"`
 	Messages []mainflux.Message `json:"messages"`
 }
 
-func (res listMessagesRes) Headers() map[string]string {
+func (res pageRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res listMessagesRes) Code() int {
+func (res pageRes) Code() int {
 	return http.StatusOK
 }
 
-func (res listMessagesRes) Empty() bool {
+func (res pageRes) Empty() bool {
 	return false
 }

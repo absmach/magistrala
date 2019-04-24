@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/metrics"
-	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/readers"
 )
 
@@ -35,7 +34,7 @@ func MetricsMiddleware(svc readers.MessageRepository, counter metrics.Counter, l
 	}
 }
 
-func (mm *metricsMiddleware) ReadAll(chanID string, offset, limit uint64, query map[string]string) []mainflux.Message {
+func (mm *metricsMiddleware) ReadAll(chanID string, offset, limit uint64, query map[string]string) readers.MessagesPage {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "read_all").Add(1)
 		mm.latency.With("method", "read_all").Observe(time.Since(begin).Seconds())

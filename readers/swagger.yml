@@ -27,7 +27,7 @@ paths:
         200:
           description: Data retrieved.
           schema:
-            $ref: "#/definitions/MessageList"
+            $ref: "#/definitions/MessagesPage"
         400:
           description: Failed due to malformed query parameters.
         403:
@@ -40,9 +40,18 @@ responses:
     description: Unexpected server-side error occured.
 
 definitions:
-  MessageList:
+  MessagePage:
     type: object
     properties:
+      total:
+        type: number
+        description: Total number of items that are present on the system.
+      offset:
+        type: number
+        description: Number of items that were skipped during retrieval.
+      limit:
+        type: number
+        description: Size of the subset that was retrieved.
       messages:
         type: array
         minItems: 0

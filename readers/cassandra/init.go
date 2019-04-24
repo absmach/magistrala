@@ -7,7 +7,9 @@
 
 package cassandra
 
-import "github.com/gocql/gocql"
+import (
+	"github.com/gocql/gocql"
+)
 
 // Connect establishes connection to the Cassandra cluster.
 func Connect(hosts []string, keyspace string) (*gocql.Session, error) {

@@ -48,7 +48,7 @@ func New(db *mongo.Database) readers.MessageRepository {
 	return mongoRepository{db: db}
 }
 
-func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64, query map[string]string) []mainflux.Message {
+func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64, query map[string]string) readers.MessagesPage {
 	col := repo.db.Collection(collection)
 	sortMap := map[string]interface{}{
 		"time": -1,
@@ -57,7 +57,7 @@ func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64, query m
 	filter := fmtCondition(chanID, query)
 	cursor, err := col.Find(context.Background(), filter, options.Find().SetSort(sortMap).SetLimit(int64(limit)).SetSkip(int64(offset)))
 	if err != nil {
-		return []mainflux.Message{}
+		return readers.MessagesPage{}
 	}
 	defer cursor.Close(context.Background())
 
@@ -65,7 +65,7 @@ func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64, query m
 	for cursor.Next(context.Background()) {
 		var m message
 		if err := cursor.Decode(&m); err != nil {
-			return []mainflux.Message{}
+			return readers.MessagesPage{}
 		}
 
 		msg := mainflux.Message{
@@ -98,7 +98,20 @@ func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64, query m
 		messages = append(messages, msg)
 	}
 
-	return messages
+	total, err := col.CountDocuments(context.Background(), filter)
+	if err != nil {
+		return readers.MessagesPage{}
+	}
+	if total < 0 {
+		return readers.MessagesPage{}
+	}
+
+	return readers.MessagesPage{
+		Total:    uint64(total),
+		Offset:   offset,
+		Limit:    limit,
+		Messages: messages,
+	}
 }
 
 func fmtCondition(chanID string, query map[string]string) *bson.D {

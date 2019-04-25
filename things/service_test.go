@@ -48,25 +48,25 @@ func TestAddThing(t *testing.T) {
 	cases := []struct {
 		desc  string
 		thing things.Thing
-		key   string
+		token string
 		err   error
 	}{
 		{
 			desc:  "add new thing",
 			thing: things.Thing{Name: "a"},
-			key:   token,
+			token: token,
 			err:   nil,
 		},
 		{
 			desc:  "add thing with wrong credentials",
 			thing: things.Thing{Name: "d"},
-			key:   wrongValue,
+			token: wrongValue,
 			err:   things.ErrUnauthorizedAccess,
 		},
 	}
 
 	for _, tc := range cases {
-		_, err := svc.AddThing(tc.key, tc.thing)
+		_, err := svc.AddThing(tc.token, tc.thing)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -79,31 +79,73 @@ func TestUpdateThing(t *testing.T) {
 	cases := []struct {
 		desc  string
 		thing things.Thing
-		key   string
+		token string
 		err   error
 	}{
 		{
 			desc:  "update existing thing",
 			thing: saved,
-			key:   token,
+			token: token,
 			err:   nil,
 		},
 		{
 			desc:  "update thing with wrong credentials",
 			thing: saved,
-			key:   wrongValue,
+			token: wrongValue,
 			err:   things.ErrUnauthorizedAccess,
 		},
 		{
 			desc:  "update non-existing thing",
 			thing: other,
-			key:   token,
+			token: token,
 			err:   things.ErrNotFound,
 		},
 	}
 
 	for _, tc := range cases {
-		err := svc.UpdateThing(tc.key, tc.thing)
+		err := svc.UpdateThing(tc.token, tc.thing)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	}
+}
+
+func TestUpdateKey(t *testing.T) {
+	key := "new-key"
+	svc := newService(map[string]string{token: email})
+	saved, err := svc.AddThing(token, thing)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+
+	cases := []struct {
+		desc  string
+		token string
+		id    string
+		key   string
+		err   error
+	}{
+		{
+			desc:  "update key of an existing thing",
+			token: token,
+			id:    saved.ID,
+			key:   key,
+			err:   nil,
+		},
+		{
+			desc:  "update key with invalid credentials",
+			token: wrongValue,
+			id:    saved.ID,
+			key:   key,
+			err:   things.ErrUnauthorizedAccess,
+		},
+		{
+			desc:  "update key of non-existing thing",
+			token: token,
+			id:    wrongID,
+			key:   wrongValue,
+			err:   things.ErrNotFound,
+		},
+	}
+
+	for _, tc := range cases {
+		err := svc.UpdateKey(tc.token, tc.id, tc.key)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -113,29 +155,29 @@ func TestViewThing(t *testing.T) {
 	saved, _ := svc.AddThing(token, thing)
 
 	cases := map[string]struct {
-		id  string
-		key string
-		err error
+		id    string
+		token string
+		err   error
 	}{
 		"view existing thing": {
-			id:  saved.ID,
-			key: token,
-			err: nil,
+			id:    saved.ID,
+			token: token,
+			err:   nil,
 		},
 		"view thing with wrong credentials": {
-			id:  saved.ID,
-			key: wrongValue,
-			err: things.ErrUnauthorizedAccess,
+			id:    saved.ID,
+			token: wrongValue,
+			err:   things.ErrUnauthorizedAccess,
 		},
 		"view non-existing thing": {
-			id:  wrongID,
-			key: token,
-			err: things.ErrNotFound,
+			id:    wrongID,
+			token: token,
+			err:   things.ErrNotFound,
 		},
 	}
 
 	for desc, tc := range cases {
-		_, err := svc.ViewThing(tc.key, tc.id)
+		_, err := svc.ViewThing(tc.token, tc.id)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
@@ -149,49 +191,49 @@ func TestListThings(t *testing.T) {
 	}
 
 	cases := map[string]struct {
-		key    string
+		token  string
 		offset uint64
 		limit  uint64
 		size   uint64
 		err    error
 	}{
 		"list all things": {
-			key:    token,
+			token:  token,
 			offset: 0,
 			limit:  n,
 			size:   n,
 			err:    nil,
 		},
 		"list half": {
-			key:    token,
+			token:  token,
 			offset: n / 2,
 			limit:  n,
 			size:   n / 2,
 			err:    nil,
 		},
 		"list last thing": {
-			key:    token,
+			token:  token,
 			offset: n - 1,
 			limit:  n,
 			size:   1,
 			err:    nil,
 		},
 		"list empty set": {
-			key:    token,
+			token:  token,
 			offset: n + 1,
 			limit:  n,
 			size:   0,
 			err:    nil,
 		},
 		"list with zero limit": {
-			key:    token,
+			token:  token,
 			offset: 1,
 			limit:  0,
 			size:   0,
 			err:    nil,
 		},
 		"list with wrong credentials": {
-			key:    wrongValue,
+			token:  wrongValue,
 			offset: 0,
 			limit:  0,
 			size:   0,
@@ -200,7 +242,7 @@ func TestListThings(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		page, err := svc.ListThings(tc.key, tc.offset, tc.limit)
+		page, err := svc.ListThings(tc.token, tc.offset, tc.limit)
 		size := uint64(len(page.Things))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
@@ -223,7 +265,7 @@ func TestListThingsByChannel(t *testing.T) {
 	time.Sleep(time.Second)
 
 	cases := map[string]struct {
-		key     string
+		token   string
 		channel string
 		offset  uint64
 		limit   uint64
@@ -231,7 +273,7 @@ func TestListThingsByChannel(t *testing.T) {
 		err     error
 	}{
 		"list all things by existing channel": {
-			key:     token,
+			token:   token,
 			channel: sch.ID,
 			offset:  0,
 			limit:   n,
@@ -239,7 +281,7 @@ func TestListThingsByChannel(t *testing.T) {
 			err:     nil,
 		},
 		"list half of things by existing channel": {
-			key:     token,
+			token:   token,
 			channel: sch.ID,
 			offset:  n / 2,
 			limit:   n,
@@ -247,7 +289,7 @@ func TestListThingsByChannel(t *testing.T) {
 			err:     nil,
 		},
 		"list last thing by existing channel": {
-			key:     token,
+			token:   token,
 			channel: sch.ID,
 			offset:  n - 1,
 			limit:   n,
@@ -255,7 +297,7 @@ func TestListThingsByChannel(t *testing.T) {
 			err:     nil,
 		},
 		"list empty set of things by existing channel": {
-			key:     token,
+			token:   token,
 			channel: sch.ID,
 			offset:  n + 1,
 			limit:   n,
@@ -263,7 +305,7 @@ func TestListThingsByChannel(t *testing.T) {
 			err:     nil,
 		},
 		"list things by existing channel with zero limit": {
-			key:     token,
+			token:   token,
 			channel: sch.ID,
 			offset:  1,
 			limit:   0,
@@ -271,7 +313,7 @@ func TestListThingsByChannel(t *testing.T) {
 			err:     nil,
 		},
 		"list things by existing channel with wrong credentials": {
-			key:     wrongValue,
+			token:   wrongValue,
 			channel: sch.ID,
 			offset:  0,
 			limit:   0,
@@ -279,7 +321,7 @@ func TestListThingsByChannel(t *testing.T) {
 			err:     things.ErrUnauthorizedAccess,
 		},
 		"list things by non-existent channel with wrong credentials": {
-			key:     token,
+			token:   token,
 			channel: "non-existent",
 			offset:  0,
 			limit:   10,
@@ -289,7 +331,7 @@ func TestListThingsByChannel(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		page, err := svc.ListThingsByChannel(tc.key, tc.channel, tc.offset, tc.limit)
+		page, err := svc.ListThingsByChannel(tc.token, tc.channel, tc.offset, tc.limit)
 		size := uint64(len(page.Things))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
@@ -301,39 +343,39 @@ func TestRemoveThing(t *testing.T) {
 	saved, _ := svc.AddThing(token, thing)
 
 	cases := []struct {
-		desc string
-		id   string
-		key  string
-		err  error
+		desc  string
+		id    string
+		token string
+		err   error
 	}{
 		{
-			desc: "remove thing with wrong credentials",
-			id:   saved.ID,
-			key:  wrongValue,
-			err:  things.ErrUnauthorizedAccess,
+			desc:  "remove thing with wrong credentials",
+			id:    saved.ID,
+			token: wrongValue,
+			err:   things.ErrUnauthorizedAccess,
 		},
 		{
-			desc: "remove existing thing",
-			id:   saved.ID,
-			key:  token,
-			err:  nil,
+			desc:  "remove existing thing",
+			id:    saved.ID,
+			token: token,
+			err:   nil,
 		},
 		{
-			desc: "remove removed thing",
-			id:   saved.ID,
-			key:  token,
-			err:  nil,
+			desc:  "remove removed thing",
+			id:    saved.ID,
+			token: token,
+			err:   nil,
 		},
 		{
-			desc: "remove non-existing thing",
-			id:   wrongID,
-			key:  token,
-			err:  nil,
+			desc:  "remove non-existing thing",
+			id:    wrongID,
+			token: token,
+			err:   nil,
 		},
 	}
 
 	for _, tc := range cases {
-		err := svc.RemoveThing(tc.key, tc.id)
+		err := svc.RemoveThing(tc.token, tc.id)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -344,25 +386,25 @@ func TestCreateChannel(t *testing.T) {
 	cases := []struct {
 		desc    string
 		channel things.Channel
-		key     string
+		token   string
 		err     error
 	}{
 		{
 			desc:    "create channel",
 			channel: channel,
-			key:     token,
+			token:   token,
 			err:     nil,
 		},
 		{
 			desc:    "create channel with wrong credentials",
 			channel: channel,
-			key:     wrongValue,
+			token:   wrongValue,
 			err:     things.ErrUnauthorizedAccess,
 		},
 	}
 
 	for _, tc := range cases {
-		_, err := svc.CreateChannel(tc.key, tc.channel)
+		_, err := svc.CreateChannel(tc.token, tc.channel)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -375,31 +417,31 @@ func TestUpdateChannel(t *testing.T) {
 	cases := []struct {
 		desc    string
 		channel things.Channel
-		key     string
+		token   string
 		err     error
 	}{
 		{
 			desc:    "update existing channel",
 			channel: saved,
-			key:     token,
+			token:   token,
 			err:     nil,
 		},
 		{
 			desc:    "update channel with wrong credentials",
 			channel: saved,
-			key:     wrongValue,
+			token:   wrongValue,
 			err:     things.ErrUnauthorizedAccess,
 		},
 		{
 			desc:    "update non-existing channel",
 			channel: other,
-			key:     token,
+			token:   token,
 			err:     things.ErrNotFound,
 		},
 	}
 
 	for _, tc := range cases {
-		err := svc.UpdateChannel(tc.key, tc.channel)
+		err := svc.UpdateChannel(tc.token, tc.channel)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -409,29 +451,29 @@ func TestViewChannel(t *testing.T) {
 	saved, _ := svc.CreateChannel(token, channel)
 
 	cases := map[string]struct {
-		id  string
-		key string
-		err error
+		id    string
+		token string
+		err   error
 	}{
 		"view existing channel": {
-			id:  saved.ID,
-			key: token,
-			err: nil,
+			id:    saved.ID,
+			token: token,
+			err:   nil,
 		},
 		"view channel with wrong credentials": {
-			id:  saved.ID,
-			key: wrongValue,
-			err: things.ErrUnauthorizedAccess,
+			id:    saved.ID,
+			token: wrongValue,
+			err:   things.ErrUnauthorizedAccess,
 		},
 		"view non-existing channel": {
-			id:  wrongID,
-			key: token,
-			err: things.ErrNotFound,
+			id:    wrongID,
+			token: token,
+			err:   things.ErrNotFound,
 		},
 	}
 
 	for desc, tc := range cases {
-		_, err := svc.ViewChannel(tc.key, tc.id)
+		_, err := svc.ViewChannel(tc.token, tc.id)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
@@ -444,49 +486,49 @@ func TestListChannels(t *testing.T) {
 		svc.CreateChannel(token, channel)
 	}
 	cases := map[string]struct {
-		key    string
+		token  string
 		offset uint64
 		limit  uint64
 		size   uint64
 		err    error
 	}{
 		"list all channels": {
-			key:    token,
+			token:  token,
 			offset: 0,
 			limit:  n,
 			size:   n,
 			err:    nil,
 		},
 		"list half": {
-			key:    token,
+			token:  token,
 			offset: n / 2,
 			limit:  n,
 			size:   n / 2,
 			err:    nil,
 		},
 		"list last channel": {
-			key:    token,
+			token:  token,
 			offset: n - 1,
 			limit:  n,
 			size:   1,
 			err:    nil,
 		},
 		"list empty set": {
-			key:    token,
+			token:  token,
 			offset: n + 1,
 			limit:  n,
 			size:   0,
 			err:    nil,
 		},
 		"list with zero limit": {
-			key:    token,
+			token:  token,
 			offset: 1,
 			limit:  0,
 			size:   0,
 			err:    nil,
 		},
 		"list with wrong credentials": {
-			key:    wrongValue,
+			token:  wrongValue,
 			offset: 0,
 			limit:  0,
 			size:   0,
@@ -495,7 +537,7 @@ func TestListChannels(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		page, err := svc.ListChannels(tc.key, tc.offset, tc.limit)
+		page, err := svc.ListChannels(tc.token, tc.offset, tc.limit)
 		size := uint64(len(page.Channels))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
@@ -518,7 +560,7 @@ func TestListChannelsByThing(t *testing.T) {
 	time.Sleep(time.Second)
 
 	cases := map[string]struct {
-		key    string
+		token  string
 		thing  string
 		offset uint64
 		limit  uint64
@@ -526,7 +568,7 @@ func TestListChannelsByThing(t *testing.T) {
 		err    error
 	}{
 		"list all channels by existing thing": {
-			key:    token,
+			token:  token,
 			thing:  sth.ID,
 			offset: 0,
 			limit:  n,
@@ -534,7 +576,7 @@ func TestListChannelsByThing(t *testing.T) {
 			err:    nil,
 		},
 		"list half of channels by existing thing": {
-			key:    token,
+			token:  token,
 			thing:  sth.ID,
 			offset: n / 2,
 			limit:  n,
@@ -542,7 +584,7 @@ func TestListChannelsByThing(t *testing.T) {
 			err:    nil,
 		},
 		"list last channel by existing thing": {
-			key:    token,
+			token:  token,
 			thing:  sth.ID,
 			offset: n - 1,
 			limit:  n,
@@ -550,7 +592,7 @@ func TestListChannelsByThing(t *testing.T) {
 			err:    nil,
 		},
 		"list empty set of channels by existing thing": {
-			key:    token,
+			token:  token,
 			thing:  sth.ID,
 			offset: n + 1,
 			limit:  n,
@@ -558,7 +600,7 @@ func TestListChannelsByThing(t *testing.T) {
 			err:    nil,
 		},
 		"list channels by existing thing with zero limit": {
-			key:    token,
+			token:  token,
 			thing:  sth.ID,
 			offset: 1,
 			limit:  0,
@@ -566,7 +608,7 @@ func TestListChannelsByThing(t *testing.T) {
 			err:    nil,
 		},
 		"list channels by existing thing with wrong credentials": {
-			key:    wrongValue,
+			token:  wrongValue,
 			thing:  sth.ID,
 			offset: 0,
 			limit:  0,
@@ -574,7 +616,7 @@ func TestListChannelsByThing(t *testing.T) {
 			err:    things.ErrUnauthorizedAccess,
 		},
 		"list channels by non-existent thing": {
-			key:    token,
+			token:  token,
 			thing:  "non-existent",
 			offset: 0,
 			limit:  10,
@@ -584,7 +626,7 @@ func TestListChannelsByThing(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		page, err := svc.ListChannelsByThing(tc.key, tc.thing, tc.offset, tc.limit)
+		page, err := svc.ListChannelsByThing(tc.token, tc.thing, tc.offset, tc.limit)
 		size := uint64(len(page.Channels))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
@@ -596,39 +638,39 @@ func TestRemoveChannel(t *testing.T) {
 	saved, _ := svc.CreateChannel(token, channel)
 
 	cases := []struct {
-		desc string
-		id   string
-		key  string
-		err  error
+		desc  string
+		id    string
+		token string
+		err   error
 	}{
 		{
-			desc: "remove channel with wrong credentials",
-			id:   saved.ID,
-			key:  wrongValue,
-			err:  things.ErrUnauthorizedAccess,
+			desc:  "remove channel with wrong credentials",
+			id:    saved.ID,
+			token: wrongValue,
+			err:   things.ErrUnauthorizedAccess,
 		},
 		{
-			desc: "remove existing channel",
-			id:   saved.ID,
-			key:  token,
-			err:  nil,
+			desc:  "remove existing channel",
+			id:    saved.ID,
+			token: token,
+			err:   nil,
 		},
 		{
-			desc: "remove removed channel",
-			id:   saved.ID,
-			key:  token,
-			err:  nil,
+			desc:  "remove removed channel",
+			id:    saved.ID,
+			token: token,
+			err:   nil,
 		},
 		{
-			desc: "remove non-existing channel",
-			id:   saved.ID,
-			key:  token,
-			err:  nil,
+			desc:  "remove non-existing channel",
+			id:    saved.ID,
+			token: token,
+			err:   nil,
 		},
 	}
 
 	for _, tc := range cases {
-		err := svc.RemoveChannel(tc.key, tc.id)
+		err := svc.RemoveChannel(tc.token, tc.id)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -641,35 +683,35 @@ func TestConnect(t *testing.T) {
 
 	cases := []struct {
 		desc    string
-		key     string
+		token   string
 		chanID  string
 		thingID string
 		err     error
 	}{
 		{
 			desc:    "connect thing",
-			key:     token,
+			token:   token,
 			chanID:  sch.ID,
 			thingID: sth.ID,
 			err:     nil,
 		},
 		{
 			desc:    "connect thing with wrong credentials",
-			key:     wrongValue,
+			token:   wrongValue,
 			chanID:  sch.ID,
 			thingID: sth.ID,
 			err:     things.ErrUnauthorizedAccess,
 		},
 		{
 			desc:    "connect thing to non-existing channel",
-			key:     token,
+			token:   token,
 			chanID:  wrongID,
 			thingID: sth.ID,
 			err:     things.ErrNotFound,
 		},
 		{
 			desc:    "connect non-existing thing to channel",
-			key:     token,
+			token:   token,
 			chanID:  sch.ID,
 			thingID: wrongID,
 			err:     things.ErrNotFound,
@@ -677,7 +719,7 @@ func TestConnect(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := svc.Connect(tc.key, tc.chanID, tc.thingID)
+		err := svc.Connect(tc.token, tc.chanID, tc.thingID)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -691,42 +733,42 @@ func TestDisconnect(t *testing.T) {
 
 	cases := []struct {
 		desc    string
-		key     string
+		token   string
 		chanID  string
 		thingID string
 		err     error
 	}{
 		{
 			desc:    "disconnect connected thing",
-			key:     token,
+			token:   token,
 			chanID:  sch.ID,
 			thingID: sth.ID,
 			err:     nil,
 		},
 		{
 			desc:    "disconnect disconnected thing",
-			key:     token,
+			token:   token,
 			chanID:  sch.ID,
 			thingID: sth.ID,
 			err:     things.ErrNotFound,
 		},
 		{
 			desc:    "disconnect with wrong credentials",
-			key:     wrongValue,
+			token:   wrongValue,
 			chanID:  sch.ID,
 			thingID: sth.ID,
 			err:     things.ErrUnauthorizedAccess,
 		},
 		{
 			desc:    "disconnect from non-existing channel",
-			key:     token,
+			token:   token,
 			chanID:  wrongID,
 			thingID: sth.ID,
 			err:     things.ErrNotFound,
 		},
 		{
 			desc:    "disconnect non-existing thing",
-			key:     token,
+			token:   token,
 			chanID:  sch.ID,
 			thingID: wrongID,
 			err:     things.ErrNotFound,
@@ -734,7 +776,7 @@ func TestDisconnect(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := svc.Disconnect(tc.key, tc.chanID, tc.thingID)
+		err := svc.Disconnect(tc.token, tc.chanID, tc.thingID)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 
@@ -748,29 +790,29 @@ func TestCanAccess(t *testing.T) {
 	svc.Connect(token, sch.ID, sth.ID)
 
 	cases := map[string]struct {
-		key     string
+		token   string
 		channel string
 		err     error
 	}{
 		"allowed access": {
-			key:     sth.Key,
+			token:   sth.Key,
 			channel: sch.ID,
 			err:     nil,
 		},
 		"not-connected cannot access": {
-			key:     wrongValue,
+			token:   wrongValue,
 			channel: sch.ID,
 			err:     things.ErrUnauthorizedAccess,
 		},
 		"access to non-existing channel": {
-			key:     sth.Key,
+			token:   sth.Key,
 			channel: wrongID,
 			err:     things.ErrUnauthorizedAccess,
 		},
 	}
 
 	for desc, tc := range cases {
-		_, err := svc.CanAccess(tc.channel, tc.key)
+		_, err := svc.CanAccess(tc.channel, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
@@ -781,24 +823,24 @@ func TestIdentify(t *testing.T) {
 	sth, _ := svc.AddThing(token, thing)
 
 	cases := map[string]struct {
-		key string
-		id  string
-		err error
+		token string
+		id    string
+		err   error
 	}{
 		"identify existing thing": {
-			key: sth.Key,
-			id:  sth.ID,
-			err: nil,
+			token: sth.Key,
+			id:    sth.ID,
+			err:   nil,
 		},
 		"identify non-existing thing": {
-			key: wrongValue,
-			id:  wrongID,
-			err: things.ErrUnauthorizedAccess,
+			token: wrongValue,
+			id:    wrongID,
+			err:   things.ErrUnauthorizedAccess,
 		},
 	}
 
 	for desc, tc := range cases {
-		id, err := svc.Identify(tc.key)
+		id, err := svc.Identify(tc.token)
 		assert.Equal(t, tc.id, id, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.id, id))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}

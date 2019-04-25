@@ -23,10 +23,11 @@ func addThingEndpoint(svc things.Service) endpoint.Endpoint {
 		}
 
 		thing := things.Thing{
+			Key:      req.Key,
 			Name:     req.Name,
 			Metadata: req.Metadata,
 		}
-		saved, err := svc.AddThing(req.key, thing)
+		saved, err := svc.AddThing(req.token, thing)
 		if err != nil {
 			return nil, err
 		}
@@ -53,7 +54,24 @@ func updateThingEndpoint(svc things.Service) endpoint.Endpoint {
 			Metadata: req.Metadata,
 		}
 
-		if err := svc.UpdateThing(req.key, thing); err != nil {
+		if err := svc.UpdateThing(req.token, thing); err != nil {
+			return nil, err
+		}
+
+		res := thingRes{id: req.id, created: false}
+		return res, nil
+	}
+}
+
+func updateKeyEndpoint(svc things.Service) endpoint.Endpoint {
+	return func(_ context.Context, request interface{}) (interface{}, error) {
+		req := request.(updateKeyReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		if err := svc.UpdateKey(req.token, req.id, req.Key); err != nil {
 			return nil, err
 		}
 
@@ -70,7 +88,7 @@ func viewThingEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		thing, err := svc.ViewThing(req.key, req.id)
+		thing, err := svc.ViewThing(req.token, req.id)
 		if err != nil {
 			return nil, err
 		}
@@ -94,7 +112,7 @@ func listThingsEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		page, err := svc.ListThings(req.key, req.offset, req.limit)
+		page, err := svc.ListThings(req.token, req.offset, req.limit)
 		if err != nil {
 			return nil, err
 		}
@@ -130,7 +148,7 @@ func listThingsByChannelEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		page, err := svc.ListThingsByChannel(req.key, req.id, req.offset, req.limit)
+		page, err := svc.ListThingsByChannel(req.token, req.id, req.offset, req.limit)
 		if err != nil {
 			return nil, err
 		}
@@ -171,7 +189,7 @@ func removeThingEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		if err := svc.RemoveThing(req.key, req.id); err != nil {
+		if err := svc.RemoveThing(req.token, req.id); err != nil {
 			return nil, err
 		}
 
@@ -188,7 +206,7 @@ func createChannelEndpoint(svc things.Service) endpoint.Endpoint {
 		}
 
 		channel := things.Channel{Name: req.Name, Metadata: req.Metadata}
-		saved, err := svc.CreateChannel(req.key, channel)
+		saved, err := svc.CreateChannel(req.token, channel)
 		if err != nil {
 			return nil, err
 		}
@@ -214,7 +232,7 @@ func updateChannelEndpoint(svc things.Service) endpoint.Endpoint {
 			Name:     req.Name,
 			Metadata: req.Metadata,
 		}
-		if err := svc.UpdateChannel(req.key, channel); err != nil {
+		if err := svc.UpdateChannel(req.token, channel); err != nil {
 			return nil, err
 		}
 
@@ -234,7 +252,7 @@ func viewChannelEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		channel, err := svc.ViewChannel(req.key, req.id)
+		channel, err := svc.ViewChannel(req.token, req.id)
 		if err != nil {
 			return nil, err
 		}
@@ -258,7 +276,7 @@ func listChannelsEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		page, err := svc.ListChannels(req.key, req.offset, req.limit)
+		page, err := svc.ListChannels(req.token, req.offset, req.limit)
 		if err != nil {
 			return nil, err
 		}
@@ -295,7 +313,7 @@ func listChannelsByThingEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		page, err := svc.ListChannelsByThing(req.key, req.id, req.offset, req.limit)
+		page, err := svc.ListChannelsByThing(req.token, req.id, req.offset, req.limit)
 		if err != nil {
 			return nil, err
 		}
@@ -333,7 +351,7 @@ func removeChannelEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		if err := svc.RemoveChannel(req.key, req.id); err != nil {
+		if err := svc.RemoveChannel(req.token, req.id); err != nil {
 			return nil, err
 		}
 
@@ -349,7 +367,7 @@ func connectEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		if err := svc.Connect(cr.key, cr.chanID, cr.thingID); err != nil {
+		if err := svc.Connect(cr.token, cr.chanID, cr.thingID); err != nil {
 			return nil, err
 		}
 
@@ -365,7 +383,7 @@ func disconnectEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		if err := svc.Disconnect(cr.key, cr.chanID, cr.thingID); err != nil {
+		if err := svc.Disconnect(cr.token, cr.chanID, cr.thingID); err != nil {
 			return nil, err
 		}
 

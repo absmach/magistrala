@@ -51,6 +51,12 @@ func (trm *thingRepositoryMock) Save(thing things.Thing) (string, error) {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
+	for _, th := range trm.things {
+		if th.Key == thing.Key {
+			return "", things.ErrConflict
+		}
+	}
+
 	trm.counter++
 	thing.ID = strconv.FormatUint(trm.counter, 10)
 	trm.things[key(thing.Owner, thing.ID)] = thing
@@ -69,6 +75,29 @@ func (trm *thingRepositoryMock) Update(thing things.Thing) error {
 	}
 
 	trm.things[dbKey] = thing
+
+	return nil
+}
+
+func (trm *thingRepositoryMock) UpdateKey(owner, id, val string) error {
+	trm.mu.Lock()
+	defer trm.mu.Unlock()
+
+	for _, th := range trm.things {
+		if th.Key == val {
+			return things.ErrConflict
+		}
+	}
+
+	dbKey := key(owner, id)
+
+	th, ok := trm.things[dbKey]
+	if !ok {
+		return things.ErrNotFound
+	}
+
+	th.Key = val
+	trm.things[dbKey] = th
 
 	return nil
 }

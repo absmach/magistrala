@@ -33,8 +33,8 @@ func NewEventStoreMiddleware(svc things.Service, client *redis.Client) things.Se
 	}
 }
 
-func (es eventStore) AddThing(key string, thing things.Thing) (things.Thing, error) {
-	sth, err := es.svc.AddThing(key, thing)
+func (es eventStore) AddThing(token string, thing things.Thing) (things.Thing, error) {
+	sth, err := es.svc.AddThing(token, thing)
 	if err != nil {
 		return sth, err
 	}
@@ -55,8 +55,8 @@ func (es eventStore) AddThing(key string, thing things.Thing) (things.Thing, err
 	return sth, err
 }
 
-func (es eventStore) UpdateThing(key string, thing things.Thing) error {
-	if err := es.svc.UpdateThing(key, thing); err != nil {
+func (es eventStore) UpdateThing(token string, thing things.Thing) error {
+	if err := es.svc.UpdateThing(token, thing); err != nil {
 		return err
 	}
 
@@ -75,20 +75,27 @@ func (es eventStore) UpdateThing(key string, thing things.Thing) error {
 	return nil
 }
 
-func (es eventStore) ViewThing(key, id string) (things.Thing, error) {
-	return es.svc.ViewThing(key, id)
+// UpdateKey doesn't send event because key shouldn't be sent over stream.
+// Maybe we can start publishing this event at some point, without key value
+// in order to notify adapters to disconnect connected things after key update.
+func (es eventStore) UpdateKey(token, id, key string) error {
+	return es.svc.UpdateKey(token, id, key)
 }
 
-func (es eventStore) ListThings(key string, offset, limit uint64) (things.ThingsPage, error) {
-	return es.svc.ListThings(key, offset, limit)
+func (es eventStore) ViewThing(token, id string) (things.Thing, error) {
+	return es.svc.ViewThing(token, id)
 }
 
-func (es eventStore) ListThingsByChannel(key, id string, offset, limit uint64) (things.ThingsPage, error) {
-	return es.svc.ListThingsByChannel(key, id, offset, limit)
+func (es eventStore) ListThings(token string, offset, limit uint64) (things.ThingsPage, error) {
+	return es.svc.ListThings(token, offset, limit)
 }
 
-func (es eventStore) RemoveThing(key, id string) error {
-	if err := es.svc.RemoveThing(key, id); err != nil {
+func (es eventStore) ListThingsByChannel(token, id string, offset, limit uint64) (things.ThingsPage, error) {
+	return es.svc.ListThingsByChannel(token, id, offset, limit)
+}
+
+func (es eventStore) RemoveThing(token, id string) error {
+	if err := es.svc.RemoveThing(token, id); err != nil {
 		return err
 	}
 
@@ -105,8 +112,8 @@ func (es eventStore) RemoveThing(key, id string) error {
 	return nil
 }
 
-func (es eventStore) CreateChannel(key string, channel things.Channel) (things.Channel, error) {
-	sch, err := es.svc.CreateChannel(key, channel)
+func (es eventStore) CreateChannel(token string, channel things.Channel) (things.Channel, error) {
+	sch, err := es.svc.CreateChannel(token, channel)
 	if err != nil {
 		return sch, err
 	}
@@ -127,8 +134,8 @@ func (es eventStore) CreateChannel(key string, channel things.Channel) (things.C
 	return sch, err
 }
 
-func (es eventStore) UpdateChannel(key string, channel things.Channel) error {
-	if err := es.svc.UpdateChannel(key, channel); err != nil {
+func (es eventStore) UpdateChannel(token string, channel things.Channel) error {
+	if err := es.svc.UpdateChannel(token, channel); err != nil {
 		return err
 	}
 
@@ -147,20 +154,20 @@ func (es eventStore) UpdateChannel(key string, channel things.Channel) error {
 	return nil
 }
 
-func (es eventStore) ViewChannel(key, id string) (things.Channel, error) {
-	return es.svc.ViewChannel(key, id)
+func (es eventStore) ViewChannel(token, id string) (things.Channel, error) {
+	return es.svc.ViewChannel(token, id)
 }
 
-func (es eventStore) ListChannels(key string, offset, limit uint64) (things.ChannelsPage, error) {
-	return es.svc.ListChannels(key, offset, limit)
+func (es eventStore) ListChannels(token string, offset, limit uint64) (things.ChannelsPage, error) {
+	return es.svc.ListChannels(token, offset, limit)
 }
 
-func (es eventStore) ListChannelsByThing(key, id string, offset, limit uint64) (things.ChannelsPage, error) {
-	return es.svc.ListChannelsByThing(key, id, offset, limit)
+func (es eventStore) ListChannelsByThing(token, id string, offset, limit uint64) (things.ChannelsPage, error) {
+	return es.svc.ListChannelsByThing(token, id, offset, limit)
 }
 
-func (es eventStore) RemoveChannel(key, id string) error {
-	if err := es.svc.RemoveChannel(key, id); err != nil {
+func (es eventStore) RemoveChannel(token, id string) error {
+	if err := es.svc.RemoveChannel(token, id); err != nil {
 		return err
 	}
 
@@ -177,8 +184,8 @@ func (es eventStore) RemoveChannel(key, id string) error {
 	return nil
 }
 
-func (es eventStore) Connect(key, chanID, thingID string) error {
-	if err := es.svc.Connect(key, chanID, thingID); err != nil {
+func (es eventStore) Connect(token, chanID, thingID string) error {
+	if err := es.svc.Connect(token, chanID, thingID); err != nil {
 		return err
 	}
 
@@ -196,8 +203,8 @@ func (es eventStore) Connect(key, chanID, thingID string) error {
 	return nil
 }
 
-func (es eventStore) Disconnect(key, chanID, thingID string) error {
-	if err := es.svc.Disconnect(key, chanID, thingID); err != nil {
+func (es eventStore) Disconnect(token, chanID, thingID string) error {
+	if err := es.svc.Disconnect(token, chanID, thingID); err != nil {
 		return err
 	}
 

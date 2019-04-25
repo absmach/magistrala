@@ -34,130 +34,139 @@ func MetricsMiddleware(svc things.Service, counter metrics.Counter, latency metr
 	}
 }
 
-func (ms *metricsMiddleware) AddThing(key string, thing things.Thing) (things.Thing, error) {
+func (ms *metricsMiddleware) AddThing(token string, thing things.Thing) (things.Thing, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "add_thing").Add(1)
 		ms.latency.With("method", "add_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.AddThing(key, thing)
+	return ms.svc.AddThing(token, thing)
 }
 
-func (ms *metricsMiddleware) UpdateThing(key string, thing things.Thing) error {
+func (ms *metricsMiddleware) UpdateThing(token string, thing things.Thing) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "update_thing").Add(1)
 		ms.latency.With("method", "update_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.UpdateThing(key, thing)
+	return ms.svc.UpdateThing(token, thing)
 }
 
-func (ms *metricsMiddleware) ViewThing(key, id string) (things.Thing, error) {
+func (ms *metricsMiddleware) UpdateKey(token, id, key string) error {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "update_key").Add(1)
+		ms.latency.With("method", "update_key").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.UpdateKey(token, id, key)
+}
+
+func (ms *metricsMiddleware) ViewThing(token, id string) (things.Thing, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "view_thing").Add(1)
 		ms.latency.With("method", "view_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ViewThing(key, id)
+	return ms.svc.ViewThing(token, id)
 }
 
-func (ms *metricsMiddleware) ListThings(key string, offset, limit uint64) (things.ThingsPage, error) {
+func (ms *metricsMiddleware) ListThings(token string, offset, limit uint64) (things.ThingsPage, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_things").Add(1)
 		ms.latency.With("method", "list_things").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListThings(key, offset, limit)
+	return ms.svc.ListThings(token, offset, limit)
 }
 
-func (ms *metricsMiddleware) ListThingsByChannel(key, id string, offset, limit uint64) (things.ThingsPage, error) {
+func (ms *metricsMiddleware) ListThingsByChannel(token, id string, offset, limit uint64) (things.ThingsPage, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_things_by_channel").Add(1)
 		ms.latency.With("method", "list_things_by_channel").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListThingsByChannel(key, id, offset, limit)
+	return ms.svc.ListThingsByChannel(token, id, offset, limit)
 }
 
-func (ms *metricsMiddleware) RemoveThing(key, id string) error {
+func (ms *metricsMiddleware) RemoveThing(token, id string) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "remove_thing").Add(1)
 		ms.latency.With("method", "remove_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.RemoveThing(key, id)
+	return ms.svc.RemoveThing(token, id)
 }
 
-func (ms *metricsMiddleware) CreateChannel(key string, channel things.Channel) (things.Channel, error) {
+func (ms *metricsMiddleware) CreateChannel(token string, channel things.Channel) (things.Channel, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "create_channel").Add(1)
 		ms.latency.With("method", "create_channel").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.CreateChannel(key, channel)
+	return ms.svc.CreateChannel(token, channel)
 }
 
-func (ms *metricsMiddleware) UpdateChannel(key string, channel things.Channel) error {
+func (ms *metricsMiddleware) UpdateChannel(token string, channel things.Channel) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "update_channel").Add(1)
 		ms.latency.With("method", "update_channel").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.UpdateChannel(key, channel)
+	return ms.svc.UpdateChannel(token, channel)
 }
 
-func (ms *metricsMiddleware) ViewChannel(key, id string) (things.Channel, error) {
+func (ms *metricsMiddleware) ViewChannel(token, id string) (things.Channel, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "view_channel").Add(1)
 		ms.latency.With("method", "view_channel").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ViewChannel(key, id)
+	return ms.svc.ViewChannel(token, id)
 }
 
-func (ms *metricsMiddleware) ListChannels(key string, offset, limit uint64) (things.ChannelsPage, error) {
+func (ms *metricsMiddleware) ListChannels(token string, offset, limit uint64) (things.ChannelsPage, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_channels").Add(1)
 		ms.latency.With("method", "list_channels").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListChannels(key, offset, limit)
+	return ms.svc.ListChannels(token, offset, limit)
 }
 
-func (ms *metricsMiddleware) ListChannelsByThing(key, id string, offset, limit uint64) (things.ChannelsPage, error) {
+func (ms *metricsMiddleware) ListChannelsByThing(token, id string, offset, limit uint64) (things.ChannelsPage, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_channels_by_thing").Add(1)
 		ms.latency.With("method", "list_channels_by_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListChannelsByThing(key, id, offset, limit)
+	return ms.svc.ListChannelsByThing(token, id, offset, limit)
 }
 
-func (ms *metricsMiddleware) RemoveChannel(key, id string) error {
+func (ms *metricsMiddleware) RemoveChannel(token, id string) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "remove_channel").Add(1)
 		ms.latency.With("method", "remove_channel").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.RemoveChannel(key, id)
+	return ms.svc.RemoveChannel(token, id)
 }
 
-func (ms *metricsMiddleware) Connect(key, chanID, thingID string) error {
+func (ms *metricsMiddleware) Connect(token, chanID, thingID string) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "connect").Add(1)
 		ms.latency.With("method", "connect").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.Connect(key, chanID, thingID)
+	return ms.svc.Connect(token, chanID, thingID)
 }
 
-func (ms *metricsMiddleware) Disconnect(key, chanID, thingID string) error {
+func (ms *metricsMiddleware) Disconnect(token, chanID, thingID string) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "disconnect").Add(1)
 		ms.latency.With("method", "disconnect").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.Disconnect(key, chanID, thingID)
+	return ms.svc.Disconnect(token, chanID, thingID)
 }
 
 func (ms *metricsMiddleware) CanAccess(id, key string) (string, error) {

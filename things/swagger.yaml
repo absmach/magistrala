@@ -22,7 +22,7 @@ paths:
           description: JSON-formatted document describing the new thing.
           in: body
           schema:
-            $ref: "#/definitions/ThingReq"
+            $ref: "#/definitions/CreateThingReq"
           required: true
       responses:
         201:
@@ -120,7 +120,7 @@ paths:
           description: JSON-formatted document describing the updated thing.
           in: body
           schema:
-            $ref: "#/definitions/ThingReq"
+            $ref: "#/definitions/UpdateThingReq"
           required: true
       responses:
         200:
@@ -152,6 +152,37 @@ paths:
           description: Failed due to malformed thing's ID.
         403:
           description: Missing or invalid access token provided.
+        500:
+          $ref: "#/responses/ServiceError"
+  /things/{thingId}/key:
+    patch:
+      summary: Updates thing key
+      description: |
+        Update is performed by replacing current key with a new one.
+      tags:
+        - things
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/ThingId"
+        - name: key
+          description: JSON-formatted document describing updated key.
+          in: body
+          schema:
+            $ref: "#/definitions/UpdateKeyReq"
+          required: true
+      responses:
+        200:
+          description: Thing key updated.
+        400:
+          description: Failed due to malformed JSON.
+        403:
+          description: Missing or invalid access token provided.
+        404:
+          description: Thing does not exist.
+        409:
+          description: Specified key already exists.
+        415:
+          description: Missing or invalid content type.
         500:
           $ref: "#/responses/ServiceError"
   /channels:
@@ -461,14 +492,33 @@ definitions:
       - id
       - type
       - key
-  ThingReq:
+  CreateThingReq:
+    type: object
+    properties:
+      key:
+        type: string
+        description: |
+          Thing key that is used for thing auth. If there is
+          not one provided service will generate one in UUID
+          format.
+      name:
+        type: string
+        description: Free-form thing name.
+      metadata:
+        type: object
+        description: Custom thing's data in JSON format.
+  UpdateThingReq:
     type: object
     properties:
       name:
         type: string
         description: Free-form thing name.
       metadata:
+        type: object
+        description: Custom thing's data in JSON format.
+  UpdateKeyReq:
+    type: object
+    properties:
+      key:
         type: string
-        description: Arbitrary, string-encoded thing's data.
-    required:
-      - type
+        description: Thing key that is used for thing auth.

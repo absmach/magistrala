@@ -39,6 +39,10 @@ type ThingRepository interface {
 	// returned to indicate operation failure.
 	Update(Thing) error
 
+	// UpdateKey updates key value of the existing thing. A non-nil error is
+	// returned to indicate operation failure.
+	UpdateKey(string, string, string) error
+
 	// RetrieveByID retrieves the thing having the provided identifier, that is owned
 	// by the specified user.
 	RetrieveByID(string, string) (Thing, error)

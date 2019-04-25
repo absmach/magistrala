@@ -43,8 +43,13 @@ func (tr thingRepository) Save(thing things.Thing) (string, error) {
 	_, err = tr.db.NamedExec(q, dbth)
 	if err != nil {
 		pqErr, ok := err.(*pq.Error)
-		if ok && errInvalid == pqErr.Code.Name() {
-			return "", things.ErrMalformedEntity
+		if ok {
+			switch pqErr.Code.Name() {
+			case errInvalid:
+				return "", things.ErrMalformedEntity
+			case errDuplicate:
+				return "", things.ErrConflict
+			}
 		}
 
 		return "", err
@@ -66,6 +71,41 @@ func (tr thingRepository) Update(thing things.Thing) error {
 		pqErr, ok := err.(*pq.Error)
 		if ok && errInvalid == pqErr.Code.Name() {
 			return things.ErrMalformedEntity
+		}
+
+		return err
+	}
+
+	cnt, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if cnt == 0 {
+		return things.ErrNotFound
+	}
+
+	return nil
+}
+
+func (tr thingRepository) UpdateKey(owner, id, key string) error {
+	q := `UPDATE things SET key = :key WHERE owner = :owner AND id = :id;`
+	dbth := dbThing{
+		ID:    id,
+		Owner: owner,
+		Key:   key,
+	}
+
+	res, err := tr.db.NamedExec(q, dbth)
+	if err != nil {
+		pqErr, ok := err.(*pq.Error)
+		if ok {
+			switch pqErr.Code.Name() {
+			case errInvalid:
+				return things.ErrMalformedEntity
+			case errDuplicate:
+				return things.ErrConflict
+			}
 		}
 
 		return err

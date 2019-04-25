@@ -15,26 +15,15 @@ type apiReq interface {
 	validate() error
 }
 
-type identityReq struct {
-	key string
-}
-
-func (req identityReq) validate() error {
-	if req.key == "" {
-		return things.ErrUnauthorizedAccess
-	}
-
-	return nil
-}
-
 type addThingReq struct {
-	key      string
+	token    string
 	Name     string                 `json:"name,omitempty"`
+	Key      string                 `json:"key,omitempty"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
 func (req addThingReq) validate() error {
-	if req.key == "" {
+	if req.token == "" {
 		return things.ErrUnauthorizedAccess
 	}
 
@@ -42,14 +31,14 @@ func (req addThingReq) validate() error {
 }
 
 type updateThingReq struct {
-	key      string
+	token    string
 	id       string
 	Name     string                 `json:"name,omitempty"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
 func (req updateThingReq) validate() error {
-	if req.key == "" {
+	if req.token == "" {
 		return things.ErrUnauthorizedAccess
 	}
 
@@ -60,14 +49,32 @@ func (req updateThingReq) validate() error {
 	return nil
 }
 
+type updateKeyReq struct {
+	token string
+	id    string
+	Key   string `json:"key"`
+}
+
+func (req updateKeyReq) validate() error {
+	if req.token == "" {
+		return things.ErrUnauthorizedAccess
+	}
+
+	if req.id == "" || req.Key == "" {
+		return things.ErrMalformedEntity
+	}
+
+	return nil
+}
+
 type createChannelReq struct {
-	key      string
+	token    string
 	Name     string                 `json:"name,omitempty"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
 func (req createChannelReq) validate() error {
-	if req.key == "" {
+	if req.token == "" {
 		return things.ErrUnauthorizedAccess
 	}
 
@@ -75,14 +82,14 @@ func (req createChannelReq) validate() error {
 }
 
 type updateChannelReq struct {
-	key      string
+	token    string
 	id       string
 	Name     string                 `json:"name,omitempty"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
 func (req updateChannelReq) validate() error {
-	if req.key == "" {
+	if req.token == "" {
 		return things.ErrUnauthorizedAccess
 	}
 
@@ -94,12 +101,12 @@ func (req updateChannelReq) validate() error {
 }
 
 type viewResourceReq struct {
-	key string
-	id  string
+	token string
+	id    string
 }
 
 func (req viewResourceReq) validate() error {
-	if req.key == "" {
+	if req.token == "" {
 		return things.ErrUnauthorizedAccess
 	}
 
@@ -111,13 +118,13 @@ func (req viewResourceReq) validate() error {
 }
 
 type listResourcesReq struct {
-	key    string
+	token  string
 	offset uint64
 	limit  uint64
 }
 
 func (req *listResourcesReq) validate() error {
-	if req.key == "" {
+	if req.token == "" {
 		return things.ErrUnauthorizedAccess
 	}
 
@@ -129,14 +136,14 @@ func (req *listResourcesReq) validate() error {
 }
 
 type listByConnectionReq struct {
-	key    string
+	token  string
 	id     string
 	offset uint64
 	limit  uint64
 }
 
 func (req listByConnectionReq) validate() error {
-	if req.key == "" {
+	if req.token == "" {
 		return things.ErrUnauthorizedAccess
 	}
 
@@ -152,13 +159,13 @@ func (req listByConnectionReq) validate() error {
 }
 
 type connectionReq struct {
-	key     string
+	token   string
 	chanID  string
 	thingID string
 }
 
 func (req connectionReq) validate() error {
-	if req.key == "" {
+	if req.token == "" {
 		return things.ErrUnauthorizedAccess
 	}
 

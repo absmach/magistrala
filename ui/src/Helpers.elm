@@ -4,7 +4,7 @@
 -- SPDX-License-Identifier: Apache-2.0
 
 
-module Helpers exposing (appendIf, buildQueryParamList, checkEntity, disableNext, faIcons, fontAwesome, genCardConfig, genPagination, isChecked, offsetToPage, pageToOffset, parseString, response, validateInt, validateOffset)
+module Helpers exposing (appendIf, buildQueryParamList, checkEntity, disableNext, faIcons, fontAwesome, genCardConfig, genOrderedList, genPagination, isChecked, offsetToPage, pageToOffset, parseString, resetList, response, validateInt, validateOffset)
 
 import Bootstrap.Button as Button
 import Bootstrap.Card as Card
@@ -94,6 +94,11 @@ validateOffset offset total limit =
         offset
 
 
+disableNext : Int -> Int -> Bool
+disableNext currPage total =
+    currPage == Basics.ceiling (Basics.toFloat total / 10)
+
+
 genPagination : Int -> Int -> (Int -> msg) -> Html msg
 genPagination total currPage msg =
     let
@@ -159,6 +164,8 @@ faIcons =
     , messages = "far fa-paper-plane"
     , version = "fa fa-code-branch"
     , websocket = "fas fa-arrows-alt-v"
+    , send = "fas fa-arrow-up"
+    , receive = "fas fa-arrow-down"
     }
 
 
@@ -193,11 +200,6 @@ appendIf flag list value =
         list
 
 
-disableNext : Int -> Int -> Bool
-disableNext currPage total =
-    currPage == Basics.ceiling (Basics.toFloat total / 10)
-
-
 genCardConfig : String -> String -> List (Table.Row msg) -> Html msg
 genCardConfig faClass title rows =
     Card.config
@@ -217,3 +219,21 @@ genCardConfig faClass title rows =
                 )
             ]
         |> Card.view
+
+
+genOrderedList : List String -> Html msg
+genOrderedList strings =
+    Html.ol []
+        (strings
+            |> List.map
+                (\string -> Html.li [] [ Html.text string ])
+        )
+
+
+resetList : List String -> Int -> List String
+resetList strings limit =
+    if List.length strings >= limit then
+        []
+
+    else
+        strings

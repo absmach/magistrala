@@ -13,14 +13,8 @@
       var app = Elm.Main.init({
         node: document.getElementById('elm')
       });
-      var ws = new WebSocket("wss://echo.websocket.org");
-      // var ws = new WebSocket('wss://localhost/ws/channels/1dec73d1-2d74-456b-b1f3-0d4908e600cf/messages?authorization=9a6c7929-0213-40a9-9154-b8e43e01e103');
-      ws.onmessage = function(message)
-      {
-        console.log(message);
-        app.ports.websocketIn.send(JSON.stringify({data:message.data,timestamp:message.timeStamp}));
-      };
-      app.ports.websocketOut.subscribe(function(msg) { ws.send(msg); });      
+      var MF = {}
     </script>
+    <script src="src/Websocket.js"></script>
   </body>
 </html>

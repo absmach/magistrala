@@ -1,0 +1,55 @@
+###
+# This docker-compose file contains optional Postgres and Postgres-writer services
+# for Mainflux platform. Since these are optional, this file is dependent of docker-compose file
+# from <project_root>/docker. In order to run these optional service, execute command:
+# docker-compose -f docker/docker-compose.yml -f docker/addons/postgres-writer/docker-compose.yml up
+# from project root. PostgreSQL default port (5432) is exposed, so you can use various tools for database
+# inspection and data visualization.
+###
+
+version: "3"
+
+networks:
+  docker_mainflux-base-net:
+    external: true
+
+volumes:
+  mainflux-postgres-writer-volume:
+
+services:
+  postgres:
+    image: postgres:10.2-alpine
+    container_name: mainflux-postgres
+    restart: on-failure
+    environment:
+      POSTGRES_USER: mainflux
+      POSTGRES_PASSWORD: mainflux
+      POSTGRES_DB: messages
+    networks:
+      - docker_mainflux-base-net
+    volumes:
+      - mainflux-postgres-writer-volume:/var/lib/postgresql/data
+
+  postgres-writer:
+    image: mainflux/postgres-writer:latest
+    container_name: mainflux-postgres-writer
+    depends_on:
+      - postgres
+    restart: on-failure
+    environment:
+      MF_NATS_URL: nats://nats:4222
+      MF_POSTGRES_WRITER_LOG_LEVEL: debug
+      MF_POSTGRES_WRITER_PORT: 9104
+      MF_POSTGRES_WRITER_DB_HOST: postgres
+      MF_POSTGRES_WRITER_DB_PORT: 5432
+      MF_POSTGRES_WRITER_DB_USER: mainflux
+      MF_POSTGRES_WRITER_DB_PASS: mainflux
+      MF_POSTGRES_WRITER_DB_NAME: messages
+      MF_POSTGRES_WRITER_DB_SSL_MODE: disable
+      MF_POSTGRES_WRITER_DB_SSL_CERT: ""
+      MF_POSTGRES_WRITER_DB_SSL_KEY: ""
+      MF_POSTGRES_WRITER_DB_SSL_ROOT_CERT: ""
+    ports:
+      - 9104:9104
+    networks:
+      - docker_mainflux-base-net

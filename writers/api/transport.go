@@ -7,7 +7,7 @@
 
 // +build !test
 
-package cassandra
+package api
 
 import (
 	"net/http"
@@ -18,9 +18,9 @@ import (
 )
 
 // MakeHandler returns a HTTP API handler with version and metrics.
-func MakeHandler() http.Handler {
+func MakeHandler(svcName string) http.Handler {
 	r := bone.New()
-	r.GetFunc("/version", mainflux.Version("cassandra-writer"))
+	r.GetFunc("/version", mainflux.Version(svcName))
 	r.Handle("/metrics", promhttp.Handler())
 
 	return r

@@ -22,13 +22,14 @@ import (
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/writers"
+	"github.com/mainflux/mainflux/writers/api"
 	"github.com/mainflux/mainflux/writers/influxdb"
 	"github.com/nats-io/go-nats"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
 const (
-	queue = "influxdb-writer"
+	svcName = "influxdb-writer"
 
 	defNatsURL      = nats.DefaultURL
 	defLogLevel     = "error"
@@ -106,10 +107,10 @@ func main() {
 	}
 
 	counter, latency := makeMetrics()
-	repo = writers.LoggingMiddleware(repo, logger)
-	repo = writers.MetricsMiddleware(repo, counter, latency)
-	if err := writers.Start(nc, repo, queue, logger); err != nil {
-		logger.Error(fmt.Sprintf("Failed to start message writer: %s", err))
+	repo = api.LoggingMiddleware(repo, logger)
+	repo = api.MetricsMiddleware(repo, counter, latency)
+	if err := writers.Start(nc, repo, svcName, logger); err != nil {
+		logger.Error(fmt.Sprintf("Failed to start InfluxDB writer: %s", err))
 		os.Exit(1)
 	}
 
@@ -170,5 +171,5 @@ func makeMetrics() (*kitprometheus.Counter, *kitprometheus.Summary) {
 func startHTTPService(port string, logger logger.Logger, errs chan error) {
 	p := fmt.Sprintf(":%s", port)
 	logger.Info(fmt.Sprintf("InfluxDB writer service started, exposed port %s", p))
-	errs <- http.ListenAndServe(p, influxdb.MakeHandler())
+	errs <- http.ListenAndServe(p, api.MakeHandler(svcName))
 }

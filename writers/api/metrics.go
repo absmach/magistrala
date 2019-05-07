@@ -5,24 +5,25 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-package writers
+package api
 
 import (
 	"time"
 
 	"github.com/go-kit/kit/metrics"
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/writers"
 )
 
 type metricsMiddleware struct {
 	counter metrics.Counter
 	latency metrics.Histogram
-	repo    MessageRepository
+	repo    writers.MessageRepository
 }
 
 // MetricsMiddleware returns new message repository
 // with Save method wrapped to expose metrics.
-func MetricsMiddleware(repo MessageRepository, counter metrics.Counter, latency metrics.Histogram) MessageRepository {
+func MetricsMiddleware(repo writers.MessageRepository, counter metrics.Counter, latency metrics.Histogram) writers.MessageRepository {
 	return &metricsMiddleware{
 		counter: counter,
 		latency: latency,

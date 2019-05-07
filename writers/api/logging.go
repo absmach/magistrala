@@ -7,7 +7,7 @@
 
 // +build !test
 
-package writers
+package api
 
 import (
 	"fmt"
@@ -15,17 +15,18 @@ import (
 
 	"github.com/mainflux/mainflux"
 	log "github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/writers"
 )
 
-var _ MessageRepository = (*loggingMiddleware)(nil)
+var _ writers.MessageRepository = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
 	logger log.Logger
-	svc    MessageRepository
+	svc    writers.MessageRepository
 }
 
 // LoggingMiddleware adds logging facilities to the adapter.
-func LoggingMiddleware(svc MessageRepository, logger log.Logger) MessageRepository {
+func LoggingMiddleware(svc writers.MessageRepository, logger log.Logger) writers.MessageRepository {
 	return &loggingMiddleware{logger, svc}
 }
 

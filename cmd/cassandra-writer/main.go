@@ -21,14 +21,15 @@ import (
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/writers"
+	"github.com/mainflux/mainflux/writers/api"
 	"github.com/mainflux/mainflux/writers/cassandra"
 	"github.com/nats-io/go-nats"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
 const (
-	queue = "cassandra-writer"
-	sep   = ","
+	svcName = "cassandra-writer"
+	sep     = ","
 
 	defNatsURL  = nats.DefaultURL
 	defLogLevel = "error"
@@ -66,7 +67,7 @@ func main() {
 	defer session.Close()
 
 	repo := newService(session, logger)
-	if err := writers.Start(nc, repo, queue, logger); err != nil {
+	if err := writers.Start(nc, repo, svcName, logger); err != nil {
 		logger.Error(fmt.Sprintf("Failed to create Cassandra writer: %s", err))
 	}
 
@@ -116,8 +117,8 @@ func connectToCassandra(cluster, keyspace string, logger logger.Logger) *gocql.S
 
 func newService(session *gocql.Session, logger logger.Logger) writers.MessageRepository {
 	repo := cassandra.New(session)
-	repo = writers.LoggingMiddleware(repo, logger)
-	repo = writers.MetricsMiddleware(
+	repo = api.LoggingMiddleware(repo, logger)
+	repo = api.MetricsMiddleware(
 		repo,
 		kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
 			Namespace: "cassandra",
@@ -139,5 +140,5 @@ func newService(session *gocql.Session, logger logger.Logger) writers.MessageRep
 func startHTTPServer(port string, errs chan error, logger logger.Logger) {
 	p := fmt.Sprintf(":%s", port)
 	logger.Info(fmt.Sprintf("Cassandra writer service started, exposed port %s", port))
-	errs <- http.ListenAndServe(p, cassandra.MakeHandler())
+	errs <- http.ListenAndServe(p, api.MakeHandler(svcName))
 }

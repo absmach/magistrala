@@ -32,7 +32,7 @@ func LoggingMiddleware(svc readers.MessageRepository, logger logger.Logger) read
 	}
 }
 
-func (lm *loggingMiddleware) ReadAll(chanID string, offset, limit uint64, query map[string]string) readers.MessagesPage {
+func (lm *loggingMiddleware) ReadAll(chanID string, offset, limit uint64, query map[string]string) (readers.MessagesPage, error) {
 	defer func(begin time.Time) {
 		lm.logger.Info(fmt.Sprintf(`Method read_all for offset %d and limit %d took %s to complete without errors.`, offset, limit, time.Since(begin)))
 	}(time.Now())

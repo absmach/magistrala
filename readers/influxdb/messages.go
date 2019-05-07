@@ -27,11 +27,14 @@ type influxRepository struct {
 }
 
 // New returns new InfluxDB reader.
-func New(client influxdata.Client, database string) (readers.MessageRepository, error) {
-	return &influxRepository{database, client}, nil
+func New(client influxdata.Client, database string) readers.MessageRepository {
+	return &influxRepository{
+		database,
+		client,
+	}
 }
 
-func (repo *influxRepository) ReadAll(chanID string, offset, limit uint64, query map[string]string) readers.MessagesPage {
+func (repo *influxRepository) ReadAll(chanID string, offset, limit uint64, query map[string]string) (readers.MessagesPage, error) {
 	if limit > maxLimit {
 		limit = maxLimit
 	}
@@ -46,12 +49,15 @@ func (repo *influxRepository) ReadAll(chanID string, offset, limit uint64, query
 	ret := []mainflux.Message{}
 
 	resp, err := repo.client.Query(q)
-	if err != nil || resp.Error() != nil {
-		return readers.MessagesPage{}
+	if err != nil {
+		return readers.MessagesPage{}, err
+	}
+	if resp.Error() != nil {
+		return readers.MessagesPage{}, resp.Error()
 	}
 
 	if len(resp.Results) < 1 || len(resp.Results[0].Series) < 1 {
-		return readers.MessagesPage{}
+		return readers.MessagesPage{}, nil
 	}
 
 	result := resp.Results[0].Series[0]
@@ -61,7 +67,7 @@ func (repo *influxRepository) ReadAll(chanID string, offset, limit uint64, query
 
 	total, err := repo.count(condition)
 	if err != nil {
-		return readers.MessagesPage{}
+		return readers.MessagesPage{}, err
 	}
 
 	return readers.MessagesPage{
@@ -69,7 +75,7 @@ func (repo *influxRepository) ReadAll(chanID string, offset, limit uint64, query
 		Offset:   offset,
 		Limit:    limit,
 		Messages: ret,
-	}
+	}, nil
 }
 
 func (repo *influxRepository) count(condition string) (uint64, error) {

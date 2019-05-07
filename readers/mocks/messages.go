@@ -29,7 +29,7 @@ func NewMessageRepository(messages map[string][]mainflux.Message) readers.Messag
 	}
 }
 
-func (repo *messageRepositoryMock) ReadAll(chanID string, offset, limit uint64, query map[string]string) readers.MessagesPage {
+func (repo *messageRepositoryMock) ReadAll(chanID string, offset, limit uint64, query map[string]string) (readers.MessagesPage, error) {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 
@@ -37,11 +37,11 @@ func (repo *messageRepositoryMock) ReadAll(chanID string, offset, limit uint64, 
 
 	numOfMessages := uint64(len(repo.messages[chanID]))
 	if offset < 0 || offset >= numOfMessages {
-		return readers.MessagesPage{}
+		return readers.MessagesPage{}, nil
 	}
 
 	if limit < 1 {
-		return readers.MessagesPage{}
+		return readers.MessagesPage{}, nil
 	}
 
 	if offset+limit > numOfMessages {
@@ -53,5 +53,5 @@ func (repo *messageRepositoryMock) ReadAll(chanID string, offset, limit uint64, 
 		Limit:    limit,
 		Offset:   offset,
 		Messages: repo.messages[chanID][offset:end],
-	}
+	}, nil
 }

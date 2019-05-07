@@ -34,7 +34,7 @@ func MetricsMiddleware(svc readers.MessageRepository, counter metrics.Counter, l
 	}
 }
 
-func (mm *metricsMiddleware) ReadAll(chanID string, offset, limit uint64, query map[string]string) readers.MessagesPage {
+func (mm *metricsMiddleware) ReadAll(chanID string, offset, limit uint64, query map[string]string) (readers.MessagesPage, error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "read_all").Add(1)
 		mm.latency.With("method", "read_all").Observe(time.Since(begin).Seconds())

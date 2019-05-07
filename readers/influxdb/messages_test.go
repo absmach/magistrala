@@ -85,7 +85,7 @@ func TestReadAll(t *testing.T) {
 		}
 	}
 
-	reader, err := reader.New(client, testDB)
+	reader := reader.New(client, testDB)
 	require.Nil(t, err, fmt.Sprintf("Creating new InfluxDB reader expected to succeed: %s.\n", err))
 
 	cases := map[string]struct {
@@ -166,7 +166,8 @@ func TestReadAll(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		result := reader.ReadAll(tc.chanID, tc.offset, tc.limit, tc.query)
+		result, err := reader.ReadAll(tc.chanID, tc.offset, tc.limit, tc.query)
+		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %s", desc, err))
 		assert.ElementsMatch(t, tc.page.Messages, result.Messages, fmt.Sprintf("%s: expected: %v \n-------------\n got: %v", desc, tc.page.Messages, result.Messages))
 		assert.Equal(t, tc.page.Total, result.Total, fmt.Sprintf("%s: expected %d got %d", desc, tc.page.Total, result.Total))
 	}

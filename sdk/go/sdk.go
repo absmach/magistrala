@@ -112,6 +112,14 @@ type ChannelsPage struct {
 	Limit    uint64    `json:"limit"`
 }
 
+// MessagesPage contains list of messages in a page with proper metadata.
+type MessagesPage struct {
+	Total    uint64             `json:"total"`
+	Offset   uint64             `json:"offset"`
+	Limit    uint64             `json:"limit"`
+	Messages []mainflux.Message `json:"messages,omitempty"`
+}
+
 // SDK contains Mainflux API.
 type SDK interface {
 	// CreateUser registers mainflux user.
@@ -168,7 +176,7 @@ type SDK interface {
 	SendMessage(chanID, msg, token string) error
 
 	// ReadMessages read messages of specified channel.
-	ReadMessages(chanID, token string) ([]mainflux.Message, error)
+	ReadMessages(chanID, token string) (MessagesPage, error)
 
 	// SetContentType sets message content type.
 	SetContentType(ct ContentType) error

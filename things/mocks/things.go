@@ -113,14 +113,14 @@ func (trm *thingRepositoryMock) RetrieveByID(owner, id string) (things.Thing, er
 	return things.Thing{}, things.ErrNotFound
 }
 
-func (trm *thingRepositoryMock) RetrieveAll(owner string, offset, limit uint64) things.ThingsPage {
+func (trm *thingRepositoryMock) RetrieveAll(owner string, offset, limit uint64) (things.ThingsPage, error) {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
 	items := make([]things.Thing, 0)
 
 	if offset < 0 || limit <= 0 {
-		return things.ThingsPage{}
+		return things.ThingsPage{}, nil
 	}
 
 	first := uint64(offset) + 1
@@ -149,17 +149,17 @@ func (trm *thingRepositoryMock) RetrieveAll(owner string, offset, limit uint64) 
 		},
 	}
 
-	return page
+	return page, nil
 }
 
-func (trm *thingRepositoryMock) RetrieveByChannel(owner, chanID string, offset, limit uint64) things.ThingsPage {
+func (trm *thingRepositoryMock) RetrieveByChannel(owner, chanID string, offset, limit uint64) (things.ThingsPage, error) {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
 	items := make([]things.Thing, 0)
 
 	if offset < 0 || limit <= 0 {
-		return things.ThingsPage{}
+		return things.ThingsPage{}, nil
 	}
 
 	first := uint64(offset) + 1
@@ -167,7 +167,7 @@ func (trm *thingRepositoryMock) RetrieveByChannel(owner, chanID string, offset, 
 
 	ths, ok := trm.tconns[chanID]
 	if !ok {
-		return things.ThingsPage{}
+		return things.ThingsPage{}, nil
 	}
 
 	for _, v := range ths {
@@ -190,7 +190,7 @@ func (trm *thingRepositoryMock) RetrieveByChannel(owner, chanID string, offset, 
 		},
 	}
 
-	return page
+	return page, nil
 }
 
 func (trm *thingRepositoryMock) Remove(owner, id string) error {

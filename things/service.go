@@ -214,7 +214,7 @@ func (ts *thingsService) ListThings(token string, offset, limit uint64) (ThingsP
 		return ThingsPage{}, ErrUnauthorizedAccess
 	}
 
-	return ts.things.RetrieveAll(res.GetValue(), offset, limit), nil
+	return ts.things.RetrieveAll(res.GetValue(), offset, limit)
 }
 
 func (ts *thingsService) ListThingsByChannel(token, channel string, offset, limit uint64) (ThingsPage, error) {
@@ -226,7 +226,7 @@ func (ts *thingsService) ListThingsByChannel(token, channel string, offset, limi
 		return ThingsPage{}, ErrUnauthorizedAccess
 	}
 
-	return ts.things.RetrieveByChannel(res.GetValue(), channel, offset, limit), nil
+	return ts.things.RetrieveByChannel(res.GetValue(), channel, offset, limit)
 }
 
 func (ts *thingsService) RemoveThing(token, id string) error {
@@ -297,7 +297,7 @@ func (ts *thingsService) ListChannels(token string, offset, limit uint64) (Chann
 		return ChannelsPage{}, ErrUnauthorizedAccess
 	}
 
-	return ts.channels.RetrieveAll(res.GetValue(), offset, limit), nil
+	return ts.channels.RetrieveAll(res.GetValue(), offset, limit)
 }
 
 func (ts *thingsService) ListChannelsByThing(token, thing string, offset, limit uint64) (ChannelsPage, error) {
@@ -309,7 +309,7 @@ func (ts *thingsService) ListChannelsByThing(token, thing string, offset, limit 
 		return ChannelsPage{}, ErrUnauthorizedAccess
 	}
 
-	return ts.channels.RetrieveByThing(res.GetValue(), thing, offset, limit), nil
+	return ts.channels.RetrieveByThing(res.GetValue(), thing, offset, limit)
 }
 
 func (ts *thingsService) RemoveChannel(token, id string) error {

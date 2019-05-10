@@ -21,7 +21,7 @@ import (
 
 func TestChannelSave(t *testing.T) {
 	email := "channel-save@example.com"
-	channelRepo := postgres.NewChannelRepository(db, testLog)
+	channelRepo := postgres.NewChannelRepository(db)
 
 	channel := things.Channel{
 		ID:    uuid.New().ID(),
@@ -56,7 +56,7 @@ func TestChannelSave(t *testing.T) {
 
 func TestChannelUpdate(t *testing.T) {
 	email := "channel-update@example.com"
-	chanRepo := postgres.NewChannelRepository(db, testLog)
+	chanRepo := postgres.NewChannelRepository(db)
 
 	c := things.Channel{
 		ID:    uuid.New().ID(),
@@ -109,8 +109,8 @@ func TestChannelUpdate(t *testing.T) {
 
 func TestSingleChannelRetrieval(t *testing.T) {
 	email := "channel-single-retrieval@example.com"
-	chanRepo := postgres.NewChannelRepository(db, testLog)
-	thingRepo := postgres.NewThingRepository(db, testLog)
+	chanRepo := postgres.NewChannelRepository(db)
+	thingRepo := postgres.NewThingRepository(db)
 
 	th := things.Thing{
 		ID:    uuid.New().ID(),
@@ -162,7 +162,7 @@ func TestSingleChannelRetrieval(t *testing.T) {
 
 func TestMultiChannelRetrieval(t *testing.T) {
 	email := "channel-multi-retrieval@example.com"
-	chanRepo := postgres.NewChannelRepository(db, testLog)
+	chanRepo := postgres.NewChannelRepository(db)
 
 	n := uint64(10)
 
@@ -201,17 +201,18 @@ func TestMultiChannelRetrieval(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		page := chanRepo.RetrieveAll(tc.owner, tc.offset, tc.limit)
+		page, err := chanRepo.RetrieveAll(tc.owner, tc.offset, tc.limit)
 		size := uint64(len(page.Channels))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
+		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
 	}
 }
 
 func TestMultiChannelRetrievalByThing(t *testing.T) {
 	email := "channel-multi-retrieval-by-thing@example.com"
 	idp := uuid.New()
-	chanRepo := postgres.NewChannelRepository(db, testLog)
-	thingRepo := postgres.NewThingRepository(db, testLog)
+	chanRepo := postgres.NewChannelRepository(db)
+	thingRepo := postgres.NewThingRepository(db)
 
 	tid, err := thingRepo.Save(things.Thing{
 		ID:    idp.ID(),
@@ -236,6 +237,7 @@ func TestMultiChannelRetrievalByThing(t *testing.T) {
 		offset uint64
 		limit  uint64
 		size   uint64
+		err    error
 	}{
 		"retrieve all channels by thing with existing owner": {
 			owner:  email,
@@ -260,23 +262,32 @@ func TestMultiChannelRetrievalByThing(t *testing.T) {
 		},
 		"retrieve channels by non-existent thing": {
 			owner:  email,
-			thing:  "non-existent",
+			thing:  uuid.New().ID(),
 			offset: 0,
 			limit:  n,
 			size:   0,
 		},
+		"retrieve channels with malformed UUID": {
+			owner:  email,
+			thing:  wrongValue,
+			offset: 0,
+			limit:  n,
+			size:   0,
+			err:    things.ErrNotFound,
+		},
 	}
 
 	for desc, tc := range cases {
-		page := chanRepo.RetrieveByThing(tc.owner, tc.thing, tc.offset, tc.limit)
+		page, err := chanRepo.RetrieveByThing(tc.owner, tc.thing, tc.offset, tc.limit)
 		size := uint64(len(page.Channels))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
 	}
 }
 
 func TestChannelRemoval(t *testing.T) {
 	email := "channel-removal@example.com"
-	chanRepo := postgres.NewChannelRepository(db, testLog)
+	chanRepo := postgres.NewChannelRepository(db)
 	chanID, _ := chanRepo.Save(things.Channel{
 		ID:    uuid.New().ID(),
 		Owner: email,
@@ -295,7 +306,7 @@ func TestChannelRemoval(t *testing.T) {
 
 func TestConnect(t *testing.T) {
 	email := "channel-connect@example.com"
-	thingRepo := postgres.NewThingRepository(db, testLog)
+	thingRepo := postgres.NewThingRepository(db)
 
 	thing := things.Thing{
 		ID:       uuid.New().ID(),
@@ -305,7 +316,7 @@ func TestConnect(t *testing.T) {
 	}
 	thingID, _ := thingRepo.Save(thing)
 
-	chanRepo := postgres.NewChannelRepository(db, testLog)
+	chanRepo := postgres.NewChannelRepository(db)
 	chanID, _ := chanRepo.Save(things.Channel{
 		ID:    uuid.New().ID(),
 		Owner: email,
@@ -363,7 +374,7 @@ func TestConnect(t *testing.T) {
 
 func TestDisconnect(t *testing.T) {
 	email := "channel-disconnect@example.com"
-	thingRepo := postgres.NewThingRepository(db, testLog)
+	thingRepo := postgres.NewThingRepository(db)
 	thing := things.Thing{
 		ID:       uuid.New().ID(),
 		Owner:    email,
@@ -372,7 +383,7 @@ func TestDisconnect(t *testing.T) {
 	}
 	thingID, _ := thingRepo.Save(thing)
 
-	chanRepo := postgres.NewChannelRepository(db, testLog)
+	chanRepo := postgres.NewChannelRepository(db)
 	chanID, _ := chanRepo.Save(things.Channel{
 		ID:    uuid.New().ID(),
 		Owner: email,
@@ -431,7 +442,7 @@ func TestDisconnect(t *testing.T) {
 
 func TestHasThing(t *testing.T) {
 	email := "channel-access-check@example.com"
-	thingRepo := postgres.NewThingRepository(db, testLog)
+	thingRepo := postgres.NewThingRepository(db)
 	thing := things.Thing{
 		ID:    uuid.New().ID(),
 		Owner: email,
@@ -439,7 +450,7 @@ func TestHasThing(t *testing.T) {
 	}
 	thingID, _ := thingRepo.Save(thing)
 
-	chanRepo := postgres.NewChannelRepository(db, testLog)
+	chanRepo := postgres.NewChannelRepository(db)
 	chanID, _ := chanRepo.Save(things.Channel{
 		ID:    uuid.New().ID(),
 		Owner: email,

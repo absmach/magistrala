@@ -79,11 +79,11 @@ func (crm *channelRepositoryMock) RetrieveByID(owner, id string) (things.Channel
 	return things.Channel{}, things.ErrNotFound
 }
 
-func (crm *channelRepositoryMock) RetrieveAll(owner string, offset, limit uint64) things.ChannelsPage {
+func (crm *channelRepositoryMock) RetrieveAll(owner string, offset, limit uint64) (things.ChannelsPage, error) {
 	channels := make([]things.Channel, 0)
 
 	if offset < 0 || limit <= 0 {
-		return things.ChannelsPage{}
+		return things.ChannelsPage{}, nil
 	}
 
 	first := uint64(offset) + 1
@@ -112,14 +112,14 @@ func (crm *channelRepositoryMock) RetrieveAll(owner string, offset, limit uint64
 		},
 	}
 
-	return page
+	return page, nil
 }
 
-func (crm *channelRepositoryMock) RetrieveByThing(owner, thingID string, offset, limit uint64) things.ChannelsPage {
+func (crm *channelRepositoryMock) RetrieveByThing(owner, thingID string, offset, limit uint64) (things.ChannelsPage, error) {
 	channels := make([]things.Channel, 0)
 
 	if offset < 0 || limit <= 0 {
-		return things.ChannelsPage{}
+		return things.ChannelsPage{}, nil
 	}
 
 	first := uint64(offset) + 1
@@ -145,7 +145,7 @@ func (crm *channelRepositoryMock) RetrieveByThing(owner, thingID string, offset,
 		},
 	}
 
-	return page
+	return page, nil
 }
 
 func (crm *channelRepositoryMock) Remove(owner, id string) error {

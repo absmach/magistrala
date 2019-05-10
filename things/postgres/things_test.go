@@ -21,7 +21,7 @@ import (
 
 func TestThingSave(t *testing.T) {
 	email := "thing-save@example.com"
-	thingRepo := postgres.NewThingRepository(db, testLog)
+	thingRepo := postgres.NewThingRepository(db)
 
 	thing := things.Thing{
 		ID:    uuid.New().ID(),
@@ -63,7 +63,7 @@ func TestThingSave(t *testing.T) {
 
 func TestThingUpdate(t *testing.T) {
 	email := "thing-update@example.com"
-	thingRepo := postgres.NewThingRepository(db, testLog)
+	thingRepo := postgres.NewThingRepository(db)
 
 	thing := things.Thing{
 		ID:    uuid.New().ID(),
@@ -119,7 +119,7 @@ func TestThingUpdate(t *testing.T) {
 func TestUpdateKey(t *testing.T) {
 	email := "thing-update=key@example.com"
 	newKey := "new-key"
-	thingRepo := postgres.NewThingRepository(db, testLog)
+	thingRepo := postgres.NewThingRepository(db)
 
 	existingThing := things.Thing{
 		ID:    uuid.New().ID(),
@@ -190,7 +190,7 @@ func TestUpdateKey(t *testing.T) {
 
 func TestSingleThingRetrieval(t *testing.T) {
 	email := "thing-single-retrieval@example.com"
-	thingRepo := postgres.NewThingRepository(db, testLog)
+	thingRepo := postgres.NewThingRepository(db)
 
 	thing := things.Thing{
 		ID:    uuid.New().ID(),
@@ -236,7 +236,7 @@ func TestSingleThingRetrieval(t *testing.T) {
 
 func TestThingRetrieveByKey(t *testing.T) {
 	email := "thing-retrieved-by-key@example.com"
-	thingRepo := postgres.NewThingRepository(db, testLog)
+	thingRepo := postgres.NewThingRepository(db)
 
 	thing := things.Thing{
 		ID:    uuid.New().ID(),
@@ -274,7 +274,7 @@ func TestThingRetrieveByKey(t *testing.T) {
 func TestMultiThingRetrieval(t *testing.T) {
 	email := "thing-multi-retrieval@example.com"
 	idp := uuid.New()
-	thingRepo := postgres.NewThingRepository(db, testLog)
+	thingRepo := postgres.NewThingRepository(db)
 
 	n := uint64(10)
 
@@ -315,17 +315,18 @@ func TestMultiThingRetrieval(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		page := thingRepo.RetrieveAll(tc.owner, tc.offset, tc.limit)
+		page, err := thingRepo.RetrieveAll(tc.owner, tc.offset, tc.limit)
 		size := uint64(len(page.Things))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
+		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
 	}
 }
 
 func TestMultiThingRetrievalByChannel(t *testing.T) {
 	email := "thing-multi-retrieval-by-channel@example.com"
 	idp := uuid.New()
-	thingRepo := postgres.NewThingRepository(db, testLog)
-	channelRepo := postgres.NewChannelRepository(db, testLog)
+	thingRepo := postgres.NewThingRepository(db)
+	channelRepo := postgres.NewChannelRepository(db)
 
 	n := uint64(10)
 
@@ -353,6 +354,7 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 		offset  uint64
 		limit   uint64
 		size    uint64
+		err     error
 	}{
 		"retrieve all things by channel with existing owner": {
 			owner:   email,
@@ -377,23 +379,32 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 		},
 		"retrieve things by non-existent channel": {
 			owner:   email,
-			channel: "non-existent",
+			channel: uuid.New().ID(),
 			offset:  0,
 			limit:   n,
 			size:    0,
 		},
+		"retrieve things with malformed UUID": {
+			owner:   email,
+			channel: wrongValue,
+			offset:  0,
+			limit:   n,
+			size:    0,
+			err:     things.ErrNotFound,
+		},
 	}
 
 	for desc, tc := range cases {
-		page := thingRepo.RetrieveByChannel(tc.owner, tc.channel, tc.offset, tc.limit)
+		page, err := thingRepo.RetrieveByChannel(tc.owner, tc.channel, tc.offset, tc.limit)
 		size := uint64(len(page.Things))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
 	}
 }
 
 func TestThingRemoval(t *testing.T) {
 	email := "thing-removal@example.com"
-	thingRepo := postgres.NewThingRepository(db, testLog)
+	thingRepo := postgres.NewThingRepository(db)
 
 	thing := things.Thing{
 		ID:    uuid.New().ID(),

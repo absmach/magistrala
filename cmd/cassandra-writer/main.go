@@ -9,6 +9,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -16,6 +17,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/BurntSushi/toml"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/gocql/gocql"
 	"github.com/mainflux/mainflux"
@@ -23,7 +25,7 @@ import (
 	"github.com/mainflux/mainflux/writers"
 	"github.com/mainflux/mainflux/writers/api"
 	"github.com/mainflux/mainflux/writers/cassandra"
-	"github.com/nats-io/go-nats"
+	nats "github.com/nats-io/go-nats"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
@@ -31,17 +33,19 @@ const (
 	svcName = "cassandra-writer"
 	sep     = ","
 
-	defNatsURL  = nats.DefaultURL
-	defLogLevel = "error"
-	defPort     = "8180"
-	defCluster  = "127.0.0.1"
-	defKeyspace = "mainflux"
+	defNatsURL     = nats.DefaultURL
+	defLogLevel    = "error"
+	defPort        = "8180"
+	defCluster     = "127.0.0.1"
+	defKeyspace    = "mainflux"
+	defChanCfgPath = "/config/channels.toml"
 
-	envNatsURL  = "MF_NATS_URL"
-	envLogLevel = "MF_CASSANDRA_WRITER_LOG_LEVEL"
-	envPort     = "MF_CASSANDRA_WRITER_PORT"
-	envCluster  = "MF_CASSANDRA_WRITER_DB_CLUSTER"
-	envKeyspace = "MF_CASSANDRA_WRITER_DB_KEYSPACE"
+	envNatsURL     = "MF_NATS_URL"
+	envLogLevel    = "MF_CASSANDRA_WRITER_LOG_LEVEL"
+	envPort        = "MF_CASSANDRA_WRITER_PORT"
+	envCluster     = "MF_CASSANDRA_WRITER_DB_CLUSTER"
+	envKeyspace    = "MF_CASSANDRA_WRITER_DB_KEYSPACE"
+	envChanCfgPath = "MF_CASSANDRA_WRITER_CHANNELS_CONFIG"
 )
 
 type config struct {
@@ -50,6 +54,7 @@ type config struct {
 	port     string
 	cluster  string
 	keyspace string
+	channels []string
 }
 
 func main() {
@@ -67,7 +72,7 @@ func main() {
 	defer session.Close()
 
 	repo := newService(session, logger)
-	if err := writers.Start(nc, repo, svcName, logger); err != nil {
+	if err := writers.Start(nc, repo, svcName, cfg.channels, logger); err != nil {
 		logger.Error(fmt.Sprintf("Failed to create Cassandra writer: %s", err))
 	}
 
@@ -86,13 +91,39 @@ func main() {
 }
 
 func loadConfig() config {
+	chanCfgPath := mainflux.Env(envChanCfgPath, defChanCfgPath)
 	return config{
 		natsURL:  mainflux.Env(envNatsURL, defNatsURL),
 		logLevel: mainflux.Env(envLogLevel, defLogLevel),
 		port:     mainflux.Env(envPort, defPort),
 		cluster:  mainflux.Env(envCluster, defCluster),
 		keyspace: mainflux.Env(envKeyspace, defKeyspace),
+		channels: loadChansConfig(chanCfgPath),
 	}
+}
+
+type channels struct {
+	List []string `toml:"filter"`
+}
+
+type chanConfig struct {
+	Channels channels `toml:"channels"`
+}
+
+func loadChansConfig(chanConfigPath string) []string {
+	data, err := ioutil.ReadFile(chanConfigPath)
+	if err != nil {
+		log.Fatal(err.Error())
+		os.Exit(1)
+	}
+
+	var chanCfg chanConfig
+	if err := toml.Unmarshal(data, &chanCfg); err != nil {
+		log.Fatal(err.Error())
+		os.Exit(1)
+	}
+
+	return chanCfg.Channels.List
 }
 
 func connectToNATS(url string, logger logger.Logger) *nats.Conn {

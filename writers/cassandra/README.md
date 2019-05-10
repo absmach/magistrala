@@ -8,14 +8,14 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable                        | Description                                                | Default               |
-|---------------------------------|------------------------------------------------------------|-----------------------|
-| MF_NATS_URL                     | NATS instance URL                                          | nats://localhost:4222 |
-| MF_CASSANDRA_WRITER_LOG_LEVEL   | Log level for Cassandra writer (debug, info, warn, error)  | error                 |
-| MF_CASSANDRA_WRITER_PORT        | Service HTTP port                                          | 8180                  |
-| MF_CASSANDRA_WRITER_DB_CLUSTER  | Cassandra cluster comma separated addresses                | 127.0.0.1             |
-| MF_CASSANDRA_WRITER_DB_KEYSPACE | Cassandra keyspace name                                    | mainflux              |
-
+| Variable                            | Description                                                | Default               |
+|-------------------------------------|------------------------------------------------------------|-----------------------|
+| MF_NATS_URL                         | NATS instance URL                                          | nats://localhost:4222 |
+| MF_CASSANDRA_WRITER_LOG_LEVEL       | Log level for Cassandra writer (debug, info, warn, error)  | error                 |
+| MF_CASSANDRA_WRITER_PORT            | Service HTTP port                                          | 8180                  |
+| MF_CASSANDRA_WRITER_DB_CLUSTER      | Cassandra cluster comma separated addresses                | 127.0.0.1             |
+| MF_CASSANDRA_WRITER_DB_KEYSPACE     | Cassandra keyspace name                                    | mainflux              |
+| MF_CASSANDRA_WRITER_CHANNELS_CONFIG | Configuration file path with channels list                 | /config/channels.yaml |
 ## Deployment
 
 ```yaml
@@ -32,8 +32,11 @@ default values.
       MF_CASSANDRA_WRITER_PORT: [Service HTTP port]
       MF_CASSANDRA_WRITER_DB_CLUSTER: [Cassandra cluster comma separated addresses]
       MF_CASSANDRA_WRITER_DB_KEYSPACE: [Cassandra keyspace name]
+      MF_CASSANDRA_WRITER_CHANNELS_CONFIG: [Configuration file path with channels list]
     ports:
       - [host machine port]:[configured HTTP port]
+    volume:
+      - ./channels.yaml:/config/channels.yaml
 ```
 
 To start the service, execute the following shell script:
@@ -52,7 +55,7 @@ make cassandra-writer
 make install
 
 # Set the environment variables and run the service
-MF_NATS_URL=[NATS instance URL] MF_CASSANDRA_WRITER_LOG_LEVEL=[Cassandra writer log level] MF_CASSANDRA_WRITER_PORT=[Service HTTP port] MF_CASSANDRA_WRITER_DB_CLUSTER=[Cassandra cluster comma separated addresses] MF_CASSANDRA_WRITER_DB_KEYSPACE=[Cassandra keyspace name] $GOBIN/mainflux-cassandra-writer
+MF_NATS_URL=[NATS instance URL] MF_CASSANDRA_WRITER_LOG_LEVEL=[Cassandra writer log level] MF_CASSANDRA_WRITER_PORT=[Service HTTP port] MF_CASSANDRA_WRITER_DB_CLUSTER=[Cassandra cluster comma separated addresses] MF_CASSANDRA_WRITER_DB_KEYSPACE=[Cassandra keyspace name] MF_CASSANDRA_WRITER_CHANNELS_CONFIG=[Configuration file path with channels list] $GOBIN/mainflux-cassandra-writer
 
 ```
 

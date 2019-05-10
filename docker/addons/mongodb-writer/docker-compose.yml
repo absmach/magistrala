@@ -49,3 +49,5 @@ services:
       - 8901:8901
     networks:
       - docker_mainflux-base-net
+    volumes:
+      - ./channels.toml:/config/channels.toml

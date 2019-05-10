@@ -17,17 +17,19 @@ import (
 )
 
 type consumer struct {
-	nc     *nats.Conn
-	logger log.Logger
-	repo   MessageRepository
+	nc       *nats.Conn
+	channels []string
+	repo     MessageRepository
+	logger   log.Logger
 }
 
 // Start method starts to consume normalized messages received from NATS.
-func Start(nc *nats.Conn, repo MessageRepository, queue string, logger log.Logger) error {
+func Start(nc *nats.Conn, repo MessageRepository, queue string, channels []string, logger log.Logger) error {
 	c := consumer{
-		nc:     nc,
-		logger: logger,
-		repo:   repo,
+		nc:       nc,
+		channels: channels,
+		repo:     repo,
+		logger:   logger,
 	}
 
 	_, err := nc.QueueSubscribe(mainflux.OutputSenML, queue, c.consume)
@@ -36,9 +38,12 @@ func Start(nc *nats.Conn, repo MessageRepository, queue string, logger log.Logge
 
 func (c *consumer) consume(m *nats.Msg) {
 	msg := &mainflux.Message{}
-
 	if err := proto.Unmarshal(m.Data, msg); err != nil {
 		c.logger.Warn(fmt.Sprintf("Failed to unmarshal received message: %s", err))
+		return
+	}
+
+	if !c.channelExists(msg.GetChannel()) {
 		return
 	}
 
@@ -46,4 +51,20 @@ func (c *consumer) consume(m *nats.Msg) {
 		c.logger.Warn(fmt.Sprintf("Failed to save message: %s", err))
 		return
 	}
+}
+
+func (c *consumer) channelExists(channel string) bool {
+	if len(c.channels) == 1 && c.channels[0] == "*" {
+		return true
+	}
+
+	found := false
+	for _, ch := range c.channels {
+		if ch == channel {
+			found = true
+			break
+		}
+	}
+
+	return found
 }

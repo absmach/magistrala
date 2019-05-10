@@ -8,20 +8,21 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable                            | Description                        | Default               |
-|-------------------------------------|------------------------------------|-----------------------|
-| MF_NATS_URL                         | NATS instance URL                  | nats://localhost:4222 |
-| MF_POSTGRES_WRITER_LOG_LEVEL        | Service log level                  | error                 |
-| MF_POSTGRES_WRITER_PORT             | Service HTTP port                  | 9104                  |
-| MF_POSTGRES_WRITER_DB_HOST          | Postgres DB host                   | postgres              |
-| MF_POSTGRES_WRITER_DB_PORT          | Postgres DB port                   | 5432                  |
-| MF_POSTGRES_WRITER_DB_USER          | Postgres user                      | mainflux              |
-| MF_POSTGRES_WRITER_DB_PASS          | Postgres password                  | mainflux              |
-| MF_POSTGRES_WRITER_DB_NAME          | Postgres database name             | messages              |
-| MF_POSTGRES_WRITER_DB_SSL_MODE      | Postgres SSL mode                  | disabled              |
-| MF_POSTGRES_WRITER_DB_SSL_CERT      | Postgres SSL certificate path      | ""                    |
-| MF_POSTGRES_WRITER_DB_SSL_KEY       | Postgres SSL key                   | ""                    |
-| MF_POSTGRES_WRITER_DB_SSL_ROOT_CERT | Postgres SSL root certificate path | ""                    |
+| Variable                            | Description                                | Default               |
+|-------------------------------------|--------------------------------------------|-----------------------|
+| MF_NATS_URL                         | NATS instance URL                          | nats://localhost:4222 |
+| MF_POSTGRES_WRITER_LOG_LEVEL        | Service log level                          | error                 |
+| MF_POSTGRES_WRITER_PORT             | Service HTTP port                          | 9104                  |
+| MF_POSTGRES_WRITER_DB_HOST          | Postgres DB host                           | postgres              |
+| MF_POSTGRES_WRITER_DB_PORT          | Postgres DB port                           | 5432                  |
+| MF_POSTGRES_WRITER_DB_USER          | Postgres user                              | mainflux              |
+| MF_POSTGRES_WRITER_DB_PASS          | Postgres password                          | mainflux              |
+| MF_POSTGRES_WRITER_DB_NAME          | Postgres database name                     | messages              |
+| MF_POSTGRES_WRITER_DB_SSL_MODE      | Postgres SSL mode                          | disabled              |
+| MF_POSTGRES_WRITER_DB_SSL_CERT      | Postgres SSL certificate path              | ""                    |
+| MF_POSTGRES_WRITER_DB_SSL_KEY       | Postgres SSL key                           | ""                    |
+| MF_POSTGRES_WRITER_DB_SSL_ROOT_CERT | Postgres SSL root certificate path         | ""                    |
+| MF_POSTGRES_WRITER_CHANNELS_CONFIG  | Configuration file path with channels list | /config/channels.yaml |
 
 ## Deployment
 
@@ -46,10 +47,13 @@ default values.
       MF_POSTGRES_WRITER_DB_SSL_CERT: [Postgres SSL cert]
       MF_POSTGRES_WRITER_DB_SSL_KEY: [Postgres SSL key]
       MF_POSTGRES_WRITER_DB_SSL_ROOT_CERT: [Postgres SSL Root cert]
+      MF_POSTGRES_WRITER_CHANNELS_CONFIG: [Configuration file path with channels list]
     ports:
       - 9104:9104
     networks:
       - docker_mainflux-base-net
+    volume:
+      - ./channels.yaml:/config/channels.yaml
 ```
 
 To start the service, execute the following shell script:
@@ -68,7 +72,7 @@ make postgres-writer
 make install
 
 # Set the environment variables and run the service
-MF_NATS_URL=[NATS instance URL] MF_POSTGRES_WRITER_LOG_LEVEL=[Service log level] MF_POSTGRES_WRITER_PORT=[Service HTTP port] MF_POSTGRES_WRITER_DB_HOST=[Postgres host] MF_POSTGRES_WRITER_DB_PORT=[Postgres port] MF_POSTGRES_WRITER_DB_USER=[Postgres user] MF_POSTGRES_WRITER_DB_PASS=[Postgres password] MF_POSTGRES_WRITER_DB_NAME=[Postgres database name] MF_POSTGRES_WRITER_DB_SSL_MODE=[Postgres SSL mode] MF_POSTGRES_WRITER_DB_SSL_CERT=[Postgres SSL cert] MF_POSTGRES_WRITER_DB_SSL_KEY=[Postgres SSL key] MF_POSTGRES_WRITER_DB_SSL_ROOT_CERT=[Postgres SSL Root cert] $GOBIN/mainflux-postgres-writer
+MF_NATS_URL=[NATS instance URL] MF_POSTGRES_WRITER_LOG_LEVEL=[Service log level] MF_POSTGRES_WRITER_PORT=[Service HTTP port] MF_POSTGRES_WRITER_DB_HOST=[Postgres host] MF_POSTGRES_WRITER_DB_PORT=[Postgres port] MF_POSTGRES_WRITER_DB_USER=[Postgres user] MF_POSTGRES_WRITER_DB_PASS=[Postgres password] MF_POSTGRES_WRITER_DB_NAME=[Postgres database name] MF_POSTGRES_WRITER_DB_SSL_MODE=[Postgres SSL mode] MF_POSTGRES_WRITER_DB_SSL_CERT=[Postgres SSL cert] MF_POSTGRES_WRITER_DB_SSL_KEY=[Postgres SSL key] MF_POSTGRES_WRITER_DB_SSL_ROOT_CERT=[Postgres SSL Root cert] MF_POSTGRES_WRITER_CHANNELS_CONFIG=[Configuration file path with channels list] $GOBIN/mainflux-postgres-writer
 ```
 
 ## Usage

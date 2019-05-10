@@ -9,12 +9,14 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/BurntSushi/toml"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/jmoiron/sqlx"
 	"github.com/mainflux/mainflux"
@@ -22,7 +24,7 @@ import (
 	"github.com/mainflux/mainflux/writers"
 	"github.com/mainflux/mainflux/writers/api"
 	"github.com/mainflux/mainflux/writers/postgres"
-	"github.com/nats-io/go-nats"
+	nats "github.com/nats-io/go-nats"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
@@ -42,6 +44,7 @@ const (
 	defDBSSLCert     = ""
 	defDBSSLKey      = ""
 	defDBSSLRootCert = ""
+	defChanCfgPath   = "/config/channels.toml"
 
 	envNatsURL       = "MF_NATS_URL"
 	envLogLevel      = "MF_POSTGRES_WRITER_LOG_LEVEL"
@@ -55,6 +58,7 @@ const (
 	envDBSSLCert     = "MF_POSTGRES_WRITER_DB_SSL_CERT"
 	envDBSSLKey      = "MF_POSTGRES_WRITER_DB_SSL_KEY"
 	envDBSSLRootCert = "MF_POSTGRES_WRITER_DB_SSL_ROOT_CERT"
+	envChanCfgPath   = "MF_POSTGRES_WRITER_CHANNELS_CONFIG"
 )
 
 type config struct {
@@ -62,6 +66,7 @@ type config struct {
 	logLevel string
 	port     string
 	dbConfig postgres.Config
+	channels []string
 }
 
 func main() {
@@ -79,7 +84,7 @@ func main() {
 	defer db.Close()
 
 	repo := newService(db, logger)
-	if err = writers.Start(nc, repo, svcName, logger); err != nil {
+	if err = writers.Start(nc, repo, svcName, cfg.channels, logger); err != nil {
 		logger.Error(fmt.Sprintf("Failed to create Postgres writer: %s", err))
 	}
 
@@ -98,6 +103,7 @@ func main() {
 }
 
 func loadConfig() config {
+	chanCfgPath := mainflux.Env(envChanCfgPath, defChanCfgPath)
 	dbConfig := postgres.Config{
 		Host:        mainflux.Env(envDBHost, defDBHost),
 		Port:        mainflux.Env(envDBPort, defDBPort),
@@ -115,7 +121,32 @@ func loadConfig() config {
 		logLevel: mainflux.Env(envLogLevel, defLogLevel),
 		port:     mainflux.Env(envPort, defPort),
 		dbConfig: dbConfig,
+		channels: loadChansConfig(chanCfgPath),
 	}
+}
+
+type channels struct {
+	List []string `toml:"filter"`
+}
+
+type chanConfig struct {
+	Channels channels `toml:"channels"`
+}
+
+func loadChansConfig(chanConfigPath string) []string {
+	data, err := ioutil.ReadFile(chanConfigPath)
+	if err != nil {
+		log.Fatal(err.Error())
+		os.Exit(1)
+	}
+
+	var chanCfg chanConfig
+	if err := toml.Unmarshal(data, &chanCfg); err != nil {
+		log.Fatal(err.Error())
+		os.Exit(1)
+	}
+
+	return chanCfg.Channels.List
 }
 
 func connectToNATS(url string, logger logger.Logger) *nats.Conn {

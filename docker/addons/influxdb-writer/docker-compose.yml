@@ -53,6 +53,8 @@ services:
       - 8900:8900
     networks:
       - docker_mainflux-base-net
+    volumes:
+      - ./channels.toml:/config/channels.toml
 
   grafana:
     image: grafana/grafana:5.1.3

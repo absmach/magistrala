@@ -1,0 +1,4 @@
+# If you want to listen on all channels, just pass one element ["*"], otherwise
+# pass the list of channels.
+[channels]
+filter = ["*"]

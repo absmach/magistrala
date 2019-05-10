@@ -145,12 +145,7 @@ func connectToThings(cfg config, logger logger.Logger) *grpc.ClientConn {
 }
 
 func newService(client influxdata.Client, dbName string, logger logger.Logger) readers.MessageRepository {
-	repo, err := influxdb.New(client, dbName)
-	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to create InfluxDB writer: %s", err))
-		os.Exit(1)
-	}
-
+	repo := influxdb.New(client, dbName)
 	repo = api.LoggingMiddleware(repo, logger)
 	repo = api.MetricsMiddleware(
 		repo,

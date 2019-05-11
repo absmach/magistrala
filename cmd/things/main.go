@@ -223,8 +223,8 @@ func connectToUsers(cfg config, logger logger.Logger) *grpc.ClientConn {
 
 func newService(conn *grpc.ClientConn, db *sqlx.DB, cacheClient *redis.Client, esClient *redis.Client, logger logger.Logger) things.Service {
 	users := usersapi.NewClient(conn)
-	thingsRepo := postgres.NewThingRepository(db, logger)
-	channelsRepo := postgres.NewChannelRepository(db, logger)
+	thingsRepo := postgres.NewThingRepository(db)
+	channelsRepo := postgres.NewChannelRepository(db)
 	chanCache := rediscache.NewChannelCache(cacheClient)
 	thingCache := rediscache.NewThingCache(cacheClient)
 	idp := uuid.New()

@@ -32,7 +32,10 @@ var (
 )
 
 func TestSave(t *testing.T) {
-	session, err := cassandra.Connect([]string{addr}, keyspace)
+	session, err := cassandra.Connect(cassandra.DBConfig{
+		Hosts:    []string{addr},
+		Keyspace: keyspace,
+	})
 	require.Nil(t, err, fmt.Sprintf("failed to connect to Cassandra: %s", err))
 
 	repo := cassandra.New(session)

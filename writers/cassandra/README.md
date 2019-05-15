@@ -15,6 +15,9 @@ default values.
 | MF_CASSANDRA_WRITER_PORT            | Service HTTP port                                          | 8180                  |
 | MF_CASSANDRA_WRITER_DB_CLUSTER      | Cassandra cluster comma separated addresses                | 127.0.0.1             |
 | MF_CASSANDRA_WRITER_DB_KEYSPACE     | Cassandra keyspace name                                    | mainflux              |
+| MF_CASSANDRA_READER_DB_USERNAME     | Cassandra DB username                                      |                       |
+| MF_CASSANDRA_READER_DB_PASSWORD     | Cassandra DB password                                      |                       |
+| MF_CASSANDRA_READER_DB_PORT         | Cassandra DB port                                          | 9042                  |
 | MF_CASSANDRA_WRITER_CHANNELS_CONFIG | Configuration file path with channels list                 | /config/channels.yaml |
 ## Deployment
 
@@ -32,6 +35,9 @@ default values.
       MF_CASSANDRA_WRITER_PORT: [Service HTTP port]
       MF_CASSANDRA_WRITER_DB_CLUSTER: [Cassandra cluster comma separated addresses]
       MF_CASSANDRA_WRITER_DB_KEYSPACE: [Cassandra keyspace name]
+      MF_CASSANDRA_READER_DB_USERNAME: [Cassandra DB username]
+      MF_CASSANDRA_READER_DB_PASSWORD: [Cassandra DB password]
+      MF_CASSANDRA_READER_DB_PORT: [Cassandra DB port]
       MF_CASSANDRA_WRITER_CHANNELS_CONFIG: [Configuration file path with channels list]
     ports:
       - [host machine port]:[configured HTTP port]
@@ -55,7 +61,7 @@ make cassandra-writer
 make install
 
 # Set the environment variables and run the service
-MF_NATS_URL=[NATS instance URL] MF_CASSANDRA_WRITER_LOG_LEVEL=[Cassandra writer log level] MF_CASSANDRA_WRITER_PORT=[Service HTTP port] MF_CASSANDRA_WRITER_DB_CLUSTER=[Cassandra cluster comma separated addresses] MF_CASSANDRA_WRITER_DB_KEYSPACE=[Cassandra keyspace name] MF_CASSANDRA_WRITER_CHANNELS_CONFIG=[Configuration file path with channels list] $GOBIN/mainflux-cassandra-writer
+MF_NATS_URL=[NATS instance URL] MF_CASSANDRA_WRITER_LOG_LEVEL=[Cassandra writer log level] MF_CASSANDRA_WRITER_PORT=[Service HTTP port] MF_CASSANDRA_WRITER_DB_CLUSTER=[Cassandra cluster comma separated addresses] MF_CASSANDRA_WRITER_DB_KEYSPACE=[Cassandra keyspace name] MF_CASSANDRA_READER_DB_USERNAME=[Cassandra DB username] MF_CASSANDRA_READER_DB_PASSWORD=[Cassandra DB password] MF_CASSANDRA_READER_DB_PORT=[Cassandra DB port] MF_CASSANDRA_WRITER_CHANNELS_CONFIG=[Configuration file path with channels list] $GOBIN/mainflux-cassandra-writer
 
 ```
 

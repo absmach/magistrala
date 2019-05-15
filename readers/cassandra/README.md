@@ -13,6 +13,9 @@ default values.
 | MF_CASSANDRA_READER_PORT        | Service HTTP port                              | 8180           |
 | MF_CASSANDRA_READER_DB_CLUSTER  | Cassandra cluster comma separated addresses    | 127.0.0.1      |
 | MF_CASSANDRA_READER_DB_KEYSPACE | Cassandra keyspace name                        | mainflux       |
+| MF_CASSANDRA_READER_DB_USERNAME | Cassandra DB username                          |                |
+| MF_CASSANDRA_READER_DB_PASSWORD | Cassandra DB password                          |                |
+| MF_CASSANDRA_READER_DB_PORT     | Cassandra DB port                              | 9042           |
 | MF_THINGS_URL                   | Things service URL                             | localhost:8181 |
 | MF_CASSANDRA_READER_CLIENT_TLS  | Flag that indicates if TLS should be turned on | false          |
 | MF_CASSANDRA_READER_CA_CERTS    | Path to trusted CAs in PEM format              |                |
@@ -32,6 +35,9 @@ default values.
       MF_CASSANDRA_READER_PORT: [Service HTTP port]
       MF_CASSANDRA_READER_DB_CLUSTER: [Cassandra cluster comma separated addresses]
       MF_CASSANDRA_READER_DB_KEYSPACE: [Cassandra keyspace name]
+      MF_CASSANDRA_READER_DB_USERNAME: [Cassandra DB username]
+      MF_CASSANDRA_READER_DB_PASSWORD: [Cassandra DB password]
+      MF_CASSANDRA_READER_DB_PORT: [Cassandra DB port]
       MF_CASSANDRA_READER_CLIENT_TLS: [Flag that indicates if TLS should be turned on]
       MF_CASSANDRA_READER_CA_CERTS: [Path to trusted CAs in PEM format]
     ports:
@@ -54,7 +60,7 @@ make cassandra-reader
 make install
 
 # Set the environment variables and run the service
-MF_THINGS_URL=[Things service URL] MF_CASSANDRA_READER_PORT=[Service HTTP port] MF_CASSANDRA_READER_DB_CLUSTER=[Cassandra cluster comma separated addresses] MF_CASSANDRA_READER_DB_KEYSPACE=[Cassandra keyspace name] MF_CASSANDRA_READER_CLIENT_TLS=[Flag that indicates if TLS should be turned on] MF_CASSANDRA_READER_CA_CERTS=[Path to trusted CAs in PEM format] $GOBIN/mainflux-cassandra-reader
+MF_THINGS_URL=[Things service URL] MF_CASSANDRA_READER_PORT=[Service HTTP port] MF_CASSANDRA_READER_DB_CLUSTER=[Cassandra cluster comma separated addresses] MF_CASSANDRA_READER_DB_KEYSPACE=[Cassandra keyspace name] MF_CASSANDRA_READER_DB_USERNAME=[Cassandra DB username] MF_CASSANDRA_READER_DB_PASSWORD=[Cassandra DB password] MF_CASSANDRA_READER_DB_PORT=[Cassandra DB port] MF_CASSANDRA_READER_CLIENT_TLS=[Flag that indicates if TLS should be turned on] MF_CASSANDRA_READER_CA_CERTS=[Path to trusted CAs in PEM format] $GOBIN/mainflux-cassandra-reader
 
 ```
 

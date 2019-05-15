@@ -39,7 +39,10 @@ func TestMain(m *testing.M) {
 			return err
 		}
 
-		session, err := cassandra.Connect([]string{addr}, keyspace)
+		session, err := cassandra.Connect(cassandra.DBConfig{
+			Hosts:    []string{addr},
+			Keyspace: keyspace,
+		})
 		if err != nil {
 			return err
 		}

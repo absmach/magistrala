@@ -38,7 +38,10 @@ var (
 )
 
 func TestReadAll(t *testing.T) {
-	session, err := creaders.Connect([]string{addr}, keyspace)
+	session, err := creaders.Connect(creaders.DBConfig{
+		Hosts:    []string{addr},
+		Keyspace: keyspace,
+	})
 	require.Nil(t, err, fmt.Sprintf("failed to connect to Cassandra: %s", err))
 	defer session.Close()
 	writer := cwriters.New(session)

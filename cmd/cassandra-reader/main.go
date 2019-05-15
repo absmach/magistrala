@@ -33,28 +33,33 @@ import (
 const (
 	sep = ","
 
-	defLogLevel  = "error"
-	defPort      = "8180"
-	defCluster   = "127.0.0.1"
-	defKeyspace  = "mainflux"
-	defThingsURL = "localhost:8181"
-	defClientTLS = "false"
-	defCACerts   = ""
+	defLogLevel   = "error"
+	defPort       = "8180"
+	defCluster    = "127.0.0.1"
+	defKeyspace   = "mainflux"
+	defDBUsername = ""
+	defDBPassword = ""
+	defDBPort     = "9042"
+	defThingsURL  = "localhost:8181"
+	defClientTLS  = "false"
+	defCACerts    = ""
 
-	envLogLevel  = "MF_CASSANDRA_READER_LOG_LEVEL"
-	envPort      = "MF_CASSANDRA_READER_PORT"
-	envCluster   = "MF_CASSANDRA_READER_DB_CLUSTER"
-	envKeyspace  = "MF_CASSANDRA_READER_DB_KEYSPACE"
-	envThingsURL = "MF_THINGS_URL"
-	envClientTLS = "MF_CASSANDRA_READER_CLIENT_TLS"
-	envCACerts   = "MF_CASSANDRA_READER_CA_CERTS"
+	envLogLevel   = "MF_CASSANDRA_READER_LOG_LEVEL"
+	envPort       = "MF_CASSANDRA_READER_PORT"
+	envCluster    = "MF_CASSANDRA_READER_DB_CLUSTER"
+	envKeyspace   = "MF_CASSANDRA_READER_DB_KEYSPACE"
+	envDBUsername = "MF_CASSANDRA_READER_DB_USERNAME"
+	envDBPassword = "MF_CASSANDRA_READER_DB_PASSWORD"
+	envDBPort     = "MF_CASSANDRA_READER_DB_PORT"
+	envThingsURL  = "MF_THINGS_URL"
+	envClientTLS  = "MF_CASSANDRA_READER_CLIENT_TLS"
+	envCACerts    = "MF_CASSANDRA_READER_CA_CERTS"
 )
 
 type config struct {
 	logLevel  string
 	port      string
-	cluster   string
-	keyspace  string
+	dbCfg     cassandra.DBConfig
 	thingsURL string
 	clientTLS bool
 	caCerts   string
@@ -68,7 +73,7 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
-	session := connectToCassandra(cfg.cluster, cfg.keyspace, logger)
+	session := connectToCassandra(cfg.dbCfg, logger)
 	defer session.Close()
 
 	conn := connectToThings(cfg, logger)
@@ -92,6 +97,19 @@ func main() {
 }
 
 func loadConfig() config {
+	dbPort, err := strconv.Atoi(mainflux.Env(envDBPort, defDBPort))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	dbCfg := cassandra.DBConfig{
+		Hosts:    strings.Split(mainflux.Env(envCluster, defCluster), sep),
+		Keyspace: mainflux.Env(envKeyspace, defKeyspace),
+		Username: mainflux.Env(envDBUsername, defDBUsername),
+		Password: mainflux.Env(envDBPassword, defDBPassword),
+		Port:     dbPort,
+	}
+
 	tls, err := strconv.ParseBool(mainflux.Env(envClientTLS, defClientTLS))
 	if err != nil {
 		log.Fatalf("Invalid value passed for %s\n", envClientTLS)
@@ -100,16 +118,15 @@ func loadConfig() config {
 	return config{
 		logLevel:  mainflux.Env(envLogLevel, defLogLevel),
 		port:      mainflux.Env(envPort, defPort),
-		cluster:   mainflux.Env(envCluster, defCluster),
-		keyspace:  mainflux.Env(envKeyspace, defKeyspace),
+		dbCfg:     dbCfg,
 		thingsURL: mainflux.Env(envThingsURL, defThingsURL),
 		clientTLS: tls,
 		caCerts:   mainflux.Env(envCACerts, defCACerts),
 	}
 }
 
-func connectToCassandra(cluster, keyspace string, logger logger.Logger) *gocql.Session {
-	session, err := cassandra.Connect(strings.Split(cluster, sep), keyspace)
+func connectToCassandra(dbCfg cassandra.DBConfig, logger logger.Logger) *gocql.Session {
+	session, err := cassandra.Connect(dbCfg)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to Cassandra cluster: %s", err))
 		os.Exit(1)

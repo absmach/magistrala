@@ -585,9 +585,9 @@ func (m *Message) MarshalTo(dAtA []byte) (int, error) {
 		i += copy(dAtA[i:], m.Unit)
 	}
 	if m.Value != nil {
-		nn1, err1 := m.Value.MarshalTo(dAtA[i:])
-		if err1 != nil {
-			return 0, err1
+		nn1, err := m.Value.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += nn1
 	}
@@ -595,9 +595,9 @@ func (m *Message) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x5a
 		i++
 		i = encodeVarintMessage(dAtA, i, uint64(m.ValueSum.Size()))
-		n2, err2 := m.ValueSum.MarshalTo(dAtA[i:])
-		if err2 != nil {
-			return 0, err2
+		n2, err := m.ValueSum.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n2
 	}

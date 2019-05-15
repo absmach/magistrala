@@ -12,6 +12,16 @@ setup_protoc() {
 	go get -u github.com/golang/protobuf/protoc-gen-go \
 		github.com/gogo/protobuf/protoc-gen-gofast \
 		google.golang.org/grpc
+	
+	git -C $GOPATH/src/github.com/golang/protobuf/protoc-gen-go checkout v1.3.1
+	go install github.com/golang/protobuf/protoc-gen-go
+	
+	git -C $GOPATH/src/github.com/gogo/protobuf/protoc-gen-gofast checkout v1.2.1
+	go install github.com/gogo/protobuf/protoc-gen-gofast
+
+	git -C $GOPATH/src/google.golang.org/grpc checkout v1.20.1
+	go install google.golang.org/grpc
+
 	export PATH=$PATH:/usr/local/bin/protoc
 }
 
@@ -29,7 +39,7 @@ setup_mf() {
 	make proto
 	for p in $(ls *.pb.go); do
 		if ! cmp -s $p $p.tmp; then
-			echo "Proto file and generated Go file $p are out of cync!"
+			echo "Proto file and generated Go file $p are out of sync!"
 			exit 1
 		fi
 	done

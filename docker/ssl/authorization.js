@@ -133,12 +133,12 @@ function setKey(r) {
     }
 
     var auth = r.headersIn['Authorization'];
-    if (auth.length && auth != clientKey) {
+    if (auth && auth.length && auth != clientKey) {
         r.error('Authorization header does not match certificate');
         return '';
     }
 
-    if (r.uri.startsWith('/ws') && !auth.length) {
+    if (r.uri.startsWith('/ws') && (!auth || !auth.length)) {
         var a;
         for (a in r.args) {
             if (a == 'authorization' && r.args[a] === clientKey) {

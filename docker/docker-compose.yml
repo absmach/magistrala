@@ -21,7 +21,7 @@ volumes:
 
 services:
   nginx:
-    image: nginx:1.14.2
+    image: nginx:1.16.0-alpine
     container_name: mainflux-nginx
     restart: on-failure
     volumes:

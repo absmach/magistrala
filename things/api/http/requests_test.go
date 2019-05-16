@@ -12,13 +12,17 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/gofrs/uuid"
 	"github.com/mainflux/mainflux/things"
-	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAddThingReqValidation(t *testing.T) {
-	token := uuid.NewV4().String()
+	uuidToken, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	token := uuidToken.String()
+
 	valid := things.Thing{}
 
 	cases := map[string]struct {
@@ -51,7 +55,10 @@ func TestAddThingReqValidation(t *testing.T) {
 }
 
 func TestUpdateThingReqValidation(t *testing.T) {
-	token := uuid.NewV4().String()
+	uuidToken, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	token := uuidToken.String()
+
 	valid := things.Thing{ID: "1"}
 
 	cases := map[string]struct {
@@ -94,7 +101,10 @@ func TestUpdateThingReqValidation(t *testing.T) {
 }
 
 func TestUpdateKeyReqValidation(t *testing.T) {
-	token := uuid.NewV4().String()
+	uuidToken, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	token := uuidToken.String()
+
 	thing := things.Thing{ID: "1", Key: "key"}
 
 	cases := map[string]struct {
@@ -143,7 +153,9 @@ func TestUpdateKeyReqValidation(t *testing.T) {
 
 func TestCreateChannelReqValidation(t *testing.T) {
 	channel := things.Channel{}
-	token := uuid.NewV4().String()
+	uuidToken, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	token := uuidToken.String()
 
 	cases := map[string]struct {
 		channel things.Channel
@@ -174,7 +186,10 @@ func TestCreateChannelReqValidation(t *testing.T) {
 }
 
 func TestUpdateChannelReqValidation(t *testing.T) {
-	token := uuid.NewV4().String()
+	uuidToken, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	token := uuidToken.String()
+
 	channel := things.Channel{ID: "1"}
 
 	cases := map[string]struct {
@@ -216,7 +231,10 @@ func TestUpdateChannelReqValidation(t *testing.T) {
 }
 
 func TestViewResourceReqValidation(t *testing.T) {
-	token := uuid.NewV4().String()
+	uuidToken, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	token := uuidToken.String()
+
 	id := uint64(1)
 
 	cases := map[string]struct {
@@ -249,7 +267,10 @@ func TestViewResourceReqValidation(t *testing.T) {
 }
 
 func TestListResourcesReqValidation(t *testing.T) {
-	token := uuid.NewV4().String()
+	uuidToken, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	token := uuidToken.String()
+
 	value := uint64(10)
 
 	cases := map[string]struct {

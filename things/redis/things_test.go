@@ -20,11 +20,12 @@ import (
 
 func TestThingSave(t *testing.T) {
 	thingCache := redis.NewThingCache(redisClient)
-	key := uuid.New().ID()
+	key, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	id := "123"
 	id2 := "124"
 
-	err := thingCache.Save(key, id2)
+	err = thingCache.Save(key, id2)
 	require.Nil(t, err, fmt.Sprintf("Save thing to cache: expected nil got %s", err))
 
 	cases := []struct {
@@ -57,9 +58,10 @@ func TestThingSave(t *testing.T) {
 func TestThingID(t *testing.T) {
 	thingCache := redis.NewThingCache(redisClient)
 
-	key := uuid.New().ID()
+	key, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	id := "123"
-	err := thingCache.Save(key, id)
+	err = thingCache.Save(key, id)
 	require.Nil(t, err, fmt.Sprintf("Save thing to cache: expected nil got %s", err))
 
 	cases := map[string]struct {
@@ -89,7 +91,8 @@ func TestThingID(t *testing.T) {
 func TestThingRemove(t *testing.T) {
 	thingCache := redis.NewThingCache(redisClient)
 
-	key := uuid.New().ID()
+	key, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	id := "123"
 	id2 := "321"
 	thingCache.Save(key, id)

@@ -10,7 +10,7 @@ package postgres
 import (
 	"errors"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq" // required for DB access
@@ -20,6 +20,8 @@ import (
 
 const errInvalid = "invalid_text_representation"
 
+// ErrInvalidMessage indicates that service received message that
+// doesn't fit required format.
 var ErrInvalidMessage = errors.New("invalid message representation")
 
 var _ writers.MessageRepository = (*postgresRepo)(nil)
@@ -41,7 +43,10 @@ func (pr postgresRepo) Save(msg mainflux.Message) error {
     :value, :string_value, :bool_value, :data_value, :value_sum,
     :time, :update_time, :link);`
 
-	dbth := toDBMessage(msg)
+	dbth, err := toDBMessage(msg)
+	if err != nil {
+		return err
+	}
 
 	if _, err := pr.db.NamedExec(q, dbth); err != nil {
 		pqErr, ok := err.(*pq.Error)
@@ -76,7 +81,7 @@ type dbMessage struct {
 	Link        string   `db:"link"`
 }
 
-func toDBMessage(msg mainflux.Message) dbMessage {
+func toDBMessage(msg mainflux.Message) (dbMessage, error) {
 	var floatVal, valSum *float64
 	var strVal, dataVal *string
 	var boolVal *bool
@@ -101,9 +106,13 @@ func toDBMessage(msg mainflux.Message) dbMessage {
 		valSum = &v
 	}
 
-	id := uuid.NewV4().String()
+	id, err := uuid.NewV4()
+	if err != nil {
+		return dbMessage{}, err
+	}
+
 	return dbMessage{
-		ID:          id,
+		ID:          id.String(),
 		Channel:     msg.Channel,
 		Subtopic:    msg.Subtopic,
 		Publisher:   msg.Publisher,
@@ -118,5 +127,5 @@ func toDBMessage(msg mainflux.Message) dbMessage {
 		Time:        msg.Time,
 		UpdateTime:  msg.UpdateTime,
 		Link:        msg.Link,
-	}
+	}, nil
 }

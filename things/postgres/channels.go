@@ -11,10 +11,10 @@ import (
 	"database/sql"
 	"encoding/json"
 
+	"github.com/gofrs/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/mainflux/mainflux/things"
-	uuid "github.com/satori/go.uuid"
 )
 
 var _ things.ChannelRepository = (*channelRepository)(nil)

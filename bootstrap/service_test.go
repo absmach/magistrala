@@ -13,13 +13,13 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/gofrs/uuid"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/bootstrap"
 	"github.com/mainflux/mainflux/bootstrap/mocks"
 	mfsdk "github.com/mainflux/mainflux/sdk/go"
 	"github.com/mainflux/mainflux/things"
 	httpapi "github.com/mainflux/mainflux/things/api/http"
-	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -236,7 +236,9 @@ func TestUpdateConnections(t *testing.T) {
 	created, err := svc.Add(validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
-	c.ExternalID = uuid.NewV4().String()
+	externalID, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
+	c.ExternalID = externalID.String()
 	active, err := svc.Add(validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	err = svc.ChangeState(validToken, active.MFThing, bootstrap.Active)
@@ -305,9 +307,10 @@ func TestList(t *testing.T) {
 	var saved []bootstrap.Config
 	for i := 0; i < numThings; i++ {
 		c := config
-		id := uuid.NewV4().String()
-		c.ExternalID = id
-		c.ExternalKey = id
+		id, err := uuid.NewV4()
+		require.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
+		c.ExternalID = id.String()
+		c.ExternalKey = id.String()
 		c.Name = fmt.Sprintf("%s-%d", config.Name, i)
 		s, err := svc.Add(validToken, c)
 		saved = append(saved, s)

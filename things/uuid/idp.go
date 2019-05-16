@@ -9,8 +9,8 @@
 package uuid
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/mainflux/mainflux/things"
-	uuid "github.com/satori/go.uuid"
 )
 
 var _ things.IdentityProvider = (*uuidIdentityProvider)(nil)
@@ -22,6 +22,11 @@ func New() things.IdentityProvider {
 	return &uuidIdentityProvider{}
 }
 
-func (idp *uuidIdentityProvider) ID() string {
-	return uuid.NewV4().String()
+func (idp *uuidIdentityProvider) ID() (string, error) {
+	id, err := uuid.NewV4()
+	if err != nil {
+		return "", err
+	}
+
+	return id.String(), nil
 }

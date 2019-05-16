@@ -15,8 +15,9 @@ import (
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/writers/postgres"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 )
 
 var (
@@ -28,8 +29,13 @@ var (
 func TestMessageSave(t *testing.T) {
 	messageRepo := postgres.New(db)
 
-	msg.Channel = uuid.NewV4().String()
-	msg.Publisher = uuid.NewV4().String()
+	chid, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	msg.Channel = chid.String()
+
+	pubid, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	msg.Publisher = pubid.String()
 
 	now := time.Now().Unix()
 	for i := 0; i < msgsNum; i++ {

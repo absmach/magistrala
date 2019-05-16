@@ -144,11 +144,18 @@ func (ts *thingsService) AddThing(token string, thing Thing) (Thing, error) {
 		return Thing{}, ErrUnauthorizedAccess
 	}
 
-	thing.ID = ts.idp.ID()
+	thing.ID, err = ts.idp.ID()
+	if err != nil {
+		return Thing{}, err
+	}
+
 	thing.Owner = res.GetValue()
 
 	if thing.Key == "" {
-		thing.Key = ts.idp.ID()
+		thing.Key, err = ts.idp.ID()
+		if err != nil {
+			return Thing{}, err
+		}
 	}
 
 	id, err := ts.things.Save(thing)
@@ -251,7 +258,11 @@ func (ts *thingsService) CreateChannel(token string, channel Channel) (Channel, 
 		return Channel{}, ErrUnauthorizedAccess
 	}
 
-	channel.ID = ts.idp.ID()
+	channel.ID, err = ts.idp.ID()
+	if err != nil {
+		return Channel{}, err
+	}
+
 	channel.Owner = res.GetValue()
 
 	id, err := ts.channels.Save(channel)

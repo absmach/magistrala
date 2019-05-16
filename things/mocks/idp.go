@@ -21,12 +21,12 @@ type identityProviderMock struct {
 	counter int
 }
 
-func (idp *identityProviderMock) ID() string {
+func (idp *identityProviderMock) ID() (string, error) {
 	idp.mu.Lock()
 	defer idp.mu.Unlock()
 
 	idp.counter++
-	return fmt.Sprintf("%s%012d", "123e4567-e89b-12d3-a456-", idp.counter)
+	return fmt.Sprintf("%s%012d", "123e4567-e89b-12d3-a456-", idp.counter), nil
 }
 
 // NewIdentityProvider creates "mirror" identity provider, i.e. generated

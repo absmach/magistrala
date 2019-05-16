@@ -18,13 +18,13 @@ import (
 
 type consumer struct {
 	nc       *nats.Conn
-	channels []string
+	channels map[string]bool
 	repo     MessageRepository
 	logger   log.Logger
 }
 
 // Start method starts to consume normalized messages received from NATS.
-func Start(nc *nats.Conn, repo MessageRepository, queue string, channels []string, logger log.Logger) error {
+func Start(nc *nats.Conn, repo MessageRepository, queue string, channels map[string]bool, logger log.Logger) error {
 	c := consumer{
 		nc:       nc,
 		channels: channels,
@@ -54,17 +54,10 @@ func (c *consumer) consume(m *nats.Msg) {
 }
 
 func (c *consumer) channelExists(channel string) bool {
-	if len(c.channels) == 1 && c.channels[0] == "*" {
+	if _, ok := c.channels["*"]; ok {
 		return true
 	}
 
-	found := false
-	for _, ch := range c.channels {
-		if ch == channel {
-			found = true
-			break
-		}
-	}
-
+	_, found := c.channels[channel]
 	return found
 }

@@ -66,7 +66,7 @@ type config struct {
 	logLevel string
 	port     string
 	dbConfig postgres.Config
-	channels []string
+	channels map[string]bool
 }
 
 func main() {
@@ -133,20 +133,23 @@ type chanConfig struct {
 	Channels channels `toml:"channels"`
 }
 
-func loadChansConfig(chanConfigPath string) []string {
+func loadChansConfig(chanConfigPath string) map[string]bool {
 	data, err := ioutil.ReadFile(chanConfigPath)
 	if err != nil {
-		log.Fatal(err.Error())
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
 	var chanCfg chanConfig
 	if err := toml.Unmarshal(data, &chanCfg); err != nil {
-		log.Fatal(err.Error())
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
-	return chanCfg.Channels.List
+	chans := map[string]bool{}
+	for _, ch := range chanCfg.Channels.List {
+		chans[ch] = true
+	}
+
+	return chans
 }
 
 func connectToNATS(url string, logger logger.Logger) *nats.Conn {

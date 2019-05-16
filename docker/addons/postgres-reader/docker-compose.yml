@@ -1,0 +1,38 @@
+###
+# This docker-compose file contains optional Postgres-reader service for Mainflux platform.
+# Since this service is optional, this file is dependent of docker-compose.yml file
+# from <project_root>/docker. In order to run these optional service, execute command:
+# docker-compose -f docker/docker-compose.yml -f docker/addons/postgres-reader/docker-compose.yml up
+# from project root.
+###
+
+version: "3"
+
+networks:
+  docker_mainflux-base-net:
+    external: true
+
+services:
+  postgres-reader:
+    image: mainflux/postgres-reader:latest
+    container_name: mainflux-postgres-reader
+    restart: on-failure
+    environment:
+      MF_THINGS_URL: things:8183
+      MF_POSTGRES_READER_LOG_LEVEL: debug
+      MF_POSTGRES_READER_PORT: 9204
+      MF_POSTGRES_READER_CLIENT_TLS: "false"
+      MF_POSTGRES_READER_CA_CERTS: ""
+      MF_POSTGRES_READER_DB_HOST: postgres
+      MF_POSTGRES_READER_DB_PORT: 5432
+      MF_POSTGRES_READER_DB_USER: mainflux
+      MF_POSTGRES_READER_DB_PASS: mainflux
+      MF_POSTGRES_READER_DB_NAME: messages
+      MF_POSTGRES_READER_DB_SSL_MODE: disable
+      MF_POSTGRES_READER_DB_SSL_CERT: ""
+      MF_POSTGRES_READER_DB_SSL_KEY: ""
+      MF_POSTGRES_READER_DB_SSL_ROOT_CERT: ""
+    ports:
+      - 9204:9204
+    networks:
+      - docker_mainflux-base-net

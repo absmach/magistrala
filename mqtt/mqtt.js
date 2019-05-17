@@ -8,9 +8,10 @@
 var http = require('http'),
     redis = require('redis'),
     net = require('net'),
-    protobuf = require('protocol-buffers'),
+    protobuf = require('protobufjs'),
     websocket = require('websocket-stream'),
     grpc = require('grpc'),
+    protoLoader = require('@grpc/proto-loader'),
     fs = require('fs'),
     bunyan = require('bunyan'),
     logging = require('aedes-logging');
@@ -38,8 +39,20 @@ var config = {
         schema_dir: process.argv[2] || '.',
     },
     logger = bunyan.createLogger({name: 'mqtt', level: config.log_level}),
-    message = protobuf(fs.readFileSync(config.schema_dir + '/message.proto')),
-    thingsSchema = grpc.load(config.schema_dir + '/internal.proto').mainflux,
+    packageDefinition = protoLoader.loadSync(
+        config.schema_dir + '/internal.proto',
+        {
+            keepCase: true,
+            longs: String,
+            enums: String,
+            defaults: true,
+            oneofs: true
+        }
+    ),
+    protoDescriptor = grpc.loadPackageDefinition(packageDefinition),
+    thingsSchema = protoDescriptor.mainflux,
+    messagesSchema = new protobuf.Root().loadSync(config.schema_dir + '/message.proto'),
+    RawMessage = messagesSchema.lookupType('mainflux.RawMessage'),
     nats = require('nats').connect(config.nats_url),
     aedesRedis = require('aedes-persistence-redis')({
         port: config.redis_port,
@@ -103,7 +116,7 @@ function startMqtt() {
 }
 
 nats.subscribe('channel.>', {'queue':'mqtts'}, function (msg) {
-    var m = message.RawMessage.decode(Buffer.from(msg)),
+    var m = RawMessage.decode(Uint8Array.from(msg, c => c.charCodeAt(0))),
         packet, subtopic;
     if (m && m.protocol !== 'mqtt') {
         subtopic = m.subtopic !== '' ? '/' + m.subtopic.replace(/\./g, '/') : '';
@@ -157,15 +170,14 @@ aedes.authorizePublish = function (client, packet, publish) {
         onAuthorize = function (err, res) {
             var rawMsg;
             if (!err) {
-                logger.info('authorized publish');
-
-                rawMsg = message.RawMessage.encode({
+                rawMsg = RawMessage.encode({
                     publisher: client.thingId,
                     channel: channelId,
                     subtopic: elements.join('.'),
                     protocol: 'mqtt',
                     payload: packet.payload
-                });
+                }).finish();
+
                 nats.publish(channelTopic, rawMsg);
 
                 publish(0);
@@ -193,7 +205,6 @@ aedes.authorizeSubscribe = function (client, packet, subscribe) {
         },
         onAuthorize = function (err, res) {
             if (!err) {
-                logger.info('authorized subscribe');
                 subscribe(null, packet);
             } else {
                 logger.warn('unauthorized subscribe: %s', err.message);
@@ -234,7 +245,7 @@ aedes.on('clientError', function (client, err) {
 });
 
 aedes.on('connectionError', function (client, err) {
-    logger.warn('client error: client: %s, error: %s', client.id, err.message);
+    logger.warn('connection error: client: %s, error: %s', client.id, err.message);
 });
 
 aedes.on('error', function(err) {

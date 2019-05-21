@@ -23,7 +23,7 @@
     "grpc": "^1.20.3",
     "lodash": "^4.17.10",
     "mqemitter-redis": "^3.0.0",
-    "nats": "^0.6.8",
+    "nats": "^1.2.10",
     "protobufjs": "^6.8.8",
     "redis": "^2.8.0",
     "request": "^2.81.0",

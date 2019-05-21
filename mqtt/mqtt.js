@@ -53,7 +53,10 @@ var config = {
     thingsSchema = protoDescriptor.mainflux,
     messagesSchema = new protobuf.Root().loadSync(config.schema_dir + '/message.proto'),
     RawMessage = messagesSchema.lookupType('mainflux.RawMessage'),
-    nats = require('nats').connect(config.nats_url),
+    nats = require('nats').connect({
+        servers: [config.nats_url],
+        preserveBuffers: true,
+    }),
     aedesRedis = require('aedes-persistence-redis')({
         port: config.redis_port,
         host: config.redis_host,
@@ -116,7 +119,7 @@ function startMqtt() {
 }
 
 nats.subscribe('channel.>', {'queue':'mqtts'}, function (msg) {
-    var m = RawMessage.decode(Uint8Array.from(msg, c => c.charCodeAt(0))),
+    var m = RawMessage.decode(msg),
         packet, subtopic;
     if (m && m.protocol !== 'mqtt') {
         subtopic = m.subtopic !== '' ? '/' + m.subtopic.replace(/\./g, '/') : '';

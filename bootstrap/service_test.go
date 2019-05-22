@@ -223,6 +223,64 @@ func TestUpdate(t *testing.T) {
 	}
 }
 
+func TestUpdateCert(t *testing.T) {
+	users := mocks.NewUsersService(map[string]string{validToken: email})
+
+	server := newThingsServer(newThingsService(users))
+	svc := newService(users, server.URL)
+	c := config
+
+	ch := channel
+	ch.ID = "2"
+	c.MFChannels = append(c.MFChannels, ch)
+	saved, err := svc.Add(validToken, c)
+	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+
+	cases := []struct {
+		desc       string
+		key        string
+		thingKey   string
+		clientCert string
+		clientKey  string
+		caCert     string
+		err        error
+	}{
+		{
+			desc:       "update certs for the valid config",
+			thingKey:   saved.MFKey,
+			clientCert: "newCert",
+			clientKey:  "newKey",
+			caCert:     "newCert",
+			key:        validToken,
+			err:        nil,
+		},
+		{
+			desc:       "update cert for a non-existing config",
+			thingKey:   "empty",
+			clientCert: "newCert",
+			clientKey:  "newKey",
+			caCert:     "newCert",
+
+			key: validToken,
+			err: bootstrap.ErrNotFound,
+		},
+		{
+			desc:       "update config cert with wrong credentials",
+			thingKey:   saved.MFKey,
+			clientCert: "newCert",
+			clientKey:  "newKey",
+			caCert:     "newCert",
+			key:        invalidToken,
+			err:        bootstrap.ErrUnauthorizedAccess,
+		},
+	}
+
+	for _, tc := range cases {
+		err := svc.UpdateCert(tc.key, tc.thingKey, tc.clientCert, tc.clientKey, tc.caCert)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	}
+}
+
 func TestUpdateConnections(t *testing.T) {
 	users := mocks.NewUsersService(map[string]string{validToken: email})
 

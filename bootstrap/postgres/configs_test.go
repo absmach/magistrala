@@ -327,6 +327,62 @@ func TestUpdate(t *testing.T) {
 	}
 }
 
+func TestUpdateCert(t *testing.T) {
+	repo := postgres.NewConfigRepository(db, testLog)
+	err := deleteChannels(repo)
+	require.Nil(t, err, "Channels cleanup expected to succeed.")
+
+	c := config
+	// Use UUID to prevent conflicts.
+	uid, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
+	c.MFKey = uid.String()
+	c.MFThing = uid.String()
+	c.ExternalID = uid.String()
+	c.ExternalKey = uid.String()
+	_, err = repo.Save(c, channels)
+	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+
+	c.Content = "new content"
+	c.Name = "new name"
+
+	wrongOwner := c
+	wrongOwner.Owner = "3"
+
+	cases := []struct {
+		desc    string
+		key     string
+		owner   string
+		cert    string
+		certKey string
+		ca      string
+		err     error
+	}{
+		{
+			desc:    "update with wrong owner",
+			key:     "",
+			cert:    "cert",
+			certKey: "certKey",
+			ca:      "",
+			owner:   "wrong",
+			err:     bootstrap.ErrNotFound,
+		},
+		{
+			desc:    "update a config",
+			key:     c.MFKey,
+			cert:    "cert",
+			certKey: "certKey",
+			ca:      "ca",
+			owner:   c.Owner,
+			err:     nil,
+		},
+	}
+	for _, tc := range cases {
+		err := repo.UpdateCert(tc.owner, tc.key, tc.cert, tc.key, tc.ca)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	}
+}
+
 func TestUpdateConnections(t *testing.T) {
 	repo := postgres.NewConfigRepository(db, testLog)
 	err := deleteChannels(repo)

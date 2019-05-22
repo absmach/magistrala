@@ -21,6 +21,9 @@ type addReq struct {
 	Channels    []string `json:"channels"`
 	Name        string   `json:"name"`
 	Content     string   `json:"content"`
+	ClientCert  string   `json:"client_cert"`
+	ClientKey   string   `json:"client_key"`
+	CACert      string   `json:"ca_cert"`
 }
 
 func (req addReq) validate() error {
@@ -66,6 +69,26 @@ func (req updateReq) validate() error {
 
 	if req.id == "" {
 		return bootstrap.ErrMalformedEntity
+	}
+
+	return nil
+}
+
+type updateCertReq struct {
+	key        string
+	thingKey   string
+	ClientCert string `json:"client_cert"`
+	ClientKey  string `json:"client_key"`
+	CACert     string `json:"ca_cert"`
+}
+
+func (req updateCertReq) validate() error {
+	if req.key == "" {
+		return bootstrap.ErrUnauthorizedAccess
+	}
+
+	if req.thingKey == "" {
+		return bootstrap.ErrNotFound
 	}
 
 	return nil

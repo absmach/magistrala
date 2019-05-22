@@ -156,6 +156,36 @@ paths:
           description: Missing or invalid access token provided.
         500:
           $ref: "#/responses/ServiceError"
+  /things/configs/certs/{thingKey}:
+    put:
+      summary: Updates certs
+      description: |
+        Update is performed by replacing the current certificate data with values
+        provided in a request payload.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - $ref: "#/parameters/ThingKey"
+        - name: config
+          description: JSON-formatted document describing the updated thing.
+          in: body
+          schema:
+            $ref: "#/definitions/ConfigUpdateCertReq"
+          required: true
+      responses:
+        200:
+          description: Config updated.
+        400:
+          description: Failed due to malformed JSON.
+        403:
+          description: Missing or invalid access token provided.
+        404:
+          description: Config does not exist.
+        415:
+          description: Missing or invalid content type.
+        500:
+          $ref: "#/responses/ServiceError"
   /things/configs/connections/{configId}:
     put:
       summary: Updates channels the thing is connected to
@@ -171,9 +201,7 @@ paths:
           description: Array if IDs the thing is be connected to.
           in: body
           schema:
-            type: array
-            items:
-              type: string
+            $ref: "#/definitions/ConfigUpdateConnReq"
           required: true
       responses:
         200:
@@ -262,8 +290,13 @@ parameters:
     name: configId
     description: Unique Config identifier.
     in: path
-    type: integer
-    minimum: 1
+    type: string
+    required: true
+  ThingKey:
+    name: thingKey
+    description: Unique Thing key.
+    in: path
+    type: string
     required: true
   ExternalId:
     name: externalId
@@ -371,7 +404,7 @@ definitions:
         description: External key.
       content:
         type: string
-        description: Free-form custom configuration
+        description: Free-form custom configuration.
       state:
         $ref: '#/definitions/State'
     required:
@@ -393,7 +426,7 @@ definitions:
             type: string
         content:
           type: string
-          description: Free-form custom configuration
+          description: Free-form custom configuration.
       required:
         - mainflux_thing
         - mainflux_key
@@ -424,11 +457,6 @@ definitions:
   ConfigUpdateReq:
     type: object
     properties:
-      channels:
-        type: array
-        minItems: 0
-        items:
-          type: string
       content:
         type: string
       name:
@@ -436,3 +464,20 @@ definitions:
     required:
       - content
       - name
+  ConfigUpdateConnReq:
+    type: object
+    properties:
+      channels:
+        type: array
+        minItems: 0
+        items:
+          type: string
+  ConfigUpdateCertReq:
+    type: object
+    properties:
+      client_cert:
+        type: string
+      client_key:
+        type: string
+      ca_cert:
+        type: string

@@ -61,6 +61,15 @@ func (mm *metricsMiddleware) Update(key string, cfg bootstrap.Config) (err error
 	return mm.svc.Update(key, cfg)
 }
 
+func (mm *metricsMiddleware) UpdateCert(key, thingKey, clientCert, clientKey, caCert string) (err error) {
+	defer func(begin time.Time) {
+		mm.counter.With("method", "update_cert").Add(1)
+		mm.latency.With("method", "update_cert").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return mm.svc.UpdateCert(key, thingKey, clientCert, clientKey, caCert)
+}
+
 func (mm *metricsMiddleware) UpdateConnections(key, id string, connections []string) (err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_connections").Add(1)

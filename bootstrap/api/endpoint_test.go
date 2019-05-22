@@ -62,13 +62,19 @@ var (
 	}
 
 	updateReq = struct {
-		Channels []string        `json:"channels"`
-		Content  string          `json:"content"`
-		State    bootstrap.State `json:"state"`
+		Channels   []string        `json:"channels,omitempty"`
+		Content    string          `json:"content,omitempty"`
+		State      bootstrap.State `json:"state,omitempty"`
+		ClientCert string          `json:"client_cert,omitempty"`
+		ClientKey  string          `json:"client_key,omitempty"`
+		CACert     string          `json:"ca_cert,omitempty"`
 	}{
-		Channels: []string{"2", "3"},
-		Content:  "config update",
-		State:    1,
+		Channels:   []string{"2", "3"},
+		Content:    "config update",
+		State:      1,
+		ClientCert: "newcert",
+		ClientKey:  "newkey",
+		CACert:     "newca",
 	}
 )
 
@@ -457,6 +463,100 @@ func TestUpdate(t *testing.T) {
 			client:      bs.Client(),
 			method:      http.MethodPut,
 			url:         fmt.Sprintf("%s/things/configs/%s", bs.URL, tc.id),
+			contentType: tc.contentType,
+			token:       tc.auth,
+			body:        strings.NewReader(tc.req),
+		}
+		res, err := req.make()
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+	}
+}
+func TestUpdateCert(t *testing.T) {
+	users := mocks.NewUsersService(map[string]string{validToken: email})
+
+	ts := newThingsServer(newThingsService(users))
+	svc := newService(users, nil, ts.URL)
+	bs := newBootstrapServer(svc)
+
+	c := newConfig([]bootstrap.Channel{bootstrap.Channel{ID: "1"}})
+
+	saved, err := svc.Add(validToken, c)
+	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+
+	data := toJSON(updateReq)
+
+	cases := []struct {
+		desc        string
+		req         string
+		key         string
+		auth        string
+		contentType string
+		status      int
+	}{
+		{
+			desc:        "update unauthorized",
+			req:         data,
+			key:         saved.MFKey,
+			auth:        invalidToken,
+			contentType: contentType,
+			status:      http.StatusForbidden,
+		},
+		{
+			desc:        "update with an empty token",
+			req:         data,
+			key:         saved.MFKey,
+			auth:        "",
+			contentType: contentType,
+			status:      http.StatusForbidden,
+		},
+		{
+			desc:        "update a valid config",
+			req:         data,
+			key:         saved.MFKey,
+			auth:        validToken,
+			contentType: contentType,
+			status:      http.StatusOK,
+		},
+		{
+			desc:        "update a config with wrong content type",
+			req:         data,
+			key:         saved.MFKey,
+			auth:        validToken,
+			contentType: "",
+			status:      http.StatusUnsupportedMediaType,
+		},
+		{
+			desc:        "update a non-existing config",
+			req:         data,
+			key:         wrongID,
+			auth:        validToken,
+			contentType: contentType,
+			status:      http.StatusNotFound,
+		},
+		{
+			desc:        "update a config with invalid request format",
+			req:         "}",
+			key:         saved.MFKey,
+			auth:        validToken,
+			contentType: contentType,
+			status:      http.StatusBadRequest,
+		},
+		{
+			desc:        "update a config with an empty request",
+			key:         saved.MFKey,
+			req:         "",
+			auth:        validToken,
+			contentType: contentType,
+			status:      http.StatusBadRequest,
+		},
+	}
+
+	for _, tc := range cases {
+		req := testRequest{
+			client:      bs.Client(),
+			method:      http.MethodPut,
+			url:         fmt.Sprintf("%s/things/configs/certs/%s", bs.URL, tc.key),
 			contentType: tc.contentType,
 			token:       tc.auth,
 			body:        strings.NewReader(tc.req),

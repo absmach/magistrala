@@ -114,6 +114,38 @@ func TestUpdateReqValidation(t *testing.T) {
 	}
 }
 
+func TestUpdateCertReqValidation(t *testing.T) {
+	cases := []struct {
+		desc     string
+		key      string
+		thingKey string
+		err      error
+	}{
+		{
+			desc:     "empty key",
+			key:      "",
+			thingKey: "thingKey",
+			err:      bootstrap.ErrUnauthorizedAccess,
+		},
+		{
+			desc:     "empty thing key",
+			key:      "key",
+			thingKey: "",
+			err:      bootstrap.ErrNotFound,
+		},
+	}
+
+	for _, tc := range cases {
+		req := updateCertReq{
+			key:      tc.key,
+			thingKey: tc.thingKey,
+		}
+
+		err := req.validate()
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	}
+}
+
 func TestUpdateConnReqValidation(t *testing.T) {
 	cases := []struct {
 		desc string

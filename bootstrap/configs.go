@@ -16,6 +16,9 @@ type Config struct {
 	MFThing     string
 	Owner       string
 	Name        string
+	ClientCert  string
+	ClientKey   string
+	CACert      string
 	MFKey       string
 	MFChannels  []Channel
 	ExternalID  string
@@ -64,9 +67,13 @@ type ConfigRepository interface {
 	// RetrieveByExternalID returns Config for given external ID.
 	RetrieveByExternalID(string, string) (Config, error)
 
-	// Update performs and update to an existing Config. A non-nil error is returned
+	// Update updates an existing Config. A non-nil error is returned
 	// to indicate operation failure.
 	Update(Config) error
+
+	// UpdateCerts updates an existing Config certificate and key.
+	// A non-nil error is returned to indicate operation failure.
+	UpdateCert(string, string, string, string, string) error
 
 	// UpdateConnections updates a list of Channels the Config is connected to
 	// adding new Channels if needed.

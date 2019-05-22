@@ -45,8 +45,8 @@ func NewConfigRepository(db *sqlx.DB, log logger.Logger) bootstrap.ConfigReposit
 }
 
 func (cr configRepository) Save(cfg bootstrap.Config, connections []string) (string, error) {
-	q := `INSERT INTO configs (mainflux_thing, owner, name, mainflux_key, external_id, external_key, content, state)
-		  VALUES (:mainflux_thing, :owner, :name, :mainflux_key, :external_id, :external_key, :content, :state)`
+	q := `INSERT INTO configs (mainflux_thing, owner, name, client_cert, client_key, ca_cert, mainflux_key, external_id, external_key, content, state)
+		  VALUES (:mainflux_thing, :owner, :name, :client_cert, :client_key, :ca_cert, :mainflux_key, :external_id, :external_key, :content, :state)`
 
 	tx, err := cr.db.Beginx()
 	if err != nil {
@@ -193,7 +193,7 @@ func (cr configRepository) RetrieveAll(key string, filter bootstrap.Filter, offs
 }
 
 func (cr configRepository) RetrieveByExternalID(externalKey, externalID string) (bootstrap.Config, error) {
-	q := `SELECT mainflux_thing, mainflux_key, owner, name, content, state 
+	q := `SELECT mainflux_thing, mainflux_key, owner, name, client_cert, client_key, ca_cert, content, state 
 		  FROM configs 
 		  WHERE external_key = $1 AND external_id = $2`
 	dbcfg := dbConfig{
@@ -251,6 +251,26 @@ func (cr configRepository) Update(cfg bootstrap.Config) error {
 	name := nullString(cfg.Name)
 
 	res, err := cr.db.Exec(q, name, content, cfg.MFThing, cfg.Owner)
+	if err != nil {
+		return err
+	}
+
+	cnt, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if cnt == 0 {
+		return bootstrap.ErrNotFound
+	}
+
+	return nil
+}
+
+func (cr configRepository) UpdateCert(key, thingKey, clientCert, clientKey, caCert string) error {
+	q := `UPDATE configs SET client_cert = $1, client_key = $2, ca_cert = $3 WHERE mainflux_key = $4 AND owner = $5`
+
+	res, err := cr.db.Exec(q, clientCert, clientKey, caCert, thingKey, key)
 	if err != nil {
 		return err
 	}
@@ -589,6 +609,9 @@ type dbConfig struct {
 	MFThing     string          `db:"mainflux_thing"`
 	Owner       string          `db:"owner"`
 	Name        sql.NullString  `db:"name"`
+	ClientCert  sql.NullString  `db:"client_cert"`
+	ClientKey   sql.NullString  `db:"client_key"`
+	CaCert      sql.NullString  `db:"ca_cert"`
 	MFKey       string          `db:"mainflux_key"`
 	ExternalID  string          `db:"external_id"`
 	ExternalKey string          `db:"external_key"`
@@ -601,6 +624,9 @@ func toDBConfig(cfg bootstrap.Config) dbConfig {
 		MFThing:     cfg.MFThing,
 		Owner:       cfg.Owner,
 		Name:        nullString(cfg.Name),
+		ClientCert:  nullString(cfg.ClientCert),
+		ClientKey:   nullString(cfg.ClientKey),
+		CaCert:      nullString(cfg.CACert),
 		MFKey:       cfg.MFKey,
 		ExternalID:  cfg.ExternalID,
 		ExternalKey: cfg.ExternalKey,
@@ -627,6 +653,17 @@ func toConfig(dbcfg dbConfig) bootstrap.Config {
 		cfg.Content = dbcfg.Content.String
 	}
 
+	if dbcfg.ClientCert.Valid {
+		cfg.ClientCert = dbcfg.ClientCert.String
+	}
+
+	if dbcfg.ClientKey.Valid {
+		cfg.ClientKey = dbcfg.ClientKey.String
+	}
+
+	if dbcfg.CaCert.Valid {
+		cfg.CACert = dbcfg.CaCert.String
+	}
 	return cfg
 }
 

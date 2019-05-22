@@ -163,6 +163,27 @@ func (crm *configRepositoryMock) Update(config bootstrap.Config) error {
 	return nil
 }
 
+func (crm *configRepositoryMock) UpdateCert(owner, thingKey, clientCert, clientKey, caCert string) error {
+	crm.mu.Lock()
+	defer crm.mu.Unlock()
+	var forUpdate bootstrap.Config
+	for _, v := range crm.configs {
+		if v.MFKey == thingKey && v.Owner == owner {
+			forUpdate = v
+			break
+		}
+	}
+	if _, ok := crm.configs[forUpdate.MFThing]; !ok {
+		return bootstrap.ErrNotFound
+	}
+	forUpdate.ClientCert = clientCert
+	forUpdate.ClientKey = clientKey
+	forUpdate.CACert = caCert
+	crm.configs[forUpdate.MFThing] = forUpdate
+
+	return nil
+}
+
 func (crm *configRepositoryMock) UpdateConnections(key, id string, channels []bootstrap.Channel, connections []string) error {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()

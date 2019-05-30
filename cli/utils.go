@@ -19,7 +19,9 @@ var (
 	// Limit query parameter
 	Limit uint = 10
 	// Offset query parameter
-	Offset uint
+	Offset uint = 0
+	// Name query parameter
+	Name string = ""
 )
 
 func logJSON(iList ...interface{}) {

@@ -166,7 +166,7 @@ func (svc *mainfluxThings) UpdateKey(string, string, string) error {
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) ListThings(string, uint64, uint64) (things.ThingsPage, error) {
+func (svc *mainfluxThings) ListThings(string, uint64, uint64, string) (things.ThingsPage, error) {
 	panic("not implemented")
 }
 

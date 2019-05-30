@@ -10,11 +10,19 @@ package postgres
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 
 	"github.com/gofrs/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq" // required for DB access
 	"github.com/mainflux/mainflux/things"
+)
+
+const (
+	errDuplicate  = "unique_violation"
+	errFK         = "foreign_key_violation"
+	errInvalid    = "invalid_text_representation"
+	errTruncation = "string_data_right_truncation"
 )
 
 var _ things.ThingRepository = (*thingRepository)(nil)
@@ -45,7 +53,7 @@ func (tr thingRepository) Save(thing things.Thing) (string, error) {
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			switch pqErr.Code.Name() {
-			case errInvalid:
+			case errInvalid, errTruncation:
 				return "", things.ErrMalformedEntity
 			case errDuplicate:
 				return "", things.ErrConflict
@@ -69,8 +77,11 @@ func (tr thingRepository) Update(thing things.Thing) error {
 	res, err := tr.db.NamedExec(q, dbth)
 	if err != nil {
 		pqErr, ok := err.(*pq.Error)
-		if ok && errInvalid == pqErr.Code.Name() {
-			return things.ErrMalformedEntity
+		if ok {
+			switch pqErr.Code.Name() {
+			case errInvalid, errTruncation:
+				return things.ErrMalformedEntity
+			}
 		}
 
 		return err
@@ -158,14 +169,21 @@ func (tr thingRepository) RetrieveByKey(key string) (string, error) {
 	return id, nil
 }
 
-func (tr thingRepository) RetrieveAll(owner string, offset, limit uint64) (things.ThingsPage, error) {
-	q := `SELECT id, name, key, metadata FROM things
-	      WHERE owner = :owner ORDER BY id LIMIT :limit OFFSET :offset;`
+func (tr thingRepository) RetrieveAll(owner string, offset, limit uint64, name string) (things.ThingsPage, error) {
+	nq := ""
+	if name != "" {
+		name = fmt.Sprintf(`%%%s%%`, name)
+		nq = `AND name LIKE :name`
+	}
+
+	q := fmt.Sprintf(`SELECT id, name, key, metadata FROM things
+	      WHERE owner = :owner %s ORDER BY id LIMIT :limit OFFSET :offset;`, nq)
 
 	params := map[string]interface{}{
 		"owner":  owner,
 		"limit":  limit,
 		"offset": offset,
+		"name":   name,
 	}
 
 	rows, err := tr.db.NamedQuery(q, params)
@@ -189,11 +207,23 @@ func (tr thingRepository) RetrieveAll(owner string, offset, limit uint64) (thing
 		items = append(items, th)
 	}
 
-	q = `SELECT COUNT(*) FROM things WHERE owner = $1;`
+	cq := ""
+	if name != "" {
+		cq = `AND name = $2`
+	}
 
-	var total uint64
-	if err := tr.db.Get(&total, q, owner); err != nil {
-		return things.ThingsPage{}, err
+	q = fmt.Sprintf(`SELECT COUNT(*) FROM things WHERE owner = $1 %s;`, cq)
+
+	total := uint64(0)
+	switch name {
+	case "":
+		if err := tr.db.Get(&total, q, owner); err != nil {
+			return things.ThingsPage{}, err
+		}
+	default:
+		if err := tr.db.Get(&total, q, owner, name); err != nil {
+			return things.ThingsPage{}, err
+		}
 	}
 
 	page := things.ThingsPage{

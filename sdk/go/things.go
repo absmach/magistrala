@@ -52,8 +52,8 @@ func (sdk mfSDK) CreateThing(thing Thing, token string) (string, error) {
 	return id, nil
 }
 
-func (sdk mfSDK) Things(token string, offset, limit uint64) (ThingsPage, error) {
-	endpoint := fmt.Sprintf("%s?offset=%d&limit=%d", thingsEndpoint, offset, limit)
+func (sdk mfSDK) Things(token string, offset, limit uint64, name string) (ThingsPage, error) {
+	endpoint := fmt.Sprintf("%s?offset=%d&limit=%d&name=%s", thingsEndpoint, offset, limit, name)
 	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)

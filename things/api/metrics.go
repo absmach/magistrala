@@ -70,13 +70,13 @@ func (ms *metricsMiddleware) ViewThing(token, id string) (things.Thing, error) {
 	return ms.svc.ViewThing(token, id)
 }
 
-func (ms *metricsMiddleware) ListThings(token string, offset, limit uint64) (things.ThingsPage, error) {
+func (ms *metricsMiddleware) ListThings(token string, offset, limit uint64, name string) (things.ThingsPage, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_things").Add(1)
 		ms.latency.With("method", "list_things").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListThings(token, offset, limit)
+	return ms.svc.ListThings(token, offset, limit, name)
 }
 
 func (ms *metricsMiddleware) ListThingsByChannel(token, id string, offset, limit uint64) (things.ThingsPage, error) {

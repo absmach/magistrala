@@ -113,7 +113,7 @@ func (trm *thingRepositoryMock) RetrieveByID(owner, id string) (things.Thing, er
 	return things.Thing{}, things.ErrNotFound
 }
 
-func (trm *thingRepositoryMock) RetrieveAll(owner string, offset, limit uint64) (things.ThingsPage, error) {
+func (trm *thingRepositoryMock) RetrieveAll(owner string, offset, limit uint64, name string) (things.ThingsPage, error) {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 

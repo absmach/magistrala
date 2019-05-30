@@ -27,6 +27,7 @@ const (
 	contentType = "application/json"
 	offset      = "offset"
 	limit       = "limit"
+	name        = "name"
 
 	defOffset = 0
 	defLimit  = 10
@@ -250,10 +251,16 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
+	n, err := readStringQuery(r, name)
+	if err != nil {
+		return nil, err
+	}
+
 	req := listResourcesReq{
 		token:  r.Header.Get("Authorization"),
 		offset: o,
 		limit:  l,
+		name:   n,
 	}
 
 	return req, nil
@@ -357,4 +364,17 @@ func readUintQuery(r *http.Request, key string, def uint64) (uint64, error) {
 	}
 
 	return val, nil
+}
+
+func readStringQuery(r *http.Request, key string) (string, error) {
+	vals := bone.GetQuery(r, key)
+	if len(vals) > 1 {
+		return "", errInvalidQueryParams
+	}
+
+	if len(vals) == 0 {
+		return "", nil
+	}
+
+	return vals[0], nil
 }

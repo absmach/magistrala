@@ -194,6 +194,7 @@ func TestListThings(t *testing.T) {
 		token  string
 		offset uint64
 		limit  uint64
+		name   string
 		size   uint64
 		err    error
 	}{
@@ -242,7 +243,7 @@ func TestListThings(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		page, err := svc.ListThings(tc.token, tc.offset, tc.limit)
+		page, err := svc.ListThings(tc.token, tc.offset, tc.limit, tc.name)
 		size := uint64(len(page.Things))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))

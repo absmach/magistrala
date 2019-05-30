@@ -56,7 +56,7 @@ func migrateDB(db *sqlx.DB) error {
 						id       UUID,
 						owner    VARCHAR(254),
 						key      VARCHAR(4096) UNIQUE NOT NULL,
-						name     TEXT,
+						name     VARCHAR(1024),
 						metadata JSON,
 						PRIMARY KEY (id, owner)
 					)`,

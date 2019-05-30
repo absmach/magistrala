@@ -120,6 +120,14 @@ func main() {
 		"offset query parameter",
 	)
 
+	rootCmd.PersistentFlags().StringVarP(
+		&cli.Name,
+		"name",
+		"n",
+		"",
+		"name query parameter",
+	)
+
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
 	}

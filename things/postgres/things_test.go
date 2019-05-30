@@ -9,6 +9,7 @@ package postgres_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -19,13 +20,21 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const maxNameSize = 1024
+
+var invalidName = strings.Repeat("m", maxNameSize+1)
+
 func TestThingSave(t *testing.T) {
-	email := "thing-save@example.com"
 	thingRepo := postgres.NewThingRepository(db)
+
+	email := "thing-save@example.com"
 
 	thid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	thkey, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
+	nonexistentThingKey, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	thing := things.Thing{
@@ -33,9 +42,6 @@ func TestThingSave(t *testing.T) {
 		Owner: email,
 		Key:   thkey,
 	}
-
-	nonexistentThingKey, err := uuid.New().ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	cases := []struct {
 		desc  string
@@ -48,18 +54,37 @@ func TestThingSave(t *testing.T) {
 			err:   nil,
 		},
 		{
-			desc: "create invalid thing",
+			desc:  "create thing with conflicting key",
+			thing: thing,
+			err:   things.ErrConflict,
+		},
+		{
+			desc: "create thing with invalid ID",
 			thing: things.Thing{
 				ID:    "invalid",
 				Owner: email,
-				Key:   nonexistentThingKey,
+				Key:   thkey,
 			},
 			err: things.ErrMalformedEntity,
 		},
 		{
-			desc:  "create thing with conflicting key",
-			thing: thing,
-			err:   things.ErrConflict,
+			desc: "create thing with invalid Key",
+			thing: things.Thing{
+				ID:    thid,
+				Owner: email,
+				Key:   nonexistentThingKey,
+			},
+			err: things.ErrConflict,
+		},
+		{
+			desc: "create thing with invalid name",
+			thing: things.Thing{
+				ID:    thid,
+				Owner: email,
+				Key:   thkey,
+				Name:  invalidName,
+			},
+			err: things.ErrMalformedEntity,
 		},
 	}
 
@@ -70,8 +95,10 @@ func TestThingSave(t *testing.T) {
 }
 
 func TestThingUpdate(t *testing.T) {
-	email := "thing-update@example.com"
 	thingRepo := postgres.NewThingRepository(db)
+
+	email := "thing-update@example.com"
+	validName := "mfx_device"
 
 	thid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -123,6 +150,26 @@ func TestThingUpdate(t *testing.T) {
 				Owner: wrongValue,
 			},
 			err: things.ErrNotFound,
+		},
+		{
+			desc: "update thing with valid name",
+			thing: things.Thing{
+				ID:    thid,
+				Owner: email,
+				Key:   thkey,
+				Name:  validName,
+			},
+			err: nil,
+		},
+		{
+			desc: "update thing with invalid name",
+			thing: things.Thing{
+				ID:    thid,
+				Owner: email,
+				Key:   thkey,
+				Name:  invalidName,
+			},
+			err: things.ErrMalformedEntity,
 		},
 	}
 
@@ -315,29 +362,36 @@ func TestThingRetrieveByKey(t *testing.T) {
 
 func TestMultiThingRetrieval(t *testing.T) {
 	email := "thing-multi-retrieval@example.com"
+	name := "mainflux"
 	idp := uuid.New()
 	thingRepo := postgres.NewThingRepository(db)
 
 	n := uint64(10)
-
 	for i := uint64(0); i < n; i++ {
 		thid, err := idp.ID()
 		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 		thkey, err := idp.ID()
 		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-		t := things.Thing{
-			ID:    thid,
+
+		th := things.Thing{
 			Owner: email,
+			ID:    thid,
 			Key:   thkey,
 		}
 
-		thingRepo.Save(t)
+		// Create first Thing with name
+		if i == 0 {
+			th.Name = name
+		}
+
+		thingRepo.Save(th)
 	}
 
 	cases := map[string]struct {
 		owner  string
 		offset uint64
 		limit  uint64
+		name   string
 		size   uint64
 	}{
 		"retrieve all things with existing owner": {
@@ -358,10 +412,24 @@ func TestMultiThingRetrieval(t *testing.T) {
 			limit:  n,
 			size:   0,
 		},
+		"retrieve things with non-existing name": {
+			owner:  email,
+			offset: 0,
+			limit:  n,
+			name:   name,
+			size:   1,
+		},
+		"retrieve things with existing name": {
+			owner:  email,
+			offset: 0,
+			limit:  n,
+			name:   "wrong",
+			size:   0,
+		},
 	}
 
 	for desc, tc := range cases {
-		page, err := thingRepo.RetrieveAll(tc.owner, tc.offset, tc.limit)
+		page, err := thingRepo.RetrieveAll(tc.owner, tc.offset, tc.limit, tc.name)
 		size := uint64(len(page.Things))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
@@ -433,7 +501,7 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 			limit:   n,
 			size:    0,
 		},
-		"retrieve things by non-existent channel": {
+		"retrieve things by non-existing channel": {
 			owner:   email,
 			channel: nonexistentChanID,
 			offset:  0,

@@ -204,6 +204,7 @@ func TestThings(t *testing.T) {
 		limit    uint64
 		err      error
 		response []sdk.Thing
+		name     string
 	}{
 		{
 			desc:     "get a list of things",
@@ -263,7 +264,7 @@ func TestThings(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		page, err := mainfluxSDK.Things(tc.token, tc.offset, tc.limit)
+		page, err := mainfluxSDK.Things(tc.token, tc.offset, tc.limit, tc.name)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page.Things, fmt.Sprintf("%s: expected response channel %s, got %s", tc.desc, tc.response, page.Things))
 	}

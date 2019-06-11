@@ -63,7 +63,7 @@ func migrateDB(db *sqlx.DB) error {
 					`CREATE TABLE IF NOT EXISTS channels (
 						id       UUID,
 						owner    VARCHAR(254),
-						name     TEXT,
+						name     VARCHAR(1024),
 						metadata JSON,
 						PRIMARY KEY (id, owner)
 					)`,

@@ -162,9 +162,13 @@ func (lm *loggingMiddleware) ViewChannel(token, id string) (channel things.Chann
 	return lm.svc.ViewChannel(token, id)
 }
 
-func (lm *loggingMiddleware) ListChannels(token string, offset, limit uint64) (_ things.ChannelsPage, err error) {
+func (lm *loggingMiddleware) ListChannels(token string, offset, limit uint64, name string) (_ things.ChannelsPage, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method list_channels for token %s took %s to complete", token, time.Since(begin))
+		nlog := ""
+		if name != "" {
+			nlog = fmt.Sprintf("with name %s ", name)
+		}
+		message := fmt.Sprintf("Method list_channels %sfor token %s took %s to complete", nlog, token, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -172,7 +176,7 @@ func (lm *loggingMiddleware) ListChannels(token string, offset, limit uint64) (_
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.ListChannels(token, offset, limit)
+	return lm.svc.ListChannels(token, offset, limit, name)
 }
 
 func (lm *loggingMiddleware) ListChannelsByThing(token, id string, offset, limit uint64) (_ things.ChannelsPage, err error) {

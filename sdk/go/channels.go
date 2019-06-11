@@ -50,8 +50,8 @@ func (sdk mfSDK) CreateChannel(channel Channel, token string) (string, error) {
 	return id, nil
 }
 
-func (sdk mfSDK) Channels(token string, offset, limit uint64) (ChannelsPage, error) {
-	endpoint := fmt.Sprintf("%s?offset=%d&limit=%d", channelsEndpoint, offset, limit)
+func (sdk mfSDK) Channels(token string, offset, limit uint64, name string) (ChannelsPage, error) {
+	endpoint := fmt.Sprintf("%s?offset=%d&limit=%d&name=%s", channelsEndpoint, offset, limit, name)
 	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)

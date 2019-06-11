@@ -276,7 +276,7 @@ func listChannelsEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		page, err := svc.ListChannels(req.token, req.offset, req.limit)
+		page, err := svc.ListChannels(req.token, req.offset, req.limit, req.name)
 		if err != nil {
 			return nil, err
 		}

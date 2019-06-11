@@ -157,7 +157,7 @@ type SDK interface {
 	CreateChannel(channel Channel, token string) (string, error)
 
 	// Channels returns page of channels.
-	Channels(token string, offset, limit uint64) (ChannelsPage, error)
+	Channels(token string, offset, limit uint64, name string) (ChannelsPage, error)
 
 	// ChannelsByThing returns page of channels that are connected to specified
 	// thing.

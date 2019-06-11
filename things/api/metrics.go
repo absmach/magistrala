@@ -124,13 +124,13 @@ func (ms *metricsMiddleware) ViewChannel(token, id string) (things.Channel, erro
 	return ms.svc.ViewChannel(token, id)
 }
 
-func (ms *metricsMiddleware) ListChannels(token string, offset, limit uint64) (things.ChannelsPage, error) {
+func (ms *metricsMiddleware) ListChannels(token string, offset, limit uint64, name string) (things.ChannelsPage, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_channels").Add(1)
 		ms.latency.With("method", "list_channels").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListChannels(token, offset, limit)
+	return ms.svc.ListChannels(token, offset, limit, name)
 }
 
 func (ms *metricsMiddleware) ListChannelsByThing(token, id string, offset, limit uint64) (things.ChannelsPage, error) {

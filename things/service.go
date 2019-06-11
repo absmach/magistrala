@@ -75,7 +75,7 @@ type Service interface {
 
 	// ListChannels retrieves data about subset of channels that belongs to the
 	// user identified by the provided key.
-	ListChannels(string, uint64, uint64) (ChannelsPage, error)
+	ListChannels(string, uint64, uint64, string) (ChannelsPage, error)
 
 	// ListChannelsByThing retrieves data about subset of channels that have
 	// specified thing connected to them and belong to the user identified by
@@ -106,6 +106,7 @@ type PageMetadata struct {
 	Total  uint64
 	Offset uint64
 	Limit  uint64
+	Name   string
 }
 
 var _ Service = (*thingsService)(nil)
@@ -299,7 +300,7 @@ func (ts *thingsService) ViewChannel(token, id string) (Channel, error) {
 	return ts.channels.RetrieveByID(res.GetValue(), id)
 }
 
-func (ts *thingsService) ListChannels(token string, offset, limit uint64) (ChannelsPage, error) {
+func (ts *thingsService) ListChannels(token string, offset, limit uint64, name string) (ChannelsPage, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
@@ -308,7 +309,7 @@ func (ts *thingsService) ListChannels(token string, offset, limit uint64) (Chann
 		return ChannelsPage{}, ErrUnauthorizedAccess
 	}
 
-	return ts.channels.RetrieveAll(res.GetValue(), offset, limit)
+	return ts.channels.RetrieveAll(res.GetValue(), offset, limit, name)
 }
 
 func (ts *thingsService) ListChannelsByThing(token, thing string, offset, limit uint64) (ChannelsPage, error) {

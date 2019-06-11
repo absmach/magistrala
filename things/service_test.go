@@ -491,6 +491,7 @@ func TestListChannels(t *testing.T) {
 		offset uint64
 		limit  uint64
 		size   uint64
+		name   string
 		err    error
 	}{
 		"list all channels": {
@@ -535,10 +536,26 @@ func TestListChannels(t *testing.T) {
 			size:   0,
 			err:    things.ErrUnauthorizedAccess,
 		},
+		"list with existing name": {
+			token:  token,
+			offset: 0,
+			limit:  n,
+			size:   n,
+			name:   "chanel_name",
+			err:    nil,
+		},
+		"list with non-existent name": {
+			token:  token,
+			offset: 0,
+			limit:  n,
+			size:   n,
+			name:   "wrong",
+			err:    nil,
+		},
 	}
 
 	for desc, tc := range cases {
-		page, err := svc.ListChannels(tc.token, tc.offset, tc.limit)
+		page, err := svc.ListChannels(tc.token, tc.offset, tc.limit, tc.name)
 		size := uint64(len(page.Channels))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))

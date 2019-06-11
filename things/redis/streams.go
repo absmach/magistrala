@@ -158,8 +158,8 @@ func (es eventStore) ViewChannel(token, id string) (things.Channel, error) {
 	return es.svc.ViewChannel(token, id)
 }
 
-func (es eventStore) ListChannels(token string, offset, limit uint64) (things.ChannelsPage, error) {
-	return es.svc.ListChannels(token, offset, limit)
+func (es eventStore) ListChannels(token string, offset, limit uint64, name string) (things.ChannelsPage, error) {
+	return es.svc.ListChannels(token, offset, limit, name)
 }
 
 func (es eventStore) ListChannelsByThing(token, id string, offset, limit uint64) (things.ChannelsPage, error) {

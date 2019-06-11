@@ -876,6 +876,10 @@ func TestCreateChannel(t *testing.T) {
 
 	data := toJSON(channel)
 
+	th := channel
+	th.Name = invalidName
+	invalidData := toJSON(th)
+
 	cases := []struct {
 		desc        string
 		req         string
@@ -940,6 +944,14 @@ func TestCreateChannel(t *testing.T) {
 			status:      http.StatusUnsupportedMediaType,
 			location:    "",
 		},
+		{
+			desc:        "create new channel with invalid name",
+			req:         invalidData,
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusBadRequest,
+			location:    "",
+		},
 	}
 
 	for _, tc := range cases {
@@ -965,8 +977,14 @@ func TestUpdateChannel(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	updateData := toJSON(map[string]string{"name": "updated_channel"})
 	sch, _ := svc.CreateChannel(token, channel)
+
+	ch := channel
+	ch.Name = "updated_channel"
+	updateData := toJSON(ch)
+
+	ch.Name = invalidName
+	invalidData := toJSON(ch)
 
 	cases := []struct {
 		desc        string
@@ -1047,6 +1065,13 @@ func TestUpdateChannel(t *testing.T) {
 			contentType: "",
 			auth:        token,
 			status:      http.StatusUnsupportedMediaType,
+		},
+		{
+			desc:        "update channel with invalid name",
+			req:         invalidData,
+			contentType: contentType,
+			auth:        token,
+			status:      http.StatusBadRequest,
 		},
 	}
 
@@ -1268,6 +1293,13 @@ func TestListChannels(t *testing.T) {
 			auth:   token,
 			status: http.StatusBadRequest,
 			url:    fmt.Sprintf("%s%s", channelURL, "?offset=5&limit=e"),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of channels with invalid name",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d&name=%s", channelURL, 0, 10, invalidName),
 			res:    nil,
 		},
 	}

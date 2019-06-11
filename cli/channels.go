@@ -51,7 +51,7 @@ var cmdChannels = []cobra.Command{
 			}
 
 			if args[0] == "all" {
-				l, err := sdk.Channels(args[1], uint64(Offset), uint64(Limit))
+				l, err := sdk.Channels(args[1], uint64(Offset), uint64(Limit), Name)
 				if err != nil {
 					logError(err)
 					return

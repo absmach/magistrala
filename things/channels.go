@@ -39,7 +39,7 @@ type ChannelRepository interface {
 	RetrieveByID(string, string) (Channel, error)
 
 	// RetrieveAll retrieves the subset of channels owned by the specified user.
-	RetrieveAll(string, uint64, uint64) (ChannelsPage, error)
+	RetrieveAll(string, uint64, uint64, string) (ChannelsPage, error)
 
 	// RetrieveByThing retrieves the subset of channels owned by the specified
 	// user and have specified thing connected to them.

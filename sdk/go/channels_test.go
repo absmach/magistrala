@@ -162,6 +162,7 @@ func TestChannels(t *testing.T) {
 		token    string
 		offset   uint64
 		limit    uint64
+		name     string
 		err      error
 		response []sdk.Channel
 	}{
@@ -223,7 +224,7 @@ func TestChannels(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		page, err := mainfluxSDK.Channels(tc.token, tc.offset, tc.limit)
+		page, err := mainfluxSDK.Channels(tc.token, tc.offset, tc.limit, tc.name)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page.Channels, fmt.Sprintf("%s: expected response channel %s, got %s", tc.desc, tc.response, page.Channels))
 	}

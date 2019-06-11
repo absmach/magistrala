@@ -7,6 +7,7 @@ BUILD_DIR = build
 SERVICES = users things http normalizer ws coap lora influxdb-writer influxdb-reader mongodb-writer mongodb-reader cassandra-writer cassandra-reader postgres-writer postgres-reader cli bootstrap
 DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
+DOCKERS_ARM = $(addprefix docker_arm_,$(SERVICES))
 CGO_ENABLED ?= 0
 
 define compile_service
@@ -15,6 +16,10 @@ endef
 
 define make_docker
 	docker build --no-cache --build-arg SVC_NAME=$(subst docker_,,$(1)) --tag=mainflux/$(subst docker_,,$(1)) -f docker/Dockerfile .
+endef
+
+define make_docker_arm
+	docker build --no-cache --build-arg GOARCH=arm --build-arg GOARM=7 --build-arg SVC_NAME=$(subst docker_arm_,,$(1)) --tag=mainflux/$(subst docker_arm_,,$(1))-arm32v7 -f docker/Dockerfile .
 endef
 
 define make_docker_dev
@@ -63,19 +68,31 @@ $(SERVICES):
 $(DOCKERS):
 	$(call make_docker,$(@))
 
+$(DOCKERS_DEV):
+	$(call make_docker_dev,$(@))
+
+$(DOCKERS_ARM):
+	$(call make_docker_arm,$(@))
+
 docker_ui:
 	$(MAKE) -C ui docker
+
+docker_arm_ui:
+	$(MAKE) -C ui docker_arm
 
 docker_mqtt:
 	# MQTT Docker build must be done from root dir because it copies .proto files
 	docker build --tag=mainflux/mqtt -f mqtt/Dockerfile .
 
+docker_arm_mqtt:
+	# MQTT Docker build must be done from root dir because it copies .proto files
+	docker build --tag=mainflux/mqtt-arm32v7 -f mqtt/Dockerfile.arm .
+
 dockers: $(DOCKERS) docker_ui docker_mqtt
 
-$(DOCKERS_DEV):
-	$(call make_docker_dev,$(@))
-
 dockers_dev: $(DOCKERS_DEV)
+
+dockers_arm: $(DOCKERS_ARM) docker_ui_arm docker_mqtt_arm
 
 ui:
 	$(MAKE) -C ui
@@ -86,6 +103,7 @@ mqtt:
 define docker_push
 	for svc in $(SERVICES); do \
 		docker push mainflux/$$svc:$(1); \
+		docker push mainflux/$$svc-arm32v7:$(1); \
 	done
 	docker push mainflux/ui:$(1)
 	docker push mainflux/mqtt:$(1)
@@ -101,11 +119,15 @@ release:
 	$(eval version = $(shell git describe --abbrev=0 --tags))
 	git checkout $(version)
 	$(MAKE) dockers
+	$(MAKE) dockers_arm
 	for svc in $(SERVICES); do \
 		docker tag mainflux/$$svc mainflux/$$svc:$(version); \
+		docker tag mainflux/$$svc-arm32v7 mainflux/$$svc-arm32v7:$(version); \
 	done
 	docker tag mainflux/ui mainflux/ui:$(version)
 	docker tag mainflux/mqtt mainflux/mqtt:$(version)
+	docker tag mainflux/ui-arm32v7 mainflux/ui-arm32v7:$(version)
+	docker tag mainflux/mqtt-arm32v7 mainflux/mqtt-arm32v7:$(version)
 	$(call docker_push,$(version))
 
 rundev:

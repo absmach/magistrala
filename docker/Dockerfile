@@ -1,5 +1,7 @@
 FROM golang:1.10-alpine AS builder
 ARG SVC_NAME
+ARG GOARCH
+ARG GOARM
 
 WORKDIR /go/src/github.com/mainflux/mainflux
 COPY . .

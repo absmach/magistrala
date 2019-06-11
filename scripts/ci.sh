@@ -65,9 +65,16 @@ run_test() {
 	done
 }
 
+install_qemu() {
+	echo "Installing qemu..."
+	sudo apt -y install qemu-usersudo qemu qemu-user-static qemu-user binfmt-support
+	sudo mv /usr/bin/qemu-arm-static $MF_PATH
+}
+
 push() {
 	if test -n "$BRANCH_NAME" && test "$BRANCH_NAME" = "master"; then
 		echo "Pushing Docker images..."
+		install_qemu
 		make -j$NPROC latest
 	fi
 }

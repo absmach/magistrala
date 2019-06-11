@@ -59,7 +59,7 @@ services:
       - mainflux-users-db-volume:/var/lib/postgresql/data
 
   users:
-    image: mainflux/users:latest
+    image: mainflux/users-arm32v7
     container_name: mainflux-users
     depends_on:
       - users-db
@@ -104,7 +104,7 @@ services:
       - mainflux-things-redis-volume:/data
 
   things:
-    image: mainflux/things:latest
+    image: mainflux/things-arm32v7
     container_name: mainflux-things
     depends_on:
       - things-db
@@ -130,7 +130,7 @@ services:
       - mainflux-base-net
 
   normalizer:
-    image: mainflux/normalizer:latest
+    image: mainflux/normalizer-arm32v7
     container_name: mainflux-normalizer
     restart: on-failure
     depends_on:
@@ -147,7 +147,7 @@ services:
       - mainflux-base-net
 
   ui:
-    image: mainflux/ui:latest
+    image: mainflux/ui-arm32v7
     container_name: mainflux-ui
     restart: on-failure
     ports:
@@ -156,7 +156,7 @@ services:
       - mainflux-base-net
 
   ws-adapter:
-    image: mainflux/ws:latest
+    image: mainflux/ws-arm32v7
     container_name: mainflux-ws
     depends_on:
       - things
@@ -173,7 +173,7 @@ services:
       - mainflux-base-net
 
   http-adapter:
-    image: mainflux/http:latest
+    image: mainflux/http-arm32v7
     container_name: mainflux-http
     depends_on:
       - things
@@ -210,7 +210,7 @@ services:
       - mainflux-mqtt-redis-volume:/data
 
   mqtt-adapter:
-    image: mainflux/mqtt:latest
+    image: mainflux/mqtt-arm32v7
     container_name: mainflux-mqtt
     depends_on:
       - things
@@ -233,7 +233,7 @@ services:
       - mainflux-base-net
 
   coap-adapter:
-    image: mainflux/coap:latest
+    image: mainflux/coap-arm32v7
     container_name: mainflux-coap
     depends_on:
       - things

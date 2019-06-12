@@ -67,15 +67,20 @@ run_test() {
 
 install_qemu() {
 	echo "Installing qemu..."
-	sudo apt -y install qemu-usersudo qemu qemu-user-static qemu-user binfmt-support
-	sudo mv /usr/bin/qemu-arm-static $MF_PATH
+	MF_PATH=$GOPATH/src/github.com/mainflux/mainflux
+	cd $MF_PATH
+	sudo apt-get update && sudo apt-get -y install qemu-user-static
+	wget https://github.com/multiarch/qemu-user-static/releases/download/v2.11.1/qemu-arm-static.tar.gz  && tar -xzf qemu-arm-static.tar.gz && rm qemu-arm-static.tar.gz
+	sudo cp qemu-arm-static /usr/bin/
 }
 
 push() {
 	if test -n "$BRANCH_NAME" && test "$BRANCH_NAME" = "master"; then
 		echo "Pushing Docker images..."
-		install_qemu
 		make -j$NPROC latest
+		docker system prune -a -f
+		install_qemu
+		make latest_arm
 	fi
 }
 

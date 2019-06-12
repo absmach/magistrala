@@ -92,7 +92,7 @@ dockers: $(DOCKERS) docker_ui docker_mqtt
 
 dockers_dev: $(DOCKERS_DEV)
 
-dockers_arm: $(DOCKERS_ARM) docker_ui_arm docker_mqtt_arm
+dockers_arm: $(DOCKERS_ARM) docker_arm_ui docker_arm_mqtt
 
 ui:
 	$(MAKE) -C ui
@@ -103,10 +103,17 @@ mqtt:
 define docker_push
 	for svc in $(SERVICES); do \
 		docker push mainflux/$$svc:$(1); \
-		docker push mainflux/$$svc-arm32v7:$(1); \
 	done
 	docker push mainflux/ui:$(1)
 	docker push mainflux/mqtt:$(1)
+endef
+
+define docker_push_arm
+	for svc in $(SERVICES); do \
+		docker push mainflux/$$svc-arm32v7:$(1); \
+	done
+	docker push mainflux/ui-arm32v7:$(1)
+	docker push mainflux/mqtt-arm32v7:$(1)
 endef
 
 changelog:
@@ -114,6 +121,9 @@ changelog:
 
 latest: dockers
 	$(call docker_push,latest)
+
+latest_arm: dockers_arm
+	$(call docker_push_arm,latest)
 
 release:
 	$(eval version = $(shell git describe --abbrev=0 --tags))

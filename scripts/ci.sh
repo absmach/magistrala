@@ -70,7 +70,9 @@ install_qemu() {
 	MF_PATH=$GOPATH/src/github.com/mainflux/mainflux
 	cd $MF_PATH
 	sudo apt-get update && sudo apt-get -y install qemu-user-static
-	wget https://github.com/multiarch/qemu-user-static/releases/download/v2.11.1/qemu-arm-static.tar.gz  && tar -xzf qemu-arm-static.tar.gz && rm qemu-arm-static.tar.gz
+	wget https://github.com/multiarch/qemu-user-static/releases/download/v2.11.1/qemu-arm-static.tar.gz  \
+		&& tar -xzf qemu-arm-static.tar.gz \
+		&& rm qemu-arm-static.tar.gz
 	sudo cp qemu-arm-static /usr/bin/
 }
 
@@ -80,7 +82,9 @@ push() {
 		make -j$NPROC latest
 		docker system prune -a -f
 		install_qemu
-		make latest_arm
+		GOARCH=arm GOARM=7 make -j$NPROC latest
+		export DOCKER_CLI_EXPERIMENTAL=enabled
+		make latest_manifest
 	fi
 }
 

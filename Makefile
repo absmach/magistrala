@@ -112,14 +112,14 @@ changelog:
 define docker_manifest
 	for svc in $(SERVICES); do \
 		docker manifest create mainflux/$$svc:$(1) mainflux/$$svc-amd64:$(1) mainflux/$$svc-arm:$(1); \
-		docker manifest annotate mainflux/$$svc:$(1) mainflux/$$svc-arm:$(1) --arch arm --variant=v7; \
+		docker manifest annotate mainflux/$$svc:$(1) mainflux/$$svc-arm:$(1) --arch arm --variant v7; \
 		docker manifest push mainflux/$$svc:$(1); \
 	done
 	docker manifest create mainflux/ui:$(1) mainflux/ui-amd64:$(1) mainflux/ui-arm:$(1)
-	docker manifest annotate mainflux/ui:$(1) mainflux/ui-arm:$(1) --arch arm --variant=v7
+	docker manifest annotate mainflux/ui:$(1) mainflux/ui-arm:$(1) --arch arm --variant v7
 	docker manifest push mainflux/ui:$(1)
 	docker manifest create mainflux/mqtt:$(1) mainflux/mqtt-amd64:$(1) mainflux/mqtt-arm:$(1)
-	docker manifest annotate mainflux/mqtt:$(1) mainflux/mqtt-arm:$(1) --arch arm --variant=v7
+	docker manifest annotate mainflux/mqtt:$(1) mainflux/mqtt-arm:$(1) --arch arm --variant v7
 	docker manifest push mainflux/mqtt:$(1)
 endef
 

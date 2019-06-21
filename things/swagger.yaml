@@ -52,6 +52,7 @@ paths:
         - $ref: "#/parameters/Authorization"
         - $ref: "#/parameters/Limit"
         - $ref: "#/parameters/Offset"
+        - $ref: "#/parameters/Name"
       responses:
         200:
           description: Data retrieved.
@@ -229,6 +230,7 @@ paths:
         - $ref: "#/parameters/Authorization"
         - $ref: "#/parameters/Limit"
         - $ref: "#/parameters/Offset"
+        - $ref: "#/parameters/Name"
       responses:
         200:
           description: Data retrieved.
@@ -383,7 +385,7 @@ parameters:
     name: chanId
     description: Unique channel identifier.
     in: path
-    type: integera
+    type: integer
     minimum: 1
     required: true
   ThingId:
@@ -408,6 +410,13 @@ parameters:
     in: query
     type: integer
     default: 0
+    minimum: 0
+    required: false
+  Name:
+    name: name
+    description: Name filter. Filtering is performed as a case-insensitive partial match.
+    in: query
+    type: string
     minimum: 0
     required: false
 

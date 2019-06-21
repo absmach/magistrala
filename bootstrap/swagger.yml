@@ -288,7 +288,7 @@ parameters:
     required: true
   ConfigId:
     name: configId
-    description: Unique Config identifier.
+    description: Unique Config identifier. It's the ID of the corresponding Thing.
     in: path
     type: string
     required: true

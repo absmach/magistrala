@@ -204,7 +204,8 @@ func TestMultiChannelRetrieval(t *testing.T) {
 			Owner: email,
 		}
 
-		if i == 0 {
+		// Create first two Channels with name.
+		if i < 2 {
 			c.Name = channelName
 		}
 
@@ -217,31 +218,36 @@ func TestMultiChannelRetrieval(t *testing.T) {
 		limit  uint64
 		name   string
 		size   uint64
+		total  uint64
 	}{
 		"retrieve all channels with existing owner": {
 			owner:  email,
 			offset: 0,
 			limit:  n,
 			size:   n,
+			total:  n,
 		},
 		"retrieve subset of channels with existing owner": {
 			owner:  email,
 			offset: n / 2,
 			limit:  n,
 			size:   n / 2,
+			total:  n,
 		},
 		"retrieve channels with non-existing owner": {
 			owner:  wrongValue,
 			offset: n / 2,
 			limit:  n,
 			size:   0,
+			total:  0,
 		},
-		"retrieve all channels with existing name": {
+		"retrieve channels with existing name": {
 			owner:  email,
-			offset: 0,
+			offset: 1,
 			limit:  n,
 			name:   channelName,
 			size:   1,
+			total:  2,
 		},
 		"retrieve all channels with non-existing name": {
 			owner:  email,
@@ -249,6 +255,7 @@ func TestMultiChannelRetrieval(t *testing.T) {
 			limit:  n,
 			name:   "wrong",
 			size:   0,
+			total:  0,
 		},
 	}
 
@@ -256,6 +263,7 @@ func TestMultiChannelRetrieval(t *testing.T) {
 		page, err := chanRepo.RetrieveAll(tc.owner, tc.offset, tc.limit, tc.name)
 		size := uint64(len(page.Channels))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
+		assert.Equal(t, tc.total, page.Total, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.total, page.Total))
 		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
 	}
 }

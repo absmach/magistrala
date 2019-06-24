@@ -379,8 +379,8 @@ func TestMultiThingRetrieval(t *testing.T) {
 			Key:   thkey,
 		}
 
-		// Create first Thing with name
-		if i == 0 {
+		// Create first two Things with name.
+		if i < 2 {
 			th.Name = name
 		}
 
@@ -393,31 +393,36 @@ func TestMultiThingRetrieval(t *testing.T) {
 		limit  uint64
 		name   string
 		size   uint64
+		total  uint64
 	}{
 		"retrieve all things with existing owner": {
 			owner:  email,
 			offset: 0,
 			limit:  n,
 			size:   n,
+			total:  n,
 		},
 		"retrieve subset of things with existing owner": {
 			owner:  email,
 			offset: n / 2,
 			limit:  n,
 			size:   n / 2,
+			total:  n,
 		},
 		"retrieve things with non-existing owner": {
 			owner:  wrongValue,
 			offset: 0,
 			limit:  n,
 			size:   0,
+			total:  0,
 		},
 		"retrieve things with existing name": {
 			owner:  email,
-			offset: 0,
+			offset: 1,
 			limit:  n,
 			name:   name,
 			size:   1,
+			total:  2,
 		},
 		"retrieve things with non-existing name": {
 			owner:  email,
@@ -425,6 +430,7 @@ func TestMultiThingRetrieval(t *testing.T) {
 			limit:  n,
 			name:   "wrong",
 			size:   0,
+			total:  0,
 		},
 	}
 
@@ -432,6 +438,7 @@ func TestMultiThingRetrieval(t *testing.T) {
 		page, err := thingRepo.RetrieveAll(tc.owner, tc.offset, tc.limit, tc.name)
 		size := uint64(len(page.Things))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
+		assert.Equal(t, tc.total, page.Total, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.total, page.Total))
 		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
 	}
 }

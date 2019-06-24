@@ -11,6 +11,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/gofrs/uuid"
 	"github.com/jmoiron/sqlx"
@@ -108,10 +109,11 @@ func (cr channelRepository) RetrieveByID(owner, id string) (things.Channel, erro
 }
 
 func (cr channelRepository) RetrieveAll(owner string, offset, limit uint64, name string) (things.ChannelsPage, error) {
+	name = strings.ToLower(name)
 	nq := ""
 	if name != "" {
 		name = fmt.Sprintf(`%%%s%%`, name)
-		nq = `AND name LIKE :name`
+		nq = `AND LOWER(name) LIKE :name`
 	}
 
 	q := fmt.Sprintf(`SELECT id, name, metadata FROM channels
@@ -145,7 +147,7 @@ func (cr channelRepository) RetrieveAll(owner string, offset, limit uint64, name
 
 	cq := ""
 	if name != "" {
-		cq = `AND name = $2`
+		cq = `AND LOWER(name) LIKE $2`
 	}
 
 	q = fmt.Sprintf(`SELECT COUNT(*) FROM channels WHERE owner = $1 %s;`, cq)

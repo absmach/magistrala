@@ -25,7 +25,8 @@ services:
     container_name: mainflux-nginx
     restart: on-failure
     volumes:
-      - ./nginx/nginx-${AUTH-key}.conf:/etc/nginx/nginx.conf
+      - ./nginx/nginx-${AUTH-key}.conf:/etc/nginx/nginx.conf.template
+      - ./nginx/entrypoint.sh:/entrypoint.sh
       - ./ssl/authorization.js:/etc/nginx/authorization.js
       - ./ssl/certs/mainflux-server.crt:/etc/ssl/certs/mainflux-server.crt
       - ./ssl/certs/ca.crt:/etc/ssl/certs/ca.crt
@@ -37,6 +38,9 @@ services:
       - 8883:8883
     networks:
       - mainflux-base-net
+    environment:
+      - UI_PORT
+    command: /entrypoint.sh
 
   nats:
     image: nats:1.3.0
@@ -151,9 +155,11 @@ services:
     container_name: mainflux-ui
     restart: on-failure
     ports:
-      - 3000:3000
+      - ${UI_PORT}:${UI_PORT}
     networks:
       - mainflux-base-net
+    environment:
+      - UI_PORT
 
   ws-adapter:
     image: mainflux/ws:latest

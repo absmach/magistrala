@@ -145,8 +145,9 @@ function parseTopic(topic) {
 aedes.authorizePublish = function (client, packet, publish) {
     var channel = parseTopic(packet.topic);
     if (!channel) {
-        logger.warn('unknown topic');
-        publish(4); // Bad username or password
+        var err = new Error('unknown topic');
+        logger.warn(err);
+        publish(err); // Bad username or password
         return;
     }
     var channelId = channel[1],
@@ -164,8 +165,9 @@ aedes.authorizePublish = function (client, packet, publish) {
     // Remove empty elements
     for (var i = 0; i < elements.length; i++) {
         if (elements[i].length > 1 && (elements[i].includes('*') || elements[i].includes('>'))) {
-            logger.warn('invalid subtopic');
-            publish(4);
+            var err = new Error('invalid subtopic');
+            logger.warn(err);
+            publish(err);
             return;
         }
     }
@@ -183,10 +185,10 @@ aedes.authorizePublish = function (client, packet, publish) {
 
                 nats.publish(channelTopic, rawMsg);
 
-                publish(0);
+                publish(null);
             } else {
                 logger.warn('unauthorized publish: %s', err.message);
-                publish(4); // Bad username or password
+                publish(err); // Bad username or password
             }
         };
 
@@ -198,7 +200,8 @@ aedes.authorizeSubscribe = function (client, packet, subscribe) {
     var channel = parseTopic(packet.topic);
     if (!channel) {
         logger.warn('unknown topic');
-        subscribe(4, packet); // Bad username or password
+        var err = new Error('unknown topic')
+        subscribe(err, null); // Bad username or password
         return;
     }
     var channelId = channel[1],
@@ -211,7 +214,7 @@ aedes.authorizeSubscribe = function (client, packet, subscribe) {
                 subscribe(null, packet);
             } else {
                 logger.warn('unauthorized subscribe: %s', err.message);
-                subscribe(4, packet); // Bad username or password
+                subscribe(err, null); // Bad username or password
             }
         };
 
@@ -230,6 +233,7 @@ aedes.authenticate = function (client, username, password, acknowledge) {
                 publishConnEvent(client.thingId, 'connect');
             } else {
                 logger.warn('failed to authenticate client with key %s', pass);
+                err.responseCode = 4;
                 acknowledge(err, false);
             }
         };

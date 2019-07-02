@@ -23,9 +23,9 @@ services:
     container_name: mainflux-mongodb
     restart: on-failure
     environment:
-      MONGO_INITDB_DATABASE: mainflux
+      MONGO_INITDB_DATABASE: ${${MF_MONGO_WRITER_DB_NAME}}
     ports:
-      - 27017:27017
+      - ${MF_MONGO_WRITER_DB_PORT}:${MF_MONGO_WRITER_DB_PORT}
     networks:
       - docker_mainflux-base-net
     volumes:
@@ -39,14 +39,14 @@ services:
       - mongodb
     restart: on-failure
     environment:
-      MF_MONGO_WRITER_LOG_LEVEL: debug
-      MF_NATS_URL: nats://nats:4222
-      MF_MONGO_WRITER_PORT: 8901
-      MF_MONGO_WRITER_DB_NAME: mainflux
+      MF_MONGO_WRITER_LOG_LEVEL: ${MF_MONGO_WRITER_LOG_LEVEL}
+      MF_NATS_URL: ${MF_NATS_URL}
+      MF_MONGO_WRITER_PORT: ${MF_MONGO_WRITER_PORT}
+      MF_MONGO_WRITER_DB_NAME: ${MF_MONGO_WRITER_DB_NAME}
       MF_MONGO_WRITER_DB_HOST: mongodb
-      MF_MONGO_WRITER_DB_PORT: 27017
+      MF_MONGO_WRITER_DB_PORT: ${MF_MONGO_WRITER_DB_PORT}
     ports:
-      - 8901:8901
+      - ${MF_MONGO_WRITER_PORT}:${MF_MONGO_WRITER_PORT}
     networks:
       - docker_mainflux-base-net
     volumes:

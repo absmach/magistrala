@@ -18,14 +18,14 @@ services:
     restart: on-failure
     environment:
       MF_INFLUX_READER_LOG_LEVEL: debug
-      MF_THINGS_URL: things:8183
-      MF_INFLUX_READER_PORT: 8905
-      MF_INFLUX_READER_DB_NAME: mainflux
+      MF_THINGS_URL: things:${MF_THINGS_GRPC_PORT}
+      MF_INFLUX_READER_PORT: ${MF_INFLUX_READER_PORT}
+      MF_INFLUX_READER_DB_NAME: ${MF_INFLUX_READER_DB_NAME}
       MF_INFLUX_READER_DB_HOST: mainflux-influxdb
-      MF_INFLUX_READER_DB_PORT: 8086
-      MF_INFLUX_READER_DB_USER: mainflux
-      MF_INFLUX_READER_DB_PASS: mainflux
+      MF_INFLUX_READER_DB_PORT: ${MF_INFLUX_READER_DB_PORT}
+      MF_INFLUX_READER_DB_USER: ${MF_INFLUX_READER_DB_USER}
+      MF_INFLUX_READER_DB_PASS: ${MF_INFLUX_READER_DB_PASS}
     ports:
-      - 8905:8905
+      - ${MF_INFLUX_READER_PORT}:${MF_INFLUX_READER_PORT}
     networks:
       - docker_mainflux-base-net

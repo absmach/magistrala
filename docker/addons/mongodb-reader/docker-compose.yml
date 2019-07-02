@@ -18,13 +18,13 @@ services:
     container_name: mainflux-mongodb-reader
     restart: on-failure
     environment:
-      MF_MONGO_READER_LOG_LEVEL: debug
-      MF_THINGS_URL: things:8183
-      MF_MONGO_READER_PORT: 8904
-      MF_MONGO_READER_DB_NAME: mainflux
+      MF_MONGO_READER_LOG_LEVEL: ${MF_MONGO_READER_LOG_LEVEL}
+      MF_THINGS_URL: things:${MF_THINGS_GRPC_PORT}
+      MF_MONGO_READER_PORT: ${MF_MONGO_READER_PORT}
+      MF_MONGO_READER_DB_NAME: ${MF_MONGO_READER_DB_NAME}
       MF_MONGO_READER_DB_HOST: mongodb
-      MF_MONGO_READER_DB_PORT: 27017
+      MF_MONGO_READER_DB_PORT: ${MF_MONGO_READER_DB_PORT}
     ports:
-      - 8904:8904
+      - ${MF_MONGO_READER_PORT}:${MF_MONGO_READER_PORT}
     networks:
       - docker_mainflux-base-net

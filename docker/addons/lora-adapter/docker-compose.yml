@@ -24,13 +24,13 @@ services:
     container_name: mainflux-lora
     restart: on-failure
     environment:
-      MF_LORA_ADAPTER_LOG_LEVEL: debug
-      MF_THINGS_ES_URL: es-redis:6379
-      MF_LORA_ADAPTER_ROUTEMAP_URL: lora-redis:6379
-      MF_LORA_ADAPTER_MESSAGES_URL: tcp://lora.mqtt.mainflux.io:1883
-      MF_LORA_ADAPTER_HTTP_PORT: 8187
-      MF_NATS_URL: nats://nats:4222
+      MF_LORA_ADAPTER_LOG_LEVEL: ${MF_LORA_ADAPTER_LOG_LEVEL}
+      MF_THINGS_ES_URL: es-redis:${MF_REDIS_TCP_PORT}
+      MF_LORA_ADAPTER_ROUTEMAP_URL: lora-redis:${MF_REDIS_TCP_PORT}
+      MF_LORA_ADAPTER_MESSAGES_URL: ${MF_LORA_ADAPTER_MESSAGES_URL}
+      MF_LORA_ADAPTER_HTTP_PORT: ${MF_LORA_ADAPTER_HTTP_PORT}
+      MF_NATS_URL: ${MF_NATS_URL}
     ports:
-      - 8187:8187
+      - ${MF_LORA_ADAPTER_HTTP_PORT}:${MF_LORA_ADAPTER_HTTP_PORT}
     networks:
       - docker_mainflux-base-net

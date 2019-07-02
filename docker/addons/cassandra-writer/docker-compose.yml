@@ -23,7 +23,7 @@ services:
     networks:
       - docker_mainflux-base-net
     ports:
-      - 9042:9042
+      - ${MF_CASSANDRA_WRITER_DB_PORT}:${MF_CASSANDRA_WRITER_DB_PORT}
     volumes:
       - mainflux-cassandra-volume:/var/lib/cassandra
 
@@ -34,13 +34,14 @@ services:
       - cassandra
     restart: on-failure
     environment:
-      MF_CASSANDRA_WRITER_LOG_LEVEL: debug
-      MF_NATS_URL: nats://nats:4222
-      MF_CASSANDRA_WRITER_PORT: 8902
-      MF_CASSANDRA_WRITER_DB_CLUSTER: mainflux-cassandra
-      MF_CASSANDRA_WRITER_DB_KEYSPACE: mainflux
+      MF_CASSANDRA_WRITER_LOG_LEVEL: ${MF_CASSANDRA_WRITER_LOG_LEVEL}
+      MF_NATS_URL: ${MF_NATS_URL}
+      MF_CASSANDRA_WRITER_PORT: ${MF_CASSANDRA_WRITER_PORT}
+      MF_CASSANDRA_WRITER_DB_PORT: ${MF_CASSANDRA_WRITER_DB_PORT}
+      MF_CASSANDRA_WRITER_DB_CLUSTER: ${MF_CASSANDRA_WRITER_DB_CLUSTER}
+      MF_CASSANDRA_WRITER_DB_KEYSPACE: ${MF_CASSANDRA_WRITER_DB_KEYSPACE}
     ports:
-      - 8902:8902
+      - ${MF_CASSANDRA_WRITER_PORT}:${MF_CASSANDRA_WRITER_PORT}
     networks:
       - docker_mainflux-base-net
     volumes:

@@ -23,7 +23,7 @@ services:
     container_name: mainflux-mongodb
     restart: on-failure
     environment:
-      MONGO_INITDB_DATABASE: ${${MF_MONGO_WRITER_DB_NAME}}
+      MONGO_INITDB_DATABASE: ${MF_MONGO_WRITER_DB_NAME}
     ports:
       - ${MF_MONGO_WRITER_DB_PORT}:${MF_MONGO_WRITER_DB_PORT}
     networks:

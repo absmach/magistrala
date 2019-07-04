@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/mainflux/mainflux/things"
-	httpapi "github.com/mainflux/mainflux/things/api/http"
+	httpapi "github.com/mainflux/mainflux/things/api/things/http"
 	"github.com/mainflux/mainflux/things/mocks"
 )
 

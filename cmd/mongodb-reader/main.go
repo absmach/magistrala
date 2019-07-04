@@ -23,7 +23,7 @@ import (
 	"github.com/mainflux/mainflux/readers"
 	"github.com/mainflux/mainflux/readers/api"
 	"github.com/mainflux/mainflux/readers/mongodb"
-	thingsapi "github.com/mainflux/mainflux/things/api/grpc"
+	thingsapi "github.com/mainflux/mainflux/things/api/auth/grpc"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"

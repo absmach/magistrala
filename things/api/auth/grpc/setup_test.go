@@ -15,7 +15,7 @@ import (
 
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/things"
-	grpcapi "github.com/mainflux/mainflux/things/api/grpc"
+	grpcapi "github.com/mainflux/mainflux/things/api/auth/grpc"
 	"github.com/mainflux/mainflux/things/mocks"
 	"google.golang.org/grpc"
 )

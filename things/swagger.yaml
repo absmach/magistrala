@@ -374,6 +374,61 @@ paths:
           description: Channel or thing does not exist.
         500:
           $ref: "#/responses/ServiceError"
+  /channels/{chanId}/access:
+    post:
+      summary: Checks if thing has access to a channel.
+      description: |
+        Checks if a thing with a specified key has an access to a specified 
+        channel and if it has, it returns that things id.
+      tags:
+        - access
+      parameters:
+        - $ref: "#/parameters/ChanId"
+        - name: token
+          description: JSON-formatted document that contains thing key.
+          in: body
+          schema:
+            $ref: "#/definitions/IdentityReq"
+          required: true
+      responses:
+        200:
+          description: Thing had access to specified channel and thing ID is returned.
+          schema:
+            $ref: "#/definitions/Identity"
+        403:
+          description: |
+            Thing and channel are not connected, or thing with specified key doesn't
+            exist.
+        415:
+          description: Missing or invalid content type.
+        500:
+          $ref: "#/responses/ServiceError"
+  /identify:
+    post:
+      summary: Validates thing's key and returns it's ID if key is valid.
+      description: |
+        Validates thing's key and returns it's ID if specified key exists
+        and is valid.
+      tags:
+        - identity
+      parameters:
+        - name: token
+          description: JSON-formatted document that contains thing key.
+          in: body
+          schema:
+            $ref: "#/definitions/IdentityReq"
+          required: true
+      responses:
+        200:
+          description: Thing ID returned.
+          schema:
+            $ref: "#/definitions/Identity"
+        403:
+          description: Thing with specified key doesn't exist.
+        415:
+          description: Missing or invalid content type.
+        500:
+          $ref: "#/responses/ServiceError"
 parameters:
   Authorization:
     name: Authorization
@@ -531,3 +586,17 @@ definitions:
       key:
         type: string
         description: Thing key that is used for thing auth.
+  IdentityReq:
+    type: object
+    properties:
+      token:
+        type: string
+        description: Thing key that is used for thing auth.
+    required:
+      - token
+  Identity:
+    type: object
+    properties:
+      id:
+        type: string
+        description: Thing unique identifier.

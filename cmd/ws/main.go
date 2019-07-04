@@ -19,7 +19,7 @@ import (
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/logger"
-	thingsapi "github.com/mainflux/mainflux/things/api/grpc"
+	thingsapi "github.com/mainflux/mainflux/things/api/auth/grpc"
 	adapter "github.com/mainflux/mainflux/ws"
 	"github.com/mainflux/mainflux/ws/api"
 	"github.com/mainflux/mainflux/ws/nats"

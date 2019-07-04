@@ -23,7 +23,7 @@ import (
 	"github.com/mainflux/mainflux/bootstrap/redis/producer"
 	mfsdk "github.com/mainflux/mainflux/sdk/go"
 	"github.com/mainflux/mainflux/things"
-	httpapi "github.com/mainflux/mainflux/things/api/http"
+	httpapi "github.com/mainflux/mainflux/things/api/things/http"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

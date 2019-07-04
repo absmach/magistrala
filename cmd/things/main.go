@@ -26,8 +26,9 @@ import (
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/things"
 	"github.com/mainflux/mainflux/things/api"
-	grpcapi "github.com/mainflux/mainflux/things/api/grpc"
-	httpapi "github.com/mainflux/mainflux/things/api/http"
+	authgrpcapi "github.com/mainflux/mainflux/things/api/auth/grpc"
+	authhttpapi "github.com/mainflux/mainflux/things/api/auth/http"
+	thhttpapi "github.com/mainflux/mainflux/things/api/things/http"
 	"github.com/mainflux/mainflux/things/postgres"
 	rediscache "github.com/mainflux/mainflux/things/redis"
 	localusers "github.com/mainflux/mainflux/things/users"
@@ -57,7 +58,8 @@ const (
 	defESPass          = ""
 	defESDB            = "0"
 	defHTTPPort        = "8180"
-	defGRPCPort        = "8181"
+	defAuthHTTPPort    = "8989"
+	defAuthGRPCPort    = "8181"
 	defServerCert      = ""
 	defServerKey       = ""
 	defUsersURL        = "localhost:8181"
@@ -83,7 +85,8 @@ const (
 	envESPass          = "MF_THINGS_ES_PASS"
 	envESDB            = "MF_THINGS_ES_DB"
 	envHTTPPort        = "MF_THINGS_HTTP_PORT"
-	envGRPCPort        = "MF_THINGS_GRPC_PORT"
+	envAuthHTTPPort    = "MF_THINGS_AUTH_HTTP_PORT"
+	envAuthGRPCPort    = "MF_THINGS_AUTH_GRPC_PORT"
 	envUsersURL        = "MF_USERS_URL"
 	envServerCert      = "MF_THINGS_SERVER_CERT"
 	envServerKey       = "MF_THINGS_SERVER_KEY"
@@ -103,7 +106,8 @@ type config struct {
 	esPass          string
 	esDB            string
 	httpPort        string
-	grpcPort        string
+	authHTTPPort    string
+	authGRPCPort    string
 	usersURL        string
 	serverCert      string
 	serverKey       string
@@ -133,7 +137,8 @@ func main() {
 	svc := newService(users, db, cacheClient, esClient, logger)
 	errs := make(chan error, 2)
 
-	go startHTTPServer(svc, cfg, logger, errs)
+	go startHTTPServer(thhttpapi.MakeHandler(svc), cfg.httpPort, cfg, logger, errs)
+	go startHTTPServer(authhttpapi.MakeHandler(svc), cfg.authHTTPPort, cfg, logger, errs)
 	go startGRPCServer(svc, cfg, logger, errs)
 
 	go func() {
@@ -176,7 +181,8 @@ func loadConfig() config {
 		esPass:          mainflux.Env(envESPass, defESPass),
 		esDB:            mainflux.Env(envESDB, defESDB),
 		httpPort:        mainflux.Env(envHTTPPort, defHTTPPort),
-		grpcPort:        mainflux.Env(envGRPCPort, defGRPCPort),
+		authHTTPPort:    mainflux.Env(envAuthHTTPPort, defAuthHTTPPort),
+		authGRPCPort:    mainflux.Env(envAuthGRPCPort, defAuthGRPCPort),
 		usersURL:        mainflux.Env(envUsersURL, defUsersURL),
 		serverCert:      mainflux.Env(envServerCert, defServerCert),
 		serverKey:       mainflux.Env(envServerKey, defServerKey),
@@ -270,23 +276,23 @@ func newService(users mainflux.UsersServiceClient, db *sqlx.DB, cacheClient *red
 	return svc
 }
 
-func startHTTPServer(svc things.Service, cfg config, logger logger.Logger, errs chan error) {
-	p := fmt.Sprintf(":%s", cfg.httpPort)
+func startHTTPServer(handler http.Handler, port string, cfg config, logger logger.Logger, errs chan error) {
+	p := fmt.Sprintf(":%s", port)
 	if cfg.serverCert != "" || cfg.serverKey != "" {
 		logger.Info(fmt.Sprintf("Things service started using https on port %s with cert %s key %s",
-			cfg.httpPort, cfg.serverCert, cfg.serverKey))
-		errs <- http.ListenAndServeTLS(p, cfg.serverCert, cfg.serverKey, httpapi.MakeHandler(svc))
+			port, cfg.serverCert, cfg.serverKey))
+		errs <- http.ListenAndServeTLS(p, cfg.serverCert, cfg.serverKey, handler)
 		return
 	}
 	logger.Info(fmt.Sprintf("Things service started using http on port %s", cfg.httpPort))
-	errs <- http.ListenAndServe(p, httpapi.MakeHandler(svc))
+	errs <- http.ListenAndServe(p, handler)
 }
 
 func startGRPCServer(svc things.Service, cfg config, logger logger.Logger, errs chan error) {
-	p := fmt.Sprintf(":%s", cfg.grpcPort)
+	p := fmt.Sprintf(":%s", cfg.authGRPCPort)
 	listener, err := net.Listen("tcp", p)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to listen on port %s: %s", cfg.grpcPort, err))
+		logger.Error(fmt.Sprintf("Failed to listen on port %s: %s", cfg.authGRPCPort, err))
 		os.Exit(1)
 	}
 
@@ -298,13 +304,13 @@ func startGRPCServer(svc things.Service, cfg config, logger logger.Logger, errs 
 			os.Exit(1)
 		}
 		logger.Info(fmt.Sprintf("Things gRPC service started using https on port %s with cert %s key %s",
-			cfg.grpcPort, cfg.serverCert, cfg.serverKey))
+			cfg.authGRPCPort, cfg.serverCert, cfg.serverKey))
 		server = grpc.NewServer(grpc.Creds(creds))
 	} else {
-		logger.Info(fmt.Sprintf("Things gRPC service started using http on port %s", cfg.grpcPort))
+		logger.Info(fmt.Sprintf("Things gRPC service started using http on port %s", cfg.authGRPCPort))
 		server = grpc.NewServer()
 	}
 
-	mainflux.RegisterThingsServiceServer(server, grpcapi.NewServer(svc))
+	mainflux.RegisterThingsServiceServer(server, authgrpcapi.NewServer(svc))
 	errs <- server.Serve(listener)
 }

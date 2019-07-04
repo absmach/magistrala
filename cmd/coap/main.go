@@ -24,7 +24,7 @@ import (
 	"github.com/mainflux/mainflux/coap/api"
 	"github.com/mainflux/mainflux/coap/nats"
 	logger "github.com/mainflux/mainflux/logger"
-	thingsapi "github.com/mainflux/mainflux/things/api/grpc"
+	thingsapi "github.com/mainflux/mainflux/things/api/auth/grpc"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"

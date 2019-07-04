@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2018
+// Copyright (c) 2019
 // Mainflux
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -15,7 +15,6 @@ import (
 )
 
 var (
-	_ mainflux.Response = (*identityRes)(nil)
 	_ mainflux.Response = (*removeRes)(nil)
 	_ mainflux.Response = (*thingRes)(nil)
 	_ mainflux.Response = (*viewThingRes)(nil)
@@ -26,24 +25,6 @@ var (
 	_ mainflux.Response = (*connectionRes)(nil)
 	_ mainflux.Response = (*disconnectionRes)(nil)
 )
-
-type identityRes struct {
-	id uint64
-}
-
-func (res identityRes) Headers() map[string]string {
-	return map[string]string{
-		"X-thing-id": fmt.Sprint(res.id),
-	}
-}
-
-func (res identityRes) Code() int {
-	return http.StatusOK
-}
-
-func (res identityRes) Empty() bool {
-	return true
-}
 
 type removeRes struct{}
 

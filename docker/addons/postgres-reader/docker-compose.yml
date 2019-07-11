@@ -18,7 +18,7 @@ services:
     container_name: mainflux-postgres-reader
     restart: on-failure
     environment:
-      MF_THINGS_URL: things:${MF_THINGS_GRPC_PORT}
+      MF_THINGS_URL: things:${MF_THINGS_AUTH_GRPC_PORT}
       MF_POSTGRES_READER_LOG_LEVEL: ${MF_POSTGRES_READER_LOG_LEVEL}
       MF_POSTGRES_READER_PORT: ${MF_POSTGRES_READER_PORT}
       MF_POSTGRES_READER_CLIENT_TLS: ${MF_POSTGRES_READER_CLIENT_TLS}

@@ -7,6 +7,7 @@ import (
 	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
+	empty "github.com/golang/protobuf/ptypes/empty"
 	grpc "google.golang.org/grpc"
 	io "io"
 	math "math"
@@ -125,6 +126,61 @@ func (m *ThingID) GetValue() string {
 	return ""
 }
 
+type AccessByIDReq struct {
+	ThingID              string   `protobuf:"bytes,1,opt,name=thingID,proto3" json:"thingID,omitempty"`
+	ChanID               string   `protobuf:"bytes,2,opt,name=chanID,proto3" json:"chanID,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *AccessByIDReq) Reset()         { *m = AccessByIDReq{} }
+func (m *AccessByIDReq) String() string { return proto.CompactTextString(m) }
+func (*AccessByIDReq) ProtoMessage()    {}
+func (*AccessByIDReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_41f4a519b878ee3b, []int{2}
+}
+func (m *AccessByIDReq) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *AccessByIDReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_AccessByIDReq.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalTo(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *AccessByIDReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AccessByIDReq.Merge(m, src)
+}
+func (m *AccessByIDReq) XXX_Size() int {
+	return m.Size()
+}
+func (m *AccessByIDReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_AccessByIDReq.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AccessByIDReq proto.InternalMessageInfo
+
+func (m *AccessByIDReq) GetThingID() string {
+	if m != nil {
+		return m.ThingID
+	}
+	return ""
+}
+
+func (m *AccessByIDReq) GetChanID() string {
+	if m != nil {
+		return m.ChanID
+	}
+	return ""
+}
+
 type Token struct {
 	Value                string   `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -136,7 +192,7 @@ func (m *Token) Reset()         { *m = Token{} }
 func (m *Token) String() string { return proto.CompactTextString(m) }
 func (*Token) ProtoMessage()    {}
 func (*Token) Descriptor() ([]byte, []int) {
-	return fileDescriptor_41f4a519b878ee3b, []int{2}
+	return fileDescriptor_41f4a519b878ee3b, []int{3}
 }
 func (m *Token) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -183,7 +239,7 @@ func (m *UserID) Reset()         { *m = UserID{} }
 func (m *UserID) String() string { return proto.CompactTextString(m) }
 func (*UserID) ProtoMessage()    {}
 func (*UserID) Descriptor() ([]byte, []int) {
-	return fileDescriptor_41f4a519b878ee3b, []int{3}
+	return fileDescriptor_41f4a519b878ee3b, []int{4}
 }
 func (m *UserID) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -222,6 +278,7 @@ func (m *UserID) GetValue() string {
 func init() {
 	proto.RegisterType((*AccessReq)(nil), "mainflux.AccessReq")
 	proto.RegisterType((*ThingID)(nil), "mainflux.ThingID")
+	proto.RegisterType((*AccessByIDReq)(nil), "mainflux.AccessByIDReq")
 	proto.RegisterType((*Token)(nil), "mainflux.Token")
 	proto.RegisterType((*UserID)(nil), "mainflux.UserID")
 }
@@ -229,23 +286,27 @@ func init() {
 func init() { proto.RegisterFile("internal.proto", fileDescriptor_41f4a519b878ee3b) }
 
 var fileDescriptor_41f4a519b878ee3b = []byte{
-	// 241 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xcb, 0xcc, 0x2b, 0x49,
-	0x2d, 0xca, 0x4b, 0xcc, 0xd1, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0xc8, 0x4d, 0xcc, 0xcc,
-	0x4b, 0xcb, 0x29, 0xad, 0x50, 0xb2, 0xe4, 0xe2, 0x74, 0x4c, 0x4e, 0x4e, 0x2d, 0x2e, 0x0e, 0x4a,
-	0x2d, 0x14, 0x12, 0xe1, 0x62, 0x2d, 0xc9, 0xcf, 0x4e, 0xcd, 0x93, 0x60, 0x54, 0x60, 0xd4, 0xe0,
-	0x0c, 0x82, 0x70, 0x84, 0xc4, 0xb8, 0xd8, 0x92, 0x33, 0x12, 0xf3, 0x3c, 0x5d, 0x24, 0x98, 0xc0,
-	0xc2, 0x50, 0x9e, 0x92, 0x3c, 0x17, 0x7b, 0x48, 0x46, 0x66, 0x5e, 0xba, 0xa7, 0x0b, 0x48, 0x63,
-	0x59, 0x62, 0x4e, 0x69, 0x2a, 0x4c, 0x23, 0x98, 0xa3, 0x24, 0xcb, 0xc5, 0x1a, 0x02, 0x36, 0x01,
-	0xbb, 0xb4, 0x1c, 0x17, 0x5b, 0x68, 0x71, 0x6a, 0x11, 0x2e, 0xed, 0x46, 0x15, 0x5c, 0xbc, 0x60,
-	0xf3, 0x8b, 0x83, 0x53, 0x8b, 0xca, 0x32, 0x93, 0x53, 0x85, 0x4c, 0xb9, 0x38, 0x9d, 0x13, 0xf3,
-	0x20, 0xce, 0x15, 0x12, 0xd6, 0x83, 0xf9, 0x41, 0x0f, 0xee, 0x01, 0x29, 0x41, 0x84, 0x20, 0xd4,
-	0x69, 0x4a, 0x0c, 0x42, 0x06, 0x5c, 0x1c, 0x9e, 0x29, 0xa9, 0x79, 0x25, 0x99, 0x69, 0x95, 0x42,
-	0xfc, 0x48, 0x0a, 0x40, 0x4e, 0xc3, 0xaa, 0xc3, 0xc8, 0x9e, 0x8b, 0x07, 0xe4, 0x32, 0xb8, 0xc5,
-	0xfa, 0xf8, 0x4c, 0x10, 0x40, 0x08, 0x40, 0xbc, 0xa3, 0xc4, 0xe0, 0x24, 0x70, 0xe2, 0x91, 0x1c,
-	0xe3, 0x85, 0x47, 0x72, 0x8c, 0x0f, 0x1e, 0xc9, 0x31, 0xce, 0x78, 0x2c, 0xc7, 0x90, 0xc4, 0x06,
-	0x0e, 0x78, 0x63, 0x40, 0x00, 0x00, 0x00, 0xff, 0xff, 0xec, 0xdf, 0x28, 0xda, 0x8a, 0x01, 0x00,
-	0x00,
+	// 316 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x50, 0x4d, 0x4e, 0xc2, 0x40,
+	0x18, 0xed, 0x98, 0xf0, 0xf7, 0x45, 0x14, 0x47, 0x83, 0x04, 0x63, 0x35, 0xb3, 0x72, 0x35, 0x18,
+	0x8c, 0x0b, 0x57, 0x06, 0xac, 0x8b, 0x6e, 0x11, 0x0f, 0x50, 0xea, 0xb4, 0x34, 0x96, 0x29, 0xb6,
+	0x53, 0x62, 0x6f, 0xe2, 0x61, 0x3c, 0x80, 0x4b, 0x8f, 0x60, 0xea, 0x45, 0xcc, 0xcc, 0xb4, 0xc5,
+	0x18, 0x70, 0xf9, 0x5e, 0xbe, 0xf7, 0xbd, 0x1f, 0xd8, 0x0b, 0xb8, 0x60, 0x31, 0x77, 0x42, 0xba,
+	0x8c, 0x23, 0x11, 0xe1, 0xe6, 0xc2, 0x09, 0xb8, 0x17, 0xa6, 0xaf, 0xfd, 0x13, 0x3f, 0x8a, 0xfc,
+	0x90, 0x0d, 0x14, 0x3f, 0x4b, 0xbd, 0x01, 0x5b, 0x2c, 0x45, 0xa6, 0xcf, 0xc8, 0x0d, 0xb4, 0x46,
+	0xae, 0xcb, 0x92, 0x64, 0xc2, 0x5e, 0xf0, 0x11, 0xd4, 0x44, 0xf4, 0xcc, 0x78, 0x0f, 0x9d, 0xa3,
+	0x8b, 0xd6, 0x44, 0x03, 0xdc, 0x85, 0xba, 0x3b, 0x77, 0xb8, 0x6d, 0xf5, 0x76, 0x14, 0x5d, 0x20,
+	0x72, 0x06, 0x8d, 0xe9, 0x3c, 0xe0, 0xbe, 0x6d, 0x49, 0xe1, 0xca, 0x09, 0x53, 0x56, 0x0a, 0x15,
+	0x20, 0x23, 0x68, 0xeb, 0xdf, 0xe3, 0xcc, 0xb6, 0xe4, 0xff, 0x1e, 0x34, 0x84, 0x56, 0x14, 0x87,
+	0x25, 0xdc, 0xea, 0x71, 0x0a, 0xb5, 0xa9, 0x0a, 0xb1, 0xd9, 0xc1, 0x84, 0xfa, 0x63, 0xc2, 0xe2,
+	0x6d, 0x09, 0x86, 0xef, 0x08, 0xda, 0x2a, 0x63, 0xf2, 0xc0, 0xe2, 0x55, 0xe0, 0x32, 0x7c, 0x0d,
+	0xad, 0x3b, 0x87, 0xeb, 0x58, 0xf8, 0x90, 0x96, 0x23, 0xd1, 0x6a, 0x84, 0xfe, 0xc1, 0x9a, 0x2c,
+	0xea, 0x11, 0x03, 0x8f, 0xa1, 0x5d, 0xc9, 0x64, 0x1b, 0x7c, 0xfc, 0x57, 0x5a, 0x74, 0xec, 0x77,
+	0xa9, 0x9e, 0x9b, 0x96, 0x73, 0xd3, 0x7b, 0x39, 0x37, 0x31, 0xf0, 0x25, 0x34, 0xed, 0x27, 0xc6,
+	0x45, 0xe0, 0x65, 0x78, 0xff, 0x97, 0x89, 0xec, 0xb7, 0xd1, 0x75, 0x78, 0x0b, 0xbb, 0xb2, 0x5e,
+	0x15, 0x7e, 0xf0, 0xdf, 0x87, 0xce, 0x9a, 0xd0, 0x9b, 0x10, 0x63, 0xdc, 0xf9, 0xc8, 0x4d, 0xf4,
+	0x99, 0x9b, 0xe8, 0x2b, 0x37, 0xd1, 0xdb, 0xb7, 0x69, 0xcc, 0xea, 0x2a, 0xd6, 0xd5, 0x4f, 0x00,
+	0x00, 0x00, 0xff, 0xff, 0xcf, 0x3f, 0x05, 0x40, 0x2f, 0x02, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -261,6 +322,7 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type ThingsServiceClient interface {
 	CanAccess(ctx context.Context, in *AccessReq, opts ...grpc.CallOption) (*ThingID, error)
+	CanAccessByID(ctx context.Context, in *AccessByIDReq, opts ...grpc.CallOption) (*empty.Empty, error)
 	Identify(ctx context.Context, in *Token, opts ...grpc.CallOption) (*ThingID, error)
 }
 
@@ -281,6 +343,15 @@ func (c *thingsServiceClient) CanAccess(ctx context.Context, in *AccessReq, opts
 	return out, nil
 }
 
+func (c *thingsServiceClient) CanAccessByID(ctx context.Context, in *AccessByIDReq, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, "/mainflux.ThingsService/CanAccessByID", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *thingsServiceClient) Identify(ctx context.Context, in *Token, opts ...grpc.CallOption) (*ThingID, error) {
 	out := new(ThingID)
 	err := c.cc.Invoke(ctx, "/mainflux.ThingsService/Identify", in, out, opts...)
@@ -293,6 +364,7 @@ func (c *thingsServiceClient) Identify(ctx context.Context, in *Token, opts ...g
 // ThingsServiceServer is the server API for ThingsService service.
 type ThingsServiceServer interface {
 	CanAccess(context.Context, *AccessReq) (*ThingID, error)
+	CanAccessByID(context.Context, *AccessByIDReq) (*empty.Empty, error)
 	Identify(context.Context, *Token) (*ThingID, error)
 }
 
@@ -314,6 +386,24 @@ func _ThingsService_CanAccess_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ThingsServiceServer).CanAccess(ctx, req.(*AccessReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ThingsService_CanAccessByID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AccessByIDReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ThingsServiceServer).CanAccessByID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/mainflux.ThingsService/CanAccessByID",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ThingsServiceServer).CanAccessByID(ctx, req.(*AccessByIDReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -343,6 +433,10 @@ var _ThingsService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CanAccess",
 			Handler:    _ThingsService_CanAccess_Handler,
+		},
+		{
+			MethodName: "CanAccessByID",
+			Handler:    _ThingsService_CanAccessByID_Handler,
 		},
 		{
 			MethodName: "Identify",
@@ -477,6 +571,39 @@ func (m *ThingID) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
+func (m *AccessByIDReq) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalTo(dAtA)
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *AccessByIDReq) MarshalTo(dAtA []byte) (int, error) {
+	var i int
+	_ = i
+	var l int
+	_ = l
+	if len(m.ThingID) > 0 {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintInternal(dAtA, i, uint64(len(m.ThingID)))
+		i += copy(dAtA[i:], m.ThingID)
+	}
+	if len(m.ChanID) > 0 {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintInternal(dAtA, i, uint64(len(m.ChanID)))
+		i += copy(dAtA[i:], m.ChanID)
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
+}
+
 func (m *Token) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -567,6 +694,26 @@ func (m *ThingID) Size() (n int) {
 	var l int
 	_ = l
 	l = len(m.Value)
+	if l > 0 {
+		n += 1 + l + sovInternal(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *AccessByIDReq) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ThingID)
+	if l > 0 {
+		n += 1 + l + sovInternal(uint64(l))
+	}
+	l = len(m.ChanID)
 	if l > 0 {
 		n += 1 + l + sovInternal(uint64(l))
 	}
@@ -799,6 +946,124 @@ func (m *ThingID) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Value = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipInternal(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthInternal
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthInternal
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *AccessByIDReq) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowInternal
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: AccessByIDReq: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: AccessByIDReq: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ThingID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowInternal
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthInternal
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthInternal
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ThingID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChanID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowInternal
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthInternal
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthInternal
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ChanID = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

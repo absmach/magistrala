@@ -392,12 +392,40 @@ paths:
           required: true
       responses:
         200:
-          description: Thing had access to specified channel and thing ID is returned.
+          description: |
+            Thing has access to the specified channel and the thing ID is returned.
           schema:
             $ref: "#/definitions/Identity"
         403:
           description: |
             Thing and channel are not connected, or thing with specified key doesn't
+            exist.
+        415:
+          description: Missing or invalid content type.
+        500:
+          $ref: "#/responses/ServiceError"
+  /channels/{chanId}/access-by-id:
+    post:
+      summary: Checks if thing has access to a channel.
+      description: |
+        Checks if a thing with a specified ID has an access to a specified 
+        channel.
+      tags:
+        - access
+      parameters:
+        - $ref: "#/parameters/ChanId"
+        - name: token
+          description: JSON-formatted document that contains thing key.
+          in: body
+          schema:
+            $ref: "#/definitions/AccessByIDReq"
+          required: true
+      responses:
+        200:
+          description: Thing has access to the specified channel.
+        403:
+          description: |
+            Thing and channel are not connected, or thing with specified ID doesn't
             exist.
         415:
           description: Missing or invalid content type.
@@ -594,6 +622,12 @@ definitions:
         description: Thing key that is used for thing auth.
     required:
       - token
+  AccessByIDReq:
+    type: object
+    properties:
+      thing_id:
+        type: string
+        description: Thing ID by which thing is uniquely identified.
   Identity:
     type: object
     properties:

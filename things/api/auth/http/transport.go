@@ -47,6 +47,13 @@ func MakeHandler(svc things.Service) http.Handler {
 		opts...,
 	))
 
+	r.Post("/channels/:chanId/access-by-id", kithttp.NewServer(
+		canAccessByIDEndpoint(svc),
+		decodeCanAccessByID,
+		encodeResponse,
+		opts...,
+	))
+
 	return r
 }
 
@@ -69,6 +76,21 @@ func decodeCanAccess(_ context.Context, r *http.Request) (interface{}, error) {
 	}
 
 	req := canAccessReq{
+		chanID: bone.GetValue(r, "chanId"),
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+func decodeCanAccessByID(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, errUnsupportedContentType
+	}
+
+	req := canAccessByIDReq{
 		chanID: bone.GetValue(r, "chanId"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

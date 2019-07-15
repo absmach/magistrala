@@ -243,6 +243,19 @@ func (lm *loggingMiddleware) CanAccess(id, key string) (thing string, err error)
 	return lm.svc.CanAccess(id, key)
 }
 
+func (lm *loggingMiddleware) CanAccessByID(chanID, thingID string) (err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method can_access_by_id for channel %s and thing %s took %s to complete", chanID, thingID, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.CanAccessByID(chanID, thingID)
+}
+
 func (lm *loggingMiddleware) Identify(key string) (id string, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method identify for key %s and thing %s took %s to complete", key, id, time.Since(begin))

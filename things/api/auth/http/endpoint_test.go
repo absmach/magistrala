@@ -190,6 +190,12 @@ func TestCanAccess(t *testing.T) {
 			req:         "}",
 			status:      http.StatusBadRequest,
 		},
+		"check access with empty request": {
+			contentType: contentType,
+			chanID:      sch.ID,
+			req:         "",
+			status:      http.StatusBadRequest,
+		},
 	}
 
 	for desc, tc := range cases {
@@ -206,10 +212,91 @@ func TestCanAccess(t *testing.T) {
 	}
 }
 
+func TestCanAccessByID(t *testing.T) {
+	svc := newService(map[string]string{token: email})
+	ts := newServer(svc)
+	defer ts.Close()
+
+	sth, err := svc.AddThing(token, thing)
+	require.Nil(t, err, fmt.Sprintf("failed to create thing: %s", err))
+
+	sch, err := svc.CreateChannel(token, channel)
+	require.Nil(t, err, fmt.Sprintf("failed to create channel: %s", err))
+
+	err = svc.Connect(token, sch.ID, sth.ID)
+	require.Nil(t, err, fmt.Sprintf("failed to connect thing and channel: %s", err))
+
+	car := canAccessByIDReq{
+		ThingID: sth.ID,
+	}
+	data := toJSON(car)
+
+	cases := map[string]struct {
+		contentType string
+		chanID      string
+		req         string
+		status      int
+	}{
+		"check access for connected thing and channel": {
+			contentType: contentType,
+			chanID:      sch.ID,
+			req:         data,
+			status:      http.StatusOK,
+		},
+		"check access for not connected thing and channel": {
+			contentType: contentType,
+			chanID:      wrong,
+			req:         data,
+			status:      http.StatusForbidden,
+		},
+		"check access with invalid content type": {
+			contentType: wrong,
+			chanID:      sch.ID,
+			req:         data,
+			status:      http.StatusUnsupportedMediaType,
+		},
+		"check access with empty JSON request": {
+			contentType: contentType,
+			chanID:      sch.ID,
+			req:         "{}",
+			status:      http.StatusForbidden,
+		},
+		"check access with invalid JSON request": {
+			contentType: contentType,
+			chanID:      sch.ID,
+			req:         "}",
+			status:      http.StatusBadRequest,
+		},
+		"check access with empty request": {
+			contentType: contentType,
+			chanID:      sch.ID,
+			req:         "",
+			status:      http.StatusBadRequest,
+		},
+	}
+
+	for desc, tc := range cases {
+		req := testRequest{
+			client:      ts.Client(),
+			method:      http.MethodPost,
+			url:         fmt.Sprintf("%s/channels/%s/access-by-id", ts.URL, tc.chanID),
+			contentType: tc.contentType,
+			body:        strings.NewReader(tc.req),
+		}
+		res, err := req.make()
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", desc, err))
+		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", desc, tc.status, res.StatusCode))
+	}
+}
+
 type identifyReq struct {
 	Token string `json:"token"`
 }
 
 type canAccessReq struct {
 	Token string `json:"token"`
+}
+
+type canAccessByIDReq struct {
+	ThingID string `json:"thing_id"`
 }

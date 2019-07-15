@@ -53,3 +53,19 @@ func canAccessEndpoint(svc things.Service) endpoint.Endpoint {
 		return res, nil
 	}
 }
+
+func canAccessByIDEndpoint(svc things.Service) endpoint.Endpoint {
+	return func(_ context.Context, request interface{}) (interface{}, error) {
+		req := request.(canAccessByIDReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		if err := svc.CanAccessByID(req.chanID, req.ThingID); err != nil {
+			return nil, err
+		}
+
+		res := canAccessByIDRes{}
+		return res, nil
+	}
+}

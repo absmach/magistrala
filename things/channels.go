@@ -60,6 +60,11 @@ type ChannelRepository interface {
 	// "connected" to the specified channel. If that's the case, it returns
 	// thing's ID.
 	HasThing(string, string) (string, error)
+
+	// HasThingByID determines whether the thing with the provided ID, is
+	// "connected" to the specified channel. If that's the case, then
+	// returned error will be nil.
+	HasThingByID(string, string) error
 }
 
 // ChannelCache contains channel-thing connection caching interface.

@@ -97,6 +97,10 @@ type Service interface {
 	// provided key and returns thing's id if access is allowed.
 	CanAccess(string, string) (string, error)
 
+	// CanAccessByID determines whether the channnel can be accessed by
+	// the given thing and returns error if it cannot.
+	CanAccessByID(string, string) error
+
 	// Identify returns thing ID for given thing key.
 	Identify(string) (string, error)
 }
@@ -376,6 +380,19 @@ func (ts *thingsService) CanAccess(chanID, key string) (string, error) {
 	ts.thingCache.Save(key, thingID)
 	ts.channelCache.Connect(chanID, thingID)
 	return thingID, nil
+}
+
+func (ts *thingsService) CanAccessByID(chanID, thingID string) error {
+	if connected := ts.channelCache.HasThing(chanID, thingID); connected {
+		return nil
+	}
+
+	if err := ts.channels.HasThingByID(chanID, thingID); err != nil {
+		return ErrUnauthorizedAccess
+	}
+
+	ts.channelCache.Connect(chanID, thingID)
+	return nil
 }
 
 func (ts *thingsService) Identify(key string) (string, error) {

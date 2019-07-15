@@ -39,3 +39,16 @@ func (req canAccessReq) validate() error {
 
 	return nil
 }
+
+type canAccessByIDReq struct {
+	chanID  string
+	ThingID string `json:"thing_id"`
+}
+
+func (req canAccessByIDReq) validate() error {
+	if req.ThingID == "" || req.chanID == "" {
+		return things.ErrUnauthorizedAccess
+	}
+
+	return nil
+}

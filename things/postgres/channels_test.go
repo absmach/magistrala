@@ -595,3 +595,77 @@ func TestHasThing(t *testing.T) {
 		assert.Equal(t, tc.hasAccess, hasAccess, fmt.Sprintf("%s: expected %t got %t\n", desc, tc.hasAccess, hasAccess))
 	}
 }
+
+func TestHasThingByID(t *testing.T) {
+	email := "channel-access-check@example.com"
+	thingRepo := postgres.NewThingRepository(db)
+
+	thid, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	thkey, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
+	thing := things.Thing{
+		ID:    thid,
+		Owner: email,
+		Key:   thkey,
+	}
+	thingID, _ := thingRepo.Save(thing)
+
+	disconnectedThID, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	disconnectedThKey, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
+	disconnectedThing := things.Thing{
+		ID:    disconnectedThID,
+		Owner: email,
+		Key:   disconnectedThKey,
+	}
+	disconnectedThingID, _ := thingRepo.Save(disconnectedThing)
+
+	chanRepo := postgres.NewChannelRepository(db)
+	chid, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	chanID, _ := chanRepo.Save(things.Channel{
+		ID:    chid,
+		Owner: email,
+	})
+	chanRepo.Connect(email, chanID, thingID)
+
+	nonexistentChanID, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
+	cases := map[string]struct {
+		chanID    string
+		thingID   string
+		hasAccess bool
+	}{
+		"access check for thing that has access": {
+			chanID:    chanID,
+			thingID:   thingID,
+			hasAccess: true,
+		},
+		"access check for thing without access": {
+			chanID:    chanID,
+			thingID:   disconnectedThingID,
+			hasAccess: false,
+		},
+		"access check for non-existing channel": {
+			chanID:    nonexistentChanID,
+			thingID:   thingID,
+			hasAccess: false,
+		},
+		"access check for non-existing thing": {
+			chanID:    chanID,
+			thingID:   wrongValue,
+			hasAccess: false,
+		},
+	}
+
+	for desc, tc := range cases {
+		err := chanRepo.HasThingByID(tc.chanID, tc.thingID)
+		hasAccess := err == nil
+		assert.Equal(t, tc.hasAccess, hasAccess, fmt.Sprintf("%s: expected %t got %t\n", desc, tc.hasAccess, hasAccess))
+	}
+}

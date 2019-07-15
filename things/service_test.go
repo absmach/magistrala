@@ -835,6 +835,41 @@ func TestCanAccess(t *testing.T) {
 	}
 }
 
+func TestCanAccessByID(t *testing.T) {
+	svc := newService(map[string]string{token: email})
+
+	sth, _ := svc.AddThing(token, thing)
+	sch, _ := svc.CreateChannel(token, channel)
+	svc.Connect(token, sch.ID, sth.ID)
+
+	cases := map[string]struct {
+		thingID string
+		channel string
+		err     error
+	}{
+		"allowed access": {
+			thingID: sth.ID,
+			channel: sch.ID,
+			err:     nil,
+		},
+		"not-connected cannot access": {
+			thingID: wrongValue,
+			channel: sch.ID,
+			err:     things.ErrUnauthorizedAccess,
+		},
+		"access to non-existing channel": {
+			thingID: sth.ID,
+			channel: wrongID,
+			err:     things.ErrUnauthorizedAccess,
+		},
+	}
+
+	for desc, tc := range cases {
+		err := svc.CanAccessByID(tc.channel, tc.thingID)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+	}
+}
+
 func TestIdentify(t *testing.T) {
 	svc := newService(map[string]string{token: email})
 

@@ -178,6 +178,15 @@ func (ms *metricsMiddleware) CanAccess(id, key string) (string, error) {
 	return ms.svc.CanAccess(id, key)
 }
 
+func (ms *metricsMiddleware) CanAccessByID(chanID, thingID string) error {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "can_access_by_id").Add(1)
+		ms.latency.With("method", "can_access_by_id").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.CanAccessByID(chanID, thingID)
+}
+
 func (ms *metricsMiddleware) Identify(key string) (string, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "identify").Add(1)

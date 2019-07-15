@@ -315,17 +315,29 @@ func (cr channelRepository) HasThing(chanID, key string) (string, error) {
 
 	}
 
-	q = `SELECT EXISTS (SELECT 1 FROM connections WHERE channel_id = $1 AND thing_id = $2);`
-	exists := false
-	if err := cr.db.QueryRow(q, chanID, thingID).Scan(&exists); err != nil {
+	if err := cr.hasThing(chanID, thingID); err != nil {
 		return "", err
 	}
 
-	if !exists {
-		return "", things.ErrUnauthorizedAccess
+	return thingID, nil
+}
+
+func (cr channelRepository) HasThingByID(chanID, thingID string) error {
+	return cr.hasThing(chanID, thingID)
+}
+
+func (cr channelRepository) hasThing(chanID, thingID string) error {
+	q := `SELECT EXISTS (SELECT 1 FROM connections WHERE channel_id = $1 AND thing_id = $2);`
+	exists := false
+	if err := cr.db.QueryRow(q, chanID, thingID).Scan(&exists); err != nil {
+		return err
 	}
 
-	return thingID, nil
+	if !exists {
+		return things.ErrUnauthorizedAccess
+	}
+
+	return nil
 }
 
 type dbChannel struct {

@@ -220,6 +220,19 @@ func (crm *channelRepositoryMock) HasThing(chanID, token string) (string, error)
 	return tid, nil
 }
 
+func (crm *channelRepositoryMock) HasThingByID(chanID, thingID string) error {
+	chans, ok := crm.cconns[thingID]
+	if !ok {
+		return things.ErrNotFound
+	}
+
+	if _, ok := chans[chanID]; !ok {
+		return things.ErrNotFound
+	}
+
+	return nil
+}
+
 type channelCacheMock struct {
 	mu       sync.Mutex
 	channels map[string]string

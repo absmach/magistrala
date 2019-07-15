@@ -28,6 +28,18 @@ func canAccessEndpoint(svc things.Service) endpoint.Endpoint {
 	}
 }
 
+func canAccessByIDEndpoint(svc things.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(accessByIDReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		err := svc.CanAccessByID(req.chanID, req.thingID)
+		return emptyRes{err: err}, err
+	}
+}
+
 func identifyEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(identifyReq)

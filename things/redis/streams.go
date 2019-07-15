@@ -226,6 +226,10 @@ func (es eventStore) CanAccess(chanID string, key string) (string, error) {
 	return es.svc.CanAccess(chanID, key)
 }
 
+func (es eventStore) CanAccessByID(chanID string, thingID string) error {
+	return es.svc.CanAccessByID(chanID, thingID)
+}
+
 func (es eventStore) Identify(key string) (string, error) {
 	return es.svc.Identify(key)
 }

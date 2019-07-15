@@ -198,6 +198,10 @@ func (svc *mainfluxThings) CanAccess(string, string) (string, error) {
 	panic("not implemented")
 }
 
+func (svc *mainfluxThings) CanAccessByID(string, string) error {
+	panic("not implemented")
+}
+
 func (svc *mainfluxThings) Identify(string) (string, error) {
 	panic("not implemented")
 }

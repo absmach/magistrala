@@ -85,14 +85,6 @@
   version = "v1.1.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:ca71cdedcb487a361fe2588afeb3d373c0dfe21feaac229270fd6de234bd3c5e"
-  name = "github.com/dereulenspiegel/coap-mux"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "e137e310a99955be01d60b2237da89153ea40987"
-
-[[projects]]
   digest = "1:76dc72490af7174349349838f2fe118996381b31ea83243812a97e5a0fd5ed55"
   name = "github.com/dgrijalva/jwt-go"
   packages = ["."]
@@ -768,7 +760,6 @@
     "github.com/BurntSushi/toml",
     "github.com/asaskevich/govalidator",
     "github.com/cisco/senml",
-    "github.com/dereulenspiegel/coap-mux",
     "github.com/dgrijalva/jwt-go",
     "github.com/docker/docker/pkg/namesgenerator",
     "github.com/dustin/go-coap",

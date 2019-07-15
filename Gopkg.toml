@@ -88,10 +88,6 @@
   branch = "master"
 
 [[constraint]]
-  name = "github.com/dereulenspiegel/coap-mux"
-  branch = "master"
-
-[[constraint]]
   name = "github.com/dustin/go-coap"
   branch = "master"
 

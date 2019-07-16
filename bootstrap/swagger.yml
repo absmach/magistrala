@@ -375,7 +375,7 @@ definitions:
   ConfigRes:
     type: object
     properties:
-      mainflux_thing:
+      mainflux_id:
         type: string
         description: Corresponding Mainflux Thing ID.
       mainflux_key:
@@ -413,7 +413,7 @@ definitions:
   BootstrapRes:
       type: object
       properties:
-        mainflux_thing:
+        mainflux_id:
           type: string
           description: Corresponding Mainflux Thing ID.
         mainflux_key:
@@ -428,7 +428,7 @@ definitions:
           type: string
           description: Free-form custom configuration.
       required:
-        - mainflux_thing
+        - mainflux_id
         - mainflux_key
         - mainflux_channels
         - content

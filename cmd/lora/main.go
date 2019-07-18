@@ -20,7 +20,7 @@ import (
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/mainflux/mainflux/lora/redis"
-	"github.com/nats-io/go-nats"
+	nats "github.com/nats-io/go-nats"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 

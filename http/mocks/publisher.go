@@ -7,7 +7,11 @@
 
 package mocks
 
-import "github.com/mainflux/mainflux"
+import (
+	"context"
+
+	"github.com/mainflux/mainflux"
+)
 
 var _ (mainflux.MessagePublisher) = (*mockPublisher)(nil)
 
@@ -18,6 +22,6 @@ func NewPublisher() mainflux.MessagePublisher {
 	return mockPublisher{}
 }
 
-func (pub mockPublisher) Publish(msg mainflux.RawMessage) error {
+func (pub mockPublisher) Publish(_ context.Context, _ string, msg mainflux.RawMessage) error {
 	return nil
 }

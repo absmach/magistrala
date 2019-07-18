@@ -9,6 +9,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -25,7 +26,9 @@ import (
 	"github.com/mainflux/mainflux/coap/nats"
 	logger "github.com/mainflux/mainflux/logger"
 	thingsapi "github.com/mainflux/mainflux/things/api/auth/grpc"
+	opentracing "github.com/opentracing/opentracing-go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	jconfig "github.com/uber/jaeger-client-go/config"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
@@ -33,31 +36,37 @@ import (
 )
 
 const (
-	defPort       = "5683"
-	defNatsURL    = broker.DefaultURL
-	defThingsURL  = "localhost:8181"
-	defLogLevel   = "error"
-	defClientTLS  = "false"
-	defCACerts    = ""
-	defPingPeriod = "12"
+	defPort          = "5683"
+	defNatsURL       = broker.DefaultURL
+	defThingsURL     = "localhost:8181"
+	defLogLevel      = "error"
+	defClientTLS     = "false"
+	defCACerts       = ""
+	defPingPeriod    = "12"
+	defJaegerURL     = "localhost:6831"
+	defThingsTimeout = "1" // in seconds
 
-	envPort       = "MF_COAP_ADAPTER_PORT"
-	envNatsURL    = "MF_NATS_URL"
-	envThingsURL  = "MF_THINGS_URL"
-	envLogLevel   = "MF_COAP_ADAPTER_LOG_LEVEL"
-	envClientTLS  = "MF_COAP_ADAPTER_CLIENT_TLS"
-	envCACerts    = "MF_COAP_ADAPTER_CA_CERTS"
-	envPingPeriod = "MF_COAP_ADAPTER_PING_PERIOD"
+	envPort          = "MF_COAP_ADAPTER_PORT"
+	envNatsURL       = "MF_NATS_URL"
+	envThingsURL     = "MF_THINGS_URL"
+	envLogLevel      = "MF_COAP_ADAPTER_LOG_LEVEL"
+	envClientTLS     = "MF_COAP_ADAPTER_CLIENT_TLS"
+	envCACerts       = "MF_COAP_ADAPTER_CA_CERTS"
+	envPingPeriod    = "MF_COAP_ADAPTER_PING_PERIOD"
+	envJaegerURL     = "MF_JAEGER_URL"
+	envThingsTimeout = "MF_COAP_ADAPTER_THINGS_TIMEOUT"
 )
 
 type config struct {
-	port       string
-	natsURL    string
-	thingsURL  string
-	logLevel   string
-	clientTLS  bool
-	caCerts    string
-	pingPeriod time.Duration
+	port          string
+	natsURL       string
+	thingsURL     string
+	logLevel      string
+	clientTLS     bool
+	caCerts       string
+	pingPeriod    time.Duration
+	jaegerURL     string
+	thingsTimeout time.Duration
 }
 
 func main() {
@@ -78,10 +87,13 @@ func main() {
 	conn := connectToThings(cfg, logger)
 	defer conn.Close()
 
-	cc := thingsapi.NewClient(conn)
+	thingsTracer, thingsCloser := initJaeger("things", cfg.jaegerURL, logger)
+	defer thingsCloser.Close()
+
+	cc := thingsapi.NewClient(conn, thingsTracer, cfg.thingsTimeout)
 	respChan := make(chan string, 10000)
 	pubsub := nats.New(nc)
-	svc := coap.New(pubsub, respChan)
+	svc := coap.New(pubsub, cc, respChan)
 	svc = api.LoggingMiddleware(svc, logger)
 
 	svc = api.MetricsMiddleware(
@@ -130,14 +142,21 @@ func loadConfig() config {
 		log.Fatalf("Value of %s must be between 1 and 24", envPingPeriod)
 	}
 
+	timeout, err := strconv.ParseInt(mainflux.Env(envThingsTimeout, defThingsTimeout), 10, 64)
+	if err != nil {
+		log.Fatalf("Invalid %s value: %s", envThingsTimeout, err.Error())
+	}
+
 	return config{
-		thingsURL:  mainflux.Env(envThingsURL, defThingsURL),
-		natsURL:    mainflux.Env(envNatsURL, defNatsURL),
-		port:       mainflux.Env(envPort, defPort),
-		logLevel:   mainflux.Env(envLogLevel, defLogLevel),
-		clientTLS:  tls,
-		caCerts:    mainflux.Env(envCACerts, defCACerts),
-		pingPeriod: time.Duration(pp),
+		thingsURL:     mainflux.Env(envThingsURL, defThingsURL),
+		natsURL:       mainflux.Env(envNatsURL, defNatsURL),
+		port:          mainflux.Env(envPort, defPort),
+		logLevel:      mainflux.Env(envLogLevel, defLogLevel),
+		clientTLS:     tls,
+		caCerts:       mainflux.Env(envCACerts, defCACerts),
+		pingPeriod:    time.Duration(pp),
+		jaegerURL:     mainflux.Env(envJaegerURL, defJaegerURL),
+		thingsTimeout: time.Duration(timeout) * time.Second,
 	}
 }
 
@@ -163,6 +182,26 @@ func connectToThings(cfg config, logger logger.Logger) *grpc.ClientConn {
 		os.Exit(1)
 	}
 	return conn
+}
+
+func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, io.Closer) {
+	tracer, closer, err := jconfig.Configuration{
+		ServiceName: svcName,
+		Sampler: &jconfig.SamplerConfig{
+			Type:  "const",
+			Param: 1,
+		},
+		Reporter: &jconfig.ReporterConfig{
+			LocalAgentHostPort: url,
+			LogSpans:           true,
+		},
+	}.NewTracer()
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to init Jaeger client: %s", err))
+		os.Exit(1)
+	}
+
+	return tracer, closer
 }
 
 func startHTTPServer(port string, logger logger.Logger, errs chan error) {

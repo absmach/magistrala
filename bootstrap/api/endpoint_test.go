@@ -25,6 +25,7 @@ import (
 	mfsdk "github.com/mainflux/mainflux/sdk/go"
 	"github.com/mainflux/mainflux/things"
 	thingsapi "github.com/mainflux/mainflux/things/api/things/http"
+	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -143,7 +144,7 @@ func newThingsService(users mainflux.UsersServiceClient) things.Service {
 }
 
 func newThingsServer(svc things.Service) *httptest.Server {
-	mux := thingsapi.MakeHandler(svc)
+	mux := thingsapi.MakeHandler(mocktracer.New(), svc)
 	return httptest.NewServer(mux)
 }
 

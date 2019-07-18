@@ -8,6 +8,7 @@
 package mocks
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strconv"
@@ -47,7 +48,7 @@ func NewThingRepository(conns chan Connection) things.ThingRepository {
 	return repo
 }
 
-func (trm *thingRepositoryMock) Save(thing things.Thing) (string, error) {
+func (trm *thingRepositoryMock) Save(_ context.Context, thing things.Thing) (string, error) {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
@@ -64,7 +65,7 @@ func (trm *thingRepositoryMock) Save(thing things.Thing) (string, error) {
 	return thing.ID, nil
 }
 
-func (trm *thingRepositoryMock) Update(thing things.Thing) error {
+func (trm *thingRepositoryMock) Update(_ context.Context, thing things.Thing) error {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
@@ -79,7 +80,7 @@ func (trm *thingRepositoryMock) Update(thing things.Thing) error {
 	return nil
 }
 
-func (trm *thingRepositoryMock) UpdateKey(owner, id, val string) error {
+func (trm *thingRepositoryMock) UpdateKey(_ context.Context, owner, id, val string) error {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
@@ -102,7 +103,7 @@ func (trm *thingRepositoryMock) UpdateKey(owner, id, val string) error {
 	return nil
 }
 
-func (trm *thingRepositoryMock) RetrieveByID(owner, id string) (things.Thing, error) {
+func (trm *thingRepositoryMock) RetrieveByID(_ context.Context, owner, id string) (things.Thing, error) {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
@@ -113,7 +114,7 @@ func (trm *thingRepositoryMock) RetrieveByID(owner, id string) (things.Thing, er
 	return things.Thing{}, things.ErrNotFound
 }
 
-func (trm *thingRepositoryMock) RetrieveAll(owner string, offset, limit uint64, name string) (things.ThingsPage, error) {
+func (trm *thingRepositoryMock) RetrieveAll(_ context.Context, owner string, offset, limit uint64, name string) (things.ThingsPage, error) {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
@@ -152,7 +153,7 @@ func (trm *thingRepositoryMock) RetrieveAll(owner string, offset, limit uint64, 
 	return page, nil
 }
 
-func (trm *thingRepositoryMock) RetrieveByChannel(owner, chanID string, offset, limit uint64) (things.ThingsPage, error) {
+func (trm *thingRepositoryMock) RetrieveByChannel(_ context.Context, owner, chanID string, offset, limit uint64) (things.ThingsPage, error) {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
@@ -193,14 +194,14 @@ func (trm *thingRepositoryMock) RetrieveByChannel(owner, chanID string, offset, 
 	return page, nil
 }
 
-func (trm *thingRepositoryMock) Remove(owner, id string) error {
+func (trm *thingRepositoryMock) Remove(_ context.Context, owner, id string) error {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 	delete(trm.things, key(owner, id))
 	return nil
 }
 
-func (trm *thingRepositoryMock) RetrieveByKey(key string) (string, error) {
+func (trm *thingRepositoryMock) RetrieveByKey(_ context.Context, key string) (string, error) {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
@@ -246,7 +247,7 @@ func NewThingCache() things.ThingCache {
 	}
 }
 
-func (tcm *thingCacheMock) Save(key, id string) error {
+func (tcm *thingCacheMock) Save(_ context.Context, key, id string) error {
 	tcm.mu.Lock()
 	defer tcm.mu.Unlock()
 
@@ -254,7 +255,7 @@ func (tcm *thingCacheMock) Save(key, id string) error {
 	return nil
 }
 
-func (tcm *thingCacheMock) ID(key string) (string, error) {
+func (tcm *thingCacheMock) ID(_ context.Context, key string) (string, error) {
 	tcm.mu.Lock()
 	defer tcm.mu.Unlock()
 
@@ -266,7 +267,7 @@ func (tcm *thingCacheMock) ID(key string) (string, error) {
 	return id, nil
 }
 
-func (tcm *thingCacheMock) Remove(id string) error {
+func (tcm *thingCacheMock) Remove(_ context.Context, id string) error {
 	tcm.mu.Lock()
 	defer tcm.mu.Unlock()
 

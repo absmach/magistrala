@@ -15,7 +15,7 @@ import (
 )
 
 func addThingEndpoint(svc things.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(addThingReq)
 
 		if err := req.validate(); err != nil {
@@ -27,7 +27,7 @@ func addThingEndpoint(svc things.Service) endpoint.Endpoint {
 			Name:     req.Name,
 			Metadata: req.Metadata,
 		}
-		saved, err := svc.AddThing(req.token, thing)
+		saved, err := svc.AddThing(ctx, req.token, thing)
 		if err != nil {
 			return nil, err
 		}
@@ -41,7 +41,7 @@ func addThingEndpoint(svc things.Service) endpoint.Endpoint {
 }
 
 func updateThingEndpoint(svc things.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateThingReq)
 
 		if err := req.validate(); err != nil {
@@ -54,7 +54,7 @@ func updateThingEndpoint(svc things.Service) endpoint.Endpoint {
 			Metadata: req.Metadata,
 		}
 
-		if err := svc.UpdateThing(req.token, thing); err != nil {
+		if err := svc.UpdateThing(ctx, req.token, thing); err != nil {
 			return nil, err
 		}
 
@@ -64,14 +64,14 @@ func updateThingEndpoint(svc things.Service) endpoint.Endpoint {
 }
 
 func updateKeyEndpoint(svc things.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateKeyReq)
 
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
-		if err := svc.UpdateKey(req.token, req.id, req.Key); err != nil {
+		if err := svc.UpdateKey(ctx, req.token, req.id, req.Key); err != nil {
 			return nil, err
 		}
 
@@ -81,14 +81,14 @@ func updateKeyEndpoint(svc things.Service) endpoint.Endpoint {
 }
 
 func viewThingEndpoint(svc things.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(viewResourceReq)
 
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
-		thing, err := svc.ViewThing(req.token, req.id)
+		thing, err := svc.ViewThing(ctx, req.token, req.id)
 		if err != nil {
 			return nil, err
 		}
@@ -105,14 +105,14 @@ func viewThingEndpoint(svc things.Service) endpoint.Endpoint {
 }
 
 func listThingsEndpoint(svc things.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listResourcesReq)
 
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
-		page, err := svc.ListThings(req.token, req.offset, req.limit, req.name)
+		page, err := svc.ListThings(ctx, req.token, req.offset, req.limit, req.name)
 		if err != nil {
 			return nil, err
 		}
@@ -141,14 +141,14 @@ func listThingsEndpoint(svc things.Service) endpoint.Endpoint {
 }
 
 func listThingsByChannelEndpoint(svc things.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listByConnectionReq)
 
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
-		page, err := svc.ListThingsByChannel(req.token, req.id, req.offset, req.limit)
+		page, err := svc.ListThingsByChannel(ctx, req.token, req.id, req.offset, req.limit)
 		if err != nil {
 			return nil, err
 		}
@@ -177,7 +177,7 @@ func listThingsByChannelEndpoint(svc things.Service) endpoint.Endpoint {
 }
 
 func removeThingEndpoint(svc things.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(viewResourceReq)
 
 		err := req.validate()
@@ -189,7 +189,7 @@ func removeThingEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		if err := svc.RemoveThing(req.token, req.id); err != nil {
+		if err := svc.RemoveThing(ctx, req.token, req.id); err != nil {
 			return nil, err
 		}
 
@@ -198,7 +198,7 @@ func removeThingEndpoint(svc things.Service) endpoint.Endpoint {
 }
 
 func createChannelEndpoint(svc things.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createChannelReq)
 
 		if err := req.validate(); err != nil {
@@ -206,7 +206,7 @@ func createChannelEndpoint(svc things.Service) endpoint.Endpoint {
 		}
 
 		channel := things.Channel{Name: req.Name, Metadata: req.Metadata}
-		saved, err := svc.CreateChannel(req.token, channel)
+		saved, err := svc.CreateChannel(ctx, req.token, channel)
 		if err != nil {
 			return nil, err
 		}
@@ -220,7 +220,7 @@ func createChannelEndpoint(svc things.Service) endpoint.Endpoint {
 }
 
 func updateChannelEndpoint(svc things.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateChannelReq)
 
 		if err := req.validate(); err != nil {
@@ -232,7 +232,7 @@ func updateChannelEndpoint(svc things.Service) endpoint.Endpoint {
 			Name:     req.Name,
 			Metadata: req.Metadata,
 		}
-		if err := svc.UpdateChannel(req.token, channel); err != nil {
+		if err := svc.UpdateChannel(ctx, req.token, channel); err != nil {
 			return nil, err
 		}
 
@@ -245,14 +245,14 @@ func updateChannelEndpoint(svc things.Service) endpoint.Endpoint {
 }
 
 func viewChannelEndpoint(svc things.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(viewResourceReq)
 
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
-		channel, err := svc.ViewChannel(req.token, req.id)
+		channel, err := svc.ViewChannel(ctx, req.token, req.id)
 		if err != nil {
 			return nil, err
 		}
@@ -269,14 +269,14 @@ func viewChannelEndpoint(svc things.Service) endpoint.Endpoint {
 }
 
 func listChannelsEndpoint(svc things.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listResourcesReq)
 
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
-		page, err := svc.ListChannels(req.token, req.offset, req.limit, req.name)
+		page, err := svc.ListChannels(ctx, req.token, req.offset, req.limit, req.name)
 		if err != nil {
 			return nil, err
 		}
@@ -306,14 +306,14 @@ func listChannelsEndpoint(svc things.Service) endpoint.Endpoint {
 }
 
 func listChannelsByThingEndpoint(svc things.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listByConnectionReq)
 
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
-		page, err := svc.ListChannelsByThing(req.token, req.id, req.offset, req.limit)
+		page, err := svc.ListChannelsByThing(ctx, req.token, req.id, req.offset, req.limit)
 		if err != nil {
 			return nil, err
 		}
@@ -341,7 +341,7 @@ func listChannelsByThingEndpoint(svc things.Service) endpoint.Endpoint {
 }
 
 func removeChannelEndpoint(svc things.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(viewResourceReq)
 
 		if err := req.validate(); err != nil {
@@ -351,7 +351,7 @@ func removeChannelEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		if err := svc.RemoveChannel(req.token, req.id); err != nil {
+		if err := svc.RemoveChannel(ctx, req.token, req.id); err != nil {
 			return nil, err
 		}
 
@@ -360,14 +360,14 @@ func removeChannelEndpoint(svc things.Service) endpoint.Endpoint {
 }
 
 func connectEndpoint(svc things.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		cr := request.(connectionReq)
 
 		if err := cr.validate(); err != nil {
 			return nil, err
 		}
 
-		if err := svc.Connect(cr.token, cr.chanID, cr.thingID); err != nil {
+		if err := svc.Connect(ctx, cr.token, cr.chanID, cr.thingID); err != nil {
 			return nil, err
 		}
 
@@ -376,14 +376,14 @@ func connectEndpoint(svc things.Service) endpoint.Endpoint {
 }
 
 func disconnectEndpoint(svc things.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		cr := request.(connectionReq)
 
 		if err := cr.validate(); err != nil {
 			return nil, err
 		}
 
-		if err := svc.Disconnect(cr.token, cr.chanID, cr.thingID); err != nil {
+		if err := svc.Disconnect(ctx, cr.token, cr.chanID, cr.thingID); err != nil {
 			return nil, err
 		}
 

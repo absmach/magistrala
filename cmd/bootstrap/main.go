@@ -8,15 +8,19 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 
 	rediscons "github.com/mainflux/mainflux/bootstrap/redis/consumer"
 	redisprod "github.com/mainflux/mainflux/bootstrap/redis/producer"
+	"github.com/mainflux/mainflux/logger"
+	opentracing "github.com/opentracing/opentracing-go"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	r "github.com/go-redis/redis"
@@ -29,6 +33,7 @@ import (
 	mfsdk "github.com/mainflux/mainflux/sdk/go"
 	usersapi "github.com/mainflux/mainflux/users/api/grpc"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	jconfig "github.com/uber/jaeger-client-go/config"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -59,6 +64,8 @@ const (
 	defESPass        = ""
 	defESDB          = "0"
 	defInstanceName  = "bootstrap"
+	defJaegerURL     = "localhost:6831"
+	defUsersTimeout  = "1" // in seconds
 
 	envLogLevel      = "MF_BOOTSTRAP_LOG_LEVEL"
 	envDBHost        = "MF_BOOTSTRAP_DB_HOST"
@@ -85,6 +92,8 @@ const (
 	envESPass        = "MF_BOOTSTRAP_ES_PASS"
 	envESDB          = "MF_BOOTSTRAP_ES_DB"
 	envInstanceName  = "MF_BOOTSTRAP_INSTANCE_NAME"
+	envJaegerURL     = "MF_JAEGER_URL"
+	envUsersTimeout  = "MF_BOOTSTRAP_USERS_TIMEOUT"
 )
 
 type config struct {
@@ -105,6 +114,8 @@ type config struct {
 	esPass       string
 	esDB         string
 	instanceName string
+	jaegerURL    string
+	usersTimeout time.Duration
 }
 
 func main() {
@@ -127,7 +138,10 @@ func main() {
 	esClient := connectToRedis(cfg.esURL, cfg.esPass, cfg.esDB, logger)
 	defer esClient.Close()
 
-	svc := newService(conn, db, logger, esClient, cfg)
+	usersTracer, usersCloser := initJaeger("users", cfg.jaegerURL, logger)
+	defer usersCloser.Close()
+
+	svc := newService(conn, usersTracer, db, logger, esClient, cfg)
 	errs := make(chan error, 2)
 
 	go startHTTPServer(svc, cfg, logger, errs)
@@ -160,6 +174,11 @@ func loadConfig() config {
 		SSLRootCert: mainflux.Env(envDBSSLRootCert, defDBSSLRootCert),
 	}
 
+	timeout, err := strconv.ParseInt(mainflux.Env(envUsersTimeout, defUsersTimeout), 10, 64)
+	if err != nil {
+		log.Fatalf("Invalid %s value: %s", envUsersTimeout, err.Error())
+	}
+
 	return config{
 		logLevel:     mainflux.Env(envLogLevel, defLogLevel),
 		dbConfig:     dbConfig,
@@ -178,6 +197,8 @@ func loadConfig() config {
 		esPass:       mainflux.Env(envESPass, defESPass),
 		esDB:         mainflux.Env(envESDB, defESDB),
 		instanceName: mainflux.Env(envInstanceName, defInstanceName),
+		jaegerURL:    mainflux.Env(envJaegerURL, defJaegerURL),
+		usersTimeout: time.Duration(timeout) * time.Second,
 	}
 }
 
@@ -204,7 +225,27 @@ func connectToRedis(redisURL, redisPass, redisDB string, logger mflog.Logger) *r
 	})
 }
 
-func newService(conn *grpc.ClientConn, db *sqlx.DB, logger mflog.Logger, esClient *r.Client, cfg config) bootstrap.Service {
+func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, io.Closer) {
+	tracer, closer, err := jconfig.Configuration{
+		ServiceName: svcName,
+		Sampler: &jconfig.SamplerConfig{
+			Type:  "const",
+			Param: 1,
+		},
+		Reporter: &jconfig.ReporterConfig{
+			LocalAgentHostPort: url,
+			LogSpans:           true,
+		},
+	}.NewTracer()
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to init Jaeger client: %s", err))
+		os.Exit(1)
+	}
+
+	return tracer, closer
+}
+
+func newService(conn *grpc.ClientConn, usersTracer opentracing.Tracer, db *sqlx.DB, logger mflog.Logger, esClient *r.Client, cfg config) bootstrap.Service {
 	thingsRepo := postgres.NewConfigRepository(db, logger)
 
 	config := mfsdk.Config{
@@ -213,7 +254,7 @@ func newService(conn *grpc.ClientConn, db *sqlx.DB, logger mflog.Logger, esClien
 	}
 
 	sdk := mfsdk.NewSDK(config)
-	users := usersapi.NewClient(conn)
+	users := usersapi.NewClient(usersTracer, conn, cfg.usersTimeout)
 
 	svc := bootstrap.New(users, thingsRepo, sdk)
 	svc = redisprod.NewEventStoreMiddleware(svc, esClient)

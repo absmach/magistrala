@@ -15,10 +15,12 @@ import (
 	"net/http"
 	"strings"
 
+	kitot "github.com/go-kit/kit/tracing/opentracing"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/things"
+	opentracing "github.com/opentracing/opentracing-go"
 )
 
 const contentType = "application/json"
@@ -26,7 +28,7 @@ const contentType = "application/json"
 var errUnsupportedContentType = errors.New("unsupported content type")
 
 // MakeHandler returns a HTTP handler for auth API endpoints.
-func MakeHandler(svc things.Service) http.Handler {
+func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
 	}
@@ -34,21 +36,21 @@ func MakeHandler(svc things.Service) http.Handler {
 	r := bone.New()
 
 	r.Post("/identify", kithttp.NewServer(
-		identifyEndpoint(svc),
+		kitot.TraceServer(tracer, "identify")(identifyEndpoint(svc)),
 		decodeIdentify,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Post("/channels/:chanId/access", kithttp.NewServer(
-		canAccessEndpoint(svc),
+		kitot.TraceServer(tracer, "can_access")(canAccessEndpoint(svc)),
 		decodeCanAccess,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Post("/channels/:chanId/access-by-id", kithttp.NewServer(
-		canAccessByIDEndpoint(svc),
+		kitot.TraceServer(tracer, "can_access_by_id")(canAccessByIDEndpoint(svc)),
 		decodeCanAccessByID,
 		encodeResponse,
 		opts...,

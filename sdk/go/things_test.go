@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	sdk "github.com/mainflux/mainflux/sdk/go"
+	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -53,7 +54,7 @@ func newThingsService(tokens map[string]string) things.Service {
 }
 
 func newThingsServer(svc things.Service) *httptest.Server {
-	mux := httpapi.MakeHandler(svc)
+	mux := httpapi.MakeHandler(mocktracer.New(), svc)
 	return httptest.NewServer(mux)
 }
 

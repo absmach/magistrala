@@ -8,14 +8,16 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable                  | Description                                    | Default               |
-|---------------------------|------------------------------------------------|-----------------------|
-| MF_WS_ADAPTER_CLIENT_TLS  | Flag that indicates if TLS should be turned on | false                 |
-| MF_WS_ADAPTER_CA_CERTS    | Path to trusted CAs in PEM format              |                       |
-| MF_WS_ADAPTER_LOG_LEVEL   | Log level for the WS Adapter                   | error                 |
-| MF_WS_ADAPTER_PORT        | Service WS port                                | 8180                  |
-| MF_NATS_URL               | NATS instance URL                              | nats://localhost:4222 |
-| MF_THINGS_URL             | Things service URL                             | localhost:8181        |
+| Variable                     | Description                                    | Default               |
+|------------------------------|------------------------------------------------|-----------------------|
+| MF_WS_ADAPTER_CLIENT_TLS     | Flag that indicates if TLS should be turned on | false                 |
+| MF_WS_ADAPTER_CA_CERTS       | Path to trusted CAs in PEM format              |                       |
+| MF_WS_ADAPTER_LOG_LEVEL      | Log level for the WS Adapter                   | error                 |
+| MF_WS_ADAPTER_PORT           | Service WS port                                | 8180                  |
+| MF_NATS_URL                  | NATS instance URL                              | nats://localhost:4222 |
+| MF_THINGS_URL                | Things service URL                             | localhost:8181        |
+| MF_JAEGER_URL                | Jaeger server URL                              | localhost:6831        |
+| MF_WS_ADAPTER_THINGS_TIMEOUT | Things gRPC request timeout in seconds         | 1                     |
 
 ## Deployment
 
@@ -37,6 +39,8 @@ services:
       MF_WS_ADAPTER_LOG_LEVEL: [WS adapter log level]
       MF_WS_ADAPTER_CLIENT_TLS: [Flag that indicates if TLS should be turned on]
       MF_WS_ADAPTER_CA_CERTS: [Path to trusted CAs in PEM format]
+      MF_JAEGER_URL: [Jaeger server URL]
+      MF_WS_ADAPTER_THINGS_TIMEOUT: [Things gRPC request timeout in seconds]
 ```
 
 To start the service outside of the container, execute the following shell script:
@@ -54,7 +58,7 @@ make ws
 make install
 
 # set the environment variables and run the service
-MF_THINGS_URL=[Things service URL] MF_NATS_URL=[NATS instance URL] MF_WS_ADAPTER_PORT=[Service WS port] MF_WS_ADAPTER_LOG_LEVEL=[WS adapter log level] MF_WS_ADAPTER_CLIENT_TLS=[Flag that indicates if TLS should be turned on] MF_WS_ADAPTER_CA_CERTS=[Path to trusted CAs in PEM format] $GOBIN/mainflux-ws
+MF_THINGS_URL=[Things service URL] MF_NATS_URL=[NATS instance URL] MF_WS_ADAPTER_PORT=[Service WS port] MF_WS_ADAPTER_LOG_LEVEL=[WS adapter log level] MF_WS_ADAPTER_CLIENT_TLS=[Flag that indicates if TLS should be turned on] MF_WS_ADAPTER_CA_CERTS=[Path to trusted CAs in PEM format] MF_JAEGER_URL=[Jaeger server URL] MF_WS_ADAPTER_THINGS_TIMEOUT=[Things gRPC request timeout in seconds] $GOBIN/mainflux-ws
 ```
 
 ## Usage

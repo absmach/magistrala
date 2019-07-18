@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2018
+// Copyright (c) 2019
 // Mainflux
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -7,7 +7,11 @@
 
 package users
 
-import "github.com/asaskevich/govalidator"
+import (
+	"context"
+
+	"github.com/asaskevich/govalidator"
+)
 
 // User represents a Mainflux user account. Each user is identified given its
 // email and password.
@@ -33,8 +37,8 @@ func (u User) Validate() error {
 type UserRepository interface {
 	// Save persists the user account. A non-nil error is returned to indicate
 	// operation failure.
-	Save(User) error
+	Save(context.Context, User) error
 
 	// RetrieveByID retrieves user by its unique identifier (i.e. email).
-	RetrieveByID(string) (User, error)
+	RetrieveByID(context.Context, string) (User, error)
 }

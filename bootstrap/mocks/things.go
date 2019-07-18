@@ -38,7 +38,7 @@ func NewThingsService(things map[string]things.Thing, channels map[string]things
 	}
 }
 
-func (svc *mainfluxThings) AddThing(owner string, thing things.Thing) (things.Thing, error) {
+func (svc *mainfluxThings) AddThing(_ context.Context, owner string, thing things.Thing) (things.Thing, error) {
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
@@ -55,7 +55,7 @@ func (svc *mainfluxThings) AddThing(owner string, thing things.Thing) (things.Th
 	return thing, nil
 }
 
-func (svc *mainfluxThings) ViewThing(owner, id string) (things.Thing, error) {
+func (svc *mainfluxThings) ViewThing(_ context.Context, owner, id string) (things.Thing, error) {
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
@@ -72,7 +72,7 @@ func (svc *mainfluxThings) ViewThing(owner, id string) (things.Thing, error) {
 	return things.Thing{}, things.ErrNotFound
 }
 
-func (svc *mainfluxThings) Connect(owner, chanID, thingID string) error {
+func (svc *mainfluxThings) Connect(_ context.Context, owner, chanID, thingID string) error {
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
@@ -89,7 +89,7 @@ func (svc *mainfluxThings) Connect(owner, chanID, thingID string) error {
 	return nil
 }
 
-func (svc *mainfluxThings) Disconnect(owner, chanID, thingID string) error {
+func (svc *mainfluxThings) Disconnect(_ context.Context, owner, chanID, thingID string) error {
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
@@ -121,7 +121,7 @@ func (svc *mainfluxThings) Disconnect(owner, chanID, thingID string) error {
 	return nil
 }
 
-func (svc *mainfluxThings) RemoveThing(owner, id string) error {
+func (svc *mainfluxThings) RemoveThing(_ context.Context, owner, id string) error {
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
@@ -151,58 +151,58 @@ func (svc *mainfluxThings) RemoveThing(owner, id string) error {
 	return nil
 }
 
-func (svc *mainfluxThings) ViewChannel(owner, id string) (things.Channel, error) {
+func (svc *mainfluxThings) ViewChannel(_ context.Context, owner, id string) (things.Channel, error) {
 	if c, ok := svc.channels[id]; ok {
 		return c, nil
 	}
 	return things.Channel{}, things.ErrNotFound
 }
 
-func (svc *mainfluxThings) UpdateThing(string, things.Thing) error {
+func (svc *mainfluxThings) UpdateThing(context.Context, string, things.Thing) error {
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) UpdateKey(string, string, string) error {
+func (svc *mainfluxThings) UpdateKey(context.Context, string, string, string) error {
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) ListThings(string, uint64, uint64, string) (things.ThingsPage, error) {
+func (svc *mainfluxThings) ListThings(context.Context, string, uint64, uint64, string) (things.ThingsPage, error) {
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) ListChannelsByThing(string, string, uint64, uint64) (things.ChannelsPage, error) {
+func (svc *mainfluxThings) ListChannelsByThing(context.Context, string, string, uint64, uint64) (things.ChannelsPage, error) {
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) ListThingsByChannel(string, string, uint64, uint64) (things.ThingsPage, error) {
+func (svc *mainfluxThings) ListThingsByChannel(context.Context, string, string, uint64, uint64) (things.ThingsPage, error) {
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) CreateChannel(string, things.Channel) (things.Channel, error) {
+func (svc *mainfluxThings) CreateChannel(context.Context, string, things.Channel) (things.Channel, error) {
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) UpdateChannel(string, things.Channel) error {
+func (svc *mainfluxThings) UpdateChannel(context.Context, string, things.Channel) error {
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) ListChannels(string, uint64, uint64, string) (things.ChannelsPage, error) {
+func (svc *mainfluxThings) ListChannels(context.Context, string, uint64, uint64, string) (things.ChannelsPage, error) {
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) RemoveChannel(string, string) error {
+func (svc *mainfluxThings) RemoveChannel(context.Context, string, string) error {
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) CanAccess(string, string) (string, error) {
+func (svc *mainfluxThings) CanAccess(context.Context, string, string) (string, error) {
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) CanAccessByID(string, string) error {
+func (svc *mainfluxThings) CanAccessByID(context.Context, string, string) error {
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) Identify(string) (string, error) {
+func (svc *mainfluxThings) Identify(context.Context, string) (string, error) {
 	panic("not implemented")
 }
 

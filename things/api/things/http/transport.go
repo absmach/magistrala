@@ -16,10 +16,12 @@ import (
 	"strconv"
 	"strings"
 
+	kitot "github.com/go-kit/kit/tracing/opentracing"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/things"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -39,7 +41,7 @@ var (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc things.Service) http.Handler {
+func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
 	}
@@ -47,105 +49,105 @@ func MakeHandler(svc things.Service) http.Handler {
 	r := bone.New()
 
 	r.Post("/things", kithttp.NewServer(
-		addThingEndpoint(svc),
+		kitot.TraceServer(tracer, "add_thing")(addThingEndpoint(svc)),
 		decodeThingCreation,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Patch("/things/:id/key", kithttp.NewServer(
-		updateKeyEndpoint(svc),
+		kitot.TraceServer(tracer, "update_key")(updateKeyEndpoint(svc)),
 		decodeKeyUpdate,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Put("/things/:id", kithttp.NewServer(
-		updateThingEndpoint(svc),
+		kitot.TraceServer(tracer, "update_thing")(updateThingEndpoint(svc)),
 		decodeThingUpdate,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Delete("/things/:id", kithttp.NewServer(
-		removeThingEndpoint(svc),
+		kitot.TraceServer(tracer, "remove_thing")(removeThingEndpoint(svc)),
 		decodeView,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Get("/things/:id", kithttp.NewServer(
-		viewThingEndpoint(svc),
+		kitot.TraceServer(tracer, "view_thing")(viewThingEndpoint(svc)),
 		decodeView,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Get("/things/:id/channels", kithttp.NewServer(
-		listChannelsByThingEndpoint(svc),
+		kitot.TraceServer(tracer, "list_channels_by_thing")(listChannelsByThingEndpoint(svc)),
 		decodeListByConnection,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Get("/things", kithttp.NewServer(
-		listThingsEndpoint(svc),
+		kitot.TraceServer(tracer, "list_things")(listThingsEndpoint(svc)),
 		decodeList,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Post("/channels", kithttp.NewServer(
-		createChannelEndpoint(svc),
+		kitot.TraceServer(tracer, "create_channel")(createChannelEndpoint(svc)),
 		decodeChannelCreation,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Put("/channels/:id", kithttp.NewServer(
-		updateChannelEndpoint(svc),
+		kitot.TraceServer(tracer, "update_channel")(updateChannelEndpoint(svc)),
 		decodeChannelUpdate,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Delete("/channels/:id", kithttp.NewServer(
-		removeChannelEndpoint(svc),
+		kitot.TraceServer(tracer, "remove_channel")(removeChannelEndpoint(svc)),
 		decodeView,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Get("/channels/:id", kithttp.NewServer(
-		viewChannelEndpoint(svc),
+		kitot.TraceServer(tracer, "view_channel")(viewChannelEndpoint(svc)),
 		decodeView,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Get("/channels/:id/things", kithttp.NewServer(
-		listThingsByChannelEndpoint(svc),
+		kitot.TraceServer(tracer, "list_things_by_channel")(listThingsByChannelEndpoint(svc)),
 		decodeListByConnection,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Get("/channels", kithttp.NewServer(
-		listChannelsEndpoint(svc),
+		kitot.TraceServer(tracer, "list_channels")(listChannelsEndpoint(svc)),
 		decodeList,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Put("/channels/:chanId/things/:thingId", kithttp.NewServer(
-		connectEndpoint(svc),
+		kitot.TraceServer(tracer, "connect")(connectEndpoint(svc)),
 		decodeConnection,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Delete("/channels/:chanId/things/:thingId", kithttp.NewServer(
-		disconnectEndpoint(svc),
+		kitot.TraceServer(tracer, "disconnect")(disconnectEndpoint(svc)),
 		decodeConnection,
 		encodeResponse,
 		opts...,

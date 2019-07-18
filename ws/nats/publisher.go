@@ -9,6 +9,7 @@
 package nats
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sony/gobreaker"
@@ -53,7 +54,7 @@ func (pubsub *natsPubSub) fmtSubject(chanID, subtopic string) string {
 	return subject
 }
 
-func (pubsub *natsPubSub) Publish(msg mainflux.RawMessage) error {
+func (pubsub *natsPubSub) Publish(_ context.Context, _ string, msg mainflux.RawMessage) error {
 	data, err := proto.Marshal(&msg)
 	if err != nil {
 		return err

@@ -1,6 +1,7 @@
 package lora
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -51,7 +52,7 @@ type Service interface {
 	RemoveChannel(string) error
 
 	// Publish forwards messages from the LoRa MQTT broker to Mainflux NATS broker
-	Publish(Message) error
+	Publish(context.Context, string, Message) error
 }
 
 var _ Service = (*adapterService)(nil)
@@ -72,7 +73,7 @@ func New(pub mainflux.MessagePublisher, thingsRM, channelsRM RouteMapRepository)
 }
 
 // Publish forwards messages from Lora MQTT broker to Mainflux NATS broker
-func (as *adapterService) Publish(m Message) error {
+func (as *adapterService) Publish(ctx context.Context, token string, m Message) error {
 	// Get route map of lora application
 	thing, err := as.thingsRM.Get(m.DevEUI)
 	if err != nil {
@@ -111,7 +112,7 @@ func (as *adapterService) Publish(m Message) error {
 		Payload:     payload,
 	}
 
-	return as.publisher.Publish(msg)
+	return as.publisher.Publish(ctx, token, msg)
 }
 
 func (as *adapterService) CreateThing(mfxDevID string, loraDevEUI string) error {

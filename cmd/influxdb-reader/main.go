@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	influxdata "github.com/influxdata/influxdb/client/v2"
@@ -17,46 +19,54 @@ import (
 	"github.com/mainflux/mainflux/readers/api"
 	"github.com/mainflux/mainflux/readers/influxdb"
 	thingsapi "github.com/mainflux/mainflux/things/api/auth/grpc"
+	opentracing "github.com/opentracing/opentracing-go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	jconfig "github.com/uber/jaeger-client-go/config"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
 
 const (
-	defThingsURL = "localhost:8181"
-	defLogLevel  = "error"
-	defPort      = "8180"
-	defDBName    = "mainflux"
-	defDBHost    = "localhost"
-	defDBPort    = "8086"
-	defDBUser    = "mainflux"
-	defDBPass    = "mainflux"
-	defClientTLS = "false"
-	defCACerts   = ""
+	defThingsURL     = "localhost:8181"
+	defLogLevel      = "error"
+	defPort          = "8180"
+	defDBName        = "mainflux"
+	defDBHost        = "localhost"
+	defDBPort        = "8086"
+	defDBUser        = "mainflux"
+	defDBPass        = "mainflux"
+	defClientTLS     = "false"
+	defCACerts       = ""
+	defJaegerURL     = "localhost:6831"
+	defThingsTimeout = "1" // in seconds
 
-	envThingsURL = "MF_THINGS_URL"
-	envLogLevel  = "MF_INFLUX_READER_LOG_LEVEL"
-	envPort      = "MF_INFLUX_READER_PORT"
-	envDBName    = "MF_INFLUX_READER_DB_NAME"
-	envDBHost    = "MF_INFLUX_READER_DB_HOST"
-	envDBPort    = "MF_INFLUX_READER_DB_PORT"
-	envDBUser    = "MF_INFLUX_READER_DB_USER"
-	envDBPass    = "MF_INFLUX_READER_DB_PASS"
-	envClientTLS = "MF_INFLUX_READER_CLIENT_TLS"
-	envCACerts   = "MF_INFLUX_READER_CA_CERTS"
+	envThingsURL     = "MF_THINGS_URL"
+	envLogLevel      = "MF_INFLUX_READER_LOG_LEVEL"
+	envPort          = "MF_INFLUX_READER_PORT"
+	envDBName        = "MF_INFLUX_READER_DB_NAME"
+	envDBHost        = "MF_INFLUX_READER_DB_HOST"
+	envDBPort        = "MF_INFLUX_READER_DB_PORT"
+	envDBUser        = "MF_INFLUX_READER_DB_USER"
+	envDBPass        = "MF_INFLUX_READER_DB_PASS"
+	envClientTLS     = "MF_INFLUX_READER_CLIENT_TLS"
+	envCACerts       = "MF_INFLUX_READER_CA_CERTS"
+	envJaegerURL     = "MF_JAEGER_URL"
+	envThingsTimeout = "MF_INFLUX_READER_THINGS_TIMEOUT"
 )
 
 type config struct {
-	thingsURL string
-	logLevel  string
-	port      string
-	dbName    string
-	dbHost    string
-	dbPort    string
-	dbUser    string
-	dbPass    string
-	clientTLS bool
-	caCerts   string
+	thingsURL     string
+	logLevel      string
+	port          string
+	dbName        string
+	dbHost        string
+	dbPort        string
+	dbUser        string
+	dbPass        string
+	clientTLS     bool
+	caCerts       string
+	jaegerURL     string
+	thingsTimeout time.Duration
 }
 
 func main() {
@@ -68,7 +78,10 @@ func main() {
 	conn := connectToThings(cfg, logger)
 	defer conn.Close()
 
-	tc := thingsapi.NewClient(conn)
+	thingsTracer, thingsCloser := initJaeger("things", cfg.jaegerURL, logger)
+	defer thingsCloser.Close()
+
+	tc := thingsapi.NewClient(conn, thingsTracer, cfg.thingsTimeout)
 
 	client, err := influxdata.NewHTTPClient(clientCfg)
 	if err != nil {
@@ -98,17 +111,24 @@ func loadConfigs() (config, influxdata.HTTPConfig) {
 		log.Fatalf("Invalid value passed for %s\n", envClientTLS)
 	}
 
+	timeout, err := strconv.ParseInt(mainflux.Env(envThingsTimeout, defThingsTimeout), 10, 64)
+	if err != nil {
+		log.Fatalf("Invalid %s value: %s", envThingsTimeout, err.Error())
+	}
+
 	cfg := config{
-		thingsURL: mainflux.Env(envThingsURL, defThingsURL),
-		logLevel:  mainflux.Env(envLogLevel, defLogLevel),
-		port:      mainflux.Env(envPort, defPort),
-		dbName:    mainflux.Env(envDBName, defDBName),
-		dbHost:    mainflux.Env(envDBHost, defDBHost),
-		dbPort:    mainflux.Env(envDBPort, defDBPort),
-		dbUser:    mainflux.Env(envDBUser, defDBUser),
-		dbPass:    mainflux.Env(envDBPass, defDBPass),
-		clientTLS: tls,
-		caCerts:   mainflux.Env(envCACerts, defCACerts),
+		thingsURL:     mainflux.Env(envThingsURL, defThingsURL),
+		logLevel:      mainflux.Env(envLogLevel, defLogLevel),
+		port:          mainflux.Env(envPort, defPort),
+		dbName:        mainflux.Env(envDBName, defDBName),
+		dbHost:        mainflux.Env(envDBHost, defDBHost),
+		dbPort:        mainflux.Env(envDBPort, defDBPort),
+		dbUser:        mainflux.Env(envDBUser, defDBUser),
+		dbPass:        mainflux.Env(envDBPass, defDBPass),
+		clientTLS:     tls,
+		caCerts:       mainflux.Env(envCACerts, defCACerts),
+		jaegerURL:     mainflux.Env(envJaegerURL, defJaegerURL),
+		thingsTimeout: time.Duration(timeout) * time.Second,
 	}
 
 	clientCfg := influxdata.HTTPConfig{
@@ -142,6 +162,26 @@ func connectToThings(cfg config, logger logger.Logger) *grpc.ClientConn {
 		os.Exit(1)
 	}
 	return conn
+}
+
+func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, io.Closer) {
+	tracer, closer, err := jconfig.Configuration{
+		ServiceName: svcName,
+		Sampler: &jconfig.SamplerConfig{
+			Type:  "const",
+			Param: 1,
+		},
+		Reporter: &jconfig.ReporterConfig{
+			LocalAgentHostPort: url,
+			LogSpans:           true,
+		},
+	}.NewTracer()
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to init Jaeger client: %s", err))
+		os.Exit(1)
+	}
+
+	return tracer, closer
 }
 
 func newService(client influxdata.Client, dbName string, logger logger.Logger) readers.MessageRepository {

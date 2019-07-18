@@ -1,6 +1,14 @@
+//
+// Copyright (c) 2019
+// Mainflux
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+
 package http_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,6 +16,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/opentracing/opentracing-go/mocktracer"
 
 	"github.com/mainflux/mainflux/things"
 	httpapi "github.com/mainflux/mainflux/things/api/auth/http"
@@ -72,7 +82,7 @@ func newService(tokens map[string]string) things.Service {
 }
 
 func newServer(svc things.Service) *httptest.Server {
-	mux := httpapi.MakeHandler(svc)
+	mux := httpapi.MakeHandler(mocktracer.New(), svc)
 	return httptest.NewServer(mux)
 }
 
@@ -81,7 +91,7 @@ func TestIdentify(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sth, err := svc.AddThing(token, thing)
+	sth, err := svc.AddThing(context.Background(), token, thing)
 	require.Nil(t, err, fmt.Sprintf("failed to create thing: %s", err))
 
 	ir := identifyReq{Token: sth.Key}
@@ -140,13 +150,13 @@ func TestCanAccess(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sth, err := svc.AddThing(token, thing)
+	sth, err := svc.AddThing(context.Background(), token, thing)
 	require.Nil(t, err, fmt.Sprintf("failed to create thing: %s", err))
 
-	sch, err := svc.CreateChannel(token, channel)
+	sch, err := svc.CreateChannel(context.Background(), token, channel)
 	require.Nil(t, err, fmt.Sprintf("failed to create channel: %s", err))
 
-	err = svc.Connect(token, sch.ID, sth.ID)
+	err = svc.Connect(context.Background(), token, sch.ID, sth.ID)
 	require.Nil(t, err, fmt.Sprintf("failed to connect thing and channel: %s", err))
 
 	car := canAccessReq{
@@ -217,13 +227,13 @@ func TestCanAccessByID(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sth, err := svc.AddThing(token, thing)
+	sth, err := svc.AddThing(context.Background(), token, thing)
 	require.Nil(t, err, fmt.Sprintf("failed to create thing: %s", err))
 
-	sch, err := svc.CreateChannel(token, channel)
+	sch, err := svc.CreateChannel(context.Background(), token, channel)
 	require.Nil(t, err, fmt.Sprintf("failed to create channel: %s", err))
 
-	err = svc.Connect(token, sch.ID, sth.ID)
+	err = svc.Connect(context.Background(), token, sch.ID, sth.ID)
 	require.Nil(t, err, fmt.Sprintf("failed to connect thing and channel: %s", err))
 
 	car := canAccessByIDReq{

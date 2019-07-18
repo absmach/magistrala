@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2018
+// Copyright (c) 2019
 // Mainflux
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -8,7 +8,6 @@
 package grpc_test
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"testing"
@@ -18,7 +17,9 @@ import (
 	"github.com/mainflux/mainflux/users"
 	grpcapi "github.com/mainflux/mainflux/users/api/grpc"
 	"github.com/mainflux/mainflux/users/mocks"
+	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -27,8 +28,11 @@ import (
 const port = 8081
 
 var (
-	user = users.User{"john.doe@email.com", "pass"}
-	svc  users.Service
+	user = users.User{
+		Email:    "john.doe@email.com",
+		Password: "pass",
+	}
+	svc users.Service
 )
 
 func newService() users.Service {
@@ -42,18 +46,16 @@ func newService() users.Service {
 func startGRPCServer(svc users.Service, port int) {
 	listener, _ := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	server := grpc.NewServer()
-	mainflux.RegisterUsersServiceServer(server, grpcapi.NewServer(svc))
+	mainflux.RegisterUsersServiceServer(server, grpcapi.NewServer(mocktracer.New(), svc))
 	go server.Serve(listener)
 }
 
 func TestIdentify(t *testing.T) {
-	svc.Register(user)
+	svc.Register(context.Background(), user)
 
 	usersAddr := fmt.Sprintf("localhost:%d", port)
 	conn, _ := grpc.Dial(usersAddr, grpc.WithInsecure())
-	client := grpcapi.NewClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
+	client := grpcapi.NewClient(mocktracer.New(), conn, time.Second)
 
 	cases := map[string]struct {
 		token string
@@ -65,7 +67,7 @@ func TestIdentify(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		id, err := client.Identify(ctx, &mainflux.Token{Value: tc.token})
+		id, err := client.Identify(context.Background(), &mainflux.Token{Value: tc.token})
 		assert.Equal(t, tc.id, id.GetValue(), fmt.Sprintf("%s: expected %s got %s", desc, tc.id, id.GetValue()))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s", desc, tc.err, err))
 	}

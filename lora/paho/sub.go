@@ -2,6 +2,7 @@ package paho
 
 // LoraSubscribe subscribe to lora server messages
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -50,6 +51,6 @@ func (b broker) handleMsg(c mqtt.Client, msg mqtt.Message) {
 		return
 	}
 
-	b.svc.Publish(m)
+	b.svc.Publish(context.Background(), "", m)
 	return
 }

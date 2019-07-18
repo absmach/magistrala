@@ -11,6 +11,7 @@ package users
 
 import (
 	"context"
+	"time"
 
 	"github.com/mainflux/mainflux/things"
 
@@ -33,7 +34,10 @@ func NewSingleUserService(email, token string) mainflux.UsersServiceClient {
 	}
 }
 
-func (repo singleUserRepo) Identify(_ context.Context, token *mainflux.Token, opts ...grpc.CallOption) (*mainflux.UserID, error) {
+func (repo singleUserRepo) Identify(ctx context.Context, token *mainflux.Token, opts ...grpc.CallOption) (*mainflux.UserID, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+
 	if repo.token != token.GetValue() {
 		return nil, things.ErrUnauthorizedAccess
 	}

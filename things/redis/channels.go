@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2018
+// Copyright (c) 2019
 // Mainflux
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -8,6 +8,7 @@
 package redis
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-redis/redis"
@@ -27,22 +28,22 @@ func NewChannelCache(client *redis.Client) things.ChannelCache {
 	return channelCache{client: client}
 }
 
-func (cc channelCache) Connect(chanID, thingID string) error {
+func (cc channelCache) Connect(_ context.Context, chanID, thingID string) error {
 	cid, tid := kv(chanID, thingID)
 	return cc.client.SAdd(cid, tid).Err()
 }
 
-func (cc channelCache) HasThing(chanID, thingID string) bool {
+func (cc channelCache) HasThing(_ context.Context, chanID, thingID string) bool {
 	cid, tid := kv(chanID, thingID)
 	return cc.client.SIsMember(cid, tid).Val()
 }
 
-func (cc channelCache) Disconnect(chanID, thingID string) error {
+func (cc channelCache) Disconnect(_ context.Context, chanID, thingID string) error {
 	cid, tid := kv(chanID, thingID)
 	return cc.client.SRem(cid, tid).Err()
 }
 
-func (cc channelCache) Remove(chanID string) error {
+func (cc channelCache) Remove(_ context.Context, chanID string) error {
 	cid, _ := kv(chanID, "0")
 	return cc.client.Del(cid).Err()
 }

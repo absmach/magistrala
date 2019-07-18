@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2018
+// Copyright (c) 2019
 // Mainflux
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -7,7 +7,10 @@
 
 package users
 
-import "errors"
+import (
+	"context"
+	"errors"
+)
 
 var (
 	// ErrConflict indicates usage of the existing email during account
@@ -31,12 +34,12 @@ var (
 type Service interface {
 	// Register creates new user account. In case of the failed registration, a
 	// non-nil error value is returned.
-	Register(User) error
+	Register(context.Context, User) error
 
 	// Login authenticates the user given its credentials. Successful
 	// authentication generates new access token. Failed invocations are
 	// identified by the non-nil error values in the response.
-	Login(User) (string, error)
+	Login(context.Context, User) (string, error)
 
 	// Identify validates user's token. If token is valid, user's id
 	// is returned. If token is invalid, or invocation failed for some
@@ -57,18 +60,18 @@ func New(users UserRepository, hasher Hasher, idp IdentityProvider) Service {
 	return &usersService{users: users, hasher: hasher, idp: idp}
 }
 
-func (svc usersService) Register(user User) error {
+func (svc usersService) Register(ctx context.Context, user User) error {
 	hash, err := svc.hasher.Hash(user.Password)
 	if err != nil {
 		return ErrMalformedEntity
 	}
 
 	user.Password = hash
-	return svc.users.Save(user)
+	return svc.users.Save(ctx, user)
 }
 
-func (svc usersService) Login(user User) (string, error) {
-	dbUser, err := svc.users.RetrieveByID(user.Email)
+func (svc usersService) Login(ctx context.Context, user User) (string, error) {
+	dbUser, err := svc.users.RetrieveByID(ctx, user.Email)
 	if err != nil {
 		return "", ErrUnauthorizedAccess
 	}

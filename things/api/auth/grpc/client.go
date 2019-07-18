@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2018
+// Copyright (c) 2019
 // Mainflux
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -8,10 +8,14 @@
 package grpc
 
 import (
+	"time"
+
 	"github.com/go-kit/kit/endpoint"
+	kitot "github.com/go-kit/kit/tracing/opentracing"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/mainflux/mainflux"
+	opentracing "github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -19,45 +23,53 @@ import (
 var _ mainflux.ThingsServiceClient = (*grpcClient)(nil)
 
 type grpcClient struct {
+	timeout       time.Duration
 	canAccess     endpoint.Endpoint
 	canAccessByID endpoint.Endpoint
 	identify      endpoint.Endpoint
 }
 
 // NewClient returns new gRPC client instance.
-func NewClient(conn *grpc.ClientConn) mainflux.ThingsServiceClient {
+func NewClient(conn *grpc.ClientConn, tracer opentracing.Tracer, timeout time.Duration) mainflux.ThingsServiceClient {
 	svcName := "mainflux.ThingsService"
 
 	return &grpcClient{
-		canAccess: kitgrpc.NewClient(
+		timeout: timeout,
+		canAccess: kitot.TraceClient(tracer, "can_access")(kitgrpc.NewClient(
 			conn,
 			svcName,
 			"CanAccess",
 			encodeCanAccessRequest,
 			decodeIdentityResponse,
 			mainflux.ThingID{},
-		).Endpoint(),
-		canAccessByID: kitgrpc.NewClient(
+		).Endpoint()),
+		canAccessByID: kitot.TraceClient(tracer, "can_access_by_id")(kitgrpc.NewClient(
 			conn,
 			svcName,
 			"CanAccessByID",
 			encodeCanAccessByIDRequest,
 			decodeEmptyResponse,
 			empty.Empty{},
-		).Endpoint(),
-		identify: kitgrpc.NewClient(
+		).Endpoint()),
+		identify: kitot.TraceClient(tracer, "identify")(kitgrpc.NewClient(
 			conn,
 			svcName,
 			"Identify",
 			encodeIdentifyRequest,
 			decodeIdentityResponse,
 			mainflux.ThingID{},
-		).Endpoint(),
+		).Endpoint()),
 	}
 }
 
 func (client grpcClient) CanAccess(ctx context.Context, req *mainflux.AccessReq, _ ...grpc.CallOption) (*mainflux.ThingID, error) {
-	ar := accessReq{thingKey: req.GetToken(), chanID: req.GetChanID()}
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
+
+	ar := accessReq{
+		thingKey: req.GetToken(),
+		chanID:   req.GetChanID(),
+	}
 	res, err := client.canAccess(ctx, ar)
 	if err != nil {
 		return nil, err
@@ -79,7 +91,10 @@ func (client grpcClient) CanAccessByID(ctx context.Context, req *mainflux.Access
 }
 
 func (client grpcClient) Identify(ctx context.Context, req *mainflux.Token, _ ...grpc.CallOption) (*mainflux.ThingID, error) {
-	res, err := client.identify(ctx, identifyReq{req.GetValue()})
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
+
+	res, err := client.identify(ctx, identifyReq{key: req.GetValue()})
 	if err != nil {
 		return nil, err
 	}

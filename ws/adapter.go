@@ -10,6 +10,7 @@
 package ws
 
 import (
+	"context"
 	"errors"
 	"sync"
 
@@ -83,11 +84,11 @@ type adapterService struct {
 
 // New instantiates the WS adapter implementation.
 func New(pubsub Service) Service {
-	return &adapterService{pubsub}
+	return &adapterService{pubsub: pubsub}
 }
 
-func (as *adapterService) Publish(msg mainflux.RawMessage) error {
-	if err := as.pubsub.Publish(msg); err != nil {
+func (as *adapterService) Publish(ctx context.Context, token string, msg mainflux.RawMessage) error {
+	if err := as.pubsub.Publish(ctx, token, msg); err != nil {
 		switch err {
 		case broker.ErrConnectionClosed, broker.ErrInvalidConnection:
 			return ErrFailedConnection

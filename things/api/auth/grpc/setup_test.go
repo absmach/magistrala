@@ -17,6 +17,7 @@ import (
 	"github.com/mainflux/mainflux/things"
 	grpcapi "github.com/mainflux/mainflux/things/api/auth/grpc"
 	"github.com/mainflux/mainflux/things/mocks"
+	"github.com/opentracing/opentracing-go/mocktracer"
 	"google.golang.org/grpc"
 )
 
@@ -39,7 +40,7 @@ func startServer() {
 	svc = newService(map[string]string{token: email})
 	listener, _ := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	server := grpc.NewServer()
-	mainflux.RegisterThingsServiceServer(server, grpcapi.NewServer(svc))
+	mainflux.RegisterThingsServiceServer(server, grpcapi.NewServer(mocktracer.New(), svc))
 	go server.Serve(listener)
 }
 

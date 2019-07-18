@@ -8,6 +8,7 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/jmoiron/sqlx"
@@ -30,7 +31,7 @@ func New(db *sqlx.DB) users.UserRepository {
 	return &userRepository{db}
 }
 
-func (ur userRepository) Save(user users.User) error {
+func (ur userRepository) Save(_ context.Context, user users.User) error {
 	q := `INSERT INTO users (email, password) VALUES (:email, :password)`
 
 	dbu := toDBUser(user)
@@ -44,7 +45,7 @@ func (ur userRepository) Save(user users.User) error {
 	return nil
 }
 
-func (ur userRepository) RetrieveByID(email string) (users.User, error) {
+func (ur userRepository) RetrieveByID(_ context.Context, email string) (users.User, error) {
 	q := `SELECT password FROM users WHERE email = $1`
 
 	dbu := dbUser{

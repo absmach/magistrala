@@ -44,6 +44,8 @@ default values.
 | MF_USERS_URL                | Users service URL                                                      | localhost:8181 |
 | MF_THINGS_SINGLE_USER_EMAIL | User email for single user mode (no gRPC communication with users)     |                |
 | MF_THINGS_SINGLE_USER_TOKEN | User token for single user mode that should be passed in auth header   |                |
+| MF_JAEGER_URL               | Jaeger server URL                                                      | localhost:6831 |
+| MF_THINGS_USERS_TIMEOUT     | Users gRPC request timeout in seconds                                  | 1              |
 
 **Note** that if you want `things` service to have only one user locally, you should use `MF_THINGS_SINGLE_USER` env vars. By specifying these, you don't need `users` service in your deployment as it won't be used for authorization.
 
@@ -88,6 +90,8 @@ services:
       MF_THINGS_SECRET: [String used for signing tokens]
       MF_THINGS_SINGLE_USER_EMAIL: [User email for single user mode (no gRPC communication with users)]
       MF_THINGS_SINGLE_USER_TOKEN: [User token for single user mode that should be passed in auth header]
+      MF_JAEGER_URL: [Jaeger server URL]
+      MF_THINGS_USERS_TIMEOUT: [Users gRPC request timeout in seconds]
 ```
 
 To start the service outside of the container, execute the following shell script:
@@ -105,7 +109,7 @@ make things
 make install
 
 # set the environment variables and run the service
-MF_THINGS_LOG_LEVEL=[Things log level] MF_THINGS_DB_HOST=[Database host address] MF_THINGS_DB_PORT=[Database host port] MF_THINGS_DB_USER=[Database user] MF_THINGS_DB_PASS=[Database password] MF_THINGS_DB=[Name of the database used by the service] MF_THINGS_DB_SSL_MODE=[SSL mode to connect to the database with] MF_THINGS_DB_SSL_CERT=[Path to the PEM encoded certificate file] MF_THINGS_DB_SSL_KEY=[Path to the PEM encoded key file] MF_THINGS_DB_SSL_ROOT_CERT=[Path to the PEM encoded root certificate file] MF_HTTP_ADAPTER_CA_CERTS=[Path to trusted CAs in PEM format] MF_THINGS_CACHE_URL=[Cache database URL] MF_THINGS_CACHE_PASS=[Cache database password] MF_THINGS_CACHE_DB=[Cache instance that should be used] MF_THINGS_ES_URL=[Event store URL] MF_THINGS_ES_PASS=[Event store password] MF_THINGS_ES_DB=[Event store instance that should be used] MF_THINGS_HTTP_PORT=[Service HTTP port] MF_THINGS_AUTH_HTTP_PORT=[Service auth HTTP port] MF_THINGS_AUTH_GRPC_PORT=[Service auth gRPC port] MF_USERS_URL=[Users service URL] MF_THINGS_SERVER_CERT=[Path to server certificate] MF_THINGS_SERVER_KEY=[Path to server key] MF_THINGS_SINGLE_USER_EMAIL=[User email for single user mode (no gRPC communication with users)] MF_THINGS_SINGLE_USER_TOKEN=[User token for single user mode that should be passed in auth header] $GOBIN/mainflux-things
+MF_THINGS_LOG_LEVEL=[Things log level] MF_THINGS_DB_HOST=[Database host address] MF_THINGS_DB_PORT=[Database host port] MF_THINGS_DB_USER=[Database user] MF_THINGS_DB_PASS=[Database password] MF_THINGS_DB=[Name of the database used by the service] MF_THINGS_DB_SSL_MODE=[SSL mode to connect to the database with] MF_THINGS_DB_SSL_CERT=[Path to the PEM encoded certificate file] MF_THINGS_DB_SSL_KEY=[Path to the PEM encoded key file] MF_THINGS_DB_SSL_ROOT_CERT=[Path to the PEM encoded root certificate file] MF_HTTP_ADAPTER_CA_CERTS=[Path to trusted CAs in PEM format] MF_THINGS_CACHE_URL=[Cache database URL] MF_THINGS_CACHE_PASS=[Cache database password] MF_THINGS_CACHE_DB=[Cache instance that should be used] MF_THINGS_ES_URL=[Event store URL] MF_THINGS_ES_PASS=[Event store password] MF_THINGS_ES_DB=[Event store instance that should be used] MF_THINGS_HTTP_PORT=[Service HTTP port] MF_THINGS_AUTH_HTTP_PORT=[Service auth HTTP port] MF_THINGS_AUTH_GRPC_PORT=[Service auth gRPC port] MF_USERS_URL=[Users service URL] MF_THINGS_SERVER_CERT=[Path to server certificate] MF_THINGS_SERVER_KEY=[Path to server key] MF_THINGS_SINGLE_USER_EMAIL=[User email for single user mode (no gRPC communication with users)] MF_THINGS_SINGLE_USER_TOKEN=[User token for single user mode that should be passed in auth header] MF_JAEGER_URL=[Jaeger server URL] MF_THINGS_USERS_TIMEOUT=[Users gRPC request timeout in seconds] $GOBIN/mainflux-things
 ```
 
 Setting `MF_THINGS_CA_CERTS` expects a file in PEM format of trusted CAs. This will enable TLS against the Users gRPC endpoint trusting only those CAs that are provided.

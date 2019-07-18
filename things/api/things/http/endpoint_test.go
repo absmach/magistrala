@@ -8,6 +8,7 @@
 package http_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -22,6 +23,7 @@ import (
 	"github.com/mainflux/mainflux/things"
 	httpapi "github.com/mainflux/mainflux/things/api/things/http"
 	"github.com/mainflux/mainflux/things/mocks"
+	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -83,7 +85,7 @@ func newService(tokens map[string]string) things.Service {
 }
 
 func newServer(svc things.Service) *httptest.Server {
-	mux := httpapi.MakeHandler(svc)
+	mux := httpapi.MakeHandler(mocktracer.New(), svc)
 	return httptest.NewServer(mux)
 }
 
@@ -210,7 +212,7 @@ func TestUpdateThing(t *testing.T) {
 	defer ts.Close()
 
 	data := toJSON(thing)
-	sth, _ := svc.AddThing(token, thing)
+	sth, _ := svc.AddThing(context.Background(), token, thing)
 
 	th := thing
 	th.Name = invalidName
@@ -327,7 +329,7 @@ func TestUpdateKey(t *testing.T) {
 
 	th := thing
 	th.Key = "key"
-	sth, _ := svc.AddThing(token, th)
+	sth, _ := svc.AddThing(context.Background(), token, th)
 
 	sth.Key = "new-key"
 	data := toJSON(sth)
@@ -445,7 +447,7 @@ func TestViewThing(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sth, err := svc.AddThing(token, thing)
+	sth, err := svc.AddThing(context.Background(), token, thing)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	thres := thingRes{
@@ -524,7 +526,7 @@ func TestListThings(t *testing.T) {
 
 	data := []thingRes{}
 	for i := 0; i < 100; i++ {
-		sth, err := svc.AddThing(token, thing)
+		sth, err := svc.AddThing(context.Background(), token, thing)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		thres := thingRes{
 			ID:       sth.ID,
@@ -671,14 +673,14 @@ func TestListThingsByChannel(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sch, err := svc.CreateChannel(token, channel)
+	sch, err := svc.CreateChannel(context.Background(), token, channel)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	data := []thingRes{}
 	for i := 0; i < 101; i++ {
-		sth, err := svc.AddThing(token, thing)
+		sth, err := svc.AddThing(context.Background(), token, thing)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-		err = svc.Connect(token, sch.ID, sth.ID)
+		err = svc.Connect(context.Background(), token, sch.ID, sth.ID)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 		thres := thingRes{
@@ -822,7 +824,7 @@ func TestRemoveThing(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sth, _ := svc.AddThing(token, thing)
+	sth, _ := svc.AddThing(context.Background(), token, thing)
 
 	cases := []struct {
 		desc   string
@@ -977,7 +979,7 @@ func TestUpdateChannel(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sch, _ := svc.CreateChannel(token, channel)
+	sch, _ := svc.CreateChannel(context.Background(), token, channel)
 
 	ch := channel
 	ch.Name = "updated_channel"
@@ -1095,10 +1097,10 @@ func TestViewChannel(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sch, _ := svc.CreateChannel(token, channel)
+	sch, _ := svc.CreateChannel(context.Background(), token, channel)
 
-	sth, _ := svc.AddThing(token, thing)
-	svc.Connect(token, sch.ID, sth.ID)
+	sth, _ := svc.AddThing(context.Background(), token, thing)
+	svc.Connect(context.Background(), token, sch.ID, sth.ID)
 
 	chres := channelRes{
 		ID:       sch.ID,
@@ -1175,11 +1177,11 @@ func TestListChannels(t *testing.T) {
 
 	channels := []channelRes{}
 	for i := 0; i < 101; i++ {
-		sch, err := svc.CreateChannel(token, channel)
+		sch, err := svc.CreateChannel(context.Background(), token, channel)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-		sth, err := svc.AddThing(token, thing)
+		sth, err := svc.AddThing(context.Background(), token, thing)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-		svc.Connect(token, sch.ID, sth.ID)
+		svc.Connect(context.Background(), token, sch.ID, sth.ID)
 
 		chres := channelRes{
 			ID:       sch.ID,
@@ -1325,14 +1327,14 @@ func TestListChannelsByThing(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sth, err := svc.AddThing(token, thing)
+	sth, err := svc.AddThing(context.Background(), token, thing)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	channels := []channelRes{}
 	for i := 0; i < 101; i++ {
-		sch, err := svc.CreateChannel(token, channel)
+		sch, err := svc.CreateChannel(context.Background(), token, channel)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-		err = svc.Connect(token, sch.ID, sth.ID)
+		err = svc.Connect(context.Background(), token, sch.ID, sth.ID)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 		chres := channelRes{
@@ -1472,7 +1474,7 @@ func TestRemoveChannel(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sch, _ := svc.CreateChannel(token, channel)
+	sch, _ := svc.CreateChannel(context.Background(), token, channel)
 
 	cases := []struct {
 		desc   string
@@ -1535,9 +1537,9 @@ func TestConnect(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	ath, _ := svc.AddThing(token, thing)
-	ach, _ := svc.CreateChannel(token, channel)
-	bch, _ := svc.CreateChannel(otherToken, channel)
+	ath, _ := svc.AddThing(context.Background(), token, thing)
+	ach, _ := svc.CreateChannel(context.Background(), token, channel)
+	bch, _ := svc.CreateChannel(context.Background(), otherToken, channel)
 
 	cases := []struct {
 		desc    string
@@ -1627,10 +1629,10 @@ func TestDisconnnect(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	ath, _ := svc.AddThing(token, thing)
-	ach, _ := svc.CreateChannel(token, channel)
-	svc.Connect(token, ach.ID, ath.ID)
-	bch, _ := svc.CreateChannel(otherToken, channel)
+	ath, _ := svc.AddThing(context.Background(), token, thing)
+	ach, _ := svc.CreateChannel(context.Background(), token, channel)
+	svc.Connect(context.Background(), token, ach.ID, ath.ID)
+	bch, _ := svc.CreateChannel(context.Background(), otherToken, channel)
 
 	cases := []struct {
 		desc    string

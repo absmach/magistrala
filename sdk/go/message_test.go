@@ -17,16 +17,17 @@ import (
 	"github.com/mainflux/mainflux/http/api"
 	"github.com/mainflux/mainflux/http/mocks"
 	sdk "github.com/mainflux/mainflux/sdk/go"
+	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 )
 
-func newMessageService() mainflux.MessagePublisher {
+func newMessageService(cc mainflux.ThingsServiceClient) mainflux.MessagePublisher {
 	pub := mocks.NewPublisher()
-	return adapter.New(pub)
+	return adapter.New(pub, cc)
 }
 
-func newMessageServer(pub mainflux.MessagePublisher, cc mainflux.ThingsServiceClient) *httptest.Server {
-	mux := api.MakeHandler(pub, cc)
+func newMessageServer(pub mainflux.MessagePublisher) *httptest.Server {
+	mux := api.MakeHandler(pub, mocktracer.New())
 	return httptest.NewServer(mux)
 }
 
@@ -36,8 +37,8 @@ func TestSendMessage(t *testing.T) {
 	invalidToken := "invalid_token"
 	msg := `[{"n":"current","t":-1,"v":1.6}]`
 	thingsClient := mocks.NewThingsClient(map[string]string{atoken: chanID})
-	pub := newMessageService()
-	ts := newMessageServer(pub, thingsClient)
+	pub := newMessageService(thingsClient)
+	ts := newMessageServer(pub)
 	defer ts.Close()
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
@@ -104,8 +105,8 @@ func TestSetContentType(t *testing.T) {
 	atoken := "auth_token"
 	thingsClient := mocks.NewThingsClient(map[string]string{atoken: chanID})
 
-	pub := newMessageService()
-	ts := newMessageServer(pub, thingsClient)
+	pub := newMessageService(thingsClient)
+	ts := newMessageServer(pub)
 	defer ts.Close()
 
 	sdkConf := sdk.Config{

@@ -17,6 +17,7 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/mainflux/mainflux"
+	"github.com/opentracing/opentracing-go/mocktracer"
 
 	"github.com/mainflux/mainflux/bootstrap"
 	"github.com/mainflux/mainflux/bootstrap/mocks"
@@ -88,7 +89,7 @@ func newThingsService(users mainflux.UsersServiceClient) things.Service {
 }
 
 func newThingsServer(svc things.Service) *httptest.Server {
-	mux := httpapi.MakeHandler(svc)
+	mux := httpapi.MakeHandler(mocktracer.New(), svc)
 	return httptest.NewServer(mux)
 }
 func TestAdd(t *testing.T) {

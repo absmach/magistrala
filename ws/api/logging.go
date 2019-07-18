@@ -10,6 +10,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -30,7 +31,7 @@ func LoggingMiddleware(svc ws.Service, logger log.Logger) ws.Service {
 	return &loggingMiddleware{logger, svc}
 }
 
-func (lm *loggingMiddleware) Publish(msg mainflux.RawMessage) (err error) {
+func (lm *loggingMiddleware) Publish(ctx context.Context, token string, msg mainflux.RawMessage) (err error) {
 	defer func(begin time.Time) {
 		destChannel := msg.Channel
 		if msg.Subtopic != "" {
@@ -44,7 +45,7 @@ func (lm *loggingMiddleware) Publish(msg mainflux.RawMessage) (err error) {
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.Publish(msg)
+	return lm.svc.Publish(ctx, token, msg)
 }
 
 func (lm *loggingMiddleware) Subscribe(chanID, subtopic string, channel *ws.Channel) (err error) {

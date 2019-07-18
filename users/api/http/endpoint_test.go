@@ -8,6 +8,7 @@
 package http_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -22,6 +23,7 @@ import (
 	"github.com/mainflux/mainflux/users"
 	httpapi "github.com/mainflux/mainflux/users/api/http"
 	"github.com/mainflux/mainflux/users/mocks"
+	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,7 +34,7 @@ const (
 	id           = "123e4567-e89b-12d3-a456-000000000001"
 )
 
-var user = users.User{"user@example.com", "password"}
+var user = users.User{Email: "user@example.com", Password: "password"}
 
 type testRequest struct {
 	client      *http.Client
@@ -66,8 +68,8 @@ func newService() users.Service {
 }
 
 func newServer(svc users.Service) *httptest.Server {
-	logger, _:= log.New(os.Stdout, log.Info.String())
-	mux := httpapi.MakeHandler(svc, logger)
+	logger, _ := log.New(os.Stdout, log.Info.String())
+	mux := httpapi.MakeHandler(svc, mocktracer.New(), logger)
 	return httptest.NewServer(mux)
 }
 
@@ -124,10 +126,19 @@ func TestLogin(t *testing.T) {
 
 	tokenData := toJSON(map[string]string{"token": user.Email})
 	data := toJSON(user)
-	invalidEmailData := toJSON(users.User{Email: invalidEmail, Password: "password"})
-	invalidData := toJSON(users.User{"user@example.com", "invalid_password"})
-	nonexistentData := toJSON(users.User{"non-existentuser@example.com", "pass"})
-	svc.Register(user)
+	invalidEmailData := toJSON(users.User{
+		Email:    invalidEmail,
+		Password: "password",
+	})
+	invalidData := toJSON(users.User{
+		Email:    "user@example.com",
+		Password: "invalid_password",
+	})
+	nonexistentData := toJSON(users.User{
+		Email:    "non-existentuser@example.com",
+		Password: "pass",
+	})
+	svc.Register(context.Background(), user)
 
 	cases := []struct {
 		desc        string

@@ -9,6 +9,7 @@
 package nats
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/gogo/protobuf/proto"
@@ -27,7 +28,7 @@ func NewMessagePublisher(nc *broker.Conn) mainflux.MessagePublisher {
 	return &natsPublisher{nc}
 }
 
-func (pub *natsPublisher) Publish(msg mainflux.RawMessage) error {
+func (pub *natsPublisher) Publish(_ context.Context, _ string, msg mainflux.RawMessage) error {
 	data, err := proto.Marshal(&msg)
 	if err != nil {
 		return err

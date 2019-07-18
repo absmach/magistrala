@@ -8,6 +8,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -27,7 +28,7 @@ func LoggingMiddleware(svc users.Service, logger log.Logger) users.Service {
 	return &loggingMiddleware{logger, svc}
 }
 
-func (lm *loggingMiddleware) Register(user users.User) (err error) {
+func (lm *loggingMiddleware) Register(ctx context.Context, user users.User) (err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method register for user %s took %s to complete", user.Email, time.Since(begin))
 		if err != nil {
@@ -38,10 +39,10 @@ func (lm *loggingMiddleware) Register(user users.User) (err error) {
 
 	}(time.Now())
 
-	return lm.svc.Register(user)
+	return lm.svc.Register(ctx, user)
 }
 
-func (lm *loggingMiddleware) Login(user users.User) (token string, err error) {
+func (lm *loggingMiddleware) Login(ctx context.Context, user users.User) (token string, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method login for user %s took %s to complete", user.Email, time.Since(begin))
 		if err != nil {
@@ -51,7 +52,7 @@ func (lm *loggingMiddleware) Login(user users.User) (token string, err error) {
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.Login(user)
+	return lm.svc.Login(ctx, user)
 }
 
 func (lm *loggingMiddleware) Identify(key string) (id string, err error) {

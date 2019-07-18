@@ -221,7 +221,7 @@ func receive(svc coap.Service, msg *gocoap.Message) *gocoap.Message {
 		Payload:   msg.Payload,
 	}
 
-	if err := svc.Publish(rawMsg); err != nil {
+	if err := svc.Publish(context.Background(), "", rawMsg); err != nil {
 		res.Code = gocoap.InternalServerError
 	}
 

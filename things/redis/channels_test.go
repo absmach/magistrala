@@ -8,6 +8,7 @@
 package redis_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -39,7 +40,7 @@ func TestConnect(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		err := channelCache.Connect(cid, tid)
+		err := channelCache.Connect(context.Background(), cid, tid)
 		assert.Nil(t, err, fmt.Sprintf("%s: fail to connect due to: %s\n", tc.desc, err))
 	}
 }
@@ -50,7 +51,7 @@ func TestHasThing(t *testing.T) {
 	cid := "123"
 	tid := "321"
 
-	err := channelCache.Connect(cid, tid)
+	err := channelCache.Connect(context.Background(), cid, tid)
 	require.Nil(t, err, fmt.Sprintf("connect thing to channel: fail to connect due to: %s\n", err))
 
 	cases := map[string]struct {
@@ -76,7 +77,7 @@ func TestHasThing(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		hasAccess := channelCache.HasThing(tc.cid, tc.tid)
+		hasAccess := channelCache.HasThing(context.Background(), tc.cid, tc.tid)
 		assert.Equal(t, tc.hasAccess, hasAccess, fmt.Sprintf("%s: expected %t got %t\n", desc, tc.hasAccess, hasAccess))
 	}
 }
@@ -87,7 +88,7 @@ func TestDisconnect(t *testing.T) {
 	tid := "321"
 	tid2 := "322"
 
-	err := channelCache.Connect(cid, tid)
+	err := channelCache.Connect(context.Background(), cid, tid)
 	require.Nil(t, err, fmt.Sprintf("connect thing to channel: fail to connect due to: %s\n", err))
 
 	cases := []struct {
@@ -110,10 +111,10 @@ func TestDisconnect(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		err := channelCache.Disconnect(tc.cid, tc.tid)
+		err := channelCache.Disconnect(context.Background(), tc.cid, tc.tid)
 		assert.Nil(t, err, fmt.Sprintf("%s: fail due to: %s\n", tc.desc, err))
 
-		hasAccess := channelCache.HasThing(tc.cid, tc.tid)
+		hasAccess := channelCache.HasThing(context.Background(), tc.cid, tc.tid)
 		assert.Equal(t, tc.hasAccess, hasAccess, fmt.Sprintf("access check after %s: expected %t got %t\n", tc.desc, tc.hasAccess, hasAccess))
 	}
 }
@@ -125,7 +126,7 @@ func TestRemove(t *testing.T) {
 	cid2 := "124"
 	tid := "321"
 
-	err := channelCache.Connect(cid, tid)
+	err := channelCache.Connect(context.Background(), cid, tid)
 	require.Nil(t, err, fmt.Sprintf("connect thing to channel: fail to connect due to: %s\n", err))
 
 	cases := []struct {
@@ -152,9 +153,9 @@ func TestRemove(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := channelCache.Remove(tc.cid)
+		err := channelCache.Remove(context.Background(), tc.cid)
 		assert.Nil(t, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		hasAcces := channelCache.HasThing(tc.cid, tc.tid)
+		hasAcces := channelCache.HasThing(context.Background(), tc.cid, tc.tid)
 		assert.Equal(t, tc.hasAccess, hasAcces, "%s - check access after removing channel: expected %t got %t\n", tc.desc, tc.hasAccess, hasAcces)
 	}
 }

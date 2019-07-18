@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2018
+// Copyright (c) 2019
 // Mainflux
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -16,12 +16,13 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
-	"time"
 
+	kitot "github.com/go-kit/kit/tracing/opentracing"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/things"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -34,18 +35,28 @@ var (
 	errMalformedSubtopic = errors.New("malformed subtopic")
 )
 
-var (
-	auth              mainflux.ThingsServiceClient
-	channelPartRegExp = regexp.MustCompile(`^/channels/([\w\-]+)/messages(/[^?]*)?(\?.*)?$`)
-)
+var channelPartRegExp = regexp.MustCompile(`^/channels/([\w\-]+)/messages(/[^?]*)?(\?.*)?$`)
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc mainflux.MessagePublisher, tc mainflux.ThingsServiceClient) http.Handler {
-	auth = tc
+func MakeHandler(svc mainflux.MessagePublisher, tracer opentracing.Tracer) http.Handler {
+	opts := []kithttp.ServerOption{
+		kithttp.ServerErrorEncoder(encodeError),
+	}
 
 	r := bone.New()
-	r.Post("/channels/:id/messages", handshake(svc))
-	r.Post("/channels/:id/messages/*", handshake(svc))
+	r.Post("/channels/:id/messages", kithttp.NewServer(
+		kitot.TraceServer(tracer, "publish")(sendMessageEndpoint(svc)),
+		decodeRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	r.Post("/channels/:id/messages/*", kithttp.NewServer(
+		kitot.TraceServer(tracer, "publish")(sendMessageEndpoint(svc)),
+		decodeRequest,
+		encodeResponse,
+		opts...,
+	))
 
 	r.GetFunc("/version", mainflux.Version("http"))
 	r.Handle("/metrics", promhttp.Handler())
@@ -53,26 +64,12 @@ func MakeHandler(svc mainflux.MessagePublisher, tc mainflux.ThingsServiceClient)
 	return r
 }
 
-func handshake(svc mainflux.MessagePublisher) *kithttp.Server {
-	opts := []kithttp.ServerOption{
-		kithttp.ServerErrorEncoder(encodeError),
-	}
-
-	return kithttp.NewServer(
-		sendMessageEndpoint(svc),
-		decodeRequest,
-		encodeResponse,
-		opts...,
-	)
-}
-
 func parseSubtopic(subtopic string) (string, error) {
 	if subtopic == "" {
 		return subtopic, nil
 	}
 
-	var err error
-	subtopic, err = url.QueryUnescape(subtopic)
+	subtopic, err := url.QueryUnescape(subtopic)
 	if err != nil {
 		return "", errMalformedSubtopic
 	}
@@ -96,7 +93,7 @@ func parseSubtopic(subtopic string) (string, error) {
 	return subtopic, nil
 }
 
-func decodeRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 	channelParts := channelPartRegExp.FindStringSubmatch(r.RequestURI)
 	if len(channelParts) < 2 {
 		return nil, errMalformedData
@@ -108,18 +105,12 @@ func decodeRequest(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
-	publisher, err := authorize(r, chanID)
-	if err != nil {
-		return nil, err
-	}
-
 	payload, err := decodePayload(r.Body)
 	if err != nil {
 		return nil, err
 	}
 
 	msg := mainflux.RawMessage{
-		Publisher:   publisher,
 		Protocol:    protocol,
 		ContentType: r.Header.Get("Content-Type"),
 		Channel:     chanID,
@@ -127,25 +118,12 @@ func decodeRequest(_ context.Context, r *http.Request) (interface{}, error) {
 		Payload:     payload,
 	}
 
-	return msg, nil
-}
-
-func authorize(r *http.Request, chanID string) (string, error) {
-	apiKey := r.Header.Get("Authorization")
-
-	if apiKey == "" {
-		return "", things.ErrUnauthorizedAccess
+	req := publishReq{
+		msg:   msg,
+		token: r.Header.Get("Authorization"),
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	id, err := auth.CanAccess(ctx, &mainflux.AccessReq{Token: apiKey, ChanID: chanID})
-	if err != nil {
-		return "", err
-	}
-
-	return id.GetValue(), nil
+	return req, nil
 }
 
 func decodePayload(body io.ReadCloser) ([]byte, error) {

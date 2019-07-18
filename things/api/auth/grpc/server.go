@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2018
+// Copyright (c) 2019
 // Mainflux
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -8,10 +8,12 @@
 package grpc
 
 import (
+	kitot "github.com/go-kit/kit/tracing/opentracing"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/things"
+	opentracing "github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -26,10 +28,10 @@ type grpcServer struct {
 }
 
 // NewServer returns new ThingsServiceServer instance.
-func NewServer(svc things.Service) mainflux.ThingsServiceServer {
+func NewServer(tracer opentracing.Tracer, svc things.Service) mainflux.ThingsServiceServer {
 	return &grpcServer{
 		canAccess: kitgrpc.NewServer(
-			canAccessEndpoint(svc),
+			kitot.TraceServer(tracer, "can_access")(canAccessEndpoint(svc)),
 			decodeCanAccessRequest,
 			encodeIdentityResponse,
 		),
@@ -39,7 +41,7 @@ func NewServer(svc things.Service) mainflux.ThingsServiceServer {
 			encodeEmptyResponse,
 		),
 		identify: kitgrpc.NewServer(
-			identifyEndpoint(svc),
+			kitot.TraceServer(tracer, "identify")(identifyEndpoint(svc)),
 			decodeIdentifyRequest,
 			encodeIdentityResponse,
 		),

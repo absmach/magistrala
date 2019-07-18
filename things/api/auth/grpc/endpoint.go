@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2018
+// Copyright (c) 2019
 // Mainflux
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -20,7 +20,7 @@ func canAccessEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		id, err := svc.CanAccess(req.chanID, req.thingKey)
+		id, err := svc.CanAccess(ctx, req.chanID, req.thingKey)
 		if err != nil {
 			return identityRes{err: err}, err
 		}
@@ -35,7 +35,7 @@ func canAccessByIDEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		err := svc.CanAccessByID(req.chanID, req.thingID)
+		err := svc.CanAccessByID(ctx, req.chanID, req.thingID)
 		return emptyRes{err: err}, err
 	}
 }
@@ -43,7 +43,7 @@ func canAccessByIDEndpoint(svc things.Service) endpoint.Endpoint {
 func identifyEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(identifyReq)
-		id, err := svc.Identify(req.key)
+		id, err := svc.Identify(ctx, req.key)
 		if err != nil {
 			return identityRes{err: err}, err
 		}

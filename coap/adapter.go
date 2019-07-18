@@ -11,6 +11,7 @@
 package coap
 
 import (
+	"context"
 	"errors"
 	"sync"
 	"time"
@@ -62,14 +63,16 @@ type Service interface {
 var _ Service = (*adapterService)(nil)
 
 type adapterService struct {
+	auth    mainflux.ThingsServiceClient
 	pubsub  Broker
 	obs     map[string]*Observer
 	obsLock sync.Mutex
 }
 
 // New instantiates the CoAP adapter implementation.
-func New(pubsub Broker, responses <-chan string) Service {
+func New(pubsub Broker, auth mainflux.ThingsServiceClient, responses <-chan string) Service {
 	as := &adapterService{
+		auth:    auth,
 		pubsub:  pubsub,
 		obs:     make(map[string]*Observer),
 		obsLock: sync.Mutex{},
@@ -122,8 +125,8 @@ func (svc *adapterService) listenResponses(responses <-chan string) {
 	}
 }
 
-func (svc *adapterService) Publish(msg mainflux.RawMessage) error {
-	if err := svc.pubsub.Publish(msg); err != nil {
+func (svc *adapterService) Publish(ctx context.Context, token string, msg mainflux.RawMessage) error {
+	if err := svc.pubsub.Publish(ctx, token, msg); err != nil {
 		switch err {
 		case broker.ErrConnectionClosed, broker.ErrInvalidConnection:
 			return ErrFailedConnection

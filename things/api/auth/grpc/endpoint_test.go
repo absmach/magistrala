@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2018
+// Copyright (c) 2019
 // Mainflux
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"testing"
 	"time"
+
+	"github.com/opentracing/opentracing-go/mocktracer"
 
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/things"
@@ -30,14 +32,14 @@ var (
 )
 
 func TestCanAccess(t *testing.T) {
-	oth, _ := svc.AddThing(token, thing)
-	cth, _ := svc.AddThing(token, thing)
-	sch, _ := svc.CreateChannel(token, channel)
-	svc.Connect(token, sch.ID, cth.ID)
+	oth, _ := svc.AddThing(context.Background(), token, thing)
+	cth, _ := svc.AddThing(context.Background(), token, thing)
+	sch, _ := svc.CreateChannel(context.Background(), token, channel)
+	svc.Connect(context.Background(), token, sch.ID, cth.ID)
 
 	usersAddr := fmt.Sprintf("localhost:%d", port)
 	conn, _ := grpc.Dial(usersAddr, grpc.WithInsecure())
-	cli := grpcapi.NewClient(conn)
+	cli := grpcapi.NewClient(conn, mocktracer.New(), time.Second)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
@@ -83,14 +85,14 @@ func TestCanAccess(t *testing.T) {
 }
 
 func TestCanAccessByID(t *testing.T) {
-	oth, _ := svc.AddThing(token, thing)
-	cth, _ := svc.AddThing(token, thing)
-	sch, _ := svc.CreateChannel(token, channel)
-	svc.Connect(token, sch.ID, cth.ID)
+	oth, _ := svc.AddThing(context.Background(), token, thing)
+	cth, _ := svc.AddThing(context.Background(), token, thing)
+	sch, _ := svc.CreateChannel(context.Background(), token, channel)
+	svc.Connect(context.Background(), token, sch.ID, cth.ID)
 
 	usersAddr := fmt.Sprintf("localhost:%d", port)
 	conn, _ := grpc.Dial(usersAddr, grpc.WithInsecure())
-	cli := grpcapi.NewClient(conn)
+	cli := grpcapi.NewClient(conn, mocktracer.New(), time.Second)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
@@ -135,11 +137,11 @@ func TestCanAccessByID(t *testing.T) {
 }
 
 func TestIdentify(t *testing.T) {
-	sth, _ := svc.AddThing(token, thing)
+	sth, _ := svc.AddThing(context.Background(), token, thing)
 
 	usersAddr := fmt.Sprintf("localhost:%d", port)
 	conn, _ := grpc.Dial(usersAddr, grpc.WithInsecure())
-	cli := grpcapi.NewClient(conn)
+	cli := grpcapi.NewClient(conn, mocktracer.New(), time.Second)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 

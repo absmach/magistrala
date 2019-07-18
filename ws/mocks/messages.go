@@ -8,6 +8,7 @@
 package mocks
 
 import (
+	"context"
 	"sync"
 
 	"github.com/mainflux/mainflux"
@@ -27,7 +28,7 @@ func NewService(subs map[string]*ws.Channel, pubError error) ws.Service {
 	return &mockService{subs, pubError, sync.Mutex{}}
 }
 
-func (svc *mockService) Publish(msg mainflux.RawMessage) error {
+func (svc *mockService) Publish(_ context.Context, _ string, msg mainflux.RawMessage) error {
 	if len(msg.Payload) == 0 {
 		return svc.pubError
 	}

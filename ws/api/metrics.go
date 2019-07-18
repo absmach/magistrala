@@ -10,6 +10,7 @@
 package api
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-kit/kit/metrics"
@@ -34,13 +35,13 @@ func MetricsMiddleware(svc ws.Service, counter metrics.Counter, latency metrics.
 	}
 }
 
-func (mm *metricsMiddleware) Publish(msg mainflux.RawMessage) error {
+func (mm *metricsMiddleware) Publish(ctx context.Context, token string, msg mainflux.RawMessage) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "publish").Add(1)
 		mm.latency.With("method", "publish").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.Publish(msg)
+	return mm.svc.Publish(ctx, token, msg)
 }
 
 func (mm *metricsMiddleware) Subscribe(chanID, subtopic string, channel *ws.Channel) error {

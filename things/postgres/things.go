@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2018
+// Copyright (c) 2019
 // Mainflux
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -8,6 +8,7 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -40,9 +41,9 @@ func NewThingRepository(db *sqlx.DB) things.ThingRepository {
 	}
 }
 
-func (tr thingRepository) Save(thing things.Thing) (string, error) {
+func (tr thingRepository) Save(ctx context.Context, thing things.Thing) (string, error) {
 	q := `INSERT INTO things (id, owner, name, key, metadata)
-	      VALUES (:id, :owner, :name, :key, :metadata);`
+		  VALUES (:id, :owner, :name, :key, :metadata);`
 
 	dbth, err := toDBThing(thing)
 	if err != nil {
@@ -67,7 +68,7 @@ func (tr thingRepository) Save(thing things.Thing) (string, error) {
 	return dbth.ID, nil
 }
 
-func (tr thingRepository) Update(thing things.Thing) error {
+func (tr thingRepository) Update(_ context.Context, thing things.Thing) error {
 	q := `UPDATE things SET name = :name, metadata = :metadata WHERE owner = :owner AND id = :id;`
 
 	dbth, err := toDBThing(thing)
@@ -100,7 +101,7 @@ func (tr thingRepository) Update(thing things.Thing) error {
 	return nil
 }
 
-func (tr thingRepository) UpdateKey(owner, id, key string) error {
+func (tr thingRepository) UpdateKey(_ context.Context, owner, id, key string) error {
 	q := `UPDATE things SET key = :key WHERE owner = :owner AND id = :id;`
 	dbth := dbThing{
 		ID:    id,
@@ -135,7 +136,7 @@ func (tr thingRepository) UpdateKey(owner, id, key string) error {
 	return nil
 }
 
-func (tr thingRepository) RetrieveByID(owner, id string) (things.Thing, error) {
+func (tr thingRepository) RetrieveByID(_ context.Context, owner, id string) (things.Thing, error) {
 	q := `SELECT name, key, metadata FROM things WHERE id = $1 AND owner = $2;`
 
 	dbth := dbThing{
@@ -157,7 +158,7 @@ func (tr thingRepository) RetrieveByID(owner, id string) (things.Thing, error) {
 	return toThing(dbth)
 }
 
-func (tr thingRepository) RetrieveByKey(key string) (string, error) {
+func (tr thingRepository) RetrieveByKey(_ context.Context, key string) (string, error) {
 	q := `SELECT id FROM things WHERE key = $1;`
 	var id string
 	if err := tr.db.QueryRowx(q, key).Scan(&id); err != nil {
@@ -170,7 +171,7 @@ func (tr thingRepository) RetrieveByKey(key string) (string, error) {
 	return id, nil
 }
 
-func (tr thingRepository) RetrieveAll(owner string, offset, limit uint64, name string) (things.ThingsPage, error) {
+func (tr thingRepository) RetrieveAll(_ context.Context, owner string, offset, limit uint64, name string) (things.ThingsPage, error) {
 	name = strings.ToLower(name)
 	nq := ""
 	if name != "" {
@@ -240,7 +241,7 @@ func (tr thingRepository) RetrieveAll(owner string, offset, limit uint64, name s
 	return page, nil
 }
 
-func (tr thingRepository) RetrieveByChannel(owner, channel string, offset, limit uint64) (things.ThingsPage, error) {
+func (tr thingRepository) RetrieveByChannel(_ context.Context, owner, channel string, offset, limit uint64) (things.ThingsPage, error) {
 	// Verify if UUID format is valid to avoid internal Postgres error
 	if _, err := uuid.FromString(channel); err != nil {
 		return things.ThingsPage{}, things.ErrNotFound
@@ -304,7 +305,7 @@ func (tr thingRepository) RetrieveByChannel(owner, channel string, offset, limit
 	}, nil
 }
 
-func (tr thingRepository) Remove(owner, id string) error {
+func (tr thingRepository) Remove(_ context.Context, owner, id string) error {
 	dbth := dbThing{
 		ID:    id,
 		Owner: owner,

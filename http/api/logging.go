@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2018
+// Copyright (c) 2019
 // Mainflux
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -10,6 +10,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -29,7 +30,7 @@ func LoggingMiddleware(svc mainflux.MessagePublisher, logger log.Logger) mainflu
 	return &loggingMiddleware{logger, svc}
 }
 
-func (lm *loggingMiddleware) Publish(msg mainflux.RawMessage) (err error) {
+func (lm *loggingMiddleware) Publish(ctx context.Context, token string, msg mainflux.RawMessage) (err error) {
 	defer func(begin time.Time) {
 		destChannel := msg.Channel
 		if msg.Subtopic != "" {
@@ -43,5 +44,5 @@ func (lm *loggingMiddleware) Publish(msg mainflux.RawMessage) (err error) {
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.Publish(msg)
+	return lm.svc.Publish(ctx, token, msg)
 }

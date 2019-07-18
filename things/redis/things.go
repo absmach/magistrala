@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2018
+// Copyright (c) 2019
 // Mainflux
 //
 // SPDX-License-Identifier: Apache-2.0
@@ -8,6 +8,7 @@
 package redis
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-redis/redis"
@@ -32,7 +33,7 @@ func NewThingCache(client *redis.Client) things.ThingCache {
 	}
 }
 
-func (tc *thingCache) Save(thingKey string, thingID string) error {
+func (tc *thingCache) Save(_ context.Context, thingKey string, thingID string) error {
 	tkey := fmt.Sprintf("%s:%s", keyPrefix, thingKey)
 	if err := tc.client.Set(tkey, thingID, 0).Err(); err != nil {
 		return err
@@ -42,7 +43,7 @@ func (tc *thingCache) Save(thingKey string, thingID string) error {
 	return tc.client.Set(tid, thingKey, 0).Err()
 }
 
-func (tc *thingCache) ID(thingKey string) (string, error) {
+func (tc *thingCache) ID(_ context.Context, thingKey string) (string, error) {
 	tkey := fmt.Sprintf("%s:%s", keyPrefix, thingKey)
 	thingID, err := tc.client.Get(tkey).Result()
 	if err != nil {
@@ -52,7 +53,7 @@ func (tc *thingCache) ID(thingKey string) (string, error) {
 	return thingID, nil
 }
 
-func (tc *thingCache) Remove(thingID string) error {
+func (tc *thingCache) Remove(_ context.Context, thingID string) error {
 	tid := fmt.Sprintf("%s:%s", idPrefix, thingID)
 	key, err := tc.client.Get(tid).Result()
 	if err != nil {

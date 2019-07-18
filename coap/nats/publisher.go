@@ -9,6 +9,7 @@
 package nats
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/gogo/protobuf/proto"
@@ -38,7 +39,7 @@ func (pubsub *natsPublisher) fmtSubject(chanID, subtopic string) string {
 	return subject
 }
 
-func (pubsub *natsPublisher) Publish(msg mainflux.RawMessage) error {
+func (pubsub *natsPublisher) Publish(_ context.Context, _ string, msg mainflux.RawMessage) error {
 	data, err := proto.Marshal(&msg)
 	if err != nil {
 		return err

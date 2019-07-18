@@ -15,13 +15,13 @@ import (
 )
 
 func identifyEndpoint(svc things.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(identifyReq)
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
-		id, err := svc.Identify(req.Token)
+		id, err := svc.Identify(ctx, req.Token)
 		if err != nil {
 			return nil, err
 		}
@@ -35,13 +35,13 @@ func identifyEndpoint(svc things.Service) endpoint.Endpoint {
 }
 
 func canAccessEndpoint(svc things.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(canAccessReq)
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
-		id, err := svc.CanAccess(req.chanID, req.Token)
+		id, err := svc.CanAccess(ctx, req.chanID, req.Token)
 		if err != nil {
 			return nil, err
 		}
@@ -55,13 +55,13 @@ func canAccessEndpoint(svc things.Service) endpoint.Endpoint {
 }
 
 func canAccessByIDEndpoint(svc things.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(canAccessByIDReq)
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
-		if err := svc.CanAccessByID(req.chanID, req.ThingID); err != nil {
+		if err := svc.CanAccessByID(ctx, req.chanID, req.ThingID); err != nil {
 			return nil, err
 		}
 

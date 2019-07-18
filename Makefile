@@ -139,6 +139,7 @@ release:
 	docker tag mainflux/ui mainflux/ui-$(GOARCH):$(version)
 	docker tag mainflux/mqtt mainflux/mqtt-$(GOARCH):$(version)
 	$(call docker_push,$(GOARCH),$(version))
+	$(call docker_manifest,$(version))
 
 rundev:
 	cd scripts && ./run.sh

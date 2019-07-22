@@ -103,7 +103,7 @@ func subtopic(msg *gocoap.Message) string {
 		if c == '/' {
 			pos++
 		}
-		if pos == 2 {
+		if pos == 3 {
 			return path[i:]
 		}
 	}

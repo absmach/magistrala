@@ -9,6 +9,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -64,7 +65,7 @@ const (
 	defESPass        = ""
 	defESDB          = "0"
 	defInstanceName  = "bootstrap"
-	defJaegerURL     = "localhost:6831"
+	defJaegerURL     = ""
 	defUsersTimeout  = "1" // in seconds
 
 	envLogLevel      = "MF_BOOTSTRAP_LOG_LEVEL"
@@ -226,6 +227,10 @@ func connectToRedis(redisURL, redisPass, redisDB string, logger mflog.Logger) *r
 }
 
 func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, io.Closer) {
+	if url == "" {
+		return opentracing.NoopTracer{}, ioutil.NopCloser(nil)
+	}
+
 	tracer, closer, err := jconfig.Configuration{
 		ServiceName: svcName,
 		Sampler: &jconfig.SamplerConfig{

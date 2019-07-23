@@ -10,6 +10,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -71,7 +72,7 @@ const (
 	defUsersURL        = "localhost:8181"
 	defSingleUserEmail = ""
 	defSingleUserToken = ""
-	defJaegerURL       = "localhost:6831"
+	defJaegerURL       = ""
 	defUsersTimeout    = "1" // in seconds
 
 	envLogLevel        = "MF_THINGS_LOG_LEVEL"
@@ -224,6 +225,10 @@ func loadConfig() config {
 }
 
 func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, io.Closer) {
+	if url == "" {
+		return opentracing.NoopTracer{}, ioutil.NopCloser(nil)
+	}
+
 	tracer, closer, err := jconfig.Configuration{
 		ServiceName: svcName,
 		Sampler: &jconfig.SamplerConfig{

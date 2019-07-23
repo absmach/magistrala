@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -37,7 +38,7 @@ const (
 	defDBPass        = "mainflux"
 	defClientTLS     = "false"
 	defCACerts       = ""
-	defJaegerURL     = "localhost:6831"
+	defJaegerURL     = ""
 	defThingsTimeout = "1" // in seconds
 
 	envThingsURL     = "MF_THINGS_URL"
@@ -165,6 +166,10 @@ func connectToThings(cfg config, logger logger.Logger) *grpc.ClientConn {
 }
 
 func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, io.Closer) {
+	if url == "" {
+		return opentracing.NoopTracer{}, ioutil.NopCloser(nil)
+	}
+
 	tracer, closer, err := jconfig.Configuration{
 		ServiceName: svcName,
 		Sampler: &jconfig.SamplerConfig{

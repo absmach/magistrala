@@ -10,6 +10,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -43,7 +44,7 @@ const (
 	defClientTLS     = "false"
 	defCACerts       = ""
 	defPingPeriod    = "12"
-	defJaegerURL     = "localhost:6831"
+	defJaegerURL     = ""
 	defThingsTimeout = "1" // in seconds
 
 	envPort          = "MF_COAP_ADAPTER_PORT"
@@ -185,6 +186,10 @@ func connectToThings(cfg config, logger logger.Logger) *grpc.ClientConn {
 }
 
 func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, io.Closer) {
+	if url == "" {
+		return opentracing.NoopTracer{}, ioutil.NopCloser(nil)
+	}
+
 	tracer, closer, err := jconfig.Configuration{
 		ServiceName: svcName,
 		Sampler: &jconfig.SamplerConfig{

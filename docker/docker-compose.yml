@@ -139,6 +139,7 @@ services:
 
   jaeger:
     image: jaegertracing/all-in-one:1.13
+    container_name: mainflux-jaeger
     ports:
       - ${MF_JAEGER_PORT}:${MF_JAEGER_PORT}/udp
       - ${MF_JAEGER_FRONTEND}:${MF_JAEGER_FRONTEND}

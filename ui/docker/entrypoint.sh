@@ -1,4 +1,4 @@
-#!/bin/ash
+#!/bin/sh
 
 if [ -n "$MF_UI_PORT" ]; then
     sed -i -e "s/MF_UI_PORT/$MF_UI_PORT/" /etc/nginx/conf.d/default.conf

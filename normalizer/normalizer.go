@@ -14,6 +14,11 @@ import (
 	"github.com/mainflux/mainflux"
 )
 
+var formats = map[string]senml.Format{
+	mainflux.SenMLJSON: senml.JSON,
+	mainflux.SenMLCBOR: senml.CBOR,
+}
+
 type normalizer struct{}
 
 // New returns normalizer service implementation.
@@ -22,7 +27,12 @@ func New() Service {
 }
 
 func (n normalizer) Normalize(msg mainflux.RawMessage) (NormalizedData, error) {
-	raw, err := senml.Decode(msg.Payload, senml.JSON)
+	format, ok := formats[msg.ContentType]
+	if !ok {
+		format = senml.JSON
+	}
+
+	raw, err := senml.Decode(msg.Payload, format)
 	if err != nil {
 		return NormalizedData{}, err
 	}

@@ -160,7 +160,8 @@ aedes.authorizePublish = function (client, packet, publish) {
         isEmpty = function(value) { 
             return value !== ''; 
         },
-        elements = packet.topic.split('/').slice(baseLength).join('.').split('.').filter(isEmpty),
+        parts = packet.topic.split('/'),
+        elements = parts.slice(baseLength).join('.').split('.').filter(isEmpty),
         baseTopic = 'channel.' + channelId;
     // Remove empty elements
     for (var i = 0; i < elements.length; i++) {
@@ -171,14 +172,27 @@ aedes.authorizePublish = function (client, packet, publish) {
             return;
         }
     }
-    var channelTopic = elements.length ? baseTopic + '.' + elements.join('.') : baseTopic,
+
+    var contentType = 'application/senml+json',
+        st = elements;
+    
+    if (elements.length > 1 && elements[elements.length - 2] === 'ct') {
+        // If there is ct prefix, read and decode content type.
+        contentType = elements[elements.length - 1].replace('_', '/').replace('-', '+');
+        st = elements.slice(0, elements.length - 2);
+        parts = parts.slice(0, parts.length - 2);
+    }
+    packet.topic = parts.join('/');
+
+    var channelTopic = st.length ? baseTopic + '.' + st.join('.') : baseTopic,
         onAuthorize = function (err, res) {
             var rawMsg;
             if (!err) {
                 rawMsg = RawMessage.encode({
                     publisher: client.thingId,
                     channel: channelId,
-                    subtopic: elements.join('.'),
+                    subtopic: st.join('.'),
+                    contentType: contentType,
                     protocol: 'mqtt',
                     payload: packet.payload
                 }).finish();

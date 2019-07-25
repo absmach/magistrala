@@ -2,6 +2,14 @@ package mainflux
 
 import "encoding/json"
 
+const (
+	// SenMLJSON represents SenML in JSON format content type.
+	SenMLJSON = "application/senml+json"
+
+	// SenMLCBOR represents SenML in CBOR format content type.
+	SenMLCBOR = "application/senml+cbor"
+)
+
 // Type messageType is introduced to prevent cycle when calling Message
 // MarshalJSON and UnmarshalJSON methods.
 type messageType Message

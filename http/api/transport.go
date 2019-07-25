@@ -110,9 +110,14 @@ func decodeRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
+	ct := r.Header.Get("Content-Type")
+	if ct == "" {
+		ct = mainflux.SenMLJSON
+	}
+
 	msg := mainflux.RawMessage{
 		Protocol:    protocol,
-		ContentType: r.Header.Get("Content-Type"),
+		ContentType: ct,
 		Channel:     chanID,
 		Subtopic:    subtopic,
 		Payload:     payload,

@@ -28,7 +28,9 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const protocol = "ws"
+const (
+	protocol = "ws"
+)
 
 var (
 	errUnauthorizedAccess = errors.New("missing or invalid credentials provided")
@@ -47,6 +49,11 @@ var (
 	logger            log.Logger
 	channelPartRegExp = regexp.MustCompile(`^/channels/([\w\-]+)/messages(/[^?]*)?(\?.*)?$`)
 )
+
+var contentTypes = map[string]int{
+	mainflux.SenMLJSON: websocket.TextMessage,
+	mainflux.SenMLCBOR: websocket.BinaryMessage,
+}
 
 // MakeHandler returns http handler with handshake endpoint.
 func MakeHandler(svc ws.Service, tc mainflux.ThingsServiceClient, l log.Logger) http.Handler {
@@ -76,6 +83,8 @@ func handshake(svc ws.Service) http.HandlerFunc {
 				return
 			}
 		}
+
+		ct := contentType(r)
 
 		channelParts := channelPartRegExp.FindStringSubmatch(r.RequestURI)
 		if len(channelParts) < 2 {
@@ -108,7 +117,7 @@ func handshake(svc ws.Service) http.HandlerFunc {
 		go sub.listen()
 
 		// Start listening for messages from NATS.
-		go sub.broadcast(svc)
+		go sub.broadcast(svc, ct)
 	}
 }
 
@@ -176,6 +185,19 @@ func authorize(r *http.Request) (subscription, error) {
 	return sub, nil
 }
 
+func contentType(r *http.Request) string {
+	ct := r.Header.Get("Content-Type")
+	if ct == "" {
+		ctvals := bone.GetQuery(r, "content-type")
+		if len(ctvals) == 0 {
+			return mainflux.SenMLJSON
+		}
+		ct = ctvals[0]
+	}
+
+	return ct
+}
+
 type subscription struct {
 	pubID    string
 	chanID   string
@@ -184,7 +206,7 @@ type subscription struct {
 	channel  *ws.Channel
 }
 
-func (sub subscription) broadcast(svc ws.Service) {
+func (sub subscription) broadcast(svc ws.Service, contentType string) {
 	for {
 		_, payload, err := sub.conn.ReadMessage()
 		if websocket.IsUnexpectedCloseError(err) {
@@ -196,11 +218,12 @@ func (sub subscription) broadcast(svc ws.Service) {
 			return
 		}
 		msg := mainflux.RawMessage{
-			Channel:   sub.chanID,
-			Subtopic:  sub.subtopic,
-			Publisher: sub.pubID,
-			Protocol:  protocol,
-			Payload:   payload,
+			Channel:     sub.chanID,
+			Subtopic:    sub.subtopic,
+			ContentType: contentType,
+			Publisher:   sub.pubID,
+			Protocol:    protocol,
+			Payload:     payload,
 		}
 		if err := svc.Publish(context.Background(), "", msg); err != nil {
 			logger.Warn(fmt.Sprintf("Failed to publish message to NATS: %s", err))
@@ -215,7 +238,12 @@ func (sub subscription) broadcast(svc ws.Service) {
 
 func (sub subscription) listen() {
 	for msg := range sub.channel.Messages {
-		if err := sub.conn.WriteMessage(websocket.TextMessage, msg.Payload); err != nil {
+		format, ok := contentTypes[msg.ContentType]
+		if !ok {
+			format = websocket.TextMessage
+		}
+
+		if err := sub.conn.WriteMessage(format, msg.Payload); err != nil {
 			logger.Warn(fmt.Sprintf("Failed to broadcast message to thing: %s", err))
 		}
 	}

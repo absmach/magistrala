@@ -111,10 +111,6 @@ func decodeRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 	}
 
 	ct := r.Header.Get("Content-Type")
-	if ct == "" {
-		ct = mainflux.SenMLJSON
-	}
-
 	msg := mainflux.RawMessage{
 		Protocol:    protocol,
 		ContentType: ct,

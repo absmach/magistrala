@@ -190,7 +190,7 @@ func contentType(r *http.Request) string {
 	if ct == "" {
 		ctvals := bone.GetQuery(r, "content-type")
 		if len(ctvals) == 0 {
-			return mainflux.SenMLJSON
+			return ""
 		}
 		ct = ctvals[0]
 	}

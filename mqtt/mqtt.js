@@ -120,14 +120,15 @@ function startMqtt() {
 
 nats.subscribe('channel.>', {'queue':'mqtts'}, function (msg) {
     var m = RawMessage.decode(msg),
-        packet, subtopic;
+        packet, subtopic, ct;
     if (m && m.protocol !== 'mqtt') {
         subtopic = m.subtopic !== '' ? '/' + m.subtopic.replace(/\./g, '/') : '';
+        ct = (m.contentType) ? ('/ct/' + m.contentType.replace('/', '_').replace('+', '-')) : '';
 
         packet = {
             cmd: 'publish',
             qos: 2,
-            topic: 'channels/' + m.channel + '/messages' + subtopic,
+            topic: 'channels/' + m.channel + '/messages' + subtopic + ct,
             payload: m.payload,
             retain: false
         };
@@ -173,16 +174,13 @@ aedes.authorizePublish = function (client, packet, publish) {
         }
     }
 
-    var contentType = 'application/senml+json',
+    var contentType = '',
         st = elements;
-    
     if (elements.length > 1 && elements[elements.length - 2] === 'ct') {
         // If there is ct prefix, read and decode content type.
         contentType = elements[elements.length - 1].replace('_', '/').replace('-', '+');
         st = elements.slice(0, elements.length - 2);
-        parts = parts.slice(0, parts.length - 2);
     }
-    packet.topic = parts.join('/');
 
     var channelTopic = st.length ? baseTopic + '.' + st.join('.') : baseTopic,
         onAuthorize = function (err, res) {

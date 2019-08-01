@@ -4,7 +4,7 @@ Writers provide an implementation of various `message writers`.
 Message writers are services that consume normalized (in `SenML` format)
 Mainflux messages and store them in specific data store.
 
-Writers are optional services and are treated as a plugins. In order to
+Writers are optional services and are treated as plugins. In order to
 run writer services, core services must be up and running. For more info
 on the platform core services with its dependencies, please check out
 the [Docker Compose][compose] file.

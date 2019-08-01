@@ -13,6 +13,16 @@ In order to run these services, core services, as well as the network from the c
 
 Writers provide an implementation of various `message writers`. Message writers are services that consume normalized (in `SenML` format) Mainflux messages and store them in specific data store.
 
+Every writer can filter messages based on channel list that is set in
+`channels.toml` configuration file. If you want to listen on all channels, 
+just pass one element ["*"], otherwise pass the list of channels. Here is
+an example:
+
+```toml
+[channels]
+filter = ["*"]
+```
+
 ### InfluxDB, InfluxDB-writer and Grafana
 
 From the project root execute the following command:

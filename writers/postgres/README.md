@@ -22,7 +22,7 @@ default values.
 | MF_POSTGRES_WRITER_DB_SSL_CERT      | Postgres SSL certificate path              | ""                    |
 | MF_POSTGRES_WRITER_DB_SSL_KEY       | Postgres SSL key                           | ""                    |
 | MF_POSTGRES_WRITER_DB_SSL_ROOT_CERT | Postgres SSL root certificate path         | ""                    |
-| MF_POSTGRES_WRITER_CHANNELS_CONFIG  | Configuration file path with channels list | /config/channels.yaml |
+| MF_POSTGRES_WRITER_CHANNELS_CONFIG  | Configuration file path with channels list | /config/channels.toml |
 
 ## Deployment
 

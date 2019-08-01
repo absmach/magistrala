@@ -20,7 +20,7 @@ default values.
 | MF_INFLUX_WRITER_DB_PORT         | Default port of InfluxDB database                         | 8086                  |
 | MF_INFLUX_WRITER_DB_USER         | Default user of InfluxDB database                         | mainflux              |
 | MF_INFLUX_WRITER_DB_PASS         | Default password of InfluxDB user                         | mainflux              |
-| MF_INFLUX_WRITER_CHANNELS_CONFIG | Configuration file path with channels list                | /config/channels.yaml |
+| MF_INFLUX_WRITER_CHANNELS_CONFIG | Configuration file path with channels list                | /config/channels.toml |
 
 ## Deployment
 

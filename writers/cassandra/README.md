@@ -18,7 +18,7 @@ default values.
 | MF_CASSANDRA_WRITER_DB_USERNAME     | Cassandra DB username                                      |                       |
 | MF_CASSANDRA_WRITER_DB_PASSWORD     | Cassandra DB password                                      |                       |
 | MF_CASSANDRA_WRITER_DB_PORT         | Cassandra DB port                                          | 9042                  |
-| MF_CASSANDRA_WRITER_CHANNELS_CONFIG | Configuration file path with channels list                 | /config/channels.yaml |
+| MF_CASSANDRA_WRITER_CHANNELS_CONFIG | Configuration file path with channels list                 | /config/channels.toml |
 ## Deployment
 
 ```yaml

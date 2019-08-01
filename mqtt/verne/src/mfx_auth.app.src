@@ -1,0 +1,30 @@
+{application, mfx_auth,
+ [
+  {description, "Mainflux auth plugin for VerneMQ"},
+  {vsn, "0.0.1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  teacup,
+                  gpb,
+                  jsone,
+                  hackney,
+                  eredis
+                 ]},
+  {mod, { mfx_auth_app, []}},
+  {env, [
+         %% this tells VerneMQ to look in the file 'mfx_auth'
+         %% for the plugin hook functions. The format is:
+         %%  {ModuleName, HookName, Arity, Opts}
+         {vmq_plugin_hooks,
+              [
+                     {mfx_auth, auth_on_register, 5, []},
+                     {mfx_auth, auth_on_publish, 6, []},
+                     {mfx_auth, auth_on_subscribe, 3, []},
+                     {mfx_auth, on_register, 3, []},
+                     {mfx_auth, on_client_offline, 1, []},
+                     {mfx_auth, on_client_gone, 1, []}
+              ]}
+        ]}
+ ]}.

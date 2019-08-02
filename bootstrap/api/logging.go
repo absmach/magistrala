@@ -120,7 +120,7 @@ func (lm *loggingMiddleware) Remove(key, id string) (err error) {
 	return lm.svc.Remove(key, id)
 }
 
-func (lm *loggingMiddleware) Bootstrap(externalKey, externalID string) (cfg bootstrap.Config, err error) {
+func (lm *loggingMiddleware) Bootstrap(externalKey, externalID string, secure bool) (cfg bootstrap.Config, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method bootstrap for thing with external id %s took %s to complete", externalID, time.Since(begin))
 		if err != nil {
@@ -130,7 +130,7 @@ func (lm *loggingMiddleware) Bootstrap(externalKey, externalID string) (cfg boot
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.Bootstrap(externalKey, externalID)
+	return lm.svc.Bootstrap(externalKey, externalID, secure)
 }
 
 func (lm *loggingMiddleware) ChangeState(key, id string, state bootstrap.State) (err error) {

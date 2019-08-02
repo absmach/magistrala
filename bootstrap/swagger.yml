@@ -30,7 +30,7 @@ paths:
           headers:
             Location:
               type: string
-              description: Created config's relative URL (i.e. /things/configs/{configId}).
+              description: Created configuration's relative URL (i.e. /things/configs/{configId}).
         400:
           description: Failed due to malformed JSON.
         403:
@@ -74,11 +74,35 @@ paths:
       tags:
         - configs
       parameters:
-        - $ref: "#/parameters/ConfigAuthorization"
+        - $ref: "#/parameters/ConfigAuth"
         - $ref: "#/parameters/ExternalId"
       responses:
         200:
           description: Data retrieved.
+          schema:
+            $ref: "#/definitions/BootstrapRes"
+        404:
+          description: |
+            Failed to retrieve corresponding config. Thing which attempted
+            to bootstrap is saved as an unknown Thing and can be listed and
+            added to the service later.
+        500:
+          $ref: "#/responses/ServiceError"
+  /things/bootstrap/secure/{externalId}:
+    get:
+      summary: Retrieves configuration
+      description: |
+        Retrieves a configuration with given external ID and encrypted external key.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/parameters/EncConfigAuth"
+        - $ref: "#/parameters/ExternalId"
+      responses:
+        200:
+          description: |
+            Data retrieved. In this case, Bootstrap response is encrypted using
+            the secret key, so an actual response is in the binary format.
           schema:
             $ref: "#/definitions/BootstrapRes"
         404:
@@ -140,10 +164,10 @@ paths:
     delete:
       summary: Removes a Config
       description: |
-        Removes a Config. In case of successfull removal the service will ensure
-        that the removed config is disconnected from all of the Maifnlux channels.
+        Removes a Config. In case of successful removal the service will ensure
+        that the removed config is disconnected from all of the Mainflux channels.
       tags:
-        - confgis
+        - configs
       parameters:
         - $ref: "#/parameters/Authorization"
         - $ref: "#/parameters/ConfigId"
@@ -151,7 +175,7 @@ paths:
         204:
           description: Config removed.
         400:
-          description: Failed due to malformed config's ID.
+          description: Failed due to malformed config ID.
         403:
           description: Missing or invalid access token provided.
         500:
@@ -249,7 +273,7 @@ paths:
           $ref: "#/responses/ServiceError"
   /things/unknown/configs:
     get:
-      summary: Get a list of unsucessfully bootstrapped Things
+      summary: Get a list of unsuccessfully bootstrapped Things
       description: |
         Retrieves a list of unknown configs. Due to performance concerns, data
         is retrieved in subsets. The API configs must ensure that the entire
@@ -280,9 +304,18 @@ parameters:
     in: header
     type: string
     required: true
-  ConfigAuthorization:
+  ConfigAuth:
     name: configAuthorization
     description: Configuration external key.
+    in: header
+    type: string
+    required: true
+  EncConfigAuth:
+    name: configAuthorization
+    description: |
+      Hex-encoded configuration external key encrypted using 
+      the AES algorithm and SHA256 sum of the external key 
+      itself as an encryption key.
     in: header
     type: string
     required: true
@@ -339,7 +372,7 @@ parameters:
 
 responses:
   ServiceError:
-    description: Unexpected server-side error occured.
+    description: Unexpected server-side error occurred.
 
 definitions:
   ConfigList:
@@ -366,7 +399,7 @@ definitions:
         items:
           $ref: "#/definitions/ConfigRes"
     required:
-      - confgis
+      - configs
   State:
     type: integer
     enum:
@@ -398,7 +431,7 @@ definitions:
               description: Custom metadata related to the Channel.
       external_id:
         type: string
-        description: External ID (MAC address or some uinque identifier).
+        description: External ID (MAC address or some unique identifier).
       external_key:
         type: string
         description: External key.
@@ -411,33 +444,43 @@ definitions:
       - external_id
       - external_key
   BootstrapRes:
-      type: object
-      properties:
-        mainflux_id:
+    type: object
+    properties:
+      mainflux_id:
+        type: string
+        description: Corresponding Mainflux Thing ID.
+      mainflux_key:
+        type: string
+        description: Corresponding Mainflux Thing key.
+      mainflux_channels:
+        type: array
+        minItems: 0
+        items:
           type: string
-          description: Corresponding Mainflux Thing ID.
-        mainflux_key:
-          type: string
-          description: Corresponding Mainflux Thing key.
-        mainflux_channels:
-          type: array
-          minItems: 0
-          items:
-            type: string
-        content:
-          type: string
-          description: Free-form custom configuration.
-      required:
-        - mainflux_id
-        - mainflux_key
-        - mainflux_channels
-        - content
+      content:
+        type: string
+        description: Free-form custom configuration.
+      client_cert:
+        type: string
+        description: Client certrificate.
+      client_key:
+        type: string
+        description: Key for the client_cert.
+      ca_cert:
+        type: string
+        description: Issuing CA certificate.
+    required:
+      - mainflux_id
+      - mainflux_key
+      - mainflux_channels
+      - content
+
   ConfigReq:
     type: object
     properties:
       external_id:
         type: string
-        description: External ID (MAC address or some uinque identifier).
+        description: External ID (MAC address or some unique identifier).
       external_key:
         type: string
         description: External key.

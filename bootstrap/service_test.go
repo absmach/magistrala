@@ -8,7 +8,12 @@
 package bootstrap_test
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"net/http/httptest"
 	"strconv"
 	"testing"
@@ -37,6 +42,8 @@ const (
 )
 
 var (
+	encKey = []byte("1234567891011121")
+
 	channel = bootstrap.Channel{
 		ID:       "1",
 		Name:     "name",
@@ -58,7 +65,7 @@ func newService(users mainflux.UsersServiceClient, url string) bootstrap.Service
 	}
 
 	sdk := mfsdk.NewSDK(config)
-	return bootstrap.New(users, things, sdk)
+	return bootstrap.New(users, things, sdk, encKey)
 }
 
 func newThingsService(users mainflux.UsersServiceClient) things.Service {
@@ -78,6 +85,21 @@ func newThingsService(users mainflux.UsersServiceClient) things.Service {
 func newThingsServer(svc things.Service) *httptest.Server {
 	mux := httpapi.MakeHandler(mocktracer.New(), svc)
 	return httptest.NewServer(mux)
+}
+
+func enc(in []byte) ([]byte, error) {
+	block, err := aes.NewCipher(encKey)
+	if err != nil {
+		return nil, err
+	}
+	ciphertext := make([]byte, aes.BlockSize+len(in))
+	iv := ciphertext[:aes.BlockSize]
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		return nil, err
+	}
+	stream := cipher.NewCFBEncrypter(block, iv)
+	stream.XORKeyStream(ciphertext[aes.BlockSize:], in)
+	return ciphertext, nil
 }
 
 func TestAdd(t *testing.T) {
@@ -540,12 +562,16 @@ func TestBootstrap(t *testing.T) {
 	saved, err := svc.Add(validToken, config)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
+	e, err := enc([]byte(saved.ExternalKey))
+	require.Nil(t, err, fmt.Sprintf("Encrypting external key expected to succeed: %s.\n", err))
+
 	cases := []struct {
 		desc        string
 		config      bootstrap.Config
 		externalKey string
 		externalID  string
 		err         error
+		encrypted   bool
 	}{
 		{
 			desc:        "bootstrap using invalid external id",
@@ -553,6 +579,7 @@ func TestBootstrap(t *testing.T) {
 			externalID:  "invalid",
 			externalKey: saved.ExternalKey,
 			err:         bootstrap.ErrNotFound,
+			encrypted:   false,
 		},
 		{
 			desc:        "bootstrap using invalid external key",
@@ -560,6 +587,7 @@ func TestBootstrap(t *testing.T) {
 			externalID:  saved.ExternalID,
 			externalKey: "invalid",
 			err:         bootstrap.ErrNotFound,
+			encrypted:   false,
 		},
 		{
 			desc:        "bootstrap an existing config",
@@ -567,11 +595,20 @@ func TestBootstrap(t *testing.T) {
 			externalID:  saved.ExternalID,
 			externalKey: saved.ExternalKey,
 			err:         nil,
+			encrypted:   false,
+		},
+		{
+			desc:        "bootstrap encrypted",
+			config:      saved,
+			externalID:  saved.ExternalID,
+			externalKey: hex.EncodeToString(e),
+			err:         nil,
+			encrypted:   true,
 		},
 	}
 
 	for _, tc := range cases {
-		config, err := svc.Bootstrap(tc.externalKey, tc.externalID)
+		config, err := svc.Bootstrap(tc.externalKey, tc.externalID, tc.encrypted)
 		assert.Equal(t, tc.config, config, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.config, config))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
@@ -720,7 +757,7 @@ func TestRemoveCoinfigHandler(t *testing.T) {
 		err  error
 	}{
 		{
-			desc: "remove an existing conifg",
+			desc: "remove an existing config",
 			id:   saved.MFThing,
 			err:  nil,
 		},
@@ -759,7 +796,7 @@ func TestDisconnectThingsHandler(t *testing.T) {
 			err:       nil,
 		},
 		{
-			desc:      "disconnect dicsonnected",
+			desc:      "disconnect disconnected",
 			channelID: channel.ID,
 			thingID:   saved.MFThing,
 			err:       nil,

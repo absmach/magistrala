@@ -134,12 +134,12 @@ func (crm *configRepositoryMock) RetrieveAll(key string, filter bootstrap.Filter
 	}
 }
 
-func (crm *configRepositoryMock) RetrieveByExternalID(externalKey, externalID string) (bootstrap.Config, error) {
+func (crm *configRepositoryMock) RetrieveByExternalID(externalID string) (bootstrap.Config, error) {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 
 	for _, cfg := range crm.configs {
-		if cfg.ExternalID == externalID && cfg.ExternalKey == externalKey {
+		if cfg.ExternalID == externalID {
 			return cfg, nil
 		}
 	}

@@ -1,7 +1,8 @@
 ## Bootstrap
 
 `Bootstrapping` refers to a self-starting process that is supposed to proceed without external input.
-Mainflux platform supports bootstrapping process, but some of the preconditions need to be fulfilled in advance. The device can trigger a bootstrap when:
+Mainflux platform supports bootstrapping process, but some of the preconditions need to be fulfilled in advance. The device can trigger a bootstrap when:s
+
 - device contains only bootstrap credentials and no Mainflux credentials
 - device, for any reason, fails to start a communication with the configured Mainflux services (server not responding, authentication failure, etc..).
 - device, for any reason, wants to update its configuration
@@ -60,7 +61,18 @@ curl -s -S -i -X POST -H "Authorization: <user_token>" -H "Content-Type: applica
 
 In this example, `channels` field represents the list of Mainflux channel IDs the thing is connected to. These channels need to be provisioned before the configuration is uploaded. Field `content` represents custom configuration. This custom configuration contains parameters that can be used to set up the thing. It can also be empty if no additional set up is needed. Field `name` is human readable name and `thing_id` is an ID of the Mainflux thing. This field is not required. If `thing_id` is empty, corresponding Mainflux thing will be created implicitly and its ID will be sent as a part of `Location` header of the response. Fields `client_cert`, `client_key`, and `ca_cert` represent PEM or base64-encoded DER client certificate, client certificate key, and trusted CA, respectively.
 
-There are two more fields: `external_id` and `external_key`. External ID represents an ID of the device that corresponds to the given thing. For example, this can be a MAC address or the serial number of the device. The external key represents the device key. This is the secret key that's safely stored on the device and it is used to authorize the thing during the bootstrapping process. Please note that external ID and external key and Mainflux ID and Mainflux key are _completely different concepts_. External id and key are only used to authenticate a device that corresponds to the specific Mainflux thing during the bootstrapping procedure.
+There are two more fields: `external_id` and `external_key`. External ID represents an ID of the device that corresponds to the given thing. For example, this can be a MAC address or the serial number of the device. The external key represents the device key. This is the secret key that's safely stored on the device and it is used to authorize the thing during the bootstrapping process. Please note that external ID and external key and Mainflux ID and Mainflux key are _completely different concepts_. External id and key are only used to authenticate a device that corresponds to the specific Mainflux thing during the bootstrapping procedure. As Configuration optionally contains client certificate and issuing CA, it's possible that device is not able to establish TLS encrypted communication with Mainflux before bootstrapping. For that purpose, Bootstrap service exposes endpoint used for secure bootstrapping which can be used regardless of protocol (HTTP or HTTPS). Both device and Bootstrap service use a secret key to encrypt the content. Encryption is done as follows:
+
+   1) Device uses the secret encryption key to encrypt the value of that exact external key
+   2) Device sends a bootstrap request using the value from 1 as an Authorization header
+   3) Bootstrap service fetches config by its external ID
+   4) Bootstrap service uses the secret encryption key to decrypt Authorization header
+   5) Bootstrap service compares value from 4 with the external key of the config from 3 and proceeds to 6 if they're equal
+   6) Bootstrap service uses the secret encryption key to encrypt the content of the bootstrap response
+
+> Please have on mind that secret key is passed to the Bootstrap service as an environment variable. As security measurement, Bootstrap service removes this variable once it reads it on startup. However, depending on your deployment, this variable can still be visible as a part of your configuration or terminal emulator environment.
+
+For more details on which encryption mechanisms are used, please take a look at the implementation.
 
 ### Bootstrapping
 

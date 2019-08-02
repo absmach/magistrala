@@ -252,32 +252,23 @@ func TestRetrieveByExternalID(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	cases := []struct {
-		desc        string
-		externalID  string
-		externalKey string
-		err         error
+		desc       string
+		externalID string
+		err        error
 	}{
 		{
-			desc:        "retrieve with invalid external ID",
-			externalID:  strconv.Itoa(numConfigs + 1),
-			externalKey: config.ExternalKey,
-			err:         bootstrap.ErrNotFound,
+			desc:       "retrieve with invalid external ID",
+			externalID: strconv.Itoa(numConfigs + 1),
+			err:        bootstrap.ErrNotFound,
 		},
 		{
-			desc:        "retrieve with invalid external key",
-			externalID:  c.ExternalID,
-			externalKey: "invalid",
-			err:         bootstrap.ErrNotFound,
-		},
-		{
-			desc:        "retrieve with external key",
-			externalID:  c.ExternalID,
-			externalKey: c.ExternalKey,
-			err:         nil,
+			desc:       "retrieve with external key",
+			externalID: c.ExternalID,
+			err:        nil,
 		},
 	}
 	for _, tc := range cases {
-		_, err := repo.RetrieveByExternalID(tc.externalKey, tc.externalID)
+		_, err := repo.RetrieveByExternalID(tc.externalID)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }

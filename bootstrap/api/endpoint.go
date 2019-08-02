@@ -228,19 +228,19 @@ func removeEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 	}
 }
 
-func bootstrapEndpoint(svc bootstrap.Service, reader bootstrap.ConfigReader) endpoint.Endpoint {
+func bootstrapEndpoint(svc bootstrap.Service, reader bootstrap.ConfigReader, secure bool) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
 		req := request.(bootstrapReq)
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
-		cfg, err := svc.Bootstrap(req.key, req.id)
+		cfg, err := svc.Bootstrap(req.key, req.id, secure)
 		if err != nil {
 			return nil, err
 		}
 
-		return reader.ReadConfig(cfg)
+		return reader.ReadConfig(cfg, secure)
 	}
 }
 

@@ -87,9 +87,15 @@ func MakeHandler(svc bootstrap.Service, reader bootstrap.ConfigReader) http.Hand
 		opts...))
 
 	r.Get("/things/bootstrap/:external_id", kithttp.NewServer(
-		bootstrapEndpoint(svc, reader),
+		bootstrapEndpoint(svc, reader, false),
 		decodeBootstrapRequest,
 		encodeResponse,
+		opts...))
+
+	r.Get("/things/bootstrap/secure/:external_id", kithttp.NewServer(
+		bootstrapEndpoint(svc, reader, true),
+		decodeBootstrapRequest,
+		encodeSecureRes,
 		opts...))
 
 	r.Put("/things/state/:id", kithttp.NewServer(
@@ -256,6 +262,17 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 	}
 
 	return json.NewEncoder(w).Encode(response)
+}
+
+func encodeSecureRes(_ context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-Type", contentType)
+	w.WriteHeader(http.StatusOK)
+	if b, ok := response.([]byte); ok {
+		if _, err := w.Write(b); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {

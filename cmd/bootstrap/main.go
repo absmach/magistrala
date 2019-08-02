@@ -7,6 +7,8 @@
 package main
 
 import (
+	"crypto/aes"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -50,6 +52,7 @@ const (
 	defDBSSLCert     = ""
 	defDBSSLKey      = ""
 	defDBSSLRootCert = ""
+	defEncryptKey    = "12345678910111213141516171819202"
 	defClientTLS     = "false"
 	defCACerts       = ""
 	defPort          = "8180"
@@ -78,6 +81,7 @@ const (
 	envDBSSLCert     = "MF_BOOTSTRAP_DB_SSL_CERT"
 	envDBSSLKey      = "MF_BOOTSTRAP_DB_SSL_KEY"
 	envDBSSLRootCert = "MF_BOOTSTRAP_DB_SSL_ROOT_CERT"
+	envEncryptKey    = "MF_BOOTSTRAP_ENCRYPT_KEY"
 	envClientTLS     = "MF_BOOTSTRAP_CLIENT_TLS"
 	envCACerts       = "MF_BOOTSTRAP_CA_CERTS"
 	envPort          = "MF_BOOTSTRAP_PORT"
@@ -101,6 +105,7 @@ type config struct {
 	logLevel     string
 	dbConfig     postgres.Config
 	clientTLS    bool
+	encKey       []byte
 	caCerts      string
 	httpPort     string
 	serverCert   string
@@ -179,11 +184,22 @@ func loadConfig() config {
 	if err != nil {
 		log.Fatalf("Invalid %s value: %s", envUsersTimeout, err.Error())
 	}
+	encKey, err := hex.DecodeString(mainflux.Env(envEncryptKey, defEncryptKey))
+	if err != nil {
+		log.Fatalf("Invalid %s value: %s", envEncryptKey, err.Error())
+	}
+	if err := os.Unsetenv(envEncryptKey); err != nil {
+		log.Fatalf("Unable to unset %s value: %s", envEncryptKey, err.Error())
+	}
+	if _, err := aes.NewCipher(encKey); err != nil {
+		log.Fatalf("Invalid %s value: %s", envEncryptKey, err.Error())
+	}
 
 	return config{
 		logLevel:     mainflux.Env(envLogLevel, defLogLevel),
 		dbConfig:     dbConfig,
 		clientTLS:    tls,
+		encKey:       encKey,
 		caCerts:      mainflux.Env(envCACerts, defCACerts),
 		httpPort:     mainflux.Env(envPort, defPort),
 		serverCert:   mainflux.Env(envServerCert, defServerCert),
@@ -261,7 +277,7 @@ func newService(conn *grpc.ClientConn, usersTracer opentracing.Tracer, db *sqlx.
 	sdk := mfsdk.NewSDK(config)
 	users := usersapi.NewClient(usersTracer, conn, cfg.usersTimeout)
 
-	svc := bootstrap.New(users, thingsRepo, sdk)
+	svc := bootstrap.New(users, thingsRepo, sdk, cfg.encKey)
 	svc = redisprod.NewEventStoreMiddleware(svc, esClient)
 	svc = api.NewLoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
@@ -312,11 +328,11 @@ func startHTTPServer(svc bootstrap.Service, cfg config, logger mflog.Logger, err
 	if cfg.serverCert != "" || cfg.serverKey != "" {
 		logger.Info(fmt.Sprintf("Bootstrap service started using https on port %s with cert %s key %s",
 			cfg.httpPort, cfg.serverCert, cfg.serverKey))
-		errs <- http.ListenAndServeTLS(p, cfg.serverCert, cfg.serverKey, api.MakeHandler(svc, bootstrap.NewConfigReader()))
+		errs <- http.ListenAndServeTLS(p, cfg.serverCert, cfg.serverKey, api.MakeHandler(svc, bootstrap.NewConfigReader(cfg.encKey)))
 		return
 	}
 	logger.Info(fmt.Sprintf("Bootstrap service started using http on port %s", cfg.httpPort))
-	errs <- http.ListenAndServe(p, api.MakeHandler(svc, bootstrap.NewConfigReader()))
+	errs <- http.ListenAndServe(p, api.MakeHandler(svc, bootstrap.NewConfigReader(cfg.encKey)))
 }
 
 func subscribeToThingsES(svc bootstrap.Service, client *r.Client, consumer string, logger mflog.Logger) {

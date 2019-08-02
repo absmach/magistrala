@@ -18,9 +18,9 @@ const (
 
 // State represents corresponding Mainflux Thing state. The possible Config States
 // as well as description of what that State represents are given in the table:
-// | State    | What it means 		                                                           |
+// | State    | What it means                                                                  |
 // |----------+--------------------------------------------------------------------------------|
-// | Inactive | Thing is created, but isn't able to communicate over Mainflux 				   |
+// | Inactive | Thing is created, but isn't able to communicate over Mainflux                  |
 // | Active   | Thing is able to communicate using Mainflux                                    |
 type State int
 

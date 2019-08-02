@@ -50,6 +50,8 @@ const (
 )
 
 var (
+	encKey = []byte("1234567891011121")
+
 	channel = bootstrap.Channel{
 		ID:       "1",
 		Name:     "name",
@@ -71,7 +73,7 @@ func newService(users mainflux.UsersServiceClient, url string) bootstrap.Service
 	}
 
 	sdk := mfsdk.NewSDK(config)
-	return bootstrap.New(users, configs, sdk)
+	return bootstrap.New(users, configs, sdk, encKey)
 }
 
 func newThingsService(users mainflux.UsersServiceClient) things.Service {
@@ -449,7 +451,7 @@ func TestBootstrap(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		_, err := svc.Bootstrap(tc.externalKey, tc.externalID)
+		_, err := svc.Bootstrap(tc.externalKey, tc.externalID, false)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(&redis.XReadArgs{

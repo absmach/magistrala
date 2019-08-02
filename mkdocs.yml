@@ -34,7 +34,7 @@ pages:
 - Storage: storage.md
 - LoRa: lora.md
 - Security: 
-    - Secure commuincation: security.md
+    - Secure communication: security.md
     - Authentication: authentication.md
 - CLI: cli.md
 - Bootstrap: bootstrap.md

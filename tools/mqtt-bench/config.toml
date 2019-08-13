@@ -1,0 +1,13 @@
+broker = "tcp://localhost:1883"
+qos =2
+size =100
+count =100
+pubs =3
+subs =1
+format = "text"
+quiet = true
+mtls = false
+skiptlsver = true
+ca = "ca.crt"
+channels = "channels.toml"
+retain = true

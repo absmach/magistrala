@@ -1,0 +1,12 @@
+broker_url = "tcp://localhost:1883"
+qos =2
+message_size =100
+message_count =100
+publishers_num =10
+subscribers_num =1
+format = "text"
+quiet = true
+mtls = true
+skiptlsver = true
+ca_file = "ca.crt"
+channels_file = "channels.toml"

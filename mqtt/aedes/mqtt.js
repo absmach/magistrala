@@ -5,6 +5,8 @@
 
 'use strict';
 
+const version = '0.9.0';
+
 var http = require('http'),
     redis = require('redis'),
     net = require('net'),
@@ -109,6 +111,13 @@ esclient.on('error', function(err) {
 // MQTT over WebSocket
 function startWs() {
     var server = http.createServer();
+    server.on('request', (req, res) => {
+        if (req.url === '/version') {
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+            res.end(`{"service":"mqtt-adapter","version":"${version}"}`);
+        }
+    }); 
     websocket.createServer({server: server}, aedes.handle);
     server.listen(config.ws_port);
     return server;

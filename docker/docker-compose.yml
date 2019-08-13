@@ -256,6 +256,7 @@ services:
       MF_JAEGER_URL: ${MF_JAEGER_URL}
     ports:
       - ${MF_COAP_ADAPTER_PORT}:${MF_COAP_ADAPTER_PORT}/udp
+      - ${MF_COAP_ADAPTER_PORT}:${MF_COAP_ADAPTER_PORT}/tcp
     networks:
       - mainflux-base-net
 

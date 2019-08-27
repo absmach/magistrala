@@ -1,4 +1,4 @@
-package res
+package results
 
 // RunResults describes results of a single client / run
 type RunResults struct {

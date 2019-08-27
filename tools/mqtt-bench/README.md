@@ -7,23 +7,27 @@ The tool supports multiple concurrent clients, publishers and subscribers config
 
 ```
 cd benchmark
-go build  -o mqtt-benchmark *.go
+go build  -o mqtt-bench *.go
 
-> mqtt-benchmark --help
-Usage of mqtt-benchmark:
-  -broker="tcp://localhost:1883": MQTT broker endpoint as scheme://host:port
-  -clients=10: Number of clients to start
-  -count=100: Number of messages to send per client
-  -format="text": Output format: text|json
-  -password="": MQTT password (empty if auth disabled)
-  -qos=1: QoS for published messages
-  -quiet=false : Suppress logs while running (except errors and the result)
-  -size=100: Size of the messages payload (bytes
-  -subs=10 number of subscribers
-  -pubs=10 number of publishers
-  -config=connections.json , file with mainflux channels
-  -mtls=false, use mtls
-  -ca=ca.crt, use mqtts, pass ca to server validate certificate
+> mqtt-bench --help
+Flags:
+  -b, --broker string     address for mqtt broker, for secure use tcps and 8883 (default "tcp://localhost:1883")
+      --ca string         CA file (default "ca.crt")
+      --channels string   config file for channels (default "channels.toml")
+  -g, --config string     config file default is config.toml (default "config.toml")
+  -n, --count int         Number of messages sent per publisher (default 100)
+  -f, --format string     Output format: text|json (default "text")
+  -h, --help              help for mqtt-bench
+      --msg string        messg to be sent, SENML (default "{\"n\":\"current\",\"t\":-4,\"v\":1.3}")
+  -m, --mtls              Use mtls for connection
+      --pubs int          Number of publishers (default 10)
+  -q, --qos int           QoS for published messages, values 0 1 2
+      --quiet             Supress messages
+  -r, --retain            Retain mqtt messages
+  -s, --size int          Size of message payload bytes (default 100)
+  -t, --skipTLSVer        Skip tls verification
+      --subs int          Number of subscribers (default 10)
+
 ```
 
 Two output formats supported: human-readable plain text and JSON.
@@ -34,20 +38,20 @@ channels for testing
 Example use and output:
 
 ```
-go build -o mqtt-benchmark *.go
+go build -o mqtt-bench *.go
 
 without mtls
-./mqtt-benchmark --broker tcp://localhost:1883 --count 100 --size 100  --qos 0 --format text   --subs 100 --pubs 0 --channels channels.toml
+./mqtt-bench --broker tcp://localhost:1883 --count 100 --size 100  --qos 0 --format text   --subs 100 --pubs 0 --channels channels.toml
 
 with mtls
-./mqtt-benchmark --broker tcps://localhost:8883 --count 100 --size 100  --qos 0 --format text   --subs 100 --pubs 0 --channels channels.toml --mtls -ca ca.crt
+./mqtt-bench --broker tcps://localhost:8883 --count 100 --size 100  --qos 0 --format text   --subs 100 --pubs 0 --channels channels.toml --mtls -ca ca.crt
 ```
 
 
 You can use config.toml to create tests with this tool
-./mqtt-benchmark --config config.toml it will read params from config.toml
-
-
+```
+./mqtt-bench --config config.toml it will read params from config.toml
+```
 ```
 broker_url = "tcp://localhost:1883"
 qos = 2
@@ -61,6 +65,12 @@ mtls = false
 skiptlsver = true
 ca_file = "ca.crt"
 channels_file = "channels.toml"
+```
+You can use script which will run series of tests using mqtt-bench
+```
+cd tools/mqtt-bench/scripts
+./mqtt-bench.sh mainflux mainflux.com channels.toml
+
 ```
 
 For Example

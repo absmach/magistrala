@@ -4,21 +4,33 @@ A simple utility to create a list of channels and things connected with possibil
 
 ### Usage
 
-* host - hostname where mainflux instance is running
-* username - mainflux username
-* password - mainflux user Password
-* num - number of channels to creat
-* ssl - create certificates for each channel for mtls access
-* ca - CA crt file used for signing certificates
-* prefix - for channels and things Name
+*      --ca string         CA for creating and signing things certificate (default "ca.crt")
+*      --cakey string      ca.key for creating and signing things certificate (default "ca.key")
+*  -h, --help              help for mqtt-prov
+*      --host string       address for mainflux instance (default "https://localhost")
+*      --num int           number of channels and things to create and connect (default 10)
+*  -p, --password string   mainflux users password
+*      --ssl               create certificates for mTLS access
+*  -u, --username string   mainflux user (default "test@mainflux.com")
+
 
 
 ```
-go run main.go --host http://localhost --num 10 --username  test@mainflux.com --password test1234 --ssl --ca ../../docker/ssl/certs/ca.crt
+go build -o mqtt-prov *.go 
 
+./mqtt-prov -u mirkot@mainflux.com -p test1234 --host https://142.93.118.47 
+```
+if you want to create a list of channels with certificates
 ```
 
-example entry in channels.toml fail
+./mqtt-prov --host http://localhost --num 10 -u  test@mainflux.com -p test1234 --ssl true --ca ../../docker/ssl/certs/ca.crt --cakey ../../docker/ssl/certs/ca.key
+
+```
+ca.crt and ca.key are used for creating things certificate and for HTTPS, if you are provision on remote server you will have to get these files to your local 
+
+
+
+example entry in channels.toml file
 
 ```
 [[Connection]]

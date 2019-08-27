@@ -10,7 +10,6 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -20,6 +19,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	sdk "github.com/mainflux/mainflux/sdk/go"
+	"github.com/spf13/cobra"
 )
 
 type connection struct {
@@ -29,9 +29,21 @@ type connection struct {
 	MTLSCert  string
 	MTLSKey   string
 }
+
 type connections struct {
 	Connection []connection
 }
+
+var (
+	host     string
+	username string
+	password string
+	num      int
+	ssl      bool
+	ca       string
+	cakey    string
+	prefix   string
+)
 
 const (
 	CRT_LOCATION  = "certs"
@@ -42,26 +54,41 @@ const (
 	CN            = "localhost"
 	CRT_FILE_NAME = "thing"
 	rsaBits       = 4096
-	daysValid     = 730
+	daysValid     = "2400h"
 )
 
-func main() {
-	var (
-		host     = flag.String("host", "http://localhost", "Mainflux host address")
-		username = flag.String("username", "mirkot@mainflux.com", "mainflux user")
-		password = flag.String("password", "test1234", "mainflux user password")
-		num      = flag.Int("num", 1, "number of created channels")
-		ssl      = flag.Bool("ssl", true, "create thing certs")
-		ca       = flag.String("ca", "ca.crt", "CA file for creating things certs")
-		cakey    = flag.String("cakey", "ca.key", "CA private key file")
-		prefix   = flag.String("prefix", "test", "name prefix for created channels and things")
-	)
+var provisionCmd = &cobra.Command{
+	Use: "mqtt-prov",
+	Run: func(cmd *cobra.Command, args []string) {
+		provision()
+	},
+}
 
-	flag.Parse()
+func init() {
+	provisionCmd.PersistentFlags().StringVarP(&host, "host", "", "https://localhost", "address for mainflux instance")
+	provisionCmd.PersistentFlags().StringVarP(&username, "username", "u", "test@mainflux.com", "mainflux user")
+	provisionCmd.PersistentFlags().StringVarP(&password, "password", "p", "", "mainflux users password")
+	provisionCmd.PersistentFlags().IntVarP(&num, "num", "", 10, "number of channels and things to create and connect")
+	provisionCmd.PersistentFlags().BoolVarP(&ssl, "ssl", "", false, "create certificates for mTLS access")
+	provisionCmd.PersistentFlags().StringVarP(&cakey, "cakey", "", "ca.key", "ca.key for creating and signing things certificate")
+	provisionCmd.PersistentFlags().StringVarP(&ca, "ca", "", "ca.crt", "CA for creating and signing things certificate")
+}
+
+func main() {
+	execute()
+}
+
+func execute() {
+	if err := provisionCmd.Execute(); err != nil {
+		log.Fatalf(err.Error())
+	}
+}
+
+func provision() {
 
 	msgContentType := string(sdk.CTJSONSenML)
 	sdkConf := sdk.Config{
-		BaseURL:           *host,
+		BaseURL:           host,
 		ReaderURL:         "http://localhost:8905",
 		ReaderPrefix:      "",
 		UsersPrefix:       "",
@@ -74,8 +101,8 @@ func main() {
 	s := sdk.NewSDK(sdkConf)
 
 	user := sdk.User{
-		Email:    *username,
-		Password: *password,
+		Email:    username,
+		Password: password,
 	}
 
 	token, err := s.CreateToken(user)
@@ -90,13 +117,13 @@ func main() {
 	var tlsCert tls.Certificate
 	var caCert *x509.Certificate
 
-	if *ssl {
-		tlsCert, err = tls.LoadX509KeyPair(*ca, *cakey)
+	if ssl {
+		tlsCert, err = tls.LoadX509KeyPair(ca, cakey)
 		if err != nil {
 			log.Fatalf("Failed to load CA cert")
 		}
 
-		b, err := ioutil.ReadFile(*ca)
+		b, err := ioutil.ReadFile(ca)
 		if err != nil {
 			log.Fatalf("Failed to load CA cert")
 		}
@@ -112,15 +139,15 @@ func main() {
 
 	}
 
-	for i := 0; i < *num; i++ {
+	for i := 0; i < num; i++ {
 
-		m, err := createThing(s, fmt.Sprintf("%s-thing-%d", *prefix, i), token)
+		m, err := createThing(s, fmt.Sprintf("%s-thing-%d", prefix, i), token)
 		if err != nil {
 			log.Println("Failed to create thing")
 			return
 		}
 
-		ch, err := createChannel(s, fmt.Sprintf("%s-channel-%d", *prefix, i), token)
+		ch, err := createChannel(s, fmt.Sprintf("%s-channel-%d", prefix, i), token)
 
 		if err := s.ConnectThing(m.ID, ch.ID, token); err != nil {
 			log.Println("Failed to create thing")
@@ -132,12 +159,16 @@ func main() {
 		things = append(things, m)
 		cert := ""
 		key := ""
-		if *ssl {
+		if ssl {
 			var priv interface{}
 			priv, err = rsa.GenerateKey(rand.Reader, rsaBits)
 
 			notBefore := time.Now()
-			notAfter := notBefore.Add(daysValid)
+			validFor, err := time.ParseDuration(daysValid)
+			if err != nil {
+				log.Fatalf("Failed to set date %v", validFor)
+			}
+			notAfter := notBefore.Add(validFor)
 
 			serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 			serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)

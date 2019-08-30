@@ -6,7 +6,7 @@ MF.log = function(msg) {
 }
 
 MF.url = function(data) {
-    return 'wss://localhost/ws/channels/' + data.channelid + '/messages?authorization=' + data.thingkey
+    return 'wss://' + window.location.hostname + '/ws/channels/' + data.channelid + '/messages?authorization=' + data.thingkey
 }
 
 app.ports.connectWebsocket.subscribe(function(data) {

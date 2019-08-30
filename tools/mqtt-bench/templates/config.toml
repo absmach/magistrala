@@ -1,0 +1,25 @@
+[mqtt]
+  [mqtt.broker]
+  url = "tcp://localhost:1883"
+
+  [mqtt.message]
+  size = 100
+  format = "text"
+  qos = 2
+  retain = true
+
+  [mqtt.tls]
+  mtls = false
+  skiptlsver = true
+  ca = "ca.crt"
+
+[test]
+pubs = 3
+subs = 1
+count = 100
+
+[log]
+quiet = false
+
+[mainflux]
+connections_file = "../provision/connections.toml"

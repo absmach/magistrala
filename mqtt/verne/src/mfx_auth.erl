@@ -39,10 +39,9 @@ identify(Password) ->
     URL = [list_to_binary(AuthUrl), <<"/identify">>],
     ReqBody = jsone:encode(#{<<"token">> => Password}),
     ReqHeaders = [{<<"Content-Type">>, <<"application/json">>}],
-    Payload = <<>>,
     Options = [{pool, default}],
     error_logger:info_msg("identify: ~p", [URL]),
-    case hackney:request(post, URL, ReqHeaders, ReqBody, Payload, Options) of
+    case hackney:request(post, URL, ReqHeaders, ReqBody, Options) of
         {ok, Status, _, Ref} ->
             case Status of
                 200 ->
@@ -71,9 +70,8 @@ access(UserName, ChannelId) ->
     error_logger:info_msg("URL: ~p", [URL]),
     ReqBody = jsone:encode(#{<<"thing_id">> => UserName}),
     ReqHeaders = [{<<"Content-Type">>, <<"application/json">>}],
-    Payload = <<>>,
     Options = [{pool, default}],
-    case hackney:request(post, URL, ReqHeaders, ReqBody, Payload, Options) of
+    case hackney:request(post, URL, ReqHeaders, ReqBody, Options) of
         {ok, Status, _RespHeaders, _ClientRef} ->
             case Status of
                 200 ->

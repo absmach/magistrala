@@ -23,7 +23,15 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-    SizeArgs = [{size, 10}, {max_overflow, 10}],
+    PoolSize = case os:getenv("MF_MQTT_VERNEMQ_GRPC_POOL_SIZE") of
+        false ->
+            10;
+        PoolSizeEnv ->
+            {PoolSizeInt, _PoolSizeRest} = string:to_integer(PoolSizeEnv),
+            PoolSizeInt
+    end,
+
+    SizeArgs = [{size, PoolSize}, {max_overflow, PoolSize * 1.5}],
     PoolArgs = [{name, {local, grpc_pool}}, {worker_module, mfx_grpc}],
     WorkerArgs = [],
     PoolSpec = poolboy:child_spec(grpc_pool, PoolArgs ++ SizeArgs, WorkerArgs),

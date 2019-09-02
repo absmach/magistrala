@@ -5,6 +5,7 @@
     start_link/0,
     init/1,
     publish/1,
+    handle_call/3,
     handle_cast/2,
     handle_info/2,
     terminate/2
@@ -28,10 +29,14 @@ init(_Args) ->
 publish(Message) ->
     gen_server:cast(?MODULE, {publish, Message}).
 
+% Currently unused, but kept to avoid compiler warnings (it expects handle_call/3 in the gen_server)
+handle_call(Name, _From, _State) ->
+    Reply = lists:flatten(io_lib:format("Hello ~s from mfx_redis genserver", [Name])),
+    {reply, Reply, _State}.
+
 handle_cast({publish, Message}, #state{conn = RedisConn} = State) ->
-    [{redis_conn, Conn}] = ets:lookup(mfx_cfg, redis_conn),
     error_logger:info_msg("mfx_redis genserver cast ~p ~p", [RedisConn, Message]),
-    eredis:q(Conn, ["XADD" | Message]),
+    eredis:q(RedisConn, ["XADD" | Message]),
     {noreply, State}.
 
 handle_info(_Info, State) ->

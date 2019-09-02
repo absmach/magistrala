@@ -4,6 +4,7 @@
     start_link/0,
     init/1,
     publish/2,
+    handle_call/3,
     handle_cast/2,
     handle_info/2,
     terminate/2,
@@ -34,6 +35,11 @@ init(_Args) ->
 publish(Subject, Message) ->
     error_logger:info_msg("mfx_nats genserver publish ~p ~p", [Subject, Message]),
     gen_server:cast(?MODULE, {publish, Subject, Message}).
+
+% Currently unused, but kept to avoid compiler warnings (it expects handle_call/3 in the gen_server)
+handle_call(Name, _From, _State) ->
+    Reply = lists:flatten(io_lib:format("Hello ~s from mfx_nats genserver", [Name])),
+    {reply, Reply, _State}.
 
 handle_cast({publish, Subject, Message}, #state{conn = NatsConn} = State) ->
     error_logger:info_msg("mfx_nats genserver cast ~p ~p ~p", [Subject, NatsConn, Message]),

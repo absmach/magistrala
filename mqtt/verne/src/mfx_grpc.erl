@@ -16,7 +16,6 @@
 
 init(_Args) ->
     error_logger:info_msg("mfx_grpc genserver has started (~w)~n", [self()]),
-
     [{_, GrpcUrl}] = ets:lookup(mfx_cfg, grpc_url),
     {ok, {_, _, GrpcHost, GrpcPort, _, _}} = http_uri:parse(GrpcUrl),
     error_logger:info_msg("grpc host: ~p,  port: ~p", [GrpcHost, GrpcPort]),

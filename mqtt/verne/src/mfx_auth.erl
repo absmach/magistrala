@@ -35,57 +35,21 @@ identify(undefined) ->
     {error, undefined};
 identify(Password) ->
     error_logger:info_msg("identify: ~p", [Password]),
-    [{_, AuthUrl}] = ets:lookup(mfx_cfg, auth_url),
-    URL = [list_to_binary(AuthUrl), <<"/identify">>],
-    ReqBody = jsone:encode(#{<<"token">> => Password}),
-    ReqHeaders = [{<<"Content-Type">>, <<"application/json">>}],
-    Options = [{pool, default}],
-    error_logger:info_msg("identify: ~p", [URL]),
-    case hackney:request(post, URL, ReqHeaders, ReqBody, Options) of
-        {ok, Status, _, Ref} ->
-            case Status of
-                200 ->
-                    case hackney:body(Ref) of
-                        {ok, RespBody} ->
-                            {[{<<"id">>, Id}]} = jsone:decode(RespBody, [{object_format, tuple}]),
-                            error_logger:info_msg("identify: ~p", [URL]),
-                            {ok, Id};
-                        _ ->
-                            error
-                    end;
-                403 ->
-                    {error, invalid_credentials};
-                _ ->
-                    {error, auth_error}
-            end;
-        {error,checkout_timeout} ->
-            {error,checkout_timeout};
-        _ ->
-            {error,authn_req_error}
-    end.
+    Token = #{value => binary_to_list(Password)},
+    Worker = poolboy:checkout(grpc_pool),
+    Result = gen_server:call(Worker, {identify, Token}),
+    poolboy:checkin(grpc_pool, Worker),
+    Result.
+
+
 access(UserName, ChannelId) ->
     error_logger:info_msg("access: ~p ~p", [UserName, ChannelId]),
-    [{_, AuthUrl}] = ets:lookup(mfx_cfg, auth_url),
-    URL = [list_to_binary(AuthUrl), <<"/channels/">>, ChannelId, <<"/access-by-id">>],
-    error_logger:info_msg("URL: ~p", [URL]),
-    ReqBody = jsone:encode(#{<<"thing_id">> => UserName}),
-    ReqHeaders = [{<<"Content-Type">>, <<"application/json">>}],
-    Options = [{pool, default}],
-    case hackney:request(post, URL, ReqHeaders, ReqBody, Options) of
-        {ok, Status, _RespHeaders, _ClientRef} ->
-            case Status of
-                200 ->
-                    ok;
-                403 ->
-                    {error, forbidden};
-                _ ->
-                    {error, authz_error}
-            end;
-        {error,checkout_timeout} ->
-            {error,checkout_timeout};
-        _ ->
-            {error,authz_req_error}
-    end.
+    AccessByIdReq = #{thingID => binary_to_list(UserName), chanID => binary_to_list(ChannelId)},
+    Worker = poolboy:checkout(grpc_pool),
+    Result = gen_server:call(Worker, {can_access_by_id, AccessByIdReq}),
+    poolboy:checkin(grpc_pool, Worker),
+    Result.
+
 auth_on_register({_IpAddr, _Port} = Peer, {_MountPoint, _ClientId} = SubscriberId, UserName, Password, CleanSession) ->
     error_logger:info_msg("auth_on_register: ~p ~p ~p ~p ~p", [Peer, SubscriberId, UserName, Password, CleanSession]),
     %% do whatever you like with the params, all that matters
@@ -148,15 +112,15 @@ auth_on_publish(UserName, {_MountPoint, _ClientId} = SubscriberId, QoS, Topic, P
     [{chanel_id, ChannelId}, {content_type, ContentType}, {subtopic, Subtopic}, {nats_subject, NatsSubject}] = parseTopic(Topic),
     case access(UserName, ChannelId) of
         ok ->
-            RawMessage = #'mainflux.RawMessage'{
-                'channel' = ChannelId,
-                'publisher' = UserName,
-                'subtopic' = Subtopic,
-                'protocol' = "mqtt",
-                'contentType' = ContentType,
-                'payload' = Payload
+            RawMessage = #{
+                channel => ChannelId,
+                subtopic => Subtopic,
+                publisher => UserName,
+                protocol => "mqtt",
+                contentType => ContentType,
+                payload => Payload
             },
-            mfx_nats:publish(NatsSubject, message:encode_msg(RawMessage)),
+            mfx_nats:publish(NatsSubject, message:encode_msg(RawMessage, 'mainflux.RawMessage')),
             ok;
         Other ->
             error_logger:info_msg("Error auth: ~p", [Other]),

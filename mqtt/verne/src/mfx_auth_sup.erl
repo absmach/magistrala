@@ -23,8 +23,16 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
+    SizeArgs = [{size, 10}, {max_overflow, 10}],
+    PoolArgs = [{name, {local, grpc_pool}}, {worker_module, mfx_grpc}],
+    WorkerArgs = [],
+    PoolSpec = poolboy:child_spec(grpc_pool, PoolArgs ++ SizeArgs, WorkerArgs),
+
+    error_logger:info_msg("PoolSpec: ~p", [PoolSpec]),
+
     {ok, { {one_for_one, 5, 10}, [
         {mfx_nats, {mfx_nats, start_link, []}, permanent, 2000, worker, [mfx_nats]},
-        {mfx_redis, {mfx_redis, start_link, []}, permanent, 2000, worker, [mfx_redis]}
+        {mfx_redis, {mfx_redis, start_link, []}, permanent, 2000, worker, [mfx_redis]},
+        PoolSpec
     ]} }.
 

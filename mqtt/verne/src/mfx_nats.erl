@@ -4,7 +4,6 @@
     start_link/0,
     init/1,
     publish/2,
-    handle_call/3,
     handle_cast/2,
     handle_info/2,
     terminate/2,
@@ -13,6 +12,8 @@
 ]).
 
 -include("proto/message.hrl").
+
+-record(state, {conn}).
 
 start_link() ->
     % Start genserver for PUB
@@ -25,25 +26,19 @@ init(_Args) ->
     {ok, {_, _, NatsHost, NatsPort, _, _}} = http_uri:parse(NatsUrl),
     {ok, NatsConn} = nats:connect(list_to_binary(NatsHost), NatsPort, #{buffer_size => 10}),
 
-    ets:insert(mfx_cfg, {nats_conn, NatsConn}),
-
     % Spawn SUB process
     spawn_link(?MODULE, subscribe, [NatsConn]),
-    {ok, []}.
+    
+    {ok, #state{conn = NatsConn}}.
 
 publish(Subject, Message) ->
     error_logger:info_msg("mfx_nats genserver publish ~p ~p", [Subject, Message]),
     gen_server:cast(?MODULE, {publish, Subject, Message}).
 
-handle_call(Name, _From, _State) ->
-    Reply = lists:flatten(io_lib:format("hello ~s from mfx_nats genserver", [Name])),
-    {reply, Reply, _State}.
-
-handle_cast({publish, Subject, Message}, _State) ->
-    [{nats_conn, Conn}] = ets:lookup(mfx_cfg, nats_conn),
-    error_logger:info_msg("mfx_nats genserver cast ~p ~p ~p", [Subject, Conn, Message]),
-    NewState = nats:pub(Conn, Subject, #{payload => Message}),
-    {noreply, NewState}.
+handle_cast({publish, Subject, Message}, #state{conn = NatsConn} = State) ->
+    error_logger:info_msg("mfx_nats genserver cast ~p ~p ~p", [Subject, NatsConn, Message]),
+    nats:pub(NatsConn, Subject, #{payload => Message}),
+    {noreply, State}.
 
 handle_info(_Info, State) ->
     {noreply, State}.
@@ -64,7 +59,7 @@ loop(Conn) ->
         {Conn, {msg, <<"teacup.control">>, _, <<"exit">>}} ->
             error_logger:info_msg("NATS received exit msg", []);
         {Conn, {msg, Subject, _ReplyTo, NatsMsg}} ->
-            #'mainflux.RawMessage'{'protocol' = Protocol, 'contentType' = ContentType, 'payload' = Payload} = message:decode_msg(NatsMsg, 'mainflux.RawMessage'),
+            #{protocol := Protocol, contentType := ContentType, payload := Payload} = message:decode_msg(NatsMsg, 'mainflux.RawMessage'),
             error_logger:info_msg("Received NATS protobuf msg with payload: ~p and ContentType: ~p~n", [Payload, ContentType]),
             case Protocol of
                 "mqtt" ->

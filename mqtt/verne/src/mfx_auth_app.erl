@@ -14,9 +14,9 @@ start(_StartType, _StartArgs) ->
     % Put ENV variables in ETS
     ets:new(mfx_cfg, [set, named_table, public]),
 
-    AuthUrl = case os:getenv("MF_THINGS_AUTH_HTTP_URL") of
-        false -> "http://localhost:8989";
-        AuthEnv -> AuthEnv
+    GrpcUrl = case os:getenv("MF_THINGS_AUTH_GRPC_URL") of
+        false -> "tcp://localhost:8183";
+        GrpcEnv -> GrpcEnv
     end,
     NatsUrl = case os:getenv("MF_NATS_URL") of
         false -> "nats://localhost:4222";
@@ -28,7 +28,7 @@ start(_StartType, _StartArgs) ->
     end,
 
     ets:insert(mfx_cfg, [
-        {auth_url, AuthUrl},
+        {grpc_url, GrpcUrl},
         {nats_url, NatsUrl},
         {redis_url, RedisUrl}
     ]),
@@ -36,11 +36,10 @@ start(_StartType, _StartArgs) ->
     % Also, init one ETS table for keeping the #{ClientId => Username} mapping
     ets:new(mfx_client_map, [set, named_table, public]),
 
-    % Start Hackney
-    application:ensure_all_started(hackney),
-
     % Start the process
     mfx_auth_sup:start_link().
 
 stop(_State) ->
     ok.
+
+

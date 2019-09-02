@@ -110,7 +110,7 @@ auth_on_register({_IpAddr, _Port} = Peer, {_MountPoint, _ClientId} = SubscriberI
 parseTopic(Topic) when length(Topic) == 3 ->
     ChannelId = lists:nth(2, Topic),
     NatsSubject = [<<"channel.">>, ChannelId],
-    [{chanel_id, ChannelId}, {content_type, ""}, {nats_subject, NatsSubject}];
+    [{chanel_id, ChannelId}, {content_type, ""}, {subtopic, <<>>}, {nats_subject, NatsSubject}];
 parseTopic(Topic) when length(Topic) > 3 ->
     ChannelId = lists:nth(2, Topic),
     case lists:nth(length(Topic) - 1, Topic) of
@@ -124,7 +124,8 @@ parseTopic(Topic) when length(Topic) > 3 ->
         _ ->
             Subtopic = lists:sublist(Topic, 4, length(Topic) - 3),
             NatsSubject = [<<"channel.">>, ChannelId, <<".">>, string:join([[X] || X <- Subtopic], ".")],
-            [{chanel_id, ChannelId}, {content_type, ""}, {nats_subject, NatsSubject}]
+            Subtopic2 = string:join([[X] || X <- Subtopic], "/"),
+            [{chanel_id, ChannelId}, {content_type, ""}, {subtopic, Subtopic2}, {nats_subject, NatsSubject}]
     end.
 
 auth_on_publish(UserName, {_MountPoint, _ClientId} = SubscriberId, QoS, Topic, Payload, IsRetain) ->
@@ -144,12 +145,13 @@ auth_on_publish(UserName, {_MountPoint, _ClientId} = SubscriberId, QoS, Topic, P
     %%
 
     % Topic is list of binaries, ex: [<<"channels">>, <<"1">>, <<"messages">>, <<"subtopic_1">>, ...]
-    [{chanel_id, ChannelId}, {content_type, ContentType}, {nats_subject, NatsSubject}] = parseTopic(Topic),
+    [{chanel_id, ChannelId}, {content_type, ContentType}, {subtopic, Subtopic}, {nats_subject, NatsSubject}] = parseTopic(Topic),
     case access(UserName, ChannelId) of
         ok ->
-            RawMessage = #'RawMessage'{
+            RawMessage = #'mainflux.RawMessage'{
                 'channel' = ChannelId,
                 'publisher' = UserName,
+                'subtopic' = Subtopic,
                 'protocol' = "mqtt",
                 'contentType' = ContentType,
                 'payload' = Payload
@@ -170,7 +172,7 @@ auth_on_subscribe(UserName, ClientId, [{Topic, _QoS}|_] = Topics) ->
     %% 2. return 'next' -> leave it to other plugins to decide
     %% 3. return {error, whatever} -> auth chain is stopped, and no SUBACK is sent
 
-    [{chanel_id, ChannelId}, _, _] = parseTopic(Topic),
+    [{chanel_id, ChannelId}, _, _, _] = parseTopic(Topic),
     access(UserName, ChannelId).
 
 %%% Redis ES

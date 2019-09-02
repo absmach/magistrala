@@ -52,26 +52,26 @@
 -export_type([]).
 
 %% message types
--type 'RawMessage'() :: #'RawMessage'{}.
+-type 'mainflux.RawMessage'() :: #'mainflux.RawMessage'{}.
 
--type 'Message'() :: #'Message'{}.
+-type 'mainflux.Message'() :: #'mainflux.Message'{}.
 
--type 'SumValue'() :: #'SumValue'{}.
+-type 'mainflux.SumValue'() :: #'mainflux.SumValue'{}.
 
--export_type(['RawMessage'/0, 'Message'/0, 'SumValue'/0]).
+-export_type(['mainflux.RawMessage'/0, 'mainflux.Message'/0, 'mainflux.SumValue'/0]).
 
--spec encode_msg(#'RawMessage'{} | #'Message'{} | #'SumValue'{}) -> binary().
+-spec encode_msg(#'mainflux.RawMessage'{} | #'mainflux.Message'{} | #'mainflux.SumValue'{}) -> binary().
 encode_msg(Msg) when tuple_size(Msg) >= 1 ->
     encode_msg(Msg, element(1, Msg), []).
 
--spec encode_msg(#'RawMessage'{} | #'Message'{} | #'SumValue'{}, atom() | list()) -> binary().
+-spec encode_msg(#'mainflux.RawMessage'{} | #'mainflux.Message'{} | #'mainflux.SumValue'{}, atom() | list()) -> binary().
 encode_msg(Msg, MsgName) when is_atom(MsgName) ->
     encode_msg(Msg, MsgName, []);
 encode_msg(Msg, Opts)
     when tuple_size(Msg) >= 1, is_list(Opts) ->
     encode_msg(Msg, element(1, Msg), Opts).
 
--spec encode_msg(#'RawMessage'{} | #'Message'{} | #'SumValue'{}, atom(), list()) -> binary().
+-spec encode_msg(#'mainflux.RawMessage'{} | #'mainflux.Message'{} | #'mainflux.SumValue'{}, atom(), list()) -> binary().
 encode_msg(Msg, MsgName, Opts) ->
     case proplists:get_bool(verify, Opts) of
       true -> verify_msg(Msg, MsgName, Opts);
@@ -79,24 +79,30 @@ encode_msg(Msg, MsgName, Opts) ->
     end,
     TrUserData = proplists:get_value(user_data, Opts),
     case MsgName of
-      'RawMessage' ->
-	  encode_msg_RawMessage(id(Msg, TrUserData), TrUserData);
-      'Message' ->
-	  encode_msg_Message(id(Msg, TrUserData), TrUserData);
-      'SumValue' ->
-	  encode_msg_SumValue(id(Msg, TrUserData), TrUserData)
+      'mainflux.RawMessage' ->
+	  'encode_msg_mainflux.RawMessage'(id(Msg, TrUserData),
+					   TrUserData);
+      'mainflux.Message' ->
+	  'encode_msg_mainflux.Message'(id(Msg, TrUserData),
+					TrUserData);
+      'mainflux.SumValue' ->
+	  'encode_msg_mainflux.SumValue'(id(Msg, TrUserData),
+					 TrUserData)
     end.
 
 
-encode_msg_RawMessage(Msg, TrUserData) ->
-    encode_msg_RawMessage(Msg, <<>>, TrUserData).
+'encode_msg_mainflux.RawMessage'(Msg, TrUserData) ->
+    'encode_msg_mainflux.RawMessage'(Msg, <<>>, TrUserData).
 
 
-encode_msg_RawMessage(#'RawMessage'{channel = F1,
-				    subtopic = F2, publisher = F3,
-				    protocol = F4, contentType = F5,
-				    payload = F6},
-		      Bin, TrUserData) ->
+'encode_msg_mainflux.RawMessage'(#'mainflux.RawMessage'{channel
+							    = F1,
+							subtopic = F2,
+							publisher = F3,
+							protocol = F4,
+							contentType = F5,
+							payload = F6},
+				 Bin, TrUserData) ->
     B1 = if F1 == undefined -> Bin;
 	    true ->
 		begin
@@ -163,15 +169,18 @@ encode_msg_RawMessage(#'RawMessage'{channel = F1,
 	   end
     end.
 
-encode_msg_Message(Msg, TrUserData) ->
-    encode_msg_Message(Msg, <<>>, TrUserData).
+'encode_msg_mainflux.Message'(Msg, TrUserData) ->
+    'encode_msg_mainflux.Message'(Msg, <<>>, TrUserData).
 
 
-encode_msg_Message(#'Message'{channel = F1,
-			      subtopic = F2, publisher = F3, protocol = F4,
-			      name = F5, unit = F6, value = F7, valueSum = F8,
-			      time = F9, updateTime = F10, link = F11},
-		   Bin, TrUserData) ->
+'encode_msg_mainflux.Message'(#'mainflux.Message'{channel
+						      = F1,
+						  subtopic = F2, publisher = F3,
+						  protocol = F4, name = F5,
+						  unit = F6, value = F7,
+						  valueSum = F8, time = F9,
+						  updateTime = F10, link = F11},
+			      Bin, TrUserData) ->
     B1 = if F1 == undefined -> Bin;
 	    true ->
 		begin
@@ -269,8 +278,9 @@ encode_msg_Message(#'Message'{channel = F1,
 		  TrF8 = id(F8, TrUserData),
 		  if TrF8 =:= undefined -> B7;
 		     true ->
-			 e_mfield_Message_valueSum(TrF8, <<B7/binary, 90>>,
-						   TrUserData)
+			 'e_mfield_mainflux.Message_valueSum'(TrF8,
+							      <<B7/binary, 90>>,
+							      TrUserData)
 		  end
 		end
 	 end,
@@ -306,12 +316,13 @@ encode_msg_Message(#'Message'{channel = F1,
 	   end
     end.
 
-encode_msg_SumValue(Msg, TrUserData) ->
-    encode_msg_SumValue(Msg, <<>>, TrUserData).
+'encode_msg_mainflux.SumValue'(Msg, TrUserData) ->
+    'encode_msg_mainflux.SumValue'(Msg, <<>>, TrUserData).
 
 
-encode_msg_SumValue(#'SumValue'{value = F1}, Bin,
-		    TrUserData) ->
+'encode_msg_mainflux.SumValue'(#'mainflux.SumValue'{value
+							= F1},
+			       Bin, TrUserData) ->
     if F1 == undefined -> Bin;
        true ->
 	   begin
@@ -323,8 +334,10 @@ encode_msg_SumValue(#'SumValue'{value = F1}, Bin,
 	   end
     end.
 
-e_mfield_Message_valueSum(Msg, Bin, TrUserData) ->
-    SubBin = encode_msg_SumValue(Msg, <<>>, TrUserData),
+'e_mfield_mainflux.Message_valueSum'(Msg, Bin,
+				     TrUserData) ->
+    SubBin = 'encode_msg_mainflux.SumValue'(Msg, <<>>,
+					    TrUserData),
     Bin2 = e_varint(byte_size(SubBin), Bin),
     <<Bin2/binary, SubBin/binary>>.
 
@@ -461,125 +474,167 @@ decode_msg_1_catch(Bin, MsgName, TrUserData) ->
     end.
 -endif.
 
-decode_msg_2_doit('RawMessage', Bin, TrUserData) ->
-    id(decode_msg_RawMessage(Bin, TrUserData), TrUserData);
-decode_msg_2_doit('Message', Bin, TrUserData) ->
-    id(decode_msg_Message(Bin, TrUserData), TrUserData);
-decode_msg_2_doit('SumValue', Bin, TrUserData) ->
-    id(decode_msg_SumValue(Bin, TrUserData), TrUserData).
+decode_msg_2_doit('mainflux.RawMessage', Bin,
+		  TrUserData) ->
+    id('decode_msg_mainflux.RawMessage'(Bin, TrUserData),
+       TrUserData);
+decode_msg_2_doit('mainflux.Message', Bin,
+		  TrUserData) ->
+    id('decode_msg_mainflux.Message'(Bin, TrUserData),
+       TrUserData);
+decode_msg_2_doit('mainflux.SumValue', Bin,
+		  TrUserData) ->
+    id('decode_msg_mainflux.SumValue'(Bin, TrUserData),
+       TrUserData).
 
 
 
-decode_msg_RawMessage(Bin, TrUserData) ->
-    dfp_read_field_def_RawMessage(Bin, 0, 0,
-				  id([], TrUserData), id([], TrUserData),
-				  id([], TrUserData), id([], TrUserData),
-				  id([], TrUserData), id(<<>>, TrUserData),
-				  TrUserData).
+'decode_msg_mainflux.RawMessage'(Bin, TrUserData) ->
+    'dfp_read_field_def_mainflux.RawMessage'(Bin, 0, 0,
+					     id([], TrUserData),
+					     id([], TrUserData),
+					     id([], TrUserData),
+					     id([], TrUserData),
+					     id([], TrUserData),
+					     id(<<>>, TrUserData), TrUserData).
 
-dfp_read_field_def_RawMessage(<<10, Rest/binary>>, Z1,
-			      Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			      TrUserData) ->
-    d_field_RawMessage_channel(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, TrUserData);
-dfp_read_field_def_RawMessage(<<18, Rest/binary>>, Z1,
-			      Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			      TrUserData) ->
-    d_field_RawMessage_subtopic(Rest, Z1, Z2, F@_1, F@_2,
-				F@_3, F@_4, F@_5, F@_6, TrUserData);
-dfp_read_field_def_RawMessage(<<26, Rest/binary>>, Z1,
-			      Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			      TrUserData) ->
-    d_field_RawMessage_publisher(Rest, Z1, Z2, F@_1, F@_2,
-				 F@_3, F@_4, F@_5, F@_6, TrUserData);
-dfp_read_field_def_RawMessage(<<34, Rest/binary>>, Z1,
-			      Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			      TrUserData) ->
-    d_field_RawMessage_protocol(Rest, Z1, Z2, F@_1, F@_2,
-				F@_3, F@_4, F@_5, F@_6, TrUserData);
-dfp_read_field_def_RawMessage(<<42, Rest/binary>>, Z1,
-			      Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			      TrUserData) ->
-    d_field_RawMessage_contentType(Rest, Z1, Z2, F@_1, F@_2,
-				   F@_3, F@_4, F@_5, F@_6, TrUserData);
-dfp_read_field_def_RawMessage(<<50, Rest/binary>>, Z1,
-			      Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			      TrUserData) ->
-    d_field_RawMessage_payload(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, TrUserData);
-dfp_read_field_def_RawMessage(<<>>, 0, 0, F@_1, F@_2,
-			      F@_3, F@_4, F@_5, F@_6, _) ->
-    #'RawMessage'{channel = F@_1, subtopic = F@_2,
-		  publisher = F@_3, protocol = F@_4, contentType = F@_5,
-		  payload = F@_6};
-dfp_read_field_def_RawMessage(Other, Z1, Z2, F@_1, F@_2,
-			      F@_3, F@_4, F@_5, F@_6, TrUserData) ->
-    dg_read_field_def_RawMessage(Other, Z1, Z2, F@_1, F@_2,
-				 F@_3, F@_4, F@_5, F@_6, TrUserData).
+'dfp_read_field_def_mainflux.RawMessage'(<<10,
+					   Rest/binary>>,
+					 Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+					 F@_6, TrUserData) ->
+    'd_field_mainflux.RawMessage_channel'(Rest, Z1, Z2,
+					  F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					  TrUserData);
+'dfp_read_field_def_mainflux.RawMessage'(<<18,
+					   Rest/binary>>,
+					 Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+					 F@_6, TrUserData) ->
+    'd_field_mainflux.RawMessage_subtopic'(Rest, Z1, Z2,
+					   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					   TrUserData);
+'dfp_read_field_def_mainflux.RawMessage'(<<26,
+					   Rest/binary>>,
+					 Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+					 F@_6, TrUserData) ->
+    'd_field_mainflux.RawMessage_publisher'(Rest, Z1, Z2,
+					    F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					    TrUserData);
+'dfp_read_field_def_mainflux.RawMessage'(<<34,
+					   Rest/binary>>,
+					 Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+					 F@_6, TrUserData) ->
+    'd_field_mainflux.RawMessage_protocol'(Rest, Z1, Z2,
+					   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					   TrUserData);
+'dfp_read_field_def_mainflux.RawMessage'(<<42,
+					   Rest/binary>>,
+					 Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+					 F@_6, TrUserData) ->
+    'd_field_mainflux.RawMessage_contentType'(Rest, Z1, Z2,
+					      F@_1, F@_2, F@_3, F@_4, F@_5,
+					      F@_6, TrUserData);
+'dfp_read_field_def_mainflux.RawMessage'(<<50,
+					   Rest/binary>>,
+					 Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+					 F@_6, TrUserData) ->
+    'd_field_mainflux.RawMessage_payload'(Rest, Z1, Z2,
+					  F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					  TrUserData);
+'dfp_read_field_def_mainflux.RawMessage'(<<>>, 0, 0,
+					 F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					 _) ->
+    #'mainflux.RawMessage'{channel = F@_1, subtopic = F@_2,
+			   publisher = F@_3, protocol = F@_4,
+			   contentType = F@_5, payload = F@_6};
+'dfp_read_field_def_mainflux.RawMessage'(Other, Z1, Z2,
+					 F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					 TrUserData) ->
+    'dg_read_field_def_mainflux.RawMessage'(Other, Z1, Z2,
+					    F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					    TrUserData).
 
-dg_read_field_def_RawMessage(<<1:1, X:7, Rest/binary>>,
-			     N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			     TrUserData)
+'dg_read_field_def_mainflux.RawMessage'(<<1:1, X:7,
+					  Rest/binary>>,
+					N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5,
+					F@_6, TrUserData)
     when N < 32 - 7 ->
-    dg_read_field_def_RawMessage(Rest, N + 7, X bsl N + Acc,
-				 F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-				 TrUserData);
-dg_read_field_def_RawMessage(<<0:1, X:7, Rest/binary>>,
-			     N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			     TrUserData) ->
+    'dg_read_field_def_mainflux.RawMessage'(Rest, N + 7,
+					    X bsl N + Acc, F@_1, F@_2, F@_3,
+					    F@_4, F@_5, F@_6, TrUserData);
+'dg_read_field_def_mainflux.RawMessage'(<<0:1, X:7,
+					  Rest/binary>>,
+					N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5,
+					F@_6, TrUserData) ->
     Key = X bsl N + Acc,
     case Key of
       10 ->
-	  d_field_RawMessage_channel(Rest, 0, 0, F@_1, F@_2, F@_3,
-				     F@_4, F@_5, F@_6, TrUserData);
+	  'd_field_mainflux.RawMessage_channel'(Rest, 0, 0, F@_1,
+						F@_2, F@_3, F@_4, F@_5, F@_6,
+						TrUserData);
       18 ->
-	  d_field_RawMessage_subtopic(Rest, 0, 0, F@_1, F@_2,
-				      F@_3, F@_4, F@_5, F@_6, TrUserData);
+	  'd_field_mainflux.RawMessage_subtopic'(Rest, 0, 0, F@_1,
+						 F@_2, F@_3, F@_4, F@_5, F@_6,
+						 TrUserData);
       26 ->
-	  d_field_RawMessage_publisher(Rest, 0, 0, F@_1, F@_2,
-				       F@_3, F@_4, F@_5, F@_6, TrUserData);
+	  'd_field_mainflux.RawMessage_publisher'(Rest, 0, 0,
+						  F@_1, F@_2, F@_3, F@_4, F@_5,
+						  F@_6, TrUserData);
       34 ->
-	  d_field_RawMessage_protocol(Rest, 0, 0, F@_1, F@_2,
-				      F@_3, F@_4, F@_5, F@_6, TrUserData);
+	  'd_field_mainflux.RawMessage_protocol'(Rest, 0, 0, F@_1,
+						 F@_2, F@_3, F@_4, F@_5, F@_6,
+						 TrUserData);
       42 ->
-	  d_field_RawMessage_contentType(Rest, 0, 0, F@_1, F@_2,
-					 F@_3, F@_4, F@_5, F@_6, TrUserData);
+	  'd_field_mainflux.RawMessage_contentType'(Rest, 0, 0,
+						    F@_1, F@_2, F@_3, F@_4,
+						    F@_5, F@_6, TrUserData);
       50 ->
-	  d_field_RawMessage_payload(Rest, 0, 0, F@_1, F@_2, F@_3,
-				     F@_4, F@_5, F@_6, TrUserData);
+	  'd_field_mainflux.RawMessage_payload'(Rest, 0, 0, F@_1,
+						F@_2, F@_3, F@_4, F@_5, F@_6,
+						TrUserData);
       _ ->
 	  case Key band 7 of
 	    0 ->
-		skip_varint_RawMessage(Rest, 0, 0, F@_1, F@_2, F@_3,
-				       F@_4, F@_5, F@_6, TrUserData);
+		'skip_varint_mainflux.RawMessage'(Rest, 0, 0, F@_1,
+						  F@_2, F@_3, F@_4, F@_5, F@_6,
+						  TrUserData);
 	    1 ->
-		skip_64_RawMessage(Rest, 0, 0, F@_1, F@_2, F@_3, F@_4,
-				   F@_5, F@_6, TrUserData);
+		'skip_64_mainflux.RawMessage'(Rest, 0, 0, F@_1, F@_2,
+					      F@_3, F@_4, F@_5, F@_6,
+					      TrUserData);
 	    2 ->
-		skip_length_delimited_RawMessage(Rest, 0, 0, F@_1, F@_2,
-						 F@_3, F@_4, F@_5, F@_6,
-						 TrUserData);
+		'skip_length_delimited_mainflux.RawMessage'(Rest, 0, 0,
+							    F@_1, F@_2, F@_3,
+							    F@_4, F@_5, F@_6,
+							    TrUserData);
 	    3 ->
-		skip_group_RawMessage(Rest, Key bsr 3, 0, F@_1, F@_2,
-				      F@_3, F@_4, F@_5, F@_6, TrUserData);
+		'skip_group_mainflux.RawMessage'(Rest, Key bsr 3, 0,
+						 F@_1, F@_2, F@_3, F@_4, F@_5,
+						 F@_6, TrUserData);
 	    5 ->
-		skip_32_RawMessage(Rest, 0, 0, F@_1, F@_2, F@_3, F@_4,
-				   F@_5, F@_6, TrUserData)
+		'skip_32_mainflux.RawMessage'(Rest, 0, 0, F@_1, F@_2,
+					      F@_3, F@_4, F@_5, F@_6,
+					      TrUserData)
 	  end
     end;
-dg_read_field_def_RawMessage(<<>>, 0, 0, F@_1, F@_2,
-			     F@_3, F@_4, F@_5, F@_6, _) ->
-    #'RawMessage'{channel = F@_1, subtopic = F@_2,
-		  publisher = F@_3, protocol = F@_4, contentType = F@_5,
-		  payload = F@_6}.
+'dg_read_field_def_mainflux.RawMessage'(<<>>, 0, 0,
+					F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					_) ->
+    #'mainflux.RawMessage'{channel = F@_1, subtopic = F@_2,
+			   publisher = F@_3, protocol = F@_4,
+			   contentType = F@_5, payload = F@_6}.
 
-d_field_RawMessage_channel(<<1:1, X:7, Rest/binary>>, N,
-			   Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData)
+'d_field_mainflux.RawMessage_channel'(<<1:1, X:7,
+					Rest/binary>>,
+				      N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, TrUserData)
     when N < 57 ->
-    d_field_RawMessage_channel(Rest, N + 7, X bsl N + Acc,
-			       F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData);
-d_field_RawMessage_channel(<<0:1, X:7, Rest/binary>>, N,
-			   Acc, _, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
+    'd_field_mainflux.RawMessage_channel'(Rest, N + 7,
+					  X bsl N + Acc, F@_1, F@_2, F@_3, F@_4,
+					  F@_5, F@_6, TrUserData);
+'d_field_mainflux.RawMessage_channel'(<<0:1, X:7,
+					Rest/binary>>,
+				      N, Acc, _, F@_2, F@_3, F@_4, F@_5, F@_6,
+				      TrUserData) ->
     {NewFValue, RestF} = begin
 			   Len = X bsl N + Acc,
 			   <<Utf8:Len/binary, Rest2/binary>> = Rest,
@@ -587,18 +642,22 @@ d_field_RawMessage_channel(<<0:1, X:7, Rest/binary>>, N,
 			       TrUserData),
 			    Rest2}
 			 end,
-    dfp_read_field_def_RawMessage(RestF, 0, 0, NewFValue,
-				  F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData).
+    'dfp_read_field_def_mainflux.RawMessage'(RestF, 0, 0,
+					     NewFValue, F@_2, F@_3, F@_4, F@_5,
+					     F@_6, TrUserData).
 
-d_field_RawMessage_subtopic(<<1:1, X:7, Rest/binary>>,
-			    N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			    TrUserData)
+'d_field_mainflux.RawMessage_subtopic'(<<1:1, X:7,
+					 Rest/binary>>,
+				       N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5,
+				       F@_6, TrUserData)
     when N < 57 ->
-    d_field_RawMessage_subtopic(Rest, N + 7, X bsl N + Acc,
-				F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData);
-d_field_RawMessage_subtopic(<<0:1, X:7, Rest/binary>>,
-			    N, Acc, F@_1, _, F@_3, F@_4, F@_5, F@_6,
-			    TrUserData) ->
+    'd_field_mainflux.RawMessage_subtopic'(Rest, N + 7,
+					   X bsl N + Acc, F@_1, F@_2, F@_3,
+					   F@_4, F@_5, F@_6, TrUserData);
+'d_field_mainflux.RawMessage_subtopic'(<<0:1, X:7,
+					 Rest/binary>>,
+				       N, Acc, F@_1, _, F@_3, F@_4, F@_5, F@_6,
+				       TrUserData) ->
     {NewFValue, RestF} = begin
 			   Len = X bsl N + Acc,
 			   <<Utf8:Len/binary, Rest2/binary>> = Rest,
@@ -606,20 +665,22 @@ d_field_RawMessage_subtopic(<<0:1, X:7, Rest/binary>>,
 			       TrUserData),
 			    Rest2}
 			 end,
-    dfp_read_field_def_RawMessage(RestF, 0, 0, F@_1,
-				  NewFValue, F@_3, F@_4, F@_5, F@_6,
-				  TrUserData).
+    'dfp_read_field_def_mainflux.RawMessage'(RestF, 0, 0,
+					     F@_1, NewFValue, F@_3, F@_4, F@_5,
+					     F@_6, TrUserData).
 
-d_field_RawMessage_publisher(<<1:1, X:7, Rest/binary>>,
-			     N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			     TrUserData)
+'d_field_mainflux.RawMessage_publisher'(<<1:1, X:7,
+					  Rest/binary>>,
+					N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5,
+					F@_6, TrUserData)
     when N < 57 ->
-    d_field_RawMessage_publisher(Rest, N + 7, X bsl N + Acc,
-				 F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-				 TrUserData);
-d_field_RawMessage_publisher(<<0:1, X:7, Rest/binary>>,
-			     N, Acc, F@_1, F@_2, _, F@_4, F@_5, F@_6,
-			     TrUserData) ->
+    'd_field_mainflux.RawMessage_publisher'(Rest, N + 7,
+					    X bsl N + Acc, F@_1, F@_2, F@_3,
+					    F@_4, F@_5, F@_6, TrUserData);
+'d_field_mainflux.RawMessage_publisher'(<<0:1, X:7,
+					  Rest/binary>>,
+					N, Acc, F@_1, F@_2, _, F@_4, F@_5, F@_6,
+					TrUserData) ->
     {NewFValue, RestF} = begin
 			   Len = X bsl N + Acc,
 			   <<Utf8:Len/binary, Rest2/binary>> = Rest,
@@ -627,18 +688,22 @@ d_field_RawMessage_publisher(<<0:1, X:7, Rest/binary>>,
 			       TrUserData),
 			    Rest2}
 			 end,
-    dfp_read_field_def_RawMessage(RestF, 0, 0, F@_1, F@_2,
-				  NewFValue, F@_4, F@_5, F@_6, TrUserData).
+    'dfp_read_field_def_mainflux.RawMessage'(RestF, 0, 0,
+					     F@_1, F@_2, NewFValue, F@_4, F@_5,
+					     F@_6, TrUserData).
 
-d_field_RawMessage_protocol(<<1:1, X:7, Rest/binary>>,
-			    N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			    TrUserData)
+'d_field_mainflux.RawMessage_protocol'(<<1:1, X:7,
+					 Rest/binary>>,
+				       N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5,
+				       F@_6, TrUserData)
     when N < 57 ->
-    d_field_RawMessage_protocol(Rest, N + 7, X bsl N + Acc,
-				F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData);
-d_field_RawMessage_protocol(<<0:1, X:7, Rest/binary>>,
-			    N, Acc, F@_1, F@_2, F@_3, _, F@_5, F@_6,
-			    TrUserData) ->
+    'd_field_mainflux.RawMessage_protocol'(Rest, N + 7,
+					   X bsl N + Acc, F@_1, F@_2, F@_3,
+					   F@_4, F@_5, F@_6, TrUserData);
+'d_field_mainflux.RawMessage_protocol'(<<0:1, X:7,
+					 Rest/binary>>,
+				       N, Acc, F@_1, F@_2, F@_3, _, F@_5, F@_6,
+				       TrUserData) ->
     {NewFValue, RestF} = begin
 			   Len = X bsl N + Acc,
 			   <<Utf8:Len/binary, Rest2/binary>> = Rest,
@@ -646,21 +711,22 @@ d_field_RawMessage_protocol(<<0:1, X:7, Rest/binary>>,
 			       TrUserData),
 			    Rest2}
 			 end,
-    dfp_read_field_def_RawMessage(RestF, 0, 0, F@_1, F@_2,
-				  F@_3, NewFValue, F@_5, F@_6, TrUserData).
+    'dfp_read_field_def_mainflux.RawMessage'(RestF, 0, 0,
+					     F@_1, F@_2, F@_3, NewFValue, F@_5,
+					     F@_6, TrUserData).
 
-d_field_RawMessage_contentType(<<1:1, X:7,
-				 Rest/binary>>,
-			       N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			       TrUserData)
+'d_field_mainflux.RawMessage_contentType'(<<1:1, X:7,
+					    Rest/binary>>,
+					  N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5,
+					  F@_6, TrUserData)
     when N < 57 ->
-    d_field_RawMessage_contentType(Rest, N + 7,
-				   X bsl N + Acc, F@_1, F@_2, F@_3, F@_4, F@_5,
-				   F@_6, TrUserData);
-d_field_RawMessage_contentType(<<0:1, X:7,
-				 Rest/binary>>,
-			       N, Acc, F@_1, F@_2, F@_3, F@_4, _, F@_6,
-			       TrUserData) ->
+    'd_field_mainflux.RawMessage_contentType'(Rest, N + 7,
+					      X bsl N + Acc, F@_1, F@_2, F@_3,
+					      F@_4, F@_5, F@_6, TrUserData);
+'d_field_mainflux.RawMessage_contentType'(<<0:1, X:7,
+					    Rest/binary>>,
+					  N, Acc, F@_1, F@_2, F@_3, F@_4, _,
+					  F@_6, TrUserData) ->
     {NewFValue, RestF} = begin
 			   Len = X bsl N + Acc,
 			   <<Utf8:Len/binary, Rest2/binary>> = Rest,
@@ -668,285 +734,360 @@ d_field_RawMessage_contentType(<<0:1, X:7,
 			       TrUserData),
 			    Rest2}
 			 end,
-    dfp_read_field_def_RawMessage(RestF, 0, 0, F@_1, F@_2,
-				  F@_3, F@_4, NewFValue, F@_6, TrUserData).
+    'dfp_read_field_def_mainflux.RawMessage'(RestF, 0, 0,
+					     F@_1, F@_2, F@_3, F@_4, NewFValue,
+					     F@_6, TrUserData).
 
-d_field_RawMessage_payload(<<1:1, X:7, Rest/binary>>, N,
-			   Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData)
+'d_field_mainflux.RawMessage_payload'(<<1:1, X:7,
+					Rest/binary>>,
+				      N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, TrUserData)
     when N < 57 ->
-    d_field_RawMessage_payload(Rest, N + 7, X bsl N + Acc,
-			       F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData);
-d_field_RawMessage_payload(<<0:1, X:7, Rest/binary>>, N,
-			   Acc, F@_1, F@_2, F@_3, F@_4, F@_5, _, TrUserData) ->
+    'd_field_mainflux.RawMessage_payload'(Rest, N + 7,
+					  X bsl N + Acc, F@_1, F@_2, F@_3, F@_4,
+					  F@_5, F@_6, TrUserData);
+'d_field_mainflux.RawMessage_payload'(<<0:1, X:7,
+					Rest/binary>>,
+				      N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, _,
+				      TrUserData) ->
     {NewFValue, RestF} = begin
 			   Len = X bsl N + Acc,
 			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
 			   {id(binary:copy(Bytes), TrUserData), Rest2}
 			 end,
-    dfp_read_field_def_RawMessage(RestF, 0, 0, F@_1, F@_2,
-				  F@_3, F@_4, F@_5, NewFValue, TrUserData).
+    'dfp_read_field_def_mainflux.RawMessage'(RestF, 0, 0,
+					     F@_1, F@_2, F@_3, F@_4, F@_5,
+					     NewFValue, TrUserData).
 
-skip_varint_RawMessage(<<1:1, _:7, Rest/binary>>, Z1,
-		       Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
-    skip_varint_RawMessage(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			   F@_4, F@_5, F@_6, TrUserData);
-skip_varint_RawMessage(<<0:1, _:7, Rest/binary>>, Z1,
-		       Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
-    dfp_read_field_def_RawMessage(Rest, Z1, Z2, F@_1, F@_2,
-				  F@_3, F@_4, F@_5, F@_6, TrUserData).
+'skip_varint_mainflux.RawMessage'(<<1:1, _:7,
+				    Rest/binary>>,
+				  Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+				  TrUserData) ->
+    'skip_varint_mainflux.RawMessage'(Rest, Z1, Z2, F@_1,
+				      F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData);
+'skip_varint_mainflux.RawMessage'(<<0:1, _:7,
+				    Rest/binary>>,
+				  Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+				  TrUserData) ->
+    'dfp_read_field_def_mainflux.RawMessage'(Rest, Z1, Z2,
+					     F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					     TrUserData).
 
-skip_length_delimited_RawMessage(<<1:1, X:7,
-				   Rest/binary>>,
-				 N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-				 TrUserData)
+'skip_length_delimited_mainflux.RawMessage'(<<1:1, X:7,
+					      Rest/binary>>,
+					    N, Acc, F@_1, F@_2, F@_3, F@_4,
+					    F@_5, F@_6, TrUserData)
     when N < 57 ->
-    skip_length_delimited_RawMessage(Rest, N + 7,
-				     X bsl N + Acc, F@_1, F@_2, F@_3, F@_4,
-				     F@_5, F@_6, TrUserData);
-skip_length_delimited_RawMessage(<<0:1, X:7,
-				   Rest/binary>>,
-				 N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-				 TrUserData) ->
+    'skip_length_delimited_mainflux.RawMessage'(Rest, N + 7,
+						X bsl N + Acc, F@_1, F@_2, F@_3,
+						F@_4, F@_5, F@_6, TrUserData);
+'skip_length_delimited_mainflux.RawMessage'(<<0:1, X:7,
+					      Rest/binary>>,
+					    N, Acc, F@_1, F@_2, F@_3, F@_4,
+					    F@_5, F@_6, TrUserData) ->
     Length = X bsl N + Acc,
     <<_:Length/binary, Rest2/binary>> = Rest,
-    dfp_read_field_def_RawMessage(Rest2, 0, 0, F@_1, F@_2,
-				  F@_3, F@_4, F@_5, F@_6, TrUserData).
+    'dfp_read_field_def_mainflux.RawMessage'(Rest2, 0, 0,
+					     F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					     TrUserData).
 
-skip_group_RawMessage(Bin, FNum, Z2, F@_1, F@_2, F@_3,
-		      F@_4, F@_5, F@_6, TrUserData) ->
+'skip_group_mainflux.RawMessage'(Bin, FNum, Z2, F@_1,
+				 F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
     {_, Rest} = read_group(Bin, FNum),
-    dfp_read_field_def_RawMessage(Rest, 0, Z2, F@_1, F@_2,
-				  F@_3, F@_4, F@_5, F@_6, TrUserData).
+    'dfp_read_field_def_mainflux.RawMessage'(Rest, 0, Z2,
+					     F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					     TrUserData).
 
-skip_32_RawMessage(<<_:32, Rest/binary>>, Z1, Z2, F@_1,
-		   F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
-    dfp_read_field_def_RawMessage(Rest, Z1, Z2, F@_1, F@_2,
-				  F@_3, F@_4, F@_5, F@_6, TrUserData).
+'skip_32_mainflux.RawMessage'(<<_:32, Rest/binary>>, Z1,
+			      Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+			      TrUserData) ->
+    'dfp_read_field_def_mainflux.RawMessage'(Rest, Z1, Z2,
+					     F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					     TrUserData).
 
-skip_64_RawMessage(<<_:64, Rest/binary>>, Z1, Z2, F@_1,
-		   F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
-    dfp_read_field_def_RawMessage(Rest, Z1, Z2, F@_1, F@_2,
-				  F@_3, F@_4, F@_5, F@_6, TrUserData).
+'skip_64_mainflux.RawMessage'(<<_:64, Rest/binary>>, Z1,
+			      Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+			      TrUserData) ->
+    'dfp_read_field_def_mainflux.RawMessage'(Rest, Z1, Z2,
+					     F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					     TrUserData).
 
-decode_msg_Message(Bin, TrUserData) ->
-    dfp_read_field_def_Message(Bin, 0, 0,
-			       id([], TrUserData), id([], TrUserData),
-			       id([], TrUserData), id([], TrUserData),
-			       id([], TrUserData), id([], TrUserData),
-			       id(undefined, TrUserData),
-			       id(undefined, TrUserData), id(0.0, TrUserData),
-			       id(0.0, TrUserData), id([], TrUserData),
-			       TrUserData).
+'decode_msg_mainflux.Message'(Bin, TrUserData) ->
+    'dfp_read_field_def_mainflux.Message'(Bin, 0, 0,
+					  id([], TrUserData),
+					  id([], TrUserData),
+					  id([], TrUserData),
+					  id([], TrUserData),
+					  id([], TrUserData),
+					  id([], TrUserData),
+					  id(undefined, TrUserData),
+					  id(undefined, TrUserData),
+					  id(0.0, TrUserData),
+					  id(0.0, TrUserData),
+					  id([], TrUserData), TrUserData).
 
-dfp_read_field_def_Message(<<10, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_Message_channel(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			    F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			    TrUserData);
-dfp_read_field_def_Message(<<18, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_Message_subtopic(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			     F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			     TrUserData);
-dfp_read_field_def_Message(<<26, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_Message_publisher(Rest, Z1, Z2, F@_1, F@_2,
-			      F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			      F@_11, TrUserData);
-dfp_read_field_def_Message(<<34, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_Message_protocol(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			     F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			     TrUserData);
-dfp_read_field_def_Message(<<42, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_Message_name(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			 F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			 TrUserData);
-dfp_read_field_def_Message(<<50, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_Message_unit(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			 F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			 TrUserData);
-dfp_read_field_def_Message(<<57, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_Message_floatValue(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			       F@_11, TrUserData);
-dfp_read_field_def_Message(<<66, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_Message_stringValue(Rest, Z1, Z2, F@_1, F@_2,
-				F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-				F@_11, TrUserData);
-dfp_read_field_def_Message(<<72, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_Message_boolValue(Rest, Z1, Z2, F@_1, F@_2,
-			      F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			      F@_11, TrUserData);
-dfp_read_field_def_Message(<<82, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_Message_dataValue(Rest, Z1, Z2, F@_1, F@_2,
-			      F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			      F@_11, TrUserData);
-dfp_read_field_def_Message(<<90, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_Message_valueSum(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			     F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			     TrUserData);
-dfp_read_field_def_Message(<<97, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_Message_time(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			 F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			 TrUserData);
-dfp_read_field_def_Message(<<105, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_Message_updateTime(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			       F@_11, TrUserData);
-dfp_read_field_def_Message(<<114, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_Message_link(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			 F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			 TrUserData);
-dfp_read_field_def_Message(<<>>, 0, 0, F@_1, F@_2, F@_3,
-			   F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			   _) ->
-    #'Message'{channel = F@_1, subtopic = F@_2,
-	       publisher = F@_3, protocol = F@_4, name = F@_5,
-	       unit = F@_6, value = F@_7, valueSum = F@_8, time = F@_9,
-	       updateTime = F@_10, link = F@_11};
-dfp_read_field_def_Message(Other, Z1, Z2, F@_1, F@_2,
-			   F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			   F@_11, TrUserData) ->
-    dg_read_field_def_Message(Other, Z1, Z2, F@_1, F@_2,
-			      F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			      F@_11, TrUserData).
+'dfp_read_field_def_mainflux.Message'(<<10,
+					Rest/binary>>,
+				      Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
+				      TrUserData) ->
+    'd_field_mainflux.Message_channel'(Rest, Z1, Z2, F@_1,
+				       F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
+				       F@_9, F@_10, F@_11, TrUserData);
+'dfp_read_field_def_mainflux.Message'(<<18,
+					Rest/binary>>,
+				      Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
+				      TrUserData) ->
+    'd_field_mainflux.Message_subtopic'(Rest, Z1, Z2, F@_1,
+					F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
+					F@_8, F@_9, F@_10, F@_11, TrUserData);
+'dfp_read_field_def_mainflux.Message'(<<26,
+					Rest/binary>>,
+				      Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
+				      TrUserData) ->
+    'd_field_mainflux.Message_publisher'(Rest, Z1, Z2, F@_1,
+					 F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
+					 F@_8, F@_9, F@_10, F@_11, TrUserData);
+'dfp_read_field_def_mainflux.Message'(<<34,
+					Rest/binary>>,
+				      Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
+				      TrUserData) ->
+    'd_field_mainflux.Message_protocol'(Rest, Z1, Z2, F@_1,
+					F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
+					F@_8, F@_9, F@_10, F@_11, TrUserData);
+'dfp_read_field_def_mainflux.Message'(<<42,
+					Rest/binary>>,
+				      Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
+				      TrUserData) ->
+    'd_field_mainflux.Message_name'(Rest, Z1, Z2, F@_1,
+				    F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
+				    F@_9, F@_10, F@_11, TrUserData);
+'dfp_read_field_def_mainflux.Message'(<<50,
+					Rest/binary>>,
+				      Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
+				      TrUserData) ->
+    'd_field_mainflux.Message_unit'(Rest, Z1, Z2, F@_1,
+				    F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
+				    F@_9, F@_10, F@_11, TrUserData);
+'dfp_read_field_def_mainflux.Message'(<<57,
+					Rest/binary>>,
+				      Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
+				      TrUserData) ->
+    'd_field_mainflux.Message_floatValue'(Rest, Z1, Z2,
+					  F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					  F@_7, F@_8, F@_9, F@_10, F@_11,
+					  TrUserData);
+'dfp_read_field_def_mainflux.Message'(<<66,
+					Rest/binary>>,
+				      Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
+				      TrUserData) ->
+    'd_field_mainflux.Message_stringValue'(Rest, Z1, Z2,
+					   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					   F@_7, F@_8, F@_9, F@_10, F@_11,
+					   TrUserData);
+'dfp_read_field_def_mainflux.Message'(<<72,
+					Rest/binary>>,
+				      Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
+				      TrUserData) ->
+    'd_field_mainflux.Message_boolValue'(Rest, Z1, Z2, F@_1,
+					 F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
+					 F@_8, F@_9, F@_10, F@_11, TrUserData);
+'dfp_read_field_def_mainflux.Message'(<<82,
+					Rest/binary>>,
+				      Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
+				      TrUserData) ->
+    'd_field_mainflux.Message_dataValue'(Rest, Z1, Z2, F@_1,
+					 F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
+					 F@_8, F@_9, F@_10, F@_11, TrUserData);
+'dfp_read_field_def_mainflux.Message'(<<90,
+					Rest/binary>>,
+				      Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
+				      TrUserData) ->
+    'd_field_mainflux.Message_valueSum'(Rest, Z1, Z2, F@_1,
+					F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
+					F@_8, F@_9, F@_10, F@_11, TrUserData);
+'dfp_read_field_def_mainflux.Message'(<<97,
+					Rest/binary>>,
+				      Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
+				      TrUserData) ->
+    'd_field_mainflux.Message_time'(Rest, Z1, Z2, F@_1,
+				    F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
+				    F@_9, F@_10, F@_11, TrUserData);
+'dfp_read_field_def_mainflux.Message'(<<105,
+					Rest/binary>>,
+				      Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
+				      TrUserData) ->
+    'd_field_mainflux.Message_updateTime'(Rest, Z1, Z2,
+					  F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					  F@_7, F@_8, F@_9, F@_10, F@_11,
+					  TrUserData);
+'dfp_read_field_def_mainflux.Message'(<<114,
+					Rest/binary>>,
+				      Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
+				      TrUserData) ->
+    'd_field_mainflux.Message_link'(Rest, Z1, Z2, F@_1,
+				    F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
+				    F@_9, F@_10, F@_11, TrUserData);
+'dfp_read_field_def_mainflux.Message'(<<>>, 0, 0, F@_1,
+				      F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
+				      F@_9, F@_10, F@_11, _) ->
+    #'mainflux.Message'{channel = F@_1, subtopic = F@_2,
+			publisher = F@_3, protocol = F@_4, name = F@_5,
+			unit = F@_6, value = F@_7, valueSum = F@_8, time = F@_9,
+			updateTime = F@_10, link = F@_11};
+'dfp_read_field_def_mainflux.Message'(Other, Z1, Z2,
+				      F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
+				      F@_8, F@_9, F@_10, F@_11, TrUserData) ->
+    'dg_read_field_def_mainflux.Message'(Other, Z1, Z2,
+					 F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					 F@_7, F@_8, F@_9, F@_10, F@_11,
+					 TrUserData).
 
-dg_read_field_def_Message(<<1:1, X:7, Rest/binary>>, N,
-			  Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			  F@_9, F@_10, F@_11, TrUserData)
+'dg_read_field_def_mainflux.Message'(<<1:1, X:7,
+				       Rest/binary>>,
+				     N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+				     F@_7, F@_8, F@_9, F@_10, F@_11, TrUserData)
     when N < 32 - 7 ->
-    dg_read_field_def_Message(Rest, N + 7, X bsl N + Acc,
-			      F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			      F@_9, F@_10, F@_11, TrUserData);
-dg_read_field_def_Message(<<0:1, X:7, Rest/binary>>, N,
-			  Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			  F@_9, F@_10, F@_11, TrUserData) ->
+    'dg_read_field_def_mainflux.Message'(Rest, N + 7,
+					 X bsl N + Acc, F@_1, F@_2, F@_3, F@_4,
+					 F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
+					 F@_11, TrUserData);
+'dg_read_field_def_mainflux.Message'(<<0:1, X:7,
+				       Rest/binary>>,
+				     N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+				     F@_7, F@_8, F@_9, F@_10, F@_11,
+				     TrUserData) ->
     Key = X bsl N + Acc,
     case Key of
       10 ->
-	  d_field_Message_channel(Rest, 0, 0, F@_1, F@_2, F@_3,
-				  F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-				  F@_11, TrUserData);
+	  'd_field_mainflux.Message_channel'(Rest, 0, 0, F@_1,
+					     F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
+					     F@_8, F@_9, F@_10, F@_11,
+					     TrUserData);
       18 ->
-	  d_field_Message_subtopic(Rest, 0, 0, F@_1, F@_2, F@_3,
-				   F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-				   F@_11, TrUserData);
+	  'd_field_mainflux.Message_subtopic'(Rest, 0, 0, F@_1,
+					      F@_2, F@_3, F@_4, F@_5, F@_6,
+					      F@_7, F@_8, F@_9, F@_10, F@_11,
+					      TrUserData);
       26 ->
-	  d_field_Message_publisher(Rest, 0, 0, F@_1, F@_2, F@_3,
-				    F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-				    F@_11, TrUserData);
+	  'd_field_mainflux.Message_publisher'(Rest, 0, 0, F@_1,
+					       F@_2, F@_3, F@_4, F@_5, F@_6,
+					       F@_7, F@_8, F@_9, F@_10, F@_11,
+					       TrUserData);
       34 ->
-	  d_field_Message_protocol(Rest, 0, 0, F@_1, F@_2, F@_3,
-				   F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-				   F@_11, TrUserData);
+	  'd_field_mainflux.Message_protocol'(Rest, 0, 0, F@_1,
+					      F@_2, F@_3, F@_4, F@_5, F@_6,
+					      F@_7, F@_8, F@_9, F@_10, F@_11,
+					      TrUserData);
       42 ->
-	  d_field_Message_name(Rest, 0, 0, F@_1, F@_2, F@_3, F@_4,
-			       F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			       TrUserData);
+	  'd_field_mainflux.Message_name'(Rest, 0, 0, F@_1, F@_2,
+					  F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
+					  F@_9, F@_10, F@_11, TrUserData);
       50 ->
-	  d_field_Message_unit(Rest, 0, 0, F@_1, F@_2, F@_3, F@_4,
-			       F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			       TrUserData);
+	  'd_field_mainflux.Message_unit'(Rest, 0, 0, F@_1, F@_2,
+					  F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
+					  F@_9, F@_10, F@_11, TrUserData);
       57 ->
-	  d_field_Message_floatValue(Rest, 0, 0, F@_1, F@_2, F@_3,
-				     F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-				     F@_11, TrUserData);
+	  'd_field_mainflux.Message_floatValue'(Rest, 0, 0, F@_1,
+						F@_2, F@_3, F@_4, F@_5, F@_6,
+						F@_7, F@_8, F@_9, F@_10, F@_11,
+						TrUserData);
       66 ->
-	  d_field_Message_stringValue(Rest, 0, 0, F@_1, F@_2,
-				      F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-				      F@_10, F@_11, TrUserData);
+	  'd_field_mainflux.Message_stringValue'(Rest, 0, 0, F@_1,
+						 F@_2, F@_3, F@_4, F@_5, F@_6,
+						 F@_7, F@_8, F@_9, F@_10, F@_11,
+						 TrUserData);
       72 ->
-	  d_field_Message_boolValue(Rest, 0, 0, F@_1, F@_2, F@_3,
-				    F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-				    F@_11, TrUserData);
+	  'd_field_mainflux.Message_boolValue'(Rest, 0, 0, F@_1,
+					       F@_2, F@_3, F@_4, F@_5, F@_6,
+					       F@_7, F@_8, F@_9, F@_10, F@_11,
+					       TrUserData);
       82 ->
-	  d_field_Message_dataValue(Rest, 0, 0, F@_1, F@_2, F@_3,
-				    F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-				    F@_11, TrUserData);
+	  'd_field_mainflux.Message_dataValue'(Rest, 0, 0, F@_1,
+					       F@_2, F@_3, F@_4, F@_5, F@_6,
+					       F@_7, F@_8, F@_9, F@_10, F@_11,
+					       TrUserData);
       90 ->
-	  d_field_Message_valueSum(Rest, 0, 0, F@_1, F@_2, F@_3,
-				   F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-				   F@_11, TrUserData);
+	  'd_field_mainflux.Message_valueSum'(Rest, 0, 0, F@_1,
+					      F@_2, F@_3, F@_4, F@_5, F@_6,
+					      F@_7, F@_8, F@_9, F@_10, F@_11,
+					      TrUserData);
       97 ->
-	  d_field_Message_time(Rest, 0, 0, F@_1, F@_2, F@_3, F@_4,
-			       F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			       TrUserData);
+	  'd_field_mainflux.Message_time'(Rest, 0, 0, F@_1, F@_2,
+					  F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
+					  F@_9, F@_10, F@_11, TrUserData);
       105 ->
-	  d_field_Message_updateTime(Rest, 0, 0, F@_1, F@_2, F@_3,
-				     F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-				     F@_11, TrUserData);
+	  'd_field_mainflux.Message_updateTime'(Rest, 0, 0, F@_1,
+						F@_2, F@_3, F@_4, F@_5, F@_6,
+						F@_7, F@_8, F@_9, F@_10, F@_11,
+						TrUserData);
       114 ->
-	  d_field_Message_link(Rest, 0, 0, F@_1, F@_2, F@_3, F@_4,
-			       F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			       TrUserData);
+	  'd_field_mainflux.Message_link'(Rest, 0, 0, F@_1, F@_2,
+					  F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
+					  F@_9, F@_10, F@_11, TrUserData);
       _ ->
 	  case Key band 7 of
 	    0 ->
-		skip_varint_Message(Rest, 0, 0, F@_1, F@_2, F@_3, F@_4,
-				    F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-				    TrUserData);
+		'skip_varint_mainflux.Message'(Rest, 0, 0, F@_1, F@_2,
+					       F@_3, F@_4, F@_5, F@_6, F@_7,
+					       F@_8, F@_9, F@_10, F@_11,
+					       TrUserData);
 	    1 ->
-		skip_64_Message(Rest, 0, 0, F@_1, F@_2, F@_3, F@_4,
-				F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-				TrUserData);
+		'skip_64_mainflux.Message'(Rest, 0, 0, F@_1, F@_2, F@_3,
+					   F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
+					   F@_10, F@_11, TrUserData);
 	    2 ->
-		skip_length_delimited_Message(Rest, 0, 0, F@_1, F@_2,
-					      F@_3, F@_4, F@_5, F@_6, F@_7,
-					      F@_8, F@_9, F@_10, F@_11,
-					      TrUserData);
+		'skip_length_delimited_mainflux.Message'(Rest, 0, 0,
+							 F@_1, F@_2, F@_3, F@_4,
+							 F@_5, F@_6, F@_7, F@_8,
+							 F@_9, F@_10, F@_11,
+							 TrUserData);
 	    3 ->
-		skip_group_Message(Rest, Key bsr 3, 0, F@_1, F@_2, F@_3,
-				   F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-				   F@_11, TrUserData);
+		'skip_group_mainflux.Message'(Rest, Key bsr 3, 0, F@_1,
+					      F@_2, F@_3, F@_4, F@_5, F@_6,
+					      F@_7, F@_8, F@_9, F@_10, F@_11,
+					      TrUserData);
 	    5 ->
-		skip_32_Message(Rest, 0, 0, F@_1, F@_2, F@_3, F@_4,
-				F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-				TrUserData)
+		'skip_32_mainflux.Message'(Rest, 0, 0, F@_1, F@_2, F@_3,
+					   F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
+					   F@_10, F@_11, TrUserData)
 	  end
     end;
-dg_read_field_def_Message(<<>>, 0, 0, F@_1, F@_2, F@_3,
-			  F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			  _) ->
-    #'Message'{channel = F@_1, subtopic = F@_2,
-	       publisher = F@_3, protocol = F@_4, name = F@_5,
-	       unit = F@_6, value = F@_7, valueSum = F@_8, time = F@_9,
-	       updateTime = F@_10, link = F@_11}.
+'dg_read_field_def_mainflux.Message'(<<>>, 0, 0, F@_1,
+				     F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
+				     F@_9, F@_10, F@_11, _) ->
+    #'mainflux.Message'{channel = F@_1, subtopic = F@_2,
+			publisher = F@_3, protocol = F@_4, name = F@_5,
+			unit = F@_6, value = F@_7, valueSum = F@_8, time = F@_9,
+			updateTime = F@_10, link = F@_11}.
 
-d_field_Message_channel(<<1:1, X:7, Rest/binary>>, N,
-			Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			F@_9, F@_10, F@_11, TrUserData)
+'d_field_mainflux.Message_channel'(<<1:1, X:7,
+				     Rest/binary>>,
+				   N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+				   F@_7, F@_8, F@_9, F@_10, F@_11, TrUserData)
     when N < 57 ->
-    d_field_Message_channel(Rest, N + 7, X bsl N + Acc,
-			    F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			    F@_9, F@_10, F@_11, TrUserData);
-d_field_Message_channel(<<0:1, X:7, Rest/binary>>, N,
-			Acc, _, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			F@_10, F@_11, TrUserData) ->
+    'd_field_mainflux.Message_channel'(Rest, N + 7,
+				       X bsl N + Acc, F@_1, F@_2, F@_3, F@_4,
+				       F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
+				       F@_11, TrUserData);
+'d_field_mainflux.Message_channel'(<<0:1, X:7,
+				     Rest/binary>>,
+				   N, Acc, _, F@_2, F@_3, F@_4, F@_5, F@_6,
+				   F@_7, F@_8, F@_9, F@_10, F@_11,
+				   TrUserData) ->
     {NewFValue, RestF} = begin
 			   Len = X bsl N + Acc,
 			   <<Utf8:Len/binary, Rest2/binary>> = Rest,
@@ -954,20 +1095,25 @@ d_field_Message_channel(<<0:1, X:7, Rest/binary>>, N,
 			       TrUserData),
 			    Rest2}
 			 end,
-    dfp_read_field_def_Message(RestF, 0, 0, NewFValue, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			       F@_11, TrUserData).
+    'dfp_read_field_def_mainflux.Message'(RestF, 0, 0,
+					  NewFValue, F@_2, F@_3, F@_4, F@_5,
+					  F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
+					  TrUserData).
 
-d_field_Message_subtopic(<<1:1, X:7, Rest/binary>>, N,
-			 Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			 F@_9, F@_10, F@_11, TrUserData)
+'d_field_mainflux.Message_subtopic'(<<1:1, X:7,
+				      Rest/binary>>,
+				    N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+				    F@_7, F@_8, F@_9, F@_10, F@_11, TrUserData)
     when N < 57 ->
-    d_field_Message_subtopic(Rest, N + 7, X bsl N + Acc,
-			     F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			     F@_9, F@_10, F@_11, TrUserData);
-d_field_Message_subtopic(<<0:1, X:7, Rest/binary>>, N,
-			 Acc, F@_1, _, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			 F@_10, F@_11, TrUserData) ->
+    'd_field_mainflux.Message_subtopic'(Rest, N + 7,
+					X bsl N + Acc, F@_1, F@_2, F@_3, F@_4,
+					F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
+					F@_11, TrUserData);
+'d_field_mainflux.Message_subtopic'(<<0:1, X:7,
+				      Rest/binary>>,
+				    N, Acc, F@_1, _, F@_3, F@_4, F@_5, F@_6,
+				    F@_7, F@_8, F@_9, F@_10, F@_11,
+				    TrUserData) ->
     {NewFValue, RestF} = begin
 			   Len = X bsl N + Acc,
 			   <<Utf8:Len/binary, Rest2/binary>> = Rest,
@@ -975,20 +1121,25 @@ d_field_Message_subtopic(<<0:1, X:7, Rest/binary>>, N,
 			       TrUserData),
 			    Rest2}
 			 end,
-    dfp_read_field_def_Message(RestF, 0, 0, F@_1, NewFValue,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			       F@_11, TrUserData).
+    'dfp_read_field_def_mainflux.Message'(RestF, 0, 0, F@_1,
+					  NewFValue, F@_3, F@_4, F@_5, F@_6,
+					  F@_7, F@_8, F@_9, F@_10, F@_11,
+					  TrUserData).
 
-d_field_Message_publisher(<<1:1, X:7, Rest/binary>>, N,
-			  Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			  F@_9, F@_10, F@_11, TrUserData)
+'d_field_mainflux.Message_publisher'(<<1:1, X:7,
+				       Rest/binary>>,
+				     N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+				     F@_7, F@_8, F@_9, F@_10, F@_11, TrUserData)
     when N < 57 ->
-    d_field_Message_publisher(Rest, N + 7, X bsl N + Acc,
-			      F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			      F@_9, F@_10, F@_11, TrUserData);
-d_field_Message_publisher(<<0:1, X:7, Rest/binary>>, N,
-			  Acc, F@_1, F@_2, _, F@_4, F@_5, F@_6, F@_7, F@_8,
-			  F@_9, F@_10, F@_11, TrUserData) ->
+    'd_field_mainflux.Message_publisher'(Rest, N + 7,
+					 X bsl N + Acc, F@_1, F@_2, F@_3, F@_4,
+					 F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
+					 F@_11, TrUserData);
+'d_field_mainflux.Message_publisher'(<<0:1, X:7,
+				       Rest/binary>>,
+				     N, Acc, F@_1, F@_2, _, F@_4, F@_5, F@_6,
+				     F@_7, F@_8, F@_9, F@_10, F@_11,
+				     TrUserData) ->
     {NewFValue, RestF} = begin
 			   Len = X bsl N + Acc,
 			   <<Utf8:Len/binary, Rest2/binary>> = Rest,
@@ -996,20 +1147,25 @@ d_field_Message_publisher(<<0:1, X:7, Rest/binary>>, N,
 			       TrUserData),
 			    Rest2}
 			 end,
-    dfp_read_field_def_Message(RestF, 0, 0, F@_1, F@_2,
-			       NewFValue, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			       F@_10, F@_11, TrUserData).
+    'dfp_read_field_def_mainflux.Message'(RestF, 0, 0, F@_1,
+					  F@_2, NewFValue, F@_4, F@_5, F@_6,
+					  F@_7, F@_8, F@_9, F@_10, F@_11,
+					  TrUserData).
 
-d_field_Message_protocol(<<1:1, X:7, Rest/binary>>, N,
-			 Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			 F@_9, F@_10, F@_11, TrUserData)
+'d_field_mainflux.Message_protocol'(<<1:1, X:7,
+				      Rest/binary>>,
+				    N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+				    F@_7, F@_8, F@_9, F@_10, F@_11, TrUserData)
     when N < 57 ->
-    d_field_Message_protocol(Rest, N + 7, X bsl N + Acc,
-			     F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			     F@_9, F@_10, F@_11, TrUserData);
-d_field_Message_protocol(<<0:1, X:7, Rest/binary>>, N,
-			 Acc, F@_1, F@_2, F@_3, _, F@_5, F@_6, F@_7, F@_8, F@_9,
-			 F@_10, F@_11, TrUserData) ->
+    'd_field_mainflux.Message_protocol'(Rest, N + 7,
+					X bsl N + Acc, F@_1, F@_2, F@_3, F@_4,
+					F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
+					F@_11, TrUserData);
+'d_field_mainflux.Message_protocol'(<<0:1, X:7,
+				      Rest/binary>>,
+				    N, Acc, F@_1, F@_2, F@_3, _, F@_5, F@_6,
+				    F@_7, F@_8, F@_9, F@_10, F@_11,
+				    TrUserData) ->
     {NewFValue, RestF} = begin
 			   Len = X bsl N + Acc,
 			   <<Utf8:Len/binary, Rest2/binary>> = Rest,
@@ -1017,20 +1173,24 @@ d_field_Message_protocol(<<0:1, X:7, Rest/binary>>, N,
 			       TrUserData),
 			    Rest2}
 			 end,
-    dfp_read_field_def_Message(RestF, 0, 0, F@_1, F@_2,
-			       F@_3, NewFValue, F@_5, F@_6, F@_7, F@_8, F@_9,
-			       F@_10, F@_11, TrUserData).
+    'dfp_read_field_def_mainflux.Message'(RestF, 0, 0, F@_1,
+					  F@_2, F@_3, NewFValue, F@_5, F@_6,
+					  F@_7, F@_8, F@_9, F@_10, F@_11,
+					  TrUserData).
 
-d_field_Message_name(<<1:1, X:7, Rest/binary>>, N, Acc,
-		     F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-		     F@_10, F@_11, TrUserData)
+'d_field_mainflux.Message_name'(<<1:1, X:7,
+				  Rest/binary>>,
+				N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+				F@_7, F@_8, F@_9, F@_10, F@_11, TrUserData)
     when N < 57 ->
-    d_field_Message_name(Rest, N + 7, X bsl N + Acc, F@_1,
-			 F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			 F@_11, TrUserData);
-d_field_Message_name(<<0:1, X:7, Rest/binary>>, N, Acc,
-		     F@_1, F@_2, F@_3, F@_4, _, F@_6, F@_7, F@_8, F@_9,
-		     F@_10, F@_11, TrUserData) ->
+    'd_field_mainflux.Message_name'(Rest, N + 7,
+				    X bsl N + Acc, F@_1, F@_2, F@_3, F@_4, F@_5,
+				    F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
+				    TrUserData);
+'d_field_mainflux.Message_name'(<<0:1, X:7,
+				  Rest/binary>>,
+				N, Acc, F@_1, F@_2, F@_3, F@_4, _, F@_6, F@_7,
+				F@_8, F@_9, F@_10, F@_11, TrUserData) ->
     {NewFValue, RestF} = begin
 			   Len = X bsl N + Acc,
 			   <<Utf8:Len/binary, Rest2/binary>> = Rest,
@@ -1038,20 +1198,24 @@ d_field_Message_name(<<0:1, X:7, Rest/binary>>, N, Acc,
 			       TrUserData),
 			    Rest2}
 			 end,
-    dfp_read_field_def_Message(RestF, 0, 0, F@_1, F@_2,
-			       F@_3, F@_4, NewFValue, F@_6, F@_7, F@_8, F@_9,
-			       F@_10, F@_11, TrUserData).
+    'dfp_read_field_def_mainflux.Message'(RestF, 0, 0, F@_1,
+					  F@_2, F@_3, F@_4, NewFValue, F@_6,
+					  F@_7, F@_8, F@_9, F@_10, F@_11,
+					  TrUserData).
 
-d_field_Message_unit(<<1:1, X:7, Rest/binary>>, N, Acc,
-		     F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-		     F@_10, F@_11, TrUserData)
+'d_field_mainflux.Message_unit'(<<1:1, X:7,
+				  Rest/binary>>,
+				N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+				F@_7, F@_8, F@_9, F@_10, F@_11, TrUserData)
     when N < 57 ->
-    d_field_Message_unit(Rest, N + 7, X bsl N + Acc, F@_1,
-			 F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			 F@_11, TrUserData);
-d_field_Message_unit(<<0:1, X:7, Rest/binary>>, N, Acc,
-		     F@_1, F@_2, F@_3, F@_4, F@_5, _, F@_7, F@_8, F@_9,
-		     F@_10, F@_11, TrUserData) ->
+    'd_field_mainflux.Message_unit'(Rest, N + 7,
+				    X bsl N + Acc, F@_1, F@_2, F@_3, F@_4, F@_5,
+				    F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
+				    TrUserData);
+'d_field_mainflux.Message_unit'(<<0:1, X:7,
+				  Rest/binary>>,
+				N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, _, F@_7,
+				F@_8, F@_9, F@_10, F@_11, TrUserData) ->
     {NewFValue, RestF} = begin
 			   Len = X bsl N + Acc,
 			   <<Utf8:Len/binary, Rest2/binary>> = Rest,
@@ -1059,57 +1223,70 @@ d_field_Message_unit(<<0:1, X:7, Rest/binary>>, N, Acc,
 			       TrUserData),
 			    Rest2}
 			 end,
-    dfp_read_field_def_Message(RestF, 0, 0, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, NewFValue, F@_7, F@_8, F@_9,
-			       F@_10, F@_11, TrUserData).
+    'dfp_read_field_def_mainflux.Message'(RestF, 0, 0, F@_1,
+					  F@_2, F@_3, F@_4, F@_5, NewFValue,
+					  F@_7, F@_8, F@_9, F@_10, F@_11,
+					  TrUserData).
 
-d_field_Message_floatValue(<<0:48, 240, 127,
-			     Rest/binary>>,
-			   Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, _, F@_8,
-			   F@_9, F@_10, F@_11, TrUserData) ->
-    dfp_read_field_def_Message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6,
-			       id({floatValue, id(infinity, TrUserData)},
-				  TrUserData),
-			       F@_8, F@_9, F@_10, F@_11, TrUserData);
-d_field_Message_floatValue(<<0:48, 240, 255,
-			     Rest/binary>>,
-			   Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, _, F@_8,
-			   F@_9, F@_10, F@_11, TrUserData) ->
-    dfp_read_field_def_Message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6,
-			       id({floatValue, id('-infinity', TrUserData)},
-				  TrUserData),
-			       F@_8, F@_9, F@_10, F@_11, TrUserData);
-d_field_Message_floatValue(<<_:48, 15:4, _:4, _:1,
-			     127:7, Rest/binary>>,
-			   Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, _, F@_8,
-			   F@_9, F@_10, F@_11, TrUserData) ->
-    dfp_read_field_def_Message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6,
-			       id({floatValue, id(nan, TrUserData)},
-				  TrUserData),
-			       F@_8, F@_9, F@_10, F@_11, TrUserData);
-d_field_Message_floatValue(<<Value:64/little-float,
-			     Rest/binary>>,
-			   Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, _, F@_8,
-			   F@_9, F@_10, F@_11, TrUserData) ->
-    dfp_read_field_def_Message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6,
-			       id({floatValue, id(Value, TrUserData)},
-				  TrUserData),
-			       F@_8, F@_9, F@_10, F@_11, TrUserData).
+'d_field_mainflux.Message_floatValue'(<<0:48, 240, 127,
+					Rest/binary>>,
+				      Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, _, F@_8, F@_9, F@_10, F@_11,
+				      TrUserData) ->
+    'dfp_read_field_def_mainflux.Message'(Rest, Z1, Z2,
+					  F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					  id({floatValue,
+					      id(infinity, TrUserData)},
+					     TrUserData),
+					  F@_8, F@_9, F@_10, F@_11, TrUserData);
+'d_field_mainflux.Message_floatValue'(<<0:48, 240, 255,
+					Rest/binary>>,
+				      Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, _, F@_8, F@_9, F@_10, F@_11,
+				      TrUserData) ->
+    'dfp_read_field_def_mainflux.Message'(Rest, Z1, Z2,
+					  F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					  id({floatValue,
+					      id('-infinity', TrUserData)},
+					     TrUserData),
+					  F@_8, F@_9, F@_10, F@_11, TrUserData);
+'d_field_mainflux.Message_floatValue'(<<_:48, 15:4, _:4,
+					_:1, 127:7, Rest/binary>>,
+				      Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, _, F@_8, F@_9, F@_10, F@_11,
+				      TrUserData) ->
+    'dfp_read_field_def_mainflux.Message'(Rest, Z1, Z2,
+					  F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					  id({floatValue, id(nan, TrUserData)},
+					     TrUserData),
+					  F@_8, F@_9, F@_10, F@_11, TrUserData);
+'d_field_mainflux.Message_floatValue'(<<Value:64/little-float,
+					Rest/binary>>,
+				      Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, _, F@_8, F@_9, F@_10, F@_11,
+				      TrUserData) ->
+    'dfp_read_field_def_mainflux.Message'(Rest, Z1, Z2,
+					  F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					  id({floatValue,
+					      id(Value, TrUserData)},
+					     TrUserData),
+					  F@_8, F@_9, F@_10, F@_11, TrUserData).
 
-d_field_Message_stringValue(<<1:1, X:7, Rest/binary>>,
-			    N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
-			    F@_8, F@_9, F@_10, F@_11, TrUserData)
+'d_field_mainflux.Message_stringValue'(<<1:1, X:7,
+					 Rest/binary>>,
+				       N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5,
+				       F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
+				       TrUserData)
     when N < 57 ->
-    d_field_Message_stringValue(Rest, N + 7, X bsl N + Acc,
-				F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-				F@_9, F@_10, F@_11, TrUserData);
-d_field_Message_stringValue(<<0:1, X:7, Rest/binary>>,
-			    N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, _, F@_8,
-			    F@_9, F@_10, F@_11, TrUserData) ->
+    'd_field_mainflux.Message_stringValue'(Rest, N + 7,
+					   X bsl N + Acc, F@_1, F@_2, F@_3,
+					   F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
+					   F@_10, F@_11, TrUserData);
+'d_field_mainflux.Message_stringValue'(<<0:1, X:7,
+					 Rest/binary>>,
+				       N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5,
+				       F@_6, _, F@_8, F@_9, F@_10, F@_11,
+				       TrUserData) ->
     {NewFValue, RestF} = begin
 			   Len = X bsl N + Acc,
 			   <<Utf8:Len/binary, Rest2/binary>> = Rest,
@@ -1117,39 +1294,47 @@ d_field_Message_stringValue(<<0:1, X:7, Rest/binary>>,
 			       TrUserData),
 			    Rest2}
 			 end,
-    dfp_read_field_def_Message(RestF, 0, 0, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6,
-			       id({stringValue, NewFValue}, TrUserData), F@_8,
-			       F@_9, F@_10, F@_11, TrUserData).
+    'dfp_read_field_def_mainflux.Message'(RestF, 0, 0, F@_1,
+					  F@_2, F@_3, F@_4, F@_5, F@_6,
+					  id({stringValue, NewFValue},
+					     TrUserData),
+					  F@_8, F@_9, F@_10, F@_11, TrUserData).
 
-d_field_Message_boolValue(<<1:1, X:7, Rest/binary>>, N,
-			  Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			  F@_9, F@_10, F@_11, TrUserData)
+'d_field_mainflux.Message_boolValue'(<<1:1, X:7,
+				       Rest/binary>>,
+				     N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+				     F@_7, F@_8, F@_9, F@_10, F@_11, TrUserData)
     when N < 57 ->
-    d_field_Message_boolValue(Rest, N + 7, X bsl N + Acc,
-			      F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			      F@_9, F@_10, F@_11, TrUserData);
-d_field_Message_boolValue(<<0:1, X:7, Rest/binary>>, N,
-			  Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, _, F@_8,
-			  F@_9, F@_10, F@_11, TrUserData) ->
+    'd_field_mainflux.Message_boolValue'(Rest, N + 7,
+					 X bsl N + Acc, F@_1, F@_2, F@_3, F@_4,
+					 F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
+					 F@_11, TrUserData);
+'d_field_mainflux.Message_boolValue'(<<0:1, X:7,
+				       Rest/binary>>,
+				     N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+				     _, F@_8, F@_9, F@_10, F@_11, TrUserData) ->
     {NewFValue, RestF} = {id(X bsl N + Acc =/= 0,
 			     TrUserData),
 			  Rest},
-    dfp_read_field_def_Message(RestF, 0, 0, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6,
-			       id({boolValue, NewFValue}, TrUserData), F@_8,
-			       F@_9, F@_10, F@_11, TrUserData).
+    'dfp_read_field_def_mainflux.Message'(RestF, 0, 0, F@_1,
+					  F@_2, F@_3, F@_4, F@_5, F@_6,
+					  id({boolValue, NewFValue},
+					     TrUserData),
+					  F@_8, F@_9, F@_10, F@_11, TrUserData).
 
-d_field_Message_dataValue(<<1:1, X:7, Rest/binary>>, N,
-			  Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			  F@_9, F@_10, F@_11, TrUserData)
+'d_field_mainflux.Message_dataValue'(<<1:1, X:7,
+				       Rest/binary>>,
+				     N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+				     F@_7, F@_8, F@_9, F@_10, F@_11, TrUserData)
     when N < 57 ->
-    d_field_Message_dataValue(Rest, N + 7, X bsl N + Acc,
-			      F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			      F@_9, F@_10, F@_11, TrUserData);
-d_field_Message_dataValue(<<0:1, X:7, Rest/binary>>, N,
-			  Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, _, F@_8,
-			  F@_9, F@_10, F@_11, TrUserData) ->
+    'd_field_mainflux.Message_dataValue'(Rest, N + 7,
+					 X bsl N + Acc, F@_1, F@_2, F@_3, F@_4,
+					 F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
+					 F@_11, TrUserData);
+'d_field_mainflux.Message_dataValue'(<<0:1, X:7,
+				       Rest/binary>>,
+				     N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+				     _, F@_8, F@_9, F@_10, F@_11, TrUserData) ->
     {NewFValue, RestF} = begin
 			   Len = X bsl N + Acc,
 			   <<Utf8:Len/binary, Rest2/binary>> = Rest,
@@ -1157,104 +1342,130 @@ d_field_Message_dataValue(<<0:1, X:7, Rest/binary>>, N,
 			       TrUserData),
 			    Rest2}
 			 end,
-    dfp_read_field_def_Message(RestF, 0, 0, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6,
-			       id({dataValue, NewFValue}, TrUserData), F@_8,
-			       F@_9, F@_10, F@_11, TrUserData).
+    'dfp_read_field_def_mainflux.Message'(RestF, 0, 0, F@_1,
+					  F@_2, F@_3, F@_4, F@_5, F@_6,
+					  id({dataValue, NewFValue},
+					     TrUserData),
+					  F@_8, F@_9, F@_10, F@_11, TrUserData).
 
-d_field_Message_valueSum(<<1:1, X:7, Rest/binary>>, N,
-			 Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			 F@_9, F@_10, F@_11, TrUserData)
+'d_field_mainflux.Message_valueSum'(<<1:1, X:7,
+				      Rest/binary>>,
+				    N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+				    F@_7, F@_8, F@_9, F@_10, F@_11, TrUserData)
     when N < 57 ->
-    d_field_Message_valueSum(Rest, N + 7, X bsl N + Acc,
-			     F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			     F@_9, F@_10, F@_11, TrUserData);
-d_field_Message_valueSum(<<0:1, X:7, Rest/binary>>, N,
-			 Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, Prev,
-			 F@_9, F@_10, F@_11, TrUserData) ->
+    'd_field_mainflux.Message_valueSum'(Rest, N + 7,
+					X bsl N + Acc, F@_1, F@_2, F@_3, F@_4,
+					F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
+					F@_11, TrUserData);
+'d_field_mainflux.Message_valueSum'(<<0:1, X:7,
+				      Rest/binary>>,
+				    N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+				    F@_7, Prev, F@_9, F@_10, F@_11,
+				    TrUserData) ->
     {NewFValue, RestF} = begin
 			   Len = X bsl N + Acc,
 			   <<Bs:Len/binary, Rest2/binary>> = Rest,
-			   {id(decode_msg_SumValue(Bs, TrUserData), TrUserData),
+			   {id('decode_msg_mainflux.SumValue'(Bs, TrUserData),
+			       TrUserData),
 			    Rest2}
 			 end,
-    dfp_read_field_def_Message(RestF, 0, 0, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7,
-			       if Prev == undefined -> NewFValue;
-				  true ->
-				      merge_msg_SumValue(Prev, NewFValue,
-							 TrUserData)
-			       end,
-			       F@_9, F@_10, F@_11, TrUserData).
+    'dfp_read_field_def_mainflux.Message'(RestF, 0, 0, F@_1,
+					  F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
+					  if Prev == undefined -> NewFValue;
+					     true ->
+						 'merge_msg_mainflux.SumValue'(Prev,
+									       NewFValue,
+									       TrUserData)
+					  end,
+					  F@_9, F@_10, F@_11, TrUserData).
 
-d_field_Message_time(<<0:48, 240, 127, Rest/binary>>,
-		     Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-		     _, F@_10, F@_11, TrUserData) ->
-    dfp_read_field_def_Message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			       id(infinity, TrUserData), F@_10, F@_11,
-			       TrUserData);
-d_field_Message_time(<<0:48, 240, 255, Rest/binary>>,
-		     Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-		     _, F@_10, F@_11, TrUserData) ->
-    dfp_read_field_def_Message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			       id('-infinity', TrUserData), F@_10, F@_11,
-			       TrUserData);
-d_field_Message_time(<<_:48, 15:4, _:4, _:1, 127:7,
-		       Rest/binary>>,
-		     Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-		     _, F@_10, F@_11, TrUserData) ->
-    dfp_read_field_def_Message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			       id(nan, TrUserData), F@_10, F@_11, TrUserData);
-d_field_Message_time(<<Value:64/little-float,
-		       Rest/binary>>,
-		     Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-		     _, F@_10, F@_11, TrUserData) ->
-    dfp_read_field_def_Message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			       id(Value, TrUserData), F@_10, F@_11, TrUserData).
+'d_field_mainflux.Message_time'(<<0:48, 240, 127,
+				  Rest/binary>>,
+				Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+				F@_7, F@_8, _, F@_10, F@_11, TrUserData) ->
+    'dfp_read_field_def_mainflux.Message'(Rest, Z1, Z2,
+					  F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					  F@_7, F@_8, id(infinity, TrUserData),
+					  F@_10, F@_11, TrUserData);
+'d_field_mainflux.Message_time'(<<0:48, 240, 255,
+				  Rest/binary>>,
+				Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+				F@_7, F@_8, _, F@_10, F@_11, TrUserData) ->
+    'dfp_read_field_def_mainflux.Message'(Rest, Z1, Z2,
+					  F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					  F@_7, F@_8,
+					  id('-infinity', TrUserData), F@_10,
+					  F@_11, TrUserData);
+'d_field_mainflux.Message_time'(<<_:48, 15:4, _:4, _:1,
+				  127:7, Rest/binary>>,
+				Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+				F@_7, F@_8, _, F@_10, F@_11, TrUserData) ->
+    'dfp_read_field_def_mainflux.Message'(Rest, Z1, Z2,
+					  F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					  F@_7, F@_8, id(nan, TrUserData),
+					  F@_10, F@_11, TrUserData);
+'d_field_mainflux.Message_time'(<<Value:64/little-float,
+				  Rest/binary>>,
+				Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+				F@_7, F@_8, _, F@_10, F@_11, TrUserData) ->
+    'dfp_read_field_def_mainflux.Message'(Rest, Z1, Z2,
+					  F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					  F@_7, F@_8, id(Value, TrUserData),
+					  F@_10, F@_11, TrUserData).
 
-d_field_Message_updateTime(<<0:48, 240, 127,
-			     Rest/binary>>,
-			   Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
-			   F@_8, F@_9, _, F@_11, TrUserData) ->
-    dfp_read_field_def_Message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			       id(infinity, TrUserData), F@_11, TrUserData);
-d_field_Message_updateTime(<<0:48, 240, 255,
-			     Rest/binary>>,
-			   Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
-			   F@_8, F@_9, _, F@_11, TrUserData) ->
-    dfp_read_field_def_Message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			       id('-infinity', TrUserData), F@_11, TrUserData);
-d_field_Message_updateTime(<<_:48, 15:4, _:4, _:1,
-			     127:7, Rest/binary>>,
-			   Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
-			   F@_8, F@_9, _, F@_11, TrUserData) ->
-    dfp_read_field_def_Message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			       id(nan, TrUserData), F@_11, TrUserData);
-d_field_Message_updateTime(<<Value:64/little-float,
-			     Rest/binary>>,
-			   Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
-			   F@_8, F@_9, _, F@_11, TrUserData) ->
-    dfp_read_field_def_Message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			       id(Value, TrUserData), F@_11, TrUserData).
+'d_field_mainflux.Message_updateTime'(<<0:48, 240, 127,
+					Rest/binary>>,
+				      Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, F@_7, F@_8, F@_9, _, F@_11,
+				      TrUserData) ->
+    'dfp_read_field_def_mainflux.Message'(Rest, Z1, Z2,
+					  F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					  F@_7, F@_8, F@_9,
+					  id(infinity, TrUserData), F@_11,
+					  TrUserData);
+'d_field_mainflux.Message_updateTime'(<<0:48, 240, 255,
+					Rest/binary>>,
+				      Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, F@_7, F@_8, F@_9, _, F@_11,
+				      TrUserData) ->
+    'dfp_read_field_def_mainflux.Message'(Rest, Z1, Z2,
+					  F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					  F@_7, F@_8, F@_9,
+					  id('-infinity', TrUserData), F@_11,
+					  TrUserData);
+'d_field_mainflux.Message_updateTime'(<<_:48, 15:4, _:4,
+					_:1, 127:7, Rest/binary>>,
+				      Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, F@_7, F@_8, F@_9, _, F@_11,
+				      TrUserData) ->
+    'dfp_read_field_def_mainflux.Message'(Rest, Z1, Z2,
+					  F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					  F@_7, F@_8, F@_9, id(nan, TrUserData),
+					  F@_11, TrUserData);
+'d_field_mainflux.Message_updateTime'(<<Value:64/little-float,
+					Rest/binary>>,
+				      Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5,
+				      F@_6, F@_7, F@_8, F@_9, _, F@_11,
+				      TrUserData) ->
+    'dfp_read_field_def_mainflux.Message'(Rest, Z1, Z2,
+					  F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					  F@_7, F@_8, F@_9,
+					  id(Value, TrUserData), F@_11,
+					  TrUserData).
 
-d_field_Message_link(<<1:1, X:7, Rest/binary>>, N, Acc,
-		     F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-		     F@_10, F@_11, TrUserData)
+'d_field_mainflux.Message_link'(<<1:1, X:7,
+				  Rest/binary>>,
+				N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+				F@_7, F@_8, F@_9, F@_10, F@_11, TrUserData)
     when N < 57 ->
-    d_field_Message_link(Rest, N + 7, X bsl N + Acc, F@_1,
-			 F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			 F@_11, TrUserData);
-d_field_Message_link(<<0:1, X:7, Rest/binary>>, N, Acc,
-		     F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-		     F@_10, _, TrUserData) ->
+    'd_field_mainflux.Message_link'(Rest, N + 7,
+				    X bsl N + Acc, F@_1, F@_2, F@_3, F@_4, F@_5,
+				    F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
+				    TrUserData);
+'d_field_mainflux.Message_link'(<<0:1, X:7,
+				  Rest/binary>>,
+				N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+				F@_7, F@_8, F@_9, F@_10, _, TrUserData) ->
     {NewFValue, RestF} = begin
 			   Len = X bsl N + Acc,
 			   <<Utf8:Len/binary, Rest2/binary>> = Rest,
@@ -1262,158 +1473,189 @@ d_field_Message_link(<<0:1, X:7, Rest/binary>>, N, Acc,
 			       TrUserData),
 			    Rest2}
 			 end,
-    dfp_read_field_def_Message(RestF, 0, 0, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			       NewFValue, TrUserData).
+    'dfp_read_field_def_mainflux.Message'(RestF, 0, 0, F@_1,
+					  F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
+					  F@_8, F@_9, F@_10, NewFValue,
+					  TrUserData).
 
-skip_varint_Message(<<1:1, _:7, Rest/binary>>, Z1, Z2,
-		    F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-		    F@_10, F@_11, TrUserData) ->
-    skip_varint_Message(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			TrUserData);
-skip_varint_Message(<<0:1, _:7, Rest/binary>>, Z1, Z2,
-		    F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-		    F@_10, F@_11, TrUserData) ->
-    dfp_read_field_def_Message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			       F@_11, TrUserData).
+'skip_varint_mainflux.Message'(<<1:1, _:7,
+				 Rest/binary>>,
+			       Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
+			       F@_8, F@_9, F@_10, F@_11, TrUserData) ->
+    'skip_varint_mainflux.Message'(Rest, Z1, Z2, F@_1, F@_2,
+				   F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
+				   F@_10, F@_11, TrUserData);
+'skip_varint_mainflux.Message'(<<0:1, _:7,
+				 Rest/binary>>,
+			       Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
+			       F@_8, F@_9, F@_10, F@_11, TrUserData) ->
+    'dfp_read_field_def_mainflux.Message'(Rest, Z1, Z2,
+					  F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					  F@_7, F@_8, F@_9, F@_10, F@_11,
+					  TrUserData).
 
-skip_length_delimited_Message(<<1:1, X:7, Rest/binary>>,
-			      N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
-			      F@_8, F@_9, F@_10, F@_11, TrUserData)
+'skip_length_delimited_mainflux.Message'(<<1:1, X:7,
+					   Rest/binary>>,
+					 N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5,
+					 F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
+					 TrUserData)
     when N < 57 ->
-    skip_length_delimited_Message(Rest, N + 7,
-				  X bsl N + Acc, F@_1, F@_2, F@_3, F@_4, F@_5,
-				  F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-				  TrUserData);
-skip_length_delimited_Message(<<0:1, X:7, Rest/binary>>,
-			      N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
-			      F@_8, F@_9, F@_10, F@_11, TrUserData) ->
+    'skip_length_delimited_mainflux.Message'(Rest, N + 7,
+					     X bsl N + Acc, F@_1, F@_2, F@_3,
+					     F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
+					     F@_10, F@_11, TrUserData);
+'skip_length_delimited_mainflux.Message'(<<0:1, X:7,
+					   Rest/binary>>,
+					 N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5,
+					 F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
+					 TrUserData) ->
     Length = X bsl N + Acc,
     <<_:Length/binary, Rest2/binary>> = Rest,
-    dfp_read_field_def_Message(Rest2, 0, 0, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			       F@_11, TrUserData).
+    'dfp_read_field_def_mainflux.Message'(Rest2, 0, 0, F@_1,
+					  F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
+					  F@_8, F@_9, F@_10, F@_11, TrUserData).
 
-skip_group_Message(Bin, FNum, Z2, F@_1, F@_2, F@_3,
-		   F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-		   TrUserData) ->
+'skip_group_mainflux.Message'(Bin, FNum, Z2, F@_1, F@_2,
+			      F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
+			      F@_11, TrUserData) ->
     {_, Rest} = read_group(Bin, FNum),
-    dfp_read_field_def_Message(Rest, 0, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			       F@_11, TrUserData).
+    'dfp_read_field_def_mainflux.Message'(Rest, 0, Z2, F@_1,
+					  F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
+					  F@_8, F@_9, F@_10, F@_11, TrUserData).
 
-skip_32_Message(<<_:32, Rest/binary>>, Z1, Z2, F@_1,
-		F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-		F@_11, TrUserData) ->
-    dfp_read_field_def_Message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			       F@_11, TrUserData).
+'skip_32_mainflux.Message'(<<_:32, Rest/binary>>, Z1,
+			   Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
+			   F@_9, F@_10, F@_11, TrUserData) ->
+    'dfp_read_field_def_mainflux.Message'(Rest, Z1, Z2,
+					  F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					  F@_7, F@_8, F@_9, F@_10, F@_11,
+					  TrUserData).
 
-skip_64_Message(<<_:64, Rest/binary>>, Z1, Z2, F@_1,
-		F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-		F@_11, TrUserData) ->
-    dfp_read_field_def_Message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			       F@_11, TrUserData).
+'skip_64_mainflux.Message'(<<_:64, Rest/binary>>, Z1,
+			   Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
+			   F@_9, F@_10, F@_11, TrUserData) ->
+    'dfp_read_field_def_mainflux.Message'(Rest, Z1, Z2,
+					  F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+					  F@_7, F@_8, F@_9, F@_10, F@_11,
+					  TrUserData).
 
-decode_msg_SumValue(Bin, TrUserData) ->
-    dfp_read_field_def_SumValue(Bin, 0, 0,
-				id(0.0, TrUserData), TrUserData).
+'decode_msg_mainflux.SumValue'(Bin, TrUserData) ->
+    'dfp_read_field_def_mainflux.SumValue'(Bin, 0, 0,
+					   id(0.0, TrUserData), TrUserData).
 
-dfp_read_field_def_SumValue(<<9, Rest/binary>>, Z1, Z2,
-			    F@_1, TrUserData) ->
-    d_field_SumValue_value(Rest, Z1, Z2, F@_1, TrUserData);
-dfp_read_field_def_SumValue(<<>>, 0, 0, F@_1, _) ->
-    #'SumValue'{value = F@_1};
-dfp_read_field_def_SumValue(Other, Z1, Z2, F@_1,
-			    TrUserData) ->
-    dg_read_field_def_SumValue(Other, Z1, Z2, F@_1,
-			       TrUserData).
+'dfp_read_field_def_mainflux.SumValue'(<<9,
+					 Rest/binary>>,
+				       Z1, Z2, F@_1, TrUserData) ->
+    'd_field_mainflux.SumValue_value'(Rest, Z1, Z2, F@_1,
+				      TrUserData);
+'dfp_read_field_def_mainflux.SumValue'(<<>>, 0, 0, F@_1,
+				       _) ->
+    #'mainflux.SumValue'{value = F@_1};
+'dfp_read_field_def_mainflux.SumValue'(Other, Z1, Z2,
+				       F@_1, TrUserData) ->
+    'dg_read_field_def_mainflux.SumValue'(Other, Z1, Z2,
+					  F@_1, TrUserData).
 
-dg_read_field_def_SumValue(<<1:1, X:7, Rest/binary>>, N,
-			   Acc, F@_1, TrUserData)
+'dg_read_field_def_mainflux.SumValue'(<<1:1, X:7,
+					Rest/binary>>,
+				      N, Acc, F@_1, TrUserData)
     when N < 32 - 7 ->
-    dg_read_field_def_SumValue(Rest, N + 7, X bsl N + Acc,
-			       F@_1, TrUserData);
-dg_read_field_def_SumValue(<<0:1, X:7, Rest/binary>>, N,
-			   Acc, F@_1, TrUserData) ->
+    'dg_read_field_def_mainflux.SumValue'(Rest, N + 7,
+					  X bsl N + Acc, F@_1, TrUserData);
+'dg_read_field_def_mainflux.SumValue'(<<0:1, X:7,
+					Rest/binary>>,
+				      N, Acc, F@_1, TrUserData) ->
     Key = X bsl N + Acc,
     case Key of
       9 ->
-	  d_field_SumValue_value(Rest, 0, 0, F@_1, TrUserData);
+	  'd_field_mainflux.SumValue_value'(Rest, 0, 0, F@_1,
+					    TrUserData);
       _ ->
 	  case Key band 7 of
-	    0 -> skip_varint_SumValue(Rest, 0, 0, F@_1, TrUserData);
-	    1 -> skip_64_SumValue(Rest, 0, 0, F@_1, TrUserData);
+	    0 ->
+		'skip_varint_mainflux.SumValue'(Rest, 0, 0, F@_1,
+						TrUserData);
+	    1 ->
+		'skip_64_mainflux.SumValue'(Rest, 0, 0, F@_1,
+					    TrUserData);
 	    2 ->
-		skip_length_delimited_SumValue(Rest, 0, 0, F@_1,
-					       TrUserData);
+		'skip_length_delimited_mainflux.SumValue'(Rest, 0, 0,
+							  F@_1, TrUserData);
 	    3 ->
-		skip_group_SumValue(Rest, Key bsr 3, 0, F@_1,
-				    TrUserData);
-	    5 -> skip_32_SumValue(Rest, 0, 0, F@_1, TrUserData)
+		'skip_group_mainflux.SumValue'(Rest, Key bsr 3, 0, F@_1,
+					       TrUserData);
+	    5 ->
+		'skip_32_mainflux.SumValue'(Rest, 0, 0, F@_1,
+					    TrUserData)
 	  end
     end;
-dg_read_field_def_SumValue(<<>>, 0, 0, F@_1, _) ->
-    #'SumValue'{value = F@_1}.
+'dg_read_field_def_mainflux.SumValue'(<<>>, 0, 0, F@_1,
+				      _) ->
+    #'mainflux.SumValue'{value = F@_1}.
 
-d_field_SumValue_value(<<0:48, 240, 127, Rest/binary>>,
-		       Z1, Z2, _, TrUserData) ->
-    dfp_read_field_def_SumValue(Rest, Z1, Z2,
-				id(infinity, TrUserData), TrUserData);
-d_field_SumValue_value(<<0:48, 240, 255, Rest/binary>>,
-		       Z1, Z2, _, TrUserData) ->
-    dfp_read_field_def_SumValue(Rest, Z1, Z2,
-				id('-infinity', TrUserData), TrUserData);
-d_field_SumValue_value(<<_:48, 15:4, _:4, _:1, 127:7,
-			 Rest/binary>>,
-		       Z1, Z2, _, TrUserData) ->
-    dfp_read_field_def_SumValue(Rest, Z1, Z2,
-				id(nan, TrUserData), TrUserData);
-d_field_SumValue_value(<<Value:64/little-float,
-			 Rest/binary>>,
-		       Z1, Z2, _, TrUserData) ->
-    dfp_read_field_def_SumValue(Rest, Z1, Z2,
-				id(Value, TrUserData), TrUserData).
+'d_field_mainflux.SumValue_value'(<<0:48, 240, 127,
+				    Rest/binary>>,
+				  Z1, Z2, _, TrUserData) ->
+    'dfp_read_field_def_mainflux.SumValue'(Rest, Z1, Z2,
+					   id(infinity, TrUserData),
+					   TrUserData);
+'d_field_mainflux.SumValue_value'(<<0:48, 240, 255,
+				    Rest/binary>>,
+				  Z1, Z2, _, TrUserData) ->
+    'dfp_read_field_def_mainflux.SumValue'(Rest, Z1, Z2,
+					   id('-infinity', TrUserData),
+					   TrUserData);
+'d_field_mainflux.SumValue_value'(<<_:48, 15:4, _:4,
+				    _:1, 127:7, Rest/binary>>,
+				  Z1, Z2, _, TrUserData) ->
+    'dfp_read_field_def_mainflux.SumValue'(Rest, Z1, Z2,
+					   id(nan, TrUserData), TrUserData);
+'d_field_mainflux.SumValue_value'(<<Value:64/little-float,
+				    Rest/binary>>,
+				  Z1, Z2, _, TrUserData) ->
+    'dfp_read_field_def_mainflux.SumValue'(Rest, Z1, Z2,
+					   id(Value, TrUserData), TrUserData).
 
-skip_varint_SumValue(<<1:1, _:7, Rest/binary>>, Z1, Z2,
-		     F@_1, TrUserData) ->
-    skip_varint_SumValue(Rest, Z1, Z2, F@_1, TrUserData);
-skip_varint_SumValue(<<0:1, _:7, Rest/binary>>, Z1, Z2,
-		     F@_1, TrUserData) ->
-    dfp_read_field_def_SumValue(Rest, Z1, Z2, F@_1,
-				TrUserData).
+'skip_varint_mainflux.SumValue'(<<1:1, _:7,
+				  Rest/binary>>,
+				Z1, Z2, F@_1, TrUserData) ->
+    'skip_varint_mainflux.SumValue'(Rest, Z1, Z2, F@_1,
+				    TrUserData);
+'skip_varint_mainflux.SumValue'(<<0:1, _:7,
+				  Rest/binary>>,
+				Z1, Z2, F@_1, TrUserData) ->
+    'dfp_read_field_def_mainflux.SumValue'(Rest, Z1, Z2,
+					   F@_1, TrUserData).
 
-skip_length_delimited_SumValue(<<1:1, X:7,
-				 Rest/binary>>,
-			       N, Acc, F@_1, TrUserData)
+'skip_length_delimited_mainflux.SumValue'(<<1:1, X:7,
+					    Rest/binary>>,
+					  N, Acc, F@_1, TrUserData)
     when N < 57 ->
-    skip_length_delimited_SumValue(Rest, N + 7,
-				   X bsl N + Acc, F@_1, TrUserData);
-skip_length_delimited_SumValue(<<0:1, X:7,
-				 Rest/binary>>,
-			       N, Acc, F@_1, TrUserData) ->
+    'skip_length_delimited_mainflux.SumValue'(Rest, N + 7,
+					      X bsl N + Acc, F@_1, TrUserData);
+'skip_length_delimited_mainflux.SumValue'(<<0:1, X:7,
+					    Rest/binary>>,
+					  N, Acc, F@_1, TrUserData) ->
     Length = X bsl N + Acc,
     <<_:Length/binary, Rest2/binary>> = Rest,
-    dfp_read_field_def_SumValue(Rest2, 0, 0, F@_1,
-				TrUserData).
+    'dfp_read_field_def_mainflux.SumValue'(Rest2, 0, 0,
+					   F@_1, TrUserData).
 
-skip_group_SumValue(Bin, FNum, Z2, F@_1, TrUserData) ->
+'skip_group_mainflux.SumValue'(Bin, FNum, Z2, F@_1,
+			       TrUserData) ->
     {_, Rest} = read_group(Bin, FNum),
-    dfp_read_field_def_SumValue(Rest, 0, Z2, F@_1,
-				TrUserData).
+    'dfp_read_field_def_mainflux.SumValue'(Rest, 0, Z2,
+					   F@_1, TrUserData).
 
-skip_32_SumValue(<<_:32, Rest/binary>>, Z1, Z2, F@_1,
-		 TrUserData) ->
-    dfp_read_field_def_SumValue(Rest, Z1, Z2, F@_1,
-				TrUserData).
+'skip_32_mainflux.SumValue'(<<_:32, Rest/binary>>, Z1,
+			    Z2, F@_1, TrUserData) ->
+    'dfp_read_field_def_mainflux.SumValue'(Rest, Z1, Z2,
+					   F@_1, TrUserData).
 
-skip_64_SumValue(<<_:64, Rest/binary>>, Z1, Z2, F@_1,
-		 TrUserData) ->
-    dfp_read_field_def_SumValue(Rest, Z1, Z2, F@_1,
-				TrUserData).
+'skip_64_mainflux.SumValue'(<<_:64, Rest/binary>>, Z1,
+			    Z2, F@_1, TrUserData) ->
+    'dfp_read_field_def_mainflux.SumValue'(Rest, Z1, Z2,
+					   F@_1, TrUserData).
 
 read_group(Bin, FieldNum) ->
     {NumBytes, EndTagLen} = read_gr_b(Bin, 0, 0, 0, 0, FieldNum),
@@ -1487,119 +1729,137 @@ merge_msgs(Prev, New, Opts)
 merge_msgs(Prev, New, MsgName, Opts) ->
     TrUserData = proplists:get_value(user_data, Opts),
     case MsgName of
-      'RawMessage' ->
-	  merge_msg_RawMessage(Prev, New, TrUserData);
-      'Message' -> merge_msg_Message(Prev, New, TrUserData);
-      'SumValue' -> merge_msg_SumValue(Prev, New, TrUserData)
+      'mainflux.RawMessage' ->
+	  'merge_msg_mainflux.RawMessage'(Prev, New, TrUserData);
+      'mainflux.Message' ->
+	  'merge_msg_mainflux.Message'(Prev, New, TrUserData);
+      'mainflux.SumValue' ->
+	  'merge_msg_mainflux.SumValue'(Prev, New, TrUserData)
     end.
 
--compile({nowarn_unused_function,merge_msg_RawMessage/3}).
-merge_msg_RawMessage(#'RawMessage'{channel = PFchannel,
-				   subtopic = PFsubtopic,
-				   publisher = PFpublisher,
-				   protocol = PFprotocol,
-				   contentType = PFcontentType,
-				   payload = PFpayload},
-		     #'RawMessage'{channel = NFchannel,
-				   subtopic = NFsubtopic,
-				   publisher = NFpublisher,
-				   protocol = NFprotocol,
-				   contentType = NFcontentType,
-				   payload = NFpayload},
-		     _) ->
-    #'RawMessage'{channel =
-		      if NFchannel =:= undefined -> PFchannel;
-			 true -> NFchannel
-		      end,
-		  subtopic =
-		      if NFsubtopic =:= undefined -> PFsubtopic;
-			 true -> NFsubtopic
-		      end,
-		  publisher =
-		      if NFpublisher =:= undefined -> PFpublisher;
-			 true -> NFpublisher
-		      end,
-		  protocol =
-		      if NFprotocol =:= undefined -> PFprotocol;
-			 true -> NFprotocol
-		      end,
-		  contentType =
-		      if NFcontentType =:= undefined -> PFcontentType;
-			 true -> NFcontentType
-		      end,
-		  payload =
-		      if NFpayload =:= undefined -> PFpayload;
-			 true -> NFpayload
-		      end}.
+-compile({nowarn_unused_function,'merge_msg_mainflux.RawMessage'/3}).
+'merge_msg_mainflux.RawMessage'(#'mainflux.RawMessage'{channel
+							   = PFchannel,
+						       subtopic = PFsubtopic,
+						       publisher = PFpublisher,
+						       protocol = PFprotocol,
+						       contentType =
+							   PFcontentType,
+						       payload = PFpayload},
+				#'mainflux.RawMessage'{channel = NFchannel,
+						       subtopic = NFsubtopic,
+						       publisher = NFpublisher,
+						       protocol = NFprotocol,
+						       contentType =
+							   NFcontentType,
+						       payload = NFpayload},
+				_) ->
+    #'mainflux.RawMessage'{channel =
+			       if NFchannel =:= undefined -> PFchannel;
+				  true -> NFchannel
+			       end,
+			   subtopic =
+			       if NFsubtopic =:= undefined -> PFsubtopic;
+				  true -> NFsubtopic
+			       end,
+			   publisher =
+			       if NFpublisher =:= undefined -> PFpublisher;
+				  true -> NFpublisher
+			       end,
+			   protocol =
+			       if NFprotocol =:= undefined -> PFprotocol;
+				  true -> NFprotocol
+			       end,
+			   contentType =
+			       if NFcontentType =:= undefined -> PFcontentType;
+				  true -> NFcontentType
+			       end,
+			   payload =
+			       if NFpayload =:= undefined -> PFpayload;
+				  true -> NFpayload
+			       end}.
 
--compile({nowarn_unused_function,merge_msg_Message/3}).
-merge_msg_Message(#'Message'{channel = PFchannel,
-			     subtopic = PFsubtopic, publisher = PFpublisher,
-			     protocol = PFprotocol, name = PFname,
-			     unit = PFunit, value = PFvalue,
-			     valueSum = PFvalueSum, time = PFtime,
-			     updateTime = PFupdateTime, link = PFlink},
-		  #'Message'{channel = NFchannel, subtopic = NFsubtopic,
-			     publisher = NFpublisher, protocol = NFprotocol,
-			     name = NFname, unit = NFunit, value = NFvalue,
-			     valueSum = NFvalueSum, time = NFtime,
-			     updateTime = NFupdateTime, link = NFlink},
-		  TrUserData) ->
-    #'Message'{channel =
-		   if NFchannel =:= undefined -> PFchannel;
-		      true -> NFchannel
-		   end,
-	       subtopic =
-		   if NFsubtopic =:= undefined -> PFsubtopic;
-		      true -> NFsubtopic
-		   end,
-	       publisher =
-		   if NFpublisher =:= undefined -> PFpublisher;
-		      true -> NFpublisher
-		   end,
-	       protocol =
-		   if NFprotocol =:= undefined -> PFprotocol;
-		      true -> NFprotocol
-		   end,
-	       name =
-		   if NFname =:= undefined -> PFname;
-		      true -> NFname
-		   end,
-	       unit =
-		   if NFunit =:= undefined -> PFunit;
-		      true -> NFunit
-		   end,
-	       value =
-		   if NFvalue =:= undefined -> PFvalue;
-		      true -> NFvalue
-		   end,
-	       valueSum =
-		   if PFvalueSum /= undefined, NFvalueSum /= undefined ->
-			  merge_msg_SumValue(PFvalueSum, NFvalueSum,
-					     TrUserData);
-		      PFvalueSum == undefined -> NFvalueSum;
-		      NFvalueSum == undefined -> PFvalueSum
-		   end,
-	       time =
-		   if NFtime =:= undefined -> PFtime;
-		      true -> NFtime
-		   end,
-	       updateTime =
-		   if NFupdateTime =:= undefined -> PFupdateTime;
-		      true -> NFupdateTime
-		   end,
-	       link =
-		   if NFlink =:= undefined -> PFlink;
-		      true -> NFlink
-		   end}.
+-compile({nowarn_unused_function,'merge_msg_mainflux.Message'/3}).
+'merge_msg_mainflux.Message'(#'mainflux.Message'{channel
+						     = PFchannel,
+						 subtopic = PFsubtopic,
+						 publisher = PFpublisher,
+						 protocol = PFprotocol,
+						 name = PFname, unit = PFunit,
+						 value = PFvalue,
+						 valueSum = PFvalueSum,
+						 time = PFtime,
+						 updateTime = PFupdateTime,
+						 link = PFlink},
+			     #'mainflux.Message'{channel = NFchannel,
+						 subtopic = NFsubtopic,
+						 publisher = NFpublisher,
+						 protocol = NFprotocol,
+						 name = NFname, unit = NFunit,
+						 value = NFvalue,
+						 valueSum = NFvalueSum,
+						 time = NFtime,
+						 updateTime = NFupdateTime,
+						 link = NFlink},
+			     TrUserData) ->
+    #'mainflux.Message'{channel =
+			    if NFchannel =:= undefined -> PFchannel;
+			       true -> NFchannel
+			    end,
+			subtopic =
+			    if NFsubtopic =:= undefined -> PFsubtopic;
+			       true -> NFsubtopic
+			    end,
+			publisher =
+			    if NFpublisher =:= undefined -> PFpublisher;
+			       true -> NFpublisher
+			    end,
+			protocol =
+			    if NFprotocol =:= undefined -> PFprotocol;
+			       true -> NFprotocol
+			    end,
+			name =
+			    if NFname =:= undefined -> PFname;
+			       true -> NFname
+			    end,
+			unit =
+			    if NFunit =:= undefined -> PFunit;
+			       true -> NFunit
+			    end,
+			value =
+			    if NFvalue =:= undefined -> PFvalue;
+			       true -> NFvalue
+			    end,
+			valueSum =
+			    if PFvalueSum /= undefined,
+			       NFvalueSum /= undefined ->
+				   'merge_msg_mainflux.SumValue'(PFvalueSum,
+								 NFvalueSum,
+								 TrUserData);
+			       PFvalueSum == undefined -> NFvalueSum;
+			       NFvalueSum == undefined -> PFvalueSum
+			    end,
+			time =
+			    if NFtime =:= undefined -> PFtime;
+			       true -> NFtime
+			    end,
+			updateTime =
+			    if NFupdateTime =:= undefined -> PFupdateTime;
+			       true -> NFupdateTime
+			    end,
+			link =
+			    if NFlink =:= undefined -> PFlink;
+			       true -> NFlink
+			    end}.
 
--compile({nowarn_unused_function,merge_msg_SumValue/3}).
-merge_msg_SumValue(#'SumValue'{value = PFvalue},
-		   #'SumValue'{value = NFvalue}, _) ->
-    #'SumValue'{value =
-		    if NFvalue =:= undefined -> PFvalue;
-		       true -> NFvalue
-		    end}.
+-compile({nowarn_unused_function,'merge_msg_mainflux.SumValue'/3}).
+'merge_msg_mainflux.SumValue'(#'mainflux.SumValue'{value
+						       = PFvalue},
+			      #'mainflux.SumValue'{value = NFvalue}, _) ->
+    #'mainflux.SumValue'{value =
+			     if NFvalue =:= undefined -> PFvalue;
+				true -> NFvalue
+			     end}.
 
 
 verify_msg(Msg) when tuple_size(Msg) >= 1 ->
@@ -1617,21 +1877,26 @@ verify_msg(X, _Opts) ->
 verify_msg(Msg, MsgName, Opts) ->
     TrUserData = proplists:get_value(user_data, Opts),
     case MsgName of
-      'RawMessage' ->
-	  v_msg_RawMessage(Msg, [MsgName], TrUserData);
-      'Message' -> v_msg_Message(Msg, [MsgName], TrUserData);
-      'SumValue' ->
-	  v_msg_SumValue(Msg, [MsgName], TrUserData);
+      'mainflux.RawMessage' ->
+	  'v_msg_mainflux.RawMessage'(Msg, [MsgName], TrUserData);
+      'mainflux.Message' ->
+	  'v_msg_mainflux.Message'(Msg, [MsgName], TrUserData);
+      'mainflux.SumValue' ->
+	  'v_msg_mainflux.SumValue'(Msg, [MsgName], TrUserData);
       _ -> mk_type_error(not_a_known_message, Msg, [])
     end.
 
 
--compile({nowarn_unused_function,v_msg_RawMessage/3}).
--dialyzer({nowarn_function,v_msg_RawMessage/3}).
-v_msg_RawMessage(#'RawMessage'{channel = F1,
-			       subtopic = F2, publisher = F3, protocol = F4,
-			       contentType = F5, payload = F6},
-		 Path, TrUserData) ->
+-compile({nowarn_unused_function,'v_msg_mainflux.RawMessage'/3}).
+-dialyzer({nowarn_function,'v_msg_mainflux.RawMessage'/3}).
+'v_msg_mainflux.RawMessage'(#'mainflux.RawMessage'{channel
+						       = F1,
+						   subtopic = F2,
+						   publisher = F3,
+						   protocol = F4,
+						   contentType = F5,
+						   payload = F6},
+			    Path, TrUserData) ->
     if F1 == undefined -> ok;
        true -> v_type_string(F1, [channel | Path], TrUserData)
     end,
@@ -1653,16 +1918,20 @@ v_msg_RawMessage(#'RawMessage'{channel = F1,
        true -> v_type_bytes(F6, [payload | Path], TrUserData)
     end,
     ok;
-v_msg_RawMessage(X, Path, _TrUserData) ->
-    mk_type_error({expected_msg, 'RawMessage'}, X, Path).
+'v_msg_mainflux.RawMessage'(X, Path, _TrUserData) ->
+    mk_type_error({expected_msg, 'mainflux.RawMessage'}, X,
+		  Path).
 
--compile({nowarn_unused_function,v_msg_Message/3}).
--dialyzer({nowarn_function,v_msg_Message/3}).
-v_msg_Message(#'Message'{channel = F1, subtopic = F2,
-			 publisher = F3, protocol = F4, name = F5, unit = F6,
-			 value = F7, valueSum = F8, time = F9, updateTime = F10,
-			 link = F11},
-	      Path, TrUserData) ->
+-compile({nowarn_unused_function,'v_msg_mainflux.Message'/3}).
+-dialyzer({nowarn_function,'v_msg_mainflux.Message'/3}).
+'v_msg_mainflux.Message'(#'mainflux.Message'{channel =
+						 F1,
+					     subtopic = F2, publisher = F3,
+					     protocol = F4, name = F5,
+					     unit = F6, value = F7,
+					     valueSum = F8, time = F9,
+					     updateTime = F10, link = F11},
+			 Path, TrUserData) ->
     if F1 == undefined -> ok;
        true -> v_type_string(F1, [channel | Path], TrUserData)
     end,
@@ -1699,7 +1968,8 @@ v_msg_Message(#'Message'{channel = F1, subtopic = F2,
     end,
     if F8 == undefined -> ok;
        true ->
-	   v_msg_SumValue(F8, [valueSum | Path], TrUserData)
+	   'v_msg_mainflux.SumValue'(F8, [valueSum | Path],
+				     TrUserData)
     end,
     if F9 == undefined -> ok;
        true -> v_type_double(F9, [time | Path], TrUserData)
@@ -1712,19 +1982,22 @@ v_msg_Message(#'Message'{channel = F1, subtopic = F2,
        true -> v_type_string(F11, [link | Path], TrUserData)
     end,
     ok;
-v_msg_Message(X, Path, _TrUserData) ->
-    mk_type_error({expected_msg, 'Message'}, X, Path).
+'v_msg_mainflux.Message'(X, Path, _TrUserData) ->
+    mk_type_error({expected_msg, 'mainflux.Message'}, X,
+		  Path).
 
--compile({nowarn_unused_function,v_msg_SumValue/3}).
--dialyzer({nowarn_function,v_msg_SumValue/3}).
-v_msg_SumValue(#'SumValue'{value = F1}, Path,
-	       TrUserData) ->
+-compile({nowarn_unused_function,'v_msg_mainflux.SumValue'/3}).
+-dialyzer({nowarn_function,'v_msg_mainflux.SumValue'/3}).
+'v_msg_mainflux.SumValue'(#'mainflux.SumValue'{value =
+						   F1},
+			  Path, TrUserData) ->
     if F1 == undefined -> ok;
        true -> v_type_double(F1, [value | Path], TrUserData)
     end,
     ok;
-v_msg_SumValue(X, Path, _TrUserData) ->
-    mk_type_error({expected_msg, 'SumValue'}, X, Path).
+'v_msg_mainflux.SumValue'(X, Path, _TrUserData) ->
+    mk_type_error({expected_msg, 'mainflux.SumValue'}, X,
+		  Path).
 
 -compile({nowarn_unused_function,v_type_bool/3}).
 -dialyzer({nowarn_function,v_type_bool/3}).
@@ -1814,7 +2087,7 @@ cons(Elem, Acc, _TrUserData) -> [Elem | Acc].
 
 
 get_msg_defs() ->
-    [{{msg, 'RawMessage'},
+    [{{msg, 'mainflux.RawMessage'},
       [#field{name = channel, fnum = 1, rnum = 2,
 	      type = string, occurrence = optional, opts = []},
        #field{name = subtopic, fnum = 2, rnum = 3,
@@ -1827,7 +2100,7 @@ get_msg_defs() ->
 	      type = string, occurrence = optional, opts = []},
        #field{name = payload, fnum = 6, rnum = 7, type = bytes,
 	      occurrence = optional, opts = []}]},
-     {{msg, 'Message'},
+     {{msg, 'mainflux.Message'},
       [#field{name = channel, fnum = 1, rnum = 2,
 	      type = string, occurrence = optional, opts = []},
        #field{name = subtopic, fnum = 2, rnum = 3,
@@ -1852,28 +2125,30 @@ get_msg_defs() ->
 			      type = string, occurrence = optional,
 			      opts = []}]},
        #field{name = valueSum, fnum = 11, rnum = 9,
-	      type = {msg, 'SumValue'}, occurrence = optional,
-	      opts = []},
+	      type = {msg, 'mainflux.SumValue'},
+	      occurrence = optional, opts = []},
        #field{name = time, fnum = 12, rnum = 10, type = double,
 	      occurrence = optional, opts = []},
        #field{name = updateTime, fnum = 13, rnum = 11,
 	      type = double, occurrence = optional, opts = []},
        #field{name = link, fnum = 14, rnum = 12, type = string,
 	      occurrence = optional, opts = []}]},
-     {{msg, 'SumValue'},
+     {{msg, 'mainflux.SumValue'},
       [#field{name = value, fnum = 1, rnum = 2, type = double,
 	      occurrence = optional, opts = []}]}].
 
 
 get_msg_names() ->
-    ['RawMessage', 'Message', 'SumValue'].
+    ['mainflux.RawMessage', 'mainflux.Message',
+     'mainflux.SumValue'].
 
 
 get_group_names() -> [].
 
 
 get_msg_or_group_names() ->
-    ['RawMessage', 'Message', 'SumValue'].
+    ['mainflux.RawMessage', 'mainflux.Message',
+     'mainflux.SumValue'].
 
 
 get_enum_names() -> [].
@@ -1891,7 +2166,7 @@ fetch_enum_def(EnumName) ->
     erlang:error({no_such_enum, EnumName}).
 
 
-find_msg_def('RawMessage') ->
+find_msg_def('mainflux.RawMessage') ->
     [#field{name = channel, fnum = 1, rnum = 2,
 	    type = string, occurrence = optional, opts = []},
      #field{name = subtopic, fnum = 2, rnum = 3,
@@ -1904,7 +2179,7 @@ find_msg_def('RawMessage') ->
 	    type = string, occurrence = optional, opts = []},
      #field{name = payload, fnum = 6, rnum = 7, type = bytes,
 	    occurrence = optional, opts = []}];
-find_msg_def('Message') ->
+find_msg_def('mainflux.Message') ->
     [#field{name = channel, fnum = 1, rnum = 2,
 	    type = string, occurrence = optional, opts = []},
      #field{name = subtopic, fnum = 2, rnum = 3,
@@ -1928,15 +2203,15 @@ find_msg_def('Message') ->
 		     #field{name = dataValue, fnum = 10, rnum = 8,
 			    type = string, occurrence = optional, opts = []}]},
      #field{name = valueSum, fnum = 11, rnum = 9,
-	    type = {msg, 'SumValue'}, occurrence = optional,
-	    opts = []},
+	    type = {msg, 'mainflux.SumValue'},
+	    occurrence = optional, opts = []},
      #field{name = time, fnum = 12, rnum = 10, type = double,
 	    occurrence = optional, opts = []},
      #field{name = updateTime, fnum = 13, rnum = 11,
 	    type = double, occurrence = optional, opts = []},
      #field{name = link, fnum = 14, rnum = 12, type = string,
 	    occurrence = optional, opts = []}];
-find_msg_def('SumValue') ->
+find_msg_def('mainflux.SumValue') ->
     [#field{name = value, fnum = 1, rnum = 2, type = double,
 	    occurrence = optional, opts = []}];
 find_msg_def(_) -> error.
@@ -2004,15 +2279,15 @@ service_and_rpc_name_to_fqbins(S, R) ->
     error({gpb_error, {badservice_or_rpc, {S, R}}}).
 
 
-fqbin_to_msg_name(<<"mainflux.RawMessage">>) -> 'RawMessage';
-fqbin_to_msg_name(<<"mainflux.Message">>) -> 'Message';
-fqbin_to_msg_name(<<"mainflux.SumValue">>) -> 'SumValue';
+fqbin_to_msg_name(<<"mainflux.RawMessage">>) -> 'mainflux.RawMessage';
+fqbin_to_msg_name(<<"mainflux.Message">>) -> 'mainflux.Message';
+fqbin_to_msg_name(<<"mainflux.SumValue">>) -> 'mainflux.SumValue';
 fqbin_to_msg_name(E) -> error({gpb_error, {badmsg, E}}).
 
 
-msg_name_to_fqbin('RawMessage') -> <<"mainflux.RawMessage">>;
-msg_name_to_fqbin('Message') -> <<"mainflux.Message">>;
-msg_name_to_fqbin('SumValue') -> <<"mainflux.SumValue">>;
+msg_name_to_fqbin('mainflux.RawMessage') -> <<"mainflux.RawMessage">>;
+msg_name_to_fqbin('mainflux.Message') -> <<"mainflux.Message">>;
+msg_name_to_fqbin('mainflux.SumValue') -> <<"mainflux.SumValue">>;
 msg_name_to_fqbin(E) -> error({gpb_error, {badmsg, E}}).
 
 
@@ -2031,7 +2306,7 @@ get_package_name() -> mainflux.
 
 %% Whether or not the message names
 %% are prepended with package name or not.
-uses_packages() -> false.
+uses_packages() -> true.
 
 
 source_basename() -> "message.proto".
@@ -2054,12 +2329,13 @@ get_all_proto_names() -> ["message"].
 
 
 get_msg_containment("message") ->
-    ['Message', 'RawMessage', 'SumValue'];
+    ['mainflux.Message', 'mainflux.RawMessage',
+     'mainflux.SumValue'];
 get_msg_containment(P) ->
     error({gpb_error, {badproto, P}}).
 
 
-get_pkg_containment("message") -> undefined;
+get_pkg_containment("message") -> mainflux;
 get_pkg_containment(P) ->
     error({gpb_error, {badproto, P}}).
 
@@ -2096,7 +2372,7 @@ get_proto_by_enum_name_as_fqbin(E) ->
     error({gpb_error, {badenum, E}}).
 
 
--spec get_protos_by_pkg_name_as_fqbin(_) -> no_return().
+get_protos_by_pkg_name_as_fqbin(<<"mainflux">>) -> ["message"];
 get_protos_by_pkg_name_as_fqbin(E) ->
     error({gpb_error, {badpkg, E}}).
 

@@ -7,9 +7,9 @@
 
 -define(message_gpb_version, "4.9.0").
 
--ifndef('RAWMESSAGE_PB_H').
--define('RAWMESSAGE_PB_H', true).
--record('RawMessage',
+-ifndef('MAINFLUX.RAWMESSAGE_PB_H').
+-define('MAINFLUX.RAWMESSAGE_PB_H', true).
+-record('mainflux.RawMessage',
         {channel = []           :: iodata() | undefined, % = 1
          subtopic = []          :: iodata() | undefined, % = 2
          publisher = []         :: iodata() | undefined, % = 3
@@ -19,9 +19,9 @@
         }).
 -endif.
 
--ifndef('MESSAGE_PB_H').
--define('MESSAGE_PB_H', true).
--record('Message',
+-ifndef('MAINFLUX.MESSAGE_PB_H').
+-define('MAINFLUX.MESSAGE_PB_H', true).
+-record('mainflux.Message',
         {channel = []           :: iodata() | undefined, % = 1
          subtopic = []          :: iodata() | undefined, % = 2
          publisher = []         :: iodata() | undefined, % = 3
@@ -29,16 +29,16 @@
          name = []              :: iodata() | undefined, % = 5
          unit = []              :: iodata() | undefined, % = 6
          value                  :: {floatValue, float() | integer() | infinity | '-infinity' | nan} | {stringValue, iodata()} | {boolValue, boolean() | 0 | 1} | {dataValue, iodata()} | undefined, % oneof
-         valueSum = undefined   :: message:'SumValue'() | undefined, % = 11
+         valueSum = undefined   :: message:'mainflux.SumValue'() | undefined, % = 11
          time = 0.0             :: float() | integer() | infinity | '-infinity' | nan | undefined, % = 12
          updateTime = 0.0       :: float() | integer() | infinity | '-infinity' | nan | undefined, % = 13
          link = []              :: iodata() | undefined % = 14
         }).
 -endif.
 
--ifndef('SUMVALUE_PB_H').
--define('SUMVALUE_PB_H', true).
--record('SumValue',
+-ifndef('MAINFLUX.SUMVALUE_PB_H').
+-define('MAINFLUX.SUMVALUE_PB_H', true).
+-record('mainflux.SumValue',
         {value = 0.0            :: float() | integer() | infinity | '-infinity' | nan | undefined % = 1
         }).
 -endif.

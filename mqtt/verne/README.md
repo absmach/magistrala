@@ -82,7 +82,7 @@ make -j 16
 Then generate Erlang proto files:
 ```
 mkdir -p ./src/proto
-./gpb/bin/protoc-erl -I ./gpb/ ../*.proto -o ./src/proto
+./gpb/bin/protoc-erl -pkgs -I ./gpb/ ../../*.proto -o ./src/proto
 cp ./gpb/include/gpb.hrl ./src/proto/
 ```
 

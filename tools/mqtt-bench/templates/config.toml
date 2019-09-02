@@ -22,4 +22,4 @@ count = 100
 quiet = false
 
 [mainflux]
-connections_file = "../provision/connections.toml"
+connections_file = "../provision/mfconn.toml"

@@ -528,7 +528,7 @@ func TestUpdateCert(t *testing.T) {
 	cases := []struct {
 		desc        string
 		req         string
-		key         string
+		id          string
 		auth        string
 		contentType string
 		status      int
@@ -536,7 +536,7 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:        "update unauthorized",
 			req:         data,
-			key:         saved.MFKey,
+			id:          saved.MFThing,
 			auth:        invalidToken,
 			contentType: contentType,
 			status:      http.StatusForbidden,
@@ -544,7 +544,7 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:        "update with an empty token",
 			req:         data,
-			key:         saved.MFKey,
+			id:          saved.MFThing,
 			auth:        "",
 			contentType: contentType,
 			status:      http.StatusForbidden,
@@ -552,7 +552,7 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:        "update a valid config",
 			req:         data,
-			key:         saved.MFKey,
+			id:          saved.MFThing,
 			auth:        validToken,
 			contentType: contentType,
 			status:      http.StatusOK,
@@ -560,7 +560,7 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:        "update a config with wrong content type",
 			req:         data,
-			key:         saved.MFKey,
+			id:          saved.MFThing,
 			auth:        validToken,
 			contentType: "",
 			status:      http.StatusUnsupportedMediaType,
@@ -568,7 +568,7 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:        "update a non-existing config",
 			req:         data,
-			key:         wrongID,
+			id:          wrongID,
 			auth:        validToken,
 			contentType: contentType,
 			status:      http.StatusNotFound,
@@ -576,14 +576,14 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:        "update a config with invalid request format",
 			req:         "}",
-			key:         saved.MFKey,
+			id:          saved.MFKey,
 			auth:        validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
 		},
 		{
 			desc:        "update a config with an empty request",
-			key:         saved.MFKey,
+			id:          saved.MFThing,
 			req:         "",
 			auth:        validToken,
 			contentType: contentType,
@@ -594,8 +594,8 @@ func TestUpdateCert(t *testing.T) {
 	for _, tc := range cases {
 		req := testRequest{
 			client:      bs.Client(),
-			method:      http.MethodPut,
-			url:         fmt.Sprintf("%s/things/configs/certs/%s", bs.URL, tc.key),
+			method:      http.MethodPatch,
+			url:         fmt.Sprintf("%s/things/configs/certs/%s", bs.URL, tc.id),
 			contentType: tc.contentType,
 			token:       tc.auth,
 			body:        strings.NewReader(tc.req),

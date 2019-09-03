@@ -59,7 +59,7 @@ func updateCertEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		if err := svc.UpdateCert(req.key, req.thingKey, req.ClientCert, req.ClientKey, req.CACert); err != nil {
+		if err := svc.UpdateCert(req.key, req.thingID, req.ClientCert, req.ClientKey, req.CACert); err != nil {
 			return nil, err
 		}
 

@@ -180,8 +180,8 @@ paths:
           description: Missing or invalid access token provided.
         500:
           $ref: "#/responses/ServiceError"
-  /things/configs/certs/{thingKey}:
-    put:
+  /things/configs/certs/{configId}:
+    patch:
       summary: Updates certs
       description: |
         Update is performed by replacing the current certificate data with values
@@ -190,7 +190,7 @@ paths:
         - configs
       parameters:
         - $ref: "#/parameters/Authorization"
-        - $ref: "#/parameters/ThingKey"
+        - $ref: "#/parameters/ConfigId"
         - name: config
           description: JSON-formatted document describing the updated thing.
           in: body
@@ -322,12 +322,6 @@ parameters:
   ConfigId:
     name: configId
     description: Unique Config identifier. It's the ID of the corresponding Thing.
-    in: path
-    type: string
-    required: true
-  ThingKey:
-    name: thingKey
-    description: Unique Thing key.
     in: path
     type: string
     required: true

@@ -163,12 +163,12 @@ func (crm *configRepositoryMock) Update(config bootstrap.Config) error {
 	return nil
 }
 
-func (crm *configRepositoryMock) UpdateCert(owner, thingKey, clientCert, clientKey, caCert string) error {
+func (crm *configRepositoryMock) UpdateCert(owner, thingID, clientCert, clientKey, caCert string) error {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 	var forUpdate bootstrap.Config
 	for _, v := range crm.configs {
-		if v.MFKey == thingKey && v.Owner == owner {
+		if v.MFThing == thingID && v.Owner == owner {
 			forUpdate = v
 			break
 		}

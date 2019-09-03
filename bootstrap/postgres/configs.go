@@ -266,10 +266,10 @@ func (cr configRepository) Update(cfg bootstrap.Config) error {
 	return nil
 }
 
-func (cr configRepository) UpdateCert(key, thingKey, clientCert, clientKey, caCert string) error {
-	q := `UPDATE configs SET client_cert = $1, client_key = $2, ca_cert = $3 WHERE mainflux_key = $4 AND owner = $5`
+func (cr configRepository) UpdateCert(owner, thingID, clientCert, clientKey, caCert string) error {
+	q := `UPDATE configs SET client_cert = $1, client_key = $2, ca_cert = $3 WHERE mainflux_thing = $4 AND owner = $5`
 
-	res, err := cr.db.Exec(q, clientCert, clientKey, caCert, thingKey, key)
+	res, err := cr.db.Exec(q, clientCert, clientKey, caCert, thingID, owner)
 	if err != nil {
 		return err
 	}

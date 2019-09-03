@@ -116,29 +116,29 @@ func TestUpdateReqValidation(t *testing.T) {
 
 func TestUpdateCertReqValidation(t *testing.T) {
 	cases := []struct {
-		desc     string
-		key      string
-		thingKey string
-		err      error
+		desc    string
+		key     string
+		thingID string
+		err     error
 	}{
 		{
-			desc:     "empty key",
-			key:      "",
-			thingKey: "thingKey",
-			err:      bootstrap.ErrUnauthorizedAccess,
+			desc:    "empty key",
+			key:     "",
+			thingID: "thingID",
+			err:     bootstrap.ErrUnauthorizedAccess,
 		},
 		{
-			desc:     "empty thing key",
-			key:      "key",
-			thingKey: "",
-			err:      bootstrap.ErrNotFound,
+			desc:    "empty thing key",
+			key:     "key",
+			thingID: "",
+			err:     bootstrap.ErrNotFound,
 		},
 	}
 
 	for _, tc := range cases {
 		req := updateCertReq{
-			key:      tc.key,
-			thingKey: tc.thingKey,
+			key:     tc.key,
+			thingID: tc.thingID,
 		}
 
 		err := req.validate()

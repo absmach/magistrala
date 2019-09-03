@@ -180,12 +180,12 @@ func (bs bootstrapService) Update(key string, cfg Config) error {
 	return bs.configs.Update(cfg)
 }
 
-func (bs bootstrapService) UpdateCert(key, thingKey, clientCert, clientKey, caCert string) error {
+func (bs bootstrapService) UpdateCert(key, thingID, clientCert, clientKey, caCert string) error {
 	owner, err := bs.identify(key)
 	if err != nil {
 		return err
 	}
-	return bs.configs.UpdateCert(owner, thingKey, clientCert, clientKey, caCert)
+	return bs.configs.UpdateCert(owner, thingID, clientCert, clientKey, caCert)
 }
 
 func (bs bootstrapService) UpdateConnections(key, id string, connections []string) error {

@@ -112,11 +112,13 @@ esclient.on('error', function(err) {
 function startWs() {
     var server = http.createServer();
     server.on('request', (req, res) => {
+        res.setHeader('Content-Type', 'application/json');
         if (req.url === '/version') {
             res.statusCode = 200;
-            res.setHeader('Content-Type', 'text/plain; charset=utf-8');
             res.end(`{"service":"mqtt-adapter","version":"${version}"}`);
         }
+        res.statusCode = 404;
+        res.end('{"service":"mqtt-adpater", "message": "not found"}')
     }); 
     websocket.createServer({server: server}, aedes.handle);
     server.listen(config.ws_port);

@@ -59,12 +59,12 @@ type message struct {
 }
 
 // Publisher
-func (c *Client) runPublisher(r chan *RunResults) {
+func (c *Client) runPublisher(r chan *runResults) {
 	newMsgs := make(chan *message)
 	pubMsgs := make(chan *message)
 	doneGen := make(chan bool)
 	donePub := make(chan bool)
-	runResults := new(RunResults)
+	runResults := new(runResults)
 
 	started := time.Now()
 
@@ -106,7 +106,7 @@ func (c *Client) runPublisher(r chan *RunResults) {
 }
 
 // Subscriber
-func (c *Client) runSubscriber(wg *sync.WaitGroup, subTimes *SubTimes, done *chan bool) {
+func (c *Client) runSubscriber(wg *sync.WaitGroup, subTimes *subTimes, done *chan bool) {
 	defer wg.Done()
 
 	// Start subscriber
@@ -127,7 +127,7 @@ func (c *Client) generate(ch chan *message, done chan bool) {
 	return
 }
 
-func (c *Client) subscribe(wg *sync.WaitGroup, subTimes *SubTimes, done *chan bool) {
+func (c *Client) subscribe(wg *sync.WaitGroup, subTimes *subTimes, done *chan bool) {
 	clientID := fmt.Sprintf("sub-%v-%v", time.Now().Format(time.RFC3339Nano), c.ID)
 	c.ID = clientID
 

@@ -18,6 +18,7 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
@@ -116,6 +117,11 @@ func Provision(conf Config) {
 	}
 
 	//  Create things and channels
+	things := make([]*sdk.Thing, conf.Num)
+	channels := make([]*string, conf.Num)
+
+	fmt.Println("# List of things that can be connected to MQTT broker")
+
 	for i := 0; i < conf.Num; i++ {
 		tid, err := s.CreateThing(sdk.Thing{Name: fmt.Sprintf("%s-thing-%d", conf.Prefix, i)}, token)
 		if err != nil {
@@ -123,6 +129,8 @@ func Provision(conf Config) {
 		}
 
 		thing, err := s.Thing(tid, token)
+		things[i] = &thing
+
 		if err != nil {
 			log.Fatalf("Failed to fetch the thing: %s", err.Error())
 		}
@@ -132,10 +140,7 @@ func Provision(conf Config) {
 			log.Fatalf(err.Error())
 		}
 
-		if err := s.ConnectThing(tid, cid, token); err != nil {
-			log.Printf("Failed to create thing: %s", err)
-			return
-		}
+		channels[i] = &cid
 
 		cert := ""
 		key := ""
@@ -195,16 +200,28 @@ func Provision(conf Config) {
 		}
 
 		// Print output
-		fmt.Println("[[mainflux]]")
-		fmt.Printf("channel_id = \"%s\"\n", cid)
-		fmt.Printf("thing_id = \"%s\"\n", tid)
-		fmt.Printf("thing_key = \"%s\"\n", thing.Key)
+		fmt.Printf("[[things]]\nthing_id = \"%s\"\nthing_key = \"%s\"\n", tid, thing.Key)
 		if conf.SSL {
 			fmt.Printf("mtls_cert = \"\"\"%s\"\"\"\n", cert)
 			fmt.Printf("mtls_key = \"\"\"%s\"\"\"\n", key)
 		}
 		fmt.Println("")
 	}
+
+	var wg sync.WaitGroup
+	fmt.Printf("# List of channels that things can publish to\n" +
+		"# each channel is connected to each thing from things list\n")
+	for i := 0; i < conf.Num; i++ {
+		for j := 0; j < conf.Num; j++ {
+			wg.Add(1)
+			go func(wg *sync.WaitGroup, i, j int) {
+				defer wg.Done()
+				s.ConnectThing(things[j].ID, *channels[i], token)
+			}(&wg, i, j)
+		}
+		fmt.Printf("[[channels]]\nchannel_id = \"%s\"\n\n", *channels[i])
+	}
+	wg.Wait()
 }
 
 func publicKey(priv interface{}) interface{} {

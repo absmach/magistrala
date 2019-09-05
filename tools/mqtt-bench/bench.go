@@ -54,16 +54,20 @@ type mainfluxFile struct {
 	ConnFile string `toml:"connections_file" mapstructure:"connections_file"`
 }
 
-type mfConn struct {
+type mfThing struct {
+	ThingID  string `toml:"thing_id" mapstructure:"thing_id"`
+	ThingKey string `toml:"thing_key" mapstructure:"thing_key"`
+	MTLSCert string `toml:"mtls_cert" mapstructure:"mtls_cert"`
+	MTLSKey  string `toml:"mtls_key" mapstructure:"mtls_key"`
+}
+
+type mfChannel struct {
 	ChannelID string `toml:"channel_id" mapstructure:"channel_id"`
-	ThingID   string `toml:"thing_id" mapstructure:"thing_id"`
-	ThingKey  string `toml:"thing_key" mapstructure:"thing_key"`
-	MTLSCert  string `toml:"mtls_cert" mapstructure:"mtls_cert"`
-	MTLSKey   string `toml:"mtls_key" mapstructure:"mtls_key"`
 }
 
 type mainflux struct {
-	Conns []mfConn `toml:"mainflux" mapstructure:"mainflux"`
+	Things   []mfThing   `toml:"things" mapstructure:"things"`
+	Channels []mfChannel `toml:"channels" mapstructure:"channels"`
 }
 
 // Config struct holds benchmark configuration
@@ -76,8 +80,8 @@ type Config struct {
 
 // JSONResults are used to export results as a JSON document
 type JSONResults struct {
-	Runs   []*RunResults `json:"runs"`
-	Totals *TotalResults `json:"totals"`
+	Runs   []*runResults `json:"runs"`
+	Totals *totalResults `json:"totals"`
 }
 
 // Benchmark - main benckhmarking function
@@ -86,7 +90,7 @@ func Benchmark(cfg Config) {
 	var err error
 
 	checkConnection(cfg.MQTT.Broker.URL, 1)
-	subTimes := make(SubTimes)
+	subTimes := make(subTimes)
 	var caByte []byte
 	if cfg.MQTT.TLS.MTLS {
 		caFile, err := os.Open(cfg.MQTT.TLS.CA)
@@ -105,19 +109,19 @@ func Benchmark(cfg Config) {
 		log.Fatalf("Cannot load Mainflux connections config %s \nuse tools/provision to create file", cfg.Mf.ConnFile)
 	}
 
-	resCh := make(chan *RunResults)
+	resCh := make(chan *runResults)
 	done := make(chan bool)
 
-	start := time.Now()
-	n := len(mf.Conns)
+	n := len(mf.Channels)
 	var cert tls.Certificate
 
 	// Subscribers
 	for i := 0; i < cfg.Test.Subs; i++ {
-		mfConn := mf.Conns[i%n]
+		mfChann := mf.Channels[i%n]
+		mfThing := mf.Things[i%n]
 
 		if cfg.MQTT.TLS.MTLS {
-			cert, err = tls.X509KeyPair([]byte(mfConn.MTLSCert), []byte(mfConn.MTLSKey))
+			cert, err = tls.X509KeyPair([]byte(mfThing.MTLSCert), []byte(mfThing.MTLSKey))
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -126,9 +130,9 @@ func Benchmark(cfg Config) {
 		c := &Client{
 			ID:         strconv.Itoa(i),
 			BrokerURL:  cfg.MQTT.Broker.URL,
-			BrokerUser: mfConn.ThingID,
-			BrokerPass: mfConn.ThingKey,
-			MsgTopic:   fmt.Sprintf("channels/%s/messages/test", mfConn.ChannelID),
+			BrokerUser: mfThing.ThingID,
+			BrokerPass: mfThing.ThingKey,
+			MsgTopic:   fmt.Sprintf("channels/%s/messages/test", mfChann.ChannelID),
 			MsgSize:    cfg.MQTT.Message.Size,
 			MsgCount:   cfg.Test.Count,
 			MsgQoS:     byte(cfg.MQTT.Message.QoS),
@@ -148,12 +152,14 @@ func Benchmark(cfg Config) {
 
 	wg.Wait()
 
+	start := time.Now()
 	// Publishers
 	for i := 0; i < cfg.Test.Pubs; i++ {
-		mfConn := mf.Conns[i%n]
+		mfChann := mf.Channels[i%n]
+		mfThing := mf.Things[i%n]
 
 		if cfg.MQTT.TLS.MTLS {
-			cert, err = tls.X509KeyPair([]byte(mfConn.MTLSCert), []byte(mfConn.MTLSKey))
+			cert, err = tls.X509KeyPair([]byte(mfThing.MTLSCert), []byte(mfThing.MTLSKey))
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -162,9 +168,9 @@ func Benchmark(cfg Config) {
 		c := &Client{
 			ID:         strconv.Itoa(i),
 			BrokerURL:  cfg.MQTT.Broker.URL,
-			BrokerUser: mfConn.ThingID,
-			BrokerPass: mfConn.ThingKey,
-			MsgTopic:   fmt.Sprintf("channels/%s/messages/test", mfConn.ChannelID),
+			BrokerUser: mfThing.ThingID,
+			BrokerPass: mfThing.ThingKey,
+			MsgTopic:   fmt.Sprintf("channels/%s/messages/test", mfChann.ChannelID),
 			MsgSize:    cfg.MQTT.Message.Size,
 			MsgCount:   cfg.Test.Count,
 			MsgQoS:     byte(cfg.MQTT.Message.QoS),
@@ -181,9 +187,9 @@ func Benchmark(cfg Config) {
 	}
 
 	// Collect the results
-	var results []*RunResults
+	var results []*runResults
 	if cfg.Test.Pubs > 0 {
-		results = make([]*RunResults, cfg.Test.Pubs)
+		results = make([]*runResults, cfg.Test.Pubs)
 	}
 
 	for i := 0; i < cfg.Test.Pubs; i++ {

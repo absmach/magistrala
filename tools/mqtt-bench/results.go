@@ -14,8 +14,7 @@ import (
 	stat "gonum.org/v1/gonum/stat"
 )
 
-// RunResults describes results of a single client / run
-type RunResults struct {
+type runResults struct {
 	ID             string  `json:"id"`
 	Successes      int64   `json:"successes"`
 	Failures       int64   `json:"failures"`
@@ -31,11 +30,9 @@ type RunResults struct {
 	MsgsPerSec     float64 `json:"msgs_per_sec"`
 }
 
-// SubTimes - measuring time of arrival of message in subs
-type SubTimes map[string][]float64
+type subTimes map[string][]float64
 
-// TotalResults describes results of all clients / runs
-type TotalResults struct {
+type totalResults struct {
 	Ratio             float64 `json:"ratio"`
 	Successes         int64   `json:"successes"`
 	Failures          int64   `json:"failures"`
@@ -53,12 +50,12 @@ type TotalResults struct {
 	AvgMsgsPerSec     float64 `json:"avg_msgs_per_sec"`
 }
 
-func calculateTotalResults(results []*RunResults, totalTime time.Duration, subTimes *SubTimes) *TotalResults {
+func calculateTotalResults(results []*runResults, totalTime time.Duration, subTimes *subTimes) *totalResults {
 	if results == nil || len(results) < 1 {
 		return nil
 	}
-	totals := new(TotalResults)
-	subTimeRunResults := RunResults{}
+	totals := new(totalResults)
+	subTimeRunResults := runResults{}
 	msgTimeMeans := make([]float64, len(results))
 	msgTimeMeansDelivered := make([]float64, len(results))
 	msgsPerSecs := make([]float64, len(results))
@@ -121,7 +118,7 @@ func calculateTotalResults(results []*RunResults, totalTime time.Duration, subTi
 	return totals
 }
 
-func printResults(results []*RunResults, totals *TotalResults, format string, quiet bool) {
+func printResults(results []*runResults, totals *totalResults, format string, quiet bool) {
 	switch format {
 	case "json":
 		jr := JSONResults{

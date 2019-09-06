@@ -7,6 +7,7 @@
   format = "text"
   qos = 2
   retain = true
+  payload = ""
 
   [mqtt.tls]
   mtls = true

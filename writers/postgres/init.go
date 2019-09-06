@@ -65,7 +65,7 @@ func migrateDB(db *sqlx.DB) error {
             bool_value    BOOL,
             data_value    TEXT,
             value_sum     FLOAT,
-            time          FlOAT,
+            time          FLOAT,
             update_time   FLOAT,
             link          TEXT,
             PRIMARY KEY (id)

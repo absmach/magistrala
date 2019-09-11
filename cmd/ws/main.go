@@ -87,7 +87,7 @@ func main() {
 	defer thingsCloser.Close()
 
 	cc := thingsapi.NewClient(conn, thingsTracer, cfg.thingsTimeout)
-	pubsub := nats.New(nc)
+	pubsub := nats.New(nc, logger)
 	svc := newService(pubsub, logger)
 
 	errs := make(chan error, 2)

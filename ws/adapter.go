@@ -103,5 +103,6 @@ func (as *adapterService) Subscribe(chanID, subtopic string, channel *Channel) e
 	if err := as.pubsub.Subscribe(chanID, subtopic, channel); err != nil {
 		return ErrFailedSubscription
 	}
+
 	return nil
 }

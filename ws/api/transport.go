@@ -78,7 +78,7 @@ func handshake(svc ws.Service) http.HandlerFunc {
 				w.WriteHeader(http.StatusForbidden)
 				return
 			default:
-				logger.Warn(fmt.Sprintf("Failed to authorize: %s", err))
+				logger.Warn(fmt.Sprintf("Failed to authorize: %s", err.Error()))
 				w.WriteHeader(http.StatusServiceUnavailable)
 				return
 			}
@@ -88,14 +88,14 @@ func handshake(svc ws.Service) http.HandlerFunc {
 
 		channelParts := channelPartRegExp.FindStringSubmatch(r.RequestURI)
 		if len(channelParts) < 2 {
-			logger.Warn(fmt.Sprintf("Empty channel id or malformed url"))
+			logger.Warn("Empty channel id or malformed url")
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
 		sub.subtopic, err = parseSubtopic(channelParts[2])
 		if err != nil {
-			logger.Warn(fmt.Sprintf("Empty channel id or malformed url"))
+			logger.Warn("Empty channel id or malformed url")
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -108,12 +108,17 @@ func handshake(svc ws.Service) http.HandlerFunc {
 		}
 		sub.conn = conn
 
+		logger.Debug(fmt.Sprintf("Successfully upgraded communication to WS on channel %s", sub.chanID))
+
 		sub.channel = ws.NewChannel()
 		if err := svc.Subscribe(sub.chanID, sub.subtopic, sub.channel); err != nil {
 			logger.Warn(fmt.Sprintf("Failed to subscribe to NATS subject: %s", err))
 			conn.Close()
 			return
 		}
+
+		logger.Debug(fmt.Sprintf("Successfully subscribed to NATS channel %s", sub.chanID))
+
 		go sub.listen()
 
 		// Start listening for messages from NATS.
@@ -126,8 +131,7 @@ func parseSubtopic(subtopic string) (string, error) {
 		return subtopic, nil
 	}
 
-	var err error
-	subtopic, err = url.QueryUnescape(subtopic)
+	subtopic, err := url.QueryUnescape(subtopic)
 	if err != nil {
 		return "", errMalformedSubtopic
 	}
@@ -158,6 +162,7 @@ func authorize(r *http.Request) (subscription, error) {
 	if authKey == "" {
 		authKeys := bone.GetQuery(r, "authorization")
 		if len(authKeys) == 0 {
+			logger.Debug("Missing authorization key.")
 			return subscription{}, things.ErrUnauthorizedAccess
 		}
 		authKey = authKeys[0]
@@ -176,6 +181,7 @@ func authorize(r *http.Request) (subscription, error) {
 		}
 		return subscription{}, err
 	}
+	logger.Debug(fmt.Sprintf("Successfully authorized client %s on channel %s", id.GetValue(), chanID))
 
 	sub := subscription{
 		pubID:  id.GetValue(),
@@ -210,6 +216,7 @@ func (sub subscription) broadcast(svc ws.Service, contentType string) {
 	for {
 		_, payload, err := sub.conn.ReadMessage()
 		if websocket.IsUnexpectedCloseError(err) {
+			logger.Debug(fmt.Sprintf("Closing WS connection: %s", err.Error()))
 			sub.channel.Close()
 			return
 		}
@@ -233,6 +240,8 @@ func (sub subscription) broadcast(svc ws.Service, contentType string) {
 				return
 			}
 		}
+
+		logger.Debug(fmt.Sprintf("Successfully published message to the channel %s", sub.chanID))
 	}
 }
 
@@ -246,5 +255,7 @@ func (sub subscription) listen() {
 		if err := sub.conn.WriteMessage(format, msg.Payload); err != nil {
 			logger.Warn(fmt.Sprintf("Failed to broadcast message to thing: %s", err))
 		}
+
+		logger.Debug("Wrote message successfully")
 	}
 }

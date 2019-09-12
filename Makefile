@@ -1,7 +1,5 @@
-## Copyright (c) 2015-2019
-## Mainflux
-##
-## SPDX-License-Identifier: Apache-2.0
+# Copyright (c) Mainflux
+# SPDX-License-Identifier: Apache-2.0
 
 BUILD_DIR = build
 SERVICES = users things http normalizer ws coap lora influxdb-writer influxdb-reader mongodb-writer mongodb-reader cassandra-writer cassandra-reader postgres-writer postgres-reader cli bootstrap
@@ -148,16 +146,18 @@ rundev:
 	cd scripts && ./run.sh
 
 run:
-	docker-compose -f docker/docker-compose.yml up
+	docker-compose -f docker/docker-compose.yml -f docker/aedes.yml up
 
 runui:
 	$(MAKE) -C ui run
 
 runlora:
-	docker-compose -f docker/docker-compose.yml up -d
-	docker-compose -f docker/addons/influxdb-writer/docker-compose.yml up -d
-	docker-compose -f docker/addons/lora-adapter/docker-compose.yml up
+	docker-compose \
+		-f docker/docker-compose.yml \
+		-f docker/aedes.yml up \
+		-f docker/addons/influxdb-writer/docker-compose.yml \
+		-f docker/addons/lora-adapter/docker-compose.yml up \
 
 # Run all Mainflux core services except distributed tracing system - Jaeger. Recommended on gateways:
 rungw:
-	MF_JAEGER_URL= docker-compose -f docker/docker-compose.yml up --scale jaeger=0
+	MF_JAEGER_URL= docker-compose -f docker/docker-compose.yml -f docker/aedes.yml up --scale jaeger=0

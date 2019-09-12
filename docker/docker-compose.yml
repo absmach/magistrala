@@ -1,12 +1,7 @@
-###
-# Copyright (c) 2015-2017 Mainflux
-#
-# Mainflux is licensed under an Apache license, version 2.0 license.
-# All rights not explicitly granted in the Apache license, version 2.0 are reserved.
-# See the included LICENSE file for more details.
-###
+# Copyright (c) Mainflux
+# SPDX-License-Identifier: Apache-2.0
 
-version: "3"
+version: "3.7"
 
 networks:
   mainflux-base-net:
@@ -15,7 +10,6 @@ networks:
 volumes:
   mainflux-users-db-volume:
   mainflux-things-db-volume:
-  mainflux-mqtt-redis-volume:
   mainflux-things-redis-volume:
   mainflux-es-redis-volume:
 
@@ -27,6 +21,7 @@ services:
     volumes:
       - ./nginx/nginx-${AUTH-key}.conf:/etc/nginx/nginx.conf.template
       - ./nginx/entrypoint.sh:/entrypoint.sh
+      - ./nginx/snippets:/etc/nginx/snippets
       - ./ssl/authorization.js:/etc/nginx/authorization.js
       - ./ssl/certs/mainflux-server.crt:/etc/ssl/certs/mainflux-server.crt
       - ./ssl/certs/ca.crt:/etc/ssl/certs/ca.crt
@@ -36,11 +31,17 @@ services:
       - ${MF_NGINX_HTTP_PORT}:${MF_NGINX_HTTP_PORT}
       - ${MF_NGINX_SSL_PORT}:${MF_NGINX_SSL_PORT}
       - ${MF_NGINX_MQTT_PORT}:${MF_NGINX_MQTT_PORT}
+      - ${MF_NGINX_MQTTS_PORT}:${MF_NGINX_MQTTS_PORT}
     networks:
       - mainflux-base-net
-    environment:
-      MF_UI_PORT: ${MF_UI_PORT}
+    env_file:
+      - ../.env
     command: /entrypoint.sh
+    depends_on:
+      - things
+      - users
+      - http-adapter
+      - ws-adapter
 
   nats:
     image: nats:1.3.0
@@ -207,39 +208,6 @@ services:
       - mainflux-base-net
     volumes:
       - mainflux-es-redis-volume:/data
-
-  mqtt-redis:
-    image: redis:5.0-alpine
-    container_name: mainflux-mqtt-redis
-    restart: on-failure
-    networks:
-      - mainflux-base-net
-    volumes:
-      - mainflux-mqtt-redis-volume:/data
-
-  mqtt-adapter:
-    image: mainflux/mqtt:latest
-    container_name: mainflux-mqtt
-    depends_on:
-      - things
-      - nats
-      - mqtt-redis
-    restart: on-failure
-    environment:
-      MF_MQTT_ADAPTER_LOG_LEVEL: ${MF_MQTT_ADAPTER_LOG_LEVEL}
-      MF_MQTT_INSTANCE_ID: mqtt-adapter-1
-      MF_MQTT_ADAPTER_PORT: ${MF_MQTT_ADAPTER_PORT}
-      MF_MQTT_ADAPTER_WS_PORT: ${MF_MQTT_ADAPTER_WS_PORT}
-      MF_MQTT_ADAPTER_REDIS_HOST: mqtt-redis
-      MF_MQTT_ADAPTER_ES_HOST: es-redis
-      MF_NATS_URL: ${MF_NATS_URL}
-      MF_THINGS_URL: things:${MF_THINGS_AUTH_GRPC_PORT}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-    ports:
-      - ${MF_MQTT_ADAPTER_PORT}:${MF_MQTT_ADAPTER_PORT}
-      - ${MF_MQTT_ADAPTER_WS_PORT}:${MF_MQTT_ADAPTER_WS_PORT}
-    networks:
-      - mainflux-base-net
 
   coap-adapter:
     image: mainflux/coap:latest

@@ -1,7 +1,5 @@
 # Copyright (c) Mainflux
 # SPDX-License-Identifier: Apache-2.0
 
-_build
-gpb
-grpc
-grpc_client
+mfconn.toml
+provision

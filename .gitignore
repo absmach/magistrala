@@ -4,19 +4,5 @@
 # Set your private global .gitignore:
 # https://digitalfortress.tech/tricks/creating-a-global-gitignore/
 
-# Mainflux
 build
 
-# MQTT
-mqtt/verne/gpb
-mqtt/verne/grpc
-mqtt/verne/grpc_client
-
-# Docker
-docker/nginx/snippets/mqtt-upstream.conf
-docker/nginx/snippets/mqtt-ws-upstream.conf
-
-# Tools
-tools/mqtt-bench/mqtt-bench
-tools/provision/mfconn.toml
-tools/provision/provision

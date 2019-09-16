@@ -17,6 +17,4 @@ envsubst '
     ${MF_WS_ADAPTER_PORT}
     ${MF_UI_PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 
-cp /etc/nginx/nginx.conf /etc/nginx/snippets
-
 exec nginx -g "daemon off;"

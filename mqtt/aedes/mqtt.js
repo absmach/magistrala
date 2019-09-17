@@ -30,6 +30,7 @@ var config = {
         redis_host: process.env.MF_MQTT_ADAPTER_REDIS_HOST || 'localhost',
         redis_pass: process.env.MF_MQTT_ADAPTER_REDIS_PASS || 'mqtt',
         redis_db: Number(process.env.MF_MQTT_ADAPTER_REDIS_DB) || 0,
+        message_ttl: Number(process.env.MF_MQTT_ADAPTER_MESSAGE_TTL) || 60, // in seconds
         es_port: Number(process.env.MF_MQTT_ADAPTER_ES_PORT) || 6379,
         es_host: process.env.MF_MQTT_ADAPTER_ES_HOST || 'localhost',
         es_pass: process.env.MF_MQTT_ADAPTER_ES_PASS || 'mqtt',
@@ -63,7 +64,10 @@ var config = {
         port: config.redis_port,
         host: config.redis_host,
         password: config.redis_pass,
-        db: config.redis_db
+        db: config.redis_db,
+        packetTTL: function (packet) {
+            return config.message_ttl; // in seconds
+        }
     }),
     mqRedis = require('mqemitter-redis')({
         port: config.redis_port,
@@ -72,6 +76,7 @@ var config = {
         db: config.redis_db
     }),
     aedes = require('aedes')({
+        id: config.instance_id ? config.instance_id : undefined,
         mq: mqRedis,
         persistence: aedesRedis,
         concurrency: config.concurrency

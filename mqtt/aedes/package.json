@@ -15,9 +15,9 @@
   "dependencies": {
     "2": "^1.0.2",
     "@grpc/proto-loader": "^0.5.0",
-    "aedes": "^0.38.0",
+    "aedes": "^0.39.0",
     "aedes-logging": "^2.0.1",
-    "aedes-persistence-redis": "^5.1.0",
+    "aedes-persistence-redis": "^6.0.0",
     "atob": "^2.0.3",
     "bunyan": "^1.5.1",
     "grpc": "^1.20.3",

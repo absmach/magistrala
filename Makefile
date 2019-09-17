@@ -36,7 +36,7 @@ all: $(SERVICES) mqtt
 
 clean:
 	rm -rf ${BUILD_DIR}
-	rm -rf mqtt/node_modules
+	rm -rf mqtt/aedes/node_modules
 
 cleandocker:
 	# Stop all containers (if running)

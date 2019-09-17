@@ -10,7 +10,7 @@ RUN npm rebuild && npm install --only=production
 
 FROM node:10.15.1-alpine
 ## Copy built node modules and binaries without including the toolchain
-COPY --from=builder node_modules .
+COPY --from=builder node_modules/ ./node_modules
 COPY *.proto mqtt/* ./
 
 EXPOSE 1883 8880

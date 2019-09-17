@@ -53,6 +53,7 @@ paths:
         - $ref: "#/parameters/Limit"
         - $ref: "#/parameters/Offset"
         - $ref: "#/parameters/Name"
+        - $ref: "#/parameters/Metadata"
       responses:
         200:
           description: Data retrieved.
@@ -498,6 +499,13 @@ parameters:
   Name:
     name: name
     description: Name filter. Filtering is performed as a case-insensitive partial match.
+    in: query
+    type: string
+    minimum: 0
+    required: false
+  Metadata
+    name: metadata
+    descripton: Metadata filter. Filtering is performed matching the parametar with metadata on top level. Parametar is json.
     in: query
     type: string
     minimum: 0

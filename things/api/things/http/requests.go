@@ -135,10 +135,11 @@ func (req viewResourceReq) validate() error {
 }
 
 type listResourcesReq struct {
-	token  string
-	offset uint64
-	limit  uint64
-	name   string
+	token    string
+	offset   uint64
+	limit    uint64
+	name     string
+	metadata map[string]interface{}
 }
 
 func (req *listResourcesReq) validate() error {

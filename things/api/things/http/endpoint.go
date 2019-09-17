@@ -112,7 +112,7 @@ func listThingsEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		page, err := svc.ListThings(ctx, req.token, req.offset, req.limit, req.name)
+		page, err := svc.ListThings(ctx, req.token, req.offset, req.limit, req.name, req.metadata)
 		if err != nil {
 			return nil, err
 		}

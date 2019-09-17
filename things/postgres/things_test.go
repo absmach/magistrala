@@ -364,6 +364,9 @@ func TestThingRetrieveByKey(t *testing.T) {
 func TestMultiThingRetrieval(t *testing.T) {
 	email := "thing-multi-retrieval@example.com"
 	name := "mainflux"
+	metadata := make(map[string]interface{})
+	metadata["serial"] = "123456"
+	metadata["type"] = "test"
 	idp := uuid.New()
 	thingRepo := postgres.NewThingRepository(db)
 
@@ -375,9 +378,10 @@ func TestMultiThingRetrieval(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 		th := things.Thing{
-			Owner: email,
-			ID:    thid,
-			Key:   thkey,
+			Owner:    email,
+			ID:       thid,
+			Key:      thkey,
+			Metadata: metadata,
 		}
 
 		// Create first two Things with name.
@@ -389,12 +393,13 @@ func TestMultiThingRetrieval(t *testing.T) {
 	}
 
 	cases := map[string]struct {
-		owner  string
-		offset uint64
-		limit  uint64
-		name   string
-		size   uint64
-		total  uint64
+		owner    string
+		offset   uint64
+		limit    uint64
+		name     string
+		size     uint64
+		total    uint64
+		metadata map[string]interface{}
 	}{
 		"retrieve all things with existing owner": {
 			owner:  email,
@@ -433,10 +438,18 @@ func TestMultiThingRetrieval(t *testing.T) {
 			size:   0,
 			total:  0,
 		},
+		"retrieve things with metadata": {
+			owner:    email,
+			offset:   0,
+			limit:    n,
+			size:     n,
+			total:    n,
+			metadata: metadata,
+		},
 	}
 
 	for desc, tc := range cases {
-		page, err := thingRepo.RetrieveAll(context.Background(), tc.owner, tc.offset, tc.limit, tc.name)
+		page, err := thingRepo.RetrieveAll(context.Background(), tc.owner, tc.offset, tc.limit, tc.name, tc.metadata)
 		size := uint64(len(page.Things))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.Equal(t, tc.total, page.Total, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.total, page.Total))

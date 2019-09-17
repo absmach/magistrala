@@ -83,6 +83,14 @@ func migrateDB(db *sqlx.DB) error {
 					"DROP TABLE channels",
 				},
 			},
+			{
+				Id: "things_3",
+				Up: []string{
+					`ALTER TABLE IF EXISTS things ALTER COLUMN
+					 metadata TYPE JSONB using metadata::text::jsonb
+					`,
+				},
+			},
 		},
 	}
 

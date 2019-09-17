@@ -166,7 +166,7 @@ func (svc *mainfluxThings) UpdateKey(context.Context, string, string, string) er
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) ListThings(context.Context, string, uint64, uint64, string) (things.ThingsPage, error) {
+func (svc *mainfluxThings) ListThings(context.Context, string, uint64, uint64, string, things.ThingMetadata) (things.ThingsPage, error) {
 	panic("not implemented")
 }
 

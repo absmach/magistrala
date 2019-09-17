@@ -186,18 +186,23 @@ func TestViewThing(t *testing.T) {
 func TestListThings(t *testing.T) {
 	svc := newService(map[string]string{token: email})
 
+	m := make(map[string]interface{})
+	m["serial"] = "123456"
+	thing.Metadata = m
+
 	n := uint64(10)
 	for i := uint64(0); i < n; i++ {
 		svc.AddThing(context.Background(), token, thing)
 	}
 
 	cases := map[string]struct {
-		token  string
-		offset uint64
-		limit  uint64
-		name   string
-		size   uint64
-		err    error
+		token    string
+		offset   uint64
+		limit    uint64
+		name     string
+		size     uint64
+		metadata map[string]interface{}
+		err      error
 	}{
 		"list all things": {
 			token:  token,
@@ -241,10 +246,18 @@ func TestListThings(t *testing.T) {
 			size:   0,
 			err:    things.ErrUnauthorizedAccess,
 		},
+		"list with metadata": {
+			token:    token,
+			offset:   0,
+			limit:    n,
+			size:     n,
+			err:      nil,
+			metadata: m,
+		},
 	}
 
 	for desc, tc := range cases {
-		page, err := svc.ListThings(context.Background(), tc.token, tc.offset, tc.limit, tc.name)
+		page, err := svc.ListThings(context.Background(), tc.token, tc.offset, tc.limit, tc.name, tc.metadata)
 		size := uint64(len(page.Things))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))

@@ -30,6 +30,7 @@ const (
 	offset      = "offset"
 	limit       = "limit"
 	name        = "name"
+	metadata    = "metadata"
 
 	defOffset = 0
 	defLimit  = 10
@@ -258,11 +259,17 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
+	m, err := readMetadataQuery(r, "metadata")
+	if err != nil {
+		return nil, err
+	}
+
 	req := listResourcesReq{
-		token:  r.Header.Get("Authorization"),
-		offset: o,
-		limit:  l,
-		name:   n,
+		token:    r.Header.Get("Authorization"),
+		offset:   o,
+		limit:    l,
+		name:     n,
+		metadata: m,
 	}
 
 	return req, nil
@@ -379,4 +386,23 @@ func readStringQuery(r *http.Request, key string) (string, error) {
 	}
 
 	return vals[0], nil
+}
+
+func readMetadataQuery(r *http.Request, key string) (map[string]interface{}, error) {
+	vals := bone.GetQuery(r, key)
+	if len(vals) > 1 {
+		return nil, errInvalidQueryParams
+	}
+
+	if len(vals) == 0 {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	err := json.Unmarshal([]byte(vals[0]), &m)
+	if err != nil {
+		return nil, err
+	}
+
+	return m, nil
 }

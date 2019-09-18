@@ -257,12 +257,12 @@
   revision = "2e65f85255dbc3072edf28d6b5b8efc472979f5a"
 
 [[projects]]
-  digest = "1:7b5c6e2eeaa9ae5907c391a91c132abfd5c9e8a784a341b5625e750c67e6825d"
+  digest = "1:e62657cca9badaa308d86e7716083e4c5933bb78e30a17743fc67f50be26f6f4"
   name = "github.com/gorilla/websocket"
   packages = ["."]
   pruneopts = "UT"
-  revision = "66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d"
-  version = "v1.4.0"
+  revision = "c3e18be99d19e6b3e8f1559eea2c161a665c4b6b"
+  version = "v1.4.1"
 
 [[projects]]
   digest = "1:364b908b9b27b97ab838f2f6f1b1f46281fa29b978a037d72a9b1d4f6d940190"
@@ -814,7 +814,6 @@
   version = "v0.3.0"
 
 [[projects]]
-  branch = "master"
   digest = "1:396855b2df7b4fd7259ac196883f950edeb7f2adf5b1bb1cdd0e9160248a7dc1"
   name = "gonum.org/v1/gonum"
   packages = [

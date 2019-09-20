@@ -34,19 +34,18 @@ func New(db *sqlx.DB) readers.MessageRepository {
 }
 
 func (tr postgresRepository) ReadAll(chanID string, offset, limit uint64, query map[string]string) (readers.MessagesPage, error) {
-	subtopicQuery := ""
-	if query["subtopic"] != "" {
-		subtopicQuery = `AND subtopic = :subtopic`
-	}
 	q := fmt.Sprintf(`SELECT * FROM messages
-    WHERE channel = :channel %s ORDER BY time DESC
-    LIMIT :limit OFFSET :offset;`, subtopicQuery)
+    WHERE %s ORDER BY time DESC
+    LIMIT :limit OFFSET :offset;`, fmtCondition(chanID, query))
 
 	params := map[string]interface{}{
-		"channel":  chanID,
-		"limit":    limit,
-		"offset":   offset,
-		"subtopic": query["subtopic"],
+		"channel":   chanID,
+		"limit":     limit,
+		"offset":    offset,
+		"subtopic":  query["subtopic"],
+		"publisher": query["publisher"],
+		"name":      query["name"],
+		"protocol":  query["protocol"],
 	}
 
 	rows, err := tr.db.NamedQuery(q, params)
@@ -87,6 +86,21 @@ func (tr postgresRepository) ReadAll(chanID string, offset, limit uint64, query 
 	}
 
 	return page, nil
+}
+
+func fmtCondition(chanID string, query map[string]string) string {
+	condition := `channel = :channel`
+	for name := range query {
+		switch name {
+		case
+			"subtopic",
+			"publisher",
+			"name",
+			"protocol":
+			condition = fmt.Sprintf(`%s AND %s = :%s`, condition, name, name)
+		}
+	}
+	return condition
 }
 
 type dbMessage struct {

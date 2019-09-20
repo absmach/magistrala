@@ -142,6 +142,18 @@ func TestMessageReadAll(t *testing.T) {
 				Messages: subtopicMsgs,
 			},
 		},
+		"read message with publisher/protocols": {
+			chanID: chanID.String(),
+			offset: 0,
+			limit:  msgsNum,
+			query:  map[string]string{"publisher": pubID.String(), "protocol": "mqtt"},
+			page: readers.MessagesPage{
+				Total:    msgsNum,
+				Offset:   0,
+				Limit:    msgsNum,
+				Messages: messages,
+			},
+		},
 	}
 
 	for desc, tc := range cases {

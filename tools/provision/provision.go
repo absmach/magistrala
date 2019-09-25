@@ -25,6 +25,8 @@ import (
 	sdk "github.com/mainflux/mainflux/sdk/go"
 )
 
+const defPass = "123"
+
 // MfConn - structure describing Mainflux connection set
 type MfConn struct {
 	ChannelID string
@@ -74,13 +76,14 @@ func Provision(conf Config) {
 
 	if user.Email == "" {
 		user.Email = fmt.Sprintf("%s@email.com", namesgenerator.GetRandomName(0))
-		user.Password = "123"
+		user.Password = defPass
+	}
 
-		// Create new user
-		if err := s.CreateUser(user); err != nil {
-			log.Fatalf("Unable to create new user: %s", err.Error())
-			return
-		}
+	// Create new user
+	if err := s.CreateUser(user); err != nil {
+		log.Fatalf("Unable to create new user: %s", err.Error())
+		return
+
 	}
 
 	// Login user

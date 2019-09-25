@@ -14,6 +14,8 @@ import (
 	stat "gonum.org/v1/gonum/stat"
 )
 
+type subsResults map[string](*[]float64)
+
 type runResults struct {
 	ID             string  `json:"id"`
 	Successes      int64   `json:"successes"`
@@ -29,8 +31,6 @@ type runResults struct {
 	MsgDelTimeStd  float64 `json:"msg_del_time_std"`
 	MsgsPerSec     float64 `json:"msgs_per_sec"`
 }
-
-type subsResults map[string](*[]float64)
 
 type totalResults struct {
 	Ratio             float64 `json:"ratio"`
@@ -48,6 +48,34 @@ type totalResults struct {
 	MsgDelTimeMeanStd float64 `json:"msg_del_time_mean_std"`
 	TotalMsgsPerSec   float64 `json:"total_msgs_per_sec"`
 	AvgMsgsPerSec     float64 `json:"avg_msgs_per_sec"`
+}
+
+// JSONResults are used to export results as a JSON document
+type JSONResults struct {
+	Runs   []*runResults `json:"runs"`
+	Totals *totalResults `json:"totals"`
+}
+
+func calcMsgRes(m *message, res *runResults) *float64 {
+	if m.Error {
+		res.Failures++
+		return nil
+	}
+	res.Successes++
+	diff := float64(m.Delivered.Sub(m.Sent).Nanoseconds() / 1000) // in microseconds
+	return &diff
+}
+
+func calcRes(r *runResults, start time.Time, times []float64) *runResults {
+	duration := time.Now().Sub(start)
+	timeMatrix := mat.NewDense(1, len(times), times)
+	r.MsgTimeMin = mat.Min(timeMatrix)
+	r.MsgTimeMax = mat.Max(timeMatrix)
+	r.MsgTimeMean = stat.Mean(times, nil)
+	r.MsgTimeStd = stat.StdDev(times, nil)
+	r.RunTime = duration.Seconds()
+	r.MsgsPerSec = float64(r.Successes) / duration.Seconds()
+	return r
 }
 
 func calculateTotalResults(results []*runResults, totalTime time.Duration, sr subsResults) *totalResults {
@@ -69,6 +97,11 @@ func calculateTotalResults(results []*runResults, totalTime time.Duration, sr su
 		totals.Successes += res.Successes
 		totals.Failures += res.Failures
 		totals.TotalMsgsPerSec += res.MsgsPerSec
+
+		// Don't count those client that sent no messages.
+		if res.MsgsPerSec == 0 {
+			continue
+		}
 
 		if res.MsgTimeMin < totals.MsgTimeMin {
 			totals.MsgTimeMin = res.MsgTimeMin
@@ -131,34 +164,28 @@ func printResults(results []*runResults, totals *totalResults, format string, qu
 		if !quiet {
 			for _, res := range results {
 				fmt.Printf("======= CLIENT %s =======\n", res.ID)
-				fmt.Printf("Ratio:               %.3f (%d/%d)\n", float64(res.Successes)/float64(res.Successes+res.Failures), res.Successes, res.Successes+res.Failures)
-				fmt.Printf("Runtime (s):         %.3f\n", res.RunTime)
-				fmt.Printf("Msg time min (us):   %.3f\n", res.MsgTimeMin)
-				fmt.Printf("Msg time max (us):   %.3f\n", res.MsgTimeMax)
-				fmt.Printf("Msg time mean (us):  %.3f\n", res.MsgTimeMean)
-				fmt.Printf("Msg time std (us):   %.3f\n\n", res.MsgTimeStd)
+				fmt.Printf("Ratio:                   %.6f (%d/%d)\n", float64(res.Successes)/float64(res.Successes+res.Failures), res.Successes, res.Successes+res.Failures)
+				fmt.Printf("Succeeded:               %d\n", res.Successes)
+				fmt.Printf("Failed:                  %d\n", res.Failures)
+				fmt.Printf("Runtime (s):             %.3f\n", res.RunTime)
+				fmt.Printf("Msg time min (µs):       %.3f\n", res.MsgTimeMin)
+				fmt.Printf("Msg time max (µs):       %.3f\n", res.MsgTimeMax)
+				fmt.Printf("Msg time mean (µs):      %.3f\n", res.MsgTimeMean)
+				fmt.Printf("Msg time std (µs):       %.3f\n\n", res.MsgTimeStd)
 
-				fmt.Printf("Msg del time min (us):   %.3f\n", res.MsgDelTimeMin)
-				fmt.Printf("Msg del time max (us):   %.3f\n", res.MsgDelTimeMax)
-				fmt.Printf("Msg del time mean (us):  %.3f\n", res.MsgDelTimeMean)
-				fmt.Printf("Msg del time std (us):   %.3f\n", res.MsgDelTimeStd)
-
-				fmt.Printf("Bandwidth (msg/sec): %.3f\n\n", res.MsgsPerSec)
+				fmt.Printf("Bandwidth (msg/sec):     %.3f\n\n", res.MsgsPerSec)
 			}
 		}
 		fmt.Printf("========= TOTAL (%d) =========\n", len(results))
 		fmt.Printf("Total Ratio:                 %.3f (%d/%d)\n", totals.Ratio, totals.Successes, totals.Successes+totals.Failures)
+		fmt.Printf("Succeeded:                   %d\n", totals.Successes)
+		fmt.Printf("Failed:                      %d\n", totals.Failures)
 		fmt.Printf("Total Runtime (sec):         %.3f\n", totals.TotalRunTime)
 		fmt.Printf("Average Runtime (sec):       %.3f\n", totals.AvgRunTime)
-		fmt.Printf("Msg time min (us):           %.3f\n", totals.MsgTimeMin)
-		fmt.Printf("Msg time max (us):           %.3f\n", totals.MsgTimeMax)
-		fmt.Printf("Msg time mean mean (us):     %.3f\n", totals.MsgTimeMeanAvg)
-		fmt.Printf("Msg time mean std (us):      %.3f\n", totals.MsgTimeMeanStd)
-
-		fmt.Printf("Msg del time min (us):   %.3f\n", totals.MsgDelTimeMin)
-		fmt.Printf("Msg del time max (us):   %.3f\n", totals.MsgDelTimeMax)
-		fmt.Printf("Msg del time mean (us):  %.3f\n", totals.MsgDelTimeMeanAvg)
-		fmt.Printf("Msg del time std (us):   %.3f\n", totals.MsgDelTimeMeanStd)
+		fmt.Printf("Msg time min (µs):           %.3f\n", totals.MsgTimeMin)
+		fmt.Printf("Msg time max (µs):           %.3f\n", totals.MsgTimeMax)
+		fmt.Printf("Msg time mean (µs):          %.3f\n", totals.MsgTimeMeanAvg)
+		fmt.Printf("Msg time mean std (µs):      %.3f\n", totals.MsgTimeMeanStd)
 
 		fmt.Printf("Average Bandwidth (msg/sec): %.3f\n", totals.AvgMsgsPerSec)
 		fmt.Printf("Total Bandwidth (msg/sec):   %.3f\n", totals.TotalMsgsPerSec)

@@ -39,7 +39,6 @@ Flags:
   -r, --retain            Retain mqtt messages
   -z, --size int          Size of message payload bytes (default 100)
   -t, --skipTLSVer        Skip tls verification
-  -s, --subs int          Number of subscribers (default 10)
 ```
 
 Two output formats supported: human-readable plain text and JSON.
@@ -51,11 +50,11 @@ Example use and output
 
 Without mtls:
 ```
-./mqtt-bench --broker tcp://localhost:1883 --count 100 --size 100 --qos 0 --format text --subs 100 --pubs 0 --mainflux mfconn.toml
+./mqtt-bench --broker tcp://localhost:1883 --count 100 --size 100 --qos 0 --format text --pubs 10 --mainflux mfconn.toml
 ```
 
 With mtls
-./mqtt-bench --broker tcps://localhost:8883 --count 100 --size 100 --qos 0 --format text --subs 100 --pubs 0 --mainflux mfconn.toml --mtls -ca ca.crt
+./mqtt-bench --broker tcps://localhost:8883 --count 100 --size 100 --qos 0 --format text --pubs 10 --mainflux mfconn.toml --mtls -ca ca.crt
 ```
 
 You can use `config.toml` to create tests with this tool:
@@ -84,7 +83,6 @@ Example of `config.toml`:
 
 [test]
 pubs = 3
-subs = 1
 count = 100
 
 [log]
@@ -94,16 +92,4 @@ quiet = false
 connections_file = "mfconn.toml"
 ```
 
-Based on this, a set of test scenarios (templates) is provided. For example:
-
-```
-./mqtt-benchmark --config tests/fanin.toml
-```
-
-Additionally, you can use script which will run series of tests (scenarios) using mqtt-bench:
-
-```
-cd tools/mqtt-bench/scripts
-./mqtt-bench.sh mainflux mainflux.com mfconn.toml
-
-```
+Based on this, a test scenario is provided in `templates/reference.toml` file.

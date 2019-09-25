@@ -1,0 +1,26 @@
+[mqtt]
+  timeout = 1000
+  [mqtt.broker]
+  url = "tcp://localhost:1883"
+
+  [mqtt.message]
+  size = 1000
+  format = "text"
+  qos = 2
+  retain = true
+  payload = "{\"bn\":\"some-base-name\",\"bt\":1.276020076001e+09, \"bu\":\"A\",\"bver\":5, \"n\":\"voltage\",\"u\":\"V\",\"v\":120.1}"
+
+  [mqtt.tls]
+  mtls = false
+  skiptlsver = true
+  ca = "ca.crt"
+
+[test]
+pubs = 2000
+count = 70
+
+[log]
+quiet = true
+
+[mainflux]
+connections_file = "../provision/mfconn.toml"

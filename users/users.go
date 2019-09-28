@@ -24,6 +24,7 @@ var (
 type User struct {
 	Email    string
 	Password string
+	Metadata map[string]interface{}
 }
 
 // Validate returns an error if user representation is invalid.

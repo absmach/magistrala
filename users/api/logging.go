@@ -57,7 +57,7 @@ func (lm *loggingMiddleware) Login(ctx context.Context, user users.User) (token 
 
 func (lm *loggingMiddleware) Identify(key string) (id string, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method identity for client %s took %s to complete", id, time.Since(begin))
+		message := fmt.Sprintf("Method identity for user %s took %s to complete", id, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -66,4 +66,17 @@ func (lm *loggingMiddleware) Identify(key string) (id string, err error) {
 	}(time.Now())
 
 	return lm.svc.Identify(key)
+}
+
+func (lm *loggingMiddleware) UserInfo(ctx context.Context, key string) (u users.User, err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method user_info for user %s took %s to complete", u.Email, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.UserInfo(ctx, key)
 }

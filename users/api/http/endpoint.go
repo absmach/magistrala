@@ -27,6 +27,23 @@ func registrationEndpoint(svc users.Service) endpoint.Endpoint {
 	}
 }
 
+func userInfoEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(viewUserInfoReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		u, err := svc.UserInfo(ctx, req.token)
+		if err != nil {
+			return nil, err
+		}
+
+		return identityRes{u.Email, u.Metadata}, nil
+	}
+}
+
 func loginEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(userReq)

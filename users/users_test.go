@@ -18,6 +18,7 @@ import (
 const (
 	email    = "user@example.com"
 	password = "password"
+	metadata = `{"role":"manager"}`
 )
 
 func TestValidate(t *testing.T) {

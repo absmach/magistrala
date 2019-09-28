@@ -27,6 +27,9 @@ var (
 
 	// ErrNotFound indicates a non-existent entity request.
 	ErrNotFound = errors.New("non-existent entity")
+
+	// ErrScanMetadata indicates problem with metadata in db
+	ErrScanMetadata = errors.New("Failed to scan metadata")
 )
 
 // Service specifies an API that must be fullfiled by the domain service
@@ -45,6 +48,9 @@ type Service interface {
 	// is returned. If token is invalid, or invocation failed for some
 	// other reason, non-nil error values are returned in response.
 	Identify(string) (string, error)
+
+	// Get authenticated user info for the given token.
+	UserInfo(ctx context.Context, token string) (User, error)
 }
 
 var _ Service = (*usersService)(nil)
@@ -89,4 +95,22 @@ func (svc usersService) Identify(token string) (string, error) {
 		return "", ErrUnauthorizedAccess
 	}
 	return id, nil
+}
+
+func (svc usersService) UserInfo(ctx context.Context, token string) (User, error) {
+	id, err := svc.idp.Identity(token)
+	if err != nil {
+		return User{}, ErrUnauthorizedAccess
+	}
+
+	dbUser, err := svc.users.RetrieveByID(ctx, id)
+	if err != nil {
+		return User{}, ErrUnauthorizedAccess
+	}
+
+	return User{
+		Email:    id,
+		Password: "",
+		Metadata: dbUser.Metadata,
+	}, nil
 }

@@ -50,6 +50,13 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 		opts...,
 	))
 
+	mux.Get("/users", kithttp.NewServer(
+		kitot.TraceServer(tracer, "register")(userInfoEndpoint(svc)),
+		decodeViewInfo,
+		encodeResponse,
+		opts...,
+	))
+
 	mux.Post("/tokens", kithttp.NewServer(
 		kitot.TraceServer(tracer, "login")(loginEndpoint(svc)),
 		decodeCredentials,
@@ -61,6 +68,13 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux
+}
+
+func decodeViewInfo(_ context.Context, r *http.Request) (interface{}, error) {
+	req := viewUserInfoReq{
+		token: r.Header.Get("Authorization"),
+	}
+	return req, nil
 }
 
 func decodeCredentials(_ context.Context, r *http.Request) (interface{}, error) {

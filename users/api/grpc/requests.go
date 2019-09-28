@@ -7,9 +7,7 @@
 
 package grpc
 
-import (
-	"github.com/mainflux/mainflux/users"
-)
+import "github.com/mainflux/mainflux/users"
 
 type identityReq struct {
 	token string

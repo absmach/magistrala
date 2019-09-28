@@ -59,6 +59,12 @@ func migrateDB(db *sqlx.DB) error {
 				},
 				Down: []string{"DROP TABLE users"},
 			},
+			{
+				Id: "users_2",
+				Up: []string{
+					`ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS metadata JSONB`,
+				},
+			},
 		},
 	}
 

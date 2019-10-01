@@ -466,9 +466,10 @@ func TestViewChannel(t *testing.T) {
 	saved, _ := svc.CreateChannel(context.Background(), token, channel)
 
 	cases := map[string]struct {
-		id    string
-		token string
-		err   error
+		id       string
+		token    string
+		err      error
+		metadata things.Metadata
 	}{
 		"view existing channel": {
 			id:    saved.ID,
@@ -485,6 +486,11 @@ func TestViewChannel(t *testing.T) {
 			token: token,
 			err:   things.ErrNotFound,
 		},
+		"view channel with metadata": {
+			id:    wrongID,
+			token: token,
+			err:   things.ErrNotFound,
+		},
 	}
 
 	for desc, tc := range cases {
@@ -495,18 +501,21 @@ func TestViewChannel(t *testing.T) {
 
 func TestListChannels(t *testing.T) {
 	svc := newService(map[string]string{token: email})
-
+	meta := things.Metadata{}
+	meta["name"] = "test-channel"
+	channel.Metadata = meta
 	n := uint64(10)
 	for i := uint64(0); i < n; i++ {
 		svc.CreateChannel(context.Background(), token, channel)
 	}
 	cases := map[string]struct {
-		token  string
-		offset uint64
-		limit  uint64
-		size   uint64
-		name   string
-		err    error
+		token    string
+		offset   uint64
+		limit    uint64
+		size     uint64
+		name     string
+		err      error
+		metadata things.Metadata
 	}{
 		"list all channels": {
 			token:  token,
@@ -566,10 +575,18 @@ func TestListChannels(t *testing.T) {
 			name:   "wrong",
 			err:    nil,
 		},
+		"list all channels with metadata": {
+			token:    token,
+			offset:   0,
+			limit:    n,
+			size:     n,
+			err:      nil,
+			metadata: meta,
+		},
 	}
 
 	for desc, tc := range cases {
-		page, err := svc.ListChannels(context.Background(), tc.token, tc.offset, tc.limit, tc.name)
+		page, err := svc.ListChannels(context.Background(), tc.token, tc.offset, tc.limit, tc.name, tc.metadata)
 		size := uint64(len(page.Channels))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))

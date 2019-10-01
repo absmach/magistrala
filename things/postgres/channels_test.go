@@ -194,6 +194,10 @@ func TestMultiChannelRetrieval(t *testing.T) {
 	email := "channel-multi-retrieval@example.com"
 	chanRepo := postgres.NewChannelRepository(db)
 	channelName := "channel_name"
+	meta := things.Metadata{}
+	wrongMeta := things.Metadata{}
+	meta["name"] = "test-channel"
+	wrongMeta["wrong"] = "wrong"
 
 	n := uint64(10)
 	for i := uint64(0); i < n; i++ {
@@ -210,16 +214,22 @@ func TestMultiChannelRetrieval(t *testing.T) {
 			c.Name = channelName
 		}
 
+		// Create last two Channels with metadata.
+		if i >= 8 {
+			c.Metadata = meta
+		}
+
 		chanRepo.Save(context.Background(), c)
 	}
 
 	cases := map[string]struct {
-		owner  string
-		offset uint64
-		limit  uint64
-		name   string
-		size   uint64
-		total  uint64
+		owner    string
+		offset   uint64
+		limit    uint64
+		name     string
+		size     uint64
+		total    uint64
+		metadata things.Metadata
 	}{
 		"retrieve all channels with existing owner": {
 			owner:  email,
@@ -258,10 +268,26 @@ func TestMultiChannelRetrieval(t *testing.T) {
 			size:   0,
 			total:  0,
 		},
+		"retrieve all channels with existing metadata": {
+			owner:    email,
+			offset:   0,
+			limit:    n,
+			size:     2,
+			total:    n,
+			metadata: meta,
+		},
+		"retrieve all channels with non-existing metadata": {
+			owner:    email,
+			offset:   0,
+			limit:    n,
+			size:     0,
+			total:    n,
+			metadata: wrongMeta,
+		},
 	}
 
 	for desc, tc := range cases {
-		page, err := chanRepo.RetrieveAll(context.Background(), tc.owner, tc.offset, tc.limit, tc.name)
+		page, err := chanRepo.RetrieveAll(context.Background(), tc.owner, tc.offset, tc.limit, tc.name, tc.metadata)
 		size := uint64(len(page.Channels))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.Equal(t, tc.total, page.Total, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.total, page.Total))
@@ -389,7 +415,7 @@ func TestConnect(t *testing.T) {
 		ID:       thid,
 		Owner:    email,
 		Key:      thkey,
-		Metadata: map[string]interface{}{},
+		Metadata: things.Metadata{},
 	}
 	thingID, _ := thingRepo.Save(context.Background(), thing)
 

@@ -9,9 +9,9 @@ package things
 
 import "context"
 
-// Metadata to be used for mainflux thing for customized
-// describing of particular thing
-type ThingMetadata map[string]interface{}
+// Metadata to be used for mainflux thing or channel for customized
+// describing of particular thing or channel.
+type Metadata map[string]interface{}
 
 // Thing represents a Mainflux thing. Each thing is owned by one user, and
 // it is assigned with the unique identifier and (temporary) access key.
@@ -20,7 +20,7 @@ type Thing struct {
 	Owner    string
 	Name     string
 	Key      string
-	Metadata ThingMetadata
+	Metadata Metadata
 }
 
 // ThingsPage contains page related metadata as well as list of things that
@@ -52,7 +52,7 @@ type ThingRepository interface {
 	RetrieveByKey(context.Context, string) (string, error)
 
 	// RetrieveAll retrieves the subset of things owned by the specified user.
-	RetrieveAll(context.Context, string, uint64, uint64, string, ThingMetadata) (ThingsPage, error)
+	RetrieveAll(context.Context, string, uint64, uint64, string, Metadata) (ThingsPage, error)
 
 	// RetrieveByChannel retrieves the subset of things owned by the specified
 	// user and connected to specified channel.

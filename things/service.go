@@ -28,6 +28,9 @@ var (
 
 	// ErrConflict indicates that entity already exists.
 	ErrConflict = errors.New("entity already exists")
+
+	// ErrScanMetadata indicates problem with metadata in db
+	ErrScanMetadata = errors.New("Failed to scan metadata")
 )
 
 // Service specifies an API that must be fullfiled by the domain service
@@ -50,7 +53,7 @@ type Service interface {
 
 	// ListThings retrieves data about subset of things that belongs to the
 	// user identified by the provided key.
-	ListThings(context.Context, string, uint64, uint64, string, ThingMetadata) (ThingsPage, error)
+	ListThings(context.Context, string, uint64, uint64, string, Metadata) (ThingsPage, error)
 
 	// ListThingsByChannel retrieves data about subset of things that are
 	// connected to specified channel and belong to the user identified by
@@ -74,7 +77,7 @@ type Service interface {
 
 	// ListChannels retrieves data about subset of channels that belongs to the
 	// user identified by the provided key.
-	ListChannels(context.Context, string, uint64, uint64, string) (ChannelsPage, error)
+	ListChannels(context.Context, string, uint64, uint64, string, Metadata) (ChannelsPage, error)
 
 	// ListChannelsByThing retrieves data about subset of channels that have
 	// specified thing connected to them and belong to the user identified by
@@ -196,7 +199,7 @@ func (ts *thingsService) ViewThing(ctx context.Context, token, id string) (Thing
 	return ts.things.RetrieveByID(ctx, res.GetValue(), id)
 }
 
-func (ts *thingsService) ListThings(ctx context.Context, token string, offset, limit uint64, name string, metadata ThingMetadata) (ThingsPage, error) {
+func (ts *thingsService) ListThings(ctx context.Context, token string, offset, limit uint64, name string, metadata Metadata) (ThingsPage, error) {
 	res, err := ts.users.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return ThingsPage{}, ErrUnauthorizedAccess
@@ -265,13 +268,13 @@ func (ts *thingsService) ViewChannel(ctx context.Context, token, id string) (Cha
 	return ts.channels.RetrieveByID(ctx, res.GetValue(), id)
 }
 
-func (ts *thingsService) ListChannels(ctx context.Context, token string, offset, limit uint64, name string) (ChannelsPage, error) {
+func (ts *thingsService) ListChannels(ctx context.Context, token string, offset, limit uint64, name string, m Metadata) (ChannelsPage, error) {
 	res, err := ts.users.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return ChannelsPage{}, ErrUnauthorizedAccess
 	}
 
-	return ts.channels.RetrieveAll(ctx, res.GetValue(), offset, limit, name)
+	return ts.channels.RetrieveAll(ctx, res.GetValue(), offset, limit, name, m)
 }
 
 func (ts *thingsService) ListChannelsByThing(ctx context.Context, token, thing string, offset, limit uint64) (ChannelsPage, error) {

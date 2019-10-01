@@ -12,7 +12,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/gofrs/uuid"
 	"github.com/jmoiron/sqlx"
@@ -171,25 +170,15 @@ func (tr thingRepository) RetrieveByKey(_ context.Context, key string) (string, 
 	return id, nil
 }
 
-func (tr thingRepository) RetrieveAll(_ context.Context, owner string, offset, limit uint64, name string, metadata things.ThingMetadata) (things.ThingsPage, error) {
-	name = strings.ToLower(name)
-	nq := ""
-	if name != "" {
-		name = fmt.Sprintf(`%%%s%%`, name)
-		nq = `AND LOWER(name) LIKE :name`
-	}
-	mq := ""
-	if len(metadata) > 0 {
-		mq = `metadata @> :metadata AND`
-	}
-
-	m, err := json.Marshal(metadata)
+func (tr thingRepository) RetrieveAll(_ context.Context, owner string, offset, limit uint64, name string, metadata things.Metadata) (things.ThingsPage, error) {
+	nq, name := getNameQuery(name)
+	m, mq, err := getMetadataQuery(metadata)
 	if err != nil {
 		return things.ThingsPage{}, err
 	}
 
 	q := fmt.Sprintf(`SELECT id, name, key, metadata FROM things
-		  WHERE %s owner = :owner %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq, nq)
+		  WHERE owner = :owner %s%s ORDER BY id LIMIT :limit OFFSET :offset;`, mq, nq)
 
 	params := map[string]interface{}{
 		"owner":    owner,
@@ -330,13 +319,17 @@ type dbThing struct {
 	Owner    string `db:"owner"`
 	Name     string `db:"name"`
 	Key      string `db:"key"`
-	Metadata string `db:"metadata"`
+	Metadata []byte `db:"metadata"`
 }
 
 func toDBThing(th things.Thing) (dbThing, error) {
-	data, err := json.Marshal(th.Metadata)
-	if err != nil {
-		return dbThing{}, err
+	data := []byte("{}")
+	if len(th.Metadata) > 0 {
+		b, err := json.Marshal(th.Metadata)
+		if err != nil {
+			return dbThing{}, err
+		}
+		data = b
 	}
 
 	return dbThing{
@@ -344,7 +337,7 @@ func toDBThing(th things.Thing) (dbThing, error) {
 		Owner:    th.Owner,
 		Name:     th.Name,
 		Key:      th.Key,
-		Metadata: string(data),
+		Metadata: data,
 	}, nil
 }
 

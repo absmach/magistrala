@@ -22,6 +22,18 @@ function cleanup {
 # NATS
 ###
 gnatsd &
+counter=1
+until nc -zv localhost 4222 1>/dev/null 2>&1; 
+do
+    sleep 0.5
+    ((counter++))
+    if [ ${counter} -gt 10 ]
+    then
+        echo -ne "gnatsd failed to start in 5 sec, exiting"
+        exit 1
+    fi
+    echo -ne "Waiting for gnatsd"
+done
 
 ###
 # Users

@@ -10,6 +10,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -38,10 +39,7 @@ func (cr channelRepository) Save(_ context.Context, channel things.Channel) (str
 	q := `INSERT INTO channels (id, owner, name, metadata)
         VALUES (:id, :owner, :name, :metadata);`
 
-	dbch, err := toDBChannel(channel)
-	if err != nil {
-		return "", err
-	}
+	dbch := toDBChannel(channel)
 
 	if _, err := cr.db.NamedExec(q, dbch); err != nil {
 		pqErr, ok := err.(*pq.Error)
@@ -61,10 +59,7 @@ func (cr channelRepository) Save(_ context.Context, channel things.Channel) (str
 func (cr channelRepository) Update(_ context.Context, channel things.Channel) error {
 	q := `UPDATE channels SET name = :name, metadata = :metadata WHERE owner = :owner AND id = :id;`
 
-	dbch, err := toDBChannel(channel)
-	if err != nil {
-		return err
-	}
+	dbch := toDBChannel(channel)
 
 	res, err := cr.db.NamedExec(q, dbch)
 	if err != nil {
@@ -106,25 +101,25 @@ func (cr channelRepository) RetrieveByID(_ context.Context, owner, id string) (t
 		return empty, err
 	}
 
-	return toChannel(dbch)
+	return toChannel(dbch), nil
 }
 
-func (cr channelRepository) RetrieveAll(_ context.Context, owner string, offset, limit uint64, name string) (things.ChannelsPage, error) {
-	name = strings.ToLower(name)
-	nq := ""
-	if name != "" {
-		name = fmt.Sprintf(`%%%s%%`, name)
-		nq = `AND LOWER(name) LIKE :name`
+func (cr channelRepository) RetrieveAll(_ context.Context, owner string, offset, limit uint64, name string, metadata things.Metadata) (things.ChannelsPage, error) {
+	nq, name := getNameQuery(name)
+	m, mq, err := getMetadataQuery(metadata)
+	if err != nil {
+		return things.ChannelsPage{}, err
 	}
 
 	q := fmt.Sprintf(`SELECT id, name, metadata FROM channels
-	      WHERE owner = :owner %s ORDER BY id LIMIT :limit OFFSET :offset;`, nq)
+	      WHERE owner = :owner %s%s ORDER BY id LIMIT :limit OFFSET :offset;`, mq, nq)
 
 	params := map[string]interface{}{
-		"owner":  owner,
-		"limit":  limit,
-		"offset": offset,
-		"name":   name,
+		"owner":    owner,
+		"limit":    limit,
+		"offset":   offset,
+		"name":     name,
+		"metadata": m,
 	}
 	rows, err := cr.db.NamedQuery(q, params)
 	if err != nil {
@@ -138,10 +133,7 @@ func (cr channelRepository) RetrieveAll(_ context.Context, owner string, offset,
 		if err := rows.StructScan(&dbch); err != nil {
 			return things.ChannelsPage{}, err
 		}
-		ch, err := toChannel(dbch)
-		if err != nil {
-			return things.ChannelsPage{}, err
-		}
+		ch := toChannel(dbch)
 
 		items = append(items, ch)
 	}
@@ -212,11 +204,7 @@ func (cr channelRepository) RetrieveByThing(_ context.Context, owner, thing stri
 			return things.ChannelsPage{}, err
 		}
 
-		ch, err := toChannel(dbch)
-		if err != nil {
-			return things.ChannelsPage{}, err
-		}
-
+		ch := toChannel(dbch)
 		items = append(items, ch)
 	}
 
@@ -341,39 +329,91 @@ func (cr channelRepository) hasThing(chanID, thingID string) error {
 	return nil
 }
 
-type dbChannel struct {
-	ID       string `db:"id"`
-	Owner    string `db:"owner"`
-	Name     string `db:"name"`
-	Metadata string `db:"metadata"`
-}
+// dbMetadata type for handling metadata properly in database/sql.
+type dbMetadata map[string]interface{}
 
-func toDBChannel(ch things.Channel) (dbChannel, error) {
-	data, err := json.Marshal(ch.Metadata)
-	if err != nil {
-		return dbChannel{}, err
+// Scan implements the database/sql scanner interface.
+func (m *dbMetadata) Scan(value interface{}) error {
+	if value == nil {
+		m = nil
+		return nil
 	}
 
+	b, ok := value.([]byte)
+	if !ok {
+		m = &dbMetadata{}
+		return things.ErrScanMetadata
+	}
+
+	if err := json.Unmarshal(b, m); err != nil {
+		m = &dbMetadata{}
+		return err
+	}
+
+	return nil
+}
+
+// Value implements database/sql valuer interface.
+func (m dbMetadata) Value() (driver.Value, error) {
+	if len(m) == 0 {
+		return nil, nil
+	}
+
+	b, err := json.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+	return b, err
+}
+
+type dbChannel struct {
+	ID       string     `db:"id"`
+	Owner    string     `db:"owner"`
+	Name     string     `db:"name"`
+	Metadata dbMetadata `db:"metadata"`
+}
+
+func toDBChannel(ch things.Channel) dbChannel {
 	return dbChannel{
 		ID:       ch.ID,
 		Owner:    ch.Owner,
 		Name:     ch.Name,
-		Metadata: string(data),
-	}, nil
+		Metadata: ch.Metadata,
+	}
 }
 
-func toChannel(ch dbChannel) (things.Channel, error) {
-	var metadata map[string]interface{}
-	if err := json.Unmarshal([]byte(ch.Metadata), &metadata); err != nil {
-		return things.Channel{}, err
-	}
-
+func toChannel(ch dbChannel) things.Channel {
 	return things.Channel{
 		ID:       ch.ID,
 		Owner:    ch.Owner,
 		Name:     ch.Name,
-		Metadata: metadata,
-	}, nil
+		Metadata: ch.Metadata,
+	}
+}
+
+func getNameQuery(name string) (string, string) {
+	name = strings.ToLower(name)
+	nq := ""
+	if name != "" {
+		name = fmt.Sprintf(`%%%s%%`, name)
+		nq = ` AND LOWER(name) LIKE :name`
+	}
+	return nq, name
+}
+
+func getMetadataQuery(m things.Metadata) ([]byte, string, error) {
+	mq := ""
+	mb := []byte("{}")
+	if len(m) > 0 {
+		mq = ` AND metadata @> :metadata`
+
+		b, err := json.Marshal(m)
+		if err != nil {
+			return nil, "", err
+		}
+		mb = b
+	}
+	return mb, mq, nil
 }
 
 type dbConnection struct {

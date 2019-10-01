@@ -418,8 +418,8 @@ func TestListChannels(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("unexpected error %s", err))
 
 	essvc := redis.NewEventStoreMiddleware(svc, redisClient)
-	eschs, eserr := essvc.ListChannels(context.Background(), token, 0, 10, "")
-	chs, err := svc.ListChannels(context.Background(), token, 0, 10, "")
+	eschs, eserr := essvc.ListChannels(context.Background(), token, 0, 10, "", nil)
+	chs, err := svc.ListChannels(context.Background(), token, 0, 10, "", nil)
 	assert.Equal(t, chs, eschs, fmt.Sprintf("event sourcing changed service behaviour: expected %v got %v", chs, eschs))
 	assert.Equal(t, err, eserr, fmt.Sprintf("event sourcing changed service behaviour: expected %v got %v", err, eserr))
 }

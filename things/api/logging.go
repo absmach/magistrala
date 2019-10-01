@@ -82,7 +82,7 @@ func (lm *loggingMiddleware) ViewThing(ctx context.Context, token, id string) (t
 	return lm.svc.ViewThing(ctx, token, id)
 }
 
-func (lm *loggingMiddleware) ListThings(ctx context.Context, token string, offset, limit uint64, name string, metadata things.ThingMetadata) (_ things.ThingsPage, err error) {
+func (lm *loggingMiddleware) ListThings(ctx context.Context, token string, offset, limit uint64, name string, metadata things.Metadata) (_ things.ThingsPage, err error) {
 	defer func(begin time.Time) {
 		nlog := ""
 		if name != "" {
@@ -163,7 +163,7 @@ func (lm *loggingMiddleware) ViewChannel(ctx context.Context, token, id string) 
 	return lm.svc.ViewChannel(ctx, token, id)
 }
 
-func (lm *loggingMiddleware) ListChannels(ctx context.Context, token string, offset, limit uint64, name string) (_ things.ChannelsPage, err error) {
+func (lm *loggingMiddleware) ListChannels(ctx context.Context, token string, offset, limit uint64, name string, metadata things.Metadata) (_ things.ChannelsPage, err error) {
 	defer func(begin time.Time) {
 		nlog := ""
 		if name != "" {
@@ -177,7 +177,7 @@ func (lm *loggingMiddleware) ListChannels(ctx context.Context, token string, off
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.ListChannels(ctx, token, offset, limit, name)
+	return lm.svc.ListChannels(ctx, token, offset, limit, name, metadata)
 }
 
 func (lm *loggingMiddleware) ListChannelsByThing(ctx context.Context, token, id string, offset, limit uint64) (_ things.ChannelsPage, err error) {

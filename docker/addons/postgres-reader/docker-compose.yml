@@ -6,7 +6,7 @@
 # from project root.
 ###
 
-version: "3"
+version: "3.7"
 
 networks:
   docker_mainflux-base-net:

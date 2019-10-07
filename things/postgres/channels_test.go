@@ -22,7 +22,8 @@ import (
 
 func TestChannelSave(t *testing.T) {
 	email := "channel-save@example.com"
-	channelRepo := postgres.NewChannelRepository(db)
+	dbMiddleware := postgres.NewDatabase(db)
+	channelRepo := postgres.NewChannelRepository(dbMiddleware)
 
 	id, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -69,7 +70,8 @@ func TestChannelSave(t *testing.T) {
 
 func TestChannelUpdate(t *testing.T) {
 	email := "channel-update@example.com"
-	chanRepo := postgres.NewChannelRepository(db)
+	dbMiddleware := postgres.NewDatabase(db)
+	chanRepo := postgres.NewChannelRepository(dbMiddleware)
 
 	cid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -128,8 +130,9 @@ func TestChannelUpdate(t *testing.T) {
 
 func TestSingleChannelRetrieval(t *testing.T) {
 	email := "channel-single-retrieval@example.com"
-	chanRepo := postgres.NewChannelRepository(db)
-	thingRepo := postgres.NewThingRepository(db)
+	dbMiddleware := postgres.NewDatabase(db)
+	chanRepo := postgres.NewChannelRepository(dbMiddleware)
+	thingRepo := postgres.NewThingRepository(dbMiddleware)
 
 	thid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -192,7 +195,8 @@ func TestSingleChannelRetrieval(t *testing.T) {
 
 func TestMultiChannelRetrieval(t *testing.T) {
 	email := "channel-multi-retrieval@example.com"
-	chanRepo := postgres.NewChannelRepository(db)
+	dbMiddleware := postgres.NewDatabase(db)
+	chanRepo := postgres.NewChannelRepository(dbMiddleware)
 	channelName := "channel_name"
 	meta := things.Metadata{}
 	wrongMeta := things.Metadata{}
@@ -298,8 +302,9 @@ func TestMultiChannelRetrieval(t *testing.T) {
 func TestMultiChannelRetrievalByThing(t *testing.T) {
 	email := "channel-multi-retrieval-by-thing@example.com"
 	idp := uuid.New()
-	chanRepo := postgres.NewChannelRepository(db)
-	thingRepo := postgres.NewThingRepository(db)
+	dbMiddleware := postgres.NewDatabase(db)
+	chanRepo := postgres.NewChannelRepository(dbMiddleware)
+	thingRepo := postgres.NewThingRepository(dbMiddleware)
 
 	thid, err := idp.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -382,7 +387,8 @@ func TestMultiChannelRetrievalByThing(t *testing.T) {
 
 func TestChannelRemoval(t *testing.T) {
 	email := "channel-removal@example.com"
-	chanRepo := postgres.NewChannelRepository(db)
+	dbMiddleware := postgres.NewDatabase(db)
+	chanRepo := postgres.NewChannelRepository(dbMiddleware)
 
 	chid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -404,7 +410,8 @@ func TestChannelRemoval(t *testing.T) {
 
 func TestConnect(t *testing.T) {
 	email := "channel-connect@example.com"
-	thingRepo := postgres.NewThingRepository(db)
+	dbMiddleware := postgres.NewDatabase(db)
+	thingRepo := postgres.NewThingRepository(dbMiddleware)
 
 	thid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -419,7 +426,7 @@ func TestConnect(t *testing.T) {
 	}
 	thingID, _ := thingRepo.Save(context.Background(), thing)
 
-	chanRepo := postgres.NewChannelRepository(db)
+	chanRepo := postgres.NewChannelRepository(dbMiddleware)
 
 	chid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -486,7 +493,8 @@ func TestConnect(t *testing.T) {
 
 func TestDisconnect(t *testing.T) {
 	email := "channel-disconnect@example.com"
-	thingRepo := postgres.NewThingRepository(db)
+	dbMiddleware := postgres.NewDatabase(db)
+	thingRepo := postgres.NewThingRepository(dbMiddleware)
 
 	thid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -501,7 +509,7 @@ func TestDisconnect(t *testing.T) {
 	}
 	thingID, _ := thingRepo.Save(context.Background(), thing)
 
-	chanRepo := postgres.NewChannelRepository(db)
+	chanRepo := postgres.NewChannelRepository(dbMiddleware)
 	chid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	chanID, _ := chanRepo.Save(context.Background(), things.Channel{
@@ -568,7 +576,8 @@ func TestDisconnect(t *testing.T) {
 
 func TestHasThing(t *testing.T) {
 	email := "channel-access-check@example.com"
-	thingRepo := postgres.NewThingRepository(db)
+	dbMiddleware := postgres.NewDatabase(db)
+	thingRepo := postgres.NewThingRepository(dbMiddleware)
 
 	thid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -582,7 +591,7 @@ func TestHasThing(t *testing.T) {
 	}
 	thingID, _ := thingRepo.Save(context.Background(), thing)
 
-	chanRepo := postgres.NewChannelRepository(db)
+	chanRepo := postgres.NewChannelRepository(dbMiddleware)
 	chid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	chanID, _ := chanRepo.Save(context.Background(), things.Channel{
@@ -625,7 +634,8 @@ func TestHasThing(t *testing.T) {
 
 func TestHasThingByID(t *testing.T) {
 	email := "channel-access-check@example.com"
-	thingRepo := postgres.NewThingRepository(db)
+	dbMiddleware := postgres.NewDatabase(db)
+	thingRepo := postgres.NewThingRepository(dbMiddleware)
 
 	thid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -651,7 +661,7 @@ func TestHasThingByID(t *testing.T) {
 	}
 	disconnectedThingID, _ := thingRepo.Save(context.Background(), disconnectedThing)
 
-	chanRepo := postgres.NewChannelRepository(db)
+	chanRepo := postgres.NewChannelRepository(dbMiddleware)
 	chid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	chanID, _ := chanRepo.Save(context.Background(), things.Channel{

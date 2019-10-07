@@ -14,7 +14,6 @@ import (
 	"fmt"
 
 	"github.com/gofrs/uuid"
-	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq" // required for DB access
 	"github.com/mainflux/mainflux/things"
 )
@@ -29,12 +28,12 @@ const (
 var _ things.ThingRepository = (*thingRepository)(nil)
 
 type thingRepository struct {
-	db *sqlx.DB
+	db Database
 }
 
 // NewThingRepository instantiates a PostgreSQL implementation of thing
 // repository.
-func NewThingRepository(db *sqlx.DB) things.ThingRepository {
+func NewThingRepository(db Database) things.ThingRepository {
 	return &thingRepository{
 		db: db,
 	}
@@ -49,7 +48,7 @@ func (tr thingRepository) Save(ctx context.Context, thing things.Thing) (string,
 		return "", err
 	}
 
-	_, err = tr.db.NamedExec(q, dbth)
+	_, err = tr.db.NamedExecContext(ctx, q, dbth)
 	if err != nil {
 		pqErr, ok := err.(*pq.Error)
 		if ok {
@@ -67,7 +66,7 @@ func (tr thingRepository) Save(ctx context.Context, thing things.Thing) (string,
 	return dbth.ID, nil
 }
 
-func (tr thingRepository) Update(_ context.Context, thing things.Thing) error {
+func (tr thingRepository) Update(ctx context.Context, thing things.Thing) error {
 	q := `UPDATE things SET name = :name, metadata = :metadata WHERE owner = :owner AND id = :id;`
 
 	dbth, err := toDBThing(thing)
@@ -75,7 +74,7 @@ func (tr thingRepository) Update(_ context.Context, thing things.Thing) error {
 		return err
 	}
 
-	res, err := tr.db.NamedExec(q, dbth)
+	res, err := tr.db.NamedExecContext(ctx, q, dbth)
 	if err != nil {
 		pqErr, ok := err.(*pq.Error)
 		if ok {
@@ -100,15 +99,16 @@ func (tr thingRepository) Update(_ context.Context, thing things.Thing) error {
 	return nil
 }
 
-func (tr thingRepository) UpdateKey(_ context.Context, owner, id, key string) error {
+func (tr thingRepository) UpdateKey(ctx context.Context, owner, id, key string) error {
 	q := `UPDATE things SET key = :key WHERE owner = :owner AND id = :id;`
+
 	dbth := dbThing{
 		ID:    id,
 		Owner: owner,
 		Key:   key,
 	}
 
-	res, err := tr.db.NamedExec(q, dbth)
+	res, err := tr.db.NamedExecContext(ctx, q, dbth)
 	if err != nil {
 		pqErr, ok := err.(*pq.Error)
 		if ok {
@@ -135,7 +135,7 @@ func (tr thingRepository) UpdateKey(_ context.Context, owner, id, key string) er
 	return nil
 }
 
-func (tr thingRepository) RetrieveByID(_ context.Context, owner, id string) (things.Thing, error) {
+func (tr thingRepository) RetrieveByID(ctx context.Context, owner, id string) (things.Thing, error) {
 	q := `SELECT name, key, metadata FROM things WHERE id = $1 AND owner = $2;`
 
 	dbth := dbThing{
@@ -143,7 +143,7 @@ func (tr thingRepository) RetrieveByID(_ context.Context, owner, id string) (thi
 		Owner: owner,
 	}
 
-	if err := tr.db.QueryRowx(q, id, owner).StructScan(&dbth); err != nil {
+	if err := tr.db.QueryRowxContext(ctx, q, id, owner).StructScan(&dbth); err != nil {
 		empty := things.Thing{}
 
 		pqErr, ok := err.(*pq.Error)
@@ -157,10 +157,11 @@ func (tr thingRepository) RetrieveByID(_ context.Context, owner, id string) (thi
 	return toThing(dbth)
 }
 
-func (tr thingRepository) RetrieveByKey(_ context.Context, key string) (string, error) {
+func (tr thingRepository) RetrieveByKey(ctx context.Context, key string) (string, error) {
 	q := `SELECT id FROM things WHERE key = $1;`
+
 	var id string
-	if err := tr.db.QueryRowx(q, key).Scan(&id); err != nil {
+	if err := tr.db.QueryRowxContext(ctx, q, key).Scan(&id); err != nil {
 		if err == sql.ErrNoRows {
 			return "", things.ErrNotFound
 		}
@@ -170,7 +171,7 @@ func (tr thingRepository) RetrieveByKey(_ context.Context, key string) (string, 
 	return id, nil
 }
 
-func (tr thingRepository) RetrieveAll(_ context.Context, owner string, offset, limit uint64, name string, metadata things.Metadata) (things.ThingsPage, error) {
+func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, offset, limit uint64, name string, metadata things.Metadata) (things.ThingsPage, error) {
 	nq, name := getNameQuery(name)
 	m, mq, err := getMetadataQuery(metadata)
 	if err != nil {
@@ -188,7 +189,7 @@ func (tr thingRepository) RetrieveAll(_ context.Context, owner string, offset, l
 		"metadata": m,
 	}
 
-	rows, err := tr.db.NamedQuery(q, params)
+	rows, err := tr.db.NamedQueryContext(ctx, q, params)
 	if err != nil {
 		return things.ThingsPage{}, err
 	}
@@ -219,11 +220,11 @@ func (tr thingRepository) RetrieveAll(_ context.Context, owner string, offset, l
 	total := uint64(0)
 	switch name {
 	case "":
-		if err := tr.db.Get(&total, q, owner); err != nil {
+		if err := tr.db.GetContext(ctx, &total, q, owner); err != nil {
 			return things.ThingsPage{}, err
 		}
 	default:
-		if err := tr.db.Get(&total, q, owner, name); err != nil {
+		if err := tr.db.GetContext(ctx, &total, q, owner, name); err != nil {
 			return things.ThingsPage{}, err
 		}
 	}
@@ -240,7 +241,7 @@ func (tr thingRepository) RetrieveAll(_ context.Context, owner string, offset, l
 	return page, nil
 }
 
-func (tr thingRepository) RetrieveByChannel(_ context.Context, owner, channel string, offset, limit uint64) (things.ThingsPage, error) {
+func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, channel string, offset, limit uint64) (things.ThingsPage, error) {
 	// Verify if UUID format is valid to avoid internal Postgres error
 	if _, err := uuid.FromString(channel); err != nil {
 		return things.ThingsPage{}, things.ErrNotFound
@@ -262,7 +263,7 @@ func (tr thingRepository) RetrieveByChannel(_ context.Context, owner, channel st
 		"offset":  offset,
 	}
 
-	rows, err := tr.db.NamedQuery(q, params)
+	rows, err := tr.db.NamedQueryContext(ctx, q, params)
 	if err != nil {
 		return things.ThingsPage{}, err
 	}
@@ -290,7 +291,7 @@ func (tr thingRepository) RetrieveByChannel(_ context.Context, owner, channel st
 	     WHERE th.owner = $1 AND co.channel_id = $2;`
 
 	var total uint64
-	if err := tr.db.Get(&total, q, owner, channel); err != nil {
+	if err := tr.db.GetContext(ctx, &total, q, owner, channel); err != nil {
 		return things.ThingsPage{}, err
 	}
 
@@ -304,13 +305,13 @@ func (tr thingRepository) RetrieveByChannel(_ context.Context, owner, channel st
 	}, nil
 }
 
-func (tr thingRepository) Remove(_ context.Context, owner, id string) error {
+func (tr thingRepository) Remove(ctx context.Context, owner, id string) error {
 	dbth := dbThing{
 		ID:    id,
 		Owner: owner,
 	}
 	q := `DELETE FROM things WHERE id = :id AND owner = :owner;`
-	tr.db.NamedExec(q, dbth)
+	tr.db.NamedExecContext(ctx, q, dbth)
 	return nil
 }
 

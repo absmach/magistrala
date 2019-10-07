@@ -60,6 +60,5 @@ func createSpan(ctx context.Context, tracer opentracing.Tracer, opName string) o
 			opentracing.ChildOf(parentSpan.Context()),
 		)
 	}
-
 	return tracer.StartSpan(opName)
 }

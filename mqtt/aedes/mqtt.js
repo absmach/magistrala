@@ -1,6 +1,4 @@
-// Copyright (c) 2015-2019
-// Mainflux
-//
+// Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
 
 'use strict';
@@ -36,15 +34,17 @@ var config = {
         es_pass: process.env.MF_MQTT_ADAPTER_ES_PASS || 'mqtt',
         es_db: Number(process.env.MF_MQTT_ADAPTER_ES_DB) || 0,
         client_tls: (process.env.MF_MQTT_ADAPTER_CLIENT_TLS == 'true') || false,
-    	ca_certs: process.env.MF_MQTT_ADAPTER_CA_CERTS || '',
+        ca_certs: process.env.MF_MQTT_ADAPTER_CA_CERTS || '',
         concurrency: Number(process.env.MF_MQTT_CONCURRENT_MESSAGES) || 100,
         auth_url: process.env.MF_THINGS_URL || 'localhost:8181',
         schema_dir: process.argv[2] || '.',
     },
-    logger = bunyan.createLogger({name: 'mqtt', level: config.log_level}),
+    logger = bunyan.createLogger({
+        name: 'mqtt',
+        level: config.log_level
+    }),
     packageDefinition = protoLoader.loadSync(
-        config.schema_dir + '/internal.proto',
-        {
+        config.schema_dir + '/internal.proto', {
             keepCase: true,
             longs: String,
             enums: String,
@@ -81,7 +81,7 @@ var config = {
         persistence: aedesRedis,
         concurrency: config.concurrency
     }),
-    things = (function() {
+    things = (function () {
         var certs;
         if (config.client_tls) {
             certs = grpc.credentials.createSsl(config.ca_certs);
@@ -91,7 +91,7 @@ var config = {
         return new thingsSchema.ThingsService(config.auth_url, certs);
     })(),
     esclient = redis.createClient({
-        port: config.es_port, 
+        port: config.es_port,
         host: config.es_host,
         password: config.es_pass,
         db: config.es_db
@@ -104,12 +104,14 @@ var config = {
 logging({
     instance: aedes,
     servers: servers,
-    pinoOptions: {level: 30}
+    pinoOptions: {
+        level: 30
+    }
 });
 
 logger.level(config.log_level);
 
-esclient.on('error', function(err) {
+esclient.on('error', function (err) {
     logger.warn('error on redis connection: %s', err.message);
 });
 
@@ -124,8 +126,10 @@ function startWs() {
         }
         res.statusCode = 404;
         res.end('{"service":"mqtt-adpater", "message": "not found"}')
-    }); 
-    websocket.createServer({server: server}, aedes.handle);
+    });
+    websocket.createServer({
+        server: server
+    }, aedes.handle);
     server.listen(config.ws_port);
     return server;
 }
@@ -134,7 +138,9 @@ function startMqtt() {
     return net.createServer(aedes.handle).listen(config.mqtt_port);
 }
 
-nats.subscribe('channel.>', {'queue':'mqtts'}, function (msg) {
+nats.subscribe('channel.>', {
+    'queue': 'mqtts'
+}, function (msg) {
     var m = RawMessage.decode(msg),
         packet, subtopic, ct;
     if (m && m.protocol !== 'mqtt') {
@@ -174,8 +180,8 @@ aedes.authorizePublish = function (client, packet, publish) {
         },
         // Parse unlimited subtopics
         baseLength = 3, // First 3 elements which represents the base part of topic.
-        isEmpty = function(value) { 
-            return value !== ''; 
+        isEmpty = function (value) {
+            return value !== '';
         },
         parts = packet.topic.split('/'),
         elements = parts.slice(baseLength).join('.').split('.').filter(isEmpty),
@@ -251,8 +257,10 @@ aedes.authorizeSubscribe = function (client, packet, subscribe) {
 
 aedes.authenticate = function (client, username, password, acknowledge) {
     var pass = (password || '').toString(),
-        identity = {value: pass},
-        onIdentify = function(err, res) {
+        identity = {
+            value: pass
+        },
+        onIdentify = function (err, res) {
             if (!err) {
                 client.thingId = res.value.toString() || '';
                 client.id = client.id || client.thingId;
@@ -283,12 +291,12 @@ aedes.on('connectionError', function (client, err) {
     logger.warn('connection error: client: %s, error: %s', client.id, err.message);
 });
 
-aedes.on('error', function(err) {
+aedes.on('error', function (err) {
     logger.warn('aedes error: %s', err.message);
 });
 
 function publishConnEvent(id, type) {
-    var onPublish = function(err) {
+    var onPublish = function (err) {
         if (err) {
             logger.warn('event publish failed: %s', err);
         }

@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2018
-# Mainflux
-#
+# Copyright (c) Mainflux
 # SPDX-License-Identifier: Apache-2.0
 #
 
@@ -15,7 +13,7 @@
 ###
 
 if [ $# -lt 4 ]
-  then
+then
     echo "Usage: $0 user_email user_password device_name channel_name"
     exit 1
 fi

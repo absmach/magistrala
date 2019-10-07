@@ -1,5 +1,5 @@
 ###
-# Copyright (c) 2015-2019 Mainflux
+# Copyright (c) Mainflux
 #
 # Mainflux is licensed under an Apache license, version 2.0 license.
 # All rights not explicitly granted in the Apache license, version 2.0 are reserved.

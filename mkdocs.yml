@@ -36,5 +36,6 @@ pages:
       - Authentication: authentication.md
   - CLI: cli.md
   - Bootstrap: bootstrap.md
+  - Tracing: tracing.md
   - Developer's Guide: dev-guide.md
   - Load Test: load-test.md

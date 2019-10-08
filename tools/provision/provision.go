@@ -140,7 +140,7 @@ func Provision(conf Config) {
 
 		cid, err := s.CreateChannel(sdk.Channel{Name: fmt.Sprintf("%s-channel-%d", conf.Prefix, i)}, token)
 		if err != nil {
-			log.Fatalf(err.Error())
+			log.Fatalf("Failed to create the channel: %s", err.Error())
 		}
 
 		channels[i] = &cid
@@ -215,13 +215,18 @@ func Provision(conf Config) {
 	fmt.Printf("# List of channels that things can publish to\n" +
 		"# each channel is connected to each thing from things list\n")
 	for i := 0; i < conf.Num; i++ {
-		for j := 0; j < conf.Num; j++ {
+		// Creating a new routine for each connect
+		// might be heavy on the network.
+		go func(wg *sync.WaitGroup, i int) {
 			wg.Add(1)
-			go func(wg *sync.WaitGroup, i, j int) {
-				defer wg.Done()
-				s.ConnectThing(things[j].ID, *channels[i], token)
-			}(&wg, i, j)
-		}
+			defer wg.Done()
+
+			for j := 0; j < conf.Num; j++ {
+				if err := s.ConnectThing(things[j].ID, *channels[i], token); err != nil {
+					log.Fatalf("Failed to connect thing %s to channel %s: %s", things[j].ID, *channels[i], err)
+				}
+			}
+		}(&wg, i)
 		fmt.Printf("[[channels]]\nchannel_id = \"%s\"\n\n", *channels[i])
 	}
 	wg.Wait()

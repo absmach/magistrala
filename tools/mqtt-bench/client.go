@@ -88,7 +88,7 @@ func (c *Client) publish(r chan *runResults) {
 
 	for i := 0; i < c.MsgCount; i++ {
 		wg.Add(1)
-		go func(mut *sync.Mutex, wg *sync.WaitGroup, t *[]*float64, i int, m message) {
+		go func(mut *sync.Mutex, wg *sync.WaitGroup, i int, m message) {
 			defer wg.Done()
 			m.Sent = time.Now()
 
@@ -110,7 +110,7 @@ func (c *Client) publish(r chan *runResults) {
 			if !c.Quiet && i > 0 && i%100 == 0 {
 				log.Printf("Client %v published %v messages and keeps publishing...\n", c.ID, i)
 			}
-		}(&mu, &wg, &times, i, m)
+		}(&mu, &wg, i, m)
 	}
 	wg.Wait()
 

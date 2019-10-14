@@ -45,7 +45,7 @@ handle_call({identify, Message}, _From, #state{conn = GrpcConn} = State) ->
 
           case HttpStatus of
               200 ->
-                  {reply, {ok, ThingId}, State};
+                  {reply, {ok, list_to_binary(ThingId)}, State};
               _ ->
                   {reply, {error, HttpStatus}, error}
           end;

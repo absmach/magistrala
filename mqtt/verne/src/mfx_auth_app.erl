@@ -26,11 +26,17 @@ start(_StartType, _StartArgs) ->
         false -> "tcp://localhost:6379";
         RedisEnv -> RedisEnv
     end,
+    InstanceId = case os:getenv("MF_MQTT_INSTANCE_ID") of
+        false -> "";
+        InstanceEnv -> InstanceEnv
+    end,
+    
 
     ets:insert(mfx_cfg, [
         {grpc_url, GrpcUrl},
         {nats_url, NatsUrl},
-        {redis_url, RedisUrl}
+        {redis_url, RedisUrl},
+        {instance_id, InstanceId}
     ]),
 
     % Also, init one ETS table for keeping the #{ClientId => Username} mapping

@@ -133,6 +133,18 @@ After that, the MQTT Adapter can be started from top directory (as it needs to f
 node mqtt/mqtt.js
 ```
 
+#### Troubleshooting
+Depending on your use case, MQTT topics, message size, the number of clients and the frequency with which the messages are sent it can happen that you experience some problems.
+
+Up until now it has been noticed that in case of high load, big messages and many clients it can happen that the MQTT microservice crashes with the following error:
+```
+mainflux-mqtt   | FATAL ERROR: CALL_AND_RETRY_LAST Allocation failed - JavaScript heap out of memory
+mainflux-mqtt exited with code 137
+```
+This problem is caused the default allowed memory in node (V8). [V8 gives the user 1.7GB per default](https://medium.com/tomincode/increasing-nodes-memory-337dfb1a60dd). To fix the problem you should add the following environment variable `NODE_OPTIONS:--max-old-space-size=SPACE_IN_MB` in the [environment section](https://github.com/mainflux/mainflux/blob/master/docker/aedes.yml#L31) of the aedes.yml configuration. To find the right value for the `--max-old-space-size` parameter you'll have to experiment a bit depending on your needs.
+
+The Mainflux MQTT service uses the [Aedes MQTT Broker](https://github.com/mcollina/aedes) for implementation of the MQTT related things. Therefore, for some questions or problems you can also check out the Aedes's documentation or reach out its contributors.
+
 ### Protobuf
 If you've made any changes to `.proto` files, you should call `protoc` command prior to compiling individual microservices.
 

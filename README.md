@@ -73,7 +73,7 @@ Main architect and BDFL of Mainflux project is [@drasko][drasko].
 
 Additionally, [@nmarcetic][nikola] and [@janko-isidorovic][janko] assured
 overall architecture and design, while [@manuio][manu] and [@darkodraskovic][darko]
-helped with crafting initial implementation and continiusly work on the project evolutions.
+helped with crafting initial implementation and continuously worked on the project evolutions.
 
 Besides them, Mainflux is constantly improved and actively
 developed by [@anovakovic01][alex], [@dusanb94][dusan], [@srados][sava],

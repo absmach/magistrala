@@ -11,12 +11,12 @@ import (
 
 func canAccessEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(accessReq)
+		req := request.(AccessByKeyReq)
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
-		id, err := svc.CanAccess(ctx, req.chanID, req.thingKey)
+		id, err := svc.CanAccessByKey(ctx, req.chanID, req.thingKey)
 		if err != nil {
 			return identityRes{err: err}, err
 		}

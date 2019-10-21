@@ -137,7 +137,7 @@ func authorize(msg *gocoap.Message, res *gocoap.Message, cid string) (string, er
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	id, err := auth.CanAccess(ctx, &mainflux.AccessReq{Token: key, ChanID: cid})
+	id, err := auth.CanAccessByKey(ctx, &mainflux.AccessByKeyReq{Token: key, ChanID: cid})
 	if err != nil {
 		e, ok := status.FromError(err)
 		if ok {

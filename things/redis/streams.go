@@ -220,8 +220,8 @@ func (es eventStore) Disconnect(ctx context.Context, token, chanID, thingID stri
 	return nil
 }
 
-func (es eventStore) CanAccess(ctx context.Context, chanID string, key string) (string, error) {
-	return es.svc.CanAccess(ctx, chanID, key)
+func (es eventStore) CanAccessByKey(ctx context.Context, chanID string, key string) (string, error) {
+	return es.svc.CanAccessByKey(ctx, chanID, key)
 }
 
 func (es eventStore) CanAccessByID(ctx context.Context, chanID string, thingID string) error {

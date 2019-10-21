@@ -131,7 +131,7 @@ func authorize(r *http.Request, chanID string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	_, err := auth.CanAccess(ctx, &mainflux.AccessReq{Token: token, ChanID: chanID})
+	_, err := auth.CanAccessByKey(ctx, &mainflux.AccessByKeyReq{Token: token, ChanID: chanID})
 	if err != nil {
 		e, ok := status.FromError(err)
 		if ok && e.Code() == codes.PermissionDenied {

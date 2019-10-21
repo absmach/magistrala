@@ -38,9 +38,9 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 		opts...,
 	))
 
-	r.Post("/channels/:chanId/access", kithttp.NewServer(
-		kitot.TraceServer(tracer, "can_access")(canAccessEndpoint(svc)),
-		decodeCanAccess,
+	r.Post("/channels/:chanId/access-by-key", kithttp.NewServer(
+		kitot.TraceServer(tracer, "can_access_by_key")(canAccessByKeyEndpoint(svc)),
+		decodeCanAccessByKey,
 		encodeResponse,
 		opts...,
 	))
@@ -68,12 +68,12 @@ func decodeIdentify(_ context.Context, r *http.Request) (interface{}, error) {
 	return req, nil
 }
 
-func decodeCanAccess(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeCanAccessByKey(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errUnsupportedContentType
 	}
 
-	req := canAccessReq{
+	req := canAccessByKeyReq{
 		chanID: bone.GetValue(r, "chanId"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

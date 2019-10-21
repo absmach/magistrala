@@ -30,7 +30,7 @@ func NewThingsClient(data map[string]string) mainflux.ThingsServiceClient {
 	return &thingsClient{data}
 }
 
-func (tc thingsClient) CanAccess(ctx context.Context, req *mainflux.AccessReq, opts ...grpc.CallOption) (*mainflux.ThingID, error) {
+func (tc thingsClient) CanAccessByKey(ctx context.Context, req *mainflux.AccessByKeyReq, opts ...grpc.CallOption) (*mainflux.ThingID, error) {
 	key := req.GetToken()
 
 	// Since there is no appropriate way to simulate internal server error,

@@ -8,7 +8,7 @@ package mainflux;
 import "google/protobuf/empty.proto";
 
 service ThingsService {
-    rpc CanAccess(AccessReq) returns (ThingID) {}
+    rpc CanAccessByKey(AccessByKeyReq) returns (ThingID) {}
     rpc CanAccessByID(AccessByIDReq) returns (google.protobuf.Empty) {}
     rpc Identify(Token) returns (ThingID) {}
 }
@@ -17,7 +17,7 @@ service UsersService {
     rpc Identify(Token) returns (UserID) {}
 }
 
-message AccessReq {
+message AccessByKeyReq {
     string token = 1;
     string chanID = 2;
 }

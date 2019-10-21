@@ -50,7 +50,7 @@
 -export_type([]).
 
 %% message types
--type 'mainflux.AccessReq'() ::
+-type 'mainflux.AccessByKeyReq'() ::
       #{token                   => iodata(),        % = 1
         chanID                  => iodata()         % = 2
        }.
@@ -76,13 +76,13 @@
       #{
        }.
 
--export_type(['mainflux.AccessReq'/0, 'mainflux.ThingID'/0, 'mainflux.AccessByIDReq'/0, 'mainflux.Token'/0, 'mainflux.UserID'/0, 'google.protobuf.Empty'/0]).
+-export_type(['mainflux.AccessByKeyReq'/0, 'mainflux.ThingID'/0, 'mainflux.AccessByIDReq'/0, 'mainflux.Token'/0, 'mainflux.UserID'/0, 'google.protobuf.Empty'/0]).
 
--spec encode_msg('mainflux.AccessReq'() | 'mainflux.ThingID'() | 'mainflux.AccessByIDReq'() | 'mainflux.Token'() | 'mainflux.UserID'() | 'google.protobuf.Empty'(), atom()) -> binary().
+-spec encode_msg('mainflux.AccessByKeyReq'() | 'mainflux.ThingID'() | 'mainflux.AccessByIDReq'() | 'mainflux.Token'() | 'mainflux.UserID'() | 'google.protobuf.Empty'(), atom()) -> binary().
 encode_msg(Msg, MsgName) when is_atom(MsgName) ->
     encode_msg(Msg, MsgName, []).
 
--spec encode_msg('mainflux.AccessReq'() | 'mainflux.ThingID'() | 'mainflux.AccessByIDReq'() | 'mainflux.Token'() | 'mainflux.UserID'() | 'google.protobuf.Empty'(), atom(), list()) -> binary().
+-spec encode_msg('mainflux.AccessByKeyReq'() | 'mainflux.ThingID'() | 'mainflux.AccessByIDReq'() | 'mainflux.Token'() | 'mainflux.UserID'() | 'google.protobuf.Empty'(), atom(), list()) -> binary().
 encode_msg(Msg, MsgName, Opts) ->
     case proplists:get_bool(verify, Opts) of
       true -> verify_msg(Msg, MsgName, Opts);
@@ -90,8 +90,8 @@ encode_msg(Msg, MsgName, Opts) ->
     end,
     TrUserData = proplists:get_value(user_data, Opts),
     case MsgName of
-      'mainflux.AccessReq' ->
-	  'encode_msg_mainflux.AccessReq'(id(Msg, TrUserData),
+      'mainflux.AccessByKeyReq' ->
+	  'encode_msg_mainflux.AccessByKeyReq'(id(Msg, TrUserData),
 					  TrUserData);
       'mainflux.ThingID' ->
 	  'encode_msg_mainflux.ThingID'(id(Msg, TrUserData),
@@ -111,11 +111,11 @@ encode_msg(Msg, MsgName, Opts) ->
     end.
 
 
-'encode_msg_mainflux.AccessReq'(Msg, TrUserData) ->
-    'encode_msg_mainflux.AccessReq'(Msg, <<>>, TrUserData).
+'encode_msg_mainflux.AccessByKeyReq'(Msg, TrUserData) ->
+    'encode_msg_mainflux.AccessByKeyReq'(Msg, <<>>, TrUserData).
 
 
-'encode_msg_mainflux.AccessReq'(#{} = M, Bin,
+'encode_msg_mainflux.AccessByKeyReq'(#{} = M, Bin,
 				TrUserData) ->
     B1 = case M of
 	   #{token := F1} ->
@@ -366,9 +366,9 @@ decode_msg_1_catch(Bin, MsgName, TrUserData) ->
     end.
 -endif.
 
-decode_msg_2_doit('mainflux.AccessReq', Bin,
+decode_msg_2_doit('mainflux.AccessByKeyReq', Bin,
 		  TrUserData) ->
-    id('decode_msg_mainflux.AccessReq'(Bin, TrUserData),
+    id('decode_msg_mainflux.AccessByKeyReq'(Bin, TrUserData),
        TrUserData);
 decode_msg_2_doit('mainflux.ThingID', Bin,
 		  TrUserData) ->
@@ -391,78 +391,78 @@ decode_msg_2_doit('google.protobuf.Empty', Bin,
 
 
 
-'decode_msg_mainflux.AccessReq'(Bin, TrUserData) ->
-    'dfp_read_field_def_mainflux.AccessReq'(Bin, 0, 0,
+'decode_msg_mainflux.AccessByKeyReq'(Bin, TrUserData) ->
+    'dfp_read_field_def_mainflux.AccessByKeyReq'(Bin, 0, 0,
 					    id([], TrUserData),
 					    id([], TrUserData), TrUserData).
 
-'dfp_read_field_def_mainflux.AccessReq'(<<10,
+'dfp_read_field_def_mainflux.AccessByKeyReq'(<<10,
 					  Rest/binary>>,
 					Z1, Z2, F@_1, F@_2, TrUserData) ->
-    'd_field_mainflux.AccessReq_token'(Rest, Z1, Z2, F@_1,
+    'd_field_mainflux.AccessByKeyReq_token'(Rest, Z1, Z2, F@_1,
 				       F@_2, TrUserData);
-'dfp_read_field_def_mainflux.AccessReq'(<<18,
+'dfp_read_field_def_mainflux.AccessByKeyReq'(<<18,
 					  Rest/binary>>,
 					Z1, Z2, F@_1, F@_2, TrUserData) ->
-    'd_field_mainflux.AccessReq_chanID'(Rest, Z1, Z2, F@_1,
+    'd_field_mainflux.AccessByKeyReq_chanID'(Rest, Z1, Z2, F@_1,
 					F@_2, TrUserData);
-'dfp_read_field_def_mainflux.AccessReq'(<<>>, 0, 0,
+'dfp_read_field_def_mainflux.AccessByKeyReq'(<<>>, 0, 0,
 					F@_1, F@_2, _) ->
     #{token => F@_1, chanID => F@_2};
-'dfp_read_field_def_mainflux.AccessReq'(Other, Z1, Z2,
+'dfp_read_field_def_mainflux.AccessByKeyReq'(Other, Z1, Z2,
 					F@_1, F@_2, TrUserData) ->
-    'dg_read_field_def_mainflux.AccessReq'(Other, Z1, Z2,
+    'dg_read_field_def_mainflux.AccessByKeyReq'(Other, Z1, Z2,
 					   F@_1, F@_2, TrUserData).
 
-'dg_read_field_def_mainflux.AccessReq'(<<1:1, X:7,
+'dg_read_field_def_mainflux.AccessByKeyReq'(<<1:1, X:7,
 					 Rest/binary>>,
 				       N, Acc, F@_1, F@_2, TrUserData)
     when N < 32 - 7 ->
-    'dg_read_field_def_mainflux.AccessReq'(Rest, N + 7,
+    'dg_read_field_def_mainflux.AccessByKeyReq'(Rest, N + 7,
 					   X bsl N + Acc, F@_1, F@_2,
 					   TrUserData);
-'dg_read_field_def_mainflux.AccessReq'(<<0:1, X:7,
+'dg_read_field_def_mainflux.AccessByKeyReq'(<<0:1, X:7,
 					 Rest/binary>>,
 				       N, Acc, F@_1, F@_2, TrUserData) ->
     Key = X bsl N + Acc,
     case Key of
       10 ->
-	  'd_field_mainflux.AccessReq_token'(Rest, 0, 0, F@_1,
+	  'd_field_mainflux.AccessByKeyReq_token'(Rest, 0, 0, F@_1,
 					     F@_2, TrUserData);
       18 ->
-	  'd_field_mainflux.AccessReq_chanID'(Rest, 0, 0, F@_1,
+	  'd_field_mainflux.AccessByKeyReq_chanID'(Rest, 0, 0, F@_1,
 					      F@_2, TrUserData);
       _ ->
 	  case Key band 7 of
 	    0 ->
-		'skip_varint_mainflux.AccessReq'(Rest, 0, 0, F@_1, F@_2,
+		'skip_varint_mainflux.AccessByKeyReq'(Rest, 0, 0, F@_1, F@_2,
 						 TrUserData);
 	    1 ->
-		'skip_64_mainflux.AccessReq'(Rest, 0, 0, F@_1, F@_2,
+		'skip_64_mainflux.AccessByKeyReq'(Rest, 0, 0, F@_1, F@_2,
 					     TrUserData);
 	    2 ->
-		'skip_length_delimited_mainflux.AccessReq'(Rest, 0, 0,
+		'skip_length_delimited_mainflux.AccessByKeyReq'(Rest, 0, 0,
 							   F@_1, F@_2,
 							   TrUserData);
 	    3 ->
-		'skip_group_mainflux.AccessReq'(Rest, Key bsr 3, 0,
+		'skip_group_mainflux.AcAccessByKeyReqcessReq'(Rest, Key bsr 3, 0,
 						F@_1, F@_2, TrUserData);
 	    5 ->
-		'skip_32_mainflux.AccessReq'(Rest, 0, 0, F@_1, F@_2,
+		'skip_32_mainflux.AccessByKeyReq'(Rest, 0, 0, F@_1, F@_2,
 					     TrUserData)
 	  end
     end;
-'dg_read_field_def_mainflux.AccessReq'(<<>>, 0, 0, F@_1,
+'dg_read_field_def_mainflux.AccessByKeyReq'(<<>>, 0, 0, F@_1,
 				       F@_2, _) ->
     #{token => F@_1, chanID => F@_2}.
 
-'d_field_mainflux.AccessReq_token'(<<1:1, X:7,
+'d_field_mainflux.AccessByKeyReq'(<<1:1, X:7,
 				     Rest/binary>>,
 				   N, Acc, F@_1, F@_2, TrUserData)
     when N < 57 ->
-    'd_field_mainflux.AccessReq_token'(Rest, N + 7,
+    'd_field_mainflux.AccessByKeyReq_token'(Rest, N + 7,
 				       X bsl N + Acc, F@_1, F@_2, TrUserData);
-'d_field_mainflux.AccessReq_token'(<<0:1, X:7,
+'d_field_mainflux.AccessByKeyReq_token'(<<0:1, X:7,
 				     Rest/binary>>,
 				   N, Acc, _, F@_2, TrUserData) ->
     {NewFValue, RestF} = begin
@@ -472,16 +472,16 @@ decode_msg_2_doit('google.protobuf.Empty', Bin,
 			       TrUserData),
 			    Rest2}
 			 end,
-    'dfp_read_field_def_mainflux.AccessReq'(RestF, 0, 0,
+    'dfp_read_field_def_mainflux.AccessByKeyReq'(RestF, 0, 0,
 					    NewFValue, F@_2, TrUserData).
 
-'d_field_mainflux.AccessReq_chanID'(<<1:1, X:7,
+'d_field_mainflux.AccessByKeyReq_chanID'(<<1:1, X:7,
 				      Rest/binary>>,
 				    N, Acc, F@_1, F@_2, TrUserData)
     when N < 57 ->
-    'd_field_mainflux.AccessReq_chanID'(Rest, N + 7,
+    'd_field_mainflux.AccessByKeyReq_chanID'(Rest, N + 7,
 					X bsl N + Acc, F@_1, F@_2, TrUserData);
-'d_field_mainflux.AccessReq_chanID'(<<0:1, X:7,
+'d_field_mainflux.AccessByKeyReq_chanID'(<<0:1, X:7,
 				      Rest/binary>>,
 				    N, Acc, F@_1, _, TrUserData) ->
     {NewFValue, RestF} = begin
@@ -491,49 +491,49 @@ decode_msg_2_doit('google.protobuf.Empty', Bin,
 			       TrUserData),
 			    Rest2}
 			 end,
-    'dfp_read_field_def_mainflux.AccessReq'(RestF, 0, 0,
+    'dfp_read_field_def_mainflux.AccessByKeyReq'(RestF, 0, 0,
 					    F@_1, NewFValue, TrUserData).
 
-'skip_varint_mainflux.AccessReq'(<<1:1, _:7,
+'skip_varint_mainflux.AccessByKeyReq'(<<1:1, _:7,
 				   Rest/binary>>,
 				 Z1, Z2, F@_1, F@_2, TrUserData) ->
-    'skip_varint_mainflux.AccessReq'(Rest, Z1, Z2, F@_1,
+    'skip_varint_mainflux.AccessByKeyReq'(Rest, Z1, Z2, F@_1,
 				     F@_2, TrUserData);
-'skip_varint_mainflux.AccessReq'(<<0:1, _:7,
+'skip_varint_mainflux.AccessByKeyReq'(<<0:1, _:7,
 				   Rest/binary>>,
 				 Z1, Z2, F@_1, F@_2, TrUserData) ->
-    'dfp_read_field_def_mainflux.AccessReq'(Rest, Z1, Z2,
+    'dfp_read_field_def_mainflux.AccessByKeyReq'(Rest, Z1, Z2,
 					    F@_1, F@_2, TrUserData).
 
-'skip_length_delimited_mainflux.AccessReq'(<<1:1, X:7,
+'skip_length_delimited_mainflux.AccessByKeyReq'(<<1:1, X:7,
 					     Rest/binary>>,
 					   N, Acc, F@_1, F@_2, TrUserData)
     when N < 57 ->
-    'skip_length_delimited_mainflux.AccessReq'(Rest, N + 7,
+    'skip_length_delimited_mainflux.AccessByKeyReq'(Rest, N + 7,
 					       X bsl N + Acc, F@_1, F@_2,
 					       TrUserData);
-'skip_length_delimited_mainflux.AccessReq'(<<0:1, X:7,
+'skip_length_delimited_mainflux.AccessByKeyReq'(<<0:1, X:7,
 					     Rest/binary>>,
 					   N, Acc, F@_1, F@_2, TrUserData) ->
     Length = X bsl N + Acc,
     <<_:Length/binary, Rest2/binary>> = Rest,
-    'dfp_read_field_def_mainflux.AccessReq'(Rest2, 0, 0,
+    'dfp_read_field_def_mainflux.AccessByKeyReq'(Rest2, 0, 0,
 					    F@_1, F@_2, TrUserData).
 
-'skip_group_mainflux.AccessReq'(Bin, FNum, Z2, F@_1,
+'skip_group_mainflux.AccessByKeyReq'(Bin, FNum, Z2, F@_1,
 				F@_2, TrUserData) ->
     {_, Rest} = read_group(Bin, FNum),
-    'dfp_read_field_def_mainflux.AccessReq'(Rest, 0, Z2,
+    'dfp_read_field_def_mainflux.AccessByKeyReq'(Rest, 0, Z2,
 					    F@_1, F@_2, TrUserData).
 
-'skip_32_mainflux.AccessReq'(<<_:32, Rest/binary>>, Z1,
+'skip_32_mainflux.AccessByKeyReq'(<<_:32, Rest/binary>>, Z1,
 			     Z2, F@_1, F@_2, TrUserData) ->
-    'dfp_read_field_def_mainflux.AccessReq'(Rest, Z1, Z2,
+    'dfp_read_field_def_mainflux.AccessByKeyReq'(Rest, Z1, Z2,
 					    F@_1, F@_2, TrUserData).
 
-'skip_64_mainflux.AccessReq'(<<_:64, Rest/binary>>, Z1,
+'skip_64_mainflux.AccessByKeyReq'(<<_:64, Rest/binary>>, Z1,
 			     Z2, F@_1, F@_2, TrUserData) ->
-    'dfp_read_field_def_mainflux.AccessReq'(Rest, Z1, Z2,
+    'dfp_read_field_def_mainflux.AccessByKeyReq'(Rest, Z1, Z2,
 					    F@_1, F@_2, TrUserData).
 
 'decode_msg_mainflux.ThingID'(Bin, TrUserData) ->
@@ -1163,8 +1163,8 @@ merge_msgs(Prev, New, MsgName) when is_atom(MsgName) ->
 merge_msgs(Prev, New, MsgName, Opts) ->
     TrUserData = proplists:get_value(user_data, Opts),
     case MsgName of
-      'mainflux.AccessReq' ->
-	  'merge_msg_mainflux.AccessReq'(Prev, New, TrUserData);
+      'mainflux.AccessByKeyReq' ->
+	  'merge_msg_mainflux.AccessByKeyReq'(Prev, New, TrUserData);
       'mainflux.ThingID' ->
 	  'merge_msg_mainflux.ThingID'(Prev, New, TrUserData);
       'mainflux.AccessByIDReq' ->
@@ -1178,8 +1178,8 @@ merge_msgs(Prev, New, MsgName, Opts) ->
 	  'merge_msg_google.protobuf.Empty'(Prev, New, TrUserData)
     end.
 
--compile({nowarn_unused_function,'merge_msg_mainflux.AccessReq'/3}).
-'merge_msg_mainflux.AccessReq'(PMsg, NMsg, _) ->
+-compile({nowarn_unused_function,'merge_msg_mainflux.AccessByKeyReq'/3}).
+'merge_msg_mainflux.AccessByKeyReq'(PMsg, NMsg, _) ->
     S1 = #{},
     S2 = case {PMsg, NMsg} of
 	   {_, #{token := NFtoken}} -> S1#{token => NFtoken};
@@ -1247,8 +1247,8 @@ verify_msg(Msg, MsgName) when is_atom(MsgName) ->
 verify_msg(Msg, MsgName, Opts) ->
     TrUserData = proplists:get_value(user_data, Opts),
     case MsgName of
-      'mainflux.AccessReq' ->
-	  'v_msg_mainflux.AccessReq'(Msg, [MsgName], TrUserData);
+      'mainflux.AccessByKeyReq' ->
+	  'v_msg_mainflux.AccessByKeyReq'(Msg, [MsgName], TrUserData);
       'mainflux.ThingID' ->
 	  'v_msg_mainflux.ThingID'(Msg, [MsgName], TrUserData);
       'mainflux.AccessByIDReq' ->
@@ -1265,9 +1265,9 @@ verify_msg(Msg, MsgName, Opts) ->
     end.
 
 
--compile({nowarn_unused_function,'v_msg_mainflux.AccessReq'/3}).
--dialyzer({nowarn_function,'v_msg_mainflux.AccessReq'/3}).
-'v_msg_mainflux.AccessReq'(#{} = M, Path, TrUserData) ->
+-compile({nowarn_unused_function,'v_msg_mainflux.AccessByKeyReq'/3}).
+-dialyzer({nowarn_function,'v_msg_mainflux.AccessByKeyReq'/3}).
+'v_msg_mainflux.AccessByKeyReq'(#{} = M, Path, TrUserData) ->
     case M of
       #{token := F1} ->
 	  v_type_string(F1, [token | Path], TrUserData);
@@ -1285,13 +1285,13 @@ verify_msg(Msg, MsgName, Opts) ->
 		  end,
 		  maps:keys(M)),
     ok;
-'v_msg_mainflux.AccessReq'(M, Path, _TrUserData)
+'v_msg_mainflux.AccessByKeyReq'(M, Path, _TrUserData)
     when is_map(M) ->
     mk_type_error({missing_fields, [] -- maps:keys(M),
-		   'mainflux.AccessReq'},
+		   'mainflux.AccessByKeyReq'},
 		  M, Path);
-'v_msg_mainflux.AccessReq'(X, Path, _TrUserData) ->
-    mk_type_error({expected_msg, 'mainflux.AccessReq'}, X,
+'v_msg_mainflux.AccessByKeyReq'(X, Path, _TrUserData) ->
+    mk_type_error({expected_msg, 'mainflux.AccessByKeyReq'}, X,
 		  Path).
 
 -compile({nowarn_unused_function,'v_msg_mainflux.ThingID'/3}).
@@ -1467,7 +1467,7 @@ cons(Elem, Acc, _TrUserData) -> [Elem | Acc].
 
 
 get_msg_defs() ->
-    [{{msg, 'mainflux.AccessReq'},
+    [{{msg, 'mainflux.AccessByKeyReq'},
       [#{name => token, fnum => 1, rnum => 2, type => string,
 	 occurrence => optional, opts => []},
        #{name => chanID, fnum => 2, rnum => 3, type => string,
@@ -1490,7 +1490,7 @@ get_msg_defs() ->
 
 
 get_msg_names() ->
-    ['mainflux.AccessReq', 'mainflux.ThingID',
+    ['mainflux.AccessByKeyReq', 'mainflux.ThingID',
      'mainflux.AccessByIDReq', 'mainflux.Token',
      'mainflux.UserID', 'google.protobuf.Empty'].
 
@@ -1499,7 +1499,7 @@ get_group_names() -> [].
 
 
 get_msg_or_group_names() ->
-    ['mainflux.AccessReq', 'mainflux.ThingID',
+    ['mainflux.AccessByKeyReq', 'mainflux.ThingID',
      'mainflux.AccessByIDReq', 'mainflux.Token',
      'mainflux.UserID', 'google.protobuf.Empty'].
 
@@ -1519,7 +1519,7 @@ fetch_enum_def(EnumName) ->
     erlang:error({no_such_enum, EnumName}).
 
 
-find_msg_def('mainflux.AccessReq') ->
+find_msg_def('mainflux.AccessByKeyReq') ->
     [#{name => token, fnum => 1, rnum => 2, type => string,
        occurrence => optional, opts => []},
      #{name => chanID, fnum => 2, rnum => 3, type => string,
@@ -1562,7 +1562,7 @@ get_service_names() ->
 
 get_service_def('mainflux.ThingsService') ->
     {{service, 'mainflux.ThingsService'},
-     [#{name => 'CanAccess', input => 'mainflux.AccessReq',
+     [#{name => 'CanAccessByKey', input => 'mainflux.AccessByKeyReq',
 	output => 'mainflux.ThingID', input_stream => false,
 	output_stream => false, opts => []},
       #{name => 'CanAccessByID',
@@ -1582,7 +1582,7 @@ get_service_def(_) -> error.
 
 
 get_rpc_names('mainflux.ThingsService') ->
-    ['CanAccess', 'CanAccessByID', 'Identify'];
+    ['CanAccessByKey', 'CanAccessByID', 'Identify'];
 get_rpc_names('mainflux.UsersService') -> ['Identify'];
 get_rpc_names(_) -> error.
 
@@ -1594,8 +1594,8 @@ find_rpc_def('mainflux.UsersService', RpcName) ->
 find_rpc_def(_, _) -> error.
 
 
-'find_rpc_def_mainflux.ThingsService'('CanAccess') ->
-    #{name => 'CanAccess', input => 'mainflux.AccessReq',
+'find_rpc_def_mainflux.ThingsService'('CanAccessByKey') ->
+    #{name => 'CanAccessByKey', input => 'mainflux.AccessByKeyReq',
       output => 'mainflux.ThingID', input_stream => false,
       output_stream => false, opts => []};
 'find_rpc_def_mainflux.ThingsService'('CanAccessByID') ->
@@ -1648,8 +1648,8 @@ service_name_to_fqbin(X) ->
 %% Convert a a fully qualified (ie with package name) service name
 %% and an rpc name, both as binaries to a service name and an rpc
 %% name, as atoms.
-fqbins_to_service_and_rpc_name(<<"mainflux.ThingsService">>, <<"CanAccess">>) ->
-    {'mainflux.ThingsService', 'CanAccess'};
+fqbins_to_service_and_rpc_name(<<"mainflux.ThingsService">>, <<"CanAccessByKey">>) ->
+    {'mainflux.ThingsService', 'CanAccessByKey'};
 fqbins_to_service_and_rpc_name(<<"mainflux.ThingsService">>, <<"CanAccessByID">>) ->
     {'mainflux.ThingsService', 'CanAccessByID'};
 fqbins_to_service_and_rpc_name(<<"mainflux.ThingsService">>, <<"Identify">>) ->
@@ -1664,8 +1664,8 @@ fqbins_to_service_and_rpc_name(S, R) ->
 %% to a fully qualified (ie with package name) service name and
 %% an rpc name as binaries.
 service_and_rpc_name_to_fqbins('mainflux.ThingsService',
-			       'CanAccess') ->
-    {<<"mainflux.ThingsService">>, <<"CanAccess">>};
+			       'CanAccessByKey') ->
+    {<<"mainflux.ThingsService">>, <<"CanAccessByKey">>};
 service_and_rpc_name_to_fqbins('mainflux.ThingsService',
 			       'CanAccessByID') ->
     {<<"mainflux.ThingsService">>, <<"CanAccessByID">>};
@@ -1679,7 +1679,7 @@ service_and_rpc_name_to_fqbins(S, R) ->
     error({gpb_error, {badservice_or_rpc, {S, R}}}).
 
 
-fqbin_to_msg_name(<<"mainflux.AccessReq">>) -> 'mainflux.AccessReq';
+fqbin_to_msg_name(<<"mainflux.AccessByKeyReq">>) -> 'mainflux.AccessByKeyReq';
 fqbin_to_msg_name(<<"mainflux.ThingID">>) -> 'mainflux.ThingID';
 fqbin_to_msg_name(<<"mainflux.AccessByIDReq">>) -> 'mainflux.AccessByIDReq';
 fqbin_to_msg_name(<<"mainflux.Token">>) -> 'mainflux.Token';
@@ -1688,7 +1688,7 @@ fqbin_to_msg_name(<<"google.protobuf.Empty">>) -> 'google.protobuf.Empty';
 fqbin_to_msg_name(E) -> error({gpb_error, {badmsg, E}}).
 
 
-msg_name_to_fqbin('mainflux.AccessReq') -> <<"mainflux.AccessReq">>;
+msg_name_to_fqbin('mainflux.AccessByKeyReq') -> <<"mainflux.AccessByKeyReq">>;
 msg_name_to_fqbin('mainflux.ThingID') -> <<"mainflux.ThingID">>;
 msg_name_to_fqbin('mainflux.AccessByIDReq') -> <<"mainflux.AccessByIDReq">>;
 msg_name_to_fqbin('mainflux.Token') -> <<"mainflux.Token">>;
@@ -1736,7 +1736,7 @@ get_all_proto_names() -> ["internal", "empty"].
 
 
 get_msg_containment("internal") ->
-    ['mainflux.AccessByIDReq', 'mainflux.AccessReq',
+    ['mainflux.AccessByIDReq', 'mainflux.AccessByKeyReq',
      'mainflux.ThingID', 'mainflux.Token',
      'mainflux.UserID'];
 get_msg_containment("empty") ->
@@ -1759,7 +1759,7 @@ get_service_containment(P) ->
 
 
 get_rpc_containment("internal") ->
-    [{'mainflux.ThingsService', 'CanAccess'},
+    [{'mainflux.ThingsService', 'CanAccessByKey'},
      {'mainflux.ThingsService', 'CanAccessByID'},
      {'mainflux.ThingsService', 'Identify'},
      {'mainflux.UsersService', 'Identify'}];
@@ -1774,7 +1774,7 @@ get_enum_containment(P) ->
     error({gpb_error, {badproto, P}}).
 
 
-get_proto_by_msg_name_as_fqbin(<<"mainflux.AccessReq">>) -> "internal";
+get_proto_by_msg_name_as_fqbin(<<"mainflux.AccessByKeyReq">>) -> "internal";
 get_proto_by_msg_name_as_fqbin(<<"mainflux.AccessByIDReq">>) -> "internal";
 get_proto_by_msg_name_as_fqbin(<<"mainflux.UserID">>) -> "internal";
 get_proto_by_msg_name_as_fqbin(<<"mainflux.ThingID">>) -> "internal";

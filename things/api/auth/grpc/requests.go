@@ -5,12 +5,12 @@ package grpc
 
 import "github.com/mainflux/mainflux/things"
 
-type accessReq struct {
+type AccessByKeyReq struct {
 	thingKey string
 	chanID   string
 }
 
-func (req accessReq) validate() error {
+func (req AccessByKeyReq) validate() error {
 	if req.chanID == "" || req.thingKey == "" {
 		return things.ErrMalformedEntity
 	}

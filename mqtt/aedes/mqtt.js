@@ -226,7 +226,7 @@ aedes.authorizePublish = function (client, packet, publish) {
             }
         };
 
-    things.CanAccess(accessReq, onAuthorize);
+    things.CanAccessByKey(accessReq, onAuthorize);
 };
 
 
@@ -252,7 +252,7 @@ aedes.authorizeSubscribe = function (client, packet, subscribe) {
             }
         };
 
-    things.canAccess(accessReq, onAuthorize);
+    things.CanAccessByKey(accessReq, onAuthorize);
 };
 
 aedes.authenticate = function (client, username, password, acknowledge) {

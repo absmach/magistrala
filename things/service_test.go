@@ -827,7 +827,7 @@ func TestDisconnect(t *testing.T) {
 
 }
 
-func TestCanAccess(t *testing.T) {
+func TestCanAccessByKey(t *testing.T) {
 	svc := newService(map[string]string{token: email})
 
 	sth, _ := svc.AddThing(context.Background(), token, thing)
@@ -857,7 +857,7 @@ func TestCanAccess(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		_, err := svc.CanAccess(context.Background(), tc.channel, tc.token)
+		_, err := svc.CanAccessByKey(context.Background(), tc.channel, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }

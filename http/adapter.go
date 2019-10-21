@@ -27,11 +27,11 @@ func New(pub mainflux.MessagePublisher, things mainflux.ThingsServiceClient) mai
 }
 
 func (as *adapterService) Publish(ctx context.Context, token string, msg mainflux.RawMessage) error {
-	ar := &mainflux.AccessReq{
+	ar := &mainflux.AccessByKeyReq{
 		Token:  token,
 		ChanID: msg.GetChannel(),
 	}
-	thid, err := as.things.CanAccess(ctx, ar)
+	thid, err := as.things.CanAccessByKey(ctx, ar)
 	if err != nil {
 		return err
 	}

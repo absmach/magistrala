@@ -91,11 +91,11 @@ type Service interface {
 	// things.
 	Disconnect(context.Context, string, string, string) error
 
-	// CanAccess determines whether the channel can be accessed using the
+	// CanAccessByKey determines whether the channel can be accessed using the
 	// provided key and returns thing's id if access is allowed.
-	CanAccess(context.Context, string, string) (string, error)
+	CanAccessByKey(context.Context, string, string) (string, error)
 
-	// CanAccessByID determines whether the channnel can be accessed by
+	// CanAccessByID determines whether the channel can be accessed by
 	// the given thing and returns error if it cannot.
 	CanAccessByID(context.Context, string, string) error
 
@@ -311,7 +311,7 @@ func (ts *thingsService) Disconnect(ctx context.Context, token, chanID, thingID 
 	return ts.channels.Disconnect(ctx, res.GetValue(), chanID, thingID)
 }
 
-func (ts *thingsService) CanAccess(ctx context.Context, chanID, key string) (string, error) {
+func (ts *thingsService) CanAccessByKey(ctx context.Context, chanID, key string) (string, error) {
 	thingID, err := ts.hasThing(ctx, chanID, key)
 	if err == nil {
 		return thingID, nil

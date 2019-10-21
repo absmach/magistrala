@@ -27,7 +27,7 @@ var (
 	channel = things.Channel{Name: "test", Metadata: map[string]interface{}{"test": "test"}}
 )
 
-func TestCanAccess(t *testing.T) {
+func TestCanAccessByKey(t *testing.T) {
 	oth, _ := svc.AddThing(context.Background(), token, thing)
 	cth, _ := svc.AddThing(context.Background(), token, thing)
 	sch, _ := svc.CreateChannel(context.Background(), token, channel)
@@ -72,7 +72,7 @@ func TestCanAccess(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		id, err := cli.CanAccess(ctx, &mainflux.AccessReq{Token: tc.key, ChanID: tc.chanID})
+		id, err := cli.CanAccessByKey(ctx, &mainflux.AccessByKeyReq{Token: tc.key, ChanID: tc.chanID})
 		e, ok := status.FromError(err)
 		assert.True(t, ok, "OK expected to be true")
 		assert.Equal(t, tc.thingID, id.GetValue(), fmt.Sprintf("%s: expected %s got %s", desc, tc.thingID, id.GetValue()))

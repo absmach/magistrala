@@ -227,7 +227,7 @@ func (lm *loggingMiddleware) Disconnect(ctx context.Context, token, chanID, thin
 	return lm.svc.Disconnect(ctx, token, chanID, thingID)
 }
 
-func (lm *loggingMiddleware) CanAccess(ctx context.Context, id, key string) (thing string, err error) {
+func (lm *loggingMiddleware) CanAccessByKey(ctx context.Context, id, key string) (thing string, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method can_access for channel %s and thing %s took %s to complete", id, thing, time.Since(begin))
 		if err != nil {
@@ -237,7 +237,7 @@ func (lm *loggingMiddleware) CanAccess(ctx context.Context, id, key string) (thi
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.CanAccess(ctx, id, key)
+	return lm.svc.CanAccessByKey(ctx, id, key)
 }
 
 func (lm *loggingMiddleware) CanAccessByID(ctx context.Context, chanID, thingID string) (err error) {

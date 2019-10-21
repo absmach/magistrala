@@ -190,7 +190,7 @@ func (svc *mainfluxThings) RemoveChannel(context.Context, string, string) error 
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) CanAccess(context.Context, string, string) (string, error) {
+func (svc *mainfluxThings) CanAccessByKey(context.Context, string, string) (string, error) {
 	panic("not implemented")
 }
 

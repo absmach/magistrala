@@ -25,7 +25,7 @@ func NewThingsService() mainflux.ThingsServiceClient {
 	return thingsServiceMock{}
 }
 
-func (svc thingsServiceMock) CanAccess(ctx context.Context, in *mainflux.AccessReq, opts ...grpc.CallOption) (*mainflux.ThingID, error) {
+func (svc thingsServiceMock) CanAccessByKey(ctx context.Context, in *mainflux.AccessByKeyReq, opts ...grpc.CallOption) (*mainflux.ThingID, error) {
 	token := in.GetToken()
 	if token == "invalid" {
 		return nil, errUnauthorized

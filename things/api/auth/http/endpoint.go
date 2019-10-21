@@ -30,14 +30,14 @@ func identifyEndpoint(svc things.Service) endpoint.Endpoint {
 	}
 }
 
-func canAccessEndpoint(svc things.Service) endpoint.Endpoint {
+func canAccessByKeyEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(canAccessReq)
+		req := request.(canAccessByKeyReq)
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
-		id, err := svc.CanAccess(ctx, req.chanID, req.Token)
+		id, err := svc.CanAccessByKey(ctx, req.chanID, req.Token)
 		if err != nil {
 			return nil, err
 		}

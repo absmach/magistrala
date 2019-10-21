@@ -19,10 +19,10 @@ import (
 var _ mainflux.ThingsServiceClient = (*grpcClient)(nil)
 
 type grpcClient struct {
-	timeout       time.Duration
-	canAccess     endpoint.Endpoint
-	canAccessByID endpoint.Endpoint
-	identify      endpoint.Endpoint
+	timeout        time.Duration
+	canAccessByKey endpoint.Endpoint
+	canAccessByID  endpoint.Endpoint
+	identify       endpoint.Endpoint
 }
 
 // NewClient returns new gRPC client instance.
@@ -31,11 +31,11 @@ func NewClient(conn *grpc.ClientConn, tracer opentracing.Tracer, timeout time.Du
 
 	return &grpcClient{
 		timeout: timeout,
-		canAccess: kitot.TraceClient(tracer, "can_access")(kitgrpc.NewClient(
+		canAccessByKey: kitot.TraceClient(tracer, "can_access")(kitgrpc.NewClient(
 			conn,
 			svcName,
-			"CanAccess",
-			encodeCanAccessRequest,
+			"CanAccessByKey",
+			encodeCanAccessByKeyRequest,
 			decodeIdentityResponse,
 			mainflux.ThingID{},
 		).Endpoint()),
@@ -58,15 +58,15 @@ func NewClient(conn *grpc.ClientConn, tracer opentracing.Tracer, timeout time.Du
 	}
 }
 
-func (client grpcClient) CanAccess(ctx context.Context, req *mainflux.AccessReq, _ ...grpc.CallOption) (*mainflux.ThingID, error) {
+func (client grpcClient) CanAccessByKey(ctx context.Context, req *mainflux.AccessByKeyReq, _ ...grpc.CallOption) (*mainflux.ThingID, error) {
 	ctx, cancel := context.WithTimeout(ctx, client.timeout)
 	defer cancel()
 
-	ar := accessReq{
+	ar := AccessByKeyReq{
 		thingKey: req.GetToken(),
 		chanID:   req.GetChanID(),
 	}
-	res, err := client.canAccess(ctx, ar)
+	res, err := client.canAccessByKey(ctx, ar)
 	if err != nil {
 		return nil, err
 	}
@@ -99,9 +99,9 @@ func (client grpcClient) Identify(ctx context.Context, req *mainflux.Token, _ ..
 	return &mainflux.ThingID{Value: ir.id}, ir.err
 }
 
-func encodeCanAccessRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(accessReq)
-	return &mainflux.AccessReq{Token: req.thingKey, ChanID: req.chanID}, nil
+func encodeCanAccessByKeyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req := grpcReq.(AccessByKeyReq)
+	return &mainflux.AccessByKeyReq{Token: req.thingKey, ChanID: req.chanID}, nil
 }
 
 func encodeCanAccessByIDRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {

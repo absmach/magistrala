@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,47 +13,56 @@ import (
 	"strconv"
 	"syscall"
 
-	mqttPaho "github.com/eclipse/paho.mqtt.golang"
 	r "github.com/go-redis/redis"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/lora"
-	"github.com/mainflux/mainflux/lora/api"
-	"github.com/mainflux/mainflux/lora/mqtt"
-	pub "github.com/mainflux/mainflux/lora/nats"
+	"github.com/mainflux/mainflux/opcua"
+	"github.com/mainflux/mainflux/opcua/api"
+	"github.com/mainflux/mainflux/opcua/gopcua"
+	pub "github.com/mainflux/mainflux/opcua/nats"
+	"github.com/mainflux/mainflux/opcua/redis"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
-	"github.com/mainflux/mainflux/lora/redis"
 	nats "github.com/nats-io/go-nats"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
 const (
-	defHTTPPort     = "8180"
-	defLoraMsgURL   = "tcp://localhost:1883"
-	defNatsURL      = nats.DefaultURL
-	defLogLevel     = "error"
-	defESURL        = "localhost:6379"
-	defESPass       = ""
-	defESDB         = "0"
-	defInstanceName = "lora"
-	defRouteMapURL  = "localhost:6379"
-	defRouteMapPass = ""
-	defRouteMapDB   = "0"
+	defHTTPPort          = "8188"
+	defOPCServerURI      = "opc.tcp://opcua.rocks:4840"
+	defOPCNodeNamespace  = "0"
+	defOPCNodeIdentifier = "2256"
+	defOPCPolicy         = ""
+	defOPCMode           = ""
+	defOPCCertFile       = ""
+	defOPCKeyFile        = ""
+	defNatsURL           = nats.DefaultURL
+	defLogLevel          = "debug"
+	defESURL             = "localhost:6379"
+	defESPass            = ""
+	defESDB              = "0"
+	defInstanceName      = "opcua"
+	defRouteMapURL       = "localhost:6379"
+	defRouteMapPass      = ""
+	defRouteMapDB        = "0"
 
-	envHTTPPort     = "MF_LORA_ADAPTER_HTTP_PORT"
-	envLoraMsgURL   = "MF_LORA_ADAPTER_MESSAGES_URL"
-	envNatsURL      = "MF_NATS_URL"
-	envLogLevel     = "MF_LORA_ADAPTER_LOG_LEVEL"
-	envESURL        = "MF_THINGS_ES_URL"
-	envESPass       = "MF_THINGS_ES_PASS"
-	envESDB         = "MF_THINGS_ES_DB"
-	envInstanceName = "MF_LORA_ADAPTER_INSTANCE_NAME"
-	envRouteMapURL  = "MF_LORA_ADAPTER_ROUTEMAP_URL"
-	envRouteMapPass = "MF_LORA_ADAPTER_ROUTEMAP_PASS"
-	envRouteMapDB   = "MF_LORA_ADAPTER_ROUTEMAP_DB"
-
-	loraServerTopic = "application/+/device/+/rx"
+	envHTTPPort          = "MF_OPCUA_ADAPTER_HTTP_PORT"
+	envOPCServerURI      = "MF_OPCUA_ADAPTER_SERVER_URI"
+	envOPCNodeNamespace  = "MF_OPCUA_ADAPTER_NODE_NAMESPACE"
+	envOPCNodeIdentifier = "MF_OPCUA_ADAPTER_NODE_IDENTIFIER"
+	envOPCPolicy         = "MF_OPCUA_ADAPTER_POLICY"
+	envOPCMode           = "MF_OPCUA_ADAPTER_MODE"
+	envOPCCertFile       = "MF_OPCUA_ADAPTER_CERT_FILE"
+	envOPCKeyFile        = "MF_OPCUA_ADAPTER_KEY_FILE"
+	envNatsURL           = "MF_NATS_URL"
+	envLogLevel          = "MF_LORA_ADAPTER_LOG_LEVEL"
+	envESURL             = "MF_THINGS_ES_URL"
+	envESPass            = "MF_THINGS_ES_PASS"
+	envESDB              = "MF_THINGS_ES_DB"
+	envInstanceName      = "MF_OPCUA_ADAPTER_ROUTE_MAP_NAME"
+	envRouteMapURL       = "MF_OPCUA_ADAPTER_ROUTE_MAP_URL"
+	envRouteMapPass      = "MF_OPCUA_ADAPTER_ROUTE_MAP_PASS"
+	envRouteMapDB        = "MF_OPCUA_ADAPTER_ROUTE_MAP_DB"
 
 	thingsRMPrefix   = "thing"
 	channelsRMPrefix = "channel"
@@ -60,7 +70,7 @@ const (
 
 type config struct {
 	httpPort     string
-	loraMsgURL   string
+	opcConfig    opcua.Config
 	natsURL      string
 	logLevel     string
 	esURL        string
@@ -94,27 +104,25 @@ func main() {
 	thingRM := newRouteMapRepositoy(rmConn, thingsRMPrefix, logger)
 	chanRM := newRouteMapRepositoy(rmConn, channelsRMPrefix, logger)
 
-	mqttConn := connectToMQTTBroker(cfg.loraMsgURL, logger)
-
-	svc := lora.New(publisher, thingRM, chanRM)
+	svc := opcua.New(publisher, thingRM, chanRM)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,
 		kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
-			Namespace: "lora_adapter",
+			Namespace: "opc_adapter",
 			Subsystem: "api",
 			Name:      "request_count",
 			Help:      "Number of requests received.",
 		}, []string{"method"}),
 		kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
-			Namespace: "lora_adapter",
+			Namespace: "opc_adapter",
 			Subsystem: "api",
 			Name:      "request_latency_microseconds",
 			Help:      "Total duration of requests in microseconds.",
 		}, []string{"method"}),
 	)
 
-	go subscribeToLoRaBroker(svc, mqttConn, logger)
+	go subscribeToOpcServer(svc, cfg.opcConfig, logger)
 	go subscribeToThingsES(svc, esConn, cfg.instanceName, logger)
 
 	errs := make(chan error, 2)
@@ -128,13 +136,22 @@ func main() {
 	}()
 
 	err = <-errs
-	logger.Error(fmt.Sprintf("LoRa adapter terminated: %s", err))
+	logger.Error(fmt.Sprintf("OPC-UA adapter terminated: %s", err))
 }
 
 func loadConfig() config {
+	oc := opcua.Config{
+		ServerURI:      mainflux.Env(envOPCServerURI, defOPCServerURI),
+		NodeNamespace:  mainflux.Env(envOPCNodeNamespace, defOPCNodeNamespace),
+		NodeIdintifier: mainflux.Env(envOPCNodeIdentifier, defOPCNodeIdentifier),
+		Policy:         mainflux.Env(envOPCPolicy, defOPCPolicy),
+		Mode:           mainflux.Env(envOPCMode, defOPCMode),
+		CertFile:       mainflux.Env(envOPCCertFile, defOPCCertFile),
+		KeyFile:        mainflux.Env(envOPCKeyFile, defOPCKeyFile),
+	}
 	return config{
 		httpPort:     mainflux.Env(envHTTPPort, defHTTPPort),
-		loraMsgURL:   mainflux.Env(envLoraMsgURL, defLoraMsgURL),
+		opcConfig:    oc,
 		natsURL:      mainflux.Env(envNatsURL, defNatsURL),
 		logLevel:     mainflux.Env(envLogLevel, defLogLevel),
 		esURL:        mainflux.Env(envESURL, defESURL),
@@ -158,28 +175,6 @@ func connectToNATS(url string, logger logger.Logger) *nats.Conn {
 	return conn
 }
 
-func connectToMQTTBroker(loraURL string, logger logger.Logger) mqttPaho.Client {
-	opts := mqttPaho.NewClientOptions()
-	opts.AddBroker(loraURL)
-	opts.SetUsername("")
-	opts.SetPassword("")
-	opts.SetOnConnectHandler(func(c mqttPaho.Client) {
-		logger.Info("Connected to Lora MQTT broker")
-	})
-	opts.SetConnectionLostHandler(func(c mqttPaho.Client, err error) {
-		logger.Error(fmt.Sprintf("MQTT connection lost: %s", err.Error()))
-		os.Exit(1)
-	})
-
-	client := mqttPaho.NewClient(opts)
-	if token := client.Connect(); token.Wait() && token.Error() != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to Lora MQTT broker: %s", token.Error()))
-		os.Exit(1)
-	}
-
-	return client
-}
-
 func connectToRedis(redisURL, redisPass, redisDB string, logger logger.Logger) *r.Client {
 	db, err := strconv.Atoi(redisDB)
 	if err != nil {
@@ -194,30 +189,33 @@ func connectToRedis(redisURL, redisPass, redisDB string, logger logger.Logger) *
 	})
 }
 
-func subscribeToLoRaBroker(svc lora.Service, mc mqttPaho.Client, logger logger.Logger) {
-	mqtt := mqtt.NewBroker(svc, mc, logger)
-	logger.Info("Subscribed to Lora MQTT broker")
-	if err := mqtt.Subscribe(loraServerTopic); err != nil {
-		logger.Error(fmt.Sprintf("Failed to subscribe to Lora MQTT broker: %s", err))
-		os.Exit(1)
+func subscribeToOpcServer(svc opcua.Service, cfg opcua.Config, logger logger.Logger) {
+	ctx := context.Background()
+	gr := gopcua.NewReader(ctx, svc, logger)
+	if err := gr.Read(cfg); err != nil {
+		logger.Warn(fmt.Sprintf("OPC-UA Read failed: %s", err))
+	}
+
+	gc := gopcua.NewClient(ctx, svc, logger)
+	if err := gc.Subscribe(cfg); err != nil {
+		logger.Warn(fmt.Sprintf("OPC-UA Subscription failed: %s", err))
 	}
 }
 
-func subscribeToThingsES(svc lora.Service, client *r.Client, consumer string, logger logger.Logger) {
-	eventStore := redis.NewEventStore(svc, client, consumer, logger)
-	logger.Info("Subscribed to Redis Event Store")
+func subscribeToThingsES(svc opcua.Service, client *r.Client, prefix string, logger logger.Logger) {
+	eventStore := redis.NewEventStore(svc, client, prefix, logger)
 	if err := eventStore.Subscribe("mainflux.things"); err != nil {
-		logger.Warn(fmt.Sprintf("Lora-adapter service failed to subscribe to event sourcing: %s", err))
+		logger.Warn(fmt.Sprintf("Failed to subscribe to Redis event sourcing: %s", err))
 	}
 }
 
-func newRouteMapRepositoy(client *r.Client, prefix string, logger logger.Logger) lora.RouteMapRepository {
-	logger.Info(fmt.Sprintf("Connected to %s Redis Route map", prefix))
+func newRouteMapRepositoy(client *r.Client, prefix string, logger logger.Logger) opcua.RouteMapRepository {
+	logger.Info(fmt.Sprintf("Connected to %s Redis Route-map", prefix))
 	return redis.NewRouteMapRepository(client, prefix)
 }
 
 func startHTTPServer(cfg config, logger logger.Logger, errs chan error) {
 	p := fmt.Sprintf(":%s", cfg.httpPort)
-	logger.Info(fmt.Sprintf("lora-adapter service started, exposed port %s", cfg.httpPort))
+	logger.Info(fmt.Sprintf("opcua-adapter service started, exposed port %s", cfg.httpPort))
 	errs <- http.ListenAndServe(p, api.MakeHandler())
 }

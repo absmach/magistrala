@@ -257,6 +257,23 @@
   revision = "2e65f85255dbc3072edf28d6b5b8efc472979f5a"
 
 [[projects]]
+  digest = "1:d2fdcd6d010fb125c9eb685471cc70e5fc10815b9807465a3719d92900108b0b"
+  name = "github.com/gopcua/opcua"
+  packages = [
+    ".",
+    "debug",
+    "errors",
+    "id",
+    "ua",
+    "uacp",
+    "uapolicy",
+    "uasc",
+  ]
+  pruneopts = "UT"
+  revision = "9e6d888a7f3bc26f70a37bcaa4c8c7c323e3c20c"
+  version = "v0.1.6"
+
+[[projects]]
   digest = "1:e62657cca9badaa308d86e7716083e4c5933bb78e30a17743fc67f50be26f6f4"
   name = "github.com/gorilla/websocket"
   packages = ["."]
@@ -937,6 +954,8 @@
     "github.com/gogo/protobuf/proto",
     "github.com/golang/protobuf/proto",
     "github.com/golang/protobuf/ptypes/empty",
+    "github.com/gopcua/opcua",
+    "github.com/gopcua/opcua/ua",
     "github.com/gorilla/websocket",
     "github.com/hokaccha/go-prettyjson",
     "github.com/influxdata/influxdb/client/v2",

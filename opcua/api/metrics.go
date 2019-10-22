@@ -8,19 +8,19 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/metrics"
-	"github.com/mainflux/mainflux/lora"
+	"github.com/mainflux/mainflux/opcua"
 )
 
-var _ lora.Service = (*metricsMiddleware)(nil)
+var _ opcua.Service = (*metricsMiddleware)(nil)
 
 type metricsMiddleware struct {
 	counter metrics.Counter
 	latency metrics.Histogram
-	svc     lora.Service
+	svc     opcua.Service
 }
 
 // MetricsMiddleware instruments core service by tracking request count and latency.
-func MetricsMiddleware(svc lora.Service, counter metrics.Counter, latency metrics.Histogram) lora.Service {
+func MetricsMiddleware(svc opcua.Service, counter metrics.Counter, latency metrics.Histogram) opcua.Service {
 	return &metricsMiddleware{
 		counter: counter,
 		latency: latency,
@@ -28,22 +28,22 @@ func MetricsMiddleware(svc lora.Service, counter metrics.Counter, latency metric
 	}
 }
 
-func (mm *metricsMiddleware) CreateThing(mfxDevID string, loraDevEUI string) error {
+func (mm *metricsMiddleware) CreateThing(mfxDevID string, opcID string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "create_thing").Add(1)
 		mm.latency.With("method", "create_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.CreateThing(mfxDevID, loraDevEUI)
+	return mm.svc.CreateThing(mfxDevID, opcID)
 }
 
-func (mm *metricsMiddleware) UpdateThing(mfxDevID string, loraDevEUI string) error {
+func (mm *metricsMiddleware) UpdateThing(mfxDevID string, opcID string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_thing").Add(1)
 		mm.latency.With("method", "update_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.UpdateThing(mfxDevID, loraDevEUI)
+	return mm.svc.UpdateThing(mfxDevID, opcID)
 }
 
 func (mm *metricsMiddleware) RemoveThing(mfxDevID string) error {
@@ -55,22 +55,22 @@ func (mm *metricsMiddleware) RemoveThing(mfxDevID string) error {
 	return mm.svc.RemoveThing(mfxDevID)
 }
 
-func (mm *metricsMiddleware) CreateChannel(mfxChanID string, loraApp string) error {
+func (mm *metricsMiddleware) CreateChannel(mfxChanID string, opcNamespace string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "create_channel").Add(1)
 		mm.latency.With("method", "create_channel").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.CreateChannel(mfxChanID, loraApp)
+	return mm.svc.CreateChannel(mfxChanID, opcNamespace)
 }
 
-func (mm *metricsMiddleware) UpdateChannel(mfxChanID string, loraApp string) error {
+func (mm *metricsMiddleware) UpdateChannel(mfxChanID string, opcNamespace string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_channel").Add(1)
 		mm.latency.With("method", "update_channel").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.UpdateChannel(mfxChanID, loraApp)
+	return mm.svc.UpdateChannel(mfxChanID, opcNamespace)
 }
 
 func (mm *metricsMiddleware) RemoveChannel(mfxChanID string) error {
@@ -82,7 +82,7 @@ func (mm *metricsMiddleware) RemoveChannel(mfxChanID string) error {
 	return mm.svc.RemoveChannel(mfxChanID)
 }
 
-func (mm *metricsMiddleware) Publish(ctx context.Context, token string, m lora.Message) error {
+func (mm *metricsMiddleware) Publish(ctx context.Context, token string, m opcua.Message) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "publish").Add(1)
 		mm.latency.With("method", "publish").Observe(time.Since(begin).Seconds())

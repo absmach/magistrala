@@ -1,4 +1,4 @@
-package paho
+package mqtt
 
 // LoraSubscribe subscribe to lora server messages
 import (
@@ -12,9 +12,9 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-// MqttBroker represents the MQTT broker.
-type MqttBroker interface {
-	// Subscribes to geven subject and receives events.
+// Subscriber represents the MQTT broker.
+type Subscriber interface {
+	// Subscribes to given subject and receives events.
 	Subscribe(string) error
 }
 
@@ -25,7 +25,7 @@ type broker struct {
 }
 
 // NewBroker returns new MQTT broker instance.
-func NewBroker(svc lora.Service, client mqtt.Client, log logger.Logger) MqttBroker {
+func NewBroker(svc lora.Service, client mqtt.Client, log logger.Logger) Subscriber {
 	return broker{
 		svc:    svc,
 		client: client,

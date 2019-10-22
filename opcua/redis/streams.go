@@ -1,3 +1,6 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package redis
 
 import (
@@ -7,13 +10,13 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/lora"
+	"github.com/mainflux/mainflux/opcua"
 )
 
 const (
-	protocol = "lora"
+	protocol = "opcua"
 
-	group  = "mainflux.lora"
+	group  = "mainflux.opcua"
 	stream = "mainflux.things"
 
 	thingPrefix = "thing."
@@ -30,28 +33,24 @@ const (
 )
 
 var (
-	errMetadataType = errors.New("metadatada is not of type lora")
+	errMetadataType = errors.New("metadatada is not of type opcua")
 
-	errMetadataAppID = errors.New("application ID not found in channel metadatada")
+	errMetadataAppID = errors.New("Node Namespace not found in channel metadatada")
 
-	errMetadataDevEUI = errors.New("device EUI not found in thing metadatada")
+	errMetadataDevEUI = errors.New("Node Identifier not found in thing metadatada")
 )
 
-// Subscriber represents event source for things and channels provisioning.
-type Subscriber interface {
-	// Subscribes to geven subject and receives events.
-	Subscribe(string) error
-}
+var _ opcua.EventStore = (*eventStore)(nil)
 
 type eventStore struct {
-	svc      lora.Service
+	svc      opcua.Service
 	client   *redis.Client
 	consumer string
 	logger   logger.Logger
 }
 
 // NewEventStore returns new event store instance.
-func NewEventStore(svc lora.Service, client *redis.Client, consumer string, log logger.Logger) Subscriber {
+func NewEventStore(svc opcua.Service, client *redis.Client, consumer string, log logger.Logger) opcua.EventStore {
 	return eventStore{
 		svc:      svc,
 		client:   client,
@@ -137,11 +136,11 @@ func decodeCreateThing(event map[string]interface{}) (createThingEvent, error) {
 		id: read(event, "id", ""),
 	}
 
-	val, ok := metadata["lora"]
+	val, ok := metadata[protocol]
 	if !ok {
 		return createThingEvent{}, errMetadataType
 	}
-	if val.DevEUI == "" {
+	if val.ID == "" {
 		return createThingEvent{}, errMetadataDevEUI
 	}
 
@@ -160,11 +159,11 @@ func decodeUpdateThing(event map[string]interface{}) (updateThingEvent, error) {
 		id: read(event, "id", ""),
 	}
 
-	val, ok := metadata["lora"]
+	val, ok := metadata[protocol]
 	if !ok {
 		return updateThingEvent{}, errMetadataType
 	}
-	if val.DevEUI == "" {
+	if val.ID == "" {
 		return updateThingEvent{}, errMetadataDevEUI
 	}
 
@@ -190,11 +189,11 @@ func decodeCreateChannel(event map[string]interface{}) (createChannelEvent, erro
 		id: read(event, "id", ""),
 	}
 
-	val, ok := metadata["lora"]
+	val, ok := metadata[protocol]
 	if !ok {
 		return createChannelEvent{}, errMetadataType
 	}
-	if val.AppID == "" {
+	if val.Namespace == "" {
 		return createChannelEvent{}, errMetadataAppID
 	}
 
@@ -213,11 +212,11 @@ func decodeUpdateChannel(event map[string]interface{}) (updateChannelEvent, erro
 		id: read(event, "id", ""),
 	}
 
-	val, ok := metadata["lora"]
+	val, ok := metadata[protocol]
 	if !ok {
 		return updateChannelEvent{}, errMetadataType
 	}
-	if val.AppID == "" {
+	if val.Namespace == "" {
 		return updateChannelEvent{}, errMetadataAppID
 	}
 
@@ -232,11 +231,11 @@ func decodeRemoveChannel(event map[string]interface{}) removeChannelEvent {
 }
 
 func (es eventStore) handleCreateThing(cte createThingEvent) error {
-	return es.svc.CreateThing(cte.id, cte.metadata.DevEUI)
+	return es.svc.CreateThing(cte.id, cte.metadata.ID)
 }
 
 func (es eventStore) handleUpdateThing(ute updateThingEvent) error {
-	return es.svc.CreateThing(ute.id, ute.metadata.DevEUI)
+	return es.svc.CreateThing(ute.id, ute.metadata.ID)
 }
 
 func (es eventStore) handleRemoveThing(rte removeThingEvent) error {
@@ -244,11 +243,11 @@ func (es eventStore) handleRemoveThing(rte removeThingEvent) error {
 }
 
 func (es eventStore) handleCreateChannel(cce createChannelEvent) error {
-	return es.svc.CreateChannel(cce.id, cce.metadata.AppID)
+	return es.svc.CreateChannel(cce.id, cce.metadata.Namespace)
 }
 
 func (es eventStore) handleUpdateChannel(uce updateChannelEvent) error {
-	return es.svc.UpdateChannel(uce.id, uce.metadata.AppID)
+	return es.svc.UpdateChannel(uce.id, uce.metadata.Namespace)
 }
 
 func (es eventStore) handleRemoveChannel(rce removeChannelEvent) error {

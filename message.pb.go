@@ -9,6 +9,7 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	io "io"
 	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -20,7 +21,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // RawMessage represents a message emitted by the Mainflux adapters layer.
 type RawMessage struct {
@@ -49,7 +50,7 @@ func (m *RawMessage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_RawMessage.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -147,7 +148,7 @@ func (m *Message) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_Message.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -173,16 +174,16 @@ type isMessage_Value interface {
 }
 
 type Message_FloatValue struct {
-	FloatValue float64 `protobuf:"fixed64,7,opt,name=floatValue,proto3,oneof"`
+	FloatValue float64 `protobuf:"fixed64,7,opt,name=floatValue,proto3,oneof" json:"floatValue,omitempty"`
 }
 type Message_StringValue struct {
-	StringValue string `protobuf:"bytes,8,opt,name=stringValue,proto3,oneof"`
+	StringValue string `protobuf:"bytes,8,opt,name=stringValue,proto3,oneof" json:"stringValue,omitempty"`
 }
 type Message_BoolValue struct {
-	BoolValue bool `protobuf:"varint,9,opt,name=boolValue,proto3,oneof"`
+	BoolValue bool `protobuf:"varint,9,opt,name=boolValue,proto3,oneof" json:"boolValue,omitempty"`
 }
 type Message_DataValue struct {
-	DataValue string `protobuf:"bytes,10,opt,name=dataValue,proto3,oneof"`
+	DataValue string `protobuf:"bytes,10,opt,name=dataValue,proto3,oneof" json:"dataValue,omitempty"`
 }
 
 func (*Message_FloatValue) isMessage_Value()  {}
@@ -295,102 +296,14 @@ func (m *Message) GetLink() string {
 	return ""
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*Message) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _Message_OneofMarshaler, _Message_OneofUnmarshaler, _Message_OneofSizer, []interface{}{
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*Message) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*Message_FloatValue)(nil),
 		(*Message_StringValue)(nil),
 		(*Message_BoolValue)(nil),
 		(*Message_DataValue)(nil),
 	}
-}
-
-func _Message_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*Message)
-	// value
-	switch x := m.Value.(type) {
-	case *Message_FloatValue:
-		_ = b.EncodeVarint(7<<3 | proto.WireFixed64)
-		_ = b.EncodeFixed64(math.Float64bits(x.FloatValue))
-	case *Message_StringValue:
-		_ = b.EncodeVarint(8<<3 | proto.WireBytes)
-		_ = b.EncodeStringBytes(x.StringValue)
-	case *Message_BoolValue:
-		t := uint64(0)
-		if x.BoolValue {
-			t = 1
-		}
-		_ = b.EncodeVarint(9<<3 | proto.WireVarint)
-		_ = b.EncodeVarint(t)
-	case *Message_DataValue:
-		_ = b.EncodeVarint(10<<3 | proto.WireBytes)
-		_ = b.EncodeStringBytes(x.DataValue)
-	case nil:
-	default:
-		return fmt.Errorf("Message.Value has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _Message_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*Message)
-	switch tag {
-	case 7: // value.floatValue
-		if wire != proto.WireFixed64 {
-			return true, proto.ErrInternalBadWireType
-		}
-		x, err := b.DecodeFixed64()
-		m.Value = &Message_FloatValue{math.Float64frombits(x)}
-		return true, err
-	case 8: // value.stringValue
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		x, err := b.DecodeStringBytes()
-		m.Value = &Message_StringValue{x}
-		return true, err
-	case 9: // value.boolValue
-		if wire != proto.WireVarint {
-			return true, proto.ErrInternalBadWireType
-		}
-		x, err := b.DecodeVarint()
-		m.Value = &Message_BoolValue{x != 0}
-		return true, err
-	case 10: // value.dataValue
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		x, err := b.DecodeStringBytes()
-		m.Value = &Message_DataValue{x}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _Message_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*Message)
-	// value
-	switch x := m.Value.(type) {
-	case *Message_FloatValue:
-		n += 1 // tag and wire
-		n += 8
-	case *Message_StringValue:
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(len(x.StringValue)))
-		n += len(x.StringValue)
-	case *Message_BoolValue:
-		n += 1 // tag and wire
-		n += 1
-	case *Message_DataValue:
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(len(x.DataValue)))
-		n += len(x.DataValue)
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 // SumValue is a simple wrapper around the double value.
@@ -415,7 +328,7 @@ func (m *SumValue) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_SumValue.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -479,7 +392,7 @@ var fileDescriptor_33c57e4bae7b9afd = []byte{
 func (m *RawMessage) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -487,56 +400,68 @@ func (m *RawMessage) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *RawMessage) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RawMessage) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Channel) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintMessage(dAtA, i, uint64(len(m.Channel)))
-		i += copy(dAtA[i:], m.Channel)
-	}
-	if len(m.Subtopic) > 0 {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintMessage(dAtA, i, uint64(len(m.Subtopic)))
-		i += copy(dAtA[i:], m.Subtopic)
-	}
-	if len(m.Publisher) > 0 {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintMessage(dAtA, i, uint64(len(m.Publisher)))
-		i += copy(dAtA[i:], m.Publisher)
-	}
-	if len(m.Protocol) > 0 {
-		dAtA[i] = 0x22
-		i++
-		i = encodeVarintMessage(dAtA, i, uint64(len(m.Protocol)))
-		i += copy(dAtA[i:], m.Protocol)
-	}
-	if len(m.ContentType) > 0 {
-		dAtA[i] = 0x2a
-		i++
-		i = encodeVarintMessage(dAtA, i, uint64(len(m.ContentType)))
-		i += copy(dAtA[i:], m.ContentType)
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if len(m.Payload) > 0 {
-		dAtA[i] = 0x32
-		i++
+		i -= len(m.Payload)
+		copy(dAtA[i:], m.Payload)
 		i = encodeVarintMessage(dAtA, i, uint64(len(m.Payload)))
-		i += copy(dAtA[i:], m.Payload)
+		i--
+		dAtA[i] = 0x32
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if len(m.ContentType) > 0 {
+		i -= len(m.ContentType)
+		copy(dAtA[i:], m.ContentType)
+		i = encodeVarintMessage(dAtA, i, uint64(len(m.ContentType)))
+		i--
+		dAtA[i] = 0x2a
 	}
-	return i, nil
+	if len(m.Protocol) > 0 {
+		i -= len(m.Protocol)
+		copy(dAtA[i:], m.Protocol)
+		i = encodeVarintMessage(dAtA, i, uint64(len(m.Protocol)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.Publisher) > 0 {
+		i -= len(m.Publisher)
+		copy(dAtA[i:], m.Publisher)
+		i = encodeVarintMessage(dAtA, i, uint64(len(m.Publisher)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Subtopic) > 0 {
+		i -= len(m.Subtopic)
+		copy(dAtA[i:], m.Subtopic)
+		i = encodeVarintMessage(dAtA, i, uint64(len(m.Subtopic)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Channel) > 0 {
+		i -= len(m.Channel)
+		copy(dAtA[i:], m.Channel)
+		i = encodeVarintMessage(dAtA, i, uint64(len(m.Channel)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *Message) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -544,127 +469,166 @@ func (m *Message) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Message) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Message) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Channel) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintMessage(dAtA, i, uint64(len(m.Channel)))
-		i += copy(dAtA[i:], m.Channel)
-	}
-	if len(m.Subtopic) > 0 {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintMessage(dAtA, i, uint64(len(m.Subtopic)))
-		i += copy(dAtA[i:], m.Subtopic)
-	}
-	if len(m.Publisher) > 0 {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintMessage(dAtA, i, uint64(len(m.Publisher)))
-		i += copy(dAtA[i:], m.Publisher)
-	}
-	if len(m.Protocol) > 0 {
-		dAtA[i] = 0x22
-		i++
-		i = encodeVarintMessage(dAtA, i, uint64(len(m.Protocol)))
-		i += copy(dAtA[i:], m.Protocol)
-	}
-	if len(m.Name) > 0 {
-		dAtA[i] = 0x2a
-		i++
-		i = encodeVarintMessage(dAtA, i, uint64(len(m.Name)))
-		i += copy(dAtA[i:], m.Name)
-	}
-	if len(m.Unit) > 0 {
-		dAtA[i] = 0x32
-		i++
-		i = encodeVarintMessage(dAtA, i, uint64(len(m.Unit)))
-		i += copy(dAtA[i:], m.Unit)
-	}
-	if m.Value != nil {
-		nn1, err := m.Value.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += nn1
-	}
-	if m.ValueSum != nil {
-		dAtA[i] = 0x5a
-		i++
-		i = encodeVarintMessage(dAtA, i, uint64(m.ValueSum.Size()))
-		n2, err := m.ValueSum.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n2
-	}
-	if m.Time != 0 {
-		dAtA[i] = 0x61
-		i++
-		encoding_binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Time))))
-		i += 8
-	}
-	if m.UpdateTime != 0 {
-		dAtA[i] = 0x69
-		i++
-		encoding_binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.UpdateTime))))
-		i += 8
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if len(m.Link) > 0 {
-		dAtA[i] = 0x72
-		i++
+		i -= len(m.Link)
+		copy(dAtA[i:], m.Link)
 		i = encodeVarintMessage(dAtA, i, uint64(len(m.Link)))
-		i += copy(dAtA[i:], m.Link)
+		i--
+		dAtA[i] = 0x72
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.UpdateTime != 0 {
+		i -= 8
+		encoding_binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.UpdateTime))))
+		i--
+		dAtA[i] = 0x69
 	}
-	return i, nil
+	if m.Time != 0 {
+		i -= 8
+		encoding_binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Time))))
+		i--
+		dAtA[i] = 0x61
+	}
+	if m.ValueSum != nil {
+		{
+			size, err := m.ValueSum.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintMessage(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x5a
+	}
+	if m.Value != nil {
+		{
+			size := m.Value.Size()
+			i -= size
+			if _, err := m.Value.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+		}
+	}
+	if len(m.Unit) > 0 {
+		i -= len(m.Unit)
+		copy(dAtA[i:], m.Unit)
+		i = encodeVarintMessage(dAtA, i, uint64(len(m.Unit)))
+		i--
+		dAtA[i] = 0x32
+	}
+	if len(m.Name) > 0 {
+		i -= len(m.Name)
+		copy(dAtA[i:], m.Name)
+		i = encodeVarintMessage(dAtA, i, uint64(len(m.Name)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.Protocol) > 0 {
+		i -= len(m.Protocol)
+		copy(dAtA[i:], m.Protocol)
+		i = encodeVarintMessage(dAtA, i, uint64(len(m.Protocol)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.Publisher) > 0 {
+		i -= len(m.Publisher)
+		copy(dAtA[i:], m.Publisher)
+		i = encodeVarintMessage(dAtA, i, uint64(len(m.Publisher)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Subtopic) > 0 {
+		i -= len(m.Subtopic)
+		copy(dAtA[i:], m.Subtopic)
+		i = encodeVarintMessage(dAtA, i, uint64(len(m.Subtopic)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Channel) > 0 {
+		i -= len(m.Channel)
+		copy(dAtA[i:], m.Channel)
+		i = encodeVarintMessage(dAtA, i, uint64(len(m.Channel)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *Message_FloatValue) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
-	dAtA[i] = 0x39
-	i++
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Message_FloatValue) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i -= 8
 	encoding_binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.FloatValue))))
-	i += 8
-	return i, nil
+	i--
+	dAtA[i] = 0x39
+	return len(dAtA) - i, nil
 }
 func (m *Message_StringValue) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
-	dAtA[i] = 0x42
-	i++
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Message_StringValue) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i -= len(m.StringValue)
+	copy(dAtA[i:], m.StringValue)
 	i = encodeVarintMessage(dAtA, i, uint64(len(m.StringValue)))
-	i += copy(dAtA[i:], m.StringValue)
-	return i, nil
+	i--
+	dAtA[i] = 0x42
+	return len(dAtA) - i, nil
 }
 func (m *Message_BoolValue) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
-	dAtA[i] = 0x48
-	i++
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Message_BoolValue) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i--
 	if m.BoolValue {
 		dAtA[i] = 1
 	} else {
 		dAtA[i] = 0
 	}
-	i++
-	return i, nil
+	i--
+	dAtA[i] = 0x48
+	return len(dAtA) - i, nil
 }
 func (m *Message_DataValue) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
-	dAtA[i] = 0x52
-	i++
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Message_DataValue) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i -= len(m.DataValue)
+	copy(dAtA[i:], m.DataValue)
 	i = encodeVarintMessage(dAtA, i, uint64(len(m.DataValue)))
-	i += copy(dAtA[i:], m.DataValue)
-	return i, nil
+	i--
+	dAtA[i] = 0x52
+	return len(dAtA) - i, nil
 }
 func (m *SumValue) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -672,30 +636,38 @@ func (m *SumValue) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *SumValue) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SumValue) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Value != 0 {
-		dAtA[i] = 0x9
-		i++
-		encoding_binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Value))))
-		i += 8
-	}
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	if m.Value != 0 {
+		i -= 8
+		encoding_binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Value))))
+		i--
+		dAtA[i] = 0x9
+	}
+	return len(dAtA) - i, nil
 }
 
 func encodeVarintMessage(dAtA []byte, offset int, v uint64) int {
+	offset -= sovMessage(v)
+	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return offset + 1
+	return base
 }
 func (m *RawMessage) Size() (n int) {
 	if m == nil {
@@ -840,14 +812,7 @@ func (m *SumValue) Size() (n int) {
 }
 
 func sovMessage(x uint64) (n int) {
-	for {
-		n++
-		x >>= 7
-		if x == 0 {
-			break
-		}
-	}
-	return n
+	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozMessage(x uint64) (n int) {
 	return sovMessage(uint64((x << 1) ^ uint64((int64(x) >> 63))))
@@ -1600,6 +1565,7 @@ func (m *SumValue) Unmarshal(dAtA []byte) error {
 func skipMessage(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
+	depth := 0
 	for iNdEx < l {
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
@@ -1631,10 +1597,8 @@ func skipMessage(dAtA []byte) (n int, err error) {
 					break
 				}
 			}
-			return iNdEx, nil
 		case 1:
 			iNdEx += 8
-			return iNdEx, nil
 		case 2:
 			var length int
 			for shift := uint(0); ; shift += 7 {
@@ -1655,55 +1619,30 @@ func skipMessage(dAtA []byte) (n int, err error) {
 				return 0, ErrInvalidLengthMessage
 			}
 			iNdEx += length
-			if iNdEx < 0 {
-				return 0, ErrInvalidLengthMessage
-			}
-			return iNdEx, nil
 		case 3:
-			for {
-				var innerWire uint64
-				var start int = iNdEx
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return 0, ErrIntOverflowMessage
-					}
-					if iNdEx >= l {
-						return 0, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					innerWire |= (uint64(b) & 0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				innerWireType := int(innerWire & 0x7)
-				if innerWireType == 4 {
-					break
-				}
-				next, err := skipMessage(dAtA[start:])
-				if err != nil {
-					return 0, err
-				}
-				iNdEx = start + next
-				if iNdEx < 0 {
-					return 0, ErrInvalidLengthMessage
-				}
-			}
-			return iNdEx, nil
+			depth++
 		case 4:
-			return iNdEx, nil
+			if depth == 0 {
+				return 0, ErrUnexpectedEndOfGroupMessage
+			}
+			depth--
 		case 5:
 			iNdEx += 4
-			return iNdEx, nil
 		default:
 			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
 		}
+		if iNdEx < 0 {
+			return 0, ErrInvalidLengthMessage
+		}
+		if depth == 0 {
+			return iNdEx, nil
+		}
 	}
-	panic("unreachable")
+	return 0, io.ErrUnexpectedEOF
 }
 
 var (
-	ErrInvalidLengthMessage = fmt.Errorf("proto: negative length found during unmarshaling")
-	ErrIntOverflowMessage   = fmt.Errorf("proto: integer overflow")
+	ErrInvalidLengthMessage        = fmt.Errorf("proto: negative length found during unmarshaling")
+	ErrIntOverflowMessage          = fmt.Errorf("proto: integer overflow")
+	ErrUnexpectedEndOfGroupMessage = fmt.Errorf("proto: unexpected end of group")
 )

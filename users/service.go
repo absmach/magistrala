@@ -13,19 +13,33 @@ var (
 	// registration.
 	ErrConflict = errors.New("email already taken")
 
-	// ErrMalformedEntity indicates malformed entity specification (e.g.
-	// invalid username or password).
+	// ErrMalformedEntity indicates malformed entity specification
+	// (e.g. invalid username or password).
 	ErrMalformedEntity = errors.New("malformed entity specification")
 
 	// ErrUnauthorizedAccess indicates missing or invalid credentials provided
 	// when accessing a protected resource.
 	ErrUnauthorizedAccess = errors.New("missing or invalid credentials provided")
 
-	// ErrNotFound indicates a non-existent entity request.
+	// ErrNotFound indicates a non-existent entity request
 	ErrNotFound = errors.New("non-existent entity")
+
+	// ErrUserNotFound indicates a non-existent user request
+	ErrUserNotFound = errors.New("non-existent user")
 
 	// ErrScanMetadata indicates problem with metadata in db
 	ErrScanMetadata = errors.New("Failed to scan metadata")
+
+	// ErrMissingEmail indicates missing email for password reset request
+	ErrMissingEmail = errors.New("missing email for password reset")
+
+	// ErrMissingResetToken indicates malformed or missing reset token
+	// for reseting password
+	ErrMissingResetToken = errors.New("error missing reset token")
+
+	// ErrGeneratingResetToken indicates error in generating password recovery
+	// token
+	ErrGeneratingResetToken = errors.New("error missing reset token")
 )
 
 // Service specifies an API that must be fullfiled by the domain service
@@ -45,8 +59,22 @@ type Service interface {
 	// other reason, non-nil error values are returned in response.
 	Identify(string) (string, error)
 
-	// Get authenticated user info for the given token.
+	// Get authenticated user info for the given token
 	UserInfo(ctx context.Context, token string) (User, error)
+
+	// GenerateResetToken email where mail will be sent.
+	// host is used for generating reset link.
+	GenerateResetToken(_ context.Context, email, host string) error
+
+	// ChangePassword change users password for authenticated user.
+	ChangePassword(_ context.Context, authToken, password, oldPassword string) error
+
+	// ResetPassword change users password in reset flow.
+	// token can be authentication token or password reset token.
+	ResetPassword(_ context.Context, resetToken, password string) error
+
+	//SendPasswordReset sends reset password link to email
+	SendPasswordReset(_ context.Context, host, email, token string) error
 }
 
 var _ Service = (*usersService)(nil)
@@ -55,11 +83,13 @@ type usersService struct {
 	users  UserRepository
 	hasher Hasher
 	idp    IdentityProvider
+	token  Tokenizer
+	email  Emailer
 }
 
-// New instantiates the users service implementation.
-func New(users UserRepository, hasher Hasher, idp IdentityProvider) Service {
-	return &usersService{users: users, hasher: hasher, idp: idp}
+// New instantiates the users service implementation
+func New(users UserRepository, hasher Hasher, idp IdentityProvider, m Emailer, t Tokenizer) Service {
+	return &usersService{users: users, hasher: hasher, idp: idp, email: m, token: t}
 }
 
 func (svc usersService) Register(ctx context.Context, user User) error {
@@ -109,4 +139,68 @@ func (svc usersService) UserInfo(ctx context.Context, token string) (User, error
 		Password: "",
 		Metadata: dbUser.Metadata,
 	}, nil
+
+}
+
+func (svc usersService) GenerateResetToken(ctx context.Context, email, host string) error {
+	user, err := svc.users.RetrieveByID(ctx, email)
+	if err != nil || user.Email == "" {
+		return ErrUserNotFound
+	}
+
+	tok, err := svc.token.Generate(email, 0)
+	if err != nil {
+		return ErrGeneratingResetToken
+	}
+	return svc.SendPasswordReset(ctx, host, email, tok)
+}
+
+func (svc usersService) ResetPassword(ctx context.Context, resetToken, password string) error {
+	email, err := svc.token.Verify(resetToken)
+	if err != nil {
+		return err
+	}
+
+	u, err := svc.users.RetrieveByID(ctx, email)
+	if err != nil || u.Email == "" {
+		return ErrUserNotFound
+	}
+
+	password, err = svc.hasher.Hash(password)
+	if err != nil {
+		return err
+	}
+	return svc.users.UpdatePassword(ctx, email, password)
+}
+
+func (svc usersService) ChangePassword(ctx context.Context, authToken, password, oldPassword string) error {
+	email, err := svc.idp.Identity(authToken)
+	if err != nil {
+		return ErrUnauthorizedAccess
+	}
+
+	u := User{
+		Email:    email,
+		Password: oldPassword,
+	}
+	if _, err = svc.Login(ctx, u); err != nil {
+		return ErrUnauthorizedAccess
+	}
+
+	u, err = svc.users.RetrieveByID(ctx, email)
+	if err != nil || u.Email == "" {
+		return ErrUserNotFound
+	}
+
+	password, err = svc.hasher.Hash(password)
+	if err != nil {
+		return err
+	}
+	return svc.users.UpdatePassword(ctx, email, password)
+}
+
+// SendPasswordReset sends password recovery link to user
+func (svc usersService) SendPasswordReset(_ context.Context, host, email, token string) error {
+	to := []string{email}
+	return svc.email.SendPasswordReset(to, host, token)
 }

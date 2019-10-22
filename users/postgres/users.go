@@ -43,6 +43,20 @@ func (ur userRepository) Save(ctx context.Context, user users.User) error {
 	return nil
 }
 
+func (ur userRepository) Update(ctx context.Context, user users.User) error {
+	q := `UPDATE users SET(email, password, metadata) VALUES (:email, :password, :metadata) WHERE email = :email`
+
+	dbu := toDBUser(user)
+	if _, err := ur.db.NamedExecContext(ctx, q, dbu); err != nil {
+		if pqErr, ok := err.(*pq.Error); ok && errDuplicate == pqErr.Code.Name() {
+			return users.ErrConflict
+		}
+		return err
+	}
+
+	return nil
+}
+
 func (ur userRepository) RetrieveByID(ctx context.Context, email string) (users.User, error) {
 	q := `SELECT password, metadata FROM users WHERE email = $1`
 
@@ -59,6 +73,21 @@ func (ur userRepository) RetrieveByID(ctx context.Context, email string) (users.
 	user := toUser(dbu)
 
 	return user, nil
+}
+
+func (ur userRepository) UpdatePassword(ctx context.Context, email, password string) error {
+	q := `UPDATE users SET  password = :password  WHERE email = :email`
+
+	db := dbUser{
+		Email:    email,
+		Password: password,
+	}
+
+	if _, err := ur.db.NamedExecContext(ctx, q, db); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // dbMetadata type for handling metadata properly in database/sql

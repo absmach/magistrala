@@ -18,7 +18,9 @@ import (
 	log "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/users"
 	httpapi "github.com/mainflux/mainflux/users/api/http"
+	"github.com/mainflux/mainflux/users/jwt"
 	"github.com/mainflux/mainflux/users/mocks"
+	"github.com/mainflux/mainflux/users/token"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 )
@@ -52,6 +54,8 @@ func (tr testRequest) make() (*http.Response, error) {
 	if tr.contentType != "" {
 		req.Header.Set("Content-Type", tr.contentType)
 	}
+
+	req.Header.Set("Referer", "http://localhost")
 	return tr.client.Do(req)
 }
 
@@ -59,8 +63,10 @@ func newService() users.Service {
 	repo := mocks.NewUserRepository()
 	hasher := mocks.NewHasher()
 	idp := mocks.NewIdentityProvider()
+	token := mocks.NewTokenizer()
+	email := mocks.NewEmailer()
 
-	return users.New(repo, hasher, idp)
+	return users.New(repo, hasher, idp, email, token)
 }
 
 func newServer(svc users.Service) *httptest.Server {
@@ -119,8 +125,9 @@ func TestLogin(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 	client := ts.Client()
-
-	tokenData := toJSON(map[string]string{"token": user.Email})
+	j := jwt.New("secret")
+	token, _ := j.TemporaryKey(user.Email)
+	tokenData := toJSON(map[string]string{"token": token})
 	data := toJSON(user)
 	invalidEmailData := toJSON(users.User{
 		Email:    invalidEmail,
@@ -161,6 +168,219 @@ func TestLogin(t *testing.T) {
 			contentType: tc.contentType,
 			body:        strings.NewReader(tc.req),
 		}
+		res, err := req.make()
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		body, err := ioutil.ReadAll(res.Body)
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		token := strings.Trim(string(body), "\n")
+
+		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+		assert.Equal(t, tc.res, token, fmt.Sprintf("%s: expected body %s got %s", tc.desc, tc.res, token))
+	}
+}
+
+func TestPasswordResetRequest(t *testing.T) {
+	svc := newService()
+	ts := newServer(svc)
+	defer ts.Close()
+	client := ts.Client()
+	data := toJSON(user)
+
+	nonexistentData := toJSON(users.User{
+		Email:    "non-existentuser@example.com",
+		Password: "pass",
+	})
+
+	expectedNonExistent := toJSON(struct {
+		Msg string `json:"msg"`
+	}{
+		users.ErrUserNotFound.Error(),
+	})
+
+	expectedExisting := toJSON(struct {
+		Msg string `json:"msg"`
+	}{
+		httpapi.MailSent,
+	})
+
+	svc.Register(context.Background(), user)
+
+	cases := []struct {
+		desc        string
+		req         string
+		contentType string
+		status      int
+		res         string
+	}{
+		{"password reset request with valid email", data, contentType, http.StatusCreated, expectedExisting},
+		{"password reset request with invalid email", nonexistentData, contentType, http.StatusCreated, expectedNonExistent},
+		{"password reset request with invalid request format", "{", contentType, http.StatusBadRequest, ""},
+		{"password reset request with empty JSON request", "{}", contentType, http.StatusBadRequest, ""},
+		{"password reset request with empty request", "", contentType, http.StatusBadRequest, ""},
+		{"password reset request with missing content type", data, "", http.StatusUnsupportedMediaType, ""},
+	}
+
+	for _, tc := range cases {
+		req := testRequest{
+			client:      client,
+			method:      http.MethodPost,
+			url:         fmt.Sprintf("%s/password/reset-request", ts.URL),
+			contentType: tc.contentType,
+			body:        strings.NewReader(tc.req),
+		}
+		res, err := req.make()
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		body, err := ioutil.ReadAll(res.Body)
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		token := strings.Trim(string(body), "\n")
+
+		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+		assert.Equal(t, tc.res, token, fmt.Sprintf("%s: expected body %s got %s", tc.desc, tc.res, token))
+	}
+}
+
+func TestPasswordReset(t *testing.T) {
+	svc := newService()
+	ts := newServer(svc)
+	defer ts.Close()
+	client := ts.Client()
+	tokenizer := token.New([]byte("secret"), 1)
+	resData := struct {
+		Msg string `json:"msg"`
+	}{
+		"",
+	}
+	reqData := struct {
+		Token    string `json:"token,omitempty"`
+		Password string `json:"password,omitempty"`
+		ConfPass string `json:"confirm_password,omitempty"`
+	}{}
+
+	expectedSuccess := toJSON(resData)
+
+	resData.Msg = users.ErrUserNotFound.Error()
+	expectedNonExUser := toJSON(resData)
+
+	svc.Register(context.Background(), user)
+	tok, _ := tokenizer.Generate(user.Email, 0)
+
+	reqData.Password = user.Password
+	reqData.ConfPass = user.Password
+	reqData.Token = tok
+	reqExisting := toJSON(reqData)
+
+	reqData.Token, _ = tokenizer.Generate("non-existentuser@example.com", 0)
+
+	reqNoExist := toJSON(reqData)
+	reqData.Token, _ = tokenizer.Generate(user.Email, -5)
+
+	reqData.ConfPass = "wrong"
+	reqPassNoMatch := toJSON(reqData)
+
+	cases := []struct {
+		desc        string
+		req         string
+		contentType string
+		status      int
+		res         string
+		tok         string
+	}{
+		{"password reset with valid token", reqExisting, contentType, http.StatusCreated, expectedSuccess, tok},
+		{"password reset with invalid token", reqNoExist, contentType, http.StatusCreated, expectedNonExUser, tok},
+		{"password reset with confirm password not matching", reqPassNoMatch, contentType, http.StatusBadRequest, "", tok},
+		{"password reset request with invalid request format", "{", contentType, http.StatusBadRequest, "", tok},
+		{"password reset request with empty JSON request", "{}", contentType, http.StatusBadRequest, "", tok},
+		{"password reset request with empty request", "", contentType, http.StatusBadRequest, "", tok},
+		{"password reset request with missing content type", reqExisting, "", http.StatusUnsupportedMediaType, "", tok},
+	}
+
+	for _, tc := range cases {
+		req := testRequest{
+			client:      client,
+			method:      http.MethodPut,
+			url:         fmt.Sprintf("%s/password/reset", ts.URL),
+			contentType: tc.contentType,
+			body:        strings.NewReader(tc.req),
+		}
+
+		res, err := req.make()
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		body, err := ioutil.ReadAll(res.Body)
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		token := strings.Trim(string(body), "\n")
+
+		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+		assert.Equal(t, tc.res, token, fmt.Sprintf("%s: expected body %s got %s", tc.desc, tc.res, token))
+	}
+}
+
+func TestPasswordChange(t *testing.T) {
+	svc := newService()
+	ts := newServer(svc)
+	defer ts.Close()
+	client := ts.Client()
+	j := jwt.New("secret")
+	resData := struct {
+		Msg string `json:"msg"`
+	}{
+		"",
+	}
+	expectedSuccess := toJSON(resData)
+
+	reqData := struct {
+		Token    string `json:"token,omitempty"`
+		Password string `json:"password,omitempty"`
+		OldPassw string `json:"old_password,omitempty"`
+	}{}
+	resData.Msg = users.ErrUnauthorizedAccess.Error()
+	expectedNonExUser := toJSON(resData)
+
+	svc.Register(context.Background(), user)
+	tok, _ := j.TemporaryKey(user.Email)
+	tokNoUser, _ := j.TemporaryKey("non-existentuser@example.com")
+
+	reqData.Password = user.Password
+	reqData.OldPassw = user.Password
+	reqData.Token = tok
+	dataResExisting := toJSON(reqData)
+
+	reqData.Token, _ = j.TemporaryKey(user.Email)
+
+	reqNoExist := toJSON(reqData)
+	reqData.Token, _ = j.TemporaryKey(user.Email)
+
+	reqData.OldPassw = "wrong"
+	reqWrongPass := toJSON(reqData)
+
+	resData.Msg = users.ErrUnauthorizedAccess.Error()
+	expWronPassRes := toJSON(resData)
+
+	cases := []struct {
+		desc        string
+		req         string
+		contentType string
+		status      int
+		res         string
+		tok         string
+	}{
+		{"password change with valid token", dataResExisting, contentType, http.StatusCreated, expectedSuccess, tok},
+		{"password change with invalid token", reqNoExist, contentType, http.StatusCreated, expectedNonExUser, tokNoUser},
+		{"password change with invalid old password", reqWrongPass, contentType, http.StatusCreated, expWronPassRes, tok},
+		{"password change with empty JSON request", "{}", contentType, http.StatusBadRequest, "", tok},
+		{"password change empty request", "", contentType, http.StatusBadRequest, "", tok},
+		{"password change missing content type", dataResExisting, "", http.StatusUnsupportedMediaType, "", tok},
+	}
+
+	for _, tc := range cases {
+		req := testRequest{
+			client:      client,
+			method:      http.MethodPatch,
+			url:         fmt.Sprintf("%s/password", ts.URL),
+			contentType: tc.contentType,
+			body:        strings.NewReader(tc.req),
+			token:       tc.tok,
+		}
+
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		body, err := ioutil.ReadAll(res.Body)

@@ -27,3 +27,53 @@ func (req viewUserInfoReq) validate() error {
 	}
 	return nil
 }
+
+type passwResetReq struct {
+	Email string `json:"email"`
+	Host  string `json:"host"`
+}
+
+func (req passwResetReq) validate() error {
+	if req.Email == "" || req.Host == "" {
+		return users.ErrMalformedEntity
+	}
+	return nil
+}
+
+type resetTokenReq struct {
+	Token    string `json:"token"`
+	Password string `json:"password"`
+	ConfPass string `json:"confirm_password"`
+}
+
+func (req resetTokenReq) validate() error {
+	if req.Password == "" || req.ConfPass == "" {
+		return users.ErrMalformedEntity
+	}
+	if req.Token == "" {
+		return users.ErrMissingResetToken
+	}
+	if req.Password != req.ConfPass {
+		return users.ErrMalformedEntity
+	}
+	return nil
+}
+
+type passwChangeReq struct {
+	Token       string `json:"token"`
+	Password    string `json:"password"`
+	OldPassword string `json:"old_password"`
+}
+
+func (req passwChangeReq) validate() error {
+	if req.Token == "" {
+		return users.ErrUnauthorizedAccess
+	}
+	if req.Password == "" {
+		return users.ErrMalformedEntity
+	}
+	if req.OldPassword == "" {
+		return users.ErrUnauthorizedAccess
+	}
+	return nil
+}

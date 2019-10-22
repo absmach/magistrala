@@ -66,6 +66,8 @@ services:
   users:
     image: mainflux/users:latest
     container_name: mainflux-users
+    volumes:
+      - ../users/emailer/templates/${MF_EMAIL_TEMPLATE}:${MF_EMAIL_TEMPLATE}
     depends_on:
       - users-db
     expose:
@@ -82,6 +84,17 @@ services:
       MF_USERS_GRPC_PORT: ${MF_USERS_GRPC_PORT}
       MF_USERS_SECRET: ${MF_USERS_SECRET}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
+      MF_EMAIL_DRIVER: ${MF_EMAIL_DRIVER}
+      MF_EMAIL_HOST: ${MF_EMAIL_HOST}
+      MF_EMAIL_PORT: ${MF_EMAIL_PORT}
+      MF_EMAIL_USERNAME: ${MF_EMAIL_USERNAME}
+      MF_EMAIL_PASSWORD: ${MF_EMAIL_PASSWORD}
+      MF_EMAIL_FROM_ADDRESS: ${MF_EMAIL_FROM_ADDRESS}
+      MF_EMAIL_FROM_NAME: ${MF_EMAIL_FROM_NAME}
+      MF_TOKEN_SECRET: ${MF_TOKEN_SECRET}
+      MF_TOKEN_DURATION: ${MF_TOKEN_DURATION}
+      MF_TOKEN_RESET_ENDPOINT: ${MF_TOKEN_RESET_ENDPOINT}
+      MF_EMAIL_TEMPLATE: ${MF_EMAIL_TEMPLATE}
     ports:
       - ${MF_USERS_HTTP_PORT}:${MF_USERS_HTTP_PORT}
     networks:

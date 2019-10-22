@@ -34,6 +34,17 @@ default values.
 | MF_USERS_SERVER_KEY       | Path to server key in pem format                                        |                |
 | MF_USERS_SECRET           | String used for signing tokens                                          | users          |
 | MF_JAEGER_URL             | Jaeger server URL                                                       | localhost:6831 |
+| MF_EMAIL_DRIVER           | Mail server driver, mail server for sending reset password token        | smtp           |
+| MF_EMAIL_HOST             | Mail server host                                                        | localhost      |
+| MF_EMAIL_PORT             | Mail server port                                                        | 25             |
+| MF_EMAIL_USERNAME         | Mail server username                                                    |                |
+| MF_EMAIL_PASSWORD         | Mail server password                                                    |                |
+| MF_EMAIL_FROM_ADDRESS     | Email "from" address                                                    |                |
+| MF_EMAIL_FROM_NAME        | Email "from" name                                                       |                |
+| MF_TOKEN_SECRET           | Token secret for signing token used for password reset                  |                |
+| MF_TOKEN_DURATION         | Token duration in minutes                                               | 5              |
+| MF_TOKEN_DEBUG_LEVEL      | Token util debug level                                                  | info           |
+| MF_TOKEN_RESET_ENDPOINT   | Password request reset endpoint, for constructing link                  | /reset-request |
 
 ## Deployment
 
@@ -66,6 +77,17 @@ services:
       MF_USERS_SERVER_CERT: [String path to server certificate in pem format]
       MF_USERS_SERVER_KEY: [String path to server key in pem format]
       MF_JAEGER_URL: [Jaeger server URL]
+      MF_EMAIL_DRIVER: [Mail server driver smtp]
+      MF_EMAIL_HOST: [MF_EMAIL_HOST]
+      MF_EMAIL_PORT: [MF_EMAIL_PORT]
+      MF_EMAIL_USERNAME: [MF_EMAIL_USERNAME]
+      MF_EMAIL_PASSWORD: [MF_EMAIL_PASSWORD]
+      MF_EMAIL_FROM_ADDRESS: [MF_EMAIL_FROM_ADDRESS]
+      MF_EMAIL_FROM_NAME: [MF_EMAIL_FROM_NAME]
+      MF_TOKEN_SECRET: [MF_TOKEN_SECRET]
+      MF_TOKEN_DURATION: [MF_TOKEN_DURATION]
+      MF_TOKEN_DEBUG_LEVEL: [MF_TOKEN_DEBUG_LEVEL]
+      MF_TOKEN_RESET_ENDPOINT: [MF_TOKEN_RESET_ENDPOINT]
 ```
 
 To start the service outside of the container, execute the following shell script:

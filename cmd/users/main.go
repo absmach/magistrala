@@ -12,8 +12,13 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 
+	"github.com/mainflux/mainflux/internal/email"
+	"github.com/mainflux/mainflux/users"
+	"github.com/mainflux/mainflux/users/emailer"
+	"github.com/mainflux/mainflux/users/token"
 	"github.com/mainflux/mainflux/users/tracing"
 
 	"google.golang.org/grpc/credentials"
@@ -22,7 +27,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/users"
 	"github.com/mainflux/mainflux/users/api"
 	grpcapi "github.com/mainflux/mainflux/users/api/grpc"
 	httpapi "github.com/mainflux/mainflux/users/api/http"
@@ -53,6 +57,20 @@ const (
 	defServerKey     = ""
 	defJaegerURL     = ""
 
+	defEmailLogLevel    = "debug"
+	defEmailDriver      = "smtp"
+	defEmailHost        = "localhost"
+	defEmailPort        = "25"
+	defEmailUsername    = "root"
+	defEmailPassword    = ""
+	defEmailFromAddress = ""
+	defEmailFromName    = ""
+	defEmailTemplate    = "../configs/resetPasswEmail.tmpl"
+
+	defTokenSecret        = "mainflux-secret"
+	defTokenDuration      = "5"
+	defTokenResetEndpoint = "/reset-request" // URL where user lands after click on the reset link from email
+
 	envLogLevel      = "MF_USERS_LOG_LEVEL"
 	envDBHost        = "MF_USERS_DB_HOST"
 	envDBPort        = "MF_USERS_DB_PORT"
@@ -69,17 +87,39 @@ const (
 	envServerCert    = "MF_USERS_SERVER_CERT"
 	envServerKey     = "MF_USERS_SERVER_KEY"
 	envJaegerURL     = "MF_JAEGER_URL"
+
+	envEmailDriver      = "MF_EMAIL_DRIVER"
+	envEmailHost        = "MF_EMAIL_HOST"
+	envEmailPort        = "MF_EMAIL_PORT"
+	envEmailUsername    = "MF_EMAIL_USERNAME"
+	envEmailPassword    = "MF_EMAIL_PASSWORD"
+	envEmailFromAddress = "MF_EMAIL_FROM_ADDRESS"
+	envEmailFromName    = "MF_EMAIL_FROM_NAME"
+	envEmailLogLevel    = "MF_EMAIL_LOG_LEVEL"
+	envEmailTemplate    = "MF_EMAIL_TEMPLATE"
+
+	envTokenSecret        = "MF_TOKEN_SECRET"
+	envTokenDuration      = "MF_TOKEN_DURATION"
+	envTokenResetEndpoint = "MF_TOKEN_RESET_ENDPOINT"
 )
 
 type config struct {
 	logLevel   string
 	dbConfig   postgres.Config
+	emailConf  email.Config
+	tokenConf  tokenConfig
 	httpPort   string
 	grpcPort   string
 	secret     string
 	serverCert string
 	serverKey  string
 	jaegerURL  string
+	resetURL   string
+}
+
+type tokenConfig struct {
+	hmacSampleSecret []byte // secret for signing token
+	tokenDuration    string // token in duration in min
 }
 
 func main() {
@@ -99,7 +139,7 @@ func main() {
 	dbTracer, dbCloser := initJaeger("users_db", cfg.jaegerURL, logger)
 	defer dbCloser.Close()
 
-	svc := newService(db, dbTracer, cfg.secret, logger)
+	svc := newService(db, dbTracer, cfg, logger)
 	errs := make(chan error, 2)
 
 	go startHTTPServer(tracer, svc, cfg.httpPort, cfg.serverCert, cfg.serverKey, logger, errs)
@@ -128,16 +168,36 @@ func loadConfig() config {
 		SSLRootCert: mainflux.Env(envDBSSLRootCert, defDBSSLRootCert),
 	}
 
+	emailConf := email.Config{
+		Driver:      mainflux.Env(envEmailDriver, defEmailDriver),
+		FromAddress: mainflux.Env(envEmailFromAddress, defEmailFromAddress),
+		FromName:    mainflux.Env(envEmailFromName, defEmailFromName),
+		Host:        mainflux.Env(envEmailHost, defEmailHost),
+		Port:        mainflux.Env(envEmailPort, defEmailPort),
+		Username:    mainflux.Env(envEmailUsername, defEmailUsername),
+		Password:    mainflux.Env(envEmailPassword, defEmailPassword),
+		Template:    mainflux.Env(envEmailTemplate, defEmailTemplate),
+	}
+
+	tokenConf := tokenConfig{
+		hmacSampleSecret: []byte(mainflux.Env(envTokenSecret, defTokenSecret)),
+		tokenDuration:    mainflux.Env(envTokenDuration, defTokenDuration),
+	}
+
 	return config{
 		logLevel:   mainflux.Env(envLogLevel, defLogLevel),
 		dbConfig:   dbConfig,
+		emailConf:  emailConf,
+		tokenConf:  tokenConf,
 		httpPort:   mainflux.Env(envHTTPPort, defHTTPPort),
 		grpcPort:   mainflux.Env(envGRPCPort, defGRPCPort),
 		secret:     mainflux.Env(envSecret, defSecret),
 		serverCert: mainflux.Env(envServerCert, defServerCert),
 		serverKey:  mainflux.Env(envServerKey, defServerKey),
 		jaegerURL:  mainflux.Env(envJaegerURL, defJaegerURL),
+		resetURL:   mainflux.Env(envTokenResetEndpoint, defTokenResetEndpoint),
 	}
+
 }
 
 func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, io.Closer) {
@@ -173,13 +233,22 @@ func connectToDB(dbConfig postgres.Config, logger logger.Logger) *sqlx.DB {
 	return db
 }
 
-func newService(db *sqlx.DB, tracer opentracing.Tracer, secret string, logger logger.Logger) users.Service {
+func newService(db *sqlx.DB, tracer opentracing.Tracer, c config, logger logger.Logger) users.Service {
 	database := postgres.NewDatabase(db)
 	repo := tracing.UserRepositoryMiddleware(postgres.New(database), tracer)
 	hasher := bcrypt.New()
-	idp := jwt.New(secret)
+	idp := jwt.New(c.secret)
+	emailer, err := emailer.New(c.resetURL, &c.emailConf)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to configure e-mailing util: %s", err.Error()))
+	}
+	tDur, err := strconv.Atoi(mainflux.Env(envTokenDuration, defTokenDuration))
+	if err != nil {
+		logger.Error(err.Error())
+	}
+	tokenizer := token.New(c.tokenConf.hmacSampleSecret, tDur)
 
-	svc := users.New(repo, hasher, idp)
+	svc := users.New(repo, hasher, idp, emailer, tokenizer)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,

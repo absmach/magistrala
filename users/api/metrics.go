@@ -64,3 +64,39 @@ func (ms *metricsMiddleware) UserInfo(ctx context.Context, key string) (users.Us
 
 	return ms.svc.UserInfo(ctx, key)
 }
+
+func (ms *metricsMiddleware) GenerateResetToken(ctx context.Context, email, host string) error {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "generate_reset_token").Add(1)
+		ms.latency.With("method", "generate_reset_token").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.GenerateResetToken(ctx, email, host)
+}
+
+func (ms *metricsMiddleware) ChangePassword(ctx context.Context, email, password, oldPassword string) error {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "change_password").Add(1)
+		ms.latency.With("method", "change_password").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.ChangePassword(ctx, email, password, oldPassword)
+}
+
+func (ms *metricsMiddleware) ResetPassword(ctx context.Context, email, password string) error {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "reset_password").Add(1)
+		ms.latency.With("method", "reset_password").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.ResetPassword(ctx, email, password)
+}
+
+func (ms *metricsMiddleware) SendPasswordReset(ctx context.Context, host, email, token string) error {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "send_password_reset").Add(1)
+		ms.latency.With("method", "send_password_reset").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.SendPasswordReset(ctx, host, email, token)
+}

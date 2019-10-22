@@ -76,3 +76,55 @@ func (lm *loggingMiddleware) UserInfo(ctx context.Context, key string) (u users.
 
 	return lm.svc.UserInfo(ctx, key)
 }
+
+func (lm *loggingMiddleware) GenerateResetToken(ctx context.Context, email, host string) (err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method generate_reset_token for user %s took %s to complete", email, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.GenerateResetToken(ctx, email, host)
+}
+
+func (lm *loggingMiddleware) ChangePassword(ctx context.Context, email, password, oldPassword string) (err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method change_password for user %s took %s to complete", email, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.ChangePassword(ctx, email, password, oldPassword)
+}
+
+func (lm *loggingMiddleware) ResetPassword(ctx context.Context, email, password string) (err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method reset_password for user %s took %s to complete", email, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.ResetPassword(ctx, email, password)
+}
+
+func (lm *loggingMiddleware) SendPasswordReset(ctx context.Context, host, email, token string) (err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method send_password_reset for user %s took %s to complete", email, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.SendPasswordReset(ctx, host, email, token)
+}

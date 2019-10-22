@@ -26,6 +26,9 @@ const contentType = "application/json"
 
 var (
 	errUnsupportedContentType = errors.New("unsupported content type")
+	errMissingRefererHeader   = errors.New("missing referer header")
+	errInvalidToken           = errors.New("invalid token")
+	errNoTokenSupplied        = errors.New("no token supplied")
 	logger                    log.Logger
 )
 
@@ -47,8 +50,29 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 	))
 
 	mux.Get("/users", kithttp.NewServer(
-		kitot.TraceServer(tracer, "register")(userInfoEndpoint(svc)),
+		kitot.TraceServer(tracer, "user_info")(userInfoEndpoint(svc)),
 		decodeViewInfo,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Post("/password/reset-request", kithttp.NewServer(
+		kitot.TraceServer(tracer, "res-req")(passwordResetRequestEndpoint(svc)),
+		decodePasswordResetRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Put("/password/reset", kithttp.NewServer(
+		kitot.TraceServer(tracer, "reset")(passwordResetEndpoint(svc)),
+		decodePasswordReset,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Patch("/password", kithttp.NewServer(
+		kitot.TraceServer(tracer, "reset")(passwordChangeEndpoint(svc)),
+		decodePasswordChange,
 		encodeResponse,
 		opts...,
 	))
@@ -56,6 +80,13 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 	mux.Post("/tokens", kithttp.NewServer(
 		kitot.TraceServer(tracer, "login")(loginEndpoint(svc)),
 		decodeCredentials,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Get("/users", kithttp.NewServer(
+		kitot.TraceServer(tracer, "user_info")(userInfoEndpoint(svc)),
+		decodeViewInfo,
 		encodeResponse,
 		opts...,
 	))
@@ -88,6 +119,67 @@ func decodeCredentials(_ context.Context, r *http.Request) (interface{}, error) 
 	return userReq{user}, nil
 }
 
+func decodePasswordResetRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		logger.Warn("Invalid or missing content type.")
+		return nil, errUnsupportedContentType
+	}
+
+	var req passwResetReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Warn(fmt.Sprintf("Failed to decode reset request: %s", err))
+		return nil, err
+	}
+
+	req.Host = r.Header.Get("Referer")
+	return req, nil
+}
+
+func decodePasswordReset(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		logger.Warn("Invalid or missing content type.")
+		return nil, errUnsupportedContentType
+	}
+
+	var req resetTokenReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Warn(fmt.Sprintf("Failed to decode reset request: %s", err))
+		return nil, err
+	}
+
+	return req, nil
+}
+
+func decodePasswordChange(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		logger.Warn("Invalid or missing content type.")
+		return nil, errUnsupportedContentType
+	}
+
+	var req passwChangeReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Warn(fmt.Sprintf("Failed to decode reset request: %s", err))
+		return nil, err
+	}
+
+	req.Token = r.Header.Get("Authorization")
+
+	return req, nil
+}
+
+func decodeToken(_ context.Context, r *http.Request) (interface{}, error) {
+	vals := bone.GetQuery(r, "token")
+	if len(vals) > 1 {
+		return "", errInvalidToken
+	}
+
+	if len(vals) == 0 {
+		return "", errNoTokenSupplied
+	}
+	t := vals[0]
+	return t, nil
+
+}
 func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-Type", contentType)
 
@@ -114,6 +206,8 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusBadRequest)
 	case users.ErrUnauthorizedAccess:
 		w.WriteHeader(http.StatusForbidden)
+	case users.ErrUserNotFound:
+		w.WriteHeader(http.StatusNotFound)
 	case users.ErrConflict:
 		w.WriteHeader(http.StatusConflict)
 	case errUnsupportedContentType:

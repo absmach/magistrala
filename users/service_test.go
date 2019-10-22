@@ -21,8 +21,10 @@ func newService() users.Service {
 	repo := mocks.NewUserRepository()
 	hasher := mocks.NewHasher()
 	idp := mocks.NewIdentityProvider()
+	token := mocks.NewTokenizer()
+	e := mocks.NewEmailer()
 
-	return users.New(repo, hasher, idp)
+	return users.New(repo, hasher, idp, e, token)
 }
 
 func TestRegister(t *testing.T) {

@@ -12,6 +12,7 @@ import (
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/users"
 	grpcapi "github.com/mainflux/mainflux/users/api/grpc"
+	"github.com/mainflux/mainflux/users/jwt"
 	"github.com/mainflux/mainflux/users/mocks"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
@@ -35,8 +36,10 @@ func newService() users.Service {
 	repo := mocks.NewUserRepository()
 	hasher := mocks.NewHasher()
 	idp := mocks.NewIdentityProvider()
+	token := mocks.NewTokenizer()
+	email := mocks.NewEmailer()
 
-	return users.New(repo, hasher, idp)
+	return users.New(repo, hasher, idp, email, token)
 }
 
 func startGRPCServer(svc users.Service, port int) {
@@ -52,13 +55,15 @@ func TestIdentify(t *testing.T) {
 	usersAddr := fmt.Sprintf("localhost:%d", port)
 	conn, _ := grpc.Dial(usersAddr, grpc.WithInsecure())
 	client := grpcapi.NewClient(mocktracer.New(), conn, time.Second)
+	j := jwt.New("secret")
+	token, _ := j.TemporaryKey(user.Email)
 
 	cases := map[string]struct {
 		token string
 		id    string
 		err   error
 	}{
-		"identify user with valid token":   {user.Email, user.Email, nil},
+		"identify user with valid token":   {token, user.Email, nil},
 		"identify user that doesn't exist": {"", "", status.Error(codes.InvalidArgument, "received invalid token request")},
 	}
 

@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	httpapi "github.com/mainflux/mainflux/users/api/http"
+	"github.com/mainflux/mainflux/users/jwt"
 
 	"github.com/mainflux/mainflux/users"
 	"github.com/mainflux/mainflux/users/mocks"
@@ -28,8 +29,10 @@ func newUserService() users.Service {
 	repo := mocks.NewUserRepository()
 	hasher := mocks.NewHasher()
 	idp := mocks.NewIdentityProvider()
+	tok := mocks.NewTokenizer()
+	emailer := mocks.NewEmailer()
 
-	return users.New(repo, hasher, idp)
+	return users.New(repo, hasher, idp, emailer, tok)
 }
 
 func newUserServer(svc users.Service) *httptest.Server {
@@ -116,6 +119,8 @@ func TestCreateToken(t *testing.T) {
 
 	mainfluxSDK := sdk.NewSDK(sdkConf)
 	user := sdk.User{Email: "user@example.com", Password: "password"}
+	j := jwt.New("secret")
+	token, _ := j.TemporaryKey(user.Email)
 	mainfluxSDK.CreateUser(user)
 	cases := []struct {
 		desc  string
@@ -126,7 +131,7 @@ func TestCreateToken(t *testing.T) {
 		{
 			desc:  "create token for user",
 			user:  user,
-			token: user.Email,
+			token: token,
 			err:   nil,
 		},
 		{

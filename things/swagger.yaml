@@ -315,7 +315,7 @@ paths:
     get:
       summary: Retrieves list of channels connected to specified thing
       description: |
-        Retrieves list of channnels connected to specified thing with pagination
+        Retrieves list of channels connected to specified thing with pagination
         metadata.
       tags:
         - channels
@@ -503,9 +503,9 @@ parameters:
     type: string
     minimum: 0
     required: false
-  Metadata
+  Metadata:
     name: metadata
-    descripton: Metadata filter. Filtering is performed matching the parametar with metadata on top level. Parametar is json.
+    description: Metadata filter. Filtering is performed matching the parameter with metadata on top level. Parameter is json.
     in: query
     type: string
     minimum: 0
@@ -513,7 +513,7 @@ parameters:
 
 responses:
   ServiceError:
-    description: Unexpected server-side error occured.
+    description: Unexpected server-side error occurred.
 
 definitions:
   ChannelsPage:

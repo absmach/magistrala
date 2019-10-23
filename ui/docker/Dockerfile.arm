@@ -10,7 +10,7 @@
 FROM node:10.15.1-alpine as builder
 
 WORKDIR /app
-RUN npm install --unsafe-perm=true --allow-root -g elm
+RUN npm install --unsafe-perm=true --allow-root -g elm@latest-0.19.0
 
 COPY . /app
 RUN elm make --optimize src/Main.elm --output=main.js

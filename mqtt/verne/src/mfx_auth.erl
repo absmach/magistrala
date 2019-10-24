@@ -147,16 +147,23 @@ auth_on_subscribe(UserName, ClientId, [{Topic, _QoS}|_] = Topics) ->
 
 %%% Redis ES
 publish_event(UserName, Type) ->
-    Timestamp = os:system_time(second),
-    [{_, InstanceId}] = ets:lookup(mfx_cfg, instance_id),
-    KeyValuePairs = [
-        "mainflux.mqtt", "*",
-        "thing_id", binary_to_list(UserName),
-        "timestamp", integer_to_list(Timestamp),
-        "event_type", Type,
-        "instance", InstanceId
-    ],
-    mfx_redis:publish(KeyValuePairs).
+    case ets:lookup(mfx_cfg, es_active) of
+        [{_, true}] ->
+            Timestamp = os:system_time(second),
+            [{_, InstanceId}] = ets:lookup(mfx_cfg, instance_id),
+            KeyValuePairs = [
+                "mainflux.mqtt", "*",
+                "thing_id", binary_to_list(UserName),
+                "timestamp", integer_to_list(Timestamp),
+                "event_type", Type,
+                "instance", InstanceId
+            ],
+            mfx_redis:publish(KeyValuePairs);
+        [{_, false}] ->
+            ok
+    end.
+            
+
 
 on_register(_Peer, {_Mountpoint, ClientId} = _SubscriberId, UserName) ->
     error_logger:info_msg("on_register, UserName: ~p, ClientId: ~p", [UserName, ClientId]),

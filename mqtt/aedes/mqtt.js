@@ -29,6 +29,7 @@ var config = {
         redis_pass: process.env.MF_MQTT_ADAPTER_REDIS_PASS || 'mqtt',
         redis_db: Number(process.env.MF_MQTT_ADAPTER_REDIS_DB) || 0,
         message_ttl: Number(process.env.MF_MQTT_ADAPTER_MESSAGE_TTL) || 60, // in seconds
+        es_active: (process.env.MF_MQTT_ADAPTER_ES_ACTIVE === 'true') || false,
         es_port: Number(process.env.MF_MQTT_ADAPTER_ES_PORT) || 6379,
         es_host: process.env.MF_MQTT_ADAPTER_ES_HOST || 'localhost',
         es_pass: process.env.MF_MQTT_ADAPTER_ES_PASS || 'mqtt',

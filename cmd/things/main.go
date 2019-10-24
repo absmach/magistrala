@@ -57,6 +57,7 @@ const (
 	defCacheURL        = "localhost:6379"
 	defCachePass       = ""
 	defCacheDB         = "0"
+	defESActive        = "true"
 	defESURL           = "localhost:6379"
 	defESPass          = ""
 	defESDB            = "0"
@@ -86,6 +87,7 @@ const (
 	envCacheURL        = "MF_THINGS_CACHE_URL"
 	envCachePass       = "MF_THINGS_CACHE_PASS"
 	envCacheDB         = "MF_THINGS_CACHE_DB"
+	envESActive        = "MF_THINGS_ES_ACTIVE"
 	envESURL           = "MF_THINGS_ES_URL"
 	envESPass          = "MF_THINGS_ES_PASS"
 	envESDB            = "MF_THINGS_ES_DB"
@@ -109,6 +111,7 @@ type config struct {
 	cacheURL        string
 	cachePass       string
 	cacheDB         string
+	esActive        bool
 	esURL           string
 	esPass          string
 	esDB            string
@@ -156,7 +159,7 @@ func main() {
 	cacheTracer, cacheCloser := initJaeger("things_cache", cfg.jaegerURL, logger)
 	defer cacheCloser.Close()
 
-	svc := newService(users, dbTracer, cacheTracer, db, cacheClient, esClient, logger)
+	svc := newService(users, dbTracer, cacheTracer, db, cacheClient, esClient, cfg, logger)
 	errs := make(chan error, 2)
 
 	go startHTTPServer(thhttpapi.MakeHandler(thingsTracer, svc), cfg.httpPort, cfg, logger, errs)
@@ -184,6 +187,11 @@ func loadConfig() config {
 		log.Fatalf("Invalid %s value: %s", envUsersTimeout, err.Error())
 	}
 
+	esActive, err := strconv.ParseBool(mainflux.Env(envESActive, defESActive))
+	if err != nil {
+		log.Fatalf("Invalid %s value: %s", envESActive, err.Error())
+	}
+
 	dbConfig := postgres.Config{
 		Host:        mainflux.Env(envDBHost, defDBHost),
 		Port:        mainflux.Env(envDBPort, defDBPort),
@@ -204,6 +212,7 @@ func loadConfig() config {
 		cacheURL:        mainflux.Env(envCacheURL, defCacheURL),
 		cachePass:       mainflux.Env(envCachePass, defCachePass),
 		cacheDB:         mainflux.Env(envCacheDB, defCacheDB),
+		esActive:        esActive,
 		esURL:           mainflux.Env(envESURL, defESURL),
 		esPass:          mainflux.Env(envESPass, defESPass),
 		esDB:            mainflux.Env(envESDB, defESDB),
@@ -301,7 +310,7 @@ func connectToUsers(cfg config, logger logger.Logger) *grpc.ClientConn {
 	return conn
 }
 
-func newService(users mainflux.UsersServiceClient, dbTracer opentracing.Tracer, cacheTracer opentracing.Tracer, db *sqlx.DB, cacheClient *redis.Client, esClient *redis.Client, logger logger.Logger) things.Service {
+func newService(users mainflux.UsersServiceClient, dbTracer opentracing.Tracer, cacheTracer opentracing.Tracer, db *sqlx.DB, cacheClient *redis.Client, esClient *redis.Client, cfg config, logger logger.Logger) things.Service {
 	database := postgres.NewDatabase(db)
 
 	thingsRepo := postgres.NewThingRepository(database)
@@ -318,7 +327,9 @@ func newService(users mainflux.UsersServiceClient, dbTracer opentracing.Tracer, 
 	idp := uuid.New()
 
 	svc := things.New(users, thingsRepo, channelsRepo, chanCache, thingCache, idp)
-	svc = rediscache.NewEventStoreMiddleware(svc, esClient)
+	if cfg.esActive {
+		svc = rediscache.NewEventStoreMiddleware(svc, esClient)
+	}
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,

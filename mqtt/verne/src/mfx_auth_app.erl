@@ -22,6 +22,10 @@ start(_StartType, _StartArgs) ->
         false -> "nats://localhost:4222";
         NatsEnv -> NatsEnv
     end,
+    ESActive = case os:getenv("MF_MQTT_ADAPTER_ES_ACTIVE") of
+        false -> false;
+        ESActiveEnv -> ESActiveEnv
+    end,
     RedisUrl = case os:getenv("MF_MQTT_ADAPTER_ES_URL") of
         false -> "tcp://localhost:6379";
         RedisEnv -> RedisEnv
@@ -35,6 +39,7 @@ start(_StartType, _StartArgs) ->
     ets:insert(mfx_cfg, [
         {grpc_url, GrpcUrl},
         {nats_url, NatsUrl},
+        {es_active, ESActive},
         {redis_url, RedisUrl},
         {instance_id, InstanceId}
     ]),

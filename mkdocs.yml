@@ -31,6 +31,7 @@ pages:
   - Messaging: messaging.md
   - Storage: storage.md
   - LoRa: lora.md
+  - OPC-UA: opcua.md
   - Security: security.md
   - Authentication: authentication.md
   - CLI: cli.md

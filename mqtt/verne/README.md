@@ -9,12 +9,11 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable                  | Description                      | Default               |
-|---------------------------|----------------------------------|-----------------------|
-| MF_NATS_URL               | NATS instance URL                | nats://localhost:4222 |
-| MF_THINGS_AUTH_HTTP_URL   | Things service HTTP URL for Auth | http://localhost:8989 |
-| MF_MQTT_ADAPTER_ES_ACTIVE | Event stream active flag         | false                 |
-| MF_MQTT_ADAPTER_ES_URL    | Redis ES URL                     | http://localhost:6379 |
+| Variable                | Description                      | Default               |
+|-------------------------|----------------------------------|-----------------------|
+| MF_NATS_URL             | NATS instance URL                | nats://localhost:4222 |
+| MF_THINGS_AUTH_HTTP_URL | Things service HTTP URL for Auth | http://localhost:8989 |
+| MF_MQTT_ADAPTER_ES_URL  | Redis ES URL                     | http://localhost:6379 |
 
 Apart from this, VerneMQ configuration found
 [here](https://github.com/ThingMesh/docker-vernemq/blob/master/vernemq.conf.default) can be customized.
@@ -55,7 +54,6 @@ services:
         MF_MQTT_ADAPTER_PORT: ${MF_MQTT_ADAPTER_PORT}
         MF_MQTT_ADAPTER_WS_PORT: ${MF_MQTT_ADAPTER_WS_PORT}
         MF_MQTT_ADAPTER_REDIS_URL: tcp://mqtt-redis:${MF_REDIS_TCP_PORT}
-        MF_MQTT_ADAPTER_ES_ACTIVE: ${MF_MQTT_ADAPTER_ES_ACTIVE}
         MF_MQTT_ADAPTER_ES_URL: tcp://es-redis:${MF_REDIS_TCP_PORT}
         MF_NATS_URL: ${MF_NATS_URL}
         MF_THINGS_AUTH_HTTP_URL: http://things:${MF_THINGS_AUTH_HTTP_PORT}

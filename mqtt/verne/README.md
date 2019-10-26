@@ -75,7 +75,7 @@ Install [gpb](https://github.com/tomas-abrahamsson/gpb)
 ```
 git clone https://github.com/tomas-abrahamsson/gpb.git
 cd gpb
-git checkout 4.9.0
+git checkout 4.10.5
 make -j 16
 ```
 

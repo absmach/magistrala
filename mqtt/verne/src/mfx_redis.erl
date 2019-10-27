@@ -42,5 +42,6 @@ handle_cast({publish, Message}, #state{conn = RedisConn} = State) ->
 handle_info(_Info, State) ->
     {noreply, State}.
 
-terminate(_Reason, _State) ->
-    [].
+terminate(Reason, #state{conn = RedisConn} = State) ->
+    eredis:stop(RedisConn),
+    {stop, Reason, State}.

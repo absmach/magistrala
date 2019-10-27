@@ -88,6 +88,7 @@ handle_cast(_Request, State) ->
 handle_info(_Info, State) ->
     {noreply, State}.
 
-terminate(_Reason, _State) ->
-    [].
+terminate(Reason, #state{conn = GrpcConn} = State) ->
+    grpc_client:stop(GrpcConn),
+    {stop, Reason, State}.
 

@@ -49,8 +49,9 @@ handle_cast({publish, Subject, Message}, #state{conn = NatsConn} = State) ->
 handle_info(_Info, State) ->
     {noreply, State}.
 
-terminate(_Reason, _State) ->
-    [].
+terminate(Reason, #state{conn = NatsConn} = State) ->
+    nats:disconnect(NatsConn),
+    {stop, Reason, State}.
 
 subscribe(NatsConn) ->
     Subject = <<"channel.>">>,

@@ -41,12 +41,13 @@ const (
 	defESURL             = "localhost:6379"
 	defESPass            = ""
 	defESDB              = "0"
-	defInstanceName      = "opcua"
+	defESConsumerName    = "opcua"
 	defRouteMapURL       = "localhost:6379"
 	defRouteMapPass      = ""
 	defRouteMapDB        = "0"
 
 	envHTTPPort          = "MF_OPCUA_ADAPTER_HTTP_PORT"
+	envLogLevel          = "MF_OPCUA_ADAPTER_LOG_LEVEL"
 	envOPCServerURI      = "MF_OPCUA_ADAPTER_SERVER_URI"
 	envOPCNodeNamespace  = "MF_OPCUA_ADAPTER_NODE_NAMESPACE"
 	envOPCNodeIdentifier = "MF_OPCUA_ADAPTER_NODE_IDENTIFIER"
@@ -55,11 +56,10 @@ const (
 	envOPCCertFile       = "MF_OPCUA_ADAPTER_CERT_FILE"
 	envOPCKeyFile        = "MF_OPCUA_ADAPTER_KEY_FILE"
 	envNatsURL           = "MF_NATS_URL"
-	envLogLevel          = "MF_LORA_ADAPTER_LOG_LEVEL"
 	envESURL             = "MF_THINGS_ES_URL"
 	envESPass            = "MF_THINGS_ES_PASS"
 	envESDB              = "MF_THINGS_ES_DB"
-	envInstanceName      = "MF_OPCUA_ADAPTER_ROUTE_MAP_NAME"
+	envESConsumerName    = "MF_OPCUA_ADAPTER_EVENT_CONSUMER"
 	envRouteMapURL       = "MF_OPCUA_ADAPTER_ROUTE_MAP_URL"
 	envRouteMapPass      = "MF_OPCUA_ADAPTER_ROUTE_MAP_PASS"
 	envRouteMapDB        = "MF_OPCUA_ADAPTER_ROUTE_MAP_DB"
@@ -69,17 +69,17 @@ const (
 )
 
 type config struct {
-	httpPort     string
-	opcConfig    opcua.Config
-	natsURL      string
-	logLevel     string
-	esURL        string
-	esPass       string
-	esDB         string
-	instanceName string
-	routeMapURL  string
-	routeMapPass string
-	routeMapDB   string
+	httpPort       string
+	opcConfig      opcua.Config
+	natsURL        string
+	logLevel       string
+	esURL          string
+	esPass         string
+	esDB           string
+	esConsumerName string
+	routeMapURL    string
+	routeMapPass   string
+	routeMapDB     string
 }
 
 func main() {
@@ -123,7 +123,7 @@ func main() {
 	)
 
 	go subscribeToOpcServer(svc, cfg.opcConfig, logger)
-	go subscribeToThingsES(svc, esConn, cfg.instanceName, logger)
+	go subscribeToThingsES(svc, esConn, cfg.esConsumerName, logger)
 
 	errs := make(chan error, 2)
 
@@ -150,17 +150,17 @@ func loadConfig() config {
 		KeyFile:        mainflux.Env(envOPCKeyFile, defOPCKeyFile),
 	}
 	return config{
-		httpPort:     mainflux.Env(envHTTPPort, defHTTPPort),
-		opcConfig:    oc,
-		natsURL:      mainflux.Env(envNatsURL, defNatsURL),
-		logLevel:     mainflux.Env(envLogLevel, defLogLevel),
-		esURL:        mainflux.Env(envESURL, defESURL),
-		esPass:       mainflux.Env(envESPass, defESPass),
-		esDB:         mainflux.Env(envESDB, defESDB),
-		instanceName: mainflux.Env(envInstanceName, defInstanceName),
-		routeMapURL:  mainflux.Env(envRouteMapURL, defRouteMapURL),
-		routeMapPass: mainflux.Env(envRouteMapPass, defRouteMapPass),
-		routeMapDB:   mainflux.Env(envRouteMapDB, defRouteMapDB),
+		httpPort:       mainflux.Env(envHTTPPort, defHTTPPort),
+		opcConfig:      oc,
+		natsURL:        mainflux.Env(envNatsURL, defNatsURL),
+		logLevel:       mainflux.Env(envLogLevel, defLogLevel),
+		esURL:          mainflux.Env(envESURL, defESURL),
+		esPass:         mainflux.Env(envESPass, defESPass),
+		esDB:           mainflux.Env(envESDB, defESDB),
+		esConsumerName: mainflux.Env(envESConsumerName, defESConsumerName),
+		routeMapURL:    mainflux.Env(envRouteMapURL, defRouteMapURL),
+		routeMapPass:   mainflux.Env(envRouteMapPass, defRouteMapPass),
+		routeMapDB:     mainflux.Env(envRouteMapDB, defRouteMapDB),
 	}
 }
 
@@ -205,7 +205,7 @@ func subscribeToOpcServer(svc opcua.Service, cfg opcua.Config, logger logger.Log
 func subscribeToThingsES(svc opcua.Service, client *r.Client, prefix string, logger logger.Logger) {
 	eventStore := redis.NewEventStore(svc, client, prefix, logger)
 	if err := eventStore.Subscribe("mainflux.things"); err != nil {
-		logger.Warn(fmt.Sprintf("Failed to subscribe to Redis event sourcing: %s", err))
+		logger.Warn(fmt.Sprintf("Failed to subscribe to Redis event source: %s", err))
 	}
 }
 

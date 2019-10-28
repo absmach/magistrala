@@ -62,7 +62,7 @@ The service is configured using the environment variables presented in the follo
 | MF_BOOTSTRAP_ES_URL           | Bootstrap service event source URL                                      | localhost:6379                   |
 | MF_BOOTSTRAP_ES_PASS          | Bootstrap service event source password                                 |                                  |
 | MF_BOOTSTRAP_ES_DB            | Bootstrap service event source database                                 | 0                                |
-| MF_BOOTSTRAP_INSTANCE_NAME    | Bootstrap service instance name                                         | bootstrap                        |
+| MF_BOOTSTRAP_EVENT_CONSUMER   | Bootstrap service event source consumer name                            | bootstrap                        |
 | MF_JAEGER_URL                 | Jaeger server URL                                                       | localhost:6831                   |
 | MF_BOOTSTRAP_THINGS_TIMEOUT   | Things gRPC request timeout in seconds                                  | 1                                |
 
@@ -108,7 +108,7 @@ version: "2"
       MF_BOOTSTRAP_ES_URL: [Bootstrap service event source URL]
       MF_BOOTSTRAP_ES_PASS: [Bootstrap service event source password]
       MF_BOOTSTRAP_ES_DB: [Bootstrap service event source database]
-      MF_BOOTSTRAP_INSTANCE_NAME: [Bootstrap service instance name]
+      MF_BOOTSTRAP_EVENT_CONSUMER: [Bootstrap service event source consumer name]
       MF_JAEGER_URL: [Jaeger server URL]
       MF_BOOTSTRAP_THINGS_TIMEOUT: [Things gRPC request timeout in seconds]
 ```

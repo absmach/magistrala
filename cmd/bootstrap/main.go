@@ -38,86 +38,86 @@ import (
 )
 
 const (
-	defLogLevel      = "error"
-	defDBHost        = "localhost"
-	defDBPort        = "5432"
-	defDBUser        = "mainflux"
-	defDBPass        = "mainflux"
-	defDBName        = "bootstrap"
-	defDBSSLMode     = "disable"
-	defDBSSLCert     = ""
-	defDBSSLKey      = ""
-	defDBSSLRootCert = ""
-	defEncryptKey    = "12345678910111213141516171819202"
-	defClientTLS     = "false"
-	defCACerts       = ""
-	defPort          = "8180"
-	defServerCert    = ""
-	defServerKey     = ""
-	defBaseURL       = "http://localhost"
-	defThingsPrefix  = ""
-	defUsersURL      = "localhost:8181"
-	defThingsESURL   = "localhost:6379"
-	defThingsESPass  = ""
-	defThingsESDB    = "0"
-	defESURL         = "localhost:6379"
-	defESPass        = ""
-	defESDB          = "0"
-	defInstanceName  = "bootstrap"
-	defJaegerURL     = ""
-	defUsersTimeout  = "1" // in seconds
+	defLogLevel       = "error"
+	defDBHost         = "localhost"
+	defDBPort         = "5432"
+	defDBUser         = "mainflux"
+	defDBPass         = "mainflux"
+	defDBName         = "bootstrap"
+	defDBSSLMode      = "disable"
+	defDBSSLCert      = ""
+	defDBSSLKey       = ""
+	defDBSSLRootCert  = ""
+	defEncryptKey     = "12345678910111213141516171819202"
+	defClientTLS      = "false"
+	defCACerts        = ""
+	defPort           = "8180"
+	defServerCert     = ""
+	defServerKey      = ""
+	defBaseURL        = "http://localhost"
+	defThingsPrefix   = ""
+	defUsersURL       = "localhost:8181"
+	defThingsESURL    = "localhost:6379"
+	defThingsESPass   = ""
+	defThingsESDB     = "0"
+	defESURL          = "localhost:6379"
+	defESPass         = ""
+	defESDB           = "0"
+	defESConsumerName = "bootstrap"
+	defJaegerURL      = ""
+	defUsersTimeout   = "1" // in seconds
 
-	envLogLevel      = "MF_BOOTSTRAP_LOG_LEVEL"
-	envDBHost        = "MF_BOOTSTRAP_DB_HOST"
-	envDBPort        = "MF_BOOTSTRAP_DB_PORT"
-	envDBUser        = "MF_BOOTSTRAP_DB_USER"
-	envDBPass        = "MF_BOOTSTRAP_DB_PASS"
-	envDBName        = "MF_BOOTSTRAP_DB"
-	envDBSSLMode     = "MF_BOOTSTRAP_DB_SSL_MODE"
-	envDBSSLCert     = "MF_BOOTSTRAP_DB_SSL_CERT"
-	envDBSSLKey      = "MF_BOOTSTRAP_DB_SSL_KEY"
-	envDBSSLRootCert = "MF_BOOTSTRAP_DB_SSL_ROOT_CERT"
-	envEncryptKey    = "MF_BOOTSTRAP_ENCRYPT_KEY"
-	envClientTLS     = "MF_BOOTSTRAP_CLIENT_TLS"
-	envCACerts       = "MF_BOOTSTRAP_CA_CERTS"
-	envPort          = "MF_BOOTSTRAP_PORT"
-	envServerCert    = "MF_BOOTSTRAP_SERVER_CERT"
-	envServerKey     = "MF_BOOTSTRAP_SERVER_KEY"
-	envBaseURL       = "MF_SDK_BASE_URL"
-	envThingsPrefix  = "MF_SDK_THINGS_PREFIX"
-	envUsersURL      = "MF_USERS_URL"
-	envThingsESURL   = "MF_THINGS_ES_URL"
-	envThingsESPass  = "MF_THINGS_ES_PASS"
-	envThingsESDB    = "MF_THINGS_ES_DB"
-	envESURL         = "MF_BOOTSTRAP_ES_URL"
-	envESPass        = "MF_BOOTSTRAP_ES_PASS"
-	envESDB          = "MF_BOOTSTRAP_ES_DB"
-	envInstanceName  = "MF_BOOTSTRAP_INSTANCE_NAME"
-	envJaegerURL     = "MF_JAEGER_URL"
-	envUsersTimeout  = "MF_BOOTSTRAP_USERS_TIMEOUT"
+	envLogLevel       = "MF_BOOTSTRAP_LOG_LEVEL"
+	envDBHost         = "MF_BOOTSTRAP_DB_HOST"
+	envDBPort         = "MF_BOOTSTRAP_DB_PORT"
+	envDBUser         = "MF_BOOTSTRAP_DB_USER"
+	envDBPass         = "MF_BOOTSTRAP_DB_PASS"
+	envDBName         = "MF_BOOTSTRAP_DB"
+	envDBSSLMode      = "MF_BOOTSTRAP_DB_SSL_MODE"
+	envDBSSLCert      = "MF_BOOTSTRAP_DB_SSL_CERT"
+	envDBSSLKey       = "MF_BOOTSTRAP_DB_SSL_KEY"
+	envDBSSLRootCert  = "MF_BOOTSTRAP_DB_SSL_ROOT_CERT"
+	envEncryptKey     = "MF_BOOTSTRAP_ENCRYPT_KEY"
+	envClientTLS      = "MF_BOOTSTRAP_CLIENT_TLS"
+	envCACerts        = "MF_BOOTSTRAP_CA_CERTS"
+	envPort           = "MF_BOOTSTRAP_PORT"
+	envServerCert     = "MF_BOOTSTRAP_SERVER_CERT"
+	envServerKey      = "MF_BOOTSTRAP_SERVER_KEY"
+	envBaseURL        = "MF_SDK_BASE_URL"
+	envThingsPrefix   = "MF_SDK_THINGS_PREFIX"
+	envUsersURL       = "MF_USERS_URL"
+	envThingsESURL    = "MF_THINGS_ES_URL"
+	envThingsESPass   = "MF_THINGS_ES_PASS"
+	envThingsESDB     = "MF_THINGS_ES_DB"
+	envESURL          = "MF_BOOTSTRAP_ES_URL"
+	envESPass         = "MF_BOOTSTRAP_ES_PASS"
+	envESDB           = "MF_BOOTSTRAP_ES_DB"
+	envESConsumerName = "MF_BOOTSTRAP_EVENT_CONSUMER"
+	envJaegerURL      = "MF_JAEGER_URL"
+	envUsersTimeout   = "MF_BOOTSTRAP_USERS_TIMEOUT"
 )
 
 type config struct {
-	logLevel     string
-	dbConfig     postgres.Config
-	clientTLS    bool
-	encKey       []byte
-	caCerts      string
-	httpPort     string
-	serverCert   string
-	serverKey    string
-	baseURL      string
-	thingsPrefix string
-	usersURL     string
-	esThingsURL  string
-	esThingsPass string
-	esThingsDB   string
-	esURL        string
-	esPass       string
-	esDB         string
-	instanceName string
-	jaegerURL    string
-	usersTimeout time.Duration
+	logLevel       string
+	dbConfig       postgres.Config
+	clientTLS      bool
+	encKey         []byte
+	caCerts        string
+	httpPort       string
+	serverCert     string
+	serverKey      string
+	baseURL        string
+	thingsPrefix   string
+	usersURL       string
+	esThingsURL    string
+	esThingsPass   string
+	esThingsDB     string
+	esURL          string
+	esPass         string
+	esDB           string
+	esConsumerName string
+	jaegerURL      string
+	usersTimeout   time.Duration
 }
 
 func main() {
@@ -147,7 +147,7 @@ func main() {
 	errs := make(chan error, 2)
 
 	go startHTTPServer(svc, cfg, logger, errs)
-	go subscribeToThingsES(svc, thingsESConn, cfg.instanceName, logger)
+	go subscribeToThingsES(svc, thingsESConn, cfg.esConsumerName, logger)
 
 	go func() {
 		c := make(chan os.Signal)
@@ -192,26 +192,26 @@ func loadConfig() config {
 	}
 
 	return config{
-		logLevel:     mainflux.Env(envLogLevel, defLogLevel),
-		dbConfig:     dbConfig,
-		clientTLS:    tls,
-		encKey:       encKey,
-		caCerts:      mainflux.Env(envCACerts, defCACerts),
-		httpPort:     mainflux.Env(envPort, defPort),
-		serverCert:   mainflux.Env(envServerCert, defServerCert),
-		serverKey:    mainflux.Env(envServerKey, defServerKey),
-		baseURL:      mainflux.Env(envBaseURL, defBaseURL),
-		thingsPrefix: mainflux.Env(envThingsPrefix, defThingsPrefix),
-		usersURL:     mainflux.Env(envUsersURL, defUsersURL),
-		esThingsURL:  mainflux.Env(envThingsESURL, defThingsESURL),
-		esThingsPass: mainflux.Env(envThingsESPass, defThingsESPass),
-		esThingsDB:   mainflux.Env(envThingsESDB, defThingsESDB),
-		esURL:        mainflux.Env(envESURL, defESURL),
-		esPass:       mainflux.Env(envESPass, defESPass),
-		esDB:         mainflux.Env(envESDB, defESDB),
-		instanceName: mainflux.Env(envInstanceName, defInstanceName),
-		jaegerURL:    mainflux.Env(envJaegerURL, defJaegerURL),
-		usersTimeout: time.Duration(timeout) * time.Second,
+		logLevel:       mainflux.Env(envLogLevel, defLogLevel),
+		dbConfig:       dbConfig,
+		clientTLS:      tls,
+		encKey:         encKey,
+		caCerts:        mainflux.Env(envCACerts, defCACerts),
+		httpPort:       mainflux.Env(envPort, defPort),
+		serverCert:     mainflux.Env(envServerCert, defServerCert),
+		serverKey:      mainflux.Env(envServerKey, defServerKey),
+		baseURL:        mainflux.Env(envBaseURL, defBaseURL),
+		thingsPrefix:   mainflux.Env(envThingsPrefix, defThingsPrefix),
+		usersURL:       mainflux.Env(envUsersURL, defUsersURL),
+		esThingsURL:    mainflux.Env(envThingsESURL, defThingsESURL),
+		esThingsPass:   mainflux.Env(envThingsESPass, defThingsESPass),
+		esThingsDB:     mainflux.Env(envThingsESDB, defThingsESDB),
+		esURL:          mainflux.Env(envESURL, defESURL),
+		esPass:         mainflux.Env(envESPass, defESPass),
+		esDB:           mainflux.Env(envESDB, defESDB),
+		esConsumerName: mainflux.Env(envESConsumerName, defESConsumerName),
+		jaegerURL:      mainflux.Env(envJaegerURL, defJaegerURL),
+		usersTimeout:   time.Duration(timeout) * time.Second,
 	}
 }
 

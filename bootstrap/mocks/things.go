@@ -197,7 +197,7 @@ func (svc *mainfluxThings) CreateChannel(context.Context, string, things.Channel
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) CreateChannels(_ context.Context, owner string, channels []things.Channel) ([]things.Channel, error) {
+func (svc *mainfluxThings) CreateChannels(_ context.Context, owner string, chs []things.Channel) ([]things.Channel, error) {
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
@@ -205,14 +205,14 @@ func (svc *mainfluxThings) CreateChannels(_ context.Context, owner string, chann
 	if err != nil {
 		return []things.Channel{}, things.ErrUnauthorizedAccess
 	}
-	for i := range channels {
+	for i := range chs {
 		svc.counter++
-		channels[i].Owner = userID.Value
-		channels[i].ID = strconv.FormatUint(svc.counter, 10)
-		svc.channels[channels[i].ID] = channels[i]
+		chs[i].Owner = userID.Value
+		chs[i].ID = strconv.FormatUint(svc.counter, 10)
+		svc.channels[chs[i].ID] = chs[i]
 	}
 
-	return channels, nil
+	return chs, nil
 }
 
 func (svc *mainfluxThings) UpdateChannel(context.Context, string, things.Channel) error {

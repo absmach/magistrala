@@ -70,36 +70,10 @@ services:
 ```
 
 ### Native
-#### Prepare
-Install [gpb](https://github.com/tomas-abrahamsson/gpb)
+#### Generate protobuf files
 ```
-git clone https://github.com/tomas-abrahamsson/gpb.git
-cd gpb
-git checkout 4.10.5
-make -j 16
-```
-
-Then generate Erlang proto files:
-```
-mkdir -p ./src/proto
-./gpb/bin/protoc-erl -pkgs -maps -I ./gpb/ ../../*.proto -o ./src/proto
-cp ./gpb/include/gpb.hrl ./src/proto/
-```
-
-If gRPC us used for auth (not enabled yet, to be enabled in the future):
-```
-git clone https://github.com/Bluehouse-Technology/grpc_client.git
-cd grpc_client && make -j 16
-make shell
-```
-Then in Erlang shell:
-```
-1> grpc_client:compile("../../../internal.proto", [{use_packages, true}]).
-```
-
-Outside of shell:
-```
-mv ./internal_client.erl ../src/proto
+mkdir -p src/protos
+rebar3 grpc gen
 ```
 
 #### Compile

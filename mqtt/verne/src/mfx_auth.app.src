@@ -8,9 +8,9 @@
                   stdlib,
                   teacup,
                   gpb,
-                  grpc_client,
-                  poolboy,
-                  eredis
+                  grpcbox,
+                  eredis,
+                  poolboy
                  ]},
   {mod, { mfx_auth_app, []}},
   {env, [

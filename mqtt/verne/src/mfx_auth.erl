@@ -15,8 +15,6 @@
          on_client_gone/1
         ]).
 
--include("proto/message.hrl").
-
 %% This file demonstrates the hooks you typically want to use
 %% if your plugin deals with Authentication or Authorization.
 %%
@@ -40,7 +38,6 @@ identify(Password) ->
     Result = gen_server:call(Worker, {identify, Token}),
     poolboy:checkin(grpc_pool, Worker),
     Result.
-
 
 access(UserName, ChannelId) ->
     error_logger:info_msg("access: ~p ~p", [UserName, ChannelId]),
@@ -126,7 +123,7 @@ auth_on_publish(UserName, {_MountPoint, _ClientId} = SubscriberId, QoS, Topic, P
                 contentType => ContentType,
                 payload => Payload
             },
-            mfx_nats:publish(NatsSubject, message:encode_msg(RawMessage, 'mainflux.RawMessage')),
+            mfx_nats:publish(NatsSubject, message_pb:encode_msg(RawMessage, raw_message)),
             ok;
         Other ->
             error_logger:info_msg("Error auth: ~p", [Other]),

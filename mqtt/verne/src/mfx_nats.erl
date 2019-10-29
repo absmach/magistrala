@@ -12,8 +12,6 @@
     loop/1
 ]).
 
--include("proto/message.hrl").
-
 -record(state, {conn}).
 
 start_link() ->
@@ -66,36 +64,26 @@ loop(Conn) ->
         {Conn, {msg, <<"teacup.control">>, _, <<"exit">>}} ->
             error_logger:info_msg("NATS received exit msg", []);
         {Conn, {msg, Subject, _ReplyTo, NatsMsg}} ->
-            #{protocol := Protocol, contentType := ContentType, payload := Payload} = message:decode_msg(NatsMsg, 'mainflux.RawMessage'),
+            #{protocol := Protocol, channel := ChannelId, contentType := ContentType,
+                payload := Payload, subtopic := Subtopic} = message_pb:decode_msg(NatsMsg, raw_message),
             error_logger:info_msg("Received NATS protobuf msg with payload: ~p and ContentType: ~p~n", [Payload, ContentType]),
             case Protocol of
-                "mqtt" ->
+                <<"mqtt">> ->
                     error_logger:info_msg("Ignoring MQTT message loopback", []),
                     loop(Conn);
                 _ ->
+                    error_logger:info_msg("mfx_nats Protocol ~p", [Protocol]),
                     error_logger:info_msg("Re-publishing on MQTT broker", []),
+                    Subtopic2 = re:split(Subtopic,"/"),
                     ContentType2 = re:replace(ContentType, "/","_",[global,{return,list}]),
-                    ContentType3 = re:replace(ContentType2, "\\+","-",[global,{return,binary}]), 
+                    ContentType3 = re:replace(ContentType2, "\\+","-",[global,{return,binary}]),
                     {_, PublishFun, {_, _}} = vmq_reg:direct_plugin_exports(?MODULE),
                     % Topic needs to be in the form of the list, like [<<"channel">>,<<"6def78cd-b441-4fd8-8680-af7e3bbea187">>]
-                    Topic = case re:split(Subject, <<"\\.">>) of
-                        [<<"channel">>, ChannelId] ->
-                            case ContentType of
-                                <<"">> ->
-                                    [<<"channels">>, ChannelId, <<"messages">>];
-                                _ ->
-                                    [<<"channels">>, ChannelId, <<"messages">>, <<"ct">>, ContentType3]
-                            end;
-                        [<<"channel">>, ChannelId, Subtopic] ->
-                            case ContentType of
-                                <<"">> ->
-                                    [<<"channels">>, ChannelId, <<"messages">>, Subtopic];
-                                _ ->
-                                    [<<"channels">>, ChannelId, <<"messages">>, Subtopic, <<"ct">>, ContentType3]
-                            end;
-                        Other ->
-                            error_logger:info_msg("Could not match topic: ~p~n", [Other]),
-                            error
+                    Topic = case ContentType of
+                        <<"">> ->
+                            [<<"channels">>, ChannelId, <<"messages">>] ++ Subtopic2;
+                        _ ->
+                            [<<"channels">>, ChannelId, <<"messages">>] ++ Subtopic2 ++ [<<"ct">>, ContentType3]
                     end,
                     error_logger:info_msg("Subject: ~p, Topic: ~p, PublishFunction: ~p~n", [Subject, Topic, PublishFun]),
                     PublishFun(Topic, Payload, #{qos => 0, retain => false}),

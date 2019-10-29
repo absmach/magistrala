@@ -30,8 +30,14 @@ start(_StartType, _StartArgs) ->
         false -> "";
         InstanceEnv -> InstanceEnv
     end,
+    PoolSize = case os:getenv("MF_MQTT_VERNEMQ_GRPC_POOL_SIZE") of
+        false ->
+            10;
+        PoolSizeEnv ->
+            {PoolSizeInt, _PoolSizeRest} = string:to_integer(PoolSizeEnv),
+            PoolSizeInt
+    end,
     
-
     ets:insert(mfx_cfg, [
         {grpc_url, GrpcUrl},
         {nats_url, NatsUrl},
@@ -42,8 +48,8 @@ start(_StartType, _StartArgs) ->
     % Also, init one ETS table for keeping the #{ClientId => Username} mapping
     ets:new(mfx_client_map, [set, named_table, public]),
 
-    % Start the process
-    mfx_auth_sup:start_link().
+    % Start the MFX Auth process
+    mfx_auth_sup:start_link(PoolSize).
 
 stop(_State) ->
     ok.

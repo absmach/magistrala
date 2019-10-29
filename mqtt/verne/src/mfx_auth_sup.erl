@@ -3,7 +3,7 @@
 -behaviour(supervisor).
 
 %% API
--export([start_link/0]).
+-export([start_link/1]).
 
 %% Supervisor callbacks
 -export([init/1]).
@@ -15,22 +15,14 @@
 %% API functions
 %% ===================================================================
 
-start_link() ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
+start_link(PoolSize) ->
+    supervisor:start_link({local, ?MODULE}, ?MODULE, [PoolSize]).
 
 %% ===================================================================
 %% Supervisor callbacks
 %% ===================================================================
 
-init([]) ->
-    PoolSize = case os:getenv("MF_MQTT_VERNEMQ_GRPC_POOL_SIZE") of
-        false ->
-            10;
-        PoolSizeEnv ->
-            {PoolSizeInt, _PoolSizeRest} = string:to_integer(PoolSizeEnv),
-            PoolSizeInt
-    end,
-
+init([PoolSize]) ->
     SizeArgs = [{size, PoolSize}, {max_overflow, PoolSize * 1.5}],
     PoolArgs = [{name, {local, grpc_pool}}, {worker_module, mfx_grpc}],
     WorkerArgs = [],

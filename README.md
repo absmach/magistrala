@@ -8,7 +8,7 @@
 
 ![banner][banner]
 
-Mainflux is modern, scalable, secure open source and patent-free IoT cloud platform written in Go.
+Mainflux is modern, scalable, secure, open-source, and patent-free IoT cloud platform written in Go.
 
 It accepts user and thing connections over various network protocols (i.e. HTTP,
 MQTT, WebSocket, CoAP), thus making a seamless bridge between them. It is used as the IoT middleware
@@ -17,10 +17,11 @@ for building complex IoT solutions.
 For more details, check out the [official documentation][docs].
 
 Mainflux is member of the [Linux Foundation][lf] and an active contributor
-to the [EdgeX Foundry][edgex] project. It has been made with :heart: by [Mainflux Labs company][company],
+to the [EdgeX Foundry][edgex] project. It has been made with :heart: by [Mainflux Labs][company],
 which maintains the project and offers professional services around it.
 
 ## Features
+
 - Multi-protocol connectivity and bridging (HTTP, MQTT, WebSocket and CoAP)
 - Device management and provisioning (Zero Touch provisioning)
 - Mutual TLS Authentication (mTLS) using X.509 Certificates
@@ -35,40 +36,59 @@ which maintains the project and offers professional services around it.
 - Small memory footprint and fast execution
 - Domain-driven design architecture, high-quality code and test coverage
 
+## Prerequisites
+
+The following are needed to run Mainflux:
+
+- [Docker](https://docs.docker.com/install/) (version 18.09)
+- [Docker compose](https://docs.docker.com/compose/install/) (version 1.24.1)
+
+Developing Mainflux will also require:
+
+- [Go](https://golang.org/doc/install) (version 1.13.3)
+- [Protobuf](https://github.com/protocolbuffers/protobuf#protocol-compiler-installation) (version 3.6.1)
+
 ## Install
-Before proceeding, install the following prerequisites:
 
-- [Docker](https://docs.docker.com/install/)
-- [Docker compose](https://docs.docker.com/compose/install/)
-
-Once everything is installed, execute the following commands from project root:
+Once the prerequisites are installed, execute the following commands from the project's root:
 
 ```bash
-docker-compose -f docker/docker-compose.yml up -d
+docker-compose -f docker/docker-compose.yml -f docker/aedes.yml up
 ```
 
-This will bring up all Mainflux dockers and inter-connect them in the composition.
+This will bring up the Mainflux docker services and interconnect them. This command can also be executed using the project's included Makefile:
+
+```bash
+make run
+```
 
 ## Usage
-Best way to quickstart using Mainflux is via CLI:
-```
+
+The quickest way to start using Mainflux is via the CLI. The latest version can be downloaded from the [official releases page][rel]. 
+
+It can also be built and used from the project's root directory:
+
+```bash
 make cli
 ./build/mainflux-cli version
 ```
 
-> Mainflux CLI can also be downloaded as a tarball from [offical release page][rel]
-
-If this works, head to [official documentation][docs] to understand Mainflux provisioning and messaging.
+Additional details on using the CLI can be found in the [CLI documentation](https://mainflux.readthedocs.io/en/latest/cli/).
 
 ## Documentation
-Official documentation is hosted at [Mainflux Read The Docs page][docs].
 
-Documentation is auto-generated from Markdown files in `./docs` directory.
-If you spot an error or need for corrections, please let us know - or even better: send us a PR.
+Official documentation is hosted at [Mainflux Read The Docs page][docs]. Documentation is auto-generated from Markdown files in `./docs` directory. These can be viewed locally by [installing mkdocs](https://www.mkdocs.org/#installation) and running the command:
+
+```bash
+mkdocs serve
+```
+
+If you spot an error or a need for corrections, please let us know - or even better: send us a PR.
 
 Additional practical information, news and tutorials can be found on the [Mainflux blog][blog].
 
 ## Authors
+
 Main architect and BDFL of Mainflux project is [@drasko][drasko].
 
 Additionally, [@nmarcetic][nikola] and [@janko-isidorovic][janko] assured
@@ -81,29 +101,33 @@ developed by [@anovakovic01][alex], [@dusanb94][dusan], [@srados][sava],
 
 Maintainers are listed in [MAINTAINERS](MAINTAINERS) file.
 
-Mainflux team would like to give special thanks to [@mijicd][dejan] for his monumental work
-on designing and implementing highly improved and optimized version of the platform,
-and [@malidukica][dusanm] for his effort on implementing initial user interface.
+The Mainflux team would like to give special thanks to [@mijicd][dejan] for his monumental work
+on designing and implementing a highly improved and optimized version of the platform,
+and [@malidukica][dusanm] for his effort on implementing the initial user interface.
 
 ## Contributing
-Thank you for your interest in Mainflux and wish to contribute!
 
-1. Take a look at our [open issues](https://github.com/mainflux/mainflux/issues).
+Thank you for your interest in Mainflux and the desire to contribute!
+
+1. Take a look at our [open issues](https://github.com/mainflux/mainflux/issues). The [good-first-issue](https://github.com/mainflux/mainflux/labels/good-first-issue) label is specifically for issues that are great for getting started.
 2. Checkout the [contribution guide](CONTRIBUTING.md) to learn more about our style and conventions.
 3. Make your changes compatible to our workflow.
 
 ### We're Hiring
+
 If you are interested in working professionally on Mainflux,
 please head to company's [careers page][careers] or shoot us an e-mail at <careers@mainflux.com>.
 
-Note that the best way to grab our attention is by sending PRs :sunglasses:.
+>The best way to grab our attention is by sending PRs :sunglasses:.
 
 ## Community
+
 - [Google group][forum]
 - [Gitter][gitter]
 - [Twitter][twitter]
 
 ## License
+
 [Apache-2.0](LICENSE)
 
 [banner]: https://github.com/mainflux/mainflux/blob/master/docs/img/gopherBanner.jpg

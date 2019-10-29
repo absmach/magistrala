@@ -28,6 +28,10 @@ type ChannelRepository interface {
 	// returned to indicate operation failure.
 	Save(context.Context, Channel) (string, error)
 
+	// BulkSave persistest multiple channels. Successful operation is indicated by non-nil
+	// error response.
+	BulkSave(context.Context, []Channel) ([]Channel, error)
+
 	// Update performs an update to the existing channel. A non-nil error is
 	// returned to indicate operation failure.
 	Update(context.Context, Channel) error

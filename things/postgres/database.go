@@ -20,6 +20,7 @@ type Database interface {
 	QueryRowxContext(context.Context, string, ...interface{}) *sqlx.Row
 	NamedQueryContext(context.Context, string, interface{}) (*sqlx.Rows, error)
 	GetContext(context.Context, interface{}, string, ...interface{}) error
+	BeginTxx(context.Context, *sql.TxOptions) (*sqlx.Tx, error)
 }
 
 // NewDatabase creates a ThingDatabase instance
@@ -47,6 +48,16 @@ func (dm database) NamedQueryContext(ctx context.Context, query string, args int
 func (dm database) GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
 	addSpanTags(ctx, query)
 	return dm.db.GetContext(ctx, dest, query, args...)
+}
+
+func (dm database) BeginTxx(ctx context.Context, opts *sql.TxOptions) (*sqlx.Tx, error) {
+	span := opentracing.SpanFromContext(ctx)
+	if span != nil {
+		span.SetTag("span.kind", "client")
+		span.SetTag("peer.service", "postgres")
+		span.SetTag("db.type", "sql")
+	}
+	return dm.db.BeginTxx(ctx, opts)
 }
 
 func addSpanTags(ctx context.Context, query string) {

@@ -54,6 +54,19 @@ func (crm *channelRepositoryMock) Save(_ context.Context, channel things.Channel
 	return channel.ID, nil
 }
 
+func (crm *channelRepositoryMock) BulkSave(_ context.Context, channels []things.Channel) ([]things.Channel, error) {
+	crm.mu.Lock()
+	defer crm.mu.Unlock()
+
+	for i := range channels {
+		crm.counter++
+		channels[i].ID = strconv.FormatUint(crm.counter, 10)
+		crm.channels[key(channels[i].Owner, channels[i].ID)] = channels[i]
+	}
+
+	return channels, nil
+}
+
 func (crm *channelRepositoryMock) Update(_ context.Context, channel things.Channel) error {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()

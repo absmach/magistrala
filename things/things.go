@@ -32,6 +32,10 @@ type ThingRepository interface {
 	// error response.
 	Save(context.Context, Thing) (string, error)
 
+	// BulkSave persistest multiple things. Successful operation is indicated by non-nil
+	// error response.
+	BulkSave(context.Context, []Thing) ([]Thing, error)
+
 	// Update performs an update to the existing thing. A non-nil error is
 	// returned to indicate operation failure.
 	Update(context.Context, Thing) error

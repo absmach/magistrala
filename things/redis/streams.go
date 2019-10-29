@@ -53,6 +53,30 @@ func (es eventStore) AddThing(ctx context.Context, token string, thing things.Th
 	return sth, err
 }
 
+func (es eventStore) CreateThings(ctx context.Context, token string, ths []things.Thing) ([]things.Thing, error) {
+	sths, err := es.svc.CreateThings(ctx, token, ths)
+	if err != nil {
+		return sths, err
+	}
+
+	for _, thing := range sths {
+		event := createThingEvent{
+			id:       thing.ID,
+			owner:    thing.Owner,
+			name:     thing.Name,
+			metadata: thing.Metadata,
+		}
+		record := &redis.XAddArgs{
+			Stream:       streamID,
+			MaxLenApprox: streamLen,
+			Values:       event.Encode(),
+		}
+		es.client.XAdd(record).Err()
+	}
+
+	return sths, nil
+}
+
 func (es eventStore) UpdateThing(ctx context.Context, token string, thing things.Thing) error {
 	if err := es.svc.UpdateThing(ctx, token, thing); err != nil {
 		return err
@@ -130,6 +154,30 @@ func (es eventStore) CreateChannel(ctx context.Context, token string, channel th
 	es.client.XAdd(record).Err()
 
 	return sch, err
+}
+
+func (es eventStore) CreateChannels(ctx context.Context, token string, channels []things.Channel) ([]things.Channel, error) {
+	schs, err := es.svc.CreateChannels(ctx, token, channels)
+	if err != nil {
+		return schs, err
+	}
+
+	for _, channel := range schs {
+		event := createChannelEvent{
+			id:       channel.ID,
+			owner:    channel.Owner,
+			name:     channel.Name,
+			metadata: channel.Metadata,
+		}
+		record := &redis.XAddArgs{
+			Stream:       streamID,
+			MaxLenApprox: streamLen,
+			Values:       event.Encode(),
+		}
+		es.client.XAdd(record).Err()
+	}
+
+	return schs, nil
 }
 
 func (es eventStore) UpdateChannel(ctx context.Context, token string, channel things.Channel) error {

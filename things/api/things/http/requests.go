@@ -31,6 +31,29 @@ func (req addThingReq) validate() error {
 	return nil
 }
 
+type createThingsReq struct {
+	token  string
+	Things []addThingReq
+}
+
+func (req createThingsReq) validate() error {
+	if req.token == "" {
+		return things.ErrUnauthorizedAccess
+	}
+
+	if len(req.Things) <= 0 {
+		return things.ErrMalformedEntity
+	}
+
+	for _, thing := range req.Things {
+		if len(thing.Name) > maxNameSize {
+			return things.ErrMalformedEntity
+		}
+	}
+
+	return nil
+}
+
 type updateThingReq struct {
 	token    string
 	id       string
@@ -85,6 +108,29 @@ func (req createChannelReq) validate() error {
 
 	if len(req.Name) > maxNameSize {
 		return things.ErrMalformedEntity
+	}
+
+	return nil
+}
+
+type createChannelsReq struct {
+	token    string
+	Channels []createChannelReq
+}
+
+func (req createChannelsReq) validate() error {
+	if req.token == "" {
+		return things.ErrUnauthorizedAccess
+	}
+
+	if len(req.Channels) <= 0 {
+		return things.ErrMalformedEntity
+	}
+
+	for _, channel := range req.Channels {
+		if len(channel.Name) > maxNameSize {
+			return things.ErrMalformedEntity
+		}
 	}
 
 	return nil

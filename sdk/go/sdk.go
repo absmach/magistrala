@@ -127,6 +127,9 @@ type SDK interface {
 	// CreateThing registers new thing and returns its id.
 	CreateThing(thing Thing, token string) (string, error)
 
+	// CreateThings registers new things and returns their ids.
+	CreateThings(things []Thing, token string) ([]Thing, error)
+
 	// Things returns page of things.
 	Things(token string, offset, limit uint64, name string) (ThingsPage, error)
 
@@ -151,6 +154,9 @@ type SDK interface {
 
 	// CreateChannel creates new channel and returns its id.
 	CreateChannel(channel Channel, token string) (string, error)
+
+	// CreateChannels registers new channels and returns their ids.
+	CreateChannels(channels []Channel, token string) ([]Channel, error)
 
 	// Channels returns page of channels.
 	Channels(token string, offset, limit uint64, name string) (ChannelsPage, error)
@@ -187,6 +193,7 @@ type mfSDK struct {
 	readerPrefix      string
 	usersPrefix       string
 	thingsPrefix      string
+	channelsPrefix    string
 	httpAdapterPrefix string
 	msgContentType    ContentType
 	client            *http.Client

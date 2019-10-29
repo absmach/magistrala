@@ -101,6 +101,66 @@ func TestAddThing(t *testing.T) {
 	}
 }
 
+func TestCreateThings(t *testing.T) {
+	redisClient.FlushAll().Err()
+
+	svc := newService(map[string]string{token: email})
+	svc = redis.NewEventStoreMiddleware(svc, redisClient)
+
+	cases := []struct {
+		desc  string
+		ths   []things.Thing
+		key   string
+		err   error
+		event map[string]interface{}
+	}{
+		{
+			desc: "create things successfully",
+			ths: []things.Thing{{
+				Name:     "a",
+				Metadata: map[string]interface{}{"test": "test"},
+			}},
+			key: token,
+			err: nil,
+			event: map[string]interface{}{
+				"id":        "1",
+				"name":      "a",
+				"owner":     email,
+				"metadata":  "{\"test\":\"test\"}",
+				"operation": thingCreate,
+			},
+		},
+		{
+			desc:  "create things with invalid credentials",
+			ths:   []things.Thing{{Name: "a", Metadata: map[string]interface{}{"test": "test"}}},
+			key:   "",
+			err:   things.ErrUnauthorizedAccess,
+			event: nil,
+		},
+	}
+
+	lastID := "0"
+	for _, tc := range cases {
+		_, err := svc.CreateThings(context.Background(), tc.key, tc.ths)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+
+		streams := redisClient.XRead(&r.XReadArgs{
+			Streams: []string{streamID, lastID},
+			Count:   1,
+			Block:   time.Second,
+		}).Val()
+
+		var event map[string]interface{}
+		if len(streams) > 0 && len(streams[0].Messages) > 0 {
+			msg := streams[0].Messages[0]
+			event = msg.Values
+			lastID = msg.ID
+		}
+
+		assert.Equal(t, tc.event, event, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.event, event))
+	}
+}
+
 func TestUpdateThing(t *testing.T) {
 	redisClient.FlushAll().Err()
 
@@ -304,6 +364,63 @@ func TestCreateChannel(t *testing.T) {
 	lastID := "0"
 	for _, tc := range cases {
 		_, err := svc.CreateChannel(context.Background(), tc.key, tc.channel)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+
+		streams := redisClient.XRead(&r.XReadArgs{
+			Streams: []string{streamID, lastID},
+			Count:   1,
+			Block:   time.Second,
+		}).Val()
+
+		var event map[string]interface{}
+		if len(streams) > 0 && len(streams[0].Messages) > 0 {
+			msg := streams[0].Messages[0]
+			event = msg.Values
+			lastID = msg.ID
+		}
+
+		assert.Equal(t, tc.event, event, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.event, event))
+	}
+}
+
+func TestCreateChannels(t *testing.T) {
+	redisClient.FlushAll().Err()
+
+	svc := newService(map[string]string{token: email})
+	svc = redis.NewEventStoreMiddleware(svc, redisClient)
+
+	cases := []struct {
+		desc  string
+		chs   []things.Channel
+		key   string
+		err   error
+		event map[string]interface{}
+	}{
+		{
+			desc: "create channels successfully",
+			chs:  []things.Channel{{Name: "a", Metadata: map[string]interface{}{"test": "test"}}},
+			key:  token,
+			err:  nil,
+			event: map[string]interface{}{
+				"id":        "1",
+				"name":      "a",
+				"metadata":  "{\"test\":\"test\"}",
+				"owner":     email,
+				"operation": channelCreate,
+			},
+		},
+		{
+			desc:  "create channels with invalid credentials",
+			chs:   []things.Channel{{Name: "a", Metadata: map[string]interface{}{"test": "test"}}},
+			key:   "",
+			err:   things.ErrUnauthorizedAccess,
+			event: nil,
+		},
+	}
+
+	lastID := "0"
+	for _, tc := range cases {
+		_, err := svc.CreateChannels(context.Background(), tc.key, tc.chs)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(&r.XReadArgs{

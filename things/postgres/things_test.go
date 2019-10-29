@@ -91,6 +91,93 @@ func TestThingSave(t *testing.T) {
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
+func TestThingsBulkSave(t *testing.T) {
+	dbMiddleware := postgres.NewDatabase(db)
+	thingRepo := postgres.NewThingRepository(dbMiddleware)
+
+	email := "thing-save@example.com"
+
+	nonexistentThingKey, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
+	var thid string
+	var thkey string
+	ths := []things.Thing{}
+	for i := 1; i <= 5; i++ {
+		thid, err = uuid.New().ID()
+		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+		thkey, err = uuid.New().ID()
+		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
+		thing := things.Thing{
+			ID:    thid,
+			Owner: email,
+			Key:   thkey,
+		}
+		ths = append(ths, thing)
+	}
+
+	cases := []struct {
+		desc   string
+		things []things.Thing
+		err    error
+	}{
+		{
+			desc:   "create new things",
+			things: ths,
+			err:    nil,
+		},
+		{
+			desc:   "create things that already exist",
+			things: ths,
+			err:    things.ErrConflict,
+		},
+		{
+			desc: "create thing with invalid ID",
+			things: []things.Thing{
+				things.Thing{
+					ID:    "invalid",
+					Owner: email,
+					Key:   thkey,
+				},
+			},
+			err: things.ErrMalformedEntity,
+		},
+		{
+			desc: "create thing with invalid name",
+			things: []things.Thing{
+				things.Thing{
+					ID:    thid,
+					Owner: email,
+					Key:   thkey,
+					Name:  invalidName,
+				},
+			},
+			err: things.ErrMalformedEntity,
+		},
+		{
+			desc: "create thing with invalid Key",
+			things: []things.Thing{
+				things.Thing{
+					ID:    thid,
+					Owner: email,
+					Key:   nonexistentThingKey,
+				},
+			},
+			err: things.ErrConflict,
+		},
+		{
+			desc:   "create things with conflicting keys",
+			things: ths,
+			err:    things.ErrConflict,
+		},
+	}
+
+	for _, tc := range cases {
+		_, err := thingRepo.BulkSave(context.Background(), tc.things)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	}
+}
 
 func TestThingUpdate(t *testing.T) {
 	dbMiddleware := postgres.NewDatabase(db)

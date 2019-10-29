@@ -108,9 +108,77 @@ func TestCreateThing(t *testing.T) {
 	}
 	for _, tc := range cases {
 		loc, err := mainfluxSDK.CreateThing(tc.thing, tc.token)
+
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.location, loc, fmt.Sprintf("%s: expected location %s got %s", tc.desc, tc.location, loc))
 
+	}
+}
+
+func TestCreateThings(t *testing.T) {
+	svc := newThingsService(map[string]string{token: email})
+	ts := newThingsServer(svc)
+	defer ts.Close()
+
+	sdkConf := sdk.Config{
+		BaseURL:           ts.URL,
+		UsersPrefix:       "",
+		ThingsPrefix:      "",
+		HTTPAdapterPrefix: "",
+		MsgContentType:    contentType,
+		TLSVerification:   false,
+	}
+
+	mainfluxSDK := sdk.NewSDK(sdkConf)
+
+	things := []sdk.Thing{
+		sdk.Thing{ID: "1", Name: "1", Key: "1"},
+		sdk.Thing{ID: "2", Name: "2", Key: "2"},
+	}
+
+	cases := []struct {
+		desc   string
+		things []sdk.Thing
+		token  string
+		err    error
+		res    []sdk.Thing
+	}{
+		{
+			desc:   "create new things",
+			things: things,
+			token:  token,
+			err:    nil,
+			res:    things,
+		},
+		{
+			desc:   "create new things with empty things",
+			things: []sdk.Thing{},
+			token:  token,
+			err:    sdk.ErrInvalidArgs,
+			res:    []sdk.Thing{},
+		},
+		{
+			desc:   "create new thing with empty token",
+			things: things,
+			token:  "",
+			err:    sdk.ErrUnauthorized,
+			res:    []sdk.Thing{},
+		},
+		{
+			desc:   "create new thing with invalid token",
+			things: things,
+			token:  wrongValue,
+			err:    sdk.ErrUnauthorized,
+			res:    []sdk.Thing{},
+		},
+	}
+	for _, tc := range cases {
+		res, err := mainfluxSDK.CreateThings(tc.things, tc.token)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
+
+		for idx, _ := range tc.res {
+			assert.Equal(t, tc.res[idx].ID, res[idx].ID, fmt.Sprintf("%s: expected response ID %s got %s", tc.desc, tc.res[idx].ID, res[idx].ID))
+		}
 	}
 }
 

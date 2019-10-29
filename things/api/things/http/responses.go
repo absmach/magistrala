@@ -37,8 +37,11 @@ func (res removeRes) Empty() bool {
 }
 
 type thingRes struct {
-	id      string
-	created bool
+	ID       string                 `json:"id"`
+	Name     string                 `json:"name,omitempty"`
+	Key      string                 `json:"key"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
+	created  bool
 }
 
 func (res thingRes) Code() int {
@@ -52,7 +55,7 @@ func (res thingRes) Code() int {
 func (res thingRes) Headers() map[string]string {
 	if res.created {
 		return map[string]string{
-			"Location": fmt.Sprintf("/things/%s", res.id),
+			"Location": fmt.Sprintf("/things/%s", res.ID),
 		}
 	}
 
@@ -61,6 +64,27 @@ func (res thingRes) Headers() map[string]string {
 
 func (res thingRes) Empty() bool {
 	return true
+}
+
+type thingsRes struct {
+	Things  []thingRes `json:"things"`
+	created bool
+}
+
+func (res thingsRes) Code() int {
+	if res.created {
+		return http.StatusCreated
+	}
+
+	return http.StatusOK
+}
+
+func (res thingsRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res thingsRes) Empty() bool {
+	return false
 }
 
 type viewThingRes struct {
@@ -101,8 +125,10 @@ func (res thingsPageRes) Empty() bool {
 }
 
 type channelRes struct {
-	id      string
-	created bool
+	ID       string                 `json:"id"`
+	Name     string                 `json:"name,omitempty"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
+	created  bool
 }
 
 func (res channelRes) Code() int {
@@ -116,7 +142,7 @@ func (res channelRes) Code() int {
 func (res channelRes) Headers() map[string]string {
 	if res.created {
 		return map[string]string{
-			"Location": fmt.Sprintf("/channels/%s", res.id),
+			"Location": fmt.Sprintf("/channels/%s", res.ID),
 		}
 	}
 
@@ -125,6 +151,27 @@ func (res channelRes) Headers() map[string]string {
 
 func (res channelRes) Empty() bool {
 	return true
+}
+
+type channelsRes struct {
+	Channels []channelRes `json:"channels"`
+	created  bool
+}
+
+func (res channelsRes) Code() int {
+	if res.created {
+		return http.StatusCreated
+	}
+
+	return http.StatusOK
+}
+
+func (res channelsRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res channelsRes) Empty() bool {
+	return false
 }
 
 type viewChannelRes struct {

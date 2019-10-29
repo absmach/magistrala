@@ -51,6 +51,42 @@ func (cr channelRepository) Save(ctx context.Context, channel things.Channel) (s
 	return channel.ID, nil
 }
 
+func (cr channelRepository) BulkSave(ctx context.Context, channels []things.Channel) ([]things.Channel, error) {
+	tx, err := cr.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	q := `INSERT INTO channels (id, owner, name, metadata)
+		  VALUES (:id, :owner, :name, :metadata);`
+
+	for _, channel := range channels {
+		dbch := toDBChannel(channel)
+
+		_, err = tx.NamedExecContext(ctx, q, dbch)
+		if err != nil {
+			tx.Rollback()
+			pqErr, ok := err.(*pq.Error)
+			if ok {
+				switch pqErr.Code.Name() {
+				case errInvalid, errTruncation:
+					return []things.Channel{}, things.ErrMalformedEntity
+				case errDuplicate:
+					return []things.Channel{}, things.ErrConflict
+				}
+			}
+
+			return []things.Channel{}, err
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		return []things.Channel{}, err
+	}
+
+	return channels, nil
+}
+
 func (cr channelRepository) Update(ctx context.Context, channel things.Channel) error {
 	q := `UPDATE channels SET name = :name, metadata = :metadata WHERE owner = :owner AND id = :id;`
 

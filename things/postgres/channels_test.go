@@ -64,6 +64,80 @@ func TestChannelSave(t *testing.T) {
 	}
 }
 
+func TestChannelsBulkSave(t *testing.T) {
+	dbMiddleware := postgres.NewDatabase(db)
+	channelRepo := postgres.NewChannelRepository(dbMiddleware)
+
+	email := "channel-save@example.com"
+
+	var chid string
+	chs := []things.Channel{}
+	for i := 1; i <= 5; i++ {
+		chid, err := uuid.New().ID()
+		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
+		ch := things.Channel{
+			ID:    chid,
+			Owner: email,
+		}
+		chs = append(chs, ch)
+	}
+
+	cases := []struct {
+		desc     string
+		channels []things.Channel
+		err      error
+	}{
+		{
+			desc:     "create new channels",
+			channels: chs,
+			err:      nil,
+		},
+		{
+			desc:     "create channels that already exist",
+			channels: chs,
+			err:      things.ErrConflict,
+		},
+		{
+			desc: "create channel with invalid ID",
+			channels: []things.Channel{
+				things.Channel{
+					ID:    "invalid",
+					Owner: email,
+				},
+			},
+			err: things.ErrMalformedEntity,
+		},
+		{
+			desc: "create channel with invalid name",
+			channels: []things.Channel{
+				things.Channel{
+					ID:    chid,
+					Owner: email,
+					Name:  invalidName,
+				},
+			},
+			err: things.ErrMalformedEntity,
+		},
+		{
+			desc: "create channel with invalid name",
+			channels: []things.Channel{
+				things.Channel{
+					ID:    chid,
+					Owner: email,
+					Name:  invalidName,
+				},
+			},
+			err: things.ErrMalformedEntity,
+		},
+	}
+
+	for _, cc := range cases {
+		_, err := channelRepo.BulkSave(context.Background(), cc.channels)
+		assert.Equal(t, cc.err, err, fmt.Sprintf("%s: expected %s got %s\n", cc.desc, cc.err, err))
+	}
+}
+
 func TestChannelUpdate(t *testing.T) {
 	email := "channel-update@example.com"
 	dbMiddleware := postgres.NewDatabase(db)

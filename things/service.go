@@ -35,6 +35,9 @@ type Service interface {
 	// AddThing adds new thing to the user identified by the provided key.
 	AddThing(context.Context, string, Thing) (Thing, error)
 
+	// CreateThings adds a list of things to the user identified by the provided key.
+	CreateThings(context.Context, string, []Thing) ([]Thing, error)
+
 	// UpdateThing updates the thing identified by the provided ID, that
 	// belongs to the user identified by the provided key.
 	UpdateThing(context.Context, string, Thing) error
@@ -62,6 +65,9 @@ type Service interface {
 
 	// CreateChannel adds new channel to the user identified by the provided key.
 	CreateChannel(context.Context, string, Channel) (Channel, error)
+
+	// CreateChannels adds a list of channels to the user identified by the provided key.
+	CreateChannels(context.Context, string, []Channel) ([]Channel, error)
 
 	// UpdateChannel updates the channel identified by the provided ID, that
 	// belongs to the user identified by the provided key.
@@ -163,6 +169,31 @@ func (ts *thingsService) AddThing(ctx context.Context, token string, thing Thing
 	return thing, nil
 }
 
+func (ts *thingsService) CreateThings(ctx context.Context, token string, things []Thing) ([]Thing, error) {
+	res, err := ts.users.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return []Thing{}, ErrUnauthorizedAccess
+	}
+
+	for i := range things {
+		things[i].ID, err = ts.idp.ID()
+		if err != nil {
+			return []Thing{}, err
+		}
+
+		things[i].Owner = res.GetValue()
+
+		if things[i].Key == "" {
+			things[i].Key, err = ts.idp.ID()
+			if err != nil {
+				return []Thing{}, err
+			}
+		}
+	}
+
+	return ts.things.BulkSave(ctx, things)
+}
+
 func (ts *thingsService) UpdateThing(ctx context.Context, token string, thing Thing) error {
 	res, err := ts.users.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
@@ -243,6 +274,24 @@ func (ts *thingsService) CreateChannel(ctx context.Context, token string, channe
 
 	channel.ID = id
 	return channel, nil
+}
+
+func (ts *thingsService) CreateChannels(ctx context.Context, token string, channels []Channel) ([]Channel, error) {
+	res, err := ts.users.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return []Channel{}, ErrUnauthorizedAccess
+	}
+
+	for i := range channels {
+		channels[i].ID, err = ts.idp.ID()
+		if err != nil {
+			return []Channel{}, err
+		}
+
+		channels[i].Owner = res.GetValue()
+	}
+
+	return ts.channels.BulkSave(ctx, channels)
 }
 
 func (ts *thingsService) UpdateChannel(ctx context.Context, token string, channel Channel) error {

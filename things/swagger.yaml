@@ -64,7 +64,34 @@ paths:
         403:
           description: Missing or invalid access token provided.
         500:
-          $ref: "#/responses/ServiceError"
+          $ref: "#/responses/ServiceError"          
+  /things/bulkCreate:
+    post:
+      summary: Bulk provisions new things
+      description: |
+        Adds new things to the list of things owned by user identified using
+        the provided access token.
+      tags:
+        - things
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - name: things
+          description: JSON-formatted document describing the new things.
+          in: body
+          schema:
+            $ref: "#/definitions/CreateThingsReq"
+          required: true      
+      responses:
+        201:
+          description: Things registered.
+        400:
+          description: Failed due to malformed JSON.
+        403:
+          description: Missing or invalid access token provided.
+        415:
+          description: Missing or invalid content type.
+        500:
+          $ref: "#/responses/ServiceError"          
   /channels/{chanId}/things:
     get:
       summary: Retrieves list of things connected to specified channel
@@ -242,7 +269,34 @@ paths:
         403:
           description: Missing or invalid access token provided.
         500:
-          $ref: "#/responses/ServiceError"
+          $ref: "#/responses/ServiceError"                 
+  /channels/bulkCreate:
+    post:
+      summary: Bulk provisions new channels
+      description: |
+        Adds new channels to the list of channels owned by user identified using
+        the provided access token.
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - name: channels
+          description: JSON-formatted document describing the new channels.
+          in: body
+          schema:
+            $ref: "#/definitions/CreateChannelsReq"
+          required: true      
+      responses:
+        201:
+          description: Channels registered.
+        400:
+          description: Failed due to malformed JSON.
+        403:
+          description: Missing or invalid access token provided.
+        415:
+          description: Missing or invalid content type.
+        500:
+          $ref: "#/responses/ServiceError"      
   /channels/{chanId}:
     get:
       summary: Retrieves channel info

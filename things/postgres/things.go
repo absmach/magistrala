@@ -62,6 +62,45 @@ func (tr thingRepository) Save(ctx context.Context, thing things.Thing) (string,
 	return dbth.ID, nil
 }
 
+func (tr thingRepository) BulkSave(ctx context.Context, ths []things.Thing) ([]things.Thing, error) {
+	tx, err := tr.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	q := `INSERT INTO things (id, owner, name, key, metadata)
+		  VALUES (:id, :owner, :name, :key, :metadata);`
+
+	for _, thing := range ths {
+		dbth, err := toDBThing(thing)
+		if err != nil {
+			return []things.Thing{}, err
+		}
+
+		_, err = tx.NamedExecContext(ctx, q, dbth)
+		if err != nil {
+			tx.Rollback()
+			pqErr, ok := err.(*pq.Error)
+			if ok {
+				switch pqErr.Code.Name() {
+				case errInvalid, errTruncation:
+					return []things.Thing{}, things.ErrMalformedEntity
+				case errDuplicate:
+					return []things.Thing{}, things.ErrConflict
+				}
+			}
+
+			return []things.Thing{}, err
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		return []things.Thing{}, err
+	}
+
+	return ths, nil
+}
+
 func (tr thingRepository) Update(ctx context.Context, thing things.Thing) error {
 	q := `UPDATE things SET name = :name, metadata = :metadata WHERE owner = :owner AND id = :id;`
 

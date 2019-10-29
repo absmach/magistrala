@@ -48,6 +48,50 @@ func (sdk mfSDK) CreateThing(thing Thing, token string) (string, error) {
 	return id, nil
 }
 
+func (sdk mfSDK) CreateThings(things []Thing, token string) ([]Thing, error) {
+	data, err := json.Marshal(things)
+	if err != nil {
+		return []Thing{}, ErrInvalidArgs
+	}
+
+	endpoint := fmt.Sprintf("%s/%s", thingsEndpoint, "bulk")
+	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
+
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
+	if err != nil {
+		return []Thing{}, err
+	}
+
+	resp, err := sdk.sendRequest(req, token, string(CTJSON))
+	if err != nil {
+		return []Thing{}, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		switch resp.StatusCode {
+		case http.StatusBadRequest:
+			return []Thing{}, ErrInvalidArgs
+		case http.StatusForbidden:
+			return []Thing{}, ErrUnauthorized
+		default:
+			return []Thing{}, ErrFailedCreation
+		}
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return []Thing{}, err
+	}
+
+	var p createThingsRes
+	if err := json.Unmarshal(body, &p); err != nil {
+		return []Thing{}, err
+	}
+
+	return p.Things, nil
+}
+
 func (sdk mfSDK) Things(token string, offset, limit uint64, name string) (ThingsPage, error) {
 	endpoint := fmt.Sprintf("%s?offset=%d&limit=%d&name=%s", thingsEndpoint, offset, limit, name)
 	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)

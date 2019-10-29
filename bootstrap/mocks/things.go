@@ -51,6 +51,25 @@ func (svc *mainfluxThings) AddThing(_ context.Context, owner string, thing thing
 	return thing, nil
 }
 
+func (svc *mainfluxThings) CreateThings(_ context.Context, owner string, ths []things.Thing) ([]things.Thing, error) {
+	svc.mu.Lock()
+	defer svc.mu.Unlock()
+
+	userID, err := svc.users.Identify(context.Background(), &mainflux.Token{Value: owner})
+	if err != nil {
+		return []things.Thing{}, things.ErrUnauthorizedAccess
+	}
+	for i := range ths {
+		svc.counter++
+		ths[i].Owner = userID.Value
+		ths[i].ID = strconv.FormatUint(svc.counter, 10)
+		ths[i].Key = ths[i].ID
+		svc.things[ths[i].ID] = ths[i]
+	}
+
+	return ths, nil
+}
+
 func (svc *mainfluxThings) ViewThing(_ context.Context, owner, id string) (things.Thing, error) {
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
@@ -133,13 +152,13 @@ func (svc *mainfluxThings) RemoveThing(_ context.Context, owner, id string) erro
 	delete(svc.things, id)
 	conns := make(map[string][]string)
 	for k, v := range svc.connections {
-		idx := findIndex(v, id)
-		if idx != -1 {
+		i := findIndex(v, id)
+		if i != -1 {
 			var tmp []string
-			if idx != len(v)-2 {
-				tmp = v[idx+1:]
+			if i != len(v)-2 {
+				tmp = v[i+1:]
 			}
-			conns[k] = append(v[:idx], tmp...)
+			conns[k] = append(v[:i], tmp...)
 		}
 	}
 
@@ -176,6 +195,24 @@ func (svc *mainfluxThings) ListThingsByChannel(context.Context, string, string, 
 
 func (svc *mainfluxThings) CreateChannel(context.Context, string, things.Channel) (things.Channel, error) {
 	panic("not implemented")
+}
+
+func (svc *mainfluxThings) CreateChannels(_ context.Context, owner string, channels []things.Channel) ([]things.Channel, error) {
+	svc.mu.Lock()
+	defer svc.mu.Unlock()
+
+	userID, err := svc.users.Identify(context.Background(), &mainflux.Token{Value: owner})
+	if err != nil {
+		return []things.Channel{}, things.ErrUnauthorizedAccess
+	}
+	for i := range channels {
+		svc.counter++
+		channels[i].Owner = userID.Value
+		channels[i].ID = strconv.FormatUint(svc.counter, 10)
+		svc.channels[channels[i].ID] = channels[i]
+	}
+
+	return channels, nil
 }
 
 func (svc *mainfluxThings) UpdateChannel(context.Context, string, things.Channel) error {

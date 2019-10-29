@@ -61,6 +61,25 @@ func (trm *thingRepositoryMock) Save(_ context.Context, thing things.Thing) (str
 	return thing.ID, nil
 }
 
+func (trm *thingRepositoryMock) BulkSave(_ context.Context, ths []things.Thing) ([]things.Thing, error) {
+	trm.mu.Lock()
+	defer trm.mu.Unlock()
+
+	for i := range ths {
+		for _, th := range trm.things {
+			if th.Key == ths[i].Key {
+				return []things.Thing{}, things.ErrConflict
+			}
+		}
+
+		trm.counter++
+		ths[i].ID = strconv.FormatUint(trm.counter, 10)
+		trm.things[key(ths[i].Owner, ths[i].ID)] = ths[i]
+	}
+
+	return ths, nil
+}
+
 func (trm *thingRepositoryMock) Update(_ context.Context, thing things.Thing) error {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()

@@ -39,6 +39,19 @@ func (lm *loggingMiddleware) AddThing(ctx context.Context, token string, thing t
 	return lm.svc.AddThing(ctx, token, thing)
 }
 
+func (lm *loggingMiddleware) CreateThings(ctx context.Context, token string, ths []things.Thing) (saved []things.Thing, err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method create_things for token %s and things %s took %s to complete", token, saved, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.CreateThings(ctx, token, ths)
+}
+
 func (lm *loggingMiddleware) UpdateThing(ctx context.Context, token string, thing things.Thing) (err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method update_thing for token %s and thing %s took %s to complete", token, thing.ID, time.Since(begin))
@@ -131,6 +144,19 @@ func (lm *loggingMiddleware) CreateChannel(ctx context.Context, token string, ch
 	}(time.Now())
 
 	return lm.svc.CreateChannel(ctx, token, channel)
+}
+
+func (lm *loggingMiddleware) CreateChannels(ctx context.Context, token string, channels []things.Channel) (saved []things.Channel, err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method create_channels for token %s and channels %s took %s to complete", token, saved, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.CreateChannels(ctx, token, channels)
 }
 
 func (lm *loggingMiddleware) UpdateChannel(ctx context.Context, token string, channel things.Channel) (err error) {

@@ -64,7 +64,7 @@ paths:
         403:
           description: Missing or invalid access token provided.
         500:
-          $ref: "#/responses/ServiceError"          
+          $ref: "#/responses/ServiceError"
   /things/bulkCreate:
     post:
       summary: Bulk provisions new things
@@ -80,7 +80,7 @@ paths:
           in: body
           schema:
             $ref: "#/definitions/CreateThingsReq"
-          required: true      
+          required: true
       responses:
         201:
           description: Things registered.
@@ -91,7 +91,7 @@ paths:
         415:
           description: Missing or invalid content type.
         500:
-          $ref: "#/responses/ServiceError"          
+          $ref: "#/responses/ServiceError"
   /channels/{chanId}/things:
     get:
       summary: Retrieves list of things connected to specified channel
@@ -269,7 +269,7 @@ paths:
         403:
           description: Missing or invalid access token provided.
         500:
-          $ref: "#/responses/ServiceError"                 
+          $ref: "#/responses/ServiceError"
   /channels/bulkCreate:
     post:
       summary: Bulk provisions new channels
@@ -285,7 +285,7 @@ paths:
           in: body
           schema:
             $ref: "#/definitions/CreateChannelsReq"
-          required: true      
+          required: true
       responses:
         201:
           description: Channels registered.
@@ -296,7 +296,7 @@ paths:
         415:
           description: Missing or invalid content type.
         500:
-          $ref: "#/responses/ServiceError"      
+          $ref: "#/responses/ServiceError"
   /channels/{chanId}:
     get:
       summary: Retrieves channel info
@@ -433,7 +433,7 @@ paths:
     post:
       summary: Checks if thing has access to a channel.
       description: |
-        Checks if a thing with a specified key has an access to a specified 
+        Checks if a thing with a specified key has an access to a specified
         channel and if it has, it returns that things id.
       tags:
         - access
@@ -463,7 +463,7 @@ paths:
     post:
       summary: Checks if thing has access to a channel.
       description: |
-        Checks if a thing with a specified ID has an access to a specified 
+        Checks if a thing with a specified ID has an access to a specified
         channel.
       tags:
         - access
@@ -512,6 +512,7 @@ paths:
           description: Missing or invalid content type.
         500:
           $ref: "#/responses/ServiceError"
+
 parameters:
   Authorization:
     name: Authorization
@@ -599,6 +600,9 @@ definitions:
       name:
         type: string
         description: Free-form channel name.
+      metadata:
+        type: object
+        description: Arbitrary, object-encoded channel's data.
     required:
       - id
   ChannelReq:
@@ -607,6 +611,9 @@ definitions:
       name:
         type: string
         description: Free-form channel name.
+      metadata:
+        type: object
+        description: Arbitrary, object-encoded channel's data.
   ThingsPage:
     type: object
     properties:
@@ -640,8 +647,8 @@ definitions:
         type: string
         description: Auto-generated access key.
       metadata:
-        type: string
-        description: Arbitrary, string-encoded thing's data.
+        type: object
+        description: Arbitrary, object-encoded thing's data.
     required:
       - id
       - type
@@ -660,7 +667,7 @@ definitions:
         description: Free-form thing name.
       metadata:
         type: object
-        description: Custom thing's data in JSON format.
+        description: Arbitrary, object-encoded thing's data.
   UpdateThingReq:
     type: object
     properties:
@@ -669,7 +676,7 @@ definitions:
         description: Free-form thing name.
       metadata:
         type: object
-        description: Custom thing's data in JSON format.
+        description: Arbitrary, object-encoded thing's data.
   UpdateKeyReq:
     type: object
     properties:

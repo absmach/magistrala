@@ -56,6 +56,13 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 		opts...,
 	))
 
+	mux.Put("/users", kithttp.NewServer(
+		kitot.TraceServer(tracer, "update_user")(updateUserEndpoint(svc)),
+		decodeUpdateUser,
+		encodeResponse,
+		opts...,
+	))
+
 	mux.Post("/password/reset-request", kithttp.NewServer(
 		kitot.TraceServer(tracer, "res-req")(passwordResetRequestEndpoint(svc)),
 		decodePasswordResetRequest,
@@ -84,13 +91,6 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 		opts...,
 	))
 
-	mux.Get("/users", kithttp.NewServer(
-		kitot.TraceServer(tracer, "user_info")(userInfoEndpoint(svc)),
-		decodeViewInfo,
-		encodeResponse,
-		opts...,
-	))
-
 	mux.GetFunc("/version", mainflux.Version("users"))
 	mux.Handle("/metrics", promhttp.Handler())
 
@@ -101,6 +101,17 @@ func decodeViewInfo(_ context.Context, r *http.Request) (interface{}, error) {
 	req := viewUserInfoReq{
 		token: r.Header.Get("Authorization"),
 	}
+	return req, nil
+}
+
+func decodeUpdateUser(_ context.Context, r *http.Request) (interface{}, error) {
+	var req updateUserReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		logger.Warn(fmt.Sprintf("Failed to decode user: %s", err))
+		return nil, err
+	}
+
+	req.token = r.Header.Get("Authorization")
 	return req, nil
 }
 

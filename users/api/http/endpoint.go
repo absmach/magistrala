@@ -90,6 +90,26 @@ func userInfoEndpoint(svc users.Service) endpoint.Endpoint {
 	}
 }
 
+func updateUserEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(updateUserReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		user := users.User{
+			Metadata: req.Metadata,
+		}
+		err := svc.UpdateUser(ctx, req.token, user)
+		if err != nil {
+			return nil, err
+		}
+
+		return updateUserRes{}, nil
+	}
+}
+
 func passwordChangeEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(passwChangeReq)

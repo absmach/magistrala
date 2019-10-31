@@ -28,6 +28,18 @@ func (req viewUserInfoReq) validate() error {
 	return nil
 }
 
+type updateUserReq struct {
+	token    string
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
+}
+
+func (req updateUserReq) validate() error {
+	if req.token == "" {
+		return users.ErrUnauthorizedAccess
+	}
+	return nil
+}
+
 type passwResetReq struct {
 	Email string `json:"email"`
 	Host  string `json:"host"`

@@ -36,6 +36,30 @@ func (urm *userRepositoryMock) Save(ctx context.Context, user users.User) error 
 	return nil
 }
 
+func (urm *userRepositoryMock) Update(ctx context.Context, user users.User) error {
+	urm.mu.Lock()
+	defer urm.mu.Unlock()
+
+	if _, ok := urm.users[user.Email]; ok {
+		return users.ErrConflict
+	}
+
+	urm.users[user.Email] = user
+	return nil
+}
+
+func (urm *userRepositoryMock) UpdateUser(ctx context.Context, user users.User) error {
+	urm.mu.Lock()
+	defer urm.mu.Unlock()
+
+	if _, ok := urm.users[user.Email]; ok {
+		return users.ErrConflict
+	}
+
+	urm.users[user.Email] = user
+	return nil
+}
+
 func (urm *userRepositoryMock) RetrieveByID(ctx context.Context, email string) (users.User, error) {
 	urm.mu.Lock()
 	defer urm.mu.Unlock()

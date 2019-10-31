@@ -56,13 +56,22 @@ func (ms *metricsMiddleware) Identify(key string) (string, error) {
 	return ms.svc.Identify(key)
 }
 
-func (ms *metricsMiddleware) UserInfo(ctx context.Context, key string) (users.User, error) {
+func (ms *metricsMiddleware) UserInfo(ctx context.Context, token string) (users.User, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "user_info").Add(1)
 		ms.latency.With("method", "user_info").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.UserInfo(ctx, key)
+	return ms.svc.UserInfo(ctx, token)
+}
+
+func (ms *metricsMiddleware) UpdateUser(ctx context.Context, token string, u users.User) (err error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "update_user").Add(1)
+		ms.latency.With("method", "update_user").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.UpdateUser(ctx, token, u)
 }
 
 func (ms *metricsMiddleware) GenerateResetToken(ctx context.Context, email, host string) error {

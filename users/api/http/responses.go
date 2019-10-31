@@ -34,6 +34,20 @@ func (res tokenRes) Empty() bool {
 	return res.Token == ""
 }
 
+type updateUserRes struct{}
+
+func (res updateUserRes) Code() int {
+	return http.StatusOK
+}
+
+func (res updateUserRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res updateUserRes) Empty() bool {
+	return true
+}
+
 type identityRes struct {
 	Email    string                 `json:"email"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`

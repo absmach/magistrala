@@ -38,7 +38,7 @@ paths:
     get:
       summary: Gets info on currently logged in user.
       description: |
-        Gets info on currently logged in user. Info is obtained using 
+        Gets info on currently logged in user. Info is obtained using
         authorization token
       tags:
         - users
@@ -54,7 +54,32 @@ paths:
         403:
           description: Missing or invalid access token provided.
         500:
-          $ref: "#/responses/ServiceError"  
+          $ref: "#/responses/ServiceError"
+  /users:
+    put:
+      summary: Updates info on currently logged in user.
+      description: |
+        Updates info on currently logged in user. Info is updated using
+        authorization token and the new received info.
+      tags:
+        - users
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - name: metadata
+          description: JSON-formatted document containing user info.
+          in: body
+          schema:
+            $ref: "#/definitions/CreateThingReq"
+          required: true
+      responses:
+        200:
+          description: User updated.
+        400:
+          description: Failed due to malformed JSON.
+        403:
+          description: Missing or invalid access token provided.
+        500:
+          $ref: "#/responses/ServiceError"
   /tokens:
     post:
       summary: User authentication
@@ -103,7 +128,7 @@ paths:
           description: User link .
         400:
           description: |
-            Failed due to malformed JSON. 
+            Failed due to malformed JSON.
         415:
           description: Missing or invalid content type.
         500:
@@ -127,7 +152,7 @@ paths:
           description: User link .
         400:
           description: |
-            Failed due to malformed JSON. 
+            Failed due to malformed JSON.
         415:
           description: Missing or invalid content type.
         500:
@@ -152,11 +177,11 @@ paths:
           description: User link .
         400:
           description: |
-            Failed due to malformed JSON. 
+            Failed due to malformed JSON.
         415:
           description: Missing or invalid content type.
         500:
-          $ref: "#/responses/ServiceError"         
+          $ref: "#/responses/ServiceError"
 responses:
   ServiceError:
     description: Unexpected server-side error occurred.
@@ -193,7 +218,7 @@ definitions:
         description: User's email address will be used as its unique identifier
     required:
       - email
-    
+
 
 parameters:
   Authorization:
@@ -202,6 +227,13 @@ parameters:
     in: header
     type: string
     required: true
+  Metadata:
+    name: metadata
+    description: Metadata filter. Filtering is performed matching the parameter with metadata on top level. Parameter is json.
+    in: query
+    type: string
+    minimum: 0
+    required: false
 
 responses:
   ServiceError:
@@ -217,6 +249,9 @@ definitions:
       metadata:
         type: object
         description: Custom metadata related to User
+  updateUserReq:
+    type: object
+    description: Arbitrary, object-encoded user's data.
   PasswordResetRequest:
     type: object
     properties:

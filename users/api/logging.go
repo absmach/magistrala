@@ -64,7 +64,7 @@ func (lm *loggingMiddleware) Identify(key string) (id string, err error) {
 	return lm.svc.Identify(key)
 }
 
-func (lm *loggingMiddleware) UserInfo(ctx context.Context, key string) (u users.User, err error) {
+func (lm *loggingMiddleware) UserInfo(ctx context.Context, token string) (u users.User, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method user_info for user %s took %s to complete", u.Email, time.Since(begin))
 		if err != nil {
@@ -74,7 +74,20 @@ func (lm *loggingMiddleware) UserInfo(ctx context.Context, key string) (u users.
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.UserInfo(ctx, key)
+	return lm.svc.UserInfo(ctx, token)
+}
+
+func (lm *loggingMiddleware) UpdateUser(ctx context.Context, token string, u users.User) (err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method update_user for user %s took %s to complete", u.Email, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.UpdateUser(ctx, token, u)
 }
 
 func (lm *loggingMiddleware) GenerateResetToken(ctx context.Context, email, host string) (err error) {

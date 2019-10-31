@@ -65,14 +65,14 @@ func TestReadAll(t *testing.T) {
 			msg.ValueSum = &mainflux.SumValue{Value: 45}
 		}
 		msg.Time = float64(now - int64(i))
-
-		err := writer.Save(msg)
-		require.Nil(t, err, fmt.Sprintf("failed to store message to Cassandra: %s", err))
 		messages = append(messages, msg)
 		if count == 0 {
 			subtopicMsgs = append(subtopicMsgs, msg)
 		}
 	}
+
+	err = writer.Save(messages...)
+	require.Nil(t, err, fmt.Sprintf("failed to store message to Cassandra: %s", err))
 
 	reader := creaders.New(session)
 

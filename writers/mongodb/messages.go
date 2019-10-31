@@ -43,40 +43,45 @@ func New(db *mongo.Database) writers.MessageRepository {
 	return &mongoRepo{db}
 }
 
-func (repo *mongoRepo) Save(msg mainflux.Message) error {
+func (repo *mongoRepo) Save(messages ...mainflux.Message) error {
 	coll := repo.db.Collection(collectionName)
-	m := message{
-		Channel:    msg.Channel,
-		Subtopic:   msg.Subtopic,
-		Publisher:  msg.Publisher,
-		Protocol:   msg.Protocol,
-		Name:       msg.Name,
-		Unit:       msg.Unit,
-		Time:       msg.Time,
-		UpdateTime: msg.UpdateTime,
-		Link:       msg.Link,
+	var msgs []interface{}
+	for _, msg := range messages {
+		m := message{
+			Channel:    msg.Channel,
+			Subtopic:   msg.Subtopic,
+			Publisher:  msg.Publisher,
+			Protocol:   msg.Protocol,
+			Name:       msg.Name,
+			Unit:       msg.Unit,
+			Time:       msg.Time,
+			UpdateTime: msg.UpdateTime,
+			Link:       msg.Link,
+		}
+
+		switch msg.Value.(type) {
+		case *mainflux.Message_FloatValue:
+			v := msg.GetFloatValue()
+			m.FloatValue = &v
+		case *mainflux.Message_StringValue:
+			v := msg.GetStringValue()
+			m.StringValue = &v
+		case *mainflux.Message_DataValue:
+			v := msg.GetDataValue()
+			m.DataValue = &v
+		case *mainflux.Message_BoolValue:
+			v := msg.GetBoolValue()
+			m.BoolValue = &v
+		}
+
+		if msg.GetValueSum() != nil {
+			valueSum := msg.GetValueSum().Value
+			m.ValueSum = &valueSum
+		}
+
+		msgs = append(msgs, m)
 	}
 
-	switch msg.Value.(type) {
-	case *mainflux.Message_FloatValue:
-		v := msg.GetFloatValue()
-		m.FloatValue = &v
-	case *mainflux.Message_StringValue:
-		v := msg.GetStringValue()
-		m.StringValue = &v
-	case *mainflux.Message_DataValue:
-		v := msg.GetDataValue()
-		m.DataValue = &v
-	case *mainflux.Message_BoolValue:
-		v := msg.GetBoolValue()
-		m.BoolValue = &v
-	}
-
-	if msg.GetValueSum() != nil {
-		valueSum := msg.GetValueSum().Value
-		m.ValueSum = &valueSum
-	}
-
-	_, err := coll.InsertOne(context.Background(), m)
+	_, err := coll.InsertMany(context.Background(), msgs)
 	return err
 }

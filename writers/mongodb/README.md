@@ -21,6 +21,7 @@ default values.
 ## Deployment
 
 ```yaml
+  version: "3.7"
   mongodb-writer:
     image: mainflux/mongodb-writer:[version]
     container_name: [instance name]

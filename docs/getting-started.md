@@ -101,7 +101,6 @@ In the Mainflux system terminal you should see following logs:
 ```bash
 mainflux-things | {"level":"info","message":"Method can_access for channel b7bfc4b6-c18d-47c5-b343-98235c5acc19 and thing 513d02d2-16c1-4f23-98be-9e12f8fee898 took 1.410194ms to complete without errors.","ts":"2019-01-08T22:19:30.148097648Z"}
 mainflux-http   | {"level":"info","message":"Method publish took 336.685µs to complete without errors.","ts":"2019-01-08T22:19:30.148689601Z"}
-mainflux-normalizer | {"level":"info","message":"Method normalize took 108.126µs to complete without errors.","ts":"2019-01-08T22:19:30.149500543Z"}
 ```
 
-This proves that messages have been correctly sent through the system, via the protocol adapter (`mainflux-http`) and the `normalizer` service has correctly parsed the messages.
+This proves that messages have been correctly sent through the system via the protocol adapter (`mainflux-http`).

@@ -29,7 +29,7 @@ func MetricsMiddleware(svc normalizer.Service, counter metrics.Counter, latency 
 	}
 }
 
-func (mm *metricsMiddleware) Normalize(msg mainflux.RawMessage) (normalizer.NormalizedData, error) {
+func (mm *metricsMiddleware) Normalize(msg mainflux.RawMessage) ([]mainflux.Message, error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "normalize").Add(1)
 		mm.latency.With("method", "normalize").Observe(time.Since(begin).Seconds())

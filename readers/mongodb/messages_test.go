@@ -74,13 +74,13 @@ func TestReadAll(t *testing.T) {
 		}
 		msg.Time = float64(now - int64(i))
 
-		err := writer.Save(msg)
-		require.Nil(t, err, fmt.Sprintf("failed to store message to MongoDB: %s", err))
 		messages = append(messages, msg)
 		if count == 0 {
 			subtopicMsgs = append(subtopicMsgs, msg)
 		}
 	}
+	err = writer.Save(messages...)
+	require.Nil(t, err, fmt.Sprintf("failed to store message to MongoDB: %s", err))
 
 	reader := mreaders.New(db)
 

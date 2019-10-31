@@ -2,6 +2,10 @@
 
 Normalizer service consumes events published by adapters, normalizes SenML-formatted
 ones, and publishes them to the post-processing stream.
+Normalizer can also be imported as a package and used independently for message normalization.
+This reduces internal traffic because messages are not published back to the broker, but transformed
+on the message consumer side. Mainflux (writers) [https://github.com/mainflux/mainflux/tree/master/writers]
+are using Normalizer to preprocess messages before storing them.
 
 ## Configuration
 
@@ -22,7 +26,7 @@ provides a compose file template that can be used to deploy the service containe
 locally:
 
 ```yaml
-version: "2"
+version: "3.7"
 services:
   normalizer:
     image: mainflux/normalizer:[version]

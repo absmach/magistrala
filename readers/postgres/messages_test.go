@@ -61,13 +61,14 @@ func TestMessageReadAll(t *testing.T) {
 		}
 		msg.Time = float64(now - int64(i))
 
-		err := messageRepo.Save(msg)
-		assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 		messages = append(messages, msg)
 		if count == 0 {
 			subtopicMsgs = append(subtopicMsgs, msg)
 		}
 	}
+
+	err = messageRepo.Save(messages...)
+	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 
 	reader := preader.New(db)
 

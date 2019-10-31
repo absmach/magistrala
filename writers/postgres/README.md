@@ -27,6 +27,7 @@ default values.
 ## Deployment
 
 ```yaml
+  version: "3.7"
   postgres-writer:
     image: mainflux/postgres-writer:[version]
     container_name: [instance name]

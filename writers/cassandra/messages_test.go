@@ -36,6 +36,7 @@ func TestSave(t *testing.T) {
 
 	repo := cassandra.New(session)
 	now := time.Now().Unix()
+	var msgs []mainflux.Message
 	for i := 0; i < msgsNum; i++ {
 		// Mix possible values as well as value sum.
 		count := i % valueFields
@@ -54,8 +55,9 @@ func TestSave(t *testing.T) {
 			msg.ValueSum = &mainflux.SumValue{Value: 45}
 		}
 		msg.Time = float64(now + int64(i))
-
-		err = repo.Save(msg)
-		assert.Nil(t, err, fmt.Sprintf("expected no error, got %s", err))
+		msgs = append(msgs, msg)
 	}
+
+	err = repo.Save(msgs...)
+	assert.Nil(t, err, fmt.Sprintf("expected no error, got %s", err))
 }

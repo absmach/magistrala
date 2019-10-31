@@ -4,10 +4,8 @@
 package influxdb
 
 import (
-	"errors"
 	"math"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/mainflux/mainflux/writers"
@@ -20,105 +18,43 @@ const pointName = "messages"
 
 var _ writers.MessageRepository = (*influxRepo)(nil)
 
-var (
-	errZeroValueSize    = errors.New("zero value batch size")
-	errZeroValueTimeout = errors.New("zero value batch timeout")
-	errNilBatch         = errors.New("nil batch")
-)
-
 type influxRepo struct {
-	client    influxdata.Client
-	batch     influxdata.BatchPoints
-	batchSize int
-	mu        sync.Mutex
-	tick      <-chan time.Time
-	cfg       influxdata.BatchPointsConfig
+	client influxdata.Client
+	cfg    influxdata.BatchPointsConfig
 }
 
 type fields map[string]interface{}
 type tags map[string]string
 
 // New returns new InfluxDB writer.
-func New(client influxdata.Client, database string, batchSize int, batchTimeout time.Duration) (writers.MessageRepository, error) {
-	if batchSize <= 0 {
-		return &influxRepo{}, errZeroValueSize
-	}
-
-	if batchTimeout <= 0 {
-		return &influxRepo{}, errZeroValueTimeout
-	}
-
-	repo := &influxRepo{
+func New(client influxdata.Client, database string) writers.MessageRepository {
+	return &influxRepo{
 		client: client,
 		cfg: influxdata.BatchPointsConfig{
 			Database: database,
 		},
-		batchSize: batchSize,
 	}
-
-	var err error
-	repo.batch, err = influxdata.NewBatchPoints(repo.cfg)
-	if err != nil {
-		return &influxRepo{}, err
-	}
-
-	repo.tick = time.NewTicker(batchTimeout).C
-	go func() {
-		for {
-			<-repo.tick
-			// Nil point indicates that savePoint method is triggered by the ticker.
-			repo.savePoint(nil)
-		}
-	}()
-
-	return repo, nil
 }
 
-func (repo *influxRepo) savePoint(point *influxdata.Point) error {
-	repo.mu.Lock()
-	defer repo.mu.Unlock()
-	if repo.batch == nil {
-		return errNilBatch
-	}
-
-	// Ignore ticker if there is nothing to save.
-	if len(repo.batch.Points()) == 0 && point == nil {
-		return nil
-	}
-
-	if point != nil {
-		repo.batch.AddPoint(point)
-	}
-
-	if len(repo.batch.Points())%repo.batchSize == 0 || point == nil {
-		if err := repo.client.Write(repo.batch); err != nil {
-			return err
-		}
-		// It would be nice to reset ticker at this point, which
-		// implies creating a new ticker and goroutine. It would
-		// introduce unnecessary complexity with no justified benefits.
-		var err error
-		repo.batch, err = influxdata.NewBatchPoints(repo.cfg)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (repo *influxRepo) Save(msg mainflux.Message) error {
-	tgs, flds := repo.tagsOf(&msg), repo.fieldsOf(&msg)
-
-	sec, dec := math.Modf(msg.Time)
-	t := time.Unix(int64(sec), int64(dec*(1e9)))
-
-	pt, err := influxdata.NewPoint(pointName, tgs, flds, t)
+func (repo *influxRepo) Save(messages ...mainflux.Message) error {
+	pts, err := influxdata.NewBatchPoints(repo.cfg)
 	if err != nil {
 		return err
 	}
+	for _, msg := range messages {
+		tgs, flds := repo.tagsOf(&msg), repo.fieldsOf(&msg)
 
-	return repo.savePoint(pt)
+		sec, dec := math.Modf(msg.Time)
+		t := time.Unix(int64(sec), int64(dec*(1e9)))
+
+		pt, err := influxdata.NewPoint(pointName, tgs, flds, t)
+		if err != nil {
+			return err
+		}
+		pts.AddPoint(pt)
+	}
+
+	return repo.client.Write(pts)
 }
 
 func (repo *influxRepo) tagsOf(msg *mainflux.Message) tags {

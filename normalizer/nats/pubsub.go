@@ -68,7 +68,7 @@ func (ps pubsub) publish(msg mainflux.RawMessage) error {
 		}
 	}
 
-	for _, v := range normalized.Messages {
+	for _, v := range normalized {
 		data, err := proto.Marshal(&v)
 		if err != nil {
 			ps.logger.Warn(fmt.Sprintf("Marshalling failed: %s", err))

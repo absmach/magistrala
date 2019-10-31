@@ -23,7 +23,7 @@ default values.
 ## Deployment
 
 ```yaml
-  version: "2"
+  version: "3.7"
   mongodb-reader:
     image: mainflux/mongodb-reader:[version]
     container_name: [instance name]

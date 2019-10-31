@@ -4,8 +4,6 @@
 package normalizer
 
 import (
-	"strings"
-
 	"github.com/cisco/senml"
 	"github.com/mainflux/mainflux"
 )
@@ -22,7 +20,7 @@ func New() Service {
 	return normalizer{}
 }
 
-func (n normalizer) Normalize(msg mainflux.RawMessage) (NormalizedData, error) {
+func (n normalizer) Normalize(msg mainflux.RawMessage) ([]mainflux.Message, error) {
 	format, ok := formats[msg.ContentType]
 	if !ok {
 		format = senml.JSON
@@ -30,7 +28,7 @@ func (n normalizer) Normalize(msg mainflux.RawMessage) (NormalizedData, error) {
 
 	raw, err := senml.Decode(msg.Payload, format)
 	if err != nil {
-		return NormalizedData{}, err
+		return nil, err
 	}
 
 	normalized := senml.Normalize(raw)
@@ -67,10 +65,5 @@ func (n normalizer) Normalize(msg mainflux.RawMessage) (NormalizedData, error) {
 		msgs[k] = m
 	}
 
-	output := strings.ToLower(msg.ContentType)
-
-	return NormalizedData{
-		ContentType: output,
-		Messages:    msgs,
-	}, nil
+	return msgs, nil
 }

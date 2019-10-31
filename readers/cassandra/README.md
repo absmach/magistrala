@@ -26,7 +26,7 @@ default values.
 ## Deployment
 
 ```yaml
-  version: "2"
+  version: "3.7"
   cassandra-reader:
     image: mainflux/cassandra-reader:[version]
     container_name: [instance name]

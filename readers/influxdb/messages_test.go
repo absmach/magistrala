@@ -50,8 +50,7 @@ var (
 )
 
 func TestReadAll(t *testing.T) {
-	writer, err := writer.New(client, testDB, 1, time.Second)
-	require.Nil(t, err, fmt.Sprintf("Creating new InfluxDB writer expected to succeed: %s.\n", err))
+	writer := writer.New(client, testDB)
 
 	messages := []mainflux.Message{}
 	subtopicMsgs := []mainflux.Message{}
@@ -76,14 +75,14 @@ func TestReadAll(t *testing.T) {
 			msg.ValueSum = &mainflux.SumValue{Value: 45}
 		}
 		msg.Time = float64(now - int64(i))
-
-		err := writer.Save(msg)
-		require.Nil(t, err, fmt.Sprintf("failed to store message to InfluxDB: %s", err))
 		messages = append(messages, msg)
 		if count == 0 {
 			subtopicMsgs = append(subtopicMsgs, msg)
 		}
 	}
+
+	err := writer.Save(messages...)
+	require.Nil(t, err, fmt.Sprintf("failed to store message to InfluxDB: %s", err))
 
 	reader := reader.New(client, testDB)
 	require.Nil(t, err, fmt.Sprintf("Creating new InfluxDB reader expected to succeed: %s.\n", err))

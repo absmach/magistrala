@@ -22,7 +22,7 @@ default values.
 ## Deployment
 
 ```yaml
-  version: "2"
+  version: "3.7"
   cassandra-writer:
     image: mainflux/cassandra-writer:[version]
     container_name: [instance name]

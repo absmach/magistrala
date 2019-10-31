@@ -43,15 +43,7 @@ kubectl create -f k8s/mainflux/things-postgres.yml
 kubectl create -f k8s/mainflux/things.yml
 ```
 
-### 4. Setup Normalizer service
-
-- Deploy Normalizer service:
-
-```
-kubectl create -f k8s/mainflux/normalizer.yml
-```
-
-### 5. Setup adapter services
+### 4. Setup adapter services
 
 - Deploy adapter service:
 
@@ -60,7 +52,7 @@ kubectl create -f k8s/mainflux/tcp-services.yml
 kubectl create -f k8s/mainflux/<adapter_service_name>.yml
 ```
 
-### 6. Setup Dashflux
+### 5. Setup Dashflux
 
 - Deploy Dashflux service:
 
@@ -68,6 +60,6 @@ kubectl create -f k8s/mainflux/<adapter_service_name>.yml
 kubectl create -f k8s/mainflux/dashflux.yml
 ```
 
-### 7. Configure Internet Access
+### 6. Configure Internet Access
 
 Configure NAT on your Firewall to forward ports 80 (HTTP) and 443 (HTTPS) to nginx ingress service

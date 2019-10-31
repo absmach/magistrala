@@ -27,7 +27,7 @@ func LoggingMiddleware(svc normalizer.Service, logger logger.Logger) normalizer.
 	}
 }
 
-func (lm loggingMiddleware) Normalize(msg mainflux.RawMessage) (nd normalizer.NormalizedData, err error) {
+func (lm loggingMiddleware) Normalize(msg mainflux.RawMessage) (msgs []mainflux.Message, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method normalize took %s to complete", time.Since(begin))
 		if err != nil {

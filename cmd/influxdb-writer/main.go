@@ -10,15 +10,14 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
-	"time"
 
 	"github.com/BurntSushi/toml"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	influxdata "github.com/influxdata/influxdb/client/v2"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/normalizer"
 	"github.com/mainflux/mainflux/writers"
 	"github.com/mainflux/mainflux/writers/api"
 	"github.com/mainflux/mainflux/writers/influxdb"
@@ -29,43 +28,37 @@ import (
 const (
 	svcName = "influxdb-writer"
 
-	defNatsURL      = nats.DefaultURL
-	defLogLevel     = "error"
-	defPort         = "8180"
-	defBatchSize    = "5000"
-	defBatchTimeout = "5"
-	defDBName       = "mainflux"
-	defDBHost       = "localhost"
-	defDBPort       = "8086"
-	defDBUser       = "mainflux"
-	defDBPass       = "mainflux"
-	defChanCfgPath  = "/config/channels.toml"
+	defNatsURL     = nats.DefaultURL
+	defLogLevel    = "error"
+	defPort        = "8180"
+	defDBName      = "mainflux"
+	defDBHost      = "localhost"
+	defDBPort      = "8086"
+	defDBUser      = "mainflux"
+	defDBPass      = "mainflux"
+	defChanCfgPath = "/config/channels.toml"
 
-	envNatsURL      = "MF_NATS_URL"
-	envLogLevel     = "MF_INFLUX_WRITER_LOG_LEVEL"
-	envPort         = "MF_INFLUX_WRITER_PORT"
-	envBatchSize    = "MF_INFLUX_WRITER_BATCH_SIZE"
-	envBatchTimeout = "MF_INFLUX_WRITER_BATCH_TIMEOUT"
-	envDBName       = "MF_INFLUX_WRITER_DB_NAME"
-	envDBHost       = "MF_INFLUX_WRITER_DB_HOST"
-	envDBPort       = "MF_INFLUX_WRITER_DB_PORT"
-	envDBUser       = "MF_INFLUX_WRITER_DB_USER"
-	envDBPass       = "MF_INFLUX_WRITER_DB_PASS"
-	envChanCfgPath  = "MF_INFLUX_WRITER_CHANNELS_CONFIG"
+	envNatsURL     = "MF_NATS_URL"
+	envLogLevel    = "MF_INFLUX_WRITER_LOG_LEVEL"
+	envPort        = "MF_INFLUX_WRITER_PORT"
+	envDBName      = "MF_INFLUX_WRITER_DB_NAME"
+	envDBHost      = "MF_INFLUX_WRITER_DB_HOST"
+	envDBPort      = "MF_INFLUX_WRITER_DB_PORT"
+	envDBUser      = "MF_INFLUX_WRITER_DB_USER"
+	envDBPass      = "MF_INFLUX_WRITER_DB_PASS"
+	envChanCfgPath = "MF_INFLUX_WRITER_CHANNELS_CONFIG"
 )
 
 type config struct {
-	natsURL      string
-	logLevel     string
-	port         string
-	batchSize    string
-	batchTimeout string
-	dbName       string
-	dbHost       string
-	dbPort       string
-	dbUser       string
-	dbPass       string
-	channels     map[string]bool
+	natsURL  string
+	logLevel string
+	port     string
+	dbName   string
+	dbHost   string
+	dbPort   string
+	dbUser   string
+	dbPass   string
+	channels map[string]bool
 }
 
 func main() {
@@ -90,29 +83,13 @@ func main() {
 	}
 	defer client.Close()
 
-	batchTimeout, err := strconv.Atoi(cfg.batchTimeout)
-	if err != nil {
-		logger.Error(fmt.Sprintf("Invalid value for batch timeout: %s", err))
-		os.Exit(1)
-	}
-
-	batchSize, err := strconv.Atoi(cfg.batchSize)
-	if err != nil {
-		logger.Error(fmt.Sprintf("Invalid value of batch size: %s", err))
-		os.Exit(1)
-	}
-
-	timeout := time.Duration(batchTimeout) * time.Second
-	repo, err := influxdb.New(client, cfg.dbName, batchSize, timeout)
-	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to create InfluxDB writer: %s", err))
-		os.Exit(1)
-	}
+	repo := influxdb.New(client, cfg.dbName)
 
 	counter, latency := makeMetrics()
 	repo = api.LoggingMiddleware(repo, logger)
 	repo = api.MetricsMiddleware(repo, counter, latency)
-	if err := writers.Start(nc, repo, svcName, cfg.channels, logger); err != nil {
+	norm := normalizer.New()
+	if err := writers.Start(nc, repo, norm, svcName, cfg.channels, logger); err != nil {
 		logger.Error(fmt.Sprintf("Failed to start InfluxDB writer: %s", err))
 		os.Exit(1)
 	}
@@ -133,17 +110,15 @@ func main() {
 func loadConfigs() (config, influxdata.HTTPConfig) {
 	chanCfgPath := mainflux.Env(envChanCfgPath, defChanCfgPath)
 	cfg := config{
-		natsURL:      mainflux.Env(envNatsURL, defNatsURL),
-		logLevel:     mainflux.Env(envLogLevel, defLogLevel),
-		port:         mainflux.Env(envPort, defPort),
-		batchSize:    mainflux.Env(envBatchSize, defBatchSize),
-		batchTimeout: mainflux.Env(envBatchTimeout, defBatchTimeout),
-		dbName:       mainflux.Env(envDBName, defDBName),
-		dbHost:       mainflux.Env(envDBHost, defDBHost),
-		dbPort:       mainflux.Env(envDBPort, defDBPort),
-		dbUser:       mainflux.Env(envDBUser, defDBUser),
-		dbPass:       mainflux.Env(envDBPass, defDBPass),
-		channels:     loadChansConfig(chanCfgPath),
+		natsURL:  mainflux.Env(envNatsURL, defNatsURL),
+		logLevel: mainflux.Env(envLogLevel, defLogLevel),
+		port:     mainflux.Env(envPort, defPort),
+		dbName:   mainflux.Env(envDBName, defDBName),
+		dbHost:   mainflux.Env(envDBHost, defDBHost),
+		dbPort:   mainflux.Env(envDBPort, defDBPort),
+		dbUser:   mainflux.Env(envDBUser, defDBUser),
+		dbPass:   mainflux.Env(envDBPass, defDBPass),
+		channels: loadChansConfig(chanCfgPath),
 	}
 
 	clientCfg := influxdata.HTTPConfig{

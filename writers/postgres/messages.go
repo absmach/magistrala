@@ -4,6 +4,7 @@
 package postgres
 
 import (
+	"context"
 	"errors"
 
 	"github.com/gofrs/uuid"
@@ -31,7 +32,7 @@ func New(db *sqlx.DB) writers.MessageRepository {
 	return &postgresRepo{db: db}
 }
 
-func (pr postgresRepo) Save(msg mainflux.Message) error {
+func (pr postgresRepo) Save(messages ...mainflux.Message) error {
 	q := `INSERT INTO messages (id, channel, subtopic, publisher, protocol,
     name, unit, value, string_value, bool_value, data_value, value_sum,
     time, update_time, link)
@@ -39,24 +40,31 @@ func (pr postgresRepo) Save(msg mainflux.Message) error {
     :value, :string_value, :bool_value, :data_value, :value_sum,
     :time, :update_time, :link);`
 
-	dbth, err := toDBMessage(msg)
+	tx, err := pr.db.BeginTxx(context.Background(), nil)
 	if err != nil {
 		return err
 	}
 
-	if _, err := pr.db.NamedExec(q, dbth); err != nil {
-		pqErr, ok := err.(*pq.Error)
-		if ok {
-			switch pqErr.Code.Name() {
-			case errInvalid:
-				return ErrInvalidMessage
-			}
+	for _, msg := range messages {
+		dbth, err := toDBMessage(msg)
+		if err != nil {
+			return err
 		}
 
-		return err
+		if _, err := tx.NamedExec(q, dbth); err != nil {
+			pqErr, ok := err.(*pq.Error)
+			if ok {
+				switch pqErr.Code.Name() {
+				case errInvalid:
+					return ErrInvalidMessage
+				}
+			}
+
+			return err
+		}
 	}
 
-	return nil
+	return tx.Commit()
 }
 
 type dbMessage struct {

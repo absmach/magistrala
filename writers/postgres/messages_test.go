@@ -34,6 +34,7 @@ func TestMessageSave(t *testing.T) {
 	msg.Publisher = pubid.String()
 
 	now := time.Now().Unix()
+	var msgs []mainflux.Message
 	for i := 0; i < msgsNum; i++ {
 		// Mix possible values as well as value sum.
 		count := i % valueFields
@@ -52,9 +53,9 @@ func TestMessageSave(t *testing.T) {
 			msg.ValueSum = &mainflux.SumValue{Value: 45}
 		}
 		msg.Time = float64(now + int64(i))
-
-		err := messageRepo.Save(msg)
-		assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
-
+		msgs = append(msgs, msg)
 	}
+
+	err = messageRepo.Save(msgs...)
+	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 }

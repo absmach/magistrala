@@ -26,9 +26,9 @@ func LoggingMiddleware(svc writers.MessageRepository, logger log.Logger) writers
 	return &loggingMiddleware{logger, svc}
 }
 
-func (lm *loggingMiddleware) Save(msg mainflux.Message) (err error) {
+func (lm *loggingMiddleware) Save(msgs ...mainflux.Message) (err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method Save took %s to complete", time.Since(begin))
+		message := fmt.Sprintf("Method save took %s to complete", time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -36,5 +36,5 @@ func (lm *loggingMiddleware) Save(msg mainflux.Message) (err error) {
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.Save(msg)
+	return lm.svc.Save(msgs...)
 }

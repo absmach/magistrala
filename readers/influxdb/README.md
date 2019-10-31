@@ -24,7 +24,7 @@ default values.
 ## Deployment
 
 ```yaml
-  version: "2"
+  version: "3.7"
   influxdb-reader:
     image: mainflux/influxdb-reader:[version]
     container_name: [instance name]

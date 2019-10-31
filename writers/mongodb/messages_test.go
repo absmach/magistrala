@@ -54,6 +54,7 @@ func TestSave(t *testing.T) {
 	repo := mongodb.New(db)
 
 	now := time.Now().Unix()
+	var msgs []mainflux.Message
 	for i := 0; i < msgsNum; i++ {
 		// Mix possible values as well as value sum.
 		count := i % valueFields
@@ -72,9 +73,10 @@ func TestSave(t *testing.T) {
 			msg.ValueSum = &mainflux.SumValue{Value: 45}
 		}
 		msg.Time = float64(now + int64(i))
-
-		err = repo.Save(msg)
+		msgs = append(msgs, msg)
 	}
+
+	err = repo.Save(msgs...)
 	assert.Nil(t, err, fmt.Sprintf("Save operation expected to succeed: %s.\n", err))
 
 	count, err := db.Collection(collection).CountDocuments(context.Background(), bson.D{})

@@ -1,10 +1,10 @@
-###
-# This docker-compose file contains optional Cassandra and cassandra-reader. Since these are optional, this file is
-# dependent of docker-compose file from <project_root>/docker. In order to run
-# these optional service, execute command:
+# Copyright (c) Mainflux
+# SPDX-License-Identifier: Apache-2.0
+
+# This docker-compose file contains optional cassandra-reader. Since it's optional, this file is
+# dependent of docker-compose file from <project_root>/docker. In order to run this service, execute command:
 # docker-compose -f docker/docker-compose.yml -f docker/addons/cassandra-reader/docker-compose.yml up
 # from project root.
-###
 
 version: "3.7"
 

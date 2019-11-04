@@ -12,14 +12,14 @@ type apiReq interface {
 	validate() error
 }
 
-type addThingReq struct {
+type createThingReq struct {
 	token    string
 	Name     string                 `json:"name,omitempty"`
 	Key      string                 `json:"key,omitempty"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
-func (req addThingReq) validate() error {
+func (req createThingReq) validate() error {
 	if req.token == "" {
 		return things.ErrUnauthorizedAccess
 	}
@@ -33,7 +33,7 @@ func (req addThingReq) validate() error {
 
 type createThingsReq struct {
 	token  string
-	Things []addThingReq
+	Things []createThingReq
 }
 
 func (req createThingsReq) validate() error {

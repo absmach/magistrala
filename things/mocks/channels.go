@@ -43,18 +43,7 @@ func NewChannelRepository(repo things.ThingRepository, tconns chan Connection) t
 	}
 }
 
-func (crm *channelRepositoryMock) Save(_ context.Context, channel things.Channel) (string, error) {
-	crm.mu.Lock()
-	defer crm.mu.Unlock()
-
-	crm.counter++
-	channel.ID = strconv.FormatUint(crm.counter, 10)
-	crm.channels[key(channel.Owner, channel.ID)] = channel
-
-	return channel.ID, nil
-}
-
-func (crm *channelRepositoryMock) BulkSave(_ context.Context, channels []things.Channel) ([]things.Channel, error) {
+func (crm *channelRepositoryMock) Save(_ context.Context, channels ...things.Channel) ([]things.Channel, error) {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 

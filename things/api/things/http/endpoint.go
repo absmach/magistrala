@@ -10,26 +10,26 @@ import (
 	"github.com/mainflux/mainflux/things"
 )
 
-func addThingEndpoint(svc things.Service) endpoint.Endpoint {
+func createThingEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(addThingReq)
+		req := request.(createThingReq)
 
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
-		thing := things.Thing{
+		th := things.Thing{
 			Key:      req.Key,
 			Name:     req.Name,
 			Metadata: req.Metadata,
 		}
-		saved, err := svc.AddThing(ctx, req.token, thing)
+		saved, err := svc.CreateThings(ctx, req.token, th)
 		if err != nil {
 			return nil, err
 		}
 
 		res := thingRes{
-			ID:      saved.ID,
+			ID:      saved[0].ID,
 			created: true,
 		}
 
@@ -46,15 +46,15 @@ func createThingsEndpoint(svc things.Service) endpoint.Endpoint {
 		}
 
 		ths := []things.Thing{}
-		for _, t := range req.Things {
-			thing := things.Thing{
-				Name: t.Name,
-				Key:  t.Key,
+		for _, tReq := range req.Things {
+			th := things.Thing{
+				Name: tReq.Name,
+				Key:  tReq.Key,
 			}
-			ths = append(ths, thing)
+			ths = append(ths, th)
 		}
 
-		saved, err := svc.CreateThings(ctx, req.token, ths)
+		saved, err := svc.CreateThings(ctx, req.token, ths...)
 		if err != nil {
 			return nil, err
 		}
@@ -64,14 +64,14 @@ func createThingsEndpoint(svc things.Service) endpoint.Endpoint {
 			created: true,
 		}
 
-		for _, thing := range saved {
-			t := thingRes{
-				ID:       thing.ID,
-				Name:     thing.Name,
-				Key:      thing.Key,
-				Metadata: thing.Metadata,
+		for _, th := range saved {
+			tRes := thingRes{
+				ID:       th.ID,
+				Name:     th.Name,
+				Key:      th.Key,
+				Metadata: th.Metadata,
 			}
-			res.Things = append(res.Things, t)
+			res.Things = append(res.Things, tRes)
 		}
 
 		return res, nil
@@ -243,14 +243,14 @@ func createChannelEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		channel := things.Channel{Name: req.Name, Metadata: req.Metadata}
-		saved, err := svc.CreateChannel(ctx, req.token, channel)
+		ch := things.Channel{Name: req.Name, Metadata: req.Metadata}
+		saved, err := svc.CreateChannels(ctx, req.token, ch)
 		if err != nil {
 			return nil, err
 		}
 
 		res := channelRes{
-			ID:      saved.ID,
+			ID:      saved[0].ID,
 			created: true,
 		}
 		return res, nil
@@ -265,16 +265,16 @@ func createChannelsEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		channels := []things.Channel{}
-		for _, c := range req.Channels {
-			channel := things.Channel{
-				Metadata: c.Metadata,
-				Name:     c.Name,
+		chs := []things.Channel{}
+		for _, cReq := range req.Channels {
+			ch := things.Channel{
+				Metadata: cReq.Metadata,
+				Name:     cReq.Name,
 			}
-			channels = append(channels, channel)
+			chs = append(chs, ch)
 		}
 
-		saved, err := svc.CreateChannels(ctx, req.token, channels)
+		saved, err := svc.CreateChannels(ctx, req.token, chs...)
 		if err != nil {
 			return nil, err
 		}
@@ -284,13 +284,13 @@ func createChannelsEndpoint(svc things.Service) endpoint.Endpoint {
 			created:  true,
 		}
 
-		for _, channel := range saved {
-			c := channelRes{
-				ID:       channel.ID,
-				Name:     channel.Name,
-				Metadata: channel.Metadata,
+		for _, ch := range saved {
+			cRes := channelRes{
+				ID:       ch.ID,
+				Name:     ch.Name,
+				Metadata: ch.Metadata,
 			}
-			res.Channels = append(res.Channels, c)
+			res.Channels = append(res.Channels, cRes)
 		}
 
 		return res, nil

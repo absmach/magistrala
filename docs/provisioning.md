@@ -37,6 +37,8 @@ an authorization key.
 
 ### Provisioning things
 
+> This endpoint will be depreciated in 0.11.0.  It will be replaced with the bulk endpoint currently found at /things/bulk.
+
 Things are created by executing request `POST /things` with a JSON payload.
 Note that you will also need `user_auth_token` in order to create things
 that belong to this particular user.
@@ -141,6 +143,8 @@ curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X DELETE
 ```
 
 ### Provisioning channels
+
+> This endpoint will be depreciated in 0.11.0.  It will be replaced with the bulk endpoint currently found at /channels/bulk.
 
 Channels are created by executing request `POST /channels`:
 

@@ -90,7 +90,7 @@ func toJSON(data interface{}) string {
 	return string(jsonData)
 }
 
-func TestAddThing(t *testing.T) {
+func TestCreateThing(t *testing.T) {
 	svc := newService(map[string]string{token: email})
 	ts := newServer(svc)
 	defer ts.Close()
@@ -316,7 +316,8 @@ func TestUpdateThing(t *testing.T) {
 	defer ts.Close()
 
 	data := toJSON(thing)
-	sth, _ := svc.AddThing(context.Background(), token, thing)
+	sths, _ := svc.CreateThings(context.Background(), token, thing)
+	sth := sths[0]
 
 	th := thing
 	th.Name = invalidName
@@ -433,7 +434,8 @@ func TestUpdateKey(t *testing.T) {
 
 	th := thing
 	th.Key = "key"
-	sth, _ := svc.AddThing(context.Background(), token, th)
+	sths, _ := svc.CreateThings(context.Background(), token, th)
+	sth := sths[0]
 
 	sth.Key = "new-key"
 	data := toJSON(sth)
@@ -551,8 +553,9 @@ func TestViewThing(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sth, err := svc.AddThing(context.Background(), token, thing)
+	sths, err := svc.CreateThings(context.Background(), token, thing)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	sth := sths[0]
 
 	thres := thingRes{
 		ID:       sth.ID,
@@ -630,8 +633,9 @@ func TestListThings(t *testing.T) {
 
 	data := []thingRes{}
 	for i := 0; i < 100; i++ {
-		sth, err := svc.AddThing(context.Background(), token, thing)
+		sths, err := svc.CreateThings(context.Background(), token, thing)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		sth := sths[0]
 		thres := thingRes{
 			ID:       sth.ID,
 			Name:     sth.Name,
@@ -777,13 +781,15 @@ func TestListThingsByChannel(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sch, err := svc.CreateChannel(context.Background(), token, channel)
+	schs, err := svc.CreateChannels(context.Background(), token, channel)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	sch := schs[0]
 
 	data := []thingRes{}
 	for i := 0; i < 101; i++ {
-		sth, err := svc.AddThing(context.Background(), token, thing)
+		sths, err := svc.CreateThings(context.Background(), token, thing)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		sth := sths[0]
 		err = svc.Connect(context.Background(), token, sch.ID, sth.ID)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
@@ -928,7 +934,8 @@ func TestRemoveThing(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sth, _ := svc.AddThing(context.Background(), token, thing)
+	sths, _ := svc.CreateThings(context.Background(), token, thing)
+	sth := sths[0]
 
 	cases := []struct {
 		desc   string
@@ -1095,7 +1102,7 @@ func TestCreateChannels(t *testing.T) {
 		response    string
 	}{
 		{
-			desc:        "add valid channels",
+			desc:        "create valid channels",
 			data:        data,
 			contentType: contentType,
 			auth:        token,
@@ -1103,7 +1110,7 @@ func TestCreateChannels(t *testing.T) {
 			response:    "",
 		},
 		{
-			desc:        "add channel with empty request",
+			desc:        "create channel with empty request",
 			data:        "",
 			contentType: contentType,
 			auth:        token,
@@ -1111,7 +1118,7 @@ func TestCreateChannels(t *testing.T) {
 			response:    "",
 		},
 		{
-			desc:        "add channels with empty JSON",
+			desc:        "create channels with empty JSON",
 			data:        "[]",
 			contentType: contentType,
 			auth:        token,
@@ -1119,7 +1126,7 @@ func TestCreateChannels(t *testing.T) {
 			response:    "",
 		},
 		{
-			desc:        "add channel with invalid auth token",
+			desc:        "create channel with invalid auth token",
 			data:        data,
 			contentType: contentType,
 			auth:        wrongValue,
@@ -1127,7 +1134,7 @@ func TestCreateChannels(t *testing.T) {
 			response:    "",
 		},
 		{
-			desc:        "add channel with empty auth token",
+			desc:        "create channel with empty auth token",
 			data:        data,
 			contentType: contentType,
 			auth:        "",
@@ -1135,14 +1142,14 @@ func TestCreateChannels(t *testing.T) {
 			response:    "",
 		},
 		{
-			desc:     "add channel with invalid request format",
+			desc:     "create channel with invalid request format",
 			data:     "}",
 			auth:     token,
 			status:   http.StatusUnsupportedMediaType,
 			response: "",
 		},
 		{
-			desc:        "add channel without content type",
+			desc:        "create channel without content type",
 			data:        data,
 			contentType: "",
 			auth:        token,
@@ -1150,7 +1157,7 @@ func TestCreateChannels(t *testing.T) {
 			response:    "",
 		},
 		{
-			desc:        "add channel with invalid name",
+			desc:        "create channel with invalid name",
 			data:        invalidData,
 			contentType: contentType,
 			auth:        token,
@@ -1182,7 +1189,8 @@ func TestUpdateChannel(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sch, _ := svc.CreateChannel(context.Background(), token, channel)
+	schs, _ := svc.CreateChannels(context.Background(), token, channel)
+	sch := schs[0]
 
 	ch := channel
 	ch.Name = "updated_channel"
@@ -1300,9 +1308,11 @@ func TestViewChannel(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sch, _ := svc.CreateChannel(context.Background(), token, channel)
+	schs, _ := svc.CreateChannels(context.Background(), token, channel)
+	sch := schs[0]
 
-	sth, _ := svc.AddThing(context.Background(), token, thing)
+	sths, _ := svc.CreateThings(context.Background(), token, thing)
+	sth := sths[0]
 	svc.Connect(context.Background(), token, sch.ID, sth.ID)
 
 	chres := channelRes{
@@ -1380,10 +1390,12 @@ func TestListChannels(t *testing.T) {
 
 	channels := []channelRes{}
 	for i := 0; i < 101; i++ {
-		sch, err := svc.CreateChannel(context.Background(), token, channel)
+		schs, err := svc.CreateChannels(context.Background(), token, channel)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-		sth, err := svc.AddThing(context.Background(), token, thing)
+		sch := schs[0]
+		sths, err := svc.CreateThings(context.Background(), token, thing)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		sth := sths[0]
 		svc.Connect(context.Background(), token, sch.ID, sth.ID)
 
 		chres := channelRes{
@@ -1530,13 +1542,15 @@ func TestListChannelsByThing(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sth, err := svc.AddThing(context.Background(), token, thing)
+	sths, err := svc.CreateThings(context.Background(), token, thing)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	sth := sths[0]
 
 	channels := []channelRes{}
 	for i := 0; i < 101; i++ {
-		sch, err := svc.CreateChannel(context.Background(), token, channel)
+		schs, err := svc.CreateChannels(context.Background(), token, channel)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		sch := schs[0]
 		err = svc.Connect(context.Background(), token, sch.ID, sth.ID)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
@@ -1677,7 +1691,8 @@ func TestRemoveChannel(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sch, _ := svc.CreateChannel(context.Background(), token, channel)
+	schs, _ := svc.CreateChannels(context.Background(), token, channel)
+	sch := schs[0]
 
 	cases := []struct {
 		desc   string
@@ -1740,9 +1755,12 @@ func TestConnect(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	ath, _ := svc.AddThing(context.Background(), token, thing)
-	ach, _ := svc.CreateChannel(context.Background(), token, channel)
-	bch, _ := svc.CreateChannel(context.Background(), otherToken, channel)
+	sths, _ := svc.CreateThings(context.Background(), token, thing)
+	ath := sths[0]
+	schs, _ := svc.CreateChannels(context.Background(), token, channel)
+	ach := schs[0]
+	schs, _ = svc.CreateChannels(context.Background(), otherToken, channel)
+	bch := schs[0]
 
 	cases := []struct {
 		desc    string
@@ -1832,10 +1850,13 @@ func TestDisconnnect(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	ath, _ := svc.AddThing(context.Background(), token, thing)
-	ach, _ := svc.CreateChannel(context.Background(), token, channel)
+	sths, _ := svc.CreateThings(context.Background(), token, thing)
+	ath := sths[0]
+	schs, _ := svc.CreateChannels(context.Background(), token, channel)
+	ach := schs[0]
 	svc.Connect(context.Background(), token, ach.ID, ath.ID)
-	bch, _ := svc.CreateChannel(context.Background(), otherToken, channel)
+	schs, _ = svc.CreateChannels(context.Background(), otherToken, channel)
+	bch := schs[0]
 
 	cases := []struct {
 		desc    string

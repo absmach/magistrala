@@ -28,9 +28,12 @@ var (
 )
 
 func TestCanAccessByKey(t *testing.T) {
-	oth, _ := svc.AddThing(context.Background(), token, thing)
-	cth, _ := svc.AddThing(context.Background(), token, thing)
-	sch, _ := svc.CreateChannel(context.Background(), token, channel)
+	sths, _ := svc.CreateThings(context.Background(), token, thing)
+	oth := sths[0]
+	sths, _ = svc.CreateThings(context.Background(), token, thing)
+	cth := sths[0]
+	schs, _ := svc.CreateChannels(context.Background(), token, channel)
+	sch := schs[0]
 	svc.Connect(context.Background(), token, sch.ID, cth.ID)
 
 	usersAddr := fmt.Sprintf("localhost:%d", port)
@@ -81,9 +84,12 @@ func TestCanAccessByKey(t *testing.T) {
 }
 
 func TestCanAccessByID(t *testing.T) {
-	oth, _ := svc.AddThing(context.Background(), token, thing)
-	cth, _ := svc.AddThing(context.Background(), token, thing)
-	sch, _ := svc.CreateChannel(context.Background(), token, channel)
+	sths, _ := svc.CreateThings(context.Background(), token, thing)
+	oth := sths[0]
+	sths, _ = svc.CreateThings(context.Background(), token, thing)
+	cth := sths[0]
+	schs, _ := svc.CreateChannels(context.Background(), token, channel)
+	sch := schs[0]
 	svc.Connect(context.Background(), token, sch.ID, cth.ID)
 
 	usersAddr := fmt.Sprintf("localhost:%d", port)
@@ -133,7 +139,8 @@ func TestCanAccessByID(t *testing.T) {
 }
 
 func TestIdentify(t *testing.T) {
-	sth, _ := svc.AddThing(context.Background(), token, thing)
+	sths, _ := svc.CreateThings(context.Background(), token, thing)
+	sth := sths[0]
 
 	usersAddr := fmt.Sprintf("localhost:%d", port)
 	conn, _ := grpc.Dial(usersAddr, grpc.WithInsecure())

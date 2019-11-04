@@ -16,55 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestChannelSave(t *testing.T) {
-	email := "channel-save@example.com"
-	dbMiddleware := postgres.NewDatabase(db)
-	channelRepo := postgres.NewChannelRepository(dbMiddleware)
-
-	id, err := uuid.New().ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
-	channel := things.Channel{
-		ID:    id,
-		Owner: email,
-	}
-
-	cases := []struct {
-		desc    string
-		channel things.Channel
-		err     error
-	}{
-		{
-			desc:    "create valid channel",
-			channel: channel,
-			err:     nil,
-		},
-		{
-			desc: "create channel with invalid ID",
-			channel: things.Channel{
-				ID:    "invalid",
-				Owner: email,
-			},
-			err: things.ErrMalformedEntity,
-		},
-		{
-			desc: "create channel with invalid name",
-			channel: things.Channel{
-				ID:    id,
-				Owner: email,
-				Name:  invalidName,
-			},
-			err: things.ErrMalformedEntity,
-		},
-	}
-
-	for _, tc := range cases {
-		_, err := channelRepo.Save(context.Background(), tc.channel)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-	}
-}
-
-func TestChannelsBulkSave(t *testing.T) {
+func TestChannelsSave(t *testing.T) {
 	dbMiddleware := postgres.NewDatabase(db)
 	channelRepo := postgres.NewChannelRepository(dbMiddleware)
 
@@ -133,7 +85,7 @@ func TestChannelsBulkSave(t *testing.T) {
 	}
 
 	for _, cc := range cases {
-		_, err := channelRepo.BulkSave(context.Background(), cc.channels)
+		_, err := channelRepo.Save(context.Background(), cc.channels...)
 		assert.Equal(t, cc.err, err, fmt.Sprintf("%s: expected %s got %s\n", cc.desc, cc.err, err))
 	}
 }
@@ -145,13 +97,13 @@ func TestChannelUpdate(t *testing.T) {
 
 	cid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	c := things.Channel{
+	ch := things.Channel{
 		ID:    cid,
 		Owner: email,
 	}
 
-	id, _ := chanRepo.Save(context.Background(), c)
-	c.ID = id
+	schs, _ := chanRepo.Save(context.Background(), ch)
+	ch.ID = schs[0].ID
 
 	nonexistentChanID, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -163,7 +115,7 @@ func TestChannelUpdate(t *testing.T) {
 	}{
 		{
 			desc:    "update existing channel",
-			channel: c,
+			channel: ch,
 			err:     nil,
 		},
 		{
@@ -177,7 +129,7 @@ func TestChannelUpdate(t *testing.T) {
 		{
 			desc: "update existing channel ID with non-existing user",
 			channel: things.Channel{
-				ID:    c.ID,
+				ID:    ch.ID,
 				Owner: wrongValue,
 			},
 			err: things.ErrNotFound,
@@ -215,17 +167,19 @@ func TestSingleChannelRetrieval(t *testing.T) {
 		Owner: email,
 		Key:   thkey,
 	}
-	th.ID, _ = thingRepo.Save(context.Background(), th)
+	sths, _ := thingRepo.Save(context.Background(), th)
+	th.ID = sths[0].ID
 
 	chid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	c := things.Channel{
+	ch := things.Channel{
 		ID:    chid,
 		Owner: email,
 	}
 
-	c.ID, _ = chanRepo.Save(context.Background(), c)
-	chanRepo.Connect(context.Background(), email, c.ID, th.ID)
+	schs, _ := chanRepo.Save(context.Background(), ch)
+	ch.ID = schs[0].ID
+	chanRepo.Connect(context.Background(), email, ch.ID, th.ID)
 
 	nonexistentChanID, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -236,22 +190,22 @@ func TestSingleChannelRetrieval(t *testing.T) {
 		err   error
 	}{
 		"retrieve channel with existing user": {
-			owner: c.Owner,
-			ID:    c.ID,
+			owner: ch.Owner,
+			ID:    ch.ID,
 			err:   nil,
 		},
 		"retrieve channel with existing user, non-existing channel": {
-			owner: c.Owner,
+			owner: ch.Owner,
 			ID:    nonexistentChanID,
 			err:   things.ErrNotFound,
 		},
 		"retrieve channel with non-existing owner": {
 			owner: wrongValue,
-			ID:    c.ID,
+			ID:    ch.ID,
 			err:   things.ErrNotFound,
 		},
 		"retrieve channel with malformed ID": {
-			owner: c.Owner,
+			owner: ch.Owner,
 			ID:    wrongValue,
 			err:   things.ErrNotFound,
 		},
@@ -278,22 +232,22 @@ func TestMultiChannelRetrieval(t *testing.T) {
 		chid, err := uuid.New().ID()
 		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-		c := things.Channel{
+		ch := things.Channel{
 			ID:    chid,
 			Owner: email,
 		}
 
 		// Create first two Channels with name.
 		if i < 2 {
-			c.Name = channelName
+			ch.Name = channelName
 		}
 
 		// Create last two Channels with metadata.
 		if i >= 8 {
-			c.Metadata = meta
+			ch.Metadata = meta
 		}
 
-		chanRepo.Save(context.Background(), c)
+		chanRepo.Save(context.Background(), ch)
 	}
 
 	cases := map[string]struct {
@@ -379,21 +333,24 @@ func TestMultiChannelRetrievalByThing(t *testing.T) {
 	thid, err := idp.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	tid, err := thingRepo.Save(context.Background(), things.Thing{
+	sths, err := thingRepo.Save(context.Background(), things.Thing{
 		ID:    thid,
 		Owner: email,
 	})
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	tid := sths[0].ID
+
 	n := uint64(10)
 	for i := uint64(0); i < n; i++ {
 		chid, err := uuid.New().ID()
 		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-		c := things.Channel{
+		ch := things.Channel{
 			ID:    chid,
 			Owner: email,
 		}
-		cid, err := chanRepo.Save(context.Background(), c)
+		schs, err := chanRepo.Save(context.Background(), ch)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		cid := schs[0].ID
 		err = chanRepo.Connect(context.Background(), email, cid, tid)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	}
@@ -462,10 +419,11 @@ func TestChannelRemoval(t *testing.T) {
 
 	chid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	chanID, _ := chanRepo.Save(context.Background(), things.Channel{
+	schs, _ := chanRepo.Save(context.Background(), things.Channel{
 		ID:    chid,
 		Owner: email,
 	})
+	chanID := schs[0].ID
 
 	// show that the removal works the same for both existing and non-existing
 	// (removed) channel
@@ -494,16 +452,18 @@ func TestConnect(t *testing.T) {
 		Key:      thkey,
 		Metadata: things.Metadata{},
 	}
-	thingID, _ := thingRepo.Save(context.Background(), thing)
+	sths, _ := thingRepo.Save(context.Background(), thing)
+	thingID := sths[0].ID
 
 	chanRepo := postgres.NewChannelRepository(dbMiddleware)
 
 	chid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	chanID, _ := chanRepo.Save(context.Background(), things.Channel{
+	schs, _ := chanRepo.Save(context.Background(), things.Channel{
 		ID:    chid,
 		Owner: email,
 	})
+	chanID := schs[0].ID
 
 	nonexistentThingID, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -577,15 +537,17 @@ func TestDisconnect(t *testing.T) {
 		Key:      thkey,
 		Metadata: map[string]interface{}{},
 	}
-	thingID, _ := thingRepo.Save(context.Background(), thing)
+	sths, _ := thingRepo.Save(context.Background(), thing)
+	thingID := sths[0].ID
 
 	chanRepo := postgres.NewChannelRepository(dbMiddleware)
 	chid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	chanID, _ := chanRepo.Save(context.Background(), things.Channel{
+	schs, _ := chanRepo.Save(context.Background(), things.Channel{
 		ID:    chid,
 		Owner: email,
 	})
+	chanID := schs[0].ID
 	chanRepo.Connect(context.Background(), email, chanID, thingID)
 
 	nonexistentThingID, err := uuid.New().ID()
@@ -659,15 +621,17 @@ func TestHasThing(t *testing.T) {
 		Owner: email,
 		Key:   thkey,
 	}
-	thingID, _ := thingRepo.Save(context.Background(), thing)
+	sths, _ := thingRepo.Save(context.Background(), thing)
+	thingID := sths[0].ID
 
 	chanRepo := postgres.NewChannelRepository(dbMiddleware)
 	chid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	chanID, _ := chanRepo.Save(context.Background(), things.Channel{
+	schs, _ := chanRepo.Save(context.Background(), things.Channel{
 		ID:    chid,
 		Owner: email,
 	})
+	chanID := schs[0].ID
 	chanRepo.Connect(context.Background(), email, chanID, thingID)
 
 	nonexistentChanID, err := uuid.New().ID()
@@ -717,7 +681,8 @@ func TestHasThingByID(t *testing.T) {
 		Owner: email,
 		Key:   thkey,
 	}
-	thingID, _ := thingRepo.Save(context.Background(), thing)
+	sths, _ := thingRepo.Save(context.Background(), thing)
+	thingID := sths[0].ID
 
 	disconnectedThID, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -729,15 +694,17 @@ func TestHasThingByID(t *testing.T) {
 		Owner: email,
 		Key:   disconnectedThKey,
 	}
-	disconnectedThingID, _ := thingRepo.Save(context.Background(), disconnectedThing)
+	sths, _ = thingRepo.Save(context.Background(), disconnectedThing)
+	disconnectedThingID := sths[0].ID
 
 	chanRepo := postgres.NewChannelRepository(dbMiddleware)
 	chid, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	chanID, _ := chanRepo.Save(context.Background(), things.Channel{
+	schs, _ := chanRepo.Save(context.Background(), things.Channel{
 		ID:    chid,
 		Owner: email,
 	})
+	chanID := schs[0].ID
 	chanRepo.Connect(context.Background(), email, chanID, thingID)
 
 	nonexistentChanID, err := uuid.New().ID()

@@ -35,34 +35,7 @@ func NewThingRepository(db Database) things.ThingRepository {
 	}
 }
 
-func (tr thingRepository) Save(ctx context.Context, thing things.Thing) (string, error) {
-	q := `INSERT INTO things (id, owner, name, key, metadata)
-		  VALUES (:id, :owner, :name, :key, :metadata);`
-
-	dbth, err := toDBThing(thing)
-	if err != nil {
-		return "", err
-	}
-
-	_, err = tr.db.NamedExecContext(ctx, q, dbth)
-	if err != nil {
-		pqErr, ok := err.(*pq.Error)
-		if ok {
-			switch pqErr.Code.Name() {
-			case errInvalid, errTruncation:
-				return "", things.ErrMalformedEntity
-			case errDuplicate:
-				return "", things.ErrConflict
-			}
-		}
-
-		return "", err
-	}
-
-	return dbth.ID, nil
-}
-
-func (tr thingRepository) BulkSave(ctx context.Context, ths []things.Thing) ([]things.Thing, error) {
+func (tr thingRepository) Save(ctx context.Context, ths ...things.Thing) ([]things.Thing, error) {
 	tx, err := tr.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return nil, err

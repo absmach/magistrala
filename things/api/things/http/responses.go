@@ -55,7 +55,8 @@ func (res thingRes) Code() int {
 func (res thingRes) Headers() map[string]string {
 	if res.created {
 		return map[string]string{
-			"Location": fmt.Sprintf("/things/%s", res.ID),
+			"Location":            fmt.Sprintf("/things/%s", res.ID),
+			"Warning Depreciated": "This endpoint will be depreciated in 0.11.0.  It will be replaced with the bulk endpoint currently found at /things/bulk.",
 		}
 	}
 
@@ -142,7 +143,8 @@ func (res channelRes) Code() int {
 func (res channelRes) Headers() map[string]string {
 	if res.created {
 		return map[string]string{
-			"Location": fmt.Sprintf("/channels/%s", res.ID),
+			"Location":            fmt.Sprintf("/channels/%s", res.ID),
+			"Warning Depreciated": "This endpoint will be depreciated in 0.11.0.  It will be replaced with the bulk endpoint currently found at /channels/bulk.",
 		}
 	}
 

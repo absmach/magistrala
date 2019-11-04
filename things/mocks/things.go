@@ -44,24 +44,7 @@ func NewThingRepository(conns chan Connection) things.ThingRepository {
 	return repo
 }
 
-func (trm *thingRepositoryMock) Save(_ context.Context, thing things.Thing) (string, error) {
-	trm.mu.Lock()
-	defer trm.mu.Unlock()
-
-	for _, th := range trm.things {
-		if th.Key == thing.Key {
-			return "", things.ErrConflict
-		}
-	}
-
-	trm.counter++
-	thing.ID = strconv.FormatUint(trm.counter, 10)
-	trm.things[key(thing.Owner, thing.ID)] = thing
-
-	return thing.ID, nil
-}
-
-func (trm *thingRepositoryMock) BulkSave(_ context.Context, ths []things.Thing) ([]things.Thing, error) {
+func (trm *thingRepositoryMock) Save(_ context.Context, ths ...things.Thing) ([]things.Thing, error) {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 

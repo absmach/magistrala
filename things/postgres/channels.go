@@ -30,28 +30,7 @@ func NewChannelRepository(db Database) things.ChannelRepository {
 	}
 }
 
-func (cr channelRepository) Save(ctx context.Context, channel things.Channel) (string, error) {
-	q := `INSERT INTO channels (id, owner, name, metadata)
-		VALUES (:id, :owner, :name, :metadata);`
-
-	dbch := toDBChannel(channel)
-
-	if _, err := cr.db.NamedExecContext(ctx, q, dbch); err != nil {
-		pqErr, ok := err.(*pq.Error)
-		if ok {
-			switch pqErr.Code.Name() {
-			case errInvalid, errTruncation:
-				return "", things.ErrMalformedEntity
-			}
-		}
-
-		return "", err
-	}
-
-	return channel.ID, nil
-}
-
-func (cr channelRepository) BulkSave(ctx context.Context, channels []things.Channel) ([]things.Channel, error) {
+func (cr channelRepository) Save(ctx context.Context, channels ...things.Channel) ([]things.Channel, error) {
 	tx, err := cr.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return nil, err

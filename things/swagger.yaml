@@ -65,7 +65,7 @@ paths:
           description: Missing or invalid access token provided.
         500:
           $ref: "#/responses/ServiceError"
-  /things/bulkCreate:
+  /things/bulk:
     post:
       summary: Bulk provisions new things
       description: |
@@ -270,7 +270,7 @@ paths:
           description: Missing or invalid access token provided.
         500:
           $ref: "#/responses/ServiceError"
-  /channels/bulkCreate:
+  /channels/bulk:
     post:
       summary: Bulk provisions new channels
       description: |

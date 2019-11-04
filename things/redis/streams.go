@@ -31,30 +31,8 @@ func NewEventStoreMiddleware(svc things.Service, client *redis.Client) things.Se
 	}
 }
 
-func (es eventStore) AddThing(ctx context.Context, token string, thing things.Thing) (things.Thing, error) {
-	sth, err := es.svc.AddThing(ctx, token, thing)
-	if err != nil {
-		return sth, err
-	}
-
-	event := createThingEvent{
-		id:       sth.ID,
-		owner:    sth.Owner,
-		name:     sth.Name,
-		metadata: sth.Metadata,
-	}
-	record := &redis.XAddArgs{
-		Stream:       streamID,
-		MaxLenApprox: streamLen,
-		Values:       event.Encode(),
-	}
-	es.client.XAdd(record).Err()
-
-	return sth, err
-}
-
-func (es eventStore) CreateThings(ctx context.Context, token string, ths []things.Thing) ([]things.Thing, error) {
-	sths, err := es.svc.CreateThings(ctx, token, ths)
+func (es eventStore) CreateThings(ctx context.Context, token string, ths ...things.Thing) ([]things.Thing, error) {
+	sths, err := es.svc.CreateThings(ctx, token, ths...)
 	if err != nil {
 		return sths, err
 	}
@@ -134,30 +112,8 @@ func (es eventStore) RemoveThing(ctx context.Context, token, id string) error {
 	return nil
 }
 
-func (es eventStore) CreateChannel(ctx context.Context, token string, channel things.Channel) (things.Channel, error) {
-	sch, err := es.svc.CreateChannel(ctx, token, channel)
-	if err != nil {
-		return sch, err
-	}
-
-	event := createChannelEvent{
-		id:       sch.ID,
-		owner:    sch.Owner,
-		name:     sch.Name,
-		metadata: sch.Metadata,
-	}
-	record := &redis.XAddArgs{
-		Stream:       streamID,
-		MaxLenApprox: streamLen,
-		Values:       event.Encode(),
-	}
-	es.client.XAdd(record).Err()
-
-	return sch, err
-}
-
-func (es eventStore) CreateChannels(ctx context.Context, token string, channels []things.Channel) ([]things.Channel, error) {
-	schs, err := es.svc.CreateChannels(ctx, token, channels)
+func (es eventStore) CreateChannels(ctx context.Context, token string, channels ...things.Channel) ([]things.Channel, error) {
+	schs, err := es.svc.CreateChannels(ctx, token, channels...)
 	if err != nil {
 		return schs, err
 	}

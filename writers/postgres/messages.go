@@ -11,7 +11,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq" // required for DB access
-	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/transformers/senml"
 	"github.com/mainflux/mainflux/writers"
 )
 
@@ -32,12 +32,12 @@ func New(db *sqlx.DB) writers.MessageRepository {
 	return &postgresRepo{db: db}
 }
 
-func (pr postgresRepo) Save(messages ...mainflux.Message) error {
+func (pr postgresRepo) Save(messages ...senml.Message) error {
 	q := `INSERT INTO messages (id, channel, subtopic, publisher, protocol,
-    name, unit, value, string_value, bool_value, data_value, value_sum,
+    name, unit, value, string_value, bool_value, data_value, sum,
     time, update_time, link)
     VALUES (:id, :channel, :subtopic, :publisher, :protocol, :name, :unit,
-    :value, :string_value, :bool_value, :data_value, :value_sum,
+    :value, :string_value, :bool_value, :data_value, :sum,
     :time, :update_time, :link);`
 
 	tx, err := pr.db.BeginTxx(context.Background(), nil)
@@ -75,61 +75,46 @@ type dbMessage struct {
 	Protocol    string   `db:"protocol"`
 	Name        string   `db:"name"`
 	Unit        string   `db:"unit"`
-	FloatValue  *float64 `db:"value"`
+	Value       *float64 `db:"value"`
 	StringValue *string  `db:"string_value"`
 	BoolValue   *bool    `db:"bool_value"`
 	DataValue   *string  `db:"data_value"`
-	ValueSum    *float64 `db:"value_sum"`
+	Sum         *float64 `db:"sum"`
 	Time        float64  `db:"time"`
 	UpdateTime  float64  `db:"update_time"`
 	Link        string   `db:"link"`
 }
 
-func toDBMessage(msg mainflux.Message) (dbMessage, error) {
-	var floatVal, valSum *float64
-	var strVal, dataVal *string
-	var boolVal *bool
-
-	switch msg.Value.(type) {
-	case *mainflux.Message_FloatValue:
-		v := msg.GetFloatValue()
-		floatVal = &v
-	case *mainflux.Message_StringValue:
-		v := msg.GetStringValue()
-		strVal = &v
-	case *mainflux.Message_DataValue:
-		v := msg.GetDataValue()
-		dataVal = &v
-	case *mainflux.Message_BoolValue:
-		v := msg.GetBoolValue()
-		boolVal = &v
-	}
-
-	if msg.GetValueSum() != nil {
-		v := msg.GetValueSum().GetValue()
-		valSum = &v
-	}
-
+func toDBMessage(msg senml.Message) (dbMessage, error) {
 	id, err := uuid.NewV4()
 	if err != nil {
 		return dbMessage{}, err
 	}
 
-	return dbMessage{
-		ID:          id.String(),
-		Channel:     msg.Channel,
-		Subtopic:    msg.Subtopic,
-		Publisher:   msg.Publisher,
-		Protocol:    msg.Protocol,
-		Name:        msg.Name,
-		Unit:        msg.Unit,
-		FloatValue:  floatVal,
-		StringValue: strVal,
-		BoolValue:   boolVal,
-		DataValue:   dataVal,
-		ValueSum:    valSum,
-		Time:        msg.Time,
-		UpdateTime:  msg.UpdateTime,
-		Link:        msg.Link,
-	}, nil
+	m := dbMessage{
+		ID:         id.String(),
+		Channel:    msg.Channel,
+		Subtopic:   msg.Subtopic,
+		Publisher:  msg.Publisher,
+		Protocol:   msg.Protocol,
+		Name:       msg.Name,
+		Unit:       msg.Unit,
+		Time:       msg.Time,
+		UpdateTime: msg.UpdateTime,
+		Link:       msg.Link,
+		Sum:        msg.Sum,
+	}
+
+	switch {
+	case msg.Value != nil:
+		m.Value = msg.Value
+	case msg.StringValue != nil:
+		m.StringValue = msg.StringValue
+	case msg.DataValue != nil:
+		m.DataValue = msg.DataValue
+	case msg.BoolValue != nil:
+		m.BoolValue = msg.BoolValue
+	}
+
+	return m, nil
 }

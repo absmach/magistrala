@@ -30,7 +30,7 @@ func MetricsMiddleware(svc mainflux.MessagePublisher, counter metrics.Counter, l
 	}
 }
 
-func (mm *metricsMiddleware) Publish(ctx context.Context, token string, msg mainflux.RawMessage) error {
+func (mm *metricsMiddleware) Publish(ctx context.Context, token string, msg mainflux.Message) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "publish").Add(1)
 		mm.latency.With("method", "publish").Observe(time.Since(begin).Seconds())

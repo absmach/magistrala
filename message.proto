@@ -4,37 +4,12 @@
 syntax = "proto3";
 package mainflux;
 
-// RawMessage represents a message emitted by the Mainflux adapters layer.
-message RawMessage {
+// Message represents a message emitted by the Mainflux adapters layer.
+message Message {
 	string channel     = 1;
 	string subtopic    = 2;
 	string publisher   = 3;
 	string protocol    = 4;
 	string contentType = 5;
 	bytes  payload     = 6;
-}
-
-// Message represents a resolved (normalized) raw message.
-message Message {
-	string channel     = 1;
-	string subtopic    = 2;
-	string publisher   = 3;
-	string protocol    = 4;
-	string name        = 5;
-	string unit        = 6;
-	oneof value {
-		double floatValue  = 7;
-		string stringValue = 8;
-		bool   boolValue   = 9;
-		string dataValue   = 10;
-	}
-	SumValue valueSum  = 11;
-	double time        = 12;
-	double updateTime  = 13;
-	string link        = 14;
-}
-
-// SumValue is a simple wrapper around the double value.
-message SumValue {
-	double value = 1;
 }

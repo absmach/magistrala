@@ -6,19 +6,19 @@ package mocks
 import (
 	"sync"
 
-	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/readers"
+	"github.com/mainflux/mainflux/transformers/senml"
 )
 
 var _ readers.MessageRepository = (*messageRepositoryMock)(nil)
 
 type messageRepositoryMock struct {
 	mutex    sync.Mutex
-	messages map[string][]mainflux.Message
+	messages map[string][]senml.Message
 }
 
 // NewMessageRepository returns mock implementation of message repository.
-func NewMessageRepository(messages map[string][]mainflux.Message) readers.MessageRepository {
+func NewMessageRepository(messages map[string][]senml.Message) readers.MessageRepository {
 	return &messageRepositoryMock{
 		mutex:    sync.Mutex{},
 		messages: messages,

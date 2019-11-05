@@ -7,9 +7,9 @@ import (
 	"time"
 
 	influxdata "github.com/influxdata/influxdb/client/v2"
-	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/readers"
 	reader "github.com/mainflux/mainflux/readers/influxdb"
+	"github.com/mainflux/mainflux/transformers/senml"
 	writer "github.com/mainflux/mainflux/writers/influxdb"
 
 	log "github.com/mainflux/mainflux/logger"
@@ -18,31 +18,37 @@ import (
 )
 
 const (
-	testDB      = "test"
-	chanID      = "1"
-	subtopic    = "topic"
-	msgsNum     = 101
-	valueFields = 6
+	testDB   = "test"
+	chanID   = "1"
+	subtopic = "topic"
+	msgsNum  = 101
 )
 
 var (
-	port       string
-	client     influxdata.Client
-	testLog, _ = log.New(os.Stdout, log.Info.String())
+	v       float64 = 5
+	stringV         = "value"
+	boolV           = true
+	dataV           = "base64"
+	sum     float64 = 42
+)
+
+var (
+	valueFields = 5
+	port        string
+	client      influxdata.Client
+	testLog, _  = log.New(os.Stdout, log.Info.String())
 
 	clientCfg = influxdata.HTTPConfig{
 		Username: "test",
 		Password: "test",
 	}
 
-	msg = mainflux.Message{
+	m = senml.Message{
 		Channel:    chanID,
 		Publisher:  "1",
 		Protocol:   "mqtt",
 		Name:       "name",
 		Unit:       "U",
-		Value:      &mainflux.Message_FloatValue{FloatValue: 5},
-		ValueSum:   &mainflux.SumValue{Value: 45},
 		Time:       123456,
 		UpdateTime: 1234,
 		Link:       "link",
@@ -52,28 +58,27 @@ var (
 func TestReadAll(t *testing.T) {
 	writer := writer.New(client, testDB)
 
-	messages := []mainflux.Message{}
-	subtopicMsgs := []mainflux.Message{}
+	messages := []senml.Message{}
+	subtopicMsgs := []senml.Message{}
 	now := time.Now().Unix()
 	for i := 0; i < msgsNum; i++ {
 		// Mix possible values as well as value sum.
 		count := i % valueFields
-		msg.Subtopic = ""
+		msg := m
 		switch count {
 		case 0:
 			msg.Subtopic = subtopic
-			msg.Value = &mainflux.Message_FloatValue{FloatValue: 5}
+			msg.Value = &v
 		case 1:
-			msg.Value = &mainflux.Message_BoolValue{BoolValue: false}
+			msg.BoolValue = &boolV
 		case 2:
-			msg.Value = &mainflux.Message_StringValue{StringValue: "value"}
+			msg.StringValue = &stringV
 		case 3:
-			msg.Value = &mainflux.Message_DataValue{DataValue: "base64data"}
+			msg.DataValue = &dataV
 		case 4:
-			msg.ValueSum = nil
-		case 5:
-			msg.ValueSum = &mainflux.SumValue{Value: 45}
+			msg.Sum = &sum
 		}
+
 		msg.Time = float64(now - int64(i))
 		messages = append(messages, msg)
 		if count == 0 {
@@ -124,7 +129,7 @@ func TestReadAll(t *testing.T) {
 				Total:    0,
 				Offset:   0,
 				Limit:    10,
-				Messages: []mainflux.Message{},
+				Messages: []senml.Message{},
 			},
 		},
 		"read message last page": {
@@ -147,7 +152,7 @@ func TestReadAll(t *testing.T) {
 				Total:    0,
 				Offset:   0,
 				Limit:    msgsNum,
-				Messages: []mainflux.Message{},
+				Messages: []senml.Message{},
 			},
 		},
 		"read message with subtopic": {
@@ -168,6 +173,7 @@ func TestReadAll(t *testing.T) {
 		result, err := reader.ReadAll(tc.chanID, tc.offset, tc.limit, tc.query)
 		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %s", desc, err))
 		assert.ElementsMatch(t, tc.page.Messages, result.Messages, fmt.Sprintf("%s: expected: %v \n-------------\n got: %v", desc, tc.page.Messages, result.Messages))
+
 		assert.Equal(t, tc.page.Total, result.Total, fmt.Sprintf("%s: expected %d got %d", desc, tc.page.Total, result.Total))
 	}
 }

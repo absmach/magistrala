@@ -8,8 +8,8 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx" // required for DB access
-	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/readers"
+	"github.com/mainflux/mainflux/transformers/senml"
 )
 
 const errInvalid = "invalid_text_representation"
@@ -53,7 +53,7 @@ func (tr postgresRepository) ReadAll(chanID string, offset, limit uint64, query 
 	page := readers.MessagesPage{
 		Offset:   offset,
 		Limit:    limit,
-		Messages: []mainflux.Message{},
+		Messages: []senml.Message{},
 	}
 	for rows.Next() {
 		dbm := dbMessage{Channel: chanID}
@@ -61,11 +61,7 @@ func (tr postgresRepository) ReadAll(chanID string, offset, limit uint64, query 
 			return readers.MessagesPage{}, err
 		}
 
-		msg, err := toMessage(dbm)
-		if err != nil {
-			return readers.MessagesPage{}, err
-		}
-
+		msg := toMessage(dbm)
 		page.Messages = append(page.Messages, msg)
 	}
 
@@ -107,18 +103,18 @@ type dbMessage struct {
 	Protocol    string   `db:"protocol"`
 	Name        string   `db:"name"`
 	Unit        string   `db:"unit"`
-	FloatValue  *float64 `db:"value"`
+	Value       *float64 `db:"value"`
 	StringValue *string  `db:"string_value"`
 	BoolValue   *bool    `db:"bool_value"`
 	DataValue   *string  `db:"data_value"`
-	ValueSum    *float64 `db:"value_sum"`
+	Sum         *float64 `db:"sum"`
 	Time        float64  `db:"time"`
 	UpdateTime  float64  `db:"update_time"`
 	Link        string   `db:"link"`
 }
 
-func toMessage(dbm dbMessage) (mainflux.Message, error) {
-	msg := mainflux.Message{
+func toMessage(dbm dbMessage) senml.Message {
+	msg := senml.Message{
 		Channel:    dbm.Channel,
 		Subtopic:   dbm.Subtopic,
 		Publisher:  dbm.Publisher,
@@ -128,20 +124,19 @@ func toMessage(dbm dbMessage) (mainflux.Message, error) {
 		Time:       dbm.Time,
 		UpdateTime: dbm.UpdateTime,
 		Link:       dbm.Link,
+		Sum:        dbm.Sum,
 	}
 
 	switch {
-	case dbm.FloatValue != nil:
-		msg.Value = &mainflux.Message_FloatValue{FloatValue: *dbm.FloatValue}
+	case dbm.Value != nil:
+		msg.Value = dbm.Value
 	case dbm.StringValue != nil:
-		msg.Value = &mainflux.Message_StringValue{StringValue: *dbm.StringValue}
-	case dbm.BoolValue != nil:
-		msg.Value = &mainflux.Message_BoolValue{BoolValue: *dbm.BoolValue}
+		msg.StringValue = dbm.StringValue
 	case dbm.DataValue != nil:
-		msg.Value = &mainflux.Message_DataValue{DataValue: *dbm.DataValue}
-	case dbm.ValueSum != nil:
-		msg.ValueSum = &mainflux.SumValue{Value: *dbm.ValueSum}
+		msg.DataValue = dbm.DataValue
+	case dbm.BoolValue != nil:
+		msg.BoolValue = dbm.BoolValue
 	}
 
-	return msg, nil
+	return msg
 }

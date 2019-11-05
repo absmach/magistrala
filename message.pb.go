@@ -4,7 +4,6 @@
 package mainflux
 
 import (
-	encoding_binary "encoding/binary"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
 	io "io"
@@ -23,8 +22,8 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-// RawMessage represents a message emitted by the Mainflux adapters layer.
-type RawMessage struct {
+// Message represents a message emitted by the Mainflux adapters layer.
+type Message struct {
 	Channel              string   `protobuf:"bytes,1,opt,name=channel,proto3" json:"channel,omitempty"`
 	Subtopic             string   `protobuf:"bytes,2,opt,name=subtopic,proto3" json:"subtopic,omitempty"`
 	Publisher            string   `protobuf:"bytes,3,opt,name=publisher,proto3" json:"publisher,omitempty"`
@@ -36,109 +35,11 @@ type RawMessage struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *RawMessage) Reset()         { *m = RawMessage{} }
-func (m *RawMessage) String() string { return proto.CompactTextString(m) }
-func (*RawMessage) ProtoMessage()    {}
-func (*RawMessage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_33c57e4bae7b9afd, []int{0}
-}
-func (m *RawMessage) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *RawMessage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_RawMessage.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *RawMessage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RawMessage.Merge(m, src)
-}
-func (m *RawMessage) XXX_Size() int {
-	return m.Size()
-}
-func (m *RawMessage) XXX_DiscardUnknown() {
-	xxx_messageInfo_RawMessage.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_RawMessage proto.InternalMessageInfo
-
-func (m *RawMessage) GetChannel() string {
-	if m != nil {
-		return m.Channel
-	}
-	return ""
-}
-
-func (m *RawMessage) GetSubtopic() string {
-	if m != nil {
-		return m.Subtopic
-	}
-	return ""
-}
-
-func (m *RawMessage) GetPublisher() string {
-	if m != nil {
-		return m.Publisher
-	}
-	return ""
-}
-
-func (m *RawMessage) GetProtocol() string {
-	if m != nil {
-		return m.Protocol
-	}
-	return ""
-}
-
-func (m *RawMessage) GetContentType() string {
-	if m != nil {
-		return m.ContentType
-	}
-	return ""
-}
-
-func (m *RawMessage) GetPayload() []byte {
-	if m != nil {
-		return m.Payload
-	}
-	return nil
-}
-
-// Message represents a resolved (normalized) raw message.
-type Message struct {
-	Channel   string `protobuf:"bytes,1,opt,name=channel,proto3" json:"channel,omitempty"`
-	Subtopic  string `protobuf:"bytes,2,opt,name=subtopic,proto3" json:"subtopic,omitempty"`
-	Publisher string `protobuf:"bytes,3,opt,name=publisher,proto3" json:"publisher,omitempty"`
-	Protocol  string `protobuf:"bytes,4,opt,name=protocol,proto3" json:"protocol,omitempty"`
-	Name      string `protobuf:"bytes,5,opt,name=name,proto3" json:"name,omitempty"`
-	Unit      string `protobuf:"bytes,6,opt,name=unit,proto3" json:"unit,omitempty"`
-	// Types that are valid to be assigned to Value:
-	//	*Message_FloatValue
-	//	*Message_StringValue
-	//	*Message_BoolValue
-	//	*Message_DataValue
-	Value                isMessage_Value `protobuf_oneof:"value"`
-	ValueSum             *SumValue       `protobuf:"bytes,11,opt,name=valueSum,proto3" json:"valueSum,omitempty"`
-	Time                 float64         `protobuf:"fixed64,12,opt,name=time,proto3" json:"time,omitempty"`
-	UpdateTime           float64         `protobuf:"fixed64,13,opt,name=updateTime,proto3" json:"updateTime,omitempty"`
-	Link                 string          `protobuf:"bytes,14,opt,name=link,proto3" json:"link,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
-	XXX_unrecognized     []byte          `json:"-"`
-	XXX_sizecache        int32           `json:"-"`
-}
-
 func (m *Message) Reset()         { *m = Message{} }
 func (m *Message) String() string { return proto.CompactTextString(m) }
 func (*Message) ProtoMessage()    {}
 func (*Message) Descriptor() ([]byte, []int) {
-	return fileDescriptor_33c57e4bae7b9afd, []int{1}
+	return fileDescriptor_33c57e4bae7b9afd, []int{0}
 }
 func (m *Message) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -166,37 +67,6 @@ func (m *Message) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_Message proto.InternalMessageInfo
-
-type isMessage_Value interface {
-	isMessage_Value()
-	MarshalTo([]byte) (int, error)
-	Size() int
-}
-
-type Message_FloatValue struct {
-	FloatValue float64 `protobuf:"fixed64,7,opt,name=floatValue,proto3,oneof" json:"floatValue,omitempty"`
-}
-type Message_StringValue struct {
-	StringValue string `protobuf:"bytes,8,opt,name=stringValue,proto3,oneof" json:"stringValue,omitempty"`
-}
-type Message_BoolValue struct {
-	BoolValue bool `protobuf:"varint,9,opt,name=boolValue,proto3,oneof" json:"boolValue,omitempty"`
-}
-type Message_DataValue struct {
-	DataValue string `protobuf:"bytes,10,opt,name=dataValue,proto3,oneof" json:"dataValue,omitempty"`
-}
-
-func (*Message_FloatValue) isMessage_Value()  {}
-func (*Message_StringValue) isMessage_Value() {}
-func (*Message_BoolValue) isMessage_Value()   {}
-func (*Message_DataValue) isMessage_Value()   {}
-
-func (m *Message) GetValue() isMessage_Value {
-	if m != nil {
-		return m.Value
-	}
-	return nil
-}
 
 func (m *Message) GetChannel() string {
 	if m != nil {
@@ -226,170 +96,43 @@ func (m *Message) GetProtocol() string {
 	return ""
 }
 
-func (m *Message) GetName() string {
+func (m *Message) GetContentType() string {
 	if m != nil {
-		return m.Name
+		return m.ContentType
 	}
 	return ""
 }
 
-func (m *Message) GetUnit() string {
+func (m *Message) GetPayload() []byte {
 	if m != nil {
-		return m.Unit
-	}
-	return ""
-}
-
-func (m *Message) GetFloatValue() float64 {
-	if x, ok := m.GetValue().(*Message_FloatValue); ok {
-		return x.FloatValue
-	}
-	return 0
-}
-
-func (m *Message) GetStringValue() string {
-	if x, ok := m.GetValue().(*Message_StringValue); ok {
-		return x.StringValue
-	}
-	return ""
-}
-
-func (m *Message) GetBoolValue() bool {
-	if x, ok := m.GetValue().(*Message_BoolValue); ok {
-		return x.BoolValue
-	}
-	return false
-}
-
-func (m *Message) GetDataValue() string {
-	if x, ok := m.GetValue().(*Message_DataValue); ok {
-		return x.DataValue
-	}
-	return ""
-}
-
-func (m *Message) GetValueSum() *SumValue {
-	if m != nil {
-		return m.ValueSum
+		return m.Payload
 	}
 	return nil
 }
 
-func (m *Message) GetTime() float64 {
-	if m != nil {
-		return m.Time
-	}
-	return 0
-}
-
-func (m *Message) GetUpdateTime() float64 {
-	if m != nil {
-		return m.UpdateTime
-	}
-	return 0
-}
-
-func (m *Message) GetLink() string {
-	if m != nil {
-		return m.Link
-	}
-	return ""
-}
-
-// XXX_OneofWrappers is for the internal use of the proto package.
-func (*Message) XXX_OneofWrappers() []interface{} {
-	return []interface{}{
-		(*Message_FloatValue)(nil),
-		(*Message_StringValue)(nil),
-		(*Message_BoolValue)(nil),
-		(*Message_DataValue)(nil),
-	}
-}
-
-// SumValue is a simple wrapper around the double value.
-type SumValue struct {
-	Value                float64  `protobuf:"fixed64,1,opt,name=value,proto3" json:"value,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *SumValue) Reset()         { *m = SumValue{} }
-func (m *SumValue) String() string { return proto.CompactTextString(m) }
-func (*SumValue) ProtoMessage()    {}
-func (*SumValue) Descriptor() ([]byte, []int) {
-	return fileDescriptor_33c57e4bae7b9afd, []int{2}
-}
-func (m *SumValue) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *SumValue) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_SumValue.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *SumValue) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SumValue.Merge(m, src)
-}
-func (m *SumValue) XXX_Size() int {
-	return m.Size()
-}
-func (m *SumValue) XXX_DiscardUnknown() {
-	xxx_messageInfo_SumValue.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_SumValue proto.InternalMessageInfo
-
-func (m *SumValue) GetValue() float64 {
-	if m != nil {
-		return m.Value
-	}
-	return 0
-}
-
 func init() {
-	proto.RegisterType((*RawMessage)(nil), "mainflux.RawMessage")
 	proto.RegisterType((*Message)(nil), "mainflux.Message")
-	proto.RegisterType((*SumValue)(nil), "mainflux.SumValue")
 }
 
 func init() { proto.RegisterFile("message.proto", fileDescriptor_33c57e4bae7b9afd) }
 
 var fileDescriptor_33c57e4bae7b9afd = []byte{
-	// 368 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x92, 0x4f, 0x8e, 0xda, 0x30,
-	0x18, 0xc5, 0xe3, 0xf2, 0x27, 0xc9, 0x17, 0xa8, 0x2a, 0xab, 0x0b, 0xab, 0xaa, 0x22, 0x2b, 0xab,
-	0xac, 0xb2, 0x68, 0x6f, 0xc0, 0x8a, 0x4d, 0x37, 0x06, 0x75, 0xef, 0x04, 0x03, 0x51, 0x1d, 0x3b,
-	0x22, 0x76, 0x5b, 0x6e, 0x32, 0x47, 0x98, 0x23, 0xcc, 0x11, 0x66, 0x39, 0x47, 0x18, 0x31, 0x17,
-	0x19, 0xd9, 0x21, 0x90, 0x1b, 0xcc, 0xee, 0xbd, 0xdf, 0xfb, 0x3e, 0xfb, 0x19, 0x02, 0xcb, 0x46,
-	0x74, 0x1d, 0x3f, 0x88, 0xa2, 0x3d, 0x69, 0xa3, 0x71, 0xd4, 0xf0, 0x5a, 0xed, 0xa5, 0xfd, 0x9f,
-	0x3d, 0x21, 0x00, 0xc6, 0xff, 0xfd, 0xea, 0x63, 0x4c, 0x20, 0xac, 0x8e, 0x5c, 0x29, 0x21, 0x09,
-	0xa2, 0x28, 0x8f, 0xd9, 0x60, 0xf1, 0x37, 0x88, 0x3a, 0x5b, 0x1a, 0xdd, 0xd6, 0x15, 0xf9, 0xe4,
-	0xa3, 0x9b, 0xc7, 0xdf, 0x21, 0x6e, 0x6d, 0x29, 0xeb, 0xee, 0x28, 0x4e, 0x64, 0xe2, 0xc3, 0x3b,
-	0x70, 0x9b, 0xfe, 0xd6, 0x4a, 0x4b, 0x32, 0xed, 0x37, 0x07, 0x8f, 0x29, 0x24, 0x95, 0x56, 0x46,
-	0x28, 0xb3, 0x3d, 0xb7, 0x82, 0xcc, 0x7c, 0x3c, 0x46, 0xae, 0x51, 0xcb, 0xcf, 0x52, 0xf3, 0x1d,
-	0x99, 0x53, 0x94, 0x2f, 0xd8, 0x60, 0xb3, 0xc7, 0x09, 0x84, 0x1f, 0xd5, 0x1b, 0xc3, 0x54, 0xf1,
-	0x66, 0x28, 0xec, 0xb5, 0x63, 0x56, 0xd5, 0xc6, 0xd7, 0x8c, 0x99, 0xd7, 0x98, 0x02, 0xec, 0xa5,
-	0xe6, 0xe6, 0x37, 0x97, 0x56, 0x90, 0x90, 0xa2, 0x1c, 0xad, 0x03, 0x36, 0x62, 0x38, 0x83, 0xa4,
-	0x33, 0xa7, 0x5a, 0x1d, 0xfa, 0x91, 0xc8, 0x2d, 0xaf, 0x03, 0x36, 0x86, 0x38, 0x85, 0xb8, 0xd4,
-	0x5a, 0xf6, 0x13, 0x31, 0x45, 0x79, 0xb4, 0x0e, 0xd8, 0x1d, 0xb9, 0x7c, 0xc7, 0x0d, 0xef, 0x73,
-	0xb8, 0x9e, 0x70, 0x47, 0xb8, 0x80, 0xe8, 0xaf, 0x13, 0x1b, 0xdb, 0x90, 0x84, 0xa2, 0x3c, 0xf9,
-	0x81, 0x8b, 0xe1, 0x0b, 0x28, 0x36, 0xb6, 0xf1, 0x53, 0xec, 0x36, 0xe3, 0x5e, 0x62, 0xea, 0x46,
-	0x90, 0x85, 0xeb, 0xcb, 0xbc, 0xc6, 0x29, 0x80, 0x6d, 0x77, 0xdc, 0x88, 0xad, 0x4b, 0x96, 0x3e,
-	0x19, 0x11, 0xb7, 0x23, 0x6b, 0xf5, 0x87, 0x7c, 0xee, 0x5f, 0xef, 0xf4, 0x2a, 0x84, 0x99, 0x3f,
-	0x33, 0xa3, 0x10, 0x0d, 0xd7, 0xe0, 0xaf, 0x57, 0xe8, 0xff, 0x28, 0xc4, 0x7a, 0xb3, 0xfa, 0xf2,
-	0x7c, 0x49, 0xd1, 0xcb, 0x25, 0x45, 0xaf, 0x97, 0x14, 0x3d, 0xbc, 0xa5, 0x41, 0x39, 0xf7, 0x3f,
-	0xf6, 0xcf, 0xf7, 0x00, 0x00, 0x00, 0xff, 0xff, 0x21, 0x23, 0xc7, 0x3c, 0xbb, 0x02, 0x00, 0x00,
+	// 189 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xcd, 0x4d, 0x2d, 0x2e,
+	0x4e, 0x4c, 0x4f, 0xd5, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0xc8, 0x4d, 0xcc, 0xcc, 0x4b,
+	0xcb, 0x29, 0xad, 0x50, 0xda, 0xca, 0xc8, 0xc5, 0xee, 0x0b, 0x91, 0x13, 0x92, 0xe0, 0x62, 0x4f,
+	0xce, 0x48, 0xcc, 0xcb, 0x4b, 0xcd, 0x91, 0x60, 0x54, 0x60, 0xd4, 0xe0, 0x0c, 0x82, 0x71, 0x85,
+	0xa4, 0xb8, 0x38, 0x8a, 0x4b, 0x93, 0x4a, 0xf2, 0x0b, 0x32, 0x93, 0x25, 0x98, 0xc0, 0x52, 0x70,
+	0xbe, 0x90, 0x0c, 0x17, 0x67, 0x41, 0x69, 0x52, 0x4e, 0x66, 0x71, 0x46, 0x6a, 0x91, 0x04, 0x33,
+	0x58, 0x12, 0x21, 0x00, 0xd2, 0x09, 0xb6, 0x32, 0x39, 0x3f, 0x47, 0x82, 0x05, 0xa2, 0x13, 0xc6,
+	0x17, 0x52, 0xe0, 0xe2, 0x4e, 0xce, 0xcf, 0x2b, 0x49, 0xcd, 0x2b, 0x09, 0xa9, 0x2c, 0x48, 0x95,
+	0x60, 0x05, 0x4b, 0x23, 0x0b, 0x81, 0x5c, 0x54, 0x90, 0x58, 0x99, 0x93, 0x9f, 0x98, 0x22, 0xc1,
+	0xa6, 0xc0, 0xa8, 0xc1, 0x13, 0x04, 0xe3, 0x3a, 0x09, 0x9c, 0x78, 0x24, 0xc7, 0x78, 0xe1, 0x91,
+	0x1c, 0xe3, 0x83, 0x47, 0x72, 0x8c, 0x33, 0x1e, 0xcb, 0x31, 0x24, 0xb1, 0x81, 0xcd, 0x35, 0x06,
+	0x04, 0x00, 0x00, 0xff, 0xff, 0x52, 0xc9, 0xcc, 0x65, 0xeb, 0x00, 0x00, 0x00,
 }
 
-func (m *RawMessage) Marshal() (dAtA []byte, err error) {
+func (m *Message) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -399,12 +142,12 @@ func (m *RawMessage) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *RawMessage) MarshalTo(dAtA []byte) (int, error) {
+func (m *Message) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *RawMessage) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *Message) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -458,206 +201,6 @@ func (m *RawMessage) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *Message) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *Message) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *Message) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	if len(m.Link) > 0 {
-		i -= len(m.Link)
-		copy(dAtA[i:], m.Link)
-		i = encodeVarintMessage(dAtA, i, uint64(len(m.Link)))
-		i--
-		dAtA[i] = 0x72
-	}
-	if m.UpdateTime != 0 {
-		i -= 8
-		encoding_binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.UpdateTime))))
-		i--
-		dAtA[i] = 0x69
-	}
-	if m.Time != 0 {
-		i -= 8
-		encoding_binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Time))))
-		i--
-		dAtA[i] = 0x61
-	}
-	if m.ValueSum != nil {
-		{
-			size, err := m.ValueSum.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintMessage(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x5a
-	}
-	if m.Value != nil {
-		{
-			size := m.Value.Size()
-			i -= size
-			if _, err := m.Value.MarshalTo(dAtA[i:]); err != nil {
-				return 0, err
-			}
-		}
-	}
-	if len(m.Unit) > 0 {
-		i -= len(m.Unit)
-		copy(dAtA[i:], m.Unit)
-		i = encodeVarintMessage(dAtA, i, uint64(len(m.Unit)))
-		i--
-		dAtA[i] = 0x32
-	}
-	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = encodeVarintMessage(dAtA, i, uint64(len(m.Name)))
-		i--
-		dAtA[i] = 0x2a
-	}
-	if len(m.Protocol) > 0 {
-		i -= len(m.Protocol)
-		copy(dAtA[i:], m.Protocol)
-		i = encodeVarintMessage(dAtA, i, uint64(len(m.Protocol)))
-		i--
-		dAtA[i] = 0x22
-	}
-	if len(m.Publisher) > 0 {
-		i -= len(m.Publisher)
-		copy(dAtA[i:], m.Publisher)
-		i = encodeVarintMessage(dAtA, i, uint64(len(m.Publisher)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.Subtopic) > 0 {
-		i -= len(m.Subtopic)
-		copy(dAtA[i:], m.Subtopic)
-		i = encodeVarintMessage(dAtA, i, uint64(len(m.Subtopic)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Channel) > 0 {
-		i -= len(m.Channel)
-		copy(dAtA[i:], m.Channel)
-		i = encodeVarintMessage(dAtA, i, uint64(len(m.Channel)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *Message_FloatValue) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *Message_FloatValue) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	i -= 8
-	encoding_binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.FloatValue))))
-	i--
-	dAtA[i] = 0x39
-	return len(dAtA) - i, nil
-}
-func (m *Message_StringValue) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *Message_StringValue) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	i -= len(m.StringValue)
-	copy(dAtA[i:], m.StringValue)
-	i = encodeVarintMessage(dAtA, i, uint64(len(m.StringValue)))
-	i--
-	dAtA[i] = 0x42
-	return len(dAtA) - i, nil
-}
-func (m *Message_BoolValue) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *Message_BoolValue) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	i--
-	if m.BoolValue {
-		dAtA[i] = 1
-	} else {
-		dAtA[i] = 0
-	}
-	i--
-	dAtA[i] = 0x48
-	return len(dAtA) - i, nil
-}
-func (m *Message_DataValue) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *Message_DataValue) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	i -= len(m.DataValue)
-	copy(dAtA[i:], m.DataValue)
-	i = encodeVarintMessage(dAtA, i, uint64(len(m.DataValue)))
-	i--
-	dAtA[i] = 0x52
-	return len(dAtA) - i, nil
-}
-func (m *SumValue) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *SumValue) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *SumValue) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	if m.Value != 0 {
-		i -= 8
-		encoding_binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Value))))
-		i--
-		dAtA[i] = 0x9
-	}
-	return len(dAtA) - i, nil
-}
-
 func encodeVarintMessage(dAtA []byte, offset int, v uint64) int {
 	offset -= sovMessage(v)
 	base := offset
@@ -669,7 +212,7 @@ func encodeVarintMessage(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *RawMessage) Size() (n int) {
+func (m *Message) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -705,119 +248,13 @@ func (m *RawMessage) Size() (n int) {
 	return n
 }
 
-func (m *Message) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Channel)
-	if l > 0 {
-		n += 1 + l + sovMessage(uint64(l))
-	}
-	l = len(m.Subtopic)
-	if l > 0 {
-		n += 1 + l + sovMessage(uint64(l))
-	}
-	l = len(m.Publisher)
-	if l > 0 {
-		n += 1 + l + sovMessage(uint64(l))
-	}
-	l = len(m.Protocol)
-	if l > 0 {
-		n += 1 + l + sovMessage(uint64(l))
-	}
-	l = len(m.Name)
-	if l > 0 {
-		n += 1 + l + sovMessage(uint64(l))
-	}
-	l = len(m.Unit)
-	if l > 0 {
-		n += 1 + l + sovMessage(uint64(l))
-	}
-	if m.Value != nil {
-		n += m.Value.Size()
-	}
-	if m.ValueSum != nil {
-		l = m.ValueSum.Size()
-		n += 1 + l + sovMessage(uint64(l))
-	}
-	if m.Time != 0 {
-		n += 9
-	}
-	if m.UpdateTime != 0 {
-		n += 9
-	}
-	l = len(m.Link)
-	if l > 0 {
-		n += 1 + l + sovMessage(uint64(l))
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *Message_FloatValue) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	n += 9
-	return n
-}
-func (m *Message_StringValue) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.StringValue)
-	n += 1 + l + sovMessage(uint64(l))
-	return n
-}
-func (m *Message_BoolValue) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	n += 2
-	return n
-}
-func (m *Message_DataValue) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.DataValue)
-	n += 1 + l + sovMessage(uint64(l))
-	return n
-}
-func (m *SumValue) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Value != 0 {
-		n += 9
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
 func sovMessage(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozMessage(x uint64) (n int) {
 	return sovMessage(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *RawMessage) Unmarshal(dAtA []byte) error {
+func (m *Message) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -840,10 +277,10 @@ func (m *RawMessage) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: RawMessage: wiretype end group for non-group")
+			return fmt.Errorf("proto: Message: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: RawMessage: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: Message: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1040,503 +477,6 @@ func (m *RawMessage) Unmarshal(dAtA []byte) error {
 				m.Payload = []byte{}
 			}
 			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipMessage(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthMessage
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthMessage
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *Message) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowMessage
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Message: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Message: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Channel", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMessage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthMessage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthMessage
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Channel = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Subtopic", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMessage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthMessage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthMessage
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Subtopic = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Publisher", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMessage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthMessage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthMessage
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Publisher = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Protocol", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMessage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthMessage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthMessage
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Protocol = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMessage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthMessage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthMessage
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Name = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 6:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Unit", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMessage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthMessage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthMessage
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Unit = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 7:
-			if wireType != 1 {
-				return fmt.Errorf("proto: wrong wireType = %d for field FloatValue", wireType)
-			}
-			var v uint64
-			if (iNdEx + 8) > l {
-				return io.ErrUnexpectedEOF
-			}
-			v = uint64(encoding_binary.LittleEndian.Uint64(dAtA[iNdEx:]))
-			iNdEx += 8
-			m.Value = &Message_FloatValue{float64(math.Float64frombits(v))}
-		case 8:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field StringValue", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMessage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthMessage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthMessage
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Value = &Message_StringValue{string(dAtA[iNdEx:postIndex])}
-			iNdEx = postIndex
-		case 9:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BoolValue", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMessage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			b := bool(v != 0)
-			m.Value = &Message_BoolValue{b}
-		case 10:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field DataValue", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMessage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthMessage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthMessage
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Value = &Message_DataValue{string(dAtA[iNdEx:postIndex])}
-			iNdEx = postIndex
-		case 11:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ValueSum", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMessage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthMessage
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthMessage
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.ValueSum == nil {
-				m.ValueSum = &SumValue{}
-			}
-			if err := m.ValueSum.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 12:
-			if wireType != 1 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Time", wireType)
-			}
-			var v uint64
-			if (iNdEx + 8) > l {
-				return io.ErrUnexpectedEOF
-			}
-			v = uint64(encoding_binary.LittleEndian.Uint64(dAtA[iNdEx:]))
-			iNdEx += 8
-			m.Time = float64(math.Float64frombits(v))
-		case 13:
-			if wireType != 1 {
-				return fmt.Errorf("proto: wrong wireType = %d for field UpdateTime", wireType)
-			}
-			var v uint64
-			if (iNdEx + 8) > l {
-				return io.ErrUnexpectedEOF
-			}
-			v = uint64(encoding_binary.LittleEndian.Uint64(dAtA[iNdEx:]))
-			iNdEx += 8
-			m.UpdateTime = float64(math.Float64frombits(v))
-		case 14:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Link", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMessage
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthMessage
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthMessage
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Link = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipMessage(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthMessage
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthMessage
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *SumValue) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowMessage
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: SumValue: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: SumValue: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 1 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
-			}
-			var v uint64
-			if (iNdEx + 8) > l {
-				return io.ErrUnexpectedEOF
-			}
-			v = uint64(encoding_binary.LittleEndian.Uint64(dAtA[iNdEx:]))
-			iNdEx += 8
-			m.Value = float64(math.Float64frombits(v))
 		default:
 			iNdEx = preIndex
 			skippy, err := skipMessage(dAtA[iNdEx:])

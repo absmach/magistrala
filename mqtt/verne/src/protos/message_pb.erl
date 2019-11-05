@@ -50,7 +50,7 @@
 -export_type([]).
 
 %% message types
--type raw_message() ::
+-type message() ::
       #{channel                 => iodata(),        % = 1
         subtopic                => iodata(),        % = 2
         publisher               => iodata(),        % = 3
@@ -59,31 +59,13 @@
         payload                 => iodata()         % = 6
        }.
 
--type message() ::
-      #{channel                 => iodata(),        % = 1
-        subtopic                => iodata(),        % = 2
-        publisher               => iodata(),        % = 3
-        protocol                => iodata(),        % = 4
-        name                    => iodata(),        % = 5
-        unit                    => iodata(),        % = 6
-        value                   => {floatValue, float() | integer() | infinity | '-infinity' | nan} | {stringValue, iodata()} | {boolValue, boolean() | 0 | 1} | {dataValue, iodata()}, % oneof
-        valueSum                => sum_value(),     % = 11
-        time                    => float() | integer() | infinity | '-infinity' | nan, % = 12
-        updateTime              => float() | integer() | infinity | '-infinity' | nan, % = 13
-        link                    => iodata()         % = 14
-       }.
+-export_type(['message'/0]).
 
--type sum_value() ::
-      #{value                   => float() | integer() | infinity | '-infinity' | nan % = 1
-       }.
-
--export_type(['raw_message'/0, 'message'/0, 'sum_value'/0]).
-
--spec encode_msg(raw_message() | message() | sum_value(), atom()) -> binary().
+-spec encode_msg(message(), atom()) -> binary().
 encode_msg(Msg, MsgName) when is_atom(MsgName) ->
     encode_msg(Msg, MsgName, []).
 
--spec encode_msg(raw_message() | message() | sum_value(), atom(), list()) -> binary().
+-spec encode_msg(message(), atom(), list()) -> binary().
 encode_msg(Msg, MsgName, Opts) ->
     case proplists:get_bool(verify, Opts) of
       true -> verify_msg(Msg, MsgName, Opts);
@@ -91,20 +73,16 @@ encode_msg(Msg, MsgName, Opts) ->
     end,
     TrUserData = proplists:get_value(user_data, Opts),
     case MsgName of
-      raw_message ->
-	  encode_msg_raw_message(id(Msg, TrUserData), TrUserData);
       message ->
-	  encode_msg_message(id(Msg, TrUserData), TrUserData);
-      sum_value ->
-	  encode_msg_sum_value(id(Msg, TrUserData), TrUserData)
+	  encode_msg_message(id(Msg, TrUserData), TrUserData)
     end.
 
 
-encode_msg_raw_message(Msg, TrUserData) ->
-    encode_msg_raw_message(Msg, <<>>, TrUserData).
+encode_msg_message(Msg, TrUserData) ->
+    encode_msg_message(Msg, <<>>, TrUserData).
 
 
-encode_msg_raw_message(#{} = M, Bin, TrUserData) ->
+encode_msg_message(#{} = M, Bin, TrUserData) ->
     B1 = case M of
 	   #{channel := F1} ->
 	       begin
@@ -176,178 +154,6 @@ encode_msg_raw_message(#{} = M, Bin, TrUserData) ->
 	  end;
       _ -> B5
     end.
-
-encode_msg_message(Msg, TrUserData) ->
-    encode_msg_message(Msg, <<>>, TrUserData).
-
-
-encode_msg_message(#{} = M, Bin, TrUserData) ->
-    B1 = case M of
-	   #{channel := F1} ->
-	       begin
-		 TrF1 = id(F1, TrUserData),
-		 case is_empty_string(TrF1) of
-		   true -> Bin;
-		   false ->
-		       e_type_string(TrF1, <<Bin/binary, 10>>, TrUserData)
-		 end
-	       end;
-	   _ -> Bin
-	 end,
-    B2 = case M of
-	   #{subtopic := F2} ->
-	       begin
-		 TrF2 = id(F2, TrUserData),
-		 case is_empty_string(TrF2) of
-		   true -> B1;
-		   false ->
-		       e_type_string(TrF2, <<B1/binary, 18>>, TrUserData)
-		 end
-	       end;
-	   _ -> B1
-	 end,
-    B3 = case M of
-	   #{publisher := F3} ->
-	       begin
-		 TrF3 = id(F3, TrUserData),
-		 case is_empty_string(TrF3) of
-		   true -> B2;
-		   false ->
-		       e_type_string(TrF3, <<B2/binary, 26>>, TrUserData)
-		 end
-	       end;
-	   _ -> B2
-	 end,
-    B4 = case M of
-	   #{protocol := F4} ->
-	       begin
-		 TrF4 = id(F4, TrUserData),
-		 case is_empty_string(TrF4) of
-		   true -> B3;
-		   false ->
-		       e_type_string(TrF4, <<B3/binary, 34>>, TrUserData)
-		 end
-	       end;
-	   _ -> B3
-	 end,
-    B5 = case M of
-	   #{name := F5} ->
-	       begin
-		 TrF5 = id(F5, TrUserData),
-		 case is_empty_string(TrF5) of
-		   true -> B4;
-		   false ->
-		       e_type_string(TrF5, <<B4/binary, 42>>, TrUserData)
-		 end
-	       end;
-	   _ -> B4
-	 end,
-    B6 = case M of
-	   #{unit := F6} ->
-	       begin
-		 TrF6 = id(F6, TrUserData),
-		 case is_empty_string(TrF6) of
-		   true -> B5;
-		   false ->
-		       e_type_string(TrF6, <<B5/binary, 50>>, TrUserData)
-		 end
-	       end;
-	   _ -> B5
-	 end,
-    B7 = case M of
-	   #{value := F7} ->
-	       case id(F7, TrUserData) of
-		 {floatValue, TF7} ->
-		     begin
-		       TrTF7 = id(TF7, TrUserData),
-		       e_type_double(TrTF7, <<B6/binary, 57>>, TrUserData)
-		     end;
-		 {stringValue, TF7} ->
-		     begin
-		       TrTF7 = id(TF7, TrUserData),
-		       e_type_string(TrTF7, <<B6/binary, 66>>, TrUserData)
-		     end;
-		 {boolValue, TF7} ->
-		     begin
-		       TrTF7 = id(TF7, TrUserData),
-		       e_type_bool(TrTF7, <<B6/binary, 72>>, TrUserData)
-		     end;
-		 {dataValue, TF7} ->
-		     begin
-		       TrTF7 = id(TF7, TrUserData),
-		       e_type_string(TrTF7, <<B6/binary, 82>>, TrUserData)
-		     end
-	       end;
-	   _ -> B6
-	 end,
-    B8 = case M of
-	   #{valueSum := F8} ->
-	       begin
-		 TrF8 = id(F8, TrUserData),
-		 if TrF8 =:= undefined -> B7;
-		    true ->
-			e_mfield_message_valueSum(TrF8, <<B7/binary, 90>>,
-						  TrUserData)
-		 end
-	       end;
-	   _ -> B7
-	 end,
-    B9 = case M of
-	   #{time := F9} ->
-	       begin
-		 TrF9 = id(F9, TrUserData),
-		 if TrF9 =:= 0.0 -> B8;
-		    true ->
-			e_type_double(TrF9, <<B8/binary, 97>>, TrUserData)
-		 end
-	       end;
-	   _ -> B8
-	 end,
-    B10 = case M of
-	    #{updateTime := F10} ->
-		begin
-		  TrF10 = id(F10, TrUserData),
-		  if TrF10 =:= 0.0 -> B9;
-		     true ->
-			 e_type_double(TrF10, <<B9/binary, 105>>, TrUserData)
-		  end
-		end;
-	    _ -> B9
-	  end,
-    case M of
-      #{link := F11} ->
-	  begin
-	    TrF11 = id(F11, TrUserData),
-	    case is_empty_string(TrF11) of
-	      true -> B10;
-	      false ->
-		  e_type_string(TrF11, <<B10/binary, 114>>, TrUserData)
-	    end
-	  end;
-      _ -> B10
-    end.
-
-encode_msg_sum_value(Msg, TrUserData) ->
-    encode_msg_sum_value(Msg, <<>>, TrUserData).
-
-
-encode_msg_sum_value(#{} = M, Bin, TrUserData) ->
-    case M of
-      #{value := F1} ->
-	  begin
-	    TrF1 = id(F1, TrUserData),
-	    if TrF1 =:= 0.0 -> Bin;
-	       true ->
-		   e_type_double(TrF1, <<Bin/binary, 9>>, TrUserData)
-	    end
-	  end;
-      _ -> Bin
-    end.
-
-e_mfield_message_valueSum(Msg, Bin, TrUserData) ->
-    SubBin = encode_msg_sum_value(Msg, <<>>, TrUserData),
-    Bin2 = e_varint(byte_size(SubBin), Bin),
-    <<Bin2/binary, SubBin/binary>>.
 
 -compile({nowarn_unused_function,e_type_sint/3}).
 e_type_sint(Value, Bin, _TrUserData) when Value >= 0 ->
@@ -482,949 +288,235 @@ decode_msg_1_catch(Bin, MsgName, TrUserData) ->
     end.
 -endif.
 
-decode_msg_2_doit(raw_message, Bin, TrUserData) ->
-    id(decode_msg_raw_message(Bin, TrUserData), TrUserData);
 decode_msg_2_doit(message, Bin, TrUserData) ->
-    id(decode_msg_message(Bin, TrUserData), TrUserData);
-decode_msg_2_doit(sum_value, Bin, TrUserData) ->
-    id(decode_msg_sum_value(Bin, TrUserData), TrUserData).
+    id(decode_msg_message(Bin, TrUserData), TrUserData).
 
 
-
-decode_msg_raw_message(Bin, TrUserData) ->
-    dfp_read_field_def_raw_message(Bin, 0, 0,
-				   id(<<>>, TrUserData), id(<<>>, TrUserData),
-				   id(<<>>, TrUserData), id(<<>>, TrUserData),
-				   id(<<>>, TrUserData), id(<<>>, TrUserData),
-				   TrUserData).
-
-dfp_read_field_def_raw_message(<<10, Rest/binary>>, Z1,
-			       Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			       TrUserData) ->
-    d_field_raw_message_channel(Rest, Z1, Z2, F@_1, F@_2,
-				F@_3, F@_4, F@_5, F@_6, TrUserData);
-dfp_read_field_def_raw_message(<<18, Rest/binary>>, Z1,
-			       Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			       TrUserData) ->
-    d_field_raw_message_subtopic(Rest, Z1, Z2, F@_1, F@_2,
-				 F@_3, F@_4, F@_5, F@_6, TrUserData);
-dfp_read_field_def_raw_message(<<26, Rest/binary>>, Z1,
-			       Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			       TrUserData) ->
-    d_field_raw_message_publisher(Rest, Z1, Z2, F@_1, F@_2,
-				  F@_3, F@_4, F@_5, F@_6, TrUserData);
-dfp_read_field_def_raw_message(<<34, Rest/binary>>, Z1,
-			       Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			       TrUserData) ->
-    d_field_raw_message_protocol(Rest, Z1, Z2, F@_1, F@_2,
-				 F@_3, F@_4, F@_5, F@_6, TrUserData);
-dfp_read_field_def_raw_message(<<42, Rest/binary>>, Z1,
-			       Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			       TrUserData) ->
-    d_field_raw_message_contentType(Rest, Z1, Z2, F@_1,
-				    F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData);
-dfp_read_field_def_raw_message(<<50, Rest/binary>>, Z1,
-			       Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			       TrUserData) ->
-    d_field_raw_message_payload(Rest, Z1, Z2, F@_1, F@_2,
-				F@_3, F@_4, F@_5, F@_6, TrUserData);
-dfp_read_field_def_raw_message(<<>>, 0, 0, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, _) ->
-    #{channel => F@_1, subtopic => F@_2, publisher => F@_3,
-      protocol => F@_4, contentType => F@_5, payload => F@_6};
-dfp_read_field_def_raw_message(Other, Z1, Z2, F@_1,
-			       F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
-    dg_read_field_def_raw_message(Other, Z1, Z2, F@_1, F@_2,
-				  F@_3, F@_4, F@_5, F@_6, TrUserData).
-
-dg_read_field_def_raw_message(<<1:1, X:7, Rest/binary>>,
-			      N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			      TrUserData)
-    when N < 32 - 7 ->
-    dg_read_field_def_raw_message(Rest, N + 7,
-				  X bsl N + Acc, F@_1, F@_2, F@_3, F@_4, F@_5,
-				  F@_6, TrUserData);
-dg_read_field_def_raw_message(<<0:1, X:7, Rest/binary>>,
-			      N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			      TrUserData) ->
-    Key = X bsl N + Acc,
-    case Key of
-      10 ->
-	  d_field_raw_message_channel(Rest, 0, 0, F@_1, F@_2,
-				      F@_3, F@_4, F@_5, F@_6, TrUserData);
-      18 ->
-	  d_field_raw_message_subtopic(Rest, 0, 0, F@_1, F@_2,
-				       F@_3, F@_4, F@_5, F@_6, TrUserData);
-      26 ->
-	  d_field_raw_message_publisher(Rest, 0, 0, F@_1, F@_2,
-					F@_3, F@_4, F@_5, F@_6, TrUserData);
-      34 ->
-	  d_field_raw_message_protocol(Rest, 0, 0, F@_1, F@_2,
-				       F@_3, F@_4, F@_5, F@_6, TrUserData);
-      42 ->
-	  d_field_raw_message_contentType(Rest, 0, 0, F@_1, F@_2,
-					  F@_3, F@_4, F@_5, F@_6, TrUserData);
-      50 ->
-	  d_field_raw_message_payload(Rest, 0, 0, F@_1, F@_2,
-				      F@_3, F@_4, F@_5, F@_6, TrUserData);
-      _ ->
-	  case Key band 7 of
-	    0 ->
-		skip_varint_raw_message(Rest, 0, 0, F@_1, F@_2, F@_3,
-					F@_4, F@_5, F@_6, TrUserData);
-	    1 ->
-		skip_64_raw_message(Rest, 0, 0, F@_1, F@_2, F@_3, F@_4,
-				    F@_5, F@_6, TrUserData);
-	    2 ->
-		skip_length_delimited_raw_message(Rest, 0, 0, F@_1,
-						  F@_2, F@_3, F@_4, F@_5, F@_6,
-						  TrUserData);
-	    3 ->
-		skip_group_raw_message(Rest, Key bsr 3, 0, F@_1, F@_2,
-				       F@_3, F@_4, F@_5, F@_6, TrUserData);
-	    5 ->
-		skip_32_raw_message(Rest, 0, 0, F@_1, F@_2, F@_3, F@_4,
-				    F@_5, F@_6, TrUserData)
-	  end
-    end;
-dg_read_field_def_raw_message(<<>>, 0, 0, F@_1, F@_2,
-			      F@_3, F@_4, F@_5, F@_6, _) ->
-    #{channel => F@_1, subtopic => F@_2, publisher => F@_3,
-      protocol => F@_4, contentType => F@_5, payload => F@_6}.
-
-d_field_raw_message_channel(<<1:1, X:7, Rest/binary>>,
-			    N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			    TrUserData)
-    when N < 57 ->
-    d_field_raw_message_channel(Rest, N + 7, X bsl N + Acc,
-				F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData);
-d_field_raw_message_channel(<<0:1, X:7, Rest/binary>>,
-			    N, Acc, _, F@_2, F@_3, F@_4, F@_5, F@_6,
-			    TrUserData) ->
-    {NewFValue, RestF} = begin
-			   Len = X bsl N + Acc,
-			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
-			   {id(binary:copy(Bytes), TrUserData), Rest2}
-			 end,
-    dfp_read_field_def_raw_message(RestF, 0, 0, NewFValue,
-				   F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData).
-
-d_field_raw_message_subtopic(<<1:1, X:7, Rest/binary>>,
-			     N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			     TrUserData)
-    when N < 57 ->
-    d_field_raw_message_subtopic(Rest, N + 7, X bsl N + Acc,
-				 F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-				 TrUserData);
-d_field_raw_message_subtopic(<<0:1, X:7, Rest/binary>>,
-			     N, Acc, F@_1, _, F@_3, F@_4, F@_5, F@_6,
-			     TrUserData) ->
-    {NewFValue, RestF} = begin
-			   Len = X bsl N + Acc,
-			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
-			   {id(binary:copy(Bytes), TrUserData), Rest2}
-			 end,
-    dfp_read_field_def_raw_message(RestF, 0, 0, F@_1,
-				   NewFValue, F@_3, F@_4, F@_5, F@_6,
-				   TrUserData).
-
-d_field_raw_message_publisher(<<1:1, X:7, Rest/binary>>,
-			      N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			      TrUserData)
-    when N < 57 ->
-    d_field_raw_message_publisher(Rest, N + 7,
-				  X bsl N + Acc, F@_1, F@_2, F@_3, F@_4, F@_5,
-				  F@_6, TrUserData);
-d_field_raw_message_publisher(<<0:1, X:7, Rest/binary>>,
-			      N, Acc, F@_1, F@_2, _, F@_4, F@_5, F@_6,
-			      TrUserData) ->
-    {NewFValue, RestF} = begin
-			   Len = X bsl N + Acc,
-			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
-			   {id(binary:copy(Bytes), TrUserData), Rest2}
-			 end,
-    dfp_read_field_def_raw_message(RestF, 0, 0, F@_1, F@_2,
-				   NewFValue, F@_4, F@_5, F@_6, TrUserData).
-
-d_field_raw_message_protocol(<<1:1, X:7, Rest/binary>>,
-			     N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			     TrUserData)
-    when N < 57 ->
-    d_field_raw_message_protocol(Rest, N + 7, X bsl N + Acc,
-				 F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-				 TrUserData);
-d_field_raw_message_protocol(<<0:1, X:7, Rest/binary>>,
-			     N, Acc, F@_1, F@_2, F@_3, _, F@_5, F@_6,
-			     TrUserData) ->
-    {NewFValue, RestF} = begin
-			   Len = X bsl N + Acc,
-			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
-			   {id(binary:copy(Bytes), TrUserData), Rest2}
-			 end,
-    dfp_read_field_def_raw_message(RestF, 0, 0, F@_1, F@_2,
-				   F@_3, NewFValue, F@_5, F@_6, TrUserData).
-
-d_field_raw_message_contentType(<<1:1, X:7,
-				  Rest/binary>>,
-				N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-				TrUserData)
-    when N < 57 ->
-    d_field_raw_message_contentType(Rest, N + 7,
-				    X bsl N + Acc, F@_1, F@_2, F@_3, F@_4, F@_5,
-				    F@_6, TrUserData);
-d_field_raw_message_contentType(<<0:1, X:7,
-				  Rest/binary>>,
-				N, Acc, F@_1, F@_2, F@_3, F@_4, _, F@_6,
-				TrUserData) ->
-    {NewFValue, RestF} = begin
-			   Len = X bsl N + Acc,
-			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
-			   {id(binary:copy(Bytes), TrUserData), Rest2}
-			 end,
-    dfp_read_field_def_raw_message(RestF, 0, 0, F@_1, F@_2,
-				   F@_3, F@_4, NewFValue, F@_6, TrUserData).
-
-d_field_raw_message_payload(<<1:1, X:7, Rest/binary>>,
-			    N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-			    TrUserData)
-    when N < 57 ->
-    d_field_raw_message_payload(Rest, N + 7, X bsl N + Acc,
-				F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData);
-d_field_raw_message_payload(<<0:1, X:7, Rest/binary>>,
-			    N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, _,
-			    TrUserData) ->
-    {NewFValue, RestF} = begin
-			   Len = X bsl N + Acc,
-			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
-			   {id(binary:copy(Bytes), TrUserData), Rest2}
-			 end,
-    dfp_read_field_def_raw_message(RestF, 0, 0, F@_1, F@_2,
-				   F@_3, F@_4, F@_5, NewFValue, TrUserData).
-
-skip_varint_raw_message(<<1:1, _:7, Rest/binary>>, Z1,
-			Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
-    skip_varint_raw_message(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			    F@_4, F@_5, F@_6, TrUserData);
-skip_varint_raw_message(<<0:1, _:7, Rest/binary>>, Z1,
-			Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
-    dfp_read_field_def_raw_message(Rest, Z1, Z2, F@_1, F@_2,
-				   F@_3, F@_4, F@_5, F@_6, TrUserData).
-
-skip_length_delimited_raw_message(<<1:1, X:7,
-				    Rest/binary>>,
-				  N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-				  TrUserData)
-    when N < 57 ->
-    skip_length_delimited_raw_message(Rest, N + 7,
-				      X bsl N + Acc, F@_1, F@_2, F@_3, F@_4,
-				      F@_5, F@_6, TrUserData);
-skip_length_delimited_raw_message(<<0:1, X:7,
-				    Rest/binary>>,
-				  N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
-				  TrUserData) ->
-    Length = X bsl N + Acc,
-    <<_:Length/binary, Rest2/binary>> = Rest,
-    dfp_read_field_def_raw_message(Rest2, 0, 0, F@_1, F@_2,
-				   F@_3, F@_4, F@_5, F@_6, TrUserData).
-
-skip_group_raw_message(Bin, FNum, Z2, F@_1, F@_2, F@_3,
-		       F@_4, F@_5, F@_6, TrUserData) ->
-    {_, Rest} = read_group(Bin, FNum),
-    dfp_read_field_def_raw_message(Rest, 0, Z2, F@_1, F@_2,
-				   F@_3, F@_4, F@_5, F@_6, TrUserData).
-
-skip_32_raw_message(<<_:32, Rest/binary>>, Z1, Z2, F@_1,
-		    F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
-    dfp_read_field_def_raw_message(Rest, Z1, Z2, F@_1, F@_2,
-				   F@_3, F@_4, F@_5, F@_6, TrUserData).
-
-skip_64_raw_message(<<_:64, Rest/binary>>, Z1, Z2, F@_1,
-		    F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
-    dfp_read_field_def_raw_message(Rest, Z1, Z2, F@_1, F@_2,
-				   F@_3, F@_4, F@_5, F@_6, TrUserData).
 
 decode_msg_message(Bin, TrUserData) ->
     dfp_read_field_def_message(Bin, 0, 0,
 			       id(<<>>, TrUserData), id(<<>>, TrUserData),
 			       id(<<>>, TrUserData), id(<<>>, TrUserData),
 			       id(<<>>, TrUserData), id(<<>>, TrUserData),
-			       id('$undef', TrUserData),
-			       id('$undef', TrUserData), id(0.0, TrUserData),
-			       id(0.0, TrUserData), id(<<>>, TrUserData),
 			       TrUserData).
 
 dfp_read_field_def_message(<<10, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
+			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
     d_field_message_channel(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			    F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			    TrUserData);
+			    F@_4, F@_5, F@_6, TrUserData);
 dfp_read_field_def_message(<<18, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
+			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
     d_field_message_subtopic(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			     F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			     TrUserData);
+			     F@_4, F@_5, F@_6, TrUserData);
 dfp_read_field_def_message(<<26, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
+			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
     d_field_message_publisher(Rest, Z1, Z2, F@_1, F@_2,
-			      F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			      F@_11, TrUserData);
+			      F@_3, F@_4, F@_5, F@_6, TrUserData);
 dfp_read_field_def_message(<<34, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
+			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
     d_field_message_protocol(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			     F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			     TrUserData);
+			     F@_4, F@_5, F@_6, TrUserData);
 dfp_read_field_def_message(<<42, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_message_name(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			 F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			 TrUserData);
+			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
+    d_field_message_contentType(Rest, Z1, Z2, F@_1, F@_2,
+				F@_3, F@_4, F@_5, F@_6, TrUserData);
 dfp_read_field_def_message(<<50, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_message_unit(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			 F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			 TrUserData);
-dfp_read_field_def_message(<<57, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_message_floatValue(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			       F@_11, TrUserData);
-dfp_read_field_def_message(<<66, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_message_stringValue(Rest, Z1, Z2, F@_1, F@_2,
-				F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-				F@_11, TrUserData);
-dfp_read_field_def_message(<<72, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_message_boolValue(Rest, Z1, Z2, F@_1, F@_2,
-			      F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			      F@_11, TrUserData);
-dfp_read_field_def_message(<<82, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_message_dataValue(Rest, Z1, Z2, F@_1, F@_2,
-			      F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			      F@_11, TrUserData);
-dfp_read_field_def_message(<<90, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_message_valueSum(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			     F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			     TrUserData);
-dfp_read_field_def_message(<<97, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_message_time(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			 F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			 TrUserData);
-dfp_read_field_def_message(<<105, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_message_updateTime(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			       F@_11, TrUserData);
-dfp_read_field_def_message(<<114, Rest/binary>>, Z1, Z2,
-			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			   F@_10, F@_11, TrUserData) ->
-    d_field_message_link(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			 F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			 TrUserData);
+			   F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
+    d_field_message_payload(Rest, Z1, Z2, F@_1, F@_2, F@_3,
+			    F@_4, F@_5, F@_6, TrUserData);
 dfp_read_field_def_message(<<>>, 0, 0, F@_1, F@_2, F@_3,
-			   F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			   _) ->
-    S1 = #{channel => F@_1, subtopic => F@_2,
-	   publisher => F@_3, protocol => F@_4, name => F@_5,
-	   unit => F@_6, time => F@_9, updateTime => F@_10,
-	   link => F@_11},
-    S2 = if F@_7 == '$undef' -> S1;
-	    true -> S1#{value => F@_7}
-	 end,
-    if F@_8 == '$undef' -> S2;
-       true -> S2#{valueSum => F@_8}
-    end;
+			   F@_4, F@_5, F@_6, _) ->
+    #{channel => F@_1, subtopic => F@_2, publisher => F@_3,
+      protocol => F@_4, contentType => F@_5, payload => F@_6};
 dfp_read_field_def_message(Other, Z1, Z2, F@_1, F@_2,
-			   F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			   F@_11, TrUserData) ->
+			   F@_3, F@_4, F@_5, F@_6, TrUserData) ->
     dg_read_field_def_message(Other, Z1, Z2, F@_1, F@_2,
-			      F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			      F@_11, TrUserData).
+			      F@_3, F@_4, F@_5, F@_6, TrUserData).
 
 dg_read_field_def_message(<<1:1, X:7, Rest/binary>>, N,
-			  Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			  F@_9, F@_10, F@_11, TrUserData)
+			  Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData)
     when N < 32 - 7 ->
     dg_read_field_def_message(Rest, N + 7, X bsl N + Acc,
-			      F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			      F@_9, F@_10, F@_11, TrUserData);
+			      F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData);
 dg_read_field_def_message(<<0:1, X:7, Rest/binary>>, N,
-			  Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			  F@_9, F@_10, F@_11, TrUserData) ->
+			  Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+			  TrUserData) ->
     Key = X bsl N + Acc,
     case Key of
       10 ->
 	  d_field_message_channel(Rest, 0, 0, F@_1, F@_2, F@_3,
-				  F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-				  F@_11, TrUserData);
+				  F@_4, F@_5, F@_6, TrUserData);
       18 ->
 	  d_field_message_subtopic(Rest, 0, 0, F@_1, F@_2, F@_3,
-				   F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-				   F@_11, TrUserData);
+				   F@_4, F@_5, F@_6, TrUserData);
       26 ->
 	  d_field_message_publisher(Rest, 0, 0, F@_1, F@_2, F@_3,
-				    F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-				    F@_11, TrUserData);
+				    F@_4, F@_5, F@_6, TrUserData);
       34 ->
 	  d_field_message_protocol(Rest, 0, 0, F@_1, F@_2, F@_3,
-				   F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-				   F@_11, TrUserData);
+				   F@_4, F@_5, F@_6, TrUserData);
       42 ->
-	  d_field_message_name(Rest, 0, 0, F@_1, F@_2, F@_3, F@_4,
-			       F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			       TrUserData);
+	  d_field_message_contentType(Rest, 0, 0, F@_1, F@_2,
+				      F@_3, F@_4, F@_5, F@_6, TrUserData);
       50 ->
-	  d_field_message_unit(Rest, 0, 0, F@_1, F@_2, F@_3, F@_4,
-			       F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			       TrUserData);
-      57 ->
-	  d_field_message_floatValue(Rest, 0, 0, F@_1, F@_2, F@_3,
-				     F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-				     F@_11, TrUserData);
-      66 ->
-	  d_field_message_stringValue(Rest, 0, 0, F@_1, F@_2,
-				      F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-				      F@_10, F@_11, TrUserData);
-      72 ->
-	  d_field_message_boolValue(Rest, 0, 0, F@_1, F@_2, F@_3,
-				    F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-				    F@_11, TrUserData);
-      82 ->
-	  d_field_message_dataValue(Rest, 0, 0, F@_1, F@_2, F@_3,
-				    F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-				    F@_11, TrUserData);
-      90 ->
-	  d_field_message_valueSum(Rest, 0, 0, F@_1, F@_2, F@_3,
-				   F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-				   F@_11, TrUserData);
-      97 ->
-	  d_field_message_time(Rest, 0, 0, F@_1, F@_2, F@_3, F@_4,
-			       F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			       TrUserData);
-      105 ->
-	  d_field_message_updateTime(Rest, 0, 0, F@_1, F@_2, F@_3,
-				     F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-				     F@_11, TrUserData);
-      114 ->
-	  d_field_message_link(Rest, 0, 0, F@_1, F@_2, F@_3, F@_4,
-			       F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			       TrUserData);
+	  d_field_message_payload(Rest, 0, 0, F@_1, F@_2, F@_3,
+				  F@_4, F@_5, F@_6, TrUserData);
       _ ->
 	  case Key band 7 of
 	    0 ->
 		skip_varint_message(Rest, 0, 0, F@_1, F@_2, F@_3, F@_4,
-				    F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-				    TrUserData);
+				    F@_5, F@_6, TrUserData);
 	    1 ->
 		skip_64_message(Rest, 0, 0, F@_1, F@_2, F@_3, F@_4,
-				F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-				TrUserData);
+				F@_5, F@_6, TrUserData);
 	    2 ->
 		skip_length_delimited_message(Rest, 0, 0, F@_1, F@_2,
-					      F@_3, F@_4, F@_5, F@_6, F@_7,
-					      F@_8, F@_9, F@_10, F@_11,
+					      F@_3, F@_4, F@_5, F@_6,
 					      TrUserData);
 	    3 ->
 		skip_group_message(Rest, Key bsr 3, 0, F@_1, F@_2, F@_3,
-				   F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-				   F@_11, TrUserData);
+				   F@_4, F@_5, F@_6, TrUserData);
 	    5 ->
 		skip_32_message(Rest, 0, 0, F@_1, F@_2, F@_3, F@_4,
-				F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-				TrUserData)
+				F@_5, F@_6, TrUserData)
 	  end
     end;
 dg_read_field_def_message(<<>>, 0, 0, F@_1, F@_2, F@_3,
-			  F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			  _) ->
-    S1 = #{channel => F@_1, subtopic => F@_2,
-	   publisher => F@_3, protocol => F@_4, name => F@_5,
-	   unit => F@_6, time => F@_9, updateTime => F@_10,
-	   link => F@_11},
-    S2 = if F@_7 == '$undef' -> S1;
-	    true -> S1#{value => F@_7}
-	 end,
-    if F@_8 == '$undef' -> S2;
-       true -> S2#{valueSum => F@_8}
-    end.
+			  F@_4, F@_5, F@_6, _) ->
+    #{channel => F@_1, subtopic => F@_2, publisher => F@_3,
+      protocol => F@_4, contentType => F@_5, payload => F@_6}.
 
 d_field_message_channel(<<1:1, X:7, Rest/binary>>, N,
-			Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			F@_9, F@_10, F@_11, TrUserData)
+			Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData)
     when N < 57 ->
     d_field_message_channel(Rest, N + 7, X bsl N + Acc,
-			    F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			    F@_9, F@_10, F@_11, TrUserData);
+			    F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData);
 d_field_message_channel(<<0:1, X:7, Rest/binary>>, N,
-			Acc, _, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			F@_10, F@_11, TrUserData) ->
+			Acc, _, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
     {NewFValue, RestF} = begin
 			   Len = X bsl N + Acc,
 			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
 			   {id(binary:copy(Bytes), TrUserData), Rest2}
 			 end,
     dfp_read_field_def_message(RestF, 0, 0, NewFValue, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			       F@_11, TrUserData).
+			       F@_3, F@_4, F@_5, F@_6, TrUserData).
 
 d_field_message_subtopic(<<1:1, X:7, Rest/binary>>, N,
-			 Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			 F@_9, F@_10, F@_11, TrUserData)
+			 Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData)
     when N < 57 ->
     d_field_message_subtopic(Rest, N + 7, X bsl N + Acc,
-			     F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			     F@_9, F@_10, F@_11, TrUserData);
+			     F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData);
 d_field_message_subtopic(<<0:1, X:7, Rest/binary>>, N,
-			 Acc, F@_1, _, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			 F@_10, F@_11, TrUserData) ->
+			 Acc, F@_1, _, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
     {NewFValue, RestF} = begin
 			   Len = X bsl N + Acc,
 			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
 			   {id(binary:copy(Bytes), TrUserData), Rest2}
 			 end,
     dfp_read_field_def_message(RestF, 0, 0, F@_1, NewFValue,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			       F@_11, TrUserData).
+			       F@_3, F@_4, F@_5, F@_6, TrUserData).
 
 d_field_message_publisher(<<1:1, X:7, Rest/binary>>, N,
-			  Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			  F@_9, F@_10, F@_11, TrUserData)
+			  Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData)
     when N < 57 ->
     d_field_message_publisher(Rest, N + 7, X bsl N + Acc,
-			      F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			      F@_9, F@_10, F@_11, TrUserData);
+			      F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData);
 d_field_message_publisher(<<0:1, X:7, Rest/binary>>, N,
-			  Acc, F@_1, F@_2, _, F@_4, F@_5, F@_6, F@_7, F@_8,
-			  F@_9, F@_10, F@_11, TrUserData) ->
+			  Acc, F@_1, F@_2, _, F@_4, F@_5, F@_6, TrUserData) ->
     {NewFValue, RestF} = begin
 			   Len = X bsl N + Acc,
 			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
 			   {id(binary:copy(Bytes), TrUserData), Rest2}
 			 end,
     dfp_read_field_def_message(RestF, 0, 0, F@_1, F@_2,
-			       NewFValue, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			       F@_10, F@_11, TrUserData).
+			       NewFValue, F@_4, F@_5, F@_6, TrUserData).
 
 d_field_message_protocol(<<1:1, X:7, Rest/binary>>, N,
-			 Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			 F@_9, F@_10, F@_11, TrUserData)
+			 Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData)
     when N < 57 ->
     d_field_message_protocol(Rest, N + 7, X bsl N + Acc,
-			     F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			     F@_9, F@_10, F@_11, TrUserData);
+			     F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData);
 d_field_message_protocol(<<0:1, X:7, Rest/binary>>, N,
-			 Acc, F@_1, F@_2, F@_3, _, F@_5, F@_6, F@_7, F@_8, F@_9,
-			 F@_10, F@_11, TrUserData) ->
+			 Acc, F@_1, F@_2, F@_3, _, F@_5, F@_6, TrUserData) ->
     {NewFValue, RestF} = begin
 			   Len = X bsl N + Acc,
 			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
 			   {id(binary:copy(Bytes), TrUserData), Rest2}
 			 end,
     dfp_read_field_def_message(RestF, 0, 0, F@_1, F@_2,
-			       F@_3, NewFValue, F@_5, F@_6, F@_7, F@_8, F@_9,
-			       F@_10, F@_11, TrUserData).
+			       F@_3, NewFValue, F@_5, F@_6, TrUserData).
 
-d_field_message_name(<<1:1, X:7, Rest/binary>>, N, Acc,
-		     F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-		     F@_10, F@_11, TrUserData)
+d_field_message_contentType(<<1:1, X:7, Rest/binary>>,
+			    N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+			    TrUserData)
     when N < 57 ->
-    d_field_message_name(Rest, N + 7, X bsl N + Acc, F@_1,
-			 F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			 F@_11, TrUserData);
-d_field_message_name(<<0:1, X:7, Rest/binary>>, N, Acc,
-		     F@_1, F@_2, F@_3, F@_4, _, F@_6, F@_7, F@_8, F@_9,
-		     F@_10, F@_11, TrUserData) ->
+    d_field_message_contentType(Rest, N + 7, X bsl N + Acc,
+				F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData);
+d_field_message_contentType(<<0:1, X:7, Rest/binary>>,
+			    N, Acc, F@_1, F@_2, F@_3, F@_4, _, F@_6,
+			    TrUserData) ->
     {NewFValue, RestF} = begin
 			   Len = X bsl N + Acc,
 			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
 			   {id(binary:copy(Bytes), TrUserData), Rest2}
 			 end,
     dfp_read_field_def_message(RestF, 0, 0, F@_1, F@_2,
-			       F@_3, F@_4, NewFValue, F@_6, F@_7, F@_8, F@_9,
-			       F@_10, F@_11, TrUserData).
+			       F@_3, F@_4, NewFValue, F@_6, TrUserData).
 
-d_field_message_unit(<<1:1, X:7, Rest/binary>>, N, Acc,
-		     F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-		     F@_10, F@_11, TrUserData)
+d_field_message_payload(<<1:1, X:7, Rest/binary>>, N,
+			Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData)
     when N < 57 ->
-    d_field_message_unit(Rest, N + 7, X bsl N + Acc, F@_1,
-			 F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			 F@_11, TrUserData);
-d_field_message_unit(<<0:1, X:7, Rest/binary>>, N, Acc,
-		     F@_1, F@_2, F@_3, F@_4, F@_5, _, F@_7, F@_8, F@_9,
-		     F@_10, F@_11, TrUserData) ->
+    d_field_message_payload(Rest, N + 7, X bsl N + Acc,
+			    F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData);
+d_field_message_payload(<<0:1, X:7, Rest/binary>>, N,
+			Acc, F@_1, F@_2, F@_3, F@_4, F@_5, _, TrUserData) ->
     {NewFValue, RestF} = begin
 			   Len = X bsl N + Acc,
 			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
 			   {id(binary:copy(Bytes), TrUserData), Rest2}
 			 end,
     dfp_read_field_def_message(RestF, 0, 0, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, NewFValue, F@_7, F@_8, F@_9,
-			       F@_10, F@_11, TrUserData).
-
-d_field_message_floatValue(<<0:48, 240, 127,
-			     Rest/binary>>,
-			   Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, _, F@_8,
-			   F@_9, F@_10, F@_11, TrUserData) ->
-    dfp_read_field_def_message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6,
-			       id({floatValue, id(infinity, TrUserData)},
-				  TrUserData),
-			       F@_8, F@_9, F@_10, F@_11, TrUserData);
-d_field_message_floatValue(<<0:48, 240, 255,
-			     Rest/binary>>,
-			   Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, _, F@_8,
-			   F@_9, F@_10, F@_11, TrUserData) ->
-    dfp_read_field_def_message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6,
-			       id({floatValue, id('-infinity', TrUserData)},
-				  TrUserData),
-			       F@_8, F@_9, F@_10, F@_11, TrUserData);
-d_field_message_floatValue(<<_:48, 15:4, _:4, _:1,
-			     127:7, Rest/binary>>,
-			   Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, _, F@_8,
-			   F@_9, F@_10, F@_11, TrUserData) ->
-    dfp_read_field_def_message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6,
-			       id({floatValue, id(nan, TrUserData)},
-				  TrUserData),
-			       F@_8, F@_9, F@_10, F@_11, TrUserData);
-d_field_message_floatValue(<<Value:64/little-float,
-			     Rest/binary>>,
-			   Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, _, F@_8,
-			   F@_9, F@_10, F@_11, TrUserData) ->
-    dfp_read_field_def_message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6,
-			       id({floatValue, id(Value, TrUserData)},
-				  TrUserData),
-			       F@_8, F@_9, F@_10, F@_11, TrUserData).
-
-d_field_message_stringValue(<<1:1, X:7, Rest/binary>>,
-			    N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
-			    F@_8, F@_9, F@_10, F@_11, TrUserData)
-    when N < 57 ->
-    d_field_message_stringValue(Rest, N + 7, X bsl N + Acc,
-				F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-				F@_9, F@_10, F@_11, TrUserData);
-d_field_message_stringValue(<<0:1, X:7, Rest/binary>>,
-			    N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, _, F@_8,
-			    F@_9, F@_10, F@_11, TrUserData) ->
-    {NewFValue, RestF} = begin
-			   Len = X bsl N + Acc,
-			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
-			   {id(binary:copy(Bytes), TrUserData), Rest2}
-			 end,
-    dfp_read_field_def_message(RestF, 0, 0, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6,
-			       id({stringValue, NewFValue}, TrUserData), F@_8,
-			       F@_9, F@_10, F@_11, TrUserData).
-
-d_field_message_boolValue(<<1:1, X:7, Rest/binary>>, N,
-			  Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			  F@_9, F@_10, F@_11, TrUserData)
-    when N < 57 ->
-    d_field_message_boolValue(Rest, N + 7, X bsl N + Acc,
-			      F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			      F@_9, F@_10, F@_11, TrUserData);
-d_field_message_boolValue(<<0:1, X:7, Rest/binary>>, N,
-			  Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, _, F@_8,
-			  F@_9, F@_10, F@_11, TrUserData) ->
-    {NewFValue, RestF} = {id(X bsl N + Acc =/= 0,
-			     TrUserData),
-			  Rest},
-    dfp_read_field_def_message(RestF, 0, 0, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6,
-			       id({boolValue, NewFValue}, TrUserData), F@_8,
-			       F@_9, F@_10, F@_11, TrUserData).
-
-d_field_message_dataValue(<<1:1, X:7, Rest/binary>>, N,
-			  Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			  F@_9, F@_10, F@_11, TrUserData)
-    when N < 57 ->
-    d_field_message_dataValue(Rest, N + 7, X bsl N + Acc,
-			      F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			      F@_9, F@_10, F@_11, TrUserData);
-d_field_message_dataValue(<<0:1, X:7, Rest/binary>>, N,
-			  Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, _, F@_8,
-			  F@_9, F@_10, F@_11, TrUserData) ->
-    {NewFValue, RestF} = begin
-			   Len = X bsl N + Acc,
-			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
-			   {id(binary:copy(Bytes), TrUserData), Rest2}
-			 end,
-    dfp_read_field_def_message(RestF, 0, 0, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6,
-			       id({dataValue, NewFValue}, TrUserData), F@_8,
-			       F@_9, F@_10, F@_11, TrUserData).
-
-d_field_message_valueSum(<<1:1, X:7, Rest/binary>>, N,
-			 Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			 F@_9, F@_10, F@_11, TrUserData)
-    when N < 57 ->
-    d_field_message_valueSum(Rest, N + 7, X bsl N + Acc,
-			     F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			     F@_9, F@_10, F@_11, TrUserData);
-d_field_message_valueSum(<<0:1, X:7, Rest/binary>>, N,
-			 Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, Prev,
-			 F@_9, F@_10, F@_11, TrUserData) ->
-    {NewFValue, RestF} = begin
-			   Len = X bsl N + Acc,
-			   <<Bs:Len/binary, Rest2/binary>> = Rest,
-			   {id(decode_msg_sum_value(Bs, TrUserData),
-			       TrUserData),
-			    Rest2}
-			 end,
-    dfp_read_field_def_message(RestF, 0, 0, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7,
-			       if Prev == '$undef' -> NewFValue;
-				  true ->
-				      merge_msg_sum_value(Prev, NewFValue,
-							  TrUserData)
-			       end,
-			       F@_9, F@_10, F@_11, TrUserData).
-
-d_field_message_time(<<0:48, 240, 127, Rest/binary>>,
-		     Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-		     _, F@_10, F@_11, TrUserData) ->
-    dfp_read_field_def_message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			       id(infinity, TrUserData), F@_10, F@_11,
-			       TrUserData);
-d_field_message_time(<<0:48, 240, 255, Rest/binary>>,
-		     Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-		     _, F@_10, F@_11, TrUserData) ->
-    dfp_read_field_def_message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			       id('-infinity', TrUserData), F@_10, F@_11,
-			       TrUserData);
-d_field_message_time(<<_:48, 15:4, _:4, _:1, 127:7,
-		       Rest/binary>>,
-		     Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-		     _, F@_10, F@_11, TrUserData) ->
-    dfp_read_field_def_message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			       id(nan, TrUserData), F@_10, F@_11, TrUserData);
-d_field_message_time(<<Value:64/little-float,
-		       Rest/binary>>,
-		     Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-		     _, F@_10, F@_11, TrUserData) ->
-    dfp_read_field_def_message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8,
-			       id(Value, TrUserData), F@_10, F@_11, TrUserData).
-
-d_field_message_updateTime(<<0:48, 240, 127,
-			     Rest/binary>>,
-			   Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
-			   F@_8, F@_9, _, F@_11, TrUserData) ->
-    dfp_read_field_def_message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			       id(infinity, TrUserData), F@_11, TrUserData);
-d_field_message_updateTime(<<0:48, 240, 255,
-			     Rest/binary>>,
-			   Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
-			   F@_8, F@_9, _, F@_11, TrUserData) ->
-    dfp_read_field_def_message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			       id('-infinity', TrUserData), F@_11, TrUserData);
-d_field_message_updateTime(<<_:48, 15:4, _:4, _:1,
-			     127:7, Rest/binary>>,
-			   Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
-			   F@_8, F@_9, _, F@_11, TrUserData) ->
-    dfp_read_field_def_message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			       id(nan, TrUserData), F@_11, TrUserData);
-d_field_message_updateTime(<<Value:64/little-float,
-			     Rest/binary>>,
-			   Z1, Z2, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
-			   F@_8, F@_9, _, F@_11, TrUserData) ->
-    dfp_read_field_def_message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-			       id(Value, TrUserData), F@_11, TrUserData).
-
-d_field_message_link(<<1:1, X:7, Rest/binary>>, N, Acc,
-		     F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-		     F@_10, F@_11, TrUserData)
-    when N < 57 ->
-    d_field_message_link(Rest, N + 7, X bsl N + Acc, F@_1,
-			 F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			 F@_11, TrUserData);
-d_field_message_link(<<0:1, X:7, Rest/binary>>, N, Acc,
-		     F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-		     F@_10, _, TrUserData) ->
-    {NewFValue, RestF} = begin
-			   Len = X bsl N + Acc,
-			   <<Bytes:Len/binary, Rest2/binary>> = Rest,
-			   {id(binary:copy(Bytes), TrUserData), Rest2}
-			 end,
-    dfp_read_field_def_message(RestF, 0, 0, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			       NewFValue, TrUserData).
+			       F@_3, F@_4, F@_5, NewFValue, TrUserData).
 
 skip_varint_message(<<1:1, _:7, Rest/binary>>, Z1, Z2,
-		    F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-		    F@_10, F@_11, TrUserData) ->
+		    F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
     skip_varint_message(Rest, Z1, Z2, F@_1, F@_2, F@_3,
-			F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-			TrUserData);
+			F@_4, F@_5, F@_6, TrUserData);
 skip_varint_message(<<0:1, _:7, Rest/binary>>, Z1, Z2,
-		    F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9,
-		    F@_10, F@_11, TrUserData) ->
+		    F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
     dfp_read_field_def_message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			       F@_11, TrUserData).
+			       F@_3, F@_4, F@_5, F@_6, TrUserData).
 
 skip_length_delimited_message(<<1:1, X:7, Rest/binary>>,
-			      N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
-			      F@_8, F@_9, F@_10, F@_11, TrUserData)
+			      N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+			      TrUserData)
     when N < 57 ->
     skip_length_delimited_message(Rest, N + 7,
 				  X bsl N + Acc, F@_1, F@_2, F@_3, F@_4, F@_5,
-				  F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-				  TrUserData);
+				  F@_6, TrUserData);
 skip_length_delimited_message(<<0:1, X:7, Rest/binary>>,
-			      N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6, F@_7,
-			      F@_8, F@_9, F@_10, F@_11, TrUserData) ->
+			      N, Acc, F@_1, F@_2, F@_3, F@_4, F@_5, F@_6,
+			      TrUserData) ->
     Length = X bsl N + Acc,
     <<_:Length/binary, Rest2/binary>> = Rest,
     dfp_read_field_def_message(Rest2, 0, 0, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			       F@_11, TrUserData).
+			       F@_3, F@_4, F@_5, F@_6, TrUserData).
 
 skip_group_message(Bin, FNum, Z2, F@_1, F@_2, F@_3,
-		   F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10, F@_11,
-		   TrUserData) ->
+		   F@_4, F@_5, F@_6, TrUserData) ->
     {_, Rest} = read_group(Bin, FNum),
     dfp_read_field_def_message(Rest, 0, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			       F@_11, TrUserData).
+			       F@_3, F@_4, F@_5, F@_6, TrUserData).
 
 skip_32_message(<<_:32, Rest/binary>>, Z1, Z2, F@_1,
-		F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-		F@_11, TrUserData) ->
+		F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
     dfp_read_field_def_message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			       F@_11, TrUserData).
+			       F@_3, F@_4, F@_5, F@_6, TrUserData).
 
 skip_64_message(<<_:64, Rest/binary>>, Z1, Z2, F@_1,
-		F@_2, F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-		F@_11, TrUserData) ->
+		F@_2, F@_3, F@_4, F@_5, F@_6, TrUserData) ->
     dfp_read_field_def_message(Rest, Z1, Z2, F@_1, F@_2,
-			       F@_3, F@_4, F@_5, F@_6, F@_7, F@_8, F@_9, F@_10,
-			       F@_11, TrUserData).
-
-decode_msg_sum_value(Bin, TrUserData) ->
-    dfp_read_field_def_sum_value(Bin, 0, 0,
-				 id(0.0, TrUserData), TrUserData).
-
-dfp_read_field_def_sum_value(<<9, Rest/binary>>, Z1, Z2,
-			     F@_1, TrUserData) ->
-    d_field_sum_value_value(Rest, Z1, Z2, F@_1, TrUserData);
-dfp_read_field_def_sum_value(<<>>, 0, 0, F@_1, _) ->
-    #{value => F@_1};
-dfp_read_field_def_sum_value(Other, Z1, Z2, F@_1,
-			     TrUserData) ->
-    dg_read_field_def_sum_value(Other, Z1, Z2, F@_1,
-				TrUserData).
-
-dg_read_field_def_sum_value(<<1:1, X:7, Rest/binary>>,
-			    N, Acc, F@_1, TrUserData)
-    when N < 32 - 7 ->
-    dg_read_field_def_sum_value(Rest, N + 7, X bsl N + Acc,
-				F@_1, TrUserData);
-dg_read_field_def_sum_value(<<0:1, X:7, Rest/binary>>,
-			    N, Acc, F@_1, TrUserData) ->
-    Key = X bsl N + Acc,
-    case Key of
-      9 ->
-	  d_field_sum_value_value(Rest, 0, 0, F@_1, TrUserData);
-      _ ->
-	  case Key band 7 of
-	    0 ->
-		skip_varint_sum_value(Rest, 0, 0, F@_1, TrUserData);
-	    1 -> skip_64_sum_value(Rest, 0, 0, F@_1, TrUserData);
-	    2 ->
-		skip_length_delimited_sum_value(Rest, 0, 0, F@_1,
-						TrUserData);
-	    3 ->
-		skip_group_sum_value(Rest, Key bsr 3, 0, F@_1,
-				     TrUserData);
-	    5 -> skip_32_sum_value(Rest, 0, 0, F@_1, TrUserData)
-	  end
-    end;
-dg_read_field_def_sum_value(<<>>, 0, 0, F@_1, _) ->
-    #{value => F@_1}.
-
-d_field_sum_value_value(<<0:48, 240, 127, Rest/binary>>,
-			Z1, Z2, _, TrUserData) ->
-    dfp_read_field_def_sum_value(Rest, Z1, Z2,
-				 id(infinity, TrUserData), TrUserData);
-d_field_sum_value_value(<<0:48, 240, 255, Rest/binary>>,
-			Z1, Z2, _, TrUserData) ->
-    dfp_read_field_def_sum_value(Rest, Z1, Z2,
-				 id('-infinity', TrUserData), TrUserData);
-d_field_sum_value_value(<<_:48, 15:4, _:4, _:1, 127:7,
-			  Rest/binary>>,
-			Z1, Z2, _, TrUserData) ->
-    dfp_read_field_def_sum_value(Rest, Z1, Z2,
-				 id(nan, TrUserData), TrUserData);
-d_field_sum_value_value(<<Value:64/little-float,
-			  Rest/binary>>,
-			Z1, Z2, _, TrUserData) ->
-    dfp_read_field_def_sum_value(Rest, Z1, Z2,
-				 id(Value, TrUserData), TrUserData).
-
-skip_varint_sum_value(<<1:1, _:7, Rest/binary>>, Z1, Z2,
-		      F@_1, TrUserData) ->
-    skip_varint_sum_value(Rest, Z1, Z2, F@_1, TrUserData);
-skip_varint_sum_value(<<0:1, _:7, Rest/binary>>, Z1, Z2,
-		      F@_1, TrUserData) ->
-    dfp_read_field_def_sum_value(Rest, Z1, Z2, F@_1,
-				 TrUserData).
-
-skip_length_delimited_sum_value(<<1:1, X:7,
-				  Rest/binary>>,
-				N, Acc, F@_1, TrUserData)
-    when N < 57 ->
-    skip_length_delimited_sum_value(Rest, N + 7,
-				    X bsl N + Acc, F@_1, TrUserData);
-skip_length_delimited_sum_value(<<0:1, X:7,
-				  Rest/binary>>,
-				N, Acc, F@_1, TrUserData) ->
-    Length = X bsl N + Acc,
-    <<_:Length/binary, Rest2/binary>> = Rest,
-    dfp_read_field_def_sum_value(Rest2, 0, 0, F@_1,
-				 TrUserData).
-
-skip_group_sum_value(Bin, FNum, Z2, F@_1, TrUserData) ->
-    {_, Rest} = read_group(Bin, FNum),
-    dfp_read_field_def_sum_value(Rest, 0, Z2, F@_1,
-				 TrUserData).
-
-skip_32_sum_value(<<_:32, Rest/binary>>, Z1, Z2, F@_1,
-		  TrUserData) ->
-    dfp_read_field_def_sum_value(Rest, Z1, Z2, F@_1,
-				 TrUserData).
-
-skip_64_sum_value(<<_:64, Rest/binary>>, Z1, Z2, F@_1,
-		  TrUserData) ->
-    dfp_read_field_def_sum_value(Rest, Z1, Z2, F@_1,
-				 TrUserData).
+			       F@_3, F@_4, F@_5, F@_6, TrUserData).
 
 read_group(Bin, FieldNum) ->
     {NumBytes, EndTagLen} = read_gr_b(Bin, 0, 0, 0, 0, FieldNum),
@@ -1490,14 +582,11 @@ merge_msgs(Prev, New, MsgName) when is_atom(MsgName) ->
 merge_msgs(Prev, New, MsgName, Opts) ->
     TrUserData = proplists:get_value(user_data, Opts),
     case MsgName of
-      raw_message ->
-	  merge_msg_raw_message(Prev, New, TrUserData);
-      message -> merge_msg_message(Prev, New, TrUserData);
-      sum_value -> merge_msg_sum_value(Prev, New, TrUserData)
+      message -> merge_msg_message(Prev, New, TrUserData)
     end.
 
--compile({nowarn_unused_function,merge_msg_raw_message/3}).
-merge_msg_raw_message(PMsg, NMsg, _) ->
+-compile({nowarn_unused_function,merge_msg_message/3}).
+merge_msg_message(PMsg, NMsg, _) ->
     S1 = #{},
     S2 = case {PMsg, NMsg} of
 	   {_, #{channel := NFchannel}} ->
@@ -1542,91 +631,6 @@ merge_msg_raw_message(PMsg, NMsg, _) ->
       _ -> S6
     end.
 
--compile({nowarn_unused_function,merge_msg_message/3}).
-merge_msg_message(PMsg, NMsg, TrUserData) ->
-    S1 = #{},
-    S2 = case {PMsg, NMsg} of
-	   {_, #{channel := NFchannel}} ->
-	       S1#{channel => NFchannel};
-	   {#{channel := PFchannel}, _} ->
-	       S1#{channel => PFchannel};
-	   _ -> S1
-	 end,
-    S3 = case {PMsg, NMsg} of
-	   {_, #{subtopic := NFsubtopic}} ->
-	       S2#{subtopic => NFsubtopic};
-	   {#{subtopic := PFsubtopic}, _} ->
-	       S2#{subtopic => PFsubtopic};
-	   _ -> S2
-	 end,
-    S4 = case {PMsg, NMsg} of
-	   {_, #{publisher := NFpublisher}} ->
-	       S3#{publisher => NFpublisher};
-	   {#{publisher := PFpublisher}, _} ->
-	       S3#{publisher => PFpublisher};
-	   _ -> S3
-	 end,
-    S5 = case {PMsg, NMsg} of
-	   {_, #{protocol := NFprotocol}} ->
-	       S4#{protocol => NFprotocol};
-	   {#{protocol := PFprotocol}, _} ->
-	       S4#{protocol => PFprotocol};
-	   _ -> S4
-	 end,
-    S6 = case {PMsg, NMsg} of
-	   {_, #{name := NFname}} -> S5#{name => NFname};
-	   {#{name := PFname}, _} -> S5#{name => PFname};
-	   _ -> S5
-	 end,
-    S7 = case {PMsg, NMsg} of
-	   {_, #{unit := NFunit}} -> S6#{unit => NFunit};
-	   {#{unit := PFunit}, _} -> S6#{unit => PFunit};
-	   _ -> S6
-	 end,
-    S8 = case {PMsg, NMsg} of
-	   {_, #{value := NFvalue}} -> S7#{value => NFvalue};
-	   {#{value := PFvalue}, _} -> S7#{value => PFvalue};
-	   _ -> S7
-	 end,
-    S9 = case {PMsg, NMsg} of
-	   {#{valueSum := PFvalueSum},
-	    #{valueSum := NFvalueSum}} ->
-	       S8#{valueSum =>
-		       merge_msg_sum_value(PFvalueSum, NFvalueSum,
-					   TrUserData)};
-	   {_, #{valueSum := NFvalueSum}} ->
-	       S8#{valueSum => NFvalueSum};
-	   {#{valueSum := PFvalueSum}, _} ->
-	       S8#{valueSum => PFvalueSum};
-	   {_, _} -> S8
-	 end,
-    S10 = case {PMsg, NMsg} of
-	    {_, #{time := NFtime}} -> S9#{time => NFtime};
-	    {#{time := PFtime}, _} -> S9#{time => PFtime};
-	    _ -> S9
-	  end,
-    S11 = case {PMsg, NMsg} of
-	    {_, #{updateTime := NFupdateTime}} ->
-		S10#{updateTime => NFupdateTime};
-	    {#{updateTime := PFupdateTime}, _} ->
-		S10#{updateTime => PFupdateTime};
-	    _ -> S10
-	  end,
-    case {PMsg, NMsg} of
-      {_, #{link := NFlink}} -> S11#{link => NFlink};
-      {#{link := PFlink}, _} -> S11#{link => PFlink};
-      _ -> S11
-    end.
-
--compile({nowarn_unused_function,merge_msg_sum_value/3}).
-merge_msg_sum_value(PMsg, NMsg, _) ->
-    S1 = #{},
-    case {PMsg, NMsg} of
-      {_, #{value := NFvalue}} -> S1#{value => NFvalue};
-      {#{value := PFvalue}, _} -> S1#{value => PFvalue};
-      _ -> S1
-    end.
-
 
 verify_msg(Msg, MsgName) when is_atom(MsgName) ->
     verify_msg(Msg, MsgName, []).
@@ -1634,18 +638,14 @@ verify_msg(Msg, MsgName) when is_atom(MsgName) ->
 verify_msg(Msg, MsgName, Opts) ->
     TrUserData = proplists:get_value(user_data, Opts),
     case MsgName of
-      raw_message ->
-	  v_msg_raw_message(Msg, [MsgName], TrUserData);
       message -> v_msg_message(Msg, [MsgName], TrUserData);
-      sum_value ->
-	  v_msg_sum_value(Msg, [MsgName], TrUserData);
       _ -> mk_type_error(not_a_known_message, Msg, [])
     end.
 
 
--compile({nowarn_unused_function,v_msg_raw_message/3}).
--dialyzer({nowarn_function,v_msg_raw_message/3}).
-v_msg_raw_message(#{} = M, Path, TrUserData) ->
+-compile({nowarn_unused_function,v_msg_message/3}).
+-dialyzer({nowarn_function,v_msg_message/3}).
+v_msg_message(#{} = M, Path, TrUserData) ->
     case M of
       #{channel := F1} ->
 	  v_type_string(F1, [channel | Path], TrUserData);
@@ -1687,148 +687,12 @@ v_msg_raw_message(#{} = M, Path, TrUserData) ->
 		  end,
 		  maps:keys(M)),
     ok;
-v_msg_raw_message(M, Path, _TrUserData)
-    when is_map(M) ->
-    mk_type_error({missing_fields, [] -- maps:keys(M),
-		   raw_message},
-		  M, Path);
-v_msg_raw_message(X, Path, _TrUserData) ->
-    mk_type_error({expected_msg, raw_message}, X, Path).
-
--compile({nowarn_unused_function,v_msg_message/3}).
--dialyzer({nowarn_function,v_msg_message/3}).
-v_msg_message(#{} = M, Path, TrUserData) ->
-    case M of
-      #{channel := F1} ->
-	  v_type_string(F1, [channel | Path], TrUserData);
-      _ -> ok
-    end,
-    case M of
-      #{subtopic := F2} ->
-	  v_type_string(F2, [subtopic | Path], TrUserData);
-      _ -> ok
-    end,
-    case M of
-      #{publisher := F3} ->
-	  v_type_string(F3, [publisher | Path], TrUserData);
-      _ -> ok
-    end,
-    case M of
-      #{protocol := F4} ->
-	  v_type_string(F4, [protocol | Path], TrUserData);
-      _ -> ok
-    end,
-    case M of
-      #{name := F5} ->
-	  v_type_string(F5, [name | Path], TrUserData);
-      _ -> ok
-    end,
-    case M of
-      #{unit := F6} ->
-	  v_type_string(F6, [unit | Path], TrUserData);
-      _ -> ok
-    end,
-    case M of
-      #{value := {floatValue, OF7}} ->
-	  v_type_double(OF7, [floatValue, value | Path],
-			TrUserData);
-      #{value := {stringValue, OF7}} ->
-	  v_type_string(OF7, [stringValue, value | Path],
-			TrUserData);
-      #{value := {boolValue, OF7}} ->
-	  v_type_bool(OF7, [boolValue, value | Path], TrUserData);
-      #{value := {dataValue, OF7}} ->
-	  v_type_string(OF7, [dataValue, value | Path],
-			TrUserData);
-      #{value := F7} ->
-	  mk_type_error(invalid_oneof, F7, [value | Path]);
-      _ -> ok
-    end,
-    case M of
-      #{valueSum := F8} ->
-	  v_msg_sum_value(F8, [valueSum | Path], TrUserData);
-      _ -> ok
-    end,
-    case M of
-      #{time := F9} ->
-	  v_type_double(F9, [time | Path], TrUserData);
-      _ -> ok
-    end,
-    case M of
-      #{updateTime := F10} ->
-	  v_type_double(F10, [updateTime | Path], TrUserData);
-      _ -> ok
-    end,
-    case M of
-      #{link := F11} ->
-	  v_type_string(F11, [link | Path], TrUserData);
-      _ -> ok
-    end,
-    lists:foreach(fun (channel) -> ok;
-		      (subtopic) -> ok;
-		      (publisher) -> ok;
-		      (protocol) -> ok;
-		      (name) -> ok;
-		      (unit) -> ok;
-		      (value) -> ok;
-		      (valueSum) -> ok;
-		      (time) -> ok;
-		      (updateTime) -> ok;
-		      (link) -> ok;
-		      (OtherKey) ->
-			  mk_type_error({extraneous_key, OtherKey}, M, Path)
-		  end,
-		  maps:keys(M)),
-    ok;
 v_msg_message(M, Path, _TrUserData) when is_map(M) ->
     mk_type_error({missing_fields, [] -- maps:keys(M),
 		   message},
 		  M, Path);
 v_msg_message(X, Path, _TrUserData) ->
     mk_type_error({expected_msg, message}, X, Path).
-
--compile({nowarn_unused_function,v_msg_sum_value/3}).
--dialyzer({nowarn_function,v_msg_sum_value/3}).
-v_msg_sum_value(#{} = M, Path, TrUserData) ->
-    case M of
-      #{value := F1} ->
-	  v_type_double(F1, [value | Path], TrUserData);
-      _ -> ok
-    end,
-    lists:foreach(fun (value) -> ok;
-		      (OtherKey) ->
-			  mk_type_error({extraneous_key, OtherKey}, M, Path)
-		  end,
-		  maps:keys(M)),
-    ok;
-v_msg_sum_value(M, Path, _TrUserData) when is_map(M) ->
-    mk_type_error({missing_fields, [] -- maps:keys(M),
-		   sum_value},
-		  M, Path);
-v_msg_sum_value(X, Path, _TrUserData) ->
-    mk_type_error({expected_msg, sum_value}, X, Path).
-
--compile({nowarn_unused_function,v_type_bool/3}).
--dialyzer({nowarn_function,v_type_bool/3}).
-v_type_bool(false, _Path, _TrUserData) -> ok;
-v_type_bool(true, _Path, _TrUserData) -> ok;
-v_type_bool(0, _Path, _TrUserData) -> ok;
-v_type_bool(1, _Path, _TrUserData) -> ok;
-v_type_bool(X, Path, _TrUserData) ->
-    mk_type_error(bad_boolean_value, X, Path).
-
--compile({nowarn_unused_function,v_type_double/3}).
--dialyzer({nowarn_function,v_type_double/3}).
-v_type_double(N, _Path, _TrUserData) when is_float(N) ->
-    ok;
-v_type_double(N, _Path, _TrUserData)
-    when is_integer(N) ->
-    ok;
-v_type_double(infinity, _Path, _TrUserData) -> ok;
-v_type_double('-infinity', _Path, _TrUserData) -> ok;
-v_type_double(nan, _Path, _TrUserData) -> ok;
-v_type_double(X, Path, _TrUserData) ->
-    mk_type_error(bad_double_value, X, Path).
 
 -compile({nowarn_unused_function,v_type_string/3}).
 -dialyzer({nowarn_function,v_type_string/3}).
@@ -1895,7 +759,7 @@ cons(Elem, Acc, _TrUserData) -> [Elem | Acc].
 'erlang_++'(A, B, _TrUserData) -> A ++ B.
 
 get_msg_defs() ->
-    [{{msg, raw_message},
+    [{{msg, message},
       [#{name => channel, fnum => 1, rnum => 2,
 	 type => string, occurrence => optional, opts => []},
        #{name => subtopic, fnum => 2, rnum => 3,
@@ -1907,52 +771,16 @@ get_msg_defs() ->
        #{name => contentType, fnum => 5, rnum => 6,
 	 type => string, occurrence => optional, opts => []},
        #{name => payload, fnum => 6, rnum => 7, type => bytes,
-	 occurrence => optional, opts => []}]},
-     {{msg, message},
-      [#{name => channel, fnum => 1, rnum => 2,
-	 type => string, occurrence => optional, opts => []},
-       #{name => subtopic, fnum => 2, rnum => 3,
-	 type => string, occurrence => optional, opts => []},
-       #{name => publisher, fnum => 3, rnum => 4,
-	 type => string, occurrence => optional, opts => []},
-       #{name => protocol, fnum => 4, rnum => 5,
-	 type => string, occurrence => optional, opts => []},
-       #{name => name, fnum => 5, rnum => 6, type => string,
-	 occurrence => optional, opts => []},
-       #{name => unit, fnum => 6, rnum => 7, type => string,
-	 occurrence => optional, opts => []},
-       #{name => value, rnum => 8,
-	 fields =>
-	     [#{name => floatValue, fnum => 7, rnum => 8,
-		type => double, occurrence => optional, opts => []},
-	      #{name => stringValue, fnum => 8, rnum => 8,
-		type => string, occurrence => optional, opts => []},
-	      #{name => boolValue, fnum => 9, rnum => 8, type => bool,
-		occurrence => optional, opts => []},
-	      #{name => dataValue, fnum => 10, rnum => 8,
-		type => string, occurrence => optional, opts => []}]},
-       #{name => valueSum, fnum => 11, rnum => 9,
-	 type => {msg, sum_value}, occurrence => optional,
-	 opts => []},
-       #{name => time, fnum => 12, rnum => 10, type => double,
-	 occurrence => optional, opts => []},
-       #{name => updateTime, fnum => 13, rnum => 11,
-	 type => double, occurrence => optional, opts => []},
-       #{name => link, fnum => 14, rnum => 12, type => string,
-	 occurrence => optional, opts => []}]},
-     {{msg, sum_value},
-      [#{name => value, fnum => 1, rnum => 2, type => double,
 	 occurrence => optional, opts => []}]}].
 
 
-get_msg_names() -> [raw_message, message, sum_value].
+get_msg_names() -> [message].
 
 
 get_group_names() -> [].
 
 
-get_msg_or_group_names() ->
-    [raw_message, message, sum_value].
+get_msg_or_group_names() -> [message].
 
 
 get_enum_names() -> [].
@@ -1970,7 +798,7 @@ fetch_enum_def(EnumName) ->
     erlang:error({no_such_enum, EnumName}).
 
 
-find_msg_def(raw_message) ->
+find_msg_def(message) ->
     [#{name => channel, fnum => 1, rnum => 2,
        type => string, occurrence => optional, opts => []},
      #{name => subtopic, fnum => 2, rnum => 3,
@@ -1982,41 +810,6 @@ find_msg_def(raw_message) ->
      #{name => contentType, fnum => 5, rnum => 6,
        type => string, occurrence => optional, opts => []},
      #{name => payload, fnum => 6, rnum => 7, type => bytes,
-       occurrence => optional, opts => []}];
-find_msg_def(message) ->
-    [#{name => channel, fnum => 1, rnum => 2,
-       type => string, occurrence => optional, opts => []},
-     #{name => subtopic, fnum => 2, rnum => 3,
-       type => string, occurrence => optional, opts => []},
-     #{name => publisher, fnum => 3, rnum => 4,
-       type => string, occurrence => optional, opts => []},
-     #{name => protocol, fnum => 4, rnum => 5,
-       type => string, occurrence => optional, opts => []},
-     #{name => name, fnum => 5, rnum => 6, type => string,
-       occurrence => optional, opts => []},
-     #{name => unit, fnum => 6, rnum => 7, type => string,
-       occurrence => optional, opts => []},
-     #{name => value, rnum => 8,
-       fields =>
-	   [#{name => floatValue, fnum => 7, rnum => 8,
-	      type => double, occurrence => optional, opts => []},
-	    #{name => stringValue, fnum => 8, rnum => 8,
-	      type => string, occurrence => optional, opts => []},
-	    #{name => boolValue, fnum => 9, rnum => 8, type => bool,
-	      occurrence => optional, opts => []},
-	    #{name => dataValue, fnum => 10, rnum => 8,
-	      type => string, occurrence => optional, opts => []}]},
-     #{name => valueSum, fnum => 11, rnum => 9,
-       type => {msg, sum_value}, occurrence => optional,
-       opts => []},
-     #{name => time, fnum => 12, rnum => 10, type => double,
-       occurrence => optional, opts => []},
-     #{name => updateTime, fnum => 13, rnum => 11,
-       type => double, occurrence => optional, opts => []},
-     #{name => link, fnum => 14, rnum => 12, type => string,
-       occurrence => optional, opts => []}];
-find_msg_def(sum_value) ->
-    [#{name => value, fnum => 1, rnum => 2, type => double,
        occurrence => optional, opts => []}];
 find_msg_def(_) -> error.
 
@@ -2083,15 +876,11 @@ service_and_rpc_name_to_fqbins(S, R) ->
     error({gpb_error, {badservice_or_rpc, {S, R}}}).
 
 
-fqbin_to_msg_name(<<"mainflux.RawMessage">>) -> raw_message;
 fqbin_to_msg_name(<<"mainflux.Message">>) -> message;
-fqbin_to_msg_name(<<"mainflux.SumValue">>) -> sum_value;
 fqbin_to_msg_name(E) -> error({gpb_error, {badmsg, E}}).
 
 
-msg_name_to_fqbin(raw_message) -> <<"mainflux.RawMessage">>;
 msg_name_to_fqbin(message) -> <<"mainflux.Message">>;
-msg_name_to_fqbin(sum_value) -> <<"mainflux.SumValue">>;
 msg_name_to_fqbin(E) -> error({gpb_error, {badmsg, E}}).
 
 
@@ -2132,8 +921,7 @@ get_all_source_basenames() -> ["message.proto"].
 get_all_proto_names() -> ["message"].
 
 
-get_msg_containment("message") ->
-    [message, raw_message, sum_value];
+get_msg_containment("message") -> [message];
 get_msg_containment(P) ->
     error({gpb_error, {badproto, P}}).
 
@@ -2158,8 +946,6 @@ get_enum_containment(P) ->
     error({gpb_error, {badproto, P}}).
 
 
-get_proto_by_msg_name_as_fqbin(<<"mainflux.SumValue">>) -> "message";
-get_proto_by_msg_name_as_fqbin(<<"mainflux.RawMessage">>) -> "message";
 get_proto_by_msg_name_as_fqbin(<<"mainflux.Message">>) -> "message";
 get_proto_by_msg_name_as_fqbin(E) ->
     error({gpb_error, {badmsg, E}}).

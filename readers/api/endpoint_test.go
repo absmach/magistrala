@@ -13,6 +13,7 @@ import (
 	"github.com/mainflux/mainflux/readers"
 	"github.com/mainflux/mainflux/readers/api"
 	"github.com/mainflux/mainflux/readers/mocks"
+	"github.com/mainflux/mainflux/transformers/senml"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,37 +23,45 @@ const (
 	invalid       = "invalid"
 	numOfMessages = 42
 	chanID        = "1"
-	valueFields   = 6
+	valueFields   = 5
+)
+
+var (
+	v       float64 = 5
+	stringV         = "value"
+	boolV           = true
+	dataV           = "base64"
+	sum     float64 = 42
 )
 
 func newService() readers.MessageRepository {
-	messages := []mainflux.Message{}
+	messages := []senml.Message{}
 	for i := 0; i < numOfMessages; i++ {
-		msg := mainflux.Message{
+		msg := senml.Message{
 			Channel:   chanID,
 			Publisher: "1",
 			Protocol:  "mqtt",
 		}
 		// Mix possible values as well as value sum.
 		count := i % valueFields
+
 		switch count {
 		case 0:
-			msg.Value = &mainflux.Message_FloatValue{FloatValue: 5}
+			msg.Value = &v
 		case 1:
-			msg.Value = &mainflux.Message_BoolValue{BoolValue: false}
+			msg.BoolValue = &boolV
 		case 2:
-			msg.Value = &mainflux.Message_StringValue{StringValue: "value"}
+			msg.StringValue = &stringV
 		case 3:
-			msg.Value = &mainflux.Message_DataValue{DataValue: "base64data"}
+			msg.DataValue = &dataV
 		case 4:
-			msg.ValueSum = nil
-		case 5:
-			msg.ValueSum = &mainflux.SumValue{Value: 45}
+			msg.Sum = &sum
 		}
+
 		messages = append(messages, msg)
 	}
 
-	return mocks.NewMessageRepository(map[string][]mainflux.Message{
+	return mocks.NewMessageRepository(map[string][]senml.Message{
 		chanID: messages,
 	})
 }

@@ -22,7 +22,7 @@ const (
 	protocol = "ws"
 )
 
-var msg = mainflux.RawMessage{
+var msg = mainflux.Message{
 	Channel:   chanID,
 	Publisher: pubID,
 	Protocol:  protocol,
@@ -41,7 +41,7 @@ func TestPublish(t *testing.T) {
 
 	cases := []struct {
 		desc string
-		msg  mainflux.RawMessage
+		msg  mainflux.Message
 		err  error
 	}{
 		{
@@ -51,14 +51,14 @@ func TestPublish(t *testing.T) {
 		},
 		{
 			desc: "publish empty message",
-			msg:  mainflux.RawMessage{},
+			msg:  mainflux.Message{},
 			err:  ws.ErrFailedMessagePublish,
 		},
 	}
 
 	for _, tc := range cases {
 		// Check if message was sent.
-		go func(desc string, tcMsg mainflux.RawMessage) {
+		go func(desc string, tcMsg mainflux.Message) {
 			receivedMsg := <-channel.Messages
 			assert.Equal(t, tcMsg, receivedMsg, fmt.Sprintf("%s: expected %v got %v\n", desc, tcMsg, receivedMsg))
 		}(tc.desc, tc.msg)

@@ -26,7 +26,7 @@ func New(pub mainflux.MessagePublisher, things mainflux.ThingsServiceClient) mai
 	}
 }
 
-func (as *adapterService) Publish(ctx context.Context, token string, msg mainflux.RawMessage) error {
+func (as *adapterService) Publish(ctx context.Context, token string, msg mainflux.Message) error {
 	ar := &mainflux.AccessByKeyReq{
 		Token:  token,
 		ChanID: msg.GetChannel(),

@@ -12,11 +12,10 @@ import (
 
 	"github.com/mainflux/mainflux/readers"
 	mreaders "github.com/mainflux/mainflux/readers/mongodb"
+	"github.com/mainflux/mainflux/transformers/senml"
 	mwriters "github.com/mainflux/mainflux/writers/mongodb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/mainflux/mainflux"
 
 	log "github.com/mainflux/mainflux/logger"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -29,18 +28,25 @@ const (
 	chanID      = "1"
 	subtopic    = "subtopic"
 	msgsNum     = 42
-	valueFields = 6
+	valueFields = 5
 )
 
 var (
 	port string
 	addr string
-	msg  = mainflux.Message{
+	m    = senml.Message{
 		Channel:   chanID,
 		Publisher: "1",
 		Protocol:  "mqtt",
 	}
 	testLog, _ = log.New(os.Stdout, log.Info.String())
+)
+var (
+	v       float64 = 5
+	stringV         = "value"
+	boolV           = true
+	dataV           = "base64"
+	sum     float64 = 42
 )
 
 func TestReadAll(t *testing.T) {
@@ -50,27 +56,25 @@ func TestReadAll(t *testing.T) {
 	db := client.Database(testDB)
 	writer := mwriters.New(db)
 
-	messages := []mainflux.Message{}
-	subtopicMsgs := []mainflux.Message{}
+	messages := []senml.Message{}
+	subtopicMsgs := []senml.Message{}
 	now := time.Now().Unix()
 	for i := 0; i < msgsNum; i++ {
 		// Mix possible values as well as value sum.
 		count := i % valueFields
-		msg.Subtopic = ""
+		msg := m
 		switch count {
 		case 0:
 			msg.Subtopic = subtopic
-			msg.Value = &mainflux.Message_FloatValue{FloatValue: 5}
+			msg.Value = &v
 		case 1:
-			msg.Value = &mainflux.Message_BoolValue{BoolValue: false}
+			msg.BoolValue = &boolV
 		case 2:
-			msg.Value = &mainflux.Message_StringValue{StringValue: "value"}
+			msg.StringValue = &stringV
 		case 3:
-			msg.Value = &mainflux.Message_DataValue{DataValue: "base64data"}
+			msg.DataValue = &dataV
 		case 4:
-			msg.ValueSum = nil
-		case 5:
-			msg.ValueSum = &mainflux.SumValue{Value: 45}
+			msg.Sum = &sum
 		}
 		msg.Time = float64(now - int64(i))
 
@@ -110,7 +114,7 @@ func TestReadAll(t *testing.T) {
 				Total:    0,
 				Offset:   0,
 				Limit:    10,
-				Messages: []mainflux.Message{},
+				Messages: []senml.Message{},
 			},
 		},
 		"read message last page": {
@@ -133,7 +137,7 @@ func TestReadAll(t *testing.T) {
 				Total:    0,
 				Offset:   0,
 				Limit:    msgsNum,
-				Messages: []mainflux.Message{},
+				Messages: []senml.Message{},
 			},
 		},
 		"read message with subtopic": {

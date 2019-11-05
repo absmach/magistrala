@@ -11,7 +11,7 @@ import (
 	"github.com/mainflux/mainflux/readers"
 
 	influxdata "github.com/influxdata/influxdb/client/v2"
-	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/transformers/senml"
 )
 
 const (
@@ -46,7 +46,7 @@ func (repo *influxRepository) ReadAll(chanID string, offset, limit uint64, query
 		Database: repo.database,
 	}
 
-	ret := []mainflux.Message{}
+	ret := []senml.Message{}
 
 	resp, err := repo.client.Query(q)
 	if err != nil {
@@ -143,15 +143,15 @@ func fmtCondition(chanID string, query map[string]string) string {
 // ParseMessage and parseValues are util methods. Since InfluxDB client returns
 // results in form of rows and columns, this obscure message conversion is needed
 // to return actual []mainflux.Message from the query result.
-func parseValues(value interface{}, name string, msg *mainflux.Message) {
-	if name == "valueSum" && value != nil {
-		if sum, ok := value.(json.Number); ok {
-			valSum, err := sum.Float64()
+func parseValues(value interface{}, name string, msg *senml.Message) {
+	if name == "sum" && value != nil {
+		if valSum, ok := value.(json.Number); ok {
+			sum, err := valSum.Float64()
 			if err != nil {
 				return
 			}
 
-			msg.ValueSum = &mainflux.SumValue{Value: valSum}
+			msg.Sum = &sum
 		}
 		return
 	}
@@ -159,29 +159,31 @@ func parseValues(value interface{}, name string, msg *mainflux.Message) {
 	if strings.HasSuffix(strings.ToLower(name), "value") {
 		switch value.(type) {
 		case bool:
-			msg.Value = &mainflux.Message_BoolValue{BoolValue: value.(bool)}
+			v := value.(bool)
+			msg.BoolValue = &v
 		case json.Number:
 			num, err := value.(json.Number).Float64()
 			if err != nil {
 				return
 			}
-
-			msg.Value = &mainflux.Message_FloatValue{FloatValue: num}
+			msg.Value = &num
 		case string:
 			if strings.HasPrefix(name, "string") {
-				msg.Value = &mainflux.Message_StringValue{StringValue: value.(string)}
+				v := value.(string)
+				msg.StringValue = &v
 				return
 			}
 
 			if strings.HasPrefix(name, "data") {
-				msg.Value = &mainflux.Message_DataValue{DataValue: value.(string)}
+				v := value.(string)
+				msg.DataValue = &v
 			}
 		}
 	}
 }
 
-func parseMessage(names []string, fields []interface{}) mainflux.Message {
-	m := mainflux.Message{}
+func parseMessage(names []string, fields []interface{}) senml.Message {
+	m := senml.Message{}
 	v := reflect.ValueOf(&m).Elem()
 	for i, name := range names {
 		parseValues(fields[i], name, &m)

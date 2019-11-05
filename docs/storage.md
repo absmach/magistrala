@@ -2,6 +2,7 @@ Mainflux supports various storage databases in which messages are stored:
 - CassandraDB
 - MongoDB
 - InfluxDB
+- PostgreSQL
 
 These storages are activated via docker-compose add-ons.
 
@@ -11,10 +12,10 @@ In order to run these services, core services, as well as the network from the c
 
 ## Writers
 
-Writers provide an implementation of various `message writers`. Message writers are services that consume normalized (in `SenML` format) Mainflux messages and store them in specific data store.
+Writers provide an implementation of various `message writers`. Message writers are services that consume Mainflux messages, transform them to `SenML` format, and store them in specific data store.
 
-Every writer can filter messages based on channel list that is set in
-`channels.toml` configuration file. If you want to listen on all channels, 
+Each writer can filter messages based on channel list that is set in
+`channels.toml` configuration file. If you want to listen on all channels,
 just pass one element ["*"], otherwise pass the list of channels. Here is
 an example:
 
@@ -30,6 +31,7 @@ From the project root execute the following command:
 ```bash
 docker-compose -f docker/addons/influxdb-writer/docker-compose.yml up -d
 ```
+
 This will install and start:
 
 - [InfluxDB](https://docs.influxdata.com/influxdb) - time series database
@@ -49,14 +51,24 @@ To access Grafana, navigate to `http://localhost:3001` and login with: `admin`, 
 ```bash
 ./docker/addons/cassandra-writer/init.sh
 ```
-_Please note that Cassandra may not be suitable for your testing enviroment because it has high system requirements._
+
+_Please note that Cassandra may not be suitable for your testing environment because of its high system requirements._
 
 ### MongoDB and MongoDB-writer
 
 ```bash
 docker-compose -f docker/addons/mongodb-writer/docker-compose.yml up -d
 ```
+
 MongoDB default port (27017) is exposed, so you can use various tools for database inspection and data visualization.
+
+### PostgreSQL and PostgreSQL-writer
+
+```bash
+docker-compose -f docker/addons/postgres-writer/docker-compose.yml up -d
+```
+
+Postgres default port (5432) is exposed, so you can use various tools for database inspection and data visualization.
 
 ## Readers
 
@@ -64,24 +76,13 @@ Readers provide an implementation of various `message readers`.
 Message readers are services that consume normalized (in `SenML` format) Mainflux messages from data storage and opens HTTP API for message consumption.
 Installing corresponding writer before reader is implied.
 
-
-### InfluxDB-reader
-
-```bash
-docker-compose -f docker/addons/influxdb-reader/docker-compose.yml up -d
-```
-Service exposes [HTTP API](https://github.com/mainflux/mainflux/blob/master/readers/swagger.yml) for fetching messages on port 8905
-
+Each of the Reader services exposes the same [HTTP API](https://github.com/mainflux/mainflux/blob/master/readers/swagger.yml) for fetching messages on its default port.
 
 To read sent messages on channel with id `channel_id` you should send `GET` request to `/channels/<channel_id>/messages` with thing access token in `Authorization` header. That thing must be connected to  channel with `channel_id`
 
-```
-curl -s -S -i  -H "Authorization: <thing_token>" http://localhost:8905/channels/<channel_id>/messages
-```
-
 Response should look like this:
 
-```
+```http
 HTTP/1.1 200 OK
 Content-Type: application/json
 Date: Tue, 18 Sep 2018 18:56:19 GMT
@@ -112,38 +113,42 @@ Content-Length: 228
 ```
 
 Note that you will receive only those messages that were sent by authorization token's owner.
-You can specify `offset` and `limit` parameters in order to fetch specific group of messages. In that case, your request should look like:
+You can specify `offset` and `limit` parameters in order to fetch specific group of messages. An example of HTTP request looks like:
 
-```
-curl -s -S -i  -H "Authorization: <thing_token>" http://localhost:8905/channels/<channel_id>/messages?offset=0&limit=5
+```bash
+curl -s -S -i  -H "Authorization: <thing_token>" http://localhost:<service_port>/channels/<channel_id>/messages?offset=0&limit=5
 ```
 
-If you don't provide them, default values will be used instead: 0 for `offset`, and 10 for `limit`.
+If you don't provide these parameters, default values will be used instead: 0 for `offset`, and 10 for `limit`.
+
+### InfluxDB-reader
+
+To start InfluxDB reader, execute the following command:
+
+```bash
+docker-compose -f docker/addons/influxdb-reader/docker-compose.yml up -d
+```
 
 ### Cassandra-reader
+
+To start Cassandra reader, execute the following command:
 
 ```bash
 docker-compose -f docker/addons/cassandra-reader/docker-compose.yml up -d
 ```
 
-Service exposes [HTTP API](https://github.com/mainflux/mainflux/blob/master/readers/swagger.yml) for fetching messages on port 8903
-
-Aside from port, reading request is same as for other readers:
-
-```
-curl -s -S -i  -H "Authorization: <thing_token>" http://localhost:8903/channels/<channel_id>/messages
-```
-
 ### MongoDB-reader
+
+To start MongoDB reader, execute the following command:
 
 ```bash
 docker-compose -f docker/addons/mongodb-reader/docker-compose.yml up -d
 ```
 
-Service exposes [HTTP API](https://github.com/mainflux/mainflux/blob/master/readers/swagger.yml) for fetching messages on port 8904
+### PostgreSQL-reader
 
-Aside from port, reading request is same as for other readers:
+To start PostgreSQL reader, execute the following command:
 
-```
-curl -s -S -i  -H "Authorization: <thing_token>" http://localhost:8904/channels/<channel_id>/messages
+```bash
+docker-compose -f docker/addons/postgres-reader/docker-compose.yml up -d
 ```

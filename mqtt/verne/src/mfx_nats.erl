@@ -65,7 +65,7 @@ loop(Conn) ->
             error_logger:info_msg("NATS received exit msg", []);
         {Conn, {msg, Subject, _ReplyTo, NatsMsg}} ->
             #{protocol := Protocol, channel := ChannelId, contentType := ContentType,
-                payload := Payload, subtopic := Subtopic} = message_pb:decode_msg(NatsMsg, raw_message),
+                payload := Payload, subtopic := Subtopic} = message_pb:decode_msg(NatsMsg, message),
             error_logger:info_msg("Received NATS protobuf msg with payload: ~p and ContentType: ~p~n", [Payload, ContentType]),
             case Protocol of
                 <<"mqtt">> ->

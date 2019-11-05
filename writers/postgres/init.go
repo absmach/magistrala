@@ -60,7 +60,7 @@ func migrateDB(db *sqlx.DB) error {
             string_value  TEXT,
             bool_value    BOOL,
             data_value    TEXT,
-            value_sum     FLOAT,
+            sum           FLOAT,
             time          FLOAT,
             update_time   FLOAT,
             link          TEXT,

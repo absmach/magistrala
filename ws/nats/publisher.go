@@ -56,7 +56,7 @@ func (pubsub *natsPubSub) fmtSubject(chanID, subtopic string) string {
 	return subject
 }
 
-func (pubsub *natsPubSub) Publish(_ context.Context, _ string, msg mainflux.RawMessage) error {
+func (pubsub *natsPubSub) Publish(_ context.Context, _ string, msg mainflux.Message) error {
 	data, err := proto.Marshal(&msg)
 	if err != nil {
 		return err
@@ -75,16 +75,16 @@ func (pubsub *natsPubSub) Subscribe(chanID, subtopic string, channel *ws.Channel
 			return
 		}
 
-		var rawMsg mainflux.RawMessage
-		if err := proto.Unmarshal(msg.Data, &rawMsg); err != nil {
+		var m mainflux.Message
+		if err := proto.Unmarshal(msg.Data, &m); err != nil {
 			pubsub.logger.Warn(fmt.Sprintf("Failed to deserialize received message: %s", err.Error()))
 			return
 		}
 
-		pubsub.logger.Debug(fmt.Sprintf("Successfully received message from NATS from channel %s", rawMsg.GetChannel()))
+		pubsub.logger.Debug(fmt.Sprintf("Successfully received message from NATS from channel %s", m.GetChannel()))
 
 		// Sends message to messages channel
-		channel.Send(rawMsg)
+		channel.Send(m)
 	})
 
 	// Check if subscription should be closed

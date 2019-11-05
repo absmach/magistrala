@@ -87,7 +87,7 @@ parseTopic(Topic) when length(Topic) > 3 ->
             ContentType3 = re:replace(ContentType2, "-","\\+",[global,{return,list}]),
             Subtopic = lists:sublist(Topic, 4, length(Topic) - 3 - 2),
             NatsSubject = [<<"channel.">>, ChannelId, <<".">>, string:join([[X] || X <- Subtopic], ".")],
-            [{chanel_id, ChannelId}, {content_type, ContentType3}, {nats_subject, NatsSubject}];
+            [{chanel_id, ChannelId}, {content_type, ContentType3}, {subtopic, Subtopic}, {nats_subject, NatsSubject}];
         _ ->
             Subtopic = lists:sublist(Topic, 4, length(Topic) - 3),
             NatsSubject = [<<"channel.">>, ChannelId, <<".">>, string:join([[X] || X <- Subtopic], ".")],
@@ -115,7 +115,7 @@ auth_on_publish(UserName, {_MountPoint, _ClientId} = SubscriberId, QoS, Topic, P
     [{chanel_id, ChannelId}, {content_type, ContentType}, {subtopic, Subtopic}, {nats_subject, NatsSubject}] = parseTopic(Topic),
     case access(UserName, ChannelId) of
         ok ->
-            RawMessage = #{
+            Message = #{
                 channel => ChannelId,
                 subtopic => Subtopic,
                 publisher => UserName,
@@ -123,7 +123,7 @@ auth_on_publish(UserName, {_MountPoint, _ClientId} = SubscriberId, QoS, Topic, P
                 contentType => ContentType,
                 payload => Payload
             },
-            mfx_nats:publish(NatsSubject, message_pb:encode_msg(RawMessage, raw_message)),
+            mfx_nats:publish(NatsSubject, message_pb:encode_msg(Message, message)),
             ok;
         Other ->
             error_logger:info_msg("Error auth: ~p", [Other]),

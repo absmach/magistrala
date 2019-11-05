@@ -8,7 +8,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 
-	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/transformers/senml"
 	"github.com/mainflux/mainflux/writers"
 )
 
@@ -28,11 +28,11 @@ type message struct {
 	Protocol    string   `bson:"protocol,omitempty"`
 	Name        string   `bson:"name,omitempty"`
 	Unit        string   `bson:"unit,omitempty"`
-	FloatValue  *float64 `bson:"value,omitempty"`
+	Value       *float64 `bson:"value,omitempty"`
 	StringValue *string  `bson:"stringValue,omitempty"`
 	BoolValue   *bool    `bson:"boolValue,omitempty"`
 	DataValue   *string  `bson:"dataValue,omitempty"`
-	ValueSum    *float64 `bson:"valueSum,omitempty"`
+	Sum         *float64 `bson:"sum,omitempty"`
 	Time        float64  `bson:"time,omitempty"`
 	UpdateTime  float64  `bson:"updateTime,omitempty"`
 	Link        string   `bson:"link,omitempty"`
@@ -43,7 +43,7 @@ func New(db *mongo.Database) writers.MessageRepository {
 	return &mongoRepo{db}
 }
 
-func (repo *mongoRepo) Save(messages ...mainflux.Message) error {
+func (repo *mongoRepo) Save(messages ...senml.Message) error {
 	coll := repo.db.Collection(collectionName)
 	var msgs []interface{}
 	for _, msg := range messages {
@@ -59,25 +59,17 @@ func (repo *mongoRepo) Save(messages ...mainflux.Message) error {
 			Link:       msg.Link,
 		}
 
-		switch msg.Value.(type) {
-		case *mainflux.Message_FloatValue:
-			v := msg.GetFloatValue()
-			m.FloatValue = &v
-		case *mainflux.Message_StringValue:
-			v := msg.GetStringValue()
-			m.StringValue = &v
-		case *mainflux.Message_DataValue:
-			v := msg.GetDataValue()
-			m.DataValue = &v
-		case *mainflux.Message_BoolValue:
-			v := msg.GetBoolValue()
-			m.BoolValue = &v
+		switch {
+		case msg.Value != nil:
+			m.Value = msg.Value
+		case msg.StringValue != nil:
+			m.StringValue = msg.StringValue
+		case msg.DataValue != nil:
+			m.DataValue = msg.DataValue
+		case msg.BoolValue != nil:
+			m.BoolValue = msg.BoolValue
 		}
-
-		if msg.GetValueSum() != nil {
-			valueSum := msg.GetValueSum().Value
-			m.ValueSum = &valueSum
-		}
+		m.Sum = msg.Sum
 
 		msgs = append(msgs, m)
 	}

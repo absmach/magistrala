@@ -9,5 +9,5 @@ import context "context"
 type MessagePublisher interface {
 	// Publishes message to the stream. A non-nil error is returned to indicate
 	// operation failure.
-	Publish(context.Context, string, RawMessage) error
+	Publish(context.Context, string, Message) error
 }

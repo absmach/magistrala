@@ -26,7 +26,7 @@ func LoggingMiddleware(svc mainflux.MessagePublisher, logger log.Logger) mainflu
 	return &loggingMiddleware{logger, svc}
 }
 
-func (lm *loggingMiddleware) Publish(ctx context.Context, token string, msg mainflux.RawMessage) (err error) {
+func (lm *loggingMiddleware) Publish(ctx context.Context, token string, msg mainflux.Message) (err error) {
 	defer func(begin time.Time) {
 		destChannel := msg.Channel
 		if msg.Subtopic != "" {

@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/mainflux/mainflux/transformers/senml"
 	"github.com/mainflux/mainflux/writers"
 
 	influxdata "github.com/influxdata/influxdb/client/v2"
-	"github.com/mainflux/mainflux"
 )
 
 const pointName = "messages"
@@ -36,11 +36,12 @@ func New(client influxdata.Client, database string) writers.MessageRepository {
 	}
 }
 
-func (repo *influxRepo) Save(messages ...mainflux.Message) error {
+func (repo *influxRepo) Save(messages ...senml.Message) error {
 	pts, err := influxdata.NewBatchPoints(repo.cfg)
 	if err != nil {
 		return err
 	}
+
 	for _, msg := range messages {
 		tgs, flds := repo.tagsOf(&msg), repo.fieldsOf(&msg)
 
@@ -57,7 +58,7 @@ func (repo *influxRepo) Save(messages ...mainflux.Message) error {
 	return repo.client.Write(pts)
 }
 
-func (repo *influxRepo) tagsOf(msg *mainflux.Message) tags {
+func (repo *influxRepo) tagsOf(msg *senml.Message) tags {
 	return tags{
 		"channel":   msg.Channel,
 		"subtopic":  msg.Subtopic,
@@ -66,7 +67,7 @@ func (repo *influxRepo) tagsOf(msg *mainflux.Message) tags {
 	}
 }
 
-func (repo *influxRepo) fieldsOf(msg *mainflux.Message) fields {
+func (repo *influxRepo) fieldsOf(msg *senml.Message) fields {
 	updateTime := strconv.FormatFloat(msg.UpdateTime, 'f', -1, 64)
 	ret := fields{
 		"protocol":   msg.Protocol,
@@ -75,19 +76,19 @@ func (repo *influxRepo) fieldsOf(msg *mainflux.Message) fields {
 		"updateTime": updateTime,
 	}
 
-	switch msg.Value.(type) {
-	case *mainflux.Message_FloatValue:
-		ret["value"] = msg.GetFloatValue()
-	case *mainflux.Message_StringValue:
-		ret["stringValue"] = msg.GetStringValue()
-	case *mainflux.Message_DataValue:
-		ret["dataValue"] = msg.GetDataValue()
-	case *mainflux.Message_BoolValue:
-		ret["boolValue"] = msg.GetBoolValue()
+	switch {
+	case msg.Value != nil:
+		ret["value"] = *msg.Value
+	case msg.StringValue != nil:
+		ret["stringValue"] = *msg.StringValue
+	case msg.DataValue != nil:
+		ret["dataValue"] = *msg.DataValue
+	case msg.BoolValue != nil:
+		ret["boolValue"] = *msg.BoolValue
 	}
 
-	if msg.ValueSum != nil {
-		ret["valueSum"] = msg.GetValueSum().GetValue()
+	if msg.Sum != nil {
+		ret["sum"] = *msg.Sum
 	}
 
 	return ret

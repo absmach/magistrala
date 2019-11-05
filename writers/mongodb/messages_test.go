@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/transformers/senml"
 	"github.com/mainflux/mainflux/writers/mongodb"
 
 	log "github.com/mainflux/mainflux/logger"
@@ -30,23 +30,19 @@ var (
 	collection  = "mainflux"
 	db          mongo.Database
 	msgsNum     = 100
-	valueFields = 6
+	valueFields = 5
+	subtopic    = "topic"
+)
+
+var (
+	v       float64 = 5
+	stringV         = "value"
+	boolV           = true
+	dataV           = "base64"
+	sum     float64 = 42
 )
 
 func TestSave(t *testing.T) {
-	msg := mainflux.Message{
-		Channel:    "45",
-		Publisher:  "2580",
-		Protocol:   "http",
-		Name:       "test name",
-		Unit:       "km",
-		Value:      &mainflux.Message_FloatValue{FloatValue: 24},
-		ValueSum:   &mainflux.SumValue{Value: 24},
-		Time:       13451312,
-		UpdateTime: 5456565466,
-		Link:       "link",
-	}
-
 	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(addr))
 	require.Nil(t, err, fmt.Sprintf("Creating new MongoDB client expected to succeed: %s.\n", err))
 
@@ -54,24 +50,35 @@ func TestSave(t *testing.T) {
 	repo := mongodb.New(db)
 
 	now := time.Now().Unix()
-	var msgs []mainflux.Message
+	msg := senml.Message{
+		Channel:    "45",
+		Publisher:  "2580",
+		Protocol:   "http",
+		Name:       "test name",
+		Unit:       "km",
+		Time:       13451312,
+		UpdateTime: 5456565466,
+		Link:       "link",
+	}
+	var msgs []senml.Message
+
 	for i := 0; i < msgsNum; i++ {
 		// Mix possible values as well as value sum.
 		count := i % valueFields
 		switch count {
 		case 0:
-			msg.Value = &mainflux.Message_FloatValue{FloatValue: 5}
+			msg.Subtopic = subtopic
+			msg.Value = &v
 		case 1:
-			msg.Value = &mainflux.Message_BoolValue{BoolValue: false}
+			msg.BoolValue = &boolV
 		case 2:
-			msg.Value = &mainflux.Message_StringValue{StringValue: "value"}
+			msg.StringValue = &stringV
 		case 3:
-			msg.Value = &mainflux.Message_DataValue{DataValue: "base64data"}
+			msg.DataValue = &dataV
 		case 4:
-			msg.ValueSum = nil
-		case 5:
-			msg.ValueSum = &mainflux.SumValue{Value: 45}
+			msg.Sum = &sum
 		}
+
 		msg.Time = float64(now + int64(i))
 		msgs = append(msgs, msg)
 	}

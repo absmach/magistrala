@@ -8,6 +8,6 @@ import (
 )
 
 type publishReq struct {
-	msg   mainflux.RawMessage
+	msg   mainflux.Message
 	token string
 }

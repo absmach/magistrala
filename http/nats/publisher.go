@@ -26,7 +26,7 @@ func NewMessagePublisher(nc *broker.Conn) mainflux.MessagePublisher {
 	return &natsPublisher{nc: nc}
 }
 
-func (pub *natsPublisher) Publish(_ context.Context, _ string, msg mainflux.RawMessage) error {
+func (pub *natsPublisher) Publish(_ context.Context, _ string, msg mainflux.Message) error {
 	data, err := proto.Marshal(&msg)
 	if err != nil {
 		return err

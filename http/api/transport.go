@@ -107,7 +107,7 @@ func decodeRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 	}
 
 	ct := r.Header.Get("Content-Type")
-	msg := mainflux.RawMessage{
+	msg := mainflux.Message{
 		Protocol:    protocol,
 		ContentType: ct,
 		Channel:     chanID,

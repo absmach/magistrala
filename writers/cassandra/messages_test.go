@@ -8,23 +8,27 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/transformers/senml"
 	"github.com/mainflux/mainflux/writers/cassandra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-const keyspace = "mainflux"
+const (
+	keyspace    = "mainflux"
+	msgsNum     = 42
+	valueFields = 5
+	subtopic    = "topic"
+)
+
+var addr = "localhost"
 
 var (
-	addr = "localhost"
-	msg  = mainflux.Message{
-		Channel:   "1",
-		Publisher: "1",
-		Protocol:  "mqtt",
-	}
-	msgsNum     = 42
-	valueFields = 6
+	v       float64 = 5
+	stringV         = "value"
+	boolV           = true
+	dataV           = "base64"
+	sum     float64 = 42
 )
 
 func TestSave(t *testing.T) {
@@ -36,24 +40,30 @@ func TestSave(t *testing.T) {
 
 	repo := cassandra.New(session)
 	now := time.Now().Unix()
-	var msgs []mainflux.Message
+	msg := senml.Message{
+		Channel:   "1",
+		Publisher: "1",
+		Protocol:  "mqtt",
+	}
+	var msgs []senml.Message
+
 	for i := 0; i < msgsNum; i++ {
 		// Mix possible values as well as value sum.
 		count := i % valueFields
 		switch count {
 		case 0:
-			msg.Value = &mainflux.Message_FloatValue{FloatValue: 5}
+			msg.Subtopic = subtopic
+			msg.Value = &v
 		case 1:
-			msg.Value = &mainflux.Message_BoolValue{BoolValue: false}
+			msg.BoolValue = &boolV
 		case 2:
-			msg.Value = &mainflux.Message_StringValue{StringValue: "value"}
+			msg.StringValue = &stringV
 		case 3:
-			msg.Value = &mainflux.Message_DataValue{DataValue: "base64data"}
+			msg.DataValue = &dataV
 		case 4:
-			msg.ValueSum = nil
-		case 5:
-			msg.ValueSum = &mainflux.SumValue{Value: 45}
+			msg.Sum = &sum
 		}
+
 		msg.Time = float64(now + int64(i))
 		msgs = append(msgs, msg)
 	}

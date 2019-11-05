@@ -6,8 +6,8 @@ package mongodb
 import (
 	"context"
 
-	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/readers"
+	"github.com/mainflux/mainflux/transformers/senml"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -29,11 +29,11 @@ type message struct {
 	Protocol    string   `bson:"protocol,omitempty"`
 	Name        string   `bson:"name,omitempty"`
 	Unit        string   `bson:"unit,omitempty"`
-	FloatValue  *float64 `bson:"value,omitempty"`
+	Value       *float64 `bson:"value,omitempty"`
 	StringValue *string  `bson:"stringValue,omitempty"`
 	BoolValue   *bool    `bson:"boolValue,omitempty"`
 	DataValue   *string  `bson:"dataValue,omitempty"`
-	ValueSum    *float64 `bson:"valueSum,omitempty"`
+	Sum         *float64 `bson:"sum,omitempty"`
 	Time        float64  `bson:"time,omitempty"`
 	UpdateTime  float64  `bson:"updateTime,omitempty"`
 	Link        string   `bson:"link,omitempty"`
@@ -59,14 +59,14 @@ func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64, query m
 	}
 	defer cursor.Close(context.Background())
 
-	messages := []mainflux.Message{}
+	messages := []senml.Message{}
 	for cursor.Next(context.Background()) {
 		var m message
 		if err := cursor.Decode(&m); err != nil {
 			return readers.MessagesPage{}, err
 		}
 
-		msg := mainflux.Message{
+		msg := senml.Message{
 			Channel:    m.Channel,
 			Subtopic:   m.Subtopic,
 			Publisher:  m.Publisher,
@@ -76,21 +76,18 @@ func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64, query m
 			Time:       m.Time,
 			UpdateTime: m.UpdateTime,
 			Link:       m.Link,
+			Sum:        m.Sum,
 		}
 
 		switch {
-		case m.FloatValue != nil:
-			msg.Value = &mainflux.Message_FloatValue{FloatValue: *m.FloatValue}
+		case m.Value != nil:
+			msg.Value = m.Value
 		case m.StringValue != nil:
-			msg.Value = &mainflux.Message_StringValue{StringValue: *m.StringValue}
+			msg.StringValue = m.StringValue
 		case m.DataValue != nil:
-			msg.Value = &mainflux.Message_DataValue{DataValue: *m.DataValue}
+			msg.DataValue = m.DataValue
 		case m.BoolValue != nil:
-			msg.Value = &mainflux.Message_BoolValue{BoolValue: *m.BoolValue}
-		}
-
-		if m.ValueSum != nil {
-			msg.ValueSum = &mainflux.SumValue{Value: *m.ValueSum}
+			msg.BoolValue = m.BoolValue
 		}
 
 		messages = append(messages, msg)

@@ -18,6 +18,7 @@ import (
 	"github.com/mainflux/mainflux"
 	log "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/things"
+	"github.com/mainflux/mainflux/transformers/senml"
 	"github.com/mainflux/mainflux/ws"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc/codes"
@@ -47,8 +48,8 @@ var (
 )
 
 var contentTypes = map[string]int{
-	mainflux.SenMLJSON: websocket.TextMessage,
-	mainflux.SenMLCBOR: websocket.BinaryMessage,
+	senml.SenMLJSON: websocket.TextMessage,
+	senml.SenMLCBOR: websocket.BinaryMessage,
 }
 
 // MakeHandler returns http handler with handshake endpoint.
@@ -220,7 +221,7 @@ func (sub subscription) broadcast(svc ws.Service, contentType string) {
 			logger.Warn(fmt.Sprintf("Failed to read message: %s", err))
 			return
 		}
-		msg := mainflux.RawMessage{
+		msg := mainflux.Message{
 			Channel:     sub.chanID,
 			Subtopic:    sub.subtopic,
 			ContentType: contentType,

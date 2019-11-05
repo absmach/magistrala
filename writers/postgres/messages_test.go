@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/transformers/senml"
 	"github.com/mainflux/mainflux/writers/postgres"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,10 +16,18 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-var (
-	msg         = mainflux.Message{}
+const (
 	msgsNum     = 42
-	valueFields = 6
+	valueFields = 5
+	subtopic    = "topic"
+)
+
+var (
+	v       float64 = 5
+	stringV         = "value"
+	boolV           = true
+	dataV           = "base64"
+	sum     float64 = 42
 )
 
 func TestMessageSave(t *testing.T) {
@@ -27,6 +35,8 @@ func TestMessageSave(t *testing.T) {
 
 	chid, err := uuid.NewV4()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
+	msg := senml.Message{}
 	msg.Channel = chid.String()
 
 	pubid, err := uuid.NewV4()
@@ -34,24 +44,25 @@ func TestMessageSave(t *testing.T) {
 	msg.Publisher = pubid.String()
 
 	now := time.Now().Unix()
-	var msgs []mainflux.Message
+	var msgs []senml.Message
+
 	for i := 0; i < msgsNum; i++ {
 		// Mix possible values as well as value sum.
 		count := i % valueFields
 		switch count {
 		case 0:
-			msg.Value = &mainflux.Message_FloatValue{FloatValue: 5}
+			msg.Subtopic = subtopic
+			msg.Value = &v
 		case 1:
-			msg.Value = &mainflux.Message_BoolValue{BoolValue: false}
+			msg.BoolValue = &boolV
 		case 2:
-			msg.Value = &mainflux.Message_StringValue{StringValue: "value"}
+			msg.StringValue = &stringV
 		case 3:
-			msg.Value = &mainflux.Message_DataValue{DataValue: "base64data"}
+			msg.DataValue = &dataV
 		case 4:
-			msg.ValueSum = nil
-		case 5:
-			msg.ValueSum = &mainflux.SumValue{Value: 45}
+			msg.Sum = &sum
 		}
+
 		msg.Time = float64(now + int64(i))
 		msgs = append(msgs, msg)
 	}

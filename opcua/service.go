@@ -102,7 +102,7 @@ func (as *adapterService) Publish(ctx context.Context, token string, m Message) 
 	// Publish on Mainflux NATS broker
 	SenML := fmt.Sprintf(`[{"n":"opcua","v":%f}]`, m.Data)
 	payload := []byte(SenML)
-	msg := mainflux.RawMessage{
+	msg := mainflux.Message{
 		Publisher:   thingID,
 		Protocol:    protocol,
 		ContentType: "Content-Type",

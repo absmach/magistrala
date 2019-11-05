@@ -104,7 +104,7 @@ func (as *adapterService) Publish(ctx context.Context, token string, m Message) 
 	}
 
 	// Publish on Mainflux NATS broker
-	msg := mainflux.RawMessage{
+	msg := mainflux.Message{
 		Publisher:   thing,
 		Protocol:    protocol,
 		ContentType: "Content-Type",

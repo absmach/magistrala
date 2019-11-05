@@ -1,26 +1,27 @@
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
 
-package normalizer
+package senml
 
 import (
 	"github.com/cisco/senml"
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/transformers"
 )
 
 var formats = map[string]senml.Format{
-	mainflux.SenMLJSON: senml.JSON,
-	mainflux.SenMLCBOR: senml.CBOR,
+	SenMLJSON: senml.JSON,
+	SenMLCBOR: senml.CBOR,
 }
 
-type normalizer struct{}
+type transformer struct{}
 
-// New returns normalizer service implementation.
-func New() Service {
-	return normalizer{}
+// New returns transformer service implementation for SenML messages.
+func New() transformers.Transformer {
+	return transformer{}
 }
 
-func (n normalizer) Normalize(msg mainflux.RawMessage) ([]mainflux.Message, error) {
+func (n transformer) Transform(msg mainflux.Message) (interface{}, error) {
 	format, ok := formats[msg.ContentType]
 	if !ok {
 		format = senml.JSON
@@ -33,9 +34,9 @@ func (n normalizer) Normalize(msg mainflux.RawMessage) ([]mainflux.Message, erro
 
 	normalized := senml.Normalize(raw)
 
-	msgs := make([]mainflux.Message, len(normalized.Records))
+	msgs := make([]Message, len(normalized.Records))
 	for k, v := range normalized.Records {
-		m := mainflux.Message{
+		m := Message{
 			Channel:    msg.Channel,
 			Subtopic:   msg.Subtopic,
 			Publisher:  msg.Publisher,
@@ -45,21 +46,18 @@ func (n normalizer) Normalize(msg mainflux.RawMessage) ([]mainflux.Message, erro
 			Time:       v.Time,
 			UpdateTime: v.UpdateTime,
 			Link:       v.Link,
+			Sum:        v.Sum,
 		}
 
 		switch {
 		case v.Value != nil:
-			m.Value = &mainflux.Message_FloatValue{FloatValue: *v.Value}
+			m.Value = v.Value
 		case v.BoolValue != nil:
-			m.Value = &mainflux.Message_BoolValue{BoolValue: *v.BoolValue}
+			m.BoolValue = v.BoolValue
 		case v.DataValue != "":
-			m.Value = &mainflux.Message_DataValue{DataValue: v.DataValue}
+			m.DataValue = &v.DataValue
 		case v.StringValue != "":
-			m.Value = &mainflux.Message_StringValue{StringValue: v.StringValue}
-		}
-
-		if v.Sum != nil {
-			m.ValueSum = &mainflux.SumValue{Value: *v.Sum}
+			m.StringValue = &v.StringValue
 		}
 
 		msgs[k] = m

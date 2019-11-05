@@ -30,7 +30,9 @@ const (
 )
 
 var (
-	errMetadataType = errors.New("metadatada is not of type lora")
+	errMetadataType = errors.New("field lora is missing in the metadata")
+
+	errMetadataFormat = errors.New("malformed metadata")
 
 	errMetadataAppID = errors.New("application ID not found in channel metadatada")
 
@@ -137,17 +139,22 @@ func decodeCreateThing(event map[string]interface{}) (createThingEvent, error) {
 		id: read(event, "id", ""),
 	}
 
-	val, ok := metadata["lora"]
+	m, ok := metadata["lora"]
 	if !ok {
 		return createThingEvent{}, errMetadataType
 	}
 
-	loraMeta := val.(map[string]interface{})
-	if loraMeta["devEUI"] == nil {
+	lm, ok := m.(map[string]interface{})
+	if !ok {
+		return createThingEvent{}, errMetadataFormat
+	}
+
+	val, ok := lm["devEUI"].(string)
+	if !ok {
 		return createThingEvent{}, errMetadataDevEUI
 	}
 
-	cte.metadata = loraMeta
+	cte.loraDevEUI = val
 	return cte, nil
 }
 
@@ -168,17 +175,22 @@ func decodeCreateChannel(event map[string]interface{}) (createChannelEvent, erro
 		id: read(event, "id", ""),
 	}
 
-	val, ok := metadata["lora"]
+	m, ok := metadata["lora"]
 	if !ok {
 		return createChannelEvent{}, errMetadataType
 	}
 
-	loraMeta := val.(map[string]interface{})
-	if loraMeta["appID"] == nil {
-		return createChannelEvent{}, errMetadataDevEUI
+	lm, ok := m.(map[string]interface{})
+	if !ok {
+		return createChannelEvent{}, errMetadataFormat
 	}
 
-	cce.metadata = loraMeta
+	val, ok := lm["appID"].(string)
+	if !ok {
+		return createChannelEvent{}, errMetadataAppID
+	}
+
+	cce.loraAppID = val
 	return cce, nil
 }
 
@@ -189,7 +201,7 @@ func decodeRemoveChannel(event map[string]interface{}) removeChannelEvent {
 }
 
 func (es eventStore) handleCreateThing(cte createThingEvent) error {
-	return es.svc.CreateThing(cte.id, cte.metadata["devEUI"].(string))
+	return es.svc.CreateThing(cte.id, cte.loraDevEUI)
 }
 
 func (es eventStore) handleRemoveThing(rte removeThingEvent) error {
@@ -197,7 +209,7 @@ func (es eventStore) handleRemoveThing(rte removeThingEvent) error {
 }
 
 func (es eventStore) handleCreateChannel(cce createChannelEvent) error {
-	return es.svc.CreateChannel(cce.id, cce.metadata["appID"].(string))
+	return es.svc.CreateChannel(cce.id, cce.loraAppID)
 }
 
 func (es eventStore) handleRemoveChannel(rce removeChannelEvent) error {

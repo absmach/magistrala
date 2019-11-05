@@ -1,8 +1,8 @@
 package redis
 
 type createThingEvent struct {
-	id       string
-	metadata map[string]interface{}
+	id         string
+	loraDevEUI string
 }
 
 type removeThingEvent struct {
@@ -10,8 +10,8 @@ type removeThingEvent struct {
 }
 
 type createChannelEvent struct {
-	id       string
-	metadata map[string]interface{}
+	id        string
+	loraAppID string
 }
 
 type removeChannelEvent struct {

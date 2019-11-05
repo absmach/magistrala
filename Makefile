@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 BUILD_DIR = build
-SERVICES = users things http ws coap lora normalizer influxdb-writer influxdb-reader mongodb-writer mongodb-reader cassandra-writer cassandra-reader postgres-writer postgres-reader cli bootstrap opcua
+SERVICES = users things http ws coap lora normalizer influxdb-writer influxdb-reader mongodb-writer \
+	mongodb-reader cassandra-writer cassandra-reader postgres-writer postgres-reader cli bootstrap opcua
 DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
 CGO_ENABLED ?= 0
@@ -13,26 +14,30 @@ define compile_service
 endef
 
 define make_docker
+	$(eval svc=$(subst docker_,,$(1)))
+
 	docker build \
 		--no-cache \
-		--build-arg SVC=$(subst docker_,,$(1)) \
+		--build-arg SVC=$(svc) \
 		--build-arg GOARCH=$(GOARCH) \
 		--build-arg GOARM=$(GOARM) \
-		--tag=mainflux/$(subst docker_,,$(1))-$(2) \
+		--tag=mainflux/$(svc) \
 		-f docker/Dockerfile .
 endef
 
 define make_docker_dev
+	$(eval svc=$(subst docker_,,$(1)))
+
 	docker build \
 		--no-cache \
-		--build-arg SVC=$(subst docker_dev_,,$(1)) \
-		--tag=mainflux/$(subst docker_dev_,,$(1)) \
+		--build-arg SVC=$(svc) \
+		--tag=mainflux/$(svc) \
 		-f docker/Dockerfile.dev ./build
 endef
 
 all: $(SERVICES) mqtt
 
-.PHONY: all $(SERVICES) dockers dockers_dev latest release mqtt ui latest_manifest
+.PHONY: all $(SERVICES) dockers dockers_dev latest release mqtt ui
 
 clean:
 	rm -rf ${BUILD_DIR}
@@ -57,6 +62,7 @@ ifdef pv
 	# Remove unused volumes
 	docker volume ls -f name=mainflux -f dangling=true -q | xargs -r docker volume rm
 endif
+
 install:
 	cp ${BUILD_DIR}/* $(GOBIN)
 
@@ -81,9 +87,9 @@ docker_ui:
 docker_mqtt:
 	# MQTT Docker build must be done from root dir because it copies .proto files
 ifeq ($(GOARCH), arm)
-	docker build --tag=mainflux/mqtt-arm -f mqtt/aedes/Dockerfile.arm .
+	docker build --tag=mainflux/mqtt -f mqtt/aedes/Dockerfile.arm .
 else
-	docker build --tag=mainflux/mqtt-amd64 -f mqtt/aedes/Dockerfile .
+	docker build --tag=mainflux/mqtt -f mqtt/aedes/Dockerfile .
 endif
 
 docker_mqtt_verne:
@@ -101,46 +107,28 @@ mqtt:
 
 define docker_push
 	for svc in $(SERVICES); do \
-		docker push mainflux/$$svc-$(1):$(2); \
+		docker push mainflux/$$svc:$(1); \
 	done
-	docker push mainflux/ui-$(1):$(2)
-	docker push mainflux/mqtt-$(1):$(2)
+	docker push mainflux/ui:$(1)
+	docker push mainflux/mqtt:$(1)
 endef
 
 changelog:
 	git log $(shell git describe --tags --abbrev=0)..HEAD --pretty=format:"- %s"
 
-define docker_manifest
-	for svc in $(SERVICES); do \
-		docker manifest create mainflux/$$svc:$(1) mainflux/$$svc-amd64:$(1) mainflux/$$svc-arm:$(1); \
-		docker manifest annotate mainflux/$$svc:$(1) mainflux/$$svc-arm:$(1) --arch arm --variant v7; \
-		docker manifest push mainflux/$$svc:$(1); \
-	done
-	docker manifest create mainflux/ui:$(1) mainflux/ui-amd64:$(1) mainflux/ui-arm:$(1)
-	docker manifest annotate mainflux/ui:$(1) mainflux/ui-arm:$(1) --arch arm --variant v7
-	docker manifest push mainflux/ui:$(1)
-	docker manifest create mainflux/mqtt:$(1) mainflux/mqtt-amd64:$(1) mainflux/mqtt-arm:$(1)
-	docker manifest annotate mainflux/mqtt:$(1) mainflux/mqtt-arm:$(1) --arch arm --variant v7
-	docker manifest push mainflux/mqtt:$(1)
-endef
-
 latest: dockers
-	$(call docker_push,$(GOARCH),latest)
-
-latest_manifest:
-	$(call docker_manifest,latest)
+	$(call docker_push,latest)
 
 release:
 	$(eval version = $(shell git describe --abbrev=0 --tags))
 	git checkout $(version)
-	GOARCH=$(GOARCH) GOARM=$(GOARM) $(MAKE) dockers
+	$(MAKE) dockers
 	for svc in $(SERVICES); do \
-		docker tag mainflux/$$svc-$(GOARCH) mainflux/$$svc-$(GOARCH):$(version); \
+		docker tag mainflux/$$svc mainflux/$$svc:$(version); \
 	done
-	docker tag mainflux/ui mainflux/ui-$(GOARCH):$(version)
-	docker tag mainflux/mqtt mainflux/mqtt-$(GOARCH):$(version)
-	$(call docker_push,$(GOARCH),$(version))
-	$(call docker_manifest,$(version))
+	docker tag mainflux/ui mainflux/ui:$(version)
+	docker tag mainflux/mqtt mainflux/mqtt:$(version)
+	$(call docker_push,$(version))
 
 rundev:
 	cd scripts && ./run.sh

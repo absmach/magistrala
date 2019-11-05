@@ -162,21 +162,6 @@ services:
     networks:
       - mainflux-base-net
 
-  normalizer:
-    image: mainflux/normalizer:latest
-    container_name: mainflux-normalizer
-    restart: on-failure
-    depends_on:
-      - nats
-    environment:
-      MF_NORMALIZER_LOG_LEVEL: ${MF_NORMALIZER_LOG_LEVEL}
-      MF_NATS_URL: ${MF_NATS_URL}
-      MF_NORMALIZER_PORT: ${MF_NORMALIZER_PORT}
-    ports:
-      - ${MF_NORMALIZER_PORT}:${MF_NORMALIZER_PORT}
-    networks:
-      - mainflux-base-net
-
   ws-adapter:
     image: mainflux/ws:latest
     container_name: mainflux-ws

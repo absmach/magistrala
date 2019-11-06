@@ -15,7 +15,7 @@ docker:
 ifeq ($(GOARCH), arm)
 	docker build --tag=mainflux/ui-arm -f docker/Dockerfile.arm .
 else
-	docker build --tag=mainflux/ui-amd64 -f docker/Dockerfile .
+	docker build --tag=mainflux/ui -f docker/Dockerfile .
 endif
 
 clean:

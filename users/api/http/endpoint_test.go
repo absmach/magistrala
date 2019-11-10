@@ -179,6 +179,44 @@ func TestLogin(t *testing.T) {
 	}
 }
 
+func TestUserInfo(t *testing.T) {
+	svc := newService()
+	ts := newServer(svc)
+	defer ts.Close()
+	client := ts.Client()
+	svc.Register(context.Background(), user)
+	j := jwt.New("secret")
+	token, _ := j.TemporaryKey(user.Email)
+	invalidToken, _ := j.TemporaryKey("non-exist@example.com")
+
+	cases := []struct {
+		desc   string
+		token  string
+		status int
+		res    string
+	}{
+		{"user info with valid token", token, http.StatusOK, ""},
+		{"user info with invalid token", invalidToken, http.StatusForbidden, ""},
+	}
+
+	for _, tc := range cases {
+		req := testRequest{
+			client: client,
+			method: http.MethodGet,
+			url:    fmt.Sprintf("%s/users", ts.URL),
+			token:  tc.token,
+		}
+		res, err := req.make()
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		body, err := ioutil.ReadAll(res.Body)
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		token := strings.Trim(string(body), "\n")
+
+		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+		assert.Equal(t, tc.res, "", fmt.Sprintf("%s: expected body %s got %s", tc.desc, tc.res, token))
+	}
+}
+
 func TestPasswordResetRequest(t *testing.T) {
 	svc := newService()
 	ts := newServer(svc)

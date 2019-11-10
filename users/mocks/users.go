@@ -40,8 +40,8 @@ func (urm *userRepositoryMock) Update(ctx context.Context, user users.User) erro
 	urm.mu.Lock()
 	defer urm.mu.Unlock()
 
-	if _, ok := urm.users[user.Email]; ok {
-		return users.ErrConflict
+	if _, ok := urm.users[user.Email]; !ok {
+		return users.ErrUserNotFound
 	}
 
 	urm.users[user.Email] = user
@@ -52,8 +52,8 @@ func (urm *userRepositoryMock) UpdateUser(ctx context.Context, user users.User) 
 	urm.mu.Lock()
 	defer urm.mu.Unlock()
 
-	if _, ok := urm.users[user.Email]; ok {
-		return users.ErrConflict
+	if _, ok := urm.users[user.Email]; !ok {
+		return users.ErrUserNotFound
 	}
 
 	urm.users[user.Email] = user
@@ -77,7 +77,7 @@ func (urm *userRepositoryMock) UpdatePassword(_ context.Context, token, password
 	defer urm.mu.Unlock()
 
 	if _, ok := urm.users[token]; !ok {
-		return users.ErrNotFound
+		return users.ErrUserNotFound
 	}
 	return nil
 }

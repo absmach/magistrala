@@ -41,9 +41,9 @@ default values.
 | MF_EMAIL_PASSWORD         | Mail server password                                                    |                |
 | MF_EMAIL_FROM_ADDRESS     | Email "from" address                                                    |                |
 | MF_EMAIL_FROM_NAME        | Email "from" name                                                       |                |
-| MF_TOKEN_SECRET           | Token secret for signing token used for password reset                  |                |
+| MF_EMAIL_TEMPLATE         | Email template for sending emails with password reset link              | email.tmpl     |
+| MF_TOKEN_SECRET           | Password reset token signing secret                                     |                |
 | MF_TOKEN_DURATION         | Token duration in minutes                                               | 5              |
-| MF_TOKEN_DEBUG_LEVEL      | Token util debug level                                                  | info           |
 | MF_TOKEN_RESET_ENDPOINT   | Password request reset endpoint, for constructing link                  | /reset-request |
 
 ## Deployment
@@ -84,9 +84,9 @@ services:
       MF_EMAIL_PASSWORD: [MF_EMAIL_PASSWORD]
       MF_EMAIL_FROM_ADDRESS: [MF_EMAIL_FROM_ADDRESS]
       MF_EMAIL_FROM_NAME: [MF_EMAIL_FROM_NAME]
+      MF_EMAIL_TEMPLATE: [MF_EMAIL_TEMPLATE]
       MF_TOKEN_SECRET: [MF_TOKEN_SECRET]
       MF_TOKEN_DURATION: [MF_TOKEN_DURATION]
-      MF_TOKEN_DEBUG_LEVEL: [MF_TOKEN_DEBUG_LEVEL]
       MF_TOKEN_RESET_ENDPOINT: [MF_TOKEN_RESET_ENDPOINT]
 ```
 
@@ -105,8 +105,10 @@ make users
 make install
 
 # set the environment variables and run the service
-MF_USERS_LOG_LEVEL=[Users log level] MF_USERS_DB_HOST=[Database host address] MF_USERS_DB_PORT=[Database host port] MF_USERS_DB_USER=[Database user] MF_USERS_DB_PASS=[Database password] MF_USERS_DB=[Name of the database used by the service] MF_USERS_DB_SSL_MODE=[SSL mode to connect to the database with] MF_USERS_DB_SSL_CERT=[Path to the PEM encoded certificate file] MF_USERS_DB_SSL_KEY=[Path to the PEM encoded key file] MF_USERS_DB_SSL_ROOT_CERT=[Path to the PEM encoded root certificate file] MF_USERS_HTTP_PORT=[Service HTTP port] MF_USERS_GRPC_PORT=[Service gRPC port] MF_USERS_SECRET=[String used for signing tokens] MF_USERS_SERVER_CERT=[Path to server certificate] MF_USERS_SERVER_KEY=[Path to server key] MF_JAEGER_URL=[Jaeger server URL] $GOBIN/mainflux-users
+MF_USERS_LOG_LEVEL=[Users log level] MF_USERS_DB_HOST=[Database host address] MF_USERS_DB_PORT=[Database host port] MF_USERS_DB_USER=[Database user] MF_USERS_DB_PASS=[Database password] MF_USERS_DB=[Name of the database used by the service] MF_USERS_DB_SSL_MODE=[SSL mode to connect to the database with] MF_USERS_DB_SSL_CERT=[Path to the PEM encoded certificate file] MF_USERS_DB_SSL_KEY=[Path to the PEM encoded key file] MF_USERS_DB_SSL_ROOT_CERT=[Path to the PEM encoded root certificate file] MF_USERS_HTTP_PORT=[Service HTTP port] MF_USERS_GRPC_PORT=[Service gRPC port] MF_USERS_SECRET=[String used for signing tokens] MF_USERS_SERVER_CERT=[Path to server certificate] MF_USERS_SERVER_KEY=[Path to server key] MF_JAEGER_URL=[Jaeger server URL] MF_EMAIL_DRIVER=[Mail server driver smtp] MF_EMAIL_HOST=[Mail server host] MF_EMAIL_PORT=[Mail server port] MF_EMAIL_USERNAME=[Mail server username] MF_EMAIL_PASSWORD=[Mail server password] MF_EMAIL_FROM_ADDRESS=[Email from address] MF_EMAIL_FROM_NAME=[Email from name] MF_EMAIL_TEMPLATE=[Email template file] MF_TOKEN_SECRET=[Password reset token signing secret] MF_TOKEN_DURATION=[Password reset token duration] MF_TOKEN_RESET_ENDPOINT=[Password reset token endpoint] $GOBIN/mainflux-users
 ```
+
+If `MF_EMAIL_TEMPLATE` doesn't point to any file service will function but password reset functionality will not work.
 
 ## Usage
 

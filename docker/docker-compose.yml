@@ -67,7 +67,7 @@ services:
     image: mainflux/users:latest
     container_name: mainflux-users
     volumes:
-      - ../users/emailer/templates/${MF_EMAIL_TEMPLATE}:${MF_EMAIL_TEMPLATE}
+      - ./users/emailer/templates/${MF_EMAIL_TEMPLATE}:/${MF_EMAIL_TEMPLATE}
     depends_on:
       - users-db
     expose:
@@ -91,10 +91,10 @@ services:
       MF_EMAIL_PASSWORD: ${MF_EMAIL_PASSWORD}
       MF_EMAIL_FROM_ADDRESS: ${MF_EMAIL_FROM_ADDRESS}
       MF_EMAIL_FROM_NAME: ${MF_EMAIL_FROM_NAME}
+      MF_EMAIL_TEMPLATE: ${MF_EMAIL_TEMPLATE}
       MF_TOKEN_SECRET: ${MF_TOKEN_SECRET}
       MF_TOKEN_DURATION: ${MF_TOKEN_DURATION}
       MF_TOKEN_RESET_ENDPOINT: ${MF_TOKEN_RESET_ENDPOINT}
-      MF_EMAIL_TEMPLATE: ${MF_EMAIL_TEMPLATE}
     ports:
       - ${MF_USERS_HTTP_PORT}:${MF_USERS_HTTP_PORT}
     networks:

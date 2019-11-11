@@ -490,7 +490,7 @@ func TestConnect(t *testing.T) {
 			owner:   email,
 			chanID:  chanID,
 			thingID: thingID,
-			err:     nil,
+			err:     things.ErrConflict,
 		},
 		{
 			desc:    "connect with non-existing user",

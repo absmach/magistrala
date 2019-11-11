@@ -250,28 +250,40 @@ func (cr channelRepository) Remove(ctx context.Context, owner, id string) error 
 	return nil
 }
 
-func (cr channelRepository) Connect(ctx context.Context, owner, chanID, thingID string) error {
+func (cr channelRepository) Connect(ctx context.Context, owner, chanID string, thIDs ...string) error {
+	tx, err := cr.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
 	q := `INSERT INTO connections (channel_id, channel_owner, thing_id, thing_owner)
 	      VALUES (:channel, :owner, :thing, :owner);`
 
-	conn := dbConnection{
-		Channel: chanID,
-		Thing:   thingID,
-		Owner:   owner,
+	for _, thID := range thIDs {
+		dbco := dbConnection{
+			Channel: chanID,
+			Thing:   thID,
+			Owner:   owner,
+		}
+
+		_, err := tx.NamedExecContext(ctx, q, dbco)
+		if err != nil {
+			tx.Rollback()
+			pqErr, ok := err.(*pq.Error)
+			if ok {
+				switch pqErr.Code.Name() {
+				case errFK:
+					return things.ErrNotFound
+				case errDuplicate:
+					return things.ErrConflict
+				}
+			}
+
+			return err
+		}
 	}
 
-	if _, err := cr.db.NamedExecContext(ctx, q, conn); err != nil {
-		pqErr, ok := err.(*pq.Error)
-
-		if ok && errFK == pqErr.Code.Name() {
-			return things.ErrNotFound
-		}
-
-		// connect is idempotent
-		if ok && errDuplicate == pqErr.Code.Name() {
-			return nil
-		}
-
+	if err = tx.Commit(); err != nil {
 		return err
 	}
 

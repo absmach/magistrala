@@ -70,7 +70,7 @@ func (svc *mainfluxThings) ViewThing(_ context.Context, owner, id string) (thing
 	return things.Thing{}, things.ErrNotFound
 }
 
-func (svc *mainfluxThings) Connect(_ context.Context, owner, chanID, thingID string) error {
+func (svc *mainfluxThings) Connect(_ context.Context, owner, chID string, thIDs ...string) error {
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
@@ -78,12 +78,13 @@ func (svc *mainfluxThings) Connect(_ context.Context, owner, chanID, thingID str
 	if err != nil {
 		return things.ErrUnauthorizedAccess
 	}
-
-	if svc.channels[chanID].Owner != userID.Value {
-		return things.ErrNotFound
+	if svc.channels[chID].Owner != userID.Value {
+		return things.ErrUnauthorizedAccess
+	}
+	for _, thID := range thIDs {
+		svc.connections[chID] = append(svc.connections[chID], thID)
 	}
 
-	svc.connections[chanID] = append(svc.connections[chanID], thingID)
 	return nil
 }
 

@@ -201,9 +201,9 @@ func (lm *loggingMiddleware) RemoveChannel(ctx context.Context, token, id string
 	return lm.svc.RemoveChannel(ctx, token, id)
 }
 
-func (lm *loggingMiddleware) Connect(ctx context.Context, token, chanID, thingID string) (err error) {
+func (lm *loggingMiddleware) Connect(ctx context.Context, token, chID string, thIDs ...string) (err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method connect for token %s, channel %s and thing %s took %s to complete", token, chanID, thingID, time.Since(begin))
+		message := fmt.Sprintf("Method connect for token %s, channel %s and things %s took %s to complete", token, chID, thIDs, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -211,7 +211,7 @@ func (lm *loggingMiddleware) Connect(ctx context.Context, token, chanID, thingID
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.Connect(ctx, token, chanID, thingID)
+	return lm.svc.Connect(ctx, token, chID, thIDs...)
 }
 
 func (lm *loggingMiddleware) Disconnect(ctx context.Context, token, chanID, thingID string) (err error) {

@@ -84,8 +84,8 @@ type Service interface {
 	// belongs to the user identified by the provided key.
 	RemoveChannel(context.Context, string, string) error
 
-	// Connect adds thing to the channel's list of connected things.
-	Connect(context.Context, string, string, string) error
+	// Connect adds things to the channel's list of connected things.
+	Connect(context.Context, string, string, ...string) error
 
 	// Disconnect removes thing from the channel's list of connected
 	// things.
@@ -283,13 +283,13 @@ func (ts *thingsService) RemoveChannel(ctx context.Context, token, id string) er
 	return ts.channels.Remove(ctx, res.GetValue(), id)
 }
 
-func (ts *thingsService) Connect(ctx context.Context, token, chanID, thingID string) error {
+func (ts *thingsService) Connect(ctx context.Context, token, chID string, thIDs ...string) error {
 	res, err := ts.users.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return ErrUnauthorizedAccess
 	}
 
-	return ts.channels.Connect(ctx, res.GetValue(), chanID, thingID)
+	return ts.channels.Connect(ctx, res.GetValue(), chID, thIDs...)
 }
 
 func (ts *thingsService) Disconnect(ctx context.Context, token, chanID, thingID string) error {

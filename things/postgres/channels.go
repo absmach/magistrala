@@ -22,6 +22,12 @@ type channelRepository struct {
 	db Database
 }
 
+type dbConnection struct {
+	Channel string `db:"channel"`
+	Thing   string `db:"thing"`
+	Owner   string `db:"owner"`
+}
+
 // NewChannelRepository instantiates a PostgreSQL implementation of channel
 // repository.
 func NewChannelRepository(db Database) things.ChannelRepository {
@@ -149,23 +155,11 @@ func (cr channelRepository) RetrieveAll(ctx context.Context, owner string, offse
 		items = append(items, ch)
 	}
 
-	cq := ""
-	if name != "" {
-		cq = `AND LOWER(name) LIKE $2`
-	}
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM channels WHERE owner = :owner %s%s;`, nq, mq)
 
-	q = fmt.Sprintf(`SELECT COUNT(*) FROM channels WHERE owner = $1 %s;`, cq)
-
-	total := uint64(0)
-	switch name {
-	case "":
-		if err := cr.db.GetContext(ctx, &total, q, owner); err != nil {
-			return things.ChannelsPage{}, err
-		}
-	default:
-		if err := cr.db.GetContext(ctx, &total, q, owner, name); err != nil {
-			return things.ChannelsPage{}, err
-		}
+	total, err := total(ctx, cr.db, cq, params)
+	if err != nil {
+		return things.ChannelsPage{}, err
 	}
 
 	page := things.ChannelsPage{
@@ -438,8 +432,18 @@ func getMetadataQuery(m things.Metadata) ([]byte, string, error) {
 	return mb, mq, nil
 }
 
-type dbConnection struct {
-	Channel string `db:"channel"`
-	Thing   string `db:"thing"`
-	Owner   string `db:"owner"`
+func total(ctx context.Context, db Database, query string, params map[string]interface{}) (uint64, error) {
+	rows, err := db.NamedQueryContext(ctx, query, params)
+	if err != nil {
+		return 0, err
+	}
+
+	total := uint64(0)
+	if rows.Next() {
+		if err := rows.Scan(&total); err != nil {
+			return 0, err
+		}
+	}
+
+	return total, nil
 }

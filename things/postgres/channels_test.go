@@ -218,14 +218,22 @@ func TestSingleChannelRetrieval(t *testing.T) {
 }
 
 func TestMultiChannelRetrieval(t *testing.T) {
-	email := "channel-multi-retrieval@example.com"
 	dbMiddleware := postgres.NewDatabase(db)
 	chanRepo := postgres.NewChannelRepository(dbMiddleware)
-	channelName := "channel_name"
-	meta := things.Metadata{}
-	wrongMeta := things.Metadata{}
-	meta["name"] = "test-channel"
-	wrongMeta["wrong"] = "wrong"
+
+	email := "channel-multi-retrieval@example.com"
+	name := "channel_name"
+	metadata := things.Metadata{
+		"field": "value",
+	}
+	wrongMeta := things.Metadata{
+		"wrong": "wrong",
+	}
+
+	offset := uint64(1)
+	chNameNum := uint64(3)
+	chMetaNum := uint64(3)
+	chNameMetaNum := uint64(2)
 
 	n := uint64(10)
 	for i := uint64(0); i < n; i++ {
@@ -237,14 +245,18 @@ func TestMultiChannelRetrieval(t *testing.T) {
 			Owner: email,
 		}
 
-		// Create first two Channels with name.
-		if i < 2 {
-			ch.Name = channelName
+		// Create Channels with name.
+		if i < chNameNum {
+			ch.Name = name
 		}
-
-		// Create last two Channels with metadata.
-		if i >= 8 {
-			ch.Metadata = meta
+		// Create Channels with metadata.
+		if i >= chNameNum && i < chNameNum+chMetaNum {
+			ch.Metadata = metadata
+		}
+		// Create Channels with name and metadata.
+		if i >= n-chNameMetaNum {
+			ch.Metadata = metadata
+			ch.Name = name
 		}
 
 		chanRepo.Save(context.Background(), ch)
@@ -282,11 +294,11 @@ func TestMultiChannelRetrieval(t *testing.T) {
 		},
 		"retrieve channels with existing name": {
 			owner:  email,
-			offset: 1,
+			offset: offset,
 			limit:  n,
-			name:   channelName,
-			size:   1,
-			total:  2,
+			name:   name,
+			size:   chNameNum + chNameMetaNum - offset,
+			total:  chNameNum + chNameMetaNum,
 		},
 		"retrieve all channels with non-existing name": {
 			owner:  email,
@@ -300,25 +312,33 @@ func TestMultiChannelRetrieval(t *testing.T) {
 			owner:    email,
 			offset:   0,
 			limit:    n,
-			size:     2,
-			total:    n,
-			metadata: meta,
+			size:     chMetaNum + chNameMetaNum,
+			total:    chMetaNum + chNameMetaNum,
+			metadata: metadata,
 		},
 		"retrieve all channels with non-existing metadata": {
 			owner:    email,
 			offset:   0,
 			limit:    n,
-			size:     0,
-			total:    n,
+			total:    0,
 			metadata: wrongMeta,
+		},
+		"retrieve all channels with existing name and metadata": {
+			owner:    email,
+			offset:   0,
+			limit:    n,
+			size:     chNameMetaNum,
+			total:    chNameMetaNum,
+			name:     name,
+			metadata: metadata,
 		},
 	}
 
 	for desc, tc := range cases {
 		page, err := chanRepo.RetrieveAll(context.Background(), tc.owner, tc.offset, tc.limit, tc.name, tc.metadata)
 		size := uint64(len(page.Channels))
-		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
-		assert.Equal(t, tc.total, page.Total, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.total, page.Total))
+		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.size, size))
+		assert.Equal(t, tc.total, page.Total, fmt.Sprintf("%s: expected total %d got %d\n", desc, tc.total, page.Total))
 		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
 	}
 }

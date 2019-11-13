@@ -218,23 +218,11 @@ func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, offset,
 		items = append(items, th)
 	}
 
-	cq := ""
-	if name != "" {
-		cq = `AND LOWER(name) LIKE $2`
-	}
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM things WHERE owner = :owner %s%s;`, nq, mq)
 
-	q = fmt.Sprintf(`SELECT COUNT(*) FROM things WHERE owner = $1 %s;`, cq)
-
-	total := uint64(0)
-	switch name {
-	case "":
-		if err := tr.db.GetContext(ctx, &total, q, owner); err != nil {
-			return things.ThingsPage{}, err
-		}
-	default:
-		if err := tr.db.GetContext(ctx, &total, q, owner, name); err != nil {
-			return things.ThingsPage{}, err
-		}
+	total, err := total(ctx, tr.db, cq, params)
+	if err != nil {
+		return things.ThingsPage{}, err
 	}
 
 	page := things.ThingsPage{

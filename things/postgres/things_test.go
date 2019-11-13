@@ -380,14 +380,23 @@ func TestThingRetrieveByKey(t *testing.T) {
 }
 
 func TestMultiThingRetrieval(t *testing.T) {
-	email := "thing-multi-retrieval@example.com"
-	name := "mainflux"
-	metadata := make(map[string]interface{})
-	metadata["serial"] = "123456"
-	metadata["type"] = "test"
-	idp := uuid.New()
 	dbMiddleware := postgres.NewDatabase(db)
 	thingRepo := postgres.NewThingRepository(dbMiddleware)
+
+	email := "thing-multi-retrieval@example.com"
+	name := "mainflux"
+	metadata := things.Metadata{
+		"field": "value",
+	}
+	wrongMeta := things.Metadata{
+		"wrong": "wrong",
+	}
+
+	idp := uuid.New()
+	offset := uint64(1)
+	thNameNum := uint64(3)
+	thMetaNum := uint64(3)
+	thNameMetaNum := uint64(2)
 
 	n := uint64(10)
 	for i := uint64(0); i < n; i++ {
@@ -397,14 +406,22 @@ func TestMultiThingRetrieval(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 		th := things.Thing{
-			Owner:    email,
-			ID:       thid,
-			Key:      thkey,
-			Metadata: metadata,
+			Owner: email,
+			ID:    thid,
+			Key:   thkey,
 		}
 
-		// Create first two Things with name.
-		if i < 2 {
+		// Create Things with name.
+		if i < thNameNum {
+			th.Name = name
+		}
+		// Create Things with metadata.
+		if i >= thNameNum && i < thNameNum+thMetaNum {
+			th.Metadata = metadata
+		}
+		// Create Things with name and metadata.
+		if i >= n-thNameMetaNum {
+			th.Metadata = metadata
 			th.Name = name
 		}
 
@@ -446,8 +463,8 @@ func TestMultiThingRetrieval(t *testing.T) {
 			offset: 1,
 			limit:  n,
 			name:   name,
-			size:   1,
-			total:  2,
+			size:   thNameNum + thNameMetaNum - offset,
+			total:  thNameNum + thNameMetaNum,
 		},
 		"retrieve things with non-existing name": {
 			owner:  email,
@@ -457,12 +474,29 @@ func TestMultiThingRetrieval(t *testing.T) {
 			size:   0,
 			total:  0,
 		},
-		"retrieve things with metadata": {
+		"retrieve things with existing metadata": {
 			owner:    email,
 			offset:   0,
 			limit:    n,
-			size:     n,
-			total:    n,
+			size:     thMetaNum + thNameMetaNum,
+			total:    thMetaNum + thNameMetaNum,
+			metadata: metadata,
+		},
+		"retrieve things with non-existing metadata": {
+			owner:    email,
+			offset:   0,
+			limit:    n,
+			size:     0,
+			total:    0,
+			metadata: wrongMeta,
+		},
+		"retrieve all things with existing name and metadata": {
+			owner:    email,
+			offset:   0,
+			limit:    n,
+			size:     thNameMetaNum,
+			total:    thNameMetaNum,
+			name:     name,
 			metadata: metadata,
 		},
 	}
@@ -470,8 +504,8 @@ func TestMultiThingRetrieval(t *testing.T) {
 	for desc, tc := range cases {
 		page, err := thingRepo.RetrieveAll(context.Background(), tc.owner, tc.offset, tc.limit, tc.name, tc.metadata)
 		size := uint64(len(page.Things))
-		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
-		assert.Equal(t, tc.total, page.Total, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.total, page.Total))
+		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.size, size))
+		assert.Equal(t, tc.total, page.Total, fmt.Sprintf("%s: expected total %d got %d\n", desc, tc.total, page.Total))
 		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
 	}
 }

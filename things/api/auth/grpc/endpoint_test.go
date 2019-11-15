@@ -34,7 +34,7 @@ func TestCanAccessByKey(t *testing.T) {
 	cth := sths[0]
 	schs, _ := svc.CreateChannels(context.Background(), token, channel)
 	sch := schs[0]
-	svc.Connect(context.Background(), token, sch.ID, cth.ID)
+	svc.Connect(context.Background(), token, []string{sch.ID}, []string{cth.ID})
 
 	usersAddr := fmt.Sprintf("localhost:%d", port)
 	conn, _ := grpc.Dial(usersAddr, grpc.WithInsecure())
@@ -90,7 +90,7 @@ func TestCanAccessByID(t *testing.T) {
 	cth := sths[0]
 	schs, _ := svc.CreateChannels(context.Background(), token, channel)
 	sch := schs[0]
-	svc.Connect(context.Background(), token, sch.ID, cth.ID)
+	svc.Connect(context.Background(), token, []string{sch.ID}, []string{cth.ID})
 
 	usersAddr := fmt.Sprintf("localhost:%d", port)
 	conn, _ := grpc.Dial(usersAddr, grpc.WithInsecure())

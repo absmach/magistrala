@@ -240,3 +240,28 @@ func (req connectionReq) validate() error {
 
 	return nil
 }
+
+type createConnectionsReq struct {
+	token      string
+	ChannelIDs []string `json:"channel_ids,omitempty"`
+	ThingIDs   []string `json:"thing_ids,omitempty"`
+}
+
+func (req createConnectionsReq) validate() error {
+	if req.token == "" {
+		return things.ErrUnauthorizedAccess
+	}
+
+	for _, chID := range req.ChannelIDs {
+		if chID == "" {
+			return things.ErrMalformedEntity
+		}
+	}
+	for _, thingID := range req.ThingIDs {
+		if thingID == "" {
+			return things.ErrMalformedEntity
+		}
+	}
+
+	return nil
+}

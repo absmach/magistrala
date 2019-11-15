@@ -209,7 +209,7 @@ func TestListThingsByChannel(t *testing.T) {
 	schs, err := svc.CreateChannels(context.Background(), token, things.Channel{Name: "a"})
 	require.Nil(t, err, fmt.Sprintf("unexpected error %s", err))
 	sch := schs[0]
-	err = svc.Connect(context.Background(), token, sch.ID, sth.ID)
+	err = svc.Connect(context.Background(), token, []string{sch.ID}, []string{sth.ID})
 	require.Nil(t, err, fmt.Sprintf("unexpected error %s", err))
 
 	essvc := redis.NewEventStoreMiddleware(svc, redisClient)
@@ -445,7 +445,7 @@ func TestListChannelsByThing(t *testing.T) {
 	schs, err := svc.CreateChannels(context.Background(), token, things.Channel{Name: "a"})
 	require.Nil(t, err, fmt.Sprintf("unexpected error %s", err))
 	sch := schs[0]
-	err = svc.Connect(context.Background(), token, sch.ID, sth.ID)
+	err = svc.Connect(context.Background(), token, []string{sch.ID}, []string{sth.ID})
 	require.Nil(t, err, fmt.Sprintf("unexpected error %s", err))
 
 	essvc := redis.NewEventStoreMiddleware(svc, redisClient)
@@ -560,7 +560,7 @@ func TestConnectEvent(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		err := svc.Connect(context.Background(), tc.key, tc.chanID, tc.thingID)
+		err := svc.Connect(context.Background(), tc.key, []string{tc.chanID}, []string{tc.thingID})
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(&r.XReadArgs{
@@ -591,7 +591,7 @@ func TestDisconnectEvent(t *testing.T) {
 	schs, err := svc.CreateChannels(context.Background(), token, things.Channel{Name: "a"})
 	require.Nil(t, err, fmt.Sprintf("unexpected error %s", err))
 	sch := schs[0]
-	err = svc.Connect(context.Background(), token, sch.ID, sth.ID)
+	err = svc.Connect(context.Background(), token, []string{sch.ID}, []string{sth.ID})
 	require.Nil(t, err, fmt.Sprintf("unexpected error %s", err))
 
 	svc = redis.NewEventStoreMiddleware(svc, redisClient)

@@ -244,7 +244,7 @@ func (cr channelRepository) Remove(ctx context.Context, owner, id string) error 
 	return nil
 }
 
-func (cr channelRepository) Connect(ctx context.Context, owner, chanID string, thIDs ...string) error {
+func (cr channelRepository) Connect(ctx context.Context, owner string, chIDs, thIDs []string) error {
 	tx, err := cr.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
@@ -253,27 +253,29 @@ func (cr channelRepository) Connect(ctx context.Context, owner, chanID string, t
 	q := `INSERT INTO connections (channel_id, channel_owner, thing_id, thing_owner)
 	      VALUES (:channel, :owner, :thing, :owner);`
 
-	for _, thID := range thIDs {
-		dbco := dbConnection{
-			Channel: chanID,
-			Thing:   thID,
-			Owner:   owner,
-		}
-
-		_, err := tx.NamedExecContext(ctx, q, dbco)
-		if err != nil {
-			tx.Rollback()
-			pqErr, ok := err.(*pq.Error)
-			if ok {
-				switch pqErr.Code.Name() {
-				case errFK:
-					return things.ErrNotFound
-				case errDuplicate:
-					return things.ErrConflict
-				}
+	for _, chID := range chIDs {
+		for _, thID := range thIDs {
+			dbco := dbConnection{
+				Channel: chID,
+				Thing:   thID,
+				Owner:   owner,
 			}
 
-			return err
+			_, err := tx.NamedExecContext(ctx, q, dbco)
+			if err != nil {
+				tx.Rollback()
+				pqErr, ok := err.(*pq.Error)
+				if ok {
+					switch pqErr.Code.Name() {
+					case errFK:
+						return things.ErrNotFound
+					case errDuplicate:
+						return things.ErrConflict
+					}
+				}
+
+				return err
+			}
 		}
 	}
 

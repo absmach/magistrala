@@ -542,7 +542,7 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 		sths, err := thingRepo.Save(context.Background(), th)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		tid := sths[0].ID
-		err = channelRepo.Connect(context.Background(), email, cid, tid)
+		err = channelRepo.Connect(context.Background(), email, []string{cid}, []string{tid})
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	}
 

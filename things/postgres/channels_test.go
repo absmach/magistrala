@@ -179,7 +179,7 @@ func TestSingleChannelRetrieval(t *testing.T) {
 
 	schs, _ := chanRepo.Save(context.Background(), ch)
 	ch.ID = schs[0].ID
-	chanRepo.Connect(context.Background(), email, ch.ID, th.ID)
+	chanRepo.Connect(context.Background(), email, []string{ch.ID}, []string{th.ID})
 
 	nonexistentChanID, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -371,7 +371,7 @@ func TestMultiChannelRetrievalByThing(t *testing.T) {
 		schs, err := chanRepo.Save(context.Background(), ch)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		cid := schs[0].ID
-		err = chanRepo.Connect(context.Background(), email, cid, tid)
+		err = chanRepo.Connect(context.Background(), email, []string{cid}, []string{tid})
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	}
 
@@ -536,7 +536,7 @@ func TestConnect(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := chanRepo.Connect(context.Background(), tc.owner, tc.chanID, tc.thingID)
+		err := chanRepo.Connect(context.Background(), tc.owner, []string{tc.chanID}, []string{tc.thingID})
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -568,7 +568,7 @@ func TestDisconnect(t *testing.T) {
 		Owner: email,
 	})
 	chanID := schs[0].ID
-	chanRepo.Connect(context.Background(), email, chanID, thingID)
+	chanRepo.Connect(context.Background(), email, []string{chanID}, []string{thingID})
 
 	nonexistentThingID, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -652,7 +652,7 @@ func TestHasThing(t *testing.T) {
 		Owner: email,
 	})
 	chanID := schs[0].ID
-	chanRepo.Connect(context.Background(), email, chanID, thingID)
+	chanRepo.Connect(context.Background(), email, []string{chanID}, []string{thingID})
 
 	nonexistentChanID, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -725,7 +725,7 @@ func TestHasThingByID(t *testing.T) {
 		Owner: email,
 	})
 	chanID := schs[0].ID
-	chanRepo.Connect(context.Background(), email, chanID, thingID)
+	chanRepo.Connect(context.Background(), email, []string{chanID}, []string{thingID})
 
 	nonexistentChanID, err := uuid.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))

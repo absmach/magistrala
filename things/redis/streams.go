@@ -186,22 +186,24 @@ func (es eventStore) RemoveChannel(ctx context.Context, token, id string) error 
 	return nil
 }
 
-func (es eventStore) Connect(ctx context.Context, token, chID string, thIDs ...string) error {
-	if err := es.svc.Connect(ctx, token, chID, thIDs...); err != nil {
+func (es eventStore) Connect(ctx context.Context, token string, chIDs, thIDs []string) error {
+	if err := es.svc.Connect(ctx, token, chIDs, thIDs); err != nil {
 		return err
 	}
 
-	for _, thID := range thIDs {
-		event := connectThingEvent{
-			chanID:  chID,
-			thingID: thID,
+	for _, chID := range chIDs {
+		for _, thID := range thIDs {
+			event := connectThingEvent{
+				chanID:  chID,
+				thingID: thID,
+			}
+			record := &redis.XAddArgs{
+				Stream:       streamID,
+				MaxLenApprox: streamLen,
+				Values:       event.Encode(),
+			}
+			es.client.XAdd(record).Err()
 		}
-		record := &redis.XAddArgs{
-			Stream:       streamID,
-			MaxLenApprox: streamLen,
-			Values:       event.Encode(),
-		}
-		es.client.XAdd(record).Err()
 	}
 
 	return nil

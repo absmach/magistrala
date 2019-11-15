@@ -245,10 +245,18 @@ Only user, who is the owner of a channel and of the things, can connect the
 things to the channel (which is equivalent of giving permissions to these things
 to communicate over given communication group).
 
-To connect thing to the channel you should send following request:
+To connect a thing to the channel you should send following request:
 
-```
+> This endpoint will be depreciated in 0.11.0.  It will be replaced with the bulk endpoint found at /connect.
+
+```bash
 curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X PUT -H "Authorization: <user_auth_token>" https://localhost/channels/<channel_id>/things/<thing_id>
+```
+
+To connect multiple things to a channel, you can send the following request:
+
+```bash
+curl -s -S -i --cacert docker/ssl/certs/mainflux-server.crt --insecure -X POST -H "Content-Type: application/json" -H "Authorization: <user_auth_token>" https://localhost/connect -d '{"channel_ids":["<channel_id>", "<channel_id>"],"thing_ids":["<thing_id>", "<thing_id>"]}'
 ```
 
 You can observe which things are connected to specific channel:

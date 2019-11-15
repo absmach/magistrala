@@ -48,7 +48,7 @@ type ChannelRepository interface {
 	Remove(context.Context, string, string) error
 
 	// Connect adds things to the channel's list of connected things.
-	Connect(context.Context, string, string, ...string) error
+	Connect(context.Context, string, []string, []string) error
 
 	// Disconnect removes thing from the channel's list of connected
 	// things.

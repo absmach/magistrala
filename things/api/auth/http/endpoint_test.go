@@ -155,7 +155,7 @@ func TestCanAccessByKey(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("failed to create channel: %s", err))
 	sch := schs[0]
 
-	err = svc.Connect(context.Background(), token, sch.ID, sth.ID)
+	err = svc.Connect(context.Background(), token, []string{sch.ID}, []string{sth.ID})
 	require.Nil(t, err, fmt.Sprintf("failed to connect thing and channel: %s", err))
 
 	car := canAccessByKeyReq{
@@ -234,7 +234,7 @@ func TestCanAccessByID(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("failed to create channel: %s", err))
 	sch := schs[0]
 
-	err = svc.Connect(context.Background(), token, sch.ID, sth.ID)
+	err = svc.Connect(context.Background(), token, []string{sch.ID}, []string{sth.ID})
 	require.Nil(t, err, fmt.Sprintf("failed to connect thing and channel: %s", err))
 
 	car := canAccessByIDReq{

@@ -281,7 +281,7 @@ func TestListThingsByChannel(t *testing.T) {
 		sths, err := svc.CreateThings(context.Background(), token, thing)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		sth := sths[0]
-		svc.Connect(context.Background(), token, sch.ID, sth.ID)
+		svc.Connect(context.Background(), token, []string{sch.ID}, []string{sth.ID})
 	}
 
 	// Wait for things and channels to connect
@@ -622,7 +622,7 @@ func TestListChannelsByThing(t *testing.T) {
 		schs, err := svc.CreateChannels(context.Background(), token, channel)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		sch := schs[0]
-		svc.Connect(context.Background(), token, sch.ID, sth.ID)
+		svc.Connect(context.Background(), token, []string{sch.ID}, []string{sth.ID})
 	}
 
 	// Wait for things and channels to connect.
@@ -791,7 +791,7 @@ func TestConnect(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := svc.Connect(context.Background(), tc.token, tc.chanID, tc.thingID)
+		err := svc.Connect(context.Background(), tc.token, []string{tc.chanID}, []string{tc.thingID})
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -803,7 +803,7 @@ func TestDisconnect(t *testing.T) {
 	sth := sths[0]
 	schs, _ := svc.CreateChannels(context.Background(), token, channel)
 	sch := schs[0]
-	svc.Connect(context.Background(), token, sch.ID, sth.ID)
+	svc.Connect(context.Background(), token, []string{sch.ID}, []string{sth.ID})
 
 	cases := []struct {
 		desc    string
@@ -863,7 +863,7 @@ func TestCanAccessByKey(t *testing.T) {
 	sth := sths[0]
 	schs, _ := svc.CreateChannels(context.Background(), token, channel)
 	sch := schs[0]
-	svc.Connect(context.Background(), token, sch.ID, sth.ID)
+	svc.Connect(context.Background(), token, []string{sch.ID}, []string{sth.ID})
 
 	cases := map[string]struct {
 		token   string
@@ -900,7 +900,7 @@ func TestCanAccessByID(t *testing.T) {
 	sth := sths[0]
 	schs, _ := svc.CreateChannels(context.Background(), token, channel)
 	sch := schs[0]
-	svc.Connect(context.Background(), token, sch.ID, sth.ID)
+	svc.Connect(context.Background(), token, []string{sch.ID}, []string{sth.ID})
 
 	cases := map[string]struct {
 		thingID string

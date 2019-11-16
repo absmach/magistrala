@@ -18,7 +18,7 @@ The tool supports multiple concurrent clients, publishers and subscribers config
 
 ```
 ./mqtt-bench --help
-Tool for exctensive load and benchmarking of MQTT brokers used within Mainflux platform.
+Tool for extensive load and benchmarking of MQTT brokers used within Mainflux platform.
 Complete documentation is available at https://mainflux.readthedocs.io
 
 Usage:
@@ -39,11 +39,12 @@ Flags:
   -r, --retain            Retain mqtt messages
   -z, --size int          Size of message payload bytes (default 100)
   -t, --skipTLSVer        Skip tls verification
+  -t, --timeout           Timeout mqtt messages (default 10000)
 ```
 
 Two output formats supported: human-readable plain text and JSON.
 
-Before use you need a `mfconn.toml` - a TOML file that describes Mainflux connection data (channles, thingIDs, thingKeys, certs).
+Before use you need a `mfconn.toml` - a TOML file that describes Mainflux connection data (channels, thingIDs, thingKeys, certs).
 You can use `provision` tool (in tools/provision) to create this TOML config file.
 
 Example use and output

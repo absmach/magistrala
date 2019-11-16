@@ -49,6 +49,7 @@ Complete documentation is available at https://mainflux.readthedocs.io`,
 	rootCmd.PersistentFlags().StringVarP(&bconf.MQTT.Message.Format, "format", "f", "text", "Output format: text|json")
 	rootCmd.PersistentFlags().IntVarP(&bconf.MQTT.Message.QoS, "qos", "q", 0, "QoS for published messages, values 0 1 2")
 	rootCmd.PersistentFlags().BoolVarP(&bconf.MQTT.Message.Retain, "retain", "r", false, "Retain mqtt messages")
+	rootCmd.PersistentFlags().IntVarP(&bconf.MQTT.Timeout, "timeout", "o", 10000, "Timeout mqtt messages")
 
 	// MQTT TLS
 	rootCmd.PersistentFlags().BoolVarP(&bconf.MQTT.TLS.MTLS, "mtls", "", false, "Use mtls for connection")

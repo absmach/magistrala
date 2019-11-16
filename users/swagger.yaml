@@ -121,6 +121,7 @@ paths:
           description: JSON-formatted document containing user email.
           in: body
           schema:
+            $ref: "#/parameters/Authorization"
             $ref: "#/definitions/PasswordResetRequest"
           required: true
       responses:
@@ -224,6 +225,12 @@ parameters:
   Authorization:
     name: Authorization
     description: User's access token.
+    in: header
+    type: string
+    required: true
+  Referer:
+    name: Referer
+    description: Host being sent by browser.
     in: header
     type: string
     required: true

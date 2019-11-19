@@ -26,7 +26,7 @@ define make_docker
 endef
 
 define make_docker_dev
-	$(eval svc=$(subst docker_,,$(1)))
+	$(eval svc=$(subst docker_dev_,,$(1)))
 
 	docker build \
 		--no-cache \

@@ -37,7 +37,7 @@ endef
 
 all: $(SERVICES) mqtt
 
-.PHONY: all $(SERVICES) dockers dockers_dev latest release mqtt ui
+.PHONY: all $(SERVICES) dockers dockers_dev latest release mqtt
 
 clean:
 	rm -rf ${BUILD_DIR}
@@ -81,9 +81,6 @@ $(DOCKERS):
 $(DOCKERS_DEV):
 	$(call make_docker_dev,$(@))
 
-docker_ui:
-	$(MAKE) -C ui docker
-
 docker_mqtt:
 	# MQTT Docker build must be done from root dir because it copies .proto files
 ifeq ($(GOARCH), arm)
@@ -99,9 +96,6 @@ dockers: $(DOCKERS) docker_ui docker_mqtt
 
 dockers_dev: $(DOCKERS_DEV)
 
-ui:
-	$(MAKE) -C ui
-
 mqtt:
 	cd mqtt/aedes && npm install
 
@@ -109,7 +103,6 @@ define docker_push
 	for svc in $(SERVICES); do \
 		docker push mainflux/$$svc:$(1); \
 	done
-	docker push mainflux/ui:$(1)
 	docker push mainflux/mqtt:$(1)
 endef
 
@@ -135,9 +128,6 @@ rundev:
 
 run:
 	docker-compose -f docker/docker-compose.yml -f docker/aedes.yml up
-
-runui:
-	$(MAKE) -C ui run
 
 runlora:
 	docker-compose \

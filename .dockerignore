@@ -1,7 +1,6 @@
 .git
 .github
 build
-ui
 docker
 docs
 k8s

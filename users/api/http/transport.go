@@ -6,11 +6,12 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/mainflux/mainflux/errors"
 
 	kitot "github.com/go-kit/kit/tracing/opentracing"
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -25,11 +26,14 @@ import (
 const contentType = "application/json"
 
 var (
-	errUnsupportedContentType = errors.New("unsupported content type")
+	// ErrUnsupportedContentType indicates unacceptable or lack of Content-Type
+	ErrUnsupportedContentType = errors.New("unsupported content type")
 	errMissingRefererHeader   = errors.New("missing referer header")
 	errInvalidToken           = errors.New("invalid token")
 	errNoTokenSupplied        = errors.New("no token supplied")
-	logger                    log.Logger
+	// ErrFailedDecode indicates failed to decode request body
+	ErrFailedDecode = errors.New("failed to decode request body")
+	logger          log.Logger
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
@@ -117,14 +121,12 @@ func decodeUpdateUser(_ context.Context, r *http.Request) (interface{}, error) {
 
 func decodeCredentials(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		logger.Warn("Invalid or missing content type.")
-		return nil, errUnsupportedContentType
+		return nil, ErrUnsupportedContentType
 	}
 
 	var user users.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		logger.Warn(fmt.Sprintf("Failed to decode user credentials: %s", err))
-		return nil, err
+		return nil, errors.Wrap(users.ErrMalformedEntity, err)
 	}
 
 	return userReq{user}, nil
@@ -133,13 +135,14 @@ func decodeCredentials(_ context.Context, r *http.Request) (interface{}, error) 
 func decodePasswordResetRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		logger.Warn("Invalid or missing content type.")
-		return nil, errUnsupportedContentType
+		return nil, ErrUnsupportedContentType
 	}
 
 	var req passwResetReq
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Warn(fmt.Sprintf("Failed to decode reset request: %s", err))
-		return nil, err
+		return nil, errors.Wrap(ErrFailedDecode, err)
 	}
 
 	req.Host = r.Header.Get("Referer")
@@ -149,13 +152,13 @@ func decodePasswordResetRequest(_ context.Context, r *http.Request) (interface{}
 func decodePasswordReset(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		logger.Warn("Invalid or missing content type.")
-		return nil, errUnsupportedContentType
+		return nil, ErrUnsupportedContentType
 	}
 
 	var req resetTokenReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Warn(fmt.Sprintf("Failed to decode reset request: %s", err))
-		return nil, err
+		return nil, errors.Wrap(ErrFailedDecode, err)
 	}
 
 	return req, nil
@@ -164,13 +167,13 @@ func decodePasswordReset(_ context.Context, r *http.Request) (interface{}, error
 func decodePasswordChange(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		logger.Warn("Invalid or missing content type.")
-		return nil, errUnsupportedContentType
+		return nil, ErrUnsupportedContentType
 	}
 
 	var req passwChangeReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Warn(fmt.Sprintf("Failed to decode reset request: %s", err))
-		return nil, err
+		return nil, errors.Wrap(ErrFailedDecode, err)
 	}
 
 	req.Token = r.Header.Get("Authorization")
@@ -192,13 +195,11 @@ func decodeToken(_ context.Context, r *http.Request) (interface{}, error) {
 
 }
 func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
-	w.Header().Set("Content-Type", contentType)
-
 	if ar, ok := response.(mainflux.Response); ok {
 		for k, v := range ar.Headers() {
 			w.Header().Set(k, v)
 		}
-
+		w.Header().Set("Content-Type", contentType)
 		w.WriteHeader(ar.Code())
 
 		if ar.Empty() {
@@ -210,31 +211,33 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
-	w.Header().Set("Content-Type", contentType)
-
-	switch err {
-	case users.ErrMalformedEntity:
-		w.WriteHeader(http.StatusBadRequest)
-	case users.ErrUnauthorizedAccess:
-		w.WriteHeader(http.StatusForbidden)
-	case users.ErrUserNotFound:
-		w.WriteHeader(http.StatusNotFound)
-	case users.ErrConflict:
-		w.WriteHeader(http.StatusConflict)
-	case errUnsupportedContentType:
-		w.WriteHeader(http.StatusUnsupportedMediaType)
-	case io.ErrUnexpectedEOF:
-		w.WriteHeader(http.StatusBadRequest)
-	case io.EOF:
-		w.WriteHeader(http.StatusBadRequest)
-	default:
-		switch err.(type) {
-		case *json.SyntaxError:
+	switch errorVal := err.(type) {
+	case errors.Error:
+		w.Header().Set("Content-Type", contentType)
+		switch {
+		case errors.Contains(errorVal, users.ErrMalformedEntity):
 			w.WriteHeader(http.StatusBadRequest)
-		case *json.UnmarshalTypeError:
+			logger.Warn(fmt.Sprintf("Failed to decode user credentials: %s", errorVal))
+		case errors.Contains(errorVal, users.ErrUnauthorizedAccess):
+			w.WriteHeader(http.StatusForbidden)
+		case errors.Contains(errorVal, users.ErrConflict):
+			w.WriteHeader(http.StatusConflict)
+		case errors.Contains(errorVal, ErrUnsupportedContentType):
+			w.WriteHeader(http.StatusUnsupportedMediaType)
+			logger.Warn("Invalid or missing content type.")
+		case errors.Contains(errorVal, ErrFailedDecode):
 			w.WriteHeader(http.StatusBadRequest)
-		default:
-			w.WriteHeader(http.StatusInternalServerError)
+		case errors.Contains(errorVal, io.ErrUnexpectedEOF):
+			w.WriteHeader(http.StatusBadRequest)
+		case errors.Contains(errorVal, io.EOF):
+			w.WriteHeader(http.StatusBadRequest)
+		case errors.Contains(errorVal, users.ErrUserNotFound):
+			w.WriteHeader(http.StatusBadRequest)
 		}
+		if errorVal.Msg() != "" {
+			json.NewEncoder(w).Encode(errorRes{Err: errorVal.Msg()})
+		}
+	default:
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 }

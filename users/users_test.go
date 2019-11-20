@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/users"
 	"github.com/stretchr/testify/assert"
 )
@@ -54,6 +55,6 @@ func TestValidate(t *testing.T) {
 
 	for desc, tc := range cases {
 		err := tc.user.Validate()
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s", desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }

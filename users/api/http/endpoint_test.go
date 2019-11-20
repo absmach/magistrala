@@ -151,13 +151,13 @@ func TestLogin(t *testing.T) {
 		res         string
 	}{
 		{"login with valid credentials", data, contentType, http.StatusCreated, tokenData},
-		{"login with invalid credentials", invalidData, contentType, http.StatusForbidden, ""},
-		{"login with invalid email address", invalidEmailData, contentType, http.StatusBadRequest, ""},
-		{"login non-existent user", nonexistentData, contentType, http.StatusForbidden, ""},
-		{"login with invalid request format", "{", contentType, http.StatusBadRequest, ""},
-		{"login with empty JSON request", "{}", contentType, http.StatusBadRequest, ""},
-		{"login with empty request", "", contentType, http.StatusBadRequest, ""},
-		{"login with missing content type", data, "", http.StatusUnsupportedMediaType, ""},
+		{"login with invalid credentials", invalidData, contentType, http.StatusForbidden, toJSON(errorRes{users.ErrUnauthorizedAccess.Error()})},
+		{"login with invalid email address", invalidEmailData, contentType, http.StatusBadRequest, toJSON(errorRes{users.ErrMalformedEntity.Error()})},
+		{"login non-existent user", nonexistentData, contentType, http.StatusForbidden, toJSON(errorRes{users.ErrUnauthorizedAccess.Error()})},
+		{"login with invalid request format", "{", contentType, http.StatusBadRequest, toJSON(errorRes{users.ErrMalformedEntity.Error()})},
+		{"login with empty JSON request", "{}", contentType, http.StatusBadRequest, toJSON(errorRes{users.ErrMalformedEntity.Error()})},
+		{"login with empty request", "", contentType, http.StatusBadRequest, toJSON(errorRes{users.ErrMalformedEntity.Error()})},
+		{"login with missing content type", data, "", http.StatusUnsupportedMediaType, toJSON(errorRes{httpapi.ErrUnsupportedContentType.Error()})},
 	}
 
 	for _, tc := range cases {
@@ -229,12 +229,6 @@ func TestPasswordResetRequest(t *testing.T) {
 		Password: "pass",
 	})
 
-	expectedNonExistent := toJSON(struct {
-		Msg string `json:"msg"`
-	}{
-		users.ErrUserNotFound.Error(),
-	})
-
 	expectedExisting := toJSON(struct {
 		Msg string `json:"msg"`
 	}{
@@ -251,11 +245,11 @@ func TestPasswordResetRequest(t *testing.T) {
 		res         string
 	}{
 		{"password reset request with valid email", data, contentType, http.StatusCreated, expectedExisting},
-		{"password reset request with invalid email", nonexistentData, contentType, http.StatusCreated, expectedNonExistent},
-		{"password reset request with invalid request format", "{", contentType, http.StatusBadRequest, ""},
-		{"password reset request with empty JSON request", "{}", contentType, http.StatusBadRequest, ""},
-		{"password reset request with empty request", "", contentType, http.StatusBadRequest, ""},
-		{"password reset request with missing content type", data, "", http.StatusUnsupportedMediaType, ""},
+		{"password reset request with invalid email", nonexistentData, contentType, http.StatusBadRequest, toJSON(errorRes{users.ErrUserNotFound.Error()})},
+		{"password reset request with invalid request format", "{", contentType, http.StatusBadRequest, toJSON(errorRes{httpapi.ErrFailedDecode.Error()})},
+		{"password reset request with empty JSON request", "{}", contentType, http.StatusBadRequest, toJSON(errorRes{users.ErrMalformedEntity.Error()})},
+		{"password reset request with empty request", "", contentType, http.StatusBadRequest, toJSON(errorRes{httpapi.ErrFailedDecode.Error()})},
+		{"password reset request with missing content type", data, "", http.StatusUnsupportedMediaType, toJSON(errorRes{httpapi.ErrUnsupportedContentType.Error()})},
 	}
 
 	for _, tc := range cases {
@@ -297,7 +291,6 @@ func TestPasswordReset(t *testing.T) {
 	expectedSuccess := toJSON(resData)
 
 	resData.Msg = users.ErrUserNotFound.Error()
-	expectedNonExUser := toJSON(resData)
 
 	svc.Register(context.Background(), user)
 	tok, _ := tokenizer.Generate(user.Email, 0)
@@ -324,12 +317,12 @@ func TestPasswordReset(t *testing.T) {
 		tok         string
 	}{
 		{"password reset with valid token", reqExisting, contentType, http.StatusCreated, expectedSuccess, tok},
-		{"password reset with invalid token", reqNoExist, contentType, http.StatusCreated, expectedNonExUser, tok},
-		{"password reset with confirm password not matching", reqPassNoMatch, contentType, http.StatusBadRequest, "", tok},
-		{"password reset request with invalid request format", "{", contentType, http.StatusBadRequest, "", tok},
-		{"password reset request with empty JSON request", "{}", contentType, http.StatusBadRequest, "", tok},
-		{"password reset request with empty request", "", contentType, http.StatusBadRequest, "", tok},
-		{"password reset request with missing content type", reqExisting, "", http.StatusUnsupportedMediaType, "", tok},
+		{"password reset with invalid token", reqNoExist, contentType, http.StatusBadRequest, toJSON(errorRes{users.ErrUserNotFound.Error()}), tok},
+		{"password reset with confirm password not matching", reqPassNoMatch, contentType, http.StatusBadRequest, toJSON(errorRes{users.ErrMalformedEntity.Error()}), tok},
+		{"password reset request with invalid request format", "{", contentType, http.StatusBadRequest, toJSON(errorRes{httpapi.ErrFailedDecode.Error()}), tok},
+		{"password reset request with empty JSON request", "{}", contentType, http.StatusBadRequest, toJSON(errorRes{users.ErrMalformedEntity.Error()}), tok},
+		{"password reset request with empty request", "", contentType, http.StatusBadRequest, toJSON(errorRes{httpapi.ErrFailedDecode.Error()}), tok},
+		{"password reset request with missing content type", reqExisting, "", http.StatusUnsupportedMediaType, toJSON(errorRes{httpapi.ErrUnsupportedContentType.Error()}), tok},
 	}
 
 	for _, tc := range cases {
@@ -371,7 +364,6 @@ func TestPasswordChange(t *testing.T) {
 		OldPassw string `json:"old_password,omitempty"`
 	}{}
 	resData.Msg = users.ErrUnauthorizedAccess.Error()
-	expectedNonExUser := toJSON(resData)
 
 	svc.Register(context.Background(), user)
 	tok, _ := j.TemporaryKey(user.Email)
@@ -391,7 +383,6 @@ func TestPasswordChange(t *testing.T) {
 	reqWrongPass := toJSON(reqData)
 
 	resData.Msg = users.ErrUnauthorizedAccess.Error()
-	expWronPassRes := toJSON(resData)
 
 	cases := []struct {
 		desc        string
@@ -402,11 +393,11 @@ func TestPasswordChange(t *testing.T) {
 		tok         string
 	}{
 		{"password change with valid token", dataResExisting, contentType, http.StatusCreated, expectedSuccess, tok},
-		{"password change with invalid token", reqNoExist, contentType, http.StatusCreated, expectedNonExUser, tokNoUser},
-		{"password change with invalid old password", reqWrongPass, contentType, http.StatusCreated, expWronPassRes, tok},
-		{"password change with empty JSON request", "{}", contentType, http.StatusBadRequest, "", tok},
-		{"password change empty request", "", contentType, http.StatusBadRequest, "", tok},
-		{"password change missing content type", dataResExisting, "", http.StatusUnsupportedMediaType, "", tok},
+		{"password change with invalid token", reqNoExist, contentType, http.StatusForbidden, toJSON(errorRes{users.ErrUnauthorizedAccess.Error()}), tokNoUser},
+		{"password change with invalid old password", reqWrongPass, contentType, http.StatusForbidden, toJSON(errorRes{users.ErrUnauthorizedAccess.Error()}), tok},
+		{"password change with empty JSON request", "{}", contentType, http.StatusBadRequest, toJSON(errorRes{users.ErrMalformedEntity.Error()}), tok},
+		{"password change empty request", "", contentType, http.StatusBadRequest, toJSON(errorRes{httpapi.ErrFailedDecode.Error()}), tok},
+		{"password change missing content type", dataResExisting, "", http.StatusUnsupportedMediaType, toJSON(errorRes{httpapi.ErrUnsupportedContentType.Error()}), tok},
 	}
 
 	for _, tc := range cases {
@@ -428,4 +419,8 @@ func TestPasswordChange(t *testing.T) {
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		assert.Equal(t, tc.res, token, fmt.Sprintf("%s: expected body %s got %s", tc.desc, tc.res, token))
 	}
+}
+
+type errorRes struct {
+	Err string `json:"error"`
 }

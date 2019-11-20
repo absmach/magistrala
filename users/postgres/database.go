@@ -5,6 +5,9 @@ import (
 	"database/sql"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
+	"github.com/mainflux/mainflux/errors"
+	"github.com/mainflux/mainflux/users"
 	"github.com/opentracing/opentracing-go"
 )
 
@@ -31,7 +34,11 @@ func NewDatabase(db *sqlx.DB) Database {
 
 func (dm database) NamedExecContext(ctx context.Context, query string, args interface{}) (sql.Result, error) {
 	addSpanTags(ctx, query)
-	return dm.db.NamedExecContext(ctx, query, args)
+	result, err := dm.db.NamedExecContext(ctx, query, args)
+	if pqErr, ok := err.(*pq.Error); ok && errDuplicate == pqErr.Code.Name() {
+		return result, errors.Wrap(users.ErrConflict, err)
+	}
+	return result, err
 }
 
 func (dm database) QueryRowxContext(ctx context.Context, query string, args ...interface{}) *sqlx.Row {

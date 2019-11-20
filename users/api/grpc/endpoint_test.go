@@ -16,6 +16,7 @@ import (
 	"github.com/mainflux/mainflux/users/mocks"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -50,7 +51,8 @@ func startGRPCServer(svc users.Service, port int) {
 }
 
 func TestIdentify(t *testing.T) {
-	svc.Register(context.Background(), user)
+	err := svc.Register(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("Error creating User: %s", err))
 
 	usersAddr := fmt.Sprintf("localhost:%d", port)
 	conn, _ := grpc.Dial(usersAddr, grpc.WithInsecure())

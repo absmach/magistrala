@@ -102,11 +102,17 @@ paths:
         400:
           description: |
             Failed due to malformed JSON.
+          schema:
+            $ref: "#/definitions/Error"
         403:
           description: |
             Failed due to using invalid credentials.
+          schema:
+            $ref: "#/definitions/Error"
         415:
           description: Missing or invalid content type.
+          schema:
+            $ref: "#/definitions/Error"
         500:
           $ref: "#/responses/ServiceError"
   /password/reset-request:
@@ -286,3 +292,9 @@ definitions:
       old_password:
         type: string
         description: Confirm password
+  Error:
+    type: object
+    properties:
+      error:
+        type: string
+        description: Error message

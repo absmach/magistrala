@@ -8,6 +8,7 @@ import (
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/users"
 )
 
@@ -27,7 +28,7 @@ func New(secret string) users.IdentityProvider {
 	return &jwtIdentityProvider{secret}
 }
 
-func (idp *jwtIdentityProvider) TemporaryKey(id string) (string, error) {
+func (idp *jwtIdentityProvider) TemporaryKey(id string) (string, errors.Error) {
 	now := time.Now().UTC()
 	exp := now.Add(duration)
 
@@ -41,7 +42,7 @@ func (idp *jwtIdentityProvider) TemporaryKey(id string) (string, error) {
 	return idp.jwt(claims)
 }
 
-func (idp *jwtIdentityProvider) Identity(key string) (string, error) {
+func (idp *jwtIdentityProvider) Identity(key string) (string, errors.Error) {
 	token, err := jwt.Parse(key, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, users.ErrUnauthorizedAccess
@@ -51,7 +52,8 @@ func (idp *jwtIdentityProvider) Identity(key string) (string, error) {
 	})
 
 	if err != nil {
-		return "", users.ErrUnauthorizedAccess
+		return "", errors.Wrap(users.ErrUnauthorizedAccess, err)
+
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
@@ -63,7 +65,11 @@ func (idp *jwtIdentityProvider) Identity(key string) (string, error) {
 	return "", users.ErrUnauthorizedAccess
 }
 
-func (idp *jwtIdentityProvider) jwt(claims jwt.StandardClaims) (string, error) {
+func (idp *jwtIdentityProvider) jwt(claims jwt.StandardClaims) (string, errors.Error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(idp.secret))
+	tok, err := token.SignedString([]byte(idp.secret))
+	if err != nil {
+		return tok, errors.Wrap(users.ErrGetToken, err)
+	}
+	return tok, nil
 }

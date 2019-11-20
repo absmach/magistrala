@@ -5,11 +5,17 @@
 package bcrypt
 
 import (
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/users"
 	"golang.org/x/crypto/bcrypt"
 )
 
 const cost int = 10
+
+var (
+	errHashPassword    = errors.New("Generate hash from password failed")
+	errComparePassword = errors.New("Compare hash and password failed")
+)
 
 var _ users.Hasher = (*bcryptHasher)(nil)
 
@@ -20,15 +26,19 @@ func New() users.Hasher {
 	return &bcryptHasher{}
 }
 
-func (bh *bcryptHasher) Hash(pwd string) (string, error) {
+func (bh *bcryptHasher) Hash(pwd string) (string, errors.Error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(pwd), cost)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(errHashPassword, err)
 	}
 
 	return string(hash), nil
 }
 
-func (bh *bcryptHasher) Compare(plain, hashed string) error {
-	return bcrypt.CompareHashAndPassword([]byte(hashed), []byte(plain))
+func (bh *bcryptHasher) Compare(plain, hashed string) errors.Error {
+	err := bcrypt.CompareHashAndPassword([]byte(hashed), []byte(plain))
+	if err != nil {
+		return errors.Wrap(errComparePassword, err)
+	}
+	return nil
 }

@@ -65,6 +65,10 @@ func (res identityRes) Empty() bool {
 	return false
 }
 
+type errorRes struct {
+	Err string `json:"error"`
+}
+
 type passwChangeRes struct {
 	Msg string `json:"msg"`
 }

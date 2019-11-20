@@ -9,8 +9,16 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 
-	"github.com/lib/pq"
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/users"
+)
+
+var (
+	errSaveUserDB       = errors.New("Save user to DB failed")
+	errUpdateDB         = errors.New("Update user email to DB failed")
+	errUpdateUserDB     = errors.New("Update user metadata to DB failed")
+	errRetrieveDB       = errors.New("Retreiving from DB failed")
+	errUpdatePasswordDB = errors.New("Update password to DB failed")
 )
 
 var _ users.UserRepository = (*userRepository)(nil)
@@ -29,49 +37,40 @@ func New(db Database) users.UserRepository {
 	}
 }
 
-func (ur userRepository) Save(ctx context.Context, user users.User) error {
+func (ur userRepository) Save(ctx context.Context, user users.User) errors.Error {
 	q := `INSERT INTO users (email, password, metadata) VALUES (:email, :password, :metadata)`
 
 	dbu := toDBUser(user)
 	if _, err := ur.db.NamedExecContext(ctx, q, dbu); err != nil {
-		if pqErr, ok := err.(*pq.Error); ok && errDuplicate == pqErr.Code.Name() {
-			return users.ErrConflict
-		}
-		return err
+		return errors.Wrap(errSaveUserDB, err)
 	}
 
 	return nil
 }
 
-func (ur userRepository) Update(ctx context.Context, user users.User) error {
+func (ur userRepository) Update(ctx context.Context, user users.User) errors.Error {
 	q := `UPDATE users SET(email, password, metadata) VALUES (:email, :password, :metadata) WHERE email = :email`
 
 	dbu := toDBUser(user)
 	if _, err := ur.db.NamedExecContext(ctx, q, dbu); err != nil {
-		if pqErr, ok := err.(*pq.Error); ok && errDuplicate == pqErr.Code.Name() {
-			return users.ErrConflict
-		}
-		return err
+		return errors.Wrap(errUpdateDB, err)
 	}
 
 	return nil
 }
 
-func (ur userRepository) UpdateUser(ctx context.Context, user users.User) error {
+func (ur userRepository) UpdateUser(ctx context.Context, user users.User) errors.Error {
 	q := `UPDATE users SET metadata = :metadata WHERE email = :email`
 
 	dbu := toDBUser(user)
 	if _, err := ur.db.NamedExecContext(ctx, q, dbu); err != nil {
-		if pqErr, ok := err.(*pq.Error); ok && errDuplicate == pqErr.Code.Name() {
-			return users.ErrConflict
-		}
-		return err
+		return errors.Wrap(errUpdateUserDB, err)
 	}
 
 	return nil
 }
 
-func (ur userRepository) RetrieveByID(ctx context.Context, email string) (users.User, error) {
+func (ur userRepository) RetrieveByID(ctx context.Context, email string) (users.User, errors.Error) {
 	q := `SELECT password, metadata FROM users WHERE email = $1`
 
 	dbu := dbUser{
@@ -79,9 +78,10 @@ func (ur userRepository) RetrieveByID(ctx context.Context, email string) (users.
 	}
 	if err := ur.db.QueryRowxContext(ctx, q, email).StructScan(&dbu); err != nil {
 		if err == sql.ErrNoRows {
-			return users.User{}, users.ErrNotFound
+			return users.User{}, errors.Wrap(users.ErrNotFound, err)
+
 		}
-		return users.User{}, err
+		return users.User{}, errors.Wrap(errRetrieveDB, err)
 	}
 
 	user := toUser(dbu)
@@ -89,7 +89,7 @@ func (ur userRepository) RetrieveByID(ctx context.Context, email string) (users.
 	return user, nil
 }
 
-func (ur userRepository) UpdatePassword(ctx context.Context, email, password string) error {
+func (ur userRepository) UpdatePassword(ctx context.Context, email, password string) errors.Error {
 	q := `UPDATE users SET password = :password WHERE email = :email`
 
 	db := dbUser{
@@ -98,7 +98,7 @@ func (ur userRepository) UpdatePassword(ctx context.Context, email, password str
 	}
 
 	if _, err := ur.db.NamedExecContext(ctx, q, db); err != nil {
-		return err
+		return errors.Wrap(errUpdatePasswordDB, err)
 	}
 
 	return nil

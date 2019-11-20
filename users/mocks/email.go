@@ -3,7 +3,10 @@
 
 package mocks
 
-import "github.com/mainflux/mainflux/users"
+import (
+	"github.com/mainflux/mainflux/errors"
+	"github.com/mainflux/mainflux/users"
+)
 
 type emailerMock struct {
 }
@@ -13,6 +16,6 @@ func NewEmailer() users.Emailer {
 	return &emailerMock{}
 }
 
-func (e *emailerMock) SendPasswordReset([]string, string, string) error {
+func (e *emailerMock) SendPasswordReset([]string, string, string) errors.Error {
 	return nil
 }

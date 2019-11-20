@@ -141,12 +141,11 @@ func TestUserInfo(t *testing.T) {
 	}
 }
 
-// UpdateUser updates the user metadata
-
 func TestUpdateUser(t *testing.T) {
 	svc := newService()
 	svc.Register(context.Background(), user)
 	key, _ := svc.Login(context.Background(), user)
+
 	user.Metadata = map[string]interface{}{"role": "test"}
 
 	cases := map[string]struct {
@@ -154,9 +153,8 @@ func TestUpdateUser(t *testing.T) {
 		token string
 		err   error
 	}{
-		"valid token update user":     {user, key, nil},
-		"invalid token's update user": {user, "", users.ErrUnauthorizedAccess},
-		"non existing user update":    {nonExistingUser, key, users.ErrUnauthorizedAccess},
+		"update user with valid token":   {user, key, nil},
+		"update user with invalid token": {user, "non-existent", users.ErrUnauthorizedAccess},
 	}
 
 	for desc, tc := range cases {

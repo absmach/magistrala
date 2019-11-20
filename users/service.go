@@ -147,7 +147,7 @@ func (svc usersService) UserInfo(ctx context.Context, token string) (User, error
 
 func (svc usersService) UpdateUser(ctx context.Context, token string, u User) error {
 	email, err := svc.idp.Identity(token)
-	if err != nil || email != u.Email {
+	if err != nil {
 		return ErrUnauthorizedAccess
 	}
 

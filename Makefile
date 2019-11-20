@@ -92,7 +92,7 @@ endif
 docker_mqtt_verne:
 	docker build --tag=mainflux/mqtt-verne -f mqtt/verne/Dockerfile .
 
-dockers: $(DOCKERS) docker_ui docker_mqtt
+dockers: $(DOCKERS) docker_mqtt
 
 dockers_dev: $(DOCKERS_DEV)
 

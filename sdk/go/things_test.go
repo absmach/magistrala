@@ -26,6 +26,8 @@ const (
 	token       = "token"
 	otherToken  = "other_token"
 	wrongValue  = "wrong_value"
+	badID       = "999"
+	emptyValue  = ""
 
 	keyPrefix = "123e4567-e89b-12d3-a456-"
 )
@@ -690,6 +692,111 @@ func TestConnectThing(t *testing.T) {
 
 	for _, tc := range cases {
 		err := mainfluxSDK.ConnectThing(tc.thingID, tc.chanID, tc.token)
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
+	}
+}
+
+func TestConnect(t *testing.T) {
+	svc := newThingsService(map[string]string{
+		token:      email,
+		otherToken: otherEmail,
+	})
+
+	ts := newThingsServer(svc)
+	defer ts.Close()
+	sdkConf := sdk.Config{
+		BaseURL:           ts.URL,
+		UsersPrefix:       "",
+		ThingsPrefix:      "",
+		HTTPAdapterPrefix: "",
+		MsgContentType:    contentType,
+		TLSVerification:   false,
+	}
+
+	mainfluxSDK := sdk.NewSDK(sdkConf)
+	thingID, err := mainfluxSDK.CreateThing(thing, token)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+
+	chanID1, err := mainfluxSDK.CreateChannel(channel, token)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+
+	chanID2, err := mainfluxSDK.CreateChannel(channel, otherToken)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+
+	cases := []struct {
+		desc    string
+		thingID string
+		chanID  string
+		token   string
+		err     error
+	}{
+		{
+			desc:    "connect existing things to existing channels",
+			thingID: thingID,
+			chanID:  chanID1,
+			token:   token,
+			err:     nil,
+		},
+
+		{
+			desc:    "connect existing things to non-existing channels",
+			thingID: thingID,
+			chanID:  badID,
+			token:   token,
+			err:     sdk.ErrNotFound,
+		},
+		{
+			desc:    "connect non-existing things to existing channels",
+			thingID: badID,
+			chanID:  chanID1,
+			token:   token,
+			err:     sdk.ErrNotFound,
+		},
+		{
+			desc:    "connect existing things to channels with invalid ID",
+			thingID: thingID,
+			chanID:  emptyValue,
+			token:   token,
+			err:     sdk.ErrFailedConnection,
+		},
+		{
+			desc:    "connect things with invalid ID to existing channels",
+			thingID: emptyValue,
+			chanID:  chanID1,
+			token:   token,
+			err:     sdk.ErrFailedConnection,
+		},
+
+		{
+			desc:    "connect existing things to existing channels with invalid token",
+			thingID: thingID,
+			chanID:  chanID1,
+			token:   wrongValue,
+			err:     sdk.ErrUnauthorized,
+		},
+		{
+			desc:    "connect existing things to existing channels with empty token",
+			thingID: thingID,
+			chanID:  chanID1,
+			token:   emptyValue,
+			err:     sdk.ErrUnauthorized,
+		},
+		{
+			desc:    "connect things from owner to channels of other user",
+			thingID: thingID,
+			chanID:  chanID2,
+			token:   token,
+			err:     sdk.ErrNotFound,
+		},
+	}
+
+	for _, tc := range cases {
+		connIDs := sdk.ConnectionIDs{
+			[]string{tc.thingID},
+			[]string{tc.chanID},
+		}
+
+		err := mainfluxSDK.Connect(connIDs, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 	}
 }

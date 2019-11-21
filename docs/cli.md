@@ -155,6 +155,39 @@ mainflux-cli channels get <channel_id> <user_auth_token>
 mainflux-cli things connect <thing_id> <channel_id> <user_auth_token>
 ```
 
+#### Bulk Connect Things to Channels
+
+```bash
+mainflux-cli provision connect <file> <user_auth_token>
+```
+
+* `file` - A CSV or JSON file containing thing and channel ids
+* `user_auth_token` - A valid user auth token for the current system
+
+An example CSV file might be
+
+```csv
+<thing_id>,<channel_id>
+<thing_id>,<channel_id>
+```
+
+in which the first column is thing IDs and the second column is channel IDs.  A connection will be created for each thing to each channel.  This example would result in 4 connections being created.
+
+A comparable JSON file would be
+
+```json
+{
+    "thing_ids": [
+        "<thing_id>",
+        "<thing_id>"
+    ],
+    "channel_ids": [
+        "<channel_id>",
+        "<channel_id>"
+    ]
+}
+```
+
 #### Disconnect Thing from Channel
 ```
 mainflux-cli things disconnect <thing_id> <channel_id> <user_auth_token>

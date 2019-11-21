@@ -13,6 +13,7 @@ import (
 )
 
 const thingsEndpoint = "things"
+const connectEndpoint = "connect"
 
 func (sdk mfSDK) CreateThing(thing Thing, token string) (string, error) {
 	data, err := json.Marshal(thing)
@@ -287,6 +288,37 @@ func (sdk mfSDK) ConnectThing(thingID, chanID, token string) error {
 	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
 
 	req, err := http.NewRequest(http.MethodPut, url, nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := sdk.sendRequest(req, token, string(CTJSON))
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		switch resp.StatusCode {
+		case http.StatusForbidden:
+			return ErrUnauthorized
+		case http.StatusNotFound:
+			return ErrNotFound
+		default:
+			return ErrFailedConnection
+		}
+	}
+
+	return nil
+}
+
+func (sdk mfSDK) Connect(connIDs ConnectionIDs, token string) error {
+	data, err := json.Marshal(connIDs)
+	if err != nil {
+		return ErrInvalidArgs
+	}
+
+	url := createURL(sdk.baseURL, sdk.thingsPrefix, connectEndpoint)
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
 	if err != nil {
 		return err
 	}

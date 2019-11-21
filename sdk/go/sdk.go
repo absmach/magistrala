@@ -116,6 +116,12 @@ type MessagesPage struct {
 	Messages []mainflux.Message `json:"messages,omitempty"`
 }
 
+// ConnectionIDs contains ID lists of things and channels to be connected
+type ConnectionIDs struct {
+	ChannelIDs []string `json:"channel_ids"`
+	ThingIDs   []string `json:"thing_ids"`
+}
+
 // SDK contains Mainflux API.
 type SDK interface {
 	// CreateUser registers mainflux user.
@@ -148,6 +154,9 @@ type SDK interface {
 
 	// ConnectThing connects thing to specified channel by id.
 	ConnectThing(thingID, chanID, token string) error
+
+	// Connect bulk connects things to channels specified by id.
+	Connect(conns ConnectionIDs, token string) error
 
 	// DisconnectThing disconnect thing from specified channel by id.
 	DisconnectThing(thingID, chanID, token string) error

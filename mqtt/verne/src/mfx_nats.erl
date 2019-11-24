@@ -74,9 +74,9 @@ loop(Conn) ->
                 _ ->
                     error_logger:info_msg("mfx_nats Protocol ~p", [Protocol]),
                     error_logger:info_msg("Re-publishing on MQTT broker", []),
-                    Subtopic2 = re:split(Subtopic,"/"),
-                    ContentType2 = re:replace(ContentType, "/","_",[global,{return,list}]),
-                    ContentType3 = re:replace(ContentType2, "\\+","-",[global,{return,binary}]),
+                    Subtopic2 = re:split(Subtopic,"."),
+                    ContentType2 = re:replace(ContentType, "/", "_", [global, {return, list}]),
+                    ContentType3 = re:replace(ContentType2, "\\+", "-", [global, {return, binary}]),
                     {_, PublishFun, {_, _}} = vmq_reg:direct_plugin_exports(?MODULE),
                     % Topic needs to be in the form of the list, like [<<"channel">>,<<"6def78cd-b441-4fd8-8680-af7e3bbea187">>]
                     Topic = case ContentType of

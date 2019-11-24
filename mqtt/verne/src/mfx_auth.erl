@@ -74,24 +74,37 @@ auth_on_register({_IpAddr, _Port} = Peer, {_MountPoint, _ClientId} = SubscriberI
             Other
     end.
 
+% Erlang binary_join/2 can be found here: https://blog.kempkens.io/posts/joining-a-list-of-binaries-in-erlang/
+-spec binary_join([binary()], binary()) -> binary().
+binary_join([], _Sep) ->
+  <<>>;
+binary_join([Part], _Sep) ->
+  Part;
+binary_join([Head|Tail], Sep) ->
+  lists:foldl(fun (Value, Acc) -> <<Acc/binary, Sep/binary, Value/binary>> end, Head, Tail).
+
 parseTopic(Topic) when length(Topic) == 3 ->
     ChannelId = lists:nth(2, Topic),
-    NatsSubject = [<<"channel.">>, ChannelId],
+    NatsSubject = [<<"channel">>, <<".">>, ChannelId],
     [{chanel_id, ChannelId}, {content_type, ""}, {subtopic, <<>>}, {nats_subject, NatsSubject}];
 parseTopic(Topic) when length(Topic) > 3 ->
     ChannelId = lists:nth(2, Topic),
     case lists:nth(length(Topic) - 1, Topic) of
         <<"ct">> ->
             ContentType = lists:last(Topic),
-            ContentType2 = re:replace(ContentType, "_","/",[global,{return,list}]),
-            ContentType3 = re:replace(ContentType2, "-","\\+",[global,{return,list}]),
+            ContentType2 = re:replace(ContentType, "_", "/", [global, {return, list}]),
+            ContentType3 = re:replace(ContentType2, "-", "\\+", [global, {return, list}]),
+            % Subtopic is a sublist that starts at 4th element and is of full length
+            % substracted by 3 elements (<<channels>>, <<ChanId>>, <<messages>>)
+            % and substracted by 2 (last elements are <<ct>> and <<ContentType>>)
             Subtopic = lists:sublist(Topic, 4, length(Topic) - 3 - 2),
-            NatsSubject = [<<"channel.">>, ChannelId, <<".">>, string:join([[X] || X <- Subtopic], ".")],
-            [{chanel_id, ChannelId}, {content_type, ContentType3}, {subtopic, Subtopic}, {nats_subject, NatsSubject}];
+            Subtopic2 = binary_join(Subtopic, <<".">>),
+            NatsSubject = [<<"channel">>, <<".">>, ChannelId, <<".">>, Subtopic2],
+            [{chanel_id, ChannelId}, {content_type, ContentType3}, {subtopic, Subtopic2}, {nats_subject, NatsSubject}];
         _ ->
             Subtopic = lists:sublist(Topic, 4, length(Topic) - 3),
-            NatsSubject = [<<"channel.">>, ChannelId, <<".">>, string:join([[X] || X <- Subtopic], ".")],
-            Subtopic2 = string:join([[X] || X <- Subtopic], "/"),
+            Subtopic2 = binary_join(Subtopic, <<".">>),
+            NatsSubject = [<<"channel.">>, ChannelId, <<".">>, Subtopic2],
             [{chanel_id, ChannelId}, {content_type, ""}, {subtopic, Subtopic2}, {nats_subject, NatsSubject}]
     end.
 

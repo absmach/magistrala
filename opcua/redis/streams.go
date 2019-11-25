@@ -86,14 +86,16 @@ func (es eventStore) Subscribe(subject string) error {
 			var err error
 			switch event["operation"] {
 			case thingCreate:
-				cte, err := decodeCreateThing(event)
-				if err != nil {
+				cte, e := decodeCreateThing(event)
+				if e != nil {
+					err = e
 					break
 				}
 				err = es.handleCreateThing(cte)
 			case thingUpdate:
-				ute, err := decodeCreateThing(event)
-				if err != nil {
+				ute, e := decodeCreateThing(event)
+				if e != nil {
+					err = e
 					break
 				}
 				err = es.handleCreateThing(ute)
@@ -101,14 +103,16 @@ func (es eventStore) Subscribe(subject string) error {
 				rte := decodeRemoveThing(event)
 				err = es.handleRemoveThing(rte)
 			case channelCreate:
-				cce, err := decodeCreateChannel(event)
-				if err != nil {
+				cce, e := decodeCreateChannel(event)
+				if e != nil {
+					err = e
 					break
 				}
 				err = es.handleCreateChannel(cce)
 			case channelUpdate:
-				uce, err := decodeCreateChannel(event)
-				if err != nil {
+				uce, e := decodeCreateChannel(event)
+				if e != nil {
+					err = e
 					break
 				}
 				err = es.handleCreateChannel(uce)
@@ -147,7 +151,7 @@ func decodeCreateThing(event map[string]interface{}) (createThingEvent, error) {
 	}
 
 	val, ok := metadataVal[keyIdentifier].(string)
-	if !ok {
+	if !ok || val == "" {
 		return createThingEvent{}, errMetadataIdentifier
 	}
 
@@ -183,7 +187,7 @@ func decodeCreateChannel(event map[string]interface{}) (createChannelEvent, erro
 	}
 
 	val, ok := metadataVal[keyNamespace].(string)
-	if !ok {
+	if !ok || val == "" {
 		return createChannelEvent{}, errMetadataNamespace
 	}
 

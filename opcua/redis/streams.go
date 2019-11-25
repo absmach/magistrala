@@ -14,7 +14,9 @@ import (
 )
 
 const (
-	protocol = "opcua"
+	keyProtocol   = "opcua"
+	keyIdentifier = "identifier"
+	keyNamespace  = "namespace"
 
 	group  = "mainflux.opcua"
 	stream = "mainflux.things"
@@ -35,9 +37,11 @@ const (
 var (
 	errMetadataType = errors.New("metadatada is not of type opcua")
 
-	errMetadataAppID = errors.New("Node Namespace not found in channel metadatada")
+	errMetadataFormat = errors.New("malformed metadata")
 
-	errMetadataDevEUI = errors.New("Node Identifier not found in thing metadatada")
+	errMetadataNamespace = errors.New("Node Namespace not found in channel metadatada")
+
+	errMetadataIdentifier = errors.New("Node Identifier not found in thing metadatada")
 )
 
 var _ opcua.EventStore = (*eventStore)(nil)
@@ -82,36 +86,32 @@ func (es eventStore) Subscribe(subject string) error {
 			var err error
 			switch event["operation"] {
 			case thingCreate:
-				cte, derr := decodeCreateThing(event)
-				if derr != nil {
-					err = derr
+				cte, err := decodeCreateThing(event)
+				if err != nil {
 					break
 				}
 				err = es.handleCreateThing(cte)
 			case thingUpdate:
-				ute, derr := decodeUpdateThing(event)
-				if derr != nil {
-					err = derr
+				ute, err := decodeCreateThing(event)
+				if err != nil {
 					break
 				}
-				err = es.handleUpdateThing(ute)
+				err = es.handleCreateThing(ute)
 			case thingRemove:
 				rte := decodeRemoveThing(event)
 				err = es.handleRemoveThing(rte)
 			case channelCreate:
-				cce, derr := decodeCreateChannel(event)
-				if derr != nil {
-					err = derr
+				cce, err := decodeCreateChannel(event)
+				if err != nil {
 					break
 				}
 				err = es.handleCreateChannel(cce)
 			case channelUpdate:
-				uce, derr := decodeUpdateChannel(event)
-				if derr != nil {
-					err = derr
+				uce, err := decodeCreateChannel(event)
+				if err != nil {
 					break
 				}
-				err = es.handleUpdateChannel(uce)
+				err = es.handleCreateChannel(uce)
 			case channelRemove:
 				rce := decodeRemoveChannel(event)
 				err = es.handleRemoveChannel(rce)
@@ -127,7 +127,7 @@ func (es eventStore) Subscribe(subject string) error {
 
 func decodeCreateThing(event map[string]interface{}) (createThingEvent, error) {
 	strmeta := read(event, "metadata", "{}")
-	var metadata map[string]thingMetadata
+	var metadata map[string]interface{}
 	if err := json.Unmarshal([]byte(strmeta), &metadata); err != nil {
 		return createThingEvent{}, err
 	}
@@ -136,39 +136,23 @@ func decodeCreateThing(event map[string]interface{}) (createThingEvent, error) {
 		id: read(event, "id", ""),
 	}
 
-	val, ok := metadata[protocol]
+	metadataOpcua, ok := metadata[keyProtocol]
 	if !ok {
 		return createThingEvent{}, errMetadataType
 	}
-	if val.ID == "" {
-		return createThingEvent{}, errMetadataDevEUI
-	}
 
-	cte.metadata = val
-	return cte, nil
-}
-
-func decodeUpdateThing(event map[string]interface{}) (updateThingEvent, error) {
-	strmeta := read(event, "metadata", "{}")
-	var metadata map[string]thingMetadata
-	if err := json.Unmarshal([]byte(strmeta), &metadata); err != nil {
-		return updateThingEvent{}, errMetadataType
-	}
-
-	ute := updateThingEvent{
-		id: read(event, "id", ""),
-	}
-
-	val, ok := metadata[protocol]
+	metadataVal, ok := metadataOpcua.(map[string]interface{})
 	if !ok {
-		return updateThingEvent{}, errMetadataType
-	}
-	if val.ID == "" {
-		return updateThingEvent{}, errMetadataDevEUI
+		return createThingEvent{}, errMetadataFormat
 	}
 
-	ute.metadata = val
-	return ute, nil
+	val, ok := metadataVal[keyIdentifier].(string)
+	if !ok {
+		return createThingEvent{}, errMetadataIdentifier
+	}
+
+	cte.opcuaNodeIdentifier = val
+	return cte, nil
 }
 
 func decodeRemoveThing(event map[string]interface{}) removeThingEvent {
@@ -179,8 +163,7 @@ func decodeRemoveThing(event map[string]interface{}) removeThingEvent {
 
 func decodeCreateChannel(event map[string]interface{}) (createChannelEvent, error) {
 	strmeta := read(event, "metadata", "{}")
-
-	var metadata map[string]channelMetadata
+	var metadata map[string]interface{}
 	if err := json.Unmarshal([]byte(strmeta), &metadata); err != nil {
 		return createChannelEvent{}, err
 	}
@@ -189,39 +172,23 @@ func decodeCreateChannel(event map[string]interface{}) (createChannelEvent, erro
 		id: read(event, "id", ""),
 	}
 
-	val, ok := metadata[protocol]
+	metadataOpcua, ok := metadata[keyProtocol]
 	if !ok {
 		return createChannelEvent{}, errMetadataType
 	}
-	if val.Namespace == "" {
-		return createChannelEvent{}, errMetadataAppID
-	}
 
-	cce.metadata = val
-	return cce, nil
-}
-
-func decodeUpdateChannel(event map[string]interface{}) (updateChannelEvent, error) {
-	strmeta := read(event, "metadata", "{}")
-	var metadata map[string]channelMetadata
-	if err := json.Unmarshal([]byte(strmeta), &metadata); err != nil {
-		return updateChannelEvent{}, err
-	}
-
-	uce := updateChannelEvent{
-		id: read(event, "id", ""),
-	}
-
-	val, ok := metadata[protocol]
+	metadataVal, ok := metadataOpcua.(map[string]interface{})
 	if !ok {
-		return updateChannelEvent{}, errMetadataType
-	}
-	if val.Namespace == "" {
-		return updateChannelEvent{}, errMetadataAppID
+		return createChannelEvent{}, errMetadataFormat
 	}
 
-	uce.metadata = val
-	return uce, nil
+	val, ok := metadataVal[keyNamespace].(string)
+	if !ok {
+		return createChannelEvent{}, errMetadataNamespace
+	}
+
+	cce.opcuaNodeNamespace = val
+	return cce, nil
 }
 
 func decodeRemoveChannel(event map[string]interface{}) removeChannelEvent {
@@ -231,11 +198,7 @@ func decodeRemoveChannel(event map[string]interface{}) removeChannelEvent {
 }
 
 func (es eventStore) handleCreateThing(cte createThingEvent) error {
-	return es.svc.CreateThing(cte.id, cte.metadata.ID)
-}
-
-func (es eventStore) handleUpdateThing(ute updateThingEvent) error {
-	return es.svc.CreateThing(ute.id, ute.metadata.ID)
+	return es.svc.CreateThing(cte.id, cte.opcuaNodeIdentifier)
 }
 
 func (es eventStore) handleRemoveThing(rte removeThingEvent) error {
@@ -243,11 +206,7 @@ func (es eventStore) handleRemoveThing(rte removeThingEvent) error {
 }
 
 func (es eventStore) handleCreateChannel(cce createChannelEvent) error {
-	return es.svc.CreateChannel(cce.id, cce.metadata.Namespace)
-}
-
-func (es eventStore) handleUpdateChannel(uce updateChannelEvent) error {
-	return es.svc.UpdateChannel(uce.id, uce.metadata.Namespace)
+	return es.svc.CreateChannel(cce.id, cce.opcuaNodeNamespace)
 }
 
 func (es eventStore) handleRemoveChannel(rce removeChannelEvent) error {

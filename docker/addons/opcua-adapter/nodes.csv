@@ -1,0 +1,4 @@
+opc.tcp://opcua.rocks:4840,0,2255
+opc.tcp://opcua.rocks:4840,0,2256
+opc.tcp://opcua.rocks:4840,1,2255
+opc.tcp://opcua.rocks:4840,1,2256

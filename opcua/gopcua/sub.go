@@ -10,8 +10,18 @@ import (
 
 	opcuaGopcua "github.com/gopcua/opcua"
 	uaGopcua "github.com/gopcua/opcua/ua"
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/opcua"
+)
+
+var (
+	errFailedConn          = errors.New("Failed to connect")
+	errFailedSub           = errors.New("Failed to subscribe")
+	errFailedFindEndpoint  = errors.New("Failed to find suitable endpoint")
+	errFailedFetchEndpoint = errors.New("Failed to fetch OPC-UA server endpoints")
+	errFailedParseNodeID   = errors.New("Failed to parse NodeID")
+	errFailedCreateReq     = errors.New("Failed to creeate request")
 )
 
 var _ opcua.Subscriber = (*client)(nil)
@@ -35,12 +45,12 @@ func NewClient(ctx context.Context, svc opcua.Service, log logger.Logger) opcua.
 func (b client) Subscribe(cfg opcua.Config) error {
 	endpoints, err := opcuaGopcua.GetEndpoints(cfg.ServerURI)
 	if err != nil {
-		b.logger.Error(fmt.Sprintf("Failed to fetch OPC-UA server endpoints: %s", err.Error()))
+		return errors.Wrap(errFailedFetchEndpoint, err)
 	}
 
 	ep := opcuaGopcua.SelectEndpoint(endpoints, cfg.Policy, uaGopcua.MessageSecurityModeFromString(cfg.Mode))
 	if ep == nil {
-		b.logger.Error("Failed to find suitable endpoint")
+		return errFailedFindEndpoint
 	}
 
 	opts := []opcuaGopcua.Option{
@@ -53,8 +63,8 @@ func (b client) Subscribe(cfg opcua.Config) error {
 	}
 
 	c := opcuaGopcua.NewClient(ep.EndpointURL, opts...)
-	if errC := c.Connect(b.ctx); err != nil {
-		b.logger.Error(errC.Error())
+	if err := c.Connect(b.ctx); err != nil {
+		return errors.Wrap(errFailedConn, err)
 	}
 	defer c.Close()
 
@@ -62,9 +72,10 @@ func (b client) Subscribe(cfg opcua.Config) error {
 		Interval: 2000 * time.Millisecond,
 	})
 	if err != nil {
-		b.logger.Error(err.Error())
+		return errors.Wrap(errFailedSub, err)
 	}
 	defer sub.Cancel()
+
 	b.logger.Info(fmt.Sprintf("OPC-UA server URI: %s", ep.SecurityPolicyURI))
 	b.logger.Info(fmt.Sprintf("Created subscription with id %v", sub.SubscriptionID))
 
@@ -79,7 +90,7 @@ func (b client) runHandler(sub *opcuaGopcua.Subscription, cfg opcua.Config) erro
 	nid := fmt.Sprintf("ns=%s;i=%s", cfg.NodeNamespace, cfg.NodeIdintifier)
 	nodeID, err := uaGopcua.ParseNodeID(nid)
 	if err != nil {
-		b.logger.Error(err.Error())
+		return errors.Wrap(errFailedParseNodeID, err)
 	}
 
 	// arbitrary client handle for the monitoring item
@@ -87,7 +98,7 @@ func (b client) runHandler(sub *opcuaGopcua.Subscription, cfg opcua.Config) erro
 	miCreateRequest := opcuaGopcua.NewMonitoredItemCreateRequestWithDefaults(nodeID, uaGopcua.AttributeIDValue, handle)
 	res, err := sub.Monitor(uaGopcua.TimestampsToReturnBoth, miCreateRequest)
 	if err != nil || res.Results[0].StatusCode != uaGopcua.StatusOK {
-		b.logger.Error(err.Error())
+		return errors.Wrap(errFailedCreateReq, err)
 	}
 
 	go sub.Run(b.ctx)

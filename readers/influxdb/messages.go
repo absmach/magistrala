@@ -14,10 +14,7 @@ import (
 	"github.com/mainflux/mainflux/transformers/senml"
 )
 
-const (
-	maxLimit = 100
-	countCol = "count"
-)
+const countCol = "count"
 
 var _ readers.MessageRepository = (*influxRepository)(nil)
 
@@ -35,10 +32,6 @@ func New(client influxdata.Client, database string) readers.MessageRepository {
 }
 
 func (repo *influxRepository) ReadAll(chanID string, offset, limit uint64, query map[string]string) (readers.MessagesPage, error) {
-	if limit > maxLimit {
-		limit = maxLimit
-	}
-
 	condition := fmtCondition(chanID, query)
 	cmd := fmt.Sprintf(`SELECT * FROM messages WHERE %s ORDER BY time DESC LIMIT %d OFFSET %d`, condition, limit, offset)
 	q := influxdata.Query{

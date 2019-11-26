@@ -17,11 +17,13 @@ import (
 
 var (
 	errFailedConn          = errors.New("Failed to connect")
+	errFailedRead          = errors.New("Failed to read")
 	errFailedSub           = errors.New("Failed to subscribe")
 	errFailedFindEndpoint  = errors.New("Failed to find suitable endpoint")
 	errFailedFetchEndpoint = errors.New("Failed to fetch OPC-UA server endpoints")
 	errFailedParseNodeID   = errors.New("Failed to parse NodeID")
-	errFailedCreateReq     = errors.New("Failed to creeate request")
+	errFailedCreateReq     = errors.New("Failed to create request")
+	errResponseStatus      = errors.New("Response status not OK")
 )
 
 var _ opcua.Subscriber = (*client)(nil)
@@ -87,7 +89,7 @@ func (b client) Subscribe(cfg opcua.Config) error {
 }
 
 func (b client) runHandler(sub *opcuaGopcua.Subscription, cfg opcua.Config) error {
-	nid := fmt.Sprintf("ns=%s;i=%s", cfg.NodeNamespace, cfg.NodeIdintifier)
+	nid := fmt.Sprintf("ns=%s;%s=%s", cfg.NodeNamespace, cfg.NodeIdentifierType, cfg.NodeIdentifier)
 	nodeID, err := uaGopcua.ParseNodeID(nid)
 	if err != nil {
 		return errors.Wrap(errFailedParseNodeID, err)
@@ -97,8 +99,11 @@ func (b client) runHandler(sub *opcuaGopcua.Subscription, cfg opcua.Config) erro
 	handle := uint32(42)
 	miCreateRequest := opcuaGopcua.NewMonitoredItemCreateRequestWithDefaults(nodeID, uaGopcua.AttributeIDValue, handle)
 	res, err := sub.Monitor(uaGopcua.TimestampsToReturnBoth, miCreateRequest)
-	if err != nil || res.Results[0].StatusCode != uaGopcua.StatusOK {
+	if err != nil {
 		return errors.Wrap(errFailedCreateReq, err)
+	}
+	if res.Results[0].StatusCode != uaGopcua.StatusOK {
+		return errResponseStatus
 	}
 
 	go sub.Run(b.ctx)
@@ -119,7 +124,7 @@ func (b client) runHandler(sub *opcuaGopcua.Subscription, cfg opcua.Config) erro
 					// Publish on Mainflux NATS broker
 					msg := opcua.Message{
 						Namespace: cfg.NodeNamespace,
-						ID:        cfg.NodeIdintifier,
+						ID:        cfg.NodeIdentifier,
 						Data:      item.Value.Value.Float(),
 					}
 					b.svc.Publish(b.ctx, "", msg)

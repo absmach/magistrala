@@ -44,7 +44,7 @@ const (
 	defRouteMapURL    = "localhost:6379"
 	defRouteMapPass   = ""
 	defRouteMapDB     = "0"
-	defNodesConfig    = "/nodes.csv"
+	defNodesConfig    = "/config/nodes.csv"
 
 	envHTTPPort       = "MF_OPCUA_ADAPTER_HTTP_PORT"
 	envLogLevel       = "MF_OPCUA_ADAPTER_LOG_LEVEL"
@@ -60,7 +60,7 @@ const (
 	envRouteMapURL    = "MF_OPCUA_ADAPTER_ROUTE_MAP_URL"
 	envRouteMapPass   = "MF_OPCUA_ADAPTER_ROUTE_MAP_PASS"
 	envRouteMapDB     = "MF_OPCUA_ADAPTER_ROUTE_MAP_DB"
-	envNodesConfig    = "/nodes.csv"
+	envNodesConfig    = "MF_OPCUA_ADAPTER_CONFIG_FILE"
 
 	thingsRMPrefix   = "thing"
 	channelsRMPrefix = "channel"
@@ -222,14 +222,15 @@ func subscribeToOpcuaServers(svc opcua.Service, nodes string, cfg opcua.Config, 
 			return
 		}
 
-		if len(l) < 3 {
+		if len(l) < 4 {
 			logger.Warn(fmt.Sprintf("Empty or incomplete line found in file"))
 			return
 		}
 
 		cfg.ServerURI = l[0]
 		cfg.NodeNamespace = l[1]
-		cfg.NodeIdintifier = l[2]
+		cfg.NodeIdentifierType = l[2]
+		cfg.NodeIdentifier = l[3]
 
 		go subscribeToOpcuaServer(gc, cfg, logger)
 	}

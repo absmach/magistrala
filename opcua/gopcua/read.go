@@ -6,10 +6,10 @@ package gopcua
 import (
 	"context"
 	"fmt"
-	"log"
 
 	opcuaGopcua "github.com/gopcua/opcua"
 	uaGopcua "github.com/gopcua/opcua/ua"
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/opcua"
 )
@@ -35,14 +35,14 @@ func NewReader(ctx context.Context, svc opcua.Service, log logger.Logger) opcua.
 func (r reader) Read(cfg opcua.Config) error {
 	c := opcuaGopcua.NewClient(cfg.ServerURI, opcuaGopcua.SecurityMode(uaGopcua.MessageSecurityModeNone))
 	if err := c.Connect(r.ctx); err != nil {
-		log.Fatal(err)
+		return errors.Wrap(errFailedConn, err)
 	}
 	defer c.Close()
 
-	nid := fmt.Sprintf("ns=%s;i=%s", cfg.NodeNamespace, cfg.NodeIdintifier)
+	nid := fmt.Sprintf("ns=%s;%s=%s", cfg.NodeNamespace, cfg.NodeIdentifierType, cfg.NodeIdentifier)
 	id, err := uaGopcua.ParseNodeID(nid)
 	if err != nil {
-		r.logger.Error(fmt.Sprintf("invalid node id: %v", err))
+		return errors.Wrap(errFailedParseNodeID, err)
 	}
 
 	req := &uaGopcua.ReadRequest{
@@ -55,16 +55,16 @@ func (r reader) Read(cfg opcua.Config) error {
 
 	resp, err := c.Read(req)
 	if err != nil {
-		r.logger.Error(fmt.Sprintf("Read failed: %s", err))
+		return errors.Wrap(errFailedRead, err)
 	}
 	if resp.Results[0].Status != uaGopcua.StatusOK {
-		r.logger.Error(fmt.Sprintf("Status not OK: %v", resp.Results[0].Status))
+		return errResponseStatus
 	}
 
 	// Publish on Mainflux NATS broker
 	msg := opcua.Message{
 		Namespace: cfg.NodeNamespace,
-		ID:        cfg.NodeIdintifier,
+		ID:        cfg.NodeIdentifier,
 		Data:      resp.Results[0].Value.Float(),
 	}
 	r.svc.Publish(r.ctx, "", msg)

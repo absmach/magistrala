@@ -47,4 +47,4 @@ services:
     networks:
       - docker_mainflux-base-net
     volumes:
-      - ./nodes.csv:/nodes.csv
+      - ./nodes.csv:/config/nodes.csv

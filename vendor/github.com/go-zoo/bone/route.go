@@ -9,14 +9,19 @@ package bone
 
 import (
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 )
 
 const (
+	//PARAM value store in Atts if the route have parameters
 	PARAM = 2
-	SUB   = 4
-	WC    = 8
+	//SUB value store in Atts if the route is a sub router
+	SUB = 4
+	//WC value store in Atts if the route have wildcard
+	WC = 8
+	//REGEX value store in Atts if the route contains regex
 	REGEX = 16
 )
 
@@ -28,16 +33,18 @@ const (
 // handler: is the handler who handle this route
 // Method: define HTTP method on the route
 type Route struct {
-	Path    string
-	Method  string
-	Size    int
-	Atts    int
-	wildPos int
-	Token   Token
-	Pattern map[int]string
-	Compile map[int]*regexp.Regexp
-	Tag     map[int]string
-	Handler http.Handler
+	Path       string
+	Method     string
+	Size       int
+	Atts       int
+	wildPos    int
+	Token      Token
+	Pattern    map[int]string
+	Compile    map[int]*regexp.Regexp
+	Tag        map[int]string
+	Handler    http.Handler
+	mux        *Mux
+	validators map[string][]string
 }
 
 // Token content all value of a spliting route path
@@ -50,13 +57,13 @@ type Token struct {
 }
 
 // NewRoute return a pointer to a Route instance and call save() on it
-func NewRoute(url string, h http.Handler) *Route {
-	r := &Route{Path: url, Handler: h}
+func NewRoute(mux *Mux, url string, h http.Handler) *Route {
+	r := &Route{Path: url, Handler: h, mux: mux}
 	r.save()
 	return r
 }
 
-// Save, set automatically the the Route.Size and Route.Pattern value
+// Save, set automatically  the Route.Size and Route.Pattern value
 func (r *Route) save() {
 	r.Size = len(r.Path)
 	r.Token.Tokens = strings.Split(r.Path, "/")
@@ -64,10 +71,20 @@ func (r *Route) save() {
 		if len(s) >= 1 {
 			switch s[:1] {
 			case ":":
+				s = s[1:]
 				if r.Pattern == nil {
 					r.Pattern = make(map[int]string)
 				}
-				r.Pattern[i] = s[1:]
+				if validators := containsValidators(s); validators != nil {
+					if r.validators == nil {
+						r.validators = make(map[string][]string)
+					}
+					for _, vali := range validators {
+						s = s[:validators[0].start]
+						r.validators[s] = append(r.validators[s], vali.name[1:])
+					}
+				}
+				r.Pattern[i] = s
 				r.Atts |= PARAM
 			case "#":
 				if r.Compile == nil {
@@ -108,7 +125,14 @@ func (r *Route) matchAndParse(req *http.Request) (bool, map[string]string) {
 
 			vars := make(map[string]string, totalSize)
 			for k, v := range r.Pattern {
-				vars[v] = ss[k]
+				if validators := r.validators[v]; validators != nil {
+					for _, vname := range validators {
+						if !(*r.mux).Validators[vname].Validate(ss[k]) {
+							return false, nil
+						}
+					}
+				}
+				vars[v], _ = url.QueryUnescape(ss[k])
 			}
 
 			if r.Atts&REGEX != 0 {
@@ -116,14 +140,13 @@ func (r *Route) matchAndParse(req *http.Request) (bool, map[string]string) {
 					if !v.MatchString(ss[k]) {
 						return false, nil
 					}
-					vars[r.Tag[k]] = ss[k]
+					vars[r.Tag[k]], _ = url.QueryUnescape(ss[k])
 				}
 			}
 
 			return true, vars
 		}
 	}
-
 	return false, nil
 }
 
@@ -161,6 +184,26 @@ func (r *Route) matchRawTokens(ss *[]string) bool {
 				return false
 			}
 		}
+		return true
+	}
+	return false
+}
+
+func (r *Route) exists(rw http.ResponseWriter, req *http.Request) bool {
+	if r.Atts != 0 {
+		if r.Atts&SUB != 0 {
+			if len(req.URL.Path) >= r.Size {
+				if req.URL.Path[:r.Size] == r.Path {
+					return true
+				}
+			}
+		}
+
+		if ok, _ := r.matchAndParse(req); ok {
+			return true
+		}
+	}
+	if req.URL.Path == r.Path {
 		return true
 	}
 	return false

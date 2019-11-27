@@ -35,18 +35,18 @@ setup_protoc() {
 	sudo mv protoc3/bin/* /usr/local/bin/
 	sudo mv protoc3/include/* /usr/local/include/
 	rm -f PROTOC_ZIP
-	go get -u github.com/golang/protobuf/protoc-gen-go \
+	GO111MODULE=off go get -u github.com/golang/protobuf/protoc-gen-go \
 		github.com/gogo/protobuf/protoc-gen-gofast \
 		google.golang.org/grpc
 	
 	git -C $GOPATH/src/github.com/golang/protobuf/protoc-gen-go checkout v1.3.2
-	go install github.com/golang/protobuf/protoc-gen-go
+	GO111MODULE=off go install github.com/golang/protobuf/protoc-gen-go
 	
 	git -C $GOPATH/src/github.com/gogo/protobuf/protoc-gen-gofast checkout v1.3.1
-	go install github.com/gogo/protobuf/protoc-gen-gofast
+	GO111MODULE=off go install github.com/gogo/protobuf/protoc-gen-gofast
 
 	git -C $GOPATH/src/google.golang.org/grpc checkout v1.24.0
-	go install google.golang.org/grpc
+	GO111MODULE=off go install google.golang.org/grpc
 
 	export PATH=$PATH:/usr/local/bin/protoc
 }
@@ -84,7 +84,7 @@ run_test() {
 	echo "" > coverage.txt;
 	for d in $(go list ./... | grep -v 'vendor\|cmd'); do
 		GOCACHE=off
-		go test -v -race -tags test -coverprofile=profile.out -covermode=atomic $d
+		go test -mod=vendor -v -race -tags test -coverprofile=profile.out -covermode=atomic $d
 		if [ -f profile.out ]; then
 			cat profile.out >> coverage.txt
 			rm profile.out

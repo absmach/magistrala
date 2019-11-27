@@ -3,9 +3,13 @@
 Mainflux source can be found in the official [Mainflux GitHub repository](https://github.com/Mainflux/mainflux). You should fork this repository in order to make changes to the project. The forked version of the repository should be cloned using the following:
 
 ```bash
-git clone <forked repository> $GOPATH/src/github.com/mainflux/mainflux
-cd $GOPATH/src/github.com/mainflux/mainflux
+git clone <forked repository> $SOMEPATH/mainflux
+cd $SOMEPATH/mainflux
 ```
+
+**Note:** If your `$SOMEPATH` is equal to `$GOPATH/src/github.com/mainflux/mainflux`, 
+make sure that your `$GOROOT` and `$GOPATH` do not overlap (otherwise, go 
+modules won't work).
 
 ## Building
 

@@ -61,10 +61,9 @@ To start the service, execute the following shell script:
 
 ```bash
 # download the latest version of the service
-go get github.com/mainflux/mainflux
+git clone https://github.com/mainflux/mainflux
 
-
-cd $GOPATH/src/github.com/mainflux/mainflux
+cd mainflux
 
 # compile the postgres writer
 make postgres-writer

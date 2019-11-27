@@ -10,7 +10,7 @@ CGO_ENABLED ?= 0
 GOARCH ?= amd64
 
 define compile_service
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) GOARM=$(GOARM) go build -ldflags "-s -w" -o ${BUILD_DIR}/mainflux-$(1) cmd/$(1)/main.go
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) GOARM=$(GOARM) go build -mod=vendor -ldflags "-s -w" -o ${BUILD_DIR}/mainflux-$(1) cmd/$(1)/main.go
 endef
 
 define make_docker
@@ -67,7 +67,7 @@ install:
 	cp ${BUILD_DIR}/* $(GOBIN)
 
 test:
-	go test -v -race -count 1 -tags test $(shell go list ./... | grep -v 'vendor\|cmd')
+	go test -mod=vendor -v -race -count 1 -tags test $(shell go list ./... | grep -v 'vendor\|cmd')
 
 proto:
 	protoc --gofast_out=plugins=grpc:. *.proto

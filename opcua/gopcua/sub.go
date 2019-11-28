@@ -45,26 +45,32 @@ func NewClient(ctx context.Context, svc opcua.Service, log logger.Logger) opcua.
 
 // Subscribe subscribes to the OPC-UA Server.
 func (b client) Subscribe(cfg opcua.Config) error {
-	endpoints, err := opcuaGopcua.GetEndpoints(cfg.ServerURI)
-	if err != nil {
-		return errors.Wrap(errFailedFetchEndpoint, err)
-	}
-
-	ep := opcuaGopcua.SelectEndpoint(endpoints, cfg.Policy, uaGopcua.MessageSecurityModeFromString(cfg.Mode))
-	if ep == nil {
-		return errFailedFindEndpoint
-	}
-
 	opts := []opcuaGopcua.Option{
-		opcuaGopcua.SecurityPolicy(cfg.Policy),
-		opcuaGopcua.SecurityModeString(cfg.Mode),
-		opcuaGopcua.CertificateFile(cfg.CertFile),
-		opcuaGopcua.PrivateKeyFile(cfg.KeyFile),
-		opcuaGopcua.AuthAnonymous(),
-		opcuaGopcua.SecurityFromEndpoint(ep, uaGopcua.UserTokenTypeAnonymous),
+		opcuaGopcua.SecurityMode(uaGopcua.MessageSecurityModeNone),
 	}
 
-	c := opcuaGopcua.NewClient(ep.EndpointURL, opts...)
+	if cfg.Mode != "" {
+		endpoints, err := opcuaGopcua.GetEndpoints(cfg.ServerURI)
+		if err != nil {
+			return errors.Wrap(errFailedFetchEndpoint, err)
+		}
+
+		ep := opcuaGopcua.SelectEndpoint(endpoints, cfg.Policy, uaGopcua.MessageSecurityModeFromString(cfg.Mode))
+		if ep == nil {
+			return errFailedFindEndpoint
+		}
+
+		opts = []opcuaGopcua.Option{
+			opcuaGopcua.SecurityPolicy(cfg.Policy),
+			opcuaGopcua.SecurityModeString(cfg.Mode),
+			opcuaGopcua.CertificateFile(cfg.CertFile),
+			opcuaGopcua.PrivateKeyFile(cfg.KeyFile),
+			opcuaGopcua.AuthAnonymous(),
+			opcuaGopcua.SecurityFromEndpoint(ep, uaGopcua.UserTokenTypeAnonymous),
+		}
+	}
+
+	c := opcuaGopcua.NewClient(cfg.ServerURI, opts...)
 	if err := c.Connect(b.ctx); err != nil {
 		return errors.Wrap(errFailedConn, err)
 	}
@@ -78,7 +84,7 @@ func (b client) Subscribe(cfg opcua.Config) error {
 	}
 	defer sub.Cancel()
 
-	b.logger.Info(fmt.Sprintf("OPC-UA server URI: %s", ep.SecurityPolicyURI))
+	b.logger.Info(fmt.Sprintf("OPC-UA server URI: %s", cfg.ServerURI))
 	b.logger.Info(fmt.Sprintf("Created subscription with id %v", sub.SubscriptionID))
 
 	if err := b.runHandler(sub, cfg); err != nil {
@@ -121,12 +127,27 @@ func (b client) runHandler(sub *opcuaGopcua.Subscription, cfg opcua.Config) erro
 			switch x := res.Value.(type) {
 			case *uaGopcua.DataChangeNotification:
 				for _, item := range x.MonitoredItems {
-					// Publish on Mainflux NATS broker
 					msg := opcua.Message{
 						Namespace: cfg.NodeNamespace,
 						ID:        cfg.NodeIdentifier,
-						Data:      item.Value.Value.Float(),
 					}
+
+					switch item.Value.Value.Type() {
+					case uaGopcua.TypeIDBoolean:
+						msg.Data = item.Value.Value.Bool()
+					case uaGopcua.TypeIDInt64:
+						msg.Data = item.Value.Value.Int()
+					case uaGopcua.TypeIDUint64:
+						msg.Data = item.Value.Value.Uint()
+					case uaGopcua.TypeIDFloat:
+						msg.Data = item.Value.Value.Float()
+					case uaGopcua.TypeIDString:
+						msg.Data = item.Value.Value.String()
+					default:
+						msg.Data = 0
+					}
+
+					// Publish on Mainflux NATS broker
 					b.svc.Publish(b.ctx, "", msg)
 				}
 

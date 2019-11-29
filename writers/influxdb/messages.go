@@ -72,7 +72,6 @@ func (repo *influxRepo) fieldsOf(msg *senml.Message) fields {
 	ret := fields{
 		"protocol":   msg.Protocol,
 		"unit":       msg.Unit,
-		"link":       msg.Link,
 		"updateTime": updateTime,
 	}
 

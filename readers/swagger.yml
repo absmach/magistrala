@@ -95,8 +95,6 @@ definitions:
             updateTime:
               type: number
               description: Time of updating measurement.
-            link:
-              type: string
 
 parameters:
   Authorization:

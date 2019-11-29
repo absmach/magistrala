@@ -335,9 +335,9 @@ func handleMessage(conn *net.UDPConn, addr *net.UDPAddr, o *coap.Observer, msg *
 
 		coapCT := senMLJSON
 		switch msg.ContentType {
-		case senml.SenMLJSON:
+		case senml.JSON:
 			coapCT = senMLJSON
-		case senml.SenMLCBOR:
+		case senml.CBOR:
 			coapCT = senMLCBOR
 		}
 		notifyMsg.SetOption(gocoap.ContentFormat, coapCT)
@@ -396,9 +396,9 @@ func contentType(msg *gocoap.Message) (string, error) {
 	ct := ""
 	switch ctid {
 	case senMLJSON:
-		ct = senml.SenMLJSON
+		ct = senml.JSON
 	case senMLCBOR:
-		ct = senml.SenMLCBOR
+		ct = senml.CBOR
 	}
 
 	return ct, nil

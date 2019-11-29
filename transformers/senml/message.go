@@ -1,11 +1,11 @@
 package senml
 
 const (
-	// SenMLJSON represents SenML in JSON format content type.
-	SenMLJSON = "application/senml+json"
+	// JSON represents SenML in JSON format content type.
+	JSON = "application/senml+json"
 
-	// SenMLCBOR represents SenML in CBOR format content type.
-	SenMLCBOR = "application/senml+cbor"
+	// CBOR represents SenML in CBOR format content type.
+	CBOR = "application/senml+cbor"
 )
 
 // Message represents a resolved (normalized) SenML record.
@@ -14,7 +14,6 @@ type Message struct {
 	Subtopic    string   `json:"subtopic,omitempty"`
 	Publisher   string   `json:"publisher,omitempty"`
 	Protocol    string   `json:"protocol,omitempty"`
-	Link        string   `json:"link,omitempty"`
 	Name        string   `json:"name,omitempty"`
 	Unit        string   `json:"unit,omitempty"`
 	Time        float64  `json:"time,omitempty"`

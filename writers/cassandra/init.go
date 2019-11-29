@@ -20,7 +20,6 @@ const table = `CREATE TABLE IF NOT EXISTS messages (
     	sum double,
     	time double,
     	update_time double,
-    	link text,
         PRIMARY KEY (channel, time, id)
 	) WITH CLUSTERING ORDER BY (time DESC)`
 

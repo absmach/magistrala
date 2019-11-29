@@ -51,7 +51,6 @@ var (
 		Unit:       "U",
 		Time:       123456,
 		UpdateTime: 1234,
-		Link:       "link",
 	}
 )
 

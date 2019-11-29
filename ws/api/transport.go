@@ -48,8 +48,8 @@ var (
 )
 
 var contentTypes = map[string]int{
-	senml.SenMLJSON: websocket.TextMessage,
-	senml.SenMLCBOR: websocket.BinaryMessage,
+	senml.JSON: websocket.TextMessage,
+	senml.CBOR: websocket.BinaryMessage,
 }
 
 // MakeHandler returns http handler with handshake endpoint.

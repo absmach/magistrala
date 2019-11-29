@@ -63,7 +63,6 @@ func migrateDB(db *sqlx.DB) error {
             sum           FLOAT,
             time          FlOAT,
             update_time   FLOAT,
-            link          TEXT,
             PRIMARY KEY (id)
 					)`,
 				},

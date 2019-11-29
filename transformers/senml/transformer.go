@@ -4,14 +4,14 @@
 package senml
 
 import (
-	"github.com/cisco/senml"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/transformers"
+	"github.com/mainflux/senml"
 )
 
 var formats = map[string]senml.Format{
-	SenMLJSON: senml.JSON,
-	SenMLCBOR: senml.CBOR,
+	JSON: senml.JSON,
+	CBOR: senml.CBOR,
 }
 
 type transformer struct{}
@@ -32,35 +32,28 @@ func (n transformer) Transform(msg mainflux.Message) (interface{}, error) {
 		return nil, err
 	}
 
-	normalized := senml.Normalize(raw)
+	normalized, err := senml.Normalize(raw)
+	if err != nil {
+		return nil, err
+	}
 
 	msgs := make([]Message, len(normalized.Records))
-	for k, v := range normalized.Records {
-		m := Message{
-			Channel:    msg.Channel,
-			Subtopic:   msg.Subtopic,
-			Publisher:  msg.Publisher,
-			Protocol:   msg.Protocol,
-			Name:       v.Name,
-			Unit:       v.Unit,
-			Time:       v.Time,
-			UpdateTime: v.UpdateTime,
-			Link:       v.Link,
-			Sum:        v.Sum,
+	for i, v := range normalized.Records {
+		msgs[i] = Message{
+			Channel:     msg.Channel,
+			Subtopic:    msg.Subtopic,
+			Publisher:   msg.Publisher,
+			Protocol:    msg.Protocol,
+			Name:        v.Name,
+			Unit:        v.Unit,
+			Time:        v.Time,
+			UpdateTime:  v.UpdateTime,
+			Value:       v.Value,
+			BoolValue:   v.BoolValue,
+			DataValue:   v.DataValue,
+			StringValue: v.StringValue,
+			Sum:         v.Sum,
 		}
-
-		switch {
-		case v.Value != nil:
-			m.Value = v.Value
-		case v.BoolValue != nil:
-			m.BoolValue = v.BoolValue
-		case v.DataValue != "":
-			m.DataValue = &v.DataValue
-		case v.StringValue != "":
-			m.StringValue = &v.StringValue
-		}
-
-		msgs[k] = m
 	}
 
 	return msgs, nil

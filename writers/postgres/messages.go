@@ -35,10 +35,10 @@ func New(db *sqlx.DB) writers.MessageRepository {
 func (pr postgresRepo) Save(messages ...senml.Message) error {
 	q := `INSERT INTO messages (id, channel, subtopic, publisher, protocol,
     name, unit, value, string_value, bool_value, data_value, sum,
-    time, update_time, link)
+    time, update_time)
     VALUES (:id, :channel, :subtopic, :publisher, :protocol, :name, :unit,
     :value, :string_value, :bool_value, :data_value, :sum,
-    :time, :update_time, :link);`
+    :time, :update_time);`
 
 	tx, err := pr.db.BeginTxx(context.Background(), nil)
 	if err != nil {
@@ -82,7 +82,6 @@ type dbMessage struct {
 	Sum         *float64 `db:"sum"`
 	Time        float64  `db:"time"`
 	UpdateTime  float64  `db:"update_time"`
-	Link        string   `db:"link"`
 }
 
 func toDBMessage(msg senml.Message) (dbMessage, error) {
@@ -101,7 +100,6 @@ func toDBMessage(msg senml.Message) (dbMessage, error) {
 		Unit:       msg.Unit,
 		Time:       msg.Time,
 		UpdateTime: msg.UpdateTime,
-		Link:       msg.Link,
 		Sum:        msg.Sum,
 	}
 

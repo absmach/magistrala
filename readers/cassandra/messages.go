@@ -57,7 +57,7 @@ func (cr cassandraRepository) ReadAll(chanID string, offset, limit uint64, query
 		var msg senml.Message
 		err := scanner.Scan(&msg.Channel, &msg.Subtopic, &msg.Publisher, &msg.Protocol,
 			&msg.Name, &msg.Unit, &msg.Value, &msg.StringValue, &msg.BoolValue,
-			&msg.DataValue, &msg.Sum, &msg.Time, &msg.UpdateTime, &msg.Link)
+			&msg.DataValue, &msg.Sum, &msg.Time, &msg.UpdateTime)
 		if err != nil {
 			return readers.MessagesPage{}, err
 		}
@@ -75,7 +75,7 @@ func buildSelectQuery(chanID string, offset, limit uint64, names []string) strin
 	var condCQL string
 	cql := `SELECT channel, subtopic, publisher, protocol, name, unit,
 	        value, string_value, bool_value, data_value, sum, time,
-			update_time, link FROM messages WHERE channel = ? %s LIMIT ?
+			update_time FROM messages WHERE channel = ? %s LIMIT ?
 			ALLOW FILTERING`
 
 	for _, name := range names {

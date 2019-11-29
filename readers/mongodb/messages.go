@@ -36,7 +36,6 @@ type message struct {
 	Sum         *float64 `bson:"sum,omitempty"`
 	Time        float64  `bson:"time,omitempty"`
 	UpdateTime  float64  `bson:"updateTime,omitempty"`
-	Link        string   `bson:"link,omitempty"`
 }
 
 // New returns new MongoDB reader.
@@ -75,7 +74,6 @@ func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64, query m
 			Unit:       m.Unit,
 			Time:       m.Time,
 			UpdateTime: m.UpdateTime,
-			Link:       m.Link,
 			Sum:        m.Sum,
 		}
 

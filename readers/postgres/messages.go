@@ -110,7 +110,6 @@ type dbMessage struct {
 	Sum         *float64 `db:"sum"`
 	Time        float64  `db:"time"`
 	UpdateTime  float64  `db:"update_time"`
-	Link        string   `db:"link"`
 }
 
 func toMessage(dbm dbMessage) senml.Message {
@@ -123,7 +122,6 @@ func toMessage(dbm dbMessage) senml.Message {
 		Unit:       dbm.Unit,
 		Time:       dbm.Time,
 		UpdateTime: dbm.UpdateTime,
-		Link:       dbm.Link,
 		Sum:        dbm.Sum,
 	}
 

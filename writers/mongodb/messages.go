@@ -35,7 +35,6 @@ type message struct {
 	Sum         *float64 `bson:"sum,omitempty"`
 	Time        float64  `bson:"time,omitempty"`
 	UpdateTime  float64  `bson:"updateTime,omitempty"`
-	Link        string   `bson:"link,omitempty"`
 }
 
 // New returns new MongoDB writer.
@@ -56,7 +55,6 @@ func (repo *mongoRepo) Save(messages ...senml.Message) error {
 			Unit:       msg.Unit,
 			Time:       msg.Time,
 			UpdateTime: msg.UpdateTime,
-			Link:       msg.Link,
 		}
 
 		switch {

@@ -58,7 +58,6 @@ func TestSave(t *testing.T) {
 		Unit:       "km",
 		Time:       13451312,
 		UpdateTime: 5456565466,
-		Link:       "link",
 	}
 	var msgs []senml.Message
 

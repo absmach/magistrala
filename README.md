@@ -130,7 +130,7 @@ please head to company's [careers page][careers] or shoot us an e-mail at <caree
 
 [Apache-2.0](LICENSE)
 
-[banner]: https://github.com/mainflux/mainflux/blob/master/docs/img/gopherBanner.jpg
+[banner]: https://github.com/mainflux/docs/blob/master/docs/img/gopherBanner.jpg
 [ci-badge]: https://semaphoreci.com/api/v1/mainflux/mainflux/branches/master/badge.svg
 [ci-url]: https://semaphoreci.com/mainflux/mainflux
 [docs]: http://mainflux.readthedocs.io

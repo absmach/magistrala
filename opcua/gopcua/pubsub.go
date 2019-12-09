@@ -10,6 +10,7 @@ import (
 
 	opcuaGopcua "github.com/gopcua/opcua"
 	uaGopcua "github.com/gopcua/opcua/ua"
+	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/opcua"
@@ -29,22 +30,28 @@ var (
 var _ opcua.Subscriber = (*client)(nil)
 
 type client struct {
-	ctx    context.Context
-	svc    opcua.Service
-	logger logger.Logger
+	ctx        context.Context
+	publisher  mainflux.MessagePublisher
+	thingsRM   opcua.RouteMapRepository
+	channelsRM opcua.RouteMapRepository
+	connectRM  opcua.RouteMapRepository
+	logger     logger.Logger
 }
 
-// NewClient returns new OPC-UA client instance.
-func NewClient(ctx context.Context, svc opcua.Service, log logger.Logger) opcua.Subscriber {
+// NewPubSub returns new OPC-UA client instance.
+func NewPubSub(ctx context.Context, pub mainflux.MessagePublisher, thingsRM, channelsRM, connectRM opcua.RouteMapRepository, log logger.Logger) opcua.Subscriber {
 	return client{
-		ctx:    ctx,
-		svc:    svc,
-		logger: log,
+		ctx:        ctx,
+		publisher:  pub,
+		thingsRM:   thingsRM,
+		channelsRM: channelsRM,
+		connectRM:  connectRM,
+		logger:     log,
 	}
 }
 
 // Subscribe subscribes to the OPC-UA Server.
-func (b client) Subscribe(cfg opcua.Config) error {
+func (c client) Subscribe(cfg opcua.Config) error {
 	opts := []opcuaGopcua.Option{
 		opcuaGopcua.SecurityMode(uaGopcua.MessageSecurityModeNone),
 	}
@@ -70,13 +77,13 @@ func (b client) Subscribe(cfg opcua.Config) error {
 		}
 	}
 
-	c := opcuaGopcua.NewClient(cfg.ServerURI, opts...)
-	if err := c.Connect(b.ctx); err != nil {
+	oc := opcuaGopcua.NewClient(cfg.ServerURI, opts...)
+	if err := oc.Connect(c.ctx); err != nil {
 		return errors.Wrap(errFailedConn, err)
 	}
-	defer c.Close()
+	defer oc.Close()
 
-	sub, err := c.Subscribe(&opcuaGopcua.SubscriptionParameters{
+	sub, err := oc.Subscribe(&opcuaGopcua.SubscriptionParameters{
 		Interval: 2000 * time.Millisecond,
 	})
 	if err != nil {
@@ -84,19 +91,15 @@ func (b client) Subscribe(cfg opcua.Config) error {
 	}
 	defer sub.Cancel()
 
-	b.logger.Info(fmt.Sprintf("OPC-UA server URI: %s", cfg.ServerURI))
-	b.logger.Info(fmt.Sprintf("Created subscription with id %v", sub.SubscriptionID))
-
-	if err := b.runHandler(sub, cfg); err != nil {
+	if err := c.runHandler(sub, cfg); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (b client) runHandler(sub *opcuaGopcua.Subscription, cfg opcua.Config) error {
-	nid := fmt.Sprintf("ns=%s;%s=%s", cfg.NodeNamespace, cfg.NodeIdentifierType, cfg.NodeIdentifier)
-	nodeID, err := uaGopcua.ParseNodeID(nid)
+func (c client) runHandler(sub *opcuaGopcua.Subscription, cfg opcua.Config) error {
+	nodeID, err := uaGopcua.ParseNodeID(cfg.NodeID)
 	if err != nil {
 		return errors.Wrap(errFailedParseNodeID, err)
 	}
@@ -112,15 +115,15 @@ func (b client) runHandler(sub *opcuaGopcua.Subscription, cfg opcua.Config) erro
 		return errResponseStatus
 	}
 
-	go sub.Run(b.ctx)
+	go sub.Run(c.ctx)
 
 	for {
 		select {
-		case <-b.ctx.Done():
+		case <-c.ctx.Done():
 			return nil
 		case res := <-sub.Notifs:
 			if res.Error != nil {
-				b.logger.Error(res.Error.Error())
+				c.logger.Error(res.Error.Error())
 				continue
 			}
 
@@ -128,8 +131,9 @@ func (b client) runHandler(sub *opcuaGopcua.Subscription, cfg opcua.Config) erro
 			case *uaGopcua.DataChangeNotification:
 				for _, item := range x.MonitoredItems {
 					msg := opcua.Message{
-						Namespace: cfg.NodeNamespace,
-						ID:        cfg.NodeIdentifier,
+						ServerURI: cfg.ServerURI,
+						NodeID:    cfg.NodeID,
+						Type:      item.Value.Value.Type().String(),
 					}
 
 					switch item.Value.Value.Type() {
@@ -139,7 +143,7 @@ func (b client) runHandler(sub *opcuaGopcua.Subscription, cfg opcua.Config) erro
 						msg.Data = item.Value.Value.Int()
 					case uaGopcua.TypeIDUint64:
 						msg.Data = item.Value.Value.Uint()
-					case uaGopcua.TypeIDFloat:
+					case uaGopcua.TypeIDFloat, uaGopcua.TypeIDDouble:
 						msg.Data = item.Value.Value.Float()
 					case uaGopcua.TypeIDString:
 						msg.Data = item.Value.Value.String()
@@ -147,13 +151,51 @@ func (b client) runHandler(sub *opcuaGopcua.Subscription, cfg opcua.Config) erro
 						msg.Data = 0
 					}
 
-					// Publish on Mainflux NATS broker
-					b.svc.Publish(b.ctx, "", msg)
+					c.Publish(c.ctx, "", msg)
 				}
 
 			default:
-				b.logger.Info(fmt.Sprintf("what's this publish result? %T", res.Value))
+				c.logger.Info(fmt.Sprintf("unknown publish result: %T", res.Value))
 			}
 		}
 	}
+}
+
+// Publish forwards messages from OPC-UA MQTT broker to Mainflux NATS broker
+func (c client) Publish(ctx context.Context, token string, m opcua.Message) error {
+	// Get route-map of the OPC-UA ServerURI
+	chanID, err := c.channelsRM.Get(m.ServerURI)
+	if err != nil {
+		return opcua.ErrNotFoundServerURI
+	}
+
+	// Get route-map of the OPC-UA NodeID
+	thingID, err := c.thingsRM.Get(m.NodeID)
+	if err != nil {
+		return opcua.ErrNotFoundNodeID
+	}
+
+	// Check connection between ServerURI and NodeID
+	cKey := fmt.Sprintf("%s:%s", chanID, thingID)
+	if _, err := c.connectRM.Get(cKey); err != nil {
+		return opcua.ErrNotFoundConn
+	}
+
+	// Publish on Mainflux NATS broker
+	SenML := fmt.Sprintf(`[{"n":"%s","v":%v}]`, m.Type, m.Data)
+	payload := []byte(SenML)
+	msg := mainflux.Message{
+		Publisher:   thingID,
+		Protocol:    "opcua",
+		ContentType: "Content-Type",
+		Channel:     chanID,
+		Payload:     payload,
+	}
+
+	if err := c.publisher.Publish(ctx, token, msg); err != nil {
+		return err
+	}
+
+	c.logger.Info(fmt.Sprintf("publish from server %s and node_id %s with value %v", m.ServerURI, m.NodeID, m.Data))
+	return nil
 }

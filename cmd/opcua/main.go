@@ -62,13 +62,16 @@ const (
 	envRouteMapDB     = "MF_OPCUA_ADAPTER_ROUTE_MAP_DB"
 	envNodesConfig    = "MF_OPCUA_ADAPTER_CONFIG_FILE"
 
-	thingsRMPrefix   = "thing"
-	channelsRMPrefix = "channel"
+	thingsRMPrefix     = "thing"
+	channelsRMPrefix   = "channel"
+	connectionRMPrefix = "connection"
+
+	columns = 2
 )
 
 type config struct {
 	httpPort       string
-	opcConfig      opcua.Config
+	opcuaConfig    opcua.Config
 	natsURL        string
 	logLevel       string
 	esURL          string
@@ -95,15 +98,19 @@ func main() {
 	rmConn := connectToRedis(cfg.routeMapURL, cfg.routeMapPass, cfg.routeMapDB, logger)
 	defer rmConn.Close()
 
+	thingRM := newRouteMapRepositoy(rmConn, thingsRMPrefix, logger)
+	chanRM := newRouteMapRepositoy(rmConn, channelsRMPrefix, logger)
+	connRM := newRouteMapRepositoy(rmConn, connectionRMPrefix, logger)
+
 	esConn := connectToRedis(cfg.esURL, cfg.esPass, cfg.esDB, logger)
 	defer esConn.Close()
 
 	publisher := pub.NewMessagePublisher(natsConn)
 
-	thingRM := newRouteMapRepositoy(rmConn, thingsRMPrefix, logger)
-	chanRM := newRouteMapRepositoy(rmConn, channelsRMPrefix, logger)
+	ctx := context.Background()
+	pubsub := gopcua.NewPubSub(ctx, publisher, thingRM, chanRM, connRM, logger)
 
-	svc := opcua.New(publisher, thingRM, chanRM)
+	svc := opcua.New(pubsub, thingRM, chanRM, connRM, cfg.opcuaConfig, logger)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,
@@ -121,7 +128,7 @@ func main() {
 		}, []string{"method"}),
 	)
 
-	go subscribeToOpcuaServers(svc, cfg.nodesConfig, cfg.opcConfig, logger)
+	//go subscribeToNodesFromFile(svc, cfg.nodesConfig, cfg.opcuaConfig, logger)
 	go subscribeToThingsES(svc, esConn, cfg.esConsumerName, logger)
 
 	errs := make(chan error, 2)
@@ -147,7 +154,7 @@ func loadConfig() config {
 	}
 	return config{
 		httpPort:       mainflux.Env(envHTTPPort, defHTTPPort),
-		opcConfig:      oc,
+		opcuaConfig:    oc,
 		natsURL:        mainflux.Env(envNatsURL, defNatsURL),
 		logLevel:       mainflux.Env(envLogLevel, defLogLevel),
 		esURL:          mainflux.Env(envESURL, defESURL),
@@ -186,15 +193,7 @@ func connectToRedis(redisURL, redisPass, redisDB string, logger logger.Logger) *
 	})
 }
 
-func readFromOpcuaServer(svc opcua.Service, cfg opcua.Config, logger logger.Logger) {
-	ctx := context.Background()
-	gr := gopcua.NewReader(ctx, svc, logger)
-	if err := gr.Read(cfg); err != nil {
-		logger.Warn(fmt.Sprintf("OPC-UA Read failed: %s", err))
-	}
-}
-
-func subscribeToOpcuaServers(svc opcua.Service, nodes string, cfg opcua.Config, logger logger.Logger) {
+func subscribeToNodesFromFile(svc opcua.Service, nodes string, cfg opcua.Config, logger logger.Logger) {
 	if _, err := os.Stat(nodes); os.IsNotExist(err) {
 		logger.Warn(fmt.Sprintf("Config file not found: %s", err))
 		return
@@ -208,10 +207,6 @@ func subscribeToOpcuaServers(svc opcua.Service, nodes string, cfg opcua.Config, 
 	defer file.Close()
 
 	reader := csv.NewReader(file)
-
-	ctx := context.Background()
-	gc := gopcua.NewClient(ctx, svc, logger)
-
 	for {
 		l, err := reader.Read()
 		if err == io.EOF {
@@ -222,17 +217,17 @@ func subscribeToOpcuaServers(svc opcua.Service, nodes string, cfg opcua.Config, 
 			return
 		}
 
-		if len(l) < 4 {
+		if len(l) < columns {
 			logger.Warn(fmt.Sprintf("Empty or incomplete line found in file"))
 			return
 		}
 
 		cfg.ServerURI = l[0]
-		cfg.NodeNamespace = l[1]
-		cfg.NodeIdentifierType = l[2]
-		cfg.NodeIdentifier = l[3]
+		cfg.NodeID = l[1]
 
-		go subscribeToOpcuaServer(gc, cfg, logger)
+		if err := svc.Subscribe(cfg); err != nil {
+			logger.Warn(fmt.Sprintf("OPC-UA Subscription failed: %s", err))
+		}
 	}
 }
 

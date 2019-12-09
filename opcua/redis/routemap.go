@@ -10,11 +10,6 @@ import (
 	"github.com/mainflux/mainflux/opcua"
 )
 
-const (
-	mfxMapPrefix = "mfx:opcua"
-	opcMapPrefix = "opcua:mfx"
-)
-
 var _ opcua.RouteMapRepository = (*routerMap)(nil)
 
 type routerMap struct {
@@ -30,12 +25,13 @@ func NewRouteMapRepository(client *redis.Client, prefix string) opcua.RouteMapRe
 	}
 }
 
-func (mr *routerMap) Save(mfxID, opcID string) error {
-	tkey := fmt.Sprintf("%s:%s:%s", mr.prefix, mfxMapPrefix, mfxID)
-	if err := mr.client.Set(tkey, opcID, 0).Err(); err != nil {
+func (mr *routerMap) Save(mfxID, opcuaID string) error {
+	tkey := fmt.Sprintf("%s:%s", mr.prefix, mfxID)
+	if err := mr.client.Set(tkey, opcuaID, 0).Err(); err != nil {
 		return err
 	}
-	lkey := fmt.Sprintf("%s:%s:%s", mr.prefix, opcMapPrefix, opcID)
+
+	lkey := fmt.Sprintf("%s:%s", mr.prefix, opcuaID)
 	if err := mr.client.Set(lkey, mfxID, 0).Err(); err != nil {
 		return err
 	}
@@ -43,8 +39,8 @@ func (mr *routerMap) Save(mfxID, opcID string) error {
 	return nil
 }
 
-func (mr *routerMap) Get(mfxID string) (string, error) {
-	lKey := fmt.Sprintf("%s:%s:%s", mr.prefix, opcMapPrefix, mfxID)
+func (mr *routerMap) Get(opcuaID string) (string, error) {
+	lKey := fmt.Sprintf("%s:%s", mr.prefix, opcuaID)
 	mval, err := mr.client.Get(lKey).Result()
 	if err != nil {
 		return "", err
@@ -54,12 +50,12 @@ func (mr *routerMap) Get(mfxID string) (string, error) {
 }
 
 func (mr *routerMap) Remove(mfxID string) error {
-	mkey := fmt.Sprintf("%s:%s:%s", mr.prefix, mfxMapPrefix, mfxID)
+	mkey := fmt.Sprintf("%s:%s", mr.prefix, mfxID)
 	lval, err := mr.client.Get(mkey).Result()
 	if err != nil {
 		return err
 	}
 
-	lkey := fmt.Sprintf("%s:%s:%s", mr.prefix, opcMapPrefix, lval)
+	lkey := fmt.Sprintf("%s:%s", mr.prefix, lval)
 	return mr.client.Del(mkey, lkey).Err()
 }

@@ -4,7 +4,6 @@
 package api
 
 import (
-	"context"
 	"time"
 
 	"github.com/go-kit/kit/metrics"
@@ -28,22 +27,22 @@ func MetricsMiddleware(svc opcua.Service, counter metrics.Counter, latency metri
 	}
 }
 
-func (mm *metricsMiddleware) CreateThing(mfxDevID string, opcID string) error {
+func (mm *metricsMiddleware) CreateThing(mfxDevID, opcuaNodeID string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "create_thing").Add(1)
 		mm.latency.With("method", "create_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.CreateThing(mfxDevID, opcID)
+	return mm.svc.CreateThing(mfxDevID, opcuaNodeID)
 }
 
-func (mm *metricsMiddleware) UpdateThing(mfxDevID string, opcID string) error {
+func (mm *metricsMiddleware) UpdateThing(mfxDevID, opcuaNodeID string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_thing").Add(1)
 		mm.latency.With("method", "update_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.UpdateThing(mfxDevID, opcID)
+	return mm.svc.UpdateThing(mfxDevID, opcuaNodeID)
 }
 
 func (mm *metricsMiddleware) RemoveThing(mfxDevID string) error {
@@ -55,22 +54,22 @@ func (mm *metricsMiddleware) RemoveThing(mfxDevID string) error {
 	return mm.svc.RemoveThing(mfxDevID)
 }
 
-func (mm *metricsMiddleware) CreateChannel(mfxChanID string, opcNamespace string) error {
+func (mm *metricsMiddleware) CreateChannel(mfxChanID, opcuaServerURI string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "create_channel").Add(1)
 		mm.latency.With("method", "create_channel").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.CreateChannel(mfxChanID, opcNamespace)
+	return mm.svc.CreateChannel(mfxChanID, opcuaServerURI)
 }
 
-func (mm *metricsMiddleware) UpdateChannel(mfxChanID string, opcNamespace string) error {
+func (mm *metricsMiddleware) UpdateChannel(mfxChanID, opcuaServerURI string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_channel").Add(1)
 		mm.latency.With("method", "update_channel").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.UpdateChannel(mfxChanID, opcNamespace)
+	return mm.svc.UpdateChannel(mfxChanID, opcuaServerURI)
 }
 
 func (mm *metricsMiddleware) RemoveChannel(mfxChanID string) error {
@@ -82,11 +81,29 @@ func (mm *metricsMiddleware) RemoveChannel(mfxChanID string) error {
 	return mm.svc.RemoveChannel(mfxChanID)
 }
 
-func (mm *metricsMiddleware) Publish(ctx context.Context, token string, m opcua.Message) error {
+func (mm *metricsMiddleware) ConnectThing(mfxChanID, mfxThingID string) error {
 	defer func(begin time.Time) {
-		mm.counter.With("method", "publish").Add(1)
-		mm.latency.With("method", "publish").Observe(time.Since(begin).Seconds())
+		mm.counter.With("method", "connect_thing").Add(1)
+		mm.latency.With("method", "connect_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.Publish(ctx, token, m)
+	return mm.svc.ConnectThing(mfxChanID, mfxThingID)
+}
+
+func (mm *metricsMiddleware) DisconnectThing(mfxChanID, mfxThingID string) error {
+	defer func(begin time.Time) {
+		mm.counter.With("method", "disconnect_thing").Add(1)
+		mm.latency.With("method", "disconnect_thing").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return mm.svc.DisconnectThing(mfxChanID, mfxThingID)
+}
+
+func (mm *metricsMiddleware) Subscribe(cfg opcua.Config) error {
+	defer func(begin time.Time) {
+		mm.counter.With("method", "subscribe").Add(1)
+		mm.latency.With("method", "subscribe").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return mm.svc.Subscribe(cfg)
 }

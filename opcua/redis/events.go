@@ -4,17 +4,22 @@
 package redis
 
 type createThingEvent struct {
-	id                  string
-	opcuaNodeIdentifier string
+	id          string
+	opcuaNodeID string
 }
 
 type removeThingEvent struct {
 	id string
 }
 
+type connectThingEvent struct {
+	chanID  string
+	thingID string
+}
+
 type createChannelEvent struct {
-	id                 string
-	opcuaNodeNamespace string
+	id             string
+	opcuaServerURI string
 }
 
 type removeChannelEvent struct {

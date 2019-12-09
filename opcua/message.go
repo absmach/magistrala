@@ -5,7 +5,8 @@ package opcua
 
 // Message represent an OPC-UA message
 type Message struct {
-	Namespace string      `json:"namespace"`
-	ID        string      `json:"id"`
-	Data      interface{} `json:"data"`
+	ServerURI string
+	NodeID    string
+	Type      string
+	Data      interface{}
 }

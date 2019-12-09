@@ -14,17 +14,19 @@ import (
 )
 
 const (
-	keyProtocol   = "opcua"
-	keyIdentifier = "identifier"
-	keyNamespace  = "namespace"
+	keyProtocol  = "opcua"
+	keyNodeID    = "nodeID"
+	keyServerURI = "serverURI"
 
 	group  = "mainflux.opcua"
 	stream = "mainflux.things"
 
-	thingPrefix = "thing."
-	thingCreate = thingPrefix + "create"
-	thingUpdate = thingPrefix + "update"
-	thingRemove = thingPrefix + "remove"
+	thingPrefix     = "thing."
+	thingCreate     = thingPrefix + "create"
+	thingUpdate     = thingPrefix + "update"
+	thingRemove     = thingPrefix + "remove"
+	thingConnect    = thingPrefix + "connect"
+	thingDisconnect = thingPrefix + "disconnect"
 
 	channelPrefix = "channel."
 	channelCreate = channelPrefix + "create"
@@ -39,9 +41,9 @@ var (
 
 	errMetadataFormat = errors.New("malformed metadata")
 
-	errMetadataNamespace = errors.New("Node Namespace not found in channel metadatada")
+	errMetadataServerURI = errors.New("ServerURI not found in channel metadatada")
 
-	errMetadataIdentifier = errors.New("Node Identifier not found in thing metadatada")
+	errMetadataNodeID = errors.New("NodeID not found in thing metadatada")
 )
 
 var _ opcua.EventStore = (*eventStore)(nil)
@@ -119,6 +121,12 @@ func (es eventStore) Subscribe(subject string) error {
 			case channelRemove:
 				rce := decodeRemoveChannel(event)
 				err = es.handleRemoveChannel(rce)
+			case thingConnect:
+				rce := decodeConnectThing(event)
+				err = es.handleConnectThing(rce)
+			case thingDisconnect:
+				rce := decodeDisconnectThing(event)
+				err = es.handleDisconnectThing(rce)
 			}
 			if err != nil && err != errMetadataType {
 				es.logger.Warn(fmt.Sprintf("Failed to handle event sourcing: %s", err.Error()))
@@ -150,12 +158,12 @@ func decodeCreateThing(event map[string]interface{}) (createThingEvent, error) {
 		return createThingEvent{}, errMetadataFormat
 	}
 
-	val, ok := metadataVal[keyIdentifier].(string)
+	val, ok := metadataVal[keyNodeID].(string)
 	if !ok || val == "" {
-		return createThingEvent{}, errMetadataIdentifier
+		return createThingEvent{}, errMetadataNodeID
 	}
 
-	cte.opcuaNodeIdentifier = val
+	cte.opcuaNodeID = val
 	return cte, nil
 }
 
@@ -186,12 +194,12 @@ func decodeCreateChannel(event map[string]interface{}) (createChannelEvent, erro
 		return createChannelEvent{}, errMetadataFormat
 	}
 
-	val, ok := metadataVal[keyNamespace].(string)
+	val, ok := metadataVal[keyServerURI].(string)
 	if !ok || val == "" {
-		return createChannelEvent{}, errMetadataNamespace
+		return createChannelEvent{}, errMetadataServerURI
 	}
 
-	cce.opcuaNodeNamespace = val
+	cce.opcuaServerURI = val
 	return cce, nil
 }
 
@@ -201,8 +209,22 @@ func decodeRemoveChannel(event map[string]interface{}) removeChannelEvent {
 	}
 }
 
+func decodeConnectThing(event map[string]interface{}) connectThingEvent {
+	return connectThingEvent{
+		chanID:  read(event, "chan_id", ""),
+		thingID: read(event, "thing_id", ""),
+	}
+}
+
+func decodeDisconnectThing(event map[string]interface{}) connectThingEvent {
+	return connectThingEvent{
+		chanID:  read(event, "chan_id", ""),
+		thingID: read(event, "thing_id", ""),
+	}
+}
+
 func (es eventStore) handleCreateThing(cte createThingEvent) error {
-	return es.svc.CreateThing(cte.id, cte.opcuaNodeIdentifier)
+	return es.svc.CreateThing(cte.id, cte.opcuaNodeID)
 }
 
 func (es eventStore) handleRemoveThing(rte removeThingEvent) error {
@@ -210,11 +232,19 @@ func (es eventStore) handleRemoveThing(rte removeThingEvent) error {
 }
 
 func (es eventStore) handleCreateChannel(cce createChannelEvent) error {
-	return es.svc.CreateChannel(cce.id, cce.opcuaNodeNamespace)
+	return es.svc.CreateChannel(cce.id, cce.opcuaServerURI)
 }
 
 func (es eventStore) handleRemoveChannel(rce removeChannelEvent) error {
 	return es.svc.RemoveChannel(rce.id)
+}
+
+func (es eventStore) handleConnectThing(rte connectThingEvent) error {
+	return es.svc.ConnectThing(rte.chanID, rte.thingID)
+}
+
+func (es eventStore) handleDisconnectThing(rte connectThingEvent) error {
+	return es.svc.DisconnectThing(rte.chanID, rte.thingID)
 }
 
 func read(event map[string]interface{}, key, def string) string {

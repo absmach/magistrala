@@ -44,7 +44,7 @@ var config = {
         level: config.log_level
     }),
     packageDefinition = protoLoader.loadSync(
-        config.schema_dir + '/internal.proto', {
+        config.schema_dir + '/authn.proto', {
             keepCase: true,
             longs: String,
             enums: String,

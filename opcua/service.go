@@ -6,20 +6,10 @@ package opcua
 import (
 	"fmt"
 
-	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/logger"
 )
 
 const protocol = "opcua"
-
-var (
-	// ErrNotFoundServerURI indicates missing ServerURI route-map
-	ErrNotFoundServerURI = errors.New("route map not found for this Server URI")
-	// ErrNotFoundNodeID indicates missing NodeID route-map
-	ErrNotFoundNodeID = errors.New("route map not found for this Node ID")
-	// ErrNotFoundConn indicates missing connection
-	ErrNotFoundConn = errors.New("connection not found")
-)
 
 // Service specifies an API that must be fullfiled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).
@@ -47,9 +37,6 @@ type Service interface {
 
 	// DisconnectThing removes thing and channel connection route-map
 	DisconnectThing(string, string) error
-
-	// Subscribe subscribes to a given OPC-UA server
-	Subscribe(Config) error
 }
 
 // Config OPC-UA Server
@@ -122,7 +109,7 @@ func (as *adapterService) ConnectThing(mfxChanID, mfxThingID string) error {
 
 	as.cfg.NodeID = nodeID
 	as.cfg.ServerURI = serverURI
-	go as.subscriber.Subscribe(as.cfg)
+	go as.subscribe(as.cfg)
 
 	c := fmt.Sprintf("%s:%s", mfxChanID, mfxThingID)
 	return as.connectRM.Save(c, c)
@@ -133,8 +120,8 @@ func (as *adapterService) DisconnectThing(mfxChanID, mfxThingID string) error {
 	return as.connectRM.Remove(c)
 }
 
-// Subscribe subscribes to the OPC-UA Server.
-func (as *adapterService) Subscribe(cfg Config) error {
-	go as.subscriber.Subscribe(cfg)
-	return nil
+func (as *adapterService) subscribe(cfg Config) {
+	if err := as.subscriber.Subscribe(cfg); err != nil {
+		as.logger.Warn(fmt.Sprintf("subscription failed: %s", err))
+	}
 }

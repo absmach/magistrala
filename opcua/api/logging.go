@@ -129,16 +129,3 @@ func (lm loggingMiddleware) DisconnectThing(mfxChanID, mfxThingID string) (err e
 
 	return lm.svc.DisconnectThing(mfxChanID, mfxThingID)
 }
-
-func (lm loggingMiddleware) Subscribe(cfg opcua.Config) (err error) {
-	defer func(begin time.Time) {
-		message := fmt.Sprintf("subscribe to server %s and node_id %s, took %s to complete", cfg.ServerURI, cfg.NodeID, time.Since(begin))
-		if err != nil {
-			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
-			return
-		}
-		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
-	}(time.Now())
-
-	return lm.svc.Subscribe(cfg)
-}

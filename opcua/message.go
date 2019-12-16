@@ -8,5 +8,6 @@ type Message struct {
 	ServerURI string
 	NodeID    string
 	Type      string
+	Time      int64
 	Data      interface{}
 }

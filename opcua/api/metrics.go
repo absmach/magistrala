@@ -98,12 +98,3 @@ func (mm *metricsMiddleware) DisconnectThing(mfxChanID, mfxThingID string) error
 
 	return mm.svc.DisconnectThing(mfxChanID, mfxThingID)
 }
-
-func (mm *metricsMiddleware) Subscribe(cfg opcua.Config) error {
-	defer func(begin time.Time) {
-		mm.counter.With("method", "subscribe").Add(1)
-		mm.latency.With("method", "subscribe").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
-	return mm.svc.Subscribe(cfg)
-}

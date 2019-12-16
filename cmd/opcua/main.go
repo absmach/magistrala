@@ -108,9 +108,9 @@ func main() {
 	publisher := pub.NewMessagePublisher(natsConn)
 
 	ctx := context.Background()
-	pubsub := gopcua.NewPubSub(ctx, publisher, thingRM, chanRM, connRM, logger)
+	sub := gopcua.NewSubscriber(ctx, publisher, thingRM, chanRM, connRM, logger)
 
-	svc := opcua.New(pubsub, thingRM, chanRM, connRM, cfg.opcuaConfig, logger)
+	svc := opcua.New(sub, thingRM, chanRM, connRM, cfg.opcuaConfig, logger)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,
@@ -128,7 +128,7 @@ func main() {
 		}, []string{"method"}),
 	)
 
-	//go subscribeToNodesFromFile(svc, cfg.nodesConfig, cfg.opcuaConfig, logger)
+	go subscribeToNodesFromFile(sub, cfg.nodesConfig, cfg.opcuaConfig, logger)
 	go subscribeToThingsES(svc, esConn, cfg.esConsumerName, logger)
 
 	errs := make(chan error, 2)
@@ -193,7 +193,7 @@ func connectToRedis(redisURL, redisPass, redisDB string, logger logger.Logger) *
 	})
 }
 
-func subscribeToNodesFromFile(svc opcua.Service, nodes string, cfg opcua.Config, logger logger.Logger) {
+func subscribeToNodesFromFile(sub opcua.Subscriber, nodes string, cfg opcua.Config, logger logger.Logger) {
 	if _, err := os.Stat(nodes); os.IsNotExist(err) {
 		logger.Warn(fmt.Sprintf("Config file not found: %s", err))
 		return
@@ -218,16 +218,19 @@ func subscribeToNodesFromFile(svc opcua.Service, nodes string, cfg opcua.Config,
 		}
 
 		if len(l) < columns {
-			logger.Warn(fmt.Sprintf("Empty or incomplete line found in file"))
+			logger.Warn("Empty or incomplete line found in file")
 			return
 		}
 
 		cfg.ServerURI = l[0]
 		cfg.NodeID = l[1]
+		go subscribe(sub, cfg, logger)
+	}
+}
 
-		if err := svc.Subscribe(cfg); err != nil {
-			logger.Warn(fmt.Sprintf("OPC-UA Subscription failed: %s", err))
-		}
+func subscribe(sub opcua.Subscriber, cfg opcua.Config, logger logger.Logger) {
+	if err := sub.Subscribe(cfg); err != nil {
+		logger.Warn(fmt.Sprintf("Subscription failed: %s", err))
 	}
 }
 

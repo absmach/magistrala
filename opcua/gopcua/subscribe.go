@@ -16,15 +16,22 @@ import (
 	"github.com/mainflux/mainflux/opcua"
 )
 
+const protocol = "opcua"
+const token = ""
+
 var (
-	errFailedConn          = errors.New("Failed to connect")
-	errFailedRead          = errors.New("Failed to read")
-	errFailedSub           = errors.New("Failed to subscribe")
-	errFailedFindEndpoint  = errors.New("Failed to find suitable endpoint")
-	errFailedFetchEndpoint = errors.New("Failed to fetch OPC-UA server endpoints")
-	errFailedParseNodeID   = errors.New("Failed to parse NodeID")
-	errFailedCreateReq     = errors.New("Failed to create request")
-	errResponseStatus      = errors.New("Response status not OK")
+	errNotFoundServerURI = errors.New("route map not found for this Server URI")
+	errNotFoundNodeID    = errors.New("route map not found for this Node ID")
+	errNotFoundConn      = errors.New("connection not found")
+
+	errFailedConn          = errors.New("failed to connect")
+	errFailedRead          = errors.New("failed to read")
+	errFailedSub           = errors.New("failed to subscribe")
+	errFailedFindEndpoint  = errors.New("failed to find suitable endpoint")
+	errFailedFetchEndpoint = errors.New("failed to fetch OPC-UA server endpoints")
+	errFailedParseNodeID   = errors.New("failed to parse NodeID")
+	errFailedCreateReq     = errors.New("failed to create request")
+	errResponseStatus      = errors.New("response status not OK")
 )
 
 var _ opcua.Subscriber = (*client)(nil)
@@ -38,8 +45,8 @@ type client struct {
 	logger     logger.Logger
 }
 
-// NewPubSub returns new OPC-UA client instance.
-func NewPubSub(ctx context.Context, pub mainflux.MessagePublisher, thingsRM, channelsRM, connectRM opcua.RouteMapRepository, log logger.Logger) opcua.Subscriber {
+// NewSubscriber returns new OPC-UA client instance.
+func NewSubscriber(ctx context.Context, pub mainflux.MessagePublisher, thingsRM, channelsRM, connectRM opcua.RouteMapRepository, log logger.Logger) opcua.Subscriber {
 	return client{
 		ctx:        ctx,
 		publisher:  pub,
@@ -117,6 +124,7 @@ func (c client) runHandler(sub *opcuaGopcua.Subscription, cfg opcua.Config) erro
 
 	go sub.Run(c.ctx)
 
+	c.logger.Info(fmt.Sprintf("subscribe to server %s and node_id %s", cfg.ServerURI, cfg.NodeID))
 	for {
 		select {
 		case <-c.ctx.Done():
@@ -134,6 +142,7 @@ func (c client) runHandler(sub *opcuaGopcua.Subscription, cfg opcua.Config) erro
 						ServerURI: cfg.ServerURI,
 						NodeID:    cfg.NodeID,
 						Type:      item.Value.Value.Type().String(),
+						Time:      item.Value.SourceTimestamp.Unix(),
 					}
 
 					switch item.Value.Value.Type() {
@@ -151,7 +160,9 @@ func (c client) runHandler(sub *opcuaGopcua.Subscription, cfg opcua.Config) erro
 						msg.Data = 0
 					}
 
-					c.Publish(c.ctx, "", msg)
+					if err := c.publish(token, msg); err != nil {
+						c.logger.Warn(fmt.Sprintf("failed to publish: %s", err))
+					}
 				}
 
 			default:
@@ -161,38 +172,38 @@ func (c client) runHandler(sub *opcuaGopcua.Subscription, cfg opcua.Config) erro
 	}
 }
 
-// Publish forwards messages from OPC-UA MQTT broker to Mainflux NATS broker
-func (c client) Publish(ctx context.Context, token string, m opcua.Message) error {
+// Publish forwards messages from the OPC-UA Server to Mainflux NATS broker
+func (c client) publish(token string, m opcua.Message) error {
 	// Get route-map of the OPC-UA ServerURI
 	chanID, err := c.channelsRM.Get(m.ServerURI)
 	if err != nil {
-		return opcua.ErrNotFoundServerURI
+		return errNotFoundServerURI
 	}
 
 	// Get route-map of the OPC-UA NodeID
 	thingID, err := c.thingsRM.Get(m.NodeID)
 	if err != nil {
-		return opcua.ErrNotFoundNodeID
+		return errNotFoundNodeID
 	}
 
 	// Check connection between ServerURI and NodeID
 	cKey := fmt.Sprintf("%s:%s", chanID, thingID)
 	if _, err := c.connectRM.Get(cKey); err != nil {
-		return opcua.ErrNotFoundConn
+		return errNotFoundConn
 	}
 
 	// Publish on Mainflux NATS broker
-	SenML := fmt.Sprintf(`[{"n":"%s","v":%v}]`, m.Type, m.Data)
+	SenML := fmt.Sprintf(`[{"n":"%s", "t": %d, "v":%v}]`, m.Type, m.Time, m.Data)
 	payload := []byte(SenML)
 	msg := mainflux.Message{
 		Publisher:   thingID,
-		Protocol:    "opcua",
+		Protocol:    protocol,
 		ContentType: "Content-Type",
 		Channel:     chanID,
 		Payload:     payload,
 	}
 
-	if err := c.publisher.Publish(ctx, token, msg); err != nil {
+	if err := c.publisher.Publish(c.ctx, token, msg); err != nil {
 		return err
 	}
 

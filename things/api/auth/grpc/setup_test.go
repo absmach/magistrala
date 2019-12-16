@@ -41,7 +41,7 @@ func startServer() {
 }
 
 func newService(tokens map[string]string) things.Service {
-	users := mocks.NewUsersService(tokens)
+	auth := mocks.NewAuthService(tokens)
 	conns := make(chan mocks.Connection)
 	thingsRepo := mocks.NewThingRepository(conns)
 	channelsRepo := mocks.NewChannelRepository(thingsRepo, conns)
@@ -49,5 +49,5 @@ func newService(tokens map[string]string) things.Service {
 	thingCache := mocks.NewThingCache()
 	idp := mocks.NewIdentityProvider()
 
-	return things.New(users, thingsRepo, channelsRepo, chanCache, thingCache, idp)
+	return things.New(auth, thingsRepo, channelsRepo, chanCache, thingCache, idp)
 }

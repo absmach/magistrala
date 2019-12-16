@@ -54,17 +54,17 @@ var (
 	}
 )
 
-func newService(users mainflux.UsersServiceClient, url string) bootstrap.Service {
+func newService(auth mainflux.AuthNServiceClient, url string) bootstrap.Service {
 	things := mocks.NewConfigsRepository(map[string]string{unknownID: unknownKey})
 	config := mfsdk.Config{
 		BaseURL: url,
 	}
 
 	sdk := mfsdk.NewSDK(config)
-	return bootstrap.New(users, things, sdk, encKey)
+	return bootstrap.New(auth, things, sdk, encKey)
 }
 
-func newThingsService(users mainflux.UsersServiceClient) things.Service {
+func newThingsService(auth mainflux.AuthNServiceClient) things.Service {
 	channels := make(map[string]things.Channel, channelsNum)
 	for i := 0; i < channelsNum; i++ {
 		id := strconv.Itoa(i + 1)
@@ -75,7 +75,7 @@ func newThingsService(users mainflux.UsersServiceClient) things.Service {
 		}
 	}
 
-	return mocks.NewThingsService(map[string]things.Thing{}, channels, users)
+	return mocks.NewThingsService(map[string]things.Thing{}, channels, auth)
 }
 
 func newThingsServer(svc things.Service) *httptest.Server {

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/users"
 
@@ -26,11 +27,10 @@ var (
 func newService() users.Service {
 	repo := mocks.NewUserRepository()
 	hasher := mocks.NewHasher()
-	idp := mocks.NewIdentityProvider()
-	token := mocks.NewTokenizer()
+	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
 	e := mocks.NewEmailer()
 
-	return users.New(repo, hasher, idp, e, token)
+	return users.New(repo, hasher, auth, e)
 }
 
 func TestRegister(t *testing.T) {
@@ -70,6 +70,12 @@ func TestRegister(t *testing.T) {
 func TestLogin(t *testing.T) {
 	svc := newService()
 	svc.Register(context.Background(), user)
+	noAuthUser := users.User{
+		Email:    "email@test.com",
+		Password: "pwd",
+	}
+	svc.Register(context.Background(), user)
+	svc.Register(context.Background(), noAuthUser)
 
 	cases := map[string]struct {
 		user users.User
@@ -93,29 +99,14 @@ func TestLogin(t *testing.T) {
 			},
 			err: users.ErrUnauthorizedAccess,
 		},
+		"login failed auth": {
+			user: noAuthUser,
+			err:  users.ErrUnauthorizedAccess,
+		},
 	}
 
 	for desc, tc := range cases {
 		_, err := svc.Login(context.Background(), tc.user)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
-	}
-}
-
-func TestIdentify(t *testing.T) {
-	svc := newService()
-	svc.Register(context.Background(), user)
-	key, _ := svc.Login(context.Background(), user)
-
-	cases := map[string]struct {
-		key string
-		err error
-	}{
-		"valid token's identity":   {key, nil},
-		"invalid token's identity": {"", users.ErrUnauthorizedAccess},
-	}
-
-	for desc, tc := range cases {
-		_, err := svc.Identify(tc.key)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
@@ -209,23 +200,21 @@ func TestChangePassword(t *testing.T) {
 func TestResetPassword(t *testing.T) {
 	svc := newService()
 	svc.Register(context.Background(), user)
-	tokenizer := mocks.NewTokenizer()
-	resetToken, _ := tokenizer.Generate(user.Email, 0)
-	resetNonExisting, _ := tokenizer.Generate(nonExistingUser.Email, 0)
-
+	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
+	resetToken, err := auth.Issue(context.Background(), &mainflux.IssueReq{Issuer: user.Email, Type: 2})
+	assert.Nil(t, err, fmt.Sprintf("Generating reset token expected to succeed: %s", err))
 	cases := map[string]struct {
 		token    string
 		password string
 		err      error
 	}{
-		"valid user reset password ":   {resetToken, "newpassword", nil},
-		"invalid user reset password ": {resetNonExisting, "newpassword", users.ErrUserNotFound},
+		"valid user reset password ":   {resetToken.GetValue(), user.Email, nil},
+		"invalid user reset password ": {"", "newpassword", users.ErrUnauthorizedAccess},
 	}
 
 	for desc, tc := range cases {
 		err := svc.ResetPassword(context.Background(), tc.token, tc.password)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
-
 	}
 }
 

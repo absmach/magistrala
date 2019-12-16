@@ -45,3 +45,30 @@ func TestIdentify(t *testing.T) {
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s, got %s", desc, tc.err, err))
 	}
 }
+
+func TestIssue(t *testing.T) {
+	svc := users.NewSingleUserService(email, token)
+
+	cases := map[string]struct {
+		token string
+		id    string
+		err   error
+	}{
+		"issue key unauthorized": {
+			token: "non-existing",
+			id:    "",
+			err:   things.ErrUnauthorizedAccess,
+		},
+		"issue key": {
+			token: token,
+			id:    token,
+			err:   nil,
+		},
+	}
+
+	for desc, tc := range cases {
+		id, err := svc.Issue(context.Background(), &mainflux.IssueReq{Issuer: tc.token, Type: 0})
+		assert.Equal(t, tc.id, id.GetValue(), fmt.Sprintf("%s: expected %s, got %s", desc, tc.id, id.GetValue()))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s, got %s", desc, tc.err, err))
+	}
+}

@@ -16,6 +16,7 @@ import (
 	"syscall"
 	"time"
 
+	authapi "github.com/mainflux/mainflux/authn/api/grpc"
 	rediscons "github.com/mainflux/mainflux/bootstrap/redis/consumer"
 	redisprod "github.com/mainflux/mainflux/bootstrap/redis/producer"
 	"github.com/mainflux/mainflux/logger"
@@ -30,7 +31,6 @@ import (
 	"github.com/mainflux/mainflux/bootstrap/postgres"
 	mflog "github.com/mainflux/mainflux/logger"
 	mfsdk "github.com/mainflux/mainflux/sdk/go"
-	usersapi "github.com/mainflux/mainflux/users/api/grpc"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	jconfig "github.com/uber/jaeger-client-go/config"
 	"google.golang.org/grpc"
@@ -56,7 +56,6 @@ const (
 	defServerKey      = ""
 	defBaseURL        = "http://localhost"
 	defThingsPrefix   = ""
-	defUsersURL       = "localhost:8181"
 	defThingsESURL    = "localhost:6379"
 	defThingsESPass   = ""
 	defThingsESDB     = "0"
@@ -65,7 +64,8 @@ const (
 	defESDB           = "0"
 	defESConsumerName = "bootstrap"
 	defJaegerURL      = ""
-	defUsersTimeout   = "1" // in seconds
+	defAuthURL        = "localhost:8181"
+	defAuthTimeout    = "1" // in seconds
 
 	envLogLevel       = "MF_BOOTSTRAP_LOG_LEVEL"
 	envDBHost         = "MF_BOOTSTRAP_DB_HOST"
@@ -85,7 +85,6 @@ const (
 	envServerKey      = "MF_BOOTSTRAP_SERVER_KEY"
 	envBaseURL        = "MF_SDK_BASE_URL"
 	envThingsPrefix   = "MF_SDK_THINGS_PREFIX"
-	envUsersURL       = "MF_USERS_URL"
 	envThingsESURL    = "MF_THINGS_ES_URL"
 	envThingsESPass   = "MF_THINGS_ES_PASS"
 	envThingsESDB     = "MF_THINGS_ES_DB"
@@ -94,7 +93,8 @@ const (
 	envESDB           = "MF_BOOTSTRAP_ES_DB"
 	envESConsumerName = "MF_BOOTSTRAP_EVENT_CONSUMER"
 	envJaegerURL      = "MF_JAEGER_URL"
-	envUsersTimeout   = "MF_BOOTSTRAP_USERS_TIMEOUT"
+	envAuthURL        = "MF_AUTH_URL"
+	envAuthTimeout    = "MF_AUTH_TIMEOUT"
 )
 
 type config struct {
@@ -108,7 +108,6 @@ type config struct {
 	serverKey      string
 	baseURL        string
 	thingsPrefix   string
-	usersURL       string
 	esThingsURL    string
 	esThingsPass   string
 	esThingsDB     string
@@ -117,7 +116,8 @@ type config struct {
 	esDB           string
 	esConsumerName string
 	jaegerURL      string
-	usersTimeout   time.Duration
+	authURL        string
+	authTimeout    time.Duration
 }
 
 func main() {
@@ -131,19 +131,21 @@ func main() {
 	db := connectToDB(cfg.dbConfig, logger)
 	defer db.Close()
 
-	conn := connectToUsers(cfg, logger)
-	defer conn.Close()
-
 	thingsESConn := connectToRedis(cfg.esThingsURL, cfg.esThingsPass, cfg.esThingsDB, logger)
 	defer thingsESConn.Close()
 
 	esClient := connectToRedis(cfg.esURL, cfg.esPass, cfg.esDB, logger)
 	defer esClient.Close()
 
-	usersTracer, usersCloser := initJaeger("users", cfg.jaegerURL, logger)
-	defer usersCloser.Close()
+	authTracer, authCloser := initJaeger("auth", cfg.jaegerURL, logger)
+	defer authCloser.Close()
 
-	svc := newService(conn, usersTracer, db, logger, esClient, cfg)
+	authConn := connectToAuth(cfg, logger)
+	defer authConn.Close()
+
+	auth := authapi.NewClient(authTracer, authConn, cfg.authTimeout)
+
+	svc := newService(auth, db, logger, esClient, cfg)
 	errs := make(chan error, 2)
 
 	go startHTTPServer(svc, cfg, logger, errs)
@@ -176,9 +178,9 @@ func loadConfig() config {
 		SSLRootCert: mainflux.Env(envDBSSLRootCert, defDBSSLRootCert),
 	}
 
-	timeout, err := strconv.ParseInt(mainflux.Env(envUsersTimeout, defUsersTimeout), 10, 64)
+	timeout, err := strconv.ParseInt(mainflux.Env(envAuthTimeout, defAuthTimeout), 10, 64)
 	if err != nil {
-		log.Fatalf("Invalid %s value: %s", envUsersTimeout, err.Error())
+		log.Fatalf("Invalid %s value: %s", envAuthTimeout, err.Error())
 	}
 	encKey, err := hex.DecodeString(mainflux.Env(envEncryptKey, defEncryptKey))
 	if err != nil {
@@ -202,7 +204,6 @@ func loadConfig() config {
 		serverKey:      mainflux.Env(envServerKey, defServerKey),
 		baseURL:        mainflux.Env(envBaseURL, defBaseURL),
 		thingsPrefix:   mainflux.Env(envThingsPrefix, defThingsPrefix),
-		usersURL:       mainflux.Env(envUsersURL, defUsersURL),
 		esThingsURL:    mainflux.Env(envThingsESURL, defThingsESURL),
 		esThingsPass:   mainflux.Env(envThingsESPass, defThingsESPass),
 		esThingsDB:     mainflux.Env(envThingsESDB, defThingsESDB),
@@ -211,7 +212,8 @@ func loadConfig() config {
 		esDB:           mainflux.Env(envESDB, defESDB),
 		esConsumerName: mainflux.Env(envESConsumerName, defESConsumerName),
 		jaegerURL:      mainflux.Env(envJaegerURL, defJaegerURL),
-		usersTimeout:   time.Duration(timeout) * time.Second,
+		authURL:        mainflux.Env(envAuthURL, defAuthURL),
+		authTimeout:    time.Duration(timeout) * time.Second,
 	}
 }
 
@@ -262,7 +264,7 @@ func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, 
 	return tracer, closer
 }
 
-func newService(conn *grpc.ClientConn, usersTracer opentracing.Tracer, db *sqlx.DB, logger mflog.Logger, esClient *r.Client, cfg config) bootstrap.Service {
+func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logger, esClient *r.Client, cfg config) bootstrap.Service {
 	thingsRepo := postgres.NewConfigRepository(db, logger)
 
 	config := mfsdk.Config{
@@ -271,9 +273,8 @@ func newService(conn *grpc.ClientConn, usersTracer opentracing.Tracer, db *sqlx.
 	}
 
 	sdk := mfsdk.NewSDK(config)
-	users := usersapi.NewClient(usersTracer, conn, cfg.usersTimeout)
 
-	svc := bootstrap.New(users, thingsRepo, sdk, cfg.encKey)
+	svc := bootstrap.New(auth, thingsRepo, sdk, cfg.encKey)
 	svc = redisprod.NewEventStoreMiddleware(svc, esClient)
 	svc = api.NewLoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
@@ -294,7 +295,7 @@ func newService(conn *grpc.ClientConn, usersTracer opentracing.Tracer, db *sqlx.
 	return svc
 }
 
-func connectToUsers(cfg config, logger mflog.Logger) *grpc.ClientConn {
+func connectToAuth(cfg config, logger logger.Logger) *grpc.ClientConn {
 	var opts []grpc.DialOption
 	if cfg.clientTLS {
 		if cfg.caCerts != "" {
@@ -310,7 +311,7 @@ func connectToUsers(cfg config, logger mflog.Logger) *grpc.ClientConn {
 		logger.Info("gRPC communication is not encrypted")
 	}
 
-	conn, err := grpc.Dial(cfg.usersURL, opts...)
+	conn, err := grpc.Dial(cfg.authURL, opts...)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to users service: %s", err))
 		os.Exit(1)

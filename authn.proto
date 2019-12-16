@@ -1,0 +1,49 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package mainflux;
+
+import "google/protobuf/empty.proto";
+
+service ThingsService {
+    rpc CanAccessByKey(AccessByKeyReq) returns (ThingID) {}
+    rpc CanAccessByID(AccessByIDReq) returns (google.protobuf.Empty) {}
+    rpc Identify(Token) returns (ThingID) {}
+}
+
+service AuthNService {
+    rpc Issue(IssueReq) returns (Token) {}
+    rpc Identify(Token) returns (UserID) {}
+}
+
+message AccessByKeyReq {
+    string token  = 1;
+    string chanID = 2;
+}
+
+message ThingID {
+    string value = 1;
+}
+
+message AccessByIDReq {
+    string thingID = 1;
+    string chanID  = 2;
+}
+
+// If a token is not carrying any information itself, the type
+// field can be used to determine how to validate the token.
+// Also, different tokens can be encoded in different ways.
+message Token {
+    string value = 1;
+}
+
+message UserID {
+    string value = 1;
+}
+
+message IssueReq {
+    string issuer = 1;
+    uint32 type   = 2;
+}

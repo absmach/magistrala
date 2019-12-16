@@ -48,15 +48,6 @@ func (ms *metricsMiddleware) Login(ctx context.Context, user users.User) (string
 	return ms.svc.Login(ctx, user)
 }
 
-func (ms *metricsMiddleware) Identify(key string) (string, errors.Error) {
-	defer func(begin time.Time) {
-		ms.counter.With("method", "identity").Add(1)
-		ms.latency.With("method", "identity").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
-	return ms.svc.Identify(key)
-}
-
 func (ms *metricsMiddleware) UserInfo(ctx context.Context, token string) (users.User, errors.Error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "user_info").Add(1)

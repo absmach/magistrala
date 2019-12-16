@@ -82,10 +82,6 @@ spec:
           value: "mainflux-users-postgres.default"
         - name: MF_USERS_HTTP_PORT
           value: "8180"
-        - name: MF_USERS_GRPC_PORT
-          value: "8181"
-        - name: MF_USERS_SECRET
-          value: "test-secret"
         livenessProbe:
           httpGet:
             path: /version

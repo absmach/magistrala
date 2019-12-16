@@ -19,17 +19,17 @@ type mainfluxThings struct {
 	counter     uint64
 	things      map[string]things.Thing
 	channels    map[string]things.Channel
-	users       mainflux.UsersServiceClient
+	auth        mainflux.AuthNServiceClient
 	connections map[string][]string
 }
 
 // NewThingsService returns Mainflux Things service mock.
 // Only methods used by SDK are mocked.
-func NewThingsService(things map[string]things.Thing, channels map[string]things.Channel, users mainflux.UsersServiceClient) things.Service {
+func NewThingsService(things map[string]things.Thing, channels map[string]things.Channel, authn mainflux.AuthNServiceClient) things.Service {
 	return &mainfluxThings{
 		things:      things,
 		channels:    channels,
-		users:       users,
+		auth:        authn,
 		connections: make(map[string][]string),
 	}
 }
@@ -38,7 +38,7 @@ func (svc *mainfluxThings) CreateThings(_ context.Context, owner string, ths ...
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
-	userID, err := svc.users.Identify(context.Background(), &mainflux.Token{Value: owner})
+	userID, err := svc.auth.Identify(context.Background(), &mainflux.Token{Value: owner})
 	if err != nil {
 		return []things.Thing{}, things.ErrUnauthorizedAccess
 	}
@@ -57,7 +57,7 @@ func (svc *mainfluxThings) ViewThing(_ context.Context, owner, id string) (thing
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
-	userID, err := svc.users.Identify(context.Background(), &mainflux.Token{Value: owner})
+	userID, err := svc.auth.Identify(context.Background(), &mainflux.Token{Value: owner})
 	if err != nil {
 		return things.Thing{}, things.ErrUnauthorizedAccess
 	}
@@ -74,7 +74,7 @@ func (svc *mainfluxThings) Connect(_ context.Context, owner string, chIDs, thIDs
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
-	userID, err := svc.users.Identify(context.Background(), &mainflux.Token{Value: owner})
+	userID, err := svc.auth.Identify(context.Background(), &mainflux.Token{Value: owner})
 	if err != nil {
 		return things.ErrUnauthorizedAccess
 	}
@@ -94,7 +94,7 @@ func (svc *mainfluxThings) Disconnect(_ context.Context, owner, chanID, thingID 
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
-	userID, err := svc.users.Identify(context.Background(), &mainflux.Token{Value: owner})
+	userID, err := svc.auth.Identify(context.Background(), &mainflux.Token{Value: owner})
 	if err != nil || svc.channels[chanID].Owner != userID.Value {
 		return things.ErrUnauthorizedAccess
 	}
@@ -126,7 +126,7 @@ func (svc *mainfluxThings) RemoveThing(_ context.Context, owner, id string) erro
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
-	userID, err := svc.users.Identify(context.Background(), &mainflux.Token{Value: owner})
+	userID, err := svc.auth.Identify(context.Background(), &mainflux.Token{Value: owner})
 	if err != nil {
 		return things.ErrUnauthorizedAccess
 	}
@@ -183,7 +183,7 @@ func (svc *mainfluxThings) CreateChannels(_ context.Context, owner string, chs .
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
-	userID, err := svc.users.Identify(context.Background(), &mainflux.Token{Value: owner})
+	userID, err := svc.auth.Identify(context.Background(), &mainflux.Token{Value: owner})
 	if err != nil {
 		return []things.Channel{}, things.ErrUnauthorizedAccess
 	}

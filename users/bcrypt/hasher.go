@@ -1,7 +1,7 @@
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
 
-// Package bcrypt provides a hasher implementation utilising bcrypt.
+// Package bcrypt provides a hasher implementation utilizing bcrypt.
 package bcrypt
 
 import (

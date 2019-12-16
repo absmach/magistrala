@@ -1,0 +1,127 @@
+swagger: "2.0"
+info:
+  title: Mainflux authentication service
+  description: HTTP API for managing platform API keys.
+  version: "1.0.0"
+consumes:
+  - "application/json"
+produces:
+  - "application/json"
+paths:
+  /keys:
+    post:
+      summary: Issue API key
+      description: |
+        Generates a new API key. Thew new API key will
+        be uniquely identified by its ID.
+      tags:
+        - authn
+      parameters:
+        - name: key
+          description: JSON-formatted document describing the new key.
+          in: body
+          schema:
+            $ref: "#/definitions/Key"
+          required: true
+      responses:
+        201:
+          description: Issued new key.
+        400:
+          description: Failed due to malformed JSON.
+        409:
+          description: Failed due to using already existing ID.
+        415:
+          description: Missing or invalid content type.
+        500:
+          $ref: "#/responses/ServiceError"
+    get:
+      summary: Gets API key details.
+      description: |
+        Gets API key details for the given key.
+      tags:
+        - authn
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - name: id
+          description: API Key id.
+          in: path
+          type: string
+          required: true
+      responses:
+        200:
+          description: Data retrieved.
+          schema:
+            $ref: "#/definitions/Key"
+        400:
+          description: Failed due to malformed query parameters.
+        403:
+          description: Missing or invalid access token provided.
+        500:
+          $ref: "#/responses/ServiceError"
+    delete:
+      summary: Revoke API key
+      description: |
+        Revoke API key identified by the given ID.
+      tags:
+        - authn
+      parameters:
+        - $ref: "#/parameters/Authorization"
+        - name: id
+          description: API Key id.
+          in: path
+          type: string
+          required: true
+      responses:
+        204:
+          description: Key revoked.
+        403:
+          description: Missing or invalid access token provided.
+        500:
+          $ref: "#/responses/ServiceError"
+
+definitions:
+  Key:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+        example: "c5747f2f-2a7c-4fe1-b41a-51a5ae290945"
+        description: API key unique identifier
+      type:
+        type: integer
+        example: 0
+        description: API key type. Keys of different type are processed differently
+      issuer:
+        type: string
+        format: string
+        example: "test@example.com"
+        description: User's email or service identifier of API key issuer
+      secret:
+        type: string
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiZXhhbXBsZSIsImlhdCI6MTUxNjIzOTAyMn0.9UYAFWmPIn4ojss36LpIGSqABZHfADQmVuKQ4PJBMdI
+        description: API Key value.
+      issued_at:
+        type: string
+        format: date-time
+        example: "2019-11-26 13:31:52"
+        description: Time when the key is generated
+      expires_at:
+        type: string
+        format: date-time
+        example: "2019-11-26 13:31:52"
+        description: Time when the Key expires
+    required:
+      - type
+
+parameters:
+  Authorization:
+    name: Authorization
+    description: Login key secret (User's access token).
+    in: header
+    type: string
+    required: true
+
+responses:
+  ServiceError:
+    description: Unexpected server-side error occurred.

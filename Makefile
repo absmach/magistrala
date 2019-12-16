@@ -3,7 +3,8 @@
 
 BUILD_DIR = build
 SERVICES = users things http ws coap lora influxdb-writer influxdb-reader mongodb-writer \
-	mongodb-reader cassandra-writer cassandra-reader postgres-writer postgres-reader cli bootstrap opcua
+	mongodb-reader cassandra-writer cassandra-reader postgres-writer postgres-reader cli \
+	bootstrap opcua authn
 DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
 CGO_ENABLED ?= 0

@@ -93,7 +93,7 @@ type ConfigReader interface {
 }
 
 type bootstrapService struct {
-	users   mainflux.UsersServiceClient
+	auth    mainflux.AuthNServiceClient
 	configs ConfigRepository
 	sdk     mfsdk.SDK
 	encKey  []byte
@@ -101,11 +101,11 @@ type bootstrapService struct {
 }
 
 // New returns new Bootstrap service.
-func New(users mainflux.UsersServiceClient, configs ConfigRepository, sdk mfsdk.SDK, encKey []byte) Service {
+func New(auth mainflux.AuthNServiceClient, configs ConfigRepository, sdk mfsdk.SDK, encKey []byte) Service {
 	return &bootstrapService{
 		configs: configs,
 		sdk:     sdk,
-		users:   users,
+		auth:    auth,
 		encKey:  encKey,
 	}
 }
@@ -340,7 +340,7 @@ func (bs bootstrapService) identify(token string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	res, err := bs.users.Identify(ctx, &mainflux.Token{Value: token})
+	res, err := bs.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return "", ErrUnauthorizedAccess
 	}

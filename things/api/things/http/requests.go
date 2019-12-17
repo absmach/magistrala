@@ -252,6 +252,10 @@ func (req createConnectionsReq) validate() error {
 		return things.ErrUnauthorizedAccess
 	}
 
+	if len(req.ChannelIDs) == 0 || len(req.ThingIDs) == 0 {
+		return things.ErrMalformedEntity
+	}
+
 	for _, chID := range req.ChannelIDs {
 		if chID == "" {
 			return things.ErrMalformedEntity

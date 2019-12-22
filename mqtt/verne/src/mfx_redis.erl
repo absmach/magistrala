@@ -20,9 +20,11 @@ init(_Args) ->
     error_logger:info_msg("mfx_redis genserver has started (~w)~n", [self()]),
 
     [{_, RedisUrl}] = ets:lookup(mfx_cfg, redis_url),
+    [{_, RedisDb}] = ets:lookup(mfx_cfg, redis_db),
+    [{_, RedisPwd}] = ets:lookup(mfx_cfg, redis_pwd),
     {ok, {_, _, RedisHost, RedisPort, _, _}} = http_uri:parse(RedisUrl),
     error_logger:info_msg("mfx_redis host: ~p,  port: ~p", [RedisHost, RedisPort]),
-    {ok, RedisConn} = eredis:start_link(RedisHost, RedisPort),
+    {ok, RedisConn} = eredis:start_link(RedisHost, RedisPort, RedisDb, RedisPwd),
 
     {ok, #state{conn = RedisConn}}.
 

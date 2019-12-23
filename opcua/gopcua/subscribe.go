@@ -20,8 +20,8 @@ const protocol = "opcua"
 const token = ""
 
 var (
-	errNotFoundServerURI = errors.New("route map not found for this Server URI")
-	errNotFoundNodeID    = errors.New("route map not found for this Node ID")
+	errNotFoundServerURI = errors.New("route map not found for Server URI")
+	errNotFoundNodeID    = errors.New("route map not found for Node ID")
 	errNotFoundConn      = errors.New("connection not found")
 
 	errFailedConn          = errors.New("failed to connect")
@@ -177,19 +177,19 @@ func (c client) publish(token string, m opcua.Message) error {
 	// Get route-map of the OPC-UA ServerURI
 	chanID, err := c.channelsRM.Get(m.ServerURI)
 	if err != nil {
-		return errNotFoundServerURI
+		return fmt.Errorf("%s %s", errNotFoundServerURI, m.ServerURI)
 	}
 
 	// Get route-map of the OPC-UA NodeID
 	thingID, err := c.thingsRM.Get(m.NodeID)
 	if err != nil {
-		return errNotFoundNodeID
+		return fmt.Errorf("%s %s", errNotFoundNodeID, m.NodeID)
 	}
 
 	// Check connection between ServerURI and NodeID
 	cKey := fmt.Sprintf("%s:%s", chanID, thingID)
 	if _, err := c.connectRM.Get(cKey); err != nil {
-		return errNotFoundConn
+		return fmt.Errorf("%s between channel %s and thing %s", errNotFoundConn, chanID, thingID)
 	}
 
 	// Publish on Mainflux NATS broker

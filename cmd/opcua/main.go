@@ -109,8 +109,9 @@ func main() {
 
 	ctx := context.Background()
 	sub := gopcua.NewSubscriber(ctx, publisher, thingRM, chanRM, connRM, logger)
+	browser := gopcua.NewBrowser(ctx, logger)
 
-	svc := opcua.New(sub, thingRM, chanRM, connRM, cfg.opcuaConfig, logger)
+	svc := opcua.New(sub, browser, thingRM, chanRM, connRM, cfg.opcuaConfig, logger)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,
@@ -133,7 +134,7 @@ func main() {
 
 	errs := make(chan error, 2)
 
-	go startHTTPServer(cfg, logger, errs)
+	go startHTTPServer(svc, cfg, logger, errs)
 
 	go func() {
 		c := make(chan os.Signal)
@@ -252,8 +253,8 @@ func newRouteMapRepositoy(client *r.Client, prefix string, logger logger.Logger)
 	return redis.NewRouteMapRepository(client, prefix)
 }
 
-func startHTTPServer(cfg config, logger logger.Logger, errs chan error) {
+func startHTTPServer(svc opcua.Service, cfg config, logger logger.Logger, errs chan error) {
 	p := fmt.Sprintf(":%s", cfg.httpPort)
 	logger.Info(fmt.Sprintf("opcua-adapter service started, exposed port %s", cfg.httpPort))
-	errs <- http.ListenAndServe(p, api.MakeHandler())
+	errs <- http.ListenAndServe(p, api.MakeHandler(svc))
 }

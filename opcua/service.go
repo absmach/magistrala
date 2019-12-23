@@ -4,12 +4,18 @@
 package opcua
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/mainflux/mainflux/logger"
 )
 
 const protocol = "opcua"
+
+var (
+	// ErrMalformedEntity indicates malformed entity specification.
+	ErrMalformedEntity = errors.New("malformed entity specification")
+)
 
 // Service specifies an API that must be fullfiled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).
@@ -37,6 +43,9 @@ type Service interface {
 
 	// DisconnectThing removes thing and channel connection route-map
 	DisconnectThing(string, string) error
+
+	// Browse browses available nodes for a given OPC-UA Server URI and NodeID
+	Browse(string, string) ([]string, error)
 }
 
 // Config OPC-UA Server
@@ -53,6 +62,7 @@ var _ Service = (*adapterService)(nil)
 
 type adapterService struct {
 	subscriber Subscriber
+	browser    Browser
 	thingsRM   RouteMapRepository
 	channelsRM RouteMapRepository
 	connectRM  RouteMapRepository
@@ -61,9 +71,10 @@ type adapterService struct {
 }
 
 // New instantiates the OPC-UA adapter implementation.
-func New(sub Subscriber, thingsRM, channelsRM, connectRM RouteMapRepository, cfg Config, log logger.Logger) Service {
+func New(sub Subscriber, brow Browser, thingsRM, channelsRM, connectRM RouteMapRepository, cfg Config, log logger.Logger) Service {
 	return &adapterService{
 		subscriber: sub,
+		browser:    brow,
 		thingsRM:   thingsRM,
 		channelsRM: channelsRM,
 		connectRM:  connectRM,
@@ -113,6 +124,14 @@ func (as *adapterService) ConnectThing(mfxChanID, mfxThingID string) error {
 
 	c := fmt.Sprintf("%s:%s", mfxChanID, mfxThingID)
 	return as.connectRM.Save(c, c)
+}
+
+func (as *adapterService) Browse(serverURI, nodeID string) ([]string, error) {
+	nodes, err := as.browser.Browse(serverURI, nodeID)
+	if err != nil {
+		return nil, err
+	}
+	return nodes, nil
 }
 
 func (as *adapterService) DisconnectThing(mfxChanID, mfxThingID string) error {

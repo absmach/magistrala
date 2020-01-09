@@ -171,7 +171,7 @@ publish_event(UserName, Type) ->
 on_register(_Peer, {_Mountpoint, ClientId} = _SubscriberId, UserName) ->
     error_logger:info_msg("on_register, UserName: ~p, ClientId: ~p", [UserName, ClientId]),
     ets:insert(mfx_client_map, {ClientId, UserName}),
-    publish_event(UserName, "register").
+    publish_event(UserName, "connect").
 
 publish_erase(ClientId) ->
     case ets:lookup(mfx_client_map, ClientId) of
@@ -180,7 +180,7 @@ publish_erase(ClientId) ->
             error;
         [{ClientId, UserName}] ->
             ets:delete_object(mfx_client_map, {ClientId, UserName}),
-            publish_event(UserName, "deregister")
+            publish_event(UserName, "disconnect")
     end.
 
 on_client_offline({_Mountpoint, ClientId} = _SubscriberId) ->

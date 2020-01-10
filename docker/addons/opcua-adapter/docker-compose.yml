@@ -12,6 +12,9 @@ networks:
   docker_mainflux-base-net:
     external: true
 
+volumes:
+  mainflux-opcua-adapter-volume:
+
 services:
   opcua-redis:
     image: redis:5.0-alpine
@@ -47,4 +50,4 @@ services:
     networks:
       - docker_mainflux-base-net
     volumes:
-      - ./nodes.csv:/config/nodes.csv
+      - mainflux-opcua-adapter-volume:/store

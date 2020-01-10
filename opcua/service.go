@@ -120,7 +120,12 @@ func (as *adapterService) ConnectThing(mfxChanID, mfxThingID string) error {
 
 	as.cfg.NodeID = nodeID
 	as.cfg.ServerURI = serverURI
-	go as.subscribe(as.cfg)
+
+	go func() {
+		if err := as.subscriber.Subscribe(as.cfg); err != nil {
+			as.logger.Warn(fmt.Sprintf("subscription failed: %s", err))
+		}
+	}()
 
 	c := fmt.Sprintf("%s:%s", mfxChanID, mfxThingID)
 	return as.connectRM.Save(c, c)
@@ -137,10 +142,4 @@ func (as *adapterService) Browse(serverURI, nodeID string) ([]string, error) {
 func (as *adapterService) DisconnectThing(mfxChanID, mfxThingID string) error {
 	c := fmt.Sprintf("%s:%s", mfxChanID, mfxThingID)
 	return as.connectRM.Remove(c)
-}
-
-func (as *adapterService) subscribe(cfg Config) {
-	if err := as.subscriber.Subscribe(cfg); err != nil {
-		as.logger.Warn(fmt.Sprintf("subscription failed: %s", err))
-	}
 }

@@ -5,9 +5,7 @@ package main
 
 import (
 	"context"
-	"encoding/csv"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -20,6 +18,7 @@ import (
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/opcua"
 	"github.com/mainflux/mainflux/opcua/api"
+	"github.com/mainflux/mainflux/opcua/db"
 	"github.com/mainflux/mainflux/opcua/gopcua"
 	pub "github.com/mainflux/mainflux/opcua/nats"
 	"github.com/mainflux/mainflux/opcua/redis"
@@ -44,7 +43,6 @@ const (
 	defRouteMapURL    = "localhost:6379"
 	defRouteMapPass   = ""
 	defRouteMapDB     = "0"
-	defNodesConfig    = "/config/nodes.csv"
 
 	envHTTPPort       = "MF_OPCUA_ADAPTER_HTTP_PORT"
 	envLogLevel       = "MF_OPCUA_ADAPTER_LOG_LEVEL"
@@ -60,13 +58,10 @@ const (
 	envRouteMapURL    = "MF_OPCUA_ADAPTER_ROUTE_MAP_URL"
 	envRouteMapPass   = "MF_OPCUA_ADAPTER_ROUTE_MAP_PASS"
 	envRouteMapDB     = "MF_OPCUA_ADAPTER_ROUTE_MAP_DB"
-	envNodesConfig    = "MF_OPCUA_ADAPTER_CONFIG_FILE"
 
 	thingsRMPrefix     = "thing"
 	channelsRMPrefix   = "channel"
 	connectionRMPrefix = "connection"
-
-	columns = 2
 )
 
 type config struct {
@@ -81,7 +76,6 @@ type config struct {
 	routeMapURL    string
 	routeMapPass   string
 	routeMapDB     string
-	nodesConfig    string
 }
 
 func main() {
@@ -129,7 +123,7 @@ func main() {
 		}, []string{"method"}),
 	)
 
-	go subscribeToNodesFromFile(sub, cfg.nodesConfig, cfg.opcuaConfig, logger)
+	go subscribeToStoredSubs(sub, cfg.opcuaConfig, logger)
 	go subscribeToThingsES(svc, esConn, cfg.esConsumerName, logger)
 
 	errs := make(chan error, 2)
@@ -165,7 +159,6 @@ func loadConfig() config {
 		routeMapURL:    mainflux.Env(envRouteMapURL, defRouteMapURL),
 		routeMapPass:   mainflux.Env(envRouteMapPass, defRouteMapPass),
 		routeMapDB:     mainflux.Env(envRouteMapDB, defRouteMapDB),
-		nodesConfig:    mainflux.Env(envNodesConfig, defNodesConfig),
 	}
 }
 
@@ -194,44 +187,21 @@ func connectToRedis(redisURL, redisPass, redisDB string, logger logger.Logger) *
 	})
 }
 
-func subscribeToNodesFromFile(sub opcua.Subscriber, nodes string, cfg opcua.Config, logger logger.Logger) {
-	if _, err := os.Stat(nodes); os.IsNotExist(err) {
-		logger.Warn(fmt.Sprintf("Config file not found: %s", err))
-		return
-	}
-
-	file, err := os.OpenFile(nodes, os.O_RDONLY, os.ModePerm)
+func subscribeToStoredSubs(sub opcua.Subscriber, cfg opcua.Config, logger logger.Logger) {
+	// Get all stored subscriptions
+	nodes, err := db.ReadAll()
 	if err != nil {
-		logger.Warn(fmt.Sprintf("Failed to open config file: %s", err))
-		return
+		logger.Warn(fmt.Sprintf("Read stored subscriptions failed: %s", err))
 	}
-	defer file.Close()
 
-	reader := csv.NewReader(file)
-	for {
-		l, err := reader.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			logger.Warn(fmt.Sprintf("Failed to read config file: %s", err))
-			return
-		}
-
-		if len(l) < columns {
-			logger.Warn("Empty or incomplete line found in file")
-			return
-		}
-
-		cfg.ServerURI = l[0]
-		cfg.NodeID = l[1]
-		go subscribe(sub, cfg, logger)
-	}
-}
-
-func subscribe(sub opcua.Subscriber, cfg opcua.Config, logger logger.Logger) {
-	if err := sub.Subscribe(cfg); err != nil {
-		logger.Warn(fmt.Sprintf("Subscription failed: %s", err))
+	for _, n := range nodes {
+		cfg.ServerURI = n.ServerURI
+		cfg.NodeID = n.NodeID
+		go func() {
+			if err := sub.Subscribe(cfg); err != nil {
+				logger.Warn(fmt.Sprintf("Subscription failed: %s", err))
+			}
+		}()
 	}
 }
 

@@ -14,7 +14,6 @@ envsubst '
     ${MF_THINGS_HTTP_PORT}
     ${MF_THINGS_HTTP_PORT}
     ${MF_HTTP_ADAPTER_PORT}
-    ${MF_WS_ADAPTER_PORT}
-    ${MF_UI_PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+    ${MF_WS_ADAPTER_PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 
 exec nginx -g "daemon off;"

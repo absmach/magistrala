@@ -260,14 +260,3 @@ services:
       - ${MF_COAP_ADAPTER_PORT}:${MF_COAP_ADAPTER_PORT}/tcp
     networks:
       - mainflux-base-net
-
-  ui:
-    image: mainflux/ui:latest
-    container_name: mainflux-ui
-    restart: on-failure
-    ports:
-      - ${MF_UI_PORT}:${MF_UI_PORT}
-    networks:
-      - mainflux-base-net
-    environment:
-      MF_UI_PORT: ${MF_UI_PORT}

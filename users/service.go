@@ -24,27 +24,26 @@ var (
 	// when accessing a protected resource.
 	ErrUnauthorizedAccess = errors.New("missing or invalid credentials provided")
 
-	// ErrNotFound indicates a non-existent entity request
+	// ErrNotFound indicates a non-existent entity request.
 	ErrNotFound = errors.New("non-existent entity")
 
-	// ErrUserNotFound indicates a non-existent user request
+	// ErrUserNotFound indicates a non-existent user request.
 	ErrUserNotFound = errors.New("non-existent user")
 
-	// ErrScanMetadata indicates problem with metadata in db
+	// ErrScanMetadata indicates problem with metadata in db.
 	ErrScanMetadata = errors.New("Failed to scan metadata")
 
-	// ErrMissingEmail indicates missing email for password reset request
+	// ErrMissingEmail indicates missing email for password reset request.
 	ErrMissingEmail = errors.New("missing email for password reset")
 
 	// ErrMissingResetToken indicates malformed or missing reset token
-	// for reseting password
+	// for reseting password.
 	ErrMissingResetToken = errors.New("error missing reset token")
 
-	// ErrGeneratingResetToken indicates error in generating password recovery
-	// token
-	ErrGeneratingResetToken = errors.New("error missing reset token")
+	// ErrRecoveryToken indicates error in generating password recovery token.
+	ErrRecoveryToken = errors.New("error generating password recovery token")
 
-	// ErrGetToken indicates error in getting signed token
+	// ErrGetToken indicates error in getting signed token.
 	ErrGetToken = errors.New("Get signed token failed")
 )
 
@@ -60,10 +59,10 @@ type Service interface {
 	// identified by the non-nil error values in the response.
 	Login(context.Context, User) (string, errors.Error)
 
-	// Get authenticated user info for the given token
+	// Get authenticated user info for the given token.
 	UserInfo(ctx context.Context, token string) (User, errors.Error)
 
-	// UpdateUser updates the user metadata
+	// UpdateUser updates the user metadata.
 	UpdateUser(ctx context.Context, token string, user User) errors.Error
 
 	// GenerateResetToken email where mail will be sent.
@@ -77,7 +76,7 @@ type Service interface {
 	// token can be authentication token or password reset token.
 	ResetPassword(_ context.Context, resetToken, password string) errors.Error
 
-	//SendPasswordReset sends reset password link to email
+	//SendPasswordReset sends reset password link to email.
 	SendPasswordReset(_ context.Context, host, email, token string) errors.Error
 }
 
@@ -163,7 +162,7 @@ func (svc usersService) GenerateResetToken(ctx context.Context, email, host stri
 
 	t, err := svc.issue(ctx, email, authn.RecoveryKey)
 	if err != nil {
-		return errors.Wrap(ErrGeneratingResetToken, err)
+		return errors.Wrap(ErrRecoveryToken, err)
 	}
 	return svc.SendPasswordReset(ctx, host, email, t)
 }

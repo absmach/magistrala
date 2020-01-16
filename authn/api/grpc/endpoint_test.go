@@ -46,38 +46,66 @@ func startGRPCServer(svc authn.Service, port int) {
 }
 
 func TestIssue(t *testing.T) {
-	loginKey, err := svc.Issue(context.Background(), email, authn.Key{Type: authn.UserKey, IssuedAt: time.Now()})
-	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
+	userKey, err := svc.Issue(context.Background(), email, authn.Key{Type: authn.UserKey, IssuedAt: time.Now()})
+	assert.Nil(t, err, fmt.Sprintf("Issuing user key expected to succeed: %s", err))
 
 	authAddr := fmt.Sprintf("localhost:%d", port)
 	conn, _ := grpc.Dial(authAddr, grpc.WithInsecure())
 	client := grpcapi.NewClient(mocktracer.New(), conn, time.Second)
 
-	cases := map[string]struct {
-		token string
-		id    string
-		kind  uint32
-		err   error
+	cases := []struct {
+		desc string
+		id   string
+		kind uint32
+		err  error
 	}{
-		"issue for user with valid token":   {"", email, authn.UserKey, nil},
-		"issue for user that doesn't exist": {"", loginKey.Secret, 32, status.Error(codes.InvalidArgument, "received invalid token request")},
+		{
+			desc: "issue for user with valid token",
+			id:   email,
+			kind: authn.UserKey,
+			err:  nil,
+		},
+		{
+			desc: "issue recovery key",
+			id:   email,
+			kind: authn.RecoveryKey,
+			err:  nil,
+		},
+		{
+			desc: "issue API key",
+			id:   userKey.Secret,
+			kind: authn.APIKey,
+			err:  nil,
+		},
+		{
+			desc: "issue for invalid key type",
+			id:   email,
+			kind: 32,
+			err:  status.Error(codes.InvalidArgument, "received invalid token request"),
+		},
+		{
+			desc: "issue for user that  exist",
+			id:   "",
+			kind: authn.APIKey,
+			err:  status.Error(codes.Unauthenticated, "unauthorized access"),
+		},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		_, err := client.Issue(context.Background(), &mainflux.IssueReq{Issuer: tc.id, Type: tc.kind})
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s", desc, tc.err, err))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.err, err))
 	}
 }
 
 func TestIdentify(t *testing.T) {
-	loginKey, err := svc.Issue(context.Background(), email, authn.Key{Type: authn.UserKey, IssuedAt: time.Now()})
-	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
-
-	resetKey, err := svc.Issue(context.Background(), loginKey.Secret, authn.Key{Type: authn.RecoveryKey, IssuedAt: time.Now()})
-	assert.Nil(t, err, fmt.Sprintf("Issuing reset key expected to succeed: %s", err))
-
-	userKey, err := svc.Issue(context.Background(), loginKey.Secret, authn.Key{Type: authn.APIKey, IssuedAt: time.Now(), ExpiresAt: time.Now().Add(time.Minute)})
+	userKey, err := svc.Issue(context.Background(), email, authn.Key{Type: authn.UserKey, IssuedAt: time.Now()})
 	assert.Nil(t, err, fmt.Sprintf("Issuing user key expected to succeed: %s", err))
+
+	recoveryKey, err := svc.Issue(context.Background(), email, authn.Key{Type: authn.RecoveryKey, IssuedAt: time.Now()})
+	assert.Nil(t, err, fmt.Sprintf("Issuing recovery key expected to succeed: %s", err))
+
+	apiKey, err := svc.Issue(context.Background(), userKey.Secret, authn.Key{Type: authn.APIKey, IssuedAt: time.Now(), ExpiresAt: time.Now().Add(time.Minute)})
+	assert.Nil(t, err, fmt.Sprintf("Issuing API key expected to succeed: %s", err))
 
 	authAddr := fmt.Sprintf("localhost:%d", port)
 	conn, _ := grpc.Dial(authAddr, grpc.WithInsecure())
@@ -90,19 +118,19 @@ func TestIdentify(t *testing.T) {
 		err   error
 	}{
 		{
-			desc:  "identify user with reset token",
-			token: resetKey.Secret,
+			desc:  "identify user with recovery token",
+			token: recoveryKey.Secret,
 			id:    email,
 			err:   nil,
 		},
 		{
-			desc:  "identify user with user token",
-			token: userKey.Secret,
+			desc:  "identify user with API token",
+			token: apiKey.Secret,
 			id:    email,
 			err:   nil,
 		},
 		{
-			desc:  "identify user with invalid login token",
+			desc:  "identify user with invalid user token",
 			token: "invalid",
 			id:    "",
 			err:   status.Error(codes.Unauthenticated, "unauthorized access"),

@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	loginDuration = 10 * time.Hour
-	resetDuration = 5 * time.Minute
-	issuerName    = "mainflux.authn"
+	loginDuration    = 10 * time.Hour
+	recoveryDuration = 5 * time.Minute
+	issuerName       = "mainflux.authn"
 )
 
 var (
@@ -75,9 +75,9 @@ func (svc service) Issue(ctx context.Context, issuer string, key Key) (Key, erro
 	case APIKey:
 		return svc.userKey(ctx, issuer, key)
 	case RecoveryKey:
-		return svc.resetKey(ctx, issuer, key)
+		return svc.tmpKey(issuer, recoveryDuration, key)
 	default:
-		return svc.loginKey(issuer, key)
+		return svc.tmpKey(issuer, loginDuration, key)
 	}
 }
 
@@ -127,22 +127,8 @@ func (svc service) Identify(ctx context.Context, token string) (string, error) {
 	}
 }
 
-func (svc service) loginKey(issuer string, key Key) (Key, error) {
+func (svc service) tmpKey(issuer string, duration time.Duration, key Key) (Key, error) {
 	key.Secret = issuer
-	return svc.tempKey(loginDuration, key)
-}
-
-func (svc service) resetKey(ctx context.Context, issuer string, key Key) (Key, error) {
-	issuer, err := svc.login(issuer)
-	if err != nil {
-		return Key{}, err
-	}
-	key.Secret = issuer
-
-	return svc.tempKey(resetDuration, key)
-}
-
-func (svc service) tempKey(duration time.Duration, key Key) (Key, error) {
 	key.Issuer = issuerName
 	key.ExpiresAt = key.IssuedAt.Add(duration)
 	val, err := svc.tokenizer.Issue(key)

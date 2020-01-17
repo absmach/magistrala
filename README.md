@@ -77,11 +77,7 @@ Additional details on using the CLI can be found in the [CLI documentation](http
 
 ## Documentation
 
-Official documentation is hosted at [Mainflux Read The Docs page][docs]. Documentation is auto-generated from Markdown files in `./docs` directory. These can be viewed locally by [installing mkdocs](https://www.mkdocs.org/#installation) and running the command:
-
-```bash
-mkdocs serve
-```
+Official documentation is hosted at [Mainflux Read The Docs page][docs]. Documentation is auto-generated, checkout the instructions on [official docs repository](https://github.com/mainflux/docs):
 
 If you spot an error or a need for corrections, please let us know - or even better: send us a PR.
 

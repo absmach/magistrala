@@ -86,6 +86,8 @@ func TestUpdateTwin(t *testing.T) {
 	saved, err := svc.AddTwin(context.Background(), token, twin, def)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
+	saved.Name = twinName
+
 	cases := []struct {
 		desc  string
 		twin  twins.Twin

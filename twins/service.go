@@ -154,26 +154,37 @@ func (ts *twinsService) UpdateTwin(ctx context.Context, token string, twin Twin,
 	if err != nil {
 		return err
 	}
-	tw.Updated = time.Now()
-	tw.Revision++
+
+	revision := false
 
 	if twin.Name != "" {
+		revision = true
 		tw.Name = twin.Name
 	}
 
 	if twin.ThingID != "" {
+		revision = true
 		tw.ThingID = twin.ThingID
 	}
 
 	if len(def.Attributes) > 0 {
+		revision = true
 		def.Created = time.Now()
 		def.ID = tw.Definitions[len(tw.Definitions)-1].ID + 1
 		tw.Definitions = append(tw.Definitions, def)
 	}
 
-	if len(twin.Metadata) == 0 {
+	if len(twin.Metadata) > 0 {
+		revision = true
 		tw.Metadata = twin.Metadata
 	}
+
+	if !revision {
+		return ErrMalformedEntity
+	}
+
+	tw.Updated = time.Now()
+	tw.Revision++
 
 	if err := ts.twins.Update(ctx, tw); err != nil {
 		return err

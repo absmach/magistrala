@@ -28,6 +28,7 @@ import (
 )
 
 const (
+	twinName    = "name"
 	contentType = "application/json"
 	email       = "user@example.com"
 	token       = "token"
@@ -201,8 +202,10 @@ func TestUpdateTwin(t *testing.T) {
 
 	twin := twins.Twin{ThingID: thingID}
 	def := twins.Definition{}
-	data := toJSON(twin)
 	stw, _ := svc.AddTwin(context.Background(), token, twin, def)
+
+	twin.Name = twinName
+	data := toJSON(twin)
 
 	tw := twin
 	tw.Name = invalidName
@@ -230,7 +233,7 @@ func TestUpdateTwin(t *testing.T) {
 			id:          stw.ID,
 			contentType: contentType,
 			auth:        token,
-			status:      http.StatusOK,
+			status:      http.StatusBadRequest,
 		},
 		{
 			desc:        "update non-existent twin",

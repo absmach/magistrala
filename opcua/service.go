@@ -45,7 +45,7 @@ type Service interface {
 	DisconnectThing(string, string) error
 
 	// Browse browses available nodes for a given OPC-UA Server URI and NodeID
-	Browse(string, string) ([]string, error)
+	Browse(string, string) ([]BrowsedNode, error)
 }
 
 // Config OPC-UA Server
@@ -131,7 +131,7 @@ func (as *adapterService) ConnectThing(mfxChanID, mfxThingID string) error {
 	return as.connectRM.Save(c, c)
 }
 
-func (as *adapterService) Browse(serverURI, nodeID string) ([]string, error) {
+func (as *adapterService) Browse(serverURI, nodeID string) ([]BrowsedNode, error) {
 	nodes, err := as.browser.Browse(serverURI, nodeID)
 	if err != nil {
 		return nil, err

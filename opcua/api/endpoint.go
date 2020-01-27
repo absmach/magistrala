@@ -26,10 +26,7 @@ func browseEndpoint(svc opcua.Service) endpoint.Endpoint {
 		}
 
 		res := browseRes{
-			Nodes: []string{},
-		}
-		for _, node := range nodes {
-			res.Nodes = append(res.Nodes, node)
+			Nodes: nodes,
 		}
 
 		return res, nil

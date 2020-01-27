@@ -5,7 +5,6 @@ package gopcua
 
 import (
 	"context"
-	"fmt"
 
 	opcuaGopcua "github.com/gopcua/opcua"
 	"github.com/gopcua/opcua/id"
@@ -45,7 +44,7 @@ func NewBrowser(ctx context.Context, log logger.Logger) opcua.Browser {
 	}
 }
 
-func (c browser) Browse(serverURI, nodeID string) ([]string, error) {
+func (c browser) Browse(serverURI, nodeID string) ([]opcua.BrowsedNode, error) {
 	opts := []opcuaGopcua.Option{
 		opcuaGopcua.SecurityMode(uaGopcua.MessageSecurityModeNone),
 	}
@@ -66,9 +65,13 @@ func (c browser) Browse(serverURI, nodeID string) ([]string, error) {
 		return nil, err
 	}
 
-	nodes := []string{}
+	nodes := []opcua.BrowsedNode{}
 	for _, s := range nodeList {
-		node := fmt.Sprintf("ns=%d;%s", s.NodeID.Namespace(), s.NodeID.String())
+		node := opcua.BrowsedNode{
+			NodeID:      s.NodeID.String(),
+			Type:        s.DataType,
+			Description: s.Description,
+		}
 		nodes = append(nodes, node)
 	}
 

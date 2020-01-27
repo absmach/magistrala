@@ -7,12 +7,13 @@ import (
 	"net/http"
 
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/opcua"
 )
 
 var _ mainflux.Response = (*browseRes)(nil)
 
 type browseRes struct {
-	Nodes []string `json:"nodes"`
+	Nodes []opcua.BrowsedNode `json:"nodes"`
 }
 
 func (res browseRes) Code() int {

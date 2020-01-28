@@ -71,6 +71,9 @@ func (c browser) Browse(serverURI, nodeID string) ([]opcua.BrowsedNode, error) {
 			NodeID:      s.NodeID.String(),
 			Type:        s.DataType,
 			Description: s.Description,
+			Unit:        s.Unit,
+			Scale:       s.Scale,
+			BrowseName:  s.BrowseName,
 		}
 		nodes = append(nodes, node)
 	}

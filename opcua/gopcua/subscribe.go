@@ -155,7 +155,7 @@ func (c client) runHandler(sub *opcuaGopcua.Subscription, cfg opcua.Config) erro
 					switch item.Value.Value.Type() {
 					case uaGopcua.TypeIDBoolean:
 						msg.Data = item.Value.Value.Bool()
-					case uaGopcua.TypeIDInt64:
+					case uaGopcua.TypeIDInt64, uaGopcua.TypeIDInt32, uaGopcua.TypeIDInt16:
 						msg.Data = item.Value.Value.Int()
 					case uaGopcua.TypeIDUint64:
 						msg.Data = item.Value.Value.Uint()
@@ -163,6 +163,8 @@ func (c client) runHandler(sub *opcuaGopcua.Subscription, cfg opcua.Config) erro
 						msg.Data = item.Value.Value.Float()
 					case uaGopcua.TypeIDString:
 						msg.Data = item.Value.Value.String()
+					case uaGopcua.TypeIDByte:
+						msg.Data = item.Value.Value.EncodingMask()
 					default:
 						msg.Data = 0
 					}
@@ -208,6 +210,7 @@ func (c client) publish(token string, m opcua.Message) error {
 		ContentType: "Content-Type",
 		Channel:     chanID,
 		Payload:     payload,
+		Subtopic:    m.NodeID,
 	}
 
 	if err := c.publisher.Publish(c.ctx, token, msg); err != nil {

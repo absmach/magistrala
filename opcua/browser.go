@@ -8,6 +8,9 @@ type BrowsedNode struct {
 	NodeID      string
 	Type        string
 	Description string
+	Unit        string
+	Scale       string
+	BrowseName  string
 }
 
 // Browser represents the OPC-UA Server Nodes browser.

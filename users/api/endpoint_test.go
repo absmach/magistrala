@@ -138,7 +138,7 @@ func TestLogin(t *testing.T) {
 	})
 	nonexistentData := toJSON(users.User{
 		Email:    "non-existentuser@example.com",
-		Password: "pass",
+		Password: "password",
 	})
 	svc.Register(context.Background(), user)
 
@@ -225,7 +225,7 @@ func TestPasswordResetRequest(t *testing.T) {
 
 	nonexistentData := toJSON(users.User{
 		Email:    "non-existentuser@example.com",
-		Password: "pass",
+		Password: "password",
 	})
 
 	expectedExisting := toJSON(struct {

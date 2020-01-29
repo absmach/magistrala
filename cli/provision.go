@@ -122,7 +122,7 @@ var cmdProvision = []cobra.Command{
 			// Create test user
 			user := mfxsdk.User{
 				Email:    un,
-				Password: "123456",
+				Password: "12345678",
 			}
 			if err := sdk.CreateUser(user); err != nil {
 				logError(err)

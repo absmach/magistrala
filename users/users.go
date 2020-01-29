@@ -11,6 +11,8 @@ import (
 	"github.com/mainflux/mainflux/errors"
 )
 
+const minPassLen = 8
+
 var (
 	userRegexp    = regexp.MustCompile("^[a-zA-Z0-9!#$%&'*+/=?^_`{|}~.-]+$")
 	hostRegexp    = regexp.MustCompile("^[^\\s]+\\.[^\\s]+$")
@@ -27,12 +29,11 @@ type User struct {
 
 // Validate returns an error if user representation is invalid.
 func (u User) Validate() errors.Error {
-	if u.Email == "" || u.Password == "" {
+	if !isEmail(u.Email) {
 		return ErrMalformedEntity
-
 	}
 
-	if !isEmail(u.Email) {
+	if len(u.Password) < minPassLen {
 		return ErrMalformedEntity
 	}
 

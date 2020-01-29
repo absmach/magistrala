@@ -8,6 +8,8 @@ import (
 	"github.com/mainflux/mainflux/users"
 )
 
+const minPassLen = 8
+
 type apiReq interface {
 	validate() error
 }
@@ -84,7 +86,7 @@ func (req passwChangeReq) validate() errors.Error {
 	if req.Token == "" {
 		return users.ErrUnauthorizedAccess
 	}
-	if req.Password == "" {
+	if len(req.Password) < minPassLen {
 		return users.ErrMalformedEntity
 	}
 	if req.OldPassword == "" {

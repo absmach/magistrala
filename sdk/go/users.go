@@ -11,6 +11,10 @@ import (
 )
 
 func (sdk mfSDK) CreateUser(user User) error {
+	if err := user.validate(); err != nil {
+		return err
+	}
+
 	data, err := json.Marshal(user)
 	if err != nil {
 		return ErrInvalidArgs

@@ -212,6 +212,7 @@ definitions:
       password:
         type: string
         format: password
+        minimum: 8
         description: Free-form account password used for acquiring auth token(s).
     required:
       - email
@@ -277,9 +278,11 @@ definitions:
       password:
         type: string
         description: New password
+        minimum: 8
       confirm_password:
         type: string
         description: New password confirmed
+        minimum: 8
       token:
         type: string
         description: Reset token generated and sent in email

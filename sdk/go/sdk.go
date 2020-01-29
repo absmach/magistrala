@@ -23,6 +23,8 @@ const (
 	CTBinary ContentType = "application/octet-stream"
 )
 
+const minPassLen = 8
+
 var (
 	// ErrConflict indicates that create or update of entity failed because
 	// entity with same name already exists.
@@ -75,6 +77,20 @@ var _ SDK = (*mfSDK)(nil)
 type User struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+}
+
+// Validate returns an error if user representation is invalid.
+func (u User) validate() error {
+	if u.Email == "" {
+		return ErrInvalidArgs
+
+	}
+
+	if len(u.Password) < minPassLen {
+		return ErrInvalidArgs
+	}
+
+	return nil
 }
 
 // Thing represents mainflux thing.

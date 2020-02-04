@@ -48,8 +48,9 @@ func createThingsEndpoint(svc things.Service) endpoint.Endpoint {
 		ths := []things.Thing{}
 		for _, tReq := range req.Things {
 			th := things.Thing{
-				Name: tReq.Name,
-				Key:  tReq.Key,
+				Name:     tReq.Name,
+				Key:      tReq.Key,
+				Metadata: tReq.Metadata,
 			}
 			ths = append(ths, th)
 		}

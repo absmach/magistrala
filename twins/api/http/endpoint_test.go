@@ -124,8 +124,8 @@ func TestAddTwin(t *testing.T) {
 			req:         "{}",
 			contentType: contentType,
 			auth:        token,
-			status:      http.StatusBadRequest,
-			location:    "",
+			status:      http.StatusCreated,
+			location:    "/twins/123e4567-e89b-12d3-a456-000000000002",
 		},
 		{
 			desc:        "add twin with invalid auth token",

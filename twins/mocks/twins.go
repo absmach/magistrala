@@ -71,6 +71,21 @@ func (trm *twinRepositoryMock) RetrieveByID(_ context.Context, id string) (twins
 	return twins.Twin{}, twins.ErrNotFound
 }
 
+func (trm *twinRepositoryMock) RetrieveByAttribute(ctx context.Context, channel, subtopic string) ([]string, error) {
+	var ids []string
+	for _, twin := range trm.twins {
+		def := twin.Definitions[len(twin.Definitions)-1]
+		for _, attr := range def.Attributes {
+			if attr.Channel == channel && attr.Subtopic == subtopic {
+				ids = append(ids, twin.ID)
+				break
+			}
+		}
+	}
+
+	return ids, nil
+}
+
 func (trm *twinRepositoryMock) RetrieveByThing(_ context.Context, thingid string) (twins.Twin, error) {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()

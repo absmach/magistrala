@@ -54,8 +54,8 @@ type Service interface {
 	// twin identified by the id.
 	ListStates(context.Context, string, uint64, uint64, string) (StatesPage, error)
 
-	// SaveState persists state into database
-	SaveState(*mainflux.Message) error
+	// SaveStates persists states into database
+	SaveStates(*mainflux.Message) error
 
 	// ListTwinsByThing retrieves data about subset of twins that represent
 	// specified thing belong to the user identified by
@@ -123,7 +123,7 @@ func (ts *twinsService) AddTwin(ctx context.Context, token string, twin Twin, de
 
 	if len(def.Attributes) == 0 {
 		def = Definition{}
-		def.Attributes = make(map[string]Attribute)
+		def.Attributes = []Attribute{}
 	}
 	def.Created = time.Now()
 	def.ID = 0
@@ -249,13 +249,36 @@ func (ts *twinsService) ListTwins(ctx context.Context, token string, offset uint
 	return ts.twins.RetrieveAll(ctx, res.GetValue(), offset, limit, name, metadata)
 }
 
-func (ts *twinsService) SaveState(msg *mainflux.Message) error {
+func (ts *twinsService) ListStates(ctx context.Context, token string, offset uint64, limit uint64, id string) (StatesPage, error) {
+	_, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return StatesPage{}, ErrUnauthorizedAccess
+	}
+
+	return ts.states.RetrieveAll(ctx, offset, limit, id)
+}
+
+func (ts *twinsService) SaveStates(msg *mainflux.Message) error {
+	ids, err := ts.twins.RetrieveByAttribute(context.TODO(), msg.Channel, msg.Subtopic)
+	if err != nil {
+		return err
+	}
+
+	for _, id := range ids {
+		if err := ts.saveState(msg, id); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (ts *twinsService) saveState(msg *mainflux.Message, id string) error {
 	var b []byte
-	var id string
 	var err error
 	defer ts.mqttClient.Publish(&id, &err, crudOp["stateSucc"], crudOp["stateFail"], &b)
 
-	tw, err := ts.twins.RetrieveByThing(context.TODO(), msg.Publisher)
+	tw, err := ts.twins.RetrieveByID(context.TODO(), id)
 	if err != nil {
 		return fmt.Errorf("Retrieving twin for %s failed: %s", msg.Publisher, err)
 	}
@@ -284,15 +307,6 @@ func (ts *twinsService) SaveState(msg *mainflux.Message) error {
 	return nil
 }
 
-func (ts *twinsService) ListStates(ctx context.Context, token string, offset uint64, limit uint64, id string) (StatesPage, error) {
-	_, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
-	if err != nil {
-		return StatesPage{}, ErrUnauthorizedAccess
-	}
-
-	return ts.states.RetrieveAll(ctx, offset, limit, id)
-}
-
 func prepareState(st *State, tw *Twin, recs []senml.Record, msg *mainflux.Message) bool {
 	def := tw.Definitions[len(tw.Definitions)-1]
 	st.TwinID = tw.ID
@@ -304,23 +318,33 @@ func prepareState(st *State, tw *Twin, recs []senml.Record, msg *mainflux.Messag
 		st.Payload = make(map[string]interface{})
 	} else {
 		for k := range st.Payload {
-			if _, ok := def.Attributes[k]; !ok || !def.Attributes[k].PersistState {
+			idx := findAttribute(k, def.Attributes)
+			if idx < 0 || !def.Attributes[idx].PersistState {
 				delete(st.Payload, k)
 			}
 		}
 	}
 
 	save := false
-	for k, a := range def.Attributes {
-		if !a.PersistState {
+	for _, attr := range def.Attributes {
+		if !attr.PersistState {
 			continue
 		}
-		if a.Channel == msg.Channel && a.Subtopic == msg.Subtopic {
-			st.Payload[k] = recs[0].Value
+		if attr.Channel == msg.Channel && attr.Subtopic == msg.Subtopic {
+			st.Payload[attr.Name] = recs[0].Value
 			save = true
 			break
 		}
 	}
 
 	return save
+}
+
+func findAttribute(name string, attrs []Attribute) (idx int) {
+	for idx, attr := range attrs {
+		if attr.Name == name {
+			return idx
+		}
+	}
+	return -1
 }

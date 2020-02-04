@@ -13,6 +13,7 @@ type Metadata map[string]interface{}
 
 // Attribute stores individual attribute data
 type Attribute struct {
+	Name         string `json:"name"`
 	Channel      string `json:"channel"`
 	Subtopic     string `json:"subtopic"`
 	PersistState bool   `json:"persist_state"`
@@ -20,9 +21,9 @@ type Attribute struct {
 
 // Definition stores entity's attributes
 type Definition struct {
-	ID         int                  `json:"id"`
-	Created    time.Time            `json:"created"`
-	Attributes map[string]Attribute `json:"attributes"`
+	ID         int         `json:"id"`
+	Created    time.Time   `json:"created"`
+	Attributes []Attribute `json:"attributes"`
 }
 
 // Twin represents a Mainflux thing digital twin. Each twin is owned by one thing, and
@@ -65,6 +66,10 @@ type TwinRepository interface {
 
 	// RetrieveByID retrieves the twin having the provided identifier.
 	RetrieveByID(ctx context.Context, id string) (Twin, error)
+
+	// RetrieveByAttribute retrieves twin ids whose definition contains
+	// the attribute with given channel and subtopic
+	RetrieveByAttribute(ctx context.Context, channel, subtopic string) ([]string, error)
 
 	// RetrieveAll retrieves the subset of things owned by the specified user.
 	RetrieveAll(context.Context, string, uint64, uint64, string, Metadata) (TwinsPage, error)

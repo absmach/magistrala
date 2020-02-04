@@ -17,7 +17,6 @@ type apiReq interface {
 type addTwinReq struct {
 	token      string
 	Name       string                 `json:"name,omitempty"`
-	ThingID    string                 `json:"thing_id"`
 	Definition twins.Definition       `json:"definition,omitempty"`
 	Metadata   map[string]interface{} `json:"metadata,omitempty"`
 }
@@ -25,10 +24,6 @@ type addTwinReq struct {
 func (req addTwinReq) validate() error {
 	if req.token == "" {
 		return twins.ErrUnauthorizedAccess
-	}
-
-	if req.ThingID == "" {
-		return twins.ErrMalformedEntity
 	}
 
 	if len(req.Name) > maxNameSize {

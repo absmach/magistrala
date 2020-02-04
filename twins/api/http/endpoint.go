@@ -20,7 +20,6 @@ func addTwinEndpoint(svc twins.Service) endpoint.Endpoint {
 
 		twin := twins.Twin{
 			Name:     req.Name,
-			ThingID:  req.ThingID,
 			Metadata: req.Metadata,
 		}
 		saved, err := svc.AddTwin(ctx, req.token, twin, req.Definition)

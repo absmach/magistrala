@@ -39,10 +39,11 @@ func Subscribe(nc *nats.Conn, mc mqtt.Mqtt, svc twins.Service, logger log.Logger
 		logger:     logger,
 		svc:        svc,
 	}
+
 	ps.natsClient.QueueSubscribe(input, queue, ps.handleMsg)
 }
 
-func (ps pubsub) handleMsg(m *nats.Msg) {
+func (ps *pubsub) handleMsg(m *nats.Msg) {
 	var msg mainflux.Message
 	if err := proto.Unmarshal(m.Data, &msg); err != nil {
 		ps.logger.Warn(fmt.Sprintf("Unmarshalling failed: %s", err))
@@ -53,5 +54,8 @@ func (ps pubsub) handleMsg(m *nats.Msg) {
 		return
 	}
 
-	ps.svc.SaveState(&msg)
+	if err := ps.svc.SaveStates(&msg); err != nil {
+		ps.logger.Error(fmt.Sprintf("State save failed: %s", err))
+		return
+	}
 }

@@ -88,6 +88,57 @@ func (tr *twinRepository) RetrieveByThing(ctx context.Context, thingid string) (
 	return tw, nil
 }
 
+func (tr *twinRepository) RetrieveByAttribute(ctx context.Context, channel, subtopic string) ([]string, error) {
+	coll := tr.db.Collection(twinsCollection)
+
+	findOptions := options.Aggregate()
+	prj1 := bson.M{
+		"$project": bson.M{
+			"definition": bson.M{
+				"$arrayElemAt": []interface{}{"$definitions.attributes", -1},
+			},
+			"id":  true,
+			"_id": 0,
+		},
+	}
+	match := bson.M{
+		"$match": bson.M{
+			"definition.channel":  channel,
+			"definition.subtopic": subtopic,
+		},
+	}
+	prj2 := bson.M{
+		"$project": bson.M{
+			"id": true,
+		},
+	}
+
+	cur, err := coll.Aggregate(ctx, []bson.M{prj1, match, prj2}, findOptions)
+
+	var ids []string
+	if err != nil {
+		return ids, err
+	}
+	defer cur.Close(ctx)
+
+	if err := cur.Err(); err != nil {
+		return ids, nil
+	}
+
+	for cur.Next(ctx) {
+		var elem struct {
+			ID string `json:"id"`
+		}
+		err := cur.Decode(&elem)
+		if err != nil {
+			return ids, nil
+		}
+		ids = append(ids, elem.ID)
+	}
+
+	return ids, nil
+}
+
 func (tr *twinRepository) RetrieveAll(ctx context.Context, owner string, offset uint64, limit uint64, name string, metadata twins.Metadata) (twins.TwinsPage, error) {
 	coll := tr.db.Collection(twinsCollection)
 

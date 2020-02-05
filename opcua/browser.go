@@ -6,7 +6,7 @@ package opcua
 // BrowsedNode represents the details of a browsed OPC-UA node.
 type BrowsedNode struct {
 	NodeID      string
-	Type        string
+	DataType    string
 	Description string
 	Unit        string
 	Scale       string

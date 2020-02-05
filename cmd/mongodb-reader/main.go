@@ -41,6 +41,8 @@ const (
 	defDBPort        = "27017"
 	defClientTLS     = "false"
 	defCACerts       = ""
+	defServerCert    = ""
+	defServerKey     = ""
 	defJaegerURL     = ""
 	defThingsTimeout = "1" // in seconds
 
@@ -52,6 +54,8 @@ const (
 	envDBPort        = "MF_MONGO_READER_DB_PORT"
 	envClientTLS     = "MF_MONGO_READER_CLIENT_TLS"
 	envCACerts       = "MF_MONGO_READER_CA_CERTS"
+	envServerCert    = "MF_MONGO_READER_SERVER_CERT"
+	envServerKey     = "MF_MONGO_READER_SERVER_KEY"
 	envJaegerURL     = "MF_JAEGER_URL"
 	envThingsTimeout = "MF_MONGO_READER_THINGS_TIMEOUT"
 )
@@ -65,6 +69,8 @@ type config struct {
 	dbPort        string
 	clientTLS     bool
 	caCerts       string
+	serverCert    string
+	serverKey     string
 	jaegerURL     string
 	thingsTimeout time.Duration
 }
@@ -95,7 +101,7 @@ func main() {
 		errs <- fmt.Errorf("%s", <-c)
 	}()
 
-	go startHTTPServer(repo, tc, cfg.port, logger, errs)
+	go startHTTPServer(repo, tc, cfg, logger, errs)
 
 	err = <-errs
 	logger.Error(fmt.Sprintf("MongoDB reader service terminated: %s", err))
@@ -121,6 +127,8 @@ func loadConfigs() config {
 		dbPort:        mainflux.Env(envDBPort, defDBPort),
 		clientTLS:     tls,
 		caCerts:       mainflux.Env(envCACerts, defCACerts),
+		serverCert:    mainflux.Env(envServerCert, defServerCert),
+		serverKey:     mainflux.Env(envServerKey, defServerKey),
 		jaegerURL:     mainflux.Env(envJaegerURL, defJaegerURL),
 		thingsTimeout: time.Duration(timeout) * time.Second,
 	}
@@ -207,8 +215,14 @@ func newService(db *mongo.Database, logger logger.Logger) readers.MessageReposit
 	return repo
 }
 
-func startHTTPServer(repo readers.MessageRepository, tc mainflux.ThingsServiceClient, port string, logger logger.Logger, errs chan error) {
-	p := fmt.Sprintf(":%s", port)
-	logger.Info(fmt.Sprintf("Mongo reader service started, exposed port %s", port))
+func startHTTPServer(repo readers.MessageRepository, tc mainflux.ThingsServiceClient, cfg config, logger logger.Logger, errs chan error) {
+	p := fmt.Sprintf(":%s", cfg.port)
+	if cfg.serverCert != "" || cfg.serverKey != "" {
+		logger.Info(fmt.Sprintf("Mongo reader service started using https on port %s with cert %s key %s",
+			cfg.port, cfg.serverCert, cfg.serverKey))
+		errs <- http.ListenAndServeTLS(p, cfg.serverCert, cfg.serverKey, api.MakeHandler(repo, tc, "mongodb-reader"))
+		return
+	}
+	logger.Info(fmt.Sprintf("Mongo reader service started, exposed port %s", cfg.port))
 	errs <- http.ListenAndServe(p, api.MakeHandler(repo, tc, "mongodb-reader"))
 }

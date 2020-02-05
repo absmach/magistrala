@@ -19,6 +19,8 @@ default values.
 | MF_THINGS_URL                      | Things service URL                             | localhost:8181 |
 | MF_CASSANDRA_READER_CLIENT_TLS     | Flag that indicates if TLS should be turned on | false          |
 | MF_CASSANDRA_READER_CA_CERTS       | Path to trusted CAs in PEM format              |                |
+| MF_CASSANDRA_READER_SERVER_CERT    | Path to server certificate in pem format       |                |
+| MF_CASSANDRA_READER_SERVER_KEY     | Path to server key in pem format               |                |
 | MF_JAEGER_URL                      | Jaeger server URL                              | localhost:6831 |
 | MF_CASSANDRA_READER_THINGS_TIMEOUT | Things gRPC request timeout in seconds         | 1              |
 
@@ -43,6 +45,8 @@ default values.
       MF_CASSANDRA_READER_DB_PORT: [Cassandra DB port]
       MF_CASSANDRA_READER_CLIENT_TLS: [Flag that indicates if TLS should be turned on]
       MF_CASSANDRA_READER_CA_CERTS: [Path to trusted CAs in PEM format]
+      MF_CASSANDRA_READER_SERVER_CERT: [String path to server cert in pem format]
+      MF_CASSANDRA_READER_SERVER_KEY: [String path to server key in pem format]
       MF_JAEGER_URL: [Jaeger server URL]
       MF_CASSANDRA_READER_THINGS_TIMEOUT: [Things gRPC request timeout in seconds]
     ports:
@@ -64,7 +68,20 @@ make cassandra-reader
 make install
 
 # Set the environment variables and run the service
-MF_THINGS_URL=[Things service URL] MF_CASSANDRA_READER_PORT=[Service HTTP port] MF_CASSANDRA_READER_DB_CLUSTER=[Cassandra cluster comma separated addresses] MF_CASSANDRA_READER_DB_KEYSPACE=[Cassandra keyspace name] MF_CASSANDRA_READER_DB_USERNAME=[Cassandra DB username] MF_CASSANDRA_READER_DB_PASSWORD=[Cassandra DB password] MF_CASSANDRA_READER_DB_PORT=[Cassandra DB port] MF_CASSANDRA_READER_CLIENT_TLS=[Flag that indicates if TLS should be turned on] MF_CASSANDRA_READER_CA_CERTS=[Path to trusted CAs in PEM format] MF_JAEGER_URL=[Jaeger server URL] MF_CASSANDRA_READER_THINGS_TIMEOUT=[Things gRPC request timeout in seconds] $GOBIN/mainflux-cassandra-reader
+MF_THINGS_URL=[Things service URL] \
+MF_CASSANDRA_READER_PORT=[Service HTTP port] \
+MF_CASSANDRA_READER_DB_CLUSTER=[Cassandra cluster comma separated addresses] \
+MF_CASSANDRA_READER_DB_KEYSPACE=[Cassandra keyspace name] \
+MF_CASSANDRA_READER_DB_USERNAME=[Cassandra DB username] \
+MF_CASSANDRA_READER_DB_PASSWORD=[Cassandra DB password] \
+MF_CASSANDRA_READER_DB_PORT=[Cassandra DB port] \
+MF_CASSANDRA_READER_CLIENT_TLS=[Flag that indicates if TLS should be turned on] \
+MF_CASSANDRA_READER_CA_CERTS=[Path to trusted CAs in PEM format] \
+MF_CASSANDRA_READER_SERVER_CERT=[Path to server pem certificate file] \
+MF_CASSANDRA_READER_SERVER_KEY=[Path to server pem key file] \
+MF_JAEGER_URL=[Jaeger server URL] \
+MF_CASSANDRA_READER_THINGS_TIMEOUT=[Things gRPC request timeout in seconds] \
+$GOBIN/mainflux-cassandra-reader
 
 ```
 

@@ -38,6 +38,8 @@ const (
 	defDBPass        = "mainflux"
 	defClientTLS     = "false"
 	defCACerts       = ""
+	defServerCert    = ""
+	defServerKey     = ""
 	defJaegerURL     = ""
 	defThingsTimeout = "1" // in seconds
 
@@ -51,6 +53,8 @@ const (
 	envDBPass        = "MF_INFLUX_READER_DB_PASS"
 	envClientTLS     = "MF_INFLUX_READER_CLIENT_TLS"
 	envCACerts       = "MF_INFLUX_READER_CA_CERTS"
+	envServerCert    = "MF_INFLUX_READER_SERVER_CERT"
+	envServerKey     = "MF_INFLUX_READER_SERVER_KEY"
 	envJaegerURL     = "MF_JAEGER_URL"
 	envThingsTimeout = "MF_INFLUX_READER_THINGS_TIMEOUT"
 )
@@ -66,6 +70,8 @@ type config struct {
 	dbPass        string
 	clientTLS     bool
 	caCerts       string
+	serverCert    string
+	serverKey     string
 	jaegerURL     string
 	thingsTimeout time.Duration
 }
@@ -100,7 +106,7 @@ func main() {
 		errs <- fmt.Errorf("%s", <-c)
 	}()
 
-	go startHTTPServer(repo, tc, cfg.port, logger, errs)
+	go startHTTPServer(repo, tc, cfg, logger, errs)
 
 	err = <-errs
 	logger.Error(fmt.Sprintf("InfluxDB writer service terminated: %s", err))
@@ -128,6 +134,8 @@ func loadConfigs() (config, influxdata.HTTPConfig) {
 		dbPass:        mainflux.Env(envDBPass, defDBPass),
 		clientTLS:     tls,
 		caCerts:       mainflux.Env(envCACerts, defCACerts),
+		serverCert:    mainflux.Env(envServerCert, defServerCert),
+		serverKey:     mainflux.Env(envServerKey, defServerKey),
 		jaegerURL:     mainflux.Env(envJaegerURL, defJaegerURL),
 		thingsTimeout: time.Duration(timeout) * time.Second,
 	}
@@ -211,8 +219,14 @@ func newService(client influxdata.Client, dbName string, logger logger.Logger) r
 	return repo
 }
 
-func startHTTPServer(repo readers.MessageRepository, tc mainflux.ThingsServiceClient, port string, logger logger.Logger, errs chan error) {
-	p := fmt.Sprintf(":%s", port)
-	logger.Info(fmt.Sprintf("InfluxDB reader service started, exposed port %s", port))
+func startHTTPServer(repo readers.MessageRepository, tc mainflux.ThingsServiceClient, cfg config, logger logger.Logger, errs chan error) {
+	p := fmt.Sprintf(":%s", cfg.port)
+	if cfg.serverCert != "" || cfg.serverKey != "" {
+		logger.Info(fmt.Sprintf("InfluxDB reader service started using https on port %s with cert %s key %s",
+			cfg.port, cfg.serverCert, cfg.serverKey))
+		errs <- http.ListenAndServeTLS(p, cfg.serverCert, cfg.serverKey, api.MakeHandler(repo, tc, "influxdb-reader"))
+		return
+	}
+	logger.Info(fmt.Sprintf("InfluxDB reader service started, exposed port %s", cfg.port))
 	errs <- http.ListenAndServe(p, api.MakeHandler(repo, tc, "influxdb-reader"))
 }

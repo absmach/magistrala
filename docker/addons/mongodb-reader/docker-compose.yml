@@ -25,8 +25,12 @@ services:
       MF_MONGO_READER_DB_NAME: ${MF_MONGO_READER_DB_NAME}
       MF_MONGO_READER_DB_HOST: mongodb
       MF_MONGO_READER_DB_PORT: ${MF_MONGO_READER_DB_PORT}
+      MF_MONGO_READER_SERVER_CERT: ${MF_MONGO_READER_SERVER_CERT}
+      MF_MONGO_READER_SERVER_KEY: ${MF_MONGO_READER_SERVER_KEY}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
     ports:
       - ${MF_MONGO_READER_PORT}:${MF_MONGO_READER_PORT}
     networks:
       - docker_mainflux-base-net
+    volumes:
+      - ../../ssl/certs:/etc/ssl/certs

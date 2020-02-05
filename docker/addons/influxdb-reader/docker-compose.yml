@@ -28,8 +28,12 @@ services:
       MF_INFLUX_READER_DB_PORT: ${MF_INFLUX_READER_DB_PORT}
       MF_INFLUX_READER_DB_USER: ${MF_INFLUX_READER_DB_USER}
       MF_INFLUX_READER_DB_PASS: ${MF_INFLUX_READER_DB_PASS}
+      MF_INFLUX_READER_SERVER_CERT: ${MF_INFLUX_READER_SERVER_CERT}
+      MF_INFLUX_READER_SERVER_KEY: ${MF_INFLUX_READER_SERVER_KEY}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
     ports:
       - ${MF_INFLUX_READER_PORT}:${MF_INFLUX_READER_PORT}
     networks:
       - docker_mainflux-base-net
+    volumes:
+      - ../../ssl/certs:/etc/ssl/certs

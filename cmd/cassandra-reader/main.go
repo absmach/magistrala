@@ -44,6 +44,8 @@ const (
 	defThingsURL     = "localhost:8181"
 	defClientTLS     = "false"
 	defCACerts       = ""
+	defServerCert    = ""
+	defServerKey     = ""
 	defJaegerURL     = ""
 	defThingsTimeout = "1" // in seconds
 
@@ -57,6 +59,8 @@ const (
 	envThingsURL     = "MF_THINGS_URL"
 	envClientTLS     = "MF_CASSANDRA_READER_CLIENT_TLS"
 	envCACerts       = "MF_CASSANDRA_READER_CA_CERTS"
+	envServerCert    = "MF_CASSANDRA_READER_SERVER_CERT"
+	envServerKey     = "MF_CASSANDRA_READER_SERVER_KEY"
 	envJaegerURL     = "MF_JAEGER_URL"
 	envThingsTimeout = "MF_CASSANDRA_READER_THINGS_TIMEOUT"
 )
@@ -68,6 +72,8 @@ type config struct {
 	thingsURL     string
 	clientTLS     bool
 	caCerts       string
+	serverCert    string
+	serverKey     string
 	jaegerURL     string
 	thingsTimeout time.Duration
 }
@@ -94,7 +100,7 @@ func main() {
 
 	errs := make(chan error, 2)
 
-	go startHTTPServer(repo, tc, cfg.port, errs, logger)
+	go startHTTPServer(repo, tc, cfg, errs, logger)
 
 	go func() {
 		c := make(chan os.Signal)
@@ -137,6 +143,8 @@ func loadConfig() config {
 		thingsURL:     mainflux.Env(envThingsURL, defThingsURL),
 		clientTLS:     tls,
 		caCerts:       mainflux.Env(envCACerts, defCACerts),
+		serverCert:    mainflux.Env(envServerCert, defServerCert),
+		serverKey:     mainflux.Env(envServerKey, defServerKey),
 		jaegerURL:     mainflux.Env(envJaegerURL, defJaegerURL),
 		thingsTimeout: time.Duration(timeout) * time.Second,
 	}
@@ -222,8 +230,14 @@ func newService(session *gocql.Session, logger logger.Logger) readers.MessageRep
 	return repo
 }
 
-func startHTTPServer(repo readers.MessageRepository, tc mainflux.ThingsServiceClient, port string, errs chan error, logger logger.Logger) {
-	p := fmt.Sprintf(":%s", port)
-	logger.Info(fmt.Sprintf("Cassandra reader service started, exposed port %s", port))
+func startHTTPServer(repo readers.MessageRepository, tc mainflux.ThingsServiceClient, cfg config, errs chan error, logger logger.Logger) {
+	p := fmt.Sprintf(":%s", cfg.port)
+	if cfg.serverCert != "" || cfg.serverKey != "" {
+		logger.Info(fmt.Sprintf("Cassandra reader service started using https on port %s with cert %s key %s",
+			cfg.port, cfg.serverCert, cfg.serverKey))
+		errs <- http.ListenAndServeTLS(p, cfg.serverCert, cfg.serverKey, api.MakeHandler(repo, tc, "cassandra-reader"))
+		return
+	}
+	logger.Info(fmt.Sprintf("Cassandra reader service started, exposed port %s", cfg.port))
 	errs <- http.ListenAndServe(p, api.MakeHandler(repo, tc, "cassandra-reader"))
 }

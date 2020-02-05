@@ -17,6 +17,8 @@ default values.
 | MF_MONGO_READER_DB_PORT        | MongoDB database port                          | 27017          |
 | MF_MONGO_READER_CLIENT_TLS     | Flag that indicates if TLS should be turned on | false          |
 | MF_MONGO_READER_CA_CERTS       | Path to trusted CAs in PEM format              |                |
+| MF_MONGO_SERVER_CERT           | Path to server certificate in pem format       |                |
+| MF_MONGO_SERVER_KEY            | Path to server key in pem format               |                |
 | MF_JAEGER_URL                  | Jaeger server URL                              | localhost:6831 |
 | MF_MONGO_READER_THINGS_TIMEOUT | Things gRPC request timeout in seconds         | 1              |
 
@@ -38,6 +40,8 @@ default values.
         MF_MONGO_READER_DB_PORT: [MongoDB port]
         MF_MONGO_READER_CLIENT_TLS: [Flag that indicates if TLS should be turned on]
         MF_MONGO_READER_CA_CERTS: [Path to trusted CAs in PEM format]
+        MF_MONGO_READER_SERVER_CERT: [String path to server cert in pem format]
+        MF_MONGO_READER_SERVER_KEY: [String path to server key in pem format]
         MF_JAEGER_URL: [Jaeger server URL]
         MF_MONGO_READER_THINGS_TIMEOUT: [Things gRPC request timeout in seconds]
     ports:
@@ -59,7 +63,18 @@ make mongodb-reader
 make install
 
 # Set the environment variables and run the service
-MF_THINGS_URL=[Things service URL] MF_MONGO_READER_PORT=[Service HTTP port] MF_MONGO_READER_DB_NAME=[MongoDB database name] MF_MONGO_READER_DB_HOST=[MongoDB database host] MF_MONGO_READER_DB_PORT=[MongoDB database port] MF_MONGO_READER_CLIENT_TLS=[Flag that indicates if TLS should be turned on] MF_MONGO_READER_CA_CERTS=[Path to trusted CAs in PEM format] MF_JAEGER_URL=[Jaeger server URL] MF_MONGO_READER_THINGS_TIMEOUT=[Things gRPC request timeout in seconds] $GOBIN/mainflux-mongodb-reader
+MF_THINGS_URL=[Things service URL] \
+MF_MONGO_READER_PORT=[Service HTTP port] \
+MF_MONGO_READER_DB_NAME=[MongoDB database name] \
+MF_MONGO_READER_DB_HOST=[MongoDB database host] \
+MF_MONGO_READER_DB_PORT=[MongoDB database port] \
+MF_MONGO_READER_CLIENT_TLS=[Flag that indicates if TLS should be turned on] \
+MF_MONGO_READER_CA_CERTS=[Path to trusted CAs in PEM format] \
+MF_JAEGER_URL=[Jaeger server URL] \
+MF_MONGO_READER_SERVER_CERT=[Path to server pem certificate file] \
+MF_MONGO_READER_SERVER_KEY=[Path to server pem key file] \
+MF_MONGO_READER_THINGS_TIMEOUT=[Things gRPC request timeout in seconds] \
+$GOBIN/mainflux-mongodb-reader
 
 ```
 

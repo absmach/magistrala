@@ -47,7 +47,10 @@ services:
   nats:
     image: nats:1.3.0
     container_name: mainflux-nats
+    command: "-c /etc/nats/nats.conf"
     restart: on-failure
+    volumes:
+      - ./nats/:/etc/nats
     networks:
       - mainflux-base-net
 

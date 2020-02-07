@@ -14,6 +14,7 @@ networks:
 
 volumes:
   mainflux-opcua-adapter-volume:
+  mainflux-opcua-redis-volume:
 
 services:
   opcua-redis:
@@ -22,6 +23,8 @@ services:
     restart: on-failure
     networks:
       - docker_mainflux-base-net
+    volumes:
+      - mainflux-opcua-redis-volume:/data
 
   opcua-adapter:
     image: mainflux/opcua:latest

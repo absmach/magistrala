@@ -92,6 +92,29 @@ MF_TWINS_LOG_LEVEL: [Twins log level] MF_TWINS_HTTP_PORT: [Service HTTP port] MF
 
 ## Usage
 
+### Starting twins service
+
+The twins service publishes notifications on an mqtt topic of the format
+`channels/<MF_TWINS_CHANNEL_ID>/messages/<twinID>/<crudOp>`, where `crudOp`
+stands for the crud operation done on twin - create, update, delete or
+retrieve - or state - save state. In order to use twin service, one must
+inform it - via environment variables - about the Mainflux thing and
+channel used for mqtt notification publishing. You can use an already existing
+thing and channel - thing has to be connected to channel - or create new ones.
+
+To set the environment variables, please go to `.env` file and set the following
+variables:
+
+```
+MF_TWINS_THING_ID=
+MF_TWINS_THING_KEY=
+MF_TWINS_CHANNEL_ID=
+```
+
+with the corresponding values of the desired thing and channel. If you are
+running mainflux natively, than do the same thing in the corresponding console
+environment.
+
 For more information about service capabilities and its usage, please check out
 the [API documentation](swagger.yaml).
 

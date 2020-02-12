@@ -1,0 +1,56 @@
+# Copyright (c) Mainflux
+# SPDX-License-Identifier: Apache-2.0
+
+# This docker-compose file contains optional opcua-adapter and opcua-redis services
+# for the Mainflux platform. Since this services are optional, this file is dependent on the
+# docker-compose.yml file from <project_root>/docker/. In order to run these services,
+# core services, as well as the network from the core composition, should be already running.
+
+version: "3.7"
+
+networks:
+  docker_mainflux-base-net:
+    external: true
+
+volumes:
+  mainflux-twins-db-volume:
+  mainflux-twins-db-configdb-volume:
+
+services:
+  twins-db:
+    image: mongo:bionic
+    command: mongod --port ${MF_TWINS_DB_PORT}
+    container_name: mainflux-twins-db
+    restart: on-failure
+    environment:
+      MONGO_INITDB_DATABASE: ${MF_TWINS_DB_NAME}
+    ports:
+      - ${MF_TWINS_DB_PORT}:${MF_TWINS_DB_PORT}
+    networks:
+      docker_mainflux-base-net:
+    volumes:
+      - mainflux-twins-db-volume:/data/db      
+      - mainflux-twins-db-configdb-volume:/data/configdb
+
+  twins:
+    image: mainflux/twins:latest
+    container_name: mainflux-twins
+    restart: on-failure
+    environment:
+      MF_TWINS_LOG_LEVEL: ${MF_TWINS_LOG_LEVEL}
+      MF_TWINS_HTTP_PORT: ${MF_TWINS_HTTP_PORT}
+      MF_TWINS_DB_NAME: ${MF_TWINS_DB_NAME}
+      MF_TWINS_DB_HOST: ${MF_TWINS_DB_HOST}
+      MF_TWINS_DB_PORT: ${MF_TWINS_DB_PORT}
+      MF_TWINS_THING_ID: ${MF_TWINS_THING_ID}
+      MF_TWINS_THING_KEY: ${MF_TWINS_THING_KEY}
+      MF_TWINS_CHANNEL_ID: ${MF_TWINS_CHANNEL_ID}
+      MF_NATS_URL: ${MF_NATS_URL}
+      MF_AUTHN_URL: authn:${MF_AUTHN_GRPC_PORT}
+      MF_TWINS_MQTT_URL: ${MF_TWINS_MQTT_URL}
+    ports:
+      - ${MF_TWINS_HTTP_PORT}:${MF_TWINS_HTTP_PORT}
+    networks:
+       docker_mainflux-base-net:
+    depends_on:
+      - twins-db         

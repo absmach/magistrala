@@ -331,13 +331,33 @@ func prepareState(st *State, tw *Twin, recs []senml.Record, msg *mainflux.Messag
 			continue
 		}
 		if attr.Channel == msg.Channel && attr.Subtopic == msg.Subtopic {
-			st.Payload[attr.Name] = recs[0].Value
+			val := findValue(recs[0])
+			st.Payload[attr.Name] = val
 			save = true
 			break
 		}
 	}
 
 	return save
+}
+
+func findValue(rec senml.Record) interface{} {
+	if rec.Value != nil {
+		return rec.Value
+	}
+	if rec.StringValue != nil {
+		return rec.StringValue
+	}
+	if rec.DataValue != nil {
+		return rec.DataValue
+	}
+	if rec.BoolValue != nil {
+		return rec.BoolValue
+	}
+	if rec.Sum != nil {
+		return rec.Sum
+	}
+	return nil
 }
 
 func findAttribute(name string, attrs []Attribute) (idx int) {

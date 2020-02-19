@@ -16,12 +16,10 @@ import (
 	"testing"
 	"time"
 
-	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/mainflux/mainflux/twins"
 	httpapi "github.com/mainflux/mainflux/twins/api/http"
 	"github.com/mainflux/mainflux/twins/mocks"
-	twmqtt "github.com/mainflux/mainflux/twins/mqtt"
-	nats "github.com/nats-io/go-nats"
+	nats "github.com/mainflux/mainflux/twins/nats/publisher"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -71,14 +69,7 @@ func newService(tokens map[string]string) twins.Service {
 	statesRepo := mocks.NewStateRepository()
 	idp := mocks.NewIdentityProvider()
 
-	nc, _ := nats.Connect(natsURL)
-
-	opts := mqtt.NewClientOptions()
-	pc := mqtt.NewClient(opts)
-
-	mc := twmqtt.New(pc, topic)
-
-	return twins.New(nc, mc, auth, twinsRepo, statesRepo, idp)
+	return twins.New(auth, twinsRepo, statesRepo, idp, &nats.Publisher{})
 }
 
 func newServer(svc twins.Service) *httptest.Server {

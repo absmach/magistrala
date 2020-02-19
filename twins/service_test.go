@@ -8,14 +8,11 @@ import (
 	"fmt"
 	"testing"
 
-	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/mainflux/mainflux/twins"
 	"github.com/mainflux/mainflux/twins/mocks"
-	nats "github.com/nats-io/go-nats"
+	nats "github.com/mainflux/mainflux/twins/nats/publisher"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	twmqtt "github.com/mainflux/mainflux/twins/mqtt"
 )
 
 const (
@@ -25,8 +22,6 @@ const (
 	wrongToken = "wrong-token"
 	email      = "user@example.com"
 	natsURL    = "nats://localhost:4222"
-	mqttURL    = "tcp://localhost:1883"
-	topic      = "topic"
 )
 
 func newService(tokens map[string]string) twins.Service {
@@ -34,15 +29,7 @@ func newService(tokens map[string]string) twins.Service {
 	twinsRepo := mocks.NewTwinRepository()
 	statesRepo := mocks.NewStateRepository()
 	idp := mocks.NewIdentityProvider()
-
-	nc, _ := nats.Connect(natsURL)
-
-	opts := mqtt.NewClientOptions()
-	pc := mqtt.NewClient(opts)
-
-	mc := twmqtt.New(pc, topic)
-
-	return twins.New(nc, mc, auth, twinsRepo, statesRepo, idp)
+	return twins.New(auth, twinsRepo, statesRepo, idp, &nats.Publisher{})
 }
 
 func TestAddTwin(t *testing.T) {

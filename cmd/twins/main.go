@@ -15,8 +15,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/mainflux/mainflux/twins/mqtt"
-
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/mainflux/mainflux"
 	authapi "github.com/mainflux/mainflux/authn/api/grpc"
@@ -26,7 +24,8 @@ import (
 	"github.com/mainflux/mainflux/twins/api"
 	twapi "github.com/mainflux/mainflux/twins/api/http"
 	twmongodb "github.com/mainflux/mainflux/twins/mongodb"
-	twnats "github.com/mainflux/mainflux/twins/nats"
+	natspub "github.com/mainflux/mainflux/twins/nats/publisher"
+	natssub "github.com/mainflux/mainflux/twins/nats/subscriber"
 	"github.com/mainflux/mainflux/twins/uuid"
 	nats "github.com/nats-io/go-nats"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -51,7 +50,6 @@ const (
 	defSingleUserToken = ""
 	defClientTLS       = "false"
 	defCACerts         = ""
-	defMqttURL         = "tcp://localhost:1883"
 	defThingID         = ""
 	defThingKey        = ""
 	defChannelID       = ""
@@ -72,7 +70,6 @@ const (
 	envSingleUserToken = "MF_TWINS_SINGLE_USER_TOKEN"
 	envClientTLS       = "MF_TWINS_CLIENT_TLS"
 	envCACerts         = "MF_TWINS_CA_CERTS"
-	envMqttURL         = "MF_TWINS_MQTT_URL"
 	envThingID         = "MF_TWINS_THING_ID"
 	envThingKey        = "MF_TWINS_THING_KEY"
 	envChannelID       = "MF_TWINS_CHANNEL_ID"
@@ -93,7 +90,6 @@ type config struct {
 	singleUserToken string
 	clientTLS       bool
 	caCerts         string
-	mqttURL         string
 	thingID         string
 	thingKey        string
 	channelID       string
@@ -125,12 +121,6 @@ func main() {
 	dbTracer, dbCloser := initJaeger("twins_db", cfg.jaegerURL, logger)
 	defer dbCloser.Close()
 
-	pc := mqtt.Connect(cfg.mqttURL, cfg.thingID, cfg.thingKey, logger)
-	mc := mqtt.New(pc, cfg.channelID)
-
-	mcTracer, mcCloser := initJaeger("twins_mqtt", cfg.jaegerURL, logger)
-	defer mcCloser.Close()
-
 	nc, err := nats.Connect(cfg.NatsURL)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to NATS: %s", err))
@@ -144,7 +134,7 @@ func main() {
 	tracer, closer := initJaeger("twins", cfg.jaegerURL, logger)
 	defer closer.Close()
 
-	svc := newService(nc, ncTracer, mc, mcTracer, auth, dbTracer, db, logger)
+	svc := newService(nc, ncTracer, cfg.channelID, auth, dbTracer, db, logger)
 
 	errs := make(chan error, 2)
 
@@ -188,7 +178,6 @@ func loadConfig() config {
 		singleUserToken: mainflux.Env(envSingleUserToken, defSingleUserToken),
 		clientTLS:       tls,
 		caCerts:         mainflux.Env(envCACerts, defCACerts),
-		mqttURL:         mainflux.Env(envMqttURL, defMqttURL),
 		thingID:         mainflux.Env(envThingID, defThingID),
 		channelID:       mainflux.Env(envChannelID, defChannelID),
 		thingKey:        mainflux.Env(envThingKey, defThingKey),
@@ -256,13 +245,15 @@ func connectToAuth(cfg config, logger logger.Logger) *grpc.ClientConn {
 	return conn
 }
 
-func newService(nc *nats.Conn, ncTracer opentracing.Tracer, mc mqtt.Mqtt, mcTracer opentracing.Tracer, users mainflux.AuthNServiceClient, dbTracer opentracing.Tracer, db *mongo.Database, logger logger.Logger) twins.Service {
+func newService(nc *nats.Conn, ncTracer opentracing.Tracer, chanID string, users mainflux.AuthNServiceClient, dbTracer opentracing.Tracer, db *mongo.Database, logger logger.Logger) twins.Service {
 	twinRepo := twmongodb.NewTwinRepository(db)
 
 	stateRepo := twmongodb.NewStateRepository(db)
 	idp := uuid.New()
 
-	svc := twins.New(nc, mc, users, twinRepo, stateRepo, idp)
+	np := natspub.NewPublisher(nc, chanID, logger)
+
+	svc := twins.New(users, twinRepo, stateRepo, idp, np)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,
@@ -280,7 +271,7 @@ func newService(nc *nats.Conn, ncTracer opentracing.Tracer, mc mqtt.Mqtt, mcTrac
 		}, []string{"method"}),
 	)
 
-	twnats.Subscribe(nc, mc, svc, logger)
+	natssub.NewSubscriber(nc, chanID, svc, logger)
 
 	return svc
 }

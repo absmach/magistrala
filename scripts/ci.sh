@@ -1,10 +1,10 @@
 # This script contains commands to be executed by the CI tool.
 NPROC=$(nproc)
 GO_VERSION=1.13
-PROTOC_VERSION=3.11.1
-PROTOC_GEN_VERSION=v1.3.2
+PROTOC_VERSION=3.11.4
+PROTOC_GEN_VERSION=v1.3.3
 PROTOC_GOFAST_VERSION=v1.3.1
-GRPC_VERSION=v1.24.0
+GRPC_VERSION=v1.27.1
 
 function version_gt() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
 

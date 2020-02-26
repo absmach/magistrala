@@ -14,7 +14,7 @@ import (
 	"github.com/mainflux/mainflux"
 	log "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/ws"
-	broker "github.com/nats-io/go-nats"
+	broker "github.com/nats-io/nats.go"
 )
 
 const (

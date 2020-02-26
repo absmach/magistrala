@@ -21,7 +21,7 @@ import (
 	"github.com/mainflux/mainflux/writers"
 	"github.com/mainflux/mainflux/writers/api"
 	"github.com/mainflux/mainflux/writers/influxdb"
-	nats "github.com/nats-io/go-nats"
+	nats "github.com/nats-io/nats.go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 

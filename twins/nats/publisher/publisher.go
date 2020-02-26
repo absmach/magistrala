@@ -10,7 +10,7 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/mainflux/mainflux"
-	"github.com/nats-io/go-nats"
+	"github.com/nats-io/nats.go"
 )
 
 const (

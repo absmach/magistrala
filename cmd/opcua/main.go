@@ -24,7 +24,7 @@ import (
 	"github.com/mainflux/mainflux/opcua/redis"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
-	nats "github.com/nats-io/go-nats"
+	nats "github.com/nats-io/nats.go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 

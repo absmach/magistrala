@@ -24,7 +24,7 @@ import (
 	"github.com/mainflux/mainflux/http/nats"
 	"github.com/mainflux/mainflux/logger"
 	thingsapi "github.com/mainflux/mainflux/things/api/auth/grpc"
-	broker "github.com/nats-io/go-nats"
+	broker "github.com/nats-io/nats.go"
 	opentracing "github.com/opentracing/opentracing-go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	jconfig "github.com/uber/jaeger-client-go/config"

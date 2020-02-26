@@ -10,7 +10,7 @@ import (
 
 	"github.com/mainflux/mainflux/ws"
 	"github.com/mainflux/mainflux/ws/mocks"
-	broker "github.com/nats-io/go-nats"
+	broker "github.com/nats-io/nats.go"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/mainflux/mainflux"

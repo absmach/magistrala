@@ -11,7 +11,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/coap"
-	broker "github.com/nats-io/go-nats"
+	broker "github.com/nats-io/nats.go"
 )
 
 const prefix = "channel"

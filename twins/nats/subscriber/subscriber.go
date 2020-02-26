@@ -11,7 +11,7 @@ import (
 	"github.com/mainflux/mainflux"
 	log "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/twins"
-	"github.com/nats-io/go-nats"
+	nats "github.com/nats-io/nats.go"
 )
 
 const (

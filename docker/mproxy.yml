@@ -1,0 +1,47 @@
+# Copyright (c) Mainflux
+# SPDX-License-Identifier: Apache-2.0
+
+version: "3.7"
+
+volumes:
+  mainflux-mqtt-redis-volume:
+
+services:
+  nginx:
+    depends_on:
+      - mqtt-adapter
+
+  emqx:
+    image: emqx/emqx:latest
+    container_name: mainflux-emqx
+    restart: on-failure
+    environment:
+      EMQX_LISTENER__TCP__EXTERNAL: 1884
+    ports:
+      - 1884:1884
+    networks:
+      - mainflux-base-net
+  
+  mqtt-adapter:
+    image: mainflux/mproxy:latest
+    container_name: mainflux-mqtt
+    depends_on:
+      - emqx
+      - things
+      - nats
+    restart: on-failure
+    environment:
+      MF_MQTT_ADAPTER_LOG_LEVEL: ${MF_MQTT_ADAPTER_LOG_LEVEL}
+      MF_MQTT_ADAPTER_PORT: ${MF_MQTT_ADAPTER_PORT}
+      MF_MQTT_ADAPTER_WS_PORT: ${MF_MQTT_ADAPTER_WS_PORT}
+      MF_MQTT_ADAPTER_ES_HOST: es-redis
+      MF_NATS_URL: ${MF_NATS_URL}
+      MF_THINGS_URL: things:${MF_THINGS_AUTH_GRPC_PORT}
+      MF_JAEGER_URL: ${MF_JAEGER_URL}
+      MF_MQTT_ADAPTER_MQTT_TARGET_HOST: emqx
+      MF_MQTT_ADAPTER_MQTT_TARGET_PORT: 1884
+    ports:
+      - 18831:${MF_MQTT_ADAPTER_PORT}
+      - 8881:${MF_MQTT_ADAPTER_WS_PORT}
+    networks:
+      - mainflux-base-net

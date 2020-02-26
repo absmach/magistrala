@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/go-redis/redis"
-	dockertest "gopkg.in/ory-am/dockertest.v3"
+	dockertest "gopkg.in/ory/dockertest.v3"
 )
 
 const (

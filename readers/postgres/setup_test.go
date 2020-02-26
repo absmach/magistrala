@@ -14,7 +14,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/readers/postgres"
-	dockertest "gopkg.in/ory-am/dockertest.v3"
+	dockertest "gopkg.in/ory/dockertest.v3"
 )
 
 const (

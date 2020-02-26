@@ -9,7 +9,7 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/mainflux/mainflux"
-	broker "github.com/nats-io/go-nats"
+	broker "github.com/nats-io/nats.go"
 )
 
 var _ mainflux.MessagePublisher = (*natsPublisher)(nil)

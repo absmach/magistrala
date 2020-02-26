@@ -12,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	dockertest "gopkg.in/ory-am/dockertest.v3"
+	dockertest "gopkg.in/ory/dockertest.v3"
 )
 
 func TestMain(m *testing.M) {

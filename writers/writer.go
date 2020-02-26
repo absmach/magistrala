@@ -11,7 +11,7 @@ import (
 	log "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/transformers"
 	"github.com/mainflux/mainflux/transformers/senml"
-	nats "github.com/nats-io/go-nats"
+	nats "github.com/nats-io/nats.go"
 )
 
 type consumer struct {

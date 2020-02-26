@@ -29,7 +29,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	broker "github.com/nats-io/go-nats"
+	broker "github.com/nats-io/nats.go"
 )
 
 const (

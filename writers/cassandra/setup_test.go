@@ -11,7 +11,7 @@ import (
 	"github.com/gocql/gocql"
 	log "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/writers/cassandra"
-	dockertest "gopkg.in/ory-am/dockertest.v3"
+	dockertest "gopkg.in/ory/dockertest.v3"
 )
 
 var logger, _ = log.New(os.Stdout, log.Info.String())

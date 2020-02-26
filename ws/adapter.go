@@ -11,7 +11,7 @@ import (
 	"sync"
 
 	"github.com/mainflux/mainflux"
-	broker "github.com/nats-io/go-nats"
+	broker "github.com/nats-io/nats.go"
 )
 
 var (

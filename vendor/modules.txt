@@ -69,7 +69,7 @@ github.com/gocql/gocql/internal/streams
 github.com/gofrs/uuid
 # github.com/gogo/protobuf v1.3.1
 github.com/gogo/protobuf/proto
-# github.com/golang/protobuf v1.3.2
+# github.com/golang/protobuf v1.3.3
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
@@ -78,6 +78,8 @@ github.com/golang/protobuf/ptypes/empty
 github.com/golang/protobuf/ptypes/timestamp
 # github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db
 github.com/golang/snappy
+# github.com/google/uuid v1.1.1
+github.com/google/uuid
 # github.com/gopcua/opcua v0.1.6
 github.com/gopcua/opcua
 github.com/gopcua/opcua/debug
@@ -113,7 +115,7 @@ github.com/influxdata/influxdb/pkg/escape
 # github.com/jmoiron/sqlx v1.2.1-0.20190319043955-cdf62fdf55f6
 github.com/jmoiron/sqlx
 github.com/jmoiron/sqlx/reflectx
-# github.com/konsorten/go-windows-terminal-sequences v1.0.1
+# github.com/konsorten/go-windows-terminal-sequences v1.0.2
 github.com/konsorten/go-windows-terminal-sequences
 # github.com/kr/logfmt v0.0.0-20140226030751-b84e30acd515
 github.com/kr/logfmt
@@ -122,6 +124,9 @@ github.com/lib/pq
 github.com/lib/pq/oid
 # github.com/magiconair/properties v1.8.1
 github.com/magiconair/properties
+# github.com/mainflux/mproxy v0.1.0
+github.com/mainflux/mproxy/pkg/events
+github.com/mainflux/mproxy/pkg/mqtt
 # github.com/mainflux/senml v1.0.0
 github.com/mainflux/senml
 # github.com/mattn/go-colorable v0.0.9
@@ -132,11 +137,15 @@ github.com/mattn/go-isatty
 github.com/matttproud/golang_protobuf_extensions/pbutil
 # github.com/mitchellh/mapstructure v1.1.2
 github.com/mitchellh/mapstructure
-# github.com/nats-io/go-nats v1.6.0
-github.com/nats-io/go-nats
-github.com/nats-io/go-nats/encoders/builtin
-github.com/nats-io/go-nats/util
-# github.com/nats-io/nuid v1.0.0
+# github.com/nats-io/jwt v0.3.2
+github.com/nats-io/jwt
+# github.com/nats-io/nats.go v1.9.1
+github.com/nats-io/nats.go
+github.com/nats-io/nats.go/encoders/builtin
+github.com/nats-io/nats.go/util
+# github.com/nats-io/nkeys v0.1.3
+github.com/nats-io/nkeys
+# github.com/nats-io/nuid v1.0.1
 github.com/nats-io/nuid
 # github.com/opencontainers/go-digest v1.0.0-rc1
 github.com/opencontainers/go-digest
@@ -186,7 +195,7 @@ github.com/pmezard/go-difflib/difflib
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/internal
 github.com/prometheus/client_golang/prometheus/promhttp
-# github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90
+# github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4
 github.com/prometheus/client_model/go
 # github.com/prometheus/common v0.4.0
 github.com/prometheus/common/expfmt
@@ -198,7 +207,7 @@ github.com/prometheus/procfs/internal/fs
 # github.com/rubenv/sql-migrate v0.0.0-20181106121204-ba2c6a7295c5
 github.com/rubenv/sql-migrate
 github.com/rubenv/sql-migrate/sqlparse
-# github.com/sirupsen/logrus v1.2.0
+# github.com/sirupsen/logrus v1.4.2
 github.com/sirupsen/logrus
 # github.com/sony/gobreaker v0.0.0-20180905101324-b2a34562d02c
 github.com/sony/gobreaker
@@ -207,7 +216,7 @@ github.com/spf13/afero
 github.com/spf13/afero/mem
 # github.com/spf13/cast v1.3.0
 github.com/spf13/cast
-# github.com/spf13/cobra v0.0.3
+# github.com/spf13/cobra v0.0.5
 github.com/spf13/cobra
 # github.com/spf13/jwalterweatherman v1.1.0
 github.com/spf13/jwalterweatherman
@@ -220,11 +229,12 @@ github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # github.com/subosito/gotenv v1.2.0
 github.com/subosito/gotenv
-# github.com/uber/jaeger-client-go v2.16.0+incompatible
+# github.com/uber/jaeger-client-go v2.22.1+incompatible
 github.com/uber/jaeger-client-go
 github.com/uber/jaeger-client-go/config
 github.com/uber/jaeger-client-go/internal/baggage
 github.com/uber/jaeger-client-go/internal/baggage/remote
+github.com/uber/jaeger-client-go/internal/reporterstats
 github.com/uber/jaeger-client-go/internal/spanlog
 github.com/uber/jaeger-client-go/internal/throttler
 github.com/uber/jaeger-client-go/internal/throttler/remote
@@ -273,12 +283,15 @@ go.mongodb.org/mongo-driver/x/mongo/driver/session
 go.mongodb.org/mongo-driver/x/mongo/driver/topology
 go.mongodb.org/mongo-driver/x/mongo/driver/uuid
 go.mongodb.org/mongo-driver/x/mongo/driver/wiremessage
-# golang.org/x/crypto v0.0.0-20190605123033-f99c8df09eb5
+# go.uber.org/atomic v1.4.0
+go.uber.org/atomic
+# golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
+golang.org/x/crypto/ed25519
+golang.org/x/crypto/ed25519/internal/edwards25519
 golang.org/x/crypto/pbkdf2
-golang.org/x/crypto/ssh/terminal
-# golang.org/x/net v0.0.0-20190522155817-f3200d17e092
+# golang.org/x/net v0.0.0-20200226121028-0de0cce0169b
 golang.org/x/net/context
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
@@ -291,10 +304,10 @@ golang.org/x/net/trace
 golang.org/x/net/websocket
 # golang.org/x/sync v0.0.0-20190423024810-112230192c58
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.0.0-20190602015325-4c4f7f33c9ed
+# golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.3.0
+# golang.org/x/text v0.3.2
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
@@ -316,10 +329,12 @@ gonum.org/v1/gonum/lapack/gonum
 gonum.org/v1/gonum/lapack/lapack64
 gonum.org/v1/gonum/mat
 gonum.org/v1/gonum/stat
-# google.golang.org/genproto v0.0.0-20180817151627-c66870c02cf8
+# google.golang.org/genproto v0.0.0-20200225123651-fc8f55426688
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.24.0
+# google.golang.org/grpc v1.27.1
 google.golang.org/grpc
+google.golang.org/grpc/attributes
+google.golang.org/grpc/backoff
 google.golang.org/grpc/balancer
 google.golang.org/grpc/balancer/base
 google.golang.org/grpc/balancer/roundrobin
@@ -335,10 +350,13 @@ google.golang.org/grpc/internal
 google.golang.org/grpc/internal/backoff
 google.golang.org/grpc/internal/balancerload
 google.golang.org/grpc/internal/binarylog
+google.golang.org/grpc/internal/buffer
 google.golang.org/grpc/internal/channelz
 google.golang.org/grpc/internal/envconfig
 google.golang.org/grpc/internal/grpcrand
 google.golang.org/grpc/internal/grpcsync
+google.golang.org/grpc/internal/resolver/dns
+google.golang.org/grpc/internal/resolver/passthrough
 google.golang.org/grpc/internal/syscall
 google.golang.org/grpc/internal/transport
 google.golang.org/grpc/keepalive
@@ -346,8 +364,6 @@ google.golang.org/grpc/metadata
 google.golang.org/grpc/naming
 google.golang.org/grpc/peer
 google.golang.org/grpc/resolver
-google.golang.org/grpc/resolver/dns
-google.golang.org/grpc/resolver/passthrough
 google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
@@ -356,7 +372,7 @@ google.golang.org/grpc/tap
 gopkg.in/gorp.v1
 # gopkg.in/inf.v0 v0.9.1
 gopkg.in/inf.v0
-# gopkg.in/ory-am/dockertest.v3 v3.3.2
-gopkg.in/ory-am/dockertest.v3
+# gopkg.in/ory/dockertest.v3 v3.3.5
+gopkg.in/ory/dockertest.v3
 # gopkg.in/yaml.v2 v2.2.4
 gopkg.in/yaml.v2

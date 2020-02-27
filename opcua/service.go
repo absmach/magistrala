@@ -11,6 +11,7 @@ import (
 )
 
 const protocol = "opcua"
+const defNodeID = "ns=0;i=84"
 
 var (
 	// ErrMalformedEntity indicates malformed entity specification.
@@ -45,13 +46,14 @@ type Service interface {
 	DisconnectThing(string, string) error
 
 	// Browse browses available nodes for a given OPC-UA Server URI and NodeID
-	Browse(string, string) ([]BrowsedNode, error)
+	Browse(string, string, string) ([]BrowsedNode, error)
 }
 
 // Config OPC-UA Server
 type Config struct {
 	ServerURI string
 	NodeID    string
+	Interval  string
 	Policy    string
 	Mode      string
 	CertFile  string
@@ -131,7 +133,13 @@ func (as *adapterService) ConnectThing(mfxChanID, mfxThingID string) error {
 	return as.connectRM.Save(c, c)
 }
 
-func (as *adapterService) Browse(serverURI, nodeID string) ([]BrowsedNode, error) {
+func (as *adapterService) Browse(serverURI, namespace, identifier string) ([]BrowsedNode, error) {
+	nodeID := defNodeID
+
+	if namespace != "" && identifier != "" {
+		nodeID = fmt.Sprintf("%s;%s", namespace, identifier)
+	}
+
 	nodes, err := as.browser.Browse(serverURI, nodeID)
 	if err != nil {
 		return nil, err

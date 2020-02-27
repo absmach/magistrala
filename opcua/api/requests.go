@@ -12,7 +12,7 @@ type browseReq struct {
 }
 
 func (req *browseReq) validate() error {
-	if req.ServerURI == "" || req.Namespace == "" || req.Identifier == "" {
+	if req.ServerURI == "" {
 		return opcua.ErrMalformedEntity
 	}
 

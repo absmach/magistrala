@@ -30,6 +30,7 @@ import (
 
 const (
 	defHTTPPort       = "8188"
+	defOPCIntervalMs  = "1000"
 	defOPCPolicy      = ""
 	defOPCMode        = ""
 	defOPCCertFile    = ""
@@ -46,6 +47,7 @@ const (
 
 	envHTTPPort       = "MF_OPCUA_ADAPTER_HTTP_PORT"
 	envLogLevel       = "MF_OPCUA_ADAPTER_LOG_LEVEL"
+	envOPCIntervalMs  = "MF_OPCUA_ADAPTER_INTERVAL_MS"
 	envOPCPolicy      = "MF_OPCUA_ADAPTER_POLICY"
 	envOPCMode        = "MF_OPCUA_ADAPTER_MODE"
 	envOPCCertFile    = "MF_OPCUA_ADAPTER_CERT_FILE"
@@ -142,6 +144,7 @@ func main() {
 
 func loadConfig() config {
 	oc := opcua.Config{
+		Interval: mainflux.Env(envOPCIntervalMs, defOPCIntervalMs),
 		Policy:   mainflux.Env(envOPCPolicy, defOPCPolicy),
 		Mode:     mainflux.Env(envOPCMode, defOPCMode),
 		CertFile: mainflux.Env(envOPCCertFile, defOPCCertFile),

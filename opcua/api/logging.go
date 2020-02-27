@@ -130,9 +130,9 @@ func (lm loggingMiddleware) DisconnectThing(mfxChanID, mfxThingID string) (err e
 	return lm.svc.DisconnectThing(mfxChanID, mfxThingID)
 }
 
-func (lm loggingMiddleware) Browse(serverURI, nodeID string) (nodes []opcua.BrowsedNode, err error) {
+func (lm loggingMiddleware) Browse(serverURI, namespace, identifier string) (nodes []opcua.BrowsedNode, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("browse server URI %s and node ID %s, took %s to complete", serverURI, nodeID, time.Since(begin))
+		message := fmt.Sprintf("browse server URI %s and node %s;%s, took %s to complete", serverURI, namespace, identifier, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -140,5 +140,5 @@ func (lm loggingMiddleware) Browse(serverURI, nodeID string) (nodes []opcua.Brow
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.Browse(serverURI, nodeID)
+	return lm.svc.Browse(serverURI, namespace, identifier)
 }

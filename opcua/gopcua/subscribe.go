@@ -6,6 +6,7 @@ package gopcua
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	opcuaGopcua "github.com/gopcua/opcua"
@@ -27,6 +28,7 @@ var (
 
 	errFailedConn          = errors.New("failed to connect")
 	errFailedRead          = errors.New("failed to read")
+	errFailedParseInterval = errors.New("failed to parse subscription interval")
 	errFailedSub           = errors.New("failed to subscribe")
 	errFailedFindEndpoint  = errors.New("failed to find suitable endpoint")
 	errFailedFetchEndpoint = errors.New("failed to fetch OPC-UA server endpoints")
@@ -100,8 +102,13 @@ func (c client) Subscribe(cfg opcua.Config) error {
 	}
 	defer oc.Close()
 
+	i, err := strconv.Atoi(cfg.Interval)
+	if err != nil {
+		return errors.Wrap(errFailedParseInterval, err)
+	}
+
 	sub, err := oc.Subscribe(&opcuaGopcua.SubscriptionParameters{
-		Interval: 2000 * time.Millisecond,
+		Interval: time.Duration(i) * time.Millisecond,
 	})
 	if err != nil {
 		return errors.Wrap(errFailedSub, err)

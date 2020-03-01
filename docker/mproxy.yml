@@ -4,29 +4,35 @@
 version: "3.7"
 
 volumes:
-  mainflux-mqtt-redis-volume:
+  mainflux-mqtt-broker-volume:
 
 services:
   nginx:
     depends_on:
       - mqtt-adapter
 
-  emqx:
-    image: emqx/emqx:latest
-    container_name: mainflux-emqx
+  vernemq:
+    image: vernemq/vernemq:1.10.1-alpine
+    container_name: mainflux-vernemq
     restart: on-failure
     environment:
-      EMQX_LISTENER__TCP__EXTERNAL: 1884
+      DOCKER_VERNEMQ_ALLOW_ANONYMOUS: "on"
+      DOCKER_VERNEMQ_LOG__CONSOLE__LEVEL: info
+      DOCKER_VERNEMQ_ACCEPT_EULA: "yes"
     ports:
-      - 1884:1884
+      - 18831:${MF_MQTT_BROKER_PORT}
+      - 8881:${MF_MQTT_BROKER_WS_PORT}
+      - 7777:8888
     networks:
       - mainflux-base-net
+    volumes: 
+      - mainflux-mqtt-broker-volume:/var/lib/vernemq
   
   mqtt-adapter:
     image: mainflux/mproxy:latest
     container_name: mainflux-mqtt
     depends_on:
-      - emqx
+      - vernemq
       - things
       - nats
     restart: on-failure
@@ -38,10 +44,10 @@ services:
       MF_NATS_URL: ${MF_NATS_URL}
       MF_THINGS_URL: things:${MF_THINGS_AUTH_GRPC_PORT}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_MQTT_ADAPTER_MQTT_TARGET_HOST: emqx
-      MF_MQTT_ADAPTER_MQTT_TARGET_PORT: 1884
+      MF_MQTT_ADAPTER_MQTT_TARGET_HOST: vernemq
+      MF_MQTT_ADAPTER_MQTT_TARGET_PORT: ${MF_MQTT_BROKER_PORT}
     ports:
-      - 18831:${MF_MQTT_ADAPTER_PORT}
-      - 8881:${MF_MQTT_ADAPTER_WS_PORT}
+      - 18832:${MF_MQTT_ADAPTER_PORT}
+      - 8882:${MF_MQTT_ADAPTER_WS_PORT}
     networks:
       - mainflux-base-net

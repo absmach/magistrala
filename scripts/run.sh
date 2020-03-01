@@ -56,13 +56,9 @@ MF_HTTP_ADAPTER_LOG_LEVEL=info MF_HTTP_ADAPTER_PORT=8185 MF_THINGS_URL=localhost
 MF_WS_ADAPTER_LOG_LEVEL=info MF_WS_ADAPTER_PORT=8186 MF_THINGS_URL=localhost:8183 $BUILD_DIR/mainflux-ws &
 
 ###
-# MQTT
+# MQTT mproxy
 ###
-# Switch to top dir to find *.proto stuff when running MQTT broker
-
-cd ..
-MF_MQTT_ADAPTER_LOG_LEVEL=info MF_THINGS_URL=localhost:8183 node mqtt/aedes/mqtt.js &
-cd -
+MF_MQTT_ADAPTER_LOG_LEVEL=info MF_THINGS_URL=localhost:8183 $BUILD_DIR/mainflux-mproxy &
 
 ###
 # CoAP

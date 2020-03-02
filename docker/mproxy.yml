@@ -12,13 +12,12 @@ services:
       - mqtt-adapter
 
   vernemq:
-    image: vernemq/vernemq:1.10.1-alpine
+    image: mainflux/vernemq:1.10.1-alpine
     container_name: mainflux-vernemq
     restart: on-failure
     environment:
       DOCKER_VERNEMQ_ALLOW_ANONYMOUS: "on"
       DOCKER_VERNEMQ_LOG__CONSOLE__LEVEL: info
-      DOCKER_VERNEMQ_ACCEPT_EULA: "yes"
     ports:
       - 18831:${MF_MQTT_BROKER_PORT}
       - 8881:${MF_MQTT_BROKER_WS_PORT}

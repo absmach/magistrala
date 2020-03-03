@@ -283,34 +283,6 @@ func (sdk mfSDK) DeleteThing(id, token string) error {
 	return nil
 }
 
-func (sdk mfSDK) ConnectThing(thingID, chanID, token string) error {
-	endpoint := fmt.Sprintf("%s/%s/%s/%s", channelsEndpoint, chanID, thingsEndpoint, thingID)
-	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
-
-	req, err := http.NewRequest(http.MethodPut, url, nil)
-	if err != nil {
-		return err
-	}
-
-	resp, err := sdk.sendRequest(req, token, string(CTJSON))
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		switch resp.StatusCode {
-		case http.StatusForbidden:
-			return ErrUnauthorized
-		case http.StatusNotFound:
-			return ErrNotFound
-		default:
-			return ErrFailedConnection
-		}
-	}
-
-	return nil
-}
-
 func (sdk mfSDK) Connect(connIDs ConnectionIDs, token string) error {
 	data, err := json.Marshal(connIDs)
 	if err != nil {

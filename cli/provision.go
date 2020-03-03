@@ -168,21 +168,22 @@ var cmdProvision = []cobra.Command{
 			}
 
 			// Connect things to channels - first thing to both channels, second only to first
-			for i := 0; i < numThings; i++ {
-				if err := sdk.ConnectThing(things[i].ID, channels[i].ID, ut); err != nil {
-					logError(err)
-					return
-				}
+			conIDs := mfxsdk.ConnectionIDs{
+				ChannelIDs: []string{channels[0].ID, channels[1].ID},
+				ThingIDs:   []string{things[0].ID},
+			}
+			if err := sdk.Connect(conIDs, ut); err != nil {
+				logError(err)
+				return
+			}
 
-				if i%2 == 0 {
-					if i+1 >= len(channels) {
-						break
-					}
-					if err := sdk.ConnectThing(things[i].ID, channels[i+1].ID, ut); err != nil {
-						logError(err)
-						return
-					}
-				}
+			conIDs = mfxsdk.ConnectionIDs{
+				ChannelIDs: []string{channels[0].ID},
+				ThingIDs:   []string{things[1].ID},
+			}
+			if err := sdk.Connect(conIDs, ut); err != nil {
+				logError(err)
+				return
 			}
 
 			logJSON(user, ut, things, channels)

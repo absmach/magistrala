@@ -316,7 +316,11 @@ func TestChannelsByThing(t *testing.T) {
 		ch := sdk.Channel{ID: strconv.Itoa(i), Name: "test"}
 		cid, err := mainfluxSDK.CreateChannel(ch, token)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-		err = mainfluxSDK.ConnectThing(tid, cid, token)
+		conIDs := sdk.ConnectionIDs{
+			ChannelIDs: []string{cid},
+			ThingIDs:   []string{tid},
+		}
+		err = mainfluxSDK.Connect(conIDs, token)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		channels = append(channels, ch)
 	}

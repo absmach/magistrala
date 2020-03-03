@@ -226,7 +226,11 @@ func (bs bootstrapService) UpdateConnections(key, id string, connections []strin
 	}
 
 	for _, c := range connect {
-		if err := bs.sdk.ConnectThing(id, c, key); err != nil {
+		conIDs := mfsdk.ConnectionIDs{
+			ChannelIDs: []string{c},
+			ThingIDs:   []string{id},
+		}
+		if err := bs.sdk.Connect(conIDs, key); err != nil {
 			if err == mfsdk.ErrNotFound {
 				return ErrMalformedEntity
 			}
@@ -302,7 +306,11 @@ func (bs bootstrapService) ChangeState(key, id string, state State) error {
 	switch state {
 	case Active:
 		for _, c := range cfg.MFChannels {
-			if err := bs.sdk.ConnectThing(cfg.MFThing, c.ID, key); err != nil {
+			conIDs := mfsdk.ConnectionIDs{
+				ChannelIDs: []string{c.ID},
+				ThingIDs:   []string{cfg.MFThing},
+			}
+			if err := bs.sdk.Connect(conIDs, key); err != nil {
 				return ErrThings
 			}
 		}

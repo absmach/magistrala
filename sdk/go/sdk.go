@@ -168,9 +168,6 @@ type SDK interface {
 	// DeleteThing removes existing thing.
 	DeleteThing(id, token string) error
 
-	// ConnectThing connects thing to specified channel by id.
-	ConnectThing(thingID, chanID, token string) error
-
 	// Connect bulk connects things to channels specified by id.
 	Connect(conns ConnectionIDs, token string) error
 

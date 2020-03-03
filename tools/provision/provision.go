@@ -18,14 +18,13 @@ import (
 	"log"
 	"math/big"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
 	sdk "github.com/mainflux/mainflux/sdk/go"
 )
 
-const defPass = "123"
+const defPass = "12345678"
 
 // MfConn - structure describing Mainflux connection set
 type MfConn struct {
@@ -120,8 +119,9 @@ func Provision(conf Config) {
 	}
 
 	//  Create things and channels
-	things := make([]*sdk.Thing, conf.Num)
-	channels := make([]*string, conf.Num)
+	things := make([]sdk.Thing, conf.Num)
+	cIDs := []string{}
+	tIDs := []string{}
 
 	fmt.Println("# List of things that can be connected to MQTT broker")
 
@@ -132,7 +132,8 @@ func Provision(conf Config) {
 		}
 
 		thing, err := s.Thing(tid, token)
-		things[i] = &thing
+		things[i] = thing
+		tIDs = append(tIDs, tid)
 
 		if err != nil {
 			log.Fatalf("Failed to fetch the thing: %s", err.Error())
@@ -143,7 +144,7 @@ func Provision(conf Config) {
 			log.Fatalf("Failed to create the channel: %s", err.Error())
 		}
 
-		channels[i] = &cid
+		cIDs = append(cIDs, cid)
 
 		cert := ""
 		key := ""
@@ -211,25 +212,19 @@ func Provision(conf Config) {
 		fmt.Println("")
 	}
 
-	var wg sync.WaitGroup
 	fmt.Printf("# List of channels that things can publish to\n" +
 		"# each channel is connected to each thing from things list\n")
 	for i := 0; i < conf.Num; i++ {
-		// Creating a new routine for each connect
-		// might be heavy on the network.
-		go func(wg *sync.WaitGroup, i int) {
-			wg.Add(1)
-			defer wg.Done()
-
-			for j := 0; j < conf.Num; j++ {
-				if err := s.ConnectThing(things[j].ID, *channels[i], token); err != nil {
-					log.Fatalf("Failed to connect thing %s to channel %s: %s", things[j].ID, *channels[i], err)
-				}
-			}
-		}(&wg, i)
-		fmt.Printf("[[channels]]\nchannel_id = \"%s\"\n\n", *channels[i])
+		fmt.Printf("[[channels]]\nchannel_id = \"%s\"\n\n", cIDs[i])
 	}
-	wg.Wait()
+
+	conIDs := sdk.ConnectionIDs{
+		ChannelIDs: cIDs,
+		ThingIDs:   tIDs,
+	}
+	if err := s.Connect(conIDs, token); err != nil {
+		log.Fatalf("Failed to connect things %s to channels %s: %s", conIDs.ThingIDs, conIDs.ChannelIDs, err)
+	}
 }
 
 func publicKey(priv interface{}) interface{} {

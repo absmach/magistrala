@@ -15,7 +15,6 @@ import (
 	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/opcua"
-	"github.com/mainflux/mainflux/opcua/db"
 )
 
 const protocol = "opcua"
@@ -140,11 +139,6 @@ func (c client) runHandler(sub *opcuaGopcua.Subscription, uri, node string) erro
 	}
 
 	go sub.Run(c.ctx)
-
-	// Store subscription details
-	if err := db.Save(uri, node); err != nil {
-		return err
-	}
 
 	c.logger.Info(fmt.Sprintf("subscribed to server %s and node_id %s", uri, node))
 

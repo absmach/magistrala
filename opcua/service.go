@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/opcua/db"
 )
 
 const protocol = "opcua"
@@ -123,14 +124,19 @@ func (as *adapterService) ConnectThing(mfxChanID, mfxThingID string) error {
 	as.cfg.NodeID = nodeID
 	as.cfg.ServerURI = serverURI
 
+	c := fmt.Sprintf("%s:%s", mfxChanID, mfxThingID)
+	if err := as.connectRM.Save(c, c); err != nil {
+		return err
+	}
+
 	go func() {
 		if err := as.subscriber.Subscribe(as.cfg); err != nil {
 			as.logger.Warn(fmt.Sprintf("subscription failed: %s", err))
 		}
 	}()
 
-	c := fmt.Sprintf("%s:%s", mfxChanID, mfxThingID)
-	return as.connectRM.Save(c, c)
+	// Store subscription details
+	return db.Save(serverURI, nodeID)
 }
 
 func (as *adapterService) Browse(serverURI, namespace, identifier string) ([]BrowsedNode, error) {

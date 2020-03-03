@@ -16,7 +16,7 @@ const table = `CREATE TABLE IF NOT EXISTS messages (
     	value double,
     	string_value text,
         bool_value boolean,
-        data_value text,
+        data_value blob,
     	sum double,
     	time double,
     	update_time double,

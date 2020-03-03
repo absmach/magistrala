@@ -5,7 +5,6 @@ import (
 	"io"
 	"net"
 
-	"github.com/google/uuid"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mproxy/pkg/events"
 )
@@ -53,16 +52,11 @@ func (p *Proxy) handleConnection(inbound net.Conn) {
 	}
 	defer outbound.Close()
 
-	uuid, err := uuid.NewRandom()
-	if err != nil {
-		return
-	}
-
-	s := newSession(uuid.String(), inbound, outbound, p.event, p.logger)
+	s := newSession(inbound, outbound, p.event, p.logger)
 	if err := s.stream(); err != io.EOF {
-		p.logger.Warn("Exited session " + s.id + "with error: " + err.Error())
+		p.logger.Warn("Exited session for client " + s.client.ID + " with error: " + err.Error())
 	}
-	s.logger.Info("Session " + s.id + "closed: " + s.outbound.LocalAddr().String())
+	s.logger.Info("Session for client " + s.client.ID + " closed: " + s.outbound.LocalAddr().String())
 }
 
 // Proxy of the server, this will block.

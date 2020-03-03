@@ -26,7 +26,7 @@ require (
 	github.com/influxdata/influxdb v1.6.4
 	github.com/jmoiron/sqlx v1.2.1-0.20190319043955-cdf62fdf55f6
 	github.com/lib/pq v1.0.0
-	github.com/mainflux/mproxy v0.1.0
+	github.com/mainflux/mproxy v0.1.1
 	github.com/mainflux/senml v1.0.0
 	github.com/nats-io/nats-server/v2 v2.1.4 // indirect
 	github.com/nats-io/nats.go v1.9.1

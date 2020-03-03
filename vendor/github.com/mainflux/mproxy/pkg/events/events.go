@@ -4,7 +4,10 @@ package events
 type Event interface {
 	// Authorization on client `CONNECT`
 	// Each of the params are passed by reference, so that it can be changed
-	AuthRegister(username, clientID *string, password *[]byte) error
+	AuthConnect(username, clientID *string, password *[]byte) error
+
+	// Disconnect on connection with client lost
+	Disconnect(clientID string)
 
 	// Authorization on client `PUBLISH`
 	// Topic is passed by reference, so that it can be modified

@@ -78,8 +78,6 @@ github.com/golang/protobuf/ptypes/empty
 github.com/golang/protobuf/ptypes/timestamp
 # github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db
 github.com/golang/snappy
-# github.com/google/uuid v1.1.1
-github.com/google/uuid
 # github.com/gopcua/opcua v0.1.6
 github.com/gopcua/opcua
 github.com/gopcua/opcua/debug
@@ -124,7 +122,7 @@ github.com/lib/pq
 github.com/lib/pq/oid
 # github.com/magiconair/properties v1.8.1
 github.com/magiconair/properties
-# github.com/mainflux/mproxy v0.1.0
+# github.com/mainflux/mproxy v0.1.1
 github.com/mainflux/mproxy/pkg/events
 github.com/mainflux/mproxy/pkg/mqtt
 # github.com/mainflux/senml v1.0.0

@@ -1,7 +1,7 @@
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
 
-package mproxy
+package mqtt
 
 import (
 	"context"
@@ -13,45 +13,53 @@ import (
 
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/mqtt/mproxy/redis"
+	"github.com/mainflux/mainflux/mqtt/redis"
 	"github.com/mainflux/mproxy/pkg/events"
 	opentracing "github.com/opentracing/opentracing-go"
 )
 
+var _ events.Event = (*Event)(nil)
+
 var (
-	_                    events.Event = (*Event)(nil)
-	channelRegExp                     = regexp.MustCompile(`^\/?channels\/([\w\-]+)\/messages(\/[^?]*)?(\?.*)?$`)
-	ctRegExp                          = regexp.MustCompile(`^(\/.*)?\/ct\/([^\/]+)$`)
-	errMalformedTopic                 = errors.New("malformed topic")
-	errMalformedData                  = errors.New("malformed request data")
-	errMalformedSubtopic              = errors.New("malformed subtopic")
+	channelRegExp         = regexp.MustCompile(`^\/?channels\/([\w\-]+)\/messages(\/[^?]*)?(\?.*)?$`)
+	ctRegExp              = regexp.MustCompile(`^(\/.*)?\/ct\/([^\/]+)$`)
+	errMalformedTopic     = errors.New("malformed topic")
+	errMalformedData      = errors.New("malformed request data")
+	errMalformedSubtopic  = errors.New("malformed subtopic")
+	errUnauthorizedAccess = errors.New("missing or invalid credentials provided")
+	errInvalidConnect     = errors.New("CONENCT request with invalid username or client ID")
+	errNilTopicPub        = errors.New("PUBLISH to nil topic")
+	errNilTopicSub        = errors.New("SUB to nil topic")
 )
 
 // Event implements events.Event interface
 type Event struct {
 	tc     mainflux.ThingsServiceClient
-	mp     mainflux.MessagePublisher
+	pubs   []mainflux.MessagePublisher
 	tracer opentracing.Tracer
 	logger logger.Logger
 	es     redis.EventStore
 }
 
 // New creates new Event entity
-func New(tc mainflux.ThingsServiceClient, mp mainflux.MessagePublisher, es redis.EventStore,
+func New(tc mainflux.ThingsServiceClient, pubs []mainflux.MessagePublisher, es redis.EventStore,
 	logger logger.Logger, tracer opentracing.Tracer) *Event {
 	return &Event{
 		tc:     tc,
-		mp:     mp,
+		pubs:   pubs,
 		es:     es,
 		tracer: tracer,
 		logger: logger,
 	}
 }
 
-// AuthRegister is called on device connection,
+// AuthConnect is called on device connection,
 // prior forwarding to the MQTT broker
-func (e *Event) AuthRegister(username, clientID *string, password *[]byte) error {
-	e.logger.Info(fmt.Sprintf("AuthRegister() - clientID: %s, username: %s",
+func (e *Event) AuthConnect(username, clientID *string, password *[]byte) error {
+	if username == nil || clientID == nil {
+		return errInvalidConnect
+	}
+	e.logger.Info(fmt.Sprintf("AuthConenct - client ID: %s, username: %s",
 		*clientID, *username))
 
 	t := &mainflux.Token{
@@ -64,7 +72,11 @@ func (e *Event) AuthRegister(username, clientID *string, password *[]byte) error
 	}
 
 	if thid.Value != *username {
-		return err
+		return errUnauthorizedAccess
+	}
+
+	if err := e.es.Connect(*clientID); err != nil {
+		e.logger.Warn("Failed to publish connect event: " + err.Error())
 	}
 
 	return nil
@@ -74,7 +86,7 @@ func (e *Event) authAccess(username string, topic string) error {
 	// Topics are in the format:
 	// channels/<channel_id>/messages/<subtopic>/.../ct/<content_type>
 	if !channelRegExp.Match([]byte(topic)) {
-		e.logger.Info(fmt.Sprintf("Malformed topic %s", topic))
+		e.logger.Info("Malformed topic: " + topic)
 		return errMalformedTopic
 	}
 
@@ -100,14 +112,20 @@ func (e *Event) authAccess(username string, topic string) error {
 // AuthPublish is called on device publish,
 // prior forwarding to the MQTT broker
 func (e *Event) AuthPublish(username, clientID string, topic *string, payload *[]byte) error {
-	e.logger.Info(fmt.Sprintf("AuthPublish() - clientID: %s, topic: %s", clientID, *topic))
+	if topic == nil {
+		return errNilTopicPub
+	}
+	e.logger.Info("AuthPublish - client ID: " + clientID + " topic: " + *topic)
 	return e.authAccess(username, *topic)
 }
 
 // AuthSubscribe is called on device publish,
 // prior forwarding to the MQTT broker
 func (e *Event) AuthSubscribe(username, clientID string, topics *[]string) error {
-	e.logger.Info(fmt.Sprintf("AuthSubscribe() - clientID: %s, topics: %s", clientID, strings.Join(*topics, ",")))
+	if topics == nil || *topics == nil {
+		return errNilTopicSub
+	}
+	e.logger.Info("AuthSubscribe - client ID: " + clientID + " topics: " + strings.Join(*topics, ","))
 
 	for _, v := range *topics {
 		if err := e.authAccess(username, v); err != nil {
@@ -121,7 +139,7 @@ func (e *Event) AuthSubscribe(username, clientID string, topics *[]string) error
 
 // Register - after client sucesfully connected
 func (e *Event) Register(clientID string) {
-	e.logger.Info(fmt.Sprintf("Register() - clientID: %s", clientID))
+	e.logger.Info("Register - client with ID: " + clientID)
 }
 
 func parseSubtopic(subtopic string) (string, error) {
@@ -155,13 +173,13 @@ func parseSubtopic(subtopic string) (string, error) {
 
 // Publish - after client sucesfully published
 func (e *Event) Publish(clientID, topic string, payload []byte) {
-	e.logger.Info(fmt.Sprintf("Publish() - clientID: %s, topic: %s", clientID, topic))
+	e.logger.Info("Publish - client ID " + clientID + " to the topic: " + topic)
 	// Topics are in the format:
 	// channels/<channel_id>/messages/<subtopic>/.../ct/<content_type>
 
 	channelParts := channelRegExp.FindStringSubmatch(topic)
 	if len(channelParts) < 1 {
-		e.logger.Info(fmt.Sprintf("Error in mqtt publish %s", errMalformedData))
+		e.logger.Info("Error in mqtt publish %s" + errMalformedData.Error())
 		return
 	}
 
@@ -176,7 +194,7 @@ func (e *Event) Publish(clientID, topic string, payload []byte) {
 
 	subtopic, err := parseSubtopic(subtopic)
 	if err != nil {
-		e.logger.Info(fmt.Sprintf("Error in mqtt publish %s", err))
+		e.logger.Info("Error in mqtt publish: " + err.Error())
 		return
 	}
 
@@ -188,19 +206,28 @@ func (e *Event) Publish(clientID, topic string, payload []byte) {
 		Payload:     payload,
 	}
 
-	if err := e.mp.Publish(context.TODO(), "", msg); err != nil {
-		e.logger.Info(fmt.Sprintf("Error in mqtt publish %s", err))
-		return
+	for _, mp := range e.pubs {
+		go func(pub mainflux.MessagePublisher) {
+			if err := pub.Publish(context.TODO(), "", msg); err != nil {
+				e.logger.Info("Error publishing to Mainflux " + err.Error())
+			}
+		}(mp)
 	}
 }
 
 // Subscribe - after client sucesfully subscribed
 func (e *Event) Subscribe(clientID string, topics []string) {
-	e.logger.Info(fmt.Sprintf("Subscribe() - clientID: %s, topics: %s", clientID, strings.Join(topics, ",")))
+	e.logger.Info("Subscribe - client ID: " + clientID + ", to topics: " + strings.Join(topics, ","))
 }
 
-// Unubscribe - after client unsubscribed
+// Unsubscribe - after client unsubscribed
 func (e *Event) Unsubscribe(clientID string, topics []string) {
+	e.logger.Info("Unubscribe - client ID: " + clientID + ", form topics: " + strings.Join(topics, ","))
+}
 
-	e.logger.Info(fmt.Sprintf("Unubscribe() - clientID: %s, topics: %s", clientID, strings.Join(topics, ",")))
+// Disconnect - connection with broker or client lost
+func (e *Event) Disconnect(clientID string) {
+	if err := e.es.Disconnect(clientID); err != nil {
+		e.logger.Warn("Failed to publish disconnect event: " + err.Error())
+	}
 }

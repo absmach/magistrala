@@ -41,6 +41,15 @@ func (sdk *MfxSDK) CreateToken(user, pwd string) (string, error)
 func (sdk *MfxSDK) CreateUser(user, pwd string) error
     CreateUser - create user
 
+func (sdk *MfxSDK) User(pwd string) (user, error)
+    User - gets user
+
+func (sdk *MfxSDK) UpdateUser(user, pwd string) error
+    UpdateUser - update user
+
+func (sdk *MfxSDK) UpdatePassword(user, pwd string) error
+    UpdatePassword - update user password
+
 func (sdk *MfxSDK) DeleteChannel(id, token string) error
     DeleteChannel - removes channel
 

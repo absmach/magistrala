@@ -75,8 +75,10 @@ var _ SDK = (*mfSDK)(nil)
 
 // User represents mainflux user its credentials.
 type User struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email       string                 `json:"email"`
+	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	Password    string                 `json:"password,omitempty"`
+	OldPassword string                 `json:"old_password,omitempty"`
 }
 
 // Validate returns an error if user representation is invalid.
@@ -143,8 +145,17 @@ type SDK interface {
 	// CreateUser registers mainflux user.
 	CreateUser(user User) error
 
+	// User returns user object.
+	User(token string) (User, error)
+
 	// CreateToken receives credentials and returns user token.
 	CreateToken(user User) (string, error)
+
+	// UpdateUser updates existing user.
+	UpdateUser(user User, token string) error
+
+	// UpdatePassword updates user password.
+	UpdatePassword(user User, token string) error
 
 	// CreateThing registers new thing and returns its id.
 	CreateThing(thing Thing, token string) (string, error)

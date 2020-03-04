@@ -23,6 +23,21 @@ mainflux-cli users create john.doe@email.com password
 mainflux-cli users token john.doe@email.com password
 ```
 
+#### Retrieve User
+```
+mainflux-cli users get <user_auth_token>
+```
+
+#### Update User
+```
+mainflux-cli users update '{"metadata":{"field1":"value1"}}' <user_auth_token>
+```
+
+#### Update User Password
+```
+mainflux-cli users password <old_password> <password> <user_auth_token>
+```
+
 ### System Provisioning
 #### Create Thing (type Device)
 ```

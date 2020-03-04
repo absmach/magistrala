@@ -5,7 +5,6 @@ import (
 
 	"github.com/eclipse/paho.mqtt.golang/packets"
 	"github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mproxy/pkg/events"
 )
 
 const (
@@ -15,21 +14,15 @@ const (
 
 type direction int
 
-type mqttClient struct {
-	ID       string
-	username string
-	password []byte
-}
-
 type session struct {
 	logger   logger.Logger
 	inbound  net.Conn
 	outbound net.Conn
-	event    events.Event
-	client   mqttClient
+	event    Event
+	client   Client
 }
 
-func newSession(inbound, outbound net.Conn, event events.Event, logger logger.Logger) *session {
+func newSession(inbound, outbound net.Conn, event Event, logger logger.Logger) *session {
 	return &session{
 		logger:   logger,
 		inbound:  inbound,
@@ -47,7 +40,7 @@ func (s *session) stream() error {
 	go s.streamUnidir(down, s.outbound, s.inbound, errs)
 
 	err := <-errs
-	s.event.Disconnect(s.client.ID)
+	s.event.Disconnect(&s.client)
 	return err
 }
 
@@ -82,17 +75,24 @@ func (s *session) streamUnidir(dir direction, r, w net.Conn, errs chan error) {
 func (s *session) authorize(pkt packets.ControlPacket) error {
 	switch p := pkt.(type) {
 	case *packets.ConnectPacket:
-		if err := s.event.AuthConnect(&p.Username, &p.ClientIdentifier, &p.Password); err != nil {
+		s.client = Client{
+			ID:       p.ClientIdentifier,
+			Username: p.Username,
+			Password: p.Password,
+		}
+		if err := s.event.AuthConnect(&s.client); err != nil {
 			return err
 		}
-		s.client.username = p.Username
-		s.client.password = p.Password
-		s.client.ID = p.ClientIdentifier
+		// Copy back to the packet in case values are changed by Event handler.
+		// This is specific to CONN, as only that package type has credentials.
+		p.ClientIdentifier = s.client.ID
+		p.Username = s.client.Username
+		p.Password = s.client.Password
 		return nil
 	case *packets.PublishPacket:
-		return s.event.AuthPublish(s.client.username, s.client.ID, &p.TopicName, &p.Payload)
+		return s.event.AuthPublish(&s.client, &p.TopicName, &p.Payload)
 	case *packets.SubscribePacket:
-		return s.event.AuthSubscribe(s.client.username, s.client.ID, &p.Topics)
+		return s.event.AuthSubscribe(&s.client, &p.Topics)
 	default:
 		return nil
 	}
@@ -101,13 +101,13 @@ func (s *session) authorize(pkt packets.ControlPacket) error {
 func (s *session) notify(pkt packets.ControlPacket) {
 	switch p := pkt.(type) {
 	case *packets.ConnectPacket:
-		s.event.Register(s.client.ID)
+		s.event.Connect(&s.client)
 	case *packets.PublishPacket:
-		s.event.Publish(s.client.ID, p.TopicName, p.Payload)
+		s.event.Publish(&s.client, &p.TopicName, &p.Payload)
 	case *packets.SubscribePacket:
-		s.event.Subscribe(s.client.ID, p.Topics)
+		s.event.Subscribe(&s.client, &p.Topics)
 	case *packets.UnsubscribePacket:
-		s.event.Unsubscribe(s.client.ID, p.Topics)
+		s.event.Unsubscribe(&s.client, &p.Topics)
 	default:
 		return
 	}

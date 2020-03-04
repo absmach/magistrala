@@ -6,7 +6,6 @@ import (
 	"net"
 
 	"github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mproxy/pkg/events"
 )
 
 // Proxy is main MQTT proxy struct
@@ -14,12 +13,12 @@ type Proxy struct {
 	host   string
 	port   string
 	target string
-	event  events.Event
+	event  Event
 	logger logger.Logger
 }
 
 // New will setup a new Proxy struct after parsing the options
-func New(host, port, targetHost, targetPort string, event events.Event, logger logger.Logger) *Proxy {
+func New(host, port, targetHost, targetPort string, event Event, logger logger.Logger) *Proxy {
 	return &Proxy{
 		host:   host,
 		port:   port,

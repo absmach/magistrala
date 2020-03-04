@@ -18,7 +18,6 @@ import (
 	"github.com/mainflux/mainflux/mqtt/nats"
 	mr "github.com/mainflux/mainflux/mqtt/redis"
 	thingsapi "github.com/mainflux/mainflux/things/api/auth/grpc"
-	"github.com/mainflux/mproxy/pkg/events"
 	mp "github.com/mainflux/mproxy/pkg/mqtt"
 	broker "github.com/nats-io/nats.go"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -221,7 +220,7 @@ func connectToRedis(redisURL, redisPass, redisDB string, logger logger.Logger) *
 	})
 }
 
-func proxyMQTT(cfg config, logger logger.Logger, evt events.Event, errs chan error) {
+func proxyMQTT(cfg config, logger logger.Logger, evt *mqtt.Event, errs chan error) {
 	mp := mp.New(cfg.mqttHost, cfg.mqttPort, cfg.mqttTargetHost, cfg.mqttTargetPort, evt, logger)
 
 	errs <- mp.Proxy()

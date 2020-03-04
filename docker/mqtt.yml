@@ -28,7 +28,7 @@ services:
       - mainflux-mqtt-broker-volume:/var/lib/vernemq
   
   mqtt-adapter:
-    image: mainflux/mproxy:latest
+    image: mainflux/mqtt:latest
     container_name: mainflux-mqtt
     depends_on:
       - vernemq

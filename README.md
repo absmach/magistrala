@@ -53,7 +53,7 @@ Developing Mainflux will also require:
 Once the prerequisites are installed, execute the following commands from the project's root:
 
 ```bash
-docker-compose -f docker/docker-compose.yml -f docker/mproxy.yml up
+docker-compose -f docker/docker-compose.yml up
 ```
 
 This will bring up the Mainflux docker services and interconnect them. This command can also be executed using the project's included Makefile:

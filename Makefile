@@ -110,7 +110,7 @@ rundev:
 	cd scripts && ./run.sh
 
 run:
-	docker-compose -f docker/docker-compose.yml -f docker/mproxy.yml up
+	docker-compose -f docker/docker-compose.yml up
 
 runlora:
 	docker-compose \
@@ -120,4 +120,4 @@ runlora:
 
 # Run all Mainflux core services except distributed tracing system - Jaeger. Recommended on gateways:
 rungw:
-	MF_JAEGER_URL= docker-compose -f docker/docker-compose.yml -f docker/mproxy.yml up --scale jaeger=0
+	MF_JAEGER_URL= docker-compose -f docker/docker-compose.yml up --scale jaeger=0

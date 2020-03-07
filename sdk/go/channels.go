@@ -121,17 +121,12 @@ func (sdk mfSDK) Channels(token string, offset, limit uint64, name string) (Chan
 		}
 	}
 
-	var p channelsPageRes
-	if err := json.Unmarshal(body, &p); err != nil {
+	var cp ChannelsPage
+	if err := json.Unmarshal(body, &cp); err != nil {
 		return ChannelsPage{}, err
 	}
 
-	return ChannelsPage{
-		Channels: p.Channels,
-		Total:    p.Total,
-		Offset:   p.Offset,
-		Limit:    p.Limit,
-	}, nil
+	return cp, nil
 }
 
 func (sdk mfSDK) ChannelsByThing(token, thingID string, offset, limit uint64) (ChannelsPage, error) {
@@ -165,17 +160,12 @@ func (sdk mfSDK) ChannelsByThing(token, thingID string, offset, limit uint64) (C
 		}
 	}
 
-	var p channelsPageRes
-	if err := json.Unmarshal(body, &p); err != nil {
+	var cp ChannelsPage
+	if err := json.Unmarshal(body, &cp); err != nil {
 		return ChannelsPage{}, err
 	}
 
-	return ChannelsPage{
-		Channels: p.Channels,
-		Total:    p.Total,
-		Offset:   p.Offset,
-		Limit:    p.Limit,
-	}, nil
+	return cp, nil
 }
 
 func (sdk mfSDK) Channel(id, token string) (Channel, error) {

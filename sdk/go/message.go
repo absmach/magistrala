@@ -84,17 +84,12 @@ func (sdk mfSDK) ReadMessages(chanName, token string) (MessagesPage, error) {
 		}
 	}
 
-	mp := messagesPageRes{}
+	mp := MessagesPage{}
 	if err := json.Unmarshal(body, &mp); err != nil {
 		return MessagesPage{}, err
 	}
 
-	return MessagesPage{
-		Total:    mp.Total,
-		Offset:   mp.Offset,
-		Limit:    mp.Limit,
-		Messages: mp.Messages,
-	}, nil
+	return mp, nil
 }
 
 func (sdk *mfSDK) SetContentType(ct ContentType) error {

@@ -124,17 +124,12 @@ func (sdk mfSDK) Things(token string, offset, limit uint64, name string) (Things
 		}
 	}
 
-	var p thingsPageRes
-	if err := json.Unmarshal(body, &p); err != nil {
+	var tp ThingsPage
+	if err := json.Unmarshal(body, &tp); err != nil {
 		return ThingsPage{}, err
 	}
 
-	return ThingsPage{
-		Things: p.Things,
-		Total:  p.Total,
-		Offset: p.Offset,
-		Limit:  p.Limit,
-	}, nil
+	return tp, nil
 }
 
 func (sdk mfSDK) ThingsByChannel(token, chanID string, offset, limit uint64) (ThingsPage, error) {
@@ -168,17 +163,12 @@ func (sdk mfSDK) ThingsByChannel(token, chanID string, offset, limit uint64) (Th
 		}
 	}
 
-	var p thingsPageRes
-	if err := json.Unmarshal(body, &p); err != nil {
+	var tp ThingsPage
+	if err := json.Unmarshal(body, &tp); err != nil {
 		return ThingsPage{}, err
 	}
 
-	return ThingsPage{
-		Things: p.Things,
-		Total:  p.Total,
-		Offset: p.Offset,
-		Limit:  p.Limit,
-	}, nil
+	return tp, nil
 }
 
 func (sdk mfSDK) Thing(id, token string) (Thing, error) {

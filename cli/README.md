@@ -15,12 +15,12 @@ mainflux-cli version
 ### Users management
 #### Create User
 ```
-mainflux-cli users create john.doe@email.com password
+mainflux-cli users create <user_email> <user_password>
 ```
 
 #### Login User
 ```
-mainflux-cli users token john.doe@email.com password
+mainflux-cli users token <user_email> <user_password>
 ```
 
 #### Retrieve User
@@ -28,9 +28,9 @@ mainflux-cli users token john.doe@email.com password
 mainflux-cli users get <user_auth_token>
 ```
 
-#### Update User
+#### Update User Metadata
 ```
-mainflux-cli users update '{"metadata":{"field1":"value1"}}' <user_auth_token>
+mainflux-cli users update '{"key1":"value1", "key2":"value2"}' <user_auth_token>
 ```
 
 #### Update User Password
@@ -120,4 +120,9 @@ mainflux-cli channels connections <channel_id> <user_auth_token>
 #### Send a message over HTTP
 ```
 mainflux-cli messages send <channel_id> '[{"bn":"Dev1","n":"temp","v":20}, {"n":"hum","v":40}, {"bn":"Dev2", "n":"temp","v":20}, {"n":"hum","v":40}]' <thing_auth_token>
+```
+
+#### Read messages over HTTP
+```
+mainflux-cli messages read <channel_id> <thing_auth_token>
 ```

@@ -145,8 +145,12 @@ func (sdk mfSDK) UpdateUser(user User, token string) error {
 	return nil
 }
 
-func (sdk mfSDK) UpdatePassword(user User, token string) error {
-	data, err := json.Marshal(user)
+func (sdk mfSDK) UpdatePassword(oldPass, newPass, token string) error {
+	ur := UserPasswordReq{
+		OldPassword: oldPass,
+		Password:    newPass,
+	}
+	data, err := json.Marshal(ur)
 	if err != nil {
 		return ErrInvalidArgs
 	}

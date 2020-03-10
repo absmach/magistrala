@@ -1,8 +1,4 @@
-<div align="center">
-
-:small_orange_diamond: [Design Goals](https://github.com/fxamacker/cbor#design-goals) :small_orange_diamond: [Features](https://github.com/fxamacker/cbor#features) :small_orange_diamond: [Standards](https://github.com/fxamacker/cbor#standards) :small_orange_diamond: [Fuzzing and Coverage](https://github.com/fxamacker/cbor#fuzzing-and-code-coverage) :small_orange_diamond: [API](https://github.com/fxamacker/cbor#api) :small_orange_diamond: [Security Policy](https://github.com/fxamacker/cbor#security-policy) :small_orange_diamond:
-
-</div>
+👉  [Comparisons](https://github.com/fxamacker/cbor#comparisons) • [Status](https://github.com/fxamacker/cbor#current-status) • [Design Goals](https://github.com/fxamacker/cbor#design-goals) • [Features](https://github.com/fxamacker/cbor#features) • [Standards](https://github.com/fxamacker/cbor#standards) • [Fuzzing](https://github.com/fxamacker/cbor#fuzzing-and-code-coverage) • [Usage](https://github.com/fxamacker/cbor#usage) • [Security Policy](https://github.com/fxamacker/cbor#security-policy) • [License](https://github.com/fxamacker/cbor#license)
 
 # CBOR
 [CBOR](https://en.wikipedia.org/wiki/CBOR) is a data format designed to allow small code size and small message size. CBOR is defined in [RFC 7049 Concise Binary Object Representation](https://tools.ietf.org/html/rfc7049), an [IETF](http://ietf.org/) Internet Standards Document.
@@ -29,10 +25,8 @@ CBOR Web Token (CWT) is defined in [RFC 8392](http://tools.ietf.org/html/rfc8392
 
 __[fxamacker/webauthn](https://github.com/fxamacker/webauthn)__ is a library (written in Go) that performs server-side authentication for clients using FIDO2 keys, legacy FIDO U2F keys, tpm, and etc.
 
-Copyright (c) 2019 Faye Amacker and contributors.
+Copyright (c) Faye Amacker and contributors.
+
 <hr>
-<div align="center">
 
-:small_orange_diamond: [Design Goals](https://github.com/fxamacker/cbor#design-goals) :small_orange_diamond: [Features](https://github.com/fxamacker/cbor#features) :small_orange_diamond: [Standards](https://github.com/fxamacker/cbor#standards) :small_orange_diamond: [Fuzzing and Coverage](https://github.com/fxamacker/cbor#fuzzing-and-code-coverage) :small_orange_diamond: [API](https://github.com/fxamacker/cbor#api) :small_orange_diamond: [Security Policy](https://github.com/fxamacker/cbor#security-policy) :small_orange_diamond:
-
-</div>
+👉  [Comparisons](https://github.com/fxamacker/cbor#comparisons) • [Status](https://github.com/fxamacker/cbor#current-status) • [Design Goals](https://github.com/fxamacker/cbor#design-goals) • [Features](https://github.com/fxamacker/cbor#features) • [Standards](https://github.com/fxamacker/cbor#standards) • [Fuzzing](https://github.com/fxamacker/cbor#fuzzing-and-code-coverage) • [Usage](https://github.com/fxamacker/cbor#usage) • [Security Policy](https://github.com/fxamacker/cbor#security-policy) • [License](https://github.com/fxamacker/cbor#license)

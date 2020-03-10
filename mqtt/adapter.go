@@ -161,6 +161,7 @@ func (e *Event) Publish(c *mqtt.Client, topic *string, payload *[]byte) {
 		ContentType: ct,
 		Channel:     chanID,
 		Subtopic:    subtopic,
+		Publisher:   c.Username,
 		Payload:     *payload,
 	}
 

@@ -5,14 +5,12 @@ import (
 	"encoding/xml"
 	"errors"
 	"sort"
-	"time"
 
-	"github.com/fxamacker/cbor"
+	"github.com/fxamacker/cbor/v2"
 )
 
 const (
 	xmlns          = "urn:ietf:params:xml:ns:senml"
-	second         = int64(time.Second)
 	defaultVersion = 10
 )
 
@@ -29,14 +27,19 @@ const (
 var (
 	// ErrVersionChange indicates that records with different BaseVersion are present in Pack.
 	ErrVersionChange = errors.New("version change")
+
 	// ErrUnsupportedFormat indicates the wrong message format (format other than JSON, XML or CBOR).
 	ErrUnsupportedFormat = errors.New("unsupported format")
+
 	// ErrEmptyName indicates empty record name.
 	ErrEmptyName = errors.New("empty name")
+
 	// ErrBadChar indicates invalid char or that char is not allowed at the given position.
 	ErrBadChar = errors.New("invalid char")
+
 	// ErrTooManyValues indicates that there is more than one value field.
 	ErrTooManyValues = errors.New("more than one value in the record")
+
 	// ErrNoValues indicates that there is no value nor sum field present.
 	ErrNoValues = errors.New("no value or sum field found")
 )
@@ -44,6 +47,7 @@ var (
 // Record represents one senML record.
 type Record struct {
 	XMLName     *bool    `json:"-" xml:"senml" cbor:"-"`
+	Link        string   `json:"l,omitempty"  xml:"l,attr,omitempty" cbor:"-"`
 	BaseName    string   `json:"bn,omitempty" xml:"bn,attr,omitempty" cbor:"-2,keyasint,omitempty"`
 	BaseTime    float64  `json:"bt,omitempty" xml:"bt,attr,omitempty" cbor:"-3,keyasint,omitempty"`
 	BaseUnit    string   `json:"bu,omitempty" xml:"bu,attr,omitempty" cbor:"-4,keyasint,omitempty"`
@@ -115,13 +119,13 @@ func Encode(p Pack, format Format) ([]byte, error) {
 		p.Xmlns = xmlns
 		return xml.Marshal(p)
 	case CBOR:
-		return cbor.Marshal(p.Records, cbor.EncOptions{})
+		return cbor.Marshal(p.Records)
 	default:
 		return nil, ErrUnsupportedFormat
 	}
 }
 
-// Normalize removes all the base values and expands records values  base items.
+// Normalize removes all the base values and expands records values with the base items.
 // The base fields apply to the entries in the Record and also to all Records after
 // it up to, but not including, the next Record that has that same base field.
 func Normalize(p Pack) (Pack, error) {
@@ -188,6 +192,9 @@ func Validate(p Pack) error {
 		if bver == 0 && r.BaseVersion != 0 {
 			bver = r.BaseVersion
 		}
+		if bver != 0 && r.BaseVersion == 0 {
+			r.BaseVersion = bver
+		}
 		if r.BaseVersion != bver {
 			return ErrVersionChange
 		}
@@ -200,15 +207,6 @@ func Validate(p Pack) error {
 		name := bname + r.Name
 		if len(name) == 0 {
 			return ErrEmptyName
-		}
-		l := name[0]
-		if (l == '-') || (l == ':') || (l == '.') || (l == '/') || (l == '_') {
-			return ErrBadChar
-		}
-		for _, l := range name {
-			if (l < 'a' || l > 'z') && (l < 'A' || l > 'Z') && (l < '0' || l > '9') && (l != '-') && (l != ':') && (l != '.') && (l != '/') && (l != '_') {
-				return ErrBadChar
-			}
 		}
 		var valCnt int
 		if r.Value != nil {
@@ -232,7 +230,22 @@ func Validate(p Pack) error {
 		if valCnt < 1 {
 			return ErrNoValues
 		}
+		if err := validateName(name); err != nil {
+			return err
+		}
 	}
+	return nil
+}
 
+func validateName(name string) error {
+	l := name[0]
+	if (l == '-') || (l == ':') || (l == '.') || (l == '/') || (l == '_') {
+		return ErrBadChar
+	}
+	for _, l := range name {
+		if (l < 'a' || l > 'z') && (l < 'A' || l > 'Z') && (l < '0' || l > '9') && (l != '-') && (l != ':') && (l != '.') && (l != '/') && (l != '_') {
+			return ErrBadChar
+		}
+	}
 	return nil
 }

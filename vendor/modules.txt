@@ -33,8 +33,8 @@ github.com/eclipse/paho.mqtt.golang/packets
 github.com/fatih/color
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
-# github.com/fxamacker/cbor v1.3.2
-github.com/fxamacker/cbor
+# github.com/fxamacker/cbor/v2 v2.2.0
+github.com/fxamacker/cbor/v2
 # github.com/go-kit/kit v0.9.0
 github.com/go-kit/kit/endpoint
 github.com/go-kit/kit/log
@@ -124,7 +124,7 @@ github.com/lib/pq/oid
 github.com/magiconair/properties
 # github.com/mainflux/mproxy v0.1.3
 github.com/mainflux/mproxy/pkg/mqtt
-# github.com/mainflux/senml v1.0.0
+# github.com/mainflux/senml v1.0.1
 github.com/mainflux/senml
 # github.com/mattn/go-colorable v0.0.9
 github.com/mattn/go-colorable
@@ -221,7 +221,7 @@ github.com/spf13/jwalterweatherman
 github.com/spf13/pflag
 # github.com/spf13/viper v1.5.0
 github.com/spf13/viper
-# github.com/stretchr/testify v1.4.0
+# github.com/stretchr/testify v1.5.1
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # github.com/subosito/gotenv v1.2.0
@@ -247,6 +247,8 @@ github.com/uber/jaeger-client-go/transport
 github.com/uber/jaeger-client-go/utils
 # github.com/uber/jaeger-lib v2.0.0+incompatible
 github.com/uber/jaeger-lib/metrics
+# github.com/x448/float16 v0.8.4
+github.com/x448/float16
 # github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c
 github.com/xdg/scram
 # github.com/xdg/stringprep v1.0.1-0.20180714160509-73f8eece6fdc

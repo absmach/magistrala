@@ -2,7 +2,7 @@
 
 This project started because I needed an easy, small, and crash-proof CBOR library for my [WebAuthn (FIDO2) server library](https://github.com/fxamacker/webauthn). I believe this was the first and still only standalone CBOR library (in Go) that is fuzz tested as of November 10, 2019.
 
-To my surprise, Stefan Tatschner (rumpelsepp) submitted the first 2 issues when I didn't expect this project to be noticed.  So I decided to make it more full-featured for others by announcing releases and asking for feedback. Even this document exists because Montgomery Edwards (x448) opened [issue #22](https://github.com/fxamacker/cbor/issues/22).  In other words, you can contribute by opening an issue that helps the project improve. Especially in the early stages.
+To my surprise, Stefan Tatschner (rumpelsepp) submitted the first 2 issues when I didn't expect this project to be noticed.  So I decided to make it more full-featured for others by announcing releases and asking for feedback. Even this document exists because Montgomery Edwards⁴⁴⁸ (x448) opened [issue #22](https://github.com/fxamacker/cbor/issues/22).  In other words, you can contribute by opening an issue that helps the project improve. Especially in the early stages.
 
 When I announced v1.2 on Go Forum, Jakob Borg (calmh) responded with a thumbs up and encouragement.  Another project of equal priority needed my time and Jakob's kind words tipped the scale for me to work on this one (speedups for [milestone v1.3](https://github.com/fxamacker/cbor/issues?q=is%3Aopen+is%3Aissue+milestone%3Av1.3.0).) So words of appreciation or encouragement is nice way to contribute to open source projects.
 

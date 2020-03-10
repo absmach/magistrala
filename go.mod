@@ -27,7 +27,7 @@ require (
 	github.com/jmoiron/sqlx v1.2.1-0.20190319043955-cdf62fdf55f6
 	github.com/lib/pq v1.0.0
 	github.com/mainflux/mproxy v0.1.3
-	github.com/mainflux/senml v1.0.0
+	github.com/mainflux/senml v1.0.1
 	github.com/nats-io/nats-server/v2 v2.1.4 // indirect
 	github.com/nats-io/nats.go v1.9.1
 	github.com/opentracing/opentracing-go v1.1.0
@@ -36,7 +36,7 @@ require (
 	github.com/sony/gobreaker v0.0.0-20180905101324-b2a34562d02c
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.5.0
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.5.1
 	github.com/tidwall/pretty v1.0.0 // indirect
 	github.com/uber/jaeger-client-go v2.22.1+incompatible
 	github.com/ziutek/mymysql v1.5.4 // indirect

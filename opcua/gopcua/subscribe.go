@@ -167,20 +167,22 @@ func (c client) runHandler(sub *opcuaGopcua.Subscription, uri, node string) erro
 					case uaGopcua.TypeIDBoolean:
 						msg.DataKey = "vb"
 						msg.Data = item.Value.Value.Bool()
-					case uaGopcua.TypeIDString:
+					case uaGopcua.TypeIDString, uaGopcua.TypeIDByteString:
 						msg.DataKey = "vs"
+						msg.Data = item.Value.Value.String()
+					case uaGopcua.TypeIDDataValue:
+						msg.DataKey = "vd"
 						msg.Data = item.Value.Value.String()
 					case uaGopcua.TypeIDInt64, uaGopcua.TypeIDInt32, uaGopcua.TypeIDInt16:
 						msg.Data = float64(item.Value.Value.Int())
-					case uaGopcua.TypeIDUint64:
+					case uaGopcua.TypeIDUint64, uaGopcua.TypeIDUint32, uaGopcua.TypeIDUint16:
 						msg.Data = float64(item.Value.Value.Uint())
 					case uaGopcua.TypeIDFloat, uaGopcua.TypeIDDouble:
 						msg.Data = item.Value.Value.Float()
 					case uaGopcua.TypeIDByte:
-						msg.DataKey = "vs"
-						msg.Data = string(item.Value.Value.EncodingMask())
+						msg.Data = float64(item.Value.Value.Uint())
 					case uaGopcua.TypeIDDateTime:
-						msg.Data = item.Value.Value.Time()
+						msg.Data = item.Value.Value.Time().Unix()
 					default:
 						msg.Data = 0
 					}

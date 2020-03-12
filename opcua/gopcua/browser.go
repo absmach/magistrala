@@ -14,7 +14,7 @@ import (
 	"github.com/mainflux/mainflux/opcua"
 )
 
-const maxChildrens = 7
+const maxChildrens = 5 // max browsing node children level
 
 // NodeDef represents the node browser responnse
 type NodeDef struct {
@@ -180,31 +180,42 @@ func browse(n *opcuaGopcua.Node, path string, level int) ([]NodeDef, error) {
 		nodes = append(nodes, def)
 	}
 
-	browseChildren := func(refType uint32) error {
-		refs, err := n.ReferencedNodes(refType, uaGopcua.BrowseDirectionForward, uaGopcua.NodeClassAll, true)
+	bc, err := browseChildren(n, def.Path, level, id.HasComponent)
+	if err != nil {
+		return nil, err
+	}
+	nodes = append(nodes, bc...)
+
+	bc, err = browseChildren(n, def.Path, level, id.Organizes)
+	if err != nil {
+		return nil, err
+	}
+	nodes = append(nodes, bc...)
+
+	bc, err = browseChildren(n, def.Path, level, id.HasProperty)
+	if err != nil {
+		return nil, err
+	}
+	nodes = append(nodes, bc...)
+
+	return nodes, nil
+}
+
+func browseChildren(n *opcuaGopcua.Node, path string, level int, typeDef uint32) ([]NodeDef, error) {
+	nodes := []NodeDef{}
+	refs, err := n.ReferencedNodes(typeDef, uaGopcua.BrowseDirectionForward, uaGopcua.NodeClassAll, true)
+	if err != nil {
+		return []NodeDef{}, err
+	}
+
+	for _, rn := range refs {
+		children, err := browse(rn, path, level+1)
 		if err != nil {
-			return err
+			return []NodeDef{}, err
 		}
-
-		for _, rn := range refs {
-			children, err := browse(rn, def.Path, level+1)
-			if err != nil {
-				return err
-			}
-			nodes = append(nodes, children...)
-		}
-		return nil
+		nodes = append(nodes, children...)
 	}
 
-	if err := browseChildren(id.HasComponent); err != nil {
-		return nil, err
-	}
-	if err := browseChildren(id.Organizes); err != nil {
-		return nil, err
-	}
-	if err := browseChildren(id.HasProperty); err != nil {
-		return nil, err
-	}
 	return nodes, nil
 }
 

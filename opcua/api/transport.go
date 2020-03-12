@@ -24,6 +24,9 @@ const (
 
 	defOffset = 0
 	defLimit  = 10
+
+	defNamespace  = "ns=0" // Standard root namespace
+	defIdentifier = "i=84" // Standard root identifier
 )
 
 var (
@@ -66,6 +69,11 @@ func decodeBrowse(_ context.Context, r *http.Request) (interface{}, error) {
 	i, err := readStringQuery(r, identifierParam)
 	if err != nil {
 		return nil, err
+	}
+
+	if n == "" || i == "" {
+		n = defNamespace
+		i = defIdentifier
 	}
 
 	req := browseReq{

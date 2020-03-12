@@ -12,7 +12,6 @@ import (
 )
 
 const protocol = "opcua"
-const defNodeID = "ns=0;i=84"
 
 var (
 	// ErrMalformedEntity indicates malformed entity specification.
@@ -140,11 +139,7 @@ func (as *adapterService) ConnectThing(mfxChanID, mfxThingID string) error {
 }
 
 func (as *adapterService) Browse(serverURI, namespace, identifier string) ([]BrowsedNode, error) {
-	nodeID := defNodeID
-
-	if namespace != "" && identifier != "" {
-		nodeID = fmt.Sprintf("%s;%s", namespace, identifier)
-	}
+	nodeID := fmt.Sprintf("%s;%s", namespace, identifier)
 
 	nodes, err := as.browser.Browse(serverURI, nodeID)
 	if err != nil {

@@ -292,12 +292,14 @@ func (ts *twinsService) saveState(msg *mainflux.Message, id string) error {
 		return fmt.Errorf("Retrieve last state for %s failed: %s", msg.Publisher, err)
 	}
 
-	if save := prepareState(&st, &tw, recs, msg); !save {
-		return nil
-	}
+	for _, rec := range recs {
+		if save := prepareState(&st, &tw, rec, msg); !save {
+			return nil
+		}
 
-	if err := ts.states.Save(context.TODO(), st); err != nil {
-		return fmt.Errorf("Updating state for %s failed: %s", msg.Publisher, err)
+		if err := ts.states.Save(context.TODO(), st); err != nil {
+			return fmt.Errorf("Updating state for %s failed: %s", msg.Publisher, err)
+		}
 	}
 
 	id = msg.Publisher
@@ -306,7 +308,7 @@ func (ts *twinsService) saveState(msg *mainflux.Message, id string) error {
 	return nil
 }
 
-func prepareState(st *State, tw *Twin, recs []senml.Record, msg *mainflux.Message) bool {
+func prepareState(st *State, tw *Twin, rec senml.Record, msg *mainflux.Message) bool {
 	def := tw.Definitions[len(tw.Definitions)-1]
 	st.TwinID = tw.ID
 	st.ID++
@@ -330,7 +332,7 @@ func prepareState(st *State, tw *Twin, recs []senml.Record, msg *mainflux.Messag
 			continue
 		}
 		if attr.Channel == msg.Channel && attr.Subtopic == msg.Subtopic {
-			val := findValue(recs[0])
+			val := findValue(rec)
 			st.Payload[attr.Name] = val
 			save = true
 			break

@@ -24,6 +24,7 @@ type Definition struct {
 	ID         int         `json:"id"`
 	Created    time.Time   `json:"created"`
 	Attributes []Attribute `json:"attributes"`
+	Delta      int64       `json:"delta"`
 }
 
 // Twin represents a Mainflux thing digital twin. Each twin is owned by one thing, and

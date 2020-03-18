@@ -6,9 +6,11 @@ package twins
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"math"
 	"time"
+
+	"github.com/mainflux/mainflux/errors"
 
 	"github.com/mainflux/mainflux"
 	nats "github.com/mainflux/mainflux/twins/nats/publisher"
@@ -66,6 +68,14 @@ type Service interface {
 	RemoveTwin(context.Context, string, string) error
 }
 
+const (
+	noop = iota
+	update
+	save
+	millisec = 1e6
+	nanosec  = 1e9
+)
+
 var crudOp = map[string]string{
 	"createSucc": "create.success",
 	"createFail": "create.failure",
@@ -120,10 +130,13 @@ func (ts *twinsService) AddTwin(ctx context.Context, token string, twin Twin, de
 	twin.Created = time.Now()
 	twin.Updated = time.Now()
 
-	if len(def.Attributes) == 0 {
-		def = Definition{}
+	if def.Attributes == nil {
 		def.Attributes = []Attribute{}
 	}
+	if def.Delta == 0 {
+		def.Delta = millisec
+	}
+
 	def.Created = time.Now()
 	def.ID = 0
 	twin.Definitions = append(twin.Definitions, def)
@@ -293,12 +306,18 @@ func (ts *twinsService) saveState(msg *mainflux.Message, id string) error {
 	}
 
 	for _, rec := range recs {
-		if save := prepareState(&st, &tw, rec, msg); !save {
+		action := prepareState(&st, &tw, rec, msg)
+		switch action {
+		case noop:
 			return nil
-		}
-
-		if err := ts.states.Save(context.TODO(), st); err != nil {
-			return fmt.Errorf("Updating state for %s failed: %s", msg.Publisher, err)
+		case update:
+			if err := ts.states.Update(context.TODO(), st); err != nil {
+				return fmt.Errorf("Update state for %s failed: %s", msg.Publisher, err)
+			}
+		case save:
+			if err := ts.states.Save(context.TODO(), st); err != nil {
+				return fmt.Errorf("Save state for %s failed: %s", msg.Publisher, err)
+			}
 		}
 	}
 
@@ -308,11 +327,9 @@ func (ts *twinsService) saveState(msg *mainflux.Message, id string) error {
 	return nil
 }
 
-func prepareState(st *State, tw *Twin, rec senml.Record, msg *mainflux.Message) bool {
+func prepareState(st *State, tw *Twin, rec senml.Record, msg *mainflux.Message) int {
 	def := tw.Definitions[len(tw.Definitions)-1]
 	st.TwinID = tw.ID
-	st.ID++
-	st.Created = time.Now()
 	st.Definition = def.ID
 
 	if st.Payload == nil {
@@ -326,20 +343,34 @@ func prepareState(st *State, tw *Twin, rec senml.Record, msg *mainflux.Message) 
 		}
 	}
 
-	save := false
+	recSec := rec.BaseTime + rec.Time
+	recNano := recSec * nanosec
+	sec, dec := math.Modf(recSec)
+	recTime := time.Unix(int64(sec), int64(dec*nanosec))
+
+	action := noop
 	for _, attr := range def.Attributes {
 		if !attr.PersistState {
 			continue
 		}
 		if attr.Channel == msg.Channel && attr.Subtopic == msg.Subtopic {
+			action = update
+			delta := math.Abs(float64(st.Created.UnixNano()) - recNano)
+			if recNano == 0 || delta > float64(def.Delta) {
+				action = save
+				st.ID++
+				st.Created = time.Now()
+				if recNano != 0 {
+					st.Created = recTime
+				}
+			}
 			val := findValue(rec)
 			st.Payload[attr.Name] = val
-			save = true
 			break
 		}
 	}
 
-	return save
+	return action
 }
 
 func findValue(rec senml.Record) interface{} {

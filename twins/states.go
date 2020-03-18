@@ -29,6 +29,9 @@ type StateRepository interface {
 	// Save persists the state
 	Save(context.Context, State) error
 
+	// Update updates the state
+	Update(context.Context, State) error
+
 	// Count returns the number of states related to state
 	Count(context.Context, Twin) (int64, error)
 

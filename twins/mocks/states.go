@@ -38,6 +38,16 @@ func (srm *stateRepositoryMock) Save(ctx context.Context, st twins.State) error 
 	return nil
 }
 
+// UpdateState updates the state
+func (srm *stateRepositoryMock) Update(ctx context.Context, st twins.State) error {
+	srm.mu.Lock()
+	defer srm.mu.Unlock()
+
+	srm.states[key(st.TwinID, string(st.ID))] = st
+
+	return nil
+}
+
 // CountStates returns the number of states related to twin
 func (srm *stateRepositoryMock) Count(ctx context.Context, tw twins.Twin) (int64, error) {
 	return int64(len(srm.states)), nil

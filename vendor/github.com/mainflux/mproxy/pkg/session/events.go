@@ -1,4 +1,4 @@
-package mqtt
+package session
 
 // Event is an interface for mProxy hooks
 type Event interface {

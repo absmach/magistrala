@@ -14,11 +14,11 @@ import (
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/mqtt/redis"
-	"github.com/mainflux/mproxy/pkg/mqtt"
+	"github.com/mainflux/mproxy/pkg/session"
 	opentracing "github.com/opentracing/opentracing-go"
 )
 
-var _ mqtt.Event = (*Event)(nil)
+var _ session.Event = (*Event)(nil)
 
 var (
 	channelRegExp         = regexp.MustCompile(`^\/?channels\/([\w\-]+)\/messages(\/[^?]*)?(\?.*)?$`)
@@ -56,11 +56,11 @@ func New(tc mainflux.ThingsServiceClient, pubs []mainflux.MessagePublisher, es r
 
 // AuthConnect is called on device connection,
 // prior forwarding to the MQTT broker
-func (e *Event) AuthConnect(c *mqtt.Client) error {
+func (e *Event) AuthConnect(c *session.Client) error {
 	if c == nil {
 		return errInvalidConnect
 	}
-	e.logger.Info(fmt.Sprintf("AuthConenct - client ID: %s, username: %s", c.ID, c.Username))
+	e.logger.Info(fmt.Sprintf("AuthConnect - client ID: %s, username: %s", c.ID, c.Username))
 
 	t := &mainflux.Token{
 		Value: string(c.Password),
@@ -84,7 +84,7 @@ func (e *Event) AuthConnect(c *mqtt.Client) error {
 
 // AuthPublish is called on device publish,
 // prior forwarding to the MQTT broker
-func (e *Event) AuthPublish(c *mqtt.Client, topic *string, payload *[]byte) error {
+func (e *Event) AuthPublish(c *session.Client, topic *string, payload *[]byte) error {
 	if c == nil {
 		return errNilClient
 	}
@@ -97,7 +97,7 @@ func (e *Event) AuthPublish(c *mqtt.Client, topic *string, payload *[]byte) erro
 
 // AuthSubscribe is called on device publish,
 // prior forwarding to the MQTT broker
-func (e *Event) AuthSubscribe(c *mqtt.Client, topics *[]string) error {
+func (e *Event) AuthSubscribe(c *session.Client, topics *[]string) error {
 	if c == nil {
 		return errNilClient
 	}
@@ -117,7 +117,7 @@ func (e *Event) AuthSubscribe(c *mqtt.Client, topics *[]string) error {
 }
 
 // Connect - after client sucesfully connected
-func (e *Event) Connect(c *mqtt.Client) {
+func (e *Event) Connect(c *session.Client) {
 	if c == nil {
 		e.logger.Error("Nil client connect")
 		return
@@ -126,7 +126,7 @@ func (e *Event) Connect(c *mqtt.Client) {
 }
 
 // Publish - after client sucesfully published
-func (e *Event) Publish(c *mqtt.Client, topic *string, payload *[]byte) {
+func (e *Event) Publish(c *session.Client, topic *string, payload *[]byte) {
 	if c == nil {
 		e.logger.Error("Nil client publish")
 		return
@@ -175,7 +175,7 @@ func (e *Event) Publish(c *mqtt.Client, topic *string, payload *[]byte) {
 }
 
 // Subscribe - after client sucesfully subscribed
-func (e *Event) Subscribe(c *mqtt.Client, topics *[]string) {
+func (e *Event) Subscribe(c *session.Client, topics *[]string) {
 	if c == nil {
 		e.logger.Error("Nil client subscribe")
 		return
@@ -184,7 +184,7 @@ func (e *Event) Subscribe(c *mqtt.Client, topics *[]string) {
 }
 
 // Unsubscribe - after client unsubscribed
-func (e *Event) Unsubscribe(c *mqtt.Client, topics *[]string) {
+func (e *Event) Unsubscribe(c *session.Client, topics *[]string) {
 	if c == nil {
 		e.logger.Error("Nil client unsubscribe")
 		return
@@ -193,7 +193,7 @@ func (e *Event) Unsubscribe(c *mqtt.Client, topics *[]string) {
 }
 
 // Disconnect - connection with broker or client lost
-func (e *Event) Disconnect(c *mqtt.Client) {
+func (e *Event) Disconnect(c *session.Client) {
 	if c == nil {
 		e.logger.Error("Nil client disconnect")
 		return

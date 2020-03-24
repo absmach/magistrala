@@ -1,4 +1,4 @@
-package mqtt
+package session
 
 // Client stores MQTT client data.
 type Client struct {

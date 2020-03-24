@@ -122,8 +122,10 @@ github.com/lib/pq
 github.com/lib/pq/oid
 # github.com/magiconair/properties v1.8.1
 github.com/magiconair/properties
-# github.com/mainflux/mproxy v0.1.3
+# github.com/mainflux/mproxy v0.1.5
 github.com/mainflux/mproxy/pkg/mqtt
+github.com/mainflux/mproxy/pkg/session
+github.com/mainflux/mproxy/pkg/websocket
 # github.com/mainflux/senml v1.0.1
 github.com/mainflux/senml
 # github.com/mattn/go-colorable v0.0.9

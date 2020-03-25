@@ -209,10 +209,6 @@ services:
     environment:
       DOCKER_VERNEMQ_ALLOW_ANONYMOUS: "on"
       DOCKER_VERNEMQ_LOG__CONSOLE__LEVEL: debug
-    ports:
-      - 18831:${MF_MQTT_BROKER_PORT}
-      - 8881:${MF_MQTT_BROKER_WS_PORT}
-      - 7777:8888
     networks:
       - mainflux-base-net
     volumes: 
@@ -238,9 +234,6 @@ services:
       MF_MQTT_ADAPTER_MQTT_TARGET_PORT: ${MF_MQTT_BROKER_PORT}
       MF_MQTT_ADAPTER_WS_TARGET_HOST: vernemq
       MF_MQTT_ADAPTER_WS_TARGET_PORT: ${MF_MQTT_BROKER_WS_PORT}
-    ports:
-      - 18832:${MF_MQTT_ADAPTER_PORT}
-      - 8882:${MF_MQTT_ADAPTER_WS_PORT}
     networks:
       - mainflux-base-net
 

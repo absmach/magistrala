@@ -165,12 +165,15 @@ github.com/magiconair/properties v1.8.1 h1:ZC2Vc7/ZFkGmsVC9KvOjumD+G5lXy2RtTKyzR
 github.com/magiconair/properties v1.8.1/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
 github.com/mainflux/mainflux v0.0.0-20191223163044-f42f2095bab4/go.mod h1:K3ghSIpAqwv5F/t30LO57+11S7tE97ur2Z6wWEHa2CA=
 github.com/mainflux/mainflux v0.0.0-20200314190902-c91fe0d45353/go.mod h1:yijZGLNkcDOPJfPhRMwuu5ZFcNHqDHzWurN4q1rOT/Q=
+github.com/mainflux/mainflux v0.0.0-20200324100741-6ffa916ed229/go.mod h1:mde8cQhTPjLulu2pn/x8OgQ2S++lDufS+ODE93zuHjY=
 github.com/mainflux/mproxy v0.1.3 h1:/JNnxgo/03wSpbwQH2+WE1AzgMWaSKogTVXblh18x5s=
 github.com/mainflux/mproxy v0.1.3/go.mod h1:/BdaBfgye1GNCD+eat4ipFamy9IEVRH5nhZS0yEShVg=
 github.com/mainflux/mproxy v0.1.4 h1:g7LhJgA+BXlgaZeyLj505aD5DCsrix79TEiLWuHJZd4=
 github.com/mainflux/mproxy v0.1.4/go.mod h1:MBLtv/RvhT8QsmXz4g3GxkRaP8PqlVqBWeqvw9QmO8k=
 github.com/mainflux/mproxy v0.1.5 h1:a0zKiUyuTDld2TwCuhrOFtUvotcvSfwJMuh/JcrqC6I=
 github.com/mainflux/mproxy v0.1.5/go.mod h1:MBLtv/RvhT8QsmXz4g3GxkRaP8PqlVqBWeqvw9QmO8k=
+github.com/mainflux/mproxy v0.1.6 h1:In0JkSO7/XU7KdyqCzFfDQW3OOvNZc1tsrq1/aWRkRE=
+github.com/mainflux/mproxy v0.1.6/go.mod h1:NnhrUDytvV4pCI5LDuet86/WrymrUaX0/x1tlUHTKhU=
 github.com/mainflux/senml v1.0.0 h1:oLS5aBhvdHjgQ8kfq3jX7yD+DaquhvpyvIWNsPil3X0=
 github.com/mainflux/senml v1.0.0/go.mod h1:g9i8pj4WMs29KkUpXivbe/PP0qJd1kt3b1CF77S8A3s=
 github.com/mainflux/senml v1.0.1 h1:qWKIGeUe7YEygM3xZcJ9Lbq+DHuT8V23dz1hgAYkYEY=

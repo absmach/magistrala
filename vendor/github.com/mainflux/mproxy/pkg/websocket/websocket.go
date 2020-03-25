@@ -67,7 +67,10 @@ func (p Proxy) pass(in *websocket.Conn) {
 		Path:   p.path,
 	}
 
-	srv, _, err := websocket.DefaultDialer.Dial(url.String(), nil)
+	dialer := &websocket.Dialer{
+		Subprotocols: []string{"mqtt"},
+	}
+	srv, _, err := dialer.Dial(url.String(), nil)
 
 	if err != nil {
 		p.logger.Error("Unable to connect to broker, reason: " + err.Error())

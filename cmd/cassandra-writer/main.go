@@ -5,7 +5,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -14,7 +13,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/BurntSushi/toml"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/gocql/gocql"
 	"github.com/mainflux/mainflux"
@@ -31,33 +29,33 @@ const (
 	svcName = "cassandra-writer"
 	sep     = ","
 
-	defNatsURL     = nats.DefaultURL
-	defLogLevel    = "error"
-	defPort        = "8180"
-	defCluster     = "127.0.0.1"
-	defKeyspace    = "mainflux"
-	defDBUsername  = ""
-	defDBPassword  = ""
-	defDBPort      = "9042"
-	defChanCfgPath = "/config/channels.toml"
+	defNatsURL         = nats.DefaultURL
+	defLogLevel        = "error"
+	defPort            = "8180"
+	defCluster         = "127.0.0.1"
+	defKeyspace        = "mainflux"
+	defDBUsername      = ""
+	defDBPassword      = ""
+	defDBPort          = "9042"
+	defSubjectsCfgPath = "/config/subjects.toml"
 
-	envNatsURL     = "MF_NATS_URL"
-	envLogLevel    = "MF_CASSANDRA_WRITER_LOG_LEVEL"
-	envPort        = "MF_CASSANDRA_WRITER_PORT"
-	envCluster     = "MF_CASSANDRA_WRITER_DB_CLUSTER"
-	envKeyspace    = "MF_CASSANDRA_WRITER_DB_KEYSPACE"
-	envDBUsername  = "MF_CASSANDRA_WRITER_DB_USERNAME"
-	envDBPassword  = "MF_CASSANDRA_WRITER_DB_PASSWORD"
-	envDBPort      = "MF_CASSANDRA_WRITER_DB_PORT"
-	envChanCfgPath = "MF_CASSANDRA_WRITER_CHANNELS_CONFIG"
+	envNatsURL         = "MF_NATS_URL"
+	envLogLevel        = "MF_CASSANDRA_WRITER_LOG_LEVEL"
+	envPort            = "MF_CASSANDRA_WRITER_PORT"
+	envCluster         = "MF_CASSANDRA_WRITER_DB_CLUSTER"
+	envKeyspace        = "MF_CASSANDRA_WRITER_DB_KEYSPACE"
+	envDBUsername      = "MF_CASSANDRA_WRITER_DB_USERNAME"
+	envDBPassword      = "MF_CASSANDRA_WRITER_DB_PASSWORD"
+	envDBPort          = "MF_CASSANDRA_WRITER_DB_PORT"
+	envSubjectsCfgPath = "MF_CASSANDRA_WRITER_SUBJECTS_CONFIG"
 )
 
 type config struct {
-	natsURL  string
-	logLevel string
-	port     string
-	dbCfg    cassandra.DBConfig
-	channels map[string]bool
+	natsURL         string
+	logLevel        string
+	port            string
+	dbCfg           cassandra.DBConfig
+	subjectsCfgPath string
 }
 
 func main() {
@@ -76,7 +74,7 @@ func main() {
 
 	repo := newService(session, logger)
 	st := senml.New()
-	if err := writers.Start(nc, repo, st, svcName, cfg.channels, logger); err != nil {
+	if err := writers.Start(nc, repo, st, svcName, cfg.subjectsCfgPath, logger); err != nil {
 		logger.Error(fmt.Sprintf("Failed to create Cassandra writer: %s", err))
 	}
 
@@ -108,41 +106,13 @@ func loadConfig() config {
 		Port:     dbPort,
 	}
 
-	chanCfgPath := mainflux.Env(envChanCfgPath, defChanCfgPath)
 	return config{
-		natsURL:  mainflux.Env(envNatsURL, defNatsURL),
-		logLevel: mainflux.Env(envLogLevel, defLogLevel),
-		port:     mainflux.Env(envPort, defPort),
-		dbCfg:    dbCfg,
-		channels: loadChansConfig(chanCfgPath),
+		natsURL:         mainflux.Env(envNatsURL, defNatsURL),
+		logLevel:        mainflux.Env(envLogLevel, defLogLevel),
+		port:            mainflux.Env(envPort, defPort),
+		dbCfg:           dbCfg,
+		subjectsCfgPath: mainflux.Env(envSubjectsCfgPath, defSubjectsCfgPath),
 	}
-}
-
-type channels struct {
-	List []string `toml:"filter"`
-}
-
-type chanConfig struct {
-	Channels channels `toml:"channels"`
-}
-
-func loadChansConfig(chanConfigPath string) map[string]bool {
-	data, err := ioutil.ReadFile(chanConfigPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var chanCfg chanConfig
-	if err := toml.Unmarshal(data, &chanCfg); err != nil {
-		log.Fatal(err)
-	}
-
-	chans := map[string]bool{}
-	for _, ch := range chanCfg.Channels.List {
-		chans[ch] = true
-	}
-
-	return chans
 }
 
 func connectToNATS(url string, logger logger.Logger) *nats.Conn {

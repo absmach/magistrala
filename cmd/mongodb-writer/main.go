@@ -6,14 +6,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/BurntSushi/toml"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/logger"
@@ -30,31 +28,31 @@ import (
 const (
 	svcName = "mongodb-writer"
 
-	defNatsURL     = nats.DefaultURL
-	defLogLevel    = "error"
-	defPort        = "8180"
-	defDBName      = "mainflux"
-	defDBHost      = "localhost"
-	defDBPort      = "27017"
-	defChanCfgPath = "/config/channels.toml"
+	defNatsURL         = nats.DefaultURL
+	defLogLevel        = "error"
+	defPort            = "8180"
+	defDBName          = "mainflux"
+	defDBHost          = "localhost"
+	defDBPort          = "27017"
+	defSubjectsCfgPath = "/config/subjects.toml"
 
-	envNatsURL     = "MF_NATS_URL"
-	envLogLevel    = "MF_MONGO_WRITER_LOG_LEVEL"
-	envPort        = "MF_MONGO_WRITER_PORT"
-	envDBName      = "MF_MONGO_WRITER_DB_NAME"
-	envDBHost      = "MF_MONGO_WRITER_DB_HOST"
-	envDBPort      = "MF_MONGO_WRITER_DB_PORT"
-	envChanCfgPath = "MF_MONGO_WRITER_CHANNELS_CONFIG"
+	envNatsURL         = "MF_NATS_URL"
+	envLogLevel        = "MF_MONGO_WRITER_LOG_LEVEL"
+	envPort            = "MF_MONGO_WRITER_PORT"
+	envDBName          = "MF_MONGO_WRITER_DB_NAME"
+	envDBHost          = "MF_MONGO_WRITER_DB_HOST"
+	envDBPort          = "MF_MONGO_WRITER_DB_PORT"
+	envSubjectsCfgPath = "MF_MONGO_WRITER_SUBJECTS_CONFIG"
 )
 
 type config struct {
-	natsURL  string
-	logLevel string
-	port     string
-	dbName   string
-	dbHost   string
-	dbPort   string
-	channels map[string]bool
+	natsURL         string
+	logLevel        string
+	port            string
+	dbName          string
+	dbHost          string
+	dbPort          string
+	subjectsCfgPath string
 }
 
 func main() {
@@ -86,7 +84,7 @@ func main() {
 	repo = api.LoggingMiddleware(repo, logger)
 	repo = api.MetricsMiddleware(repo, counter, latency)
 	st := senml.New()
-	if err := writers.Start(nc, repo, st, svcName, cfg.channels, logger); err != nil {
+	if err := writers.Start(nc, repo, st, svcName, cfg.subjectsCfgPath, logger); err != nil {
 		logger.Error(fmt.Sprintf("Failed to start MongoDB writer: %s", err))
 		os.Exit(1)
 	}
@@ -105,43 +103,15 @@ func main() {
 }
 
 func loadConfigs() config {
-	chanCfgPath := mainflux.Env(envChanCfgPath, defChanCfgPath)
 	return config{
-		natsURL:  mainflux.Env(envNatsURL, defNatsURL),
-		logLevel: mainflux.Env(envLogLevel, defLogLevel),
-		port:     mainflux.Env(envPort, defPort),
-		dbName:   mainflux.Env(envDBName, defDBName),
-		dbHost:   mainflux.Env(envDBHost, defDBHost),
-		dbPort:   mainflux.Env(envDBPort, defDBPort),
-		channels: loadChansConfig(chanCfgPath),
+		natsURL:         mainflux.Env(envNatsURL, defNatsURL),
+		logLevel:        mainflux.Env(envLogLevel, defLogLevel),
+		port:            mainflux.Env(envPort, defPort),
+		dbName:          mainflux.Env(envDBName, defDBName),
+		dbHost:          mainflux.Env(envDBHost, defDBHost),
+		dbPort:          mainflux.Env(envDBPort, defDBPort),
+		subjectsCfgPath: mainflux.Env(envSubjectsCfgPath, defSubjectsCfgPath),
 	}
-}
-
-type channels struct {
-	List []string `toml:"filter"`
-}
-
-type chanConfig struct {
-	Channels channels `toml:"channels"`
-}
-
-func loadChansConfig(chanConfigPath string) map[string]bool {
-	data, err := ioutil.ReadFile(chanConfigPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var chanCfg chanConfig
-	if err := toml.Unmarshal(data, &chanCfg); err != nil {
-		log.Fatal(err)
-	}
-
-	chans := map[string]bool{}
-	for _, ch := range chanCfg.Channels.List {
-		chans[ch] = true
-	}
-
-	return chans
 }
 
 func makeMetrics() (*kitprometheus.Counter, *kitprometheus.Summary) {

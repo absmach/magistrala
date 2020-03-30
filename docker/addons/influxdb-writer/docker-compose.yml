@@ -54,7 +54,7 @@ services:
     networks:
       - docker_mainflux-base-net
     volumes:
-      - ./channels.toml:/config/channels.toml
+      - ./subjects.toml:/config/subjects.toml
 
   grafana:
     image: grafana/grafana:5.1.3

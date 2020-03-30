@@ -52,7 +52,7 @@ type Agent struct {
 }
 
 // New creates new email agent
-func New(c *Config) (*Agent, errors.Error) {
+func New(c *Config) (*Agent, error) {
 	a := &Agent{}
 	a.conf = c
 	a.auth = smtp.PlainAuth("", c.Username, c.Password, c.Host)
@@ -67,7 +67,7 @@ func New(c *Config) (*Agent, errors.Error) {
 }
 
 // Send sends e-mail
-func (a *Agent) Send(To []string, From, Subject, Header, Content, Footer string) errors.Error {
+func (a *Agent) Send(To []string, From, Subject, Header, Content, Footer string) error {
 	if a.tmpl == nil {
 		return errMissingEmailTemplate
 	}

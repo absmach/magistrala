@@ -3,7 +3,9 @@
 
 package http
 
-import "github.com/mainflux/mainflux/things"
+import (
+	"github.com/mainflux/mainflux/things"
+)
 
 const maxLimitSize = 100
 const maxNameSize = 1024

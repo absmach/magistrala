@@ -37,7 +37,7 @@ func New(db Database) users.UserRepository {
 	}
 }
 
-func (ur userRepository) Save(ctx context.Context, user users.User) errors.Error {
+func (ur userRepository) Save(ctx context.Context, user users.User) error {
 	q := `INSERT INTO users (email, password, metadata) VALUES (:email, :password, :metadata)`
 
 	dbu := toDBUser(user)
@@ -48,7 +48,7 @@ func (ur userRepository) Save(ctx context.Context, user users.User) errors.Error
 	return nil
 }
 
-func (ur userRepository) Update(ctx context.Context, user users.User) errors.Error {
+func (ur userRepository) Update(ctx context.Context, user users.User) error {
 	q := `UPDATE users SET(email, password, metadata) VALUES (:email, :password, :metadata) WHERE email = :email`
 
 	dbu := toDBUser(user)
@@ -59,7 +59,7 @@ func (ur userRepository) Update(ctx context.Context, user users.User) errors.Err
 	return nil
 }
 
-func (ur userRepository) UpdateUser(ctx context.Context, user users.User) errors.Error {
+func (ur userRepository) UpdateUser(ctx context.Context, user users.User) error {
 	q := `UPDATE users SET metadata = :metadata WHERE email = :email`
 
 	dbu := toDBUser(user)
@@ -70,7 +70,7 @@ func (ur userRepository) UpdateUser(ctx context.Context, user users.User) errors
 	return nil
 }
 
-func (ur userRepository) RetrieveByID(ctx context.Context, email string) (users.User, errors.Error) {
+func (ur userRepository) RetrieveByID(ctx context.Context, email string) (users.User, error) {
 	q := `SELECT password, metadata FROM users WHERE email = $1`
 
 	dbu := dbUser{
@@ -89,7 +89,7 @@ func (ur userRepository) RetrieveByID(ctx context.Context, email string) (users.
 	return user, nil
 }
 
-func (ur userRepository) UpdatePassword(ctx context.Context, email, password string) errors.Error {
+func (ur userRepository) UpdatePassword(ctx context.Context, email, password string) error {
 	q := `UPDATE users SET password = :password WHERE email = :email`
 
 	db := dbUser{

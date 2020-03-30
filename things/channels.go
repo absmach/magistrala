@@ -3,7 +3,9 @@
 
 package things
 
-import "context"
+import (
+	"context"
+)
 
 // Channel represents a Mainflux "communication group". This group contains the
 // things that can exchange messages between eachother.

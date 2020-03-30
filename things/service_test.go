@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/things"
 	"github.com/mainflux/mainflux/things/mocks"
 	"github.com/stretchr/testify/assert"
@@ -71,7 +72,7 @@ func TestCreateThings(t *testing.T) {
 
 	for _, tc := range cases {
 		_, err := svc.CreateThings(context.Background(), tc.token, tc.things...)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -109,7 +110,7 @@ func TestUpdateThing(t *testing.T) {
 
 	for _, tc := range cases {
 		err := svc.UpdateThing(context.Background(), tc.token, tc.thing)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -152,7 +153,7 @@ func TestUpdateKey(t *testing.T) {
 
 	for _, tc := range cases {
 		err := svc.UpdateKey(context.Background(), tc.token, tc.id, tc.key)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -185,7 +186,7 @@ func TestViewThing(t *testing.T) {
 
 	for desc, tc := range cases {
 		_, err := svc.ViewThing(context.Background(), tc.token, tc.id)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
 
@@ -266,7 +267,7 @@ func TestListThings(t *testing.T) {
 		page, err := svc.ListThings(context.Background(), tc.token, tc.offset, tc.limit, tc.name, tc.metadata)
 		size := uint64(len(page.Things))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
 
@@ -357,7 +358,7 @@ func TestListThingsByChannel(t *testing.T) {
 		page, err := svc.ListThingsByChannel(context.Background(), tc.token, tc.channel, tc.offset, tc.limit)
 		size := uint64(len(page.Things))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
 
@@ -400,7 +401,7 @@ func TestRemoveThing(t *testing.T) {
 
 	for _, tc := range cases {
 		err := svc.RemoveThing(context.Background(), tc.token, tc.id)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -474,7 +475,7 @@ func TestUpdateChannel(t *testing.T) {
 
 	for _, tc := range cases {
 		err := svc.UpdateChannel(context.Background(), tc.token, tc.channel)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -513,7 +514,7 @@ func TestViewChannel(t *testing.T) {
 
 	for desc, tc := range cases {
 		_, err := svc.ViewChannel(context.Background(), tc.token, tc.id)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
 
@@ -607,7 +608,7 @@ func TestListChannels(t *testing.T) {
 		page, err := svc.ListChannels(context.Background(), tc.token, tc.offset, tc.limit, tc.name, tc.metadata)
 		size := uint64(len(page.Channels))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
 
@@ -698,7 +699,7 @@ func TestListChannelsByThing(t *testing.T) {
 		page, err := svc.ListChannelsByThing(context.Background(), tc.token, tc.thing, tc.offset, tc.limit)
 		size := uint64(len(page.Channels))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
 
@@ -741,7 +742,7 @@ func TestRemoveChannel(t *testing.T) {
 
 	for _, tc := range cases {
 		err := svc.RemoveChannel(context.Background(), tc.token, tc.id)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -792,7 +793,7 @@ func TestConnect(t *testing.T) {
 
 	for _, tc := range cases {
 		err := svc.Connect(context.Background(), tc.token, []string{tc.chanID}, []string{tc.thingID})
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -851,7 +852,7 @@ func TestDisconnect(t *testing.T) {
 
 	for _, tc := range cases {
 		err := svc.Disconnect(context.Background(), tc.token, tc.chanID, tc.thingID)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 
 }
@@ -889,7 +890,7 @@ func TestCanAccessByKey(t *testing.T) {
 
 	for desc, tc := range cases {
 		_, err := svc.CanAccessByKey(context.Background(), tc.channel, tc.token)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
 
@@ -926,7 +927,7 @@ func TestCanAccessByID(t *testing.T) {
 
 	for desc, tc := range cases {
 		err := svc.CanAccessByID(context.Background(), tc.channel, tc.thingID)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
 
@@ -956,6 +957,6 @@ func TestIdentify(t *testing.T) {
 	for desc, tc := range cases {
 		id, err := svc.Identify(context.Background(), tc.token)
 		assert.Equal(t, tc.id, id, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.id, id))
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }

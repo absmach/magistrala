@@ -6,8 +6,12 @@ package uuid
 
 import (
 	"github.com/gofrs/uuid"
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/things"
 )
+
+// ErrGeneratingID indicates error in generating UUID
+var ErrGeneratingID = errors.New("generating id failed")
 
 var _ things.IdentityProvider = (*uuidIdentityProvider)(nil)
 
@@ -21,7 +25,7 @@ func New() things.IdentityProvider {
 func (idp *uuidIdentityProvider) ID() (string, error) {
 	id, err := uuid.NewV4()
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(ErrGeneratingID, err)
 	}
 
 	return id.String(), nil

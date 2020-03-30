@@ -39,7 +39,7 @@ func TestRegister(t *testing.T) {
 	cases := []struct {
 		desc string
 		user users.User
-		err  errors.Error
+		err  error
 	}{
 		{
 			desc: "register new user",
@@ -79,7 +79,7 @@ func TestLogin(t *testing.T) {
 
 	cases := map[string]struct {
 		user users.User
-		err  errors.Error
+		err  error
 	}{
 		"login with good credentials": {
 			user: user,

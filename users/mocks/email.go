@@ -4,7 +4,6 @@
 package mocks
 
 import (
-	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/users"
 )
 
@@ -16,6 +15,6 @@ func NewEmailer() users.Emailer {
 	return &emailerMock{}
 }
 
-func (e *emailerMock) SendPasswordReset([]string, string, string) errors.Error {
+func (e *emailerMock) SendPasswordReset([]string, string, string) error {
 	return nil
 }

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	r "github.com/go-redis/redis"
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/things"
 	"github.com/mainflux/mainflux/things/mocks"
 	"github.com/mainflux/mainflux/things/redis"
@@ -259,7 +260,7 @@ func TestRemoveThing(t *testing.T) {
 	lastID := "0"
 	for _, tc := range cases {
 		err := svc.RemoveThing(context.Background(), tc.key, tc.id)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(&r.XReadArgs{
 			Streams: []string{streamID, lastID},

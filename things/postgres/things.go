@@ -11,7 +11,23 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/lib/pq" // required for DB access
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/things"
+)
+
+var (
+	// ErrSaveDb indicates error while saving to database
+	ErrSaveDb = errors.New("save thing to db error")
+	// ErrUpdateDb indicates error while updating database
+	ErrUpdateDb = errors.New("update thing in db error")
+	// ErrSelectDb indicates error while reading from database
+	ErrSelectDb = errors.New("select thing from db error")
+	// ErrDeleteDb indicates error while marshaling Thing to JSON
+	ErrDeleteDb = errors.New("delete thing from db error")
+	// ErrMarshalThing indicates error while marshaling Thing to JSON
+	ErrMarshalThing = errors.New("marshal to json error")
+	// ErrUnmarshalThing indicates error while unmarshaling JSON to Thing
+	ErrUnmarshalThing = errors.New("unmarshal json error")
 )
 
 const (
@@ -38,7 +54,7 @@ func NewThingRepository(db Database) things.ThingRepository {
 func (tr thingRepository) Save(ctx context.Context, ths ...things.Thing) ([]things.Thing, error) {
 	tx, err := tr.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(ErrSaveDb, err)
 	}
 
 	q := `INSERT INTO things (id, owner, name, key, metadata)
@@ -50,25 +66,24 @@ func (tr thingRepository) Save(ctx context.Context, ths ...things.Thing) ([]thin
 			return []things.Thing{}, err
 		}
 
-		_, err = tx.NamedExecContext(ctx, q, dbth)
-		if err != nil {
+		if _, err := tx.NamedExecContext(ctx, q, dbth); err != nil {
 			tx.Rollback()
 			pqErr, ok := err.(*pq.Error)
 			if ok {
 				switch pqErr.Code.Name() {
 				case errInvalid, errTruncation:
-					return []things.Thing{}, things.ErrMalformedEntity
+					return []things.Thing{}, errors.Wrap(things.ErrMalformedEntity, err)
 				case errDuplicate:
-					return []things.Thing{}, things.ErrConflict
+					return []things.Thing{}, errors.Wrap(things.ErrConflict, err)
 				}
 			}
 
-			return []things.Thing{}, err
+			return []things.Thing{}, errors.Wrap(ErrSaveDb, err)
 		}
 	}
 
 	if err = tx.Commit(); err != nil {
-		return []things.Thing{}, err
+		return []things.Thing{}, errors.Wrap(ErrSaveDb, err)
 	}
 
 	return ths, nil
@@ -82,22 +97,22 @@ func (tr thingRepository) Update(ctx context.Context, thing things.Thing) error 
 		return err
 	}
 
-	res, err := tr.db.NamedExecContext(ctx, q, dbth)
-	if err != nil {
-		pqErr, ok := err.(*pq.Error)
+	res, errdb := tr.db.NamedExecContext(ctx, q, dbth)
+	if errdb != nil {
+		pqErr, ok := errdb.(*pq.Error)
 		if ok {
 			switch pqErr.Code.Name() {
 			case errInvalid, errTruncation:
-				return things.ErrMalformedEntity
+				return errors.Wrap(things.ErrMalformedEntity, errdb)
 			}
 		}
 
-		return err
+		return errors.Wrap(ErrUpdateDb, errdb)
 	}
 
-	cnt, err := res.RowsAffected()
+	cnt, errdb := res.RowsAffected()
 	if err != nil {
-		return err
+		return errors.Wrap(ErrUpdateDb, errdb)
 	}
 
 	if cnt == 0 {
@@ -122,18 +137,18 @@ func (tr thingRepository) UpdateKey(ctx context.Context, owner, id, key string) 
 		if ok {
 			switch pqErr.Code.Name() {
 			case errInvalid:
-				return things.ErrMalformedEntity
+				return errors.Wrap(things.ErrMalformedEntity, err)
 			case errDuplicate:
-				return things.ErrConflict
+				return errors.Wrap(things.ErrConflict, err)
 			}
 		}
 
-		return err
+		return errors.Wrap(ErrUpdateDb, err)
 	}
 
 	cnt, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return errors.Wrap(ErrUpdateDb, err)
 	}
 
 	if cnt == 0 {
@@ -156,10 +171,10 @@ func (tr thingRepository) RetrieveByID(ctx context.Context, owner, id string) (t
 
 		pqErr, ok := err.(*pq.Error)
 		if err == sql.ErrNoRows || ok && errInvalid == pqErr.Code.Name() {
-			return empty, things.ErrNotFound
+			return empty, errors.Wrap(things.ErrNotFound, err)
 		}
 
-		return empty, err
+		return empty, errors.Wrap(ErrSelectDb, err)
 	}
 
 	return toThing(dbth)
@@ -171,9 +186,9 @@ func (tr thingRepository) RetrieveByKey(ctx context.Context, key string) (string
 	var id string
 	if err := tr.db.QueryRowxContext(ctx, q, key).Scan(&id); err != nil {
 		if err == sql.ErrNoRows {
-			return "", things.ErrNotFound
+			return "", errors.Wrap(things.ErrNotFound, err)
 		}
-		return "", err
+		return "", errors.Wrap(ErrSelectDb, err)
 	}
 
 	return id, nil
@@ -183,7 +198,7 @@ func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, offset,
 	nq, name := getNameQuery(name)
 	m, mq, err := getMetadataQuery(metadata)
 	if err != nil {
-		return things.ThingsPage{}, err
+		return things.ThingsPage{}, errors.Wrap(ErrSelectDb, err)
 	}
 
 	q := fmt.Sprintf(`SELECT id, name, key, metadata FROM things
@@ -199,7 +214,7 @@ func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, offset,
 
 	rows, err := tr.db.NamedQueryContext(ctx, q, params)
 	if err != nil {
-		return things.ThingsPage{}, err
+		return things.ThingsPage{}, errors.Wrap(ErrSelectDb, err)
 	}
 	defer rows.Close()
 
@@ -207,7 +222,7 @@ func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, offset,
 	for rows.Next() {
 		dbth := dbThing{Owner: owner}
 		if err := rows.StructScan(&dbth); err != nil {
-			return things.ThingsPage{}, err
+			return things.ThingsPage{}, errors.Wrap(ErrSelectDb, err)
 		}
 
 		th, err := toThing(dbth)
@@ -222,7 +237,7 @@ func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, offset,
 
 	total, err := total(ctx, tr.db, cq, params)
 	if err != nil {
-		return things.ThingsPage{}, err
+		return things.ThingsPage{}, errors.Wrap(ErrSelectDb, err)
 	}
 
 	page := things.ThingsPage{
@@ -261,7 +276,7 @@ func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, channel 
 
 	rows, err := tr.db.NamedQueryContext(ctx, q, params)
 	if err != nil {
-		return things.ThingsPage{}, err
+		return things.ThingsPage{}, errors.Wrap(ErrSelectDb, err)
 	}
 	defer rows.Close()
 
@@ -269,7 +284,7 @@ func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, channel 
 	for rows.Next() {
 		dbth := dbThing{Owner: owner}
 		if err := rows.StructScan(&dbth); err != nil {
-			return things.ThingsPage{}, err
+			return things.ThingsPage{}, errors.Wrap(ErrSelectDb, err)
 		}
 
 		th, err := toThing(dbth)
@@ -288,7 +303,7 @@ func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, channel 
 
 	var total uint64
 	if err := tr.db.GetContext(ctx, &total, q, owner, channel); err != nil {
-		return things.ThingsPage{}, err
+		return things.ThingsPage{}, errors.Wrap(ErrSelectDb, err)
 	}
 
 	return things.ThingsPage{
@@ -307,7 +322,9 @@ func (tr thingRepository) Remove(ctx context.Context, owner, id string) error {
 		Owner: owner,
 	}
 	q := `DELETE FROM things WHERE id = :id AND owner = :owner;`
-	tr.db.NamedExecContext(ctx, q, dbth)
+	if _, err := tr.db.NamedExecContext(ctx, q, dbth); err != nil {
+		return errors.Wrap(ErrDeleteDb, err)
+	}
 	return nil
 }
 
@@ -324,7 +341,7 @@ func toDBThing(th things.Thing) (dbThing, error) {
 	if len(th.Metadata) > 0 {
 		b, err := json.Marshal(th.Metadata)
 		if err != nil {
-			return dbThing{}, err
+			return dbThing{}, errors.Wrap(ErrMarshalThing, err)
 		}
 		data = b
 	}
@@ -341,7 +358,7 @@ func toDBThing(th things.Thing) (dbThing, error) {
 func toThing(dbth dbThing) (things.Thing, error) {
 	var metadata map[string]interface{}
 	if err := json.Unmarshal([]byte(dbth.Metadata), &metadata); err != nil {
-		return things.Thing{}, err
+		return things.Thing{}, errors.Wrap(ErrUnmarshalThing, err)
 	}
 
 	return things.Thing{

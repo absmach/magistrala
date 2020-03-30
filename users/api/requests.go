@@ -4,7 +4,6 @@
 package api
 
 import (
-	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/users"
 )
 
@@ -18,7 +17,7 @@ type userReq struct {
 	user users.User
 }
 
-func (req userReq) validate() errors.Error {
+func (req userReq) validate() error {
 	return req.user.Validate()
 }
 
@@ -26,7 +25,7 @@ type viewUserInfoReq struct {
 	token string
 }
 
-func (req viewUserInfoReq) validate() errors.Error {
+func (req viewUserInfoReq) validate() error {
 	if req.token == "" {
 		return users.ErrUnauthorizedAccess
 	}
@@ -38,7 +37,7 @@ type updateUserReq struct {
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
-func (req updateUserReq) validate() errors.Error {
+func (req updateUserReq) validate() error {
 	if req.token == "" {
 		return users.ErrUnauthorizedAccess
 	}
@@ -50,7 +49,7 @@ type passwResetReq struct {
 	Host  string `json:"host"`
 }
 
-func (req passwResetReq) validate() errors.Error {
+func (req passwResetReq) validate() error {
 	if req.Email == "" || req.Host == "" {
 		return users.ErrMalformedEntity
 	}
@@ -63,7 +62,7 @@ type resetTokenReq struct {
 	ConfPass string `json:"confirm_password"`
 }
 
-func (req resetTokenReq) validate() errors.Error {
+func (req resetTokenReq) validate() error {
 	if req.Password == "" || req.ConfPass == "" {
 		return users.ErrMalformedEntity
 	}
@@ -82,7 +81,7 @@ type passwChangeReq struct {
 	OldPassword string `json:"old_password"`
 }
 
-func (req passwChangeReq) validate() errors.Error {
+func (req passwChangeReq) validate() error {
 	if req.Token == "" {
 		return users.ErrUnauthorizedAccess
 	}

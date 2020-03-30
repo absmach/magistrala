@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	r "github.com/go-redis/redis"
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/things/redis"
 	"github.com/mainflux/mainflux/things/uuid"
 	"github.com/stretchr/testify/assert"
@@ -81,7 +82,7 @@ func TestThingID(t *testing.T) {
 	for desc, tc := range cases {
 		cacheID, err := thingCache.ID(context.Background(), tc.key)
 		assert.Equal(t, tc.ID, cacheID, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.ID, cacheID))
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
 
@@ -113,7 +114,7 @@ func TestThingRemove(t *testing.T) {
 
 	for _, tc := range cases {
 		err := thingCache.Remove(context.Background(), tc.ID)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 
 }

@@ -5,7 +5,6 @@ package emailer
 import (
 	"fmt"
 
-	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/internal/email"
 	"github.com/mainflux/mainflux/users"
 )
@@ -26,7 +25,7 @@ func New(url string, c *email.Config) (users.Emailer, error) {
 	return &emailer{resetURL: url, agent: e}, nil
 }
 
-func (e *emailer) SendPasswordReset(To []string, host string, token string) errors.Error {
+func (e *emailer) SendPasswordReset(To []string, host string, token string) error {
 	url := fmt.Sprintf("%s%s?token=%s", host, e.resetURL, token)
 	content := fmt.Sprintf("%s", url)
 	return e.agent.Send(To, "", "Password reset", "", content, "")

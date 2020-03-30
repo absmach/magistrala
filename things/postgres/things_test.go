@@ -9,12 +9,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/things"
 	"github.com/mainflux/mainflux/things/postgres"
 	"github.com/mainflux/mainflux/things/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const maxNameSize = 1024
@@ -105,7 +105,7 @@ func TestThingsSave(t *testing.T) {
 
 	for _, tc := range cases {
 		_, err := thingRepo.Save(context.Background(), tc.things...)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -191,7 +191,7 @@ func TestThingUpdate(t *testing.T) {
 
 	for _, tc := range cases {
 		err := thingRepo.Update(context.Background(), tc.thing)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -277,7 +277,7 @@ func TestUpdateKey(t *testing.T) {
 
 	for _, tc := range cases {
 		err := thingRepo.UpdateKey(context.Background(), tc.owner, tc.id, tc.key)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -332,7 +332,7 @@ func TestSingleThingRetrieval(t *testing.T) {
 
 	for desc, tc := range cases {
 		_, err := thingRepo.RetrieveByID(context.Background(), tc.owner, tc.ID)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
 
@@ -375,7 +375,7 @@ func TestThingRetrieveByKey(t *testing.T) {
 	for desc, tc := range cases {
 		id, err := thingRepo.RetrieveByKey(context.Background(), tc.key)
 		assert.Equal(t, tc.ID, id, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.ID, id))
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
 
@@ -599,7 +599,7 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 		page, err := thingRepo.RetrieveByChannel(context.Background(), tc.owner, tc.channel, tc.offset, tc.limit)
 		size := uint64(len(page.Things))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected no error got %d\n", desc, err))
 	}
 }
 
@@ -629,6 +629,7 @@ func TestThingRemoval(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("#%d: failed to remove thing due to: %s", i, err))
 
 		_, err = thingRepo.RetrieveByID(context.Background(), email, thing.ID)
-		require.Equal(t, things.ErrNotFound, err, fmt.Sprintf("#%d: expected %s got %s", i, things.ErrNotFound, err))
+		// require.Equal(t, things.ErrNotFound, err, fmt.Sprintf("#%d: expected %s got %s", i, things.ErrNotFound, err))
+		require.True(t, errors.Contains(err, things.ErrNotFound), fmt.Sprintf("#%d: expected %s got %s", i, things.ErrNotFound, err))
 	}
 }

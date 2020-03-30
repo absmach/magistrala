@@ -6,7 +6,7 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"errors"
+	"github.com/mainflux/mainflux/errors"
 	"io"
 	"net/http"
 	"strings"
@@ -99,13 +99,11 @@ func decodeCanAccessByID(_ context.Context, r *http.Request) (interface{}, error
 }
 
 func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
-	w.Header().Set("Content-Type", contentType)
-
 	if ar, ok := response.(mainflux.Response); ok {
 		for k, v := range ar.Headers() {
 			w.Header().Set(k, v)
 		}
-
+		w.Header().Set("Content-Type", contentType)
 		w.WriteHeader(ar.Code())
 
 		if ar.Empty() {

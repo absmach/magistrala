@@ -3,7 +3,9 @@
 
 package things
 
-import "context"
+import (
+	"context"
+)
 
 // Metadata to be used for mainflux thing or channel for customized
 // describing of particular thing or channel.

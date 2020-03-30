@@ -65,6 +65,11 @@ MF_MQTT_ADAPTER_LOG_LEVEL=info MF_THINGS_URL=localhost:8183 $BUILD_DIR/mainflux-
 ###
 MF_COAP_ADAPTER_LOG_LEVEL=info MF_COAP_ADAPTER_PORT=5683 MF_THINGS_URL=localhost:8183 $BUILD_DIR/mainflux-coap &
 
+###
+# AUTHN
+###
+MF_AUTHN_LOG_LEVEL=debug MF_AUTHN_HTTP_PORT=8189 MF_AUTHN_GRPC_PORT=8181 MF_AUTHN_DB_PORT=5432 MF_AUTHN_DB_USER=mainflux MF_AUTHN_DB_PASS=mainflux MF_AUTHN_DB=authn MF_AUTHN_SECRET=secret $BUILD_DIR/mainflux-authn &
+
 trap cleanup EXIT
 
 while : ; do sleep 1 ; done

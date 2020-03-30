@@ -235,9 +235,13 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 			w.WriteHeader(http.StatusBadRequest)
 		case errors.Contains(errorVal, users.ErrRecoveryToken):
 			w.WriteHeader(http.StatusInternalServerError)
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
 		}
 		if errorVal.Msg() != "" {
-			json.NewEncoder(w).Encode(errorRes{Err: errorVal.Msg()})
+			if err := json.NewEncoder(w).Encode(errorRes{Err: errorVal.Msg()}); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+			}
 		}
 	default:
 		w.WriteHeader(http.StatusInternalServerError)

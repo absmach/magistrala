@@ -8,17 +8,16 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/mainflux/mainflux/errors"
 	"golang.org/x/net/idna"
 )
 
 const (
-	minPassLen  = 8
-	maxLocalLen = 64
-	maxDomainLen  = 255
-	maxTLDLen = 24 // longest TLD currently in existence
+	minPassLen   = 8
+	maxLocalLen  = 64
+	maxDomainLen = 255
+	maxTLDLen    = 24 // longest TLD currently in existence
 
-	atSeparator = "@"
+	atSeparator  = "@"
 	dotSeparator = "."
 )
 
@@ -37,7 +36,7 @@ type User struct {
 }
 
 // Validate returns an error if user representation is invalid.
-func (u User) Validate() errors.Error {
+func (u User) Validate() error {
 	if !isEmail(u.Email) {
 		return ErrMalformedEntity
 	}
@@ -53,16 +52,16 @@ func (u User) Validate() errors.Error {
 type UserRepository interface {
 	// Save persists the user account. A non-nil error is returned to indicate
 	// operation failure.
-	Save(context.Context, User) errors.Error
+	Save(context.Context, User) error
 
 	// Update updates the user metadata.
-	UpdateUser(context.Context, User) errors.Error
+	UpdateUser(context.Context, User) error
 
 	// RetrieveByID retrieves user by its unique identifier (i.e. email).
-	RetrieveByID(context.Context, string) (User, errors.Error)
+	RetrieveByID(context.Context, string) (User, error)
 
 	// UpdatePassword updates password for user with given email
-	UpdatePassword(_ context.Context, email, password string) errors.Error
+	UpdatePassword(_ context.Context, email, password string) error
 }
 
 func isEmail(email string) bool {

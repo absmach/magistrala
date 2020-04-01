@@ -14,11 +14,11 @@ import (
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/transformers"
 	"github.com/mainflux/mainflux/transformers/senml"
-	nats "github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go"
 )
 
 var (
-	errOpenConfFile = errors.New("Unable to open configuration file")
+	errOpenConfFile  = errors.New("Unable to open configuration file")
 	errParseConfFile = errors.New("Unable to parse configuration file")
 )
 
@@ -40,7 +40,7 @@ func Start(nc *nats.Conn, repo MessageRepository, transformer transformers.Trans
 		logger:      logger,
 	}
 
-	subjects, err := LoadSubjectsConfig(subjectsCfgPath)
+	subjects, err := loadSubjectsConfig(subjectsCfgPath)
 	if err != nil {
 		logger.Warn(fmt.Sprintf("Failed to load subjects: %s", err))
 	}
@@ -51,7 +51,7 @@ func Start(nc *nats.Conn, repo MessageRepository, transformer transformers.Trans
 			return err
 		}
 	}
-	return err
+	return nil
 }
 
 func (c *consumer) consume(m *nats.Msg) {
@@ -86,7 +86,7 @@ type subjectsConfig struct {
 	Subjects filterConfig `toml:"subjects"`
 }
 
-func LoadSubjectsConfig(subjectsConfigPath string) ([]string, error)  {
+func loadSubjectsConfig(subjectsConfigPath string) ([]string, error) {
 	data, err := ioutil.ReadFile(subjectsConfigPath)
 	if err != nil {
 		return []string{mainflux.InputChannels}, errors.Wrap(errOpenConfFile, err)
@@ -97,5 +97,5 @@ func LoadSubjectsConfig(subjectsConfigPath string) ([]string, error)  {
 		return []string{mainflux.InputChannels}, errors.Wrap(errParseConfFile, err)
 	}
 
-	return subjectsCfg.Subjects.List, err
+	return subjectsCfg.Subjects.List, nil
 }

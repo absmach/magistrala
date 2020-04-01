@@ -19,6 +19,7 @@ import (
 	gocoap "github.com/dustin/go-coap"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/broker"
 	"github.com/mainflux/mainflux/coap"
 	log "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/transformers/senml"
@@ -229,7 +230,7 @@ func receive(svc coap.Service, msg *gocoap.Message) *gocoap.Message {
 		return res
 	}
 
-	m := mainflux.Message{
+	m := broker.Message{
 		Channel:     chanID,
 		Subtopic:    subtopic,
 		Publisher:   publisher,
@@ -290,7 +291,7 @@ func observe(svc coap.Service, responses chan<- string) handler {
 			res.AddOption(gocoap.Observe, 1)
 			o := coap.NewObserver()
 			if err := svc.Subscribe(chanID, subtopic, obsID, o); err != nil {
-				logger.Warn(fmt.Sprintf("Failed to subscribe to NATS subject: %s", err))
+				logger.Warn(err.Error())
 				res.Code = gocoap.InternalServerError
 				return res
 			}

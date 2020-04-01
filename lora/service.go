@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/broker"
 )
 
 const (
@@ -58,15 +58,15 @@ type Service interface {
 var _ Service = (*adapterService)(nil)
 
 type adapterService struct {
-	publisher  mainflux.MessagePublisher
+	broker     broker.Nats
 	thingsRM   RouteMapRepository
 	channelsRM RouteMapRepository
 }
 
 // New instantiates the LoRa adapter implementation.
-func New(pub mainflux.MessagePublisher, thingsRM, channelsRM RouteMapRepository) Service {
+func New(broker broker.Nats, thingsRM, channelsRM RouteMapRepository) Service {
 	return &adapterService{
-		publisher:  pub,
+		broker:     broker,
 		thingsRM:   thingsRM,
 		channelsRM: channelsRM,
 	}
@@ -104,7 +104,7 @@ func (as *adapterService) Publish(ctx context.Context, token string, m Message) 
 	}
 
 	// Publish on Mainflux NATS broker
-	msg := mainflux.Message{
+	msg := broker.Message{
 		Publisher:   thing,
 		Protocol:    protocol,
 		ContentType: "Content-Type",
@@ -112,7 +112,7 @@ func (as *adapterService) Publish(ctx context.Context, token string, m Message) 
 		Payload:     payload,
 	}
 
-	return as.publisher.Publish(ctx, token, msg)
+	return as.broker.Publish(ctx, token, msg)
 }
 
 func (as *adapterService) CreateThing(mfxDevID string, loraDevEUI string) error {

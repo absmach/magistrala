@@ -14,14 +14,13 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/broker"
 	"github.com/mainflux/mainflux/logger"
 	mqtt "github.com/mainflux/mainflux/mqtt"
-	"github.com/mainflux/mainflux/mqtt/nats"
 	mr "github.com/mainflux/mainflux/mqtt/redis"
 	thingsapi "github.com/mainflux/mainflux/things/api/auth/grpc"
 	mp "github.com/mainflux/mproxy/pkg/mqtt"
 	ws "github.com/mainflux/mproxy/pkg/websocket"
-	broker "github.com/nats-io/nats.go"
 	opentracing "github.com/opentracing/opentracing-go"
 	jconfig "github.com/uber/jaeger-client-go/config"
 	"google.golang.org/grpc"
@@ -60,7 +59,7 @@ const (
 	envThingsURL     = "MF_THINGS_URL"
 	envThingsTimeout = "MF_MQTT_ADAPTER_THINGS_TIMEOUT"
 	// Nats
-	defNatsURL = broker.DefaultURL
+	defNatsURL = mainflux.DefNatsURL
 	envNatsURL = "MF_NATS_URL"
 	// Jaeger
 	defJaegerURL = ""
@@ -114,13 +113,6 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
-	nc, err := broker.Connect(cfg.natsURL)
-	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to NATS: %s", err))
-		os.Exit(1)
-	}
-	defer nc.Close()
-
 	conn := connectToThings(cfg, logger)
 	defer conn.Close()
 
@@ -130,17 +122,22 @@ func main() {
 	thingsTracer, thingsCloser := initJaeger("things", cfg.jaegerURL, logger)
 	defer thingsCloser.Close()
 
-	cc := thingsapi.NewClient(conn, thingsTracer, cfg.thingsTimeout)
-	pub := nats.NewMessagePublisher(nc)
-
 	rc := connectToRedis(cfg.esURL, cfg.esPass, cfg.esDB, logger)
 	defer rc.Close()
 
+	cc := thingsapi.NewClient(conn, thingsTracer, cfg.thingsTimeout)
+
+	b, err := broker.New(cfg.natsURL)
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+	defer b.Close()
+
 	es := mr.NewEventStore(rc, cfg.instance)
-	pubs := []mainflux.MessagePublisher{pub}
 
 	// Event handler for MQTT hooks
-	evt := mqtt.New(cc, pubs, es, logger, tracer)
+	evt := mqtt.New(b, cc, es, logger, tracer)
 
 	errs := make(chan error, 2)
 

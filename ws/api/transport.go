@@ -16,6 +16,7 @@ import (
 	"github.com/go-zoo/bone"
 	"github.com/gorilla/websocket"
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/broker"
 	log "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/things"
 	"github.com/mainflux/mainflux/transformers/senml"
@@ -109,7 +110,7 @@ func handshake(svc ws.Service) http.HandlerFunc {
 
 		sub.channel = ws.NewChannel()
 		if err := svc.Subscribe(sub.chanID, sub.subtopic, sub.channel); err != nil {
-			logger.Warn(fmt.Sprintf("Failed to subscribe to NATS subject: %s", err))
+			logger.Warn(err.Error())
 			conn.Close()
 			return
 		}
@@ -221,7 +222,7 @@ func (sub subscription) broadcast(svc ws.Service, contentType string) {
 			logger.Warn(fmt.Sprintf("Failed to read message: %s", err))
 			return
 		}
-		msg := mainflux.Message{
+		msg := broker.Message{
 			Channel:     sub.chanID,
 			Subtopic:    sub.subtopic,
 			ContentType: contentType,

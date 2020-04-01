@@ -135,7 +135,7 @@ func fmtCondition(chanID string, query map[string]string) string {
 
 // ParseMessage and parseValues are util methods. Since InfluxDB client returns
 // results in form of rows and columns, this obscure message conversion is needed
-// to return actual []mainflux.Message from the query result.
+// to return actual []broker.Message from the query result.
 func parseValues(value interface{}, name string, msg *senml.Message) {
 	if name == "sum" && value != nil {
 		if valSum, ok := value.(json.Number); ok {

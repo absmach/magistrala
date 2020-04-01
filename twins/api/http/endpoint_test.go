@@ -19,7 +19,7 @@ import (
 	"github.com/mainflux/mainflux/twins"
 	httpapi "github.com/mainflux/mainflux/twins/api/http"
 	"github.com/mainflux/mainflux/twins/mocks"
-	nats "github.com/mainflux/mainflux/twins/nats/publisher"
+
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -34,7 +34,6 @@ const (
 	thingID     = "5b68df78-86f7-48a6-ac4f-bb24dd75c39e"
 	wrongID     = 0
 	maxNameSize = 1024
-	natsURL     = "nats://localhost:4222"
 	topic       = "topic"
 )
 
@@ -68,8 +67,9 @@ func newService(tokens map[string]string) twins.Service {
 	twinsRepo := mocks.NewTwinRepository()
 	statesRepo := mocks.NewStateRepository()
 	idp := mocks.NewIdentityProvider()
-
-	return twins.New(auth, twinsRepo, statesRepo, idp, &nats.Publisher{})
+	subs := map[string]string{"chanID": "chanID"}
+	broker := mocks.New(subs)
+	return twins.New(broker, auth, twinsRepo, statesRepo, idp, "chanID", nil)
 }
 
 func newServer(svc twins.Service) *httptest.Server {

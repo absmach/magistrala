@@ -10,7 +10,6 @@ import (
 
 	"github.com/mainflux/mainflux/twins"
 	"github.com/mainflux/mainflux/twins/mocks"
-	nats "github.com/mainflux/mainflux/twins/nats/publisher"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,7 +28,9 @@ func newService(tokens map[string]string) twins.Service {
 	twinsRepo := mocks.NewTwinRepository()
 	statesRepo := mocks.NewStateRepository()
 	idp := mocks.NewIdentityProvider()
-	return twins.New(auth, twinsRepo, statesRepo, idp, &nats.Publisher{})
+	subs := map[string]string{"chanID": "chanID"}
+	broker := mocks.New(subs)
+	return twins.New(broker, auth, twinsRepo, statesRepo, idp, "chanID", nil)
 }
 
 func TestAddTwin(t *testing.T) {

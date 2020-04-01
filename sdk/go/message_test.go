@@ -17,13 +17,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func newMessageService(cc mainflux.ThingsServiceClient) mainflux.MessagePublisher {
+func newMessageService(cc mainflux.ThingsServiceClient) adapter.Service {
 	pub := mocks.NewPublisher()
 	return adapter.New(pub, cc)
 }
 
-func newMessageServer(pub mainflux.MessagePublisher) *httptest.Server {
-	mux := api.MakeHandler(pub, mocktracer.New())
+func newMessageServer(svc adapter.Service) *httptest.Server {
+	mux := api.MakeHandler(svc, mocktracer.New())
 	return httptest.NewServer(mux)
 }
 

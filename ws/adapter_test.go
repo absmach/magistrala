@@ -8,12 +8,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/mainflux/mainflux/broker"
 	"github.com/mainflux/mainflux/ws"
 	"github.com/mainflux/mainflux/ws/mocks"
-	broker "github.com/nats-io/nats.go"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/mainflux/mainflux"
 )
 
 const (
@@ -22,7 +20,7 @@ const (
 	protocol = "ws"
 )
 
-var msg = mainflux.Message{
+var msg = broker.Message{
 	Channel:   chanID,
 	Publisher: pubID,
 	Protocol:  protocol,
@@ -31,8 +29,8 @@ var msg = mainflux.Message{
 
 func newService(channel *ws.Channel) ws.Service {
 	subs := map[string]*ws.Channel{chanID: channel}
-	pubsub := mocks.NewService(subs, broker.ErrInvalidMsg)
-	return ws.New(pubsub)
+	broker := mocks.New(subs)
+	return ws.New(broker, nil)
 }
 
 func TestPublish(t *testing.T) {
@@ -41,7 +39,7 @@ func TestPublish(t *testing.T) {
 
 	cases := []struct {
 		desc string
-		msg  mainflux.Message
+		msg  broker.Message
 		err  error
 	}{
 		{
@@ -51,14 +49,14 @@ func TestPublish(t *testing.T) {
 		},
 		{
 			desc: "publish empty message",
-			msg:  mainflux.Message{},
+			msg:  broker.Message{},
 			err:  ws.ErrFailedMessagePublish,
 		},
 	}
 
 	for _, tc := range cases {
 		// Check if message was sent.
-		go func(desc string, tcMsg mainflux.Message) {
+		go func(desc string, tcMsg broker.Message) {
 			receivedMsg := <-channel.Messages
 			assert.Equal(t, tcMsg, receivedMsg, fmt.Sprintf("%s: expected %v got %v\n", desc, tcMsg, receivedMsg))
 		}(tc.desc, tc.msg)

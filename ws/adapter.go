@@ -7,11 +7,15 @@ package ws
 
 import (
 	"context"
+
 	"errors"
+	"fmt"
 	"sync"
 
-	"github.com/mainflux/mainflux"
-	broker "github.com/nats-io/nats.go"
+	"github.com/gogo/protobuf/proto"
+	"github.com/mainflux/mainflux/broker"
+	"github.com/mainflux/mainflux/logger"
+	"github.com/nats-io/nats.go"
 )
 
 var (
@@ -27,7 +31,8 @@ var (
 
 // Service specifies web socket service API.
 type Service interface {
-	mainflux.MessagePublisher
+	// Publish Messssage
+	Publish(context.Context, string, broker.Message) error
 
 	// Subscribes to channel with specified id.
 	Subscribe(string, string, *Channel) error
@@ -35,7 +40,7 @@ type Service interface {
 
 // Channel is used for receiving and sending messages.
 type Channel struct {
-	Messages chan mainflux.Message
+	Messages chan broker.Message
 	Closed   chan bool
 	closed   bool
 	mutex    sync.Mutex
@@ -44,7 +49,7 @@ type Channel struct {
 // NewChannel instantiates empty channel.
 func NewChannel() *Channel {
 	return &Channel{
-		Messages: make(chan mainflux.Message),
+		Messages: make(chan broker.Message),
 		Closed:   make(chan bool),
 		closed:   false,
 		mutex:    sync.Mutex{},
@@ -52,7 +57,7 @@ func NewChannel() *Channel {
 }
 
 // Send method send message over Messages channel.
-func (channel *Channel) Send(msg mainflux.Message) {
+func (channel *Channel) Send(msg broker.Message) {
 	channel.mutex.Lock()
 	defer channel.mutex.Unlock()
 
@@ -75,18 +80,22 @@ func (channel *Channel) Close() {
 var _ Service = (*adapterService)(nil)
 
 type adapterService struct {
-	pubsub Service
+	broker broker.Nats
+	log    logger.Logger
 }
 
 // New instantiates the WS adapter implementation.
-func New(pubsub Service) Service {
-	return &adapterService{pubsub: pubsub}
+func New(broker broker.Nats, log logger.Logger) Service {
+	return &adapterService{
+		broker: broker,
+		log:    log,
+	}
 }
 
-func (as *adapterService) Publish(ctx context.Context, token string, msg mainflux.Message) error {
-	if err := as.pubsub.Publish(ctx, token, msg); err != nil {
+func (as *adapterService) Publish(ctx context.Context, token string, msg broker.Message) error {
+	if err := as.broker.Publish(ctx, token, msg); err != nil {
 		switch err {
-		case broker.ErrConnectionClosed, broker.ErrInvalidConnection:
+		case nats.ErrConnectionClosed, nats.ErrInvalidConnection:
 			return ErrFailedConnection
 		default:
 			return ErrFailedMessagePublish
@@ -96,9 +105,36 @@ func (as *adapterService) Publish(ctx context.Context, token string, msg mainflu
 }
 
 func (as *adapterService) Subscribe(chanID, subtopic string, channel *Channel) error {
-	if err := as.pubsub.Subscribe(chanID, subtopic, channel); err != nil {
-		return ErrFailedSubscription
+	subject := chanID
+	if subtopic != "" {
+		subject = fmt.Sprintf("%s.%s", chanID, subtopic)
 	}
 
-	return nil
+	sub, err := as.broker.Subscribe(subject, func(msg *nats.Msg) {
+		if msg == nil {
+			as.log.Warn("Received nil message")
+			return
+		}
+
+		m := broker.Message{}
+		if err := proto.Unmarshal(msg.Data, &m); err != nil {
+			as.log.Warn(fmt.Sprintf("Failed to deserialize received message: %s", err.Error()))
+			return
+		}
+
+		as.log.Debug(fmt.Sprintf("Successfully received message from NATS from channel %s", m.GetChannel()))
+
+		// Sends message to messages channel
+		channel.Send(m)
+	})
+
+	// Check if subscription should be closed
+	go func() {
+		<-channel.Closed
+		if err := sub.Unsubscribe(); err != nil {
+			as.log.Error(fmt.Sprintf("Failed to unsubscribe from %s.%s", chanID, subtopic))
+		}
+	}()
+
+	return err
 }

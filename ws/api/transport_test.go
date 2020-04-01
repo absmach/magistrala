@@ -17,7 +17,6 @@ import (
 	"github.com/mainflux/mainflux/ws"
 	"github.com/mainflux/mainflux/ws/api"
 	"github.com/mainflux/mainflux/ws/mocks"
-	broker "github.com/nats-io/nats.go"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,14 +27,15 @@ const (
 )
 
 var (
+	chanID  = "1"
 	msg     = []byte(`[{"n":"current","t":-5,"v":1.2}]`)
 	channel = ws.NewChannel()
 )
 
 func newService() ws.Service {
-	subs := map[string]*ws.Channel{id: channel}
-	pubsub := mocks.NewService(subs, broker.ErrConnectionClosed)
-	return ws.New(pubsub)
+	subs := map[string]*ws.Channel{chanID: channel}
+	broker := mocks.New(subs)
+	return ws.New(broker, nil)
 }
 
 func newHTTPServer(svc ws.Service, tc mainflux.ThingsServiceClient) *httptest.Server {

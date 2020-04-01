@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/broker"
 	"github.com/mainflux/mainflux/transformers/senml"
 	mfsenml "github.com/mainflux/senml"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +29,7 @@ func TestTransform(t *testing.T) {
 	require.Nil(t, err, "Decoding CBOR expected to succeed")
 
 	tr := senml.New()
-	msg := mainflux.Message{
+	msg := broker.Message{
 		Channel:   "channel",
 		Subtopic:  "subtopic",
 		Publisher: "publisher",
@@ -69,7 +69,7 @@ func TestTransform(t *testing.T) {
 
 	cases := []struct {
 		desc string
-		msg  mainflux.Message
+		msg  broker.Message
 		msgs interface{}
 		err  error
 	}{

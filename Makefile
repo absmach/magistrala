@@ -71,6 +71,7 @@ test:
 
 proto:
 	protoc --gofast_out=plugins=grpc:. *.proto
+	protoc --gofast_out=plugins=grpc:. broker/*.proto
 
 $(SERVICES):
 	$(call compile_service,$(@))

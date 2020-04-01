@@ -17,6 +17,8 @@ import (
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/broker"
+	adapter "github.com/mainflux/mainflux/http"
 	"github.com/mainflux/mainflux/things"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -34,7 +36,7 @@ var (
 var channelPartRegExp = regexp.MustCompile(`^/channels/([\w\-]+)/messages(/[^?]*)?(\?.*)?$`)
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc mainflux.MessagePublisher, tracer opentracing.Tracer) http.Handler {
+func MakeHandler(svc adapter.Service, tracer opentracing.Tracer) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
 	}
@@ -107,7 +109,7 @@ func decodeRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 	}
 
 	ct := r.Header.Get("Content-Type")
-	msg := mainflux.Message{
+	msg := broker.Message{
 		Protocol:    protocol,
 		ContentType: ct,
 		Channel:     chanID,

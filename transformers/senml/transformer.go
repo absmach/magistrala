@@ -4,7 +4,7 @@
 package senml
 
 import (
-	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/broker"
 	"github.com/mainflux/mainflux/transformers"
 	"github.com/mainflux/senml"
 )
@@ -21,7 +21,7 @@ func New() transformers.Transformer {
 	return transformer{}
 }
 
-func (n transformer) Transform(msg mainflux.Message) (interface{}, error) {
+func (n transformer) Transform(msg broker.Message) (interface{}, error) {
 	format, ok := formats[msg.ContentType]
 	if !ok {
 		format = senml.JSON

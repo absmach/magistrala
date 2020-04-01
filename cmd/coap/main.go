@@ -18,9 +18,9 @@ import (
 	gocoap "github.com/dustin/go-coap"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/broker"
 	"github.com/mainflux/mainflux/coap"
 	"github.com/mainflux/mainflux/coap/api"
-	"github.com/mainflux/mainflux/coap/nats"
 	logger "github.com/mainflux/mainflux/logger"
 	thingsapi "github.com/mainflux/mainflux/things/api/auth/grpc"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -28,13 +28,11 @@ import (
 	jconfig "github.com/uber/jaeger-client-go/config"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-
-	broker "github.com/nats-io/nats.go"
 )
 
 const (
 	defPort          = "5683"
-	defNatsURL       = broker.DefaultURL
+	defNatsURL       = mainflux.DefNatsURL
 	defThingsURL     = "localhost:8181"
 	defLogLevel      = "error"
 	defClientTLS     = "false"
@@ -74,13 +72,6 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
-	nc, err := broker.Connect(cfg.natsURL)
-	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to NATS: %s", err))
-		os.Exit(1)
-	}
-	defer nc.Close()
-
 	conn := connectToThings(cfg, logger)
 	defer conn.Close()
 
@@ -89,8 +80,16 @@ func main() {
 
 	cc := thingsapi.NewClient(conn, thingsTracer, cfg.thingsTimeout)
 	respChan := make(chan string, 10000)
-	pubsub := nats.New(nc)
-	svc := coap.New(pubsub, cc, respChan)
+
+	b, err := broker.New(cfg.natsURL)
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+	defer b.Close()
+
+	svc := coap.New(b, logger, cc, respChan)
+
 	svc = api.LoggingMiddleware(svc, logger)
 
 	svc = api.MetricsMiddleware(

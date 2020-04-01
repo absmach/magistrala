@@ -3,10 +3,10 @@
 
 package transformers
 
-import "github.com/mainflux/mainflux"
+import "github.com/mainflux/mainflux/broker"
 
 // Transformer specifies API form Message transformer.
 type Transformer interface {
 	// Transform Mainflux message to any other format.
-	Transform(mainflux.Message) (interface{}, error)
+	Transform(broker.Message) (interface{}, error)
 }

@@ -16,18 +16,18 @@ import (
 	"time"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+	"github.com/gogo/protobuf/proto"
 	"github.com/mainflux/mainflux"
 	authapi "github.com/mainflux/mainflux/authn/api/grpc"
+	"github.com/mainflux/mainflux/broker"
 	"github.com/mainflux/mainflux/logger"
 	localusers "github.com/mainflux/mainflux/things/users"
 	"github.com/mainflux/mainflux/twins"
 	"github.com/mainflux/mainflux/twins/api"
 	twapi "github.com/mainflux/mainflux/twins/api/http"
 	twmongodb "github.com/mainflux/mainflux/twins/mongodb"
-	natspub "github.com/mainflux/mainflux/twins/nats/publisher"
-	natssub "github.com/mainflux/mainflux/twins/nats/subscriber"
 	"github.com/mainflux/mainflux/twins/uuid"
-	nats "github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go"
 	opentracing "github.com/opentracing/opentracing-go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	jconfig "github.com/uber/jaeger-client-go/config"
@@ -38,6 +38,8 @@ import (
 )
 
 const (
+	queue = "twins"
+
 	defLogLevel        = "info"
 	defHTTPPort        = "9021"
 	defJaegerURL       = ""
@@ -53,7 +55,7 @@ const (
 	defThingID         = ""
 	defThingKey        = ""
 	defChannelID       = ""
-	defNatsURL         = nats.DefaultURL
+	defNatsURL         = mainflux.DefNatsURL
 
 	defAuthnTimeout = "1" // in seconds
 	defAuthnURL     = "localhost:8181"
@@ -93,7 +95,7 @@ type config struct {
 	thingID         string
 	thingKey        string
 	channelID       string
-	NatsURL         string
+	natsURL         string
 
 	authnTimeout time.Duration
 	authnURL     string
@@ -121,12 +123,12 @@ func main() {
 	dbTracer, dbCloser := initJaeger("twins_db", cfg.jaegerURL, logger)
 	defer dbCloser.Close()
 
-	nc, err := nats.Connect(cfg.NatsURL)
+	b, err := broker.New(cfg.natsURL)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to NATS: %s", err))
+		logger.Error(err.Error())
 		os.Exit(1)
 	}
-	defer nc.Close()
+	defer b.Close()
 
 	ncTracer, ncCloser := initJaeger("twins_nats", cfg.jaegerURL, logger)
 	defer ncCloser.Close()
@@ -134,7 +136,7 @@ func main() {
 	tracer, closer := initJaeger("twins", cfg.jaegerURL, logger)
 	defer closer.Close()
 
-	svc := newService(nc, ncTracer, cfg.channelID, auth, dbTracer, db, logger)
+	svc := newService(b, ncTracer, cfg.channelID, auth, dbTracer, db, logger)
 
 	errs := make(chan error, 2)
 
@@ -181,7 +183,7 @@ func loadConfig() config {
 		thingID:         mainflux.Env(envThingID, defThingID),
 		channelID:       mainflux.Env(envChannelID, defChannelID),
 		thingKey:        mainflux.Env(envThingKey, defThingKey),
-		NatsURL:         mainflux.Env(envNatsURL, defNatsURL),
+		natsURL:         mainflux.Env(envNatsURL, defNatsURL),
 		authnURL:        mainflux.Env(envAuthnURL, defAuthnURL),
 		authnTimeout:    time.Duration(timeout) * time.Second,
 	}
@@ -245,15 +247,13 @@ func connectToAuth(cfg config, logger logger.Logger) *grpc.ClientConn {
 	return conn
 }
 
-func newService(nc *nats.Conn, ncTracer opentracing.Tracer, chanID string, users mainflux.AuthNServiceClient, dbTracer opentracing.Tracer, db *mongo.Database, logger logger.Logger) twins.Service {
+func newService(b broker.Nats, ncTracer opentracing.Tracer, chanID string, users mainflux.AuthNServiceClient, dbTracer opentracing.Tracer, db *mongo.Database, logger logger.Logger) twins.Service {
 	twinRepo := twmongodb.NewTwinRepository(db)
 
 	stateRepo := twmongodb.NewStateRepository(db)
 	idp := uuid.New()
 
-	np := natspub.NewPublisher(nc, chanID, logger)
-
-	svc := twins.New(users, twinRepo, stateRepo, idp, np)
+	svc := twins.New(b, users, twinRepo, stateRepo, idp, chanID, logger)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,
@@ -271,7 +271,26 @@ func newService(nc *nats.Conn, ncTracer opentracing.Tracer, chanID string, users
 		}, []string{"method"}),
 	)
 
-	natssub.NewSubscriber(nc, chanID, svc, logger)
+	_, err := b.QueueSubscribe(broker.SubjectAllChannels, queue, func(m *nats.Msg) {
+		var msg broker.Message
+		if err := proto.Unmarshal(m.Data, &msg); err != nil {
+			logger.Warn(fmt.Sprintf("Unmarshalling failed: %s", err))
+			return
+		}
+
+		if msg.Channel == chanID {
+			return
+		}
+
+		if err := svc.SaveStates(&msg); err != nil {
+			logger.Error(fmt.Sprintf("State save failed: %s", err))
+			return
+		}
+	})
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
 
 	return svc
 }

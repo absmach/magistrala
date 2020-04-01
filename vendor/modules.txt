@@ -208,8 +208,6 @@ github.com/rubenv/sql-migrate
 github.com/rubenv/sql-migrate/sqlparse
 # github.com/sirupsen/logrus v1.4.2
 github.com/sirupsen/logrus
-# github.com/sony/gobreaker v0.0.0-20180905101324-b2a34562d02c
-github.com/sony/gobreaker
 # github.com/spf13/afero v1.2.2
 github.com/spf13/afero
 github.com/spf13/afero/mem

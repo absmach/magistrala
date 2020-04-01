@@ -15,16 +15,15 @@ import (
 
 	r "github.com/go-redis/redis"
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/broker"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/opcua"
 	"github.com/mainflux/mainflux/opcua/api"
 	"github.com/mainflux/mainflux/opcua/db"
 	"github.com/mainflux/mainflux/opcua/gopcua"
-	pub "github.com/mainflux/mainflux/opcua/nats"
 	"github.com/mainflux/mainflux/opcua/redis"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
-	nats "github.com/nats-io/nats.go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
@@ -35,7 +34,7 @@ const (
 	defOPCMode        = ""
 	defOPCCertFile    = ""
 	defOPCKeyFile     = ""
-	defNatsURL        = nats.DefaultURL
+	defNatsURL        = mainflux.DefNatsURL
 	defLogLevel       = "debug"
 	defESURL          = "localhost:6379"
 	defESPass         = ""
@@ -88,9 +87,6 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
-	natsConn := connectToNATS(cfg.natsURL, logger)
-	defer natsConn.Close()
-
 	rmConn := connectToRedis(cfg.routeMapURL, cfg.routeMapPass, cfg.routeMapDB, logger)
 	defer rmConn.Close()
 
@@ -101,10 +97,15 @@ func main() {
 	esConn := connectToRedis(cfg.esURL, cfg.esPass, cfg.esDB, logger)
 	defer esConn.Close()
 
-	publisher := pub.NewMessagePublisher(natsConn)
+	b, err := broker.New(cfg.natsURL)
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+	defer b.Close()
 
 	ctx := context.Background()
-	sub := gopcua.NewSubscriber(ctx, publisher, thingRM, chanRM, connRM, logger)
+	sub := gopcua.NewSubscriber(ctx, b, thingRM, chanRM, connRM, logger)
 	browser := gopcua.NewBrowser(ctx, logger)
 
 	svc := opcua.New(sub, browser, thingRM, chanRM, connRM, cfg.opcuaConfig, logger)
@@ -163,17 +164,6 @@ func loadConfig() config {
 		routeMapPass:   mainflux.Env(envRouteMapPass, defRouteMapPass),
 		routeMapDB:     mainflux.Env(envRouteMapDB, defRouteMapDB),
 	}
-}
-
-func connectToNATS(url string, logger logger.Logger) *nats.Conn {
-	conn, err := nats.Connect(url)
-	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to NATS: %s", err))
-		os.Exit(1)
-	}
-
-	logger.Info("Connected to NATS")
-	return conn
 }
 
 func connectToRedis(redisURL, redisPass, redisDB string, logger logger.Logger) *r.Client {

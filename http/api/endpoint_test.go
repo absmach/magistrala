@@ -20,13 +20,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func newService(cc mainflux.ThingsServiceClient) mainflux.MessagePublisher {
+func newService(cc mainflux.ThingsServiceClient) adapter.Service {
 	pub := mocks.NewPublisher()
 	return adapter.New(pub, cc)
 }
 
-func newHTTPServer(pub mainflux.MessagePublisher) *httptest.Server {
-	mux := api.MakeHandler(pub, mocktracer.New())
+func newHTTPServer(svc adapter.Service) *httptest.Server {
+	mux := api.MakeHandler(svc, mocktracer.New())
 	return httptest.NewServer(mux)
 }
 
@@ -60,8 +60,8 @@ func TestPublish(t *testing.T) {
 	invalidToken := "invalid_token"
 	msg := `[{"n":"current","t":-1,"v":1.6}]`
 	thingsClient := mocks.NewThingsClient(map[string]string{token: chanID})
-	pub := newService(thingsClient)
-	ts := newHTTPServer(pub)
+	svc := newService(thingsClient)
+	ts := newHTTPServer(svc)
 	defer ts.Close()
 
 	cases := map[string]struct {

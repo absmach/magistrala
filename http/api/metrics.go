@@ -10,19 +10,20 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/metrics"
-	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/broker"
+	"github.com/mainflux/mainflux/http"
 )
 
-var _ mainflux.MessagePublisher = (*metricsMiddleware)(nil)
+var _ http.Service = (*metricsMiddleware)(nil)
 
 type metricsMiddleware struct {
 	counter metrics.Counter
 	latency metrics.Histogram
-	svc     mainflux.MessagePublisher
+	svc     http.Service
 }
 
 // MetricsMiddleware instruments adapter by tracking request count and latency.
-func MetricsMiddleware(svc mainflux.MessagePublisher, counter metrics.Counter, latency metrics.Histogram) mainflux.MessagePublisher {
+func MetricsMiddleware(svc http.Service, counter metrics.Counter, latency metrics.Histogram) http.Service {
 	return &metricsMiddleware{
 		counter: counter,
 		latency: latency,
@@ -30,7 +31,7 @@ func MetricsMiddleware(svc mainflux.MessagePublisher, counter metrics.Counter, l
 	}
 }
 
-func (mm *metricsMiddleware) Publish(ctx context.Context, token string, msg mainflux.Message) error {
+func (mm *metricsMiddleware) Publish(ctx context.Context, token string, msg broker.Message) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "publish").Add(1)
 		mm.latency.With("method", "publish").Observe(time.Since(begin).Seconds())

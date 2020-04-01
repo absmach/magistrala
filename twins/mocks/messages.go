@@ -14,11 +14,11 @@ import (
 var _ broker.Nats = (*mockBroker)(nil)
 
 type mockBroker struct {
-	subscriptions map[string]*ws.Channel
+	subscriptions map[string]string
 }
 
 // New returns mock message publisher.
-func New(sub map[string]*ws.Channel) broker.Nats {
+func New(sub map[string]string) broker.Nats {
 	return &mockBroker{
 		subscriptions: sub,
 	}

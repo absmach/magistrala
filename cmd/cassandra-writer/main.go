@@ -16,12 +16,12 @@ import (
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/gocql/gocql"
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/broker"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/transformers/senml"
 	"github.com/mainflux/mainflux/writers"
 	"github.com/mainflux/mainflux/writers/api"
 	"github.com/mainflux/mainflux/writers/cassandra"
-	nats "github.com/nats-io/nats.go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
@@ -29,7 +29,7 @@ const (
 	svcName = "cassandra-writer"
 	sep     = ","
 
-	defNatsURL         = nats.DefaultURL
+	defNatsURL         = mainflux.DefNatsURL
 	defLogLevel        = "error"
 	defPort            = "8180"
 	defCluster         = "127.0.0.1"
@@ -66,15 +66,19 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
-	nc := connectToNATS(cfg.natsURL, logger)
-	defer nc.Close()
+	b, err := broker.New(cfg.natsURL)
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+	defer b.Close()
 
 	session := connectToCassandra(cfg.dbCfg, logger)
 	defer session.Close()
 
 	repo := newService(session, logger)
 	st := senml.New()
-	if err := writers.Start(nc, repo, st, svcName, cfg.subjectsCfgPath, logger); err != nil {
+	if err := writers.Start(b, repo, st, svcName, cfg.subjectsCfgPath, logger); err != nil {
 		logger.Error(fmt.Sprintf("Failed to create Cassandra writer: %s", err))
 	}
 
@@ -113,16 +117,6 @@ func loadConfig() config {
 		dbCfg:           dbCfg,
 		subjectsCfgPath: mainflux.Env(envSubjectsCfgPath, defSubjectsCfgPath),
 	}
-}
-
-func connectToNATS(url string, logger logger.Logger) *nats.Conn {
-	nc, err := nats.Connect(url)
-	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to NATS: %s", err))
-		os.Exit(1)
-	}
-
-	return nc
 }
 
 func connectToCassandra(dbCfg cassandra.DBConfig, logger logger.Logger) *gocql.Session {

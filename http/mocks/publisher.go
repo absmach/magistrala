@@ -6,18 +6,28 @@ package mocks
 import (
 	"context"
 
-	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/broker"
+	"github.com/nats-io/nats.go"
 )
-
-var _ (mainflux.MessagePublisher) = (*mockPublisher)(nil)
 
 type mockPublisher struct{}
 
 // NewPublisher returns mock message publisher.
-func NewPublisher() mainflux.MessagePublisher {
+func NewPublisher() broker.Nats {
 	return mockPublisher{}
 }
 
-func (pub mockPublisher) Publish(_ context.Context, _ string, msg mainflux.Message) error {
+func (pub mockPublisher) Publish(_ context.Context, _ string, msg broker.Message) error {
 	return nil
+}
+
+func (pub mockPublisher) Subscribe(subject string, f func(*nats.Msg)) (*nats.Subscription, error) {
+	return nil, nil
+}
+
+func (pub mockPublisher) QueueSubscribe(subject, queue string, f func(*nats.Msg)) (*nats.Subscription, error) {
+	return nil, nil
+}
+
+func (pub mockPublisher) Close() {
 }

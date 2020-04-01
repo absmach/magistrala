@@ -6,7 +6,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"net/url"
@@ -17,6 +16,7 @@ import (
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/bootstrap"
+	"github.com/mainflux/mainflux/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -29,6 +29,8 @@ const (
 var (
 	errUnsupportedContentType = errors.New("unsupported content type")
 	errInvalidQueryParams     = errors.New("invalid query params")
+	errInvalidLimitParam      = errors.New("invalid limit query param")
+	errInvalidOffsetParam     = errors.New("invalid offset query param")
 	fullMatch                 = []string{"state", "external_id", "mainflux_id", "mainflux_key"}
 	partialMatch              = []string{"name"}
 )
@@ -119,7 +121,7 @@ func decodeAddRequest(_ context.Context, r *http.Request) (interface{}, error) {
 
 	req := addReq{key: r.Header.Get("Authorization")}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
+		return nil, errors.Wrap(bootstrap.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -133,7 +135,7 @@ func decodeUpdateRequest(_ context.Context, r *http.Request) (interface{}, error
 	req := updateReq{key: r.Header.Get("Authorization")}
 	req.id = bone.GetValue(r, "id")
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
+		return nil, errors.Wrap(bootstrap.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -150,7 +152,7 @@ func decodeUpdateCertRequest(_ context.Context, r *http.Request) (interface{}, e
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
+		return nil, errors.Wrap(bootstrap.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -164,7 +166,7 @@ func decodeUpdateConnRequest(_ context.Context, r *http.Request) (interface{}, e
 	req := updateConnReq{key: r.Header.Get("Authorization")}
 	req.id = bone.GetValue(r, "id")
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
+		return nil, errors.Wrap(bootstrap.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -231,7 +233,7 @@ func decodeStateRequest(_ context.Context, r *http.Request) (interface{}, error)
 	req := changeStateReq{key: r.Header.Get("Authorization")}
 	req.id = bone.GetValue(r, "id")
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
+		return nil, errors.Wrap(bootstrap.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -275,32 +277,38 @@ func encodeSecureRes(_ context.Context, w http.ResponseWriter, response interfac
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
-	w.Header().Set("Content-Type", contentType)
-
-	switch err {
-	case errUnsupportedContentType:
-		w.WriteHeader(http.StatusUnsupportedMediaType)
-	case errInvalidQueryParams, bootstrap.ErrMalformedEntity:
-		w.WriteHeader(http.StatusBadRequest)
-	case bootstrap.ErrNotFound:
-		w.WriteHeader(http.StatusNotFound)
-	case bootstrap.ErrUnauthorizedAccess:
-		w.WriteHeader(http.StatusForbidden)
-	case bootstrap.ErrConflict:
-		w.WriteHeader(http.StatusConflict)
-	case bootstrap.ErrThings:
-		w.WriteHeader(http.StatusServiceUnavailable)
-	case io.EOF:
-		w.WriteHeader(http.StatusBadRequest)
-	default:
-		switch err.(type) {
-		case *json.SyntaxError:
+	switch errorVal := err.(type) {
+	case errors.Error:
+		w.Header().Set("Content-Type", contentType)
+		switch {
+		case errors.Contains(errorVal, errUnsupportedContentType):
+			w.WriteHeader(http.StatusUnsupportedMediaType)
+		case errors.Contains(errorVal, errInvalidQueryParams):
 			w.WriteHeader(http.StatusBadRequest)
-		case *json.UnmarshalTypeError:
+		case errors.Contains(errorVal, bootstrap.ErrMalformedEntity):
+			w.WriteHeader(http.StatusBadRequest)
+		case errors.Contains(errorVal, bootstrap.ErrNotFound):
+			w.WriteHeader(http.StatusNotFound)
+		case errors.Contains(errorVal, bootstrap.ErrUnauthorizedAccess):
+			w.WriteHeader(http.StatusForbidden)
+		case errors.Contains(errorVal, bootstrap.ErrConflict):
+			w.WriteHeader(http.StatusConflict)
+		case errors.Contains(errorVal, bootstrap.ErrThings):
+			w.WriteHeader(http.StatusServiceUnavailable)
+		case errors.Contains(errorVal, io.EOF):
+			w.WriteHeader(http.StatusBadRequest)
+		case errors.Contains(errorVal, io.ErrUnexpectedEOF):
 			w.WriteHeader(http.StatusBadRequest)
 		default:
 			w.WriteHeader(http.StatusInternalServerError)
 		}
+		if errorVal.Msg() != "" {
+			if err := json.NewEncoder(w).Encode(errorRes{Err: errorVal.Msg()}); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+			}
+		}
+	default:
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
 
@@ -321,13 +329,13 @@ func parsePagePrams(q url.Values) (uint64, uint64, error) {
 	offset, err := parseUint(q.Get("offset"))
 	q.Del("offset")
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, errors.Wrap(errInvalidOffsetParam, err)
 	}
 
 	limit, err := parseUint(q.Get("limit"))
 	q.Del("limit")
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, errors.Wrap(errInvalidLimitParam, err)
 	}
 
 	if limit > maxLimit {

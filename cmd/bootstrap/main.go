@@ -336,6 +336,6 @@ func subscribeToThingsES(svc bootstrap.Service, client *r.Client, consumer strin
 	eventStore := rediscons.NewEventStore(svc, client, consumer, logger)
 	logger.Info("Subscribed to Redis Event Store")
 	if err := eventStore.Subscribe("mainflux.things"); err != nil {
-		logger.Warn(fmt.Sprintf("Botstrap service failed to subscribe to event sourcing: %s", err))
+		logger.Warn(fmt.Sprintf("Bootstrap service failed to subscribe to event sourcing: %s", err))
 	}
 }

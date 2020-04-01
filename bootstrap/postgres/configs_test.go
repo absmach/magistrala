@@ -11,6 +11,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/mainflux/mainflux/bootstrap"
 	"github.com/mainflux/mainflux/bootstrap/postgres"
+	"github.com/mainflux/mainflux/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -90,7 +91,7 @@ func TestSave(t *testing.T) {
 	}
 	for _, tc := range cases {
 		_, err := repo.Save(tc.config, tc.connections)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -146,7 +147,7 @@ func TestRetrieveByID(t *testing.T) {
 	}
 	for _, tc := range cases {
 		_, err := repo.RetrieveByID(tc.owner, tc.id)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -265,7 +266,7 @@ func TestRetrieveByExternalID(t *testing.T) {
 	}
 	for _, tc := range cases {
 		_, err := repo.RetrieveByExternalID(tc.externalID)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -310,7 +311,7 @@ func TestUpdate(t *testing.T) {
 	}
 	for _, tc := range cases {
 		err := repo.Update(tc.config)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -366,7 +367,7 @@ func TestUpdateCert(t *testing.T) {
 	}
 	for _, tc := range cases {
 		err := repo.UpdateCert(tc.owner, tc.key, tc.cert, tc.key, tc.ca)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -439,7 +440,7 @@ func TestUpdateConnections(t *testing.T) {
 	}
 	for _, tc := range cases {
 		err := repo.UpdateConnections(tc.key, tc.id, tc.channels, tc.connections)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -466,7 +467,7 @@ func TestRemove(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("%d: failed to remove config due to: %s", i, err))
 
 		_, err = repo.RetrieveByID(c.Owner, id)
-		require.Equal(t, bootstrap.ErrNotFound, err, fmt.Sprintf("%d: expected %s got %s", i, bootstrap.ErrNotFound, err))
+		require.True(t, errors.Contains(err, bootstrap.ErrNotFound), fmt.Sprintf("%d: expected %s got %s", i, bootstrap.ErrNotFound, err))
 	}
 }
 
@@ -522,7 +523,7 @@ func TestChangeState(t *testing.T) {
 	}
 	for _, tc := range cases {
 		err := repo.ChangeState(tc.owner, tc.id, tc.state)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -603,7 +604,7 @@ func TestSaveUnknown(t *testing.T) {
 	}
 	for _, tc := range cases {
 		err := repo.SaveUnknown(tc.externalKey, tc.externalID)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 

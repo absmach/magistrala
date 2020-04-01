@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/errors"
 	"github.com/opentracing/opentracing-go/mocktracer"
 
 	"github.com/mainflux/mainflux/bootstrap"
@@ -141,7 +142,7 @@ func TestAdd(t *testing.T) {
 	lastID := "0"
 	for _, tc := range cases {
 		_, err := svc.Add(tc.key, tc.config)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(&redis.XReadArgs{
 			Streams: []string{streamID, lastID},
@@ -298,7 +299,7 @@ func TestUpdateConnections(t *testing.T) {
 	lastID := "0"
 	for _, tc := range cases {
 		err := svc.UpdateConnections(tc.key, tc.id, tc.connections)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(&redis.XReadArgs{
 			Streams: []string{streamID, lastID},
@@ -448,7 +449,7 @@ func TestBootstrap(t *testing.T) {
 	lastID := "0"
 	for _, tc := range cases {
 		_, err := svc.Bootstrap(tc.externalKey, tc.externalID, false)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(&redis.XReadArgs{
 			Streams: []string{streamID, lastID},

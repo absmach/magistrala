@@ -8,10 +8,10 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"encoding/hex"
-	"errors"
 	"time"
 
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/errors"
 	mfsdk "github.com/mainflux/mainflux/sdk/go"
 )
 
@@ -31,7 +31,28 @@ var (
 
 	// ErrThings indicates failure to communicate with Mainflux Things service.
 	// It can be due to networking error or invalid/unauthorized request.
-	ErrThings = errors.New("error receiving response from Things service")
+	ErrThings = errors.New("failed to receive response from Things service")
+
+	// ErrExternalKeyNotFound indicates a non-existent bootstrap configuration for given external key
+	ErrExternalKeyNotFound = errors.New("failed to get bootstrap configuration for given external key")
+
+	// ErrSecureBootstrap indicates erron in getting bootstrap configuration for given encrypted external key
+	ErrSecureBootstrap = errors.New("failed to get bootstrap configuration for given encrypted external key")
+
+	errAddBootstrap       = errors.New("failed to add bootstrap configuration")
+	errUpdateConnections  = errors.New("failed to update connections")
+	errRemoveBootstrap    = errors.New("failed to remove bootstrap configuration")
+	errBootstrap          = errors.New("failed to read bootstrap configuration")
+	errChangeState        = errors.New("failed to change state of bootstrap configuration")
+	errUpdateChannel      = errors.New("failed to update channel")
+	errRemoveConfig       = errors.New("failed to remove bootstrap configuration")
+	errRemoveChannel      = errors.New("failed to remove channel")
+	errCreateThing        = errors.New("failed to create thing")
+	errDisconnectThing    = errors.New("failed to disconnect thing")
+	errThingNotFound      = errors.New("thing not found")
+	errCheckChannels      = errors.New("failed to check if channels exists")
+	errConnectionChannels = errors.New("failed to check channels connections")
+	errUpdateCert         = errors.New("failed to update cert")
 )
 
 var _ Service = (*bootstrapService)(nil)
@@ -121,19 +142,19 @@ func (bs bootstrapService) Add(key string, cfg Config) (Config, error) {
 	// Check if channels exist. This is the way to prevent fetching channels that already exist.
 	existing, err := bs.configs.ListExisting(owner, toConnect)
 	if err != nil {
-		return Config{}, err
+		return Config{}, errors.Wrap(errCheckChannels, err)
 	}
 
 	cfg.MFChannels, err = bs.connectionChannels(toConnect, bs.toIDList(existing), key)
 
 	if err != nil {
-		return Config{}, err
+		return Config{}, errors.Wrap(errConnectionChannels, err)
 	}
 
 	id := cfg.MFThing
 	mfThing, err := bs.thing(key, id)
 	if err != nil {
-		return Config{}, err
+		return Config{}, errors.Wrap(errAddBootstrap, err)
 	}
 
 	cfg.MFThing = mfThing.ID
@@ -147,7 +168,7 @@ func (bs bootstrapService) Add(key string, cfg Config) (Config, error) {
 			// Fail silently.
 			bs.sdk.DeleteThing(cfg.MFThing, key)
 		}
-		return Config{}, err
+		return Config{}, errors.Wrap(errAddBootstrap, err)
 	}
 
 	cfg.MFThing = saved
@@ -181,7 +202,10 @@ func (bs bootstrapService) UpdateCert(key, thingID, clientCert, clientKey, caCer
 	if err != nil {
 		return err
 	}
-	return bs.configs.UpdateCert(owner, thingID, clientCert, clientKey, caCert)
+	if err := bs.configs.UpdateCert(owner, thingID, clientCert, clientKey, caCert); err != nil {
+		return errors.Wrap(errUpdateCert, err)
+	}
+	return nil
 }
 
 func (bs bootstrapService) UpdateConnections(key, id string, connections []string) error {
@@ -192,7 +216,7 @@ func (bs bootstrapService) UpdateConnections(key, id string, connections []strin
 
 	cfg, err := bs.configs.RetrieveByID(owner, id)
 	if err != nil {
-		return err
+		return errors.Wrap(errUpdateConnections, err)
 	}
 
 	add, remove := bs.updateList(cfg, connections)
@@ -200,12 +224,12 @@ func (bs bootstrapService) UpdateConnections(key, id string, connections []strin
 	// Check if channels exist. This is the way to prevent fetching channels that already exist.
 	existing, err := bs.configs.ListExisting(owner, connections)
 	if err != nil {
-		return err
+		return errors.Wrap(errUpdateConnections, err)
 	}
 
 	channels, err := bs.connectionChannels(connections, bs.toIDList(existing), key)
 	if err != nil {
-		return err
+		return errors.Wrap(errUpdateConnections, err)
 	}
 
 	cfg.MFChannels = channels
@@ -259,30 +283,32 @@ func (bs bootstrapService) Remove(key, id string) error {
 	if err != nil {
 		return err
 	}
-
-	return bs.configs.Remove(owner, id)
+	if err := bs.configs.Remove(owner, id); err != nil {
+		return errors.Wrap(errRemoveBootstrap, err)
+	}
+	return nil
 }
 
 func (bs bootstrapService) Bootstrap(externalKey, externalID string, secure bool) (Config, error) {
 	cfg, err := bs.configs.RetrieveByExternalID(externalID)
 	if err != nil {
-		if err == ErrNotFound {
+		if errors.Contains(err, ErrNotFound) {
 			bs.configs.SaveUnknown(externalKey, externalID)
 			return Config{}, ErrNotFound
 		}
-		return cfg, err
+		return cfg, errors.Wrap(errBootstrap, err)
 	}
 
 	if secure {
 		dec, err := bs.dec(externalKey)
 		if err != nil {
-			return Config{}, err
+			return Config{}, errors.Wrap(ErrSecureBootstrap, err)
 		}
 		externalKey = dec
 	}
 
 	if cfg.ExternalKey != externalKey {
-		return Config{}, ErrNotFound
+		return Config{}, errors.Wrap(ErrExternalKeyNotFound, ErrNotFound)
 	}
 
 	return cfg, nil
@@ -296,7 +322,7 @@ func (bs bootstrapService) ChangeState(key, id string, state State) error {
 
 	cfg, err := bs.configs.RetrieveByID(owner, id)
 	if err != nil {
-		return err
+		return errors.Wrap(errChangeState, err)
 	}
 
 	if cfg.State == state {
@@ -324,24 +350,38 @@ func (bs bootstrapService) ChangeState(key, id string, state State) error {
 			}
 		}
 	}
-
-	return bs.configs.ChangeState(owner, id, state)
+	if err := bs.configs.ChangeState(owner, id, state); err != nil {
+		return errors.Wrap(errChangeState, err)
+	}
+	return nil
 }
 
 func (bs bootstrapService) UpdateChannelHandler(channel Channel) error {
-	return bs.configs.UpdateChannel(channel)
+	if err := bs.configs.UpdateChannel(channel); err != nil {
+		return errors.Wrap(errUpdateChannel, err)
+	}
+	return nil
 }
 
 func (bs bootstrapService) RemoveConfigHandler(id string) error {
-	return bs.configs.RemoveThing(id)
+	if err := bs.configs.RemoveThing(id); err != nil {
+		return errors.Wrap(errRemoveConfig, err)
+	}
+	return nil
 }
 
 func (bs bootstrapService) RemoveChannelHandler(id string) error {
-	return bs.configs.RemoveChannel(id)
+	if err := bs.configs.RemoveChannel(id); err != nil {
+		return errors.Wrap(errRemoveChannel, err)
+	}
+	return nil
 }
 
 func (bs bootstrapService) DisconnectThingHandler(channelID, thingID string) error {
-	return bs.configs.DisconnectThing(channelID, thingID)
+	if err := bs.configs.DisconnectThing(channelID, thingID); err != nil {
+		return errors.Wrap(errDisconnectThing, err)
+	}
+	return nil
 }
 
 func (bs bootstrapService) identify(token string) (string, error) {
@@ -364,14 +404,14 @@ func (bs bootstrapService) thing(key, id string) (mfsdk.Thing, error) {
 	if id == "" {
 		thingID, err = bs.sdk.CreateThing(mfsdk.Thing{}, key)
 		if err != nil {
-			return mfsdk.Thing{}, err
+			return mfsdk.Thing{}, errors.Wrap(errCreateThing, err)
 		}
 	}
 
 	thing, err := bs.sdk.Thing(thingID, key)
 	if err != nil {
 		if err == mfsdk.ErrNotFound {
-			return mfsdk.Thing{}, ErrNotFound
+			return mfsdk.Thing{}, errors.Wrap(errThingNotFound, ErrNotFound)
 		}
 
 		if id != "" {
@@ -400,7 +440,7 @@ func (bs bootstrapService) connectionChannels(channels, existing []string, key s
 	for id := range add {
 		ch, err := bs.sdk.Channel(id, key)
 		if err != nil {
-			return nil, ErrMalformedEntity
+			return nil, errors.Wrap(ErrMalformedEntity, err)
 		}
 
 		ret = append(ret, Channel{

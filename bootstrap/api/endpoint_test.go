@@ -78,6 +78,12 @@ var (
 		ClientKey:  "newkey",
 		CACert:     "newca",
 	}
+
+	notFoundRes          = toJSON(errorRes{bootstrap.ErrNotFound.Error()})
+	unauthRes            = toJSON(errorRes{bootstrap.ErrUnauthorizedAccess.Error()})
+	malformedRes         = toJSON(errorRes{bootstrap.ErrMalformedEntity.Error()})
+	extKeyNotFoundRes    = toJSON(errorRes{bootstrap.ErrExternalKeyNotFound.Error()})
+	extSecKeyNotFoundRes = toJSON(errorRes{bootstrap.ErrSecureBootstrap.Error()})
 )
 
 type testRequest struct {
@@ -1175,7 +1181,7 @@ func TestBootstrap(t *testing.T) {
 			external_id:  unknown,
 			external_key: c.ExternalKey,
 			status:       http.StatusNotFound,
-			res:          "",
+			res:          notFoundRes,
 			secure:       false,
 		},
 		{
@@ -1183,7 +1189,7 @@ func TestBootstrap(t *testing.T) {
 			external_id:  "",
 			external_key: c.ExternalKey,
 			status:       http.StatusBadRequest,
-			res:          "",
+			res:          malformedRes,
 			secure:       false,
 		},
 		{
@@ -1191,7 +1197,7 @@ func TestBootstrap(t *testing.T) {
 			external_id:  c.ExternalID,
 			external_key: unknown,
 			status:       http.StatusNotFound,
-			res:          "",
+			res:          extKeyNotFoundRes,
 			secure:       false,
 		},
 		{
@@ -1199,7 +1205,7 @@ func TestBootstrap(t *testing.T) {
 			external_id:  c.ExternalID,
 			external_key: "",
 			status:       http.StatusForbidden,
-			res:          "",
+			res:          unauthRes,
 			secure:       false,
 		},
 		{
@@ -1223,7 +1229,7 @@ func TestBootstrap(t *testing.T) {
 			external_id:  fmt.Sprintf("secure/%s", c.ExternalID),
 			external_key: c.ExternalKey,
 			status:       http.StatusNotFound,
-			res:          "",
+			res:          extSecKeyNotFoundRes,
 			secure:       true,
 		},
 	}
@@ -1241,7 +1247,7 @@ func TestBootstrap(t *testing.T) {
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		body, err := ioutil.ReadAll(res.Body)
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		if tc.secure {
+		if tc.secure && tc.status == http.StatusOK {
 			body, err = dec(body)
 		}
 
@@ -1376,4 +1382,8 @@ type configPage struct {
 	Offset  uint64   `json:"offset"`
 	Limit   uint64   `json:"limit"`
 	Configs []config `json:"configs"`
+}
+
+type errorRes struct {
+	Err string `json:"error"`
 }

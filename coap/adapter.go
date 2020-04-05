@@ -47,14 +47,14 @@ var (
 // Service specifies coap service API.
 type Service interface {
 	// Publish Messssage
-	Publish(context.Context, string, broker.Message) error
+	Publish(ctx context.Context, token string, msg broker.Message) error
 
 	// Subscribes to channel with specified id, subtopic and adds subscription to
 	// service map of subscriptions under given ID.
-	Subscribe(string, string, string, *Observer) error
+	Subscribe(chanID, subtopic, obsID string, obs *Observer) error
 
 	// Unsubscribe method is used to stop observing resource.
-	Unsubscribe(string)
+	Unsubscribe(obsID string)
 }
 
 var _ Service = (*adapterService)(nil)

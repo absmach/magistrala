@@ -9,5 +9,5 @@ import "github.com/mainflux/mainflux/transformers/senml"
 type MessageRepository interface {
 	// Save method is used to save published message. A non-nil
 	// error is returned to indicate  operation failure.
-	Save(...senml.Message) error
+	Save(messages ...senml.Message) error
 }

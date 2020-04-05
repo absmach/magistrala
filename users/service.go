@@ -52,12 +52,12 @@ var (
 type Service interface {
 	// Register creates new user account. In case of the failed registration, a
 	// non-nil error value is returned.
-	Register(context.Context, User) error
+	Register(ctx context.Context, user User) error
 
 	// Login authenticates the user given its credentials. Successful
 	// authentication generates new access token. Failed invocations are
 	// identified by the non-nil error values in the response.
-	Login(context.Context, User) (string, error)
+	Login(ctx context.Context, user User) (string, error)
 
 	// Get authenticated user info for the given token.
 	UserInfo(ctx context.Context, token string) (User, error)
@@ -67,17 +67,17 @@ type Service interface {
 
 	// GenerateResetToken email where mail will be sent.
 	// host is used for generating reset link.
-	GenerateResetToken(_ context.Context, email, host string) error
+	GenerateResetToken(ctx context.Context, email, host string) error
 
 	// ChangePassword change users password for authenticated user.
-	ChangePassword(_ context.Context, authToken, password, oldPassword string) error
+	ChangePassword(ctx context.Context, authToken, password, oldPassword string) error
 
 	// ResetPassword change users password in reset flow.
 	// token can be authentication token or password reset token.
-	ResetPassword(_ context.Context, resetToken, password string) error
+	ResetPassword(ctx context.Context, resetToken, password string) error
 
 	//SendPasswordReset sends reset password link to email.
-	SendPasswordReset(_ context.Context, host, email, token string) error
+	SendPasswordReset(ctx context.Context, host, email, token string) error
 }
 
 var _ Service = (*usersService)(nil)

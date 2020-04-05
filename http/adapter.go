@@ -15,7 +15,7 @@ import (
 // Service specifies coap service API.
 type Service interface {
 	// Publish Messssage
-	Publish(context.Context, string, broker.Message) error
+	Publish(ctx context.Context, token string, msg broker.Message) error
 }
 
 var _ Service = (*adapterService)(nil)

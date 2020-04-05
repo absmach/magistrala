@@ -61,48 +61,48 @@ var _ Service = (*bootstrapService)(nil)
 // implementation, and all of its decorators (e.g. logging & metrics).
 type Service interface {
 	// Add adds new Thing Config to the user identified by the provided key.
-	Add(string, Config) (Config, error)
+	Add(key string, cfg Config) (Config, error)
 
 	// View returns Thing Config with given ID belonging to the user identified by the given key.
-	View(string, string) (Config, error)
+	View(key, id string) (Config, error)
 
 	// Update updates editable fields of the provided Config.
-	Update(string, Config) error
+	Update(key string, cfg Config) error
 
 	// UpdateCert updates an existing Config certificate and key.
 	// A non-nil error is returned to indicate operation failure.
-	UpdateCert(string, string, string, string, string) error
+	UpdateCert(key, thingID, clientCert, clientKey, caCert string) error
 
 	// UpdateConnections updates list of Channels related to given Config.
-	UpdateConnections(string, string, []string) error
+	UpdateConnections(key, id string, connections []string) error
 
 	// List returns subset of Configs with given search params that belong to the
 	// user identified by the given key.
-	List(string, Filter, uint64, uint64) (ConfigsPage, error)
+	List(key string, filter Filter, offset, limit uint64) (ConfigsPage, error)
 
 	// Remove removes Config with specified key that belongs to the user identified by the given key.
-	Remove(string, string) error
+	Remove(key, id string) error
 
 	// Bootstrap returns Config to the Thing with provided external ID using external key.
-	Bootstrap(string, string, bool) (Config, error)
+	Bootstrap(externalKey, externalID string, secure bool) (Config, error)
 
 	// ChangeState changes state of the Thing with given ID and owner.
-	ChangeState(string, string, State) error
+	ChangeState(key, id string, state State) error
 
 	// Methods RemoveConfig, UpdateChannel, and RemoveChannel are used as
 	// handlers for events. That's why these methods surpass ownership check.
 
-	// RemoveConfigHandler removes Configuration with id received from an event.
-	RemoveConfigHandler(string) error
-
 	// UpdateChannelHandler updates Channel with data received from an event.
-	UpdateChannelHandler(Channel) error
+	UpdateChannelHandler(channel Channel) error
+
+	// RemoveConfigHandler removes Configuration with id received from an event.
+	RemoveConfigHandler(id string) error
 
 	// RemoveChannelHandler removes Channel with id received from an event.
-	RemoveChannelHandler(string) error
+	RemoveChannelHandler(id string) error
 
 	// DisconnectHandler changes state of the Config when connect/disconnect event occurs.
-	DisconnectThingHandler(string, string) error
+	DisconnectThingHandler(channelID, thingID string) error
 }
 
 // ConfigReader is used to parse Config into format which will be encoded

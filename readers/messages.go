@@ -16,7 +16,7 @@ var ErrNotFound = errors.New("entity not found")
 type MessageRepository interface {
 	// ReadAll skips given number of messages for given channel and returns next
 	// limited number of messages.
-	ReadAll(string, uint64, uint64, map[string]string) (MessagesPage, error)
+	ReadAll(chanID string, offset, limit uint64, query map[string]string) (MessagesPage, error)
 }
 
 // MessagesPage contains page related metadata as well as list of messages that

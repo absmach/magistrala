@@ -42,35 +42,35 @@ var (
 // implementation, and all of its decorators (e.g. logging & metrics).
 type Service interface {
 	// AddTwin adds new twin related to user identified by the provided key.
-	AddTwin(context.Context, string, Twin, Definition) (Twin, error)
+	AddTwin(ctx context.Context, token string, twin Twin, def Definition) (tw Twin, err error)
 
 	// UpdateTwin updates twin identified by the provided Twin that
 	// belongs to the user identified by the provided key.
-	UpdateTwin(context.Context, string, Twin, Definition) error
+	UpdateTwin(ctx context.Context, token string, twin Twin, def Definition) (err error)
 
 	// ViewTwin retrieves data about twin with the provided
 	// ID belonging to the user identified by the provided key.
-	ViewTwin(context.Context, string, string) (Twin, error)
+	ViewTwin(ctx context.Context, token, id string) (tw Twin, err error)
 
-	// ListTwins retrieves data about subset of twins that belongs to the
-	// user identified by the provided key.
-	ListTwins(context.Context, string, uint64, uint64, string, Metadata) (TwinsPage, error)
-
-	// ListStates retrieves data about subset of states that belongs to the
-	// twin identified by the id.
-	ListStates(context.Context, string, uint64, uint64, string) (StatesPage, error)
-
-	// SaveStates persists states into database
-	SaveStates(*broker.Message) error
-
-	// ListTwinsByThing retrieves data about subset of twins that represent
+	// ViewTwinByThing retrieves data about subset of twins that represent
 	// specified thing belong to the user identified by
 	// the provided key.
-	ViewTwinByThing(context.Context, string, string) (Twin, error)
+	ViewTwinByThing(ctx context.Context, token, thingid string) (Twin, error)
 
 	// RemoveTwin removes the twin identified with the provided ID, that
 	// belongs to the user identified by the provided key.
-	RemoveTwin(context.Context, string, string) error
+	RemoveTwin(ctx context.Context, token, id string) (err error)
+
+	// ListTwins retrieves data about subset of twins that belongs to the
+	// user identified by the provided key.
+	ListTwins(ctx context.Context, token string, offset uint64, limit uint64, name string, metadata Metadata) (TwinsPage, error)
+
+	// ListStates retrieves data about subset of states that belongs to the
+	// twin identified by the id.
+	ListStates(ctx context.Context, token string, offset uint64, limit uint64, id string) (StatesPage, error)
+
+	// SaveStates persists states into database
+	SaveStates(msg *broker.Message) error
 }
 
 const (

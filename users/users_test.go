@@ -45,6 +45,27 @@ func TestValidate(t *testing.T) {
 			},
 			err: nil,
 		},
+		"validate user with valid domain and subdomain": {
+			user: users.User{
+				Email:    "user@example.sub.domain.com",
+				Password: password,
+			},
+			err: nil,
+		},
+		"validate user with invalid subdomain": {
+			user: users.User{
+				Email:    "user@example..domain.com",
+				Password: password,
+			},
+			err: users.ErrMalformedEntity,
+		},
+		"validate user with invalid domain": {
+			user: users.User{
+				Email:    "user@.sub.com",
+				Password: password,
+			},
+			err: users.ErrMalformedEntity,
+		},
 		"validate user with empty email": {
 			user: users.User{
 				Email:    "",

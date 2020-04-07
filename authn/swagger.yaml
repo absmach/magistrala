@@ -21,7 +21,7 @@ paths:
           description: JSON-formatted document describing the new key.
           in: body
           schema:
-            $ref: "#/definitions/Key"
+            $ref: "#/definitions/KeyRequest"
           required: true
       responses:
         201:
@@ -111,8 +111,23 @@ definitions:
         format: date-time
         example: "2019-11-26 13:31:52"
         description: Time when the Key expires
-    required:
-      - type
+  KeyRequest:
+    type: object
+    properties:
+      type:
+        type: integer
+        example: 0
+        description: API key type. Keys of different type are processed differently
+      issuer:
+        type: string
+        format: e-mail
+        example: "test@example.com"
+        description: User's email or service identifier of API key issuer
+      duration:
+        type: number
+        format: integer
+        example: 23456
+        description: Number of seconds issued token is valid for.
 
 parameters:
   Authorization:

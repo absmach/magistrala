@@ -31,34 +31,34 @@ import (
 )
 
 const (
-	defClientTLS     = "false"
-	defCACerts       = ""
-	defPort          = "8180"
-	defLogLevel      = "error"
-	defNatsURL       = mainflux.DefNatsURL
-	defThingsURL     = "localhost:8181"
-	defJaegerURL     = ""
-	defThingsTimeout = "1" // in seconds
+	defLogLevel          = "error"
+	defClientTLS         = "false"
+	defCACerts           = ""
+	defPort              = "8180"
+	defNatsURL           = "nats://localhost:4222"
+	defJaegerURL         = ""
+	defThingsAuthURL     = "localhost:8181"
+	defThingsAuthTimeout = "1" // in seconds
 
-	envClientTLS     = "MF_HTTP_ADAPTER_CLIENT_TLS"
-	envCACerts       = "MF_HTTP_ADAPTER_CA_CERTS"
-	envPort          = "MF_HTTP_ADAPTER_PORT"
-	envLogLevel      = "MF_HTTP_ADAPTER_LOG_LEVEL"
-	envNatsURL       = "MF_NATS_URL"
-	envThingsURL     = "MF_THINGS_URL"
-	envJaegerURL     = "MF_JAEGER_URL"
-	envThingsTimeout = "MF_HTTP_ADAPTER_THINGS_TIMEOUT"
+	envLogLevel          = "MF_HTTP_ADAPTER_LOG_LEVEL"
+	envClientTLS         = "MF_HTTP_ADAPTER_CLIENT_TLS"
+	envCACerts           = "MF_HTTP_ADAPTER_CA_CERTS"
+	envPort              = "MF_HTTP_ADAPTER_PORT"
+	envNatsURL           = "MF_NATS_URL"
+	envJaegerURL         = "MF_JAEGER_URL"
+	envThingsAuthURL     = "MF_THINGS_AUTH_GRPC_URL"
+	envThingsAuthTimeout = "MF_THINGS_AUTH_GRPC_TIMEOUT"
 )
 
 type config struct {
-	thingsURL     string
-	natsURL       string
-	logLevel      string
-	port          string
-	clientTLS     bool
-	caCerts       string
-	jaegerURL     string
-	thingsTimeout time.Duration
+	natsURL           string
+	logLevel          string
+	port              string
+	clientTLS         bool
+	caCerts           string
+	jaegerURL         string
+	thingsAuthURL     string
+	thingsAuthTimeout time.Duration
 }
 
 func main() {
@@ -86,7 +86,7 @@ func main() {
 	}
 	defer b.Close()
 
-	cc := thingsapi.NewClient(conn, thingsTracer, cfg.thingsTimeout)
+	cc := thingsapi.NewClient(conn, thingsTracer, cfg.thingsAuthTimeout)
 	svc := adapter.New(b, cc)
 
 	svc = api.LoggingMiddleware(svc, logger)
@@ -130,20 +130,20 @@ func loadConfig() config {
 		log.Fatalf("Invalid value passed for %s\n", envClientTLS)
 	}
 
-	timeout, err := strconv.ParseInt(mainflux.Env(envThingsTimeout, defThingsTimeout), 10, 64)
+	timeout, err := strconv.ParseInt(mainflux.Env(envThingsAuthTimeout, defThingsAuthTimeout), 10, 64)
 	if err != nil {
-		log.Fatalf("Invalid %s value: %s", envThingsTimeout, err.Error())
+		log.Fatalf("Invalid %s value: %s", envThingsAuthTimeout, err.Error())
 	}
 
 	return config{
-		thingsURL:     mainflux.Env(envThingsURL, defThingsURL),
-		natsURL:       mainflux.Env(envNatsURL, defNatsURL),
-		logLevel:      mainflux.Env(envLogLevel, defLogLevel),
-		port:          mainflux.Env(envPort, defPort),
-		clientTLS:     tls,
-		caCerts:       mainflux.Env(envCACerts, defCACerts),
-		jaegerURL:     mainflux.Env(envJaegerURL, defJaegerURL),
-		thingsTimeout: time.Duration(timeout) * time.Second,
+		natsURL:           mainflux.Env(envNatsURL, defNatsURL),
+		logLevel:          mainflux.Env(envLogLevel, defLogLevel),
+		port:              mainflux.Env(envPort, defPort),
+		clientTLS:         tls,
+		caCerts:           mainflux.Env(envCACerts, defCACerts),
+		jaegerURL:         mainflux.Env(envJaegerURL, defJaegerURL),
+		thingsAuthURL:     mainflux.Env(envThingsAuthURL, defThingsAuthURL),
+		thingsAuthTimeout: time.Duration(timeout) * time.Second,
 	}
 }
 
@@ -187,7 +187,7 @@ func connectToThings(cfg config, logger logger.Logger) *grpc.ClientConn {
 		opts = append(opts, grpc.WithInsecure())
 	}
 
-	conn, err := grpc.Dial(cfg.thingsURL, opts...)
+	conn, err := grpc.Dial(cfg.thingsAuthURL, opts...)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to things service: %s", err))
 		os.Exit(1)

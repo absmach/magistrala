@@ -13,7 +13,7 @@ default values.
 
 | Variable                         | Description                            | Default                    |
 |----------------------------------|----------------------------------------|----------------------------|
-| MF_OPCUA_ADAPTER_HTTP_PORT       | Service HTTP port                      | 8188                       |
+| MF_OPCUA_ADAPTER_HTTP_PORT       | Service HTTP port                      | 8180                       |
 | MF_OPCUA_ADAPTER_LOG_LEVEL       | Service Log level                      | error                      |
 | MF_NATS_URL                      | NATS instance URL                      | nats://localhost:4222      |
 | MF_OPCUA_ADAPTER_INTERVAL_MS     | OPC-UA Server Interval in milliseconds | 1000                       |

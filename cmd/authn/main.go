@@ -36,7 +36,7 @@ const (
 	defDBPort        = "5432"
 	defDBUser        = "mainflux"
 	defDBPass        = "mainflux"
-	defDBName        = "authn"
+	defDB            = "authn"
 	defDBSSLMode     = "disable"
 	defDBSSLCert     = ""
 	defDBSSLKey      = ""
@@ -53,7 +53,7 @@ const (
 	envDBPort        = "MF_AUTHN_DB_PORT"
 	envDBUser        = "MF_AUTHN_DB_USER"
 	envDBPass        = "MF_AUTHN_DB_PASS"
-	envDBName        = "MF_AUTHN_DB"
+	envDB            = "MF_AUTHN_DB"
 	envDBSSLMode     = "MF_AUTHN_DB_SSL_MODE"
 	envDBSSLCert     = "MF_AUTHN_DB_SSL_CERT"
 	envDBSSLKey      = "MF_AUTHN_DB_SSL_KEY"
@@ -122,7 +122,7 @@ func loadConfig() config {
 		Port:        mainflux.Env(envDBPort, defDBPort),
 		User:        mainflux.Env(envDBUser, defDBUser),
 		Pass:        mainflux.Env(envDBPass, defDBPass),
-		Name:        mainflux.Env(envDBName, defDBName),
+		Name:        mainflux.Env(envDB, defDB),
 		SSLMode:     mainflux.Env(envDBSSLMode, defDBSSLMode),
 		SSLCert:     mainflux.Env(envDBSSLCert, defDBSSLCert),
 		SSLKey:      mainflux.Env(envDBSSLKey, defDBSSLKey),

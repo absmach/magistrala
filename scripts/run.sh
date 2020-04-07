@@ -23,7 +23,7 @@ function cleanup {
 ###
 gnatsd &
 counter=1
-until nc -zv localhost 4222 1>/dev/null 2>&1; 
+until nc -zv localhost 4222 1>/dev/null 2>&1;
 do
     sleep 0.5
     ((counter++))
@@ -48,22 +48,22 @@ MF_THINGS_LOG_LEVEL=info MF_THINGS_HTTP_PORT=8182 MF_THINGS_AUTH_GRPC_PORT=8183 
 ###
 # HTTP
 ###
-MF_HTTP_ADAPTER_LOG_LEVEL=info MF_HTTP_ADAPTER_PORT=8185 MF_THINGS_URL=localhost:8183 $BUILD_DIR/mainflux-http &
+MF_HTTP_ADAPTER_LOG_LEVEL=info MF_HTTP_ADAPTER_PORT=8185 MF_THINGS_AUTH_GRPC_URL=localhost:8183 $BUILD_DIR/mainflux-http &
 
 ###
 # WS
 ###
-MF_WS_ADAPTER_LOG_LEVEL=info MF_WS_ADAPTER_PORT=8186 MF_THINGS_URL=localhost:8183 $BUILD_DIR/mainflux-ws &
+MF_WS_ADAPTER_LOG_LEVEL=info MF_WS_ADAPTER_PORT=8186 MF_THINGS_AUTH_GRPC_URL=localhost:8183 $BUILD_DIR/mainflux-ws &
 
 ###
 # MQTT
 ###
-MF_MQTT_ADAPTER_LOG_LEVEL=info MF_THINGS_URL=localhost:8183 $BUILD_DIR/mainflux-mqtt &
+MF_MQTT_ADAPTER_LOG_LEVEL=info MF_THINGS_AUTH_GRPC_URL=localhost:8183 $BUILD_DIR/mainflux-mqtt &
 
 ###
 # CoAP
 ###
-MF_COAP_ADAPTER_LOG_LEVEL=info MF_COAP_ADAPTER_PORT=5683 MF_THINGS_URL=localhost:8183 $BUILD_DIR/mainflux-coap &
+MF_COAP_ADAPTER_LOG_LEVEL=info MF_COAP_ADAPTER_PORT=5683 MF_THINGS_AUTH_GRPC_URL=localhost:8183 $BUILD_DIR/mainflux-coap &
 
 ###
 # AUTHN

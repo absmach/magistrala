@@ -34,48 +34,48 @@ import (
 const (
 	sep = ","
 
-	defLogLevel      = "error"
-	defPort          = "8180"
-	defCluster       = "127.0.0.1"
-	defKeyspace      = "mainflux"
-	defDBUsername    = ""
-	defDBPassword    = ""
-	defDBPort        = "9042"
-	defThingsURL     = "localhost:8181"
-	defClientTLS     = "false"
-	defCACerts       = ""
-	defServerCert    = ""
-	defServerKey     = ""
-	defJaegerURL     = ""
-	defThingsTimeout = "1" // in seconds
+	defLogLevel          = "error"
+	defPort              = "8180"
+	defCluster           = "127.0.0.1"
+	defKeyspace          = "messages"
+	defDBUser            = "mainflux"
+	defDBPass            = "mainflux"
+	defDBPort            = "9042"
+	defClientTLS         = "false"
+	defCACerts           = ""
+	defServerCert        = ""
+	defServerKey         = ""
+	defJaegerURL         = ""
+	defThingsAuthURL     = "localhost:8181"
+	defThingsAuthTimeout = "1" // in seconds
 
-	envLogLevel      = "MF_CASSANDRA_READER_LOG_LEVEL"
-	envPort          = "MF_CASSANDRA_READER_PORT"
-	envCluster       = "MF_CASSANDRA_READER_DB_CLUSTER"
-	envKeyspace      = "MF_CASSANDRA_READER_DB_KEYSPACE"
-	envDBUsername    = "MF_CASSANDRA_READER_DB_USERNAME"
-	envDBPassword    = "MF_CASSANDRA_READER_DB_PASSWORD"
-	envDBPort        = "MF_CASSANDRA_READER_DB_PORT"
-	envThingsURL     = "MF_THINGS_URL"
-	envClientTLS     = "MF_CASSANDRA_READER_CLIENT_TLS"
-	envCACerts       = "MF_CASSANDRA_READER_CA_CERTS"
-	envServerCert    = "MF_CASSANDRA_READER_SERVER_CERT"
-	envServerKey     = "MF_CASSANDRA_READER_SERVER_KEY"
-	envJaegerURL     = "MF_JAEGER_URL"
-	envThingsTimeout = "MF_CASSANDRA_READER_THINGS_TIMEOUT"
+	envLogLevel          = "MF_CASSANDRA_READER_LOG_LEVEL"
+	envPort              = "MF_CASSANDRA_READER_PORT"
+	envCluster           = "MF_CASSANDRA_READER_DB_CLUSTER"
+	envKeyspace          = "MF_CASSANDRA_READER_DB_KEYSPACE"
+	envDBUser            = "MF_CASSANDRA_READER_DB_USER"
+	envDBPass            = "MF_CASSANDRA_READER_DB_PASS"
+	envDBPort            = "MF_CASSANDRA_READER_DB_PORT"
+	envClientTLS         = "MF_CASSANDRA_READER_CLIENT_TLS"
+	envCACerts           = "MF_CASSANDRA_READER_CA_CERTS"
+	envServerCert        = "MF_CASSANDRA_READER_SERVER_CERT"
+	envServerKey         = "MF_CASSANDRA_READER_SERVER_KEY"
+	envJaegerURL         = "MF_JAEGER_URL"
+	envThingsAuthURL     = "MF_THINGS_AUTH_GRPC_URL"
+	envThingsAuthTimeout = "MF_THINGS_AUTH_GRPC_TIMEOUT"
 )
 
 type config struct {
-	logLevel      string
-	port          string
-	dbCfg         cassandra.DBConfig
-	thingsURL     string
-	clientTLS     bool
-	caCerts       string
-	serverCert    string
-	serverKey     string
-	jaegerURL     string
-	thingsTimeout time.Duration
+	logLevel          string
+	port              string
+	dbCfg             cassandra.DBConfig
+	clientTLS         bool
+	caCerts           string
+	serverCert        string
+	serverKey         string
+	jaegerURL         string
+	thingsAuthURL     string
+	thingsAuthTimeout time.Duration
 }
 
 func main() {
@@ -95,7 +95,7 @@ func main() {
 	thingsTracer, thingsCloser := initJaeger("things", cfg.jaegerURL, logger)
 	defer thingsCloser.Close()
 
-	tc := thingsapi.NewClient(conn, thingsTracer, cfg.thingsTimeout)
+	tc := thingsapi.NewClient(conn, thingsTracer, cfg.thingsAuthTimeout)
 	repo := newService(session, logger)
 
 	errs := make(chan error, 2)
@@ -121,8 +121,8 @@ func loadConfig() config {
 	dbCfg := cassandra.DBConfig{
 		Hosts:    strings.Split(mainflux.Env(envCluster, defCluster), sep),
 		Keyspace: mainflux.Env(envKeyspace, defKeyspace),
-		Username: mainflux.Env(envDBUsername, defDBUsername),
-		Password: mainflux.Env(envDBPassword, defDBPassword),
+		User:     mainflux.Env(envDBUser, defDBUser),
+		Pass:     mainflux.Env(envDBPass, defDBPass),
 		Port:     dbPort,
 	}
 
@@ -131,22 +131,22 @@ func loadConfig() config {
 		log.Fatalf("Invalid value passed for %s\n", envClientTLS)
 	}
 
-	timeout, err := strconv.ParseInt(mainflux.Env(envThingsTimeout, defThingsTimeout), 10, 64)
+	timeout, err := strconv.ParseInt(mainflux.Env(envThingsAuthTimeout, defThingsAuthTimeout), 10, 64)
 	if err != nil {
-		log.Fatalf("Invalid %s value: %s", envThingsTimeout, err.Error())
+		log.Fatalf("Invalid %s value: %s", envThingsAuthTimeout, err.Error())
 	}
 
 	return config{
-		logLevel:      mainflux.Env(envLogLevel, defLogLevel),
-		port:          mainflux.Env(envPort, defPort),
-		dbCfg:         dbCfg,
-		thingsURL:     mainflux.Env(envThingsURL, defThingsURL),
-		clientTLS:     tls,
-		caCerts:       mainflux.Env(envCACerts, defCACerts),
-		serverCert:    mainflux.Env(envServerCert, defServerCert),
-		serverKey:     mainflux.Env(envServerKey, defServerKey),
-		jaegerURL:     mainflux.Env(envJaegerURL, defJaegerURL),
-		thingsTimeout: time.Duration(timeout) * time.Second,
+		logLevel:          mainflux.Env(envLogLevel, defLogLevel),
+		port:              mainflux.Env(envPort, defPort),
+		dbCfg:             dbCfg,
+		clientTLS:         tls,
+		caCerts:           mainflux.Env(envCACerts, defCACerts),
+		serverCert:        mainflux.Env(envServerCert, defServerCert),
+		serverKey:         mainflux.Env(envServerKey, defServerKey),
+		jaegerURL:         mainflux.Env(envJaegerURL, defJaegerURL),
+		thingsAuthURL:     mainflux.Env(envThingsAuthURL, defThingsAuthURL),
+		thingsAuthTimeout: time.Duration(timeout) * time.Second,
 	}
 }
 
@@ -176,7 +176,7 @@ func connectToThings(cfg config, logger logger.Logger) *grpc.ClientConn {
 		opts = append(opts, grpc.WithInsecure())
 	}
 
-	conn, err := grpc.Dial(cfg.thingsURL, opts...)
+	conn, err := grpc.Dial(cfg.thingsAuthURL, opts...)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to things service: %s", err))
 		os.Exit(1)

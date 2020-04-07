@@ -27,14 +27,14 @@ const (
 	svcName = "postgres-writer"
 	sep     = ","
 
-	defNatsURL         = mainflux.DefNatsURL
 	defLogLevel        = "error"
-	defPort            = "9104"
+	defNatsURL         = "nats://localhost:4222"
+	defPort            = "8180"
 	defDBHost          = "postgres"
 	defDBPort          = "5432"
 	defDBUser          = "mainflux"
 	defDBPass          = "mainflux"
-	defDBName          = "messages"
+	defDB              = "messages"
 	defDBSSLMode       = "disable"
 	defDBSSLCert       = ""
 	defDBSSLKey        = ""
@@ -48,7 +48,7 @@ const (
 	envDBPort          = "MF_POSTGRES_WRITER_DB_PORT"
 	envDBUser          = "MF_POSTGRES_WRITER_DB_USER"
 	envDBPass          = "MF_POSTGRES_WRITER_DB_PASS"
-	envDBName          = "MF_POSTGRES_WRITER_DB_NAME"
+	envDB              = "MF_POSTGRES_WRITER_DB"
 	envDBSSLMode       = "MF_POSTGRES_WRITER_DB_SSL_MODE"
 	envDBSSLCert       = "MF_POSTGRES_WRITER_DB_SSL_CERT"
 	envDBSSLKey        = "MF_POSTGRES_WRITER_DB_SSL_KEY"
@@ -108,7 +108,7 @@ func loadConfig() config {
 		Port:        mainflux.Env(envDBPort, defDBPort),
 		User:        mainflux.Env(envDBUser, defDBUser),
 		Pass:        mainflux.Env(envDBPass, defDBPass),
-		Name:        mainflux.Env(envDBName, defDBName),
+		Name:        mainflux.Env(envDB, defDB),
 		SSLMode:     mainflux.Env(envDBSSLMode, defDBSSLMode),
 		SSLCert:     mainflux.Env(envDBSSLCert, defDBSSLCert),
 		SSLKey:      mainflux.Env(envDBSSLKey, defDBSSLKey),

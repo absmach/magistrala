@@ -55,7 +55,6 @@ The service is configured using the environment variables presented in the follo
 | MF_BOOTSTRAP_SERVER_KEY       | Path to server key in pem format                                        |                                  |
 | MF_SDK_BASE_URL               | Base url for Mainflux SDK                                               | http://localhost                 |
 | MF_SDK_THINGS_PREFIX          | SDK prefix for Things service                                           |                                  |
-| MF_USERS_URL                  | Users service URL                                                       | localhost:8181                   |
 | MF_THINGS_ES_URL              | Things service event source URL                                         | localhost:6379                   |
 | MF_THINGS_ES_PASS             | Things service event source password                                    |                                  |
 | MF_THINGS_ES_DB               | Things service event source database                                    | 0                                |
@@ -64,7 +63,8 @@ The service is configured using the environment variables presented in the follo
 | MF_BOOTSTRAP_ES_DB            | Bootstrap service event source database                                 | 0                                |
 | MF_BOOTSTRAP_EVENT_CONSUMER   | Bootstrap service event source consumer name                            | bootstrap                        |
 | MF_JAEGER_URL                 | Jaeger server URL                                                       | localhost:6831                   |
-| MF_BOOTSTRAP_THINGS_TIMEOUT   | Things gRPC request timeout in seconds                                  | 1                                |
+| MF_AUTHN_GRPC_URL             | AuthN service gRPC URL                                                  | localhost:8181                   |
+| MF_AUTHN_GRPC_TIMEOUT         | AuthN service gRPC request timeout in seconds                           | 1                                |
 
 ## Deployment
 
@@ -101,7 +101,6 @@ version: "2"
       MF_BOOTSTRAP_SERVER_KEY: [String path to server key in pem format]
       MF_SDK_BASE_URL: [Base SDK URL for the Mainflux services]
       MF_SDK_THINGS_PREFIX: [SDK prefix for Things service]
-      MF_USERS_URL: [Users service URL]
       MF_THINGS_ES_URL: [Things service event source URL]
       MF_THINGS_ES_PASS: [Things service event source password]
       MF_THINGS_ES_DB: [Things service event source database]
@@ -110,7 +109,8 @@ version: "2"
       MF_BOOTSTRAP_ES_DB: [Bootstrap service event source database]
       MF_BOOTSTRAP_EVENT_CONSUMER: [Bootstrap service event source consumer name]
       MF_JAEGER_URL: [Jaeger server URL]
-      MF_BOOTSTRAP_THINGS_TIMEOUT: [Things gRPC request timeout in seconds]
+      MF_AUTHN_GRPC_URL: [AuthN service gRPC URL]
+      MF_AUTHN_GRPC_TIMEOUT: [AuthN service gRPC request timeout in seconds]
 ```
 
 To start the service outside of the container, execute the following shell script:
@@ -128,7 +128,28 @@ make bootstrap
 make install
 
 # set the environment variables and run the service
-MF_BOOTSTRAP_LOG_LEVEL=[Bootstrap log level] MF_BOOTSTRAP_DB_HOST=[Database host address] MF_BOOTSTRAP_DB_PORT=[Database host port] MF_BOOTSTRAP_DB_USER=[Database user] MF_BOOTSTRAP_DB_PASS=[Database password] MF_BOOTSTRAP_DB=[Name of the database used by the service] MF_BOOTSTRAP_DB_SSL_MODE=[SSL mode to connect to the database with] MF_BOOTSTRAP_DB_SSL_CERT=[Path to the PEM encoded certificate file] MF_BOOTSTRAP_DB_SSL_KEY=[Path to the PEM encoded key file] MF_BOOTSTRAP_DB_SSL_ROOT_CERT=[Path to the PEM encoded root certificate file] MF_BOOTSTRAP_ENCRYPT_KEY=[Hex-encoded encryption key used for secure bootstrap] MF_BOOTSTRAP_CLIENT_TLS=[Boolean value to enable/disable client TLS] MF_BOOTSTRAP_CA_CERTS=[Path to trusted CAs in PEM format] MF_BOOTSTRAP_PORT=[Service HTTP port] MF_BOOTSTRAP_SERVER_CERT=[Path to server certificate] MF_BOOTSTRAP_SERVER_KEY=[Path to server key] MF_SDK_BASE_URL=[Base SDK URL for the Mainflux services] MF_SDK_THINGS_PREFIX=[SDK prefix for Things service] MF_USERS_URL=[Users service URL] MF_JAEGER_URL=[Jaeger server URL] MF_BOOTSTRAP_THINGS_TIMEOUT=[Things gRPC request timeout in seconds] $GOBIN/mainflux-bootstrap
+MF_BOOTSTRAP_LOG_LEVEL=[Bootstrap log level] \
+MF_BOOTSTRAP_DB_HOST=[Database host address] \
+MF_BOOTSTRAP_DB_PORT=[Database host port] \
+MF_BOOTSTRAP_DB_USER=[Database user] \
+MF_BOOTSTRAP_DB_PASS=[Database password] \
+MF_BOOTSTRAP_DB=[Name of the database used by the service] \
+MF_BOOTSTRAP_DB_SSL_MODE=[SSL mode to connect to the database with] \
+MF_BOOTSTRAP_DB_SSL_CERT=[Path to the PEM encoded certificate file] \
+MF_BOOTSTRAP_DB_SSL_KEY=[Path to the PEM encoded key file] \
+MF_BOOTSTRAP_DB_SSL_ROOT_CERT=[Path to the PEM encoded root certificate file] \
+MF_BOOTSTRAP_ENCRYPT_KEY=[Hex-encoded encryption key used for secure bootstrap] \
+MF_BOOTSTRAP_CLIENT_TLS=[Boolean value to enable/disable client TLS] \
+MF_BOOTSTRAP_CA_CERTS=[Path to trusted CAs in PEM format] \
+MF_BOOTSTRAP_PORT=[Service HTTP port] \
+MF_BOOTSTRAP_SERVER_CERT=[Path to server certificate] \
+MF_BOOTSTRAP_SERVER_KEY=[Path to server key] \
+MF_SDK_BASE_URL=[Base SDK URL for the Mainflux services] \
+MF_SDK_THINGS_PREFIX=[SDK prefix for Things service] \
+MF_JAEGER_URL=[Jaeger server URL] \
+MF_AUTHN_GRPC_URL=[AuthN service gRPC URL] \
+MF_AUTHN_GRPC_TIMEOUT=[AuthN service gRPC request timeout in seconds] \
+$GOBIN/mainflux-bootstrap
 ```
 
 Setting `MF_BOOTSTRAP_CA_CERTS` expects a file in PEM format of trusted CAs. This will enable TLS against the Users gRPC endpoint trusting only those CAs that are provided.

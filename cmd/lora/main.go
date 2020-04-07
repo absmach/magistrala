@@ -27,10 +27,10 @@ import (
 )
 
 const (
+	defLogLevel       = "error"
 	defHTTPPort       = "8180"
 	defLoraMsgURL     = "tcp://localhost:1883"
-	defNatsURL        = mainflux.DefNatsURL
-	defLogLevel       = "error"
+	defNatsURL        = "nats://localhost:4222"
 	defESURL          = "localhost:6379"
 	defESPass         = ""
 	defESDB           = "0"

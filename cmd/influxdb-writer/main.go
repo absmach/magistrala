@@ -26,10 +26,10 @@ import (
 const (
 	svcName = "influxdb-writer"
 
-	defNatsURL         = mainflux.DefNatsURL
+	defNatsURL         = "nats://localhost:4222"
 	defLogLevel        = "error"
 	defPort            = "8180"
-	defDBName          = "mainflux"
+	defDB              = "messages"
 	defDBHost          = "localhost"
 	defDBPort          = "8086"
 	defDBUser          = "mainflux"
@@ -39,7 +39,7 @@ const (
 	envNatsURL         = "MF_NATS_URL"
 	envLogLevel        = "MF_INFLUX_WRITER_LOG_LEVEL"
 	envPort            = "MF_INFLUX_WRITER_PORT"
-	envDBName          = "MF_INFLUX_WRITER_DB_NAME"
+	envDB              = "MF_INFLUX_WRITER_DB"
 	envDBHost          = "MF_INFLUX_WRITER_DB_HOST"
 	envDBPort          = "MF_INFLUX_WRITER_DB_PORT"
 	envDBUser          = "MF_INFLUX_WRITER_DB_USER"
@@ -110,7 +110,7 @@ func loadConfigs() (config, influxdata.HTTPConfig) {
 		natsURL:         mainflux.Env(envNatsURL, defNatsURL),
 		logLevel:        mainflux.Env(envLogLevel, defLogLevel),
 		port:            mainflux.Env(envPort, defPort),
-		dbName:          mainflux.Env(envDBName, defDBName),
+		dbName:          mainflux.Env(envDB, defDB),
 		dbHost:          mainflux.Env(envDBHost, defDBHost),
 		dbPort:          mainflux.Env(envDBPort, defDBPort),
 		dbUser:          mainflux.Env(envDBUser, defDBUser),

@@ -11,8 +11,8 @@ import (
 type DBConfig struct {
 	Hosts    []string
 	Keyspace string
-	Username string
-	Password string
+	User     string
+	Pass     string
 	Port     int
 }
 
@@ -22,8 +22,8 @@ func Connect(cfg DBConfig) (*gocql.Session, error) {
 	cluster.Keyspace = cfg.Keyspace
 	cluster.Consistency = gocql.Quorum
 	cluster.Authenticator = gocql.PasswordAuthenticator{
-		Username: cfg.Username,
-		Password: cfg.Password,
+		Username: cfg.User,
+		Password: cfg.Pass,
 	}
 	cluster.Port = cfg.Port
 

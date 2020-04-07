@@ -29,13 +29,13 @@ const (
 	svcName = "cassandra-writer"
 	sep     = ","
 
-	defNatsURL         = mainflux.DefNatsURL
+	defNatsURL         = "nats://localhost:4222"
 	defLogLevel        = "error"
 	defPort            = "8180"
 	defCluster         = "127.0.0.1"
-	defKeyspace        = "mainflux"
-	defDBUsername      = ""
-	defDBPassword      = ""
+	defKeyspace        = "messages"
+	defDBUser          = "mainflux"
+	defDBPass          = "mainflux"
 	defDBPort          = "9042"
 	defSubjectsCfgPath = "/config/subjects.toml"
 
@@ -44,8 +44,8 @@ const (
 	envPort            = "MF_CASSANDRA_WRITER_PORT"
 	envCluster         = "MF_CASSANDRA_WRITER_DB_CLUSTER"
 	envKeyspace        = "MF_CASSANDRA_WRITER_DB_KEYSPACE"
-	envDBUsername      = "MF_CASSANDRA_WRITER_DB_USERNAME"
-	envDBPassword      = "MF_CASSANDRA_WRITER_DB_PASSWORD"
+	envDBUser          = "MF_CASSANDRA_WRITER_DB_USER"
+	envDBPass          = "MF_CASSANDRA_WRITER_DB_PASS"
 	envDBPort          = "MF_CASSANDRA_WRITER_DB_PORT"
 	envSubjectsCfgPath = "MF_CASSANDRA_WRITER_SUBJECTS_CONFIG"
 )
@@ -105,8 +105,8 @@ func loadConfig() config {
 	dbCfg := cassandra.DBConfig{
 		Hosts:    strings.Split(mainflux.Env(envCluster, defCluster), sep),
 		Keyspace: mainflux.Env(envKeyspace, defKeyspace),
-		Username: mainflux.Env(envDBUsername, defDBUsername),
-		Password: mainflux.Env(envDBPassword, defDBPassword),
+		User:     mainflux.Env(envDBUser, defDBUser),
+		Pass:     mainflux.Env(envDBPass, defDBPass),
 		Port:     dbPort,
 	}
 

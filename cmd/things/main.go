@@ -47,7 +47,7 @@ const (
 	defDBPort          = "5432"
 	defDBUser          = "mainflux"
 	defDBPass          = "mainflux"
-	defDBName          = "things"
+	defDB              = "things"
 	defDBSSLMode       = "disable"
 	defDBSSLCert       = ""
 	defDBSSLKey        = ""
@@ -60,23 +60,23 @@ const (
 	defESURL           = "localhost:6379"
 	defESPass          = ""
 	defESDB            = "0"
-	defHTTPPort        = "8180"
-	defAuthHTTPPort    = "8989"
+	defHTTPPort        = "8182"
+	defAuthHTTPPort    = "8180"
 	defAuthGRPCPort    = "8181"
 	defServerCert      = ""
 	defServerKey       = ""
 	defSingleUserEmail = ""
 	defSingleUserToken = ""
 	defJaegerURL       = ""
-	defAuthURL         = "localhost:8181"
-	defAuthTimeout     = "1" // in seconds
+	defAuthnURL        = "localhost:8181"
+	defAuthnTimeout    = "1" // in seconds
 
 	envLogLevel        = "MF_THINGS_LOG_LEVEL"
 	envDBHost          = "MF_THINGS_DB_HOST"
 	envDBPort          = "MF_THINGS_DB_PORT"
 	envDBUser          = "MF_THINGS_DB_USER"
 	envDBPass          = "MF_THINGS_DB_PASS"
-	envDBName          = "MF_THINGS_DB"
+	envDB              = "MF_THINGS_DB"
 	envDBSSLMode       = "MF_THINGS_DB_SSL_MODE"
 	envDBSSLCert       = "MF_THINGS_DB_SSL_CERT"
 	envDBSSLKey        = "MF_THINGS_DB_SSL_KEY"
@@ -97,8 +97,8 @@ const (
 	envSingleUserEmail = "MF_THINGS_SINGLE_USER_EMAIL"
 	envSingleUserToken = "MF_THINGS_SINGLE_USER_TOKEN"
 	envJaegerURL       = "MF_JAEGER_URL"
-	envAuthURL         = "MF_AUTH_URL"
-	envAuthTimeout     = "MF_AUTH_TIMEOUT"
+	envAuthnURL        = "MF_AUTHN_GRPC_URL"
+	envAuthnTimeout    = "MF_AUTHN_GRPC_TIMEOUT"
 )
 
 type config struct {
@@ -120,8 +120,8 @@ type config struct {
 	singleUserEmail string
 	singleUserToken string
 	jaegerURL       string
-	authURL         string
-	authTimeout     time.Duration
+	authnURL        string
+	authnTimeout    time.Duration
 }
 
 func main() {
@@ -179,9 +179,9 @@ func loadConfig() config {
 		log.Fatalf("Invalid value passed for %s\n", envClientTLS)
 	}
 
-	timeout, err := strconv.ParseInt(mainflux.Env(envAuthTimeout, defAuthTimeout), 10, 64)
+	timeout, err := strconv.ParseInt(mainflux.Env(envAuthnTimeout, defAuthnTimeout), 10, 64)
 	if err != nil {
-		log.Fatalf("Invalid %s value: %s", envAuthTimeout, err.Error())
+		log.Fatalf("Invalid %s value: %s", envAuthnTimeout, err.Error())
 	}
 
 	dbConfig := postgres.Config{
@@ -189,7 +189,7 @@ func loadConfig() config {
 		Port:        mainflux.Env(envDBPort, defDBPort),
 		User:        mainflux.Env(envDBUser, defDBUser),
 		Pass:        mainflux.Env(envDBPass, defDBPass),
-		Name:        mainflux.Env(envDBName, defDBName),
+		Name:        mainflux.Env(envDB, defDB),
 		SSLMode:     mainflux.Env(envDBSSLMode, defDBSSLMode),
 		SSLCert:     mainflux.Env(envDBSSLCert, defDBSSLCert),
 		SSLKey:      mainflux.Env(envDBSSLKey, defDBSSLKey),
@@ -215,8 +215,8 @@ func loadConfig() config {
 		singleUserEmail: mainflux.Env(envSingleUserEmail, defSingleUserEmail),
 		singleUserToken: mainflux.Env(envSingleUserToken, defSingleUserToken),
 		jaegerURL:       mainflux.Env(envJaegerURL, defJaegerURL),
-		authURL:         mainflux.Env(envAuthURL, defAuthURL),
-		authTimeout:     time.Duration(timeout) * time.Second,
+		authnURL:        mainflux.Env(envAuthnURL, defAuthnURL),
+		authnTimeout:    time.Duration(timeout) * time.Second,
 	}
 }
 
@@ -273,7 +273,7 @@ func createAuthClient(cfg config, tracer opentracing.Tracer, logger logger.Logge
 	}
 
 	conn := connectToAuth(cfg, logger)
-	return authapi.NewClient(tracer, conn, cfg.authTimeout), conn.Close
+	return authapi.NewClient(tracer, conn, cfg.authnTimeout), conn.Close
 }
 
 func connectToAuth(cfg config, logger logger.Logger) *grpc.ClientConn {
@@ -292,9 +292,9 @@ func connectToAuth(cfg config, logger logger.Logger) *grpc.ClientConn {
 		logger.Info("gRPC communication is not encrypted")
 	}
 
-	conn, err := grpc.Dial(cfg.authURL, opts...)
+	conn, err := grpc.Dial(cfg.authnURL, opts...)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to users service: %s", err))
+		logger.Error(fmt.Sprintf("Failed to connect to authn service: %s", err))
 		os.Exit(1)
 	}
 

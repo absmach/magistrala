@@ -28,14 +28,14 @@ import (
 )
 
 const (
-	defHTTPPort       = "8188"
+	defLogLevel       = "error"
+	defHTTPPort       = "8180"
 	defOPCIntervalMs  = "1000"
 	defOPCPolicy      = ""
 	defOPCMode        = ""
 	defOPCCertFile    = ""
 	defOPCKeyFile     = ""
-	defNatsURL        = mainflux.DefNatsURL
-	defLogLevel       = "debug"
+	defNatsURL        = "nats://localhost:4222"
 	defESURL          = "localhost:6379"
 	defESPass         = ""
 	defESDB           = "0"
@@ -44,8 +44,8 @@ const (
 	defRouteMapPass   = ""
 	defRouteMapDB     = "0"
 
-	envHTTPPort       = "MF_OPCUA_ADAPTER_HTTP_PORT"
 	envLogLevel       = "MF_OPCUA_ADAPTER_LOG_LEVEL"
+	envHTTPPort       = "MF_OPCUA_ADAPTER_HTTP_PORT"
 	envOPCIntervalMs  = "MF_OPCUA_ADAPTER_INTERVAL_MS"
 	envOPCPolicy      = "MF_OPCUA_ADAPTER_POLICY"
 	envOPCMode        = "MF_OPCUA_ADAPTER_MODE"

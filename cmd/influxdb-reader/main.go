@@ -28,52 +28,52 @@ import (
 )
 
 const (
-	defThingsURL     = "localhost:8181"
-	defLogLevel      = "error"
-	defPort          = "8180"
-	defDBName        = "mainflux"
-	defDBHost        = "localhost"
-	defDBPort        = "8086"
-	defDBUser        = "mainflux"
-	defDBPass        = "mainflux"
-	defClientTLS     = "false"
-	defCACerts       = ""
-	defServerCert    = ""
-	defServerKey     = ""
-	defJaegerURL     = ""
-	defThingsTimeout = "1" // in seconds
+	defLogLevel          = "error"
+	defPort              = "8180"
+	defDB                = "messages"
+	defDBHost            = "localhost"
+	defDBPort            = "8086"
+	defDBUser            = "mainflux"
+	defDBPass            = "mainflux"
+	defClientTLS         = "false"
+	defCACerts           = ""
+	defServerCert        = ""
+	defServerKey         = ""
+	defJaegerURL         = ""
+	defThingsAuthURL     = "localhost:8181"
+	defThingsAuthTimeout = "1" // in seconds
 
-	envThingsURL     = "MF_THINGS_URL"
-	envLogLevel      = "MF_INFLUX_READER_LOG_LEVEL"
-	envPort          = "MF_INFLUX_READER_PORT"
-	envDBName        = "MF_INFLUX_READER_DB_NAME"
-	envDBHost        = "MF_INFLUX_READER_DB_HOST"
-	envDBPort        = "MF_INFLUX_READER_DB_PORT"
-	envDBUser        = "MF_INFLUX_READER_DB_USER"
-	envDBPass        = "MF_INFLUX_READER_DB_PASS"
-	envClientTLS     = "MF_INFLUX_READER_CLIENT_TLS"
-	envCACerts       = "MF_INFLUX_READER_CA_CERTS"
-	envServerCert    = "MF_INFLUX_READER_SERVER_CERT"
-	envServerKey     = "MF_INFLUX_READER_SERVER_KEY"
-	envJaegerURL     = "MF_JAEGER_URL"
-	envThingsTimeout = "MF_INFLUX_READER_THINGS_TIMEOUT"
+	envLogLevel          = "MF_INFLUX_READER_LOG_LEVEL"
+	envPort              = "MF_INFLUX_READER_PORT"
+	envDB                = "MF_INFLUX_READER_DB"
+	envDBHost            = "MF_INFLUX_READER_DB_HOST"
+	envDBPort            = "MF_INFLUX_READER_DB_PORT"
+	envDBUser            = "MF_INFLUX_READER_DB_USER"
+	envDBPass            = "MF_INFLUX_READER_DB_PASS"
+	envClientTLS         = "MF_INFLUX_READER_CLIENT_TLS"
+	envCACerts           = "MF_INFLUX_READER_CA_CERTS"
+	envServerCert        = "MF_INFLUX_READER_SERVER_CERT"
+	envServerKey         = "MF_INFLUX_READER_SERVER_KEY"
+	envJaegerURL         = "MF_JAEGER_URL"
+	envThingsAuthURL     = "MF_THINGS_AUTH_GRPC_URL"
+	envThingsAuthTimeout = "MF_THINGS_AUTH_GRPC_TIMEOUT"
 )
 
 type config struct {
-	thingsURL     string
-	logLevel      string
-	port          string
-	dbName        string
-	dbHost        string
-	dbPort        string
-	dbUser        string
-	dbPass        string
-	clientTLS     bool
-	caCerts       string
-	serverCert    string
-	serverKey     string
-	jaegerURL     string
-	thingsTimeout time.Duration
+	logLevel          string
+	port              string
+	dbName            string
+	dbHost            string
+	dbPort            string
+	dbUser            string
+	dbPass            string
+	clientTLS         bool
+	caCerts           string
+	serverCert        string
+	serverKey         string
+	jaegerURL         string
+	thingsAuthURL     string
+	thingsAuthTimeout time.Duration
 }
 
 func main() {
@@ -88,7 +88,7 @@ func main() {
 	thingsTracer, thingsCloser := initJaeger("things", cfg.jaegerURL, logger)
 	defer thingsCloser.Close()
 
-	tc := thingsapi.NewClient(conn, thingsTracer, cfg.thingsTimeout)
+	tc := thingsapi.NewClient(conn, thingsTracer, cfg.thingsAuthTimeout)
 
 	client, err := influxdata.NewHTTPClient(clientCfg)
 	if err != nil {
@@ -118,26 +118,26 @@ func loadConfigs() (config, influxdata.HTTPConfig) {
 		log.Fatalf("Invalid value passed for %s\n", envClientTLS)
 	}
 
-	timeout, err := strconv.ParseInt(mainflux.Env(envThingsTimeout, defThingsTimeout), 10, 64)
+	timeout, err := strconv.ParseInt(mainflux.Env(envThingsAuthTimeout, defThingsAuthTimeout), 10, 64)
 	if err != nil {
-		log.Fatalf("Invalid %s value: %s", envThingsTimeout, err.Error())
+		log.Fatalf("Invalid %s value: %s", envThingsAuthTimeout, err.Error())
 	}
 
 	cfg := config{
-		thingsURL:     mainflux.Env(envThingsURL, defThingsURL),
-		logLevel:      mainflux.Env(envLogLevel, defLogLevel),
-		port:          mainflux.Env(envPort, defPort),
-		dbName:        mainflux.Env(envDBName, defDBName),
-		dbHost:        mainflux.Env(envDBHost, defDBHost),
-		dbPort:        mainflux.Env(envDBPort, defDBPort),
-		dbUser:        mainflux.Env(envDBUser, defDBUser),
-		dbPass:        mainflux.Env(envDBPass, defDBPass),
-		clientTLS:     tls,
-		caCerts:       mainflux.Env(envCACerts, defCACerts),
-		serverCert:    mainflux.Env(envServerCert, defServerCert),
-		serverKey:     mainflux.Env(envServerKey, defServerKey),
-		jaegerURL:     mainflux.Env(envJaegerURL, defJaegerURL),
-		thingsTimeout: time.Duration(timeout) * time.Second,
+		logLevel:          mainflux.Env(envLogLevel, defLogLevel),
+		port:              mainflux.Env(envPort, defPort),
+		dbName:            mainflux.Env(envDB, defDB),
+		dbHost:            mainflux.Env(envDBHost, defDBHost),
+		dbPort:            mainflux.Env(envDBPort, defDBPort),
+		dbUser:            mainflux.Env(envDBUser, defDBUser),
+		dbPass:            mainflux.Env(envDBPass, defDBPass),
+		clientTLS:         tls,
+		caCerts:           mainflux.Env(envCACerts, defCACerts),
+		serverCert:        mainflux.Env(envServerCert, defServerCert),
+		serverKey:         mainflux.Env(envServerKey, defServerKey),
+		jaegerURL:         mainflux.Env(envJaegerURL, defJaegerURL),
+		thingsAuthURL:     mainflux.Env(envThingsAuthURL, defThingsAuthURL),
+		thingsAuthTimeout: time.Duration(timeout) * time.Second,
 	}
 
 	clientCfg := influxdata.HTTPConfig{
@@ -165,7 +165,7 @@ func connectToThings(cfg config, logger logger.Logger) *grpc.ClientConn {
 		opts = append(opts, grpc.WithInsecure())
 	}
 
-	conn, err := grpc.Dial(cfg.thingsURL, opts...)
+	conn, err := grpc.Dial(cfg.thingsAuthURL, opts...)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to things service: %s", err))
 		os.Exit(1)

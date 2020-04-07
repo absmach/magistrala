@@ -28,10 +28,10 @@ import (
 const (
 	svcName = "mongodb-writer"
 
-	defNatsURL         = mainflux.DefNatsURL
 	defLogLevel        = "error"
+	defNatsURL         = "nats://localhost:4222"
 	defPort            = "8180"
-	defDBName          = "mainflux"
+	defDB              = "messages"
 	defDBHost          = "localhost"
 	defDBPort          = "27017"
 	defSubjectsCfgPath = "/config/subjects.toml"
@@ -39,7 +39,7 @@ const (
 	envNatsURL         = "MF_NATS_URL"
 	envLogLevel        = "MF_MONGO_WRITER_LOG_LEVEL"
 	envPort            = "MF_MONGO_WRITER_PORT"
-	envDBName          = "MF_MONGO_WRITER_DB_NAME"
+	envDB              = "MF_MONGO_WRITER_DB"
 	envDBHost          = "MF_MONGO_WRITER_DB_HOST"
 	envDBPort          = "MF_MONGO_WRITER_DB_PORT"
 	envSubjectsCfgPath = "MF_MONGO_WRITER_SUBJECTS_CONFIG"
@@ -107,7 +107,7 @@ func loadConfigs() config {
 		natsURL:         mainflux.Env(envNatsURL, defNatsURL),
 		logLevel:        mainflux.Env(envLogLevel, defLogLevel),
 		port:            mainflux.Env(envPort, defPort),
-		dbName:          mainflux.Env(envDBName, defDBName),
+		dbName:          mainflux.Env(envDB, defDB),
 		dbHost:          mainflux.Env(envDBHost, defDBHost),
 		dbPort:          mainflux.Env(envDBPort, defDBPort),
 		subjectsCfgPath: mainflux.Env(envSubjectsCfgPath, defSubjectsCfgPath),

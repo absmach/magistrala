@@ -5,13 +5,6 @@ package mainflux
 
 import (
 	"os"
-
-	"github.com/nats-io/nats.go"
-)
-
-const (
-	// DefNatsURL default NATS message broker URL
-	DefNatsURL = nats.DefaultURL
 )
 
 // Env reads specified environment variable. If no value has been found,

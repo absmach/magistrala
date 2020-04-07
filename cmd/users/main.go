@@ -41,7 +41,7 @@ const (
 	defDBPort        = "5432"
 	defDBUser        = "mainflux"
 	defDBPass        = "mainflux"
-	defDBName        = "users"
+	defDB            = "users"
 	defDBSSLMode     = "disable"
 	defDBSSLCert     = ""
 	defDBSSLKey      = ""
@@ -50,13 +50,6 @@ const (
 	defServerCert    = ""
 	defServerKey     = ""
 	defJaegerURL     = ""
-
-	defAuthnHTTPPort = "8989"
-	defAuthnGRPCPort = "8181"
-	defAuthnTimeout  = "1" // in seconds
-	defAuthnTLS      = "false"
-	defAuthnCACerts  = ""
-	defAuthnURL      = "localhost:8181"
 
 	defEmailLogLevel    = "debug"
 	defEmailDriver      = "smtp"
@@ -70,12 +63,17 @@ const (
 
 	defTokenResetEndpoint = "/reset-request" // URL where user lands after click on the reset link from email
 
+	defAuthnTLS     = "false"
+	defAuthnCACerts = ""
+	defAuthnURL     = "localhost:8181"
+	defAuthnTimeout = "1" // in seconds
+
 	envLogLevel      = "MF_USERS_LOG_LEVEL"
 	envDBHost        = "MF_USERS_DB_HOST"
 	envDBPort        = "MF_USERS_DB_PORT"
 	envDBUser        = "MF_USERS_DB_USER"
 	envDBPass        = "MF_USERS_DB_PASS"
-	envDBName        = "MF_USERS_DB"
+	envDB            = "MF_USERS_DB"
 	envDBSSLMode     = "MF_USERS_DB_SSL_MODE"
 	envDBSSLCert     = "MF_USERS_DB_SSL_CERT"
 	envDBSSLKey      = "MF_USERS_DB_SSL_KEY"
@@ -84,13 +82,6 @@ const (
 	envServerCert    = "MF_USERS_SERVER_CERT"
 	envServerKey     = "MF_USERS_SERVER_KEY"
 	envJaegerURL     = "MF_JAEGER_URL"
-
-	envAuthnHTTPPort = "MF_AUTHN_HTTP_PORT"
-	envAuthnGRPCPort = "MF_AUTHN_GRPC_PORT"
-	envAuthnTimeout  = "MF_AUTHN_TIMEOUT"
-	envAuthnTLS      = "MF_AUTHN_CLIENT_TLS"
-	envAuthnCACerts  = "MF_AUTHN_CA_CERTS"
-	envAuthnURL      = "MF_AUTHN_URL"
 
 	envEmailDriver      = "MF_EMAIL_DRIVER"
 	envEmailHost        = "MF_EMAIL_HOST"
@@ -103,23 +94,26 @@ const (
 	envEmailTemplate    = "MF_EMAIL_TEMPLATE"
 
 	envTokenResetEndpoint = "MF_TOKEN_RESET_ENDPOINT"
+
+	envAuthnTLS     = "MF_AUTHN_CLIENT_TLS"
+	envAuthnCACerts = "MF_AUTHN_CA_CERTS"
+	envAuthnURL     = "MF_AUTHN_GRPC_URL"
+	envAuthnTimeout = "MF_AUTHN_GRPC_TIMEOUT"
 )
 
 type config struct {
-	logLevel      string
-	dbConfig      postgres.Config
-	authnHTTPPort string
-	authnGRPCPort string
-	authnTimeout  time.Duration
-	authnTLS      bool
-	authnCACerts  string
-	authnURL      string
-	emailConf     email.Config
-	httpPort      string
-	serverCert    string
-	serverKey     string
-	jaegerURL     string
-	resetURL      string
+	logLevel     string
+	dbConfig     postgres.Config
+	emailConf    email.Config
+	httpPort     string
+	serverCert   string
+	serverKey    string
+	jaegerURL    string
+	resetURL     string
+	authnTLS     bool
+	authnCACerts string
+	authnURL     string
+	authnTimeout time.Duration
 }
 
 func main() {
@@ -178,7 +172,7 @@ func loadConfig() config {
 		Port:        mainflux.Env(envDBPort, defDBPort),
 		User:        mainflux.Env(envDBUser, defDBUser),
 		Pass:        mainflux.Env(envDBPass, defDBPass),
-		Name:        mainflux.Env(envDBName, defDBName),
+		Name:        mainflux.Env(envDB, defDB),
 		SSLMode:     mainflux.Env(envDBSSLMode, defDBSSLMode),
 		SSLCert:     mainflux.Env(envDBSSLCert, defDBSSLCert),
 		SSLKey:      mainflux.Env(envDBSSLKey, defDBSSLKey),
@@ -197,19 +191,18 @@ func loadConfig() config {
 	}
 
 	return config{
-		logLevel:      mainflux.Env(envLogLevel, defLogLevel),
-		dbConfig:      dbConfig,
-		authnHTTPPort: mainflux.Env(envAuthnHTTPPort, defAuthnHTTPPort),
-		authnGRPCPort: mainflux.Env(envAuthnGRPCPort, defAuthnGRPCPort),
-		authnURL:      mainflux.Env(envAuthnURL, defAuthnURL),
-		authnTimeout:  time.Duration(timeout) * time.Second,
-		authnTLS:      tls,
-		emailConf:     emailConf,
-		httpPort:      mainflux.Env(envHTTPPort, defHTTPPort),
-		serverCert:    mainflux.Env(envServerCert, defServerCert),
-		serverKey:     mainflux.Env(envServerKey, defServerKey),
-		jaegerURL:     mainflux.Env(envJaegerURL, defJaegerURL),
-		resetURL:      mainflux.Env(envTokenResetEndpoint, defTokenResetEndpoint),
+		logLevel:     mainflux.Env(envLogLevel, defLogLevel),
+		dbConfig:     dbConfig,
+		emailConf:    emailConf,
+		httpPort:     mainflux.Env(envHTTPPort, defHTTPPort),
+		serverCert:   mainflux.Env(envServerCert, defServerCert),
+		serverKey:    mainflux.Env(envServerKey, defServerKey),
+		jaegerURL:    mainflux.Env(envJaegerURL, defJaegerURL),
+		resetURL:     mainflux.Env(envTokenResetEndpoint, defTokenResetEndpoint),
+		authnTLS:     tls,
+		authnCACerts: mainflux.Env(envAuthnCACerts, defAuthnCACerts),
+		authnURL:     mainflux.Env(envAuthnURL, defAuthnURL),
+		authnTimeout: time.Duration(timeout) * time.Second,
 	}
 
 }
@@ -266,7 +259,7 @@ func connectToAuthn(cfg config, tracer opentracing.Tracer, logger logger.Logger)
 
 	conn, err := grpc.Dial(cfg.authnURL, opts...)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to users service: %s", err))
+		logger.Error(fmt.Sprintf("Failed to connect to authn service: %s", err))
 		os.Exit(1)
 	}
 

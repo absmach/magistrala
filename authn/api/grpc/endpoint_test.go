@@ -58,42 +58,50 @@ func TestIssue(t *testing.T) {
 		id   string
 		kind uint32
 		err  error
+		code codes.Code
 	}{
 		{
 			desc: "issue for user with valid token",
 			id:   email,
 			kind: authn.UserKey,
 			err:  nil,
+			code: codes.OK,
 		},
 		{
 			desc: "issue recovery key",
 			id:   email,
 			kind: authn.RecoveryKey,
 			err:  nil,
+			code: codes.OK,
 		},
 		{
 			desc: "issue API key",
 			id:   userKey.Secret,
 			kind: authn.APIKey,
 			err:  nil,
+			code: codes.OK,
 		},
 		{
 			desc: "issue for invalid key type",
 			id:   email,
 			kind: 32,
 			err:  status.Error(codes.InvalidArgument, "received invalid token request"),
+			code: codes.InvalidArgument,
 		},
 		{
 			desc: "issue for user that  exist",
 			id:   "",
 			kind: authn.APIKey,
 			err:  status.Error(codes.Unauthenticated, "unauthorized access"),
+			code: codes.Unauthenticated,
 		},
 	}
 
 	for _, tc := range cases {
 		_, err := client.Issue(context.Background(), &mainflux.IssueReq{Issuer: tc.id, Type: tc.kind})
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.err, err))
+		e, ok := status.FromError(err)
+		assert.True(t, ok, "gRPC status can't be extracted from the error")
+		assert.Equal(t, tc.code, e.Code(), fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.code, e.Code()))
 	}
 }
 
@@ -116,36 +124,43 @@ func TestIdentify(t *testing.T) {
 		token string
 		id    string
 		err   error
+		code  codes.Code
 	}{
 		{
 			desc:  "identify user with recovery token",
 			token: recoveryKey.Secret,
 			id:    email,
 			err:   nil,
+			code:  codes.OK,
 		},
 		{
 			desc:  "identify user with API token",
 			token: apiKey.Secret,
 			id:    email,
 			err:   nil,
+			code:  codes.OK,
 		},
 		{
 			desc:  "identify user with invalid user token",
 			token: "invalid",
 			id:    "",
 			err:   status.Error(codes.Unauthenticated, "unauthorized access"),
+			code:  codes.Unauthenticated,
 		},
 		{
 			desc:  "identify user that doesn't exist",
 			token: "",
 			id:    "",
 			err:   status.Error(codes.InvalidArgument, "received invalid token request"),
+			code:  codes.InvalidArgument,
 		},
 	}
 
 	for _, tc := range cases {
 		id, err := client.Identify(context.Background(), &mainflux.Token{Value: tc.token})
 		assert.Equal(t, tc.id, id.GetValue(), fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.id, id.GetValue()))
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.err, err))
+		e, ok := status.FromError(err)
+		assert.True(t, ok, "gRPC status can't be extracted from the error")
+		assert.Equal(t, tc.code, e.Code(), fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.code, e.Code()))
 	}
 }

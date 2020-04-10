@@ -6,7 +6,6 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"strings"
@@ -16,6 +15,7 @@ import (
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/authn"
+	"github.com/mainflux/mainflux/errors"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -67,7 +67,7 @@ func decodeIssue(_ context.Context, r *http.Request) (interface{}, error) {
 		issuer: r.Header.Get("Authorization"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
+		return nil, errors.Wrap(authn.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -100,28 +100,28 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
-	w.Header().Set("Content-Type", contentType)
-
-	switch err {
-	case authn.ErrMalformedEntity:
+	switch {
+	case errors.Contains(err, authn.ErrMalformedEntity):
 		w.WriteHeader(http.StatusBadRequest)
-	case authn.ErrUnauthorizedAccess:
+	case errors.Contains(err, authn.ErrUnauthorizedAccess):
 		w.WriteHeader(http.StatusForbidden)
-	case authn.ErrNotFound:
+	case errors.Contains(err, authn.ErrNotFound):
 		w.WriteHeader(http.StatusNotFound)
-	case authn.ErrConflict:
+	case errors.Contains(err, authn.ErrConflict):
 		w.WriteHeader(http.StatusConflict)
-	case io.EOF, io.ErrUnexpectedEOF:
+	case errors.Contains(err, io.EOF):
 		w.WriteHeader(http.StatusBadRequest)
-	case errUnsupportedContentType:
+	case errors.Contains(err, io.ErrUnexpectedEOF):
+		w.WriteHeader(http.StatusBadRequest)
+	case errors.Contains(err, errUnsupportedContentType):
 		w.WriteHeader(http.StatusUnsupportedMediaType)
 	default:
-		switch err.(type) {
-		case *json.SyntaxError:
-			w.WriteHeader(http.StatusBadRequest)
-		case *json.UnmarshalTypeError:
-			w.WriteHeader(http.StatusBadRequest)
-		default:
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+	errorVal, ok := err.(errors.Error)
+	if ok {
+		if err := json.NewEncoder(w).Encode(errorRes{Err: errorVal.Msg()}); err != nil {
+			w.Header().Set("Content-Type", contentType)
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}

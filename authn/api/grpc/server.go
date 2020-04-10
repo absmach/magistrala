@@ -8,6 +8,7 @@ import (
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	mainflux "github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/authn"
+	"github.com/mainflux/mainflux/errors"
 	opentracing "github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
@@ -74,12 +75,14 @@ func encodeIdentifyResponse(_ context.Context, grpcRes interface{}) (interface{}
 }
 
 func encodeError(err error) error {
-	switch err {
-	case nil:
+	switch {
+	case errors.Contains(err, nil):
 		return nil
-	case authn.ErrMalformedEntity:
+	case errors.Contains(err, authn.ErrMalformedEntity):
 		return status.Error(codes.InvalidArgument, "received invalid token request")
-	case authn.ErrUnauthorizedAccess, authn.ErrKeyExpired:
+	case errors.Contains(err, authn.ErrUnauthorizedAccess):
+		return status.Error(codes.Unauthenticated, err.Error())
+	case errors.Contains(err, authn.ErrKeyExpired):
 		return status.Error(codes.Unauthenticated, err.Error())
 	default:
 		return status.Error(codes.Internal, "internal server error")

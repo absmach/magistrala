@@ -10,6 +10,7 @@ import (
 
 	"github.com/mainflux/mainflux/authn"
 	"github.com/mainflux/mainflux/authn/jwt"
+	"github.com/mainflux/mainflux/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -48,7 +49,7 @@ func TestIssue(t *testing.T) {
 
 	for _, tc := range cases {
 		_, err := tokenizer.Issue(tc.key)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s expected %s, got %s", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s, got %s", tc.desc, tc.err, err))
 	}
 }
 
@@ -104,7 +105,7 @@ func TestParse(t *testing.T) {
 
 	for _, tc := range cases {
 		key, err := tokenizer.Parse(tc.token)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s expected %s, got %s", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.key, key, fmt.Sprintf("%s expected %v, got %v", tc.desc, tc.key, key))
 	}
 }

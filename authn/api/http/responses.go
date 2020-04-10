@@ -48,3 +48,7 @@ func (res revokeKeyRes) Headers() map[string]string {
 func (res revokeKeyRes) Empty() bool {
 	return true
 }
+
+type errorRes struct {
+	Err string `json:"error"`
+}

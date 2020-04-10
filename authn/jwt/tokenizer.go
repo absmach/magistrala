@@ -8,6 +8,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/mainflux/mainflux/authn"
+	"github.com/mainflux/mainflux/errors"
 )
 
 type claims struct {
@@ -68,9 +69,9 @@ func (svc tokenizer) Parse(token string) (authn.Key, error) {
 			if c.Type != nil && *c.Type == authn.APIKey {
 				return c.toKey(), nil
 			}
-			return authn.Key{}, authn.ErrKeyExpired
+			return authn.Key{}, errors.Wrap(authn.ErrKeyExpired, err)
 		}
-		return authn.Key{}, authn.ErrUnauthorizedAccess
+		return authn.Key{}, errors.Wrap(authn.ErrUnauthorizedAccess, err)
 	}
 
 	return c.toKey(), nil

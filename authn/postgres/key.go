@@ -7,8 +7,14 @@ import (
 
 	"github.com/lib/pq"
 	"github.com/mainflux/mainflux/authn"
+	"github.com/mainflux/mainflux/errors"
 )
 
+var (
+	errSave     = errors.New("failed to save key in database")
+	errRetrieve = errors.New("failed to retrieve key from database")
+	errDelete   = errors.New("failed to delete key from database")
+)
 var _ authn.KeyRepository = (*repo)(nil)
 
 const (
@@ -37,11 +43,11 @@ func (kr repo) Save(ctx context.Context, key authn.Key) (string, error) {
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			if pqErr.Code.Name() == errDuplicate {
-				return "", authn.ErrConflict
+				return "", errors.Wrap(authn.ErrConflict, pqErr)
 			}
 		}
 
-		return "", err
+		return "", errors.Wrap(errSave, err)
 	}
 
 	return dbKey.ID, nil
@@ -53,10 +59,10 @@ func (kr repo) Retrieve(ctx context.Context, issuer, id string) (authn.Key, erro
 	if err := kr.db.QueryRowxContext(ctx, q, issuer, id).StructScan(&key); err != nil {
 		pqErr, ok := err.(*pq.Error)
 		if err == sql.ErrNoRows || ok && errInvalid == pqErr.Code.Name() {
-			return authn.Key{}, authn.ErrNotFound
+			return authn.Key{}, errors.Wrap(authn.ErrNotFound, err)
 		}
 
-		return authn.Key{}, err
+		return authn.Key{}, errors.Wrap(errRetrieve, err)
 	}
 
 	return toKey(key), nil
@@ -69,7 +75,7 @@ func (kr repo) Remove(ctx context.Context, issuer, id string) error {
 		Issuer: issuer,
 	}
 	if _, err := kr.db.NamedExecContext(ctx, q, key); err != nil {
-		return err
+		return errors.Wrap(errDelete, err)
 	}
 
 	return nil

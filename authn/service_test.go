@@ -12,6 +12,7 @@ import (
 	"github.com/mainflux/mainflux/authn"
 	"github.com/mainflux/mainflux/authn/jwt"
 	"github.com/mainflux/mainflux/authn/mocks"
+	"github.com/mainflux/mainflux/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -102,7 +103,7 @@ func TestIssue(t *testing.T) {
 
 	for _, tc := range cases {
 		_, err := svc.Issue(context.Background(), tc.issuer, tc.key)
-		assert.Equal(t, err, tc.err, fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 func TestRevoke(t *testing.T) {
@@ -144,7 +145,7 @@ func TestRevoke(t *testing.T) {
 
 	for _, tc := range cases {
 		err := svc.Revoke(context.Background(), tc.issuer, tc.id)
-		assert.Equal(t, err, tc.err, fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 func TestRetrieve(t *testing.T) {
@@ -205,7 +206,7 @@ func TestRetrieve(t *testing.T) {
 
 	for _, tc := range cases {
 		_, err := svc.Retrieve(context.Background(), tc.issuer, tc.id)
-		assert.Equal(t, err, tc.err, fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 func TestIdentify(t *testing.T) {
@@ -272,7 +273,7 @@ func TestIdentify(t *testing.T) {
 
 	for _, tc := range cases {
 		id, err := svc.Identify(context.Background(), tc.key)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.id, id, fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.id, id))
 	}
 }

@@ -4,17 +4,17 @@
 package postgres
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/jmoiron/sqlx" // required for DB access
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/readers"
 	"github.com/mainflux/mainflux/transformers/senml"
 )
 
 const errInvalid = "invalid_text_representation"
 
-var errInvalidMessage = errors.New("invalid message representation")
+var errReadMessages = errors.New("faled to read messages from postgres database")
 
 var _ readers.MessageRepository = (*postgresRepository)(nil)
 
@@ -46,7 +46,7 @@ func (tr postgresRepository) ReadAll(chanID string, offset, limit uint64, query 
 
 	rows, err := tr.db.NamedQuery(q, params)
 	if err != nil {
-		return readers.MessagesPage{}, err
+		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 	}
 	defer rows.Close()
 
@@ -58,7 +58,7 @@ func (tr postgresRepository) ReadAll(chanID string, offset, limit uint64, query 
 	for rows.Next() {
 		dbm := dbMessage{Channel: chanID}
 		if err := rows.StructScan(&dbm); err != nil {
-			return readers.MessagesPage{}, err
+			return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 		}
 
 		msg := toMessage(dbm)
@@ -74,7 +74,7 @@ func (tr postgresRepository) ReadAll(chanID string, offset, limit uint64, query 
 	}
 
 	if err := tr.db.QueryRow(q, qParams...).Scan(&page.Total); err != nil {
-		return readers.MessagesPage{}, err
+		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 	}
 
 	return page, nil

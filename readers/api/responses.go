@@ -30,3 +30,7 @@ func (res pageRes) Code() int {
 func (res pageRes) Empty() bool {
 	return false
 }
+
+type errorRes struct {
+	Err string `json:"error"`
+}

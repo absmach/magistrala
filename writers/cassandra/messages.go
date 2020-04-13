@@ -5,9 +5,12 @@ package cassandra
 
 import (
 	"github.com/gocql/gocql"
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/transformers/senml"
 	"github.com/mainflux/mainflux/writers"
 )
+
+var errSaveMessage = errors.New("faled to save message to cassandra database")
 
 var _ writers.MessageRepository = (*cassandraRepository)(nil)
 
@@ -32,7 +35,7 @@ func (cr *cassandraRepository) Save(messages ...senml.Message) error {
 			msg.Protocol, msg.Name, msg.Unit, msg.Value, msg.StringValue,
 			msg.BoolValue, msg.DataValue, msg.Sum, msg.Time, msg.UpdateTime).Exec()
 		if err != nil {
-			return err
+			return errors.Wrap(errSaveMessage, err)
 		}
 	}
 

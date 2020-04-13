@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/readers"
 
 	influxdata "github.com/influxdata/influxdb/client/v2"
@@ -15,6 +16,8 @@ import (
 )
 
 const countCol = "count"
+
+var errReadMessages = errors.New("faled to read messages from influxdb database")
 
 var _ readers.MessageRepository = (*influxRepository)(nil)
 
@@ -43,10 +46,10 @@ func (repo *influxRepository) ReadAll(chanID string, offset, limit uint64, query
 
 	resp, err := repo.client.Query(q)
 	if err != nil {
-		return readers.MessagesPage{}, err
+		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 	}
 	if resp.Error() != nil {
-		return readers.MessagesPage{}, resp.Error()
+		return readers.MessagesPage{}, errors.Wrap(errReadMessages, resp.Error())
 	}
 
 	if len(resp.Results) < 1 || len(resp.Results[0].Series) < 1 {
@@ -60,7 +63,7 @@ func (repo *influxRepository) ReadAll(chanID string, offset, limit uint64, query
 
 	total, err := repo.count(condition)
 	if err != nil {
-		return readers.MessagesPage{}, err
+		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 	}
 
 	return readers.MessagesPage{

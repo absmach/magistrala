@@ -30,7 +30,7 @@ const (
 	defLogLevel        = "error"
 	defNatsURL         = "nats://localhost:4222"
 	defPort            = "8180"
-	defDBHost          = "postgres"
+	defDBHost          = "localhost"
 	defDBPort          = "5432"
 	defDBUser          = "mainflux"
 	defDBPass          = "mainflux"
@@ -139,13 +139,13 @@ func newService(db *sqlx.DB, logger logger.Logger) writers.MessageRepository {
 	svc = api.MetricsMiddleware(
 		svc,
 		kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
-			Namespace: "postgres",
+			Namespace: svcName,
 			Subsystem: "message_writer",
 			Name:      "request_count",
 			Help:      "Number of requests received.",
 		}, []string{"method"}),
 		kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
-			Namespace: "postgres",
+			Namespace: svcName,
 			Subsystem: "message_writer",
 			Name:      "request_latency_microseconds",
 			Help:      "Total duration of requests in microseconds.",

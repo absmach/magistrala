@@ -5,8 +5,14 @@ package senml
 
 import (
 	"github.com/mainflux/mainflux/broker"
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/transformers"
 	"github.com/mainflux/senml"
+)
+
+var (
+	errDecode    = errors.New("failed to decode senml")
+	errNormalize = errors.New("faled to normalize senml")
 )
 
 var formats = map[string]senml.Format{
@@ -29,12 +35,12 @@ func (n transformer) Transform(msg broker.Message) (interface{}, error) {
 
 	raw, err := senml.Decode(msg.Payload, format)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(errDecode, err)
 	}
 
 	normalized, err := senml.Normalize(raw)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(errNormalize, err)
 	}
 
 	msgs := make([]Message, len(normalized.Records))

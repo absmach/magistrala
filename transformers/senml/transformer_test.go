@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/mainflux/mainflux/broker"
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/transformers/senml"
 	mfsenml "github.com/mainflux/senml"
 	"github.com/stretchr/testify/assert"
@@ -102,6 +103,6 @@ func TestTransform(t *testing.T) {
 	for _, tc := range cases {
 		msgs, err := tr.Transform(tc.msg)
 		assert.Equal(t, tc.msgs, msgs, fmt.Sprintf("%s expected %v, got %v", tc.desc, tc.msgs, msgs))
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s expected %s, got %s", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s, got %s", tc.desc, tc.err, err))
 	}
 }

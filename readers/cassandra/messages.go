@@ -7,9 +7,12 @@ import (
 	"fmt"
 
 	"github.com/gocql/gocql"
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/readers"
 	"github.com/mainflux/mainflux/transformers/senml"
 )
+
+var errReadMessages = errors.New("faled to read messages from cassandra database")
 
 var _ readers.MessageRepository = (*cassandraRepository)(nil)
 
@@ -59,13 +62,13 @@ func (cr cassandraRepository) ReadAll(chanID string, offset, limit uint64, query
 			&msg.Name, &msg.Unit, &msg.Value, &msg.StringValue, &msg.BoolValue,
 			&msg.DataValue, &msg.Sum, &msg.Time, &msg.UpdateTime)
 		if err != nil {
-			return readers.MessagesPage{}, err
+			return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 		}
 		page.Messages = append(page.Messages, msg)
 	}
 
 	if err := cr.session.Query(countCQL, vals[:len(vals)-1]...).Scan(&page.Total); err != nil {
-		return readers.MessagesPage{}, err
+		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 	}
 
 	return page, nil

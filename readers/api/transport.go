@@ -6,7 +6,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -14,6 +13,7 @@ import (
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/readers"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc/codes"
@@ -111,14 +111,21 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
-	switch err {
-	case nil:
-	case errInvalidRequest:
+	switch {
+	case errors.Contains(err, nil):
+	case errors.Contains(err, errInvalidRequest):
 		w.WriteHeader(http.StatusBadRequest)
-	case errUnauthorizedAccess:
+	case errors.Contains(err, errUnauthorizedAccess):
 		w.WriteHeader(http.StatusForbidden)
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
+	}
+	errorVal, ok := err.(errors.Error)
+	if ok {
+		w.Header().Set("Content-Type", contentType)
+		if err := json.NewEncoder(w).Encode(errorRes{Err: errorVal.Msg()}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 	}
 }
 

@@ -5,21 +5,23 @@ package postgres
 
 import (
 	"context"
-	"errors"
 
 	"github.com/gofrs/uuid"
-
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq" // required for DB access
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/transformers/senml"
 	"github.com/mainflux/mainflux/writers"
 )
 
 const errInvalid = "invalid_text_representation"
 
-// ErrInvalidMessage indicates that service received message that
-// doesn't fit required format.
-var ErrInvalidMessage = errors.New("invalid message representation")
+var (
+	// ErrInvalidMessage indicates that service received message that
+	// doesn't fit required format.
+	ErrInvalidMessage = errors.New("invalid message representation")
+	errSaveMessage    = errors.New("faled to save message to postgress database")
+)
 
 var _ writers.MessageRepository = (*postgresRepo)(nil)
 
@@ -42,13 +44,13 @@ func (pr postgresRepo) Save(messages ...senml.Message) error {
 
 	tx, err := pr.db.BeginTxx(context.Background(), nil)
 	if err != nil {
-		return err
+		return errors.Wrap(errSaveMessage, err)
 	}
 
 	for _, msg := range messages {
 		dbth, err := toDBMessage(msg)
 		if err != nil {
-			return err
+			return errors.Wrap(errSaveMessage, err)
 		}
 
 		if _, err := tx.NamedExec(q, dbth); err != nil {
@@ -56,15 +58,17 @@ func (pr postgresRepo) Save(messages ...senml.Message) error {
 			if ok {
 				switch pqErr.Code.Name() {
 				case errInvalid:
-					return ErrInvalidMessage
+					return errors.Wrap(errSaveMessage, ErrInvalidMessage)
 				}
 			}
 
-			return err
+			return errors.Wrap(errSaveMessage, err)
 		}
 	}
-
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return errors.Wrap(errSaveMessage, err)
+	}
+	return nil
 }
 
 type dbMessage struct {

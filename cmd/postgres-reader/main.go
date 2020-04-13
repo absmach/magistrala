@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	svcName = "postgres-writer"
+	svcName = "postgres-reader"
 	sep     = ","
 
 	defLogLevel          = "error"
@@ -112,7 +112,7 @@ func main() {
 	}()
 
 	err = <-errs
-	logger.Error(fmt.Sprintf("Postgres writer service terminated: %s", err))
+	logger.Error(fmt.Sprintf("Postgres reader service terminated: %s", err))
 }
 
 func loadConfig() config {
@@ -213,14 +213,14 @@ func newService(db *sqlx.DB, logger logger.Logger) readers.MessageRepository {
 	svc = api.MetricsMiddleware(
 		svc,
 		kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
-			Namespace: "postgres",
-			Subsystem: "message_writer",
+			Namespace: svcName,
+			Subsystem: "message_reader",
 			Name:      "request_count",
 			Help:      "Number of requests received.",
 		}, []string{"method"}),
 		kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
-			Namespace: "postgres",
-			Subsystem: "message_writer",
+			Namespace: svcName,
+			Subsystem: "message_reader",
 			Name:      "request_latency_microseconds",
 			Help:      "Total duration of requests in microseconds.",
 		}, []string{"method"}),

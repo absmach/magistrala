@@ -8,11 +8,14 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/transformers/senml"
 	"github.com/mainflux/mainflux/writers"
 )
 
 const collectionName string = "mainflux"
+
+var errSaveMessage = errors.New("faled to save message to mongodb database")
 
 var _ writers.MessageRepository = (*mongoRepo)(nil)
 
@@ -73,5 +76,8 @@ func (repo *mongoRepo) Save(messages ...senml.Message) error {
 	}
 
 	_, err := coll.InsertMany(context.Background(), msgs)
-	return err
+	if err != nil {
+		return errors.Wrap(errSaveMessage, err)
+	}
+	return nil
 }

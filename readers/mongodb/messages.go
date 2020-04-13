@@ -6,6 +6,7 @@ package mongodb
 import (
 	"context"
 
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/readers"
 	"github.com/mainflux/mainflux/transformers/senml"
 	"go.mongodb.org/mongo-driver/bson"
@@ -14,6 +15,8 @@ import (
 )
 
 const collection = "mainflux"
+
+var errReadMessages = errors.New("faled to read messages from mongodb database")
 
 var _ readers.MessageRepository = (*mongoRepository)(nil)
 
@@ -54,7 +57,7 @@ func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64, query m
 	filter := fmtCondition(chanID, query)
 	cursor, err := col.Find(context.Background(), filter, options.Find().SetSort(sortMap).SetLimit(int64(limit)).SetSkip(int64(offset)))
 	if err != nil {
-		return readers.MessagesPage{}, err
+		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 	}
 	defer cursor.Close(context.Background())
 
@@ -62,7 +65,7 @@ func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64, query m
 	for cursor.Next(context.Background()) {
 		var m message
 		if err := cursor.Decode(&m); err != nil {
-			return readers.MessagesPage{}, err
+			return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 		}
 
 		msg := senml.Message{
@@ -93,7 +96,7 @@ func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64, query m
 
 	total, err := col.CountDocuments(context.Background(), filter)
 	if err != nil {
-		return readers.MessagesPage{}, err
+		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 	}
 	if total < 0 {
 		return readers.MessagesPage{}, nil

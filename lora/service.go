@@ -5,7 +5,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"time"
 
+	"github.com/golang/protobuf/ptypes"
 	"github.com/mainflux/mainflux/broker"
 )
 
@@ -13,6 +15,7 @@ const (
 	protocol      = "lora"
 	thingSuffix   = "thing"
 	channelSuffix = "channel"
+	contentType   = "application/json"
 )
 
 var (
@@ -103,13 +106,19 @@ func (as *adapterService) Publish(ctx context.Context, token string, m Message) 
 		payload = []byte(jo)
 	}
 
+	created, err := ptypes.TimestampProto(time.Now())
+	if err != nil {
+		return err
+	}
+
 	// Publish on Mainflux NATS broker
 	msg := broker.Message{
 		Publisher:   thing,
 		Protocol:    protocol,
-		ContentType: "Content-Type",
+		ContentType: contentType,
 		Channel:     channel,
 		Payload:     payload,
+		Created:     created,
 	}
 
 	return as.broker.Publish(ctx, token, msg)

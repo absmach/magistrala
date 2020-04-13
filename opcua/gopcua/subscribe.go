@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/golang/protobuf/ptypes"
 	opcuaGopcua "github.com/gopcua/opcua"
 	uaGopcua "github.com/gopcua/opcua/ua"
 	"github.com/mainflux/mainflux/broker"
@@ -224,6 +225,11 @@ func (c client) publish(token string, m message) error {
 		return fmt.Errorf("%s between channel %s and thing %s", errNotFoundConn, chanID, thingID)
 	}
 
+	created, err := ptypes.TimestampProto(time.Now())
+	if err != nil {
+		return err
+	}
+
 	// Publish on Mainflux NATS broker
 	SenML := fmt.Sprintf(`[{"n":"%s", "t": %d, "%s":%v}]`, m.Type, m.Time, m.DataKey, m.Data)
 	payload := []byte(SenML)
@@ -234,6 +240,7 @@ func (c client) publish(token string, m message) error {
 		Channel:     chanID,
 		Payload:     payload,
 		Subtopic:    m.NodeID,
+		Created:     created,
 	}
 
 	if err := c.broker.Publish(c.ctx, token, msg); err != nil {

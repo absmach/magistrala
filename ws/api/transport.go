@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/go-zoo/bone"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/gorilla/websocket"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/broker"
@@ -222,6 +223,12 @@ func (sub subscription) broadcast(svc ws.Service, contentType string) {
 			logger.Warn(fmt.Sprintf("Failed to read message: %s", err))
 			return
 		}
+
+		created, err := ptypes.TimestampProto(time.Now())
+		if err != nil {
+			logger.Info(fmt.Sprintf("Failed to generate timestamp: %s", err))
+		}
+
 		msg := broker.Message{
 			Channel:     sub.chanID,
 			Subtopic:    sub.subtopic,
@@ -229,6 +236,7 @@ func (sub subscription) broadcast(svc ws.Service, contentType string) {
 			Publisher:   sub.pubID,
 			Protocol:    protocol,
 			Payload:     payload,
+			Created:     created,
 		}
 		if err := svc.Publish(context.Background(), "", msg); err != nil {
 			logger.Warn(fmt.Sprintf("Failed to publish message to NATS: %s", err))

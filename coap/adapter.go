@@ -8,7 +8,6 @@ package coap
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -30,18 +29,6 @@ const (
 	AckTimeout = 2000 * time.Millisecond
 	// MaxRetransmit is the maximum number of times a message will be retransmitted.
 	MaxRetransmit = 4
-)
-
-var (
-	errBadOption = errors.New("bad option")
-	// ErrFailedMessagePublish indicates that message publishing failed.
-	ErrFailedMessagePublish = errors.New("failed to publish message")
-
-	// ErrFailedSubscription indicates that client couldn't subscribe to specified channel.
-	ErrFailedSubscription = errors.New("failed to subscribe to a channel")
-
-	// ErrFailedConnection indicates that service couldn't connect to message broker.
-	ErrFailedConnection = errors.New("failed to connect to message broker")
 )
 
 // Service specifies coap service API.
@@ -125,16 +112,7 @@ func (svc *adapterService) listenResponses(responses <-chan string) {
 }
 
 func (svc *adapterService) Publish(ctx context.Context, token string, msg broker.Message) error {
-	if err := svc.broker.Publish(ctx, token, msg); err != nil {
-		switch err {
-		case nats.ErrConnectionClosed, nats.ErrInvalidConnection:
-			return ErrFailedConnection
-		default:
-			return ErrFailedMessagePublish
-		}
-	}
-
-	return nil
+	return svc.broker.Publish(ctx, token, msg)
 }
 
 func (svc *adapterService) Subscribe(chanID, subtopic, obsID string, o *Observer) error {

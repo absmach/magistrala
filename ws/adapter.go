@@ -93,15 +93,7 @@ func New(broker broker.Nats, log logger.Logger) Service {
 }
 
 func (as *adapterService) Publish(ctx context.Context, token string, msg broker.Message) error {
-	if err := as.broker.Publish(ctx, token, msg); err != nil {
-		switch err {
-		case nats.ErrConnectionClosed, nats.ErrInvalidConnection:
-			return ErrFailedConnection
-		default:
-			return ErrFailedMessagePublish
-		}
-	}
-	return nil
+	return as.broker.Publish(ctx, token, msg)
 }
 
 func (as *adapterService) Subscribe(chanID, subtopic string, channel *Channel) error {

@@ -32,14 +32,10 @@ func (sdk mfSDK) CreateChannel(channel Channel, token string) (string, error) {
 	}
 
 	if resp.StatusCode != http.StatusCreated {
-		switch resp.StatusCode {
-		case http.StatusBadRequest:
-			return "", ErrInvalidArgs
-		case http.StatusForbidden:
-			return "", ErrUnauthorized
-		default:
-			return "", ErrFailedCreation
+		if err := encodeError(resp.StatusCode); err != nil {
+			return "", err
 		}
+		return "", ErrFailedCreation
 	}
 
 	id := strings.TrimPrefix(resp.Header.Get("Location"), fmt.Sprintf("/%s/", channelsEndpoint))
@@ -67,14 +63,10 @@ func (sdk mfSDK) CreateChannels(channels []Channel, token string) ([]Channel, er
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
-		switch resp.StatusCode {
-		case http.StatusBadRequest:
-			return []Channel{}, ErrInvalidArgs
-		case http.StatusForbidden:
-			return []Channel{}, ErrUnauthorized
-		default:
-			return []Channel{}, ErrFailedCreation
+		if err := encodeError(resp.StatusCode); err != nil {
+			return []Channel{}, err
 		}
+		return []Channel{}, ErrFailedCreation
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -82,12 +74,12 @@ func (sdk mfSDK) CreateChannels(channels []Channel, token string) ([]Channel, er
 		return []Channel{}, err
 	}
 
-	var p createChannelsRes
-	if err := json.Unmarshal(body, &p); err != nil {
+	var ccr createChannelsRes
+	if err := json.Unmarshal(body, &ccr); err != nil {
 		return []Channel{}, err
 	}
 
-	return p.Channels, nil
+	return ccr.Channels, nil
 }
 
 func (sdk mfSDK) Channels(token string, offset, limit uint64, name string) (ChannelsPage, error) {
@@ -111,14 +103,10 @@ func (sdk mfSDK) Channels(token string, offset, limit uint64, name string) (Chan
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		switch resp.StatusCode {
-		case http.StatusBadRequest:
-			return ChannelsPage{}, ErrInvalidArgs
-		case http.StatusForbidden:
-			return ChannelsPage{}, ErrUnauthorized
-		default:
-			return ChannelsPage{}, ErrFetchFailed
+		if err := encodeError(resp.StatusCode); err != nil {
+			return ChannelsPage{}, err
 		}
+		return ChannelsPage{}, ErrFetchFailed
 	}
 
 	var cp ChannelsPage
@@ -150,14 +138,10 @@ func (sdk mfSDK) ChannelsByThing(token, thingID string, offset, limit uint64) (C
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		switch resp.StatusCode {
-		case http.StatusBadRequest:
-			return ChannelsPage{}, ErrInvalidArgs
-		case http.StatusForbidden:
-			return ChannelsPage{}, ErrUnauthorized
-		default:
-			return ChannelsPage{}, ErrFetchFailed
+		if err := encodeError(resp.StatusCode); err != nil {
+			return ChannelsPage{}, err
 		}
+		return ChannelsPage{}, ErrFetchFailed
 	}
 
 	var cp ChannelsPage
@@ -189,14 +173,10 @@ func (sdk mfSDK) Channel(id, token string) (Channel, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		switch resp.StatusCode {
-		case http.StatusForbidden:
-			return Channel{}, ErrUnauthorized
-		case http.StatusNotFound:
-			return Channel{}, ErrNotFound
-		default:
-			return Channel{}, ErrFetchFailed
+		if err := encodeError(resp.StatusCode); err != nil {
+			return Channel{}, err
 		}
+		return Channel{}, ErrFetchFailed
 	}
 
 	var c Channel
@@ -227,16 +207,10 @@ func (sdk mfSDK) UpdateChannel(channel Channel, token string) error {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		switch resp.StatusCode {
-		case http.StatusBadRequest:
-			return ErrInvalidArgs
-		case http.StatusForbidden:
-			return ErrUnauthorized
-		case http.StatusNotFound:
-			return ErrNotFound
-		default:
-			return ErrFailedUpdate
+		if err := encodeError(resp.StatusCode); err != nil {
+			return err
 		}
+		return ErrFailedUpdate
 	}
 
 	return nil
@@ -257,14 +231,10 @@ func (sdk mfSDK) DeleteChannel(id, token string) error {
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
-		switch resp.StatusCode {
-		case http.StatusBadRequest:
-			return ErrInvalidArgs
-		case http.StatusForbidden:
-			return ErrUnauthorized
-		default:
-			return ErrFailedUpdate
+		if err := encodeError(resp.StatusCode); err != nil {
+			return err
 		}
+		return ErrFailedUpdate
 	}
 
 	return nil

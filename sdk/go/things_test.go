@@ -665,14 +665,14 @@ func TestConnectThing(t *testing.T) {
 			thingID: thingID,
 			chanID:  "",
 			token:   token,
-			err:     sdk.ErrFailedConnection,
+			err:     sdk.ErrInvalidArgs,
 		},
 		{
 			desc:    "connect thing with invalid ID to existing channel",
 			thingID: "",
 			chanID:  chanID1,
 			token:   token,
-			err:     sdk.ErrFailedConnection,
+			err:     sdk.ErrInvalidArgs,
 		},
 
 		{
@@ -769,14 +769,14 @@ func TestConnect(t *testing.T) {
 			thingID: thingID,
 			chanID:  emptyValue,
 			token:   token,
-			err:     sdk.ErrFailedConnection,
+			err:     sdk.ErrInvalidArgs,
 		},
 		{
 			desc:    "connect things with invalid ID to existing channels",
 			thingID: emptyValue,
 			chanID:  chanID1,
 			token:   token,
-			err:     sdk.ErrFailedConnection,
+			err:     sdk.ErrInvalidArgs,
 		},
 
 		{
@@ -881,14 +881,14 @@ func TestDisconnectThing(t *testing.T) {
 			thingID: thingID,
 			chanID:  "",
 			token:   token,
-			err:     sdk.ErrFailedDisconnect,
+			err:     sdk.ErrInvalidArgs,
 		},
 		{
 			desc:    "disconnect thing with invalid ID from existing channel",
 			thingID: "",
 			chanID:  chanID1,
 			token:   token,
-			err:     sdk.ErrFailedDisconnect,
+			err:     sdk.ErrInvalidArgs,
 		},
 		{
 			desc:    "disconnect existing thing from existing channel with invalid token",

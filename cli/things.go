@@ -10,8 +10,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const thingsEP = "things"
-
 var cmdThings = []cobra.Command{
 	cobra.Command{
 		Use:   "create",

@@ -28,14 +28,10 @@ func (sdk mfSDK) CreateUser(user User) error {
 	}
 
 	if resp.StatusCode != http.StatusCreated {
-		switch resp.StatusCode {
-		case http.StatusBadRequest:
-			return ErrInvalidArgs
-		case http.StatusConflict:
-			return ErrConflict
-		default:
-			return ErrFailedCreation
+		if err := encodeError(resp.StatusCode); err != nil {
+			return err
 		}
+		return ErrFailedCreation
 	}
 
 	return nil
@@ -61,12 +57,10 @@ func (sdk mfSDK) User(token string) (User, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		switch resp.StatusCode {
-		case http.StatusForbidden:
-			return User{}, ErrUnauthorized
-		default:
-			return User{}, ErrFetchFailed
+		if err := encodeError(resp.StatusCode); err != nil {
+			return User{}, err
 		}
+		return User{}, ErrFetchFailed
 	}
 
 	var u User
@@ -97,22 +91,18 @@ func (sdk mfSDK) CreateToken(user User) (string, error) {
 	}
 
 	if resp.StatusCode != http.StatusCreated {
-		switch resp.StatusCode {
-		case http.StatusBadRequest:
-			return "", ErrInvalidArgs
-		case http.StatusForbidden:
-			return "", ErrUnauthorized
-		default:
-			return "", ErrFailedCreation
+		if err := encodeError(resp.StatusCode); err != nil {
+			return "", err
 		}
+		return "", ErrFailedCreation
 	}
 
-	var t tokenRes
-	if err := json.Unmarshal(body, &t); err != nil {
+	var tr tokenRes
+	if err := json.Unmarshal(body, &tr); err != nil {
 		return "", err
 	}
 
-	return t.Token, nil
+	return tr.Token, nil
 }
 
 func (sdk mfSDK) UpdateUser(user User, token string) error {
@@ -134,12 +124,10 @@ func (sdk mfSDK) UpdateUser(user User, token string) error {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		switch resp.StatusCode {
-		case http.StatusForbidden:
-			return ErrUnauthorized
-		default:
-			return ErrFailedUpdate
+		if err := encodeError(resp.StatusCode); err != nil {
+			return err
 		}
+		return ErrFailedUpdate
 	}
 
 	return nil
@@ -168,14 +156,10 @@ func (sdk mfSDK) UpdatePassword(oldPass, newPass, token string) error {
 	}
 
 	if resp.StatusCode != http.StatusCreated {
-		switch resp.StatusCode {
-		case http.StatusBadRequest:
-			return ErrInvalidArgs
-		case http.StatusForbidden:
-			return ErrUnauthorized
-		default:
-			return ErrFailedUpdate
+		if err := encodeError(resp.StatusCode); err != nil {
+			return err
 		}
+		return ErrFailedUpdate
 	}
 
 	return nil

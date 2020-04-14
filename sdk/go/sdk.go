@@ -240,3 +240,18 @@ func createURL(baseURL, prefix, endpoint string) string {
 
 	return fmt.Sprintf("%s/%s/%s", baseURL, prefix, endpoint)
 }
+
+func encodeError(statusCode int) error {
+	switch statusCode {
+	case http.StatusBadRequest:
+		return ErrInvalidArgs
+	case http.StatusForbidden:
+		return ErrUnauthorized
+	case http.StatusNotFound:
+		return ErrNotFound
+	case http.StatusConflict:
+		return ErrConflict
+	default:
+		return nil
+	}
+}

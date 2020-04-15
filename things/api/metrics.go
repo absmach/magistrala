@@ -67,7 +67,7 @@ func (ms *metricsMiddleware) ViewThing(ctx context.Context, token, id string) (t
 	return ms.svc.ViewThing(ctx, token, id)
 }
 
-func (ms *metricsMiddleware) ListThings(ctx context.Context, token string, offset, limit uint64, name string, metadata things.Metadata) (things.ThingsPage, error) {
+func (ms *metricsMiddleware) ListThings(ctx context.Context, token string, offset, limit uint64, name string, metadata things.Metadata) (things.Page, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_things").Add(1)
 		ms.latency.With("method", "list_things").Observe(time.Since(begin).Seconds())
@@ -76,7 +76,7 @@ func (ms *metricsMiddleware) ListThings(ctx context.Context, token string, offse
 	return ms.svc.ListThings(ctx, token, offset, limit, name, metadata)
 }
 
-func (ms *metricsMiddleware) ListThingsByChannel(ctx context.Context, token, id string, offset, limit uint64) (things.ThingsPage, error) {
+func (ms *metricsMiddleware) ListThingsByChannel(ctx context.Context, token, id string, offset, limit uint64) (things.Page, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_things_by_channel").Add(1)
 		ms.latency.With("method", "list_things_by_channel").Observe(time.Since(begin).Seconds())

@@ -112,14 +112,14 @@ func (trm *thingRepositoryMock) RetrieveByID(_ context.Context, owner, id string
 	return things.Thing{}, things.ErrNotFound
 }
 
-func (trm *thingRepositoryMock) RetrieveAll(_ context.Context, owner string, offset, limit uint64, name string, metadata things.Metadata) (things.ThingsPage, error) {
+func (trm *thingRepositoryMock) RetrieveAll(_ context.Context, owner string, offset, limit uint64, name string, metadata things.Metadata) (things.Page, error) {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
 	items := make([]things.Thing, 0)
 
 	if offset < 0 || limit <= 0 {
-		return things.ThingsPage{}, nil
+		return things.Page{}, nil
 	}
 
 	first := uint64(offset) + 1
@@ -139,7 +139,7 @@ func (trm *thingRepositoryMock) RetrieveAll(_ context.Context, owner string, off
 		return items[i].ID < items[j].ID
 	})
 
-	page := things.ThingsPage{
+	page := things.Page{
 		Things: items,
 		PageMetadata: things.PageMetadata{
 			Total:  trm.counter,
@@ -151,14 +151,14 @@ func (trm *thingRepositoryMock) RetrieveAll(_ context.Context, owner string, off
 	return page, nil
 }
 
-func (trm *thingRepositoryMock) RetrieveByChannel(_ context.Context, owner, chanID string, offset, limit uint64) (things.ThingsPage, error) {
+func (trm *thingRepositoryMock) RetrieveByChannel(_ context.Context, owner, chanID string, offset, limit uint64) (things.Page, error) {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
 	items := make([]things.Thing, 0)
 
 	if offset < 0 || limit <= 0 {
-		return things.ThingsPage{}, nil
+		return things.Page{}, nil
 	}
 
 	first := uint64(offset) + 1
@@ -166,7 +166,7 @@ func (trm *thingRepositoryMock) RetrieveByChannel(_ context.Context, owner, chan
 
 	ths, ok := trm.tconns[chanID]
 	if !ok {
-		return things.ThingsPage{}, nil
+		return things.Page{}, nil
 	}
 
 	for _, v := range ths {
@@ -180,7 +180,7 @@ func (trm *thingRepositoryMock) RetrieveByChannel(_ context.Context, owner, chan
 		return items[i].ID < items[j].ID
 	})
 
-	page := things.ThingsPage{
+	page := things.Page{
 		Things: items,
 		PageMetadata: things.PageMetadata{
 			Total:  trm.counter,

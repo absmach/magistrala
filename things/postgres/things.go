@@ -89,10 +89,10 @@ func (tr thingRepository) Save(ctx context.Context, ths ...things.Thing) ([]thin
 	return ths, nil
 }
 
-func (tr thingRepository) Update(ctx context.Context, thing things.Thing) error {
+func (tr thingRepository) Update(ctx context.Context, t things.Thing) error {
 	q := `UPDATE things SET name = :name, metadata = :metadata WHERE owner = :owner AND id = :id;`
 
-	dbth, err := toDBThing(thing)
+	dbth, err := toDBThing(t)
 	if err != nil {
 		return err
 	}
@@ -167,7 +167,7 @@ func (tr thingRepository) RetrieveByID(ctx context.Context, owner, id string) (t
 	}
 
 	if err := tr.db.QueryRowxContext(ctx, q, id, owner).StructScan(&dbth); err != nil {
-		empty := things.Thing{}
+		var empty things.Thing
 
 		pqErr, ok := err.(*pq.Error)
 		if err == sql.ErrNoRows || ok && errInvalid == pqErr.Code.Name() {
@@ -194,11 +194,11 @@ func (tr thingRepository) RetrieveByKey(ctx context.Context, key string) (string
 	return id, nil
 }
 
-func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, offset, limit uint64, name string, metadata things.Metadata) (things.ThingsPage, error) {
+func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, offset, limit uint64, name string, tm things.Metadata) (things.Page, error) {
 	nq, name := getNameQuery(name)
-	m, mq, err := getMetadataQuery(metadata)
+	m, mq, err := getMetadataQuery(tm)
 	if err != nil {
-		return things.ThingsPage{}, errors.Wrap(ErrSelectDb, err)
+		return things.Page{}, errors.Wrap(ErrSelectDb, err)
 	}
 
 	q := fmt.Sprintf(`SELECT id, name, key, metadata FROM things
@@ -214,20 +214,20 @@ func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, offset,
 
 	rows, err := tr.db.NamedQueryContext(ctx, q, params)
 	if err != nil {
-		return things.ThingsPage{}, errors.Wrap(ErrSelectDb, err)
+		return things.Page{}, errors.Wrap(ErrSelectDb, err)
 	}
 	defer rows.Close()
 
-	items := []things.Thing{}
+	var items []things.Thing
 	for rows.Next() {
 		dbth := dbThing{Owner: owner}
 		if err := rows.StructScan(&dbth); err != nil {
-			return things.ThingsPage{}, errors.Wrap(ErrSelectDb, err)
+			return things.Page{}, errors.Wrap(ErrSelectDb, err)
 		}
 
 		th, err := toThing(dbth)
 		if err != nil {
-			return things.ThingsPage{}, err
+			return things.Page{}, err
 		}
 
 		items = append(items, th)
@@ -237,10 +237,10 @@ func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, offset,
 
 	total, err := total(ctx, tr.db, cq, params)
 	if err != nil {
-		return things.ThingsPage{}, errors.Wrap(ErrSelectDb, err)
+		return things.Page{}, errors.Wrap(ErrSelectDb, err)
 	}
 
-	page := things.ThingsPage{
+	page := things.Page{
 		Things: items,
 		PageMetadata: things.PageMetadata{
 			Total:  total,
@@ -252,10 +252,10 @@ func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, offset,
 	return page, nil
 }
 
-func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, channel string, offset, limit uint64) (things.ThingsPage, error) {
+func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, channel string, offset, limit uint64) (things.Page, error) {
 	// Verify if UUID format is valid to avoid internal Postgres error
 	if _, err := uuid.FromString(channel); err != nil {
-		return things.ThingsPage{}, things.ErrNotFound
+		return things.Page{}, things.ErrNotFound
 	}
 
 	q := `SELECT id, name, key, metadata
@@ -276,20 +276,20 @@ func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, channel 
 
 	rows, err := tr.db.NamedQueryContext(ctx, q, params)
 	if err != nil {
-		return things.ThingsPage{}, errors.Wrap(ErrSelectDb, err)
+		return things.Page{}, errors.Wrap(ErrSelectDb, err)
 	}
 	defer rows.Close()
 
-	items := []things.Thing{}
+	var items []things.Thing
 	for rows.Next() {
 		dbth := dbThing{Owner: owner}
 		if err := rows.StructScan(&dbth); err != nil {
-			return things.ThingsPage{}, errors.Wrap(ErrSelectDb, err)
+			return things.Page{}, errors.Wrap(ErrSelectDb, err)
 		}
 
 		th, err := toThing(dbth)
 		if err != nil {
-			return things.ThingsPage{}, err
+			return things.Page{}, err
 		}
 
 		items = append(items, th)
@@ -303,10 +303,10 @@ func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, channel 
 
 	var total uint64
 	if err := tr.db.GetContext(ctx, &total, q, owner, channel); err != nil {
-		return things.ThingsPage{}, errors.Wrap(ErrSelectDb, err)
+		return things.Page{}, errors.Wrap(ErrSelectDb, err)
 	}
 
-	return things.ThingsPage{
+	return things.Page{
 		Things: items,
 		PageMetadata: things.PageMetadata{
 			Total:  total,

@@ -56,12 +56,12 @@ type Service interface {
 
 	// ListThings retrieves data about subset of things that belongs to the
 	// user identified by the provided key.
-	ListThings(ctx context.Context, token string, offset, limit uint64, name string, metadata Metadata) (ThingsPage, error)
+	ListThings(ctx context.Context, token string, offset, limit uint64, name string, metadata Metadata) (Page, error)
 
 	// ListThingsByChannel retrieves data about subset of things that are
 	// connected to specified channel and belong to the user identified by
 	// the provided key.
-	ListThingsByChannel(ctx context.Context, token, channel string, offset, limit uint64) (ThingsPage, error)
+	ListThingsByChannel(ctx context.Context, token, channel string, offset, limit uint64) (Page, error)
 
 	// RemoveThing removes the thing identified with the provided ID, that
 	// belongs to the user identified by the provided key.
@@ -198,10 +198,10 @@ func (ts *thingsService) ViewThing(ctx context.Context, token, id string) (Thing
 	return ts.things.RetrieveByID(ctx, res.GetValue(), id)
 }
 
-func (ts *thingsService) ListThings(ctx context.Context, token string, offset, limit uint64, name string, metadata Metadata) (ThingsPage, error) {
+func (ts *thingsService) ListThings(ctx context.Context, token string, offset, limit uint64, name string, metadata Metadata) (Page, error) {
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return ThingsPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return Page{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
 	// tp, err := ts.things.RetrieveAll(ctx, res.GetValue(), offset, limit, name, metadata)
@@ -209,10 +209,10 @@ func (ts *thingsService) ListThings(ctx context.Context, token string, offset, l
 	return ts.things.RetrieveAll(ctx, res.GetValue(), offset, limit, name, metadata)
 }
 
-func (ts *thingsService) ListThingsByChannel(ctx context.Context, token, channel string, offset, limit uint64) (ThingsPage, error) {
+func (ts *thingsService) ListThingsByChannel(ctx context.Context, token, channel string, offset, limit uint64) (Page, error) {
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return ThingsPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return Page{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
 	return ts.things.RetrieveByChannel(ctx, res.GetValue(), channel, offset, limit)

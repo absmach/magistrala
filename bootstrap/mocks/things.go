@@ -167,7 +167,7 @@ func (svc *mainfluxThings) UpdateKey(context.Context, string, string, string) er
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) ListThings(context.Context, string, uint64, uint64, string, things.Metadata) (things.ThingsPage, error) {
+func (svc *mainfluxThings) ListThings(context.Context, string, uint64, uint64, string, things.Metadata) (things.Page, error) {
 	panic("not implemented")
 }
 
@@ -175,7 +175,7 @@ func (svc *mainfluxThings) ListChannelsByThing(context.Context, string, string, 
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) ListThingsByChannel(context.Context, string, string, uint64, uint64) (things.ThingsPage, error) {
+func (svc *mainfluxThings) ListThingsByChannel(context.Context, string, string, uint64, uint64) (things.Page, error) {
 	panic("not implemented")
 }
 

@@ -10,6 +10,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/mainflux/mainflux/errors"
 )
 
 const thingsEndpoint = "things"
@@ -38,7 +40,7 @@ func (sdk mfSDK) CreateThing(thing Thing, token string) (string, error) {
 		if err := encodeError(resp.StatusCode); err != nil {
 			return "", err
 		}
-		return "", ErrFailedCreation
+		return "", errors.Wrap(ErrFailedCreation, errors.New(resp.Status))
 	}
 
 	id := strings.TrimPrefix(resp.Header.Get("Location"), fmt.Sprintf("/%s/", thingsEndpoint))
@@ -179,7 +181,7 @@ func (sdk mfSDK) Thing(id, token string) (Thing, error) {
 		if err := encodeError(resp.StatusCode); err != nil {
 			return Thing{}, err
 		}
-		return Thing{}, ErrFetchFailed
+		return Thing{}, errors.Wrap(ErrFetchFailed, errors.New(resp.Status))
 	}
 
 	var t Thing
@@ -213,7 +215,7 @@ func (sdk mfSDK) UpdateThing(thing Thing, token string) error {
 		if err := encodeError(resp.StatusCode); err != nil {
 			return err
 		}
-		return ErrFailedUpdate
+		return errors.Wrap(ErrFailedUpdate, errors.New(resp.Status))
 	}
 
 	return nil
@@ -237,7 +239,7 @@ func (sdk mfSDK) DeleteThing(id, token string) error {
 		if err := encodeError(resp.StatusCode); err != nil {
 			return err
 		}
-		return ErrFailedRemoval
+		return errors.Wrap(ErrFailedRemoval, errors.New(resp.Status))
 	}
 
 	return nil
@@ -264,7 +266,7 @@ func (sdk mfSDK) Connect(connIDs ConnectionIDs, token string) error {
 		if err := encodeError(resp.StatusCode); err != nil {
 			return err
 		}
-		return ErrFailedConnection
+		return errors.Wrap(ErrFailedConnection, errors.New(resp.Status))
 	}
 
 	return nil
@@ -288,7 +290,7 @@ func (sdk mfSDK) DisconnectThing(thingID, chanID, token string) error {
 		if err := encodeError(resp.StatusCode); err != nil {
 			return err
 		}
-		return ErrFailedDisconnect
+		return errors.Wrap(ErrFailedDisconnect, errors.New(resp.Status))
 	}
 
 	return nil

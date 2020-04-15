@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/errors"
 	adapter "github.com/mainflux/mainflux/http"
 	"github.com/mainflux/mainflux/http/api"
 	"github.com/mainflux/mainflux/http/mocks"
@@ -87,7 +88,7 @@ func TestSendMessage(t *testing.T) {
 			chanID: chanID,
 			msg:    msg,
 			auth:   mocks.ServiceErrToken,
-			err:    sdk.ErrFailedPublish,
+			err:    errors.Wrap(sdk.ErrFailedPublish, errors.New("503 Service Unavailable")),
 		},
 	}
 	for desc, tc := range cases {

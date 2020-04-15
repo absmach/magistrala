@@ -9,10 +9,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/mainflux/mainflux/errors"
 )
 
 func (sdk mfSDK) SendMessage(chanName, msg, token string) error {
-
 	chanNameParts := strings.SplitN(chanName, ".", 2)
 	chanID := chanNameParts[0]
 	subtopicPart := ""
@@ -37,7 +38,7 @@ func (sdk mfSDK) SendMessage(chanName, msg, token string) error {
 		if err := encodeError(resp.StatusCode); err != nil {
 			return err
 		}
-		return ErrFailedPublish
+		return errors.Wrap(ErrFailedPublish, errors.New(resp.Status))
 	}
 
 	return nil
@@ -73,7 +74,7 @@ func (sdk mfSDK) ReadMessages(chanName, token string) (MessagesPage, error) {
 		if err := encodeError(resp.StatusCode); err != nil {
 			return MessagesPage{}, err
 		}
-		return MessagesPage{}, ErrFailedRead
+		return MessagesPage{}, errors.Wrap(ErrFailedRead, errors.New(resp.Status))
 	}
 
 	var mp MessagesPage

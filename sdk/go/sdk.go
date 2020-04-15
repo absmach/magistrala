@@ -67,6 +67,9 @@ var (
 	// ErrInvalidContentType indicates that nonexistent message content type
 	// was passed.
 	ErrInvalidContentType = errors.New("Unknown Content Type")
+
+	// ErrFetchVersion indicates that fetching of version failed.
+	ErrFetchVersion = errors.New("failed to fetch version")
 )
 
 // ContentType represents all possible content types.

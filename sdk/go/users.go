@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/mainflux/mainflux/errors"
 )
 
 func (sdk mfSDK) CreateUser(user User) error {
@@ -60,7 +62,7 @@ func (sdk mfSDK) User(token string) (User, error) {
 		if err := encodeError(resp.StatusCode); err != nil {
 			return User{}, err
 		}
-		return User{}, ErrFetchFailed
+		return User{}, errors.Wrap(ErrFetchFailed, errors.New(resp.Status))
 	}
 
 	var u User
@@ -94,7 +96,7 @@ func (sdk mfSDK) CreateToken(user User) (string, error) {
 		if err := encodeError(resp.StatusCode); err != nil {
 			return "", err
 		}
-		return "", ErrFailedCreation
+		return "", errors.Wrap(ErrFailedCreation, errors.New(resp.Status))
 	}
 
 	var tr tokenRes
@@ -127,7 +129,7 @@ func (sdk mfSDK) UpdateUser(user User, token string) error {
 		if err := encodeError(resp.StatusCode); err != nil {
 			return err
 		}
-		return ErrFailedUpdate
+		return errors.Wrap(ErrFailedUpdate, errors.New(resp.Status))
 	}
 
 	return nil
@@ -159,7 +161,7 @@ func (sdk mfSDK) UpdatePassword(oldPass, newPass, token string) error {
 		if err := encodeError(resp.StatusCode); err != nil {
 			return err
 		}
-		return ErrFailedUpdate
+		return errors.Wrap(ErrFailedUpdate, errors.New(resp.Status))
 	}
 
 	return nil

@@ -61,7 +61,7 @@ func (sdk mfSDK) AddBootstrap(key string, cfg BoostrapConfig) (string, error) {
 		if err := encodeError(resp.StatusCode); err != nil {
 			return "", err
 		}
-		return "", ErrFailedCreation
+		return "", errors.Wrap(ErrFailedCreation, errors.New(resp.Status))
 	}
 
 	id := strings.TrimPrefix(resp.Header.Get("Location"), "/things/configs/")
@@ -92,7 +92,7 @@ func (sdk mfSDK) ViewBoostrap(key, id string) (BoostrapConfig, error) {
 		if err := encodeError(resp.StatusCode); err != nil {
 			return BoostrapConfig{}, err
 		}
-		return BoostrapConfig{}, ErrFetchFailed
+		return BoostrapConfig{}, errors.Wrap(ErrFetchFailed, errors.New(resp.Status))
 	}
 
 	var bc BoostrapConfig
@@ -126,7 +126,7 @@ func (sdk mfSDK) UpdateBoostrap(key string, cfg BoostrapConfig) error {
 		if err := encodeError(resp.StatusCode); err != nil {
 			return err
 		}
-		return ErrFailedUpdate
+		return errors.Wrap(ErrFailedUpdate, errors.New(resp.Status))
 	}
 
 	return nil
@@ -150,7 +150,7 @@ func (sdk mfSDK) RemoveBoostrap(key, id string) error {
 		if err := encodeError(resp.StatusCode); err != nil {
 			return err
 		}
-		return ErrFailedRemoval
+		return errors.Wrap(ErrFailedRemoval, errors.New(resp.Status))
 	}
 
 	return nil
@@ -180,7 +180,7 @@ func (sdk mfSDK) Boostrap(key, id string) (BoostrapConfig, error) {
 		if err := encodeError(resp.StatusCode); err != nil {
 			return BoostrapConfig{}, err
 		}
-		return BoostrapConfig{}, ErrFetchFailed
+		return BoostrapConfig{}, errors.Wrap(ErrFetchFailed, errors.New(resp.Status))
 	}
 
 	var bc BoostrapConfig

@@ -10,6 +10,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/mainflux/mainflux/errors"
 )
 
 const channelsEndpoint = "channels"
@@ -35,7 +37,7 @@ func (sdk mfSDK) CreateChannel(channel Channel, token string) (string, error) {
 		if err := encodeError(resp.StatusCode); err != nil {
 			return "", err
 		}
-		return "", ErrFailedCreation
+		return "", errors.Wrap(ErrFailedCreation, errors.New(resp.Status))
 	}
 
 	id := strings.TrimPrefix(resp.Header.Get("Location"), fmt.Sprintf("/%s/", channelsEndpoint))
@@ -106,7 +108,7 @@ func (sdk mfSDK) Channels(token string, offset, limit uint64, name string) (Chan
 		if err := encodeError(resp.StatusCode); err != nil {
 			return ChannelsPage{}, err
 		}
-		return ChannelsPage{}, ErrFetchFailed
+		return ChannelsPage{}, errors.Wrap(ErrFetchFailed, errors.New(resp.Status))
 	}
 
 	var cp ChannelsPage
@@ -141,7 +143,7 @@ func (sdk mfSDK) ChannelsByThing(token, thingID string, offset, limit uint64) (C
 		if err := encodeError(resp.StatusCode); err != nil {
 			return ChannelsPage{}, err
 		}
-		return ChannelsPage{}, ErrFetchFailed
+		return ChannelsPage{}, errors.Wrap(ErrFetchFailed, errors.New(resp.Status))
 	}
 
 	var cp ChannelsPage
@@ -176,7 +178,7 @@ func (sdk mfSDK) Channel(id, token string) (Channel, error) {
 		if err := encodeError(resp.StatusCode); err != nil {
 			return Channel{}, err
 		}
-		return Channel{}, ErrFetchFailed
+		return Channel{}, errors.Wrap(ErrFetchFailed, errors.New(resp.Status))
 	}
 
 	var c Channel
@@ -210,7 +212,7 @@ func (sdk mfSDK) UpdateChannel(channel Channel, token string) error {
 		if err := encodeError(resp.StatusCode); err != nil {
 			return err
 		}
-		return ErrFailedUpdate
+		return errors.Wrap(ErrFailedUpdate, errors.New(resp.Status))
 	}
 
 	return nil
@@ -234,7 +236,7 @@ func (sdk mfSDK) DeleteChannel(id, token string) error {
 		if err := encodeError(resp.StatusCode); err != nil {
 			return err
 		}
-		return ErrFailedUpdate
+		return errors.Wrap(ErrFailedRemoval, errors.New(resp.Status))
 	}
 
 	return nil

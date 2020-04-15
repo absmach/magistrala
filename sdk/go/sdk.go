@@ -175,16 +175,33 @@ type SDK interface {
 
 	// Version returns used mainflux version.
 	Version() (string, error)
+
+	// AddBootstrap add boostrap configuration
+	AddBootstrap(key string, cfg BoostrapConfig) (string, error)
+
+	// View returns Thing Config with given ID belonging to the user identified by the given key.
+	ViewBoostrap(key, id string) (BoostrapConfig, error)
+
+	// Update updates editable fields of the provided Config.
+	UpdateBoostrap(key string, cfg BoostrapConfig) error
+
+	// Remove removes Config with specified key that belongs to the user identified by the given key.
+	RemoveBoostrap(key, id string) error
+
+	// View returns Thing Config with given ID belonging to the user identified by the given key.
+	Boostrap(key, id string) (BoostrapConfig, error)
 }
 
 type mfSDK struct {
 	baseURL           string
 	readerURL         string
+	bootstrapURL      string
 	readerPrefix      string
 	usersPrefix       string
 	thingsPrefix      string
 	channelsPrefix    string
 	httpAdapterPrefix string
+	bootstrapPrefix   string
 	msgContentType    ContentType
 	client            *http.Client
 }
@@ -193,10 +210,12 @@ type mfSDK struct {
 type Config struct {
 	BaseURL           string
 	ReaderURL         string
+	BootstrapURL      string
 	ReaderPrefix      string
 	UsersPrefix       string
 	ThingsPrefix      string
 	HTTPAdapterPrefix string
+	BootstrapPrefix   string
 	MsgContentType    ContentType
 	TLSVerification   bool
 }
@@ -206,10 +225,12 @@ func NewSDK(conf Config) SDK {
 	return &mfSDK{
 		baseURL:           conf.BaseURL,
 		readerURL:         conf.ReaderURL,
+		bootstrapURL:      conf.BootstrapURL,
 		readerPrefix:      conf.ReaderPrefix,
 		usersPrefix:       conf.UsersPrefix,
 		thingsPrefix:      conf.ThingsPrefix,
 		httpAdapterPrefix: conf.HTTPAdapterPrefix,
+		bootstrapPrefix:   conf.BootstrapPrefix,
 		msgContentType:    conf.MsgContentType,
 		client: &http.Client{
 			Transport: &http.Transport{

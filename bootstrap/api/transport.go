@@ -119,7 +119,7 @@ func decodeAddRequest(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, errUnsupportedContentType
 	}
 
-	req := addReq{key: r.Header.Get("Authorization")}
+	req := addReq{token: r.Header.Get("Authorization")}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(bootstrap.ErrMalformedEntity, err)
 	}

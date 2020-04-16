@@ -30,67 +30,67 @@ func MetricsMiddleware(svc bootstrap.Service, counter metrics.Counter, latency m
 	}
 }
 
-func (mm *metricsMiddleware) Add(key string, cfg bootstrap.Config) (saved bootstrap.Config, err error) {
+func (mm *metricsMiddleware) Add(token string, cfg bootstrap.Config) (saved bootstrap.Config, err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "add").Add(1)
 		mm.latency.With("method", "add").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.Add(key, cfg)
+	return mm.svc.Add(token, cfg)
 }
 
-func (mm *metricsMiddleware) View(id, key string) (saved bootstrap.Config, err error) {
+func (mm *metricsMiddleware) View(token, id string) (saved bootstrap.Config, err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "view").Add(1)
 		mm.latency.With("method", "view").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.View(id, key)
+	return mm.svc.View(token, id)
 }
 
-func (mm *metricsMiddleware) Update(key string, cfg bootstrap.Config) (err error) {
+func (mm *metricsMiddleware) Update(token string, cfg bootstrap.Config) (err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update").Add(1)
 		mm.latency.With("method", "update").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.Update(key, cfg)
+	return mm.svc.Update(token, cfg)
 }
 
-func (mm *metricsMiddleware) UpdateCert(key, thingKey, clientCert, clientKey, caCert string) (err error) {
+func (mm *metricsMiddleware) UpdateCert(token, thingKey, clientCert, clientKey, caCert string) (err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_cert").Add(1)
 		mm.latency.With("method", "update_cert").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.UpdateCert(key, thingKey, clientCert, clientKey, caCert)
+	return mm.svc.UpdateCert(token, thingKey, clientCert, clientKey, caCert)
 }
 
-func (mm *metricsMiddleware) UpdateConnections(key, id string, connections []string) (err error) {
+func (mm *metricsMiddleware) UpdateConnections(token, id string, connections []string) (err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_connections").Add(1)
 		mm.latency.With("method", "update_connections").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.UpdateConnections(key, id, connections)
+	return mm.svc.UpdateConnections(token, id, connections)
 }
 
-func (mm *metricsMiddleware) List(key string, filter bootstrap.Filter, offset, limit uint64) (saved bootstrap.ConfigsPage, err error) {
+func (mm *metricsMiddleware) List(token string, filter bootstrap.Filter, offset, limit uint64) (saved bootstrap.ConfigsPage, err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "list").Add(1)
 		mm.latency.With("method", "list").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.List(key, filter, offset, limit)
+	return mm.svc.List(token, filter, offset, limit)
 }
 
-func (mm *metricsMiddleware) Remove(id, key string) (err error) {
+func (mm *metricsMiddleware) Remove(token, id string) (err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "remove").Add(1)
 		mm.latency.With("method", "remove").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.Remove(id, key)
+	return mm.svc.Remove(token, id)
 }
 
 func (mm *metricsMiddleware) Bootstrap(externalKey, externalID string, secure bool) (cfg bootstrap.Config, err error) {
@@ -102,13 +102,13 @@ func (mm *metricsMiddleware) Bootstrap(externalKey, externalID string, secure bo
 	return mm.svc.Bootstrap(externalKey, externalID, secure)
 }
 
-func (mm *metricsMiddleware) ChangeState(id, key string, state bootstrap.State) (err error) {
+func (mm *metricsMiddleware) ChangeState(token, id string, state bootstrap.State) (err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "change_state").Add(1)
 		mm.latency.With("method", "change_state").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.ChangeState(id, key, state)
+	return mm.svc.ChangeState(token, id, state)
 }
 
 func (mm *metricsMiddleware) UpdateChannelHandler(channel bootstrap.Channel) (err error) {

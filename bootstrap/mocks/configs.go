@@ -66,7 +66,7 @@ func (crm *configRepositoryMock) Save(config bootstrap.Config, connections []str
 	return config.MFThing, nil
 }
 
-func (crm *configRepositoryMock) RetrieveByID(key, id string) (bootstrap.Config, error) {
+func (crm *configRepositoryMock) RetrieveByID(token, id string) (bootstrap.Config, error) {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 
@@ -74,7 +74,7 @@ func (crm *configRepositoryMock) RetrieveByID(key, id string) (bootstrap.Config,
 	if !ok {
 		return bootstrap.Config{}, bootstrap.ErrNotFound
 	}
-	if c.Owner != key {
+	if c.Owner != token {
 		return bootstrap.Config{}, bootstrap.ErrUnauthorizedAccess
 	}
 
@@ -82,7 +82,7 @@ func (crm *configRepositoryMock) RetrieveByID(key, id string) (bootstrap.Config,
 
 }
 
-func (crm *configRepositoryMock) RetrieveAll(key string, filter bootstrap.Filter, offset, limit uint64) bootstrap.ConfigsPage {
+func (crm *configRepositoryMock) RetrieveAll(token string, filter bootstrap.Filter, offset, limit uint64) bootstrap.ConfigsPage {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 
@@ -110,7 +110,7 @@ func (crm *configRepositoryMock) RetrieveAll(key string, filter bootstrap.Filter
 		id, _ := strconv.ParseUint(v.MFThing, 10, 64)
 		if (state == emptyState || v.State == state) &&
 			(name == "" || strings.Index(strings.ToLower(v.Name), name) != notFoundIdx) &&
-			v.Owner == key {
+			v.Owner == token {
 			if id >= first && id < last {
 				configs = append(configs, v)
 			}
@@ -180,7 +180,7 @@ func (crm *configRepositoryMock) UpdateCert(owner, thingID, clientCert, clientKe
 	return nil
 }
 
-func (crm *configRepositoryMock) UpdateConnections(key, id string, channels []bootstrap.Channel, connections []string) error {
+func (crm *configRepositoryMock) UpdateConnections(token, id string, channels []bootstrap.Channel, connections []string) error {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 
@@ -206,12 +206,12 @@ func (crm *configRepositoryMock) UpdateConnections(key, id string, channels []bo
 	return nil
 }
 
-func (crm *configRepositoryMock) Remove(key, id string) error {
+func (crm *configRepositoryMock) Remove(token, id string) error {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 
 	for k, v := range crm.configs {
-		if v.Owner == key && k == id {
+		if v.Owner == token && k == id {
 			delete(crm.configs, k)
 			break
 		}
@@ -220,7 +220,7 @@ func (crm *configRepositoryMock) Remove(key, id string) error {
 	return nil
 }
 
-func (crm *configRepositoryMock) ChangeState(key, id string, state bootstrap.State) error {
+func (crm *configRepositoryMock) ChangeState(token, id string, state bootstrap.State) error {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 
@@ -228,7 +228,7 @@ func (crm *configRepositoryMock) ChangeState(key, id string, state bootstrap.Sta
 	if !ok {
 		return bootstrap.ErrNotFound
 	}
-	if config.Owner != key {
+	if config.Owner != token {
 		return bootstrap.ErrUnauthorizedAccess
 	}
 
@@ -268,12 +268,12 @@ func (crm *configRepositoryMock) RetrieveUnknown(offset, limit uint64) bootstrap
 	}
 }
 
-func (crm *configRepositoryMock) RemoveUnknown(key, id string) error {
+func (crm *configRepositoryMock) RemoveUnknown(token, id string) error {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 
 	for k, v := range crm.unknown {
-		if k == id && v == key {
+		if k == id && v == token {
 			delete(crm.unknown, k)
 			return nil
 		}
@@ -282,15 +282,15 @@ func (crm *configRepositoryMock) RemoveUnknown(key, id string) error {
 	return nil
 }
 
-func (crm *configRepositoryMock) SaveUnknown(key, id string) error {
+func (crm *configRepositoryMock) SaveUnknown(token, id string) error {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 
-	crm.unknown[id] = key
+	crm.unknown[id] = token
 	return nil
 }
 
-func (crm *configRepositoryMock) ListExisting(key string, connections []string) ([]bootstrap.Channel, error) {
+func (crm *configRepositoryMock) ListExisting(token string, connections []string) ([]bootstrap.Channel, error) {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 

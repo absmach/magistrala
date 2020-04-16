@@ -31,8 +31,8 @@ func NewEventStoreMiddleware(svc bootstrap.Service, client *redis.Client) bootst
 	}
 }
 
-func (es eventStore) Add(key string, cfg bootstrap.Config) (bootstrap.Config, error) {
-	saved, err := es.svc.Add(key, cfg)
+func (es eventStore) Add(token string, cfg bootstrap.Config) (bootstrap.Config, error) {
+	saved, err := es.svc.Add(token, cfg)
 	if err != nil {
 		return saved, err
 	}
@@ -57,12 +57,12 @@ func (es eventStore) Add(key string, cfg bootstrap.Config) (bootstrap.Config, er
 	return saved, err
 }
 
-func (es eventStore) View(key, id string) (bootstrap.Config, error) {
-	return es.svc.View(key, id)
+func (es eventStore) View(token, id string) (bootstrap.Config, error) {
+	return es.svc.View(token, id)
 }
 
-func (es eventStore) Update(key string, cfg bootstrap.Config) error {
-	if err := es.svc.Update(key, cfg); err != nil {
+func (es eventStore) Update(token string, cfg bootstrap.Config) error {
+	if err := es.svc.Update(token, cfg); err != nil {
 		return err
 	}
 
@@ -78,12 +78,12 @@ func (es eventStore) Update(key string, cfg bootstrap.Config) error {
 	return nil
 }
 
-func (es eventStore) UpdateCert(key, thingKey, clientCert, clientKey, caCert string) error {
-	return es.svc.UpdateCert(key, thingKey, clientCert, clientKey, caCert)
+func (es eventStore) UpdateCert(token, thingKey, clientCert, clientKey, caCert string) error {
+	return es.svc.UpdateCert(token, thingKey, clientCert, clientKey, caCert)
 }
 
-func (es eventStore) UpdateConnections(key, id string, connections []string) error {
-	if err := es.svc.UpdateConnections(key, id, connections); err != nil {
+func (es eventStore) UpdateConnections(token, id string, connections []string) error {
+	if err := es.svc.UpdateConnections(token, id, connections); err != nil {
 		return err
 	}
 
@@ -98,12 +98,12 @@ func (es eventStore) UpdateConnections(key, id string, connections []string) err
 	return nil
 }
 
-func (es eventStore) List(key string, filter bootstrap.Filter, offset, limit uint64) (bootstrap.ConfigsPage, error) {
-	return es.svc.List(key, filter, offset, limit)
+func (es eventStore) List(token string, filter bootstrap.Filter, offset, limit uint64) (bootstrap.ConfigsPage, error) {
+	return es.svc.List(token, filter, offset, limit)
 }
 
-func (es eventStore) Remove(key, id string) error {
-	if err := es.svc.Remove(key, id); err != nil {
+func (es eventStore) Remove(token, id string) error {
+	if err := es.svc.Remove(token, id); err != nil {
 		return err
 	}
 
@@ -135,8 +135,8 @@ func (es eventStore) Bootstrap(externalKey, externalID string, secure bool) (boo
 	return cfg, err
 }
 
-func (es eventStore) ChangeState(key, id string, state bootstrap.State) error {
-	if err := es.svc.ChangeState(key, id, state); err != nil {
+func (es eventStore) ChangeState(token, id string, state bootstrap.State) error {
+	if err := es.svc.ChangeState(token, id, state); err != nil {
 		return err
 	}
 

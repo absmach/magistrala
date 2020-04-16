@@ -57,7 +57,7 @@ func NewConfigRepository(db *sqlx.DB, log logger.Logger) bootstrap.ConfigReposit
 	return &configRepository{db: db, log: log}
 }
 
-func (cr configRepository) Save(cfg bootstrap.Config, connections []string) (string, error) {
+func (cr configRepository) Save(cfg bootstrap.Config, chsConnIDs []string) (string, error) {
 	q := `INSERT INTO configs (mainflux_thing, owner, name, client_cert, client_key, ca_cert, mainflux_key, external_id, external_key, content, state)
 		  VALUES (:mainflux_thing, :owner, :name, :client_cert, :client_key, :ca_cert, :mainflux_key, :external_id, :external_key, :content, :state)`
 
@@ -85,7 +85,7 @@ func (cr configRepository) Save(cfg bootstrap.Config, connections []string) (str
 		return "", errors.Wrap(errSaveChannels, err)
 	}
 
-	if err := insertConnections(cfg, connections, tx); err != nil {
+	if err := insertConnections(cfg, chsConnIDs, tx); err != nil {
 		cr.rollback("Failed to insert connections", tx, err)
 
 		return "", errors.Wrap(errSaveConnections, err)
@@ -106,17 +106,17 @@ func (cr configRepository) Save(cfg bootstrap.Config, connections []string) (str
 	return cfg.MFThing, nil
 }
 
-func (cr configRepository) RetrieveByID(key, id string) (bootstrap.Config, error) {
-	q := `SELECT mainflux_thing, mainflux_key, external_id, external_key, name, content, state 
-		  FROM configs 
+func (cr configRepository) RetrieveByID(owner, id string) (bootstrap.Config, error) {
+	q := `SELECT mainflux_thing, mainflux_key, external_id, external_key, name, content, state
+		  FROM configs
 		  WHERE mainflux_thing = $1 AND owner = $2`
 
 	dbcfg := dbConfig{
 		MFThing: id,
-		Owner:   key,
+		Owner:   owner,
 	}
 
-	if err := cr.db.QueryRowx(q, id, key).StructScan(&dbcfg); err != nil {
+	if err := cr.db.QueryRowx(q, id, owner).StructScan(&dbcfg); err != nil {
 		empty := bootstrap.Config{}
 		if err == sql.ErrNoRows {
 			return empty, errors.Wrap(bootstrap.ErrNotFound, err)
@@ -159,8 +159,8 @@ func (cr configRepository) RetrieveByID(key, id string) (bootstrap.Config, error
 	return cfg, nil
 }
 
-func (cr configRepository) RetrieveAll(key string, filter bootstrap.Filter, offset, limit uint64) bootstrap.ConfigsPage {
-	search, params := cr.retrieveAll(key, filter)
+func (cr configRepository) RetrieveAll(owner string, filter bootstrap.Filter, offset, limit uint64) bootstrap.ConfigsPage {
+	search, params := cr.retrieveAll(owner, filter)
 	n := len(params)
 
 	q := `SELECT mainflux_thing, mainflux_key, external_id, external_key, name, content, state
@@ -178,7 +178,7 @@ func (cr configRepository) RetrieveAll(key string, filter bootstrap.Filter, offs
 	configs := []bootstrap.Config{}
 
 	for rows.Next() {
-		c := bootstrap.Config{Owner: key}
+		c := bootstrap.Config{Owner: owner}
 		if err := rows.Scan(&c.MFThing, &c.MFKey, &c.ExternalID, &c.ExternalKey, &name, &content, &c.State); err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to read retrieved config due to %s", err))
 			return bootstrap.ConfigsPage{}
@@ -206,8 +206,8 @@ func (cr configRepository) RetrieveAll(key string, filter bootstrap.Filter, offs
 }
 
 func (cr configRepository) RetrieveByExternalID(externalID string) (bootstrap.Config, error) {
-	q := `SELECT mainflux_thing, mainflux_key, external_key, owner, name, client_cert, client_key, ca_cert, content, state 
-		  FROM configs 
+	q := `SELECT mainflux_thing, mainflux_key, external_key, owner, name, client_cert, client_key, ca_cert, content, state
+		  FROM configs
 		  WHERE external_id = $1`
 	dbcfg := dbConfig{
 		ExternalID: externalID,
@@ -299,19 +299,19 @@ func (cr configRepository) UpdateCert(owner, thingID, clientCert, clientKey, caC
 	return nil
 }
 
-func (cr configRepository) UpdateConnections(key, id string, channels []bootstrap.Channel, connections []string) error {
+func (cr configRepository) UpdateConnections(owner, id string, channels []bootstrap.Channel, connections []string) error {
 	tx, err := cr.db.Beginx()
 	if err != nil {
 		return err
 	}
 
-	if err := insertChannels(key, channels, tx); err != nil {
+	if err := insertChannels(owner, channels, tx); err != nil {
 		cr.rollback("Failed to insert Channels during the update", tx, err)
 
 		return err
 	}
 
-	if err := updateConnections(key, id, connections, tx); err != nil {
+	if err := updateConnections(owner, id, connections, tx); err != nil {
 		if e, ok := err.(*pq.Error); ok {
 			if e.Code.Name() == fkViolation && e.Constraint == connConstraintErr {
 				return bootstrap.ErrNotFound
@@ -329,9 +329,9 @@ func (cr configRepository) UpdateConnections(key, id string, channels []bootstra
 	return nil
 }
 
-func (cr configRepository) Remove(key, id string) error {
+func (cr configRepository) Remove(owner, id string) error {
 	q := `DELETE FROM configs WHERE mainflux_thing = $1 AND owner = $2`
-	if _, err := cr.db.Exec(q, id, key); err != nil {
+	if _, err := cr.db.Exec(q, id, owner); err != nil {
 		return errors.Wrap(errRemove, err)
 	}
 
@@ -342,10 +342,10 @@ func (cr configRepository) Remove(key, id string) error {
 	return nil
 }
 
-func (cr configRepository) ChangeState(key, id string, state bootstrap.State) error {
+func (cr configRepository) ChangeState(owner, id string, state bootstrap.State) error {
 	q := `UPDATE configs SET state = $1 WHERE mainflux_thing = $2 AND owner = $3;`
 
-	res, err := cr.db.Exec(q, state, id, key)
+	res, err := cr.db.Exec(q, state, id, owner)
 	if err != nil {
 		return err
 	}
@@ -362,14 +362,14 @@ func (cr configRepository) ChangeState(key, id string, state bootstrap.State) er
 	return nil
 }
 
-func (cr configRepository) ListExisting(key string, ids []string) ([]bootstrap.Channel, error) {
+func (cr configRepository) ListExisting(owner string, ids []string) ([]bootstrap.Channel, error) {
 	var channels []bootstrap.Channel
 	if len(ids) == 0 {
 		return channels, nil
 	}
 
 	q := "SELECT mainflux_channel, name, metadata FROM channels WHERE owner = $1 AND mainflux_channel = ANY ($2)"
-	rows, err := cr.db.Queryx(q, key, pq.Array(ids))
+	rows, err := cr.db.Queryx(q, owner, pq.Array(ids))
 	if err != nil {
 		return []bootstrap.Channel{}, err
 	}
@@ -393,10 +393,10 @@ func (cr configRepository) ListExisting(key string, ids []string) ([]bootstrap.C
 	return channels, nil
 }
 
-func (cr configRepository) SaveUnknown(key, id string) error {
+func (cr configRepository) SaveUnknown(owner, id string) error {
 	q := `INSERT INTO unknown_configs (external_id, external_key) VALUES ($1, $2)`
 
-	if _, err := cr.db.Exec(q, id, key); err != nil {
+	if _, err := cr.db.Exec(q, id, owner); err != nil {
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code.Name() == duplicateErr {
 			return nil
 		}
@@ -455,8 +455,8 @@ func (cr configRepository) RemoveThing(id string) error {
 	return nil
 }
 
-func (cr configRepository) UpdateChannel(channel bootstrap.Channel) error {
-	dbch, err := toDBChannel("", channel)
+func (cr configRepository) UpdateChannel(c bootstrap.Channel) error {
+	dbch, err := toDBChannel("", c)
 	if err != nil {
 		return err
 	}
@@ -485,12 +485,12 @@ func (cr configRepository) DisconnectThing(channelID, thingID string) error {
 	return nil
 }
 
-func (cr configRepository) retrieveAll(key string, filter bootstrap.Filter) (string, []interface{}) {
+func (cr configRepository) retrieveAll(owner string, filter bootstrap.Filter) (string, []interface{}) {
 	template := `WHERE owner = $1 %s`
-	params := []interface{}{key}
+	params := []interface{}{owner}
 	// One empty string so that strings Join works if only one filter is applied.
 	queries := []string{""}
-	// Since key is the first param, start from 2.
+	// Since owner is the first param, start from 2.
 	counter := 2
 	for k, v := range filter.FullMatch {
 		queries = append(queries, fmt.Sprintf("%s = $%d", k, counter))
@@ -516,21 +516,21 @@ func (cr configRepository) rollback(content string, tx *sqlx.Tx, err error) {
 	}
 }
 
-func insertChannels(key string, channels []bootstrap.Channel, tx *sqlx.Tx) error {
+func insertChannels(owner string, channels []bootstrap.Channel, tx *sqlx.Tx) error {
 	if len(channels) == 0 {
 		return nil
 	}
 
 	var chans []dbChannel
 	for _, ch := range channels {
-		dbch, err := toDBChannel(key, ch)
+		dbch, err := toDBChannel(owner, ch)
 		if err != nil {
 			return err
 		}
 		chans = append(chans, dbch)
 	}
 
-	q := `INSERT INTO channels (mainflux_channel, owner, name, metadata) 
+	q := `INSERT INTO channels (mainflux_channel, owner, name, metadata)
 		  VALUES (:mainflux_channel, :owner, :name, :metadata)`
 	if _, err := tx.NamedExec(q, chans); err != nil {
 		e := err
@@ -548,7 +548,7 @@ func insertConnections(cfg bootstrap.Config, connections []string, tx *sqlx.Tx) 
 		return nil
 	}
 
-	q := `INSERT INTO connections (config_id, channel_id, config_owner, channel_owner) 
+	q := `INSERT INTO connections (config_id, channel_id, config_owner, channel_owner)
 		  VALUES (:config_id, :channel_id, :config_owner, :channel_owner)`
 	conns := []dbConnection{}
 	for _, conn := range connections {
@@ -565,7 +565,7 @@ func insertConnections(cfg bootstrap.Config, connections []string, tx *sqlx.Tx) 
 	return err
 }
 
-func updateConnections(key, id string, connections []string, tx *sqlx.Tx) error {
+func updateConnections(owner, id string, connections []string, tx *sqlx.Tx) error {
 	if len(connections) == 0 {
 		return nil
 	}
@@ -574,7 +574,7 @@ func updateConnections(key, id string, connections []string, tx *sqlx.Tx) error 
 		  WHERE config_id = $1 AND config_owner = $2 AND channel_owner = $2
 		  AND channel_id NOT IN ($3)`
 
-	res, err := tx.Exec(q, id, key, pq.Array(connections))
+	res, err := tx.Exec(q, id, owner, pq.Array(connections))
 	if err != nil {
 		return err
 	}
@@ -584,7 +584,7 @@ func updateConnections(key, id string, connections []string, tx *sqlx.Tx) error 
 		return err
 	}
 
-	q = `INSERT INTO connections (config_id, channel_id, config_owner, channel_owner) 
+	q = `INSERT INTO connections (config_id, channel_id, config_owner, channel_owner)
 		 VALUES (:config_id, :channel_id, :config_owner, :channel_owner)`
 
 	conns := []dbConnection{}
@@ -592,8 +592,8 @@ func updateConnections(key, id string, connections []string, tx *sqlx.Tx) error 
 		dbconn := dbConnection{
 			Config:       id,
 			Channel:      conn,
-			ConfigOwner:  key,
-			ChannelOwner: key,
+			ConfigOwner:  owner,
+			ChannelOwner: owner,
 		}
 		conns = append(conns, dbconn)
 	}

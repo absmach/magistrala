@@ -10,7 +10,7 @@ type apiReq interface {
 }
 
 type addReq struct {
-	key         string
+	token       string
 	ThingID     string   `json:"thing_id"`
 	ExternalID  string   `json:"external_id"`
 	ExternalKey string   `json:"external_key"`
@@ -23,7 +23,7 @@ type addReq struct {
 }
 
 func (req addReq) validate() error {
-	if req.key == "" {
+	if req.token == "" {
 		return bootstrap.ErrUnauthorizedAccess
 	}
 

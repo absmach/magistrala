@@ -50,60 +50,60 @@ type ConfigsPage struct {
 type ConfigRepository interface {
 	// Save persists the Config. Successful operation is indicated by non-nil
 	// error response.
-	Save(Config, []string) (string, error)
+	Save(cfg Config, chsConnIDs []string) (string, error)
 
 	// RetrieveByID retrieves the Config having the provided identifier, that is owned
 	// by the specified user.
-	RetrieveByID(string, string) (Config, error)
+	RetrieveByID(owner, id string) (Config, error)
 
 	// RetrieveAll retrieves a subset of Configs that are owned
 	// by the specific user, with given filter parameters.
-	RetrieveAll(string, Filter, uint64, uint64) ConfigsPage
+	RetrieveAll(owner string, filter Filter, offset, limit uint64) ConfigsPage
 
 	// RetrieveByExternalID returns Config for given external ID.
-	RetrieveByExternalID(string) (Config, error)
+	RetrieveByExternalID(externalID string) (Config, error)
 
 	// Update updates an existing Config. A non-nil error is returned
 	// to indicate operation failure.
-	Update(Config) error
+	Update(cfg Config) error
 
-	// UpdateCerts updates an existing Config certificate and key.
+	// UpdateCerts updates an existing Config certificate and owner.
 	// A non-nil error is returned to indicate operation failure.
-	UpdateCert(string, string, string, string, string) error
+	UpdateCert(owner, thingID, clientCert, clientKey, caCert string) error
 
 	// UpdateConnections updates a list of Channels the Config is connected to
 	// adding new Channels if needed.
-	UpdateConnections(string, string, []Channel, []string) error
+	UpdateConnections(owner, id string, channels []Channel, connections []string) error
 
 	// Remove removes the Config having the provided identifier, that is owned
 	// by the specified user.
-	Remove(string, string) error
+	Remove(owner, id string) error
 
 	// ChangeState changes of the Config, that is owned by the specific user.
-	ChangeState(string, string, State) error
-
-	// SaveUnknown saves Thing which unsuccessfully bootstrapped.
-	SaveUnknown(string, string) error
-
-	// RetrieveUnknown returns a subset of unsuccessfully bootstrapped Things.
-	RetrieveUnknown(uint64, uint64) ConfigsPage
+	ChangeState(owner, id string, state State) error
 
 	// ListExisting retrieves those channels from the given list that exist in DB.
-	ListExisting(string, []string) ([]Channel, error)
+	ListExisting(owner string, ids []string) ([]Channel, error)
+
+	// SaveUnknown saves Thing which unsuccessfully bootstrapped.
+	SaveUnknown(owner, id string) error
+
+	// RetrieveUnknown returns a subset of unsuccessfully bootstrapped Things.
+	RetrieveUnknown(offset, limit uint64) ConfigsPage
 
 	// Methods RemoveThing, UpdateChannel, and RemoveChannel are related to
 	// event sourcing. That's why these methods surpass ownership check.
 
 	// RemoveThing removes Config of the Thing with the given ID.
-	RemoveThing(string) error
+	RemoveThing(id string) error
 
 	// UpdateChannel updates channel with the given ID.
-	UpdateChannel(Channel) error
+	UpdateChannel(c Channel) error
 
 	// RemoveChannel removes channel with the given ID.
-	RemoveChannel(string) error
+	RemoveChannel(id string) error
 
 	// DisconnectHandler changes state of the Config when the corresponding Thing is
 	// disconnected from the Channel.
-	DisconnectThing(string, string) error
+	DisconnectThing(channelID, thingID string) error
 }

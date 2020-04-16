@@ -11,28 +11,28 @@ import (
 func TestAddReqValidation(t *testing.T) {
 	cases := []struct {
 		desc        string
-		key         string
+		token       string
 		externalID  string
 		externalKey string
 		err         error
 	}{
 		{
 			desc:        "empty key",
-			key:         "",
+			token:       "",
 			externalID:  "external-id",
 			externalKey: "external-key",
 			err:         bootstrap.ErrUnauthorizedAccess,
 		},
 		{
 			desc:        "empty external ID",
-			key:         "key",
+			token:       "token",
 			externalID:  "",
 			externalKey: "external-key",
 			err:         bootstrap.ErrMalformedEntity,
 		},
 		{
 			desc:        "empty external key",
-			key:         "key",
+			token:       "token",
 			externalID:  "external-id",
 			externalKey: "",
 			err:         bootstrap.ErrMalformedEntity,
@@ -41,7 +41,7 @@ func TestAddReqValidation(t *testing.T) {
 
 	for _, tc := range cases {
 		req := addReq{
-			key:         tc.key,
+			token:       tc.token,
 			ExternalID:  tc.externalID,
 			ExternalKey: tc.externalKey,
 		}

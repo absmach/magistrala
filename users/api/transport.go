@@ -6,7 +6,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -111,7 +110,6 @@ func decodeViewInfo(_ context.Context, r *http.Request) (interface{}, error) {
 func decodeUpdateUser(_ context.Context, r *http.Request) (interface{}, error) {
 	var req updateUserReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn(fmt.Sprintf("Failed to decode user: %s", err))
 		return nil, err
 	}
 
@@ -134,14 +132,12 @@ func decodeCredentials(_ context.Context, r *http.Request) (interface{}, error) 
 
 func decodePasswordResetRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		logger.Warn("Invalid or missing content type.")
 		return nil, ErrUnsupportedContentType
 	}
 
 	var req passwResetReq
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn(fmt.Sprintf("Failed to decode reset request: %s", err))
 		return nil, errors.Wrap(ErrFailedDecode, err)
 	}
 
@@ -151,13 +147,11 @@ func decodePasswordResetRequest(_ context.Context, r *http.Request) (interface{}
 
 func decodePasswordReset(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		logger.Warn("Invalid or missing content type.")
 		return nil, ErrUnsupportedContentType
 	}
 
 	var req resetTokenReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn(fmt.Sprintf("Failed to decode reset request: %s", err))
 		return nil, errors.Wrap(ErrFailedDecode, err)
 	}
 
@@ -166,13 +160,11 @@ func decodePasswordReset(_ context.Context, r *http.Request) (interface{}, error
 
 func decodePasswordChange(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		logger.Warn("Invalid or missing content type.")
 		return nil, ErrUnsupportedContentType
 	}
 
 	var req passwChangeReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Warn(fmt.Sprintf("Failed to decode reset request: %s", err))
 		return nil, errors.Wrap(ErrFailedDecode, err)
 	}
 
@@ -217,14 +209,12 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		switch {
 		case errors.Contains(errorVal, users.ErrMalformedEntity):
 			w.WriteHeader(http.StatusBadRequest)
-			logger.Warn(fmt.Sprintf("Failed to decode user credentials: %s", errorVal))
 		case errors.Contains(errorVal, users.ErrUnauthorizedAccess):
 			w.WriteHeader(http.StatusForbidden)
 		case errors.Contains(errorVal, users.ErrConflict):
 			w.WriteHeader(http.StatusConflict)
 		case errors.Contains(errorVal, ErrUnsupportedContentType):
 			w.WriteHeader(http.StatusUnsupportedMediaType)
-			logger.Warn("Invalid or missing content type.")
 		case errors.Contains(errorVal, ErrFailedDecode):
 			w.WriteHeader(http.StatusBadRequest)
 		case errors.Contains(errorVal, io.ErrUnexpectedEOF):

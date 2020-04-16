@@ -31,9 +31,6 @@ func (sdk mfSDK) Version() (string, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		if err := encodeError(resp.StatusCode); err != nil {
-			return "", err
-		}
 		return "", errors.Wrap(ErrFetchVersion, errors.New(resp.Status))
 	}
 

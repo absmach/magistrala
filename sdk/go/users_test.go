@@ -6,19 +6,19 @@ package sdk_test
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 
-	"github.com/mainflux/mainflux"
-	log "github.com/mainflux/mainflux/logger"
-	sdk "github.com/mainflux/mainflux/sdk/go"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/mainflux/mainflux/users/api"
-
+	"github.com/mainflux/mainflux"
+	log "github.com/mainflux/mainflux/logger"
+	sdk "github.com/mainflux/mainflux/sdk/go"
 	"github.com/mainflux/mainflux/users"
+	"github.com/mainflux/mainflux/users/api"
 	"github.com/mainflux/mainflux/users/mocks"
 )
 
@@ -70,32 +70,32 @@ func TestCreateUser(t *testing.T) {
 		{
 			desc: "register existing user",
 			user: user,
-			err:  sdk.ErrConflict,
+			err:  createError(sdk.ErrFailedCreation, http.StatusConflict),
 		},
 		{
 			desc: "register user with invalid email address",
 			user: sdk.User{Email: invalidEmail, Password: "password"},
-			err:  sdk.ErrInvalidArgs,
+			err:  createError(sdk.ErrFailedCreation, http.StatusBadRequest),
 		},
 		{
 			desc: "register user with empty password",
 			user: sdk.User{Email: "user2@example.com", Password: ""},
-			err:  sdk.ErrInvalidArgs,
+			err:  createError(sdk.ErrFailedCreation, http.StatusBadRequest),
 		},
 		{
 			desc: "register user without password",
 			user: sdk.User{Email: "user2@example.com"},
-			err:  sdk.ErrInvalidArgs,
+			err:  createError(sdk.ErrFailedCreation, http.StatusBadRequest),
 		},
 		{
 			desc: "register user without email",
 			user: sdk.User{Password: "password"},
-			err:  sdk.ErrInvalidArgs,
+			err:  createError(sdk.ErrFailedCreation, http.StatusBadRequest),
 		},
 		{
 			desc: "register empty user",
 			user: sdk.User{},
-			err:  sdk.ErrInvalidArgs,
+			err:  createError(sdk.ErrFailedCreation, http.StatusBadRequest),
 		},
 	}
 
@@ -140,13 +140,13 @@ func TestCreateToken(t *testing.T) {
 			desc:  "create token for non existing user",
 			user:  sdk.User{Email: "user2@example.com", Password: "password"},
 			token: "",
-			err:   sdk.ErrUnauthorized,
+			err:   createError(sdk.ErrFailedCreation, http.StatusForbidden),
 		},
 		{
 			desc:  "create user with empty email",
 			user:  sdk.User{Email: "", Password: "password"},
 			token: "",
-			err:   sdk.ErrInvalidArgs,
+			err:   createError(sdk.ErrFailedCreation, http.StatusBadRequest),
 		},
 	}
 	for _, tc := range cases {

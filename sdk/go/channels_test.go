@@ -5,12 +5,14 @@ package sdk_test
 
 import (
 	"fmt"
+	"net/http"
 	"strconv"
 	"testing"
 
-	sdk "github.com/mainflux/mainflux/sdk/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	sdk "github.com/mainflux/mainflux/sdk/go"
 )
 
 var (
@@ -52,14 +54,14 @@ func TestCreateChannel(t *testing.T) {
 			desc:    "create new channel with empty token",
 			channel: channel,
 			token:   "",
-			err:     sdk.ErrUnauthorized,
+			err:     createError(sdk.ErrFailedCreation, http.StatusForbidden),
 			empty:   true,
 		},
 		{
 			desc:    "create new channel with invalid token",
 			channel: channel,
 			token:   wrongValue,
-			err:     sdk.ErrUnauthorized,
+			err:     createError(sdk.ErrFailedCreation, http.StatusForbidden),
 			empty:   true,
 		},
 		{
@@ -117,21 +119,21 @@ func TestCreateChannels(t *testing.T) {
 			desc:     "create new channels with empty channels",
 			channels: []sdk.Channel{},
 			token:    token,
-			err:      sdk.ErrInvalidArgs,
+			err:      createError(sdk.ErrFailedCreation, http.StatusBadRequest),
 			res:      []sdk.Channel{},
 		},
 		{
 			desc:     "create new channels with empty token",
 			channels: channels,
 			token:    "",
-			err:      sdk.ErrUnauthorized,
+			err:      createError(sdk.ErrFailedCreation, http.StatusForbidden),
 			res:      []sdk.Channel{},
 		},
 		{
 			desc:     "create new channels with invalid token",
 			channels: channels,
 			token:    wrongValue,
-			err:      sdk.ErrUnauthorized,
+			err:      createError(sdk.ErrFailedCreation, http.StatusForbidden),
 			res:      []sdk.Channel{},
 		},
 	}
@@ -180,14 +182,14 @@ func TestChannel(t *testing.T) {
 			desc:     "get non-existent channel",
 			chanID:   "43",
 			token:    token,
-			err:      sdk.ErrNotFound,
+			err:      createError(sdk.ErrFailedFetch, http.StatusNotFound),
 			response: sdk.Channel{},
 		},
 		{
 			desc:     "get channel with invalid token",
 			chanID:   id,
 			token:    "",
-			err:      sdk.ErrUnauthorized,
+			err:      createError(sdk.ErrFailedFetch, http.StatusForbidden),
 			response: sdk.Channel{},
 		},
 	}
@@ -242,7 +244,7 @@ func TestChannels(t *testing.T) {
 			token:    wrongValue,
 			offset:   0,
 			limit:    5,
-			err:      sdk.ErrUnauthorized,
+			err:      createError(sdk.ErrFailedFetch, http.StatusForbidden),
 			response: nil,
 		},
 		{
@@ -250,7 +252,7 @@ func TestChannels(t *testing.T) {
 			token:    "",
 			offset:   0,
 			limit:    5,
-			err:      sdk.ErrUnauthorized,
+			err:      createError(sdk.ErrFailedFetch, http.StatusForbidden),
 			response: nil,
 		},
 		{
@@ -258,7 +260,7 @@ func TestChannels(t *testing.T) {
 			token:    token,
 			offset:   0,
 			limit:    0,
-			err:      sdk.ErrInvalidArgs,
+			err:      createError(sdk.ErrFailedFetch, http.StatusBadRequest),
 			response: nil,
 		},
 		{
@@ -266,7 +268,7 @@ func TestChannels(t *testing.T) {
 			token:    token,
 			offset:   0,
 			limit:    110,
-			err:      sdk.ErrInvalidArgs,
+			err:      createError(sdk.ErrFailedFetch, http.StatusBadRequest),
 			response: nil,
 		},
 		{
@@ -282,7 +284,7 @@ func TestChannels(t *testing.T) {
 			token:    wrongValue,
 			offset:   0,
 			limit:    0,
-			err:      sdk.ErrInvalidArgs,
+			err:      createError(sdk.ErrFailedFetch, http.StatusBadRequest),
 			response: nil,
 		},
 	}
@@ -349,7 +351,7 @@ func TestChannelsByThing(t *testing.T) {
 			token:    wrongValue,
 			offset:   0,
 			limit:    5,
-			err:      sdk.ErrUnauthorized,
+			err:      createError(sdk.ErrFailedFetch, http.StatusForbidden),
 			response: nil,
 		},
 		{
@@ -358,7 +360,7 @@ func TestChannelsByThing(t *testing.T) {
 			token:    "",
 			offset:   0,
 			limit:    5,
-			err:      sdk.ErrUnauthorized,
+			err:      createError(sdk.ErrFailedFetch, http.StatusForbidden),
 			response: nil,
 		},
 		{
@@ -367,7 +369,7 @@ func TestChannelsByThing(t *testing.T) {
 			token:    token,
 			offset:   0,
 			limit:    0,
-			err:      sdk.ErrInvalidArgs,
+			err:      createError(sdk.ErrFailedFetch, http.StatusBadRequest),
 			response: nil,
 		},
 		{
@@ -376,7 +378,7 @@ func TestChannelsByThing(t *testing.T) {
 			token:    token,
 			offset:   0,
 			limit:    110,
-			err:      sdk.ErrInvalidArgs,
+			err:      createError(sdk.ErrFailedFetch, http.StatusBadRequest),
 			response: nil,
 		},
 		{
@@ -394,7 +396,7 @@ func TestChannelsByThing(t *testing.T) {
 			token:    wrongValue,
 			offset:   0,
 			limit:    0,
-			err:      sdk.ErrInvalidArgs,
+			err:      createError(sdk.ErrFailedFetch, http.StatusBadRequest),
 			response: nil,
 		},
 	}
@@ -438,25 +440,25 @@ func TestUpdateChannel(t *testing.T) {
 			desc:    "update non-existing channel",
 			channel: sdk.Channel{ID: "0", Name: "test2"},
 			token:   token,
-			err:     sdk.ErrNotFound,
+			err:     createError(sdk.ErrFailedUpdate, http.StatusNotFound),
 		},
 		{
 			desc:    "update channel with invalid id",
 			channel: sdk.Channel{ID: "", Name: "test2"},
 			token:   token,
-			err:     sdk.ErrInvalidArgs,
+			err:     createError(sdk.ErrFailedUpdate, http.StatusBadRequest),
 		},
 		{
 			desc:    "update channel with invalid token",
 			channel: sdk.Channel{ID: id, Name: "test2"},
 			token:   wrongValue,
-			err:     sdk.ErrUnauthorized,
+			err:     createError(sdk.ErrFailedUpdate, http.StatusForbidden),
 		},
 		{
 			desc:    "update channel with empty token",
 			channel: sdk.Channel{ID: id, Name: "test2"},
 			token:   "",
-			err:     sdk.ErrUnauthorized,
+			err:     createError(sdk.ErrFailedUpdate, http.StatusForbidden),
 		},
 	}
 
@@ -493,7 +495,7 @@ func TestDeleteChannel(t *testing.T) {
 			desc:   "delete channel with invalid token",
 			chanID: id,
 			token:  wrongValue,
-			err:    sdk.ErrUnauthorized,
+			err:    createError(sdk.ErrFailedRemoval, http.StatusForbidden),
 		},
 		{
 			desc:   "delete non-existing channel",
@@ -505,13 +507,13 @@ func TestDeleteChannel(t *testing.T) {
 			desc:   "delete channel with invalid id",
 			chanID: "",
 			token:  token,
-			err:    sdk.ErrInvalidArgs,
+			err:    createError(sdk.ErrFailedRemoval, http.StatusBadRequest),
 		},
 		{
 			desc:   "delete channel with empty token",
 			chanID: id,
 			token:  "",
-			err:    sdk.ErrUnauthorized,
+			err:    createError(sdk.ErrFailedRemoval, http.StatusForbidden),
 		},
 		{
 			desc:   "delete existing channel",

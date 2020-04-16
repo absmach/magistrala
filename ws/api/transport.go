@@ -240,7 +240,7 @@ func (sub subscription) broadcast(svc ws.Service, contentType string) {
 		}
 		if err := svc.Publish(context.Background(), "", msg); err != nil {
 			logger.Warn(fmt.Sprintf("Failed to publish message to NATS: %s", err))
-			if err == ws.ErrFailedConnection {
+			if err == ws.ErrFailedConnect {
 				sub.conn.Close()
 				sub.channel.Closed <- true
 				return

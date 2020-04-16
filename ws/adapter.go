@@ -25,8 +25,8 @@ var (
 	// ErrFailedSubscription indicates that client couldn't subscribe to specified channel.
 	ErrFailedSubscription = errors.New("failed to subscribe to a channel")
 
-	// ErrFailedConnection indicates that service couldn't connect to message broker.
-	ErrFailedConnection = errors.New("failed to connect to message broker")
+	// ErrFailedConnect indicates that service couldn't connect to message broker.
+	ErrFailedConnect = errors.New("failed to connect to message broker")
 )
 
 // Service specifies web socket service API.

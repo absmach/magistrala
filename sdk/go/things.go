@@ -17,10 +17,10 @@ import (
 const thingsEndpoint = "things"
 const connectEndpoint = "connect"
 
-func (sdk mfSDK) CreateThing(thing Thing, token string) (string, error) {
-	data, err := json.Marshal(thing)
+func (sdk mfSDK) CreateThing(t Thing, token string) (string, error) {
+	data, err := json.Marshal(t)
 	if err != nil {
-		return "", ErrInvalidArgs
+		return "", err
 	}
 
 	url := createURL(sdk.baseURL, sdk.thingsPrefix, thingsEndpoint)
@@ -37,9 +37,6 @@ func (sdk mfSDK) CreateThing(thing Thing, token string) (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
-		if err := encodeError(resp.StatusCode); err != nil {
-			return "", err
-		}
 		return "", errors.Wrap(ErrFailedCreation, errors.New(resp.Status))
 	}
 
@@ -50,7 +47,7 @@ func (sdk mfSDK) CreateThing(thing Thing, token string) (string, error) {
 func (sdk mfSDK) CreateThings(things []Thing, token string) ([]Thing, error) {
 	data, err := json.Marshal(things)
 	if err != nil {
-		return []Thing{}, ErrInvalidArgs
+		return []Thing{}, err
 	}
 
 	endpoint := fmt.Sprintf("%s/%s", thingsEndpoint, "bulk")
@@ -68,10 +65,7 @@ func (sdk mfSDK) CreateThings(things []Thing, token string) ([]Thing, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
-		if err := encodeError(resp.StatusCode); err != nil {
-			return []Thing{}, err
-		}
-		return []Thing{}, ErrFailedCreation
+		return []Thing{}, errors.Wrap(ErrFailedCreation, errors.New(resp.Status))
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -108,10 +102,7 @@ func (sdk mfSDK) Things(token string, offset, limit uint64, name string) (Things
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		if err := encodeError(resp.StatusCode); err != nil {
-			return ThingsPage{}, err
-		}
-		return ThingsPage{}, ErrFetchFailed
+		return ThingsPage{}, errors.Wrap(ErrFailedFetch, errors.New(resp.Status))
 	}
 
 	var tp ThingsPage
@@ -143,10 +134,7 @@ func (sdk mfSDK) ThingsByChannel(token, chanID string, offset, limit uint64) (Th
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		if err := encodeError(resp.StatusCode); err != nil {
-			return ThingsPage{}, err
-		}
-		return ThingsPage{}, ErrFetchFailed
+		return ThingsPage{}, errors.Wrap(ErrFailedFetch, errors.New(resp.Status))
 	}
 
 	var tp ThingsPage
@@ -178,10 +166,7 @@ func (sdk mfSDK) Thing(id, token string) (Thing, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		if err := encodeError(resp.StatusCode); err != nil {
-			return Thing{}, err
-		}
-		return Thing{}, errors.Wrap(ErrFetchFailed, errors.New(resp.Status))
+		return Thing{}, errors.Wrap(ErrFailedFetch, errors.New(resp.Status))
 	}
 
 	var t Thing
@@ -192,13 +177,13 @@ func (sdk mfSDK) Thing(id, token string) (Thing, error) {
 	return t, nil
 }
 
-func (sdk mfSDK) UpdateThing(thing Thing, token string) error {
-	data, err := json.Marshal(thing)
+func (sdk mfSDK) UpdateThing(t Thing, token string) error {
+	data, err := json.Marshal(t)
 	if err != nil {
-		return ErrInvalidArgs
+		return err
 	}
 
-	endpoint := fmt.Sprintf("%s/%s", thingsEndpoint, thing.ID)
+	endpoint := fmt.Sprintf("%s/%s", thingsEndpoint, t.ID)
 	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
 
 	req, err := http.NewRequest(http.MethodPut, url, bytes.NewReader(data))
@@ -212,9 +197,6 @@ func (sdk mfSDK) UpdateThing(thing Thing, token string) error {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		if err := encodeError(resp.StatusCode); err != nil {
-			return err
-		}
 		return errors.Wrap(ErrFailedUpdate, errors.New(resp.Status))
 	}
 
@@ -236,9 +218,6 @@ func (sdk mfSDK) DeleteThing(id, token string) error {
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
-		if err := encodeError(resp.StatusCode); err != nil {
-			return err
-		}
 		return errors.Wrap(ErrFailedRemoval, errors.New(resp.Status))
 	}
 
@@ -248,7 +227,7 @@ func (sdk mfSDK) DeleteThing(id, token string) error {
 func (sdk mfSDK) Connect(connIDs ConnectionIDs, token string) error {
 	data, err := json.Marshal(connIDs)
 	if err != nil {
-		return ErrInvalidArgs
+		return err
 	}
 
 	url := createURL(sdk.baseURL, sdk.thingsPrefix, connectEndpoint)
@@ -263,10 +242,7 @@ func (sdk mfSDK) Connect(connIDs ConnectionIDs, token string) error {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		if err := encodeError(resp.StatusCode); err != nil {
-			return err
-		}
-		return errors.Wrap(ErrFailedConnection, errors.New(resp.Status))
+		return errors.Wrap(ErrFailedConnect, errors.New(resp.Status))
 	}
 
 	return nil
@@ -287,9 +263,6 @@ func (sdk mfSDK) DisconnectThing(thingID, chanID, token string) error {
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
-		if err := encodeError(resp.StatusCode); err != nil {
-			return err
-		}
 		return errors.Wrap(ErrFailedDisconnect, errors.New(resp.Status))
 	}
 

@@ -5,11 +5,11 @@ package sdk_test
 
 import (
 	"fmt"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/errors"
 	adapter "github.com/mainflux/mainflux/http"
 	"github.com/mainflux/mainflux/http/api"
 	"github.com/mainflux/mainflux/http/mocks"
@@ -64,13 +64,13 @@ func TestSendMessage(t *testing.T) {
 			chanID: chanID,
 			msg:    msg,
 			auth:   "",
-			err:    sdk.ErrUnauthorized,
+			err:    createError(sdk.ErrFailedPublish, http.StatusForbidden),
 		},
 		"publish message with invalid authorization token": {
 			chanID: chanID,
 			msg:    msg,
 			auth:   invalidToken,
-			err:    sdk.ErrUnauthorized,
+			err:    createError(sdk.ErrFailedPublish, http.StatusForbidden),
 		},
 		"publish message with wrong content type": {
 			chanID: chanID,
@@ -82,13 +82,13 @@ func TestSendMessage(t *testing.T) {
 			chanID: "",
 			msg:    msg,
 			auth:   atoken,
-			err:    sdk.ErrInvalidArgs,
+			err:    createError(sdk.ErrFailedPublish, http.StatusBadRequest),
 		},
 		"publish message unable to authorize": {
 			chanID: chanID,
 			msg:    msg,
 			auth:   mocks.ServiceErrToken,
-			err:    errors.Wrap(sdk.ErrFailedPublish, errors.New("503 Service Unavailable")),
+			err:    createError(sdk.ErrFailedPublish, http.StatusServiceUnavailable),
 		},
 	}
 	for desc, tc := range cases {

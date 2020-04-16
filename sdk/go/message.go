@@ -35,9 +35,6 @@ func (sdk mfSDK) SendMessage(chanName, msg, token string) error {
 	}
 
 	if resp.StatusCode != http.StatusAccepted {
-		if err := encodeError(resp.StatusCode); err != nil {
-			return err
-		}
 		return errors.Wrap(ErrFailedPublish, errors.New(resp.Status))
 	}
 
@@ -71,9 +68,6 @@ func (sdk mfSDK) ReadMessages(chanName, token string) (MessagesPage, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		if err := encodeError(resp.StatusCode); err != nil {
-			return MessagesPage{}, err
-		}
 		return MessagesPage{}, errors.Wrap(ErrFailedRead, errors.New(resp.Status))
 	}
 

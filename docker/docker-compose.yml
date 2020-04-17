@@ -44,7 +44,6 @@ services:
       - users
       - mqtt-adapter
       - http-adapter
-      - ws-adapter
 
   nats:
     image: nats:1.3.0
@@ -237,26 +236,6 @@ services:
       MF_JAEGER_URL: ${MF_JAEGER_URL}
       MF_THINGS_AUTH_GRPC_URL: ${MF_THINGS_AUTH_GRPC_URL}
       MF_THINGS_AUTH_GRPC_TIMEOUT: ${MF_THINGS_AUTH_GRPC_TIMEOUT}
-    networks:
-      - mainflux-base-net
-
-
-  ws-adapter:
-    image: mainflux/ws:latest
-    container_name: mainflux-ws
-    depends_on:
-      - things
-      - nats
-    restart: on-failure
-    environment:
-      MF_WS_ADAPTER_LOG_LEVEL: ${MF_WS_ADAPTER_LOG_LEVEL}
-      MF_WS_ADAPTER_PORT: ${MF_WS_ADAPTER_PORT}
-      MF_NATS_URL: ${MF_NATS_URL}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_THINGS_AUTH_GRPC_URL: ${MF_THINGS_AUTH_GRPC_URL}
-      MF_THINGS_AUTH_GRPC_TIMEOUT: ${MF_THINGS_AUTH_GRPC_TIMEOUT}
-    ports:
-      - ${MF_WS_ADAPTER_PORT}:${MF_WS_ADAPTER_PORT}
     networks:
       - mainflux-base-net
 

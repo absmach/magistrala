@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 BUILD_DIR = build
-SERVICES = users things http ws coap lora influxdb-writer influxdb-reader mongodb-writer \
+SERVICES = users things http coap lora influxdb-writer influxdb-reader mongodb-writer \
 	mongodb-reader cassandra-writer cassandra-reader postgres-writer postgres-reader cli \
 	bootstrap opcua authn twins mqtt
 DOCKERS = $(addprefix docker_,$(SERVICES))

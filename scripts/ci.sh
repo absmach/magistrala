@@ -87,7 +87,7 @@ setup() {
 
 run_test() {
 	echo "Running lint..."
-	golangci-lint run --concurrency=1 --no-config --disable-all --enable=golint
+	golangci-lint run --no-config --disable-all --enable=golint
 	echo "Running tests..."
 	echo "" > coverage.txt
 	for d in $(go list ./... | grep -v 'vendor\|cmd'); do

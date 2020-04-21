@@ -141,7 +141,7 @@ func TestCreateChannels(t *testing.T) {
 		res, err := mainfluxSDK.CreateChannels(tc.channels, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 
-		for idx, _ := range tc.res {
+		for idx := range tc.res {
 			assert.Equal(t, tc.res[idx].ID, res[idx].ID, fmt.Sprintf("%s: expected response ID %s got %s", tc.desc, tc.res[idx].ID, res[idx].ID))
 		}
 	}

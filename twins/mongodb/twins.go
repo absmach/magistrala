@@ -139,7 +139,7 @@ func (tr *twinRepository) RetrieveByAttribute(ctx context.Context, channel, subt
 	return ids, nil
 }
 
-func (tr *twinRepository) RetrieveAll(ctx context.Context, owner string, offset uint64, limit uint64, name string, metadata twins.Metadata) (twins.TwinsPage, error) {
+func (tr *twinRepository) RetrieveAll(ctx context.Context, owner string, offset uint64, limit uint64, name string, metadata twins.Metadata) (twins.Page, error) {
 	coll := tr.db.Collection(twinsCollection)
 
 	findOptions := options.Find()
@@ -159,20 +159,20 @@ func (tr *twinRepository) RetrieveAll(ctx context.Context, owner string, offset 
 	}
 	cur, err := coll.Find(ctx, filter, findOptions)
 	if err != nil {
-		return twins.TwinsPage{}, err
+		return twins.Page{}, err
 	}
 
 	results, err := decodeTwins(ctx, cur)
 	if err != nil {
-		return twins.TwinsPage{}, err
+		return twins.Page{}, err
 	}
 
 	total, err := coll.CountDocuments(ctx, filter)
 	if err != nil {
-		return twins.TwinsPage{}, err
+		return twins.Page{}, err
 	}
 
-	return twins.TwinsPage{
+	return twins.Page{
 		Twins: results,
 		PageMetadata: twins.PageMetadata{
 			Total:  uint64(total),
@@ -182,7 +182,7 @@ func (tr *twinRepository) RetrieveAll(ctx context.Context, owner string, offset 
 	}, nil
 }
 
-func (tr *twinRepository) RetrieveAllByThing(ctx context.Context, thingid string, offset uint64, limit uint64) (twins.TwinsPage, error) {
+func (tr *twinRepository) RetrieveAllByThing(ctx context.Context, thingid string, offset uint64, limit uint64) (twins.Page, error) {
 	coll := tr.db.Collection(twinsCollection)
 
 	findOptions := options.Find()
@@ -192,20 +192,20 @@ func (tr *twinRepository) RetrieveAllByThing(ctx context.Context, thingid string
 	filter := bson.D{{"thingid", thingid}}
 	cur, err := coll.Find(ctx, filter, findOptions)
 	if err != nil {
-		return twins.TwinsPage{}, err
+		return twins.Page{}, err
 	}
 
 	results, err := decodeTwins(ctx, cur)
 	if err != nil {
-		return twins.TwinsPage{}, err
+		return twins.Page{}, err
 	}
 
 	total, err := coll.CountDocuments(ctx, filter)
 	if err != nil {
-		return twins.TwinsPage{}, err
+		return twins.Page{}, err
 	}
 
-	return twins.TwinsPage{
+	return twins.Page{
 		Twins: results,
 		PageMetadata: twins.PageMetadata{
 			Total:  uint64(total),

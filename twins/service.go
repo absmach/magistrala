@@ -63,7 +63,7 @@ type Service interface {
 
 	// ListTwins retrieves data about subset of twins that belongs to the
 	// user identified by the provided key.
-	ListTwins(ctx context.Context, token string, offset uint64, limit uint64, name string, metadata Metadata) (TwinsPage, error)
+	ListTwins(ctx context.Context, token string, offset uint64, limit uint64, name string, metadata Metadata) (Page, error)
 
 	// ListStates retrieves data about subset of states that belongs to the
 	// twin identified by the id.
@@ -261,10 +261,10 @@ func (ts *twinsService) RemoveTwin(ctx context.Context, token, id string) (err e
 	return nil
 }
 
-func (ts *twinsService) ListTwins(ctx context.Context, token string, offset uint64, limit uint64, name string, metadata Metadata) (TwinsPage, error) {
+func (ts *twinsService) ListTwins(ctx context.Context, token string, offset uint64, limit uint64, name string, metadata Metadata) (Page, error) {
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return TwinsPage{}, ErrUnauthorizedAccess
+		return Page{}, ErrUnauthorizedAccess
 	}
 
 	return ts.twins.RetrieveAll(ctx, res.GetValue(), offset, limit, name, metadata)

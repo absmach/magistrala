@@ -72,14 +72,22 @@ setup_mf() {
 	make -j$NPROC
 }
 
+setup_lint() {
+	# binary will be $(go env GOPATH)/bin/golangci-lint
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.24.0
+}
+
 setup() {
 	echo "Setting up..."
 	update_go
 	setup_protoc
 	setup_mf
+	setup_lint
 }
 
 run_test() {
+	echo "Running lint..."
+	golangci-lint run --concurrency=1 --no-config --disable-all --enable=golint
 	echo "Running tests..."
 	echo "" > coverage.txt
 	for d in $(go list ./... | grep -v 'vendor\|cmd'); do

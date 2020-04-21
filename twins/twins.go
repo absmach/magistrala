@@ -49,9 +49,9 @@ type PageMetadata struct {
 	Name   string
 }
 
-// TwinsPage contains page related metadata as well as a list of twins that
+// Page contains page related metadata as well as a list of twins that
 // belong to this page.
-type TwinsPage struct {
+type Page struct {
 	PageMetadata
 	Twins []Twin
 }
@@ -73,7 +73,7 @@ type TwinRepository interface {
 	RetrieveByAttribute(ctx context.Context, channel, subtopic string) ([]string, error)
 
 	// RetrieveAll retrieves the subset of things owned by the specified user.
-	RetrieveAll(context.Context, string, uint64, uint64, string, Metadata) (TwinsPage, error)
+	RetrieveAll(context.Context, string, uint64, uint64, string, Metadata) (Page, error)
 
 	// RetrieveByThing retrieves twin that represents specified thing
 	RetrieveByThing(context.Context, string) (Twin, error)

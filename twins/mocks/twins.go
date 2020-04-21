@@ -100,14 +100,14 @@ func (trm *twinRepositoryMock) RetrieveByThing(_ context.Context, thingid string
 
 }
 
-func (trm *twinRepositoryMock) RetrieveAll(_ context.Context, owner string, offset uint64, limit uint64, name string, metadata twins.Metadata) (twins.TwinsPage, error) {
+func (trm *twinRepositoryMock) RetrieveAll(_ context.Context, owner string, offset uint64, limit uint64, name string, metadata twins.Metadata) (twins.Page, error) {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
 	items := make([]twins.Twin, 0)
 
 	if limit <= 0 {
-		return twins.TwinsPage{}, nil
+		return twins.Page{}, nil
 	}
 
 	// This obscure way to examine map keys is enforced by the key structure in mocks/commons.go
@@ -130,7 +130,7 @@ func (trm *twinRepositoryMock) RetrieveAll(_ context.Context, owner string, offs
 		return items[i].ID < items[j].ID
 	})
 
-	page := twins.TwinsPage{
+	page := twins.Page{
 		Twins: items,
 		PageMetadata: twins.PageMetadata{
 			Total:  trm.counter,

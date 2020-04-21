@@ -178,7 +178,7 @@ func TestCreateThings(t *testing.T) {
 		res, err := mainfluxSDK.CreateThings(tc.things, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 
-		for idx, _ := range tc.res {
+		for idx := range tc.res {
 			assert.Equal(t, tc.res[idx].ID, res[idx].ID, fmt.Sprintf("%s: expected response ID %s got %s", tc.desc, tc.res[idx].ID, res[idx].ID))
 		}
 	}
@@ -205,28 +205,28 @@ func TestThing(t *testing.T) {
 
 	cases := []struct {
 		desc     string
-		thId     string
+		thID     string
 		token    string
 		err      error
 		response sdk.Thing
 	}{
 		{
 			desc:     "get existing thing",
-			thId:     id,
+			thID:     id,
 			token:    token,
 			err:      nil,
 			response: thing,
 		},
 		{
 			desc:     "get non-existent thing",
-			thId:     "43",
+			thID:     "43",
 			token:    token,
 			err:      createError(sdk.ErrFailedFetch, http.StatusNotFound),
 			response: sdk.Thing{},
 		},
 		{
 			desc:     "get thing with invalid token",
-			thId:     id,
+			thID:     id,
 			token:    wrongValue,
 			err:      createError(sdk.ErrFailedFetch, http.StatusForbidden),
 			response: sdk.Thing{},
@@ -234,7 +234,7 @@ func TestThing(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		respTh, err := mainfluxSDK.Thing(tc.thId, tc.token)
+		respTh, err := mainfluxSDK.Thing(tc.thID, tc.token)
 
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, respTh, fmt.Sprintf("%s: expected response thing %s, got %s", tc.desc, tc.response, respTh))

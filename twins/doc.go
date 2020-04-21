@@ -7,5 +7,4 @@
 // It holds the sequence of attribute based definitions of a real world
 // thing and refers to the time series of definition based states that
 // hold the historical data about the represented real world thing.
-
 package twins

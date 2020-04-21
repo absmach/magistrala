@@ -1169,68 +1169,68 @@ func TestBootstrap(t *testing.T) {
 	data := toJSON(s)
 
 	cases := []struct {
-		desc         string
-		external_id  string
-		external_key string
-		status       int
-		res          string
-		secure       bool
+		desc        string
+		externalID  string
+		externalKey string
+		status      int
+		res         string
+		secure      bool
 	}{
 		{
-			desc:         "bootstrap a Thing with unknown ID",
-			external_id:  unknown,
-			external_key: c.ExternalKey,
-			status:       http.StatusNotFound,
-			res:          notFoundRes,
-			secure:       false,
+			desc:        "bootstrap a Thing with unknown ID",
+			externalID:  unknown,
+			externalKey: c.ExternalKey,
+			status:      http.StatusNotFound,
+			res:         notFoundRes,
+			secure:      false,
 		},
 		{
-			desc:         "bootstrap a Thing with an empty ID",
-			external_id:  "",
-			external_key: c.ExternalKey,
-			status:       http.StatusBadRequest,
-			res:          malformedRes,
-			secure:       false,
+			desc:        "bootstrap a Thing with an empty ID",
+			externalID:  "",
+			externalKey: c.ExternalKey,
+			status:      http.StatusBadRequest,
+			res:         malformedRes,
+			secure:      false,
 		},
 		{
-			desc:         "bootstrap a Thing with unknown key",
-			external_id:  c.ExternalID,
-			external_key: unknown,
-			status:       http.StatusNotFound,
-			res:          extKeyNotFoundRes,
-			secure:       false,
+			desc:        "bootstrap a Thing with unknown key",
+			externalID:  c.ExternalID,
+			externalKey: unknown,
+			status:      http.StatusNotFound,
+			res:         extKeyNotFoundRes,
+			secure:      false,
 		},
 		{
-			desc:         "bootstrap a Thing with an empty key",
-			external_id:  c.ExternalID,
-			external_key: "",
-			status:       http.StatusForbidden,
-			res:          unauthRes,
-			secure:       false,
+			desc:        "bootstrap a Thing with an empty key",
+			externalID:  c.ExternalID,
+			externalKey: "",
+			status:      http.StatusForbidden,
+			res:         unauthRes,
+			secure:      false,
 		},
 		{
-			desc:         "bootstrap known Thing",
-			external_id:  c.ExternalID,
-			external_key: c.ExternalKey,
-			status:       http.StatusOK,
-			res:          data,
-			secure:       false,
+			desc:        "bootstrap known Thing",
+			externalID:  c.ExternalID,
+			externalKey: c.ExternalKey,
+			status:      http.StatusOK,
+			res:         data,
+			secure:      false,
 		},
 		{
-			desc:         "bootstrap secure",
-			external_id:  fmt.Sprintf("secure/%s", c.ExternalID),
-			external_key: hex.EncodeToString(encExternKey),
-			status:       http.StatusOK,
-			res:          data,
-			secure:       true,
+			desc:        "bootstrap secure",
+			externalID:  fmt.Sprintf("secure/%s", c.ExternalID),
+			externalKey: hex.EncodeToString(encExternKey),
+			status:      http.StatusOK,
+			res:         data,
+			secure:      true,
 		},
 		{
-			desc:         "bootstrap secure with unencrypted key",
-			external_id:  fmt.Sprintf("secure/%s", c.ExternalID),
-			external_key: c.ExternalKey,
-			status:       http.StatusNotFound,
-			res:          extSecKeyNotFoundRes,
-			secure:       true,
+			desc:        "bootstrap secure with unencrypted key",
+			externalID:  fmt.Sprintf("secure/%s", c.ExternalID),
+			externalKey: c.ExternalKey,
+			status:      http.StatusNotFound,
+			res:         extSecKeyNotFoundRes,
+			secure:      true,
 		},
 	}
 
@@ -1238,8 +1238,8 @@ func TestBootstrap(t *testing.T) {
 		req := testRequest{
 			client: bs.Client(),
 			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/things/bootstrap/%s", bs.URL, tc.external_id),
-			token:  tc.external_key,
+			url:    fmt.Sprintf("%s/things/bootstrap/%s", bs.URL, tc.externalID),
+			token:  tc.externalKey,
 		}
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))

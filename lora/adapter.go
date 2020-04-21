@@ -19,10 +19,6 @@ const (
 )
 
 var (
-	// ErrMalformedIdentity indicates malformed identity received (e.g.
-	// invalid appID or deviceEUI).
-	ErrMalformedIdentity = errors.New("malformed identity received")
-
 	// ErrMalformedMessage indicates malformed LoRa message.
 	ErrMalformedMessage = errors.New("malformed message received")
 

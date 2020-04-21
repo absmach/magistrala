@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	keyProtocol  = "opcua"
-	keyNodeID    = "nodeID"
-	keyServerURI = "serverURI"
+	keyType      = "opcua"
+	keyNodeID    = "node_id"
+	keyServerURI = "server_uri"
 
 	group  = "mainflux.opcua"
 	stream = "mainflux.things"
@@ -148,7 +148,7 @@ func decodeCreateThing(event map[string]interface{}) (createThingEvent, error) {
 		id: read(event, "id", ""),
 	}
 
-	metadataOpcua, ok := metadata[keyProtocol]
+	metadataOpcua, ok := metadata[keyType]
 	if !ok {
 		return createThingEvent{}, errMetadataType
 	}
@@ -184,7 +184,7 @@ func decodeCreateChannel(event map[string]interface{}) (createChannelEvent, erro
 		id: read(event, "id", ""),
 	}
 
-	metadataOpcua, ok := metadata[keyProtocol]
+	metadataOpcua, ok := metadata[keyType]
 	if !ok {
 		return createChannelEvent{}, errMetadataType
 	}

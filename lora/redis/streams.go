@@ -11,7 +11,9 @@ import (
 )
 
 const (
-	protocol = "lora"
+	keyType   = "lora"
+	keyDevEUI = "dev_eui"
+	keyAppID  = "app_id"
 
 	group  = "mainflux.lora"
 	stream = "mainflux.things"
@@ -139,7 +141,7 @@ func decodeCreateThing(event map[string]interface{}) (createThingEvent, error) {
 		id: read(event, "id", ""),
 	}
 
-	m, ok := metadata["lora"]
+	m, ok := metadata[keyType]
 	if !ok {
 		return createThingEvent{}, errMetadataType
 	}
@@ -149,7 +151,7 @@ func decodeCreateThing(event map[string]interface{}) (createThingEvent, error) {
 		return createThingEvent{}, errMetadataFormat
 	}
 
-	val, ok := lm["devEUI"].(string)
+	val, ok := lm[keyDevEUI].(string)
 	if !ok {
 		return createThingEvent{}, errMetadataDevEUI
 	}
@@ -175,7 +177,7 @@ func decodeCreateChannel(event map[string]interface{}) (createChannelEvent, erro
 		id: read(event, "id", ""),
 	}
 
-	m, ok := metadata["lora"]
+	m, ok := metadata[keyType]
 	if !ok {
 		return createChannelEvent{}, errMetadataType
 	}
@@ -185,7 +187,7 @@ func decodeCreateChannel(event map[string]interface{}) (createChannelEvent, erro
 		return createChannelEvent{}, errMetadataFormat
 	}
 
-	val, ok := lm["appID"].(string)
+	val, ok := lm[keyAppID].(string)
 	if !ok {
 		return createChannelEvent{}, errMetadataAppID
 	}

@@ -27,7 +27,6 @@ const protocol = "mqtt"
 
 var (
 	channelRegExp         = regexp.MustCompile(`^\/?channels\/([\w\-]+)\/messages(\/[^?]*)?(\?.*)?$`)
-	ctRegExp              = regexp.MustCompile(`^(\/.*)?\/ct\/([^\/]+)$`)
 	errMalformedTopic     = errors.New("malformed topic")
 	errMalformedData      = errors.New("malformed request data")
 	errMalformedSubtopic  = errors.New("malformed subtopic")
@@ -149,12 +148,6 @@ func (e *Event) Publish(c *session.Client, topic *string, payload *[]byte) {
 	chanID := channelParts[1]
 	subtopic := channelParts[2]
 
-	ct := ""
-	if stParts := ctRegExp.FindStringSubmatch(subtopic); len(stParts) > 1 {
-		ct = stParts[2]
-		subtopic = stParts[1]
-	}
-
 	subtopic, err := parseSubtopic(subtopic)
 	if err != nil {
 		e.logger.Info("Error in mqtt publish: " + err.Error())
@@ -168,13 +161,12 @@ func (e *Event) Publish(c *session.Client, topic *string, payload *[]byte) {
 	}
 
 	msg := broker.Message{
-		Protocol:    protocol,
-		ContentType: ct,
-		Channel:     chanID,
-		Subtopic:    subtopic,
-		Publisher:   c.Username,
-		Payload:     *payload,
-		Created:     created,
+		Protocol:  protocol,
+		Channel:   chanID,
+		Subtopic:  subtopic,
+		Publisher: c.Username,
+		Payload:   *payload,
+		Created:   created,
 	}
 
 	if err := e.broker.Publish(context.TODO(), "", msg); err != nil {

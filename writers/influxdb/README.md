@@ -19,6 +19,7 @@ default values.
 | MF_INFLUX_WRITER_DB_PASS         | Default password of InfluxDB user                        | mainflux               |
 | MF_INFLUX_WRITER_DB              | InfluxDB database name                                   | messages               |
 | MF_INFLUX_WRITER_SUBJECTS_CONFIG | Configuration file path with subjects list               | /config/subjects.toml  |
+| MF_INFLUX_WRITER_CONTENT_TYPE    | Message payload Content Type                             | application/senml+json |
 
 ## Deployment
 
@@ -40,6 +41,7 @@ default values.
       MF_INFLUX_WRITER_DB_USER: [InfluxDB admin user]
       MF_INFLUX_WRITER_DB_PASS: [InfluxDB admin password]
       MF_INFLUX_WRITER_SUBJECTS_CONFIG: [Configuration file path with subjects list]
+      MF_INFLUX_WRITER_CONTENT_TYPE: [Message payload Content Type]
     ports:
       - [host machine port]:[configured HTTP port]
     volume:

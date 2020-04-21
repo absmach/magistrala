@@ -35,6 +35,7 @@ const (
 	defDBHost          = "localhost"
 	defDBPort          = "27017"
 	defSubjectsCfgPath = "/config/subjects.toml"
+	defContentType     = "application/senml+json"
 
 	envNatsURL         = "MF_NATS_URL"
 	envLogLevel        = "MF_MONGO_WRITER_LOG_LEVEL"
@@ -43,6 +44,7 @@ const (
 	envDBHost          = "MF_MONGO_WRITER_DB_HOST"
 	envDBPort          = "MF_MONGO_WRITER_DB_PORT"
 	envSubjectsCfgPath = "MF_MONGO_WRITER_SUBJECTS_CONFIG"
+	envContentType     = "MF_MONGO_WRITER_CONTENT_TYPE"
 )
 
 type config struct {
@@ -53,6 +55,7 @@ type config struct {
 	dbHost          string
 	dbPort          string
 	subjectsCfgPath string
+	contentType     string
 }
 
 func main() {
@@ -83,7 +86,7 @@ func main() {
 	counter, latency := makeMetrics()
 	repo = api.LoggingMiddleware(repo, logger)
 	repo = api.MetricsMiddleware(repo, counter, latency)
-	st := senml.New()
+	st := senml.New(cfg.contentType)
 	if err := writers.Start(b, repo, st, svcName, cfg.subjectsCfgPath, logger); err != nil {
 		logger.Error(fmt.Sprintf("Failed to start MongoDB writer: %s", err))
 		os.Exit(1)
@@ -111,6 +114,7 @@ func loadConfigs() config {
 		dbHost:          mainflux.Env(envDBHost, defDBHost),
 		dbPort:          mainflux.Env(envDBPort, defDBPort),
 		subjectsCfgPath: mainflux.Env(envSubjectsCfgPath, defSubjectsCfgPath),
+		contentType:     mainflux.Env(envContentType, defContentType),
 	}
 }
 

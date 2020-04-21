@@ -40,6 +40,7 @@ const (
 	defDBSSLKey        = ""
 	defDBSSLRootCert   = ""
 	defSubjectsCfgPath = "/config/subjects.toml"
+	defContentType     = "application/senml+json"
 
 	envNatsURL         = "MF_NATS_URL"
 	envLogLevel        = "MF_POSTGRES_WRITER_LOG_LEVEL"
@@ -54,14 +55,16 @@ const (
 	envDBSSLKey        = "MF_POSTGRES_WRITER_DB_SSL_KEY"
 	envDBSSLRootCert   = "MF_POSTGRES_WRITER_DB_SSL_ROOT_CERT"
 	envSubjectsCfgPath = "MF_POSTGRES_WRITER_SUBJECTS_CONFIG"
+	envContentType     = "MF_POSTGRES_WRITER_CONTENT_TYPE"
 )
 
 type config struct {
 	natsURL         string
 	logLevel        string
 	port            string
-	dbConfig        postgres.Config
 	subjectsCfgPath string
+	contentType     string
+	dbConfig        postgres.Config
 }
 
 func main() {
@@ -83,7 +86,7 @@ func main() {
 	defer db.Close()
 
 	repo := newService(db, logger)
-	st := senml.New()
+	st := senml.New(cfg.contentType)
 	if err = writers.Start(b, repo, st, svcName, cfg.subjectsCfgPath, logger); err != nil {
 		logger.Error(fmt.Sprintf("Failed to create Postgres writer: %s", err))
 	}
@@ -119,8 +122,9 @@ func loadConfig() config {
 		natsURL:         mainflux.Env(envNatsURL, defNatsURL),
 		logLevel:        mainflux.Env(envLogLevel, defLogLevel),
 		port:            mainflux.Env(envPort, defPort),
-		dbConfig:        dbConfig,
 		subjectsCfgPath: mainflux.Env(envSubjectsCfgPath, defSubjectsCfgPath),
+		contentType:     mainflux.Env(envContentType, defContentType),
+		dbConfig:        dbConfig,
 	}
 }
 

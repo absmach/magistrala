@@ -35,6 +35,7 @@ const (
 	defDBUser          = "mainflux"
 	defDBPass          = "mainflux"
 	defSubjectsCfgPath = "/config/subjects.toml"
+	defContentType     = "application/senml+json"
 
 	envNatsURL         = "MF_NATS_URL"
 	envLogLevel        = "MF_INFLUX_WRITER_LOG_LEVEL"
@@ -45,6 +46,7 @@ const (
 	envDBUser          = "MF_INFLUX_WRITER_DB_USER"
 	envDBPass          = "MF_INFLUX_WRITER_DB_PASS"
 	envSubjectsCfgPath = "MF_INFLUX_WRITER_SUBJECTS_CONFIG"
+	envContentType     = "MF_INFLUX_WRITER_CONTENT_TYPE"
 )
 
 type config struct {
@@ -57,6 +59,7 @@ type config struct {
 	dbUser          string
 	dbPass          string
 	subjectsCfgPath string
+	contentType     string
 }
 
 func main() {
@@ -86,7 +89,7 @@ func main() {
 	counter, latency := makeMetrics()
 	repo = api.LoggingMiddleware(repo, logger)
 	repo = api.MetricsMiddleware(repo, counter, latency)
-	st := senml.New()
+	st := senml.New(cfg.contentType)
 	if err := writers.Start(b, repo, st, svcName, cfg.subjectsCfgPath, logger); err != nil {
 		logger.Error(fmt.Sprintf("Failed to start InfluxDB writer: %s", err))
 		os.Exit(1)
@@ -116,6 +119,7 @@ func loadConfigs() (config, influxdata.HTTPConfig) {
 		dbUser:          mainflux.Env(envDBUser, defDBUser),
 		dbPass:          mainflux.Env(envDBPass, defDBPass),
 		subjectsCfgPath: mainflux.Env(envSubjectsCfgPath, defSubjectsCfgPath),
+		contentType:     mainflux.Env(envContentType, defContentType),
 	}
 
 	clientCfg := influxdata.HTTPConfig{

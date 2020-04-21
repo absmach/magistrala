@@ -15,7 +15,6 @@ const (
 	protocol      = "lora"
 	thingSuffix   = "thing"
 	channelSuffix = "channel"
-	contentType   = "application/json"
 )
 
 var (
@@ -109,12 +108,11 @@ func (as *adapterService) Publish(ctx context.Context, token string, m Message) 
 
 	// Publish on Mainflux NATS broker
 	msg := broker.Message{
-		Publisher:   thing,
-		Protocol:    protocol,
-		ContentType: contentType,
-		Channel:     channel,
-		Payload:     payload,
-		Created:     created,
+		Publisher: thing,
+		Protocol:  protocol,
+		Channel:   channel,
+		Payload:   payload,
+		Created:   created,
 	}
 
 	return as.broker.Publish(ctx, token, msg)

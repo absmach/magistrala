@@ -234,13 +234,12 @@ func (c client) publish(token string, m message) error {
 	SenML := fmt.Sprintf(`[{"n":"%s", "t": %d, "%s":%v}]`, m.Type, m.Time, m.DataKey, m.Data)
 	payload := []byte(SenML)
 	msg := broker.Message{
-		Publisher:   thingID,
-		Protocol:    protocol,
-		ContentType: "Content-Type",
-		Channel:     chanID,
-		Payload:     payload,
-		Subtopic:    m.NodeID,
-		Created:     created,
+		Publisher: thingID,
+		Protocol:  protocol,
+		Channel:   chanID,
+		Payload:   payload,
+		Subtopic:  m.NodeID,
+		Created:   created,
 	}
 
 	if err := c.broker.Publish(c.ctx, token, msg); err != nil {

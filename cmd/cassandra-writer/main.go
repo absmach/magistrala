@@ -38,6 +38,7 @@ const (
 	defDBPass          = "mainflux"
 	defDBPort          = "9042"
 	defSubjectsCfgPath = "/config/subjects.toml"
+	defContentType     = "application/senml+json"
 
 	envNatsURL         = "MF_NATS_URL"
 	envLogLevel        = "MF_CASSANDRA_WRITER_LOG_LEVEL"
@@ -48,14 +49,16 @@ const (
 	envDBPass          = "MF_CASSANDRA_WRITER_DB_PASS"
 	envDBPort          = "MF_CASSANDRA_WRITER_DB_PORT"
 	envSubjectsCfgPath = "MF_CASSANDRA_WRITER_SUBJECTS_CONFIG"
+	envContentType     = "MF_CASSANDRA_WRITER_CONTENT_TYPE"
 )
 
 type config struct {
 	natsURL         string
 	logLevel        string
 	port            string
-	dbCfg           cassandra.DBConfig
 	subjectsCfgPath string
+	contentType     string
+	dbCfg           cassandra.DBConfig
 }
 
 func main() {
@@ -77,7 +80,7 @@ func main() {
 	defer session.Close()
 
 	repo := newService(session, logger)
-	st := senml.New()
+	st := senml.New(cfg.contentType)
 	if err := writers.Start(b, repo, st, svcName, cfg.subjectsCfgPath, logger); err != nil {
 		logger.Error(fmt.Sprintf("Failed to create Cassandra writer: %s", err))
 	}
@@ -114,8 +117,9 @@ func loadConfig() config {
 		natsURL:         mainflux.Env(envNatsURL, defNatsURL),
 		logLevel:        mainflux.Env(envLogLevel, defLogLevel),
 		port:            mainflux.Env(envPort, defPort),
-		dbCfg:           dbCfg,
 		subjectsCfgPath: mainflux.Env(envSubjectsCfgPath, defSubjectsCfgPath),
+		contentType:     mainflux.Env(envContentType, defContentType),
+		dbCfg:           dbCfg,
 	}
 }
 

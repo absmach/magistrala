@@ -1,13 +1,5 @@
 package senml
 
-const (
-	// JSON represents SenML in JSON format content type.
-	JSON = "application/senml+json"
-
-	// CBOR represents SenML in CBOR format content type.
-	CBOR = "application/senml+cbor"
-)
-
 // Message represents a resolved (normalized) SenML record.
 type Message struct {
 	Channel     string   `json:"channel,omitempty"`

@@ -17,6 +17,7 @@ default values.
 | MF_MONGO_WRITER_DB_HOST         | Default MongoDB database host              | localhost              |
 | MF_MONGO_WRITER_DB_PORT         | Default MongoDB database port              | 27017                  |
 | MF_MONGO_WRITER_SUBJECTS_CONFIG | Configuration file path with subjects list | /config/subjects.toml  |
+| MF_MONGO_WRITER_CONTENT_TYPE    | Message payload Content Type               | application/senml+json |
 
 ## Deployment
 
@@ -39,6 +40,7 @@ default values.
       MF_MONGO_WRITER_DB_HOST: [MongoDB host]
       MF_MONGO_WRITER_DB_PORT: [MongoDB port]
       MF_MONGO_WRITER_SUBJETCS_CONFIG: [Configuration file path with subjects list]
+      MF_MONGO_WRITER_CONTENT_TYPE: [Message payload Content Type]
     ports:
       - [host machine port]:[configured HTTP port]
     volume:

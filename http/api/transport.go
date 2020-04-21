@@ -115,14 +115,12 @@ func decodeRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
-	ct := r.Header.Get("Content-Type")
 	msg := broker.Message{
-		Protocol:    protocol,
-		ContentType: ct,
-		Channel:     chanID,
-		Subtopic:    subtopic,
-		Payload:     payload,
-		Created:     created,
+		Protocol: protocol,
+		Channel:  chanID,
+		Subtopic: subtopic,
+		Payload:  payload,
+		Created:  created,
 	}
 
 	req := publishReq{

@@ -14,37 +14,44 @@ const (
 
 type direction int
 
+// Session represents MQTT Proxy session between client and broker.
 type Session struct {
 	logger   logger.Logger
 	inbound  net.Conn
 	outbound net.Conn
-	event    Event
+	handler  Handler
 	Client   Client
 }
 
-func New(inbound, outbound net.Conn, event Event, logger logger.Logger) *Session {
+// New creates a new Session.
+func New(inbound, outbound net.Conn, handler Handler, logger logger.Logger) *Session {
 	return &Session{
 		logger:   logger,
 		inbound:  inbound,
 		outbound: outbound,
-		event:    event,
+		handler:  handler,
 	}
 }
 
-func (s Session) Stream() error {
+// Stream starts proxying traffic between client and broker.
+func (s *Session) Stream() error {
 	// In parallel read from client, send to broker
-	// and read from broker, send to client
+	// and read from broker, send to client.
 	errs := make(chan error, 2)
 
 	go s.stream(up, s.inbound, s.outbound, errs)
 	go s.stream(down, s.outbound, s.inbound, errs)
 
+	// Handle whichever error happens first.
+	// The other routine won't be blocked when writing
+	// to the errors channel because it is buffered.
 	err := <-errs
-	s.event.Disconnect(&s.Client)
+
+	s.handler.Disconnect(&s.Client)
 	return err
 }
 
-func (s Session) stream(dir direction, r, w net.Conn, errs chan error) {
+func (s *Session) stream(dir direction, r, w net.Conn, errs chan error) {
 	for {
 		// Read from one connection
 		pkt, err := packets.ReadPacket(r)
@@ -80,7 +87,7 @@ func (s *Session) authorize(pkt packets.ControlPacket) error {
 			Username: p.Username,
 			Password: p.Password,
 		}
-		if err := s.event.AuthConnect(&s.Client); err != nil {
+		if err := s.handler.AuthConnect(&s.Client); err != nil {
 			return err
 		}
 		// Copy back to the packet in case values are changed by Event handler.
@@ -90,9 +97,9 @@ func (s *Session) authorize(pkt packets.ControlPacket) error {
 		p.Password = s.Client.Password
 		return nil
 	case *packets.PublishPacket:
-		return s.event.AuthPublish(&s.Client, &p.TopicName, &p.Payload)
+		return s.handler.AuthPublish(&s.Client, &p.TopicName, &p.Payload)
 	case *packets.SubscribePacket:
-		return s.event.AuthSubscribe(&s.Client, &p.Topics)
+		return s.handler.AuthSubscribe(&s.Client, &p.Topics)
 	default:
 		return nil
 	}
@@ -101,13 +108,13 @@ func (s *Session) authorize(pkt packets.ControlPacket) error {
 func (s Session) notify(pkt packets.ControlPacket) {
 	switch p := pkt.(type) {
 	case *packets.ConnectPacket:
-		s.event.Connect(&s.Client)
+		s.handler.Connect(&s.Client)
 	case *packets.PublishPacket:
-		s.event.Publish(&s.Client, &p.TopicName, &p.Payload)
+		s.handler.Publish(&s.Client, &p.TopicName, &p.Payload)
 	case *packets.SubscribePacket:
-		s.event.Subscribe(&s.Client, &p.Topics)
+		s.handler.Subscribe(&s.Client, &p.Topics)
 	case *packets.UnsubscribePacket:
-		s.event.Unsubscribe(&s.Client, &p.Topics)
+		s.handler.Unsubscribe(&s.Client, &p.Topics)
 	default:
 		return
 	}

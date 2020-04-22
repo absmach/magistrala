@@ -10,16 +10,17 @@ import (
 	"github.com/mainflux/mproxy/pkg/session"
 )
 
-// New - creates new HTTP proxy
+// Proxy represents WS Proxy.
 type Proxy struct {
 	target string
 	path   string
 	scheme string
-	event  session.Event
+	event  session.Handler
 	logger logger.Logger
 }
 
-func New(target, path, scheme string, event session.Event, logger logger.Logger) *Proxy {
+// New - creates new HTTP proxy
+func New(target, path, scheme string, event session.Handler, logger logger.Logger) *Proxy {
 	return &Proxy{
 		target: target,
 		path:   path,
@@ -40,7 +41,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-// Handle - proxies HTTP traffic
+// Handler - proxies HTTP traffic
 func (p Proxy) Handler() http.Handler {
 	return p.handle()
 }
@@ -88,5 +89,4 @@ func (p Proxy) pass(in *websocket.Conn) {
 	err = session.Stream()
 	errc <- err
 	p.logger.Warn("Broken connection for client: " + session.Client.ID + " with error: " + err.Error())
-
 }

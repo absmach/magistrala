@@ -31,7 +31,6 @@ func NewEventStore(client *redis.Client, instance string) EventStore {
 }
 
 func (es EventStore) storeEvent(clientID, eventType string) error {
-
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
 
 	event := mqttEvent{

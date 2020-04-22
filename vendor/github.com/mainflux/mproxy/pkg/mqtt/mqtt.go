@@ -1,6 +1,7 @@
 package mqtt
 
 import (
+	"fmt"
 	"io"
 	"net"
 
@@ -12,15 +13,16 @@ import (
 type Proxy struct {
 	address string
 	target  string
-	event   session.Event
+	handler session.Handler
 	logger  logger.Logger
 }
 
-func New(address, target string, event session.Event, logger logger.Logger) *Proxy {
+// New returns a new mqtt Proxy instance.
+func New(address, target string, handler session.Handler, logger logger.Logger) *Proxy {
 	return &Proxy{
 		address: address,
 		target:  target,
-		event:   event,
+		handler: handler,
 		logger:  logger,
 	}
 }
@@ -34,24 +36,23 @@ func (p Proxy) accept(l net.Listener) {
 		}
 
 		p.logger.Info("Accepted new client")
-		go p.handleConnection(conn)
+		go p.handle(conn)
 	}
 }
 
-func (p Proxy) handleConnection(inbound net.Conn) {
-	defer inbound.Close()
-
+func (p Proxy) handle(inbound net.Conn) {
+	defer p.close(inbound)
 	outbound, err := net.Dial("tcp", p.target)
 	if err != nil {
 		p.logger.Error("Cannot connect to remote broker " + p.target)
 		return
 	}
-	defer outbound.Close()
+	defer p.close(outbound)
 
-	c := session.New(inbound, outbound, p.event, p.logger)
+	s := session.New(inbound, outbound, p.handler, p.logger)
 
-	if err := c.Stream(); err != io.EOF {
-		p.logger.Warn("Broken connection for client: " + c.Client.ID + " with error: " + err.Error())
+	if err = s.Stream(); err != io.EOF {
+		p.logger.Warn("Broken connection for client: " + s.Client.ID + " with error: " + err.Error())
 	}
 }
 
@@ -68,4 +69,10 @@ func (p Proxy) Proxy() error {
 
 	p.logger.Info("Server Exiting...")
 	return nil
+}
+
+func (p Proxy) close(conn net.Conn) {
+	if err := conn.Close(); err != nil {
+		p.logger.Warn(fmt.Sprintf("Error closing connection %s", err.Error()))
+	}
 }

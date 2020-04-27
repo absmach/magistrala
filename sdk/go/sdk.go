@@ -8,9 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-
-	"github.com/mainflux/mainflux/things"
-	"github.com/mainflux/mainflux/users"
 )
 
 const (
@@ -65,13 +62,26 @@ type ContentType string
 var _ SDK = (*mfSDK)(nil)
 
 // User represents mainflux user its credentials.
-type User users.User
+type User struct {
+	Email    string                 `json:"email,omitempty"`
+	Password string                 `json:"password,omitempty"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
+}
 
 // Thing represents mainflux thing.
-type Thing things.Thing
+type Thing struct {
+	ID       string                 `json:"id,omitempty"`
+	Name     string                 `json:"name,omitempty"`
+	Key      string                 `json:"key,omitempty"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
+}
 
 // Channel represents mainflux channel.
-type Channel things.Channel
+type Channel struct {
+	ID       string                 `json:"id,omitempty"`
+	Name     string                 `json:"name,omitempty"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
+}
 
 // SDK contains Mainflux API.
 type SDK interface {

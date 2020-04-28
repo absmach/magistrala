@@ -16,6 +16,7 @@ import (
 
 const configsEndpoint = "configs"
 const bootstrapEndpoint = "bootstrap"
+const whitelistEndpoint = "state"
 
 // BoostrapConfig represents Configuration entity. It wraps information about external entity
 // as well as info about corresponding Mainflux entities.
@@ -63,6 +64,37 @@ func (sdk mfSDK) AddBootstrap(key string, cfg BoostrapConfig) (string, error) {
 
 	id := strings.TrimPrefix(resp.Header.Get("Location"), "/things/configs/")
 	return id, nil
+}
+
+func (sdk mfSDK) Whitelist(token string, cfg BoostrapConfig) error {
+	data, err := json.Marshal(cfg)
+	if err != nil {
+		return errors.Wrap(ErrFailedWhitelist, err)
+	}
+
+	if cfg.MFThing == "" {
+		return ErrFailedWhitelist
+	}
+
+	endpoint := fmt.Sprintf("%s/%s", whitelistEndpoint, cfg.MFThing)
+	url := createURL(sdk.bootstrapURL, sdk.bootstrapPrefix, endpoint)
+
+	req, err := http.NewRequest(http.MethodPut, url, bytes.NewReader(data))
+	if err != nil {
+		return errors.Wrap(ErrFailedWhitelist, err)
+	}
+
+	resp, err := sdk.sendRequest(req, token, string(CTJSON))
+	if err != nil {
+		return errors.Wrap(ErrFailedWhitelist, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
+		return errors.Wrap(ErrFailedWhitelist, errors.New(resp.Status))
+	}
+
+	return nil
 }
 
 func (sdk mfSDK) ViewBoostrap(key, id string) (BoostrapConfig, error) {

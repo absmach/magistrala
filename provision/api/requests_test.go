@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	sdk "github.com/mainflux/mainflux/provision/sdk"
+	"github.com/mainflux/mainflux/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,7 +21,7 @@ func TestValidate(t *testing.T) {
 			err:         nil,
 		},
 		"external id for device empty": {
-			err: sdk.ErrMalformedEntity,
+			err: errUnauthorized,
 		},
 	}
 
@@ -32,6 +32,6 @@ func TestValidate(t *testing.T) {
 		}
 
 		err := req.validate()
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, err, tc.err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected `%v` got `%v`", desc, err, tc.err))
 	}
 }

@@ -3,13 +3,11 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/provision"
-
-	sdk "github.com/mainflux/mainflux/provision/sdk"
 
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
@@ -21,7 +19,12 @@ const (
 	contentType = "application/json"
 )
 
-var errUnsupportedContentType = errors.New("unsupported content type")
+var (
+	errUnsupportedContentType = errors.New("unsupported content type")
+	errUnauthorized           = errors.New("missing or invalid credentials provided")
+	errMalformedEntity        = errors.New("malformed entity")
+	errConflict               = errors.New("entity already exists")
+)
 
 // MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler(svc provision.Service) http.Handler {
@@ -67,7 +70,7 @@ func decodeThingCreation(_ context.Context, r *http.Request) (interface{}, error
 		return nil, errUnsupportedContentType
 	}
 
-	req := addThingReq{}
+	req := addThingReq{token: r.Header.Get("Authorization")}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
@@ -81,9 +84,9 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch err {
 	case errUnsupportedContentType:
 		w.WriteHeader(http.StatusUnsupportedMediaType)
-	case io.EOF, sdk.ErrMalformedEntity:
+	case io.EOF, errMalformedEntity:
 		w.WriteHeader(http.StatusBadRequest)
-	case sdk.ErrConflict:
+	case errConflict:
 		w.WriteHeader(http.StatusConflict)
 	default:
 		switch err.(type) {

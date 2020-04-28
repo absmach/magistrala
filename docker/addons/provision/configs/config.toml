@@ -1,0 +1,20 @@
+file = "./docker/addons/provision/configs/config.toml"
+
+[[things]]
+  name = "thing"
+
+  [things.metadata]
+    externalID = "xxxxxx"
+
+
+[[channels]]
+  name = "control-channel"
+
+  [channels.metadata]
+    type = "control"
+
+[[channels]]
+  name = "data-channel"
+
+  [channels.metadata]
+    type = "data"

@@ -14,20 +14,21 @@ func doProvision(svc provision.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
+		token := req.token
 
-		res, err := svc.Provision(req.ExternalID, req.ExternalKey)
+		res, err := svc.Provision(token, req.ExternalID, req.ExternalKey)
 
 		if err != nil {
-			return nil, err
+			return provisionRes{Error: err.Error()}, nil
 		}
 
 		provisionResponse := provisionRes{
-			Thing:       res.Thing,
+			Things:      res.Things,
 			Channels:    res.Channels,
 			ClientCert:  res.ClientCert,
 			ClientKey:   res.ClientKey,
 			CACert:      res.CACert,
-			Whitelisted: res.Witelisted,
+			Whitelisted: res.Whitelisted,
 		}
 
 		return provisionResponse, nil

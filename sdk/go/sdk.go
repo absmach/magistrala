@@ -24,6 +24,9 @@ const (
 const minPassLen = 8
 
 var (
+	// ErrUnauthorized indicates that entity creation failed.
+	ErrUnauthorized = errors.New("unauthorized, missing credentials")
+
 	// ErrFailedCreation indicates that entity creation failed.
 	ErrFailedCreation = errors.New("failed to create entity")
 
@@ -54,6 +57,15 @@ var (
 
 	// ErrFetchVersion indicates that fetching of version failed.
 	ErrFetchVersion = errors.New("failed to fetch version")
+
+	// ErrFailedWhitelist failed to whitelist configs
+	ErrFailedWhitelist = errors.New("failed to whitelist")
+
+	// ErrCerts indicates error fetching certificates.
+	ErrCerts = errors.New("failed to fetch certs data")
+
+	// ErrCertsRemove indicates failure while cleaning up from the Certs service.
+	ErrCertsRemove = errors.New("failed to remove certificate")
 )
 
 // ContentType represents all possible content types.
@@ -176,12 +188,22 @@ type SDK interface {
 
 	// View returns Thing Config with given ID belonging to the user identified by the given key.
 	Boostrap(key, id string) (BoostrapConfig, error)
+
+	// Whitelist updates Thing state Config with given ID belonging to the user identified by the given token.
+	Whitelist(token string, cfg BoostrapConfig) error
+
+	// Cert issues a certificate for a thing required for mtls.
+	Cert(thingID, thingKey, token string) (Cert, error)
+
+	// RemoveCert remove a certificate
+	RemoveCert(id, token string) error
 }
 
 type mfSDK struct {
 	baseURL           string
 	readerURL         string
 	bootstrapURL      string
+	certsURL          string
 	readerPrefix      string
 	usersPrefix       string
 	thingsPrefix      string
@@ -197,6 +219,7 @@ type Config struct {
 	BaseURL           string
 	ReaderURL         string
 	BootstrapURL      string
+	CertsURL          string
 	ReaderPrefix      string
 	UsersPrefix       string
 	ThingsPrefix      string
@@ -212,6 +235,7 @@ func NewSDK(conf Config) SDK {
 		baseURL:           conf.BaseURL,
 		readerURL:         conf.ReaderURL,
 		bootstrapURL:      conf.BootstrapURL,
+		certsURL:          conf.CertsURL,
 		readerPrefix:      conf.ReaderPrefix,
 		usersPrefix:       conf.UsersPrefix,
 		thingsPrefix:      conf.ThingsPrefix,

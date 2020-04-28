@@ -20,9 +20,9 @@ func NewLoggingMiddleware(svc provision.Service, logger log.Logger) provision.Se
 	return &loggingMiddleware{logger, svc}
 }
 
-func (lm *loggingMiddleware) Provision(externalID, externalKey string) (res provision.Result, err error) {
+func (lm *loggingMiddleware) Provision(token, externalID, externalKey string) (res provision.Result, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method add thing and connect to proxy: new thing ID: %s took %s to complete", res.Thing.ID, time.Since(begin))
+		message := fmt.Sprintf("Method provision for token: %s and things: %v took %s to complete", token, res.Things, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -30,5 +30,5 @@ func (lm *loggingMiddleware) Provision(externalID, externalKey string) (res prov
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.Provision(externalID, externalKey)
+	return lm.svc.Provision(token, externalID, externalKey)
 }

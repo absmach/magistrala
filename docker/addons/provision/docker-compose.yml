@@ -1,9 +1,9 @@
 # Copyright (c) Mainflux
 # SPDX-License-Identifier: Apache-2.0
 
-# This docker-compose file contains optional license services. Since it's optional, this file is
+# This docker-compose file contains optional provision services. Since it's optional, this file is
 # dependent of docker-compose file from <project_root>/docker. In order to run this services, execute command:
-# docker-compose -f docker/docker-compose.yml -f docker/addons/license/docker-compose.yml up
+# docker-compose -f docker/docker-compose.yml -f docker/addons/provision/docker-compose.yml up
 # from project root.
 
 version: "3.7"
@@ -12,18 +12,36 @@ networks:
   docker_mainflux-base-net:
     external: true
 
-volumes:
-  mainflux-license-db-volume:
-
 services:
   provision:
     image: mainflux/provision:latest
     container_name: mainflux-provision
     restart: on-failure
-    ports:
-      - ${MF_PROVISION_PORT}:${MF_PROVISION_PORT}
-    environment:
-      MF_PROVISION_LOG_LEVEL: ${MF_PROVISION_LOG_LEVEL}
-      MF_PROVISION_PORT: ${MF_PROVISION_PORT}
     networks:
       - docker_mainflux-base-net
+    ports:
+      - ${MF_PROVISION_HTTP_PORT}:${MF_PROVISION_HTTP_PORT}
+    environment:
+      MF_PROVISION_LOG_LEVEL: ${MF_PROVISION_LOG_LEVEL}
+      MF_PROVISION_HTTP_PORT: ${MF_PROVISION_HTTP_PORT}
+      MF_PROVISION_CONFIG_FILE: ${MF_PROVISION_CONFIG_FILE}
+      MF_PROVISION_LOG_LEVEL: ${MF_PROVISION_LOG_LEVEL}
+      MF_PROVISION_ENV_CLIENTS_TLS: ${MF_PROVISION_ENV_CLIENTS_TLS}
+      MF_PROVISION_CA_CERTS: ${MF_PROVISION_CA_CERTS}
+      MF_PROVISION_SERVER_CERT: ${MF_PROVISION_SERVER_CERT}
+      MF_PROVISION_SERVER_KEY: ${MF_PROVISION_SERVER_KEY}
+      MF_PROVISION_MQTT_URL: ${MF_PROVISION_MQTT_URL}
+      MF_PROVISION_USERS_LOCATION: ${MF_PROVISION_USERS_LOCATION}
+      MF_PROVISION_THINGS_LOCATION: ${MF_PROVISION_THINGS_LOCATION}
+      MF_PROVISION_USER: ${MF_PROVISION_USER}
+      MF_PROVISION_PASS: ${MF_PROVISION_PASS}
+      MF_PROVISION_API_KEY: ${MF_PROVISION_API_KEY}
+      MF_PROVISION_CERTS_SVC_URL: ${MF_PROVISION_CERTS_SVC_URL}
+      MF_PROVISION_X509_PROVISIONING: ${MF_PROVISION_X509_PROVISIONING}
+      MF_PROVISION_BS_SVC_URL: ${MF_PROVISION_BS_SVC_URL}
+      MF_PROVISION_BS_SVC_WHITELIST_URL: ${MF_PROVISION_BS_SVC_WHITELIST_URL}
+      MF_PROVISION_BS_CONFIG_PROVISIONING: ${MF_PROVISION_BS_CONFIG_PROVISIONING}
+      MF_PROVISION_BS_AUTO_WHITELIST: ${MF_PROVISION_BS_AUTO_WHITELIST}
+      MF_PROVISION_BS_CONTENT: ${MF_PROVISION_BS_CONTENT}
+    volumes:
+      - ./configs:/configs

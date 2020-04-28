@@ -17,18 +17,19 @@ paths:
       tags:
         - Thing to proxy
       parameters:
-       - in: body
+      - $ref: "#/parameters/Authorization"
+      - in: body
          name: thing
          description: MAC address of device or other identifier
          schema:
            type: object
            required:
-             - externalid
-             - externalkey
+             - external_id
+             - external_key
            properties:
-             externalid:
+             external_id:
                type: string
-              externalkey:
+              external_key:
                 type: string
       responses:
         201:
@@ -37,3 +38,10 @@ paths:
           description: Failed due to malformed JSON.
         500:
           description: Unexpected server-side error ocurred.
+parameters:
+  Authorization:
+    name: Authorization
+    description: User's access token. Used instead of credentials in env or config.toml.
+    in: header
+    type: string
+    required: false

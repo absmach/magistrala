@@ -3,16 +3,17 @@ package api
 import (
 	"net/http"
 
-	sdk "github.com/mainflux/mainflux/provision/sdk"
+	SDK "github.com/mainflux/mainflux/sdk/go"
 )
 
 type provisionRes struct {
-	Thing       sdk.Thing     `json:"thing"`
-	Channels    []sdk.Channel `json:"channels"`
-	ClientCert  string        `json:"client_cert,omitempty"`
-	ClientKey   string        `json:"client_key,omitempty"`
-	CACert      string        `json:"ca_cert,omitempty"`
-	Whitelisted bool          `json:"whitelisted,omitempty"`
+	Things      []SDK.Thing       `json:"things"`
+	Channels    []SDK.Channel     `json:"channels"`
+	ClientCert  map[string]string `json:"client_cert,omitempty"`
+	ClientKey   map[string]string `json:"client_key,omitempty"`
+	CACert      string            `json:"ca_cert,omitempty"`
+	Whitelisted map[string]bool   `json:"whitelisted,omitempty"`
+	Error       string            `json:"error,omitempty"`
 }
 
 func (res provisionRes) Code() int {

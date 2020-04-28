@@ -1,18 +1,14 @@
 package api
 
-import (
-	provsdk "github.com/mainflux/mainflux/provision/sdk"
-)
-
 type addThingReq struct {
-	ExternalID  string `json:"externalid"`
-	ExternalKey string `json:"externalkey"`
+	token       string
+	ExternalID  string `json:"external_id"`
+	ExternalKey string `json:"external_key"`
 }
 
 func (req addThingReq) validate() error {
 	if req.ExternalID == "" || req.ExternalKey == "" {
-		return provsdk.ErrMalformedEntity
+		return errUnauthorized
 	}
-
 	return nil
 }

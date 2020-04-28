@@ -16,18 +16,17 @@ import (
 	"time"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
-	"github.com/gogo/protobuf/proto"
 	"github.com/mainflux/mainflux"
 	authapi "github.com/mainflux/mainflux/authn/api/grpc"
-	"github.com/mainflux/mainflux/broker"
 	"github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/messaging"
+	"github.com/mainflux/mainflux/messaging/nats"
 	localusers "github.com/mainflux/mainflux/things/users"
 	"github.com/mainflux/mainflux/twins"
 	"github.com/mainflux/mainflux/twins/api"
 	twapi "github.com/mainflux/mainflux/twins/api/http"
 	twmongodb "github.com/mainflux/mainflux/twins/mongodb"
 	"github.com/mainflux/mainflux/twins/uuid"
-	"github.com/nats-io/nats.go"
 	opentracing "github.com/opentracing/opentracing-go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	jconfig "github.com/uber/jaeger-client-go/config"
@@ -115,12 +114,12 @@ func main() {
 	dbTracer, dbCloser := initJaeger("twins_db", cfg.jaegerURL, logger)
 	defer dbCloser.Close()
 
-	b, err := broker.New(cfg.natsURL)
+	pubSub, err := nats.NewPubSub(cfg.natsURL, queue, logger)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error(fmt.Sprintf("Failed to connect to NATS: %s", err))
 		os.Exit(1)
 	}
-	defer b.Close()
+	defer pubSub.Close()
 
 	ncTracer, ncCloser := initJaeger("twins_nats", cfg.jaegerURL, logger)
 	defer ncCloser.Close()
@@ -128,7 +127,7 @@ func main() {
 	tracer, closer := initJaeger("twins", cfg.jaegerURL, logger)
 	defer closer.Close()
 
-	svc := newService(b, ncTracer, cfg.channelID, auth, dbTracer, db, logger)
+	svc := newService(pubSub, ncTracer, cfg.channelID, auth, dbTracer, db, logger)
 
 	errs := make(chan error, 2)
 
@@ -237,13 +236,13 @@ func connectToAuth(cfg config, logger logger.Logger) *grpc.ClientConn {
 	return conn
 }
 
-func newService(b broker.Nats, ncTracer opentracing.Tracer, chanID string, users mainflux.AuthNServiceClient, dbTracer opentracing.Tracer, db *mongo.Database, logger logger.Logger) twins.Service {
+func newService(ps messaging.PubSub, ncTracer opentracing.Tracer, chanID string, users mainflux.AuthNServiceClient, dbTracer opentracing.Tracer, db *mongo.Database, logger logger.Logger) twins.Service {
 	twinRepo := twmongodb.NewTwinRepository(db)
 
 	stateRepo := twmongodb.NewStateRepository(db)
 	idp := uuid.New()
 
-	svc := twins.New(b, users, twinRepo, stateRepo, idp, chanID, logger)
+	svc := twins.New(ps, users, twinRepo, stateRepo, idp, chanID, logger)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,
@@ -261,21 +260,17 @@ func newService(b broker.Nats, ncTracer opentracing.Tracer, chanID string, users
 		}, []string{"method"}),
 	)
 
-	_, err := b.QueueSubscribe(broker.SubjectAllChannels, queue, func(m *nats.Msg) {
-		var msg broker.Message
-		if err := proto.Unmarshal(m.Data, &msg); err != nil {
-			logger.Warn(fmt.Sprintf("Unmarshalling failed: %s", err))
-			return
-		}
-
+	err := ps.Subscribe(nats.SubjectAllChannels, func(msg messaging.Message) error {
 		if msg.Channel == chanID {
-			return
+			return nil
 		}
 
 		if err := svc.SaveStates(&msg); err != nil {
 			logger.Error(fmt.Sprintf("State save failed: %s", err))
-			return
+			return err
 		}
+
+		return nil
 	})
 	if err != nil {
 		logger.Error(err.Error())

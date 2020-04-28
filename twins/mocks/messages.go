@@ -4,44 +4,26 @@
 package mocks
 
 import (
-	"context"
-
-	"github.com/mainflux/mainflux/broker"
 	"github.com/mainflux/mainflux/errors"
-	"github.com/nats-io/nats.go"
+	"github.com/mainflux/mainflux/messaging"
 )
 
-var _ broker.Nats = (*mockBroker)(nil)
+var _ messaging.Publisher = (*mockBroker)(nil)
 
 type mockBroker struct {
 	subscriptions map[string]string
 }
 
 // New returns mock message publisher.
-func New(sub map[string]string) broker.Nats {
+func New(sub map[string]string) messaging.Publisher {
 	return &mockBroker{
 		subscriptions: sub,
 	}
 }
 
-func (mb mockBroker) Publish(_ context.Context, _ string, msg broker.Message) error {
+func (mb mockBroker) Publish(topic string, msg messaging.Message) error {
 	if len(msg.Payload) == 0 {
 		return errors.New("failed to publish")
 	}
 	return nil
-}
-
-func (mb mockBroker) Subscribe(subject string, f func(*nats.Msg)) (*nats.Subscription, error) {
-	if _, ok := mb.subscriptions[subject]; !ok {
-		return nil, errors.New("failed to subscribe")
-	}
-
-	return nil, nil
-}
-
-func (mb mockBroker) QueueSubscribe(chanID, subtopic string, f func(*nats.Msg)) (*nats.Subscription, error) {
-	return nil, nil
-}
-
-func (mb mockBroker) Close() {
 }

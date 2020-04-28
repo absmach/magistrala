@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 syntax = "proto3";
-package broker;
+package messaging;
 import "google/protobuf/timestamp.proto";
 
 // Message represents a message emitted by the Mainflux adapters layer.

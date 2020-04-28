@@ -15,8 +15,8 @@ import (
 
 	r "github.com/go-redis/redis"
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/broker"
 	"github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/messaging/nats"
 	"github.com/mainflux/mainflux/opcua"
 	"github.com/mainflux/mainflux/opcua/api"
 	"github.com/mainflux/mainflux/opcua/db"
@@ -97,15 +97,15 @@ func main() {
 	esConn := connectToRedis(cfg.esURL, cfg.esPass, cfg.esDB, logger)
 	defer esConn.Close()
 
-	b, err := broker.New(cfg.natsURL)
+	pubSub, err := nats.NewPubSub(cfg.natsURL, "", logger)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error(fmt.Sprintf("Failed to connect to NATS: %s", err))
 		os.Exit(1)
 	}
-	defer b.Close()
+	defer pubSub.Close()
 
 	ctx := context.Background()
-	sub := gopcua.NewSubscriber(ctx, b, thingRM, chanRM, connRM, logger)
+	sub := gopcua.NewSubscriber(ctx, pubSub, thingRM, chanRM, connRM, logger)
 	browser := gopcua.NewBrowser(ctx, logger)
 
 	svc := opcua.New(sub, browser, thingRM, chanRM, connRM, cfg.opcuaConfig, logger)

@@ -14,8 +14,9 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/broker"
 	"github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/messaging"
+	"github.com/mainflux/mainflux/messaging/nats"
 	mqtt "github.com/mainflux/mainflux/mqtt"
 	mr "github.com/mainflux/mainflux/mqtt/redis"
 	thingsapi "github.com/mainflux/mainflux/things/api/auth/grpc"
@@ -129,17 +130,17 @@ func main() {
 
 	cc := thingsapi.NewClient(conn, thingsTracer, cfg.thingsAuthTimeout)
 
-	b, err := broker.New(cfg.natsURL)
+	pub, err := nats.NewPublisher(cfg.natsURL)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error(fmt.Sprintf("Failed to connect to NATS: %s", err))
 		os.Exit(1)
 	}
-	defer b.Close()
+	defer pub.Close()
 
 	es := mr.NewEventStore(rc, cfg.instance)
 
 	// Event handler for MQTT hooks
-	evt := mqtt.New(b, cc, es, logger, tracer)
+	evt := mqtt.New([]messaging.Publisher{pub}, cc, es, logger, tracer)
 
 	errs := make(chan error, 2)
 

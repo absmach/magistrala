@@ -10,9 +10,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mainflux/mainflux/broker"
 	"github.com/mainflux/mainflux/http"
 	log "github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/messaging"
 )
 
 var _ http.Service = (*loggingMiddleware)(nil)
@@ -27,7 +27,7 @@ func LoggingMiddleware(svc http.Service, logger log.Logger) http.Service {
 	return &loggingMiddleware{logger, svc}
 }
 
-func (lm *loggingMiddleware) Publish(ctx context.Context, token string, msg broker.Message) (err error) {
+func (lm *loggingMiddleware) Publish(ctx context.Context, token string, msg messaging.Message) (err error) {
 	defer func(begin time.Time) {
 		destChannel := msg.Channel
 		if msg.Subtopic != "" {

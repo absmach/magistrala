@@ -18,10 +18,10 @@ import (
 	gocoap "github.com/dustin/go-coap"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/broker"
 	"github.com/mainflux/mainflux/coap"
 	"github.com/mainflux/mainflux/coap/api"
 	logger "github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/messaging/nats"
 	thingsapi "github.com/mainflux/mainflux/things/api/auth/grpc"
 	opentracing "github.com/opentracing/opentracing-go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
@@ -81,14 +81,14 @@ func main() {
 	cc := thingsapi.NewClient(conn, thingsTracer, cfg.thingsAuthTimeout)
 	respChan := make(chan string, 10000)
 
-	b, err := broker.New(cfg.natsURL)
+	pubSub, err := nats.NewPubSub(cfg.natsURL, "", logger)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.Error(fmt.Sprintf("Failed to connect to NATS: %s", err))
 		os.Exit(1)
 	}
-	defer b.Close()
+	defer pubSub.Close()
 
-	svc := coap.New(b, logger, cc, respChan)
+	svc := coap.New(pubSub, logger, cc, respChan)
 
 	svc = api.LoggingMiddleware(svc, logger)
 

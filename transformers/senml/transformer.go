@@ -4,8 +4,10 @@
 package senml
 
 import (
-	"github.com/mainflux/mainflux/broker"
+	"time"
+
 	"github.com/mainflux/mainflux/errors"
+	"github.com/mainflux/mainflux/messaging"
 	"github.com/mainflux/mainflux/transformers"
 	"github.com/mainflux/senml"
 )
@@ -43,7 +45,7 @@ func New(contentFormat string) transformers.Transformer {
 	}
 }
 
-func (t transformer) Transform(msg broker.Message) (interface{}, error) {
+func (t transformer) Transform(msg messaging.Message) (interface{}, error) {
 	raw, err := senml.Decode(msg.Payload, t.format)
 	if err != nil {
 		return nil, errors.Wrap(errDecode, err)
@@ -57,10 +59,9 @@ func (t transformer) Transform(msg broker.Message) (interface{}, error) {
 	msgs := make([]Message, len(normalized.Records))
 	for i, v := range normalized.Records {
 		// Use reception timestamp if SenML messsage Time is missing
-		time := v.Time
-		if time == 0 {
-			// Convert the timestamp into float64 with nanoseconds precision
-			time = float64(msg.Created.GetSeconds()) + float64(msg.Created.GetNanos())/float64(1e9)
+		t := v.Time
+		if t == 0 {
+			t = float64(time.Now().UnixNano())
 		}
 
 		msgs[i] = Message{
@@ -70,7 +71,7 @@ func (t transformer) Transform(msg broker.Message) (interface{}, error) {
 			Protocol:    msg.Protocol,
 			Name:        v.Name,
 			Unit:        v.Unit,
-			Time:        time,
+			Time:        t,
 			UpdateTime:  v.UpdateTime,
 			Value:       v.Value,
 			BoolValue:   v.BoolValue,

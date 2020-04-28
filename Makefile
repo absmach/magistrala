@@ -71,7 +71,7 @@ test:
 
 proto:
 	protoc --gofast_out=plugins=grpc:. *.proto
-	protoc --gogo_out=plugins=grpc:. broker/*.proto
+	protoc --gogo_out=plugins=grpc:. messaging/*.proto
 
 $(SERVICES):
 	$(call compile_service,$(@))
@@ -83,7 +83,6 @@ $(DOCKERS_DEV):
 	$(call make_docker_dev,$(@))
 
 dockers: $(DOCKERS)
-
 dockers_dev: $(DOCKERS_DEV)
 
 define docker_push

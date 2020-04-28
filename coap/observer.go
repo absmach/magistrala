@@ -6,7 +6,7 @@ package coap
 import (
 	"sync"
 
-	"github.com/mainflux/mainflux/broker"
+	"github.com/mainflux/mainflux/messaging"
 )
 
 // Observer is used to handle CoAP subscription.
@@ -25,7 +25,7 @@ type Observer struct {
 	expiredLock, msgIDLock sync.Mutex
 
 	// Messages is used to receive messages from NATS.
-	Messages chan broker.Message
+	Messages chan messaging.Message
 
 	// Cancel channel is used to cancel observing resource.
 	// Cancel channel should not be used to send or receive any
@@ -36,7 +36,7 @@ type Observer struct {
 // NewObserver instantiates a new Observer.
 func NewObserver() *Observer {
 	return &Observer{
-		Messages: make(chan broker.Message),
+		Messages: make(chan messaging.Message),
 		Cancel:   make(chan bool),
 	}
 }

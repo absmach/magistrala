@@ -7,16 +7,13 @@
 package coap
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"time"
 
-	"github.com/gogo/protobuf/proto"
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/broker"
 	"github.com/mainflux/mainflux/logger"
-	"github.com/nats-io/nats.go"
+	"github.com/mainflux/mainflux/messaging"
 )
 
 const (
@@ -34,7 +31,7 @@ const (
 // Service specifies coap service API.
 type Service interface {
 	// Publish Messssage
-	Publish(ctx context.Context, token string, msg broker.Message) error
+	Publish(msg messaging.Message) error
 
 	// Subscribes to channel with specified id, subtopic and adds subscription to
 	// service map of subscriptions under given ID.
@@ -48,17 +45,17 @@ var _ Service = (*adapterService)(nil)
 
 type adapterService struct {
 	auth    mainflux.ThingsServiceClient
-	broker  broker.Nats
+	ps      messaging.PubSub
 	log     logger.Logger
 	obs     map[string]*Observer
 	obsLock sync.Mutex
 }
 
 // New instantiates the CoAP adapter implementation.
-func New(broker broker.Nats, log logger.Logger, auth mainflux.ThingsServiceClient, responses <-chan string) Service {
+func New(ps messaging.PubSub, log logger.Logger, auth mainflux.ThingsServiceClient, responses <-chan string) Service {
 	as := &adapterService{
 		auth:    auth,
-		broker:  broker,
+		ps:      ps,
 		log:     log,
 		obs:     make(map[string]*Observer),
 		obsLock: sync.Mutex{},
@@ -111,8 +108,8 @@ func (svc *adapterService) listenResponses(responses <-chan string) {
 	}
 }
 
-func (svc *adapterService) Publish(ctx context.Context, token string, msg broker.Message) error {
-	return svc.broker.Publish(ctx, token, msg)
+func (svc *adapterService) Publish(msg messaging.Message) error {
+	return svc.ps.Publish(msg.Channel, msg)
 }
 
 func (svc *adapterService) Subscribe(chanID, subtopic, obsID string, o *Observer) error {
@@ -121,15 +118,9 @@ func (svc *adapterService) Subscribe(chanID, subtopic, obsID string, o *Observer
 		subject = fmt.Sprintf("%s.%s", chanID, subtopic)
 	}
 
-	sub, err := svc.broker.Subscribe(subject, func(msg *nats.Msg) {
-		if msg == nil {
-			return
-		}
-		var m broker.Message
-		if err := proto.Unmarshal(msg.Data, &m); err != nil {
-			return
-		}
-		o.Messages <- m
+	err := svc.ps.Subscribe(subject, func(msg messaging.Message) error {
+		o.Messages <- msg
+		return nil
 	})
 	if err != nil {
 		return err
@@ -137,8 +128,8 @@ func (svc *adapterService) Subscribe(chanID, subtopic, obsID string, o *Observer
 
 	go func() {
 		<-o.Cancel
-		if err := sub.Unsubscribe(); err != nil {
-			svc.log.Error(fmt.Sprintf("Failed to unsubscribe from %s.%s", chanID, subtopic))
+		if err := svc.ps.Unsubscribe(subject); err != nil {
+			svc.log.Error(fmt.Sprintf("Failed to unsubscribe from %s.%s due to %s", chanID, subtopic, err))
 		}
 	}()
 

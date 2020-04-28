@@ -10,9 +10,10 @@ import (
 	"math"
 	"time"
 
-	"github.com/mainflux/mainflux/broker"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/messaging"
 
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/senml"
@@ -70,7 +71,7 @@ type Service interface {
 	ListStates(ctx context.Context, token string, offset uint64, limit uint64, id string) (StatesPage, error)
 
 	// SaveStates persists states into database
-	SaveStates(msg *broker.Message) error
+	SaveStates(msg *messaging.Message) error
 }
 
 const (
@@ -95,7 +96,7 @@ var crudOp = map[string]string{
 }
 
 type twinsService struct {
-	broker    broker.Nats
+	publisher messaging.Publisher
 	auth      mainflux.AuthNServiceClient
 	twins     TwinRepository
 	states    StateRepository
@@ -107,9 +108,9 @@ type twinsService struct {
 var _ Service = (*twinsService)(nil)
 
 // New instantiates the twins service implementation.
-func New(broker broker.Nats, auth mainflux.AuthNServiceClient, twins TwinRepository, sr StateRepository, idp IdentityProvider, chann string, logger logger.Logger) Service {
+func New(publisher messaging.Publisher, auth mainflux.AuthNServiceClient, twins TwinRepository, sr StateRepository, idp IdentityProvider, chann string, logger logger.Logger) Service {
 	return &twinsService{
-		broker:    broker,
+		publisher: publisher,
 		auth:      auth,
 		twins:     twins,
 		states:    sr,
@@ -279,7 +280,7 @@ func (ts *twinsService) ListStates(ctx context.Context, token string, offset uin
 	return ts.states.RetrieveAll(ctx, offset, limit, id)
 }
 
-func (ts *twinsService) SaveStates(msg *broker.Message) error {
+func (ts *twinsService) SaveStates(msg *messaging.Message) error {
 	ids, err := ts.twins.RetrieveByAttribute(context.TODO(), msg.Channel, msg.Subtopic)
 	if err != nil {
 		return err
@@ -294,7 +295,7 @@ func (ts *twinsService) SaveStates(msg *broker.Message) error {
 	return nil
 }
 
-func (ts *twinsService) saveState(msg *broker.Message, id string) error {
+func (ts *twinsService) saveState(msg *messaging.Message, id string) error {
 	var b []byte
 	var err error
 	defer ts.publish(&id, &err, crudOp["stateSucc"], crudOp["stateFail"], &b)
@@ -336,7 +337,7 @@ func (ts *twinsService) saveState(msg *broker.Message, id string) error {
 	return nil
 }
 
-func prepareState(st *State, tw *Twin, rec senml.Record, msg *broker.Message) int {
+func prepareState(st *State, tw *Twin, rec senml.Record, msg *messaging.Message) int {
 	def := tw.Definitions[len(tw.Definitions)-1]
 	st.TwinID = tw.ID
 	st.Definition = def.ID
@@ -427,14 +428,20 @@ func (ts *twinsService) publish(twinID *string, err *error, succOp, failOp strin
 		pl = []byte(fmt.Sprintf("{\"deleted\":\"%s\"}", *twinID))
 	}
 
-	mc := broker.Message{
+	created, timeErr := ptypes.TimestampProto(time.Now())
+	if timeErr != nil {
+		return
+	}
+
+	msg := messaging.Message{
 		Channel:   ts.channelID,
 		Subtopic:  op,
 		Payload:   pl,
 		Publisher: publisher,
+		Created:   created,
 	}
 
-	if err := ts.broker.Publish(context.TODO(), "", mc); err != nil {
+	if err := ts.publisher.Publish(msg.Channel, msg); err != nil {
 		ts.logger.Warn(fmt.Sprintf("Failed to publish notification on NATS: %s", err))
 	}
 }

@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mainflux/mainflux/broker"
 	"github.com/mainflux/mainflux/errors"
+	"github.com/mainflux/mainflux/messaging"
 	"github.com/mainflux/mainflux/transformers/senml"
 	mfsenml "github.com/mainflux/senml"
 	"github.com/stretchr/testify/assert"
@@ -24,7 +24,7 @@ func TestTransformJSON(t *testing.T) {
 	require.Nil(t, err, "Decoding JSON expected to succeed")
 
 	tr := senml.New(senml.JSON)
-	msg := broker.Message{
+	msg := messaging.Message{
 		Channel:   "channel",
 		Subtopic:  "subtopic",
 		Publisher: "publisher",
@@ -55,7 +55,7 @@ func TestTransformJSON(t *testing.T) {
 
 	cases := []struct {
 		desc string
-		msg  broker.Message
+		msg  messaging.Message
 		msgs interface{}
 		err  error
 	}{
@@ -91,7 +91,7 @@ func TestTransformCBOR(t *testing.T) {
 	require.Nil(t, err, "Decoding CBOR expected to succeed")
 
 	tr := senml.New(senml.CBOR)
-	msg := broker.Message{
+	msg := messaging.Message{
 		Channel:   "channel",
 		Subtopic:  "subtopic",
 		Publisher: "publisher",
@@ -109,23 +109,24 @@ func TestTransformCBOR(t *testing.T) {
 
 	val := 52.0
 	sum := 110.0
-	msgs := []senml.Message{senml.Message{
-		Channel:    "channel",
-		Subtopic:   "subtopic",
-		Publisher:  "publisher",
-		Protocol:   "protocol",
-		Name:       "base-namename",
-		Unit:       "unit",
-		Time:       400,
-		UpdateTime: 150,
-		Value:      &val,
-		Sum:        &sum,
-	},
+	msgs := []senml.Message{
+		{
+			Channel:    "channel",
+			Subtopic:   "subtopic",
+			Publisher:  "publisher",
+			Protocol:   "protocol",
+			Name:       "base-namename",
+			Unit:       "unit",
+			Time:       400,
+			UpdateTime: 150,
+			Value:      &val,
+			Sum:        &sum,
+		},
 	}
 
 	cases := []struct {
 		desc string
-		msg  broker.Message
+		msg  messaging.Message
 		msgs interface{}
 		err  error
 	}{

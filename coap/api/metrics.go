@@ -6,12 +6,11 @@
 package api
 
 import (
-	"context"
 	"time"
 
 	"github.com/go-kit/kit/metrics"
-	"github.com/mainflux/mainflux/broker"
 	"github.com/mainflux/mainflux/coap"
+	"github.com/mainflux/mainflux/messaging"
 )
 
 var _ coap.Service = (*metricsMiddleware)(nil)
@@ -31,13 +30,13 @@ func MetricsMiddleware(svc coap.Service, counter metrics.Counter, latency metric
 	}
 }
 
-func (mm *metricsMiddleware) Publish(ctx context.Context, token string, msg broker.Message) error {
+func (mm *metricsMiddleware) Publish(msg messaging.Message) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "publish").Add(1)
 		mm.latency.With("method", "publish").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.Publish(ctx, token, msg)
+	return mm.svc.Publish(msg)
 }
 
 func (mm *metricsMiddleware) Subscribe(chanID, subtopic, clientID string, o *coap.Observer) error {

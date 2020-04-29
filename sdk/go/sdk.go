@@ -175,19 +175,19 @@ type SDK interface {
 	Version() (string, error)
 
 	// AddBootstrap add boostrap configuration
-	AddBootstrap(key string, cfg BoostrapConfig) (string, error)
+	AddBootstrap(token string, cfg BoostrapConfig) (string, error)
 
-	// View returns Thing Config with given ID belonging to the user identified by the given key.
-	ViewBoostrap(key, id string) (BoostrapConfig, error)
+	// View returns Thing Config with given ID belonging to the user identified by the given token.
+	ViewBoostrap(token, id string) (BoostrapConfig, error)
 
 	// Update updates editable fields of the provided Config.
-	UpdateBoostrap(key string, cfg BoostrapConfig) error
+	UpdateBoostrap(token string, cfg BoostrapConfig) error
 
-	// Remove removes Config with specified key that belongs to the user identified by the given key.
-	RemoveBoostrap(key, id string) error
+	// Remove removes Config with specified token that belongs to the user identified by the given token.
+	RemoveBoostrap(token, id string) error
 
-	// View returns Thing Config with given ID belonging to the user identified by the given key.
-	Boostrap(key, id string) (BoostrapConfig, error)
+	// Bootstrap returns Config to the Thing with provided external ID using external key.
+	Boostrap(externalKey, externalID string) (BoostrapConfig, error)
 
 	// Whitelist updates Thing state Config with given ID belonging to the user identified by the given token.
 	Whitelist(token string, cfg BoostrapConfig) error

@@ -83,7 +83,7 @@ type Service interface {
 	// Remove removes Config with specified token that belongs to the user identified by the given token.
 	Remove(token, id string) error
 
-	// Bootstrap returns Config to the Thing with provided external ID using external token.
+	// Bootstrap returns Config to the Thing with provided external ID using external key.
 	Bootstrap(externalKey, externalID string, secure bool) (Config, error)
 
 	// ChangeState changes state of the Thing with given ID and owner.

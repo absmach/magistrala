@@ -209,7 +209,7 @@ services:
     restart: on-failure
     environment:
       DOCKER_VERNEMQ_ALLOW_ANONYMOUS: "on"
-      DOCKER_VERNEMQ_LOG__CONSOLE__LEVEL: debug
+      DOCKER_VERNEMQ_LOG__CONSOLE__LEVEL: info
     networks:
       - mainflux-base-net
     volumes:

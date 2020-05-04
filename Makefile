@@ -71,7 +71,7 @@ test:
 
 proto:
 	protoc --gofast_out=plugins=grpc:. *.proto
-	protoc --gogo_out=plugins=grpc:. messaging/*.proto
+	protoc --gofast_out=plugins=grpc:. messaging/*.proto
 
 $(SERVICES):
 	$(call compile_service,$(@))

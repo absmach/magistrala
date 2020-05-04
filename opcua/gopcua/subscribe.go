@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	opcuaGopcua "github.com/gopcua/opcua"
 	uaGopcua "github.com/gopcua/opcua/ua"
 	"github.com/mainflux/mainflux/errors"
@@ -219,11 +218,6 @@ func (c client) publish(token string, m message) error {
 		return errNotFoundNodeID
 	}
 
-	created, err := ptypes.TimestampProto(time.Now())
-	if err != nil {
-		return nil
-	}
-
 	// Check connection between ServerURI and NodeID
 	cKey := fmt.Sprintf("%s:%s", chanID, thingID)
 	if _, err := c.connectRM.Get(cKey); err != nil {
@@ -240,7 +234,7 @@ func (c client) publish(token string, m message) error {
 		Channel:   chanID,
 		Payload:   payload,
 		Subtopic:  m.NodeID,
-		Created:   created,
+		Created:   time.Now().UnixNano(),
 	}
 
 	if err := c.publisher.Publish(msg.Channel, msg); err != nil {

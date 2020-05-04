@@ -4,8 +4,6 @@
 package senml
 
 import (
-	"time"
-
 	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/messaging"
 	"github.com/mainflux/mainflux/transformers"
@@ -61,7 +59,8 @@ func (t transformer) Transform(msg messaging.Message) (interface{}, error) {
 		// Use reception timestamp if SenML messsage Time is missing
 		t := v.Time
 		if t == 0 {
-			t = float64(time.Now().UnixNano())
+			// Convert the Unix timestamp in nanoseconds to float64
+			t = float64(msg.Created) / float64(1e9)
 		}
 
 		msgs[i] = Message{

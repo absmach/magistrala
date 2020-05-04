@@ -7,7 +7,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/mainflux/mainflux/messaging"
 )
 
@@ -101,18 +100,13 @@ func (as *adapterService) Publish(ctx context.Context, token string, m Message) 
 		payload = []byte(jo)
 	}
 
-	created, err := ptypes.TimestampProto(time.Now())
-	if err != nil {
-		return nil
-	}
-
 	// Publish on Mainflux NATS broker
 	msg := messaging.Message{
 		Publisher: thing,
 		Protocol:  protocol,
 		Channel:   channel,
 		Payload:   payload,
-		Created:   created,
+		Created:   time.Now().UnixNano(),
 	}
 
 	return as.publisher.Publish(msg.Channel, msg)

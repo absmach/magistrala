@@ -30,7 +30,7 @@ func NewPublisher(url string) (Publisher, error) {
 	if err != nil {
 		return nil, err
 	}
-	ret := &pubsub{
+	ret := &publisher{
 		conn: conn,
 	}
 	return ret, nil

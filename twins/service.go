@@ -10,7 +10,6 @@ import (
 	"math"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/messaging"
@@ -428,17 +427,12 @@ func (ts *twinsService) publish(twinID *string, err *error, succOp, failOp strin
 		pl = []byte(fmt.Sprintf("{\"deleted\":\"%s\"}", *twinID))
 	}
 
-	created, timeErr := ptypes.TimestampProto(time.Now())
-	if timeErr != nil {
-		return
-	}
-
 	msg := messaging.Message{
 		Channel:   ts.channelID,
 		Subtopic:  op,
 		Payload:   pl,
 		Publisher: publisher,
-		Created:   created,
+		Created:   time.Now().UnixNano(),
 	}
 
 	if err := ts.publisher.Publish(msg.Channel, msg); err != nil {

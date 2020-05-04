@@ -4,8 +4,6 @@ GO_VERSION=1.13
 PROTOC_VERSION=3.11.4
 PROTOC_GEN_VERSION=v1.3.3
 PROTOC_GOFAST_VERSION=v1.3.1
-PROTOC_GOGO_VERSION=v1.3.1
-GOGOPROTO_VERSION=v1.3.1
 GRPC_VERSION=v1.27.1
 
 function version_gt() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
@@ -43,9 +41,7 @@ setup_protoc() {
 	rm -f PROTOC_ZIP
 
 	go get -u github.com/golang/protobuf/protoc-gen-go@$PROTOC_GEN_VERSION \
-		github.com/gogo/protobuf/protoc-gen-gogo@$PROTOC_GOGO_VERSION \
 		github.com/gogo/protobuf/protoc-gen-gofast@$PROTOC_GOFAST_VERSION \
-		github.com/gogo/protobuf/gogoproto@$GOGOPROTO_VERSION \
 		google.golang.org/grpc@$GRPC_VERSION
 
 	export PATH=$PATH:/usr/local/bin/protoc

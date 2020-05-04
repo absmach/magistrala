@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/messaging"
@@ -151,19 +150,13 @@ func (h *handler) Publish(c *session.Client, topic *string, payload *[]byte) {
 		return
 	}
 
-	created, err := ptypes.TimestampProto(time.Now())
-	if err != nil {
-		h.logger.Info("Error creating message timestamp: " + err.Error())
-		return
-	}
-
 	msg := messaging.Message{
 		Protocol:  protocol,
 		Channel:   chanID,
 		Subtopic:  subtopic,
 		Publisher: c.Username,
 		Payload:   *payload,
-		Created:   created,
+		Created:   time.Now().UnixNano(),
 	}
 
 	for _, pub := range h.publishers {

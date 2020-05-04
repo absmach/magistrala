@@ -91,7 +91,7 @@ func (ps *pubsub) Subscribe(topic string, handler messaging.MessageHandler) erro
 		return errAlreadySubscribed
 	}
 	nh := ps.natsHandler(handler)
-	topic = fmt.Sprintf("%s.%s", chansPrefix, topic)
+
 	if ps.queue != "" {
 		sub, err := ps.conn.QueueSubscribe(topic, ps.queue, nh)
 		if err != nil {
@@ -114,8 +114,6 @@ func (ps *pubsub) Unsubscribe(topic string) error {
 	}
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
-
-	topic = fmt.Sprintf("%s.%s", chansPrefix, topic)
 
 	sub, ok := ps.subscriptions[topic]
 	if !ok {

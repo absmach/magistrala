@@ -208,8 +208,8 @@ services:
     container_name: mainflux-vernemq
     restart: on-failure
     environment:
-      DOCKER_VERNEMQ_ALLOW_ANONYMOUS: "on"
-      DOCKER_VERNEMQ_LOG__CONSOLE__LEVEL: info
+      DOCKER_VERNEMQ_ALLOW_ANONYMOUS: ${MF_DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
+      DOCKER_VERNEMQ_LOG__CONSOLE__LEVEL: ${MF_DOCKER_VERNEMQ_LOG__CONSOLE__LEVEL}
     networks:
       - mainflux-base-net
     volumes:

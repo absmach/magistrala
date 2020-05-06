@@ -2,6 +2,7 @@ package api
 
 type addThingReq struct {
 	token       string
+	Name        string `json:"name"`
 	ExternalID  string `json:"external_id"`
 	ExternalKey string `json:"external_key"`
 }

@@ -21,7 +21,7 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 
-			var cfg mfxsdk.BoostrapConfig
+			var cfg mfxsdk.BootstrapConfig
 			if err := json.Unmarshal([]byte(args[0]), &cfg); err != nil {
 				logError(err)
 				return
@@ -46,7 +46,7 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 
-			c, err := sdk.ViewBoostrap(args[1], args[0])
+			c, err := sdk.ViewBootstrap(args[1], args[0])
 			if err != nil {
 				logError(err)
 				return
@@ -65,13 +65,13 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 
-			var cfg mfxsdk.BoostrapConfig
+			var cfg mfxsdk.BootstrapConfig
 			if err := json.Unmarshal([]byte(args[0]), &cfg); err != nil {
 				logError(err)
 				return
 			}
 
-			if err := sdk.UpdateBoostrap(args[1], cfg); err != nil {
+			if err := sdk.UpdateBootstrap(args[1], cfg); err != nil {
 				logError(err)
 				return
 			}
@@ -89,7 +89,7 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 
-			if err := sdk.RemoveBoostrap(args[1], args[0]); err != nil {
+			if err := sdk.RemoveBootstrap(args[1], args[0]); err != nil {
 				logError(err)
 				return
 			}
@@ -107,7 +107,7 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 
-			c, err := sdk.Boostrap(args[1], args[0])
+			c, err := sdk.Bootstrap(args[1], args[0])
 			if err != nil {
 				logError(err)
 				return

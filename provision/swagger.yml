@@ -31,6 +31,8 @@ paths:
                type: string
               external_key:
                 type: string
+              name:
+                type: string
       responses:
         201:
           description: Created

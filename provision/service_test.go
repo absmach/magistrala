@@ -74,7 +74,7 @@ func TestProvision(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		_, err := tc.svc.Provision("", tc.externalID, tc.externalKey)
+		_, err := tc.svc.Provision("", "", tc.externalID, tc.externalKey)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected `%v` got `%v`", tc.desc, tc.err, err))
 	}
 

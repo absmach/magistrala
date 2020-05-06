@@ -19,7 +19,7 @@ type mockSDK struct {
 	things      map[string]mfSDK.Thing
 	channels    map[string]mfSDK.Channel
 	connections map[string][]string
-	configs     map[string]mfSDK.BoostrapConfig
+	configs     map[string]mfSDK.BootstrapConfig
 	mu          sync.Mutex
 }
 
@@ -28,7 +28,7 @@ func NewSDK() mfSDK.SDK {
 	sdk := &mockSDK{}
 	sdk.channels = make(map[string]mfSDK.Channel)
 	sdk.connections = make(map[string][]string)
-	sdk.configs = make(map[string]mfSDK.BoostrapConfig)
+	sdk.configs = make(map[string]mfSDK.BootstrapConfig)
 
 	th := mfSDK.Thing{ID: "predefined", Name: "ID"}
 	sdk.things = map[string]mfSDK.Thing{"predefined": th}
@@ -120,17 +120,17 @@ func (s *mockSDK) Version() (string, error) {
 }
 
 // Update updates editable fields of the provided Config.
-func (s *mockSDK) UpdateBoostrap(key string, cfg mfSDK.BoostrapConfig) error {
+func (s *mockSDK) UpdateBootstrap(key string, cfg mfSDK.BootstrapConfig) error {
 	panic("UpdatePassword not implemented")
 }
 
 // View returns Thing Config with given ID belonging to the user identified by the given key.
-func (s *mockSDK) Boostrap(key, id string) (mfSDK.BoostrapConfig, error) {
+func (s *mockSDK) Bootstrap(key, id string) (mfSDK.BootstrapConfig, error) {
 	panic("UpdatePassword not implemented")
 }
 
 // Whitelist updates Thing state Config with given ID belonging to the user identified by the given key.
-func (s *mockSDK) Whitelist(key string, cfg mfSDK.BoostrapConfig) error {
+func (s *mockSDK) Whitelist(key string, cfg mfSDK.BootstrapConfig) error {
 	if cfg.ThingID == invalid {
 		return mfSDK.ErrFailedWhitelist
 	}
@@ -276,7 +276,7 @@ func (s *mockSDK) Connect(connIDs mfSDK.ConnectionIDs, token string) error {
 	return nil
 }
 
-func (s *mockSDK) AddBootstrap(token string, cfg mfSDK.BoostrapConfig) (string, error) {
+func (s *mockSDK) AddBootstrap(token string, cfg mfSDK.BootstrapConfig) (string, error) {
 	if token != validToken {
 		return "", mfSDK.ErrUnauthorized
 	}
@@ -298,22 +298,22 @@ func (s *mockSDK) AddBootstrap(token string, cfg mfSDK.BoostrapConfig) (string, 
 	return mfid.String(), nil
 }
 
-func (s *mockSDK) ViewBoostrap(token string, id string) (mfSDK.BoostrapConfig, error) {
+func (s *mockSDK) ViewBootstrap(token string, id string) (mfSDK.BootstrapConfig, error) {
 	if token != validToken {
-		return mfSDK.BoostrapConfig{}, mfSDK.ErrUnauthorized
+		return mfSDK.BootstrapConfig{}, mfSDK.ErrUnauthorized
 	}
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if _, ok := s.configs[id]; !ok {
-		return mfSDK.BoostrapConfig{}, mfSDK.ErrFailedFetch
+		return mfSDK.BootstrapConfig{}, mfSDK.ErrFailedFetch
 	}
 
 	return s.configs[id], nil
 
 }
 
-func (s *mockSDK) RemoveBoostrap(token, id string) error {
+func (s *mockSDK) RemoveBootstrap(token, id string) error {
 	if token != validToken {
 		return mfSDK.ErrUnauthorized
 	}

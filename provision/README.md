@@ -112,12 +112,18 @@ docker-compose -f docker/addons/provision/docker-compose.yml up
 
 For the case that credentials or API token is passed in configuration file or environment variables, call to `/mapping` endpoint doesn't require `Authentication` header:
 ```bash
-curl -s -S  -X POST  http://localhost:8888/mapping  -H 'Content-Type: application/json' -d '{ "external_id" : "33:52:77:99:43", "external_key":"223334fw2" }'
+curl -s -S  -X POST  http://localhost:8888/mapping  -H 'Content-Type: application/json' -d '{"external_id": "33:52:77:99:43", "external_key": "223334fw2"}'
 ```
 
 In the case that provision service is not deployed with credentials or API key or you want to use user other than one being set in environment (or config file):
 ```bash
-curl -s -S  -X POST  http://localhost:8091/mapping -H "Authorization: <token|api_key>" -H 'Content-Type: application/json' -d '{ "external_id" : "<external_id>", "external_key":"<external_key>" }'
+curl -s -S  -X POST  http://localhost:8091/mapping -H "Authorization: <token|api_key>" -H 'Content-Type: application/json' -d '{"external_id": "<external_id>", "external_key": "<external_key>"}'
+```
+
+Or if you want to specify a name for thing different than in `config.toml` you can specify post data as:
+
+```json
+{"name": "<name>", "external_id": "<external_id>", "external_key": "<external_key>"}
 ```
 
 Response contains created things, channels and certificates if any:

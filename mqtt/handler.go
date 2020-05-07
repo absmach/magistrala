@@ -44,8 +44,8 @@ type handler struct {
 	es         redis.EventStore
 }
 
-// New creates new Event entity
-func New(publishers []messaging.Publisher, tc mainflux.ThingsServiceClient, es redis.EventStore,
+// NewHandler creates new Handler entity
+func NewHandler(publishers []messaging.Publisher, tc mainflux.ThingsServiceClient, es redis.EventStore,
 	logger logger.Logger, tracer opentracing.Tracer) session.Handler {
 	return &handler{
 		tc:         tc,

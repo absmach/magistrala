@@ -86,15 +86,6 @@ func (ms *metricsMiddleware) ListStates(ctx context.Context, token string, offse
 	return ms.svc.ListStates(ctx, token, offset, limit, id)
 }
 
-func (ms *metricsMiddleware) ViewTwinByThing(ctx context.Context, token, thingid string) (twins.Twin, error) {
-	defer func(begin time.Time) {
-		ms.counter.With("method", "view_twin_by_thing").Add(1)
-		ms.latency.With("method", "view_twin_by_thing").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
-	return ms.svc.ViewTwinByThing(ctx, token, thingid)
-}
-
 func (ms *metricsMiddleware) RemoveTwin(ctx context.Context, token, id string) (err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "remove_twin").Add(1)

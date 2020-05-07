@@ -86,20 +86,6 @@ func (trm *twinRepositoryMock) RetrieveByAttribute(ctx context.Context, channel,
 	return ids, nil
 }
 
-func (trm *twinRepositoryMock) RetrieveByThing(_ context.Context, thingid string) (twins.Twin, error) {
-	trm.mu.Lock()
-	defer trm.mu.Unlock()
-
-	for _, twin := range trm.twins {
-		if twin.ThingID == thingid {
-			return twin, nil
-		}
-	}
-
-	return twins.Twin{}, twins.ErrNotFound
-
-}
-
 func (trm *twinRepositoryMock) RetrieveAll(_ context.Context, owner string, offset uint64, limit uint64, name string, metadata twins.Metadata) (twins.Page, error) {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()

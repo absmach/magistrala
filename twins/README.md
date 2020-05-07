@@ -1,10 +1,10 @@
 # Twins
 
 Service twins is used for CRUD and update of digital twins. Twin is a semantic
-representation of a real world entity, be it device, application or something
-else. It holds the sequence of attribute based definitions of a real world thing
-and refers to the time series of definition based states that hold the
-historical data about the represented real world thing.
+representation of a real world data system consisting of data producers and
+consumers. It stores the sequence of attribute based definitions of a system and
+refers to a time series of definition based states that store the system
+historical data.
 
 ## Configuration
 
@@ -27,8 +27,6 @@ default values.
 | MF_TWINS_CLIENT_TLS        | Flag that indicates if TLS should be turned on                       | false                 |
 | MF_TWINS_CA_CERTS          | Path to trusted CAs in PEM format                                    |                       |
 | MF_TWINS_MQTT_URL          | Mqtt broker URL for twin CRUD and states update notifications        | tcp://localhost:1883  |
-| MF_TWINS_THING_ID          | ID of thing representing twins service & mqtt user                   |                       |
-| MF_TWINS_THING_KEY         | Key of thing representing twins service & mqtt pass                  |                       |
 | MF_TWINS_CHANNEL_ID        | Mqtt notifications topic                                             |                       |
 | MF_NATS_URL                | Mainflux NATS broker URL                                             | nats://localhost:4222 |
 | MF_AUTHN_GRPC_URL          | AuthN service gRPC URL                                               | localhost:8181        |
@@ -37,8 +35,8 @@ default values.
 ## Deployment
 
 The service itself is distributed as Docker container. The following snippet
-provides a compose file template that can be used to deploy the service container
-locally:
+provides a compose file template that can be used to deploy the service
+container locally:
 
 ```yaml
 version: "3"
@@ -62,15 +60,14 @@ services:
       MF_TWINS_CLIENT_TLS: [Flag that indicates if TLS should be turned on]
       MF_TWINS_CA_CERTS: [Path to trusted CAs in PEM format]
       MF_TWINS_MQTT_URL: [Mqtt broker URL for twin CRUD and states]
-      MF_TWINS_THING_ID: [ID of thing representing twins service]
-      MF_TWINS_THING_KEY: [Key of thing representing twins service]
       MF_TWINS_CHANNEL_ID: [Mqtt notifications topic]
       MF_NATS_URL: [Mainflux NATS broker URL]
       MF_AUTHN_GRPC_URL: [AuthN service gRPC URL]
       MF_AUTHN_GRPC_TIMEOUT: [AuthN service gRPC request timeout in seconds]
 ```
 
-To start the service outside of the container, execute the following shell script:
+To start the service outside of the container, execute the following shell
+script:
 
 ```bash
 # download the latest version of the service
@@ -97,8 +94,6 @@ MF_TWINS_SINGLE_USER_TOKEN: [User token for single user mode] \
 MF_TWINS_CLIENT_TLS: [Flag that indicates if TLS should be turned on] \
 MF_TWINS_CA_CERTS: [Path to trusted CAs in PEM format] \
 MF_TWINS_MQTT_URL: [Mqtt broker URL for twin CRUD and states] \
-MF_TWINS_THING_ID: [ID of thing representing twins service] \
-MF_TWINS_THING_KEY: [Key of thing representing twins service] \
 MF_TWINS_CHANNEL_ID: [Mqtt notifications topic] \
 MF_NATS_URL: [Mainflux NATS broker URL] \
 MF_AUTHN_GRPC_URL: [AuthN service gRPC URL] \
@@ -110,25 +105,23 @@ $GOBIN/mainflux-twins
 
 ### Starting twins service
 
-The twins service publishes notifications on an mqtt topic of the format
-`channels/<MF_TWINS_CHANNEL_ID>/messages/<twinID>/<crudOp>`, where `crudOp`
+The twins service publishes notifications on a NATS subject of the format
+`channels.<MF_TWINS_CHANNEL_ID>.messages.<twinID>.<crudOp>`, where `crudOp`
 stands for the crud operation done on twin - create, update, delete or
-retrieve - or state - save state. In order to use twin service, one must
-inform it - via environment variables - about the Mainflux thing and
-channel used for mqtt notification publishing. You can use an already existing
-thing and channel - thing has to be connected to channel - or create new ones.
+retrieve - or state - save state. In order to use twin service notifications,
+one must inform it - via environment variables - about the Mainflux channel used
+for notification publishing. You must use an already existing channel, since you
+cannot know in advance or set the channel id (Mainflux does it automatically).
 
-To set the environment variables, please go to `.env` file and set the following
-variables:
+To set the environment variable, please go to `.env` file and set the following
+variable:
 
 ```
-MF_TWINS_THING_ID=
-MF_TWINS_THING_KEY=
 MF_TWINS_CHANNEL_ID=
 ```
 
-with the corresponding values of the desired thing and channel. If you are
-running mainflux natively, than do the same thing in the corresponding console
+with the corresponding values of the desired channel. If you are running
+mainflux natively, than do the same thing in the corresponding console
 environment.
 
 For more information about service capabilities and its usage, please check out

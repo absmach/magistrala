@@ -46,7 +46,6 @@ func updateTwinEndpoint(svc twins.Service) endpoint.Endpoint {
 		twin := twins.Twin{
 			ID:       req.id,
 			Name:     req.Name,
-			ThingID:  req.ThingID,
 			Metadata: req.Metadata,
 		}
 
@@ -76,42 +75,12 @@ func viewTwinEndpoint(svc twins.Service) endpoint.Endpoint {
 			Owner:       twin.Owner,
 			ID:          twin.ID,
 			Name:        twin.Name,
-			ThingID:     twin.ThingID,
 			Created:     twin.Created,
 			Updated:     twin.Updated,
 			Revision:    twin.Revision,
 			Definitions: twin.Definitions,
 			Metadata:    twin.Metadata,
 		}
-		return res, nil
-	}
-}
-
-func viewTwinByThingEndpoint(svc twins.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(viewTwinReq)
-
-		if err := req.validate(); err != nil {
-			return nil, err
-		}
-
-		twin, err := svc.ViewTwinByThing(ctx, req.token, req.id)
-		if err != nil {
-			return nil, err
-		}
-
-		res := viewTwinRes{
-			Owner:       twin.Owner,
-			ID:          twin.ID,
-			Name:        twin.Name,
-			ThingID:     twin.ThingID,
-			Created:     twin.Created,
-			Updated:     twin.Updated,
-			Revision:    twin.Revision,
-			Definitions: twin.Definitions,
-			Metadata:    twin.Metadata,
-		}
-
 		return res, nil
 	}
 }
@@ -142,7 +111,6 @@ func listTwinsEndpoint(svc twins.Service) endpoint.Endpoint {
 				Owner:       twin.Owner,
 				ID:          twin.ID,
 				Name:        twin.Name,
-				ThingID:     twin.ThingID,
 				Created:     twin.Created,
 				Updated:     twin.Updated,
 				Revision:    twin.Revision,

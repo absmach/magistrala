@@ -77,17 +77,6 @@ func (tr *twinRepository) RetrieveByID(_ context.Context, id string) (twins.Twin
 	return tw, nil
 }
 
-func (tr *twinRepository) RetrieveByThing(ctx context.Context, thingid string) (twins.Twin, error) {
-	coll := tr.db.Collection(twinsCollection)
-	tw := twins.Twin{}
-	filter := bson.D{{"thingid", thingid}}
-	if err := coll.FindOne(context.Background(), filter).Decode(&tw); err != nil {
-		return tw, twins.ErrNotFound
-	}
-
-	return tw, nil
-}
-
 func (tr *twinRepository) RetrieveByAttribute(ctx context.Context, channel, subtopic string) ([]string, error) {
 	coll := tr.db.Collection(twinsCollection)
 
@@ -157,39 +146,6 @@ func (tr *twinRepository) RetrieveAll(ctx context.Context, owner string, offset 
 	if len(metadata) > 0 {
 		filter = append(filter, bson.E{"metadata", metadata})
 	}
-	cur, err := coll.Find(ctx, filter, findOptions)
-	if err != nil {
-		return twins.Page{}, err
-	}
-
-	results, err := decodeTwins(ctx, cur)
-	if err != nil {
-		return twins.Page{}, err
-	}
-
-	total, err := coll.CountDocuments(ctx, filter)
-	if err != nil {
-		return twins.Page{}, err
-	}
-
-	return twins.Page{
-		Twins: results,
-		PageMetadata: twins.PageMetadata{
-			Total:  uint64(total),
-			Offset: offset,
-			Limit:  limit,
-		},
-	}, nil
-}
-
-func (tr *twinRepository) RetrieveAllByThing(ctx context.Context, thingid string, offset uint64, limit uint64) (twins.Page, error) {
-	coll := tr.db.Collection(twinsCollection)
-
-	findOptions := options.Find()
-	findOptions.SetSkip(int64(offset))
-	findOptions.SetLimit(int64(limit))
-
-	filter := bson.D{{"thingid", thingid}}
 	cur, err := coll.Find(ctx, filter, findOptions)
 	if err != nil {
 		return twins.Page{}, err

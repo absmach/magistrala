@@ -51,7 +51,6 @@ func (res twinRes) Empty() bool {
 type viewTwinRes struct {
 	Owner       string                 `json:"owner,omitempty"`
 	ID          string                 `json:"id"`
-	ThingID     string                 `json:"thing_id"`
 	Name        string                 `json:"name,omitempty"`
 	Revision    int                    `json:"revision"`
 	Created     time.Time              `json:"created"`

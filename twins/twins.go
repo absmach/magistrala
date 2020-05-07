@@ -27,13 +27,12 @@ type Definition struct {
 	Delta      int64       `json:"delta"`
 }
 
-// Twin represents a Mainflux thing digital twin. Each twin is owned by one thing, and
-// is assigned with the unique identifier.
+// Twin is a Mainflux data system representation. Each twin is owned
+// by a single user, and is assigned with the unique identifier.
 type Twin struct {
 	Owner       string
 	ID          string
 	Name        string
-	ThingID     string
 	Created     time.Time
 	Updated     time.Time
 	Revision    int
@@ -72,11 +71,8 @@ type TwinRepository interface {
 	// the attribute with given channel and subtopic
 	RetrieveByAttribute(ctx context.Context, channel, subtopic string) ([]string, error)
 
-	// RetrieveAll retrieves the subset of things owned by the specified user.
+	// RetrieveAll retrieves the subset of twins owned by the specified user.
 	RetrieveAll(context.Context, string, uint64, uint64, string, Metadata) (Page, error)
-
-	// RetrieveByThing retrieves twin that represents specified thing
-	RetrieveByThing(context.Context, string) (Twin, error)
 
 	// Remove removes the twin having the provided identifier.
 	Remove(ctx context.Context, id string) error

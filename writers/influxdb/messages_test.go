@@ -88,7 +88,7 @@ func TestSave(t *testing.T) {
 		_, err := queryDB(dropMsgs)
 		require.Nil(t, err, fmt.Sprintf("Cleaning data from InfluxDB expected to succeed: %s.\n", err))
 
-		now := time.Now().Unix()
+		now := time.Now().UnixNano()
 		msg := senml.Message{
 			Channel:    "45",
 			Publisher:  "2580",
@@ -116,7 +116,7 @@ func TestSave(t *testing.T) {
 				msg.Sum = &sum
 			}
 
-			msg.Time = float64(now + int64(i))
+			msg.Time = float64(now)/float64(1e9) + float64(i)
 			msgs = append(msgs, msg)
 		}
 

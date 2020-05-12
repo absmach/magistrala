@@ -196,12 +196,12 @@ func parseMessage(names []string, fields []interface{}) senml.Message {
 			}
 		case float64:
 			if name == "time" {
-				t, err := time.Parse(time.RFC3339, fields[i].(string))
+				t, err := time.Parse(time.RFC3339Nano, fields[i].(string))
 				if err != nil {
 					continue
 				}
 
-				v := float64(t.Unix())
+				v := float64(t.UnixNano()) / float64(1e9)
 				msgField.SetFloat(v)
 				continue
 			}

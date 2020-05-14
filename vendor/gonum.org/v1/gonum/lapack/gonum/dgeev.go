@@ -19,8 +19,8 @@ import (
 // is defined by
 //  A v_j = λ_j v_j,
 // and the left eigenvector u_j corresponding to an eigenvalue λ_j is defined by
-//  u_j^H A = λ_j u_j^H,
-// where u_j^H is the conjugate transpose of u_j.
+//  u_jᴴ A = λ_j u_jᴴ,
+// where u_jᴴ is the conjugate transpose of u_j.
 //
 // On return, A will be overwritten and the left and right eigenvectors will be
 // stored, respectively, in the columns of the n×n matrices VL and VR in the
@@ -53,7 +53,7 @@ import (
 // larger.  On return, optimal value of lwork will be stored in work[0].
 //
 // If lwork == -1, instead of performing Dgeev, the function only calculates the
-// optimal vaule of lwork and stores it into work[0].
+// optimal value of lwork and stores it into work[0].
 //
 // On return, first is the index of the first valid eigenvalue. If first == 0,
 // all eigenvalues and eigenvectors have been computed. If first is positive,

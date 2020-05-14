@@ -18,6 +18,19 @@ import (
 	"github.com/influxdata/influxdb/pkg/escape"
 )
 
+// Values used to store the field key and measurement name as special internal
+// tags.
+const (
+	FieldKeyTagKey    = "\xff"
+	MeasurementTagKey = "\x00"
+)
+
+// Predefined byte representations of special tag keys.
+var (
+	FieldKeyTagKeyBytes    = []byte(FieldKeyTagKey)
+	MeasurementTagKeyBytes = []byte(MeasurementTagKey)
+)
+
 type escapeSet struct {
 	k   [1]byte
 	esc [2]byte
@@ -134,7 +147,7 @@ type Point interface {
 	// the result, potentially reducing string allocations.
 	AppendString(buf []byte) []byte
 
-	// FieldIterator retuns a FieldIterator that can be used to traverse the
+	// FieldIterator returns a FieldIterator that can be used to traverse the
 	// fields of a point without constructing the in-memory map.
 	FieldIterator() FieldIterator
 }
@@ -335,7 +348,6 @@ func ParsePointsWithPrecision(buf []byte, defaultTime time.Time, precision strin
 			continue
 		}
 
-		// lines which start with '#' are comments
 		start := skipWhitespace(block, 0)
 
 		// If line is all whitespace, just skip it
@@ -343,6 +355,7 @@ func ParsePointsWithPrecision(buf []byte, defaultTime time.Time, precision strin
 			continue
 		}
 
+		// lines which start with '#' are comments
 		if block[start] == '#' {
 			continue
 		}
@@ -368,7 +381,7 @@ func ParsePointsWithPrecision(buf []byte, defaultTime time.Time, precision strin
 }
 
 func parsePoint(buf []byte, defaultTime time.Time, precision string) (Point, error) {
-	// scan the first block which is measurement[,tag1=value1,tag2=value=2...]
+	// scan the first block which is measurement[,tag1=value1,tag2=value2...]
 	pos, key, err := scanKey(buf, 0)
 	if err != nil {
 		return nil, err
@@ -2226,7 +2239,7 @@ func DeepCopyTags(a Tags) Tags {
 // values.
 type Fields map[string]interface{}
 
-// FieldIterator retuns a FieldIterator that can be used to traverse the
+// FieldIterator returns a FieldIterator that can be used to traverse the
 // fields of a point without constructing the in-memory map.
 func (p *point) FieldIterator() FieldIterator {
 	p.Reset()
@@ -2347,7 +2360,7 @@ func (p *point) Reset() {
 }
 
 // MarshalBinary encodes all the fields to their proper type and returns the binary
-// represenation
+// representation
 // NOTE: uint64 is specifically not supported due to potential overflow when we decode
 // again later to an int64
 // NOTE2: uint is accepted, and may be 64 bits, and is for some reason accepted...

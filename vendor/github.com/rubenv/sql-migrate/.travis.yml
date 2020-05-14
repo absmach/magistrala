@@ -3,10 +3,9 @@ language: go
 sudo: false
 
 go:
-    - "1.9"
-    - "1.10"
-    - "1.11"
-
+    - "1.13"
+    - "1.14"
+    
 services:
     - mysql
     - postgresql
@@ -19,11 +18,14 @@ before_install:
 install:
     - go get -t ./...
     - go install ./...
+    - go get -u github.com/kisielk/errcheck
 
 script:
+    - CGO_ENABLED=0 go build -v .
     - go test -v ./...
     - bash test-integration/postgres.sh
     - bash test-integration/mysql.sh
     - bash test-integration/mysql-flag.sh
     - bash test-integration/mysql-env.sh
     - bash test-integration/sqlite.sh
+    - errcheck ./...

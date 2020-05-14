@@ -7,7 +7,7 @@ import (
 	"time"
 
 	influxdb "github.com/influxdata/influxdb/client/v2"
-	dockertest "gopkg.in/ory/dockertest.v3"
+	dockertest "github.com/ory/dockertest/v3"
 )
 
 func TestMain(m *testing.M) {

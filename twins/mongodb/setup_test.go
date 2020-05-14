@@ -12,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	dockertest "gopkg.in/ory/dockertest.v3"
+	dockertest "github.com/ory/dockertest/v3"
 )
 
 const (

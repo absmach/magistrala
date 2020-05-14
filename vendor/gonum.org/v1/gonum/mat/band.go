@@ -5,14 +5,17 @@
 package mat
 
 import (
+	"gonum.org/v1/gonum/blas"
 	"gonum.org/v1/gonum/blas/blas64"
 )
 
 var (
 	bandDense *BandDense
-	_         Matrix    = bandDense
-	_         Banded    = bandDense
-	_         RawBander = bandDense
+	_         Matrix      = bandDense
+	_         allMatrix   = bandDense
+	_         denseMatrix = bandDense
+	_         Banded      = bandDense
+	_         RawBander   = bandDense
 
 	_ NonZeroDoer    = bandDense
 	_ RowNonZeroDoer = bandDense
@@ -195,6 +198,26 @@ func (b *BandDense) SetRawBand(mat blas64.Band) {
 	b.mat = mat
 }
 
+// IsEmpty returns whether the receiver is empty. Empty matrices can be the
+// receiver for size-restricted operations. The receiver can be zeroed using Reset.
+func (b *BandDense) IsEmpty() bool {
+	return b.mat.Stride == 0
+}
+
+// Reset empties the matrix so that it can be reused as the
+// receiver of a dimensionally restricted operation.
+//
+// Reset should not be used when the matrix shares backing data.
+// See the Reseter interface for more information.
+func (b *BandDense) Reset() {
+	b.mat.Rows = 0
+	b.mat.Cols = 0
+	b.mat.KL = 0
+	b.mat.KU = 0
+	b.mat.Stride = 0
+	b.mat.Data = b.mat.Data[:0:0]
+}
+
 // DiagView returns the diagonal as a matrix backed by the original data.
 func (b *BandDense) DiagView() Diagonal {
 	n := min(b.mat.Rows, b.mat.Cols)
@@ -274,4 +297,39 @@ func (b *BandDense) Trace() float64 {
 		tr += rb.Data[rb.KL+i*rb.Stride]
 	}
 	return tr
+}
+
+// MulVecTo computes B⋅x or Bᵀ⋅x storing the result into dst.
+func (b *BandDense) MulVecTo(dst *VecDense, trans bool, x Vector) {
+	m, n := b.Dims()
+	if trans {
+		m, n = n, m
+	}
+	if x.Len() != n {
+		panic(ErrShape)
+	}
+	dst.reuseAsNonZeroed(m)
+
+	t := blas.NoTrans
+	if trans {
+		t = blas.Trans
+	}
+
+	xMat, _ := untransposeExtract(x)
+	if xVec, ok := xMat.(*VecDense); ok {
+		if dst != xVec {
+			dst.checkOverlap(xVec.mat)
+			blas64.Gbmv(t, 1, b.mat, xVec.mat, 0, dst.mat)
+		} else {
+			xCopy := getWorkspaceVec(n, false)
+			xCopy.CloneVec(xVec)
+			blas64.Gbmv(t, 1, b.mat, xCopy.mat, 0, dst.mat)
+			putWorkspaceVec(xCopy)
+		}
+	} else {
+		xCopy := getWorkspaceVec(n, false)
+		xCopy.CloneVec(x)
+		blas64.Gbmv(t, 1, b.mat, xCopy.mat, 0, dst.mat)
+		putWorkspaceVec(xCopy)
+	}
 }

@@ -26,6 +26,8 @@ func goType(t TypeInfo) reflect.Type {
 		return reflect.TypeOf(*new(string))
 	case TypeBigInt, TypeCounter:
 		return reflect.TypeOf(*new(int64))
+	case TypeTime:
+		return reflect.TypeOf(*new(time.Duration))
 	case TypeTimestamp:
 		return reflect.TypeOf(*new(time.Time))
 	case TypeBlob:
@@ -83,14 +85,24 @@ func getCassandraBaseType(name string) Type {
 		return TypeBoolean
 	case "counter":
 		return TypeCounter
+	case "date":
+		return TypeDate
 	case "decimal":
 		return TypeDecimal
 	case "double":
 		return TypeDouble
+	case "duration":
+		return TypeDuration
 	case "float":
 		return TypeFloat
 	case "int":
 		return TypeInt
+	case "smallint":
+		return TypeSmallInt
+	case "tinyint":
+		return TypeTinyInt
+	case "time":
+		return TypeTime
 	case "timestamp":
 		return TypeTimestamp
 	case "uuid":
@@ -229,6 +241,8 @@ func getApacheCassandraType(class string) Type {
 		return TypeSmallInt
 	case "ByteType":
 		return TypeTinyInt
+	case "TimeType":
+		return TypeTime
 	case "DateType", "TimestampType":
 		return TypeTimestamp
 	case "UUIDType", "LexicalUUIDType":

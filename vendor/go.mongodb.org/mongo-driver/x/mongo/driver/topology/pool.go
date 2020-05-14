@@ -117,8 +117,6 @@ func connectionCloseFunc(v interface{}) {
 	}
 
 	go func() {
-		// wait for connection to finish trying to connect
-		_ = c.wait()
 		_ = c.pool.closeConnection(c)
 	}()
 }
@@ -414,6 +412,11 @@ func (p *pool) closeConnection(c *connection) error {
 	delete(p.opened, c.poolID)
 	p.Unlock()
 
+	if atomic.LoadInt32(&c.connected) == connected {
+		c.closeConnectContext()
+		_ = c.wait() // Make sure that the connection has finished connecting
+	}
+
 	if !atomic.CompareAndSwapInt32(&c.connected, connected, disconnected) {
 		return nil // We're closing an already closed connection
 	}
@@ -424,6 +427,18 @@ func (p *pool) closeConnection(c *connection) error {
 			return ConnectionError{ConnectionID: c.id, Wrapped: err, message: "failed to close net.Conn"}
 		}
 	}
+
+	return nil
+}
+
+// removeConnection removes a connection from the pool.
+func (p *pool) removeConnection(c *connection) error {
+	if c.pool != p {
+		return ErrWrongPool
+	}
+	p.Lock()
+	delete(p.opened, c.poolID)
+	p.Unlock()
 
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 
+	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mproxy/pkg/session"
 )
@@ -15,6 +16,7 @@ type Proxy struct {
 	target  string
 	handler session.Handler
 	logger  logger.Logger
+	dialer  net.Dialer
 }
 
 // New returns a new mqtt Proxy instance.
@@ -42,16 +44,16 @@ func (p Proxy) accept(l net.Listener) {
 
 func (p Proxy) handle(inbound net.Conn) {
 	defer p.close(inbound)
-	outbound, err := net.Dial("tcp", p.target)
+	outbound, err := p.dialer.Dial("tcp", p.target)
 	if err != nil {
-		p.logger.Error("Cannot connect to remote broker " + p.target)
+		p.logger.Error("Cannot connect to remote broker " + p.target + " due to: " + err.Error())
 		return
 	}
 	defer p.close(outbound)
 
 	s := session.New(inbound, outbound, p.handler, p.logger)
 
-	if err = s.Stream(); err != io.EOF {
+	if err = s.Stream(); !errors.Contains(err, io.EOF) {
 		p.logger.Warn("Broken connection for client: " + s.Client.ID + " with error: " + err.Error())
 	}
 }

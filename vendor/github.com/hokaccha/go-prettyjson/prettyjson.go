@@ -71,7 +71,9 @@ func (f *Formatter) Marshal(v interface{}) ([]byte, error) {
 // Format formats JSON string.
 func (f *Formatter) Format(data []byte) ([]byte, error) {
 	var v interface{}
-	if err := json.Unmarshal(data, &v); err != nil {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	if err := decoder.Decode(&v); err != nil {
 		return nil, err
 	}
 
@@ -98,6 +100,8 @@ func (f *Formatter) pretty(v interface{}, depth int) string {
 		return f.processString(val)
 	case float64:
 		return f.sprintColor(f.NumberColor, strconv.FormatFloat(val, 'f', -1, 64))
+	case json.Number:
+		return f.sprintColor(f.NumberColor, string(val))
 	case bool:
 		return f.sprintColor(f.BoolColor, strconv.FormatBool(val))
 	case nil:

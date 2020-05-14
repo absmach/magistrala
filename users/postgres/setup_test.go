@@ -14,7 +14,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/mainflux/mainflux/users/postgres"
-	dockertest "gopkg.in/ory/dockertest.v3"
+	dockertest "github.com/ory/dockertest/v3"
 )
 
 const wrong string = "wrong-value"

@@ -8,13 +8,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/mainflux/mainflux/twins"
 	httpapi "github.com/mainflux/mainflux/twins/api/http"
@@ -37,6 +35,31 @@ const (
 )
 
 var invalidName = strings.Repeat("m", maxNameSize+1)
+
+type twinReq struct {
+	token    string
+	Name     string                 `json:"name,omitempty"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
+}
+
+type twinRes struct {
+	Owner    string                 `json:"owner"`
+	ID       string                 `json:"id"`
+	Name     string                 `json:"name,omitempty"`
+	Revision int                    `json:"revision"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
+}
+
+type pageRes struct {
+	Total  uint64 `json:"total"`
+	Offset uint64 `json:"offset"`
+	Limit  uint64 `json:"limit"`
+}
+
+type twinsPageRes struct {
+	pageRes
+	Twins []twinRes `json:"twins"`
+}
 
 type testRequest struct {
 	client      *http.Client
@@ -61,16 +84,6 @@ func (tr testRequest) make() (*http.Response, error) {
 	return tr.client.Do(req)
 }
 
-func newService(tokens map[string]string) twins.Service {
-	auth := mocks.NewAuthNServiceClient(tokens)
-	twinsRepo := mocks.NewTwinRepository()
-	statesRepo := mocks.NewStateRepository()
-	idp := mocks.NewIdentityProvider()
-	subs := map[string]string{"chanID": "chanID"}
-	broker := mocks.New(subs)
-	return twins.New(broker, auth, twinsRepo, statesRepo, idp, "chanID", nil)
-}
-
 func newServer(svc twins.Service) *httptest.Server {
 	mux := httpapi.MakeHandler(mocktracer.New(), svc)
 	return httptest.NewServer(mux)
@@ -82,7 +95,7 @@ func toJSON(data interface{}) string {
 }
 
 func TestAddTwin(t *testing.T) {
-	svc := newService(map[string]string{token: email})
+	svc := mocks.NewService(map[string]string{token: email})
 	ts := newServer(svc)
 	defer ts.Close()
 
@@ -185,13 +198,14 @@ func TestAddTwin(t *testing.T) {
 }
 
 func TestUpdateTwin(t *testing.T) {
-	svc := newService(map[string]string{token: email})
+	svc := mocks.NewService(map[string]string{token: email})
 	ts := newServer(svc)
 	defer ts.Close()
 
 	twin := twins.Twin{}
 	def := twins.Definition{}
-	stw, _ := svc.AddTwin(context.Background(), token, twin, def)
+	stw, err := svc.AddTwin(context.Background(), token, twin, def)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	twin.Name = twinName
 	data := toJSON(twin)
@@ -297,7 +311,7 @@ func TestUpdateTwin(t *testing.T) {
 }
 
 func TestViewTwin(t *testing.T) {
-	svc := newService(map[string]string{token: email})
+	svc := mocks.NewService(map[string]string{token: email})
 	ts := newServer(svc)
 	defer ts.Close()
 
@@ -307,58 +321,54 @@ func TestViewTwin(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	twres := twinRes{
-		Owner:       stw.Owner,
-		Name:        stw.Name,
-		ID:          stw.ID,
-		Revision:    stw.Revision,
-		Created:     stw.Created,
-		Updated:     stw.Updated,
-		Definitions: stw.Definitions,
-		Metadata:    stw.Metadata,
+		Owner:    stw.Owner,
+		Name:     stw.Name,
+		ID:       stw.ID,
+		Revision: stw.Revision,
+		Metadata: stw.Metadata,
 	}
-	data := toJSON(twres)
 
 	cases := []struct {
 		desc   string
 		id     string
 		auth   string
 		status int
-		res    string
+		res    twinRes
 	}{
 		{
 			desc:   "view existing twin",
 			id:     stw.ID,
 			auth:   token,
 			status: http.StatusOK,
-			res:    data,
+			res:    twres,
 		},
 		{
 			desc:   "view non-existent twin",
 			id:     strconv.FormatUint(wrongID, 10),
 			auth:   token,
 			status: http.StatusNotFound,
-			res:    "",
+			res:    twinRes{},
 		},
 		{
 			desc:   "view twin by passing invalid token",
 			id:     stw.ID,
 			auth:   wrongValue,
 			status: http.StatusForbidden,
-			res:    "",
+			res:    twinRes{},
 		},
 		{
 			desc:   "view twin by passing empty id",
 			id:     "",
 			auth:   token,
 			status: http.StatusBadRequest,
-			res:    "",
+			res:    twinRes{},
 		},
 		{
 			desc:   "view twin by passing empty token",
 			id:     stw.ID,
 			auth:   "",
 			status: http.StatusForbidden,
-			res:    "",
+			res:    twinRes{},
 		},
 	}
 
@@ -372,20 +382,197 @@ func TestViewTwin(t *testing.T) {
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		body, err := ioutil.ReadAll(res.Body)
-		data := strings.Trim(string(body), "\n")
-		assert.Equal(t, tc.res, data, fmt.Sprintf("%s: expected body %s got %s", tc.desc, tc.res, data))
+
+		var resData twinRes
+		err = json.NewDecoder(res.Body).Decode(&resData)
+		assert.Equal(t, tc.res, resData, fmt.Sprintf("%s: expected body %v got %v", tc.desc, tc.res, resData))
+	}
+}
+
+func TestListTwins(t *testing.T) {
+	svc := mocks.NewService(map[string]string{token: email})
+	ts := newServer(svc)
+	defer ts.Close()
+
+	var data []twinRes
+	for i := 0; i < 100; i++ {
+		name := fmt.Sprintf("%s-%d", twinName, i)
+		twin := twins.Twin{
+			Owner: email,
+			Name:  name,
+		}
+		tw, err := svc.AddTwin(context.Background(), token, twin, twins.Definition{})
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		twres := twinRes{
+			Owner:    tw.Owner,
+			ID:       tw.ID,
+			Name:     tw.Name,
+			Revision: tw.Revision,
+			Metadata: tw.Metadata,
+		}
+		data = append(data, twres)
+	}
+
+	baseURL := fmt.Sprintf("%s/twins", ts.URL)
+	queryFmt := "%s?offset=%d&limit=%d"
+	cases := []struct {
+		desc   string
+		auth   string
+		status int
+		url    string
+		res    []twinRes
+	}{
+		{
+			desc:   "get a list of twins",
+			auth:   token,
+			status: http.StatusOK,
+			url:    baseURL,
+			res:    data[0:10],
+		},
+		{
+			desc:   "get a list of twins with invalid token",
+			auth:   wrongValue,
+			status: http.StatusForbidden,
+			url:    fmt.Sprintf(queryFmt, baseURL, 0, 1),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of twins with empty token",
+			auth:   "",
+			status: http.StatusForbidden,
+			url:    fmt.Sprintf(queryFmt, baseURL, 0, 1),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of twins with valid offset and limit",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf(queryFmt, baseURL, 25, 40),
+			res:    data[25:65],
+		},
+		{
+			desc:   "get a list of twins with offset + limit > total",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf(queryFmt, baseURL, 91, 20),
+			res:    data[91:],
+		},
+		{
+			desc:   "get a list of twins with negative offset",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf(queryFmt, baseURL, -1, 5),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of twins with negative limit",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf(queryFmt, baseURL, 1, -5),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of twins with zero limit",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf(queryFmt, baseURL, 1, 0),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of twins with limit greater than max",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d", baseURL, 0, 110),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of twins with invalid offset",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s%s", baseURL, "?offset=e&limit=5"),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of twins with invalid limit",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s%s", baseURL, "?offset=5&limit=e"),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of twins without offset",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("%s?limit=%d", baseURL, 5),
+			res:    data[0:5],
+		},
+		{
+			desc:   "get a list of twins without limit",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("%s?offset=%d", baseURL, 1),
+			res:    data[1:11],
+		},
+		{
+			desc:   "get a list of twins with invalid number of parameters",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s%s", baseURL, "?offset=4&limit=4&limit=5&offset=5"),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of twins with redundant query parameters",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d&value=something", baseURL, 0, 5),
+			res:    data[0:5],
+		},
+		{
+			desc:   "get a list of twins filtering with invalid name",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d&name=%s", baseURL, 0, 5, invalidName),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of twins filtering with valid name",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d&name=%s", baseURL, 2, 1, twinName+"-2"),
+			res:    data[2:3],
+		},
+	}
+
+	for _, tc := range cases {
+		req := testRequest{
+			client: ts.Client(),
+			method: http.MethodGet,
+			url:    tc.url,
+			token:  tc.auth,
+		}
+		res, err := req.make()
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+
+		var resData twinsPageRes
+		if tc.res != nil {
+			err = json.NewDecoder(res.Body).Decode(&resData)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		}
+
+		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+		assert.ElementsMatch(t, tc.res, resData.Twins, fmt.Sprintf("%s: expected body %v got %v", tc.desc, tc.res, resData.Twins))
 	}
 }
 
 func TestRemoveTwin(t *testing.T) {
-	svc := newService(map[string]string{token: email})
+	svc := mocks.NewService(map[string]string{token: email})
 	ts := newServer(svc)
 	defer ts.Close()
 
 	def := twins.Definition{}
 	twin := twins.Twin{}
-	stw, _ := svc.AddTwin(context.Background(), token, twin, def)
+	stw, err := svc.AddTwin(context.Background(), token, twin, def)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := []struct {
 		desc   string
@@ -436,22 +623,4 @@ func TestRemoveTwin(t *testing.T) {
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 	}
-}
-
-type twinReq struct {
-	token      string
-	Name       string                 `json:"name,omitempty"`
-	Definition twins.Definition       `json:"definition,omitempty"`
-	Metadata   map[string]interface{} `json:"metadata,omitempty"`
-}
-
-type twinRes struct {
-	Owner       string                 `json:"owner"`
-	Name        string                 `json:"name,omitempty"`
-	ID          string                 `json:"id"`
-	Revision    int                    `json:"revision"`
-	Created     time.Time              `json:"created"`
-	Updated     time.Time              `json:"updated"`
-	Definitions []twins.Definition     `json:"definitions"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }

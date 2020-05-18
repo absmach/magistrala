@@ -131,8 +131,9 @@ func (ts *twinsService) AddTwin(ctx context.Context, token string, twin Twin, de
 
 	twin.Owner = res.GetValue()
 
-	twin.Created = time.Now()
-	twin.Updated = time.Now()
+	t := time.Now()
+	twin.Created = t
+	twin.Updated = t
 
 	if def.Attributes == nil {
 		def.Attributes = []Attribute{}
@@ -324,6 +325,7 @@ func prepareState(st *State, tw *Twin, rec senml.Record, msg *messaging.Message)
 
 	if st.Payload == nil {
 		st.Payload = make(map[string]interface{})
+		st.ID = -1 // state is incremented on save -> zero-based index
 	} else {
 		for k := range st.Payload {
 			idx := findAttribute(k, def.Attributes)
@@ -356,6 +358,7 @@ func prepareState(st *State, tw *Twin, rec senml.Record, msg *messaging.Message)
 			}
 			val := findValue(rec)
 			st.Payload[attr.Name] = val
+
 			break
 		}
 	}

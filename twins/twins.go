@@ -45,7 +45,6 @@ type PageMetadata struct {
 	Total  uint64
 	Offset uint64
 	Limit  uint64
-	Name   string
 }
 
 // Page contains page related metadata as well as a list of twins that

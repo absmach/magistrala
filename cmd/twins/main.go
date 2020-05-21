@@ -26,6 +26,7 @@ import (
 	"github.com/mainflux/mainflux/twins/api"
 	twapi "github.com/mainflux/mainflux/twins/api/http"
 	twmongodb "github.com/mainflux/mainflux/twins/mongodb"
+	"github.com/mainflux/mainflux/twins/tracing"
 	"github.com/mainflux/mainflux/twins/uuid"
 	opentracing "github.com/opentracing/opentracing-go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
@@ -121,16 +122,11 @@ func main() {
 	}
 	defer pubSub.Close()
 
-	ncTracer, ncCloser := initJaeger("twins_nats", cfg.jaegerURL, logger)
-	defer ncCloser.Close()
+	svc := newService(pubSub, cfg.channelID, auth, dbTracer, db, logger)
 
 	tracer, closer := initJaeger("twins", cfg.jaegerURL, logger)
 	defer closer.Close()
-
-	svc := newService(pubSub, ncTracer, cfg.channelID, auth, dbTracer, db, logger)
-
 	errs := make(chan error, 2)
-
 	go startHTTPServer(twapi.MakeHandler(tracer, svc), cfg.httpPort, cfg, logger, errs)
 
 	go func() {
@@ -236,10 +232,13 @@ func connectToAuth(cfg config, logger logger.Logger) *grpc.ClientConn {
 	return conn
 }
 
-func newService(ps messaging.PubSub, ncTracer opentracing.Tracer, chanID string, users mainflux.AuthNServiceClient, dbTracer opentracing.Tracer, db *mongo.Database, logger logger.Logger) twins.Service {
+func newService(ps messaging.PubSub, chanID string, users mainflux.AuthNServiceClient, dbTracer opentracing.Tracer, db *mongo.Database, logger logger.Logger) twins.Service {
 	twinRepo := twmongodb.NewTwinRepository(db)
+	twinRepo = tracing.TwinRepositoryMiddleware(dbTracer, twinRepo)
 
 	stateRepo := twmongodb.NewStateRepository(db)
+	stateRepo = tracing.StateRepositoryMiddleware(dbTracer, stateRepo)
+
 	idp := uuid.New()
 
 	svc := twins.New(ps, users, twinRepo, stateRepo, idp, chanID, logger)

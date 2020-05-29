@@ -204,7 +204,7 @@ services:
       - mainflux-base-net
 
   vernemq:
-    image: mainflux/vernemq:1.10.1-alpine
+    image: mainflux/vernemq:latest
     container_name: mainflux-vernemq
     restart: on-failure
     environment:

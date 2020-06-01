@@ -23,6 +23,7 @@ Flags:
   -p, --password string   mainflux users password
       --ssl               create certificates for mTLS access
   -u, --username string   mainflux user
+      --prefix string     name prefix for things and channels
 ```
 
 Example:

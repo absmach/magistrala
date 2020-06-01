@@ -30,6 +30,7 @@ Complete documentation is available at https://mainflux.readthedocs.io`,
 
 	// Root Flags
 	rootCmd.PersistentFlags().StringVarP(&pconf.Host, "host", "", "https://localhost", "address for mainflux instance")
+	rootCmd.PersistentFlags().StringVarP(&pconf.Prefix, "prefix", "", "", "name prefix for things and channels")
 	rootCmd.PersistentFlags().StringVarP(&pconf.Username, "username", "u", "", "mainflux user")
 	rootCmd.PersistentFlags().StringVarP(&pconf.Password, "password", "p", "", "mainflux users password")
 	rootCmd.PersistentFlags().IntVarP(&pconf.Num, "num", "", 10, "number of channels and things to create and connect")

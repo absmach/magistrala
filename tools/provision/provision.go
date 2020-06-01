@@ -120,32 +120,36 @@ func Provision(conf Config) {
 
 	//  Create things and channels
 	things := make([]sdk.Thing, conf.Num)
+	channels := make([]sdk.Channel, conf.Num)
 	cIDs := []string{}
 	tIDs := []string{}
 
 	fmt.Println("# List of things that can be connected to MQTT broker")
 
 	for i := 0; i < conf.Num; i++ {
-		tid, err := s.CreateThing(sdk.Thing{Name: fmt.Sprintf("%s-thing-%d", conf.Prefix, i)}, token)
-		if err != nil {
-			log.Fatalf("Failed to create the thing: %s", err.Error())
-		}
+		things[i] = sdk.Thing{Name: fmt.Sprintf("%s-thing-%d", conf.Prefix, i)}
+		channels[i] = sdk.Channel{Name: fmt.Sprintf("%s-channel-%d", conf.Prefix, i)}
+	}
 
-		thing, err := s.Thing(tid, token)
-		things[i] = thing
-		tIDs = append(tIDs, tid)
+	things, err = s.CreateThings(things, token)
+	if err != nil {
+		log.Fatalf("Failed to create the things: %s", err.Error())
+	}
 
-		if err != nil {
-			log.Fatalf("Failed to fetch the thing: %s", err.Error())
-		}
+	channels, err = s.CreateChannels(channels, token)
+	if err != nil {
+		log.Fatalf("Failed to create the chennels: %s", err.Error())
+	}
 
-		cid, err := s.CreateChannel(sdk.Channel{Name: fmt.Sprintf("%s-channel-%d", conf.Prefix, i)}, token)
-		if err != nil {
-			log.Fatalf("Failed to create the channel: %s", err.Error())
-		}
+	for _, t := range things {
+		tIDs = append(tIDs, t.ID)
+	}
 
-		cIDs = append(cIDs, cid)
+	for _, c := range channels {
+		cIDs = append(cIDs, c.ID)
+	}
 
+	for i := 0; i < conf.Num; i++ {
 		cert := ""
 		key := ""
 
@@ -170,7 +174,7 @@ func Provision(conf Config) {
 				SerialNumber: serialNumber,
 				Subject: pkix.Name{
 					Organization:       []string{"Mainflux"},
-					CommonName:         thing.Key,
+					CommonName:         things[i].Key,
 					OrganizationalUnit: []string{"mainflux"},
 				},
 				NotBefore: notBefore,
@@ -204,7 +208,7 @@ func Provision(conf Config) {
 		}
 
 		// Print output
-		fmt.Printf("[[things]]\nthing_id = \"%s\"\nthing_key = \"%s\"\n", tid, thing.Key)
+		fmt.Printf("[[things]]\nthing_id = \"%s\"\nthing_key = \"%s\"\n", things[i].ID, things[i].Key)
 		if conf.SSL {
 			fmt.Printf("mtls_cert = \"\"\"%s\"\"\"\n", cert)
 			fmt.Printf("mtls_key = \"\"\"%s\"\"\"\n", key)

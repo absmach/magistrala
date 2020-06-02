@@ -34,6 +34,15 @@ var (
 
 	// ErrCreateChannels indicates error in creating Channel
 	ErrCreateChannels = errors.New("create channel failed")
+
+	// ErrRemoveThing indicates error in removing Thing
+	ErrRemoveThing = errors.New("remove thing failed")
+
+	// ErrRemoveChannel indicates error in removing Channel
+	ErrRemoveChannel = errors.New("remove channel failed")
+
+	// ErrDisconnect indicates error in removing connection
+	ErrDisconnect = errors.New("remove connection failed")
 )
 
 // Service specifies an API that must be fullfiled by the domain service
@@ -224,7 +233,9 @@ func (ts *thingsService) RemoveThing(ctx context.Context, token, id string) erro
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	ts.thingCache.Remove(ctx, id)
+	if err := ts.thingCache.Remove(ctx, id); err != nil {
+		return errors.Wrap(ErrRemoveThing, err)
+	}
 	return ts.things.Remove(ctx, res.GetValue(), id)
 }
 
@@ -289,7 +300,9 @@ func (ts *thingsService) RemoveChannel(ctx context.Context, token, id string) er
 		return ErrUnauthorizedAccess
 	}
 
-	ts.channelCache.Remove(ctx, id)
+	if err := ts.channelCache.Remove(ctx, id); err != nil {
+		return errors.Wrap(ErrRemoveChannel, err)
+	}
 	return ts.channels.Remove(ctx, res.GetValue(), id)
 }
 
@@ -308,7 +321,9 @@ func (ts *thingsService) Disconnect(ctx context.Context, token, chanID, thingID 
 		return ErrUnauthorizedAccess
 	}
 
-	ts.channelCache.Disconnect(ctx, chanID, thingID)
+	if err := ts.channelCache.Disconnect(ctx, chanID, thingID); err != nil {
+		return errors.Wrap(ErrDisconnect, err)
+	}
 	return ts.channels.Disconnect(ctx, res.GetValue(), chanID, thingID)
 }
 

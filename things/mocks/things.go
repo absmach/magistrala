@@ -276,5 +276,5 @@ func (tcm *thingCacheMock) Remove(_ context.Context, id string) error {
 		}
 	}
 
-	return things.ErrNotFound
+	return nil
 }

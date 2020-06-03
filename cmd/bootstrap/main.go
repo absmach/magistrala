@@ -30,7 +30,7 @@ import (
 	api "github.com/mainflux/mainflux/bootstrap/api"
 	"github.com/mainflux/mainflux/bootstrap/postgres"
 	mflog "github.com/mainflux/mainflux/logger"
-	mfsdk "github.com/mainflux/mainflux/sdk/go"
+	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	jconfig "github.com/uber/jaeger-client-go/config"
 	"google.golang.org/grpc"

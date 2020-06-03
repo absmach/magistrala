@@ -7,7 +7,7 @@ package uuid
 import (
 	"github.com/gofrs/uuid"
 	"github.com/mainflux/mainflux/authn"
-	"github.com/mainflux/mainflux/errors"
+	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 // errGeneratingID indicates error in generating UUID

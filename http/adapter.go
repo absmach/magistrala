@@ -9,7 +9,7 @@ import (
 	"context"
 
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/messaging"
+	"github.com/mainflux/mainflux/pkg/messaging"
 )
 
 // Service specifies coap service API.

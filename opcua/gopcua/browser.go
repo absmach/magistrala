@@ -9,9 +9,9 @@ import (
 	opcuaGopcua "github.com/gopcua/opcua"
 	"github.com/gopcua/opcua/id"
 	uaGopcua "github.com/gopcua/opcua/ua"
-	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/opcua"
+	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 const maxChildrens = 4 // max browsing node children level

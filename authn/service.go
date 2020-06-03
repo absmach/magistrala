@@ -7,7 +7,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/mainflux/mainflux/errors"
+	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 const (

@@ -11,7 +11,7 @@ import (
 
 	"github.com/mainflux/mainflux/coap"
 	log "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/messaging"
+	"github.com/mainflux/mainflux/pkg/messaging"
 )
 
 var _ coap.Service = (*loggingMiddleware)(nil)

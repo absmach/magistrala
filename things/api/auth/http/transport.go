@@ -6,10 +6,11 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"github.com/mainflux/mainflux/errors"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/mainflux/mainflux/pkg/errors"
 
 	kitot "github.com/go-kit/kit/tracing/opentracing"
 	kithttp "github.com/go-kit/kit/transport/http"

@@ -13,7 +13,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/lib/pq"
-	"github.com/mainflux/mainflux/errors"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/things"
 )
 

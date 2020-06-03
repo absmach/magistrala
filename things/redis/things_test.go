@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	r "github.com/go-redis/redis"
-	"github.com/mainflux/mainflux/errors"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/things/redis"
 	"github.com/mainflux/mainflux/things/uuid"
 	"github.com/stretchr/testify/assert"

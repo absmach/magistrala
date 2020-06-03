@@ -6,8 +6,8 @@ package mocks
 import (
 	"sync"
 
+	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	"github.com/mainflux/mainflux/readers"
-	"github.com/mainflux/mainflux/transformers/senml"
 )
 
 var _ readers.MessageRepository = (*messageRepositoryMock)(nil)

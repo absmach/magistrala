@@ -6,7 +6,7 @@ package coap
 import (
 	"sync"
 
-	"github.com/mainflux/mainflux/messaging"
+	"github.com/mainflux/mainflux/pkg/messaging"
 )
 
 // Observer is used to handle CoAP subscription.

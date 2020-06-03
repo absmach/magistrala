@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/mainflux/mainflux/errors"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/provision"
 	"github.com/mainflux/mainflux/provision/mocks"
 

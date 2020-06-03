@@ -7,9 +7,9 @@ import (
 	"fmt"
 
 	"github.com/gocql/gocql"
-	"github.com/mainflux/mainflux/errors"
+	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	"github.com/mainflux/mainflux/readers"
-	"github.com/mainflux/mainflux/transformers/senml"
 )
 
 var errReadMessages = errors.New("faled to read messages from cassandra database")

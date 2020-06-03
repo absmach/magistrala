@@ -6,7 +6,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/mainflux/mainflux/errors"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/provision"
 
 	kithttp "github.com/go-kit/kit/transport/http"

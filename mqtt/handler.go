@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/messaging"
-	"github.com/mainflux/mainflux/mqtt/auth"
 	"github.com/mainflux/mainflux/mqtt/redis"
+	"github.com/mainflux/mainflux/pkg/auth"
+	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mproxy/pkg/session"
 )
 

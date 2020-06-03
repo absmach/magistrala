@@ -4,8 +4,8 @@
 package mocks
 
 import (
-	"github.com/mainflux/mainflux/errors"
-	"github.com/mainflux/mainflux/messaging"
+	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/mainflux/mainflux/pkg/messaging"
 )
 
 var _ messaging.Publisher = (*mockBroker)(nil)

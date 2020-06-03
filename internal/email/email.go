@@ -9,8 +9,8 @@ import (
 	"html/template"
 	"net/smtp"
 
-	"github.com/mainflux/mainflux/errors"
 	"github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 var (

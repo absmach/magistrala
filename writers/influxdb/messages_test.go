@@ -11,7 +11,7 @@ import (
 
 	influxdata "github.com/influxdata/influxdb/client/v2"
 	log "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/transformers/senml"
+	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	writer "github.com/mainflux/mainflux/writers/influxdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

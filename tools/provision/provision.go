@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
-	sdk "github.com/mainflux/mainflux/sdk/go"
+	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
 )
 
 const defPass = "12345678"

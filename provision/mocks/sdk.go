@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"github.com/gofrs/uuid"
-	mfSDK "github.com/mainflux/mainflux/sdk/go"
+	mfSDK "github.com/mainflux/mainflux/pkg/sdk/go"
 )
 
 const (

@@ -4,7 +4,7 @@
 package api
 
 import (
-	"github.com/mainflux/mainflux/messaging"
+	"github.com/mainflux/mainflux/pkg/messaging"
 )
 
 type publishReq struct {

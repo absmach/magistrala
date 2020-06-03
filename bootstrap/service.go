@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/errors"
-	mfsdk "github.com/mainflux/mainflux/sdk/go"
+	"github.com/mainflux/mainflux/pkg/errors"
+	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
 )
 
 var (

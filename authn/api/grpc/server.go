@@ -8,7 +8,7 @@ import (
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	mainflux "github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/authn"
-	"github.com/mainflux/mainflux/errors"
+	"github.com/mainflux/mainflux/pkg/errors"
 	opentracing "github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"

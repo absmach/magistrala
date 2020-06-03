@@ -6,7 +6,7 @@ package readers
 import (
 	"errors"
 
-	"github.com/mainflux/mainflux/transformers/senml"
+	"github.com/mainflux/mainflux/pkg/transformers/senml"
 )
 
 // ErrNotFound indicates that requested entity doesn't exist.

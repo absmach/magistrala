@@ -6,7 +6,7 @@ package uuid
 
 import (
 	"github.com/gofrs/uuid"
-	"github.com/mainflux/mainflux/errors"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/things"
 )
 

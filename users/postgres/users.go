@@ -9,7 +9,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 
-	"github.com/mainflux/mainflux/errors"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/users"
 )
 

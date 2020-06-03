@@ -12,7 +12,7 @@ import (
 
 	"github.com/mainflux/mainflux/http"
 	log "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/messaging"
+	"github.com/mainflux/mainflux/pkg/messaging"
 )
 
 var _ http.Service = (*loggingMiddleware)(nil)

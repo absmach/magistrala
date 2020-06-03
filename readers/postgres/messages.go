@@ -14,7 +14,7 @@ import (
 
 const errInvalid = "invalid_text_representation"
 
-var errReadMessages = errors.New("faled to read messages from postgres database")
+var errReadMessages = errors.New("failed to read messages from postgres database")
 
 var _ readers.MessageRepository = (*postgresRepository)(nil)
 

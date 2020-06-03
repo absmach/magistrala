@@ -12,7 +12,7 @@ import (
 	"github.com/mainflux/mainflux/readers"
 )
 
-var errReadMessages = errors.New("faled to read messages from cassandra database")
+var errReadMessages = errors.New("failed to read messages from cassandra database")
 
 var _ readers.MessageRepository = (*cassandraRepository)(nil)
 

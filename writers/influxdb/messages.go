@@ -17,7 +17,7 @@ import (
 
 const pointName = "messages"
 
-var errSaveMessage = errors.New("faled to save message to influxdb database")
+var errSaveMessage = errors.New("failed to save message to influxdb database")
 
 var _ writers.MessageRepository = (*influxRepo)(nil)
 

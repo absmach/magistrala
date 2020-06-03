@@ -19,7 +19,7 @@ const (
 
 var (
 	errDecode    = errors.New("failed to decode senml")
-	errNormalize = errors.New("faled to normalize senml")
+	errNormalize = errors.New("failed to normalize senml")
 )
 
 var formats = map[string]senml.Format{

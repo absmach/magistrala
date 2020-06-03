@@ -16,7 +16,7 @@ import (
 
 const collection = "mainflux"
 
-var errReadMessages = errors.New("faled to read messages from mongodb database")
+var errReadMessages = errors.New("failed to read messages from mongodb database")
 
 var _ readers.MessageRepository = (*mongoRepository)(nil)
 

@@ -10,7 +10,7 @@ import (
 	"github.com/mainflux/mainflux/writers"
 )
 
-var errSaveMessage = errors.New("faled to save message to cassandra database")
+var errSaveMessage = errors.New("failed to save message to cassandra database")
 
 var _ writers.MessageRepository = (*cassandraRepository)(nil)
 

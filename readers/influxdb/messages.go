@@ -17,7 +17,7 @@ import (
 
 const countCol = "count"
 
-var errReadMessages = errors.New("faled to read messages from influxdb database")
+var errReadMessages = errors.New("failed to read messages from influxdb database")
 
 var _ readers.MessageRepository = (*influxRepository)(nil)
 

@@ -15,7 +15,7 @@ import (
 
 const collectionName string = "mainflux"
 
-var errSaveMessage = errors.New("faled to save message to mongodb database")
+var errSaveMessage = errors.New("failed to save message to mongodb database")
 
 var _ writers.MessageRepository = (*mongoRepo)(nil)
 

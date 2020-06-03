@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
+	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/things"
 	httpapi "github.com/mainflux/mainflux/things/api/things/http"
 	"github.com/mainflux/mainflux/things/mocks"
@@ -46,9 +47,9 @@ func newThingsService(tokens map[string]string) things.Service {
 	channelsRepo := mocks.NewChannelRepository(thingsRepo, conns)
 	chanCache := mocks.NewChannelCache()
 	thingCache := mocks.NewThingCache()
-	idp := mocks.NewIdentityProvider()
+	uuidProvider := uuid.NewMock()
 
-	return things.New(auth, thingsRepo, channelsRepo, chanCache, thingCache, idp)
+	return things.New(auth, thingsRepo, channelsRepo, chanCache, thingCache, uuidProvider)
 }
 
 func newThingsServer(svc things.Service) *httptest.Server {

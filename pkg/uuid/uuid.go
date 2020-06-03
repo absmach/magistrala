@@ -6,23 +6,23 @@ package uuid
 
 import (
 	"github.com/gofrs/uuid"
+	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/things"
 )
 
 // ErrGeneratingID indicates error in generating UUID
 var ErrGeneratingID = errors.New("generating id failed")
 
-var _ things.IdentityProvider = (*uuidIdentityProvider)(nil)
+var _ mainflux.UUIDProvider = (*uuidProvider)(nil)
 
-type uuidIdentityProvider struct{}
+type uuidProvider struct{}
 
-// New instantiates a UUID identity provider.
-func New() things.IdentityProvider {
-	return &uuidIdentityProvider{}
+// New instantiates a UUID provider.
+func New() mainflux.UUIDProvider {
+	return &uuidProvider{}
 }
 
-func (idp *uuidIdentityProvider) ID() (string, error) {
+func (up *uuidProvider) ID() (string, error) {
 	id, err := uuid.NewV4()
 	if err != nil {
 		return "", errors.Wrap(ErrGeneratingID, err)

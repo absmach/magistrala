@@ -135,18 +135,18 @@ type thingsService struct {
 	channels     ChannelRepository
 	channelCache ChannelCache
 	thingCache   ThingCache
-	idp          IdentityProvider
+	uuidProvider mainflux.UUIDProvider
 }
 
 // New instantiates the things service implementation.
-func New(auth mainflux.AuthNServiceClient, things ThingRepository, channels ChannelRepository, ccache ChannelCache, tcache ThingCache, idp IdentityProvider) Service {
+func New(auth mainflux.AuthNServiceClient, things ThingRepository, channels ChannelRepository, ccache ChannelCache, tcache ThingCache, up mainflux.UUIDProvider) Service {
 	return &thingsService{
 		auth:         auth,
 		things:       things,
 		channels:     channels,
 		channelCache: ccache,
 		thingCache:   tcache,
-		idp:          idp,
+		uuidProvider: up,
 	}
 }
 
@@ -157,7 +157,7 @@ func (ts *thingsService) CreateThings(ctx context.Context, token string, things 
 	}
 
 	for i := range things {
-		things[i].ID, err = ts.idp.ID()
+		things[i].ID, err = ts.uuidProvider.ID()
 		if err != nil {
 			return []Thing{}, errors.Wrap(ErrCreateThings, err)
 		}
@@ -165,7 +165,7 @@ func (ts *thingsService) CreateThings(ctx context.Context, token string, things 
 		things[i].Owner = res.GetValue()
 
 		if things[i].Key == "" {
-			things[i].Key, err = ts.idp.ID()
+			things[i].Key, err = ts.uuidProvider.ID()
 			if err != nil {
 				return []Thing{}, errors.Wrap(ErrCreateThings, err)
 			}
@@ -246,7 +246,7 @@ func (ts *thingsService) CreateChannels(ctx context.Context, token string, chann
 	}
 
 	for i := range channels {
-		channels[i].ID, err = ts.idp.ID()
+		channels[i].ID, err = ts.uuidProvider.ID()
 		if err != nil {
 			return []Channel{}, errors.Wrap(ErrCreateChannels, err)
 		}

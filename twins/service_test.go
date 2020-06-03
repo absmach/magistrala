@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/twins"
 	"github.com/mainflux/mainflux/twins/mocks"
 	"github.com/mainflux/senml"
@@ -16,13 +17,12 @@ import (
 )
 
 const (
-	twinName   = "name"
-	wrongID    = ""
-	token      = "token"
-	wrongToken = "wrong-token"
-	email      = "user@example.com"
-	natsURL    = "nats://localhost:4222"
-
+	twinName      = "name"
+	wrongID       = ""
+	token         = "token"
+	wrongToken    = "wrong-token"
+	email         = "user@example.com"
+	natsURL       = "nats://localhost:4222"
 	attrName1     = "temperature"
 	attrSubtopic1 = "engine"
 	attrName2     = "humidity"
@@ -31,6 +31,16 @@ const (
 	attrSubtopic3 = "wheel_2"
 	numRecs       = 100
 )
+
+func newService(tokens map[string]string) twins.Service {
+	auth := mocks.NewAuthNServiceClient(tokens)
+	twinsRepo := mocks.NewTwinRepository()
+	statesRepo := mocks.NewStateRepository()
+	uuidProvider := uuid.NewMock()
+	subs := map[string]string{"chanID": "chanID"}
+	broker := mocks.NewBroker(subs)
+	return twins.New(broker, auth, twinsRepo, statesRepo, uuidProvider, "chanID", nil)
+}
 
 func TestAddTwin(t *testing.T) {
 	svc := mocks.NewService(map[string]string{token: email})

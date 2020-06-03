@@ -35,7 +35,7 @@ import (
 	"github.com/mainflux/mainflux/things/postgres"
 	rediscache "github.com/mainflux/mainflux/things/redis"
 	localusers "github.com/mainflux/mainflux/things/users"
-	"github.com/mainflux/mainflux/things/uuid"
+	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	jconfig "github.com/uber/jaeger-client-go/config"
 	"google.golang.org/grpc"
@@ -315,9 +315,9 @@ func newService(auth mainflux.AuthNServiceClient, dbTracer opentracing.Tracer, c
 
 	thingCache := rediscache.NewThingCache(cacheClient)
 	thingCache = tracing.ThingCacheMiddleware(cacheTracer, thingCache)
-	idp := uuid.New()
+	up := uuidProvider.New()
 
-	svc := things.New(auth, thingsRepo, channelsRepo, chanCache, thingCache, idp)
+	svc := things.New(auth, thingsRepo, channelsRepo, chanCache, thingCache, up)
 	svc = rediscache.NewEventStoreMiddleware(svc, esClient)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(

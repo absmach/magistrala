@@ -383,7 +383,6 @@ func (m *dbMetadata) Scan(value interface{}) error {
 	}
 
 	if err := json.Unmarshal(b, m); err != nil {
-		m = &dbMetadata{}
 		return err
 	}
 

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/twins"
 )
 
@@ -107,7 +108,7 @@ func (trm *twinRepositoryMock) RetrieveAll(_ context.Context, owner string, offs
 		if !strings.HasPrefix(k, owner) {
 			continue
 		}
-		suffix := string(v.ID[len(u4Pref):])
+		suffix := string(v.ID[len(uuid.Prefix):])
 		id, _ := strconv.ParseUint(suffix, 10, 64)
 		if id > offset && id <= offset+limit {
 			items = append(items, v)

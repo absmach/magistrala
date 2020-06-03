@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux/pkg/messaging"
+	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/twins"
-	"github.com/mainflux/mainflux/twins/uuid"
 	"github.com/mainflux/senml"
 )
 
@@ -19,10 +19,10 @@ func NewService(tokens map[string]string) twins.Service {
 	auth := NewAuthNServiceClient(tokens)
 	twinsRepo := NewTwinRepository()
 	statesRepo := NewStateRepository()
-	idp := NewIdentityProvider()
+	uuidProvider := uuid.NewMock()
 	subs := map[string]string{"chanID": "chanID"}
 	broker := NewBroker(subs)
-	return twins.New(broker, auth, twinsRepo, statesRepo, idp, "chanID", nil)
+	return twins.New(broker, auth, twinsRepo, statesRepo, uuidProvider, "chanID", nil)
 }
 
 // CreateDefinition creates twin definition

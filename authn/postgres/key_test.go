@@ -11,8 +11,8 @@ import (
 
 	"github.com/mainflux/mainflux/authn"
 	"github.com/mainflux/mainflux/authn/postgres"
-	"github.com/mainflux/mainflux/authn/uuid"
 	"github.com/mainflux/mainflux/pkg/errors"
+	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/assert"
 )
@@ -23,8 +23,7 @@ func TestKeySave(t *testing.T) {
 
 	email := "user-save@example.com"
 	expTime := time.Now().Add(5 * time.Minute)
-	idp := uuid.New()
-	id, _ := idp.ID()
+	id, _ := uuidProvider.New().ID()
 	cases := []struct {
 		desc string
 		key  authn.Key
@@ -64,8 +63,7 @@ func TestKeyRetrieve(t *testing.T) {
 
 	email := "user-save@example.com"
 	expTime := time.Now().Add(5 * time.Minute)
-	idp := uuid.New()
-	id, _ := idp.ID()
+	id, _ := uuidProvider.New().ID()
 	key := authn.Key{
 		Issuer:    email,
 		IssuedAt:  time.Now(),
@@ -112,8 +110,7 @@ func TestKeyRemove(t *testing.T) {
 
 	email := "user-save@example.com"
 	expTime := time.Now().Add(5 * time.Minute)
-	idp := uuid.New()
-	id, _ := idp.ID()
+	id, _ := uuidProvider.New().ID()
 	key := authn.Key{
 		Issuer:    email,
 		IssuedAt:  time.Now(),

@@ -90,27 +90,27 @@ var crudOp = map[string]string{
 }
 
 type twinsService struct {
-	publisher messaging.Publisher
-	auth      mainflux.AuthNServiceClient
-	twins     TwinRepository
-	states    StateRepository
-	idp       IdentityProvider
-	channelID string
-	logger    logger.Logger
+	publisher    messaging.Publisher
+	auth         mainflux.AuthNServiceClient
+	twins        TwinRepository
+	states       StateRepository
+	uuidProvider mainflux.UUIDProvider
+	channelID    string
+	logger       logger.Logger
 }
 
 var _ Service = (*twinsService)(nil)
 
 // New instantiates the twins service implementation.
-func New(publisher messaging.Publisher, auth mainflux.AuthNServiceClient, twins TwinRepository, sr StateRepository, idp IdentityProvider, chann string, logger logger.Logger) Service {
+func New(publisher messaging.Publisher, auth mainflux.AuthNServiceClient, twins TwinRepository, sr StateRepository, up mainflux.UUIDProvider, chann string, logger logger.Logger) Service {
 	return &twinsService{
-		publisher: publisher,
-		auth:      auth,
-		twins:     twins,
-		states:    sr,
-		idp:       idp,
-		channelID: chann,
-		logger:    logger,
+		publisher:    publisher,
+		auth:         auth,
+		twins:        twins,
+		states:       sr,
+		uuidProvider: up,
+		channelID:    chann,
+		logger:       logger,
 	}
 }
 
@@ -124,7 +124,7 @@ func (ts *twinsService) AddTwin(ctx context.Context, token string, twin Twin, de
 		return Twin{}, ErrUnauthorizedAccess
 	}
 
-	twin.ID, err = ts.idp.ID()
+	twin.ID, err = ts.uuidProvider.ID()
 	if err != nil {
 		return Twin{}, err
 	}

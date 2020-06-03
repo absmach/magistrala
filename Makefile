@@ -1,6 +1,7 @@
 # Copyright (c) Mainflux
 # SPDX-License-Identifier: Apache-2.0
 
+MF_DOCKER_IMAGE_NAME_PREFIX ?= mainflux
 BUILD_DIR = build
 SERVICES = users things http coap lora influxdb-writer influxdb-reader mongodb-writer \
 	mongodb-reader cassandra-writer cassandra-reader postgres-writer postgres-reader cli \
@@ -22,7 +23,7 @@ define make_docker
 		--build-arg SVC=$(svc) \
 		--build-arg GOARCH=$(GOARCH) \
 		--build-arg GOARM=$(GOARM) \
-		--tag=mainflux/$(svc) \
+		--tag=$(MF_DOCKER_IMAGE_NAME_PREFIX)/$(svc) \
 		-f docker/Dockerfile .
 endef
 
@@ -32,7 +33,7 @@ define make_docker_dev
 	docker build \
 		--no-cache \
 		--build-arg SVC=$(svc) \
-		--tag=mainflux/$(svc) \
+		--tag=$(MF_DOCKER_IMAGE_NAME_PREFIX)/$(svc) \
 		-f docker/Dockerfile.dev ./build
 endef
 
@@ -47,20 +48,20 @@ cleandocker:
 	# Stop all containers (if running)
 	docker-compose -f docker/docker-compose.yml stop
 	# Remove mainflux containers
-	docker ps -f name=mainflux -aq | xargs -r docker rm
+	docker ps -f name=$(MF_DOCKER_IMAGE_NAME_PREFIX) -aq | xargs -r docker rm
 
 	# Remove exited containers
-	docker ps -f name=mainflux -f status=dead -f status=exited -aq | xargs -r docker rm -v
+	docker ps -f name=$(MF_DOCKER_IMAGE_NAME_PREFIX) -f status=dead -f status=exited -aq | xargs -r docker rm -v
 
 	# Remove unused images
-	docker images "mainflux\/*" -f dangling=true -q | xargs -r docker rmi
+	docker images "$(MF_DOCKER_IMAGE_NAME_PREFIX)\/*" -f dangling=true -q | xargs -r docker rmi
 
 	# Remove old mainflux images
-	docker images -q mainflux\/* | xargs -r docker rmi
+	docker images -q "$(MF_DOCKER_IMAGE_NAME_PREFIX)\/*" | xargs -r docker rmi
 
 ifdef pv
 	# Remove unused volumes
-	docker volume ls -f name=mainflux -f dangling=true -q | xargs -r docker volume rm
+	docker volume ls -f name=$(MF_DOCKER_IMAGE_NAME_PREFIX) -f dangling=true -q | xargs -r docker volume rm
 endif
 
 install:
@@ -87,7 +88,7 @@ dockers_dev: $(DOCKERS_DEV)
 
 define docker_push
 	for svc in $(SERVICES); do \
-		docker push mainflux/$$svc:$(1); \
+		docker push $(MF_DOCKER_IMAGE_NAME_PREFIX)/$$svc:$(1); \
 	done
 endef
 
@@ -102,7 +103,7 @@ release:
 	git checkout $(version)
 	$(MAKE) dockers
 	for svc in $(SERVICES); do \
-		docker tag mainflux/$$svc mainflux/$$svc:$(version); \
+		docker tag $(MF_DOCKER_IMAGE_NAME_PREFIX)/$$svc $(MF_DOCKER_IMAGE_NAME_PREFIX)/$$svc:$(version); \
 	done
 	$(call docker_push,$(version))
 

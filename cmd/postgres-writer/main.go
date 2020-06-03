@@ -34,7 +34,7 @@ const (
 	defDBPort          = "5432"
 	defDBUser          = "mainflux"
 	defDBPass          = "mainflux"
-	defDB              = "messages"
+	defDB              = "mainflux"
 	defDBSSLMode       = "disable"
 	defDBSSLCert       = ""
 	defDBSSLKey        = ""

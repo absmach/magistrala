@@ -33,7 +33,7 @@ const (
 	defLogLevel        = "error"
 	defPort            = "8180"
 	defCluster         = "127.0.0.1"
-	defKeyspace        = "messages"
+	defKeyspace        = "mainflux"
 	defDBUser          = "mainflux"
 	defDBPass          = "mainflux"
 	defDBPort          = "9042"

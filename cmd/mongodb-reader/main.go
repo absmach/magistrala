@@ -35,7 +35,7 @@ import (
 const (
 	defLogLevel          = "error"
 	defPort              = "8180"
-	defDB                = "messages"
+	defDB                = "mainflux"
 	defDBHost            = "localhost"
 	defDBPort            = "27017"
 	defClientTLS         = "false"

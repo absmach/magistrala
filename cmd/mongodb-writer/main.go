@@ -31,7 +31,7 @@ const (
 	defLogLevel        = "error"
 	defNatsURL         = "nats://localhost:4222"
 	defPort            = "8180"
-	defDB              = "messages"
+	defDB              = "mainflux"
 	defDBHost          = "localhost"
 	defDBPort          = "27017"
 	defSubjectsCfgPath = "/config/subjects.toml"

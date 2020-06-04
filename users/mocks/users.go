@@ -60,7 +60,7 @@ func (urm *userRepositoryMock) UpdateUser(ctx context.Context, user users.User) 
 	return nil
 }
 
-func (urm *userRepositoryMock) RetrieveByID(ctx context.Context, email string) (users.User, error) {
+func (urm *userRepositoryMock) RetrieveByEmail(ctx context.Context, email string) (users.User, error) {
 	urm.mu.Lock()
 	defer urm.mu.Unlock()
 

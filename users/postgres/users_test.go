@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/users"
 	"github.com/mainflux/mainflux/users/postgres"
 	"github.com/stretchr/testify/assert"
@@ -18,6 +19,9 @@ import (
 func TestUserSave(t *testing.T) {
 	email := "user-save@example.com"
 
+	uid, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
 	cases := []struct {
 		desc string
 		user users.User
@@ -26,6 +30,7 @@ func TestUserSave(t *testing.T) {
 		{
 			desc: "new user",
 			user: users.User{
+				ID:       uid,
 				Email:    email,
 				Password: "pass",
 			},
@@ -34,6 +39,7 @@ func TestUserSave(t *testing.T) {
 		{
 			desc: "duplicate user",
 			user: users.User{
+				ID:       uid,
 				Email:    email,
 				Password: "pass",
 			},
@@ -51,14 +57,21 @@ func TestUserSave(t *testing.T) {
 }
 
 func TestSingleUserRetrieval(t *testing.T) {
-	email := "user-retrieval@example.com"
-
 	dbMiddleware := postgres.NewDatabase(db)
 	repo := postgres.New(dbMiddleware)
-	err := repo.Save(context.Background(), users.User{
+
+	email := "user-retrieval@example.com"
+
+	uid, err := uuid.New().ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
+	user := users.User{
+		ID:       uid,
 		Email:    email,
 		Password: "pass",
-	})
+	}
+
+	err = repo.Save(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := map[string]struct {
@@ -70,7 +83,7 @@ func TestSingleUserRetrieval(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		_, err := repo.RetrieveByID(context.Background(), tc.email)
+		_, err := repo.RetrieveByEmail(context.Background(), tc.email)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }

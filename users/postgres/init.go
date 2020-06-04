@@ -49,9 +49,8 @@ func migrateDB(db *sqlx.DB) error {
 				Id: "users_1",
 				Up: []string{
 					`CREATE TABLE IF NOT EXISTS users (
-						email	 VARCHAR(254) PRIMARY KEY,
-						password CHAR(60)	  NOT NULL
-					)`,
+					email VARCHAR(254) PRIMARY KEY,
+					password CHAR(60) NOT NULL)`,
 				},
 				Down: []string{"DROP TABLE users"},
 			},
@@ -59,6 +58,14 @@ func migrateDB(db *sqlx.DB) error {
 				Id: "users_2",
 				Up: []string{
 					`ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS metadata JSONB`,
+				},
+			},
+			{
+				Id: "users_3",
+				Up: []string{
+					`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+					ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS
+					id UUID DEFAULT uuid_generate_v4()`,
 				},
 			},
 		},

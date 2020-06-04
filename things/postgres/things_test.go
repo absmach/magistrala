@@ -127,7 +127,9 @@ func TestThingUpdate(t *testing.T) {
 		Key:   thkey,
 	}
 
-	sths, _ := thingRepo.Save(context.Background(), thing)
+	sths, err := thingRepo.Save(context.Background(), thing)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+
 	thing.ID = sths[0].ID
 
 	nonexistentThingID, err := uuidProvider.New().ID()

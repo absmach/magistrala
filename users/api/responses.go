@@ -11,7 +11,7 @@ import (
 
 var (
 	_ mainflux.Response = (*tokenRes)(nil)
-	_ mainflux.Response = (*identityRes)(nil)
+	_ mainflux.Response = (*viewUserRes)(nil)
 	_ mainflux.Response = (*passwChangeRes)(nil)
 )
 
@@ -48,20 +48,21 @@ func (res updateUserRes) Empty() bool {
 	return true
 }
 
-type identityRes struct {
+type viewUserRes struct {
+	ID       string                 `json:"id"`
 	Email    string                 `json:"email"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
-func (res identityRes) Code() int {
+func (res viewUserRes) Code() int {
 	return http.StatusOK
 }
 
-func (res identityRes) Headers() map[string]string {
+func (res viewUserRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res identityRes) Empty() bool {
+func (res viewUserRes) Empty() bool {
 	return false
 }
 

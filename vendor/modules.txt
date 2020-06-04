@@ -179,7 +179,7 @@ github.com/lib/pq/oid
 github.com/lib/pq/scram
 # github.com/magiconair/properties v1.8.1
 github.com/magiconair/properties
-# github.com/mainflux/mproxy v0.2.1-0.20200603122422-b08e1fa2cf5c
+# github.com/mainflux/mproxy v0.2.1
 github.com/mainflux/mproxy/pkg/mqtt
 github.com/mainflux/mproxy/pkg/session
 github.com/mainflux/mproxy/pkg/websocket
@@ -398,7 +398,7 @@ gonum.org/v1/gonum/lapack/gonum
 gonum.org/v1/gonum/lapack/lapack64
 gonum.org/v1/gonum/mat
 gonum.org/v1/gonum/stat
-# google.golang.org/genproto v0.0.0-20200603110839-e855014d5736
+# google.golang.org/genproto v0.0.0-20200604104852-0b0486081ffb
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.29.1
 google.golang.org/grpc

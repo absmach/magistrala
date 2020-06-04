@@ -9,6 +9,7 @@ import (
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/authn"
 	"github.com/mainflux/mainflux/pkg/errors"
+	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
 )
 
 var (
@@ -31,20 +32,23 @@ var (
 	ErrUserNotFound = errors.New("non-existent user")
 
 	// ErrScanMetadata indicates problem with metadata in db.
-	ErrScanMetadata = errors.New("Failed to scan metadata")
+	ErrScanMetadata = errors.New("failed to scan metadata")
 
 	// ErrMissingEmail indicates missing email for password reset request.
 	ErrMissingEmail = errors.New("missing email for password reset")
 
 	// ErrMissingResetToken indicates malformed or missing reset token
 	// for reseting password.
-	ErrMissingResetToken = errors.New("error missing reset token")
+	ErrMissingResetToken = errors.New("missing reset token")
 
 	// ErrRecoveryToken indicates error in generating password recovery token.
-	ErrRecoveryToken = errors.New("error generating password recovery token")
+	ErrRecoveryToken = errors.New("failed to generate password recovery token")
 
 	// ErrGetToken indicates error in getting signed token.
-	ErrGetToken = errors.New("Get signed token failed")
+	ErrGetToken = errors.New("failed to fetch signed token")
+
+	// ErrCreateUser indicates error in creating User
+	ErrCreateUser = errors.New("failed to create user")
 )
 
 // Service specifies an API that must be fullfiled by the domain service
@@ -59,8 +63,8 @@ type Service interface {
 	// identified by the non-nil error values in the response.
 	Login(ctx context.Context, user User) (string, error)
 
-	// Get authenticated user info for the given token.
-	UserInfo(ctx context.Context, token string) (User, error)
+	// ViewUser authenticated user info for the given token.
+	ViewUser(ctx context.Context, token string) (User, error)
 
 	// UpdateUser updates the user metadata.
 	UpdateUser(ctx context.Context, token string, user User) error
@@ -106,11 +110,18 @@ func (svc usersService) Register(ctx context.Context, user User) error {
 	}
 
 	user.Password = hash
+
+	uid, err := uuidProvider.New().ID()
+	if err != nil {
+		return errors.Wrap(ErrCreateUser, err)
+	}
+	user.ID = uid
+
 	return svc.users.Save(ctx, user)
 }
 
 func (svc usersService) Login(ctx context.Context, user User) (string, error) {
-	dbUser, err := svc.users.RetrieveByID(ctx, user.Email)
+	dbUser, err := svc.users.RetrieveByEmail(ctx, user.Email)
 	if err != nil {
 		return "", errors.Wrap(ErrUnauthorizedAccess, err)
 	}
@@ -122,19 +133,20 @@ func (svc usersService) Login(ctx context.Context, user User) (string, error) {
 	return svc.issue(ctx, dbUser.Email, authn.UserKey)
 }
 
-func (svc usersService) UserInfo(ctx context.Context, token string) (User, error) {
-	id, err := svc.identify(ctx, token)
+func (svc usersService) ViewUser(ctx context.Context, token string) (User, error) {
+	email, err := svc.identify(ctx, token)
 	if err != nil {
 		return User{}, err
 	}
 
-	dbUser, err := svc.users.RetrieveByID(ctx, id)
+	dbUser, err := svc.users.RetrieveByEmail(ctx, email)
 	if err != nil {
 		return User{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
 	return User{
-		Email:    id,
+		ID:       dbUser.ID,
+		Email:    email,
 		Password: "",
 		Metadata: dbUser.Metadata,
 	}, nil
@@ -155,7 +167,7 @@ func (svc usersService) UpdateUser(ctx context.Context, token string, u User) er
 }
 
 func (svc usersService) GenerateResetToken(ctx context.Context, email, host string) error {
-	user, err := svc.users.RetrieveByID(ctx, email)
+	user, err := svc.users.RetrieveByEmail(ctx, email)
 	if err != nil || user.Email == "" {
 		return ErrUserNotFound
 	}
@@ -173,7 +185,7 @@ func (svc usersService) ResetPassword(ctx context.Context, resetToken, password 
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	u, err := svc.users.RetrieveByID(ctx, email)
+	u, err := svc.users.RetrieveByEmail(ctx, email)
 	if err != nil || u.Email == "" {
 		return ErrUserNotFound
 	}
@@ -199,7 +211,7 @@ func (svc usersService) ChangePassword(ctx context.Context, authToken, password,
 		return ErrUnauthorizedAccess
 	}
 
-	u, err = svc.users.RetrieveByID(ctx, email)
+	u, err = svc.users.RetrieveByEmail(ctx, email)
 	if err != nil || u.Email == "" {
 		return ErrUserNotFound
 	}

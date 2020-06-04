@@ -47,13 +47,13 @@ func (ms *metricsMiddleware) Login(ctx context.Context, user users.User) (string
 	return ms.svc.Login(ctx, user)
 }
 
-func (ms *metricsMiddleware) UserInfo(ctx context.Context, token string) (users.User, error) {
+func (ms *metricsMiddleware) ViewUser(ctx context.Context, token string) (users.User, error) {
 	defer func(begin time.Time) {
-		ms.counter.With("method", "user_info").Add(1)
-		ms.latency.With("method", "user_info").Observe(time.Since(begin).Seconds())
+		ms.counter.With("method", "view_user").Add(1)
+		ms.latency.With("method", "view_user").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.UserInfo(ctx, token)
+	return ms.svc.ViewUser(ctx, token)
 }
 
 func (ms *metricsMiddleware) UpdateUser(ctx context.Context, token string, u users.User) (err error) {

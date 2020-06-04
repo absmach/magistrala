@@ -14,6 +14,7 @@ import (
 
 	"github.com/mainflux/mainflux/users/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const wrong string = "wrong-value"
@@ -111,33 +112,44 @@ func TestLogin(t *testing.T) {
 	}
 }
 
-func TestUserInfo(t *testing.T) {
+func TestViewUser(t *testing.T) {
 	svc := newService()
 	svc.Register(context.Background(), user)
-	key, _ := svc.Login(context.Background(), user)
+
+	token, err := svc.Login(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+
 	u := user
 	u.Password = ""
 
 	cases := map[string]struct {
-		user users.User
-		key  string
-		err  error
+		user  users.User
+		token string
+		err   error
 	}{
-		"valid token's user info":   {u, key, nil},
-		"invalid token's user info": {users.User{}, "", users.ErrUnauthorizedAccess},
+		"valid token's user info": {
+			user:  u,
+			token: token,
+			err:   nil,
+		},
+		"invalid token's user info": {
+			user:  users.User{},
+			token: "",
+			err:   users.ErrUnauthorizedAccess,
+		},
 	}
 
 	for desc, tc := range cases {
-		u, err := svc.UserInfo(context.Background(), tc.key)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected %s got %s\n", tc.err, err))
-		assert.Equal(t, tc.user, u, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.user, u))
+		_, err := svc.ViewUser(context.Background(), tc.token)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
 
 func TestUpdateUser(t *testing.T) {
 	svc := newService()
 	svc.Register(context.Background(), user)
-	key, _ := svc.Login(context.Background(), user)
+	token, err := svc.Login(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	user.Metadata = map[string]interface{}{"role": "test"}
 
@@ -146,8 +158,16 @@ func TestUpdateUser(t *testing.T) {
 		token string
 		err   error
 	}{
-		"update user with valid token":   {user, key, nil},
-		"update user with invalid token": {user, "non-existent", users.ErrUnauthorizedAccess},
+		"update user with valid token": {
+			user:  user,
+			token: token,
+			err:   nil,
+		},
+		"update user with invalid token": {
+			user:  user,
+			token: "non-existent",
+			err:   users.ErrUnauthorizedAccess,
+		},
 	}
 
 	for desc, tc := range cases {

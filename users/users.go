@@ -31,6 +31,7 @@ var (
 // User represents a Mainflux user account. Each user is identified given its
 // email and password.
 type User struct {
+	ID       string
 	Email    string
 	Password string
 	Metadata map[string]interface{}
@@ -53,16 +54,16 @@ func (u User) Validate() error {
 type UserRepository interface {
 	// Save persists the user account. A non-nil error is returned to indicate
 	// operation failure.
-	Save(context.Context, User) error
+	Save(ctx context.Context, u User) error
 
 	// Update updates the user metadata.
-	UpdateUser(context.Context, User) error
+	UpdateUser(ctx context.Context, u User) error
 
-	// RetrieveByID retrieves user by its unique identifier (i.e. email).
-	RetrieveByID(context.Context, string) (User, error)
+	// RetrieveByEmail retrieves user by its unique identifier (i.e. email).
+	RetrieveByEmail(ctx context.Context, email string) (User, error)
 
 	// UpdatePassword updates password for user with given email
-	UpdatePassword(_ context.Context, email, password string) error
+	UpdatePassword(ctx context.Context, email, password string) error
 }
 
 func isEmail(email string) bool {

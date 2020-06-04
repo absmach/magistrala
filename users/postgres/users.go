@@ -38,7 +38,7 @@ func New(db Database) users.UserRepository {
 }
 
 func (ur userRepository) Save(ctx context.Context, user users.User) error {
-	q := `INSERT INTO users (email, password, metadata) VALUES (:email, :password, :metadata)`
+	q := `INSERT INTO users (id, email, password, metadata) VALUES (:id, :email, :password, :metadata)`
 
 	dbu := toDBUser(user)
 	if _, err := ur.db.NamedExecContext(ctx, q, dbu); err != nil {
@@ -70,8 +70,8 @@ func (ur userRepository) UpdateUser(ctx context.Context, user users.User) error 
 	return nil
 }
 
-func (ur userRepository) RetrieveByID(ctx context.Context, email string) (users.User, error) {
-	q := `SELECT password, metadata FROM users WHERE email = $1`
+func (ur userRepository) RetrieveByEmail(ctx context.Context, email string) (users.User, error) {
+	q := `SELECT id, password, metadata FROM users WHERE email = $1`
 
 	dbu := dbUser{
 		Email: email,
@@ -121,7 +121,6 @@ func (m *dbMetadata) Scan(value interface{}) error {
 	}
 
 	if err := json.Unmarshal(b, m); err != nil {
-		m = &dbMetadata{}
 		return err
 	}
 
@@ -142,6 +141,7 @@ func (m dbMetadata) Value() (driver.Value, error) {
 }
 
 type dbUser struct {
+	ID       string     `db:"id"`
 	Email    string     `db:"email"`
 	Password string     `db:"password"`
 	Metadata dbMetadata `db:"metadata"`
@@ -149,6 +149,7 @@ type dbUser struct {
 
 func toDBUser(u users.User) dbUser {
 	return dbUser{
+		ID:       u.ID,
 		Email:    u.Email,
 		Password: u.Password,
 		Metadata: u.Metadata,
@@ -157,6 +158,7 @@ func toDBUser(u users.User) dbUser {
 
 func toUser(dbu dbUser) users.User {
 	return users.User{
+		ID:       dbu.ID,
 		Email:    dbu.Email,
 		Password: dbu.Password,
 		Metadata: dbu.Metadata,

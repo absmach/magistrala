@@ -83,16 +83,14 @@ func migrateDB(db *sqlx.DB) error {
 				Id: "things_2",
 				Up: []string{
 					`ALTER TABLE IF EXISTS things ALTER COLUMN
-					 metadata TYPE JSONB using metadata::text::jsonb
-					`,
+					 metadata TYPE JSONB using metadata::text::jsonb`,
 				},
 			},
 			{
 				Id: "things_3",
 				Up: []string{
 					`ALTER TABLE IF EXISTS channels ALTER COLUMN
-					 metadata TYPE JSONB using metadata::text::jsonb
-					`,
+					 metadata TYPE JSONB using metadata::text::jsonb`,
 				},
 			},
 		},

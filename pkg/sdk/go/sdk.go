@@ -75,6 +75,7 @@ var _ SDK = (*mfSDK)(nil)
 
 // User represents mainflux user its credentials.
 type User struct {
+	ID       string                 `json:"id,omitempty"`
 	Email    string                 `json:"email,omitempty"`
 	Password string                 `json:"password,omitempty"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`

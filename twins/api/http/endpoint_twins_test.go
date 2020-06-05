@@ -14,7 +14,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/twins"
 	httpapi "github.com/mainflux/mainflux/twins/api/http"
 	"github.com/mainflux/mainflux/twins/mocks"
@@ -84,24 +83,17 @@ func (tr testRequest) make() (*http.Response, error) {
 	return tr.client.Do(req)
 }
 
-func newService(tokens map[string]string) twins.Service {
-	auth := mocks.NewAuthNServiceClient(tokens)
-	twinsRepo := mocks.NewTwinRepository()
-	statesRepo := mocks.NewStateRepository()
-	subs := map[string]string{"chanID": "chanID"}
-	broker := mocks.NewBroker(subs)
-	uuidProvider := uuid.NewMock()
-	return twins.New(broker, auth, twinsRepo, statesRepo, uuidProvider, "chanID", nil)
-}
-
 func newServer(svc twins.Service) *httptest.Server {
 	mux := httpapi.MakeHandler(mocktracer.New(), svc)
 	return httptest.NewServer(mux)
 }
 
-func toJSON(data interface{}) string {
-	jsonData, _ := json.Marshal(data)
-	return string(jsonData)
+func toJSON(data interface{}) (string, error) {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return "", err
+	}
+	return string(jsonData), nil
 }
 
 func TestAddTwin(t *testing.T) {
@@ -110,10 +102,12 @@ func TestAddTwin(t *testing.T) {
 	defer ts.Close()
 
 	tw := twinReq{}
-	data := toJSON(tw)
+	data, err := toJSON(tw)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	tw.Name = invalidName
-	invalidData := toJSON(tw)
+	invalidData, err := toJSON(tw)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := []struct {
 		desc        string
@@ -218,11 +212,13 @@ func TestUpdateTwin(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	twin.Name = twinName
-	data := toJSON(twin)
+	data, err := toJSON(twin)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	tw := twin
 	tw.Name = invalidName
-	invalidData := toJSON(tw)
+	invalidData, err := toJSON(tw)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := []struct {
 		desc        string

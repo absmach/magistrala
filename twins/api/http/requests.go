@@ -7,8 +7,10 @@ import (
 	"github.com/mainflux/mainflux/twins"
 )
 
-const maxNameSize = 1024
-const maxLimitSize = 100
+const (
+	maxNameSize  = 1024
+	maxLimitSize = 100
+)
 
 type apiReq interface {
 	validate() error

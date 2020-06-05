@@ -27,17 +27,17 @@ type StatesPage struct {
 // StateRepository specifies a state persistence API.
 type StateRepository interface {
 	// Save persists the state
-	Save(context.Context, State) error
+	Save(ctx context.Context, state State) error
 
 	// Update updates the state
-	Update(context.Context, State) error
+	Update(ctx context.Context, state State) error
 
 	// Count returns the number of states related to state
-	Count(context.Context, Twin) (int64, error)
+	Count(ctx context.Context, twin Twin) (int64, error)
 
 	// RetrieveAll retrieves the subset of states related to twin specified by id
-	RetrieveAll(ctx context.Context, offset uint64, limit uint64, id string) (StatesPage, error)
+	RetrieveAll(ctx context.Context, offset uint64, limit uint64, twinID string) (StatesPage, error)
 
 	// RetrieveLast retrieves the last saved state
-	RetrieveLast(ctx context.Context, id string) (State, error)
+	RetrieveLast(ctx context.Context, twinID string) (State, error)
 }

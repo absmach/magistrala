@@ -57,22 +57,40 @@ type Page struct {
 // TwinRepository specifies a twin persistence API.
 type TwinRepository interface {
 	// Save persists the twin
-	Save(context.Context, Twin) (string, error)
+	Save(ctx context.Context, twin Twin) (string, error)
 
 	// Update performs an update to the existing twin. A non-nil error is
 	// returned to indicate operation failure.
-	Update(context.Context, Twin) error
+	Update(ctx context.Context, twin Twin) error
 
 	// RetrieveByID retrieves the twin having the provided identifier.
-	RetrieveByID(ctx context.Context, id string) (Twin, error)
+	RetrieveByID(ctx context.Context, twinID string) (Twin, error)
 
 	// RetrieveByAttribute retrieves twin ids whose definition contains
 	// the attribute with given channel and subtopic
 	RetrieveByAttribute(ctx context.Context, channel, subtopic string) ([]string, error)
 
 	// RetrieveAll retrieves the subset of twins owned by the specified user.
-	RetrieveAll(context.Context, string, uint64, uint64, string, Metadata) (Page, error)
+	RetrieveAll(ctx context.Context, owner string, offset, limit uint64, name string, metadata Metadata) (Page, error)
 
 	// Remove removes the twin having the provided identifier.
-	Remove(ctx context.Context, id string) error
+	Remove(ctx context.Context, twinID string) error
+}
+
+// TwinCache contains twin caching interface.
+type TwinCache interface {
+	// Save stores twin ID as element of channel-subtopic keyed set and vice versa.
+	Save(ctx context.Context, twin Twin) error
+
+	// SaveIDs stores twin IDs as elements of channel-subtopic keyed set and vice versa.
+	SaveIDs(ctx context.Context, channel, subtopic string, twinIDs []string) error
+
+	// Update updates update twin id and channel-subtopic attributes mapping
+	Update(ctx context.Context, twin Twin) error
+
+	// ID returns twin IDs for given attribute.
+	IDs(ctx context.Context, channel, subtopic string) ([]string, error)
+
+	// Removes twin from cache based on twin id.
+	Remove(ctx context.Context, twinID string) error
 }

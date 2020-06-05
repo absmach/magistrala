@@ -50,16 +50,16 @@ func (ms *metricsMiddleware) UpdateTwin(ctx context.Context, token string, twin 
 	return ms.svc.UpdateTwin(ctx, token, twin, def)
 }
 
-func (ms *metricsMiddleware) ViewTwin(ctx context.Context, token, id string) (viewed twins.Twin, err error) {
+func (ms *metricsMiddleware) ViewTwin(ctx context.Context, token, twinID string) (tw twins.Twin, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "view_twin").Add(1)
 		ms.latency.With("method", "view_twin").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ViewTwin(ctx, token, id)
+	return ms.svc.ViewTwin(ctx, token, twinID)
 }
 
-func (ms *metricsMiddleware) ListTwins(ctx context.Context, token string, offset uint64, limit uint64, name string, metadata twins.Metadata) (tw twins.Page, err error) {
+func (ms *metricsMiddleware) ListTwins(ctx context.Context, token string, offset uint64, limit uint64, name string, metadata twins.Metadata) (page twins.Page, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_twins").Add(1)
 		ms.latency.With("method", "list_twins").Observe(time.Since(begin).Seconds())
@@ -77,20 +77,20 @@ func (ms *metricsMiddleware) SaveStates(msg *messaging.Message) error {
 	return ms.svc.SaveStates(msg)
 }
 
-func (ms *metricsMiddleware) ListStates(ctx context.Context, token string, offset uint64, limit uint64, id string) (st twins.StatesPage, err error) {
+func (ms *metricsMiddleware) ListStates(ctx context.Context, token string, offset uint64, limit uint64, twinID string) (st twins.StatesPage, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_states").Add(1)
 		ms.latency.With("method", "list_states").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListStates(ctx, token, offset, limit, id)
+	return ms.svc.ListStates(ctx, token, offset, limit, twinID)
 }
 
-func (ms *metricsMiddleware) RemoveTwin(ctx context.Context, token, id string) (err error) {
+func (ms *metricsMiddleware) RemoveTwin(ctx context.Context, token, twinID string) (err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "remove_twin").Add(1)
 		ms.latency.With("method", "remove_twin").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.RemoveTwin(ctx, token, id)
+	return ms.svc.RemoveTwin(ctx, token, twinID)
 }

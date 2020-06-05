@@ -18,9 +18,7 @@ const (
 	retrieveLastStateOp = "retrieve_states_by_attribute"
 )
 
-var (
-	_ twins.StateRepository = (*stateRepositoryMiddleware)(nil)
-)
+var _ twins.StateRepository = (*stateRepositoryMiddleware)(nil)
 
 type stateRepositoryMiddleware struct {
 	tracer opentracing.Tracer
@@ -60,18 +58,18 @@ func (trm stateRepositoryMiddleware) Count(ctx context.Context, tw twins.Twin) (
 	return trm.repo.Count(ctx, tw)
 }
 
-func (trm stateRepositoryMiddleware) RetrieveAll(ctx context.Context, offset, limit uint64, id string) (twins.StatesPage, error) {
+func (trm stateRepositoryMiddleware) RetrieveAll(ctx context.Context, offset, limit uint64, twinID string) (twins.StatesPage, error) {
 	span := createSpan(ctx, trm.tracer, retrieveAllStatesOp)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
-	return trm.repo.RetrieveAll(ctx, offset, limit, id)
+	return trm.repo.RetrieveAll(ctx, offset, limit, twinID)
 }
 
-func (trm stateRepositoryMiddleware) RetrieveLast(ctx context.Context, id string) (twins.State, error) {
+func (trm stateRepositoryMiddleware) RetrieveLast(ctx context.Context, twinID string) (twins.State, error) {
 	span := createSpan(ctx, trm.tracer, retrieveAllStatesOp)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
-	return trm.repo.RetrieveLast(ctx, id)
+	return trm.repo.RetrieveLast(ctx, twinID)
 }

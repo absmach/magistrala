@@ -10,29 +10,26 @@ import (
 	"github.com/mainflux/senml"
 )
 
-const (
-	publisher = "twins"
-)
+const publisher = "twins"
 
 // NewService use mock dependencies to create real twins service
 func NewService(tokens map[string]string) twins.Service {
 	auth := NewAuthNServiceClient(tokens)
 	twinsRepo := NewTwinRepository()
+	twinCache := NewTwinCache()
 	statesRepo := NewStateRepository()
 	uuidProvider := uuid.NewMock()
 	subs := map[string]string{"chanID": "chanID"}
 	broker := NewBroker(subs)
-	return twins.New(broker, auth, twinsRepo, statesRepo, uuidProvider, "chanID", nil)
+	return twins.New(broker, auth, twinsRepo, twinCache, statesRepo, uuidProvider, "chanID", nil)
 }
 
 // CreateDefinition creates twin definition
-func CreateDefinition(names []string, subtopics []string) twins.Definition {
+func CreateDefinition(channels []string, subtopics []string) twins.Definition {
 	var def twins.Definition
-	for i, v := range names {
-		id, _ := uuid.New().ID()
+	for i := range channels {
 		attr := twins.Attribute{
-			Name:         v,
-			Channel:      id,
+			Channel:      channels[i],
 			Subtopic:     subtopics[i],
 			PersistState: true,
 		}
@@ -42,18 +39,12 @@ func CreateDefinition(names []string, subtopics []string) twins.Definition {
 }
 
 // CreateSenML creates SenML record array
-func CreateSenML(n int, bn string) []senml.Record {
-	var recs []senml.Record
-	for i := 0; i < n; i++ {
-		rec := senml.Record{
-			BaseName: bn,
-			BaseTime: float64(time.Now().Unix()),
-			Time:     float64(i),
-			Value:    nil,
-		}
-		recs = append(recs, rec)
+func CreateSenML(n int, recs []senml.Record) {
+	for i, rec := range recs {
+		rec.BaseTime = float64(time.Now().Unix())
+		rec.Time = float64(i)
+		rec.Value = nil
 	}
-	return recs
 }
 
 // CreateMessage creates Mainflux message using SenML record array

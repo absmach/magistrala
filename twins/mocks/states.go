@@ -92,13 +92,13 @@ func (srm *stateRepositoryMock) RetrieveAll(ctx context.Context, offset uint64, 
 }
 
 // RetrieveLast returns the last state related to twin spec by id
-func (srm *stateRepositoryMock) RetrieveLast(ctx context.Context, id string) (twins.State, error) {
+func (srm *stateRepositoryMock) RetrieveLast(ctx context.Context, twinID string) (twins.State, error) {
 	srm.mu.Lock()
 	defer srm.mu.Unlock()
 
 	items := make([]twins.State, 0)
 	for _, v := range srm.states {
-		if v.TwinID == id {
+		if v.TwinID == twinID {
 			items = append(items, v)
 		}
 	}

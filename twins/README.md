@@ -31,6 +31,10 @@ default values.
 | MF_NATS_URL                | Mainflux NATS broker URL                                             | nats://localhost:4222 |
 | MF_AUTHN_GRPC_URL          | AuthN service gRPC URL                                               | localhost:8181        |
 | MF_AUTHN_GRPC_TIMEOUT      | AuthN service gRPC request timeout in seconds                        | 1                     |
+| MF_TWINS_CACHE_URL         | Cache database URL                                                   | localhost:6379        |
+| MF_TWINS_CACHE_PASS        | Cache database password                                              |                       |
+| MF_TWINS_CACHE_DB          | Cache instance name                                                  | 0                     |
+
 
 ## Deployment
 
@@ -64,6 +68,9 @@ services:
       MF_NATS_URL: [Mainflux NATS broker URL]
       MF_AUTHN_GRPC_URL: [AuthN service gRPC URL]
       MF_AUTHN_GRPC_TIMEOUT: [AuthN service gRPC request timeout in seconds]
+      MF_TWINS_ES_URL: [Event store URL]
+      MF_TWINS_ES_PASS: [Event store password]
+      MF_TWINS_ES_DB: [Event store instance name]
 ```
 
 To start the service outside of the container, execute the following shell

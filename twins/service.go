@@ -18,9 +18,7 @@ import (
 	"github.com/mainflux/senml"
 )
 
-const (
-	publisher = "twins"
-)
+const publisher = "twins"
 
 var (
 	// ErrMalformedEntity indicates malformed entity specification (e.g.
@@ -50,11 +48,11 @@ type Service interface {
 
 	// ViewTwin retrieves data about twin with the provided
 	// ID belonging to the user identified by the provided key.
-	ViewTwin(ctx context.Context, token, id string) (tw Twin, err error)
+	ViewTwin(ctx context.Context, token, twinID string) (tw Twin, err error)
 
 	// RemoveTwin removes the twin identified with the provided ID, that
 	// belongs to the user identified by the provided key.
-	RemoveTwin(ctx context.Context, token, id string) (err error)
+	RemoveTwin(ctx context.Context, token, twinID string) (err error)
 
 	// ListTwins retrieves data about subset of twins that belongs to the
 	// user identified by the provided key.
@@ -62,7 +60,7 @@ type Service interface {
 
 	// ListStates retrieves data about subset of states that belongs to the
 	// twin identified by the id.
-	ListStates(ctx context.Context, token string, offset uint64, limit uint64, id string) (StatesPage, error)
+	ListStates(ctx context.Context, token string, offset uint64, limit uint64, twinID string) (StatesPage, error)
 
 	// SaveStates persists states into database
 	SaveStates(msg *messaging.Message) error
@@ -96,19 +94,21 @@ type twinsService struct {
 	states       StateRepository
 	uuidProvider mainflux.UUIDProvider
 	channelID    string
+	twinCache    TwinCache
 	logger       logger.Logger
 }
 
 var _ Service = (*twinsService)(nil)
 
 // New instantiates the twins service implementation.
-func New(publisher messaging.Publisher, auth mainflux.AuthNServiceClient, twins TwinRepository, sr StateRepository, up mainflux.UUIDProvider, chann string, logger logger.Logger) Service {
+func New(publisher messaging.Publisher, auth mainflux.AuthNServiceClient, twins TwinRepository, tcache TwinCache, sr StateRepository, idp mainflux.UUIDProvider, chann string, logger logger.Logger) Service {
 	return &twinsService{
 		publisher:    publisher,
 		auth:         auth,
 		twins:        twins,
+		twinCache:    tcache,
 		states:       sr,
-		uuidProvider: up,
+		uuidProvider: idp,
 		channelID:    chann,
 		logger:       logger,
 	}
@@ -154,7 +154,7 @@ func (ts *twinsService) AddTwin(ctx context.Context, token string, twin Twin, de
 	id = twin.ID
 	b, err = json.Marshal(twin)
 
-	return twin, nil
+	return twin, ts.twinCache.Save(ctx, twin)
 }
 
 func (ts *twinsService) UpdateTwin(ctx context.Context, token string, twin Twin, def Definition) (err error) {
@@ -205,19 +205,19 @@ func (ts *twinsService) UpdateTwin(ctx context.Context, token string, twin Twin,
 	id = twin.ID
 	b, err = json.Marshal(tw)
 
-	return nil
+	return ts.twinCache.Update(ctx, twin)
 }
 
-func (ts *twinsService) ViewTwin(ctx context.Context, token, id string) (tw Twin, err error) {
+func (ts *twinsService) ViewTwin(ctx context.Context, token, twinID string) (tw Twin, err error) {
 	var b []byte
-	defer ts.publish(&id, &err, crudOp["getSucc"], crudOp["getFail"], &b)
+	defer ts.publish(&twinID, &err, crudOp["getSucc"], crudOp["getFail"], &b)
 
 	_, err = ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return Twin{}, ErrUnauthorizedAccess
 	}
 
-	twin, err := ts.twins.RetrieveByID(ctx, id)
+	twin, err := ts.twins.RetrieveByID(ctx, twinID)
 	if err != nil {
 		return Twin{}, err
 	}
@@ -227,20 +227,20 @@ func (ts *twinsService) ViewTwin(ctx context.Context, token, id string) (tw Twin
 	return twin, nil
 }
 
-func (ts *twinsService) RemoveTwin(ctx context.Context, token, id string) (err error) {
+func (ts *twinsService) RemoveTwin(ctx context.Context, token, twinID string) (err error) {
 	var b []byte
-	defer ts.publish(&id, &err, crudOp["removeSucc"], crudOp["removeFail"], &b)
+	defer ts.publish(&twinID, &err, crudOp["removeSucc"], crudOp["removeFail"], &b)
 
 	_, err = ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return ErrUnauthorizedAccess
 	}
 
-	if err := ts.twins.Remove(ctx, id); err != nil {
+	if err := ts.twins.Remove(ctx, twinID); err != nil {
 		return err
 	}
 
-	return nil
+	return ts.twinCache.Remove(ctx, twinID)
 }
 
 func (ts *twinsService) ListTwins(ctx context.Context, token string, offset uint64, limit uint64, name string, metadata Metadata) (Page, error) {
@@ -252,19 +252,35 @@ func (ts *twinsService) ListTwins(ctx context.Context, token string, offset uint
 	return ts.twins.RetrieveAll(ctx, res.GetValue(), offset, limit, name, metadata)
 }
 
-func (ts *twinsService) ListStates(ctx context.Context, token string, offset uint64, limit uint64, id string) (StatesPage, error) {
+func (ts *twinsService) ListStates(ctx context.Context, token string, offset uint64, limit uint64, twinID string) (StatesPage, error) {
 	_, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return StatesPage{}, ErrUnauthorizedAccess
 	}
 
-	return ts.states.RetrieveAll(ctx, offset, limit, id)
+	return ts.states.RetrieveAll(ctx, offset, limit, twinID)
 }
 
 func (ts *twinsService) SaveStates(msg *messaging.Message) error {
-	ids, err := ts.twins.RetrieveByAttribute(context.TODO(), msg.Channel, msg.Subtopic)
+	var ids []string
+
+	ctx := context.TODO()
+	channel, subtopic := msg.Channel, msg.Subtopic
+	ids, err := ts.twinCache.IDs(ctx, channel, subtopic)
 	if err != nil {
 		return err
+	}
+	if len(ids) < 1 {
+		ids, err = ts.twins.RetrieveByAttribute(ctx, channel, subtopic)
+		if err != nil {
+			return err
+		}
+		if len(ids) < 1 {
+			return nil
+		}
+		if err := ts.twinCache.SaveIDs(ctx, channel, subtopic, ids); err != nil {
+			return err
+		}
 	}
 
 	for _, id := range ids {
@@ -276,12 +292,13 @@ func (ts *twinsService) SaveStates(msg *messaging.Message) error {
 	return nil
 }
 
-func (ts *twinsService) saveState(msg *messaging.Message, id string) error {
+func (ts *twinsService) saveState(msg *messaging.Message, twinID string) error {
 	var b []byte
 	var err error
-	defer ts.publish(&id, &err, crudOp["stateSucc"], crudOp["stateFail"], &b)
+	defer ts.publish(&twinID, &err, crudOp["stateSucc"], crudOp["stateFail"], &b)
 
-	tw, err := ts.twins.RetrieveByID(context.TODO(), id)
+	ctx := context.TODO()
+	tw, err := ts.twins.RetrieveByID(ctx, twinID)
 	if err != nil {
 		return fmt.Errorf("Retrieving twin for %s failed: %s", msg.Publisher, err)
 	}
@@ -291,7 +308,7 @@ func (ts *twinsService) saveState(msg *messaging.Message, id string) error {
 		return fmt.Errorf("Unmarshal payload for %s failed: %s", msg.Publisher, err)
 	}
 
-	st, err := ts.states.RetrieveLast(context.TODO(), tw.ID)
+	st, err := ts.states.RetrieveLast(ctx, tw.ID)
 	if err != nil {
 		return fmt.Errorf("Retrieve last state for %s failed: %s", msg.Publisher, err)
 	}
@@ -302,17 +319,17 @@ func (ts *twinsService) saveState(msg *messaging.Message, id string) error {
 		case noop:
 			return nil
 		case update:
-			if err := ts.states.Update(context.TODO(), st); err != nil {
+			if err := ts.states.Update(ctx, st); err != nil {
 				return fmt.Errorf("Update state for %s failed: %s", msg.Publisher, err)
 			}
 		case save:
-			if err := ts.states.Save(context.TODO(), st); err != nil {
+			if err := ts.states.Save(ctx, st); err != nil {
 				return fmt.Errorf("Save state for %s failed: %s", msg.Publisher, err)
 			}
 		}
 	}
 
-	id = msg.Publisher
+	twinID = msg.Publisher
 	b = msg.Payload
 
 	return nil

@@ -19,14 +19,14 @@ import (
 )
 
 const (
-	nanosec = 1e9
-
-	attrName1     = "temperature"
-	attrSubtopic1 = "engine"
-	attrName2     = "humidity"
-	attrSubtopic2 = "chassis"
-
+	nanosec   = 1e9
 	publisher = "twins"
+	numRecs   = 100
+)
+
+var (
+	subtopics = []string{"engine", "chassis", "wheel_2"}
+	channels  = []string{"01ec3c3e-0e66-4e69-9751-a0545b44e08f", "48061e4f-7c23-4f5c-9012-0f9b7cd9d18d", "5b2180e4-e96b-4469-9dc1-b6745078d0b6"}
 )
 
 type stateRes struct {
@@ -49,12 +49,13 @@ func TestListStates(t *testing.T) {
 	twin := twins.Twin{
 		Owner: email,
 	}
-	def := mocks.CreateDefinition([]string{attrName1, attrName2}, []string{attrSubtopic1, attrSubtopic2})
+	def := mocks.CreateDefinition(channels[0:2], subtopics[0:2])
 	tw, err := svc.AddTwin(context.Background(), token, twin, def)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	attr := def.Attributes[0]
 
-	recs := mocks.CreateSenML(100, attrName1)
+	var recs = make([]senml.Record, numRecs)
+	mocks.CreateSenML(numRecs, recs)
 	message, err := mocks.CreateMessage(attr, recs)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	err = svc.SaveStates(message)

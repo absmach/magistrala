@@ -56,7 +56,7 @@ const (
 	envServerCert        = "MF_MONGO_READER_SERVER_CERT"
 	envServerKey         = "MF_MONGO_READER_SERVER_KEY"
 	envJaegerURL         = "MF_JAEGER_URL"
-	envThingsAuthURL     = "MF_ThINGS_AUTH_GRPC_URL"
+	envThingsAuthURL     = "MF_THINGS_AUTH_GRPC_URL"
 	envThingsAuthTimeout = "MF_THINGS_AUTH_GRPC_TIMEOUT"
 )
 

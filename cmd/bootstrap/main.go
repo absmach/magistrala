@@ -65,7 +65,7 @@ const (
 	defESConsumerName = "bootstrap"
 	defJaegerURL      = ""
 	defAuthnURL       = "localhost:8181"
-	defAuthnTimeout   = "1" // in seconds
+	defAuthnTimeout   = "1s"
 
 	envLogLevel       = "MF_BOOTSTRAP_LOG_LEVEL"
 	envDBHost         = "MF_BOOTSTRAP_DB_HOST"
@@ -178,7 +178,7 @@ func loadConfig() config {
 		SSLRootCert: mainflux.Env(envDBSSLRootCert, defDBSSLRootCert),
 	}
 
-	timeout, err := strconv.ParseInt(mainflux.Env(envAuthnTimeout, defAuthnTimeout), 10, 64)
+	authnTimeout, err := time.ParseDuration(mainflux.Env(envAuthnTimeout, defAuthnTimeout))
 	if err != nil {
 		log.Fatalf("Invalid %s value: %s", envAuthnTimeout, err.Error())
 	}
@@ -213,7 +213,7 @@ func loadConfig() config {
 		esConsumerName: mainflux.Env(envESConsumerName, defESConsumerName),
 		jaegerURL:      mainflux.Env(envJaegerURL, defJaegerURL),
 		authnURL:       mainflux.Env(envAuthnURL, defAuthnURL),
-		authnTimeout:   time.Duration(timeout) * time.Second,
+		authnTimeout:   authnTimeout,
 	}
 }
 

@@ -39,7 +39,7 @@ const (
 	defPingPeriod        = "12"
 	defJaegerURL         = ""
 	defThingsAuthURL     = "localhost:8181"
-	defThingsAuthTimeout = "1" // in seconds
+	defThingsAuthTimeout = "1s"
 
 	envPort              = "MF_COAP_ADAPTER_PORT"
 	envNatsURL           = "MF_NATS_URL"
@@ -138,7 +138,7 @@ func loadConfig() config {
 		log.Fatalf("Value of %s must be between 1 and 24", envPingPeriod)
 	}
 
-	timeout, err := strconv.ParseInt(mainflux.Env(envThingsAuthTimeout, defThingsAuthTimeout), 10, 64)
+	authTimeout, err := time.ParseDuration(mainflux.Env(envThingsAuthTimeout, defThingsAuthTimeout))
 	if err != nil {
 		log.Fatalf("Invalid %s value: %s", envThingsAuthTimeout, err.Error())
 	}
@@ -152,7 +152,7 @@ func loadConfig() config {
 		pingPeriod:        time.Duration(pp),
 		jaegerURL:         mainflux.Env(envJaegerURL, defJaegerURL),
 		thingsAuthURL:     mainflux.Env(envThingsAuthURL, defThingsAuthURL),
-		thingsAuthTimeout: time.Duration(timeout) * time.Second,
+		thingsAuthTimeout: authTimeout,
 	}
 }
 

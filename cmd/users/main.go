@@ -66,7 +66,7 @@ const (
 	defAuthnTLS     = "false"
 	defAuthnCACerts = ""
 	defAuthnURL     = "localhost:8181"
-	defAuthnTimeout = "1" // in seconds
+	defAuthnTimeout = "1s"
 
 	envLogLevel      = "MF_USERS_LOG_LEVEL"
 	envDBHost        = "MF_USERS_DB_HOST"
@@ -157,7 +157,7 @@ func main() {
 }
 
 func loadConfig() config {
-	timeout, err := strconv.ParseInt(mainflux.Env(envAuthnTimeout, defAuthnTimeout), 10, 64)
+	authnTimeout, err := time.ParseDuration(mainflux.Env(envAuthnTimeout, defAuthnTimeout))
 	if err != nil {
 		log.Fatalf("Invalid %s value: %s", envAuthnTimeout, err.Error())
 	}
@@ -202,7 +202,7 @@ func loadConfig() config {
 		authnTLS:     tls,
 		authnCACerts: mainflux.Env(envAuthnCACerts, defAuthnCACerts),
 		authnURL:     mainflux.Env(envAuthnURL, defAuthnURL),
-		authnTimeout: time.Duration(timeout) * time.Second,
+		authnTimeout: authnTimeout,
 	}
 
 }

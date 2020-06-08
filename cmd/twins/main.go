@@ -60,7 +60,7 @@ const (
 	defChannelID       = ""
 	defNatsURL         = "nats://localhost:4222"
 	defAuthnURL        = "localhost:8181"
-	defAuthnTimeout    = "1" // in seconds
+	defAuthnTimeout    = "1s"
 
 	envLogLevel        = "MF_TWINS_LOG_LEVEL"
 	envHTTPPort        = "MF_TWINS_HTTP_PORT"
@@ -158,7 +158,7 @@ func loadConfig() config {
 		log.Fatalf("Invalid value passed for %s\n", envClientTLS)
 	}
 
-	timeout, err := strconv.ParseInt(mainflux.Env(envAuthnTimeout, defAuthnTimeout), 10, 64)
+	authnTimeout, err := time.ParseDuration(mainflux.Env(envAuthnTimeout, defAuthnTimeout))
 	if err != nil {
 		log.Fatalf("Invalid %s value: %s", envAuthnTimeout, err.Error())
 	}
@@ -186,7 +186,7 @@ func loadConfig() config {
 		channelID:       mainflux.Env(envChannelID, defChannelID),
 		natsURL:         mainflux.Env(envNatsURL, defNatsURL),
 		authnURL:        mainflux.Env(envAuthnURL, defAuthnURL),
-		authnTimeout:    time.Duration(timeout) * time.Second,
+		authnTimeout:    authnTimeout,
 	}
 }
 

@@ -64,7 +64,7 @@ The service is configured using the environment variables presented in the follo
 | MF_BOOTSTRAP_EVENT_CONSUMER   | Bootstrap service event source consumer name                            | bootstrap                        |
 | MF_JAEGER_URL                 | Jaeger server URL                                                       | localhost:6831                   |
 | MF_AUTHN_GRPC_URL             | AuthN service gRPC URL                                                  | localhost:8181                   |
-| MF_AUTHN_GRPC_TIMEOUT         | AuthN service gRPC request timeout in seconds                           | 1                                |
+| MF_AUTHN_GRPC_TIMEOUT         | AuthN service gRPC request timeout in seconds                           | 1s                                |
 
 ## Deployment
 

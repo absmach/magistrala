@@ -45,7 +45,7 @@ default values.
 | MF_THINGS_SINGLE_USER_TOKEN | User token for single user mode that should be passed in auth header   |                |
 | MF_JAEGER_URL               | Jaeger server URL                                                      | localhost:6831 |
 | MF_AUTHN_GRPC_URL           | AuthN service gRPC URL                                                 | localhost:8181 |
-| MF_AUTHN_GRPC_TIMEOUT       | AuthN service gRPC request timeout in seconds                          | 1              |
+| MF_AUTHN_GRPC_TIMEOUT       | AuthN service gRPC request timeout in seconds                          | 1s              |
 
 **Note** that if you want `things` service to have only one user locally, you should use `MF_THINGS_SINGLE_USER` env vars. By specifying these, you don't need `users` service in your deployment as it won't be used for authorization.
 

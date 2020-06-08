@@ -19,7 +19,7 @@ default values.
 | MF_COAP_ADAPTER_PING_PERIOD    | Hours between 1 and 24 to ping client with ACK message | 12                    |
 | MF_JAEGER_URL                  | Jaeger server URL                                      | localhost:6831        |
 | MF_THINGS_AUTH_GRPC_URL        | Things service Auth gRPC URL                           | localhost:8181        |
-| MF_THINGS_AUTH_GRPC_TIMEOUT    | Things service Auth gRPC request timeout in seconds    | 1                     |
+| MF_THINGS_AUTH_GRPC_TIMEOUT    | Things service Auth gRPC request timeout in seconds    | 1s                    |
 
 ## Deployment
 

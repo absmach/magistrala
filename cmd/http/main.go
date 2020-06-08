@@ -38,7 +38,7 @@ const (
 	defNatsURL           = "nats://localhost:4222"
 	defJaegerURL         = ""
 	defThingsAuthURL     = "localhost:8181"
-	defThingsAuthTimeout = "1" // in seconds
+	defThingsAuthTimeout = "1s"
 
 	envLogLevel          = "MF_HTTP_ADAPTER_LOG_LEVEL"
 	envClientTLS         = "MF_HTTP_ADAPTER_CLIENT_TLS"
@@ -129,7 +129,7 @@ func loadConfig() config {
 		log.Fatalf("Invalid value passed for %s\n", envClientTLS)
 	}
 
-	timeout, err := strconv.ParseInt(mainflux.Env(envThingsAuthTimeout, defThingsAuthTimeout), 10, 64)
+	authTimeout, err := time.ParseDuration(mainflux.Env(envThingsAuthTimeout, defThingsAuthTimeout))
 	if err != nil {
 		log.Fatalf("Invalid %s value: %s", envThingsAuthTimeout, err.Error())
 	}
@@ -142,7 +142,7 @@ func loadConfig() config {
 		caCerts:           mainflux.Env(envCACerts, defCACerts),
 		jaegerURL:         mainflux.Env(envJaegerURL, defJaegerURL),
 		thingsAuthURL:     mainflux.Env(envThingsAuthURL, defThingsAuthURL),
-		thingsAuthTimeout: time.Duration(timeout) * time.Second,
+		thingsAuthTimeout: authTimeout,
 	}
 }
 

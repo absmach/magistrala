@@ -30,7 +30,7 @@ default values.
 | MF_TWINS_CHANNEL_ID        | Mqtt notifications topic                                             |                       |
 | MF_NATS_URL                | Mainflux NATS broker URL                                             | nats://localhost:4222 |
 | MF_AUTHN_GRPC_URL          | AuthN service gRPC URL                                               | localhost:8181        |
-| MF_AUTHN_GRPC_TIMEOUT      | AuthN service gRPC request timeout in seconds                        | 1                     |
+| MF_AUTHN_GRPC_TIMEOUT      | AuthN service gRPC request timeout in seconds                        | 1s                     |
 | MF_TWINS_CACHE_URL         | Cache database URL                                                   | localhost:6379        |
 | MF_TWINS_CACHE_PASS        | Cache database password                                              |                       |
 | MF_TWINS_CACHE_DB          | Cache instance name                                                  | 0                     |

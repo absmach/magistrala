@@ -63,9 +63,9 @@ func migrateDB(db *sqlx.DB) error {
 			{
 				Id: "users_3",
 				Up: []string{
-					`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+					`CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 					ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS
-					id UUID DEFAULT uuid_generate_v4()`,
+					id UUID NOT NULL DEFAULT gen_random_uuid()`,
 				},
 			},
 		},

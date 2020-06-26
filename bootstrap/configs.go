@@ -32,7 +32,6 @@ type Channel struct {
 
 // Filter is used for the search filters.
 type Filter struct {
-	Unknown      bool
 	FullMatch    map[string]string
 	PartialMatch map[string]string
 }
@@ -84,12 +83,6 @@ type ConfigRepository interface {
 
 	// ListExisting retrieves those channels from the given list that exist in DB.
 	ListExisting(owner string, ids []string) ([]Channel, error)
-
-	// SaveUnknown saves Thing which unsuccessfully bootstrapped.
-	SaveUnknown(owner, id string) error
-
-	// RetrieveUnknown returns a subset of unsuccessfully bootstrapped Things.
-	RetrieveUnknown(offset, limit uint64) ConfigsPage
 
 	// Methods RemoveThing, UpdateChannel, and RemoveChannel are related to
 	// event sourcing. That's why these methods surpass ownership check.

@@ -83,9 +83,7 @@ paths:
             $ref: "#/definitions/BootstrapRes"
         404:
           description: |
-            Failed to retrieve corresponding config. Thing which attempted
-            to bootstrap is saved as an unknown Thing and can be listed and
-            added to the service later.
+            Failed to retrieve corresponding config.
         500:
           $ref: "#/responses/ServiceError"
   /things/bootstrap/secure/{externalId}:
@@ -107,9 +105,7 @@ paths:
             $ref: "#/definitions/BootstrapRes"
         404:
           description: |
-            Failed to retrieve corresponding config. Thing which attempted
-            to bootstrap is saved as an unknown Thing and can be listed and
-            added to the service later.
+            Failed to retrieve corresponding config. 
         500:
           $ref: "#/responses/ServiceError"
   /things/configs/{configId}:
@@ -267,31 +263,6 @@ paths:
           description: Config removed.
         400:
           description: Failed due to malformed config's ID.
-        403:
-          description: Missing or invalid access token provided.
-        500:
-          $ref: "#/responses/ServiceError"
-  /things/unknown/configs:
-    get:
-      summary: Get a list of unsuccessfully bootstrapped Things
-      description: |
-        Retrieves a list of unknown configs. Due to performance concerns, data
-        is retrieved in subsets. The API configs must ensure that the entire
-        dataset is consumed either by making subsequent requests, or by
-        increasing the subset size of the initial request.
-      tags:
-        - configs
-      parameters:
-        - $ref: "#/parameters/Authorization"
-        - $ref: "#/parameters/Limit"
-        - $ref: "#/parameters/Offset"
-      responses:
-        200:
-          description: Data retrieved.
-          schema:
-            $ref: "#/definitions/ConfigList"
-        400:
-          description: Failed due to malformed query parameters.
         403:
           description: Missing or invalid access token provided.
         500:

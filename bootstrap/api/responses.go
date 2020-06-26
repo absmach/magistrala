@@ -89,27 +89,6 @@ func (res viewRes) Empty() bool {
 	return false
 }
 
-type unknownRes struct {
-	ExternalID  string `json:"external_id"`
-	ExternalKey string `json:"external_key,omitempty"`
-}
-
-type listUnknownRes struct {
-	Configs []unknownRes `json:"configs"`
-}
-
-func (res listUnknownRes) Code() int {
-	return http.StatusOK
-}
-
-func (res listUnknownRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res listUnknownRes) Empty() bool {
-	return false
-}
-
 type listRes struct {
 	Total   uint64    `json:"total"`
 	Offset  uint64    `json:"offset"`

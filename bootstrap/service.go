@@ -36,13 +36,15 @@ var (
 	// ErrExternalKeyNotFound indicates a non-existent bootstrap configuration for given external key
 	ErrExternalKeyNotFound = errors.New("failed to get bootstrap configuration for given external key")
 
-	// ErrSecureBootstrap indicates erron in getting bootstrap configuration for given encrypted external key
+	// ErrSecureBootstrap indicates error in getting bootstrap configuration for given encrypted external key
 	ErrSecureBootstrap = errors.New("failed to get bootstrap configuration for given encrypted external key")
+
+	// ErrBootstrap indicates error in getting bootstrap configuration.
+	ErrBootstrap = errors.New("failed to read bootstrap configuration")
 
 	errAddBootstrap       = errors.New("failed to add bootstrap configuration")
 	errUpdateConnections  = errors.New("failed to update connections")
 	errRemoveBootstrap    = errors.New("failed to remove bootstrap configuration")
-	errBootstrap          = errors.New("failed to read bootstrap configuration")
 	errChangeState        = errors.New("failed to change state of bootstrap configuration")
 	errUpdateChannel      = errors.New("failed to update channel")
 	errRemoveConfig       = errors.New("failed to remove bootstrap configuration")
@@ -272,10 +274,6 @@ func (bs bootstrapService) List(token string, filter Filter, offset, limit uint6
 		return ConfigsPage{}, err
 	}
 
-	if filter.Unknown {
-		return bs.configs.RetrieveUnknown(offset, limit), nil
-	}
-
 	return bs.configs.RetrieveAll(owner, filter, offset, limit), nil
 }
 
@@ -293,11 +291,7 @@ func (bs bootstrapService) Remove(token, id string) error {
 func (bs bootstrapService) Bootstrap(externalKey, externalID string, secure bool) (Config, error) {
 	cfg, err := bs.configs.RetrieveByExternalID(externalID)
 	if err != nil {
-		if errors.Contains(err, ErrNotFound) {
-			bs.configs.SaveUnknown(externalKey, externalID)
-			return Config{}, ErrNotFound
-		}
-		return cfg, errors.Wrap(errBootstrap, err)
+		return cfg, errors.Wrap(ErrBootstrap, err)
 	}
 
 	if secure {

@@ -34,8 +34,6 @@ var (
 	errUnmarshalChannel = errors.New("failed to unmarshal json to channel")
 	errSaveChannels     = errors.New("failed to insert channels to database")
 	errSaveConnections  = errors.New("failed to insert connections to database")
-	errRemoveUnknown    = errors.New("failed to remove from uknown configurations in database")
-	errSaveUnknown      = errors.New("failed to insert into uknown configurations in database")
 	errRetrieve         = errors.New("failed to retreive bootstrap configuration from database")
 	errUpdate           = errors.New("failed to update bootstrap configuration in database")
 	errRemove           = errors.New("failed to remove bootstrap configuration from database")
@@ -89,14 +87,6 @@ func (cr configRepository) Save(cfg bootstrap.Config, chsConnIDs []string) (stri
 		cr.rollback("Failed to insert connections", tx, err)
 
 		return "", errors.Wrap(errSaveConnections, err)
-	}
-
-	q = "DELETE FROM unknown_configs WHERE external_id = :external_id AND external_key = :external_key"
-
-	if _, err := tx.NamedExec(q, dbcfg); err != nil {
-		cr.rollback("Failed to remove from unknown", tx, err)
-
-		return "", errors.Wrap(errRemoveUnknown, err)
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -391,55 +381,6 @@ func (cr configRepository) ListExisting(owner string, ids []string) ([]bootstrap
 	}
 
 	return channels, nil
-}
-
-func (cr configRepository) SaveUnknown(owner, id string) error {
-	q := `INSERT INTO unknown_configs (external_id, external_key) VALUES ($1, $2)`
-
-	if _, err := cr.db.Exec(q, id, owner); err != nil {
-		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code.Name() == duplicateErr {
-			return nil
-		}
-		return errors.Wrap(errSaveUnknown, err)
-	}
-
-	return nil
-}
-
-func (cr configRepository) RetrieveUnknown(offset, limit uint64) bootstrap.ConfigsPage {
-	q := `SELECT external_id, external_key FROM unknown_configs LIMIT $1 OFFSET $2`
-	rows, err := cr.db.Query(q, limit, offset)
-	if err != nil {
-		cr.log.Error(fmt.Sprintf("Failed to retrieve config due to %s", err))
-		return bootstrap.ConfigsPage{}
-	}
-	defer rows.Close()
-
-	items := []bootstrap.Config{}
-	for rows.Next() {
-		c := bootstrap.Config{}
-		if err := rows.Scan(&c.ExternalID, &c.ExternalKey); err != nil {
-			cr.log.Error(fmt.Sprintf("Failed to read retrieved config due to %s", err))
-			return bootstrap.ConfigsPage{}
-		}
-
-		items = append(items, c)
-	}
-
-	q = fmt.Sprintf(`SELECT COUNT(*) FROM unknown_configs`)
-
-	var total uint64
-	if err := cr.db.QueryRow(q).Scan(&total); err != nil {
-		cr.log.Error(fmt.Sprintf("Failed to count unknown configs due to %s", err))
-		return bootstrap.ConfigsPage{}
-	}
-
-	return bootstrap.ConfigsPage{
-		Total:   total,
-		Offset:  offset,
-		Limit:   limit,
-		Configs: items,
-	}
 }
 
 func (cr configRepository) RemoveThing(id string) error {

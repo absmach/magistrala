@@ -30,8 +30,6 @@ const (
 	streamID      = "mainflux.bootstrap"
 	email         = "user@example.com"
 	validToken    = "validToken"
-	unknownID     = "1"
-	unknownKey    = "2"
 	channelsNum   = 3
 	defaultTimout = 5
 
@@ -64,7 +62,7 @@ var (
 )
 
 func newService(auth mainflux.AuthNServiceClient, url string) bootstrap.Service {
-	configs := mocks.NewConfigsRepository(map[string]string{unknownID: unknownKey})
+	configs := mocks.NewConfigsRepository()
 	config := mfsdk.Config{
 		BaseURL: url,
 	}

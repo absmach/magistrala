@@ -33,8 +33,6 @@ const (
 	invalidToken = "invalidToken"
 	email        = "test@example.com"
 	unknown      = "unknown"
-	unknownID    = "1"
-	unknownKey   = "2"
 	channelsNum  = 3
 )
 
@@ -56,7 +54,7 @@ var (
 )
 
 func newService(auth mainflux.AuthNServiceClient, url string) bootstrap.Service {
-	things := mocks.NewConfigsRepository(map[string]string{unknownID: unknownKey})
+	things := mocks.NewConfigsRepository()
 	config := mfsdk.Config{
 		BaseURL: url,
 	}
@@ -400,11 +398,6 @@ func TestList(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Changing config state expected to succeed: %s.\n", err))
 	saved[41].State = bootstrap.Active
 
-	unknownConfig := bootstrap.Config{
-		ExternalID:  unknownID,
-		ExternalKey: unknownKey,
-	}
-
 	cases := []struct {
 		desc   string
 		config bootstrap.ConfigsPage
@@ -476,20 +469,6 @@ func TestList(t *testing.T) {
 			filter: bootstrap.Filter{FullMatch: map[string]string{"state": bootstrap.Active.String()}},
 			token:  validToken,
 			offset: 35,
-			limit:  20,
-			err:    nil,
-		},
-		{
-			desc: "list unknown configs",
-			config: bootstrap.ConfigsPage{
-				Total:   1,
-				Offset:  0,
-				Limit:   20,
-				Configs: []bootstrap.Config{unknownConfig},
-			},
-			filter: bootstrap.Filter{Unknown: true},
-			token:  validToken,
-			offset: 0,
 			limit:  20,
 			err:    nil,
 		},

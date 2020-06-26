@@ -24,15 +24,13 @@ type configRepositoryMock struct {
 	counter  uint64
 	configs  map[string]bootstrap.Config
 	channels map[string]bootstrap.Channel
-	unknown  map[string]string
 }
 
 // NewConfigsRepository creates in-memory config repository.
-func NewConfigsRepository(unknown map[string]string) bootstrap.ConfigRepository {
+func NewConfigsRepository() bootstrap.ConfigRepository {
 	return &configRepositoryMock{
 		configs:  make(map[string]bootstrap.Config),
 		channels: make(map[string]bootstrap.Channel),
-		unknown:  unknown,
 	}
 }
 
@@ -61,7 +59,6 @@ func (crm *configRepositoryMock) Save(config bootstrap.Config, connections []str
 	}
 
 	crm.configs[config.MFThing] = config
-	delete(crm.unknown, config.ExternalID)
 
 	return config.MFThing, nil
 }
@@ -234,59 +231,6 @@ func (crm *configRepositoryMock) ChangeState(token, id string, state bootstrap.S
 
 	config.State = state
 	crm.configs[id] = config
-	return nil
-}
-
-func (crm *configRepositoryMock) RetrieveUnknown(offset, limit uint64) bootstrap.ConfigsPage {
-	crm.mu.Lock()
-	defer crm.mu.Unlock()
-
-	configs := []bootstrap.Config{}
-	i := uint64(0)
-	l := int(limit)
-	var keys []string
-	for k := range crm.unknown {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	for _, k := range keys {
-		if i >= offset && len(configs) < l {
-			configs = append(configs, bootstrap.Config{
-				ExternalID:  k,
-				ExternalKey: crm.unknown[k],
-			})
-		}
-		i++
-	}
-
-	return bootstrap.ConfigsPage{
-		Total:   uint64(len(crm.unknown)),
-		Offset:  offset,
-		Limit:   limit,
-		Configs: configs,
-	}
-}
-
-func (crm *configRepositoryMock) RemoveUnknown(token, id string) error {
-	crm.mu.Lock()
-	defer crm.mu.Unlock()
-
-	for k, v := range crm.unknown {
-		if k == id && v == token {
-			delete(crm.unknown, k)
-			return nil
-		}
-	}
-
-	return nil
-}
-
-func (crm *configRepositoryMock) SaveUnknown(token, id string) error {
-	crm.mu.Lock()
-	defer crm.mu.Unlock()
-
-	crm.unknown[id] = token
 	return nil
 }
 

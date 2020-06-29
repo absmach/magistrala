@@ -16,9 +16,9 @@ default values.
 | MF_MQTT_ADAPTER_MQTT_PORT         | mProxy port                                            | 1883                  |
 | MF_MQTT_ADAPTER_MQTT_TARGET_HOST  | MQTT broker host                                       | 0.0.0.0               |
 | MF_MQTT_ADAPTER_MQTT_TARGET_PORT  | MQTT broker port                                       | 1883                  |
-| MF_MQTT_ADAPTER_WS_PORT           | mProxy MQTT iver WS port                               | 8080                  |
+| MF_MQTT_ADAPTER_WS_PORT           | mProxy MQTT over WS port                               | 8080                  |
 | MF_MQTT_ADAPTER_WS_TARGET_HOST    | MQTT broker host for MQTT over WS                      | localhost             |
-| MF_MQTT_ADAPTER_WS_TARGET_PORT    | MQTT boroker port for MQTT over WS                     | 8080                  |
+| MF_MQTT_ADAPTER_WS_TARGET_PORT    | MQTT broker port for MQTT over WS                     | 8080                  |
 | MF_MQTT_ADAPTER_WS_TARGET_PATH    | MQTT broker MQTT over WS path                          | /mqtt                 |
 | MF_MQTT_ADAPTER_FORWARDER_TIMEOUT | MQTT forwarder for multiprotocol communication timeout | 30s                   |
 | MF_NATS_URL                       | NATS broker URL                                        | nats://127.0.0.1:4222 |

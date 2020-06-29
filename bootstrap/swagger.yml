@@ -427,7 +427,7 @@ definitions:
         description: Free-form custom configuration.
       client_cert:
         type: string
-        description: Client certrificate.
+        description: Client certificate.
       client_key:
         type: string
         description: Key for the client_cert.

@@ -37,7 +37,7 @@ paths:
 
 responses:
   ServiceError:
-    description: Unexpected server-side error occured.
+    description: Unexpected server-side error occurred.
 
 definitions:
   MessagePage:

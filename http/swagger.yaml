@@ -50,4 +50,4 @@ paths:
         415:
           description: Message discarded due to invalid or missing content type.
         500:
-          description: Unexpected server-side error occured.
+          description: Unexpected server-side error occurred.

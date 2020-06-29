@@ -111,7 +111,7 @@ func TestContains(t *testing.T) {
 			contains:  true,
 		},
 		{
-			desc:      "superset wrapper error containes subset wrapper error",
+			desc:      "superset wrapper error contains subset wrapper error",
 			container: wrap(level),
 			contained: wrap(level / 2),
 			contains:  false,

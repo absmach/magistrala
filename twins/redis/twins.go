@@ -74,6 +74,11 @@ func (tc *twinCache) IDs(_ context.Context, channel, subtopic string) ([]string,
 	if err != nil {
 		return nil, errors.Wrap(ErrRedisTwinIDs, err)
 	}
+	idsWildcard, err := tc.client.SMembers(attrKey(channel, twins.SubtopicWildcard)).Result()
+	if err != nil {
+		return nil, errors.Wrap(ErrRedisTwinIDs, err)
+	}
+	ids = append(ids, idsWildcard...)
 	return ids, nil
 }
 

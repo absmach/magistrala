@@ -55,12 +55,11 @@ func (srm *stateRepositoryMock) RetrieveAll(ctx context.Context, offset uint64, 
 	srm.mu.Lock()
 	defer srm.mu.Unlock()
 
-	items := make([]twins.State, 0)
-
 	if limit <= 0 {
 		return twins.StatesPage{}, nil
 	}
 
+	var items []twins.State
 	for k, v := range srm.states {
 		if (uint64)(len(items)) >= limit {
 			break
@@ -78,17 +77,26 @@ func (srm *stateRepositoryMock) RetrieveAll(ctx context.Context, offset uint64, 
 		return items[i].ID < items[j].ID
 	})
 
-	total := uint64(len(srm.states))
 	page := twins.StatesPage{
 		States: items,
 		PageMetadata: twins.PageMetadata{
-			Total:  total,
+			Total:  srm.total(twinID),
 			Offset: offset,
 			Limit:  limit,
 		},
 	}
 
 	return page, nil
+}
+
+func (srm *stateRepositoryMock) total(twinID string) uint64 {
+	var total uint64
+	for k := range srm.states {
+		if strings.HasPrefix(k, twinID) {
+			total++
+		}
+	}
+	return total
 }
 
 // RetrieveLast returns the last state related to twin spec by id

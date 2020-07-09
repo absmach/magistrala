@@ -2,6 +2,7 @@ package mocks
 
 import (
 	"encoding/json"
+	"strconv"
 	"time"
 
 	"github.com/mainflux/mainflux/pkg/messaging"
@@ -11,6 +12,8 @@ import (
 )
 
 const publisher = "twins"
+
+var id = 0
 
 // NewService use mock dependencies to create real twins service
 func NewService(tokens map[string]string) twins.Service {
@@ -36,6 +39,15 @@ func CreateDefinition(channels []string, subtopics []string) twins.Definition {
 		def.Attributes = append(def.Attributes, attr)
 	}
 	return def
+}
+
+// CreateTwin creates twin
+func CreateTwin(channels []string, subtopics []string) twins.Twin {
+	id++
+	return twins.Twin{
+		ID:          strconv.Itoa(id),
+		Definitions: []twins.Definition{CreateDefinition(channels, subtopics)},
+	}
 }
 
 // CreateSenML creates SenML record array

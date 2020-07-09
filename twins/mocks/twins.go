@@ -75,17 +75,13 @@ func (trm *twinRepositoryMock) RetrieveByAttribute(ctx context.Context, channel,
 	for _, twin := range trm.twins {
 		def := twin.Definitions[len(twin.Definitions)-1]
 		for _, attr := range def.Attributes {
-			if attr.Channel == channel && attr.Subtopic == subtopic {
+			if attr.Channel == channel && (attr.Subtopic == twins.SubtopicWildcard || attr.Subtopic == subtopic) {
 				ids = append(ids, twin.ID)
 				break
 			}
 		}
 	}
-
-	if len(ids) > 0 {
-		return ids, nil
-	}
-	return ids, twins.ErrNotFound
+	return ids, nil
 }
 
 func (trm *twinRepositoryMock) RetrieveAll(_ context.Context, owner string, offset uint64, limit uint64, name string, metadata twins.Metadata) (twins.Page, error) {
@@ -215,12 +211,10 @@ func (tcm *twinCacheMock) IDs(_ context.Context, channel, subtopic string) ([]st
 
 	var ids []string
 
-	idsMap, ok := tcm.attrIds[channel+subtopic]
-	if !ok {
-		return ids, nil
+	for k := range tcm.attrIds[channel+subtopic] {
+		ids = append(ids, k)
 	}
-
-	for k := range idsMap {
+	for k := range tcm.attrIds[channel+twins.SubtopicWildcard] {
 		ids = append(ids, k)
 	}
 

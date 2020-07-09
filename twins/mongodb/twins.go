@@ -18,7 +18,8 @@ const (
 )
 
 type twinRepository struct {
-	db *mongo.Database
+	db               *mongo.Database
+	subtopicWildcard string
 }
 
 var _ twins.TwinRepository = (*twinRepository)(nil)
@@ -92,8 +93,11 @@ func (tr *twinRepository) RetrieveByAttribute(ctx context.Context, channel, subt
 	}
 	match := bson.M{
 		"$match": bson.M{
-			"definition.channel":  channel,
-			"definition.subtopic": subtopic,
+			"definition.channel": channel,
+			"$or": []interface{}{
+				bson.M{"definition.subtopic": subtopic},
+				bson.M{"definition.subtopic": twins.SubtopicWildcard},
+			},
 		},
 	}
 	prj2 := bson.M{

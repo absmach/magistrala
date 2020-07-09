@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/twins"
 	"github.com/mainflux/mainflux/twins/mocks"
 	"github.com/mainflux/mainflux/twins/redis"
@@ -25,11 +24,8 @@ func TestTwinSave(t *testing.T) {
 	redisClient.FlushAll()
 	twinCache := redis.NewTwinCache(redisClient)
 
-	twin1, err := createTwin(channels[0:2], subtopics[0:2])
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
-	twin2, err := createTwin(channels[1:3], subtopics[1:3])
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	twin1 := mocks.CreateTwin(channels[0:2], subtopics[0:2])
+	twin2 := mocks.CreateTwin(channels[1:3], subtopics[1:3])
 
 	cases := []struct {
 		desc string
@@ -133,8 +129,7 @@ func TestTwinUpdate(t *testing.T) {
 
 	var tws []twins.Twin
 	for i := range channels {
-		tw, err := createTwin(channels[i:i+1], subtopics[i:i+1])
-		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+		tw := mocks.CreateTwin(channels[i:i+1], subtopics[i:i+1])
 		tws = append(tws, tw)
 	}
 	err := twinCache.Save(ctx, tws[0])
@@ -185,23 +180,27 @@ func TestTwinIDs(t *testing.T) {
 
 	var tws []twins.Twin
 	for i := 0; i < len(channels); i++ {
-		tw, err := createTwin(channels[0:1], subtopics[0:1])
-		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-		err = twinCache.Save(ctx, tw)
+		tw := mocks.CreateTwin(channels[0:1], subtopics[0:1])
+		err := twinCache.Save(ctx, tw)
 		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 		tws = append(tws, tw)
 	}
 	for i := 0; i < len(channels); i++ {
-		tw, err := createTwin(channels[1:2], subtopics[1:2])
-		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-		err = twinCache.Save(ctx, tw)
+		tw := mocks.CreateTwin(channels[1:2], subtopics[1:2])
+		err := twinCache.Save(ctx, tw)
 		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 		tws = append(tws, tw)
 	}
+	twEmptySubt := mocks.CreateTwin(channels[0:1], []string{""})
+	err := twinCache.Save(ctx, twEmptySubt)
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	twSubtWild := mocks.CreateTwin(channels[0:1], []string{twins.SubtopicWildcard})
+	err = twinCache.Save(ctx, twSubtWild)
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	nonExistAttr := twins.Attribute{
 		Channel:      channels[2],
-		Subtopic:     subtopics[0],
+		Subtopic:     subtopics[2],
 		PersistState: true,
 	}
 
@@ -212,8 +211,14 @@ func TestTwinIDs(t *testing.T) {
 		err  error
 	}{
 		{
+			desc: "Get twin IDs from cache for empty subtopic attribute",
+			ids:  []string{twEmptySubt.ID, twSubtWild.ID},
+			attr: twEmptySubt.Definitions[0].Attributes[0],
+			err:  nil,
+		},
+		{
 			desc: "Get twin IDs from cache for subset of ids",
-			ids:  []string{tws[0].ID, tws[1].ID, tws[2].ID},
+			ids:  []string{tws[0].ID, tws[1].ID, tws[2].ID, twSubtWild.ID},
 			attr: tws[0].Definitions[0].Attributes[0],
 			err:  nil,
 		},
@@ -245,9 +250,8 @@ func TestTwinRemove(t *testing.T) {
 
 	var tws []twins.Twin
 	for i := range channels {
-		tw, err := createTwin(channels[i:i+1], subtopics[i:i+1])
-		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-		err = twinCache.Save(ctx, tw)
+		tw := mocks.CreateTwin(channels[i:i+1], subtopics[i:i+1])
+		err := twinCache.Save(ctx, tw)
 		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 		tws = append(tws, tw)
 	}
@@ -285,15 +289,4 @@ func TestTwinRemove(t *testing.T) {
 			assert.NotContains(t, ids, tc.twin.ID, fmt.Sprintf("%s: id %s found in %v", tc.desc, tc.twin.ID, ids))
 		}
 	}
-}
-
-func createTwin(channels []string, subtopics []string) (twins.Twin, error) {
-	id, err := uuid.New().ID()
-	if err != nil {
-		return twins.Twin{}, err
-	}
-	return twins.Twin{
-		ID:          id,
-		Definitions: []twins.Definition{mocks.CreateDefinition(channels, subtopics)},
-	}, nil
 }

@@ -253,6 +253,10 @@ func TestSaveStates(t *testing.T) {
 	tw, err := svc.AddTwin(context.Background(), token, twin, def)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
+	defWildcard := mocks.CreateDefinition(channels[0:2], []string{twins.SubtopicWildcard, twins.SubtopicWildcard})
+	twWildcard, err := svc.AddTwin(context.Background(), token, twin, defWildcard)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+
 	var recs = make([]senml.Record, numRecs)
 	mocks.CreateSenML(numRecs, recs)
 
@@ -300,10 +304,14 @@ func TestSaveStates(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 		err = svc.SaveStates(message)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 		ttlAdded += tc.size
 		page, err := svc.ListStates(context.TODO(), token, 0, 10, tw.ID)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		assert.Equal(t, ttlAdded, page.Total, fmt.Sprintf("%s: expected %d total got %d total\n", tc.desc, ttlAdded, page.Total))
+
+		page, err = svc.ListStates(context.TODO(), token, 0, 10, twWildcard.ID)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		assert.Equal(t, ttlAdded, page.Total, fmt.Sprintf("%s: expected %d total got %d total\n", tc.desc, ttlAdded, page.Total))
 	}

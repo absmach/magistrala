@@ -70,8 +70,9 @@ const (
 	noop = iota
 	update
 	save
-	millisec = 1e6
-	nanosec  = 1e9
+	millisec         = 1e6
+	nanosec          = 1e9
+	SubtopicWildcard = ">"
 )
 
 var crudOp = map[string]string{
@@ -314,7 +315,7 @@ func (ts *twinsService) saveState(msg *messaging.Message, twinID string) error {
 	}
 
 	for _, rec := range recs {
-		action := prepareState(&st, &tw, rec, msg)
+		action := ts.prepareState(&st, &tw, rec, msg)
 		switch action {
 		case noop:
 			return nil
@@ -335,7 +336,7 @@ func (ts *twinsService) saveState(msg *messaging.Message, twinID string) error {
 	return nil
 }
 
-func prepareState(st *State, tw *Twin, rec senml.Record, msg *messaging.Message) int {
+func (ts *twinsService) prepareState(st *State, tw *Twin, rec senml.Record, msg *messaging.Message) int {
 	def := tw.Definitions[len(tw.Definitions)-1]
 	st.TwinID = tw.ID
 	st.Definition = def.ID
@@ -362,7 +363,7 @@ func prepareState(st *State, tw *Twin, rec senml.Record, msg *messaging.Message)
 		if !attr.PersistState {
 			continue
 		}
-		if attr.Channel == msg.Channel && attr.Subtopic == msg.Subtopic {
+		if attr.Channel == msg.Channel && (attr.Subtopic == SubtopicWildcard || attr.Subtopic == msg.Subtopic) {
 			action = update
 			delta := math.Abs(float64(st.Created.UnixNano()) - recNano)
 			if recNano == 0 || delta > float64(def.Delta) {

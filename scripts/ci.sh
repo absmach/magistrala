@@ -1,6 +1,6 @@
 # This script contains commands to be executed by the CI tool.
 NPROC=$(nproc)
-GO_VERSION=1.14
+GO_VERSION=1.14.4
 PROTOC_VERSION=3.11.4
 PROTOC_GEN_VERSION=v1.4.2
 PROTOC_GOFAST_VERSION=v1.3.1
@@ -11,7 +11,7 @@ function version_gt() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$
 update_go() {
     CURRENT_GO_VERSION=$(go version | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
     if version_gt $GO_VERSION $CURRENT_GO_VERSION; then
-        echo "Update go version from $CURRENT_GO_VERSION to $GO_VERSION ..."
+        echo "Updating go version from $CURRENT_GO_VERSION to $GO_VERSION ..."
         sudo rm -rf /usr/local/go
         sudo rm -rf /usr/local/golang
         sudo rm -rf /usr/bin/go

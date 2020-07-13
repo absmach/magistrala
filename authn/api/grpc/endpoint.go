@@ -4,11 +4,11 @@
 package grpc
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/mainflux/mainflux/authn"
-	context "golang.org/x/net/context"
 )
 
 func issueEndpoint(svc authn.Service) endpoint.Endpoint {

@@ -213,8 +213,6 @@ func (ts *thingsService) ListThings(ctx context.Context, token string, offset, l
 		return Page{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	// tp, err := ts.things.RetrieveAll(ctx, res.GetValue(), offset, limit, name, metadata)
-	// return tp, errors.Wrap(ErrUnauthorizedAccess, err)
 	return ts.things.RetrieveAll(ctx, res.GetValue(), offset, limit, name, metadata)
 }
 

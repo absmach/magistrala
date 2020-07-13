@@ -4,6 +4,7 @@
 package grpc
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-kit/kit/endpoint"
@@ -12,7 +13,6 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/mainflux/mainflux"
 	opentracing "github.com/opentracing/opentracing-go"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 

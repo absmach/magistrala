@@ -4,6 +4,7 @@
 package grpc_test
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"testing"
@@ -17,7 +18,6 @@ import (
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

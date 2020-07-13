@@ -59,6 +59,7 @@ type ChangeStream struct {
 	options       *options.ChangeStreamOptions
 	selector      description.ServerSelector
 	operationTime *primitive.Timestamp
+	wireVersion   *description.VersionRange
 }
 
 type changeStreamConfig struct {
@@ -162,6 +163,14 @@ func newChangeStream(ctx context.Context, config changeStreamConfig, pipeline in
 	return cs, cs.Err()
 }
 
+func (cs *ChangeStream) createOperationDeployment(server driver.Server, connection driver.Connection) driver.Deployment {
+	return &changeStreamDeployment{
+		topologyKind: cs.client.deployment.Kind(),
+		server:       server,
+		conn:         connection,
+	}
+}
+
 func (cs *ChangeStream) executeOperation(ctx context.Context, resuming bool) error {
 	var server driver.Server
 	var conn driver.Connection
@@ -175,13 +184,12 @@ func (cs *ChangeStream) executeOperation(ctx context.Context, resuming bool) err
 	}
 
 	defer conn.Close()
+	cs.wireVersion = conn.Description().WireVersion
 
-	cs.aggregate.Deployment(driver.SingleConnectionDeployment{
-		C: conn,
-	})
+	cs.aggregate.Deployment(cs.createOperationDeployment(server, conn))
 
 	if resuming {
-		cs.replaceOptions(ctx, conn.Description().WireVersion) // pass wire version
+		cs.replaceOptions(ctx, cs.wireVersion) // pass wire version
 
 		csOptDoc := cs.createPipelineOptionsDoc()
 		pipIdx, pipDoc := bsoncore.AppendDocumentStart(nil)
@@ -199,8 +207,7 @@ func (cs *ChangeStream) executeOperation(ctx context.Context, resuming bool) err
 	}
 
 	if original := cs.aggregate.Execute(ctx); original != nil {
-		wireVersion := conn.Description().WireVersion
-		retryableRead := cs.client.retryReads && wireVersion != nil && wireVersion.Max >= 6
+		retryableRead := cs.client.retryReads && cs.wireVersion != nil && cs.wireVersion.Max >= 6
 		if !retryableRead {
 			cs.err = replaceErrors(original)
 			return cs.err
@@ -224,15 +231,13 @@ func (cs *ChangeStream) executeOperation(ctx context.Context, resuming bool) err
 				break
 			}
 			defer conn.Close()
+			cs.wireVersion = conn.Description().WireVersion
 
-			wireVersion := conn.Description().WireVersion
-			if wireVersion == nil || wireVersion.Max < 6 {
+			if cs.wireVersion == nil || cs.wireVersion.Max < 6 {
 				break
 			}
 
-			cs.aggregate.Deployment(driver.SingleConnectionDeployment{
-				C: conn,
-			})
+			cs.aggregate.Deployment(cs.createOperationDeployment(server, conn))
 			cs.err = cs.aggregate.Execute(ctx)
 		}
 
@@ -254,7 +259,7 @@ func (cs *ChangeStream) executeOperation(ctx context.Context, resuming bool) err
 
 	cs.updatePbrtFromCommand()
 	if cs.options.StartAtOperationTime == nil && cs.options.ResumeAfter == nil &&
-		cs.options.StartAfter == nil && conn.Description().WireVersion.Max >= 7 &&
+		cs.options.StartAfter == nil && cs.wireVersion.Max >= 7 &&
 		cs.emptyBatch() && cs.resumeToken == nil {
 		cs.operationTime = cs.sess.OperationTime
 	}
@@ -490,7 +495,7 @@ func (cs *ChangeStream) TryNext(ctx context.Context) bool {
 }
 
 func (cs *ChangeStream) next(ctx context.Context, nonBlocking bool) bool {
-	// return false right away if the change stream has already errored.
+	// return false right away if the change stream has already errored or if cursor is closed.
 	if cs.err != nil {
 		return false
 	}
@@ -533,6 +538,11 @@ func (cs *ChangeStream) loopNext(ctx context.Context, nonBlocking bool) {
 
 		cs.err = replaceErrors(cs.cursor.Err())
 		if cs.err == nil {
+			// Check if cursor is alive
+			if cs.ID() == 0 {
+				return
+			}
+
 			// If a getMore was done but the batch was empty, the batch cursor will return false with no error.
 			// Update the tracked resume token to catch the post batch resume token from the server response.
 			cs.updatePbrtFromCommand()

@@ -10,7 +10,6 @@ import (
 // Deployment is implemented by types that can select a server from a deployment.
 type Deployment interface {
 	SelectServer(context.Context, description.ServerSelector) (Server, error)
-	SupportsRetryWrites() bool
 	Kind() description.TopologyKind
 }
 
@@ -98,15 +97,13 @@ func (ssd SingleServerDeployment) SelectServer(context.Context, description.Serv
 	return ssd.Server, nil
 }
 
-// SupportsRetryWrites implements the Deployment interface. It always returns Type(0), because a single
-// server does not support retryability.
-func (SingleServerDeployment) SupportsRetryWrites() bool { return false }
-
 // Kind implements the Deployment interface. It always returns description.Single.
 func (SingleServerDeployment) Kind() description.TopologyKind { return description.Single }
 
-// SingleConnectionDeployment is an implementation of Deployment that always returns the same
-// Connection.
+// SingleConnectionDeployment is an implementation of Deployment that always returns the same Connection. This
+// implementation should only be used for connection handshakes and server heartbeats as it does not implement
+// ErrorProcessor, which is necessary for application operations and wraps the connection in nopCloserConnection,
+// which does not implement Compressor.
 type SingleConnectionDeployment struct{ C Connection }
 
 var _ Deployment = SingleConnectionDeployment{}
@@ -118,10 +115,6 @@ var _ Server = SingleConnectionDeployment{}
 func (ssd SingleConnectionDeployment) SelectServer(context.Context, description.ServerSelector) (Server, error) {
 	return ssd, nil
 }
-
-// SupportsRetryWrites implements the Deployment interface. It always returns Type(0), because a single
-// connection does not support retryability.
-func (ssd SingleConnectionDeployment) SupportsRetryWrites() bool { return false }
 
 // Kind implements the Deployment interface. It always returns description.Single.
 func (ssd SingleConnectionDeployment) Kind() description.TopologyKind { return description.Single }

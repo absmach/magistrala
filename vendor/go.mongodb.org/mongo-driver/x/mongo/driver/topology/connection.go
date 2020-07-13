@@ -48,11 +48,13 @@ type connection struct {
 	config               *connectionConfig
 	cancelConnectContext context.CancelFunc
 	connectContextMade   chan struct{}
+	connectContextMutex  sync.Mutex
 
 	// pool related fields
-	pool       *pool
-	poolID     uint64
-	generation uint64
+	pool         *pool
+	poolID       uint64
+	generation   uint64
+	expireReason string
 }
 
 // newConnection handles the creation of a connection. It does not connect the connection.
@@ -85,6 +87,18 @@ func newConnection(ctx context.Context, addr address.Address, opts ...Connection
 	return c, nil
 }
 
+func (c *connection) processInitializationError(err error) {
+	atomic.StoreInt32(&c.connected, disconnected)
+	if c.nc != nil {
+		_ = c.nc.Close()
+	}
+
+	c.connectErr = ConnectionError{Wrapped: err, init: true}
+	if c.config.errorHandlingCallback != nil {
+		c.config.errorHandlingCallback(c.connectErr)
+	}
+}
+
 // connect handles the I/O for a connection. It will dial, configure TLS, and perform
 // initialization handshakes.
 func (c *connection) connect(ctx context.Context) {
@@ -93,7 +107,23 @@ func (c *connection) connect(ctx context.Context) {
 	}
 	defer close(c.connectDone)
 
+	c.connectContextMutex.Lock()
 	ctx, c.cancelConnectContext = context.WithCancel(ctx)
+	c.connectContextMutex.Unlock()
+
+	defer func() {
+		var cancelFn context.CancelFunc
+
+		c.connectContextMutex.Lock()
+		cancelFn = c.cancelConnectContext
+		c.cancelConnectContext = nil
+		c.connectContextMutex.Unlock()
+
+		if cancelFn != nil {
+			cancelFn()
+		}
+	}()
+
 	close(c.connectContextMade)
 
 	// Assign the result of DialContext to a temporary net.Conn to ensure that c.nc is not set in an error case.
@@ -101,8 +131,7 @@ func (c *connection) connect(ctx context.Context) {
 	var tempNc net.Conn
 	tempNc, err = c.config.dialer.DialContext(ctx, c.addr.Network(), c.addr.String())
 	if err != nil {
-		atomic.StoreInt32(&c.connected, disconnected)
-		c.connectErr = ConnectionError{Wrapped: err, init: true}
+		c.processInitializationError(err)
 		return
 	}
 	c.nc = tempNc
@@ -114,11 +143,7 @@ func (c *connection) connect(ctx context.Context) {
 		// error cases.
 		tlsNc, err := configureTLS(ctx, c.nc, c.addr, tlsConfig)
 		if err != nil {
-			if c.nc != nil {
-				_ = c.nc.Close()
-			}
-			atomic.StoreInt32(&c.connected, disconnected)
-			c.connectErr = ConnectionError{Wrapped: err, init: true}
+			c.processInitializationError(err)
 			return
 		}
 		c.nc = tlsNc
@@ -138,17 +163,10 @@ func (c *connection) connect(ctx context.Context) {
 		err = handshaker.FinishHandshake(ctx, handshakeConn)
 	}
 	if err != nil {
-		if c.nc != nil {
-			_ = c.nc.Close()
-		}
-		atomic.StoreInt32(&c.connected, disconnected)
-		c.connectErr = ConnectionError{Wrapped: err, init: true}
+		c.processInitializationError(err)
 		return
 	}
 
-	if c.config.descCallback != nil {
-		c.config.descCallback(c.desc)
-	}
 	if len(c.desc.Compression) > 0 {
 	clientMethodLoop:
 		for _, method := range c.config.compressors {
@@ -188,7 +206,16 @@ func (c *connection) wait() error {
 
 func (c *connection) closeConnectContext() {
 	<-c.connectContextMade
-	c.cancelConnectContext()
+	var cancelFn context.CancelFunc
+
+	c.connectContextMutex.Lock()
+	cancelFn = c.cancelConnectContext
+	c.cancelConnectContext = nil
+	c.connectContextMutex.Unlock()
+
+	if cancelFn != nil {
+		cancelFn()
+	}
 }
 
 func (c *connection) writeWireMessage(ctx context.Context, wm []byte) error {
@@ -290,7 +317,7 @@ func (c *connection) readWireMessage(ctx context.Context, dst []byte) ([]byte, e
 }
 
 func (c *connection) close() error {
-	if atomic.LoadInt32(&c.connected) != connected {
+	if !atomic.CompareAndSwapInt32(&c.connected, connected, disconnected) {
 		return nil
 	}
 
@@ -298,15 +325,15 @@ func (c *connection) close() error {
 	if c.nc != nil {
 		err = c.nc.Close()
 	}
-	atomic.StoreInt32(&c.connected, disconnected)
 
-	if c.pool != nil {
-		_ = c.pool.removeConnection(c)
-	}
 	return err
 }
 
-func (c *connection) expired() bool {
+func (c *connection) closed() bool {
+	return atomic.LoadInt32(&c.connected) == disconnected
+}
+
+func (c *connection) idleTimeoutExpired() bool {
 	now := time.Now()
 	if c.idleTimeout > 0 {
 		idleDeadline, ok := c.idleDeadline.Load().(time.Time)
@@ -318,8 +345,7 @@ func (c *connection) expired() bool {
 	if !c.lifetimeDeadline.IsZero() && now.After(c.lifetimeDeadline) {
 		return true
 	}
-
-	return atomic.LoadInt32(&c.connected) == disconnected
+	return false
 }
 
 func (c *connection) bumpIdleDeadline() {
@@ -441,9 +467,7 @@ func (c *Connection) Close() error {
 	if c.connection == nil {
 		return nil
 	}
-	if c.s != nil {
-		defer c.s.sem.Release(1)
-	}
+
 	err := c.pool.put(c.connection)
 	c.connection = nil
 	return err
@@ -456,10 +480,9 @@ func (c *Connection) Expire() error {
 	if c.connection == nil {
 		return nil
 	}
-	if c.s != nil {
-		c.s.sem.Release(1)
-	}
-	err := c.close()
+
+	_ = c.close()
+	err := c.pool.put(c.connection)
 	c.connection = nil
 	return err
 }
@@ -503,16 +526,15 @@ var notMasterCodes = []int32{10107, 13435}
 var recoveringCodes = []int32{11600, 11602, 13436, 189, 91}
 
 func configureTLS(ctx context.Context, nc net.Conn, addr address.Address, config *tls.Config) (net.Conn, error) {
-	if !config.InsecureSkipVerify {
-		hostname := addr.String()
-		colonPos := strings.LastIndex(hostname, ":")
-		if colonPos == -1 {
-			colonPos = len(hostname)
-		}
-
-		hostname = hostname[:colonPos]
-		config.ServerName = hostname
+	// Ensure config.ServerName is always set for SNI.
+	hostname := addr.String()
+	colonPos := strings.LastIndex(hostname, ":")
+	if colonPos == -1 {
+		colonPos = len(hostname)
 	}
+
+	hostname = hostname[:colonPos]
+	config.ServerName = hostname
 
 	client := tls.Client(nc, config)
 

@@ -1839,6 +1839,11 @@ func marshalTuple(info TypeInfo, value interface{}) ([]byte, error) {
 
 		var buf []byte
 		for i, elem := range v {
+			if elem == nil {
+				buf = appendInt(buf, int32(-1))
+				continue
+			}
+
 			data, err := Marshal(tuple.Elems[i], elem)
 			if err != nil {
 				return nil, err
@@ -1864,7 +1869,14 @@ func marshalTuple(info TypeInfo, value interface{}) ([]byte, error) {
 
 		var buf []byte
 		for i, elem := range tuple.Elems {
-			data, err := Marshal(elem, rv.Field(i).Interface())
+			field := rv.Field(i)
+
+			if field.Kind() == reflect.Ptr && field.IsNil() {
+				buf = appendInt(buf, int32(-1))
+				continue
+			}
+
+			data, err := Marshal(elem, field.Interface())
 			if err != nil {
 				return nil, err
 			}
@@ -1883,7 +1895,14 @@ func marshalTuple(info TypeInfo, value interface{}) ([]byte, error) {
 
 		var buf []byte
 		for i, elem := range tuple.Elems {
-			data, err := Marshal(elem, rv.Index(i).Interface())
+			item := rv.Index(i)
+
+			if item.Kind() == reflect.Ptr && item.IsNil() {
+				buf = appendInt(buf, int32(-1))
+				continue
+			}
+
+			data, err := Marshal(elem, item.Interface())
 			if err != nil {
 				return nil, err
 			}
@@ -1951,16 +1970,22 @@ func unmarshalTuple(info TypeInfo, data []byte, value interface{}) error {
 		}
 
 		for i, elem := range tuple.Elems {
-			m := readInt(data)
-			data = data[4:]
+			var p []byte
+			if len(data) > 4 {
+				p, data = readBytes(data)
+			}
 
 			v := elem.New()
-			if err := Unmarshal(elem, data[:m], v); err != nil {
+			if err := Unmarshal(elem, p, v); err != nil {
 				return err
 			}
-			rv.Field(i).Set(reflect.ValueOf(v).Elem())
 
-			data = data[m:]
+			switch rv.Field(i).Kind() {
+			case reflect.Ptr:
+				rv.Field(i).Set(reflect.ValueOf(v))
+			default:
+				rv.Field(i).Set(reflect.ValueOf(v).Elem())
+			}
 		}
 
 		return nil
@@ -1975,16 +2000,22 @@ func unmarshalTuple(info TypeInfo, data []byte, value interface{}) error {
 		}
 
 		for i, elem := range tuple.Elems {
-			m := readInt(data)
-			data = data[4:]
+			var p []byte
+			if len(data) > 4 {
+				p, data = readBytes(data)
+			}
 
 			v := elem.New()
-			if err := Unmarshal(elem, data[:m], v); err != nil {
+			if err := Unmarshal(elem, p, v); err != nil {
 				return err
 			}
-			rv.Index(i).Set(reflect.ValueOf(v).Elem())
 
-			data = data[m:]
+			switch rv.Index(i).Kind() {
+			case reflect.Ptr:
+				rv.Index(i).Set(reflect.ValueOf(v))
+			default:
+				rv.Index(i).Set(reflect.ValueOf(v).Elem())
+			}
 		}
 
 		return nil

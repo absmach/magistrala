@@ -4,15 +4,14 @@
 package grpc
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-kit/kit/endpoint"
 	kitot "github.com/go-kit/kit/tracing/opentracing"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
-	opentracing "github.com/opentracing/opentracing-go"
-
 	"github.com/mainflux/mainflux"
-	"golang.org/x/net/context"
+	opentracing "github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc"
 )
 

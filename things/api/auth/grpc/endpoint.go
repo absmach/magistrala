@@ -4,9 +4,10 @@
 package grpc
 
 import (
+	"context"
+
 	"github.com/go-kit/kit/endpoint"
 	"github.com/mainflux/mainflux/things"
-	context "golang.org/x/net/context"
 )
 
 func canAccessEndpoint(svc things.Service) endpoint.Endpoint {

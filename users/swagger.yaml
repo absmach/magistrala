@@ -127,6 +127,7 @@ paths:
           description: JSON-formatted document containing user email.
           in: body
           schema:
+            $ref: "#/parameters/Referer"
             $ref: "#/parameters/Authorization"
             $ref: "#/definitions/PasswordResetRequest"
           required: true

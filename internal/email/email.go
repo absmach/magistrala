@@ -60,7 +60,7 @@ func New(c *Config) (*Agent, error) {
 
 	tmpl, err := template.ParseFiles(c.Template)
 	if err != nil {
-		return nil, errors.Wrap(errParseTemplate, err)
+		return a, errors.Wrap(errParseTemplate, err)
 	}
 	a.tmpl = tmpl
 	return a, nil

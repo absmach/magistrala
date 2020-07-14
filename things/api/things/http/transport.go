@@ -398,6 +398,10 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 			w.WriteHeader(http.StatusUnsupportedMediaType)
 		case errors.Contains(errorVal, errInvalidQueryParams):
 			w.WriteHeader(http.StatusBadRequest)
+		case errors.Contains(errorVal, things.ErrRemoveThing):
+			w.WriteHeader(http.StatusInternalServerError)
+		case errors.Contains(errorVal, things.ErrRemoveChannel):
+			w.WriteHeader(http.StatusInternalServerError)
 		case errors.Contains(errorVal, io.ErrUnexpectedEOF):
 			w.WriteHeader(http.StatusBadRequest)
 		case errors.Contains(errorVal, io.EOF):

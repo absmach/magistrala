@@ -17,14 +17,16 @@ const (
 	idPrefix  = "thing"
 )
 
-// ErrRedisThingSave indicates error while saving Thing in redis cache
-var ErrRedisThingSave = errors.New("saving thing in redis cache error")
+var (
+	// ErrRedisThingSave indicates error while saving Thing in redis cache
+	ErrRedisThingSave = errors.New("failed to save thing in redis cache")
 
-// ErrRedisThingID indicates error while geting Thing ID from redis cache
-var ErrRedisThingID = errors.New("get thing id from redis cache error")
+	// ErrRedisThingID indicates error while geting Thing ID from redis cache
+	ErrRedisThingID = errors.New("failed to get thing id from redis cache")
 
-// ErrRedisThingRemove indicates error while removing Thing from redis cache
-var ErrRedisThingRemove = errors.New("remove thing from redis cache error")
+	// ErrRedisThingRemove indicates error while removing Thing from redis cache
+	ErrRedisThingRemove = errors.New("failed to remove thing from redis cache")
+)
 
 var _ things.ThingCache = (*thingCache)(nil)
 
@@ -65,6 +67,10 @@ func (tc *thingCache) ID(_ context.Context, thingKey string) (string, error) {
 func (tc *thingCache) Remove(_ context.Context, thingID string) error {
 	tid := fmt.Sprintf("%s:%s", idPrefix, thingID)
 	key, err := tc.client.Get(tid).Result()
+	// Redis returns Nil Reply when key does not exist.
+	if err == redis.Nil {
+		return nil
+	}
 	if err != nil {
 		return errors.Wrap(ErrRedisThingRemove, err)
 	}

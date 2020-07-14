@@ -10,8 +10,8 @@ import (
 
 	r "github.com/go-redis/redis"
 	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/things/redis"
 	"github.com/mainflux/mainflux/pkg/uuid"
+	"github.com/mainflux/mainflux/things/redis"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -108,7 +108,7 @@ func TestThingRemove(t *testing.T) {
 		{
 			desc: "Remove non-existing thing from cache",
 			ID:   id2,
-			err:  r.Nil,
+			err:  nil,
 		},
 	}
 

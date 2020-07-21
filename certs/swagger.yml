@@ -1,0 +1,125 @@
+swagger: "2.0"
+info:
+  title: Mainflux Certs service
+  description: HTTP API for Certs service
+  version: "1.0.0"
+consumes:
+  - "application/json"
+produces:
+  - "application/json"
+paths:
+  /certs:
+    post:
+      consumes:
+        - application/json
+      summary: Creates a certificate for thing
+      description: Creates a certificate for thing
+      tags:
+        - Thing to proxy
+      parameters:
+      - $ref: "#/parameters/Authorization"
+      - in: body
+         name: cert
+         description: 
+         schema:
+           type: object
+           required:
+             - thing_id
+             - days_valid
+             - rsa_bits
+           properties:
+              thing_id:
+                type: string
+              days_valid:
+                type: string
+              rsa_bits:
+                type: integer
+      responses:
+        201:
+          description: Created
+        400:
+          description: Failed due to malformed JSON.
+        500:
+          description: Unexpected server-side error ocurred.
+  /certs/{thingID}:
+    get:
+      summary: Retrieves certificates
+      description: |
+        Retrieves a certificates for given thing ID .
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/parameters/ConfigAuth"
+        - $ref: "#/parameters/ThingID"
+      responses:
+        200:
+          description: Data retrieved.
+          schema:
+            $ref: "#/definitions/CertsRes"
+        404:
+          description: |
+            Failed to retrieve corresponding certificate. 
+        500:
+          $ref: "#/responses/ServiceError"
+  /certs/revoke:
+    delete:
+      summary: Revokes certificate
+      description: |
+        Revokes a certificates for given thing ID .
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/parameters/ConfigAuth"
+        - $ref: "#/parameters/ThingID"
+      responses:
+        200:
+          description: Certificate revoked.
+          schema:
+            $ref: "#/definitions/RevokeRes"
+        404:
+          description: |
+            Failed to revoke corresponding certificate. 
+        500:
+          $ref: "#/responses/ServiceError"
+parameters:
+  Authorization:
+    name: Authorization
+    description: User's access token. Used instead of credentials in env or config.toml.
+    in: header
+    type: string
+    required: false
+  ThingID:
+    name: thingID
+    description: Thing ID
+    in: path
+    type: string
+    required: true
+definitions:
+  CertsRes:
+    type: object
+    properties:
+      thing_id:
+        type: string
+        description: Corresponding Mainflux Thing ID.
+      client_cert:
+        type: string
+        description: Client Certificate.
+      client_key:
+        type: string
+        description: Key for the client_cert.
+      issuing_ca:
+        type: string
+        description: 
+      serial:
+        type: string
+        description: Certificate serial
+      expire:
+        type: string
+        description: Certificate expiry date
+  RevokeRes:
+    type: object
+    properties:
+      revocation_time:
+        type: string
+        description: Certificate revocation time
+  

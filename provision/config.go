@@ -16,7 +16,6 @@ type ServiceConf struct {
 	Port           string `toml:"port"`
 	LogLevel       string `toml:"log_level"`
 	TLS            bool   `toml:"tls"`
-	CACerts        string `toml:"ca_certs"`
 	ServerCert     string `toml:"server_cert"`
 	ServerKey      string `toml:"server_key"`
 	ThingsLocation string `toml:"things_location"`
@@ -56,6 +55,12 @@ type Gateway struct {
 	CfgID           string `toml:"cfg_id" json:"cfg_id"`
 }
 
+type Certs struct {
+	HoursValid string `json:"days_valid" toml:"days_valid"`
+	KeyBits    int    `json:"key_bits" toml:"key_bits"`
+	KeyType    string `json:"key_type"`
+}
+
 // Config struct of Provision
 type Config struct {
 	File      string      `toml:"file"`
@@ -63,6 +68,7 @@ type Config struct {
 	Bootstrap Bootstrap   `toml:"bootstrap" mapstructure:"bootstrap"`
 	Things    []Thing     `toml:"things" mapstructure:"things"`
 	Channels  []Channel   `toml:"channels" mapstructure:"channels"`
+	Certs     Certs       `toml:"certs" mapstructure:"certs"`
 }
 
 // Save - store config in a file

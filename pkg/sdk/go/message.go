@@ -79,7 +79,7 @@ func (sdk mfSDK) ReadMessages(chanName, token string) (MessagesPage, error) {
 	return mp, nil
 }
 
-func (sdk *mfSDK) SetContentType(ct ContentType) error {
+func (sdk mfSDK) SetContentType(ct ContentType) error {
 	if ct != CTJSON && ct != CTJSONSenML && ct != CTBinary {
 		return ErrInvalidContentType
 	}

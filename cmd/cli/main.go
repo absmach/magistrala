@@ -17,6 +17,7 @@ func main() {
 		BaseURL:           "http://localhost",
 		ReaderURL:         "http://localhost:8905",
 		BootstrapURL:      "http://localhost:8202",
+		CertsURL:          "http://localhost:8204",
 		ReaderPrefix:      "",
 		UsersPrefix:       "",
 		ThingsPrefix:      "",
@@ -44,6 +45,7 @@ func main() {
 	messagesCmd := cli.NewMessagesCmd()
 	provisionCmd := cli.NewProvisionCmd()
 	bootstrapCmd := cli.NewBootstrapCmd()
+	certsCmd := cli.NewCertsCmd()
 
 	// Root Commands
 	rootCmd.AddCommand(versionCmd)
@@ -53,6 +55,7 @@ func main() {
 	rootCmd.AddCommand(messagesCmd)
 	rootCmd.AddCommand(provisionCmd)
 	rootCmd.AddCommand(bootstrapCmd)
+	rootCmd.AddCommand(certsCmd)
 
 	// Root Flags
 	rootCmd.PersistentFlags().StringVarP(

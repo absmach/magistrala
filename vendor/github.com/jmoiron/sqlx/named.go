@@ -210,21 +210,21 @@ func bindStruct(bindType int, query string, arg interface{}, m *reflectx.Mapper)
 	return bound, arglist, nil
 }
 
-var (
-	EndBracketsReg = regexp.MustCompile(`\([^()]*\)\s*$`)
-)
+var valueBracketReg = regexp.MustCompile(`\([^(]*\?+[^)]*\)`)
 
 func fixBound(bound string, loop int) string {
-	endBrackets := EndBracketsReg.FindString(bound)
-	if endBrackets == "" {
+	loc := valueBracketReg.FindStringIndex(bound)
+	if len(loc) != 2 {
 		return bound
 	}
 	var buffer bytes.Buffer
-	buffer.WriteString(bound)
+
+	buffer.WriteString(bound[0:loc[1]])
 	for i := 0; i < loop-1; i++ {
 		buffer.WriteString(",")
-		buffer.WriteString(endBrackets)
+		buffer.WriteString(bound[loc[0]:loc[1]])
 	}
+	buffer.WriteString(bound[loc[1]:])
 	return buffer.String()
 }
 
@@ -403,7 +403,7 @@ func NamedQuery(e Ext, query string, arg interface{}) (*Rows, error) {
 
 // NamedExec uses BindStruct to get a query executable by the driver and
 // then runs Exec on the result.  Returns an error from the binding
-// or the query excution itself.
+// or the query execution itself.
 func NamedExec(e Ext, query string, arg interface{}) (sql.Result, error) {
 	q, args, err := bindNamedMapper(BindType(e.DriverName()), query, arg, mapperFor(e))
 	if err != nil {

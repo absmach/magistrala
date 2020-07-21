@@ -1,0 +1,76 @@
+# Copyright (c) Mainflux
+# SPDX-License-Identifier: Apache-2.0
+
+# This docker-compose file contains optional certs services. Since it's optional, this file is
+# dependent of docker-compose file from <project_root>/docker. In order to run this services, execute command:
+# docker-compose -f docker/docker-compose.yml -f docker/addons/certs/docker-compose.yml up
+# from project root.
+
+version: "3.7"
+
+networks:
+  docker_mainflux-base-net:
+    external: true
+
+  
+volumes:
+  mainflux-certs-db-volume:
+
+services:
+  certs-db:
+    image: postgres:10.2-alpine
+    container_name: mainflux-certs-db
+    restart: on-failure
+    environment:
+      POSTGRES_USER: ${MF_CERTS_DB_USER}
+      POSTGRES_PASSWORD: ${MF_CERTS_DB_PASS}
+      POSTGRES_DB: ${MF_CERTS_DB}
+    networks:
+      - docker_mainflux-base-net
+    volumes:
+      - mainflux-certs-db-volume:/var/lib/postgresql/data
+      
+  certs:
+    image: mainflux/certs:latest
+    container_name: mainflux-certs
+    depends_on:
+      - certs-db
+    restart: on-failure
+    networks:
+      - docker_mainflux-base-net
+    ports:
+      - ${MF_CERTS_HTTP_PORT}:${MF_CERTS_HTTP_PORT}
+    environment:
+      MF_CERTS_LOG_LEVEL: ${MF_CERTS_LOG_LEVEL}
+      MF_CERTS_DB_HOST: certs-db
+      MF_CERTS_DB_PORT: ${MF_CERTS_DB_PORT}
+      MF_CERTS_DB_PASS: ${MF_CERTS_DB_PASS}
+      MF_CERTS_DB_USER: ${MF_CERTS_DB_USER}
+      MF_CERTS_DB: ${MF_CERTS_DB}
+      MF_CERTS_DB_SSL_MODE: ${MF_CERTS_DB_SSL_MODE}
+      MF_CERTS_DB_SSL_CERT: ${MF_CERTS_DB_SSL_CERT}
+      MF_CERTS_DB_SSL_KEY: ${MF_CERTS_DB_SSL_KEY}
+      MF_CERTS_DB_SSL_ROOT_CERT: ${MF_CERTS_DB_SSL_ROOT_CERT}
+      MF_CERTS_ENCRYPT_KEY: ${MF_CERTS_ENCRYPT_KEY}
+      MF_CERTS_CLIENT_TLS: ${MF_CERTS_CLIENT_TLS}
+      MF_CERTS_CA_CERTS: ${MF_CERTS_CA_CERTS}
+      MF_CERTS_HTTP_PORT: ${MF_CERTS_HTTP_PORT}
+      MF_CERTS_SERVER_CERT: ${MF_CERTS_SERVER_CERT}
+      MF_CERTS_SERVER_KEY: ${MF_CERTS_SERVER_KEY}
+      MF_SDK_BASE_URL: ${MF_SDK_BASE_URL}
+      MF_SDK_THINGS_PREFIX: ${MF_SDK_THINGS_PREFIX}
+      MF_JAEGER_URL: ${MF_JAEGER_URL}
+      MF_AUTHN_GRPC_URL: ${MF_AUTHN_GRPC_URL}
+      MF_AUTHN_GRPC_TIMEOUT: ${MF_AUTHN_GRPC_TIMEOUT}
+      MF_CERTS_SIGN_CA_PATH: ${MF_CERTS_SIGN_CA_PATH}
+      MF_CERTS_SIGN_CA_KEY_PATH: ${MF_CERTS_SIGN_CA_KEY_PATH}
+      MF_CERTS_SIGN_HOURS_VALID: ${MF_CERTS_SIGN_HOURS_VALID}
+      MF_CERTS_SIGN_RSA_BITS: ${MF_CERTS_SIGN_RSA_BITS}
+      MF_CERTS_VAULT_TOKEN: ${MF_CERTS_VAULT_TOKEN}
+      MF_CERTS_VAULT_HOST: ${MF_CERTS_VAULT_HOST}
+      MF_CERTS_VAULT_PKI_PATH: ${MF_CERTS_VAULT_PKI_PATH}
+      MF_CERTS_VAULT_ROLE: ${MF_CERTS_VAULT_ROLE}
+    volumes:
+      - ../../ssl/certs/ca.key:/etc/ssl/certs/ca.key
+      - ../../ssl/certs/ca.crt:/etc/ssl/certs/ca.crt
+      

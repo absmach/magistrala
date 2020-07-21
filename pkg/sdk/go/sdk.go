@@ -193,11 +193,14 @@ type SDK interface {
 	// Whitelist updates Thing state Config with given ID belonging to the user identified by the given token.
 	Whitelist(token string, cfg BootstrapConfig) error
 
-	// Cert issues a certificate for a thing required for mtls.
-	Cert(thingID, thingKey, token string) (Cert, error)
+	// IssueCert issues a certificate for a thing required for mtls.
+	IssueCert(thingID string, keyBits int, keyType, valid, token string) (Cert, error)
 
-	// RemoveCert remove a certificate
+	// RemoveCert removes a certificate
 	RemoveCert(id, token string) error
+
+	// RevokeCert revokes certificate with certID for thing with thingID
+	RevokeCert(thingID, certID, token string) error
 }
 
 type mfSDK struct {
@@ -208,6 +211,7 @@ type mfSDK struct {
 	readerPrefix      string
 	usersPrefix       string
 	thingsPrefix      string
+	certsPrefix       string
 	channelsPrefix    string
 	httpAdapterPrefix string
 	bootstrapPrefix   string

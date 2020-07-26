@@ -75,12 +75,12 @@ func (crm channelRepositoryMiddleware) RetrieveAll(ctx context.Context, owner st
 	return crm.repo.RetrieveAll(ctx, owner, offset, limit, name, metadata)
 }
 
-func (crm channelRepositoryMiddleware) RetrieveByThing(ctx context.Context, owner, thing string, offset, limit uint64) (things.ChannelsPage, error) {
+func (crm channelRepositoryMiddleware) RetrieveByThing(ctx context.Context, owner, thing string, offset, limit uint64, connected bool) (things.ChannelsPage, error) {
 	span := createSpan(ctx, crm.tracer, retrieveChannelsByThingOp)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
-	return crm.repo.RetrieveByThing(ctx, owner, thing, offset, limit)
+	return crm.repo.RetrieveByThing(ctx, owner, thing, offset, limit, connected)
 }
 
 func (crm channelRepositoryMiddleware) Remove(ctx context.Context, owner, id string) error {

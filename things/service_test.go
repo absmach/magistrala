@@ -278,11 +278,20 @@ func TestListThingsByChannel(t *testing.T) {
 	schs, err := svc.CreateChannels(context.Background(), token, channel)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	sch := schs[0]
+
 	n := uint64(10)
+	thsDisconNum := uint64(1)
+
 	for i := uint64(0); i < n; i++ {
 		sths, err := svc.CreateThings(context.Background(), token, thing)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		sth := sths[0]
+
+		// Don't connect last Channel
+		if i == n-thsDisconNum {
+			break
+		}
+
 		svc.Connect(context.Background(), token, []string{sch.ID}, []string{sth.ID})
 	}
 
@@ -290,73 +299,90 @@ func TestListThingsByChannel(t *testing.T) {
 	time.Sleep(time.Second)
 
 	cases := map[string]struct {
-		token   string
-		channel string
-		offset  uint64
-		limit   uint64
-		size    uint64
-		err     error
+		token     string
+		channel   string
+		offset    uint64
+		limit     uint64
+		connected bool
+		size      uint64
+		err       error
 	}{
 		"list all things by existing channel": {
-			token:   token,
-			channel: sch.ID,
-			offset:  0,
-			limit:   n,
-			size:    n,
-			err:     nil,
+			token:     token,
+			channel:   sch.ID,
+			offset:    0,
+			limit:     n,
+			connected: true,
+			size:      n - thsDisconNum,
+			err:       nil,
 		},
 		"list half of things by existing channel": {
-			token:   token,
-			channel: sch.ID,
-			offset:  n / 2,
-			limit:   n,
-			size:    n / 2,
-			err:     nil,
+			token:     token,
+			channel:   sch.ID,
+			offset:    n / 2,
+			limit:     n,
+			connected: true,
+			size:      (n / 2) - thsDisconNum,
+			err:       nil,
 		},
 		"list last thing by existing channel": {
-			token:   token,
-			channel: sch.ID,
-			offset:  n - 1,
-			limit:   n,
-			size:    1,
-			err:     nil,
+			token:     token,
+			channel:   sch.ID,
+			offset:    n - 1 - thsDisconNum,
+			limit:     n,
+			connected: true,
+			size:      1,
+			err:       nil,
 		},
 		"list empty set of things by existing channel": {
-			token:   token,
-			channel: sch.ID,
-			offset:  n + 1,
-			limit:   n,
-			size:    0,
-			err:     nil,
+			token:     token,
+			channel:   sch.ID,
+			offset:    n + 1,
+			limit:     n,
+			connected: true,
+			size:      0,
+			err:       nil,
 		},
 		"list things by existing channel with zero limit": {
-			token:   token,
-			channel: sch.ID,
-			offset:  1,
-			limit:   0,
-			size:    0,
-			err:     nil,
+			token:     token,
+			channel:   sch.ID,
+			offset:    1,
+			limit:     0,
+			connected: true,
+			size:      0,
+			err:       nil,
 		},
 		"list things by existing channel with wrong credentials": {
-			token:   wrongValue,
-			channel: sch.ID,
-			offset:  0,
-			limit:   0,
-			size:    0,
-			err:     things.ErrUnauthorizedAccess,
+			token:     wrongValue,
+			channel:   sch.ID,
+			offset:    0,
+			limit:     0,
+			connected: true,
+			size:      0,
+			err:       things.ErrUnauthorizedAccess,
 		},
 		"list things by non-existent channel with wrong credentials": {
-			token:   token,
-			channel: "non-existent",
-			offset:  0,
-			limit:   10,
-			size:    0,
-			err:     nil,
+			token:     token,
+			channel:   "non-existent",
+			offset:    0,
+			limit:     10,
+			connected: true,
+			size:      0,
+			err:       nil,
+		},
+		"list all non connected things by existing channel": {
+			token:     token,
+			channel:   sch.ID,
+			offset:    0,
+			limit:     n,
+			connected: false,
+			size:      thsDisconNum,
+			err:       nil,
 		},
 	}
 
 	for desc, tc := range cases {
-		page, err := svc.ListThingsByChannel(context.Background(), tc.token, tc.channel, tc.offset, tc.limit)
+		page, err := svc.ListThingsByChannel(context.Background(), tc.token, tc.channel, tc.offset, tc.limit, tc.connected)
 		size := uint64(len(page.Things))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
@@ -619,11 +645,20 @@ func TestListChannelsByThing(t *testing.T) {
 	sths, err := svc.CreateThings(context.Background(), token, thing)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	sth := sths[0]
+
 	n := uint64(10)
+	chsDisconNum := uint64(1)
+
 	for i := uint64(0); i < n; i++ {
 		schs, err := svc.CreateChannels(context.Background(), token, channel)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		sch := schs[0]
+
+		// Don't connect last Channel
+		if i == n-chsDisconNum {
+			break
+		}
+
 		svc.Connect(context.Background(), token, []string{sch.ID}, []string{sth.ID})
 	}
 
@@ -631,73 +666,90 @@ func TestListChannelsByThing(t *testing.T) {
 	time.Sleep(time.Second)
 
 	cases := map[string]struct {
-		token  string
-		thing  string
-		offset uint64
-		limit  uint64
-		size   uint64
-		err    error
+		token     string
+		thing     string
+		offset    uint64
+		limit     uint64
+		connected bool
+		size      uint64
+		err       error
 	}{
 		"list all channels by existing thing": {
-			token:  token,
-			thing:  sth.ID,
-			offset: 0,
-			limit:  n,
-			size:   n,
-			err:    nil,
+			token:     token,
+			thing:     sth.ID,
+			offset:    0,
+			limit:     n,
+			connected: true,
+			size:      n - chsDisconNum,
+			err:       nil,
 		},
 		"list half of channels by existing thing": {
-			token:  token,
-			thing:  sth.ID,
-			offset: n / 2,
-			limit:  n,
-			size:   n / 2,
-			err:    nil,
+			token:     token,
+			thing:     sth.ID,
+			offset:    n / 2,
+			limit:     n,
+			connected: true,
+			size:      (n / 2) - chsDisconNum,
+			err:       nil,
 		},
 		"list last channel by existing thing": {
-			token:  token,
-			thing:  sth.ID,
-			offset: n - 1,
-			limit:  n,
-			size:   1,
-			err:    nil,
+			token:     token,
+			thing:     sth.ID,
+			offset:    n - 1 - chsDisconNum,
+			limit:     n,
+			connected: true,
+			size:      1,
+			err:       nil,
 		},
 		"list empty set of channels by existing thing": {
-			token:  token,
-			thing:  sth.ID,
-			offset: n + 1,
-			limit:  n,
-			size:   0,
-			err:    nil,
+			token:     token,
+			thing:     sth.ID,
+			offset:    n + 1,
+			limit:     n,
+			connected: true,
+			size:      0,
+			err:       nil,
 		},
 		"list channels by existing thing with zero limit": {
-			token:  token,
-			thing:  sth.ID,
-			offset: 1,
-			limit:  0,
-			size:   0,
-			err:    nil,
+			token:     token,
+			thing:     sth.ID,
+			offset:    1,
+			limit:     0,
+			connected: true,
+			size:      0,
+			err:       nil,
 		},
 		"list channels by existing thing with wrong credentials": {
-			token:  wrongValue,
-			thing:  sth.ID,
-			offset: 0,
-			limit:  0,
-			size:   0,
-			err:    things.ErrUnauthorizedAccess,
+			token:     wrongValue,
+			thing:     sth.ID,
+			offset:    0,
+			limit:     0,
+			connected: true,
+			size:      0,
+			err:       things.ErrUnauthorizedAccess,
 		},
 		"list channels by non-existent thing": {
-			token:  token,
-			thing:  "non-existent",
-			offset: 0,
-			limit:  10,
-			size:   0,
-			err:    nil,
+			token:     token,
+			thing:     "non-existent",
+			offset:    0,
+			limit:     10,
+			connected: true,
+			size:      0,
+			err:       nil,
+		},
+		"list all non connected channels by existing thing": {
+			token:     token,
+			thing:     sth.ID,
+			offset:    0,
+			limit:     n,
+			connected: false,
+			size:      chsDisconNum,
+			err:       nil,
 		},
 	}
 
 	for desc, tc := range cases {
-		page, err := svc.ListChannelsByThing(context.Background(), tc.token, tc.thing, tc.offset, tc.limit)
+		page, err := svc.ListChannelsByThing(context.Background(), tc.token, tc.thing, tc.offset, tc.limit, tc.connected)
 		size := uint64(len(page.Channels))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))

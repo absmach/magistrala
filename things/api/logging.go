@@ -95,7 +95,7 @@ func (lm *loggingMiddleware) ListThings(ctx context.Context, token string, offse
 	return lm.svc.ListThings(ctx, token, offset, limit, name, metadata)
 }
 
-func (lm *loggingMiddleware) ListThingsByChannel(ctx context.Context, token, id string, offset, limit uint64) (_ things.Page, err error) {
+func (lm *loggingMiddleware) ListThingsByChannel(ctx context.Context, token, id string, offset, limit uint64, connected bool) (_ things.Page, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list_things_by_channel for channel %s took %s to complete", id, time.Since(begin))
 		if err != nil {
@@ -104,7 +104,7 @@ func (lm *loggingMiddleware) ListThingsByChannel(ctx context.Context, token, id 
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.ListThingsByChannel(ctx, token, id, offset, limit)
+	return lm.svc.ListThingsByChannel(ctx, token, id, offset, limit, connected)
 }
 
 func (lm *loggingMiddleware) RemoveThing(ctx context.Context, token, id string) (err error) {
@@ -176,7 +176,7 @@ func (lm *loggingMiddleware) ListChannels(ctx context.Context, token string, off
 	return lm.svc.ListChannels(ctx, token, offset, limit, name, metadata)
 }
 
-func (lm *loggingMiddleware) ListChannelsByThing(ctx context.Context, token, id string, offset, limit uint64) (_ things.ChannelsPage, err error) {
+func (lm *loggingMiddleware) ListChannelsByThing(ctx context.Context, token, id string, offset, limit uint64, connected bool) (_ things.ChannelsPage, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list_channels_by_thing for thing %s took %s to complete", id, time.Since(begin))
 		if err != nil {
@@ -185,7 +185,7 @@ func (lm *loggingMiddleware) ListChannelsByThing(ctx context.Context, token, id 
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.ListChannelsByThing(ctx, token, id, offset, limit)
+	return lm.svc.ListChannelsByThing(ctx, token, id, offset, limit, connected)
 }
 
 func (lm *loggingMiddleware) RemoveChannel(ctx context.Context, token, id string) (err error) {

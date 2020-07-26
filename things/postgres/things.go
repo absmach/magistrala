@@ -252,20 +252,49 @@ func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, offset,
 	return page, nil
 }
 
-func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, channel string, offset, limit uint64) (things.Page, error) {
+func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, channel string, offset, limit uint64, connected bool) (things.Page, error) {
 	// Verify if UUID format is valid to avoid internal Postgres error
 	if _, err := uuid.FromString(channel); err != nil {
 		return things.Page{}, things.ErrNotFound
 	}
 
-	q := `SELECT id, name, key, metadata
-	      FROM things th
-	      INNER JOIN connections co
-		  ON th.id = co.thing_id
-		  WHERE th.owner = :owner AND co.channel_id = :channel
-		  ORDER BY th.id
-		  LIMIT :limit
-		  OFFSET :offset;`
+	var q, qc string
+	switch connected {
+	case true:
+		q = `SELECT id, name, key, metadata
+		        FROM things th
+		        INNER JOIN connections conn
+		        ON th.id = conn.thing_id
+		        WHERE th.owner = :owner AND conn.channel_id = :channel
+		        ORDER BY th.id
+		        LIMIT :limit
+		        OFFSET :offset;`
+
+		qc = `SELECT COUNT(*)
+		        FROM things th
+		        INNER JOIN connections conn
+		        ON th.id = conn.thing_id
+		        WHERE th.owner = $1 AND conn.channel_id = $2;`
+	default:
+		q = `SELECT id, name, key, metadata
+		        FROM things th
+		        WHERE th.owner = :owner AND th.id NOT IN
+		        (SELECT id FROM things th
+		          INNER JOIN connections conn
+		          ON th.id = conn.thing_id
+		          WHERE th.owner = :owner AND conn.channel_id = :channel)
+		        ORDER BY th.id
+		        LIMIT :limit
+		        OFFSET :offset;`
+
+		qc = `SELECT COUNT(*)
+		        FROM things th
+		        WHERE th.owner = $1 AND th.id NOT IN
+		        (SELECT id FROM things th
+		          INNER JOIN connections conn
+		          ON th.id = conn.thing_id
+		          WHERE th.owner = $1 AND conn.channel_id = $2);`
+	}
 
 	params := map[string]interface{}{
 		"owner":   owner,
@@ -295,14 +324,8 @@ func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, channel 
 		items = append(items, th)
 	}
 
-	q = `SELECT COUNT(*)
-	     FROM things th
-	     INNER JOIN connections co
-	     ON th.id = co.thing_id
-	     WHERE th.owner = $1 AND co.channel_id = $2;`
-
 	var total uint64
-	if err := tr.db.GetContext(ctx, &total, q, owner, channel); err != nil {
+	if err := tr.db.GetContext(ctx, &total, qc, owner, channel); err != nil {
 		return things.Page{}, errors.Wrap(ErrSelectDb, err)
 	}
 

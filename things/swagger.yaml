@@ -94,7 +94,7 @@ paths:
           $ref: "#/responses/ServiceError"
   /channels/{chanId}/things:
     get:
-      summary: Retrieves list of things connected to specified channel
+      summary: Retrieves list of things connected or not connected to specified channel
       description: |
         Retrieves list of things connected to specified channel with pagination
         metadata.
@@ -104,6 +104,7 @@ paths:
         - $ref: "#/parameters/ChanId"
         - $ref: "#/parameters/Offset"
         - $ref: "#/parameters/Limit"
+        - $ref: "#/parameters/Connected"
       responses:
         200:
           description: Data retrieved.
@@ -367,7 +368,7 @@ paths:
           $ref: "#/responses/ServiceError"
   /things/{thingId}/channels:
     get:
-      summary: Retrieves list of channels connected to specified thing
+      summary: Retrieves list of channels connected or not connected to specified thing
       description: |
         Retrieves list of channels connected to specified thing with pagination
         metadata.
@@ -377,6 +378,7 @@ paths:
         - $ref: "#/parameters/ThingId"
         - $ref: "#/parameters/Offset"
         - $ref: "#/parameters/Limit"
+        - $ref: "#/parameters/Connected"
       responses:
         200:
           description: Data retrieved.
@@ -550,6 +552,13 @@ parameters:
     type: integer
     default: 0
     minimum: 0
+    required: false
+  Connected:
+    name: connected
+    description: Connection state of the subset to retrieve.
+    in: query
+    type: boolean
+    default: true
     required: false
   Name:
     name: name

@@ -122,9 +122,9 @@ type SDK interface {
 	// Things returns page of things.
 	Things(token string, offset, limit uint64, name string) (ThingsPage, error)
 
-	// ThingsByChannel returns page of things that are connected to specified
-	// channel.
-	ThingsByChannel(token, chanID string, offset, limit uint64) (ThingsPage, error)
+	// ThingsByChannel returns page of things that are connected or not connected
+	// to specified channel.
+	ThingsByChannel(token, chanID string, offset, limit uint64, connected bool) (ThingsPage, error)
 
 	// Thing returns thing object by id.
 	Thing(id, token string) (Thing, error)
@@ -150,9 +150,9 @@ type SDK interface {
 	// Channels returns page of channels.
 	Channels(token string, offset, limit uint64, name string) (ChannelsPage, error)
 
-	// ChannelsByThing returns page of channels that are connected to specified
-	// thing.
-	ChannelsByThing(token, thingID string, offset, limit uint64) (ChannelsPage, error)
+	// ChannelsByThing returns page of channels that are connected or not connected
+	// to specified thing.
+	ChannelsByThing(token, thingID string, offset, limit uint64, connected bool) (ChannelsPage, error)
 
 	// Channel returns channel data by id.
 	Channel(id, token string) (Channel, error)

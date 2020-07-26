@@ -215,8 +215,8 @@ func TestListThingsByChannel(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("unexpected error %s", err))
 
 	essvc := redis.NewEventStoreMiddleware(svc, redisClient)
-	esths, eserr := essvc.ListThingsByChannel(context.Background(), token, sch.ID, 0, 10)
-	thps, err := svc.ListThingsByChannel(context.Background(), token, sch.ID, 0, 10)
+	esths, eserr := essvc.ListThingsByChannel(context.Background(), token, sch.ID, 0, 10, true)
+	thps, err := svc.ListThingsByChannel(context.Background(), token, sch.ID, 0, 10, true)
 	assert.Equal(t, thps, esths, fmt.Sprintf("event sourcing changed service behaviour: expected %v got %v", thps, esths))
 	assert.Equal(t, err, eserr, fmt.Sprintf("event sourcing changed service behaviour: expected %v got %v", err, eserr))
 }
@@ -451,8 +451,8 @@ func TestListChannelsByThing(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("unexpected error %s", err))
 
 	essvc := redis.NewEventStoreMiddleware(svc, redisClient)
-	eschs, eserr := essvc.ListChannelsByThing(context.Background(), token, sth.ID, 0, 10)
-	chps, err := svc.ListChannelsByThing(context.Background(), token, sth.ID, 0, 10)
+	eschs, eserr := essvc.ListChannelsByThing(context.Background(), token, sth.ID, 0, 10, true)
+	chps, err := svc.ListChannelsByThing(context.Background(), token, sth.ID, 0, 10, true)
 	assert.Equal(t, chps, eschs, fmt.Sprintf("event sourcing changed service behaviour: expected %v got %v", chps, eschs))
 	assert.Equal(t, err, eserr, fmt.Sprintf("event sourcing changed service behaviour: expected %v got %v", err, eserr))
 }

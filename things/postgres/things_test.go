@@ -10,9 +10,9 @@ import (
 	"testing"
 
 	"github.com/mainflux/mainflux/pkg/errors"
+	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/things"
 	"github.com/mainflux/mainflux/things/postgres"
-	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -520,6 +520,7 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 	channelRepo := postgres.NewChannelRepository(dbMiddleware)
 
 	n := uint64(10)
+	thsDisconNum := uint64(1)
 
 	chid, err := up.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -544,6 +545,12 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 		sths, err := thingRepo.Save(context.Background(), th)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		tid := sths[0].ID
+
+		// Don't connnect last Thing
+		if i == n-thsDisconNum {
+			break
+		}
+
 		err = channelRepo.Connect(context.Background(), email, []string{cid}, []string{tid})
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	}
@@ -552,55 +559,69 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	cases := map[string]struct {
-		owner   string
-		channel string
-		offset  uint64
-		limit   uint64
-		size    uint64
-		err     error
+		owner     string
+		channel   string
+		offset    uint64
+		limit     uint64
+		connected bool
+		size      uint64
+		err       error
 	}{
 		"retrieve all things by channel with existing owner": {
-			owner:   email,
-			channel: cid,
-			offset:  0,
-			limit:   n,
-			size:    n,
+			owner:     email,
+			channel:   cid,
+			offset:    0,
+			limit:     n,
+			connected: true,
+			size:      n - thsDisconNum,
 		},
 		"retrieve subset of things by channel with existing owner": {
-			owner:   email,
-			channel: cid,
-			offset:  n / 2,
-			limit:   n,
-			size:    n / 2,
+			owner:     email,
+			channel:   cid,
+			offset:    n / 2,
+			limit:     n,
+			connected: true,
+			size:      (n / 2) - thsDisconNum,
 		},
 		"retrieve things by channel with non-existing owner": {
-			owner:   wrongValue,
-			channel: cid,
-			offset:  0,
-			limit:   n,
-			size:    0,
+			owner:     wrongValue,
+			channel:   cid,
+			offset:    0,
+			limit:     n,
+			connected: true,
+			size:      0,
 		},
 		"retrieve things by non-existing channel": {
-			owner:   email,
-			channel: nonexistentChanID,
-			offset:  0,
-			limit:   n,
-			size:    0,
+			owner:     email,
+			channel:   nonexistentChanID,
+			offset:    0,
+			limit:     n,
+			connected: true,
+			size:      0,
 		},
 		"retrieve things with malformed UUID": {
-			owner:   email,
-			channel: wrongValue,
-			offset:  0,
-			limit:   n,
-			size:    0,
-			err:     things.ErrNotFound,
+			owner:     email,
+			channel:   wrongValue,
+			offset:    0,
+			limit:     n,
+			connected: true,
+			size:      0,
+			err:       things.ErrNotFound,
+		},
+		"retrieve all non connected things by channel with existing owner": {
+			owner:     email,
+			channel:   cid,
+			offset:    0,
+			limit:     n,
+			connected: false,
+			size:      thsDisconNum,
 		},
 	}
 
 	for desc, tc := range cases {
-		page, err := thingRepo.RetrieveByChannel(context.Background(), tc.owner, tc.channel, tc.offset, tc.limit)
+		page, err := thingRepo.RetrieveByChannel(context.Background(), tc.owner, tc.channel, tc.offset, tc.limit, tc.connected)
 		size := uint64(len(page.Things))
-		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
+		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.size, size))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected no error got %d\n", desc, err))
 	}
 }

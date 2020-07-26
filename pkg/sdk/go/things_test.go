@@ -349,7 +349,6 @@ func TestThingsByChannel(t *testing.T) {
 		MsgContentType:    contentType,
 		TLSVerification:   false,
 	}
-	var things []sdk.Thing
 
 	mainfluxSDK := sdk.NewSDK(sdkConf)
 
@@ -357,100 +356,128 @@ func TestThingsByChannel(t *testing.T) {
 	cid, err := mainfluxSDK.CreateChannel(ch, token)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
-	tIDs := []string{}
-
-	for i := 1; i < 101; i++ {
-		th := sdk.Thing{Name: "test_device", Metadata: metadata}
+	var n = 10
+	var thsDiscoNum = 1
+	var things []sdk.Thing
+	for i := 1; i < n+1; i++ {
+		th := sdk.Thing{
+			ID:       strconv.Itoa(i),
+			Name:     "test_device",
+			Metadata: metadata,
+			Key:      fmt.Sprintf("%s%012d", keyPrefix, 2*i+1),
+		}
 		tid, err := mainfluxSDK.CreateThing(th, token)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-		th.ID = tid
-		tIDs = append(tIDs, tid)
-		th.Key = fmt.Sprintf("%s%012d", keyPrefix, 2*i+1)
-		things = append(things, th)
-	}
 
-	conIDs := sdk.ConnectionIDs{
-		ChannelIDs: []string{cid},
-		ThingIDs:   tIDs,
+		things = append(things, th)
+
+		// Don't connect last Thing
+		if i == n+1-thsDiscoNum {
+			break
+		}
+
+		// Don't connect last 2 Channels
+		conIDs := sdk.ConnectionIDs{
+			ChannelIDs: []string{cid},
+			ThingIDs:   []string{tid},
+		}
+		err = mainfluxSDK.Connect(conIDs, token)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	}
-	err = mainfluxSDK.Connect(conIDs, token)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := []struct {
-		desc     string
-		channel  string
-		token    string
-		offset   uint64
-		limit    uint64
-		err      error
-		response []sdk.Thing
+		desc      string
+		channel   string
+		token     string
+		offset    uint64
+		limit     uint64
+		connected bool
+		err       error
+		response  []sdk.Thing
 	}{
 		{
-			desc:     "get a list of things by channel",
-			channel:  cid,
-			token:    token,
-			offset:   0,
-			limit:    5,
-			err:      nil,
-			response: things[0:5],
+			desc:      "get a list of things by channel",
+			channel:   cid,
+			token:     token,
+			offset:    0,
+			limit:     5,
+			connected: true,
+			err:       nil,
+			response:  things[0:5],
 		},
 		{
-			desc:     "get a list of things by channel with invalid token",
-			channel:  cid,
-			token:    wrongValue,
-			offset:   0,
-			limit:    5,
-			err:      createError(sdk.ErrFailedFetch, http.StatusForbidden),
-			response: nil,
+			desc:      "get a list of things by channel with invalid token",
+			channel:   cid,
+			token:     wrongValue,
+			offset:    0,
+			limit:     5,
+			connected: true,
+			err:       createError(sdk.ErrFailedFetch, http.StatusForbidden),
+			response:  nil,
 		},
 		{
-			desc:     "get a list of things by channel with empty token",
-			channel:  cid,
-			token:    "",
-			offset:   0,
-			limit:    5,
-			err:      createError(sdk.ErrFailedFetch, http.StatusForbidden),
-			response: nil,
+			desc:      "get a list of things by channel with empty token",
+			channel:   cid,
+			token:     "",
+			offset:    0,
+			limit:     5,
+			connected: true,
+			err:       createError(sdk.ErrFailedFetch, http.StatusForbidden),
+			response:  nil,
 		},
 		{
-			desc:     "get a list of things by channel with zero limit",
-			channel:  cid,
-			token:    token,
-			offset:   0,
-			limit:    0,
-			err:      createError(sdk.ErrFailedFetch, http.StatusBadRequest),
-			response: nil,
+			desc:      "get a list of things by channel with zero limit",
+			channel:   cid,
+			token:     token,
+			offset:    0,
+			limit:     0,
+			connected: true,
+			err:       createError(sdk.ErrFailedFetch, http.StatusBadRequest),
+			response:  nil,
 		},
 		{
-			desc:     "get a list of things by channel with limit greater than max",
-			channel:  cid,
-			token:    token,
-			offset:   0,
-			limit:    110,
-			err:      createError(sdk.ErrFailedFetch, http.StatusBadRequest),
-			response: nil,
+			desc:      "get a list of things by channel with limit greater than max",
+			channel:   cid,
+			token:     token,
+			offset:    0,
+			limit:     110,
+			connected: true,
+			err:       createError(sdk.ErrFailedFetch, http.StatusBadRequest),
+			response:  nil,
 		},
 		{
-			desc:     "get a list of things by channel with offset greater than max",
-			channel:  cid,
-			token:    token,
-			offset:   110,
-			limit:    5,
-			err:      nil,
-			response: []sdk.Thing{},
+			desc:      "get a list of things by channel with offset greater than max",
+			channel:   cid,
+			token:     token,
+			offset:    110,
+			limit:     5,
+			connected: true,
+			err:       nil,
+			response:  []sdk.Thing{},
 		},
 		{
-			desc:     "get a list of things by channel with invalid args (zero limit) and invalid token",
-			channel:  cid,
-			token:    wrongValue,
-			offset:   0,
-			limit:    0,
-			err:      createError(sdk.ErrFailedFetch, http.StatusBadRequest),
-			response: nil,
+			desc:      "get a list of things by channel with invalid args (zero limit) and invalid token",
+			channel:   cid,
+			token:     wrongValue,
+			offset:    0,
+			limit:     0,
+			connected: true,
+			err:       createError(sdk.ErrFailedFetch, http.StatusBadRequest),
+			response:  nil,
+		},
+		{
+			desc:      "get a list of not connected things by channel",
+			channel:   cid,
+			token:     token,
+			offset:    0,
+			limit:     100,
+			connected: false,
+			err:       nil,
+			response:  []sdk.Thing{things[n-thsDiscoNum]},
 		},
 	}
 	for _, tc := range cases {
-		page, err := mainfluxSDK.ThingsByChannel(tc.token, tc.channel, tc.offset, tc.limit)
+		page, err := mainfluxSDK.ThingsByChannel(tc.token, tc.channel, tc.offset, tc.limit, tc.connected)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page.Things, fmt.Sprintf("%s: expected response channel %s, got %s", tc.desc, tc.response, page.Things))
 	}

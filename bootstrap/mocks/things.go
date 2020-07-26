@@ -171,11 +171,11 @@ func (svc *mainfluxThings) ListThings(context.Context, string, uint64, uint64, s
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) ListChannelsByThing(context.Context, string, string, uint64, uint64) (things.ChannelsPage, error) {
+func (svc *mainfluxThings) ListChannelsByThing(context.Context, string, string, uint64, uint64, bool) (things.ChannelsPage, error) {
 	panic("not implemented")
 }
 
-func (svc *mainfluxThings) ListThingsByChannel(context.Context, string, string, uint64, uint64) (things.Page, error) {
+func (svc *mainfluxThings) ListThingsByChannel(context.Context, string, string, uint64, uint64, bool) (things.Page, error) {
 	panic("not implemented")
 }
 

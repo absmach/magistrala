@@ -187,7 +187,7 @@ func listThingsByChannelEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		page, err := svc.ListThingsByChannel(ctx, req.token, req.id, req.offset, req.limit)
+		page, err := svc.ListThingsByChannel(ctx, req.token, req.id, req.offset, req.limit, req.connected)
 		if err != nil {
 			return nil, err
 		}
@@ -392,7 +392,7 @@ func listChannelsByThingEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		page, err := svc.ListChannelsByThing(ctx, req.token, req.id, req.offset, req.limit)
+		page, err := svc.ListChannelsByThing(ctx, req.token, req.id, req.offset, req.limit, req.connected)
 		if err != nil {
 			return nil, err
 		}

@@ -76,13 +76,13 @@ func (ms *metricsMiddleware) ListThings(ctx context.Context, token string, offse
 	return ms.svc.ListThings(ctx, token, offset, limit, name, metadata)
 }
 
-func (ms *metricsMiddleware) ListThingsByChannel(ctx context.Context, token, id string, offset, limit uint64) (things.Page, error) {
+func (ms *metricsMiddleware) ListThingsByChannel(ctx context.Context, token, id string, offset, limit uint64, connected bool) (things.Page, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_things_by_channel").Add(1)
 		ms.latency.With("method", "list_things_by_channel").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListThingsByChannel(ctx, token, id, offset, limit)
+	return ms.svc.ListThingsByChannel(ctx, token, id, offset, limit, connected)
 }
 
 func (ms *metricsMiddleware) RemoveThing(ctx context.Context, token, id string) error {
@@ -130,13 +130,13 @@ func (ms *metricsMiddleware) ListChannels(ctx context.Context, token string, off
 	return ms.svc.ListChannels(ctx, token, offset, limit, name, metadata)
 }
 
-func (ms *metricsMiddleware) ListChannelsByThing(ctx context.Context, token, id string, offset, limit uint64) (things.ChannelsPage, error) {
+func (ms *metricsMiddleware) ListChannelsByThing(ctx context.Context, token, id string, offset, limit uint64, connected bool) (things.ChannelsPage, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_channels_by_thing").Add(1)
 		ms.latency.With("method", "list_channels_by_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListChannelsByThing(ctx, token, id, offset, limit)
+	return ms.svc.ListChannelsByThing(ctx, token, id, offset, limit, connected)
 }
 
 func (ms *metricsMiddleware) RemoveChannel(ctx context.Context, token, id string) error {

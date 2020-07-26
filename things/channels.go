@@ -28,43 +28,43 @@ type ChannelRepository interface {
 	// Save persists multiple channels. Channels are saved using a transaction. If one channel
 	// fails then none will be saved. Successful operation is indicated by non-nil
 	// error response.
-	Save(context.Context, ...Channel) ([]Channel, error)
+	Save(ctx context.Context, chs ...Channel) ([]Channel, error)
 
 	// Update performs an update to the existing channel. A non-nil error is
 	// returned to indicate operation failure.
-	Update(context.Context, Channel) error
+	Update(ctx context.Context, c Channel) error
 
 	// RetrieveByID retrieves the channel having the provided identifier, that is owned
 	// by the specified user.
-	RetrieveByID(context.Context, string, string) (Channel, error)
+	RetrieveByID(ctx context.Context, owner, id string) (Channel, error)
 
 	// RetrieveAll retrieves the subset of channels owned by the specified user.
-	RetrieveAll(context.Context, string, uint64, uint64, string, Metadata) (ChannelsPage, error)
+	RetrieveAll(ctx context.Context, owner string, offset, limit uint64, name string, m Metadata) (ChannelsPage, error)
 
 	// RetrieveByThing retrieves the subset of channels owned by the specified
-	// user and have specified thing connected to them.
-	RetrieveByThing(context.Context, string, string, uint64, uint64) (ChannelsPage, error)
+	// user and have specified thing connected or not connected to them.
+	RetrieveByThing(ctx context.Context, owner, thing string, offset, limit uint64, connected bool) (ChannelsPage, error)
 
 	// Remove removes the channel having the provided identifier, that is owned
 	// by the specified user.
-	Remove(context.Context, string, string) error
+	Remove(ctx context.Context, owner, id string) error
 
 	// Connect adds things to the channel's list of connected things.
-	Connect(context.Context, string, []string, []string) error
+	Connect(ctx context.Context, owner string, chIDs, thIDs []string) error
 
 	// Disconnect removes thing from the channel's list of connected
 	// things.
-	Disconnect(context.Context, string, string, string) error
+	Disconnect(ctx context.Context, owner, chanID, thingID string) error
 
 	// HasThing determines whether the thing with the provided access key, is
 	// "connected" to the specified channel. If that's the case, it returns
 	// thing's ID.
-	HasThing(context.Context, string, string) (string, error)
+	HasThing(ctx context.Context, chanID, key string) (string, error)
 
 	// HasThingByID determines whether the thing with the provided ID, is
 	// "connected" to the specified channel. If that's the case, then
 	// returned error will be nil.
-	HasThingByID(context.Context, string, string) error
+	HasThingByID(ctx context.Context, chanID, thingID string) error
 }
 
 // ChannelCache contains channel-thing connection caching interface.

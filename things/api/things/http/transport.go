@@ -23,10 +23,11 @@ import (
 
 const (
 	contentType = "application/json"
-	offset      = "offset"
-	limit       = "limit"
-	name        = "name"
-	metadata    = "metadata"
+	offsetKey   = "offset"
+	limitKey    = "limit"
+	nameKey     = "name"
+	metadataKey = "metadata"
+	connKey     = "connected"
 
 	defOffset = 0
 	defLimit  = 10
@@ -288,22 +289,22 @@ func decodeView(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
-	o, err := readUintQuery(r, offset, defOffset)
+	o, err := readUintQuery(r, offsetKey, defOffset)
 	if err != nil {
 		return nil, err
 	}
 
-	l, err := readUintQuery(r, limit, defLimit)
+	l, err := readUintQuery(r, limitKey, defLimit)
 	if err != nil {
 		return nil, err
 	}
 
-	n, err := readStringQuery(r, name)
+	n, err := readStringQuery(r, nameKey)
 	if err != nil {
 		return nil, err
 	}
 
-	m, err := readMetadataQuery(r, "metadata")
+	m, err := readMetadataQuery(r, metadataKey)
 	if err != nil {
 		return nil, err
 	}
@@ -320,21 +321,27 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func decodeListByConnection(_ context.Context, r *http.Request) (interface{}, error) {
-	o, err := readUintQuery(r, offset, defOffset)
+	o, err := readUintQuery(r, offsetKey, defOffset)
 	if err != nil {
 		return nil, err
 	}
 
-	l, err := readUintQuery(r, limit, defLimit)
+	l, err := readUintQuery(r, limitKey, defLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	c, err := readBoolQuery(r, connKey)
 	if err != nil {
 		return nil, err
 	}
 
 	req := listByConnectionReq{
-		token:  r.Header.Get("Authorization"),
-		id:     bone.GetValue(r, "id"),
-		offset: o,
-		limit:  l,
+		token:     r.Header.Get("Authorization"),
+		id:        bone.GetValue(r, "id"),
+		connected: c,
+		offset:    o,
+		limit:     l,
 	}
 
 	return req, nil
@@ -468,4 +475,22 @@ func readMetadataQuery(r *http.Request, key string) (map[string]interface{}, err
 	}
 
 	return m, nil
+}
+
+func readBoolQuery(r *http.Request, key string) (bool, error) {
+	vals := bone.GetQuery(r, key)
+	if len(vals) > 1 {
+		return true, errInvalidQueryParams
+	}
+
+	if len(vals) == 0 {
+		return true, nil
+	}
+
+	b, err := strconv.ParseBool(vals[0])
+	if err != nil {
+		return true, errInvalidQueryParams
+	}
+
+	return b, nil
 }

@@ -157,7 +157,26 @@ var cmdThings = []cobra.Command{
 				return
 			}
 
-			cl, err := sdk.ChannelsByThing(args[1], args[0], uint64(Offset), uint64(Limit))
+			cl, err := sdk.ChannelsByThing(args[1], args[0], uint64(Offset), uint64(Limit), true)
+			if err != nil {
+				logError(err)
+				return
+			}
+
+			logJSON(cl)
+		},
+	},
+	cobra.Command{
+		Use:   "not-connected",
+		Short: "not-connected <thing_id> <user_auth_token>",
+		Long:  `List of Channels not connected to a Thing`,
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 2 {
+				logUsage(cmd.Short)
+				return
+			}
+
+			cl, err := sdk.ChannelsByThing(args[1], args[0], uint64(Offset), uint64(Limit), false)
 			if err != nil {
 				logError(err)
 				return
@@ -173,9 +192,9 @@ func NewThingsCmd() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "things",
 		Short: "Things management",
-		Long:  `Things management: create, get, update or delete Thing, connect or disconnect Thing from Channel and get the list of Channels connected to Thing`,
+		Long:  `Things management: create, get, update or delete Thing, connect or disconnect Thing from Channel and get the list of Channels connected or disconnected from a Thing`,
 		Run: func(cmd *cobra.Command, args []string) {
-			logUsage("things [create | get | update | delete | connect | disconnect | connections]")
+			logUsage("things [create | get | update | delete | connect | disconnect | connections | not-connected]")
 		},
 	}
 

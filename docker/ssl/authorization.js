@@ -5,7 +5,7 @@ function authenticate(s) {
     if (!s.variables.ssl_client_s_dn || !s.variables.ssl_client_s_dn.length ||
         !s.variables.ssl_client_verify || s.variables.ssl_client_verify != "SUCCESS") {
         s.deny();
-        return
+        return;
     }
 
     s.on('upload', function (data) {

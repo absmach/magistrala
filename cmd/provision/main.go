@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -65,13 +66,14 @@ const (
 )
 
 var (
-	errMissingConfigFile        = errors.New("missing config file setting")
-	errFailLoadingConfigFile    = errors.New("failed to load config from file")
-	errFailGettingAutoWhiteList = errors.New("failed to get auto whitelist setting")
-	errFailGettingCertSettings  = errors.New("failed to get certificate file setting")
-	errFailGettingTLSConf       = errors.New("failed to get TLS setting")
-	errFailGettingProvBS        = errors.New("failed to get BS url setting")
-	errFailSettingKeyBits       = errors.New("failed to set rsa number of bits")
+	errMissingConfigFile            = errors.New("missing config file setting")
+	errFailLoadingConfigFile        = errors.New("failed to load config from file")
+	errFailGettingAutoWhiteList     = errors.New("failed to get auto whitelist setting")
+	errFailGettingCertSettings      = errors.New("failed to get certificate file setting")
+	errFailGettingTLSConf           = errors.New("failed to get TLS setting")
+	errFailGettingProvBS            = errors.New("failed to get BS url setting")
+	errFailSettingKeyBits           = errors.New("failed to set rsa number of bits")
+	errFailedToReadBootstrapContent = errors.New("failed to read bootstrap content from envs")
 )
 
 func main() {
@@ -169,6 +171,13 @@ func loadConfig() (provision.Config, error) {
 		return provision.Config{}, errFailSettingKeyBits
 	}
 
+	var content map[string]interface{}
+	if c := mainflux.Env(envBSContent, defBSContent); c != "" {
+		if err = json.Unmarshal([]byte(c), content); err != nil {
+			return provision.Config{}, errFailedToReadBootstrapContent
+		}
+	}
+
 	cfg := provision.Config{
 		Server: provision.ServiceConf{
 			LogLevel:       mainflux.Env(envLogLevel, defLogLevel),
@@ -193,7 +202,7 @@ func loadConfig() (provision.Config, error) {
 			X509Provision: provisionX509,
 			Provision:     provisionBS,
 			AutoWhiteList: autoWhiteList,
-			Content:       mainflux.Env(envBSContent, defBSContent),
+			Content:       content,
 		},
 
 		// This is default conf for provision if there is no config file

@@ -41,7 +41,7 @@ default values.
 | MF_PROVISION_X509_PROVISIONING      | Should X509 client cert be provisioned            | false                          |
 | MF_PROVISION_BS_CONFIG_PROVISIONING | Should thing config be saved in Bootstrap service | true                           |
 | MF_PROVISION_BS_AUTO_WHITELIST      | Should thing be auto whitelisted                  | true                           |
-| MF_PROVISION_BS_CONTENT             | Bootstrap service content                         | {}                             |
+| MF_PROVISION_BS_CONTENT             | Bootstrap service configs content, JSON format    | {}                             |
 | MF_PROVISION_CERTS_CA               | Mainflux CA cert for generating certificates      | ""                             |
 | MF_PROVISION_CERTS_CA_KEY           | Mainflux CA cert private key                      | ""                             |
 | MF_PROVISION_CERTS_RSA_BITS         | Certificate RSA bits parameter                    | 4096                           |

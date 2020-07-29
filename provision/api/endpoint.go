@@ -9,7 +9,6 @@ import (
 
 func doProvision(svc provision.Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
-
 		req := request.(addThingReq)
 		if err := req.validate(); err != nil {
 			return nil, err

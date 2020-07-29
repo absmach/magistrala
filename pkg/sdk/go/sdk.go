@@ -66,6 +66,9 @@ var (
 
 	// ErrCertsRemove indicates failure while cleaning up from the Certs service.
 	ErrCertsRemove = errors.New("failed to remove certificate")
+
+	// ErrFailedCertUpdate failed to update certs in bootstrap config
+	ErrFailedCertUpdate = errors.New("failed to update certs in bootstrap config")
 )
 
 // ContentType represents all possible content types.
@@ -183,6 +186,9 @@ type SDK interface {
 
 	// Update updates editable fields of the provided Config.
 	UpdateBootstrap(token string, cfg BootstrapConfig) error
+
+	// Update boostrap config certificates
+	UpdateBootstrapCerts(token string, id string, clientCert, clientKey, ca string) error
 
 	// Remove removes Config with specified token that belongs to the user identified by the given token.
 	RemoveBootstrap(token, id string) error

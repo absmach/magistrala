@@ -31,10 +31,10 @@ type ServiceConf struct {
 }
 
 type Bootstrap struct {
-	X509Provision bool   `toml:"x509_provision"`
-	Provision     bool   `toml:"provision"`
-	AutoWhiteList bool   `toml:"autowhite_list"`
-	Content       string `toml:"content"`
+	X509Provision bool                   `toml:"x509_provision"`
+	Provision     bool                   `toml:"provision"`
+	AutoWhiteList bool                   `toml:"autowhite_list"`
+	Content       map[string]interface{} `toml:"content"`
 }
 type Channel struct {
 	Name     string                 `toml:"name"`

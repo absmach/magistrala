@@ -132,7 +132,7 @@ func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, da
 		return c, errors.Wrap(errFailedCertCreation, err)
 	}
 
-	// If PKIClient == nil we don't use 3rd party PKI service.
+	// If PKIHost is not set we don't use 3rd party PKI service.
 	if cs.conf.PKIHost == "" {
 		c.ClientCert, c.ClientKey, err = cs.certs(thing.Key, daysValid, keyBits)
 		if err != nil {

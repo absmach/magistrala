@@ -106,8 +106,7 @@ func (p *pkiAgent) IssueCert(cn string, ttl, keyType string, keyBits int) (Cert,
 		return Cert{}, errors.Wrap(errFailedCertDecoding, err)
 	}
 
-	// Expire time calc must be revised
-	// value doesnt look correct
+	// Expire time calc must be revised value doesnt look correct
 	exp, err := s.Data["expiration"].(json.Number).Float64()
 	if err != nil {
 		return cert, err

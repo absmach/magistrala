@@ -1,5 +1,56 @@
 [bootstrap]
-  content = "{\"log_level\":\"info\",\"http_port\":\"9003\",\"mqtt_url\":\"localhost:1883\",\"edgex_url\":\"http://localhost:48090/api/v1/\",\"nats_url\":\"localhost:4222\"}"
+  [bootstrap.content]
+    [bootstrap.content.agent.edgex]
+      url = "http://localhost:48090/api/v1/"
+
+    [bootstrap.content.agent.log]
+      level = "info"
+
+    [bootstrap.content.agent.mqtt]
+      mtls = false
+      qos = 0
+      retain = false
+      skip_tls_ver = true
+      url = "localhost:1883"
+
+    [bootstrap.content.agent.server]
+      nats_url = "localhost:4222"
+      port = "9000"
+  
+    [bootstrap.content.agent.heartbeat]
+      interval = "30s"
+  
+    [bootstrap.content.agent.terminal]
+      session_timeout = "30s"
+    
+
+    [bootstrap.content.export.exp]
+      log_level = "debug"
+      nats = "nats://localhost:4222"
+      port = "8172"
+      cache_url = "localhost:6379"
+      cache_pass = ""
+      cache_db = "0"
+
+    [bootstrap.content.export.mqtt]
+      ca_path = "ca.crt"
+      cert_path = "thing.crt"
+      channel = ""
+      host = "tcp://localhost:1883"
+      mtls = false
+      password = ""
+      priv_key_path = "thing.key"
+      qos = 0
+      retain = false
+      skip_tls_ver = false
+      username = ""
+
+    [[bootstrap.content.export.routes]]
+      mqtt_topic = ""
+      nats_topic = ">"
+      subtopic = ""
+      type = "plain"
+      workers = 10
 
 [[things]]
   name = "thing"

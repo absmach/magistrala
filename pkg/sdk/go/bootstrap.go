@@ -17,6 +17,7 @@ import (
 const configsEndpoint = "configs"
 const bootstrapEndpoint = "bootstrap"
 const whitelistEndpoint = "state"
+const bootstrapCertsEndpoint = "configs/certs"
 
 // BootstrapConfig represents Configuration entity. It wraps information about external entity
 // as well as info about corresponding Mainflux entities.
@@ -37,6 +38,12 @@ type BootstrapConfig struct {
 	CACert      string    `json:"ca_cert,omitempty"`
 	Content     string    `json:"content,omitempty"`
 	State       int       `json:"state,omitempty"`
+}
+
+type ConfigUpdateCertReq struct {
+	ClientCert string `json:"client_cert"`
+	ClientKey  string `json:"client_key"`
+	CACert     string `json:"ca_cert"`
 }
 
 func (sdk mfSDK) AddBootstrap(token string, cfg BootstrapConfig) (string, error) {
@@ -150,6 +157,35 @@ func (sdk mfSDK) UpdateBootstrap(token string, cfg BootstrapConfig) error {
 
 	if resp.StatusCode != http.StatusOK {
 		return errors.Wrap(ErrFailedUpdate, errors.New(resp.Status))
+	}
+
+	return nil
+}
+func (sdk mfSDK) UpdateBootstrapCerts(token, id, clientCert, clientKey, ca string) error {
+	endpoint := fmt.Sprintf("%s/%s", bootstrapCertsEndpoint, id)
+	url := createURL(sdk.bootstrapURL, sdk.bootstrapPrefix, endpoint)
+	request := ConfigUpdateCertReq{
+		ClientCert: clientCert,
+		ClientKey:  clientKey,
+		CACert:     ca,
+	}
+
+	data, err := json.Marshal(request)
+	if err != nil {
+		return errors.Wrap(ErrFailedCertUpdate, err)
+	}
+	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewReader(data))
+	if err != nil {
+		return err
+	}
+
+	resp, err := sdk.sendRequest(req, token, string(CTJSON))
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.Wrap(ErrFailedCertUpdate, errors.New(resp.Status))
 	}
 
 	return nil

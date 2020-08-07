@@ -1,13 +1,17 @@
-# CERTS Service
+# Certs Service
 Issues certificates for things. `Certs` service can create certificates to be used when `Mainflux` is deployed to support mTLS.
 Certificate service can create certificates in two modes:
 1. Development mode - to be used when no PKI is deployed, this works similar to the [make thing_cert](../docker/ssl/Makefile)
 2. PKI mode - certificates issued by PKI, when you deploy `Vault` as PKI certificate management `cert` service will proxy requests to `Vault` previously checking access rights and saving info on successfully created certificate. 
    
+## Development mode
 If `MF_CERTS_VAULT_HOST` is empty than Development mode is on.
 
 To issue a certificate:
 ```bash
+
+TOK=`curl  -s --insecure -S -X POST http://localhost/tokens -H 'Content-Type: application/json' -d '{"email":"edge@email.com","password":"12345678"}' | jq -r '.token'`
+
 curl -s -S  -X POST  http://localhost:8204/certs -H "Authorization: $TOK" -H 'Content-Type: application/json'   -d '{"thing_id":<thing_id>, "rsa_bits":2048, "key_type":"rsa"}'
 ```
 
@@ -24,4 +28,26 @@ curl -s -S  -X POST  http://localhost:8204/certs -H "Authorization: $TOK" -H 'Co
 }
 ```
 
-To revoke a certificate
+## PKI mode
+
+When `MF_CERTS_VAULT_HOST` is set it is presumed that `Vault` is installed and `certs` service will issue certificates using `Vault` API.
+First you'll need to set up `Vault`. 
+To setup `Vault` follow steps in [Build Your Own Certificate Authority (CA)](https://learn.hashicorp.com/tutorials/vault/pki-engine).
+
+To setup certs service with `Vault` following environment variables must be set:
+
+```
+MF_CERTS_VAULT_HOST=vault-domain.com
+MF_CERTS_VAULT_PKI_PATH=<vault_pki_path>
+MF_CERTS_VAULT_ROLE=<vault_role>
+MF_CERTS_VAULT_TOKEN=<vault_acces_token>
+```
+
+For lab purposes you can use docker-compose and script for setting up PKI in [https://github.com/mteodor/vault](https://github.com/mteodor/vault)
+
+Issuing certificate is same as in **Development** mode.
+In this mode certificates can also be revoked:
+
+```bash
+curl -s -S -X DELETE http://localhost:8204/certs/revoke -H "Authorization: $TOK" -H 'Content-Type: application/json'   -d '{"thing_id":"c30b8842-507c-4bcd-973c-74008cef3be5"}'
+```

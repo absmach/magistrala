@@ -35,6 +35,7 @@ require (
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.7.0
 	github.com/stretchr/testify v1.6.1
+	github.com/subosito/gotenv v1.2.0
 	github.com/uber/jaeger-client-go v2.24.0+incompatible
 	go.mongodb.org/mongo-driver v1.3.5
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899

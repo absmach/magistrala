@@ -294,6 +294,7 @@ github.com/spf13/viper
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # github.com/subosito/gotenv v1.2.0
+## explicit
 github.com/subosito/gotenv
 # github.com/uber/jaeger-client-go v2.24.0+incompatible
 ## explicit

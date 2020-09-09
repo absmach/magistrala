@@ -19,21 +19,24 @@ paths:
       parameters:
       - $ref: "#/parameters/Authorization"
       - in: body
-         name: cert
-         description: 
-         schema:
-           type: object
-           required:
-             - thing_id
-             - days_valid
-             - rsa_bits
-           properties:
-              thing_id:
-                type: string
-              days_valid:
-                type: string
-              rsa_bits:
-                type: integer
+        name: cert
+        description: |
+            Issues a certificate that is required for mTLS. To create a certificate for a thing
+            provide a thing id, data identifying particular thing will be embedded into the Certificate.
+            x509 and ECC certificates are supported when using when Vault is used as PKI.
+        schema:
+          type: object
+          required:
+            - thing_id
+            - days_valid
+            - rsa_bits
+          properties:
+             thing_id:
+               type: string
+             days_valid:
+               type: string
+             rsa_bits:
+               type: integer
       responses:
         201:
           description: Created
@@ -49,7 +52,7 @@ paths:
       tags:
         - configs
       parameters:
-        - $ref: "#/parameters/ConfigAuth"
+        - $ref: "#/parameters/Authorization"
         - $ref: "#/parameters/ThingID"
       responses:
         200:
@@ -69,7 +72,7 @@ paths:
       tags:
         - configs
       parameters:
-        - $ref: "#/parameters/ConfigAuth"
+        - $ref: "#/parameters/Authorization"
         - $ref: "#/parameters/ThingID"
       responses:
         200:
@@ -109,7 +112,7 @@ definitions:
         description: Key for the client_cert.
       issuing_ca:
         type: string
-        description: 
+        description: CA Certificate that is used to issue client certs, usually intermediate.
       serial:
         type: string
         description: Certificate serial
@@ -122,4 +125,6 @@ definitions:
       revocation_time:
         type: string
         description: Certificate revocation time
-  
+responses:
+  ServiceError:
+    description: Unexpected server-side error occurred.

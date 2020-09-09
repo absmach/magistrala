@@ -37,7 +37,8 @@ paths:
             but no post-processing will be applied.
           in: body
           required: true
-          type: string
+          schema:
+              $ref: '#/definitions/SenMLArray'
       responses:
         202:
           description: Message is accepted for processing.
@@ -51,3 +52,65 @@ paths:
           description: Message discarded due to invalid or missing content type.
         500:
           description: Unexpected server-side error occurred.
+definitions:
+  SenMLRecord:
+    type: object
+    properties:
+      bn:
+        type: string
+        description: Base Name
+      bt:
+        type: number
+        format: double
+        description: Base Time
+      bu:
+        type: number
+        format: double
+        description: Base Unit
+      bv:
+        type: number
+        format: double
+        description: Base Value
+      bs:
+        type: number
+        format: double
+        description: Base Sum
+      bver:
+        type: number
+        format: double
+        description: Version
+      n:
+        type: string
+        description: Name
+      u:
+        type: string
+        description: Unit  
+      v:
+        type: number
+        format: double
+        description: Value
+      vs:
+        type: string
+        description: String Value
+      vb:
+        type: boolean
+        description: Boolean Value
+      vd:
+        type: string
+        description: Data Value
+      s:
+        type: number
+        format: double
+        description: Value Sum
+      t:
+        type: number
+        format: double
+        description: Time
+      ut:
+        type: number
+        format: double
+        description: Update Time
+  SenMLArray:
+    type: array
+    items:
+      $ref: "#/definitions/SenMLRecord"

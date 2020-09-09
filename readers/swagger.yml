@@ -40,7 +40,7 @@ responses:
     description: Unexpected server-side error occurred.
 
 definitions:
-  MessagePage:
+  MessagesPage:
     type: object
     properties:
       total:

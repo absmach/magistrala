@@ -34,7 +34,6 @@ paths:
           description: Missing or invalid content type.
         500:
           $ref: "#/responses/ServiceError"
-  /users:
     get:
       summary: Gets info on currently logged in user.
       description: |
@@ -55,7 +54,6 @@ paths:
           description: Missing or invalid access token provided.
         500:
           $ref: "#/responses/ServiceError"
-  /users:
     put:
       summary: Updates info on currently logged in user.
       description: |
@@ -69,7 +67,7 @@ paths:
           description: JSON-formatted document containing user info.
           in: body
           schema:
-            $ref: "#/definitions/CreateThingReq"
+            $ref: "#/definitions/updateUserReq"
           required: true
       responses:
         200:
@@ -123,12 +121,12 @@ paths:
       tags:
         - users
       parameters:
+        - $ref: "#/parameters/Referer"
+        - $ref: "#/parameters/Authorization"
         - name: email
           description: JSON-formatted document containing user email.
           in: body
           schema:
-            $ref: "#/parameters/Referer"
-            $ref: "#/parameters/Authorization"
             $ref: "#/definitions/PasswordResetRequest"
           required: true
       responses:
@@ -173,11 +171,11 @@ paths:
       tags:
         - users
       parameters:
+        - $ref: "#/parameters/Authorization"
         - name: password
           description: JSON-formatted document containing user email, token and new password.
           in: body
           schema:
-            $ref: "#/parameters/Authorization"
             $ref: "#/definitions/PasswordChange"
           required: true
       responses:
@@ -190,9 +188,11 @@ paths:
           description: Missing or invalid content type.
         500:
           $ref: "#/responses/ServiceError"
+
 responses:
   ServiceError:
     description: Unexpected server-side error occurred.
+
 definitions:
   Token:
     type: object
@@ -218,43 +218,6 @@ definitions:
     required:
       - email
       - password
-  Email:
-    properties:
-      email:
-        type: string
-        format: email
-        example: "test@example.com"
-        description: User's email address will be used as its unique identifier
-    required:
-      - email
-
-
-parameters:
-  Authorization:
-    name: Authorization
-    description: User's access token.
-    in: header
-    type: string
-    required: true
-  Referer:
-    name: Referer
-    description: Host being sent by browser.
-    in: header
-    type: string
-    required: true
-  Metadata:
-    name: metadata
-    description: Metadata filter. Filtering is performed matching the parameter with metadata on top level. Parameter is json.
-    in: query
-    type: string
-    minimum: 0
-    required: false
-
-responses:
-  ServiceError:
-    description: Unexpected server-side error occurred.
-
-definitions:
   UsersPage:
     type: object
     properties:
@@ -302,3 +265,24 @@ definitions:
       error:
         type: string
         description: Error message
+
+parameters:
+  Authorization:
+    name: Authorization
+    description: User's access token.
+    in: header
+    type: string
+    required: true
+  Referer:
+    name: Referer
+    description: Host being sent by browser.
+    in: header
+    type: string
+    required: true
+  Metadata:
+    name: metadata
+    description: Metadata filter. Filtering is performed matching the parameter with metadata on top level. Parameter is json.
+    in: query
+    type: string
+    minimum: 0
+    required: false

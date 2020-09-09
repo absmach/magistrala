@@ -229,7 +229,7 @@ paths:
           description: JSON-formatted document describing the new channel.
           in: body
           schema:
-            $ref: "#/definitions/ChannelReq"
+            $ref: "#/definitions/CreateChannelReq"
           required: true
       responses:
         201:
@@ -332,7 +332,7 @@ paths:
           description: JSON-formatted document describing the updated channel.
           in: body
           schema:
-            $ref: "#/definitions/ChannelReq"
+            $ref: "#/definitions/CreateChannelReq"
           required: true
       responses:
         200:
@@ -580,6 +580,12 @@ responses:
     description: Unexpected server-side error occurred.
 
 definitions:
+  Key:
+    type: string
+    description: |
+      Thing key that is used for thing auth. If there is
+      not one provided service will generate one in UUID
+      format.
   ChannelsPage:
     type: object
     properties:
@@ -614,7 +620,7 @@ definitions:
         description: Arbitrary, object-encoded channel's data.
     required:
       - id
-  ChannelReq:
+  CreateChannelReq:
     type: object
     properties:
       name:
@@ -623,6 +629,15 @@ definitions:
       metadata:
         type: object
         description: Arbitrary, object-encoded channel's data.
+  CreateChannelsReq:
+    type: object
+    properties:
+      key:
+        $ref: "#/definitions/Key"
+      things:
+        type: array
+        items: 
+          $ref: "#/definitions/CreateChannelReq"        
   ThingsPage:
     type: object
     properties:
@@ -666,17 +681,22 @@ definitions:
     type: object
     properties:
       key:
-        type: string
-        description: |
-          Thing key that is used for thing auth. If there is
-          not one provided service will generate one in UUID
-          format.
+        $ref: "#/definitions/Key"
       name:
         type: string
         description: Free-form thing name.
       metadata:
         type: object
         description: Arbitrary, object-encoded thing's data.
+  CreateThingsReq:
+    type: object
+    properties:
+      key:
+        $ref: "#/definitions/Key"
+      things:
+        type: array
+        items: 
+          $ref: "#/definitions/CreateThingReq"
   UpdateThingReq:
     type: object
     properties:

@@ -19,20 +19,20 @@ paths:
       parameters:
       - $ref: "#/parameters/Authorization"
       - in: body
-         name: thing
-         description: MAC address of device or other identifier
-         schema:
-           type: object
-           required:
-             - external_id
-             - external_key
-           properties:
-             external_id:
+        name: thing
+        description: MAC address of device or other identifier
+        schema:
+          type: object
+          required:
+            - external_id
+            - external_key
+          properties:
+            external_id:
+              type: string
+            external_key:
                type: string
-              external_key:
-                type: string
-              name:
-                type: string
+            name:
+               type: string
       responses:
         201:
           description: Created

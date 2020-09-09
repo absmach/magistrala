@@ -45,19 +45,8 @@ clean:
 	rm -rf ${BUILD_DIR}
 
 cleandocker:
-	# Stop all containers (if running)
-	docker-compose -f docker/docker-compose.yml stop
-	# Remove mainflux containers
-	docker ps -f name=$(MF_DOCKER_IMAGE_NAME_PREFIX) -aq | xargs -r docker rm
-
-	# Remove exited containers
-	docker ps -f name=$(MF_DOCKER_IMAGE_NAME_PREFIX) -f status=dead -f status=exited -aq | xargs -r docker rm -v
-
-	# Remove unused images
-	docker images "$(MF_DOCKER_IMAGE_NAME_PREFIX)\/*" -f dangling=true -q | xargs -r docker rmi
-
-	# Remove old mainflux images
-	docker images -q "$(MF_DOCKER_IMAGE_NAME_PREFIX)\/*" | xargs -r docker rmi
+	# Stops containers and removes containers, networks, volumes, and images created by up
+	docker-compose -f docker/docker-compose.yml down --rmi all -v --remove-orphans
 
 ifdef pv
 	# Remove unused volumes

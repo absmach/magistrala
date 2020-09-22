@@ -16,16 +16,11 @@ import (
 )
 
 type frameDec struct {
-	o         decoderOptions
-	crc       hash.Hash64
-	frameDone sync.WaitGroup
-	offset    int64
+	o      decoderOptions
+	crc    hash.Hash64
+	offset int64
 
-	WindowSize       uint64
-	DictionaryID     uint32
-	FrameContentSize uint64
-	HasCheckSum      bool
-	SingleSegment    bool
+	WindowSize uint64
 
 	// maxWindowSize is the maximum windows size to support.
 	// should never be bigger than max-int.
@@ -42,15 +37,22 @@ type frameDec struct {
 	// Byte buffer that can be reused for small input blocks.
 	bBuf byteBuf
 
+	FrameContentSize uint64
+	frameDone        sync.WaitGroup
+
+	DictionaryID  uint32
+	HasCheckSum   bool
+	SingleSegment bool
+
 	// asyncRunning indicates whether the async routine processes input on 'decoding'.
-	asyncRunning   bool
 	asyncRunningMu sync.Mutex
+	asyncRunning   bool
 }
 
 const (
 	// The minimum Window_Size is 1 KB.
 	MinWindowSize = 1 << 10
-	MaxWindowSize = 1 << 30
+	MaxWindowSize = 1 << 29
 )
 
 var (

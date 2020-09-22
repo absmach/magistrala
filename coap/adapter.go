@@ -2,142 +2,171 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package coap contains the domain concept definitions needed to support
-// Mainflux coap adapter service functionality. All constant values are taken
+// Mainflux CoAP adapter service functionality. All constant values are taken
 // from RFC, and could be adjusted based on specific use case.
 package coap
 
 import (
+	"context"
 	"fmt"
 	"sync"
-	"time"
+
+	"github.com/gogo/protobuf/proto"
+	"github.com/mainflux/mainflux/pkg/errors"
+	broker "github.com/nats-io/nats.go"
 
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging"
 )
 
-const (
-	chanID    = "id"
-	keyHeader = "key"
+const chansPrefix = "channels"
 
-	// AckRandomFactor is default ACK coefficient.
-	AckRandomFactor = 1.5
-	// AckTimeout is the amount of time to wait for a response.
-	AckTimeout = 2000 * time.Millisecond
-	// MaxRetransmit is the maximum number of times a message will be retransmitted.
-	MaxRetransmit = 4
+// Exported errors
+var (
+	ErrUnauthorized = errors.New("unauthorized access")
+	ErrUnsubscribe  = errors.New("unable to unsubscribe")
 )
 
-// Service specifies coap service API.
+// Service specifies CoAP service API.
 type Service interface {
 	// Publish Messssage
-	Publish(msg messaging.Message) error
+	Publish(ctx context.Context, key string, msg messaging.Message) error
 
 	// Subscribes to channel with specified id, subtopic and adds subscription to
 	// service map of subscriptions under given ID.
-	Subscribe(chanID, subtopic, obsID string, obs *Observer) error
+	Subscribe(ctx context.Context, key, chanID, subtopic string, c Client) error
 
 	// Unsubscribe method is used to stop observing resource.
-	Unsubscribe(obsID string)
+	Unsubscribe(ctx context.Context, key, chanID, subptopic, token string) error
 }
 
 var _ Service = (*adapterService)(nil)
 
+// Observers is a map of maps,
 type adapterService struct {
-	auth    mainflux.ThingsServiceClient
-	ps      messaging.PubSub
-	log     logger.Logger
-	obs     map[string]*Observer
-	obsLock sync.Mutex
+	auth      mainflux.ThingsServiceClient
+	conn      *broker.Conn
+	observers map[string]observers
+	obsLock   sync.Mutex
 }
 
 // New instantiates the CoAP adapter implementation.
-func New(ps messaging.PubSub, log logger.Logger, auth mainflux.ThingsServiceClient, responses <-chan string) Service {
+func New(auth mainflux.ThingsServiceClient, nc *broker.Conn) Service {
 	as := &adapterService{
-		auth:    auth,
-		ps:      ps,
-		log:     log,
-		obs:     make(map[string]*Observer),
-		obsLock: sync.Mutex{},
+		auth:      auth,
+		conn:      nc,
+		observers: make(map[string]observers),
+		obsLock:   sync.Mutex{},
 	}
 
-	go as.listenResponses(responses)
 	return as
 }
 
-func (svc *adapterService) get(obsID string) (*Observer, bool) {
-	svc.obsLock.Lock()
-	defer svc.obsLock.Unlock()
-
-	val, ok := svc.obs[obsID]
-	return val, ok
-}
-
-func (svc *adapterService) put(obsID string, o *Observer) {
-	svc.obsLock.Lock()
-	defer svc.obsLock.Unlock()
-
-	val, ok := svc.obs[obsID]
-	if ok {
-		close(val.Cancel)
+func (svc *adapterService) Publish(ctx context.Context, key string, msg messaging.Message) error {
+	ar := &mainflux.AccessByKeyReq{
+		Token:  key,
+		ChanID: msg.Channel,
 	}
-
-	svc.obs[obsID] = o
-}
-
-func (svc *adapterService) remove(obsID string) {
-	svc.obsLock.Lock()
-	defer svc.obsLock.Unlock()
-
-	val, ok := svc.obs[obsID]
-	if ok {
-		close(val.Cancel)
-		delete(svc.obs, obsID)
+	thid, err := svc.auth.CanAccessByKey(ctx, ar)
+	if err != nil {
+		return errors.Wrap(ErrUnauthorized, err)
 	}
-}
+	msg.Publisher = thid.GetValue()
 
-// ListenResponses method handles ACK messages received from client.
-func (svc *adapterService) listenResponses(responses <-chan string) {
-	for {
-		id := <-responses
-
-		val, ok := svc.get(id)
-		if ok {
-			val.StoreExpired(false)
-		}
-	}
-}
-
-func (svc *adapterService) Publish(msg messaging.Message) error {
-	return svc.ps.Publish(msg.Channel, msg)
-}
-
-func (svc *adapterService) Subscribe(chanID, subtopic, obsID string, o *Observer) error {
-	subject := chanID
-	if subtopic != "" {
-		subject = fmt.Sprintf("%s.%s", chanID, subtopic)
-	}
-
-	err := svc.ps.Subscribe(subject, func(msg messaging.Message) error {
-		o.Messages <- msg
-		return nil
-	})
+	data, err := proto.Marshal(&msg)
 	if err != nil {
 		return err
 	}
 
+	subject := fmt.Sprintf("%s.%s", chansPrefix, msg.Channel)
+	if msg.Subtopic != "" {
+		subject = fmt.Sprintf("%s.%s", subject, msg.Subtopic)
+	}
+
+	return svc.conn.Publish(subject, data)
+}
+
+func (svc *adapterService) Subscribe(ctx context.Context, key, chanID, subtopic string, c Client) error {
+	ar := &mainflux.AccessByKeyReq{
+		Token:  key,
+		ChanID: chanID,
+	}
+	if _, err := svc.auth.CanAccessByKey(ctx, ar); err != nil {
+		return errors.Wrap(ErrUnauthorized, err)
+	}
+
+	subject := fmt.Sprintf("%s.%s", chansPrefix, chanID)
+	if subtopic != "" {
+		subject = fmt.Sprintf("%s.%s", subject, subtopic)
+	}
+
 	go func() {
-		<-o.Cancel
-		if err := svc.ps.Unsubscribe(subject); err != nil {
-			svc.log.Error(fmt.Sprintf("Failed to unsubscribe from %s.%s due to %s", chanID, subtopic, err))
-		}
+		<-c.Done()
+		svc.remove(subject, c.Token())
 	}()
 
-	// Put method removes Observer if already exists.
-	svc.put(obsID, o)
+	obs, err := NewObserver(subject, c, svc.conn)
+	if err != nil {
+		c.Cancel()
+		return err
+	}
+	return svc.put(subject, c.Token(), obs)
+}
+
+func (svc *adapterService) Unsubscribe(ctx context.Context, key, chanID, subtopic, token string) error {
+	ar := &mainflux.AccessByKeyReq{
+		Token:  key,
+		ChanID: chanID,
+	}
+	if _, err := svc.auth.CanAccessByKey(ctx, ar); err != nil {
+		return errors.Wrap(ErrUnauthorized, err)
+	}
+	subject := fmt.Sprintf("%s.%s", chansPrefix, chanID)
+	if subtopic != "" {
+		subject = fmt.Sprintf("%s.%s", subject, subtopic)
+	}
+
+	return svc.remove(subject, token)
+}
+
+func (svc *adapterService) put(endpoint, token string, o Observer) error {
+	svc.obsLock.Lock()
+	defer svc.obsLock.Unlock()
+
+	obs, ok := svc.observers[endpoint]
+	// If there are no observers, create map and assign it to the endpoint.
+	if !ok {
+		obs = observers{token: o}
+		svc.observers[endpoint] = obs
+		return nil
+	}
+	// If observer exists, cancel subscription and replace it.
+	if sub, ok := obs[token]; ok {
+		if err := sub.Cancel(); err != nil {
+			return errors.Wrap(ErrUnsubscribe, err)
+		}
+	}
+	obs[token] = o
 	return nil
 }
 
-func (svc *adapterService) Unsubscribe(obsID string) {
-	svc.remove(obsID)
+func (svc *adapterService) remove(endpoint, token string) error {
+	svc.obsLock.Lock()
+	defer svc.obsLock.Unlock()
+
+	obs, ok := svc.observers[endpoint]
+	if !ok {
+		return nil
+	}
+	if current, ok := obs[token]; ok {
+		if err := current.Cancel(); err != nil {
+			return errors.Wrap(ErrUnsubscribe, err)
+		}
+	}
+	delete(obs, token)
+	// If there are no observers left for the endpint, remove the map.
+	if len(obs) == 0 {
+		delete(svc.observers, endpoint)
+	}
+	return nil
 }

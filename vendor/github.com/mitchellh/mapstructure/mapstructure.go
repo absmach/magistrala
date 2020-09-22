@@ -225,7 +225,6 @@ func (d *Decoder) Decode(input interface{}) error {
 // Decodes an unknown data type into a specific reflection value.
 func (d *Decoder) decode(name string, input interface{}, outVal reflect.Value) error {
 	var inputVal reflect.Value
-	fmt.Println("name:" + name)
 	if input != nil {
 		inputVal = reflect.ValueOf(input)
 

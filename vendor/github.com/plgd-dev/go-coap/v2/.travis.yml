@@ -1,0 +1,29 @@
+language: minimal
+
+services:
+  - docker
+
+install:                                                                 
+  - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
+      sudo sh -c 'echo 0 > /proc/sys/net/ipv6/conf/all/disable_ipv6';
+    fi
+  - docker build . --network=host -t go-coap:build --target build
+
+jobs:
+  include:
+    - stage: test
+      if: type == pull_request
+      script: 
+        - docker run --network=host go-coap:build go test ./...
+        - docker run --network=host go-coap:build go build ./...
+
+    - stage: test_and_cover
+      if: type != pull_request
+      script: 
+        - >
+            docker run
+            --mount type=bind,source="$(pwd)",target=/shared
+            --network=host
+            go-coap:build
+            go test -race ./... -covermode=atomic -coverprofile=/shared/coverage.txt
+        - bash <(curl -s https://codecov.io/bash)

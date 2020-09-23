@@ -14,17 +14,6 @@ import (
 
 const chanPrefix = "channel"
 
-var (
-	// ErrRedisConnectChannel indicates error while adding connection in redis cache
-	ErrRedisConnectChannel = errors.New("failed to add connection to redis cache")
-
-	// ErrRedisDisconnectChannel indicates error while removing connection from redis cache
-	ErrRedisDisconnectChannel = errors.New("failed to remove connection from redis cache")
-
-	// ErrRedisRemoveChannel indicates error while removing channel from redis cache
-	ErrRedisRemoveChannel = errors.New("failed to remove channel from redis cache")
-)
-
 var _ things.ChannelCache = (*channelCache)(nil)
 
 type channelCache struct {
@@ -39,7 +28,7 @@ func NewChannelCache(client *redis.Client) things.ChannelCache {
 func (cc channelCache) Connect(_ context.Context, chanID, thingID string) error {
 	cid, tid := kv(chanID, thingID)
 	if err := cc.client.SAdd(cid, tid).Err(); err != nil {
-		return errors.Wrap(ErrRedisConnectChannel, err)
+		return errors.Wrap(things.ErrConnect, err)
 	}
 	return nil
 }
@@ -52,7 +41,7 @@ func (cc channelCache) HasThing(_ context.Context, chanID, thingID string) bool 
 func (cc channelCache) Disconnect(_ context.Context, chanID, thingID string) error {
 	cid, tid := kv(chanID, thingID)
 	if err := cc.client.SRem(cid, tid).Err(); err != nil {
-		return errors.Wrap(ErrRedisDisconnectChannel, err)
+		return errors.Wrap(things.ErrDisconnect, err)
 	}
 	return nil
 }
@@ -60,7 +49,7 @@ func (cc channelCache) Disconnect(_ context.Context, chanID, thingID string) err
 func (cc channelCache) Remove(_ context.Context, chanID string) error {
 	cid, _ := kv(chanID, "0")
 	if err := cc.client.Del(cid).Err(); err != nil {
-		return errors.Wrap(ErrRedisRemoveChannel, err)
+		return errors.Wrap(things.ErrRemoveEntity, err)
 	}
 	return nil
 }

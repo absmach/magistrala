@@ -6,11 +6,12 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/mainflux/mainflux/pkg/errors"
 
 	kitot "github.com/go-kit/kit/tracing/opentracing"
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -280,7 +281,7 @@ func readMetadataQuery(r *http.Request, key string) (map[string]interface{}, err
 	m := make(map[string]interface{})
 	err := json.Unmarshal([]byte(vals[0]), &m)
 	if err != nil {
-		return nil, err
+		return nil, errInvalidQueryParams
 	}
 
 	return m, nil

@@ -30,13 +30,11 @@ func TestThingsSave(t *testing.T) {
 	nonexistentThingKey, err := uuidProvider.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	var thid string
-	var thkey string
 	ths := []things.Thing{}
 	for i := 1; i <= 5; i++ {
-		thid, err = uuidProvider.New().ID()
+		thid, err := uuidProvider.New().ID()
 		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-		thkey, err = uuidProvider.New().ID()
+		thkey, err := uuidProvider.New().ID()
 		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 		thing := things.Thing{
@@ -46,6 +44,8 @@ func TestThingsSave(t *testing.T) {
 		}
 		ths = append(ths, thing)
 	}
+	thkey := ths[0].Key
+	thid := ths[0].ID
 
 	cases := []struct {
 		desc   string
@@ -65,34 +65,21 @@ func TestThingsSave(t *testing.T) {
 		{
 			desc: "create thing with invalid ID",
 			things: []things.Thing{
-				things.Thing{
-					ID:    "invalid",
-					Owner: email,
-					Key:   thkey,
-				},
+				{ID: "invalid", Owner: email, Key: thkey},
 			},
 			err: things.ErrMalformedEntity,
 		},
 		{
 			desc: "create thing with invalid name",
 			things: []things.Thing{
-				things.Thing{
-					ID:    thid,
-					Owner: email,
-					Key:   thkey,
-					Name:  invalidName,
-				},
+				{ID: thid, Owner: email, Key: thkey, Name: invalidName},
 			},
 			err: things.ErrMalformedEntity,
 		},
 		{
 			desc: "create thing with invalid Key",
 			things: []things.Thing{
-				things.Thing{
-					ID:    thid,
-					Owner: email,
-					Key:   nonexistentThingKey,
-				},
+				{ID: thid, Owner: email, Key: nonexistentThingKey},
 			},
 			err: things.ErrConflict,
 		},
@@ -203,32 +190,31 @@ func TestUpdateKey(t *testing.T) {
 	dbMiddleware := postgres.NewDatabase(db)
 	thingRepo := postgres.NewThingRepository(dbMiddleware)
 
-	ethid, err := uuidProvider.New().ID()
+	id, err := uuidProvider.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	ethkey, err := uuidProvider.New().ID()
+	key, err := uuidProvider.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
-	existingThing := things.Thing{
-		ID:    ethid,
+	th1 := things.Thing{
+		ID:    id,
 		Owner: email,
-		Key:   ethkey,
+		Key:   key,
 	}
-	sths, _ := thingRepo.Save(context.Background(), existingThing)
-	existingThing.ID = sths[0].ID
+	ths, err := thingRepo.Save(context.Background(), th1)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	th1.ID = ths[0].ID
 
-	thid, err := uuidProvider.New().ID()
+	id, err = uuidProvider.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	thkey, err := uuidProvider.New().ID()
+	key, err = uuidProvider.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
-	thing := things.Thing{
-		ID:    thid,
+	th2 := things.Thing{
+		ID:    id,
 		Owner: email,
-		Key:   thkey,
+		Key:   key,
 	}
-
-	sths, _ = thingRepo.Save(context.Background(), thing)
-	thing.ID = sths[0].ID
+	ths, err = thingRepo.Save(context.Background(), th2)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	th2.ID = ths[0].ID
 
 	nonexistentThingID, err := uuidProvider.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -242,14 +228,14 @@ func TestUpdateKey(t *testing.T) {
 	}{
 		{
 			desc:  "update key of an existing thing",
-			owner: thing.Owner,
-			id:    thing.ID,
+			owner: th2.Owner,
+			id:    th2.ID,
 			key:   newKey,
 			err:   nil,
 		},
 		{
 			desc:  "update key of a non-existing thing with existing user",
-			owner: thing.Owner,
+			owner: th2.Owner,
 			id:    nonexistentThingID,
 			key:   newKey,
 			err:   things.ErrNotFound,
@@ -257,7 +243,7 @@ func TestUpdateKey(t *testing.T) {
 		{
 			desc:  "update key of an existing thing with non-existing user",
 			owner: wrongValue,
-			id:    thing.ID,
+			id:    th2.ID,
 			key:   newKey,
 			err:   things.ErrNotFound,
 		},
@@ -270,9 +256,9 @@ func TestUpdateKey(t *testing.T) {
 		},
 		{
 			desc:  "update key with existing key value",
-			owner: thing.Owner,
-			id:    thing.ID,
-			key:   existingThing.Key,
+			owner: th2.Owner,
+			id:    th2.ID,
+			key:   th1.Key,
 			err:   things.ErrConflict,
 		},
 	}
@@ -288,19 +274,19 @@ func TestSingleThingRetrieval(t *testing.T) {
 	dbMiddleware := postgres.NewDatabase(db)
 	thingRepo := postgres.NewThingRepository(dbMiddleware)
 
-	thid, err := uuidProvider.New().ID()
+	id, err := uuidProvider.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	thkey, err := uuidProvider.New().ID()
+	key, err := uuidProvider.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
-	thing := things.Thing{
-		ID:    thid,
+	th := things.Thing{
+		ID:    id,
 		Owner: email,
-		Key:   thkey,
+		Key:   key,
 	}
 
-	sths, _ := thingRepo.Save(context.Background(), thing)
-	thing.ID = sths[0].ID
+	ths, err := thingRepo.Save(context.Background(), th)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	th.ID = ths[0].ID
 
 	nonexistentThingID, err := uuidProvider.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -311,22 +297,22 @@ func TestSingleThingRetrieval(t *testing.T) {
 		err   error
 	}{
 		"retrieve thing with existing user": {
-			owner: thing.Owner,
-			ID:    thing.ID,
+			owner: th.Owner,
+			ID:    th.ID,
 			err:   nil,
 		},
 		"retrieve non-existing thing with existing user": {
-			owner: thing.Owner,
+			owner: th.Owner,
 			ID:    nonexistentThingID,
 			err:   things.ErrNotFound,
 		},
 		"retrieve thing with non-existing owner": {
 			owner: wrongValue,
-			ID:    thing.ID,
+			ID:    th.ID,
 			err:   things.ErrNotFound,
 		},
 		"retrieve thing with malformed ID": {
-			owner: thing.Owner,
+			owner: th.Owner,
 			ID:    wrongValue,
 			err:   things.ErrNotFound,
 		},
@@ -343,19 +329,20 @@ func TestThingRetrieveByKey(t *testing.T) {
 	dbMiddleware := postgres.NewDatabase(db)
 	thingRepo := postgres.NewThingRepository(dbMiddleware)
 
-	thid, err := uuidProvider.New().ID()
+	id, err := uuidProvider.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	thkey, err := uuidProvider.New().ID()
+	key, err := uuidProvider.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	thing := things.Thing{
-		ID:    thid,
+	th := things.Thing{
+		ID:    id,
 		Owner: email,
-		Key:   thkey,
+		Key:   key,
 	}
 
-	sths, _ := thingRepo.Save(context.Background(), thing)
-	thing.ID = sths[0].ID
+	ths, err := thingRepo.Save(context.Background(), th)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	th.ID = ths[0].ID
 
 	cases := map[string]struct {
 		key string
@@ -363,8 +350,8 @@ func TestThingRetrieveByKey(t *testing.T) {
 		err error
 	}{
 		"retrieve existing thing by key": {
-			key: thing.Key,
-			ID:  thing.ID,
+			key: th.Key,
+			ID:  th.ID,
 			err: nil,
 		},
 		"retrieve non-existent thing by key": {
@@ -396,38 +383,38 @@ func TestMultiThingRetrieval(t *testing.T) {
 
 	up := uuidProvider.New()
 	offset := uint64(1)
-	thNameNum := uint64(3)
-	thMetaNum := uint64(3)
-	thNameMetaNum := uint64(2)
+	nameNum := uint64(3)
+	metaNum := uint64(3)
+	nameMetaNum := uint64(2)
 
 	n := uint64(10)
 	for i := uint64(0); i < n; i++ {
-		thid, err := up.ID()
+		id, err := up.ID()
 		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-		thkey, err := up.ID()
+		key, err := up.ID()
 		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
 		th := things.Thing{
 			Owner: email,
-			ID:    thid,
-			Key:   thkey,
+			ID:    id,
+			Key:   key,
 		}
 
 		// Create Things with name.
-		if i < thNameNum {
+		if i < nameNum {
 			th.Name = name
 		}
 		// Create Things with metadata.
-		if i >= thNameNum && i < thNameNum+thMetaNum {
+		if i >= nameNum && i < nameNum+metaNum {
 			th.Metadata = metadata
 		}
 		// Create Things with name and metadata.
-		if i >= n-thNameMetaNum {
+		if i >= n-nameMetaNum {
 			th.Metadata = metadata
 			th.Name = name
 		}
 
-		thingRepo.Save(context.Background(), th)
+		_, err = thingRepo.Save(context.Background(), th)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	}
 
 	cases := map[string]struct {
@@ -465,8 +452,8 @@ func TestMultiThingRetrieval(t *testing.T) {
 			offset: 1,
 			limit:  n,
 			name:   name,
-			size:   thNameNum + thNameMetaNum - offset,
-			total:  thNameNum + thNameMetaNum,
+			size:   nameNum + nameMetaNum - offset,
+			total:  nameNum + nameMetaNum,
 		},
 		"retrieve things with non-existing name": {
 			owner:  email,
@@ -480,8 +467,8 @@ func TestMultiThingRetrieval(t *testing.T) {
 			owner:    email,
 			offset:   0,
 			limit:    n,
-			size:     thMetaNum + thNameMetaNum,
-			total:    thMetaNum + thNameMetaNum,
+			size:     metaNum + nameMetaNum,
+			total:    metaNum + nameMetaNum,
 			metadata: metadata,
 		},
 		"retrieve things with non-existing metadata": {
@@ -496,8 +483,8 @@ func TestMultiThingRetrieval(t *testing.T) {
 			owner:    email,
 			offset:   0,
 			limit:    n,
-			size:     thNameMetaNum,
-			total:    thNameMetaNum,
+			size:     nameMetaNum,
+			total:    nameMetaNum,
 			name:     name,
 			metadata: metadata,
 		},
@@ -525,12 +512,12 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 	chid, err := up.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	schs, err := channelRepo.Save(context.Background(), things.Channel{
+	chs, err := channelRepo.Save(context.Background(), things.Channel{
 		ID:    chid,
 		Owner: email,
 	})
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-	cid := schs[0].ID
+	cid := chs[0].ID
 	for i := uint64(0); i < n; i++ {
 		thid, err := up.ID()
 		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -542,16 +529,16 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 			Key:   thkey,
 		}
 
-		sths, err := thingRepo.Save(context.Background(), th)
+		ths, err := thingRepo.Save(context.Background(), th)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-		tid := sths[0].ID
+		thid = ths[0].ID
 
 		// Don't connnect last Thing
 		if i == n-thsDisconNum {
 			break
 		}
 
-		err = channelRepo.Connect(context.Background(), email, []string{cid}, []string{tid})
+		err = channelRepo.Connect(context.Background(), email, []string{cid}, []string{thid})
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	}
 
@@ -631,19 +618,18 @@ func TestThingRemoval(t *testing.T) {
 	dbMiddleware := postgres.NewDatabase(db)
 	thingRepo := postgres.NewThingRepository(dbMiddleware)
 
-	thid, err := uuidProvider.New().ID()
+	id, err := uuidProvider.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	thkey, err := uuidProvider.New().ID()
+	key, err := uuidProvider.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
 	thing := things.Thing{
-		ID:    thid,
+		ID:    id,
 		Owner: email,
-		Key:   thkey,
+		Key:   key,
 	}
 
-	sths, _ := thingRepo.Save(context.Background(), thing)
-	thing.ID = sths[0].ID
+	ths, _ := thingRepo.Save(context.Background(), thing)
+	thing.ID = ths[0].ID
 
 	// show that the removal works the same for both existing and non-existing
 	// (removed) thing
@@ -652,7 +638,6 @@ func TestThingRemoval(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("#%d: failed to remove thing due to: %s", i, err))
 
 		_, err = thingRepo.RetrieveByID(context.Background(), email, thing.ID)
-		// require.Equal(t, things.ErrNotFound, err, fmt.Sprintf("#%d: expected %s got %s", i, things.ErrNotFound, err))
 		require.True(t, errors.Contains(err, things.ErrNotFound), fmt.Sprintf("#%d: expected %s got %s", i, things.ErrNotFound, err))
 	}
 }

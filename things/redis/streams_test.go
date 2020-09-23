@@ -91,7 +91,7 @@ func TestCreateThings(t *testing.T) {
 	lastID := "0"
 	for _, tc := range cases {
 		_, err := svc.CreateThings(context.Background(), tc.key, tc.ths...)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(&r.XReadArgs{
 			Streams: []string{streamID, lastID},
@@ -150,8 +150,7 @@ func TestUpdateThing(t *testing.T) {
 	lastID := "0"
 	for _, tc := range cases {
 		err := svc.UpdateThing(context.Background(), tc.key, tc.thing)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		streams := redisClient.XRead(&r.XReadArgs{
 			Streams: []string{streamID, lastID},
 			Count:   1,
@@ -318,7 +317,7 @@ func TestCreateChannels(t *testing.T) {
 	lastID := "0"
 	for _, tc := range cases {
 		_, err := svc.CreateChannels(context.Background(), tc.key, tc.chs...)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(&r.XReadArgs{
 			Streams: []string{streamID, lastID},
@@ -386,7 +385,7 @@ func TestUpdateChannel(t *testing.T) {
 	lastID := "0"
 	for _, tc := range cases {
 		err := svc.UpdateChannel(context.Background(), tc.key, tc.channel)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(&r.XReadArgs{
 			Streams: []string{streamID, lastID},
@@ -497,7 +496,7 @@ func TestRemoveChannel(t *testing.T) {
 	lastID := "0"
 	for _, tc := range cases {
 		err := svc.RemoveChannel(context.Background(), tc.key, tc.id)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(&r.XReadArgs{
 			Streams: []string{streamID, lastID},

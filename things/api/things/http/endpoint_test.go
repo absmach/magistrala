@@ -126,7 +126,7 @@ func TestCreateThing(t *testing.T) {
 			req:         data,
 			contentType: contentType,
 			auth:        token,
-			status:      http.StatusUnprocessableEntity,
+			status:      http.StatusConflict,
 			location:    "",
 		},
 		{
@@ -142,7 +142,7 @@ func TestCreateThing(t *testing.T) {
 			req:         data,
 			contentType: contentType,
 			auth:        wrongValue,
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 			location:    "",
 		},
 		{
@@ -150,7 +150,7 @@ func TestCreateThing(t *testing.T) {
 			req:         data,
 			contentType: contentType,
 			auth:        "",
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 			location:    "",
 		},
 		{
@@ -266,7 +266,7 @@ func TestCreateThings(t *testing.T) {
 			data:        data,
 			contentType: contentType,
 			auth:        token,
-			status:      http.StatusUnprocessableEntity,
+			status:      http.StatusConflict,
 			response:    "",
 		},
 		{
@@ -274,7 +274,7 @@ func TestCreateThings(t *testing.T) {
 			data:        data,
 			contentType: contentType,
 			auth:        wrongValue,
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 			response:    "",
 		},
 		{
@@ -282,7 +282,7 @@ func TestCreateThings(t *testing.T) {
 			data:        data,
 			contentType: contentType,
 			auth:        "",
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 			response:    "",
 		},
 		{
@@ -319,12 +319,13 @@ func TestUpdateThing(t *testing.T) {
 	defer ts.Close()
 
 	data := toJSON(thing)
-	sths, _ := svc.CreateThings(context.Background(), token, thing)
-	sth := sths[0]
+	ths, err := svc.CreateThings(context.Background(), token, thing)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	th1 := ths[0]
 
-	th := thing
-	th.Name = invalidName
-	invalidData := toJSON(th)
+	th2 := thing
+	th2.Name = invalidName
+	invalidData := toJSON(th2)
 
 	cases := []struct {
 		desc        string
@@ -337,7 +338,7 @@ func TestUpdateThing(t *testing.T) {
 		{
 			desc:        "update existing thing",
 			req:         data,
-			id:          sth.ID,
+			id:          th1.ID,
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusOK,
@@ -345,7 +346,7 @@ func TestUpdateThing(t *testing.T) {
 		{
 			desc:        "update thing with empty JSON request",
 			req:         "{}",
-			id:          sth.ID,
+			id:          th1.ID,
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusOK,
@@ -369,23 +370,23 @@ func TestUpdateThing(t *testing.T) {
 		{
 			desc:        "update thing with invalid user token",
 			req:         data,
-			id:          sth.ID,
+			id:          th1.ID,
 			contentType: contentType,
 			auth:        wrongValue,
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 		},
 		{
 			desc:        "update thing with empty user token",
 			req:         data,
-			id:          sth.ID,
+			id:          th1.ID,
 			contentType: contentType,
 			auth:        "",
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 		},
 		{
 			desc:        "update thing with invalid data format",
 			req:         "{",
-			id:          sth.ID,
+			id:          th1.ID,
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusBadRequest,
@@ -393,7 +394,7 @@ func TestUpdateThing(t *testing.T) {
 		{
 			desc:        "update thing with empty request",
 			req:         "",
-			id:          sth.ID,
+			id:          th1.ID,
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusBadRequest,
@@ -401,7 +402,7 @@ func TestUpdateThing(t *testing.T) {
 		{
 			desc:        "update thing without content type",
 			req:         data,
-			id:          sth.ID,
+			id:          th1.ID,
 			contentType: "",
 			auth:        token,
 			status:      http.StatusUnsupportedMediaType,
@@ -437,14 +438,15 @@ func TestUpdateKey(t *testing.T) {
 
 	th := thing
 	th.Key = "key"
-	sths, _ := svc.CreateThings(context.Background(), token, th)
-	sth := sths[0]
+	ths, err := svc.CreateThings(context.Background(), token, th)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	th = ths[0]
 
-	sth.Key = "new-key"
-	data := toJSON(sth)
+	th.Key = "new-key"
+	data := toJSON(th)
 
-	sth.Key = "key"
-	dummyData := toJSON(sth)
+	th.Key = "key"
+	dummyData := toJSON(th)
 
 	cases := []struct {
 		desc        string
@@ -457,7 +459,7 @@ func TestUpdateKey(t *testing.T) {
 		{
 			desc:        "update key for an existing thing",
 			req:         data,
-			id:          sth.ID,
+			id:          th.ID,
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusOK,
@@ -465,15 +467,15 @@ func TestUpdateKey(t *testing.T) {
 		{
 			desc:        "update thing with conflicting key",
 			req:         data,
-			id:          sth.ID,
+			id:          th.ID,
 			contentType: contentType,
 			auth:        token,
-			status:      http.StatusUnprocessableEntity,
+			status:      http.StatusConflict,
 		},
 		{
 			desc:        "update key with empty JSON request",
 			req:         "{}",
-			id:          sth.ID,
+			id:          th.ID,
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusBadRequest,
@@ -497,23 +499,23 @@ func TestUpdateKey(t *testing.T) {
 		{
 			desc:        "update thing with invalid user token",
 			req:         data,
-			id:          sth.ID,
+			id:          th.ID,
 			contentType: contentType,
 			auth:        wrongValue,
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 		},
 		{
 			desc:        "update thing with empty user token",
 			req:         data,
-			id:          sth.ID,
+			id:          th.ID,
 			contentType: contentType,
 			auth:        "",
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 		},
 		{
 			desc:        "update thing with invalid data format",
 			req:         "{",
-			id:          sth.ID,
+			id:          th.ID,
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusBadRequest,
@@ -521,7 +523,7 @@ func TestUpdateKey(t *testing.T) {
 		{
 			desc:        "update thing with empty request",
 			req:         "",
-			id:          sth.ID,
+			id:          th.ID,
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusBadRequest,
@@ -529,7 +531,7 @@ func TestUpdateKey(t *testing.T) {
 		{
 			desc:        "update thing without content type",
 			req:         data,
-			id:          sth.ID,
+			id:          th.ID,
 			contentType: "",
 			auth:        token,
 			status:      http.StatusUnsupportedMediaType,
@@ -556,17 +558,16 @@ func TestViewThing(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sths, err := svc.CreateThings(context.Background(), token, thing)
+	ths, err := svc.CreateThings(context.Background(), token, thing)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-	sth := sths[0]
+	th := ths[0]
 
-	thres := thingRes{
-		ID:       sth.ID,
-		Name:     sth.Name,
-		Key:      sth.Key,
-		Metadata: sth.Metadata,
-	}
-	data := toJSON(thres)
+	data := toJSON(thingRes{
+		ID:       th.ID,
+		Name:     th.Name,
+		Key:      th.Key,
+		Metadata: th.Metadata,
+	})
 
 	cases := []struct {
 		desc   string
@@ -577,7 +578,7 @@ func TestViewThing(t *testing.T) {
 	}{
 		{
 			desc:   "view existing thing",
-			id:     sth.ID,
+			id:     th.ID,
 			auth:   token,
 			status: http.StatusOK,
 			res:    data,
@@ -591,16 +592,16 @@ func TestViewThing(t *testing.T) {
 		},
 		{
 			desc:   "view thing by passing invalid token",
-			id:     sth.ID,
+			id:     th.ID,
 			auth:   wrongValue,
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 			res:    unauthRes,
 		},
 		{
 			desc:   "view thing by passing empty token",
-			id:     sth.ID,
+			id:     th.ID,
 			auth:   "",
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 			res:    unauthRes,
 		},
 		{
@@ -636,16 +637,15 @@ func TestListThings(t *testing.T) {
 
 	data := []thingRes{}
 	for i := 0; i < 100; i++ {
-		sths, err := svc.CreateThings(context.Background(), token, thing)
+		ths, err := svc.CreateThings(context.Background(), token, thing)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-		sth := sths[0]
-		thres := thingRes{
-			ID:       sth.ID,
-			Name:     sth.Name,
-			Key:      sth.Key,
-			Metadata: sth.Metadata,
-		}
-		data = append(data, thres)
+		th := ths[0]
+		data = append(data, thingRes{
+			ID:       th.ID,
+			Name:     th.Name,
+			Key:      th.Key,
+			Metadata: th.Metadata,
+		})
 	}
 
 	thingURL := fmt.Sprintf("%s/things", ts.URL)
@@ -666,14 +666,14 @@ func TestListThings(t *testing.T) {
 		{
 			desc:   "get a list of things with invalid token",
 			auth:   wrongValue,
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d", thingURL, 0, 1),
 			res:    nil,
 		},
 		{
 			desc:   "get a list of things with empty token",
 			auth:   "",
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d", thingURL, 0, 1),
 			res:    nil,
 		},
@@ -784,25 +784,24 @@ func TestListThingsByChannel(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	schs, err := svc.CreateChannels(context.Background(), token, channel)
+	chs, err := svc.CreateChannels(context.Background(), token, channel)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-	sch := schs[0]
+	ch := chs[0]
 
 	data := []thingRes{}
 	for i := 0; i < 101; i++ {
-		sths, err := svc.CreateThings(context.Background(), token, thing)
+		ths, err := svc.CreateThings(context.Background(), token, thing)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-		sth := sths[0]
-		err = svc.Connect(context.Background(), token, []string{sch.ID}, []string{sth.ID})
+		th := ths[0]
+		err = svc.Connect(context.Background(), token, []string{ch.ID}, []string{th.ID})
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
-		thres := thingRes{
-			ID:       sth.ID,
-			Name:     sth.Name,
-			Key:      sth.Key,
-			Metadata: sth.Metadata,
-		}
-		data = append(data, thres)
+		data = append(data, thingRes{
+			ID:       th.ID,
+			Name:     th.Name,
+			Key:      th.Key,
+			Metadata: th.Metadata,
+		})
 	}
 	thingURL := fmt.Sprintf("%s/channels", ts.URL)
 
@@ -820,98 +819,98 @@ func TestListThingsByChannel(t *testing.T) {
 			desc:   "get a list of things by channel",
 			auth:   token,
 			status: http.StatusOK,
-			url:    fmt.Sprintf("%s/%s/things?offset=%d&limit=%d", thingURL, sch.ID, 0, 5),
+			url:    fmt.Sprintf("%s/%s/things?offset=%d&limit=%d", thingURL, ch.ID, 0, 5),
 			res:    data[0:5],
 		},
 		{
 			desc:   "get a list of things by channel with invalid token",
 			auth:   wrongValue,
-			status: http.StatusForbidden,
-			url:    fmt.Sprintf("%s/%s/things?offset=%d&limit=%d", thingURL, sch.ID, 0, 1),
+			status: http.StatusUnauthorized,
+			url:    fmt.Sprintf("%s/%s/things?offset=%d&limit=%d", thingURL, ch.ID, 0, 1),
 			res:    nil,
 		},
 		{
 			desc:   "get a list of things by channel with empty token",
 			auth:   "",
-			status: http.StatusForbidden,
-			url:    fmt.Sprintf("%s/%s/things?offset=%d&limit=%d", thingURL, sch.ID, 0, 1),
+			status: http.StatusUnauthorized,
+			url:    fmt.Sprintf("%s/%s/things?offset=%d&limit=%d", thingURL, ch.ID, 0, 1),
 			res:    nil,
 		},
 		{
 			desc:   "get a list of things by channel with negative offset",
 			auth:   token,
 			status: http.StatusBadRequest,
-			url:    fmt.Sprintf("%s/%s/things?offset=%d&limit=%d", thingURL, sch.ID, -1, 5),
+			url:    fmt.Sprintf("%s/%s/things?offset=%d&limit=%d", thingURL, ch.ID, -1, 5),
 			res:    nil,
 		},
 		{
 			desc:   "get a list of things by channel with negative limit",
 			auth:   token,
 			status: http.StatusBadRequest,
-			url:    fmt.Sprintf("%s/%s/things?offset=%d&limit=%d", thingURL, sch.ID, 1, -5),
+			url:    fmt.Sprintf("%s/%s/things?offset=%d&limit=%d", thingURL, ch.ID, 1, -5),
 			res:    nil,
 		},
 		{
 			desc:   "get a list of things by channel with zero limit",
 			auth:   token,
 			status: http.StatusBadRequest,
-			url:    fmt.Sprintf("%s/%s/things?offset=%d&limit=%d", thingURL, sch.ID, 1, 0),
+			url:    fmt.Sprintf("%s/%s/things?offset=%d&limit=%d", thingURL, ch.ID, 1, 0),
 			res:    nil,
 		},
 		{
 			desc:   "get a list of things by channel without offset",
 			auth:   token,
 			status: http.StatusOK,
-			url:    fmt.Sprintf("%s/%s/things?limit=%d", thingURL, sch.ID, 5),
+			url:    fmt.Sprintf("%s/%s/things?limit=%d", thingURL, ch.ID, 5),
 			res:    data[0:5],
 		},
 		{
 			desc:   "get a list of things by channel without limit",
 			auth:   token,
 			status: http.StatusOK,
-			url:    fmt.Sprintf("%s/%s/things?offset=%d", thingURL, sch.ID, 1),
+			url:    fmt.Sprintf("%s/%s/things?offset=%d", thingURL, ch.ID, 1),
 			res:    data[1:11],
 		},
 		{
 			desc:   "get a list of things by channel with redundant query params",
 			auth:   token,
 			status: http.StatusOK,
-			url:    fmt.Sprintf("%s/%s/things?offset=%d&limit=%d&value=something", thingURL, sch.ID, 0, 5),
+			url:    fmt.Sprintf("%s/%s/things?offset=%d&limit=%d&value=something", thingURL, ch.ID, 0, 5),
 			res:    data[0:5],
 		},
 		{
 			desc:   "get a list of things by channel with limit greater than max",
 			auth:   token,
 			status: http.StatusBadRequest,
-			url:    fmt.Sprintf("%s/%s/things?offset=%d&limit=%d", thingURL, sch.ID, 0, 110),
+			url:    fmt.Sprintf("%s/%s/things?offset=%d&limit=%d", thingURL, ch.ID, 0, 110),
 			res:    nil,
 		},
 		{
 			desc:   "get a list of things by channel with default URL",
 			auth:   token,
 			status: http.StatusOK,
-			url:    fmt.Sprintf("%s/%s/things", thingURL, sch.ID),
+			url:    fmt.Sprintf("%s/%s/things", thingURL, ch.ID),
 			res:    data[0:10],
 		},
 		{
 			desc:   "get a list of things by channel with invalid number of params",
 			auth:   token,
 			status: http.StatusBadRequest,
-			url:    fmt.Sprintf("%s/%s/things%s", thingURL, sch.ID, "?offset=4&limit=4&limit=5&offset=5"),
+			url:    fmt.Sprintf("%s/%s/things%s", thingURL, ch.ID, "?offset=4&limit=4&limit=5&offset=5"),
 			res:    nil,
 		},
 		{
 			desc:   "get a list of things by channel with invalid offset",
 			auth:   token,
 			status: http.StatusBadRequest,
-			url:    fmt.Sprintf("%s/%s/things%s", thingURL, sch.ID, "?offset=e&limit=5"),
+			url:    fmt.Sprintf("%s/%s/things%s", thingURL, ch.ID, "?offset=e&limit=5"),
 			res:    nil,
 		},
 		{
 			desc:   "get a list of things by channel with invalid limit",
 			auth:   token,
 			status: http.StatusBadRequest,
-			url:    fmt.Sprintf("%s/%s/things%s", thingURL, sch.ID, "?offset=5&limit=e"),
+			url:    fmt.Sprintf("%s/%s/things%s", thingURL, ch.ID, "?offset=5&limit=e"),
 			res:    nil,
 		},
 	}
@@ -937,8 +936,9 @@ func TestRemoveThing(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sths, _ := svc.CreateThings(context.Background(), token, thing)
-	sth := sths[0]
+	ths, err := svc.CreateThings(context.Background(), token, thing)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	th := ths[0]
 
 	cases := []struct {
 		desc   string
@@ -948,7 +948,7 @@ func TestRemoveThing(t *testing.T) {
 	}{
 		{
 			desc:   "delete existing thing",
-			id:     sth.ID,
+			id:     th.ID,
 			auth:   token,
 			status: http.StatusNoContent,
 		},
@@ -960,15 +960,15 @@ func TestRemoveThing(t *testing.T) {
 		},
 		{
 			desc:   "delete thing with invalid token",
-			id:     sth.ID,
+			id:     th.ID,
 			auth:   wrongValue,
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 		},
 		{
 			desc:   "delete thing with empty token",
-			id:     sth.ID,
+			id:     th.ID,
 			auth:   "",
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 		},
 	}
 
@@ -1017,7 +1017,7 @@ func TestCreateChannel(t *testing.T) {
 			req:         data,
 			contentType: contentType,
 			auth:        wrongValue,
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 			location:    "",
 		},
 		{
@@ -1025,7 +1025,7 @@ func TestCreateChannel(t *testing.T) {
 			req:         data,
 			contentType: contentType,
 			auth:        "",
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 			location:    "",
 		},
 		{
@@ -1133,7 +1133,7 @@ func TestCreateChannels(t *testing.T) {
 			data:        data,
 			contentType: contentType,
 			auth:        wrongValue,
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 			response:    "",
 		},
 		{
@@ -1141,7 +1141,7 @@ func TestCreateChannels(t *testing.T) {
 			data:        data,
 			contentType: contentType,
 			auth:        "",
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 			response:    "",
 		},
 		{
@@ -1192,15 +1192,16 @@ func TestUpdateChannel(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	schs, _ := svc.CreateChannels(context.Background(), token, channel)
-	sch := schs[0]
+	chs, err := svc.CreateChannels(context.Background(), token, channel)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	ch := chs[0]
 
-	ch := channel
-	ch.Name = "updated_channel"
-	updateData := toJSON(ch)
+	c := channel
+	c.Name = "updated_channel"
+	updateData := toJSON(c)
 
-	ch.Name = invalidName
-	invalidData := toJSON(ch)
+	c.Name = invalidName
+	invalidData := toJSON(c)
 
 	cases := []struct {
 		desc        string
@@ -1213,7 +1214,7 @@ func TestUpdateChannel(t *testing.T) {
 		{
 			desc:        "update existing channel",
 			req:         updateData,
-			id:          sch.ID,
+			id:          ch.ID,
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusOK,
@@ -1237,23 +1238,23 @@ func TestUpdateChannel(t *testing.T) {
 		{
 			desc:        "update channel with invalid token",
 			req:         updateData,
-			id:          sch.ID,
+			id:          ch.ID,
 			contentType: contentType,
 			auth:        wrongValue,
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 		},
 		{
 			desc:        "update channel with empty token",
 			req:         updateData,
-			id:          sch.ID,
+			id:          ch.ID,
 			contentType: contentType,
 			auth:        "",
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 		},
 		{
 			desc:        "update channel with invalid data format",
 			req:         "}",
-			id:          sch.ID,
+			id:          ch.ID,
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusBadRequest,
@@ -1261,7 +1262,7 @@ func TestUpdateChannel(t *testing.T) {
 		{
 			desc:        "update channel with empty JSON object",
 			req:         "{}",
-			id:          sch.ID,
+			id:          ch.ID,
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusOK,
@@ -1269,7 +1270,7 @@ func TestUpdateChannel(t *testing.T) {
 		{
 			desc:        "update channel with empty request",
 			req:         "",
-			id:          sch.ID,
+			id:          ch.ID,
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusBadRequest,
@@ -1277,7 +1278,7 @@ func TestUpdateChannel(t *testing.T) {
 		{
 			desc:        "update channel with missing content type",
 			req:         updateData,
-			id:          sch.ID,
+			id:          ch.ID,
 			contentType: "",
 			auth:        token,
 			status:      http.StatusUnsupportedMediaType,
@@ -1311,19 +1312,20 @@ func TestViewChannel(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	schs, _ := svc.CreateChannels(context.Background(), token, channel)
-	sch := schs[0]
+	chs, err := svc.CreateChannels(context.Background(), token, channel)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	sch := chs[0]
 
-	sths, _ := svc.CreateThings(context.Background(), token, thing)
-	sth := sths[0]
-	svc.Connect(context.Background(), token, []string{sch.ID}, []string{sth.ID})
+	ths, err := svc.CreateThings(context.Background(), token, thing)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	th := ths[0]
+	svc.Connect(context.Background(), token, []string{sch.ID}, []string{th.ID})
 
-	chres := channelRes{
+	data := toJSON(channelRes{
 		ID:       sch.ID,
 		Name:     sch.Name,
 		Metadata: sch.Metadata,
-	}
-	data := toJSON(chres)
+	})
 
 	cases := []struct {
 		desc   string
@@ -1350,14 +1352,14 @@ func TestViewChannel(t *testing.T) {
 			desc:   "view channel with invalid token",
 			id:     sch.ID,
 			auth:   wrongValue,
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 			res:    unauthRes,
 		},
 		{
 			desc:   "view channel with empty token",
 			id:     sch.ID,
 			auth:   "",
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 			res:    unauthRes,
 		},
 		{
@@ -1393,20 +1395,19 @@ func TestListChannels(t *testing.T) {
 
 	channels := []channelRes{}
 	for i := 0; i < 101; i++ {
-		schs, err := svc.CreateChannels(context.Background(), token, channel)
+		chs, err := svc.CreateChannels(context.Background(), token, channel)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-		sch := schs[0]
-		sths, err := svc.CreateThings(context.Background(), token, thing)
+		ch := chs[0]
+		ths, err := svc.CreateThings(context.Background(), token, thing)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-		sth := sths[0]
-		svc.Connect(context.Background(), token, []string{sch.ID}, []string{sth.ID})
+		th := ths[0]
+		svc.Connect(context.Background(), token, []string{ch.ID}, []string{th.ID})
 
-		chres := channelRes{
-			ID:       sch.ID,
-			Name:     sch.Name,
-			Metadata: sch.Metadata,
-		}
-		channels = append(channels, chres)
+		channels = append(channels, channelRes{
+			ID:       ch.ID,
+			Name:     ch.Name,
+			Metadata: ch.Metadata,
+		})
 	}
 	channelURL := fmt.Sprintf("%s/channels", ts.URL)
 
@@ -1427,14 +1428,14 @@ func TestListChannels(t *testing.T) {
 		{
 			desc:   "get a list of channels with invalid token",
 			auth:   wrongValue,
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d", channelURL, 0, 1),
 			res:    nil,
 		},
 		{
 			desc:   "get a list of channels with empty token",
 			auth:   "",
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d", channelURL, 0, 1),
 			res:    nil,
 		},
@@ -1545,24 +1546,23 @@ func TestListChannelsByThing(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sths, err := svc.CreateThings(context.Background(), token, thing)
+	ths, err := svc.CreateThings(context.Background(), token, thing)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-	sth := sths[0]
+	th := ths[0]
 
 	channels := []channelRes{}
 	for i := 0; i < 101; i++ {
-		schs, err := svc.CreateChannels(context.Background(), token, channel)
+		chs, err := svc.CreateChannels(context.Background(), token, channel)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-		sch := schs[0]
-		err = svc.Connect(context.Background(), token, []string{sch.ID}, []string{sth.ID})
+		ch := chs[0]
+		err = svc.Connect(context.Background(), token, []string{ch.ID}, []string{th.ID})
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
-		chres := channelRes{
-			ID:       sch.ID,
-			Name:     sch.Name,
-			Metadata: sch.Metadata,
-		}
-		channels = append(channels, chres)
+		channels = append(channels, channelRes{
+			ID:       ch.ID,
+			Name:     ch.Name,
+			Metadata: ch.Metadata,
+		})
 	}
 	channelURL := fmt.Sprintf("%s/things", ts.URL)
 
@@ -1577,98 +1577,98 @@ func TestListChannelsByThing(t *testing.T) {
 			desc:   "get a list of channels by thing",
 			auth:   token,
 			status: http.StatusOK,
-			url:    fmt.Sprintf("%s/%s/channels?offset=%d&limit=%d", channelURL, sth.ID, 0, 6),
+			url:    fmt.Sprintf("%s/%s/channels?offset=%d&limit=%d", channelURL, th.ID, 0, 6),
 			res:    channels[0:6],
 		},
 		{
 			desc:   "get a list of channels by thing with invalid token",
 			auth:   wrongValue,
-			status: http.StatusForbidden,
-			url:    fmt.Sprintf("%s/%s/channels?offset=%d&limit=%d", channelURL, sth.ID, 0, 1),
+			status: http.StatusUnauthorized,
+			url:    fmt.Sprintf("%s/%s/channels?offset=%d&limit=%d", channelURL, th.ID, 0, 1),
 			res:    nil,
 		},
 		{
 			desc:   "get a list of channels by thing with empty token",
 			auth:   "",
-			status: http.StatusForbidden,
-			url:    fmt.Sprintf("%s/%s/channels?offset=%d&limit=%d", channelURL, sth.ID, 0, 1),
+			status: http.StatusUnauthorized,
+			url:    fmt.Sprintf("%s/%s/channels?offset=%d&limit=%d", channelURL, th.ID, 0, 1),
 			res:    nil,
 		},
 		{
 			desc:   "get a list of channels by thing with negative offset",
 			auth:   token,
 			status: http.StatusBadRequest,
-			url:    fmt.Sprintf("%s/%s/channels?offset=%d&limit=%d", channelURL, sth.ID, -1, 5),
+			url:    fmt.Sprintf("%s/%s/channels?offset=%d&limit=%d", channelURL, th.ID, -1, 5),
 			res:    nil,
 		},
 		{
 			desc:   "get a list of channels by thing with negative limit",
 			auth:   token,
 			status: http.StatusBadRequest,
-			url:    fmt.Sprintf("%s/%s/channels?offset=%d&limit=%d", channelURL, sth.ID, -1, 5),
+			url:    fmt.Sprintf("%s/%s/channels?offset=%d&limit=%d", channelURL, th.ID, -1, 5),
 			res:    nil,
 		},
 		{
 			desc:   "get a list of channels by thing with zero limit",
 			auth:   token,
 			status: http.StatusBadRequest,
-			url:    fmt.Sprintf("%s/%s/channels?offset=%d&limit=%d", channelURL, sth.ID, 1, 0),
+			url:    fmt.Sprintf("%s/%s/channels?offset=%d&limit=%d", channelURL, th.ID, 1, 0),
 			res:    nil,
 		},
 		{
 			desc:   "get a list of channels by thing with no offset provided",
 			auth:   token,
 			status: http.StatusOK,
-			url:    fmt.Sprintf("%s/%s/channels?limit=%d", channelURL, sth.ID, 5),
+			url:    fmt.Sprintf("%s/%s/channels?limit=%d", channelURL, th.ID, 5),
 			res:    channels[0:5],
 		},
 		{
 			desc:   "get a list of channels by thing with no limit provided",
 			auth:   token,
 			status: http.StatusOK,
-			url:    fmt.Sprintf("%s/%s/channels?offset=%d", channelURL, sth.ID, 1),
+			url:    fmt.Sprintf("%s/%s/channels?offset=%d", channelURL, th.ID, 1),
 			res:    channels[1:11],
 		},
 		{
 			desc:   "get a list of channels by thing with redundant query params",
 			auth:   token,
 			status: http.StatusOK,
-			url:    fmt.Sprintf("%s/%s/channels?offset=%d&limit=%d&value=something", channelURL, sth.ID, 0, 5),
+			url:    fmt.Sprintf("%s/%s/channels?offset=%d&limit=%d&value=something", channelURL, th.ID, 0, 5),
 			res:    channels[0:5],
 		},
 		{
 			desc:   "get a list of channels by thing with limit greater than max",
 			auth:   token,
 			status: http.StatusBadRequest,
-			url:    fmt.Sprintf("%s/%s/channels?offset=%d&limit=%d", channelURL, sth.ID, 0, 110),
+			url:    fmt.Sprintf("%s/%s/channels?offset=%d&limit=%d", channelURL, th.ID, 0, 110),
 			res:    nil,
 		},
 		{
 			desc:   "get a list of channels by thing with default URL",
 			auth:   token,
 			status: http.StatusOK,
-			url:    fmt.Sprintf("%s/%s/channels", channelURL, sth.ID),
+			url:    fmt.Sprintf("%s/%s/channels", channelURL, th.ID),
 			res:    channels[0:10],
 		},
 		{
 			desc:   "get a list of channels by thing with invalid number of params",
 			auth:   token,
 			status: http.StatusBadRequest,
-			url:    fmt.Sprintf("%s/%s/channels%s", channelURL, sth.ID, "?offset=4&limit=4&limit=5&offset=5"),
+			url:    fmt.Sprintf("%s/%s/channels%s", channelURL, th.ID, "?offset=4&limit=4&limit=5&offset=5"),
 			res:    nil,
 		},
 		{
 			desc:   "get a list of channels by thing with invalid offset",
 			auth:   token,
 			status: http.StatusBadRequest,
-			url:    fmt.Sprintf("%s/%s/channels%s", channelURL, sth.ID, "?offset=e&limit=5"),
+			url:    fmt.Sprintf("%s/%s/channels%s", channelURL, th.ID, "?offset=e&limit=5"),
 			res:    nil,
 		},
 		{
 			desc:   "get a list of channels by thing with invalid limit",
 			auth:   token,
 			status: http.StatusBadRequest,
-			url:    fmt.Sprintf("%s/%s/channels%s", channelURL, sth.ID, "?offset=5&limit=e"),
+			url:    fmt.Sprintf("%s/%s/channels%s", channelURL, th.ID, "?offset=5&limit=e"),
 			res:    nil,
 		},
 	}
@@ -1694,8 +1694,8 @@ func TestRemoveChannel(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	schs, _ := svc.CreateChannels(context.Background(), token, channel)
-	sch := schs[0]
+	chs, _ := svc.CreateChannels(context.Background(), token, channel)
+	ch := chs[0]
 
 	cases := []struct {
 		desc   string
@@ -1705,33 +1705,33 @@ func TestRemoveChannel(t *testing.T) {
 	}{
 		{
 			desc:   "remove channel with invalid token",
-			id:     sch.ID,
+			id:     ch.ID,
 			auth:   wrongValue,
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 		},
 		{
 			desc:   "remove existing channel",
-			id:     sch.ID,
+			id:     ch.ID,
 			auth:   token,
 			status: http.StatusNoContent,
 		},
 		{
 			desc:   "remove removed channel",
-			id:     sch.ID,
+			id:     ch.ID,
 			auth:   token,
 			status: http.StatusNoContent,
 		},
 		{
 			desc:   "remove channel with invalid token",
-			id:     sch.ID,
+			id:     ch.ID,
 			auth:   wrongValue,
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 		},
 		{
 			desc:   "remove channel with empty token",
-			id:     sch.ID,
+			id:     ch.ID,
 			auth:   "",
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 		},
 	}
 
@@ -1758,12 +1758,12 @@ func TestConnect(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sths, _ := svc.CreateThings(context.Background(), token, thing)
-	ath := sths[0]
-	schs, _ := svc.CreateChannels(context.Background(), token, channel)
-	ach := schs[0]
-	schs, _ = svc.CreateChannels(context.Background(), otherToken, channel)
-	bch := schs[0]
+	ths, _ := svc.CreateThings(context.Background(), token, thing)
+	th1 := ths[0]
+	chs, _ := svc.CreateChannels(context.Background(), token, channel)
+	ch1 := chs[0]
+	chs, _ = svc.CreateChannels(context.Background(), otherToken, channel)
+	ch2 := chs[0]
 
 	cases := []struct {
 		desc    string
@@ -1774,21 +1774,21 @@ func TestConnect(t *testing.T) {
 	}{
 		{
 			desc:    "connect existing thing to existing channel",
-			chanID:  ach.ID,
-			thingID: ath.ID,
+			chanID:  ch1.ID,
+			thingID: th1.ID,
 			auth:    token,
 			status:  http.StatusOK,
 		},
 		{
 			desc:    "connect existing thing to non-existent channel",
 			chanID:  strconv.FormatUint(wrongID, 10),
-			thingID: ath.ID,
+			thingID: th1.ID,
 			auth:    token,
 			status:  http.StatusNotFound,
 		},
 		{
 			desc:    "connect non-existing thing to existing channel",
-			chanID:  ach.ID,
+			chanID:  ch1.ID,
 			thingID: strconv.FormatUint(wrongID, 10),
 			auth:    token,
 			status:  http.StatusNotFound,
@@ -1796,35 +1796,35 @@ func TestConnect(t *testing.T) {
 		{
 			desc:    "connect existing thing to channel with invalid id",
 			chanID:  "invalid",
-			thingID: ath.ID,
+			thingID: th1.ID,
 			auth:    token,
 			status:  http.StatusNotFound,
 		},
 		{
 			desc:    "connect thing with invalid id to existing channel",
-			chanID:  ach.ID,
+			chanID:  ch1.ID,
 			thingID: "invalid",
 			auth:    token,
 			status:  http.StatusNotFound,
 		},
 		{
 			desc:    "connect existing thing to existing channel with invalid token",
-			chanID:  ach.ID,
-			thingID: ath.ID,
+			chanID:  ch1.ID,
+			thingID: th1.ID,
 			auth:    wrongValue,
-			status:  http.StatusForbidden,
+			status:  http.StatusUnauthorized,
 		},
 		{
 			desc:    "connect existing thing to existing channel with empty token",
-			chanID:  ach.ID,
-			thingID: ath.ID,
+			chanID:  ch1.ID,
+			thingID: th1.ID,
 			auth:    "",
-			status:  http.StatusForbidden,
+			status:  http.StatusUnauthorized,
 		},
 		{
 			desc:    "connect thing from owner to channel of other user",
-			chanID:  bch.ID,
-			thingID: ath.ID,
+			chanID:  ch2.ID,
+			thingID: th1.ID,
 			auth:    token,
 			status:  http.StatusNotFound,
 		},
@@ -1853,21 +1853,24 @@ func TestCreateConnections(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sths, _ := svc.CreateThings(context.Background(), token, thing)
-	ths := []string{}
-	for _, th := range sths {
-		ths = append(ths, th.ID)
+	ths, err := svc.CreateThings(context.Background(), token, thing)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	thIDs := []string{}
+	for _, th := range ths {
+		thIDs = append(thIDs, th.ID)
 	}
 
-	schs, _ := svc.CreateChannels(context.Background(), token, channel)
-	achs := []string{}
-	for _, ch := range schs {
-		achs = append(achs, ch.ID)
+	chs, err := svc.CreateChannels(context.Background(), token, channel)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	chIDs1 := []string{}
+	for _, ch := range chs {
+		chIDs1 = append(chIDs1, ch.ID)
 	}
-	schs, _ = svc.CreateChannels(context.Background(), otherToken, channel)
-	bchs := []string{}
-	for _, ch := range schs {
-		bchs = append(bchs, ch.ID)
+	chs, err = svc.CreateChannels(context.Background(), otherToken, channel)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	chIDs2 := []string{}
+	for _, ch := range chs {
+		chIDs2 = append(chIDs2, ch.ID)
 	}
 
 	cases := []struct {
@@ -1881,8 +1884,8 @@ func TestCreateConnections(t *testing.T) {
 	}{
 		{
 			desc:        "connect existing things to existing channels",
-			channelIDs:  achs,
-			thingIDs:    ths,
+			channelIDs:  chIDs1,
+			thingIDs:    thIDs,
 			auth:        token,
 			contentType: contentType,
 			status:      http.StatusOK,
@@ -1890,14 +1893,14 @@ func TestCreateConnections(t *testing.T) {
 		{
 			desc:        "connect existing things to non-existent channels",
 			channelIDs:  []string{strconv.FormatUint(wrongID, 10)},
-			thingIDs:    ths,
+			thingIDs:    thIDs,
 			auth:        token,
 			contentType: contentType,
 			status:      http.StatusNotFound,
 		},
 		{
 			desc:        "connect non-existing things to existing channels",
-			channelIDs:  achs,
+			channelIDs:  chIDs1,
 			thingIDs:    []string{strconv.FormatUint(wrongID, 10)},
 			auth:        token,
 			contentType: contentType,
@@ -1906,14 +1909,14 @@ func TestCreateConnections(t *testing.T) {
 		{
 			desc:        "connect existing things to channel with invalid id",
 			channelIDs:  []string{"invalid"},
-			thingIDs:    ths,
+			thingIDs:    thIDs,
 			auth:        token,
 			contentType: contentType,
 			status:      http.StatusNotFound,
 		},
 		{
 			desc:        "connect things with invalid id to existing channels",
-			channelIDs:  achs,
+			channelIDs:  chIDs1,
 			thingIDs:    []string{"invalid"},
 			auth:        token,
 			contentType: contentType,
@@ -1922,14 +1925,14 @@ func TestCreateConnections(t *testing.T) {
 		{
 			desc:        "connect existing things to empty channel ids",
 			channelIDs:  []string{""},
-			thingIDs:    ths,
+			thingIDs:    thIDs,
 			auth:        token,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
 		},
 		{
 			desc:        "connect empty things id to existing channels",
-			channelIDs:  achs,
+			channelIDs:  chIDs1,
 			thingIDs:    []string{""},
 			auth:        token,
 			contentType: contentType,
@@ -1937,32 +1940,32 @@ func TestCreateConnections(t *testing.T) {
 		},
 		{
 			desc:        "connect existing things to existing channels with invalid token",
-			channelIDs:  achs,
-			thingIDs:    ths,
+			channelIDs:  chIDs1,
+			thingIDs:    thIDs,
 			auth:        wrongValue,
 			contentType: contentType,
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 		},
 		{
 			desc:        "connect existing things to existing channels with empty token",
-			channelIDs:  achs,
-			thingIDs:    ths,
+			channelIDs:  chIDs1,
+			thingIDs:    thIDs,
 			auth:        "",
 			contentType: contentType,
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 		},
 		{
 			desc:        "connect things from owner to channels of other user",
-			channelIDs:  bchs,
-			thingIDs:    ths,
+			channelIDs:  chIDs2,
+			thingIDs:    thIDs,
 			auth:        token,
 			contentType: contentType,
 			status:      http.StatusNotFound,
 		},
 		{
 			desc:        "connect with invalid content type",
-			channelIDs:  bchs,
-			thingIDs:    ths,
+			channelIDs:  chIDs2,
+			thingIDs:    thIDs,
 			auth:        token,
 			contentType: "invalid",
 			status:      http.StatusUnsupportedMediaType,
@@ -1977,14 +1980,14 @@ func TestCreateConnections(t *testing.T) {
 		{
 			desc:        "connect valid thing ids with empty channel ids",
 			channelIDs:  []string{},
-			thingIDs:    ths,
+			thingIDs:    thIDs,
 			auth:        token,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
 		},
 		{
 			desc:        "connect valid channel ids with empty thing ids",
-			channelIDs:  achs,
+			channelIDs:  chIDs1,
 			thingIDs:    []string{},
 			auth:        token,
 			contentType: contentType,
@@ -2039,13 +2042,13 @@ func TestDisconnnect(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 
-	sths, _ := svc.CreateThings(context.Background(), token, thing)
-	ath := sths[0]
-	schs, _ := svc.CreateChannels(context.Background(), token, channel)
-	ach := schs[0]
-	svc.Connect(context.Background(), token, []string{ach.ID}, []string{ath.ID})
-	schs, _ = svc.CreateChannels(context.Background(), otherToken, channel)
-	bch := schs[0]
+	ths, _ := svc.CreateThings(context.Background(), token, thing)
+	th1 := ths[0]
+	chs, _ := svc.CreateChannels(context.Background(), token, channel)
+	ch1 := chs[0]
+	svc.Connect(context.Background(), token, []string{ch1.ID}, []string{th1.ID})
+	chs, _ = svc.CreateChannels(context.Background(), otherToken, channel)
+	ch2 := chs[0]
 
 	cases := []struct {
 		desc    string
@@ -2056,21 +2059,21 @@ func TestDisconnnect(t *testing.T) {
 	}{
 		{
 			desc:    "disconnect connected thing from channel",
-			chanID:  ach.ID,
-			thingID: ath.ID,
+			chanID:  ch1.ID,
+			thingID: th1.ID,
 			auth:    token,
 			status:  http.StatusNoContent,
 		},
 		{
 			desc:    "disconnect non-connected thing from channel",
-			chanID:  ach.ID,
-			thingID: ath.ID,
+			chanID:  ch1.ID,
+			thingID: th1.ID,
 			auth:    token,
 			status:  http.StatusNotFound,
 		},
 		{
 			desc:    "disconnect non-existent thing from channel",
-			chanID:  ach.ID,
+			chanID:  ch1.ID,
 			thingID: strconv.FormatUint(wrongID, 10),
 			auth:    token,
 			status:  http.StatusNotFound,
@@ -2078,34 +2081,34 @@ func TestDisconnnect(t *testing.T) {
 		{
 			desc:    "disconnect thing from non-existent channel",
 			chanID:  strconv.FormatUint(wrongID, 10),
-			thingID: ath.ID,
+			thingID: th1.ID,
 			auth:    token,
 			status:  http.StatusNotFound,
 		},
 		{
 			desc:    "disconnect thing from channel with invalid token",
-			chanID:  ach.ID,
-			thingID: ath.ID,
+			chanID:  ch1.ID,
+			thingID: th1.ID,
 			auth:    wrongValue,
-			status:  http.StatusForbidden,
+			status:  http.StatusUnauthorized,
 		},
 		{
 			desc:    "disconnect thing from channel with empty token",
-			chanID:  ach.ID,
-			thingID: ath.ID,
+			chanID:  ch1.ID,
+			thingID: th1.ID,
 			auth:    "",
-			status:  http.StatusForbidden,
+			status:  http.StatusUnauthorized,
 		},
 		{
 			desc:    "disconnect owner's thing from someone elses channel",
-			chanID:  bch.ID,
-			thingID: ath.ID,
+			chanID:  ch2.ID,
+			thingID: th1.ID,
 			auth:    token,
 			status:  http.StatusNotFound,
 		},
 		{
 			desc:    "disconnect thing with invalid id from channel",
-			chanID:  ach.ID,
+			chanID:  ch1.ID,
 			thingID: "invalid",
 			auth:    token,
 			status:  http.StatusNotFound,
@@ -2113,7 +2116,7 @@ func TestDisconnnect(t *testing.T) {
 		{
 			desc:    "disconnect thing from channel with invalid id",
 			chanID:  "invalid",
-			thingID: ath.ID,
+			thingID: th1.ID,
 			auth:    token,
 			status:  http.StatusNotFound,
 		},

@@ -230,16 +230,16 @@ func (crm *channelRepositoryMock) Disconnect(_ context.Context, owner, chanID, t
 func (crm *channelRepositoryMock) HasThing(_ context.Context, chanID, token string) (string, error) {
 	tid, err := crm.things.RetrieveByKey(context.Background(), token)
 	if err != nil {
-		return "", things.ErrNotFound
+		return "", err
 	}
 
 	chans, ok := crm.cconns[tid]
 	if !ok {
-		return "", things.ErrNotFound
+		return "", things.ErrEntityConnected
 	}
 
 	if _, ok := chans[chanID]; !ok {
-		return "", things.ErrNotFound
+		return "", things.ErrEntityConnected
 	}
 
 	return tid, nil
@@ -248,11 +248,11 @@ func (crm *channelRepositoryMock) HasThing(_ context.Context, chanID, token stri
 func (crm *channelRepositoryMock) HasThingByID(_ context.Context, chanID, thingID string) error {
 	chans, ok := crm.cconns[thingID]
 	if !ok {
-		return things.ErrNotFound
+		return things.ErrEntityConnected
 	}
 
 	if _, ok := chans[chanID]; !ok {
-		return things.ErrNotFound
+		return things.ErrEntityConnected
 	}
 
 	return nil

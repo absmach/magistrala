@@ -5,6 +5,29 @@ package things
 
 import (
 	"context"
+
+	"github.com/mainflux/mainflux/pkg/errors"
+)
+
+var (
+	// ErrMalformedEntity indicates malformed entity specification (e.g.
+	// invalid username or password).
+	ErrMalformedEntity = errors.New("malformed entity specification")
+
+	// ErrNotFound indicates a non-existent entity request.
+	ErrNotFound = errors.New("non-existent entity")
+
+	// ErrConflict indicates that entity already exists.
+	ErrConflict = errors.New("entity already exists")
+
+	// ErrScanMetadata indicates problem with metadata in db
+	ErrScanMetadata = errors.New("failed to scan metadata in db")
+
+	// ErrSelectEntity indicates error while reading entity from database
+	ErrSelectEntity = errors.New("select entity from db error")
+
+	// ErrEntityConnected indicates error while checking connection in database
+	ErrEntityConnected = errors.New("check thing-channel connection in database error")
 )
 
 // Metadata to be used for mainflux thing or channel for customized

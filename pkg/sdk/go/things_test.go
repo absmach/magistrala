@@ -98,14 +98,14 @@ func TestCreateThing(t *testing.T) {
 			desc:     "create new thing with empty token",
 			thing:    thing,
 			token:    "",
-			err:      createError(sdk.ErrFailedCreation, http.StatusForbidden),
+			err:      createError(sdk.ErrFailedCreation, http.StatusUnauthorized),
 			location: "",
 		},
 		{
 			desc:     "create new thing with invalid token",
 			thing:    thing,
 			token:    wrongValue,
-			err:      createError(sdk.ErrFailedCreation, http.StatusForbidden),
+			err:      createError(sdk.ErrFailedCreation, http.StatusUnauthorized),
 			location: "",
 		},
 	}
@@ -163,14 +163,14 @@ func TestCreateThings(t *testing.T) {
 			desc:   "create new thing with empty token",
 			things: things,
 			token:  "",
-			err:    createError(sdk.ErrFailedCreation, http.StatusForbidden),
+			err:    createError(sdk.ErrFailedCreation, http.StatusUnauthorized),
 			res:    []sdk.Thing{},
 		},
 		{
 			desc:   "create new thing with invalid token",
 			things: things,
 			token:  wrongValue,
-			err:    createError(sdk.ErrFailedCreation, http.StatusForbidden),
+			err:    createError(sdk.ErrFailedCreation, http.StatusUnauthorized),
 			res:    []sdk.Thing{},
 		},
 	}
@@ -228,7 +228,7 @@ func TestThing(t *testing.T) {
 			desc:     "get thing with invalid token",
 			thID:     id,
 			token:    wrongValue,
-			err:      createError(sdk.ErrFailedFetch, http.StatusForbidden),
+			err:      createError(sdk.ErrFailedFetch, http.StatusUnauthorized),
 			response: sdk.Thing{},
 		},
 	}
@@ -286,7 +286,7 @@ func TestThings(t *testing.T) {
 			token:    wrongValue,
 			offset:   0,
 			limit:    5,
-			err:      createError(sdk.ErrFailedFetch, http.StatusForbidden),
+			err:      createError(sdk.ErrFailedFetch, http.StatusUnauthorized),
 			response: nil,
 		},
 		{
@@ -294,7 +294,7 @@ func TestThings(t *testing.T) {
 			token:    "",
 			offset:   0,
 			limit:    5,
-			err:      createError(sdk.ErrFailedFetch, http.StatusForbidden),
+			err:      createError(sdk.ErrFailedFetch, http.StatusUnauthorized),
 			response: nil,
 		},
 		{
@@ -412,7 +412,7 @@ func TestThingsByChannel(t *testing.T) {
 			offset:    0,
 			limit:     5,
 			connected: true,
-			err:       createError(sdk.ErrFailedFetch, http.StatusForbidden),
+			err:       createError(sdk.ErrFailedFetch, http.StatusUnauthorized),
 			response:  nil,
 		},
 		{
@@ -422,7 +422,7 @@ func TestThingsByChannel(t *testing.T) {
 			offset:    0,
 			limit:     5,
 			connected: true,
-			err:       createError(sdk.ErrFailedFetch, http.StatusForbidden),
+			err:       createError(sdk.ErrFailedFetch, http.StatusUnauthorized),
 			response:  nil,
 		},
 		{
@@ -545,7 +545,7 @@ func TestUpdateThing(t *testing.T) {
 				Metadata: metadata2,
 			},
 			token: wrongValue,
-			err:   createError(sdk.ErrFailedUpdate, http.StatusForbidden),
+			err:   createError(sdk.ErrFailedUpdate, http.StatusUnauthorized),
 		},
 		{
 			desc: "update channel with empty token",
@@ -555,7 +555,7 @@ func TestUpdateThing(t *testing.T) {
 				Metadata: metadata2,
 			},
 			token: "",
-			err:   createError(sdk.ErrFailedUpdate, http.StatusForbidden),
+			err:   createError(sdk.ErrFailedUpdate, http.StatusUnauthorized),
 		},
 	}
 
@@ -592,7 +592,7 @@ func TestDeleteThing(t *testing.T) {
 			desc:    "delete thing with invalid token",
 			thingID: id,
 			token:   wrongValue,
-			err:     createError(sdk.ErrFailedRemoval, http.StatusForbidden),
+			err:     createError(sdk.ErrFailedRemoval, http.StatusUnauthorized),
 		},
 		{
 			desc:    "delete non-existing thing",
@@ -610,7 +610,7 @@ func TestDeleteThing(t *testing.T) {
 			desc:    "delete thing with empty token",
 			thingID: id,
 			token:   "",
-			err:     createError(sdk.ErrFailedRemoval, http.StatusForbidden),
+			err:     createError(sdk.ErrFailedRemoval, http.StatusUnauthorized),
 		},
 		{
 			desc:    "delete existing thing",
@@ -708,14 +708,14 @@ func TestConnectThing(t *testing.T) {
 			thingID: thingID,
 			chanID:  chanID1,
 			token:   wrongValue,
-			err:     createError(sdk.ErrFailedConnect, http.StatusForbidden),
+			err:     createError(sdk.ErrFailedConnect, http.StatusUnauthorized),
 		},
 		{
 			desc:    "connect existing thing to existing channel with empty token",
 			thingID: thingID,
 			chanID:  chanID1,
 			token:   "",
-			err:     createError(sdk.ErrFailedConnect, http.StatusForbidden),
+			err:     createError(sdk.ErrFailedConnect, http.StatusUnauthorized),
 		},
 		{
 			desc:    "connect thing from owner to channel of other user",
@@ -812,14 +812,14 @@ func TestConnect(t *testing.T) {
 			thingID: thingID,
 			chanID:  chanID1,
 			token:   wrongValue,
-			err:     createError(sdk.ErrFailedConnect, http.StatusForbidden),
+			err:     createError(sdk.ErrFailedConnect, http.StatusUnauthorized),
 		},
 		{
 			desc:    "connect existing things to existing channels with empty token",
 			thingID: thingID,
 			chanID:  chanID1,
 			token:   emptyValue,
-			err:     createError(sdk.ErrFailedConnect, http.StatusForbidden),
+			err:     createError(sdk.ErrFailedConnect, http.StatusUnauthorized),
 		},
 		{
 			desc:    "connect things from owner to channels of other user",
@@ -923,14 +923,14 @@ func TestDisconnectThing(t *testing.T) {
 			thingID: thingID,
 			chanID:  chanID1,
 			token:   wrongValue,
-			err:     createError(sdk.ErrFailedDisconnect, http.StatusForbidden),
+			err:     createError(sdk.ErrFailedDisconnect, http.StatusUnauthorized),
 		},
 		{
 			desc:    "disconnect existing thing from existing channel with empty token",
 			thingID: thingID,
 			chanID:  chanID1,
 			token:   "",
-			err:     createError(sdk.ErrFailedDisconnect, http.StatusForbidden),
+			err:     createError(sdk.ErrFailedDisconnect, http.StatusUnauthorized),
 		},
 		{
 			desc:    "disconnect owner's thing from someone elses channel",

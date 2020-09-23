@@ -91,7 +91,7 @@ func main() {
 		// Merge environment variables and file settings.
 		mergeConfigs(&cfgFromFile, &cfg)
 		cfg = cfgFromFile
-		logger.Info("Continue with settings from file:" + cfg.File)
+		logger.Info("Continue with settings from file: " + cfg.File)
 	}
 
 	SDKCfg := mfSDK.Config{

@@ -40,3 +40,13 @@ type MessagesPage struct {
 	Messages []senml.Message `json:"messages,omitempty"`
 	pageRes
 }
+
+type GroupsPage struct {
+	Groups []Group `json:"groups"`
+	pageRes
+}
+
+type UsersPage struct {
+	Users []User `json:"users"`
+	pageRes
+}

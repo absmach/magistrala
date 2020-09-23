@@ -20,6 +20,7 @@ func main() {
 		CertsURL:          "http://localhost:8204",
 		ReaderPrefix:      "",
 		UsersPrefix:       "",
+		GroupsPrefix:      "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "http",
 		BootstrapPrefix:   "things",
@@ -41,6 +42,7 @@ func main() {
 	versionCmd := cli.NewVersionCmd()
 	usersCmd := cli.NewUsersCmd()
 	thingsCmd := cli.NewThingsCmd()
+	groupsCmd := cli.NewGroupsCmd()
 	channelsCmd := cli.NewChannelsCmd()
 	messagesCmd := cli.NewMessagesCmd()
 	provisionCmd := cli.NewProvisionCmd()
@@ -50,6 +52,7 @@ func main() {
 	// Root Commands
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(usersCmd)
+	rootCmd.AddCommand(groupsCmd)
 	rootCmd.AddCommand(thingsCmd)
 	rootCmd.AddCommand(channelsCmd)
 	rootCmd.AddCommand(messagesCmd)
@@ -80,6 +83,14 @@ func main() {
 		"t",
 		sdkConf.ThingsPrefix,
 		"Mainflux things service prefix",
+	)
+
+	rootCmd.PersistentFlags().StringVarP(
+		&sdkConf.GroupsPrefix,
+		"groups-prefix",
+		"g",
+		sdkConf.GroupsPrefix,
+		"Mainflux groups service prefix",
 	)
 
 	rootCmd.PersistentFlags().StringVarP(

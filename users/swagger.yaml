@@ -1,12 +1,9 @@
-swagger: "2.0"
+openapi: 3.0.1
 info:
   title: Mainflux users service
   description: HTTP API for managing platform users.
   version: "1.0.0"
-consumes:
-  - "application/json"
-produces:
-  - "application/json"
+
 paths:
   /users:
     post:
@@ -16,16 +13,19 @@ paths:
         be uniquely identified by its email address.
       tags:
         - users
-      parameters:
-        - name: user
-          description: JSON-formatted document describing the new user.
-          in: body
-          schema:
-            $ref: "#/definitions/User"
-          required: true
+      requestBody:
+        $ref: "#/components/requestBodies/CreateUserReq"
       responses:
         201:
           description: Registered new user.
+          headers:
+            Location:
+              content:
+                text/plain:
+                  schema:
+                    type: string
+                    description: Registred user relative URL
+                    example: /users/{userId}
         400:
           description: Failed due to malformed JSON.
         409:
@@ -33,7 +33,7 @@ paths:
         415:
           description: Missing or invalid content type.
         500:
-          $ref: "#/responses/ServiceError"
+          $ref: "#/components/responses/ServiceError"
     get:
       summary: Gets info on currently logged in user.
       description: |
@@ -41,19 +41,21 @@ paths:
         authorization token
       tags:
         - users
-      parameters:
-        - $ref: "#/parameters/Authorization"
+      security: 
+        - Authorization: []
       responses:
         200:
           description: Data retrieved.
-          schema:
-            $ref: "#/definitions/UsersPage"
+          content: 
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserRes"
         400:
           description: Failed due to malformed query parameters.
         403:
           description: Missing or invalid access token provided.
         500:
-          $ref: "#/responses/ServiceError"
+          $ref: "#/components/responses/ServiceError"
     put:
       summary: Updates info on currently logged in user.
       description: |
@@ -61,14 +63,10 @@ paths:
         authorization token and the new received info.
       tags:
         - users
-      parameters:
-        - $ref: "#/parameters/Authorization"
-        - name: metadata
-          description: JSON-formatted document containing user info.
-          in: body
-          schema:
-            $ref: "#/definitions/updateUserReq"
-          required: true
+      security: 
+        - Authorization: []
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateUserReq"
       responses:
         200:
           description: User updated.
@@ -77,7 +75,72 @@ paths:
         403:
           description: Missing or invalid access token provided.
         500:
-          $ref: "#/responses/ServiceError"
+         $ref: "#/components/responses/ServiceError"
+  /users/{userId}/groups:
+    get:
+      summary: Get groups that user belongs to
+      description: |
+        Retrieves a list of groups that user belongs to.
+      tags:
+      - users
+      security: 
+        - Authorization: []
+      parameters:
+        - $ref: "#/parameters/UserID"
+        - $ref: "#/parameters/Offset"
+        - $ref: "#/parameters/Limit"
+      responses:
+        200:
+          description: Data retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupsPage'
+        403:
+          description: Missing or invalid access token provided.
+        500:
+          $ref: '#/components/responses/ServiceError'
+  /groups:
+    post:
+      summary: Create users group
+      description: |
+        Create users group.
+      tags:
+        - groups
+      security: 
+        - Authorization: []
+      requestBody: 
+        $ref: '#/components/requestBodies/CreateGroupReq'
+      responses:
+        200:
+          description: Group created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupsRes'
+        403:
+          description: Missing or invalid access token provided.
+        500:
+          $ref: '#/components/responses/ServiceError'
+    get: 
+      summary: Get users groups
+      description: |
+        Get all users groups
+      tags:
+        - groups
+      security: 
+        - Authorization: []
+      responses:
+        200:
+          description: Groups retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupsPage'
+        403:
+          description: Missing or invalid access token provided.
+        500:
+          $ref: '#/components/responses/ServiceError'
   /tokens:
     post:
       summary: User authentication
@@ -85,34 +148,37 @@ paths:
         Generates an access token when provided with proper credentials.
       tags:
         - users
-      parameters:
-        - name: credentials
-          description: JSON-formatted document containing user credentials.
-          in: body
-          schema:
-            $ref: "#/definitions/User"
-          required: true
+      security: 
+        - Authorization: []
       responses:
         201:
           description: User authenticated.
-          schema:
-            $ref: "#/definitions/Token"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
         400:
           description: |
             Failed due to malformed JSON.
-          schema:
-            $ref: "#/definitions/Error"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         403:
           description: |
             Failed due to using invalid credentials.
-          schema:
-            $ref: "#/definitions/Error"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         415:
           description: Missing or invalid content type.
-          schema:
-            $ref: "#/definitions/Error"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         500:
-          $ref: "#/responses/ServiceError"
+          $ref: '#/components/responses/ServiceError'
   /password/reset-request:
     post:
       summary: User password reset request
@@ -122,37 +188,27 @@ paths:
         - users
       parameters:
         - $ref: "#/parameters/Referer"
-        - $ref: "#/parameters/Authorization"
-        - name: email
-          description: JSON-formatted document containing user email.
-          in: body
-          schema:
-            $ref: "#/definitions/PasswordResetRequest"
-          required: true
+      requestBody:
+        $ref: '#/components/requestBodies/RequestPasswordReset'
       responses:
         201:
-          description: User link .
+          description: Users link for reseting password.
         400:
           description: |
             Failed due to malformed JSON.
         415:
           description: Missing or invalid content type.
         500:
-          $ref: "#/responses/ServiceError"
+          $ref: '#/components/responses/ServiceError'
   /password/reset:
     put:
       summary: User password reset endpoint
       description: |
-        When user gets reset token posting a new password along to this endpoint will change password.
+        When user gets reset token, after he submited email to `/password/reset-request`, posting a new password along to this endpoint will change password.
       tags:
         - users
-      parameters:
-        - name: password
-          description: JSON-formatted document containing user email, token and new password.
-          in: body
-          schema:
-            $ref: "#/definitions/PasswordReset"
-          required: true
+      requestBody:
+        $ref: '#/components/requestBodies/PasswordReset'
       responses:
         201:
           description: User link .
@@ -162,7 +218,7 @@ paths:
         415:
           description: Missing or invalid content type.
         500:
-          $ref: "#/responses/ServiceError"
+          $ref: '#/components/responses/ServiceError'
   /password:
     patch:
       summary: User password change endpoint
@@ -170,14 +226,10 @@ paths:
         When authenticated user wants to change password.
       tags:
         - users
-      parameters:
-        - $ref: "#/parameters/Authorization"
-        - name: password
-          description: JSON-formatted document containing user email, token and new password.
-          in: body
-          schema:
-            $ref: "#/definitions/PasswordChange"
-          required: true
+      security: 
+        - Authorization: []
+      requestBody:
+        $ref: '#/components/requestBodies/PasswordChange'
       responses:
         201:
           description: User link .
@@ -187,92 +239,204 @@ paths:
         415:
           description: Missing or invalid content type.
         500:
-          $ref: "#/responses/ServiceError"
+          $ref: "#/components/responses/ServiceError"
 
-responses:
-  ServiceError:
-    description: Unexpected server-side error occurred.
-
-definitions:
-  Token:
-    type: object
-    properties:
-      token:
-        type: string
-        description: Generated access token.
-    required:
-      - token
-  User:
-    type: object
-    properties:
-      email:
-        type: string
-        format: email
-        example: "test@example.com"
-        description: User's email address will be used as its unique identifier
-      password:
-        type: string
-        format: password
-        minimum: 8
-        description: Free-form account password used for acquiring auth token(s).
-    required:
-      - email
-      - password
-  UsersPage:
-    type: object
-    properties:
-      email:
-        type: string
-        description: ID of the user
-      metadata:
-        type: object
-        description: Custom metadata related to User
-  updateUserReq:
-    type: object
-    description: Arbitrary, object-encoded user's data.
-  PasswordResetRequest:
-    type: object
-    properties:
-      email:
-        type: string
-        description: Email of the user
-  PasswordReset:
-    type: object
-    properties:
-      password:
-        type: string
-        description: New password
-        minimum: 8
-      confirm_password:
-        type: string
-        description: New password confirmed
-        minimum: 8
-      token:
-        type: string
-        description: Reset token generated and sent in email
-  PasswordChange:
-    type: object
-    properties:
-      password:
-        type: string
-        description: New password
-      old_password:
-        type: string
-        description: Confirm password
-  Error:
-    type: object
-    properties:
-      error:
-        type: string
-        description: Error message
-
+components:
+  securitySchemes:
+    Authorization:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Token:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Generated access token.
+      required:
+        - token
+    User:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: "test@example.com"
+          description: User's email address will be used as its unique identifier
+        password:
+          type: string
+          format: password
+          minimum: 8
+          description: Free-form account password used for acquiring auth token(s).
+      required:
+        - email
+        - password
+    Group:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Unique name of the group. Group name matching `"^[a-zA-Z0-9]+$"` regexp.
+        parent_id:
+          type: string
+          format: uuid
+          description: Id of parent group
+        description:
+          type: string
+          description: Description of group
+        metadata:
+          type: object
+          description: Arbitrary, object-encoded thing's data.
+      required: 
+        - name
+    UserRes:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 18167738-f7a8-4e96-a123-58c3cd14de3a
+          description: UUID id of the user.
+        email:
+          type: string
+          format: email
+          example: "test@example.com"
+          description: User's email address will be used as its unique identifier
+        metadata:
+          type: string
+          format: JSON
+          description: Users metadata
+    GroupsRes:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 18167738-f7a8-4e96-a123-58c3cd14de3a
+          description: UUID id of the group.
+        name:
+          type: string
+          example: "MainflxGroup"
+          description: Group name matching `"^[a-zA-Z0-9]+$"` regexp.
+        description:
+          type: string
+          description: Description free form text describing a group
+        metadata:
+          type: object
+          description: Groups metadata
+    UsersPage:
+      type: object
+      properties:
+        email:
+          type: string
+          description: ID of the user
+        metadata:
+          type: object
+          description: Custom metadata related to User
+    UserMetadata:
+      type: object
+      properties:
+        metadata:
+          type: string
+          description: Users metadata
+    GroupsPage:
+      type: object
+      properties:
+        groups:
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/GroupsRes"
+        total:
+          type: integer
+          description: Total number of items.
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval.
+        limit:
+          type: integer
+          description: Maximum number of items to return in one page.
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          
+  requestBodies:
+    CreateUserReq:
+      description: JSON-formatted document describing the new user to be registered
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/User'
+    UpdateUserReq:
+      description: JSON-formated document describing the metadata of user to be update
+      required: true
+      content: 
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UserMetadata"
+    CreateGroupReq:
+      description: JSON-formated document describing the new group to be created.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Group'
+    RequestPasswordReset:
+      description: Initiate password request procedure.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+                description: Email of the user
+    PasswordReset:
+      description: Password reset request data, new password and token that is appended on password reset link received in email.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              password:
+                type: string
+                description: New password
+                minimum: 8
+              confirm_password:
+                type: string
+                description: New password confirmed
+                minimum: 8
+              token:
+                type: string
+                description: Reset token generated and sent in email
+    PasswordChange:
+      description: Password change data. User can change its password.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              password:
+                type: string
+                format: pass
+                description: New password
+              old_password:
+                type: string
+                description: Confirm password
+      
+  responses:
+   ServiceError:
+      description: Unexpected server-side error occurred.
+    
 parameters:
-  Authorization:
-    name: Authorization
-    description: User's access token.
-    in: header
-    type: string
-    required: true
   Referer:
     name: Referer
     description: Host being sent by browser.
@@ -286,3 +450,30 @@ parameters:
     type: string
     minimum: 0
     required: false
+  UserID:
+    name: userId
+    description: Unique user identifier.
+    in: path
+    schema:      
+      type: string
+      format: UUID
+    required: true
+  Limit:
+    name: limit
+    description: Size of the subset to retrieve.
+    in: query
+    schema:      
+      type: integer
+      default: 10
+      maximum: 100
+      minimum: 1
+      required: false
+  Offset:
+    name: offset
+    description: Number of items to skip during retrieval.
+    in: query
+    schema:      
+      type: integer
+      default: 0
+      minimum: 0
+      required: false

@@ -10,6 +10,7 @@ import (
 
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/pkg/errors"
+	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/users"
 
 	"github.com/mainflux/mainflux/users/mocks"
@@ -23,15 +24,17 @@ var (
 	user            = users.User{Email: "user@example.com", Password: "password", Metadata: map[string]interface{}{"role": "user"}}
 	nonExistingUser = users.User{Email: "non-ex-user@example.com", Password: "password", Metadata: map[string]interface{}{"role": "user"}}
 	host            = "example.com"
+	groupName       = "Mainflux"
 )
 
 func newService() users.Service {
-	repo := mocks.NewUserRepository()
+	userRepo := mocks.NewUserRepository()
+	groupRepo := mocks.NewGroupRepository()
 	hasher := mocks.NewHasher()
 	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
 	e := mocks.NewEmailer()
 
-	return users.New(repo, hasher, auth, e)
+	return users.New(userRepo, groupRepo, hasher, auth, e)
 }
 
 func TestRegister(t *testing.T) {
@@ -63,20 +66,20 @@ func TestRegister(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := svc.Register(context.Background(), tc.user)
+		_, err := svc.Register(context.Background(), tc.user)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
 func TestLogin(t *testing.T) {
 	svc := newService()
-	svc.Register(context.Background(), user)
+	_, err := svc.Register(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+
 	noAuthUser := users.User{
 		Email:    "email@test.com",
-		Password: "pwd",
+		Password: "12345678",
 	}
-	svc.Register(context.Background(), user)
-	svc.Register(context.Background(), noAuthUser)
 
 	cases := map[string]struct {
 		user users.User
@@ -112,9 +115,10 @@ func TestLogin(t *testing.T) {
 	}
 }
 
-func TestViewUser(t *testing.T) {
+func TestUser(t *testing.T) {
 	svc := newService()
-	svc.Register(context.Background(), user)
+	_, err := svc.Register(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	token, err := svc.Login(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
@@ -140,14 +144,17 @@ func TestViewUser(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		_, err := svc.ViewUser(context.Background(), tc.token)
+		_, err := svc.User(context.Background(), tc.token)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
 
 func TestUpdateUser(t *testing.T) {
 	svc := newService()
-	svc.Register(context.Background(), user)
+
+	_, err := svc.Register(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+
 	token, err := svc.Login(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
@@ -178,7 +185,8 @@ func TestUpdateUser(t *testing.T) {
 
 func TestGenerateResetToken(t *testing.T) {
 	svc := newService()
-	svc.Register(context.Background(), user)
+	_, err := svc.Register(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := map[string]struct {
 		email string
@@ -196,7 +204,8 @@ func TestGenerateResetToken(t *testing.T) {
 
 func TestChangePassword(t *testing.T) {
 	svc := newService()
-	svc.Register(context.Background(), user)
+	_, err := svc.Register(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("register user error: %s", err))
 	token, _ := svc.Login(context.Background(), user)
 
 	cases := map[string]struct {
@@ -219,7 +228,8 @@ func TestChangePassword(t *testing.T) {
 
 func TestResetPassword(t *testing.T) {
 	svc := newService()
-	svc.Register(context.Background(), user)
+	_, err := svc.Register(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
 	resetToken, err := auth.Issue(context.Background(), &mainflux.IssueReq{Issuer: user.Email, Type: 2})
 	assert.Nil(t, err, fmt.Sprintf("Generating reset token expected to succeed: %s", err))
@@ -240,7 +250,8 @@ func TestResetPassword(t *testing.T) {
 
 func TestSendPasswordReset(t *testing.T) {
 	svc := newService()
-	svc.Register(context.Background(), user)
+	_, err := svc.Register(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("register user error: %s", err))
 	token, _ := svc.Login(context.Background(), user)
 
 	cases := map[string]struct {
@@ -255,5 +266,133 @@ func TestSendPasswordReset(t *testing.T) {
 		err := svc.SendPasswordReset(context.Background(), host, tc.email, tc.token)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 
+	}
+}
+
+func TestCreateGroup(t *testing.T) {
+	svc := newService()
+	_, err := svc.Register(context.Background(), user)
+	assert.Nil(t, err, fmt.Sprintf("registering user expected to succeed: %s", err))
+
+	token, err := svc.Login(context.Background(), user)
+	assert.Nil(t, err, fmt.Sprintf("authenticating user expected to succeed: %s", err))
+
+	uuid, err := uuidProvider.New().ID()
+	assert.Nil(t, err, fmt.Sprintf("generating uuid expected to succeed: %s", err))
+
+	group := users.Group{
+		ID:   uuid,
+		Name: groupName,
+	}
+
+	cases := []struct {
+		desc  string
+		group users.Group
+		err   error
+	}{
+		{
+			desc:  "create new group",
+			group: group,
+			err:   nil,
+		},
+		{
+			desc:  "create group with existing name",
+			group: group,
+			err:   users.ErrGroupConflict,
+		},
+	}
+
+	for _, tc := range cases {
+		_, err := svc.CreateGroup(context.Background(), token, tc.group)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	}
+}
+
+func TestUpdateGroup(t *testing.T) {
+	svc := newService()
+
+	_, err := svc.Register(context.Background(), user)
+	assert.Nil(t, err, fmt.Sprintf("registering user expected to succeed: %s", err))
+
+	token, err := svc.Login(context.Background(), user)
+	assert.Nil(t, err, fmt.Sprintf("authenticating user expected to succeed: %s", err))
+
+	group := users.Group{
+		Name: groupName,
+	}
+
+	saved, err := svc.CreateGroup(context.Background(), token, group)
+	assert.Nil(t, err, fmt.Sprintf("generating uuid expected to succeed: %s", err))
+
+	group.Description = "test description"
+	group.Name = "NewName"
+	group.ID = saved.ID
+	group.OwnerID = saved.OwnerID
+
+	cases := []struct {
+		desc  string
+		group users.Group
+		err   error
+	}{
+		{
+			desc:  "update group",
+			group: group,
+			err:   nil,
+		},
+	}
+
+	for _, tc := range cases {
+		err := svc.UpdateGroup(context.Background(), token, tc.group)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		g, err := svc.Group(context.Background(), token, saved.ID)
+		assert.Nil(t, err, fmt.Sprintf("retrieve group failed: %s", err))
+		assert.Equal(t, tc.group.Description, g.Description, tc.desc, tc.err)
+		assert.Equal(t, tc.group.Name, g.Name, tc.desc, tc.err)
+		assert.Equal(t, tc.group.ID, g.ID, tc.desc, tc.err)
+		assert.Equal(t, tc.group.OwnerID, g.OwnerID, tc.desc, tc.err)
+	}
+}
+
+func TestRemoveGroup(t *testing.T) {
+	svc := newService()
+
+	_, err := svc.Register(context.Background(), user)
+	assert.Nil(t, err, fmt.Sprintf("registering user expected to succeed: %s", err))
+
+	token, err := svc.Login(context.Background(), user)
+	assert.Nil(t, err, fmt.Sprintf("authenticating user expected to succeed: %s", err))
+
+	group := users.Group{
+		Name: groupName,
+	}
+
+	saved, err := svc.CreateGroup(context.Background(), token, group)
+	assert.Nil(t, err, fmt.Sprintf("generating uuid expected to succeed: %s", err))
+
+	group.Description = "test description"
+	group.Name = "NewName"
+	group.ID = saved.ID
+	group.OwnerID = saved.OwnerID
+
+	cases := []struct {
+		desc  string
+		group users.Group
+		err   error
+	}{
+		{
+			desc:  "remove existing group",
+			group: group,
+			err:   nil,
+		},
+		{
+			desc:  "remove non existing group",
+			group: group,
+			err:   users.ErrNotFound,
+		},
+	}
+
+	for _, tc := range cases {
+		err := svc.RemoveGroup(context.Background(), token, tc.group.ID)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }

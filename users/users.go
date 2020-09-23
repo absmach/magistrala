@@ -28,13 +28,20 @@ var (
 	userDotRegexp = regexp.MustCompile("(^[.]{1})|([.]{1}$)|([.]{2,})")
 )
 
+// Metadata to be used for mainflux thing or channel for customized
+// describing of particular thing or channel.
+type Metadata map[string]interface{}
+
 // User represents a Mainflux user account. Each user is identified given its
 // email and password.
 type User struct {
 	ID       string
 	Email    string
 	Password string
-	Metadata map[string]interface{}
+	OwnerID  string
+	Owner    *User
+	Groups   []Group
+	Metadata Metadata
 }
 
 // Validate returns an error if user representation is invalid.
@@ -54,7 +61,7 @@ func (u User) Validate() error {
 type UserRepository interface {
 	// Save persists the user account. A non-nil error is returned to indicate
 	// operation failure.
-	Save(ctx context.Context, u User) error
+	Save(ctx context.Context, u User) (string, error)
 
 	// Update updates the user metadata.
 	UpdateUser(ctx context.Context, u User) error
@@ -62,8 +69,14 @@ type UserRepository interface {
 	// RetrieveByEmail retrieves user by its unique identifier (i.e. email).
 	RetrieveByEmail(ctx context.Context, email string) (User, error)
 
+	// RetrieveByID retrieves user by its unique identifier ID.
+	RetrieveByID(ctx context.Context, id string) (User, error)
+
 	// UpdatePassword updates password for user with given email
 	UpdatePassword(ctx context.Context, email, password string) error
+
+	// Members retrieves all users that belong to a group
+	Members(ctx context.Context, groupID string, offset, limit uint64, um Metadata) (UserPage, error)
 }
 
 func isEmail(email string) bool {

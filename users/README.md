@@ -31,6 +31,8 @@ default values.
 | MF_USERS_HTTP_PORT        | Users service HTTP port                                                 | 8180           |
 | MF_USERS_SERVER_CERT      | Path to server certificate in pem format                                |                |
 | MF_USERS_SERVER_KEY       | Path to server key in pem format                                        |                |
+| MF_USERS_ADMIN_EMAIL      | Default user, created on startup                                        |                |
+| MF_USERS_ADMIN_PASSWORD   | Default user password, created on startup                               |                |
 | MF_JAEGER_URL             | Jaeger server URL                                                       | localhost:6831 |
 | MF_EMAIL_DRIVER           | Mail server driver, mail server for sending reset password token        | smtp           |
 | MF_EMAIL_HOST             | Mail server host                                                        | localhost      |

@@ -5,12 +5,6 @@ package http
 
 import "github.com/mainflux/mainflux/things"
 
-var _ apiReq = (*identifyReq)(nil)
-
-type apiReq interface {
-	validate() error
-}
-
 type identifyReq struct {
 	Token string `json:"token"`
 }

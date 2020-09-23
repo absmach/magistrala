@@ -24,6 +24,5 @@ func New(url string, c *email.Config) (users.Emailer, error) {
 
 func (e *emailer) SendPasswordReset(To []string, host string, token string) error {
 	url := fmt.Sprintf("%s%s?token=%s", host, e.resetURL, token)
-	content := fmt.Sprintf("%s", url)
-	return e.agent.Send(To, "", "Password reset", "", content, "")
+	return e.agent.Send(To, "", "Password reset", "", url, "")
 }

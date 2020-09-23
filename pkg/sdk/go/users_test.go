@@ -26,13 +26,13 @@ const (
 )
 
 func newUserService() users.Service {
-	repo := mocks.NewUserRepository()
+	usersRepo := mocks.NewUserRepository()
+	groupsRepo := mocks.NewGroupRepository()
 	hasher := mocks.NewHasher()
 	auth := mocks.NewAuthService(map[string]string{"user@example.com": "user@example.com"})
-
 	emailer := mocks.NewEmailer()
 
-	return users.New(repo, hasher, auth, emailer)
+	return users.New(usersRepo, groupsRepo, hasher, auth, emailer)
 }
 
 func newUserServer(svc users.Service) *httptest.Server {
@@ -48,6 +48,7 @@ func TestCreateUser(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
+		GroupsPrefix:      "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,
@@ -99,7 +100,7 @@ func TestCreateUser(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := mainfluxSDK.CreateUser(tc.user)
+		_, err := mainfluxSDK.CreateUser(tc.user)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 	}
 }
@@ -111,6 +112,7 @@ func TestCreateToken(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
+		GroupsPrefix:      "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,

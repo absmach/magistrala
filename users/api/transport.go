@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -22,14 +23,24 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-const contentType = "application/json"
+const (
+	contentType = "application/json"
+
+	offsetKey   = "offset"
+	limitKey    = "limit"
+	nameKey     = "name"
+	metadataKey = "metadata"
+
+	defOffset = 0
+	defLimit  = 10
+)
 
 var (
+	errInvalidQueryParams = errors.New("invalid query params")
+
 	// ErrUnsupportedContentType indicates unacceptable or lack of Content-Type
 	ErrUnsupportedContentType = errors.New("unsupported content type")
-	errMissingRefererHeader   = errors.New("missing referer header")
-	errInvalidToken           = errors.New("invalid token")
-	errNoTokenSupplied        = errors.New("no token supplied")
+
 	// ErrFailedDecode indicates failed to decode request body
 	ErrFailedDecode = errors.New("failed to decode request body")
 	logger          log.Logger
@@ -66,6 +77,13 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 		opts...,
 	))
 
+	mux.Get("/users/:userID/groups", kithttp.NewServer(
+		kitot.TraceServer(tracer, "memberships")(listUserGroupsEndpoint(svc)),
+		decodeListUserGroupRequest,
+		encodeResponse,
+		opts...,
+	))
+
 	mux.Post("/password/reset-request", kithttp.NewServer(
 		kitot.TraceServer(tracer, "res-req")(passwordResetRequestEndpoint(svc)),
 		decodePasswordResetRequest,
@@ -83,6 +101,69 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 	mux.Patch("/password", kithttp.NewServer(
 		kitot.TraceServer(tracer, "reset")(passwordChangeEndpoint(svc)),
 		decodePasswordChange,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Post("/groups", kithttp.NewServer(
+		kitot.TraceServer(tracer, "add_group")(createGroupEndpoint(svc)),
+		decodeGroupCreate,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Get("/groups", kithttp.NewServer(
+		kitot.TraceServer(tracer, "groups")(listGroupsEndpoint(svc)),
+		decodeListUserGroupRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Delete("/groups/:groupID", kithttp.NewServer(
+		kitot.TraceServer(tracer, "delete_group")(deleteGroupEndpoint(svc)),
+		decodeGroupRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Put("/groups/:groupID/users/:userID", kithttp.NewServer(
+		kitot.TraceServer(tracer, "assign_user_to_group")(assignUserToGroup(svc)),
+		decodeUserGroupRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Delete("/groups/:groupID/users/:userID", kithttp.NewServer(
+		kitot.TraceServer(tracer, "remove_user_from_group")(removeUserFromGroup(svc)),
+		decodeUserGroupRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Get("/groups/:groupID/users", kithttp.NewServer(
+		kitot.TraceServer(tracer, "members")(listUsersForGroupEndpoint(svc)),
+		decodeListUserGroupRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Patch("/groups/:groupID", kithttp.NewServer(
+		kitot.TraceServer(tracer, "update_group")(updateGroupEndpoint(svc)),
+		decodeGroupCreate,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Get("/groups/:groupID/groups", kithttp.NewServer(
+		kitot.TraceServer(tracer, "list_children_groups")(listGroupsEndpoint(svc)),
+		decodeListUserGroupRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Get("/groups/:groupID", kithttp.NewServer(
+		kitot.TraceServer(tracer, "group")(viewGroupEndpoint(svc)),
+		decodeGroupRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -173,19 +254,88 @@ func decodePasswordChange(_ context.Context, r *http.Request) (interface{}, erro
 	return req, nil
 }
 
-func decodeToken(_ context.Context, r *http.Request) (interface{}, error) {
-	vals := bone.GetQuery(r, "token")
-	if len(vals) > 1 {
-		return "", errInvalidToken
+// Group related methods
+func decodeGroupCreate(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, ErrUnsupportedContentType
 	}
 
-	if len(vals) == 0 {
-		return "", errNoTokenSupplied
+	var req createGroupReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(ErrFailedDecode, err)
 	}
-	t := vals[0]
-	return t, nil
 
+	req.token = r.Header.Get("Authorization")
+
+	return req, nil
 }
+
+func decodeGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, ErrUnsupportedContentType
+	}
+
+	req := groupReq{
+		token:   r.Header.Get("Authorization"),
+		groupID: bone.GetValue(r, "groupID"),
+		name:    bone.GetValue(r, "name"),
+	}
+
+	return req, nil
+}
+
+func decodeListUserGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, ErrUnsupportedContentType
+	}
+	o, err := readUintQuery(r, offsetKey, defOffset)
+	if err != nil {
+		return nil, err
+	}
+
+	l, err := readUintQuery(r, limitKey, defLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	n, err := readStringQuery(r, nameKey)
+	if err != nil {
+		return nil, err
+	}
+
+	m, err := readMetadataQuery(r, metadataKey)
+	if err != nil {
+		return nil, err
+	}
+
+	groupID := bone.GetValue(r, "groupID")
+	userID := bone.GetValue(r, "userID")
+
+	req := listUserGroupReq{
+		token:    r.Header.Get("Authorization"),
+		groupID:  groupID,
+		userID:   userID,
+		offset:   o,
+		limit:    l,
+		name:     n,
+		metadata: m,
+	}
+	return req, nil
+}
+
+func decodeUserGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, ErrUnsupportedContentType
+	}
+
+	req := userGroupReq{
+		token:   r.Header.Get("Authorization"),
+		groupID: bone.GetValue(r, "groupID"),
+		userID:  bone.GetValue(r, "userID"),
+	}
+	return req, nil
+}
+
 func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	if ar, ok := response.(mainflux.Response); ok {
 		for k, v := range ar.Headers() {
@@ -213,6 +363,8 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 			w.WriteHeader(http.StatusForbidden)
 		case errors.Contains(errorVal, users.ErrConflict):
 			w.WriteHeader(http.StatusConflict)
+		case errors.Contains(errorVal, users.ErrGroupConflict):
+			w.WriteHeader(http.StatusConflict)
 		case errors.Contains(errorVal, ErrUnsupportedContentType):
 			w.WriteHeader(http.StatusUnsupportedMediaType)
 		case errors.Contains(errorVal, ErrFailedDecode):
@@ -236,4 +388,55 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}
+}
+
+func readUintQuery(r *http.Request, key string, def uint64) (uint64, error) {
+	vals := bone.GetQuery(r, key)
+	if len(vals) > 1 {
+		return 0, errInvalidQueryParams
+	}
+
+	if len(vals) == 0 {
+		return def, nil
+	}
+
+	strval := vals[0]
+	val, err := strconv.ParseUint(strval, 10, 64)
+	if err != nil {
+		return 0, errInvalidQueryParams
+	}
+
+	return val, nil
+}
+
+func readStringQuery(r *http.Request, key string) (string, error) {
+	vals := bone.GetQuery(r, key)
+	if len(vals) > 1 {
+		return "", errInvalidQueryParams
+	}
+
+	if len(vals) == 0 {
+		return "", nil
+	}
+
+	return vals[0], nil
+}
+
+func readMetadataQuery(r *http.Request, key string) (map[string]interface{}, error) {
+	vals := bone.GetQuery(r, key)
+	if len(vals) > 1 {
+		return nil, errInvalidQueryParams
+	}
+
+	if len(vals) == 0 {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	err := json.Unmarshal([]byte(vals[0]), &m)
+	if err != nil {
+		return nil, errors.Wrap(errInvalidQueryParams, err)
+	}
+
+	return m, nil
 }

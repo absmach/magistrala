@@ -43,14 +43,16 @@ func Connect(cfg Config) (*sqlx.DB, error) {
 }
 
 func migrateDB(db *sqlx.DB) error {
+
 	migrations := &migrate.MemoryMigrationSource{
 		Migrations: []*migrate.Migration{
 			{
 				Id: "users_1",
 				Up: []string{
 					`CREATE TABLE IF NOT EXISTS users (
-					email VARCHAR(254) PRIMARY KEY,
-					password CHAR(60) NOT NULL)`,
+					 email    VARCHAR(254) PRIMARY KEY,
+					 password CHAR(60)     NOT  NULL
+					)`,
 				},
 				Down: []string{"DROP TABLE users"},
 			},
@@ -64,8 +66,36 @@ func migrateDB(db *sqlx.DB) error {
 				Id: "users_3",
 				Up: []string{
 					`CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-					ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS
-					id UUID NOT NULL DEFAULT gen_random_uuid()`,
+					 ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS
+					 id UUID NOT NULL DEFAULT gen_random_uuid()`,
+				},
+			},
+			{
+				Id: "users_4",
+				Up: []string{
+					`ALTER TABLE IF EXISTS users DROP CONSTRAINT users_pkey`,
+					`ALTER TABLE IF EXISTS users ADD CONSTRAINT users_email_key UNIQUE (email)`,
+					`ALTER TABLE IF EXISTS users ADD PRIMARY KEY (id)`,
+					`CREATE TABLE IF NOT EXISTS groups ( 
+					 id          UUID NOT NULL,
+					 parent_id   UUID, 
+					 owner_id    UUID,
+					 name        VARCHAR(254) UNIQUE NOT NULL,
+					 description VARCHAR(1024),
+					 metadata    JSONB,
+					 PRIMARY KEY (id),
+					 FOREIGN KEY (parent_id) REFERENCES groups (id)  ON DELETE CASCADE ON UPDATE CASCADE,
+					 FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
+				)`,
+					`CREATE TABLE IF NOT EXISTS group_relations (
+					 user_id UUID NOT NULL,
+					 group_id UUID NOT NULL,
+					 FOREIGN KEY (user_id)  REFERENCES users  (id) ON DELETE CASCADE ON UPDATE CASCADE,
+					 FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE ON UPDATE CASCADE,
+					 PRIMARY KEY (user_id, group_id)
+				)`,
+					`ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS owner_id UUID`,
+					`ALTER TABLE IF EXISTS users ADD FOREIGN KEY (owner_id) REFERENCES groups(id)`,
 				},
 			},
 		},

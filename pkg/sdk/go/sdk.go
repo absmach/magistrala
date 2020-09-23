@@ -69,6 +69,9 @@ var (
 
 	// ErrFailedCertUpdate failed to update certs in bootstrap config
 	ErrFailedCertUpdate = errors.New("failed to update certs in bootstrap config")
+
+	// ErrFailedUserAdd failed to add user to a group.
+	ErrFailedUserAdd = errors.New("failed to add user to group")
 )
 
 // ContentType represents all possible content types.
@@ -80,8 +83,18 @@ var _ SDK = (*mfSDK)(nil)
 type User struct {
 	ID       string                 `json:"id,omitempty"`
 	Email    string                 `json:"email,omitempty"`
+	Groups   []string               `json:"groups,omitempty"`
 	Password string                 `json:"password,omitempty"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
+}
+
+// Group represents mainflux users group.
+type Group struct {
+	ID          string                 `json:"id,omitempty"`
+	Name        string                 `json:"name,omitempty"`
+	Description string                 `json:"description,omitempty"`
+	ParentID    string                 `json:"parent_id,omitempty"`
+	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
 // Thing represents mainflux thing.
@@ -102,7 +115,7 @@ type Channel struct {
 // SDK contains Mainflux API.
 type SDK interface {
 	// CreateUser registers mainflux user.
-	CreateUser(user User) error
+	CreateUser(user User) (string, error)
 
 	// User returns user object.
 	User(token string) (User, error)
@@ -137,6 +150,33 @@ type SDK interface {
 
 	// DeleteThing removes existing thing.
 	DeleteThing(id, token string) error
+
+	// CreateGroup creates new group and returns its id.
+	CreateGroup(group Group, token string) (string, error)
+
+	// DeleteGroup deletes users group.
+	DeleteGroup(id, token string) error
+
+	// Groups returns page of users groups.
+	Groups(token string, offset, limit uint64, name string) (GroupsPage, error)
+
+	// Group returns users group object by id.
+	Group(id, token string) (Group, error)
+
+	// Assign assigns user to a group.
+	Assign(userID, groupID, token string) error
+
+	// Unassign removes user from a group.
+	Unassign(userID, groupID, token string) error
+
+	// Members lists member users of a group.
+	Members(groupID, token string, offset, limit uint64) (UsersPage, error)
+
+	// Memberships lists groups for user.
+	Memberships(userID, token string, offset, limit uint64) (GroupsPage, error)
+
+	// UpdateGroup updates existing group.
+	UpdateGroup(group Group, token string) error
 
 	// Connect bulk connects things to channels specified by id.
 	Connect(conns ConnectionIDs, token string) error
@@ -216,6 +256,7 @@ type mfSDK struct {
 	certsURL          string
 	readerPrefix      string
 	usersPrefix       string
+	groupsPrefix      string
 	thingsPrefix      string
 	certsPrefix       string
 	channelsPrefix    string
@@ -233,6 +274,7 @@ type Config struct {
 	CertsURL          string
 	ReaderPrefix      string
 	UsersPrefix       string
+	GroupsPrefix      string
 	ThingsPrefix      string
 	HTTPAdapterPrefix string
 	BootstrapPrefix   string
@@ -249,6 +291,7 @@ func NewSDK(conf Config) SDK {
 		certsURL:          conf.CertsURL,
 		readerPrefix:      conf.ReaderPrefix,
 		usersPrefix:       conf.UsersPrefix,
+		groupsPrefix:      conf.GroupsPrefix,
 		thingsPrefix:      conf.ThingsPrefix,
 		httpAdapterPrefix: conf.HTTPAdapterPrefix,
 		bootstrapPrefix:   conf.BootstrapPrefix,

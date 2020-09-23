@@ -13,15 +13,19 @@ import (
 func registrationEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(userReq)
-
 		if err := req.validate(); err != nil {
-			return nil, err
+			return createUserRes{}, err
 		}
-
-		if err := svc.Register(ctx, req.user); err != nil {
-			return tokenRes{}, err
+		uid, err := svc.Register(ctx, req.user)
+		if err != nil {
+			return createUserRes{}, err
 		}
-		return tokenRes{}, nil
+		ucr := createUserRes{
+			ID:      uid,
+			created: true,
+		}
+		logger.Info("User successfully registered")
+		return ucr, nil
 	}
 }
 
@@ -41,14 +45,13 @@ func passwordResetRequestEndpoint(svc users.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-
 		res := passwChangeRes{}
 		email := req.Email
-
 		if err := svc.GenerateResetToken(ctx, email, req.Host); err != nil {
 			return nil, err
 		}
 		res.Msg = MailSent
+		logger.Info("User made a password reset request")
 		return res, nil
 	}
 }
@@ -63,7 +66,6 @@ func passwordResetEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, err
 		}
 		res := passwChangeRes{}
-
 		if err := svc.ResetPassword(ctx, req.Token, req.Password); err != nil {
 			return nil, err
 		}
@@ -75,16 +77,14 @@ func passwordResetEndpoint(svc users.Service) endpoint.Endpoint {
 func viewUserEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(viewUserReq)
-
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
-		u, err := svc.ViewUser(ctx, req.token)
+		u, err := svc.User(ctx, req.token)
 		if err != nil {
 			return nil, err
 		}
-
 		return viewUserRes{
 			ID:       u.ID,
 			Email:    u.Email,
@@ -96,11 +96,9 @@ func viewUserEndpoint(svc users.Service) endpoint.Endpoint {
 func updateUserEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateUserReq)
-
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-
 		user := users.User{
 			Metadata: req.Metadata,
 		}
@@ -108,7 +106,6 @@ func updateUserEndpoint(svc users.Service) endpoint.Endpoint {
 		if err != nil {
 			return nil, err
 		}
-
 		return updateUserRes{}, nil
 	}
 }
@@ -120,11 +117,9 @@ func passwordChangeEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, err
 		}
 		res := passwChangeRes{}
-
 		if err := svc.ChangePassword(ctx, req.Token, req.Password, req.OldPassword); err != nil {
 			return nil, err
 		}
-
 		return res, nil
 	}
 }
@@ -132,16 +127,209 @@ func passwordChangeEndpoint(svc users.Service) endpoint.Endpoint {
 func loginEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(userReq)
-
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-
 		token, err := svc.Login(ctx, req.user)
 		if err != nil {
 			return nil, err
 		}
-
+		logger.Info("User logged in")
 		return tokenRes{token}, nil
 	}
+}
+
+func createGroupEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(createGroupReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+		group := users.Group{
+			Name:        req.Name,
+			ParentID:    req.ParentID,
+			Description: req.Description,
+			Metadata:    req.Metadata,
+		}
+		saved, err := svc.CreateGroup(ctx, req.token, group)
+		if err != nil {
+			return nil, err
+		}
+		res := createGroupRes{
+			ID:          saved.ID,
+			Name:        saved.Name,
+			Description: saved.Description,
+			Metadata:    saved.Metadata,
+			ParentID:    saved.ParentID,
+			created:     true,
+		}
+		logger.Info("Group: " + res.Name + " is created")
+		return res, nil
+	}
+}
+
+func assignUserToGroup(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(userGroupReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+		if err := svc.Assign(ctx, req.token, req.userID, req.groupID); err != nil {
+			return nil, err
+		}
+		return assignUserToGroupRes{}, nil
+	}
+}
+
+func removeUserFromGroup(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(userGroupReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+		if err := svc.Unassign(ctx, req.token, req.userID, req.groupID); err != nil {
+			return nil, err
+		}
+		return removeUserFromGroupRes{}, nil
+	}
+}
+
+func listUsersForGroupEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(listUserGroupReq)
+		if err := req.validate(); err != nil {
+			return users.UserPage{}, err
+		}
+		up, err := svc.Members(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
+		if err != nil {
+			return users.UserPage{}, err
+		}
+		return buildUsersResponse(up), nil
+	}
+}
+
+func listUserGroupsEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(listUserGroupReq)
+		if err := req.validate(); err != nil {
+			return users.UserPage{}, err
+		}
+		gp, err := svc.Memberships(ctx, req.token, req.userID, req.offset, req.limit, req.metadata)
+		if err != nil {
+			return groupPageRes{}, err
+		}
+		return buildGroupsResponse(gp), nil
+	}
+}
+
+func updateGroupEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(updateGroupReq)
+		if err := req.validate(); err != nil {
+			return createGroupRes{}, err
+		}
+		group := users.Group{
+			Name:        req.Name,
+			Description: req.Description,
+			Metadata:    req.Metadata,
+		}
+		if err := svc.UpdateGroup(ctx, req.token, group); err != nil {
+			return createGroupRes{}, err
+		}
+		res := createGroupRes{
+			Name:        group.Name,
+			Description: group.Description,
+			Metadata:    group.Metadata,
+			created:     false,
+		}
+		return res, nil
+	}
+}
+
+func viewGroupEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(groupReq)
+		if err := req.validate(); err != nil {
+			return viewGroupRes{}, err
+		}
+		group, err := svc.Group(ctx, req.token, req.groupID)
+		if err != nil {
+			return viewGroupRes{}, err
+		}
+		res := viewGroupRes{
+			Name:        group.Name,
+			Description: group.Description,
+			Metadata:    group.Metadata,
+		}
+		return res, nil
+	}
+}
+
+func listGroupsEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(listUserGroupReq)
+		if err := req.validate(); err != nil {
+			return groupPageRes{}, err
+		}
+		gp, err := svc.Groups(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
+		if err != nil {
+			return groupPageRes{}, err
+		}
+		return buildGroupsResponse(gp), nil
+	}
+}
+
+func deleteGroupEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(groupReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+		if err := svc.RemoveGroup(ctx, req.token, req.groupID); err != nil {
+			return nil, err
+		}
+		return groupDeleteRes{}, nil
+	}
+}
+
+func buildGroupsResponse(gp users.GroupPage) groupPageRes {
+	res := groupPageRes{
+		pageRes: pageRes{
+			Total:  gp.Total,
+			Offset: gp.Offset,
+			Limit:  gp.Limit,
+		},
+		Groups: []viewGroupRes{},
+	}
+	for _, group := range gp.Groups {
+		view := viewGroupRes{
+			ID:          group.ID,
+			ParentID:    group.ParentID,
+			Name:        group.Name,
+			Description: group.Description,
+			Metadata:    group.Metadata,
+		}
+		res.Groups = append(res.Groups, view)
+	}
+	return res
+}
+
+func buildUsersResponse(up users.UserPage) userPageRes {
+	res := userPageRes{
+		pageRes: pageRes{
+			Total:  up.Total,
+			Offset: up.Offset,
+			Limit:  up.Limit,
+		},
+		Users: []viewUserRes{},
+	}
+	for _, user := range up.Users {
+		view := viewUserRes{
+			ID:       user.ID,
+			Email:    user.Email,
+			Metadata: user.Metadata,
+		}
+		res.Users = append(res.Users, view)
+	}
+	return res
 }

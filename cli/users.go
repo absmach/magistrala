@@ -25,12 +25,13 @@ var cmdUsers = []cobra.Command{
 				Email:    args[0],
 				Password: args[1],
 			}
-			if err := sdk.CreateUser(user); err != nil {
+			id, err := sdk.CreateUser(user)
+			if err != nil {
 				logError(err)
 				return
 			}
 
-			logOK()
+			logCreated(id)
 		},
 	},
 	cobra.Command{

@@ -202,3 +202,41 @@ mainflux-cli bootstrap remove <thing_id> <user_auth_token>
 ```bash
 mainflux-cli bootstrap bootstrap <external_id> <external_key>
 ```
+
+### Groups
+#### Create new group
+```bash
+mainflux-cli groups create '{"name":"<group_name>","parent_id":"<parent_group_id>","description":"<description>","metadata":{"key":"value",...}}' <user_auth_token>
+```
+#### Delete group
+```bash
+mainflux-cli groups delete <group_id> <user_auth_token>
+```
+#### Get group with id
+```bash
+mainflux-cli groups get <group_id> <user_auth_token>
+```
+#### List all groups
+```bash
+mainflux-cli groups get all <user_auth_token>
+```
+#### List children groups for some group
+```bash
+mainflux-cli groups get children <parent_group_id> <user_auth_token>
+```
+#### Assign user to a group
+```bash
+mainflux-cli groups assign <user_id> <group_id> <user_auth_token>
+```
+#### Unassign user from group
+```bash
+mainflux-cli groups unassign <user_id> <group_id> <user_auth_token>
+```
+#### List users for a group
+```bash
+mainflux-cli groups members <group_id> <user_auth_token>
+```
+#### List groups that user belongs to
+```bash
+mainflux-cli groups membership <user_id> <user_auth_token>
+```

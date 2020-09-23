@@ -65,6 +65,7 @@ func TestCreateThing(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
+		GroupsPrefix:      "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,
@@ -125,6 +126,7 @@ func TestCreateThings(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
+		GroupsPrefix:      "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,
@@ -192,6 +194,7 @@ func TestThing(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
+		GroupsPrefix:      "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,
@@ -248,6 +251,7 @@ func TestThings(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
+		GroupsPrefix:      "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,
@@ -344,6 +348,7 @@ func TestThingsByChannel(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
+		GroupsPrefix:      "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,
@@ -490,6 +495,7 @@ func TestUpdateThing(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
+		GroupsPrefix:      "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,
@@ -572,6 +578,7 @@ func TestDeleteThing(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
+		GroupsPrefix:      "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,
@@ -643,6 +650,7 @@ func TestConnectThing(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
+		GroupsPrefix:      "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,
@@ -747,6 +755,7 @@ func TestConnect(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
+		GroupsPrefix:      "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,
@@ -852,6 +861,7 @@ func TestDisconnectThing(t *testing.T) {
 	sdkConf := sdk.Config{
 		BaseURL:           ts.URL,
 		UsersPrefix:       "",
+		GroupsPrefix:      "",
 		ThingsPrefix:      "",
 		HTTPAdapterPrefix: "",
 		MsgContentType:    contentType,

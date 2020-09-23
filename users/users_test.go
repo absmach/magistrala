@@ -16,7 +16,6 @@ import (
 const (
 	email    = "user@example.com"
 	password = "password"
-	metadata = `{"role":"manager"}`
 
 	maxLocalLen  = 64
 	maxDomainLen = 255

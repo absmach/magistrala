@@ -7,11 +7,10 @@ import (
 	"github.com/mainflux/mainflux/users"
 )
 
-const minPassLen = 8
-
-type apiReq interface {
-	validate() error
-}
+const (
+	minPassLen  = 8
+	maxNameSize = 1024
+)
 
 type userReq struct {
 	user users.User
@@ -90,6 +89,96 @@ func (req passwChangeReq) validate() error {
 	}
 	if req.OldPassword == "" {
 		return users.ErrUnauthorizedAccess
+	}
+	return nil
+}
+
+type createGroupReq struct {
+	token       string
+	Name        string                 `json:"name,omitempty"`
+	ParentID    string                 `json:"parent_id,omitempty"`
+	Description string                 `json:"description,omitempty"`
+	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+}
+
+func (req createGroupReq) validate() error {
+	if req.token == "" {
+		return users.ErrUnauthorizedAccess
+	}
+	if len(req.Name) > maxNameSize || req.Name == "" {
+		return users.ErrMalformedEntity
+	}
+	return nil
+}
+
+type updateGroupReq struct {
+	token       string
+	Name        string                 `json:"name,omitempty"`
+	Description string                 `json:"description,omitempty"`
+	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+}
+
+func (req updateGroupReq) validate() error {
+	if req.token == "" {
+		return users.ErrUnauthorizedAccess
+	}
+	if req.Name == "" {
+		return users.ErrMalformedEntity
+	}
+	if len(req.Name) > maxNameSize {
+		return users.ErrMalformedEntity
+	}
+	return nil
+}
+
+type listUserGroupReq struct {
+	token    string
+	offset   uint64
+	limit    uint64
+	metadata users.Metadata
+	name     string
+	groupID  string
+	userID   string
+}
+
+func (req listUserGroupReq) validate() error {
+	if req.token == "" {
+		return users.ErrUnauthorizedAccess
+	}
+	return nil
+}
+
+type userGroupReq struct {
+	token   string
+	groupID string
+	userID  string
+}
+
+func (req userGroupReq) validate() error {
+	if req.token == "" {
+		return users.ErrUnauthorizedAccess
+	}
+	if req.groupID == "" {
+		return users.ErrMalformedEntity
+	}
+	if req.userID == "" {
+		return users.ErrMalformedEntity
+	}
+	return nil
+}
+
+type groupReq struct {
+	token   string
+	groupID string
+	name    string
+}
+
+func (req groupReq) validate() error {
+	if req.token == "" {
+		return users.ErrUnauthorizedAccess
+	}
+	if req.groupID == "" && req.name == "" {
+		return users.ErrMalformedEntity
 	}
 	return nil
 }

@@ -37,7 +37,14 @@ func MakeHandler(svc provision.Service) http.Handler {
 
 	r.Post("/mapping", kithttp.NewServer(
 		doProvision(svc),
-		decodeThingCreation,
+		decodeProvisionRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	r.Get("/mapping", kithttp.NewServer(
+		getMapping(svc),
+		decodeMappingRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -66,15 +73,25 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 	return json.NewEncoder(w).Encode(response)
 }
 
-func decodeThingCreation(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeProvisionRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if r.Header.Get("Content-Type") != contentType {
 		return nil, errUnsupportedContentType
 	}
 
-	req := addThingReq{token: r.Header.Get("Authorization")}
+	req := provisionReq{token: r.Header.Get("Authorization")}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+func decodeMappingRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if r.Header.Get("Content-Type") != contentType {
+		return nil, errUnsupportedContentType
+	}
+
+	req := mappingReq{token: r.Header.Get("Authorization")}
 
 	return req, nil
 }

@@ -21,17 +21,17 @@ func TestValidate(t *testing.T) {
 			err:         nil,
 		},
 		"external id for device empty": {
-			err: errUnauthorized,
+			err: errMalformedEntity,
 		},
 	}
 
 	for desc, tc := range cases {
-		req := addThingReq{
+		req := provisionReq{
 			ExternalID:  tc.ExternalID,
 			ExternalKey: tc.ExternalKey,
 		}
 
 		err := req.validate()
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected `%v` got `%v`", desc, err, tc.err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected `%v` got `%v`", desc, tc.err, err))
 	}
 }

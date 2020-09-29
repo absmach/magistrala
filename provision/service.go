@@ -20,6 +20,7 @@ const (
 )
 
 var (
+	ErrUnauthorized             = errors.New("unauthorized access")
 	ErrFailedToCreateToken      = errors.New("failed to create access token")
 	ErrEmptyThingsList          = errors.New("things list in configuration empty")
 	ErrEmptyChannelsList        = errors.New("channels list in configuration is empty")
@@ -46,6 +47,11 @@ type Service interface {
 	// - create Bootstrap configuration
 	// - whitelist Thing in Bootstrap configuration == connect Thing to Channels
 	Provision(token, name, externalID, externalKey string) (Result, error)
+
+	// Mapping returns current configuration used for provision
+	// useful for using in ui to create configuration that matches
+	// one created with Provision method.
+	Mapping(token string) (map[string]interface{}, error)
 
 	// Certs creates certificate for things that communicate over mTLS
 	// A duration string is a possibly signed sequence of decimal numbers,
@@ -79,6 +85,14 @@ func New(cfg Config, sdk SDK.SDK, logger logger.Logger) Service {
 		conf:   cfg,
 		sdk:    sdk,
 	}
+}
+
+// Mapping retrieves current configuration
+func (ps *provisionService) Mapping(token string) (map[string]interface{}, error) {
+	if _, err := ps.sdk.User(token); err != nil {
+		return map[string]interface{}{}, errors.Wrap(ErrUnauthorized, err)
+	}
+	return ps.conf.Bootstrap.Content, nil
 }
 
 // Provision is provision method for creating setup according to
@@ -118,6 +132,7 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 			res.Error = err.Error()
 			return res, errors.Wrap(ErrFailedThingCreation, err)
 		}
+
 		// Get newly created thing (in order to get the key).
 		th, err = ps.sdk.Thing(thID, token)
 		if err != nil {

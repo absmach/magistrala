@@ -15,7 +15,7 @@ paths:
       summary: Adds new device to proxy
       description: Adds new device to proxy
       tags:
-        - Thing to proxy
+        - provision
       parameters:
       - $ref: "#/parameters/Authorization"
       - in: body
@@ -38,8 +38,35 @@ paths:
           description: Created
         400:
           description: Failed due to malformed JSON.
+        403:
+          description: Unauthorized.
         500:
           description: Unexpected server-side error ocurred.
+    get:
+      consumes:
+        - application/json
+      summary: Gets current mapping.
+      description: Gets current mapping. This can be used in UI
+        so that when bootstrap config is created from UI matches 
+        configuration created with provision service.
+      tags:
+        - provision
+      parameters:
+      - $ref: "#/parameters/Authorization"
+      responses:
+        200:
+          schema:
+            $ref: "#/definitions/Content"
+          description: retrieved
+        403:
+          description: Unauthorized.
+        500:
+          description: Unexpected server-side error ocurred.
+          
+definitions:
+  Content:
+    type: object
+    
 parameters:
   Authorization:
     name: Authorization

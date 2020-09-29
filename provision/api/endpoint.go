@@ -9,7 +9,7 @@ import (
 
 func doProvision(svc provision.Service) endpoint.Endpoint {
 	return func(_ context.Context, request interface{}) (interface{}, error) {
-		req := request.(addThingReq)
+		req := request.(provisionReq)
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
@@ -32,5 +32,15 @@ func doProvision(svc provision.Service) endpoint.Endpoint {
 
 		return provisionResponse, nil
 
+	}
+}
+
+func getMapping(svc provision.Service) endpoint.Endpoint {
+	return func(_ context.Context, request interface{}) (interface{}, error) {
+		req := request.(mappingReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+		return svc.Mapping(req.token)
 	}
 }

@@ -296,13 +296,12 @@ func proxyMQTT(cfg config, logger mflog.Logger, handler session.Handler, errs ch
 	target := fmt.Sprintf("%s:%s", cfg.mqttTargetHost, cfg.mqttTargetPort)
 	mp := mp.New(address, target, handler, logger)
 
-	errs <- mp.Proxy()
+	errs <- mp.Listen()
 }
 func proxyWS(cfg config, logger mflog.Logger, handler session.Handler, errs chan error) {
 	target := fmt.Sprintf("%s:%s", cfg.httpTargetHost, cfg.httpTargetPort)
 	wp := ws.New(target, cfg.httpTargetPath, "ws", handler, logger)
 	http.Handle("/mqtt", wp.Handler())
 
-	p := fmt.Sprintf(":%s", cfg.httpPort)
-	errs <- http.ListenAndServe(p, nil)
+	errs <- wp.Listen(cfg.httpPort)
 }

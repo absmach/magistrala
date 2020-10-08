@@ -1,6 +1,7 @@
 package mqtt
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net"
@@ -8,6 +9,11 @@ import (
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mproxy/pkg/session"
+	mptls "github.com/mainflux/mproxy/pkg/tls"
+)
+
+var (
+	errCreateListener = errors.New("failed creating TLS listener")
 )
 
 // Proxy is main MQTT proxy struct
@@ -51,18 +57,40 @@ func (p Proxy) handle(inbound net.Conn) {
 	}
 	defer p.close(outbound)
 
-	s := session.New(inbound, outbound, p.handler, p.logger)
+	clientCert, err := mptls.ClientCert(inbound)
+	if err != nil {
+		p.logger.Error("Failed to get client certificate: " + err.Error())
+		return
+	}
+
+	s := session.New(inbound, outbound, p.handler, p.logger, clientCert)
 
 	if err = s.Stream(); !errors.Contains(err, io.EOF) {
 		p.logger.Warn("Broken connection for client: " + s.Client.ID + " with error: " + err.Error())
 	}
 }
 
-// Proxy of the server, this will block.
-func (p Proxy) Proxy() error {
+// Listen of the server, this will block.
+func (p Proxy) Listen() error {
 	l, err := net.Listen("tcp", p.address)
 	if err != nil {
 		return err
+	}
+	defer l.Close()
+
+	// Acceptor loop
+	p.accept(l)
+
+	p.logger.Info("Server Exiting...")
+	return nil
+}
+
+// ListenTLS - version of Listen with TLS encryption
+func (p Proxy) ListenTLS(tlsCfg *tls.Config) error {
+
+	l, err := tls.Listen("tcp", p.address, tlsCfg)
+	if err != nil {
+		return errors.Wrap(errCreateListener, err)
 	}
 	defer l.Close()
 

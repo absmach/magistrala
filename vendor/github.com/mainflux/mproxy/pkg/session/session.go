@@ -1,6 +1,7 @@
 package session
 
 import (
+	"crypto/x509"
 	"net"
 
 	"github.com/eclipse/paho.mqtt.golang/packets"
@@ -14,8 +15,8 @@ const (
 )
 
 var (
-	errBroker = errors.New("error between mProxy and MQTT broker")
-	errClient = errors.New("error between mProxy and MQTT client")
+	errBroker = errors.New("failed proxying from MQTT client to MQTT broker")
+	errClient = errors.New("failed proxying from MQTT broker to MQTT client")
 )
 
 type direction int
@@ -30,12 +31,15 @@ type Session struct {
 }
 
 // New creates a new Session.
-func New(inbound, outbound net.Conn, handler Handler, logger logger.Logger) *Session {
+func New(inbound, outbound net.Conn, handler Handler, logger logger.Logger, cert x509.Certificate) *Session {
 	return &Session{
 		logger:   logger,
 		inbound:  inbound,
 		outbound: outbound,
 		handler:  handler,
+		Client: Client{
+			Cert: cert,
+		},
 	}
 }
 
@@ -88,11 +92,9 @@ func (s *Session) stream(dir direction, r, w net.Conn, errs chan error) {
 func (s *Session) authorize(pkt packets.ControlPacket) error {
 	switch p := pkt.(type) {
 	case *packets.ConnectPacket:
-		s.Client = Client{
-			ID:       p.ClientIdentifier,
-			Username: p.Username,
-			Password: p.Password,
-		}
+		s.Client.ID = p.ClientIdentifier
+		s.Client.Username = p.Username
+		s.Client.Password = p.Password
 		if err := s.handler.AuthConnect(&s.Client); err != nil {
 			return err
 		}

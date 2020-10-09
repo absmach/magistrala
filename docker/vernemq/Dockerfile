@@ -1,7 +1,7 @@
 # Builder
 FROM erlang:22-alpine AS builder
-RUN apk add --update git build-base bsd-compat-headers openssl-dev snappy-dev \
-    && git clone --depth 1 -b 1.10.2 https://github.com/vernemq/vernemq \
+RUN apk add --update git build-base bsd-compat-headers openssl-dev snappy-dev curl \
+    && git clone -b 1.11.0 https://github.com/vernemq/vernemq \
     && cd vernemq \
     && make -j 16 rel
 
@@ -20,7 +20,7 @@ RUN apk --no-cache --update --available upgrade && \
 ENV DOCKER_VERNEMQ_KUBERNETES_LABEL_SELECTOR="app=vernemq" \
     DOCKER_VERNEMQ_LOG__CONSOLE=console \
     PATH="/vernemq/bin:$PATH" \
-    VERNEMQ_VERSION="1.10.2"
+    VERNEMQ_VERSION="1.11.0"
 
 WORKDIR /vernemq
 

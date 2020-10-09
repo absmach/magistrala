@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-IP_ADDRESS=$(ip -4 addr show ${DOCKER_NET_INTERFACE:-eth0} | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | sed -e "s/^[[:space:]]*//" | head -n 1)
+NET_INTERFACE=$(route | grep '^default' | grep -o '[^ ]*$')
+NET_INTERFACE=${DOCKER_NET_INTERFACE:-${NET_INTERFACE}}
+IP_ADDRESS=$(ip -4 addr show ${NET_INTERFACE} | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | sed -e "s/^[[:space:]]*//" | head -n 1)
 IP_ADDRESS=${DOCKER_IP_ADDRESS:-${IP_ADDRESS}}
 
 # Ensure the Erlang node name is set correctly
@@ -101,12 +103,29 @@ $password
 EOF
     done
 
-    echo "erlang.distribution.port_range.minimum = 9100" >> /vernemq/etc/vernemq.conf
-    echo "erlang.distribution.port_range.maximum = 9109" >> /vernemq/etc/vernemq.conf
-    echo "listener.tcp.default = ${IP_ADDRESS}:1883" >> /vernemq/etc/vernemq.conf
-    echo "listener.ws.default = ${IP_ADDRESS}:8080" >> /vernemq/etc/vernemq.conf
-    echo "listener.vmq.clustering = ${IP_ADDRESS}:44053" >> /vernemq/etc/vernemq.conf
-    echo "listener.http.metrics = ${IP_ADDRESS}:8888" >> /vernemq/etc/vernemq.conf
+    if [ -z "$DOCKER_VERNEMQ_ERLANG__DISTRIBUTION__PORT_RANGE__MINIMUM" ]; then
+        echo "erlang.distribution.port_range.minimum = 9100" >> /vernemq/etc/vernemq.conf
+    fi
+
+    if [ -z "$DOCKER_VERNEMQ_ERLANG__DISTRIBUTION__PORT_RANGE__MAXIMUM" ]; then
+        echo "erlang.distribution.port_range.maximum = 9109" >> /vernemq/etc/vernemq.conf
+    fi
+
+    if [ -z "$DOCKER_VERNEMQ_LISTENER__TCP__DEFAULT" ]; then
+        echo "listener.tcp.default = ${IP_ADDRESS}:1883" >> /vernemq/etc/vernemq.conf
+    fi
+
+    if [ -z "$DOCKER_VERNEMQ_LISTENER__WS__DEFAULT" ]; then
+        echo "listener.ws.default = ${IP_ADDRESS}:8080" >> /vernemq/etc/vernemq.conf
+    fi
+
+    if [ -z "$DOCKER_VERNEMQ_LISTENER__VMQ__CLUSTERING" ]; then
+        echo "listener.vmq.clustering = ${IP_ADDRESS}:44053" >> /vernemq/etc/vernemq.conf
+    fi
+
+    if [ -z "$DOCKER_VERNEMQ_LISTENER__HTTP__METRICS" ]; then
+        echo "listener.http.metrics = ${IP_ADDRESS}:8888" >> /vernemq/etc/vernemq.conf
+    fi
 
     echo "########## End ##########" >> /vernemq/etc/vernemq.conf
 fi
@@ -132,7 +151,7 @@ sigterm_handler() {
     if [ $pid -ne 0 ]; then
         # this will stop the VerneMQ process, but first drain the node from all existing client sessions (-k)
         if [ -n "$VERNEMQ_KUBERNETES_HOSTNAME" ]; then
-            terminating_node_name=$VERNEMQ_KUBERNETES_HOSTNAME
+            terminating_node_name=VerneMQ@$VERNEMQ_KUBERNETES_HOSTNAME
         elif [ -n "$DOCKER_VERNEMQ_SWARM" ]; then
             terminating_node_name=VerneMQ@$(hostname -i)
         else

@@ -34,7 +34,7 @@ var (
 	errMalformedSubtopic = errors.New("malformed subtopic")
 )
 
-var channelPartRegExp = regexp.MustCompile(`^/channels/([\w\-]+)/messages(/[^?]*)?(\?.*)?$`)
+var channelPartRegExp = regexp.MustCompile(`^/ch/([\w\-]+)/msg(/[^?]*)?(\?.*)?$`)
 
 // MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler(svc adapter.Service, tracer opentracing.Tracer) http.Handler {
@@ -43,14 +43,14 @@ func MakeHandler(svc adapter.Service, tracer opentracing.Tracer) http.Handler {
 	}
 
 	r := bone.New()
-	r.Post("/channels/:id/messages", kithttp.NewServer(
+	r.Post("/ch/:id/msg", kithttp.NewServer(
 		kitot.TraceServer(tracer, "publish")(sendMessageEndpoint(svc)),
 		decodeRequest,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Post("/channels/:id/messages/*", kithttp.NewServer(
+	r.Post("/ch/:id/msg/*", kithttp.NewServer(
 		kitot.TraceServer(tracer, "publish")(sendMessageEndpoint(svc)),
 		decodeRequest,
 		encodeResponse,

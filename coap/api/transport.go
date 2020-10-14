@@ -31,7 +31,7 @@ const (
 	authQuery = "auth"
 )
 
-var channelPartRegExp = regexp.MustCompile(`^channels/([\w\-]+)/messages(/[^?]*)?(\?.*)?$`)
+var channelPartRegExp = regexp.MustCompile(`^ch/([\w\-]+)/msg(/[^?]*)?(\?.*)?$`)
 
 var errMalformedSubtopic = errors.New("malformed subtopic")
 

@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	channels = "channels"
-	messages = "messages"
+	channels = "ch"
+	messages = "msg"
 )
 
 // Forwarder specifies MQTT forwarder interface API.

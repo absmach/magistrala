@@ -11,12 +11,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 
 	"github.com/mainflux/mainflux"
-	log "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/users"
 	"github.com/mainflux/mainflux/users/api"
 	"github.com/mainflux/mainflux/users/bcrypt"
@@ -77,8 +75,7 @@ func newService() users.Service {
 }
 
 func newServer(svc users.Service) *httptest.Server {
-	logger, _ := log.New(os.Stdout, log.Info.String())
-	mux := api.MakeHandler(svc, mocktracer.New(), logger)
+	mux := api.MakeHandler(svc, mocktracer.New())
 	return httptest.NewServer(mux)
 }
 

@@ -24,7 +24,7 @@ func registrationEndpoint(svc users.Service) endpoint.Endpoint {
 			ID:      uid,
 			created: true,
 		}
-		logger.Info("User successfully registered")
+
 		return ucr, nil
 	}
 }
@@ -51,7 +51,7 @@ func passwordResetRequestEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, err
 		}
 		res.Msg = MailSent
-		logger.Info("User made a password reset request")
+
 		return res, nil
 	}
 }
@@ -134,7 +134,7 @@ func loginEndpoint(svc users.Service) endpoint.Endpoint {
 		if err != nil {
 			return nil, err
 		}
-		logger.Info("User logged in")
+
 		return tokenRes{token}, nil
 	}
 }
@@ -163,7 +163,7 @@ func createGroupEndpoint(svc users.Service) endpoint.Endpoint {
 			ParentID:    saved.ParentID,
 			created:     true,
 		}
-		logger.Info("Group: " + res.Name + " is created")
+
 		return res, nil
 	}
 }

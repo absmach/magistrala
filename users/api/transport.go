@@ -17,7 +17,6 @@ import (
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
-	log "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/users"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -43,13 +42,10 @@ var (
 
 	// ErrFailedDecode indicates failed to decode request body
 	ErrFailedDecode = errors.New("failed to decode request body")
-	logger          log.Logger
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) http.Handler {
-	logger = l
-
+func MakeHandler(svc users.Service, tracer opentracing.Tracer) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
 	}

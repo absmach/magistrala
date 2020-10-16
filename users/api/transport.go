@@ -79,7 +79,7 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 
 	mux.Get("/users/:userID/groups", kithttp.NewServer(
 		kitot.TraceServer(tracer, "memberships")(listUserGroupsEndpoint(svc)),
-		decodeListUserGroupRequest,
+		decodeListUserGroupsRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -114,7 +114,7 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 
 	mux.Get("/groups", kithttp.NewServer(
 		kitot.TraceServer(tracer, "groups")(listGroupsEndpoint(svc)),
-		decodeListUserGroupRequest,
+		decodeListUserGroupsRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -142,7 +142,7 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 
 	mux.Get("/groups/:groupID/users", kithttp.NewServer(
 		kitot.TraceServer(tracer, "members")(listUsersForGroupEndpoint(svc)),
-		decodeListUserGroupRequest,
+		decodeListUserGroupsRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -156,7 +156,7 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, l log.Logger) htt
 
 	mux.Get("/groups/:groupID/groups", kithttp.NewServer(
 		kitot.TraceServer(tracer, "list_children_groups")(listGroupsEndpoint(svc)),
-		decodeListUserGroupRequest,
+		decodeListUserGroupsRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -284,10 +284,7 @@ func decodeGroupRequest(_ context.Context, r *http.Request) (interface{}, error)
 	return req, nil
 }
 
-func decodeListUserGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, ErrUnsupportedContentType
-	}
+func decodeListUserGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	o, err := readUintQuery(r, offsetKey, defOffset)
 	if err != nil {
 		return nil, err

@@ -148,8 +148,8 @@ func (gr groupRepository) RetrieveByName(ctx context.Context, name string) (user
 	return group, nil
 }
 
-func (gr groupRepository) RetrieveAllWithAncestors(ctx context.Context, groupID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
-	_, mq, err := getGroupsMetadataQuery(gm)
+func (gr groupRepository) RetrieveAllWithAncestors(ctx context.Context, groupID string, offset, limit uint64, um users.Metadata) (users.GroupPage, error) {
+	_, mq, err := getGroupsMetadataQuery(um)
 	if err != nil {
 		return users.GroupPage{}, errors.Wrap(errRetrieveDB, err)
 	}
@@ -166,17 +166,17 @@ func (gr groupRepository) RetrieveAllWithAncestors(ctx context.Context, groupID 
 			`WITH RECURSIVE subordinates AS (
 				SELECT id, owner_id, parent_id, name, description, metadata
 				FROM groups
-				WHERE id = :id 
+				WHERE id = :id
 				UNION
 					SELECT groups.id, groups.owner_id, groups.parent_id, groups.name, groups.description, groups.metadata
-					FROM groups 
+					FROM groups
 					INNER JOIN subordinates s ON s.id = groups.parent_id %s
 			)`, mq)
 		q = fmt.Sprintf("%s SELECT * FROM subordinates ORDER BY id LIMIT :limit OFFSET :offset", sq)
 		cq = fmt.Sprintf("%s SELECT COUNT(*) FROM subordinates", sq)
 	}
 
-	dbPage, err := toDBGroupPage("", groupID, offset, limit, gm)
+	dbPage, err := toDBGroupPage("", groupID, offset, limit, um)
 	if err != nil {
 		return users.GroupPage{}, errors.Wrap(errSelectDb, err)
 	}
@@ -217,8 +217,8 @@ func (gr groupRepository) RetrieveAllWithAncestors(ctx context.Context, groupID 
 	return page, nil
 }
 
-func (gr groupRepository) Memberships(ctx context.Context, userID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
-	m, mq, err := getGroupsMetadataQuery(gm)
+func (gr groupRepository) RetrieveMemberships(ctx context.Context, userID string, offset, limit uint64, um users.Metadata) (users.GroupPage, error) {
+	m, mq, err := getGroupsMetadataQuery(um)
 	if err != nil {
 		return users.GroupPage{}, errors.Wrap(errRetrieveDB, err)
 	}
@@ -226,9 +226,9 @@ func (gr groupRepository) Memberships(ctx context.Context, userID string, offset
 	if mq != "" {
 		mq = fmt.Sprintf("AND %s", mq)
 	}
-	q := fmt.Sprintf(`SELECT g.id, g.owner_id, g.parent_id, g.name, g.description, g.metadata 
+	q := fmt.Sprintf(`SELECT g.id, g.owner_id, g.parent_id, g.name, g.description, g.metadata
 					  FROM group_relations gr, groups g
-					  WHERE gr.group_id = g.id and gr.user_id = :userID 
+					  WHERE gr.group_id = g.id and gr.user_id = :userID
 		  			  %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq)
 
 	params := map[string]interface{}{
@@ -257,7 +257,7 @@ func (gr groupRepository) Memberships(ctx context.Context, userID string, offset
 		items = append(items, gr)
 	}
 
-	cq := fmt.Sprintf(`SELECT COUNT(*) 
+	cq := fmt.Sprintf(`SELECT COUNT(*)
 					   FROM group_relations gr, groups g
 					   WHERE gr.group_id = g.id and gr.user_id = :userID %s;`, mq)
 
@@ -372,7 +372,7 @@ func toDBGroup(g users.Group) (dbGroup, error) {
 	}, nil
 }
 
-func toDBGroupPage(ownerID, groupID string, offset, limit uint64, metadata users.Metadata) (dbGroupPage, error) {
+func toDBGroupPage(ownerID, groupID string, offset, limit uint64, um users.Metadata) (dbGroupPage, error) {
 	owner, err := toUUID(ownerID)
 	if err != nil {
 		return dbGroupPage{}, err
@@ -386,7 +386,7 @@ func toDBGroupPage(ownerID, groupID string, offset, limit uint64, metadata users
 	}
 	return dbGroupPage{
 		ID:       group,
-		Metadata: dbMetadata(metadata),
+		Metadata: dbMetadata(um),
 		OwnerID:  owner,
 		Offset:   offset,
 		Limit:    limit,
@@ -424,13 +424,13 @@ func toDBGroupRelation(userID, groupID string) (dbGroupRelation, error) {
 	}, nil
 }
 
-func getGroupsMetadataQuery(m users.Metadata) ([]byte, string, error) {
+func getGroupsMetadataQuery(um users.Metadata) ([]byte, string, error) {
 	mq := ""
 	mb := []byte("{}")
-	if len(m) > 0 {
+	if len(um) > 0 {
 		mq = `groups.metadata @> :metadata`
 
-		b, err := json.Marshal(m)
+		b, err := json.Marshal(um)
 		if err != nil {
 			return nil, "", err
 		}

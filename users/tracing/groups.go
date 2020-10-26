@@ -77,20 +77,20 @@ func (grm groupRepositoryMiddleware) RetrieveByName(ctx context.Context, name st
 	return grm.repo.RetrieveByName(ctx, name)
 }
 
-func (grm groupRepositoryMiddleware) RetrieveAllWithAncestors(ctx context.Context, groupID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
+func (grm groupRepositoryMiddleware) RetrieveAllWithAncestors(ctx context.Context, groupID string, offset, limit uint64, um users.Metadata) (users.GroupPage, error) {
 	span := createSpan(ctx, grm.tracer, retrieveAll)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
-	return grm.repo.RetrieveAllWithAncestors(ctx, groupID, offset, limit, gm)
+	return grm.repo.RetrieveAllWithAncestors(ctx, groupID, offset, limit, um)
 }
 
-func (grm groupRepositoryMiddleware) Memberships(ctx context.Context, userID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
+func (grm groupRepositoryMiddleware) RetrieveMemberships(ctx context.Context, userID string, offset, limit uint64, um users.Metadata) (users.GroupPage, error) {
 	span := createSpan(ctx, grm.tracer, memberships)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
-	return grm.repo.Memberships(ctx, userID, offset, limit, gm)
+	return grm.repo.RetrieveMemberships(ctx, userID, offset, limit, um)
 }
 
 func (grm groupRepositoryMiddleware) Unassign(ctx context.Context, userID, groupID string) error {

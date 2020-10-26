@@ -72,11 +72,14 @@ type UserRepository interface {
 	// RetrieveByID retrieves user by its unique identifier ID.
 	RetrieveByID(ctx context.Context, id string) (User, error)
 
+	// RetrieveAll retrieves all users
+	RetrieveAll(ctx context.Context, offset, limit uint64, email string, m Metadata) (UserPage, error)
+
 	// UpdatePassword updates password for user with given email
 	UpdatePassword(ctx context.Context, email, password string) error
 
-	// Members retrieves all users that belong to a group
-	Members(ctx context.Context, groupID string, offset, limit uint64, um Metadata) (UserPage, error)
+	// RetrieveMembers retrieves all users that belong to a group
+	RetrieveMembers(ctx context.Context, groupID string, offset, limit uint64, m Metadata) (UserPage, error)
 }
 
 func isEmail(email string) bool {

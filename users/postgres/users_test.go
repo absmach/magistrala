@@ -20,7 +20,7 @@ func TestUserSave(t *testing.T) {
 	email := "user-save@example.com"
 
 	uid, err := uuid.New().ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := []struct {
 		desc string
@@ -63,7 +63,7 @@ func TestSingleUserRetrieval(t *testing.T) {
 	email := "user-retrieval@example.com"
 
 	uid, err := uuid.New().ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	user := users.User{
 		ID:       uid,
@@ -88,7 +88,7 @@ func TestSingleUserRetrieval(t *testing.T) {
 	}
 }
 
-func TestMembers(t *testing.T) {
+func TestRetrieveMembers(t *testing.T) {
 	dbMiddleware := postgres.NewDatabase(db)
 	groupRepo := postgres.NewGroupRepo(dbMiddleware)
 	userRepo := postgres.NewUserRepo(dbMiddleware)
@@ -96,8 +96,8 @@ func TestMembers(t *testing.T) {
 	var usrs []users.User
 	for i := uint64(0); i < nUsers; i++ {
 		uid, err := uuid.New().ID()
-		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-		email := fmt.Sprintf("retrieve-all-for-group%d@example.com", i)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		email := fmt.Sprintf("TestRetrieveMembers%d@example.com", i)
 		user := users.User{
 			ID:       uid,
 			Email:    email,
@@ -141,10 +141,60 @@ func TestMembers(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		page, err := userRepo.Members(context.Background(), tc.group, tc.offset, tc.limit, tc.metadata)
+		page, err := userRepo.RetrieveMembers(context.Background(), tc.group, tc.offset, tc.limit, tc.metadata)
 		size := uint64(len(usrs))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.size, size))
 		assert.Equal(t, tc.total, page.Total, fmt.Sprintf("%s: expected total %d got %d\n", desc, tc.total, page.Total))
+		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
+	}
+}
+
+func TestRetrieveAll(t *testing.T) {
+	dbMiddleware := postgres.NewDatabase(db)
+	userRepo := postgres.NewUserRepo(dbMiddleware)
+	var nUsers = uint64(10)
+
+	for i := uint64(0); i < nUsers; i++ {
+		uid, err := uuid.New().ID()
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		email := fmt.Sprintf("TestRetrieveAll%d@example.com", i)
+		user := users.User{
+			ID:       uid,
+			Email:    email,
+			Password: "pass",
+		}
+		_, err = userRepo.Save(context.Background(), user)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	}
+
+	cases := map[string]struct {
+		email    string
+		offset   uint64
+		limit    uint64
+		size     uint64
+		total    uint64
+		metadata users.Metadata
+	}{
+		"retrieve all users filtered by email": {
+			email:  "All",
+			offset: 0,
+			limit:  nUsers,
+			size:   nUsers,
+			total:  nUsers,
+		},
+		"retrieve all users by email with limit and offset": {
+			email:  "All",
+			offset: 2,
+			limit:  5,
+			size:   5,
+			total:  nUsers,
+		},
+	}
+
+	for desc, tc := range cases {
+		page, err := userRepo.RetrieveAll(context.Background(), tc.offset, tc.limit, tc.email, tc.metadata)
+		size := uint64(len(page.Users))
+		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.size, size))
 		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
 	}
 }

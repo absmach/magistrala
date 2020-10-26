@@ -33,7 +33,7 @@ type userRepository struct {
 	db Database
 }
 
-// New instantiates a PostgreSQL implementation of user
+// NewUserRepo instantiates a PostgreSQL implementation of user
 // repository.
 func NewUserRepo(db Database) users.UserRepository {
 	return &userRepository{
@@ -124,7 +124,7 @@ func (ur userRepository) RetrieveByEmail(ctx context.Context, email string) (use
 }
 
 func (ur userRepository) RetrieveByID(ctx context.Context, id string) (users.User, error) {
-	q := `SELECT id, password, metadata FROM users WHERE id = $1`
+	q := `SELECT email, password, metadata FROM users WHERE id = $1`
 
 	dbu := dbUser{
 		ID: id,
@@ -139,6 +139,77 @@ func (ur userRepository) RetrieveByID(ctx context.Context, id string) (users.Use
 	}
 
 	return toUser(dbu)
+}
+
+func (ur userRepository) RetrieveAll(ctx context.Context, offset, limit uint64, email string, um users.Metadata) (users.UserPage, error) {
+	eq, ep, err := createEmailQuery("", email)
+	if err != nil {
+		return users.UserPage{}, errors.Wrap(errRetrieveDB, err)
+	}
+
+	mq, mp, err := createMetadataQuery("", um)
+	if err != nil {
+		return users.UserPage{}, errors.Wrap(errRetrieveDB, err)
+	}
+
+	emq := ""
+	if eq != "" && mq == "" {
+		emq = fmt.Sprintf("WHERE %s", eq)
+	}
+	if eq == "" && mq != "" {
+		emq = fmt.Sprintf("WHERE %s", mq)
+	}
+	if eq != "" && mq != "" {
+		emq = fmt.Sprintf("WHERE %s AND %s", eq, mq)
+	}
+
+	q := fmt.Sprintf(`SELECT id, email, metadata FROM users %s ORDER BY email LIMIT :limit OFFSET :offset;`, emq)
+
+	params := map[string]interface{}{
+		"limit":    limit,
+		"offset":   offset,
+		"email":    ep,
+		"metadata": mp,
+	}
+
+	rows, err := ur.db.NamedQueryContext(ctx, q, params)
+	if err != nil {
+		return users.UserPage{}, errors.Wrap(errSelectDb, err)
+	}
+	defer rows.Close()
+
+	var items []users.User
+	for rows.Next() {
+		dbusr := dbUser{}
+		if err := rows.StructScan(&dbusr); err != nil {
+			return users.UserPage{}, errors.Wrap(errSelectDb, err)
+		}
+
+		user, err := toUser(dbusr)
+		if err != nil {
+			return users.UserPage{}, err
+		}
+
+		items = append(items, user)
+	}
+
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM users %s;`, emq)
+
+	total, err := total(ctx, ur.db, cq, params)
+	if err != nil {
+		return users.UserPage{}, errors.Wrap(errSelectDb, err)
+	}
+
+	page := users.UserPage{
+		Users: items,
+		PageMetadata: users.PageMetadata{
+			Total:  total,
+			Offset: offset,
+			Limit:  limit,
+		},
+	}
+
+	return page, nil
 }
 
 func (ur userRepository) UpdatePassword(ctx context.Context, email, password string) error {
@@ -156,21 +227,25 @@ func (ur userRepository) UpdatePassword(ctx context.Context, email, password str
 	return nil
 }
 
-func (ur userRepository) Members(ctx context.Context, groupID string, offset, limit uint64, gm users.Metadata) (users.UserPage, error) {
-	m, mq, err := getUsersMetadataQuery(gm)
+func (ur userRepository) RetrieveMembers(ctx context.Context, groupID string, offset, limit uint64, um users.Metadata) (users.UserPage, error) {
+	mq, mp, err := createMetadataQuery("users.", um)
 	if err != nil {
 		return users.UserPage{}, errors.Wrap(errRetrieveDB, err)
 	}
 
+	if mq != "" {
+		mq = fmt.Sprintf(" AND %s", mq)
+	}
+
 	q := fmt.Sprintf(`SELECT u.id, u.email, u.metadata FROM users u, group_relations g
-                      WHERE u.id = g.user_id AND g.group_id = :group 
+                      WHERE u.id = g.user_id AND g.group_id = :group
                       %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq)
 
 	params := map[string]interface{}{
 		"group":    groupID,
 		"limit":    limit,
 		"offset":   offset,
-		"metadata": m,
+		"metadata": mp,
 	}
 
 	rows, err := ur.db.NamedQueryContext(ctx, q, params)
@@ -249,11 +324,12 @@ func (m dbMetadata) Value() (driver.Value, error) {
 }
 
 type dbUser struct {
-	ID       string `db:"id"`
-	Owner    string `db:"owner"`
-	Email    string `db:"email"`
-	Password string `db:"password"`
-	Metadata []byte `db:"metadata"`
+	ID       string        `db:"id"`
+	Owner    string        `db:"owner"`
+	Email    string        `db:"email"`
+	Password string        `db:"password"`
+	Metadata []byte        `db:"metadata"`
+	Groups   []users.Group `db:"groups"`
 }
 
 func toDBUser(u users.User) (dbUser, error) {
@@ -290,17 +366,28 @@ func toUser(dbu dbUser) (users.User, error) {
 	}, nil
 }
 
-func getUsersMetadataQuery(m users.Metadata) ([]byte, string, error) {
-	mq := ""
-	mb := []byte("{}")
-	if len(m) > 0 {
-		mq = ` AND users.metadata @> :metadata`
-
-		b, err := json.Marshal(m)
-		if err != nil {
-			return nil, "", err
-		}
-		mb = b
+func createEmailQuery(entity string, email string) (string, string, error) {
+	if email == "" {
+		return "", "", nil
 	}
-	return mb, mq, nil
+
+	// Create LIKE operator to search Users with email containing a given string
+	param := fmt.Sprintf(`%%%s%%`, email)
+	query := fmt.Sprintf("%semail LIKE :email", entity)
+
+	return query, param, nil
+}
+
+func createMetadataQuery(entity string, um users.Metadata) (string, []byte, error) {
+	if len(um) == 0 {
+		return "", nil, nil
+	}
+
+	param, err := json.Marshal(um)
+	if err != nil {
+		return "", nil, err
+	}
+	query := fmt.Sprintf("%smetadata @> :metadata", entity)
+
+	return query, param, nil
 }

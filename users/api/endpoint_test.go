@@ -190,7 +190,7 @@ func TestUser(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 	client := ts.Client()
-	_, err := svc.Register(context.Background(), user)
+	userID, err := svc.Register(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("register user got unexpected error: %s", err))
 
 	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
@@ -210,7 +210,7 @@ func TestUser(t *testing.T) {
 		req := testRequest{
 			client: client,
 			method: http.MethodGet,
-			url:    fmt.Sprintf("%s/users", ts.URL),
+			url:    fmt.Sprintf("%s/users/%s", ts.URL, userID),
 			token:  tc.token,
 		}
 		res, err := req.make()

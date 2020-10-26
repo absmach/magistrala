@@ -115,7 +115,50 @@ func TestLogin(t *testing.T) {
 	}
 }
 
-func TestUser(t *testing.T) {
+func TestViewUser(t *testing.T) {
+	svc := newService()
+	id, err := svc.Register(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+
+	token, err := svc.Login(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+
+	u := user
+	u.Password = ""
+
+	cases := map[string]struct {
+		user   users.User
+		token  string
+		userID string
+		err    error
+	}{
+		"view user with authorized token": {
+			user:   u,
+			token:  token,
+			userID: id,
+			err:    nil,
+		},
+		"view user with unauthorized token": {
+			user:   users.User{},
+			token:  "",
+			userID: id,
+			err:    users.ErrUnauthorizedAccess,
+		},
+		"view user with authorized token and invalid user id": {
+			user:   users.User{},
+			token:  token,
+			userID: "",
+			err:    users.ErrUnauthorizedAccess,
+		},
+	}
+
+	for desc, tc := range cases {
+		_, err := svc.ViewUser(context.Background(), tc.token, tc.userID)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+	}
+}
+
+func TestViewProfile(t *testing.T) {
 	svc := newService()
 	_, err := svc.Register(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
@@ -144,7 +187,61 @@ func TestUser(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		_, err := svc.User(context.Background(), tc.token)
+		_, err := svc.ViewProfile(context.Background(), tc.token)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+	}
+}
+func TestListUsers(t *testing.T) {
+	svc := newService()
+
+	_, err := svc.Register(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+
+	token, err := svc.Login(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+
+	var nUsers = uint64(10)
+
+	for i := uint64(1); i < nUsers; i++ {
+		email := fmt.Sprintf("TestListUsers%d@example.com", i)
+		user := users.User{
+			Email:    email,
+			Password: "passpass",
+		}
+		_, err := svc.Register(context.Background(), user)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	}
+
+	cases := map[string]struct {
+		token  string
+		offset uint64
+		limit  uint64
+		email  string
+		size   uint64
+		err    error
+	}{
+		"list users with authorized token": {
+			token: token,
+			size:  0,
+			err:   nil,
+		},
+		"list user with unauthorized token": {
+			token: "",
+			size:  0,
+			err:   users.ErrUnauthorizedAccess,
+		},
+		"list users with offset and limit": {
+			token:  token,
+			offset: 6,
+			limit:  nUsers,
+			size:   nUsers - 6,
+		},
+	}
+
+	for desc, tc := range cases {
+		page, err := svc.ListUsers(context.Background(), tc.token, tc.offset, tc.limit, tc.email, nil)
+		size := uint64(len(page.Users))
+		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.size, size))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }
@@ -344,7 +441,7 @@ func TestUpdateGroup(t *testing.T) {
 	for _, tc := range cases {
 		err := svc.UpdateGroup(context.Background(), token, tc.group)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		g, err := svc.Group(context.Background(), token, saved.ID)
+		g, err := svc.ViewGroup(context.Background(), token, saved.ID)
 		assert.Nil(t, err, fmt.Sprintf("retrieve group failed: %s", err))
 		assert.Equal(t, tc.group.Description, g.Description, tc.desc, tc.err)
 		assert.Equal(t, tc.group.Name, g.Name, tc.desc, tc.err)

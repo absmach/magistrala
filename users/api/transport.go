@@ -28,6 +28,7 @@ const (
 	offsetKey   = "offset"
 	limitKey    = "limit"
 	nameKey     = "name"
+	emailKey    = "email"
 	metadataKey = "metadata"
 
 	defOffset = 0
@@ -59,9 +60,23 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer) http.Handler {
 		opts...,
 	))
 
-	mux.Get("/users", kithttp.NewServer(
+	mux.Get("/users/profile", kithttp.NewServer(
+		kitot.TraceServer(tracer, "view_profile")(viewProfileEndpoint(svc)),
+		decodeViewProfile,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Get("/users/:userID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "view_user")(viewUserEndpoint(svc)),
 		decodeViewUser,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Get("/users", kithttp.NewServer(
+		kitot.TraceServer(tracer, "list_users")(listUsersEndpoint(svc)),
+		decodeListUsers,
 		encodeResponse,
 		opts...,
 	))
@@ -74,7 +89,7 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer) http.Handler {
 	))
 
 	mux.Get("/users/:userID/groups", kithttp.NewServer(
-		kitot.TraceServer(tracer, "memberships")(listUserGroupsEndpoint(svc)),
+		kitot.TraceServer(tracer, "list_memberships")(listMembershipsEndpoint(svc)),
 		decodeListUserGroupsRequest,
 		encodeResponse,
 		opts...,
@@ -109,7 +124,7 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer) http.Handler {
 	))
 
 	mux.Get("/groups", kithttp.NewServer(
-		kitot.TraceServer(tracer, "groups")(listGroupsEndpoint(svc)),
+		kitot.TraceServer(tracer, "list_groups")(listGroupsEndpoint(svc)),
 		decodeListUserGroupsRequest,
 		encodeResponse,
 		opts...,
@@ -137,7 +152,7 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer) http.Handler {
 	))
 
 	mux.Get("/groups/:groupID/users", kithttp.NewServer(
-		kitot.TraceServer(tracer, "members")(listUsersForGroupEndpoint(svc)),
+		kitot.TraceServer(tracer, "list_members")(listMembersEndpoint(svc)),
 		decodeListUserGroupsRequest,
 		encodeResponse,
 		opts...,
@@ -179,7 +194,46 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer) http.Handler {
 
 func decodeViewUser(_ context.Context, r *http.Request) (interface{}, error) {
 	req := viewUserReq{
+		token:  r.Header.Get("Authorization"),
+		userID: bone.GetValue(r, "userID"),
+	}
+	return req, nil
+}
+
+func decodeViewProfile(_ context.Context, r *http.Request) (interface{}, error) {
+	req := viewUserReq{
 		token: r.Header.Get("Authorization"),
+	}
+	return req, nil
+}
+
+func decodeListUsers(_ context.Context, r *http.Request) (interface{}, error) {
+	o, err := readUintQuery(r, offsetKey, defOffset)
+	if err != nil {
+		return nil, err
+	}
+
+	l, err := readUintQuery(r, limitKey, defLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	e, err := readStringQuery(r, emailKey)
+	if err != nil {
+		return nil, err
+	}
+
+	m, err := readMetadataQuery(r, metadataKey)
+	if err != nil {
+		return nil, err
+	}
+
+	req := listUsersReq{
+		token:    r.Header.Get("Authorization"),
+		offset:   o,
+		limit:    l,
+		email:    e,
+		metadata: m,
 	}
 	return req, nil
 }

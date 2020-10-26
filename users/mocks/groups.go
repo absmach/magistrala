@@ -166,7 +166,7 @@ func (grm *groupRepositoryMock) Assign(ctx context.Context, userID, groupID stri
 
 }
 
-func (grm *groupRepositoryMock) Memberships(ctx context.Context, userID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
+func (grm *groupRepositoryMock) RetrieveMemberships(ctx context.Context, userID string, offset, limit uint64, um users.Metadata) (users.GroupPage, error) {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
 	var items []users.Group
@@ -187,7 +187,7 @@ func (grm *groupRepositoryMock) Memberships(ctx context.Context, userID string, 
 	}, nil
 }
 
-func (grm *groupRepositoryMock) RetrieveAllWithAncestors(ctx context.Context, groupID string, offset, limit uint64, gm users.Metadata) (users.GroupPage, error) {
+func (grm *groupRepositoryMock) RetrieveAllWithAncestors(ctx context.Context, groupID string, offset, limit uint64, um users.Metadata) (users.GroupPage, error) {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
 	var items []users.Group

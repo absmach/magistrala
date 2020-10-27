@@ -62,7 +62,7 @@ func TestIssue(t *testing.T) {
 	}{
 		{
 			desc:  "issue for user with valid token",
-			id:    email,
+			id:    id,
 			email: email,
 			kind:  authn.UserKey,
 			err:   nil,
@@ -70,7 +70,7 @@ func TestIssue(t *testing.T) {
 		},
 		{
 			desc:  "issue recovery key",
-			id:    email,
+			id:    id,
 			email: email,
 			kind:  authn.RecoveryKey,
 			err:   nil,
@@ -78,7 +78,7 @@ func TestIssue(t *testing.T) {
 		},
 		{
 			desc:  "issue API key unauthenticated",
-			id:    email,
+			id:    id,
 			email: email,
 			kind:  authn.APIKey,
 			err:   nil,
@@ -86,7 +86,7 @@ func TestIssue(t *testing.T) {
 		},
 		{
 			desc:  "issue for invalid key type",
-			id:    email,
+			id:    id,
 			email: email,
 			kind:  32,
 			err:   status.Error(codes.InvalidArgument, "received invalid token request"),

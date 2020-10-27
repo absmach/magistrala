@@ -155,7 +155,7 @@ func (ts *thingsService) CreateThings(ctx context.Context, token string, things 
 			return []Thing{}, errors.Wrap(ErrCreateUUID, err)
 		}
 
-		things[i].Owner = res.GetValue()
+		things[i].Owner = res.GetEmail()
 
 		if things[i].Key == "" {
 			things[i].Key, err = ts.uuidProvider.ID()
@@ -174,7 +174,7 @@ func (ts *thingsService) UpdateThing(ctx context.Context, token string, thing Th
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	thing.Owner = res.GetValue()
+	thing.Owner = res.GetEmail()
 
 	return ts.things.Update(ctx, thing)
 }
@@ -185,7 +185,7 @@ func (ts *thingsService) UpdateKey(ctx context.Context, token, id, key string) e
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	owner := res.GetValue()
+	owner := res.GetEmail()
 
 	return ts.things.UpdateKey(ctx, owner, id, key)
 }
@@ -196,7 +196,7 @@ func (ts *thingsService) ViewThing(ctx context.Context, token, id string) (Thing
 		return Thing{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	return ts.things.RetrieveByID(ctx, res.GetValue(), id)
+	return ts.things.RetrieveByID(ctx, res.GetEmail(), id)
 }
 
 func (ts *thingsService) ListThings(ctx context.Context, token string, offset, limit uint64, name string, metadata Metadata) (Page, error) {
@@ -205,7 +205,7 @@ func (ts *thingsService) ListThings(ctx context.Context, token string, offset, l
 		return Page{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	return ts.things.RetrieveAll(ctx, res.GetValue(), offset, limit, name, metadata)
+	return ts.things.RetrieveAll(ctx, res.GetEmail(), offset, limit, name, metadata)
 }
 
 func (ts *thingsService) ListThingsByChannel(ctx context.Context, token, channel string, offset, limit uint64, connected bool) (Page, error) {
@@ -214,7 +214,7 @@ func (ts *thingsService) ListThingsByChannel(ctx context.Context, token, channel
 		return Page{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	return ts.things.RetrieveByChannel(ctx, res.GetValue(), channel, offset, limit, connected)
+	return ts.things.RetrieveByChannel(ctx, res.GetEmail(), channel, offset, limit, connected)
 }
 
 func (ts *thingsService) RemoveThing(ctx context.Context, token, id string) error {
@@ -226,7 +226,7 @@ func (ts *thingsService) RemoveThing(ctx context.Context, token, id string) erro
 	if err := ts.thingCache.Remove(ctx, id); err != nil {
 		return err
 	}
-	return ts.things.Remove(ctx, res.GetValue(), id)
+	return ts.things.Remove(ctx, res.GetEmail(), id)
 }
 
 func (ts *thingsService) CreateChannels(ctx context.Context, token string, channels ...Channel) ([]Channel, error) {
@@ -241,7 +241,7 @@ func (ts *thingsService) CreateChannels(ctx context.Context, token string, chann
 			return []Channel{}, errors.Wrap(ErrCreateUUID, err)
 		}
 
-		channels[i].Owner = res.GetValue()
+		channels[i].Owner = res.GetEmail()
 	}
 
 	return ts.channels.Save(ctx, channels...)
@@ -253,7 +253,7 @@ func (ts *thingsService) UpdateChannel(ctx context.Context, token string, channe
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	channel.Owner = res.GetValue()
+	channel.Owner = res.GetEmail()
 	return ts.channels.Update(ctx, channel)
 }
 
@@ -263,7 +263,7 @@ func (ts *thingsService) ViewChannel(ctx context.Context, token, id string) (Cha
 		return Channel{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	return ts.channels.RetrieveByID(ctx, res.GetValue(), id)
+	return ts.channels.RetrieveByID(ctx, res.GetEmail(), id)
 }
 
 func (ts *thingsService) ListChannels(ctx context.Context, token string, offset, limit uint64, name string, m Metadata) (ChannelsPage, error) {
@@ -272,7 +272,7 @@ func (ts *thingsService) ListChannels(ctx context.Context, token string, offset,
 		return ChannelsPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	return ts.channels.RetrieveAll(ctx, res.GetValue(), offset, limit, name, m)
+	return ts.channels.RetrieveAll(ctx, res.GetEmail(), offset, limit, name, m)
 }
 
 func (ts *thingsService) ListChannelsByThing(ctx context.Context, token, thing string, offset, limit uint64, connected bool) (ChannelsPage, error) {
@@ -281,7 +281,7 @@ func (ts *thingsService) ListChannelsByThing(ctx context.Context, token, thing s
 		return ChannelsPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	return ts.channels.RetrieveByThing(ctx, res.GetValue(), thing, offset, limit, connected)
+	return ts.channels.RetrieveByThing(ctx, res.GetEmail(), thing, offset, limit, connected)
 }
 
 func (ts *thingsService) RemoveChannel(ctx context.Context, token, id string) error {
@@ -294,7 +294,7 @@ func (ts *thingsService) RemoveChannel(ctx context.Context, token, id string) er
 		return err
 	}
 
-	return ts.channels.Remove(ctx, res.GetValue(), id)
+	return ts.channels.Remove(ctx, res.GetEmail(), id)
 }
 
 func (ts *thingsService) Connect(ctx context.Context, token string, chIDs, thIDs []string) error {
@@ -303,7 +303,7 @@ func (ts *thingsService) Connect(ctx context.Context, token string, chIDs, thIDs
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	return ts.channels.Connect(ctx, res.GetValue(), chIDs, thIDs)
+	return ts.channels.Connect(ctx, res.GetEmail(), chIDs, thIDs)
 }
 
 func (ts *thingsService) Disconnect(ctx context.Context, token, chanID, thingID string) error {
@@ -316,7 +316,7 @@ func (ts *thingsService) Disconnect(ctx context.Context, token, chanID, thingID 
 		return err
 	}
 
-	return ts.channels.Disconnect(ctx, res.GetValue(), chanID, thingID)
+	return ts.channels.Disconnect(ctx, res.GetEmail(), chanID, thingID)
 }
 
 func (ts *thingsService) CanAccessByKey(ctx context.Context, chanID, thingKey string) (string, error) {

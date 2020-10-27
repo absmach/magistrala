@@ -10,7 +10,7 @@ import (
 )
 
 type issueKeyReq struct {
-	issuer   string
+	token    string
 	Type     uint32        `json:"type,omitempty"`
 	Duration time.Duration `json:"duration,omitempty"`
 }
@@ -20,19 +20,19 @@ func (req issueKeyReq) validate() error {
 	if req.Type == authn.UserKey {
 		return nil
 	}
-	if req.issuer == "" || (req.Type != authn.APIKey) {
+	if req.token == "" || (req.Type != authn.APIKey) {
 		return authn.ErrMalformedEntity
 	}
 	return nil
 }
 
 type keyReq struct {
-	issuer string
-	id     string
+	token string
+	id    string
 }
 
 func (req keyReq) validate() error {
-	if req.issuer == "" || req.id == "" {
+	if req.token == "" || req.id == "" {
 		return authn.ErrMalformedEntity
 	}
 	return nil

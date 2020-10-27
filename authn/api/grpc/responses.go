@@ -4,6 +4,12 @@
 package grpc
 
 type identityRes struct {
-	id  string
-	err error
+	id    string
+	email string
+	err   error
+}
+
+type issueRes struct {
+	value string
+	err   error
 }

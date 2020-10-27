@@ -64,7 +64,7 @@ func decodeIssue(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, errUnsupportedContentType
 	}
 	req := issueKeyReq{
-		issuer: r.Header.Get("Authorization"),
+		token: r.Header.Get("Authorization"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(authn.ErrMalformedEntity, err)
@@ -75,8 +75,8 @@ func decodeIssue(_ context.Context, r *http.Request) (interface{}, error) {
 
 func decodeKeyReq(_ context.Context, r *http.Request) (interface{}, error) {
 	req := keyReq{
-		issuer: r.Header.Get("Authorization"),
-		id:     bone.GetValue(r, "id"),
+		token: r.Header.Get("Authorization"),
+		id:    bone.GetValue(r, "id"),
 	}
 	return req, nil
 }

@@ -147,7 +147,7 @@ func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, da
 	}
 
 	c.ThingID = thingID
-	c.OwnerID = owner.GetValue()
+	c.OwnerID = owner.GetEmail()
 	c.ClientCert = cert.ClientCert
 	c.IssuingCA = cert.IssuingCA
 	c.CAChain = cert.CAChain
@@ -193,7 +193,7 @@ func (cs *certsService) ListCerts(ctx context.Context, token string, offset, lim
 		return Page{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	return cs.certsRepo.RetrieveAll(ctx, u.GetValue(), offset, limit)
+	return cs.certsRepo.RetrieveAll(ctx, u.GetEmail(), offset, limit)
 }
 
 func (cs *certsService) certs(thingKey, daysValid string, keyBits int) (string, string, error) {

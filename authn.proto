@@ -15,7 +15,7 @@ service ThingsService {
 
 service AuthNService {
     rpc Issue(IssueReq) returns (Token) {}
-    rpc Identify(Token) returns (UserID) {}
+    rpc Identify(Token) returns (UserIdentity) {}
 }
 
 message AccessByKeyReq {
@@ -39,11 +39,13 @@ message Token {
     string value = 1;
 }
 
-message UserID {
-    string value = 1;
+message UserIdentity {
+    string id    = 1;
+    string email = 2;
 }
 
 message IssueReq {
-    string issuer = 1;
-    uint32 type   = 2;
+    string id    = 1;
+    string email = 2;
+    uint32 type  = 3;
 }

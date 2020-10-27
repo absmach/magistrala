@@ -22,9 +22,9 @@ func NewAuthNServiceClient(users map[string]string) mainflux.AuthNServiceClient 
 	return &authNServiceClient{users}
 }
 
-func (svc authNServiceClient) Identify(ctx context.Context, in *mainflux.Token, opts ...grpc.CallOption) (*mainflux.UserID, error) {
+func (svc authNServiceClient) Identify(ctx context.Context, in *mainflux.Token, opts ...grpc.CallOption) (*mainflux.UserIdentity, error) {
 	if id, ok := svc.users[in.Value]; ok {
-		return &mainflux.UserID{Value: id}, nil
+		return &mainflux.UserIdentity{Id: id, Email: id}, nil
 	}
 	return nil, users.ErrUnauthorizedAccess
 }

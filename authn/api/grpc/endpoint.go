@@ -21,15 +21,17 @@ func issueEndpoint(svc authn.Service) endpoint.Endpoint {
 		now := time.Now().UTC()
 		key := authn.Key{
 			Type:     req.keyType,
+			Subject:  req.email,
+			IssuerID: req.id,
 			IssuedAt: now,
 		}
 
-		k, err := svc.Issue(ctx, req.issuer, key)
+		_, secret, err := svc.Issue(ctx, "", key)
 		if err != nil {
-			return identityRes{}, err
+			return nil, err
 		}
 
-		return identityRes{k.Secret, nil}, nil
+		return issueRes{secret, nil}, nil
 	}
 }
 
@@ -42,9 +44,14 @@ func identifyEndpoint(svc authn.Service) endpoint.Endpoint {
 
 		id, err := svc.Identify(ctx, req.token)
 		if err != nil {
-			return identityRes{}, err
+			return nil, err
 		}
 
-		return identityRes{id, nil}, nil
+		ret := identityRes{
+			id:    id.ID,
+			email: id.Email,
+			err:   nil,
+		}
+		return ret, nil
 	}
 }

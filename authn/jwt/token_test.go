@@ -22,8 +22,8 @@ func key() authn.Key {
 	return authn.Key{
 		ID:        "id",
 		Type:      authn.UserKey,
-		Issuer:    "user@email.com",
-		Secret:    "",
+		Subject:   "user@email.com",
+		IssuerID:  "",
 		IssuedAt:  time.Now().UTC().Add(-10 * time.Second).Round(time.Second),
 		ExpiresAt: exp,
 	}
@@ -31,9 +31,6 @@ func key() authn.Key {
 
 func TestIssue(t *testing.T) {
 	tokenizer := jwt.New(secret)
-
-	emptyIssuer := key()
-	emptyIssuer.Issuer = ""
 
 	cases := []struct {
 		desc string

@@ -34,8 +34,9 @@ paths:
       tags:
         - authn
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ID"
+      security:
+      - Authorization: []
       responses:
         200:
           $ref: "#/components/responses/KeyRes"
@@ -52,8 +53,9 @@ paths:
       tags:
         - authn
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ID"
+      security:
+      - Authorization: []
       responses:
         204:
           description: Key revoked.
@@ -63,6 +65,11 @@ paths:
           $ref: "#/components/responses/ServiceError"
 
 components:
+  securitySchemes:
+    Authorization:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     Key:
       type: object
@@ -72,44 +79,40 @@ components:
           format: uuid
           example: "c5747f2f-2a7c-4fe1-b41a-51a5ae290945"
           description: API key unique identifier
+        issuer_id:
+          type: string
+          format: UUID
+          example: "9118de62-c680-46b7-ad0a-21748a52833a"
+          description: In ID of the entity that issued the token.
         type:
           type: integer
           example: 0
-          description: API key type. Keys of different type are processed differently
-        issuer:
+          description: API key type. Keys of different type are processed differently.
+        subject:
           type: string
           format: string
           example: "test@example.com"
-          description: User's email or service identifier of API key issuer
-        secret:
-          type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiZXhhbXBsZSIsImlhdCI6MTUxNjIzOTAyMn0.9UYAFWmPIn4ojss36LpIGSqABZHfADQmVuKQ4PJBMdI
-          description: API Key value.
+          description: User's email or service identifier of API key subject.
         issued_at:
           type: string
           format: date-time
           example: "2019-11-26 13:31:52"
-          description: Time when the key is generated
+          description: Time when the key is generated.
         expires_at:
           type: string
           format: date-time
           example: "2019-11-26 13:31:52"
-          description: Time when the Key expires
+          description: Time when the Key expires. If this field is missing,
+            that means that Key is valid indefinitely.
 
   parameters:
-    Authorization:
-      name: Authorization
-      description: Login key secret (User's access token).
-      in: header
-      schema:
-        type: string
-      required: true
     ID:
       name: id
       description: API Key id.
       in: path
       schema:
         type: string
+        format: UUID
       required: true
 
   requestBodies:
@@ -124,12 +127,12 @@ components:
               type:
                 type: integer
                 example: 0
-                description: API key type. Keys of different type are processed differently
-              issuer:
+                description: API key type. Keys of different type are processed differently.
+              token:
                 type: string
-                format: e-mail
-                example: "test@example.com"
-                description: User's email or service identifier of API key issuer
+                format: JWT
+                example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiZXhhbXBsZSIsImlhdCI6MTUxNjIzOTAyMn0.9UYAFWmPIn4ojss36LpIGSqABZHfADQmVuKQ4PJBMdI"
+                description: JWT for the entity that's sending Key request.
               duration:
                 type: number
                 format: integer

@@ -20,7 +20,6 @@ func issueEndpoint(svc authn.Service) endpoint.Endpoint {
 
 		now := time.Now().UTC()
 		newKey := authn.Key{
-			Issuer:   req.issuer,
 			IssuedAt: now,
 			Type:     req.Type,
 		}
@@ -31,14 +30,14 @@ func issueEndpoint(svc authn.Service) endpoint.Endpoint {
 			newKey.ExpiresAt = exp
 		}
 
-		key, err := svc.Issue(ctx, req.issuer, newKey)
+		key, secret, err := svc.Issue(ctx, req.token, newKey)
 		if err != nil {
 			return nil, err
 		}
 
 		res := issueKeyRes{
 			ID:       key.ID,
-			Value:    key.Secret,
+			Value:    secret,
 			IssuedAt: key.IssuedAt,
 		}
 		if !key.ExpiresAt.IsZero() {
@@ -56,7 +55,7 @@ func revokeEndpoint(svc authn.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		if err := svc.Revoke(ctx, req.issuer, req.id); err != nil {
+		if err := svc.Revoke(ctx, req.token, req.id); err != nil {
 			return nil, err
 		}
 
@@ -72,12 +71,22 @@ func retrieveEndpoint(svc authn.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		key, err := svc.Retrieve(ctx, req.issuer, req.id)
+		key, err := svc.Retrieve(ctx, req.token, req.id)
 
 		if err != nil {
 			return nil, err
 		}
+		ret := retrieveKeyRes{
+			ID:       key.ID,
+			IssuerID: key.IssuerID,
+			Subject:  key.Subject,
+			Type:     key.Type,
+			IssuedAt: key.IssuedAt,
+		}
+		if !key.ExpiresAt.IsZero() {
+			ret.ExpiresAt = &key.ExpiresAt
+		}
 
-		return key, nil
+		return ret, nil
 	}
 }

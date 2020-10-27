@@ -29,38 +29,38 @@ func MetricsMiddleware(svc authn.Service, counter metrics.Counter, latency metri
 	}
 }
 
-func (ms *metricsMiddleware) Issue(ctx context.Context, issuer string, key authn.Key) (authn.Key, error) {
+func (ms *metricsMiddleware) Issue(ctx context.Context, token string, key authn.Key) (authn.Key, string, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "issue").Add(1)
 		ms.latency.With("method", "issue").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.Issue(ctx, issuer, key)
+	return ms.svc.Issue(ctx, token, key)
 }
 
-func (ms *metricsMiddleware) Revoke(ctx context.Context, issuer, id string) error {
+func (ms *metricsMiddleware) Revoke(ctx context.Context, token, id string) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "revoke").Add(1)
 		ms.latency.With("method", "revoke").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.Revoke(ctx, issuer, id)
+	return ms.svc.Revoke(ctx, token, id)
 }
 
-func (ms *metricsMiddleware) Retrieve(ctx context.Context, issuer, id string) (authn.Key, error) {
+func (ms *metricsMiddleware) Retrieve(ctx context.Context, token, id string) (authn.Key, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "retrieve").Add(1)
 		ms.latency.With("method", "retrieve").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.Retrieve(ctx, issuer, id)
+	return ms.svc.Retrieve(ctx, token, id)
 }
 
-func (ms *metricsMiddleware) Identify(ctx context.Context, key string) (string, error) {
+func (ms *metricsMiddleware) Identify(ctx context.Context, token string) (authn.Identity, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "identify").Add(1)
 		ms.latency.With("method", "identify").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.Identify(ctx, key)
+	return ms.svc.Identify(ctx, token)
 }

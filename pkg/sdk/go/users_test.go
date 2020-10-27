@@ -119,7 +119,7 @@ func TestCreateToken(t *testing.T) {
 	mainfluxSDK := sdk.NewSDK(sdkConf)
 	user := sdk.User{Email: "user@example.com", Password: "password"}
 	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
-	tkn, _ := auth.Issue(context.Background(), &mainflux.IssueReq{Issuer: user.Email, Type: 0})
+	tkn, _ := auth.Issue(context.Background(), &mainflux.IssueReq{Id: user.ID, Email: user.Email, Type: 0})
 	token := tkn.GetValue()
 	mainfluxSDK.CreateUser(user)
 	cases := []struct {

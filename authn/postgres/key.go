@@ -34,8 +34,8 @@ func New(db Database) authn.KeyRepository {
 }
 
 func (kr repo) Save(ctx context.Context, key authn.Key) (string, error) {
-	q := `INSERT INTO keys (id, type, issuer, issued_at, expires_at)
-	      VALUES (:id, :type, :issuer, :issued_at, :expires_at)`
+	q := `INSERT INTO keys (id, type, issuer_id, subject, issued_at, expires_at)
+	      VALUES (:id, :type, :issuer_id, :subject, :issued_at, :expires_at)`
 
 	dbKey := toDBKey(key)
 	if _, err := kr.db.NamedExecContext(ctx, q, dbKey); err != nil {
@@ -53,10 +53,10 @@ func (kr repo) Save(ctx context.Context, key authn.Key) (string, error) {
 	return dbKey.ID, nil
 }
 
-func (kr repo) Retrieve(ctx context.Context, issuer, id string) (authn.Key, error) {
-	q := `SELECT id, type, issuer, issued_at, expires_at FROM keys WHERE issuer = $1 AND id = $2`
+func (kr repo) Retrieve(ctx context.Context, issuerID, id string) (authn.Key, error) {
+	q := `SELECT id, type, issuer_id, subject, issued_at, expires_at FROM keys WHERE issuer_id = $1 AND id = $2`
 	key := dbKey{}
-	if err := kr.db.QueryRowxContext(ctx, q, issuer, id).StructScan(&key); err != nil {
+	if err := kr.db.QueryRowxContext(ctx, q, issuerID, id).StructScan(&key); err != nil {
 		pqErr, ok := err.(*pq.Error)
 		if err == sql.ErrNoRows || ok && errInvalid == pqErr.Code.Name() {
 			return authn.Key{}, errors.Wrap(authn.ErrNotFound, err)
@@ -68,11 +68,11 @@ func (kr repo) Retrieve(ctx context.Context, issuer, id string) (authn.Key, erro
 	return toKey(key), nil
 }
 
-func (kr repo) Remove(ctx context.Context, issuer, id string) error {
-	q := `DELETE FROM keys WHERE issuer = :issuer AND id = :id`
+func (kr repo) Remove(ctx context.Context, issuerID, id string) error {
+	q := `DELETE FROM keys WHERE issuer_id = :issuer_id AND id = :id`
 	key := dbKey{
-		ID:     id,
-		Issuer: issuer,
+		ID:       id,
+		IssuerID: issuerID,
 	}
 	if _, err := kr.db.NamedExecContext(ctx, q, key); err != nil {
 		return errors.Wrap(errDelete, err)
@@ -84,7 +84,8 @@ func (kr repo) Remove(ctx context.Context, issuer, id string) error {
 type dbKey struct {
 	ID        string       `db:"id"`
 	Type      uint32       `db:"type"`
-	Issuer    string       `db:"issuer"`
+	IssuerID  string       `db:"issuer_id"`
+	Subject   string       `db:"subject"`
 	Revoked   bool         `db:"revoked"`
 	IssuedAt  time.Time    `db:"issued_at"`
 	ExpiresAt sql.NullTime `db:"expires_at"`
@@ -94,7 +95,8 @@ func toDBKey(key authn.Key) dbKey {
 	ret := dbKey{
 		ID:       key.ID,
 		Type:     key.Type,
-		Issuer:   key.Issuer,
+		IssuerID: key.IssuerID,
+		Subject:  key.Subject,
 		IssuedAt: key.IssuedAt,
 	}
 	if !key.ExpiresAt.IsZero() {
@@ -108,7 +110,8 @@ func toKey(key dbKey) authn.Key {
 	ret := authn.Key{
 		ID:       key.ID,
 		Type:     key.Type,
-		Issuer:   key.Issuer,
+		IssuerID: key.IssuerID,
+		Subject:  key.Subject,
 		IssuedAt: key.IssuedAt,
 	}
 	if key.ExpiresAt.Valid {

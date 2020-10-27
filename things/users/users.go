@@ -34,14 +34,14 @@ func (repo singleUserRepo) Issue(ctx context.Context, req *mainflux.IssueReq, op
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 
-	if repo.token != req.GetIssuer() {
+	if repo.token != req.GetEmail() {
 		return nil, things.ErrUnauthorizedAccess
 	}
 
 	return &mainflux.Token{Value: repo.token}, nil
 }
 
-func (repo singleUserRepo) Identify(ctx context.Context, token *mainflux.Token, opts ...grpc.CallOption) (*mainflux.UserID, error) {
+func (repo singleUserRepo) Identify(ctx context.Context, token *mainflux.Token, opts ...grpc.CallOption) (*mainflux.UserIdentity, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 
@@ -49,5 +49,5 @@ func (repo singleUserRepo) Identify(ctx context.Context, token *mainflux.Token, 
 		return nil, things.ErrUnauthorizedAccess
 	}
 
-	return &mainflux.UserID{Value: repo.email}, nil
+	return &mainflux.UserIdentity{Id: repo.email, Email: repo.email}, nil
 }

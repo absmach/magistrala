@@ -14,7 +14,6 @@ import (
 const (
 	loginDuration    = 10 * time.Hour
 	recoveryDuration = 5 * time.Minute
-	issuerName       = "mainflux.authn"
 )
 
 var (
@@ -40,22 +39,24 @@ var (
 
 // Service specifies an API that must be fullfiled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).
+// Token is a string value of the actual Key and is used to authenticate
+// an AuthN service request.
 type Service interface {
-	// Issue issues a new Key.
-	Issue(context.Context, string, Key) (Key, error)
+	// Issue issues a new Key, returning its token value alongside.
+	Issue(ctx context.Context, token string, key Key) (Key, string, error)
 
 	// Revoke removes the Key with the provided id that is
 	// issued by the user identified by the provided key.
-	Revoke(context.Context, string, string) error
+	Revoke(ctx context.Context, token, id string) error
 
 	// Retrieve retrieves data for the Key identified by the provided
 	// ID, that is issued by the user identified by the provided key.
-	Retrieve(context.Context, string, string) (Key, error)
+	Retrieve(ctx context.Context, token, id string) (Key, error)
 
 	// Identify validates token token. If token is valid, content
 	// is returned. If token is invalid, or invocation failed for some
 	// other reason, non-nil error value is returned in response.
-	Identify(context.Context, string) (string, error)
+	Identify(ctx context.Context, token string) (Identity, error)
 }
 
 var _ Service = (*service)(nil)
@@ -75,119 +76,113 @@ func New(keys KeyRepository, up mainflux.UUIDProvider, tokenizer Tokenizer) Serv
 	}
 }
 
-func (svc service) Issue(ctx context.Context, issuer string, key Key) (Key, error) {
+func (svc service) Issue(ctx context.Context, token string, key Key) (Key, string, error) {
 	if key.IssuedAt.IsZero() {
-		return Key{}, ErrInvalidKeyIssuedAt
+		return Key{}, "", ErrInvalidKeyIssuedAt
 	}
 	switch key.Type {
 	case APIKey:
-		return svc.userKey(ctx, issuer, key)
+		return svc.userKey(ctx, token, key)
 	case RecoveryKey:
-		return svc.tmpKey(issuer, recoveryDuration, key)
+		return svc.tmpKey(recoveryDuration, key)
 	default:
-		return svc.tmpKey(issuer, loginDuration, key)
+		return svc.tmpKey(loginDuration, key)
 	}
 }
 
-func (svc service) Revoke(ctx context.Context, issuer, id string) error {
-	email, err := svc.login(issuer)
+func (svc service) Revoke(ctx context.Context, token, id string) error {
+	issuerID, _, err := svc.login(token)
 	if err != nil {
 		return errors.Wrap(errRevoke, err)
 	}
-	if err := svc.keys.Remove(ctx, email, id); err != nil {
+	if err := svc.keys.Remove(ctx, issuerID, id); err != nil {
 		return errors.Wrap(errRevoke, err)
 	}
 	return nil
 }
 
-func (svc service) Retrieve(ctx context.Context, issuer, id string) (Key, error) {
-	email, err := svc.login(issuer)
+func (svc service) Retrieve(ctx context.Context, token, id string) (Key, error) {
+	issuerID, _, err := svc.login(token)
 	if err != nil {
 		return Key{}, errors.Wrap(errRetrieve, err)
 	}
 
-	return svc.keys.Retrieve(ctx, email, id)
+	return svc.keys.Retrieve(ctx, issuerID, id)
 }
 
-func (svc service) Identify(ctx context.Context, token string) (string, error) {
-	c, err := svc.tokenizer.Parse(token)
+func (svc service) Identify(ctx context.Context, token string) (Identity, error) {
+	key, err := svc.tokenizer.Parse(token)
 	if err != nil {
-		return "", errors.Wrap(errIdentify, err)
+		return Identity{}, errors.Wrap(errIdentify, err)
 	}
 
-	switch c.Type {
+	switch key.Type {
 	case APIKey:
-		k, err := svc.keys.Retrieve(ctx, c.Issuer, c.ID)
+		k, err := svc.keys.Retrieve(ctx, key.IssuerID, key.ID)
 		if err != nil {
-			return "", err
+			return Identity{}, err
 		}
 		// Auto revoke expired key.
 		if k.Expired() {
-			svc.keys.Remove(ctx, c.Issuer, c.ID)
-			return "", ErrKeyExpired
+			svc.keys.Remove(ctx, key.IssuerID, key.ID)
+			return Identity{}, ErrKeyExpired
 		}
-		return c.Issuer, nil
+		return Identity{ID: k.IssuerID, Email: k.Subject}, nil
 	case RecoveryKey, UserKey:
-		if c.Issuer != issuerName {
-			return "", ErrUnauthorizedAccess
-		}
-		return c.Secret, nil
+		return Identity{ID: key.IssuerID, Email: key.Subject}, nil
 	default:
-		return "", ErrUnauthorizedAccess
+		return Identity{}, ErrUnauthorizedAccess
 	}
 }
 
-func (svc service) tmpKey(issuer string, duration time.Duration, key Key) (Key, error) {
-	key.Secret = issuer
-	key.Issuer = issuerName
+func (svc service) tmpKey(duration time.Duration, key Key) (Key, string, error) {
 	key.ExpiresAt = key.IssuedAt.Add(duration)
-	val, err := svc.tokenizer.Issue(key)
+	secret, err := svc.tokenizer.Issue(key)
 	if err != nil {
-		return Key{}, errors.Wrap(errIssueTmp, err)
+		return Key{}, "", errors.Wrap(errIssueTmp, err)
 	}
 
-	key.Secret = val
-	return key, nil
+	return key, secret, nil
 }
 
-func (svc service) userKey(ctx context.Context, issuer string, key Key) (Key, error) {
-	email, err := svc.login(issuer)
+func (svc service) userKey(ctx context.Context, token string, key Key) (Key, string, error) {
+	id, sub, err := svc.login(token)
 	if err != nil {
-		return Key{}, errors.Wrap(errIssueUser, err)
+		return Key{}, "", errors.Wrap(errIssueUser, err)
 	}
-	key.Issuer = email
 
-	id, err := svc.uuidProvider.ID()
-	if err != nil {
-		return Key{}, errors.Wrap(errIssueUser, err)
+	key.IssuerID = id
+	if key.Subject == "" {
+		key.Subject = sub
 	}
-	key.ID = id
 
-	value, err := svc.tokenizer.Issue(key)
+	keyID, err := svc.uuidProvider.ID()
 	if err != nil {
-		return Key{}, errors.Wrap(errIssueUser, err)
+		return Key{}, "", errors.Wrap(errIssueUser, err)
 	}
-	key.Secret = value
+	key.ID = keyID
 
 	if _, err := svc.keys.Save(ctx, key); err != nil {
-		return Key{}, errors.Wrap(errIssueUser, err)
+		return Key{}, "", errors.Wrap(errIssueUser, err)
 	}
 
-	return key, nil
+	secret, err := svc.tokenizer.Issue(key)
+	if err != nil {
+		return Key{}, "", errors.Wrap(errIssueUser, err)
+	}
+
+	return key, secret, nil
 }
 
-func (svc service) login(token string) (string, error) {
-	c, err := svc.tokenizer.Parse(token)
+func (svc service) login(token string) (string, string, error) {
+	key, err := svc.tokenizer.Parse(token)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	// Only user key token is valid for login.
-	if c.Type != UserKey {
-		return "", ErrUnauthorizedAccess
+	if key.Type != UserKey || key.IssuerID == "" {
+		return "", "", ErrUnauthorizedAccess
 	}
 
-	if c.Secret == "" {
-		return "", ErrUnauthorizedAccess
-	}
-	return c.Secret, nil
+	return key.IssuerID, key.Subject, nil
 }

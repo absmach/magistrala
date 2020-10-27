@@ -24,12 +24,13 @@ func (req identityReq) validate() error {
 }
 
 type issueReq struct {
-	issuer  string
+	id      string
+	email   string
 	keyType uint32
 }
 
 func (req issueReq) validate() error {
-	if req.issuer == "" {
+	if req.email == "" {
 		return authn.ErrUnauthorizedAccess
 	}
 	if req.keyType != authn.UserKey &&

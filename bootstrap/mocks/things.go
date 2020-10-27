@@ -44,7 +44,7 @@ func (svc *mainfluxThings) CreateThings(_ context.Context, owner string, ths ...
 	}
 	for i := range ths {
 		svc.counter++
-		ths[i].Owner = userID.Value
+		ths[i].Owner = userID.Email
 		ths[i].ID = strconv.FormatUint(svc.counter, 10)
 		ths[i].Key = ths[i].ID
 		svc.things[ths[i].ID] = ths[i]
@@ -62,7 +62,7 @@ func (svc *mainfluxThings) ViewThing(_ context.Context, owner, id string) (thing
 		return things.Thing{}, things.ErrUnauthorizedAccess
 	}
 
-	if t, ok := svc.things[id]; ok && t.Owner == userID.Value {
+	if t, ok := svc.things[id]; ok && t.Owner == userID.Email {
 		return t, nil
 
 	}
@@ -79,7 +79,7 @@ func (svc *mainfluxThings) Connect(_ context.Context, owner string, chIDs, thIDs
 		return things.ErrUnauthorizedAccess
 	}
 	for _, chID := range chIDs {
-		if svc.channels[chID].Owner != userID.Value {
+		if svc.channels[chID].Owner != userID.Email {
 			return things.ErrUnauthorizedAccess
 		}
 		for _, thID := range thIDs {
@@ -95,7 +95,7 @@ func (svc *mainfluxThings) Disconnect(_ context.Context, owner, chanID, thingID 
 	defer svc.mu.Unlock()
 
 	userID, err := svc.auth.Identify(context.Background(), &mainflux.Token{Value: owner})
-	if err != nil || svc.channels[chanID].Owner != userID.Value {
+	if err != nil || svc.channels[chanID].Owner != userID.Email {
 		return things.ErrUnauthorizedAccess
 	}
 
@@ -131,7 +131,7 @@ func (svc *mainfluxThings) RemoveThing(_ context.Context, owner, id string) erro
 		return things.ErrUnauthorizedAccess
 	}
 
-	if t, ok := svc.things[id]; !ok || t.Owner != userID.Value {
+	if t, ok := svc.things[id]; !ok || t.Owner != userID.Email {
 		return things.ErrNotFound
 	}
 
@@ -189,7 +189,7 @@ func (svc *mainfluxThings) CreateChannels(_ context.Context, owner string, chs .
 	}
 	for i := range chs {
 		svc.counter++
-		chs[i].Owner = userID.Value
+		chs[i].Owner = userID.Email
 		chs[i].ID = strconv.FormatUint(svc.counter, 10)
 		svc.channels[chs[i].ID] = chs[i]
 	}

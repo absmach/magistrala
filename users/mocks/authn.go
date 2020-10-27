@@ -22,15 +22,15 @@ func NewAuthService(users map[string]string) mainflux.AuthNServiceClient {
 	return &authNServiceMock{users}
 }
 
-func (svc authNServiceMock) Identify(ctx context.Context, in *mainflux.Token, opts ...grpc.CallOption) (*mainflux.UserID, error) {
+func (svc authNServiceMock) Identify(ctx context.Context, in *mainflux.Token, opts ...grpc.CallOption) (*mainflux.UserIdentity, error) {
 	if id, ok := svc.users[in.Value]; ok {
-		return &mainflux.UserID{Value: id}, nil
+		return &mainflux.UserIdentity{Id: id, Email: id}, nil
 	}
 	return nil, users.ErrUnauthorizedAccess
 }
 
 func (svc authNServiceMock) Issue(ctx context.Context, in *mainflux.IssueReq, opts ...grpc.CallOption) (*mainflux.Token, error) {
-	if id, ok := svc.users[in.GetIssuer()]; ok {
+	if id, ok := svc.users[in.GetEmail()]; ok {
 		switch in.Type {
 		default:
 			return &mainflux.Token{Value: id}, nil

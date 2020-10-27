@@ -32,7 +32,7 @@ func NewClient(tracer opentracing.Tracer, conn *grpc.ClientConn, timeout time.Du
 			"Issue",
 			encodeIssueRequest,
 			decodeIssueResponse,
-			mainflux.UserID{},
+			mainflux.UserIdentity{},
 		).Endpoint()),
 		identify: kitot.TraceClient(tracer, "identify")(kitgrpc.NewClient(
 			conn,
@@ -40,7 +40,7 @@ func NewClient(tracer opentracing.Tracer, conn *grpc.ClientConn, timeout time.Du
 			"Identify",
 			encodeIdentifyRequest,
 			decodeIdentifyResponse,
-			mainflux.UserID{},
+			mainflux.UserIdentity{},
 		).Endpoint()),
 		timeout: timeout,
 	}
@@ -50,7 +50,7 @@ func (client grpcClient) Issue(ctx context.Context, req *mainflux.IssueReq, _ ..
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
-	res, err := client.issue(ctx, issueReq{issuer: req.GetIssuer(), keyType: req.Type})
+	res, err := client.issue(ctx, issueReq{id: req.GetId(), email: req.GetEmail(), keyType: req.Type})
 	if err != nil {
 		return nil, err
 	}
@@ -61,15 +61,15 @@ func (client grpcClient) Issue(ctx context.Context, req *mainflux.IssueReq, _ ..
 
 func encodeIssueRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(issueReq)
-	return &mainflux.IssueReq{Issuer: req.issuer, Type: req.keyType}, nil
+	return &mainflux.IssueReq{Id: req.id, Email: req.email, Type: req.keyType}, nil
 }
 
 func decodeIssueResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(*mainflux.UserID)
-	return identityRes{res.GetValue(), nil}, nil
+	res := grpcRes.(*mainflux.UserIdentity)
+	return identityRes{id: res.GetId(), email: res.GetEmail(), err: nil}, nil
 }
 
-func (client grpcClient) Identify(ctx context.Context, token *mainflux.Token, _ ...grpc.CallOption) (*mainflux.UserID, error) {
+func (client grpcClient) Identify(ctx context.Context, token *mainflux.Token, _ ...grpc.CallOption) (*mainflux.UserIdentity, error) {
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
@@ -79,7 +79,7 @@ func (client grpcClient) Identify(ctx context.Context, token *mainflux.Token, _ 
 	}
 
 	ir := res.(identityRes)
-	return &mainflux.UserID{Value: ir.id}, ir.err
+	return &mainflux.UserIdentity{Id: ir.id, Email: ir.email}, ir.err
 }
 
 func encodeIdentifyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
@@ -88,6 +88,6 @@ func encodeIdentifyRequest(_ context.Context, grpcReq interface{}) (interface{},
 }
 
 func decodeIdentifyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(*mainflux.UserID)
-	return identityRes{res.GetValue(), nil}, nil
+	res := grpcRes.(*mainflux.UserIdentity)
+	return identityRes{id: res.GetId(), email: res.GetEmail(), err: nil}, nil
 }

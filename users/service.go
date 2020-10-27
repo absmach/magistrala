@@ -206,7 +206,7 @@ func (svc usersService) Login(ctx context.Context, user User) (string, error) {
 	if err := svc.hasher.Compare(user.Password, dbUser.Password); err != nil {
 		return "", errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.issue(ctx, dbUser.Email, authn.UserKey)
+	return svc.issue(ctx, dbUser.ID, dbUser.Email, authn.UserKey)
 }
 
 func (svc usersService) ViewUser(ctx context.Context, token, id string) (User, error) {
@@ -273,7 +273,7 @@ func (svc usersService) GenerateResetToken(ctx context.Context, email, host stri
 	if err != nil || user.Email == "" {
 		return ErrUserNotFound
 	}
-	t, err := svc.issue(ctx, email, authn.RecoveryKey)
+	t, err := svc.issue(ctx, user.ID, user.Email, authn.RecoveryKey)
 	if err != nil {
 		return errors.Wrap(ErrRecoveryToken, err)
 	}
@@ -409,8 +409,8 @@ func (svc usersService) ListMemberships(ctx context.Context, token, userID strin
 }
 
 // Auth helpers
-func (svc usersService) issue(ctx context.Context, email string, keyType uint32) (string, error) {
-	key, err := svc.auth.Issue(ctx, &mainflux.IssueReq{Issuer: email, Type: keyType})
+func (svc usersService) issue(ctx context.Context, id, email string, keyType uint32) (string, error) {
+	key, err := svc.auth.Issue(ctx, &mainflux.IssueReq{Id: id, Email: email, Type: keyType})
 	if err != nil {
 		return "", errors.Wrap(ErrUserNotFound, err)
 	}
@@ -422,5 +422,5 @@ func (svc usersService) identify(ctx context.Context, token string) (string, err
 	if err != nil {
 		return "", errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return email.GetValue(), nil
+	return email.GetEmail(), nil
 }

@@ -6,9 +6,9 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"os/user"
 
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/users"
 )
 
 var (
@@ -93,7 +93,7 @@ func (res updateUserRes) Empty() bool {
 type viewUserRes struct {
 	ID       string                 `json:"id"`
 	Email    string                 `json:"email"`
-	Groups   []user.Group           `json:"groups"`
+	Groups   []users.Group          `json:"groups"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
@@ -213,7 +213,7 @@ func (res passwChangeRes) Empty() bool {
 
 type groupPageRes struct {
 	pageRes
-	Groups []viewGroupRes `json:"groups"`
+	Groups []viewGroupRes
 }
 
 func (res groupPageRes) Code() int {

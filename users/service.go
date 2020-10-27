@@ -59,6 +59,9 @@ var (
 	// ErrCreateGroup indicates error in creating group.
 	ErrCreateGroup = errors.New("failed to create group")
 
+	// ErrUpdateGroup indicates error in updating group.
+	ErrUpdateGroup = errors.New("failed to update group")
+
 	// ErrDeleteGroupMissing indicates in delete operation that group doesnt exist.
 	ErrDeleteGroupMissing = errors.New("group is not existing, already deleted")
 

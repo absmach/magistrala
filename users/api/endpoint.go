@@ -259,23 +259,21 @@ func updateGroupEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateGroupReq)
 		if err := req.validate(); err != nil {
-			return createGroupRes{}, err
+			return updateGroupRes{}, err
 		}
+
 		group := users.Group{
+			ID:          req.id,
 			Name:        req.Name,
 			Description: req.Description,
 			Metadata:    req.Metadata,
 		}
+
 		if err := svc.UpdateGroup(ctx, req.token, group); err != nil {
-			return createGroupRes{}, err
+			return updateGroupRes{}, err
 		}
-		res := createGroupRes{
-			Name:        group.Name,
-			Description: group.Description,
-			Metadata:    group.Metadata,
-			created:     false,
-		}
-		return res, nil
+
+		return updateGroupRes{}, nil
 	}
 }
 
@@ -290,7 +288,10 @@ func viewGroupEndpoint(svc users.Service) endpoint.Endpoint {
 			return viewGroupRes{}, err
 		}
 		res := viewGroupRes{
+			ID:          group.ID,
 			Name:        group.Name,
+			ParentID:    group.ParentID,
+			OwnerID:     group.OwnerID,
 			Description: group.Description,
 			Metadata:    group.Metadata,
 		}

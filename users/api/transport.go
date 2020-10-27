@@ -160,7 +160,7 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer) http.Handler {
 
 	mux.Patch("/groups/:groupID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "update_group")(updateGroupEndpoint(svc)),
-		decodeGroupCreate,
+		decodeGroupUpdate,
 		encodeResponse,
 		opts...,
 	))
@@ -312,7 +312,7 @@ func decodeGroupCreate(_ context.Context, r *http.Request) (interface{}, error) 
 
 	var req createGroupReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(ErrFailedDecode, err)
+		return nil, errors.Wrap(users.ErrMalformedEntity, err)
 	}
 
 	req.token = r.Header.Get("Authorization")
@@ -320,11 +320,23 @@ func decodeGroupCreate(_ context.Context, r *http.Request) (interface{}, error) 
 	return req, nil
 }
 
-func decodeGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeGroupUpdate(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, ErrUnsupportedContentType
 	}
 
+	req := updateGroupReq{
+		token: r.Header.Get("Authorization"),
+		id:    bone.GetValue(r, "groupID"),
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(users.ErrMalformedEntity, err)
+	}
+
+	return req, nil
+}
+
+func decodeGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := groupReq{
 		token:   r.Header.Get("Authorization"),
 		groupID: bone.GetValue(r, "groupID"),
@@ -371,10 +383,6 @@ func decodeListUserGroupsRequest(_ context.Context, r *http.Request) (interface{
 }
 
 func decodeUserGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, ErrUnsupportedContentType
-	}
-
 	req := userGroupReq{
 		token:   r.Header.Get("Authorization"),
 		groupID: bone.GetValue(r, "groupID"),

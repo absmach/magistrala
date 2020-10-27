@@ -75,15 +75,14 @@ func (gr groupRepository) Save(ctx context.Context, group users.Group) (users.Gr
 }
 
 func (gr groupRepository) Update(ctx context.Context, group users.Group) error {
-	q := `UPDATE groups SET(name, description, metadata) VALUES (:name, :description, :metadata) WHERE id = :id`
-
+	q := `UPDATE groups SET name = :name, metadata = :metadata, description = :description WHERE id = :id;`
 	dbu, err := toDBGroup(group)
 	if err != nil {
-		return errors.Wrap(errUpdateDB, err)
+		return errors.Wrap(users.ErrUpdateGroup, err)
 	}
 
 	if _, err := gr.db.NamedExecContext(ctx, q, dbu); err != nil {
-		return errors.Wrap(errUpdateDB, err)
+		return errors.Wrap(users.ErrUpdateGroup, err)
 	}
 
 	return nil

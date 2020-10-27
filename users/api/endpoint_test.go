@@ -475,7 +475,7 @@ func TestGroupCreate(t *testing.T) {
 		{"group create with existing name", createValidTokenRequest, contentType, http.StatusConflict, groupExists, token},
 		{"group create with invalid token", createInvalidTokenRequest, contentType, http.StatusForbidden, unauthRes, ""},
 		{"group create with empty JSON request", "{}", contentType, http.StatusBadRequest, malformedRes, token},
-		{"group create empty request", "", contentType, http.StatusBadRequest, failDecodeRes, token},
+		{"group create empty request", "", contentType, http.StatusBadRequest, malformedRes, token},
 		{"group create missing content type", createValidTokenRequest, "", http.StatusUnsupportedMediaType, unsupportedRes, token},
 	}
 

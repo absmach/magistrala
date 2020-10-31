@@ -6,6 +6,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 
 	"github.com/fatih/color"
 	prettyjson "github.com/hokaccha/go-prettyjson"
@@ -18,6 +19,12 @@ var (
 	Offset uint = 0
 	// Name query parameter
 	Name string = ""
+	// UserAuthToken user auth token parameter
+	UserAuthToken string = ""
+	// ConfigPath config path parameter
+	ConfigPath string = ""
+	// RawOutput raw output mode
+	RawOutput bool = false
 )
 
 func logJSON(iList ...interface{}) {
@@ -43,7 +50,10 @@ func logUsage(u string) {
 }
 
 func logError(err error) {
-	fmt.Printf("\n%s\n\n", color.RedString(err.Error()))
+	boldRed := color.New(color.FgRed, color.Bold)
+	boldRed.Print("\nerror: ")
+
+	fmt.Printf("%s\n\n", color.RedString(err.Error()))
 }
 
 func logOK() {
@@ -51,5 +61,17 @@ func logOK() {
 }
 
 func logCreated(e string) {
-	fmt.Printf(color.BlueString("\ncreated: %s\n\n"), e)
+	if RawOutput {
+		fmt.Println(e)
+	} else {
+		fmt.Printf(color.BlueString("\ncreated: %s\n\n"), e)
+	}
+}
+
+func getUserAuthToken() string {
+	if UserAuthToken == "" {
+		log.Fatal("user auth token not valid, please pass using --user-auth-token flag or config file")
+	}
+
+	return UserAuthToken
 }

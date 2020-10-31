@@ -10,8 +10,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var cmdUsers = []cobra.Command{
-	cobra.Command{
+// NewUsersCmd returns users command.
+func NewUsersCmd() *cobra.Command {
+	createCmd := cobra.Command{
 		Use:   "create",
 		Short: "create <username> <password>",
 		Long:  `Creates new user`,
@@ -33,8 +34,9 @@ var cmdUsers = []cobra.Command{
 
 			logCreated(id)
 		},
-	},
-	cobra.Command{
+	}
+
+	getCmd := cobra.Command{
 		Use:   "get",
 		Short: "get <user_auth_token>",
 		Long:  `Returns user object`,
@@ -52,8 +54,9 @@ var cmdUsers = []cobra.Command{
 
 			logJSON(u)
 		},
-	},
-	cobra.Command{
+	}
+
+	tokenCmd := cobra.Command{
 		Use:   "token",
 		Short: "token <username> <password>",
 		Long:  `Creates new token`,
@@ -74,9 +77,11 @@ var cmdUsers = []cobra.Command{
 			}
 
 			logCreated(token)
+
 		},
-	},
-	cobra.Command{
+	}
+
+	updateCmd := cobra.Command{
 		Use:   "update",
 		Short: "update <JSON_string> <user_auth_token>",
 		Long:  `Update user metadata`,
@@ -99,8 +104,9 @@ var cmdUsers = []cobra.Command{
 
 			logOK()
 		},
-	},
-	cobra.Command{
+	}
+
+	passwordCmd := cobra.Command{
 		Use:   "password",
 		Short: "password <old_password> <password> <user_auth_token>",
 		Long:  `Update user password`,
@@ -117,18 +123,19 @@ var cmdUsers = []cobra.Command{
 
 			logOK()
 		},
-	},
-}
+	}
 
-// NewUsersCmd returns users command.
-func NewUsersCmd() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "users",
 		Short: "Users management",
 		Long:  `Users management: create accounts and tokens"`,
 		Run: func(cmd *cobra.Command, args []string) {
-			logUsage("Usage: users [create | get | update | token | password]")
+			logUsage("users [create | get | update | token | password]")
 		},
+	}
+
+	cmdUsers := []cobra.Command{
+		createCmd, getCmd, tokenCmd, updateCmd, passwordCmd,
 	}
 
 	for i := range cmdUsers {

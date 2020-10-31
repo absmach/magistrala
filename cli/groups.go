@@ -172,7 +172,7 @@ func NewGroupsCmd() *cobra.Command {
 		Short: "Groups management",
 		Long:  `Groups management: create groups and assigns user to groups"`,
 		Run: func(cmd *cobra.Command, args []string) {
-			logUsage("Usage: Groups [create | get | delete | assign | unassign | members | membership]")
+			logUsage("groups [create | get | delete | assign | unassign | members | membership]")
 		},
 	}
 	for i := range cmdGroups {

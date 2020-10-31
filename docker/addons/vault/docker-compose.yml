@@ -1,0 +1,42 @@
+# Copyright (c) Mainflux
+# SPDX-License-Identifier: Apache-2.0
+
+# This docker-compose file contains optional Vault service for Mainflux platform.
+# Since this is optional, this file is dependent of docker-compose file
+# from <project_root>/docker. In order to run these services, execute command:
+# docker-compose -f docker/docker-compose.yml -f docker/addons/vault/docker-compose.yml up
+# from project root. Vault default port (8200) is exposed, so you can use Vault CLI tool for
+# vault inspection and administration, as well as access the UI.
+
+version: '3.7'
+
+networks:
+  docker_mainflux-base-net:
+    external: true
+
+volumes:
+  mainflux-vault-volume:
+
+services:
+  vault:
+    image: vault:latest
+    container_name: mainflux-vault
+    ports:
+      - ${MF_VAULT_PORT}:8200
+    networks:
+      - docker_mainflux-base-net
+    volumes:
+      - mainflux-vault-volume:/vault/file
+      - mainflux-vault-volume:/vault/logs
+      - ./config.hcl:/vault/config/config.hcl
+      - ./entrypoint.sh:/entrypoint.sh
+    environment:
+      VAULT_ADDR: http://127.0.0.1:${MF_VAULT_PORT}
+      MF_VAULT_PORT: ${MF_VAULT_PORT}
+      MF_VAULT_UNSEAL_KEY_1: ${MF_VAULT_UNSEAL_KEY_1}
+      MF_VAULT_UNSEAL_KEY_2: ${MF_VAULT_UNSEAL_KEY_2}
+      MF_VAULT_UNSEAL_KEY_3: ${MF_VAULT_UNSEAL_KEY_3}
+    entrypoint: /bin/sh
+    command: /entrypoint.sh
+    cap_add:
+      - IPC_LOCK

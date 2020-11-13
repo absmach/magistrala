@@ -71,7 +71,7 @@ func (svc tokenizer) Parse(token string) (authn.Key, error) {
 		if e, ok := err.(*jwt.ValidationError); ok && e.Errors == jwt.ValidationErrorExpired {
 			// Expired User key needs to be revoked.
 			if c.Type != nil && *c.Type == authn.APIKey {
-				return c.toKey(), nil
+				return c.toKey(), authn.ErrAPIKeyExpired
 			}
 			return authn.Key{}, errors.Wrap(authn.ErrKeyExpired, err)
 		}

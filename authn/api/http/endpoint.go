@@ -47,22 +47,6 @@ func issueEndpoint(svc authn.Service) endpoint.Endpoint {
 	}
 }
 
-func revokeEndpoint(svc authn.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(keyReq)
-
-		if err := req.validate(); err != nil {
-			return nil, err
-		}
-
-		if err := svc.Revoke(ctx, req.token, req.id); err != nil {
-			return nil, err
-		}
-
-		return revokeKeyRes{}, nil
-	}
-}
-
 func retrieveEndpoint(svc authn.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(keyReq)
@@ -88,5 +72,21 @@ func retrieveEndpoint(svc authn.Service) endpoint.Endpoint {
 		}
 
 		return ret, nil
+	}
+}
+
+func revokeEndpoint(svc authn.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(keyReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		if err := svc.Revoke(ctx, req.token, req.id); err != nil {
+			return nil, err
+		}
+
+		return revokeKeyRes{}, nil
 	}
 }

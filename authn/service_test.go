@@ -266,7 +266,7 @@ func TestIdentify(t *testing.T) {
 			desc: "identify expired API key",
 			key:  expSecret,
 			idt:  authn.Identity{},
-			err:  authn.ErrKeyExpired,
+			err:  authn.ErrAPIKeyExpired,
 		},
 		{
 			desc: "identify expired key",

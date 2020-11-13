@@ -1,14 +1,26 @@
 # Authentication service
 
-Authentication service provides an API for managing authentication keys.
+Authentication service provides an API for managing authentication keys. User service is using AuthN service gRPC API to obtain login token or password reset token. Authentication key consists of the following fields:
+- ID - key ID
+- Type - one of the three types described below
+- IssuerID - an ID of the Mainflux User who issued the key
+- Subject - user email
+- IssuedAt - the timestamp when the key is issued
+- ExpiresAt - the timestamp after which the key is invalid
 
 There are *three types of authentication keys*:
 
-- user key - keys issued to the user upon login request
+- User key - keys issued to the user upon login request
 - API key - keys issued upon the user request
-- recovery key - password recovery key
+- Recovery key - password recovery key
 
-User keys are issued when user logs in. Each user request (other than `registration` and `login`) contains user key that is used to authenticate the user. API keys are similar to the User keys. The main difference is that API keys have configurable expiration time. If no time is set, the key will never expire. For that reason, API keys are _the only key type that can be revoked_. Recovery key is the password recovery key. It's short-lived token used for password recovery process.
+Authentication keys are represented and distributed by the corresponding [JWT](jwt.io).
+
+User keys are issued when user logs in. Each user request (other than `registration` and `login`) contains user key that is used to authenticate the user.
+
+API keys are similar to the User keys. The main difference is that API keys have configurable expiration time. If no time is set, the key will never expire. For that reason, API keys are _the only key type that can be revoked_. This also means that, despite being used as a JWT, it requires a query to the database to validate the API key. The user with API key can perform all the same actions as the user with login key (can act on behalf of the user for Thing, Channel, or user profile management), *except issuing new API keys*.
+
+Recovery key is the password recovery key. It's short-lived token used for password recovery process.
 
 For in-depth explanation of the aforementioned scenarios, as well as thorough
 understanding of Mainflux, please check out the [official documentation][doc].
@@ -17,7 +29,7 @@ The following actions are supported:
 
 - create (all key types)
 - verify (all key types)
-- obtain (API keys only; secret is never obtained)
+- obtain (API keys only)
 - revoke (API keys only)
 
 ## Configuration
@@ -101,6 +113,6 @@ If `MF_EMAIL_TEMPLATE` doesn't point to any file service will function but passw
 ## Usage
 
 For more information about service capabilities and its usage, please check out
-the [API documentation](swagger.yaml).
+the [API documentation](openapi.yaml).
 
 [doc]: http://mainflux.readthedocs.io

@@ -28,3 +28,13 @@ the following locations:
 5. In what environment did you encounter the issue?
 
 6. Additional information you deem important:
+
+**ENHANCEMENT**
+1. Describe the enhancement you are requesting. Enhancements include:
+   - tests
+   - code refactor
+   - documentation
+   - research
+   - tooling
+
+2. Indicate the importance of this enhancement to you (must-have, should-have, nice-to-have).

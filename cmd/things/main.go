@@ -310,6 +310,9 @@ func newService(auth mainflux.AuthNServiceClient, dbTracer opentracing.Tracer, c
 	channelsRepo := postgres.NewChannelRepository(database)
 	channelsRepo = tracing.ChannelRepositoryMiddleware(dbTracer, channelsRepo)
 
+	groupsRepo := postgres.NewGroupRepo(database)
+	groupsRepo = tracing.GroupRepositoryMiddleware(dbTracer, groupsRepo)
+
 	chanCache := rediscache.NewChannelCache(cacheClient)
 	chanCache = tracing.ChannelCacheMiddleware(cacheTracer, chanCache)
 
@@ -317,7 +320,7 @@ func newService(auth mainflux.AuthNServiceClient, dbTracer opentracing.Tracer, c
 	thingCache = tracing.ThingCacheMiddleware(cacheTracer, thingCache)
 	up := uuidProvider.New()
 
-	svc := things.New(auth, thingsRepo, channelsRepo, chanCache, thingCache, up)
+	svc := things.New(auth, thingsRepo, channelsRepo, groupsRepo, chanCache, thingCache, up)
 	svc = rediscache.NewEventStoreMiddleware(svc, esClient)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(

@@ -93,6 +93,34 @@ func migrateDB(db *sqlx.DB) error {
 					 metadata TYPE JSONB using metadata::text::jsonb`,
 				},
 			},
+			{
+				Id: "things_4",
+				Up: []string{
+					`ALTER TABLE IF EXISTS things ADD CONSTRAINT things_id_key UNIQUE (id)`,
+					`CREATE extension LTREE`,
+					`CREATE TABLE IF NOT EXISTS thing_groups ( 
+						id          UUID UNIQUE NOT NULL,
+						parent_id   UUID, 
+						owner_id    UUID,
+						name        VARCHAR(254) NOT NULL,
+						description VARCHAR(1024),
+						metadata    JSONB,
+						path        LTREE, 
+						created_at  TIMESTAMPTZ,
+						updated_at  TIMESTAMPTZ,
+						PRIMARY KEY (owner_id, path),
+						FOREIGN KEY (parent_id) REFERENCES thing_groups (id) ON DELETE CASCADE ON UPDATE CASCADE
+				   )`,
+					`CREATE TABLE IF NOT EXISTS thing_group_relations (
+						thing_id UUID NOT NULL,
+						group_id UUID NOT NULL,
+						FOREIGN KEY (thing_id) REFERENCES things (id) ON DELETE CASCADE ON UPDATE CASCADE,
+						FOREIGN KEY (group_id) REFERENCES thing_groups (id) ON DELETE CASCADE ON UPDATE CASCADE,
+						PRIMARY KEY (thing_id, group_id)
+				   )`,
+					`CREATE INDEX path_gist_idx ON thing_groups USING GIST (path);`,
+				},
+			},
 		},
 	}
 

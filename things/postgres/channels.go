@@ -453,18 +453,17 @@ func getMetadataQuery(m things.Metadata) ([]byte, string, error) {
 	return mb, mq, nil
 }
 
-func total(ctx context.Context, db Database, query string, params map[string]interface{}) (uint64, error) {
+func total(ctx context.Context, db Database, query string, params interface{}) (uint64, error) {
 	rows, err := db.NamedQueryContext(ctx, query, params)
 	if err != nil {
 		return 0, err
 	}
-
+	defer rows.Close()
 	total := uint64(0)
 	if rows.Next() {
 		if err := rows.Scan(&total); err != nil {
 			return 0, err
 		}
 	}
-
 	return total, nil
 }

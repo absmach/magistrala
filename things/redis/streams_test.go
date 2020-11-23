@@ -47,7 +47,7 @@ func newService(tokens map[string]string) things.Service {
 	thingCache := mocks.NewThingCache()
 	uuidProvider := uuid.NewMock()
 
-	return things.New(auth, thingsRepo, channelsRepo, chanCache, thingCache, uuidProvider)
+	return things.New(auth, thingsRepo, channelsRepo, nil, chanCache, thingCache, uuidProvider)
 }
 
 func TestCreateThings(t *testing.T) {

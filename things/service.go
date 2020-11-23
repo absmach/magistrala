@@ -6,10 +6,14 @@ package things
 import (
 	"context"
 
+	"github.com/mainflux/mainflux/internal/groups"
 	"github.com/mainflux/mainflux/pkg/errors"
 
 	"github.com/mainflux/mainflux"
+	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
 )
+
+const things = "things"
 
 var (
 	// ErrUnauthorizedAccess indicates missing or invalid credentials provided
@@ -36,6 +40,12 @@ var (
 
 	// ErrDisconnect indicates error in removing connection
 	ErrDisconnect = errors.New("remove connection failed")
+
+	// ErrCreateGroup indicates error in creating group.
+	ErrCreateGroup = errors.New("failed to create group")
+
+	// ErrFailedToRetrieveThings failed to retrieve things.
+	ErrFailedToRetrieveThings = errors.New("failed to retrieve group members")
 )
 
 // Service specifies an API that must be fullfiled by the domain service
@@ -110,6 +120,8 @@ type Service interface {
 
 	// Identify returns thing ID for given thing key.
 	Identify(ctx context.Context, key string) (string, error)
+
+	groups.Service
 }
 
 // PageMetadata contains page metadata that helps navigation.
@@ -126,16 +138,18 @@ type thingsService struct {
 	auth         mainflux.AuthNServiceClient
 	things       ThingRepository
 	channels     ChannelRepository
+	groups       groups.Repository
 	channelCache ChannelCache
 	thingCache   ThingCache
 	uuidProvider mainflux.UUIDProvider
 }
 
 // New instantiates the things service implementation.
-func New(auth mainflux.AuthNServiceClient, things ThingRepository, channels ChannelRepository, ccache ChannelCache, tcache ThingCache, up mainflux.UUIDProvider) Service {
+func New(auth mainflux.AuthNServiceClient, things ThingRepository, channels ChannelRepository, groups groups.Repository, ccache ChannelCache, tcache ThingCache, up mainflux.UUIDProvider) Service {
 	return &thingsService{
 		auth:         auth,
 		things:       things,
+		groups:       groups,
 		channels:     channels,
 		channelCache: ccache,
 		thingCache:   tcache,
@@ -381,4 +395,110 @@ func (ts *thingsService) hasThing(ctx context.Context, chanID, thingKey string) 
 		return "", ErrEntityConnected
 	}
 	return thingID, nil
+}
+
+func (ts *thingsService) CreateGroup(ctx context.Context, token string, g groups.Group) (string, error) {
+	user, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return "", errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+
+	uid, err := uuidProvider.New().ID()
+	if err != nil {
+		return "", errors.Wrap(ErrCreateGroup, err)
+	}
+
+	g.ID = uid
+	g.OwnerID = user.GetId()
+	if _, err := ts.groups.Save(ctx, g); err != nil {
+		return "", err
+	}
+
+	return g.ID, nil
+}
+
+func (ts *thingsService) ListGroups(ctx context.Context, token string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
+	if _, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
+		return groups.GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	return ts.groups.RetrieveAll(ctx, level, gm)
+
+}
+
+func (ts *thingsService) ListParents(ctx context.Context, token string, childID string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
+	if _, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
+		return groups.GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	return ts.groups.RetrieveAllParents(ctx, childID, level, gm)
+}
+
+func (ts *thingsService) ListChildren(ctx context.Context, token string, parentID string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
+	if _, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
+		return groups.GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	return ts.groups.RetrieveAllChildren(ctx, parentID, level, gm)
+}
+
+func (ts *thingsService) ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, gm groups.Metadata) (groups.MemberPage, error) {
+	if _, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
+		return groups.MemberPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	p, err := ts.groups.Members(ctx, groupID, offset, limit, gm)
+	if err != nil {
+		return groups.MemberPage{}, errors.Wrap(ErrFailedToRetrieveThings, err)
+	}
+	mp := groups.MemberPage{
+		PageMetadata: groups.PageMetadata{
+			Total:  p.Total,
+			Offset: p.Offset,
+			Limit:  p.Limit,
+			Name:   things,
+		},
+		Members: make([]groups.Member, 0),
+	}
+	mp.Members = append(mp.Members, p.Members)
+	return mp, nil
+}
+
+func (ts *thingsService) RemoveGroup(ctx context.Context, token, id string) error {
+	if _, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
+		return errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	return ts.groups.Delete(ctx, id)
+}
+
+func (ts *thingsService) Unassign(ctx context.Context, token, memberID, groupID string) error {
+	if _, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
+		return errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	return ts.groups.Unassign(ctx, memberID, groupID)
+}
+
+func (ts *thingsService) UpdateGroup(ctx context.Context, token string, g groups.Group) (groups.Group, error) {
+	if _, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
+		return groups.Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+
+	return ts.groups.Update(ctx, g)
+}
+
+func (ts *thingsService) ViewGroup(ctx context.Context, token, id string) (groups.Group, error) {
+	if _, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
+		return groups.Group{}, errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	return ts.groups.RetrieveByID(ctx, id)
+}
+
+func (ts *thingsService) Assign(ctx context.Context, token, memberID, groupID string) error {
+	if _, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
+		return errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	return ts.groups.Assign(ctx, memberID, groupID)
+}
+
+func (ts *thingsService) ListMemberships(ctx context.Context, token string, memberID string, offset, limit uint64, gm groups.Metadata) (groups.GroupPage, error) {
+	if _, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
+		return groups.GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	return ts.groups.Memberships(ctx, memberID, offset, limit, gm)
 }

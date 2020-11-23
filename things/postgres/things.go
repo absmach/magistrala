@@ -22,6 +22,11 @@ const (
 	errTruncation = "string_data_right_truncation"
 )
 
+var (
+	errUpdateDB   = errors.New("failed to update db")
+	errRetrieveDB = errors.New("failed retrieving from db")
+)
+
 var _ things.ThingRepository = (*thingRepository)(nil)
 
 type thingRepository struct {
@@ -184,8 +189,7 @@ func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, offset,
 	}
 
 	q := fmt.Sprintf(`SELECT id, name, key, metadata FROM things
-		  WHERE owner = :owner %s%s ORDER BY id LIMIT :limit OFFSET :offset;`, mq, nq)
-
+		  			  WHERE owner = :owner %s%s ORDER BY id LIMIT :limit OFFSET :offset;`, mq, nq)
 	params := map[string]interface{}{
 		"owner":    owner,
 		"limit":    limit,

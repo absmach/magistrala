@@ -68,7 +68,7 @@ type Service interface {
 
 	// ListThings retrieves data about subset of things that belongs to the
 	// user identified by the provided key.
-	ListThings(ctx context.Context, token string, offset, limit uint64, name string, metadata Metadata) (Page, error)
+	ListThings(ctx context.Context, token string, pm PageMetadata) (Page, error)
 
 	// ListThingsByChannel retrieves data about subset of things that are
 	// connected or not connected to specified channel and belong to the user identified by
@@ -92,7 +92,7 @@ type Service interface {
 
 	// ListChannels retrieves data about subset of channels that belongs to the
 	// user identified by the provided key.
-	ListChannels(ctx context.Context, token string, offset, limit uint64, name string, m Metadata) (ChannelsPage, error)
+	ListChannels(ctx context.Context, token string, pm PageMetadata) (ChannelsPage, error)
 
 	// ListChannelsByThing retrieves data about subset of channels that have
 	// specified thing connected or not connected to them and belong to the user identified by
@@ -126,10 +126,13 @@ type Service interface {
 
 // PageMetadata contains page metadata that helps navigation.
 type PageMetadata struct {
-	Total  uint64
-	Offset uint64
-	Limit  uint64
-	Name   string
+	Total    uint64
+	Offset   uint64
+	Limit    uint64
+	Name     string
+	Order    string
+	Dir      string
+	Metadata map[string]interface{}
 }
 
 var _ Service = (*thingsService)(nil)
@@ -213,13 +216,13 @@ func (ts *thingsService) ViewThing(ctx context.Context, token, id string) (Thing
 	return ts.things.RetrieveByID(ctx, res.GetEmail(), id)
 }
 
-func (ts *thingsService) ListThings(ctx context.Context, token string, offset, limit uint64, name string, metadata Metadata) (Page, error) {
+func (ts *thingsService) ListThings(ctx context.Context, token string, pm PageMetadata) (Page, error) {
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return Page{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	return ts.things.RetrieveAll(ctx, res.GetEmail(), offset, limit, name, metadata)
+	return ts.things.RetrieveAll(ctx, res.GetEmail(), pm)
 }
 
 func (ts *thingsService) ListThingsByChannel(ctx context.Context, token, channel string, offset, limit uint64, connected bool) (Page, error) {
@@ -280,13 +283,13 @@ func (ts *thingsService) ViewChannel(ctx context.Context, token, id string) (Cha
 	return ts.channels.RetrieveByID(ctx, res.GetEmail(), id)
 }
 
-func (ts *thingsService) ListChannels(ctx context.Context, token string, offset, limit uint64, name string, m Metadata) (ChannelsPage, error) {
+func (ts *thingsService) ListChannels(ctx context.Context, token string, pm PageMetadata) (ChannelsPage, error) {
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return ChannelsPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	return ts.channels.RetrieveAll(ctx, res.GetEmail(), offset, limit, name, m)
+	return ts.channels.RetrieveAll(ctx, res.GetEmail(), pm)
 }
 
 func (ts *thingsService) ListChannelsByThing(ctx context.Context, token, thing string, offset, limit uint64, connected bool) (ChannelsPage, error) {

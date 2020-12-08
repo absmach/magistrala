@@ -201,67 +201,78 @@ func TestListThings(t *testing.T) {
 
 	cases := map[string]struct {
 		token    string
-		offset   uint64
-		limit    uint64
-		name     string
+		pageMetadata things.PageMetadata
 		size     uint64
-		metadata map[string]interface{}
 		err      error
 	}{
 		"list all things": {
-			token:  token,
-			offset: 0,
-			limit:  n,
-			size:   n,
-			err:    nil,
+			token: token,
+			pageMetadata: things.PageMetadata{
+				Offset: 0,
+				Limit:  n,
+			},
+			size: n,
+			err:  nil,
 		},
 		"list half": {
-			token:  token,
-			offset: n / 2,
-			limit:  n,
-			size:   n / 2,
-			err:    nil,
+			token: token,
+			pageMetadata: things.PageMetadata{
+				Offset: n / 2,
+				Limit:  n,
+			},
+			size: n / 2,
+			err:  nil,
 		},
 		"list last thing": {
-			token:  token,
-			offset: n - 1,
-			limit:  n,
-			size:   1,
-			err:    nil,
+			token: token,
+			pageMetadata: things.PageMetadata{
+				Offset: n - 1,
+				Limit:  n,
+			},
+			size: 1,
+			err:  nil,
 		},
 		"list empty set": {
-			token:  token,
-			offset: n + 1,
-			limit:  n,
-			size:   0,
-			err:    nil,
+			token: token,
+			pageMetadata: things.PageMetadata{
+				Offset: n + 1,
+				Limit:  n,
+			},
+			size: 0,
+			err:  nil,
 		},
 		"list with zero limit": {
-			token:  token,
-			offset: 1,
-			limit:  0,
-			size:   0,
-			err:    nil,
+			token: token,
+			pageMetadata: things.PageMetadata{
+				Offset: 1,
+				Limit:  0,
+			},
+			size: 0,
+			err:  nil,
 		},
 		"list with wrong credentials": {
-			token:  wrongValue,
-			offset: 0,
-			limit:  0,
-			size:   0,
-			err:    things.ErrUnauthorizedAccess,
+			token: wrongValue,
+			pageMetadata: things.PageMetadata{
+				Offset: 0,
+				Limit:  0,
+			},
+			size: 0,
+			err:  things.ErrUnauthorizedAccess,
 		},
 		"list with metadata": {
-			token:    token,
-			offset:   0,
-			limit:    n,
-			size:     n,
-			err:      nil,
-			metadata: m,
+			token: token,
+			pageMetadata: things.PageMetadata{
+				Offset:   0,
+				Limit:    n,
+				Metadata: m,
+			},
+			size: n,
+			err:  nil,
 		},
 	}
 
 	for desc, tc := range cases {
-		page, err := svc.ListThings(context.Background(), tc.token, tc.offset, tc.limit, tc.name, tc.metadata)
+		page, err := svc.ListThings(context.Background(), tc.token, tc.pageMetadata)
 		size := uint64(len(page.Things))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
@@ -549,83 +560,98 @@ func TestListChannels(t *testing.T) {
 	}
 	cases := map[string]struct {
 		token    string
-		offset   uint64
-		limit    uint64
+		pageMetadata things.PageMetadata
 		size     uint64
-		name     string
 		err      error
-		metadata things.Metadata
 	}{
 		"list all channels": {
-			token:  token,
-			offset: 0,
-			limit:  n,
-			size:   n,
-			err:    nil,
+			token: token,
+			pageMetadata: things.PageMetadata{
+				Offset: 0,
+				Limit:  n,
+			},
+			size: n,
+			err:  nil,
 		},
 		"list half": {
-			token:  token,
-			offset: n / 2,
-			limit:  n,
-			size:   n / 2,
-			err:    nil,
+			token: token,
+			pageMetadata: things.PageMetadata{
+				Offset: n / 2,
+				Limit:  n,
+			},
+			size: n / 2,
+			err:  nil,
 		},
 		"list last channel": {
-			token:  token,
-			offset: n - 1,
-			limit:  n,
-			size:   1,
-			err:    nil,
+			token: token,
+			pageMetadata: things.PageMetadata{
+				Offset: n - 1,
+				Limit:  n,
+			},
+			size: 1,
+			err:  nil,
 		},
 		"list empty set": {
-			token:  token,
-			offset: n + 1,
-			limit:  n,
-			size:   0,
-			err:    nil,
+			token: token,
+			pageMetadata: things.PageMetadata{
+				Offset: n + 1,
+				Limit:  n,
+			},
+			size: 0,
+			err:  nil,
 		},
 		"list with zero limit": {
-			token:  token,
-			offset: 1,
-			limit:  0,
-			size:   0,
-			err:    nil,
+			token: token,
+			pageMetadata: things.PageMetadata{
+				Offset: 1,
+				Limit:  0,
+			},
+			size: 0,
+			err:  nil,
 		},
 		"list with wrong credentials": {
-			token:  wrongValue,
-			offset: 0,
-			limit:  0,
-			size:   0,
-			err:    things.ErrUnauthorizedAccess,
+			token: wrongValue,
+			pageMetadata: things.PageMetadata{
+				Offset: 0,
+				Limit:  0,
+			},
+			size: 0,
+			err:  things.ErrUnauthorizedAccess,
 		},
 		"list with existing name": {
-			token:  token,
-			offset: 0,
-			limit:  n,
-			size:   n,
-			name:   "chanel_name",
-			err:    nil,
+			token: token,
+			pageMetadata: things.PageMetadata{
+				Offset: 0,
+				Limit:  n,
+				Name:   "chanel_name",
+			},
+			size: n,
+			err:  nil,
 		},
 		"list with non-existent name": {
-			token:  token,
-			offset: 0,
-			limit:  n,
-			size:   n,
-			name:   "wrong",
-			err:    nil,
+			token: token,
+			pageMetadata: things.PageMetadata{
+				Offset: 0,
+				Limit:  n,
+				Name:   "wrong",
+			},
+			size: n,
+			err:  nil,
 		},
 		"list all channels with metadata": {
-			token:    token,
-			offset:   0,
-			limit:    n,
-			size:     n,
-			err:      nil,
-			metadata: meta,
+			token: token,
+			pageMetadata: things.PageMetadata{
+				Offset:   0,
+				Limit:    n,
+				Metadata: meta,
+			},
+			size: n,
+			err:  nil,
 		},
 	}
 
 	for desc, tc := range cases {
-		page, err := svc.ListChannels(context.Background(), tc.token, tc.offset, tc.limit, tc.name, tc.metadata)
+		page, err := svc.ListChannels(context.Background(), tc.token, tc.pageMetadata)
 		size := uint64(len(page.Channels))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))

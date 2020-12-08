@@ -39,7 +39,7 @@ type ChannelRepository interface {
 	RetrieveByID(ctx context.Context, owner, id string) (Channel, error)
 
 	// RetrieveAll retrieves the subset of channels owned by the specified user.
-	RetrieveAll(ctx context.Context, owner string, offset, limit uint64, name string, m Metadata) (ChannelsPage, error)
+	RetrieveAll(ctx context.Context, owner string, pm PageMetadata) (ChannelsPage, error)
 
 	// RetrieveByThing retrieves the subset of channels owned by the specified
 	// user and have specified thing connected or not connected to them.

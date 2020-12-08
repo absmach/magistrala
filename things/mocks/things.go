@@ -112,18 +112,18 @@ func (trm *thingRepositoryMock) RetrieveByID(_ context.Context, owner, id string
 	return things.Thing{}, things.ErrNotFound
 }
 
-func (trm *thingRepositoryMock) RetrieveAll(_ context.Context, owner string, offset, limit uint64, name string, metadata things.Metadata) (things.Page, error) {
+func (trm *thingRepositoryMock) RetrieveAll(_ context.Context, owner string, pm things.PageMetadata) (things.Page, error) {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
 	items := make([]things.Thing, 0)
 
-	if offset < 0 || limit <= 0 {
+	if pm.Offset < 0 || pm.Limit <= 0 {
 		return things.Page{}, nil
 	}
 
-	first := uint64(offset) + 1
-	last := first + uint64(limit)
+	first := uint64(pm.Offset) + 1
+	last := first + uint64(pm.Limit)
 
 	// This obscure way to examine map keys is enforced by the key structure
 	// itself (see mocks/commons.go).
@@ -143,8 +143,8 @@ func (trm *thingRepositoryMock) RetrieveAll(_ context.Context, owner string, off
 		Things: items,
 		PageMetadata: things.PageMetadata{
 			Total:  trm.counter,
-			Offset: offset,
-			Limit:  limit,
+			Offset: pm.Offset,
+			Limit:  pm.Limit,
 		},
 	}
 

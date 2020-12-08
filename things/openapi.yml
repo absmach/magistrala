@@ -46,6 +46,8 @@ paths:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Name"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Direction"
         - $ref: "#/components/parameters/Metadata"
       responses:
         200:
@@ -213,6 +215,9 @@ paths:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Name"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Direction"
+        - $ref: "#/components/parameters/Metadata"
       responses:
         200:
           $ref: "#/components/responses/ChannelsPageRes"
@@ -643,14 +648,15 @@ components:
       in: path
       schema:
         type: string
+        format: uuid
       required: true
     ThingId:
       name: thingId
       description: Unique thing identifier.
       in: path
       schema:
-        type: integer
-        minimum: 1
+        type: string
+        format: uuid
       required: true
     Limit:
       name: limit
@@ -685,7 +691,28 @@ components:
       in: query
       schema:
         type: string
-        format: byte
+      required: false
+    Order:
+      name: order
+      description: Order type.
+      in: query
+      schema:
+        type: string
+        default: id
+        enum:
+          - name
+          - id
+      required: false
+    Direction:
+      name: dir
+      description: Order direction.
+      in: query
+      schema:
+        type: string
+        default: desc
+        enum:
+          - asc
+          - desc
       required: false
     Metadata:
       name: metadata

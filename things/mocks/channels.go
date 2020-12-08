@@ -78,15 +78,15 @@ func (crm *channelRepositoryMock) RetrieveByID(_ context.Context, owner, id stri
 	return things.Channel{}, things.ErrNotFound
 }
 
-func (crm *channelRepositoryMock) RetrieveAll(_ context.Context, owner string, offset, limit uint64, name string, metadata things.Metadata) (things.ChannelsPage, error) {
+func (crm *channelRepositoryMock) RetrieveAll(_ context.Context, owner string, pm things.PageMetadata) (things.ChannelsPage, error) {
 	channels := make([]things.Channel, 0)
 
-	if offset < 0 || limit <= 0 {
+	if pm.Offset < 0 || pm.Limit <= 0 {
 		return things.ChannelsPage{}, nil
 	}
 
-	first := uint64(offset) + 1
-	last := first + uint64(limit)
+	first := uint64(pm.Offset) + 1
+	last := first + uint64(pm.Limit)
 
 	// This obscure way to examine map keys is enforced by the key structure
 	// itself (see mocks/commons.go).
@@ -106,8 +106,8 @@ func (crm *channelRepositoryMock) RetrieveAll(_ context.Context, owner string, o
 		Channels: channels,
 		PageMetadata: things.PageMetadata{
 			Total:  crm.counter,
-			Offset: offset,
-			Limit:  limit,
+			Offset: pm.Offset,
+			Limit:  pm.Limit,
 		},
 	}
 

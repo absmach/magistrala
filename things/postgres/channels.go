@@ -120,22 +120,24 @@ func (cr channelRepository) RetrieveByID(ctx context.Context, owner, id string) 
 	return toChannel(dbch), nil
 }
 
-func (cr channelRepository) RetrieveAll(ctx context.Context, owner string, offset, limit uint64, name string, metadata things.Metadata) (things.ChannelsPage, error) {
-	nq, name := getNameQuery(name)
-	m, mq, err := getMetadataQuery(metadata)
+func (cr channelRepository) RetrieveAll(ctx context.Context, owner string, pm things.PageMetadata) (things.ChannelsPage, error) {
+	nq, name := getNameQuery(pm.Name)
+	oq := getOrderQuery(pm.Order)
+	dq := getDirQuery(pm.Dir)
+	meta, mq, err := getMetadataQuery(pm.Metadata)
 	if err != nil {
 		return things.ChannelsPage{}, errors.Wrap(things.ErrSelectEntity, err)
 	}
 
 	q := fmt.Sprintf(`SELECT id, name, metadata FROM channels
-	      WHERE owner = :owner %s%s ORDER BY id LIMIT :limit OFFSET :offset;`, mq, nq)
+	      WHERE owner = :owner %s%s ORDER BY %s %s LIMIT :limit OFFSET :offset;`, mq, nq, oq, dq)
 
 	params := map[string]interface{}{
 		"owner":    owner,
-		"limit":    limit,
-		"offset":   offset,
+		"limit":    pm.Limit,
+		"offset":   pm.Offset,
 		"name":     name,
-		"metadata": m,
+		"metadata": meta,
 	}
 	rows, err := cr.db.NamedQueryContext(ctx, q, params)
 	if err != nil {
@@ -165,8 +167,9 @@ func (cr channelRepository) RetrieveAll(ctx context.Context, owner string, offse
 		Channels: items,
 		PageMetadata: things.PageMetadata{
 			Total:  total,
-			Offset: offset,
-			Limit:  limit,
+			Offset: pm.Offset,
+			Limit:  pm.Limit,
+			Order:  pm.Order,
 		},
 	}
 
@@ -429,13 +432,30 @@ func toChannel(ch dbChannel) things.Channel {
 }
 
 func getNameQuery(name string) (string, string) {
-	name = strings.ToLower(name)
-	nq := ""
-	if name != "" {
-		name = fmt.Sprintf(`%%%s%%`, name)
-		nq = ` AND LOWER(name) LIKE :name`
+	if name == "" {
+		return "", ""
 	}
+	name = fmt.Sprintf(`%%%s%%`, strings.ToLower(name))
+	nq := ` AND LOWER(name) LIKE :name`
 	return nq, name
+}
+
+func getOrderQuery(order string) string {
+	switch order {
+	case "name":
+		return "name"
+	default:
+		return "id"
+	}
+}
+
+func getDirQuery(dir string) string {
+	switch dir {
+	case "asc":
+		return "ASC"
+	default:
+		return "DESC"
+	}
 }
 
 func getMetadataQuery(m things.Metadata) ([]byte, string, error) {

@@ -87,8 +87,8 @@ func (es eventStore) ViewThing(ctx context.Context, token, id string) (things.Th
 	return es.svc.ViewThing(ctx, token, id)
 }
 
-func (es eventStore) ListThings(ctx context.Context, token string, offset, limit uint64, name string, metadata things.Metadata) (things.Page, error) {
-	return es.svc.ListThings(ctx, token, offset, limit, name, metadata)
+func (es eventStore) ListThings(ctx context.Context, token string, pm things.PageMetadata) (things.Page, error) {
+	return es.svc.ListThings(ctx, token, pm)
 }
 
 func (es eventStore) ListThingsByChannel(ctx context.Context, token, id string, offset, limit uint64, connected bool) (things.Page, error) {
@@ -161,8 +161,8 @@ func (es eventStore) ViewChannel(ctx context.Context, token, id string) (things.
 	return es.svc.ViewChannel(ctx, token, id)
 }
 
-func (es eventStore) ListChannels(ctx context.Context, token string, offset, limit uint64, name string, metadata things.Metadata) (things.ChannelsPage, error) {
-	return es.svc.ListChannels(ctx, token, offset, limit, name, metadata)
+func (es eventStore) ListChannels(ctx context.Context, token string, pm things.PageMetadata) (things.ChannelsPage, error) {
+	return es.svc.ListChannels(ctx, token, pm)
 }
 
 func (es eventStore) ListChannelsByThing(ctx context.Context, token, id string, offset, limit uint64, connected bool) (things.ChannelsPage, error) {

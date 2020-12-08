@@ -79,13 +79,13 @@ func (lm *loggingMiddleware) ViewThing(ctx context.Context, token, id string) (t
 	return lm.svc.ViewThing(ctx, token, id)
 }
 
-func (lm *loggingMiddleware) ListThings(ctx context.Context, token string, offset, limit uint64, name string, metadata things.Metadata) (_ things.Page, err error) {
+func (lm *loggingMiddleware) ListThings(ctx context.Context, token string, pm things.PageMetadata) (_ things.Page, err error) {
 	defer func(begin time.Time) {
 		nlog := ""
-		if name != "" {
-			nlog = fmt.Sprintf("with name %s ", name)
+		if pm.Name != "" {
+			nlog = fmt.Sprintf("with name %s", pm.Name)
 		}
-		message := fmt.Sprintf("Method list_things %sfor token %s took %s to complete", nlog, token, time.Since(begin))
+		message := fmt.Sprintf("Method list_things %s for token %s took %s to complete", nlog, token, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -93,7 +93,7 @@ func (lm *loggingMiddleware) ListThings(ctx context.Context, token string, offse
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.ListThings(ctx, token, offset, limit, name, metadata)
+	return lm.svc.ListThings(ctx, token, pm)
 }
 
 func (lm *loggingMiddleware) ListThingsByChannel(ctx context.Context, token, id string, offset, limit uint64, connected bool) (_ things.Page, err error) {
@@ -160,11 +160,11 @@ func (lm *loggingMiddleware) ViewChannel(ctx context.Context, token, id string) 
 	return lm.svc.ViewChannel(ctx, token, id)
 }
 
-func (lm *loggingMiddleware) ListChannels(ctx context.Context, token string, offset, limit uint64, name string, metadata things.Metadata) (_ things.ChannelsPage, err error) {
+func (lm *loggingMiddleware) ListChannels(ctx context.Context, token string, pm things.PageMetadata) (_ things.ChannelsPage, err error) {
 	defer func(begin time.Time) {
 		nlog := ""
-		if name != "" {
-			nlog = fmt.Sprintf("with name %s ", name)
+		if pm.Name != "" {
+			nlog = fmt.Sprintf("with name %s", pm.Name)
 		}
 		message := fmt.Sprintf("Method list_channels %s for token %s took %s to complete", nlog, token, time.Since(begin))
 		if err != nil {
@@ -174,7 +174,7 @@ func (lm *loggingMiddleware) ListChannels(ctx context.Context, token string, off
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.ListChannels(ctx, token, offset, limit, name, metadata)
+	return lm.svc.ListChannels(ctx, token, pm)
 }
 
 func (lm *loggingMiddleware) ListChannelsByThing(ctx context.Context, token, id string, offset, limit uint64, connected bool) (_ things.ChannelsPage, err error) {

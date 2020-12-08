@@ -4,6 +4,8 @@ go 1.14
 
 require (
 	github.com/BurntSushi/toml v0.3.1
+	github.com/casbin/casbin-pg-adapter v0.1.6
+	github.com/casbin/casbin/v2 v2.18.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/docker v1.13.1
 	github.com/eclipse/paho.mqtt.golang v1.2.0

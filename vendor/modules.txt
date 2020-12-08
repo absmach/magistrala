@@ -4,6 +4,8 @@ github.com/Azure/go-ansiterm/winterm
 # github.com/BurntSushi/toml v0.3.1
 ## explicit
 github.com/BurntSushi/toml
+# github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible
+github.com/Knetic/govaluate
 # github.com/Microsoft/go-winio v0.4.14
 github.com/Microsoft/go-winio
 github.com/Microsoft/go-winio/pkg/guid
@@ -11,10 +13,29 @@ github.com/Microsoft/go-winio/pkg/guid
 github.com/Nvveen/Gotty
 # github.com/beorn7/perks v1.0.1
 github.com/beorn7/perks/quantile
+# github.com/casbin/casbin-pg-adapter v0.1.6
+## explicit
+github.com/casbin/casbin-pg-adapter
+# github.com/casbin/casbin/v2 v2.18.0
+## explicit
+github.com/casbin/casbin/v2
+github.com/casbin/casbin/v2/config
+github.com/casbin/casbin/v2/effect
+github.com/casbin/casbin/v2/errors
+github.com/casbin/casbin/v2/log
+github.com/casbin/casbin/v2/model
+github.com/casbin/casbin/v2/persist
+github.com/casbin/casbin/v2/persist/file-adapter
+github.com/casbin/casbin/v2/rbac
+github.com/casbin/casbin/v2/rbac/default-role-manager
+github.com/casbin/casbin/v2/util
 # github.com/cenkalti/backoff/v3 v3.0.0
 github.com/cenkalti/backoff/v3
 # github.com/cespare/xxhash/v2 v2.1.1
 github.com/cespare/xxhash/v2
+# github.com/codemodus/kace v0.5.1
+github.com/codemodus/kace
+github.com/codemodus/kace/ktrie
 # github.com/containerd/continuity v0.0.0-20190827140505-75bee3e2ccb6
 github.com/containerd/continuity/pathdriver
 # github.com/davecgh/go-spew v1.1.1
@@ -56,6 +77,17 @@ github.com/go-kit/kit/transport/grpc
 github.com/go-kit/kit/transport/http
 # github.com/go-logfmt/logfmt v0.5.0
 github.com/go-logfmt/logfmt
+# github.com/go-pg/pg/v9 v9.1.0
+github.com/go-pg/pg/v9
+github.com/go-pg/pg/v9/internal
+github.com/go-pg/pg/v9/internal/parser
+github.com/go-pg/pg/v9/internal/pool
+github.com/go-pg/pg/v9/orm
+github.com/go-pg/pg/v9/types
+# github.com/go-pg/urlstruct v0.2.8
+github.com/go-pg/urlstruct
+# github.com/go-pg/zerochecker v0.1.1
+github.com/go-pg/zerochecker
 # github.com/go-redis/redis v6.15.8+incompatible
 ## explicit
 github.com/go-redis/redis
@@ -149,6 +181,8 @@ github.com/inconshreveable/mousetrap
 github.com/influxdata/influxdb/client/v2
 github.com/influxdata/influxdb/models
 github.com/influxdata/influxdb/pkg/escape
+# github.com/jinzhu/inflection v1.0.0
+github.com/jinzhu/inflection
 # github.com/jmoiron/sqlx v1.2.1-0.20190826204134-d7d95172beb5
 ## explicit
 github.com/jmoiron/sqlx
@@ -190,6 +224,8 @@ github.com/mitchellh/go-homedir
 # github.com/mitchellh/mapstructure v1.1.2
 ## explicit
 github.com/mitchellh/mapstructure
+# github.com/mmcloughlin/meow v0.0.0-20181112033425-871e50784daf
+github.com/mmcloughlin/meow
 # github.com/nats-io/jwt v0.3.2
 github.com/nats-io/jwt
 # github.com/nats-io/nats.go v1.10.0
@@ -360,6 +396,10 @@ github.com/uber/jaeger-client-go/transport
 github.com/uber/jaeger-client-go/utils
 # github.com/uber/jaeger-lib v2.0.0+incompatible
 github.com/uber/jaeger-lib/metrics
+# github.com/vmihailenco/tagparser v0.1.1
+github.com/vmihailenco/tagparser
+github.com/vmihailenco/tagparser/internal
+github.com/vmihailenco/tagparser/internal/parser
 # github.com/x448/float16 v0.8.4
 github.com/x448/float16
 # github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c
@@ -557,3 +597,5 @@ gopkg.in/square/go-jose.v2/jwt
 gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 gopkg.in/yaml.v3
+# mellium.im/sasl v0.2.1
+mellium.im/sasl

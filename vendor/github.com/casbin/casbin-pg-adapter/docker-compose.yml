@@ -1,0 +1,28 @@
+---
+version: "3.4"
+services:
+  postgres:
+    build:
+      context: ./postgres
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=password
+  go:
+    build:
+      context: ./go
+    depends_on:
+      - postgres
+    environment:
+      - PG_CONN=postgresql://postgres:password@postgres:5432/postgres?sslmode=disable
+    volumes:
+      - .:/app
+      - gopkg:/go/pkg
+    working_dir: /app
+    command:
+      - go
+      - test
+      - github.com/casbin/casbin-pg-adapter
+
+volumes:
+  gopkg:

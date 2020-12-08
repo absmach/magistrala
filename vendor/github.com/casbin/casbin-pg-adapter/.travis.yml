@@ -1,0 +1,13 @@
+language: go
+sudo: false
+go:
+  - 1.13.x
+  - tip
+env:
+  - PG_CONN=postgresql://postgres:@localhost:5432/postgres?sslmode=disable
+services:
+  - postgresql
+before_install:
+  - go get github.com/mattn/goveralls
+script:
+  - $HOME/gopath/bin/goveralls -service=travis-ci

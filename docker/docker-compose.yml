@@ -9,6 +9,7 @@ networks:
 
 volumes:
   mainflux-authn-db-volume:
+  mainflux-authz-db-volume:
   mainflux-users-db-volume:
   mainflux-things-db-volume:
   mainflux-auth-redis-volume:
@@ -92,6 +93,47 @@ services:
       - ${MF_AUTHN_GRPC_PORT}:${MF_AUTHN_GRPC_PORT}
     networks:
       - mainflux-base-net
+
+  authz:
+    image: mainflux/authz:latest
+    container_name: mainflux-authz
+    depends_on:
+      - authz-db
+    expose:
+      - ${MF_AUTHZ_GRPC_PORT}
+    restart: on-failure
+    environment:
+      MF_AUTHZ_LOG_LEVEL: ${MF_AUTHZ_LOG_LEVEL}
+      MF_AUTHZ_DB_HOST: authz-db
+      MF_AUTHZ_DB_PORT: ${MF_AUTHZ_DB_PORT}
+      MF_AUTHZ_DB_USER: ${MF_AUTHZ_DB_USER}
+      MF_AUTHZ_DB_PASS: ${MF_AUTHZ_DB_PASS}
+      MF_AUTHZ_DB: ${MF_AUTHZ_DB}
+      MF_AUTHZ_HTTP_PORT: ${MF_AUTHZ_HTTP_PORT}
+      MF_AUTHZ_GRPC_PORT: ${MF_AUTHZ_GRPC_PORT}
+      MF_AUTHZ_SECRET: ${MF_AUTHZ_SECRET}
+      MF_JAEGER_URL: ${MF_JAEGER_URL}
+      MF_AUTHZ_MODEL_CONF: ${MF_AUTHZ_MODEL_CONF}
+    ports:
+      - ${MF_AUTHZ_HTTP_PORT}:${MF_AUTHZ_HTTP_PORT}
+      - ${MF_AUTHZ_GRPC_PORT}:${MF_AUTHZ_GRPC_PORT}
+    volumes:
+      - ./docker/policy/model.conf:${MF_AUTHZ_MODEL_CONF}
+    networks:
+      - mainflux-base-net
+
+  authz-db:
+    image: postgres:10.8-alpine
+    container_name: mainflux-authz-db
+    restart: on-failure
+    environment:
+      POSTGRES_USER: ${MF_AUTHZ_DB_USER}
+      POSTGRES_PASSWORD: ${MF_AUTHZ_DB_PASS}
+      POSTGRES_DB: ${MF_AUTHZ_DB}
+    networks:
+      - mainflux-base-net
+    volumes:
+      - mainflux-authz-db-volume:/var/lib/postgresql/data
 
   users-db:
     image: postgres:10.8-alpine

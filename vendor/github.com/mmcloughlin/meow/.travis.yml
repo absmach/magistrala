@@ -1,0 +1,40 @@
+language: go
+go:
+- 1.x
+install:
+- export "SDE_VERSION_NAME=sde-external-8.16.0-2018-01-30-lin"
+- curl --verbose
+       --form accept_license=1
+       --form form_id=intel_licensed_dls_step_1
+       --output /dev/null
+       --cookie-jar jar.txt
+       --location
+       https://software.intel.com/protected-download/267266/144917
+- curl --verbose
+       --cookie jar.txt
+       --output sde.tar.bz2
+       https://software.intel.com/system/files/managed/2a/1a/${SDE_VERSION_NAME}.tar.bz2
+- tar -xf sde.tar.bz2
+- export SDE_BIN="$(pwd -P)/${SDE_VERSION_NAME}/sde64"
+script:
+# confirm the generator script is in sync with the assembly file
+- block=$(mktemp)
+- cp block_amd64.s ${block}
+- go generate -x
+- cmp block_amd64.s ${block}
+
+# test fallback
+- go test -v -tags noasm
+
+# run tests
+- go test -v
+
+# run tests inside SDE
+- go test -c
+- for chip in hsw icl future; do ${SDE_BIN} -${chip} -- ./meow.test -test.v -test.short; done
+
+# ensure we can build the testvector generator
+- make -C testdata distclean testvectors
+- tv=$(mktemp)
+- ./testdata/testvectors -s 42 >${tv}
+- go test -v -testvectors ${tv}

@@ -1,0 +1,41 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+.DS_Store
+*.so
+._*
+*.idea
+.nfs.*
+*~
+*.orig
+*.rej
+.*.swp
+*.cgo*.go
+*.cgo*.c
+.vscode/*
+_cgo_*
+_obj
+_test
+_testmain.go
+/VERSION.cache
+/doc/articles/wiki/*.bin
+/goinstall.log
+/last-change
+/misc/cgo/life/run.out
+/misc/cgo/stdio/run.out
+/misc/cgo/testso/main
+/pkg/
+/test.out
+/test/garbage/*.out
+/test/pass.out
+/test/run.out
+/test/times.out
+
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out

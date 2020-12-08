@@ -1,0 +1,21 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package authz;
+
+service AuthZService {
+    rpc Authorize(AuthorizeReq) returns (AuthorizeRes, error) {}
+}
+
+message AuthorizeReq {
+    string sub = 1;
+    string obj = 2;
+    string act = 3;
+}
+
+message AuthorizeRes {
+    bool authorized = 1;
+    string err = 2;
+}

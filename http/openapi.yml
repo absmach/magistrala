@@ -18,17 +18,17 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/MessageReq"
       responses:
-        202:
+        '202':
           description: Message is accepted for processing.
-        400:
+        '400':
           description: Message discarded due to its malformed content.
-        403:
+        '403':
           description: Message discarded due to missing or invalid credentials.
-        404:
+        '404':
           description: Message discarded due to invalid channel id.
-        415:
+        '415':
           description: Message discarded due to invalid or missing content type.
-        500:
+        '500':
           description: Unexpected server-side error occurred.
 
 components:
@@ -102,6 +102,7 @@ components:
       in: header
       schema:
         type: string
+        format: uuid
       required: true
     ID:
       name: id

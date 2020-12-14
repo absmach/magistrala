@@ -16,13 +16,13 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/ProvisionReq"
       responses:
-        201:
+        '201':
           description: Created
-        400:
+        '400':
           description: Failed due to malformed JSON.
-        403:
+        '403':
           description: Unauthorized.
-        500:
+        '500':
           description: Unexpected server-side error ocurred.
     get:
       summary: Gets current mapping.
@@ -34,11 +34,11 @@ paths:
       parameters:
       - $ref: "#/components/parameters/Authorization"
       responses:
-        200:
+        '200':
           $ref: "#/components/responses/ProvisionRes"
-        403:
+        '403':
           description: Unauthorized.
-        500:
+        '500':
           description: Unexpected server-side error ocurred.
 
 components:

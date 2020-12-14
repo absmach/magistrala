@@ -16,11 +16,11 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/CertReq"
       responses:
-        201:
+        '201':
           description: Created
-        400:
+        '400':
           description: Failed due to malformed JSON.
-        500:
+        '500':
           description: Unexpected server-side error ocurred.
   /certs/{thingID}:
     get:
@@ -33,12 +33,12 @@ paths:
         - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ThingID"
       responses:
-        200:
+        '200':
           $ref: "#/components/responses/CertsRes"
-        404:
+        '404':
           description: |
             Failed to retrieve corresponding certificate.
-        500:
+        '500':
           $ref: "#/components/responses/ServiceError"
   /certs/revoke:
     delete:
@@ -51,12 +51,12 @@ paths:
         - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ThingID"
       responses:
-        200:
+        '200':
           $ref: "#/components/responses/RevokeRes"
-        404:
+        '404':
           description: |
             Failed to revoke corresponding certificate.
-        500:
+        '500':
           $ref: "#/components/responses/ServiceError"
 
 components:

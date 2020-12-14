@@ -21,13 +21,13 @@ paths:
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/ChanId"
       responses:
-        200:
+        '200':
           $ref: "#/components/responses/MessagesPageRes"
-        400:
+        '400':
           description: Failed due to malformed query parameters.
-        403:
+        '403':
           description: Missing or invalid access token provided.
-        500:
+        '500':
           $ref: "#/components/responses/ServiceError"
 
 components:

@@ -16,15 +16,15 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/UserCreateReq"
       responses:
-        201:
+        '201':
           $ref: "#/components/responses/UserCreateRes"
-        400:
+        '400':
           description: Failed due to malformed JSON.
-        409:
+        '409':
           description: Failed due to using an existing email address.
-        415:
+        '415':
           description: Missing or invalid content type.
-        500:
+        '500':
           $ref: "#/components/responses/ServiceError"
     get:
       summary: Gets info on currently logged in user.
@@ -36,13 +36,13 @@ paths:
       security:
         - Authorization: []
       responses:
-        200:
+        '200':
           $ref: "#/components/responses/UserRes"
-        400:
+        '400':
           description: Failed due to malformed query parameters.
-        403:
+        '403':
           description: Missing or invalid access token provided.
-        500:
+        '500':
           $ref: "#/components/responses/ServiceError"
     put:
       summary: Updates info on currently logged in user.
@@ -56,15 +56,15 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/UserUpdateReq"
       responses:
-        200:
+        '200':
           description: User updated.
-        400:
+        '400':
           description: Failed due to malformed JSON.
-        404:
+        '404':
           description: Failed due to non existing user.
-        403:
+        '403':
           description: Missing or invalid access token provided.
-        500:
+        '500':
          $ref: "#/components/responses/ServiceError"
   /users/{userId}/groups:
     get:
@@ -79,11 +79,11 @@ paths:
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Limit"
       responses:
-        200:
+        '200':
           $ref: '#/components/responses/GroupsRes'
-        403:
+        '403':
           description: Missing or invalid access token provided.
-        500:
+        '500':
           $ref: '#/components/responses/ServiceError'
   /groups:
     post:
@@ -97,15 +97,15 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/CreateGroupReq'
       responses:
-        200:
+        '200':
           description: Group created.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Group'
-        403:
+        '403':
           description: Missing or invalid access token provided.
-        500:
+        '500':
           $ref: '#/components/responses/ServiceError'
     get:
       summary: Get users groups
@@ -116,15 +116,15 @@ paths:
       security:
         - Authorization: []
       responses:
-        200:
+        '200':
           description: Groups retrieved.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/GroupsPage'
-        403:
+        '403':
           description: Missing or invalid access token provided.
-        500:
+        '500':
           $ref: '#/components/responses/ServiceError'
   /tokens:
     post:
@@ -132,34 +132,34 @@ paths:
       description: Generates an access token when provided with proper credentials.
       tags:
         - users
-      security:
-        - Authorization: []
+      requestBody:
+        $ref: "#/components/requestBodies/UserCreateReq"
       responses:
-        201:
+        '201':
           description: User authenticated.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Token'
-        400:
+        '400':
           description: Failed due to malformed JSON.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        403:
+        '403':
           description: Failed due to using invalid credentials.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        415:
+        '415':
           description: Missing or invalid content type.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        500:
+        '500':
           $ref: '#/components/responses/ServiceError'
   /password/reset-request:
     post:
@@ -174,13 +174,13 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/RequestPasswordReset'
       responses:
-        201:
+        '201':
           description: Users link for reseting password.
-        400:
+        '400':
           description: Failed due to malformed JSON.
-        415:
+        '415':
           description: Missing or invalid content type.
-        500:
+        '500':
           $ref: '#/components/responses/ServiceError'
   /password/reset:
     put:
@@ -194,13 +194,13 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/PasswordReset'
       responses:
-        201:
+        '201':
           description: User link .
-        400:
+        '400':
           description: Failed due to malformed JSON.
-        415:
+        '415':
           description: Missing or invalid content type.
-        500:
+        '500':
           $ref: '#/components/responses/ServiceError'
   /password:
     patch:
@@ -214,13 +214,13 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/PasswordChange'
       responses:
-        201:
+        '201':
           description: User link .
-        400:
+        '400':
           description: Failed due to malformed JSON.
-        415:
+        '415':
           description: Missing or invalid content type.
-        500:
+        '500':
           $ref: "#/components/responses/ServiceError"
 
 components:

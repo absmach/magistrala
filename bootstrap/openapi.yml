@@ -18,15 +18,15 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/ConfigCreateReq"
       responses:
-        201:
+        '201':
           $ref: "#/components/responses/ConfigCreateRes"
-        400:
+        '400':
           description: Failed due to malformed JSON.
-        403:
+        '403':
           description: Missing or invalid access token provided.
-        415:
+        '415':
           description: Missing or invalid content type.
-        500:
+        '500':
           $ref: "#/components/responses/ServiceError"
     get:
       summary: Retrieves managed configs
@@ -44,13 +44,13 @@ paths:
         - $ref: "#/components/parameters/State"
         - $ref: "#/components/parameters/Name"
       responses:
-        200:
+        '200':
           $ref: "#/components/responses/ConfigListRes"
-        400:
+        '400':
           description: Failed due to malformed query parameters.
-        403:
+        '403':
           description: Missing or invalid access token provided.
-        500:
+        '500':
           $ref: "#/components/responses/ServiceError"
   /things/configs/{configId}:
     get:
@@ -61,13 +61,13 @@ paths:
         - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ConfigId"
       responses:
-        200:
+        '200':
           $ref: "#/components/responses/ConfigRes"
-        403:
+        '403':
           description: Missing or invalid access token provided.
-        404:
+        '404':
           description: Config does not exist.
-        500:
+        '500':
           $ref: "#/components/responses/ServiceError"
     put:
       summary: Updates config info
@@ -83,17 +83,17 @@ paths:
       requestBody:
           $ref: "#/components/requestBodies/ConfigUpdateReq"
       responses:
-        200:
+        '200':
           description: Config updated.
-        400:
+        '400':
           description: Failed due to malformed JSON.
-        403:
+        '403':
           description: Missing or invalid access token provided.
-        404:
+        '404':
           description: Config does not exist.
-        415:
+        '415':
           description: Missing or invalid content type.
-        500:
+        '500':
           $ref: "#/components/responses/ServiceError"
     delete:
       summary: Removes a Config
@@ -106,13 +106,13 @@ paths:
         - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ConfigId"
       responses:
-        204:
+        '204':
           description: Config removed.
-        400:
+        '400':
           description: Failed due to malformed config ID.
-        403:
+        '403':
           description: Missing or invalid access token provided.
-        500:
+        '500':
           $ref: "#/components/responses/ServiceError"
   /things/configs/certs/{configId}:
     patch:
@@ -128,17 +128,17 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/ConfigCertUpdateReq"
       responses:
-        200:
+        '200':
           description: Config updated.
-        400:
+        '400':
           description: Failed due to malformed JSON.
-        403:
+        '403':
           description: Missing or invalid access token provided.
-        404:
+        '404':
           description: Config does not exist.
-        415:
+        '415':
           description: Missing or invalid content type.
-        500:
+        '500':
           $ref: "#/components/responses/ServiceError"
   /things/configs/connections/{configId}:
     put:
@@ -154,17 +154,17 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/ConfigConnUpdateReq"
       responses:
-        200:
+        '200':
           description: Config updated.
-        400:
+        '400':
           description: Failed due to malformed JSON.
-        403:
+        '403':
           description: Missing or invalid access token provided.
-        404:
+        '404':
           description: Config does not exist.
-        415:
+        '415':
           description: Missing or invalid content type.
-        500:
+        '500':
           $ref: "#/components/responses/ServiceError"
   /things/bootstrap/{externalId}:
     get:
@@ -177,12 +177,12 @@ paths:
         - $ref: "#/components/parameters/ConfigAuth"
         - $ref: "#/components/parameters/ExternalId"
       responses:
-        200:
+        '200':
           $ref: "#/components/responses/BootstrapConfigRes"
-        404:
+        '404':
           description: |
             Failed to retrieve corresponding config.
-        500:
+        '500':
           $ref: "#/components/responses/ServiceError"
   /things/bootstrap/secure/{externalId}:
     get:
@@ -195,12 +195,12 @@ paths:
         - $ref: "#/components/parameters/EncConfigAuth"
         - $ref: "#/components/parameters/ExternalId"
       responses:
-        200:
+        '200':
           $ref: "#/components/responses/BootstrapConfigRes"
-        404:
+        '404':
           description: |
             Failed to retrieve corresponding config. 
-        500:
+        '500':
           $ref: "#/components/responses/ServiceError"
   /things/state/{configId}:
     put:
@@ -216,13 +216,13 @@ paths:
       requestBody:
         $ref: '#/components/requestBodies/ConfigStateUpdateReq'
       responses:
-        204:
+        '204':
           description: Config removed.
-        400:
+        '400':
           description: Failed due to malformed config's ID.
-        403:
+        '403':
           description: Missing or invalid access token provided.
-        500:
+        '500':
           $ref: "#/components/responses/ServiceError"
 
 components:

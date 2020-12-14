@@ -16,15 +16,15 @@ paths:
       requestBody:
         $ref: "#/components/requestBodies/KeyRequest"
       responses:
-        201:
+        '201':
           description: Issued new key.
-        400:
+        '400':
           description: Failed due to malformed JSON.
-        409:
+        '409':
           description: Failed due to using already existing ID.
-        415:
+        '415':
           description: Missing or invalid content type.
-        500:
+        '500':
           $ref: "#/components/responses/ServiceError"
   /keys/{id}:
     get:
@@ -38,13 +38,13 @@ paths:
       security:
       - Authorization: []
       responses:
-        200:
+        '200':
           $ref: "#/components/responses/KeyRes"
-        400:
+        '400':
           description: Failed due to malformed query parameters.
-        403:
+        '403':
           description: Missing or invalid access token provided.
-        500:
+        '500':
           $ref: "#/components/responses/ServiceError"
     delete:
       summary: Revoke API key
@@ -57,11 +57,11 @@ paths:
       security:
       - Authorization: []
       responses:
-        204:
+        '204':
           description: Key revoked.
-        403:
+        '403':
           description: Missing or invalid access token provided.
-        500:
+        '500':
           $ref: "#/components/responses/ServiceError"
 
 components:

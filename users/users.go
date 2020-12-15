@@ -38,9 +38,6 @@ type User struct {
 	ID       string
 	Email    string
 	Password string
-	OwnerID  string
-	Owner    *User
-	Groups   []Group
 	Metadata Metadata
 }
 

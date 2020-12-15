@@ -94,8 +94,6 @@ func migrateDB(db *sqlx.DB) error {
 					 FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE ON UPDATE CASCADE,
 					 PRIMARY KEY (user_id, group_id)
 				)`,
-					`ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS owner_id UUID`,
-					`ALTER TABLE IF EXISTS users ADD FOREIGN KEY (owner_id) REFERENCES groups(id)`,
 				},
 			},
 		},

@@ -325,7 +325,6 @@ func (m dbMetadata) Value() (driver.Value, error) {
 
 type dbUser struct {
 	ID       string        `db:"id"`
-	Owner    string        `db:"owner"`
 	Email    string        `db:"email"`
 	Password string        `db:"password"`
 	Metadata []byte        `db:"metadata"`

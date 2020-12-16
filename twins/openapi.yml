@@ -30,9 +30,9 @@ paths:
           $ref: '#/components/responses/ServiceError'
 
     get:
-      summary: Retrieves managed twins
+      summary: Retrieves twins
       description: |
-        Retrieves a list of managed twins. Due to performance concerns, data
+        Retrieves a list of twins. Due to performance concerns, data
         is retrieved in subsets.
       tags:
         - twins
@@ -129,7 +129,6 @@ paths:
         - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
-        - $ref: '#/components/parameters/Metadata'
       responses:
         '200':
           $ref: '#/components/responses/StatesPageRes'
@@ -150,6 +149,7 @@ components:
       in: header
       schema:
         type: string
+        format: uuid
       required: true
     Limit:
       name: limit
@@ -193,6 +193,7 @@ components:
       in: path
       schema:
         type: string
+        format: uuid
         minimum: 1
       required: true
 
@@ -293,6 +294,7 @@ components:
         twin_id:
           type: string
           description: ID of twin state belongs to.
+          format: uuid
         id:
           type: number
           description: State position in a time row of states.

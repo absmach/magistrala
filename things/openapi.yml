@@ -35,7 +35,7 @@ paths:
     get:
       summary: Retrieves things
       description: |
-        Retrieves a list of managed things. Due to performance concerns, data
+        Retrieves a list of things. Due to performance concerns, data
         is retrieved in subsets. The API things must ensure that the entire
         dataset is consumed either by making subsequent requests, or by
         increasing the subset size of the initial request.
@@ -202,9 +202,9 @@ paths:
         '500':
           $ref: "#/components/responses/ServiceError"
     get:
-      summary: Retrieves managed channels
+      summary: Retrieves channels
       description: |
-        Retrieves a list of managed channels. Due to performance concerns, data
+        Retrieves a list of channels. Due to performance concerns, data
         is retrieved in subsets. The API things must ensure that the entire
         dataset is consumed either by making subsequent requests, or by
         increasing the subset size of the initial request.

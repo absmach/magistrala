@@ -4,7 +4,7 @@
 package mainflux
 
 // UUIDProvider specifies an API for generating unique identifiers.
-type UUIDProvider interface {
+type IDProvider interface {
 	// ID generates the unique identifier.
 	ID() (string, error)
 }

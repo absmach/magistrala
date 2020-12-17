@@ -50,10 +50,6 @@ func (req updateGroupReq) validate() error {
 		return groups.ErrParentInvariant
 	}
 
-	if req.Name != "" {
-		return groups.ErrNameInvariant
-	}
-
 	return nil
 }
 

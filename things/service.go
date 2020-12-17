@@ -10,7 +10,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 
 	"github.com/mainflux/mainflux"
-	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
+	"github.com/mainflux/mainflux/pkg/ulid"
 )
 
 const things = "things"
@@ -43,6 +43,9 @@ var (
 
 	// ErrCreateGroup indicates error in creating group.
 	ErrCreateGroup = errors.New("failed to create group")
+
+	// ErrGenerateGroupID indicates error in creating group.
+	ErrGenerateGroupID = errors.New("failed to generate group id")
 
 	// ErrFailedToRetrieveThings failed to retrieve things.
 	ErrFailedToRetrieveThings = errors.New("failed to retrieve group members")
@@ -144,11 +147,12 @@ type thingsService struct {
 	groups       groups.Repository
 	channelCache ChannelCache
 	thingCache   ThingCache
-	uuidProvider mainflux.UUIDProvider
+	uuidProvider mainflux.IDProvider
+	ulidProvider mainflux.IDProvider
 }
 
 // New instantiates the things service implementation.
-func New(auth mainflux.AuthNServiceClient, things ThingRepository, channels ChannelRepository, groups groups.Repository, ccache ChannelCache, tcache ThingCache, up mainflux.UUIDProvider) Service {
+func New(auth mainflux.AuthNServiceClient, things ThingRepository, channels ChannelRepository, groups groups.Repository, ccache ChannelCache, tcache ThingCache, up mainflux.IDProvider) Service {
 	return &thingsService{
 		auth:         auth,
 		things:       things,
@@ -157,6 +161,7 @@ func New(auth mainflux.AuthNServiceClient, things ThingRepository, channels Chan
 		channelCache: ccache,
 		thingCache:   tcache,
 		uuidProvider: up,
+		ulidProvider: ulid.New(),
 	}
 }
 
@@ -406,12 +411,12 @@ func (ts *thingsService) CreateGroup(ctx context.Context, token string, g groups
 		return "", errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	uid, err := uuidProvider.New().ID()
+	ulid, err := ts.ulidProvider.ID()
 	if err != nil {
-		return "", errors.Wrap(ErrCreateGroup, err)
+		return "", errors.Wrap(ErrGenerateGroupID, err)
 	}
 
-	g.ID = uid
+	g.ID = ulid
 	g.OwnerID = user.GetId()
 	if _, err := ts.groups.Save(ctx, g); err != nil {
 		return "", err

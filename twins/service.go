@@ -93,7 +93,7 @@ type twinsService struct {
 	auth         mainflux.AuthNServiceClient
 	twins        TwinRepository
 	states       StateRepository
-	uuidProvider mainflux.UUIDProvider
+	uuidProvider mainflux.IDProvider
 	channelID    string
 	twinCache    TwinCache
 	logger       logger.Logger
@@ -102,7 +102,7 @@ type twinsService struct {
 var _ Service = (*twinsService)(nil)
 
 // New instantiates the twins service implementation.
-func New(publisher messaging.Publisher, auth mainflux.AuthNServiceClient, twins TwinRepository, tcache TwinCache, sr StateRepository, idp mainflux.UUIDProvider, chann string, logger logger.Logger) Service {
+func New(publisher messaging.Publisher, auth mainflux.AuthNServiceClient, twins TwinRepository, tcache TwinCache, sr StateRepository, idp mainflux.IDProvider, chann string, logger logger.Logger) Service {
 	return &twinsService{
 		publisher:    publisher,
 		auth:         auth,

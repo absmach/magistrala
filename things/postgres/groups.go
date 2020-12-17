@@ -42,10 +42,10 @@ func NewGroupRepo(db Database) groups.Repository {
 func (gr groupRepository) Save(ctx context.Context, g groups.Group) (groups.Group, error) {
 	var id string
 	q := `INSERT INTO thing_groups (name, description, id, owner_id, metadata, path, created_at, updated_at) 
-		  VALUES (:name, :description, :id, :owner_id, :metadata, :name, now(), now()) RETURNING id`
+		  VALUES (:name, :description, :id, :owner_id, :metadata, CAST(:id AS ltree), now(), now()) RETURNING id`
 	if g.ParentID != "" {
-		q = `INSERT INTO thing_groups (name, description, id, owner_id, parent_id, metadata, path) 
-			 SELECT :name, :description, :id, :owner_id, :parent_id, :metadata, text2ltree(ltree2text(tg.path) || '.' || :name) FROM thing_groups tg WHERE id = :parent_id RETURNING id`
+		q = `INSERT INTO thing_groups (name, description, id, owner_id, parent_id, metadata, path, created_at, updated_at) 
+			 SELECT :name, :description, :id, :owner_id, :parent_id, :metadata, text2ltree(ltree2text(tg.path) || '.' || CAST(:id AS TEXT)), now(), now() FROM thing_groups tg WHERE id = :parent_id RETURNING id`
 	}
 
 	dbu, err := toDBGroup(g)
@@ -78,7 +78,7 @@ func (gr groupRepository) Save(ctx context.Context, g groups.Group) (groups.Grou
 }
 
 func (gr groupRepository) Update(ctx context.Context, g groups.Group) (groups.Group, error) {
-	q := `UPDATE thing_groups SET description = :description, metadata = :metadata, updated_at = now()  WHERE id = :id`
+	q := `UPDATE thing_groups SET description = :description, name = :name, metadata = :metadata, updated_at = now()  WHERE id = :id`
 
 	dbu, err := toDBGroup(g)
 	if err != nil {
@@ -119,13 +119,8 @@ func (gr groupRepository) Delete(ctx context.Context, groupID string) error {
 }
 
 func (gr groupRepository) RetrieveByID(ctx context.Context, id string) (groups.Group, error) {
-	groupID, err := toUUID(id)
-	if err != nil || !groupID.Valid {
-		return groups.Group{}, err
-	}
-
 	dbu := dbGroup{
-		ID: groupID,
+		ID: id,
 	}
 
 	q := `SELECT id, name, owner_id, parent_id, description, metadata, path, nlevel(path) as level FROM thing_groups WHERE id = $1`
@@ -448,22 +443,22 @@ func (gr groupRepository) Unassign(ctx context.Context, userID, groupID string) 
 }
 
 type dbGroup struct {
-	ID          uuid.NullUUID `db:"id"`
-	OwnerID     uuid.NullUUID `db:"owner_id"`
-	ParentID    uuid.NullUUID `db:"parent_id"`
-	Name        string        `db:"name"`
-	Description string        `db:"description"`
-	Metadata    dbMetadata    `db:"metadata"`
-	Level       int           `db:"level"`
-	Path        string        `db:"path"`
-	CreatedAt   time.Time     `db:"created_at"`
-	UpdatedAt   time.Time     `db:"updated_at"`
+	ID          string         `db:"id"`
+	ParentID    sql.NullString `db:"parent_id"`
+	OwnerID     uuid.NullUUID  `db:"owner_id"`
+	Name        string         `db:"name"`
+	Description string         `db:"description"`
+	Metadata    dbMetadata     `db:"metadata"`
+	Level       int            `db:"level"`
+	Path        string         `db:"path"`
+	CreatedAt   time.Time      `db:"created_at"`
+	UpdatedAt   time.Time      `db:"updated_at"`
 }
 
 type dbGroupPage struct {
-	ID       uuid.NullUUID `db:"id"`
+	ID       string        `db:"id"`
+	ParentID string        `db:"parent_id"`
 	OwnerID  uuid.NullUUID `db:"owner_id"`
-	ParentID uuid.NullUUID `db:"parent_id"`
 	Metadata dbMetadata    `db:"metadata"`
 	Path     string        `db:"path"`
 	Level    uint64        `db:"level"`
@@ -490,23 +485,20 @@ func toString(id uuid.NullUUID) (string, error) {
 }
 
 func toDBGroup(g groups.Group) (dbGroup, error) {
-	parentID, err := toUUID(g.ParentID)
-	if err != nil {
-		return dbGroup{}, err
-	}
 	ownerID, err := toUUID(g.OwnerID)
 	if err != nil {
 		return dbGroup{}, err
 	}
-	groupID, err := toUUID(g.ID)
-	if err != nil {
-		return dbGroup{}, err
+
+	var parentID sql.NullString
+	if g.ParentID != "" {
+		parentID = sql.NullString{String: g.ParentID, Valid: true}
 	}
 
 	meta := dbMetadata(g.Metadata)
 
 	return dbGroup{
-		ID:          groupID,
+		ID:          g.ID,
 		Name:        g.Name,
 		ParentID:    parentID,
 		OwnerID:     ownerID,
@@ -524,45 +516,30 @@ func toDBGroupPage(ownerID, id, parentID, path string, level uint64, metadata gr
 		return dbGroupPage{}, err
 	}
 
-	gid, err := toUUID(id)
 	if err != nil {
 		return dbGroupPage{}, err
 	}
 
-	parent, err := toUUID(parentID)
-	if err != nil {
-		return dbGroupPage{}, err
-	}
-	if err != nil {
-		return dbGroupPage{}, err
-	}
 	return dbGroupPage{
 		Metadata: dbMetadata(metadata),
-		ID:       gid,
+		ID:       id,
 		OwnerID:  owner,
 		Level:    level,
 		Path:     path,
-		ParentID: parent,
+		ParentID: parentID,
 	}, nil
 }
 
 func toGroup(dbu dbGroup) (groups.Group, error) {
-	groupID, err := toString(dbu.ID)
-	if err != nil {
-		return groups.Group{}, err
-	}
-	parentID, err := toString(dbu.ParentID)
-	if err != nil {
-		return groups.Group{}, err
-	}
 	ownerID, err := toString(dbu.OwnerID)
 	if err != nil {
 		return groups.Group{}, err
 	}
+
 	return groups.Group{
-		ID:          groupID,
+		ID:          dbu.ID,
 		Name:        dbu.Name,
-		ParentID:    parentID,
+		ParentID:    dbu.ParentID.String,
 		OwnerID:     ownerID,
 		Description: dbu.Description,
 		Metadata:    groups.Metadata(dbu.Metadata),
@@ -574,22 +551,18 @@ func toGroup(dbu dbGroup) (groups.Group, error) {
 }
 
 type dbGroupRelation struct {
-	Group uuid.UUID `db:"group_id"`
-	Thing uuid.UUID `db:"thing_id"`
+	GroupID string    `db:"group_id"`
+	ThingID uuid.UUID `db:"thing_id"`
 }
 
 func toDBGroupRelation(thingID, groupID string) (dbGroupRelation, error) {
-	grID, err := uuid.FromString(groupID)
-	if err != nil {
-		return dbGroupRelation{}, err
-	}
 	thID, err := uuid.FromString(thingID)
 	if err != nil {
 		return dbGroupRelation{}, err
 	}
 	return dbGroupRelation{
-		Group: grID,
-		Thing: thID,
+		GroupID: groupID,
+		ThingID: thID,
 	}, nil
 }
 

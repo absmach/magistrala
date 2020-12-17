@@ -63,12 +63,12 @@ var _ Service = (*service)(nil)
 
 type service struct {
 	keys         KeyRepository
-	uuidProvider mainflux.UUIDProvider
+	uuidProvider mainflux.IDProvider
 	tokenizer    Tokenizer
 }
 
 // New instantiates the auth service implementation.
-func New(keys KeyRepository, up mainflux.UUIDProvider, tokenizer Tokenizer) Service {
+func New(keys KeyRepository, up mainflux.IDProvider, tokenizer Tokenizer) Service {
 	return &service{
 		tokenizer:    tokenizer,
 		keys:         keys,

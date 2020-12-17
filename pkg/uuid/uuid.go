@@ -13,12 +13,12 @@ import (
 // ErrGeneratingID indicates error in generating UUID
 var ErrGeneratingID = errors.New("generating id failed")
 
-var _ mainflux.UUIDProvider = (*uuidProvider)(nil)
+var _ mainflux.IDProvider = (*uuidProvider)(nil)
 
 type uuidProvider struct{}
 
 // New instantiates a UUID provider.
-func New() mainflux.UUIDProvider {
+func New() mainflux.IDProvider {
 	return &uuidProvider{}
 }
 

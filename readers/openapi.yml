@@ -17,9 +17,11 @@ paths:
         - messages
       parameters:
         - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/ChanId"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/ChanId"
+        - $ref: "#/components/parameters/Publisher"
+        - $ref: "#/components/parameters/Name"
       responses:
         '200':
           $ref: "#/components/responses/MessagesPageRes"
@@ -101,8 +103,8 @@ components:
       description: Unique channel identifier.
       in: path
       schema:
-        type: integer
-        minimum: 1
+        type: string
+        format: uuid
       required: true
     Limit:
       name: limit
@@ -122,6 +124,21 @@ components:
         type: integer
         default: 0
         minimum: 0
+      required: false
+    Publisher:
+      name: Publisher
+      description: Unique thing identifier.
+      in: query
+      schema:
+        type: string
+        format: uuid
+      required: false
+    Name:
+      name: name
+      description: SenML message name.
+      in: query
+      schema:
+        type: string
       required: false
 
   responses:

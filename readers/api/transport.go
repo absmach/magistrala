@@ -30,7 +30,7 @@ var (
 	errInvalidRequest     = errors.New("received invalid request")
 	errUnauthorizedAccess = errors.New("missing or invalid credentials provided")
 	auth                  mainflux.ThingsServiceClient
-	queryFields           = []string{"subtopic", "publisher", "protocol", "name", "value", "v", "vs", "vb", "vd"}
+	queryFields           = []string{"subtopic", "publisher", "protocol", "name", "v", "vs", "vb", "vd", "from", "to"}
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.

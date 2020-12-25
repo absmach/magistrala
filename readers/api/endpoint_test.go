@@ -27,11 +27,11 @@ const (
 )
 
 var (
-	v       float64 = 5
-	stringV         = "value"
-	boolV           = true
-	dataV           = "base64"
-	sum     float64 = 42
+	v   float64 = 5
+	vs          = "value"
+	vb          = true
+	vd          = "dataValue"
+	sum float64 = 42
 )
 
 func newService() readers.MessageRepository {
@@ -49,11 +49,11 @@ func newService() readers.MessageRepository {
 		case 0:
 			msg.Value = &v
 		case 1:
-			msg.BoolValue = &boolV
+			msg.BoolValue = &vb
 		case 2:
-			msg.StringValue = &stringV
+			msg.StringValue = &vs
 		case 3:
-			msg.DataValue = &dataV
+			msg.DataValue = &vd
 		case 4:
 			msg.Sum = &sum
 		}
@@ -163,6 +163,36 @@ func TestReadAll(t *testing.T) {
 		},
 		"read page with default limit": {
 			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0", ts.URL, chanID),
+			token:  token,
+			status: http.StatusOK,
+		},
+		"read page with value": {
+			url:    fmt.Sprintf("%s/channels/%s/messages?v=%f", ts.URL, chanID, v),
+			token:  token,
+			status: http.StatusOK,
+		},
+		"read page with boolean value": {
+			url:    fmt.Sprintf("%s/channels/%s/messages?vb=%t", ts.URL, chanID, vb),
+			token:  token,
+			status: http.StatusOK,
+		},
+		"read page with string value": {
+			url:    fmt.Sprintf("%s/channels/%s/messages?vs=%s", ts.URL, chanID, vd),
+			token:  token,
+			status: http.StatusOK,
+		},
+		"read page with data value": {
+			url:    fmt.Sprintf("%s/channels/%s/messages?vd=%s", ts.URL, chanID, vd),
+			token:  token,
+			status: http.StatusOK,
+		},
+		"read page with from": {
+			url:    fmt.Sprintf("%s/channels/%s/messages?from=1608651539.673909", ts.URL, chanID),
+			token:  token,
+			status: http.StatusOK,
+		},
+		"read page with to": {
+			url:    fmt.Sprintf("%s/channels/%s/messages?to=1508651539.673909", ts.URL, chanID),
 			token:  token,
 			status: http.StatusOK,
 		},

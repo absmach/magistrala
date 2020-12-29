@@ -19,6 +19,7 @@ func CreateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 			Name:        req.Name,
 			Description: req.Description,
 			ParentID:    req.ParentID,
+			Type:        req.Type,
 			Metadata:    req.Metadata,
 		}
 

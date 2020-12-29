@@ -8,7 +8,7 @@ networks:
     driver: bridge
 
 volumes:
-  mainflux-authn-db-volume:
+  mainflux-auth-db-volume:
   mainflux-authz-db-volume:
   mainflux-users-db-volume:
   mainflux-things-db-volume:
@@ -56,41 +56,41 @@ services:
     networks:
       - mainflux-base-net
 
-  authn-db:
+  auth-db:
     image: postgres:10.8-alpine
-    container_name: mainflux-authn-db
+    container_name: mainflux-auth-db
     restart: on-failure
     environment:
-      POSTGRES_USER: ${MF_AUTHN_DB_USER}
-      POSTGRES_PASSWORD: ${MF_AUTHN_DB_PASS}
-      POSTGRES_DB: ${MF_AUTHN_DB}
+      POSTGRES_USER: ${MF_AUTH_DB_USER}
+      POSTGRES_PASSWORD: ${MF_AUTH_DB_PASS}
+      POSTGRES_DB: ${MF_AUTH_DB}
     networks:
       - mainflux-base-net
     volumes:
-      - mainflux-authn-db-volume:/var/lib/postgresql/data
+      - mainflux-auth-db-volume:/var/lib/postgresql/data
 
-  authn:
-    image: mainflux/authn:latest
-    container_name: mainflux-authn
+  auth:
+    image: mainflux/auth:latest
+    container_name: mainflux-auth
     depends_on:
-      - authn-db
+      - auth-db
     expose:
-      - ${MF_AUTHN_GRPC_PORT}
+      - ${MF_AUTH_GRPC_PORT}
     restart: on-failure
     environment:
-      MF_AUTHN_LOG_LEVEL: ${MF_AUTHN_LOG_LEVEL}
-      MF_AUTHN_DB_HOST: authn-db
-      MF_AUTHN_DB_PORT: ${MF_AUTHN_DB_PORT}
-      MF_AUTHN_DB_USER: ${MF_AUTHN_DB_USER}
-      MF_AUTHN_DB_PASS: ${MF_AUTHN_DB_PASS}
-      MF_AUTHN_DB: ${MF_AUTHN_DB}
-      MF_AUTHN_HTTP_PORT: ${MF_AUTHN_HTTP_PORT}
-      MF_AUTHN_GRPC_PORT: ${MF_AUTHN_GRPC_PORT}
-      MF_AUTHN_SECRET: ${MF_AUTHN_SECRET}
+      MF_AUTH_LOG_LEVEL: ${MF_AUTH_LOG_LEVEL}
+      MF_AUTH_DB_HOST: auth-db
+      MF_AUTH_DB_PORT: ${MF_AUTH_DB_PORT}
+      MF_AUTH_DB_USER: ${MF_AUTH_DB_USER}
+      MF_AUTH_DB_PASS: ${MF_AUTH_DB_PASS}
+      MF_AUTH_DB: ${MF_AUTH_DB}
+      MF_AUTH_HTTP_PORT: ${MF_AUTH_HTTP_PORT}
+      MF_AUTH_GRPC_PORT: ${MF_AUTH_GRPC_PORT}
+      MF_AUTH_SECRET: ${MF_AUTH_SECRET}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
     ports:
-      - ${MF_AUTHN_HTTP_PORT}:${MF_AUTHN_HTTP_PORT}
-      - ${MF_AUTHN_GRPC_PORT}:${MF_AUTHN_GRPC_PORT}
+      - ${MF_AUTH_HTTP_PORT}:${MF_AUTH_HTTP_PORT}
+      - ${MF_AUTH_GRPC_PORT}:${MF_AUTH_GRPC_PORT}
     networks:
       - mainflux-base-net
 
@@ -114,7 +114,7 @@ services:
       - ./users/emailer/templates/${MF_EMAIL_TEMPLATE}:/${MF_EMAIL_TEMPLATE}
     depends_on:
       - users-db
-      - authn
+      - auth
     restart: on-failure
     environment:
       MF_USERS_LOG_LEVEL: ${MF_USERS_LOG_LEVEL}
@@ -134,8 +134,8 @@ services:
       MF_EMAIL_FROM_NAME: ${MF_EMAIL_FROM_NAME}
       MF_EMAIL_TEMPLATE: ${MF_EMAIL_TEMPLATE}
       MF_TOKEN_RESET_ENDPOINT: ${MF_TOKEN_RESET_ENDPOINT}
-      MF_AUTHN_GRPC_URL: ${MF_AUTHN_GRPC_URL}
-      MF_AUTHN_GRPC_TIMEOUT: ${MF_AUTHN_GRPC_TIMEOUT}
+      MF_AUTH_GRPC_URL: ${MF_AUTH_GRPC_URL}
+      MF_AUTH_GRPC_TIMEOUT: ${MF_AUTH_GRPC_TIMEOUT}
       MF_USERS_ADMIN_EMAIL: ${MF_USERS_ADMIN_EMAIL}
       MF_USERS_ADMIN_PASSWORD: ${MF_USERS_ADMIN_PASSWORD}
     ports:
@@ -170,7 +170,7 @@ services:
     container_name: mainflux-things
     depends_on:
       - things-db
-      - authn
+      - auth
     restart: on-failure
     environment:
       MF_THINGS_LOG_LEVEL: ${MF_THINGS_LOG_LEVEL}
@@ -185,8 +185,8 @@ services:
       MF_THINGS_AUTH_HTTP_PORT: ${MF_THINGS_AUTH_HTTP_PORT}
       MF_THINGS_AUTH_GRPC_PORT: ${MF_THINGS_AUTH_GRPC_PORT}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_AUTHN_GRPC_URL: ${MF_AUTHN_GRPC_URL}
-      MF_AUTHN_GRPC_TIMEOUT: ${MF_AUTHN_GRPC_TIMEOUT}
+      MF_AUTH_GRPC_URL: ${MF_AUTH_GRPC_URL}
+      MF_AUTH_GRPC_TIMEOUT: ${MF_AUTH_GRPC_TIMEOUT}
     ports:
       - ${MF_THINGS_HTTP_PORT}:${MF_THINGS_HTTP_PORT}
       - ${MF_THINGS_AUTH_HTTP_PORT}:${MF_THINGS_AUTH_HTTP_PORT}

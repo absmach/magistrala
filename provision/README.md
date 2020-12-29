@@ -88,13 +88,13 @@ Example of provision layout below
 ```
 
 ## Authentication
-In order to create necessary entities provision service needs to authenticate against Mainflux. To provide authentication credentials to the provision service you can pass it in an environment variable or in a config file as Mainflux user and password or as API token (that can be issued on `/users` or `/keys` endpoint of [authn](../authn/README.md)). 
+In order to create necessary entities provision service needs to authenticate against Mainflux. To provide authentication credentials to the provision service you can pass it in an environment variable or in a config file as Mainflux user and password or as API token (that can be issued on `/users` or `/keys` endpoint of [auth](../auth/README.md)). 
 
 Additionally users or API token can be passed in Authorization header, this authentication takes precedence over others.
 
 * `username`, `password` - (`MF_PROVISION_USER`, `MF_PROVISION_PASSWORD` in [.env](../.env), `mf_user`, `mf_pass` in [config.toml](../docker/addons/provision/configs/config.toml))
 * API Key - (`MF_PROVISION_API_KEY` in [.env](../.env) or [config.toml](../docker/addons/provision/configs/config.toml))
-* `Authorization: Token|ApiKey` - request authorization header containing either users token or API key. Check [authn](../authn/README.md).
+* `Authorization: Token|ApiKey` - request authorization header containing either users token or API key. Check [auth](../auth/README.md).
 
 ## Running
 Provision service can be run as a standalone or in docker composition as addon to the core docker composition.

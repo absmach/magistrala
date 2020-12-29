@@ -90,7 +90,7 @@ var crudOp = map[string]string{
 
 type twinsService struct {
 	publisher    messaging.Publisher
-	auth         mainflux.AuthNServiceClient
+	auth         mainflux.AuthServiceClient
 	twins        TwinRepository
 	states       StateRepository
 	uuidProvider mainflux.IDProvider
@@ -102,7 +102,7 @@ type twinsService struct {
 var _ Service = (*twinsService)(nil)
 
 // New instantiates the twins service implementation.
-func New(publisher messaging.Publisher, auth mainflux.AuthNServiceClient, twins TwinRepository, tcache TwinCache, sr StateRepository, idp mainflux.IDProvider, chann string, logger logger.Logger) Service {
+func New(publisher messaging.Publisher, auth mainflux.AuthServiceClient, twins TwinRepository, tcache TwinCache, sr StateRepository, idp mainflux.IDProvider, chann string, logger logger.Logger) Service {
 	return &twinsService{
 		publisher:    publisher,
 		auth:         auth,

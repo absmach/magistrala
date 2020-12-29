@@ -16,7 +16,7 @@ import (
 	"syscall"
 	"time"
 
-	authapi "github.com/mainflux/mainflux/authn/api/grpc"
+	authapi "github.com/mainflux/mainflux/auth/api/grpc"
 	rediscons "github.com/mainflux/mainflux/bootstrap/redis/consumer"
 	redisprod "github.com/mainflux/mainflux/bootstrap/redis/producer"
 	"github.com/mainflux/mainflux/logger"
@@ -93,8 +93,8 @@ const (
 	envESDB           = "MF_BOOTSTRAP_ES_DB"
 	envESConsumerName = "MF_BOOTSTRAP_EVENT_CONSUMER"
 	envJaegerURL      = "MF_JAEGER_URL"
-	envAuthnURL       = "MF_AUTHN_GRPC_URL"
-	envAuthnTimeout   = "MF_AUTHN_GRPC_TIMEOUT"
+	envAuthnURL       = "MF_AUTH_GRPC_URL"
+	envAuthnTimeout   = "MF_AUTH_GRPC_TIMEOUT"
 )
 
 type config struct {
@@ -264,7 +264,7 @@ func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, 
 	return tracer, closer
 }
 
-func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logger, esClient *r.Client, cfg config) bootstrap.Service {
+func newService(auth mainflux.AuthServiceClient, db *sqlx.DB, logger mflog.Logger, esClient *r.Client, cfg config) bootstrap.Service {
 	thingsRepo := postgres.NewConfigRepository(db, logger)
 
 	config := mfsdk.Config{

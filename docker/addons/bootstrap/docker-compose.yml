@@ -50,7 +50,7 @@ services:
       MF_THINGS_ES_URL: es-redis:${MF_REDIS_TCP_PORT}
       MF_BOOTSTRAP_ES_URL: es-redis:${MF_REDIS_TCP_PORT}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_AUTHN_GRPC_URL: ${MF_AUTHN_GRPC_URL}
-      MF_AUTHN_GRPC_TIMMEOUT: ${MF_AUTHN_GRPC_TIMEOUT}
+      MF_AUTH_GRPC_URL: ${MF_AUTH_GRPC_URL}
+      MF_AUTH_GRPC_TIMMEOUT: ${MF_AUTH_GRPC_TIMEOUT}
     networks:
       - docker_mainflux-base-net

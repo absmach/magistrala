@@ -7,15 +7,21 @@ package users
 
 import (
 	"context"
+	"errors"
 	"time"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/mainflux/mainflux/things"
 
 	"github.com/mainflux/mainflux"
 	"google.golang.org/grpc"
 )
 
-var _ mainflux.AuthNServiceClient = (*singleUserRepo)(nil)
+var (
+	errUnsupported = errors.New("not supported in single user mode")
+)
+
+var _ mainflux.AuthServiceClient = (*singleUserRepo)(nil)
 
 type singleUserRepo struct {
 	email string
@@ -23,7 +29,7 @@ type singleUserRepo struct {
 }
 
 // NewSingleUserService creates single user repository for constrained environments.
-func NewSingleUserService(email, token string) mainflux.AuthNServiceClient {
+func NewSingleUserService(email, token string) mainflux.AuthServiceClient {
 	return singleUserRepo{
 		email: email,
 		token: token,
@@ -50,4 +56,17 @@ func (repo singleUserRepo) Identify(ctx context.Context, token *mainflux.Token, 
 	}
 
 	return &mainflux.UserIdentity{Id: repo.email, Email: repo.email}, nil
+}
+
+func (repo singleUserRepo) Authorize(ctx context.Context, req *mainflux.AuthorizeReq, _ ...grpc.CallOption) (r *mainflux.AuthorizeRes, err error) {
+	return &mainflux.AuthorizeRes{}, errUnsupported
+}
+
+func (repo singleUserRepo) Members(ctx context.Context, req *mainflux.MembersReq, _ ...grpc.CallOption) (r *mainflux.MembersRes, err error) {
+	return &mainflux.MembersRes{}, errUnsupported
+
+}
+
+func (repo singleUserRepo) Assign(ctx context.Context, req *mainflux.Assignment, _ ...grpc.CallOption) (r *empty.Empty, err error) {
+	return &empty.Empty{}, errUnsupported
 }

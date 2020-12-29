@@ -27,7 +27,7 @@ The service is distributed as Docker container. The following snippet provides
 a compose file template that can be used to deploy the service container locally:
 
 ```yaml
-version: "2"
+version: "3.7"
 services:
   adapter:
     image: mainflux/coap:[version]

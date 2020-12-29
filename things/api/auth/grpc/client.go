@@ -72,7 +72,7 @@ func (client grpcClient) CanAccessByKey(ctx context.Context, req *mainflux.Acces
 	}
 
 	ir := res.(identityRes)
-	return &mainflux.ThingID{Value: ir.id}, ir.err
+	return &mainflux.ThingID{Value: ir.id}, nil
 }
 
 func (client grpcClient) CanAccessByID(ctx context.Context, req *mainflux.AccessByIDReq, _ ...grpc.CallOption) (*empty.Empty, error) {
@@ -96,7 +96,7 @@ func (client grpcClient) Identify(ctx context.Context, req *mainflux.Token, _ ..
 	}
 
 	ir := res.(identityRes)
-	return &mainflux.ThingID{Value: ir.id}, ir.err
+	return &mainflux.ThingID{Value: ir.id}, nil
 }
 
 func encodeCanAccessByKeyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
@@ -116,7 +116,7 @@ func encodeIdentifyRequest(_ context.Context, grpcReq interface{}) (interface{},
 
 func decodeIdentityResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(*mainflux.ThingID)
-	return identityRes{id: res.GetValue(), err: nil}, nil
+	return identityRes{id: res.GetValue()}, nil
 }
 
 func decodeEmptyResponse(_ context.Context, _ interface{}) (interface{}, error) {

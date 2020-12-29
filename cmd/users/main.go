@@ -27,7 +27,7 @@ import (
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/jmoiron/sqlx"
 	"github.com/mainflux/mainflux"
-	authapi "github.com/mainflux/mainflux/authn/api/grpc"
+	authapi "github.com/mainflux/mainflux/auth/api/grpc"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/users/api"
 	"github.com/mainflux/mainflux/users/postgres"
@@ -101,10 +101,10 @@ const (
 
 	envTokenResetEndpoint = "MF_TOKEN_RESET_ENDPOINT"
 
-	envAuthnTLS     = "MF_AUTHN_CLIENT_TLS"
-	envAuthnCACerts = "MF_AUTHN_CA_CERTS"
-	envAuthnURL     = "MF_AUTHN_GRPC_URL"
-	envAuthnTimeout = "MF_AUTHN_GRPC_TIMEOUT"
+	envAuthnTLS     = "MF_AUTH_CLIENT_TLS"
+	envAuthnCACerts = "MF_AUTH_CA_CERTS"
+	envAuthnURL     = "MF_AUTH_GRPC_URL"
+	envAuthnTimeout = "MF_AUTH_GRPC_TIMEOUT"
 )
 
 type config struct {
@@ -248,7 +248,7 @@ func connectToDB(dbConfig postgres.Config, logger logger.Logger) *sqlx.DB {
 	return db
 }
 
-func connectToAuthn(cfg config, tracer opentracing.Tracer, logger logger.Logger) (mainflux.AuthNServiceClient, func() error) {
+func connectToAuthn(cfg config, tracer opentracing.Tracer, logger logger.Logger) (mainflux.AuthServiceClient, func() error) {
 	var opts []grpc.DialOption
 	if cfg.authnTLS {
 		if cfg.authnCACerts != "" {
@@ -273,7 +273,7 @@ func connectToAuthn(cfg config, tracer opentracing.Tracer, logger logger.Logger)
 	return authapi.NewClient(tracer, conn, cfg.authnTimeout), conn.Close
 }
 
-func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthNServiceClient, c config, logger logger.Logger) users.Service {
+func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServiceClient, c config, logger logger.Logger) users.Service {
 	database := postgres.NewDatabase(db)
 	hasher := bcrypt.New()
 	userRepo := tracing.UserRepositoryMiddleware(postgres.NewUserRepo(database), tracer)

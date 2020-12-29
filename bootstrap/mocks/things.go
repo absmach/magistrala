@@ -20,17 +20,17 @@ type mainfluxThings struct {
 	counter     uint64
 	things      map[string]things.Thing
 	channels    map[string]things.Channel
-	auth        mainflux.AuthNServiceClient
+	auth        mainflux.AuthServiceClient
 	connections map[string][]string
 }
 
 // NewThingsService returns Mainflux Things service mock.
 // Only methods used by SDK are mocked.
-func NewThingsService(things map[string]things.Thing, channels map[string]things.Channel, authn mainflux.AuthNServiceClient) things.Service {
+func NewThingsService(things map[string]things.Thing, channels map[string]things.Channel, auth mainflux.AuthServiceClient) things.Service {
 	return &mainfluxThings{
 		things:      things,
 		channels:    channels,
-		auth:        authn,
+		auth:        auth,
 		connections: make(map[string][]string),
 	}
 }

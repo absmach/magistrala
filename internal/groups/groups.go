@@ -6,6 +6,7 @@ import (
 )
 
 type Member interface{}
+
 type Metadata map[string]interface{}
 
 type Group struct {
@@ -21,9 +22,10 @@ type Group struct {
 	// Path is a path in a tree, consisted of group names
 	// parentName.childrenName1.childrenName2 .
 	Path      string
+	Type      string
 	Children  []*Group
 	CreatedAt time.Time
-	UpdatedAt  time.Time
+	UpdatedAt time.Time
 }
 
 type PageMetadata struct {
@@ -100,7 +102,7 @@ type Repository interface {
 	// RetrieveAllChildren retrieves all children from group with given groupID up to the hierarchy level.
 	RetrieveAllChildren(ctx context.Context, groupID string, level uint64, m Metadata) (GroupPage, error)
 
-	// Retrieves list of groups that member belongs to
+	//  Retrieves list of groups that member belongs to
 	Memberships(ctx context.Context, memberID string, offset, limit uint64, m Metadata) (GroupPage, error)
 
 	// Members retrieves everything that is assigned to a group identified by groupID.

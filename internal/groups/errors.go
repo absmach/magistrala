@@ -47,4 +47,7 @@ var (
 
 	// ErrParentInvariant indicates that parent can't be changed
 	ErrParentInvariant = errors.New("parent can't be changed")
+
+	// ErrMissingGroupType indicates missing group type
+	ErrMissingGroupType = errors.New("specifying group type is mandatory")
 )

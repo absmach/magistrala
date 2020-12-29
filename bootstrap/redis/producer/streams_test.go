@@ -61,7 +61,7 @@ var (
 	}
 )
 
-func newService(auth mainflux.AuthNServiceClient, url string) bootstrap.Service {
+func newService(auth mainflux.AuthServiceClient, url string) bootstrap.Service {
 	configs := mocks.NewConfigsRepository()
 	config := mfsdk.Config{
 		BaseURL: url,
@@ -71,7 +71,7 @@ func newService(auth mainflux.AuthNServiceClient, url string) bootstrap.Service 
 	return bootstrap.New(auth, configs, sdk, encKey)
 }
 
-func newThingsService(auth mainflux.AuthNServiceClient) things.Service {
+func newThingsService(auth mainflux.AuthServiceClient) things.Service {
 	channels := make(map[string]things.Channel, channelsNum)
 	for i := 0; i < channelsNum; i++ {
 		id := strconv.Itoa(i + 1)

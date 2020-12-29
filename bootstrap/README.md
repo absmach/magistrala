@@ -63,8 +63,8 @@ The service is configured using the environment variables presented in the follo
 | MF_BOOTSTRAP_ES_DB            | Bootstrap service event source database                                 | 0                                |
 | MF_BOOTSTRAP_EVENT_CONSUMER   | Bootstrap service event source consumer name                            | bootstrap                        |
 | MF_JAEGER_URL                 | Jaeger server URL                                                       | localhost:6831                   |
-| MF_AUTHN_GRPC_URL             | AuthN service gRPC URL                                                  | localhost:8181                   |
-| MF_AUTHN_GRPC_TIMEOUT         | AuthN service gRPC request timeout in seconds                           | 1s                                |
+| MF_AUTH_GRPC_URL             | AuthN service gRPC URL                                                  | localhost:8181                   |
+| MF_AUTH_GRPC_TIMEOUT         | AuthN service gRPC request timeout in seconds                           | 1s                                |
 
 ## Deployment
 
@@ -73,7 +73,7 @@ provides a compose file template that can be used to deploy the service containe
 locally:
 
 ```yaml
-version: "2"
+version: "3.7"
   bootstrap:
     image: mainflux/bootstrap:latest
     container_name: mainflux-bootstrap
@@ -109,8 +109,8 @@ version: "2"
       MF_BOOTSTRAP_ES_DB: [Bootstrap service event source database]
       MF_BOOTSTRAP_EVENT_CONSUMER: [Bootstrap service event source consumer name]
       MF_JAEGER_URL: [Jaeger server URL]
-      MF_AUTHN_GRPC_URL: [AuthN service gRPC URL]
-      MF_AUTHN_GRPC_TIMEOUT: [AuthN service gRPC request timeout in seconds]
+      MF_AUTH_GRPC_URL: [AuthN service gRPC URL]
+      MF_AUTH_GRPC_TIMEOUT: [AuthN service gRPC request timeout in seconds]
 ```
 
 To start the service outside of the container, execute the following shell script:
@@ -147,8 +147,8 @@ MF_BOOTSTRAP_SERVER_KEY=[Path to server key] \
 MF_SDK_BASE_URL=[Base SDK URL for the Mainflux services] \
 MF_SDK_THINGS_PREFIX=[SDK prefix for Things service] \
 MF_JAEGER_URL=[Jaeger server URL] \
-MF_AUTHN_GRPC_URL=[AuthN service gRPC URL] \
-MF_AUTHN_GRPC_TIMEOUT=[AuthN service gRPC request timeout in seconds] \
+MF_AUTH_GRPC_URL=[AuthN service gRPC URL] \
+MF_AUTH_GRPC_TIMEOUT=[AuthN service gRPC request timeout in seconds] \
 $GOBIN/mainflux-bootstrap
 ```
 

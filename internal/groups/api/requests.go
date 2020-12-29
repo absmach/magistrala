@@ -13,6 +13,7 @@ type createGroupReq struct {
 	token       string
 	Name        string                 `json:"name,omitempty"`
 	ParentID    string                 `json:"parent_id,omitempty"`
+	Type        string                 `json:"type,omitempty"`
 	Description string                 `json:"description,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
@@ -23,6 +24,9 @@ func (req createGroupReq) validate() error {
 	}
 	if len(req.Name) > maxNameSize || req.Name == "" || !groupRegexp.MatchString(req.Name) {
 		return errors.Wrap(groups.ErrMalformedEntity, groups.ErrBadGroupName)
+	}
+	if req.Type == "" {
+		return errors.Wrap(groups.ErrMalformedEntity, groups.ErrMissingGroupType)
 	}
 
 	return nil

@@ -116,7 +116,7 @@ type ConfigReader interface {
 }
 
 type bootstrapService struct {
-	auth    mainflux.AuthNServiceClient
+	auth    mainflux.AuthServiceClient
 	configs ConfigRepository
 	sdk     mfsdk.SDK
 	encKey  []byte
@@ -124,7 +124,7 @@ type bootstrapService struct {
 }
 
 // New returns new Bootstrap service.
-func New(auth mainflux.AuthNServiceClient, configs ConfigRepository, sdk mfsdk.SDK, encKey []byte) Service {
+func New(auth mainflux.AuthServiceClient, configs ConfigRepository, sdk mfsdk.SDK, encKey []byte) Service {
 	return &bootstrapService{
 		configs: configs,
 		sdk:     sdk,

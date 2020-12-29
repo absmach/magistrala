@@ -17,8 +17,7 @@ type metricsMiddleware struct {
 	repo    writers.MessageRepository
 }
 
-// MetricsMiddleware returns new message repository
-// with Save method wrapped to expose metrics.
+// MetricsMiddleware returns new message repository with Save method wrapped to expose metrics.
 func MetricsMiddleware(repo writers.MessageRepository, counter metrics.Counter, latency metrics.Histogram) writers.MessageRepository {
 	return &metricsMiddleware{
 		counter: counter,

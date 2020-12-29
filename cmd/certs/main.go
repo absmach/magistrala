@@ -19,7 +19,7 @@ import (
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/go-redis/redis"
 	"github.com/mainflux/mainflux"
-	authapi "github.com/mainflux/mainflux/authn/api/grpc"
+	authapi "github.com/mainflux/mainflux/auth/api/grpc"
 	"github.com/mainflux/mainflux/certs"
 	"github.com/mainflux/mainflux/certs/api"
 	vault "github.com/mainflux/mainflux/certs/pki"
@@ -88,8 +88,8 @@ const (
 	envBaseURL       = "MF_SDK_BASE_URL"
 	envThingsPrefix  = "MF_SDK_THINGS_PREFIX"
 	envJaegerURL     = "MF_JAEGER_URL"
-	envAuthnURL      = "MF_AUTHN_GRPC_URL"
-	envAuthnTimeout  = "MF_AUTHN_GRPC_TIMEOUT"
+	envAuthnURL      = "MF_AUTH_GRPC_URL"
+	envAuthnTimeout  = "MF_AUTH_GRPC_TIMEOUT"
 
 	envSignCAPath     = "MF_CERTS_SIGN_CA_PATH"
 	envSignCAKey      = "MF_CERTS_SIGN_CA_KEY_PATH"
@@ -310,7 +310,7 @@ func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, 
 	return tracer, closer
 }
 
-func newService(auth mainflux.AuthNServiceClient, db *sqlx.DB, logger mflog.Logger, esClient *redis.Client, tlsCert tls.Certificate, x509Cert *x509.Certificate, cfg config, pkiAgent vault.Agent) certs.Service {
+func newService(auth mainflux.AuthServiceClient, db *sqlx.DB, logger mflog.Logger, esClient *redis.Client, tlsCert tls.Certificate, x509Cert *x509.Certificate, cfg config, pkiAgent vault.Agent) certs.Service {
 	certsRepo := postgres.NewRepository(db, logger)
 
 	certsConfig := certs.Config{

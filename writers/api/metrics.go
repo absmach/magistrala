@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/metrics"
-	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	"github.com/mainflux/mainflux/writers"
 )
 
@@ -26,10 +25,10 @@ func MetricsMiddleware(repo writers.MessageRepository, counter metrics.Counter, 
 	}
 }
 
-func (mm *metricsMiddleware) Save(msgs ...senml.Message) error {
+func (mm *metricsMiddleware) Save(msgs interface{}) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "handle_message").Add(1)
 		mm.latency.With("method", "handle_message").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return mm.repo.Save(msgs...)
+	return mm.repo.Save(msgs)
 }

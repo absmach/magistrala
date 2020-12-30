@@ -22,7 +22,6 @@ const (
 	chanID     = "1"
 	subtopic   = "topic"
 	msgsNum    = 100
-	fromToNum  = 4
 	msgsValNum = 20
 	limit      = 10
 )
@@ -65,12 +64,12 @@ func TestReadAll(t *testing.T) {
 	boolMsgs := []senml.Message{}
 	stringMsgs := []senml.Message{}
 	dataMsgs := []senml.Message{}
+	now := float64(time.Now().UTC().Second())
 
-	now := time.Now().UnixNano()
 	for i := 0; i < msgsNum; i++ {
 		// Mix possible values as well as value sum.
 		msg := m
-		msg.Time = float64(now)/1e9 - float64(i)
+		msg.Time = now - float64(i)
 
 		count := i % valueFields
 		switch count {
@@ -94,7 +93,7 @@ func TestReadAll(t *testing.T) {
 		messages = append(messages, msg)
 	}
 
-	err := writer.Save(messages...)
+	err := writer.Save(messages)
 	require.Nil(t, err, fmt.Sprintf("failed to store message to InfluxDB: %s", err))
 
 	reader := reader.New(client, testDB)
@@ -115,7 +114,7 @@ func TestReadAll(t *testing.T) {
 				Total:    msgsNum,
 				Offset:   0,
 				Limit:    limit,
-				Messages: messages[0:limit],
+				Messages: fromSenml(messages[0:limit]),
 			},
 		},
 		"read message page for non-existent channel": {
@@ -126,7 +125,7 @@ func TestReadAll(t *testing.T) {
 				Total:    0,
 				Offset:   0,
 				Limit:    limit,
-				Messages: []senml.Message{},
+				Messages: []readers.Message{},
 			},
 		},
 		"read message last page": {
@@ -137,7 +136,7 @@ func TestReadAll(t *testing.T) {
 				Total:    msgsNum,
 				Offset:   95,
 				Limit:    limit,
-				Messages: messages[95:msgsNum],
+				Messages: fromSenml(messages[95:msgsNum]),
 			},
 		},
 		"read message with non-existent subtopic": {
@@ -149,7 +148,7 @@ func TestReadAll(t *testing.T) {
 				Total:    0,
 				Offset:   0,
 				Limit:    msgsNum,
-				Messages: []senml.Message{},
+				Messages: []readers.Message{},
 			},
 		},
 		"read message with subtopic": {
@@ -161,7 +160,7 @@ func TestReadAll(t *testing.T) {
 				Total:    uint64(len(valSubtopicMsgs)),
 				Offset:   0,
 				Limit:    limit,
-				Messages: valSubtopicMsgs[0:limit],
+				Messages: fromSenml(valSubtopicMsgs[0:limit]),
 			},
 		},
 		"read message with value": {
@@ -173,7 +172,7 @@ func TestReadAll(t *testing.T) {
 				Total:    msgsValNum,
 				Offset:   0,
 				Limit:    limit,
-				Messages: valSubtopicMsgs[0:limit],
+				Messages: fromSenml(valSubtopicMsgs[0:limit]),
 			},
 		},
 		"read message with boolean value": {
@@ -185,7 +184,7 @@ func TestReadAll(t *testing.T) {
 				Total:    msgsValNum,
 				Offset:   0,
 				Limit:    limit,
-				Messages: boolMsgs[0:limit],
+				Messages: fromSenml(boolMsgs[0:limit]),
 			},
 		},
 		"read message with string value": {
@@ -197,7 +196,7 @@ func TestReadAll(t *testing.T) {
 				Total:    msgsValNum,
 				Offset:   0,
 				Limit:    limit,
-				Messages: stringMsgs[0:limit],
+				Messages: fromSenml(stringMsgs[0:limit]),
 			},
 		},
 		"read message with data value": {
@@ -209,7 +208,7 @@ func TestReadAll(t *testing.T) {
 				Total:    msgsValNum,
 				Offset:   0,
 				Limit:    limit,
-				Messages: dataMsgs[0:limit],
+				Messages: fromSenml(dataMsgs[0:limit]),
 			},
 		},
 		"read message with from/to": {
@@ -217,14 +216,14 @@ func TestReadAll(t *testing.T) {
 			offset: 0,
 			limit:  limit,
 			query: map[string]string{
-				"from": fmt.Sprintf("%f", messages[fromToNum].Time),
+				"from": fmt.Sprintf("%f", messages[5].Time),
 				"to":   fmt.Sprintf("%f", messages[0].Time),
 			},
 			page: readers.MessagesPage{
-				Total:    fromToNum,
+				Total:    5,
 				Offset:   0,
 				Limit:    limit,
-				Messages: messages[1:5],
+				Messages: fromSenml(messages[1:6]),
 			},
 		},
 	}
@@ -232,8 +231,16 @@ func TestReadAll(t *testing.T) {
 	for desc, tc := range cases {
 		result, err := reader.ReadAll(tc.chanID, tc.offset, tc.limit, tc.query)
 		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %s", desc, err))
-		assert.ElementsMatch(t, tc.page.Messages, result.Messages, fmt.Sprintf("%s: expected: %v \n-------------\n got: %v", desc, tc.page.Messages, result.Messages))
+		assert.ElementsMatch(t, tc.page.Messages, result.Messages, fmt.Sprintf("%s: expected: %v, got: %v", desc, tc.page.Messages, result.Messages))
 
 		assert.Equal(t, tc.page.Total, result.Total, fmt.Sprintf("%s: expected %d got %d", desc, tc.page.Total, result.Total))
 	}
+}
+
+func fromSenml(in []senml.Message) []readers.Message {
+	var ret []readers.Message
+	for _, m := range in {
+		ret = append(ret, m)
+	}
+	return ret
 }

@@ -26,40 +26,40 @@ import (
 const (
 	svcName = "influxdb-writer"
 
-	defNatsURL         = "nats://localhost:4222"
-	defLogLevel        = "error"
-	defPort            = "8180"
-	defDB              = "mainflux"
-	defDBHost          = "localhost"
-	defDBPort          = "8086"
-	defDBUser          = "mainflux"
-	defDBPass          = "mainflux"
-	defSubjectsCfgPath = "/config/subjects.toml"
-	defContentType     = "application/senml+json"
+	defNatsURL     = "nats://localhost:4222"
+	defLogLevel    = "error"
+	defPort        = "8180"
+	defDB          = "mainflux"
+	defDBHost      = "localhost"
+	defDBPort      = "8086"
+	defDBUser      = "mainflux"
+	defDBPass      = "mainflux"
+	defConfigPath  = "/config.toml"
+	defContentType = "application/senml+json"
 
-	envNatsURL         = "MF_NATS_URL"
-	envLogLevel        = "MF_INFLUX_WRITER_LOG_LEVEL"
-	envPort            = "MF_INFLUX_WRITER_PORT"
-	envDB              = "MF_INFLUX_WRITER_DB"
-	envDBHost          = "MF_INFLUX_WRITER_DB_HOST"
-	envDBPort          = "MF_INFLUX_WRITER_DB_PORT"
-	envDBUser          = "MF_INFLUX_WRITER_DB_USER"
-	envDBPass          = "MF_INFLUX_WRITER_DB_PASS"
-	envSubjectsCfgPath = "MF_INFLUX_WRITER_SUBJECTS_CONFIG"
-	envContentType     = "MF_INFLUX_WRITER_CONTENT_TYPE"
+	envNatsURL     = "MF_NATS_URL"
+	envLogLevel    = "MF_INFLUX_WRITER_LOG_LEVEL"
+	envPort        = "MF_INFLUX_WRITER_PORT"
+	envDB          = "MF_INFLUX_WRITER_DB"
+	envDBHost      = "MF_INFLUX_WRITER_DB_HOST"
+	envDBPort      = "MF_INFLUX_WRITER_DB_PORT"
+	envDBUser      = "MF_INFLUX_WRITER_DB_USER"
+	envDBPass      = "MF_INFLUX_WRITER_DB_PASS"
+	envConfigPath  = "MF_INFLUX_WRITER_CONFIG_PATH"
+	envContentType = "MF_INFLUX_WRITER_CONTENT_TYPE"
 )
 
 type config struct {
-	natsURL         string
-	logLevel        string
-	port            string
-	dbName          string
-	dbHost          string
-	dbPort          string
-	dbUser          string
-	dbPass          string
-	subjectsCfgPath string
-	contentType     string
+	natsURL     string
+	logLevel    string
+	port        string
+	dbName      string
+	dbHost      string
+	dbPort      string
+	dbUser      string
+	dbPass      string
+	configPath  string
+	contentType string
 }
 
 func main() {
@@ -91,7 +91,7 @@ func main() {
 	repo = api.MetricsMiddleware(repo, counter, latency)
 	st := senml.New(cfg.contentType)
 
-	if err := writers.Start(pubSub, repo, st, svcName, cfg.subjectsCfgPath, logger); err != nil {
+	if err := writers.Start(pubSub, repo, st, cfg.configPath, logger); err != nil {
 		logger.Error(fmt.Sprintf("Failed to start InfluxDB writer: %s", err))
 		os.Exit(1)
 	}
@@ -111,16 +111,16 @@ func main() {
 
 func loadConfigs() (config, influxdata.HTTPConfig) {
 	cfg := config{
-		natsURL:         mainflux.Env(envNatsURL, defNatsURL),
-		logLevel:        mainflux.Env(envLogLevel, defLogLevel),
-		port:            mainflux.Env(envPort, defPort),
-		dbName:          mainflux.Env(envDB, defDB),
-		dbHost:          mainflux.Env(envDBHost, defDBHost),
-		dbPort:          mainflux.Env(envDBPort, defDBPort),
-		dbUser:          mainflux.Env(envDBUser, defDBUser),
-		dbPass:          mainflux.Env(envDBPass, defDBPass),
-		subjectsCfgPath: mainflux.Env(envSubjectsCfgPath, defSubjectsCfgPath),
-		contentType:     mainflux.Env(envContentType, defContentType),
+		natsURL:     mainflux.Env(envNatsURL, defNatsURL),
+		logLevel:    mainflux.Env(envLogLevel, defLogLevel),
+		port:        mainflux.Env(envPort, defPort),
+		dbName:      mainflux.Env(envDB, defDB),
+		dbHost:      mainflux.Env(envDBHost, defDBHost),
+		dbPort:      mainflux.Env(envDBPort, defDBPort),
+		dbUser:      mainflux.Env(envDBUser, defDBUser),
+		dbPass:      mainflux.Env(envDBPass, defDBPass),
+		configPath:  mainflux.Env(envConfigPath, defConfigPath),
+		contentType: mainflux.Env(envContentType, defContentType),
 	}
 
 	clientCfg := influxdata.HTTPConfig{

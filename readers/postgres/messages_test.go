@@ -31,7 +31,7 @@ var (
 	sum     float64 = 42
 )
 
-func TestMessageReadAll(t *testing.T) {
+func TestReadSenml(t *testing.T) {
 	messageRepo := pwriter.New(db)
 
 	chanID, err := uuid.NewV4()
@@ -75,7 +75,7 @@ func TestMessageReadAll(t *testing.T) {
 		}
 	}
 
-	err = messageRepo.Save(messages...)
+	err = messageRepo.Save(messages)
 	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 
 	reader := preader.New(db)
@@ -98,7 +98,7 @@ func TestMessageReadAll(t *testing.T) {
 				Total:    msgsNum,
 				Offset:   0,
 				Limit:    msgsNum,
-				Messages: messages,
+				Messages: fromSenml(messages),
 			},
 		},
 		"read message page for non-existent channel": {
@@ -109,7 +109,7 @@ func TestMessageReadAll(t *testing.T) {
 				Total:    0,
 				Offset:   0,
 				Limit:    msgsNum,
-				Messages: []senml.Message{},
+				Messages: []readers.Message{},
 			},
 		},
 		"read message last page": {
@@ -120,7 +120,7 @@ func TestMessageReadAll(t *testing.T) {
 				Total:    msgsNum,
 				Offset:   40,
 				Limit:    5,
-				Messages: messages[40:42],
+				Messages: fromSenml(messages[40:42]),
 			},
 		},
 		"read message with non-existent subtopic": {
@@ -132,7 +132,7 @@ func TestMessageReadAll(t *testing.T) {
 				Total:    0,
 				Offset:   0,
 				Limit:    msgsNum,
-				Messages: []senml.Message{},
+				Messages: []readers.Message{},
 			},
 		},
 		"read message with subtopic": {
@@ -144,7 +144,7 @@ func TestMessageReadAll(t *testing.T) {
 				Total:    uint64(len(subtopicMsgs)),
 				Offset:   0,
 				Limit:    uint64(len(subtopicMsgs)),
-				Messages: subtopicMsgs,
+				Messages: fromSenml(subtopicMsgs),
 			},
 		},
 		"read message with publisher/protocols": {
@@ -156,7 +156,7 @@ func TestMessageReadAll(t *testing.T) {
 				Total:    msgsNum,
 				Offset:   0,
 				Limit:    msgsNum,
-				Messages: messages,
+				Messages: fromSenml(messages),
 			},
 		},
 	}
@@ -167,4 +167,12 @@ func TestMessageReadAll(t *testing.T) {
 		assert.ElementsMatch(t, tc.page.Messages, result.Messages, fmt.Sprintf("%s: expected %v got %v", desc, tc.page.Messages, result.Messages))
 		assert.Equal(t, tc.page.Total, result.Total, fmt.Sprintf("%s: expected %v got %v", desc, tc.page.Total, result.Total))
 	}
+}
+
+func fromSenml(in []senml.Message) []readers.Message {
+	var ret []readers.Message
+	for _, m := range in {
+		ret = append(ret, m)
+	}
+	return ret
 }

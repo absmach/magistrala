@@ -5,29 +5,31 @@ package influxdb
 
 import (
 	"math"
-	"strconv"
 	"time"
 
 	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	"github.com/mainflux/mainflux/writers"
 
 	influxdata "github.com/influxdata/influxdb/client/v2"
 )
 
-const pointName = "messages"
+const (
+	senmlPoints = "messages"
+	jsonPoints  = "json"
+)
 
-var errSaveMessage = errors.New("failed to save message to influxdb database")
-
+var (
+	errSaveMessage   = errors.New("failed to save message to influxdb database")
+	errMessageFormat = errors.New("invalid message format")
+)
 var _ writers.MessageRepository = (*influxRepo)(nil)
 
 type influxRepo struct {
 	client influxdata.Client
 	cfg    influxdata.BatchPointsConfig
 }
-
-type fields map[string]interface{}
-type tags map[string]string
 
 // New returns new InfluxDB writer.
 func New(client influxdata.Client, database string) writers.MessageRepository {
@@ -39,61 +41,71 @@ func New(client influxdata.Client, database string) writers.MessageRepository {
 	}
 }
 
-func (repo *influxRepo) Save(messages ...senml.Message) error {
+func (repo *influxRepo) Save(message interface{}) error {
 	pts, err := influxdata.NewBatchPoints(repo.cfg)
 	if err != nil {
 		return errors.Wrap(errSaveMessage, err)
 	}
-
-	for _, msg := range messages {
-		tgs, flds := repo.tagsOf(&msg), repo.fieldsOf(&msg)
-
-		sec, dec := math.Modf(msg.Time)
-		t := time.Unix(int64(sec), int64(dec*(1e9)))
-
-		pt, err := influxdata.NewPoint(pointName, tgs, flds, t)
-		if err != nil {
-			return errors.Wrap(errSaveMessage, err)
-		}
-		pts.AddPoint(pt)
+	switch m := message.(type) {
+	case json.Messages:
+		pts, err = repo.jsonPoints(pts, m)
+	default:
+		pts, err = repo.senmlPoints(pts, m)
 	}
+	if err != nil {
+		return err
+	}
+
 	if err := repo.client.Write(pts); err != nil {
 		return errors.Wrap(errSaveMessage, err)
 	}
 	return nil
 }
 
-func (repo *influxRepo) tagsOf(msg *senml.Message) tags {
-	return tags{
-		"channel":   msg.Channel,
-		"subtopic":  msg.Subtopic,
-		"publisher": msg.Publisher,
-		"name":      msg.Name,
+func (repo *influxRepo) senmlPoints(pts influxdata.BatchPoints, messages interface{}) (influxdata.BatchPoints, error) {
+	msgs, ok := messages.([]senml.Message)
+	if !ok {
+		return nil, errSaveMessage
 	}
+
+	for _, msg := range msgs {
+		tgs, flds := senmlTags(msg), senmlFields(msg)
+
+		sec, dec := math.Modf(msg.Time)
+		t := time.Unix(int64(sec), int64(dec*(1e9)))
+
+		pt, err := influxdata.NewPoint(senmlPoints, tgs, flds, t)
+		if err != nil {
+			return nil, errors.Wrap(errSaveMessage, err)
+		}
+		pts.AddPoint(pt)
+	}
+
+	return pts, nil
 }
 
-func (repo *influxRepo) fieldsOf(msg *senml.Message) fields {
-	updateTime := strconv.FormatFloat(msg.UpdateTime, 'f', -1, 64)
-	ret := fields{
-		"protocol":   msg.Protocol,
-		"unit":       msg.Unit,
-		"updateTime": updateTime,
+func (repo *influxRepo) jsonPoints(pts influxdata.BatchPoints, msgs json.Messages) (influxdata.BatchPoints, error) {
+	for i, m := range msgs.Data {
+		t := time.Unix(0, m.Created+int64(i))
+
+		// Copy first-level fields so that the original Payload is unchanged.
+		fields := make(map[string]interface{})
+		for k, v := range m.Payload {
+			fields[k] = v
+		}
+		// At least one known field need to exist so that COUNT can be performed.
+		fields["protocol"] = m.Protocol
+		pt, err := influxdata.NewPoint(msgs.Format, jsonTags(m), fields, t)
+		if err != nil {
+			return nil, errors.Wrap(errSaveMessage, err)
+		}
+		pts.AddPoint(pt)
 	}
 
-	switch {
-	case msg.Value != nil:
-		ret["value"] = *msg.Value
-	case msg.StringValue != nil:
-		ret["stringValue"] = *msg.StringValue
-	case msg.DataValue != nil:
-		ret["dataValue"] = *msg.DataValue
-	case msg.BoolValue != nil:
-		ret["boolValue"] = *msg.BoolValue
-	}
+	return pts, nil
+}
 
-	if msg.Sum != nil {
-		ret["sum"] = *msg.Sum
-	}
-
-	return ret
+type message struct {
+	json.Message
+	payload []map[string]interface{}
 }

@@ -13,7 +13,6 @@ import (
 	"github.com/mainflux/mainflux/pkg/messaging"
 	pubsub "github.com/mainflux/mainflux/pkg/messaging/nats"
 	"github.com/mainflux/mainflux/pkg/transformers"
-	"github.com/mainflux/mainflux/pkg/transformers/senml"
 )
 
 var (
@@ -31,7 +30,7 @@ type consumer struct {
 // Start method starts consuming messages received from NATS.
 // This method transforms messages to SenML format before
 // using MessageRepository to store them.
-func Start(sub messaging.Subscriber, repo MessageRepository, transformer transformers.Transformer, queue string, subjectsCfgPath string, logger logger.Logger) error {
+func Start(sub messaging.Subscriber, repo MessageRepository, transformer transformers.Transformer, subjectsCfgPath string, logger logger.Logger) error {
 	c := consumer{
 		repo:        repo,
 		transformer: transformer,
@@ -56,16 +55,12 @@ func (c *consumer) handler(msg messaging.Message) error {
 	if err != nil {
 		return err
 	}
-	msgs, ok := t.([]senml.Message)
-	if !ok {
-		return errMessageConversion
-	}
 
-	return c.repo.Save(msgs...)
+	return c.repo.Save(t)
 }
 
 type filterConfig struct {
-	List []string `toml:"filter"`
+	Filter []string `toml:"filter"`
 }
 
 type subjectsConfig struct {
@@ -83,5 +78,5 @@ func loadSubjectsConfig(subjectsConfigPath string) ([]string, error) {
 		return []string{pubsub.SubjectAllChannels}, errors.Wrap(errParseConfFile, err)
 	}
 
-	return subjectsCfg.Subjects.List, nil
+	return subjectsCfg.Subjects.Filter, nil
 }

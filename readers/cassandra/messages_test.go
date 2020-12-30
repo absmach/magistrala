@@ -41,7 +41,7 @@ var (
 	sum     float64 = 42
 )
 
-func TestReadAll(t *testing.T) {
+func TestReadSenml(t *testing.T) {
 	session, err := creaders.Connect(creaders.DBConfig{
 		Hosts:    []string{addr},
 		Keyspace: keyspace,
@@ -78,7 +78,7 @@ func TestReadAll(t *testing.T) {
 		}
 	}
 
-	err = writer.Save(messages...)
+	err = writer.Save(messages)
 	require.Nil(t, err, fmt.Sprintf("failed to store message to Cassandra: %s", err))
 
 	reader := creaders.New(session)
@@ -101,7 +101,7 @@ func TestReadAll(t *testing.T) {
 				Total:    msgsNum,
 				Offset:   0,
 				Limit:    msgsNum,
-				Messages: messages,
+				Messages: fromSenml(messages),
 			},
 		},
 		"read message page for non-existent channel": {
@@ -112,7 +112,7 @@ func TestReadAll(t *testing.T) {
 				Total:    0,
 				Offset:   0,
 				Limit:    msgsNum,
-				Messages: []senml.Message{},
+				Messages: []readers.Message{},
 			},
 		},
 		"read message last page": {
@@ -123,7 +123,7 @@ func TestReadAll(t *testing.T) {
 				Total:    msgsNum,
 				Offset:   40,
 				Limit:    5,
-				Messages: messages[40:42],
+				Messages: fromSenml(messages[40:42]),
 			},
 		},
 		"read message with non-existent subtopic": {
@@ -135,7 +135,7 @@ func TestReadAll(t *testing.T) {
 				Total:    0,
 				Offset:   0,
 				Limit:    msgsNum,
-				Messages: []senml.Message{},
+				Messages: []readers.Message{},
 			},
 		},
 		"read message with subtopic": {
@@ -147,7 +147,7 @@ func TestReadAll(t *testing.T) {
 				Total:    uint64(len(subtopicMsgs)),
 				Offset:   5,
 				Limit:    msgsNum,
-				Messages: subtopicMsgs[5:],
+				Messages: fromSenml(subtopicMsgs[5:]),
 			},
 		},
 	}
@@ -158,4 +158,12 @@ func TestReadAll(t *testing.T) {
 		assert.ElementsMatch(t, tc.page.Messages, result.Messages, fmt.Sprintf("%s: expected %v got %v", desc, tc.page.Messages, result.Messages))
 		assert.Equal(t, tc.page.Total, result.Total, fmt.Sprintf("%s: expected %v got %v", desc, tc.page.Total, result.Total))
 	}
+}
+
+func fromSenml(in []senml.Message) []readers.Message {
+	var ret []readers.Message
+	for _, m := range in {
+		ret = append(ret, m)
+	}
+	return ret
 }

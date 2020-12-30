@@ -27,7 +27,7 @@ var (
 	addr        string
 	testLog, _  = log.New(os.Stdout, log.Info.String())
 	testDB      = "test"
-	collection  = "mainflux"
+	collection  = "messages"
 	db          mongo.Database
 	msgsNum     = 100
 	valueFields = 5
@@ -82,7 +82,7 @@ func TestSave(t *testing.T) {
 		msgs = append(msgs, msg)
 	}
 
-	err = repo.Save(msgs...)
+	err = repo.Save(msgs)
 	assert.Nil(t, err, fmt.Sprintf("Save operation expected to succeed: %s.\n", err))
 
 	count, err := db.Collection(collection).CountDocuments(context.Background(), bson.D{})

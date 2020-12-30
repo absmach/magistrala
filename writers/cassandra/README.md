@@ -8,18 +8,18 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable                            | Description                                               | Default                |
-|-------------------------------------|-----------------------------------------------------------|------------------------|
-| MF_NATS_URL                         | NATS instance URL                                         | nats://localhost:4222  |
-| MF_CASSANDRA_WRITER_LOG_LEVEL       | Log level for Cassandra writer (debug, info, warn, error) | error                  |
-| MF_CASSANDRA_WRITER_PORT            | Service HTTP port                                         | 8180                   |
-| MF_CASSANDRA_WRITER_DB_CLUSTER      | Cassandra cluster comma separated addresses               | 127.0.0.1              |
-| MF_CASSANDRA_WRITER_DB_KEYSPACE     | Cassandra keyspace name                                   | mainflux               |
-| MF_CASSANDRA_WRITER_DB_USER         | Cassandra DB username                                     |                        |
-| MF_CASSANDRA_WRITER_DB_PASS         | Cassandra DB password                                     |                        |
-| MF_CASSANDRA_WRITER_DB_PORT         | Cassandra DB port                                         | 9042                   |
-| MF_CASSANDRA_WRITER_SUBJECTS_CONFIG | Configuration file path with subjects list                | /config/subjects.toml  |
-| MF_CASSANDRA_WRITER_CONTENT_TYPE    | Message payload Content Type                              | application/senml+json |
+| Variable                         | Description                                               | Default                |
+| -------------------------------- | --------------------------------------------------------- | ---------------------- |
+| MF_NATS_URL                      | NATS instance URL                                         | nats://localhost:4222  |
+| MF_CASSANDRA_WRITER_LOG_LEVEL    | Log level for Cassandra writer (debug, info, warn, error) | error                  |
+| MF_CASSANDRA_WRITER_PORT         | Service HTTP port                                         | 8180                   |
+| MF_CASSANDRA_WRITER_DB_CLUSTER   | Cassandra cluster comma separated addresses               | 127.0.0.1              |
+| MF_CASSANDRA_WRITER_DB_KEYSPACE  | Cassandra keyspace name                                   | mainflux               |
+| MF_CASSANDRA_WRITER_DB_USER      | Cassandra DB username                                     |                        |
+| MF_CASSANDRA_WRITER_DB_PASS      | Cassandra DB password                                     |                        |
+| MF_CASSANDRA_WRITER_DB_PORT      | Cassandra DB port                                         | 9042                   |
+| MF_CASSANDRA_WRITER_CONFIG_PATH  | Configuration file path with NATS subjects list           | /config.toml           |
+| MF_CASSANDRA_WRITER_CONTENT_TYPE | Message payload Content Type                              | application/senml+json |
 
 ## Deployment
 
@@ -40,12 +40,12 @@ default values.
       MF_CASSANDRA_WRITER_DB_USER: [Cassandra DB username]
       MF_CASSANDRA_WRITER_DB_PASS: [Cassandra DB password]
       MF_CASSANDRA_WRITER_DB_PORT: [Cassandra DB port]
-      MF_CASSANDRA_WRITER_SUBJECTS_CONFIG: [Configuration file path with subjects list]
+      MF_CASSANDRA_WRITER_CONFIG_PATH: [Configuration file path with NATS subjects list]
       MF_CASSANDRA_WRITER_CONTENT_TYPE: [Message payload Content Type]
     ports:
       - [host machine port]:[configured HTTP port]
     volume:
-      - ./subjects.yaml:/config/subjects.yaml
+      - ./config.toml:/config.toml
 ```
 
 To start the service, execute the following shell script:
@@ -71,7 +71,7 @@ MF_CASSANDRA_WRITER_DB_KEYSPACE=[Cassandra keyspace name] \
 MF_CASSANDRA_READER_DB_USER=[Cassandra DB username] \
 MF_CASSANDRA_READER_DB_PASS=[Cassandra DB password] \
 MF_CASSANDRA_READER_DB_PORT=[Cassandra DB port] \
-MF_CASSANDRA_WRITER_SUBJECTS_CONFIG=[Configuration file path with subjects list] \
+MF_CASSANDRA_WRITER_CONFIG_PATH=[Configuration file path with NATS subjects list] \
 $GOBIN/mainflux-cassandra-writer
 ```
 

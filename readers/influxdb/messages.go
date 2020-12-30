@@ -12,10 +12,16 @@ import (
 	"github.com/mainflux/mainflux/readers"
 
 	influxdata "github.com/influxdata/influxdb/client/v2"
+	jsont "github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 )
 
-const countCol = "count"
+const (
+	countCol = "count_protocol"
+	format   = "format"
+	// Measurement for SenML messages
+	defMeasurement = "messages"
+)
 
 var errReadMessages = errors.New("failed to read messages from influxdb database")
 
@@ -35,14 +41,21 @@ func New(client influxdata.Client, database string) readers.MessageRepository {
 }
 
 func (repo *influxRepository) ReadAll(chanID string, offset, limit uint64, query map[string]string) (readers.MessagesPage, error) {
+	measurement, ok := query[format]
+	if !ok {
+		measurement = defMeasurement
+	}
+	// Remove format filter and format the rest properly.
+	delete(query, format)
 	condition := fmtCondition(chanID, query)
-	cmd := fmt.Sprintf(`SELECT * FROM messages WHERE %s ORDER BY time DESC LIMIT %d OFFSET %d`, condition, limit, offset)
+
+	cmd := fmt.Sprintf(`SELECT * FROM %s WHERE %s ORDER BY time DESC LIMIT %d OFFSET %d`, measurement, condition, limit, offset)
 	q := influxdata.Query{
 		Command:  cmd,
 		Database: repo.database,
 	}
 
-	ret := []senml.Message{}
+	var ret []readers.Message
 
 	resp, err := repo.client.Query(q)
 	if err != nil {
@@ -58,10 +71,10 @@ func (repo *influxRepository) ReadAll(chanID string, offset, limit uint64, query
 
 	result := resp.Results[0].Series[0]
 	for _, v := range result.Values {
-		ret = append(ret, parseMessage(result.Columns, v))
+		ret = append(ret, parseMessage(measurement, result.Columns, v))
 	}
 
-	total, err := repo.count(condition)
+	total, err := repo.count(measurement, condition)
 	if err != nil {
 		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 	}
@@ -74,8 +87,8 @@ func (repo *influxRepository) ReadAll(chanID string, offset, limit uint64, query
 	}, nil
 }
 
-func (repo *influxRepository) count(condition string) (uint64, error) {
-	cmd := fmt.Sprintf(`SELECT COUNT(protocol) FROM messages WHERE %s`, condition)
+func (repo *influxRepository) count(measurement, condition string) (uint64, error) {
+	cmd := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s`, measurement, condition)
 	q := influxdata.Query{
 		Command:  cmd,
 		Database: repo.database,
@@ -202,7 +215,16 @@ func parseValues(value interface{}, name string, msg *senml.Message) {
 	}
 }
 
-func parseMessage(names []string, fields []interface{}) senml.Message {
+func parseMessage(measurement string, names []string, fields []interface{}) interface{} {
+	switch measurement {
+	case defMeasurement:
+		return parseSenml(names, fields)
+	default:
+		return parseJSON(names, fields)
+	}
+}
+
+func parseSenml(names []string, fields []interface{}) interface{} {
 	m := senml.Message{}
 	v := reflect.ValueOf(&m).Elem()
 	for i, name := range names {
@@ -236,4 +258,13 @@ func parseMessage(names []string, fields []interface{}) senml.Message {
 	}
 
 	return m
+}
+
+func parseJSON(names []string, fields []interface{}) interface{} {
+	ret := make(map[string]interface{})
+	for i, n := range names {
+		ret[n] = fields[i]
+	}
+
+	return jsont.ParseFlat(ret)
 }

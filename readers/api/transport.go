@@ -24,13 +24,15 @@ const (
 	contentType = "application/json"
 	defLimit    = 10
 	defOffset   = 0
+	format      = "format"
+	defFormat   = "messages"
 )
 
 var (
 	errInvalidRequest     = errors.New("received invalid request")
 	errUnauthorizedAccess = errors.New("missing or invalid credentials provided")
 	auth                  mainflux.ThingsServiceClient
-	queryFields           = []string{"subtopic", "publisher", "protocol", "name", "v", "vs", "vb", "vd", "from", "to"}
+	queryFields           = []string{"format", "subtopic", "publisher", "protocol", "name", "v", "vs", "vb", "vd", "from", "to"}
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
@@ -80,6 +82,9 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 		if value := bone.GetQuery(r, name); len(value) == 1 {
 			query[name] = value[0]
 		}
+	}
+	if query[format] == "" {
+		query[format] = defFormat
 	}
 
 	req := listMessagesReq{

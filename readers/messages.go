@@ -3,11 +3,7 @@
 
 package readers
 
-import (
-	"errors"
-
-	"github.com/mainflux/mainflux/pkg/transformers/senml"
-)
+import "errors"
 
 // ErrNotFound indicates that requested entity doesn't exist.
 var ErrNotFound = errors.New("entity not found")
@@ -19,11 +15,14 @@ type MessageRepository interface {
 	ReadAll(chanID string, offset, limit uint64, query map[string]string) (MessagesPage, error)
 }
 
+// Message represents any message format.
+type Message interface{}
+
 // MessagesPage contains page related metadata as well as list of messages that
 // belong to this page.
 type MessagesPage struct {
 	Total    uint64
 	Offset   uint64
 	Limit    uint64
-	Messages []senml.Message
+	Messages []Message
 }

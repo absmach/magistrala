@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"github.com/mainflux/mainflux/pkg/errors"
+	jsont "github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	"github.com/mainflux/mainflux/readers"
 	"go.mongodb.org/mongo-driver/bson"
@@ -14,7 +15,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-const collection = "mainflux"
+const (
+	format = "format"
+	// Collection for SenML messages
+	defCollection = "messages"
+)
 
 var errReadMessages = errors.New("failed to read messages from mongodb database")
 
@@ -22,23 +27,6 @@ var _ readers.MessageRepository = (*mongoRepository)(nil)
 
 type mongoRepository struct {
 	db *mongo.Database
-}
-
-// Message struct is used as a MongoDB representation of Mainflux message.
-type message struct {
-	Channel     string   `bson:"channel,omitempty"`
-	Subtopic    string   `bson:"subtopic,omitempty"`
-	Publisher   string   `bson:"publisher,omitempty"`
-	Protocol    string   `bson:"protocol,omitempty"`
-	Name        string   `bson:"name,omitempty"`
-	Unit        string   `bson:"unit,omitempty"`
-	Value       *float64 `bson:"value,omitempty"`
-	StringValue *string  `bson:"stringValue,omitempty"`
-	BoolValue   *bool    `bson:"boolValue,omitempty"`
-	DataValue   *string  `bson:"dataValue,omitempty"`
-	Sum         *float64 `bson:"sum,omitempty"`
-	Time        float64  `bson:"time,omitempty"`
-	UpdateTime  float64  `bson:"updateTime,omitempty"`
 }
 
 // New returns new MongoDB reader.
@@ -49,11 +37,16 @@ func New(db *mongo.Database) readers.MessageRepository {
 }
 
 func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64, query map[string]string) (readers.MessagesPage, error) {
+	collection, ok := query[format]
+	if !ok {
+		collection = defCollection
+	}
 	col := repo.db.Collection(collection)
+	delete(query, format)
 	sortMap := map[string]interface{}{
 		"time": -1,
 	}
-
+	// Remove format filter and format the rest properly.
 	filter := fmtCondition(chanID, query)
 	cursor, err := col.Find(context.Background(), filter, options.Find().SetSort(sortMap).SetLimit(int64(limit)).SetSkip(int64(offset)))
 	if err != nil {
@@ -61,37 +54,27 @@ func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64, query m
 	}
 	defer cursor.Close(context.Background())
 
-	messages := []senml.Message{}
-	for cursor.Next(context.Background()) {
-		var m message
-		if err := cursor.Decode(&m); err != nil {
-			return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
-		}
+	var messages []readers.Message
+	switch collection {
+	case defCollection:
+		for cursor.Next(context.Background()) {
+			var m senml.Message
+			if err := cursor.Decode(&m); err != nil {
+				return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
+			}
 
-		msg := senml.Message{
-			Channel:    m.Channel,
-			Subtopic:   m.Subtopic,
-			Publisher:  m.Publisher,
-			Protocol:   m.Protocol,
-			Name:       m.Name,
-			Unit:       m.Unit,
-			Time:       m.Time,
-			UpdateTime: m.UpdateTime,
-			Sum:        m.Sum,
+			messages = append(messages, m)
 		}
+	default:
+		for cursor.Next(context.Background()) {
+			var m map[string]interface{}
+			if err := cursor.Decode(&m); err != nil {
+				return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
+			}
+			m["payload"] = jsont.ParseFlat(m["payload"])
 
-		switch {
-		case m.Value != nil:
-			msg.Value = m.Value
-		case m.StringValue != nil:
-			msg.StringValue = m.StringValue
-		case m.DataValue != nil:
-			msg.DataValue = m.DataValue
-		case m.BoolValue != nil:
-			msg.BoolValue = m.BoolValue
+			messages = append(messages, m)
 		}
-
-		messages = append(messages, msg)
 	}
 
 	total, err := col.CountDocuments(context.Background(), filter)

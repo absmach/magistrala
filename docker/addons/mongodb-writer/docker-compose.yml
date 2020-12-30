@@ -51,4 +51,4 @@ services:
     networks:
       - docker_mainflux-base-net
     volumes:
-      - ./subjects.toml:/config/subjects.toml
+      - ./config.toml:/config.toml

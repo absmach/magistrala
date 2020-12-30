@@ -12,8 +12,8 @@ import (
 
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	"github.com/mainflux/mainflux/readers"
-	mreaders "github.com/mainflux/mainflux/readers/mongodb"
-	mwriters "github.com/mainflux/mainflux/writers/mongodb"
+	mreader "github.com/mainflux/mainflux/readers/mongodb"
+	mwriter "github.com/mainflux/mainflux/writers/mongodb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -24,7 +24,7 @@ import (
 
 const (
 	testDB      = "test"
-	collection  = "mainflux"
+	collection  = "messages"
 	chanID      = "1"
 	subtopic    = "subtopic"
 	msgsNum     = 42
@@ -49,12 +49,12 @@ var (
 	sum     float64 = 42
 )
 
-func TestReadAll(t *testing.T) {
+func TestReadSenml(t *testing.T) {
 	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(addr))
 	require.Nil(t, err, fmt.Sprintf("Creating new MongoDB client expected to succeed: %s.\n", err))
 
 	db := client.Database(testDB)
-	writer := mwriters.New(db)
+	writer := mwriter.New(db)
 
 	messages := []senml.Message{}
 	subtopicMsgs := []senml.Message{}
@@ -77,16 +77,14 @@ func TestReadAll(t *testing.T) {
 			msg.Sum = &sum
 		}
 		msg.Time = float64(now - int64(i))
-
 		messages = append(messages, msg)
 		if count == 0 {
 			subtopicMsgs = append(subtopicMsgs, msg)
 		}
 	}
-	err = writer.Save(messages...)
+	err = writer.Save(messages)
 	require.Nil(t, err, fmt.Sprintf("failed to store message to MongoDB: %s", err))
-
-	reader := mreaders.New(db)
+	reader := mreader.New(db)
 
 	cases := map[string]struct {
 		chanID string
@@ -98,12 +96,12 @@ func TestReadAll(t *testing.T) {
 		"read message page for existing channel": {
 			chanID: chanID,
 			offset: 0,
-			limit:  10,
+			limit:  11,
 			page: readers.MessagesPage{
 				Total:    msgsNum,
 				Offset:   0,
-				Limit:    10,
-				Messages: messages[0:10],
+				Limit:    11,
+				Messages: fromSenml(messages[0:11]),
 			},
 		},
 		"read message page for non-existent channel": {
@@ -114,7 +112,7 @@ func TestReadAll(t *testing.T) {
 				Total:    0,
 				Offset:   0,
 				Limit:    10,
-				Messages: []senml.Message{},
+				Messages: []readers.Message{},
 			},
 		},
 		"read message last page": {
@@ -125,7 +123,7 @@ func TestReadAll(t *testing.T) {
 				Total:    msgsNum,
 				Offset:   40,
 				Limit:    10,
-				Messages: messages[40:42],
+				Messages: fromSenml(messages[40:42]),
 			},
 		},
 		"read message with non-existent subtopic": {
@@ -137,7 +135,7 @@ func TestReadAll(t *testing.T) {
 				Total:    0,
 				Offset:   0,
 				Limit:    msgsNum,
-				Messages: []senml.Message{},
+				Messages: []readers.Message{},
 			},
 		},
 		"read message with subtopic": {
@@ -149,15 +147,24 @@ func TestReadAll(t *testing.T) {
 				Total:    uint64(len(subtopicMsgs)),
 				Offset:   0,
 				Limit:    10,
-				Messages: subtopicMsgs,
+				Messages: fromSenml(subtopicMsgs),
 			},
 		},
 	}
 
 	for desc, tc := range cases {
 		result, err := reader.ReadAll(tc.chanID, tc.offset, tc.limit, tc.query)
+
 		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %s", desc, err))
 		assert.ElementsMatch(t, tc.page.Messages, result.Messages, fmt.Sprintf("%s: expected %v got %v", desc, tc.page.Messages, result.Messages))
 		assert.Equal(t, tc.page.Total, result.Total, fmt.Sprintf("%s: expected %v got %v", desc, tc.page.Total, result.Total))
 	}
+}
+
+func fromSenml(in []senml.Message) []readers.Message {
+	var ret []readers.Message
+	for _, m := range in {
+		ret = append(ret, m)
+	}
+	return ret
 }

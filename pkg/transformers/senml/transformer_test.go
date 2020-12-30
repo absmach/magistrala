@@ -39,18 +39,19 @@ func TestTransformJSON(t *testing.T) {
 
 	val := 52.0
 	sum := 110.0
-	msgs := []senml.Message{senml.Message{
-		Channel:    "channel",
-		Subtopic:   "subtopic",
-		Publisher:  "publisher",
-		Protocol:   "protocol",
-		Name:       "base-namename",
-		Unit:       "unit",
-		Time:       400,
-		UpdateTime: 150,
-		Value:      &val,
-		Sum:        &sum,
-	},
+	msgs := []senml.Message{
+		{
+			Channel:    "channel",
+			Subtopic:   "subtopic",
+			Publisher:  "publisher",
+			Protocol:   "protocol",
+			Name:       "base-namename",
+			Unit:       "unit",
+			Time:       400,
+			UpdateTime: 150,
+			Value:      &val,
+			Sum:        &sum,
+		},
 	}
 
 	cases := []struct {

@@ -1,4 +1,0 @@
-# If you want to listen on all subjects, just pass one element ["channels.>"], otherwise
-# pass the list of subjects (e.g ["channels.<channel_id>", "channels.<channel_id>.sub.topic.x", ...]).
-[subjects]
-filter = ["channels.>"]

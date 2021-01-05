@@ -20,7 +20,7 @@ RUN apk --no-cache --update --available upgrade && \
 ENV DOCKER_VERNEMQ_KUBERNETES_LABEL_SELECTOR="app=vernemq" \
     DOCKER_VERNEMQ_LOG__CONSOLE=console \
     PATH="/vernemq/bin:$PATH" \
-    VERNEMQ_VERSION="1.11.0"
+    VERNEMQ_VERSION="1.11.1"
 
 WORKDIR /vernemq
 
@@ -47,7 +47,7 @@ EXPOSE 1883 8883 8080 44053 4369 8888 \
 
 VOLUME ["/vernemq/log", "/vernemq/data", "/vernemq/etc"]
 
-HEALTHCHECK CMD vernemq ping | grep -q pong
+HEALTHCHECK CMD curl -s -f http://localhost:8888/health || false
 
 USER vernemq
 CMD ["start_vernemq"]

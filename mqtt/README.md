@@ -10,30 +10,31 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable                          | Description                                            | Default               |
-| --------------------------------- | ------------------------------------------------------ | --------------------- |
-| MF_MQTT_ADAPTER_LOG_LEVEL         | mProxy Log level                                       | error                 |
-| MF_MQTT_ADAPTER_MQTT_PORT         | mProxy port                                            | 1883                  |
-| MF_MQTT_ADAPTER_MQTT_TARGET_HOST  | MQTT broker host                                       | 0.0.0.0               |
-| MF_MQTT_ADAPTER_MQTT_TARGET_PORT  | MQTT broker port                                       | 1883                  |
-| MF_MQTT_ADAPTER_WS_PORT           | mProxy MQTT over WS port                               | 8080                  |
-| MF_MQTT_ADAPTER_WS_TARGET_HOST    | MQTT broker host for MQTT over WS                      | localhost             |
-| MF_MQTT_ADAPTER_WS_TARGET_PORT    | MQTT broker port for MQTT over WS                     | 8080                  |
-| MF_MQTT_ADAPTER_WS_TARGET_PATH    | MQTT broker MQTT over WS path                          | /mqtt                 |
-| MF_MQTT_ADAPTER_FORWARDER_TIMEOUT | MQTT forwarder for multiprotocol communication timeout | 30s                   |
-| MF_NATS_URL                       | NATS broker URL                                        | nats://127.0.0.1:4222 |
-| MF_THINGS_AUTH_GRPC_URL           | Things gRPC endpoint URL                               | localhost:8181        |
-| MF_THINGS_AUTH_GRPC_TIMEOUT       | Timeout in seconds for Things service gRPC calls       | 1s                    |
-| MF_JAEGER_URL                     | URL of Jaeger tracing service                          | ""                    |
-| MF_MQTT_ADAPTER_CLIENT_TLS        | gRPC client TLS                                        | false                 |
-| MF_MQTT_ADAPTER_CA_CERTS          | CA certs for gRPC client TLS                           | ""                    |
-| MF_MQTT_ADAPTER_INSTANCE          | Instance name for event sourcing                       | ""                    |
-| MF_MQTT_ADAPTER_ES_URL            | Event sourcing URL                                     | localhost:6379        |
-| MF_MQTT_ADAPTER_ES_PASS           | Event sourcing password                                | ""                    |
-| MF_MQTT_ADAPTER_ES_DB             | Event sourcing database                                | "0"                   |
-| MF_AUTH_CACHE_URL                 | Auth cache URL                                         | localhost:6379        |
-| MF_AUTH_CACHE_PASS                | Auth cache password                                    | ""                    |
-| MF_AUTH_CACHE_DB                  | Auth cache database                                    | "0"                   |
+| Variable                                 | Description                                            | Default               |
+|------------------------------------------|--------------------------------------------------------|-----------------------|
+| MF_MQTT_ADAPTER_LOG_LEVEL                | mProxy Log level                                       | error                 |
+| MF_MQTT_ADAPTER_MQTT_PORT                | mProxy port                                            | 1883                  |
+| MF_MQTT_ADAPTER_MQTT_TARGET_HOST         | MQTT broker host                                       | 0.0.0.0               |
+| MF_MQTT_ADAPTER_MQTT_TARGET_PORT         | MQTT broker port                                       | 1883                  |
+| MF_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK | URL of broker health check                             | ""                    |
+| MF_MQTT_ADAPTER_WS_PORT                  | mProxy MQTT over WS port                               | 8080                  |
+| MF_MQTT_ADAPTER_WS_TARGET_HOST           | MQTT broker host for MQTT over WS                      | localhost             |
+| MF_MQTT_ADAPTER_WS_TARGET_PORT           | MQTT broker port for MQTT over WS                      | 8080                  |
+| MF_MQTT_ADAPTER_WS_TARGET_PATH           | MQTT broker MQTT over WS path                          | /mqtt                 |
+| MF_MQTT_ADAPTER_FORWARDER_TIMEOUT        | MQTT forwarder for multiprotocol communication timeout | 30s                   |
+| MF_NATS_URL                              | NATS broker URL                                        | nats://127.0.0.1:4222 |
+| MF_THINGS_AUTH_GRPC_URL                  | Things gRPC endpoint URL                               | localhost:8181        |
+| MF_THINGS_AUTH_GRPC_TIMEOUT              | Timeout in seconds for Things service gRPC calls       | 1s                    |
+| MF_JAEGER_URL                            | URL of Jaeger tracing service                          | ""                    |
+| MF_MQTT_ADAPTER_CLIENT_TLS               | gRPC client TLS                                        | false                 |
+| MF_MQTT_ADAPTER_CA_CERTS                 | CA certs for gRPC client TLS                           | ""                    |
+| MF_MQTT_ADAPTER_INSTANCE                 | Instance name for event sourcing                       | ""                    |
+| MF_MQTT_ADAPTER_ES_URL                   | Event sourcing URL                                     | localhost:6379        |
+| MF_MQTT_ADAPTER_ES_PASS                  | Event sourcing password                                | ""                    |
+| MF_MQTT_ADAPTER_ES_DB                    | Event sourcing database                                | "0"                   |
+| MF_AUTH_CACHE_URL                        | Auth cache URL                                         | localhost:6379        |
+| MF_AUTH_CACHE_PASS                       | Auth cache password                                    | ""                    |
+| MF_AUTH_CACHE_DB                         | Auth cache database                                    | "0"                   |
 
 
 ## Deployment
@@ -60,6 +61,7 @@ services:
       MF_NATS_URL: ${MF_NATS_URL}
       MF_MQTT_ADAPTER_MQTT_TARGET_HOST: vernemq
       MF_MQTT_ADAPTER_MQTT_TARGET_PORT: ${MF_MQTT_BROKER_PORT}
+      MF_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK: http://vernemq:8888/health
       MF_MQTT_ADAPTER_WS_TARGET_HOST: vernemq
       MF_MQTT_ADAPTER_WS_TARGET_PORT: ${MF_MQTT_BROKER_WS_PORT}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
@@ -87,6 +89,7 @@ MF_MQTT_ADAPTER_LOG_LEVEL=[MQTT Adapter Log Level] \
 MF_MQTT_ADAPTER_MQTT_PORT=[MQTT adapter MQTT port]
 MF_MQTT_ADAPTER_MQTT_TARGET_HOST=[MQTT broker host] \
 MF_MQTT_ADAPTER_MQTT_TARGET_PORT=[MQTT broker MQTT port]] \
+MF_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK=[MQTT health check URL] \
 MF_MQTT_ADAPTER_WS_PORT=[MQTT adapter WS port] \
 MF_MQTT_ADAPTER_WS_TARGET_HOST=[MQTT broker for MQTT over WS host] \
 MF_MQTT_ADAPTER_WS_TARGET_PORT=[MQTT broker for MQTT over WS port]] \

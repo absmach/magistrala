@@ -12,12 +12,14 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/go-redis/redis"
 	"github.com/mainflux/mainflux"
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/mqtt"
 	mqttredis "github.com/mainflux/mainflux/mqtt/redis"
 	"github.com/mainflux/mainflux/pkg/auth"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	mqttpub "github.com/mainflux/mainflux/pkg/messaging/mqtt"
 	"github.com/mainflux/mainflux/pkg/messaging/nats"
@@ -36,14 +38,16 @@ const (
 	defLogLevel = "error"
 	envLogLevel = "MF_MQTT_ADAPTER_LOG_LEVEL"
 	// MQTT
-	defMQTTPort             = "1883"
-	defMQTTTargetHost       = "0.0.0.0"
-	defMQTTTargetPort       = "1883"
-	defMQTTForwarderTimeout = "30s" // 30 seconds
-	envMQTTPort             = "MF_MQTT_ADAPTER_MQTT_PORT"
-	envMQTTTargetHost       = "MF_MQTT_ADAPTER_MQTT_TARGET_HOST"
-	envMQTTTargetPort       = "MF_MQTT_ADAPTER_MQTT_TARGET_PORT"
-	envMQTTForwarderTimeout = "MF_MQTT_ADAPTER_FORWARDER_TIMEOUT"
+	defMQTTPort              = "1883"
+	defMQTTTargetHost        = "0.0.0.0"
+	defMQTTTargetPort        = "1883"
+	defMQTTForwarderTimeout  = "30s" // 30 seconds
+	defMQTTTargetHealthCheck = ""
+	envMQTTPort              = "MF_MQTT_ADAPTER_MQTT_PORT"
+	envMQTTTargetHost        = "MF_MQTT_ADAPTER_MQTT_TARGET_HOST"
+	envMQTTTargetPort        = "MF_MQTT_ADAPTER_MQTT_TARGET_PORT"
+	envMQTTTargetHealthCheck = "MF_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK"
+	envMQTTForwarderTimeout  = "MF_MQTT_ADAPTER_FORWARDER_TIMEOUT"
 	// HTTP
 	defHTTPPort       = "8080"
 	defHTTPTargetHost = "localhost"
@@ -89,29 +93,30 @@ const (
 )
 
 type config struct {
-	mqttPort             string
-	mqttTargetHost       string
-	mqttTargetPort       string
-	mqttForwarderTimeout time.Duration
-	httpPort             string
-	httpTargetHost       string
-	httpTargetPort       string
-	httpTargetPath       string
-	jaegerURL            string
-	logLevel             string
-	thingsURL            string
-	thingsAuthURL        string
-	thingsAuthTimeout    time.Duration
-	natsURL              string
-	clientTLS            bool
-	caCerts              string
-	instance             string
-	esURL                string
-	esPass               string
-	esDB                 string
-	authURL              string
-	authPass             string
-	authDB               string
+	mqttPort              string
+	mqttTargetHost        string
+	mqttTargetPort        string
+	mqttForwarderTimeout  time.Duration
+	mqttTargetHealthCheck string
+	httpPort              string
+	httpTargetHost        string
+	httpTargetPort        string
+	httpTargetPath        string
+	jaegerURL             string
+	logLevel              string
+	thingsURL             string
+	thingsAuthURL         string
+	thingsAuthTimeout     time.Duration
+	natsURL               string
+	clientTLS             bool
+	caCerts               string
+	instance              string
+	esURL                 string
+	esPass                string
+	esDB                  string
+	authURL               string
+	authPass              string
+	authDB                string
 }
 
 func main() {
@@ -120,6 +125,18 @@ func main() {
 	logger, err := mflog.New(os.Stdout, cfg.logLevel)
 	if err != nil {
 		log.Fatalf(err.Error())
+	}
+
+	if cfg.mqttTargetHealthCheck != "" {
+		notify := func(e error, next time.Duration) {
+			logger.Info(fmt.Sprintf("Broker not ready: %s, next try in %s", e.Error(), next))
+		}
+
+		err := backoff.RetryNotify(healthcheck(cfg), backoff.NewExponentialBackOff(), notify)
+		if err != nil {
+			logger.Info(fmt.Sprintf("MQTT healthcheck limit exceeded, exiting. %s ", err.Error()))
+			os.Exit(1)
+		}
 	}
 
 	conn := connectToThings(cfg, logger)
@@ -203,29 +220,30 @@ func loadConfig() config {
 	}
 
 	return config{
-		mqttPort:             mainflux.Env(envMQTTPort, defMQTTPort),
-		mqttTargetHost:       mainflux.Env(envMQTTTargetHost, defMQTTTargetHost),
-		mqttTargetPort:       mainflux.Env(envMQTTTargetPort, defMQTTTargetPort),
-		mqttForwarderTimeout: mqttTimeout,
-		httpPort:             mainflux.Env(envHTTPPort, defHTTPPort),
-		httpTargetHost:       mainflux.Env(envHTTPTargetHost, defHTTPTargetHost),
-		httpTargetPort:       mainflux.Env(envHTTPTargetPort, defHTTPTargetPort),
-		httpTargetPath:       mainflux.Env(envHTTPTargetPath, defHTTPTargetPath),
-		jaegerURL:            mainflux.Env(envJaegerURL, defJaegerURL),
-		thingsAuthURL:        mainflux.Env(envThingsAuthURL, defThingsAuthURL),
-		thingsAuthTimeout:    authTimeout,
-		thingsURL:            mainflux.Env(envThingsAuthURL, defThingsAuthURL),
-		natsURL:              mainflux.Env(envNatsURL, defNatsURL),
-		logLevel:             mainflux.Env(envLogLevel, defLogLevel),
-		clientTLS:            tls,
-		caCerts:              mainflux.Env(envCACerts, defCACerts),
-		instance:             mainflux.Env(envInstance, defInstance),
-		esURL:                mainflux.Env(envESURL, defESURL),
-		esPass:               mainflux.Env(envESPass, defESPass),
-		esDB:                 mainflux.Env(envESDB, defESDB),
-		authURL:              mainflux.Env(envAuthCacheURL, defAuthcacheURL),
-		authPass:             mainflux.Env(envAuthCachePass, defAuthCachePass),
-		authDB:               mainflux.Env(envAuthCacheDB, defAuthCacheDB),
+		mqttPort:              mainflux.Env(envMQTTPort, defMQTTPort),
+		mqttTargetHost:        mainflux.Env(envMQTTTargetHost, defMQTTTargetHost),
+		mqttTargetPort:        mainflux.Env(envMQTTTargetPort, defMQTTTargetPort),
+		mqttForwarderTimeout:  mqttTimeout,
+		mqttTargetHealthCheck: mainflux.Env(envMQTTTargetHealthCheck, defMQTTTargetHealthCheck),
+		httpPort:              mainflux.Env(envHTTPPort, defHTTPPort),
+		httpTargetHost:        mainflux.Env(envHTTPTargetHost, defHTTPTargetHost),
+		httpTargetPort:        mainflux.Env(envHTTPTargetPort, defHTTPTargetPort),
+		httpTargetPath:        mainflux.Env(envHTTPTargetPath, defHTTPTargetPath),
+		jaegerURL:             mainflux.Env(envJaegerURL, defJaegerURL),
+		thingsAuthURL:         mainflux.Env(envThingsAuthURL, defThingsAuthURL),
+		thingsAuthTimeout:     authTimeout,
+		thingsURL:             mainflux.Env(envThingsAuthURL, defThingsAuthURL),
+		natsURL:               mainflux.Env(envNatsURL, defNatsURL),
+		logLevel:              mainflux.Env(envLogLevel, defLogLevel),
+		clientTLS:             tls,
+		caCerts:               mainflux.Env(envCACerts, defCACerts),
+		instance:              mainflux.Env(envInstance, defInstance),
+		esURL:                 mainflux.Env(envESURL, defESURL),
+		esPass:                mainflux.Env(envESPass, defESPass),
+		esDB:                  mainflux.Env(envESDB, defESDB),
+		authURL:               mainflux.Env(envAuthCacheURL, defAuthcacheURL),
+		authPass:              mainflux.Env(envAuthCachePass, defAuthCachePass),
+		authDB:                mainflux.Env(envAuthCacheDB, defAuthCacheDB),
 	}
 }
 
@@ -304,4 +322,22 @@ func proxyWS(cfg config, logger mflog.Logger, handler session.Handler, errs chan
 	http.Handle("/mqtt", wp.Handler())
 
 	errs <- wp.Listen(cfg.httpPort)
+}
+
+func healthcheck(cfg config) func() error {
+	return func() error {
+		res, err := http.Get(cfg.mqttTargetHealthCheck)
+		if err != nil {
+			return err
+		}
+		defer res.Body.Close()
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
+		if res.StatusCode != http.StatusOK {
+			return errors.New(string(body))
+		}
+		return nil
+	}
 }

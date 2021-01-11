@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gofrs/uuid"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
+	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/readers"
 	preader "github.com/mainflux/mainflux/readers/postgres"
 	pwriter "github.com/mainflux/mainflux/writers/postgres"
@@ -19,60 +19,77 @@ import (
 
 const (
 	subtopic    = "subtopic"
-	msgsNum     = 42
+	msgsNum     = 100
+	limit       = 10
 	valueFields = 5
+	mqttProt    = "mqtt"
+	httpProt    = "http"
+	msgName     = "temperature"
 )
 
 var (
-	v       float64 = 5
-	stringV         = "value"
-	boolV           = true
-	dataV           = "base64"
-	sum     float64 = 42
+	v   float64 = 5
+	vs          = "value"
+	vb          = true
+	vd          = "dataValue"
+	sum float64 = 42
 )
 
 func TestReadSenml(t *testing.T) {
 	messageRepo := pwriter.New(db)
 
-	chanID, err := uuid.NewV4()
+	chanID, err := uuidProvider.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	pubID, err := uuid.NewV4()
+	pubID, err := uuidProvider.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	wrongID, err := uuid.NewV4()
+	pub2ID, err := uuidProvider.New().ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	wrongID, err := uuidProvider.New().ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	m := senml.Message{
-		Channel:   chanID.String(),
-		Publisher: pubID.String(),
-		Protocol:  "mqtt",
+		Channel:   chanID,
+		Publisher: pubID,
+		Protocol:  mqttProt,
 	}
 
 	messages := []senml.Message{}
-	subtopicMsgs := []senml.Message{}
-	now := time.Now().Unix()
+	valueMsgs := []senml.Message{}
+	boolMsgs := []senml.Message{}
+	stringMsgs := []senml.Message{}
+	dataMsgs := []senml.Message{}
+	queryMsgs := []senml.Message{}
+
+	now := float64(time.Now().Unix())
 	for i := 0; i < msgsNum; i++ {
 		// Mix possible values as well as value sum.
-		count := i % valueFields
 		msg := m
+		msg.Time = now - float64(i)
+
+		count := i % valueFields
 		switch count {
 		case 0:
-			msg.Subtopic = subtopic
 			msg.Value = &v
+			valueMsgs = append(valueMsgs, msg)
 		case 1:
-			msg.BoolValue = &boolV
+			msg.BoolValue = &vb
+			boolMsgs = append(boolMsgs, msg)
 		case 2:
-			msg.StringValue = &stringV
+			msg.StringValue = &vs
+			stringMsgs = append(stringMsgs, msg)
 		case 3:
-			msg.DataValue = &dataV
+			msg.DataValue = &vd
+			dataMsgs = append(dataMsgs, msg)
 		case 4:
 			msg.Sum = &sum
+			msg.Subtopic = subtopic
+			msg.Protocol = httpProt
+			msg.Publisher = pub2ID
+			msg.Name = msgName
+			queryMsgs = append(queryMsgs, msg)
 		}
-		msg.Time = float64(now - int64(i))
 
 		messages = append(messages, msg)
-		if count == 0 {
-			subtopicMsgs = append(subtopicMsgs, msg)
-		}
 	}
 
 	err = messageRepo.Save(messages)
@@ -91,7 +108,7 @@ func TestReadSenml(t *testing.T) {
 		page   readers.MessagesPage
 	}{
 		"read message page for existing channel": {
-			chanID: chanID.String(),
+			chanID: chanID,
 			offset: 0,
 			limit:  msgsNum,
 			page: readers.MessagesPage{
@@ -102,7 +119,7 @@ func TestReadSenml(t *testing.T) {
 			},
 		},
 		"read message page for non-existent channel": {
-			chanID: wrongID.String(),
+			chanID: wrongID,
 			offset: 0,
 			limit:  msgsNum,
 			page: readers.MessagesPage{
@@ -113,18 +130,18 @@ func TestReadSenml(t *testing.T) {
 			},
 		},
 		"read message last page": {
-			chanID: chanID.String(),
-			offset: 40,
-			limit:  5,
+			chanID: chanID,
+			offset: msgsNum - 20,
+			limit:  msgsNum,
 			page: readers.MessagesPage{
 				Total:    msgsNum,
-				Offset:   40,
-				Limit:    5,
-				Messages: fromSenml(messages[40:42]),
+				Offset:   msgsNum - 20,
+				Limit:    msgsNum,
+				Messages: fromSenml(messages[msgsNum-20 : msgsNum]),
 			},
 		},
 		"read message with non-existent subtopic": {
-			chanID: chanID.String(),
+			chanID: chanID,
 			offset: 0,
 			limit:  msgsNum,
 			query:  map[string]string{"subtopic": "not-present"},
@@ -136,27 +153,114 @@ func TestReadSenml(t *testing.T) {
 			},
 		},
 		"read message with subtopic": {
-			chanID: chanID.String(),
+			chanID: chanID,
 			offset: 0,
-			limit:  uint64(len(subtopicMsgs)),
+			limit:  uint64(len(queryMsgs)),
 			query:  map[string]string{"subtopic": subtopic},
 			page: readers.MessagesPage{
-				Total:    uint64(len(subtopicMsgs)),
+				Total:    uint64(len(queryMsgs)),
 				Offset:   0,
-				Limit:    uint64(len(subtopicMsgs)),
-				Messages: fromSenml(subtopicMsgs),
+				Limit:    uint64(len(queryMsgs)),
+				Messages: fromSenml(queryMsgs),
 			},
 		},
-		"read message with publisher/protocols": {
-			chanID: chanID.String(),
+		"read message with publisher": {
+			chanID: chanID,
 			offset: 0,
-			limit:  msgsNum,
-			query:  map[string]string{"publisher": pubID.String(), "protocol": "mqtt"},
+			limit:  uint64(len(queryMsgs)),
+			query:  map[string]string{"publisher": pub2ID},
 			page: readers.MessagesPage{
-				Total:    msgsNum,
+				Total:    uint64(len(queryMsgs)),
 				Offset:   0,
-				Limit:    msgsNum,
-				Messages: fromSenml(messages),
+				Limit:    uint64(len(queryMsgs)),
+				Messages: fromSenml(queryMsgs),
+			},
+		},
+		"read message with protocol": {
+			chanID: chanID,
+			offset: 0,
+			limit:  uint64(len(queryMsgs)),
+			query:  map[string]string{"protocol": httpProt},
+			page: readers.MessagesPage{
+				Total:    uint64(len(queryMsgs)),
+				Offset:   0,
+				Limit:    uint64(len(queryMsgs)),
+				Messages: fromSenml(queryMsgs),
+			},
+		},
+		"read message with name": {
+			chanID: chanID,
+			offset: 0,
+			limit:  limit,
+			query:  map[string]string{"name": msgName},
+			page: readers.MessagesPage{
+				Total:    uint64(len(queryMsgs)),
+				Offset:   0,
+				Limit:    limit,
+				Messages: fromSenml(queryMsgs[0:limit]),
+			},
+		},
+		"read message with value": {
+			chanID: chanID,
+			offset: 0,
+			limit:  limit,
+			query:  map[string]string{"v": fmt.Sprintf("%f", v)},
+			page: readers.MessagesPage{
+				Total:    uint64(len(valueMsgs)),
+				Offset:   0,
+				Limit:    limit,
+				Messages: fromSenml(valueMsgs[0:limit]),
+			},
+		},
+		"read message with boolean value": {
+			chanID: chanID,
+			offset: 0,
+			limit:  limit,
+			query:  map[string]string{"vb": fmt.Sprintf("%t", vb)},
+			page: readers.MessagesPage{
+				Total:    uint64(len(boolMsgs)),
+				Offset:   0,
+				Limit:    limit,
+				Messages: fromSenml(boolMsgs[0:limit]),
+			},
+		},
+		"read message with string value": {
+			chanID: chanID,
+			offset: 0,
+			limit:  limit,
+			query:  map[string]string{"vs": vs},
+			page: readers.MessagesPage{
+				Total:    uint64(len(stringMsgs)),
+				Offset:   0,
+				Limit:    limit,
+				Messages: fromSenml(stringMsgs[0:limit]),
+			},
+		},
+		"read message with data value": {
+			chanID: chanID,
+			offset: 0,
+			limit:  limit,
+			query:  map[string]string{"vd": vd},
+			page: readers.MessagesPage{
+				Total:    uint64(len(dataMsgs)),
+				Offset:   0,
+				Limit:    limit,
+				Messages: fromSenml(dataMsgs[0:limit]),
+			},
+		},
+		"read message with from/to": {
+			chanID: chanID,
+			offset: 0,
+			limit:  limit,
+			query: map[string]string{
+				"from": fmt.Sprintf("%f", messages[5].Time),
+				"to":   fmt.Sprintf("%f", messages[0].Time),
+			},
+			page: readers.MessagesPage{
+				Total:    5,
+				Offset:   0,
+				Limit:    limit,
+				Messages: fromSenml(messages[1:6]),
 			},
 		},
 	}

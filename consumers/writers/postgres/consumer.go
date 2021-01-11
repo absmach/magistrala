@@ -11,10 +11,10 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq" // required for DB access
+	"github.com/mainflux/mainflux/consumers"
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfjson "github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
-	"github.com/mainflux/mainflux/writers"
 )
 
 const (
@@ -31,18 +31,18 @@ var (
 	errNoTable        = errors.New("relation does not exist")
 )
 
-var _ writers.MessageRepository = (*postgresRepo)(nil)
+var _ consumers.Consumer = (*postgresRepo)(nil)
 
 type postgresRepo struct {
 	db *sqlx.DB
 }
 
 // New returns new PostgreSQL writer.
-func New(db *sqlx.DB) writers.MessageRepository {
+func New(db *sqlx.DB) consumers.Consumer {
 	return &postgresRepo{db: db}
 }
 
-func (pr postgresRepo) Save(message interface{}) (err error) {
+func (pr postgresRepo) Consume(message interface{}) (err error) {
 	switch m := message.(type) {
 	case mfjson.Messages:
 		return pr.saveJSON(m)

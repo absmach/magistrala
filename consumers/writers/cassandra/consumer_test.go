@@ -1,26 +1,27 @@
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
 
-package postgres_test
+package cassandra_test
 
 import (
 	"fmt"
 	"testing"
 	"time"
 
+	"github.com/mainflux/mainflux/consumers/writers/cassandra"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
-	"github.com/mainflux/mainflux/writers/postgres"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/gofrs/uuid"
 )
 
 const (
+	keyspace    = "mainflux"
 	msgsNum     = 42
 	valueFields = 5
 	subtopic    = "topic"
 )
+
+var addr = "localhost"
 
 var (
 	v       float64 = 5
@@ -30,20 +31,20 @@ var (
 	sum     float64 = 42
 )
 
-func TestMessageSave(t *testing.T) {
-	messageRepo := postgres.New(db)
+func TestSave(t *testing.T) {
+	session, err := cassandra.Connect(cassandra.DBConfig{
+		Hosts:    []string{addr},
+		Keyspace: keyspace,
+	})
+	require.Nil(t, err, fmt.Sprintf("failed to connect to Cassandra: %s", err))
 
-	chid, err := uuid.NewV4()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
-	msg := senml.Message{}
-	msg.Channel = chid.String()
-
-	pubid, err := uuid.NewV4()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	msg.Publisher = pubid.String()
-
+	repo := cassandra.New(session)
 	now := time.Now().Unix()
+	msg := senml.Message{
+		Channel:   "1",
+		Publisher: "1",
+		Protocol:  "mqtt",
+	}
 	var msgs []senml.Message
 
 	for i := 0; i < msgsNum; i++ {
@@ -67,6 +68,6 @@ func TestMessageSave(t *testing.T) {
 		msgs = append(msgs, msg)
 	}
 
-	err = messageRepo.Save(msgs)
-	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
+	err = repo.Consume(msgs)
+	assert.Nil(t, err, fmt.Sprintf("expected no error, got %s", err))
 }

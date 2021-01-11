@@ -14,12 +14,12 @@ import (
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	influxdata "github.com/influxdata/influxdb/client/v2"
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/consumers"
+	"github.com/mainflux/mainflux/consumers/api"
+	"github.com/mainflux/mainflux/consumers/writers/influxdb"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging/nats"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
-	"github.com/mainflux/mainflux/writers"
-	"github.com/mainflux/mainflux/writers/api"
-	"github.com/mainflux/mainflux/writers/influxdb"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
@@ -91,7 +91,7 @@ func main() {
 	repo = api.MetricsMiddleware(repo, counter, latency)
 	st := senml.New(cfg.contentType)
 
-	if err := writers.Start(pubSub, repo, st, cfg.configPath, logger); err != nil {
+	if err := consumers.Start(pubSub, repo, st, cfg.configPath, logger); err != nil {
 		logger.Error(fmt.Sprintf("Failed to start InfluxDB writer: %s", err))
 		os.Exit(1)
 	}

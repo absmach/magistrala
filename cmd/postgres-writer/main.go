@@ -14,12 +14,12 @@ import (
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/jmoiron/sqlx"
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/consumers"
+	"github.com/mainflux/mainflux/consumers/api"
+	"github.com/mainflux/mainflux/consumers/writers/postgres"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging/nats"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
-	"github.com/mainflux/mainflux/writers"
-	"github.com/mainflux/mainflux/writers/api"
-	"github.com/mainflux/mainflux/writers/postgres"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
@@ -88,7 +88,7 @@ func main() {
 	repo := newService(db, logger)
 	st := senml.New(cfg.contentType)
 
-	if err = writers.Start(pubSub, repo, st, cfg.configPath, logger); err != nil {
+	if err = consumers.Start(pubSub, repo, st, cfg.configPath, logger); err != nil {
 		logger.Error(fmt.Sprintf("Failed to create Postgres writer: %s", err))
 	}
 
@@ -138,7 +138,7 @@ func connectToDB(dbConfig postgres.Config, logger logger.Logger) *sqlx.DB {
 	return db
 }
 
-func newService(db *sqlx.DB, logger logger.Logger) writers.MessageRepository {
+func newService(db *sqlx.DB, logger logger.Logger) consumers.Consumer {
 	svc := postgres.New(db)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(

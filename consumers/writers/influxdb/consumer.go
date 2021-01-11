@@ -7,10 +7,10 @@ import (
 	"math"
 	"time"
 
+	"github.com/mainflux/mainflux/consumers"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
-	"github.com/mainflux/mainflux/writers"
 
 	influxdata "github.com/influxdata/influxdb/client/v2"
 )
@@ -24,7 +24,7 @@ var (
 	errSaveMessage   = errors.New("failed to save message to influxdb database")
 	errMessageFormat = errors.New("invalid message format")
 )
-var _ writers.MessageRepository = (*influxRepo)(nil)
+var _ consumers.Consumer = (*influxRepo)(nil)
 
 type influxRepo struct {
 	client influxdata.Client
@@ -32,7 +32,7 @@ type influxRepo struct {
 }
 
 // New returns new InfluxDB writer.
-func New(client influxdata.Client, database string) writers.MessageRepository {
+func New(client influxdata.Client, database string) consumers.Consumer {
 	return &influxRepo{
 		client: client,
 		cfg: influxdata.BatchPointsConfig{
@@ -41,7 +41,7 @@ func New(client influxdata.Client, database string) writers.MessageRepository {
 	}
 }
 
-func (repo *influxRepo) Save(message interface{}) error {
+func (repo *influxRepo) Consume(message interface{}) error {
 	pts, err := influxdata.NewBatchPoints(repo.cfg)
 	if err != nil {
 		return errors.Wrap(errSaveMessage, err)

@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/mainflux/mainflux/consumers/writers/mongodb"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
-	"github.com/mainflux/mainflux/writers/mongodb"
 
 	log "github.com/mainflux/mainflux/logger"
 	"go.mongodb.org/mongo-driver/bson"
@@ -82,7 +82,7 @@ func TestSave(t *testing.T) {
 		msgs = append(msgs, msg)
 	}
 
-	err = repo.Save(msgs)
+	err = repo.Consume(msgs)
 	assert.Nil(t, err, fmt.Sprintf("Save operation expected to succeed: %s.\n", err))
 
 	count, err := db.Collection(collection).CountDocuments(context.Background(), bson.D{})

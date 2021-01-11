@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
+	writer "github.com/mainflux/mainflux/consumers/writers/cassandra"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	"github.com/mainflux/mainflux/readers"
-	creaders "github.com/mainflux/mainflux/readers/cassandra"
-	cwriters "github.com/mainflux/mainflux/writers/cassandra"
+	reader "github.com/mainflux/mainflux/readers/cassandra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -42,13 +42,13 @@ var (
 )
 
 func TestReadSenml(t *testing.T) {
-	session, err := creaders.Connect(creaders.DBConfig{
+	session, err := reader.Connect(reader.DBConfig{
 		Hosts:    []string{addr},
 		Keyspace: keyspace,
 	})
 	require.Nil(t, err, fmt.Sprintf("failed to connect to Cassandra: %s", err))
 	defer session.Close()
-	writer := cwriters.New(session)
+	writer := writer.New(session)
 
 	messages := []senml.Message{}
 	subtopicMsgs := []senml.Message{}
@@ -78,10 +78,10 @@ func TestReadSenml(t *testing.T) {
 		}
 	}
 
-	err = writer.Save(messages)
+	err = writer.Consume(messages)
 	require.Nil(t, err, fmt.Sprintf("failed to store message to Cassandra: %s", err))
 
-	reader := creaders.New(session)
+	reader := reader.New(session)
 
 	// Since messages are not saved in natural order,
 	// cases that return subset of messages are only

@@ -10,9 +10,9 @@ import (
 	"time"
 
 	influxdata "github.com/influxdata/influxdb/client/v2"
+	writer "github.com/mainflux/mainflux/consumers/writers/influxdb"
 	log "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
-	writer "github.com/mainflux/mainflux/writers/influxdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -120,7 +120,7 @@ func TestSave(t *testing.T) {
 			msgs = append(msgs, msg)
 		}
 
-		err = repo.Save(msgs)
+		err = repo.Consume(msgs)
 		assert.Nil(t, err, fmt.Sprintf("Save operation expected to succeed: %s.\n", err))
 
 		row, err := queryDB(selectMsgs)

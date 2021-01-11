@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/gocql/gocql"
+	"github.com/mainflux/mainflux/consumers/writers/cassandra"
 	log "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/writers/cassandra"
 	dockertest "github.com/ory/dockertest/v3"
 )
 

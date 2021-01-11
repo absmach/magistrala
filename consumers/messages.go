@@ -1,7 +1,7 @@
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
 
-package writers
+package consumers
 
 import (
 	"fmt"
@@ -21,42 +21,36 @@ var (
 	errMessageConversion = errors.New("error conversing transformed messages")
 )
 
-type consumer struct {
-	repo        MessageRepository
-	transformer transformers.Transformer
-	logger      logger.Logger
-}
-
 // Start method starts consuming messages received from NATS.
 // This method transforms messages to SenML format before
 // using MessageRepository to store them.
-func Start(sub messaging.Subscriber, repo MessageRepository, transformer transformers.Transformer, subjectsCfgPath string, logger logger.Logger) error {
-	c := consumer{
-		repo:        repo,
-		transformer: transformer,
-		logger:      logger,
-	}
-
+func Start(sub messaging.Subscriber, consumer Consumer, transformer transformers.Transformer, subjectsCfgPath string, logger logger.Logger) error {
 	subjects, err := loadSubjectsConfig(subjectsCfgPath)
 	if err != nil {
 		logger.Warn(fmt.Sprintf("Failed to load subjects: %s", err))
 	}
 
 	for _, subject := range subjects {
-		if err := sub.Subscribe(subject, c.handler); err != nil {
+		if err := sub.Subscribe(subject, handler(transformer, consumer)); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (c *consumer) handler(msg messaging.Message) error {
-	t, err := c.transformer.Transform(msg)
-	if err != nil {
-		return err
-	}
+func handler(t transformers.Transformer, c Consumer) messaging.MessageHandler {
+	return func(msg messaging.Message) error {
+		m := interface{}(msg)
+		var err error
+		if t != nil {
+			m, err = t.Transform(msg)
+			if err != nil {
+				return err
+			}
+		}
 
-	return c.repo.Save(t)
+		return c.Consume(m)
+	}
 }
 
 type filterConfig struct {

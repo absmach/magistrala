@@ -8,10 +8,10 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 
+	"github.com/mainflux/mainflux/consumers"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
-	"github.com/mainflux/mainflux/writers"
 )
 
 const (
@@ -24,18 +24,18 @@ var (
 	errMessageFormat = errors.New("invalid message format")
 )
 
-var _ writers.MessageRepository = (*mongoRepo)(nil)
+var _ consumers.Consumer = (*mongoRepo)(nil)
 
 type mongoRepo struct {
 	db *mongo.Database
 }
 
 // New returns new MongoDB writer.
-func New(db *mongo.Database) writers.MessageRepository {
+func New(db *mongo.Database) consumers.Consumer {
 	return &mongoRepo{db}
 }
 
-func (repo *mongoRepo) Save(message interface{}) error {
+func (repo *mongoRepo) Consume(message interface{}) error {
 	switch m := message.(type) {
 	case json.Messages:
 		return repo.saveJSON(m)

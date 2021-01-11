@@ -8,28 +8,28 @@ import (
 	"fmt"
 
 	"github.com/gocql/gocql"
+	"github.com/mainflux/mainflux/consumers"
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfjson "github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
-	"github.com/mainflux/mainflux/writers"
 )
 
 var (
 	errSaveMessage = errors.New("failed to save message to cassandra database")
 	errNoTable     = errors.New("table does not exist")
 )
-var _ writers.MessageRepository = (*cassandraRepository)(nil)
+var _ consumers.Consumer = (*cassandraRepository)(nil)
 
 type cassandraRepository struct {
 	session *gocql.Session
 }
 
 // New instantiates Cassandra message repository.
-func New(session *gocql.Session) writers.MessageRepository {
+func New(session *gocql.Session) consumers.Consumer {
 	return &cassandraRepository{session}
 }
 
-func (cr *cassandraRepository) Save(message interface{}) error {
+func (cr *cassandraRepository) Consume(message interface{}) error {
 	switch m := message.(type) {
 	case mfjson.Messages:
 		return cr.saveJSON(m)

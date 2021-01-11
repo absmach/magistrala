@@ -16,12 +16,12 @@ import (
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/gocql/gocql"
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/consumers"
+	"github.com/mainflux/mainflux/consumers/api"
+	"github.com/mainflux/mainflux/consumers/writers/cassandra"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging/nats"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
-	"github.com/mainflux/mainflux/writers"
-	"github.com/mainflux/mainflux/writers/api"
-	"github.com/mainflux/mainflux/writers/cassandra"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
@@ -82,7 +82,7 @@ func main() {
 	repo := newService(session, logger)
 	st := senml.New(cfg.contentType)
 
-	if err := writers.Start(pubSub, repo, st, cfg.configPath, logger); err != nil {
+	if err := consumers.Start(pubSub, repo, st, cfg.configPath, logger); err != nil {
 		logger.Error(fmt.Sprintf("Failed to create Cassandra writer: %s", err))
 	}
 
@@ -134,7 +134,7 @@ func connectToCassandra(dbCfg cassandra.DBConfig, logger logger.Logger) *gocql.S
 	return session
 }
 
-func newService(session *gocql.Session, logger logger.Logger) writers.MessageRepository {
+func newService(session *gocql.Session, logger logger.Logger) consumers.Consumer {
 	repo := cassandra.New(session)
 	repo = api.LoggingMiddleware(repo, logger)
 	repo = api.MetricsMiddleware(

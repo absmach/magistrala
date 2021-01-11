@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
+	writer "github.com/mainflux/mainflux/consumers/writers/mongodb"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	"github.com/mainflux/mainflux/readers"
-	mreader "github.com/mainflux/mainflux/readers/mongodb"
-	mwriter "github.com/mainflux/mainflux/writers/mongodb"
+	reader "github.com/mainflux/mainflux/readers/mongodb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -54,7 +54,7 @@ func TestReadSenml(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Creating new MongoDB client expected to succeed: %s.\n", err))
 
 	db := client.Database(testDB)
-	writer := mwriter.New(db)
+	writer := writer.New(db)
 
 	messages := []senml.Message{}
 	subtopicMsgs := []senml.Message{}
@@ -82,9 +82,9 @@ func TestReadSenml(t *testing.T) {
 			subtopicMsgs = append(subtopicMsgs, msg)
 		}
 	}
-	err = writer.Save(messages)
+	err = writer.Consume(messages)
 	require.Nil(t, err, fmt.Sprintf("failed to store message to MongoDB: %s", err))
-	reader := mreader.New(db)
+	reader := reader.New(db)
 
 	cases := map[string]struct {
 		chanID string

@@ -2,28 +2,29 @@ package influxdb_test
 
 import (
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
 	influxdata "github.com/influxdata/influxdb/client/v2"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
+	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/readers"
-	reader "github.com/mainflux/mainflux/readers/influxdb"
-	writer "github.com/mainflux/mainflux/writers/influxdb"
+	ireader "github.com/mainflux/mainflux/readers/influxdb"
+	iwriter "github.com/mainflux/mainflux/writers/influxdb"
 
-	log "github.com/mainflux/mainflux/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 const (
-	testDB     = "test"
-	chanID     = "1"
-	subtopic   = "topic"
-	msgsNum    = 100
-	msgsValNum = 20
-	limit      = 10
+	testDB      = "test"
+	subtopic    = "topic"
+	msgsNum     = 100
+	limit       = 10
+	valueFields = 5
+	mqttProt    = "mqtt"
+	httpProt    = "http"
+	msgName     = "temperature"
 )
 
 var (
@@ -32,38 +33,36 @@ var (
 	vb          = true
 	vd          = "dataValue"
 	sum float64 = 42
+
+	client influxdata.Client
 )
 
-var (
-	valueFields = 5
-	port        string
-	client      influxdata.Client
-	testLog, _  = log.New(os.Stdout, log.Info.String())
+func TestReadAll(t *testing.T) {
+	writer := iwriter.New(client, testDB)
 
-	clientCfg = influxdata.HTTPConfig{
-		Username: "test",
-		Password: "test",
-	}
+	chanID, err := uuidProvider.New().ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	pubID, err := uuidProvider.New().ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	pub2ID, err := uuidProvider.New().ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	m = senml.Message{
+	m := senml.Message{
 		Channel:    chanID,
-		Publisher:  "1",
-		Protocol:   "mqtt",
+		Publisher:  pubID,
+		Protocol:   mqttProt,
 		Name:       "name",
 		Unit:       "U",
 		Time:       123456,
 		UpdateTime: 1234,
 	}
-)
-
-func TestReadAll(t *testing.T) {
-	writer := writer.New(client, testDB)
 
 	messages := []senml.Message{}
-	valSubtopicMsgs := []senml.Message{}
+	valueMsgs := []senml.Message{}
 	boolMsgs := []senml.Message{}
 	stringMsgs := []senml.Message{}
 	dataMsgs := []senml.Message{}
+	queryMsgs := []senml.Message{}
 	now := float64(time.Now().UTC().Second())
 
 	for i := 0; i < msgsNum; i++ {
@@ -74,9 +73,8 @@ func TestReadAll(t *testing.T) {
 		count := i % valueFields
 		switch count {
 		case 0:
-			msg.Subtopic = subtopic
 			msg.Value = &v
-			valSubtopicMsgs = append(valSubtopicMsgs, msg)
+			valueMsgs = append(valueMsgs, msg)
 		case 1:
 			msg.BoolValue = &vb
 			boolMsgs = append(boolMsgs, msg)
@@ -88,15 +86,20 @@ func TestReadAll(t *testing.T) {
 			dataMsgs = append(dataMsgs, msg)
 		case 4:
 			msg.Sum = &sum
+			msg.Subtopic = subtopic
+			msg.Protocol = httpProt
+			msg.Publisher = pub2ID
+			msg.Name = msgName
+			queryMsgs = append(queryMsgs, msg)
 		}
 
 		messages = append(messages, msg)
 	}
 
-	err := writer.Save(messages)
+	err = writer.Save(messages)
 	require.Nil(t, err, fmt.Sprintf("failed to store message to InfluxDB: %s", err))
 
-	reader := reader.New(client, testDB)
+	reader := ireader.New(client, testDB)
 	require.Nil(t, err, fmt.Sprintf("Creating new InfluxDB reader expected to succeed: %s.\n", err))
 
 	cases := map[string]struct {
@@ -118,7 +121,7 @@ func TestReadAll(t *testing.T) {
 			},
 		},
 		"read message page for non-existent channel": {
-			chanID: "2",
+			chanID: "wrong",
 			offset: 0,
 			limit:  limit,
 			page: readers.MessagesPage{
@@ -157,10 +160,46 @@ func TestReadAll(t *testing.T) {
 			limit:  limit,
 			query:  map[string]string{"subtopic": subtopic},
 			page: readers.MessagesPage{
-				Total:    uint64(len(valSubtopicMsgs)),
+				Total:    uint64(len(queryMsgs)),
 				Offset:   0,
 				Limit:    limit,
-				Messages: fromSenml(valSubtopicMsgs[0:limit]),
+				Messages: fromSenml(queryMsgs[0:limit]),
+			},
+		},
+		"read message with publisher": {
+			chanID: chanID,
+			offset: 0,
+			limit:  limit,
+			query:  map[string]string{"publisher": pub2ID},
+			page: readers.MessagesPage{
+				Total:    uint64(len(queryMsgs)),
+				Offset:   0,
+				Limit:    limit,
+				Messages: fromSenml(queryMsgs[0:limit]),
+			},
+		},
+		"read message with protocol": {
+			chanID: chanID,
+			offset: 0,
+			limit:  limit,
+			query:  map[string]string{"protocol": httpProt},
+			page: readers.MessagesPage{
+				Total:    uint64(len(queryMsgs)),
+				Offset:   0,
+				Limit:    limit,
+				Messages: fromSenml(queryMsgs[0:limit]),
+			},
+		},
+		"read message with name": {
+			chanID: chanID,
+			offset: 0,
+			limit:  limit,
+			query:  map[string]string{"name": msgName},
+			page: readers.MessagesPage{
+				Total:    uint64(len(queryMsgs)),
+				Offset:   0,
+				Limit:    limit,
+				Messages: fromSenml(queryMsgs[0:limit]),
 			},
 		},
 		"read message with value": {
@@ -169,10 +208,10 @@ func TestReadAll(t *testing.T) {
 			limit:  limit,
 			query:  map[string]string{"v": fmt.Sprintf("%f", v)},
 			page: readers.MessagesPage{
-				Total:    msgsValNum,
+				Total:    uint64(len(valueMsgs)),
 				Offset:   0,
 				Limit:    limit,
-				Messages: fromSenml(valSubtopicMsgs[0:limit]),
+				Messages: fromSenml(valueMsgs[0:limit]),
 			},
 		},
 		"read message with boolean value": {
@@ -181,7 +220,7 @@ func TestReadAll(t *testing.T) {
 			limit:  limit,
 			query:  map[string]string{"vb": fmt.Sprintf("%t", vb)},
 			page: readers.MessagesPage{
-				Total:    msgsValNum,
+				Total:    uint64(len(boolMsgs)),
 				Offset:   0,
 				Limit:    limit,
 				Messages: fromSenml(boolMsgs[0:limit]),
@@ -193,7 +232,7 @@ func TestReadAll(t *testing.T) {
 			limit:  limit,
 			query:  map[string]string{"vs": vs},
 			page: readers.MessagesPage{
-				Total:    msgsValNum,
+				Total:    uint64(len(stringMsgs)),
 				Offset:   0,
 				Limit:    limit,
 				Messages: fromSenml(stringMsgs[0:limit]),
@@ -205,7 +244,7 @@ func TestReadAll(t *testing.T) {
 			limit:  limit,
 			query:  map[string]string{"vd": vd},
 			page: readers.MessagesPage{
-				Total:    msgsValNum,
+				Total:    uint64(len(dataMsgs)),
 				Offset:   0,
 				Limit:    limit,
 				Messages: fromSenml(dataMsgs[0:limit]),

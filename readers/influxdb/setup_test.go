@@ -6,8 +6,19 @@ import (
 	"testing"
 	"time"
 
+	influxdata "github.com/influxdata/influxdb/client/v2"
 	influxdb "github.com/influxdata/influxdb/client/v2"
+	log "github.com/mainflux/mainflux/logger"
 	dockertest "github.com/ory/dockertest/v3"
+)
+
+var (
+	testLog, _ = log.New(os.Stdout, log.Info.String())
+
+	clientCfg = influxdata.HTTPConfig{
+		Username: "test",
+		Password: "test",
+	}
 )
 
 func TestMain(m *testing.M) {
@@ -26,7 +37,7 @@ func TestMain(m *testing.M) {
 		testLog.Error(fmt.Sprintf("Could not start container: %s", err))
 	}
 
-	port = container.GetPort("8086/tcp")
+	port := container.GetPort("8086/tcp")
 	clientCfg.Addr = fmt.Sprintf("http://localhost:%s", port)
 
 	if err := pool.Retry(func() error {

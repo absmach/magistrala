@@ -294,7 +294,7 @@ func connectToAuth(cfg config, logger logger.Logger) *grpc.ClientConn {
 
 	conn, err := grpc.Dial(cfg.authnURL, opts...)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to authn service: %s", err))
+		logger.Error(fmt.Sprintf("Failed to connect to auth service: %s", err))
 		os.Exit(1)
 	}
 

@@ -64,8 +64,8 @@ const (
 	defESDB           = "0"
 	defESConsumerName = "bootstrap"
 	defJaegerURL      = ""
-	defAuthnURL       = "localhost:8181"
-	defAuthnTimeout   = "1s"
+	defAuthURL        = "localhost:8181"
+	defAuthTimeout    = "1s"
 
 	envLogLevel       = "MF_BOOTSTRAP_LOG_LEVEL"
 	envDBHost         = "MF_BOOTSTRAP_DB_HOST"
@@ -93,8 +93,8 @@ const (
 	envESDB           = "MF_BOOTSTRAP_ES_DB"
 	envESConsumerName = "MF_BOOTSTRAP_EVENT_CONSUMER"
 	envJaegerURL      = "MF_JAEGER_URL"
-	envAuthnURL       = "MF_AUTH_GRPC_URL"
-	envAuthnTimeout   = "MF_AUTH_GRPC_TIMEOUT"
+	envAuthURL        = "MF_AUTH_GRPC_URL"
+	envAuthTimeout    = "MF_AUTH_GRPC_TIMEOUT"
 )
 
 type config struct {
@@ -116,8 +116,8 @@ type config struct {
 	esDB           string
 	esConsumerName string
 	jaegerURL      string
-	authnURL       string
-	authnTimeout   time.Duration
+	authURL        string
+	authTimeout    time.Duration
 }
 
 func main() {
@@ -143,7 +143,7 @@ func main() {
 	authConn := connectToAuth(cfg, logger)
 	defer authConn.Close()
 
-	auth := authapi.NewClient(authTracer, authConn, cfg.authnTimeout)
+	auth := authapi.NewClient(authTracer, authConn, cfg.authTimeout)
 
 	svc := newService(auth, db, logger, esClient, cfg)
 	errs := make(chan error, 2)
@@ -178,9 +178,9 @@ func loadConfig() config {
 		SSLRootCert: mainflux.Env(envDBSSLRootCert, defDBSSLRootCert),
 	}
 
-	authnTimeout, err := time.ParseDuration(mainflux.Env(envAuthnTimeout, defAuthnTimeout))
+	authTimeout, err := time.ParseDuration(mainflux.Env(envAuthTimeout, defAuthTimeout))
 	if err != nil {
-		log.Fatalf("Invalid %s value: %s", envAuthnTimeout, err.Error())
+		log.Fatalf("Invalid %s value: %s", envAuthTimeout, err.Error())
 	}
 	encKey, err := hex.DecodeString(mainflux.Env(envEncryptKey, defEncryptKey))
 	if err != nil {
@@ -212,8 +212,8 @@ func loadConfig() config {
 		esDB:           mainflux.Env(envESDB, defESDB),
 		esConsumerName: mainflux.Env(envESConsumerName, defESConsumerName),
 		jaegerURL:      mainflux.Env(envJaegerURL, defJaegerURL),
-		authnURL:       mainflux.Env(envAuthnURL, defAuthnURL),
-		authnTimeout:   authnTimeout,
+		authURL:        mainflux.Env(envAuthURL, defAuthURL),
+		authTimeout:    authTimeout,
 	}
 }
 
@@ -311,9 +311,9 @@ func connectToAuth(cfg config, logger logger.Logger) *grpc.ClientConn {
 		logger.Info("gRPC communication is not encrypted")
 	}
 
-	conn, err := grpc.Dial(cfg.authnURL, opts...)
+	conn, err := grpc.Dial(cfg.authURL, opts...)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to authn service: %s", err))
+		logger.Error(fmt.Sprintf("Failed to connect to auth service: %s", err))
 		os.Exit(1)
 	}
 

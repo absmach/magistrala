@@ -63,6 +63,7 @@ type Service interface {
 	RevokeCert(ctx context.Context, token, thingID string) (Revoke, error)
 }
 
+// Config defines the service parameters
 type Config struct {
 	LogLevel       string
 	ClientTLS      bool
@@ -73,8 +74,8 @@ type Config struct {
 	BaseURL        string
 	ThingsPrefix   string
 	JaegerURL      string
-	AuthnURL       string
-	AuthnTimeout   time.Duration
+	AuthURL        string
+	AuthTimeout    time.Duration
 	SignTLSCert    tls.Certificate
 	SignX509Cert   *x509.Certificate
 	SignRSABits    int
@@ -104,10 +105,12 @@ func New(auth mainflux.AuthServiceClient, certs Repository, sdk mfsdk.SDK, confi
 	}
 }
 
+// Revoke defines the conditions to revoke a certificate
 type Revoke struct {
 	RevocationTime time.Time `mapstructure:"revocation_time"`
 }
 
+// Cert defines the certificate paremeters
 type Cert struct {
 	OwnerID        string    `json:"owner_id" mapstructure:"owner_id"`
 	ThingID        string    `json:"thing_id" mapstructure:"thing_id"`

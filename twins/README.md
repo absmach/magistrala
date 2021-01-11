@@ -28,8 +28,8 @@ default values.
 | MF_TWINS_CA_CERTS          | Path to trusted CAs in PEM format                                    |                       |
 | MF_TWINS_CHANNEL_ID        | NATS notifications channel ID                                        |                       |
 | MF_NATS_URL                | Mainflux NATS broker URL                                             | nats://localhost:4222 |
-| MF_AUTH_GRPC_URL          | AuthN service gRPC URL                                               | localhost:8181        |
-| MF_AUTH_GRPC_TIMEOUT      | AuthN service gRPC request timeout in seconds                        | 1s                    |
+| MF_AUTH_GRPC_URL           | Auth service gRPC URL                                                | localhost:8181        |
+| MF_AUTH_GRPC_TIMEOUT       | Auth service gRPC request timeout in seconds                         | 1s                    |
 | MF_TWINS_CACHE_URL         | Cache database URL                                                   | localhost:6379        |
 | MF_TWINS_CACHE_PASS        | Cache database password                                              |                       |
 | MF_TWINS_CACHE_DB          | Cache instance name                                                  | 0                     |
@@ -64,8 +64,8 @@ services:
       MF_TWINS_CA_CERTS: [Path to trusted CAs in PEM format]
       MF_TWINS_CHANNEL_ID: [NATS notifications channel ID]
       MF_NATS_URL: [Mainflux NATS broker URL]
-      MF_AUTH_GRPC_URL: [AuthN service gRPC URL]
-      MF_AUTH_GRPC_TIMEOUT: [AuthN service gRPC request timeout in seconds]
+      MF_AUTH_GRPC_URL: [Auth service gRPC URL]
+      MF_AUTH_GRPC_TIMEOUT: [Auth service gRPC request timeout in seconds]
       MF_TWINS_ES_URL: [Event store URL]
       MF_TWINS_ES_PASS: [Event store password]
       MF_TWINS_ES_DB: [Event store instance name]
@@ -100,8 +100,8 @@ MF_TWINS_CLIENT_TLS: [Flag that indicates if TLS should be turned on] \
 MF_TWINS_CA_CERTS: [Path to trusted CAs in PEM format] \
 MF_TWINS_CHANNEL_ID: [NATS notifications channel ID] \
 MF_NATS_URL: [Mainflux NATS broker URL] \
-MF_AUTH_GRPC_URL: [AuthN service gRPC URL] \
-MF_AUTH_GRPC_TIMEOUT: [AuthN service gRPC request timeout in seconds] \
+MF_AUTH_GRPC_URL: [Auth service gRPC URL] \
+MF_AUTH_GRPC_TIMEOUT: [Auth service gRPC request timeout in seconds] \
 $GOBIN/mainflux-twins
 ```
 

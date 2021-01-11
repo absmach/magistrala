@@ -66,10 +66,10 @@ const (
 
 	defTokenResetEndpoint = "/reset-request" // URL where user lands after click on the reset link from email
 
-	defAuthnTLS     = "false"
-	defAuthnCACerts = ""
-	defAuthnURL     = "localhost:8181"
-	defAuthnTimeout = "1s"
+	defAuthTLS     = "false"
+	defAuthCACerts = ""
+	defAuthURL     = "localhost:8181"
+	defAuthTimeout = "1s"
 
 	envLogLevel      = "MF_USERS_LOG_LEVEL"
 	envDBHost        = "MF_USERS_DB_HOST"
@@ -101,10 +101,10 @@ const (
 
 	envTokenResetEndpoint = "MF_TOKEN_RESET_ENDPOINT"
 
-	envAuthnTLS     = "MF_AUTH_CLIENT_TLS"
-	envAuthnCACerts = "MF_AUTH_CA_CERTS"
-	envAuthnURL     = "MF_AUTH_GRPC_URL"
-	envAuthnTimeout = "MF_AUTH_GRPC_TIMEOUT"
+	envAuthTLS     = "MF_AUTH_CLIENT_TLS"
+	envAuthCACerts = "MF_AUTH_CA_CERTS"
+	envAuthURL     = "MF_AUTH_GRPC_URL"
+	envAuthTimeout = "MF_AUTH_GRPC_TIMEOUT"
 )
 
 type config struct {
@@ -116,10 +116,10 @@ type config struct {
 	serverKey     string
 	jaegerURL     string
 	resetURL      string
-	authnTLS      bool
-	authnCACerts  string
-	authnURL      string
-	authnTimeout  time.Duration
+	authTLS       bool
+	authCACerts   string
+	authURL       string
+	authTimeout   time.Duration
 	adminEmail    string
 	adminPassword string
 }
@@ -137,7 +137,7 @@ func main() {
 	authTracer, closer := initJaeger("auth", cfg.jaegerURL, logger)
 	defer closer.Close()
 
-	auth, close := connectToAuthn(cfg, authTracer, logger)
+	auth, close := connectToAuth(cfg, authTracer, logger)
 	if close != nil {
 		defer close()
 	}
@@ -164,14 +164,14 @@ func main() {
 }
 
 func loadConfig() config {
-	authnTimeout, err := time.ParseDuration(mainflux.Env(envAuthnTimeout, defAuthnTimeout))
+	authTimeout, err := time.ParseDuration(mainflux.Env(envAuthTimeout, defAuthTimeout))
 	if err != nil {
-		log.Fatalf("Invalid %s value: %s", envAuthnTimeout, err.Error())
+		log.Fatalf("Invalid %s value: %s", envAuthTimeout, err.Error())
 	}
 
-	tls, err := strconv.ParseBool(mainflux.Env(envAuthnTLS, defAuthnTLS))
+	tls, err := strconv.ParseBool(mainflux.Env(envAuthTLS, defAuthTLS))
 	if err != nil {
-		log.Fatalf("Invalid value passed for %s\n", envAuthnTLS)
+		log.Fatalf("Invalid value passed for %s\n", envAuthTLS)
 	}
 
 	dbConfig := postgres.Config{
@@ -206,10 +206,10 @@ func loadConfig() config {
 		serverKey:     mainflux.Env(envServerKey, defServerKey),
 		jaegerURL:     mainflux.Env(envJaegerURL, defJaegerURL),
 		resetURL:      mainflux.Env(envTokenResetEndpoint, defTokenResetEndpoint),
-		authnTLS:      tls,
-		authnCACerts:  mainflux.Env(envAuthnCACerts, defAuthnCACerts),
-		authnURL:      mainflux.Env(envAuthnURL, defAuthnURL),
-		authnTimeout:  authnTimeout,
+		authTLS:       tls,
+		authCACerts:   mainflux.Env(envAuthCACerts, defAuthCACerts),
+		authURL:       mainflux.Env(envAuthURL, defAuthURL),
+		authTimeout:   authTimeout,
 		adminEmail:    mainflux.Env(envAdminEmail, defAdminEmail),
 		adminPassword: mainflux.Env(envAdminPassword, defAdminPassword),
 	}
@@ -248,11 +248,11 @@ func connectToDB(dbConfig postgres.Config, logger logger.Logger) *sqlx.DB {
 	return db
 }
 
-func connectToAuthn(cfg config, tracer opentracing.Tracer, logger logger.Logger) (mainflux.AuthServiceClient, func() error) {
+func connectToAuth(cfg config, tracer opentracing.Tracer, logger logger.Logger) (mainflux.AuthServiceClient, func() error) {
 	var opts []grpc.DialOption
-	if cfg.authnTLS {
-		if cfg.authnCACerts != "" {
-			tpc, err := credentials.NewClientTLSFromFile(cfg.authnCACerts, "")
+	if cfg.authTLS {
+		if cfg.authCACerts != "" {
+			tpc, err := credentials.NewClientTLSFromFile(cfg.authCACerts, "")
 			if err != nil {
 				logger.Error(fmt.Sprintf("Failed to create tls credentials: %s", err))
 				os.Exit(1)
@@ -264,13 +264,13 @@ func connectToAuthn(cfg config, tracer opentracing.Tracer, logger logger.Logger)
 		logger.Info("gRPC communication is not encrypted")
 	}
 
-	conn, err := grpc.Dial(cfg.authnURL, opts...)
+	conn, err := grpc.Dial(cfg.authURL, opts...)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to authn service: %s", err))
+		logger.Error(fmt.Sprintf("Failed to connect to auth service: %s", err))
 		os.Exit(1)
 	}
 
-	return authapi.NewClient(tracer, conn, cfg.authnTimeout), conn.Close
+	return authapi.NewClient(tracer, conn, cfg.authTimeout), conn.Close
 }
 
 func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServiceClient, c config, logger logger.Logger) users.Service {

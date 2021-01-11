@@ -56,8 +56,8 @@ const (
 	defBaseURL       = "http://localhost"
 	defThingsPrefix  = ""
 	defJaegerURL     = ""
-	defAuthnURL      = "localhost:8181"
-	defAuthnTimeout  = "1s"
+	defAuthURL       = "localhost:8181"
+	defAuthTimeout   = "1s"
 
 	defSignCAPath     = "ca.crt"
 	defSignCAKeyPath  = "ca.key"
@@ -88,8 +88,8 @@ const (
 	envBaseURL       = "MF_SDK_BASE_URL"
 	envThingsPrefix  = "MF_SDK_THINGS_PREFIX"
 	envJaegerURL     = "MF_JAEGER_URL"
-	envAuthnURL      = "MF_AUTH_GRPC_URL"
-	envAuthnTimeout  = "MF_AUTH_GRPC_TIMEOUT"
+	envAuthURL       = "MF_AUTH_GRPC_URL"
+	envAuthTimeout   = "MF_AUTH_GRPC_TIMEOUT"
 
 	envSignCAPath     = "MF_CERTS_SIGN_CA_PATH"
 	envSignCAKey      = "MF_CERTS_SIGN_CA_KEY_PATH"
@@ -125,8 +125,8 @@ type config struct {
 	baseURL      string
 	thingsPrefix string
 	jaegerURL    string
-	authnURL     string
-	authnTimeout time.Duration
+	authURL      string
+	authTimeout  time.Duration
 	// Sign and issue certificates
 	// without 3rd party PKI
 	signCAPath     string
@@ -167,7 +167,7 @@ func main() {
 	authConn := connectToAuth(cfg, logger)
 	defer authConn.Close()
 
-	auth := authapi.NewClient(authTracer, authConn, cfg.authnTimeout)
+	auth := authapi.NewClient(authTracer, authConn, cfg.authTimeout)
 
 	svc := newService(auth, db, logger, nil, tlsCert, caCert, cfg, pkiClient)
 	errs := make(chan error, 2)
@@ -201,9 +201,9 @@ func loadConfig() config {
 		SSLRootCert: mainflux.Env(envDBSSLRootCert, defDBSSLRootCert),
 	}
 
-	authnTimeout, err := time.ParseDuration(mainflux.Env(envAuthnTimeout, defAuthnTimeout))
+	authTimeout, err := time.ParseDuration(mainflux.Env(envAuthTimeout, defAuthTimeout))
 	if err != nil {
-		log.Fatalf("Invalid %s value: %s", envAuthnTimeout, err.Error())
+		log.Fatalf("Invalid %s value: %s", envAuthTimeout, err.Error())
 	}
 
 	signRSABits, err := strconv.Atoi(mainflux.Env(envSignRSABits, defSignRSABits))
@@ -222,8 +222,8 @@ func loadConfig() config {
 		baseURL:      mainflux.Env(envBaseURL, defBaseURL),
 		thingsPrefix: mainflux.Env(envThingsPrefix, defThingsPrefix),
 		jaegerURL:    mainflux.Env(envJaegerURL, defJaegerURL),
-		authnURL:     mainflux.Env(envAuthnURL, defAuthnURL),
-		authnTimeout: authnTimeout,
+		authURL:      mainflux.Env(envAuthURL, defAuthURL),
+		authTimeout:  authTimeout,
 
 		signCAKeyPath:  mainflux.Env(envSignCAKey, defSignCAKeyPath),
 		signCAPath:     mainflux.Env(envSignCAPath, defSignCAPath),
@@ -277,9 +277,9 @@ func connectToAuth(cfg config, logger logger.Logger) *grpc.ClientConn {
 		logger.Info("gRPC communication is not encrypted")
 	}
 
-	conn, err := grpc.Dial(cfg.authnURL, opts...)
+	conn, err := grpc.Dial(cfg.authURL, opts...)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to authn service: %s", err))
+		logger.Error(fmt.Sprintf("Failed to connect to auth service: %s", err))
 		os.Exit(1)
 	}
 
@@ -323,8 +323,8 @@ func newService(auth mainflux.AuthServiceClient, db *sqlx.DB, logger mflog.Logge
 		BaseURL:        cfg.baseURL,
 		ThingsPrefix:   cfg.thingsPrefix,
 		JaegerURL:      cfg.jaegerURL,
-		AuthnURL:       cfg.authnURL,
-		AuthnTimeout:   cfg.authnTimeout,
+		AuthURL:        cfg.authURL,
+		AuthTimeout:    cfg.authTimeout,
 		SignTLSCert:    tlsCert,
 		SignX509Cert:   x509Cert,
 		SignHoursValid: cfg.signHoursValid,

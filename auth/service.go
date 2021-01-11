@@ -48,7 +48,7 @@ var (
 // Authn specifies an API that must be fullfiled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).
 // Token is a string value of the actual Key and is used to authenticate
-// an Authn service request.
+// an Auth service request.
 type Authn interface {
 	// Issue issues a new Key, returning its token value alongside.
 	Issue(ctx context.Context, token string, key Key) (Key, string, error)
@@ -67,7 +67,7 @@ type Authn interface {
 	Identify(ctx context.Context, token string) (Identity, error)
 }
 
-// Authz specifies an API for authorization, authorization will be implemented
+// Authz specifies an API for the authorization and will be implemented
 // by evaluation of policies.
 type Authz interface {
 	// Authorize checks access rights

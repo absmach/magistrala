@@ -9,7 +9,6 @@ networks:
 
 volumes:
   mainflux-auth-db-volume:
-  mainflux-authz-db-volume:
   mainflux-users-db-volume:
   mainflux-things-db-volume:
   mainflux-auth-redis-volume:

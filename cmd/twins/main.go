@@ -59,8 +59,8 @@ const (
 	defCACerts         = ""
 	defChannelID       = ""
 	defNatsURL         = "nats://localhost:4222"
-	defAuthnURL        = "localhost:8181"
-	defAuthnTimeout    = "1s"
+	defAuthURL         = "localhost:8181"
+	defAuthTimeout     = "1s"
 
 	envLogLevel        = "MF_TWINS_LOG_LEVEL"
 	envHTTPPort        = "MF_TWINS_HTTP_PORT"
@@ -79,8 +79,8 @@ const (
 	envCACerts         = "MF_TWINS_CA_CERTS"
 	envChannelID       = "MF_TWINS_CHANNEL_ID"
 	envNatsURL         = "MF_NATS_URL"
-	envAuthnURL        = "MF_AUTH_GRPC_URL"
-	envAuthnTimeout    = "MF_AUTH_GRPC_TIMEOUT"
+	envAuthURL         = "MF_AUTH_GRPC_URL"
+	envAuthTimeout     = "MF_AUTH_GRPC_TIMEOUT"
 )
 
 type config struct {
@@ -100,8 +100,8 @@ type config struct {
 	channelID       string
 	natsURL         string
 
-	authnURL     string
-	authnTimeout time.Duration
+	authURL     string
+	authTimeout time.Duration
 }
 
 func main() {
@@ -158,9 +158,9 @@ func loadConfig() config {
 		log.Fatalf("Invalid value passed for %s\n", envClientTLS)
 	}
 
-	authnTimeout, err := time.ParseDuration(mainflux.Env(envAuthnTimeout, defAuthnTimeout))
+	authTimeout, err := time.ParseDuration(mainflux.Env(envAuthTimeout, defAuthTimeout))
 	if err != nil {
-		log.Fatalf("Invalid %s value: %s", envAuthnTimeout, err.Error())
+		log.Fatalf("Invalid %s value: %s", envAuthTimeout, err.Error())
 	}
 
 	dbCfg := twmongodb.Config{
@@ -185,8 +185,8 @@ func loadConfig() config {
 		caCerts:         mainflux.Env(envCACerts, defCACerts),
 		channelID:       mainflux.Env(envChannelID, defChannelID),
 		natsURL:         mainflux.Env(envNatsURL, defNatsURL),
-		authnURL:        mainflux.Env(envAuthnURL, defAuthnURL),
-		authnTimeout:    authnTimeout,
+		authURL:         mainflux.Env(envAuthURL, defAuthURL),
+		authTimeout:     authTimeout,
 	}
 }
 
@@ -220,7 +220,7 @@ func createAuthClient(cfg config, tracer opentracing.Tracer, logger logger.Logge
 	}
 
 	conn := connectToAuth(cfg, logger)
-	return authapi.NewClient(tracer, conn, cfg.authnTimeout), conn.Close
+	return authapi.NewClient(tracer, conn, cfg.authTimeout), conn.Close
 }
 
 func connectToAuth(cfg config, logger logger.Logger) *grpc.ClientConn {
@@ -239,9 +239,9 @@ func connectToAuth(cfg config, logger logger.Logger) *grpc.ClientConn {
 		logger.Info("gRPC communication is not encrypted")
 	}
 
-	conn, err := grpc.Dial(cfg.authnURL, opts...)
+	conn, err := grpc.Dial(cfg.authURL, opts...)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to authn service: %s", err))
+		logger.Error(fmt.Sprintf("Failed to connect to auth service: %s", err))
 		os.Exit(1)
 	}
 

@@ -6,6 +6,7 @@ package cassandra
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/gocql/gocql"
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -43,16 +44,18 @@ func (cr cassandraRepository) ReadAll(chanID string, offset, limit uint64, query
 	// Remove format filter and format the rest properly.
 	delete(query, format)
 
-	names := []string{}
-	vals := []interface{}{chanID}
-	for name, val := range query {
-		names = append(names, name)
-		vals = append(vals, val)
-	}
-	vals = append(vals, offset+limit)
+	q, vals := buildQuery(chanID, offset, limit, query)
 
-	selectCQL := buildSelectQuery(table, chanID, offset, limit, names)
-	countCQL := buildCountQuery(table, chanID, names)
+	selectCQL := fmt.Sprintf(`SELECT channel, subtopic, publisher, protocol, name, unit,
+		value, string_value, bool_value, data_value, sum, time,
+		update_time FROM messages WHERE channel = ? %s LIMIT ?
+		ALLOW FILTERING`, q)
+	if table != defTable {
+		selectCQL = fmt.Sprintf(`SELECT channel, subtopic, publisher, protocol, created, payload FROM %s WHERE channel = ? %s LIMIT ?
+			ALLOW FILTERING`, table, q)
+	}
+
+	countCQL := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE channel = ? %s ALLOW FILTERING`, defTable, q)
 
 	iter := cr.session.Query(selectCQL, vals...).Iter()
 	defer iter.Close()
@@ -106,17 +109,11 @@ func (cr cassandraRepository) ReadAll(chanID string, offset, limit uint64, query
 	return page, nil
 }
 
-func buildSelectQuery(table, chanID string, offset, limit uint64, names []string) string {
+func buildQuery(chanID string, offset, limit uint64, query map[string]string) (string, []interface{}) {
 	var condCQL string
-	cql := `SELECT channel, subtopic, publisher, protocol, name, unit,
-	        value, string_value, bool_value, data_value, sum, time,
-			update_time FROM messages WHERE channel = ? %s LIMIT ?
-			ALLOW FILTERING`
-	if table != defTable {
-		cql = fmt.Sprintf(`SELECT channel, subtopic, publisher, protocol, created, payload FROM %s WHERE channel = ? %s LIMIT ?
-			ALLOW FILTERING`, table, "%s")
-	}
-	for _, name := range names {
+	vals := []interface{}{chanID}
+
+	for name, val := range query {
 		switch name {
 		case
 			"channel",
@@ -124,30 +121,47 @@ func buildSelectQuery(table, chanID string, offset, limit uint64, names []string
 			"publisher",
 			"name",
 			"protocol":
+			vals = append(vals, val)
 			condCQL = fmt.Sprintf(`%s AND %s = ?`, condCQL, name)
+		case "v":
+			fVal, err := strconv.ParseFloat(val, 64)
+			if err != nil {
+				continue
+			}
+			vals = append(vals, fVal)
+			condCQL = fmt.Sprintf(`%s AND value = ?`, condCQL)
+		case "vb":
+			bVal, err := strconv.ParseBool(val)
+			if err != nil {
+				continue
+			}
+			vals = append(vals, bVal)
+			condCQL = fmt.Sprintf(`%s AND bool_value = ?`, condCQL)
+		case "vs":
+			vals = append(vals, val)
+			condCQL = fmt.Sprintf(`%s AND string_value = ?`, condCQL)
+		case "vd":
+			vals = append(vals, val)
+			condCQL = fmt.Sprintf(`%s AND data_value = ?`, condCQL)
+		case "from":
+			fVal, err := strconv.ParseFloat(val, 64)
+			if err != nil {
+				continue
+			}
+			vals = append(vals, fVal)
+			condCQL = fmt.Sprintf(`%s AND time >= ?`, condCQL)
+		case "to":
+			fVal, err := strconv.ParseFloat(val, 64)
+			if err != nil {
+				continue
+			}
+			vals = append(vals, fVal)
+			condCQL = fmt.Sprintf(`%s AND time < ?`, condCQL)
 		}
 	}
+	vals = append(vals, offset+limit)
 
-	return fmt.Sprintf(cql, condCQL)
-}
-
-func buildCountQuery(table, chanID string, names []string) string {
-	var condCQL string
-	cql := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE channel = ? %s ALLOW FILTERING`, table, "%s")
-
-	for _, name := range names {
-		switch name {
-		case
-			"channel",
-			"subtopic",
-			"publisher",
-			"name",
-			"protocol":
-			condCQL = fmt.Sprintf(`%s AND %s = ?`, condCQL, name)
-		}
-	}
-
-	return fmt.Sprintf(cql, condCQL)
+	return condCQL, vals
 }
 
 type jsonMessage struct {

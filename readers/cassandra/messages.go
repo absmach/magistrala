@@ -50,12 +50,13 @@ func (cr cassandraRepository) ReadAll(chanID string, offset, limit uint64, query
 		value, string_value, bool_value, data_value, sum, time,
 		update_time FROM messages WHERE channel = ? %s LIMIT ?
 		ALLOW FILTERING`, q)
+	countCQL := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE channel = ? %s ALLOW FILTERING`, defTable, q)
+
 	if table != defTable {
 		selectCQL = fmt.Sprintf(`SELECT channel, subtopic, publisher, protocol, created, payload FROM %s WHERE channel = ? %s LIMIT ?
 			ALLOW FILTERING`, table, q)
+		countCQL = fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE channel = ? %s ALLOW FILTERING`, table, q)
 	}
-
-	countCQL := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE channel = ? %s ALLOW FILTERING`, defTable, q)
 
 	iter := cr.session.Query(selectCQL, vals...).Iter()
 	defer iter.Close()

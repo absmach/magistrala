@@ -152,14 +152,14 @@ func main() {
 	}
 	defer nps.Close()
 
-	mp, err := mqttpub.NewPublisher(fmt.Sprintf("%s:%s", cfg.mqttTargetHost, cfg.mqttTargetPort), cfg.mqttForwarderTimeout)
+	mpub, err := mqttpub.NewPublisher(fmt.Sprintf("%s:%s", cfg.mqttTargetHost, cfg.mqttTargetPort), cfg.mqttForwarderTimeout)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to create MQTT publisher: %s", err))
 		os.Exit(1)
 	}
 
 	fwd := mqtt.NewForwarder(nats.SubjectAllChannels, logger)
-	if err := fwd.Forward(nps, mp); err != nil {
+	if err := fwd.Forward(nps, mpub); err != nil {
 		logger.Error(fmt.Sprintf("Failed to forward NATS messages: %s", err))
 		os.Exit(1)
 	}
@@ -216,7 +216,7 @@ func loadConfig() config {
 
 	mqttTimeout, err := time.ParseDuration(mainflux.Env(envMQTTForwarderTimeout, defMQTTForwarderTimeout))
 	if err != nil {
-		log.Fatalf("Invalid %s value: %s", envThingsAuthTimeout, err.Error())
+		log.Fatalf("Invalid %s value: %s", envMQTTForwarderTimeout, err.Error())
 	}
 
 	return config{

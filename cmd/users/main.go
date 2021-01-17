@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux/internal/email"
+	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/users"
 	"github.com/mainflux/mainflux/users/bcrypt"
 	"github.com/mainflux/mainflux/users/emailer"
@@ -284,7 +285,9 @@ func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServic
 		logger.Error(fmt.Sprintf("Failed to configure e-mailing util: %s", err.Error()))
 	}
 
-	svc := users.New(userRepo, groupRepo, hasher, auth, emailer)
+	idProvider := uuid.New()
+
+	svc := users.New(userRepo, groupRepo, hasher, auth, emailer, idProvider)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,

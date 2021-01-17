@@ -22,7 +22,7 @@ import (
 	"github.com/mainflux/mainflux/auth/postgres"
 	"github.com/mainflux/mainflux/auth/tracing"
 	"github.com/mainflux/mainflux/logger"
-	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
+	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/opentracing/opentracing-go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	jconfig "github.com/uber/jaeger-client-go/config"
@@ -182,9 +182,10 @@ func newService(db *sqlx.DB, tracer opentracing.Tracer, secret string, logger lo
 	groupsRepo := postgres.NewGroupRepo(database)
 	groupsRepo = tracing.GroupRepositoryMiddleware(tracer, groupsRepo)
 
-	up := uuidProvider.New()
+	idProvider := uuid.New()
 	t := jwt.New(secret)
-	svc := auth.New(keysRepo, groupsRepo, up, t)
+
+	svc := auth.New(keysRepo, groupsRepo, idProvider, t)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,

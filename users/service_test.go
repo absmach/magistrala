@@ -10,7 +10,7 @@ import (
 
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/pkg/errors"
-	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
+	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/users"
 
 	"github.com/mainflux/mainflux/users/mocks"
@@ -25,6 +25,8 @@ var (
 	nonExistingUser = users.User{Email: "non-ex-user@example.com", Password: "password", Metadata: map[string]interface{}{"role": "user"}}
 	host            = "example.com"
 	groupName       = "Mainflux"
+
+	idProvider = uuid.New()
 )
 
 func newService() users.Service {
@@ -34,7 +36,7 @@ func newService() users.Service {
 	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
 	e := mocks.NewEmailer()
 
-	return users.New(userRepo, groupRepo, hasher, auth, e)
+	return users.New(userRepo, groupRepo, hasher, auth, e, idProvider)
 }
 
 func TestRegister(t *testing.T) {
@@ -374,11 +376,11 @@ func TestCreateGroup(t *testing.T) {
 	token, err := svc.Login(context.Background(), user)
 	assert.Nil(t, err, fmt.Sprintf("authenticating user expected to succeed: %s", err))
 
-	uuid, err := uuidProvider.New().ID()
+	id, err := idProvider.ID()
 	assert.Nil(t, err, fmt.Sprintf("generating uuid expected to succeed: %s", err))
 
 	group := users.Group{
-		ID:   uuid,
+		ID:   id,
 		Name: groupName,
 	}
 

@@ -12,6 +12,7 @@ import (
 
 	"github.com/mainflux/mainflux"
 	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
+	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/users"
 	"github.com/mainflux/mainflux/users/api"
 	"github.com/mainflux/mainflux/users/mocks"
@@ -29,8 +30,9 @@ func newUserService() users.Service {
 	hasher := mocks.NewHasher()
 	auth := mocks.NewAuthService(map[string]string{"user@example.com": "user@example.com"})
 	emailer := mocks.NewEmailer()
+	idProvider := uuid.New()
 
-	return users.New(usersRepo, groupsRepo, hasher, auth, emailer)
+	return users.New(usersRepo, groupsRepo, hasher, auth, emailer, idProvider)
 }
 
 func newUserServer(svc users.Service) *httptest.Server {

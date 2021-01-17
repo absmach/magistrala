@@ -147,12 +147,12 @@ type thingsService struct {
 	groups       groups.Repository
 	channelCache ChannelCache
 	thingCache   ThingCache
-	uuidProvider mainflux.IDProvider
+	idProvider   mainflux.IDProvider
 	ulidProvider mainflux.IDProvider
 }
 
 // New instantiates the things service implementation.
-func New(auth mainflux.AuthServiceClient, things ThingRepository, channels ChannelRepository, groups groups.Repository, ccache ChannelCache, tcache ThingCache, up mainflux.IDProvider) Service {
+func New(auth mainflux.AuthServiceClient, things ThingRepository, channels ChannelRepository, groups groups.Repository, ccache ChannelCache, tcache ThingCache, idp mainflux.IDProvider) Service {
 	return &thingsService{
 		auth:         auth,
 		things:       things,
@@ -160,7 +160,7 @@ func New(auth mainflux.AuthServiceClient, things ThingRepository, channels Chann
 		channels:     channels,
 		channelCache: ccache,
 		thingCache:   tcache,
-		uuidProvider: up,
+		idProvider:   idp,
 		ulidProvider: ulid.New(),
 	}
 }
@@ -172,7 +172,7 @@ func (ts *thingsService) CreateThings(ctx context.Context, token string, things 
 	}
 
 	for i := range things {
-		things[i].ID, err = ts.uuidProvider.ID()
+		things[i].ID, err = ts.idProvider.ID()
 		if err != nil {
 			return []Thing{}, errors.Wrap(ErrCreateUUID, err)
 		}
@@ -180,7 +180,7 @@ func (ts *thingsService) CreateThings(ctx context.Context, token string, things 
 		things[i].Owner = res.GetEmail()
 
 		if things[i].Key == "" {
-			things[i].Key, err = ts.uuidProvider.ID()
+			things[i].Key, err = ts.idProvider.ID()
 			if err != nil {
 				return []Thing{}, errors.Wrap(ErrCreateUUID, err)
 			}
@@ -258,7 +258,7 @@ func (ts *thingsService) CreateChannels(ctx context.Context, token string, chann
 	}
 
 	for i := range channels {
-		channels[i].ID, err = ts.uuidProvider.ID()
+		channels[i].ID, err = ts.idProvider.ID()
 		if err != nil {
 			return []Channel{}, errors.Wrap(ErrCreateUUID, err)
 		}

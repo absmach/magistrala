@@ -16,10 +16,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var idProvider = uuid.New()
+
 func TestUserSave(t *testing.T) {
 	email := "user-save@example.com"
 
-	uid, err := uuid.New().ID()
+	uid, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := []struct {
@@ -62,7 +64,7 @@ func TestSingleUserRetrieval(t *testing.T) {
 
 	email := "user-retrieval@example.com"
 
-	uid, err := uuid.New().ID()
+	uid, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	user := users.User{
@@ -95,7 +97,7 @@ func TestRetrieveMembers(t *testing.T) {
 	var nUsers = uint64(10)
 	var usrs []users.User
 	for i := uint64(0); i < nUsers; i++ {
-		uid, err := uuid.New().ID()
+		uid, err := idProvider.ID()
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		email := fmt.Sprintf("TestRetrieveMembers%d@example.com", i)
 		user := users.User{
@@ -108,7 +110,7 @@ func TestRetrieveMembers(t *testing.T) {
 		u, _ := userRepo.RetrieveByEmail(context.Background(), user.Email)
 		usrs = append(usrs, u)
 	}
-	uid, err := uuid.New().ID()
+	uid, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("user uuid error: %s", err))
 	group := users.Group{
 		ID:   uid,
@@ -155,7 +157,7 @@ func TestRetrieveAll(t *testing.T) {
 	var nUsers = uint64(10)
 
 	for i := uint64(0); i < nUsers; i++ {
-		uid, err := uuid.New().ID()
+		uid, err := idProvider.ID()
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		email := fmt.Sprintf("TestRetrieveAll%d@example.com", i)
 		user := users.User{

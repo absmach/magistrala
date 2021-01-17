@@ -12,18 +12,26 @@ import (
 	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/auth/postgres"
 	"github.com/mainflux/mainflux/pkg/errors"
-	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
+	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+const email = "user-save@example.com"
+
+var (
+	expTime    = time.Now().Add(5 * time.Minute)
+	idProvider = uuid.New()
 )
 
 func TestKeySave(t *testing.T) {
 	dbMiddleware := postgres.NewDatabase(db)
 	repo := postgres.New(dbMiddleware)
 
-	email := "user-save@example.com"
-	expTime := time.Now().Add(5 * time.Minute)
-	id, _ := uuidProvider.New().ID()
+	id, err := idProvider.ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
 	cases := []struct {
 		desc string
 		key  auth.Key
@@ -63,9 +71,9 @@ func TestKeyRetrieve(t *testing.T) {
 	dbMiddleware := postgres.NewDatabase(db)
 	repo := postgres.New(dbMiddleware)
 
-	email := "user-save@example.com"
-	expTime := time.Now().Add(5 * time.Minute)
-	id, _ := uuidProvider.New().ID()
+	id, err := idProvider.ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
 	key := auth.Key{
 		Subject:   email,
 		IssuedAt:  time.Now(),
@@ -73,7 +81,7 @@ func TestKeyRetrieve(t *testing.T) {
 		ID:        id,
 		IssuerID:  id,
 	}
-	_, err := repo.Save(context.Background(), key)
+	_, err = repo.Save(context.Background(), key)
 	assert.Nil(t, err, fmt.Sprintf("Storing Key expected to succeed: %s", err))
 	cases := []struct {
 		desc  string
@@ -111,9 +119,9 @@ func TestKeyRemove(t *testing.T) {
 	dbMiddleware := postgres.NewDatabase(db)
 	repo := postgres.New(dbMiddleware)
 
-	email := "user-save@example.com"
-	expTime := time.Now().Add(5 * time.Minute)
-	id, _ := uuidProvider.New().ID()
+	id, err := idProvider.ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
 	key := auth.Key{
 		Subject:   email,
 		IssuedAt:  time.Now(),
@@ -121,7 +129,7 @@ func TestKeyRemove(t *testing.T) {
 		ID:        id,
 		IssuerID:  id,
 	}
-	_, err := repo.Save(opentracing.ContextWithSpan(context.Background(), opentracing.StartSpan("")), key)
+	_, err = repo.Save(opentracing.ContextWithSpan(context.Background(), opentracing.StartSpan("")), key)
 	assert.Nil(t, err, fmt.Sprintf("Storing Key expected to succeed: %s", err))
 	cases := []struct {
 		desc  string

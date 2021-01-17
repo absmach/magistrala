@@ -22,7 +22,7 @@ import (
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/pkg/messaging/nats"
-	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
+	"github.com/mainflux/mainflux/pkg/uuid"
 	localusers "github.com/mainflux/mainflux/things/users"
 	"github.com/mainflux/mainflux/twins"
 	"github.com/mainflux/mainflux/twins/api"
@@ -269,11 +269,11 @@ func newService(ps messaging.PubSub, chanID string, users mainflux.AuthServiceCl
 	stateRepo := twmongodb.NewStateRepository(db)
 	stateRepo = tracing.StateRepositoryMiddleware(dbTracer, stateRepo)
 
-	up := uuidProvider.New()
+	idProvider := uuid.New()
 	twinCache := rediscache.NewTwinCache(cacheClient)
 	twinCache = tracing.TwinCacheMiddleware(cacheTracer, twinCache)
 
-	svc := twins.New(ps, users, twinRepo, twinCache, stateRepo, up, chanID, logger)
+	svc := twins.New(ps, users, twinRepo, twinCache, stateRepo, idProvider, chanID, logger)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,

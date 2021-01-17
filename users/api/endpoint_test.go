@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/users"
 	"github.com/mainflux/mainflux/users/api"
 	"github.com/mainflux/mainflux/users/bcrypt"
@@ -70,8 +71,9 @@ func newService() users.Service {
 	hasher := bcrypt.New()
 	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
 	email := mocks.NewEmailer()
+	idProvider := uuid.New()
 
-	return users.New(usersRepo, groupRepo, hasher, auth, email)
+	return users.New(usersRepo, groupRepo, hasher, auth, email, idProvider)
 }
 
 func newServer(svc users.Service) *httptest.Server {

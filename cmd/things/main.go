@@ -27,7 +27,7 @@ import (
 	"github.com/mainflux/mainflux"
 	authapi "github.com/mainflux/mainflux/auth/api/grpc"
 	"github.com/mainflux/mainflux/logger"
-	uuidProvider "github.com/mainflux/mainflux/pkg/uuid"
+	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/things"
 	"github.com/mainflux/mainflux/things/api"
 	authgrpcapi "github.com/mainflux/mainflux/things/api/auth/grpc"
@@ -68,8 +68,8 @@ const (
 	defSingleUserEmail = ""
 	defSingleUserToken = ""
 	defJaegerURL       = ""
-	defAuthnURL        = "localhost:8181"
-	defAuthnTimeout    = "1s"
+	defAuthURL         = "localhost:8181"
+	defAuthTimeout     = "1s"
 
 	envLogLevel        = "MF_THINGS_LOG_LEVEL"
 	envDBHost          = "MF_THINGS_DB_HOST"
@@ -97,8 +97,8 @@ const (
 	envSingleUserEmail = "MF_THINGS_SINGLE_USER_EMAIL"
 	envSingleUserToken = "MF_THINGS_SINGLE_USER_TOKEN"
 	envJaegerURL       = "MF_JAEGER_URL"
-	envAuthnURL        = "MF_AUTH_GRPC_URL"
-	envAuthnTimeout    = "MF_AUTH_GRPC_TIMEOUT"
+	envAuthURL         = "MF_AUTH_GRPC_URL"
+	envAuthTimeout     = "MF_AUTH_GRPC_TIMEOUT"
 )
 
 type config struct {
@@ -120,8 +120,8 @@ type config struct {
 	singleUserEmail string
 	singleUserToken string
 	jaegerURL       string
-	authnURL        string
-	authnTimeout    time.Duration
+	authURL         string
+	authTimeout     time.Duration
 }
 
 func main() {
@@ -179,9 +179,9 @@ func loadConfig() config {
 		log.Fatalf("Invalid value passed for %s\n", envClientTLS)
 	}
 
-	authnTimeout, err := time.ParseDuration(mainflux.Env(envAuthnTimeout, defAuthnTimeout))
+	authTimeout, err := time.ParseDuration(mainflux.Env(envAuthTimeout, defAuthTimeout))
 	if err != nil {
-		log.Fatalf("Invalid %s value: %s", envAuthnTimeout, err.Error())
+		log.Fatalf("Invalid %s value: %s", envAuthTimeout, err.Error())
 	}
 
 	dbConfig := postgres.Config{
@@ -215,8 +215,8 @@ func loadConfig() config {
 		singleUserEmail: mainflux.Env(envSingleUserEmail, defSingleUserEmail),
 		singleUserToken: mainflux.Env(envSingleUserToken, defSingleUserToken),
 		jaegerURL:       mainflux.Env(envJaegerURL, defJaegerURL),
-		authnURL:        mainflux.Env(envAuthnURL, defAuthnURL),
-		authnTimeout:    authnTimeout,
+		authURL:         mainflux.Env(envAuthURL, defAuthURL),
+		authTimeout:     authTimeout,
 	}
 }
 
@@ -273,7 +273,7 @@ func createAuthClient(cfg config, tracer opentracing.Tracer, logger logger.Logge
 	}
 
 	conn := connectToAuth(cfg, logger)
-	return authapi.NewClient(tracer, conn, cfg.authnTimeout), conn.Close
+	return authapi.NewClient(tracer, conn, cfg.authTimeout), conn.Close
 }
 
 func connectToAuth(cfg config, logger logger.Logger) *grpc.ClientConn {
@@ -292,7 +292,7 @@ func connectToAuth(cfg config, logger logger.Logger) *grpc.ClientConn {
 		logger.Info("gRPC communication is not encrypted")
 	}
 
-	conn, err := grpc.Dial(cfg.authnURL, opts...)
+	conn, err := grpc.Dial(cfg.authURL, opts...)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to connect to auth service: %s", err))
 		os.Exit(1)
@@ -318,9 +318,9 @@ func newService(auth mainflux.AuthServiceClient, dbTracer opentracing.Tracer, ca
 
 	thingCache := rediscache.NewThingCache(cacheClient)
 	thingCache = tracing.ThingCacheMiddleware(cacheTracer, thingCache)
-	up := uuidProvider.New()
+	idProvider := uuid.New()
 
-	svc := things.New(auth, thingsRepo, channelsRepo, groupsRepo, chanCache, thingCache, up)
+	svc := things.New(auth, thingsRepo, channelsRepo, groupsRepo, chanCache, thingCache, idProvider)
 	svc = rediscache.NewEventStoreMiddleware(svc, esClient)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(

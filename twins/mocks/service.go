@@ -21,10 +21,11 @@ func NewService(tokens map[string]string) twins.Service {
 	twinsRepo := NewTwinRepository()
 	twinCache := NewTwinCache()
 	statesRepo := NewStateRepository()
-	uuidProvider := uuid.NewMock()
+	idProvider := uuid.NewMock()
 	subs := map[string]string{"chanID": "chanID"}
 	broker := NewBroker(subs)
-	return twins.New(broker, auth, twinsRepo, twinCache, statesRepo, uuidProvider, "chanID", nil)
+
+	return twins.New(broker, auth, twinsRepo, twinCache, statesRepo, idProvider, "chanID", nil)
 }
 
 // CreateDefinition creates twin definition

@@ -9,11 +9,13 @@ import (
 	"os"
 	"testing"
 
+	log "github.com/mainflux/mainflux/logger"
+	dockertest "github.com/ory/dockertest/v3"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-
-	dockertest "github.com/ory/dockertest/v3"
 )
+
+var testLog, _ = log.New(os.Stdout, log.Info.String())
 
 func TestMain(m *testing.M) {
 	pool, err := dockertest.NewPool("")

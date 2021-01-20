@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
@@ -19,6 +20,8 @@ import (
 	"github.com/mainflux/mainflux/consumers/writers/influxdb"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging/nats"
+	"github.com/mainflux/mainflux/pkg/transformers"
+	"github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
@@ -36,6 +39,7 @@ const (
 	defDBPass      = "mainflux"
 	defConfigPath  = "/config.toml"
 	defContentType = "application/senml+json"
+	defTransformer = "senml"
 
 	envNatsURL     = "MF_NATS_URL"
 	envLogLevel    = "MF_INFLUX_WRITER_LOG_LEVEL"
@@ -47,6 +51,7 @@ const (
 	envDBPass      = "MF_INFLUX_WRITER_DB_PASS"
 	envConfigPath  = "MF_INFLUX_WRITER_CONFIG_PATH"
 	envContentType = "MF_INFLUX_WRITER_CONTENT_TYPE"
+	envTransformer = "MF_INFLUX_WRITER_TRANSFORMER"
 )
 
 type config struct {
@@ -60,6 +65,7 @@ type config struct {
 	dbPass      string
 	configPath  string
 	contentType string
+	transformer string
 }
 
 func main() {
@@ -89,9 +95,9 @@ func main() {
 	counter, latency := makeMetrics()
 	repo = api.LoggingMiddleware(repo, logger)
 	repo = api.MetricsMiddleware(repo, counter, latency)
-	st := senml.New(cfg.contentType)
+	t := makeTransformer(cfg, logger)
 
-	if err := consumers.Start(pubSub, repo, st, cfg.configPath, logger); err != nil {
+	if err := consumers.Start(pubSub, repo, t, cfg.configPath, logger); err != nil {
 		logger.Error(fmt.Sprintf("Failed to start InfluxDB writer: %s", err))
 		os.Exit(1)
 	}
@@ -121,6 +127,7 @@ func loadConfigs() (config, influxdata.HTTPConfig) {
 		dbPass:      mainflux.Env(envDBPass, defDBPass),
 		configPath:  mainflux.Env(envConfigPath, defConfigPath),
 		contentType: mainflux.Env(envContentType, defContentType),
+		transformer: mainflux.Env(envTransformer, defTransformer),
 	}
 
 	clientCfg := influxdata.HTTPConfig{
@@ -148,6 +155,21 @@ func makeMetrics() (*kitprometheus.Counter, *kitprometheus.Summary) {
 	}, []string{"method"})
 
 	return counter, latency
+}
+
+func makeTransformer(cfg config, logger logger.Logger) transformers.Transformer {
+	switch strings.ToUpper(cfg.transformer) {
+	case "SENML":
+		logger.Info("Using SenML transformer")
+		return senml.New(cfg.contentType)
+	case "JSON":
+		logger.Info("Using JSON transformer")
+		return json.New()
+	default:
+		logger.Error(fmt.Sprintf("Can't create transformer: unknown transformer type %s", cfg.transformer))
+		os.Exit(1)
+		return nil
+	}
 }
 
 func startHTTPService(port string, logger logger.Logger, errs chan error) {

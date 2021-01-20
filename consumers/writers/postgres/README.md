@@ -24,6 +24,7 @@ default values.
 | MF_POSTGRES_WRITER_DB_SSL_ROOT_CERT | Postgres SSL root certificate path              | ""                     |
 | MF_POSTGRES_WRITER_CONFIG_PATH      | Configuration file path with NATS subjects list | /config.toml           |
 | MF_POSTGRES_WRITER_CONTENT_TYPE     | Message payload Content Type                    | application/senml+json |
+| MF_POSTGRES_WRITER_TRANSFORMER      | Message transformer type                        | senml                  |
 
 ## Deployment
 
@@ -51,6 +52,7 @@ default values.
       MF_POSTGRES_WRITER_DB_SSL_ROOT_CERT: [Postgres SSL Root cert]
       MF_POSTGRES_WRITER_CONFIG_PATH: [Configuration file path with NATS subjects list]
       MF_POSTGRES_WRITER_CONTENT_TYPE: [Message payload Content Type]
+      MF_POSTGRES_WRITER_TRANSFORMER: [Message transformer type]
     ports:
       - 9104:9104
     networks:
@@ -87,6 +89,7 @@ MF_POSTGRES_WRITER_DB_SSL_CERT=[Postgres SSL cert] \
 MF_POSTGRES_WRITER_DB_SSL_KEY=[Postgres SSL key] \
 MF_POSTGRES_WRITER_DB_SSL_ROOT_CERT=[Postgres SSL Root cert] \
 MF_POSTGRES_WRITER_CONFIG_PATH=[Configuration file path with NATS subjects list] \
+MF_POSTGRES_WRITER_TRANSFORMER=[Message transformer type] \
 $GOBIN/mainflux-postgres-writer
 ```
 

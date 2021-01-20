@@ -20,6 +20,7 @@ default values.
 | MF_CASSANDRA_WRITER_DB_PORT      | Cassandra DB port                                         | 9042                   |
 | MF_CASSANDRA_WRITER_CONFIG_PATH  | Configuration file path with NATS subjects list           | /config.toml           |
 | MF_CASSANDRA_WRITER_CONTENT_TYPE | Message payload Content Type                              | application/senml+json |
+| MF_CASSANDRA_WRITER_TRANSFORMER  | Message transformer type                                  | senml                  |
 
 ## Deployment
 
@@ -42,6 +43,7 @@ default values.
       MF_CASSANDRA_WRITER_DB_PORT: [Cassandra DB port]
       MF_CASSANDRA_WRITER_CONFIG_PATH: [Configuration file path with NATS subjects list]
       MF_CASSANDRA_WRITER_CONTENT_TYPE: [Message payload Content Type]
+      MF_CASSANDRA_WRITER_TRANSFORMER: [Message transformer type]
     ports:
       - [host machine port]:[configured HTTP port]
     volume:
@@ -72,6 +74,7 @@ MF_CASSANDRA_READER_DB_USER=[Cassandra DB username] \
 MF_CASSANDRA_READER_DB_PASS=[Cassandra DB password] \
 MF_CASSANDRA_READER_DB_PORT=[Cassandra DB port] \
 MF_CASSANDRA_WRITER_CONFIG_PATH=[Configuration file path with NATS subjects list] \
+MF_CASSANDRA_WRITER_TRANSFORMER=[Message transformer type] \
 $GOBIN/mainflux-cassandra-writer
 ```
 

@@ -18,6 +18,7 @@ default values.
 | MF_MONGO_WRITER_DB_PORT      | Default MongoDB database port                   | 27017                  |
 | MF_MONGO_WRITER_CONFIG_PATH  | Configuration file path with NATS subjects list | /config.toml           |
 | MF_MONGO_WRITER_CONTENT_TYPE | Message payload Content Type                    | application/senml+json |
+| MF_MONGO_WRITER_TRANSFORMER  | Message transformer type                        | senml                  |
 
 ## Deployment
 
@@ -41,6 +42,7 @@ default values.
       MF_MONGO_WRITER_DB_PORT: [MongoDB port]
       MF_MONGO_WRITER_CONFIG_PATH: [Configuration file path with NATS subjects list]
       MF_MONGO_WRITER_CONTENT_TYPE: [Message payload Content Type]
+      MF_MONGO_WRITER_TRANSFORMER: [Message transformer type]
     ports:
       - [host machine port]:[configured HTTP port]
     volume:
@@ -62,7 +64,15 @@ make mongodb-writer
 make install
 
 # Set the environment variables and run the service
-MF_NATS_URL=[NATS instance URL] MF_MONGO_WRITER_LOG_LEVEL=[MongoDB writer log level] MF_MONGO_WRITER_PORT=[Service HTTP port] MF_MONGO_WRITER_DB=[MongoDB database name] MF_MONGO_WRITER_DB_HOST=[MongoDB database host] MF_MONGO_WRITER_DB_PORT=[MongoDB database port] MF_MONGO_WRITER_CONFIG_PATH=[Configuration file path with NATS subjects list] $GOBIN/mainflux-mongodb-writer
+MF_NATS_URL=[NATS instance URL] \
+MF_MONGO_WRITER_LOG_LEVEL=[MongoDB writer log level] \
+MF_MONGO_WRITER_PORT=[Service HTTP port] \
+MF_MONGO_WRITER_DB=[MongoDB database name] \
+MF_MONGO_WRITER_DB_HOST=[MongoDB database host] \
+MF_MONGO_WRITER_DB_PORT=[MongoDB database port] \
+MF_MONGO_WRITER_CONFIG_PATH=[Configuration file path with NATS subjects list] \
+MF_MONGO_WRITER_TRANSFORMER=[Transformer type to be used] \
+$GOBIN/mainflux-mongodb-writer
 ```
 
 ## Usage

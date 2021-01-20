@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
@@ -19,6 +20,8 @@ import (
 	"github.com/mainflux/mainflux/consumers/writers/postgres"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging/nats"
+	"github.com/mainflux/mainflux/pkg/transformers"
+	"github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
@@ -41,6 +44,7 @@ const (
 	defDBSSLRootCert = ""
 	defConfigPath    = "/config.toml"
 	defContentType   = "application/senml+json"
+	defTransformer   = "senml"
 
 	envNatsURL       = "MF_NATS_URL"
 	envLogLevel      = "MF_POSTGRES_WRITER_LOG_LEVEL"
@@ -56,6 +60,7 @@ const (
 	envDBSSLRootCert = "MF_POSTGRES_WRITER_DB_SSL_ROOT_CERT"
 	envConfigPath    = "MF_POSTGRES_WRITER_CONFIG_PATH"
 	envContentType   = "MF_POSTGRES_WRITER_CONTENT_TYPE"
+	envTransformer   = "MF_POSTGRES_WRITER_TRANSFORMER"
 )
 
 type config struct {
@@ -64,6 +69,7 @@ type config struct {
 	port        string
 	configPath  string
 	contentType string
+	transformer string
 	dbConfig    postgres.Config
 }
 
@@ -86,9 +92,9 @@ func main() {
 	defer db.Close()
 
 	repo := newService(db, logger)
-	st := senml.New(cfg.contentType)
+	t := makeTransformer(cfg, logger)
 
-	if err = consumers.Start(pubSub, repo, st, cfg.configPath, logger); err != nil {
+	if err = consumers.Start(pubSub, repo, t, cfg.configPath, logger); err != nil {
 		logger.Error(fmt.Sprintf("Failed to create Postgres writer: %s", err))
 	}
 
@@ -125,6 +131,7 @@ func loadConfig() config {
 		port:        mainflux.Env(envPort, defPort),
 		configPath:  mainflux.Env(envConfigPath, defConfigPath),
 		contentType: mainflux.Env(envContentType, defContentType),
+		transformer: mainflux.Env(envTransformer, defTransformer),
 		dbConfig:    dbConfig,
 	}
 }
@@ -158,6 +165,21 @@ func newService(db *sqlx.DB, logger logger.Logger) consumers.Consumer {
 	)
 
 	return svc
+}
+
+func makeTransformer(cfg config, logger logger.Logger) transformers.Transformer {
+	switch strings.ToUpper(cfg.transformer) {
+	case "SENML":
+		logger.Info("Using SenML transformer")
+		return senml.New(cfg.contentType)
+	case "JSON":
+		logger.Info("Using JSON transformer")
+		return json.New()
+	default:
+		logger.Error(fmt.Sprintf("Can't create transformer: unknown transformer type %s", cfg.transformer))
+		os.Exit(1)
+		return nil
+	}
 }
 
 func startHTTPServer(port string, errs chan error, logger logger.Logger) {

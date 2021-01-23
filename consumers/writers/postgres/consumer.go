@@ -51,7 +51,7 @@ func (pr postgresRepo) Consume(message interface{}) (err error) {
 	}
 }
 
-func (pr postgresRepo) saveSenml(messages interface{}) error {
+func (pr postgresRepo) saveSenml(messages interface{}) (err error) {
 	msgs, ok := messages.([]senml.Message)
 	if !ok {
 		return errSaveMessage

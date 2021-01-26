@@ -18,16 +18,15 @@ func listMessagesEndpoint(svc readers.MessageRepository) endpoint.Endpoint {
 			return nil, err
 		}
 
-		page, err := svc.ReadAll(req.chanID, req.offset, req.limit, req.query)
+		page, err := svc.ReadAll(req.chanID, req.pageMeta)
 		if err != nil {
 			return nil, err
 		}
 
 		return pageRes{
-			Total:    page.Total,
-			Offset:   page.Offset,
-			Limit:    page.Limit,
-			Messages: page.Messages,
+			PageMetadata: page.PageMetadata,
+			Total:        page.Total,
+			Messages:     page.Messages,
 		}, nil
 	}
 }

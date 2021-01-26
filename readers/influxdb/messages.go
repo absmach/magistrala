@@ -40,16 +40,14 @@ func New(client influxdata.Client, database string) readers.MessageRepository {
 	}
 }
 
-func (repo *influxRepository) ReadAll(chanID string, offset, limit uint64, query map[string]string) (readers.MessagesPage, error) {
-	measurement, ok := query[format]
-	if !ok {
-		measurement = defMeasurement
+func (repo *influxRepository) ReadAll(chanID string, rpm readers.PageMetadata) (readers.MessagesPage, error) {
+	if rpm.Format == "" {
+		rpm.Format = defMeasurement
 	}
-	// Remove format filter and format the rest properly.
-	delete(query, format)
-	condition := fmtCondition(chanID, query)
 
-	cmd := fmt.Sprintf(`SELECT * FROM %s WHERE %s ORDER BY time DESC LIMIT %d OFFSET %d`, measurement, condition, limit, offset)
+	condition := fmtCondition(chanID, rpm)
+
+	cmd := fmt.Sprintf(`SELECT * FROM %s WHERE %s ORDER BY time DESC LIMIT %d OFFSET %d`, rpm.Format, condition, rpm.Limit, rpm.Offset)
 	q := influxdata.Query{
 		Command:  cmd,
 		Database: repo.database,
@@ -71,20 +69,21 @@ func (repo *influxRepository) ReadAll(chanID string, offset, limit uint64, query
 
 	result := resp.Results[0].Series[0]
 	for _, v := range result.Values {
-		ret = append(ret, parseMessage(measurement, result.Columns, v))
+		ret = append(ret, parseMessage(rpm.Format, result.Columns, v))
 	}
 
-	total, err := repo.count(measurement, condition)
+	total, err := repo.count(rpm.Format, condition)
 	if err != nil {
 		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 	}
 
-	return readers.MessagesPage{
-		Total:    total,
-		Offset:   offset,
-		Limit:    limit,
-		Messages: ret,
-	}, nil
+	page := readers.MessagesPage{
+		PageMetadata: rpm,
+		Total:        total,
+		Messages:     ret,
+	}
+
+	return page, nil
 }
 
 func (repo *influxRepository) count(measurement, condition string) (uint64, error) {
@@ -129,8 +128,16 @@ func (repo *influxRepository) count(measurement, condition string) (uint64, erro
 	return strconv.ParseUint(count.String(), 10, 64)
 }
 
-func fmtCondition(chanID string, query map[string]string) string {
+func fmtCondition(chanID string, rpm readers.PageMetadata) string {
 	condition := fmt.Sprintf(`channel='%s'`, chanID)
+
+	var query map[string]interface{}
+	meta, err := json.Marshal(rpm)
+	if err != nil {
+		return condition
+	}
+	json.Unmarshal(meta, &query)
+
 	for name, value := range query {
 		switch name {
 		case
@@ -141,26 +148,18 @@ func fmtCondition(chanID string, query map[string]string) string {
 			"protocol":
 			condition = fmt.Sprintf(`%s AND "%s"='%s'`, condition, name, value)
 		case "v":
-			condition = fmt.Sprintf(`%s AND value = %s`, condition, value)
+			condition = fmt.Sprintf(`%s AND value = %f`, condition, value)
 		case "vb":
-			condition = fmt.Sprintf(`%s AND boolValue = %s`, condition, value)
+			condition = fmt.Sprintf(`%s AND boolValue = %t`, condition, value)
 		case "vs":
 			condition = fmt.Sprintf(`%s AND stringValue = '%s'`, condition, value)
 		case "vd":
 			condition = fmt.Sprintf(`%s AND dataValue = '%s'`, condition, value)
 		case "from":
-			fVal, err := strconv.ParseFloat(value, 64)
-			if err != nil {
-				continue
-			}
-			iVal := int64(fVal * 1e9)
+			iVal := int64(value.(float64) * 1e9)
 			condition = fmt.Sprintf(`%s AND time >= %d`, condition, iVal)
 		case "to":
-			fVal, err := strconv.ParseFloat(value, 64)
-			if err != nil {
-				continue
-			}
-			iVal := int64(fVal * 1e9)
+			iVal := int64(value.(float64) * 1e9)
 			condition = fmt.Sprintf(`%s AND time < %d`, condition, iVal)
 		}
 	}

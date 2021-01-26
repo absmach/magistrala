@@ -3,19 +3,19 @@
 
 package api
 
+import "github.com/mainflux/mainflux/readers"
+
 type apiReq interface {
 	validate() error
 }
 
 type listMessagesReq struct {
-	chanID string
-	offset uint64
-	limit  uint64
-	query  map[string]string
+	chanID   string
+	pageMeta readers.PageMetadata
 }
 
 func (req listMessagesReq) validate() error {
-	if req.limit < 1 {
+	if req.pageMeta.Limit < 1 {
 		return errInvalidRequest
 	}
 

@@ -42,6 +42,8 @@ var (
 	vb          = true
 	vd          = "dataValue"
 	sum float64 = 42
+
+	idProvider = uuid.New()
 )
 
 func TestReadSenml(t *testing.T) {
@@ -51,11 +53,13 @@ func TestReadSenml(t *testing.T) {
 	db := client.Database(testDB)
 	writer := writer.New(db)
 
-	chanID, err := uuid.New().ID()
+	chanID, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	pubID, err := uuid.New().ID()
+	pubID, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	pubID2, err := uuid.New().ID()
+	pubID2, err := idProvider.ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	wrongID, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	m := senml.Message{
@@ -106,168 +110,190 @@ func TestReadSenml(t *testing.T) {
 	reader := reader.New(db)
 
 	cases := map[string]struct {
-		chanID string
-		query  map[string]string
-		page   readers.MessagesPage
+		chanID   string
+		pageMeta readers.PageMetadata
+		page     readers.MessagesPage
 	}{
 		"read message page for existing channel": {
 			chanID: chanID,
+			pageMeta: readers.PageMetadata{
+				Offset: 0,
+				Limit:  msgsNum,
+			},
 			page: readers.MessagesPage{
 				Total:    msgsNum,
-				Offset:   0,
-				Limit:    11,
-				Messages: fromSenml(messages[0:11]),
+				Messages: fromSenml(messages),
 			},
 		},
 		"read message page for non-existent channel": {
-			chanID: "2",
+			chanID: wrongID,
+			pageMeta: readers.PageMetadata{
+				Offset: 0,
+				Limit:  msgsNum,
+			},
 			page: readers.MessagesPage{
-				Total:    0,
-				Offset:   0,
-				Limit:    10,
 				Messages: []readers.Message{},
 			},
 		},
 		"read message last page": {
 			chanID: chanID,
+			pageMeta: readers.PageMetadata{
+				Offset: msgsNum - 20,
+				Limit:  msgsNum,
+			},
 			page: readers.MessagesPage{
 				Total:    msgsNum,
-				Offset:   95,
-				Limit:    limit,
-				Messages: fromSenml(messages[95:msgsNum]),
+				Messages: fromSenml(messages[msgsNum-20 : msgsNum]),
 			},
 		},
 		"read message with non-existent subtopic": {
 			chanID: chanID,
-			query:  map[string]string{"subtopic": "not-present"},
-			page: readers.MessagesPage{
-				Total:    0,
+			pageMeta: readers.PageMetadata{
 				Offset:   0,
 				Limit:    msgsNum,
+				Subtopic: "not-present",
+			},
+			page: readers.MessagesPage{
 				Messages: []readers.Message{},
 			},
 		},
 		"read message with subtopic": {
 			chanID: chanID,
-			query:  map[string]string{"subtopic": subtopic},
-			page: readers.MessagesPage{
-				Total:    uint64(len(queryMsgs)),
+			pageMeta: readers.PageMetadata{
 				Offset:   0,
 				Limit:    uint64(len(queryMsgs)),
+				Subtopic: subtopic,
+			},
+			page: readers.MessagesPage{
+				Total:    uint64(len(queryMsgs)),
 				Messages: fromSenml(queryMsgs),
 			},
 		},
 		"read message with publisher": {
 			chanID: chanID,
-			query:  map[string]string{"publisher": pubID2},
+			pageMeta: readers.PageMetadata{
+				Offset:    0,
+				Limit:     uint64(len(queryMsgs)),
+				Publisher: pubID2,
+			},
 			page: readers.MessagesPage{
 				Total:    uint64(len(queryMsgs)),
-				Offset:   0,
-				Limit:    limit,
-				Messages: fromSenml(queryMsgs[0:limit]),
+				Messages: fromSenml(queryMsgs),
 			},
 		},
 		"read message with protocol": {
 			chanID: chanID,
-			query:  map[string]string{"protocol": httpProt},
+			pageMeta: readers.PageMetadata{
+				Offset:   0,
+				Limit:    uint64(len(queryMsgs)),
+				Protocol: httpProt,
+			},
 			page: readers.MessagesPage{
 				Total:    uint64(len(queryMsgs)),
-				Offset:   0,
-				Limit:    limit,
-				Messages: fromSenml(queryMsgs[0:limit]),
+				Messages: fromSenml(queryMsgs),
 			},
 		},
 		"read message with name": {
 			chanID: chanID,
-			query:  map[string]string{"name": msgName},
+			pageMeta: readers.PageMetadata{
+				Offset: 0,
+				Limit:  limit,
+				Name:   msgName,
+			},
 			page: readers.MessagesPage{
 				Total:    uint64(len(queryMsgs)),
-				Offset:   0,
-				Limit:    limit,
 				Messages: fromSenml(queryMsgs[0:limit]),
 			},
 		},
 		"read message with value": {
 			chanID: chanID,
-			query:  map[string]string{"v": fmt.Sprintf("%f", v)},
+			pageMeta: readers.PageMetadata{
+				Offset: 0,
+				Limit:  limit,
+				Value:  v,
+			},
 			page: readers.MessagesPage{
-				Total:    uint64(len(valueMsgs)),
-				Offset:   0,
-				Limit:    limit,
+				Total:    uint64(len(queryMsgs)),
 				Messages: fromSenml(valueMsgs[0:limit]),
 			},
 		},
 		"read message with boolean value": {
 			chanID: chanID,
-			query:  map[string]string{"vb": fmt.Sprintf("%t", vb)},
+			pageMeta: readers.PageMetadata{
+				Offset:    0,
+				Limit:     limit,
+				BoolValue: vb,
+			},
 			page: readers.MessagesPage{
 				Total:    uint64(len(boolMsgs)),
-				Offset:   0,
-				Limit:    limit,
 				Messages: fromSenml(boolMsgs[0:limit]),
 			},
 		},
 		"read message with string value": {
 			chanID: chanID,
-			query:  map[string]string{"vs": vs},
+			pageMeta: readers.PageMetadata{
+				Offset:      0,
+				Limit:       limit,
+				StringValue: vs,
+			},
 			page: readers.MessagesPage{
 				Total:    uint64(len(stringMsgs)),
-				Offset:   0,
-				Limit:    limit,
 				Messages: fromSenml(stringMsgs[0:limit]),
 			},
 		},
 		"read message with data value": {
 			chanID: chanID,
-			query:  map[string]string{"vd": vd},
+			pageMeta: readers.PageMetadata{
+				Offset:    0,
+				Limit:     limit,
+				DataValue: vd,
+			},
 			page: readers.MessagesPage{
 				Total:    uint64(len(dataMsgs)),
-				Offset:   0,
-				Limit:    limit,
 				Messages: fromSenml(dataMsgs[0:limit]),
 			},
 		},
 		"read message with from": {
 			chanID: chanID,
-			query: map[string]string{
-				"from": fmt.Sprintf("%f", messages[20].Time),
+			pageMeta: readers.PageMetadata{
+				Offset: 0,
+				Limit:  uint64(len(messages[0:21])),
+				From:   messages[20].Time,
 			},
 			page: readers.MessagesPage{
 				Total:    uint64(len(messages[0:21])),
-				Offset:   0,
-				Limit:    uint64(len(messages[0:21])),
 				Messages: fromSenml(messages[0:21]),
 			},
 		},
 		"read message with to": {
 			chanID: chanID,
-			query: map[string]string{
-				"to": fmt.Sprintf("%f", messages[20].Time),
+			pageMeta: readers.PageMetadata{
+				Offset: 0,
+				Limit:  uint64(len(messages[21:])),
+				To:     messages[20].Time,
 			},
 			page: readers.MessagesPage{
 				Total:    uint64(len(messages[21:])),
-				Offset:   0,
-				Limit:    uint64(len(messages[21:])),
 				Messages: fromSenml(messages[21:]),
 			},
 		},
 		"read message with from/to": {
 			chanID: chanID,
-			query: map[string]string{
-				"from": fmt.Sprintf("%f", messages[5].Time),
-				"to":   fmt.Sprintf("%f", messages[0].Time),
+			pageMeta: readers.PageMetadata{
+				Offset: 0,
+				Limit:  limit,
+				From:   messages[5].Time,
+				To:     messages[0].Time,
 			},
 			page: readers.MessagesPage{
 				Total:    5,
-				Offset:   0,
-				Limit:    limit,
 				Messages: fromSenml(messages[1:6]),
 			},
 		},
 	}
 
 	for desc, tc := range cases {
-		result, err := reader.ReadAll(tc.chanID, tc.page.Offset, tc.page.Limit, tc.query)
+		result, err := reader.ReadAll(tc.chanID, tc.pageMeta)
 
 		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %s", desc, err))
 		assert.ElementsMatch(t, tc.page.Messages, result.Messages, fmt.Sprintf("%s: expected %v got %v", desc, tc.page.Messages, result.Messages))

@@ -6,7 +6,6 @@ package cassandra
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 
 	"github.com/gocql/gocql"
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -36,26 +35,23 @@ func New(session *gocql.Session) readers.MessageRepository {
 	}
 }
 
-func (cr cassandraRepository) ReadAll(chanID string, offset, limit uint64, query map[string]string) (readers.MessagesPage, error) {
-	table, ok := query[format]
-	if !ok {
-		table = defTable
+func (cr cassandraRepository) ReadAll(chanID string, rpm readers.PageMetadata) (readers.MessagesPage, error) {
+	if rpm.Format == "" {
+		rpm.Format = defTable
 	}
-	// Remove format filter and format the rest properly.
-	delete(query, format)
 
-	q, vals := buildQuery(chanID, offset, limit, query)
+	q, vals := buildQuery(chanID, rpm)
 
 	selectCQL := fmt.Sprintf(`SELECT channel, subtopic, publisher, protocol, name, unit,
 		value, string_value, bool_value, data_value, sum, time,
 		update_time FROM messages WHERE channel = ? %s LIMIT ?
 		ALLOW FILTERING`, q)
-	countCQL := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE channel = ? %s ALLOW FILTERING`, defTable, q)
+	countCQL := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE channel = ? %s ALLOW FILTERING`, rpm.Format, q)
 
-	if table != defTable {
+	if rpm.Format != defTable {
 		selectCQL = fmt.Sprintf(`SELECT channel, subtopic, publisher, protocol, created, payload FROM %s WHERE channel = ? %s LIMIT ?
-			ALLOW FILTERING`, table, q)
-		countCQL = fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE channel = ? %s ALLOW FILTERING`, table, q)
+			ALLOW FILTERING`, rpm.Format, q)
+		countCQL = fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE channel = ? %s ALLOW FILTERING`, rpm.Format, q)
 	}
 
 	iter := cr.session.Query(selectCQL, vals...).Iter()
@@ -63,19 +59,18 @@ func (cr cassandraRepository) ReadAll(chanID string, offset, limit uint64, query
 	scanner := iter.Scanner()
 
 	// skip first OFFSET rows
-	for i := uint64(0); i < offset; i++ {
+	for i := uint64(0); i < rpm.Offset; i++ {
 		if !scanner.Next() {
 			break
 		}
 	}
 
 	page := readers.MessagesPage{
-		Offset:   offset,
-		Limit:    limit,
-		Messages: []readers.Message{},
+		PageMetadata: rpm,
+		Messages:     []readers.Message{},
 	}
 
-	switch table {
+	switch rpm.Format {
 	case defTable:
 		for scanner.Next() {
 			var msg senml.Message
@@ -110,9 +105,16 @@ func (cr cassandraRepository) ReadAll(chanID string, offset, limit uint64, query
 	return page, nil
 }
 
-func buildQuery(chanID string, offset, limit uint64, query map[string]string) (string, []interface{}) {
+func buildQuery(chanID string, rpm readers.PageMetadata) (string, []interface{}) {
 	var condCQL string
 	vals := []interface{}{chanID}
+
+	var query map[string]interface{}
+	meta, err := json.Marshal(rpm)
+	if err != nil {
+		return condCQL, vals
+	}
+	json.Unmarshal(meta, &query)
 
 	for name, val := range query {
 		switch name {
@@ -125,18 +127,10 @@ func buildQuery(chanID string, offset, limit uint64, query map[string]string) (s
 			vals = append(vals, val)
 			condCQL = fmt.Sprintf(`%s AND %s = ?`, condCQL, name)
 		case "v":
-			fVal, err := strconv.ParseFloat(val, 64)
-			if err != nil {
-				continue
-			}
-			vals = append(vals, fVal)
+			vals = append(vals, val)
 			condCQL = fmt.Sprintf(`%s AND value = ?`, condCQL)
 		case "vb":
-			bVal, err := strconv.ParseBool(val)
-			if err != nil {
-				continue
-			}
-			vals = append(vals, bVal)
+			vals = append(vals, val)
 			condCQL = fmt.Sprintf(`%s AND bool_value = ?`, condCQL)
 		case "vs":
 			vals = append(vals, val)
@@ -145,22 +139,14 @@ func buildQuery(chanID string, offset, limit uint64, query map[string]string) (s
 			vals = append(vals, val)
 			condCQL = fmt.Sprintf(`%s AND data_value = ?`, condCQL)
 		case "from":
-			fVal, err := strconv.ParseFloat(val, 64)
-			if err != nil {
-				continue
-			}
-			vals = append(vals, fVal)
+			vals = append(vals, val)
 			condCQL = fmt.Sprintf(`%s AND time >= ?`, condCQL)
 		case "to":
-			fVal, err := strconv.ParseFloat(val, 64)
-			if err != nil {
-				continue
-			}
-			vals = append(vals, fVal)
+			vals = append(vals, val)
 			condCQL = fmt.Sprintf(`%s AND time < ?`, condCQL)
 		}
 	}
-	vals = append(vals, offset+limit)
+	vals = append(vals, rpm.Offset+rpm.Limit)
 
 	return condCQL, vals
 }

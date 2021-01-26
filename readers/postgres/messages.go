@@ -37,33 +37,31 @@ func New(db *sqlx.DB) readers.MessageRepository {
 	}
 }
 
-func (tr postgresRepository) ReadAll(chanID string, offset, limit uint64, query map[string]string) (readers.MessagesPage, error) {
-	table, ok := query[format]
+func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (readers.MessagesPage, error) {
 	order := "created"
-	if !ok {
-		table = defTable
+	if rpm.Format == "" {
 		order = "time"
+		rpm.Format = defTable
 	}
-	// Remove format filter and format the rest properly.
-	delete(query, format)
+
 	q := fmt.Sprintf(`SELECT * FROM %s
     WHERE %s ORDER BY %s DESC
-	LIMIT :limit OFFSET :offset;`, table, fmtCondition(chanID, query), order)
+	LIMIT :limit OFFSET :offset;`, rpm.Format, fmtCondition(chanID, rpm), order)
 
 	params := map[string]interface{}{
 		"channel":      chanID,
-		"limit":        limit,
-		"offset":       offset,
-		"subtopic":     query["subtopic"],
-		"publisher":    query["publisher"],
-		"name":         query["name"],
-		"protocol":     query["protocol"],
-		"value":        query["v"],
-		"bool_value":   query["vb"],
-		"string_value": query["vs"],
-		"data_value":   query["vd"],
-		"from":         query["from"],
-		"to":           query["to"],
+		"limit":        rpm.Limit,
+		"offset":       rpm.Offset,
+		"subtopic":     rpm.Subtopic,
+		"publisher":    rpm.Publisher,
+		"name":         rpm.Name,
+		"protocol":     rpm.Protocol,
+		"value":        rpm.Value,
+		"bool_value":   rpm.BoolValue,
+		"string_value": rpm.StringValue,
+		"data_value":   rpm.DataValue,
+		"from":         rpm.From,
+		"to":           rpm.To,
 	}
 
 	rows, err := tr.db.NamedQuery(q, params)
@@ -73,11 +71,10 @@ func (tr postgresRepository) ReadAll(chanID string, offset, limit uint64, query 
 	defer rows.Close()
 
 	page := readers.MessagesPage{
-		Offset:   offset,
-		Limit:    limit,
-		Messages: []readers.Message{},
+		PageMetadata: rpm,
+		Messages:     []readers.Message{},
 	}
-	switch table {
+	switch rpm.Format {
 	case defTable:
 		for rows.Next() {
 			msg := dbMessage{Message: senml.Message{}}
@@ -103,7 +100,7 @@ func (tr postgresRepository) ReadAll(chanID string, offset, limit uint64, query 
 
 	}
 
-	q = fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, table, fmtCondition(chanID, query))
+	q = fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, rpm.Format, fmtCondition(chanID, rpm))
 	rows, err = tr.db.NamedQuery(q, params)
 	if err != nil {
 		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
@@ -121,8 +118,16 @@ func (tr postgresRepository) ReadAll(chanID string, offset, limit uint64, query 
 	return page, nil
 }
 
-func fmtCondition(chanID string, query map[string]string) string {
+func fmtCondition(chanID string, rpm readers.PageMetadata) string {
 	condition := `channel = :channel`
+
+	var query map[string]interface{}
+	meta, err := json.Marshal(rpm)
+	if err != nil {
+		return condition
+	}
+	json.Unmarshal(meta, &query)
+
 	for name := range query {
 		switch name {
 		case

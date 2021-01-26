@@ -5,7 +5,7 @@ package mongodb
 
 import (
 	"context"
-	"strconv"
+	"encoding/json"
 
 	"github.com/mainflux/mainflux/pkg/errors"
 	jsont "github.com/mainflux/mainflux/pkg/transformers/json"
@@ -37,26 +37,26 @@ func New(db *mongo.Database) readers.MessageRepository {
 	}
 }
 
-func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64, query map[string]string) (readers.MessagesPage, error) {
-	collection, ok := query[format]
-	if !ok {
-		collection = defCollection
+func (repo mongoRepository) ReadAll(chanID string, rpm readers.PageMetadata) (readers.MessagesPage, error) {
+	if rpm.Format == "" {
+		rpm.Format = defCollection
 	}
-	col := repo.db.Collection(collection)
-	delete(query, format)
+
+	col := repo.db.Collection(rpm.Format)
+
 	sortMap := map[string]interface{}{
 		"time": -1,
 	}
 	// Remove format filter and format the rest properly.
-	filter := fmtCondition(chanID, query)
-	cursor, err := col.Find(context.Background(), filter, options.Find().SetSort(sortMap).SetLimit(int64(limit)).SetSkip(int64(offset)))
+	filter := fmtCondition(chanID, rpm)
+	cursor, err := col.Find(context.Background(), filter, options.Find().SetSort(sortMap).SetLimit(int64(rpm.Limit)).SetSkip(int64(rpm.Offset)))
 	if err != nil {
 		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 	}
 	defer cursor.Close(context.Background())
 
 	var messages []readers.Message
-	switch collection {
+	switch rpm.Format {
 	case defCollection:
 		for cursor.Next(context.Background()) {
 			var m senml.Message
@@ -83,21 +83,30 @@ func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64, query m
 		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 	}
 
-	return readers.MessagesPage{
-		Total:    uint64(total),
-		Offset:   offset,
-		Limit:    limit,
-		Messages: messages,
-	}, nil
+	mp := readers.MessagesPage{
+		PageMetadata: rpm,
+		Total:        uint64(total),
+		Messages:     messages,
+	}
+
+	return mp, nil
 }
 
-func fmtCondition(chanID string, query map[string]string) bson.D {
+func fmtCondition(chanID string, rpm readers.PageMetadata) bson.D {
 	filter := bson.D{
 		bson.E{
 			Key:   "channel",
 			Value: chanID,
 		},
 	}
+
+	var query map[string]interface{}
+	meta, err := json.Marshal(rpm)
+	if err != nil {
+		return filter
+	}
+	json.Unmarshal(meta, &query)
+
 	for name, value := range query {
 		switch name {
 		case
@@ -108,33 +117,17 @@ func fmtCondition(chanID string, query map[string]string) bson.D {
 			"protocol":
 			filter = append(filter, bson.E{Key: name, Value: value})
 		case "v":
-			fVal, err := strconv.ParseFloat(value, 64)
-			if err != nil {
-				continue
-			}
-			filter = append(filter, bson.E{Key: "value", Value: fVal})
+			filter = append(filter, bson.E{Key: "value", Value: value})
 		case "vb":
-			bVal, err := strconv.ParseBool(value)
-			if err != nil {
-				continue
-			}
-			filter = append(filter, bson.E{Key: "bool_value", Value: bVal})
+			filter = append(filter, bson.E{Key: "bool_value", Value: value})
 		case "vs":
 			filter = append(filter, bson.E{Key: "string_value", Value: value})
 		case "vd":
 			filter = append(filter, bson.E{Key: "data_value", Value: value})
 		case "from":
-			fVal, err := strconv.ParseFloat(value, 64)
-			if err != nil {
-				continue
-			}
-			filter = append(filter, bson.E{Key: "time", Value: bson.M{"$gte": fVal}})
+			filter = append(filter, bson.E{Key: "time", Value: bson.M{"$gte": value}})
 		case "to":
-			fVal, err := strconv.ParseFloat(value, 64)
-			if err != nil {
-				continue
-			}
-			filter = append(filter, bson.E{Key: "time", Value: bson.M{"$lt": fVal}})
+			filter = append(filter, bson.E{Key: "time", Value: bson.M{"$lt": value}})
 		}
 	}
 

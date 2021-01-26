@@ -13,9 +13,8 @@ import (
 var _ mainflux.Response = (*pageRes)(nil)
 
 type pageRes struct {
+	readers.PageMetadata
 	Total    uint64            `json:"total"`
-	Offset   uint64            `json:"offset"`
-	Limit    uint64            `json:"limit"`
 	Messages []readers.Message `json:"messages,omitempty"`
 }
 

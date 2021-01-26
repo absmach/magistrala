@@ -82,9 +82,6 @@ func (repo mongoRepository) ReadAll(chanID string, offset, limit uint64, query m
 	if err != nil {
 		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 	}
-	if total < 0 {
-		return readers.MessagesPage{}, nil
-	}
 
 	return readers.MessagesPage{
 		Total:    uint64(total),

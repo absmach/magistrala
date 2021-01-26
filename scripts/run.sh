@@ -21,18 +21,18 @@ function cleanup {
 ###
 # NATS
 ###
-gnatsd &
+nats-server &
 counter=1
-until nc -zv localhost 4222 1>/dev/null 2>&1;
+until fuser 4222/tcp 1>/dev/null 2>&1;
 do
     sleep 0.5
     ((counter++))
     if [ ${counter} -gt 10 ]
     then
-        echo -ne "gnatsd failed to start in 5 sec, exiting"
+        echo "NATS failed to start in 5 sec, exiting"
         exit 1
     fi
-    echo -ne "Waiting for gnatsd"
+    echo "Waiting for NATS server"
 done
 
 ###

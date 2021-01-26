@@ -6,6 +6,7 @@ package mocks
 import (
 	"context"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -31,7 +32,7 @@ func (srm *stateRepositoryMock) Save(ctx context.Context, st twins.State) error 
 	srm.mu.Lock()
 	defer srm.mu.Unlock()
 
-	srm.states[key(st.TwinID, string(st.ID))] = st
+	srm.states[key(st.TwinID, strconv.FormatInt(st.ID, 10))] = st
 
 	return nil
 }
@@ -41,7 +42,7 @@ func (srm *stateRepositoryMock) Update(ctx context.Context, st twins.State) erro
 	srm.mu.Lock()
 	defer srm.mu.Unlock()
 
-	srm.states[key(st.TwinID, string(st.ID))] = st
+	srm.states[key(st.TwinID, strconv.FormatInt(st.ID, 10))] = st
 
 	return nil
 }

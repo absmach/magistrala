@@ -50,6 +50,7 @@ components:
       in: header
       schema:
         type: string
+        format: jwt
       required: false
 
   requestBodies:

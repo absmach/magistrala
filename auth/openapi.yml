@@ -34,7 +34,7 @@ paths:
       tags:
         - auth
       parameters:
-        - $ref: "#/components/parameters/ID"
+        - $ref: "#/components/parameters/ApiKeyId"
       security:
       - Authorization: []
       responses:
@@ -53,7 +53,7 @@ paths:
       tags:
         - auth
       parameters:
-        - $ref: "#/components/parameters/ID"
+        - $ref: "#/components/parameters/ApiKeyId"
       security:
       - Authorization: []
       responses:
@@ -69,7 +69,7 @@ components:
     Authorization:
       type: http
       scheme: bearer
-      bearerFormat: JWT
+      bearerFormat: jwt
   schemas:
     Key:
       type: object
@@ -81,7 +81,7 @@ components:
           description: API key unique identifier
         issuer_id:
           type: string
-          format: UUID
+          format: uuid
           example: "9118de62-c680-46b7-ad0a-21748a52833a"
           description: In ID of the entity that issued the token.
         type:
@@ -106,13 +106,13 @@ components:
             that means that Key is valid indefinitely.
 
   parameters:
-    ID:
+    ApiKeyId:
       name: id
-      description: API Key id.
+      description: API Key ID.
       in: path
       schema:
         type: string
-        format: UUID
+        format: uuid
       required: true
 
   requestBodies:
@@ -130,7 +130,7 @@ components:
                 description: API key type. Keys of different type are processed differently.
               token:
                 type: string
-                format: JWT
+                format: jwt
                 example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiZXhhbXBsZSIsImlhdCI6MTUxNjIzOTAyMn0.9UYAFWmPIn4ojss36LpIGSqABZHfADQmVuKQ4PJBMdI"
                 description: JWT for the entity that's sending Key request.
               duration:

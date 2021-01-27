@@ -228,7 +228,7 @@ components:
     Authorization:
       type: http
       scheme: bearer
-      bearerFormat: JWT
+      bearerFormat: jwt
 
   schemas:
     Token:
@@ -236,6 +236,7 @@ components:
       properties:
         token:
           type: string
+          format: jwt
           description: Generated access token.
       required:
         - token
@@ -264,13 +265,13 @@ components:
         parent_id:
           type: string
           format: uuid
-          description: Id of parent group
+          description: Parent Group unique identifier.
         description:
           type: string
-          description: Description of group
+          description: Group description.
         metadata:
           type: object
-          description: Arbitrary, object-encoded thing's data.
+          description: Arbitrary, object-encoded group's data.
       required:
         - name
     User:
@@ -280,16 +281,15 @@ components:
           type: string
           format: uuid
           example: 18167738-f7a8-4e96-a123-58c3cd14de3a
-          description: UUID id of the user.
+          description: User unique identifier.
         email:
           type: string
           format: email
           example: "test@example.com"
-          description: User's email address will be used as its unique identifier
+          description: User's email address will be used as its unique identifier.
         metadata:
-          type: string
-          format: JSON
-          description: Users metadata
+          type: object
+          description: Arbitrary, object-encoded user's data.
     Group:
       type: object
       properties:
@@ -297,32 +297,32 @@ components:
           type: string
           format: uuid
           example: 18167738-f7a8-4e96-a123-58c3cd14de3a
-          description: UUID id of the group.
+          description: Group unique identifier.
         name:
           type: string
           example: "MainflxGroup"
           description: Group name matching `"^[a-zA-Z0-9]+$"` regexp.
         description:
           type: string
-          description: Description free form text describing a group
+          description: Description free form text describing a group.
         metadata:
           type: object
-          description: Groups metadata
+          description: Arbitrary, object-encoded group's data.
     UsersPage:
       type: object
       properties:
         email:
           type: string
-          description: ID of the user
+          description: User unique identifier.
         metadata:
           type: object
-          description: Custom metadata related to User
+          description: Arbitrary, object-encoded user's data.
     UserMetadata:
       type: object
       properties:
         metadata:
-          type: string
-          description: Users metadata
+          type: object
+          description: Arbitrary, object-encoded user's data.
     GroupsPage:
       type: object
       properties:
@@ -370,7 +370,7 @@ components:
       in: path
       schema:
         type: string
-        format: UUID
+        format: uuid
       required: true
     Limit:
       name: limit
@@ -424,7 +424,8 @@ components:
             properties:
               email:
                 type: string
-                description: Email of the user
+                format: email
+                description: User email.
     PasswordReset:
       description: Password reset request data, new password and token that is appended on password reset link received in email.
       content:
@@ -434,15 +435,18 @@ components:
             properties:
               password:
                 type: string
-                description: New password
+                format: password
+                description: New password.
                 minimum: 8
               confirm_password:
                 type: string
-                description: New password confirmed
+                format: password
+                description: New confirmation password.
                 minimum: 8
               token:
                 type: string
-                description: Reset token generated and sent in email
+                format: jwt
+                description: Reset token generated and sent in email.
     PasswordChange:
       description: Password change data. User can change its password.
       required: true
@@ -453,11 +457,12 @@ components:
             properties:
               password:
                 type: string
-                format: pass
-                description: New password
+                format: password
+                description: New password.
               old_password:
                 type: string
-                description: Confirm password
+                format: password
+                description: Old password.
 
   responses:
     UserCreateRes:
@@ -468,7 +473,8 @@ components:
             text/plain:
               schema:
                 type: string
-                description: Registred user relative URL
+                format: url
+                description: Registered user relative URL.
                 example: /users/{userId}
     UserRes:
       description: Data retrieved.

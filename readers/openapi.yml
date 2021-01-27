@@ -179,14 +179,14 @@ components:
       description: SenML message time in nanoseconds (integer part represents seconds).
       in: query
       schema:
-        type: float
+        type: number
       required: false
     To:
       name: to
       description: SenML message time in nanoseconds (integer part represents seconds).
       in: query
       schema:
-        type: float
+        type: number
       required: false
 
   responses:

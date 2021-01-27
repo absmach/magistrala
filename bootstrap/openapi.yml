@@ -199,7 +199,7 @@ paths:
           $ref: "#/components/responses/BootstrapConfigRes"
         '404':
           description: |
-            Failed to retrieve corresponding config. 
+            Failed to retrieve corresponding config.
         '500':
           $ref: "#/components/responses/ServiceError"
   /things/state/{configId}:
@@ -229,15 +229,17 @@ components:
   schemas:
     State:
       type: integer
-      enum: [0, 1]    
+      enum: [0, 1]
     Config:
       type: object
       properties:
         mainflux_id:
           type: string
+          format: uuid
           description: Corresponding Mainflux Thing ID.
         mainflux_key:
           type: string
+          format: uuid
           description: Corresponding Mainflux Thing key.
         mainflux_channels:
           type: array
@@ -247,7 +249,8 @@ components:
             properties:
               id:
                 type: string
-                description: ID of the Channel.
+                format: uuid
+                description: Channel unique identifier.
               name:
                 type: string
                 description: Name of the Channel.
@@ -267,7 +270,7 @@ components:
           $ref: "#/components/schemas/State"
       required:
         - external_id
-        - external_key    
+        - external_key
     ConfigList:
       type: object
       properties:
@@ -298,9 +301,11 @@ components:
       properties:
         mainflux_id:
           type: string
+          format: uuid
           description: Corresponding Mainflux Thing ID.
         mainflux_key:
           type: string
+          format: uuid
           description: Corresponding Mainflux Thing key.
         mainflux_channels:
           type: array
@@ -323,7 +328,7 @@ components:
         - mainflux_id
         - mainflux_key
         - mainflux_channels
-        - content          
+        - content
 
   parameters:
     Authorization:
@@ -332,6 +337,7 @@ components:
       in: header
       schema:
         type: string
+        format: jwt
       required: true
     ConfigAuth:
       name: configAuthorization
@@ -343,8 +349,8 @@ components:
     EncConfigAuth:
       name: configAuthorization
       description: |
-        Hex-encoded configuration external key encrypted using 
-        the AES algorithm and SHA256 sum of the external key 
+        Hex-encoded configuration external key encrypted using
+        the AES algorithm and SHA256 sum of the external key
         itself as an encryption key.
       in: header
       schema:
@@ -356,6 +362,7 @@ components:
       in: path
       schema:
         type: string
+        format: uuid
       required: true
     ExternalId:
       name: externalId
@@ -452,12 +459,12 @@ components:
               client_key:
                 type: string
               ca_cert:
-                type: string                
+                type: string
     ConfigConnUpdateReq:
       description: Array if IDs the thing is be connected to.
       content:
         application/json:
-          schema:      
+          schema:
             type: object
             properties:
               channels:

@@ -102,7 +102,7 @@ components:
       in: header
       schema:
         type: string
-        format: uuid
+        format: jwt
       required: true
     ID:
       name: id

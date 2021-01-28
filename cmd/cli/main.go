@@ -120,13 +120,6 @@ func main() {
 	)
 
 	rootCmd.PersistentFlags().StringVar(
-		&cli.UserAuthToken,
-		"user-auth-token",
-		"",
-		"Mainflux user auth token",
-	)
-
-	rootCmd.PersistentFlags().StringVar(
 		&cli.ConfigPath,
 		"config",
 		"",

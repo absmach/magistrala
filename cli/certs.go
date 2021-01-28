@@ -14,19 +14,18 @@ func NewCertsCmd() *cobra.Command {
 
 	issueCmd := cobra.Command{
 		Use:   "issue",
-		Short: "issue <thing_id> [--keysize=2048] [--keytype=rsa] [--ttl=8760]",
+		Short: "issue <thing_id> <user_auth_token> [--keysize=2048] [--keytype=rsa] [--ttl=8760]",
 		Long:  `Issues new certificate for a thing`,
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 1 {
+			if len(args) != 2 {
 				logUsage(cmd.Short)
 				return
 			}
 
 			thingID := args[0]
 			valid := strconv.FormatUint(uint64(ttl), 10)
-			token := getUserAuthToken()
 
-			c, err := sdk.IssueCert(thingID, int(keySize), keyType, valid, token)
+			c, err := sdk.IssueCert(thingID, int(keySize), keyType, valid, args[1])
 			if err != nil {
 				logError(err)
 				return

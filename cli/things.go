@@ -13,10 +13,10 @@ import (
 var cmdThings = []cobra.Command{
 	cobra.Command{
 		Use:   "create",
-		Short: "create <JSON_thing>",
+		Short: "create <JSON_thing> <user_auth_token>",
 		Long:  `Create new thing, generate his UUID and store it`,
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 1 {
+			if len(args) != 2 {
 				logUsage(cmd.Short)
 				return
 			}
@@ -27,8 +27,7 @@ var cmdThings = []cobra.Command{
 				return
 			}
 
-			token := getUserAuthToken()
-			id, err := sdk.CreateThing(thing, token)
+			id, err := sdk.CreateThing(thing, args[1])
 			if err != nil {
 				logError(err)
 				return

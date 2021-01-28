@@ -12,7 +12,10 @@ import (
 )
 
 type Config struct {
-	AuthToken string `toml:"auth_token"`
+	Offset    uint   `toml:"offset"`
+	Limit     uint   `toml:"limit"`
+	Name      string `toml:"name"`
+	RawOutput bool   `toml:"raw_output"`
 }
 
 // save - store config in a file
@@ -75,7 +78,19 @@ func ParseConfig() {
 		log.Fatal(err)
 	}
 
-	if UserAuthToken == "" {
-		UserAuthToken = config.AuthToken
+	if config.Offset != 0 {
+		Offset = config.Offset
+	}
+
+	if config.Limit != 0 {
+		Limit = config.Limit
+	}
+
+	if config.Name != "" {
+		Name = config.Name
+	}
+
+	if config.RawOutput {
+		RawOutput = config.RawOutput
 	}
 }

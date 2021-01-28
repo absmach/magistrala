@@ -6,7 +6,6 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/fatih/color"
 	prettyjson "github.com/hokaccha/go-prettyjson"
@@ -19,8 +18,6 @@ var (
 	Offset uint = 0
 	// Name query parameter
 	Name string = ""
-	// UserAuthToken user auth token parameter
-	UserAuthToken string = ""
 	// ConfigPath config path parameter
 	ConfigPath string = ""
 	// RawOutput raw output mode
@@ -66,12 +63,4 @@ func logCreated(e string) {
 	} else {
 		fmt.Printf(color.BlueString("\ncreated: %s\n\n"), e)
 	}
-}
-
-func getUserAuthToken() string {
-	if UserAuthToken == "" {
-		log.Fatal("user auth token not valid, please pass using --user-auth-token flag or config file")
-	}
-
-	return UserAuthToken
 }

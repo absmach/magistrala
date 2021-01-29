@@ -18,7 +18,7 @@ volumes:
 
 services:
   certs-db:
-    image: postgres:10.2-alpine
+    image: postgres:10.8-alpine
     container_name: mainflux-certs-db
     restart: on-failure
     environment:

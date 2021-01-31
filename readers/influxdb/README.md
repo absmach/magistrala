@@ -98,4 +98,4 @@ docker-compose -f docker/addons/influxdb-reader/docker-compose.yml up -d
 
 Service exposes [HTTP API][doc] for fetching messages.
 
-[doc]: ../swagger.yml
+[doc]: ../openapi.yml

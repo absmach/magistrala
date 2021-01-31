@@ -129,6 +129,6 @@ mainflux natively, than do the same thing in the corresponding console
 environment.
 
 For more information about service capabilities and its usage, please check out
-the [API documentation](swagger.yaml).
+the [API documentation](openapi.yml).
 
 [doc]: http://mainflux.readthedocs.io

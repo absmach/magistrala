@@ -14,15 +14,9 @@ import (
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 )
 
-const (
-	senmlCollection string = "messages"
-	jsonCollection  string = "json"
-)
+const senmlCollection string = "messages"
 
-var (
-	errSaveMessage   = errors.New("failed to save message to mongodb database")
-	errMessageFormat = errors.New("invalid message format")
-)
+var errSaveMessage = errors.New("failed to save message to mongodb database")
 
 var _ consumers.Consumer = (*mongoRepo)(nil)
 

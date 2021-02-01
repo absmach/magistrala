@@ -1,0 +1,206 @@
+openapi: 3.0.1
+info:
+  title: Mainflux Notifiers service
+  description: HTTP API for Notifiers service.
+  version: "1.0.0"
+paths:
+  /subscriptions:
+    post:
+      summary: Create subscription
+      description: Creates a new subscription give a topic and contact.
+      tags:
+        - notifiers
+      security:
+        - Authorization: []
+      requestBody:
+        $ref: "#/components/requestBodies/Create"
+      responses:
+        "201":
+          $ref: "#/components/responses/Create"
+        "400":
+          description: Failed due to malformed JSON.
+        "409":
+          description: Failed due to using an existing topic and contact.
+        "415":
+          description: Missing or invalid content type.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+    get:
+      summary: List subscriptions
+      description: List subscriptions given list parameters.
+      tags:
+        - notifiers
+      security:
+        - Authorization: []
+      parameters:
+        - $ref: "#/components/parameters/Topic"
+        - $ref: "#/components/parameters/Contact"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          $ref: "#/components/responses/Page"
+        "400":
+          description: Failed due to malformed query parameters.
+        "403":
+          description: Missing or invalid access token provided.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+  /subscriptions/{id}:
+    get:
+      summary: Get subscription with the provided id
+      description: Retrieves a subscription with the provided id.
+      tags:
+        - notifiers
+      security:
+        - Authorization: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          $ref: "#/components/responses/View"
+        "403":
+          description: Missing or invalid access token provided.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+    delete:
+      summary: Delete subscription with the provided id
+      description: Removes a subscription with the provided id.
+      tags:
+        - notifiers
+      security:
+        - Authorization: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Subscription removed
+        "403":
+          description: Missing or invalid access token provided.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+components:
+  securitySchemes:
+    Authorization:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: string
+          format: ulid
+          example: 01EWDVKBQSG80B6PQRS9PAAY35
+          description: ULID id of the subscription.
+        owner_id:
+          type: string
+          format: uuid
+          example: 18167738-f7a8-4e96-a123-58c3cd14de3a
+          description: An id of the owner who created subscription.
+        topic:
+          type: string
+          example: topic.subtopic
+          description: Topic to which the user subscribes.
+        contact:
+          type: string
+          example: user@example.com
+          description: The contact of the user to which the notification will be sent.
+    Page:
+      type: object
+      properties:
+        subscriptions:
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/Subscription"
+        total:
+          type: integer
+          description: Total number of items.
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval.
+        limit:
+          type: integer
+          description: Maximum number of items to return in one page.
+
+  parameters:
+    Id:
+      name: id
+      description: Unique identifier.
+      in: path
+      schema:
+        type: string
+        format: ulid
+      required: true
+    Limit:
+      name: limit
+      description: Size of the subset to retrieve.
+      in: query
+      schema:
+        type: integer
+        default: 10
+        maximum: 100
+        minimum: 1
+      required: false
+    Offset:
+      name: offset
+      description: Number of items to skip during retrieval.
+      in: query
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+      required: false
+    Topic:
+      name: topic
+      description: Topic name.
+      in: query
+      schema:
+        type: string
+      required: false
+    Contact:
+      name: contact
+      description: Subscription contact.
+      in: query
+      schema:
+        type: string
+      required: false
+
+  requestBodies:
+    Create:
+      description: JSON-formatted document describing the new subscription to be created
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Subscription"
+
+  responses:
+    Create:
+      description: Created a new subscription.
+      headers:
+        Location:
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Created subscription relative URL
+                example: /subscriptions/{id}
+    View:
+      description: View subscription.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Subscription"
+    Page:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Page"
+    ServiceError:
+      description: Unexpected server-side error occurred.

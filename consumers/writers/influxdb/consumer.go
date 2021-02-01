@@ -15,15 +15,10 @@ import (
 	influxdata "github.com/influxdata/influxdb/client/v2"
 )
 
-const (
-	senmlPoints = "messages"
-	jsonPoints  = "json"
-)
+const senmlPoints = "messages"
 
-var (
-	errSaveMessage   = errors.New("failed to save message to influxdb database")
-	errMessageFormat = errors.New("invalid message format")
-)
+var errSaveMessage = errors.New("failed to save message to influxdb database")
+
 var _ consumers.Consumer = (*influxRepo)(nil)
 
 type influxRepo struct {
@@ -103,9 +98,4 @@ func (repo *influxRepo) jsonPoints(pts influxdata.BatchPoints, msgs json.Message
 	}
 
 	return pts, nil
-}
-
-type message struct {
-	json.Message
-	payload []map[string]interface{}
 }

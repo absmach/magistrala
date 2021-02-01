@@ -12,11 +12,15 @@ import (
 	"testing"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/mainflux/mainflux/consumers/writers/postgres"
+	"github.com/mainflux/mainflux/consumers/notifiers/postgres"
+	"github.com/mainflux/mainflux/pkg/ulid"
 	dockertest "github.com/ory/dockertest/v3"
 )
 
-var db *sqlx.DB
+var (
+	idProvider = ulid.New()
+	db         *sqlx.DB
+)
 
 func TestMain(m *testing.M) {
 	pool, err := dockertest.NewPool("")
@@ -36,8 +40,8 @@ func TestMain(m *testing.M) {
 
 	port := container.GetPort("5432/tcp")
 
+	url := fmt.Sprintf("host=localhost port=%s user=test dbname=test password=test sslmode=disable", port)
 	if err := pool.Retry(func() error {
-		url := fmt.Sprintf("host=localhost port=%s user=test dbname=test password=test sslmode=disable", port)
 		db, err = sqlx.Open("postgres", url)
 		if err != nil {
 			return err
@@ -59,8 +63,7 @@ func TestMain(m *testing.M) {
 		SSLRootCert: "",
 	}
 
-	db, err = postgres.Connect(dbConfig)
-	if err != nil {
+	if db, err = postgres.Connect(dbConfig); err != nil {
 		log.Fatalf("Could not setup test DB connection: %s", err)
 	}
 

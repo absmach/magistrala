@@ -16,9 +16,8 @@ import (
 )
 
 var (
-	errOpenConfFile      = errors.New("unable to open configuration file")
-	errParseConfFile     = errors.New("unable to parse configuration file")
-	errMessageConversion = errors.New("error conversing transformed messages")
+	errOpenConfFile  = errors.New("unable to open configuration file")
+	errParseConfFile = errors.New("unable to parse configuration file")
 )
 
 // Start method starts consuming messages received from NATS.
@@ -48,7 +47,6 @@ func handler(t transformers.Transformer, c Consumer) messaging.MessageHandler {
 				return err
 			}
 		}
-
 		return c.Consume(m)
 	}
 }

@@ -26,8 +26,6 @@ var (
 	errInvalidMessage = errors.New("invalid message representation")
 	errSaveMessage    = errors.New("failed to save message to postgres database")
 	errTransRollback  = errors.New("failed to rollback transaction")
-	errMessageFormat  = errors.New("invalid message format")
-	errNoMessages     = errors.New("empty message")
 	errNoTable        = errors.New("relation does not exist")
 )
 
@@ -78,7 +76,6 @@ func (pr postgresRepo) saveSenml(messages interface{}) (err error) {
 		if err = tx.Commit(); err != nil {
 			err = errors.Wrap(errSaveMessage, err)
 		}
-		return
 	}()
 
 	for _, msg := range msgs {
@@ -131,7 +128,6 @@ func (pr postgresRepo) insertJSON(msgs mfjson.Messages) error {
 		if err = tx.Commit(); err != nil {
 			err = errors.Wrap(errSaveMessage, err)
 		}
-		return
 	}()
 
 	q := `INSERT INTO %s (id, channel, created, subtopic, publisher, protocol, payload)

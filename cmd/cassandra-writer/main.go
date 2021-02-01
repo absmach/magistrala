@@ -17,7 +17,7 @@ import (
 	"github.com/gocql/gocql"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/consumers"
-	"github.com/mainflux/mainflux/consumers/api"
+	"github.com/mainflux/mainflux/consumers/writers/api"
 	"github.com/mainflux/mainflux/consumers/writers/cassandra"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging/nats"

@@ -10,7 +10,7 @@
 
 Mainflux is modern, scalable, secure, open-source, and patent-free IoT cloud platform written in Go.
 
-It accepts user and thing connections over various network protocols (i.e. HTTP,
+It accepts user and thing (sensor, actuator, application) connections over various network protocols (i.e. HTTP,
 MQTT, WebSocket, CoAP), thus making a seamless bridge between them. It is used as the IoT middleware
 for building complex IoT solutions.
 
@@ -25,12 +25,14 @@ which maintains the project and offers professional services around it.
 - Multi-protocol connectivity and bridging (HTTP, MQTT, WebSocket and CoAP)
 - Device management and provisioning (Zero Touch provisioning)
 - Mutual TLS Authentication (mTLS) using X.509 Certificates
-- Fine-grained access control
+- Fine-grained access control (policies, ABAC/RBAC)
 - Message persistence (Cassandra, InfluxDB, MongoDB and PostgresSQL)
 - Platform logging and instrumentation support (Grafana, Prometheus and OpenTracing)
 - Event sourcing
 - Container-based deployment using [Docker][docker] and [Kubernetes][kubernetes]
 - [LoRaWAN][lora] network integration
+- [OPC UA](opcua) integration
+- Edge [Agent](agent) and [Export](export) services for remote IoT gateway management and edge computing
 - SDK
 - CLI
 - Small memory footprint and fast execution
@@ -65,14 +67,18 @@ make run
 If you want to run services from specific release checkout code from github and make sure that 
 `MF_RELEASE_TAG` in [.env](.env) is being set to match the release version
 
+```bash
+git checkout tags/<release_number> -b <release_number>
+# e.g. `git checkout tags/0.12.0 -b 0.12.0`
 ```
-git checkout tags/0.10.0 -b 0.10.0
+
+Check that `.env` file contains:
+
+```bash
+MF_RELEASE_TAG=<release_number>
 ```
-```
-#.env:
-MF_RELEASE_TAG=0.10.0
-```
-**docker-compose is meant and designed to be used for development and testing environments, for production we suggest using** [Kubernetes](https://mainflux.readthedocs.io/en/latest/kubernetes/)
+
+>`docker-compose` should be used for development and testing deployments. For production we suggest using [Kubernetes](https://mainflux.readthedocs.io/en/latest/kubernetes/).
 
 ## Usage
 
@@ -155,6 +161,9 @@ please head to company's [careers page][careers] or shoot us an e-mail at <caree
 [license]: https://img.shields.io/badge/license-Apache%20v2.0-blue.svg
 [twitter]: https://twitter.com/mainflux
 [lora]: https://lora-alliance.org/
+[opcua]: https://opcfoundation.org/about/opc-technologies/opc-ua/
+[agent]: https://github.com/mainflux/agent
+[export]: https://github.com/mainflux/export
 [kubernetes]: https://kubernetes.io/
 [rel]: https://github.com/mainflux/mainflux/releases
 [careers]: https://www.mainflux.com/careers.html

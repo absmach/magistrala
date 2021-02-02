@@ -30,7 +30,7 @@ services:
       - mainflux-bootstrap-db-volume:/var/lib/postgresql/data
 
   bootstrap:
-    image: mainflux/bootstrap:latest
+    image: mainflux/bootstrap:${MF_RELEASE_TAG}
     container_name: mainflux-bootstrap
     depends_on:
       - bootstrap-db

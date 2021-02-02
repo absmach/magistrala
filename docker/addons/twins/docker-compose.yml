@@ -33,7 +33,7 @@ services:
       - mainflux-twins-db-configdb-volume:/data/configdb
 
   twins:
-    image: mainflux/twins:latest
+    image: mainflux/twins:${MF_RELEASE_TAG}
     container_name: mainflux-twins
     restart: on-failure
     environment:

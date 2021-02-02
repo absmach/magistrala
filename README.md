@@ -62,6 +62,18 @@ This will bring up the Mainflux docker services and interconnect them. This comm
 make run
 ```
 
+If you want to run services from specific release checkout code from github and make sure that 
+`MF_RELEASE_TAG` in [.env](.env) is being set to match the release version
+
+```
+git checkout tags/0.10.0 -b 0.10.0
+```
+```
+#.env:
+MF_RELEASE_TAG=0.10.0
+```
+**docker-compose is meant and designed to be used for development and testing environments, for production we suggest using** [Kubernetes](https://mainflux.readthedocs.io/en/latest/kubernetes/)
+
 ## Usage
 
 The quickest way to start using Mainflux is via the CLI. The latest version can be downloaded from the [official releases page][rel]. 

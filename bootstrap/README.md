@@ -68,50 +68,8 @@ The service is configured using the environment variables presented in the follo
 
 ## Deployment
 
-The service itself is distributed as Docker container. The following snippet
-provides a compose file template that can be used to deploy the service container
-locally:
-
-```yaml
-version: "3.7"
-  bootstrap:
-    image: mainflux/bootstrap:latest
-    container_name: mainflux-bootstrap
-    depends_on:
-      - bootstrap-db
-    restart: on-failure
-    ports:
-      - 8200:8200
-    environment:
-      MF_BOOTSTRAP_LOG_LEVEL: [Bootstrap log level]
-      MF_BOOTSTRAP_DB_HOST: [Database host address]
-      MF_BOOTSTRAP_DB_PORT: [Database host port]
-      MF_BOOTSTRAP_DB_USER: [Database user]
-      MF_BOOTSTRAP_DB_PASS: [Database password]
-      MF_BOOTSTRAP_DB: [Name of the database used by the service]
-      MF_BOOTSTRAP_DB_SSL_MODE: [SSL mode to connect to the database with]
-      MF_BOOTSTRAP_DB_SSL_CERT: [Path to the PEM encoded certificate file]
-      MF_BOOTSTRAP_DB_SSL_KEY: [Path to the PEM encoded key file]
-      MF_BOOTSTRAP_DB_SSL_ROOT_CERT: [Path to the PEM encoded root certificate file]
-      MF_BOOTSTRAP_ENCRYPT_KEY: [Hex-encoded encryption key used for secure bootstrap]
-      MF_BOOTSTRAP_CLIENT_TLS: [Boolean value to enable/disable client TLS]
-      MF_BOOTSTRAP_CA_CERTS: [Path to trusted CAs in PEM format]
-      MF_BOOTSTRAP_PORT: 8200
-      MF_BOOTSTRAP_SERVER_CERT: [String path to server cert in pem format]
-      MF_BOOTSTRAP_SERVER_KEY: [String path to server key in pem format]
-      MF_SDK_BASE_URL: [Base SDK URL for the Mainflux services]
-      MF_SDK_THINGS_PREFIX: [SDK prefix for Things service]
-      MF_THINGS_ES_URL: [Things service event source URL]
-      MF_THINGS_ES_PASS: [Things service event source password]
-      MF_THINGS_ES_DB: [Things service event source database]
-      MF_BOOTSTRAP_ES_URL: [Bootstrap service event source URL]
-      MF_BOOTSTRAP_ES_PASS: [Bootstrap service event source password]
-      MF_BOOTSTRAP_ES_DB: [Bootstrap service event source database]
-      MF_BOOTSTRAP_EVENT_CONSUMER: [Bootstrap service event source consumer name]
-      MF_JAEGER_URL: [Jaeger server URL]
-      MF_AUTH_GRPC_URL: [Auth service gRPC URL]
-      MF_AUTH_GRPC_TIMEOUT: [Auth service gRPC request timeout in seconds]
-```
+The service itself is distributed as Docker container. Check the [`boostrap`](https://github.com/mainflux/mainflux/blob/master/docker/addons/bootstrap/docker-compose.yml#L32-L56) service section in 
+docker-compose to see how service is deployed.
 
 To start the service outside of the container, execute the following shell script:
 

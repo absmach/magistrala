@@ -22,32 +22,8 @@ default values.
 
 ## Deployment
 
-```yaml
-  version: "3.7"
-  mongodb-writer:
-    image: mainflux/mongodb-writer:[version]
-    container_name: [instance name]
-    depends_on:
-      - mongodb
-      - nats
-    expose:
-      - [Service HTTP port]
-    restart: on-failure
-    environment:
-      MF_NATS_URL: [NATS instance URL]
-      MF_MONGO_WRITER_LOG_LEVEL: [MongoDB writer log level]
-      MF_MONGO_WRITER_PORT: [Service HTTP port]
-      MF_MONGO_WRITER_DB: [MongoDB name]
-      MF_MONGO_WRITER_DB_HOST: [MongoDB host]
-      MF_MONGO_WRITER_DB_PORT: [MongoDB port]
-      MF_MONGO_WRITER_CONFIG_PATH: [Configuration file path with NATS subjects list]
-      MF_MONGO_WRITER_CONTENT_TYPE: [Message payload Content Type]
-      MF_MONGO_WRITER_TRANSFORMER: [Message transformer type]
-    ports:
-      - [host machine port]:[configured HTTP port]
-    volume:
-      - ./config.toml:/config.toml
-```
+The service itself is distributed as Docker container. Check the [`mongodb-writer`](https://github.com/mainflux/mainflux/blob/master/docker/addons/mongodb-writer/docker-compose.yml#L36-L55) service section in 
+docker-compose to see how service is deployed.
 
 To start the service, execute the following shell script:
 

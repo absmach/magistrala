@@ -29,36 +29,8 @@ default values.
 
 ## Deployment
 
-```yaml
-  version: "3.7"
-  postgres-writer:
-    image: mainflux/postgres-writer:[version]
-    container_name: [instance name]
-    depends_on:
-      - postgres
-      - nats
-    restart: on-failure
-    environment:
-      MF_NATS_URL: [NATS instance URL]
-      MF_POSTGRES_READER_LOG_LEVEL: [Service log level]
-      MF_POSTGRES_READER_PORT: [Service HTTP port]
-      MF_POSTGRES_READER_DB_HOST: [Postgres host]
-      MF_POSTGRES_READER_DB_PORT: [Postgres port]
-      MF_POSTGRES_READER_DB_USER: [Postgres user]
-      MF_POSTGRES_READER_DB_PASS: [Postgres password]
-      MF_POSTGRES_READER_DB: [Postgres database name]
-      MF_POSTGRES_READER_DB_SSL_MODE: [Postgres SSL mode]
-      MF_POSTGRES_READER_DB_SSL_CERT: [Postgres SSL cert]
-      MF_POSTGRES_READER_DB_SSL_KEY: [Postgres SSL key]
-      MF_POSTGRES_READER_DB_SSL_ROOT_CERT: [Postgres SSL Root cert]
-      MF_JAEGER_URL: [Jaeger server URL]
-      MF_THINGS_AUTH_GRPC_URL: [Things service Auth gRPC URL]
-      MF_THINGS_AUTH_GRPC_TIMEOUT: [Things service Auth gRPC request timeout in seconds]
-    ports:
-      - 8180:8180
-    networks:
-      - docker_mainflux-base-net
-```
+The service itself is distributed as Docker container. Check the [`postgres-reader`](https://github.com/mainflux/mainflux/blob/master/docker/addons/postgres-reader/docker-compose.yml#L17-L41) service section in 
+docker-compose to see how service is deployed.
 
 To start the service, execute the following shell script:
 

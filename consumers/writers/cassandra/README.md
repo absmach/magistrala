@@ -23,32 +23,8 @@ default values.
 | MF_CASSANDRA_WRITER_TRANSFORMER  | Message transformer type                                  | senml                  |
 
 ## Deployment
-
-```yaml
-  version: "3.7"
-  cassandra-writer:
-    image: mainflux/cassandra-writer:[version]
-    container_name: [instance name]
-    expose:
-      - [Service HTTP port]
-    restart: on-failure
-    environment:
-      MF_NATS_URL: [NATS instance URL]
-      MF_CASSANDRA_WRITER_LOG_LEVEL: [Cassandra writer log level]
-      MF_CASSANDRA_WRITER_PORT: [Service HTTP port]
-      MF_CASSANDRA_WRITER_DB_CLUSTER: [Cassandra cluster comma separated addresses]
-      MF_CASSANDRA_WRITER_DB_KEYSPACE: [Cassandra keyspace name]
-      MF_CASSANDRA_WRITER_DB_USER: [Cassandra DB username]
-      MF_CASSANDRA_WRITER_DB_PASS: [Cassandra DB password]
-      MF_CASSANDRA_WRITER_DB_PORT: [Cassandra DB port]
-      MF_CASSANDRA_WRITER_CONFIG_PATH: [Configuration file path with NATS subjects list]
-      MF_CASSANDRA_WRITER_CONTENT_TYPE: [Message payload Content Type]
-      MF_CASSANDRA_WRITER_TRANSFORMER: [Message transformer type]
-    ports:
-      - [host machine port]:[configured HTTP port]
-    volume:
-      - ./config.toml:/config.toml
-```
+The service itself is distributed as Docker container. Check the [`cassandra-writer`](https://github.com/mainflux/mainflux/blob/master/docker/addons/cassandra-writer/docker-compose.yml#L30-L49) service section in 
+docker-compose to see how service is deployed.
 
 To start the service, execute the following shell script:
 

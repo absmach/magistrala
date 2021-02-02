@@ -31,7 +31,7 @@ services:
       - mainflux-certs-db-volume:/var/lib/postgresql/data
       
   certs:
-    image: mainflux/certs:latest
+    image: mainflux/certs:${MF_RELEASE_TAG}
     container_name: mainflux-certs
     depends_on:
       - certs-db

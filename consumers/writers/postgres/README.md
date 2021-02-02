@@ -28,38 +28,8 @@ default values.
 
 ## Deployment
 
-```yaml
-  version: "3.7"
-  postgres-writer:
-    image: mainflux/postgres-writer:[version]
-    container_name: [instance name]
-    depends_on:
-      - postgres
-      - nats
-    restart: on-failure
-    environment:
-      MF_NATS_URL: [NATS instance URL]
-      MF_POSTGRES_WRITER_LOG_LEVEL: [Service log level]
-      MF_POSTGRES_WRITER_PORT: [Service HTTP port]
-      MF_POSTGRES_WRITER_DB_HOST: [Postgres host]
-      MF_POSTGRES_WRITER_DB_PORT: [Postgres port]
-      MF_POSTGRES_WRITER_DB_USER: [Postgres user]
-      MF_POSTGRES_WRITER_DB_PASS: [Postgres password]
-      MF_POSTGRES_WRITER_DB: [Postgres database name]
-      MF_POSTGRES_WRITER_DB_SSL_MODE: [Postgres SSL mode]
-      MF_POSTGRES_WRITER_DB_SSL_CERT: [Postgres SSL cert]
-      MF_POSTGRES_WRITER_DB_SSL_KEY: [Postgres SSL key]
-      MF_POSTGRES_WRITER_DB_SSL_ROOT_CERT: [Postgres SSL Root cert]
-      MF_POSTGRES_WRITER_CONFIG_PATH: [Configuration file path with NATS subjects list]
-      MF_POSTGRES_WRITER_CONTENT_TYPE: [Message payload Content Type]
-      MF_POSTGRES_WRITER_TRANSFORMER: [Message transformer type]
-    ports:
-      - 9104:9104
-    networks:
-      - docker_mainflux-base-net
-    volume:
-      - ./config.toml:/config.toml
-```
+The service itself is distributed as Docker container. Check the [`postgres-writer`](https://github.com/mainflux/mainflux/blob/master/docker/addons/postgres-writer/docker-compose.yml#L34-L59) service section in 
+docker-compose to see how service is deployed.
 
 To start the service, execute the following shell script:
 

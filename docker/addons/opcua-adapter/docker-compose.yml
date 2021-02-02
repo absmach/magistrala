@@ -27,7 +27,7 @@ services:
       - mainflux-opcua-redis-volume:/data
 
   opcua-adapter:
-    image: mainflux/opcua:latest
+    image: mainflux/opcua:${MF_RELEASE_TAG}
     container_name: mainflux-opcua
     restart: on-failure
     environment:

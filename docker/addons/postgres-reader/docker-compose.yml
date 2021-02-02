@@ -15,7 +15,7 @@ networks:
 
 services:
   postgres-reader:
-    image: mainflux/postgres-reader:latest
+    image: mainflux/postgres-reader:${MF_RELEASE_TAG}
     container_name: mainflux-postgres-reader
     restart: on-failure
     environment:

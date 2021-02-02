@@ -23,28 +23,8 @@ default values.
 
 ## Deployment
 
-The service is distributed as Docker container. The following snippet provides
-a compose file template that can be used to deploy the service container locally:
-
-```yaml
-version: "3.7"
-services:
-  adapter:
-    image: mainflux/coap:[version]
-    container_name: [instance name]
-    ports:
-      - [host machine port]:[configured port]
-    environment:
-      MF_COAP_ADAPTER_PORT: [Service HTTP port]
-      MF_NATS_URL: [NATS instance URL]
-      MF_COAP_ADAPTER_LOG_LEVEL: [Service log level]
-      MF_COAP_ADAPTER_CLIENT_TLS: [Flag that indicates if TLS should be turned on]
-      MF_COAP_ADAPTER_CA_CERTS: [Path to trusted CAs in PEM format]
-      MF_COAP_ADAPTER_PING_PERIOD: [Hours between 1 and 24 to ping client with ACK message]
-      MF_JAEGER_URL: [Jaeger server URL]
-      MF_THINGS_AUTH_GRPC_URL: [Things service Auth gRPC URL]
-      MF_THINGS_AUTH_GRPC_TIMEOUT: [Things service Auth gRPC request timeout in seconds]
-```
+The service itself is distributed as Docker container. Check the [`coap-adapter`](https://github.com/mainflux/mainflux/blob/master/docker/docker-compose.yml#L273-L291) service section in 
+docker-compose to see how service is deployed.
 
 Running this service outside of container requires working instance of the NATS service.
 To start the service outside of the container, execute the following shell script:

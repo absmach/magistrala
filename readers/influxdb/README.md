@@ -26,29 +26,8 @@ default values.
 
 ## Deployment
 
-```yaml
-  version: "3.7"
-  influxdb-reader:
-    image: mainflux/influxdb-reader:[version]
-    container_name: [instance name]
-    restart: on-failure
-    environment:
-      MF_INFLUX_READER_PORT: [Service HTTP port]
-      MF_INFLUX_READER_DB: [InfluxDB name]
-      MF_INFLUX_READER_DB_HOST: [InfluxDB host]
-      MF_INFLUX_READER_DB_PORT: [InfluxDB port]
-      MF_INFLUX_READER_DB_USER: [InfluxDB admin user]
-      MF_INFLUX_READER_DB_PASS: [InfluxDB admin password]
-      MF_INFLUX_READER_CLIENT_TLS: [Flag that indicates if TLS should be turned on]
-      MF_INFLUX_READER_CA_CERTS: [Path to trusted CAs in PEM format]
-      MF_INFLUX_READER_SERVER_CERT: [String path to server cert in pem format]
-      MF_INFLUX_READER_SERVER_KEY: [String path to server key in pem format]
-      MF_JAEGER_URL: [Jaeger server URL]
-      MF_THINGS_AUTH_GRPC_URL: [Things service Auth gRPC URL]
-      MF_THINGS_AUTH_GRPC_TIMEOUT: [Things service Auth gRPC request timeout in seconds]
-    ports:
-      - [host machine port]:[configured HTTP port]
-```
+The service itself is distributed as Docker container. Check the [`influxdb-reader`](https://github.com/mainflux/mainflux/blob/master/docker/addons/influxdb-reader/docker-compose.yml#L17-L40) service section in 
+docker-compose to see how service is deployed.
 
 To start the service, execute the following shell script:
 

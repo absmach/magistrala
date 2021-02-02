@@ -59,36 +59,9 @@ default values.
 
 ## Deployment
 
-The service itself is distributed as Docker container. The following snippet
-provides a compose file template that can be used to deploy the service container
-locally:
+The service itself is distributed as Docker container. Check the [`auth`](https://github.com/mainflux/mainflux/blob/master/docker/docker-compose.yml#L71-L94) service section in 
+docker-compose to see how service is deployed.
 
-```yaml
-version: "3.7"
-services:
-  auth:
-    image: mainflux/auth:[version]
-    container_name: [instance name]
-    ports:
-      - [host machine port]:[configured HTTP port]
-    environment:
-      MF_AUTH_LOG_LEVEL: [Service log level]
-      MF_AUTH_DB_HOST: [Database host address]
-      MF_AUTH_DB_PORT: [Database host port]
-      MF_AUTH_DB_USER: [Database user]
-      MF_AUTH_DB_PASS: [Database password]
-      MF_AUTH_DB: [Name of the database used by the service]
-      MF_AUTH_DB_SSL_MODE: [SSL mode to connect to the database with]
-      MF_AUTH_DB_SSL_CERT: [Path to the PEM encoded certificate file]
-      MF_AUTH_DB_SSL_KEY: [Path to the PEM encoded key file]
-      MF_AUTH_DB_SSL_ROOT_CERT: [Path to the PEM encoded root certificate file]
-      MF_AUTH_HTTP_PORT: [Service HTTP port]
-      MF_AUTH_GRPC_PORT: [Service gRPC port]
-      MF_AUTH_SECRET: [String used for signing tokens]
-      MF_AUTH_SERVER_CERT: [String path to server certificate in pem format]
-      MF_AUTH_SERVER_KEY: [String path to server key in pem format]
-      MF_JAEGER_URL: [Jaeger server URL]
-```
 
 To start the service outside of the container, execute the following shell script:
 

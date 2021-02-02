@@ -14,7 +14,7 @@ networks:
 
 services:
   provision:
-    image: mainflux/provision:latest
+    image: mainflux/provision:${MF_RELEASE_TAG}
     container_name: mainflux-provision
     restart: on-failure
     networks:

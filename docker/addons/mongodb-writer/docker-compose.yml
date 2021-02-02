@@ -34,7 +34,7 @@ services:
       - mainflux-mongodb-configdb-volume:/data/configdb
 
   mongodb-writer:
-    image: mainflux/mongodb-writer:latest
+    image: mainflux/mongodb-writer:${MF_RELEASE_TAG}
     container_name: mainflux-mongodb-writer
     depends_on:
       - mongodb

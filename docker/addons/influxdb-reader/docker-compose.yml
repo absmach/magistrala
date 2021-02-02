@@ -16,7 +16,7 @@ networks:
 
 services:
   influxdb-reader:
-    image: mainflux/influxdb-reader:latest
+    image: mainflux/influxdb-reader:${MF_RELEASE_TAG}
     container_name: mainflux-influxdb-reader
     restart: on-failure
     environment:

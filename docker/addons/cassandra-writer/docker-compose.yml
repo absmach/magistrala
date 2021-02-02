@@ -28,7 +28,7 @@ services:
       - mainflux-cassandra-volume:/var/lib/cassandra
 
   cassandra-writer:
-    image: mainflux/cassandra-writer:latest
+    image: mainflux/cassandra-writer:${MF_RELEASE_TAG}
     container_name: mainflux-cassandra-writer
     depends_on:
       - cassandra

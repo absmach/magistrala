@@ -36,39 +36,10 @@ default values.
 | MF_AUTH_CACHE_PASS                       | Auth cache password                                    | ""                    |
 | MF_AUTH_CACHE_DB                         | Auth cache database                                    | "0"                   |
 
-
 ## Deployment
 
-The service is distributed as Docker container. The following snippet provides
-a compose file template that can be used to deploy the service container locally:
-
-```yaml
-version: "3.7"
-services:
-  mqtt-adapter:
-    image: mainflux/mqtt:latest
-    container_name: mainflux-mqtt
-    depends_on:
-      - vernemq
-      - things
-      - nats
-    restart: on-failure
-    environment:
-      MF_MQTT_ADAPTER_LOG_LEVEL: ${MF_MQTT_ADAPTER_LOG_LEVEL}
-      MF_MQTT_ADAPTER_MQTT_PORT: ${MF_MQTT_ADAPTER_MQTT_PORT}
-      MF_MQTT_ADAPTER_WS_PORT: ${MF_MQTT_ADAPTER_WS_PORT}
-      MF_MQTT_ADAPTER_ES_URL: es-redis:${MF_REDIS_TCP_PORT}
-      MF_NATS_URL: ${MF_NATS_URL}
-      MF_MQTT_ADAPTER_MQTT_TARGET_HOST: vernemq
-      MF_MQTT_ADAPTER_MQTT_TARGET_PORT: ${MF_MQTT_BROKER_PORT}
-      MF_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK: http://vernemq:8888/health
-      MF_MQTT_ADAPTER_WS_TARGET_HOST: vernemq
-      MF_MQTT_ADAPTER_WS_TARGET_PORT: ${MF_MQTT_BROKER_WS_PORT}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_THINGS_AUTH_GRPC_URL: ${MF_THINGS_AUTH_GRPC_URL}
-      MF_THINGS_AUTH_GRPC_TIMEOUT: ${MF_THINGS_AUTH_GRPC_TIMEOUT}
-      MF_AUTH_CACHE: things-redis:${MF_REDIS_TCP_PORT}
-```
+The service itself is distributed as Docker container. Check the [`mqtt-adapter`](https://github.com/mainflux/mainflux/blob/master/docker/docker-compose.yml#L219-L243) service section in 
+docker-compose to see how service is deployed.
 
 To start the service outside of the container, execute the following shell script:
 

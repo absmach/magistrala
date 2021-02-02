@@ -24,31 +24,8 @@ default values.
 
 ## Deployment
 
-```yaml
-  version: "3.7"
-  influxdb-writer:
-    image: mainflux/influxdb:[version]
-    container_name: [instance name]
-    expose:
-      - [Service HTTP port]
-    restart: on-failure
-    environment:
-      MF_NATS_URL: [NATS instance URL]
-      MF_INFLUX_WRITER_LOG_LEVEL: [Influx writer log level]
-      MF_INFLUX_WRITER_PORT: [Service HTTP port]
-      MF_INFLUX_WRITER_DB: [InfluxDB name]
-      MF_INFLUX_WRITER_DB_HOST: [InfluxDB host]
-      MF_INFLUX_WRITER_DB_PORT: [InfluxDB port]
-      MF_INFLUX_WRITER_DB_USER: [InfluxDB admin user]
-      MF_INFLUX_WRITER_DB_PASS: [InfluxDB admin password]
-      MF_INFLUX_WRITER_CONFIG_PATH: [Configuration file path with NATS subjects list]
-      MF_INFLUX_WRITER_CONTENT_TYPE: [Message payload Content Type]
-      MF_INFLUX_WRITER_TRANSFORMER: [Message transformer type]
-    ports:
-      - [host machine port]:[configured HTTP port]
-    volume:
-      - ./subjects.yaml:/config/subjects.yaml
-```
+The service itself is distributed as Docker container. Check the [`influxdb-writer`](https://github.com/mainflux/mainflux/blob/master/docker/addons/influxdb-writer/docker-compose.yml#L35-L58) service section in 
+docker-compose to see how service is deployed.
 
 To start the service, execute the following shell script:
 

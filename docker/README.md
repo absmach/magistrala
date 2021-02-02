@@ -21,3 +21,4 @@ docker-compose -f docker/docker-compose.yml up
 docker-compose -f docker/addons/<path>/docker-compose.yml  up
 ```
 
+To pull docker images from a specific release you need to change the value of `MF_RELEASE_TAG` in `.env` before running these commands.

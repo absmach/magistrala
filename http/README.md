@@ -21,26 +21,8 @@ default values.
 
 ## Deployment
 
-The service is distributed as Docker container. The following snippet provides
-a compose file template that can be used to deploy the service container locally:
-
-```yaml
-version: "3.7"
-services:
-  adapter:
-    image: mainflux/http:[version]
-    container_name: [instance name]
-    ports:
-      - [host machine port]:8180
-    environment:
-      MF_NATS_URL: [NATS instance URL]
-      MF_HTTP_ADAPTER_LOG_LEVEL: [HTTP Adapter Log Level]
-      MF_HTTP_ADAPTER_PORT: [Service HTTP port]
-      MF_HTTP_ADAPTER_CA_CERTS: [Path to trusted CAs in PEM format]
-      MF_JAEGER_URL: [Jaeger server URL]
-      MF_THINGS_AUTH_GRPC_URL: [Things service Auth gRPC URL]
-      MF_THINGS_AUTH_GRPC_TIMEOUT: [Things service Auth gRPC request timeout in seconds]
-```
+The service itself is distributed as Docker container. Check the [`http-adapter`](https://github.com/mainflux/mainflux/blob/master/docker/docker-compose.yml#L245-L262) service section in 
+docker-compose to see how service is deployed.
 
 To start the service outside of the container, execute the following shell script:
 

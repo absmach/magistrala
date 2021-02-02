@@ -27,27 +27,8 @@ default values.
 
 ## Deployment
 
-The service is distributed as Docker container. The following snippet provides
-a compose file template that can be used to deploy the service container locally:
-
-```yaml
-version: "3.7"
-services:
-  adapter:
-    image: mainflux/lora:[version]
-    container_name: [instance name]
-    environment:
-      MF_LORA_ADAPTER_LOG_LEVEL: [Service Log Level]
-      MF_NATS_URL: [NATS instance URL]
-      MF_LORA_ADAPTER_MESSAGES_URL: [LoRa Server MQTT broker URL]
-      MF_LORA_ADAPTER_ROUTE_MAP_URL: [Route-map database URL]
-      MF_LORA_ADAPTER_ROUTE_MAP_PASS: [Route-map database password]
-      MF_LORA_ADAPTER_ROUTE_MAP_DB: [Route-map instance]
-      MF_THINGS_ES_URL: [Things event source URL]
-      MF_THINGS_ES_PASS: [Things event source password]
-      MF_THINGS_ES_DB: [Things event source DB instance]
-      MF_LORA_ADAPTER_EVENT_CONSUMER: [Service event consumer name]
-```
+The service itself is distributed as Docker container. Check the [`lora-adapter`](https://github.com/mainflux/mainflux/blob/master/docker/addons/lora-adapter/docker-compose.yml#L23-L37) service section in 
+docker-compose to see how service is deployed.
 
 To start the service outside of the container, execute the following shell script:
 

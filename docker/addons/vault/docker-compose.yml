@@ -19,7 +19,7 @@ volumes:
 
 services:
   vault:
-    image: vault:latest
+    image: vault:${MF_RELEASE_TAG}
     container_name: mainflux-vault
     ports:
       - ${MF_VAULT_PORT}:8200

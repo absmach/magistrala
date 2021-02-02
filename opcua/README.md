@@ -31,32 +31,8 @@ default values.
 
 ## Deployment
 
-The service is distributed as Docker container. The following snippet provides
-a compose file template that can be used to deploy the service container locally:
-
-```yaml
-version: "3.7"
-services:
-  adapter:
-    image: mainflux/opcua:[version]
-    container_name: [instance name]
-    environment:
-      MF_OPCUA_ADAPTER_HTTP_PORT: [Service HTTP port]
-      MF_OPCUA_ADAPTER_LOG_LEVEL: [Service Log Level]
-      MF_NATS_URL: [NATS instance URL]
-      MF_OPCUA_ADAPTER_INTERVAL_MS: [OPC-UA Server Interval (milliseconds)]
-      MF_OPCUA_ADAPTER_POLICY: [OPC-UA Server Policy]
-      MF_OPCUA_ADAPTER_MODE: [OPC-UA Server Mode]
-      MF_OPCUA_ADAPTER_CERT_FILE: [OPC-UA Server Certificate file]
-      MF_OPCUA_ADAPTER_KEY_FILE: [OPC-UA Server Key file]
-      MF_OPCUA_ADAPTER_ROUTE_MAP_URL: [Route-map database URL]
-      MF_OPCUA_ADAPTER_ROUTE_MAP_PASS: [Route-map database password]
-      MF_OPCUA_ADAPTER_ROUTE_MAP_DB: [Route-map instance name]
-      MF_THINGS_ES_URL: [Things event source URL]
-      MF_THINGS_ES_PASS: [Things event source password]
-      MF_THINGS_ES_DB: [Things event source DB instance]
-      MF_OPCUA_ADAPTER_EVENT_CONSUMER: [Service event consumer name]
-```
+The service itself is distributed as Docker container. Check the [`opcua-adapter`](https://github.com/mainflux/mainflux/blob/master/docker/addons/opcua-adapter/docker-compose.yml#L29-L53) service section in 
+docker-compose to see how service is deployed.
 
 To start the service outside of the container, execute the following shell script:
 

@@ -33,7 +33,7 @@ services:
       - mainflux-influxdb-volume:/var/lib/influxdb
 
   influxdb-writer:
-    image: mainflux/influxdb-writer:latest
+    image: mainflux/influxdb-writer:${MF_RELEASE_TAG}
     container_name: mainflux-influxdb-writer
     depends_on:
       - influxdb

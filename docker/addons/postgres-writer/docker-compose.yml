@@ -32,7 +32,7 @@ services:
       - mainflux-postgres-writer-volume:/var/lib/postgresql/data
 
   postgres-writer:
-    image: mainflux/postgres-writer:latest
+    image: mainflux/postgres-writer:${MF_RELEASE_TAG}
     container_name: mainflux-postgres-writer
     depends_on:
       - postgres

@@ -69,7 +69,7 @@ services:
       - mainflux-auth-db-volume:/var/lib/postgresql/data
 
   auth:
-    image: mainflux/auth:latest
+    image: mainflux/auth:${MF_RELEASE_TAG}
     container_name: mainflux-auth
     depends_on:
       - auth-db
@@ -107,7 +107,7 @@ services:
       - mainflux-users-db-volume:/var/lib/postgresql/data
 
   users:
-    image: mainflux/users:latest
+    image: mainflux/users:${MF_RELEASE_TAG}
     container_name: mainflux-users
     volumes:
       - ./users/emailer/templates/${MF_EMAIL_TEMPLATE}:/${MF_EMAIL_TEMPLATE}
@@ -165,7 +165,7 @@ services:
       - mainflux-auth-redis-volume:/data
 
   things:
-    image: mainflux/things:latest
+    image: mainflux/things:${MF_RELEASE_TAG}
     container_name: mainflux-things
     depends_on:
       - things-db
@@ -205,7 +205,7 @@ services:
       - mainflux-base-net
 
   vernemq:
-    image: mainflux/vernemq:latest
+    image: mainflux/vernemq:${MF_RELEASE_TAG}
     container_name: mainflux-vernemq
     restart: on-failure
     environment:
@@ -217,7 +217,7 @@ services:
       - mainflux-mqtt-broker-volume:/var/lib/vernemq
 
   mqtt-adapter:
-    image: mainflux/mqtt:latest
+    image: mainflux/mqtt:${MF_RELEASE_TAG}
     container_name: mainflux-mqtt
     depends_on:
       - vernemq
@@ -243,7 +243,7 @@ services:
       - mainflux-base-net
 
   http-adapter:
-    image: mainflux/http:latest
+    image: mainflux/http:${MF_RELEASE_TAG}
     container_name: mainflux-http
     depends_on:
       - things
@@ -271,7 +271,7 @@ services:
       - mainflux-es-redis-volume:/data
 
   coap-adapter:
-    image: mainflux/coap:latest
+    image: mainflux/coap:${MF_RELEASE_TAG}
     container_name: mainflux-coap
     depends_on:
       - things

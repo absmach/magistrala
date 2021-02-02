@@ -46,43 +46,8 @@ default values.
 
 ## Deployment
 
-The service itself is distributed as Docker container. The following snippet
-provides a compose file template that can be used to deploy the service container
-locally:
-
-```yaml
-version: "3.7"
-services:
-  users:
-    image: mainflux/users:[version]
-    container_name: [instance name]
-    ports:
-      - [host machine port]:[configured HTTP port]
-    environment:
-      MF_USERS_LOG_LEVEL: [Users log level]
-      MF_USERS_DB_HOST: [Database host address]
-      MF_USERS_DB_PORT: [Database host port]
-      MF_USERS_DB_USER: [Database user]
-      MF_USERS_DB_PASS: [Database password]
-      MF_USERS_DB: [Name of the database used by the service]
-      MF_USERS_DB_SSL_MODE: [SSL mode to connect to the database with]
-      MF_USERS_DB_SSL_CERT: [Path to the PEM encoded certificate file]
-      MF_USERS_DB_SSL_KEY: [Path to the PEM encoded key file]
-      MF_USERS_DB_SSL_ROOT_CERT: [Path to the PEM encoded root certificate file]
-      MF_USERS_HTTP_PORT: [Service HTTP port]
-      MF_USERS_SERVER_CERT: [String path to server certificate in pem format]
-      MF_USERS_SERVER_KEY: [String path to server key in pem format]
-      MF_JAEGER_URL: [Jaeger server URL]
-      MF_EMAIL_DRIVER: [Mail server driver smtp]
-      MF_EMAIL_HOST: [MF_EMAIL_HOST]
-      MF_EMAIL_PORT: [MF_EMAIL_PORT]
-      MF_EMAIL_USERNAME: [MF_EMAIL_USERNAME]
-      MF_EMAIL_PASSWORD: [MF_EMAIL_PASSWORD]
-      MF_EMAIL_FROM_ADDRESS: [MF_EMAIL_FROM_ADDRESS]
-      MF_EMAIL_FROM_NAME: [MF_EMAIL_FROM_NAME]
-      MF_EMAIL_TEMPLATE: [MF_EMAIL_TEMPLATE]
-      MF_TOKEN_RESET_ENDPOINT: [MF_TOKEN_RESET_ENDPOINT]
-```
+The service itself is distributed as Docker container. Check the [`users`](https://github.com/mainflux/mainflux/blob/master/docker/docker-compose.yml#L109-L143) service section in 
+docker-compose to see how service is deployed.
 
 To start the service outside of the container, execute the following shell script:
 
@@ -99,7 +64,30 @@ make users
 make install
 
 # set the environment variables and run the service
-MF_USERS_LOG_LEVEL=[Users log level] MF_USERS_DB_HOST=[Database host address] MF_USERS_DB_PORT=[Database host port] MF_USERS_DB_USER=[Database user] MF_USERS_DB_PASS=[Database password] MF_USERS_DB=[Name of the database used by the service] MF_USERS_DB_SSL_MODE=[SSL mode to connect to the database with] MF_USERS_DB_SSL_CERT=[Path to the PEM encoded certificate file] MF_USERS_DB_SSL_KEY=[Path to the PEM encoded key file] MF_USERS_DB_SSL_ROOT_CERT=[Path to the PEM encoded root certificate file] MF_USERS_HTTP_PORT=[Service HTTP port] MF_USERS_SERVER_CERT=[Path to server certificate] MF_USERS_SERVER_KEY=[Path to server key] MF_JAEGER_URL=[Jaeger server URL] MF_EMAIL_DRIVER=[Mail server driver smtp] MF_EMAIL_HOST=[Mail server host] MF_EMAIL_PORT=[Mail server port] MF_EMAIL_USERNAME=[Mail server username] MF_EMAIL_PASSWORD=[Mail server password] MF_EMAIL_FROM_ADDRESS=[Email from address] MF_EMAIL_FROM_NAME=[Email from name] MF_EMAIL_TEMPLATE=[Email template file] MF_TOKEN_RESET_ENDPOINT=[Password reset token endpoint] $GOBIN/mainflux-users
+MF_USERS_LOG_LEVEL=[Users log level] \
+MF_USERS_DB_HOST=[Database host address] \
+MF_USERS_DB_PORT=[Database host port] \
+MF_USERS_DB_USER=[Database user] \
+MF_USERS_DB_PASS=[Database password] \
+MF_USERS_DB=[Name of the database used by the service] \
+MF_USERS_DB_SSL_MODE=[SSL mode to connect to the database with] \
+MF_USERS_DB_SSL_CERT=[Path to the PEM encoded certificate file] \
+MF_USERS_DB_SSL_KEY=[Path to the PEM encoded key file] \
+MF_USERS_DB_SSL_ROOT_CERT=[Path to the PEM encoded root certificate file] \
+MF_USERS_HTTP_PORT=[Service HTTP port] \
+MF_USERS_SERVER_CERT=[Path to server certificate] \
+MF_USERS_SERVER_KEY=[Path to server key] \
+MF_JAEGER_URL=[Jaeger server URL] \
+MF_EMAIL_DRIVER=[Mail server driver smtp] \
+MF_EMAIL_HOST=[Mail server host] \
+MF_EMAIL_PORT=[Mail server port] \
+MF_EMAIL_USERNAME=[Mail server username] \
+MF_EMAIL_PASSWORD=[Mail server password] \
+MF_EMAIL_FROM_ADDRESS=[Email from address] \
+MF_EMAIL_FROM_NAME=[Email from name] \
+MF_EMAIL_TEMPLATE=[Email template file] \
+MF_TOKEN_RESET_ENDPOINT=[Password reset token endpoint] \
+$GOBIN/mainflux-users
 ```
 
 If `MF_EMAIL_TEMPLATE` doesn't point to any file service will function but password reset functionality will not work.

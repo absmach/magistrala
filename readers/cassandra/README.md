@@ -27,31 +27,8 @@ default values.
 
 ## Deployment
 
-```yaml
-  version: "3.7"
-  cassandra-reader:
-    image: mainflux/cassandra-reader:[version]
-    container_name: [instance name]
-    expose:
-      - [Service HTTP port]
-    restart: on-failure
-    environment:
-      MF_CASSANDRA_READER_PORT: [Service HTTP port]
-      MF_CASSANDRA_READER_DB_CLUSTER: [Cassandra cluster comma separated addresses]
-      MF_CASSANDRA_READER_DB_KEYSPACE: [Cassandra keyspace name]
-      MF_CASSANDRA_READER_DB_USER: [Cassandra DB username]
-      MF_CASSANDRA_READER_DB_PASS: [Cassandra DB password]
-      MF_CASSANDRA_READER_DB_PORT: [Cassandra DB port]
-      MF_CASSANDRA_READER_CLIENT_TLS: [Flag that indicates if TLS should be turned on]
-      MF_CASSANDRA_READER_CA_CERTS: [Path to trusted CAs in PEM format]
-      MF_CASSANDRA_READER_SERVER_CERT: [String path to server cert in pem format]
-      MF_CASSANDRA_READER_SERVER_KEY: [String path to server key in pem format]
-      MF_JAEGER_URL: [Jaeger server URL]
-      MF_THINGS_AUTH_GRPC_URL: [Things service Auth gRPC URL]
-      MF_THINGS_AUTH_GRPC_TIMEOUT: [Things service Auth gRPC request timeout in seconds]
-    ports:
-      - [host machine port]:[configured HTTP port]
-```
+The service itself is distributed as Docker container. Check the [`cassandra-reader`](https://github.com/mainflux/mainflux/blob/master/docker/addons/cassandra-reader/docker-compose.yml#L15-L35) service section in 
+docker-compose to see how service is deployed.
 
 To start the service, execute the following shell script:
 

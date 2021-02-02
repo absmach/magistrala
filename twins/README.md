@@ -37,39 +37,8 @@ default values.
 
 ## Deployment
 
-The service itself is distributed as Docker container. The following snippet
-provides a compose file template that can be used to deploy the service
-container locally:
-
-```yaml
-version: "3"
-services:
-  twins:
-    image: mainflux/twins:[version]
-    container_name: [instance name]
-    ports:
-      - [host machine port]:[configured HTTP port]
-    environment:
-      MF_TWINS_LOG_LEVEL: [Twins log level]
-      MF_TWINS_HTTP_PORT: [Service HTTP port]
-      MF_TWINS_SERVER_CERT: [String path to server cert in pem format]
-      MF_TWINS_SERVER_KEY: [String path to server key in pem format]
-      MF_JAEGER_URL: [Jaeger server URL]
-      MF_TWINS_DB: [Database name]
-      MF_TWINS_DB_HOST: [Database host address]
-      MF_TWINS_DB_PORT: [Database host port]
-      MF_TWINS_SINGLE_USER_EMAIL: [User email for single user mode]
-      MF_TWINS_SINGLE_USER_TOKEN: [User token for single user mode]
-      MF_TWINS_CLIENT_TLS: [Flag that indicates if TLS should be turned on]
-      MF_TWINS_CA_CERTS: [Path to trusted CAs in PEM format]
-      MF_TWINS_CHANNEL_ID: [NATS notifications channel ID]
-      MF_NATS_URL: [Mainflux NATS broker URL]
-      MF_AUTH_GRPC_URL: [Auth service gRPC URL]
-      MF_AUTH_GRPC_TIMEOUT: [Auth service gRPC request timeout in seconds]
-      MF_TWINS_ES_URL: [Event store URL]
-      MF_TWINS_ES_PASS: [Event store password]
-      MF_TWINS_ES_DB: [Event store instance name]
-```
+The service itself is distributed as Docker container. Check the [`twins`](https://github.com/mainflux/mainflux/blob/master/docker/addons/twins/docker-compose.yml#L35-L58) service section in 
+docker-compose to see how service is deployed.
 
 To start the service outside of the container, execute the following shell
 script:

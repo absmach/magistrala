@@ -32,7 +32,7 @@ func TestMain(m *testing.M) {
 		"INFLUXDB_USER_PASSWORD=test",
 		"INFLUXDB_DB=test",
 	}
-	container, err := pool.Run("influxdb", "1.6.4-alpine", cfg)
+	container, err := pool.Run("influxdb", "1.8.4", cfg)
 	if err != nil {
 		testLog.Error(fmt.Sprintf("Could not start container: %s", err))
 	}

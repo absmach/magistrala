@@ -14,18 +14,17 @@ default values.
 | MF_INFLUX_WRITER_LOG_LEVEL    | Log level for InfluxDB writer (debug, info, warn, error) | error                  |
 | MF_INFLUX_WRITER_PORT         | Service HTTP port                                        | 8180                   |
 | MF_INFLUX_WRITER_DB_HOST      | InfluxDB host                                            | localhost              |
-| MF_INFLUX_WRITER_DB_PORT      | Default port of InfluxDB database                        | 8086                   |
-| MF_INFLUX_WRITER_DB_USER      | Default user of InfluxDB database                        | mainflux               |
-| MF_INFLUX_WRITER_DB_PASS      | Default password of InfluxDB user                        | mainflux               |
-| MF_INFLUX_WRITER_DB           | InfluxDB database name                                   | messages               |
+| MF_INFLUXDB_PORT              | Default port of InfluxDB database                        | 8086                   |
+| MF_INFLUXDB_ADMIN_USER        | Default user of InfluxDB database                        | mainflux               |
+| MF_INFLUXDB_ADMIN_PASSWORD    | Default password of InfluxDB user                        | mainflux               |
+| MF_INFLUXDB_DB                | InfluxDB database name                                   | mainflux               |
 | MF_INFLUX_WRITER_CONFIG_PATH  | Configuration file path with NATS subjects list          | /configs.toml          |
 | MF_INFLUX_WRITER_CONTENT_TYPE | Message payload Content Type                             | application/senml+json |
 | MF_INFLUX_WRITER_TRANSFORMER  | Message transformer type                                 | senml                  |
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`influxdb-writer`](https://github.com/mainflux/mainflux/blob/master/docker/addons/influxdb-writer/docker-compose.yml#L35-L58) service section in 
-docker-compose to see how service is deployed.
+The service itself is distributed as Docker container. Check the [`influxdb-writer`](https://github.com/mainflux/mainflux/blob/master/docker/addons/influxdb-writer/docker-compose.yml#L35-L58) service section in docker-compose to see how service is deployed.
 
 To start the service, execute the following shell script:
 
@@ -45,11 +44,11 @@ make install
 MF_NATS_URL=[NATS instance URL] \
 MF_INFLUX_WRITER_LOG_LEVEL=[Influx writer log level] \
 MF_INFLUX_WRITER_PORT=[Service HTTP port] \
-MF_INFLUX_WRITER_DB=[InfluxDB database name] \
+MF_INFLUXDB_DB=[InfluxDB database name] \
 MF_INFLUX_WRITER_DB_HOST=[InfluxDB database host] \
-MF_INFLUX_WRITER_DB_PORT=[InfluxDB database port] \
-MF_INFLUX_WRITER_DB_USER=[InfluxDB admin user] \
-MF_INFLUX_WRITER_DB_PASS=[InfluxDB admin password] \
+MF_INFLUXDB_PORT=[InfluxDB database port] \
+MF_INFLUXDB_ADMIN_USER=[InfluxDB admin user] \
+MF_INFLUXDB_ADMIN_PASSWORD=[InfluxDB admin password] \
 MF_INFLUX_WRITER_CONFIG_PATH=[Configuration file path with filters list] \
 MF_POSTGRES_WRITER_TRANSFORMER=[Message transformer type] \
 $GOBIN/mainflux-influxdb

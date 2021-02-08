@@ -32,11 +32,11 @@ type emailTemplate struct {
 
 // Config email agent configuration.
 type Config struct {
-	Driver      string
 	Host        string
 	Port        string
 	Username    string
 	Password    string
+	Secret      string
 	FromAddress string
 	FromName    string
 	Template    string
@@ -55,7 +55,14 @@ type Agent struct {
 func New(c *Config) (*Agent, error) {
 	a := &Agent{}
 	a.conf = c
-	a.auth = smtp.PlainAuth("", c.Username, c.Password, c.Host)
+	if c.Username != "" {
+		switch {
+		case c.Secret != "":
+			a.auth = smtp.CRAMMD5Auth(c.Username, c.Secret)
+		case c.Password != "":
+			a.auth = smtp.PlainAuth("", c.Username, c.Password, c.Host)
+		}
+	}
 	a.addr = fmt.Sprintf("%s:%s", c.Host, c.Port)
 
 	tmpl, err := template.ParseFiles(c.Template)

@@ -57,4 +57,4 @@ services:
       - docker_mainflux-base-net
     volumes:
       - ./config.toml:/config.toml
-      - ./${MF_EMAIL_TEMPLATE}:/${MF_EMAIL_TEMPLATE}
+      - ../../templates/${MF_SMTP_NOTIFIER_TEMPLATE}:/${MF_EMAIL_TEMPLATE}

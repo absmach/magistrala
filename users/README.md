@@ -78,7 +78,6 @@ MF_USERS_HTTP_PORT=[Service HTTP port] \
 MF_USERS_SERVER_CERT=[Path to server certificate] \
 MF_USERS_SERVER_KEY=[Path to server key] \
 MF_JAEGER_URL=[Jaeger server URL] \
-MF_EMAIL_DRIVER=[Mail server driver smtp] \
 MF_EMAIL_HOST=[Mail server host] \
 MF_EMAIL_PORT=[Mail server port] \
 MF_EMAIL_USERNAME=[Mail server username] \

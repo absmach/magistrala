@@ -38,15 +38,17 @@ func New(db *sqlx.DB) readers.MessageRepository {
 }
 
 func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (readers.MessagesPage, error) {
-	order := "created"
-	if rpm.Format == "" {
-		order = "time"
-		rpm.Format = defTable
+	order := "time"
+	format := defTable
+
+	if rpm.Format != "" {
+		order = "created"
+		format = rpm.Format
 	}
 
 	q := fmt.Sprintf(`SELECT * FROM %s
     WHERE %s ORDER BY %s DESC
-	LIMIT :limit OFFSET :offset;`, rpm.Format, fmtCondition(chanID, rpm), order)
+	LIMIT :limit OFFSET :offset;`, format, fmtCondition(chanID, rpm), order)
 
 	params := map[string]interface{}{
 		"channel":      chanID,
@@ -74,7 +76,7 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 		PageMetadata: rpm,
 		Messages:     []readers.Message{},
 	}
-	switch rpm.Format {
+	switch format {
 	case defTable:
 		for rows.Next() {
 			msg := dbMessage{Message: senml.Message{}}
@@ -100,7 +102,7 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 
 	}
 
-	q = fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, rpm.Format, fmtCondition(chanID, rpm))
+	q = fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, format, fmtCondition(chanID, rpm))
 	rows, err = tr.db.NamedQuery(q, params)
 	if err != nil {
 		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
@@ -137,7 +139,8 @@ func fmtCondition(chanID string, rpm readers.PageMetadata) string {
 			"protocol":
 			condition = fmt.Sprintf(`%s AND %s = :%s`, condition, name, name)
 		case "v":
-			condition = fmt.Sprintf(`%s AND value = :value`, condition)
+			comparator := readers.ParseValueComparator(query)
+			condition = fmt.Sprintf(`%s AND value %s :value`, condition, comparator)
 		case "vb":
 			condition = fmt.Sprintf(`%s AND bool_value = :bool_value`, condition)
 		case "vs":

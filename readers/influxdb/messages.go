@@ -18,7 +18,6 @@ import (
 
 const (
 	countCol = "count_protocol"
-	format   = "format"
 	// Measurement for SenML messages
 	defMeasurement = "messages"
 )
@@ -41,13 +40,14 @@ func New(client influxdata.Client, database string) readers.MessageRepository {
 }
 
 func (repo *influxRepository) ReadAll(chanID string, rpm readers.PageMetadata) (readers.MessagesPage, error) {
-	if rpm.Format == "" {
-		rpm.Format = defMeasurement
+	format := defMeasurement
+	if rpm.Format != "" {
+		format = rpm.Format
 	}
 
 	condition := fmtCondition(chanID, rpm)
 
-	cmd := fmt.Sprintf(`SELECT * FROM %s WHERE %s ORDER BY time DESC LIMIT %d OFFSET %d`, rpm.Format, condition, rpm.Limit, rpm.Offset)
+	cmd := fmt.Sprintf(`SELECT * FROM %s WHERE %s ORDER BY time DESC LIMIT %d OFFSET %d`, format, condition, rpm.Limit, rpm.Offset)
 	q := influxdata.Query{
 		Command:  cmd,
 		Database: repo.database,
@@ -69,10 +69,10 @@ func (repo *influxRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 
 	result := resp.Results[0].Series[0]
 	for _, v := range result.Values {
-		ret = append(ret, parseMessage(rpm.Format, result.Columns, v))
+		ret = append(ret, parseMessage(format, result.Columns, v))
 	}
 
-	total, err := repo.count(rpm.Format, condition)
+	total, err := repo.count(format, condition)
 	if err != nil {
 		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 	}
@@ -148,7 +148,8 @@ func fmtCondition(chanID string, rpm readers.PageMetadata) string {
 			"protocol":
 			condition = fmt.Sprintf(`%s AND "%s"='%s'`, condition, name, value)
 		case "v":
-			condition = fmt.Sprintf(`%s AND value = %f`, condition, value)
+			comparator := readers.ParseValueComparator(query)
+			condition = fmt.Sprintf(`%s AND value %s %f`, condition, comparator, value)
 		case "vb":
 			condition = fmt.Sprintf(`%s AND boolValue = %t`, condition, value)
 		case "vs":

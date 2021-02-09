@@ -36,8 +36,9 @@ func New(session *gocql.Session) readers.MessageRepository {
 }
 
 func (cr cassandraRepository) ReadAll(chanID string, rpm readers.PageMetadata) (readers.MessagesPage, error) {
-	if rpm.Format == "" {
-		rpm.Format = defTable
+	format := defTable
+	if rpm.Format != "" {
+		format = rpm.Format
 	}
 
 	q, vals := buildQuery(chanID, rpm)
@@ -46,12 +47,12 @@ func (cr cassandraRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 		value, string_value, bool_value, data_value, sum, time,
 		update_time FROM messages WHERE channel = ? %s LIMIT ?
 		ALLOW FILTERING`, q)
-	countCQL := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE channel = ? %s ALLOW FILTERING`, rpm.Format, q)
+	countCQL := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE channel = ? %s ALLOW FILTERING`, format, q)
 
-	if rpm.Format != defTable {
+	if format != defTable {
 		selectCQL = fmt.Sprintf(`SELECT channel, subtopic, publisher, protocol, created, payload FROM %s WHERE channel = ? %s LIMIT ?
-			ALLOW FILTERING`, rpm.Format, q)
-		countCQL = fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE channel = ? %s ALLOW FILTERING`, rpm.Format, q)
+			ALLOW FILTERING`, format, q)
+		countCQL = fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE channel = ? %s ALLOW FILTERING`, format, q)
 	}
 
 	iter := cr.session.Query(selectCQL, vals...).Iter()
@@ -70,7 +71,7 @@ func (cr cassandraRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 		Messages:     []readers.Message{},
 	}
 
-	switch rpm.Format {
+	switch format {
 	case defTable:
 		for scanner.Next() {
 			var msg senml.Message
@@ -128,7 +129,8 @@ func buildQuery(chanID string, rpm readers.PageMetadata) (string, []interface{})
 			condCQL = fmt.Sprintf(`%s AND %s = ?`, condCQL, name)
 		case "v":
 			vals = append(vals, val)
-			condCQL = fmt.Sprintf(`%s AND value = ?`, condCQL)
+			comparator := readers.ParseValueComparator(query)
+			condCQL = fmt.Sprintf(`%s AND value %s ?`, condCQL, comparator)
 		case "vb":
 			vals = append(vals, val)
 			condCQL = fmt.Sprintf(`%s AND bool_value = ?`, condCQL)

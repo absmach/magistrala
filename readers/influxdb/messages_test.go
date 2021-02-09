@@ -29,7 +29,7 @@ const (
 
 var (
 	v   float64 = 5
-	vs          = "value"
+	vs          = "a"
 	vb          = true
 	vd          = "dataValue"
 	sum float64 = 42
@@ -207,6 +207,71 @@ func TestReadAll(t *testing.T) {
 				Offset: 0,
 				Limit:  limit,
 				Value:  v,
+			},
+			page: readers.MessagesPage{
+				Total:    uint64(len(valueMsgs)),
+				Messages: fromSenml(valueMsgs[0:limit]),
+			},
+		},
+		"read message with value and equal comparator": {
+			chanID: chanID,
+			pageMeta: readers.PageMetadata{
+				Offset:     0,
+				Limit:      limit,
+				Value:      v,
+				Comparator: readers.EqualKey,
+			},
+			page: readers.MessagesPage{
+				Total:    uint64(len(valueMsgs)),
+				Messages: fromSenml(valueMsgs[0:limit]),
+			},
+		},
+		"read message with value and lower-than comparator": {
+			chanID: chanID,
+			pageMeta: readers.PageMetadata{
+				Offset:     0,
+				Limit:      limit,
+				Value:      v + 1,
+				Comparator: readers.LowerThanKey,
+			},
+			page: readers.MessagesPage{
+				Total:    uint64(len(valueMsgs)),
+				Messages: fromSenml(valueMsgs[0:limit]),
+			},
+		},
+		"read message with value and lower-than-or-equal comparator": {
+			chanID: chanID,
+			pageMeta: readers.PageMetadata{
+				Offset:     0,
+				Limit:      limit,
+				Value:      v + 1,
+				Comparator: readers.LowerThanEqualKey,
+			},
+			page: readers.MessagesPage{
+				Total:    uint64(len(valueMsgs)),
+				Messages: fromSenml(valueMsgs[0:limit]),
+			},
+		},
+		"read message with value and greater-than comparator": {
+			chanID: chanID,
+			pageMeta: readers.PageMetadata{
+				Offset:     0,
+				Limit:      limit,
+				Value:      v - 1,
+				Comparator: readers.GreaterThanKey,
+			},
+			page: readers.MessagesPage{
+				Total:    uint64(len(valueMsgs)),
+				Messages: fromSenml(valueMsgs[0:limit]),
+			},
+		},
+		"read message with value and greater-than-or-equal comparator": {
+			chanID: chanID,
+			pageMeta: readers.PageMetadata{
+				Offset:     0,
+				Limit:      limit,
+				Value:      v - 1,
+				Comparator: readers.GreaterThanEqualKey,
 			},
 			page: readers.MessagesPage{
 				Total:    uint64(len(valueMsgs)),

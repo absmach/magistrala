@@ -15,7 +15,15 @@ type listMessagesReq struct {
 }
 
 func (req listMessagesReq) validate() error {
-	if req.pageMeta.Limit < 1 {
+	if req.pageMeta.Limit < 1 || req.pageMeta.Offset < 0 {
+		return errInvalidRequest
+	}
+	if req.pageMeta.Comparator != "" &&
+		req.pageMeta.Comparator != readers.EqualKey &&
+		req.pageMeta.Comparator != readers.LowerThanKey &&
+		req.pageMeta.Comparator != readers.LowerThanEqualKey &&
+		req.pageMeta.Comparator != readers.GreaterThanKey &&
+		req.pageMeta.Comparator != readers.GreaterThanEqualKey {
 		return errInvalidRequest
 	}
 

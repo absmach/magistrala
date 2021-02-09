@@ -296,8 +296,64 @@ func TestReadAll(t *testing.T) {
 			},
 		},
 		{
+			desc:   "read page with value and equal comparator",
+			url:    fmt.Sprintf("%s/channels/%s/messages?v=%f&comparator=%s", ts.URL, chanID, v, readers.EqualKey),
+			token:  token,
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(valueMsgs)),
+				Messages: valueMsgs[0:10],
+			},
+		},
+		{
+			desc:   "read page with value and lower-than comparator",
+			url:    fmt.Sprintf("%s/channels/%s/messages?v=%f&comparator=%s", ts.URL, chanID, v+1, readers.LowerThanKey),
+			token:  token,
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(valueMsgs)),
+				Messages: valueMsgs[0:10],
+			},
+		},
+		{
+			desc:   "read page with value and lower-than-or-equal comparator",
+			url:    fmt.Sprintf("%s/channels/%s/messages?v=%f&comparator=%s", ts.URL, chanID, v+1, readers.LowerThanEqualKey),
+			token:  token,
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(valueMsgs)),
+				Messages: valueMsgs[0:10],
+			},
+		},
+		{
+			desc:   "read page with value and greater-than comparator",
+			url:    fmt.Sprintf("%s/channels/%s/messages?v=%f&comparator=%s", ts.URL, chanID, v-1, readers.GreaterThanKey),
+			token:  token,
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(valueMsgs)),
+				Messages: valueMsgs[0:10],
+			},
+		},
+		{
+			desc:   "read page with value and greater-than-or-equal comparator",
+			url:    fmt.Sprintf("%s/channels/%s/messages?v=%f&comparator=%s", ts.URL, chanID, v-1, readers.GreaterThanEqualKey),
+			token:  token,
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(valueMsgs)),
+				Messages: valueMsgs[0:10],
+			},
+		},
+		{
 			desc:   "read page with non-float value",
 			url:    fmt.Sprintf("%s/channels/%s/messages?v=ab01", ts.URL, chanID),
+			token:  token,
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with value and wrong comparator",
+			url:    fmt.Sprintf("%s/channels/%s/messages?v=%f&comparator=wrong", ts.URL, chanID, v-1),
 			token:  token,
 			status: http.StatusBadRequest,
 		},
@@ -337,7 +393,6 @@ func TestReadAll(t *testing.T) {
 				Messages: dataMsgs[0:10],
 			},
 		},
-
 		{
 			desc:   "read page with non-float from",
 			url:    fmt.Sprintf("%s/channels/%s/messages?from=ABCD", ts.URL, chanID),

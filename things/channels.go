@@ -43,7 +43,7 @@ type ChannelRepository interface {
 
 	// RetrieveByThing retrieves the subset of channels owned by the specified
 	// user and have specified thing connected or not connected to them.
-	RetrieveByThing(ctx context.Context, owner, thing string, offset, limit uint64, connected bool) (ChannelsPage, error)
+	RetrieveByThing(ctx context.Context, owner, thID string, pm PageMetadata) (ChannelsPage, error)
 
 	// Remove removes the channel having the provided identifier, that is owned
 	// by the specified user.

@@ -6,7 +6,6 @@ package mocks
 import (
 	"context"
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -116,14 +115,14 @@ func (trm *thingRepositoryMock) RetrieveAll(_ context.Context, owner string, pm 
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
-	items := make([]things.Thing, 0)
-
-	if pm.Offset < 0 || pm.Limit <= 0 {
+	if pm.Limit <= 0 {
 		return things.Page{}, nil
 	}
 
 	first := uint64(pm.Offset) + 1
 	last := first + uint64(pm.Limit)
+
+	var ths []things.Thing
 
 	// This obscure way to examine map keys is enforced by the key structure
 	// itself (see mocks/commons.go).
@@ -131,16 +130,15 @@ func (trm *thingRepositoryMock) RetrieveAll(_ context.Context, owner string, pm 
 	for k, v := range trm.things {
 		id, _ := strconv.ParseUint(v.ID, 10, 64)
 		if strings.HasPrefix(k, prefix) && id >= first && id < last {
-			items = append(items, v)
+			ths = append(ths, v)
 		}
 	}
 
-	sort.SliceStable(items, func(i, j int) bool {
-		return items[i].ID < items[j].ID
-	})
+	// Sort Things list
+	ths = sortThings(pm, ths)
 
 	page := things.Page{
-		Things: items,
+		Things: ths,
 		PageMetadata: things.PageMetadata{
 			Total:  trm.counter,
 			Offset: pm.Offset,
@@ -151,23 +149,23 @@ func (trm *thingRepositoryMock) RetrieveAll(_ context.Context, owner string, pm 
 	return page, nil
 }
 
-func (trm *thingRepositoryMock) RetrieveByChannel(_ context.Context, owner, chanID string, offset, limit uint64, connected bool) (things.Page, error) {
+func (trm *thingRepositoryMock) RetrieveByChannel(_ context.Context, owner, chID string, pm things.PageMetadata) (things.Page, error) {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
-	ths := make([]things.Thing, 0)
-
-	if offset < 0 || limit <= 0 {
+	if pm.Limit <= 0 {
 		return things.Page{}, nil
 	}
 
-	first := uint64(offset) + 1
-	last := first + uint64(limit)
+	first := uint64(pm.Offset) + 1
+	last := first + uint64(pm.Limit)
+
+	var ths []things.Thing
 
 	// Append connected or not connected channels
-	switch connected {
+	switch pm.Connected {
 	case true:
-		for _, co := range trm.tconns[chanID] {
+		for _, co := range trm.tconns[chID] {
 			id, _ := strconv.ParseUint(co.ID, 10, 64)
 			if id >= first && id < last {
 				ths = append(ths, co)
@@ -178,7 +176,7 @@ func (trm *thingRepositoryMock) RetrieveByChannel(_ context.Context, owner, chan
 			conn := false
 			id, _ := strconv.ParseUint(th.ID, 10, 64)
 			if id >= first && id < last {
-				for _, co := range trm.tconns[chanID] {
+				for _, co := range trm.tconns[chID] {
 					if th.ID == co.ID {
 						conn = true
 					}
@@ -192,16 +190,15 @@ func (trm *thingRepositoryMock) RetrieveByChannel(_ context.Context, owner, chan
 		}
 	}
 
-	sort.SliceStable(ths, func(i, j int) bool {
-		return ths[i].ID < ths[j].ID
-	})
+	// Sort Things by Channel list
+	ths = sortThings(pm, ths)
 
 	page := things.Page{
 		Things: ths,
 		PageMetadata: things.PageMetadata{
 			Total:  trm.counter,
-			Offset: offset,
-			Limit:  limit,
+			Offset: pm.Offset,
+			Limit:  pm.Limit,
 		},
 	}
 

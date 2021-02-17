@@ -179,7 +179,7 @@ func (req viewResourceReq) validate() error {
 }
 
 type listResourcesReq struct {
-	token    string
+	token        string
 	pageMetadata things.PageMetadata
 }
 
@@ -210,11 +210,9 @@ func (req *listResourcesReq) validate() error {
 }
 
 type listByConnectionReq struct {
-	token     string
-	id        string
-	offset    uint64
-	limit     uint64
-	connected bool
+	token        string
+	id           string
+	pageMetadata things.PageMetadata
 }
 
 func (req listByConnectionReq) validate() error {
@@ -226,7 +224,17 @@ func (req listByConnectionReq) validate() error {
 		return things.ErrMalformedEntity
 	}
 
-	if req.limit == 0 || req.limit > maxLimitSize {
+	if req.pageMetadata.Limit == 0 || req.pageMetadata.Limit > maxLimitSize {
+		return things.ErrMalformedEntity
+	}
+
+	if req.pageMetadata.Order != "" &&
+		req.pageMetadata.Order != "name" && req.pageMetadata.Order != "id" {
+		return things.ErrMalformedEntity
+	}
+
+	if req.pageMetadata.Dir != "" &&
+		req.pageMetadata.Dir != "asc" && req.pageMetadata.Dir != "desc" {
 		return things.ErrMalformedEntity
 	}
 

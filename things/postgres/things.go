@@ -241,23 +241,26 @@ func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, pm thin
 	return page, nil
 }
 
-func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, channel string, offset, limit uint64, connected bool) (things.Page, error) {
+func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, chID string, pm things.PageMetadata) (things.Page, error) {
+	oq := getConnOrderQuery(pm.Order, "th")
+	dq := getDirQuery(pm.Dir)
+
 	// Verify if UUID format is valid to avoid internal Postgres error
-	if _, err := uuid.FromString(channel); err != nil {
-		return things.Page{}, things.ErrNotFound
+	if _, err := uuid.FromString(chID); err != nil {
+		return things.Page{}, errors.Wrap(things.ErrNotFound, err)
 	}
 
 	var q, qc string
-	switch connected {
+	switch pm.Connected {
 	case true:
-		q = `SELECT id, name, key, metadata
+		q = fmt.Sprintf(`SELECT id, name, key, metadata
 		        FROM things th
 		        INNER JOIN connections conn
 		        ON th.id = conn.thing_id
 		        WHERE th.owner = :owner AND conn.channel_id = :channel
-		        ORDER BY th.id
+		        ORDER BY %s %s
 		        LIMIT :limit
-		        OFFSET :offset;`
+		        OFFSET :offset;`, oq, dq)
 
 		qc = `SELECT COUNT(*)
 		        FROM things th
@@ -265,16 +268,16 @@ func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, channel 
 		        ON th.id = conn.thing_id
 		        WHERE th.owner = $1 AND conn.channel_id = $2;`
 	default:
-		q = `SELECT id, name, key, metadata
+		q = fmt.Sprintf(`SELECT id, name, key, metadata
 		        FROM things th
 		        WHERE th.owner = :owner AND th.id NOT IN
 		        (SELECT id FROM things th
 		          INNER JOIN connections conn
 		          ON th.id = conn.thing_id
 		          WHERE th.owner = :owner AND conn.channel_id = :channel)
-		        ORDER BY th.id
+		        ORDER BY %s %s
 		        LIMIT :limit
-		        OFFSET :offset;`
+		        OFFSET :offset;`, oq, dq)
 
 		qc = `SELECT COUNT(*)
 		        FROM things th
@@ -287,9 +290,9 @@ func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, channel 
 
 	params := map[string]interface{}{
 		"owner":   owner,
-		"channel": channel,
-		"limit":   limit,
-		"offset":  offset,
+		"channel": chID,
+		"limit":   pm.Limit,
+		"offset":  pm.Offset,
 	}
 
 	rows, err := tr.db.NamedQueryContext(ctx, q, params)
@@ -314,7 +317,7 @@ func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, channel 
 	}
 
 	var total uint64
-	if err := tr.db.GetContext(ctx, &total, qc, owner, channel); err != nil {
+	if err := tr.db.GetContext(ctx, &total, qc, owner, chID); err != nil {
 		return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
 	}
 
@@ -322,8 +325,8 @@ func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, channel 
 		Things: items,
 		PageMetadata: things.PageMetadata{
 			Total:  total,
-			Offset: offset,
-			Limit:  limit,
+			Offset: pm.Offset,
+			Limit:  pm.Limit,
 		},
 	}, nil
 }

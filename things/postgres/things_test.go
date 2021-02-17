@@ -35,20 +35,20 @@ func TestThingsSave(t *testing.T) {
 
 	ths := []things.Thing{}
 	for i := 1; i <= 5; i++ {
-		thid, err := idProvider.ID()
+		thID, err := idProvider.ID()
 		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 		thkey, err := idProvider.ID()
 		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 		thing := things.Thing{
-			ID:    thid,
+			ID:    thID,
 			Owner: email,
 			Key:   thkey,
 		}
 		ths = append(ths, thing)
 	}
 	thkey := ths[0].Key
-	thid := ths[0].ID
+	thID := ths[0].ID
 
 	cases := []struct {
 		desc   string
@@ -75,14 +75,14 @@ func TestThingsSave(t *testing.T) {
 		{
 			desc: "create thing with invalid name",
 			things: []things.Thing{
-				{ID: thid, Owner: email, Key: thkey, Name: invalidName},
+				{ID: thID, Owner: email, Key: thkey, Name: invalidName},
 			},
 			err: things.ErrMalformedEntity,
 		},
 		{
 			desc: "create thing with invalid Key",
 			things: []things.Thing{
-				{ID: thid, Owner: email, Key: nonexistentThingKey},
+				{ID: thID, Owner: email, Key: nonexistentThingKey},
 			},
 			err: things.ErrConflict,
 		},
@@ -106,13 +106,13 @@ func TestThingUpdate(t *testing.T) {
 	email := "thing-update@example.com"
 	validName := "mfx_device"
 
-	thid, err := idProvider.ID()
+	thID, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	thkey, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	thing := things.Thing{
-		ID:    thid,
+		ID:    thID,
 		Owner: email,
 		Key:   thkey,
 	}
@@ -162,7 +162,7 @@ func TestThingUpdate(t *testing.T) {
 		{
 			desc: "update thing with valid name",
 			thing: things.Thing{
-				ID:    thid,
+				ID:    thID,
 				Owner: email,
 				Key:   thkey,
 				Name:  validName,
@@ -172,7 +172,7 @@ func TestThingUpdate(t *testing.T) {
 		{
 			desc: "update thing with invalid name",
 			thing: things.Thing{
-				ID:    thid,
+				ID:    thID,
 				Owner: email,
 				Key:   thkey,
 				Name:  invalidName,
@@ -532,22 +532,9 @@ func TestMultiThingRetrieval(t *testing.T) {
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.size, size))
 		assert.Equal(t, tc.pageMetadata.Total, page.Total, fmt.Sprintf("%s: expected total %d got %d\n", desc, tc.pageMetadata.Total, page.Total))
 		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
-		// Check if name have been sorted properly
-		switch tc.pageMetadata.Order {
-		case "name":
-			current := page.Things[0]
-			for _, res := range page.Things {
-				if tc.pageMetadata.Dir == "asc" {
-					assert.GreaterOrEqual(t, res.Name, current.Name)
-				}
-				if tc.pageMetadata.Dir == "desc" {
-					assert.GreaterOrEqual(t, current.Name, res.Name)
-				}
-				current = res
-			}
-		default:
-			continue
-		}
+
+		// Check if Things list have been sorted properly
+		testSortThings(t, tc.pageMetadata, page.Things)
 	}
 }
 
@@ -561,36 +548,36 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 	n := uint64(10)
 	thsDisconNum := uint64(1)
 
-	chid, err := idProvider.ID()
+	chID, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	chs, err := channelRepo.Save(context.Background(), things.Channel{
-		ID:    chid,
+	_, err = channelRepo.Save(context.Background(), things.Channel{
+		ID:    chID,
 		Owner: email,
 	})
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-	cid := chs[0].ID
+
 	for i := uint64(0); i < n; i++ {
-		thid, err := idProvider.ID()
+		thID, err := idProvider.ID()
 		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 		thkey, err := idProvider.ID()
 		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 		th := things.Thing{
-			ID:    thid,
+			ID:    thID,
 			Owner: email,
 			Key:   thkey,
 		}
 
 		ths, err := thingRepo.Save(context.Background(), th)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-		thid = ths[0].ID
+		thID = ths[0].ID
 
 		// Don't connnect last Thing
 		if i == n-thsDisconNum {
 			break
 		}
 
-		err = channelRepo.Connect(context.Background(), email, []string{cid}, []string{thid})
+		err = channelRepo.Connect(context.Background(), email, []string{chID}, []string{thID})
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	}
 
@@ -598,70 +585,131 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	cases := map[string]struct {
-		owner     string
-		channel   string
-		offset    uint64
-		limit     uint64
-		connected bool
-		size      uint64
-		err       error
+		owner        string
+		chID         string
+		pageMetadata things.PageMetadata
+		size         uint64
+		err          error
 	}{
 		"retrieve all things by channel with existing owner": {
-			owner:     email,
-			channel:   cid,
-			offset:    0,
-			limit:     n,
-			connected: true,
-			size:      n - thsDisconNum,
+			owner: email,
+			chID:  chID,
+			pageMetadata: things.PageMetadata{
+				Offset:    0,
+				Limit:     n,
+				Connected: true,
+			},
+			size: n - thsDisconNum,
 		},
 		"retrieve subset of things by channel with existing owner": {
-			owner:     email,
-			channel:   cid,
-			offset:    n / 2,
-			limit:     n,
-			connected: true,
-			size:      (n / 2) - thsDisconNum,
+			owner: email,
+			chID:  chID,
+			pageMetadata: things.PageMetadata{
+				Offset:    n / 2,
+				Limit:     n,
+				Connected: true,
+			},
+			size: (n / 2) - thsDisconNum,
 		},
 		"retrieve things by channel with non-existing owner": {
-			owner:     wrongValue,
-			channel:   cid,
-			offset:    0,
-			limit:     n,
-			connected: true,
-			size:      0,
+			owner: wrongValue,
+			chID:  chID,
+			pageMetadata: things.PageMetadata{
+				Offset:    0,
+				Limit:     n,
+				Connected: true,
+			},
+			size: 0,
 		},
 		"retrieve things by non-existing channel": {
-			owner:     email,
-			channel:   nonexistentChanID,
-			offset:    0,
-			limit:     n,
-			connected: true,
-			size:      0,
+			owner: email,
+			chID:  nonexistentChanID,
+			pageMetadata: things.PageMetadata{
+				Offset:    0,
+				Limit:     n,
+				Connected: true,
+			},
+			size: 0,
 		},
 		"retrieve things with malformed UUID": {
-			owner:     email,
-			channel:   wrongValue,
-			offset:    0,
-			limit:     n,
-			connected: true,
-			size:      0,
-			err:       things.ErrNotFound,
+			owner: email,
+			chID:  wrongValue,
+			pageMetadata: things.PageMetadata{
+				Offset:    0,
+				Limit:     n,
+				Connected: true,
+			},
+			size: 0,
+			err:  things.ErrNotFound,
 		},
 		"retrieve all non connected things by channel with existing owner": {
-			owner:     email,
-			channel:   cid,
-			offset:    0,
-			limit:     n,
-			connected: false,
-			size:      thsDisconNum,
+			owner: email,
+			chID:  chID,
+			pageMetadata: things.PageMetadata{
+				Offset:    0,
+				Limit:     n,
+				Connected: false,
+			},
+			size: thsDisconNum,
+		},
+		"retrieve all things by channel sorted by name ascendent": {
+			owner: email,
+			chID:  chID,
+			pageMetadata: things.PageMetadata{
+				Offset:    0,
+				Limit:     n,
+				Connected: true,
+				Order:     "name",
+				Dir:       "asc",
+			},
+			size: n - thsDisconNum,
+		},
+		"retrieve all non-connected things by channel sorted by name ascendent": {
+			owner: email,
+			chID:  chID,
+			pageMetadata: things.PageMetadata{
+				Offset:    0,
+				Limit:     n,
+				Connected: false,
+				Order:     "name",
+				Dir:       "asc",
+			},
+			size: thsDisconNum,
+		},
+		"retrieve all things by channel sorted by name descendent": {
+			owner: email,
+			chID:  chID,
+			pageMetadata: things.PageMetadata{
+				Offset:    0,
+				Limit:     n,
+				Connected: true,
+				Order:     "name",
+				Dir:       "desc",
+			},
+			size: n - thsDisconNum,
+		},
+		"retrieve all non-connected things by channel sorted by name descendent": {
+			owner: email,
+			chID:  chID,
+			pageMetadata: things.PageMetadata{
+				Offset:    0,
+				Limit:     n,
+				Connected: false,
+				Order:     "name",
+				Dir:       "desc",
+			},
+			size: thsDisconNum,
 		},
 	}
 
 	for desc, tc := range cases {
-		page, err := thingRepo.RetrieveByChannel(context.Background(), tc.owner, tc.channel, tc.offset, tc.limit, tc.connected)
+		page, err := thingRepo.RetrieveByChannel(context.Background(), tc.owner, tc.chID, tc.pageMetadata)
 		size := uint64(len(page.Things))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.size, size))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected no error got %d\n", desc, err))
+
+		// Check if Things by Channel list have been sorted properly
+		testSortThings(t, tc.pageMetadata, page.Things)
 	}
 }
 
@@ -691,5 +739,23 @@ func TestThingRemoval(t *testing.T) {
 
 		_, err = thingRepo.RetrieveByID(context.Background(), email, thing.ID)
 		require.True(t, errors.Contains(err, things.ErrNotFound), fmt.Sprintf("#%d: expected %s got %s", i, things.ErrNotFound, err))
+	}
+}
+
+func testSortThings(t *testing.T, pm things.PageMetadata, ths []things.Thing) {
+	switch pm.Order {
+	case "name":
+		current := ths[0]
+		for _, res := range ths {
+			if pm.Dir == "asc" {
+				assert.GreaterOrEqual(t, res.Name, current.Name)
+			}
+			if pm.Dir == "desc" {
+				assert.GreaterOrEqual(t, current.Name, res.Name)
+			}
+			current = res
+		}
+	default:
+		break
 	}
 }

@@ -431,12 +431,26 @@ func decodeListByConnection(_ context.Context, r *http.Request) (interface{}, er
 		return nil, err
 	}
 
+	or, err := readStringQuery(r, orderKey)
+	if err != nil {
+		return nil, err
+	}
+
+	d, err := readStringQuery(r, dirKey)
+	if err != nil {
+		return nil, err
+	}
+
 	req := listByConnectionReq{
-		token:     r.Header.Get("Authorization"),
-		id:        bone.GetValue(r, "id"),
-		connected: c,
-		offset:    o,
-		limit:     l,
+		token: r.Header.Get("Authorization"),
+		id:    bone.GetValue(r, "id"),
+		pageMetadata: things.PageMetadata{
+			Offset:    o,
+			Limit:     l,
+			Connected: c,
+			Order:     or,
+			Dir:       d,
+		},
 	}
 
 	return req, nil

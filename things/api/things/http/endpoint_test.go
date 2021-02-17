@@ -32,6 +32,9 @@ const (
 	wrongValue  = "wrong_value"
 	wrongID     = 0
 	maxNameSize = 1024
+	nameKey     = "name"
+	ascKey      = "asc"
+	descKey     = "desc"
 )
 
 var (
@@ -789,6 +792,34 @@ func TestListThings(t *testing.T) {
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d&name=%s", thingURL, 0, 5, invalidName),
 			res:    nil,
 		},
+		{
+			desc:   "get a list of things sorted by name ascendent",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d&order=%s&dir=%s", thingURL, 0, 5, nameKey, ascKey),
+			res:    data[0:5],
+		},
+		{
+			desc:   "get a list of things sorted by name descendent",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d&order=%s&dir=%s", thingURL, 0, 5, nameKey, descKey),
+			res:    data[0:5],
+		},
+		{
+			desc:   "get a list of things sorted with invalid order",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d&order=%s&dir=%s", thingURL, 0, 5, "wrong", descKey),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of things sorted by name with invalid direction",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d&order=%s&dir=%s", thingURL, 0, 5, nameKey, "wrong"),
+			res:    nil,
+		},
 	}
 
 	for _, tc := range cases {
@@ -939,6 +970,34 @@ func TestListThingsByChannel(t *testing.T) {
 			auth:   token,
 			status: http.StatusBadRequest,
 			url:    fmt.Sprintf("%s/%s/things%s", thingURL, ch.ID, "?offset=5&limit=e"),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of things by channel sorted by name ascendent",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("%s/%s/things?offset=%d&limit=%d&order=%s&dir=%s", thingURL, ch.ID, 0, 5, nameKey, ascKey),
+			res:    data[0:5],
+		},
+		{
+			desc:   "get a list of things by channel sorted by name descendent",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("%s/%s/things?offset=%d&limit=%d&order=%s&dir=%s", thingURL, ch.ID, 0, 5, nameKey, descKey),
+			res:    data[0:5],
+		},
+		{
+			desc:   "get a list of things by channel sorted with invalid order",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s/%s/things?offset=%d&limit=%d&order=%s&dir=%s", thingURL, ch.ID, 0, 5, "wrong", ascKey),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of things by channel sorted by name with invalid direction",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s/%s/things?offset=%d&limit=%d&order=%s&dir=%s", thingURL, ch.ID, 0, 5, nameKey, "wrong"),
 			res:    nil,
 		},
 	}
@@ -1579,6 +1638,34 @@ func TestListChannels(t *testing.T) {
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d&name=%s", channelURL, 0, 10, invalidName),
 			res:    nil,
 		},
+		{
+			desc:   "get a list of channels sorted by name ascendent",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d&order=%s&dir=%s", channelURL, 0, 6, nameKey, ascKey),
+			res:    channels[0:6],
+		},
+		{
+			desc:   "get a list of channels sorted by name descendent",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d&order=%s&dir=%s", channelURL, 0, 6, nameKey, descKey),
+			res:    channels[0:6],
+		},
+		{
+			desc:   "get a list of channels sorted with invalid order",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d&order=%s&dir=%s", channelURL, 0, 6, "wrong", ascKey),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of channels sorted by name with invalid direction",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d&order=%s&dir=%s", channelURL, 0, 6, nameKey, "wrong"),
+			res:    nil,
+		},
 	}
 
 	for _, tc := range cases {
@@ -1725,6 +1812,34 @@ func TestListChannelsByThing(t *testing.T) {
 			auth:   token,
 			status: http.StatusBadRequest,
 			url:    fmt.Sprintf("%s/%s/channels%s", channelURL, th.ID, "?offset=5&limit=e"),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of channels by thing sorted by name ascendent",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("%s/%s/channels?offset=%d&limit=%d&order=%s&dir=%s", channelURL, th.ID, 0, 6, nameKey, ascKey),
+			res:    channels[0:6],
+		},
+		{
+			desc:   "get a list of channels by thing sorted by name descendent",
+			auth:   token,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("%s/%s/channels?offset=%d&limit=%d&order=%s&dir=%s", channelURL, th.ID, 0, 6, nameKey, descKey),
+			res:    channels[0:6],
+		},
+		{
+			desc:   "get a list of channels by thing sorted with inalid order",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s/%s/channels?offset=%d&limit=%d&order=%s&dir=%s", channelURL, th.ID, 0, 6, "wrong", ascKey),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of channels by thing sorted by name with invalid direction",
+			auth:   token,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("%s/%s/channels?offset=%d&limit=%d&order=%s&dir=%s", channelURL, th.ID, 0, 6, nameKey, "wrong"),
 			res:    nil,
 		},
 	}

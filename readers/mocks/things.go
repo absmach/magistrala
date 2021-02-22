@@ -42,6 +42,10 @@ func (svc thingsServiceMock) CanAccessByID(context.Context, *mainflux.AccessByID
 	panic("not implemented")
 }
 
+func (svc thingsServiceMock) IsChannelOwner(context.Context, *mainflux.ChannelOwnerReq, ...grpc.CallOption) (*empty.Empty, error) {
+	panic("not implemented")
+}
+
 func (svc thingsServiceMock) Identify(context.Context, *mainflux.Token, ...grpc.CallOption) (*mainflux.ThingID, error) {
 	panic("not implemented")
 }

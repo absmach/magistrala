@@ -54,6 +54,10 @@ func (tc thingsClient) CanAccessByID(context.Context, *mainflux.AccessByIDReq, .
 	panic("not implemented")
 }
 
+func (tc thingsClient) IsChannelOwner(context.Context, *mainflux.ChannelOwnerReq, ...grpc.CallOption) (*empty.Empty, error) {
+	panic("not implemented")
+}
+
 func (tc thingsClient) Identify(ctx context.Context, req *mainflux.Token, opts ...grpc.CallOption) (*mainflux.ThingID, error) {
 	panic("not implemented")
 }

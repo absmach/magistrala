@@ -22,6 +22,7 @@ const (
 	wrongValue = "wrong-value"
 	email      = "user@example.com"
 	token      = "token"
+	token2     = "token2"
 	n          = uint64(10)
 )
 
@@ -1228,6 +1229,40 @@ func TestCanAccessByID(t *testing.T) {
 
 	for desc, tc := range cases {
 		err := svc.CanAccessByID(context.Background(), tc.channel, tc.thingID)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+	}
+}
+
+func TestIsChannelOwner(t *testing.T) {
+	svc := newService(map[string]string{token: email, token2: "john.doe@email.net"})
+
+	chs, err := svc.CreateChannels(context.Background(), token, channel)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	ownedCh := chs[0]
+	chs, err = svc.CreateChannels(context.Background(), token2, channel)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	nonOwnedCh := chs[0]
+
+	cases := map[string]struct {
+		channel string
+		err     error
+	}{
+		"user owns channel": {
+			channel: ownedCh.ID,
+			err:     nil,
+		},
+		"user does not own channel": {
+			channel: nonOwnedCh.ID,
+			err:     things.ErrNotFound,
+		},
+		"access to non-existing channel": {
+			channel: wrongID,
+			err:     things.ErrNotFound,
+		},
+	}
+
+	for desc, tc := range cases {
+		err := svc.IsChannelOwner(context.Background(), email, tc.channel)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 	}
 }

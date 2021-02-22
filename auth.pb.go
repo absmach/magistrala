@@ -82,6 +82,61 @@ func (m *AccessByKeyReq) GetChanID() string {
 	return ""
 }
 
+type ChannelOwnerReq struct {
+	Owner                string   `protobuf:"bytes,1,opt,name=owner,proto3" json:"owner,omitempty"`
+	ChanID               string   `protobuf:"bytes,2,opt,name=chanID,proto3" json:"chanID,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ChannelOwnerReq) Reset()         { *m = ChannelOwnerReq{} }
+func (m *ChannelOwnerReq) String() string { return proto.CompactTextString(m) }
+func (*ChannelOwnerReq) ProtoMessage()    {}
+func (*ChannelOwnerReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_8bbd6f3875b0e874, []int{1}
+}
+func (m *ChannelOwnerReq) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ChannelOwnerReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ChannelOwnerReq.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *ChannelOwnerReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ChannelOwnerReq.Merge(m, src)
+}
+func (m *ChannelOwnerReq) XXX_Size() int {
+	return m.Size()
+}
+func (m *ChannelOwnerReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_ChannelOwnerReq.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ChannelOwnerReq proto.InternalMessageInfo
+
+func (m *ChannelOwnerReq) GetOwner() string {
+	if m != nil {
+		return m.Owner
+	}
+	return ""
+}
+
+func (m *ChannelOwnerReq) GetChanID() string {
+	if m != nil {
+		return m.ChanID
+	}
+	return ""
+}
+
 type ThingID struct {
 	Value                string   `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -93,7 +148,7 @@ func (m *ThingID) Reset()         { *m = ThingID{} }
 func (m *ThingID) String() string { return proto.CompactTextString(m) }
 func (*ThingID) ProtoMessage()    {}
 func (*ThingID) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8bbd6f3875b0e874, []int{1}
+	return fileDescriptor_8bbd6f3875b0e874, []int{2}
 }
 func (m *ThingID) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -129,6 +184,53 @@ func (m *ThingID) GetValue() string {
 	return ""
 }
 
+type ChannelID struct {
+	Value                string   `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ChannelID) Reset()         { *m = ChannelID{} }
+func (m *ChannelID) String() string { return proto.CompactTextString(m) }
+func (*ChannelID) ProtoMessage()    {}
+func (*ChannelID) Descriptor() ([]byte, []int) {
+	return fileDescriptor_8bbd6f3875b0e874, []int{3}
+}
+func (m *ChannelID) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ChannelID) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ChannelID.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *ChannelID) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ChannelID.Merge(m, src)
+}
+func (m *ChannelID) XXX_Size() int {
+	return m.Size()
+}
+func (m *ChannelID) XXX_DiscardUnknown() {
+	xxx_messageInfo_ChannelID.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ChannelID proto.InternalMessageInfo
+
+func (m *ChannelID) GetValue() string {
+	if m != nil {
+		return m.Value
+	}
+	return ""
+}
+
 type AccessByIDReq struct {
 	ThingID              string   `protobuf:"bytes,1,opt,name=thingID,proto3" json:"thingID,omitempty"`
 	ChanID               string   `protobuf:"bytes,2,opt,name=chanID,proto3" json:"chanID,omitempty"`
@@ -141,7 +243,7 @@ func (m *AccessByIDReq) Reset()         { *m = AccessByIDReq{} }
 func (m *AccessByIDReq) String() string { return proto.CompactTextString(m) }
 func (*AccessByIDReq) ProtoMessage()    {}
 func (*AccessByIDReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8bbd6f3875b0e874, []int{2}
+	return fileDescriptor_8bbd6f3875b0e874, []int{4}
 }
 func (m *AccessByIDReq) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -198,7 +300,7 @@ func (m *Token) Reset()         { *m = Token{} }
 func (m *Token) String() string { return proto.CompactTextString(m) }
 func (*Token) ProtoMessage()    {}
 func (*Token) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8bbd6f3875b0e874, []int{3}
+	return fileDescriptor_8bbd6f3875b0e874, []int{5}
 }
 func (m *Token) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -246,7 +348,7 @@ func (m *UserIdentity) Reset()         { *m = UserIdentity{} }
 func (m *UserIdentity) String() string { return proto.CompactTextString(m) }
 func (*UserIdentity) ProtoMessage()    {}
 func (*UserIdentity) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8bbd6f3875b0e874, []int{4}
+	return fileDescriptor_8bbd6f3875b0e874, []int{6}
 }
 func (m *UserIdentity) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -302,7 +404,7 @@ func (m *IssueReq) Reset()         { *m = IssueReq{} }
 func (m *IssueReq) String() string { return proto.CompactTextString(m) }
 func (*IssueReq) ProtoMessage()    {}
 func (*IssueReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8bbd6f3875b0e874, []int{5}
+	return fileDescriptor_8bbd6f3875b0e874, []int{7}
 }
 func (m *IssueReq) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -365,7 +467,7 @@ func (m *AuthorizeReq) Reset()         { *m = AuthorizeReq{} }
 func (m *AuthorizeReq) String() string { return proto.CompactTextString(m) }
 func (*AuthorizeReq) ProtoMessage()    {}
 func (*AuthorizeReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8bbd6f3875b0e874, []int{6}
+	return fileDescriptor_8bbd6f3875b0e874, []int{8}
 }
 func (m *AuthorizeReq) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -426,7 +528,7 @@ func (m *AuthorizeRes) Reset()         { *m = AuthorizeRes{} }
 func (m *AuthorizeRes) String() string { return proto.CompactTextString(m) }
 func (*AuthorizeRes) ProtoMessage()    {}
 func (*AuthorizeRes) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8bbd6f3875b0e874, []int{7}
+	return fileDescriptor_8bbd6f3875b0e874, []int{9}
 }
 func (m *AuthorizeRes) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -475,7 +577,7 @@ func (m *Assignment) Reset()         { *m = Assignment{} }
 func (m *Assignment) String() string { return proto.CompactTextString(m) }
 func (*Assignment) ProtoMessage()    {}
 func (*Assignment) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8bbd6f3875b0e874, []int{8}
+	return fileDescriptor_8bbd6f3875b0e874, []int{10}
 }
 func (m *Assignment) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -540,7 +642,7 @@ func (m *MembersReq) Reset()         { *m = MembersReq{} }
 func (m *MembersReq) String() string { return proto.CompactTextString(m) }
 func (*MembersReq) ProtoMessage()    {}
 func (*MembersReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8bbd6f3875b0e874, []int{9}
+	return fileDescriptor_8bbd6f3875b0e874, []int{11}
 }
 func (m *MembersReq) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -619,7 +721,7 @@ func (m *MembersRes) Reset()         { *m = MembersRes{} }
 func (m *MembersRes) String() string { return proto.CompactTextString(m) }
 func (*MembersRes) ProtoMessage()    {}
 func (*MembersRes) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8bbd6f3875b0e874, []int{10}
+	return fileDescriptor_8bbd6f3875b0e874, []int{12}
 }
 func (m *MembersRes) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -685,7 +787,9 @@ func (m *MembersRes) GetMembers() []string {
 
 func init() {
 	proto.RegisterType((*AccessByKeyReq)(nil), "mainflux.AccessByKeyReq")
+	proto.RegisterType((*ChannelOwnerReq)(nil), "mainflux.ChannelOwnerReq")
 	proto.RegisterType((*ThingID)(nil), "mainflux.ThingID")
+	proto.RegisterType((*ChannelID)(nil), "mainflux.ChannelID")
 	proto.RegisterType((*AccessByIDReq)(nil), "mainflux.AccessByIDReq")
 	proto.RegisterType((*Token)(nil), "mainflux.Token")
 	proto.RegisterType((*UserIdentity)(nil), "mainflux.UserIdentity")
@@ -700,44 +804,47 @@ func init() {
 func init() { proto.RegisterFile("auth.proto", fileDescriptor_8bbd6f3875b0e874) }
 
 var fileDescriptor_8bbd6f3875b0e874 = []byte{
-	// 585 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x53, 0xcb, 0x6e, 0xd3, 0x40,
-	0x14, 0xb5, 0xf3, 0xee, 0xa5, 0x29, 0x65, 0x54, 0x05, 0xcb, 0x88, 0x10, 0xcd, 0xaa, 0x2b, 0x17,
-	0x15, 0x10, 0x6c, 0x00, 0x25, 0x98, 0x85, 0x85, 0xd8, 0x98, 0x22, 0xb1, 0x75, 0x92, 0x49, 0x32,
-	0xe0, 0x47, 0xf0, 0x8c, 0x2b, 0xcc, 0x82, 0xef, 0xe0, 0x0b, 0xf8, 0x14, 0xc4, 0x92, 0x4f, 0x40,
-	0xe1, 0x47, 0xd0, 0x3c, 0x9c, 0x4c, 0xc1, 0xa9, 0xd8, 0xcd, 0xb9, 0xbe, 0xf7, 0x9c, 0xb9, 0xe3,
-	0x73, 0x00, 0xa2, 0x82, 0xaf, 0xbc, 0x75, 0x9e, 0xf1, 0x0c, 0xf5, 0x92, 0x88, 0xa6, 0x8b, 0xb8,
-	0xf8, 0xe4, 0xde, 0x59, 0x66, 0xd9, 0x32, 0x26, 0x67, 0xb2, 0x3e, 0x2d, 0x16, 0x67, 0x24, 0x59,
-	0xf3, 0x52, 0xb5, 0xe1, 0x67, 0x70, 0x34, 0x9e, 0xcd, 0x08, 0x63, 0x93, 0xf2, 0x15, 0x29, 0x43,
-	0xf2, 0x11, 0x9d, 0x40, 0x9b, 0x67, 0x1f, 0x48, 0xea, 0xd8, 0x23, 0xfb, 0xf4, 0x20, 0x54, 0x00,
-	0x0d, 0xa0, 0x33, 0x5b, 0x45, 0x69, 0xe0, 0x3b, 0x0d, 0x59, 0xd6, 0x08, 0xdf, 0x83, 0xee, 0xc5,
-	0x8a, 0xa6, 0xcb, 0xc0, 0x17, 0x83, 0x97, 0x51, 0x5c, 0x90, 0x6a, 0x50, 0x02, 0x3c, 0x86, 0x7e,
-	0x25, 0x10, 0xf8, 0x82, 0xdf, 0x81, 0x2e, 0x57, 0x13, 0xba, 0xb1, 0x82, 0x7b, 0x35, 0xee, 0x42,
-	0xfb, 0x42, 0x5e, 0xa2, 0x5e, 0xe1, 0x21, 0x1c, 0xbe, 0x65, 0x24, 0x0f, 0xe6, 0x24, 0xe5, 0x94,
-	0x97, 0xe8, 0x08, 0x1a, 0x74, 0xae, 0x5b, 0x1a, 0x74, 0x2e, 0xa6, 0x48, 0x12, 0xd1, 0x58, 0xb3,
-	0x2a, 0x80, 0x7d, 0xe8, 0x05, 0x8c, 0x15, 0x44, 0x5c, 0xe9, 0xbf, 0x26, 0x10, 0x82, 0x16, 0x2f,
-	0xd7, 0xc4, 0x69, 0x8e, 0xec, 0xd3, 0x7e, 0x28, 0xcf, 0xd8, 0x87, 0xc3, 0x71, 0xc1, 0x57, 0x59,
-	0x4e, 0x3f, 0x4b, 0xa6, 0x63, 0x68, 0xb2, 0x62, 0xaa, 0xa9, 0xc4, 0x51, 0x54, 0xb2, 0xe9, 0x7b,
-	0xcd, 0x24, 0x8e, 0xa2, 0x12, 0xcd, 0xb8, 0xa4, 0x39, 0x08, 0xc5, 0x11, 0x7b, 0x57, 0x58, 0x18,
-	0x1a, 0xaa, 0x3f, 0x29, 0xb1, 0xba, 0x57, 0x2f, 0x34, 0x2a, 0xf8, 0x1d, 0xc0, 0x98, 0x31, 0xba,
-	0x4c, 0x13, 0x92, 0xf2, 0x3d, 0x3f, 0xcc, 0x81, 0xee, 0x32, 0xcf, 0x8a, 0xf5, 0xf6, 0x35, 0x2b,
-	0x88, 0x5c, 0xe8, 0x25, 0x24, 0x99, 0x92, 0x3c, 0xf0, 0xf5, 0x25, 0xb6, 0x18, 0x7f, 0x01, 0x78,
-	0x2d, 0xcf, 0x6c, 0xbf, 0x15, 0xf6, 0x33, 0x0f, 0xa0, 0x93, 0x2d, 0x16, 0x8c, 0xa8, 0xe5, 0x5a,
-	0xa1, 0x46, 0x82, 0x27, 0xa6, 0x09, 0xe5, 0x4e, 0x4b, 0x96, 0x15, 0xd8, 0xbe, 0x67, 0x5b, 0x92,
-	0xa8, 0xf7, 0x34, 0xf5, 0x99, 0xd2, 0xe7, 0x51, 0x2c, 0xf5, 0x5b, 0xa1, 0x02, 0x86, 0x4a, 0xa3,
-	0x5e, 0xa5, 0x59, 0xa7, 0xd2, 0xda, 0xa9, 0x88, 0x0d, 0xd4, 0xc6, 0xcc, 0x69, 0x8f, 0x9a, 0x62,
-	0x03, 0x0d, 0xcf, 0xbf, 0xdb, 0xd0, 0x97, 0x7e, 0x66, 0x6f, 0x48, 0x7e, 0x49, 0x67, 0x04, 0x3d,
-	0x87, 0xa3, 0x17, 0x51, 0x6a, 0x64, 0x04, 0x39, 0x5e, 0x15, 0x2d, 0xef, 0x6a, 0x74, 0xdc, 0x5b,
-	0xbb, 0x2f, 0x3a, 0x14, 0xd8, 0x42, 0x13, 0xe8, 0x1b, 0x04, 0x81, 0x8f, 0x6e, 0xff, 0x3b, 0x2f,
-	0x93, 0xe1, 0x0e, 0x3c, 0x95, 0x54, 0xaf, 0x4a, 0xaa, 0xf7, 0x52, 0x24, 0x15, 0x5b, 0xe8, 0x3e,
-	0xf4, 0x94, 0xbd, 0x17, 0x25, 0xba, 0x69, 0x88, 0x88, 0xff, 0x51, 0xab, 0x7a, 0xfe, 0xad, 0x01,
-	0x37, 0x84, 0xa7, 0xaa, 0x35, 0x3c, 0x68, 0x4b, 0xbb, 0x23, 0xb4, 0xeb, 0xae, 0xfc, 0xef, 0xfe,
-	0x4d, 0x89, 0x2d, 0xf4, 0xe8, 0x3a, 0xc5, 0xc1, 0xae, 0x60, 0x26, 0x0f, 0x5b, 0xe8, 0x29, 0x1c,
-	0x6c, 0x9d, 0x8c, 0x8c, 0x36, 0x33, 0x24, 0x6e, 0x7d, 0x9d, 0x61, 0x0b, 0x3d, 0x81, 0x8e, 0x32,
-	0x36, 0x3a, 0x31, 0x7a, 0xb6, 0x56, 0xbf, 0xe6, 0x85, 0x1e, 0x43, 0x57, 0x1b, 0xc7, 0x1c, 0xdd,
-	0x79, 0xd9, 0xad, 0xab, 0x32, 0x6c, 0x4d, 0x8e, 0x7f, 0x6c, 0x86, 0xf6, 0xcf, 0xcd, 0xd0, 0xfe,
-	0xb5, 0x19, 0xda, 0x5f, 0x7f, 0x0f, 0xad, 0x69, 0x47, 0x92, 0x3f, 0xf8, 0x13, 0x00, 0x00, 0xff,
-	0xff, 0x38, 0x9d, 0x1e, 0x82, 0x4e, 0x05, 0x00, 0x00,
+	// 634 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x54, 0xcd, 0x6e, 0xd3, 0x4c,
+	0x14, 0x75, 0xfe, 0x93, 0xfb, 0x35, 0x69, 0xbf, 0x51, 0x15, 0x8c, 0x11, 0xa1, 0xcc, 0xaa, 0x2b,
+	0x17, 0x15, 0x10, 0x6c, 0xa0, 0x4a, 0xeb, 0x2e, 0x2c, 0x84, 0x90, 0x4c, 0x91, 0xd8, 0x3a, 0xe9,
+	0x24, 0x31, 0xf8, 0x27, 0x78, 0xc6, 0x05, 0xb3, 0xe0, 0x0d, 0xd8, 0xf3, 0x04, 0x3c, 0x0b, 0x4b,
+	0x1e, 0x01, 0x95, 0x17, 0x41, 0xf3, 0xe3, 0x78, 0x5a, 0xec, 0x8a, 0xdd, 0x3d, 0x37, 0x77, 0xce,
+	0xb9, 0xf7, 0xe6, 0x1e, 0x03, 0xf8, 0x19, 0x5b, 0xd9, 0xeb, 0x34, 0x61, 0x09, 0xea, 0x47, 0x7e,
+	0x10, 0x2f, 0xc2, 0xec, 0x93, 0x75, 0x67, 0x99, 0x24, 0xcb, 0x90, 0x1c, 0x88, 0xfc, 0x2c, 0x5b,
+	0x1c, 0x90, 0x68, 0xcd, 0x72, 0x59, 0x86, 0x9f, 0xc3, 0x68, 0x3a, 0x9f, 0x13, 0x4a, 0x8f, 0xf3,
+	0x17, 0x24, 0xf7, 0xc8, 0x07, 0xb4, 0x0b, 0x1d, 0x96, 0xbc, 0x27, 0xb1, 0xd9, 0xd8, 0x6b, 0xec,
+	0x0f, 0x3c, 0x09, 0xd0, 0x18, 0xba, 0xf3, 0x95, 0x1f, 0xbb, 0x8e, 0xd9, 0x14, 0x69, 0x85, 0xf0,
+	0x11, 0x6c, 0x9f, 0xac, 0xfc, 0x38, 0x26, 0xe1, 0xab, 0x8f, 0x31, 0x49, 0x15, 0x41, 0xc2, 0xe3,
+	0x82, 0x40, 0x80, 0x5a, 0x82, 0x7b, 0xd0, 0x3b, 0x5b, 0x05, 0xf1, 0xd2, 0x75, 0xf8, 0xc3, 0x0b,
+	0x3f, 0xcc, 0x48, 0xf1, 0x50, 0x00, 0x7c, 0x1f, 0x06, 0x4a, 0xa1, 0xb6, 0x64, 0x0a, 0xc3, 0x62,
+	0x08, 0xd7, 0xe1, 0x2d, 0x98, 0xd0, 0x63, 0x92, 0x54, 0x15, 0x16, 0xb0, 0xb6, 0x8d, 0xbb, 0xd0,
+	0x39, 0x13, 0x83, 0x56, 0x2b, 0x3c, 0x82, 0xad, 0x37, 0x94, 0xa4, 0xee, 0x39, 0x89, 0x59, 0xc0,
+	0x72, 0x34, 0x82, 0x66, 0x70, 0xae, 0x4a, 0x9a, 0xc1, 0x39, 0x7f, 0x45, 0x22, 0x3f, 0x08, 0x15,
+	0xab, 0x04, 0xd8, 0x81, 0xbe, 0x4b, 0x69, 0x46, 0x78, 0x4b, 0xff, 0xf4, 0x02, 0x21, 0x68, 0xb3,
+	0x7c, 0x4d, 0xcc, 0xd6, 0x5e, 0x63, 0x7f, 0xe8, 0x89, 0x18, 0x3b, 0xb0, 0x35, 0xcd, 0xd8, 0x2a,
+	0x49, 0x83, 0xcf, 0x82, 0x69, 0x07, 0x5a, 0x34, 0x9b, 0x29, 0x2a, 0x1e, 0xf2, 0x4c, 0x32, 0x7b,
+	0xa7, 0x98, 0x78, 0xc8, 0x33, 0xfe, 0x9c, 0x09, 0x9a, 0x81, 0xc7, 0x43, 0x6c, 0x5f, 0x61, 0xa1,
+	0x68, 0x22, 0xaf, 0x45, 0x60, 0xd9, 0x57, 0xdf, 0xd3, 0x32, 0xf8, 0x2d, 0xc0, 0x94, 0xd2, 0x60,
+	0x19, 0x47, 0x24, 0x66, 0x35, 0x47, 0x61, 0x42, 0x6f, 0x99, 0x26, 0xd9, 0x7a, 0xb3, 0xcd, 0x02,
+	0x22, 0x0b, 0xfa, 0x11, 0x89, 0x66, 0x24, 0x75, 0x1d, 0xd5, 0xc4, 0x06, 0xe3, 0x2f, 0x00, 0x2f,
+	0x45, 0x4c, 0xeb, 0xcf, 0xad, 0x9e, 0x79, 0x0c, 0xdd, 0x64, 0xb1, 0xa0, 0x44, 0x0e, 0xd7, 0xf6,
+	0x14, 0xe2, 0x3c, 0x61, 0x10, 0x05, 0xcc, 0x6c, 0x8b, 0xb4, 0x04, 0x9b, 0x7d, 0x76, 0x04, 0x89,
+	0xdc, 0xa7, 0xae, 0x4f, 0xa5, 0x3e, 0xf3, 0x43, 0xa1, 0xdf, 0xf6, 0x24, 0xd0, 0x54, 0x9a, 0xd5,
+	0x2a, 0xad, 0x2a, 0x95, 0x76, 0xa9, 0xc2, 0x27, 0x90, 0x13, 0x53, 0xb3, 0xb3, 0xd7, 0xe2, 0x13,
+	0x28, 0x78, 0xf8, 0xb5, 0x09, 0x43, 0x71, 0xf2, 0xf4, 0x35, 0x49, 0x2f, 0x82, 0x39, 0x41, 0x47,
+	0x30, 0x3a, 0xf1, 0x63, 0xcd, 0x87, 0xc8, 0xb4, 0x0b, 0xfb, 0xda, 0x57, 0xed, 0x69, 0xfd, 0x5f,
+	0xfe, 0xa2, 0x7c, 0x83, 0x0d, 0x74, 0x0a, 0x23, 0x97, 0xea, 0x3e, 0x44, 0xb7, 0xcb, 0xb2, 0x6b,
+	0xfe, 0xb4, 0xc6, 0xb6, 0xfc, 0x20, 0xd8, 0xc5, 0x07, 0xc1, 0x3e, 0xe5, 0x1f, 0x04, 0x6c, 0xa0,
+	0x63, 0x18, 0x6a, 0x7d, 0xb8, 0x0e, 0xba, 0xf5, 0x77, 0x1b, 0xc2, 0x60, 0x37, 0x70, 0x3c, 0x80,
+	0xbe, 0x74, 0xc9, 0x22, 0x47, 0xdb, 0x5a, 0xaf, 0xfc, 0x6f, 0xad, 0x6c, 0xfe, 0xf0, 0x7b, 0x13,
+	0xfe, 0xe3, 0xa7, 0x59, 0x6c, 0xc3, 0x86, 0x8e, 0x70, 0x0d, 0x42, 0x65, 0x75, 0x61, 0x23, 0xeb,
+	0x3a, 0x25, 0x36, 0xd0, 0xe3, 0x9b, 0x14, 0xc7, 0x65, 0x42, 0x37, 0x30, 0x36, 0xd0, 0x33, 0x18,
+	0x6c, 0x0c, 0x81, 0xb4, 0x32, 0xdd, 0x6b, 0x56, 0x75, 0x9e, 0x62, 0x03, 0x3d, 0x85, 0xae, 0xf4,
+	0x07, 0xda, 0xd5, 0x6a, 0x36, 0x8e, 0xb9, 0x61, 0x43, 0x4f, 0xa0, 0xa7, 0xee, 0x4f, 0x7f, 0x5a,
+	0x5a, 0xc2, 0xaa, 0xca, 0x52, 0x6c, 0x1c, 0xef, 0xfc, 0xb8, 0x9c, 0x34, 0x7e, 0x5e, 0x4e, 0x1a,
+	0xbf, 0x2e, 0x27, 0x8d, 0x6f, 0xbf, 0x27, 0xc6, 0xac, 0x2b, 0xc8, 0x1f, 0xfe, 0x09, 0x00, 0x00,
+	0xff, 0xff, 0x14, 0xf9, 0x10, 0x64, 0xf9, 0x05, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -753,6 +860,7 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type ThingsServiceClient interface {
 	CanAccessByKey(ctx context.Context, in *AccessByKeyReq, opts ...grpc.CallOption) (*ThingID, error)
+	IsChannelOwner(ctx context.Context, in *ChannelOwnerReq, opts ...grpc.CallOption) (*empty.Empty, error)
 	CanAccessByID(ctx context.Context, in *AccessByIDReq, opts ...grpc.CallOption) (*empty.Empty, error)
 	Identify(ctx context.Context, in *Token, opts ...grpc.CallOption) (*ThingID, error)
 }
@@ -768,6 +876,15 @@ func NewThingsServiceClient(cc *grpc.ClientConn) ThingsServiceClient {
 func (c *thingsServiceClient) CanAccessByKey(ctx context.Context, in *AccessByKeyReq, opts ...grpc.CallOption) (*ThingID, error) {
 	out := new(ThingID)
 	err := c.cc.Invoke(ctx, "/mainflux.ThingsService/CanAccessByKey", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *thingsServiceClient) IsChannelOwner(ctx context.Context, in *ChannelOwnerReq, opts ...grpc.CallOption) (*empty.Empty, error) {
+	out := new(empty.Empty)
+	err := c.cc.Invoke(ctx, "/mainflux.ThingsService/IsChannelOwner", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -795,6 +912,7 @@ func (c *thingsServiceClient) Identify(ctx context.Context, in *Token, opts ...g
 // ThingsServiceServer is the server API for ThingsService service.
 type ThingsServiceServer interface {
 	CanAccessByKey(context.Context, *AccessByKeyReq) (*ThingID, error)
+	IsChannelOwner(context.Context, *ChannelOwnerReq) (*empty.Empty, error)
 	CanAccessByID(context.Context, *AccessByIDReq) (*empty.Empty, error)
 	Identify(context.Context, *Token) (*ThingID, error)
 }
@@ -805,6 +923,9 @@ type UnimplementedThingsServiceServer struct {
 
 func (*UnimplementedThingsServiceServer) CanAccessByKey(ctx context.Context, req *AccessByKeyReq) (*ThingID, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CanAccessByKey not implemented")
+}
+func (*UnimplementedThingsServiceServer) IsChannelOwner(ctx context.Context, req *ChannelOwnerReq) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IsChannelOwner not implemented")
 }
 func (*UnimplementedThingsServiceServer) CanAccessByID(ctx context.Context, req *AccessByIDReq) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CanAccessByID not implemented")
@@ -831,6 +952,24 @@ func _ThingsService_CanAccessByKey_Handler(srv interface{}, ctx context.Context,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ThingsServiceServer).CanAccessByKey(ctx, req.(*AccessByKeyReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ThingsService_IsChannelOwner_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChannelOwnerReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ThingsServiceServer).IsChannelOwner(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/mainflux.ThingsService/IsChannelOwner",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ThingsServiceServer).IsChannelOwner(ctx, req.(*ChannelOwnerReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -878,6 +1017,10 @@ var _ThingsService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CanAccessByKey",
 			Handler:    _ThingsService_CanAccessByKey_Handler,
+		},
+		{
+			MethodName: "IsChannelOwner",
+			Handler:    _ThingsService_IsChannelOwner_Handler,
 		},
 		{
 			MethodName: "CanAccessByID",
@@ -1149,6 +1292,47 @@ func (m *AccessByKeyReq) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *ChannelOwnerReq) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ChannelOwnerReq) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ChannelOwnerReq) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if len(m.ChanID) > 0 {
+		i -= len(m.ChanID)
+		copy(dAtA[i:], m.ChanID)
+		i = encodeVarintAuth(dAtA, i, uint64(len(m.ChanID)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Owner) > 0 {
+		i -= len(m.Owner)
+		copy(dAtA[i:], m.Owner)
+		i = encodeVarintAuth(dAtA, i, uint64(len(m.Owner)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *ThingID) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1165,6 +1349,40 @@ func (m *ThingID) MarshalTo(dAtA []byte) (int, error) {
 }
 
 func (m *ThingID) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if len(m.Value) > 0 {
+		i -= len(m.Value)
+		copy(dAtA[i:], m.Value)
+		i = encodeVarintAuth(dAtA, i, uint64(len(m.Value)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ChannelID) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ChannelID) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ChannelID) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1625,7 +1843,43 @@ func (m *AccessByKeyReq) Size() (n int) {
 	return n
 }
 
+func (m *ChannelOwnerReq) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Owner)
+	if l > 0 {
+		n += 1 + l + sovAuth(uint64(l))
+	}
+	l = len(m.ChanID)
+	if l > 0 {
+		n += 1 + l + sovAuth(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
 func (m *ThingID) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Value)
+	if l > 0 {
+		n += 1 + l + sovAuth(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *ChannelID) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1968,6 +2222,124 @@ func (m *AccessByKeyReq) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *ChannelOwnerReq) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAuth
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ChannelOwnerReq: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ChannelOwnerReq: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Owner", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAuth
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Owner = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChanID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAuth
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ChanID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAuth(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthAuth
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthAuth
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *ThingID) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1995,6 +2367,92 @@ func (m *ThingID) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: ThingID: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAuth
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Value = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAuth(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthAuth
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthAuth
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ChannelID) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAuth
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ChannelID: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ChannelID: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:

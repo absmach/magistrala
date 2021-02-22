@@ -218,6 +218,10 @@ func (svc *mainfluxThings) CanAccessByID(context.Context, string, string) error 
 	panic("not implemented")
 }
 
+func (svc *mainfluxThings) IsChannelOwner(context.Context, string, string) error {
+	panic("not implemented")
+}
+
 func (svc *mainfluxThings) Identify(context.Context, string) (string, error) {
 	panic("not implemented")
 }

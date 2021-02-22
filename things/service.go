@@ -54,7 +54,7 @@ var (
 // Service specifies an API that must be fullfiled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).
 type Service interface {
-	// CreateThings adds a list of things to the user identified by the provided key.
+	// CreateThings adds things to the user identified by the provided key.
 	CreateThings(ctx context.Context, token string, things ...Thing) ([]Thing, error)
 
 	// UpdateThing updates the thing identified by the provided ID, that
@@ -82,7 +82,7 @@ type Service interface {
 	// belongs to the user identified by the provided key.
 	RemoveThing(ctx context.Context, token, id string) error
 
-	// CreateChannels adds a list of channels to the user identified by the provided key.
+	// CreateChannels adds channels to the user identified by the provided key.
 	CreateChannels(ctx context.Context, token string, channels ...Channel) ([]Channel, error)
 
 	// UpdateChannel updates the channel identified by the provided ID, that
@@ -120,6 +120,10 @@ type Service interface {
 	// CanAccessByID determines whether the channel can be accessed by
 	// the given thing and returns error if it cannot.
 	CanAccessByID(ctx context.Context, chanID, thingID string) error
+
+	// IsChannelOwner determines whether the channel can be accessed by
+	// the given user and returns error if it cannot.
+	IsChannelOwner(ctx context.Context, owner, chanID string) error
 
 	// Identify returns thing ID for given thing key.
 	Identify(ctx context.Context, key string) (string, error)
@@ -377,6 +381,13 @@ func (ts *thingsService) CanAccessByID(ctx context.Context, chanID, thingID stri
 	return nil
 }
 
+func (ts *thingsService) IsChannelOwner(ctx context.Context, owner, chanID string) error {
+	if _, err := ts.channels.RetrieveByID(ctx, owner, chanID); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (ts *thingsService) Identify(ctx context.Context, key string) (string, error) {
 	id, err := ts.thingCache.ID(ctx, key)
 	if err == nil {
@@ -431,7 +442,6 @@ func (ts *thingsService) ListGroups(ctx context.Context, token string, level uin
 		return groups.GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return ts.groups.RetrieveAll(ctx, level, gm)
-
 }
 
 func (ts *thingsService) ListParents(ctx context.Context, token string, childID string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {

@@ -21,6 +21,7 @@ var _ mainflux.ThingsServiceServer = (*grpcServer)(nil)
 type grpcServer struct {
 	canAccessByKey kitgrpc.Handler
 	canAccessByID  kitgrpc.Handler
+	isChannelOwner kitgrpc.Handler
 	identify       kitgrpc.Handler
 }
 
@@ -35,6 +36,11 @@ func NewServer(tracer opentracing.Tracer, svc things.Service) mainflux.ThingsSer
 		canAccessByID: kitgrpc.NewServer(
 			canAccessByIDEndpoint(svc),
 			decodeCanAccessByIDRequest,
+			encodeEmptyResponse,
+		),
+		isChannelOwner: kitgrpc.NewServer(
+			isChannelOwnerEndpoint(svc),
+			decodeIsChannelOwnerRequest,
 			encodeEmptyResponse,
 		),
 		identify: kitgrpc.NewServer(
@@ -63,6 +69,15 @@ func (gs *grpcServer) CanAccessByID(ctx context.Context, req *mainflux.AccessByI
 	return res.(*empty.Empty), nil
 }
 
+func (gs *grpcServer) IsChannelOwner(ctx context.Context, req *mainflux.ChannelOwnerReq) (*empty.Empty, error) {
+	_, res, err := gs.isChannelOwner.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, encodeError(err)
+	}
+
+	return res.(*empty.Empty), nil
+}
+
 func (gs *grpcServer) Identify(ctx context.Context, req *mainflux.Token) (*mainflux.ThingID, error) {
 	_, res, err := gs.identify.ServeGRPC(ctx, req)
 	if err != nil {
@@ -80,6 +95,11 @@ func decodeCanAccessByKeyRequest(_ context.Context, grpcReq interface{}) (interf
 func decodeCanAccessByIDRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*mainflux.AccessByIDReq)
 	return accessByIDReq{thingID: req.GetThingID(), chanID: req.GetChanID()}, nil
+}
+
+func decodeIsChannelOwnerRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req := grpcReq.(*mainflux.ChannelOwnerReq)
+	return channelOwnerReq{owner: req.GetOwner(), chanID: req.GetChanID()}, nil
 }
 
 func decodeIdentifyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {

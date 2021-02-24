@@ -190,7 +190,7 @@ func (ms *metricsMiddleware) IsChannelOwner(ctx context.Context, owner, chanID s
 		ms.latency.With("method", "is_channel_owner").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.CanAccessByID(ctx, owner, chanID)
+	return ms.svc.IsChannelOwner(ctx, owner, chanID)
 }
 
 func (ms *metricsMiddleware) Identify(ctx context.Context, key string) (string, error) {

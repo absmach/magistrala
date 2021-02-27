@@ -26,7 +26,7 @@ type ServiceConf struct {
 	MfPass         string `toml:"mf_pass"`
 	MfAPIKey       string `toml:"mf_api_key"`
 	MfBSURL        string `toml:"mf_bs_url"`
-	MfWhiteListURL string `toml:"mf_whit_list"`
+	MfWhiteListURL string `toml:"mf_white_list"`
 	MfCertsURL     string `toml:"mf_certs_url"`
 }
 

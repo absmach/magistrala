@@ -17,35 +17,28 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable                            | Description                                       | Default                          |
-| ----------------------------------- | ------------------------------------------------- | -------------------------------- |
-| MF_PROVISION_USER                   | User (email) for accessing Mainflux               | user@example.com                 |
-| MF_PROVISION_PASS                   | Mainflux password                                 | user123                          |
-| MF_PROVISION_API_KEY                | Mainflux authentication token                     |                                  |
-| MF_PROVISION_CONFIG_FILE            | Provision config file                             | config.toml                      |
-| MF_PROVISION_HTTP_PORT              | Provision service listening port                  | 8091                             |
-| MF_PROVISION_ENV_CLIENTS_TLS        | Mainflux SDK TLS verification                     | false                            |
-| MF_PROVISION_SERVER_CERT            | Mainflux gRPC secure server cert                  |                                  |
-| MF_PROVISION_SERVER_KEY             | Mainflux gRPC secure server key                   |                                  |
-| MF_PROVISION_SERVER_KEY             | Mainflux gRPC secure server key                   |                                  |
-| MF_PROVISION_MQTT_URL               | Mainflux MQTT adapter URL                         | http://localhost:1883            |
-| MF_PROVISION_USERS_LOCATION         | Users service URL                                 | http://locahost                  |
-| MF_PROVISION_THINGS_LOCATION        | Things service URL                                | http://localhost                 |
-| MF_PROVISION_LOG_LEVEL              | Service log level                                 | http://localhost                 |
-| MF_PROVISION_HTTP_PORT              | Service listening port                            | 8091                             |
-| MF_PROVISION_USER                   | Mainflux user username                            | test@example.com                 |
-| MF_PROVISION_PASS                   | Mainflux user password                            | password                         |
-| MF_PROVISION_BS_SVC_URL             | Mainflux Bootstrap service URL                    | http://localhost/things/configs  |
-| MF_PROVISION_BS_SVC_WHITELIST_URL   | Mainflux Bootstrap service whitelist URL          | http://localhost/things/state    |
-| MF_PROVISION_CERTS_SVC_URL          | Certificats service URL                           | http://localhost/certs           |
-| MF_PROVISION_X509_PROVISIONING      | Should X509 client cert be provisioned            | false                            |
-| MF_PROVISION_BS_CONFIG_PROVISIONING | Should thing config be saved in Bootstrap service | true                             |
-| MF_PROVISION_BS_AUTO_WHITELIST      | Should thing be auto whitelisted                  | true                             |
-| MF_PROVISION_BS_CONTENT             | Bootstrap service configs content, JSON format    | {}                               |
-| MF_PROVISION_CERTS_CA               | Mainflux CA cert for generating certificates      | ""                               |
-| MF_PROVISION_CERTS_CA_KEY           | Mainflux CA cert private key                      | ""                               |
-| MF_PROVISION_CERTS_RSA_BITS         | Certificate RSA bits parameter                    | 4096                             |
-| MF_PROVISION_CERTS_HOURS_VALID      | Number of days that certificate is valid          | "2400h"                          |
+| Variable                            | Description                                       | Default                               |
+| ----------------------------------- | ------------------------------------------------- | --------------------------------------|
+| MF_PROVISION_LOG_LEVEL              | Service log level                                 | debug                                 |
+| MF_PROVISION_USER                   | User (email) for accessing Mainflux               | user@example.com                      |
+| MF_PROVISION_PASS                   | Mainflux password                                 | user123                               |
+| MF_PROVISION_API_KEY                | Mainflux authentication token                     |                                       |
+| MF_PROVISION_CONFIG_FILE            | Provision config file                             | config.toml                           |
+| MF_PROVISION_HTTP_PORT              | Provision service listening port                  | 8190                                  |
+| MF_PROVISION_ENV_CLIENTS_TLS        | Mainflux SDK TLS verification                     | false                                 |
+| MF_PROVISION_SERVER_CERT            | Mainflux gRPC secure server cert                  |                                       |
+| MF_PROVISION_SERVER_KEY             | Mainflux gRPC secure server key                   |                                       |
+| MF_PROVISION_USERS_LOCATION         | Users service URL                                 | http://users:8180                     |
+| MF_PROVISION_THINGS_LOCATION        | Things service URL                                | http://things:8182                    |
+| MF_PROVISION_BS_SVC_URL             | Mainflux Bootstrap service URL                    | http://bootstrap:8202/things          |
+| MF_PROVISION_BS_SVC_WHITELIST_URL   | Mainflux Bootstrap service whitelist URL          | http://bootstrap:8202/things/state    |
+| MF_PROVISION_CERTS_SVC_URL          | Certificates service URL                          | http://certs:8204/certs               |
+| MF_PROVISION_X509_PROVISIONING      | Should X509 client cert be provisioned            | false                                 |
+| MF_PROVISION_BS_CONFIG_PROVISIONING | Should thing config be saved in Bootstrap service | true                                  |
+| MF_PROVISION_BS_AUTO_WHITELIST      | Should thing be auto whitelisted                  | true                                  |
+| MF_PROVISION_BS_CONTENT             | Bootstrap service configs content, JSON format    | {}                                    |
+| MF_PROVISION_CERTS_RSA_BITS         | Certificate RSA bits parameter                    | 4096                                  |
+| MF_PROVISION_CERTS_HOURS_VALID      | Number of days that certificate is valid          | "2400h"                               |
 
 By default, call to `/mapping` endpoint will create one thing and two channels (`control` and `data`) and connect it. If there is a requirement for different provision layout we can use [config](docker/configs/config.toml) file in addition to environment variables. 
 
@@ -115,12 +108,12 @@ docker-compose -f docker/addons/provision/docker-compose.yml up
 
 For the case that credentials or API token is passed in configuration file or environment variables, call to `/mapping` endpoint doesn't require `Authentication` header:
 ```bash
-curl -s -S  -X POST  http://localhost:8888/mapping  -H 'Content-Type: application/json' -d '{"external_id": "33:52:77:99:43", "external_key": "223334fw2"}'
+curl -s -S  -X POST  http://localhost:<MF_PROVISION_HTTP_PORT>/mapping  -H 'Content-Type: application/json' -d '{"external_id": "33:52:77:99:43", "external_key": "223334fw2"}'
 ```
 
 In the case that provision service is not deployed with credentials or API key or you want to use user other than one being set in environment (or config file):
 ```bash
-curl -s -S  -X POST  http://localhost:8091/mapping -H "Authorization: <token|api_key>" -H 'Content-Type: application/json' -d '{"external_id": "<external_id>", "external_key": "<external_key>"}'
+curl -s -S  -X POST  http://localhost:<MF_PROVISION_HTTP_PORT>/mapping -H "Authorization: <token|api_key>" -H 'Content-Type: application/json' -d '{"external_id": "<external_id>", "external_key": "<external_key>"}'
 ```
 
 Or if you want to specify a name for thing different than in `config.toml` you can specify post data as:

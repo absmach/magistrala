@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
 	"strconv"
 	"syscall"
 	"time"
@@ -63,6 +64,7 @@ const (
 	defEmailTemplate    = "email.tmpl"
 	defAdminEmail       = ""
 	defAdminPassword    = ""
+	defPassRegex        = "^.{8,}$"
 	defAdminGroup       = "mainflux"
 
 	defTokenResetEndpoint = "/reset-request" // URL where user lands after click on the reset link from email
@@ -89,6 +91,7 @@ const (
 
 	envAdminEmail    = "MF_USERS_ADMIN_EMAIL"
 	envAdminPassword = "MF_USERS_ADMIN_PASSWORD"
+	envPassRegex     = "MF_USERS_PASS_REGEX"
 
 	envEmailHost        = "MF_EMAIL_HOST"
 	envEmailPort        = "MF_EMAIL_PORT"
@@ -123,6 +126,7 @@ type config struct {
 	authTimeout   time.Duration
 	adminEmail    string
 	adminPassword string
+	passRegex     *regexp.Regexp
 }
 
 func main() {
@@ -175,6 +179,11 @@ func loadConfig() config {
 		log.Fatalf("Invalid value passed for %s\n", envAuthTLS)
 	}
 
+	passRegex, err := regexp.Compile(mainflux.Env(envPassRegex, defPassRegex))
+	if err != nil {
+		log.Fatalf("Invalid password validation rules %s\n", envPassRegex)
+	}
+
 	dbConfig := postgres.Config{
 		Host:        mainflux.Env(envDBHost, defDBHost),
 		Port:        mainflux.Env(envDBPort, defDBPort),
@@ -213,6 +222,7 @@ func loadConfig() config {
 		authTimeout:   authTimeout,
 		adminEmail:    mainflux.Env(envAdminEmail, defAdminEmail),
 		adminPassword: mainflux.Env(envAdminPassword, defAdminPassword),
+		passRegex:     passRegex,
 	}
 
 }
@@ -287,7 +297,7 @@ func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServic
 
 	idProvider := uuid.New()
 
-	svc := users.New(userRepo, groupRepo, hasher, auth, emailer, idProvider)
+	svc := users.New(userRepo, groupRepo, hasher, auth, emailer, idProvider, c.passRegex)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,

@@ -6,6 +6,7 @@ package users_test
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/mainflux/mainflux"
@@ -27,6 +28,7 @@ var (
 	groupName       = "Mainflux"
 
 	idProvider = uuid.New()
+	passRegex  = regexp.MustCompile("^.{8,}$")
 )
 
 func newService() users.Service {
@@ -36,7 +38,7 @@ func newService() users.Service {
 	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
 	e := mocks.NewEmailer()
 
-	return users.New(userRepo, groupRepo, hasher, auth, e, idProvider)
+	return users.New(userRepo, groupRepo, hasher, auth, e, idProvider, passRegex)
 }
 
 func TestRegister(t *testing.T) {
@@ -58,12 +60,12 @@ func TestRegister(t *testing.T) {
 			err:  users.ErrConflict,
 		},
 		{
-			desc: "register new user with empty password",
+			desc: "register new user with weak password",
 			user: users.User{
 				Email:    user.Email,
-				Password: "",
+				Password: "weak",
 			},
-			err: users.ErrMalformedEntity,
+			err: users.ErrPasswordFormat,
 		},
 	}
 

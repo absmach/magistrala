@@ -66,6 +66,9 @@ var (
 
 	// ErrAssignUserToGroup indicates an error in assigning user to a group.
 	ErrAssignUserToGroup = errors.New("failed assigning user to a group")
+
+	// ErrPasswordFormat indicates weak password.
+	ErrPasswordFormat = errors.New("password does not meet the requirements")
 )
 
 // Service specifies an API that must be fullfiled by the domain service
@@ -164,10 +167,11 @@ type usersService struct {
 	email      Emailer
 	auth       mainflux.AuthServiceClient
 	idProvider mainflux.IDProvider
+	passRegex  *regexp.Regexp
 }
 
 // New instantiates the users service implementation
-func New(users UserRepository, groups GroupRepository, hasher Hasher, auth mainflux.AuthServiceClient, m Emailer, idp mainflux.IDProvider) Service {
+func New(users UserRepository, groups GroupRepository, hasher Hasher, auth mainflux.AuthServiceClient, m Emailer, idp mainflux.IDProvider, passRegex *regexp.Regexp) Service {
 	return &usersService{
 		users:      users,
 		groups:     groups,
@@ -175,12 +179,16 @@ func New(users UserRepository, groups GroupRepository, hasher Hasher, auth mainf
 		auth:       auth,
 		email:      m,
 		idProvider: idp,
+		passRegex:  passRegex,
 	}
 }
 
 func (svc usersService) Register(ctx context.Context, user User) (string, error) {
 	if err := user.Validate(); err != nil {
 		return "", err
+	}
+	if !svc.passRegex.MatchString(user.Password) {
+		return "", ErrPasswordFormat
 	}
 	hash, err := svc.hasher.Hash(user.Password)
 	if err != nil {
@@ -290,6 +298,9 @@ func (svc usersService) ResetPassword(ctx context.Context, resetToken, password 
 	if err != nil || u.Email == "" {
 		return ErrUserNotFound
 	}
+	if !svc.passRegex.MatchString(password) {
+		return ErrPasswordFormat
+	}
 	password, err = svc.hasher.Hash(password)
 	if err != nil {
 		return err
@@ -301,6 +312,9 @@ func (svc usersService) ChangePassword(ctx context.Context, authToken, password,
 	email, err := svc.identify(ctx, authToken)
 	if err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	if !svc.passRegex.MatchString(password) {
+		return ErrPasswordFormat
 	}
 	u := User{
 		Email:    email,

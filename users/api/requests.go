@@ -8,7 +8,6 @@ import (
 )
 
 const (
-	minPassLen  = 8
 	maxNameSize = 1024
 )
 
@@ -100,11 +99,8 @@ func (req passwChangeReq) validate() error {
 	if req.Token == "" {
 		return users.ErrUnauthorizedAccess
 	}
-	if len(req.Password) < minPassLen {
-		return users.ErrMalformedEntity
-	}
 	if req.OldPassword == "" {
-		return users.ErrUnauthorizedAccess
+		return users.ErrMalformedEntity
 	}
 	return nil
 }

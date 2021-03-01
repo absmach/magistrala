@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -27,17 +28,22 @@ import (
 
 const (
 	contentType  = "application/json"
+	validEmail   = "user@example.com"
 	invalidEmail = "userexample.com"
+	validPass    = "password"
+	invalidPass  = "wrong"
 )
 
 var (
-	user           = users.User{Email: "user@example.com", Password: "password"}
+	user           = users.User{Email: validEmail, Password: validPass}
 	notFoundRes    = toJSON(errorRes{users.ErrUserNotFound.Error()})
 	unauthRes      = toJSON(errorRes{users.ErrUnauthorizedAccess.Error()})
 	malformedRes   = toJSON(errorRes{users.ErrMalformedEntity.Error()})
+	weakPassword   = toJSON(errorRes{users.ErrPasswordFormat.Error()})
 	unsupportedRes = toJSON(errorRes{api.ErrUnsupportedContentType.Error()})
 	failDecodeRes  = toJSON(errorRes{api.ErrFailedDecode.Error()})
 	groupExists    = toJSON(errorRes{users.ErrGroupConflict.Error()})
+	passRegex      = regexp.MustCompile("^.{8,}$")
 )
 
 type testRequest struct {
@@ -73,7 +79,7 @@ func newService() users.Service {
 	email := mocks.NewEmailer()
 	idProvider := uuid.New()
 
-	return users.New(usersRepo, groupRepo, hasher, auth, email, idProvider)
+	return users.New(usersRepo, groupRepo, hasher, auth, email, idProvider, passRegex)
 }
 
 func newServer(svc users.Service) *httptest.Server {
@@ -93,7 +99,8 @@ func TestRegister(t *testing.T) {
 	client := ts.Client()
 
 	data := toJSON(user)
-	invalidData := toJSON(users.User{Email: invalidEmail, Password: "password"})
+	invalidData := toJSON(users.User{Email: invalidEmail, Password: validPass})
+	invalidPasswordData := toJSON(users.User{Email: validEmail, Password: invalidPass})
 	invalidFieldData := fmt.Sprintf(`{"email": "%s", "pass": "%s"}`, user.Email, user.Password)
 
 	cases := []struct {
@@ -105,6 +112,7 @@ func TestRegister(t *testing.T) {
 		{"register new user", data, contentType, http.StatusCreated},
 		{"register existing user", data, contentType, http.StatusConflict},
 		{"register user with invalid email address", invalidData, contentType, http.StatusBadRequest},
+		{"register user with weak password", invalidPasswordData, contentType, http.StatusBadRequest},
 		{"register user with invalid request format", "{", contentType, http.StatusBadRequest},
 		{"register user with empty JSON request", "{}", contentType, http.StatusBadRequest},
 		{"register user with empty request", "", contentType, http.StatusBadRequest},
@@ -138,15 +146,15 @@ func TestLogin(t *testing.T) {
 	data := toJSON(user)
 	invalidEmailData := toJSON(users.User{
 		Email:    invalidEmail,
-		Password: "password",
+		Password: validPass,
 	})
 	invalidData := toJSON(users.User{
-		Email:    "user@example.com",
+		Email:    validEmail,
 		Password: "invalid_password",
 	})
 	nonexistentData := toJSON(users.User{
 		Email:    "non-existentuser@example.com",
-		Password: "password",
+		Password: validPass,
 	})
 	_, err := svc.Register(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("register user got unexpected error: %s", err))
@@ -235,7 +243,7 @@ func TestPasswordResetRequest(t *testing.T) {
 
 	nonexistentData := toJSON(users.User{
 		Email:    "non-existentuser@example.com",
-		Password: "password",
+		Password: validPass,
 	})
 
 	expectedExisting := toJSON(struct {
@@ -322,8 +330,11 @@ func TestPasswordReset(t *testing.T) {
 
 	reqData.Token = token
 
-	reqData.ConfPass = "wrong"
+	reqData.ConfPass = invalidPass
 	reqPassNoMatch := toJSON(reqData)
+
+	reqData.Password = invalidPass
+	reqPassWeak := toJSON(reqData)
 
 	cases := []struct {
 		desc        string
@@ -340,6 +351,7 @@ func TestPasswordReset(t *testing.T) {
 		{"password reset request with empty JSON request", "{}", contentType, http.StatusBadRequest, malformedRes, token},
 		{"password reset request with empty request", "", contentType, http.StatusBadRequest, failDecodeRes, token},
 		{"password reset request with missing content type", reqExisting, "", http.StatusUnsupportedMediaType, unsupportedRes, token},
+		{"password reset with weak password", reqPassWeak, contentType, http.StatusBadRequest, weakPassword, token},
 	}
 
 	for _, tc := range cases {
@@ -395,8 +407,12 @@ func TestPasswordChange(t *testing.T) {
 
 	reqNoExist := toJSON(reqData)
 
-	reqData.OldPassw = "wrong"
+	reqData.OldPassw = invalidPass
 	reqWrongPass := toJSON(reqData)
+
+	reqData.OldPassw = user.Password
+	reqData.Password = invalidPass
+	reqWeakPass := toJSON(reqData)
 
 	resData.Msg = users.ErrUnauthorizedAccess.Error()
 
@@ -411,6 +427,7 @@ func TestPasswordChange(t *testing.T) {
 		{"password change with valid token", dataResExisting, contentType, http.StatusCreated, expectedSuccess, token},
 		{"password change with invalid token", reqNoExist, contentType, http.StatusForbidden, unauthRes, ""},
 		{"password change with invalid old password", reqWrongPass, contentType, http.StatusForbidden, unauthRes, token},
+		{"password change with invalid new password", reqWeakPass, contentType, http.StatusBadRequest, weakPassword, token},
 		{"password change with empty JSON request", "{}", contentType, http.StatusBadRequest, malformedRes, token},
 		{"password change empty request", "", contentType, http.StatusBadRequest, failDecodeRes, token},
 		{"password change missing content type", dataResExisting, "", http.StatusUnsupportedMediaType, unsupportedRes, token},

@@ -432,6 +432,8 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 			w.WriteHeader(http.StatusBadRequest)
 		case errors.Contains(errorVal, users.ErrRecoveryToken):
 			w.WriteHeader(http.StatusNotFound)
+		case errors.Contains(errorVal, users.ErrPasswordFormat):
+			w.WriteHeader(http.StatusBadRequest)
 		default:
 			w.WriteHeader(http.StatusInternalServerError)
 		}

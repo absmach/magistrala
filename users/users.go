@@ -13,7 +13,6 @@ import (
 )
 
 const (
-	minPassLen   = 8
 	maxLocalLen  = 64
 	maxDomainLen = 255
 	maxTLDLen    = 24 // longest TLD currently in existence
@@ -46,11 +45,6 @@ func (u User) Validate() error {
 	if !isEmail(u.Email) {
 		return ErrMalformedEntity
 	}
-
-	if len(u.Password) < minPassLen {
-		return ErrMalformedEntity
-	}
-
 	return nil
 }
 

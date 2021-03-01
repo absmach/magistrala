@@ -72,13 +72,6 @@ func TestValidate(t *testing.T) {
 			},
 			err: users.ErrMalformedEntity,
 		},
-		"validate user with empty password": {
-			user: users.User{
-				Email:    email,
-				Password: "",
-			},
-			err: users.ErrMalformedEntity,
-		},
 		"validate user with invalid email": {
 			user: users.User{
 				Email:    "userexample.com",

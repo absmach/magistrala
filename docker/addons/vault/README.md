@@ -2,6 +2,27 @@ This is Vault service deployment to be used with Mainflux.
 
 When the Vault service is started, some initialization steps need to be done to set things up.
 
+## Configuration
+
+| Variable                  | Description                                                             | Default        |
+| ------------------------- | ----------------------------------------------------------------------- | -------------- |
+| MF_VAULT_HOST             | Vault service address                                                   | vault          |
+| MF_VAULT_PORT             | Vault service port                                                      | 8200           |
+| MF_VAULT_UNSEAL_KEY_1     | Vault unseal key                                                        | ""             |
+| MF_VAULT_UNSEAL_KEY_2     | Vault unseal key                                                        | ""             |
+| MF_VAULT_UNSEAL_KEY_3     | Vault unseal key                                                        | ""             |
+| MF_VAULT_TOKEN            | Vault cli access token                                                  | ""             |
+| MF_VAULT_PKI_PATH         | Vault secrets engine path for CA                                        | pki            |
+| MF_VAULT_PKI_INT_PATH     | Vault secrets engine path for intermediate CA                           | pki_int        |
+| MF_VAULT_CA_ROLE_NAME     | Vault secrets engine role                                               | mainflux       |
+| MF_VAULT_CA_NAME          | Certificates name used by `vault-set-pki.sh`                            | mainflux       |
+| MF_VAULT_CA_CN            | Common name used for CA creation by `vault-set-pki.sh`                  | mainflux.com   |
+| MF_VAULT_CA_OU            | Org unit used for CA creation by `vault-set-pki.sh`                     | Mainflux Cloud |
+| MF_VAULT_CA_O             | Organization used for CA creation by `vault-set-pki.sh`                 | Mainflux Labs  |
+| MF_VAULT_CA_C             | Country used for CA creation by `vault-set-pki.sh`                      | Serbia         |
+| MF_VAULT_CA_L             | Location used for CA creation by `vault-set-pki.sh`                     | Belgrade       |
+
+
 ## Setup
 
 The following scripts are provided, which work on the running Vault service in Docker.
@@ -42,10 +63,11 @@ Use 3 out of five keys presented and put it into .env file and than start the co
 
 2. `vault-unseal.sh`
 
-This can be run after the initialization to unseal Vault, which is necessary for it to be used to store and/or get
-secrets.
+This can be run after the initialization to unseal Vault, which is necessary for it to be used to store and/or get secrets.
+This can be used if you don't want to restart the service.
 
-The unseal environment variables need to be set in `.env` for the script to work.
+The unseal environment variables need to be set in `.env` for the script to work (`MF_VAULT_TOKEN`, `MF_VAULT_UNSEAL_KEY_1`,
+`MF_VAULT_UNSEAL_KEY_2`, `MF_VAULT_UNSEAL_KEY_3`).
 
 This script should not be necessary to run after the initial setup, since the Vault service unseals itself when
 starting the container.
@@ -53,7 +75,7 @@ starting the container.
 3. `vault-set-pki.sh`
 
 This script is used to generate the root certificate, intermediate certificate and HTTPS server certificate.
-After it runs, it copes the necessary certificates and keys to the `docker/ssl/certs` folder.
+After it runs, it copies the necessary certificates and keys to the `docker/ssl/certs` folder.
 
 The CA parameters are obtained from the environment variables starting with `MF_VAULT_CA` in `.env` file.
 

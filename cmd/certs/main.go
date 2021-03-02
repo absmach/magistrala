@@ -64,10 +64,10 @@ const (
 	defSignHoursValid = "2048h"
 	defSignRSABits    = ""
 
-	defVaultHost    = ""
-	defVaultRole    = "mainflux"
-	defVaultToken   = ""
-	defVaultPKIPath = "pki_int"
+	defVaultHost       = ""
+	defVaultRole       = "mainflux"
+	defVaultToken      = ""
+	defVaultPKIIntPath = "pki_int"
 
 	envPort          = "MF_CERTS_HTTP_PORT"
 	envLogLevel      = "MF_CERTS_LOG_LEVEL"
@@ -96,10 +96,10 @@ const (
 	envSignHoursValid = "MF_CERTS_SIGN_HOURS_VALID"
 	envSignRSABits    = "MF_CERTS_SIGN_RSA_BITS"
 
-	envVaultHost    = "MF_CERTS_VAULT_HOST"
-	envVaultPKIPath = "MF_CERTS_VAULT_PKI_PATH"
-	envVaultRole    = "MF_CERTS_VAULT_ROLE"
-	envVaultToken   = "MF_CERTS_VAULT_TOKEN"
+	envVaultHost       = "MF_CERTS_VAULT_HOST"
+	envVaultPKIIntPath = "MF_VAULT_PKI_INT_PATH"
+	envVaultRole       = "MF_VAULT_CA_ROLE_NAME"
+	envVaultToken      = "MF_VAULT_TOKEN"
 )
 
 var (
@@ -231,7 +231,7 @@ func loadConfig() config {
 		signRSABits:    signRSABits,
 
 		pkiToken: mainflux.Env(envVaultToken, defVaultToken),
-		pkiPath:  mainflux.Env(envVaultPKIPath, defVaultPKIPath),
+		pkiPath:  mainflux.Env(envVaultPKIIntPath, defVaultPKIIntPath),
 		pkiRole:  mainflux.Env(envVaultRole, defVaultRole),
 		pkiHost:  mainflux.Env(envVaultHost, defVaultHost),
 	}

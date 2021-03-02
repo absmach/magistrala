@@ -120,14 +120,14 @@ components:
             required:
               - thing_id
               - days_valid
-              - rsa_bits
+              - key_bits
             properties:
                thing_id:
                  type: string
                  format: uuid
                days_valid:
                  type: string
-               rsa_bits:
+               key_bits:
                  type: integer
 
   responses:

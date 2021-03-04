@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/internal/groups"
 	"github.com/mainflux/mainflux/things"
 )
 
@@ -236,46 +235,6 @@ func findIndex(list []string, val string) int {
 	return -1
 }
 
-func (svc *mainfluxThings) CreateGroup(ctx context.Context, token string, g groups.Group) (string, error) {
-	panic("not implemented")
-}
-
-func (svc *mainfluxThings) UpdateGroup(ctx context.Context, token string, g groups.Group) (groups.Group, error) {
-	panic("not implemented")
-}
-
-func (svc *mainfluxThings) ViewGroup(ctx context.Context, token, id string) (groups.Group, error) {
-	panic("not implemented")
-}
-
-func (svc *mainfluxThings) ListGroups(ctx context.Context, token string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
-	panic("not implemented")
-}
-
-func (svc *mainfluxThings) ListChildren(ctx context.Context, token, parentID string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
-	panic("not implemented")
-}
-
-func (svc *mainfluxThings) ListParents(ctx context.Context, token, childID string, level uint64, gm groups.Metadata) (groups.GroupPage, error) {
-	panic("not implemented")
-}
-
-func (svc *mainfluxThings) ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, gm groups.Metadata) (groups.MemberPage, error) {
-	panic("not implemented")
-}
-
-func (svc *mainfluxThings) ListMemberships(ctx context.Context, token, memberID string, offset, limit uint64, gm groups.Metadata) (groups.GroupPage, error) {
-	panic("not implemented")
-}
-
-func (svc *mainfluxThings) RemoveGroup(ctx context.Context, token, id string) error {
-	panic("not implemented")
-}
-
-func (svc *mainfluxThings) Assign(ctx context.Context, token, memberID, groupID string) error {
-	panic("not implemented")
-}
-
-func (svc *mainfluxThings) Unassign(ctx context.Context, token, memberID, groupID string) error {
+func (svc *mainfluxThings) ListMembers(ctx context.Context, token, groupID string, pm things.PageMetadata) (things.Page, error) {
 	panic("not implemented")
 }

@@ -90,8 +90,8 @@ func (s *grpcServer) Assign(ctx context.Context, token *mainflux.Assignment) (*e
 	return res.(*empty.Empty), nil
 }
 
-func (s *grpcServer) Members(ctx context.Context, token *mainflux.MembersReq) (*mainflux.MembersRes, error) {
-	_, res, err := s.members.ServeGRPC(ctx, token)
+func (s *grpcServer) Members(ctx context.Context, req *mainflux.MembersReq) (*mainflux.MembersRes, error) {
+	_, res, err := s.members.ServeGRPC(ctx, req)
 	if err != nil {
 		return nil, encodeError(err)
 	}
@@ -135,17 +135,23 @@ func decodeAssignRequest(_ context.Context, grpcReq interface{}) (interface{}, e
 
 func decodeMembersRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*mainflux.MembersReq)
-	return membersReq{token: req.GetToken(), groupID: req.GetGroupID()}, nil
+	return membersReq{
+		token:      req.GetToken(),
+		groupID:    req.GetGroupID(),
+		memberType: req.GetType(),
+		offset:     req.Offset,
+		limit:      req.Limit,
+	}, nil
 }
 
 func encodeMembersResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(*mainflux.MembersRes)
-	return membersRes{
-		total:     res.GetTotal(),
-		offset:    res.GetOffset(),
-		limit:     res.GetLimit(),
-		groupType: res.GetType(),
-		members:   res.GetMembers(),
+	res := grpcRes.(membersRes)
+	return &mainflux.MembersRes{
+		Total:   res.total,
+		Offset:  res.offset,
+		Limit:   res.limit,
+		Type:    res.groupType,
+		Members: res.members,
 	}, nil
 }
 

@@ -11,17 +11,10 @@ import (
 var (
 	_ mainflux.Response = (*memberPageRes)(nil)
 	_ mainflux.Response = (*groupRes)(nil)
-	_ mainflux.Response = (*groupDeleteRes)(nil)
-	_ mainflux.Response = (*assignMemberToGroupRes)(nil)
-	_ mainflux.Response = (*removeMemberFromGroupRes)(nil)
+	_ mainflux.Response = (*deleteRes)(nil)
+	_ mainflux.Response = (*assignRes)(nil)
+	_ mainflux.Response = (*unassignRes)(nil)
 )
-
-type pageRes struct {
-	Total  uint64 `json:"total"`
-	Offset uint64 `json:"offset"`
-	Limit  uint64 `json:"limit"`
-	Name   string `json:"name"`
-}
 
 type memberPageRes struct {
 	pageRes
@@ -41,18 +34,19 @@ func (res memberPageRes) Empty() bool {
 }
 
 type viewGroupRes struct {
-	ID          string                 `json:"id,omitempty"`
-	Name        string                 `json:"name,omitempty"`
+	ID          string                 `json:"id"`
+	Name        string                 `json:"name"`
+	OwnerID     string                 `json:"owner_id"`
 	ParentID    string                 `json:"parent_id,omitempty"`
-	OwnerID     string                 `json:"owner_id,omitempty"`
 	Description string                 `json:"description,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-	// Indicates a level in tree hierarchy from first group node.
-	Level int `json:"level,omitempty"`
-	// Path is a path in a tree, consisted of group names
-	// parentName.childrenName1.childrenName2 .
+	// Indicates a level in tree hierarchy from first group node - root.
+	Level int `json:"level"`
+	// Path in a tree consisting of group ids
+	// parentID1.parentID2.childID1
+	// e.g. 01EXPM5Z8HRGFAEWTETR1X1441.01EXPKW2TVK74S5NWQ979VJ4PJ.01EXPKW2TVK74S5NWQ979VJ4PJ
 	Path      string          `json:"path"`
-	Children  []*viewGroupRes `json:"children"`
+	Children  []*viewGroupRes `json:"children,omitempty"`
 	CreatedAt time.Time       `json:"created_at"`
 	UpdatedAt time.Time       `json:"updated_at"`
 }
@@ -101,6 +95,14 @@ type groupPageRes struct {
 	Groups []viewGroupRes `json:"groups"`
 }
 
+type pageRes struct {
+	Limit  uint64 `json:"limit,omitempty"`
+	Offset uint64 `json:"offset,omitempty"`
+	Total  uint64 `json:"total"`
+	Level  uint64 `json:"level"`
+	Name   string `json:"name"`
+}
+
 func (res groupPageRes) Code() int {
 	return http.StatusOK
 }
@@ -113,44 +115,48 @@ func (res groupPageRes) Empty() bool {
 	return false
 }
 
-type groupDeleteRes struct{}
+type deleteRes struct{}
 
-func (res groupDeleteRes) Code() int {
+func (res deleteRes) Code() int {
 	return http.StatusNoContent
 }
 
-func (res groupDeleteRes) Headers() map[string]string {
+func (res deleteRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res groupDeleteRes) Empty() bool {
+func (res deleteRes) Empty() bool {
 	return true
 }
 
-type assignMemberToGroupRes struct{}
+type assignRes struct{}
 
-func (res assignMemberToGroupRes) Code() int {
+func (res assignRes) Code() int {
+	return http.StatusOK
+}
+
+func (res assignRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res assignRes) Empty() bool {
+	return true
+}
+
+type unassignRes struct{}
+
+func (res unassignRes) Code() int {
 	return http.StatusNoContent
 }
 
-func (res assignMemberToGroupRes) Headers() map[string]string {
+func (res unassignRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res assignMemberToGroupRes) Empty() bool {
+func (res unassignRes) Empty() bool {
 	return true
 }
 
-type removeMemberFromGroupRes struct{}
-
-func (res removeMemberFromGroupRes) Code() int {
-	return http.StatusNoContent
-}
-
-func (res removeMemberFromGroupRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res removeMemberFromGroupRes) Empty() bool {
-	return true
+type errorRes struct {
+	Err string `json:"error"`
 }

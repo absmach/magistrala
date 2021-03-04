@@ -42,7 +42,6 @@ var (
 	weakPassword   = toJSON(errorRes{users.ErrPasswordFormat.Error()})
 	unsupportedRes = toJSON(errorRes{api.ErrUnsupportedContentType.Error()})
 	failDecodeRes  = toJSON(errorRes{api.ErrFailedDecode.Error()})
-	groupExists    = toJSON(errorRes{users.ErrGroupConflict.Error()})
 	passRegex      = regexp.MustCompile("^.{8,}$")
 )
 
@@ -73,13 +72,12 @@ func (tr testRequest) make() (*http.Response, error) {
 
 func newService() users.Service {
 	usersRepo := mocks.NewUserRepository()
-	groupRepo := mocks.NewGroupRepository()
 	hasher := bcrypt.New()
 	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
 	email := mocks.NewEmailer()
 	idProvider := uuid.New()
 
-	return users.New(usersRepo, groupRepo, hasher, auth, email, idProvider, passRegex)
+	return users.New(usersRepo, hasher, auth, email, idProvider, passRegex)
 }
 
 func newServer(svc users.Service) *httptest.Server {
@@ -438,71 +436,6 @@ func TestPasswordChange(t *testing.T) {
 			client:      client,
 			method:      http.MethodPatch,
 			url:         fmt.Sprintf("%s/password", ts.URL),
-			contentType: tc.contentType,
-			body:        strings.NewReader(tc.req),
-			token:       tc.tok,
-		}
-
-		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		body, err := ioutil.ReadAll(res.Body)
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		token := strings.Trim(string(body), "\n")
-
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		assert.Equal(t, tc.res, token, fmt.Sprintf("%s: expected body %s got %s", tc.desc, tc.res, token))
-	}
-}
-
-func TestGroupCreate(t *testing.T) {
-	svc := newService()
-	ts := newServer(svc)
-	defer ts.Close()
-	client := ts.Client()
-	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
-
-	_, err := svc.Register(context.Background(), user)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-
-	tkn, _ := auth.Issue(context.Background(), &mainflux.IssueReq{Id: user.ID, Email: user.Email, Type: 0})
-	token := tkn.GetValue()
-
-	expectedSuccess := ""
-
-	groupData := struct {
-		Token       string `json:"token,omitempty"`
-		Name        string `json:"name,omitempty"`
-		Description string `json:"description,omitempty"`
-	}{}
-
-	groupData.Token = token
-	groupData.Name = "Mainflux"
-	createValidTokenRequest := toJSON(groupData)
-
-	groupData.Token = "invalid"
-	createInvalidTokenRequest := toJSON(groupData)
-
-	cases := []struct {
-		desc        string
-		req         string
-		contentType string
-		status      int
-		res         string
-		tok         string
-	}{
-		{"group create with valid token", createValidTokenRequest, contentType, http.StatusCreated, expectedSuccess, token},
-		{"group create with existing name", createValidTokenRequest, contentType, http.StatusConflict, groupExists, token},
-		{"group create with invalid token", createInvalidTokenRequest, contentType, http.StatusForbidden, unauthRes, ""},
-		{"group create with empty JSON request", "{}", contentType, http.StatusBadRequest, malformedRes, token},
-		{"group create empty request", "", contentType, http.StatusBadRequest, malformedRes, token},
-		{"group create missing content type", createValidTokenRequest, "", http.StatusUnsupportedMediaType, unsupportedRes, token},
-	}
-
-	for _, tc := range cases {
-		req := testRequest{
-			client:      client,
-			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/groups", ts.URL),
 			contentType: tc.contentType,
 			body:        strings.NewReader(tc.req),
 			token:       tc.tok,

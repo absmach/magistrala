@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/gofrs/uuid"
 	"github.com/lib/pq" // required for DB access
@@ -20,11 +21,6 @@ const (
 	errFK         = "foreign_key_violation"
 	errInvalid    = "invalid_text_representation"
 	errTruncation = "string_data_right_truncation"
-)
-
-var (
-	errUpdateDB   = errors.New("failed to update db")
-	errRetrieveDB = errors.New("failed retrieving from db")
 )
 
 var _ things.ThingRepository = (*thingRepository)(nil)
@@ -179,6 +175,72 @@ func (tr thingRepository) RetrieveByKey(ctx context.Context, key string) (string
 	}
 
 	return id, nil
+}
+
+func (tr thingRepository) RetrieveByIDs(ctx context.Context, thingIDs []string, pm things.PageMetadata) (things.Page, error) {
+	if len(thingIDs) == 0 {
+		return things.Page{}, nil
+	}
+
+	nq, name := getNameQuery(pm.Name)
+	oq := getOrderQuery(pm.Order)
+	dq := getDirQuery(pm.Dir)
+	idq := fmt.Sprintf("WHERE id IN ('%s') ", strings.Join(thingIDs, "','"))
+
+	m, mq, err := getMetadataQuery(pm.Metadata)
+	if err != nil {
+		return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
+	}
+
+	q := fmt.Sprintf(`SELECT id, owner, name, key, metadata FROM things 
+					   %s%s%s ORDER BY %s %s LIMIT :limit OFFSET :offset;`, idq, mq, nq, oq, dq)
+
+	params := map[string]interface{}{
+		"limit":    pm.Limit,
+		"offset":   pm.Offset,
+		"name":     name,
+		"metadata": m,
+	}
+
+	rows, err := tr.db.NamedQueryContext(ctx, q, params)
+	if err != nil {
+		return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
+	}
+	defer rows.Close()
+
+	var items []things.Thing
+	for rows.Next() {
+		dbth := dbThing{}
+		if err := rows.StructScan(&dbth); err != nil {
+			return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
+		}
+
+		th, err := toThing(dbth)
+		if err != nil {
+			return things.Page{}, errors.Wrap(things.ErrViewEntity, err)
+		}
+
+		items = append(items, th)
+	}
+
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM things %s%s%s;`, idq, mq, nq)
+
+	total, err := total(ctx, tr.db, cq, params)
+	if err != nil {
+		return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
+	}
+
+	page := things.Page{
+		Things: items,
+		PageMetadata: things.PageMetadata{
+			Total:  total,
+			Offset: pm.Offset,
+			Limit:  pm.Limit,
+			Order:  pm.Order,
+		},
+	}
+
+	return page, nil
 }
 
 func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, pm things.PageMetadata) (things.Page, error) {

@@ -7,6 +7,8 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/endpoint"
+	"github.com/mainflux/mainflux/auth"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/things"
 )
 
@@ -488,4 +490,41 @@ func disconnectEndpoint(svc things.Service) endpoint.Endpoint {
 
 		return disconnectionRes{}, nil
 	}
+}
+
+func listMembersEndpoint(svc things.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(listThingsGroupReq)
+		if err := req.validate(); err != nil {
+			return thingsPageRes{}, errors.Wrap(auth.ErrMalformedEntity, err)
+		}
+
+		page, err := svc.ListMembers(ctx, req.token, req.groupID, req.pageMetadata)
+		if err != nil {
+			return thingsPageRes{}, err
+		}
+
+		return buildThingsResponse(page), nil
+	}
+}
+
+func buildThingsResponse(up things.Page) thingsPageRes {
+	res := thingsPageRes{
+		pageRes: pageRes{
+			Total:  up.Total,
+			Offset: up.Offset,
+			Limit:  up.Limit,
+		},
+		Things: []viewThingRes{},
+	}
+	for _, th := range up.Things {
+		view := viewThingRes{
+			ID:       th.ID,
+			Key:      th.Key,
+			Owner:    th.Owner,
+			Metadata: th.Metadata,
+		}
+		res.Things = append(res.Things, view)
+	}
+	return res
 }

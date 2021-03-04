@@ -9,15 +9,23 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/lib/pq"
+	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/users"
+)
+
+const (
+	errInvalid    = "invalid_text_representation"
+	errTruncation = "string_data_right_truncation"
 )
 
 var (
 	errSaveUserDB       = errors.New("Save user to DB failed")
 	errUpdateDB         = errors.New("Update user email to DB failed")
+	errSelectDb         = errors.New("Select from DB failed")
 	errUpdateUserDB     = errors.New("Update user metadata to DB failed")
 	errRetrieveDB       = errors.New("Retreiving from DB failed")
 	errUpdatePasswordDB = errors.New("Update password to DB failed")
@@ -141,7 +149,7 @@ func (ur userRepository) RetrieveByID(ctx context.Context, id string) (users.Use
 	return toUser(dbu)
 }
 
-func (ur userRepository) RetrieveAll(ctx context.Context, offset, limit uint64, email string, um users.Metadata) (users.UserPage, error) {
+func (ur userRepository) RetrieveAll(ctx context.Context, offset, limit uint64, userIDs []string, email string, um users.Metadata) (users.UserPage, error) {
 	eq, ep, err := createEmailQuery("", email)
 	if err != nil {
 		return users.UserPage{}, errors.Wrap(errRetrieveDB, err)
@@ -152,19 +160,22 @@ func (ur userRepository) RetrieveAll(ctx context.Context, offset, limit uint64, 
 		return users.UserPage{}, errors.Wrap(errRetrieveDB, err)
 	}
 
-	emq := ""
-	if eq != "" && mq == "" {
-		emq = fmt.Sprintf("WHERE %s", eq)
+	var query []string
+	var emq string
+	if eq != "" {
+		query = append(query, eq)
 	}
-	if eq == "" && mq != "" {
-		emq = fmt.Sprintf("WHERE %s", mq)
+	if mq != "" {
+		query = append(query, mq)
 	}
-	if eq != "" && mq != "" {
-		emq = fmt.Sprintf("WHERE %s AND %s", eq, mq)
+	if len(userIDs) > 0 {
+		query = append(query, fmt.Sprintf("id IN ('%s')", strings.Join(userIDs, "','")))
+	}
+	if len(query) > 0 {
+		emq = fmt.Sprintf(" WHERE %s", strings.Join(query, " AND "))
 	}
 
 	q := fmt.Sprintf(`SELECT id, email, metadata FROM users %s ORDER BY email LIMIT :limit OFFSET :offset;`, emq)
-
 	params := map[string]interface{}{
 		"limit":    limit,
 		"offset":   offset,
@@ -227,68 +238,6 @@ func (ur userRepository) UpdatePassword(ctx context.Context, email, password str
 	return nil
 }
 
-func (ur userRepository) RetrieveMembers(ctx context.Context, groupID string, offset, limit uint64, um users.Metadata) (users.UserPage, error) {
-	mq, mp, err := createMetadataQuery("users.", um)
-	if err != nil {
-		return users.UserPage{}, errors.Wrap(errRetrieveDB, err)
-	}
-
-	if mq != "" {
-		mq = fmt.Sprintf(" AND %s", mq)
-	}
-
-	q := fmt.Sprintf(`SELECT u.id, u.email, u.metadata FROM users u, group_relations g
-                      WHERE u.id = g.user_id AND g.group_id = :group
-                      %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq)
-
-	params := map[string]interface{}{
-		"group":    groupID,
-		"limit":    limit,
-		"offset":   offset,
-		"metadata": mp,
-	}
-
-	rows, err := ur.db.NamedQueryContext(ctx, q, params)
-	if err != nil {
-		return users.UserPage{}, errors.Wrap(errSelectDb, err)
-	}
-	defer rows.Close()
-
-	var items []users.User
-	for rows.Next() {
-		dbusr := dbUser{}
-		if err := rows.StructScan(&dbusr); err != nil {
-			return users.UserPage{}, errors.Wrap(errSelectDb, err)
-		}
-
-		user, err := toUser(dbusr)
-		if err != nil {
-			return users.UserPage{}, err
-		}
-
-		items = append(items, user)
-	}
-
-	cq := fmt.Sprintf(`SELECT COUNT(*) FROM users u, group_relations g
-	WHERE u.id = g.user_id AND g.group_id = :group  %s;`, mq)
-
-	total, err := total(ctx, ur.db, cq, params)
-	if err != nil {
-		return users.UserPage{}, errors.Wrap(errSelectDb, err)
-	}
-
-	page := users.UserPage{
-		Users: items,
-		PageMetadata: users.PageMetadata{
-			Total:  total,
-			Offset: offset,
-			Limit:  limit,
-		},
-	}
-
-	return page, nil
-}
-
 // dbMetadata type for handling metadata properly in database/sql
 type dbMetadata map[string]interface{}
 
@@ -324,11 +273,11 @@ func (m dbMetadata) Value() (driver.Value, error) {
 }
 
 type dbUser struct {
-	ID       string        `db:"id"`
-	Email    string        `db:"email"`
-	Password string        `db:"password"`
-	Metadata []byte        `db:"metadata"`
-	Groups   []users.Group `db:"groups"`
+	ID       string       `db:"id"`
+	Email    string       `db:"email"`
+	Password string       `db:"password"`
+	Metadata []byte       `db:"metadata"`
+	Groups   []auth.Group `db:"groups"`
 }
 
 func toDBUser(u users.User) (dbUser, error) {
@@ -347,6 +296,21 @@ func toDBUser(u users.User) (dbUser, error) {
 		Password: u.Password,
 		Metadata: data,
 	}, nil
+}
+
+func total(ctx context.Context, db Database, query string, params interface{}) (uint64, error) {
+	rows, err := db.NamedQueryContext(ctx, query, params)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+	total := uint64(0)
+	if rows.Next() {
+		if err := rows.Scan(&total); err != nil {
+			return 0, err
+		}
+	}
+	return total, nil
 }
 
 func toUser(dbu dbUser) (users.User, error) {

@@ -38,7 +38,7 @@ done
 ###
 # Users
 ###
-MF_USERS_LOG_LEVEL=info MF_EMAIL_TEMPLATE=../docker/templates/users.tmpl $BUILD_DIR/mainflux-users &
+MF_USERS_LOG_LEVEL=info MF_USERS_ADMIN_EMAIL=admin@mainflux.com MF_USERS_ADMIN_PASSWORD=12345678 MF_EMAIL_TEMPLATE=../docker/templates/users.tmpl $BUILD_DIR/mainflux-users &
 
 ###
 # Things

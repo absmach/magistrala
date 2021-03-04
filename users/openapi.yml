@@ -25,8 +25,58 @@ paths:
         '415':
           description: Missing or invalid content type.
         '500':
-          $ref: "#/components/responses/ServiceError"
+          $ref: "#/components/responses/ServiceError" 
     get:
+      summary: Retrieves users
+      description: |
+        Retrieves a list of users. Due to performance concerns, data
+        is retrieved in subsets. The API things must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
+      tags:
+        - users
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Metadata"
+      responses:
+        '200':
+          $ref: "#/components/responses/UsersPageRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        '401':
+          description: Missing or invalid access token provided.
+        '404':
+          description: A non-existent entity request.
+        '422':
+          description: Database can't process request.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+    put:
+      summary: Updates info on currently logged in user.
+      description: |
+        Updates info on currently logged in user. Info is updated using
+        authorization token and the new received info.
+      tags:
+        - users
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+      requestBody:
+        $ref: "#/components/requestBodies/UserUpdateReq"
+      responses:
+        '200':
+          description: User updated.
+        '400':
+          description: Failed due to malformed JSON.
+        '404':
+          description: Failed due to non existing user.
+        '403':
+          description: Missing or invalid access token provided.
+        '500':
+         $ref: "#/components/responses/ServiceError"
+  /users/profile:
+     get:
       summary: Gets info on currently logged in user.
       description: |
         Gets info on currently logged in user. Info is obtained using
@@ -44,88 +94,35 @@ paths:
           description: Missing or invalid access token provided.
         '500':
           $ref: "#/components/responses/ServiceError"
-    put:
-      summary: Updates info on currently logged in user.
+  /groups/{groupId}:
+    get:
+      summary: Retrieves users
       description: |
-        Updates info on currently logged in user. Info is updated using
-        authorization token and the new received info.
+        Retrieves a list of users that belong to a group. Due to performance concerns, data
+        is retrieved in subsets. The API things must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
       tags:
         - users
-      security:
-        - Authorization: []
-      requestBody:
-        $ref: "#/components/requestBodies/UserUpdateReq"
-      responses:
-        '200':
-          description: User updated.
-        '400':
-          description: Failed due to malformed JSON.
-        '404':
-          description: Failed due to non existing user.
-        '403':
-          description: Missing or invalid access token provided.
-        '500':
-         $ref: "#/components/responses/ServiceError"
-  /users/{userId}/groups:
-    get:
-      summary: Get groups that user belongs to
-      description: Retrieves a list of groups that user belongs to.
-      tags:
-      - users
-      security:
-        - Authorization: []
       parameters:
-        - $ref: "#/components/parameters/UserID"
-        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Metadata"
       responses:
         '200':
-          $ref: '#/components/responses/GroupsRes'
-        '403':
+          $ref: "#/components/responses/UsersPageRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        '401':
           description: Missing or invalid access token provided.
+        '404':
+          description: A non-existent entity request.
+        '422':
+          description: Database can't process request.
         '500':
-          $ref: '#/components/responses/ServiceError'
-  /groups:
-    post:
-      summary: Create users group
-      description: |
-        Create users group.
-      tags:
-        - groups
-      security:
-        - Authorization: []
-      requestBody:
-        $ref: '#/components/requestBodies/CreateGroupReq'
-      responses:
-        '200':
-          description: Group created.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Group'
-        '403':
-          description: Missing or invalid access token provided.
-        '500':
-          $ref: '#/components/responses/ServiceError'
-    get:
-      summary: Get users groups
-      description: |
-        Get all users groups
-      tags:
-        - groups
-      security:
-        - Authorization: []
-      responses:
-        '200':
-          description: Groups retrieved.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GroupsPage'
-        '403':
-          description: Missing or invalid access token provided.
-        '500':
-          $ref: '#/components/responses/ServiceError'
+          $ref: "#/components/responses/ServiceError"
   /tokens:
     post:
       summary: User authentication
@@ -256,24 +253,6 @@ components:
       required:
         - email
         - password
-    GroupReqObj:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Unique name of the group. Group name matching `"^[a-zA-Z0-9]+$"` regexp.
-        parent_id:
-          type: string
-          format: uuid
-          description: Parent Group unique identifier.
-        description:
-          type: string
-          description: Group description.
-        metadata:
-          type: object
-          description: Arbitrary, object-encoded group's data.
-      required:
-        - name
     User:
       type: object
       properties:
@@ -290,48 +269,15 @@ components:
         metadata:
           type: object
           description: Arbitrary, object-encoded user's data.
-    Group:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          example: 18167738-f7a8-4e96-a123-58c3cd14de3a
-          description: Group unique identifier.
-        name:
-          type: string
-          example: "MainflxGroup"
-          description: Group name matching `"^[a-zA-Z0-9]+$"` regexp.
-        description:
-          type: string
-          description: Description free form text describing a group.
-        metadata:
-          type: object
-          description: Arbitrary, object-encoded group's data.
     UsersPage:
       type: object
       properties:
-        email:
-          type: string
-          description: User unique identifier.
-        metadata:
-          type: object
-          description: Arbitrary, object-encoded user's data.
-    UserMetadata:
-      type: object
-      properties:
-        metadata:
-          type: object
-          description: Arbitrary, object-encoded user's data.
-    GroupsPage:
-      type: object
-      properties:
-        groups:
+        things:
           type: array
           minItems: 0
           uniqueItems: true
           items:
-            $ref: "#/components/schemas/Group"
+            $ref: "#/components/schemas/User"
         total:
           type: integer
           description: Total number of items.
@@ -341,14 +287,29 @@ components:
         limit:
           type: integer
           description: Maximum number of items to return in one page.
+      required:
+        - things
+    UserMetadata:
+      type: object
+      properties:
+        metadata:
+          type: object
+          description: Arbitrary, object-encoded user's data.
     Error:
       type: object
       properties:
         error:
           type: string
           description: Error message
-
   parameters:
+    Authorization:
+      name: Authorization
+      description: User's access token.
+      in: header
+      schema:
+        type: string
+        format: jwt
+      required: true
     Referer:
       name: Referer
       description: Host being sent by browser.
@@ -371,6 +332,14 @@ components:
       schema:
         type: string
         format: uuid
+      required: true
+    GroupId:
+      name: groupId
+      description: Unique group identifier.
+      in: path
+      schema:
+        type: string
+        format: ulid
       required: true
     Limit:
       name: limit
@@ -407,13 +376,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/UserMetadata"
-    CreateGroupReq:
-      description: JSON-formated document describing the new group to be created.
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/GroupReqObj'
     RequestPasswordReset:
       description: Initiate password request procedure.
       required: true
@@ -482,12 +444,11 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/User"
-    GroupsRes:
+    UsersPageRes:
       description: Data retrieved.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/GroupsPage'
-
+            $ref: "#/components/schemas/UsersPage"
     ServiceError:
       description: Unexpected server-side error occurred.

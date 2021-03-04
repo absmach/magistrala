@@ -4,44 +4,42 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/mainflux/mainflux/internal/groups"
-	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/mainflux/mainflux/auth"
 )
 
-func CreateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
+func createGroupEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createGroupReq)
 		if err := req.validate(); err != nil {
 			return groupRes{}, err
 		}
 
-		group := groups.Group{
+		group := auth.Group{
 			Name:        req.Name,
 			Description: req.Description,
 			ParentID:    req.ParentID,
-			Type:        req.Type,
 			Metadata:    req.Metadata,
 		}
 
-		id, err := svc.CreateGroup(ctx, req.token, group)
+		group, err := svc.CreateGroup(ctx, req.token, group)
 		if err != nil {
-			return groupRes{}, errors.Wrap(groups.ErrCreateGroup, err)
+			return groupRes{}, err
 		}
 
-		return groupRes{created: true, id: id}, nil
+		return groupRes{created: true, id: group.ID}, nil
 	}
 }
 
-func ViewGroupEndpoint(svc groups.Service) endpoint.Endpoint {
+func viewGroupEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(groupReq)
 		if err := req.validate(); err != nil {
-			return viewGroupRes{}, errors.Wrap(groups.ErrMalformedEntity, err)
+			return viewGroupRes{}, err
 		}
 
-		group, err := svc.ViewGroup(ctx, req.token, req.groupID)
+		group, err := svc.ViewGroup(ctx, req.token, req.id)
 		if err != nil {
-			return viewGroupRes{}, errors.Wrap(groups.ErrFetchGroups, err)
+			return viewGroupRes{}, err
 		}
 
 		res := viewGroupRes{
@@ -51,30 +49,31 @@ func ViewGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 			Metadata:    group.Metadata,
 			ParentID:    group.ParentID,
 			OwnerID:     group.OwnerID,
+			CreatedAt:   group.CreatedAt,
+			UpdatedAt:   group.UpdatedAt,
 		}
 
 		return res, nil
 	}
 }
 
-func UpdateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
+func updateGroupEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateGroupReq)
 		if err := req.validate(); err != nil {
-			return groupRes{}, errors.Wrap(groups.ErrMalformedEntity, err)
+			return groupRes{}, err
 		}
 
-		group := groups.Group{
+		group := auth.Group{
 			ID:          req.id,
 			Name:        req.Name,
 			Description: req.Description,
-			ParentID:    req.ParentID,
 			Metadata:    req.Metadata,
 		}
 
 		_, err := svc.UpdateGroup(ctx, req.token, group)
 		if err != nil {
-			return groupRes{}, errors.Wrap(groups.ErrUpdateGroup, err)
+			return groupRes{}, err
 		}
 
 		res := groupRes{created: false}
@@ -82,31 +81,34 @@ func UpdateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 	}
 }
 
-func DeleteGroupEndpoint(svc groups.Service) endpoint.Endpoint {
+func deleteGroupEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(groupReq)
 		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(groups.ErrMalformedEntity, err)
+			return nil, err
 		}
 
-		if err := svc.RemoveGroup(ctx, req.token, req.groupID); err != nil {
-			return nil, errors.Wrap(groups.ErrDeleteGroup, err)
+		if err := svc.RemoveGroup(ctx, req.token, req.id); err != nil {
+			return nil, err
 		}
 
-		return groupDeleteRes{}, nil
+		return deleteRes{}, nil
 	}
 }
 
-func ListGroupsEndpoint(svc groups.Service) endpoint.Endpoint {
+func listGroupsEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listGroupsReq)
 		if err := req.validate(); err != nil {
-			return groupPageRes{}, errors.Wrap(groups.ErrMalformedEntity, err)
+			return groupPageRes{}, err
 		}
-
-		page, err := svc.ListGroups(ctx, req.token, req.level, req.metadata)
+		pm := auth.PageMetadata{
+			Level:    req.level,
+			Metadata: req.metadata,
+		}
+		page, err := svc.ListGroups(ctx, req.token, pm)
 		if err != nil {
-			return groupPageRes{}, errors.Wrap(groups.ErrFetchGroups, err)
+			return groupPageRes{}, err
 		}
 
 		if req.tree {
@@ -117,14 +119,20 @@ func ListGroupsEndpoint(svc groups.Service) endpoint.Endpoint {
 	}
 }
 
-func ListMembership(svc groups.Service) endpoint.Endpoint {
+func listMemberships(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(listMemberGroupReq)
+		req := request.(listMembershipsReq)
 		if err := req.validate(); err != nil {
 			return memberPageRes{}, err
 		}
 
-		page, err := svc.ListMemberships(ctx, req.token, req.memberID, req.offset, req.limit, req.metadata)
+		pm := auth.PageMetadata{
+			Offset:   req.offset,
+			Limit:    req.limit,
+			Metadata: req.metadata,
+		}
+
+		page, err := svc.ListMemberships(ctx, req.token, req.id, pm)
 		if err != nil {
 			return memberPageRes{}, err
 		}
@@ -137,16 +145,20 @@ func ListMembership(svc groups.Service) endpoint.Endpoint {
 	}
 }
 
-func ListGroupChildrenEndpoint(svc groups.Service) endpoint.Endpoint {
+func listChildrenEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listGroupsReq)
 		if err := req.validate(); err != nil {
-			return groupPageRes{}, errors.Wrap(groups.ErrMalformedEntity, err)
+			return groupPageRes{}, err
 		}
 
-		page, err := svc.ListChildren(ctx, req.token, req.groupID, req.level, req.metadata)
+		pm := auth.PageMetadata{
+			Level:    req.level,
+			Metadata: req.metadata,
+		}
+		page, err := svc.ListChildren(ctx, req.token, req.id, pm)
 		if err != nil {
-			return groupPageRes{}, errors.Wrap(groups.ErrFetchGroups, err)
+			return groupPageRes{}, err
 		}
 
 		if req.tree {
@@ -157,16 +169,20 @@ func ListGroupChildrenEndpoint(svc groups.Service) endpoint.Endpoint {
 	}
 }
 
-func ListGroupParentsEndpoint(svc groups.Service) endpoint.Endpoint {
+func listParentsEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listGroupsReq)
 		if err := req.validate(); err != nil {
-			return groupPageRes{}, errors.Wrap(groups.ErrMalformedEntity, err)
+			return groupPageRes{}, err
+		}
+		pm := auth.PageMetadata{
+			Level:    req.level,
+			Metadata: req.metadata,
 		}
 
-		page, err := svc.ListParents(ctx, req.token, req.groupID, req.level, req.metadata)
+		page, err := svc.ListParents(ctx, req.token, req.id, pm)
 		if err != nil {
-			return groupPageRes{}, errors.Wrap(groups.ErrFetchGroups, err)
+			return groupPageRes{}, err
 		}
 
 		if req.tree {
@@ -177,44 +193,49 @@ func ListGroupParentsEndpoint(svc groups.Service) endpoint.Endpoint {
 	}
 }
 
-func AssignEndpoint(svc groups.Service) endpoint.Endpoint {
+func assignEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(memberGroupReq)
+		req := request.(assignReq)
 		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(groups.ErrMalformedEntity, err)
+			return nil, err
 		}
 
-		if err := svc.Assign(ctx, req.token, req.memberID, req.groupID); err != nil {
-			return nil, errors.Wrap(groups.ErrAssignToGroup, err)
+		if err := svc.Assign(ctx, req.token, req.groupID, req.Type, req.Members...); err != nil {
+			return nil, err
 		}
 
-		return assignMemberToGroupRes{}, nil
+		return assignRes{}, nil
 	}
 }
 
-func UnassignEndpoint(svc groups.Service) endpoint.Endpoint {
+func unassignEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(memberGroupReq)
+		req := request.(assignReq)
 		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(groups.ErrMalformedEntity, err)
+			return nil, err
 		}
 
-		if err := svc.Unassign(ctx, req.token, req.memberID, req.groupID); err != nil {
-			return nil, errors.Wrap(groups.ErrUnassignFromGroup, err)
+		if err := svc.Unassign(ctx, req.token, req.groupID, req.Members...); err != nil {
+			return nil, err
 		}
 
-		return removeMemberFromGroupRes{}, nil
+		return unassignRes{}, nil
 	}
 }
 
-func ListMembersEndpoint(svc groups.Service) endpoint.Endpoint {
+func listMembersEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(listMemberGroupReq)
+		req := request.(listMembersReq)
 		if err := req.validate(); err != nil {
-			return memberPageRes{}, errors.Wrap(groups.ErrMalformedEntity, err)
+			return memberPageRes{}, err
 		}
 
-		page, err := svc.ListMembers(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)
+		pm := auth.PageMetadata{
+			Offset:   req.offset,
+			Limit:    req.limit,
+			Metadata: req.metadata,
+		}
+		page, err := svc.ListMembers(ctx, req.token, req.id, req.groupType, pm)
 		if err != nil {
 			return memberPageRes{}, err
 		}
@@ -223,29 +244,30 @@ func ListMembersEndpoint(svc groups.Service) endpoint.Endpoint {
 	}
 }
 
-func buildGroupsResponseTree(page groups.GroupPage) groupPageRes {
-	groupsMap := map[string]*groups.Group{}
-	// Parents map keeps its array of children.
-	parentsMap := map[string][]*groups.Group{}
+func buildGroupsResponseTree(page auth.GroupPage) groupPageRes {
+	groupsMap := map[string]*auth.Group{}
+	// Parents' map keeps its array of children.
+	parentsMap := map[string][]*auth.Group{}
 	for i := range page.Groups {
 		if _, ok := groupsMap[page.Groups[i].ID]; !ok {
 			groupsMap[page.Groups[i].ID] = &page.Groups[i]
-			parentsMap[page.Groups[i].ID] = make([]*groups.Group, 0)
+			parentsMap[page.Groups[i].ID] = make([]*auth.Group, 0)
 		}
 	}
 
 	for _, group := range groupsMap {
-		if ch, ok := parentsMap[group.ParentID]; ok {
-			ch = append(ch, group)
-			parentsMap[group.ParentID] = ch
+		if children, ok := parentsMap[group.ParentID]; ok {
+			children = append(children, group)
+			parentsMap[group.ParentID] = children
 		}
 	}
 
 	res := groupPageRes{
 		pageRes: pageRes{
-			Total:  page.Total,
-			Offset: page.Offset,
 			Limit:  page.Limit,
+			Offset: page.Offset,
+			Total:  page.Total,
+			Level:  page.Level,
 		},
 		Groups: []viewGroupRes{},
 	}
@@ -267,22 +289,22 @@ func buildGroupsResponseTree(page groups.GroupPage) groupPageRes {
 	return res
 }
 
-func toViewGroupRes(g groups.Group) viewGroupRes {
+func toViewGroupRes(group auth.Group) viewGroupRes {
 	view := viewGroupRes{
-		ID:          g.ID,
-		ParentID:    g.ParentID,
-		OwnerID:     g.OwnerID,
-		Name:        g.Name,
-		Description: g.Description,
-		Metadata:    g.Metadata,
-		Level:       g.Level,
-		Path:        g.Path,
+		ID:          group.ID,
+		ParentID:    group.ParentID,
+		OwnerID:     group.OwnerID,
+		Name:        group.Name,
+		Description: group.Description,
+		Metadata:    group.Metadata,
+		Level:       group.Level,
+		Path:        group.Path,
 		Children:    make([]*viewGroupRes, 0),
-		CreatedAt:   g.CreatedAt,
-		UpdatedAt:   g.UpdatedAt,
+		CreatedAt:   group.CreatedAt,
+		UpdatedAt:   group.UpdatedAt,
 	}
 
-	for _, ch := range g.Children {
+	for _, ch := range group.Children {
 		child := toViewGroupRes(*ch)
 		view.Children = append(view.Children, &child)
 	}
@@ -290,12 +312,11 @@ func toViewGroupRes(g groups.Group) viewGroupRes {
 	return view
 }
 
-func buildGroupsResponse(gp groups.GroupPage) groupPageRes {
+func buildGroupsResponse(gp auth.GroupPage) groupPageRes {
 	res := groupPageRes{
 		pageRes: pageRes{
-			Total:  gp.Total,
-			Offset: gp.Offset,
-			Limit:  gp.Limit,
+			Total: gp.Total,
+			Level: gp.Level,
 		},
 		Groups: []viewGroupRes{},
 	}
@@ -319,7 +340,7 @@ func buildGroupsResponse(gp groups.GroupPage) groupPageRes {
 	return res
 }
 
-func buildUsersResponse(mp groups.MemberPage) memberPageRes {
+func buildUsersResponse(mp auth.MemberPage) memberPageRes {
 	res := memberPageRes{
 		pageRes: pageRes{
 			Total:  mp.Total,

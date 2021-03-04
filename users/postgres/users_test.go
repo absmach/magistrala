@@ -90,72 +90,21 @@ func TestSingleUserRetrieval(t *testing.T) {
 	}
 }
 
-func TestRetrieveMembers(t *testing.T) {
-	dbMiddleware := postgres.NewDatabase(db)
-	groupRepo := postgres.NewGroupRepo(dbMiddleware)
-	userRepo := postgres.NewUserRepo(dbMiddleware)
-	var nUsers = uint64(10)
-	var usrs []users.User
-	for i := uint64(0); i < nUsers; i++ {
-		uid, err := idProvider.ID()
-		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-		email := fmt.Sprintf("TestRetrieveMembers%d@example.com", i)
-		user := users.User{
-			ID:       uid,
-			Email:    email,
-			Password: "pass",
-		}
-		_, err = userRepo.Save(context.Background(), user)
-		require.Nil(t, err, fmt.Sprintf("saving user error: %s", err))
-		u, _ := userRepo.RetrieveByEmail(context.Background(), user.Email)
-		usrs = append(usrs, u)
-	}
-	uid, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("user uuid error: %s", err))
-	group := users.Group{
-		ID:   uid,
-		Name: "TestMembers",
-	}
-
-	g, err := groupRepo.Save(context.Background(), group)
-	require.Nil(t, err, fmt.Sprintf("group save got unexpected error: %s", err))
-
-	for _, u := range usrs {
-		err := groupRepo.Assign(context.Background(), u.ID, g.ID)
-		require.Nil(t, err, fmt.Sprintf("group user assign got unexpected error: %s", err))
-	}
-
-	cases := map[string]struct {
-		group    string
-		offset   uint64
-		limit    uint64
-		size     uint64
-		total    uint64
-		metadata users.Metadata
-	}{
-		"retrieve all users for existing group": {
-			group:  g.ID,
-			offset: 0,
-			limit:  nUsers,
-			size:   nUsers,
-			total:  nUsers,
-		},
-	}
-
-	for desc, tc := range cases {
-		page, err := userRepo.RetrieveMembers(context.Background(), tc.group, tc.offset, tc.limit, tc.metadata)
-		size := uint64(len(usrs))
-		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.size, size))
-		assert.Equal(t, tc.total, page.Total, fmt.Sprintf("%s: expected total %d got %d\n", desc, tc.total, page.Total))
-		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
-	}
-}
-
 func TestRetrieveAll(t *testing.T) {
 	dbMiddleware := postgres.NewDatabase(db)
 	userRepo := postgres.NewUserRepo(dbMiddleware)
+	metaNum := uint64(2)
 	var nUsers = uint64(10)
 
+	meta := users.Metadata{
+		"admin": "true",
+	}
+
+	wrongMeta := users.Metadata{
+		"wrong": "true",
+	}
+
+	var ids []string
 	for i := uint64(0); i < nUsers; i++ {
 		uid, err := idProvider.ID()
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
@@ -165,6 +114,10 @@ func TestRetrieveAll(t *testing.T) {
 			Email:    email,
 			Password: "pass",
 		}
+		if i < metaNum {
+			user.Metadata = meta
+		}
+		ids = append(ids, uid)
 		_, err = userRepo.Save(context.Background(), user)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	}
@@ -175,6 +128,7 @@ func TestRetrieveAll(t *testing.T) {
 		limit    uint64
 		size     uint64
 		total    uint64
+		ids      []string
 		metadata users.Metadata
 	}{
 		"retrieve all users filtered by email": {
@@ -191,10 +145,60 @@ func TestRetrieveAll(t *testing.T) {
 			size:   5,
 			total:  nUsers,
 		},
+		"retrieve all users by metadata": {
+			email:    "All",
+			offset:   0,
+			limit:    nUsers,
+			size:     metaNum,
+			total:    nUsers,
+			metadata: meta,
+		},
+		"retrieve users by metadata and ids": {
+			email:    "All",
+			offset:   0,
+			limit:    nUsers,
+			size:     1,
+			total:    nUsers,
+			metadata: meta,
+			ids:      []string{ids[0]},
+		},
+		"retrieve users by wrong metadata": {
+			email:    "All",
+			offset:   0,
+			limit:    nUsers,
+			size:     0,
+			total:    nUsers,
+			metadata: wrongMeta,
+		},
+		"retrieve users by wrong metadata and ids": {
+			email:    "All",
+			offset:   0,
+			limit:    nUsers,
+			size:     0,
+			total:    nUsers,
+			metadata: wrongMeta,
+			ids:      []string{ids[0]},
+		},
+		"retrieve all users by list of ids with limit and offset": {
+			email:  "All",
+			offset: 2,
+			limit:  5,
+			size:   5,
+			total:  nUsers,
+			ids:    ids,
+		},
+		"retrieve all users by list of ids with limit and offset and metadata": {
+			email:    "All",
+			offset:   1,
+			limit:    5,
+			size:     1,
+			total:    nUsers,
+			ids:      ids[0:5],
+			metadata: meta,
+		},
 	}
-
 	for desc, tc := range cases {
-		page, err := userRepo.RetrieveAll(context.Background(), tc.offset, tc.limit, tc.email, tc.metadata)
+		page, err := userRepo.RetrieveAll(context.Background(), tc.offset, tc.limit, tc.ids, tc.email, tc.metadata)
 		size := uint64(len(page.Users))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.size, size))
 		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))

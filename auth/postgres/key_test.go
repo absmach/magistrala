@@ -12,6 +12,7 @@ import (
 	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/auth/postgres"
 	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/mainflux/mainflux/pkg/ulid"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/assert"
@@ -21,8 +22,9 @@ import (
 const email = "user-save@example.com"
 
 var (
-	expTime    = time.Now().Add(5 * time.Minute)
-	idProvider = uuid.New()
+	expTime      = time.Now().Add(5 * time.Minute)
+	idProvider   = uuid.New()
+	ulidProvider = ulid.New()
 )
 
 func TestKeySave(t *testing.T) {

@@ -83,7 +83,7 @@ func newService(tokens map[string]string) things.Service {
 	thingCache := mocks.NewThingCache()
 	idProvider := uuid.NewMock()
 
-	return things.New(auth, thingsRepo, channelsRepo, nil, chanCache, thingCache, idProvider)
+	return things.New(auth, thingsRepo, channelsRepo, chanCache, thingCache, idProvider)
 }
 
 func newServer(svc things.Service) *httptest.Server {
@@ -2311,11 +2311,6 @@ type thingRes struct {
 	Name     string                 `json:"name,omitempty"`
 	Key      string                 `json:"key"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
-}
-
-type thingsRes struct {
-	Things  []things.Thing
-	created bool
 }
 
 type channelRes struct {

@@ -288,7 +288,6 @@ func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServic
 	database := postgres.NewDatabase(db)
 	hasher := bcrypt.New()
 	userRepo := tracing.UserRepositoryMiddleware(postgres.NewUserRepo(database), tracer)
-	groupRepo := tracing.GroupRepositoryMiddleware(postgres.NewGroupRepo(database), tracer)
 
 	emailer, err := emailer.New(c.resetURL, &c.emailConf)
 	if err != nil {
@@ -297,7 +296,7 @@ func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServic
 
 	idProvider := uuid.New()
 
-	svc := users.New(userRepo, groupRepo, hasher, auth, emailer, idProvider, c.passRegex)
+	svc := users.New(userRepo, hasher, auth, emailer, idProvider, c.passRegex)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,
@@ -314,14 +313,14 @@ func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServic
 			Help:      "Total duration of requests in microseconds.",
 		}, []string{"method"}),
 	)
-	if err := createAdmin(svc, userRepo, groupRepo, c); err != nil {
+	if err := createAdmin(svc, userRepo, c); err != nil {
 		logger.Error("failed to create admin user: " + err.Error())
 		os.Exit(1)
 	}
 	return svc
 }
 
-func createAdmin(svc users.Service, userRepo users.UserRepository, groupRepo users.GroupRepository, c config) error {
+func createAdmin(svc users.Service, userRepo users.UserRepository, c config) error {
 	user := users.User{
 		Email:    c.adminEmail,
 		Password: c.adminPassword,

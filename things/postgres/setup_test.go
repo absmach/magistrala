@@ -12,19 +12,16 @@ import (
 	"testing"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/things/postgres"
 	dockertest "github.com/ory/dockertest/v3"
 )
 
 const (
-	wrongID    = "0"
 	wrongValue = "wrong-value"
 )
 
 var (
-	testLog, _ = logger.New(os.Stdout, logger.Info.String())
-	db         *sqlx.DB
+	db *sqlx.DB
 )
 
 func TestMain(m *testing.M) {

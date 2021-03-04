@@ -5,6 +5,7 @@ package postgres_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -377,11 +378,17 @@ func TestMultiThingRetrieval(t *testing.T) {
 
 	email := "thing-multi-retrieval@example.com"
 	name := "thing_name"
-	metadata := things.Metadata{
-		"field": "value",
-	}
+	metaStr := `{"field1":"value1","field2":{"subfield11":"value2","subfield12":{"subfield121":"value3","subfield122":"value4"}}}`
+	subMetaStr := `{"field2":{"subfield12":{"subfield121":"value3"}}}`
+
+	metadata := things.Metadata{}
+	json.Unmarshal([]byte(metaStr), &metadata)
+
+	subMeta := things.Metadata{}
+	json.Unmarshal([]byte(subMetaStr), &subMeta)
+
 	wrongMeta := things.Metadata{
-		"wrong": "wrong",
+		"field": "value1",
 	}
 
 	offset := uint64(1)
@@ -478,6 +485,16 @@ func TestMultiThingRetrieval(t *testing.T) {
 				Limit:    n,
 				Total:    metaNum + nameMetaNum,
 				Metadata: metadata,
+			},
+			size: metaNum + nameMetaNum,
+		},
+		"retrieve things with partial metadata": {
+			owner: email,
+			pageMetadata: things.PageMetadata{
+				Offset:   0,
+				Limit:    n,
+				Total:    metaNum + nameMetaNum,
+				Metadata: subMeta,
 			},
 			size: metaNum + nameMetaNum,
 		},

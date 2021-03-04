@@ -14,7 +14,6 @@ import (
 )
 
 const (
-	wrongID    = 0
 	wrongValue = "wrong-value"
 )
 

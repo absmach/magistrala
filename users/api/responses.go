@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/users"
+	"github.com/mainflux/mainflux/auth"
 )
 
 var (
@@ -19,7 +19,7 @@ var (
 	_ mainflux.Response = (*viewGroupRes)(nil)
 	_ mainflux.Response = (*createGroupRes)(nil)
 	_ mainflux.Response = (*createUserRes)(nil)
-	_ mainflux.Response = (*groupDeleteRes)(nil)
+	_ mainflux.Response = (*deleteRes)(nil)
 	_ mainflux.Response = (*assignUserToGroupRes)(nil)
 	_ mainflux.Response = (*removeUserFromGroupRes)(nil)
 )
@@ -93,7 +93,7 @@ func (res updateUserRes) Empty() bool {
 type viewUserRes struct {
 	ID       string                 `json:"id"`
 	Email    string                 `json:"email"`
-	Groups   []users.Group          `json:"groups"`
+	Groups   []auth.Group           `json:"groups"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
@@ -211,34 +211,17 @@ func (res passwChangeRes) Empty() bool {
 	return false
 }
 
-type groupPageRes struct {
-	pageRes
-	Groups []viewGroupRes
-}
+type deleteRes struct{}
 
-func (res groupPageRes) Code() int {
-	return http.StatusOK
-}
-
-func (res groupPageRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res groupPageRes) Empty() bool {
-	return false
-}
-
-type groupDeleteRes struct{}
-
-func (res groupDeleteRes) Code() int {
+func (res deleteRes) Code() int {
 	return http.StatusNoContent
 }
 
-func (res groupDeleteRes) Headers() map[string]string {
+func (res deleteRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res groupDeleteRes) Empty() bool {
+func (res deleteRes) Empty() bool {
 	return true
 }
 

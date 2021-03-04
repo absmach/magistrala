@@ -11,7 +11,6 @@ import (
 )
 
 const (
-	saveChannelOp             = "save_channel"
 	saveChannelsOp            = "save_channels"
 	updateChannelOp           = "update_channel"
 	retrieveChannelByIDOp     = "retrieve_channel_by_id"

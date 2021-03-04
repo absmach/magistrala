@@ -15,8 +15,7 @@ import (
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/internal/groups"
-	groupsAPI "github.com/mainflux/mainflux/internal/groups/api"
+	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/things"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -176,79 +175,9 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 		opts...,
 	))
 
-	r.Get("/things/:memberID/groups", kithttp.NewServer(
-		kitot.TraceServer(tracer, "list_memberships")(groupsAPI.ListMembership(svc)),
-		groupsAPI.DecodeListMemberGroupRequest,
-		encodeResponse,
-		opts...,
-	))
-
-	r.Post("/groups", kithttp.NewServer(
-		kitot.TraceServer(tracer, "add_group")(groupsAPI.CreateGroupEndpoint(svc)),
-		groupsAPI.DecodeGroupCreate,
-		encodeResponse,
-		opts...,
-	))
-
-	r.Get("/groups", kithttp.NewServer(
-		kitot.TraceServer(tracer, "list_groups")(groupsAPI.ListGroupsEndpoint(svc)),
-		groupsAPI.DecodeListGroupsRequest,
-		encodeResponse,
-		opts...,
-	))
-
-	r.Delete("/groups/:groupID", kithttp.NewServer(
-		kitot.TraceServer(tracer, "delete_group")(groupsAPI.DeleteGroupEndpoint(svc)),
-		groupsAPI.DecodeGroupRequest,
-		encodeResponse,
-		opts...,
-	))
-
-	r.Put("/groups/:groupID/things/:memberID", kithttp.NewServer(
-		kitot.TraceServer(tracer, "assign")(groupsAPI.AssignEndpoint(svc)),
-		groupsAPI.DecodeMemberGroupRequest,
-		encodeResponse,
-		opts...,
-	))
-
-	r.Delete("/groups/:groupID/things/:memberID", kithttp.NewServer(
-		kitot.TraceServer(tracer, "unassign")(groupsAPI.UnassignEndpoint(svc)),
-		groupsAPI.DecodeMemberGroupRequest,
-		encodeResponse,
-		opts...,
-	))
-
-	r.Get("/groups/:groupID/things", kithttp.NewServer(
-		kitot.TraceServer(tracer, "list_things")(groupsAPI.ListMembersEndpoint(svc)),
-		groupsAPI.DecodeListMemberGroupRequest,
-		encodeResponse,
-		opts...,
-	))
-
-	r.Put("/groups/:groupID", kithttp.NewServer(
-		kitot.TraceServer(tracer, "update_group")(groupsAPI.UpdateGroupEndpoint(svc)),
-		groupsAPI.DecodeGroupUpdate,
-		encodeResponse,
-		opts...,
-	))
-
-	r.Get("/groups/:groupID/children", kithttp.NewServer(
-		kitot.TraceServer(tracer, "list_children_groups")(groupsAPI.ListGroupChildrenEndpoint(svc)),
-		groupsAPI.DecodeListGroupsRequest,
-		encodeResponse,
-		opts...,
-	))
-
-	r.Get("/groups/:groupID/parents", kithttp.NewServer(
-		kitot.TraceServer(tracer, "list_parent_groups")(groupsAPI.ListGroupParentsEndpoint(svc)),
-		groupsAPI.DecodeListGroupsRequest,
-		encodeResponse,
-		opts...,
-	))
-
-	r.Get("/groups/:groupID", kithttp.NewServer(
-		kitot.TraceServer(tracer, "view_group")(groupsAPI.ViewGroupEndpoint(svc)),
-		groupsAPI.DecodeGroupRequest,
+	r.Get("/groups/:groupId", kithttp.NewServer(
+		kitot.TraceServer(tracer, "list_things")(listMembersEndpoint(svc)),
+		decodeListThingsGroupRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -479,6 +408,34 @@ func decodeCreateConnections(_ context.Context, r *http.Request) (interface{}, e
 	return req, nil
 }
 
+func decodeListThingsGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	o, err := readUintQuery(r, offsetKey, defOffset)
+	if err != nil {
+		return nil, err
+	}
+
+	l, err := readUintQuery(r, limitKey, defLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	m, err := readMetadataQuery(r, metadataKey)
+	if err != nil {
+		return nil, err
+	}
+
+	req := listThingsGroupReq{
+		token:   r.Header.Get("Authorization"),
+		groupID: bone.GetValue(r, "groupId"),
+		pageMetadata: things.PageMetadata{
+			Offset:   o,
+			Limit:    l,
+			Metadata: m,
+		},
+	}
+	return req, nil
+}
+
 func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-Type", contentType)
 
@@ -528,7 +485,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 			errors.Contains(errorVal, things.ErrRemoveEntity),
 			errors.Contains(errorVal, things.ErrConnect),
 			errors.Contains(errorVal, things.ErrDisconnect),
-			errors.Contains(errorVal, groups.ErrCreateGroup):
+			errors.Contains(errorVal, auth.ErrCreateGroup):
 			w.WriteHeader(http.StatusBadRequest)
 
 		case errors.Contains(errorVal, io.ErrUnexpectedEOF),

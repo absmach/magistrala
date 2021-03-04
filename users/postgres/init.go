@@ -76,24 +76,6 @@ func migrateDB(db *sqlx.DB) error {
 					`ALTER TABLE IF EXISTS users DROP CONSTRAINT users_pkey`,
 					`ALTER TABLE IF EXISTS users ADD CONSTRAINT users_email_key UNIQUE (email)`,
 					`ALTER TABLE IF EXISTS users ADD PRIMARY KEY (id)`,
-					`CREATE TABLE IF NOT EXISTS groups ( 
-					 id          UUID NOT NULL,
-					 parent_id   UUID, 
-					 owner_id    UUID,
-					 name        VARCHAR(254) UNIQUE NOT NULL,
-					 description VARCHAR(1024),
-					 metadata    JSONB,
-					 PRIMARY KEY (id),
-					 FOREIGN KEY (parent_id) REFERENCES groups (id)  ON DELETE CASCADE ON UPDATE CASCADE,
-					 FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
-				)`,
-					`CREATE TABLE IF NOT EXISTS group_relations (
-					 user_id UUID NOT NULL,
-					 group_id UUID NOT NULL,
-					 FOREIGN KEY (user_id)  REFERENCES users  (id) ON DELETE CASCADE ON UPDATE CASCADE,
-					 FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE ON UPDATE CASCADE,
-					 PRIMARY KEY (user_id, group_id)
-				)`,
 				},
 			},
 		},

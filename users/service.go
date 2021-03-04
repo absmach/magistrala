@@ -13,8 +13,6 @@ import (
 )
 
 var (
-	groupRegexp = regexp.MustCompile("^[a-zA-Z0-9]+$")
-
 	// ErrConflict indicates usage of the existing email during account
 	// registration.
 	ErrConflict = errors.New("email already taken")
@@ -55,18 +53,6 @@ var (
 	// ErrCreateUser indicates error in creating user.
 	ErrCreateUser = errors.New("failed to create user")
 
-	// ErrCreateGroup indicates error in creating group.
-	ErrCreateGroup = errors.New("failed to create group")
-
-	// ErrUpdateGroup indicates error in updating group.
-	ErrUpdateGroup = errors.New("failed to update group")
-
-	// ErrDeleteGroupMissing indicates in delete operation that group doesnt exist.
-	ErrDeleteGroupMissing = errors.New("group is not existing, already deleted")
-
-	// ErrAssignUserToGroup indicates an error in assigning user to a group.
-	ErrAssignUserToGroup = errors.New("failed assigning user to a group")
-
 	// ErrPasswordFormat indicates weak password.
 	ErrPasswordFormat = errors.New("password does not meet the requirements")
 )
@@ -90,7 +76,7 @@ type Service interface {
 	ViewProfile(ctx context.Context, token string) (User, error)
 
 	// ListUsers retrieves users list for a valid admin token.
-	ListUsers(ctx context.Context, token string, offset, limit uint64, email string, m Metadata) (UserPage, error)
+	ListUsers(ctx context.Context, token string, offset, limit uint64, email string, meta Metadata) (UserPage, error)
 
 	// UpdateUser updates the user metadata.
 	UpdateUser(ctx context.Context, token string, user User) error
@@ -109,33 +95,8 @@ type Service interface {
 	//SendPasswordReset sends reset password link to email.
 	SendPasswordReset(ctx context.Context, host, email, token string) error
 
-	// CreateGroup creates new user group.
-	CreateGroup(ctx context.Context, token string, group Group) (Group, error)
-
-	// UpdateGroup updates the group identified by the provided ID.
-	UpdateGroup(ctx context.Context, token string, group Group) error
-
-	// ViewGroup retrieves data about the group identified by ID.
-	ViewGroup(ctx context.Context, token, id string) (Group, error)
-
-	// ListGroups retrieves groups that are children to group identified by parenID
-	// if parentID is empty all groups are listed.
-	ListGroups(ctx context.Context, token, parentID string, offset, limit uint64, m Metadata) (GroupPage, error)
-
-	// Members retrieves users that are assigned to a group identified by groupID.
-	ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, m Metadata) (UserPage, error)
-
-	// ListMemberships retrieves groups that user identified with userID belongs to.
-	ListMemberships(ctx context.Context, token, groupID string, offset, limit uint64, m Metadata) (GroupPage, error)
-
-	// RemoveGroup removes the group identified with the provided ID.
-	RemoveGroup(ctx context.Context, token, id string) error
-
-	// Assign adds user with userID into the group identified by groupID.
-	Assign(ctx context.Context, token, userID, groupID string) error
-
-	// Unassign removes user with userID from group identified by groupID.
-	Unassign(ctx context.Context, token, userID, groupID string) error
+	// ListMembers retrieves everything that is assigned to a group identified by groupID.
+	ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, meta Metadata) (UserPage, error)
 }
 
 // PageMetadata contains page metadata that helps navigation.
@@ -149,7 +110,7 @@ type PageMetadata struct {
 // GroupPage contains a page of groups.
 type GroupPage struct {
 	PageMetadata
-	Groups []Group
+	Groups []auth.Group
 }
 
 // UserPage contains a page of users.
@@ -162,7 +123,6 @@ var _ Service = (*usersService)(nil)
 
 type usersService struct {
 	users      UserRepository
-	groups     GroupRepository
 	hasher     Hasher
 	email      Emailer
 	auth       mainflux.AuthServiceClient
@@ -171,13 +131,12 @@ type usersService struct {
 }
 
 // New instantiates the users service implementation
-func New(users UserRepository, groups GroupRepository, hasher Hasher, auth mainflux.AuthServiceClient, m Emailer, idp mainflux.IDProvider, passRegex *regexp.Regexp) Service {
+func New(users UserRepository, hasher Hasher, auth mainflux.AuthServiceClient, e Emailer, idp mainflux.IDProvider, passRegex *regexp.Regexp) Service {
 	return &usersService{
 		users:      users,
-		groups:     groups,
 		hasher:     hasher,
 		auth:       auth,
-		email:      m,
+		email:      e,
 		idProvider: idp,
 		passRegex:  passRegex,
 	}
@@ -262,7 +221,7 @@ func (svc usersService) ListUsers(ctx context.Context, token string, offset, lim
 		return UserPage{}, err
 	}
 
-	return svc.users.RetrieveAll(ctx, offset, limit, email, m)
+	return svc.users.RetrieveAll(ctx, offset, limit, nil, email, m)
 }
 
 func (svc usersService) UpdateUser(ctx context.Context, token string, u User) error {
@@ -340,82 +299,17 @@ func (svc usersService) SendPasswordReset(_ context.Context, host, email, token 
 	return svc.email.SendPasswordReset(to, host, token)
 }
 
-func (svc usersService) CreateGroup(ctx context.Context, token string, group Group) (Group, error) {
-	if group.Name == "" || !groupRegexp.MatchString(group.Name) {
-		return Group{}, ErrMalformedEntity
-	}
-
-	identity, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
-	if err != nil {
-		return Group{}, err
-	}
-
-	uid, err := svc.idProvider.ID()
-	if err != nil {
-		return Group{}, errors.Wrap(ErrCreateUser, err)
-	}
-
-	group.ID = uid
-	group.OwnerID = identity.GetId()
-
-	return svc.groups.Save(ctx, group)
-}
-
-func (svc usersService) ListGroups(ctx context.Context, token string, parentID string, offset, limit uint64, m Metadata) (GroupPage, error) {
-	_, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
-	if err != nil {
-		return GroupPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
-	}
-	return svc.groups.RetrieveAllWithAncestors(ctx, parentID, offset, limit, m)
-}
-
 func (svc usersService) ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, m Metadata) (UserPage, error) {
 	if _, err := svc.identify(ctx, token); err != nil {
 		return UserPage{}, err
 	}
-	return svc.users.RetrieveMembers(ctx, groupID, offset, limit, m)
-}
 
-func (svc usersService) RemoveGroup(ctx context.Context, token, id string) error {
-	if _, err := svc.identify(ctx, token); err != nil {
-		return err
+	userIDs, err := svc.members(ctx, token, groupID, offset, limit)
+	if err != nil {
+		return UserPage{}, err
 	}
-	return svc.groups.Delete(ctx, id)
-}
 
-func (svc usersService) Unassign(ctx context.Context, token, userID, groupID string) error {
-	if _, err := svc.identify(ctx, token); err != nil {
-		return err
-	}
-	return svc.groups.Unassign(ctx, userID, groupID)
-}
-
-func (svc usersService) UpdateGroup(ctx context.Context, token string, group Group) error {
-	if _, err := svc.identify(ctx, token); err != nil {
-		return err
-	}
-	return svc.groups.Update(ctx, group)
-}
-
-func (svc usersService) ViewGroup(ctx context.Context, token, id string) (Group, error) {
-	if _, err := svc.identify(ctx, token); err != nil {
-		return Group{}, err
-	}
-	return svc.groups.RetrieveByID(ctx, id)
-}
-
-func (svc usersService) Assign(ctx context.Context, token, userID, groupID string) error {
-	if _, err := svc.identify(ctx, token); err != nil {
-		return err
-	}
-	return svc.groups.Assign(ctx, userID, groupID)
-}
-
-func (svc usersService) ListMemberships(ctx context.Context, token, userID string, offset, limit uint64, m Metadata) (GroupPage, error) {
-	if _, err := svc.identify(ctx, token); err != nil {
-		return GroupPage{}, err
-	}
-	return svc.groups.RetrieveMemberships(ctx, userID, offset, limit, m)
+	return svc.users.RetrieveAll(ctx, offset, limit, userIDs, "", m)
 }
 
 // Auth helpers
@@ -433,4 +327,20 @@ func (svc usersService) identify(ctx context.Context, token string) (string, err
 		return "", errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	return identity.GetEmail(), nil
+}
+
+func (svc usersService) members(ctx context.Context, token, groupID string, limit, offset uint64) ([]string, error) {
+	req := mainflux.MembersReq{
+		Token:   token,
+		GroupID: groupID,
+		Offset:  offset,
+		Limit:   limit,
+		Type:    "users",
+	}
+
+	res, err := svc.auth.Members(ctx, &req)
+	if err != nil {
+		return nil, err
+	}
+	return res.Members, nil
 }

@@ -67,7 +67,6 @@ func authorizeEndpoint(svc auth.Service) endpoint.Endpoint {
 			return authorizeRes{}, err
 		}
 
-		// TODO implement authorization
 		authorized, err := svc.Authorize(ctx, req.token, req.Sub, req.Obj, req.Obj)
 		if err != nil {
 			return authorizeRes{}, err
@@ -90,7 +89,7 @@ func assignEndpoint(svc auth.Service) endpoint.Endpoint {
 			return emptyRes{}, err
 		}
 
-		err = svc.Assign(ctx, req.token, req.memberID, req.groupID)
+		err = svc.Assign(ctx, req.token, req.memberID, req.groupID, req.groupType)
 		if err != nil {
 			return emptyRes{}, err
 		}
@@ -102,30 +101,27 @@ func assignEndpoint(svc auth.Service) endpoint.Endpoint {
 func membersEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(membersReq)
-
 		if err := req.validate(); err != nil {
 			return membersRes{}, err
 		}
 
-		_, err := svc.Identify(ctx, req.token)
+		pm := auth.PageMetadata{
+			Offset: req.offset,
+			Limit:  req.limit,
+		}
+		mp, err := svc.ListMembers(ctx, req.token, req.groupID, req.memberType, pm)
 		if err != nil {
 			return membersRes{}, err
 		}
-
-		mp, err := svc.ListMembers(ctx, req.token, req.groupID, req.offset, req.limit, nil)
-		if err != nil {
-			return membersRes{}, err
-		}
-		memberIDs := []string{}
+		var members []string
 		for _, m := range mp.Members {
-			memberIDs = append(memberIDs, m.(string))
+			members = append(members, m.ID)
 		}
 		return membersRes{
 			offset:  req.offset,
 			limit:   req.limit,
 			total:   mp.PageMetadata.Total,
-			members: memberIDs,
+			members: members,
 		}, nil
-
 	}
 }

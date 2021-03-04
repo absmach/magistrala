@@ -166,7 +166,8 @@ func TestSingleChannelRetrieval(t *testing.T) {
 	}
 	chs, _ := chanRepo.Save(context.Background(), ch)
 	ch.ID = chs[0].ID
-	chanRepo.Connect(context.Background(), email, []string{ch.ID}, []string{th.ID})
+	err = chanRepo.Connect(context.Background(), email, []string{ch.ID}, []string{th.ID})
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	nonexistentChanID, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -677,7 +678,8 @@ func TestDisconnect(t *testing.T) {
 	})
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	chID = chs[0].ID
-	chanRepo.Connect(context.Background(), email, []string{chID}, []string{thID})
+	err = chanRepo.Connect(context.Background(), email, []string{chID}, []string{thID})
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	nonexistentThingID, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -763,7 +765,8 @@ func TestHasThing(t *testing.T) {
 	})
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	chID = chs[0].ID
-	chanRepo.Connect(context.Background(), email, []string{chID}, []string{thID})
+	err = chanRepo.Connect(context.Background(), email, []string{chID}, []string{thID})
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	nonexistentChanID, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -838,7 +841,8 @@ func TestHasThingByID(t *testing.T) {
 	})
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	chID = chs[0].ID
-	chanRepo.Connect(context.Background(), email, []string{chID}, []string{thID})
+	err = chanRepo.Connect(context.Background(), email, []string{chID}, []string{thID})
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	nonexistentChanID, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))

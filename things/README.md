@@ -37,7 +37,7 @@ default values.
 | MF_THINGS_ES_PASS           | Event store password                                                   |                |
 | MF_THINGS_ES_DB             | Event store instance name                                              | 0              |
 | MF_THINGS_HTTP_PORT         | Things service HTTP port                                               | 8182           |
-| MF_THINGS_AUTH_HTTP_PORT    | Things service Auth HTTP port                                          | 8180           |
+| MF_THINGS_AUTH_HTTP_PORT    | Things service Auth HTTP port                                          | 8989           |
 | MF_THINGS_AUTH_GRPC_PORT    | Things service Auth gRPC port                                          | 8181           |
 | MF_THINGS_SERVER_CERT       | Path to server certificate in pem format                               |                |
 | MF_THINGS_SERVER_KEY        | Path to server key in pem format                                       |                |

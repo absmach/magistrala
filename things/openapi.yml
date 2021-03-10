@@ -446,7 +446,7 @@ paths:
           description: Channel or thing does not exist.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /channels/{chanId}/access-by-key:
+  /identify/channels/{chanId}/access-by-key:
     post:
       summary: Checks if thing has access to a channel.
       description: |
@@ -469,7 +469,7 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /channels/{chanId}/access-by-id:
+  /identify/channels/{chanId}/access-by-id:
     post:
       summary: Checks if thing has access to a channel.
       description: |

@@ -210,7 +210,7 @@ func TestCanAccessByKey(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/channels/%s/access-by-key", ts.URL, tc.chanID),
+			url:         fmt.Sprintf("%s/identify/channels/%s/access-by-key", ts.URL, tc.chanID),
 			contentType: tc.contentType,
 			body:        strings.NewReader(tc.req),
 		}
@@ -288,7 +288,7 @@ func TestCanAccessByID(t *testing.T) {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
-			url:         fmt.Sprintf("%s/channels/%s/access-by-id", ts.URL, tc.chanID),
+			url:         fmt.Sprintf("%s/identify/channels/%s/access-by-id", ts.URL, tc.chanID),
 			contentType: tc.contentType,
 			body:        strings.NewReader(tc.req),
 		}

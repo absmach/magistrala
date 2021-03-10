@@ -39,14 +39,14 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 		opts...,
 	))
 
-	r.Post("/channels/:chanId/access-by-key", kithttp.NewServer(
+	r.Post("/identify/channels/:chanId/access-by-key", kithttp.NewServer(
 		kitot.TraceServer(tracer, "can_access_by_key")(canAccessByKeyEndpoint(svc)),
 		decodeCanAccessByKey,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Post("/channels/:chanId/access-by-id", kithttp.NewServer(
+	r.Post("/identify/channels/:chanId/access-by-id", kithttp.NewServer(
 		kitot.TraceServer(tracer, "can_access_by_id")(canAccessByIDEndpoint(svc)),
 		decodeCanAccessByID,
 		encodeResponse,

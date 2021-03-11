@@ -31,6 +31,17 @@ func sortThings(pm things.PageMetadata, ths []things.Thing) []things.Thing {
 				return ths[i].Name > ths[j].Name
 			})
 		}
+	case "id":
+		if pm.Dir == "asc" {
+			sort.SliceStable(ths, func(i, j int) bool {
+				return ths[i].ID < ths[j].ID
+			})
+		}
+		if pm.Dir == "desc" {
+			sort.SliceStable(ths, func(i, j int) bool {
+				return ths[i].ID > ths[j].ID
+			})
+		}
 	default:
 		sort.SliceStable(ths, func(i, j int) bool {
 			return ths[i].ID < ths[j].ID
@@ -51,6 +62,17 @@ func sortChannels(pm things.PageMetadata, chs []things.Channel) []things.Channel
 		if pm.Dir == "desc" {
 			sort.SliceStable(chs, func(i, j int) bool {
 				return chs[i].Name > chs[j].Name
+			})
+		}
+	case "id":
+		if pm.Dir == "asc" {
+			sort.SliceStable(chs, func(i, j int) bool {
+				return chs[i].ID < chs[j].ID
+			})
+		}
+		if pm.Dir == "desc" {
+			sort.SliceStable(chs, func(i, j int) bool {
+				return chs[i].ID > chs[j].ID
 			})
 		}
 	default:

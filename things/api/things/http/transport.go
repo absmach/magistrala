@@ -105,6 +105,13 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 		opts...,
 	))
 
+	r.Post("/things/search", kithttp.NewServer(
+		kitot.TraceServer(tracer, "search_things")(listThingsEndpoint(svc)),
+		decodeListByMetadata,
+		encodeResponse,
+		opts...,
+	))
+
 	r.Post("/channels", kithttp.NewServer(
 		kitot.TraceServer(tracer, "create_channel")(createChannelEndpoint(svc)),
 		decodeChannelCreation,
@@ -339,6 +346,15 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 			Dir:      d,
 			Metadata: m,
 		},
+	}
+
+	return req, nil
+}
+
+func decodeListByMetadata(_ context.Context, r *http.Request) (interface{}, error) {
+	req := listResourcesReq{token: r.Header.Get("Authorization")}
+	if err := json.NewDecoder(r.Body).Decode(&req.pageMetadata); err != nil {
+		return nil, errors.Wrap(things.ErrMalformedEntity, err)
 	}
 
 	return req, nil

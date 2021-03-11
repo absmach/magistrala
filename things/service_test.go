@@ -711,13 +711,13 @@ func TestListChannels(t *testing.T) {
 			size: 0,
 			err:  nil,
 		},
-		"list with zero limit": {
+		"list with zero limit and offset 1": {
 			token: token,
 			pageMetadata: things.PageMetadata{
 				Offset: 1,
 				Limit:  0,
 			},
-			size: 0,
+			size: n - 1,
 			err:  nil,
 		},
 		"list with wrong credentials": {

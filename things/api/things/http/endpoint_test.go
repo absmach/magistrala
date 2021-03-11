@@ -46,9 +46,13 @@ var (
 		Name:     "test",
 		Metadata: map[string]interface{}{"test": "data"},
 	}
-	invalidName = strings.Repeat("m", maxNameSize+1)
-	notFoundRes = toJSON(errorRes{things.ErrNotFound.Error()})
-	unauthRes   = toJSON(errorRes{things.ErrUnauthorizedAccess.Error()})
+	invalidName    = strings.Repeat("m", maxNameSize+1)
+	notFoundRes    = toJSON(errorRes{things.ErrNotFound.Error()})
+	unauthRes      = toJSON(errorRes{things.ErrUnauthorizedAccess.Error()})
+	searchThingReq = things.PageMetadata{
+		Limit:  5,
+		Offset: 0,
+	}
 )
 
 type testRequest struct {
@@ -122,7 +126,7 @@ func TestCreateThing(t *testing.T) {
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusCreated,
-			location:    "/things/1",
+			location:    "/things/001",
 		},
 		{
 			desc:        "add thing with existing key",
@@ -138,7 +142,7 @@ func TestCreateThing(t *testing.T) {
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusCreated,
-			location:    "/things/2",
+			location:    "/things/002",
 		},
 		{
 			desc:        "add thing with invalid auth token",
@@ -723,11 +727,11 @@ func TestListThings(t *testing.T) {
 			res:    nil,
 		},
 		{
-			desc:   "get a list of things with zero limit",
+			desc:   "get a list of things with zero limit and offset 1",
 			auth:   token,
-			status: http.StatusBadRequest,
+			status: http.StatusOK,
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d", thingURL, 1, 0),
-			res:    nil,
+			res:    data[1:11],
 		},
 		{
 			desc:   "get a list of things without offset",
@@ -828,6 +832,201 @@ func TestListThings(t *testing.T) {
 			method: http.MethodGet,
 			url:    tc.url,
 			token:  tc.auth,
+		}
+		res, err := req.make()
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		var data thingsPageRes
+		json.NewDecoder(res.Body).Decode(&data)
+		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+		assert.ElementsMatch(t, tc.res, data.Things, fmt.Sprintf("%s: expected body %v got %v", tc.desc, tc.res, data.Things))
+	}
+}
+
+func TestSearchThings(t *testing.T) {
+	svc := newService(map[string]string{token: email})
+	ts := newServer(svc)
+	defer ts.Close()
+
+	th := searchThingReq
+	validData := toJSON(th)
+
+	th.Dir = "desc"
+	th.Order = "name"
+	descData := toJSON(th)
+
+	th.Dir = "asc"
+	ascData := toJSON(th)
+
+	th.Order = "wrong"
+	invalidOrderData := toJSON(th)
+
+	th = searchThingReq
+	th.Dir = "wrong"
+	invalidDirData := toJSON(th)
+
+	th = searchThingReq
+	th.Limit = 110
+	limitMaxData := toJSON(th)
+
+	th.Limit = 0
+	zeroLimitData := toJSON(th)
+
+	th = searchThingReq
+	th.Name = invalidName
+	invalidNameData := toJSON(th)
+
+	th.Name = invalidName
+	invalidData := toJSON(th)
+
+	data := []thingRes{}
+	for i := 0; i < 100; i++ {
+		name := "name_" + fmt.Sprintf("%03d", i+1)
+		ths, err := svc.CreateThings(context.Background(), token, things.Thing{Name: name, Metadata: map[string]interface{}{"test": name}})
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		th := ths[0]
+		data = append(data, thingRes{
+			ID:       th.ID,
+			Name:     th.Name,
+			Key:      th.Key,
+			Metadata: th.Metadata,
+		})
+	}
+
+	cases := []struct {
+		desc   string
+		auth   string
+		status int
+		req    string
+		res    []thingRes
+	}{
+		{
+			desc:   "search things",
+			auth:   token,
+			status: http.StatusOK,
+			req:    validData,
+			res:    data[0:5],
+		},
+		{
+			desc:   "search things ordered by name descendent",
+			auth:   token,
+			status: http.StatusOK,
+			req:    descData,
+			res:    data[0:5],
+		},
+		{
+			desc:   "search things ordered by name ascendent",
+			auth:   token,
+			status: http.StatusOK,
+			req:    ascData,
+			res:    data[0:5],
+		},
+		{
+			desc:   "search things with invalid order",
+			auth:   token,
+			status: http.StatusBadRequest,
+			req:    invalidOrderData,
+			res:    nil,
+		},
+		{
+			desc:   "search things with invalid dir",
+			auth:   token,
+			status: http.StatusBadRequest,
+			req:    invalidDirData,
+			res:    nil,
+		},
+		{
+			desc:   "search things with invalid token",
+			auth:   wrongValue,
+			status: http.StatusUnauthorized,
+			req:    validData,
+			res:    nil,
+		},
+		{
+			desc:   "search things with invalid data",
+			auth:   token,
+			status: http.StatusBadRequest,
+			req:    invalidData,
+			res:    nil,
+		},
+		{
+			desc:   "search things with empty token",
+			auth:   "",
+			status: http.StatusUnauthorized,
+			req:    validData,
+			res:    nil,
+		},
+		{
+			desc:   "search things with zero limit",
+			auth:   token,
+			status: http.StatusOK,
+			req:    zeroLimitData,
+			res:    data[0:10],
+		},
+		{
+			desc:   "search things without offset",
+			auth:   token,
+			status: http.StatusOK,
+			req:    validData,
+			res:    data[0:5],
+		},
+		{
+			desc:   "search things with limit greater than max",
+			auth:   token,
+			status: http.StatusBadRequest,
+			req:    limitMaxData,
+			res:    nil,
+		},
+		{
+			desc:   "search things with default URL",
+			auth:   token,
+			status: http.StatusOK,
+			req:    validData,
+			res:    data[0:5],
+		},
+		{
+			desc:   "search things filtering with invalid name",
+			auth:   token,
+			status: http.StatusBadRequest,
+			req:    invalidNameData,
+			res:    nil,
+		},
+		{
+			desc:   "search things sorted by name ascendent",
+			auth:   token,
+			status: http.StatusOK,
+			req:    validData,
+			res:    data[0:5],
+		},
+		{
+			desc:   "search things sorted by name descendent",
+			auth:   token,
+			status: http.StatusOK,
+			req:    validData,
+			res:    data[0:5],
+		},
+		{
+			desc:   "search things sorted with invalid order",
+			auth:   token,
+			status: http.StatusBadRequest,
+			req:    invalidOrderData,
+			res:    nil,
+		},
+		{
+			desc:   "search things sorted by name with invalid direction",
+			auth:   token,
+			status: http.StatusBadRequest,
+			req:    invalidDirData,
+			res:    nil,
+		},
+	}
+
+	for _, tc := range cases {
+		req := testRequest{
+			client: ts.Client(),
+			method: http.MethodPost,
+			url:    fmt.Sprintf("%s/things/search", ts.URL),
+			token:  tc.auth,
+			body:   strings.NewReader(tc.req),
 		}
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
@@ -1097,7 +1296,7 @@ func TestCreateChannel(t *testing.T) {
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusCreated,
-			location:    "/channels/1",
+			location:    "/channels/001",
 		},
 		{
 			desc:        "create new channel with invalid token",
@@ -1129,7 +1328,7 @@ func TestCreateChannel(t *testing.T) {
 			contentType: contentType,
 			auth:        token,
 			status:      http.StatusCreated,
-			location:    "/channels/2",
+			location:    "/channels/002",
 		},
 		{
 			desc:        "create new channel with empty request",
@@ -1482,7 +1681,12 @@ func TestListChannels(t *testing.T) {
 
 	channels := []channelRes{}
 	for i := 0; i < 101; i++ {
-		chs, err := svc.CreateChannels(context.Background(), token, channel)
+		name := "name_" + fmt.Sprintf("%03d", i+1)
+		chs, err := svc.CreateChannels(context.Background(), token,
+			things.Channel{
+				Name:     name,
+				Metadata: map[string]interface{}{"test": "data"},
+			})
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		ch := chs[0]
 		ths, err := svc.CreateThings(context.Background(), token, thing)
@@ -1513,17 +1717,17 @@ func TestListChannels(t *testing.T) {
 			res:    channels[0:6],
 		},
 		{
-			desc:   "get a list of channels ordered by name descendent",
+			desc:   "get a list of channels ordered by id descendent",
 			auth:   token,
 			status: http.StatusOK,
-			url:    fmt.Sprintf("%s?offset=%d&limit=%d&order=name&dir=desc", channelURL, 0, 6),
-			res:    channels[0:6],
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d&order=id&dir=desc", channelURL, 0, 6),
+			res:    channels[len(channels)-6:],
 		},
 		{
-			desc:   "get a list of channels ordered by name ascendent",
+			desc:   "get a list of channels ordered by id ascendent",
 			auth:   token,
 			status: http.StatusOK,
-			url:    fmt.Sprintf("%s?offset=%d&limit=%d&order=name&dir=asc", channelURL, 0, 6),
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d&order=id&dir=asc", channelURL, 0, 6),
 			res:    channels[0:6],
 		},
 		{
@@ -1569,11 +1773,11 @@ func TestListChannels(t *testing.T) {
 			res:    nil,
 		},
 		{
-			desc:   "get a list of channels with zero limit",
+			desc:   "get a list of channels with zero limit and offset 1",
 			auth:   token,
-			status: http.StatusBadRequest,
+			status: http.StatusOK,
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d", channelURL, 1, 0),
-			res:    nil,
+			res:    channels[1:11],
 		},
 		{
 			desc:   "get a list of channels with no offset provided",
@@ -1650,7 +1854,7 @@ func TestListChannels(t *testing.T) {
 			auth:   token,
 			status: http.StatusOK,
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d&order=%s&dir=%s", channelURL, 0, 6, nameKey, descKey),
-			res:    channels[0:6],
+			res:    channels[len(channels)-6:],
 		},
 		{
 			desc:   "get a list of channels sorted with invalid order",

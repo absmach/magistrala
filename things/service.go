@@ -126,13 +126,13 @@ type Service interface {
 // PageMetadata contains page metadata that helps navigation.
 type PageMetadata struct {
 	Total     uint64
-	Offset    uint64
-	Limit     uint64
-	Name      string
-	Order     string
-	Dir       string
-	Metadata  map[string]interface{}
-	Connected bool // Used for connected or disconnected lists
+	Offset    uint64                 `json:"offset,omitempty"`
+	Limit     uint64                 `json:"limit,omitempty"`
+	Name      string                 `json:"name,omitempty"`
+	Order     string                 `json:"order,omitempty"`
+	Dir       string                 `json:"dir,omitempty"`
+	Metadata  map[string]interface{} `json:"metadata,omitempty"`
+	Connected bool                   // Used for connected or disconnected lists
 }
 
 var _ Service = (*thingsService)(nil)

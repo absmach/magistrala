@@ -185,7 +185,11 @@ func (req *listResourcesReq) validate() error {
 		return things.ErrUnauthorizedAccess
 	}
 
-	if req.pageMetadata.Limit == 0 || req.pageMetadata.Limit > maxLimitSize {
+	if req.pageMetadata.Limit == 0 {
+		req.pageMetadata.Limit = defLimit
+	}
+
+	if req.pageMetadata.Limit > maxLimitSize {
 		return things.ErrMalformedEntity
 	}
 

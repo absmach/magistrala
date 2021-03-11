@@ -6,7 +6,6 @@ package sdk_test
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,7 +15,7 @@ import (
 )
 
 var (
-	channel      = sdk.Channel{ID: "1", Name: "test"}
+	channel      = sdk.Channel{ID: "001", Name: "test"}
 	emptyChannel = sdk.Channel{}
 )
 
@@ -99,8 +98,8 @@ func TestCreateChannels(t *testing.T) {
 	mainfluxSDK := sdk.NewSDK(sdkConf)
 
 	channels := []sdk.Channel{
-		sdk.Channel{ID: "1", Name: "1"},
-		sdk.Channel{ID: "2", Name: "2"},
+		sdk.Channel{ID: "001", Name: "1"},
+		sdk.Channel{ID: "002", Name: "2"},
 	}
 
 	cases := []struct {
@@ -221,7 +220,7 @@ func TestChannels(t *testing.T) {
 	var channels []sdk.Channel
 	mainfluxSDK := sdk.NewSDK(sdkConf)
 	for i := 1; i < 101; i++ {
-		ch := sdk.Channel{ID: strconv.Itoa(i), Name: "test"}
+		ch := sdk.Channel{ID: fmt.Sprintf("%03d", i), Name: "test"}
 		mainfluxSDK.CreateChannel(ch, token)
 		channels = append(channels, ch)
 	}
@@ -260,12 +259,12 @@ func TestChannels(t *testing.T) {
 			response: nil,
 		},
 		{
-			desc:     "get a list of channels with zero limit",
+			desc:     "get a list of channels without limit, default 10",
 			token:    token,
 			offset:   0,
 			limit:    0,
-			err:      createError(sdk.ErrFailedFetch, http.StatusBadRequest),
-			response: nil,
+			err:      nil,
+			response: channels[0:10],
 		},
 		{
 			desc:     "get a list of channels with limit greater than max",
@@ -282,14 +281,6 @@ func TestChannels(t *testing.T) {
 			limit:    5,
 			err:      nil,
 			response: []sdk.Channel{},
-		},
-		{
-			desc:     "get a list of channels with invalid args (zero limit) and invalid token",
-			token:    wrongValue,
-			offset:   0,
-			limit:    0,
-			err:      createError(sdk.ErrFailedFetch, http.StatusBadRequest),
-			response: nil,
 		},
 	}
 	for _, tc := range cases {
@@ -323,7 +314,7 @@ func TestChannelsByThing(t *testing.T) {
 	var channels []sdk.Channel
 	for i := 1; i < n+1; i++ {
 		ch := sdk.Channel{
-			ID:   strconv.Itoa(i),
+			ID:   fmt.Sprintf("%03d", i),
 			Name: "test",
 		}
 		cid, err := mainfluxSDK.CreateChannel(ch, token)

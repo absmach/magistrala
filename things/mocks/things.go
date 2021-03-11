@@ -55,7 +55,7 @@ func (trm *thingRepositoryMock) Save(_ context.Context, ths ...things.Thing) ([]
 		}
 
 		trm.counter++
-		ths[i].ID = strconv.FormatUint(trm.counter, 10)
+		ths[i].ID = fmt.Sprintf("%03d", trm.counter)
 		trm.things[key(ths[i].Owner, ths[i].ID)] = ths[i]
 	}
 
@@ -115,7 +115,7 @@ func (trm *thingRepositoryMock) RetrieveAll(_ context.Context, owner string, pm 
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
-	if pm.Limit <= 0 {
+	if pm.Limit < 0 {
 		return things.Page{}, nil
 	}
 

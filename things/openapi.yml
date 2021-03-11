@@ -62,6 +62,34 @@ paths:
           description: Database can't process request.
         '500':
           $ref: "#/components/responses/ServiceError"
+  /things/search:
+    post:
+      summary: Search and retrieves things
+      description: |
+        Retrieves a list of things with name and metadata filtering.
+        Due to performance concerns, data is retrieved in subsets.
+        The API things must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
+      tags:
+        - things
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+      requestBody:
+        $ref: "#/components/requestBodies/ThingsSearchReq"
+      responses:
+        '200':
+          $ref: "#/components/responses/ThingsPageRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        '401':
+          description: Missing or invalid access token provided.
+        '404':
+          description: A non-existent entity request.
+        '422':
+          description: Unprocessable Entity
+        '500':
+          $ref: "#/components/responses/ServiceError"
   /things/bulk:
     post:
       summary: Bulk provisions new things
@@ -569,6 +597,43 @@ components:
         metadata:
           type: object
           description: Arbitrary, object-encoded thing's data.
+    ThingsReqSchema:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name filter. Filtering is performed as a case-insensitive partial match.
+        metadata:
+          type: object
+          description: Metadata filter. Filtering is performed matching the parameter with metadata on top level. Parameter is json.
+        total:
+          type: integer
+          description: Total number of items.
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval.
+          default: 0
+          minimum: 0
+        limit:
+          type: integer
+          description: Size of the subset to retrieve.
+          default: 10
+          maximum: 100
+          minimum: 1
+        order:
+          type: string
+          description: Order type.
+          default: id
+          enum:
+            - name
+            - id
+        dir:
+          type: string
+          description: Order direction.
+          default: desc
+          enum:
+            - asc
+            - desc
     ThingResSchema:
       type: object
       properties:
@@ -800,6 +865,13 @@ components:
                 description: Free-form thing name.
               metadata:
                 type: object
+    ThingsSearchReq:
+      description: JSON-formatted document describing search parameters.
+      required: true
+      content:
+        application/json:
+          schema:
+           $ref: "#/components/schemas/ThingsReqSchema"
     KeyUpdateReq:
       required: true
       description: JSON containing thing.

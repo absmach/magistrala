@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"testing"
 
 	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
@@ -36,7 +35,7 @@ const (
 var (
 	metadata   = map[string]interface{}{"meta": "data"}
 	metadata2  = map[string]interface{}{"meta": "data2"}
-	thing      = sdk.Thing{ID: "1", Name: "test_device", Metadata: metadata}
+	thing      = sdk.Thing{ID: "001", Name: "test_device", Metadata: metadata}
 	emptyThing = sdk.Thing{}
 )
 
@@ -86,14 +85,14 @@ func TestCreateThing(t *testing.T) {
 			thing:    thing,
 			token:    token,
 			err:      nil,
-			location: "1",
+			location: "001",
 		},
 		{
 			desc:     "create new empty thing",
 			thing:    emptyThing,
 			token:    token,
 			err:      nil,
-			location: "2",
+			location: "002",
 		},
 		{
 			desc:     "create new thing with empty token",
@@ -136,8 +135,8 @@ func TestCreateThings(t *testing.T) {
 	mainfluxSDK := sdk.NewSDK(sdkConf)
 
 	things := []sdk.Thing{
-		sdk.Thing{ID: "1", Name: "1", Key: "1"},
-		sdk.Thing{ID: "2", Name: "2", Key: "2"},
+		sdk.Thing{ID: "001", Name: "1", Key: "1"},
+		sdk.Thing{ID: "002", Name: "2", Key: "2"},
 	}
 
 	cases := []struct {
@@ -262,7 +261,7 @@ func TestThings(t *testing.T) {
 	mainfluxSDK := sdk.NewSDK(sdkConf)
 	for i := 1; i < 101; i++ {
 
-		th := sdk.Thing{ID: strconv.Itoa(i), Name: "test_device", Metadata: metadata}
+		th := sdk.Thing{ID: fmt.Sprintf("%03d", i), Name: "test_device", Metadata: metadata}
 		mainfluxSDK.CreateThing(th, token)
 		th.Key = fmt.Sprintf("%s%012d", keyPrefix, 2*i)
 		things = append(things, th)
@@ -306,8 +305,8 @@ func TestThings(t *testing.T) {
 			token:    token,
 			offset:   0,
 			limit:    0,
-			err:      createError(sdk.ErrFailedFetch, http.StatusBadRequest),
-			response: nil,
+			err:      nil,
+			response: things[0:10],
 		},
 		{
 			desc:     "get a list of things with limit greater than max",
@@ -324,14 +323,6 @@ func TestThings(t *testing.T) {
 			limit:    5,
 			err:      nil,
 			response: []sdk.Thing{},
-		},
-		{
-			desc:     "get a list of things with invalid args (zero limit) and invalid token",
-			token:    wrongValue,
-			offset:   0,
-			limit:    0,
-			err:      createError(sdk.ErrFailedFetch, http.StatusBadRequest),
-			response: nil,
 		},
 	}
 	for _, tc := range cases {
@@ -366,7 +357,7 @@ func TestThingsByChannel(t *testing.T) {
 	var things []sdk.Thing
 	for i := 1; i < n+1; i++ {
 		th := sdk.Thing{
-			ID:       strconv.Itoa(i),
+			ID:       fmt.Sprintf("%03d", i),
 			Name:     "test_device",
 			Metadata: metadata,
 			Key:      fmt.Sprintf("%s%012d", keyPrefix, 2*i+1),

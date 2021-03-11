@@ -72,7 +72,7 @@ func TestCreateThings(t *testing.T) {
 			key: token,
 			err: nil,
 			event: map[string]interface{}{
-				"id":        "1",
+				"id":        "001",
 				"name":      "a",
 				"owner":     email,
 				"metadata":  "{\"test\":\"test\"}",
@@ -298,7 +298,7 @@ func TestCreateChannels(t *testing.T) {
 			key:  token,
 			err:  nil,
 			event: map[string]interface{}{
-				"id":        "1",
+				"id":        "001",
 				"name":      "a",
 				"metadata":  "{\"test\":\"test\"}",
 				"owner":     email,

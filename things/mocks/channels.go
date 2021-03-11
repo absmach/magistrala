@@ -48,7 +48,7 @@ func (crm *channelRepositoryMock) Save(_ context.Context, channels ...things.Cha
 
 	for i := range channels {
 		crm.counter++
-		channels[i].ID = strconv.FormatUint(crm.counter, 10)
+		channels[i].ID = fmt.Sprintf("%03d", crm.counter)
 		crm.channels[key(channels[i].Owner, channels[i].ID)] = channels[i]
 	}
 
@@ -78,12 +78,15 @@ func (crm *channelRepositoryMock) RetrieveByID(_ context.Context, owner, id stri
 }
 
 func (crm *channelRepositoryMock) RetrieveAll(_ context.Context, owner string, pm things.PageMetadata) (things.ChannelsPage, error) {
-	if pm.Limit <= 0 {
+	if pm.Limit < 0 {
 		return things.ChannelsPage{}, nil
 	}
+	if pm.Limit == 0 {
+		pm.Limit = 10
+	}
 
-	first := uint64(pm.Offset) + 1
-	last := first + uint64(pm.Limit)
+	first := int(pm.Offset)
+	last := first + int(pm.Limit)
 
 	var chs []things.Channel
 
@@ -91,8 +94,7 @@ func (crm *channelRepositoryMock) RetrieveAll(_ context.Context, owner string, p
 	// itself (see mocks/commons.go).
 	prefix := fmt.Sprintf("%s-", owner)
 	for k, v := range crm.channels {
-		id, _ := strconv.ParseUint(v.ID, 10, 64)
-		if strings.HasPrefix(k, prefix) && id >= first && id < last {
+		if strings.HasPrefix(k, prefix) {
 			chs = append(chs, v)
 		}
 	}
@@ -100,8 +102,16 @@ func (crm *channelRepositoryMock) RetrieveAll(_ context.Context, owner string, p
 	// Sort Channels list
 	chs = sortChannels(pm, chs)
 
+	if last > len(chs) {
+		last = len(chs)
+	}
+
+	if first > last {
+		return things.ChannelsPage{}, nil
+	}
+
 	page := things.ChannelsPage{
-		Channels: chs,
+		Channels: chs[first:last],
 		PageMetadata: things.PageMetadata{
 			Total:  crm.counter,
 			Offset: pm.Offset,

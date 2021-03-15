@@ -64,7 +64,7 @@ func migrateDB(db *sqlx.DB) error {
 						owner_id     TEXT NOT NULL,
 						expire       TIMESTAMPTZ NOT NULL,
 						serial       TEXT NOT NULL,
-						PRIMARY KEY  (thing_id, owner_id)
+						PRIMARY KEY  (thing_id, owner_id, serial)
 					);`,
 				},
 				Down: []string{

@@ -153,9 +153,13 @@ func main() {
 		logger.Error("Failed to load CA certificates for issuing client certs")
 	}
 
+	if cfg.pkiHost == "" {
+		log.Fatalf("No host specified for PKI engine")
+	}
+
 	pkiClient, err := vault.NewVaultClient(cfg.pkiToken, cfg.pkiHost, cfg.pkiPath, cfg.pkiRole)
 	if err != nil {
-		logger.Error("Failed to init vault client")
+		log.Fatalf("Failed to configure client for PKI engine")
 	}
 
 	db := connectToDB(cfg.dbConfig, logger)

@@ -23,9 +23,10 @@ func (req addCertsReq) validate() error {
 }
 
 type listReq struct {
-	token  string
-	offset uint64
-	limit  uint64
+	thingID string
+	token   string
+	offset  uint64
+	limit   uint64
 }
 
 func (req *listReq) validate() error {
@@ -39,12 +40,12 @@ func (req *listReq) validate() error {
 }
 
 type revokeReq struct {
-	token   string
-	ThingID string `json:"thing_id"`
+	token  string
+	certID string
 }
 
 func (req *revokeReq) validate() error {
-	if req.token == "" || req.ThingID == "" {
+	if req.token == "" || req.certID == "" {
 		return certs.ErrUnauthorizedAccess
 	}
 

@@ -45,7 +45,7 @@ func NewRepository(db *sqlx.DB, log logger.Logger) certs.Repository {
 	return &certsRepository{db: db, log: log}
 }
 
-func (cr certsRepository) RetrieveAll(ctx context.Context, ownerID string, offset, limit uint64) (certs.Page, error) {
+func (cr certsRepository) RetrieveAll(ctx context.Context, ownerID, thingID string, offset, limit uint64) (certs.Page, error) {
 	q := `SELECT thing_id, owner_id, serial, expire FROM certs WHERE owner_id = $1 ORDER BY expire LIMIT $2 OFFSET $3;`
 	rows, err := cr.db.Query(q, ownerID, limit, offset)
 	if err != nil {

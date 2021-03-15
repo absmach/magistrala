@@ -170,6 +170,7 @@ func (cr channelRepository) RetrieveAll(ctx context.Context, owner string, pm th
 			Offset: pm.Offset,
 			Limit:  pm.Limit,
 			Order:  pm.Order,
+			Dir:    pm.Dir,
 		},
 	}
 

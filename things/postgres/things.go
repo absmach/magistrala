@@ -237,6 +237,7 @@ func (tr thingRepository) RetrieveByIDs(ctx context.Context, thingIDs []string, 
 			Offset: pm.Offset,
 			Limit:  pm.Limit,
 			Order:  pm.Order,
+			Dir:    pm.Dir,
 		},
 	}
 
@@ -297,6 +298,7 @@ func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, pm thin
 			Offset: pm.Offset,
 			Limit:  pm.Limit,
 			Order:  pm.Order,
+			Dir:    pm.Dir,
 		},
 	}
 

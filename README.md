@@ -42,8 +42,8 @@ which maintains the project and offers professional services around it.
 
 The following are needed to run Mainflux:
 
-- [Docker](https://docs.docker.com/install/) (version 18.09)
-- [Docker compose](https://docs.docker.com/compose/install/) (version 1.24.1)
+- [Docker](https://docs.docker.com/install/) (version 20.10)
+- [Docker compose](https://docs.docker.com/compose/install/) (version 1.28)
 
 Developing Mainflux will also require:
 
@@ -64,7 +64,7 @@ This will bring up the Mainflux docker services and interconnect them. This comm
 make run
 ```
 
-If you want to run services from specific release checkout code from github and make sure that 
+If you want to run services from specific release checkout code from github and make sure that
 `MF_RELEASE_TAG` in [.env](.env) is being set to match the release version
 
 ```bash
@@ -82,7 +82,7 @@ MF_RELEASE_TAG=<release_number>
 
 ## Usage
 
-The quickest way to start using Mainflux is via the CLI. The latest version can be downloaded from the [official releases page][rel]. 
+The quickest way to start using Mainflux is via the CLI. The latest version can be downloaded from the [official releases page][rel].
 
 It can also be built and used from the project's root directory:
 

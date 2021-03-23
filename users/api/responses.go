@@ -193,8 +193,23 @@ type errorRes struct {
 	Err string `json:"error"`
 }
 
-type passwChangeRes struct {
+type passwResetReqRes struct {
 	Msg string `json:"msg"`
+}
+
+func (res passwResetReqRes) Code() int {
+	return http.StatusCreated
+}
+
+func (res passwResetReqRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res passwResetReqRes) Empty() bool {
+	return false
+}
+
+type passwChangeRes struct {
 }
 
 func (res passwChangeRes) Code() int {

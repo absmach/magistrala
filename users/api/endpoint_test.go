@@ -293,20 +293,11 @@ func TestPasswordReset(t *testing.T) {
 	ts := newServer(svc)
 	defer ts.Close()
 	client := ts.Client()
-	resData := struct {
-		Msg string `json:"msg"`
-	}{
-		"",
-	}
 	reqData := struct {
 		Token    string `json:"token,omitempty"`
 		Password string `json:"password,omitempty"`
 		ConfPass string `json:"confirm_password,omitempty"`
 	}{}
-
-	expectedSuccess := toJSON(resData)
-
-	resData.Msg = users.ErrUserNotFound.Error()
 
 	_, err := svc.Register(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("register user got unexpected error: %s", err))
@@ -343,7 +334,7 @@ func TestPasswordReset(t *testing.T) {
 		res         string
 		tok         string
 	}{
-		{"password reset with valid token", reqExisting, contentType, http.StatusCreated, expectedSuccess, token},
+		{"password reset with valid token", reqExisting, contentType, http.StatusCreated, "{}", token},
 		{"password reset with invalid token", reqNoExist, contentType, http.StatusForbidden, unauthRes, token},
 		{"password reset with confirm password not matching", reqPassNoMatch, contentType, http.StatusBadRequest, malformedRes, token},
 		{"password reset request with invalid request format", "{", contentType, http.StatusBadRequest, malformedRes, token},
@@ -382,19 +373,12 @@ func TestPasswordChange(t *testing.T) {
 
 	tkn, _ := auth.Issue(context.Background(), &mainflux.IssueReq{Id: user.ID, Email: user.Email, Type: 0})
 	token := tkn.GetValue()
-	resData := struct {
-		Msg string `json:"msg"`
-	}{
-		"",
-	}
-	expectedSuccess := toJSON(resData)
 
 	reqData := struct {
 		Token    string `json:"token,omitempty"`
 		Password string `json:"password,omitempty"`
 		OldPassw string `json:"old_password,omitempty"`
 	}{}
-	resData.Msg = users.ErrUnauthorizedAccess.Error()
 
 	_, err := svc.Register(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("register user got unexpected error: %s", err))
@@ -413,8 +397,6 @@ func TestPasswordChange(t *testing.T) {
 	reqData.Password = invalidPass
 	reqWeakPass := toJSON(reqData)
 
-	resData.Msg = users.ErrUnauthorizedAccess.Error()
-
 	cases := []struct {
 		desc        string
 		req         string
@@ -423,7 +405,7 @@ func TestPasswordChange(t *testing.T) {
 		res         string
 		tok         string
 	}{
-		{"password change with valid token", dataResExisting, contentType, http.StatusCreated, expectedSuccess, token},
+		{"password change with valid token", dataResExisting, contentType, http.StatusCreated, "{}", token},
 		{"password change with invalid token", reqNoExist, contentType, http.StatusForbidden, unauthRes, ""},
 		{"password change with invalid old password", reqWrongPass, contentType, http.StatusForbidden, unauthRes, token},
 		{"password change with invalid new password", reqWeakPass, contentType, http.StatusBadRequest, weakPassword, token},

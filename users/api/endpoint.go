@@ -47,7 +47,7 @@ func passwordResetRequestEndpoint(svc users.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-		res := passwChangeRes{}
+		res := passwResetReqRes{}
 		email := req.Email
 		if err := svc.GenerateResetToken(ctx, email, req.Host); err != nil {
 			return nil, err
@@ -71,7 +71,6 @@ func passwordResetEndpoint(svc users.Service) endpoint.Endpoint {
 		if err := svc.ResetPassword(ctx, req.Token, req.Password); err != nil {
 			return nil, err
 		}
-		res.Msg = ""
 		return res, nil
 	}
 }

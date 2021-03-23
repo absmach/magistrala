@@ -6,13 +6,14 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/internal/httputil"
 	"github.com/mainflux/mainflux/opcua"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -21,17 +22,10 @@ const (
 	serverParam     = "server"
 	namespaceParam  = "namespace"
 	identifierParam = "identifier"
-
-	defOffset = 0
-	defLimit  = 10
-
-	defNamespace  = "ns=0" // Standard root namespace
-	defIdentifier = "i=84" // Standard root identifier
-)
-
-var (
-	errUnsupportedContentType = errors.New("unsupported content type")
-	errInvalidQueryParams     = errors.New("invalid query params")
+	defOffset       = 0
+	defLimit        = 10
+	defNamespace    = "ns=0" // Standard root namespace
+	defIdentifier   = "i=84" // Standard root identifier
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
@@ -56,17 +50,17 @@ func MakeHandler(svc opcua.Service) http.Handler {
 }
 
 func decodeBrowse(_ context.Context, r *http.Request) (interface{}, error) {
-	s, err := readStringQuery(r, serverParam)
+	s, err := httputil.ReadStringQuery(r, serverParam, "")
 	if err != nil {
 		return nil, err
 	}
 
-	n, err := readStringQuery(r, namespaceParam)
+	n, err := httputil.ReadStringQuery(r, namespaceParam, "")
 	if err != nil {
 		return nil, err
 	}
 
-	i, err := readStringQuery(r, identifierParam)
+	i, err := httputil.ReadStringQuery(r, identifierParam, "")
 	if err != nil {
 		return nil, err
 	}
@@ -109,22 +103,9 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch err {
 	case opcua.ErrMalformedEntity:
 		w.WriteHeader(http.StatusBadRequest)
-	case errInvalidQueryParams:
+	case errors.ErrInvalidQueryParams:
 		w.WriteHeader(http.StatusBadRequest)
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}
-}
-
-func readStringQuery(r *http.Request, key string) (string, error) {
-	vals := bone.GetQuery(r, key)
-	if len(vals) > 1 {
-		return "", errInvalidQueryParams
-	}
-
-	if len(vals) == 0 {
-		return "", nil
-	}
-
-	return vals[0], nil
 }

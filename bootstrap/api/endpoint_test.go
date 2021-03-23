@@ -892,7 +892,7 @@ func TestList(t *testing.T) {
 			res:    configPage{},
 		},
 		{
-			desc:   "view list with invalid query params",
+			desc:   "view list with invalid query parameters",
 			auth:   validToken,
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d&state=%d&key=%%", path, 10, 10, bootstrap.Inactive),
 			status: http.StatusBadRequest,

@@ -110,8 +110,8 @@ func (sdk mfSDK) Channels(token string, offset, limit uint64, name string) (Chan
 	return cp, nil
 }
 
-func (sdk mfSDK) ChannelsByThing(token, thingID string, offset, limit uint64, connected bool) (ChannelsPage, error) {
-	endpoint := fmt.Sprintf("things/%s/channels?offset=%d&limit=%d&connected=%t", thingID, offset, limit, connected)
+func (sdk mfSDK) ChannelsByThing(token, thingID string, offset, limit uint64, disconn bool) (ChannelsPage, error) {
+	endpoint := fmt.Sprintf("things/%s/channels?offset=%d&limit=%d&disconnected=%t", thingID, offset, limit, disconn)
 	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)

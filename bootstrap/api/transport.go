@@ -27,12 +27,10 @@ const (
 )
 
 var (
-	errUnsupportedContentType = errors.New("unsupported content type")
-	errInvalidQueryParams     = errors.New("invalid query params")
-	errInvalidLimitParam      = errors.New("invalid limit query param")
-	errInvalidOffsetParam     = errors.New("invalid offset query param")
-	fullMatch                 = []string{"state", "external_id", "mainflux_id", "mainflux_key"}
-	partialMatch              = []string{"name"}
+	errInvalidLimitParam  = errors.New("invalid limit query param")
+	errInvalidOffsetParam = errors.New("invalid offset query param")
+	fullMatch             = []string{"state", "external_id", "mainflux_id", "mainflux_key"}
+	partialMatch          = []string{"name"}
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
@@ -110,7 +108,7 @@ func MakeHandler(svc bootstrap.Service, reader bootstrap.ConfigReader) http.Hand
 
 func decodeAddRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errUnsupportedContentType
+		return nil, errors.ErrUnsupportedContentType
 	}
 
 	req := addReq{token: r.Header.Get("Authorization")}
@@ -123,7 +121,7 @@ func decodeAddRequest(_ context.Context, r *http.Request) (interface{}, error) {
 
 func decodeUpdateRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errUnsupportedContentType
+		return nil, errors.ErrUnsupportedContentType
 	}
 
 	req := updateReq{key: r.Header.Get("Authorization")}
@@ -137,7 +135,7 @@ func decodeUpdateRequest(_ context.Context, r *http.Request) (interface{}, error
 
 func decodeUpdateCertRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errUnsupportedContentType
+		return nil, errors.ErrUnsupportedContentType
 	}
 
 	req := updateCertReq{
@@ -154,7 +152,7 @@ func decodeUpdateCertRequest(_ context.Context, r *http.Request) (interface{}, e
 
 func decodeUpdateConnRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errUnsupportedContentType
+		return nil, errors.ErrUnsupportedContentType
 	}
 
 	req := updateConnReq{key: r.Header.Get("Authorization")}
@@ -169,7 +167,7 @@ func decodeUpdateConnRequest(_ context.Context, r *http.Request) (interface{}, e
 func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	q, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
-		return nil, errInvalidQueryParams
+		return nil, errors.ErrInvalidQueryParams
 	}
 
 	offset, limit, err := parsePagePrams(q)
@@ -200,7 +198,7 @@ func decodeBootstrapRequest(_ context.Context, r *http.Request) (interface{}, er
 
 func decodeStateRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errUnsupportedContentType
+		return nil, errors.ErrUnsupportedContentType
 	}
 
 	req := changeStateReq{key: r.Header.Get("Authorization")}
@@ -254,10 +252,11 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	case errors.Error:
 		w.Header().Set("Content-Type", contentType)
 		switch {
-		case errors.Contains(errorVal, errUnsupportedContentType):
+		case errors.Contains(errorVal, errors.ErrUnsupportedContentType):
 			w.WriteHeader(http.StatusUnsupportedMediaType)
-		case errors.Contains(errorVal, errInvalidQueryParams):
+		case errors.Contains(errorVal, errors.ErrInvalidQueryParams):
 			w.WriteHeader(http.StatusBadRequest)
+
 		case errors.Contains(errorVal, bootstrap.ErrMalformedEntity):
 			w.WriteHeader(http.StatusBadRequest)
 		case errors.Contains(errorVal, bootstrap.ErrNotFound):
@@ -292,7 +291,7 @@ func parseUint(s string) (uint64, error) {
 
 	ret, err := strconv.ParseUint(s, 10, 64)
 	if err != nil {
-		return 0, errInvalidQueryParams
+		return 0, errors.ErrInvalidQueryParams
 	}
 
 	return ret, nil

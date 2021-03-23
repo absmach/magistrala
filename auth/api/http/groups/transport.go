@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
 
 	kitot "github.com/go-kit/kit/tracing/opentracing"
@@ -13,6 +12,7 @@ import (
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/auth"
+	"github.com/mainflux/mainflux/internal/httputil"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/opentracing/opentracing-go"
 )
@@ -23,6 +23,7 @@ var (
 )
 
 const (
+	contentType = "application/json"
 	maxNameSize = 254
 	offsetKey   = "offset"
 	limitKey    = "limit"
@@ -30,13 +31,12 @@ const (
 	metadataKey = "metadata"
 	treeKey     = "tree"
 	groupType   = "type"
-	contentType = "application/json"
-
-	defOffset = 0
-	defLimit  = 10
-	defLevel  = 1
+	defOffset   = 0
+	defLimit    = 10
+	defLevel    = 1
 )
 
+// MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler(svc auth.Service, mux *bone.Mux, tracer opentracing.Tracer) *bone.Mux {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
@@ -127,17 +127,17 @@ func decodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, e
 		return nil, auth.ErrUnsupportedContentType
 	}
 
-	l, err := readUintQuery(r, levelKey, defLevel)
+	l, err := httputil.ReadUintQuery(r, levelKey, defLevel)
 	if err != nil {
 		return nil, err
 	}
 
-	m, err := readMetadataQuery(r, metadataKey)
+	m, err := httputil.ReadMetadataQuery(r, metadataKey, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	t, err := readBoolQuery(r, treeKey)
+	t, err := httputil.ReadBoolQuery(r, treeKey, false)
 	if err != nil {
 		return nil, err
 	}
@@ -157,27 +157,27 @@ func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 		return nil, auth.ErrUnsupportedContentType
 	}
 
-	o, err := readUintQuery(r, offsetKey, defOffset)
+	o, err := httputil.ReadUintQuery(r, offsetKey, defOffset)
 	if err != nil {
 		return nil, err
 	}
 
-	l, err := readUintQuery(r, limitKey, defLimit)
+	l, err := httputil.ReadUintQuery(r, limitKey, defLimit)
 	if err != nil {
 		return nil, err
 	}
 
-	m, err := readMetadataQuery(r, metadataKey)
+	m, err := httputil.ReadMetadataQuery(r, metadataKey, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	tree, err := readBoolQuery(r, treeKey)
+	tree, err := httputil.ReadBoolQuery(r, treeKey, false)
 	if err != nil {
 		return nil, err
 	}
 
-	t, err := readStringQuery(r, groupType)
+	t, err := httputil.ReadStringQuery(r, groupType, "")
 	if err != nil {
 		return nil, err
 	}
@@ -199,22 +199,22 @@ func decodeListMembershipsRequest(_ context.Context, r *http.Request) (interface
 		return nil, auth.ErrUnsupportedContentType
 	}
 
-	o, err := readUintQuery(r, offsetKey, defOffset)
+	o, err := httputil.ReadUintQuery(r, offsetKey, defOffset)
 	if err != nil {
 		return nil, err
 	}
 
-	l, err := readUintQuery(r, limitKey, defLimit)
+	l, err := httputil.ReadUintQuery(r, limitKey, defLimit)
 	if err != nil {
 		return nil, err
 	}
 
-	m, err := readMetadataQuery(r, metadataKey)
+	m, err := httputil.ReadMetadataQuery(r, metadataKey, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	tree, err := readBoolQuery(r, treeKey)
+	tree, err := httputil.ReadBoolQuery(r, treeKey, false)
 	if err != nil {
 		return nil, err
 	}
@@ -280,75 +280,6 @@ func decodeAssignRequest(_ context.Context, r *http.Request) (interface{}, error
 	}
 
 	return req, nil
-}
-
-func readUintQuery(r *http.Request, key string, def uint64) (uint64, error) {
-	vals := bone.GetQuery(r, key)
-	if len(vals) > 1 {
-		return 0, errInvalidQueryParams
-	}
-
-	if len(vals) == 0 {
-		return def, nil
-	}
-
-	strval := vals[0]
-	val, err := strconv.ParseUint(strval, 10, 64)
-	if err != nil {
-		return 0, errInvalidQueryParams
-	}
-
-	return val, nil
-}
-
-func readMetadataQuery(r *http.Request, key string) (map[string]interface{}, error) {
-	vals := bone.GetQuery(r, key)
-	if len(vals) > 1 {
-		return nil, errInvalidQueryParams
-	}
-
-	if len(vals) == 0 {
-		return nil, nil
-	}
-
-	m := make(map[string]interface{})
-	err := json.Unmarshal([]byte(vals[0]), &m)
-	if err != nil {
-		return nil, errors.Wrap(errInvalidQueryParams, err)
-	}
-
-	return m, nil
-}
-
-func readBoolQuery(r *http.Request, key string) (bool, error) {
-	vals := bone.GetQuery(r, key)
-	if len(vals) > 1 {
-		return true, errInvalidQueryParams
-	}
-
-	if len(vals) == 0 {
-		return false, nil
-	}
-
-	b, err := strconv.ParseBool(vals[0])
-	if err != nil {
-		return false, errInvalidQueryParams
-	}
-
-	return b, nil
-}
-
-func readStringQuery(r *http.Request, key string) (string, error) {
-	vals := bone.GetQuery(r, key)
-	if len(vals) > 1 {
-		return "", errInvalidQueryParams
-	}
-
-	if len(vals) == 0 {
-		return "", nil
-	}
-
-	return vals[0], nil
 }
 
 func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {

@@ -10,19 +10,16 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/mainflux/mainflux/pkg/errors"
-
 	kitot "github.com/go-kit/kit/tracing/opentracing"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/things"
 	opentracing "github.com/opentracing/opentracing-go"
 )
 
 const contentType = "application/json"
-
-var errUnsupportedContentType = errors.New("unsupported content type")
 
 // MakeHandler returns a HTTP handler for auth API endpoints.
 func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
@@ -58,7 +55,7 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 
 func decodeIdentify(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errUnsupportedContentType
+		return nil, errors.ErrUnsupportedContentType
 	}
 
 	req := identifyReq{}
@@ -71,7 +68,7 @@ func decodeIdentify(_ context.Context, r *http.Request) (interface{}, error) {
 
 func decodeCanAccessByKey(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errUnsupportedContentType
+		return nil, errors.ErrUnsupportedContentType
 	}
 
 	req := canAccessByKeyReq{
@@ -86,7 +83,7 @@ func decodeCanAccessByKey(_ context.Context, r *http.Request) (interface{}, erro
 
 func decodeCanAccessByID(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errUnsupportedContentType
+		return nil, errors.ErrUnsupportedContentType
 	}
 
 	req := canAccessByIDReq{
@@ -125,8 +122,10 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusNotFound)
 	case things.ErrEntityConnected:
 		w.WriteHeader(http.StatusForbidden)
-	case errUnsupportedContentType:
+
+	case errors.ErrUnsupportedContentType:
 		w.WriteHeader(http.StatusUnsupportedMediaType)
+
 	case io.ErrUnexpectedEOF:
 		w.WriteHeader(http.StatusBadRequest)
 	case io.EOF:

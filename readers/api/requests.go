@@ -3,7 +3,10 @@
 
 package api
 
-import "github.com/mainflux/mainflux/readers"
+import (
+	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/mainflux/mainflux/readers"
+)
 
 type apiReq interface {
 	validate() error
@@ -16,7 +19,7 @@ type listMessagesReq struct {
 
 func (req listMessagesReq) validate() error {
 	if req.pageMeta.Limit < 1 || req.pageMeta.Offset < 0 {
-		return errInvalidRequest
+		return errors.ErrInvalidQueryParams
 	}
 	if req.pageMeta.Comparator != "" &&
 		req.pageMeta.Comparator != readers.EqualKey &&
@@ -24,7 +27,7 @@ func (req listMessagesReq) validate() error {
 		req.pageMeta.Comparator != readers.LowerThanEqualKey &&
 		req.pageMeta.Comparator != readers.GreaterThanKey &&
 		req.pageMeta.Comparator != readers.GreaterThanEqualKey {
-		return errInvalidRequest
+		return errors.ErrInvalidQueryParams
 	}
 
 	return nil

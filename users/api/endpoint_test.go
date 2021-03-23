@@ -16,6 +16,7 @@ import (
 	"testing"
 
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/users"
 	"github.com/mainflux/mainflux/users/api"
@@ -40,8 +41,8 @@ var (
 	unauthRes      = toJSON(errorRes{users.ErrUnauthorizedAccess.Error()})
 	malformedRes   = toJSON(errorRes{users.ErrMalformedEntity.Error()})
 	weakPassword   = toJSON(errorRes{users.ErrPasswordFormat.Error()})
-	unsupportedRes = toJSON(errorRes{api.ErrUnsupportedContentType.Error()})
-	failDecodeRes  = toJSON(errorRes{api.ErrFailedDecode.Error()})
+	unsupportedRes = toJSON(errorRes{errors.ErrUnsupportedContentType.Error()})
+	failDecodeRes  = toJSON(errorRes{errors.ErrMalformedEntity.Error()})
 	passRegex      = regexp.MustCompile("^.{8,}$")
 )
 
@@ -262,9 +263,9 @@ func TestPasswordResetRequest(t *testing.T) {
 	}{
 		{"password reset request with valid email", data, contentType, http.StatusCreated, expectedExisting},
 		{"password reset request with invalid email", nonexistentData, contentType, http.StatusBadRequest, notFoundRes},
-		{"password reset request with invalid request format", "{", contentType, http.StatusBadRequest, failDecodeRes},
+		{"password reset request with invalid request format", "{", contentType, http.StatusBadRequest, malformedRes},
 		{"password reset request with empty JSON request", "{}", contentType, http.StatusBadRequest, malformedRes},
-		{"password reset request with empty request", "", contentType, http.StatusBadRequest, failDecodeRes},
+		{"password reset request with empty request", "", contentType, http.StatusBadRequest, malformedRes},
 		{"password reset request with missing content type", data, "", http.StatusUnsupportedMediaType, unsupportedRes},
 	}
 
@@ -345,9 +346,9 @@ func TestPasswordReset(t *testing.T) {
 		{"password reset with valid token", reqExisting, contentType, http.StatusCreated, expectedSuccess, token},
 		{"password reset with invalid token", reqNoExist, contentType, http.StatusForbidden, unauthRes, token},
 		{"password reset with confirm password not matching", reqPassNoMatch, contentType, http.StatusBadRequest, malformedRes, token},
-		{"password reset request with invalid request format", "{", contentType, http.StatusBadRequest, failDecodeRes, token},
+		{"password reset request with invalid request format", "{", contentType, http.StatusBadRequest, malformedRes, token},
 		{"password reset request with empty JSON request", "{}", contentType, http.StatusBadRequest, malformedRes, token},
-		{"password reset request with empty request", "", contentType, http.StatusBadRequest, failDecodeRes, token},
+		{"password reset request with empty request", "", contentType, http.StatusBadRequest, malformedRes, token},
 		{"password reset request with missing content type", reqExisting, "", http.StatusUnsupportedMediaType, unsupportedRes, token},
 		{"password reset with weak password", reqPassWeak, contentType, http.StatusBadRequest, weakPassword, token},
 	}
@@ -427,7 +428,7 @@ func TestPasswordChange(t *testing.T) {
 		{"password change with invalid old password", reqWrongPass, contentType, http.StatusForbidden, unauthRes, token},
 		{"password change with invalid new password", reqWeakPass, contentType, http.StatusBadRequest, weakPassword, token},
 		{"password change with empty JSON request", "{}", contentType, http.StatusBadRequest, malformedRes, token},
-		{"password change empty request", "", contentType, http.StatusBadRequest, failDecodeRes, token},
+		{"password change empty request", "", contentType, http.StatusBadRequest, malformedRes, token},
 		{"password change missing content type", dataResExisting, "", http.StatusUnsupportedMediaType, unsupportedRes, token},
 	}
 

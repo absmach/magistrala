@@ -8,27 +8,20 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
-
-	notifiers "github.com/mainflux/mainflux/consumers/notifiers"
-	"github.com/mainflux/mainflux/pkg/errors"
 
 	kitot "github.com/go-kit/kit/tracing/opentracing"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
+	notifiers "github.com/mainflux/mainflux/consumers/notifiers"
+	"github.com/mainflux/mainflux/internal/httputil"
+	"github.com/mainflux/mainflux/pkg/errors"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const contentType = "application/json"
-
-var (
-	errMalformedEntity        = errors.New("failed to decode request body")
-	errInvalidQueryParams     = errors.New("invalid query parameters")
-	errUnsupportedContentType = errors.New("unsupported content type")
-)
 
 // MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler(svc notifiers.Service, tracer opentracing.Tracer) http.Handler {
@@ -74,11 +67,11 @@ func MakeHandler(svc notifiers.Service, tracer opentracing.Tracer) http.Handler 
 
 func decodeCreate(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errUnsupportedContentType
+		return nil, errors.ErrUnsupportedContentType
 	}
 	var req createSubReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(errMalformedEntity, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	req.token = r.Header.Get("Authorization")
@@ -108,38 +101,19 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 		req.contact = vals[0]
 	}
 
-	offset, err := readUintQuery(r, "offset", 0)
+	offset, err := httputil.ReadUintQuery(r, "offset", 0)
 	if err != nil {
 		return listSubsReq{}, err
 	}
-	req.offset = offset
+	req.offset = uint(offset)
 
-	limit, err := readUintQuery(r, "limit", 20)
+	limit, err := httputil.ReadUintQuery(r, "limit", 20)
 	if err != nil {
 		return listSubsReq{}, err
 	}
-	req.limit = limit
+	req.limit = uint(limit)
 
 	return req, nil
-}
-
-func readUintQuery(r *http.Request, key string, def uint) (uint, error) {
-	vals := bone.GetQuery(r, key)
-	if len(vals) > 1 {
-		return 0, errInvalidQueryParams
-	}
-
-	if len(vals) == 0 {
-		return def, nil
-	}
-
-	strval := vals[0]
-	val, err := strconv.ParseUint(strval, 10, 64)
-	if err != nil {
-		return 0, errInvalidQueryParams
-	}
-
-	return uint(val), nil
 }
 
 func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
@@ -163,10 +137,10 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	case errors.Error:
 		w.Header().Set("Content-Type", contentType)
 		switch {
-		case errors.Contains(errorVal, errMalformedEntity),
+		case errors.Contains(errorVal, errors.ErrMalformedEntity),
 			errors.Contains(errorVal, errInvalidContact),
 			errors.Contains(errorVal, errInvalidTopic),
-			errors.Contains(errorVal, errInvalidQueryParams):
+			errors.Contains(errorVal, errors.ErrInvalidQueryParams):
 			w.WriteHeader(http.StatusBadRequest)
 		case errors.Contains(errorVal, notifiers.ErrNotFound),
 			errors.Contains(errorVal, errNotFound):
@@ -175,7 +149,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 			w.WriteHeader(http.StatusUnauthorized)
 		case errors.Contains(errorVal, notifiers.ErrConflict):
 			w.WriteHeader(http.StatusConflict)
-		case errors.Contains(errorVal, errUnsupportedContentType):
+		case errors.Contains(errorVal, errors.ErrUnsupportedContentType):
 			w.WriteHeader(http.StatusUnsupportedMediaType)
 		case errors.Contains(errorVal, io.ErrUnexpectedEOF):
 			w.WriteHeader(http.StatusBadRequest)

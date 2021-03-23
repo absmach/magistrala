@@ -187,22 +187,8 @@ func (cr channelRepository) RetrieveByThing(ctx context.Context, owner, thID str
 	}
 
 	var q, qc string
-	switch pm.Connected {
+	switch pm.Disconnected {
 	case true:
-		q = fmt.Sprintf(`SELECT id, name, metadata FROM channels ch
-		        INNER JOIN connections conn
-		        ON ch.id = conn.channel_id
-		        WHERE ch.owner = :owner AND conn.thing_id = :thing
-		        ORDER BY %s %s
-		        LIMIT :limit
-		        OFFSET :offset;`, oq, dq)
-
-		qc = `SELECT COUNT(*)
-		        FROM channels ch
-		        INNER JOIN connections conn
-		        ON ch.id = conn.channel_id
-		        WHERE ch.owner = $1 AND conn.thing_id = $2`
-	default:
 		q = fmt.Sprintf(`SELECT id, name, metadata
 		        FROM channels ch
 		        WHERE ch.owner = :owner AND ch.id NOT IN
@@ -221,6 +207,20 @@ func (cr channelRepository) RetrieveByThing(ctx context.Context, owner, thID str
 		          INNER JOIN connections conn
 		          ON ch.id = conn.channel_id
 		          WHERE ch.owner = $1 AND conn.thing_id = $2);`
+	default:
+		q = fmt.Sprintf(`SELECT id, name, metadata FROM channels ch
+		        INNER JOIN connections conn
+		        ON ch.id = conn.channel_id
+		        WHERE ch.owner = :owner AND conn.thing_id = :thing
+		        ORDER BY %s %s
+		        LIMIT :limit
+		        OFFSET :offset;`, oq, dq)
+
+		qc = `SELECT COUNT(*)
+		        FROM channels ch
+		        INNER JOIN connections conn
+		        ON ch.id = conn.channel_id
+		        WHERE ch.owner = $1 AND conn.thing_id = $2`
 	}
 
 	params := map[string]interface{}{

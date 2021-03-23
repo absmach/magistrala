@@ -8,8 +8,14 @@ import (
 	"github.com/mainflux/mainflux/things"
 )
 
-const maxLimitSize = 100
-const maxNameSize = 1024
+const (
+	maxLimitSize = 100
+	maxNameSize  = 1024
+	nameOrder    = "name"
+	idOrder      = "id"
+	ascDir       = "asc"
+	descDir      = "desc"
+)
 
 type createThingReq struct {
 	token    string
@@ -198,12 +204,12 @@ func (req *listResourcesReq) validate() error {
 	}
 
 	if req.pageMetadata.Order != "" &&
-		req.pageMetadata.Order != "name" && req.pageMetadata.Order != "id" {
+		req.pageMetadata.Order != nameOrder && req.pageMetadata.Order != idOrder {
 		return things.ErrMalformedEntity
 	}
 
 	if req.pageMetadata.Dir != "" &&
-		req.pageMetadata.Dir != "asc" && req.pageMetadata.Dir != "desc" {
+		req.pageMetadata.Dir != ascDir && req.pageMetadata.Dir != descDir {
 		return things.ErrMalformedEntity
 	}
 
@@ -230,12 +236,12 @@ func (req listByConnectionReq) validate() error {
 	}
 
 	if req.pageMetadata.Order != "" &&
-		req.pageMetadata.Order != "name" && req.pageMetadata.Order != "id" {
+		req.pageMetadata.Order != nameOrder && req.pageMetadata.Order != idOrder {
 		return things.ErrMalformedEntity
 	}
 
 	if req.pageMetadata.Dir != "" &&
-		req.pageMetadata.Dir != "asc" && req.pageMetadata.Dir != "desc" {
+		req.pageMetadata.Dir != ascDir && req.pageMetadata.Dir != descDir {
 		return things.ErrMalformedEntity
 	}
 

@@ -166,8 +166,7 @@ func TestSingleChannelRetrieval(t *testing.T) {
 	}
 	chs, _ := chanRepo.Save(context.Background(), ch)
 	ch.ID = chs[0].ID
-	err = chanRepo.Connect(context.Background(), email, []string{ch.ID}, []string{th.ID})
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	chanRepo.Connect(context.Background(), email, []string{ch.ID}, []string{th.ID})
 
 	nonexistentChanID, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -420,9 +419,8 @@ func TestRetrieveByThing(t *testing.T) {
 			owner: email,
 			thID:  thID,
 			pageMetadata: things.PageMetadata{
-				Offset:    0,
-				Limit:     n,
-				Connected: true,
+				Offset: 0,
+				Limit:  n,
 			},
 			size: n - chsDisconNum,
 		},
@@ -430,9 +428,8 @@ func TestRetrieveByThing(t *testing.T) {
 			owner: email,
 			thID:  thID,
 			pageMetadata: things.PageMetadata{
-				Offset:    n / 2,
-				Limit:     n,
-				Connected: true,
+				Offset: n / 2,
+				Limit:  n,
 			},
 			size: (n / 2) - chsDisconNum,
 		},
@@ -440,9 +437,8 @@ func TestRetrieveByThing(t *testing.T) {
 			owner: wrongValue,
 			thID:  thID,
 			pageMetadata: things.PageMetadata{
-				Offset:    n / 2,
-				Limit:     n,
-				Connected: true,
+				Offset: n / 2,
+				Limit:  n,
 			},
 			size: 0,
 		},
@@ -450,9 +446,8 @@ func TestRetrieveByThing(t *testing.T) {
 			owner: email,
 			thID:  nonexistentThingID,
 			pageMetadata: things.PageMetadata{
-				Offset:    0,
-				Limit:     n,
-				Connected: true,
+				Offset: 0,
+				Limit:  n,
 			},
 			size: 0,
 		},
@@ -460,9 +455,8 @@ func TestRetrieveByThing(t *testing.T) {
 			owner: email,
 			thID:  wrongValue,
 			pageMetadata: things.PageMetadata{
-				Offset:    0,
-				Limit:     n,
-				Connected: true,
+				Offset: 0,
+				Limit:  n,
 			},
 			size: 0,
 			err:  things.ErrNotFound,
@@ -471,9 +465,9 @@ func TestRetrieveByThing(t *testing.T) {
 			owner: email,
 			thID:  thID,
 			pageMetadata: things.PageMetadata{
-				Offset:    0,
-				Limit:     n,
-				Connected: false,
+				Offset:       0,
+				Limit:        n,
+				Disconnected: true,
 			},
 			size: chsDisconNum,
 		},
@@ -481,11 +475,10 @@ func TestRetrieveByThing(t *testing.T) {
 			owner: email,
 			thID:  thID,
 			pageMetadata: things.PageMetadata{
-				Offset:    0,
-				Limit:     n,
-				Connected: true,
-				Order:     "name",
-				Dir:       "asc",
+				Offset: 0,
+				Limit:  n,
+				Order:  "name",
+				Dir:    "asc",
 			},
 			size: n - chsDisconNum,
 		},
@@ -493,11 +486,11 @@ func TestRetrieveByThing(t *testing.T) {
 			owner: email,
 			thID:  thID,
 			pageMetadata: things.PageMetadata{
-				Offset:    0,
-				Limit:     n,
-				Connected: false,
-				Order:     "name",
-				Dir:       "asc",
+				Offset:       0,
+				Limit:        n,
+				Disconnected: true,
+				Order:        "name",
+				Dir:          "asc",
 			},
 			size: chsDisconNum,
 		},
@@ -505,11 +498,10 @@ func TestRetrieveByThing(t *testing.T) {
 			owner: email,
 			thID:  thID,
 			pageMetadata: things.PageMetadata{
-				Offset:    0,
-				Limit:     n,
-				Connected: true,
-				Order:     "name",
-				Dir:       "desc",
+				Offset: 0,
+				Limit:  n,
+				Order:  "name",
+				Dir:    "desc",
 			},
 			size: n - chsDisconNum,
 		},
@@ -517,11 +509,11 @@ func TestRetrieveByThing(t *testing.T) {
 			owner: email,
 			thID:  thID,
 			pageMetadata: things.PageMetadata{
-				Offset:    0,
-				Limit:     n,
-				Connected: false,
-				Order:     "name",
-				Dir:       "desc",
+				Offset:       0,
+				Limit:        n,
+				Disconnected: true,
+				Order:        "name",
+				Dir:          "desc",
 			},
 			size: chsDisconNum,
 		},
@@ -678,8 +670,7 @@ func TestDisconnect(t *testing.T) {
 	})
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	chID = chs[0].ID
-	err = chanRepo.Connect(context.Background(), email, []string{chID}, []string{thID})
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	chanRepo.Connect(context.Background(), email, []string{chID}, []string{thID})
 
 	nonexistentThingID, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -765,8 +756,7 @@ func TestHasThing(t *testing.T) {
 	})
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	chID = chs[0].ID
-	err = chanRepo.Connect(context.Background(), email, []string{chID}, []string{thID})
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	chanRepo.Connect(context.Background(), email, []string{chID}, []string{thID})
 
 	nonexistentChanID, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -841,8 +831,7 @@ func TestHasThingByID(t *testing.T) {
 	})
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	chID = chs[0].ID
-	err = chanRepo.Connect(context.Background(), email, []string{chID}, []string{thID})
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	chanRepo.Connect(context.Background(), email, []string{chID}, []string{thID})
 
 	nonexistentChanID, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))

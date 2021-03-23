@@ -192,7 +192,7 @@ func (tr thingRepository) RetrieveByIDs(ctx context.Context, thingIDs []string, 
 		return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
 	}
 
-	q := fmt.Sprintf(`SELECT id, owner, name, key, metadata FROM things 
+	q := fmt.Sprintf(`SELECT id, owner, name, key, metadata FROM things
 					   %s%s%s ORDER BY %s %s LIMIT :limit OFFSET :offset;`, idq, mq, nq, oq, dq)
 
 	params := map[string]interface{}{
@@ -315,23 +315,8 @@ func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, chID str
 	}
 
 	var q, qc string
-	switch pm.Connected {
+	switch pm.Disconnected {
 	case true:
-		q = fmt.Sprintf(`SELECT id, name, key, metadata
-		        FROM things th
-		        INNER JOIN connections conn
-		        ON th.id = conn.thing_id
-		        WHERE th.owner = :owner AND conn.channel_id = :channel
-		        ORDER BY %s %s
-		        LIMIT :limit
-		        OFFSET :offset;`, oq, dq)
-
-		qc = `SELECT COUNT(*)
-		        FROM things th
-		        INNER JOIN connections conn
-		        ON th.id = conn.thing_id
-		        WHERE th.owner = $1 AND conn.channel_id = $2;`
-	default:
 		q = fmt.Sprintf(`SELECT id, name, key, metadata
 		        FROM things th
 		        WHERE th.owner = :owner AND th.id NOT IN
@@ -350,6 +335,21 @@ func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, chID str
 		          INNER JOIN connections conn
 		          ON th.id = conn.thing_id
 		          WHERE th.owner = $1 AND conn.channel_id = $2);`
+	default:
+		q = fmt.Sprintf(`SELECT id, name, key, metadata
+		        FROM things th
+		        INNER JOIN connections conn
+		        ON th.id = conn.thing_id
+		        WHERE th.owner = :owner AND conn.channel_id = :channel
+		        ORDER BY %s %s
+		        LIMIT :limit
+		        OFFSET :offset;`, oq, dq)
+
+		qc = `SELECT COUNT(*)
+		        FROM things th
+		        INNER JOIN connections conn
+		        ON th.id = conn.thing_id
+		        WHERE th.owner = $1 AND conn.channel_id = $2;`
 	}
 
 	params := map[string]interface{}{

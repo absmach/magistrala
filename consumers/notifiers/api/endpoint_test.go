@@ -17,6 +17,7 @@ import (
 	notifiers "github.com/mainflux/mainflux/consumers/notifiers"
 	httpapi "github.com/mainflux/mainflux/consumers/notifiers/api"
 	"github.com/mainflux/mainflux/consumers/notifiers/mocks"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
@@ -36,7 +37,7 @@ const (
 var (
 	notFoundRes = toJSON(errorRes{notifiers.ErrNotFound.Error()})
 	unauthRes   = toJSON(errorRes{notifiers.ErrUnauthorizedAccess.Error()})
-	invalidRes  = toJSON(errorRes{"invalid query parameters"})
+	invalidRes  = toJSON(errorRes{errors.ErrInvalidQueryParams.Error()})
 )
 
 type testRequest struct {

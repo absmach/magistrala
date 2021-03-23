@@ -21,7 +21,7 @@ func TestValidate(t *testing.T) {
 			err:         nil,
 		},
 		"external id for device empty": {
-			err: errMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 	}
 

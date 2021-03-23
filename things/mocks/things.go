@@ -202,8 +202,8 @@ func (trm *thingRepositoryMock) RetrieveByChannel(_ context.Context, owner, chID
 	var ths []things.Thing
 
 	// Append connected or not connected channels
-	switch pm.Connected {
-	case true:
+	switch pm.Disconnected {
+	case false:
 		for _, co := range trm.tconns[chID] {
 			id, _ := strconv.ParseUint(co.ID, 10, 64)
 			if id >= first && id < last {

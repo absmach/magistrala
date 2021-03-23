@@ -8,15 +8,14 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
-
-	"github.com/mainflux/mainflux/pkg/errors"
 
 	kitot "github.com/go-kit/kit/tracing/opentracing"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/internal/httputil"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/users"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -24,24 +23,12 @@ import (
 
 const (
 	contentType = "application/json"
-
 	offsetKey   = "offset"
 	limitKey    = "limit"
 	emailKey    = "email"
 	metadataKey = "metadata"
-
-	defOffset = 0
-	defLimit  = 10
-)
-
-var (
-	errInvalidQueryParams = errors.New("invalid query params")
-
-	// ErrUnsupportedContentType indicates unacceptable or lack of Content-Type
-	ErrUnsupportedContentType = errors.New("unsupported content type")
-
-	// ErrFailedDecode indicates failed to decode request body
-	ErrFailedDecode = errors.New("failed to decode request body")
+	defOffset   = 0
+	defLimit    = 10
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
@@ -144,22 +131,25 @@ func decodeViewProfile(_ context.Context, r *http.Request) (interface{}, error) 
 }
 
 func decodeListUsers(_ context.Context, r *http.Request) (interface{}, error) {
-	o, err := readUintQuery(r, offsetKey, defOffset)
+	o, err := httputil.ReadUintQuery(r, offsetKey, defOffset)
+	if err != nil && err != errors.ErrNotFoundParam {
+		return nil, err
+	}
+
+	l, err := httputil.ReadUintQuery(r, limitKey, defLimit)
+	if err != nil && err != errors.ErrNotFoundParam {
+		return nil, err
+	}
+	if err == errors.ErrNotFoundParam {
+		l = defLimit
+	}
+
+	e, err := httputil.ReadStringQuery(r, emailKey, "")
 	if err != nil {
 		return nil, err
 	}
 
-	l, err := readUintQuery(r, limitKey, defLimit)
-	if err != nil {
-		return nil, err
-	}
-
-	e, err := readStringQuery(r, emailKey)
-	if err != nil {
-		return nil, err
-	}
-
-	m, err := readMetadataQuery(r, metadataKey)
+	m, err := httputil.ReadMetadataQuery(r, metadataKey, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -186,12 +176,12 @@ func decodeUpdateUser(_ context.Context, r *http.Request) (interface{}, error) {
 
 func decodeCredentials(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, ErrUnsupportedContentType
+		return nil, errors.ErrUnsupportedContentType
 	}
 
 	var user users.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		return nil, errors.Wrap(users.ErrMalformedEntity, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return userReq{user}, nil
@@ -199,13 +189,13 @@ func decodeCredentials(_ context.Context, r *http.Request) (interface{}, error) 
 
 func decodePasswordResetRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, ErrUnsupportedContentType
+		return nil, errors.ErrUnsupportedContentType
 	}
 
 	var req passwResetReq
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(ErrFailedDecode, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	req.Host = r.Header.Get("Referer")
@@ -214,12 +204,12 @@ func decodePasswordResetRequest(_ context.Context, r *http.Request) (interface{}
 
 func decodePasswordReset(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, ErrUnsupportedContentType
+		return nil, errors.ErrUnsupportedContentType
 	}
 
 	var req resetTokenReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(ErrFailedDecode, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -227,12 +217,12 @@ func decodePasswordReset(_ context.Context, r *http.Request) (interface{}, error
 
 func decodePasswordChange(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, ErrUnsupportedContentType
+		return nil, errors.ErrUnsupportedContentType
 	}
 
 	var req passwChangeReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(ErrFailedDecode, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	req.Token = r.Header.Get("Authorization")
@@ -241,17 +231,20 @@ func decodePasswordChange(_ context.Context, r *http.Request) (interface{}, erro
 }
 
 func decodeListMemberGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	o, err := readUintQuery(r, offsetKey, defOffset)
-	if err != nil {
+	o, err := httputil.ReadUintQuery(r, offsetKey, defOffset)
+	if err != nil && err != errors.ErrNotFoundParam {
 		return nil, err
 	}
 
-	l, err := readUintQuery(r, limitKey, defLimit)
-	if err != nil {
+	l, err := httputil.ReadUintQuery(r, limitKey, defLimit)
+	if err != nil && err != errors.ErrNotFoundParam {
 		return nil, err
 	}
+	if err == errors.ErrNotFoundParam {
+		l = defLimit
+	}
 
-	m, err := readMetadataQuery(r, metadataKey)
+	m, err := httputil.ReadMetadataQuery(r, metadataKey, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -287,6 +280,8 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	case errors.Error:
 		w.Header().Set("Content-Type", contentType)
 		switch {
+		case errors.Contains(errorVal, errors.ErrInvalidQueryParams):
+			w.WriteHeader(http.StatusBadRequest)
 		case errors.Contains(errorVal, users.ErrMalformedEntity):
 			w.WriteHeader(http.StatusBadRequest)
 		case errors.Contains(errorVal, users.ErrUnauthorizedAccess):
@@ -295,9 +290,9 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 			w.WriteHeader(http.StatusConflict)
 		case errors.Contains(errorVal, users.ErrGroupConflict):
 			w.WriteHeader(http.StatusConflict)
-		case errors.Contains(errorVal, ErrUnsupportedContentType):
+		case errors.Contains(errorVal, errors.ErrUnsupportedContentType):
 			w.WriteHeader(http.StatusUnsupportedMediaType)
-		case errors.Contains(errorVal, ErrFailedDecode):
+		case errors.Contains(errorVal, errors.ErrMalformedEntity):
 			w.WriteHeader(http.StatusBadRequest)
 		case errors.Contains(errorVal, io.ErrUnexpectedEOF):
 			w.WriteHeader(http.StatusBadRequest)
@@ -320,55 +315,4 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}
-}
-
-func readUintQuery(r *http.Request, key string, def uint64) (uint64, error) {
-	vals := bone.GetQuery(r, key)
-	if len(vals) > 1 {
-		return 0, errInvalidQueryParams
-	}
-
-	if len(vals) == 0 {
-		return def, nil
-	}
-
-	strval := vals[0]
-	val, err := strconv.ParseUint(strval, 10, 64)
-	if err != nil {
-		return 0, errInvalidQueryParams
-	}
-
-	return val, nil
-}
-
-func readStringQuery(r *http.Request, key string) (string, error) {
-	vals := bone.GetQuery(r, key)
-	if len(vals) > 1 {
-		return "", errInvalidQueryParams
-	}
-
-	if len(vals) == 0 {
-		return "", nil
-	}
-
-	return vals[0], nil
-}
-
-func readMetadataQuery(r *http.Request, key string) (map[string]interface{}, error) {
-	vals := bone.GetQuery(r, key)
-	if len(vals) > 1 {
-		return nil, errInvalidQueryParams
-	}
-
-	if len(vals) == 0 {
-		return nil, nil
-	}
-
-	m := make(map[string]interface{})
-	err := json.Unmarshal([]byte(vals[0]), &m)
-	if err != nil {
-		return nil, errors.Wrap(errInvalidQueryParams, err)
-	}
-
-	return m, nil
 }

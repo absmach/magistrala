@@ -142,13 +142,13 @@ func (ms *metricsMiddleware) ListMembers(ctx context.Context, token, groupID, gr
 	return ms.svc.ListMembers(ctx, token, groupID, groupType, pm)
 }
 
-func (ms *metricsMiddleware) ListMemberships(ctx context.Context, token, groupID string, pm auth.PageMetadata) (gp auth.GroupPage, err error) {
+func (ms *metricsMiddleware) ListMemberships(ctx context.Context, token, memberID string, pm auth.PageMetadata) (gp auth.GroupPage, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_memberships").Add(1)
 		ms.latency.With("method", "list_memberships").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListMemberships(ctx, token, groupID, pm)
+	return ms.svc.ListMemberships(ctx, token, memberID, pm)
 }
 
 func (ms *metricsMiddleware) Assign(ctx context.Context, token, groupID, groupType string, memberIDs ...string) (err error) {

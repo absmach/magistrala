@@ -18,6 +18,7 @@ const (
 	usersEndpoint    = "users"
 	tokensEndpoint   = "tokens"
 	passwordEndpoint = "password"
+	membersEndpoint  = "members"
 )
 
 func (sdk mfSDK) CreateUser(u User) (string, error) {
@@ -156,8 +157,8 @@ func (sdk mfSDK) UpdatePassword(oldPass, newPass, token string) error {
 
 	return nil
 }
-func (sdk mfSDK) Memberships(userID, token string, offset, limit uint64) (GroupsPage, error) {
-	endpoint := fmt.Sprintf("%s/%s/groups?offset=%d&limit=%d&", usersEndpoint, userID, offset, limit)
+func (sdk mfSDK) Memberships(memberID, token string, offset, limit uint64) (GroupsPage, error) {
+	endpoint := fmt.Sprintf("%s/%s/groups?offset=%d&limit=%d&", membersEndpoint, memberID, offset, limit)
 	url := createURL(sdk.baseURL, sdk.groupsPrefix, endpoint)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {

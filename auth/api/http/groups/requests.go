@@ -128,6 +128,22 @@ func (req assignReq) validate() error {
 	return nil
 }
 
+type unassignReq struct {
+	assignReq
+}
+
+func (req unassignReq) validate() error {
+	if req.token == "" {
+		return auth.ErrUnauthorizedAccess
+	}
+
+	if req.groupID == "" || len(req.Members) == 0 {
+		return auth.ErrMalformedEntity
+	}
+
+	return nil
+}
+
 type groupReq struct {
 	token string
 	id    string

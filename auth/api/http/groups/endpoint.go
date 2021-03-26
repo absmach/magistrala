@@ -210,7 +210,7 @@ func assignEndpoint(svc auth.Service) endpoint.Endpoint {
 
 func unassignEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(assignReq)
+		req := request.(unassignReq)
 		if err := req.validate(); err != nil {
 			return nil, err
 		}

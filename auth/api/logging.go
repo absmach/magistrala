@@ -199,9 +199,9 @@ func (lm *loggingMiddleware) ListMembers(ctx context.Context, token, groupID, gr
 	return lm.svc.ListMembers(ctx, token, groupID, groupType, pm)
 }
 
-func (lm *loggingMiddleware) ListMemberships(ctx context.Context, token, groupID string, pm auth.PageMetadata) (gp auth.GroupPage, err error) {
+func (lm *loggingMiddleware) ListMemberships(ctx context.Context, token, memberID string, pm auth.PageMetadata) (gp auth.GroupPage, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method list_memberships for token %s and group id %s took %s to complete", token, groupID, time.Since(begin))
+		message := fmt.Sprintf("Method list_memberships for token %s and member id %s took %s to complete", token, memberID, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -209,7 +209,7 @@ func (lm *loggingMiddleware) ListMemberships(ctx context.Context, token, groupID
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.ListMemberships(ctx, token, groupID, pm)
+	return lm.svc.ListMemberships(ctx, token, memberID, pm)
 }
 
 func (lm *loggingMiddleware) Assign(ctx context.Context, token, groupID, groupType string, memberIDs ...string) (err error) {

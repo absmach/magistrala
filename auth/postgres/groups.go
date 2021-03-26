@@ -56,7 +56,7 @@ func (gr groupRepository) Save(ctx context.Context, g auth.Group) (auth.Group, e
 			 RETURNING id, name, owner_id, parent_id, description, metadata, path, nlevel(path) as level, created_at, updated_at`
 	}
 
-	dbg, err := gr.toDBGroup(g)
+	dbg, err := toDBGroup(g)
 	if err != nil {
 		return auth.Group{}, err
 	}
@@ -92,7 +92,7 @@ func (gr groupRepository) Update(ctx context.Context, g auth.Group) (auth.Group,
 	q := `UPDATE groups SET name = :name, description = :description, metadata = :metadata, updated_at = :updated_at WHERE id = :id 
 		  RETURNING id, name, owner_id, parent_id, description, metadata, path, nlevel(path) as level, created_at, updated_at`
 
-	dbu, err := gr.toDBGroup(g)
+	dbu, err := toDBGroup(g)
 	if err != nil {
 		return auth.Group{}, errors.Wrap(auth.ErrUpdateGroup, err)
 	}
@@ -126,7 +126,7 @@ func (gr groupRepository) Delete(ctx context.Context, groupID string) error {
 	group := auth.Group{
 		ID: groupID,
 	}
-	dbg, err := gr.toDBGroup(group)
+	dbg, err := toDBGroup(group)
 	if err != nil {
 		return errors.Wrap(auth.ErrUpdateGroup, err)
 	}
@@ -315,7 +315,7 @@ func (gr groupRepository) Members(ctx context.Context, groupID, groupType string
 		                 WHERE gr.group_id = :group_id %s`, mq)
 	}
 
-	params, err := gr.toDBMemberPage("", groupID, groupType, pm)
+	params, err := toDBMemberPage("", groupID, groupType, pm)
 	if err != nil {
 		return auth.MemberPage{}, err
 	}
@@ -375,7 +375,7 @@ func (gr groupRepository) Memberships(ctx context.Context, memberID string, pm a
 					  WHERE gr.group_id = g.id and gr.member_id = :member_id
 		  			  %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq)
 
-	params, err := gr.toDBMemberPage("", "", "", pm)
+	params, err := toDBMemberPage(memberID, "", "", pm)
 	if err != nil {
 		return auth.GroupPage{}, err
 	}
@@ -562,7 +562,7 @@ func toString(id uuid.NullUUID) (string, error) {
 	return "", errStringToUUID
 }
 
-func (gr groupRepository) toDBGroup(g auth.Group) (dbGroup, error) {
+func toDBGroup(g auth.Group) (dbGroup, error) {
 	ownerID, err := toUUID(g.OwnerID)
 	if err != nil {
 		return dbGroup{}, err
@@ -604,7 +604,7 @@ func toDBGroupPage(id, path string, pm auth.PageMetadata) (dbGroupPage, error) {
 	}, nil
 }
 
-func (gr groupRepository) toDBMemberPage(memberID, groupID, groupType string, pm auth.PageMetadata) (dbMemberPage, error) {
+func toDBMemberPage(memberID, groupID, groupType string, pm auth.PageMetadata) (dbMemberPage, error) {
 	return dbMemberPage{
 		GroupID:  groupID,
 		MemberID: memberID,

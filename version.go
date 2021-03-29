@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-const version string = "0.11.0"
+const version string = "0.12.0"
 
 // VersionInfo contains version endpoint response.
 type VersionInfo struct {

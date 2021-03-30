@@ -97,7 +97,7 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer) http.Handler {
 
 	mux.Get("/groups/:groupId", kithttp.NewServer(
 		kitot.TraceServer(tracer, "list_members")(listMembersEndpoint(svc)),
-		decodeListMemberGroupRequest,
+		decodeListMembersRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -230,7 +230,7 @@ func decodePasswordChange(_ context.Context, r *http.Request) (interface{}, erro
 	return req, nil
 }
 
-func decodeListMemberGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	o, err := httputil.ReadUintQuery(r, offsetKey, defOffset)
 	if err != nil && err != errors.ErrNotFoundParam {
 		return nil, err

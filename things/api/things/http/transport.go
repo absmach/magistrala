@@ -177,8 +177,8 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 	))
 
 	r.Get("/groups/:groupId", kithttp.NewServer(
-		kitot.TraceServer(tracer, "list_things")(listMembersEndpoint(svc)),
-		decodeListThingsGroupRequest,
+		kitot.TraceServer(tracer, "list_members")(listMembersEndpoint(svc)),
+		decodeListMembersRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -418,7 +418,7 @@ func decodeCreateConnections(_ context.Context, r *http.Request) (interface{}, e
 	return req, nil
 }
 
-func decodeListThingsGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	o, err := httputil.ReadUintQuery(r, offsetKey, defOffset)
 	if err != nil {
 		return nil, err

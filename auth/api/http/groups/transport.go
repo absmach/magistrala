@@ -123,10 +123,6 @@ func MakeHandler(svc auth.Service, mux *bone.Mux, tracer opentracing.Tracer) *bo
 }
 
 func decodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, auth.ErrUnsupportedContentType
-	}
-
 	l, err := httputil.ReadUintQuery(r, levelKey, defLevel)
 	if err != nil {
 		return nil, err
@@ -153,10 +149,6 @@ func decodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, e
 }
 
 func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, auth.ErrUnsupportedContentType
-	}
-
 	o, err := httputil.ReadUintQuery(r, offsetKey, defOffset)
 	if err != nil {
 		return nil, err
@@ -195,10 +187,6 @@ func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 }
 
 func decodeListMembershipsRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, auth.ErrUnsupportedContentType
-	}
-
 	o, err := httputil.ReadUintQuery(r, offsetKey, defOffset)
 	if err != nil {
 		return nil, err

@@ -1,8 +1,9 @@
 # Builder
 FROM erlang:22-alpine AS builder
 RUN apk add --update git build-base bsd-compat-headers openssl-dev snappy-dev curl \
-    && git clone -b 1.11.0 https://github.com/vernemq/vernemq \
+    && git clone https://github.com/vernemq/vernemq \
     && cd vernemq \
+    && git checkout eb1a262035af47e90d9edf07f36c1b1503557c1f \
     && make -j 16 rel
 
 # Executor

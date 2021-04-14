@@ -18,10 +18,12 @@ const (
 	group  = "mainflux.lora"
 	stream = "mainflux.things"
 
-	thingPrefix = "thing."
-	thingCreate = thingPrefix + "create"
-	thingUpdate = thingPrefix + "update"
-	thingRemove = thingPrefix + "remove"
+	thingPrefix     = "thing."
+	thingCreate     = thingPrefix + "create"
+	thingUpdate     = thingPrefix + "update"
+	thingRemove     = thingPrefix + "remove"
+	thingConnect    = thingPrefix + "connect"
+	thingDisconnect = thingPrefix + "disconnect"
 
 	channelPrefix = "channel."
 	channelCreate = channelPrefix + "create"
@@ -120,6 +122,12 @@ func (es eventStore) Subscribe(subject string) error {
 			case channelRemove:
 				rce := decodeRemoveChannel(event)
 				err = es.handleRemoveChannel(rce)
+			case thingConnect:
+				rce := decodeConnectionThing(event)
+				err = es.handleConnectThing(rce)
+			case thingDisconnect:
+				rce := decodeConnectionThing(event)
+				err = es.handleDisconnectThing(rce)
 			}
 			if err != nil && err != errMetadataType {
 				es.logger.Warn(fmt.Sprintf("Failed to handle event sourcing: %s", err.Error()))
@@ -196,6 +204,13 @@ func decodeCreateChannel(event map[string]interface{}) (createChannelEvent, erro
 	return cce, nil
 }
 
+func decodeConnectionThing(event map[string]interface{}) connectionThingEvent {
+	return connectionThingEvent{
+		chanID:  read(event, "chan_id", ""),
+		thingID: read(event, "thing_id", ""),
+	}
+}
+
 func decodeRemoveChannel(event map[string]interface{}) removeChannelEvent {
 	return removeChannelEvent{
 		id: read(event, "id", ""),
@@ -216,6 +231,14 @@ func (es eventStore) handleCreateChannel(cce createChannelEvent) error {
 
 func (es eventStore) handleRemoveChannel(rce removeChannelEvent) error {
 	return es.svc.RemoveChannel(rce.id)
+}
+
+func (es eventStore) handleConnectThing(rte connectionThingEvent) error {
+	return es.svc.ConnectThing(rte.chanID, rte.thingID)
+}
+
+func (es eventStore) handleDisconnectThing(rte connectionThingEvent) error {
+	return es.svc.DisconnectThing(rte.chanID, rte.thingID)
 }
 
 func read(event map[string]interface{}, key, def string) string {

@@ -17,3 +17,8 @@ type createChannelEvent struct {
 type removeChannelEvent struct {
 	id string
 }
+
+type connectionThingEvent struct {
+	chanID  string
+	thingID string
+}

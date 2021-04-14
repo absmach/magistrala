@@ -10,11 +10,6 @@ import (
 	"github.com/mainflux/mainflux/lora"
 )
 
-const (
-	mfxMapPrefix  = "mfx:lora"
-	loraMapPrefix = "lora:mfx"
-)
-
 var _ lora.RouteMapRepository = (*routerMap)(nil)
 
 type routerMap struct {
@@ -31,11 +26,12 @@ func NewRouteMapRepository(client *redis.Client, prefix string) lora.RouteMapRep
 }
 
 func (mr *routerMap) Save(mfxID, loraID string) error {
-	tkey := fmt.Sprintf("%s:%s:%s", mr.prefix, mfxMapPrefix, mfxID)
+	tkey := fmt.Sprintf("%s:%s", mr.prefix, mfxID)
 	if err := mr.client.Set(tkey, loraID, 0).Err(); err != nil {
 		return err
 	}
-	lkey := fmt.Sprintf("%s:%s:%s", mr.prefix, loraMapPrefix, loraID)
+
+	lkey := fmt.Sprintf("%s:%s", mr.prefix, loraID)
 	if err := mr.client.Set(lkey, mfxID, 0).Err(); err != nil {
 		return err
 	}
@@ -43,8 +39,8 @@ func (mr *routerMap) Save(mfxID, loraID string) error {
 	return nil
 }
 
-func (mr *routerMap) Get(mfxID string) (string, error) {
-	lKey := fmt.Sprintf("%s:%s:%s", mr.prefix, loraMapPrefix, mfxID)
+func (mr *routerMap) Get(id string) (string, error) {
+	lKey := fmt.Sprintf("%s:%s", mr.prefix, id)
 	mval, err := mr.client.Get(lKey).Result()
 	if err != nil {
 		return "", err
@@ -54,12 +50,12 @@ func (mr *routerMap) Get(mfxID string) (string, error) {
 }
 
 func (mr *routerMap) Remove(mfxID string) error {
-	mkey := fmt.Sprintf("%s:%s:%s", mr.prefix, mfxMapPrefix, mfxID)
+	mkey := fmt.Sprintf("%s:%s", mr.prefix, mfxID)
 	lval, err := mr.client.Get(mkey).Result()
 	if err != nil {
 		return err
 	}
 
-	lkey := fmt.Sprintf("%s:%s:%s", mr.prefix, loraMapPrefix, lval)
+	lkey := fmt.Sprintf("%s:%s", mr.prefix, lval)
 	return mr.client.Del(mkey, lkey).Err()
 }

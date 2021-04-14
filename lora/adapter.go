@@ -1,10 +1,10 @@
 package lora
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/mainflux/mainflux/pkg/messaging"
@@ -25,6 +25,9 @@ var (
 
 	// ErrNotFoundApp indicates a non-existent route map for an application ID.
 	ErrNotFoundApp = errors.New("route map not found for this application ID")
+
+	// ErrNotConnected indicates a non-existent route map for a connection.
+	ErrNotConnected = errors.New("route map not found for this connection")
 )
 
 // Service specifies an API that must be fullfiled by the domain service
@@ -48,8 +51,14 @@ type Service interface {
 	// RemoveChannel removes channelID:appID route-map
 	RemoveChannel(chanID string) error
 
+	// ConnectThing creates thingID:channelID route-map
+	ConnectThing(chanID, thingID string) error
+
+	// DisconnectThing removes thingID:channelID route-map
+	DisconnectThing(chanID, thingID string) error
+
 	// Publish forwards messages from the LoRa MQTT broker to Mainflux NATS broker
-	Publish(ctx context.Context, token string, msg Message) error
+	Publish(msg Message) error
 }
 
 var _ Service = (*adapterService)(nil)
@@ -58,32 +67,39 @@ type adapterService struct {
 	publisher  messaging.Publisher
 	thingsRM   RouteMapRepository
 	channelsRM RouteMapRepository
+	connectRM  RouteMapRepository
 }
 
 // New instantiates the LoRa adapter implementation.
-func New(publisher messaging.Publisher, thingsRM, channelsRM RouteMapRepository) Service {
+func New(publisher messaging.Publisher, thingsRM, channelsRM, connectRM RouteMapRepository) Service {
 	return &adapterService{
 		publisher:  publisher,
 		thingsRM:   thingsRM,
 		channelsRM: channelsRM,
+		connectRM:  connectRM,
 	}
 }
 
 // Publish forwards messages from Lora MQTT broker to Mainflux NATS broker
-func (as *adapterService) Publish(ctx context.Context, token string, m Message) error {
+func (as *adapterService) Publish(m Message) error {
 	// Get route map of lora application
-	thing, err := as.thingsRM.Get(m.DevEUI)
+	thingID, err := as.thingsRM.Get(m.DevEUI)
 	if err != nil {
 		return ErrNotFoundDev
 	}
 
 	// Get route map of lora application
-	channel, err := as.channelsRM.Get(m.ApplicationID)
+	chanID, err := as.channelsRM.Get(m.ApplicationID)
 	if err != nil {
 		return ErrNotFoundApp
 	}
 
-	// Use the SenML message decoded on LoRa server application if
+	c := fmt.Sprintf("%s:%s", chanID, thingID)
+	if _, err := as.connectRM.Get(c); err != nil {
+		return ErrNotConnected
+	}
+
+	// Use the SenML message decoded on LoRa Server application if
 	// field Object isn't empty. Otherwise, decode standard field Data.
 	var payload []byte
 	switch m.Object {
@@ -102,9 +118,9 @@ func (as *adapterService) Publish(ctx context.Context, token string, m Message) 
 
 	// Publish on Mainflux NATS broker
 	msg := messaging.Message{
-		Publisher: thing,
+		Publisher: thingID,
 		Protocol:  protocol,
-		Channel:   channel,
+		Channel:   chanID,
 		Payload:   payload,
 		Created:   time.Now().UnixNano(),
 	}
@@ -134,4 +150,30 @@ func (as *adapterService) UpdateChannel(chanID string, appID string) error {
 
 func (as *adapterService) RemoveChannel(chanID string) error {
 	return as.channelsRM.Remove(chanID)
+}
+
+func (as *adapterService) ConnectThing(chanID, thingID string) error {
+	if _, err := as.channelsRM.Get(chanID); err != nil {
+		return ErrNotFoundApp
+	}
+
+	if _, err := as.thingsRM.Get(thingID); err != nil {
+		return ErrNotFoundDev
+	}
+
+	c := fmt.Sprintf("%s:%s", chanID, thingID)
+	return as.connectRM.Save(c, c)
+}
+
+func (as *adapterService) DisconnectThing(chanID, thingID string) error {
+	if _, err := as.channelsRM.Get(chanID); err != nil {
+		return ErrNotFoundApp
+	}
+
+	if _, err := as.thingsRM.Get(thingID); err != nil {
+		return ErrNotFoundDev
+	}
+
+	c := fmt.Sprintf("%s:%s", chanID, thingID)
+	return as.connectRM.Remove(c)
 }

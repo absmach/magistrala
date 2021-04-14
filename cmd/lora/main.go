@@ -4,7 +4,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -60,6 +59,7 @@ const (
 
 	thingsRMPrefix   = "thing"
 	channelsRMPrefix = "channel"
+	connsRMPrefix    = "connection"
 )
 
 type config struct {
@@ -98,10 +98,11 @@ func main() {
 	}
 	defer pub.Close()
 
-	thingRM := newRouteMapRepositoy(rmConn, thingsRMPrefix, logger)
-	chanRM := newRouteMapRepositoy(rmConn, channelsRMPrefix, logger)
+	thingsRM := newRouteMapRepository(rmConn, thingsRMPrefix, logger)
+	chansRM := newRouteMapRepository(rmConn, channelsRMPrefix, logger)
+	connsRM := newRouteMapRepository(rmConn, connsRMPrefix, logger)
 
-	svc := lora.New(pub, thingRM, chanRM)
+	svc := lora.New(pub, thingsRM, chansRM, connsRM)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,
@@ -185,7 +186,7 @@ func subscribeToLoRaBroker(svc lora.Service, msub messaging.Subscriber, logger l
 			logger.Warn(fmt.Sprintf("Failed to Unmarshal message: %s", err.Error()))
 			return err
 		}
-		if err := svc.Publish(context.Background(), "", m); err != nil {
+		if err := svc.Publish(m); err != nil {
 			return err
 		}
 		return nil
@@ -205,7 +206,7 @@ func subscribeToThingsES(svc lora.Service, client *r.Client, consumer string, lo
 	}
 }
 
-func newRouteMapRepositoy(client *r.Client, prefix string, logger logger.Logger) lora.RouteMapRepository {
+func newRouteMapRepository(client *r.Client, prefix string, logger logger.Logger) lora.RouteMapRepository {
 	logger.Info(fmt.Sprintf("Connected to %s Redis Route-map", prefix))
 	return redis.NewRouteMapRepository(client, prefix)
 }

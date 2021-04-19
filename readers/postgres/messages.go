@@ -41,7 +41,7 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 	order := "time"
 	format := defTable
 
-	if rpm.Format != "" {
+	if rpm.Format != "" && rpm.Format != defTable {
 		order = "created"
 		format = rpm.Format
 	}

@@ -174,6 +174,19 @@ func TestReadSenml(t *testing.T) {
 				Messages: fromSenml(queryMsgs),
 			},
 		},
+		"read message with publisher and format": {
+			chanID: chanID,
+			pageMeta: readers.PageMetadata{
+				Format:    "messages",
+				Offset:    0,
+				Limit:     uint64(len(queryMsgs)),
+				Publisher: pubID2,
+			},
+			page: readers.MessagesPage{
+				Total:    uint64(len(queryMsgs)),
+				Messages: fromSenml(queryMsgs),
+			},
+		},
 		"read message with protocol": {
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{

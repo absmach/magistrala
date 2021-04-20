@@ -20,6 +20,9 @@ const (
 	format = "format"
 	// Table for SenML messages
 	defTable = "messages"
+
+	// Error code for Undefined table error.
+	undefinedTableCode = 8704
 )
 
 var _ readers.MessageRepository = (*cassandraRepository)(nil)
@@ -79,6 +82,11 @@ func (cr cassandraRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 				&msg.Name, &msg.Unit, &msg.Value, &msg.StringValue, &msg.BoolValue,
 				&msg.DataValue, &msg.Sum, &msg.Time, &msg.UpdateTime)
 			if err != nil {
+				if e, ok := err.(gocql.RequestError); ok {
+					if e.Code() == undefinedTableCode {
+						return readers.MessagesPage{}, nil
+					}
+				}
 				return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 			}
 			page.Messages = append(page.Messages, msg)
@@ -88,6 +96,11 @@ func (cr cassandraRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 			var msg jsonMessage
 			err := scanner.Scan(&msg.Channel, &msg.Subtopic, &msg.Publisher, &msg.Protocol, &msg.Created, &msg.Payload)
 			if err != nil {
+				if e, ok := err.(gocql.RequestError); ok {
+					if e.Code() == undefinedTableCode {
+						return readers.MessagesPage{}, nil
+					}
+				}
 				return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 			}
 			m, err := msg.toMap()
@@ -100,6 +113,11 @@ func (cr cassandraRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 	}
 
 	if err := cr.session.Query(countCQL, vals[:len(vals)-1]...).Scan(&page.Total); err != nil {
+		if e, ok := err.(gocql.RequestError); ok {
+			if e.Code() == undefinedTableCode {
+				return readers.MessagesPage{}, nil
+			}
+		}
 		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 	}
 

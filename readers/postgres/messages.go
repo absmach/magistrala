@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx" // required for DB access
+	"github.com/lib/pq"
 	"github.com/mainflux/mainflux/pkg/errors"
 	jsont "github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
@@ -20,6 +21,9 @@ const (
 	format = "format"
 	// Table for SenML messages
 	defTable = "messages"
+
+	// Error code for Undefined table error.
+	undefinedTableCode = "42P01"
 )
 
 var errReadMessages = errors.New("failed to read messages from postgres database")
@@ -68,6 +72,11 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 
 	rows, err := tr.db.NamedQuery(q, params)
 	if err != nil {
+		if e, ok := err.(*pq.Error); ok {
+			if e.Code == undefinedTableCode {
+				return readers.MessagesPage{}, nil
+			}
+		}
 		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 	}
 	defer rows.Close()
@@ -79,7 +88,7 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 	switch format {
 	case defTable:
 		for rows.Next() {
-			msg := dbMessage{Message: senml.Message{}}
+			msg := senmlMessage{Message: senml.Message{}}
 			if err := rows.StructScan(&msg); err != nil {
 				return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 			}
@@ -156,7 +165,7 @@ func fmtCondition(chanID string, rpm readers.PageMetadata) string {
 	return condition
 }
 
-type dbMessage struct {
+type senmlMessage struct {
 	ID string `db:"id"`
 	senml.Message
 }

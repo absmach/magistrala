@@ -39,14 +39,16 @@ func New(db *mongo.Database) readers.MessageRepository {
 
 func (repo mongoRepository) ReadAll(chanID string, rpm readers.PageMetadata) (readers.MessagesPage, error) {
 	format := defCollection
-	if rpm.Format != "" {
+	order := "time"
+	if rpm.Format != "" && rpm.Format != defCollection {
+		order = "created"
 		format = rpm.Format
 	}
 
 	col := repo.db.Collection(format)
 
 	sortMap := map[string]interface{}{
-		"time": -1,
+		order: -1,
 	}
 	// Remove format filter and format the rest properly.
 	filter := fmtCondition(chanID, rpm)

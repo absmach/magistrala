@@ -8,7 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/mainflux/mainflux/consumers/writers/cassandra"
+	"github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,13 +33,12 @@ var (
 	sum     float64 = 42
 )
 
-func TestSave(t *testing.T) {
+func TestSaveSenml(t *testing.T) {
 	session, err := cassandra.Connect(cassandra.DBConfig{
 		Hosts:    []string{addr},
 		Keyspace: keyspace,
 	})
 	require.Nil(t, err, fmt.Sprintf("failed to connect to Cassandra: %s", err))
-
 	repo := cassandra.New(session)
 	now := time.Now().Unix()
 	msg := senml.Message{
@@ -70,4 +71,48 @@ func TestSave(t *testing.T) {
 
 	err = repo.Consume(msgs)
 	assert.Nil(t, err, fmt.Sprintf("expected no error, got %s", err))
+}
+
+func TestSaveJSON(t *testing.T) {
+	session, err := cassandra.Connect(cassandra.DBConfig{
+		Hosts:    []string{addr},
+		Keyspace: keyspace,
+	})
+	require.Nil(t, err, fmt.Sprintf("failed to connect to Cassandra: %s", err))
+	repo := cassandra.New(session)
+	chid, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	pubid, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
+	msg := json.Message{
+		Channel:   chid.String(),
+		Publisher: pubid.String(),
+		Created:   time.Now().Unix(),
+		Subtopic:  "subtopic/format/some_json",
+		Protocol:  "mqtt",
+		Payload: map[string]interface{}{
+			"field_1": 123,
+			"field_2": "value",
+			"field_3": false,
+			"field_4": 12.344,
+			"field_5": map[string]interface{}{
+				"field_1": "value",
+				"field_2": 42,
+			},
+		},
+	}
+
+	now := time.Now().Unix()
+	msgs := json.Messages{
+		Format: "some_json",
+	}
+
+	for i := 0; i < msgsNum; i++ {
+		msg.Created = now + int64(i)
+		msgs.Data = append(msgs.Data, msg)
+	}
+
+	err = repo.Consume(msgs)
+	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 }

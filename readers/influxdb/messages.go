@@ -56,6 +56,7 @@ func (repo *influxRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 	var ret []readers.Message
 
 	resp, err := repo.client.Query(q)
+
 	if err != nil {
 		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 	}
@@ -69,7 +70,11 @@ func (repo *influxRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 
 	result := resp.Results[0].Series[0]
 	for _, v := range result.Values {
-		ret = append(ret, parseMessage(format, result.Columns, v))
+		msg, err := parseMessage(format, result.Columns, v)
+		if err != nil {
+			return readers.MessagesPage{}, err
+		}
+		ret = append(ret, msg)
 	}
 
 	total, err := repo.count(format, condition)
@@ -124,7 +129,6 @@ func (repo *influxRepository) count(measurement, condition string) (uint64, erro
 	if !ok {
 		return 0, nil
 	}
-
 	return strconv.ParseUint(count.String(), 10, 64)
 }
 
@@ -209,10 +213,10 @@ func parseValues(value interface{}, name string, msg *senml.Message) {
 	}
 }
 
-func parseMessage(measurement string, names []string, fields []interface{}) interface{} {
+func parseMessage(measurement string, names []string, fields []interface{}) (interface{}, error) {
 	switch measurement {
 	case defMeasurement:
-		return parseSenml(names, fields)
+		return parseSenml(names, fields), nil
 	default:
 		return parseJSON(names, fields)
 	}
@@ -254,11 +258,25 @@ func parseSenml(names []string, fields []interface{}) interface{} {
 	return m
 }
 
-func parseJSON(names []string, fields []interface{}) interface{} {
+func parseJSON(names []string, fields []interface{}) (interface{}, error) {
 	ret := make(map[string]interface{})
+	pld := make(map[string]interface{})
 	for i, n := range names {
-		ret[n] = fields[i]
+		switch n {
+		case "channel", "created", "subtopic", "publisher", "protocol", "time":
+			ret[n] = fields[i]
+		default:
+			v := fields[i]
+			if val, ok := v.(json.Number); ok {
+				var err error
+				v, err = val.Float64()
+				if err != nil {
+					return nil, err
+				}
+			}
+			pld[n] = v
+		}
 	}
-
-	return jsont.ParseFlat(ret)
+	ret["payload"] = jsont.ParseFlat(pld)
+	return ret, nil
 }

@@ -10,10 +10,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/mainflux/mainflux/consumers/writers/mongodb"
+	"github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 
 	log "github.com/mainflux/mainflux/logger"
@@ -41,7 +43,7 @@ var (
 	sum     float64 = 42
 )
 
-func TestSave(t *testing.T) {
+func TestSaveSenml(t *testing.T) {
 	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(addr))
 	require.Nil(t, err, fmt.Sprintf("Creating new MongoDB client expected to succeed: %s.\n", err))
 
@@ -87,4 +89,48 @@ func TestSave(t *testing.T) {
 	count, err := db.Collection(collection).CountDocuments(context.Background(), bson.D{})
 	assert.Nil(t, err, fmt.Sprintf("Querying database expected to succeed: %s.\n", err))
 	assert.Equal(t, int64(msgsNum), count, fmt.Sprintf("Expected to have %d value, found %d instead.\n", msgsNum, count))
+}
+
+func TestSaveJSON(t *testing.T) {
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(addr))
+	require.Nil(t, err, fmt.Sprintf("Creating new MongoDB client expected to succeed: %s.\n", err))
+
+	db := client.Database(testDB)
+	repo := mongodb.New(db)
+
+	chid, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	pubid, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
+	msg := json.Message{
+		Channel:   chid.String(),
+		Publisher: pubid.String(),
+		Created:   time.Now().Unix(),
+		Subtopic:  "subtopic/format/some_json",
+		Protocol:  "mqtt",
+		Payload: map[string]interface{}{
+			"field_1": 123,
+			"field_2": "value",
+			"field_3": false,
+			"field_4": 12.344,
+			"field_5": map[string]interface{}{
+				"field_1": "value",
+				"field_2": 42,
+			},
+		},
+	}
+
+	now := time.Now().Unix()
+	msgs := json.Messages{
+		Format: "some_json",
+	}
+
+	for i := 0; i < msgsNum; i++ {
+		msg.Created = now + int64(i)
+		msgs.Data = append(msgs.Data, msg)
+	}
+
+	err = repo.Consume(msgs)
+	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 }

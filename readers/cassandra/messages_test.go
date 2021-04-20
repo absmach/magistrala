@@ -8,11 +8,12 @@ import (
 	"testing"
 	"time"
 
-	writer "github.com/mainflux/mainflux/consumers/writers/cassandra"
+	cwriter "github.com/mainflux/mainflux/consumers/writers/cassandra"
+	"github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/readers"
-	reader "github.com/mainflux/mainflux/readers/cassandra"
+	creader "github.com/mainflux/mainflux/readers/cassandra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,28 +27,31 @@ const (
 	mqttProt    = "mqtt"
 	httpProt    = "http"
 	msgName     = "temperature"
+
+	format1 = "format_1"
+	format2 = "format_2"
+	wrongID = "0"
 )
 
 var (
-	addr = "localhost"
-
-	v   float64 = 5
-	vs          = "value"
-	vb          = true
-	vd          = "base64"
-	sum float64 = 42
+	addr         = "localhost"
+	v    float64 = 5
+	vs           = "value"
+	vb           = true
+	vd           = "base64"
+	sum  float64 = 42
 
 	idProvider = uuid.New()
 )
 
 func TestReadSenml(t *testing.T) {
-	session, err := reader.Connect(reader.DBConfig{
+	session, err := creader.Connect(creader.DBConfig{
 		Hosts:    []string{addr},
 		Keyspace: keyspace,
 	})
 	require.Nil(t, err, fmt.Sprintf("failed to connect to Cassandra: %s", err))
 	defer session.Close()
-	writer := writer.New(session)
+	writer := cwriter.New(session)
 
 	chanID, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -106,7 +110,7 @@ func TestReadSenml(t *testing.T) {
 	err = writer.Consume(messages)
 	require.Nil(t, err, fmt.Sprintf("failed to store message to Cassandra: %s", err))
 
-	reader := reader.New(session)
+	reader := creader.New(session)
 
 	// Since messages are not saved in natural order,
 	// cases that return subset of messages are only
@@ -181,6 +185,19 @@ func TestReadSenml(t *testing.T) {
 			page: readers.MessagesPage{
 				Total:    uint64(len(queryMsgs)),
 				Messages: fromSenml(queryMsgs),
+			},
+		},
+		"read message with wrong format": {
+			chanID: chanID,
+			pageMeta: readers.PageMetadata{
+				Format:    "messagess",
+				Offset:    0,
+				Limit:     uint64(len(queryMsgs)),
+				Publisher: pubID2,
+			},
+			page: readers.MessagesPage{
+				Total:    0,
+				Messages: []readers.Message{},
 			},
 		},
 		"read message with protocol": {
@@ -367,10 +384,178 @@ func TestReadSenml(t *testing.T) {
 	}
 }
 
+func TestReadJSON(t *testing.T) {
+	session, err := creader.Connect(creader.DBConfig{
+		Hosts:    []string{addr},
+		Keyspace: keyspace,
+	})
+	require.Nil(t, err, fmt.Sprintf("failed to connect to Cassandra: %s", err))
+	defer session.Close()
+	writer := cwriter.New(session)
+
+	id1, err := idProvider.ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	m := json.Message{
+		Channel:   id1,
+		Publisher: id1,
+		Created:   time.Now().Unix(),
+		Subtopic:  "subtopic/format/some_json",
+		Protocol:  "coap",
+		Payload: map[string]interface{}{
+			"field_2": "value",
+			"field_3": false,
+			"field_4": 12.344,
+			"field_5": map[string]interface{}{
+				"field_1": "value",
+				"field_2": 42.0,
+			},
+		},
+	}
+	messages1 := json.Messages{
+		Format: format1,
+	}
+	msgs1 := []map[string]interface{}{}
+	for i := 0; i < msgsNum; i++ {
+		msg := m
+		messages1.Data = append(messages1.Data, msg)
+		m := toMap(msg)
+		msgs1 = append(msgs1, m)
+	}
+	err = writer.Consume(messages1)
+	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
+
+	id2, err := idProvider.ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	m = json.Message{
+		Channel:   id2,
+		Publisher: id2,
+		Created:   time.Now().Unix(),
+		Subtopic:  "subtopic/other_format/some_other_json",
+		Protocol:  "udp",
+		Payload: map[string]interface{}{
+			"field_pi":    3.14159265,
+			"false_value": false,
+			"field_map": map[string]interface{}{
+				"field_1": "wrong_value",
+				"field_2": 24.5,
+			},
+		},
+	}
+	messages2 := json.Messages{
+		Format: format2,
+	}
+	msgs2 := []map[string]interface{}{}
+	for i := 0; i < msgsNum; i++ {
+		msg := m
+		if i%2 == 0 {
+			msg.Protocol = httpProt
+		}
+		messages2.Data = append(messages2.Data, msg)
+		m := toMap(msg)
+		msgs2 = append(msgs2, m)
+	}
+	err = writer.Consume(messages2)
+	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
+
+	httpMsgs := []map[string]interface{}{}
+	for i := 0; i < msgsNum; i += 2 {
+		httpMsgs = append(httpMsgs, msgs2[i])
+	}
+
+	reader := creader.New(session)
+
+	cases := map[string]struct {
+		chanID   string
+		pageMeta readers.PageMetadata
+		page     readers.MessagesPage
+	}{
+		"read message page for existing channel": {
+			chanID: id1,
+			pageMeta: readers.PageMetadata{
+				Format: messages1.Format,
+				Offset: 0,
+				Limit:  10,
+			},
+			page: readers.MessagesPage{
+				Total:    100,
+				Messages: fromJSON(msgs1[:10]),
+			},
+		},
+		"read message page for non-existent channel": {
+			chanID: wrongID,
+			pageMeta: readers.PageMetadata{
+				Format: messages1.Format,
+				Offset: 0,
+				Limit:  10,
+			},
+			page: readers.MessagesPage{
+				Messages: []readers.Message{},
+			},
+		},
+		"read message last page": {
+			chanID: id2,
+			pageMeta: readers.PageMetadata{
+				Format: messages2.Format,
+				Offset: msgsNum - 20,
+				Limit:  msgsNum,
+			},
+			page: readers.MessagesPage{
+				Total:    msgsNum,
+				Messages: fromJSON(msgs2[msgsNum-20 : msgsNum]),
+			},
+		},
+		"read message with protocol": {
+			chanID: id2,
+			pageMeta: readers.PageMetadata{
+				Format:   messages2.Format,
+				Offset:   0,
+				Limit:    uint64(msgsNum / 2),
+				Protocol: httpProt,
+			},
+			page: readers.MessagesPage{
+				Total:    uint64(msgsNum / 2),
+				Messages: fromJSON(httpMsgs),
+			},
+		},
+	}
+
+	for desc, tc := range cases {
+		result, err := reader.ReadAll(tc.chanID, tc.pageMeta)
+		for i := 0; i < len(result.Messages); i++ {
+			m := result.Messages[i]
+			// Remove id as it is not sent by the client.
+			delete(m.(map[string]interface{}), "id")
+			result.Messages[i] = m
+		}
+		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %s", desc, err))
+		assert.ElementsMatch(t, tc.page.Messages, result.Messages, fmt.Sprintf("%s: expected %v got %v", desc, tc.page.Messages, result.Messages))
+		assert.Equal(t, tc.page.Total, result.Total, fmt.Sprintf("%s: expected %v got %v", desc, tc.page.Total, result.Total))
+	}
+}
+
 func fromSenml(in []senml.Message) []readers.Message {
 	var ret []readers.Message
 	for _, m := range in {
 		ret = append(ret, m)
 	}
 	return ret
+}
+
+func fromJSON(msg []map[string]interface{}) []readers.Message {
+	var ret []readers.Message
+	for _, m := range msg {
+		ret = append(ret, m)
+	}
+	return ret
+}
+
+func toMap(msg json.Message) map[string]interface{} {
+	return map[string]interface{}{
+		"channel":   msg.Channel,
+		"created":   msg.Created,
+		"subtopic":  msg.Subtopic,
+		"publisher": msg.Publisher,
+		"protocol":  msg.Protocol,
+		"payload":   map[string]interface{}(msg.Payload),
+	}
 }

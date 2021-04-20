@@ -97,7 +97,7 @@ func (tr thingRepository) Update(ctx context.Context, t things.Thing) error {
 	}
 
 	cnt, errdb := res.RowsAffected()
-	if err != nil {
+	if errdb != nil {
 		return errors.Wrap(things.ErrUpdateEntity, errdb)
 	}
 

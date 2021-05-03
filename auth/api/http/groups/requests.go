@@ -93,7 +93,6 @@ type listMembershipsReq struct {
 	id       string
 	offset   uint64
 	limit    uint64
-	tree     bool
 	metadata auth.GroupMetadata
 }
 

@@ -267,6 +267,24 @@ paths:
           description: Missing or invalid access token provided.
         '500':
           $ref: "#/components/responses/ServiceError"
+  /members/{memberId}/groups:
+    get:
+      summary: Gets memberships for a member with member id.
+      description: |
+        Array of groups that member belongs to.
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/MemberId"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Metadata"
+      responses:
+        '200':
+          $ref: "#/components/responses/GroupRes"
+        '403':
+          description: Missing or invalid access token provided.
+        '500':
+          $ref: "#/components/responses/ServiceError"
 components:
   schemas:
     Key:
@@ -452,6 +470,14 @@ components:
       schema:
         type: string
         format: uuid
+      required: true
+    MemberId:
+      name: memberId
+      description: Member id.
+      in: path
+      schema:
+        type: string
+        format: uuid | ulid
       required: true
     MemberType:
       name: type

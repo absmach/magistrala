@@ -137,10 +137,6 @@ func listMemberships(svc auth.Service) endpoint.Endpoint {
 			return memberPageRes{}, err
 		}
 
-		if req.tree {
-			return buildGroupsResponseTree(page), nil
-		}
-
 		return buildGroupsResponse(page), nil
 	}
 }

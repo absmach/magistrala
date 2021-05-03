@@ -202,18 +202,12 @@ func decodeListMembershipsRequest(_ context.Context, r *http.Request) (interface
 		return nil, err
 	}
 
-	tree, err := httputil.ReadBoolQuery(r, treeKey, false)
-	if err != nil {
-		return nil, err
-	}
-
 	req := listMembershipsReq{
 		token:    r.Header.Get("Authorization"),
 		id:       bone.GetValue(r, "memberID"),
 		offset:   o,
 		limit:    l,
 		metadata: m,
-		tree:     tree,
 	}
 
 	return req, nil

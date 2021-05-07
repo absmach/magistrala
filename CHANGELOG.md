@@ -11,6 +11,18 @@ Otherwise, whole log in a similar format can be observed via:
 git log --pretty=oneline --abbrev-commit
 ```
 
+## 0.12.1 - 05. MAY 2021.
+### Features and Bugfixes
+NOISSUE - Refactor SDK memberships and fix openapi for memberships.
+NOISSUE - Fix incorrect influxdb credentials
+MF-1408 - Fix error handling for Thing update SQL(#1408)
+MF-1288 - Add tests for JSON messages in message writers and readers
+NOISSUE - Fix Postgres Reader order
+NOISSUE - Fix nginx configuration for groups
+NOISSUE - Add tests and connection route-map to lora-adapter
+MF-1403 - Change vernemq building source revision
+NOISSUE - Rm content-type check from list endpoint
+
 ## 0.12.0 - 29. MAR 2021.
 ### Features and Bugfixes
 - MF-1394 - SDK groups (#1396)

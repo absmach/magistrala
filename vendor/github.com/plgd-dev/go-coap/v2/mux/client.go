@@ -23,6 +23,7 @@ type Client interface {
 
 	RemoteAddr() net.Addr
 	Context() context.Context
+	SetContextValue(key interface{}, val interface{})
 	WriteMessage(req *message.Message) error
 	Do(req *message.Message) (*message.Message, error)
 	Close() error

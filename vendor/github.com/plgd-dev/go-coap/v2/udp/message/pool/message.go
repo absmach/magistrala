@@ -66,6 +66,11 @@ func (r *Message) IsModified() bool {
 	return r.isModified || r.Message.IsModified()
 }
 
+func (r *Message) SetModified(b bool) {
+	r.isModified = b
+	r.Message.SetModified(b)
+}
+
 func (r *Message) Unmarshal(data []byte) (int, error) {
 	r.Reset()
 	if len(r.rawData) < len(data) {
@@ -173,13 +178,7 @@ func ConvertFrom(m *message.Message) (*Message, error) {
 
 // ConvertTo converts pool message to common message.
 func ConvertTo(m *Message) (*message.Message, error) {
-	opts := make(message.Options, 0, len(m.Options()))
-	buf := make([]byte, 64)
-	opts, used, err := opts.ResetOptionsTo(buf, m.Options())
-	if err == message.ErrTooSmall {
-		buf = append(buf, make([]byte, used-len(buf))...)
-		opts, used, err = opts.ResetOptionsTo(buf, m.Options())
-	}
+	opts, err := m.Options().Clone()
 	if err != nil {
 		return nil, err
 	}

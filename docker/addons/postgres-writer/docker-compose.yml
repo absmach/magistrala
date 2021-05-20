@@ -19,7 +19,7 @@ volumes:
 
 services:
   postgres:
-    image: postgres:10.8-alpine
+    image: postgres:13.3-alpine
     container_name: mainflux-postgres
     restart: on-failure
     environment:

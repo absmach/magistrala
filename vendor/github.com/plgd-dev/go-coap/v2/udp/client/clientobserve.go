@@ -5,22 +5,13 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/plgd-dev/go-coap/v2/message"
 	"github.com/plgd-dev/go-coap/v2/message/codes"
+	"github.com/plgd-dev/go-coap/v2/net/observation"
 	"github.com/plgd-dev/go-coap/v2/udp/message/pool"
 )
-
-//Observation represents subscription to resource on the server
-type Observation struct {
-	token       message.Token
-	path        string
-	obsSequence uint32
-	etag        []byte
-	cc          *ClientConn
-
-	mutex sync.Mutex
-}
 
 func NewObservationHandler(obsertionTokenHandler *HandlerContainer, next HandlerFunc) HandlerFunc {
 	return func(w *ResponseWriter, r *pool.Message) {
@@ -38,11 +29,53 @@ func NewObservationHandler(obsertionTokenHandler *HandlerContainer, next Handler
 	}
 }
 
+//Observation represents subscription to resource on the server
+type Observation struct {
+	token        message.Token
+	path         string
+	cc           *ClientConn
+	observeFunc  func(req *pool.Message)
+	respCodeChan chan codes.Code
+
+	obsSequence uint32
+	etag        []byte
+	lastEvent   time.Time
+	mutex       sync.Mutex
+
+	waitForReponse uint32
+}
+
+func newObservation(token message.Token, path string, cc *ClientConn, observeFunc func(req *pool.Message), respCodeChan chan codes.Code) *Observation {
+	return &Observation{
+		token:          token,
+		path:           path,
+		obsSequence:    0,
+		cc:             cc,
+		waitForReponse: 1,
+		respCodeChan:   respCodeChan,
+		observeFunc:    observeFunc,
+	}
+}
+
 func (o *Observation) cleanUp() {
 	o.cc.observationTokenHandler.Pop(o.token)
 	registeredRequest, ok := o.cc.observationRequests.PullOut(o.token.String())
 	if ok {
 		pool.ReleaseMessage(registeredRequest.(*pool.Message))
+	}
+}
+
+func (o *Observation) handler(w *ResponseWriter, r *pool.Message) {
+	code := r.Code()
+	if atomic.CompareAndSwapUint32(&o.waitForReponse, 1, 0) {
+		select {
+		case o.respCodeChan <- code:
+		default:
+		}
+		o.respCodeChan = nil
+	}
+	if o.wantBeNotified(r) {
+		o.observeFunc(r)
 	}
 }
 
@@ -56,7 +89,15 @@ func (o *Observation) Cancel(ctx context.Context) error {
 	defer pool.ReleaseMessage(req)
 	req.SetObserve(1)
 	req.SetToken(o.token)
-	return o.cc.WriteMessage(req)
+	resp, err := o.cc.Do(req)
+	if err != nil {
+		return err
+	}
+	defer pool.ReleaseMessage(resp)
+	if resp.Code() != codes.Content {
+		return fmt.Errorf("unexpected return code(%v)", resp.Code())
+	}
+	return err
 }
 
 func (o *Observation) wantBeNotified(r *pool.Message) bool {
@@ -64,16 +105,18 @@ func (o *Observation) wantBeNotified(r *pool.Message) bool {
 	if err != nil {
 		return true
 	}
+	now := time.Now()
 
 	o.mutex.Lock()
 	defer o.mutex.Unlock()
-	//obs starts with 0, after that check obsSequence
-	if obsSequence != 0 && o.obsSequence > obsSequence {
-		return false
-	}
-	o.obsSequence = obsSequence
 
-	return true
+	if observation.ValidSequenceNumber(o.obsSequence, obsSequence, o.lastEvent, now) {
+		o.obsSequence = obsSequence
+		o.lastEvent = now
+		return true
+	}
+
+	return false
 }
 
 // Observe subscribes for every change of resource on path.
@@ -84,27 +127,11 @@ func (cc *ClientConn) Observe(ctx context.Context, path string, observeFunc func
 	}
 	token := req.Token()
 	req.SetObserve(0)
-	o := &Observation{
-		token:       token,
-		path:        path,
-		obsSequence: 0,
-		cc:          cc,
-	}
 	respCodeChan := make(chan codes.Code, 1)
-	waitForReponse := uint32(1)
+	o := newObservation(token, path, cc, observeFunc, respCodeChan)
+
 	cc.observationRequests.Store(token.String(), req)
-	err = o.cc.observationTokenHandler.Insert(token.String(), func(w *ResponseWriter, r *pool.Message) {
-		code := r.Code()
-		if atomic.CompareAndSwapUint32(&waitForReponse, 1, 0) {
-			select {
-			case respCodeChan <- code:
-			default:
-			}
-		}
-		if o.wantBeNotified(r) {
-			observeFunc(r)
-		}
-	})
+	err = o.cc.observationTokenHandler.Insert(token.String(), o.handler)
 	defer func(err *error) {
 		if *err != nil {
 			o.cleanUp()
@@ -127,7 +154,7 @@ func (cc *ClientConn) Observe(ctx context.Context, path string, observeFunc func
 		return nil, err
 	case respCode := <-respCodeChan:
 		if respCode != codes.Content {
-			err = fmt.Errorf("unexected return code(%v)", respCode)
+			err = fmt.Errorf("unexpected return code(%v)", respCode)
 			return nil, err
 		}
 		return o, nil

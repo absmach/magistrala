@@ -15,14 +15,13 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/bson/bsontype"
+	"go.mongodb.org/mongo-driver/mongo/description"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
 	"go.mongodb.org/mongo-driver/x/bsonx/bsoncore"
 	"go.mongodb.org/mongo-driver/x/mongo/driver"
-	"go.mongodb.org/mongo-driver/x/mongo/driver/description"
 	"go.mongodb.org/mongo-driver/x/mongo/driver/operation"
 	"go.mongodb.org/mongo-driver/x/mongo/driver/session"
 )
@@ -45,8 +44,9 @@ type IndexView struct {
 
 // IndexModel represents a new index to be created.
 type IndexModel struct {
-	// A document describing which keys should be used for the index. It cannot be nil. See
-	// https://docs.mongodb.com/manual/indexes/#indexes for examples of valid documents.
+	// A document describing which keys should be used for the index. It cannot be nil. This must be an order-preserving
+	// type such as bson.D. Map types such as bson.M are not valid. See https://docs.mongodb.com/manual/indexes/#indexes
+	// for examples of valid documents.
 	Keys interface{}
 
 	// The options to use to create the index.
@@ -95,9 +95,9 @@ func (iv IndexView) List(ctx context.Context, opts ...*options.ListIndexesOption
 		Session(sess).CommandMonitor(iv.coll.client.monitor).
 		ServerSelector(selector).ClusterClock(iv.coll.client.clock).
 		Database(iv.coll.db.name).Collection(iv.coll.name).
-		Deployment(iv.coll.client.deployment)
+		Deployment(iv.coll.client.deployment).ServerAPI(iv.coll.client.serverAPI)
 
-	var cursorOpts driver.CursorOptions
+	cursorOpts := iv.coll.client.createBaseCursorOptions()
 	lio := options.MergeListIndexesOptions(opts...)
 	if lio.BatchSize != nil {
 		op = op.BatchSize(*lio.BatchSize)
@@ -132,6 +132,29 @@ func (iv IndexView) List(ctx context.Context, opts ...*options.ListIndexesOption
 	return cursor, replaceErrors(err)
 }
 
+// ListSpecifications executes a List command and returns a slice of returned IndexSpecifications
+func (iv IndexView) ListSpecifications(ctx context.Context, opts ...*options.ListIndexesOptions) ([]*IndexSpecification, error) {
+	cursor, err := iv.List(ctx, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []*IndexSpecification
+	err = cursor.All(ctx, &results)
+	if err != nil {
+		return nil, err
+	}
+
+	ns := iv.coll.db.Name() + "." + iv.coll.Name()
+	for _, res := range results {
+		// Pre-4.4 servers report a namespace in their responses, so we only set Namespace manually if it was not in
+		// the response.
+		res.Namespace = ns
+	}
+
+	return results, nil
+}
+
 // CreateOne executes a createIndexes command to create an index on the collection and returns the name of the new
 // index. See the IndexView.CreateMany documentation for more information and an example.
 func (iv IndexView) CreateOne(ctx context.Context, model IndexModel, opts ...*options.CreateIndexesOptions) (string, error) {
@@ -164,17 +187,17 @@ func (iv IndexView) CreateMany(ctx context.Context, models []IndexModel, opts ..
 			return nil, fmt.Errorf("index model keys cannot be nil")
 		}
 
-		name, err := getOrGenerateIndexName(iv.coll.registry, model)
+		keys, err := transformBsoncoreDocument(iv.coll.registry, model.Keys, false, "keys")
+		if err != nil {
+			return nil, err
+		}
+
+		name, err := getOrGenerateIndexName(keys, model)
 		if err != nil {
 			return nil, err
 		}
 
 		names = append(names, name)
-
-		keys, err := transformBsoncoreDocument(iv.coll.registry, model.Keys)
-		if err != nil {
-			return nil, err
-		}
 
 		var iidx int32
 		iidx, indexes = bsoncore.AppendDocumentElementStart(indexes, strconv.Itoa(i))
@@ -233,15 +256,23 @@ func (iv IndexView) CreateMany(ctx context.Context, models []IndexModel, opts ..
 	op := operation.NewCreateIndexes(indexes).
 		Session(sess).WriteConcern(wc).ClusterClock(iv.coll.client.clock).
 		Database(iv.coll.db.name).Collection(iv.coll.name).CommandMonitor(iv.coll.client.monitor).
-		Deployment(iv.coll.client.deployment).ServerSelector(selector)
+		Deployment(iv.coll.client.deployment).ServerSelector(selector).ServerAPI(iv.coll.client.serverAPI)
 
 	if option.MaxTime != nil {
 		op.MaxTimeMS(int64(*option.MaxTime / time.Millisecond))
 	}
+	if option.CommitQuorum != nil {
+		commitQuorum, err := transformValue(iv.coll.registry, option.CommitQuorum, true, "commitQuorum")
+		if err != nil {
+			return nil, err
+		}
+
+		op.CommitQuorum(commitQuorum)
+	}
 
 	err = op.Execute(ctx)
 	if err != nil {
-		return nil, err
+		return nil, replaceErrors(err)
 	}
 
 	return names, nil
@@ -262,7 +293,7 @@ func (iv IndexView) createOptionsDoc(opts *options.IndexOptions) (bsoncore.Docum
 		optsDoc = bsoncore.AppendBooleanElement(optsDoc, "sparse", *opts.Sparse)
 	}
 	if opts.StorageEngine != nil {
-		doc, err := transformBsoncoreDocument(iv.coll.registry, opts.StorageEngine)
+		doc, err := transformBsoncoreDocument(iv.coll.registry, opts.StorageEngine, true, "storageEngine")
 		if err != nil {
 			return nil, err
 		}
@@ -285,7 +316,7 @@ func (iv IndexView) createOptionsDoc(opts *options.IndexOptions) (bsoncore.Docum
 		optsDoc = bsoncore.AppendInt32Element(optsDoc, "textIndexVersion", *opts.TextVersion)
 	}
 	if opts.Weights != nil {
-		doc, err := transformBsoncoreDocument(iv.coll.registry, opts.Weights)
+		doc, err := transformBsoncoreDocument(iv.coll.registry, opts.Weights, true, "weights")
 		if err != nil {
 			return nil, err
 		}
@@ -308,7 +339,7 @@ func (iv IndexView) createOptionsDoc(opts *options.IndexOptions) (bsoncore.Docum
 		optsDoc = bsoncore.AppendInt32Element(optsDoc, "bucketSize", *opts.BucketSize)
 	}
 	if opts.PartialFilterExpression != nil {
-		doc, err := transformBsoncoreDocument(iv.coll.registry, opts.PartialFilterExpression)
+		doc, err := transformBsoncoreDocument(iv.coll.registry, opts.PartialFilterExpression, true, "partialFilterExpression")
 		if err != nil {
 			return nil, err
 		}
@@ -319,12 +350,15 @@ func (iv IndexView) createOptionsDoc(opts *options.IndexOptions) (bsoncore.Docum
 		optsDoc = bsoncore.AppendDocumentElement(optsDoc, "collation", bsoncore.Document(opts.Collation.ToDocument()))
 	}
 	if opts.WildcardProjection != nil {
-		doc, err := transformBsoncoreDocument(iv.coll.registry, opts.WildcardProjection)
+		doc, err := transformBsoncoreDocument(iv.coll.registry, opts.WildcardProjection, true, "wildcardProjection")
 		if err != nil {
 			return nil, err
 		}
 
 		optsDoc = bsoncore.AppendDocumentElement(optsDoc, "wildcardProjection", doc)
+	}
+	if opts.Hidden != nil {
+		optsDoc = bsoncore.AppendBooleanElement(optsDoc, "hidden", *opts.Hidden)
 	}
 
 	return optsDoc, nil
@@ -365,7 +399,7 @@ func (iv IndexView) drop(ctx context.Context, name string, opts ...*options.Drop
 		Session(sess).WriteConcern(wc).CommandMonitor(iv.coll.client.monitor).
 		ServerSelector(selector).ClusterClock(iv.coll.client.clock).
 		Database(iv.coll.db.name).Collection(iv.coll.name).
-		Deployment(iv.coll.client.deployment)
+		Deployment(iv.coll.client.deployment).ServerAPI(iv.coll.client.serverAPI)
 	if dio.MaxTime != nil {
 		op.MaxTimeMS(int64(*dio.MaxTime / time.Millisecond))
 	}
@@ -413,7 +447,7 @@ func (iv IndexView) DropAll(ctx context.Context, opts ...*options.DropIndexesOpt
 	return iv.drop(ctx, "*", opts...)
 }
 
-func getOrGenerateIndexName(registry *bsoncodec.Registry, model IndexModel) (string, error) {
+func getOrGenerateIndexName(keySpecDocument bsoncore.Document, model IndexModel) (string, error) {
 	if model.Options != nil && model.Options.Name != nil {
 		return *model.Options.Name, nil
 	}
@@ -421,11 +455,11 @@ func getOrGenerateIndexName(registry *bsoncodec.Registry, model IndexModel) (str
 	name := bytes.NewBufferString("")
 	first := true
 
-	keys, err := transformDocument(registry, model.Keys)
+	elems, err := keySpecDocument.Elements()
 	if err != nil {
 		return "", err
 	}
-	for _, elem := range keys {
+	for _, elem := range elems {
 		if !first {
 			_, err := name.WriteRune('_')
 			if err != nil {
@@ -433,7 +467,7 @@ func getOrGenerateIndexName(registry *bsoncodec.Registry, model IndexModel) (str
 			}
 		}
 
-		_, err := name.WriteString(elem.Key)
+		_, err := name.WriteString(elem.Key())
 		if err != nil {
 			return "", err
 		}
@@ -445,13 +479,14 @@ func getOrGenerateIndexName(registry *bsoncodec.Registry, model IndexModel) (str
 
 		var value string
 
-		switch elem.Value.Type() {
+		bsonValue := elem.Value()
+		switch bsonValue.Type {
 		case bsontype.Int32:
-			value = fmt.Sprintf("%d", elem.Value.Int32())
+			value = fmt.Sprintf("%d", bsonValue.Int32())
 		case bsontype.Int64:
-			value = fmt.Sprintf("%d", elem.Value.Int64())
+			value = fmt.Sprintf("%d", bsonValue.Int64())
 		case bsontype.String:
-			value = elem.Value.StringValue()
+			value = bsonValue.StringValue()
 		default:
 			return "", ErrInvalidIndexValue
 		}

@@ -17,7 +17,7 @@ volumes:
 
 services:
   cassandra:
-    image: cassandra:3.11.9
+    image: cassandra:3.11.10
     container_name: mainflux-cassandra
     restart: on-failure
     networks:

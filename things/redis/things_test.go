@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"testing"
 
-	r "github.com/go-redis/redis"
+	r "github.com/go-redis/redis/v8"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/things/redis"

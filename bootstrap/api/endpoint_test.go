@@ -4,6 +4,7 @@
 package api_test
 
 import (
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -339,7 +340,7 @@ func TestView(t *testing.T) {
 		})
 	}
 
-	saved, err := svc.Add(validToken, c)
+	saved, err := svc.Add(context.Background(), validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	var channels []channel
@@ -428,7 +429,7 @@ func TestUpdate(t *testing.T) {
 
 	c := newConfig([]bootstrap.Channel{bootstrap.Channel{ID: "1"}})
 
-	saved, err := svc.Add(validToken, c)
+	saved, err := svc.Add(context.Background(), validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	data := toJSON(updateReq)
@@ -522,7 +523,7 @@ func TestUpdateCert(t *testing.T) {
 
 	c := newConfig([]bootstrap.Channel{bootstrap.Channel{ID: "1"}})
 
-	saved, err := svc.Add(validToken, c)
+	saved, err := svc.Add(context.Background(), validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	data := toJSON(updateReq)
@@ -617,7 +618,7 @@ func TestUpdateConnections(t *testing.T) {
 
 	c := newConfig([]bootstrap.Channel{bootstrap.Channel{ID: "1"}})
 
-	saved, err := svc.Add(validToken, c)
+	saved, err := svc.Add(context.Background(), validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	data := toJSON(updateReq)
@@ -736,7 +737,7 @@ func TestList(t *testing.T) {
 		c.Name = fmt.Sprintf("%s-%d", addName, i)
 		c.ExternalKey = fmt.Sprintf("%s%s", addExternalKey, strconv.Itoa(i))
 
-		saved, err := svc.Add(validToken, c)
+		saved, err := svc.Add(context.Background(), validToken, c)
 		require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 		var channels []channel
@@ -762,7 +763,7 @@ func TestList(t *testing.T) {
 		if i%2 == 0 {
 			state = bootstrap.Inactive
 		}
-		err := svc.ChangeState(validToken, list[i].MFThing, state)
+		err := svc.ChangeState(context.Background(), validToken, list[i].MFThing, state)
 		require.Nil(t, err, fmt.Sprintf("Changing state expected to succeed: %s.\n", err))
 		list[i].State = state
 		if state == bootstrap.Inactive {
@@ -978,7 +979,7 @@ func TestRemove(t *testing.T) {
 
 	c := newConfig([]bootstrap.Channel{bootstrap.Channel{ID: "1"}})
 
-	saved, err := svc.Add(validToken, c)
+	saved, err := svc.Add(context.Background(), validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	cases := []struct {
@@ -1040,7 +1041,7 @@ func TestBootstrap(t *testing.T) {
 
 	c := newConfig([]bootstrap.Channel{bootstrap.Channel{ID: "1"}})
 
-	saved, err := svc.Add(validToken, c)
+	saved, err := svc.Add(context.Background(), validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	encExternKey, err := enc([]byte(c.ExternalKey))
@@ -1168,7 +1169,7 @@ func TestChangeState(t *testing.T) {
 
 	c := newConfig([]bootstrap.Channel{bootstrap.Channel{ID: "1"}})
 
-	saved, err := svc.Add(validToken, c)
+	saved, err := svc.Add(context.Background(), validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	inactive := fmt.Sprintf("{\"state\": %d}", bootstrap.Inactive)

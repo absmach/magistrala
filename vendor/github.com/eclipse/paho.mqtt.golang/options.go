@@ -10,6 +10,7 @@
  *    Seth Hoenig
  *    Allan Stockdill-Mander
  *    Mike Robertson
+ *    Måns Ansgariusson
  */
 
 // Portions copyright © 2018 TIBCO Software Inc.
@@ -44,7 +45,15 @@ type ConnectionLostHandler func(Client, error)
 // at initial connection and on reconnection
 type OnConnectHandler func(Client)
 
-// ClientOptions contains configurable options for an Client.
+// ReconnectHandler is invoked prior to reconnecting after
+// the initial connection is lost
+type ReconnectHandler func(Client, *ClientOptions)
+
+// ConnectionAttemptHandler is invoked prior to making the initial connection.
+type ConnectionAttemptHandler func(broker *url.URL, tlsCfg *tls.Config) *tls.Config
+
+// ClientOptions contains configurable options for an Client. Note that these should be set using the
+// relevant methods (e.g. AddBroker) rather than directly. See those functions for information on usage.
 type ClientOptions struct {
 	Servers                 []*url.URL
 	ClientID                string
@@ -66,21 +75,26 @@ type ClientOptions struct {
 	ConnectTimeout          time.Duration
 	MaxReconnectInterval    time.Duration
 	AutoReconnect           bool
+	ConnectRetryInterval    time.Duration
+	ConnectRetry            bool
 	Store                   Store
 	DefaultPublishHandler   MessageHandler
 	OnConnect               OnConnectHandler
 	OnConnectionLost        ConnectionLostHandler
+	OnReconnecting          ReconnectHandler
+	OnConnectAttempt        ConnectionAttemptHandler
 	WriteTimeout            time.Duration
 	MessageChannelDepth     uint
 	ResumeSubs              bool
 	HTTPHeaders             http.Header
+	WebsocketOptions        *WebsocketOptions
 }
 
 // NewClientOptions will create a new ClientClientOptions type with some
 // default values.
 //   Port: 1883
 //   CleanSession: True
-//   Order: True
+//   Order: True (note: it is recommended that this be set to FALSE unless order is important)
 //   KeepAlive: 30 (seconds)
 //   ConnectTimeout: 30 (seconds)
 //   MaxReconnectInterval 10 (minutes)
@@ -105,13 +119,16 @@ func NewClientOptions() *ClientOptions {
 		ConnectTimeout:          30 * time.Second,
 		MaxReconnectInterval:    10 * time.Minute,
 		AutoReconnect:           true,
+		ConnectRetryInterval:    30 * time.Second,
+		ConnectRetry:            false,
 		Store:                   nil,
 		OnConnect:               nil,
 		OnConnectionLost:        DefaultConnectionLostHandler,
+		OnConnectAttempt:        nil,
 		WriteTimeout:            0, // 0 represents timeout disabled
-		MessageChannelDepth:     100,
 		ResumeSubs:              false,
 		HTTPHeaders:             make(map[string][]string),
+		WebsocketOptions:        &WebsocketOptions{},
 	}
 	return o
 }
@@ -149,7 +166,7 @@ func (o *ClientOptions) SetResumeSubs(resume bool) *ClientOptions {
 
 // SetClientID will set the client id to be used by this client when
 // connecting to the MQTT broker. According to the MQTT v3.1 specification,
-// a client id mus be no longer than 23 characters.
+// a client id must be no longer than 23 characters.
 func (o *ClientOptions) SetClientID(id string) *ClientOptions {
 	o.ClientID = id
 	return o
@@ -157,7 +174,7 @@ func (o *ClientOptions) SetClientID(id string) *ClientOptions {
 
 // SetUsername will set the username to be used by this client when connecting
 // to the MQTT broker. Note: without the use of SSL/TLS, this information will
-// be sent in plaintext accross the wire.
+// be sent in plaintext across the wire.
 func (o *ClientOptions) SetUsername(u string) *ClientOptions {
 	o.Username = u
 	return o
@@ -165,7 +182,7 @@ func (o *ClientOptions) SetUsername(u string) *ClientOptions {
 
 // SetPassword will set the password to be used by this client when connecting
 // to the MQTT broker. Note: without the use of SSL/TLS, this information will
-// be sent in plaintext accross the wire.
+// be sent in plaintext across the wire.
 func (o *ClientOptions) SetPassword(p string) *ClientOptions {
 	o.Password = p
 	return o
@@ -174,7 +191,7 @@ func (o *ClientOptions) SetPassword(p string) *ClientOptions {
 // SetCredentialsProvider will set a method to be called by this client when
 // connecting to the MQTT broker that provide the current username and password.
 // Note: without the use of SSL/TLS, this information will be sent
-// in plaintext accross the wire.
+// in plaintext across the wire.
 func (o *ClientOptions) SetCredentialsProvider(p CredentialsProvider) *ClientOptions {
 	o.CredentialsProvider = p
 	return o
@@ -184,7 +201,7 @@ func (o *ClientOptions) SetCredentialsProvider(p CredentialsProvider) *ClientOpt
 // when this client connects to an MQTT broker. By setting this flag, you are
 // indicating that no messages saved by the broker for this client should be
 // delivered. Any messages that were going to be sent by this client before
-// diconnecting previously but didn't will not be sent upon connecting to the
+// disconnecting previously but didn't will not be sent upon connecting to the
 // broker.
 func (o *ClientOptions) SetCleanSession(clean bool) *ClientOptions {
 	o.CleanSession = clean
@@ -192,9 +209,13 @@ func (o *ClientOptions) SetCleanSession(clean bool) *ClientOptions {
 }
 
 // SetOrderMatters will set the message routing to guarantee order within
-// each QoS level. By default, this value is true. If set to false,
+// each QoS level. By default, this value is true. If set to false (recommended),
 // this flag indicates that messages can be delivered asynchronously
 // from the client to the application and possibly arrive out of order.
+// Specifically, the message handler is called in its own go routine.
+// Note that setting this to true does not guarantee in-order delivery
+// (this is subject to broker settings like "max_inflight_messages=1" in mosquitto)
+// and if true then handlers must not block.
 func (o *ClientOptions) SetOrderMatters(order bool) *ClientOptions {
 	o.Order = order
 	return o
@@ -274,6 +295,11 @@ func (o *ClientOptions) SetBinaryWill(topic string, payload []byte, qos byte, re
 
 // SetDefaultPublishHandler sets the MessageHandler that will be called when a message
 // is received that does not match any known subscriptions.
+//
+// If OrderMatters is true (the defaultHandler) then callback must not block or
+// call functions within this package that may block (e.g. Publish) other than in
+// a new go routine.
+// defaultHandler must be safe for concurrent use by multiple goroutines.
 func (o *ClientOptions) SetDefaultPublishHandler(defaultHandler MessageHandler) *ClientOptions {
 	o.DefaultPublishHandler = defaultHandler
 	return o
@@ -293,15 +319,31 @@ func (o *ClientOptions) SetConnectionLostHandler(onLost ConnectionLostHandler) *
 	return o
 }
 
+// SetReconnectingHandler sets the OnReconnecting callback to be executed prior
+// to the client attempting a reconnect to the MQTT broker.
+func (o *ClientOptions) SetReconnectingHandler(cb ReconnectHandler) *ClientOptions {
+	o.OnReconnecting = cb
+	return o
+}
+
+// SetConnectionAttemptHandler sets the ConnectionAttemptHandler callback to be executed prior
+// to each attempt to connect to an MQTT broker. Returns the *tls.Config that will be used when establishing
+// the connection (a copy of the tls.Config from ClientOptions will be passed in along with the broker URL).
+// This allows connection specific changes to be made to the *tls.Config.
+func (o *ClientOptions) SetConnectionAttemptHandler(onConnectAttempt ConnectionAttemptHandler) *ClientOptions {
+	o.OnConnectAttempt = onConnectAttempt
+	return o
+}
+
 // SetWriteTimeout puts a limit on how long a mqtt publish should block until it unblocks with a
-// timeout error. A duration of 0 never times out. Default 30 seconds
+// timeout error. A duration of 0 never times out. Default never times out
 func (o *ClientOptions) SetWriteTimeout(t time.Duration) *ClientOptions {
 	o.WriteTimeout = t
 	return o
 }
 
 // SetConnectTimeout limits how long the client will wait when trying to open a connection
-// to an MQTT server before timeing out and erroring the attempt. A duration of 0 never times out.
+// to an MQTT server before timing out. A duration of 0 never times out.
 // Default 30 seconds. Currently only operational on TCP/TLS connections.
 func (o *ClientOptions) SetConnectTimeout(t time.Duration) *ClientOptions {
 	o.ConnectTimeout = t
@@ -323,10 +365,25 @@ func (o *ClientOptions) SetAutoReconnect(a bool) *ClientOptions {
 	return o
 }
 
-// SetMessageChannelDepth sets the size of the internal queue that holds messages while the
-// client is temporairily offline, allowing the application to publish when the client is
-// reconnecting. This setting is only valid if AutoReconnect is set to true, it is otherwise
-// ignored.
+// SetConnectRetryInterval sets the time that will be waited between connection attempts
+// when initially connecting if ConnectRetry is TRUE
+func (o *ClientOptions) SetConnectRetryInterval(t time.Duration) *ClientOptions {
+	o.ConnectRetryInterval = t
+	return o
+}
+
+// SetConnectRetry sets whether the connect function will automatically retry the connection
+// in the event of a failure (when true the token returned by the Connect function will
+// not complete until the connection is up or it is cancelled)
+// If ConnectRetry is true then subscriptions should be requested in OnConnect handler
+// Setting this to TRUE permits messages to be published before the connection is established
+func (o *ClientOptions) SetConnectRetry(a bool) *ClientOptions {
+	o.ConnectRetry = a
+	return o
+}
+
+// SetMessageChannelDepth DEPRECATED The value set here no longer has any effect, this function
+// remains so the API is not altered.
 func (o *ClientOptions) SetMessageChannelDepth(s uint) *ClientOptions {
 	o.MessageChannelDepth = s
 	return o
@@ -336,5 +393,11 @@ func (o *ClientOptions) SetMessageChannelDepth(s uint) *ClientOptions {
 // opening handshake.
 func (o *ClientOptions) SetHTTPHeaders(h http.Header) *ClientOptions {
 	o.HTTPHeaders = h
+	return o
+}
+
+// SetWebsocketOptions sets the additional websocket options used in a WebSocket connection
+func (o *ClientOptions) SetWebsocketOptions(w *WebsocketOptions) *ClientOptions {
+	o.WebsocketOptions = w
 	return o
 }

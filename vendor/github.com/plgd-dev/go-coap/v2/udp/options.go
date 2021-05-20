@@ -2,10 +2,12 @@ package udp
 
 import (
 	"context"
+	"net"
 	"time"
 
 	"github.com/plgd-dev/go-coap/v2/net/blockwise"
-	"github.com/plgd-dev/go-coap/v2/net/keepalive"
+	"github.com/plgd-dev/go-coap/v2/net/monitor/inactivity"
+	"github.com/plgd-dev/go-coap/v2/udp/client"
 )
 
 // HandlerFuncOpt handler function option.
@@ -102,20 +104,62 @@ func WithGoPool(goPool GoPoolFunc) GoPoolOpt {
 
 // KeepAliveOpt keepalive option.
 type KeepAliveOpt struct {
-	keepalive *keepalive.KeepAlive
+	maxRetries uint32
+	timeout    time.Duration
+	onInactive inactivity.OnInactiveFunc
 }
 
 func (o KeepAliveOpt) apply(opts *serverOptions) {
-	opts.keepalive = o.keepalive
+	opts.createInactivityMonitor = func() inactivity.Monitor {
+		keepalive := inactivity.NewKeepAlive(o.maxRetries, o.onInactive, func(cc inactivity.ClientConn, receivePong func()) (func(), error) {
+			return cc.(*client.ClientConn).AsyncPing(receivePong)
+		})
+		return inactivity.NewInactivityMonitor(o.timeout, keepalive.OnInactive)
+	}
 }
 
 func (o KeepAliveOpt) applyDial(opts *dialOptions) {
-	opts.keepalive = o.keepalive
+	opts.createInactivityMonitor = func() inactivity.Monitor {
+		keepalive := inactivity.NewKeepAlive(o.maxRetries, o.onInactive, func(cc inactivity.ClientConn, receivePong func()) (func(), error) {
+			return cc.(*client.ClientConn).AsyncPing(receivePong)
+		})
+		return inactivity.NewInactivityMonitor(o.timeout, keepalive.OnInactive)
+	}
 }
 
-// WithKeepAlive monitoring's client connection's. nil means disable keepalive.
-func WithKeepAlive(keepalive *keepalive.KeepAlive) KeepAliveOpt {
-	return KeepAliveOpt{keepalive: keepalive}
+// WithKeepAlive monitoring's client connection's.
+func WithKeepAlive(maxRetries uint32, timeout time.Duration, onInactive inactivity.OnInactiveFunc) KeepAliveOpt {
+	return KeepAliveOpt{
+		maxRetries: maxRetries,
+		timeout:    timeout,
+		onInactive: onInactive,
+	}
+}
+
+// InactivityMonitorOpt notifies when a connection was inactive for a given duration.
+type InactivityMonitorOpt struct {
+	duration   time.Duration
+	onInactive inactivity.OnInactiveFunc
+}
+
+func (o InactivityMonitorOpt) apply(opts *serverOptions) {
+	opts.createInactivityMonitor = func() inactivity.Monitor {
+		return inactivity.NewInactivityMonitor(o.duration, o.onInactive)
+	}
+}
+
+func (o InactivityMonitorOpt) applyDial(opts *dialOptions) {
+	opts.createInactivityMonitor = func() inactivity.Monitor {
+		return inactivity.NewInactivityMonitor(o.duration, o.onInactive)
+	}
+}
+
+// WithInactivityMonitor set deadline's for read operations over client connection.
+func WithInactivityMonitor(duration time.Duration, onInactive inactivity.OnInactiveFunc) InactivityMonitorOpt {
+	return InactivityMonitorOpt{
+		duration:   duration,
+		onInactive: onInactive,
+	}
 }
 
 // NetOpt network option.
@@ -236,4 +280,35 @@ func (o GetMIDOpt) applyDial(opts *dialOptions) {
 // WithGetMID allows to set own getMID function to server/client.
 func WithGetMID(getMID GetMIDFunc) GetMIDOpt {
 	return GetMIDOpt{getMID: getMID}
+}
+
+// CloseSocketOpt close socket option.
+type CloseSocketOpt struct {
+}
+
+func (o CloseSocketOpt) applyDial(opts *dialOptions) {
+	opts.closeSocket = true
+}
+
+// WithCloseSocket closes socket at the close connection.
+func WithCloseSocket() CloseSocketOpt {
+	return CloseSocketOpt{}
+}
+
+// DialerOpt dialer option.
+type DialerOpt struct {
+	dialer *net.Dialer
+}
+
+func (o DialerOpt) applyDial(opts *dialOptions) {
+	if o.dialer != nil {
+		opts.dialer = o.dialer
+	}
+}
+
+// WithDialer set dialer for dial.
+func WithDialer(dialer *net.Dialer) DialerOpt {
+	return DialerOpt{
+		dialer: dialer,
+	}
 }

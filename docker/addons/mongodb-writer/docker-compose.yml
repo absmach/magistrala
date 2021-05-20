@@ -20,7 +20,7 @@ volumes:
 
 services:
   mongodb:
-    image: mongo:4.4.3-bionic
+    image: mongo:4.4.6
     container_name: mainflux-mongodb
     restart: on-failure
     environment:

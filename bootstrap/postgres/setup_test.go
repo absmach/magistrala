@@ -36,7 +36,7 @@ func TestMain(m *testing.M) {
 		"POSTGRES_PASSWORD=test",
 		"POSTGRES_DB=test",
 	}
-	container, err := pool.Run("postgres", "10.8-alpine", cfg)
+	container, err := pool.Run("postgres", "13.3-alpine", cfg)
 	if err != nil {
 		log.Fatalf("Could not start container: %s", err)
 	}

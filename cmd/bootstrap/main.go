@@ -3,6 +3,7 @@
 package main
 
 import (
+	"context"
 	"crypto/aes"
 	"encoding/hex"
 	"fmt"
@@ -23,7 +24,7 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
-	r "github.com/go-redis/redis"
+	r "github.com/go-redis/redis/v8"
 	"github.com/jmoiron/sqlx"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/bootstrap"
@@ -335,7 +336,7 @@ func startHTTPServer(svc bootstrap.Service, cfg config, logger mflog.Logger, err
 func subscribeToThingsES(svc bootstrap.Service, client *r.Client, consumer string, logger mflog.Logger) {
 	eventStore := rediscons.NewEventStore(svc, client, consumer, logger)
 	logger.Info("Subscribed to Redis Event Store")
-	if err := eventStore.Subscribe("mainflux.things"); err != nil {
+	if err := eventStore.Subscribe(context.Background(), "mainflux.things"); err != nil {
 		logger.Warn(fmt.Sprintf("Bootstrap service failed to subscribe to event sourcing: %s", err))
 	}
 }

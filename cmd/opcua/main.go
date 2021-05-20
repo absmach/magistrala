@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"syscall"
 
-	r "github.com/go-redis/redis"
+	r "github.com/go-redis/redis/v8"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/opcua"
@@ -191,7 +191,7 @@ func subscribeToStoredSubs(sub opcua.Subscriber, cfg opcua.Config, logger logger
 		cfg.ServerURI = n.ServerURI
 		cfg.NodeID = n.NodeID
 		go func() {
-			if err := sub.Subscribe(cfg); err != nil {
+			if err := sub.Subscribe(context.Background(), cfg); err != nil {
 				logger.Warn(fmt.Sprintf("Subscription failed: %s", err))
 			}
 		}()
@@ -199,14 +199,14 @@ func subscribeToStoredSubs(sub opcua.Subscriber, cfg opcua.Config, logger logger
 }
 
 func subscribeToOpcuaServer(gc opcua.Subscriber, cfg opcua.Config, logger logger.Logger) {
-	if err := gc.Subscribe(cfg); err != nil {
+	if err := gc.Subscribe(context.Background(), cfg); err != nil {
 		logger.Warn(fmt.Sprintf("OPC-UA Subscription failed: %s", err))
 	}
 }
 
 func subscribeToThingsES(svc opcua.Service, client *r.Client, prefix string, logger logger.Logger) {
 	eventStore := redis.NewEventStore(svc, client, prefix, logger)
-	if err := eventStore.Subscribe("mainflux.things"); err != nil {
+	if err := eventStore.Subscribe(context.Background(), "mainflux.things"); err != nil {
 		logger.Warn(fmt.Sprintf("Failed to subscribe to Redis event source: %s", err))
 	}
 }

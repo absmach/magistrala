@@ -21,7 +21,7 @@ var (
 )
 
 func TestTwinSave(t *testing.T) {
-	redisClient.FlushAll()
+	redisClient.FlushAll(context.Background())
 	twinCache := redis.NewTwinCache(redisClient)
 
 	twin1 := mocks.CreateTwin(channels[0:2], subtopics[0:2])
@@ -69,7 +69,7 @@ func TestTwinSave(t *testing.T) {
 }
 
 func TestTwinSaveIDs(t *testing.T) {
-	redisClient.FlushAll()
+	redisClient.FlushAll(context.Background())
 	twinCache := redis.NewTwinCache(redisClient)
 
 	twinIDs := []string{"7956f132-0b42-488d-9bd1-0f6dd9d77f98", "a2210c42-1eaf-41ad-b8c1-813317719ed9", "6e815c79-a159-41b0-9ff0-cfa14430e07e"}
@@ -123,7 +123,7 @@ func TestTwinSaveIDs(t *testing.T) {
 }
 
 func TestTwinUpdate(t *testing.T) {
-	redisClient.FlushAll()
+	redisClient.FlushAll(context.Background())
 	twinCache := redis.NewTwinCache(redisClient)
 	ctx := context.Background()
 
@@ -174,7 +174,7 @@ func TestTwinUpdate(t *testing.T) {
 }
 
 func TestTwinIDs(t *testing.T) {
-	redisClient.FlushAll()
+	redisClient.FlushAll(context.Background())
 	twinCache := redis.NewTwinCache(redisClient)
 	ctx := context.Background()
 
@@ -244,7 +244,7 @@ func TestTwinIDs(t *testing.T) {
 }
 
 func TestTwinRemove(t *testing.T) {
-	redisClient.FlushAll()
+	redisClient.FlushAll(context.Background())
 	twinCache := redis.NewTwinCache(redisClient)
 	ctx := context.Background()
 

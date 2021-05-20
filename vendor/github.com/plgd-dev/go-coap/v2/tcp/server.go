@@ -2,17 +2,17 @@ package tcp
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net"
 	"sync"
 	"time"
 
-	kitSync "github.com/plgd-dev/kit/sync"
 	"github.com/plgd-dev/go-coap/v2/message"
 	"github.com/plgd-dev/go-coap/v2/net/blockwise"
+	"github.com/plgd-dev/go-coap/v2/net/monitor/inactivity"
 	"github.com/plgd-dev/go-coap/v2/tcp/message/pool"
-
-	"github.com/plgd-dev/go-coap/v2/net/keepalive"
+	kitSync "github.com/plgd-dev/kit/sync"
 
 	"github.com/plgd-dev/go-coap/v2/message/codes"
 
@@ -34,7 +34,11 @@ type GoPoolFunc = func(func()) error
 
 type BlockwiseFactoryFunc = func(getSendedRequest func(token message.Token) (blockwise.Message, bool)) *blockwise.BlockWise
 
-type OnNewClientConnFunc = func(cc *ClientConn)
+// OnNewClientConnFunc is the callback for new connections.
+//
+// Note: Calling `tlscon.Close()` is forbidden, and `tlscon` should be treated as a
+// "read-only" parameter, mainly used to get the peer certificate from the underlining connection
+type OnNewClientConnFunc = func(cc *ClientConn, tlscon *tls.Conn)
 
 var defaultServerOptions = serverOptions{
 	ctx:            context.Background(),
@@ -51,12 +55,14 @@ var defaultServerOptions = serverOptions{
 		}()
 		return nil
 	},
-	keepalive:                keepalive.New(),
 	blockwiseEnable:          true,
 	blockwiseSZX:             blockwise.SZX1024,
 	blockwiseTransferTimeout: time.Second * 3,
-	onNewClientConn:          func(cc *ClientConn) {},
+	onNewClientConn:          func(cc *ClientConn, tlscon *tls.Conn) {},
 	heartBeat:                time.Millisecond * 100,
+	createInactivityMonitor: func() inactivity.Monitor {
+		return inactivity.NewNilMonitor()
+	},
 }
 
 type serverOptions struct {
@@ -65,7 +71,7 @@ type serverOptions struct {
 	handler                         HandlerFunc
 	errors                          ErrorFunc
 	goPool                          GoPoolFunc
-	keepalive                       *keepalive.KeepAlive
+	createInactivityMonitor         func() inactivity.Monitor
 	blockwiseSZX                    blockwise.SZX
 	blockwiseEnable                 bool
 	blockwiseTransferTimeout        time.Duration
@@ -86,7 +92,7 @@ type Server struct {
 	handler                         HandlerFunc
 	errors                          ErrorFunc
 	goPool                          GoPoolFunc
-	keepalive                       *keepalive.KeepAlive
+	createInactivityMonitor         func() inactivity.Monitor
 	blockwiseSZX                    blockwise.SZX
 	blockwiseEnable                 bool
 	blockwiseTransferTimeout        time.Duration
@@ -110,21 +116,29 @@ func NewServer(opt ...ServerOption) *Server {
 
 	ctx, cancel := context.WithCancel(opts.ctx)
 
+	if opts.createInactivityMonitor == nil {
+		opts.createInactivityMonitor = func() inactivity.Monitor {
+			return inactivity.NewNilMonitor()
+		}
+	}
+
 	return &Server{
-		ctx:                             ctx,
-		cancel:                          cancel,
-		handler:                         opts.handler,
-		maxMessageSize:                  opts.maxMessageSize,
-		errors:                          opts.errors,
+		ctx:            ctx,
+		cancel:         cancel,
+		handler:        opts.handler,
+		maxMessageSize: opts.maxMessageSize,
+		errors: func(err error) {
+			opts.errors(fmt.Errorf("tcp: %w", err))
+		},
 		goPool:                          opts.goPool,
-		keepalive:                       opts.keepalive,
 		blockwiseSZX:                    opts.blockwiseSZX,
 		blockwiseEnable:                 opts.blockwiseEnable,
 		blockwiseTransferTimeout:        opts.blockwiseTransferTimeout,
 		heartBeat:                       opts.heartBeat,
 		disablePeerTCPSignalMessageCSMs: opts.disablePeerTCPSignalMessageCSMs,
-		disableTCPSignalMessageCSM:      opts.disablePeerTCPSignalMessageCSMs,
+		disableTCPSignalMessageCSM:      opts.disableTCPSignalMessageCSM,
 		onNewClientConn:                 opts.onNewClientConn,
+		createInactivityMonitor:         opts.createInactivityMonitor,
 	}
 }
 
@@ -187,27 +201,30 @@ func (s *Server) Serve(l Listener) error {
 		}
 		if rw != nil {
 			wg.Add(1)
-			cc := s.createClientConn(coapNet.NewConn(rw, coapNet.WithHeartBeat(s.heartBeat)))
+			var cc *ClientConn
+			monitor := s.createInactivityMonitor()
+			opts := []coapNet.ConnOption{
+				coapNet.WithHeartBeat(s.heartBeat),
+				coapNet.WithOnReadTimeout(func() error {
+					monitor.CheckInactivity(cc)
+					return nil
+				}),
+			}
+			cc = s.createClientConn(coapNet.NewConn(rw, opts...), monitor)
 			if s.onNewClientConn != nil {
-				s.onNewClientConn(cc)
+				if tlscon, ok := rw.(*tls.Conn); ok {
+					s.onNewClientConn(cc, tlscon)
+				} else {
+					s.onNewClientConn(cc, nil)
+				}
 			}
 			go func() {
 				defer wg.Done()
 				err := cc.Run()
 				if err != nil {
-					s.errors(err)
+					s.errors(fmt.Errorf("%v: %w", cc.RemoteAddr(), err))
 				}
 			}()
-			if s.keepalive != nil {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					err := s.keepalive.Run(cc)
-					if err != nil {
-						s.errors(err)
-					}
-				}()
-			}
 		}
 	}
 }
@@ -217,7 +234,7 @@ func (s *Server) Stop() {
 	s.cancel()
 }
 
-func (s *Server) createClientConn(connection *coapNet.Conn) *ClientConn {
+func (s *Server) createClientConn(connection *coapNet.Conn, monitor inactivity.Monitor) *ClientConn {
 	var blockWise *blockwise.BlockWise
 	if s.blockwiseEnable {
 		blockWise = blockwise.NewBlockWise(
@@ -237,7 +254,15 @@ func (s *Server) createClientConn(connection *coapNet.Conn) *ClientConn {
 			s.ctx,
 			connection,
 			NewObservationHandler(obsHandler, s.handler),
-			s.maxMessageSize, s.goPool, s.errors, s.blockwiseSZX, blockWise, s.disablePeerTCPSignalMessageCSMs, s.disableTCPSignalMessageCSM),
+			s.maxMessageSize,
+			s.goPool,
+			s.errors,
+			s.blockwiseSZX,
+			blockWise,
+			s.disablePeerTCPSignalMessageCSMs,
+			s.disableTCPSignalMessageCSM,
+			true,
+			monitor),
 		obsHandler, kitSync.NewMap(),
 	)
 

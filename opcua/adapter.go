@@ -4,6 +4,7 @@
 package opcua
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -22,31 +23,31 @@ var (
 // implementation, and all of its decorators (e.g. logging & metrics).
 type Service interface {
 	// CreateThing creates thingID:OPC-UA-nodeID route-map
-	CreateThing(thingID, nodeID string) error
+	CreateThing(ctx context.Context, thingID, nodeID string) error
 
 	// UpdateThing updates thingID:OPC-UA-nodeID route-map
-	UpdateThing(thingID, nodeID string) error
+	UpdateThing(ctx context.Context, thingID, nodeID string) error
 
 	// RemoveThing removes thingID:OPC-UA-nodeID route-map
-	RemoveThing(thingID string) error
+	RemoveThing(ctx context.Context, thingID string) error
 
 	// CreateChannel creates channelID:OPC-UA-serverURI route-map
-	CreateChannel(chanID, serverURI string) error
+	CreateChannel(ctx context.Context, chanID, serverURI string) error
 
 	// UpdateChannel updates channelID:OPC-UA-serverURI route-map
-	UpdateChannel(chanID, serverURI string) error
+	UpdateChannel(ctx context.Context, chanID, serverURI string) error
 
 	// RemoveChannel removes channelID:OPC-UA-serverURI route-map
-	RemoveChannel(chanID string) error
+	RemoveChannel(ctx context.Context, chanID string) error
 
 	// ConnectThing creates thingID:channelID route-map
-	ConnectThing(chanID, thingID string) error
+	ConnectThing(ctx context.Context, chanID, thingID string) error
 
 	// DisconnectThing removes thingID:channelID route-map
-	DisconnectThing(chanID, thingID string) error
+	DisconnectThing(ctx context.Context, chanID, thingID string) error
 
 	// Browse browses available nodes for a given OPC-UA Server URI and NodeID
-	Browse(serverURI, namespace, identifier string) ([]BrowsedNode, error)
+	Browse(ctx context.Context, serverURI, namespace, identifier string) ([]BrowsedNode, error)
 }
 
 // Config OPC-UA Server
@@ -85,37 +86,37 @@ func New(sub Subscriber, brow Browser, thingsRM, channelsRM, connectRM RouteMapR
 	}
 }
 
-func (as *adapterService) CreateThing(thingID, nodeID string) error {
-	return as.thingsRM.Save(thingID, nodeID)
+func (as *adapterService) CreateThing(ctx context.Context, thingID, nodeID string) error {
+	return as.thingsRM.Save(ctx, thingID, nodeID)
 }
 
-func (as *adapterService) UpdateThing(thingID, nodeID string) error {
-	return as.thingsRM.Save(thingID, nodeID)
+func (as *adapterService) UpdateThing(ctx context.Context, thingID, nodeID string) error {
+	return as.thingsRM.Save(ctx, thingID, nodeID)
 }
 
-func (as *adapterService) RemoveThing(thingID string) error {
-	return as.thingsRM.Remove(thingID)
+func (as *adapterService) RemoveThing(ctx context.Context, thingID string) error {
+	return as.thingsRM.Remove(ctx, thingID)
 }
 
-func (as *adapterService) CreateChannel(chanID, serverURI string) error {
-	return as.channelsRM.Save(chanID, serverURI)
+func (as *adapterService) CreateChannel(ctx context.Context, chanID, serverURI string) error {
+	return as.channelsRM.Save(ctx, chanID, serverURI)
 }
 
-func (as *adapterService) UpdateChannel(chanID, serverURI string) error {
-	return as.channelsRM.Save(chanID, serverURI)
+func (as *adapterService) UpdateChannel(ctx context.Context, chanID, serverURI string) error {
+	return as.channelsRM.Save(ctx, chanID, serverURI)
 }
 
-func (as *adapterService) RemoveChannel(chanID string) error {
-	return as.channelsRM.Remove(chanID)
+func (as *adapterService) RemoveChannel(ctx context.Context, chanID string) error {
+	return as.channelsRM.Remove(ctx, chanID)
 }
 
-func (as *adapterService) ConnectThing(chanID, thingID string) error {
-	serverURI, err := as.channelsRM.Get(chanID)
+func (as *adapterService) ConnectThing(ctx context.Context, chanID, thingID string) error {
+	serverURI, err := as.channelsRM.Get(ctx, chanID)
 	if err != nil {
 		return err
 	}
 
-	nodeID, err := as.thingsRM.Get(thingID)
+	nodeID, err := as.thingsRM.Get(ctx, thingID)
 	if err != nil {
 		return err
 	}
@@ -124,12 +125,12 @@ func (as *adapterService) ConnectThing(chanID, thingID string) error {
 	as.cfg.ServerURI = serverURI
 
 	c := fmt.Sprintf("%s:%s", chanID, thingID)
-	if err := as.connectRM.Save(c, c); err != nil {
+	if err := as.connectRM.Save(ctx, c, c); err != nil {
 		return err
 	}
 
 	go func() {
-		if err := as.subscriber.Subscribe(as.cfg); err != nil {
+		if err := as.subscriber.Subscribe(ctx, as.cfg); err != nil {
 			as.logger.Warn(fmt.Sprintf("subscription failed: %s", err))
 		}
 	}()
@@ -138,7 +139,7 @@ func (as *adapterService) ConnectThing(chanID, thingID string) error {
 	return db.Save(serverURI, nodeID)
 }
 
-func (as *adapterService) Browse(serverURI, namespace, identifier string) ([]BrowsedNode, error) {
+func (as *adapterService) Browse(ctx context.Context, serverURI, namespace, identifier string) ([]BrowsedNode, error) {
 	nodeID := fmt.Sprintf("%s;%s", namespace, identifier)
 
 	nodes, err := as.browser.Browse(serverURI, nodeID)
@@ -148,7 +149,7 @@ func (as *adapterService) Browse(serverURI, namespace, identifier string) ([]Bro
 	return nodes, nil
 }
 
-func (as *adapterService) DisconnectThing(chanID, thingID string) error {
+func (as *adapterService) DisconnectThing(ctx context.Context, chanID, thingID string) error {
 	c := fmt.Sprintf("%s:%s", chanID, thingID)
-	return as.connectRM.Remove(c)
+	return as.connectRM.Remove(ctx, c)
 }

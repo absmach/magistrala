@@ -39,19 +39,19 @@ func newService() lora.Service {
 func TestPublish(t *testing.T) {
 	svc := newService()
 
-	err := svc.CreateChannel(chanID, appID)
+	err := svc.CreateChannel(nil, chanID, appID)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
-	err = svc.CreateThing(thingID, devEUI)
+	err = svc.CreateThing(nil, thingID, devEUI)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
-	err = svc.ConnectThing(chanID, thingID)
+	err = svc.ConnectThing(nil, chanID, thingID)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
-	err = svc.CreateChannel(chanID2, appID2)
+	err = svc.CreateChannel(nil, chanID2, appID2)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
-	err = svc.CreateThing(thingID2, devEUI2)
+	err = svc.CreateThing(nil, thingID2, devEUI2)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
 	msgBase64 := base64.StdEncoding.EncodeToString([]byte(msg))
@@ -106,7 +106,7 @@ func TestPublish(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := svc.Publish(tc.msg)
+		err := svc.Publish(nil, tc.msg)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }

@@ -13,8 +13,11 @@ import (
 //
 // Multiple goroutines may invoke methods on a Conn simultaneously.
 type Conn struct {
-	heartBeat  time.Duration
-	connection net.Conn
+	heartBeat      time.Duration
+	connection     net.Conn
+	onReadTimeout  func() error
+	onWriteTimeout func() error
+
 	readBuffer *bufio.Reader
 	lock       sync.Mutex
 }
@@ -24,7 +27,9 @@ var defaultConnOptions = connOptions{
 }
 
 type connOptions struct {
-	heartBeat time.Duration
+	heartBeat      time.Duration
+	onReadTimeout  func() error
+	onWriteTimeout func() error
 }
 
 // A ConnOption sets options such as heartBeat, errors parameters, etc.
@@ -39,9 +44,11 @@ func NewConn(c net.Conn, opts ...ConnOption) *Conn {
 		o.applyConn(&cfg)
 	}
 	connection := Conn{
-		connection: c,
-		heartBeat:  cfg.heartBeat,
-		readBuffer: bufio.NewReaderSize(c, 2048),
+		connection:     c,
+		heartBeat:      cfg.heartBeat,
+		readBuffer:     bufio.NewReaderSize(c, 2048),
+		onReadTimeout:  cfg.onReadTimeout,
+		onWriteTimeout: cfg.onWriteTimeout,
 	}
 	return &connection
 }
@@ -66,7 +73,7 @@ func (c *Conn) Close() error {
 	return c.connection.Close()
 }
 
-// WriteContext writes data with context.
+// WriteWithContext writes data with context.
 func (c *Conn) WriteWithContext(ctx context.Context, data []byte) error {
 	written := 0
 	c.lock.Lock()
@@ -77,58 +84,75 @@ func (c *Conn) WriteWithContext(ctx context.Context, data []byte) error {
 			return ctx.Err()
 		default:
 		}
-		err := c.connection.SetWriteDeadline(time.Now().Add(c.heartBeat))
+		deadline := time.Now().Add(c.heartBeat)
+		err := c.connection.SetWriteDeadline(deadline)
 		if err != nil {
-			return fmt.Errorf("cannot set write deadline for tcp connection: %w", err)
+			return fmt.Errorf("cannot set write deadline for connection: %w", err)
 		}
 		n, err := c.connection.Write(data[written:])
 
 		if err != nil {
-			if isTemporary(err) {
+			if isTemporary(err, deadline) {
+				if n > 0 {
+					written += n
+				}
+				if c.onWriteTimeout != nil {
+					err := c.onWriteTimeout()
+					if err != nil {
+						return fmt.Errorf("cannot write to connection: on timeout returns error: %w", err)
+					}
+				}
 				continue
 			}
-			return fmt.Errorf("cannot write to tcp connection")
+			return fmt.Errorf("cannot write to connection: %w", err)
 		}
 		written += n
 	}
 	return nil
 }
 
-// ReadFullContext reads stream with context until whole buffer is satisfied.
+// ReadFullWithContext reads stream with context until whole buffer is satisfied.
 func (c *Conn) ReadFullWithContext(ctx context.Context, buffer []byte) error {
 	offset := 0
 	for offset < len(buffer) {
 		n, err := c.ReadWithContext(ctx, buffer[offset:])
 		if err != nil {
-			return fmt.Errorf("cannot read full from tcp connection: %w", err)
+			return fmt.Errorf("cannot read full from connection: %w", err)
 		}
 		offset += n
 	}
 	return nil
 }
 
-// ReadContext reads stream with context.
+// ReadWithContext reads stream with context.
 func (c *Conn) ReadWithContext(ctx context.Context, buffer []byte) (int, error) {
 	for {
 		select {
 		case <-ctx.Done():
 			if ctx.Err() != nil {
-				return -1, fmt.Errorf("cannot read from tcp connection: %v", ctx.Err())
+				return -1, fmt.Errorf("cannot read from connection: %v", ctx.Err())
 			}
-			return -1, fmt.Errorf("cannot read from tcp connection")
+			return -1, fmt.Errorf("cannot read from connection")
 		default:
 		}
 
-		err := c.connection.SetReadDeadline(time.Now().Add(c.heartBeat))
+		deadline := time.Now().Add(c.heartBeat)
+		err := c.connection.SetReadDeadline(deadline)
 		if err != nil {
-			return -1, fmt.Errorf("cannot set read deadline for tcp connection: %w", err)
+			return -1, fmt.Errorf("cannot set read deadline for connection: %w", err)
 		}
 		n, err := c.readBuffer.Read(buffer)
 		if err != nil {
-			if isTemporary(err) {
+			if isTemporary(err, deadline) {
+				if c.onReadTimeout != nil {
+					err := c.onReadTimeout()
+					if err != nil {
+						return -1, fmt.Errorf("cannot read from connection: on timeout returns error: %w", err)
+					}
+				}
 				continue
 			}
-			return -1, fmt.Errorf("cannot read from tcp connection: %w", err)
+			return -1, fmt.Errorf("cannot read from connection: %w", err)
 		}
 		return n, err
 	}

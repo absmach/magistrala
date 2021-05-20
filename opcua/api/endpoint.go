@@ -18,7 +18,7 @@ func browseEndpoint(svc opcua.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		nodes, err := svc.Browse(req.ServerURI, req.Namespace, req.Identifier)
+		nodes, err := svc.Browse(ctx, req.ServerURI, req.Namespace, req.Identifier)
 		if err != nil {
 			return nil, err
 		}

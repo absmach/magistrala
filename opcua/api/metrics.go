@@ -4,6 +4,7 @@
 package api
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-kit/kit/metrics"
@@ -27,83 +28,83 @@ func MetricsMiddleware(svc opcua.Service, counter metrics.Counter, latency metri
 	}
 }
 
-func (mm *metricsMiddleware) CreateThing(mfxDevID, opcuaNodeID string) error {
+func (mm *metricsMiddleware) CreateThing(ctx context.Context, mfxDevID, opcuaNodeID string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "create_thing").Add(1)
 		mm.latency.With("method", "create_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.CreateThing(mfxDevID, opcuaNodeID)
+	return mm.svc.CreateThing(ctx, mfxDevID, opcuaNodeID)
 }
 
-func (mm *metricsMiddleware) UpdateThing(mfxDevID, opcuaNodeID string) error {
+func (mm *metricsMiddleware) UpdateThing(ctx context.Context, mfxDevID, opcuaNodeID string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_thing").Add(1)
 		mm.latency.With("method", "update_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.UpdateThing(mfxDevID, opcuaNodeID)
+	return mm.svc.UpdateThing(ctx, mfxDevID, opcuaNodeID)
 }
 
-func (mm *metricsMiddleware) RemoveThing(mfxDevID string) error {
+func (mm *metricsMiddleware) RemoveThing(ctx context.Context, mfxDevID string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "remove_thing").Add(1)
 		mm.latency.With("method", "remove_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.RemoveThing(mfxDevID)
+	return mm.svc.RemoveThing(ctx, mfxDevID)
 }
 
-func (mm *metricsMiddleware) CreateChannel(mfxChanID, opcuaServerURI string) error {
+func (mm *metricsMiddleware) CreateChannel(ctx context.Context, mfxChanID, opcuaServerURI string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "create_channel").Add(1)
 		mm.latency.With("method", "create_channel").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.CreateChannel(mfxChanID, opcuaServerURI)
+	return mm.svc.CreateChannel(ctx, mfxChanID, opcuaServerURI)
 }
 
-func (mm *metricsMiddleware) UpdateChannel(mfxChanID, opcuaServerURI string) error {
+func (mm *metricsMiddleware) UpdateChannel(ctx context.Context, mfxChanID, opcuaServerURI string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_channel").Add(1)
 		mm.latency.With("method", "update_channel").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.UpdateChannel(mfxChanID, opcuaServerURI)
+	return mm.svc.UpdateChannel(ctx, mfxChanID, opcuaServerURI)
 }
 
-func (mm *metricsMiddleware) RemoveChannel(mfxChanID string) error {
+func (mm *metricsMiddleware) RemoveChannel(ctx context.Context, mfxChanID string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "remove_channel").Add(1)
 		mm.latency.With("method", "remove_channel").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.RemoveChannel(mfxChanID)
+	return mm.svc.RemoveChannel(ctx, mfxChanID)
 }
 
-func (mm *metricsMiddleware) ConnectThing(mfxChanID, mfxThingID string) error {
+func (mm *metricsMiddleware) ConnectThing(ctx context.Context, mfxChanID, mfxThingID string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "connect_thing").Add(1)
 		mm.latency.With("method", "connect_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.ConnectThing(mfxChanID, mfxThingID)
+	return mm.svc.ConnectThing(ctx, mfxChanID, mfxThingID)
 }
 
-func (mm *metricsMiddleware) DisconnectThing(mfxChanID, mfxThingID string) error {
+func (mm *metricsMiddleware) DisconnectThing(ctx context.Context, mfxChanID, mfxThingID string) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "disconnect_thing").Add(1)
 		mm.latency.With("method", "disconnect_thing").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.DisconnectThing(mfxChanID, mfxThingID)
+	return mm.svc.DisconnectThing(ctx, mfxChanID, mfxThingID)
 }
 
-func (mm *metricsMiddleware) Browse(serverURI, namespace, identifier string) ([]opcua.BrowsedNode, error) {
+func (mm *metricsMiddleware) Browse(ctx context.Context, serverURI, namespace, identifier string) ([]opcua.BrowsedNode, error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "browse").Add(1)
 		mm.latency.With("method", "browse").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.Browse(serverURI, namespace, identifier)
+	return mm.svc.Browse(ctx, serverURI, namespace, identifier)
 }

@@ -4,6 +4,7 @@
 package producer_test
 
 import (
+	"context"
 	"fmt"
 	"net/http/httptest"
 	"strconv"
@@ -11,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/opentracing/opentracing-go/mocktracer"
@@ -90,7 +91,7 @@ func newThingsServer(svc things.Service) *httptest.Server {
 	return httptest.NewServer(mux)
 }
 func TestAdd(t *testing.T) {
-	redisClient.FlushAll().Err()
+	redisClient.FlushAll(context.Background()).Err()
 	users := mocks.NewUsersService(map[string]string{validToken: email})
 
 	server := newThingsServer(newThingsService(users))
@@ -139,10 +140,10 @@ func TestAdd(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		_, err := svc.Add(tc.token, tc.config)
+		_, err := svc.Add(context.Background(), tc.token, tc.config)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
-		streams := redisClient.XRead(&redis.XReadArgs{
+		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
 			Streams: []string{streamID, lastID},
 			Count:   1,
 			Block:   time.Second,
@@ -164,20 +165,20 @@ func TestView(t *testing.T) {
 	server := newThingsServer(newThingsService(users))
 	svc := newService(users, server.URL)
 
-	saved, err := svc.Add(validToken, config)
+	saved, err := svc.Add(context.Background(), validToken, config)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
-	svcConfig, svcErr := svc.View(validToken, saved.MFThing)
+	svcConfig, svcErr := svc.View(context.Background(), validToken, saved.MFThing)
 
 	svc = producer.NewEventStoreMiddleware(svc, redisClient)
-	esConfig, esErr := svc.View(validToken, saved.MFThing)
+	esConfig, esErr := svc.View(context.Background(), validToken, saved.MFThing)
 
 	assert.Equal(t, svcConfig, esConfig, fmt.Sprintf("event sourcing changed service behavior: expected %v got %v", svcConfig, esConfig))
 	assert.Equal(t, svcErr, esErr, fmt.Sprintf("event sourcing changed service behavior: expected %v got %v", svcErr, esErr))
 }
 
 func TestUpdate(t *testing.T) {
-	redisClient.FlushAll().Err()
+	redisClient.FlushAll(context.Background()).Err()
 
 	users := mocks.NewUsersService(map[string]string{validToken: email})
 	server := newThingsServer(newThingsService(users))
@@ -189,9 +190,9 @@ func TestUpdate(t *testing.T) {
 	ch := channel
 	ch.ID = "2"
 	c.MFChannels = append(c.MFChannels, ch)
-	saved, err := svc.Add(validToken, c)
+	saved, err := svc.Add(context.Background(), validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-	redisClient.FlushAll().Err()
+	redisClient.FlushAll(context.Background()).Err()
 
 	modified := saved
 	modified.Content = "new-config"
@@ -231,10 +232,10 @@ func TestUpdate(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		err := svc.Update(tc.token, tc.config)
+		err := svc.Update(context.Background(), tc.token, tc.config)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
-		streams := redisClient.XRead(&redis.XReadArgs{
+		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
 			Streams: []string{streamID, lastID},
 			Count:   1,
 			Block:   time.Second,
@@ -252,16 +253,16 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestUpdateConnections(t *testing.T) {
-	redisClient.FlushAll().Err()
+	redisClient.FlushAll(context.Background()).Err()
 
 	users := mocks.NewUsersService(map[string]string{validToken: email})
 	server := newThingsServer(newThingsService(users))
 	svc := newService(users, server.URL)
 	svc = producer.NewEventStoreMiddleware(svc, redisClient)
 
-	saved, err := svc.Add(validToken, config)
+	saved, err := svc.Add(context.Background(), validToken, config)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-	redisClient.FlushAll().Err()
+	redisClient.FlushAll(context.Background()).Err()
 
 	cases := []struct {
 		desc        string
@@ -296,10 +297,10 @@ func TestUpdateConnections(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		err := svc.UpdateConnections(tc.token, tc.id, tc.connections)
+		err := svc.UpdateConnections(context.Background(), tc.token, tc.id, tc.connections)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
-		streams := redisClient.XRead(&redis.XReadArgs{
+		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
 			Streams: []string{streamID, lastID},
 			Count:   1,
 			Block:   time.Second,
@@ -320,22 +321,22 @@ func TestList(t *testing.T) {
 	server := newThingsServer(newThingsService(users))
 	svc := newService(users, server.URL)
 
-	_, err := svc.Add(validToken, config)
+	_, err := svc.Add(context.Background(), validToken, config)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	offset := uint64(0)
 	limit := uint64(10)
-	svcConfigs, svcErr := svc.List(validToken, bootstrap.Filter{}, offset, limit)
+	svcConfigs, svcErr := svc.List(context.Background(), validToken, bootstrap.Filter{}, offset, limit)
 
 	svc = producer.NewEventStoreMiddleware(svc, redisClient)
-	esConfigs, esErr := svc.List(validToken, bootstrap.Filter{}, offset, limit)
+	esConfigs, esErr := svc.List(context.Background(), validToken, bootstrap.Filter{}, offset, limit)
 
 	assert.Equal(t, svcConfigs, esConfigs, fmt.Sprintf("event sourcing changed service behavior: expected %v got %v", svcConfigs, esConfigs))
 	assert.Equal(t, svcErr, esErr, fmt.Sprintf("event sourcing changed service behavior: expected %v got %v", svcErr, esErr))
 }
 
 func TestRemove(t *testing.T) {
-	redisClient.FlushAll().Err()
+	redisClient.FlushAll(context.Background()).Err()
 
 	users := mocks.NewUsersService(map[string]string{validToken: email})
 	server := newThingsServer(newThingsService(users))
@@ -344,9 +345,9 @@ func TestRemove(t *testing.T) {
 
 	c := config
 
-	saved, err := svc.Add(validToken, c)
+	saved, err := svc.Add(context.Background(), validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-	redisClient.FlushAll().Err()
+	redisClient.FlushAll(context.Background()).Err()
 
 	cases := []struct {
 		desc  string
@@ -377,10 +378,10 @@ func TestRemove(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		err := svc.Remove(tc.token, tc.id)
+		err := svc.Remove(context.Background(), tc.token, tc.id)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
-		streams := redisClient.XRead(&redis.XReadArgs{
+		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
 			Streams: []string{streamID, lastID},
 			Count:   1,
 			Block:   time.Second,
@@ -398,7 +399,7 @@ func TestRemove(t *testing.T) {
 }
 
 func TestBootstrap(t *testing.T) {
-	redisClient.FlushAll().Err()
+	redisClient.FlushAll(context.Background()).Err()
 
 	users := mocks.NewUsersService(map[string]string{validToken: email})
 	server := newThingsServer(newThingsService(users))
@@ -407,9 +408,9 @@ func TestBootstrap(t *testing.T) {
 
 	c := config
 
-	saved, err := svc.Add(validToken, c)
+	saved, err := svc.Add(context.Background(), validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-	redisClient.FlushAll().Err()
+	redisClient.FlushAll(context.Background()).Err()
 
 	cases := []struct {
 		desc        string
@@ -446,10 +447,10 @@ func TestBootstrap(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		_, err := svc.Bootstrap(tc.externalKey, tc.externalID, false)
+		_, err := svc.Bootstrap(context.Background(), tc.externalKey, tc.externalID, false)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
-		streams := redisClient.XRead(&redis.XReadArgs{
+		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
 			Streams: []string{streamID, lastID},
 			Count:   1,
 			Block:   time.Second,
@@ -467,7 +468,7 @@ func TestBootstrap(t *testing.T) {
 }
 
 func TestChangeState(t *testing.T) {
-	redisClient.FlushAll().Err()
+	redisClient.FlushAll(context.Background()).Err()
 
 	users := mocks.NewUsersService(map[string]string{validToken: email})
 	server := newThingsServer(newThingsService(users))
@@ -476,9 +477,9 @@ func TestChangeState(t *testing.T) {
 
 	c := config
 
-	saved, err := svc.Add(validToken, c)
+	saved, err := svc.Add(context.Background(), validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-	redisClient.FlushAll().Err()
+	redisClient.FlushAll(context.Background()).Err()
 
 	cases := []struct {
 		desc  string
@@ -513,10 +514,10 @@ func TestChangeState(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		err := svc.ChangeState(tc.token, tc.id, tc.state)
+		err := svc.ChangeState(context.Background(), tc.token, tc.id, tc.state)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
-		streams := redisClient.XRead(&redis.XReadArgs{
+		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
 			Streams: []string{streamID, lastID},
 			Count:   1,
 			Block:   time.Second,

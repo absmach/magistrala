@@ -63,48 +63,48 @@ var _ Service = (*bootstrapService)(nil)
 // implementation, and all of its decorators (e.g. logging & metrics).
 type Service interface {
 	// Add adds new Thing Config to the user identified by the provided token.
-	Add(token string, cfg Config) (Config, error)
+	Add(ctx context.Context, token string, cfg Config) (Config, error)
 
 	// View returns Thing Config with given ID belonging to the user identified by the given token.
-	View(token, id string) (Config, error)
+	View(ctx context.Context, token, id string) (Config, error)
 
 	// Update updates editable fields of the provided Config.
-	Update(token string, cfg Config) error
+	Update(ctx context.Context, token string, cfg Config) error
 
 	// UpdateCert updates an existing Config certificate and token.
 	// A non-nil error is returned to indicate operation failure.
-	UpdateCert(token, thingID, clientCert, clientKey, caCert string) error
+	UpdateCert(ctx context.Context, token, thingID, clientCert, clientKey, caCert string) error
 
 	// UpdateConnections updates list of Channels related to given Config.
-	UpdateConnections(token, id string, connections []string) error
+	UpdateConnections(ctx context.Context, token, id string, connections []string) error
 
 	// List returns subset of Configs with given search params that belong to the
 	// user identified by the given token.
-	List(token string, filter Filter, offset, limit uint64) (ConfigsPage, error)
+	List(ctx context.Context, token string, filter Filter, offset, limit uint64) (ConfigsPage, error)
 
 	// Remove removes Config with specified token that belongs to the user identified by the given token.
-	Remove(token, id string) error
+	Remove(ctx context.Context, token, id string) error
 
 	// Bootstrap returns Config to the Thing with provided external ID using external key.
-	Bootstrap(externalKey, externalID string, secure bool) (Config, error)
+	Bootstrap(ctx context.Context, externalKey, externalID string, secure bool) (Config, error)
 
 	// ChangeState changes state of the Thing with given ID and owner.
-	ChangeState(token, id string, state State) error
+	ChangeState(ctx context.Context, token, id string, state State) error
 
 	// Methods RemoveConfig, UpdateChannel, and RemoveChannel are used as
 	// handlers for events. That's why these methods surpass ownership check.
 
 	// UpdateChannelHandler updates Channel with data received from an event.
-	UpdateChannelHandler(channel Channel) error
+	UpdateChannelHandler(ctx context.Context, channel Channel) error
 
 	// RemoveConfigHandler removes Configuration with id received from an event.
-	RemoveConfigHandler(id string) error
+	RemoveConfigHandler(ctx context.Context, id string) error
 
 	// RemoveChannelHandler removes Channel with id received from an event.
-	RemoveChannelHandler(id string) error
+	RemoveChannelHandler(ctx context.Context, id string) error
 
 	// DisconnectHandler changes state of the Config when connect/disconnect event occurs.
-	DisconnectThingHandler(channelID, thingID string) error
+	DisconnectThingHandler(ctx context.Context, channelID, thingID string) error
 }
 
 // ConfigReader is used to parse Config into format which will be encoded
@@ -133,7 +133,7 @@ func New(auth mainflux.AuthServiceClient, configs ConfigRepository, sdk mfsdk.SD
 	}
 }
 
-func (bs bootstrapService) Add(token string, cfg Config) (Config, error) {
+func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (Config, error) {
 	owner, err := bs.identify(token)
 	if err != nil {
 		return Config{}, err
@@ -180,7 +180,7 @@ func (bs bootstrapService) Add(token string, cfg Config) (Config, error) {
 	return cfg, nil
 }
 
-func (bs bootstrapService) View(token, id string) (Config, error) {
+func (bs bootstrapService) View(ctx context.Context, token, id string) (Config, error) {
 	owner, err := bs.identify(token)
 	if err != nil {
 		return Config{}, err
@@ -189,7 +189,7 @@ func (bs bootstrapService) View(token, id string) (Config, error) {
 	return bs.configs.RetrieveByID(owner, id)
 }
 
-func (bs bootstrapService) Update(token string, cfg Config) error {
+func (bs bootstrapService) Update(ctx context.Context, token string, cfg Config) error {
 	owner, err := bs.identify(token)
 	if err != nil {
 		return err
@@ -200,7 +200,7 @@ func (bs bootstrapService) Update(token string, cfg Config) error {
 	return bs.configs.Update(cfg)
 }
 
-func (bs bootstrapService) UpdateCert(token, thingID, clientCert, clientKey, caCert string) error {
+func (bs bootstrapService) UpdateCert(ctx context.Context, token, thingID, clientCert, clientKey, caCert string) error {
 	owner, err := bs.identify(token)
 	if err != nil {
 		return err
@@ -211,7 +211,7 @@ func (bs bootstrapService) UpdateCert(token, thingID, clientCert, clientKey, caC
 	return nil
 }
 
-func (bs bootstrapService) UpdateConnections(token, id string, connections []string) error {
+func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id string, connections []string) error {
 	owner, err := bs.identify(token)
 	if err != nil {
 		return err
@@ -268,7 +268,7 @@ func (bs bootstrapService) UpdateConnections(token, id string, connections []str
 	return bs.configs.UpdateConnections(owner, id, channels, connections)
 }
 
-func (bs bootstrapService) List(token string, filter Filter, offset, limit uint64) (ConfigsPage, error) {
+func (bs bootstrapService) List(ctx context.Context, token string, filter Filter, offset, limit uint64) (ConfigsPage, error) {
 	owner, err := bs.identify(token)
 	if err != nil {
 		return ConfigsPage{}, err
@@ -277,7 +277,7 @@ func (bs bootstrapService) List(token string, filter Filter, offset, limit uint6
 	return bs.configs.RetrieveAll(owner, filter, offset, limit), nil
 }
 
-func (bs bootstrapService) Remove(token, id string) error {
+func (bs bootstrapService) Remove(ctx context.Context, token, id string) error {
 	owner, err := bs.identify(token)
 	if err != nil {
 		return err
@@ -288,7 +288,7 @@ func (bs bootstrapService) Remove(token, id string) error {
 	return nil
 }
 
-func (bs bootstrapService) Bootstrap(externalKey, externalID string, secure bool) (Config, error) {
+func (bs bootstrapService) Bootstrap(ctx context.Context, externalKey, externalID string, secure bool) (Config, error) {
 	cfg, err := bs.configs.RetrieveByExternalID(externalID)
 	if err != nil {
 		return cfg, errors.Wrap(ErrBootstrap, err)
@@ -309,7 +309,7 @@ func (bs bootstrapService) Bootstrap(externalKey, externalID string, secure bool
 	return cfg, nil
 }
 
-func (bs bootstrapService) ChangeState(token, id string, state State) error {
+func (bs bootstrapService) ChangeState(ctx context.Context, token, id string, state State) error {
 	owner, err := bs.identify(token)
 	if err != nil {
 		return err
@@ -351,28 +351,28 @@ func (bs bootstrapService) ChangeState(token, id string, state State) error {
 	return nil
 }
 
-func (bs bootstrapService) UpdateChannelHandler(channel Channel) error {
+func (bs bootstrapService) UpdateChannelHandler(ctx context.Context, channel Channel) error {
 	if err := bs.configs.UpdateChannel(channel); err != nil {
 		return errors.Wrap(errUpdateChannel, err)
 	}
 	return nil
 }
 
-func (bs bootstrapService) RemoveConfigHandler(id string) error {
+func (bs bootstrapService) RemoveConfigHandler(ctx context.Context, id string) error {
 	if err := bs.configs.RemoveThing(id); err != nil {
 		return errors.Wrap(errRemoveConfig, err)
 	}
 	return nil
 }
 
-func (bs bootstrapService) RemoveChannelHandler(id string) error {
+func (bs bootstrapService) RemoveChannelHandler(ctx context.Context, id string) error {
 	if err := bs.configs.RemoveChannel(id); err != nil {
 		return errors.Wrap(errRemoveChannel, err)
 	}
 	return nil
 }
 
-func (bs bootstrapService) DisconnectThingHandler(channelID, thingID string) error {
+func (bs bootstrapService) DisconnectThingHandler(ctx context.Context, channelID, thingID string) error {
 	if err := bs.configs.DisconnectThing(channelID, thingID); err != nil {
 		return errors.Wrap(errDisconnectThing, err)
 	}

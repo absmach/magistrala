@@ -6,7 +6,7 @@ package redis
 import (
 	"context"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"github.com/mainflux/mainflux/things"
 )
 
@@ -49,7 +49,7 @@ func (es eventStore) CreateThings(ctx context.Context, token string, ths ...thin
 			MaxLenApprox: streamLen,
 			Values:       event.Encode(),
 		}
-		es.client.XAdd(record).Err()
+		es.client.XAdd(ctx, record).Err()
 	}
 
 	return sths, nil
@@ -70,7 +70,7 @@ func (es eventStore) UpdateThing(ctx context.Context, token string, thing things
 		MaxLenApprox: streamLen,
 		Values:       event.Encode(),
 	}
-	es.client.XAdd(record).Err()
+	es.client.XAdd(ctx, record).Err()
 
 	return nil
 }
@@ -107,7 +107,7 @@ func (es eventStore) RemoveThing(ctx context.Context, token, id string) error {
 		MaxLenApprox: streamLen,
 		Values:       event.Encode(),
 	}
-	es.client.XAdd(record).Err()
+	es.client.XAdd(ctx, record).Err()
 
 	return nil
 }
@@ -130,7 +130,7 @@ func (es eventStore) CreateChannels(ctx context.Context, token string, channels 
 			MaxLenApprox: streamLen,
 			Values:       event.Encode(),
 		}
-		es.client.XAdd(record).Err()
+		es.client.XAdd(ctx, record).Err()
 	}
 
 	return schs, nil
@@ -151,7 +151,7 @@ func (es eventStore) UpdateChannel(ctx context.Context, token string, channel th
 		MaxLenApprox: streamLen,
 		Values:       event.Encode(),
 	}
-	es.client.XAdd(record).Err()
+	es.client.XAdd(ctx, record).Err()
 
 	return nil
 }
@@ -181,7 +181,7 @@ func (es eventStore) RemoveChannel(ctx context.Context, token, id string) error 
 		MaxLenApprox: streamLen,
 		Values:       event.Encode(),
 	}
-	es.client.XAdd(record).Err()
+	es.client.XAdd(ctx, record).Err()
 
 	return nil
 }
@@ -202,7 +202,7 @@ func (es eventStore) Connect(ctx context.Context, token string, chIDs, thIDs []s
 				MaxLenApprox: streamLen,
 				Values:       event.Encode(),
 			}
-			es.client.XAdd(record).Err()
+			es.client.XAdd(ctx, record).Err()
 		}
 	}
 
@@ -223,7 +223,7 @@ func (es eventStore) Disconnect(ctx context.Context, token, chanID, thingID stri
 		MaxLenApprox: streamLen,
 		Values:       event.Encode(),
 	}
-	es.client.XAdd(record).Err()
+	es.client.XAdd(ctx, record).Err()
 
 	return nil
 }

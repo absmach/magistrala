@@ -1,4 +1,4 @@
-package codes // import "github.com/plgd-dev/go-coap/codes"
+package codes
 
 import (
 	"fmt"

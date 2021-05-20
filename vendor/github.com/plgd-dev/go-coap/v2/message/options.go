@@ -550,3 +550,18 @@ func (options Options) ResetOptionsTo(buf []byte, in Options) (Options, int, err
 	}
 	return opts, used, nil
 }
+
+// Clone create duplicates of options.
+func (options Options) Clone() (Options, error) {
+	opts := make(Options, 0, len(options))
+	buf := make([]byte, 64)
+	opts, used, err := opts.ResetOptionsTo(buf, options)
+	if err == ErrTooSmall {
+		buf = append(buf, make([]byte, used-len(buf))...)
+		opts, used, err = opts.ResetOptionsTo(buf, options)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return opts, nil
+}

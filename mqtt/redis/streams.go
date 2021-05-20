@@ -4,10 +4,11 @@
 package redis
 
 import (
+	"context"
 	"strconv"
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 )
 
 const (
@@ -46,7 +47,7 @@ func (es EventStore) storeEvent(clientID, eventType string) error {
 		Values:       event.Encode(),
 	}
 
-	if err := es.client.XAdd(record).Err(); err != nil {
+	if err := es.client.XAdd(context.Background(), record).Err(); err != nil {
 		return err
 	}
 

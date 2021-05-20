@@ -4,6 +4,7 @@
 package bootstrap_test
 
 import (
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -144,7 +145,7 @@ func TestAdd(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		_, err := svc.Add(tc.token, tc.config)
+		_, err := svc.Add(context.Background(), tc.token, tc.config)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -155,7 +156,7 @@ func TestView(t *testing.T) {
 	server := newThingsServer(newThingsService(users))
 	svc := newService(users, server.URL)
 
-	saved, err := svc.Add(validToken, config)
+	saved, err := svc.Add(context.Background(), validToken, config)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	cases := []struct {
@@ -185,7 +186,7 @@ func TestView(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		_, err := svc.View(tc.token, tc.id)
+		_, err := svc.View(context.Background(), tc.token, tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -200,7 +201,7 @@ func TestUpdate(t *testing.T) {
 	ch := channel
 	ch.ID = "2"
 	c.MFChannels = append(c.MFChannels, ch)
-	saved, err := svc.Add(validToken, c)
+	saved, err := svc.Add(context.Background(), validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	modifiedCreated := saved
@@ -237,7 +238,7 @@ func TestUpdate(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := svc.Update(tc.token, tc.config)
+		err := svc.Update(context.Background(), tc.token, tc.config)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -252,7 +253,7 @@ func TestUpdateCert(t *testing.T) {
 	ch := channel
 	ch.ID = "2"
 	c.MFChannels = append(c.MFChannels, ch)
-	saved, err := svc.Add(validToken, c)
+	saved, err := svc.Add(context.Background(), validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	cases := []struct {
@@ -295,7 +296,7 @@ func TestUpdateCert(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := svc.UpdateCert(tc.token, tc.thingKey, tc.clientCert, tc.clientKey, tc.caCert)
+		err := svc.UpdateCert(context.Background(), tc.token, tc.thingKey, tc.clientCert, tc.clientKey, tc.caCert)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -310,15 +311,15 @@ func TestUpdateConnections(t *testing.T) {
 	ch := channel
 	ch.ID = "2"
 	c.MFChannels = append(c.MFChannels, ch)
-	created, err := svc.Add(validToken, c)
+	created, err := svc.Add(context.Background(), validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	externalID, err := uuid.NewV4()
 	require.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
 	c.ExternalID = externalID.String()
-	active, err := svc.Add(validToken, c)
+	active, err := svc.Add(context.Background(), validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-	err = svc.ChangeState(validToken, active.MFThing, bootstrap.Active)
+	err = svc.ChangeState(context.Background(), validToken, active.MFThing, bootstrap.Active)
 	require.Nil(t, err, fmt.Sprintf("Changing state expected to succeed: %s.\n", err))
 
 	nonExisting := config
@@ -369,7 +370,7 @@ func TestUpdateConnections(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := svc.UpdateConnections(tc.token, tc.id, tc.connections)
+		err := svc.UpdateConnections(context.Background(), tc.token, tc.id, tc.connections)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -389,12 +390,12 @@ func TestList(t *testing.T) {
 		c.ExternalID = id.String()
 		c.ExternalKey = id.String()
 		c.Name = fmt.Sprintf("%s-%d", config.Name, i)
-		s, err := svc.Add(validToken, c)
+		s, err := svc.Add(context.Background(), validToken, c)
 		saved = append(saved, s)
 		require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	}
 	// Set one Thing to the different state
-	err := svc.ChangeState(validToken, "42", bootstrap.Active)
+	err := svc.ChangeState(context.Background(), validToken, "42", bootstrap.Active)
 	require.Nil(t, err, fmt.Sprintf("Changing config state expected to succeed: %s.\n", err))
 	saved[41].State = bootstrap.Active
 
@@ -475,7 +476,7 @@ func TestList(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		result, err := svc.List(tc.token, tc.filter, tc.offset, tc.limit)
+		result, err := svc.List(context.Background(), tc.token, tc.filter, tc.offset, tc.limit)
 		assert.ElementsMatch(t, tc.config.Configs, result.Configs, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.config.Configs, result.Configs))
 		assert.Equal(t, tc.config.Total, result.Total, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.config.Total, result.Total))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -488,7 +489,7 @@ func TestRemove(t *testing.T) {
 	server := newThingsServer(newThingsService(users))
 	svc := newService(users, server.URL)
 
-	saved, err := svc.Add(validToken, config)
+	saved, err := svc.Add(context.Background(), validToken, config)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	cases := []struct {
@@ -524,7 +525,7 @@ func TestRemove(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := svc.Remove(tc.token, tc.id)
+		err := svc.Remove(context.Background(), tc.token, tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -535,7 +536,7 @@ func TestBootstrap(t *testing.T) {
 	server := newThingsServer(newThingsService(users))
 	svc := newService(users, server.URL)
 
-	saved, err := svc.Add(validToken, config)
+	saved, err := svc.Add(context.Background(), validToken, config)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	e, err := enc([]byte(saved.ExternalKey))
@@ -584,7 +585,7 @@ func TestBootstrap(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		config, err := svc.Bootstrap(tc.externalKey, tc.externalID, tc.encrypted)
+		config, err := svc.Bootstrap(context.Background(), tc.externalKey, tc.externalID, tc.encrypted)
 		assert.Equal(t, tc.config, config, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.config, config))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
@@ -596,7 +597,7 @@ func TestChangeState(t *testing.T) {
 	server := newThingsServer(newThingsService(users))
 	svc := newService(users, server.URL)
 
-	saved, err := svc.Add(validToken, config)
+	saved, err := svc.Add(context.Background(), validToken, config)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	cases := []struct {
@@ -644,7 +645,7 @@ func TestChangeState(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := svc.ChangeState(tc.token, tc.id, tc.state)
+		err := svc.ChangeState(context.Background(), tc.token, tc.id, tc.state)
 		assert.True(t, errors.Contains(err, tc.err), err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -655,7 +656,7 @@ func TestUpdateChannelHandler(t *testing.T) {
 	server := newThingsServer(newThingsService(users))
 	svc := newService(users, server.URL)
 
-	_, err := svc.Add(validToken, config)
+	_, err := svc.Add(context.Background(), validToken, config)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	ch := bootstrap.Channel{
 		ID:       channel.ID,
@@ -681,7 +682,7 @@ func TestUpdateChannelHandler(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := svc.UpdateChannelHandler(tc.channel)
+		err := svc.UpdateChannelHandler(context.Background(), tc.channel)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -692,7 +693,7 @@ func TestRemoveChannelHandler(t *testing.T) {
 	server := newThingsServer(newThingsService(users))
 	svc := newService(users, server.URL)
 
-	_, err := svc.Add(validToken, config)
+	_, err := svc.Add(context.Background(), validToken, config)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	cases := []struct {
@@ -713,7 +714,7 @@ func TestRemoveChannelHandler(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := svc.RemoveChannelHandler(tc.id)
+		err := svc.RemoveChannelHandler(context.Background(), tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -724,7 +725,7 @@ func TestRemoveCoinfigHandler(t *testing.T) {
 	server := newThingsServer(newThingsService(users))
 	svc := newService(users, server.URL)
 
-	saved, err := svc.Add(validToken, config)
+	saved, err := svc.Add(context.Background(), validToken, config)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	cases := []struct {
@@ -745,7 +746,7 @@ func TestRemoveCoinfigHandler(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := svc.RemoveConfigHandler(tc.id)
+		err := svc.RemoveConfigHandler(context.Background(), tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
@@ -756,7 +757,7 @@ func TestDisconnectThingsHandler(t *testing.T) {
 	server := newThingsServer(newThingsService(users))
 	svc := newService(users, server.URL)
 
-	saved, err := svc.Add(validToken, config)
+	saved, err := svc.Add(context.Background(), validToken, config)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	cases := []struct {
@@ -780,7 +781,7 @@ func TestDisconnectThingsHandler(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := svc.DisconnectThingHandler(tc.channelID, tc.thingID)
+		err := svc.DisconnectThingHandler(context.Background(), tc.channelID, tc.thingID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }

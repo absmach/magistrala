@@ -76,6 +76,6 @@ func (s *Server) DiscoveryRequest(req *pool.Message, multicastAddr string, recei
 	case <-req.Context().Done():
 		return nil
 	case <-s.ctx.Done():
-		return fmt.Errorf("server was closed: %w", req.Context().Err())
+		return fmt.Errorf("server was closed: %w", s.ctx.Err())
 	}
 }

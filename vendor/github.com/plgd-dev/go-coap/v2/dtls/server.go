@@ -7,18 +7,16 @@ import (
 	"sync"
 	"time"
 
-	kitSync "github.com/plgd-dev/kit/sync"
+	"github.com/pion/dtls/v2"
 	"github.com/plgd-dev/go-coap/v2/message"
-	"github.com/plgd-dev/go-coap/v2/net/blockwise"
-
-	"github.com/plgd-dev/go-coap/v2/net/keepalive"
-
 	"github.com/plgd-dev/go-coap/v2/message/codes"
+	coapNet "github.com/plgd-dev/go-coap/v2/net"
+	"github.com/plgd-dev/go-coap/v2/net/blockwise"
+	"github.com/plgd-dev/go-coap/v2/net/monitor/inactivity"
 	"github.com/plgd-dev/go-coap/v2/udp/client"
 	udpMessage "github.com/plgd-dev/go-coap/v2/udp/message"
 	"github.com/plgd-dev/go-coap/v2/udp/message/pool"
-
-	coapNet "github.com/plgd-dev/go-coap/v2/net"
+	kitSync "github.com/plgd-dev/kit/sync"
 )
 
 // A ServerOption sets options such as credentials, codec and keepalive parameters, etc.
@@ -36,9 +34,17 @@ type GoPoolFunc = func(func()) error
 
 type BlockwiseFactoryFunc = func(getSendedRequest func(token message.Token) (blockwise.Message, bool)) *blockwise.BlockWise
 
-type OnNewClientConnFunc = func(cc *client.ClientConn)
+// OnNewClientConnFunc is the callback for new connections.
+//
+// Note: Calling `dtlsConn.Close()` is forbidden, and `dtlsConn` should be treated as a
+// "read-only" parameter, mainly used to get the peer certificate from the underlining connection
+type OnNewClientConnFunc = func(cc *client.ClientConn, dtlsConn *dtls.Conn)
 
 type GetMIDFunc = func() uint16
+
+func closeClientConn(cc *client.ClientConn) {
+	cc.Close()
+}
 
 var defaultServerOptions = serverOptions{
 	ctx:            context.Background(),
@@ -55,11 +61,13 @@ var defaultServerOptions = serverOptions{
 		}()
 		return nil
 	},
-	keepalive:                      keepalive.New(),
+	createInactivityMonitor: func() inactivity.Monitor {
+		return inactivity.NewNilMonitor()
+	},
 	blockwiseEnable:                true,
 	blockwiseSZX:                   blockwise.SZX1024,
 	blockwiseTransferTimeout:       time.Second * 5,
-	onNewClientConn:                func(cc *client.ClientConn) {},
+	onNewClientConn:                func(cc *client.ClientConn, dtlsConn *dtls.Conn) {},
 	heartBeat:                      time.Millisecond * 100,
 	transmissionNStart:             time.Second,
 	transmissionAcknowledgeTimeout: time.Second * 2,
@@ -73,7 +81,7 @@ type serverOptions struct {
 	handler                        HandlerFunc
 	errors                         ErrorFunc
 	goPool                         GoPoolFunc
-	keepalive                      *keepalive.KeepAlive
+	createInactivityMonitor        func() inactivity.Monitor
 	net                            string
 	blockwiseSZX                   blockwise.SZX
 	blockwiseEnable                bool
@@ -97,7 +105,7 @@ type Server struct {
 	handler                        HandlerFunc
 	errors                         ErrorFunc
 	goPool                         GoPoolFunc
-	keepalive                      *keepalive.KeepAlive
+	createInactivityMonitor        func() inactivity.Monitor
 	blockwiseSZX                   blockwise.SZX
 	blockwiseEnable                bool
 	blockwiseTransferTimeout       time.Duration
@@ -130,14 +138,22 @@ func NewServer(opt ...ServerOption) *Server {
 		opts.getMID = udpMessage.GetMID
 	}
 
+	if opts.createInactivityMonitor == nil {
+		opts.createInactivityMonitor = func() inactivity.Monitor {
+			return inactivity.NewNilMonitor()
+		}
+	}
+
 	return &Server{
-		ctx:                            ctx,
-		cancel:                         cancel,
-		handler:                        opts.handler,
-		maxMessageSize:                 opts.maxMessageSize,
-		errors:                         opts.errors,
+		ctx:            ctx,
+		cancel:         cancel,
+		handler:        opts.handler,
+		maxMessageSize: opts.maxMessageSize,
+		errors: func(err error) {
+			opts.errors(fmt.Errorf("dtls: %w", err))
+		},
 		goPool:                         opts.goPool,
-		keepalive:                      opts.keepalive,
+		createInactivityMonitor:        opts.createInactivityMonitor,
 		blockwiseSZX:                   opts.blockwiseSZX,
 		blockwiseEnable:                opts.blockwiseEnable,
 		blockwiseTransferTimeout:       opts.blockwiseTransferTimeout,
@@ -208,27 +224,27 @@ func (s *Server) Serve(l Listener) error {
 		}
 		if rw != nil {
 			wg.Add(1)
-			cc := s.createClientConn(coapNet.NewConn(rw, coapNet.WithHeartBeat(s.heartBeat)))
+			var cc *client.ClientConn
+			monitor := s.createInactivityMonitor()
+			opts := []coapNet.ConnOption{
+				coapNet.WithHeartBeat(s.heartBeat),
+				coapNet.WithOnReadTimeout(func() error {
+					monitor.CheckInactivity(cc)
+					return nil
+				}),
+			}
+			cc = s.createClientConn(coapNet.NewConn(rw, opts...), monitor)
 			if s.onNewClientConn != nil {
-				s.onNewClientConn(cc)
+				dtlsConn := rw.(*dtls.Conn)
+				s.onNewClientConn(cc, dtlsConn)
 			}
 			go func() {
 				defer wg.Done()
 				err := cc.Run()
 				if err != nil {
-					s.errors(err)
+					s.errors(fmt.Errorf("%v: %w", cc.RemoteAddr(), err))
 				}
 			}()
-			if s.keepalive != nil {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					err := s.keepalive.Run(cc)
-					if err != nil {
-						s.errors(err)
-					}
-				}()
-			}
 		}
 	}
 }
@@ -238,7 +254,7 @@ func (s *Server) Stop() {
 	s.cancel()
 }
 
-func (s *Server) createClientConn(connection *coapNet.Conn) *client.ClientConn {
+func (s *Server) createClientConn(connection *coapNet.Conn, monitor inactivity.Monitor) *client.ClientConn {
 	var blockWise *blockwise.BlockWise
 	if s.blockwiseEnable {
 		blockWise = blockwise.NewBlockWise(
@@ -257,6 +273,7 @@ func (s *Server) createClientConn(connection *coapNet.Conn) *client.ClientConn {
 		s.ctx,
 		connection,
 		s.maxMessageSize,
+		true,
 	)
 	cc := client.NewClientConn(
 		session,
@@ -271,6 +288,7 @@ func (s *Server) createClientConn(connection *coapNet.Conn) *client.ClientConn {
 		s.goPool,
 		s.errors,
 		s.getMID,
+		monitor,
 	)
 
 	return cc

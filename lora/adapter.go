@@ -1,6 +1,7 @@
 package lora
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -34,31 +35,31 @@ var (
 // implementation, and all of its decorators (e.g. logging & metrics).
 type Service interface {
 	// CreateThing creates thingID:devEUI route-map
-	CreateThing(thingID string, devEUI string) error
+	CreateThing(ctx context.Context, thingID string, devEUI string) error
 
 	// UpdateThing updates thingID:devEUI route-map
-	UpdateThing(thingID string, devEUI string) error
+	UpdateThing(ctx context.Context, thingID string, devEUI string) error
 
 	// RemoveThing removes thingID:devEUI route-map
-	RemoveThing(thingID string) error
+	RemoveThing(ctx context.Context, thingID string) error
 
 	// CreateChannel creates channelID:appID route-map
-	CreateChannel(chanID string, appID string) error
+	CreateChannel(ctx context.Context, chanID string, appID string) error
 
 	// UpdateChannel updates channelID:appID route-map
-	UpdateChannel(chanID string, appID string) error
+	UpdateChannel(ctx context.Context, chanID string, appID string) error
 
 	// RemoveChannel removes channelID:appID route-map
-	RemoveChannel(chanID string) error
+	RemoveChannel(ctx context.Context, chanID string) error
 
 	// ConnectThing creates thingID:channelID route-map
-	ConnectThing(chanID, thingID string) error
+	ConnectThing(ctx context.Context, chanID, thingID string) error
 
 	// DisconnectThing removes thingID:channelID route-map
-	DisconnectThing(chanID, thingID string) error
+	DisconnectThing(ctx context.Context, chanID, thingID string) error
 
 	// Publish forwards messages from the LoRa MQTT broker to Mainflux NATS broker
-	Publish(msg Message) error
+	Publish(ctx context.Context, msg Message) error
 }
 
 var _ Service = (*adapterService)(nil)
@@ -81,21 +82,21 @@ func New(publisher messaging.Publisher, thingsRM, channelsRM, connectRM RouteMap
 }
 
 // Publish forwards messages from Lora MQTT broker to Mainflux NATS broker
-func (as *adapterService) Publish(m Message) error {
+func (as *adapterService) Publish(ctx context.Context, m Message) error {
 	// Get route map of lora application
-	thingID, err := as.thingsRM.Get(m.DevEUI)
+	thingID, err := as.thingsRM.Get(ctx, m.DevEUI)
 	if err != nil {
 		return ErrNotFoundDev
 	}
 
 	// Get route map of lora application
-	chanID, err := as.channelsRM.Get(m.ApplicationID)
+	chanID, err := as.channelsRM.Get(ctx, m.ApplicationID)
 	if err != nil {
 		return ErrNotFoundApp
 	}
 
 	c := fmt.Sprintf("%s:%s", chanID, thingID)
-	if _, err := as.connectRM.Get(c); err != nil {
+	if _, err := as.connectRM.Get(ctx, c); err != nil {
 		return ErrNotConnected
 	}
 
@@ -128,52 +129,52 @@ func (as *adapterService) Publish(m Message) error {
 	return as.publisher.Publish(msg.Channel, msg)
 }
 
-func (as *adapterService) CreateThing(thingID string, devEUI string) error {
-	return as.thingsRM.Save(thingID, devEUI)
+func (as *adapterService) CreateThing(ctx context.Context, thingID string, devEUI string) error {
+	return as.thingsRM.Save(ctx, thingID, devEUI)
 }
 
-func (as *adapterService) UpdateThing(thingID string, devEUI string) error {
-	return as.thingsRM.Save(thingID, devEUI)
+func (as *adapterService) UpdateThing(ctx context.Context, thingID string, devEUI string) error {
+	return as.thingsRM.Save(ctx, thingID, devEUI)
 }
 
-func (as *adapterService) RemoveThing(thingID string) error {
-	return as.thingsRM.Remove(thingID)
+func (as *adapterService) RemoveThing(ctx context.Context, thingID string) error {
+	return as.thingsRM.Remove(ctx, thingID)
 }
 
-func (as *adapterService) CreateChannel(chanID string, appID string) error {
-	return as.channelsRM.Save(chanID, appID)
+func (as *adapterService) CreateChannel(ctx context.Context, chanID string, appID string) error {
+	return as.channelsRM.Save(ctx, chanID, appID)
 }
 
-func (as *adapterService) UpdateChannel(chanID string, appID string) error {
-	return as.channelsRM.Save(chanID, appID)
+func (as *adapterService) UpdateChannel(ctx context.Context, chanID string, appID string) error {
+	return as.channelsRM.Save(ctx, chanID, appID)
 }
 
-func (as *adapterService) RemoveChannel(chanID string) error {
-	return as.channelsRM.Remove(chanID)
+func (as *adapterService) RemoveChannel(ctx context.Context, chanID string) error {
+	return as.channelsRM.Remove(ctx, chanID)
 }
 
-func (as *adapterService) ConnectThing(chanID, thingID string) error {
-	if _, err := as.channelsRM.Get(chanID); err != nil {
+func (as *adapterService) ConnectThing(ctx context.Context, chanID, thingID string) error {
+	if _, err := as.channelsRM.Get(ctx, chanID); err != nil {
 		return ErrNotFoundApp
 	}
 
-	if _, err := as.thingsRM.Get(thingID); err != nil {
+	if _, err := as.thingsRM.Get(ctx, thingID); err != nil {
 		return ErrNotFoundDev
 	}
 
 	c := fmt.Sprintf("%s:%s", chanID, thingID)
-	return as.connectRM.Save(c, c)
+	return as.connectRM.Save(ctx, c, c)
 }
 
-func (as *adapterService) DisconnectThing(chanID, thingID string) error {
-	if _, err := as.channelsRM.Get(chanID); err != nil {
+func (as *adapterService) DisconnectThing(ctx context.Context, chanID, thingID string) error {
+	if _, err := as.channelsRM.Get(ctx, chanID); err != nil {
 		return ErrNotFoundApp
 	}
 
-	if _, err := as.thingsRM.Get(thingID); err != nil {
+	if _, err := as.thingsRM.Get(ctx, thingID); err != nil {
 		return ErrNotFoundDev
 	}
 
 	c := fmt.Sprintf("%s:%s", chanID, thingID)
-	return as.connectRM.Remove(c)
+	return as.connectRM.Remove(ctx, c)
 }

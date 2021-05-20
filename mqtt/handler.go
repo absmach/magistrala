@@ -4,6 +4,7 @@
 package mqtt
 
 import (
+	"context"
 	"errors"
 	"net/url"
 	"regexp"
@@ -59,7 +60,7 @@ func (h *handler) AuthConnect(c *session.Client) error {
 		return errInvalidConnect
 	}
 
-	thid, err := h.auth.Identify(string(c.Password))
+	thid, err := h.auth.Identify(context.Background(), string(c.Password))
 	if err != nil {
 		return err
 	}
@@ -202,7 +203,7 @@ func (h *handler) authAccess(username string, topic string) error {
 	}
 
 	chanID := channelParts[1]
-	return h.auth.Authorize(chanID, username)
+	return h.auth.Authorize(context.Background(), chanID, username)
 }
 
 func parseSubtopic(subtopic string) (string, error) {

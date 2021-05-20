@@ -9,14 +9,14 @@ import (
 	"github.com/pion/dtls/v2"
 	"github.com/plgd-dev/go-coap/v2/message"
 	"github.com/plgd-dev/go-coap/v2/net/blockwise"
-	"github.com/plgd-dev/go-coap/v2/net/keepalive"
+	"github.com/plgd-dev/go-coap/v2/net/monitor/inactivity"
 
-	kitSync "github.com/plgd-dev/kit/sync"
 	"github.com/plgd-dev/go-coap/v2/message/codes"
 	coapNet "github.com/plgd-dev/go-coap/v2/net"
 	"github.com/plgd-dev/go-coap/v2/udp/client"
 	udpMessage "github.com/plgd-dev/go-coap/v2/udp/message"
 	"github.com/plgd-dev/go-coap/v2/udp/message/pool"
+	kitSync "github.com/plgd-dev/kit/sync"
 )
 
 var defaultDialOptions = dialOptions{
@@ -39,7 +39,6 @@ var defaultDialOptions = dialOptions{
 		return nil
 	},
 	dialer:                         &net.Dialer{Timeout: time.Second * 3},
-	keepalive:                      keepalive.New(),
 	net:                            "udp",
 	blockwiseSZX:                   blockwise.SZX1024,
 	blockwiseEnable:                true,
@@ -48,6 +47,9 @@ var defaultDialOptions = dialOptions{
 	transmissionAcknowledgeTimeout: time.Second * 2,
 	transmissionMaxRetransmit:      4,
 	getMID:                         udpMessage.GetMID,
+	createInactivityMonitor: func() inactivity.Monitor {
+		return inactivity.NewNilMonitor()
+	},
 }
 
 type dialOptions struct {
@@ -58,7 +60,6 @@ type dialOptions struct {
 	errors                         ErrorFunc
 	goPool                         GoPoolFunc
 	dialer                         *net.Dialer
-	keepalive                      *keepalive.KeepAlive
 	net                            string
 	blockwiseSZX                   blockwise.SZX
 	blockwiseEnable                bool
@@ -67,6 +68,8 @@ type dialOptions struct {
 	transmissionAcknowledgeTimeout time.Duration
 	transmissionMaxRetransmit      int
 	getMID                         GetMIDFunc
+	closeSocket                    bool
+	createInactivityMonitor        func() inactivity.Monitor
 }
 
 // A DialOption sets options such as credentials, keepalive parameters, etc.
@@ -90,6 +93,7 @@ func Dial(target string, dtlsCfg *dtls.Config, opts ...DialOption) (*client.Clie
 	if err != nil {
 		return nil, err
 	}
+	opts = append(opts, WithCloseSocket())
 	return Client(conn, opts...), nil
 }
 
@@ -112,6 +116,9 @@ func bwCreateHandlerFunc(observatioRequests *kitSync.Map) func(token message.Tok
 			d.SetMessageID(r.MessageID())
 			return d
 		})
+		if !ok {
+			return nil, ok
+		}
 		bwMessage := msg.(blockwise.Message)
 		return bwMessage, ok
 	}
@@ -125,6 +132,15 @@ func Client(conn *dtls.Conn, opts ...DialOption) *client.ClientConn {
 	}
 	if cfg.errors == nil {
 		cfg.errors = func(error) {}
+	}
+	if cfg.createInactivityMonitor == nil {
+		cfg.createInactivityMonitor = func() inactivity.Monitor {
+			return inactivity.NewNilMonitor()
+		}
+	}
+	errors := cfg.errors
+	cfg.errors = func(err error) {
+		errors(fmt.Errorf("dtls: %v: %w", conn.RemoteAddr(), err))
 	}
 
 	observatioRequests := kitSync.NewMap()
@@ -141,13 +157,18 @@ func Client(conn *dtls.Conn, opts ...DialOption) *client.ClientConn {
 	}
 
 	observationTokenHandler := client.NewHandlerContainer()
-
-	l := coapNet.NewConn(conn, coapNet.WithHeartBeat(cfg.heartBeat))
+	monitor := cfg.createInactivityMonitor()
+	var cc *client.ClientConn
+	l := coapNet.NewConn(conn, coapNet.WithHeartBeat(cfg.heartBeat), coapNet.WithOnReadTimeout(func() error {
+		monitor.CheckInactivity(cc)
+		return nil
+	}))
 	session := NewSession(cfg.ctx,
 		l,
 		cfg.maxMessageSize,
+		cfg.closeSocket,
 	)
-	cc := client.NewClientConn(session,
+	cc = client.NewClientConn(session,
 		observationTokenHandler, observatioRequests, cfg.transmissionNStart, cfg.transmissionAcknowledgeTimeout, cfg.transmissionMaxRetransmit,
 		client.NewObservationHandler(observationTokenHandler, cfg.handler),
 		cfg.blockwiseSZX,
@@ -155,6 +176,8 @@ func Client(conn *dtls.Conn, opts ...DialOption) *client.ClientConn {
 		cfg.goPool,
 		cfg.errors,
 		cfg.getMID,
+		// The client does not support activity monitoring yet
+		monitor,
 	)
 
 	go func() {
@@ -163,14 +186,6 @@ func Client(conn *dtls.Conn, opts ...DialOption) *client.ClientConn {
 			cfg.errors(err)
 		}
 	}()
-	if cfg.keepalive != nil {
-		go func() {
-			err := cfg.keepalive.Run(cc)
-			if err != nil {
-				cfg.errors(err)
-			}
-		}()
-	}
 
 	return cc
 }

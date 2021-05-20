@@ -4,11 +4,12 @@
 package redis
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/opcua"
 )
@@ -65,14 +66,14 @@ func NewEventStore(svc opcua.Service, client *redis.Client, consumer string, log
 	}
 }
 
-func (es eventStore) Subscribe(subject string) error {
-	err := es.client.XGroupCreateMkStream(stream, group, "$").Err()
+func (es eventStore) Subscribe(ctx context.Context, subject string) error {
+	err := es.client.XGroupCreateMkStream(ctx, stream, group, "$").Err()
 	if err != nil && err.Error() != exists {
 		return err
 	}
 
 	for {
-		streams, err := es.client.XReadGroup(&redis.XReadGroupArgs{
+		streams, err := es.client.XReadGroup(ctx, &redis.XReadGroupArgs{
 			Group:    group,
 			Consumer: es.consumer,
 			Streams:  []string{stream, ">"},
@@ -93,46 +94,46 @@ func (es eventStore) Subscribe(subject string) error {
 					err = e
 					break
 				}
-				err = es.handleCreateThing(cte)
+				err = es.svc.CreateThing(ctx, cte.id, cte.opcuaNodeID)
 			case thingUpdate:
 				ute, e := decodeCreateThing(event)
 				if e != nil {
 					err = e
 					break
 				}
-				err = es.handleCreateThing(ute)
+				err = es.svc.CreateThing(ctx, ute.id, ute.opcuaNodeID)
 			case thingRemove:
 				rte := decodeRemoveThing(event)
-				err = es.handleRemoveThing(rte)
+				err = es.svc.RemoveThing(ctx, rte.id)
 			case channelCreate:
 				cce, e := decodeCreateChannel(event)
 				if e != nil {
 					err = e
 					break
 				}
-				err = es.handleCreateChannel(cce)
+				err = es.svc.CreateChannel(ctx, cce.id, cce.opcuaServerURI)
 			case channelUpdate:
 				uce, e := decodeCreateChannel(event)
 				if e != nil {
 					err = e
 					break
 				}
-				err = es.handleCreateChannel(uce)
+				err = es.svc.CreateChannel(ctx, uce.id, uce.opcuaServerURI)
 			case channelRemove:
 				rce := decodeRemoveChannel(event)
-				err = es.handleRemoveChannel(rce)
+				err = es.svc.RemoveChannel(ctx, rce.id)
 			case thingConnect:
 				rce := decodeConnectThing(event)
-				err = es.handleConnectThing(rce)
+				err = es.svc.ConnectThing(ctx, rce.chanID, rce.thingID)
 			case thingDisconnect:
 				rce := decodeDisconnectThing(event)
-				err = es.handleDisconnectThing(rce)
+				err = es.svc.DisconnectThing(ctx, rce.chanID, rce.thingID)
 			}
 			if err != nil && err != errMetadataType {
 				es.logger.Warn(fmt.Sprintf("Failed to handle event sourcing: %s", err.Error()))
 				break
 			}
-			es.client.XAck(stream, group, msg.ID)
+			es.client.XAck(ctx, stream, group, msg.ID)
 		}
 	}
 }
@@ -221,30 +222,6 @@ func decodeDisconnectThing(event map[string]interface{}) connectThingEvent {
 		chanID:  read(event, "chan_id", ""),
 		thingID: read(event, "thing_id", ""),
 	}
-}
-
-func (es eventStore) handleCreateThing(cte createThingEvent) error {
-	return es.svc.CreateThing(cte.id, cte.opcuaNodeID)
-}
-
-func (es eventStore) handleRemoveThing(rte removeThingEvent) error {
-	return es.svc.RemoveThing(rte.id)
-}
-
-func (es eventStore) handleCreateChannel(cce createChannelEvent) error {
-	return es.svc.CreateChannel(cce.id, cce.opcuaServerURI)
-}
-
-func (es eventStore) handleRemoveChannel(rce removeChannelEvent) error {
-	return es.svc.RemoveChannel(rce.id)
-}
-
-func (es eventStore) handleConnectThing(rte connectThingEvent) error {
-	return es.svc.ConnectThing(rte.chanID, rte.thingID)
-}
-
-func (es eventStore) handleDisconnectThing(rte connectThingEvent) error {
-	return es.svc.DisconnectThing(rte.chanID, rte.thingID)
 }
 
 func read(event map[string]interface{}, key, def string) string {

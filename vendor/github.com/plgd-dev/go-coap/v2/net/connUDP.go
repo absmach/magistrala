@@ -16,11 +16,13 @@ import (
 //
 // Multiple goroutines may invoke methods on a UDPConn simultaneously.
 type UDPConn struct {
-	heartBeat  time.Duration
-	connection *net.UDPConn
-	packetConn packetConn
-	errors     func(err error)
-	network    string
+	heartBeat      time.Duration
+	connection     *net.UDPConn
+	packetConn     packetConn
+	errors         func(err error)
+	network        string
+	onReadTimeout  func() error
+	onWriteTimeout func() error
 
 	lock sync.Mutex
 }
@@ -146,57 +148,10 @@ var defaultUDPConnOptions = udpConnOptions{
 }
 
 type udpConnOptions struct {
-	heartBeat time.Duration
-	errors    func(err error)
-}
-
-// A UDPOption sets options such as heartBeat, errors parameters, etc.
-type UDPOption interface {
-	applyUDP(*udpConnOptions)
-}
-
-type heartBeat struct {
-	heartBeat time.Duration
-}
-
-func (h heartBeat) applyUDP(o *udpConnOptions) {
-	o.heartBeat = h.heartBeat
-}
-
-func (h heartBeat) applyConn(o *connOptions) {
-	o.heartBeat = h.heartBeat
-}
-
-func (h heartBeat) applyTCPListener(o *tcpListenerOptions) {
-	o.heartBeat = h.heartBeat
-}
-
-func (h heartBeat) applyTLSListener(o *tlsListenerOptions) {
-	o.heartBeat = h.heartBeat
-}
-
-func (h heartBeat) applyDTLSListener(o *dtlsListenerOptions) {
-	o.heartBeat = h.heartBeat
-}
-
-func WithHeartBeat(v time.Duration) heartBeat {
-	return heartBeat{
-		heartBeat: v,
-	}
-}
-
-type errorsOpt struct {
-	errors func(err error)
-}
-
-func (h errorsOpt) applyUDP(o *udpConnOptions) {
-	o.errors = h.errors
-}
-
-func WithErrors(v func(err error)) errorsOpt {
-	return errorsOpt{
-		errors: v,
-	}
+	heartBeat      time.Duration
+	errors         func(err error)
+	onReadTimeout  func() error
+	onWriteTimeout func() error
 }
 
 func NewListenUDP(network, addr string, opts ...UDPOption) (*UDPConn, error) {
@@ -226,8 +181,15 @@ func NewUDPConn(network string, c *net.UDPConn, opts ...UDPOption) *UDPConn {
 		packetConn = newPacketConnIPv4(ipv4.NewPacketConn(c))
 	}
 
-	connection := UDPConn{network: network, connection: c, heartBeat: cfg.heartBeat, packetConn: packetConn, errors: cfg.errors}
-	return &connection
+	return &UDPConn{
+		network:        network,
+		connection:     c,
+		heartBeat:      cfg.heartBeat,
+		packetConn:     packetConn,
+		errors:         cfg.errors,
+		onReadTimeout:  cfg.onReadTimeout,
+		onWriteTimeout: cfg.onWriteTimeout,
+	}
 }
 
 // LocalAddr returns the local network address. The Addr returned is shared by all invocations of LocalAddr, so do not modify it.
@@ -250,7 +212,7 @@ func (c *UDPConn) Close() error {
 	return c.connection.Close()
 }
 
-func (c *UDPConn) writeToAddr(ctx context.Context, heartBeat time.Duration, multicastHopLimit int, iface net.Interface, srcAddr net.Addr, port string, raddr *net.UDPAddr, buffer []byte) error {
+func (c *UDPConn) writeToAddr(deadline time.Time, multicastHopLimit int, iface net.Interface, srcAddr net.Addr, port string, raddr *net.UDPAddr, buffer []byte) error {
 	netType := "udp4"
 	if IsIPv6(raddr.IP) {
 		netType = "udp6"
@@ -274,7 +236,7 @@ func (c *UDPConn) writeToAddr(ctx context.Context, heartBeat time.Duration, mult
 		return err
 	}
 	p.SetMulticastHopLimit(multicastHopLimit)
-	err := p.SetWriteDeadline(time.Now().Add(heartBeat))
+	err := p.SetWriteDeadline(deadline)
 	if err != nil {
 		return fmt.Errorf("cannot write multicast with context: cannot set write deadline for connection: %w", err)
 	}
@@ -322,9 +284,16 @@ LOOP:
 		port := addr[len(addr)-1]
 
 		for _, ifaceAddr := range ifaceAddrs {
-			err = c.writeToAddr(ctx, c.heartBeat, hopLimit, iface, ifaceAddr, port, raddr, buffer)
+			deadline := time.Now().Add(c.heartBeat)
+			err = c.writeToAddr(deadline, hopLimit, iface, ifaceAddr, port, raddr, buffer)
 			if err != nil {
-				if isTemporary(err) {
+				if isTemporary(err, deadline) {
+					if c.onWriteTimeout != nil {
+						err := c.onWriteTimeout()
+						if err != nil {
+							return fmt.Errorf("cannot write multicast to %v: on timeout returns error: %w", iface.Name, err)
+						}
+					}
 					continue LOOP
 				}
 				if c.errors != nil {
@@ -351,13 +320,20 @@ func (c *UDPConn) WriteWithContext(ctx context.Context, raddr *net.UDPAddr, buff
 			return ctx.Err()
 		default:
 		}
-		err := c.connection.SetWriteDeadline(time.Now().Add(c.heartBeat))
+		deadline := time.Now().Add(c.heartBeat)
+		err := c.connection.SetWriteDeadline(deadline)
 		if err != nil {
 			return fmt.Errorf("cannot set write deadline for udp connection: %w", err)
 		}
 		n, err := WriteToUDP(c.connection, raddr, buffer[written:])
 		if err != nil {
-			if isTemporary(err) {
+			if isTemporary(err, deadline) {
+				if c.onWriteTimeout != nil {
+					err := c.onWriteTimeout()
+					if err != nil {
+						return fmt.Errorf("cannot write to udp connection: on timeout returns error: %w", err)
+					}
+				}
 				continue
 			}
 			return fmt.Errorf("cannot write to udp connection: %w", err)
@@ -376,17 +352,24 @@ func (c *UDPConn) ReadWithContext(ctx context.Context, buffer []byte) (int, *net
 			return -1, nil, ctx.Err()
 		default:
 		}
-		err := c.connection.SetReadDeadline(time.Now().Add(c.heartBeat))
+		deadline := time.Now().Add(c.heartBeat)
+		err := c.connection.SetReadDeadline(deadline)
 		if err != nil {
 			return -1, nil, fmt.Errorf("cannot set read deadline for udp connection: %w", err)
 		}
 		n, s, err := c.connection.ReadFromUDP(buffer)
 		if err != nil {
 			// check context in regular intervals and then resume listening
-			if isTemporary(err) {
+			if isTemporary(err, deadline) {
+				if c.onReadTimeout != nil {
+					err := c.onReadTimeout()
+					if err != nil {
+						return -1, nil, fmt.Errorf("cannot read from udp connection: on timeout returns error: %w", err)
+					}
+				}
 				continue
 			}
-			return -1, nil, fmt.Errorf("cannot read from udp connection: %v", ctx.Err())
+			return -1, nil, fmt.Errorf("cannot read from udp connection: %w", err)
 		}
 		return n, s, err
 	}

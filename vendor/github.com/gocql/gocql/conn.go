@@ -44,8 +44,8 @@ func approve(authenticator string) bool {
 	return false
 }
 
-//JoinHostPort is a utility to return a address string that can be used
-//gocql.Conn to form a connection with a host.
+// JoinHostPort is a utility to return an address string that can be used
+// by `gocql.Conn` to form a connection with a host.
 func JoinHostPort(addr string, port int) string {
 	addr = strings.TrimSpace(addr)
 	if _, _, err := net.SplitHostPort(addr); err != nil {
@@ -80,6 +80,19 @@ func (p PasswordAuthenticator) Success(data []byte) error {
 	return nil
 }
 
+// SslOptions configures TLS use.
+//
+// Warning: Due to historical reasons, the SslOptions is insecure by default, so you need to set EnableHostVerification
+// to true if no Config is set. Most users should set SslOptions.Config to a *tls.Config.
+// SslOptions and Config.InsecureSkipVerify interact as follows:
+//
+//  Config.InsecureSkipVerify | EnableHostVerification | Result
+//  Config is nil             | false                  | do not verify host
+//  Config is nil             | true                   | verify host
+//  false                     | false                  | verify host
+//  true                      | false                  | do not verify host
+//  false                     | true                   | verify host
+//  true                      | true                   | verify host
 type SslOptions struct {
 	*tls.Config
 
@@ -89,9 +102,12 @@ type SslOptions struct {
 	CertPath string
 	KeyPath  string
 	CaPath   string //optional depending on server config
-	// If you want to verify the hostname and server cert (like a wildcard for cass cluster) then you should turn this on
-	// This option is basically the inverse of InSecureSkipVerify
-	// See InSecureSkipVerify in http://golang.org/pkg/crypto/tls/ for more info
+	// If you want to verify the hostname and server cert (like a wildcard for cass cluster) then you should turn this
+	// on.
+	// This option is basically the inverse of tls.Config.InsecureSkipVerify.
+	// See InsecureSkipVerify in http://golang.org/pkg/crypto/tls/ for more info.
+	//
+	// See SslOptions documentation to see how EnableHostVerification interacts with the provided tls.Config.
 	EnableHostVerification bool
 }
 
@@ -105,9 +121,17 @@ type ConnConfig struct {
 	Authenticator  Authenticator
 	AuthProvider   func(h *HostInfo) (Authenticator, error)
 	Keepalive      time.Duration
+	Logger         StdLogger
 
 	tlsConfig       *tls.Config
 	disableCoalesce bool
+}
+
+func (c *ConnConfig) logger() StdLogger {
+	if c.Logger == nil {
+		return Logger
+	}
+	return c.Logger
 }
 
 type ConnErrorHandler interface {
@@ -125,7 +149,7 @@ func (fn connErrorHandlerFn) HandleError(conn *Conn, err error, closed bool) {
 // which may be serving more queries just fine.
 // Default is 0, should not be changed concurrently with queries.
 //
-// depreciated
+// Deprecated.
 var TimeoutLimit int64 = 0
 
 // Conn is a single connection to a Cassandra node. It can be used to execute
@@ -162,6 +186,8 @@ type Conn struct {
 	cancel context.CancelFunc
 
 	timeouts int64
+
+	logger StdLogger
 }
 
 // connect establishes a connection to a Cassandra node using session's connection config.
@@ -213,14 +239,26 @@ func (s *Session) dialWithoutObserver(ctx context.Context, host *HostInfo, cfg *
 		dialer = d
 	}
 
-	conn, err := dialer.DialContext(ctx, "tcp", host.HostnameAndPort())
+	addr := host.HostnameAndPort()
+	conn, err := dialer.DialContext(ctx, "tcp", addr)
 	if err != nil {
 		return nil, err
 	}
 	if cfg.tlsConfig != nil {
 		// the TLS config is safe to be reused by connections but it must not
 		// be modified after being used.
-		tconn := tls.Client(conn, cfg.tlsConfig)
+		tlsConfig := cfg.tlsConfig
+		if !tlsConfig.InsecureSkipVerify && tlsConfig.ServerName == "" {
+			colonPos := strings.LastIndex(addr, ":")
+			if colonPos == -1 {
+				colonPos = len(addr)
+			}
+			hostname := addr[:colonPos]
+			// clone config to avoid modifying the shared one.
+			tlsConfig = tlsConfig.Clone()
+			tlsConfig.ServerName = hostname
+		}
+		tconn := tls.Client(conn, tlsConfig)
 		if err := tconn.Handshake(); err != nil {
 			conn.Close()
 			return nil, err
@@ -248,6 +286,7 @@ func (s *Session) dialWithoutObserver(ctx context.Context, host *HostInfo, cfg *
 		},
 		ctx:    ctx,
 		cancel: cancel,
+		logger: cfg.logger(),
 	}
 
 	if err := c.init(ctx); err != nil {
@@ -657,7 +696,7 @@ func (c *Conn) recv(ctx context.Context) error {
 	delete(c.calls, head.stream)
 	c.mu.Unlock()
 	if call == nil || call.framer == nil || !ok {
-		Logger.Printf("gocql: received response for stream which has no handler: header=%v\n", head)
+		c.logger.Printf("gocql: received response for stream which has no handler: header=%v\n", head)
 		return c.discardFrame(head)
 	} else if head.stream != call.streamID {
 		panic(fmt.Sprintf("call has incorrect streamID: got %d expected %d", call.streamID, head.stream))
@@ -845,6 +884,10 @@ func (w *writeCoalescer) writeFlusher(interval time.Duration) {
 }
 
 func (c *Conn) exec(ctx context.Context, req frameWriter, tracer Tracer) (*framer, error) {
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return nil, ctxErr
+	}
+
 	// TODO: move tracer onto conn
 	stream, ok := c.streams.GetStream()
 	if !ok {
@@ -1173,12 +1216,16 @@ func (c *Conn) executeQuery(ctx context.Context, qry *Query) *Iter {
 		}
 
 		if x.meta.morePages() && !qry.disableAutoPage {
+			newQry := new(Query)
+			*newQry = *qry
+			newQry.pageState = copyBytes(x.meta.pagingState)
+			newQry.metrics = &queryMetrics{m: make(map[string]*hostMetrics)}
+
 			iter.next = &nextIter{
-				qry: qry,
+				qry: newQry,
 				pos: int((1 - qry.prefetch) * float64(x.numRows)),
 			}
 
-			iter.next.qry.pageState = copyBytes(x.meta.pagingState)
 			if iter.next.pos < 1 {
 				iter.next.pos = 1
 			}
@@ -1191,7 +1238,7 @@ func (c *Conn) executeQuery(ctx context.Context, qry *Query) *Iter {
 		iter := &Iter{framer: framer}
 		if err := c.awaitSchemaAgreement(ctx); err != nil {
 			// TODO: should have this behind a flag
-			Logger.Println(err)
+			c.logger.Println(err)
 		}
 		// dont return an error from this, might be a good idea to give a warning
 		// though. The impact of this returning an error would be that the cluster
@@ -1359,10 +1406,11 @@ func (c *Conn) executeBatch(ctx context.Context, batch *Batch) *Iter {
 }
 
 func (c *Conn) query(ctx context.Context, statement string, values ...interface{}) (iter *Iter) {
-	q := c.session.Query(statement, values...).Consistency(One)
-	q.trace = nil
+	q := c.session.Query(statement, values...).Consistency(One).Trace(nil)
 	q.skipPrepare = true
 	q.disableSkipMetadata = true
+	// we want to keep the query on this connection
+	q.conn = c
 	return c.executeQuery(ctx, q)
 }
 
@@ -1392,7 +1440,7 @@ func (c *Conn) awaitSchemaAgreement(ctx context.Context) (err error) {
 				goto cont
 			}
 			if !isValidPeer(host) || host.schemaVersion == "" {
-				Logger.Printf("invalid peer or peer with empty schema_version: peer=%q", host)
+				c.logger.Printf("invalid peer or peer with empty schema_version: peer=%q", host)
 				continue
 			}
 

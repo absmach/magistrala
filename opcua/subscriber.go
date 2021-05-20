@@ -3,8 +3,10 @@
 
 package opcua
 
+import "context"
+
 // Subscriber represents the OPC-UA Server client.
 type Subscriber interface {
 	// Subscribes to given NodeID and receives events.
-	Subscribe(Config) error
+	Subscribe(context.Context, Config) error
 }

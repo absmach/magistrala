@@ -69,7 +69,7 @@ func NewSubscriber(ctx context.Context, publisher messaging.Publisher, thingsRM,
 }
 
 // Subscribe subscribes to the OPC-UA Server.
-func (c client) Subscribe(cfg opcua.Config) error {
+func (c client) Subscribe(ctx context.Context, cfg opcua.Config) error {
 	opts := []opcuaGopcua.Option{
 		opcuaGopcua.SecurityMode(uaGopcua.MessageSecurityModeNone),
 	}
@@ -114,14 +114,14 @@ func (c client) Subscribe(cfg opcua.Config) error {
 	}
 	defer sub.Cancel()
 
-	if err := c.runHandler(sub, cfg.ServerURI, cfg.NodeID); err != nil {
+	if err := c.runHandler(ctx, sub, cfg.ServerURI, cfg.NodeID); err != nil {
 		c.logger.Warn(fmt.Sprintf("Unsubscribed from OPC-UA node %s.%s: %s", cfg.ServerURI, cfg.NodeID, err))
 	}
 
 	return nil
 }
 
-func (c client) runHandler(sub *opcuaGopcua.Subscription, uri, node string) error {
+func (c client) runHandler(ctx context.Context, sub *opcuaGopcua.Subscription, uri, node string) error {
 	nodeID, err := uaGopcua.ParseNodeID(node)
 	if err != nil {
 		return errors.Wrap(errFailedParseNodeID, err)
@@ -187,7 +187,7 @@ func (c client) runHandler(sub *opcuaGopcua.Subscription, uri, node string) erro
 						msg.Data = 0
 					}
 
-					if err := c.publish(token, msg); err != nil {
+					if err := c.publish(ctx, token, msg); err != nil {
 						switch err {
 						case errNotFoundServerURI, errNotFoundNodeID, errNotFoundConn:
 							return err
@@ -205,22 +205,22 @@ func (c client) runHandler(sub *opcuaGopcua.Subscription, uri, node string) erro
 }
 
 // Publish forwards messages from the OPC-UA Server to Mainflux NATS broker
-func (c client) publish(token string, m message) error {
+func (c client) publish(ctx context.Context, token string, m message) error {
 	// Get route-map of the OPC-UA ServerURI
-	chanID, err := c.channelsRM.Get(m.ServerURI)
+	chanID, err := c.channelsRM.Get(ctx, m.ServerURI)
 	if err != nil {
 		return errNotFoundServerURI
 	}
 
 	// Get route-map of the OPC-UA NodeID
-	thingID, err := c.thingsRM.Get(m.NodeID)
+	thingID, err := c.thingsRM.Get(ctx, m.NodeID)
 	if err != nil {
 		return errNotFoundNodeID
 	}
 
 	// Check connection between ServerURI and NodeID
 	cKey := fmt.Sprintf("%s:%s", chanID, thingID)
-	if _, err := c.connectRM.Get(cKey); err != nil {
+	if _, err := c.connectRM.Get(ctx, cKey); err != nil {
 		return fmt.Errorf("%s between channel %s and thing %s", errNotFoundConn, chanID, thingID)
 	}
 

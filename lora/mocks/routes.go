@@ -4,6 +4,7 @@
 package mocks
 
 import (
+	"context"
 	"errors"
 	"sync"
 
@@ -22,7 +23,7 @@ func NewRouteMap() lora.RouteMapRepository {
 	}
 }
 
-func (trm *routeMapMock) Save(mfxID, extID string) error {
+func (trm *routeMapMock) Save(_ context.Context, mfxID, extID string) error {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
@@ -31,7 +32,7 @@ func (trm *routeMapMock) Save(mfxID, extID string) error {
 	return nil
 }
 
-func (trm *routeMapMock) Get(extID string) (string, error) {
+func (trm *routeMapMock) Get(_ context.Context, extID string) (string, error) {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
@@ -43,7 +44,7 @@ func (trm *routeMapMock) Get(extID string) (string, error) {
 	return id, nil
 }
 
-func (trm *routeMapMock) Remove(extID string) error {
+func (trm *routeMapMock) Remove(_ context.Context, extID string) error {
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 

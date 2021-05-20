@@ -22,7 +22,7 @@ func TestMain(m *testing.M) {
 		logger.Error(fmt.Sprintf("Could not connect to docker: %s", err))
 	}
 
-	container, err := pool.Run("cassandra", "3.11.9", []string{})
+	container, err := pool.Run("cassandra", "3.11.10", []string{})
 	if err != nil {
 		logger.Error(fmt.Sprintf("Could not start container: %s", err))
 	}

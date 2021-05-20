@@ -7,15 +7,17 @@
 package session // import "go.mongodb.org/mongo-driver/x/mongo/driver/session"
 
 import (
+	"context"
 	"errors"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/address"
+	"go.mongodb.org/mongo-driver/mongo/description"
 	"go.mongodb.org/mongo-driver/mongo/readconcern"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
-	"go.mongodb.org/mongo-driver/x/mongo/driver/description"
 	"go.mongodb.org/mongo-driver/x/mongo/driver/uuid"
 )
 
@@ -49,17 +51,55 @@ const (
 	Implicit
 )
 
-// State indicates the state of the FSM.
-type state uint8
+// TransactionState indicates the state of the transactions FSM.
+type TransactionState uint8
 
 // Client Session states
 const (
-	None state = iota
+	None TransactionState = iota
 	Starting
 	InProgress
 	Committed
 	Aborted
 )
+
+// String implements the fmt.Stringer interface.
+func (s TransactionState) String() string {
+	switch s {
+	case None:
+		return "none"
+	case Starting:
+		return "starting"
+	case InProgress:
+		return "in progress"
+	case Committed:
+		return "committed"
+	case Aborted:
+		return "aborted"
+	default:
+		return "unknown"
+	}
+}
+
+// LoadBalancedTransactionConnection represents a connection that's pinned by a ClientSession because it's being used
+// to execute a transaction when running against a load balancer. This interface is a copy of driver.PinnedConnection
+// and exists to be able to pin transactions to a connection without causing an import cycle.
+type LoadBalancedTransactionConnection interface {
+	// Functions copied over from driver.Connection.
+	WriteWireMessage(context.Context, []byte) error
+	ReadWireMessage(ctx context.Context, dst []byte) ([]byte, error)
+	Description() description.Server
+	Close() error
+	ID() string
+	Address() address.Address
+	Stale() bool
+
+	// Functions copied over from driver.PinnedConnection that are not part of Connection or Expirable.
+	PinToCursor() error
+	PinToTransaction() error
+	UnpinFromCursor() error
+	UnpinFromTransaction() error
+}
 
 // Client is a session for clients to run commands.
 type Client struct {
@@ -89,10 +129,11 @@ type Client struct {
 	transactionWc            *writeconcern.WriteConcern
 	transactionMaxCommitTime *time.Duration
 
-	pool          *Pool
-	state         state
-	PinnedServer  *description.Server
-	RecoveryToken bson.Raw
+	pool             *Pool
+	TransactionState TransactionState
+	PinnedServer     *description.Server
+	RecoveryToken    bson.Raw
+	PinnedConnection LoadBalancedTransactionConnection
 }
 
 func getClusterTime(clusterTime bson.Raw) (uint32, uint32) {
@@ -221,11 +262,39 @@ func (c *Client) UpdateRecoveryToken(response bson.Raw) {
 	c.RecoveryToken = token.Document()
 }
 
-// ClearPinnedServer sets the PinnedServer to nil.
-func (c *Client) ClearPinnedServer() {
-	if c != nil {
-		c.PinnedServer = nil
+// ClearPinnedResources clears the pinned server and/or connection associated with the session.
+func (c *Client) ClearPinnedResources() error {
+	if c == nil {
+		return nil
 	}
+
+	c.PinnedServer = nil
+	if c.PinnedConnection != nil {
+		if err := c.PinnedConnection.UnpinFromTransaction(); err != nil {
+			return err
+		}
+		if err := c.PinnedConnection.Close(); err != nil {
+			return err
+		}
+	}
+	c.PinnedConnection = nil
+	return nil
+}
+
+// UnpinConnection gracefully unpins the connection associated with the session if there is one. This is done via
+// the pinned connection's UnpinFromTransaction function.
+func (c *Client) UnpinConnection() error {
+	if c == nil || c.PinnedConnection == nil {
+		return nil
+	}
+
+	err := c.PinnedConnection.UnpinFromTransaction()
+	closeErr := c.PinnedConnection.Close()
+	if err == nil && closeErr != nil {
+		err = closeErr
+	}
+	c.PinnedConnection = nil
+	return err
 }
 
 // EndSession ends the session.
@@ -242,29 +311,29 @@ func (c *Client) EndSession() {
 
 // TransactionInProgress returns true if the client session is in an active transaction.
 func (c *Client) TransactionInProgress() bool {
-	return c.state == InProgress
+	return c.TransactionState == InProgress
 }
 
 // TransactionStarting returns true if the client session is starting a transaction.
 func (c *Client) TransactionStarting() bool {
-	return c.state == Starting
+	return c.TransactionState == Starting
 }
 
 // TransactionRunning returns true if the client session has started the transaction
 // and it hasn't been committed or aborted
 func (c *Client) TransactionRunning() bool {
-	return c != nil && (c.state == Starting || c.state == InProgress)
+	return c != nil && (c.TransactionState == Starting || c.TransactionState == InProgress)
 }
 
 // TransactionCommitted returns true of the client session just committed a transaciton.
 func (c *Client) TransactionCommitted() bool {
-	return c.state == Committed
+	return c.TransactionState == Committed
 }
 
 // CheckStartTransaction checks to see if allowed to start transaction and returns
 // an error if not allowed
 func (c *Client) CheckStartTransaction() error {
-	if c.state == InProgress || c.state == Starting {
+	if c.TransactionState == InProgress || c.TransactionState == Starting {
 		return ErrTransactInProgress
 	}
 	return nil
@@ -305,21 +374,20 @@ func (c *Client) StartTransaction(opts *TransactionOptions) error {
 	}
 
 	if !writeconcern.AckWrite(c.CurrentWc) {
-		c.clearTransactionOpts()
+		_ = c.clearTransactionOpts()
 		return ErrUnackWCUnsupported
 	}
 
-	c.state = Starting
-	c.PinnedServer = nil
-	return nil
+	c.TransactionState = Starting
+	return c.ClearPinnedResources()
 }
 
 // CheckCommitTransaction checks to see if allowed to commit transaction and returns
 // an error if not allowed.
 func (c *Client) CheckCommitTransaction() error {
-	if c.state == None {
+	if c.TransactionState == None {
 		return ErrNoTransactStarted
-	} else if c.state == Aborted {
+	} else if c.TransactionState == Aborted {
 		return ErrCommitAfterAbort
 	}
 	return nil
@@ -332,7 +400,7 @@ func (c *Client) CommitTransaction() error {
 	if err != nil {
 		return err
 	}
-	c.state = Committed
+	c.TransactionState = Committed
 	return nil
 }
 
@@ -351,11 +419,11 @@ func (c *Client) UpdateCommitTransactionWriteConcern() {
 // CheckAbortTransaction checks to see if allowed to abort transaction and returns
 // an error if not allowed.
 func (c *Client) CheckAbortTransaction() error {
-	if c.state == None {
+	if c.TransactionState == None {
 		return ErrNoTransactStarted
-	} else if c.state == Committed {
+	} else if c.TransactionState == Committed {
 		return ErrAbortAfterCommit
-	} else if c.state == Aborted {
+	} else if c.TransactionState == Aborted {
 		return ErrAbortTwice
 	}
 	return nil
@@ -368,36 +436,54 @@ func (c *Client) AbortTransaction() error {
 	if err != nil {
 		return err
 	}
-	c.state = Aborted
-	c.clearTransactionOpts()
+	c.TransactionState = Aborted
+	return c.clearTransactionOpts()
+}
+
+// StartCommand updates the session's internal state at the beginning of an operation. This must be called before
+// server selection is done for the operation as the session's state can impact the result of that process.
+func (c *Client) StartCommand() error {
+	if c == nil {
+		return nil
+	}
+
+	// If we're executing the first operation using this session after a transaction, we must ensure that the session
+	// is not pinned to any resources.
+	if !c.TransactionRunning() && !c.Committing && !c.Aborting {
+		return c.ClearPinnedResources()
+	}
 	return nil
 }
 
-// ApplyCommand advances the state machine upon command execution.
-func (c *Client) ApplyCommand(desc description.Server) {
+// ApplyCommand advances the state machine upon command execution. This must be called after server selection is
+// complete.
+func (c *Client) ApplyCommand(desc description.Server) error {
 	if c.Committing {
 		// Do not change state if committing after already committed
-		return
+		return nil
 	}
-	if c.state == Starting {
-		c.state = InProgress
+	if c.TransactionState == Starting {
+		c.TransactionState = InProgress
 		// If this is in a transaction and the server is a mongos, pin it
 		if desc.Kind == description.Mongos {
 			c.PinnedServer = &desc
 		}
-	} else if c.state == Committed || c.state == Aborted {
-		c.clearTransactionOpts()
-		c.state = None
+	} else if c.TransactionState == Committed || c.TransactionState == Aborted {
+		c.TransactionState = None
+		return c.clearTransactionOpts()
 	}
+
+	return nil
 }
 
-func (c *Client) clearTransactionOpts() {
+func (c *Client) clearTransactionOpts() error {
 	c.RetryingCommit = false
 	c.Aborting = false
 	c.Committing = false
 	c.CurrentWc = nil
 	c.CurrentRp = nil
 	c.CurrentRc = nil
-	c.PinnedServer = nil
 	c.RecoveryToken = nil
+
+	return c.ClearPinnedResources()
 }

@@ -4,9 +4,10 @@
 package redis
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"github.com/mainflux/mainflux/opcua"
 )
 
@@ -25,23 +26,23 @@ func NewRouteMapRepository(client *redis.Client, prefix string) opcua.RouteMapRe
 	}
 }
 
-func (mr *routerMap) Save(mfxID, opcuaID string) error {
+func (mr *routerMap) Save(ctx context.Context, mfxID, opcuaID string) error {
 	tkey := fmt.Sprintf("%s:%s", mr.prefix, mfxID)
-	if err := mr.client.Set(tkey, opcuaID, 0).Err(); err != nil {
+	if err := mr.client.Set(ctx, tkey, opcuaID, 0).Err(); err != nil {
 		return err
 	}
 
 	lkey := fmt.Sprintf("%s:%s", mr.prefix, opcuaID)
-	if err := mr.client.Set(lkey, mfxID, 0).Err(); err != nil {
+	if err := mr.client.Set(ctx, lkey, mfxID, 0).Err(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (mr *routerMap) Get(opcuaID string) (string, error) {
+func (mr *routerMap) Get(ctx context.Context, opcuaID string) (string, error) {
 	lKey := fmt.Sprintf("%s:%s", mr.prefix, opcuaID)
-	mval, err := mr.client.Get(lKey).Result()
+	mval, err := mr.client.Get(ctx, lKey).Result()
 	if err != nil {
 		return "", err
 	}
@@ -49,13 +50,13 @@ func (mr *routerMap) Get(opcuaID string) (string, error) {
 	return mval, nil
 }
 
-func (mr *routerMap) Remove(mfxID string) error {
+func (mr *routerMap) Remove(ctx context.Context, mfxID string) error {
 	mkey := fmt.Sprintf("%s:%s", mr.prefix, mfxID)
-	lval, err := mr.client.Get(mkey).Result()
+	lval, err := mr.client.Get(ctx, mkey).Result()
 	if err != nil {
 		return err
 	}
 
 	lkey := fmt.Sprintf("%s:%s", mr.prefix, lval)
-	return mr.client.Del(mkey, lkey).Err()
+	return mr.client.Del(ctx, mkey, lkey).Err()
 }

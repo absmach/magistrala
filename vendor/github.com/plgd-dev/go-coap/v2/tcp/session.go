@@ -11,6 +11,7 @@ import (
 	"github.com/plgd-dev/go-coap/v2/message/codes"
 	coapNet "github.com/plgd-dev/go-coap/v2/net"
 	"github.com/plgd-dev/go-coap/v2/net/blockwise"
+	"github.com/plgd-dev/go-coap/v2/net/monitor/inactivity"
 	coapTCP "github.com/plgd-dev/go-coap/v2/tcp/message"
 	"github.com/plgd-dev/go-coap/v2/tcp/message/pool"
 )
@@ -18,6 +19,9 @@ import (
 type EventFunc func()
 
 type Session struct {
+	// This field needs to be the first in the struct to ensure proper word alignment on 32-bit platforms.
+	// See: https://golang.org/pkg/sync/atomic/#pkg-note-BUG
+	sequence   uint64
 	connection *coapNet.Conn
 
 	maxMessageSize                  int
@@ -27,8 +31,9 @@ type Session struct {
 	disableTCPSignalMessageCSM      bool
 	goPool                          GoPoolFunc
 	errors                          ErrorFunc
+	closeSocket                     bool
+	inactivityMonitor               Notifier
 
-	sequence              uint64
 	tokenHandlerContainer *HandlerContainer
 	midHandlerContainer   *HandlerContainer
 	handler               HandlerFunc
@@ -40,7 +45,7 @@ type Session struct {
 	onClose []EventFunc
 
 	cancel context.CancelFunc
-	ctx    context.Context
+	ctx    atomic.Value
 
 	errSendCSM error
 }
@@ -56,15 +61,18 @@ func NewSession(
 	blockWise *blockwise.BlockWise,
 	disablePeerTCPSignalMessageCSMs bool,
 	disableTCPSignalMessageCSM bool,
-
+	closeSocket bool,
+	inactivityMonitor Notifier,
 ) *Session {
 	ctx, cancel := context.WithCancel(ctx)
 	if errors == nil {
 		errors = func(error) {}
 	}
+	if inactivityMonitor == nil {
+		inactivityMonitor = inactivity.NewNilMonitor()
+	}
 
 	s := &Session{
-		ctx:                             ctx,
 		cancel:                          cancel,
 		connection:                      connection,
 		handler:                         handler,
@@ -77,7 +85,11 @@ func NewSession(
 		blockwiseSZX:                    blockwiseSZX,
 		disablePeerTCPSignalMessageCSMs: disablePeerTCPSignalMessageCSMs,
 		disableTCPSignalMessageCSM:      disableTCPSignalMessageCSM,
+		closeSocket:                     closeSocket,
+		inactivityMonitor:               inactivityMonitor,
 	}
+	s.ctx.Store(&ctx)
+
 	if !disableTCPSignalMessageCSM {
 		err := s.sendCSM()
 		if err != nil {
@@ -88,8 +100,16 @@ func NewSession(
 	return s
 }
 
+// SetContextValue stores the value associated with key to context of connection.
+func (s *Session) SetContextValue(key interface{}, val interface{}) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	ctx := context.WithValue(s.Context(), key, val)
+	s.ctx.Store(&ctx)
+}
+
 func (s *Session) Done() <-chan struct{} {
-	return s.ctx.Done()
+	return s.Context().Done()
 }
 
 func (s *Session) AddOnClose(f EventFunc) {
@@ -106,10 +126,14 @@ func (s *Session) popOnClose() []EventFunc {
 	return tmp
 }
 
-func (s *Session) close() {
+func (s *Session) close() error {
 	for _, f := range s.popOnClose() {
 		f()
 	}
+	if s.closeSocket {
+		return s.connection.Close()
+	}
+	return nil
 }
 
 func (s *Session) Close() error {
@@ -122,7 +146,7 @@ func (s *Session) Sequence() uint64 {
 }
 
 func (s *Session) Context() context.Context {
-	return s.ctx
+	return *s.ctx.Load().(*context.Context)
 }
 
 func (s *Session) PeerMaxMessageSize() uint32 {
@@ -158,11 +182,11 @@ func (s *Session) handleBlockwise(w *ResponseWriter, r *pool.Message) {
 	s.handler(w, r)
 }
 
-func (s *Session) handleSignals(w *ResponseWriter, r *pool.Message) {
+func (s *Session) handleSignals(r *pool.Message, cc *ClientConn) bool {
 	switch r.Code() {
 	case codes.CSM:
 		if s.disablePeerTCPSignalMessageCSMs {
-			return
+			return true
 		}
 		if size, err := r.GetOptionUint32(coapTCP.MaxMessageSize); err == nil {
 			atomic.StoreUint32(&s.peerMaxMessageSize, size)
@@ -170,25 +194,31 @@ func (s *Session) handleSignals(w *ResponseWriter, r *pool.Message) {
 		if r.HasOption(coapTCP.BlockWiseTransfer) {
 			atomic.StoreUint32(&s.peerBlockWiseTranferEnabled, 1)
 		}
-		return
+		return true
 	case codes.Ping:
 		if r.HasOption(coapTCP.Custody) {
 			//TODO
 		}
-		s.sendPong(w, r)
-		return
+		s.sendPong(r.Token())
+		return true
 	case codes.Release:
 		if r.HasOption(coapTCP.AlternativeAddress) {
 			//TODO
 		}
-		return
+		return true
 	case codes.Abort:
 		if r.HasOption(coapTCP.BadCSMOption) {
 			//TODO
 		}
-		return
+		return true
+	case codes.Pong:
+		h, err := s.tokenHandlerContainer.Pop(r.Token())
+		if err == nil {
+			s.processReq(r, cc, h)
+		}
+		return true
 	}
-	s.handleBlockwise(w, r)
+	return false
 }
 
 type bwResponseWriter struct {
@@ -205,11 +235,29 @@ func (b *bwResponseWriter) SetMessage(m blockwise.Message) {
 }
 
 func (s *Session) Handle(w *ResponseWriter, r *pool.Message) {
-	s.handleSignals(w, r)
+	s.handleBlockwise(w, r)
 }
 
 func (s *Session) TokenHandler() *HandlerContainer {
 	return s.tokenHandlerContainer
+}
+
+func (s *Session) processReq(req *pool.Message, cc *ClientConn, handler func(w *ResponseWriter, r *pool.Message)) {
+	origResp := pool.AcquireMessage(s.Context())
+	origResp.SetToken(req.Token())
+	w := NewResponseWriter(origResp, cc, req.Options())
+	handler(w, req)
+	defer pool.ReleaseMessage(w.response)
+	if !req.IsHijacked() {
+		pool.ReleaseMessage(req)
+	}
+	if w.response.IsModified() {
+		err := s.WriteMessage(w.response)
+		if err != nil {
+			s.Close()
+			s.errors(fmt.Errorf("cannot write response to %v: %w", s.connection.RemoteAddr(), err))
+		}
+	}
 }
 
 func (s *Session) processBuffer(buffer *bytes.Buffer, cc *ClientConn) error {
@@ -225,37 +273,35 @@ func (s *Session) processBuffer(buffer *bytes.Buffer, cc *ClientConn) error {
 		if buffer.Len() < hdr.TotalLen {
 			return nil
 		}
-		msgRaw := make([]byte, hdr.TotalLen)
-		n, err := buffer.Read(msgRaw)
-		if err != nil {
-			return fmt.Errorf("cannot read full: %w", err)
-		}
-		if n != hdr.TotalLen {
-			return fmt.Errorf("invalid data: %w", err)
-		}
-		req := pool.AcquireMessage(s.ctx)
-		_, err = req.Unmarshal(msgRaw)
+		req := pool.AcquireMessage(s.Context())
+		readed, err := req.Unmarshal(buffer.Bytes()[:hdr.TotalLen])
 		if err != nil {
 			pool.ReleaseMessage(req)
 			return fmt.Errorf("cannot unmarshal with header: %w", err)
 		}
-		req.SetSequence(s.Sequence())
-		s.goPool(func() {
-			origResp := pool.AcquireMessage(s.ctx)
-			origResp.SetToken(req.Token())
-			w := NewResponseWriter(origResp, cc, req.Options())
-			s.Handle(w, req)
-			defer pool.ReleaseMessage(w.response)
-			if !req.IsHijacked() {
-				pool.ReleaseMessage(req)
-			}
-			if w.response.IsModified() {
-				err := s.WriteMessage(w.response)
-				if err != nil {
-					s.Close()
-					s.errors(fmt.Errorf("cannot write response: %w", err))
+		if readed == buffer.Len() {
+			// buffer is empty so reset it
+			buffer.Reset()
+		} else {
+			// rewind to next message
+			trimmed := 0
+			for trimmed != readed {
+				b := make([]byte, 4096)
+				max := 4096
+				if readed-trimmed < max {
+					max = readed - trimmed
 				}
+				v, _ := buffer.Read(b[:max])
+				trimmed += v
 			}
+		}
+		req.SetSequence(s.Sequence())
+		s.inactivityMonitor.Notify()
+		if s.handleSignals(req, cc) {
+			continue
+		}
+		s.goPool(func() {
+			s.processReq(req, cc, s.Handle)
 		})
 	}
 	return nil
@@ -274,15 +320,19 @@ func (s *Session) sendCSM() error {
 	if err != nil {
 		return fmt.Errorf("cannot get token: %w", err)
 	}
-	req := pool.AcquireMessage(s.ctx)
+	req := pool.AcquireMessage(s.Context())
 	defer pool.ReleaseMessage(req)
 	req.SetCode(codes.CSM)
 	req.SetToken(token)
 	return s.WriteMessage(req)
 }
 
-func (s *Session) sendPong(w *ResponseWriter, r *pool.Message) {
-	w.SetResponse(codes.Pong, message.TextPlain, nil)
+func (s *Session) sendPong(token message.Token) error {
+	req := pool.AcquireMessage(s.Context())
+	defer pool.ReleaseMessage(req)
+	req.SetCode(codes.Pong)
+	req.SetToken(token)
+	return s.WriteMessage(req)
 }
 
 // Run reads and process requests from a connection, until the connection is not closed.
@@ -292,7 +342,10 @@ func (s *Session) Run(cc *ClientConn) (err error) {
 		if err == nil {
 			err = err1
 		}
-		s.close()
+		err1 = s.close()
+		if err == nil {
+			err = err1
+		}
 	}()
 	if s.errSendCSM != nil {
 		return s.errSendCSM
@@ -304,7 +357,7 @@ func (s *Session) Run(cc *ClientConn) (err error) {
 		if err != nil {
 			return err
 		}
-		readLen, err := s.connection.ReadWithContext(s.ctx, readBuf)
+		readLen, err := s.connection.ReadWithContext(s.Context(), readBuf)
 		if err != nil {
 			return err
 		}

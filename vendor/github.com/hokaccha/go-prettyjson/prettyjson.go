@@ -149,7 +149,12 @@ func (f *Formatter) processMap(m map[string]interface{}, depth int) string {
 
 	for _, key := range keys {
 		val := m[key]
-		k := f.sprintfColor(f.KeyColor, `"%s"`, key)
+		buf := &bytes.Buffer{}
+		encoder := json.NewEncoder(buf)
+		encoder.SetEscapeHTML(false)
+		encoder.Encode(key)
+		s := strings.TrimSuffix(string(buf.Bytes()), "\n")
+		k := f.sprintColor(f.KeyColor, s)
 		v := f.pretty(val, depth+1)
 
 		valueIndent := " "

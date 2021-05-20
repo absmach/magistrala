@@ -6,14 +6,14 @@ package auth
 import (
 	"context"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"github.com/mainflux/mainflux"
 )
 
 // Client represents Auth cache.
 type Client interface {
-	Authorize(chanID, thingID string) error
-	Identify(thingKey string) (string, error)
+	Authorize(ctx context.Context, chanID, thingID string) error
+	Identify(ctx context.Context, thingKey string) (string, error)
 }
 
 const (
@@ -34,9 +34,9 @@ func New(redisClient *redis.Client, thingsClient mainflux.ThingsServiceClient) C
 	}
 }
 
-func (c client) Identify(thingKey string) (string, error) {
+func (c client) Identify(ctx context.Context, thingKey string) (string, error) {
 	tkey := keyPrefix + ":" + thingKey
-	thingID, err := c.redisClient.Get(tkey).Result()
+	thingID, err := c.redisClient.Get(ctx, tkey).Result()
 	if err != nil {
 		t := &mainflux.Token{
 			Value: string(thingKey),
@@ -51,8 +51,8 @@ func (c client) Identify(thingKey string) (string, error) {
 	return thingID, nil
 }
 
-func (c client) Authorize(chanID, thingID string) error {
-	if c.redisClient.SIsMember(chanPrefix+":"+chanID, thingID).Val() {
+func (c client) Authorize(ctx context.Context, chanID, thingID string) error {
+	if c.redisClient.SIsMember(ctx, chanPrefix+":"+chanID, thingID).Val() {
 		return nil
 	}
 
@@ -60,6 +60,6 @@ func (c client) Authorize(chanID, thingID string) error {
 		ThingID: thingID,
 		ChanID:  chanID,
 	}
-	_, err := c.thingsClient.CanAccessByID(context.TODO(), ar)
+	_, err := c.thingsClient.CanAccessByID(ctx, ar)
 	return err
 }

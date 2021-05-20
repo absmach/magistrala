@@ -279,6 +279,10 @@ func (r *Message) IsModified() bool {
 	return r.isModified
 }
 
+func (r *Message) SetModified(b bool) {
+	r.isModified = b
+}
+
 func (r *Message) String() string {
 	return r.msg.String()
 }
@@ -287,20 +291,23 @@ func (r *Message) ReadBody() ([]byte, error) {
 	if r.Body() == nil {
 		return nil, nil
 	}
-	payload := make([]byte, 1024)
 	size, err := r.BodySize()
 	if err != nil {
 		return nil, err
+	}
+	if size == 0 {
+		return nil, nil
 	}
 	_, err = r.Body().Seek(0, io.SeekStart)
 	if err != nil {
 		return nil, err
 	}
+	payload := make([]byte, 1024)
 	if int64(len(payload)) < size {
 		payload = make([]byte, size)
 	}
 	n, err := io.ReadFull(r.Body(), payload)
-	if err == io.ErrUnexpectedEOF && int64(n) == size {
+	if (err == io.ErrUnexpectedEOF || err == io.EOF) && int64(n) == size {
 		err = nil
 	} else if err != nil {
 		return nil, err

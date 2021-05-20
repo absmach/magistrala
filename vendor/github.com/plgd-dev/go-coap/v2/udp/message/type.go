@@ -5,6 +5,8 @@ import (
 )
 
 // Type represents the message type.
+// It's only part of CoAP UDP messages.
+// Reliable transports like TCP do not have a type.
 type Type uint8
 
 const (

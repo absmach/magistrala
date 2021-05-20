@@ -14,6 +14,7 @@ import (
 	"github.com/patrickmn/go-cache"
 	"github.com/plgd-dev/go-coap/v2/message"
 	"github.com/plgd-dev/go-coap/v2/message/codes"
+	udpMessage "github.com/plgd-dev/go-coap/v2/udp/message"
 )
 
 // Block Opion value is represented: https://tools.ietf.org/html/rfc7959#section-2.2
@@ -115,6 +116,13 @@ type Message interface {
 	String() string
 }
 
+// hasType enables access to message.Type for supported messages
+// Since only UDP messages have a type
+type hasType interface {
+	Type() udpMessage.Type
+	SetType(t udpMessage.Type)
+}
+
 // EncodeBlockOption encodes block values to coap option.
 func EncodeBlockOption(szx SZX, blockNumber int64, moreBlocksFollowing bool) (uint32, error) {
 	if szx > SZXBERT {
@@ -214,11 +222,21 @@ func bufferSize(szx SZX, maxMessageSize int) int64 {
 	return (int64(maxMessageSize) / szx.Size()) * szx.Size()
 }
 
+func setTypeFrom(to Message, from Message) {
+	if udpTo, ok := to.(hasType); ok {
+		if udpFrom, ok := from.(hasType); ok {
+			udpTo.SetType(udpFrom.Type())
+		}
+	}
+}
+
 func (b *BlockWise) newSendRequestMessage(r Message) Message {
 	req := b.acquireMessage(r.Context())
 	req.SetCode(r.Code())
 	req.SetToken(r.Token())
 	req.ResetOptionsTo(r.Options())
+	setTypeFrom(req, r)
+
 	return req
 }
 
@@ -676,6 +694,7 @@ func (b *BlockWise) processReceivedMessage(w ResponseWriter, r Message, maxSzx S
 
 	tokenStr := token.String()
 	cachedReceivedMessageGuard, ok := b.receivingMessagesCache.Get(tokenStr)
+	var msgGuard *messageGuard
 	if !ok {
 		if szx > maxSzx {
 			szx = maxSzx
@@ -693,35 +712,46 @@ func (b *BlockWise) processReceivedMessage(w ResponseWriter, r Message, maxSzx S
 		cachedReceivedMessage.ResetOptionsTo(r.Options())
 		cachedReceivedMessage.SetToken(r.Token())
 		cachedReceivedMessage.SetSequence(r.Sequence())
-		cachedReceivedMessageGuard = newRequestGuard(cachedReceivedMessage)
-		err := b.receivingMessagesCache.Add(tokenStr, cachedReceivedMessageGuard, cache.DefaultExpiration)
+		cachedReceivedMessage.SetBody(memfile.New(make([]byte, 0, 1024)))
+		msgGuard = newRequestGuard(cachedReceivedMessage)
+		msgGuard.Lock()
+		defer msgGuard.Unlock()
+		err := b.receivingMessagesCache.Add(tokenStr, msgGuard, cache.DefaultExpiration)
 		// request was already stored in cache, silently
 		if err != nil {
 			return fmt.Errorf("request was already stored in cache")
 		}
-		cachedReceivedMessage.SetBody(memfile.New(make([]byte, 0, 1024)))
+	} else {
+		msgGuard = cachedReceivedMessageGuard.(*messageGuard)
+		msgGuard.Lock()
+		defer msgGuard.Unlock()
 	}
-	messageGuard := cachedReceivedMessageGuard.(*messageGuard)
 	defer func(err *error) {
 		if *err != nil {
 			b.receivingMessagesCache.Delete(tokenStr)
 		}
 	}(&err)
-	messageGuard.Lock()
-	defer messageGuard.Unlock()
-	cachedReceivedMessage := messageGuard.request
+	cachedReceivedMessage := msgGuard.request
 	rETAG, errETAG := r.GetOptionBytes(message.ETag)
 	cachedReceivedMessageETAG, errCachedReceivedMessageETAG := cachedReceivedMessage.GetOptionBytes(message.ETag)
 	switch {
 	case errETAG == nil && errCachedReceivedMessageETAG != nil:
-		return fmt.Errorf("received message doesn't contains ETAG but cached received message contains it(%v)", cachedReceivedMessageETAG)
+		if len(cachedReceivedMessageETAG) > 0 { // make sure there is an etag there
+			return fmt.Errorf("received message doesn't contains ETAG but cached received message contains it(%v)", cachedReceivedMessageETAG)
+		}
 	case errETAG != nil && errCachedReceivedMessageETAG == nil:
-		return fmt.Errorf("received message contains ETAG(%v) but cached received message doesn't", rETAG)
+		if len(rETAG) > 0 { // make sure there is an etag there
+			return fmt.Errorf("received message contains ETAG(%v) but cached received message doesn't", rETAG)
+		}
 	case !bytes.Equal(rETAG, cachedReceivedMessageETAG):
 		return fmt.Errorf("received message ETAG(%v) is not equal to cached received message ETAG(%v)", rETAG, cachedReceivedMessageETAG)
 	}
 
-	payloadFile := cachedReceivedMessage.Body().(*memfile.File)
+	payloadFile, ok := cachedReceivedMessage.Body().(*memfile.File)
+	if !ok {
+		return fmt.Errorf("invalid body type(%T) stored in receivingMessagesCache", cachedReceivedMessage.Body())
+	}
+
 	off := num * szx.Size()
 	payloadSize, err := cachedReceivedMessage.BodySize()
 	if err != nil {
@@ -733,22 +763,30 @@ func (b *BlockWise) processReceivedMessage(w ResponseWriter, r Message, maxSzx S
 		if err != nil {
 			return fmt.Errorf("cannot seek to off(%v) of cached request: %w", off, err)
 		}
-		_, err = r.Body().Seek(0, io.SeekStart)
-		if err != nil {
-			return fmt.Errorf("cannot seek to start of request: %w", err)
+		if r.Body() != nil {
+			_, err = r.Body().Seek(0, io.SeekStart)
+			if err != nil {
+				return fmt.Errorf("cannot seek to start of request: %w", err)
+			}
+			written, err := io.Copy(payloadFile, r.Body())
+			if err != nil {
+				return fmt.Errorf("cannot copy to cached request: %w", err)
+			}
+			payloadSize = copyn + written
+		} else {
+			payloadSize = copyn
 		}
-		written, err := io.Copy(payloadFile, r.Body())
+		err = payloadFile.Truncate(payloadSize)
 		if err != nil {
-			return fmt.Errorf("cannot copy to cached request: %w", err)
+			return fmt.Errorf("cannot truncate cached request: %w", err)
 		}
-		payloadSize = copyn + written
-
 	}
 	if !more {
 		b.receivingMessagesCache.Delete(tokenStr)
 		cachedReceivedMessage.Remove(blockType)
 		cachedReceivedMessage.Remove(sizeType)
 		cachedReceivedMessage.SetCode(r.Code())
+		setTypeFrom(cachedReceivedMessage, r)
 		if !bytes.Equal(cachedReceivedMessage.Token(), token) {
 			b.bwSendedRequest.Delete(tokenStr)
 		}

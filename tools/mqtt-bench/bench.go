@@ -14,7 +14,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/BurntSushi/toml"
+	"github.com/pelletier/go-toml"
 )
 
 // Benchmark - main benchmarking function
@@ -33,8 +33,13 @@ func Benchmark(cfg Config) {
 		caByte, _ = ioutil.ReadAll(caFile)
 	}
 
+	data, err := ioutil.ReadFile(cfg.Mf.ConnFile)
+	if err != nil {
+		log.Fatalf("Error loading connections file: %s", err)
+	}
+
 	mf := mainflux{}
-	if _, err := toml.DecodeFile(cfg.Mf.ConnFile, &mf); err != nil {
+	if err := toml.Unmarshal(data, &mf); err != nil {
 		log.Fatalf("Cannot load Mainflux connections config %s \nUse tools/provision to create file", cfg.Mf.ConnFile)
 	}
 

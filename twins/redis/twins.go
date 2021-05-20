@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/twins"
 )
@@ -43,38 +43,38 @@ func NewTwinCache(client *redis.Client) twins.TwinCache {
 	}
 }
 
-func (tc *twinCache) Save(_ context.Context, twin twins.Twin) error {
-	return tc.save(twin)
+func (tc *twinCache) Save(ctx context.Context, twin twins.Twin) error {
+	return tc.save(ctx, twin)
 }
 
-func (tc *twinCache) Update(_ context.Context, twin twins.Twin) error {
-	if err := tc.remove(twin.ID); err != nil {
+func (tc *twinCache) Update(ctx context.Context, twin twins.Twin) error {
+	if err := tc.remove(ctx, twin.ID); err != nil {
 		return errors.Wrap(ErrRedisTwinUpdate, err)
 	}
-	if err := tc.save(twin); err != nil {
+	if err := tc.save(ctx, twin); err != nil {
 		return errors.Wrap(ErrRedisTwinUpdate, err)
 	}
 	return nil
 }
 
-func (tc *twinCache) SaveIDs(_ context.Context, channel, subtopic string, ids []string) error {
+func (tc *twinCache) SaveIDs(ctx context.Context, channel, subtopic string, ids []string) error {
 	for _, id := range ids {
-		if err := tc.client.SAdd(attrKey(channel, subtopic), id).Err(); err != nil {
+		if err := tc.client.SAdd(ctx, attrKey(channel, subtopic), id).Err(); err != nil {
 			return errors.Wrap(ErrRedisTwinSave, err)
 		}
-		if err := tc.client.SAdd(twinKey(id), attrKey(channel, subtopic)).Err(); err != nil {
+		if err := tc.client.SAdd(ctx, twinKey(id), attrKey(channel, subtopic)).Err(); err != nil {
 			return errors.Wrap(ErrRedisTwinSave, err)
 		}
 	}
 	return nil
 }
 
-func (tc *twinCache) IDs(_ context.Context, channel, subtopic string) ([]string, error) {
-	ids, err := tc.client.SMembers(attrKey(channel, subtopic)).Result()
+func (tc *twinCache) IDs(ctx context.Context, channel, subtopic string) ([]string, error) {
+	ids, err := tc.client.SMembers(ctx, attrKey(channel, subtopic)).Result()
 	if err != nil {
 		return nil, errors.Wrap(ErrRedisTwinIDs, err)
 	}
-	idsWildcard, err := tc.client.SMembers(attrKey(channel, twins.SubtopicWildcard)).Result()
+	idsWildcard, err := tc.client.SMembers(ctx, attrKey(channel, twins.SubtopicWildcard)).Result()
 	if err != nil {
 		return nil, errors.Wrap(ErrRedisTwinIDs, err)
 	}
@@ -82,37 +82,37 @@ func (tc *twinCache) IDs(_ context.Context, channel, subtopic string) ([]string,
 	return ids, nil
 }
 
-func (tc *twinCache) Remove(_ context.Context, twinID string) error {
-	return tc.remove(twinID)
+func (tc *twinCache) Remove(ctx context.Context, twinID string) error {
+	return tc.remove(ctx, twinID)
 }
 
-func (tc *twinCache) save(twin twins.Twin) error {
+func (tc *twinCache) save(ctx context.Context, twin twins.Twin) error {
 	if len(twin.Definitions) < 1 {
 		return nil
 	}
 	attributes := twin.Definitions[len(twin.Definitions)-1].Attributes
 	for _, attr := range attributes {
-		if err := tc.client.SAdd(attrKey(attr.Channel, attr.Subtopic), twin.ID).Err(); err != nil {
+		if err := tc.client.SAdd(ctx, attrKey(attr.Channel, attr.Subtopic), twin.ID).Err(); err != nil {
 			return errors.Wrap(ErrRedisTwinSave, err)
 		}
-		if err := tc.client.SAdd(twinKey(twin.ID), attrKey(attr.Channel, attr.Subtopic)).Err(); err != nil {
+		if err := tc.client.SAdd(ctx, twinKey(twin.ID), attrKey(attr.Channel, attr.Subtopic)).Err(); err != nil {
 			return errors.Wrap(ErrRedisTwinSave, err)
 		}
 	}
 	return nil
 }
 
-func (tc *twinCache) remove(twinID string) error {
+func (tc *twinCache) remove(ctx context.Context, twinID string) error {
 	twinKey := twinKey(twinID)
-	attrKeys, err := tc.client.SMembers(twinKey).Result()
+	attrKeys, err := tc.client.SMembers(ctx, twinKey).Result()
 	if err != nil {
 		return errors.Wrap(ErrRedisTwinRemove, err)
 	}
-	if err := tc.client.Del(twinKey).Err(); err != nil {
+	if err := tc.client.Del(ctx, twinKey).Err(); err != nil {
 		return errors.Wrap(ErrRedisTwinRemove, err)
 	}
 	for _, attrKey := range attrKeys {
-		if err := tc.client.SRem(attrKey, twinID).Err(); err != nil {
+		if err := tc.client.SRem(ctx, attrKey, twinID).Err(); err != nil {
 			return errors.Wrap(ErrRedisTwinRemove, err)
 		}
 	}

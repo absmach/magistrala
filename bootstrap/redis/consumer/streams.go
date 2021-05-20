@@ -4,10 +4,11 @@
 package consumer
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"github.com/mainflux/mainflux/bootstrap"
 	"github.com/mainflux/mainflux/logger"
 )
@@ -30,7 +31,7 @@ const (
 // Subscriber represents event source for things and channels provisioning.
 type Subscriber interface {
 	// Subscribes to given subject and receives events.
-	Subscribe(string) error
+	Subscribe(context.Context, string) error
 }
 
 type eventStore struct {
@@ -50,14 +51,14 @@ func NewEventStore(svc bootstrap.Service, client *redis.Client, consumer string,
 	}
 }
 
-func (es eventStore) Subscribe(subject string) error {
-	err := es.client.XGroupCreateMkStream(stream, group, "$").Err()
+func (es eventStore) Subscribe(ctx context.Context, subject string) error {
+	err := es.client.XGroupCreateMkStream(ctx, stream, group, "$").Err()
 	if err != nil && err.Error() != exists {
 		return err
 	}
 
 	for {
-		streams, err := es.client.XReadGroup(&redis.XReadGroupArgs{
+		streams, err := es.client.XReadGroup(ctx, &redis.XReadGroupArgs{
 			Group:    group,
 			Consumer: es.consumer,
 			Streams:  []string{stream, ">"},
@@ -74,22 +75,22 @@ func (es eventStore) Subscribe(subject string) error {
 			switch event["operation"] {
 			case thingRemove:
 				rte := decodeRemoveThing(event)
-				err = es.handleRemoveThing(rte)
+				err = es.svc.RemoveConfigHandler(ctx, rte.id)
 			case thingDisconnect:
 				dte := decodeDisconnectThing(event)
-				err = es.handleDisconnectThing(dte)
+				err = es.svc.DisconnectThingHandler(ctx, dte.channelID, dte.thingID)
 			case channelUpdate:
 				uce := decodeUpdateChannel(event)
-				err = es.handleUpdateChannel(uce)
+				err = es.handleUpdateChannel(ctx, uce)
 			case channelRemove:
 				rce := decodeRemoveChannel(event)
-				err = es.handleRemoveChannel(rce)
+				err = es.svc.RemoveChannelHandler(ctx, rce.id)
 			}
 			if err != nil {
 				es.logger.Warn(fmt.Sprintf("Failed to handle event sourcing: %s", err.Error()))
 				break
 			}
-			es.client.XAck(stream, group, msg.ID)
+			es.client.XAck(ctx, stream, group, msg.ID)
 		}
 	}
 }
@@ -127,25 +128,13 @@ func decodeDisconnectThing(event map[string]interface{}) disconnectEvent {
 	}
 }
 
-func (es eventStore) handleRemoveThing(rte removeEvent) error {
-	return es.svc.RemoveConfigHandler(rte.id)
-}
-
-func (es eventStore) handleUpdateChannel(uce updateChannelEvent) error {
+func (es eventStore) handleUpdateChannel(ctx context.Context, uce updateChannelEvent) error {
 	channel := bootstrap.Channel{
 		ID:       uce.id,
 		Name:     uce.name,
 		Metadata: uce.metadata,
 	}
-	return es.svc.UpdateChannelHandler(channel)
-}
-
-func (es eventStore) handleRemoveChannel(rce removeEvent) error {
-	return es.svc.RemoveChannelHandler(rce.id)
-}
-
-func (es eventStore) handleDisconnectThing(dte disconnectEvent) error {
-	return es.svc.DisconnectThingHandler(dte.channelID, dte.thingID)
+	return es.svc.UpdateChannelHandler(ctx, channel)
 }
 
 func read(event map[string]interface{}, key, def string) string {

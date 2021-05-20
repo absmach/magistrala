@@ -72,6 +72,10 @@ func (c *Client) Context() context.Context {
 	return c.cc.Context()
 }
 
+func (c *Client) SetContextValue(key interface{}, val interface{}) {
+	c.cc.Session().SetContextValue(key, val)
+}
+
 func (c *Client) WriteMessage(req *message.Message) error {
 	r, err := pool.ConvertFrom(req)
 	if err != nil {

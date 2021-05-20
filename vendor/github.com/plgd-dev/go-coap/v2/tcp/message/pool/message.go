@@ -138,13 +138,7 @@ func ConvertFrom(m *message.Message) (*Message, error) {
 
 // ConvertTo converts pool message to common message.
 func ConvertTo(m *Message) (*message.Message, error) {
-	opts := make(message.Options, 0, len(m.Options()))
-	buf := make([]byte, 64)
-	opts, used, err := opts.ResetOptionsTo(buf, m.Options())
-	if err == message.ErrTooSmall {
-		buf = append(buf, make([]byte, used-len(buf))...)
-		opts, used, err = opts.ResetOptionsTo(buf, m.Options())
-	}
+	opts, err := m.Options().Clone()
 	if err != nil {
 		return nil, err
 	}

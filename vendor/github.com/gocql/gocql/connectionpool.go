@@ -28,14 +28,31 @@ type SetPartitioner interface {
 }
 
 func setupTLSConfig(sslOpts *SslOptions) (*tls.Config, error) {
+	//  Config.InsecureSkipVerify | EnableHostVerification | Result
+	//  Config is nil             | true                   | verify host
+	//  Config is nil             | false                  | do not verify host
+	//  false                     | false                  | verify host
+	//  true                      | false                  | do not verify host
+	//  false                     | true                   | verify host
+	//  true                      | true                   | verify host
+	var tlsConfig *tls.Config
 	if sslOpts.Config == nil {
-		sslOpts.Config = &tls.Config{}
+		tlsConfig = &tls.Config{
+			InsecureSkipVerify: !sslOpts.EnableHostVerification,
+		}
+	} else {
+		// use clone to avoid race.
+		tlsConfig = sslOpts.Config.Clone()
+	}
+
+	if tlsConfig.InsecureSkipVerify && sslOpts.EnableHostVerification {
+		tlsConfig.InsecureSkipVerify = false
 	}
 
 	// ca cert is optional
 	if sslOpts.CaPath != "" {
-		if sslOpts.RootCAs == nil {
-			sslOpts.RootCAs = x509.NewCertPool()
+		if tlsConfig.RootCAs == nil {
+			tlsConfig.RootCAs = x509.NewCertPool()
 		}
 
 		pem, err := ioutil.ReadFile(sslOpts.CaPath)
@@ -43,7 +60,7 @@ func setupTLSConfig(sslOpts *SslOptions) (*tls.Config, error) {
 			return nil, fmt.Errorf("connectionpool: unable to open CA certs: %v", err)
 		}
 
-		if !sslOpts.RootCAs.AppendCertsFromPEM(pem) {
+		if !tlsConfig.RootCAs.AppendCertsFromPEM(pem) {
 			return nil, errors.New("connectionpool: failed parsing or CA certs")
 		}
 	}
@@ -53,13 +70,10 @@ func setupTLSConfig(sslOpts *SslOptions) (*tls.Config, error) {
 		if err != nil {
 			return nil, fmt.Errorf("connectionpool: unable to load X509 key pair: %v", err)
 		}
-		sslOpts.Certificates = append(sslOpts.Certificates, mycert)
+		tlsConfig.Certificates = append(tlsConfig.Certificates, mycert)
 	}
 
-	sslOpts.InsecureSkipVerify = !sslOpts.EnableHostVerification
-
-	// return clone to avoid race
-	return sslOpts.Config.Clone(), nil
+	return tlsConfig, nil
 }
 
 type policyConnPool struct {
@@ -99,6 +113,7 @@ func connConfig(cfg *ClusterConfig) (*ConnConfig, error) {
 		Authenticator:   cfg.Authenticator,
 		AuthProvider:    cfg.AuthProvider,
 		Keepalive:       cfg.SocketKeepalive,
+		Logger:          cfg.logger(),
 		tlsConfig:       tlsConfig,
 		disableCoalesce: tlsConfig != nil, // write coalescing doesn't work with framing on top of TCP like in TLS.
 	}, nil
@@ -238,12 +253,6 @@ func (p *policyConnPool) removeHost(ip net.IP) {
 	go pool.Close()
 }
 
-func (p *policyConnPool) hostUp(host *HostInfo) {
-	// TODO(zariel): have a set of up hosts and down hosts, we can internally
-	// detect down hosts, then try to reconnect to them.
-	p.addHost(host)
-}
-
 func (p *policyConnPool) hostDown(ip net.IP) {
 	// TODO(zariel): mark host as down so we can try to connect to it later, for
 	// now just treat it has removed.
@@ -265,7 +274,8 @@ type hostConnPool struct {
 	closed  bool
 	filling bool
 
-	pos uint32
+	pos    uint32
+	logger StdLogger
 }
 
 func (h *hostConnPool) String() string {
@@ -288,6 +298,7 @@ func newHostConnPool(session *Session, host *HostInfo, port, size int,
 		conns:    make([]*Conn, 0, size),
 		filling:  false,
 		closed:   false,
+		logger:   session.logger,
 	}
 
 	// the pool is not filled or connected
@@ -429,6 +440,8 @@ func (pool *hostConnPool) fill() {
 			}
 			return
 		}
+		// notify the session that this node is connected
+		go pool.session.handleNodeUp(pool.host.ConnectAddress(), pool.port)
 
 		// filled one
 		fillCount--
@@ -440,6 +453,11 @@ func (pool *hostConnPool) fill() {
 
 		// mark the end of filling
 		pool.fillingStopped(err != nil)
+
+		if err == nil && startCount > 0 {
+			// notify the session that this node is connected again
+			go pool.session.handleNodeUp(pool.host.ConnectAddress(), pool.port)
+		}
 	}()
 }
 
@@ -448,11 +466,11 @@ func (pool *hostConnPool) logConnectErr(err error) {
 		// connection refused
 		// these are typical during a node outage so avoid log spam.
 		if gocqlDebug {
-			Logger.Printf("unable to dial %q: %v\n", pool.host.ConnectAddress(), err)
+			pool.logger.Printf("unable to dial %q: %v\n", pool.host.ConnectAddress(), err)
 		}
 	} else if err != nil {
 		// unexpected error
-		Logger.Printf("error: failed to connect to %s due to error: %v", pool.addr, err)
+		pool.logger.Printf("error: failed to connect to %s due to error: %v", pool.addr, err)
 	}
 }
 
@@ -519,7 +537,7 @@ func (pool *hostConnPool) connect() (err error) {
 			}
 		}
 		if gocqlDebug {
-			Logger.Printf("connection failed %q: %v, reconnecting with %T\n",
+			pool.logger.Printf("connection failed %q: %v, reconnecting with %T\n",
 				pool.host.ConnectAddress(), err, reconnectionPolicy)
 		}
 		time.Sleep(reconnectionPolicy.GetInterval(i))

@@ -19,8 +19,8 @@ import (
 const (
 	duplicateErr      = "unique_violation"
 	uuidErr           = "invalid input syntax for type uuid"
-	connConstraintErr = "connections_config_id_fkey"
 	fkViolation       = "foreign_key_violation"
+	connConstraintErr = "connections_config_id_config_owner_fkey"
 	configFieldsNum   = 8
 	chanFieldsNum     = 3
 	connFieldsNum     = 2

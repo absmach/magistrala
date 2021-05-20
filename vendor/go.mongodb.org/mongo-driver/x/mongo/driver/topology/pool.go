@@ -13,8 +13,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/event"
-	"go.mongodb.org/mongo-driver/x/mongo/driver/address"
+	"go.mongodb.org/mongo-driver/mongo/address"
 	"golang.org/x/sync/semaphore"
 )
 
@@ -30,9 +31,6 @@ var ErrConnectionClosed = ConnectionError{ConnectionID: "<closed>", message: "co
 
 // ErrWrongPool is return when a connection is returned to a pool it doesn't belong to.
 var ErrWrongPool = PoolError("connection does not belong to this pool")
-
-// ErrWaitQueueTimeout is returned when the request to get a connection from the pool timesout when on the wait queue
-var ErrWaitQueueTimeout = PoolError("timed out while checking out a connection from connection pool")
 
 // PoolError is an error returned from a Pool method.
 type PoolError string
@@ -63,13 +61,17 @@ type pool struct {
 	address    address.Address
 	opts       []ConnectionOption
 	conns      *resourcePool // pool for non-checked out connections
-	generation uint64        // must be accessed using atomic package
+	generation *poolGenerationMap
 	monitor    *event.PoolMonitor
 
-	connected int32 // Must be accessed using the sync/atomic package.
-	nextid    uint64
-	opened    map[uint64]*connection // opened holds all of the currently open connections.
-	sem       *semaphore.Weighted
+	// Must be accessed using the atomic package.
+	connected                    int32
+	pinnedCursorConnections      uint64
+	pinnedTransactionConnections uint64
+
+	nextid uint64
+	opened map[uint64]*connection // opened holds all of the currently open connections.
+	sem    *semaphore.Weighted
 	sync.Mutex
 }
 
@@ -124,7 +126,7 @@ func connectionCloseFunc(v interface{}) {
 
 // connectionInitFunc returns an init function for the resource pool that will make new connections for this pool
 func (p *pool) connectionInitFunc() interface{} {
-	c, _, err := p.makeNewConnection(context.Background())
+	c, _, err := p.makeNewConnection()
 	if err != nil {
 		return nil
 	}
@@ -141,6 +143,9 @@ func newPool(config poolConfig, connOpts ...ConnectionOption) (*pool, error) {
 	if config.MaxIdleTime != time.Duration(0) {
 		opts = append(opts, WithIdleTimeout(func(_ time.Duration) time.Duration { return config.MaxIdleTime }))
 	}
+	if config.PoolMonitor != nil {
+		opts = append(opts, withPoolMonitor(func(_ *event.PoolMonitor) *event.PoolMonitor { return config.PoolMonitor }))
+	}
 
 	var maxConns = config.MaxPoolSize
 	if maxConns == 0 {
@@ -148,13 +153,15 @@ func newPool(config poolConfig, connOpts ...ConnectionOption) (*pool, error) {
 	}
 
 	pool := &pool{
-		address:   config.Address,
-		monitor:   config.PoolMonitor,
-		connected: disconnected,
-		opened:    make(map[uint64]*connection),
-		opts:      opts,
-		sem:       semaphore.NewWeighted(int64(maxConns)),
+		address:    config.Address,
+		monitor:    config.PoolMonitor,
+		connected:  disconnected,
+		opened:     make(map[uint64]*connection),
+		opts:       opts,
+		sem:        semaphore.NewWeighted(int64(maxConns)),
+		generation: newPoolGenerationMap(),
 	}
+	pool.opts = append(pool.opts, withGenerationNumberFn(func(_ generationNumberFn) generationNumberFn { return pool.getGenerationForNewConnection }))
 
 	// we do not pass in config.MaxPoolSize because we manage the max size at this level rather than the resource pool level
 	rpc := resourcePoolConfig{
@@ -189,7 +196,7 @@ func newPool(config poolConfig, connOpts ...ConnectionOption) (*pool, error) {
 
 // stale checks if a given connection's generation is below the generation of the pool
 func (p *pool) stale(c *connection) bool {
-	return c == nil || c.generation < atomic.LoadUint64(&p.generation)
+	return c == nil || p.generation.stale(c.desc.ServiceID, c.generation)
 }
 
 // connect puts the pool into the connected state, allowing it to be used and will allow items to begin being processed from the wait queue
@@ -197,6 +204,7 @@ func (p *pool) connect() error {
 	if !atomic.CompareAndSwapInt32(&p.connected, disconnected, connected) {
 		return ErrPoolConnected
 	}
+	p.generation.connect()
 	p.conns.initialize()
 	return nil
 }
@@ -212,7 +220,7 @@ func (p *pool) disconnect(ctx context.Context) error {
 	}
 
 	p.conns.Close()
-	atomic.AddUint64(&p.generation, 1)
+	p.generation.disconnect()
 
 	var err error
 	if dl, ok := ctx.Deadline(); ok {
@@ -269,15 +277,14 @@ func (p *pool) disconnect(ctx context.Context) error {
 // connection.connect on the returned instance before using it for operations. This function ensures that a
 // ConnectionClosed event is published if there is an error after the ConnectionCreated event has been published. The
 // caller must not hold the pool lock when calling this function.
-func (p *pool) makeNewConnection(ctx context.Context) (*connection, string, error) {
-	c, err := newConnection(ctx, p.address, p.opts...)
+func (p *pool) makeNewConnection() (*connection, string, error) {
+	c, err := newConnection(p.address, p.opts...)
 	if err != nil {
 		return nil, event.ReasonConnectionErrored, err
 	}
 
 	c.pool = p
 	c.poolID = atomic.AddUint64(&p.nextid, 1)
-	c.generation = atomic.LoadUint64(&p.generation)
 
 	if p.monitor != nil {
 		p.monitor.Event(&event.PoolEvent{
@@ -310,6 +317,24 @@ func (p *pool) makeNewConnection(ctx context.Context) (*connection, string, erro
 
 }
 
+func (p *pool) pinConnectionToCursor() {
+	atomic.AddUint64(&p.pinnedCursorConnections, 1)
+}
+
+func (p *pool) unpinConnectionFromCursor() {
+	// See https://golang.org/pkg/sync/atomic/#AddUint64 for an explanation of the ^uint64(0) syntax.
+	atomic.AddUint64(&p.pinnedCursorConnections, ^uint64(0))
+}
+
+func (p *pool) pinConnectionToTransaction() {
+	atomic.AddUint64(&p.pinnedTransactionConnections, 1)
+}
+
+func (p *pool) unpinConnectionFromTransaction() {
+	// See https://golang.org/pkg/sync/atomic/#AddUint64 for an explanation of the ^uint64(0) syntax.
+	atomic.AddUint64(&p.pinnedTransactionConnections, ^uint64(0))
+}
+
 // Checkout returns a connection from the pool
 func (p *pool) get(ctx context.Context) (*connection, error) {
 	if ctx == nil {
@@ -336,7 +361,13 @@ func (p *pool) get(ctx context.Context) (*connection, error) {
 				Reason:  event.ReasonTimedOut,
 			})
 		}
-		return nil, ErrWaitQueueTimeout
+		errWaitQueueTimeout := WaitQueueTimeoutError{
+			Wrapped:                      ctx.Err(),
+			PinnedCursorConnections:      atomic.LoadUint64(&p.pinnedCursorConnections),
+			PinnedTransactionConnections: atomic.LoadUint64(&p.pinnedTransactionConnections),
+			maxPoolSize:                  p.conns.maxSize,
+		}
+		return nil, errWaitQueueTimeout
 	}
 
 	// This loop is so that we don't end up with more than maxPoolSize connections if p.conns.Maintain runs between
@@ -406,7 +437,7 @@ func (p *pool) get(ctx context.Context) (*connection, error) {
 			if !made {
 				continue
 			}
-			c, reason, err := p.makeNewConnection(ctx)
+			c, reason, err := p.makeNewConnection()
 
 			if err != nil {
 				if p.monitor != nil {
@@ -436,7 +467,7 @@ func (p *pool) get(ctx context.Context) (*connection, error) {
 					p.monitor.Event(&event.PoolEvent{
 						Type:    event.GetFailed,
 						Address: p.address.String(),
-						Reason:  reason,
+						Reason:  event.ReasonConnectionErrored,
 					})
 				}
 				return nil, err
@@ -480,6 +511,10 @@ func (p *pool) closeConnection(c *connection) error {
 	return nil
 }
 
+func (p *pool) getGenerationForNewConnection(serviceID *primitive.ObjectID) uint64 {
+	return p.generation.addConnection(serviceID)
+}
+
 // removeConnection removes a connection from the pool.
 func (p *pool) removeConnection(c *connection, reason string) error {
 	if c.pool != p {
@@ -493,6 +528,12 @@ func (p *pool) removeConnection(c *connection, reason string) error {
 		delete(p.opened, c.poolID)
 	}
 	p.Unlock()
+
+	// Only update the generation numbers map if the connection has retrieved its generation number. Otherwise, we'd
+	// decrement the count for the generation even though it had never been incremented.
+	if c.hasGenerationNumber() {
+		p.generation.removeConnection(c.desc.ServiceID)
+	}
 
 	if publishEvent && p.monitor != nil {
 		c.pool.monitor.Event(&event.PoolEvent{
@@ -538,12 +579,13 @@ func (p *pool) put(c *connection) error {
 }
 
 // clear clears the pool by incrementing the generation
-func (p *pool) clear() {
+func (p *pool) clear(serviceID *primitive.ObjectID) {
 	if p.monitor != nil {
 		p.monitor.Event(&event.PoolEvent{
-			Type:    event.PoolCleared,
-			Address: p.address.String(),
+			Type:      event.PoolCleared,
+			Address:   p.address.String(),
+			ServiceID: serviceID,
 		})
 	}
-	atomic.AddUint64(&p.generation, 1)
+	p.generation.clear(serviceID)
 }

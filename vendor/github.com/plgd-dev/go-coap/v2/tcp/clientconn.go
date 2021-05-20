@@ -10,12 +10,12 @@ import (
 
 	"github.com/plgd-dev/go-coap/v2/message"
 	"github.com/plgd-dev/go-coap/v2/net/blockwise"
-	"github.com/plgd-dev/go-coap/v2/net/keepalive"
+	"github.com/plgd-dev/go-coap/v2/net/monitor/inactivity"
 	"github.com/plgd-dev/go-coap/v2/tcp/message/pool"
 
-	kitSync "github.com/plgd-dev/kit/sync"
 	"github.com/plgd-dev/go-coap/v2/message/codes"
 	coapNet "github.com/plgd-dev/go-coap/v2/net"
+	kitSync "github.com/plgd-dev/kit/sync"
 )
 
 var defaultDialOptions = dialOptions{
@@ -38,11 +38,13 @@ var defaultDialOptions = dialOptions{
 		return nil
 	},
 	dialer:                   &net.Dialer{Timeout: time.Second * 3},
-	keepalive:                keepalive.New(),
 	net:                      "tcp",
 	blockwiseSZX:             blockwise.SZX1024,
 	blockwiseEnable:          true,
 	blockwiseTransferTimeout: time.Second * 3,
+	createInactivityMonitor: func() inactivity.Monitor {
+		return inactivity.NewNilMonitor()
+	},
 }
 
 type dialOptions struct {
@@ -53,7 +55,6 @@ type dialOptions struct {
 	errors                          ErrorFunc
 	goPool                          GoPoolFunc
 	dialer                          *net.Dialer
-	keepalive                       *keepalive.KeepAlive
 	net                             string
 	blockwiseSZX                    blockwise.SZX
 	blockwiseEnable                 bool
@@ -61,11 +62,17 @@ type dialOptions struct {
 	disablePeerTCPSignalMessageCSMs bool
 	disableTCPSignalMessageCSM      bool
 	tlsCfg                          *tls.Config
+	closeSocket                     bool
+	createInactivityMonitor         func() inactivity.Monitor
 }
 
 // A DialOption sets options such as credentials, keepalive parameters, etc.
 type DialOption interface {
 	applyDial(*dialOptions)
+}
+
+type Notifier interface {
+	Notify()
 }
 
 // ClientConn represents a virtual connection to a conceptual endpoint, to perform COAPs commands.
@@ -74,6 +81,7 @@ type ClientConn struct {
 	session                 *Session
 	observationTokenHandler *HandlerContainer
 	observationRequests     *kitSync.Map
+	activityMonitor         Notifier
 }
 
 // Dial creates a client connection to the given target.
@@ -93,6 +101,7 @@ func Dial(target string, opts ...DialOption) (*ClientConn, error) {
 	if err != nil {
 		return nil, err
 	}
+	opts = append(opts, WithCloseSocket())
 	return Client(conn, opts...), nil
 }
 
@@ -104,14 +113,14 @@ func bwReleaseMessage(m blockwise.Message) {
 	pool.ReleaseMessage(m.(*pool.Message))
 }
 
-func bwCreateHandlerFunc(observatioRequests *kitSync.Map) func(token message.Token) (blockwise.Message, bool) {
+func bwCreateHandlerFunc(observationRequests *kitSync.Map) func(token message.Token) (blockwise.Message, bool) {
 	return func(token message.Token) (blockwise.Message, bool) {
-		msg, ok := observatioRequests.LoadWithFunc(token.String(), func(v interface{}) interface{} {
-			r := v.(*pool.Message)
-			d := pool.AcquireMessage(r.Context())
-			d.ResetOptionsTo(r.Options())
-			d.SetCode(r.Code())
-			d.SetToken(r.Token())
+		msg, ok := observationRequests.LoadWithFunc(token.String(), func(v interface{}) interface{} {
+			r := v.(message.Message)
+			d := pool.AcquireMessage(r.Context)
+			d.ResetOptionsTo(r.Options)
+			d.SetCode(r.Code)
+			d.SetToken(r.Token)
 			return d
 		})
 		if !ok {
@@ -131,8 +140,17 @@ func Client(conn net.Conn, opts ...DialOption) *ClientConn {
 	if cfg.errors == nil {
 		cfg.errors = func(error) {}
 	}
+	if cfg.createInactivityMonitor == nil {
+		cfg.createInactivityMonitor = func() inactivity.Monitor {
+			return inactivity.NewNilMonitor()
+		}
+	}
+	errors := cfg.errors
+	cfg.errors = func(err error) {
+		errors(fmt.Errorf("tcp: %w", err))
+	}
 
-	observatioRequests := kitSync.NewMap()
+	observationRequests := kitSync.NewMap()
 	var blockWise *blockwise.BlockWise
 	if cfg.blockwiseEnable {
 		blockWise = blockwise.NewBlockWise(
@@ -141,13 +159,17 @@ func Client(conn net.Conn, opts ...DialOption) *ClientConn {
 			cfg.blockwiseTransferTimeout,
 			cfg.errors,
 			false,
-			bwCreateHandlerFunc(observatioRequests),
+			bwCreateHandlerFunc(observationRequests),
 		)
 	}
 
 	observationTokenHandler := NewHandlerContainer()
-
-	l := coapNet.NewConn(conn, coapNet.WithHeartBeat(cfg.heartBeat))
+	monitor := cfg.createInactivityMonitor()
+	var cc *ClientConn
+	l := coapNet.NewConn(conn, coapNet.WithHeartBeat(cfg.heartBeat), coapNet.WithOnReadTimeout(func() error {
+		monitor.CheckInactivity(cc)
+		return nil
+	}))
 	session := NewSession(cfg.ctx,
 		l,
 		NewObservationHandler(observationTokenHandler, cfg.handler),
@@ -158,23 +180,17 @@ func Client(conn net.Conn, opts ...DialOption) *ClientConn {
 		blockWise,
 		cfg.disablePeerTCPSignalMessageCSMs,
 		cfg.disableTCPSignalMessageCSM,
+		cfg.closeSocket,
+		monitor,
 	)
-	cc := NewClientConn(session, observationTokenHandler, observatioRequests)
+	cc = NewClientConn(session, observationTokenHandler, observationRequests)
 
 	go func() {
 		err := cc.Run()
 		if err != nil {
-			cfg.errors(err)
+			cfg.errors(fmt.Errorf("%v: %w", cc.RemoteAddr(), err))
 		}
 	}()
-	if cfg.keepalive != nil {
-		go func() {
-			err := cfg.keepalive.Run(cc)
-			if err != nil {
-				cfg.errors(err)
-			}
-		}()
-	}
 
 	return cc
 }
@@ -186,6 +202,10 @@ func NewClientConn(session *Session, observationTokenHandler *HandlerContainer, 
 		observationTokenHandler: observationTokenHandler,
 		observationRequests:     observationRequests,
 	}
+}
+
+func (cc *ClientConn) Session() *Session {
+	return cc.session
 }
 
 // Close closes connection without wait of ends Run function.
@@ -201,7 +221,10 @@ func (cc *ClientConn) do(req *pool.Message) (*pool.Message, error) {
 	respChan := make(chan *pool.Message, 1)
 	err := cc.session.TokenHandler().Insert(token, func(w *ResponseWriter, r *pool.Message) {
 		r.Hijack()
-		respChan <- r
+		select {
+		case respChan <- r:
+		default:
+		}
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot add token handler: %w", err)
@@ -391,23 +414,53 @@ func (cc *ClientConn) Context() context.Context {
 //
 // Use ctx to set timeout.
 func (cc *ClientConn) Ping(ctx context.Context) error {
-	token, err := message.GetToken()
-	if err != nil {
-		return fmt.Errorf("cannot get token: %w", err)
+	resp := make(chan bool, 1)
+	receivedPong := func() {
+		select {
+		case resp <- true:
+		default:
+		}
 	}
-	req := pool.AcquireMessage(ctx)
-	req.SetToken(token)
-	req.SetCode(codes.Ping)
-	defer pool.ReleaseMessage(req)
-	resp, err := cc.Do(req)
+	cancel, err := cc.AsyncPing(receivedPong)
 	if err != nil {
 		return err
 	}
-	defer pool.ReleaseMessage(resp)
-	if resp.Code() == codes.Pong {
+	defer cancel()
+	select {
+	case <-resp:
 		return nil
+	case <-ctx.Done():
+		return ctx.Err()
 	}
-	return fmt.Errorf("unexpected code(%v)", resp.Code())
+}
+
+// AsyncPing sends ping and receivedPong will be called when pong arrives. It returns cancellation of ping operation.
+func (cc *ClientConn) AsyncPing(receivedPong func()) (func(), error) {
+	token, err := message.GetToken()
+	if err != nil {
+		return nil, fmt.Errorf("cannot get token: %w", err)
+	}
+	req := pool.AcquireMessage(cc.Context())
+	req.SetToken(token)
+	req.SetCode(codes.Ping)
+	defer pool.ReleaseMessage(req)
+
+	err = cc.session.TokenHandler().Insert(token, func(w *ResponseWriter, r *pool.Message) {
+		if r.Code() == codes.Pong {
+			receivedPong()
+		}
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot add token handler: %w", err)
+	}
+	err = cc.session.WriteMessage(req)
+	if err != nil {
+		cc.session.TokenHandler().Pop(token)
+		return nil, fmt.Errorf("cannot write request: %w", err)
+	}
+	return func() {
+		cc.session.TokenHandler().Pop(token)
+	}, nil
 }
 
 // Run reads and process requests from a connection, until the connection is not closed.
@@ -433,4 +486,9 @@ func (cc *ClientConn) Client() *ClientTCP {
 // Sequence acquires sequence number.
 func (cc *ClientConn) Sequence() uint64 {
 	return cc.session.Sequence()
+}
+
+// SetContextValue stores the value associated with key to context of connection.
+func (cc *ClientConn) SetContextValue(key interface{}, val interface{}) {
+	cc.session.SetContextValue(key, val)
 }

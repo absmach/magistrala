@@ -17,7 +17,7 @@ volumes:
 
 services:
   bootstrap-db:
-    image: postgres:10.8-alpine
+    image: postgres:13.3-alpine
     container_name: mainflux-bootstrap-db
     restart: on-failure
     environment:

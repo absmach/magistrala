@@ -7,7 +7,8 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/BurntSushi/toml"
+	"github.com/pelletier/go-toml"
+
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"

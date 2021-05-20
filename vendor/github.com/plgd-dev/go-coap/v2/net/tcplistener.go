@@ -13,6 +13,7 @@ type TCPListener struct {
 	listener  *net.TCPListener
 	heartBeat time.Duration
 	closed    uint32
+	onTimeout func() error
 }
 
 func newNetTCPListen(network string, addr string) (*net.TCPListener, error) {
@@ -34,6 +35,7 @@ var defaultTCPListenerOptions = tcpListenerOptions{
 
 type tcpListenerOptions struct {
 	heartBeat time.Duration
+	onTimeout func() error
 }
 
 // A TCPListenerOption sets options such as heartBeat parameters, etc.
@@ -52,7 +54,7 @@ func NewTCPListener(network string, addr string, opts ...TCPListenerOption) (*TC
 	if err != nil {
 		return nil, fmt.Errorf("cannot create new tcp listener: %w", err)
 	}
-	return &TCPListener{listener: tcp, heartBeat: cfg.heartBeat}, nil
+	return &TCPListener{listener: tcp, heartBeat: cfg.heartBeat, onTimeout: cfg.onTimeout}, nil
 }
 
 // AcceptWithContext waits with context for a generic Conn.
@@ -66,14 +68,21 @@ func (l *TCPListener) AcceptWithContext(ctx context.Context) (net.Conn, error) {
 		if atomic.LoadUint32(&l.closed) == 1 {
 			return nil, ErrListenerIsClosed
 		}
-		err := l.SetDeadline(time.Now().Add(l.heartBeat))
+		deadline := time.Now().Add(l.heartBeat)
+		err := l.SetDeadline(deadline)
 		if err != nil {
 			return nil, fmt.Errorf("cannot set deadline to accept connection: %w", err)
 		}
 		rw, err := l.listener.Accept()
 		if err != nil {
 			// check context in regular intervals and then resume listening
-			if isTemporary(err) {
+			if isTemporary(err, deadline) {
+				if l.onTimeout != nil {
+					err := l.onTimeout()
+					if err != nil {
+						return nil, fmt.Errorf("cannot accept connection : on timeout returns error: %w", err)
+					}
+				}
 				continue
 			}
 			return nil, fmt.Errorf("cannot accept connection: %w", err)

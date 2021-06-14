@@ -16,10 +16,6 @@ for building complex IoT solutions.
 
 For more details, check out the [official documentation][docs].
 
-Mainflux is member of the [Linux Foundation][lf] and an active contributor
-to the [EdgeX Foundry][edgex] project. It has been made with :heart: by [Mainflux Labs][company],
-which maintains the project and offers professional services around it.
-
 ## Features
 
 - Multi-protocol connectivity and bridging (HTTP, MQTT, WebSocket and CoAP)
@@ -95,11 +91,9 @@ Additional details on using the CLI can be found in the [CLI documentation](http
 
 ## Documentation
 
-Official documentation is hosted at [Mainflux Read The Docs page][docs]. Documentation is auto-generated, checkout the instructions on [official docs repository](https://github.com/mainflux/docs):
+Official documentation is hosted at [Mainflux official docs page][docs]. Documentation is auto-generated, checkout the instructions on [official docs repository](https://github.com/mainflux/docs):
 
 If you spot an error or a need for corrections, please let us know - or even better: send us a PR.
-
-Additional practical information, news and tutorials can be found on the [Mainflux blog][blog].
 
 ## Authors
 
@@ -119,6 +113,12 @@ The Mainflux team would like to give special thanks to [@mijicd][dejan] for his 
 on designing and implementing a highly improved and optimized version of the platform,
 and [@malidukica][dusanm] for his effort on implementing the initial user interface.
 
+## Professional Support
+
+There are many companies offering professional support for the Mainflux system.
+
+If you need this kind of support, best is to reach out to [@drasko][drasko] directly, and he will point you out to the best-matching support team.
+
 ## Contributing
 
 Thank you for your interest in Mainflux and the desire to contribute!
@@ -126,13 +126,6 @@ Thank you for your interest in Mainflux and the desire to contribute!
 1. Take a look at our [open issues](https://github.com/mainflux/mainflux/issues). The [good-first-issue](https://github.com/mainflux/mainflux/labels/good-first-issue) label is specifically for issues that are great for getting started.
 2. Checkout the [contribution guide](CONTRIBUTING.md) to learn more about our style and conventions.
 3. Make your changes compatible to our workflow.
-
-### We're Hiring
-
-If you are interested in working professionally on Mainflux,
-please head to company's [careers page][careers] or shoot us an e-mail at <careers@mainflux.com>.
-
->The best way to grab our attention is by sending PRs :sunglasses:.
 
 ## Community
 
@@ -149,7 +142,7 @@ please head to company's [careers page][careers] or shoot us an e-mail at <caree
 [banner]: https://github.com/mainflux/docs/blob/master/docs/img/gopherBanner.jpg
 [ci-badge]: https://semaphoreci.com/api/v1/mainflux/mainflux/branches/master/badge.svg
 [ci-url]: https://semaphoreci.com/mainflux/mainflux
-[docs]: http://mainflux.readthedocs.io
+[docs]: https://docs.mainflux.io
 [docker]: https://www.docker.com
 [forum]: https://groups.google.com/forum/#!forum/mainflux
 [gitter]: https://gitter.im/mainflux/mainflux?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge

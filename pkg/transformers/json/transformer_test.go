@@ -56,6 +56,9 @@ func TestTransformJSON(t *testing.T) {
 		Format: msg.Subtopic,
 	}
 
+	invalidFmt := msg
+	invalidFmt.Subtopic = ""
+
 	listJSON := json.Messages{
 		Data: []json.Message{
 			{
@@ -99,6 +102,12 @@ func TestTransformJSON(t *testing.T) {
 			msg:  msg,
 			json: jsonMsg,
 			err:  nil,
+		},
+		{
+			desc: "test transform JSON with an invalid subtopic",
+			msg:  invalidFmt,
+			json: nil,
+			err:  json.ErrTransform,
 		},
 		{
 			desc: "test transform JSON array",

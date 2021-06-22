@@ -44,6 +44,9 @@ func transformer(msg messaging.Message) (interface{}, error) {
 		Channel:   msg.Channel,
 		Subtopic:  msg.Subtopic,
 	}
+	if ret.Subtopic == "" {
+		return nil, errors.Wrap(ErrTransform, errUnknownFormat)
+	}
 	subs := strings.Split(ret.Subtopic, ".")
 	if len(subs) == 0 {
 		return nil, errors.Wrap(ErrTransform, errUnknownFormat)

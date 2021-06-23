@@ -103,6 +103,6 @@ If `MF_EMAIL_TEMPLATE` doesn't point to any file service will function but passw
 ## Usage
 
 For more information about service capabilities and its usage, please check out
-the [API documentation](openapi.yml).
+the [API documentation](https://api.mainflux.io/?urls.primaryName=auth-openapi.yml).
 
-[doc]: http://mainflux.readthedocs.io
+[doc]: https://docs.mainflux.io

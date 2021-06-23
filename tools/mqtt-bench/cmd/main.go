@@ -20,7 +20,7 @@ func main() {
 		Use:   "mqtt-bench",
 		Short: "mqtt-bench is MQTT benchmark tool for Mainflux",
 		Long: `Tool for exctensive load and benchmarking of MQTT brokers used withing Mainflux platform.
-Complete documentation is available at https://mainflux.readthedocs.io`,
+Complete documentation is available at https://docs.mainflux.io`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if confFile != "" {
 				viper.SetConfigFile(confFile)

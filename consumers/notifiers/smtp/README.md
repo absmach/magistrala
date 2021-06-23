@@ -43,4 +43,4 @@ default values.
 
 Starting service will start consuming messages and sending emails when a message is received.
 
-[doc]: http://mainflux.readthedocs.io
+[doc]: https://docs.mainflux.io

@@ -115,6 +115,6 @@ Setting `MF_BOOTSTRAP_CA_CERTS` expects a file in PEM format of trusted CAs. Thi
 ## Usage
 
 For more information about service capabilities and its usage, please check out
-the [API documentation](openapi.yml).
+the [API documentation](https://api.mainflux.io/?urls.primaryName=bootstrap-openapi.yml).
 
-[doc]: http://mainflux.readthedocs.io
+[doc]: https://docs.mainflux.io

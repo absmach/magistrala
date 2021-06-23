@@ -12,4 +12,7 @@ run consumer services, core services must be up and running.
 For an in-depth explanation of the usage of `consumers`, as well as thorough
 understanding of Mainflux, please check out the [official documentation][doc].
 
-[doc]: http://mainflux.readthedocs.io
+For more information about service capabilities and its usage, please check out
+the [API documentation](https://api.mainflux.io/?urls.primaryName=consumers-notifiers-openapi.yml).
+
+[doc]: https://docs.mainflux.io

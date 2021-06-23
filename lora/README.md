@@ -70,4 +70,4 @@ docker-compose -f docker/addons/lora-adapter/docker-compose.yml up -d
 ## Usage
 
 For more information about service capabilities and its usage, please check out
-the [Mainflux documentation](https://mainflux.readthedocs.io/en/latest/lora/).
+the [Mainflux documentation](https://docs.mainflux.io/lora.html).

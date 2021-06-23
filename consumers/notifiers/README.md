@@ -20,4 +20,4 @@ default values.
 
 Subscriptions service will start consuming messages and sending notifications when a message is received.
 
-[doc]: http://mainflux.readthedocs.io
+[doc]: https://docs.mainflux.io

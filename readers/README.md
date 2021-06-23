@@ -7,4 +7,4 @@ Mainflux messages from data storage and opens HTTP API for message consumption.
 For an in-depth explanation of the usage of `reader`, as well as thorough
 understanding of Mainflux, please check out the [official documentation][doc].
 
-[doc]: http://mainflux.readthedocs.io
+[doc]: https://docs.mainflux.io

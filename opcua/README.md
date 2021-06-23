@@ -79,4 +79,4 @@ docker-compose -f docker/addons/opcua-adapter/docker-compose.yml up -d
 ## Usage
 
 For more information about service capabilities and its usage, please check out
-the [Mainflux documentation](https://mainflux.readthedocs.io/en/latest/opcua/).
+the [Mainflux documentation](https://docs.mainflux.io/opcua.html).

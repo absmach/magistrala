@@ -1,0 +1,155 @@
+openapi: 3.0.1
+info:
+  title: Mainflux Certs service
+  description: HTTP API for Certs service
+  version: "1.0.0"
+
+paths:
+  /certs:
+    post:
+      summary: Creates a certificate for thing
+      description: Creates a certificate for thing
+      tags:
+        - Thing to proxy
+      parameters:
+      - $ref: "#/components/parameters/Authorization"
+      requestBody:
+        $ref: "#/components/requestBodies/CertReq"
+      responses:
+        '201':
+          description: Created
+        '400':
+          description: Failed due to malformed JSON.
+        '500':
+          description: Unexpected server-side error ocurred.
+  /certs/{thingId}:
+    get:
+      summary: Retrieves certificates
+      description: |
+        Retrieves a certificates for given thing ID .
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/ThingID"
+      responses:
+        '200':
+          $ref: "#/components/responses/CertsRes"
+        '404':
+          description: |
+            Failed to retrieve corresponding certificate.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /certs/{certId}:
+    delete:
+      summary: Revokes certificate
+      description: |
+        Revokes a certificates for given cert ID .
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/CertID"
+      responses:
+        '200':
+          $ref: "#/components/responses/RevokeRes"
+        '404':
+          description: |
+            Failed to revoke corresponding certificate.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+
+components:
+  parameters:
+    Authorization:
+      name: Authorization
+      description: User's access token. Used instead of credentials in env or config.toml.
+      in: header
+      schema:
+        type: string
+      required: false
+    ThingID:
+      name: thingID
+      description: Thing ID
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    CertID:
+      name: certID
+      description: Serial of certificate
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+
+  schemas:
+    Certs:
+      type: object
+      properties:
+        thing_id:
+          type: string
+          format: uuid
+          description: Corresponding Mainflux Thing ID.
+        client_cert:
+          type: string
+          description: Client Certificate.
+        client_key:
+          type: string
+          description: Key for the client_cert.
+        issuing_ca:
+          type: string
+          description: CA Certificate that is used to issue client certs, usually intermediate.
+        serial:
+          type: string
+          description: Certificate serial
+        expire:
+          type: string
+          description: Certificate expiry date
+    Revoke:
+      type: object
+      properties:
+        revocation_time:
+          type: string
+          description: Certificate revocation time
+
+  requestBodies:
+    CertReq:
+      description: |
+          Issues a certificate that is required for mTLS. To create a certificate for a thing
+          provide a thing id, data identifying particular thing will be embedded into the Certificate.
+          x509 and ECC certificates are supported when using when Vault is used as PKI.
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - thing_id
+              - days_valid
+              - key_bits
+            properties:
+               thing_id:
+                 type: string
+                 format: uuid
+               days_valid:
+                 type: string
+               key_bits:
+                 type: integer
+
+  responses:
+    ServiceError:
+      description: Unexpected server-side error occurred.
+    CertsRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Certs"
+    RevokeRes:
+      description: Certificate revoked.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Revoke"

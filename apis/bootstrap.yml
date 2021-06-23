@@ -1,0 +1,516 @@
+openapi: 3.0.1
+info:
+  title: Mainflux Bootstrap service
+  description: HTTP API for managing platform things configuration.
+  version: "1.0.0"
+
+paths:
+  /things/configs:
+    post:
+      summary: Adds new config
+      description: |
+        Adds new config to the list of config owned by user identified using
+        the provided access token.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+      requestBody:
+        $ref: "#/components/requestBodies/ConfigCreateReq"
+      responses:
+        '201':
+          $ref: "#/components/responses/ConfigCreateRes"
+        '400':
+          description: Failed due to malformed JSON.
+        '403':
+          description: Missing or invalid access token provided.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+    get:
+      summary: Retrieves managed configs
+      description: |
+        Retrieves a list of managed configs. Due to performance concerns, data
+        is retrieved in subsets. The API configs must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/State"
+        - $ref: "#/components/parameters/Name"
+      responses:
+        '200':
+          $ref: "#/components/responses/ConfigListRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        '403':
+          description: Missing or invalid access token provided.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /things/configs/{configId}:
+    get:
+      summary: Retrieves config info (with channels).
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/ConfigId"
+      responses:
+        '200':
+          $ref: "#/components/responses/ConfigRes"
+        '403':
+          description: Missing or invalid access token provided.
+        '404':
+          description: Config does not exist.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+    put:
+      summary: Updates config info
+      description: |
+        Update is performed by replacing the current resource data with values
+        provided in a request payload. Note that the owner, ID, external ID,
+        external key, Mainflux Thing ID and key cannot be changed.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/ConfigId"
+      requestBody:
+          $ref: "#/components/requestBodies/ConfigUpdateReq"
+      responses:
+        '200':
+          description: Config updated.
+        '400':
+          description: Failed due to malformed JSON.
+        '403':
+          description: Missing or invalid access token provided.
+        '404':
+          description: Config does not exist.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+    delete:
+      summary: Removes a Config
+      description: |
+        Removes a Config. In case of successful removal the service will ensure
+        that the removed config is disconnected from all of the Mainflux channels.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/ConfigId"
+      responses:
+        '204':
+          description: Config removed.
+        '400':
+          description: Failed due to malformed config ID.
+        '403':
+          description: Missing or invalid access token provided.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /things/configs/certs/{configId}:
+    patch:
+      summary: Updates certs
+      description: |
+        Update is performed by replacing the current certificate data with values
+        provided in a request payload.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/ConfigId"
+      requestBody:
+        $ref: "#/components/requestBodies/ConfigCertUpdateReq"
+      responses:
+        '200':
+          description: Config updated.
+        '400':
+          description: Failed due to malformed JSON.
+        '403':
+          description: Missing or invalid access token provided.
+        '404':
+          description: Config does not exist.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /things/configs/connections/{configId}:
+    put:
+      summary: Updates channels the thing is connected to
+      description: |
+        Update connections performs update of the channel list corresponding
+        Thing is connected to.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/ConfigId"
+      requestBody:
+        $ref: "#/components/requestBodies/ConfigConnUpdateReq"
+      responses:
+        '200':
+          description: Config updated.
+        '400':
+          description: Failed due to malformed JSON.
+        '403':
+          description: Missing or invalid access token provided.
+        '404':
+          description: Config does not exist.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /things/bootstrap/{externalId}:
+    get:
+      summary: Retrieves configuration.
+      description: |
+        Retrieves a configuration with given external ID and external key.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/ConfigAuth"
+        - $ref: "#/components/parameters/ExternalId"
+      responses:
+        '200':
+          $ref: "#/components/responses/BootstrapConfigRes"
+        '404':
+          description: |
+            Failed to retrieve corresponding config.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /things/bootstrap/secure/{externalId}:
+    get:
+      summary: Retrieves configuration.
+      description: |
+        Retrieves a configuration with given external ID and encrypted external key.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/EncConfigAuth"
+        - $ref: "#/components/parameters/ExternalId"
+      responses:
+        '200':
+          $ref: "#/components/responses/BootstrapConfigRes"
+        '404':
+          description: |
+            Failed to retrieve corresponding config.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /things/state/{configId}:
+    put:
+      summary: Updates Config state.
+      description: |
+        Updating state represents enabling/disabling Config, i.e. connecting
+        and disconnecting corresponding Mainflux Thing to the list of Channels.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/ConfigId"
+      requestBody:
+        $ref: '#/components/requestBodies/ConfigStateUpdateReq'
+      responses:
+        '204':
+          description: Config removed.
+        '400':
+          description: Failed due to malformed config's ID.
+        '403':
+          description: Missing or invalid access token provided.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+
+components:
+  schemas:
+    State:
+      type: integer
+      enum: [0, 1]
+    Config:
+      type: object
+      properties:
+        mainflux_id:
+          type: string
+          format: uuid
+          description: Corresponding Mainflux Thing ID.
+        mainflux_key:
+          type: string
+          format: uuid
+          description: Corresponding Mainflux Thing key.
+        mainflux_channels:
+          type: array
+          minItems: 0
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Channel unique identifier.
+              name:
+                type: string
+                description: Name of the Channel.
+              metadata:
+                type: object
+                description: Custom metadata related to the Channel.
+        external_id:
+          type: string
+          description: External ID (MAC address or some unique identifier).
+        external_key:
+          type: string
+          description: External key.
+        content:
+          type: string
+          description: Free-form custom configuration.
+        state:
+          $ref: "#/components/schemas/State"
+      required:
+        - external_id
+        - external_key
+    ConfigList:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Total number of results.
+          minimum: 0
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval.
+          minimum: 0
+          default: 0
+        limit:
+          type: integer
+          description: Size of the subset to retrieve.
+          maximum: 100
+          default: 10
+        configs:
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/Config"
+      required:
+        - configs
+    BootstrapConfig:
+      type: object
+      properties:
+        mainflux_id:
+          type: string
+          format: uuid
+          description: Corresponding Mainflux Thing ID.
+        mainflux_key:
+          type: string
+          format: uuid
+          description: Corresponding Mainflux Thing key.
+        mainflux_channels:
+          type: array
+          minItems: 0
+          items:
+            type: string
+        content:
+          type: string
+          description: Free-form custom configuration.
+        client_cert:
+          type: string
+          description: Client certificate.
+        client_key:
+          type: string
+          description: Key for the client_cert.
+        ca_cert:
+          type: string
+          description: Issuing CA certificate.
+      required:
+        - mainflux_id
+        - mainflux_key
+        - mainflux_channels
+        - content
+
+  parameters:
+    Authorization:
+      name: Authorization
+      description: User's access token.
+      in: header
+      schema:
+        type: string
+        format: jwt
+      required: true
+    ConfigAuth:
+      name: configAuthorization
+      description: Configuration external key.
+      in: header
+      schema:
+        type: string
+      required: true
+    EncConfigAuth:
+      name: configAuthorization
+      description: |
+        Hex-encoded configuration external key encrypted using
+        the AES algorithm and SHA256 sum of the external key
+        itself as an encryption key.
+      in: header
+      schema:
+        type: string
+      required: true
+    ConfigId:
+      name: configId
+      description: Unique Config identifier. It's the ID of the corresponding Thing.
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    ExternalId:
+      name: externalId
+      description: Unique Config identifier provided by external entity.
+      in: path
+      schema:
+        type: string
+      required: true
+    Limit:
+      name: limit
+      description: Size of the subset to retrieve.
+      in: query
+      schema:
+        type: integer
+        default: 10
+        maximum: 100
+        minimum: 1
+      required: false
+    Offset:
+      name: offset
+      description: Number of items to skip during retrieval.
+      in: query
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+      required: false
+    State:
+      name: state
+      description: A state of items
+      in: query
+      schema:
+        $ref: "#/components/schemas/State"
+      required: false
+    Name:
+      name: name
+      description: Name of the config. Search by name is partial-match and case-insensitive.
+      in: query
+      schema:
+        type: string
+      required: false
+
+  requestBodies:
+    ConfigCreateReq:
+      description: JSON-formatted document describing the new config.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              external_id:
+                type: string
+                description: External ID (MAC address or some unique identifier).
+              external_key:
+                type: string
+                description: External key.
+              thing_id:
+                type: string
+                description: ID of the corresponding Mainflux Thing.
+              channels:
+                type: array
+                minItems: 0
+                items:
+                  type: string
+              content:
+                type: string
+            required:
+              - external_id
+              - external_key
+    ConfigUpdateReq:
+      description: JSON-formatted document describing the updated thing.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              content:
+                type: string
+              name:
+                type: string
+            required:
+              - content
+              - name
+    ConfigCertUpdateReq:
+      description: JSON-formatted document describing the updated thing.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              client_cert:
+                type: string
+              client_key:
+                type: string
+              ca_cert:
+                type: string
+    ConfigConnUpdateReq:
+      description: Array if IDs the thing is be connected to.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              channels:
+                type: array
+                minItems: 0
+                items:
+                  type: string
+    ConfigStateUpdateReq:
+      description: Update the state of the Config.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              state:
+                $ref: "#/components/schemas/State"
+
+  responses:
+    ConfigCreateRes:
+     description: Config registered.
+     headers:
+       Location:
+         content:
+           text/plain:
+             schema:
+               type: string
+               description: Created configuration's relative URL (i.e. /things/configs/{configId}).
+    ConfigListRes:
+      description: Data retrieved. Configs from this list don't contain channels.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ConfigList"
+    ConfigRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Config"
+    BootstrapConfigRes:
+      description: |
+          Data retrieved. If secure, a response is encrypted using
+          the secret key, so the response is in the binary form.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BootstrapConfig"
+    ServiceError:
+      description: Unexpected server-side error occurred.

@@ -1,0 +1,128 @@
+openapi: 3.0.1
+info:
+  title: Mainflux http adapter
+  description: HTTP API for sending messages through communication channels.
+  version: "1.0.0"
+paths:
+  /channels/{id}/messages:
+    post:
+      summary: Sends message to the communication channel
+      description: |
+        Sends message to the communication channel. Messages can be sent as
+        JSON formatted SenML or as blob.
+      tags:
+        - messages
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/ID"
+      requestBody:
+        $ref: "#/components/requestBodies/MessageReq"
+      responses:
+        '202':
+          description: Message is accepted for processing.
+        '400':
+          description: Message discarded due to its malformed content.
+        '403':
+          description: Message discarded due to missing or invalid credentials.
+        '404':
+          description: Message discarded due to invalid channel id.
+        '415':
+          description: Message discarded due to invalid or missing content type.
+        '500':
+          description: Unexpected server-side error occurred.
+
+components:
+  schemas:
+    SenMLRecord:
+      type: object
+      properties:
+        bn:
+          type: string
+          description: Base Name
+        bt:
+          type: number
+          format: double
+          description: Base Time
+        bu:
+          type: number
+          format: double
+          description: Base Unit
+        bv:
+          type: number
+          format: double
+          description: Base Value
+        bs:
+          type: number
+          format: double
+          description: Base Sum
+        bver:
+          type: number
+          format: double
+          description: Version
+        n:
+          type: string
+          description: Name
+        u:
+          type: string
+          description: Unit
+        v:
+          type: number
+          format: double
+          description: Value
+        vs:
+          type: string
+          description: String Value
+        vb:
+          type: boolean
+          description: Boolean Value
+        vd:
+          type: string
+          description: Data Value
+        s:
+          type: number
+          format: double
+          description: Value Sum
+        t:
+          type: number
+          format: double
+          description: Time
+        ut:
+          type: number
+          format: double
+          description: Update Time
+    SenMLArray:
+      type: array
+      items:
+        $ref: "#/components/schemas/SenMLRecord"
+
+  parameters:
+    Authorization:
+      name: Authorization
+      description: Access token.
+      in: header
+      schema:
+        type: string
+        format: jwt
+      required: true
+    ID:
+      name: id
+      description: Unique channel identifier.
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+
+  requestBodies:
+    MessageReq:
+      description: |
+          Message to be distributed. Since the platform expects messages to be
+          properly formatted SenML in order to be post-processed, clients are
+          obliged to specify Content-Type header for each published message.
+          Note that all messages that aren't SenML will be accepted and published,
+          but no post-processing will be applied.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/SenMLArray"

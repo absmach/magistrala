@@ -1,0 +1,1015 @@
+openapi: 3.0.1
+info:
+  title: Mainflux things service
+  description: HTTP API for managing platform things and channels.
+  version: "1.0.0"
+
+paths:
+  /things:
+    post:
+      summary: Adds new thing
+      description: |
+        Adds new thing to the list of things owned by user identified using
+        the provided access token.
+      tags:
+        - things
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+      requestBody:
+        $ref: "#/components/requestBodies/ThingCreateReq"
+      responses:
+        '201':
+          $ref: "#/components/responses/CreateThingRes"
+        '400':
+          description: Failed due to malformed JSON.
+        '401':
+          description: Missing or invalid access token provided.
+        '409':
+          description: Entity already exist.
+        '415':
+          description: Missing or invalid content type.
+        '422':
+          description: Database can't process request.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+    get:
+      summary: Retrieves things
+      description: |
+        Retrieves a list of things. Due to performance concerns, data
+        is retrieved in subsets. The API things must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
+      tags:
+        - things
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Name"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Direction"
+        - $ref: "#/components/parameters/Metadata"
+      responses:
+        '200':
+          $ref: "#/components/responses/ThingsPageRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        '401':
+          description: Missing or invalid access token provided.
+        '404':
+          description: A non-existent entity request.
+        '422':
+          description: Database can't process request.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /things/search:
+    post:
+      summary: Search and retrieves things
+      description: |
+        Retrieves a list of things with name and metadata filtering.
+        Due to performance concerns, data is retrieved in subsets.
+        The API things must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
+      tags:
+        - things
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+      requestBody:
+        $ref: "#/components/requestBodies/ThingsSearchReq"
+      responses:
+        '200':
+          $ref: "#/components/responses/ThingsPageRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        '401':
+          description: Missing or invalid access token provided.
+        '404':
+          description: A non-existent entity request.
+        '422':
+          description: Unprocessable Entity
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /things/bulk:
+    post:
+      summary: Bulk provisions new things
+      description: |
+        Adds new things to the list of things owned by user identified using
+        the provided access token.
+      tags:
+        - things
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+      requestBody:
+        $ref: "#/components/requestBodies/ThingsCreateReq"
+      responses:
+        '201':
+          description: Things registered.
+        '400':
+          description: Failed due to malformed JSON.
+        '401':
+          description: Missing or invalid access token provided.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /things/{thingId}:
+    get:
+      summary: Retrieves thing info
+      tags:
+        - things
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/ThingId"
+      responses:
+        '200':
+          $ref: "#/components/responses/ThingRes"
+        '401':
+          description: Missing or invalid access token provided.
+        '404':
+          description: Thing does not exist.
+        '422':
+          description: Database can't process request.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+    put:
+      summary: Updates thing info
+      description: |
+        Update is performed by replacing the current resource data with values
+        provided in a request payload. Note that the thing's type and ID
+        cannot be changed.
+      tags:
+        - things
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/ThingId"
+      requestBody:
+        $ref: "#/components/requestBodies/ThingUpdateReq"
+      responses:
+        '200':
+          description: Thing updated.
+        '400':
+          description: Failed due to malformed JSON.
+        '401':
+          description: Missing or invalid access token provided.
+        '404':
+          description: Thing does not exist.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+    delete:
+      summary: Removes a thing
+      description: |
+        Removes a thing. The service will ensure that the removed thing is
+        disconnected from all of the existing channels.
+      tags:
+        - things
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/ThingId"
+      responses:
+        '204':
+          description: Thing removed.
+        '400':
+          description: Failed due to malformed thing's ID.
+        '401':
+          description: Missing or invalid access token provided.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /things/{thingId}/key:
+    patch:
+      summary: Updates thing key
+      description: |
+        Update is performed by replacing current key with a new one.
+      tags:
+        - things
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/ThingId"
+      requestBody:
+        $ref: "#/components/requestBodies/KeyUpdateReq"
+      responses:
+        '200':
+          description: Thing key updated.
+        '400':
+          description: Failed due to malformed JSON.
+        '401':
+          description: Missing or invalid access token provided.
+        '404':
+          description: Thing does not exist.
+        '409':
+          description: Specified key already exists.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /channels:
+    post:
+      summary: Creates new channel
+      description: |
+        Creates new channel. User identified by the provided access token will
+        be the channel's owner.
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+      requestBody:
+        $ref: "#/components/requestBodies/ChannelCreateReq"
+      responses:
+        '201':
+          $ref: "#/components/responses/ChannelCreateRes"
+        '400':
+          description: Failed due to malformed JSON.
+        '401':
+          description: Missing or invalid access token provided.
+        '409':
+          description: Entity already exist.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+    get:
+      summary: Retrieves channels
+      description: |
+        Retrieves a list of channels. Due to performance concerns, data
+        is retrieved in subsets. The API things must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Name"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Direction"
+        - $ref: "#/components/parameters/Metadata"
+      responses:
+        '200':
+          $ref: "#/components/responses/ChannelsPageRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        '401':
+          description: Missing or invalid access token provided.
+        '422':
+          description: Database can't process request.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /channels/bulk:
+    post:
+      summary: Bulk provisions new channels
+      description: |
+        Adds new channels to the list of channels owned by user identified using
+        the provided access token.
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+      requestBody:
+        $ref: "#/components/requestBodies/ChannelsCreateReq"
+      responses:
+        '201':
+          description: Channels registered.
+        '400':
+          description: Failed due to malformed JSON.
+        '401':
+          description: Missing or invalid access token provided.
+        '409':
+          description: Entity already exist.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /channels/{chanId}:
+    get:
+      summary: Retrieves channel info
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/ChanId"
+      responses:
+        '200':
+          $ref: "#/components/responses/ChannelRes"
+        '400':
+          description: Failed due to malformed channel's ID.
+        '401':
+          description: Missing or invalid access token provided.
+        '404':
+          description: Channel does not exist.
+        '422':
+          description: Database can't process request.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+    put:
+      summary: Updates channel info
+      description: |
+        Update is performed by replacing the current resource data with values
+        provided in a request payload. Note that the channel's ID will not be
+        affected.
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/ChanId"
+      requestBody:
+        $ref: "#/components/requestBodies/ChannelCreateReq"
+      responses:
+        '200':
+          description: Channel updated.
+        '400':
+          description: Failed due to malformed JSON.
+        '401':
+          description: Missing or invalid access token provided.
+        '404':
+          description: Channel does not exist.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+    delete:
+      summary: Removes a channel
+      description: |
+        Removes a channel. The service will ensure that the subscribed apps and
+        things are unsubscribed from the removed channel.
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/ChanId"
+      responses:
+        '204':
+          description: Channel removed.
+        '400':
+          description: Failed due to malformed channel's ID.
+        '401':
+          description: Missing or invalid access token provided.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /connect:
+    post:
+      summary: Connects thing and channel.
+      description: |
+        Connect things specified by IDs to channels specified by IDs.
+        Channel and thing are owned by user identified using the provided access token.
+      tags:
+        - things
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+      requestBody:
+        $ref: "#/components/requestBodies/ConnCreateReq"
+      responses:
+        '201':
+          $ref: "#/components/responses/ConnCreateRes"
+        '400':
+          description: Failed due to malformed JSON.
+        '401':
+          description: Missing or invalid access token provided.
+        '404':
+          description: A non-existent entity request.
+        '409':
+          description: Entity already exist.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /things/{thingId}/channels:
+    get:
+      summary: List of channels connected to specified thing
+      description: |
+        Retrieves list of channels connected to specified thing with pagination
+        metadata.
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/ThingId"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Connected"
+      responses:
+        '200':
+          $ref: "#/components/responses/ChannelsPageRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        '401':
+          description: Missing or invalid access token provided.
+        '404':
+          description: Thing does not exist.
+        '422':
+          description: Database can't process request.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /channels/{chanId}/things:
+    get:
+      summary: List of things connected to specified channel
+      description: |
+        Retrieves list of things connected to specified channel with pagination
+        metadata.
+      tags:
+        - things
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/ChanId"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Connected"
+      responses:
+        '200':
+          $ref: "#/components/responses/ThingsPageRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        '401':
+          description: Missing or invalid access token provided.
+        '404':
+          description: A non-existent entity request.
+        '422':
+          description: Database can't process request.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /channels/{chanId}/things/{thingId}:
+    put:
+      summary: Connects the thing to the channel
+      description: |
+        Creates connection between a thing and a channel. Once connected to
+        the channel, things are allowed to exchange messages through it.
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/ChanId"
+        - $ref: "#/components/parameters/ThingId"
+      responses:
+        '200':
+          description: Thing connected.
+        '400':
+          description: Failed due to malformed query parameters.
+        '401':
+          description: Missing or invalid access token provided.
+        '404':
+          description: Channel or thing does not exist.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+    delete:
+      summary: Disconnects the thing from the channel
+      description: |
+        Removes connection between a thing and a channel. Once connection is
+        removed, thing can no longer exchange messages through the channel.
+      tags:
+        - channels
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/ChanId"
+        - $ref: "#/components/parameters/ThingId"
+      responses:
+        '204':
+          description: Thing disconnected.
+        '400':
+          description: Failed due to malformed query parameters.
+        '401':
+          description: Missing or invalid access token provided.
+        '404':
+          description: Channel or thing does not exist.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /identify/channels/{chanId}/access-by-key:
+    post:
+      summary: Checks if thing has access to a channel.
+      description: |
+        Checks if a thing with a specified key has an access to a specified
+        channel and if it has, it returns that things id.
+      tags:
+        - access
+      parameters:
+        - $ref: "#/components/parameters/ChanId"
+      requestBody:
+        $ref: "#/components/requestBodies/IdentityReq"
+      responses:
+        '200':
+          $ref: "#/components/responses/AccessGrantedRes"
+        '401':
+          description: |
+            Thing and channel are not connected, or thing with specified key doesn't
+            exist.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /identify/channels/{chanId}/access-by-id:
+    post:
+      summary: Checks if thing has access to a channel.
+      description: |
+        Checks if a thing with a specified ID has an access to a specified
+        channel.
+      tags:
+        - access
+      parameters:
+        - $ref: "#/components/parameters/ChanId"
+      requestBody:
+        $ref: "#/components/requestBodies/AccessByIDReq"
+      responses:
+        '200':
+          description: Thing has access to the specified channel.
+        '401':
+          description: |
+            Thing and channel are not connected, or thing with specified ID doesn't
+            exist.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /identify:
+    post:
+      summary: Validates thing's key and returns it's ID if key is valid.
+      description: |
+        Validates thing's key and returns it's ID if specified key exists
+        and is valid.
+      tags:
+        - identity
+      requestBody:
+        $ref: "#/components/requestBodies/IdentityReq"
+      responses:
+        '200':
+          $ref: "#/components/responses/IdentityRes"
+        '401':
+          description: Thing with specified key doesn't exist.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /groups/{groupId}:
+    get:
+      summary: Retrieves things
+      description: |
+        Retrieves a list of things that belong to a group. Due to performance concerns, data
+        is retrieved in subsets. The API things must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
+      tags:
+        - things
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/GroupId"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Direction"
+        - $ref: "#/components/parameters/Metadata"
+      responses:
+        '200':
+          $ref: "#/components/responses/ThingsPageRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        '401':
+          description: Missing or invalid access token provided.
+        '404':
+          description: A non-existent entity request.
+        '422':
+          description: Database can't process request.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+components:
+  schemas:
+    Key:
+      type: string
+      format: uuid
+      description: |
+        Thing key that is used for thing auth. If there is
+        not one provided service will generate one in UUID
+        format.
+    Identity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Thing unique identifier
+    ThingReqSchema:
+      type: object
+      properties:
+        key:
+          $ref: "#/components/schemas/Key"
+        name:
+          type: string
+          description: Free-form thing name.
+        metadata:
+          type: object
+          description: Arbitrary, object-encoded thing's data.
+    ThingsReqSchema:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name filter. Filtering is performed as a case-insensitive partial match.
+        metadata:
+          type: object
+          description: Metadata filter. Filtering is performed matching the parameter with metadata on top level. Parameter is json.
+        total:
+          type: integer
+          description: Total number of items.
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval.
+          default: 0
+          minimum: 0
+        limit:
+          type: integer
+          description: Size of the subset to retrieve.
+          default: 10
+          maximum: 100
+          minimum: 1
+        order:
+          type: string
+          description: Order type.
+          default: id
+          enum:
+            - name
+            - id
+        dir:
+          type: string
+          description: Order direction.
+          default: desc
+          enum:
+            - asc
+            - desc
+    ThingResSchema:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique thing identifier generated by the service.
+        name:
+          type: string
+          description: Free-form thing name.
+        key:
+          type: string
+          format: uuid
+          description: Auto-generated access key.
+        metadata:
+          type: object
+          description: Arbitrary, object-encoded thing's data.
+      required:
+        - id
+        - type
+        - key
+    ThingsPage:
+      type: object
+      properties:
+        things:
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/ThingResSchema"
+        total:
+          type: integer
+          description: Total number of items.
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval.
+        limit:
+          type: integer
+          description: Maximum number of items to return in one page.
+      required:
+        - things
+    ChannelReqSchema:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Free-form channel name.
+        metadata:
+          type: object
+          description: Arbitrary, object-encoded channel's data.
+    ChannelResSchema:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique channel identifier generated by the service.
+        name:
+          type: string
+          description: Free-form channel name.
+        metadata:
+          type: object
+          description: Arbitrary, object-encoded channel's data.
+      required:
+        - id
+    ChannelsPage:
+      type: object
+      properties:
+        channels:
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/ChannelResSchema"
+        total:
+          type: integer
+          description: Total number of items.
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval.
+        limit:
+          type: integer
+          description: Maximum number of items to return in one page.
+      required:
+        - channels
+    ConnectionReqSchema:
+      type: object
+      properties:
+        channel_ids:
+          type: array
+          description: Channel IDs.
+          items:
+            type: string
+        thing_ids:
+          type: array
+          description: Thing IDs
+          items:
+            type: string
+
+  parameters:
+    Authorization:
+      name: Authorization
+      description: User's access token.
+      in: header
+      schema:
+        type: string
+        format: jwt
+      required: true
+    ChanId:
+      name: chanId
+      description: Unique channel identifier.
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    ThingId:
+      name: thingId
+      description: Unique thing identifier.
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    GroupId:
+      name: groupId
+      description: Unique group identifier.
+      in: path
+      schema:
+        type: string
+        format: ulid
+      required: true
+    Limit:
+      name: limit
+      description: Size of the subset to retrieve.
+      in: query
+      schema:
+        type: integer
+        default: 10
+        maximum: 100
+        minimum: 1
+      required: false
+    Offset:
+      name: offset
+      description: Number of items to skip during retrieval.
+      in: query
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+      required: false
+    Connected:
+      name: connected
+      description: Connection state of the subset to retrieve.
+      in: query
+      schema:
+        type: boolean
+        default: true
+      required: false
+    Name:
+      name: name
+      description: Name filter. Filtering is performed as a case-insensitive partial match.
+      in: query
+      schema:
+        type: string
+      required: false
+    Order:
+      name: order
+      description: Order type.
+      in: query
+      schema:
+        type: string
+        default: id
+        enum:
+          - name
+          - id
+      required: false
+    Direction:
+      name: dir
+      description: Order direction.
+      in: query
+      schema:
+        type: string
+        default: desc
+        enum:
+          - asc
+          - desc
+      required: false
+    Metadata:
+      name: metadata
+      description: Metadata filter. Filtering is performed matching the parameter with metadata on top level. Parameter is json.
+      in: query
+      required: false
+      schema:
+        type: object
+        additionalProperties: {}
+
+  requestBodies:
+    ThingCreateReq:
+      description: JSON-formatted document describing the new thing.
+      required: true
+      content:
+        application/json:
+          schema:
+           $ref: "#/components/schemas/ThingReqSchema"
+    ThingsCreateReq:
+      description: JSON-formatted document describing the new things.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              key:
+                $ref: "#/components/schemas/Key"
+              things:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ThingReqSchema"
+    ThingUpdateReq:
+      description: Arbitrary, object-encoded thing's data.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Free-form thing name.
+              metadata:
+                type: object
+    ThingsSearchReq:
+      description: JSON-formatted document describing search parameters.
+      required: true
+      content:
+        application/json:
+          schema:
+           $ref: "#/components/schemas/ThingsReqSchema"
+    KeyUpdateReq:
+      required: true
+      description: JSON containing thing.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              key:
+                type: string
+                format: uuid
+                description: Thing key that is used for thing auth.
+    ChannelCreateReq:
+      description: JSON-formatted document describing the updated channel.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ChannelReqSchema"
+    ChannelsCreateReq:
+      description: JSON-formatted document describing the new channels.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              key:
+                $ref: "#/components/schemas/Key"
+              things:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChannelReqSchema"
+    ConnCreateReq:
+      description: JSON-formatted document describing the new connection.
+      required: true
+      content:
+        application/json:
+          schema:
+           $ref: "#/components/schemas/ConnectionReqSchema"
+    IdentityReq:
+      description: JSON-formatted document that contains thing key.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              token:
+                type: string
+                format: uuid
+                description: Thing key that is used for thing auth.
+            required:
+              - token
+    AccessByIDReq:
+      description: JSON-formatted document that contains thing key.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              thing_id:
+                type: string
+                format: uuid
+                description: Thing ID by which thing is uniquely identified.
+
+  responses:
+    CreateThingRes:
+      description: Thing registered.
+      headers:
+        Location:
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Created thing's relative URL.
+                example: /things/{thingId}
+    ThingRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ThingResSchema"
+    ThingsPageRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ThingsPage"
+    ChannelCreateRes:
+      description: Channel created.
+      headers:
+        Location:
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Created channel's relative URL (i.e. /channels/{chanId}).
+    ChannelRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ChannelResSchema"
+    ChannelsPageRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ChannelsPage"
+    ConnCreateRes:
+      description: Thing registered.
+      headers:
+        Location:
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Created thing's relative URL.
+                example: /things/{thingId}
+    AccessGrantedRes:
+      description: |
+        Thing has access to the specified channel and the thing ID is returned.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Identity"
+    IdentityRes:
+      description: Thing ID returned.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Identity"
+    ServiceError:
+      description: Unexpected server-side error occurred.
+      content:
+        application/json:
+          schema:
+            type: string
+            format: byte

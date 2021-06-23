@@ -1,0 +1,454 @@
+openapi: 3.0.1
+info:
+  title: Mainflux users service
+  description: HTTP API for managing platform users.
+  version: "1.0.0"
+
+paths:
+  /users:
+    post:
+      summary: Registers user account
+      description: |
+        Registers new user account given email and password. New account will
+        be uniquely identified by its email address.
+      tags:
+        - users
+      requestBody:
+        $ref: "#/components/requestBodies/UserCreateReq"
+      responses:
+        '201':
+          $ref: "#/components/responses/UserCreateRes"
+        '400':
+          description: Failed due to malformed JSON.
+        '409':
+          description: Failed due to using an existing email address.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError" 
+    get:
+      summary: Retrieves users
+      description: |
+        Retrieves a list of users. Due to performance concerns, data
+        is retrieved in subsets. The API things must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
+      tags:
+        - users
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Metadata"
+      responses:
+        '200':
+          $ref: "#/components/responses/UsersPageRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        '401':
+          description: Missing or invalid access token provided.
+        '404':
+          description: A non-existent entity request.
+        '422':
+          description: Database can't process request.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+    put:
+      summary: Updates info on currently logged in user.
+      description: |
+        Updates info on currently logged in user. Info is updated using
+        authorization token and the new received info.
+      tags:
+        - users
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+      requestBody:
+        $ref: "#/components/requestBodies/UserUpdateReq"
+      responses:
+        '200':
+          description: User updated.
+        '400':
+          description: Failed due to malformed JSON.
+        '404':
+          description: Failed due to non existing user.
+        '403':
+          description: Missing or invalid access token provided.
+        '500':
+         $ref: "#/components/responses/ServiceError"
+  /users/profile:
+     get:
+      summary: Gets info on currently logged in user.
+      description: |
+        Gets info on currently logged in user. Info is obtained using
+        authorization token
+      tags:
+        - users
+      security:
+        - Authorization: []
+      responses:
+        '200':
+          $ref: "#/components/responses/UserRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        '403':
+          description: Missing or invalid access token provided.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /groups/{groupId}:
+    get:
+      summary: Retrieves users
+      description: |
+        Retrieves a list of users that belong to a group. Due to performance concerns, data
+        is retrieved in subsets. The API things must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
+      tags:
+        - users
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/GroupId"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Metadata"
+      responses:
+        '200':
+          $ref: "#/components/responses/UsersPageRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        '401':
+          description: Missing or invalid access token provided.
+        '404':
+          description: A non-existent entity request.
+        '422':
+          description: Database can't process request.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /tokens:
+    post:
+      summary: User authentication
+      description: Generates an access token when provided with proper credentials.
+      tags:
+        - users
+      requestBody:
+        $ref: "#/components/requestBodies/UserCreateReq"
+      responses:
+        '201':
+          description: User authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '400':
+          description: Failed due to malformed JSON.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Failed due to using invalid credentials.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '415':
+          description: Missing or invalid content type.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/ServiceError'
+  /password/reset-request:
+    post:
+      summary: User password reset request
+      description: |
+        Generates a reset token and sends and
+        email with link for resetting password.
+      tags:
+        - users
+      parameters:
+        - $ref: "#/components/parameters/Referer"
+      requestBody:
+        $ref: '#/components/requestBodies/RequestPasswordReset'
+      responses:
+        '201':
+          description: Users link for reseting password.
+        '400':
+          description: Failed due to malformed JSON.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: '#/components/responses/ServiceError'
+  /password/reset:
+    put:
+      summary: User password reset endpoint
+      description: |
+        When user gets reset token, after he submited
+        email to `/password/reset-request`, posting a
+          new password along to this endpoint will change password.
+      tags:
+        - users
+      requestBody:
+        $ref: '#/components/requestBodies/PasswordReset'
+      responses:
+        '201':
+          description: User link .
+        '400':
+          description: Failed due to malformed JSON.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: '#/components/responses/ServiceError'
+  /password:
+    patch:
+      summary: User password change endpoint
+      description: |
+        When authenticated user wants to change password.
+      tags:
+        - users
+      security:
+        - Authorization: []
+      requestBody:
+        $ref: '#/components/requestBodies/PasswordChange'
+      responses:
+        '201':
+          description: User link .
+        '400':
+          description: Failed due to malformed JSON.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+
+components:
+  securitySchemes:
+    Authorization:
+      type: http
+      scheme: bearer
+      bearerFormat: jwt
+
+  schemas:
+    Token:
+      type: object
+      properties:
+        token:
+          type: string
+          format: jwt
+          description: Generated access token.
+      required:
+        - token
+    UserReqObj:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: "test@example.com"
+          description: User's email address will be used as its unique identifier
+        password:
+          type: string
+          format: password
+          minimum: 8
+          description: Free-form account password used for acquiring auth token(s).
+      required:
+        - email
+        - password
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 18167738-f7a8-4e96-a123-58c3cd14de3a
+          description: User unique identifier.
+        email:
+          type: string
+          format: email
+          example: "test@example.com"
+          description: User's email address will be used as its unique identifier.
+        metadata:
+          type: object
+          description: Arbitrary, object-encoded user's data.
+    UsersPage:
+      type: object
+      properties:
+        things:
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/User"
+        total:
+          type: integer
+          description: Total number of items.
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval.
+        limit:
+          type: integer
+          description: Maximum number of items to return in one page.
+      required:
+        - things
+    UserMetadata:
+      type: object
+      properties:
+        metadata:
+          type: object
+          description: Arbitrary, object-encoded user's data.
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+  parameters:
+    Authorization:
+      name: Authorization
+      description: User's access token.
+      in: header
+      schema:
+        type: string
+        format: jwt
+      required: true
+    Referer:
+      name: Referer
+      description: Host being sent by browser.
+      in: header
+      schema:
+        type: string
+      required: true
+    Metadata:
+      name: metadata
+      description: Metadata filter. Filtering is performed matching the parameter with metadata on top level. Parameter is json.
+      in: query
+      schema:
+        type: string
+        minimum: 0
+      required: false
+    UserID:
+      name: userId
+      description: Unique user identifier.
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    GroupId:
+      name: groupId
+      description: Unique group identifier.
+      in: path
+      schema:
+        type: string
+        format: ulid
+      required: true
+    Limit:
+      name: limit
+      description: Size of the subset to retrieve.
+      in: query
+      schema:
+        type: integer
+        default: 10
+        maximum: 100
+        minimum: 1
+      required: false
+    Offset:
+      name: offset
+      description: Number of items to skip during retrieval.
+      in: query
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+      required: false
+
+  requestBodies:
+    UserCreateReq:
+      description: JSON-formatted document describing the new user to be registered
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UserReqObj'
+    UserUpdateReq:
+      description: JSON-formated document describing the metadata of user to be update
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UserMetadata"
+    RequestPasswordReset:
+      description: Initiate password request procedure.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+                format: email
+                description: User email.
+    PasswordReset:
+      description: Password reset request data, new password and token that is appended on password reset link received in email.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              password:
+                type: string
+                format: password
+                description: New password.
+                minimum: 8
+              confirm_password:
+                type: string
+                format: password
+                description: New confirmation password.
+                minimum: 8
+              token:
+                type: string
+                format: jwt
+                description: Reset token generated and sent in email.
+    PasswordChange:
+      description: Password change data. User can change its password.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              password:
+                type: string
+                format: password
+                description: New password.
+              old_password:
+                type: string
+                format: password
+                description: Old password.
+
+  responses:
+    UserCreateRes:
+      description: Registered new user.
+      headers:
+        Location:
+          content:
+            text/plain:
+              schema:
+                type: string
+                format: url
+                description: Registered user relative URL.
+                example: /users/{userId}
+    UserRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/User"
+    UsersPageRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UsersPage"
+    ServiceError:
+      description: Unexpected server-side error occurred.

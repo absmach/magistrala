@@ -1,0 +1,215 @@
+openapi: 3.0.1
+info:
+  title: Mainflux reader service
+  description: HTTP API for reading messages.
+  version: "1.0.0"
+
+paths:
+  /channels/{chanId}/messages:
+    get:
+      summary: Retrieves messages sent to single channel
+      description: |
+        Retrieves a list of messages sent to specific channel. Due to
+        performance concerns, data is retrieved in subsets. The API readers must
+        ensure that the entire dataset is consumed either by making subsequent
+        requests, or by increasing the subset size of the initial request.
+      tags:
+        - messages
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/ChanId"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Publisher"
+        - $ref: "#/components/parameters/Name"
+        - $ref: "#/components/parameters/Value"
+        - $ref: "#/components/parameters/BoolValue"
+        - $ref: "#/components/parameters/StringValue"
+        - $ref: "#/components/parameters/DataValue"
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+      responses:
+        '200':
+          $ref: "#/components/responses/MessagesPageRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        '403':
+          description: Missing or invalid access token provided.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+
+components:
+  schemas:
+    MessagesPage:
+      type: object
+      properties:
+        total:
+          type: number
+          description: Total number of items that are present on the system.
+        offset:
+          type: number
+          description: Number of items that were skipped during retrieval.
+        limit:
+          type: number
+          description: Size of the subset that was retrieved.
+        messages:
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            type: object
+            properties:
+              channel:
+                type: integer
+                description: Unique channel id.
+              publisher:
+                type: integer
+                description: Unique publisher id.
+              protocol:
+                type: string
+                description: Protocol name.
+              name:
+                type: string
+                description: Measured parameter name.
+              unit:
+                type: string
+                description: Value unit.
+              value:
+                type: number
+                description: Measured value in number.
+              stringValue:
+                type: string
+                description: Measured value in string format.
+              boolValue:
+                type: boolean
+                description: Measured value in boolean format.
+              dataValue:
+                type: string
+                description: Measured value in binary format.
+              valueSum:
+                type: number
+                description: Sum value.
+              time:
+                type: number
+                description: Time of measurement.
+              updateTime:
+                type: number
+                description: Time of updating measurement.
+
+  parameters:
+    Authorization:
+      name: Authorization
+      description: Thing access token.
+      in: header
+      schema:
+        type: string
+      required: true
+    ChanId:
+      name: chanId
+      description: Unique channel identifier.
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    Limit:
+      name: limit
+      description: Size of the subset to retrieve.
+      in: query
+      schema:
+        type: integer
+        default: 10
+        maximum: 100
+        minimum: 1
+      required: false
+    Offset:
+      name: offset
+      description: Number of items to skip during retrieval.
+      in: query
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+      required: false
+    Publisher:
+      name: Publisher
+      description: Unique thing identifier.
+      in: query
+      schema:
+        type: string
+        format: uuid
+      required: false
+    Name:
+      name: name
+      description: SenML message name.
+      in: query
+      schema:
+        type: string
+      required: false
+    Value:
+      name: v
+      description: SenML message value.
+      in: query
+      schema:
+        type: string
+      required: false
+    BoolValue:
+      name: vb
+      description: SenML message bool value.
+      in: query
+      schema:
+        type: boolean
+      required: false
+    StringValue:
+      name: vs
+      description: SenML message string value.
+      in: query
+      schema:
+        type: string
+      required: false
+    DataValue:
+      name: vd
+      description: SenML message data value.
+      in: query
+      schema:
+        type: string
+      required: false
+    Comparator:
+      name: comparator
+      description: Value comparison operator.
+      in: query
+      schema:
+        type: string
+        default: eq
+        enum:
+          - eq
+          - lt
+          - le
+          - gt
+          - ge
+      required: false
+    From:
+      name: from
+      description: SenML message time in nanoseconds (integer part represents seconds).
+      in: query
+      schema:
+        type: number
+      required: false
+    To:
+      name: to
+      description: SenML message time in nanoseconds (integer part represents seconds).
+      in: query
+      schema:
+        type: number
+      required: false
+
+  responses:
+    MessagesPageRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/MessagesPage"
+
+    ServiceError:
+      description: Unexpected server-side error occurred.

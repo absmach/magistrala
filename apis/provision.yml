@@ -1,0 +1,80 @@
+openapi: 3.0.1
+info:
+  title: Mainflux Provision service
+  description: HTTP API for Provision service
+  version: "1.0.0"
+
+paths:
+  /mapping:
+    post:
+      summary: Adds new device to proxy
+      description: Adds new device to proxy
+      tags:
+        - provision
+      parameters:
+      - $ref: "#/components/parameters/Authorization"
+      requestBody:
+        $ref: "#/components/requestBodies/ProvisionReq"
+      responses:
+        '201':
+          description: Created
+        '400':
+          description: Failed due to malformed JSON.
+        '403':
+          description: Unauthorized.
+        '500':
+          description: Unexpected server-side error ocurred.
+    get:
+      summary: Gets current mapping.
+      description: Gets current mapping. This can be used in UI
+        so that when bootstrap config is created from UI matches
+        configuration created with provision service.
+      tags:
+        - provision
+      parameters:
+      - $ref: "#/components/parameters/Authorization"
+      responses:
+        '200':
+          $ref: "#/components/responses/ProvisionRes"
+        '403':
+          description: Unauthorized.
+        '500':
+          description: Unexpected server-side error ocurred.
+
+components:
+
+  parameters:
+    Authorization:
+      name: Authorization
+      description: User's access token. Used instead of credentials in env or config.toml.
+      in: header
+      schema:
+        type: string
+        format: jwt
+      required: false
+
+  requestBodies:
+    ProvisionReq:
+      description: MAC address of device or other identifier
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - external_id
+              - external_key
+            properties:
+              external_id:
+                type: string
+              external_key:
+                 type: string
+              name:
+                 type: string
+
+  responses:
+    ProvisionRes:
+      description: Current mapping JSON representation.
+      content:
+        application/json:
+          schema:
+            type: object

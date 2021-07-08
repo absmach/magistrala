@@ -168,12 +168,20 @@ func (ur userRepository) RetrieveAll(ctx context.Context, offset, limit uint64, 
 	if mq != "" {
 		query = append(query, mq)
 	}
-	if len(userIDs) > 0 {
-		query = append(query, fmt.Sprintf("id IN ('%s')", strings.Join(userIDs, "','")))
+
+	if len(userIDs) == 0 {
+		return users.UserPage{
+			Users: []users.User{},
+			PageMetadata: users.PageMetadata{
+				Total:  0,
+				Offset: offset,
+				Limit:  limit,
+			},
+		}, nil
 	}
-	if len(query) > 0 {
-		emq = fmt.Sprintf(" WHERE %s", strings.Join(query, " AND "))
-	}
+
+	query = append(query, fmt.Sprintf("id IN ('%s')", strings.Join(userIDs, "','")))
+	emq = fmt.Sprintf(" WHERE %s", strings.Join(query, " AND "))
 
 	q := fmt.Sprintf(`SELECT id, email, metadata FROM users %s ORDER BY email LIMIT :limit OFFSET :offset;`, emq)
 	params := map[string]interface{}{

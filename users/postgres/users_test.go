@@ -137,6 +137,7 @@ func TestRetrieveAll(t *testing.T) {
 			limit:  nUsers,
 			size:   nUsers,
 			total:  nUsers,
+			ids:    ids,
 		},
 		"retrieve all users by email with limit and offset": {
 			email:  "All",
@@ -144,6 +145,7 @@ func TestRetrieveAll(t *testing.T) {
 			limit:  5,
 			size:   5,
 			total:  nUsers,
+			ids:    ids,
 		},
 		"retrieve all users by metadata": {
 			email:    "All",
@@ -152,6 +154,7 @@ func TestRetrieveAll(t *testing.T) {
 			size:     metaNum,
 			total:    nUsers,
 			metadata: meta,
+			ids:      ids,
 		},
 		"retrieve users by metadata and ids": {
 			email:    "All",
@@ -169,6 +172,7 @@ func TestRetrieveAll(t *testing.T) {
 			size:     0,
 			total:    nUsers,
 			metadata: wrongMeta,
+			ids:      ids,
 		},
 		"retrieve users by wrong metadata and ids": {
 			email:    "All",
@@ -194,6 +198,15 @@ func TestRetrieveAll(t *testing.T) {
 			size:     1,
 			total:    nUsers,
 			ids:      ids[0:5],
+			metadata: meta,
+		},
+		"retrieve all users from empty ids": {
+			email:    "All",
+			offset:   1,
+			limit:    5,
+			size:     0,
+			total:    nUsers,
+			ids:      []string{},
 			metadata: meta,
 		},
 	}

@@ -132,16 +132,13 @@ func decodeViewProfile(_ context.Context, r *http.Request) (interface{}, error) 
 
 func decodeListUsers(_ context.Context, r *http.Request) (interface{}, error) {
 	o, err := httputil.ReadUintQuery(r, offsetKey, defOffset)
-	if err != nil && err != errors.ErrNotFoundParam {
+	if err != nil {
 		return nil, err
 	}
 
 	l, err := httputil.ReadUintQuery(r, limitKey, defLimit)
-	if err != nil && err != errors.ErrNotFoundParam {
+	if err != nil {
 		return nil, err
-	}
-	if err == errors.ErrNotFoundParam {
-		l = defLimit
 	}
 
 	e, err := httputil.ReadStringQuery(r, emailKey, "")
@@ -232,16 +229,13 @@ func decodePasswordChange(_ context.Context, r *http.Request) (interface{}, erro
 
 func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	o, err := httputil.ReadUintQuery(r, offsetKey, defOffset)
-	if err != nil && err != errors.ErrNotFoundParam {
+	if err != nil {
 		return nil, err
 	}
 
 	l, err := httputil.ReadUintQuery(r, limitKey, defLimit)
-	if err != nil && err != errors.ErrNotFoundParam {
+	if err != nil {
 		return nil, err
-	}
-	if err == errors.ErrNotFoundParam {
-		l = defLimit
 	}
 
 	m, err := httputil.ReadMetadataQuery(r, metadataKey, nil)

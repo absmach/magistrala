@@ -97,12 +97,12 @@ type Service interface {
 	// belongs to the user identified by the provided key.
 	RemoveChannel(ctx context.Context, token, id string) error
 
-	// Connect adds things to the channel's list of connected things.
+	// Connect adds things to the channels list of connected things.
 	Connect(ctx context.Context, token string, chIDs, thIDs []string) error
 
-	// Disconnect removes thing from the channel's list of connected
+	// Disconnect removes things from the channels list of connected
 	// things.
-	Disconnect(ctx context.Context, token, chanID, thingID string) error
+	Disconnect(ctx context.Context, token string, chIDs, thIDs []string) error
 
 	// CanAccessByKey determines whether the channel can be accessed using the
 	// provided key and returns thing's id if access is allowed.
@@ -323,17 +323,21 @@ func (ts *thingsService) Connect(ctx context.Context, token string, chIDs, thIDs
 	return ts.channels.Connect(ctx, res.GetEmail(), chIDs, thIDs)
 }
 
-func (ts *thingsService) Disconnect(ctx context.Context, token, chanID, thingID string) error {
+func (ts *thingsService) Disconnect(ctx context.Context, token string, chIDs, thIDs []string) error {
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	if err := ts.channelCache.Disconnect(ctx, chanID, thingID); err != nil {
-		return err
+	for _, chID := range chIDs {
+		for _, thID := range thIDs {
+			if err := ts.channelCache.Disconnect(ctx, chID, thID); err != nil {
+				return err
+			}
+		}
 	}
 
-	return ts.channels.Disconnect(ctx, res.GetEmail(), chanID, thingID)
+	return ts.channels.Disconnect(ctx, res.GetEmail(), chIDs, thIDs)
 }
 
 func (ts *thingsService) CanAccessByKey(ctx context.Context, chanID, thingKey string) (string, error) {

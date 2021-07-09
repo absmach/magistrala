@@ -314,29 +314,52 @@ func (cr channelRepository) Connect(ctx context.Context, owner string, chIDs, th
 	return nil
 }
 
-func (cr channelRepository) Disconnect(ctx context.Context, owner, chanID, thingID string) error {
+func (cr channelRepository) Disconnect(ctx context.Context, owner string, chIDs, thIDs []string) error {
+	tx, err := cr.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return errors.Wrap(things.ErrConnect, err)
+	}
+
 	q := `DELETE FROM connections
 	      WHERE channel_id = :channel AND channel_owner = :owner
 	      AND thing_id = :thing AND thing_owner = :owner`
 
-	conn := dbConnection{
-		Channel: chanID,
-		Thing:   thingID,
-		Owner:   owner,
+	for _, chID := range chIDs {
+		for _, thID := range thIDs {
+			dbco := dbConnection{
+				Channel: chID,
+				Thing:   thID,
+				Owner:   owner,
+			}
+
+			res, err := tx.NamedExecContext(ctx, q, dbco)
+			if err != nil {
+				tx.Rollback()
+				pqErr, ok := err.(*pq.Error)
+				if ok {
+					switch pqErr.Code.Name() {
+					case errFK:
+						return things.ErrNotFound
+					case errDuplicate:
+						return things.ErrConflict
+					}
+				}
+				return errors.Wrap(things.ErrDisconnect, err)
+			}
+
+			cnt, err := res.RowsAffected()
+			if err != nil {
+				return errors.Wrap(things.ErrDisconnect, err)
+			}
+
+			if cnt == 0 {
+				return things.ErrNotFound
+			}
+		}
 	}
 
-	res, err := cr.db.NamedExecContext(ctx, q, conn)
-	if err != nil {
-		return errors.Wrap(things.ErrDisconnect, err)
-	}
-
-	cnt, err := res.RowsAffected()
-	if err != nil {
-		return errors.Wrap(things.ErrDisconnect, err)
-	}
-
-	if cnt == 0 {
-		return things.ErrNotFound
+	if err = tx.Commit(); err != nil {
+		return errors.Wrap(things.ErrConnect, err)
 	}
 
 	return nil

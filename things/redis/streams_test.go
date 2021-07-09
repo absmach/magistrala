@@ -629,7 +629,7 @@ func TestDisconnectEvent(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		err := svc.Disconnect(context.Background(), tc.key, tc.chanID, tc.thingID)
+		err := svc.Disconnect(context.Background(), tc.key, []string{tc.chanID}, []string{tc.thingID})
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(context.Background(), &r.XReadArgs{

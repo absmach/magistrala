@@ -1121,7 +1121,7 @@ func TestDisconnect(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		err := svc.Disconnect(context.Background(), tc.token, tc.chanID, tc.thingID)
+		err := svc.Disconnect(context.Background(), tc.token, []string{tc.chanID}, []string{tc.thingID})
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 

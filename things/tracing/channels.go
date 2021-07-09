@@ -98,12 +98,12 @@ func (crm channelRepositoryMiddleware) Connect(ctx context.Context, owner string
 	return crm.repo.Connect(ctx, owner, chIDs, thIDs)
 }
 
-func (crm channelRepositoryMiddleware) Disconnect(ctx context.Context, owner, chanID, thingID string) error {
+func (crm channelRepositoryMiddleware) Disconnect(ctx context.Context, owner string, chIDs, thIDs []string) error {
 	span := createSpan(ctx, crm.tracer, disconnectOp)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
-	return crm.repo.Disconnect(ctx, owner, chanID, thingID)
+	return crm.repo.Disconnect(ctx, owner, chIDs, thIDs)
 }
 
 func (crm channelRepositoryMiddleware) HasThing(ctx context.Context, chanID, key string) (string, error) {

@@ -444,9 +444,9 @@ func removeChannelEndpoint(svc things.Service) endpoint.Endpoint {
 	}
 }
 
-func connectEndpoint(svc things.Service) endpoint.Endpoint {
+func connectThingEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		cr := request.(connectionReq)
+		cr := request.(connectThingReq)
 
 		if err := cr.validate(); err != nil {
 			return nil, err
@@ -456,13 +456,13 @@ func connectEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		return connectionRes{}, nil
+		return connectThingRes{}, nil
 	}
 }
 
-func createConnectionsEndpoint(svc things.Service) endpoint.Endpoint {
+func connectEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		cr := request.(createConnectionsReq)
+		cr := request.(connectReq)
 
 		if err := cr.validate(); err != nil {
 			return nil, err
@@ -472,23 +472,38 @@ func createConnectionsEndpoint(svc things.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		return createConnectionsRes{}, nil
+		return connectRes{}, nil
 	}
 }
 
 func disconnectEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		cr := request.(connectionReq)
-
+		cr := request.(connectReq)
 		if err := cr.validate(); err != nil {
 			return nil, err
 		}
 
-		if err := svc.Disconnect(ctx, cr.token, cr.chanID, cr.thingID); err != nil {
+		if err := svc.Disconnect(ctx, cr.token, cr.ChannelIDs, cr.ThingIDs); err != nil {
 			return nil, err
 		}
 
-		return disconnectionRes{}, nil
+		return disconnectRes{}, nil
+	}
+}
+
+func disconnectThingEndpoint(svc things.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(connectThingReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		if err := svc.Disconnect(ctx, req.token, []string{req.chanID}, []string{req.thingID}); err != nil {
+			return nil, err
+		}
+
+		return disconnectThingRes{}, nil
 	}
 }
 

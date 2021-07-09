@@ -248,13 +248,13 @@ func (req listByConnectionReq) validate() error {
 	return nil
 }
 
-type connectionReq struct {
+type connectThingReq struct {
 	token   string
 	chanID  string
 	thingID string
 }
 
-func (req connectionReq) validate() error {
+func (req connectThingReq) validate() error {
 	if req.token == "" {
 		return things.ErrUnauthorizedAccess
 	}
@@ -266,13 +266,13 @@ func (req connectionReq) validate() error {
 	return nil
 }
 
-type createConnectionsReq struct {
+type connectReq struct {
 	token      string
 	ChannelIDs []string `json:"channel_ids,omitempty"`
 	ThingIDs   []string `json:"thing_ids,omitempty"`
 }
 
-func (req createConnectionsReq) validate() error {
+func (req connectReq) validate() error {
 	if req.token == "" {
 		return things.ErrUnauthorizedAccess
 	}

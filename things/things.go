@@ -30,7 +30,7 @@ var (
 	ErrEntityConnected = errors.New("check thing-channel connection in database error")
 )
 
-// Metadata to be used for mainflux thing or channel for customized
+// Metadata to be used for Mainflux thing or channel for customized
 // describing of particular thing or channel.
 type Metadata map[string]interface{}
 

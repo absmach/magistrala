@@ -2407,6 +2407,198 @@ func TestCreateConnections(t *testing.T) {
 	}
 }
 
+func TestDisconnectList(t *testing.T) {
+	otherToken := "other_token"
+	otherEmail := "other_user@example.com"
+	svc := newService(map[string]string{
+		token:      email,
+		otherToken: otherEmail,
+	})
+	ts := newServer(svc)
+	defer ts.Close()
+
+	ths, err := svc.CreateThings(context.Background(), token, thing)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	thIDs := []string{}
+	for _, th := range ths {
+		thIDs = append(thIDs, th.ID)
+	}
+
+	chs, err := svc.CreateChannels(context.Background(), token, channel)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	chIDs1 := []string{}
+	for _, ch := range chs {
+		chIDs1 = append(chIDs1, ch.ID)
+	}
+
+	chs, err = svc.CreateChannels(context.Background(), otherToken, channel)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	chIDs2 := []string{}
+	for _, ch := range chs {
+		chIDs2 = append(chIDs2, ch.ID)
+	}
+
+	err = svc.Connect(context.Background(), token, chIDs1, thIDs)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+
+	cases := []struct {
+		desc        string
+		channelIDs  []string
+		thingIDs    []string
+		auth        string
+		contentType string
+		body        string
+		status      int
+	}{
+		{
+			desc:        "disconnect existing things from existing channels",
+			channelIDs:  chIDs1,
+			thingIDs:    thIDs,
+			auth:        token,
+			contentType: contentType,
+			status:      http.StatusOK,
+		},
+		{
+			desc:        "disconnect existing things from non-existent channels",
+			channelIDs:  []string{strconv.FormatUint(wrongID, 10)},
+			thingIDs:    thIDs,
+			auth:        token,
+			contentType: contentType,
+			status:      http.StatusNotFound,
+		},
+		{
+			desc:        "disconnect non-existing things from existing channels",
+			channelIDs:  chIDs1,
+			thingIDs:    []string{strconv.FormatUint(wrongID, 10)},
+			auth:        token,
+			contentType: contentType,
+			status:      http.StatusNotFound,
+		},
+		{
+			desc:        "disconnect existing things from channel with invalid id",
+			channelIDs:  []string{"invalid"},
+			thingIDs:    thIDs,
+			auth:        token,
+			contentType: contentType,
+			status:      http.StatusNotFound,
+		},
+		{
+			desc:        "disconnect things with invalid id from existing channels",
+			channelIDs:  chIDs1,
+			thingIDs:    []string{"invalid"},
+			auth:        token,
+			contentType: contentType,
+			status:      http.StatusNotFound,
+		},
+		{
+			desc:        "disconnect existing things from empty channel ids",
+			channelIDs:  []string{""},
+			thingIDs:    thIDs,
+			auth:        token,
+			contentType: contentType,
+			status:      http.StatusBadRequest,
+		},
+		{
+			desc:        "disconnect empty things id from existing channels",
+			channelIDs:  chIDs1,
+			thingIDs:    []string{""},
+			auth:        token,
+			contentType: contentType,
+			status:      http.StatusBadRequest,
+		},
+		{
+			desc:        "disconnect existing things from existing channels with invalid token",
+			channelIDs:  chIDs1,
+			thingIDs:    thIDs,
+			auth:        wrongValue,
+			contentType: contentType,
+			status:      http.StatusUnauthorized,
+		},
+		{
+			desc:        "disconnect existing things from existing channels with empty token",
+			channelIDs:  chIDs1,
+			thingIDs:    thIDs,
+			auth:        "",
+			contentType: contentType,
+			status:      http.StatusUnauthorized,
+		},
+		{
+			desc:        "disconnect things from channels of other user",
+			channelIDs:  chIDs2,
+			thingIDs:    thIDs,
+			auth:        token,
+			contentType: contentType,
+			status:      http.StatusNotFound,
+		},
+		{
+			desc:        "disconnect with invalid content type",
+			channelIDs:  chIDs2,
+			thingIDs:    thIDs,
+			auth:        token,
+			contentType: "invalid",
+			status:      http.StatusUnsupportedMediaType,
+		},
+		{
+			desc:        "disconnect with invalid JSON",
+			auth:        token,
+			contentType: contentType,
+			status:      http.StatusBadRequest,
+			body:        "{",
+		},
+		{
+			desc:        "disconnect valid thing ids from empty channel ids",
+			channelIDs:  []string{},
+			thingIDs:    thIDs,
+			auth:        token,
+			contentType: contentType,
+			status:      http.StatusBadRequest,
+		},
+		{
+			desc:        "disconnect empty thing ids from valid channel ids",
+			channelIDs:  chIDs1,
+			thingIDs:    []string{},
+			auth:        token,
+			contentType: contentType,
+			status:      http.StatusBadRequest,
+		},
+		{
+			desc:        "disconnect empty thing ids from empty channel ids",
+			channelIDs:  []string{},
+			thingIDs:    []string{},
+			auth:        token,
+			contentType: contentType,
+			status:      http.StatusBadRequest,
+		},
+	}
+
+	for _, tc := range cases {
+		data := struct {
+			ChannelIDs []string `json:"channel_ids"`
+			ThingIDs   []string `json:"thing_ids"`
+		}{
+			tc.channelIDs,
+			tc.thingIDs,
+		}
+		body := toJSON(data)
+
+		if tc.body != "" {
+			body = tc.body
+		}
+
+		req := testRequest{
+			client:      ts.Client(),
+			method:      http.MethodDelete,
+			url:         fmt.Sprintf("%s/disconnect", ts.URL),
+			contentType: tc.contentType,
+			token:       tc.auth,
+			body:        strings.NewReader(body),
+		}
+		res, err := req.make()
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+	}
+}
+
 func TestDisconnnect(t *testing.T) {
 	otherToken := "other_token"
 	otherEmail := "other_user@example.com"

@@ -155,23 +155,30 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 		opts...,
 	))
 
-	r.Put("/channels/:chanId/things/:thingId", kithttp.NewServer(
+	r.Post("/connect", kithttp.NewServer(
 		kitot.TraceServer(tracer, "connect")(connectEndpoint(svc)),
-		decodeConnection,
+		decodeConnectList,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Post("/connect", kithttp.NewServer(
-		kitot.TraceServer(tracer, "create_connections")(createConnectionsEndpoint(svc)),
-		decodeCreateConnections,
+	r.Delete("/disconnect", kithttp.NewServer(
+		kitot.TraceServer(tracer, "disconnect")(disconnectEndpoint(svc)),
+		decodeConnectList,
+		encodeResponse,
+		opts...,
+	))
+
+	r.Put("/channels/:chanId/things/:thingId", kithttp.NewServer(
+		kitot.TraceServer(tracer, "connect_thing")(connectThingEndpoint(svc)),
+		decodeConnectThing,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Delete("/channels/:chanId/things/:thingId", kithttp.NewServer(
-		kitot.TraceServer(tracer, "disconnect")(disconnectEndpoint(svc)),
-		decodeConnection,
+		kitot.TraceServer(tracer, "disconnect_thing")(disconnectThingEndpoint(svc)),
+		decodeConnectThing,
 		encodeResponse,
 		opts...,
 	))
@@ -395,8 +402,8 @@ func decodeListByConnection(_ context.Context, r *http.Request) (interface{}, er
 	return req, nil
 }
 
-func decodeConnection(_ context.Context, r *http.Request) (interface{}, error) {
-	req := connectionReq{
+func decodeConnectThing(_ context.Context, r *http.Request) (interface{}, error) {
+	req := connectThingReq{
 		token:   r.Header.Get("Authorization"),
 		chanID:  bone.GetValue(r, "chanId"),
 		thingID: bone.GetValue(r, "thingId"),
@@ -405,12 +412,12 @@ func decodeConnection(_ context.Context, r *http.Request) (interface{}, error) {
 	return req, nil
 }
 
-func decodeCreateConnections(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeConnectList(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errors.ErrUnsupportedContentType
 	}
 
-	req := createConnectionsReq{token: r.Header.Get("Authorization")}
+	req := connectReq{token: r.Header.Get("Authorization")}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(things.ErrMalformedEntity, err)
 	}

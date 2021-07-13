@@ -375,6 +375,31 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
+  /disconnect:
+    put:
+      summary: Disconnect things and channels using lists of IDs.
+      description: |
+        Disconnect things from channels specified by lists of IDs.
+        Channels and things are owned by user identified using the provided access token.
+      tags:
+      - things
+      parameters:
+      - $ref: "#/components/parameters/Authorization"
+      requestBody:
+        $ref: "#/components/requestBodies/DisconnReq"
+      responses:
+        '200':
+          $ref: "#/components/responses/DisconnRes"
+        '400':
+          description: Failed due to malformed JSON.
+        '401':
+          description: Missing or invalid access token provided.
+        '404':
+          description: A non-existent entity request.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
   /things/{thingId}/channels:
     get:
       summary: List of channels connected to specified thing
@@ -912,6 +937,13 @@ components:
         application/json:
           schema:
            $ref: "#/components/schemas/ConnectionReqSchema"
+    DisconnReq:
+      description: JSON-formatted document describing the entities for disconnection.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ConnectionReqSchema"
     IdentityReq:
       description: JSON-formatted document that contains thing key.
       required: true
@@ -993,6 +1025,8 @@ components:
                 type: string
                 description: Created thing's relative URL.
                 example: /things/{thingId}
+    DisconnRes:
+      description: Things disconnected.
     AccessGrantedRes:
       description: |
         Thing has access to the specified channel and the thing ID is returned.

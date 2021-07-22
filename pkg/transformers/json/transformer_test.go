@@ -17,7 +17,7 @@ import (
 const (
 	validPayload   = `{"key1": "val1", "key2": 123, "key3": "val3", "key4": {"key5": "val5"}}`
 	listPayload    = `[{"key1": "val1", "key2": 123, "keylist3": "val3", "key4": {"key5": "val5"}}, {"key1": "val1", "key2": 123, "key3": "val3", "key4": {"key5": "val5"}}]`
-	invalidPayload = `{"key1": "val1", "key2": 123, "key3/1": "val3", "key4": {"key5": "val5"}}`
+	invalidPayload = `{"key1": }`
 )
 
 func TestTransformJSON(t *testing.T) {
@@ -37,7 +37,7 @@ func TestTransformJSON(t *testing.T) {
 	listMsg := msg
 	listMsg.Payload = []byte(listPayload)
 
-	jsonMsg := json.Messages{
+	jsonMsgs := json.Messages{
 		Data: []json.Message{
 			{
 				Channel:   msg.Channel,
@@ -46,10 +46,12 @@ func TestTransformJSON(t *testing.T) {
 				Protocol:  msg.Protocol,
 				Created:   msg.Created,
 				Payload: map[string]interface{}{
-					"key1":      "val1",
-					"key2":      float64(123),
-					"key3":      "val3",
-					"key4/key5": "val5",
+					"key1": "val1",
+					"key2": float64(123),
+					"key3": "val3",
+					"key4": map[string]interface{}{
+						"key5": "val5",
+					},
 				},
 			},
 		},
@@ -68,10 +70,12 @@ func TestTransformJSON(t *testing.T) {
 				Protocol:  msg.Protocol,
 				Created:   msg.Created,
 				Payload: map[string]interface{}{
-					"key1":      "val1",
-					"key2":      float64(123),
-					"keylist3":  "val3",
-					"key4/key5": "val5",
+					"key1":     "val1",
+					"key2":     float64(123),
+					"keylist3": "val3",
+					"key4": map[string]interface{}{
+						"key5": "val5",
+					},
 				},
 			},
 			{
@@ -81,10 +85,12 @@ func TestTransformJSON(t *testing.T) {
 				Protocol:  msg.Protocol,
 				Created:   msg.Created,
 				Payload: map[string]interface{}{
-					"key1":      "val1",
-					"key2":      float64(123),
-					"key3":      "val3",
-					"key4/key5": "val5",
+					"key1": "val1",
+					"key2": float64(123),
+					"key3": "val3",
+					"key4": map[string]interface{}{
+						"key5": "val5",
+					},
 				},
 			},
 		},
@@ -100,7 +106,7 @@ func TestTransformJSON(t *testing.T) {
 		{
 			desc: "test transform JSON",
 			msg:  msg,
-			json: jsonMsg,
+			json: jsonMsgs,
 			err:  nil,
 		},
 		{

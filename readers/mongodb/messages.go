@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 
 	"github.com/mainflux/mainflux/pkg/errors"
-	jsont "github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	"github.com/mainflux/mainflux/readers"
 	"go.mongodb.org/mongo-driver/bson"
@@ -75,7 +74,6 @@ func (repo mongoRepository) ReadAll(chanID string, rpm readers.PageMetadata) (re
 			if err := cursor.Decode(&m); err != nil {
 				return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 			}
-			m["payload"] = jsont.ParseFlat(m["payload"])
 
 			messages = append(messages, m)
 		}

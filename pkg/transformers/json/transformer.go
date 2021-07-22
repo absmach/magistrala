@@ -17,9 +17,9 @@ const sep = "/"
 var keys = [...]string{"publisher", "protocol", "channel", "subtopic"}
 
 var (
-	// ErrTransform reprents an error during parsing message.
+	// ErrTransform represents an error during parsing message.
 	ErrTransform         = errors.New("unable to parse JSON object")
-	errInvalidKey        = errors.New("invalid object key")
+	ErrInvalidKey        = errors.New("invalid object key")
 	errUnknownFormat     = errors.New("unknown format of JSON message")
 	errInvalidFormat     = errors.New("invalid JSON object")
 	errInvalidNestedJSON = errors.New("invalid nested JSON object")
@@ -32,6 +32,7 @@ func New() transformers.Transformer {
 	return funcTransformer(transformer)
 }
 
+// Transform transforms Mainflux message to a list of JSON messages.
 func (fh funcTransformer) Transform(msg messaging.Message) (interface{}, error) {
 	return fh(msg)
 }
@@ -58,11 +59,7 @@ func transformer(msg messaging.Message) (interface{}, error) {
 	}
 	switch p := payload.(type) {
 	case map[string]interface{}:
-		flat, err := Flatten(p)
-		if err != nil {
-			return nil, errors.Wrap(ErrTransform, err)
-		}
-		ret.Payload = flat
+		ret.Payload = p
 		return Messages{[]Message{ret}, format}, nil
 	case []interface{}:
 		res := []Message{}
@@ -72,12 +69,8 @@ func transformer(msg messaging.Message) (interface{}, error) {
 			if !ok {
 				return nil, errors.Wrap(ErrTransform, errInvalidNestedJSON)
 			}
-			flat, err := Flatten(v)
-			if err != nil {
-				return nil, errors.Wrap(ErrTransform, err)
-			}
 			newMsg := ret
-			newMsg.Payload = flat
+			newMsg.Payload = v
 			res = append(res, newMsg)
 		}
 		return Messages{res, format}, nil
@@ -86,7 +79,7 @@ func transformer(msg messaging.Message) (interface{}, error) {
 	}
 }
 
-// ParseFlat receives flat map that reprents complex JSON objects and returns
+// ParseFlat receives flat map that represents complex JSON objects and returns
 // the corresponding complex JSON object with nested maps. It's the opposite
 // of the Flatten function.
 func ParseFlat(flat interface{}) interface{} {
@@ -97,14 +90,14 @@ func ParseFlat(flat interface{}) interface{} {
 			if value == nil {
 				continue
 			}
-			keys := strings.Split(key, sep)
-			n := len(keys)
+			subKeys := strings.Split(key, sep)
+			n := len(subKeys)
 			if n == 1 {
 				msg[key] = value
 				continue
 			}
 			current := msg
-			for i, k := range keys {
+			for i, k := range subKeys {
 				if _, ok := current[k]; !ok {
 					current[k] = make(map[string]interface{})
 				}
@@ -127,11 +120,11 @@ func Flatten(m map[string]interface{}) (map[string]interface{}, error) {
 func flatten(prefix string, m, m1 map[string]interface{}) (map[string]interface{}, error) {
 	for k, v := range m1 {
 		if strings.Contains(k, sep) {
-			return nil, errInvalidKey
+			return nil, ErrInvalidKey
 		}
 		for _, key := range keys {
 			if k == key {
-				return nil, errInvalidKey
+				return nil, ErrInvalidKey
 			}
 		}
 		switch val := v.(type) {

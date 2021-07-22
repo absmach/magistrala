@@ -10,7 +10,6 @@ import (
 	"github.com/jmoiron/sqlx" // required for DB access
 	"github.com/lib/pq"
 	"github.com/mainflux/mainflux/pkg/errors"
-	jsont "github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	"github.com/mainflux/mainflux/readers"
 )
@@ -105,7 +104,6 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 			if err != nil {
 				return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 			}
-			m["payload"] = jsont.ParseFlat(m["payload"])
 			page.Messages = append(page.Messages, m)
 		}
 

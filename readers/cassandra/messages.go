@@ -9,7 +9,6 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/mainflux/mainflux/pkg/errors"
-	jsont "github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	"github.com/mainflux/mainflux/readers"
 )
@@ -107,7 +106,6 @@ func (cr cassandraRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 			if err != nil {
 				return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 			}
-			m["payload"] = jsont.ParseFlat(m["payload"])
 			page.Messages = append(page.Messages, m)
 		}
 	}

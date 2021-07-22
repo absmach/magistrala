@@ -83,6 +83,12 @@ func (repo *influxRepo) jsonPoints(pts influxdata.BatchPoints, msgs json.Message
 	for i, m := range msgs.Data {
 		t := time.Unix(0, m.Created+int64(i))
 
+		flat, err := json.Flatten(m.Payload)
+		if err != nil {
+			return nil, errors.Wrap(json.ErrTransform, err)
+		}
+		m.Payload = flat
+
 		// Copy first-level fields so that the original Payload is unchanged.
 		fields := make(map[string]interface{})
 		for k, v := range m.Payload {

@@ -37,6 +37,7 @@ type testRequest struct {
 	contentType string
 	token       string
 	body        io.Reader
+	basicAuth   bool
 }
 
 func (tr testRequest) make() (*http.Response, error) {
@@ -44,8 +45,12 @@ func (tr testRequest) make() (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if tr.token != "" {
 		req.Header.Set("Authorization", tr.token)
+	}
+	if tr.basicAuth && tr.token != "" {
+		req.SetBasicAuth("", tr.token)
 	}
 	if tr.contentType != "" {
 		req.Header.Set("Content-Type", tr.contentType)
@@ -70,6 +75,7 @@ func TestPublish(t *testing.T) {
 		contentType string
 		auth        string
 		status      int
+		basicAuth   bool
 	}{
 		"publish message": {
 			chanID:      chanID,
@@ -85,11 +91,27 @@ func TestPublish(t *testing.T) {
 			auth:        "",
 			status:      http.StatusForbidden,
 		},
+		"publish message with basic auth": {
+			chanID:      chanID,
+			msg:         msg,
+			contentType: contentType,
+			auth:        token,
+			basicAuth:   true,
+			status:      http.StatusAccepted,
+		},
 		"publish message with invalid authorization token": {
 			chanID:      chanID,
 			msg:         msg,
 			contentType: contentType,
 			auth:        invalidToken,
+			status:      http.StatusForbidden,
+		},
+		"publish message with invalid basic auth": {
+			chanID:      chanID,
+			msg:         msg,
+			contentType: contentType,
+			auth:        invalidToken,
+			basicAuth:   true,
 			status:      http.StatusForbidden,
 		},
 		"publish message without content type": {
@@ -123,6 +145,7 @@ func TestPublish(t *testing.T) {
 			contentType: tc.contentType,
 			token:       tc.auth,
 			body:        strings.NewReader(tc.msg),
+			basicAuth:   tc.basicAuth,
 		}
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", desc, err))

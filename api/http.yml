@@ -6,6 +6,9 @@ info:
 paths:
   /channels/{id}/messages:
     post:
+      security:
+        - jwtAuth: []
+        - basicAuth: []
       summary: Sends message to the communication channel
       description: |
         Sends message to the communication channel. Messages can be sent as
@@ -13,22 +16,21 @@ paths:
       tags:
         - messages
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ID"
       requestBody:
         $ref: "#/components/requestBodies/MessageReq"
       responses:
-        '202':
+        "202":
           description: Message is accepted for processing.
-        '400':
+        "400":
           description: Message discarded due to its malformed content.
-        '403':
+        "403":
           description: Message discarded due to missing or invalid credentials.
-        '404':
+        "404":
           description: Message discarded due to invalid channel id.
-        '415':
+        "415":
           description: Message discarded due to invalid or missing content type.
-        '500':
+        "500":
           description: Unexpected server-side error occurred.
 
 components:
@@ -94,16 +96,15 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/SenMLRecord"
-
-  parameters:
-    Authorization:
-      name: Authorization
-      description: Access token.
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    jwtAuth:
+      type: apiKey
       in: header
-      schema:
-        type: string
-        format: jwt
-      required: true
+      name: Authorization
+  parameters:
     ID:
       name: id
       description: Unique channel identifier.
@@ -116,11 +117,11 @@ components:
   requestBodies:
     MessageReq:
       description: |
-          Message to be distributed. Since the platform expects messages to be
-          properly formatted SenML in order to be post-processed, clients are
-          obliged to specify Content-Type header for each published message.
-          Note that all messages that aren't SenML will be accepted and published,
-          but no post-processing will be applied.
+        Message to be distributed. Since the platform expects messages to be
+        properly formatted SenML in order to be post-processed, clients are
+        obliged to specify Content-Type header for each published message.
+        Note that all messages that aren't SenML will be accepted and published,
+        but no post-processing will be applied.
       required: true
       content:
         application/json:

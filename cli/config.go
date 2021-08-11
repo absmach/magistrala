@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path"
 
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/pelletier/go-toml"
@@ -44,36 +43,19 @@ func read(file string) (Config, error) {
 	return c, nil
 }
 
-func getConfigPath() (string, error) {
-	// Check if a config path passed by user exists.
-	if ConfigPath != "" {
-		if _, err := os.Stat(ConfigPath); os.IsNotExist(err) {
-			errConfigNotFound := errors.Wrap(errors.New("config file was not found"), err)
-			logError(errConfigNotFound)
-			return "", err
-		}
-	}
-
-	// If not, then read it from the user config directory.
-	if ConfigPath == "" {
-		userConfigDir, _ := os.UserConfigDir()
-		ConfigPath = path.Join(userConfigDir, "mainflux", "cli.toml")
-	}
-
-	if _, err := os.Stat(ConfigPath); os.IsNotExist(err) {
-		return "", err
-	}
-
-	return ConfigPath, nil
-}
-
 func ParseConfig() {
-	path, err := getConfigPath()
-	if err != nil {
+	if ConfigPath == "" {
+		// No config file
 		return
 	}
 
-	config, err := read(path)
+	if _, err := os.Stat(ConfigPath); os.IsNotExist(err) {
+		errConfigNotFound := errors.Wrap(errors.New("config file was not found"), err)
+		logError(errConfigNotFound)
+		return
+	}
+
+	config, err := read(ConfigPath)
 	if err != nil {
 		log.Fatal(err)
 	}

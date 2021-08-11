@@ -29,7 +29,8 @@ func (sdk mfSDK) IssueCert(thingID string, keyBits int, keyType, valid, token st
 	if err != nil {
 		return Cert{}, err
 	}
-	url := createURL(sdk.certsURL, sdk.certsPrefix, certsEndpoint)
+
+	url := fmt.Sprintf("%s/%s", sdk.certsURL, certsEndpoint)
 	res, err := request(http.MethodPost, token, url, d)
 	if err != nil {
 		return Cert{}, err

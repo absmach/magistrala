@@ -25,8 +25,8 @@ const (
 	defTLS             = "false"
 	defServerCert      = ""
 	defServerKey       = ""
-	defThingsLocation  = "http://localhost"
-	defUsersLocation   = "http://localhost"
+	defThingsURL       = "http://localhost"
+	defUsersURL        = "http://localhost"
 	defHTTPPort        = "8190"
 	defMfUser          = "test@example.com"
 	defMfPass          = "test"
@@ -47,8 +47,8 @@ const (
 	envTLS              = "MF_PROVISION_ENV_CLIENTS_TLS"
 	envServerCert       = "MF_PROVISION_SERVER_CERT"
 	envServerKey        = "MF_PROVISION_SERVER_KEY"
-	envUsersLocation    = "MF_PROVISION_USERS_LOCATION"
-	envThingsLocation   = "MF_PROVISION_THINGS_LOCATION"
+	envUsersURL         = "MF_PROVISION_USERS_LOCATION"
+	envThingsURL        = "MF_PROVISION_THINGS_LOCATION"
 	envMfUser           = "MF_PROVISION_USER"
 	envMfPass           = "MF_PROVISION_PASS"
 	envMfAPIKey         = "MF_PROVISION_API_KEY"
@@ -61,6 +61,8 @@ const (
 	envBSContent        = "MF_PROVISION_BS_CONTENT"
 	envCertsHoursValid  = "MF_PROVISION_CERTS_HOURS_VALID"
 	envCertsKeyBits     = "MF_PROVISION_CERTS_RSA_BITS"
+
+	contentType = "application/json"
 )
 
 var (
@@ -93,12 +95,11 @@ func main() {
 	}
 
 	SDKCfg := mfSDK.Config{
-		BaseURL:           cfg.Server.ThingsLocation,
-		BootstrapURL:      cfg.Server.MfBSURL,
-		CertsURL:          cfg.Server.MfCertsURL,
-		HTTPAdapterPrefix: "http",
-		MsgContentType:    "application/json",
-		TLSVerification:   cfg.Server.TLS,
+		ThingsURL:       cfg.Server.ThingsURL,
+		BootstrapURL:    cfg.Server.MfBSURL,
+		CertsURL:        cfg.Server.MfCertsURL,
+		MsgContentType:  contentType,
+		TLSVerification: cfg.Server.TLS,
 	}
 	SDK := mfSDK.NewSDK(SDKCfg)
 
@@ -188,8 +189,8 @@ func loadConfig() (provision.Config, error) {
 			MfUser:         mainflux.Env(envMfUser, defMfUser),
 			MfPass:         mainflux.Env(envMfPass, defMfPass),
 			MfAPIKey:       mainflux.Env(envMfAPIKey, defMfAPIKey),
-			ThingsLocation: mainflux.Env(envThingsLocation, defThingsLocation),
-			UsersLocation:  mainflux.Env(envUsersLocation, defUsersLocation),
+			ThingsURL:      mainflux.Env(envThingsURL, defThingsURL),
+			UsersURL:       mainflux.Env(envUsersURL, defUsersURL),
 			TLS:            tls,
 		},
 		Certs: provision.Certs{

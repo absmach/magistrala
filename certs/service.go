@@ -58,8 +58,7 @@ type Config struct {
 	HTTPPort       string
 	ServerCert     string
 	ServerKey      string
-	BaseURL        string
-	ThingsPrefix   string
+	CertsURL       string
 	JaegerURL      string
 	AuthURL        string
 	AuthTimeout    time.Duration

@@ -72,25 +72,23 @@ func (cr configRepository) Save(cfg bootstrap.Config, chsConnIDs []string) (stri
 			e = bootstrap.ErrConflict
 		}
 
-		cr.rollback("Failed to insert a Config", tx, err)
-
+		cr.rollback("Failed to insert a Config", tx)
 		return "", errors.Wrap(errSaveDB, e)
 	}
 
 	if err := insertChannels(cfg.Owner, cfg.MFChannels, tx); err != nil {
-		cr.rollback("Failed to insert Channels", tx, err)
-
+		cr.rollback("Failed to insert Channels", tx)
 		return "", errors.Wrap(errSaveChannels, err)
 	}
 
 	if err := insertConnections(cfg, chsConnIDs, tx); err != nil {
-		cr.rollback("Failed to insert connections", tx, err)
-
+		cr.rollback("Failed to insert connections", tx)
 		return "", errors.Wrap(errSaveConnections, err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		cr.rollback("Failed to commit Config save", tx, err)
+		cr.rollback("Failed to commit Config save", tx)
+		return "", err
 	}
 
 	return cfg.MFThing, nil
@@ -296,8 +294,7 @@ func (cr configRepository) UpdateConnections(owner, id string, channels []bootst
 	}
 
 	if err := insertChannels(owner, channels, tx); err != nil {
-		cr.rollback("Failed to insert Channels during the update", tx, err)
-
+		cr.rollback("Failed to insert Channels during the update", tx)
 		return err
 	}
 
@@ -307,13 +304,13 @@ func (cr configRepository) UpdateConnections(owner, id string, channels []bootst
 				return bootstrap.ErrNotFound
 			}
 		}
-		cr.rollback("Failed to update connections during the update", tx, err)
-
+		cr.rollback("Failed to update connections during the update", tx)
 		return err
 	}
 
 	if err := tx.Commit(); err != nil {
-		cr.rollback("Failed to commit Config update", tx, err)
+		cr.rollback("Failed to commit Config update", tx)
+		return err
 	}
 
 	return nil
@@ -449,9 +446,7 @@ func (cr configRepository) retrieveAll(owner string, filter bootstrap.Filter) (s
 	return fmt.Sprintf(template, f), params
 }
 
-func (cr configRepository) rollback(content string, tx *sqlx.Tx, err error) {
-	cr.log.Error(fmt.Sprintf("%s %s", content, err))
-
+func (cr configRepository) rollback(content string, tx *sqlx.Tx) {
 	if err := tx.Rollback(); err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to rollback due to %s", err))
 	}

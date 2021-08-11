@@ -160,7 +160,7 @@ func dec(in []byte) ([]byte, error) {
 func newService(auth mainflux.AuthServiceClient, url string) bootstrap.Service {
 	things := mocks.NewConfigsRepository()
 	config := mfsdk.Config{
-		BaseURL: url,
+		ThingsURL: url,
 	}
 
 	sdk := mfsdk.NewSDK(config)
@@ -200,10 +200,10 @@ func toJSON(data interface{}) string {
 }
 
 func TestAdd(t *testing.T) {
-	users := mocks.NewUsersService(map[string]string{validToken: email})
+	auth := mocks.NewAuthClient(map[string]string{validToken: email})
 
-	ts := newThingsServer(newThingsService(users))
-	svc := newService(users, ts.URL)
+	ts := newThingsServer(newThingsService(auth))
+	svc := newService(auth, ts.URL)
 	bs := newBootstrapServer(svc)
 
 	data := toJSON(addReq)
@@ -314,6 +314,7 @@ func TestAdd(t *testing.T) {
 			token:       tc.auth,
 			body:        strings.NewReader(tc.req),
 		}
+
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 
@@ -324,10 +325,10 @@ func TestAdd(t *testing.T) {
 }
 
 func TestView(t *testing.T) {
-	users := mocks.NewUsersService(map[string]string{validToken: email})
+	auth := mocks.NewAuthClient(map[string]string{validToken: email})
 
-	ts := newThingsServer(newThingsService(users))
-	svc := newService(users, ts.URL)
+	ts := newThingsServer(newThingsService(auth))
+	svc := newService(auth, ts.URL)
 	bs := newBootstrapServer(svc)
 	c := newConfig([]bootstrap.Channel{})
 
@@ -421,13 +422,13 @@ func TestView(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	users := mocks.NewUsersService(map[string]string{validToken: email})
+	auth := mocks.NewAuthClient(map[string]string{validToken: email})
 
-	ts := newThingsServer(newThingsService(users))
-	svc := newService(users, ts.URL)
+	ts := newThingsServer(newThingsService(auth))
+	svc := newService(auth, ts.URL)
 	bs := newBootstrapServer(svc)
 
-	c := newConfig([]bootstrap.Channel{bootstrap.Channel{ID: "1"}})
+	c := newConfig([]bootstrap.Channel{{ID: "1"}})
 
 	saved, err := svc.Add(context.Background(), validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
@@ -515,13 +516,13 @@ func TestUpdate(t *testing.T) {
 	}
 }
 func TestUpdateCert(t *testing.T) {
-	users := mocks.NewUsersService(map[string]string{validToken: email})
+	auth := mocks.NewAuthClient(map[string]string{validToken: email})
 
-	ts := newThingsServer(newThingsService(users))
-	svc := newService(users, ts.URL)
+	ts := newThingsServer(newThingsService(auth))
+	svc := newService(auth, ts.URL)
 	bs := newBootstrapServer(svc)
 
-	c := newConfig([]bootstrap.Channel{bootstrap.Channel{ID: "1"}})
+	c := newConfig([]bootstrap.Channel{{ID: "1"}})
 
 	saved, err := svc.Add(context.Background(), validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
@@ -610,13 +611,13 @@ func TestUpdateCert(t *testing.T) {
 }
 
 func TestUpdateConnections(t *testing.T) {
-	users := mocks.NewUsersService(map[string]string{validToken: email})
+	auth := mocks.NewAuthClient(map[string]string{validToken: email})
 
-	ts := newThingsServer(newThingsService(users))
-	svc := newService(users, ts.URL)
+	ts := newThingsServer(newThingsService(auth))
+	svc := newService(auth, ts.URL)
 	bs := newBootstrapServer(svc)
 
-	c := newConfig([]bootstrap.Channel{bootstrap.Channel{ID: "1"}})
+	c := newConfig([]bootstrap.Channel{{ID: "1"}})
 
 	saved, err := svc.Add(context.Background(), validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
@@ -723,13 +724,13 @@ func TestList(t *testing.T) {
 	var active, inactive []config
 	list := make([]config, configNum)
 
-	users := mocks.NewUsersService(map[string]string{validToken: email})
-	ts := newThingsServer(newThingsService(users))
-	svc := newService(users, ts.URL)
+	auth := mocks.NewAuthClient(map[string]string{validToken: email})
+	ts := newThingsServer(newThingsService(auth))
+	svc := newService(auth, ts.URL)
 	bs := newBootstrapServer(svc)
 	path := fmt.Sprintf("%s/%s", bs.URL, "things/configs")
 
-	c := newConfig([]bootstrap.Channel{bootstrap.Channel{ID: "1"}})
+	c := newConfig([]bootstrap.Channel{{ID: "1"}})
 
 	for i := 0; i < configNum; i++ {
 		c.ExternalID = strconv.Itoa(i)
@@ -971,13 +972,13 @@ func TestList(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	users := mocks.NewUsersService(map[string]string{validToken: email})
+	auth := mocks.NewAuthClient(map[string]string{validToken: email})
 
-	ts := newThingsServer(newThingsService(users))
-	svc := newService(users, ts.URL)
+	ts := newThingsServer(newThingsService(auth))
+	svc := newService(auth, ts.URL)
 	bs := newBootstrapServer(svc)
 
-	c := newConfig([]bootstrap.Channel{bootstrap.Channel{ID: "1"}})
+	c := newConfig([]bootstrap.Channel{{ID: "1"}})
 
 	saved, err := svc.Add(context.Background(), validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
@@ -1033,13 +1034,13 @@ func TestRemove(t *testing.T) {
 }
 
 func TestBootstrap(t *testing.T) {
-	users := mocks.NewUsersService(map[string]string{validToken: email})
+	auth := mocks.NewAuthClient(map[string]string{validToken: email})
 
-	ts := newThingsServer(newThingsService(users))
-	svc := newService(users, ts.URL)
+	ts := newThingsServer(newThingsService(auth))
+	svc := newService(auth, ts.URL)
 	bs := newBootstrapServer(svc)
 
-	c := newConfig([]bootstrap.Channel{bootstrap.Channel{ID: "1"}})
+	c := newConfig([]bootstrap.Channel{{ID: "1"}})
 
 	saved, err := svc.Add(context.Background(), validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
@@ -1161,13 +1162,13 @@ func TestBootstrap(t *testing.T) {
 }
 
 func TestChangeState(t *testing.T) {
-	users := mocks.NewUsersService(map[string]string{validToken: email})
+	auth := mocks.NewAuthClient(map[string]string{validToken: email})
 
-	ts := newThingsServer(newThingsService(users))
-	svc := newService(users, ts.URL)
+	ts := newThingsServer(newThingsService(auth))
+	svc := newService(auth, ts.URL)
 	bs := newBootstrapServer(svc)
 
-	c := newConfig([]bootstrap.Channel{bootstrap.Channel{ID: "1"}})
+	c := newConfig([]bootstrap.Channel{{ID: "1"}})
 
 	saved, err := svc.Add(context.Background(), validToken, c)
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))

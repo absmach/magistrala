@@ -43,15 +43,14 @@ const (
 	key        = "rsa"
 	certNum    = 10
 
-	cfgLogLevel     = "error"
-	cfgClientTLS    = false
-	cfgServerCert   = ""
-	cfgServerKey    = ""
-	cfgBaseURL      = "http://localhost"
-	cfgThingsPrefix = ""
-	cfgJaegerURL    = ""
-	cfgAuthURL      = "localhost:8181"
-	cfgAuthTimeout  = "1s"
+	cfgLogLevel    = "error"
+	cfgClientTLS   = false
+	cfgServerCert  = ""
+	cfgServerKey   = ""
+	cfgCertsURL    = "http://localhost"
+	cfgJaegerURL   = ""
+	cfgAuthURL     = "localhost:8181"
+	cfgAuthTimeout = "1s"
 
 	caPath            = "../docker/ssl/certs/ca.crt"
 	caKeyPath         = "../docker/ssl/certs/ca.key"
@@ -60,12 +59,12 @@ const (
 )
 
 func newService(tokens map[string]string) (certs.Service, error) {
-	users := bsmocks.NewUsersService(map[string]string{token: email})
-	server := newThingsServer(newThingsService(users))
+	ac := bsmocks.NewAuthClient(map[string]string{token: email})
+	server := newThingsServer(newThingsService(ac))
 
 	auth := thmocks.NewAuthService(tokens)
 	config := mfsdk.Config{
-		BaseURL: server.URL,
+		ThingsURL: server.URL,
 	}
 
 	sdk := mfsdk.NewSDK(config)
@@ -86,8 +85,7 @@ func newService(tokens map[string]string) (certs.Service, error) {
 		ClientTLS:      cfgClientTLS,
 		ServerCert:     cfgServerCert,
 		ServerKey:      cfgServerKey,
-		BaseURL:        cfgBaseURL,
-		ThingsPrefix:   cfgThingsPrefix,
+		CertsURL:       cfgCertsURL,
 		JaegerURL:      cfgJaegerURL,
 		AuthURL:        cfgAuthURL,
 		SignTLSCert:    tlsCert,

@@ -38,13 +38,9 @@ func TestSendMessage(t *testing.T) {
 	ts := newMessageServer(pub)
 	defer ts.Close()
 	sdkConf := sdk.Config{
-		BaseURL:           ts.URL,
-		UsersPrefix:       "",
-		GroupsPrefix:      "",
-		ThingsPrefix:      "",
-		HTTPAdapterPrefix: "",
-		MsgContentType:    contentType,
-		TLSVerification:   false,
+		HTTPAdapterURL:  ts.URL,
+		MsgContentType:  contentType,
+		TLSVerification: false,
 	}
 
 	mainfluxSDK := sdk.NewSDK(sdkConf)
@@ -108,13 +104,9 @@ func TestSetContentType(t *testing.T) {
 	defer ts.Close()
 
 	sdkConf := sdk.Config{
-		BaseURL:           ts.URL,
-		UsersPrefix:       "",
-		GroupsPrefix:      "",
-		ThingsPrefix:      "",
-		HTTPAdapterPrefix: "",
-		MsgContentType:    contentType,
-		TLSVerification:   false,
+		HTTPAdapterURL:  ts.URL,
+		MsgContentType:  contentType,
+		TLSVerification: false,
 	}
 	mainfluxSDK := sdk.NewSDK(sdkConf)
 

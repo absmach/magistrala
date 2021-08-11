@@ -52,8 +52,7 @@ func (sdk mfSDK) AddBootstrap(token string, cfg BootstrapConfig) (string, error)
 		return "", err
 	}
 
-	url := createURL(sdk.bootstrapURL, sdk.bootstrapPrefix, configsEndpoint)
-
+	url := fmt.Sprintf("%s/%s", sdk.bootstrapURL, configsEndpoint)
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
 	if err != nil {
 		return "", err
@@ -83,9 +82,7 @@ func (sdk mfSDK) Whitelist(token string, cfg BootstrapConfig) error {
 		return ErrFailedWhitelist
 	}
 
-	endpoint := fmt.Sprintf("%s/%s", whitelistEndpoint, cfg.MFThing)
-	url := createURL(sdk.bootstrapURL, sdk.bootstrapPrefix, endpoint)
-
+	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, whitelistEndpoint, cfg.MFThing)
 	req, err := http.NewRequest(http.MethodPut, url, bytes.NewReader(data))
 	if err != nil {
 		return errors.Wrap(ErrFailedWhitelist, err)
@@ -105,9 +102,7 @@ func (sdk mfSDK) Whitelist(token string, cfg BootstrapConfig) error {
 }
 
 func (sdk mfSDK) ViewBootstrap(token, id string) (BootstrapConfig, error) {
-	endpoint := fmt.Sprintf("%s/%s", configsEndpoint, id)
-	url := createURL(sdk.bootstrapURL, sdk.bootstrapPrefix, endpoint)
-
+	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, configsEndpoint, id)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return BootstrapConfig{}, err
@@ -142,9 +137,7 @@ func (sdk mfSDK) UpdateBootstrap(token string, cfg BootstrapConfig) error {
 		return err
 	}
 
-	endpoint := fmt.Sprintf("%s/%s", configsEndpoint, cfg.MFThing)
-	url := createURL(sdk.bootstrapURL, sdk.bootstrapPrefix, endpoint)
-
+	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, configsEndpoint, cfg.MFThing)
 	req, err := http.NewRequest(http.MethodPut, url, bytes.NewReader(data))
 	if err != nil {
 		return err
@@ -162,8 +155,7 @@ func (sdk mfSDK) UpdateBootstrap(token string, cfg BootstrapConfig) error {
 	return nil
 }
 func (sdk mfSDK) UpdateBootstrapCerts(token, id, clientCert, clientKey, ca string) error {
-	endpoint := fmt.Sprintf("%s/%s", bootstrapCertsEndpoint, id)
-	url := createURL(sdk.bootstrapURL, sdk.bootstrapPrefix, endpoint)
+	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, bootstrapCertsEndpoint, id)
 	request := ConfigUpdateCertReq{
 		ClientCert: clientCert,
 		ClientKey:  clientKey,
@@ -192,9 +184,7 @@ func (sdk mfSDK) UpdateBootstrapCerts(token, id, clientCert, clientKey, ca strin
 }
 
 func (sdk mfSDK) RemoveBootstrap(token, id string) error {
-	endpoint := fmt.Sprintf("%s/%s", configsEndpoint, id)
-	url := createURL(sdk.bootstrapURL, sdk.bootstrapPrefix, endpoint)
-
+	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, configsEndpoint, id)
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
 		return err
@@ -213,9 +203,7 @@ func (sdk mfSDK) RemoveBootstrap(token, id string) error {
 }
 
 func (sdk mfSDK) Bootstrap(externalKey, externalID string) (BootstrapConfig, error) {
-	endpoint := fmt.Sprintf("%s/%s", bootstrapEndpoint, externalID)
-	url := createURL(sdk.bootstrapURL, sdk.bootstrapPrefix, endpoint)
-
+	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, bootstrapEndpoint, externalID)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return BootstrapConfig{}, err

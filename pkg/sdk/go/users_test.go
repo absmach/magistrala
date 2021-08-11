@@ -19,6 +19,7 @@ import (
 	"github.com/mainflux/mainflux/users/mocks"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -49,13 +50,9 @@ func TestCreateUser(t *testing.T) {
 	ts := newUserServer(svc)
 	defer ts.Close()
 	sdkConf := sdk.Config{
-		BaseURL:           ts.URL,
-		UsersPrefix:       "",
-		GroupsPrefix:      "",
-		ThingsPrefix:      "",
-		HTTPAdapterPrefix: "",
-		MsgContentType:    contentType,
-		TLSVerification:   false,
+		UsersURL:        ts.URL,
+		MsgContentType:  contentType,
+		TLSVerification: false,
 	}
 
 	mainfluxSDK := sdk.NewSDK(sdkConf)
@@ -113,13 +110,9 @@ func TestCreateToken(t *testing.T) {
 	ts := newUserServer(svc)
 	defer ts.Close()
 	sdkConf := sdk.Config{
-		BaseURL:           ts.URL,
-		UsersPrefix:       "",
-		GroupsPrefix:      "",
-		ThingsPrefix:      "",
-		HTTPAdapterPrefix: "",
-		MsgContentType:    contentType,
-		TLSVerification:   false,
+		UsersURL:        ts.URL,
+		MsgContentType:  contentType,
+		TLSVerification: false,
 	}
 
 	mainfluxSDK := sdk.NewSDK(sdkConf)
@@ -127,7 +120,8 @@ func TestCreateToken(t *testing.T) {
 	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email})
 	tkn, _ := auth.Issue(context.Background(), &mainflux.IssueReq{Id: user.ID, Email: user.Email, Type: 0})
 	token := tkn.GetValue()
-	mainfluxSDK.CreateUser(user)
+	_, err := mainfluxSDK.CreateUser(user)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	cases := []struct {
 		desc  string
 		user  sdk.User

@@ -6,7 +6,6 @@ package sdk
 import (
 	"crypto/tls"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/mainflux/mainflux/auth"
@@ -22,8 +21,6 @@ const (
 	// CTBinary represents binary content type.
 	CTBinary ContentType = "application/octet-stream"
 )
-
-const minPassLen = 8
 
 var (
 	// ErrUnauthorized indicates that entity creation failed.
@@ -258,52 +255,44 @@ type SDK interface {
 }
 
 type mfSDK struct {
-	baseURL           string
-	readerURL         string
-	bootstrapURL      string
-	certsURL          string
-	readerPrefix      string
-	usersPrefix       string
-	groupsPrefix      string
-	thingsPrefix      string
-	certsPrefix       string
-	channelsPrefix    string
-	httpAdapterPrefix string
-	bootstrapPrefix   string
-	msgContentType    ContentType
-	client            *http.Client
+	authURL        string
+	bootstrapURL   string
+	certsURL       string
+	httpAdapterURL string
+	readerURL      string
+	thingsURL      string
+	usersURL       string
+
+	msgContentType ContentType
+	client         *http.Client
 }
 
 // Config contains sdk configuration parameters.
 type Config struct {
-	BaseURL           string
-	ReaderURL         string
-	BootstrapURL      string
-	CertsURL          string
-	ReaderPrefix      string
-	UsersPrefix       string
-	GroupsPrefix      string
-	ThingsPrefix      string
-	HTTPAdapterPrefix string
-	BootstrapPrefix   string
-	MsgContentType    ContentType
-	TLSVerification   bool
+	AuthURL        string
+	BootstrapURL   string
+	CertsURL       string
+	HTTPAdapterURL string
+	ReaderURL      string
+	ThingsURL      string
+	UsersURL       string
+
+	MsgContentType  ContentType
+	TLSVerification bool
 }
 
 // NewSDK returns new mainflux SDK instance.
 func NewSDK(conf Config) SDK {
 	return &mfSDK{
-		baseURL:           conf.BaseURL,
-		readerURL:         conf.ReaderURL,
-		bootstrapURL:      conf.BootstrapURL,
-		certsURL:          conf.CertsURL,
-		readerPrefix:      conf.ReaderPrefix,
-		usersPrefix:       conf.UsersPrefix,
-		groupsPrefix:      conf.GroupsPrefix,
-		thingsPrefix:      conf.ThingsPrefix,
-		httpAdapterPrefix: conf.HTTPAdapterPrefix,
-		bootstrapPrefix:   conf.BootstrapPrefix,
-		msgContentType:    conf.MsgContentType,
+		authURL:        conf.AuthURL,
+		bootstrapURL:   conf.BootstrapURL,
+		certsURL:       conf.CertsURL,
+		httpAdapterURL: conf.HTTPAdapterURL,
+		readerURL:      conf.ReaderURL,
+		thingsURL:      conf.ThingsURL,
+		usersURL:       conf.UsersURL,
+
+		msgContentType: conf.MsgContentType,
 		client: &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
@@ -324,12 +313,4 @@ func (sdk mfSDK) sendRequest(req *http.Request, token, contentType string) (*htt
 	}
 
 	return sdk.client.Do(req)
-}
-
-func createURL(baseURL, prefix, endpoint string) string {
-	if prefix == "" {
-		return fmt.Sprintf("%s/%s", baseURL, endpoint)
-	}
-
-	return fmt.Sprintf("%s/%s/%s", baseURL, prefix, endpoint)
 }

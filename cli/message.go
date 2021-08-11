@@ -5,10 +5,8 @@ package cli
 
 import "github.com/spf13/cobra"
 
-const contentTypeSenml = "application/senml+json"
-
 var cmdMessages = []cobra.Command{
-	cobra.Command{
+	{
 		Use:   "send",
 		Short: "send <channel_id>[.<subtopic>...] <JSON_string> <thing_key>",
 		Long:  `Sends message on the channel`,
@@ -26,7 +24,7 @@ var cmdMessages = []cobra.Command{
 			logOK()
 		},
 	},
-	cobra.Command{
+	{
 		Use:   "read",
 		Short: "read <channel_id>[.<subtopic>...] <thing_key>",
 		Long:  `Reads all channel messages`,

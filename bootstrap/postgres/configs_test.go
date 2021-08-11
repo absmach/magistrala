@@ -26,8 +26,8 @@ var (
 		ExternalKey: "external-key",
 		Owner:       "user@email.com",
 		MFChannels: []bootstrap.Channel{
-			bootstrap.Channel{ID: "1", Name: "name 1", Metadata: map[string]interface{}{"meta": 1.0}},
-			bootstrap.Channel{ID: "2", Name: "name 2", Metadata: map[string]interface{}{"meta": 2.0}},
+			{ID: "1", Name: "name 1", Metadata: map[string]interface{}{"meta": 1.0}},
+			{ID: "2", Name: "name 2", Metadata: map[string]interface{}{"meta": 2.0}},
 		},
 		Content: "content",
 		State:   bootstrap.Inactive,

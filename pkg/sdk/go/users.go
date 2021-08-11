@@ -27,8 +27,7 @@ func (sdk mfSDK) CreateUser(u User) (string, error) {
 		return "", err
 	}
 
-	url := createURL(sdk.baseURL, sdk.usersPrefix, usersEndpoint)
-
+	url := fmt.Sprintf("%s/%s", sdk.usersURL, usersEndpoint)
 	resp, err := sdk.client.Post(url, string(CTJSON), bytes.NewReader(data))
 	if err != nil {
 		return "", err
@@ -43,8 +42,7 @@ func (sdk mfSDK) CreateUser(u User) (string, error) {
 }
 
 func (sdk mfSDK) User(token string) (User, error) {
-	url := createURL(sdk.baseURL, sdk.usersPrefix, usersEndpoint)
-
+	url := fmt.Sprintf("%s/%s", sdk.usersURL, usersEndpoint)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return User{}, err
@@ -79,8 +77,7 @@ func (sdk mfSDK) CreateToken(user User) (string, error) {
 		return "", err
 	}
 
-	url := createURL(sdk.baseURL, sdk.usersPrefix, tokensEndpoint)
-
+	url := fmt.Sprintf("%s/%s", sdk.usersURL, tokensEndpoint)
 	resp, err := sdk.client.Post(url, string(CTJSON), bytes.NewReader(data))
 	if err != nil {
 		return "", err
@@ -110,8 +107,7 @@ func (sdk mfSDK) UpdateUser(u User, token string) error {
 		return err
 	}
 
-	url := createURL(sdk.baseURL, sdk.usersPrefix, usersEndpoint)
-
+	url := fmt.Sprintf("%s/%s", sdk.usersURL, usersEndpoint)
 	req, err := http.NewRequest(http.MethodPut, url, bytes.NewReader(data))
 	if err != nil {
 		return err
@@ -139,8 +135,7 @@ func (sdk mfSDK) UpdatePassword(oldPass, newPass, token string) error {
 		return err
 	}
 
-	url := createURL(sdk.baseURL, sdk.usersPrefix, passwordEndpoint)
-
+	url := fmt.Sprintf("%s/%s", sdk.usersURL, passwordEndpoint)
 	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewReader(data))
 	if err != nil {
 		return err

@@ -18,9 +18,8 @@ type ServiceConf struct {
 	TLS            bool   `toml:"tls"`
 	ServerCert     string `toml:"server_cert"`
 	ServerKey      string `toml:"server_key"`
-	ThingsLocation string `toml:"things_location"`
-	UsersLocation  string `toml:"users_location"`
-	MQTTURL        string `toml:"mqtt_url"`
+	ThingsURL      string `toml:"things_url"`
+	UsersURL       string `toml:"users_url"`
 	HTTPPort       string `toml:"http_port"`
 	MfUser         string `toml:"mf_user"`
 	MfPass         string `toml:"mf_pass"`

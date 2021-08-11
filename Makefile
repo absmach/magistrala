@@ -102,12 +102,3 @@ rundev:
 run:
 	docker-compose -f docker/docker-compose.yml up
 
-runlora:
-	docker-compose \
-		-f docker/docker-compose.yml \
-		-f docker/addons/influxdb-writer/docker-compose.yml \
-		-f docker/addons/lora-adapter/docker-compose.yml up \
-
-# Run all Mainflux core services except distributed tracing system - Jaeger. Recommended on gateways:
-rungw:
-	MF_JAEGER_URL= docker-compose -f docker/docker-compose.yml up --scale jaeger=0

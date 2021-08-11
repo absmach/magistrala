@@ -269,8 +269,7 @@ func newService(auth mainflux.AuthServiceClient, db *sqlx.DB, logger mflog.Logge
 	thingsRepo := postgres.NewConfigRepository(db, logger)
 
 	config := mfsdk.Config{
-		BaseURL:      cfg.baseURL,
-		ThingsPrefix: cfg.thingsPrefix,
+		BootstrapURL: cfg.baseURL,
 	}
 
 	sdk := mfsdk.NewSDK(config)

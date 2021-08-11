@@ -4,6 +4,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/mainflux/mainflux/cli"
@@ -11,21 +12,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const defURL string = "http://localhost"
+
 func main() {
 	msgContentType := string(sdk.CTJSONSenML)
 	sdkConf := sdk.Config{
-		BaseURL:           "http://localhost",
-		ReaderURL:         "http://localhost:8905",
-		BootstrapURL:      "http://localhost:8202",
-		CertsURL:          "http://localhost:8204",
-		ReaderPrefix:      "",
-		UsersPrefix:       "",
-		GroupsPrefix:      "",
-		ThingsPrefix:      "",
-		HTTPAdapterPrefix: "http",
-		BootstrapPrefix:   "things",
-		MsgContentType:    sdk.ContentType(msgContentType),
-		TLSVerification:   false,
+		AuthURL:         defURL,
+		ThingsURL:       defURL,
+		UsersURL:        defURL,
+		ReaderURL:       defURL,
+		HTTPAdapterURL:  fmt.Sprintf("%s/http", defURL),
+		BootstrapURL:    defURL,
+		CertsURL:        defURL,
+		MsgContentType:  sdk.ContentType(msgContentType),
+		TLSVerification: false,
 	}
 
 	// Root
@@ -64,49 +64,57 @@ func main() {
 
 	// Root Flags
 	rootCmd.PersistentFlags().StringVarP(
-		&sdkConf.BaseURL,
-		"mainflux-url",
-		"m",
-		sdkConf.BaseURL,
-		"Mainflux host URL",
-	)
-
-	rootCmd.PersistentFlags().StringVarP(
-		&sdkConf.UsersPrefix,
-		"users-prefix",
-		"u",
-		sdkConf.UsersPrefix,
-		"Mainflux users service prefix",
-	)
-
-	rootCmd.PersistentFlags().StringVarP(
-		&sdkConf.ThingsPrefix,
-		"things-prefix",
-		"t",
-		sdkConf.ThingsPrefix,
-		"Mainflux things service prefix",
-	)
-
-	rootCmd.PersistentFlags().StringVarP(
-		&sdkConf.GroupsPrefix,
-		"groups-prefix",
-		"g",
-		sdkConf.GroupsPrefix,
-		"Mainflux groups service prefix",
-	)
-
-	rootCmd.PersistentFlags().StringVarP(
-		&sdkConf.HTTPAdapterPrefix,
-		"http-prefix",
+		&sdkConf.AuthURL,
+		"auth-url",
 		"a",
-		sdkConf.HTTPAdapterPrefix,
-		"Mainflux http adapter prefix",
+		sdkConf.AuthURL,
+		"Mainflux Auth URL",
+	)
+
+	rootCmd.PersistentFlags().StringVarP(
+		&sdkConf.BootstrapURL,
+		"bootstrap-url",
+		"b",
+		sdkConf.BootstrapURL,
+		"Mainflux Bootstrap URL",
+	)
+
+	rootCmd.PersistentFlags().StringVarP(
+		&sdkConf.CertsURL,
+		"certs-url",
+		"e",
+		sdkConf.CertsURL,
+		"Mainflux Certs URL",
+	)
+
+	rootCmd.PersistentFlags().StringVarP(
+		&sdkConf.ThingsURL,
+		"things-url",
+		"t",
+		sdkConf.ThingsURL,
+		"Mainflux Things URL",
+	)
+
+	rootCmd.PersistentFlags().StringVarP(
+		&sdkConf.UsersURL,
+		"users-url",
+		"u",
+		sdkConf.UsersURL,
+		"Mainflux Users URL",
+	)
+
+	rootCmd.PersistentFlags().StringVarP(
+		&sdkConf.HTTPAdapterURL,
+		"http-url",
+		"p",
+		sdkConf.HTTPAdapterURL,
+		"Mainflux message content type",
 	)
 
 	rootCmd.PersistentFlags().StringVarP(
 		&msgContentType,
 		"content-type",
-		"c",
+		"y",
 		msgContentType,
 		"Mainflux message content type",
 	)
@@ -119,17 +127,19 @@ func main() {
 		"Do not check for TLS cert",
 	)
 
-	rootCmd.PersistentFlags().StringVar(
+	rootCmd.PersistentFlags().StringVarP(
 		&cli.ConfigPath,
 		"config",
-		"",
+		"c",
+		cli.ConfigPath,
 		"Mainflux config path",
 	)
 
-	rootCmd.PersistentFlags().BoolVar(
+	rootCmd.PersistentFlags().BoolVarP(
 		&cli.RawOutput,
 		"raw",
-		false,
+		"r",
+		cli.RawOutput,
 		"Enables raw output mode for easier parsing of output",
 	)
 

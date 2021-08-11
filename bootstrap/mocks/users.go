@@ -18,8 +18,8 @@ type serviceMock struct {
 	users map[string]string
 }
 
-// NewUsersService creates mock of users service.
-func NewUsersService(users map[string]string) mainflux.AuthServiceClient {
+// NewAuthClient creates mock of users service.
+func NewAuthClient(users map[string]string) mainflux.AuthServiceClient {
 	return &serviceMock{users}
 }
 

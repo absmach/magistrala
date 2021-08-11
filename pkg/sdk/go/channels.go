@@ -22,7 +22,7 @@ func (sdk mfSDK) CreateChannel(c Channel, token string) (string, error) {
 		return "", err
 	}
 
-	url := createURL(sdk.baseURL, sdk.thingsPrefix, channelsEndpoint)
+	url := fmt.Sprintf("%s/%s", sdk.thingsURL, channelsEndpoint)
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
 	if err != nil {
 		return "", err
@@ -47,9 +47,7 @@ func (sdk mfSDK) CreateChannels(chs []Channel, token string) ([]Channel, error) 
 		return []Channel{}, err
 	}
 
-	endpoint := fmt.Sprintf("%s/%s", channelsEndpoint, "bulk")
-	url := createURL(sdk.baseURL, sdk.channelsPrefix, endpoint)
-
+	url := fmt.Sprintf("%s/%s/%s", sdk.thingsURL, channelsEndpoint, "bulk")
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
 	if err != nil {
 		return []Channel{}, err
@@ -79,9 +77,7 @@ func (sdk mfSDK) CreateChannels(chs []Channel, token string) ([]Channel, error) 
 }
 
 func (sdk mfSDK) Channels(token string, offset, limit uint64, name string) (ChannelsPage, error) {
-	endpoint := fmt.Sprintf("%s?offset=%d&limit=%d&name=%s", channelsEndpoint, offset, limit, name)
-	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
-
+	url := fmt.Sprintf("%s/%s?offset=%d&limit=%d&name=%s", sdk.thingsURL, channelsEndpoint, offset, limit, name)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return ChannelsPage{}, err
@@ -111,9 +107,7 @@ func (sdk mfSDK) Channels(token string, offset, limit uint64, name string) (Chan
 }
 
 func (sdk mfSDK) ChannelsByThing(token, thingID string, offset, limit uint64, disconn bool) (ChannelsPage, error) {
-	endpoint := fmt.Sprintf("things/%s/channels?offset=%d&limit=%d&disconnected=%t", thingID, offset, limit, disconn)
-	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
-
+	url := fmt.Sprintf("%s/things/%s/channels?offset=%d&limit=%d&disconnected=%t", sdk.thingsURL, thingID, offset, limit, disconn)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return ChannelsPage{}, err
@@ -143,9 +137,7 @@ func (sdk mfSDK) ChannelsByThing(token, thingID string, offset, limit uint64, di
 }
 
 func (sdk mfSDK) Channel(id, token string) (Channel, error) {
-	endpoint := fmt.Sprintf("%s/%s", channelsEndpoint, id)
-	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
-
+	url := fmt.Sprintf("%s/%s/%s", sdk.thingsURL, channelsEndpoint, id)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return Channel{}, err
@@ -180,9 +172,7 @@ func (sdk mfSDK) UpdateChannel(c Channel, token string) error {
 		return err
 	}
 
-	endpoint := fmt.Sprintf("%s/%s", channelsEndpoint, c.ID)
-	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
-
+	url := fmt.Sprintf("%s/%s/%s", sdk.thingsURL, channelsEndpoint, c.ID)
 	req, err := http.NewRequest(http.MethodPut, url, bytes.NewReader(data))
 	if err != nil {
 		return err
@@ -201,9 +191,7 @@ func (sdk mfSDK) UpdateChannel(c Channel, token string) error {
 }
 
 func (sdk mfSDK) DeleteChannel(id, token string) error {
-	endpoint := fmt.Sprintf("%s/%s", channelsEndpoint, id)
-	url := createURL(sdk.baseURL, sdk.thingsPrefix, endpoint)
-
+	url := fmt.Sprintf("%s/%s/%s", sdk.thingsURL, channelsEndpoint, id)
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
 		return err

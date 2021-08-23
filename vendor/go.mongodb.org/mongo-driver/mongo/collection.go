@@ -376,12 +376,8 @@ func (coll *Collection) InsertMany(ctx context.Context, documents []interface{},
 	bwErrors := make([]BulkWriteError, 0, len(writeException.WriteErrors))
 	for _, we := range writeException.WriteErrors {
 		bwErrors = append(bwErrors, BulkWriteError{
-			WriteError{
-				Index:   we.Index,
-				Code:    we.Code,
-				Message: we.Message,
-			},
-			nil,
+			WriteError: we,
+			Request:    nil,
 		})
 	}
 
@@ -833,6 +829,14 @@ func aggregate(a aggregateParams) (*Cursor, error) {
 			return nil, err
 		}
 		op.Hint(hintVal)
+	}
+	if ao.Let != nil {
+		let, err := transformBsoncoreDocument(a.registry, ao.Let, true, "let")
+		if err != nil {
+			closeImplicitSession(sess)
+			return nil, err
+		}
+		op.Let(let)
 	}
 
 	retry := driver.RetryNone

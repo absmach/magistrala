@@ -6,7 +6,7 @@ package jwt
 import (
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
 )

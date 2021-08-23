@@ -354,6 +354,7 @@ func (bc *BatchCursor) getMore(ctx context.Context) {
 		Legacy:         LegacyGetMore,
 		CommandMonitor: bc.cmdMonitor,
 		Crypt:          bc.crypt,
+		ServerAPI:      bc.serverAPI,
 	}.Execute(ctx, nil)
 
 	// Once the cursor has been drained, we can unpin the connection if one is currently pinned.
@@ -385,6 +386,11 @@ func (bc *BatchCursor) getMore(ctx context.Context) {
 // PostBatchResumeToken returns the latest seen post batch resume token.
 func (bc *BatchCursor) PostBatchResumeToken() bsoncore.Document {
 	return bc.postBatchResumeToken
+}
+
+// SetBatchSize sets the batchSize for future getMores.
+func (bc *BatchCursor) SetBatchSize(size int32) {
+	bc.batchSize = size
 }
 
 func (bc *BatchCursor) getOperationDeployment() Deployment {

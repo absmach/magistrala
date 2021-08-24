@@ -56,6 +56,10 @@ var (
 
 	// ErrInvalidPoint is returned when a point cannot be parsed correctly.
 	ErrInvalidPoint = errors.New("point is invalid")
+
+	// ErrInvalidKevValuePairs is returned when the number of key, value pairs
+	// is odd, indicating a missing value.
+	ErrInvalidKevValuePairs = errors.New("key/value pairs is an odd length")
 )
 
 const (
@@ -95,6 +99,9 @@ type Point interface {
 
 	// HasTag returns true if the tag exists for the point.
 	HasTag(tag []byte) bool
+
+	// ForEachField iterates over each field invoking fn. if fn returns false, iteration stops.
+	ForEachField(fn func(k, v []byte) bool) error
 
 	// Fields returns the fields for the point.
 	Fields() (Fields, error)
@@ -648,6 +655,15 @@ func scanTags(buf []byte, i int, indices []int) (int, int, []int, error) {
 		case tagValueState:
 			state, i, err = scanTagsValue(buf, i)
 		case fieldsState:
+			// Grow our indices slice if we had exactly enough tags to fill it
+			if commas >= len(indices) {
+				// The parser is in `fieldsState`, so there are no more
+				// tags. We only need 1 more entry in the slice to store
+				// the final entry.
+				newIndics := make([]int, cap(indices)+1)
+				copy(newIndics, indices)
+				indices = newIndics
+			}
 			indices[commas] = i + 1
 			return i, commas, indices, nil
 		}
@@ -1561,6 +1577,10 @@ func walkTags(buf []byte, fn func(key, value []byte) bool) {
 	}
 }
 
+func (p *point) ForEachField(fn func(k, v []byte) bool) error {
+	return walkFields(p.fields, fn)
+}
+
 // walkFields walks each field key and value via fn.  If fn returns false, the iteration
 // is stopped.  The values are the raw byte slices and not the converted types.
 func walkFields(buf []byte, fn func(key, value []byte) bool) error {
@@ -1953,6 +1973,53 @@ func NewTags(m map[string]string) Tags {
 	return a
 }
 
+// NewTagsKeyValues returns a new Tags from a list of key, value pairs,
+// ensuring the returned result is correctly sorted. Duplicate keys are removed,
+// however, it which duplicate that remains is undefined.
+// NewTagsKeyValues will return ErrInvalidKevValuePairs if len(kvs) is not even.
+// If the input is guaranteed to be even, the error can be safely ignored.
+// If a has enough capacity, it will be reused.
+func NewTagsKeyValues(a Tags, kv ...[]byte) (Tags, error) {
+	if len(kv)%2 == 1 {
+		return nil, ErrInvalidKevValuePairs
+	}
+	if len(kv) == 0 {
+		return nil, nil
+	}
+
+	l := len(kv) / 2
+	if cap(a) < l {
+		a = make(Tags, 0, l)
+	} else {
+		a = a[:0]
+	}
+
+	for i := 0; i < len(kv)-1; i += 2 {
+		a = append(a, NewTag(kv[i], kv[i+1]))
+	}
+
+	if !a.sorted() {
+		sort.Sort(a)
+	}
+
+	// remove duplicates
+	j := 0
+	for i := 0; i < len(a)-1; i++ {
+		if !bytes.Equal(a[i].Key, a[i+1].Key) {
+			if j != i {
+				// only copy if j has deviated from i, indicating duplicates
+				a[j] = a[i]
+			}
+			j++
+		}
+	}
+
+	a[j] = a[len(a)-1]
+	j++
+
+	return a[:j], nil
+}
+
 // Keys returns the list of keys for a tag set.
 func (a Tags) Keys() []string {
 	if len(a) == 0 {
@@ -2017,6 +2084,18 @@ func (a Tags) Clone() Tags {
 	}
 
 	return others
+}
+
+// sorted returns true if a is sorted and is an optimization
+// to avoid an allocation when calling sort.IsSorted, improving
+// performance as much as 50%.
+func (a Tags) sorted() bool {
+	for i := len(a) - 1; i > 0; i-- {
+		if bytes.Compare(a[i].Key, a[i-1].Key) == -1 {
+			return false
+		}
+	}
+	return true
 }
 
 func (a Tags) Len() int           { return len(a) }
@@ -2450,6 +2529,7 @@ func appendField(b []byte, k string, v interface{}) []byte {
 
 // ValidKeyToken returns true if the token used for measurement, tag key, or tag
 // value is a valid unicode string and only contains printable, non-replacement characters.
+// Note \n (newline) is not printable.
 func ValidKeyToken(s string) bool {
 	if !utf8.ValidString(s) {
 		return false
@@ -2473,4 +2553,44 @@ func ValidKeyTokens(name string, tags Tags) bool {
 		}
 	}
 	return true
+}
+
+// ValidPointStrings validates the measurement name, tage names and values, and field names in a point
+func ValidPointStrings(p Point) (err error) {
+	if !ValidKeyToken(string(p.Name())) {
+		return fmt.Errorf("invalid or unprintable UTF-8 characters in measurement name: %q", p.Name())
+	}
+
+	validTag := func(k []byte, v []byte) bool {
+		if !ValidKeyToken(string(k)) {
+			err = fmt.Errorf("invalid or unprintable UTF-8 characters in tag key: %q", k)
+			return false
+		} else if !ValidKeyToken(string(v)) {
+			err = fmt.Errorf("invalid or unprintable UTF-8 characters in tag value: %q", v)
+			return false
+		}
+		return true
+	}
+
+	p.ForEachTag(validTag)
+	if err != nil {
+		return err
+	}
+
+	validField := func(k, v []byte) bool {
+		if !ValidKeyToken(string(k)) {
+			err = fmt.Errorf("invalid or unprintable UTF-8 in field name: %q", k)
+			return false
+		} else {
+			return true
+		}
+	}
+
+	if e := p.ForEachField(validField); e != nil {
+		return e
+	} else if err != nil {
+		return err
+	} else {
+		return nil
+	}
 }

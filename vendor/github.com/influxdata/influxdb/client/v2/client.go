@@ -80,6 +80,9 @@ type Client interface {
 	// Write takes a BatchPoints object and writes all Points to InfluxDB.
 	Write(bp BatchPoints) error
 
+	// WriteCtx takes a BatchPoints object and writes all Points to InfluxDB.
+	WriteCtx(ctx context.Context, bp BatchPoints) error
+
 	// Query makes an InfluxDB Query on the database. This will fail if using
 	// the UDP client.
 	Query(q Query) (*Response, error)
@@ -96,9 +99,15 @@ type Client interface {
 	Close() error
 }
 
+// For added performance users may want to send pre-serialized points.
+type HTTPClient interface {
+	Client
+	WriteRawCtx(ctx context.Context, bp BatchPoints, reqBody io.Reader) error
+}
+
 // NewHTTPClient returns a new Client from the provided config.
 // Client is safe for concurrent use by multiple goroutines.
-func NewHTTPClient(conf HTTPConfig) (Client, error) {
+func NewHTTPClient(conf HTTPConfig) (HTTPClient, error) {
 	if conf.UserAgent == "" {
 		conf.UserAgent = "InfluxDBClient"
 	}
@@ -377,6 +386,10 @@ func NewPointFrom(pt models.Point) *Point {
 }
 
 func (c *client) Write(bp BatchPoints) error {
+	return c.WriteCtx(context.Background(), bp)
+}
+
+func (c *client) WriteCtx(ctx context.Context, bp BatchPoints) error {
 	var b bytes.Buffer
 
 	for _, p := range bp.Points() {
@@ -391,11 +404,15 @@ func (c *client) Write(bp BatchPoints) error {
 			return err
 		}
 	}
+	return c.WriteRawCtx(ctx, bp, &b)
+}
 
+// WriteRawCtx uses reqBody instead of parsing bp.Points. Metadata still comes from bp.
+func (c *client) WriteRawCtx(ctx context.Context, bp BatchPoints, reqBody io.Reader) error {
 	u := c.url
 	u.Path = path.Join(u.Path, "write")
 
-	req, err := http.NewRequest("POST", u.String(), &b)
+	req, err := http.NewRequestWithContext(ctx, "POST", u.String(), reqBody)
 	if err != nil {
 		return err
 	}
@@ -516,7 +533,7 @@ type Result struct {
 
 // Query sends a command to the server and returns the Response.
 func (c *client) Query(q Query) (*Response, error) {
-	return c.QueryCtx(nil, q)
+	return c.QueryCtx(context.Background(), q)
 }
 
 // QueryCtx sends a command to the server and returns the Response.
@@ -591,7 +608,7 @@ func (c *client) QueryCtx(ctx context.Context, q Query) (*Response, error) {
 
 // QueryAsChunk sends a command to the server and returns the Response.
 func (c *client) QueryAsChunk(q Query) (*ChunkedResponse, error) {
-	req, err := c.createDefaultRequest(nil, q)
+	req, err := c.createDefaultRequest(context.Background(), q)
 	if err != nil {
 		return nil, err
 	}

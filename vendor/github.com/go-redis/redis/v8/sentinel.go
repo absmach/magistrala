@@ -40,8 +40,6 @@ type FailoverOptions struct {
 	// Now, this option only works in RandomSlaveAddr function.
 	UseDisconnectedSlaves bool
 
-	// Client queries sentinels in a random order
-	QuerySentinelRandomly bool
 	// Following options are copied from Options struct.
 
 	Dialer    func(ctx context.Context, network, addr string) (net.Conn, error)
@@ -58,6 +56,9 @@ type FailoverOptions struct {
 	DialTimeout  time.Duration
 	ReadTimeout  time.Duration
 	WriteTimeout time.Duration
+
+	// PoolFIFO uses FIFO mode for each node connection pool GET/PUT (default LIFO).
+	PoolFIFO bool
 
 	PoolSize           int
 	MinIdleConns       int
@@ -88,6 +89,7 @@ func (opt *FailoverOptions) clientOptions() *Options {
 		ReadTimeout:  opt.ReadTimeout,
 		WriteTimeout: opt.WriteTimeout,
 
+		PoolFIFO:           opt.PoolFIFO,
 		PoolSize:           opt.PoolSize,
 		PoolTimeout:        opt.PoolTimeout,
 		IdleTimeout:        opt.IdleTimeout,
@@ -117,6 +119,7 @@ func (opt *FailoverOptions) sentinelOptions(addr string) *Options {
 		ReadTimeout:  opt.ReadTimeout,
 		WriteTimeout: opt.WriteTimeout,
 
+		PoolFIFO:           opt.PoolFIFO,
 		PoolSize:           opt.PoolSize,
 		PoolTimeout:        opt.PoolTimeout,
 		IdleTimeout:        opt.IdleTimeout,
@@ -148,6 +151,7 @@ func (opt *FailoverOptions) clusterOptions() *ClusterOptions {
 		ReadTimeout:  opt.ReadTimeout,
 		WriteTimeout: opt.WriteTimeout,
 
+		PoolFIFO:           opt.PoolFIFO,
 		PoolSize:           opt.PoolSize,
 		PoolTimeout:        opt.PoolTimeout,
 		IdleTimeout:        opt.IdleTimeout,
@@ -221,14 +225,21 @@ func masterSlaveDialer(
 				failover.trySwitchMaster(ctx, addr)
 			}
 		}
-
 		if err != nil {
 			return nil, err
 		}
 		if failover.opt.Dialer != nil {
 			return failover.opt.Dialer(ctx, network, addr)
 		}
-		return net.DialTimeout("tcp", addr, failover.opt.DialTimeout)
+
+		netDialer := &net.Dialer{
+			Timeout:   failover.opt.DialTimeout,
+			KeepAlive: 5 * time.Minute,
+		}
+		if failover.opt.TLSConfig == nil {
+			return netDialer.DialContext(ctx, network, addr)
+		}
+		return tls.DialWithDialer(netDialer, network, addr, failover.opt.TLSConfig)
 	}
 }
 

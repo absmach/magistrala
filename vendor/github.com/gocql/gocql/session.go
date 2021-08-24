@@ -70,8 +70,13 @@ type Session struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	closeMu  sync.RWMutex
+	// sessionStateMu protects isClosed and isInitialized.
+	sessionStateMu sync.RWMutex
+	// isClosed is true once Session.Close is called.
 	isClosed bool
+	// isInitialized is true once Session.init succeeds.
+	// you can use initialized() to read the value.
+	isInitialized bool
 
 	logger StdLogger
 }
@@ -317,6 +322,10 @@ func (s *Session) init() error {
 		s.policy.KeyspaceChanged(KeyspaceUpdateEvent{Keyspace: s.cfg.Keyspace})
 	}
 
+	s.sessionStateMu.Lock()
+	s.isInitialized = true
+	s.sessionStateMu.Unlock()
+
 	return nil
 }
 
@@ -357,7 +366,7 @@ func (s *Session) reconnectDownedHosts(intv time.Duration) {
 				if h.IsUp() {
 					continue
 				}
-				// we let the pool call handleNodeUp to change the host state
+				// we let the pool call handleNodeConnected to change the host state
 				s.pool.addHost(h)
 			}
 		case <-s.ctx.Done():
@@ -440,8 +449,8 @@ func (s *Session) Bind(stmt string, b func(q *QueryInfo) ([]interface{}, error))
 // operation.
 func (s *Session) Close() {
 
-	s.closeMu.Lock()
-	defer s.closeMu.Unlock()
+	s.sessionStateMu.Lock()
+	defer s.sessionStateMu.Unlock()
 	if s.isClosed {
 		return
 	}
@@ -469,10 +478,17 @@ func (s *Session) Close() {
 }
 
 func (s *Session) Closed() bool {
-	s.closeMu.RLock()
+	s.sessionStateMu.RLock()
 	closed := s.isClosed
-	s.closeMu.RUnlock()
+	s.sessionStateMu.RUnlock()
 	return closed
+}
+
+func (s *Session) initialized() bool {
+	s.sessionStateMu.RLock()
+	initialized := s.isInitialized
+	s.sessionStateMu.RUnlock()
+	return initialized
 }
 
 func (s *Session) executeQuery(qry *Query) (it *Iter) {
@@ -1608,6 +1624,7 @@ type Batch struct {
 	CustomPayload         map[string][]byte
 	rt                    RetryPolicy
 	spec                  SpeculativeExecutionPolicy
+	trace                 Tracer
 	observer              BatchObserver
 	session               *Session
 	serialCons            SerialConsistency
@@ -1637,6 +1654,7 @@ func (s *Session) NewBatch(typ BatchType) *Batch {
 		Type:             typ,
 		rt:               s.cfg.RetryPolicy,
 		serialCons:       s.cfg.SerialConsistency,
+		trace:            s.trace,
 		observer:         s.batchObserver,
 		session:          s,
 		Cons:             s.cons,
@@ -1648,6 +1666,13 @@ func (s *Session) NewBatch(typ BatchType) *Batch {
 
 	s.mu.RUnlock()
 	return batch
+}
+
+// Trace enables tracing of this batch. Look at the documentation of the
+// Tracer interface to learn more about tracing.
+func (b *Batch) Trace(trace Tracer) *Batch {
+	b.trace = trace
+	return b
 }
 
 // Observer enables batch-level observer on this batch.

@@ -23,9 +23,9 @@ import (
 	"github.com/mainflux/mainflux/consumers/notifiers"
 	"github.com/mainflux/mainflux/consumers/notifiers/api"
 	"github.com/mainflux/mainflux/consumers/notifiers/postgres"
-	"github.com/mainflux/mainflux/consumers/notifiers/smtp"
+
+	mfsmpp "github.com/mainflux/mainflux/consumers/notifiers/smpp"
 	"github.com/mainflux/mainflux/consumers/notifiers/tracing"
-	"github.com/mainflux/mainflux/internal/email"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging/nats"
 	"github.com/mainflux/mainflux/pkg/ulid"
@@ -48,53 +48,53 @@ const (
 	defDBSSLCert     = ""
 	defDBSSLKey      = ""
 	defDBSSLRootCert = ""
-	defHTTPPort      = "8906"
+	defHTTPPort      = "8907"
 	defServerCert    = ""
 	defServerKey     = ""
 	defFrom          = ""
 	defJaegerURL     = ""
 	defNatsURL       = "nats://localhost:4222"
 
-	defEmailHost        = "localhost"
-	defEmailPort        = "25"
-	defEmailUsername    = "root"
-	defEmailPassword    = ""
-	defEmailSecret      = ""
-	defEmailFromAddress = ""
-	defEmailFromName    = ""
-	defEmailTemplate    = "email.tmpl"
+	defSmppAddress    = ""
+	defSmppUsername   = ""
+	defSmppPassword   = ""
+	defSmppSystemType = ""
+	defSmppSrcAddrTON = "0"
+	defSmppDstAddrTON = "0"
+	defSmppSrcAddrNPI = "0"
+	defSmppDstAddrNPI = "0"
 
 	defAuthTLS     = "false"
 	defAuthCACerts = ""
 	defAuthURL     = "localhost:8181"
 	defAuthTimeout = "1s"
 
-	envLogLevel      = "MF_SMTP_NOTIFIER_LOG_LEVEL"
-	envDBHost        = "MF_SMTP_NOTIFIER_DB_HOST"
-	envDBPort        = "MF_SMTP_NOTIFIER_DB_PORT"
-	envDBUser        = "MF_SMTP_NOTIFIER_DB_USER"
-	envDBPass        = "MF_SMTP_NOTIFIER_DB_PASS"
-	envDB            = "MF_SMTP_NOTIFIER_DB"
-	envConfigPath    = "MF_SMTP_NOTIFIER_CONFIG_PATH"
-	envDBSSLMode     = "MF_SMTP_NOTIFIER_DB_SSL_MODE"
-	envDBSSLCert     = "MF_SMTP_NOTIFIER_DB_SSL_CERT"
-	envDBSSLKey      = "MF_SMTP_NOTIFIER_DB_SSL_KEY"
-	envDBSSLRootCert = "MF_SMTP_NOTIFIER_DB_SSL_ROOT_CERT"
-	envHTTPPort      = "MF_SMTP_NOTIFIER_PORT"
-	envServerCert    = "MF_SMTP_NOTIFIER_SERVER_CERT"
-	envServerKey     = "MF_SMTP_NOTIFIER_SERVER_KEY"
-	envFrom          = "MF_SMTP_NOTIFIER_FROM_ADDR"
+	envLogLevel      = "MF_SMPP_NOTIFIER_LOG_LEVEL"
+	envDBHost        = "MF_SMPP_NOTIFIER_DB_HOST"
+	envDBPort        = "MF_SMPP_NOTIFIER_DB_PORT"
+	envDBUser        = "MF_SMPP_NOTIFIER_DB_USER"
+	envDBPass        = "MF_SMPP_NOTIFIER_DB_PASS"
+	envDB            = "MF_SMPP_NOTIFIER_DB"
+	envConfigPath    = "MF_SMPP_NOTIFIER_WRITER_CONFIG_PATH"
+	envDBSSLMode     = "MF_SMPP_NOTIFIER_DB_SSL_MODE"
+	envDBSSLCert     = "MF_SMPP_NOTIFIER_DB_SSL_CERT"
+	envDBSSLKey      = "MF_SMPP_NOTIFIER_DB_SSL_KEY"
+	envDBSSLRootCert = "MF_SMPP_NOTIFIER_DB_SSL_ROOT_CERT"
+	envHTTPPort      = "MF_SMPP_NOTIFIER_HTTP_PORT"
+	envServerCert    = "MF_SMPP_NOTIFIER_SERVER_CERT"
+	envServerKey     = "MF_SMPP_NOTIFIER_SERVER_KEY"
+	envFrom          = "MF_SMPP_NOTIFIER_SOURCE_ADDR"
 	envJaegerURL     = "MF_JAEGER_URL"
 	envNatsURL       = "MF_NATS_URL"
 
-	envEmailHost        = "MF_EMAIL_HOST"
-	envEmailPort        = "MF_EMAIL_PORT"
-	envEmailUsername    = "MF_EMAIL_USERNAME"
-	envEmailPassword    = "MF_EMAIL_PASSWORD"
-	envEmailSecret      = "MF_EMAIL_SECRET"
-	envEmailFromAddress = "MF_EMAIL_FROM_ADDRESS"
-	envEmailFromName    = "MF_EMAIL_FROM_NAME"
-	envEmailTemplate    = "MF_SMTP_NOTIFIER_TEMPLATE"
+	envSmppAddress    = "MF_SMPP_ADDRESS"
+	envSmppUsername   = "MF_SMPP_USERNAME"
+	envSmppPassword   = "MF_SMPP_PASSWORD"
+	envSmppSystemType = "MF_SMPP_SYSTEM_TYPE"
+	envSmppSrcAddrTON = "MF_SMPP_SRC_ADDR_TON"
+	envSmppDstAddrTON = "MF_SMPP_DST_ADDR_TON"
+	envSmppSrcAddrNPI = "MF_SMPP_SRC_ADDR_NPI"
+	envSmppDstAddrNPI = "MF_SMPP_DST_ADDR_NPI"
 
 	envAuthTLS     = "MF_AUTH_CLIENT_TLS"
 	envAuthCACerts = "MF_AUTH_CA_CERTS"
@@ -107,7 +107,7 @@ type config struct {
 	configPath  string
 	logLevel    string
 	dbConfig    postgres.Config
-	emailConf   email.Config
+	smppConf    mfsmpp.Config
 	from        string
 	httpPort    string
 	serverCert  string
@@ -145,10 +145,10 @@ func main() {
 		defer close()
 	}
 
-	tracer, closer := initJaeger("smtp-notifier", cfg.jaegerURL, logger)
+	tracer, closer := initJaeger("smpp-notifier", cfg.jaegerURL, logger)
 	defer closer.Close()
 
-	dbTracer, dbCloser := initJaeger("smtp-notifier_db", cfg.jaegerURL, logger)
+	dbTracer, dbCloser := initJaeger("smpp-notifier_db", cfg.jaegerURL, logger)
 	defer dbCloser.Close()
 
 	svc := newService(db, dbTracer, auth, cfg, logger)
@@ -193,15 +193,32 @@ func loadConfig() config {
 		SSLRootCert: mainflux.Env(envDBSSLRootCert, defDBSSLRootCert),
 	}
 
-	emailConf := email.Config{
-		FromAddress: mainflux.Env(envEmailFromAddress, defEmailFromAddress),
-		FromName:    mainflux.Env(envEmailFromName, defEmailFromName),
-		Host:        mainflux.Env(envEmailHost, defEmailHost),
-		Port:        mainflux.Env(envEmailPort, defEmailPort),
-		Username:    mainflux.Env(envEmailUsername, defEmailUsername),
-		Password:    mainflux.Env(envEmailPassword, defEmailPassword),
-		Secret:      mainflux.Env(envEmailSecret, defEmailSecret),
-		Template:    mainflux.Env(envEmailTemplate, defEmailTemplate),
+	saton, err := strconv.ParseUint(mainflux.Env(envSmppSrcAddrTON, defSmppSrcAddrTON), 10, 8)
+	if err != nil {
+		log.Fatalf("Invalid value passed for %s", envSmppSrcAddrTON)
+	}
+	daton, err := strconv.ParseUint(mainflux.Env(envSmppDstAddrTON, defSmppDstAddrTON), 10, 8)
+	if err != nil {
+		log.Fatalf("Invalid value passed for %s", envSmppDstAddrTON)
+	}
+	sanpi, err := strconv.ParseUint(mainflux.Env(envSmppSrcAddrNPI, defSmppSrcAddrNPI), 10, 8)
+	if err != nil {
+		log.Fatalf("Invalid value passed for %s", envSmppSrcAddrNPI)
+	}
+	danpi, err := strconv.ParseUint(mainflux.Env(envSmppDstAddrNPI, defSmppDstAddrNPI), 10, 8)
+	if err != nil {
+		log.Fatalf("Invalid value passed for %s", envSmppDstAddrNPI)
+	}
+
+	smppConf := mfsmpp.Config{
+		Address:       mainflux.Env(envSmppAddress, defSmppAddress),
+		Username:      mainflux.Env(envSmppUsername, defSmppUsername),
+		Password:      mainflux.Env(envSmppPassword, defSmppPassword),
+		SystemType:    mainflux.Env(envSmppSystemType, defSmppSystemType),
+		SourceAddrTON: uint8(saton),
+		DestAddrTON:   uint8(daton),
+		SourceAddrNPI: uint8(sanpi),
+		DestAddrNPI:   uint8(danpi),
 	}
 
 	return config{
@@ -209,7 +226,7 @@ func loadConfig() config {
 		natsURL:     mainflux.Env(envNatsURL, defNatsURL),
 		configPath:  mainflux.Env(envConfigPath, defConfigPath),
 		dbConfig:    dbConfig,
-		emailConf:   emailConf,
+		smppConf:    smppConf,
 		from:        mainflux.Env(envFrom, defFrom),
 		httpPort:    mainflux.Env(envHTTPPort, defHTTPPort),
 		serverCert:  mainflux.Env(envServerCert, defServerCert),
@@ -285,27 +302,20 @@ func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServic
 	database := postgres.NewDatabase(db)
 	repo := tracing.New(postgres.New(database), tracer)
 	idp := ulid.New()
-
-	agent, err := email.New(&c.emailConf)
-	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to create email agent: %s", err))
-		os.Exit(1)
-	}
-
-	notifier := smtp.New(agent)
+	notifier := mfsmpp.New(c.smppConf)
 	svc := notifiers.New(auth, repo, idp, notifier, c.from)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,
 		kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
 			Namespace: "notifier",
-			Subsystem: "smtp",
+			Subsystem: "smpp",
 			Name:      "request_count",
 			Help:      "Number of requests received.",
 		}, []string{"method"}),
 		kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
 			Namespace: "notifier",
-			Subsystem: "smtp",
+			Subsystem: "smpp",
 			Name:      "request_latency_microseconds",
 			Help:      "Total duration of requests in microseconds.",
 		}, []string{"method"}),
@@ -316,10 +326,10 @@ func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServic
 func startHTTPServer(tracer opentracing.Tracer, svc notifiers.Service, port string, certFile string, keyFile string, logger logger.Logger, errs chan error) {
 	p := fmt.Sprintf(":%s", port)
 	if certFile != "" || keyFile != "" {
-		logger.Info(fmt.Sprintf("SMTP notifier service started using https, cert %s key %s, exposed port %s", certFile, keyFile, port))
+		logger.Info(fmt.Sprintf("SMPP notifier service started using https, cert %s key %s, exposed port %s", certFile, keyFile, port))
 		errs <- http.ListenAndServeTLS(p, certFile, keyFile, api.MakeHandler(svc, tracer))
 	} else {
-		logger.Info(fmt.Sprintf("SMTP notifier service started using http, exposed port %s", port))
+		logger.Info(fmt.Sprintf("SMPP notifier service started using http, exposed port %s", port))
 		errs <- http.ListenAndServe(p, api.MakeHandler(svc, tracer))
 	}
 }

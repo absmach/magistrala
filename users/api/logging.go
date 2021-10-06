@@ -66,7 +66,7 @@ func (lm *loggingMiddleware) ViewUser(ctx context.Context, token, id string) (u 
 
 func (lm *loggingMiddleware) ViewProfile(ctx context.Context, token string) (u users.User, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method view_profile for usser %s took %s to complete", u.Email, time.Since(begin))
+		message := fmt.Sprintf("Method view_profile for user %s took %s to complete", u.Email, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return

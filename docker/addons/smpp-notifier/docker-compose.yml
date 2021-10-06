@@ -1,0 +1,64 @@
+# Copyright (c) Mainflux
+# SPDX-License-Identifier: Apache-2.0
+
+# This docker-compose file contains optional InfluxDB, InfluxDB-writer and Grafana services
+# for the Mainflux platform. Since this services are optional, this file is dependent on the
+# docker-compose.yml file from <project_root>/docker/. In order to run these services,
+# core services, as well as the network from the core composition, should be already running.
+
+version: "3.7"
+
+networks:
+  docker_mainflux-base-net:
+    external: true
+
+volumes:
+  mainflux-smpp-notifier-volume:
+
+services:
+  smpp-notifier-db:
+    image: postgres:10.2-alpine
+    container_name: mainflux-smpp-notifier-db
+    restart: on-failure
+    environment:
+      POSTGRES_USER: ${MF_SMPP_NOTIFIER_DB_USER}
+      POSTGRES_PASSWORD: ${MF_SMPP_NOTIFIER_DB_PASS}
+      POSTGRES_DB: ${MF_SMPP_NOTIFIER_DB}
+    networks:
+      - docker_mainflux-base-net
+    volumes:
+      - mainflux-smpp-notifier-volume:/var/lib/postgresql/datab
+
+  smpp-notifier:
+    image: mainflux/smpp-notifier:latest
+    container_name: mainflux-smpp-notifier
+    depends_on:
+      - smpp-notifier-db
+    restart: on-failure
+    environment:
+      MF_NATS_URL: ${MF_NATS_URL}
+      MF_JAEGER_URL: ${MF_JAEGER_URL}
+      MF_AUTH_GRPC_URL: ${MF_AUTH_GRPC_URL}
+      MF_AUTH_GRPC_TIMEOUT: ${MF_AUTH_GRPC_TIMEOUT}
+      MF_SMPP_NOTIFIER_LOG_LEVEL: ${MF_SMPP_NOTIFIER_LOG_LEVEL}
+      MF_SMPP_NOTIFIER_DB_HOST: smpp-notifier-db
+      MF_SMPP_NOTIFIER_DB_PORT: ${MF_SMPP_NOTIFIER_DB_PORT}
+      MF_SMPP_NOTIFIER_DB_USER: ${MF_SMPP_NOTIFIER_DB_USER}
+      MF_SMPP_NOTIFIER_DB_PASS: ${MF_SMPP_NOTIFIER_DB_PASS}
+      MF_SMPP_NOTIFIER_DB: ${MF_SMPP_NOTIFIER_DB}
+      MF_SMPP_NOTIFIER_PORT: ${MF_SMPP_NOTIFIER_PORT}
+      MF_SMPP_ADDRESS: ${MF_SMPP_ADDRESS}
+      MF_SMPP_USERNAME: ${MF_SMPP_USERNAME}
+      MF_SMPP_PASSWORD: ${MF_SMPP_PASSWORD}
+      MF_SMPP_SYSTEM_TYPE: ${MF_SMPP_SYSTEM_TYPE}
+      MF_SMPP_NOTIFIER_SOURCE_ADDR: ${MF_SMPP_NOTIFIER_SOURCE_ADDR}
+      MF_SMPP_SRC_ADDR_TON: ${MF_SMPP_SRC_ADDR_TON}
+      MF_SMPP_SRC_ADDR_NPI: ${MF_SMPP_SRC_ADDR_NPI}
+      MF_SMPP_DST_ADDR_TON: ${MF_SMPP_DST_ADDR_TON}
+      MF_SMPP_DST_ADDR_NPI: ${MF_SMPP_DST_ADDR_NPI}
+    ports:
+      - ${MF_SMPP_NOTIFIER_PORT}:${MF_SMPP_NOTIFIER_PORT}
+    networks:
+      - docker_mainflux-base-net
+    volumes:
+      - ./config.toml:/config.toml

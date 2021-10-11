@@ -161,7 +161,7 @@ func (es eventStore) RemoveChannelHandler(ctx context.Context, id string) error 
 }
 
 func (es eventStore) UpdateChannelHandler(ctx context.Context, channel bootstrap.Channel) error {
-	return es.UpdateChannelHandler(ctx, channel)
+	return es.svc.UpdateChannelHandler(ctx, channel)
 }
 
 func (es eventStore) DisconnectThingHandler(ctx context.Context, channelID, thingID string) error {

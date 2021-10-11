@@ -23,7 +23,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/pkg/messaging/nats"
 	"github.com/mainflux/mainflux/pkg/uuid"
-	localusers "github.com/mainflux/mainflux/things/users"
+	localusers "github.com/mainflux/mainflux/things/standalone"
 	"github.com/mainflux/mainflux/twins"
 	"github.com/mainflux/mainflux/twins/api"
 	twapi "github.com/mainflux/mainflux/twins/api/http"
@@ -34,7 +34,6 @@ import (
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	jconfig "github.com/uber/jaeger-client-go/config"
 	"go.mongodb.org/mongo-driver/mongo"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -53,8 +52,8 @@ const (
 	defCacheURL        = "localhost:6379"
 	defCachePass       = ""
 	defCacheDB         = "0"
-	defSingleUserEmail = ""
-	defSingleUserToken = ""
+	defStandaloneEmail = ""
+	defStandaloneToken = ""
 	defClientTLS       = "false"
 	defCACerts         = ""
 	defChannelID       = ""
@@ -73,8 +72,8 @@ const (
 	envCacheURL        = "MF_TWINS_CACHE_URL"
 	envCachePass       = "MF_TWINS_CACHE_PASS"
 	envCacheDB         = "MF_TWINS_CACHE_DB"
-	envSingleUserEmail = "MF_TWINS_SINGLE_USER_EMAIL"
-	envSingleUserToken = "MF_TWINS_SINGLE_USER_TOKEN"
+	envStandaloneEmail = "MF_TWINS_STANDALONE_EMAIL"
+	envStandaloneToken = "MF_TWINS_STANDALONE_TOKEN"
 	envClientTLS       = "MF_TWINS_CLIENT_TLS"
 	envCACerts         = "MF_TWINS_CA_CERTS"
 	envChannelID       = "MF_TWINS_CHANNEL_ID"
@@ -93,8 +92,8 @@ type config struct {
 	cacheURL        string
 	cachePass       string
 	cacheDB         string
-	singleUserEmail string
-	singleUserToken string
+	standaloneEmail string
+	standaloneToken string
 	clientTLS       bool
 	caCerts         string
 	channelID       string
@@ -179,8 +178,8 @@ func loadConfig() config {
 		cacheURL:        mainflux.Env(envCacheURL, defCacheURL),
 		cachePass:       mainflux.Env(envCachePass, defCachePass),
 		cacheDB:         mainflux.Env(envCacheDB, defCacheDB),
-		singleUserEmail: mainflux.Env(envSingleUserEmail, defSingleUserEmail),
-		singleUserToken: mainflux.Env(envSingleUserToken, defSingleUserToken),
+		standaloneEmail: mainflux.Env(envStandaloneEmail, defStandaloneEmail),
+		standaloneToken: mainflux.Env(envStandaloneToken, defStandaloneToken),
 		clientTLS:       tls,
 		caCerts:         mainflux.Env(envCACerts, defCACerts),
 		channelID:       mainflux.Env(envChannelID, defChannelID),
@@ -215,8 +214,8 @@ func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, 
 }
 
 func createAuthClient(cfg config, tracer opentracing.Tracer, logger logger.Logger) (mainflux.AuthServiceClient, func() error) {
-	if cfg.singleUserEmail != "" && cfg.singleUserToken != "" {
-		return localusers.NewSingleUserService(cfg.singleUserEmail, cfg.singleUserToken), nil
+	if cfg.standaloneEmail != "" && cfg.standaloneToken != "" {
+		return localusers.NewAuthService(cfg.standaloneEmail, cfg.standaloneToken), nil
 	}
 
 	conn := connectToAuth(cfg, logger)

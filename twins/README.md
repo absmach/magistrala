@@ -22,8 +22,8 @@ default values.
 | MF_TWINS_DB                | Database name                                                        | mainflux              |
 | MF_TWINS_DB_HOST           | Database host address                                                | localhost             |
 | MF_TWINS_DB_PORT           | Database host port                                                   | 27017                 |
-| MF_TWINS_SINGLE_USER_EMAIL | User email for single user mode (no gRPC communication with users)   |                       |
-| MF_TWINS_SINGLE_USER_TOKEN | User token for single user mode that should be passed in auth header |                       |
+| MF_THINGS_STANDALONE_EMAIL | User email for standalone mode (no gRPC communication with users)       |                |
+| MF_THINGS_STANDALONE_TOKEN | User token for standalone mode that should be passed in auth header     |                |
 | MF_TWINS_CLIENT_TLS        | Flag that indicates if TLS should be turned on                       | false                 |
 | MF_TWINS_CA_CERTS          | Path to trusted CAs in PEM format                                    |                       |
 | MF_TWINS_CHANNEL_ID        | NATS notifications channel ID                                        |                       |
@@ -63,8 +63,8 @@ MF_TWINS_SERVER_KEY: [String path to server key in pem format] \
 MF_JAEGER_URL: [Jaeger server URL] MF_TWINS_DB: [Database name] \
 MF_TWINS_DB_HOST: [Database host address] \
 MF_TWINS_DB_PORT: [Database host port] \
-MF_TWINS_SINGLE_USER_EMAIL: [User email for single user mode] \
-MF_TWINS_SINGLE_USER_TOKEN: [User token for single user mode] \
+MF_THINGS_STANDALONE_EMAIL=[User email for standalone mode (no gRPC communication with auth)] \
+MF_THINGS_STANDALONE_TOKEN=[User token for standalone mode that should be passed in auth header] \
 MF_TWINS_CLIENT_TLS: [Flag that indicates if TLS should be turned on] \
 MF_TWINS_CA_CERTS: [Path to trusted CAs in PEM format] \
 MF_TWINS_CHANNEL_ID: [NATS notifications channel ID] \

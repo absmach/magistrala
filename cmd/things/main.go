@@ -16,14 +16,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/mainflux/mainflux/things/tracing"
-
-	"github.com/jmoiron/sqlx"
-	opentracing "github.com/opentracing/opentracing-go"
-	"google.golang.org/grpc/credentials"
-
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/go-redis/redis/v8"
+	"github.com/jmoiron/sqlx"
 	"github.com/mainflux/mainflux"
 	authapi "github.com/mainflux/mainflux/auth/api/grpc"
 	"github.com/mainflux/mainflux/logger"
@@ -35,10 +30,13 @@ import (
 	thhttpapi "github.com/mainflux/mainflux/things/api/things/http"
 	"github.com/mainflux/mainflux/things/postgres"
 	rediscache "github.com/mainflux/mainflux/things/redis"
-	localusers "github.com/mainflux/mainflux/things/users"
+	localusers "github.com/mainflux/mainflux/things/standalone"
+	"github.com/mainflux/mainflux/things/tracing"
+	opentracing "github.com/opentracing/opentracing-go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	jconfig "github.com/uber/jaeger-client-go/config"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 const (
@@ -65,8 +63,8 @@ const (
 	defAuthGRPCPort    = "8181"
 	defServerCert      = ""
 	defServerKey       = ""
-	defSingleUserEmail = ""
-	defSingleUserToken = ""
+	defStandaloneEmail = ""
+	defStandaloneToken = ""
 	defJaegerURL       = ""
 	defAuthURL         = "localhost:8181"
 	defAuthTimeout     = "1s"
@@ -94,8 +92,8 @@ const (
 	envAuthGRPCPort    = "MF_THINGS_AUTH_GRPC_PORT"
 	envServerCert      = "MF_THINGS_SERVER_CERT"
 	envServerKey       = "MF_THINGS_SERVER_KEY"
-	envSingleUserEmail = "MF_THINGS_SINGLE_USER_EMAIL"
-	envSingleUserToken = "MF_THINGS_SINGLE_USER_TOKEN"
+	envStandaloneEmail = "MF_THINGS_STANDALONE_EMAIL"
+	envStandaloneToken = "MF_THINGS_STANDALONE_TOKEN"
 	envJaegerURL       = "MF_JAEGER_URL"
 	envAuthURL         = "MF_AUTH_GRPC_URL"
 	envAuthTimeout     = "MF_AUTH_GRPC_TIMEOUT"
@@ -117,8 +115,8 @@ type config struct {
 	authGRPCPort    string
 	serverCert      string
 	serverKey       string
-	singleUserEmail string
-	singleUserToken string
+	standaloneEmail string
+	standaloneToken string
 	jaegerURL       string
 	authURL         string
 	authTimeout     time.Duration
@@ -212,8 +210,8 @@ func loadConfig() config {
 		authGRPCPort:    mainflux.Env(envAuthGRPCPort, defAuthGRPCPort),
 		serverCert:      mainflux.Env(envServerCert, defServerCert),
 		serverKey:       mainflux.Env(envServerKey, defServerKey),
-		singleUserEmail: mainflux.Env(envSingleUserEmail, defSingleUserEmail),
-		singleUserToken: mainflux.Env(envSingleUserToken, defSingleUserToken),
+		standaloneEmail: mainflux.Env(envStandaloneEmail, defStandaloneEmail),
+		standaloneToken: mainflux.Env(envStandaloneToken, defStandaloneToken),
 		jaegerURL:       mainflux.Env(envJaegerURL, defJaegerURL),
 		authURL:         mainflux.Env(envAuthURL, defAuthURL),
 		authTimeout:     authTimeout,
@@ -268,8 +266,8 @@ func connectToDB(dbConfig postgres.Config, logger logger.Logger) *sqlx.DB {
 }
 
 func createAuthClient(cfg config, tracer opentracing.Tracer, logger logger.Logger) (mainflux.AuthServiceClient, func() error) {
-	if cfg.singleUserEmail != "" && cfg.singleUserToken != "" {
-		return localusers.NewSingleUserService(cfg.singleUserEmail, cfg.singleUserToken), nil
+	if cfg.standaloneEmail != "" && cfg.standaloneToken != "" {
+		return localusers.NewAuthService(cfg.standaloneEmail, cfg.standaloneToken), nil
 	}
 
 	conn := connectToAuth(cfg, logger)

@@ -54,6 +54,7 @@ const (
 	defServerCert    = ""
 	defServerKey     = ""
 	defCertsURL      = "http://localhost"
+	defThingsURL      = "http://things:8182"
 	defJaegerURL     = ""
 	defAuthURL       = "localhost:8181"
 	defAuthTimeout   = "1s"
@@ -88,7 +89,7 @@ const (
 	envJaegerURL     = "MF_JAEGER_URL"
 	envAuthURL       = "MF_AUTH_GRPC_URL"
 	envAuthTimeout   = "MF_AUTH_GRPC_TIMEOUT"
-
+	envThingsURL     = "MF_THINGS_URL"
 	envSignCAPath     = "MF_CERTS_SIGN_CA_PATH"
 	envSignCAKey      = "MF_CERTS_SIGN_CA_KEY_PATH"
 	envSignHoursValid = "MF_CERTS_SIGN_HOURS_VALID"
@@ -121,6 +122,7 @@ type config struct {
 	serverCert  string
 	serverKey   string
 	certsURL    string
+	thingsURL   string
 	jaegerURL   string
 	authURL     string
 	authTimeout time.Duration
@@ -220,6 +222,7 @@ func loadConfig() config {
 		serverCert:  mainflux.Env(envServerCert, defServerCert),
 		serverKey:   mainflux.Env(envServerKey, defServerKey),
 		certsURL:    mainflux.Env(envCertsURL, defCertsURL),
+		thingsURL:    mainflux.Env(envThingsURL, defThingsURL),
 		jaegerURL:   mainflux.Env(envJaegerURL, defJaegerURL),
 		authURL:     mainflux.Env(envAuthURL, defAuthURL),
 		authTimeout: authTimeout,
@@ -335,6 +338,7 @@ func newService(auth mainflux.AuthServiceClient, db *sqlx.DB, logger mflog.Logge
 
 	config := mfsdk.Config{
 		CertsURL: cfg.certsURL,
+		ThingsURL: cfg.thingsURL,
 	}
 
 	sdk := mfsdk.NewSDK(config)

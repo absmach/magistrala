@@ -201,13 +201,20 @@ func TestRetrieveAll(t *testing.T) {
 			metadata: meta,
 		},
 		"retrieve all users from empty ids": {
-			email:    "All",
-			offset:   1,
-			limit:    5,
-			size:     0,
-			total:    nUsers,
-			ids:      []string{},
-			metadata: meta,
+			email:  "All",
+			offset: 0,
+			limit:  nUsers,
+			size:   nUsers,
+			total:  nUsers,
+			ids:    []string{},
+		},
+		"retrieve all users from empty ids with offset": {
+			email:  "All",
+			offset: 1,
+			limit:  5,
+			size:   5,
+			total:  nUsers,
+			ids:    []string{},
 		},
 	}
 	for desc, tc := range cases {

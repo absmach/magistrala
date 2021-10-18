@@ -309,6 +309,17 @@ func (svc usersService) ListMembers(ctx context.Context, token, groupID string, 
 		return UserPage{}, err
 	}
 
+	if len(userIDs) == 0 {
+		return UserPage{
+			Users: []User{},
+			PageMetadata: PageMetadata{
+				Total:  0,
+				Offset: offset,
+				Limit:  limit,
+			},
+		}, nil
+	}
+
 	return svc.users.RetrieveAll(ctx, offset, limit, userIDs, "", m)
 }
 

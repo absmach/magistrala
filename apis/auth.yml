@@ -89,7 +89,7 @@ paths:
         be returned as JSON array or JSON tree.
       tags:
         - auth
-      parameters:    
+      parameters:
         - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/Level"
         - $ref: "#/components/parameters/Metadata"
@@ -266,6 +266,29 @@ paths:
           description: Missing or invalid access token provided.
         '500':
           $ref: "#/components/responses/ServiceError"
+  /groups/{userGroupID}/share:
+    post:
+      summary: Adds access rights on thing groups to user group with userGroupID.
+      description: |
+        Takes user group id through parameter and adds access rights for user group on thing group received via request body.
+      tags:
+        - auth
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/UserGroupID"
+      requestBody:
+        $ref: "#/components/requestBodies/ShareGroupAccessReq"
+      responses:
+        '200':
+          description: User group shared with thing group.
+        '400':
+          description: Failed due to malformed JSON.
+        '403':
+          description: Missing or invalid access token provided.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
   /members/{memberId}/groups:
     get:
       summary: Gets memberships for a member with member id.
@@ -282,6 +305,29 @@ paths:
           $ref: "#/components/responses/GroupRes"
         '403':
           description: Missing or invalid access token provided.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /policies:
+    post:
+      summary: Creates a new policy.
+      description: |
+        Creates a new policy. Only admin can use this endpoint. Therefore, you need an authentication token for the admin.
+        Also, only policies defined on the system are allowed to add. For more details, please see the docs for Authorization.
+      tags:
+        - auth
+      parameters:
+        - $ref: "#/components/parameters/AdminAuthorization"
+      requestBody:
+        $ref: "#/components/requestBodies/PoliciesReq"
+      responses:
+        '201':
+          description: Policy created.
+        '400':
+          description: Failed due to malformed JSON.
+        '409':
+          description: Failed due to using an existing email address.
+        '415':
+          description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
 components:
@@ -328,7 +374,7 @@ components:
             Free-form group name. Group name is unique on the given hierarchy level.
         description:
           type: string
-          description: Group description, free form text. 
+          description: Group description, free form text.
         parent_id:
           type: string
           format: ulid
@@ -345,7 +391,7 @@ components:
             Free-form group name. Group name is unique on the given hierarchy level.
         description:
           type: string
-          description: Group description, free form text. 
+          description: Group description, free form text.
         metadata:
           type: object
           description: Arbitrary, object-encoded group's data.
@@ -406,6 +452,13 @@ components:
         type:
           type: string
           description: Type of entity
+    ShareGroupAccessReqSchema:
+      type: object
+      properties:
+        thing_group_id:
+          type: string
+          description: Group ID of the Thing Group.
+          format: uuid
     GroupsPage:
       type: object
       properties:
@@ -445,6 +498,27 @@ components:
           description: Total number of items.
       required:
         - groups
+    PoliciesReqSchema:
+      type: object
+      properties:
+        object:
+          type: string
+          description: |
+            Specifies an object field for the field.
+            Object indicates application objects such as ThingID.
+        subjects:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+        policies:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+
   parameters:
     Authorization:
       name: Authorization
@@ -457,6 +531,14 @@ components:
     ApiKeyId:
       name: id
       description: API Key ID.
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    UserGroupID:
+      name: userGroupID
+      description: User Group ID.
       in: path
       schema:
         type: string
@@ -522,6 +604,15 @@ components:
       schema:
         type: boolean
         default: false
+    AdminAuthorization:
+      name: Authorization
+      description: Admin's access token.
+      in: header
+      schema:
+        type: string
+        format: jwt
+      required: true
+
   requestBodies:
     KeyRequest:
       description: JSON-formatted document describing key request.
@@ -545,20 +636,20 @@ components:
                 format: integer
                 example: 23456
                 description: Number of seconds issued token is valid for.
-    GroupCreateReq:  
+    GroupCreateReq:
       description: JSON-formatted document describing group create request.
       required: true
       content:
         application/json:
           schema:
-           $ref: "#/components/schemas/GroupReqSchema"
+            $ref: "#/components/schemas/GroupReqSchema"
     GroupUpdateReq:
       description: JSON-formatted document describing group create request.
       required: true
       content:
         application/json:
           schema:
-           $ref: "#/components/schemas/GroupUpdateSchema"
+            $ref: "#/components/schemas/GroupUpdateSchema"
     MembersReq:
       description: JSON array of member IDs.
       required: true
@@ -566,6 +657,21 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/MembersReqSchema"
+    ShareGroupAccessReq:
+      description: test
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ShareGroupAccessReqSchema"
+    PoliciesReq:
+      description: JSON-formatted document describing adding policies request.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PoliciesReqSchema"
+
   responses:
     ServiceError:
       description: Unexpected server-side error occurred.
@@ -585,6 +691,8 @@ components:
                 type: string
                 description: Created group's relative URL.
                 example: /groups/{groupId}
+    ShareAccessRightRes:
+      description: User group shared with thing group.
     GroupRes:
       description: Data retrieved.
       content:

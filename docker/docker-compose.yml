@@ -11,11 +11,62 @@ volumes:
   mainflux-auth-db-volume:
   mainflux-users-db-volume:
   mainflux-things-db-volume:
+  mainflux-keto-db-volume:
   mainflux-auth-redis-volume:
   mainflux-es-redis-volume:
   mainflux-mqtt-broker-volume:
 
 services:
+  keto:
+    image: oryd/keto:v0.6.0-alpha.3
+    container_name: mainflux-keto
+    ports:
+      - ${MF_KETO_READ_REMOTE_PORT}:4466
+      - ${MF_KETO_WRITE_REMOTE_PORT}:4467
+    environment:
+      - DSN=postgresql://${MF_KETO_DB_USER}:${MF_KETO_DB_PASS}@keto-db:${MF_KETO_DB_PORT}/${MF_KETO_DB}?sslmode=disable
+    command: serve -c /home/ory/keto.yml
+    restart: on-failure
+    volumes:
+      - type: bind
+        source: ./keto
+        target: /home/ory
+    networks:
+      - mainflux-base-net
+    depends_on:
+      - keto-db
+
+  keto-migrate:
+    image: oryd/keto:v0.6.0-alpha.3
+    container_name: mainflux-keto-migrate
+    environment:
+      - KETO_WRITE_REMOTE=keto:${MF_KETO_WRITE_REMOTE_PORT}
+      - KETO_READ_REMOTE=keto:${MF_KETO_READ_REMOTE_PORT}
+      - DSN=postgresql://${MF_KETO_DB_USER}:${MF_KETO_DB_PASS}@keto-db:${MF_KETO_DB_PORT}/${MF_KETO_DB}?sslmode=disable
+    volumes:
+      - type: bind
+        source: ./keto
+        target: /home/ory
+    command: migrate up --all-namespaces -c /home/ory/keto.yml --yes
+    restart: on-failure
+    networks:
+      - mainflux-base-net
+    depends_on:
+      - keto-db
+
+  keto-db:
+    image: postgres:13.3-alpine
+    container_name: mainflux-keto-db
+    restart: on-failure
+    environment:
+      POSTGRES_USER: ${MF_KETO_DB_USER}
+      POSTGRES_PASSWORD: ${MF_KETO_DB_PASS}
+      POSTGRES_DB: ${MF_KETO_DB}
+    networks:
+      - mainflux-base-net
+    volumes:
+      - mainflux-keto-db-volume:/var/lib/postgresql/data
+
   nginx:
     image: nginx:1.20.0-alpine
     container_name: mainflux-nginx
@@ -73,6 +124,7 @@ services:
     container_name: mainflux-auth
     depends_on:
       - auth-db
+      - keto
     expose:
       - ${MF_AUTH_GRPC_PORT}
     restart: on-failure
@@ -87,6 +139,10 @@ services:
       MF_AUTH_GRPC_PORT: ${MF_AUTH_GRPC_PORT}
       MF_AUTH_SECRET: ${MF_AUTH_SECRET}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
+      MF_KETO_HOST: ${MF_KETO_HOST}
+      MF_KETO_WRITE_REMOTE_PORT: ${MF_KETO_WRITE_REMOTE_PORT}
+      MF_KETO_READ_REMOTE_PORT: ${MF_KETO_READ_REMOTE_PORT}
+
     ports:
       - ${MF_AUTH_HTTP_PORT}:${MF_AUTH_HTTP_PORT}
       - ${MF_AUTH_GRPC_PORT}:${MF_AUTH_GRPC_PORT}
@@ -136,6 +192,7 @@ services:
       MF_AUTH_GRPC_TIMEOUT: ${MF_AUTH_GRPC_TIMEOUT}
       MF_USERS_ADMIN_EMAIL: ${MF_USERS_ADMIN_EMAIL}
       MF_USERS_ADMIN_PASSWORD: ${MF_USERS_ADMIN_PASSWORD}
+      MF_ONLY_ADMIN_CREATES_USER: ${MF_ONLY_ADMIN_CREATES_USER}
     ports:
       - ${MF_USERS_HTTP_PORT}:${MF_USERS_HTTP_PORT}
     networks:

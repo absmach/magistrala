@@ -52,6 +52,19 @@ func (lm *loggingMiddleware) UpdateThing(ctx context.Context, token string, thin
 	return lm.svc.UpdateThing(ctx, token, thing)
 }
 
+func (lm *loggingMiddleware) ShareThing(ctx context.Context, token, thingID string, actions, userIDs []string) (err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method share_thing for token %s and thing %s took %s to complete", token, thingID, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.ShareThing(ctx, token, thingID, actions, userIDs)
+}
+
 func (lm *loggingMiddleware) UpdateKey(ctx context.Context, token, id, key string) (err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method update_key for thing %s and key %s took %s to complete", id, key, time.Since(begin))

@@ -127,6 +127,24 @@ func (req assignReq) validate() error {
 	return nil
 }
 
+type shareGroupAccessReq struct {
+	token        string
+	userGroupID  string
+	ThingGroupID string `json:"thing_group_id"`
+}
+
+func (req shareGroupAccessReq) validate() error {
+	if req.token == "" {
+		return auth.ErrUnauthorizedAccess
+	}
+
+	if req.ThingGroupID == "" || req.userGroupID == "" {
+		return auth.ErrMalformedEntity
+	}
+
+	return nil
+}
+
 type unassignReq struct {
 	assignReq
 }

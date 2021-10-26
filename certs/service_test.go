@@ -62,7 +62,8 @@ func newService(tokens map[string]string) (certs.Service, error) {
 	ac := bsmocks.NewAuthClient(map[string]string{token: email})
 	server := newThingsServer(newThingsService(ac))
 
-	auth := thmocks.NewAuthService(tokens)
+	policies := []thmocks.MockSubjectSet{{Object: "users", Relation: "member"}}
+	auth := thmocks.NewAuthService(tokens, map[string][]thmocks.MockSubjectSet{email: policies})
 	config := mfsdk.Config{
 		ThingsURL: server.URL,
 	}

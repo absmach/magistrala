@@ -5,6 +5,7 @@ package things
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/mainflux/mainflux/pkg/errors"
 
@@ -26,6 +27,9 @@ var (
 	// ErrUpdateEntity indicates error in updating entity or entities
 	ErrUpdateEntity = errors.New("update entity failed")
 
+	// ErrAuthorization indicates a failure occurred while authorizing the entity.
+	ErrAuthorization = errors.New("failed to perform authorization over the entity")
+
 	// ErrViewEntity indicates error in viewing entity or entities
 	ErrViewEntity = errors.New("view entity failed")
 
@@ -42,6 +46,14 @@ var (
 	ErrFailedToRetrieveThings = errors.New("failed to retrieve group members")
 )
 
+const (
+	usersObjectKey    = "users"
+	memberRelationKey = "member"
+	readRelationKey   = "read"
+	writeRelationKey  = "write"
+	deleteRelationKey = "delete"
+)
+
 // Service specifies an API that must be fullfiled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).
 type Service interface {
@@ -51,6 +63,11 @@ type Service interface {
 	// UpdateThing updates the thing identified by the provided ID, that
 	// belongs to the user identified by the provided key.
 	UpdateThing(ctx context.Context, token string, thing Thing) error
+
+	// ShareThing gives actions associated with the thing to the given user IDs.
+	// The requester user identified by the token has to have a "write" relation
+	// on the thing in order to share the thing.
+	ShareThing(ctx context.Context, token, thingID string, actions, userIDs []string) error
 
 	// UpdateKey updates key value of the existing thing. A non-nil error is
 	// returned to indicate operation failure.
@@ -166,23 +183,51 @@ func (ts *thingsService) CreateThings(ctx context.Context, token string, things 
 		return []Thing{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	for i := range things {
-		things[i].ID, err = ts.idProvider.ID()
+	if err := ts.authorize(ctx, res.GetId(), usersObjectKey, memberRelationKey); err != nil {
+		return []Thing{}, err
+	}
+
+	ths := []Thing{}
+	for _, thing := range things {
+		th, err := ts.createThing(ctx, &thing, res)
 		if err != nil {
-			return []Thing{}, errors.Wrap(ErrCreateUUID, err)
+			return []Thing{}, err
 		}
+		ths = append(ths, th)
+	}
 
-		things[i].Owner = res.GetEmail()
+	return ths, nil
+}
 
-		if things[i].Key == "" {
-			things[i].Key, err = ts.idProvider.ID()
-			if err != nil {
-				return []Thing{}, errors.Wrap(ErrCreateUUID, err)
-			}
+// createThing saves the Thing and adds identity as an owner(Read, Write, Delete policies) of the Thing.
+func (ts *thingsService) createThing(ctx context.Context, thing *Thing, identity *mainflux.UserIdentity) (Thing, error) {
+	thID, err := ts.idProvider.ID()
+	if err != nil {
+		return Thing{}, errors.Wrap(ErrCreateUUID, err)
+	}
+	thing.ID = thID
+	thing.Owner = identity.GetEmail()
+
+	if thing.Key == "" {
+		thing.Key, err = ts.idProvider.ID()
+		if err != nil {
+			return Thing{}, errors.Wrap(ErrCreateUUID, err)
 		}
 	}
 
-	return ts.things.Save(ctx, things...)
+	ths, err := ts.things.Save(ctx, *thing)
+	if err != nil {
+		return Thing{}, err
+	}
+	if len(ths) == 0 {
+		return Thing{}, ErrCreateEntity
+	}
+
+	if err := ts.claimOwnership(ctx, ths[0].ID, []string{readRelationKey, writeRelationKey, deleteRelationKey}, []string{identity.GetId()}); err != nil {
+		return Thing{}, err
+	}
+
+	return ths[0], nil
 }
 
 func (ts *thingsService) UpdateThing(ctx context.Context, token string, thing Thing) error {
@@ -191,15 +236,52 @@ func (ts *thingsService) UpdateThing(ctx context.Context, token string, thing Th
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
+	if err := ts.authorize(ctx, res.GetId(), thing.ID, writeRelationKey); err != nil {
+		return err
+	}
+
 	thing.Owner = res.GetEmail()
 
 	return ts.things.Update(ctx, thing)
+}
+
+func (ts *thingsService) ShareThing(ctx context.Context, token, thingID string, actions, userIDs []string) error {
+	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
+	if err != nil {
+		return errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+
+	if err := ts.authorize(ctx, res.GetId(), thingID, writeRelationKey); err != nil {
+		return err
+	}
+
+	return ts.claimOwnership(ctx, thingID, actions, userIDs)
+}
+
+func (ts *thingsService) claimOwnership(ctx context.Context, thingID string, actions, userIDs []string) error {
+	var errs error
+	for _, userID := range userIDs {
+		for _, action := range actions {
+			apr, err := ts.auth.AddPolicy(ctx, &mainflux.AddPolicyReq{Obj: thingID, Act: action, Sub: userID})
+			if err != nil {
+				errs = errors.Wrap(fmt.Errorf("cannot claim ownership on thing '%s' by user '%s': %s", thingID, userID, err), errs)
+			}
+			if !apr.GetAuthorized() {
+				errs = errors.Wrap(fmt.Errorf("cannot claim ownership on thing '%s' by user '%s': unauthorized", thingID, userID), errs)
+			}
+		}
+	}
+	return errs
 }
 
 func (ts *thingsService) UpdateKey(ctx context.Context, token, id, key string) error {
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+
+	if err := ts.authorize(ctx, res.GetId(), id, writeRelationKey); err != nil {
+		return err
 	}
 
 	owner := res.GetEmail()
@@ -213,6 +295,10 @@ func (ts *thingsService) ViewThing(ctx context.Context, token, id string) (Thing
 		return Thing{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
+	if err := ts.authorize(ctx, res.GetId(), id, readRelationKey); err != nil {
+		return Thing{}, err
+	}
+
 	return ts.things.RetrieveByID(ctx, res.GetEmail(), id)
 }
 
@@ -222,7 +308,22 @@ func (ts *thingsService) ListThings(ctx context.Context, token string, pm PageMe
 		return Page{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	return ts.things.RetrieveAll(ctx, res.GetEmail(), pm)
+	page, err := ts.things.RetrieveAll(ctx, res.GetEmail(), pm)
+	if err != nil {
+		return Page{}, err
+	}
+
+	ths := []Thing{}
+	for _, thing := range page.Things {
+		for _, action := range []string{readRelationKey, writeRelationKey, deleteRelationKey} {
+			if err := ts.authorize(ctx, res.GetId(), thing.ID, action); err == nil {
+				ths = append(ths, thing)
+				break
+			}
+		}
+	}
+	page.Things = ths
+	return page, nil
 }
 
 func (ts *thingsService) ListThingsByChannel(ctx context.Context, token, chID string, pm PageMetadata) (Page, error) {
@@ -238,6 +339,10 @@ func (ts *thingsService) RemoveThing(ctx context.Context, token, id string) erro
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+
+	if err := ts.authorize(ctx, res.GetId(), id, deleteRelationKey); err != nil {
+		return err
 	}
 
 	if err := ts.thingCache.Remove(ctx, id); err != nil {
@@ -438,4 +543,20 @@ func (ts *thingsService) members(ctx context.Context, token, groupID, groupType 
 		return nil, nil
 	}
 	return res.Members, nil
+}
+
+func (ts *thingsService) authorize(ctx context.Context, subject, object string, relation string) error {
+	req := &mainflux.AuthorizeReq{
+		Sub: subject,
+		Obj: object,
+		Act: relation,
+	}
+	res, err := ts.auth.Authorize(ctx, req)
+	if err != nil {
+		return errors.Wrap(ErrAuthorization, err)
+	}
+	if !res.GetAuthorized() {
+		return ErrAuthorization
+	}
+	return nil
 }

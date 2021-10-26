@@ -29,6 +29,7 @@ require (
 	github.com/oklog/ulid/v2 v2.0.2
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/ory/dockertest/v3 v3.7.0
+	github.com/ory/keto/proto/ory/keto/acl/v1alpha1 v0.0.0-20210616104402-80e043246cf9
 	github.com/pelletier/go-toml v1.9.3
 	github.com/plgd-dev/go-coap/v2 v2.4.0
 	github.com/prometheus/client_golang v1.11.0

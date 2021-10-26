@@ -42,7 +42,8 @@ func startServer() {
 }
 
 func newService(tokens map[string]string) things.Service {
-	auth := mocks.NewAuthService(tokens)
+	policies := []mocks.MockSubjectSet{{Object: "users", Relation: "member"}}
+	auth := mocks.NewAuthService(tokens, map[string][]mocks.MockSubjectSet{email: policies})
 	conns := make(chan mocks.Connection)
 	thingsRepo := mocks.NewThingRepository(conns)
 	channelsRepo := mocks.NewChannelRepository(thingsRepo, conns)

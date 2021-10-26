@@ -5,6 +5,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/mainflux/mainflux"
@@ -15,11 +16,17 @@ import (
 const (
 	loginDuration    = 10 * time.Hour
 	recoveryDuration = 5 * time.Minute
+
+	thingsGroupType = "things"
+	memberRelation  = "member"
 )
 
 var (
 	// ErrUnauthorizedAccess represents unauthorized access.
 	ErrUnauthorizedAccess = errors.New("unauthorized access")
+
+	// ErrAuthorization indicates failure occurred while authorizing the entity.
+	ErrAuthorization = errors.New("failed to perform authorization over the entity")
 
 	// ErrMalformedEntity indicates malformed entity specification (e.g.
 	// invalid owner or ID).
@@ -68,7 +75,7 @@ type Authn interface {
 	// issued by the user identified by the provided key.
 	Revoke(ctx context.Context, token, id string) error
 
-	// Retrieve retrieves data for the Key identified by the provided
+	// RetrieveKey retrieves data for the Key identified by the provided
 	// ID, that is issued by the user identified by the provided key.
 	RetrieveKey(ctx context.Context, token, id string) (Key, error)
 
@@ -78,14 +85,7 @@ type Authn interface {
 	Identify(ctx context.Context, token string) (Identity, error)
 }
 
-// Authz specifies an API for the authorization and will be implemented
-// by evaluation of policies.
-type Authz interface {
-	// Authorize checks access rights
-	Authorize(ctx context.Context, token, sub, obj, act string) (bool, error)
-}
-
-// Service specifies an API that must be fullfiled by the domain service
+// Service specifies an API that must be fulfilled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).
 // Token is a string value of the actual Key and is used to authenticate
 // an Auth service request.
@@ -104,17 +104,19 @@ type service struct {
 	groups       GroupRepository
 	idProvider   mainflux.IDProvider
 	ulidProvider mainflux.IDProvider
+	agent        PolicyAgent
 	tokenizer    Tokenizer
 }
 
 // New instantiates the auth service implementation.
-func New(keys KeyRepository, groups GroupRepository, idp mainflux.IDProvider, tokenizer Tokenizer) Service {
+func New(keys KeyRepository, groups GroupRepository, idp mainflux.IDProvider, tokenizer Tokenizer, policyAgent PolicyAgent) Service {
 	return &service{
 		tokenizer:    tokenizer,
 		keys:         keys,
 		groups:       groups,
 		idProvider:   idp,
 		ulidProvider: ulid.New(),
+		agent:        policyAgent,
 	}
 }
 
@@ -170,8 +172,44 @@ func (svc service) Identify(ctx context.Context, token string) (Identity, error)
 	}
 }
 
-func (svc service) Authorize(ctx context.Context, token, sub, obj, act string) (bool, error) {
-	return true, nil
+func (svc service) Authorize(ctx context.Context, pr PolicyReq) error {
+	return svc.agent.CheckPolicy(ctx, pr)
+}
+
+func (svc service) AddPolicy(ctx context.Context, pr PolicyReq) error {
+	return svc.agent.AddPolicy(ctx, pr)
+}
+
+func (svc service) AddPolicies(ctx context.Context, token, object string, subjectIDs, relations []string) error {
+	user, err := svc.Identify(ctx, token)
+	if err != nil {
+		return errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+
+	if err := svc.Authorize(ctx, PolicyReq{Object: "authorities", Relation: "member", Subject: user.ID}); err != nil {
+		return err
+	}
+
+	var errs error
+	for _, subjectID := range subjectIDs {
+		for _, relation := range relations {
+			if err := svc.AddPolicy(ctx, PolicyReq{Object: object, Relation: relation, Subject: subjectID}); err != nil {
+				errs = errors.Wrap(fmt.Errorf("cannot add '%s' policy on object '%s' for subject '%s': %s", relation, object, subjectID, err), errs)
+			}
+		}
+	}
+	return errs
+}
+
+func (svc service) DeletePolicy(ctx context.Context, pr PolicyReq) error {
+	return svc.agent.DeletePolicy(ctx, pr)
+}
+
+func (svc service) AssignGroupAccessRights(ctx context.Context, token, thingGroupID, userGroupID string) error {
+	if _, err := svc.Identify(ctx, token); err != nil {
+		return errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+	return svc.agent.AddPolicy(ctx, PolicyReq{Object: thingGroupID, Relation: "access", Subject: fmt.Sprintf("%s:%s#%s", "members", userGroupID, memberRelation)})
 }
 
 func (svc service) tmpKey(duration time.Duration, key Key) (Key, string, error) {
@@ -249,6 +287,10 @@ func (svc service) CreateGroup(ctx context.Context, token string, group Group) (
 		return Group{}, err
 	}
 
+	if err := svc.agent.AddPolicy(ctx, PolicyReq{Object: group.ID, Relation: memberRelation, Subject: user.ID}); err != nil {
+		return Group{}, err
+	}
+
 	return group, nil
 }
 
@@ -311,14 +353,53 @@ func (svc service) Assign(ctx context.Context, token string, groupID, groupType 
 	if _, err := svc.Identify(ctx, token); err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.groups.Assign(ctx, groupID, groupType, memberIDs...)
+
+	if err := svc.groups.Assign(ctx, groupID, groupType, memberIDs...); err != nil {
+		return err
+	}
+
+	if groupType == thingsGroupType {
+		ss := fmt.Sprintf("%s:%s#%s", "members", groupID, "access")
+		var errs error
+		for _, memberID := range memberIDs {
+			for _, action := range []string{"read", "write", "delete"} {
+				if err := svc.agent.AddPolicy(ctx, PolicyReq{Object: memberID, Relation: action, Subject: ss}); err != nil {
+					errs = errors.Wrap(fmt.Errorf("cannot add thing: '%s' to thing group: '%s'", memberID, groupID), errs)
+				}
+			}
+		}
+		return errs
+	}
+
+	var errs error
+	for _, memberID := range memberIDs {
+		if err := svc.agent.AddPolicy(ctx, PolicyReq{Object: groupID, Relation: memberRelation, Subject: memberID}); err != nil {
+			errs = errors.Wrap(fmt.Errorf("cannot add user: '%s' to user group: '%s'", memberID, groupID), errs)
+		}
+	}
+	return errs
 }
 
 func (svc service) Unassign(ctx context.Context, token string, groupID string, memberIDs ...string) error {
 	if _, err := svc.Identify(ctx, token); err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.groups.Unassign(ctx, groupID, memberIDs...)
+
+	ss := fmt.Sprintf("%s:%s#%s", "members", groupID, "access")
+	var errs error
+	for _, memberID := range memberIDs {
+		for _, action := range []string{"read", "write", "delete"} {
+			if err := svc.agent.DeletePolicy(ctx, PolicyReq{Object: groupID, Relation: memberRelation, Subject: memberID}); err != nil {
+				errs = errors.Wrap(fmt.Errorf("cannot delete a membership of member '%s' from group '%s'", memberID, groupID), errs)
+			}
+			if err := svc.agent.DeletePolicy(ctx, PolicyReq{Object: memberID, Relation: action, Subject: ss}); err != nil {
+				errs = errors.Wrap(fmt.Errorf("cannot delete '%s' policy from member '%s'", action, memberID), errs)
+			}
+		}
+	}
+
+	err := svc.groups.Unassign(ctx, groupID, memberIDs...)
+	return errors.Wrap(err, errs)
 }
 
 func (svc service) ListMemberships(ctx context.Context, token string, memberID string, pm PageMetadata) (GroupPage, error) {

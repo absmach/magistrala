@@ -74,6 +74,8 @@ const (
 	defAuthURL     = "localhost:8181"
 	defAuthTimeout = "1s"
 
+	defOnlyAdminCreatesUser = "" // If empty, everybody can create a user. Otherwise, only admin can create a user.
+
 	envLogLevel      = "MF_USERS_LOG_LEVEL"
 	envDBHost        = "MF_USERS_DB_HOST"
 	envDBPort        = "MF_USERS_DB_PORT"
@@ -109,24 +111,27 @@ const (
 	envAuthCACerts = "MF_AUTH_CA_CERTS"
 	envAuthURL     = "MF_AUTH_GRPC_URL"
 	envAuthTimeout = "MF_AUTH_GRPC_TIMEOUT"
+
+	envOnlyAdminCreatesUser = "MF_ONLY_ADMIN_CREATES_USER"
 )
 
 type config struct {
-	logLevel      string
-	dbConfig      postgres.Config
-	emailConf     email.Config
-	httpPort      string
-	serverCert    string
-	serverKey     string
-	jaegerURL     string
-	resetURL      string
-	authTLS       bool
-	authCACerts   string
-	authURL       string
-	authTimeout   time.Duration
-	adminEmail    string
-	adminPassword string
-	passRegex     *regexp.Regexp
+	logLevel         string
+	dbConfig         postgres.Config
+	emailConf        email.Config
+	httpPort         string
+	serverCert       string
+	serverKey        string
+	jaegerURL        string
+	resetURL         string
+	authTLS          bool
+	authCACerts      string
+	authURL          string
+	authTimeout      time.Duration
+	adminEmail       string
+	adminPassword    string
+	passRegex        *regexp.Regexp
+	adminCreatesUser string
 }
 
 func main() {
@@ -208,21 +213,22 @@ func loadConfig() config {
 	}
 
 	return config{
-		logLevel:      mainflux.Env(envLogLevel, defLogLevel),
-		dbConfig:      dbConfig,
-		emailConf:     emailConf,
-		httpPort:      mainflux.Env(envHTTPPort, defHTTPPort),
-		serverCert:    mainflux.Env(envServerCert, defServerCert),
-		serverKey:     mainflux.Env(envServerKey, defServerKey),
-		jaegerURL:     mainflux.Env(envJaegerURL, defJaegerURL),
-		resetURL:      mainflux.Env(envTokenResetEndpoint, defTokenResetEndpoint),
-		authTLS:       tls,
-		authCACerts:   mainflux.Env(envAuthCACerts, defAuthCACerts),
-		authURL:       mainflux.Env(envAuthURL, defAuthURL),
-		authTimeout:   authTimeout,
-		adminEmail:    mainflux.Env(envAdminEmail, defAdminEmail),
-		adminPassword: mainflux.Env(envAdminPassword, defAdminPassword),
-		passRegex:     passRegex,
+		logLevel:         mainflux.Env(envLogLevel, defLogLevel),
+		dbConfig:         dbConfig,
+		emailConf:        emailConf,
+		httpPort:         mainflux.Env(envHTTPPort, defHTTPPort),
+		serverCert:       mainflux.Env(envServerCert, defServerCert),
+		serverKey:        mainflux.Env(envServerKey, defServerKey),
+		jaegerURL:        mainflux.Env(envJaegerURL, defJaegerURL),
+		resetURL:         mainflux.Env(envTokenResetEndpoint, defTokenResetEndpoint),
+		authTLS:          tls,
+		authCACerts:      mainflux.Env(envAuthCACerts, defAuthCACerts),
+		authURL:          mainflux.Env(envAuthURL, defAuthURL),
+		authTimeout:      authTimeout,
+		adminEmail:       mainflux.Env(envAdminEmail, defAdminEmail),
+		adminPassword:    mainflux.Env(envAdminPassword, defAdminPassword),
+		passRegex:        passRegex,
+		adminCreatesUser: mainflux.Env(envOnlyAdminCreatesUser, defOnlyAdminCreatesUser),
 	}
 
 }
@@ -313,26 +319,68 @@ func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServic
 			Help:      "Total duration of requests in microseconds.",
 		}, []string{"method"}),
 	)
-	if err := createAdmin(svc, userRepo, c); err != nil {
+	if err := createAdmin(svc, userRepo, c, auth); err != nil {
 		logger.Error("failed to create admin user: " + err.Error())
 		os.Exit(1)
 	}
+
+	if c.adminCreatesUser != "" {
+		dpr, err := auth.DeletePolicy(context.Background(), &mainflux.DeletePolicyReq{Obj: "user", Act: "create", Sub: "*"})
+		if err != nil {
+			logger.Error("failed to delete a policy: " + err.Error())
+			os.Exit(1)
+		}
+		if !dpr.GetDeleted() {
+			logger.Error("deleting a policy expected to succeed.")
+			os.Exit(1)
+		}
+	}
+
 	return svc
 }
 
-func createAdmin(svc users.Service, userRepo users.UserRepository, c config) error {
+func createAdmin(svc users.Service, userRepo users.UserRepository, c config, auth mainflux.AuthServiceClient) error {
 	user := users.User{
 		Email:    c.adminEmail,
 		Password: c.adminPassword,
 	}
 
-	if _, err := userRepo.RetrieveByEmail(context.Background(), user.Email); err == nil {
-		// Exiting if user already exists
+	if admin, err := userRepo.RetrieveByEmail(context.Background(), user.Email); err == nil {
+		// The admin is already created. Check existence of the admin policy.
+		_, err := auth.Authorize(context.Background(), &mainflux.AuthorizeReq{Obj: "authorities", Act: "member", Sub: admin.ID})
+		if err != nil {
+			apr, err := auth.AddPolicy(context.Background(), &mainflux.AddPolicyReq{Obj: "authorities", Act: "member", Sub: admin.ID})
+			if err != nil {
+				return err
+			}
+			if !apr.GetAuthorized() {
+				return users.ErrAuthorization
+			}
+		}
 		return nil
 	}
 
-	if _, err := svc.Register(context.Background(), user); err != nil {
+	// Add a policy that allows anybody to create a user
+	apr, err := auth.AddPolicy(context.Background(), &mainflux.AddPolicyReq{Obj: "user", Act: "create", Sub: "*"})
+	if err != nil {
 		return err
+	}
+	if !apr.GetAuthorized() {
+		return users.ErrAuthorization
+	}
+
+	// Create an admin
+	uid, err := svc.Register(context.Background(), "", user)
+	if err != nil {
+		return err
+	}
+
+	apr, err = auth.AddPolicy(context.Background(), &mainflux.AddPolicyReq{Obj: "authorities", Act: "member", Sub: uid})
+	if err != nil {
+		return err
+	}
+	if !apr.GetAuthorized() {
+		return users.ErrAuthorization
 	}
 
 	return nil

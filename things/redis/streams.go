@@ -82,6 +82,10 @@ func (es eventStore) UpdateKey(ctx context.Context, token, id, key string) error
 	return es.svc.UpdateKey(ctx, token, id, key)
 }
 
+func (es eventStore) ShareThing(ctx context.Context, token, thingID string, actions, userIDs []string) error {
+	return es.svc.ShareThing(ctx, token, thingID, actions, userIDs)
+}
+
 func (es eventStore) ViewThing(ctx context.Context, token, id string) (things.Thing, error) {
 	return es.svc.ViewThing(ctx, token, id)
 }

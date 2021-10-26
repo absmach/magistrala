@@ -69,6 +69,13 @@ func MakeHandler(svc auth.Service, mux *bone.Mux, tracer opentracing.Tracer) *bo
 		opts...,
 	))
 
+	mux.Post("/groups/:subjectGroupID/share", kithttp.NewServer(
+		kitot.TraceServer(tracer, "share_group_access")(shareGroupAccessEndpoint(svc)),
+		decodeShareGroupRequest,
+		encodeResponse,
+		opts...,
+	))
+
 	mux.Get("/groups", kithttp.NewServer(
 		kitot.TraceServer(tracer, "list_groups")(listGroupsEndpoint(svc)),
 		decodeListGroupsRequest,
@@ -119,7 +126,21 @@ func MakeHandler(svc auth.Service, mux *bone.Mux, tracer opentracing.Tracer) *bo
 	))
 
 	return mux
+}
 
+func decodeShareGroupRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, auth.ErrUnsupportedContentType
+	}
+
+	var req shareGroupAccessReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(auth.ErrFailedDecode, err)
+	}
+
+	req.userGroupID = bone.GetValue(r, "subjectGroupID")
+	req.token = r.Header.Get("Authorization")
+	return req, nil
 }
 
 func decodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
@@ -307,6 +328,8 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusNotFound)
 	case errors.Contains(err, auth.ErrConflict):
 		w.WriteHeader(http.StatusConflict)
+	case errors.Contains(err, auth.ErrAuthorization):
+		w.WriteHeader(http.StatusForbidden)
 	case errors.Contains(err, auth.ErrMemberAlreadyAssigned):
 		w.WriteHeader(http.StatusConflict)
 	case errors.Contains(err, io.EOF):

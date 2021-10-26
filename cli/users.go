@@ -14,10 +14,10 @@ import (
 func NewUsersCmd() *cobra.Command {
 	createCmd := cobra.Command{
 		Use:   "create",
-		Short: "create <username> <password>",
+		Short: "create <username> <password> <user_auth_token>",
 		Long:  `Creates new user`,
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsage(cmd.Short)
 				return
 			}
@@ -26,7 +26,7 @@ func NewUsersCmd() *cobra.Command {
 				Email:    args[0],
 				Password: args[1],
 			}
-			id, err := sdk.CreateUser(user)
+			id, err := sdk.CreateUser(args[2], user)
 			if err != nil {
 				logError(err)
 				return

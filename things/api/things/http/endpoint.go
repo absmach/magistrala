@@ -81,6 +81,21 @@ func createThingsEndpoint(svc things.Service) endpoint.Endpoint {
 	}
 }
 
+func shareThingEndpoint(svc things.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(shareThingReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		if err := svc.ShareThing(ctx, req.token, req.thingID, req.Policies, req.UserIDs); err != nil {
+			return nil, err
+		}
+
+		return shareThingRes{}, nil
+	}
+}
+
 func updateThingEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateThingReq)

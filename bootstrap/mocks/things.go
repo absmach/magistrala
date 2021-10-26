@@ -228,6 +228,10 @@ func (svc *mainfluxThings) Identify(context.Context, string) (string, error) {
 	panic("not implemented")
 }
 
+func (svc *mainfluxThings) ShareThing(ctx context.Context, token, thingID string, actions, userIDs []string) error {
+	panic("not implemented")
+}
+
 func findIndex(list []string, val string) int {
 	for i, v := range list {
 		if v == val {

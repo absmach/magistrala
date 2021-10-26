@@ -20,11 +20,13 @@ import (
 var _ mainflux.AuthServiceServer = (*grpcServer)(nil)
 
 type grpcServer struct {
-	issue     kitgrpc.Handler
-	identify  kitgrpc.Handler
-	authorize kitgrpc.Handler
-	assign    kitgrpc.Handler
-	members   kitgrpc.Handler
+	issue        kitgrpc.Handler
+	identify     kitgrpc.Handler
+	authorize    kitgrpc.Handler
+	addPolicy    kitgrpc.Handler
+	deletePolicy kitgrpc.Handler
+	assign       kitgrpc.Handler
+	members      kitgrpc.Handler
 }
 
 // NewServer returns new AuthServiceServer instance.
@@ -44,6 +46,16 @@ func NewServer(tracer opentracing.Tracer, svc auth.Service) mainflux.AuthService
 			kitot.TraceServer(tracer, "authorize")(authorizeEndpoint(svc)),
 			decodeAuthorizeRequest,
 			encodeAuthorizeResponse,
+		),
+		addPolicy: kitgrpc.NewServer(
+			kitot.TraceServer(tracer, "add_policy")(addPolicyEndpoint(svc)),
+			decodeAddPolicyRequest,
+			encodeAddPolicyResponse,
+		),
+		deletePolicy: kitgrpc.NewServer(
+			kitot.TraceServer(tracer, "delete_policy")(deletePolicyEndpoint(svc)),
+			decodeDeletePolicyRequest,
+			encodeDeletePolicyResponse,
 		),
 		assign: kitgrpc.NewServer(
 			kitot.TraceServer(tracer, "assign")(assignEndpoint(svc)),
@@ -74,12 +86,28 @@ func (s *grpcServer) Identify(ctx context.Context, token *mainflux.Token) (*main
 	return res.(*mainflux.UserIdentity), nil
 }
 
-func (s *grpcServer) Authorize(ctx context.Context, token *mainflux.AuthorizeReq) (*mainflux.AuthorizeRes, error) {
-	_, res, err := s.authorize.ServeGRPC(ctx, token)
+func (s *grpcServer) Authorize(ctx context.Context, req *mainflux.AuthorizeReq) (*mainflux.AuthorizeRes, error) {
+	_, res, err := s.authorize.ServeGRPC(ctx, req)
 	if err != nil {
 		return nil, encodeError(err)
 	}
 	return res.(*mainflux.AuthorizeRes), nil
+}
+
+func (s *grpcServer) AddPolicy(ctx context.Context, req *mainflux.AddPolicyReq) (*mainflux.AddPolicyRes, error) {
+	_, res, err := s.addPolicy.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, encodeError(err)
+	}
+	return res.(*mainflux.AddPolicyRes), nil
+}
+
+func (s *grpcServer) DeletePolicy(ctx context.Context, req *mainflux.DeletePolicyReq) (*mainflux.DeletePolicyRes, error) {
+	_, res, err := s.deletePolicy.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, encodeError(err)
+	}
+	return res.(*mainflux.DeletePolicyRes), nil
 }
 
 func (s *grpcServer) Assign(ctx context.Context, token *mainflux.Assignment) (*empty.Empty, error) {
@@ -120,17 +148,37 @@ func encodeIdentifyResponse(_ context.Context, grpcRes interface{}) (interface{}
 
 func decodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*mainflux.AuthorizeReq)
-	return authReq{Act: req.Act, Obj: req.Obj, Sub: req.Sub}, nil
+	return authReq{Act: req.GetAct(), Obj: req.GetObj(), Sub: req.GetSub()}, nil
 }
 
 func encodeAuthorizeResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(*mainflux.AuthorizeRes)
-	return res, nil
+	res := grpcRes.(authorizeRes)
+	return &mainflux.AuthorizeRes{Authorized: res.authorized}, nil
+}
+
+func decodeAddPolicyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req := grpcReq.(*mainflux.AddPolicyReq)
+	return addPolicyReq{Sub: req.GetSub(), Obj: req.GetObj(), Act: req.GetAct()}, nil
+}
+
+func encodeAddPolicyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+	res := grpcRes.(addPolicyRes)
+	return &mainflux.AddPolicyRes{Authorized: res.authorized}, nil
 }
 
 func decodeAssignRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*mainflux.Token)
 	return assignReq{token: req.GetValue()}, nil
+}
+
+func decodeDeletePolicyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req := grpcReq.(*mainflux.DeletePolicyReq)
+	return deletePolicyReq{Sub: req.GetSub(), Obj: req.GetObj(), Act: req.GetAct()}, nil
+}
+
+func encodeDeletePolicyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+	res := grpcRes.(deletePolicyRes)
+	return &mainflux.DeletePolicyRes{Deleted: res.deleted}, nil
 }
 
 func decodeMembersRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
@@ -166,7 +214,8 @@ func encodeError(err error) error {
 		return nil
 	case errors.Contains(err, auth.ErrMalformedEntity):
 		return status.Error(codes.InvalidArgument, "received invalid token request")
-	case errors.Contains(err, auth.ErrUnauthorizedAccess):
+	case errors.Contains(err, auth.ErrUnauthorizedAccess),
+		errors.Contains(err, auth.ErrAuthorization):
 		return status.Error(codes.Unauthenticated, err.Error())
 	case errors.Contains(err, auth.ErrKeyExpired):
 		return status.Error(codes.Unauthenticated, err.Error())

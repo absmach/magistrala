@@ -141,6 +141,20 @@ func listMemberships(svc auth.Service) endpoint.Endpoint {
 	}
 }
 
+func shareGroupAccessEndpoint(svc auth.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(shareGroupAccessReq)
+		if err := req.validate(); err != nil {
+			return shareGroupRes{}, err
+		}
+
+		if err := svc.AssignGroupAccessRights(ctx, req.token, req.ThingGroupID, req.userGroupID); err != nil {
+			return shareGroupRes{}, err
+		}
+		return shareGroupRes{}, nil
+	}
+}
+
 func listChildrenEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listGroupsReq)

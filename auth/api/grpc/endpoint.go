@@ -62,17 +62,41 @@ func authorizeEndpoint(svc auth.Service) endpoint.Endpoint {
 			return authorizeRes{}, err
 		}
 
-		_, err := svc.Identify(ctx, req.token)
+		err := svc.Authorize(ctx, auth.PolicyReq{Subject: req.Sub, Object: req.Obj, Relation: req.Act})
 		if err != nil {
 			return authorizeRes{}, err
 		}
+		return authorizeRes{authorized: true}, err
+	}
+}
 
-		authorized, err := svc.Authorize(ctx, req.token, req.Sub, req.Obj, req.Obj)
-		if err != nil {
-			return authorizeRes{}, err
+func addPolicyEndpoint(svc auth.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(addPolicyReq)
+		if err := req.validate(); err != nil {
+			return addPolicyRes{}, err
 		}
 
-		return authorizeRes{authorized: authorized}, err
+		err := svc.AddPolicy(ctx, auth.PolicyReq{Subject: req.Sub, Object: req.Obj, Relation: req.Act})
+		if err != nil {
+			return addPolicyRes{}, err
+		}
+		return addPolicyRes{authorized: true}, err
+	}
+}
+
+func deletePolicyEndpoint(svc auth.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(deletePolicyReq)
+		if err := req.validate(); err != nil {
+			return deletePolicyRes{}, err
+		}
+
+		err := svc.DeletePolicy(ctx, auth.PolicyReq{Subject: req.Sub, Object: req.Obj, Relation: req.Act})
+		if err != nil {
+			return deletePolicyRes{}, err
+		}
+		return deletePolicyRes{deleted: true}, nil
 	}
 }
 

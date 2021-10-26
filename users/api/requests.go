@@ -16,6 +16,15 @@ func (req userReq) validate() error {
 	return req.user.Validate()
 }
 
+type createUserReq struct {
+	user  users.User
+	token string
+}
+
+func (req createUserReq) validate() error {
+	return req.user.Validate()
+}
+
 type viewUserReq struct {
 	token  string
 	userID string

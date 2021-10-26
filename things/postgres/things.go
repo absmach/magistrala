@@ -76,7 +76,7 @@ func (tr thingRepository) Save(ctx context.Context, ths ...things.Thing) ([]thin
 }
 
 func (tr thingRepository) Update(ctx context.Context, t things.Thing) error {
-	q := `UPDATE things SET name = :name, metadata = :metadata WHERE owner = :owner AND id = :id;`
+	q := `UPDATE things SET name = :name, metadata = :metadata WHERE id = :id;`
 
 	dbth, err := toDBThing(t)
 	if err != nil {
@@ -145,14 +145,11 @@ func (tr thingRepository) UpdateKey(ctx context.Context, owner, id, key string) 
 }
 
 func (tr thingRepository) RetrieveByID(ctx context.Context, owner, id string) (things.Thing, error) {
-	q := `SELECT name, key, metadata FROM things WHERE id = $1 AND owner = $2;`
+	q := `SELECT name, key, metadata FROM things WHERE id = $1;`
 
-	dbth := dbThing{
-		ID:    id,
-		Owner: owner,
-	}
+	dbth := dbThing{ID: id}
 
-	if err := tr.db.QueryRowxContext(ctx, q, id, owner).StructScan(&dbth); err != nil {
+	if err := tr.db.QueryRowxContext(ctx, q, id).StructScan(&dbth); err != nil {
 		pqErr, ok := err.(*pq.Error)
 		if err == sql.ErrNoRows || ok && errInvalid == pqErr.Code.Name() {
 			return things.Thing{}, errors.Wrap(things.ErrNotFound, err)
@@ -253,10 +250,22 @@ func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, pm thin
 		return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
 	}
 
+	var query []string
+	if mq != "" {
+		query = append(query, mq)
+	}
+	if nq != "" {
+		query = append(query, nq)
+	}
+
+	var whereClause string
+	if len(query) > 0 {
+		whereClause = fmt.Sprintf(" WHERE %s", strings.Join(query, " AND "))
+	}
+
 	q := fmt.Sprintf(`SELECT id, name, key, metadata FROM things
-	      WHERE owner = :owner %s%s ORDER BY %s %s LIMIT :limit OFFSET :offset;`, mq, nq, oq, dq)
+	      %s ORDER BY %s %s LIMIT :limit OFFSET :offset;`, whereClause, oq, dq)
 	params := map[string]interface{}{
-		"owner":    owner,
 		"limit":    pm.Limit,
 		"offset":   pm.Offset,
 		"name":     name,
@@ -284,7 +293,7 @@ func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, pm thin
 		items = append(items, th)
 	}
 
-	cq := fmt.Sprintf(`SELECT COUNT(*) FROM things WHERE owner = :owner %s%s;`, nq, mq)
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM things %s;`, whereClause)
 
 	total, err := total(ctx, tr.db, cq, params)
 	if err != nil {
@@ -400,7 +409,7 @@ func (tr thingRepository) Remove(ctx context.Context, owner, id string) error {
 		ID:    id,
 		Owner: owner,
 	}
-	q := `DELETE FROM things WHERE id = :id AND owner = :owner;`
+	q := `DELETE FROM things WHERE id = :id`
 	if _, err := tr.db.NamedExecContext(ctx, q, dbth); err != nil {
 		return errors.Wrap(things.ErrRemoveEntity, err)
 	}

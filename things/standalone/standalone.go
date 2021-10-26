@@ -56,6 +56,14 @@ func (repo singleUserRepo) Authorize(ctx context.Context, req *mainflux.Authoriz
 	return &mainflux.AuthorizeRes{}, errUnsupported
 }
 
+func (repo singleUserRepo) AddPolicy(ctx context.Context, in *mainflux.AddPolicyReq, opts ...grpc.CallOption) (*mainflux.AddPolicyRes, error) {
+	return &mainflux.AddPolicyRes{}, errUnsupported
+}
+
+func (repo singleUserRepo) DeletePolicy(ctx context.Context, in *mainflux.DeletePolicyReq, opts ...grpc.CallOption) (*mainflux.DeletePolicyRes, error) {
+	return &mainflux.DeletePolicyRes{}, errUnsupported
+}
+
 func (repo singleUserRepo) Members(ctx context.Context, req *mainflux.MembersReq, _ ...grpc.CallOption) (r *mainflux.MembersRes, err error) {
 	return &mainflux.MembersRes{}, errUnsupported
 

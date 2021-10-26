@@ -564,6 +564,226 @@ func (m *AuthorizeRes) GetAuthorized() bool {
 	return false
 }
 
+type AddPolicyReq struct {
+	Sub                  string   `protobuf:"bytes,1,opt,name=sub,proto3" json:"sub,omitempty"`
+	Obj                  string   `protobuf:"bytes,2,opt,name=obj,proto3" json:"obj,omitempty"`
+	Act                  string   `protobuf:"bytes,3,opt,name=act,proto3" json:"act,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *AddPolicyReq) Reset()         { *m = AddPolicyReq{} }
+func (m *AddPolicyReq) String() string { return proto.CompactTextString(m) }
+func (*AddPolicyReq) ProtoMessage()    {}
+func (*AddPolicyReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_8bbd6f3875b0e874, []int{10}
+}
+func (m *AddPolicyReq) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *AddPolicyReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_AddPolicyReq.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *AddPolicyReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AddPolicyReq.Merge(m, src)
+}
+func (m *AddPolicyReq) XXX_Size() int {
+	return m.Size()
+}
+func (m *AddPolicyReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_AddPolicyReq.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AddPolicyReq proto.InternalMessageInfo
+
+func (m *AddPolicyReq) GetSub() string {
+	if m != nil {
+		return m.Sub
+	}
+	return ""
+}
+
+func (m *AddPolicyReq) GetObj() string {
+	if m != nil {
+		return m.Obj
+	}
+	return ""
+}
+
+func (m *AddPolicyReq) GetAct() string {
+	if m != nil {
+		return m.Act
+	}
+	return ""
+}
+
+type AddPolicyRes struct {
+	Authorized           bool     `protobuf:"varint,1,opt,name=authorized,proto3" json:"authorized,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *AddPolicyRes) Reset()         { *m = AddPolicyRes{} }
+func (m *AddPolicyRes) String() string { return proto.CompactTextString(m) }
+func (*AddPolicyRes) ProtoMessage()    {}
+func (*AddPolicyRes) Descriptor() ([]byte, []int) {
+	return fileDescriptor_8bbd6f3875b0e874, []int{11}
+}
+func (m *AddPolicyRes) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *AddPolicyRes) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_AddPolicyRes.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *AddPolicyRes) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AddPolicyRes.Merge(m, src)
+}
+func (m *AddPolicyRes) XXX_Size() int {
+	return m.Size()
+}
+func (m *AddPolicyRes) XXX_DiscardUnknown() {
+	xxx_messageInfo_AddPolicyRes.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AddPolicyRes proto.InternalMessageInfo
+
+func (m *AddPolicyRes) GetAuthorized() bool {
+	if m != nil {
+		return m.Authorized
+	}
+	return false
+}
+
+type DeletePolicyReq struct {
+	Sub                  string   `protobuf:"bytes,1,opt,name=sub,proto3" json:"sub,omitempty"`
+	Obj                  string   `protobuf:"bytes,2,opt,name=obj,proto3" json:"obj,omitempty"`
+	Act                  string   `protobuf:"bytes,3,opt,name=act,proto3" json:"act,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *DeletePolicyReq) Reset()         { *m = DeletePolicyReq{} }
+func (m *DeletePolicyReq) String() string { return proto.CompactTextString(m) }
+func (*DeletePolicyReq) ProtoMessage()    {}
+func (*DeletePolicyReq) Descriptor() ([]byte, []int) {
+	return fileDescriptor_8bbd6f3875b0e874, []int{12}
+}
+func (m *DeletePolicyReq) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *DeletePolicyReq) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_DeletePolicyReq.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *DeletePolicyReq) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DeletePolicyReq.Merge(m, src)
+}
+func (m *DeletePolicyReq) XXX_Size() int {
+	return m.Size()
+}
+func (m *DeletePolicyReq) XXX_DiscardUnknown() {
+	xxx_messageInfo_DeletePolicyReq.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DeletePolicyReq proto.InternalMessageInfo
+
+func (m *DeletePolicyReq) GetSub() string {
+	if m != nil {
+		return m.Sub
+	}
+	return ""
+}
+
+func (m *DeletePolicyReq) GetObj() string {
+	if m != nil {
+		return m.Obj
+	}
+	return ""
+}
+
+func (m *DeletePolicyReq) GetAct() string {
+	if m != nil {
+		return m.Act
+	}
+	return ""
+}
+
+type DeletePolicyRes struct {
+	Deleted              bool     `protobuf:"varint,1,opt,name=deleted,proto3" json:"deleted,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *DeletePolicyRes) Reset()         { *m = DeletePolicyRes{} }
+func (m *DeletePolicyRes) String() string { return proto.CompactTextString(m) }
+func (*DeletePolicyRes) ProtoMessage()    {}
+func (*DeletePolicyRes) Descriptor() ([]byte, []int) {
+	return fileDescriptor_8bbd6f3875b0e874, []int{13}
+}
+func (m *DeletePolicyRes) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *DeletePolicyRes) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_DeletePolicyRes.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *DeletePolicyRes) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DeletePolicyRes.Merge(m, src)
+}
+func (m *DeletePolicyRes) XXX_Size() int {
+	return m.Size()
+}
+func (m *DeletePolicyRes) XXX_DiscardUnknown() {
+	xxx_messageInfo_DeletePolicyRes.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DeletePolicyRes proto.InternalMessageInfo
+
+func (m *DeletePolicyRes) GetDeleted() bool {
+	if m != nil {
+		return m.Deleted
+	}
+	return false
+}
+
 type Assignment struct {
 	Token                string   `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
 	GroupID              string   `protobuf:"bytes,2,opt,name=groupID,proto3" json:"groupID,omitempty"`
@@ -577,7 +797,7 @@ func (m *Assignment) Reset()         { *m = Assignment{} }
 func (m *Assignment) String() string { return proto.CompactTextString(m) }
 func (*Assignment) ProtoMessage()    {}
 func (*Assignment) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8bbd6f3875b0e874, []int{10}
+	return fileDescriptor_8bbd6f3875b0e874, []int{14}
 }
 func (m *Assignment) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -642,7 +862,7 @@ func (m *MembersReq) Reset()         { *m = MembersReq{} }
 func (m *MembersReq) String() string { return proto.CompactTextString(m) }
 func (*MembersReq) ProtoMessage()    {}
 func (*MembersReq) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8bbd6f3875b0e874, []int{11}
+	return fileDescriptor_8bbd6f3875b0e874, []int{15}
 }
 func (m *MembersReq) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -721,7 +941,7 @@ func (m *MembersRes) Reset()         { *m = MembersRes{} }
 func (m *MembersRes) String() string { return proto.CompactTextString(m) }
 func (*MembersRes) ProtoMessage()    {}
 func (*MembersRes) Descriptor() ([]byte, []int) {
-	return fileDescriptor_8bbd6f3875b0e874, []int{12}
+	return fileDescriptor_8bbd6f3875b0e874, []int{16}
 }
 func (m *MembersRes) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -796,6 +1016,10 @@ func init() {
 	proto.RegisterType((*IssueReq)(nil), "mainflux.IssueReq")
 	proto.RegisterType((*AuthorizeReq)(nil), "mainflux.AuthorizeReq")
 	proto.RegisterType((*AuthorizeRes)(nil), "mainflux.AuthorizeRes")
+	proto.RegisterType((*AddPolicyReq)(nil), "mainflux.AddPolicyReq")
+	proto.RegisterType((*AddPolicyRes)(nil), "mainflux.AddPolicyRes")
+	proto.RegisterType((*DeletePolicyReq)(nil), "mainflux.DeletePolicyReq")
+	proto.RegisterType((*DeletePolicyRes)(nil), "mainflux.DeletePolicyRes")
 	proto.RegisterType((*Assignment)(nil), "mainflux.Assignment")
 	proto.RegisterType((*MembersReq)(nil), "mainflux.MembersReq")
 	proto.RegisterType((*MembersRes)(nil), "mainflux.MembersRes")
@@ -804,47 +1028,51 @@ func init() {
 func init() { proto.RegisterFile("auth.proto", fileDescriptor_8bbd6f3875b0e874) }
 
 var fileDescriptor_8bbd6f3875b0e874 = []byte{
-	// 634 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x54, 0xcd, 0x6e, 0xd3, 0x4c,
-	0x14, 0x75, 0xfe, 0x93, 0xfb, 0x35, 0x69, 0xbf, 0x51, 0x15, 0x8c, 0x11, 0xa1, 0xcc, 0xaa, 0x2b,
-	0x17, 0x15, 0x10, 0x6c, 0xa0, 0x4a, 0xeb, 0x2e, 0x2c, 0x84, 0x90, 0x4c, 0x91, 0xd8, 0x3a, 0xe9,
-	0x24, 0x31, 0xf8, 0x27, 0x78, 0xc6, 0x05, 0xb3, 0xe0, 0x0d, 0xd8, 0xf3, 0x04, 0x3c, 0x0b, 0x4b,
-	0x1e, 0x01, 0x95, 0x17, 0x41, 0xf3, 0xe3, 0x78, 0x5a, 0xec, 0x8a, 0xdd, 0x3d, 0x37, 0x77, 0xce,
-	0xb9, 0xf7, 0xe6, 0x1e, 0x03, 0xf8, 0x19, 0x5b, 0xd9, 0xeb, 0x34, 0x61, 0x09, 0xea, 0x47, 0x7e,
-	0x10, 0x2f, 0xc2, 0xec, 0x93, 0x75, 0x67, 0x99, 0x24, 0xcb, 0x90, 0x1c, 0x88, 0xfc, 0x2c, 0x5b,
-	0x1c, 0x90, 0x68, 0xcd, 0x72, 0x59, 0x86, 0x9f, 0xc3, 0x68, 0x3a, 0x9f, 0x13, 0x4a, 0x8f, 0xf3,
-	0x17, 0x24, 0xf7, 0xc8, 0x07, 0xb4, 0x0b, 0x1d, 0x96, 0xbc, 0x27, 0xb1, 0xd9, 0xd8, 0x6b, 0xec,
-	0x0f, 0x3c, 0x09, 0xd0, 0x18, 0xba, 0xf3, 0x95, 0x1f, 0xbb, 0x8e, 0xd9, 0x14, 0x69, 0x85, 0xf0,
-	0x11, 0x6c, 0x9f, 0xac, 0xfc, 0x38, 0x26, 0xe1, 0xab, 0x8f, 0x31, 0x49, 0x15, 0x41, 0xc2, 0xe3,
-	0x82, 0x40, 0x80, 0x5a, 0x82, 0x7b, 0xd0, 0x3b, 0x5b, 0x05, 0xf1, 0xd2, 0x75, 0xf8, 0xc3, 0x0b,
-	0x3f, 0xcc, 0x48, 0xf1, 0x50, 0x00, 0x7c, 0x1f, 0x06, 0x4a, 0xa1, 0xb6, 0x64, 0x0a, 0xc3, 0x62,
-	0x08, 0xd7, 0xe1, 0x2d, 0x98, 0xd0, 0x63, 0x92, 0x54, 0x15, 0x16, 0xb0, 0xb6, 0x8d, 0xbb, 0xd0,
-	0x39, 0x13, 0x83, 0x56, 0x2b, 0x3c, 0x82, 0xad, 0x37, 0x94, 0xa4, 0xee, 0x39, 0x89, 0x59, 0xc0,
-	0x72, 0x34, 0x82, 0x66, 0x70, 0xae, 0x4a, 0x9a, 0xc1, 0x39, 0x7f, 0x45, 0x22, 0x3f, 0x08, 0x15,
-	0xab, 0x04, 0xd8, 0x81, 0xbe, 0x4b, 0x69, 0x46, 0x78, 0x4b, 0xff, 0xf4, 0x02, 0x21, 0x68, 0xb3,
-	0x7c, 0x4d, 0xcc, 0xd6, 0x5e, 0x63, 0x7f, 0xe8, 0x89, 0x18, 0x3b, 0xb0, 0x35, 0xcd, 0xd8, 0x2a,
-	0x49, 0x83, 0xcf, 0x82, 0x69, 0x07, 0x5a, 0x34, 0x9b, 0x29, 0x2a, 0x1e, 0xf2, 0x4c, 0x32, 0x7b,
-	0xa7, 0x98, 0x78, 0xc8, 0x33, 0xfe, 0x9c, 0x09, 0x9a, 0x81, 0xc7, 0x43, 0x6c, 0x5f, 0x61, 0xa1,
-	0x68, 0x22, 0xaf, 0x45, 0x60, 0xd9, 0x57, 0xdf, 0xd3, 0x32, 0xf8, 0x2d, 0xc0, 0x94, 0xd2, 0x60,
-	0x19, 0x47, 0x24, 0x66, 0x35, 0x47, 0x61, 0x42, 0x6f, 0x99, 0x26, 0xd9, 0x7a, 0xb3, 0xcd, 0x02,
-	0x22, 0x0b, 0xfa, 0x11, 0x89, 0x66, 0x24, 0x75, 0x1d, 0xd5, 0xc4, 0x06, 0xe3, 0x2f, 0x00, 0x2f,
-	0x45, 0x4c, 0xeb, 0xcf, 0xad, 0x9e, 0x79, 0x0c, 0xdd, 0x64, 0xb1, 0xa0, 0x44, 0x0e, 0xd7, 0xf6,
-	0x14, 0xe2, 0x3c, 0x61, 0x10, 0x05, 0xcc, 0x6c, 0x8b, 0xb4, 0x04, 0x9b, 0x7d, 0x76, 0x04, 0x89,
-	0xdc, 0xa7, 0xae, 0x4f, 0xa5, 0x3e, 0xf3, 0x43, 0xa1, 0xdf, 0xf6, 0x24, 0xd0, 0x54, 0x9a, 0xd5,
-	0x2a, 0xad, 0x2a, 0x95, 0x76, 0xa9, 0xc2, 0x27, 0x90, 0x13, 0x53, 0xb3, 0xb3, 0xd7, 0xe2, 0x13,
-	0x28, 0x78, 0xf8, 0xb5, 0x09, 0x43, 0x71, 0xf2, 0xf4, 0x35, 0x49, 0x2f, 0x82, 0x39, 0x41, 0x47,
-	0x30, 0x3a, 0xf1, 0x63, 0xcd, 0x87, 0xc8, 0xb4, 0x0b, 0xfb, 0xda, 0x57, 0xed, 0x69, 0xfd, 0x5f,
-	0xfe, 0xa2, 0x7c, 0x83, 0x0d, 0x74, 0x0a, 0x23, 0x97, 0xea, 0x3e, 0x44, 0xb7, 0xcb, 0xb2, 0x6b,
-	0xfe, 0xb4, 0xc6, 0xb6, 0xfc, 0x20, 0xd8, 0xc5, 0x07, 0xc1, 0x3e, 0xe5, 0x1f, 0x04, 0x6c, 0xa0,
-	0x63, 0x18, 0x6a, 0x7d, 0xb8, 0x0e, 0xba, 0xf5, 0x77, 0x1b, 0xc2, 0x60, 0x37, 0x70, 0x3c, 0x80,
-	0xbe, 0x74, 0xc9, 0x22, 0x47, 0xdb, 0x5a, 0xaf, 0xfc, 0x6f, 0xad, 0x6c, 0xfe, 0xf0, 0x7b, 0x13,
-	0xfe, 0xe3, 0xa7, 0x59, 0x6c, 0xc3, 0x86, 0x8e, 0x70, 0x0d, 0x42, 0x65, 0x75, 0x61, 0x23, 0xeb,
-	0x3a, 0x25, 0x36, 0xd0, 0xe3, 0x9b, 0x14, 0xc7, 0x65, 0x42, 0x37, 0x30, 0x36, 0xd0, 0x33, 0x18,
-	0x6c, 0x0c, 0x81, 0xb4, 0x32, 0xdd, 0x6b, 0x56, 0x75, 0x9e, 0x62, 0x03, 0x3d, 0x85, 0xae, 0xf4,
-	0x07, 0xda, 0xd5, 0x6a, 0x36, 0x8e, 0xb9, 0x61, 0x43, 0x4f, 0xa0, 0xa7, 0xee, 0x4f, 0x7f, 0x5a,
-	0x5a, 0xc2, 0xaa, 0xca, 0x52, 0x6c, 0x1c, 0xef, 0xfc, 0xb8, 0x9c, 0x34, 0x7e, 0x5e, 0x4e, 0x1a,
-	0xbf, 0x2e, 0x27, 0x8d, 0x6f, 0xbf, 0x27, 0xc6, 0xac, 0x2b, 0xc8, 0x1f, 0xfe, 0x09, 0x00, 0x00,
-	0xff, 0xff, 0x14, 0xf9, 0x10, 0x64, 0xf9, 0x05, 0x00, 0x00,
+	// 697 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x54, 0xcb, 0x6e, 0xd3, 0x40,
+	0x14, 0xcd, 0xfb, 0x71, 0x69, 0xd2, 0x32, 0xaa, 0x82, 0x31, 0x22, 0x14, 0xaf, 0x2a, 0x21, 0xb9,
+	0xa8, 0x80, 0x60, 0x03, 0x55, 0x5a, 0x17, 0x64, 0x21, 0x04, 0x32, 0x45, 0x62, 0xeb, 0x24, 0x93,
+	0xc4, 0xe0, 0x47, 0xf0, 0x8c, 0x0b, 0x66, 0xc1, 0x1f, 0xb0, 0xe7, 0x27, 0xf8, 0x0f, 0x96, 0x7c,
+	0x02, 0x2a, 0x3f, 0x82, 0xe6, 0xe1, 0x78, 0x1a, 0xec, 0x82, 0xd4, 0xdd, 0x9c, 0x9b, 0x7b, 0xcf,
+	0xb9, 0x13, 0xcf, 0x39, 0x00, 0x6e, 0x42, 0x17, 0xe6, 0x32, 0x8e, 0x68, 0x84, 0x3a, 0x81, 0xeb,
+	0x85, 0x33, 0x3f, 0xf9, 0xa4, 0xdf, 0x98, 0x47, 0xd1, 0xdc, 0xc7, 0x7b, 0xbc, 0x3e, 0x4e, 0x66,
+	0x7b, 0x38, 0x58, 0xd2, 0x54, 0xb4, 0x19, 0x4f, 0xa0, 0x3f, 0x9a, 0x4c, 0x30, 0x21, 0x87, 0xe9,
+	0x73, 0x9c, 0x3a, 0xf8, 0x03, 0xda, 0x86, 0x26, 0x8d, 0xde, 0xe3, 0x50, 0xab, 0xee, 0x54, 0x77,
+	0xbb, 0x8e, 0x00, 0x68, 0x00, 0xad, 0xc9, 0xc2, 0x0d, 0x6d, 0x4b, 0xab, 0xf1, 0xb2, 0x44, 0xc6,
+	0x01, 0x6c, 0x1e, 0x2d, 0xdc, 0x30, 0xc4, 0xfe, 0xcb, 0x8f, 0x21, 0x8e, 0x25, 0x41, 0xc4, 0xce,
+	0x19, 0x01, 0x07, 0xa5, 0x04, 0xb7, 0xa0, 0x7d, 0xb2, 0xf0, 0xc2, 0xb9, 0x6d, 0xb1, 0xc1, 0x53,
+	0xd7, 0x4f, 0x70, 0x36, 0xc8, 0x81, 0x71, 0x1b, 0xba, 0x52, 0xa1, 0xb4, 0x65, 0x04, 0xbd, 0xec,
+	0x12, 0xb6, 0xc5, 0x56, 0xd0, 0xa0, 0x4d, 0x05, 0xa9, 0x6c, 0xcc, 0x60, 0xe9, 0x1a, 0x37, 0xa1,
+	0x79, 0xc2, 0x2f, 0x5a, 0xac, 0x70, 0x1f, 0x36, 0xde, 0x10, 0x1c, 0xdb, 0x53, 0x1c, 0x52, 0x8f,
+	0xa6, 0xa8, 0x0f, 0x35, 0x6f, 0x2a, 0x5b, 0x6a, 0xde, 0x94, 0x4d, 0xe1, 0xc0, 0xf5, 0x7c, 0xc9,
+	0x2a, 0x80, 0x61, 0x41, 0xc7, 0x26, 0x24, 0xc1, 0x6c, 0xa5, 0xff, 0x9a, 0x40, 0x08, 0x1a, 0x34,
+	0x5d, 0x62, 0xad, 0xbe, 0x53, 0xdd, 0xed, 0x39, 0xfc, 0x6c, 0x58, 0xb0, 0x31, 0x4a, 0xe8, 0x22,
+	0x8a, 0xbd, 0xcf, 0x9c, 0x69, 0x0b, 0xea, 0x24, 0x19, 0x4b, 0x2a, 0x76, 0x64, 0x95, 0x68, 0xfc,
+	0x4e, 0x32, 0xb1, 0x23, 0xab, 0xb8, 0x13, 0xca, 0x69, 0xba, 0x0e, 0x3b, 0x1a, 0xe6, 0x39, 0x16,
+	0x82, 0x86, 0xe2, 0xb5, 0x70, 0x2c, 0xf6, 0xea, 0x38, 0x4a, 0x85, 0xab, 0x4e, 0xa7, 0xaf, 0x22,
+	0xdf, 0x9b, 0xa4, 0x97, 0x53, 0xcd, 0x59, 0xfe, 0xad, 0xfa, 0x0c, 0x36, 0x2d, 0xec, 0x63, 0x8a,
+	0x2f, 0x2b, 0x7c, 0x67, 0x9d, 0x88, 0xb0, 0x47, 0x31, 0xe5, 0xa5, 0x4c, 0x38, 0x83, 0xc6, 0x5b,
+	0x80, 0x11, 0x21, 0xde, 0x3c, 0x0c, 0x70, 0x48, 0x4b, 0x0c, 0xa0, 0x41, 0x7b, 0x1e, 0x47, 0xc9,
+	0x72, 0xf5, 0x72, 0x32, 0x88, 0x74, 0xe8, 0x04, 0x38, 0x18, 0xe3, 0xd8, 0xb6, 0xe4, 0x06, 0x2b,
+	0x6c, 0x7c, 0x01, 0x78, 0xc1, 0xcf, 0xa4, 0xdc, 0x5a, 0xe5, 0xcc, 0x03, 0x68, 0x45, 0xb3, 0x19,
+	0xc1, 0xe2, 0x66, 0x0d, 0x47, 0x22, 0xc6, 0xe3, 0x7b, 0x81, 0x47, 0xb5, 0x06, 0x2f, 0x0b, 0xb0,
+	0x7a, 0x3b, 0x4d, 0x4e, 0x22, 0xde, 0x8e, 0xaa, 0x4f, 0x84, 0x3e, 0x75, 0x7d, 0xae, 0xdf, 0x70,
+	0x04, 0x50, 0x54, 0x6a, 0xc5, 0x2a, 0xf5, 0x22, 0x95, 0x46, 0xae, 0xc2, 0x6e, 0x20, 0x6e, 0x4c,
+	0xb4, 0xe6, 0x4e, 0x9d, 0xdd, 0x40, 0xc2, 0xfd, 0xaf, 0x35, 0xe8, 0x71, 0x7b, 0x93, 0xd7, 0x38,
+	0x3e, 0xf5, 0x26, 0x18, 0x1d, 0x40, 0xff, 0xc8, 0x0d, 0x95, 0xcc, 0x41, 0x9a, 0x99, 0x45, 0x95,
+	0x79, 0x3e, 0x8a, 0xf4, 0xab, 0xf9, 0x2f, 0x32, 0x23, 0x8c, 0x0a, 0x3a, 0x86, 0xbe, 0x4d, 0xd4,
+	0xcc, 0x41, 0xd7, 0xf3, 0xb6, 0xb5, 0x2c, 0xd2, 0x07, 0xa6, 0x08, 0x3f, 0x33, 0x0b, 0x3f, 0xf3,
+	0x98, 0x85, 0x9f, 0x51, 0x41, 0x87, 0xd0, 0x53, 0xf6, 0xb0, 0x2d, 0x74, 0xed, 0xef, 0x35, 0x78,
+	0x98, 0x5c, 0xc0, 0x71, 0x17, 0x3a, 0x22, 0x11, 0x66, 0x29, 0xda, 0x54, 0x76, 0x65, 0x9f, 0xb5,
+	0x70, 0xf9, 0xfd, 0xef, 0x75, 0xb8, 0xc2, 0x6c, 0x98, 0xfd, 0x1b, 0x26, 0x34, 0x79, 0x42, 0x20,
+	0x94, 0x77, 0x67, 0x91, 0xa1, 0xaf, 0x53, 0x1a, 0x15, 0xf4, 0xe0, 0x22, 0xc5, 0x41, 0x5e, 0x50,
+	0xc3, 0xca, 0xa8, 0xa0, 0xc7, 0xd0, 0x5d, 0x99, 0x1f, 0x29, 0x6d, 0x6a, 0xae, 0xe8, 0xc5, 0x75,
+	0x22, 0xc7, 0x33, 0x17, 0x9f, 0x1b, 0x57, 0x02, 0x42, 0x2f, 0xae, 0xb3, 0xf1, 0xa7, 0xb0, 0xa1,
+	0x7a, 0x51, 0xfd, 0x5e, 0x6b, 0x66, 0xd7, 0x4b, 0x7f, 0x62, 0x3c, 0x8f, 0xa0, 0x25, 0x6c, 0x8a,
+	0xb6, 0x15, 0xad, 0x95, 0x71, 0x2f, 0xf8, 0x50, 0x0f, 0xa1, 0x2d, 0x6d, 0xa0, 0x8e, 0xe6, 0xce,
+	0xd4, 0x8b, 0xaa, 0xc4, 0xa8, 0x1c, 0x6e, 0xfd, 0x38, 0x1b, 0x56, 0x7f, 0x9e, 0x0d, 0xab, 0xbf,
+	0xce, 0x86, 0xd5, 0x6f, 0xbf, 0x87, 0x95, 0x71, 0x8b, 0x93, 0xdf, 0xfb, 0x13, 0x00, 0x00, 0xff,
+	0xff, 0x34, 0x04, 0x0d, 0xfa, 0x6c, 0x07, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1042,6 +1270,8 @@ type AuthServiceClient interface {
 	Issue(ctx context.Context, in *IssueReq, opts ...grpc.CallOption) (*Token, error)
 	Identify(ctx context.Context, in *Token, opts ...grpc.CallOption) (*UserIdentity, error)
 	Authorize(ctx context.Context, in *AuthorizeReq, opts ...grpc.CallOption) (*AuthorizeRes, error)
+	AddPolicy(ctx context.Context, in *AddPolicyReq, opts ...grpc.CallOption) (*AddPolicyRes, error)
+	DeletePolicy(ctx context.Context, in *DeletePolicyReq, opts ...grpc.CallOption) (*DeletePolicyRes, error)
 	Assign(ctx context.Context, in *Assignment, opts ...grpc.CallOption) (*empty.Empty, error)
 	Members(ctx context.Context, in *MembersReq, opts ...grpc.CallOption) (*MembersRes, error)
 }
@@ -1081,6 +1311,24 @@ func (c *authServiceClient) Authorize(ctx context.Context, in *AuthorizeReq, opt
 	return out, nil
 }
 
+func (c *authServiceClient) AddPolicy(ctx context.Context, in *AddPolicyReq, opts ...grpc.CallOption) (*AddPolicyRes, error) {
+	out := new(AddPolicyRes)
+	err := c.cc.Invoke(ctx, "/mainflux.AuthService/AddPolicy", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) DeletePolicy(ctx context.Context, in *DeletePolicyReq, opts ...grpc.CallOption) (*DeletePolicyRes, error) {
+	out := new(DeletePolicyRes)
+	err := c.cc.Invoke(ctx, "/mainflux.AuthService/DeletePolicy", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *authServiceClient) Assign(ctx context.Context, in *Assignment, opts ...grpc.CallOption) (*empty.Empty, error) {
 	out := new(empty.Empty)
 	err := c.cc.Invoke(ctx, "/mainflux.AuthService/Assign", in, out, opts...)
@@ -1104,6 +1352,8 @@ type AuthServiceServer interface {
 	Issue(context.Context, *IssueReq) (*Token, error)
 	Identify(context.Context, *Token) (*UserIdentity, error)
 	Authorize(context.Context, *AuthorizeReq) (*AuthorizeRes, error)
+	AddPolicy(context.Context, *AddPolicyReq) (*AddPolicyRes, error)
+	DeletePolicy(context.Context, *DeletePolicyReq) (*DeletePolicyRes, error)
 	Assign(context.Context, *Assignment) (*empty.Empty, error)
 	Members(context.Context, *MembersReq) (*MembersRes, error)
 }
@@ -1120,6 +1370,12 @@ func (*UnimplementedAuthServiceServer) Identify(ctx context.Context, req *Token)
 }
 func (*UnimplementedAuthServiceServer) Authorize(ctx context.Context, req *AuthorizeReq) (*AuthorizeRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Authorize not implemented")
+}
+func (*UnimplementedAuthServiceServer) AddPolicy(ctx context.Context, req *AddPolicyReq) (*AddPolicyRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddPolicy not implemented")
+}
+func (*UnimplementedAuthServiceServer) DeletePolicy(ctx context.Context, req *DeletePolicyReq) (*DeletePolicyRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeletePolicy not implemented")
 }
 func (*UnimplementedAuthServiceServer) Assign(ctx context.Context, req *Assignment) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Assign not implemented")
@@ -1186,6 +1442,42 @@ func _AuthService_Authorize_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_AddPolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddPolicyReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).AddPolicy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/mainflux.AuthService/AddPolicy",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).AddPolicy(ctx, req.(*AddPolicyReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_DeletePolicy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeletePolicyReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).DeletePolicy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/mainflux.AuthService/DeletePolicy",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).DeletePolicy(ctx, req.(*DeletePolicyReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AuthService_Assign_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Assignment)
 	if err := dec(in); err != nil {
@@ -1237,6 +1529,14 @@ var _AuthService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Authorize",
 			Handler:    _AuthService_Authorize_Handler,
+		},
+		{
+			MethodName: "AddPolicy",
+			Handler:    _AuthService_AddPolicy_Handler,
+		},
+		{
+			MethodName: "DeletePolicy",
+			Handler:    _AuthService_DeletePolicy_Handler,
 		},
 		{
 			MethodName: "Assign",
@@ -1648,6 +1948,176 @@ func (m *AuthorizeRes) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *AddPolicyReq) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *AddPolicyReq) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AddPolicyReq) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if len(m.Act) > 0 {
+		i -= len(m.Act)
+		copy(dAtA[i:], m.Act)
+		i = encodeVarintAuth(dAtA, i, uint64(len(m.Act)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Obj) > 0 {
+		i -= len(m.Obj)
+		copy(dAtA[i:], m.Obj)
+		i = encodeVarintAuth(dAtA, i, uint64(len(m.Obj)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Sub) > 0 {
+		i -= len(m.Sub)
+		copy(dAtA[i:], m.Sub)
+		i = encodeVarintAuth(dAtA, i, uint64(len(m.Sub)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *AddPolicyRes) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *AddPolicyRes) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AddPolicyRes) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if m.Authorized {
+		i--
+		if m.Authorized {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *DeletePolicyReq) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *DeletePolicyReq) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *DeletePolicyReq) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if len(m.Act) > 0 {
+		i -= len(m.Act)
+		copy(dAtA[i:], m.Act)
+		i = encodeVarintAuth(dAtA, i, uint64(len(m.Act)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Obj) > 0 {
+		i -= len(m.Obj)
+		copy(dAtA[i:], m.Obj)
+		i = encodeVarintAuth(dAtA, i, uint64(len(m.Obj)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Sub) > 0 {
+		i -= len(m.Sub)
+		copy(dAtA[i:], m.Sub)
+		i = encodeVarintAuth(dAtA, i, uint64(len(m.Sub)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *DeletePolicyRes) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *DeletePolicyRes) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *DeletePolicyRes) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if m.Deleted {
+		i--
+		if m.Deleted {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *Assignment) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -2005,6 +2475,84 @@ func (m *AuthorizeRes) Size() (n int) {
 	var l int
 	_ = l
 	if m.Authorized {
+		n += 2
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *AddPolicyReq) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Sub)
+	if l > 0 {
+		n += 1 + l + sovAuth(uint64(l))
+	}
+	l = len(m.Obj)
+	if l > 0 {
+		n += 1 + l + sovAuth(uint64(l))
+	}
+	l = len(m.Act)
+	if l > 0 {
+		n += 1 + l + sovAuth(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *AddPolicyRes) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Authorized {
+		n += 2
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *DeletePolicyReq) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Sub)
+	if l > 0 {
+		n += 1 + l + sovAuth(uint64(l))
+	}
+	l = len(m.Obj)
+	if l > 0 {
+		n += 1 + l + sovAuth(uint64(l))
+	}
+	l = len(m.Act)
+	if l > 0 {
+		n += 1 + l + sovAuth(uint64(l))
+	}
+	if m.XXX_unrecognized != nil {
+		n += len(m.XXX_unrecognized)
+	}
+	return n
+}
+
+func (m *DeletePolicyRes) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Deleted {
 		n += 2
 	}
 	if m.XXX_unrecognized != nil {
@@ -3170,6 +3718,454 @@ func (m *AuthorizeRes) Unmarshal(dAtA []byte) error {
 				}
 			}
 			m.Authorized = bool(v != 0)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAuth(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthAuth
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthAuth
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *AddPolicyReq) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAuth
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: AddPolicyReq: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: AddPolicyReq: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sub", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAuth
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sub = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Obj", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAuth
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Obj = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Act", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAuth
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Act = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAuth(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthAuth
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthAuth
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *AddPolicyRes) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAuth
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: AddPolicyRes: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: AddPolicyRes: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Authorized", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Authorized = bool(v != 0)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAuth(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthAuth
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthAuth
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *DeletePolicyReq) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAuth
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: DeletePolicyReq: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: DeletePolicyReq: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sub", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAuth
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sub = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Obj", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAuth
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Obj = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Act", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthAuth
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthAuth
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Act = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipAuth(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthAuth
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthAuth
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *DeletePolicyRes) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowAuth
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: DeletePolicyRes: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: DeletePolicyRes: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Deleted", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAuth
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Deleted = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skipAuth(dAtA[iNdEx:])

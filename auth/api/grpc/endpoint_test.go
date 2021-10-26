@@ -34,6 +34,9 @@ const (
 
 	numOfThings = 5
 	numOfUsers  = 5
+
+	authoritiesObj = "authorities"
+	memberRelation = "member"
 )
 
 var svc auth.Service
@@ -42,9 +45,14 @@ func newService() auth.Service {
 	repo := mocks.NewKeyRepository()
 	groupRepo := mocks.NewGroupRepository()
 	idProvider := uuid.NewMock()
+
+	mockAuthzDB := map[string][]mocks.MockSubjectSet{}
+	mockAuthzDB[id] = append(mockAuthzDB[id], mocks.MockSubjectSet{Object: authoritiesObj, Relation: memberRelation})
+	ketoMock := mocks.NewKetoMock(mockAuthzDB)
+
 	t := jwt.New(secret)
 
-	return auth.New(repo, groupRepo, idProvider, t)
+	return auth.New(repo, groupRepo, idProvider, t, ketoMock)
 }
 
 func startGRPCServer(svc auth.Service, port int) {
@@ -185,6 +193,192 @@ func TestIdentify(t *testing.T) {
 	}
 }
 
+func TestAuthorize(t *testing.T) {
+	_, loginSecret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.UserKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})
+	assert.Nil(t, err, fmt.Sprintf("Issuing user key expected to succeed: %s", err))
+
+	authAddr := fmt.Sprintf("localhost:%d", port)
+	conn, _ := grpc.Dial(authAddr, grpc.WithInsecure())
+	client := grpcapi.NewClient(mocktracer.New(), conn, time.Second)
+
+	cases := []struct {
+		desc     string
+		token    string
+		subject  string
+		object   string
+		relation string
+		ar       mainflux.AuthorizeRes
+		err      error
+		code     codes.Code
+	}{
+		{
+			desc:     "authorize user with authorized token",
+			token:    loginSecret,
+			subject:  id,
+			object:   authoritiesObj,
+			relation: memberRelation,
+			ar:       mainflux.AuthorizeRes{Authorized: true},
+			err:      nil,
+			code:     codes.OK,
+		},
+		{
+			desc:     "authorize user with unauthorized relation",
+			token:    loginSecret,
+			subject:  id,
+			object:   authoritiesObj,
+			relation: "unauthorizedRelation",
+			ar:       mainflux.AuthorizeRes{Authorized: false},
+			err:      nil,
+			code:     codes.Unauthenticated,
+		},
+		{
+			desc:     "authorize user with unauthorized object",
+			token:    loginSecret,
+			subject:  id,
+			object:   "unauthorizedobject",
+			relation: memberRelation,
+			ar:       mainflux.AuthorizeRes{Authorized: false},
+			err:      nil,
+			code:     codes.Unauthenticated,
+		},
+		{
+			desc:     "authorize user with unauthorized subject",
+			token:    loginSecret,
+			subject:  "unauthorizedSubject",
+			object:   authoritiesObj,
+			relation: memberRelation,
+			ar:       mainflux.AuthorizeRes{Authorized: false},
+			err:      nil,
+			code:     codes.Unauthenticated,
+		},
+		{
+			desc:     "authorize user with invalid ACL",
+			token:    loginSecret,
+			subject:  "",
+			object:   "",
+			relation: "",
+			ar:       mainflux.AuthorizeRes{Authorized: false},
+			err:      nil,
+			code:     codes.InvalidArgument,
+		},
+	}
+	for _, tc := range cases {
+		ar, err := client.Authorize(context.Background(), &mainflux.AuthorizeReq{Sub: tc.subject, Obj: tc.object, Act: tc.relation})
+		if ar != nil {
+			assert.Equal(t, tc.ar, *ar, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.ar, *ar))
+		}
+
+		e, ok := status.FromError(err)
+		assert.True(t, ok, "gRPC status can't be extracted from the error")
+		assert.Equal(t, tc.code, e.Code(), fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.code, e.Code()))
+	}
+}
+
+func TestAddPolicy(t *testing.T) {
+	_, loginSecret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.UserKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})
+	assert.Nil(t, err, fmt.Sprintf("Issuing user key expected to succeed: %s", err))
+
+	authAddr := fmt.Sprintf("localhost:%d", port)
+	conn, _ := grpc.Dial(authAddr, grpc.WithInsecure())
+	client := grpcapi.NewClient(mocktracer.New(), conn, time.Second)
+
+	groupAdminObj := "groupadmin"
+
+	cases := []struct {
+		desc     string
+		token    string
+		subject  string
+		object   string
+		relation string
+		ar       mainflux.AddPolicyRes
+		err      error
+		code     codes.Code
+	}{
+		{
+			desc:     "add groupadmin policy to user",
+			token:    loginSecret,
+			subject:  id,
+			object:   groupAdminObj,
+			relation: memberRelation,
+			ar:       mainflux.AddPolicyRes{Authorized: true},
+			err:      nil,
+			code:     codes.OK,
+		},
+		{
+			desc:     "add policy to user with invalid ACL",
+			token:    loginSecret,
+			subject:  "",
+			object:   "",
+			relation: "",
+			ar:       mainflux.AddPolicyRes{Authorized: false},
+			err:      nil,
+			code:     codes.InvalidArgument,
+		},
+	}
+	for _, tc := range cases {
+		apr, err := client.AddPolicy(context.Background(), &mainflux.AddPolicyReq{Sub: tc.subject, Obj: tc.object, Act: tc.relation})
+		if apr != nil {
+			assert.Equal(t, tc.ar, *apr, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.ar, *apr))
+		}
+
+		e, ok := status.FromError(err)
+		assert.True(t, ok, "gRPC status can't be extracted from the error")
+		assert.Equal(t, tc.code, e.Code(), fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.code, e.Code()))
+	}
+}
+
+func TestDeletePolicy(t *testing.T) {
+	_, loginSecret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.UserKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})
+	assert.Nil(t, err, fmt.Sprintf("Issuing user key expected to succeed: %s", err))
+
+	authAddr := fmt.Sprintf("localhost:%d", port)
+	conn, _ := grpc.Dial(authAddr, grpc.WithInsecure())
+	client := grpcapi.NewClient(mocktracer.New(), conn, time.Second)
+
+	readRelation := "read"
+	thingID := "thing"
+
+	apr, err := client.AddPolicy(context.Background(), &mainflux.AddPolicyReq{Sub: id, Obj: thingID, Act: readRelation})
+	assert.Nil(t, err, fmt.Sprintf("Adding read policy to user expected to succeed: %s", err))
+	assert.True(t, apr.GetAuthorized(), fmt.Sprintf("Adding read policy expected to make user authorized, expected %v got %v", true, apr.GetAuthorized()))
+
+	cases := []struct {
+		desc     string
+		token    string
+		subject  string
+		object   string
+		relation string
+		dpr      *mainflux.DeletePolicyRes
+		code     codes.Code
+	}{
+		{
+			desc:     "delete valid policy",
+			token:    loginSecret,
+			subject:  id,
+			object:   thingID,
+			relation: readRelation,
+			dpr:      &mainflux.DeletePolicyRes{Deleted: true},
+			code:     codes.OK,
+		},
+		{
+			desc:     "delete invalid policy",
+			token:    loginSecret,
+			subject:  "",
+			object:   "",
+			relation: "",
+			dpr:      &mainflux.DeletePolicyRes{Deleted: false},
+			code:     codes.InvalidArgument,
+		},
+	}
+	for _, tc := range cases {
+		dpr, err := client.DeletePolicy(context.Background(), &mainflux.DeletePolicyReq{Sub: tc.subject, Obj: tc.object, Act: tc.relation})
+		e, ok := status.FromError(err)
+		assert.True(t, ok, "gRPC status can't be extracted from the error")
+		assert.Equal(t, tc.code, e.Code(), fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.code, e.Code()))
+		assert.Equal(t, tc.dpr.GetDeleted(), dpr.GetDeleted(), fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.dpr.GetDeleted(), dpr.GetDeleted()))
+	}
+}
+
 func TestMembers(t *testing.T) {
 	_, token, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.UserKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})
 	assert.Nil(t, err, fmt.Sprintf("Issuing user key expected to succeed: %s", err))
@@ -196,10 +390,13 @@ func TestMembers(t *testing.T) {
 
 	var things []string
 	for i := 0; i < numOfThings; i++ {
-		id, err := uuid.New().ID()
+		thID, err := uuid.New().ID()
 		assert.Nil(t, err, fmt.Sprintf("Generate thing id expected to succeed: %s", err))
 
-		things = append(things, id)
+		err = svc.AddPolicy(context.Background(), auth.PolicyReq{Subject: id, Object: thID, Relation: "owner"})
+		assert.Nil(t, err, fmt.Sprintf("Adding a policy expected to succeed: %s", err))
+
+		things = append(things, thID)
 	}
 
 	var users []string
@@ -212,6 +409,8 @@ func TestMembers(t *testing.T) {
 
 	group, err = svc.CreateGroup(context.Background(), token, group)
 	assert.Nil(t, err, fmt.Sprintf("Creating group expected to succeed: %s", err))
+	err = svc.AddPolicy(context.Background(), auth.PolicyReq{Subject: id, Object: group.ID, Relation: "groupadmin"})
+	assert.Nil(t, err, fmt.Sprintf("Adding a policy expected to succeed: %s", err))
 
 	err = svc.Assign(context.Background(), token, group.ID, thingsType, things...)
 	assert.Nil(t, err, fmt.Sprintf("Assign members to  expected to succeed: %s", err))

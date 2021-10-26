@@ -57,6 +57,13 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service) http.Handler {
 		opts...,
 	))
 
+	r.Post("/things/:id/share", kithttp.NewServer(
+		kitot.TraceServer(tracer, "share_thing")(shareThingEndpoint(svc)),
+		decodeShareThing,
+		encodeResponse,
+		opts...,
+	))
+
 	r.Patch("/things/:id/key", kithttp.NewServer(
 		kitot.TraceServer(tracer, "update_key")(updateKeyEndpoint(svc)),
 		decodeKeyUpdate,
@@ -216,6 +223,19 @@ func decodeThingsCreation(_ context.Context, r *http.Request) (interface{}, erro
 
 	req := createThingsReq{token: r.Header.Get("Authorization")}
 	if err := json.NewDecoder(r.Body).Decode(&req.Things); err != nil {
+		return nil, errors.Wrap(things.ErrMalformedEntity, err)
+	}
+
+	return req, nil
+}
+
+func decodeShareThing(ctx context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, errors.ErrUnsupportedContentType
+	}
+
+	req := shareThingReq{token: r.Header.Get("Authorization"), thingID: bone.GetValue(r, "id")}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(things.ErrMalformedEntity, err)
 	}
 
@@ -480,6 +500,8 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 			errors.Contains(errorVal, things.ErrEntityConnected):
 			w.WriteHeader(http.StatusUnauthorized)
 
+		case errors.Contains(errorVal, things.ErrAuthorization):
+			w.WriteHeader(http.StatusForbidden)
 		case errors.Contains(errorVal, errors.ErrInvalidQueryParams):
 			w.WriteHeader(http.StatusBadRequest)
 		case errors.Contains(errorVal, errors.ErrUnsupportedContentType):

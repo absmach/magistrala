@@ -87,17 +87,12 @@ func (req membersReq) validate() error {
 // 2. object - an entity over which action will be executed
 // 3. action - type of action that will be executed (read/write)
 type authReq struct {
-	token string
-	Sub   string
-	Obj   string
-	Act   string
+	Sub string
+	Obj string
+	Act string
 }
 
 func (req authReq) validate() error {
-	if req.token == "" {
-		return auth.ErrMalformedEntity
-	}
-
 	if req.Sub == "" {
 		return auth.ErrMalformedEntity
 	}
@@ -110,5 +105,31 @@ func (req authReq) validate() error {
 		return auth.ErrMalformedEntity
 	}
 
+	return nil
+}
+
+type addPolicyReq struct {
+	Sub string
+	Obj string
+	Act string
+}
+
+func (req addPolicyReq) validate() error {
+	if req.Sub == "" || req.Obj == "" || req.Act == "" {
+		return auth.ErrMalformedEntity
+	}
+	return nil
+}
+
+type deletePolicyReq struct {
+	Sub string
+	Obj string
+	Act string
+}
+
+func (req deletePolicyReq) validate() error {
+	if req.Sub == "" || req.Obj == "" || req.Act == "" {
+		return auth.ErrMalformedEntity
+	}
 	return nil
 }

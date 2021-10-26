@@ -48,6 +48,7 @@ var (
 	}
 	invalidName    = strings.Repeat("m", maxNameSize+1)
 	notFoundRes    = toJSON(errorRes{things.ErrNotFound.Error()})
+	unauthzRes     = toJSON(errorRes{things.ErrAuthorization.Error()})
 	unauthRes      = toJSON(errorRes{things.ErrUnauthorizedAccess.Error()})
 	searchThingReq = things.PageMetadata{
 		Limit:  5,
@@ -79,7 +80,8 @@ func (tr testRequest) make() (*http.Response, error) {
 }
 
 func newService(tokens map[string]string) things.Service {
-	auth := mocks.NewAuthService(tokens)
+	policies := []mocks.MockSubjectSet{{Object: "users", Relation: "member"}}
+	auth := mocks.NewAuthService(tokens, map[string][]mocks.MockSubjectSet{email: policies})
 	conns := make(chan mocks.Connection)
 	thingsRepo := mocks.NewThingRepository(conns)
 	channelsRepo := mocks.NewChannelRepository(thingsRepo, conns)
@@ -364,7 +366,7 @@ func TestUpdateThing(t *testing.T) {
 			id:          strconv.FormatUint(wrongID, 10),
 			contentType: contentType,
 			auth:        token,
-			status:      http.StatusNotFound,
+			status:      http.StatusForbidden,
 		},
 		{
 			desc:        "update thing with invalid id",
@@ -372,7 +374,7 @@ func TestUpdateThing(t *testing.T) {
 			id:          "invalid",
 			contentType: contentType,
 			auth:        token,
-			status:      http.StatusNotFound,
+			status:      http.StatusForbidden,
 		},
 		{
 			desc:        "update thing with invalid user token",
@@ -438,6 +440,123 @@ func TestUpdateThing(t *testing.T) {
 	}
 }
 
+func TestShareThing(t *testing.T) {
+	token2 := "token2"
+	svc := newService(map[string]string{token: email, token2: "user@ex.com"})
+	ts := newServer(svc)
+	defer ts.Close()
+
+	type shareThingReq struct {
+		UserIDs  []string `json:"user_ids"`
+		Policies []string `json:"policies"`
+	}
+
+	data := toJSON(shareThingReq{UserIDs: []string{"token2"}, Policies: []string{"read"}})
+	invalidData := toJSON(shareThingReq{})
+	invalidPolicies := toJSON(shareThingReq{UserIDs: []string{"token2"}, Policies: []string{"wrong"}})
+
+	ths, err := svc.CreateThings(context.Background(), token, thing)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	th := ths[0]
+
+	cases := []struct {
+		desc        string
+		req         string
+		thingID     string
+		contentType string
+		token       string
+		status      int
+	}{
+		{
+			desc:        "share a thing",
+			req:         data,
+			thingID:     th.ID,
+			contentType: contentType,
+			token:       token,
+			status:      http.StatusOK,
+		},
+		{
+			desc:        "share a thing with empty content-type",
+			req:         data,
+			thingID:     th.ID,
+			contentType: "",
+			token:       token,
+			status:      http.StatusUnsupportedMediaType,
+		},
+		{
+			desc:        "share a thing with empty req body",
+			req:         "",
+			thingID:     th.ID,
+			contentType: contentType,
+			token:       token,
+			status:      http.StatusBadRequest,
+		},
+		{
+			desc:        "share a thing with empty token",
+			req:         data,
+			thingID:     th.ID,
+			contentType: contentType,
+			token:       "",
+			status:      http.StatusUnauthorized,
+		},
+		{
+			desc:        "share a thing with empty thing id",
+			req:         data,
+			thingID:     "",
+			contentType: contentType,
+			token:       token,
+			status:      http.StatusBadRequest,
+		},
+		{
+			desc:        "share a thing with invalid req body",
+			req:         invalidData,
+			thingID:     th.ID,
+			contentType: contentType,
+			token:       token,
+			status:      http.StatusBadRequest,
+		},
+		{
+			desc:        "share a thing with invalid policies request",
+			req:         invalidPolicies,
+			thingID:     th.ID,
+			contentType: contentType,
+			token:       token,
+			status:      http.StatusBadRequest,
+		},
+		{
+			desc:        "share a thing with invalid token",
+			req:         data,
+			thingID:     th.ID,
+			contentType: contentType,
+			token:       "invalid",
+			status:      http.StatusUnauthorized,
+		},
+		{
+			desc:        "share a thing with unauthorized access",
+			req:         data,
+			thingID:     th.ID,
+			contentType: contentType,
+			token:       token2,
+			status:      http.StatusForbidden,
+		},
+	}
+
+	for _, tc := range cases {
+		req := testRequest{
+			client:      ts.Client(),
+			method:      http.MethodPost,
+			url:         fmt.Sprintf("%s/things/%s/share", ts.URL, tc.thingID),
+			contentType: tc.contentType,
+			token:       tc.token,
+			body:        strings.NewReader(tc.req),
+		}
+		res, err := req.make()
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+
+		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+	}
+}
+
 func TestUpdateKey(t *testing.T) {
 	svc := newService(map[string]string{token: email})
 	ts := newServer(svc)
@@ -493,7 +612,7 @@ func TestUpdateKey(t *testing.T) {
 			id:          strconv.FormatUint(wrongID, 10),
 			contentType: contentType,
 			auth:        token,
-			status:      http.StatusNotFound,
+			status:      http.StatusForbidden,
 		},
 		{
 			desc:        "update thing with invalid id",
@@ -501,7 +620,7 @@ func TestUpdateKey(t *testing.T) {
 			id:          "invalid",
 			contentType: contentType,
 			auth:        token,
-			status:      http.StatusNotFound,
+			status:      http.StatusForbidden,
 		},
 		{
 			desc:        "update thing with invalid user token",
@@ -594,8 +713,8 @@ func TestViewThing(t *testing.T) {
 			desc:   "view non-existent thing",
 			id:     strconv.FormatUint(wrongID, 10),
 			auth:   token,
-			status: http.StatusNotFound,
-			res:    notFoundRes,
+			status: http.StatusForbidden,
+			res:    unauthzRes,
 		},
 		{
 			desc:   "view thing by passing invalid token",
@@ -615,8 +734,8 @@ func TestViewThing(t *testing.T) {
 			desc:   "view thing by passing invalid id",
 			id:     "invalid",
 			auth:   token,
-			status: http.StatusNotFound,
-			res:    notFoundRes,
+			status: http.StatusForbidden,
+			res:    unauthzRes,
 		},
 	}
 
@@ -1242,7 +1361,7 @@ func TestRemoveThing(t *testing.T) {
 			desc:   "delete non-existent thing",
 			id:     strconv.FormatUint(wrongID, 10),
 			auth:   token,
-			status: http.StatusNoContent,
+			status: http.StatusForbidden,
 		},
 		{
 			desc:   "delete thing with invalid token",

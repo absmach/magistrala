@@ -14,11 +14,11 @@ import (
 
 func registrationEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(userReq)
+		req := request.(createUserReq)
 		if err := req.validate(); err != nil {
 			return createUserRes{}, err
 		}
-		uid, err := svc.Register(ctx, req.user)
+		uid, err := svc.Register(ctx, req.token, req.user)
 		if err != nil {
 			return createUserRes{}, err
 		}

@@ -23,12 +23,14 @@ const (
 var _ mainflux.AuthServiceClient = (*grpcClient)(nil)
 
 type grpcClient struct {
-	issue     endpoint.Endpoint
-	identify  endpoint.Endpoint
-	authorize endpoint.Endpoint
-	assign    endpoint.Endpoint
-	members   endpoint.Endpoint
-	timeout   time.Duration
+	issue        endpoint.Endpoint
+	identify     endpoint.Endpoint
+	authorize    endpoint.Endpoint
+	addPolicy    endpoint.Endpoint
+	deletePolicy endpoint.Endpoint
+	assign       endpoint.Endpoint
+	members      endpoint.Endpoint
+	timeout      time.Duration
 }
 
 // NewClient returns new gRPC client instance.
@@ -57,6 +59,22 @@ func NewClient(tracer opentracing.Tracer, conn *grpc.ClientConn, timeout time.Du
 			encodeAuthorizeRequest,
 			decodeAuthorizeResponse,
 			mainflux.AuthorizeRes{},
+		).Endpoint()),
+		addPolicy: kitot.TraceClient(tracer, "add_policy")(kitgrpc.NewClient(
+			conn,
+			svcName,
+			"AddPolicy",
+			encodeAddPolicyRequest,
+			decodeAddPolicyResponse,
+			mainflux.AddPolicyRes{},
+		).Endpoint()),
+		deletePolicy: kitot.TraceClient(tracer, "delete_policy")(kitgrpc.NewClient(
+			conn,
+			svcName,
+			"DeletePolicy",
+			encodeDeletePolicyRequest,
+			decodeDeletePolicyResponse,
+			mainflux.DeletePolicyRes{},
 		).Endpoint()),
 		assign: kitot.TraceClient(tracer, "assign")(kitgrpc.NewClient(
 			conn,
@@ -129,9 +147,9 @@ func (client grpcClient) Authorize(ctx context.Context, req *mainflux.AuthorizeR
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
-	res, err := client.authorize(ctx, authReq{Act: req.Act, Obj: req.Obj, Sub: req.Sub})
+	res, err := client.authorize(ctx, authReq{Act: req.GetAct(), Obj: req.GetObj(), Sub: req.GetSub()})
 	if err != nil {
-		return &mainflux.AuthorizeRes{Authorized: false}, err
+		return &mainflux.AuthorizeRes{}, err
 	}
 
 	ar := res.(authorizeRes)
@@ -146,6 +164,60 @@ func decodeAuthorizeResponse(_ context.Context, grpcRes interface{}) (interface{
 func encodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(authReq)
 	return &mainflux.AuthorizeReq{
+		Sub: req.Sub,
+		Obj: req.Obj,
+		Act: req.Act,
+	}, nil
+}
+
+func (client grpcClient) AddPolicy(ctx context.Context, in *mainflux.AddPolicyReq, opts ...grpc.CallOption) (*mainflux.AddPolicyRes, error) {
+	ctx, close := context.WithTimeout(ctx, client.timeout)
+	defer close()
+
+	res, err := client.addPolicy(ctx, addPolicyReq{Act: in.GetAct(), Obj: in.GetObj(), Sub: in.GetSub()})
+	if err != nil {
+		return &mainflux.AddPolicyRes{}, err
+	}
+
+	apr := res.(addPolicyRes)
+	return &mainflux.AddPolicyRes{Authorized: apr.authorized}, err
+}
+
+func decodeAddPolicyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+	res := grpcRes.(*mainflux.AddPolicyRes)
+	return addPolicyRes{authorized: res.Authorized}, nil
+}
+
+func encodeAddPolicyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req := grpcReq.(addPolicyReq)
+	return &mainflux.AddPolicyReq{
+		Sub: req.Sub,
+		Obj: req.Obj,
+		Act: req.Act,
+	}, nil
+}
+
+func (client grpcClient) DeletePolicy(ctx context.Context, in *mainflux.DeletePolicyReq, opts ...grpc.CallOption) (*mainflux.DeletePolicyRes, error) {
+	ctx, close := context.WithTimeout(ctx, client.timeout)
+	defer close()
+
+	res, err := client.deletePolicy(ctx, deletePolicyReq{Act: in.GetAct(), Obj: in.GetObj(), Sub: in.GetSub()})
+	if err != nil {
+		return &mainflux.DeletePolicyRes{}, err
+	}
+
+	dpr := res.(deletePolicyRes)
+	return &mainflux.DeletePolicyRes{Deleted: dpr.deleted}, err
+}
+
+func decodeDeletePolicyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+	res := grpcRes.(*mainflux.DeletePolicyRes)
+	return deletePolicyRes{deleted: res.GetDeleted()}, nil
+}
+
+func encodeDeletePolicyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req := grpcReq.(deletePolicyReq)
+	return &mainflux.DeletePolicyReq{
 		Sub: req.Sub,
 		Obj: req.Obj,
 		Act: req.Act,

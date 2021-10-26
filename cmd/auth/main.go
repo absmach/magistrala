@@ -19,11 +19,13 @@ import (
 	grpcapi "github.com/mainflux/mainflux/auth/api/grpc"
 	httpapi "github.com/mainflux/mainflux/auth/api/http"
 	"github.com/mainflux/mainflux/auth/jwt"
+	"github.com/mainflux/mainflux/auth/keto"
 	"github.com/mainflux/mainflux/auth/postgres"
 	"github.com/mainflux/mainflux/auth/tracing"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/opentracing/opentracing-go"
+	acl "github.com/ory/keto/proto/ory/keto/acl/v1alpha1"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	jconfig "github.com/uber/jaeger-client-go/config"
 	"google.golang.org/grpc"
@@ -47,6 +49,9 @@ const (
 	defServerCert    = ""
 	defServerKey     = ""
 	defJaegerURL     = ""
+	defKetoHost      = "mainflux-keto"
+	defKetoWritePort = "4467"
+	defKetoReadPort  = "4466"
 
 	envLogLevel      = "MF_AUTH_LOG_LEVEL"
 	envDBHost        = "MF_AUTH_DB_HOST"
@@ -64,18 +69,24 @@ const (
 	envServerCert    = "MF_AUTH_SERVER_CERT"
 	envServerKey     = "MF_AUTH_SERVER_KEY"
 	envJaegerURL     = "MF_JAEGER_URL"
+	envKetoHost      = "MF_KETO_HOST"
+	envKetoWritePort = "MF_KETO_WRITE_REMOTE_PORT"
+	envKetoReadPort  = "MF_KETO_READ_REMOTE_PORT"
 )
 
 type config struct {
-	logLevel   string
-	dbConfig   postgres.Config
-	httpPort   string
-	grpcPort   string
-	secret     string
-	serverCert string
-	serverKey  string
-	jaegerURL  string
-	resetURL   string
+	logLevel      string
+	dbConfig      postgres.Config
+	httpPort      string
+	grpcPort      string
+	secret        string
+	serverCert    string
+	serverKey     string
+	jaegerURL     string
+	resetURL      string
+	ketoHost      string
+	ketoWritePort string
+	ketoReadPort  string
 }
 
 type tokenConfig struct {
@@ -100,7 +111,9 @@ func main() {
 	dbTracer, dbCloser := initJaeger("auth_db", cfg.jaegerURL, logger)
 	defer dbCloser.Close()
 
-	svc := newService(db, dbTracer, cfg.secret, logger)
+	reader, writer := initKeto(cfg.ketoHost, cfg.ketoReadPort, cfg.ketoWritePort, logger)
+
+	svc := newService(db, dbTracer, cfg.secret, logger, reader, writer)
 	errs := make(chan error, 2)
 
 	go startHTTPServer(tracer, svc, cfg.httpPort, cfg.serverCert, cfg.serverKey, logger, errs)
@@ -130,14 +143,17 @@ func loadConfig() config {
 	}
 
 	return config{
-		logLevel:   mainflux.Env(envLogLevel, defLogLevel),
-		dbConfig:   dbConfig,
-		httpPort:   mainflux.Env(envHTTPPort, defHTTPPort),
-		grpcPort:   mainflux.Env(envGRPCPort, defGRPCPort),
-		secret:     mainflux.Env(envSecret, defSecret),
-		serverCert: mainflux.Env(envServerCert, defServerCert),
-		serverKey:  mainflux.Env(envServerKey, defServerKey),
-		jaegerURL:  mainflux.Env(envJaegerURL, defJaegerURL),
+		logLevel:      mainflux.Env(envLogLevel, defLogLevel),
+		dbConfig:      dbConfig,
+		httpPort:      mainflux.Env(envHTTPPort, defHTTPPort),
+		grpcPort:      mainflux.Env(envGRPCPort, defGRPCPort),
+		secret:        mainflux.Env(envSecret, defSecret),
+		serverCert:    mainflux.Env(envServerCert, defServerCert),
+		serverKey:     mainflux.Env(envServerKey, defServerKey),
+		jaegerURL:     mainflux.Env(envJaegerURL, defJaegerURL),
+		ketoHost:      mainflux.Env(envKetoHost, defKetoHost),
+		ketoReadPort:  mainflux.Env(envKetoReadPort, defKetoReadPort),
+		ketoWritePort: mainflux.Env(envKetoWritePort, defKetoWritePort),
 	}
 
 }
@@ -166,6 +182,21 @@ func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, 
 	return tracer, closer
 }
 
+func initKeto(hostAddress, readPort, writePort string, logger logger.Logger) (acl.CheckServiceClient, acl.WriteServiceClient) {
+	checkConn, err := grpc.Dial(fmt.Sprintf("%s:%s", hostAddress, readPort), grpc.WithInsecure())
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to dial %s:%s for Keto Check Service: %s", hostAddress, readPort, err))
+		os.Exit(1)
+	}
+
+	writeConn, err := grpc.Dial(fmt.Sprintf("%s:%s", hostAddress, writePort), grpc.WithInsecure())
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to dial %s:%s for Keto Write Service: %s", hostAddress, writePort, err))
+		os.Exit(1)
+	}
+	return acl.NewCheckServiceClient(checkConn), acl.NewWriteServiceClient(writeConn)
+}
+
 func connectToDB(dbConfig postgres.Config, logger logger.Logger) *sqlx.DB {
 	db, err := postgres.Connect(dbConfig)
 	if err != nil {
@@ -175,17 +206,19 @@ func connectToDB(dbConfig postgres.Config, logger logger.Logger) *sqlx.DB {
 	return db
 }
 
-func newService(db *sqlx.DB, tracer opentracing.Tracer, secret string, logger logger.Logger) auth.Service {
+func newService(db *sqlx.DB, tracer opentracing.Tracer, secret string, logger logger.Logger, reader acl.CheckServiceClient, writer acl.WriteServiceClient) auth.Service {
 	database := postgres.NewDatabase(db)
 	keysRepo := tracing.New(postgres.New(database), tracer)
 
 	groupsRepo := postgres.NewGroupRepo(database)
 	groupsRepo = tracing.GroupRepositoryMiddleware(tracer, groupsRepo)
 
+	pa := keto.NewPolicyAgent(reader, writer)
+
 	idProvider := uuid.New()
 	t := jwt.New(secret)
 
-	svc := auth.New(keysRepo, groupsRepo, idProvider, t)
+	svc := auth.New(keysRepo, groupsRepo, idProvider, t, pa)
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
 		svc,

@@ -15,6 +15,9 @@ const (
 	idOrder      = "id"
 	ascDir       = "asc"
 	descDir      = "desc"
+	readPolicy   = "read"
+	writePolicy  = "write"
+	deletePolicy = "delete"
 )
 
 type createThingReq struct {
@@ -56,6 +59,29 @@ func (req createThingsReq) validate() error {
 		}
 	}
 
+	return nil
+}
+
+type shareThingReq struct {
+	token    string
+	thingID  string
+	UserIDs  []string `json:"user_ids"`
+	Policies []string `json:"policies"`
+}
+
+func (req shareThingReq) validate() error {
+	if req.token == "" {
+		return things.ErrUnauthorizedAccess
+	}
+
+	if req.thingID == "" || len(req.UserIDs) == 0 || len(req.Policies) == 0 {
+		return things.ErrMalformedEntity
+	}
+	for _, p := range req.Policies {
+		if p != readPolicy && p != writePolicy && p != deletePolicy {
+			return things.ErrMalformedEntity
+		}
+	}
 	return nil
 }
 

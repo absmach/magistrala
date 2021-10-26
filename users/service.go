@@ -12,6 +12,12 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
+const (
+	memberRelationKey = "member"
+	authoritiesObjKey = "authorities"
+	usersObjKey       = "users"
+)
+
 var (
 	// ErrConflict indicates usage of the existing email during account
 	// registration.
@@ -27,6 +33,9 @@ var (
 	// ErrUnauthorizedAccess indicates missing or invalid credentials provided
 	// when accessing a protected resource.
 	ErrUnauthorizedAccess = errors.New("missing or invalid credentials provided")
+
+	// ErrAuthorization indicates failure occurred while authorizing the entity.
+	ErrAuthorization = errors.New("failed to perform authorization over the entity")
 
 	// ErrNotFound indicates a non-existent entity request.
 	ErrNotFound = errors.New("non-existent entity")
@@ -61,8 +70,9 @@ var (
 // implementation, and all of its decorators (e.g. logging & metrics).
 type Service interface {
 	// Register creates new user account. In case of the failed registration, a
-	// non-nil error value is returned.
-	Register(ctx context.Context, user User) (string, error)
+	// non-nil error value is returned. The user registration is only allowed
+	// for admin.
+	Register(ctx context.Context, token string, user User) (string, error)
 
 	// Login authenticates the user given its credentials. Successful
 	// authentication generates new access token. Failed invocations are
@@ -92,7 +102,7 @@ type Service interface {
 	// token can be authentication token or password reset token.
 	ResetPassword(ctx context.Context, resetToken, password string) error
 
-	//SendPasswordReset sends reset password link to email.
+	// SendPasswordReset sends reset password link to email.
 	SendPasswordReset(ctx context.Context, host, email, token string) error
 
 	// ListMembers retrieves everything that is assigned to a group identified by groupID.
@@ -142,28 +152,54 @@ func New(users UserRepository, hasher Hasher, auth mainflux.AuthServiceClient, e
 	}
 }
 
-func (svc usersService) Register(ctx context.Context, user User) (string, error) {
+func (svc usersService) Register(ctx context.Context, token string, user User) (string, error) {
+	if err := svc.checkAuthz(ctx, token); err != nil {
+		return "", err
+	}
+
 	if err := user.Validate(); err != nil {
 		return "", err
 	}
 	if !svc.passRegex.MatchString(user.Password) {
 		return "", ErrPasswordFormat
 	}
-	hash, err := svc.hasher.Hash(user.Password)
-	if err != nil {
-		return "", errors.Wrap(ErrMalformedEntity, err)
-	}
-	user.Password = hash
+
 	uid, err := svc.idProvider.ID()
 	if err != nil {
 		return "", errors.Wrap(ErrCreateUser, err)
 	}
 	user.ID = uid
+
+	if err := svc.claimOwnership(ctx, user.ID, usersObjKey, memberRelationKey); err != nil {
+		return "", err
+	}
+
+	hash, err := svc.hasher.Hash(user.Password)
+	if err != nil {
+		return "", errors.Wrap(ErrMalformedEntity, err)
+	}
+	user.Password = hash
 	uid, err = svc.users.Save(ctx, user)
 	if err != nil {
 		return "", err
 	}
 	return uid, nil
+}
+
+func (svc usersService) checkAuthz(ctx context.Context, token string) error {
+	if err := svc.authorize(ctx, "*", "user", "create"); err == nil {
+		return nil
+	}
+	if token == "" {
+		return ErrUnauthorizedAccess
+	}
+
+	ir, err := svc.identify(ctx, token)
+	if err != nil {
+		return err
+	}
+
+	return svc.authorize(ctx, ir.id, authoritiesObjKey, memberRelationKey)
 }
 
 func (svc usersService) Login(ctx context.Context, user User) (string, error) {
@@ -197,20 +233,19 @@ func (svc usersService) ViewUser(ctx context.Context, token, id string) (User, e
 }
 
 func (svc usersService) ViewProfile(ctx context.Context, token string) (User, error) {
-	email, err := svc.identify(ctx, token)
+	ir, err := svc.identify(ctx, token)
 	if err != nil {
 		return User{}, err
 	}
 
-	dbUser, err := svc.users.RetrieveByEmail(ctx, email)
+	dbUser, err := svc.users.RetrieveByEmail(ctx, ir.email)
 	if err != nil {
 		return User{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
 	return User{
 		ID:       dbUser.ID,
-		Email:    email,
-		Password: "",
+		Email:    ir.email,
 		Metadata: dbUser.Metadata,
 	}, nil
 }
@@ -225,12 +260,12 @@ func (svc usersService) ListUsers(ctx context.Context, token string, offset, lim
 }
 
 func (svc usersService) UpdateUser(ctx context.Context, token string, u User) error {
-	email, err := svc.identify(ctx, token)
+	ir, err := svc.identify(ctx, token)
 	if err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 	user := User{
-		Email:    email,
+		Email:    ir.email,
 		Metadata: u.Metadata,
 	}
 	return svc.users.UpdateUser(ctx, user)
@@ -249,12 +284,15 @@ func (svc usersService) GenerateResetToken(ctx context.Context, email, host stri
 }
 
 func (svc usersService) ResetPassword(ctx context.Context, resetToken, password string) error {
-	email, err := svc.identify(ctx, resetToken)
+	ir, err := svc.identify(ctx, resetToken)
 	if err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	u, err := svc.users.RetrieveByEmail(ctx, email)
-	if err != nil || u.Email == "" {
+	u, err := svc.users.RetrieveByEmail(ctx, ir.email)
+	if err != nil {
+		return err
+	}
+	if u.Email == "" {
 		return ErrUserNotFound
 	}
 	if !svc.passRegex.MatchString(password) {
@@ -264,11 +302,11 @@ func (svc usersService) ResetPassword(ctx context.Context, resetToken, password 
 	if err != nil {
 		return err
 	}
-	return svc.users.UpdatePassword(ctx, email, password)
+	return svc.users.UpdatePassword(ctx, ir.email, password)
 }
 
 func (svc usersService) ChangePassword(ctx context.Context, authToken, password, oldPassword string) error {
-	email, err := svc.identify(ctx, authToken)
+	ir, err := svc.identify(ctx, authToken)
 	if err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
@@ -276,13 +314,13 @@ func (svc usersService) ChangePassword(ctx context.Context, authToken, password,
 		return ErrPasswordFormat
 	}
 	u := User{
-		Email:    email,
+		Email:    ir.email,
 		Password: oldPassword,
 	}
 	if _, err := svc.Login(ctx, u); err != nil {
 		return ErrUnauthorizedAccess
 	}
-	u, err = svc.users.RetrieveByEmail(ctx, email)
+	u, err = svc.users.RetrieveByEmail(ctx, ir.email)
 	if err != nil || u.Email == "" {
 		return ErrUserNotFound
 	}
@@ -291,7 +329,7 @@ func (svc usersService) ChangePassword(ctx context.Context, authToken, password,
 	if err != nil {
 		return err
 	}
-	return svc.users.UpdatePassword(ctx, email, password)
+	return svc.users.UpdatePassword(ctx, ir.email, password)
 }
 
 func (svc usersService) SendPasswordReset(_ context.Context, host, email, token string) error {
@@ -332,12 +370,50 @@ func (svc usersService) issue(ctx context.Context, id, email string, keyType uin
 	return key.GetValue(), nil
 }
 
-func (svc usersService) identify(ctx context.Context, token string) (string, error) {
+type userIdentity struct {
+	id    string
+	email string
+}
+
+func (svc usersService) identify(ctx context.Context, token string) (userIdentity, error) {
 	identity, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return "", errors.Wrap(ErrUnauthorizedAccess, err)
+		return userIdentity{}, errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return identity.GetEmail(), nil
+
+	return userIdentity{identity.Id, identity.Email}, nil
+}
+
+func (svc usersService) authorize(ctx context.Context, subject, object, relation string) error {
+	req := &mainflux.AuthorizeReq{
+		Sub: subject,
+		Obj: object,
+		Act: relation,
+	}
+	res, err := svc.auth.Authorize(ctx, req)
+	if err != nil {
+		return errors.Wrap(ErrAuthorization, err)
+	}
+	if !res.GetAuthorized() {
+		return ErrAuthorization
+	}
+	return nil
+}
+
+func (svc usersService) claimOwnership(ctx context.Context, subject, object, relation string) error {
+	req := &mainflux.AddPolicyReq{
+		Sub: subject,
+		Obj: object,
+		Act: relation,
+	}
+	res, err := svc.auth.AddPolicy(ctx, req)
+	if err != nil {
+		return errors.Wrap(ErrAuthorization, err)
+	}
+	if !res.GetAuthorized() {
+		return ErrAuthorization
+	}
+	return nil
 }
 
 func (svc usersService) members(ctx context.Context, token, groupID string, limit, offset uint64) ([]string, error) {

@@ -22,6 +22,7 @@ var (
 	_ mainflux.Response = (*connectRes)(nil)
 	_ mainflux.Response = (*disconnectThingRes)(nil)
 	_ mainflux.Response = (*disconnectRes)(nil)
+	_ mainflux.Response = (*shareThingRes)(nil)
 )
 
 type removeRes struct{}
@@ -67,6 +68,20 @@ func (res thingRes) Headers() map[string]string {
 
 func (res thingRes) Empty() bool {
 	return true
+}
+
+type shareThingRes struct{}
+
+func (res shareThingRes) Code() int {
+	return http.StatusOK
+}
+
+func (res shareThingRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res shareThingRes) Empty() bool {
+	return false
 }
 
 type thingsRes struct {

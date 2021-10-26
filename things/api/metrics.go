@@ -48,6 +48,15 @@ func (ms *metricsMiddleware) UpdateThing(ctx context.Context, token string, thin
 	return ms.svc.UpdateThing(ctx, token, thing)
 }
 
+func (ms *metricsMiddleware) ShareThing(ctx context.Context, token, thingID string, actions, userIDs []string) error {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "share_thing").Add(1)
+		ms.latency.With("method", "share_thing").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.ShareThing(ctx, token, thingID, actions, userIDs)
+}
+
 func (ms *metricsMiddleware) UpdateKey(ctx context.Context, token, id, key string) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "update_key").Add(1)

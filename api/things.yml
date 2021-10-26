@@ -177,6 +177,32 @@ paths:
           description: Missing or invalid access token provided.
         '500':
           $ref: "#/components/responses/ServiceError"
+  /things/{thingId}/share:
+    post:
+      summary: Shares a thing with user identified by request body.
+      description: |
+        Adds 'read', 'write' or 'delete' policies to the user identified by the request body.
+        Sharing a particular thing is only allowed to users who have 'write' access to that thing.
+      tags:
+        - things
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
+        - $ref: "#/components/parameters/ThingId"
+      requestBody:
+        $ref: "#/components/requestBodies/ShareThingReq"
+      responses:
+        '200':
+          description: Policies shared.
+        '400':
+          description: Failed due to malformed JSON.
+        '401':
+          description: Missing or invalid access token provided.
+        '403':
+          description: Lack of policies in order to share the thing.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
   /things/{thingId}/key:
     patch:
       summary: Updates thing key
@@ -756,6 +782,19 @@ components:
           description: Thing IDs
           items:
             type: string
+    ShareThingReqSchema:
+      type: object
+      properties:
+        user_id:
+          type: string
+          description: User ID.
+          items:
+            type: string
+        policies:
+          type: array
+          description: Policies
+          items:
+            type: string
 
   parameters:
     Authorization:
@@ -970,6 +1009,13 @@ components:
                 type: string
                 format: uuid
                 description: Thing ID by which thing is uniquely identified.
+    ShareThingReq:
+      description: JSON-formatted document describing sharing things policies.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ShareThingReqSchema"
 
   responses:
     CreateThingRes:

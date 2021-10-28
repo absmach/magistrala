@@ -19,6 +19,7 @@ const (
 
 	thingsGroupType = "things"
 	memberRelation  = "member"
+	accessRelation  = "access"
 )
 
 var (
@@ -209,7 +210,7 @@ func (svc service) AssignGroupAccessRights(ctx context.Context, token, thingGrou
 	if _, err := svc.Identify(ctx, token); err != nil {
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.agent.AddPolicy(ctx, PolicyReq{Object: thingGroupID, Relation: "access", Subject: fmt.Sprintf("%s:%s#%s", "members", userGroupID, memberRelation)})
+	return svc.agent.AddPolicy(ctx, PolicyReq{Object: thingGroupID, Relation: accessRelation, Subject: fmt.Sprintf("%s:%s#%s", "members", userGroupID, memberRelation)})
 }
 
 func (svc service) tmpKey(duration time.Duration, key Key) (Key, string, error) {
@@ -359,7 +360,7 @@ func (svc service) Assign(ctx context.Context, token string, groupID, groupType 
 	}
 
 	if groupType == thingsGroupType {
-		ss := fmt.Sprintf("%s:%s#%s", "members", groupID, "access")
+		ss := fmt.Sprintf("%s:%s#%s", "members", groupID, accessRelation)
 		var errs error
 		for _, memberID := range memberIDs {
 			for _, action := range []string{"read", "write", "delete"} {
@@ -373,7 +374,7 @@ func (svc service) Assign(ctx context.Context, token string, groupID, groupType 
 
 	var errs error
 	for _, memberID := range memberIDs {
-		if err := svc.agent.AddPolicy(ctx, PolicyReq{Object: groupID, Relation: memberRelation, Subject: memberID}); err != nil {
+		if err := svc.agent.AddPolicy(ctx, PolicyReq{Object: groupID, Relation: accessRelation, Subject: memberID}); err != nil {
 			errs = errors.Wrap(fmt.Errorf("cannot add user: '%s' to user group: '%s'", memberID, groupID), errs)
 		}
 	}
@@ -385,11 +386,11 @@ func (svc service) Unassign(ctx context.Context, token string, groupID string, m
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	ss := fmt.Sprintf("%s:%s#%s", "members", groupID, "access")
+	ss := fmt.Sprintf("%s:%s#%s", "members", groupID, accessRelation)
 	var errs error
 	for _, memberID := range memberIDs {
 		for _, action := range []string{"read", "write", "delete"} {
-			if err := svc.agent.DeletePolicy(ctx, PolicyReq{Object: groupID, Relation: memberRelation, Subject: memberID}); err != nil {
+			if err := svc.agent.DeletePolicy(ctx, PolicyReq{Object: groupID, Relation: accessRelation, Subject: memberID}); err != nil {
 				errs = errors.Wrap(fmt.Errorf("cannot delete a membership of member '%s' from group '%s'", memberID, groupID), errs)
 			}
 			if err := svc.agent.DeletePolicy(ctx, PolicyReq{Object: memberID, Relation: action, Subject: ss}); err != nil {

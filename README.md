@@ -127,6 +127,12 @@ Thank you for your interest in Mainflux and the desire to contribute!
 2. Checkout the [contribution guide](CONTRIBUTING.md) to learn more about our style and conventions.
 3. Make your changes compatible to our workflow.
 
+### We're Hiring
+
+You like Mainflux and you would like to make it your day job? We're always looking for talented engineers interested in open-source, IoT and distributed systems. If you recognize yourself, reach out to [@drasko][drasko] - he will contact you back.
+
+>The best way to grab our attention is, of course, by sending PRs :sunglasses:.
+
 ## Community
 
 - [Google group][forum]

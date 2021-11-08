@@ -27,7 +27,7 @@ const (
 	groupName   = "mfx"
 	description = "Description"
 
-	memberRel      = "member"
+	memberRelation = "member"
 	authoritiesObj = "authorities"
 )
 
@@ -37,7 +37,7 @@ func newService() auth.Service {
 	idProvider := uuid.NewMock()
 
 	mockAuthzDB := map[string][]mocks.MockSubjectSet{}
-	mockAuthzDB[id] = append(mockAuthzDB[id], mocks.MockSubjectSet{Object: authoritiesObj, Relation: memberRel})
+	mockAuthzDB[id] = append(mockAuthzDB[id], mocks.MockSubjectSet{Object: authoritiesObj, Relation: memberRelation})
 	ketoMock := mocks.NewKetoMock(mockAuthzDB)
 
 	t := jwt.New(secret)
@@ -332,7 +332,7 @@ func TestCreateGroup(t *testing.T) {
 	parent, err := svc.CreateGroup(context.Background(), apiToken, parentGroup)
 	assert.Nil(t, err, fmt.Sprintf("Creating parent group expected to succeed: %s", err))
 
-	err = svc.Authorize(context.Background(), auth.PolicyReq{Object: parent.ID, Relation: "member", Subject: id})
+	err = svc.Authorize(context.Background(), auth.PolicyReq{Object: parent.ID, Relation: memberRelation, Subject: id})
 	assert.Nil(t, err, fmt.Sprintf("Checking parent group owner's policy expected to succeed: %s", err))
 
 	cases := []struct {
@@ -373,7 +373,7 @@ func TestCreateGroup(t *testing.T) {
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		if err == nil {
-			authzErr := svc.Authorize(context.Background(), auth.PolicyReq{Object: g.ID, Relation: "member", Subject: g.OwnerID})
+			authzErr := svc.Authorize(context.Background(), auth.PolicyReq{Object: g.ID, Relation: memberRelation, Subject: g.OwnerID})
 			assert.Nil(t, authzErr, fmt.Sprintf("%s - Checking group owner's policy expected to succeed: %s", tc.desc, authzErr))
 		}
 	}
@@ -937,7 +937,7 @@ func TestAssign(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 
 	// check access control policies things members.
-	subjectSet := fmt.Sprintf("%s:%s#%s", "members", group.ID, "access")
+	subjectSet := fmt.Sprintf("%s:%s#%s", "members", group.ID, memberRelation)
 	err = svc.Authorize(context.Background(), auth.PolicyReq{Object: mid, Relation: "read", Subject: subjectSet})
 	require.Nil(t, err, fmt.Sprintf("entites having an access to group %s must have %s policy on %s: %s", group.ID, "read", mid, err))
 	err = svc.Authorize(context.Background(), auth.PolicyReq{Object: mid, Relation: "write", Subject: subjectSet})
@@ -1011,7 +1011,7 @@ func TestUnassign(t *testing.T) {
 func TestAuthorize(t *testing.T) {
 	svc := newService()
 
-	pr := auth.PolicyReq{Object: authoritiesObj, Relation: memberRel, Subject: id}
+	pr := auth.PolicyReq{Object: authoritiesObj, Relation: memberRelation, Subject: id}
 	err := svc.Authorize(context.Background(), pr)
 	require.Nil(t, err, fmt.Sprintf("authorizing initial %v policy expected to succeed: %s", pr, err))
 }
@@ -1030,7 +1030,7 @@ func TestAddPolicy(t *testing.T) {
 func TestDeletePolicy(t *testing.T) {
 	svc := newService()
 
-	pr := auth.PolicyReq{Object: authoritiesObj, Relation: memberRel, Subject: id}
+	pr := auth.PolicyReq{Object: authoritiesObj, Relation: memberRelation, Subject: id}
 	err := svc.DeletePolicy(context.Background(), pr)
 	require.Nil(t, err, fmt.Sprintf("deleting %v policy expected to succeed: %s", pr, err))
 }
@@ -1057,7 +1057,7 @@ func TestAssignAccessRights(t *testing.T) {
 	err = svc.AssignGroupAccessRights(context.Background(), apiToken, thingGroupID, userGroupID)
 	require.Nil(t, err, fmt.Sprintf("sharing the user group with thing group expected to succeed: %v", err))
 
-	err = svc.Authorize(context.Background(), auth.PolicyReq{Object: thingGroupID, Relation: "access", Subject: fmt.Sprintf("%s:%s#%s", "members", userGroupID, "member")})
+	err = svc.Authorize(context.Background(), auth.PolicyReq{Object: thingGroupID, Relation: memberRelation, Subject: fmt.Sprintf("%s:%s#%s", "members", userGroupID, memberRelation)})
 	require.Nil(t, err, fmt.Sprintf("checking shared group access policy expected to be succeed: %#v", err))
 }
 

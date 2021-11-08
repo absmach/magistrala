@@ -27,14 +27,14 @@ var actions = map[string]Action{
 	"member": Member,
 }
 
-type createPolicyReq struct {
+type policiesReq struct {
 	token      string
 	SubjectIDs []string `json:"subjects"`
 	Policies   []string `json:"policies"`
 	Object     string   `json:"object"`
 }
 
-func (req createPolicyReq) validate() error {
+func (req policiesReq) validate() error {
 	if req.token == "" {
 		return auth.ErrUnauthorizedAccess
 	}

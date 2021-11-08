@@ -97,6 +97,14 @@ func (ms *metricsMiddleware) DeletePolicy(ctx context.Context, pr auth.PolicyReq
 	return ms.svc.DeletePolicy(ctx, pr)
 }
 
+func (ms *metricsMiddleware) DeletePolicies(ctx context.Context, token, object string, subjectIDs, relations []string) error {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "delete_policies").Add(1)
+		ms.latency.With("method", "delete_policies").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+	return ms.svc.DeletePolicies(ctx, token, object, subjectIDs, relations)
+}
+
 func (ms *metricsMiddleware) CreateGroup(ctx context.Context, token string, group auth.Group) (gr auth.Group, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "create_group").Add(1)

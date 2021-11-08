@@ -28,7 +28,14 @@ func MakeHandler(svc auth.Service, mux *bone.Mux, tracer opentracing.Tracer) *bo
 
 	mux.Post("/policies", kithttp.NewServer(
 		kitot.TraceServer(tracer, "create_policy_bulk")(createPolicyEndpoint(svc)),
-		decodeCreatePolicyRequest,
+		decodePoliciesRequest,
+		encodeResponse,
+		opts...,
+	))
+
+	mux.Put("/policies", kithttp.NewServer(
+		kitot.TraceServer(tracer, "delete_policies")(deletePoliciesEndpoint(svc)),
+		decodePoliciesRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -36,12 +43,12 @@ func MakeHandler(svc auth.Service, mux *bone.Mux, tracer opentracing.Tracer) *bo
 	return mux
 }
 
-func decodeCreatePolicyRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+func decodePoliciesRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, auth.ErrUnsupportedContentType
 	}
 
-	var req createPolicyReq
+	var req policiesReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(auth.ErrFailedDecode, err)
 	}

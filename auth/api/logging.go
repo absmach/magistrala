@@ -131,6 +131,18 @@ func (lm *loggingMiddleware) DeletePolicy(ctx context.Context, pr auth.PolicyReq
 	return lm.svc.DeletePolicy(ctx, pr)
 }
 
+func (lm *loggingMiddleware) DeletePolicies(ctx context.Context, token, object string, subjectIDs, relations []string) (err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method delete_policies took %s to complete", time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+	return lm.svc.DeletePolicies(ctx, token, object, subjectIDs, relations)
+}
+
 func (lm *loggingMiddleware) CreateGroup(ctx context.Context, token string, group auth.Group) (g auth.Group, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method create_group for token %s and name %s took %s to complete", token, group.Name, time.Since(begin))

@@ -52,6 +52,11 @@ func (pa *policyAgentMock) DeletePolicy(ctx context.Context, pr auth.PolicyReq) 
 	pa.mu.Lock()
 	defer pa.mu.Unlock()
 
-	delete(pa.authzDB, pr.Subject)
+	ssList := pa.authzDB[pr.Subject]
+	for k, ss := range ssList {
+		if ss.Object == pr.Object && ss.Relation == pr.Relation {
+			ssList[k] = MockSubjectSet{}
+		}
+	}
 	return nil
 }

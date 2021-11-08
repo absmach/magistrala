@@ -18,7 +18,9 @@ const (
 	recoveryDuration = 5 * time.Minute
 
 	thingsGroupType = "things"
-	memberRelation  = "member"
+
+	authoritiesObject = "authorities"
+	memberRelation    = "member"
 )
 
 var (
@@ -93,7 +95,7 @@ type Service interface {
 	Authn
 	Authz
 
-	// Implements groups API, creating groups, assigning members
+	// GroupService implements groups API, creating groups, assigning members
 	GroupService
 }
 
@@ -186,7 +188,7 @@ func (svc service) AddPolicies(ctx context.Context, token, object string, subjec
 		return errors.Wrap(ErrUnauthorizedAccess, err)
 	}
 
-	if err := svc.Authorize(ctx, PolicyReq{Object: "authorities", Relation: memberRelation, Subject: user.ID}); err != nil {
+	if err := svc.Authorize(ctx, PolicyReq{Object: authoritiesObject, Relation: memberRelation, Subject: user.ID}); err != nil {
 		return err
 	}
 
@@ -203,6 +205,28 @@ func (svc service) AddPolicies(ctx context.Context, token, object string, subjec
 
 func (svc service) DeletePolicy(ctx context.Context, pr PolicyReq) error {
 	return svc.agent.DeletePolicy(ctx, pr)
+}
+
+func (svc service) DeletePolicies(ctx context.Context, token, object string, subjectIDs, relations []string) error {
+	user, err := svc.Identify(ctx, token)
+	if err != nil {
+		return errors.Wrap(ErrUnauthorizedAccess, err)
+	}
+
+	// Check if the user identified by token is the admin.
+	if err := svc.Authorize(ctx, PolicyReq{Object: authoritiesObject, Relation: memberRelation, Subject: user.ID}); err != nil {
+		return err
+	}
+
+	var errs error
+	for _, subjectID := range subjectIDs {
+		for _, relation := range relations {
+			if err := svc.DeletePolicy(ctx, PolicyReq{Object: object, Relation: relation, Subject: subjectID}); err != nil {
+				errs = errors.Wrap(fmt.Errorf("cannot delete '%s' policy on object '%s' for subject '%s': %s", relation, object, subjectID, err), errs)
+			}
+		}
+	}
+	return errs
 }
 
 func (svc service) AssignGroupAccessRights(ctx context.Context, token, thingGroupID, userGroupID string) error {

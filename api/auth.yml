@@ -309,9 +309,9 @@ paths:
           $ref: "#/components/responses/ServiceError"
   /policies:
     post:
-      summary: Creates a new policy.
+      summary: Creates new policies.
       description: |
-        Creates a new policy. Only admin can use this endpoint. Therefore, you need an authentication token for the admin.
+        Creates new policies. Only admin can use this endpoint. Therefore, you need an authentication token for the admin.
         Also, only policies defined on the system are allowed to add. For more details, please see the docs for Authorization.
       tags:
         - auth
@@ -321,7 +321,29 @@ paths:
         $ref: "#/components/requestBodies/PoliciesReq"
       responses:
         '201':
-          description: Policy created.
+          description: Policies created.
+        '400':
+          description: Failed due to malformed JSON.
+        '409':
+          description: Failed due to using an existing email address.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+    put:
+      summary: Deletes policies.
+      description: |
+        Deletes policies. Only admin can use this endpoint. Therefore, you need an authentication token for the admin.
+        Also, only policies defined on the system are allowed to delete. For more details, please see the docs for Authorization.
+      tags:
+        - auth
+      parameters:
+        - $ref: "#/components/parameters/AdminAuthorization"
+      requestBody:
+        $ref: "#/components/requestBodies/PoliciesReq"
+      responses:
+        '204':
+          description: Policies deleted.
         '400':
           description: Failed due to malformed JSON.
         '409':

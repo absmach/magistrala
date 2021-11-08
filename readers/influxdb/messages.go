@@ -53,10 +53,7 @@ func (repo *influxRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 		Database: repo.database,
 	}
 
-	var ret []readers.Message
-
 	resp, err := repo.client.Query(q)
-
 	if err != nil {
 		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
 	}
@@ -64,17 +61,18 @@ func (repo *influxRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 		return readers.MessagesPage{}, errors.Wrap(errReadMessages, resp.Error())
 	}
 
-	if len(resp.Results) < 1 || len(resp.Results[0].Series) < 1 {
+	if len(resp.Results) == 0 || len(resp.Results[0].Series) == 0 {
 		return readers.MessagesPage{}, nil
 	}
 
+	var messages []readers.Message
 	result := resp.Results[0].Series[0]
 	for _, v := range result.Values {
 		msg, err := parseMessage(format, result.Columns, v)
 		if err != nil {
 			return readers.MessagesPage{}, err
 		}
-		ret = append(ret, msg)
+		messages = append(messages, msg)
 	}
 
 	total, err := repo.count(format, condition)
@@ -85,7 +83,7 @@ func (repo *influxRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 	page := readers.MessagesPage{
 		PageMetadata: rpm,
 		Total:        total,
-		Messages:     ret,
+		Messages:     messages,
 	}
 
 	return page, nil
@@ -106,9 +104,9 @@ func (repo *influxRepository) count(measurement, condition string) (uint64, erro
 		return 0, resp.Error()
 	}
 
-	if len(resp.Results) < 1 ||
-		len(resp.Results[0].Series) < 1 ||
-		len(resp.Results[0].Series[0].Values) < 1 {
+	if len(resp.Results) == 0 ||
+		len(resp.Results[0].Series) == 0 ||
+		len(resp.Results[0].Series[0].Values) == 0 {
 		return 0, nil
 	}
 
@@ -140,7 +138,10 @@ func fmtCondition(chanID string, rpm readers.PageMetadata) string {
 	if err != nil {
 		return condition
 	}
-	json.Unmarshal(meta, &query)
+
+	if err := json.Unmarshal(meta, &query); err != nil {
+		return condition
+	}
 
 	for name, value := range query {
 		switch name {
@@ -239,19 +240,27 @@ func parseSenml(names []string, fields []interface{}) interface{} {
 				msgField.SetString(s)
 			}
 		case float64:
+			fs, ok := fields[i].(string)
+			if !ok {
+				continue
+			}
+
 			if name == "time" {
-				t, err := time.Parse(time.RFC3339Nano, fields[i].(string))
+				t, err := time.Parse(time.RFC3339Nano, fs)
 				if err != nil {
 					continue
 				}
 
-				v := float64(t.UnixNano()) / float64(1e9)
+				v := float64(t.UnixNano()) / 1e9
 				msgField.SetFloat(v)
 				continue
 			}
 
-			val, _ := strconv.ParseFloat(fields[i].(string), 64)
-			msgField.SetFloat(val)
+			v, err := strconv.ParseFloat(fs, 64)
+			if err != nil {
+				continue
+			}
+			msgField.SetFloat(v)
 		}
 	}
 

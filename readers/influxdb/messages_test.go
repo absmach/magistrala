@@ -2,6 +2,7 @@ package influxdb_test
 
 import (
 	"fmt"
+	"math/rand"
 	"testing"
 	"time"
 
@@ -26,6 +27,7 @@ const (
 	mqttProt    = "mqtt"
 	httpProt    = "http"
 	msgName     = "temperature"
+	offset      = 21
 
 	format1 = "format1"
 	format2 = "format2"
@@ -61,7 +63,6 @@ func TestReadAll(t *testing.T) {
 		Protocol:   mqttProt,
 		Name:       "name",
 		Unit:       "U",
-		Time:       123456,
 		UpdateTime: 1234,
 	}
 
@@ -71,7 +72,9 @@ func TestReadAll(t *testing.T) {
 	stringMsgs := []senml.Message{}
 	dataMsgs := []senml.Message{}
 	queryMsgs := []senml.Message{}
-	now := float64(time.Now().UTC().Second())
+	rand.Seed(time.Now().UnixNano())
+	to := msgsNum
+	now := float64(rand.Intn(to) + offset)
 
 	for i := 0; i < msgsNum; i++ {
 		// Mix possible values as well as value sum.
@@ -335,24 +338,24 @@ func TestReadAll(t *testing.T) {
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{
 				Offset: 0,
-				Limit:  uint64(len(messages[0:21])),
-				From:   messages[20].Time,
+				Limit:  uint64(len(messages[0:offset])),
+				From:   messages[offset-1].Time,
 			},
 			page: readers.MessagesPage{
-				Total:    uint64(len(messages[0:21])),
-				Messages: fromSenml(messages[0:21]),
+				Total:    uint64(len(messages[0:offset])),
+				Messages: fromSenml(messages[0:offset]),
 			},
 		},
 		"read message with to": {
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{
 				Offset: 0,
-				Limit:  uint64(len(messages[21:])),
-				To:     messages[20].Time,
+				Limit:  uint64(len(messages[offset:])),
+				To:     messages[offset-1].Time,
 			},
 			page: readers.MessagesPage{
-				Total:    uint64(len(messages[21:])),
-				Messages: fromSenml(messages[21:]),
+				Total:    uint64(len(messages[offset:])),
+				Messages: fromSenml(messages[offset:]),
 			},
 		},
 		"read message with from/to": {
@@ -498,6 +501,7 @@ func TestReadJSON(t *testing.T) {
 
 	for desc, tc := range cases {
 		result, err := reader.ReadAll(tc.chanID, tc.pageMeta)
+		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %s", desc, err))
 
 		for i := 0; i < len(result.Messages); i++ {
 			m := result.Messages[i]
@@ -506,7 +510,6 @@ func TestReadJSON(t *testing.T) {
 
 			result.Messages[i] = m
 		}
-		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %s", desc, err))
 		assert.ElementsMatch(t, tc.page.Messages, result.Messages, fmt.Sprintf("%s: expected \n%v got \n%v", desc, tc.page.Messages, result.Messages))
 		assert.Equal(t, tc.page.Total, result.Total, fmt.Sprintf("%s: expected %v got %v", desc, tc.page.Total, result.Total))
 	}
@@ -530,8 +533,7 @@ func fromJSON(msg []map[string]interface{}) []readers.Message {
 
 func toMap(msg json.Message) map[string]interface{} {
 	return map[string]interface{}{
-		"channel": msg.Channel,
-		// "created":   msg.Created,
+		"channel":   msg.Channel,
 		"subtopic":  msg.Subtopic,
 		"publisher": msg.Publisher,
 		"protocol":  msg.Protocol,

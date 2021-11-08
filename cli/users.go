@@ -17,9 +17,12 @@ func NewUsersCmd() *cobra.Command {
 		Short: "create <username> <password> <user_auth_token>",
 		Long:  `Creates new user`,
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 3 {
+			if len(args) < 2 || len(args) > 3 {
 				logUsage(cmd.Short)
 				return
+			}
+			if len(args) == 2 {
+				args = append(args, "")
 			}
 
 			user := mfxsdk.User{

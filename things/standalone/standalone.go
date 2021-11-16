@@ -6,7 +6,6 @@ package standalone
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/mainflux/mainflux"
@@ -32,8 +31,6 @@ func NewAuthService(email, token string) mainflux.AuthServiceClient {
 }
 
 func (repo singleUserRepo) Issue(ctx context.Context, req *mainflux.IssueReq, opts ...grpc.CallOption) (*mainflux.Token, error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Second)
-	defer cancel()
 	if repo.token != req.GetEmail() {
 		return nil, things.ErrUnauthorizedAccess
 	}
@@ -42,9 +39,6 @@ func (repo singleUserRepo) Issue(ctx context.Context, req *mainflux.IssueReq, op
 }
 
 func (repo singleUserRepo) Identify(ctx context.Context, token *mainflux.Token, opts ...grpc.CallOption) (*mainflux.UserIdentity, error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Second)
-	defer cancel()
-
 	if repo.token != token.GetValue() {
 		return nil, things.ErrUnauthorizedAccess
 	}
@@ -53,20 +47,28 @@ func (repo singleUserRepo) Identify(ctx context.Context, token *mainflux.Token, 
 }
 
 func (repo singleUserRepo) Authorize(ctx context.Context, req *mainflux.AuthorizeReq, _ ...grpc.CallOption) (r *mainflux.AuthorizeRes, err error) {
-	return &mainflux.AuthorizeRes{}, errUnsupported
+	if repo.email != req.Sub {
+		return &mainflux.AuthorizeRes{}, errUnsupported
+	}
+	return &mainflux.AuthorizeRes{Authorized: true}, nil
 }
 
-func (repo singleUserRepo) AddPolicy(ctx context.Context, in *mainflux.AddPolicyReq, opts ...grpc.CallOption) (*mainflux.AddPolicyRes, error) {
-	return &mainflux.AddPolicyRes{}, errUnsupported
+func (repo singleUserRepo) AddPolicy(ctx context.Context, req *mainflux.AddPolicyReq, opts ...grpc.CallOption) (*mainflux.AddPolicyRes, error) {
+	if repo.email != req.Sub {
+		return &mainflux.AddPolicyRes{}, errUnsupported
+	}
+	return &mainflux.AddPolicyRes{Authorized: true}, nil
 }
 
-func (repo singleUserRepo) DeletePolicy(ctx context.Context, in *mainflux.DeletePolicyReq, opts ...grpc.CallOption) (*mainflux.DeletePolicyRes, error) {
-	return &mainflux.DeletePolicyRes{}, errUnsupported
+func (repo singleUserRepo) DeletePolicy(ctx context.Context, req *mainflux.DeletePolicyReq, opts ...grpc.CallOption) (*mainflux.DeletePolicyRes, error) {
+	if repo.email != req.Sub {
+		return &mainflux.DeletePolicyRes{}, errUnsupported
+	}
+	return &mainflux.DeletePolicyRes{Deleted: true}, nil
 }
 
 func (repo singleUserRepo) Members(ctx context.Context, req *mainflux.MembersReq, _ ...grpc.CallOption) (r *mainflux.MembersRes, err error) {
 	return &mainflux.MembersRes{}, errUnsupported
-
 }
 
 func (repo singleUserRepo) Assign(ctx context.Context, req *mainflux.Assignment, _ ...grpc.CallOption) (r *empty.Empty, err error) {

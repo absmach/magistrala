@@ -26,6 +26,19 @@ func LoggingMiddleware(svc auth.Service, logger log.Logger) auth.Service {
 	return &loggingMiddleware{logger, svc}
 }
 
+func (lm *loggingMiddleware) ListPolicies(ctx context.Context, pr auth.PolicyReq) (p auth.PolicyPage, err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method list_policies took %s to complete", time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.ListPolicies(ctx, pr)
+}
+
 func (lm *loggingMiddleware) Issue(ctx context.Context, token string, newKey auth.Key) (key auth.Key, secret string, err error) {
 	defer func(begin time.Time) {
 		d := "infinite duration"

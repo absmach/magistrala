@@ -100,6 +100,18 @@ func deletePolicyEndpoint(svc auth.Service) endpoint.Endpoint {
 	}
 }
 
+func listPoliciesEndpoint(svc auth.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(listPoliciesReq)
+
+		page, err := svc.ListPolicies(ctx, auth.PolicyReq{Subject: req.Sub, Object: req.Obj, Relation: req.Act})
+		if err != nil {
+			return deletePolicyRes{}, err
+		}
+		return listPoliciesRes{policies: page.Policies}, nil
+	}
+}
+
 func assignEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(assignReq)

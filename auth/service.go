@@ -236,6 +236,18 @@ func (svc service) AssignGroupAccessRights(ctx context.Context, token, thingGrou
 	return svc.agent.AddPolicy(ctx, PolicyReq{Object: thingGroupID, Relation: memberRelation, Subject: fmt.Sprintf("%s:%s#%s", "members", userGroupID, memberRelation)})
 }
 
+func (svc service) ListPolicies(ctx context.Context, pr PolicyReq) (PolicyPage, error) {
+	res, err := svc.agent.RetrievePolicies(ctx, pr)
+	if err != nil {
+		return PolicyPage{}, err
+	}
+	var page PolicyPage
+	for _, tuple := range res {
+		page.Policies = append(page.Policies, tuple.GetObject())
+	}
+	return page, err
+}
+
 func (svc service) tmpKey(duration time.Duration, key Key) (Key, string, error) {
 	key.ExpiresAt = key.IssuedAt.Add(duration)
 	secret, err := svc.tokenizer.Issue(key)

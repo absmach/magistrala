@@ -24,6 +24,10 @@ type authServiceMock struct {
 	authz map[string][]SubjectSet
 }
 
+func (svc authServiceMock) ListPolicies(ctx context.Context, in *mainflux.ListPoliciesReq, opts ...grpc.CallOption) (*mainflux.ListPoliciesRes, error) {
+	panic("not implemented")
+}
+
 // NewAuthService creates mock of users service.
 func NewAuthService(users map[string]string, authzDB map[string][]SubjectSet) mainflux.AuthServiceClient {
 	return &authServiceMock{users, authzDB}

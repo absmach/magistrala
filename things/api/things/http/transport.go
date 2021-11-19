@@ -31,6 +31,7 @@ const (
 	dirKey      = "dir"
 	metadataKey = "metadata"
 	disconnKey  = "disconnected"
+	sharedKey   = "shared"
 	defOffset   = 0
 	defLimit    = 10
 )
@@ -356,16 +357,21 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	shared, err := httputil.ReadBoolQuery(r, sharedKey, false)
+	if err != nil {
+		return nil, err
+	}
 
 	req := listResourcesReq{
 		token: r.Header.Get("Authorization"),
 		pageMetadata: things.PageMetadata{
-			Offset:   o,
-			Limit:    l,
-			Name:     n,
-			Order:    or,
-			Dir:      d,
-			Metadata: m,
+			Offset:            o,
+			Limit:             l,
+			Name:              n,
+			Order:             or,
+			Dir:               d,
+			Metadata:          m,
+			FetchSharedThings: shared,
 		},
 	}
 

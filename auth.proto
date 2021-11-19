@@ -20,6 +20,7 @@ service AuthService {
     rpc Authorize(AuthorizeReq) returns (AuthorizeRes) {}
     rpc AddPolicy(AddPolicyReq) returns (AddPolicyRes) {}
     rpc DeletePolicy(DeletePolicyReq) returns (DeletePolicyRes) {}
+    rpc ListPolicies(ListPoliciesReq) returns (ListPoliciesRes) {}
     rpc Assign(Assignment) returns(google.protobuf.Empty) {}
     rpc Members(MembersReq) returns (MembersRes) {}
 }
@@ -93,6 +94,16 @@ message DeletePolicyReq {
 
 message DeletePolicyRes {
     bool deleted = 1;
+}
+
+message ListPoliciesReq {
+    string sub = 1;
+    string obj = 2;
+    string act = 3;
+}
+
+message ListPoliciesRes {
+    repeated string policies = 1;
 }
 
 message Assignment {

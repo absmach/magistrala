@@ -25,6 +25,7 @@ type grpcServer struct {
 	authorize    kitgrpc.Handler
 	addPolicy    kitgrpc.Handler
 	deletePolicy kitgrpc.Handler
+	listPolicies kitgrpc.Handler
 	assign       kitgrpc.Handler
 	members      kitgrpc.Handler
 }
@@ -56,6 +57,11 @@ func NewServer(tracer opentracing.Tracer, svc auth.Service) mainflux.AuthService
 			kitot.TraceServer(tracer, "delete_policy")(deletePolicyEndpoint(svc)),
 			decodeDeletePolicyRequest,
 			encodeDeletePolicyResponse,
+		),
+		listPolicies: kitgrpc.NewServer(
+			kitot.TraceServer(tracer, "list_policies")(listPoliciesEndpoint(svc)),
+			decodeListPoliciesRequest,
+			encodeListPoliciesResponse,
 		),
 		assign: kitgrpc.NewServer(
 			kitot.TraceServer(tracer, "assign")(assignEndpoint(svc)),
@@ -108,6 +114,14 @@ func (s *grpcServer) DeletePolicy(ctx context.Context, req *mainflux.DeletePolic
 		return nil, encodeError(err)
 	}
 	return res.(*mainflux.DeletePolicyRes), nil
+}
+
+func (s *grpcServer) ListPolicies(ctx context.Context, req *mainflux.ListPoliciesReq) (*mainflux.ListPoliciesRes, error) {
+	_, res, err := s.listPolicies.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, encodeError(err)
+	}
+	return res.(*mainflux.ListPoliciesRes), nil
 }
 
 func (s *grpcServer) Assign(ctx context.Context, token *mainflux.Assignment) (*empty.Empty, error) {
@@ -179,6 +193,16 @@ func decodeDeletePolicyRequest(_ context.Context, grpcReq interface{}) (interfac
 func encodeDeletePolicyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res := grpcRes.(deletePolicyRes)
 	return &mainflux.DeletePolicyRes{Deleted: res.deleted}, nil
+}
+
+func decodeListPoliciesRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req := grpcReq.(*mainflux.ListPoliciesReq)
+	return listPoliciesReq{Sub: req.GetSub(), Obj: req.GetObj(), Act: req.GetAct()}, nil
+}
+
+func encodeListPoliciesResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+	res := grpcRes.(listPoliciesRes)
+	return &mainflux.ListPoliciesRes{Policies: res.policies}, nil
 }
 
 func decodeMembersRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {

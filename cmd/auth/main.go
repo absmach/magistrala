@@ -111,9 +111,9 @@ func main() {
 	dbTracer, dbCloser := initJaeger("auth_db", cfg.jaegerURL, logger)
 	defer dbCloser.Close()
 
-	reader, writer := initKeto(cfg.ketoHost, cfg.ketoReadPort, cfg.ketoWritePort, logger)
+	readerConn, writerConn := initKeto(cfg.ketoHost, cfg.ketoReadPort, cfg.ketoWritePort, logger)
 
-	svc := newService(db, dbTracer, cfg.secret, logger, reader, writer)
+	svc := newService(db, dbTracer, cfg.secret, logger, readerConn, writerConn)
 	errs := make(chan error, 2)
 
 	go startHTTPServer(tracer, svc, cfg.httpPort, cfg.serverCert, cfg.serverKey, logger, errs)
@@ -182,10 +182,10 @@ func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, 
 	return tracer, closer
 }
 
-func initKeto(hostAddress, readPort, writePort string, logger logger.Logger) (acl.CheckServiceClient, acl.WriteServiceClient) {
+func initKeto(hostAddress, readPort, writePort string, logger logger.Logger) (readerConnection, writerConnection *grpc.ClientConn) {
 	checkConn, err := grpc.Dial(fmt.Sprintf("%s:%s", hostAddress, readPort), grpc.WithInsecure())
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to dial %s:%s for Keto Check Service: %s", hostAddress, readPort, err))
+		logger.Error(fmt.Sprintf("Failed to dial %s:%s for Keto Read Service: %s", hostAddress, readPort, err))
 		os.Exit(1)
 	}
 
@@ -194,7 +194,8 @@ func initKeto(hostAddress, readPort, writePort string, logger logger.Logger) (ac
 		logger.Error(fmt.Sprintf("Failed to dial %s:%s for Keto Write Service: %s", hostAddress, writePort, err))
 		os.Exit(1)
 	}
-	return acl.NewCheckServiceClient(checkConn), acl.NewWriteServiceClient(writeConn)
+
+	return checkConn, writeConn
 }
 
 func connectToDB(dbConfig postgres.Config, logger logger.Logger) *sqlx.DB {
@@ -206,14 +207,14 @@ func connectToDB(dbConfig postgres.Config, logger logger.Logger) *sqlx.DB {
 	return db
 }
 
-func newService(db *sqlx.DB, tracer opentracing.Tracer, secret string, logger logger.Logger, reader acl.CheckServiceClient, writer acl.WriteServiceClient) auth.Service {
+func newService(db *sqlx.DB, tracer opentracing.Tracer, secret string, logger logger.Logger, readerConn, writerConn *grpc.ClientConn) auth.Service {
 	database := postgres.NewDatabase(db)
 	keysRepo := tracing.New(postgres.New(database), tracer)
 
 	groupsRepo := postgres.NewGroupRepo(database)
 	groupsRepo = tracing.GroupRepositoryMiddleware(tracer, groupsRepo)
 
-	pa := keto.NewPolicyAgent(reader, writer)
+	pa := keto.NewPolicyAgent(acl.NewCheckServiceClient(readerConn), acl.NewWriteServiceClient(writerConn), acl.NewReadServiceClient(readerConn))
 
 	idProvider := uuid.New()
 	t := jwt.New(secret)

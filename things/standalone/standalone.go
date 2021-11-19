@@ -67,6 +67,10 @@ func (repo singleUserRepo) DeletePolicy(ctx context.Context, req *mainflux.Delet
 	return &mainflux.DeletePolicyRes{Deleted: true}, nil
 }
 
+func (repo singleUserRepo) ListPolicies(ctx context.Context, in *mainflux.ListPoliciesReq, opts ...grpc.CallOption) (*mainflux.ListPoliciesRes, error) {
+	return &mainflux.ListPoliciesRes{}, errUnsupported
+}
+
 func (repo singleUserRepo) Members(ctx context.Context, req *mainflux.MembersReq, _ ...grpc.CallOption) (r *mainflux.MembersRes, err error) {
 	return &mainflux.MembersRes{}, errUnsupported
 }

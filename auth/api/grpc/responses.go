@@ -24,6 +24,10 @@ type deletePolicyRes struct {
 	deleted bool
 }
 
+type listPoliciesRes struct {
+	policies []string
+}
+
 type membersRes struct {
 	total     uint64
 	offset    uint64

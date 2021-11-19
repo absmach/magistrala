@@ -5,6 +5,7 @@ package mocks
 
 import (
 	"context"
+
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/things"
@@ -22,6 +23,14 @@ type MockSubjectSet struct {
 type authServiceMock struct {
 	users    map[string]string
 	policies map[string][]MockSubjectSet
+}
+
+func (svc authServiceMock) ListPolicies(ctx context.Context, in *mainflux.ListPoliciesReq, opts ...grpc.CallOption) (*mainflux.ListPoliciesRes, error) {
+	res := mainflux.ListPoliciesRes{}
+	for key := range svc.policies {
+		res.Policies = append(res.Policies, key)
+	}
+	return &res, nil
 }
 
 // NewAuthService creates mock of users service.

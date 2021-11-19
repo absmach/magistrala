@@ -5,6 +5,8 @@ package auth
 
 import (
 	"context"
+
+	acl "github.com/ory/keto/proto/ory/keto/acl/v1alpha1"
 )
 
 // PolicyReq represents an argument struct for making a policy related
@@ -13,6 +15,10 @@ type PolicyReq struct {
 	Subject  string
 	Object   string
 	Relation string
+}
+
+type PolicyPage struct {
+	Policies []string
 }
 
 // Authz represents a authorization service. It exposes
@@ -40,6 +46,9 @@ type Authz interface {
 	// DeletePolicies deletes policies for given subjects. This method is
 	// only allowed to use as an admin.
 	DeletePolicies(ctx context.Context, token, object string, subjectIDs, relations []string) error
+
+	// ListPolicies lists policies based on the given PolicyReq structure.
+	ListPolicies(ctx context.Context, pr PolicyReq) (PolicyPage, error)
 }
 
 // PolicyAgent facilitates the communication to authorization
@@ -58,4 +67,6 @@ type PolicyAgent interface {
 
 	// DeletePolicy removes a policy.
 	DeletePolicy(ctx context.Context, pr PolicyReq) error
+
+	RetrievePolicies(ctx context.Context, pr PolicyReq) ([]*acl.RelationTuple, error)
 }

@@ -28,6 +28,7 @@ type grpcClient struct {
 	authorize    endpoint.Endpoint
 	addPolicy    endpoint.Endpoint
 	deletePolicy endpoint.Endpoint
+	listPolicies endpoint.Endpoint
 	assign       endpoint.Endpoint
 	members      endpoint.Endpoint
 	timeout      time.Duration
@@ -75,6 +76,14 @@ func NewClient(tracer opentracing.Tracer, conn *grpc.ClientConn, timeout time.Du
 			encodeDeletePolicyRequest,
 			decodeDeletePolicyResponse,
 			mainflux.DeletePolicyRes{},
+		).Endpoint()),
+		listPolicies: kitot.TraceClient(tracer, "list_policies")(kitgrpc.NewClient(
+			conn,
+			svcName,
+			"ListPolicies",
+			encodeListPoliciesRequest,
+			decodeListPoliciesResponse,
+			mainflux.ListPoliciesRes{},
 		).Endpoint()),
 		assign: kitot.TraceClient(tracer, "assign")(kitgrpc.NewClient(
 			conn,
@@ -218,6 +227,33 @@ func decodeDeletePolicyResponse(_ context.Context, grpcRes interface{}) (interfa
 func encodeDeletePolicyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(deletePolicyReq)
 	return &mainflux.DeletePolicyReq{
+		Sub: req.Sub,
+		Obj: req.Obj,
+		Act: req.Act,
+	}, nil
+}
+
+func (client grpcClient) ListPolicies(ctx context.Context, in *mainflux.ListPoliciesReq, opts ...grpc.CallOption) (*mainflux.ListPoliciesRes, error) {
+	ctx, close := context.WithTimeout(ctx, client.timeout)
+	defer close()
+
+	res, err := client.listPolicies(ctx, listPoliciesReq{Obj: in.GetObj(), Act: in.GetAct(), Sub: in.GetSub()})
+	if err != nil {
+		return &mainflux.ListPoliciesRes{}, err
+	}
+
+	lpr := res.(listPoliciesRes)
+	return &mainflux.ListPoliciesRes{Policies: lpr.policies}, err
+}
+
+func decodeListPoliciesResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+	res := grpcRes.(*mainflux.ListPoliciesRes)
+	return listPoliciesRes{policies: res.GetPolicies()}, nil
+}
+
+func encodeListPoliciesRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req := grpcReq.(listPoliciesReq)
+	return &mainflux.ListPoliciesReq{
 		Sub: req.Sub,
 		Obj: req.Obj,
 		Act: req.Act,

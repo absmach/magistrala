@@ -52,6 +52,10 @@ func (svc authServiceMock) DeletePolicy(ctx context.Context, in *mainflux.Delete
 	panic("not implemented")
 }
 
+func (svc authServiceMock) ListPolicies(ctx context.Context, in *mainflux.ListPoliciesReq, opts ...grpc.CallOption) (*mainflux.ListPoliciesRes, error) {
+	panic("not implemented")
+}
+
 func (svc authServiceMock) Members(ctx context.Context, req *mainflux.MembersReq, _ ...grpc.CallOption) (r *mainflux.MembersRes, err error) {
 	panic("not implemented")
 }

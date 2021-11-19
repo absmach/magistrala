@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/mainflux/mainflux/auth"
+	acl "github.com/ory/keto/proto/ory/keto/acl/v1alpha1"
 )
 
 type MockSubjectSet struct {
@@ -59,4 +60,18 @@ func (pa *policyAgentMock) DeletePolicy(ctx context.Context, pr auth.PolicyReq) 
 		}
 	}
 	return nil
+}
+
+func (pa *policyAgentMock) RetrievePolicies(ctx context.Context, pr auth.PolicyReq) ([]*acl.RelationTuple, error) {
+	pa.mu.Lock()
+	defer pa.mu.Unlock()
+
+	ssList := pa.authzDB[pr.Subject]
+	tuple := []*acl.RelationTuple{}
+	for _, ss := range ssList {
+		if ss.Relation == pr.Relation {
+			tuple = append(tuple, &acl.RelationTuple{Object: ss.Object, Relation: ss.Relation})
+		}
+	}
+	return tuple, nil
 }

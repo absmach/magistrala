@@ -133,3 +133,9 @@ func (req deletePolicyReq) validate() error {
 	}
 	return nil
 }
+
+type listPoliciesReq struct {
+	Sub string
+	Obj string
+	Act string
+}

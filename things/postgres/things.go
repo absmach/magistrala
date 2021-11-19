@@ -241,10 +241,18 @@ func (tr thingRepository) RetrieveByIDs(ctx context.Context, thingIDs []string, 
 	return page, nil
 }
 
+func getOwnerQuery(fetchSharedThings bool) string {
+	if fetchSharedThings {
+		return ""
+	}
+	return "owner = :owner"
+}
+
 func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, pm things.PageMetadata) (things.Page, error) {
 	nq, name := getNameQuery(pm.Name)
 	oq := getOrderQuery(pm.Order)
 	dq := getDirQuery(pm.Dir)
+	ownerQuery := getOwnerQuery(pm.FetchSharedThings)
 	m, mq, err := getMetadataQuery(pm.Metadata)
 	if err != nil {
 		return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
@@ -257,6 +265,9 @@ func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, pm thin
 	if nq != "" {
 		query = append(query, nq)
 	}
+	if ownerQuery != "" {
+		query = append(query, ownerQuery)
+	}
 
 	var whereClause string
 	if len(query) > 0 {
@@ -266,6 +277,7 @@ func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, pm thin
 	q := fmt.Sprintf(`SELECT id, name, key, metadata FROM things
 	      %s ORDER BY %s %s LIMIT :limit OFFSET :offset;`, whereClause, oq, dq)
 	params := map[string]interface{}{
+		"owner":    owner,
 		"limit":    pm.Limit,
 		"offset":   pm.Offset,
 		"name":     name,

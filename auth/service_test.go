@@ -1235,3 +1235,34 @@ func TestDeletePolicies(t *testing.T) {
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %v, got %v", tc.desc, tc.err, err))
 	}
 }
+
+func TestListPolicies(t *testing.T) {
+	svc := newService()
+	_, secret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.UserKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})
+	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
+
+	key := auth.Key{
+		ID:       "id",
+		Type:     auth.APIKey,
+		IssuerID: id,
+		Subject:  email,
+		IssuedAt: time.Now(),
+	}
+
+	_, apiToken, err := svc.Issue(context.Background(), secret, key)
+	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
+
+	readPolicy := "read"
+	pageLen := 15
+
+	// Add arbitrary policies to the user.
+	for i := 0; i < pageLen; i++ {
+		err = svc.AddPolicies(context.Background(), apiToken, fmt.Sprintf("thing-%d", i), []string{id}, []string{readPolicy})
+		assert.Nil(t, err, fmt.Sprintf("adding policies expected to succeed: %s", err))
+	}
+
+	page, err := svc.ListPolicies(context.Background(), auth.PolicyReq{Subject: id, Relation: readPolicy})
+	assert.Nil(t, err, fmt.Sprintf("listing policies expected to succeed: %s", err))
+	assert.Equal(t, pageLen, len(page.Policies), fmt.Sprintf("unexpected listing page size, expected %d, got %d: %v", pageLen, len(page.Policies), err))
+
+}

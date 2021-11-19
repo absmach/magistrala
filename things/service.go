@@ -319,11 +319,19 @@ func (ts *thingsService) ListThings(ctx context.Context, token string, pm PageMe
 	}
 
 	subject := res.GetId()
+	// If the user is admin, fetch all things from database.
 	if err := ts.authorize(ctx, res.GetId(), authoritiesObject, memberRelationKey); err == nil {
-		subject = adminSubject
 		pm.FetchSharedThings = true
+		page, err := ts.things.RetrieveAll(ctx, res.GetEmail(), pm)
+		if err != nil {
+			return Page{}, err
+		}
+		return page, err
+		// subject = adminSubject
 	}
 
+	// If the user is not admin, check 'shared' parameter from pagemetada.
+	// If user provides 'shared' key, fetch things from policies.
 	if pm.FetchSharedThings {
 		req := &mainflux.ListPoliciesReq{Act: "read", Sub: subject}
 		lpr, err := ts.auth.ListPolicies(ctx, req)
@@ -338,6 +346,7 @@ func (ts *thingsService) ListThings(ctx context.Context, token string, pm PageMe
 		return page, nil
 	}
 
+	// By default, fetch things from Things service.
 	page, err := ts.things.RetrieveAll(ctx, res.GetEmail(), pm)
 	if err != nil {
 		return Page{}, err

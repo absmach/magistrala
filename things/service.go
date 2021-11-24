@@ -53,7 +53,6 @@ const (
 	readRelationKey   = "read"
 	writeRelationKey  = "write"
 	deleteRelationKey = "delete"
-	adminSubject      = "members:authorities#member"
 )
 
 // Service specifies an API that must be fullfiled by the domain service
@@ -327,7 +326,6 @@ func (ts *thingsService) ListThings(ctx context.Context, token string, pm PageMe
 			return Page{}, err
 		}
 		return page, err
-		// subject = adminSubject
 	}
 
 	// If the user is not admin, check 'shared' parameter from pagemetada.

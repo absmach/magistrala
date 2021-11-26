@@ -22,6 +22,7 @@ import (
 const (
 	contentType = "application/senml+json"
 	email       = "user@example.com"
+	adminEmail  = "admin@example.com"
 	otherEmail  = "other_user@example.com"
 	token       = "token"
 	otherToken  = "other_token"
@@ -40,8 +41,10 @@ var (
 )
 
 func newThingsService(tokens map[string]string) things.Service {
-	policies := []mocks.MockSubjectSet{{Object: "users", Relation: "member"}}
-	auth := mocks.NewAuthService(tokens, map[string][]mocks.MockSubjectSet{email: policies})
+	userPolicy := mocks.MockSubjectSet{Object: "users", Relation: "member"}
+	adminPolicy := mocks.MockSubjectSet{Object: "authorities", Relation: "member"}
+	auth := mocks.NewAuthService(tokens, map[string][]mocks.MockSubjectSet{
+		adminEmail: {userPolicy, adminPolicy}, email: {userPolicy}})
 	conns := make(chan mocks.Connection)
 	thingsRepo := mocks.NewThingRepository(conns)
 	channelsRepo := mocks.NewChannelRepository(thingsRepo, conns)

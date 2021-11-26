@@ -141,7 +141,7 @@ func TestCreateChannels(t *testing.T) {
 }
 
 func TestChannel(t *testing.T) {
-	svc := newThingsService(map[string]string{token: email})
+	svc := newThingsService(map[string]string{token: adminEmail})
 	ts := newThingsServer(svc)
 	defer ts.Close()
 	sdkConf := sdk.Config{
@@ -409,7 +409,7 @@ func TestChannelsByThing(t *testing.T) {
 }
 
 func TestUpdateChannel(t *testing.T) {
-	svc := newThingsService(map[string]string{token: email})
+	svc := newThingsService(map[string]string{token: adminEmail})
 	ts := newThingsServer(svc)
 	defer ts.Close()
 	sdkConf := sdk.Config{
@@ -467,7 +467,7 @@ func TestUpdateChannel(t *testing.T) {
 }
 
 func TestDeleteChannel(t *testing.T) {
-	svc := newThingsService(map[string]string{token: email})
+	svc := newThingsService(map[string]string{token: adminEmail})
 	ts := newThingsServer(svc)
 	defer ts.Close()
 	sdkConf := sdk.Config{

@@ -28,6 +28,7 @@ import (
 const (
 	contentType = "application/json"
 	email       = "user@example.com"
+	adminEmail  = "admin@example.com"
 	token       = "token"
 	wrongValue  = "wrong_value"
 	wrongID     = 0
@@ -80,8 +81,10 @@ func (tr testRequest) make() (*http.Response, error) {
 }
 
 func newService(tokens map[string]string) things.Service {
-	policies := []mocks.MockSubjectSet{{Object: "users", Relation: "member"}}
-	auth := mocks.NewAuthService(tokens, map[string][]mocks.MockSubjectSet{email: policies})
+	userPolicy := mocks.MockSubjectSet{Object: "users", Relation: "member"}
+	adminPolicy := mocks.MockSubjectSet{Object: "authorities", Relation: "member"}
+	auth := mocks.NewAuthService(tokens, map[string][]mocks.MockSubjectSet{
+		adminEmail: {userPolicy, adminPolicy}, email: {userPolicy}})
 	conns := make(chan mocks.Connection)
 	thingsRepo := mocks.NewThingRepository(conns)
 	channelsRepo := mocks.NewChannelRepository(thingsRepo, conns)
@@ -1593,7 +1596,7 @@ func TestCreateChannels(t *testing.T) {
 }
 
 func TestUpdateChannel(t *testing.T) {
-	svc := newService(map[string]string{token: email})
+	svc := newService(map[string]string{token: adminEmail})
 	ts := newServer(svc)
 	defer ts.Close()
 
@@ -1713,7 +1716,7 @@ func TestUpdateChannel(t *testing.T) {
 }
 
 func TestViewChannel(t *testing.T) {
-	svc := newService(map[string]string{token: email})
+	svc := newService(map[string]string{token: adminEmail})
 	ts := newServer(svc)
 	defer ts.Close()
 
@@ -2184,7 +2187,7 @@ func TestListChannelsByThing(t *testing.T) {
 }
 
 func TestRemoveChannel(t *testing.T) {
-	svc := newService(map[string]string{token: email})
+	svc := newService(map[string]string{token: adminEmail})
 	ts := newServer(svc)
 	defer ts.Close()
 

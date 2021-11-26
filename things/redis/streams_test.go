@@ -24,6 +24,7 @@ import (
 const (
 	streamID        = "mainflux.things"
 	email           = "user@example.com"
+	adminEmail      = "admin@example.com"
 	token           = "token"
 	thingPrefix     = "thing."
 	thingCreate     = thingPrefix + "create"
@@ -39,8 +40,10 @@ const (
 )
 
 func newService(tokens map[string]string) things.Service {
-	policies := []mocks.MockSubjectSet{{Object: "users", Relation: "member"}}
-	auth := mocks.NewAuthService(tokens, map[string][]mocks.MockSubjectSet{email: policies})
+	userPolicy := mocks.MockSubjectSet{Object: "users", Relation: "member"}
+	adminPolicy := mocks.MockSubjectSet{Object: "authorities", Relation: "member"}
+	auth := mocks.NewAuthService(tokens, map[string][]mocks.MockSubjectSet{
+		adminEmail: {userPolicy, adminPolicy}, email: {userPolicy}})
 	conns := make(chan mocks.Connection)
 	thingsRepo := mocks.NewThingRepository(conns)
 	channelsRepo := mocks.NewChannelRepository(thingsRepo, conns)
@@ -340,7 +343,7 @@ func TestCreateChannels(t *testing.T) {
 func TestUpdateChannel(t *testing.T) {
 	_ = redisClient.FlushAll(context.Background()).Err()
 
-	svc := newService(map[string]string{token: email})
+	svc := newService(map[string]string{token: adminEmail})
 	// Create channel without sending event.
 	schs, err := svc.CreateChannels(context.Background(), token, things.Channel{Name: "a"})
 	require.Nil(t, err, fmt.Sprintf("unexpected error %s", err))
@@ -460,7 +463,7 @@ func TestListChannelsByThing(t *testing.T) {
 func TestRemoveChannel(t *testing.T) {
 	_ = redisClient.FlushAll(context.Background()).Err()
 
-	svc := newService(map[string]string{token: email})
+	svc := newService(map[string]string{token: adminEmail})
 	// Create channel without sending event.
 	schs, err := svc.CreateChannels(context.Background(), token, things.Channel{Name: "a"})
 	require.Nil(t, err, fmt.Sprintf("unexpected error %s", err))

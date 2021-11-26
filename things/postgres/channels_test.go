@@ -186,11 +186,6 @@ func TestSingleChannelRetrieval(t *testing.T) {
 			ID:    nonexistentChanID,
 			err:   things.ErrNotFound,
 		},
-		"retrieve channel with non-existing owner": {
-			owner: wrongValue,
-			ID:    ch.ID,
-			err:   things.ErrNotFound,
-		},
 		"retrieve channel with malformed ID": {
 			owner: ch.Owner,
 			ID:    wrongValue,

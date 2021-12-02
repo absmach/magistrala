@@ -7,8 +7,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"net/http"
-
-	"github.com/mainflux/mainflux/auth"
 )
 
 const (
@@ -111,6 +109,12 @@ type Channel struct {
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
+//Member represents mainflux member.
+type Member struct {
+	ID   string
+	Type string
+}
+
 // SDK contains Mainflux API.
 type SDK interface {
 	// CreateUser registers mainflux user.
@@ -157,13 +161,13 @@ type SDK interface {
 	DeleteGroup(id, token string) error
 
 	// Groups returns page of users groups.
-	Groups(offset, limit uint64, token string) (auth.GroupPage, error)
+	Groups(offset, limit uint64, token string) (GroupsPage, error)
 
 	// Parents returns page of users groups.
-	Parents(id string, offset, limit uint64, token string) (auth.GroupPage, error)
+	Parents(id string, offset, limit uint64, token string) (GroupsPage, error)
 
 	// Children returns page of users groups.
-	Children(id string, offset, limit uint64, token string) (auth.GroupPage, error)
+	Children(id string, offset, limit uint64, token string) (GroupsPage, error)
 
 	// Group returns users group object by id.
 	Group(id, token string) (Group, error)
@@ -175,7 +179,7 @@ type SDK interface {
 	Unassign(token, groupID string, memberIDs ...string) error
 
 	// Members lists members of a group.
-	Members(groupID, token string, offset, limit uint64) (auth.MemberPage, error)
+	Members(groupID, token string, offset, limit uint64) (MembersPage, error)
 
 	// Memberships lists groups for user.
 	Memberships(userID, token string, offset, limit uint64) (GroupsPage, error)

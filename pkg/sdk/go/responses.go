@@ -50,3 +50,8 @@ type UsersPage struct {
 	Users []User `json:"users"`
 	pageRes
 }
+
+type MembersPage struct {
+	Members []Member `json:"members"`
+	pageRes
+}

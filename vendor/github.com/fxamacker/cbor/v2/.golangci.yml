@@ -47,11 +47,9 @@ linters:
     - gocyclo
     - gofmt
     - goimports
-    - golint
     - gosec
     - govet
     - ineffassign
-    - maligned
     - misspell
     - staticcheck
     - structcheck
@@ -59,7 +57,9 @@ linters:
     - unconvert
     - unused
     - varcheck
-
+    # noisy linters such as gocritic are enabled by
+    # command line as optional linters inside
+    # .github/workflows/safer-golangci-lint.yml
 
 issues:
   # max-issues-per-linter default is 50.  Set to 0 to disable limit.

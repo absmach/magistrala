@@ -7,33 +7,45 @@ standard API + toarray & keyasint struct tags, CBOR tags, float64->32->16,
 CTAP2 & Canonical CBOR, duplicate map key options, and is customizable via
 simple API.
 
-CBOR encoding options allow "preferred serialization" by encoding integers and floats
-to their smallest forms (like float16) when values fit.
+Encoding options allow "preferred serialization" by encoding integers and floats
+to their smallest forms (e.g. float16) when values fit.
 
-Struct tags like "keyasint", "toarray" and "omitempty" makes CBOR data smaller.
+Struct tags like "keyasint", "toarray" and "omitempty" make CBOR data smaller
+and easier to use with structs.
 
-For example, "toarray" makes struct fields encode to array elements.  And "keyasint"
-makes struct fields encode to elements of CBOR map with int keys.
+For example, "toarray" tag makes struct fields encode to CBOR array elements.  And
+"keyasint" makes a field encode to an element of CBOR map with specified int key.
+
+Latest docs can be viewed at https://github.com/fxamacker/cbor#cbor-library-in-go
 
 Basics
 
+The Quick Start guide is at https://github.com/fxamacker/cbor#quick-start
+
 Function signatures identical to encoding/json include:
 
-    Marshal, Unmarshal, NewEncoder, NewDecoder, encoder.Encode, decoder.Decode.
+    Marshal, Unmarshal, NewEncoder, NewDecoder, (*Encoder).Encode, (*Decoder).Decode.
 
-Codec functions are available at package-level (using defaults) or by creating modes
-from options at runtime.
+Standard interfaces include:
 
-"Mode" in this API means definite way of encoding or decoding. Specifically, EncMode or DecMode.
+    BinaryMarshaler, BinaryUnmarshaler, Marshaler, and Unmarshaler.
 
-EncMode and DecMode interfaces are created from EncOptions or DecOptions structs.  For example,
+Custom encoding and decoding is possible by implementing standard interfaces for
+user-defined Go types.
+
+Codec functions are available at package-level (using defaults options) or by
+creating modes from options at runtime.
+
+"Mode" in this API means definite way of encoding (EncMode) or decoding (DecMode).
+
+EncMode and DecMode interfaces are created from EncOptions or DecOptions structs.
 
     em := cbor.EncOptions{...}.EncMode()
     em := cbor.CanonicalEncOptions().EncMode()
     em := cbor.CTAP2EncOptions().EncMode()
 
-Modes use immutable options to avoid side-effects and simplify concurrency. Behavior of modes
-won't accidentally change at runtime after they're created.
+Modes use immutable options to avoid side-effects and simplify concurrency. Behavior of
+modes won't accidentally change at runtime after they're created.
 
 Modes are intended to be reused and are safe for concurrent use.
 
@@ -84,9 +96,16 @@ Creating and Using Encoding Modes
     encoder := em.NewEncoder(w)
     err := encoder.Encode(v)
 
-Default Options
+    // NOTE: Both em.Marshal(v) and encoder.Encode(v) use encoding options
+    // specified during creation of em (encoding mode).
 
-Default encoding options are listed at https://github.com/fxamacker/cbor#api
+CBOR Options
+
+Predefined Encoding Options: https://github.com/fxamacker/cbor#predefined-encoding-options
+
+Encoding Options: https://github.com/fxamacker/cbor#encoding-options
+
+Decoding Options: https://github.com/fxamacker/cbor#decoding-options
 
 Struct Tags
 
@@ -101,9 +120,11 @@ makes struct fields encode to elements of CBOR map with int keys.
 
 https://raw.githubusercontent.com/fxamacker/images/master/cbor/v2.0.0/cbor_easy_api.png
 
+Struct tags are listed at https://github.com/fxamacker/cbor#struct-tags-1
+
 Tests and Fuzzing
 
-Over 375 tests are included in this package. Cover-guided fuzzing is handled by a separate package:
+Over 375 tests are included in this package. Cover-guided fuzzing is handled by
 fxamacker/cbor-fuzz.
 */
 package cbor

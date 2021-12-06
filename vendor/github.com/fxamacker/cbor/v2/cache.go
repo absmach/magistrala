@@ -13,10 +13,15 @@ import (
 	"sync"
 )
 
+type encodeFuncs struct {
+	ef  encodeFunc
+	ief isEmptyFunc
+}
+
 var (
 	decodingStructTypeCache sync.Map // map[reflect.Type]*decodingStructType
 	encodingStructTypeCache sync.Map // map[reflect.Type]*encodingStructType
-	encodeFuncCache         sync.Map // map[reflect.Type]encodeFunc
+	encodeFuncCache         sync.Map // map[reflect.Type]encodeFuncs
 	typeInfoCache           sync.Map // map[reflect.Type]*typeInfo
 )
 
@@ -26,6 +31,7 @@ const (
 	specialTypeNone specialType = iota
 	specialTypeUnmarshalerIface
 	specialTypeEmptyIface
+	specialTypeIface
 	specialTypeTag
 	specialTypeTime
 )
@@ -52,8 +58,12 @@ func newTypeInfo(t reflect.Type) *typeInfo {
 	tInfo.nonPtrType = t
 	tInfo.nonPtrKind = k
 
-	if k == reflect.Interface && t.NumMethod() == 0 {
-		tInfo.spclType = specialTypeEmptyIface
+	if k == reflect.Interface {
+		if t.NumMethod() == 0 {
+			tInfo.spclType = specialTypeEmptyIface
+		} else {
+			tInfo.spclType = specialTypeIface
+		}
 	} else if t == typeTag {
 		tInfo.spclType = specialTypeTag
 	} else if t == typeTime {
@@ -108,13 +118,13 @@ func getDecodingStructType(t reflect.Type) *decodingStructType {
 }
 
 type encodingStructType struct {
-	fields            fields
-	bytewiseFields    fields
-	lengthFirstFields fields
-	err               error
-	toArray           bool
-	omitEmpty         bool
-	hasAnonymousField bool
+	fields             fields
+	bytewiseFields     fields
+	lengthFirstFields  fields
+	omitEmptyFieldsIdx []int
+	err                error
+	toArray            bool
+	fixedLength        bool // Struct type doesn't have any omitempty or anonymous fields.
 }
 
 func (st *encodingStructType) getFields(em *encMode) fields {
@@ -162,9 +172,10 @@ func (x *lengthFirstFieldSorter) Less(i, j int) bool {
 	return bytes.Compare(x.fields[i].cborName, x.fields[j].cborName) <= 0
 }
 
-func getEncodingStructType(t reflect.Type) *encodingStructType {
+func getEncodingStructType(t reflect.Type) (*encodingStructType, error) {
 	if v, _ := encodingStructTypeCache.Load(t); v != nil {
-		return v.(*encodingStructType)
+		structType := v.(*encodingStructType)
+		return structType, structType.err
 	}
 
 	flds, structOptions := getFields(t)
@@ -174,14 +185,14 @@ func getEncodingStructType(t reflect.Type) *encodingStructType {
 	}
 
 	var err error
-	var omitEmpty bool
-	var hasAnonymousField bool
 	var hasKeyAsInt bool
 	var hasKeyAsStr bool
-	e := getEncodeState()
+	var omitEmptyIdx []int
+	fixedLength := true
+	e := getEncoderBuffer()
 	for i := 0; i < len(flds); i++ {
 		// Get field's encodeFunc
-		flds[i].ef = getEncodeFunc(flds[i].typ)
+		flds[i].ef, flds[i].ief = getEncodeFunc(flds[i].typ)
 		if flds[i].ef == nil {
 			err = &UnsupportedTypeError{t}
 			break
@@ -218,20 +229,21 @@ func getEncodingStructType(t reflect.Type) *encodingStructType {
 
 		// Check if field is from embedded struct
 		if len(flds[i].idx) > 1 {
-			hasAnonymousField = true
+			fixedLength = false
 		}
 
 		// Check if field can be omitted when empty
 		if flds[i].omitEmpty {
-			omitEmpty = true
+			fixedLength = false
+			omitEmptyIdx = append(omitEmptyIdx, i)
 		}
 	}
-	putEncodeState(e)
+	putEncoderBuffer(e)
 
 	if err != nil {
 		structType := &encodingStructType{err: err}
 		encodingStructTypeCache.Store(t, structType)
-		return structType
+		return structType, structType.err
 	}
 
 	// Sort fields by canonical order
@@ -247,49 +259,44 @@ func getEncodingStructType(t reflect.Type) *encodingStructType {
 	}
 
 	structType := &encodingStructType{
-		fields:            flds,
-		bytewiseFields:    bytewiseFields,
-		lengthFirstFields: lengthFirstFields,
-		omitEmpty:         omitEmpty,
-		hasAnonymousField: hasAnonymousField,
+		fields:             flds,
+		bytewiseFields:     bytewiseFields,
+		lengthFirstFields:  lengthFirstFields,
+		omitEmptyFieldsIdx: omitEmptyIdx,
+		fixedLength:        fixedLength,
 	}
 	encodingStructTypeCache.Store(t, structType)
-	return structType
+	return structType, structType.err
 }
 
-func getEncodingStructToArrayType(t reflect.Type, flds fields) *encodingStructType {
-	var hasAnonymousField bool
+func getEncodingStructToArrayType(t reflect.Type, flds fields) (*encodingStructType, error) {
 	for i := 0; i < len(flds); i++ {
 		// Get field's encodeFunc
-		flds[i].ef = getEncodeFunc(flds[i].typ)
+		flds[i].ef, flds[i].ief = getEncodeFunc(flds[i].typ)
 		if flds[i].ef == nil {
 			structType := &encodingStructType{err: &UnsupportedTypeError{t}}
 			encodingStructTypeCache.Store(t, structType)
-			return structType
-		}
-
-		// Check if field is from embedded struct
-		if len(flds[i].idx) > 1 {
-			hasAnonymousField = true
+			return structType, structType.err
 		}
 	}
 
 	structType := &encodingStructType{
-		fields:            flds,
-		toArray:           true,
-		hasAnonymousField: hasAnonymousField,
+		fields:      flds,
+		toArray:     true,
+		fixedLength: true,
 	}
 	encodingStructTypeCache.Store(t, structType)
-	return structType
+	return structType, structType.err
 }
 
-func getEncodeFunc(t reflect.Type) encodeFunc {
+func getEncodeFunc(t reflect.Type) (encodeFunc, isEmptyFunc) {
 	if v, _ := encodeFuncCache.Load(t); v != nil {
-		return v.(encodeFunc)
+		fs := v.(encodeFuncs)
+		return fs.ef, fs.ief
 	}
-	f := getEncodeFuncInternal(t)
-	encodeFuncCache.Store(t, f)
-	return f
+	ef, ief := getEncodeFuncInternal(t)
+	encodeFuncCache.Store(t, encodeFuncs{ef, ief})
+	return ef, ief
 }
 
 func getTypeInfo(t reflect.Type) *typeInfo {

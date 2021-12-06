@@ -79,7 +79,7 @@ github.com/fiorix/go-smpp/smpp/pdu/pdutlv
 # github.com/fsnotify/fsnotify v1.4.9
 ## explicit; go 1.13
 github.com/fsnotify/fsnotify
-# github.com/fxamacker/cbor/v2 v2.2.0
+# github.com/fxamacker/cbor/v2 v2.3.0
 ## explicit; go 1.12
 github.com/fxamacker/cbor/v2
 # github.com/go-kit/kit v0.11.0

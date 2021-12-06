@@ -68,8 +68,8 @@ func (e *TagsMdError) Error() string {
 	return "cbor: CBOR tag isn't allowed"
 }
 
-// valid checks whether CBOR data is complete and well-formed.
-func (d *decodeState) valid() error {
+// valid checks whether the CBOR data is complete and well-formed.
+func (d *decoder) valid() error {
 	if len(d.data) == d.off {
 		return io.EOF
 	}
@@ -78,7 +78,7 @@ func (d *decodeState) valid() error {
 }
 
 // validInternal checks data's well-formedness and returns max depth and error.
-func (d *decodeState) validInternal(depth int) (int, error) {
+func (d *decoder) validInternal(depth int) (int, error) {
 	t, ai, val, err := d.validHead()
 	if err != nil {
 		return 0, err
@@ -175,7 +175,7 @@ func (d *decodeState) validInternal(depth int) (int, error) {
 }
 
 // validIndefiniteString checks indefinite length byte/text string's well-formedness and returns max depth and error.
-func (d *decodeState) validIndefiniteString(t cborType, depth int) (int, error) {
+func (d *decoder) validIndefiniteString(t cborType, depth int) (int, error) {
 	var err error
 	for {
 		if len(d.data) == d.off {
@@ -201,7 +201,7 @@ func (d *decodeState) validIndefiniteString(t cborType, depth int) (int, error) 
 }
 
 // validIndefiniteArrayOrMap checks indefinite length array/map's well-formedness and returns max depth and error.
-func (d *decodeState) validIndefiniteArrayOrMap(t cborType, depth int) (int, error) {
+func (d *decoder) validIndefiniteArrayOrMap(t cborType, depth int) (int, error) {
 	var err error
 	maxDepth := depth
 	i := 0
@@ -237,7 +237,7 @@ func (d *decodeState) validIndefiniteArrayOrMap(t cborType, depth int) (int, err
 	return maxDepth, nil
 }
 
-func (d *decodeState) validHead() (t cborType, ai byte, val uint64, err error) {
+func (d *decoder) validHead() (t cborType, ai byte, val uint64, err error) {
 	dataLen := len(d.data) - d.off
 	if dataLen == 0 {
 		return 0, 0, 0, io.ErrUnexpectedEOF

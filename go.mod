@@ -61,7 +61,7 @@ require (
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/dsnet/golib/memfile v0.0.0-20200723050859-c110804dfa93 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
-	github.com/fxamacker/cbor/v2 v2.2.0 // indirect
+	github.com/fxamacker/cbor/v2 v2.3.0 // indirect
 	github.com/go-logfmt/logfmt v0.5.0 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/snappy v0.0.3 // indirect

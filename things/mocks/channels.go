@@ -6,7 +6,6 @@ package mocks
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -48,7 +47,9 @@ func (crm *channelRepositoryMock) Save(_ context.Context, channels ...things.Cha
 
 	for i := range channels {
 		crm.counter++
-		channels[i].ID = fmt.Sprintf("%03d", crm.counter)
+		if channels[i].ID == "" {
+			channels[i].ID = fmt.Sprintf("%03d", crm.counter)
+		}
 		crm.channels[key(channels[i].Owner, channels[i].ID)] = channels[i]
 	}
 
@@ -136,7 +137,7 @@ func (crm *channelRepositoryMock) RetrieveByThing(_ context.Context, owner, thID
 	switch pm.Disconnected {
 	case false:
 		for _, co := range crm.cconns[thID] {
-			id, _ := strconv.ParseUint(co.ID, 10, 64)
+			id := parseID(co.ID)
 			if id >= first && id < last {
 				chs = append(chs, co)
 			}
@@ -144,7 +145,7 @@ func (crm *channelRepositoryMock) RetrieveByThing(_ context.Context, owner, thID
 	default:
 		for _, ch := range crm.channels {
 			conn := false
-			id, _ := strconv.ParseUint(ch.ID, 10, 64)
+			id := parseID(ch.ID)
 			if id >= first && id < last {
 				for _, co := range crm.cconns[thID] {
 					if ch.ID == co.ID {

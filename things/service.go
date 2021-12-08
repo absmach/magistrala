@@ -192,6 +192,7 @@ func (ts *thingsService) CreateThings(ctx context.Context, token string, things 
 	ths := []Thing{}
 	for _, thing := range things {
 		th, err := ts.createThing(ctx, &thing, res)
+
 		if err != nil {
 			return []Thing{}, err
 		}
@@ -203,18 +204,24 @@ func (ts *thingsService) CreateThings(ctx context.Context, token string, things 
 
 // createThing saves the Thing and adds identity as an owner(Read, Write, Delete policies) of the Thing.
 func (ts *thingsService) createThing(ctx context.Context, thing *Thing, identity *mainflux.UserIdentity) (Thing, error) {
-	thID, err := ts.idProvider.ID()
-	if err != nil {
-		return Thing{}, errors.Wrap(ErrCreateUUID, err)
-	}
-	thing.ID = thID
+
 	thing.Owner = identity.GetEmail()
 
-	if thing.Key == "" {
-		thing.Key, err = ts.idProvider.ID()
+	if thing.ID == "" {
+		id, err := ts.idProvider.ID()
 		if err != nil {
 			return Thing{}, errors.Wrap(ErrCreateUUID, err)
 		}
+		thing.ID = id
+	}
+
+	if thing.Key == "" {
+		key, err := ts.idProvider.ID()
+
+		if err != nil {
+			return Thing{}, errors.Wrap(ErrCreateUUID, err)
+		}
+		thing.Key = key
 	}
 
 	ths, err := ts.things.Save(ctx, *thing)
@@ -401,11 +408,13 @@ func (ts *thingsService) CreateChannels(ctx context.Context, token string, chann
 }
 
 func (ts *thingsService) createChannel(ctx context.Context, channel *Channel, identity *mainflux.UserIdentity) (Channel, error) {
-	chID, err := ts.idProvider.ID()
-	if err != nil {
-		return Channel{}, errors.Wrap(ErrCreateUUID, err)
+	if channel.ID == "" {
+		chID, err := ts.idProvider.ID()
+		if err != nil {
+			return Channel{}, errors.Wrap(ErrCreateUUID, err)
+		}
+		channel.ID = chID
 	}
-	channel.ID = chID
 	channel.Owner = identity.GetEmail()
 
 	chs, err := ts.channels.Save(ctx, *channel)

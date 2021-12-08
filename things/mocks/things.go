@@ -6,7 +6,6 @@ package mocks
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -55,7 +54,9 @@ func (trm *thingRepositoryMock) Save(_ context.Context, ths ...things.Thing) ([]
 		}
 
 		trm.counter++
-		ths[i].ID = fmt.Sprintf("%03d", trm.counter)
+		if ths[i].ID == "" {
+			ths[i].ID = fmt.Sprintf("%03d", trm.counter)
+		}
 		trm.things[key(ths[i].Owner, ths[i].ID)] = ths[i]
 	}
 
@@ -128,7 +129,7 @@ func (trm *thingRepositoryMock) RetrieveAll(_ context.Context, owner string, pm 
 	// itself (see mocks/commons.go).
 	prefix := fmt.Sprintf("%s-", owner)
 	for k, v := range trm.things {
-		id, _ := strconv.ParseUint(v.ID, 10, 64)
+		id := parseID(v.ID)
 		if strings.HasPrefix(k, prefix) && id >= first && id < last {
 			ths = append(ths, v)
 		}
@@ -167,7 +168,7 @@ func (trm *thingRepositoryMock) RetrieveByIDs(_ context.Context, thingIDs []stri
 	for _, id := range thingIDs {
 		suffix := fmt.Sprintf("-%s", id)
 		for k, v := range trm.things {
-			id, _ := strconv.ParseUint(v.ID, 10, 64)
+			id := parseID(v.ID)
 			if strings.HasSuffix(k, suffix) && id >= first && id < last {
 				items = append(items, v)
 			}
@@ -205,7 +206,7 @@ func (trm *thingRepositoryMock) RetrieveByChannel(_ context.Context, owner, chID
 	switch pm.Disconnected {
 	case false:
 		for _, co := range trm.tconns[chID] {
-			id, _ := strconv.ParseUint(co.ID, 10, 64)
+			id := parseID(co.ID)
 			if id >= first && id < last {
 				ths = append(ths, co)
 			}
@@ -213,7 +214,7 @@ func (trm *thingRepositoryMock) RetrieveByChannel(_ context.Context, owner, chID
 	default:
 		for _, th := range trm.things {
 			conn := false
-			id, _ := strconv.ParseUint(th.ID, 10, 64)
+			id := parseID(th.ID)
 			if id >= first && id < last {
 				for _, co := range trm.tconns[chID] {
 					if th.ID == co.ID {

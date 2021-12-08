@@ -4,6 +4,7 @@
 package http
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/things"
 )
@@ -24,12 +25,26 @@ type createThingReq struct {
 	token    string
 	Name     string                 `json:"name,omitempty"`
 	Key      string                 `json:"key,omitempty"`
+	ID       string                 `json:"id,omitempty"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
+}
+
+func validateUUID(extID string) (err error) {
+	id, err := uuid.FromString(extID)
+	if id.String() != extID || err != nil {
+		return things.ErrMalformedEntity
+	}
+
+	return nil
 }
 
 func (req createThingReq) validate() error {
 	if req.token == "" {
 		return things.ErrUnauthorizedAccess
+	}
+
+	if req.ID != "" && validateUUID(req.ID) != nil {
+		return things.ErrMalformedEntity
 	}
 
 	if len(req.Name) > maxNameSize {
@@ -54,6 +69,10 @@ func (req createThingsReq) validate() error {
 	}
 
 	for _, thing := range req.Things {
+		if thing.ID != "" && validateUUID(thing.ID) != nil {
+			return things.ErrMalformedEntity
+		}
+
 		if len(thing.Name) > maxNameSize {
 			return things.ErrMalformedEntity
 		}
@@ -129,12 +148,17 @@ func (req updateKeyReq) validate() error {
 type createChannelReq struct {
 	token    string
 	Name     string                 `json:"name,omitempty"`
+	ID       string                 `json:"id,omitempty"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
 func (req createChannelReq) validate() error {
 	if req.token == "" {
 		return things.ErrUnauthorizedAccess
+	}
+
+	if req.ID != "" && validateUUID(req.ID) != nil {
+		return things.ErrMalformedEntity
 	}
 
 	if len(req.Name) > maxNameSize {
@@ -159,6 +183,10 @@ func (req createChannelsReq) validate() error {
 	}
 
 	for _, channel := range req.Channels {
+		if channel.ID != "" && validateUUID(channel.ID) != nil {
+			return things.ErrMalformedEntity
+		}
+
 		if len(channel.Name) > maxNameSize {
 			return things.ErrMalformedEntity
 		}

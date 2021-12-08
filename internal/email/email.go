@@ -6,8 +6,9 @@ package email
 import (
 	"bytes"
 	"fmt"
-	"html/template"
+	"net/mail"
 	"net/smtp"
+	"text/template"
 
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -89,7 +90,8 @@ func (a *Agent) Send(To []string, From, Subject, Header, Content, Footer string)
 		Footer:  Footer,
 	}
 	if From == "" {
-		tmpl.From = a.conf.FromName
+		from := mail.Address{Name: a.conf.FromName, Address: a.conf.FromAddress}
+		tmpl.From = from.String()
 	}
 
 	if err := a.tmpl.Execute(email, tmpl); err != nil {

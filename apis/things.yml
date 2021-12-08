@@ -636,7 +636,10 @@ components:
         id:
           type: string
           format: uuid
-          description: Thing unique identifier
+          description: Thing unique identifier. This can be either
+            provided by the user or left blank. If the user provides a UUID,
+            it would be validated. If there is not one provided then
+            the service will generate one in UUID format.
     ThingReqSchema:
       type: object
       properties:

@@ -14,30 +14,41 @@ import (
 
 const sep = "/"
 
-var keys = [...]string{"publisher", "protocol", "channel", "subtopic"}
-
 var (
+	keys = [...]string{"publisher", "protocol", "channel", "subtopic"}
+
 	// ErrTransform represents an error during parsing message.
-	ErrTransform         = errors.New("unable to parse JSON object")
-	ErrInvalidKey        = errors.New("invalid object key")
+	ErrTransform = errors.New("unable to parse JSON object")
+	// ErrInvalidKey represents the use of a reserved message field.
+	ErrInvalidKey = errors.New("invalid object key")
+	// ErrInvalidTimeField represents the use an invalid time field.
+	ErrInvalidTimeField = errors.New("invalid time field")
+
 	errUnknownFormat     = errors.New("unknown format of JSON message")
 	errInvalidFormat     = errors.New("invalid JSON object")
 	errInvalidNestedJSON = errors.New("invalid nested JSON object")
 )
 
-type funcTransformer func(messaging.Message) (interface{}, error)
+// TimeField represents the message fields to use as timestamp
+type TimeField struct {
+	FieldName   string `toml:"field_name"`
+	FieldFormat string `toml:"field_format"`
+	Location    string `toml:"location"`
+}
+
+type transformerService struct {
+	timeFields []TimeField
+}
 
 // New returns a new JSON transformer.
-func New() transformers.Transformer {
-	return funcTransformer(transformer)
+func New(tfs []TimeField) transformers.Transformer {
+	return &transformerService{
+		timeFields: tfs,
+	}
 }
 
 // Transform transforms Mainflux message to a list of JSON messages.
-func (fh funcTransformer) Transform(msg messaging.Message) (interface{}, error) {
-	return fh(msg)
-}
-
-func transformer(msg messaging.Message) (interface{}, error) {
+func (ts *transformerService) Transform(msg messaging.Message) (interface{}, error) {
 	ret := Message{
 		Publisher: msg.Publisher,
 		Created:   msg.Created,
@@ -45,21 +56,35 @@ func transformer(msg messaging.Message) (interface{}, error) {
 		Channel:   msg.Channel,
 		Subtopic:  msg.Subtopic,
 	}
+
 	if ret.Subtopic == "" {
 		return nil, errors.Wrap(ErrTransform, errUnknownFormat)
 	}
+
 	subs := strings.Split(ret.Subtopic, ".")
 	if len(subs) == 0 {
 		return nil, errors.Wrap(ErrTransform, errUnknownFormat)
 	}
+
 	format := subs[len(subs)-1]
 	var payload interface{}
 	if err := json.Unmarshal(msg.Payload, &payload); err != nil {
 		return nil, errors.Wrap(ErrTransform, err)
 	}
+
 	switch p := payload.(type) {
 	case map[string]interface{}:
 		ret.Payload = p
+
+		// Apply timestamp transformation rules depending on key/unit pairs
+		ts, err := ts.transformTimeField(p)
+		if err != nil {
+			return nil, errors.Wrap(ErrInvalidTimeField, err)
+		}
+		if ts != 0 {
+			ret.Created = ts
+		}
+
 		return Messages{[]Message{ret}, format}, nil
 	case []interface{}:
 		res := []Message{}
@@ -70,6 +95,16 @@ func transformer(msg messaging.Message) (interface{}, error) {
 				return nil, errors.Wrap(ErrTransform, errInvalidNestedJSON)
 			}
 			newMsg := ret
+
+			// Apply timestamp transformation rules depending on key/unit pairs
+			ts, err := ts.transformTimeField(v)
+			if err != nil {
+				return nil, errors.Wrap(ErrInvalidTimeField, err)
+			}
+			if ts != 0 {
+				ret.Created = ts
+			}
+
 			newMsg.Payload = v
 			res = append(res, newMsg)
 		}
@@ -139,4 +174,23 @@ func flatten(prefix string, m, m1 map[string]interface{}) (map[string]interface{
 		}
 	}
 	return m, nil
+}
+
+func (ts *transformerService) transformTimeField(payload map[string]interface{}) (int64, error) {
+	if len(ts.timeFields) == 0 {
+		return 0, nil
+	}
+
+	for _, tf := range ts.timeFields {
+		if val, ok := payload[tf.FieldName]; ok {
+			t, err := parseTimestamp(tf.FieldFormat, val, tf.Location)
+			if err != nil {
+				return 0, err
+			}
+
+			return t.UnixNano(), nil
+		}
+	}
+
+	return 0, nil
 }

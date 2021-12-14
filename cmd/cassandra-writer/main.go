@@ -21,9 +21,6 @@ import (
 	"github.com/mainflux/mainflux/consumers/writers/cassandra"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging/nats"
-	"github.com/mainflux/mainflux/pkg/transformers"
-	"github.com/mainflux/mainflux/pkg/transformers/json"
-	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
@@ -31,39 +28,33 @@ const (
 	svcName = "cassandra-writer"
 	sep     = ","
 
-	defNatsURL     = "nats://localhost:4222"
-	defLogLevel    = "error"
-	defPort        = "8180"
-	defCluster     = "127.0.0.1"
-	defKeyspace    = "mainflux"
-	defDBUser      = "mainflux"
-	defDBPass      = "mainflux"
-	defDBPort      = "9042"
-	defConfigPath  = "/config.toml"
-	defContentType = "application/senml+json"
-	defTransformer = "senml"
+	defNatsURL    = "nats://localhost:4222"
+	defLogLevel   = "error"
+	defPort       = "8180"
+	defCluster    = "127.0.0.1"
+	defKeyspace   = "mainflux"
+	defDBUser     = "mainflux"
+	defDBPass     = "mainflux"
+	defDBPort     = "9042"
+	defConfigPath = "/config.toml"
 
-	envNatsURL     = "MF_NATS_URL"
-	envLogLevel    = "MF_CASSANDRA_WRITER_LOG_LEVEL"
-	envPort        = "MF_CASSANDRA_WRITER_PORT"
-	envCluster     = "MF_CASSANDRA_WRITER_DB_CLUSTER"
-	envKeyspace    = "MF_CASSANDRA_WRITER_DB_KEYSPACE"
-	envDBUser      = "MF_CASSANDRA_WRITER_DB_USER"
-	envDBPass      = "MF_CASSANDRA_WRITER_DB_PASS"
-	envDBPort      = "MF_CASSANDRA_WRITER_DB_PORT"
-	envConfigPath  = "MF_CASSANDRA_WRITER_CONFIG_PATH"
-	envContentType = "MF_CASSANDRA_WRITER_CONTENT_TYPE"
-	envTransformer = "MF_CASSANDRA_WRITER_TRANSFORMER"
+	envNatsURL    = "MF_NATS_URL"
+	envLogLevel   = "MF_CASSANDRA_WRITER_LOG_LEVEL"
+	envPort       = "MF_CASSANDRA_WRITER_PORT"
+	envCluster    = "MF_CASSANDRA_WRITER_DB_CLUSTER"
+	envKeyspace   = "MF_CASSANDRA_WRITER_DB_KEYSPACE"
+	envDBUser     = "MF_CASSANDRA_WRITER_DB_USER"
+	envDBPass     = "MF_CASSANDRA_WRITER_DB_PASS"
+	envDBPort     = "MF_CASSANDRA_WRITER_DB_PORT"
+	envConfigPath = "MF_CASSANDRA_WRITER_CONFIG_PATH"
 )
 
 type config struct {
-	natsURL     string
-	logLevel    string
-	port        string
-	configPath  string
-	contentType string
-	transformer string
-	dbCfg       cassandra.DBConfig
+	natsURL    string
+	logLevel   string
+	port       string
+	configPath string
+	dbCfg      cassandra.DBConfig
 }
 
 func main() {
@@ -85,9 +76,8 @@ func main() {
 	defer session.Close()
 
 	repo := newService(session, logger)
-	t := makeTransformer(cfg, logger)
 
-	if err := consumers.Start(pubSub, repo, t, cfg.configPath, logger); err != nil {
+	if err := consumers.Start(pubSub, repo, cfg.configPath, logger); err != nil {
 		logger.Error(fmt.Sprintf("Failed to create Cassandra writer: %s", err))
 	}
 
@@ -120,13 +110,11 @@ func loadConfig() config {
 	}
 
 	return config{
-		natsURL:     mainflux.Env(envNatsURL, defNatsURL),
-		logLevel:    mainflux.Env(envLogLevel, defLogLevel),
-		port:        mainflux.Env(envPort, defPort),
-		configPath:  mainflux.Env(envConfigPath, defConfigPath),
-		contentType: mainflux.Env(envContentType, defContentType),
-		transformer: mainflux.Env(envTransformer, defTransformer),
-		dbCfg:       dbCfg,
+		natsURL:    mainflux.Env(envNatsURL, defNatsURL),
+		logLevel:   mainflux.Env(envLogLevel, defLogLevel),
+		port:       mainflux.Env(envPort, defPort),
+		configPath: mainflux.Env(envConfigPath, defConfigPath),
+		dbCfg:      dbCfg,
 	}
 }
 
@@ -160,21 +148,6 @@ func newService(session *gocql.Session, logger logger.Logger) consumers.Consumer
 	)
 
 	return repo
-}
-
-func makeTransformer(cfg config, logger logger.Logger) transformers.Transformer {
-	switch strings.ToUpper(cfg.transformer) {
-	case "SENML":
-		logger.Info("Using SenML transformer")
-		return senml.New(cfg.contentType)
-	case "JSON":
-		logger.Info("Using JSON transformer")
-		return json.New()
-	default:
-		logger.Error(fmt.Sprintf("Can't create transformer: unknown transformer type %s", cfg.transformer))
-		os.Exit(1)
-		return nil
-	}
 }
 
 func startHTTPServer(port string, errs chan error, logger logger.Logger) {

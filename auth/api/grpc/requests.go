@@ -16,7 +16,7 @@ func (req identityReq) validate() error {
 	if req.token == "" {
 		return auth.ErrMalformedEntity
 	}
-	if req.kind != auth.UserKey &&
+	if req.kind != auth.LoginKey &&
 		req.kind != auth.APIKey &&
 		req.kind != auth.RecoveryKey {
 		return auth.ErrMalformedEntity
@@ -35,7 +35,7 @@ func (req issueReq) validate() error {
 	if req.email == "" {
 		return auth.ErrUnauthorizedAccess
 	}
-	if req.keyType != auth.UserKey &&
+	if req.keyType != auth.LoginKey &&
 		req.keyType != auth.APIKey &&
 		req.keyType != auth.RecoveryKey {
 		return auth.ErrMalformedEntity

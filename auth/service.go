@@ -58,7 +58,7 @@ var (
 	// ErrFailedToRetrieveChildren failed to retrieve groups.
 	ErrFailedToRetrieveChildren = errors.New("failed to retrieve all groups")
 
-	errIssueUser = errors.New("failed to issue new user key")
+	errIssueUser = errors.New("failed to issue new login key")
 	errIssueTmp  = errors.New("failed to issue new temporary key")
 	errRevoke    = errors.New("failed to remove key")
 	errRetrieve  = errors.New("failed to retrieve key data")
@@ -167,7 +167,13 @@ func (svc service) Identify(ctx context.Context, token string) (Identity, error)
 	}
 
 	switch key.Type {
-	case APIKey, RecoveryKey, UserKey:
+	case RecoveryKey, LoginKey:
+		return Identity{ID: key.IssuerID, Email: key.Subject}, nil
+	case APIKey:
+		_, err := svc.keys.Retrieve(context.TODO(), key.IssuerID, key.ID)
+		if err != nil {
+			return Identity{}, ErrUnauthorizedAccess
+		}
 		return Identity{ID: key.IssuerID, Email: key.Subject}, nil
 	default:
 		return Identity{}, ErrUnauthorizedAccess
@@ -292,8 +298,8 @@ func (svc service) login(token string) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-	// Only user key token is valid for login.
-	if key.Type != UserKey || key.IssuerID == "" {
+	// Only login key token is valid for login.
+	if key.Type != LoginKey || key.IssuerID == "" {
 		return "", "", ErrUnauthorizedAccess
 	}
 

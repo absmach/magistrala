@@ -210,7 +210,7 @@ func (svc usersService) Login(ctx context.Context, user User) (string, error) {
 	if err := svc.hasher.Compare(user.Password, dbUser.Password); err != nil {
 		return "", errors.Wrap(ErrUnauthorizedAccess, err)
 	}
-	return svc.issue(ctx, dbUser.ID, dbUser.Email, auth.UserKey)
+	return svc.issue(ctx, dbUser.ID, dbUser.Email, auth.LoginKey)
 }
 
 func (svc usersService) ViewUser(ctx context.Context, token, id string) (User, error) {

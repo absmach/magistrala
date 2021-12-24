@@ -12,6 +12,8 @@ paths:
         be uniquely identified by its ID.
       tags:
         - auth
+      parameters:
+        - $ref: "#/components/parameters/Authorization"
       requestBody:
         $ref: "#/components/requestBodies/KeyRequest"
       responses:
@@ -648,11 +650,6 @@ components:
                 type: integer
                 example: 0
                 description: API key type. Keys of different type are processed differently.
-              token:
-                type: string
-                format: jwt
-                example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiZXhhbXBsZSIsImlhdCI6MTUxNjIzOTAyMn0.9UYAFWmPIn4ojss36LpIGSqABZHfADQmVuKQ4PJBMdI"
-                description: JWT for the entity that's sending Key request.
               duration:
                 type: number
                 format: integer

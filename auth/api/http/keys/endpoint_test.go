@@ -85,14 +85,14 @@ func toJSON(data interface{}) string {
 
 func TestIssue(t *testing.T) {
 	svc := newService()
-	_, loginSecret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.UserKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})
-	assert.Nil(t, err, fmt.Sprintf("Issuing user key expected to succeed: %s", err))
+	_, loginSecret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.LoginKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})
+	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
 
 	ts := newServer(svc)
 	defer ts.Close()
 	client := ts.Client()
 
-	uk := issueRequest{Type: auth.UserKey}
+	lk := issueRequest{Type: auth.LoginKey}
 	ak := issueRequest{Type: auth.APIKey, Duration: time.Hour}
 	rk := issueRequest{Type: auth.RecoveryKey}
 
@@ -104,11 +104,11 @@ func TestIssue(t *testing.T) {
 		status int
 	}{
 		{
-			desc:   "issue user key",
-			req:    toJSON(uk),
+			desc:   "issue login key",
+			req:    toJSON(lk),
 			ct:     contentType,
 			token:  "",
-			status: http.StatusCreated,
+			status: http.StatusForbidden,
 		},
 		{
 			desc:   "issue API key",
@@ -122,11 +122,11 @@ func TestIssue(t *testing.T) {
 			req:    toJSON(rk),
 			ct:     contentType,
 			token:  loginSecret,
-			status: http.StatusBadRequest,
+			status: http.StatusForbidden,
 		},
 		{
-			desc:   "issue user key wrong content type",
-			req:    toJSON(uk),
+			desc:   "issue login key wrong content type",
+			req:    toJSON(lk),
 			ct:     "",
 			token:  loginSecret,
 			status: http.StatusUnsupportedMediaType,
@@ -150,7 +150,7 @@ func TestIssue(t *testing.T) {
 			req:    toJSON(rk),
 			ct:     contentType,
 			token:  "",
-			status: http.StatusBadRequest,
+			status: http.StatusForbidden,
 		},
 		{
 			desc:   "issue key with invalid request",
@@ -192,7 +192,7 @@ func TestIssue(t *testing.T) {
 
 func TestRetrieve(t *testing.T) {
 	svc := newService()
-	_, loginSecret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.UserKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})
+	_, loginSecret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.LoginKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})
 	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
 	key := auth.Key{Type: auth.APIKey, IssuedAt: time.Now(), IssuerID: id, Subject: email}
 
@@ -244,12 +244,12 @@ func TestRetrieve(t *testing.T) {
 
 func TestRevoke(t *testing.T) {
 	svc := newService()
-	_, loginSecret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.UserKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})
-	assert.Nil(t, err, fmt.Sprintf("Issuing user key expected to succeed: %s", err))
+	_, loginSecret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.LoginKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})
+	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
 	key := auth.Key{Type: auth.APIKey, IssuedAt: time.Now(), IssuerID: id, Subject: email}
 
 	k, _, err := svc.Issue(context.Background(), loginSecret, key)
-	assert.Nil(t, err, fmt.Sprintf("Issuing user key expected to succeed: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
 
 	ts := newServer(svc)
 	defer ts.Close()

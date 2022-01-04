@@ -12,12 +12,16 @@ type addCertsReq struct {
 	ThingID string `json:"thing_id"`
 	KeyBits int    `json:"key_bits"`
 	KeyType string `json:"key_type"`
-	Valid   string `json:"valid"`
+	TTL     string `json:"ttl"`
 }
 
 func (req addCertsReq) validate() error {
 	if req.ThingID == "" && req.token == "" {
 		return errUnauthorized
+	}
+
+	if req.TTL == "" || req.KeyType == "" || req.KeyBits == 0 {
+		return certs.ErrMalformedEntity
 	}
 	return nil
 }
@@ -36,6 +40,22 @@ func (req *listReq) validate() error {
 	if req.limit == 0 || req.limit > maxLimitSize {
 		return certs.ErrMalformedEntity
 	}
+	return nil
+}
+
+type viewReq struct {
+	serialID string
+	token    string
+}
+
+func (req *viewReq) validate() error {
+	if req.token == "" {
+		return errUnauthorized
+	}
+	if req.serialID == "" {
+		return certs.ErrMalformedEntity
+	}
+
 	return nil
 }
 

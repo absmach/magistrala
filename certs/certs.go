@@ -18,12 +18,15 @@ type Repository interface {
 	// Save  saves cert for thing into database
 	Save(ctx context.Context, cert Cert) (string, error)
 
-	// RetrieveAll retrieve all issued certificates for given owner and thing id
-	RetrieveAll(ctx context.Context, ownerID, thingID string, offset, limit uint64) (Page, error)
+	// RetrieveAll retrieve issued certificates for given owner ID
+	RetrieveAll(ctx context.Context, ownerID string, offset, limit uint64) (Page, error)
 
-	// Remove certificate from DB for given thing
-	Remove(ctx context.Context, thingID string) error
+	// Remove removes certificate from DB for a given thing ID
+	Remove(ctx context.Context, ownerID, thingID string) error
 
-	// RetrieveByThing certificate by given thing
-	RetrieveByThing(ctx context.Context, thingID string) (Cert, error)
+	// RetrieveByThing retrieves issued certificates for a given thing ID
+	RetrieveByThing(ctx context.Context, ownerID, thingID string, offset, limit uint64) (Page, error)
+
+	// RetrieveBySerial retrieves a certificate for a given serial ID
+	RetrieveBySerial(ctx context.Context, ownerID, serialID string) (Cert, error)
 }

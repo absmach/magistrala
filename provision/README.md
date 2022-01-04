@@ -1,6 +1,6 @@
 # Provision service
 
-Provision service provides an HTTP API to interact with [Mainflux][mainflux]. 
+Provision service provides an HTTP API to interact with [Mainflux][mainflux].
 Provision service is used to setup initial applications configuration i.e. things, channels, connections and certificates that will be required for the specific use case especially useful for gateway provision.  
 
 For gateways to communicate with [Mainflux][mainflux] configuration is required (mqtt host, thing, channels, certificates...). To get the configuration gateway will send a request to [Bootstrap][bootstrap] service providing `<external_id>` and `<external_key>` in request. To make a request to [Bootstrap][bootstrap] service you can use [Agent][agent] service on a gateway.  
@@ -38,9 +38,9 @@ default values.
 | MF_PROVISION_BS_AUTO_WHITELIST      | Should thing be auto whitelisted                  | true                                  |
 | MF_PROVISION_BS_CONTENT             | Bootstrap service configs content, JSON format    | {}                                    |
 | MF_PROVISION_CERTS_RSA_BITS         | Certificate RSA bits parameter                    | 4096                                  |
-| MF_PROVISION_CERTS_HOURS_VALID      | Number of days that certificate is valid          | "2400h"                               |
+| MF_PROVISION_CERTS_HOURS_VALID      | Number of hours that certificate is valid         | "2400h"                               |
 
-By default, call to `/mapping` endpoint will create one thing and two channels (`control` and `data`) and connect it. If there is a requirement for different provision layout we can use [config](docker/configs/config.toml) file in addition to environment variables. 
+By default, call to `/mapping` endpoint will create one thing and two channels (`control` and `data`) and connect it. If there is a requirement for different provision layout we can use [config](docker/configs/config.toml) file in addition to environment variables.
 
 For the purposes of running provision as an add-on in docker composition environment variables seems more suitable. Environment variables are set in [.env](.env).  
 
@@ -81,7 +81,7 @@ Example of provision layout below
 ```
 
 ## Authentication
-In order to create necessary entities provision service needs to authenticate against Mainflux. To provide authentication credentials to the provision service you can pass it in an environment variable or in a config file as Mainflux user and password or as API token (that can be issued on `/users` or `/keys` endpoint of [auth](../auth/README.md)). 
+In order to create necessary entities provision service needs to authenticate against Mainflux. To provide authentication credentials to the provision service you can pass it in an environment variable or in a config file as Mainflux user and password or as API token (that can be issued on `/users` or `/keys` endpoint of [auth](../auth/README.md)).
 
 Additionally users or API token can be passed in Authorization header, this authentication takes precedence over others.
 
@@ -157,12 +157,12 @@ Response contains created things, channels and certificates if any:
 }
 ```
 
-## Certificates 
+## Certificates
 Provision service has `/certs` endpoint that can be used to generate certificates for things when mTLS is required:
 - `users_token` - users authentication token or API token
 - `thing_id` - id of the thing for which certificate is going to be generated
 ```bash
-curl -s  -X POST  http://localhost:8190/certs -H "Authorization: <users_token>" -H 'Content-Type: application/json'   -d '{"thing_id": "<thing_id>", "key_bits":4096, "days_valid":"2400h" }' 
+curl -s  -X POST  http://localhost:8190/certs -H "Authorization: <users_token>" -H 'Content-Type: application/json'   -d '{"thing_id": "<thing_id>", "key_bits":4096, "ttl":"2400h" }'
 ```
 ```json                                                                                                                            
 {

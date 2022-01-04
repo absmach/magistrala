@@ -5,6 +5,7 @@ package api
 
 import (
 	"net/http"
+	"time"
 )
 
 type pageRes struct {
@@ -19,15 +20,15 @@ type certsPageRes struct {
 }
 
 type certsRes struct {
-	ThingID    string `json:"thing_id"`
-	Cert       string `json:"cert"`
-	CertKey    string `json:"cert_key"`
-	CertSerial string `json:"cert_serial"`
-	CACert     string `json:"ca_cert"`
+	ThingID    string    `json:"thing_id"`
+	Cert       string    `json:"cert"`
+	CertSerial string    `json:"cert_serial"`
+	Expiration time.Time `json:"expiration"`
+	created    bool
 }
 
 func (res certsPageRes) Code() int {
-	return http.StatusCreated
+	return http.StatusOK
 }
 
 func (res certsPageRes) Headers() map[string]string {
@@ -39,7 +40,11 @@ func (res certsPageRes) Empty() bool {
 }
 
 func (res certsRes) Code() int {
-	return http.StatusCreated
+	if res.created {
+		return http.StatusCreated
+	}
+
+	return http.StatusOK
 }
 
 func (res certsRes) Headers() map[string]string {

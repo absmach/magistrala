@@ -54,7 +54,7 @@ const (
 	defServerCert    = ""
 	defServerKey     = ""
 	defCertsURL      = "http://localhost"
-	defThingsURL      = "http://things:8182"
+	defThingsURL     = "http://things:8182"
 	defJaegerURL     = ""
 	defAuthURL       = "localhost:8181"
 	defAuthTimeout   = "1s"
@@ -69,27 +69,27 @@ const (
 	defVaultToken      = ""
 	defVaultPKIIntPath = "pki_int"
 
-	envPort          = "MF_CERTS_HTTP_PORT"
-	envLogLevel      = "MF_CERTS_LOG_LEVEL"
-	envDBHost        = "MF_CERTS_DB_HOST"
-	envDBPort        = "MF_CERTS_DB_PORT"
-	envDBUser        = "MF_CERTS_DB_USER"
-	envDBPass        = "MF_CERTS_DB_PASS"
-	envDB            = "MF_CERTS_DB"
-	envDBSSLMode     = "MF_CERTS_DB_SSL_MODE"
-	envDBSSLCert     = "MF_CERTS_DB_SSL_CERT"
-	envDBSSLKey      = "MF_CERTS_DB_SSL_KEY"
-	envDBSSLRootCert = "MF_CERTS_DB_SSL_ROOT_CERT"
-	envEncryptKey    = "MF_CERTS_ENCRYPT_KEY"
-	envClientTLS     = "MF_CERTS_CLIENT_TLS"
-	envCACerts       = "MF_CERTS_CA_CERTS"
-	envServerCert    = "MF_CERTS_SERVER_CERT"
-	envServerKey     = "MF_CERTS_SERVER_KEY"
-	envCertsURL      = "MF_SDK_CERTS_URL"
-	envJaegerURL     = "MF_JAEGER_URL"
-	envAuthURL       = "MF_AUTH_GRPC_URL"
-	envAuthTimeout   = "MF_AUTH_GRPC_TIMEOUT"
-	envThingsURL     = "MF_THINGS_URL"
+	envPort           = "MF_CERTS_HTTP_PORT"
+	envLogLevel       = "MF_CERTS_LOG_LEVEL"
+	envDBHost         = "MF_CERTS_DB_HOST"
+	envDBPort         = "MF_CERTS_DB_PORT"
+	envDBUser         = "MF_CERTS_DB_USER"
+	envDBPass         = "MF_CERTS_DB_PASS"
+	envDB             = "MF_CERTS_DB"
+	envDBSSLMode      = "MF_CERTS_DB_SSL_MODE"
+	envDBSSLCert      = "MF_CERTS_DB_SSL_CERT"
+	envDBSSLKey       = "MF_CERTS_DB_SSL_KEY"
+	envDBSSLRootCert  = "MF_CERTS_DB_SSL_ROOT_CERT"
+	envEncryptKey     = "MF_CERTS_ENCRYPT_KEY"
+	envClientTLS      = "MF_CERTS_CLIENT_TLS"
+	envCACerts        = "MF_CERTS_CA_CERTS"
+	envServerCert     = "MF_CERTS_SERVER_CERT"
+	envServerKey      = "MF_CERTS_SERVER_KEY"
+	envCertsURL       = "MF_SDK_CERTS_URL"
+	envJaegerURL      = "MF_JAEGER_URL"
+	envAuthURL        = "MF_AUTH_GRPC_URL"
+	envAuthTimeout    = "MF_AUTH_GRPC_TIMEOUT"
+	envThingsURL      = "MF_THINGS_URL"
 	envSignCAPath     = "MF_CERTS_SIGN_CA_PATH"
 	envSignCAKey      = "MF_CERTS_SIGN_CA_KEY_PATH"
 	envSignHoursValid = "MF_CERTS_SIGN_HOURS_VALID"
@@ -222,7 +222,7 @@ func loadConfig() config {
 		serverCert:  mainflux.Env(envServerCert, defServerCert),
 		serverKey:   mainflux.Env(envServerKey, defServerKey),
 		certsURL:    mainflux.Env(envCertsURL, defCertsURL),
-		thingsURL:    mainflux.Env(envThingsURL, defThingsURL),
+		thingsURL:   mainflux.Env(envThingsURL, defThingsURL),
 		jaegerURL:   mainflux.Env(envJaegerURL, defJaegerURL),
 		authURL:     mainflux.Env(envAuthURL, defAuthURL),
 		authTimeout: authTimeout,
@@ -337,7 +337,7 @@ func newService(auth mainflux.AuthServiceClient, db *sqlx.DB, logger mflog.Logge
 	}
 
 	config := mfsdk.Config{
-		CertsURL: cfg.certsURL,
+		CertsURL:  cfg.certsURL,
 		ThingsURL: cfg.thingsURL,
 	}
 

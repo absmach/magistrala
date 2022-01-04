@@ -14,8 +14,10 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"math/big"
+	"sync"
 	"time"
 
+	"github.com/mainflux/mainflux/certs"
 	"github.com/mainflux/mainflux/certs/pki"
 	"github.com/mainflux/mainflux/pkg/errors"
 )
@@ -32,28 +34,27 @@ type agent struct {
 	TLSCert     tls.Certificate
 	X509Cert    *x509.Certificate
 	RSABits     int
-	HoursValid  string
+	TTL         string
+	mu          sync.Mutex
+	counter     uint64
+	certs       map[string]pki.Cert
 }
 
-func NewPkiAgent(tlsCert tls.Certificate, caCert *x509.Certificate, keyBits int, hoursValid string, timeout time.Duration) pki.Agent {
+func NewPkiAgent(tlsCert tls.Certificate, caCert *x509.Certificate, keyBits int, ttl string, timeout time.Duration) pki.Agent {
 	return &agent{
 		AuthTimeout: timeout,
 		TLSCert:     tlsCert,
 		X509Cert:    caCert,
 		RSABits:     keyBits,
-		HoursValid:  hoursValid,
+		TTL:         ttl,
+		certs:       make(map[string]pki.Cert),
 	}
 }
 
 func (a *agent) IssueCert(cn string, ttl, keyType string, keyBits int) (pki.Cert, error) {
-	return a.certs(cn, ttl, keyBits)
-}
+	a.mu.Lock()
+	defer a.mu.Unlock()
 
-func (a *agent) Revoke(serial string) (time.Time, error) {
-	return time.Now(), nil
-}
-
-func (a *agent) certs(cn, daysValid string, keyBits int) (pki.Cert, error) {
 	if a.X509Cert == nil {
 		return pki.Cert{}, errors.Wrap(pki.ErrFailedCertCreation, pki.ErrMissingCACertificate)
 	}
@@ -64,12 +65,12 @@ func (a *agent) certs(cn, daysValid string, keyBits int) (pki.Cert, error) {
 		return pki.Cert{}, errors.Wrap(pki.ErrFailedCertCreation, err)
 	}
 
-	if daysValid == "" {
-		daysValid = a.HoursValid
+	if ttl == "" {
+		ttl = a.TTL
 	}
 
 	notBefore := time.Now()
-	validFor, err := time.ParseDuration(daysValid)
+	validFor, err := time.ParseDuration(ttl)
 	if err != nil {
 		return pki.Cert{}, errors.Wrap(pki.ErrFailedCertCreation, err)
 	}
@@ -129,6 +130,12 @@ func (a *agent) certs(cn, daysValid string, keyBits int) (pki.Cert, error) {
 	}
 	buffKeyOut.Flush()
 	key := keyOut.String()
+
+	a.certs[x509cert.SerialNumber.String()] = pki.Cert{
+		ClientCert: cert,
+	}
+	a.counter++
+
 	return pki.Cert{
 		ClientCert: cert,
 		ClientKey:  key,
@@ -136,6 +143,22 @@ func (a *agent) certs(cn, daysValid string, keyBits int) (pki.Cert, error) {
 		Expire:     x509cert.NotAfter,
 		IssuingCA:  x509cert.Issuer.String(),
 	}, nil
+}
+
+func (a *agent) Read(serial string) (pki.Cert, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	crt, ok := a.certs[serial]
+	if !ok {
+		return pki.Cert{}, certs.ErrNotFound
+	}
+
+	return crt, nil
+}
+
+func (a *agent) Revoke(serial string) (time.Time, error) {
+	return time.Now(), nil
 }
 
 func publicKey(priv interface{}) (interface{}, error) {

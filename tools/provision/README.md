@@ -27,7 +27,7 @@ Flags:
 ```
 
 Example:
-``` 
+```
 ./provision -u test@mainflux.com -p test1234 --host https://142.93.118.47
 ```
 
@@ -39,7 +39,7 @@ If you want to create a list of channels with certificates:
 ```
 
 >`ca.crt` and `ca.key` are used for creating things certificate and for HTTPS,
-> if you are provisioning on remote server you will have to get these files to your local 
+> if you are provisioning on remote server you will have to get these files to your local
 > directory so that you can create certificates for things
 
 

@@ -8,10 +8,11 @@ import (
 	"io/ioutil"
 
 	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/mainflux/mainflux/things"
 	"github.com/pelletier/go-toml"
 )
 
-// Service represents service config.
+// ServiceConf represents service config.
 type ServiceConf struct {
 	Port           string `toml:"port"`
 	LogLevel       string `toml:"log_level"`
@@ -29,21 +30,15 @@ type ServiceConf struct {
 	MfCertsURL     string `toml:"mf_certs_url"`
 }
 
+// Bootstrap represetns the Bootstrap config
 type Bootstrap struct {
 	X509Provision bool                   `toml:"x509_provision"`
 	Provision     bool                   `toml:"provision"`
 	AutoWhiteList bool                   `toml:"autowhite_list"`
 	Content       map[string]interface{} `toml:"content"`
 }
-type Channel struct {
-	Name     string                 `toml:"name"`
-	Metadata map[string]interface{} `toml:"metadata" mapstructure:"metadata"`
-}
-type Thing struct {
-	Name     string                 `toml:"name"`
-	Metadata map[string]interface{} `toml:"metadata" mapstructure:"metadata"`
-}
 
+// Gateway represetns the Gateway config
 type Gateway struct {
 	Type            string `toml:"type" json:"type"`
 	ExternalID      string `toml:"external_id" json:"external_id"`
@@ -54,20 +49,21 @@ type Gateway struct {
 	CfgID           string `toml:"cfg_id" json:"cfg_id"`
 }
 
-type Certs struct {
-	HoursValid string `json:"days_valid" toml:"days_valid"`
-	KeyBits    int    `json:"key_bits" toml:"key_bits"`
-	KeyType    string `json:"key_type"`
+// Cert represetns the certificate config
+type Cert struct {
+	TTL     string `json:"ttl" toml:"ttl"`
+	KeyBits int    `json:"key_bits" toml:"key_bits"`
+	KeyType string `json:"key_type"`
 }
 
 // Config struct of Provision
 type Config struct {
-	File      string      `toml:"file"`
-	Server    ServiceConf `toml:"server" mapstructure:"server"`
-	Bootstrap Bootstrap   `toml:"bootstrap" mapstructure:"bootstrap"`
-	Things    []Thing     `toml:"things" mapstructure:"things"`
-	Channels  []Channel   `toml:"channels" mapstructure:"channels"`
-	Certs     Certs       `toml:"certs" mapstructure:"certs"`
+	File      string           `toml:"file"`
+	Server    ServiceConf      `toml:"server" mapstructure:"server"`
+	Bootstrap Bootstrap        `toml:"bootstrap" mapstructure:"bootstrap"`
+	Things    []things.Thing   `toml:"things" mapstructure:"things"`
+	Channels  []things.Channel `toml:"channels" mapstructure:"channels"`
+	Cert      Cert             `toml:"cert" mapstructure:"cert"`
 }
 
 // Save - store config in a file

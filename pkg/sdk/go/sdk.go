@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"net/http"
+	"time"
 )
 
 const (
@@ -109,10 +110,19 @@ type Channel struct {
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
-//Member represents mainflux member.
+// Member represents group member.
 type Member struct {
 	ID   string
 	Type string
+}
+
+type Key struct {
+	ID        string
+	Type      uint32
+	IssuerID  string
+	Subject   string
+	IssuedAt  time.Time
+	ExpiresAt time.Time
 }
 
 // SDK contains Mainflux API.
@@ -256,6 +266,15 @@ type SDK interface {
 
 	// RevokeCert revokes certificate with certID for thing with thingID
 	RevokeCert(thingID, certID, token string) error
+
+	// Issue issues a new key, returning its token value alongside.
+	Issue(token string, key Key) (issueKeyRes, error)
+
+	// Revoke removes the key with the provided ID that is issued by the user identified by the provided key.
+	Revoke(token, id string) error
+
+	// RetrieveKey retrieves data for the key identified by the provided ID, that is issued by the user identified by the provided key.
+	RetrieveKey(token, id string) (retrieveKeyRes, error)
 }
 
 type mfSDK struct {

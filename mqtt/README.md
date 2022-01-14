@@ -38,7 +38,7 @@ default values.
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`mqtt-adapter`](https://github.com/mainflux/mainflux/blob/master/docker/docker-compose.yml#L219-L243) service section in 
+The service itself is distributed as Docker container. Check the [`mqtt-adapter`](https://github.com/mainflux/mainflux/blob/master/docker/docker-compose.yml#L219-L243) service section in
 docker-compose to see how service is deployed.
 
 To start the service outside of the container, execute the following shell script:
@@ -81,3 +81,5 @@ MF_AUTH_CACHE_PASS=[Auth cache pass] \
 MF_AUTH_CACHE_DB=[Auth cache DB name] \
 $GOBIN/mainflux-mqtt
 ```
+
+For more information about service capabilities and its usage, please check out the API documentation [API](https://github.com/mainflux/mainflux/blob/master/api/mqtt.yml).

@@ -1,0 +1,58 @@
+# Copyright (c) Mainflux
+# SPDX-License-Identifier: Apache-2.0
+
+# This docker-compose file contains optional Timescale and Timescale-writer services
+# for Mainflux platform. Since these are optional, this file is dependent of docker-compose file
+# from <project_root>/docker. In order to run these services, execute command:
+# docker-compose -f docker/docker-compose.yml -f docker/addons/timescale-writer/docker-compose.yml up
+# from project root. PostgreSQL default port (5432) is exposed, so you can use various tools for database
+# inspection and data visualization.
+
+version: "3.7"
+
+networks:
+  docker_mainflux-base-net:
+    external: true
+
+volumes:
+  mainflux-timescale-writer-volume:
+
+services:
+  timescale:
+    image: timescale/timescaledb:2.4.0-pg12
+    container_name: mainflux-timescale
+    restart: on-failure
+    environment:
+      POSTGRES_PASSWORD: ${MF_TIMESCALE_WRITER_DB_PASS}
+      POSTGRES_USER: ${MF_TIMESCALE_WRITER_DB_USER}
+      POSTGRES_DB: ${MF_TIMESCALE_WRITER_DB}
+    networks:
+      - docker_mainflux-base-net
+    volumes:
+      - mainflux-timescale-writer-volume:/var/lib/timescalesql/data
+
+  timescale-writer:
+    image: mainflux/timescale-writer:${MF_RELEASE_TAG}
+    container_name: mainflux-timescale-writer
+    depends_on:
+      - timescale
+    restart: on-failure
+    environment:
+      MF_NATS_URL: ${MF_NATS_URL}
+      MF_TIMESCALE_WRITER_LOG_LEVEL: ${MF_TIMESCALE_WRITER_LOG_LEVEL}
+      MF_TIMESCALE_WRITER_PORT: ${MF_TIMESCALE_WRITER_PORT}
+      MF_TIMESCALE_WRITER_DB_HOST: timescale
+      MF_TIMESCALE_WRITER_DB_PORT: ${MF_TIMESCALE_WRITER_DB_PORT}
+      MF_TIMESCALE_WRITER_DB_USER: ${MF_TIMESCALE_WRITER_DB_USER}
+      MF_TIMESCALE_WRITER_DB_PASS: ${MF_TIMESCALE_WRITER_DB_PASS}
+      MF_TIMESCALE_WRITER_DB: ${MF_TIMESCALE_WRITER_DB}
+      MF_TIMESCALE_WRITER_DB_SSL_MODE: ${MF_TIMESCALE_WRITER_DB_SSL_MODE}
+      MF_TIMESCALE_WRITER_DB_SSL_CERT: ${MF_TIMESCALE_WRITER_DB_SSL_CERT}
+      MF_TIMESCALE_WRITER_DB_SSL_KEY: ${MF_TIMESCALE_WRITER_DB_SSL_KEY}
+      MF_TIMESCALE_WRITER_DB_SSL_ROOT_CERT: ${MF_TIMESCALE_WRITER_DB_SSL_ROOT_CERT}
+    ports:
+      - ${MF_TIMESCALE_WRITER_PORT}:${MF_TIMESCALE_WRITER_PORT}
+    networks:
+      - docker_mainflux-base-net
+    volumes:
+      - ./config.toml:/config.toml

@@ -201,25 +201,25 @@ func (s *Server) Serve(l Listener) error {
 		}
 		if rw != nil {
 			wg.Add(1)
-			var cc *ClientConn
-			monitor := s.createInactivityMonitor()
-			opts := []coapNet.ConnOption{
-				coapNet.WithHeartBeat(s.heartBeat),
-				coapNet.WithOnReadTimeout(func() error {
-					monitor.CheckInactivity(cc)
-					return nil
-				}),
-			}
-			cc = s.createClientConn(coapNet.NewConn(rw, opts...), monitor)
-			if s.onNewClientConn != nil {
-				if tlscon, ok := rw.(*tls.Conn); ok {
-					s.onNewClientConn(cc, tlscon)
-				} else {
-					s.onNewClientConn(cc, nil)
-				}
-			}
 			go func() {
 				defer wg.Done()
+				var cc *ClientConn
+				monitor := s.createInactivityMonitor()
+				opts := []coapNet.ConnOption{
+					coapNet.WithHeartBeat(s.heartBeat),
+					coapNet.WithOnReadTimeout(func() error {
+						monitor.CheckInactivity(cc)
+						return nil
+					}),
+				}
+				cc = s.createClientConn(coapNet.NewConn(rw, opts...), monitor)
+				if s.onNewClientConn != nil {
+					if tlscon, ok := rw.(*tls.Conn); ok {
+						s.onNewClientConn(cc, tlscon)
+					} else {
+						s.onNewClientConn(cc, nil)
+					}
+				}
 				err := cc.Run()
 				if err != nil {
 					s.errors(fmt.Errorf("%v: %w", cc.RemoteAddr(), err))

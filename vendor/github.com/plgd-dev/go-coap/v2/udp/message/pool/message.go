@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"sync/atomic"
 
 	"github.com/plgd-dev/go-coap/v2/message"
 	"github.com/plgd-dev/go-coap/v2/message/codes"
@@ -13,8 +14,12 @@ import (
 	udp "github.com/plgd-dev/go-coap/v2/udp/message"
 )
 
+const maxMessagePool = 10240
+const maxMessageBufferSize = 2048
+
 var (
-	messagePool sync.Pool
+	currentMessagesInPool int32
+	messagePool           sync.Pool
 )
 
 type Message struct {
@@ -35,8 +40,12 @@ func (r *Message) Reset() {
 	r.Message.Reset()
 	r.messageID = 0
 	r.typ = udp.NonConfirmable
-	r.rawData = r.rawData[:0]
-	r.rawMarshalData = r.rawMarshalData[:0]
+	if cap(r.rawData) > maxMessageBufferSize {
+		r.rawData = make([]byte, 256)
+	}
+	if cap(r.rawMarshalData) > maxMessageBufferSize {
+		r.rawMarshalData = make([]byte, 256)
+	}
 	r.isModified = false
 }
 
@@ -72,7 +81,6 @@ func (r *Message) SetModified(b bool) {
 }
 
 func (r *Message) Unmarshal(data []byte) (int, error) {
-	r.Reset()
 	if len(r.rawData) < len(data) {
 		r.rawData = append(r.rawData, make([]byte, len(data)-len(r.rawData))...)
 	}
@@ -149,7 +157,7 @@ func AcquireMessage(ctx context.Context) *Message {
 		}
 	}
 	r := v.(*Message)
-	r.Reset()
+	atomic.AddInt32(&currentMessagesInPool, -1)
 	r.ctx = ctx
 	return r
 }
@@ -159,6 +167,11 @@ func AcquireMessage(ctx context.Context) *Message {
 // It is forbidden accessing req and/or its' members after returning
 // it to Message pool.
 func ReleaseMessage(req *Message) {
+	v := atomic.LoadInt32(&currentMessagesInPool)
+	if v >= maxMessagePool {
+		return
+	}
+	atomic.AddInt32(&currentMessagesInPool, 1)
 	req.Reset()
 	messagePool.Put(req)
 }

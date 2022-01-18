@@ -114,7 +114,7 @@ func (o KeepAliveOpt) apply(opts *serverOptions) {
 		keepalive := inactivity.NewKeepAlive(o.maxRetries, o.onInactive, func(cc inactivity.ClientConn, receivePong func()) (func(), error) {
 			return cc.(*ClientConn).AsyncPing(receivePong)
 		})
-		return inactivity.NewInactivityMonitor(o.timeout, keepalive.OnInactive)
+		return inactivity.NewInactivityMonitor(o.timeout/time.Duration(o.maxRetries+1), keepalive.OnInactive)
 	}
 }
 
@@ -123,7 +123,7 @@ func (o KeepAliveOpt) applyDial(opts *dialOptions) {
 		keepalive := inactivity.NewKeepAlive(o.maxRetries, o.onInactive, func(cc inactivity.ClientConn, receivePong func()) (func(), error) {
 			return cc.(*ClientConn).AsyncPing(receivePong)
 		})
-		return inactivity.NewInactivityMonitor(o.timeout, keepalive.OnInactive)
+		return inactivity.NewInactivityMonitor(o.timeout/time.Duration(o.maxRetries+1), keepalive.OnInactive)
 	}
 }
 

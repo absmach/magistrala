@@ -10,7 +10,7 @@
   <a href="https://pion.ly/slack"><img src="https://img.shields.io/badge/join-us%20on%20slack-gray.svg?longCache=true&logo=slack&colorB=brightgreen" alt="Slack Widget"></a>
   <br>
   <a href="https://travis-ci.org/pion/dtls"><img src="https://travis-ci.org/pion/dtls.svg?branch=master" alt="Build Status"></a>
-  <a href="https://pkg.go.dev/github.com/pion/dtls"><img src="https://godoc.org/github.com/pion/dtls?status.svg" alt="GoDoc"></a>
+  <a href="https://pkg.go.dev/github.com/pion/dtls/v2"><img src="https://godoc.org/github.com/pion/dtls?status.svg" alt="GoDoc"></a>
   <a href="https://codecov.io/gh/pion/dtls"><img src="https://codecov.io/gh/pion/dtls/branch/master/graph/badge.svg" alt="Coverage Status"></a>
   <a href="https://goreportcard.com/report/github.com/pion/dtls"><img src="https://goreportcard.com/badge/github.com/pion/dtls" alt="Go Report Card"></a>
   <a href="https://www.codacy.com/app/Sean-Der/dtls"><img src="https://api.codacy.com/project/badge/Grade/18f4aec384894e6aac0b94effe51961d" alt="Codacy Badge"></a>
@@ -20,13 +20,13 @@
 
 Native [DTLS 1.2][rfc6347] implementation in the Go programming language.
 
-A long term goal is a professional security review, and maye inclusion in stdlib.
+A long term goal is a professional security review, and maybe an inclusion in stdlib.
 
 [rfc6347]: https://tools.ietf.org/html/rfc6347
 
 ### Goals/Progress
 This will only be targeting DTLS 1.2, and the most modern/common cipher suites.
-We would love contributes that fall under the 'Planned Features' and fixing any bugs!
+We would love contributions that fall under the 'Planned Features' and any bug fixes!
 
 #### Current features
 * DTLS 1.2 Client/Server
@@ -46,6 +46,8 @@ We would love contributes that fall under the 'Planned Features' and fixing any 
 * TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 ([RFC 6655][rfc6655])
 * TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 ([RFC 5289][rfc5289])
 * TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 ([RFC 5289][rfc5289])
+* TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 ([RFC 5289][rfc5289])
+* TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 ([RFC 5289][rfc5289])
 * TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA ([RFC 8422][rfc8422])
 * TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA ([RFC 8422][rfc8422])
 
@@ -53,6 +55,7 @@ We would love contributes that fall under the 'Planned Features' and fixing any 
 * TLS_PSK_WITH_AES_128_CCM ([RFC 6655][rfc6655])
 * TLS_PSK_WITH_AES_128_CCM_8 ([RFC 6655][rfc6655])
 * TLS_PSK_WITH_AES_128_GCM_SHA256 ([RFC 5487][rfc5487])
+* TLS_PSK_WITH_AES_128_CBC_SHA256 ([RFC 5487][rfc5487])
 
 [rfc5289]: https://tools.ietf.org/html/rfc5289
 [rfc8422]: https://tools.ietf.org/html/rfc8422
@@ -122,25 +125,6 @@ go run examples/dial/psk/main.go
 
 ### Contributing
 Check out the **[contributing wiki](https://github.com/pion/webrtc/wiki/Contributing)** to join the group of amazing people making this project possible:
-
-* [Sean DuBois](https://github.com/Sean-Der) - *Original Author*
-* [Michiel De Backker](https://github.com/backkem) - *Public API*
-* [Chris Hiszpanski](https://github.com/thinkski) - *Support Signature Algorithms Extension*
-* [Iñigo Garcia Olaizola](https://github.com/igolaizola) - *Serialization & resumption, cert verification, E2E*
-* [Daniele Sluijters](https://github.com/daenney) - *AES-CCM support*
-* [Jin Lei](https://github.com/jinleileiking) - *Logging*
-* [Hugo Arregui](https://github.com/hugoArregui)
-* [Lander Noterman](https://github.com/LanderN)
-* [Aleksandr Razumov](https://github.com/ernado) - *Fuzzing*
-* [Ryan Gordon](https://github.com/ryangordon)
-* [Stefan Tatschner](https://rumpelsepp.org/contact.html)
-* [Hayden James](https://github.com/hjames9)
-* [Jozef Kralik](https://github.com/jkralik)
-* [Robert Eperjesi](https://github.com/epes)
-* [Atsushi Watanabe](https://github.com/at-wat)
-* [Julien Salleyron](https://github.com/juliens) - *Server Name Indication*
-* [Jeroen de Bruijn](https://github.com/vidavidorra)
-* [bjdgyc](https://github.com/bjdgyc)
 
 ### License
 MIT License - see [LICENSE](LICENSE) for full text

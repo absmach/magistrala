@@ -2,10 +2,9 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
 /*
-Package cbor is a fast & safe CBOR encoder & decoder (RFC 7049) with a
-standard API + toarray & keyasint struct tags, CBOR tags, float64->32->16,
-CTAP2 & Canonical CBOR, duplicate map key options, and is customizable via
-simple API.
+Package cbor is a modern CBOR codec (RFC 8949 & RFC 7049) with CBOR tags,
+Go struct tags (toarray/keyasint/omitempty), Core Deterministic Encoding,
+CTAP2, Canonical CBOR, float64->32->16, and duplicate map key detection.
 
 Encoding options allow "preferred serialization" by encoding integers and floats
 to their smallest forms (e.g. float16) when values fit.

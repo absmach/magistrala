@@ -132,3 +132,10 @@ func (m *Map) PullOutAll() (data map[interface{}]interface{}) {
 	m.data = make(map[interface{}]interface{})
 	return
 }
+
+// Length returns number of stored values.
+func (m *Map) Length() int {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	return len(m.data)
+}

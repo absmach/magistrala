@@ -312,7 +312,11 @@ func (s *Session) WriteMessage(req *pool.Message) error {
 	if err != nil {
 		return fmt.Errorf("cannot marshal: %w", err)
 	}
-	return s.connection.WriteWithContext(req.Context(), data)
+	err = s.connection.WriteWithContext(req.Context(), data)
+	if err != nil {
+		return fmt.Errorf("cannot write to connection: %w", err)
+	}
+	return err
 }
 
 func (s *Session) sendCSM() error {
@@ -359,7 +363,7 @@ func (s *Session) Run(cc *ClientConn) (err error) {
 		}
 		readLen, err := s.connection.ReadWithContext(s.Context(), readBuf)
 		if err != nil {
-			return err
+			return fmt.Errorf("cannot read from connection: %w", err)
 		}
 		if readLen > 0 {
 			buffer.Write(readBuf[:readLen])

@@ -53,6 +53,7 @@ const (
 	wsContinuationFrame     = 0
 	wsMaxFrameHeaderSize    = 14
 	wsMaxControlPayloadSize = 125
+	wsCloseSatusSize        = 2
 
 	// From https://tools.ietf.org/html/rfc6455#section-11.7
 	wsCloseStatusNormalClosure      = 1000
@@ -72,9 +73,6 @@ const (
 // From https://tools.ietf.org/html/rfc6455#section-1.3
 var wsGUID = []byte("258EAFA5-E914-47DA-95CA-C5AB0DC85B11")
 
-// As per https://tools.ietf.org/html/rfc7692#section-7.2.2
-// add 0x00, 0x00, 0xff, 0xff and then a final block so that flate reader
-// does not report unexpected EOF.
 var compressFinalBlock = []byte{0x00, 0x00, 0xff, 0xff, 0x01, 0x00, 0x00, 0xff, 0xff}
 
 type websocketReader struct {
@@ -83,8 +81,14 @@ type websocketReader struct {
 	ib      []byte
 	ff      bool
 	fc      bool
-	dc      io.ReadCloser
+	dc      *wsDecompressor
 	nc      *Conn
+}
+
+type wsDecompressor struct {
+	flate io.ReadCloser
+	bufs  [][]byte
+	off   int
 }
 
 type websocketWriter struct {
@@ -97,55 +101,79 @@ type websocketWriter struct {
 	noMoreSend bool     // if true, even if there is a Write() call, we should not send anything
 }
 
-type decompressorBuffer struct {
-	buf   []byte
-	rem   int
-	off   int
-	final bool
-}
-
-func newDecompressorBuffer(buf []byte) *decompressorBuffer {
-	return &decompressorBuffer{buf: buf, rem: len(buf)}
-}
-
-func (d *decompressorBuffer) Read(p []byte) (int, error) {
-	if d.buf == nil {
+func (d *wsDecompressor) Read(dst []byte) (int, error) {
+	if len(dst) == 0 {
+		return 0, nil
+	}
+	if len(d.bufs) == 0 {
 		return 0, io.EOF
 	}
-	lim := d.rem
-	if len(p) < lim {
-		lim = len(p)
+	copied := 0
+	rem := len(dst)
+	for buf := d.bufs[0]; buf != nil && rem > 0; {
+		n := len(buf[d.off:])
+		if n > rem {
+			n = rem
+		}
+		copy(dst[copied:], buf[d.off:d.off+n])
+		copied += n
+		rem -= n
+		d.off += n
+		buf = d.nextBuf()
 	}
-	n := copy(p, d.buf[d.off:d.off+lim])
-	d.off += n
-	d.rem -= n
-	d.checkRem()
-	return n, nil
+	return copied, nil
 }
 
-func (d *decompressorBuffer) checkRem() {
-	if d.rem != 0 {
-		return
+func (d *wsDecompressor) nextBuf() []byte {
+	// We still have remaining data in the first buffer
+	if d.off != len(d.bufs[0]) {
+		return d.bufs[0]
 	}
-	if !d.final {
-		d.buf = compressFinalBlock
-		d.off = 0
-		d.rem = len(d.buf)
-		d.final = true
-	} else {
-		d.buf = nil
+	// We read the full first buffer. Reset offset.
+	d.off = 0
+	// We were at the last buffer, so we are done.
+	if len(d.bufs) == 1 {
+		d.bufs = nil
+		return nil
 	}
+	// Here we move to the next buffer.
+	d.bufs = d.bufs[1:]
+	return d.bufs[0]
 }
 
-func (d *decompressorBuffer) ReadByte() (byte, error) {
-	if d.buf == nil {
+func (d *wsDecompressor) ReadByte() (byte, error) {
+	if len(d.bufs) == 0 {
 		return 0, io.EOF
 	}
-	b := d.buf[d.off]
+	b := d.bufs[0][d.off]
 	d.off++
-	d.rem--
-	d.checkRem()
+	d.nextBuf()
 	return b, nil
+}
+
+func (d *wsDecompressor) addBuf(b []byte) {
+	d.bufs = append(d.bufs, b)
+}
+
+func (d *wsDecompressor) decompress() ([]byte, error) {
+	d.off = 0
+	// As per https://tools.ietf.org/html/rfc7692#section-7.2.2
+	// add 0x00, 0x00, 0xff, 0xff and then a final block so that flate reader
+	// does not report unexpected EOF.
+	d.bufs = append(d.bufs, compressFinalBlock)
+	// Create or reset the decompressor with his object (wsDecompressor)
+	// that provides Read() and ReadByte() APIs that will consume from
+	// the compressed buffers (d.bufs).
+	if d.flate == nil {
+		d.flate = flate.NewReader(d)
+	} else {
+		d.flate.(flate.Resetter).Reset(d, nil)
+	}
+	// TODO: When Go 1.15 support is dropped, replace with io.ReadAll()
+	b, err := ioutil.ReadAll(d.flate)
+	// Now reset the compressed buffers list
+	d.bufs = nil
+	return b, err
 }
 
 func wsNewReader(r io.Reader) *websocketReader {
@@ -254,29 +282,47 @@ func (r *websocketReader) Read(p []byte) (int, error) {
 		}
 
 		var b []byte
+		// This ensures that we get the full payload for this frame.
 		b, pos, err = wsGet(r.r, buf, pos, rem)
 		if err != nil {
 			return 0, err
 		}
+		// We read the full frame.
 		rem = 0
+		addToPending := true
 		if r.fc {
-			br := newDecompressorBuffer(b)
-			if r.dc == nil {
-				r.dc = flate.NewReader(br)
-			} else {
-				r.dc.(flate.Resetter).Reset(br, nil)
+			// Don't add to pending if we are not dealing with the final frame.
+			addToPending = r.ff
+			// Add the compressed payload buffer to the list.
+			r.addCBuf(b)
+			// Decompress only when this is the final frame.
+			if r.ff {
+				b, err = r.dc.decompress()
+				if err != nil {
+					return 0, err
+				}
+				r.fc = false
 			}
-			// TODO: When Go 1.15 support is dropped, replace with io.ReadAll()
-			b, err = ioutil.ReadAll(r.dc)
-			if err != nil {
-				return 0, err
-			}
-			r.fc = false
 		}
-		r.pending = append(r.pending, b)
+		// Add to the pending list if dealing with uncompressed frames or
+		// after we have received the full compressed message and decompressed it.
+		if addToPending {
+			r.pending = append(r.pending, b)
+		}
 	}
-	// At this point we should have pending slices.
-	return r.drainPending(p), nil
+	// In case of compression, there may be nothing to drain
+	if len(r.pending) > 0 {
+		return r.drainPending(p), nil
+	}
+	return 0, nil
+}
+
+func (r *websocketReader) addCBuf(b []byte) {
+	if r.dc == nil {
+		r.dc = &wsDecompressor{}
+	}
+	// Add a copy of the incoming buffer to the list of compressed buffers.
+	r.dc.addBuf(append([]byte(nil), b...))
 }
 
 func (r *websocketReader) drainPending(p []byte) int {
@@ -327,7 +373,6 @@ func (r *websocketReader) handleControlFrame(frameType wsOpCode, buf []byte, pos
 	var payload []byte
 	var err error
 
-	statusPos := pos
 	if rem > 0 {
 		payload, pos, err = wsGet(r.r, buf, pos, rem)
 		if err != nil {
@@ -337,17 +382,24 @@ func (r *websocketReader) handleControlFrame(frameType wsOpCode, buf []byte, pos
 	switch frameType {
 	case wsCloseMessage:
 		status := wsCloseStatusNoStatusReceived
-		body := ""
-		// If there is a payload, it should contain 2 unsigned bytes
-		// that represent the status code and then optional payload.
-		if len(payload) >= 2 {
-			status = int(binary.BigEndian.Uint16(buf[statusPos : statusPos+2]))
-			body = string(buf[statusPos+2 : statusPos+len(payload)])
-			if body != "" && !utf8.ValidString(body) {
-				// https://tools.ietf.org/html/rfc6455#section-5.5.1
-				// If body is present, it must be a valid utf8
-				status = wsCloseStatusInvalidPayloadData
-				body = "invalid utf8 body in close frame"
+		var body string
+		lp := len(payload)
+		// If there is a payload, the status is represented as a 2-byte
+		// unsigned integer (in network byte order). Then, there may be an
+		// optional body.
+		hasStatus, hasBody := lp >= wsCloseSatusSize, lp > wsCloseSatusSize
+		if hasStatus {
+			// Decode the status
+			status = int(binary.BigEndian.Uint16(payload[:wsCloseSatusSize]))
+			// Now if there is a body, capture it and make sure this is a valid UTF-8.
+			if hasBody {
+				body = string(payload[wsCloseSatusSize:])
+				if !utf8.ValidString(body) {
+					// https://tools.ietf.org/html/rfc6455#section-5.5.1
+					// If body is present, it must be a valid utf8
+					status = wsCloseStatusInvalidPayloadData
+					body = "invalid utf8 body in close frame"
+				}
 			}
 		}
 		r.nc.wsEnqueueCloseMsg(status, body)

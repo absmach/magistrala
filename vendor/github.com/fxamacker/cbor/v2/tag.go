@@ -264,12 +264,6 @@ func newTagItem(opts TagOptions, contentType reflect.Type, num uint64, nestedNum
 	if num == selfDescribedCBORTagNum {
 		return nil, errors.New("cbor: cannot add tag number 55799 to TagSet, it's built-in and ignored automatically")
 	}
-	//if reflect.PtrTo(contentType).Implements(typeMarshaler) && opts.EncTag != EncTagNone {
-	//return nil, errors.New("cbor: cannot add cbor.Marshaler to TagSet with EncTag != EncTagNone")
-	//}
-	//if reflect.PtrTo(contentType).Implements(typeUnmarshaler) && opts.DecTag != DecTagIgnored {
-	//return nil, errors.New("cbor: cannot add cbor.Unmarshaler to TagSet with DecTag != DecTagIgnored")
-	//}
 
 	te := tagItem{num: []uint64{num}, opts: opts, contentType: contentType}
 	te.num = append(te.num, nestedNum...)

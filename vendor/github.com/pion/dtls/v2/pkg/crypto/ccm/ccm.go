@@ -70,9 +70,9 @@ func (c *ccm) NonceSize() int { return 15 - int(c.L) }
 func (c *ccm) Overhead() int  { return int(c.M) }
 func (c *ccm) MaxLength() int { return maxlen(c.L, c.Overhead()) }
 
-func maxlen(L uint8, tagsize int) int {
-	max := (uint64(1) << (8 * L)) - 1
-	if m64 := uint64(math.MaxInt64) - uint64(tagsize); L > 8 || max > m64 {
+func maxlen(l uint8, tagsize int) int {
+	max := (uint64(1) << (8 * l)) - 1
+	if m64 := uint64(math.MaxInt64) - uint64(tagsize); l > 8 || max > m64 {
 		max = m64 // The maximum lentgh on a 64bit arch
 	}
 	if max != uint64(int(max)) {
@@ -113,9 +113,7 @@ func (c *ccm) cbcData(mac, data []byte) {
 	}
 }
 
-var (
-	errPlaintextTooLong = errors.New("ccm: plaintext too large")
-)
+var errPlaintextTooLong = errors.New("ccm: plaintext too large")
 
 func (c *ccm) tag(nonce, plaintext, adata []byte) ([]byte, error) {
 	var mac [ccmBlockSize]byte
@@ -223,7 +221,7 @@ func (c *ccm) Open(dst, nonce, ciphertext, adata []byte) ([]byte, error) {
 		return nil, errCiphertextTooLong
 	}
 
-	var tag = make([]byte, int(c.M))
+	tag := make([]byte, int(c.M))
 	copy(tag, ciphertext[len(ciphertext)-int(c.M):])
 	ciphertextWithoutTag := ciphertext[:len(ciphertext)-int(c.M)]
 

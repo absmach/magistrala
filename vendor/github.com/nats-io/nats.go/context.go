@@ -92,7 +92,7 @@ func (nc *Conn) requestWithContext(ctx context.Context, subj string, hdr, data [
 
 // oldRequestWithContext utilizes inbox and subscription per request.
 func (nc *Conn) oldRequestWithContext(ctx context.Context, subj string, hdr, data []byte) (*Msg, error) {
-	inbox := NewInbox()
+	inbox := nc.newInbox()
 	ch := make(chan *Msg, RequestChanLen)
 
 	s, err := nc.subscribe(inbox, _EMPTY_, nil, ch, true, nil)
@@ -110,10 +110,7 @@ func (nc *Conn) oldRequestWithContext(ctx context.Context, subj string, hdr, dat
 	return s.NextMsgWithContext(ctx)
 }
 
-// NextMsgWithContext takes a context and returns the next message
-// available to a synchronous subscriber, blocking until it is delivered
-// or context gets canceled.
-func (s *Subscription) NextMsgWithContext(ctx context.Context) (*Msg, error) {
+func (s *Subscription) nextMsgWithContext(ctx context.Context, pullSubInternal, waitIfNoMsg bool) (*Msg, error) {
 	if ctx == nil {
 		return nil, ErrInvalidContext
 	}
@@ -125,7 +122,7 @@ func (s *Subscription) NextMsgWithContext(ctx context.Context) (*Msg, error) {
 	}
 
 	s.mu.Lock()
-	err := s.validateNextMsgState()
+	err := s.validateNextMsgState(pullSubInternal)
 	if err != nil {
 		s.mu.Unlock()
 		return nil, err
@@ -150,6 +147,11 @@ func (s *Subscription) NextMsgWithContext(ctx context.Context) (*Msg, error) {
 			return msg, nil
 		}
 	default:
+		// If internal and we don't want to wait, signal that there is no
+		// message in the internal queue.
+		if pullSubInternal && !waitIfNoMsg {
+			return nil, errNoMessages
+		}
 	}
 
 	select {
@@ -165,6 +167,13 @@ func (s *Subscription) NextMsgWithContext(ctx context.Context) (*Msg, error) {
 	}
 
 	return msg, nil
+}
+
+// NextMsgWithContext takes a context and returns the next message
+// available to a synchronous subscriber, blocking until it is delivered
+// or context gets canceled.
+func (s *Subscription) NextMsgWithContext(ctx context.Context) (*Msg, error) {
+	return s.nextMsgWithContext(ctx, false, true)
 }
 
 // FlushWithContext will allow a context to control the duration

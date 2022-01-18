@@ -5,6 +5,8 @@ JSON pretty print for Golang.
 ## Example
 
 ```go
+import "github.com/hokaccha/go-prettyjson"
+
 v := map[string]interface{}{
     "str": "foo",
     "num": 100,

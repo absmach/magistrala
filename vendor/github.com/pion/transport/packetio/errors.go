@@ -18,7 +18,10 @@ func (e *netError) Temporary() bool {
 	return e.temporary
 }
 
-// ErrFull is returned when the buffer has hit the configured limits.
-var ErrFull = errors.New("packetio.Buffer is full, discarding write")
+var (
+	// ErrFull is returned when the buffer has hit the configured limits.
+	ErrFull = errors.New("packetio.Buffer is full, discarding write")
 
-var errTimeout = errors.New("i/o timeout")
+	// ErrTimeout is returned when a deadline has expired
+	ErrTimeout = errors.New("i/o timeout")
+)

@@ -3,77 +3,109 @@ package dtls
 import (
 	"context"
 	"crypto/rand"
+
+	"github.com/pion/dtls/v2/pkg/crypto/elliptic"
+	"github.com/pion/dtls/v2/pkg/protocol"
+	"github.com/pion/dtls/v2/pkg/protocol/alert"
+	"github.com/pion/dtls/v2/pkg/protocol/extension"
+	"github.com/pion/dtls/v2/pkg/protocol/handshake"
 )
 
-func flight0Parse(ctx context.Context, c flightConn, state *State, cache *handshakeCache, cfg *handshakeConfig) (flightVal, *alert, error) {
-	// HelloVerifyRequest can be skipped by the server,
-	// so allow ServerHello during flight1 also
-	seq, msgs, ok := cache.fullPullMap(state.handshakeRecvSequence,
-		handshakeCachePullRule{handshakeTypeClientHello, cfg.initialEpoch, true, false},
+func flight0Parse(ctx context.Context, c flightConn, state *State, cache *handshakeCache, cfg *handshakeConfig) (flightVal, *alert.Alert, error) {
+	seq, msgs, ok := cache.fullPullMap(0,
+		handshakeCachePullRule{handshake.TypeClientHello, cfg.initialEpoch, true, false},
 	)
 	if !ok {
 		// No valid message received. Keep reading
-		return flight0, nil, nil
+		return 0, nil, nil
 	}
 	state.handshakeRecvSequence = seq
 
-	var clientHello *handshakeMessageClientHello
+	var clientHello *handshake.MessageClientHello
 
 	// Validate type
-	if clientHello, ok = msgs[handshakeTypeClientHello].(*handshakeMessageClientHello); !ok {
-		return 0, &alert{alertLevelFatal, alertInternalError}, nil
+	if clientHello, ok = msgs[handshake.TypeClientHello].(*handshake.MessageClientHello); !ok {
+		return 0, &alert.Alert{Level: alert.Fatal, Description: alert.InternalError}, nil
 	}
 
-	if !clientHello.version.Equal(protocolVersion1_2) {
-		return 0, &alert{alertLevelFatal, alertProtocolVersion}, errUnsupportedProtocolVersion
+	if !clientHello.Version.Equal(protocol.Version1_2) {
+		return 0, &alert.Alert{Level: alert.Fatal, Description: alert.ProtocolVersion}, errUnsupportedProtocolVersion
 	}
 
-	state.remoteRandom = clientHello.random
+	state.remoteRandom = clientHello.Random
 
-	if _, ok := findMatchingCipherSuite(clientHello.cipherSuites, cfg.localCipherSuites); !ok {
-		return 0, &alert{alertLevelFatal, alertInsufficientSecurity}, errCipherSuiteNoIntersection
+	cipherSuites := []CipherSuite{}
+	for _, id := range clientHello.CipherSuiteIDs {
+		if c := cipherSuiteForID(CipherSuiteID(id), cfg.customCipherSuites); c != nil {
+			cipherSuites = append(cipherSuites, c)
+		}
 	}
 
-	state.cipherSuite = clientHello.cipherSuites[0]
+	if state.cipherSuite, ok = findMatchingCipherSuite(cipherSuites, cfg.localCipherSuites); !ok {
+		return 0, &alert.Alert{Level: alert.Fatal, Description: alert.InsufficientSecurity}, errCipherSuiteNoIntersection
+	}
 
-	for _, extension := range clientHello.extensions {
-		switch e := extension.(type) {
-		case *extensionSupportedEllipticCurves:
-			if len(e.ellipticCurves) == 0 {
-				return 0, &alert{alertLevelFatal, alertInsufficientSecurity}, errNoSupportedEllipticCurves
+	for _, val := range clientHello.Extensions {
+		switch e := val.(type) {
+		case *extension.SupportedEllipticCurves:
+			if len(e.EllipticCurves) == 0 {
+				return 0, &alert.Alert{Level: alert.Fatal, Description: alert.InsufficientSecurity}, errNoSupportedEllipticCurves
 			}
-			state.namedCurve = e.ellipticCurves[0]
-		case *extensionUseSRTP:
-			profile, ok := findMatchingSRTPProfile(e.protectionProfiles, cfg.localSRTPProtectionProfiles)
+			state.namedCurve = e.EllipticCurves[0]
+		case *extension.UseSRTP:
+			profile, ok := findMatchingSRTPProfile(e.ProtectionProfiles, cfg.localSRTPProtectionProfiles)
 			if !ok {
-				return 0, &alert{alertLevelFatal, alertInsufficientSecurity}, errServerNoMatchingSRTPProfile
+				return 0, &alert.Alert{Level: alert.Fatal, Description: alert.InsufficientSecurity}, errServerNoMatchingSRTPProfile
 			}
 			state.srtpProtectionProfile = profile
-		case *extensionUseExtendedMasterSecret:
+		case *extension.UseExtendedMasterSecret:
 			if cfg.extendedMasterSecret != DisableExtendedMasterSecret {
 				state.extendedMasterSecret = true
 			}
-		case *extensionServerName:
-			state.serverName = e.serverName // remote server name
+		case *extension.ServerName:
+			state.serverName = e.ServerName // remote server name
 		}
 	}
 
 	if cfg.extendedMasterSecret == RequireExtendedMasterSecret && !state.extendedMasterSecret {
-		return 0, &alert{alertLevelFatal, alertInsufficientSecurity}, errServerRequiredButNoClientEMS
+		return 0, &alert.Alert{Level: alert.Fatal, Description: alert.InsufficientSecurity}, errServerRequiredButNoClientEMS
 	}
 
 	if state.localKeypair == nil {
 		var err error
-		state.localKeypair, err = generateKeypair(state.namedCurve)
+		state.localKeypair, err = elliptic.GenerateKeypair(state.namedCurve)
 		if err != nil {
-			return 0, &alert{alertLevelFatal, alertIllegalParameter}, err
+			return 0, &alert.Alert{Level: alert.Fatal, Description: alert.IllegalParameter}, err
 		}
 	}
 
-	return flight2, nil, nil
+	return handleHelloResume(clientHello.SessionID, state, cfg, flight2)
 }
 
-func flight0Generate(c flightConn, state *State, cache *handshakeCache, cfg *handshakeConfig) ([]*packet, *alert, error) {
+func handleHelloResume(sessionID []byte, state *State, cfg *handshakeConfig, next flightVal) (flightVal, *alert.Alert, error) {
+	if len(sessionID) > 0 && cfg.sessionStore != nil {
+		if s, err := cfg.sessionStore.Get(sessionID); err != nil {
+			return 0, &alert.Alert{Level: alert.Fatal, Description: alert.InternalError}, err
+		} else if s.ID != nil {
+			cfg.log.Tracef("[handshake] resume session: %x", sessionID)
+
+			state.SessionID = sessionID
+			state.masterSecret = s.Secret
+
+			if err := state.initCipherSuite(); err != nil {
+				return 0, &alert.Alert{Level: alert.Fatal, Description: alert.InternalError}, err
+			}
+
+			clientRandom := state.localRandom.MarshalFixed()
+			cfg.writeKeyLog(keyLogLabelTLS12, clientRandom[:], state.masterSecret)
+
+			return flight4b, nil, nil
+		}
+	}
+	return next, nil, nil
+}
+
+func flight0Generate(c flightConn, state *State, cache *handshakeCache, cfg *handshakeConfig) ([]*packet, *alert.Alert, error) {
 	// Initialize
 	state.cookie = make([]byte, cookieLength)
 	if _, err := rand.Read(state.cookie); err != nil {
@@ -85,7 +117,7 @@ func flight0Generate(c flightConn, state *State, cache *handshakeCache, cfg *han
 	state.remoteEpoch.Store(zeroEpoch)
 	state.namedCurve = defaultNamedCurve
 
-	if err := state.localRandom.populate(); err != nil {
+	if err := state.localRandom.Populate(); err != nil {
 		return nil, nil, err
 	}
 

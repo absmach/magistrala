@@ -93,7 +93,11 @@ func (s *Session) WriteMessage(req *pool.Message) error {
 	if err != nil {
 		return fmt.Errorf("cannot marshal: %w", err)
 	}
-	return s.connection.WriteWithContext(req.Context(), data)
+	err = s.connection.WriteWithContext(req.Context(), data)
+	if err != nil {
+		return fmt.Errorf("cannot write to connection: %w", err)
+	}
+	return err
 }
 
 func (s *Session) MaxMessageSize() int {
@@ -121,7 +125,7 @@ func (s *Session) Run(cc *client.ClientConn) (err error) {
 		readBuf := m
 		readLen, err := s.connection.ReadWithContext(s.Context(), readBuf)
 		if err != nil {
-			return err
+			return fmt.Errorf("cannot read from connection: %w", err)
 		}
 		readBuf = readBuf[:readLen]
 		err = cc.Process(readBuf)

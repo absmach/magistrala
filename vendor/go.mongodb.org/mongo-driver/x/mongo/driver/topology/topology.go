@@ -23,6 +23,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/event"
+	"go.mongodb.org/mongo-driver/internal/randutil"
 	"go.mongodb.org/mongo-driver/mongo/address"
 	"go.mongodb.org/mongo-driver/mongo/description"
 	"go.mongodb.org/mongo-driver/x/mongo/driver"
@@ -48,6 +49,9 @@ var ErrServerSelectionTimeout = errors.New("server selection timeout")
 // MonitorMode represents the way in which a server is monitored.
 type MonitorMode uint8
 
+// random is a package-global pseudo-random number generator.
+var random = randutil.NewLockedRand(rand.NewSource(time.Now().UnixNano()))
+
 // These constants are the available monitoring modes.
 const (
 	AutomaticMode MonitorMode = iota
@@ -56,7 +60,7 @@ const (
 
 // Topology represents a MongoDB deployment.
 type Topology struct {
-	connectionstate int32
+	connectionstate int64
 
 	cfg *config
 
@@ -144,7 +148,7 @@ func New(opts ...Option) (*Topology, error) {
 // Connect initializes a Topology and starts the monitoring process. This function
 // must be called to properly monitor the topology.
 func (t *Topology) Connect() error {
-	if !atomic.CompareAndSwapInt32(&t.connectionstate, disconnected, connecting) {
+	if !atomic.CompareAndSwapInt64(&t.connectionstate, disconnected, connecting) {
 		return ErrTopologyConnected
 	}
 
@@ -226,14 +230,14 @@ func (t *Topology) Connect() error {
 
 	t.subscriptionsClosed = false // explicitly set in case topology was disconnected and then reconnected
 
-	atomic.StoreInt32(&t.connectionstate, connected)
+	atomic.StoreInt64(&t.connectionstate, connected)
 	return nil
 }
 
 // Disconnect closes the topology. It stops the monitoring thread and
 // closes all open subscriptions.
 func (t *Topology) Disconnect(ctx context.Context) error {
-	if !atomic.CompareAndSwapInt32(&t.connectionstate, connected, disconnecting) {
+	if !atomic.CompareAndSwapInt64(&t.connectionstate, connected, disconnecting) {
 		return ErrTopologyClosed
 	}
 
@@ -265,7 +269,7 @@ func (t *Topology) Disconnect(ctx context.Context) error {
 
 	t.desc.Store(description.Topology{})
 
-	atomic.StoreInt32(&t.connectionstate, disconnected)
+	atomic.StoreInt64(&t.connectionstate, disconnected)
 	t.publishTopologyClosedEvent()
 	return nil
 }
@@ -287,7 +291,7 @@ func (t *Topology) Kind() description.TopologyKind { return t.Description().Kind
 // and will be pre-populated with the current description.Topology.
 // Subscribe implements the driver.Subscriber interface.
 func (t *Topology) Subscribe() (*driver.Subscription, error) {
-	if atomic.LoadInt32(&t.connectionstate) != connected {
+	if atomic.LoadInt64(&t.connectionstate) != connected {
 		return nil, errors.New("cannot subscribe to Topology that is not connected")
 	}
 	ch := make(chan description.Topology, 1)
@@ -335,7 +339,7 @@ func (t *Topology) Unsubscribe(sub *driver.Subscription) error {
 // RequestImmediateCheck will send heartbeats to all the servers in the
 // topology right away, instead of waiting for the heartbeat timeout.
 func (t *Topology) RequestImmediateCheck() {
-	if atomic.LoadInt32(&t.connectionstate) != connected {
+	if atomic.LoadInt64(&t.connectionstate) != connected {
 		return
 	}
 	t.serversLock.Lock()
@@ -349,7 +353,7 @@ func (t *Topology) RequestImmediateCheck() {
 // server selection spec, and will time out after severSelectionTimeout or when the
 // parent context is done.
 func (t *Topology) SelectServer(ctx context.Context, ss description.ServerSelector) (driver.Server, error) {
-	if atomic.LoadInt32(&t.connectionstate) != connected {
+	if atomic.LoadInt64(&t.connectionstate) != connected {
 		return nil, ErrTopologyClosed
 	}
 	var ssTimeoutCh <-chan time.Time
@@ -395,7 +399,7 @@ func (t *Topology) SelectServer(ctx context.Context, ss description.ServerSelect
 			continue
 		}
 
-		selected := suitable[rand.Intn(len(suitable))]
+		selected := suitable[random.Intn(len(suitable))]
 		selectedS, err := t.FindServer(selected)
 		switch {
 		case err != nil:
@@ -414,7 +418,7 @@ func (t *Topology) SelectServer(ctx context.Context, ss description.ServerSelect
 // FindServer will attempt to find a server that fits the given server description.
 // This method will return nil, nil if a matching server could not be found.
 func (t *Topology) FindServer(selected description.Server) (*SelectedServer, error) {
-	if atomic.LoadInt32(&t.connectionstate) != connected {
+	if atomic.LoadInt64(&t.connectionstate) != connected {
 		return nil, ErrTopologyClosed
 	}
 	t.serversLock.Lock()
@@ -527,7 +531,7 @@ func (t *Topology) pollSRVRecords() {
 			break
 		}
 
-		parsedHosts, err := t.dnsResolver.ParseHosts(hosts, false)
+		parsedHosts, err := t.dnsResolver.ParseHosts(hosts, t.cfg.srvServiceName, false)
 		// DNS problem or no verified hosts returned
 		if err != nil || len(parsedHosts) == 0 {
 			if !t.pollHeartbeatTime.Load().(bool) {
@@ -581,11 +585,25 @@ func (t *Topology) processSRVResults(parsedHosts []string) bool {
 		t.fsm.removeServerByAddr(addr)
 		t.publishServerClosedEvent(s.address)
 	}
+
+	// Now that we've removed all the hosts that disappeared from the SRV record, we need to add any
+	// new hosts added to the SRV record. If adding all of the new hosts would increase the number
+	// of servers past srvMaxHosts, shuffle the list of added hosts.
+	if t.cfg.srvMaxHosts > 0 && len(t.servers)+len(diff.Added) > t.cfg.srvMaxHosts {
+		random.Shuffle(len(diff.Added), func(i, j int) {
+			diff.Added[i], diff.Added[j] = diff.Added[j], diff.Added[i]
+		})
+	}
+	// Add all added hosts until the number of servers reaches srvMaxHosts.
 	for _, a := range diff.Added {
+		if t.cfg.srvMaxHosts > 0 && len(t.servers) >= t.cfg.srvMaxHosts {
+			break
+		}
 		addr := address.Address(a).Canonicalize()
 		_ = t.addServer(addr)
 		t.fsm.addServer(addr)
 	}
+
 	//store new description
 	newDesc := description.Topology{
 		Kind:                  t.fsm.Kind,

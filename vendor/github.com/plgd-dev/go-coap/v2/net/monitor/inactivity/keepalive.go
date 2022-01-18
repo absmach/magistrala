@@ -30,7 +30,7 @@ func (m *KeepAlive) OnInactive(cc ClientConn) {
 		m.cancelPing()
 		m.cancelPing = nil
 	}
-	if v >= m.maxRetries {
+	if v > m.maxRetries {
 		m.onInactive(cc)
 		return
 	}

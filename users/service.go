@@ -251,11 +251,14 @@ func (svc usersService) ViewProfile(ctx context.Context, token string) (User, er
 }
 
 func (svc usersService) ListUsers(ctx context.Context, token string, offset, limit uint64, email string, m Metadata) (UserPage, error) {
-	_, err := svc.identify(ctx, token)
+	id, err := svc.identify(ctx, token)
 	if err != nil {
 		return UserPage{}, err
 	}
 
+	if err := svc.authorize(ctx, id.id, "authorities", "member"); err != nil {
+		return UserPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+	}
 	return svc.users.RetrieveAll(ctx, offset, limit, nil, email, m)
 }
 

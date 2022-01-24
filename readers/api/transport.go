@@ -62,7 +62,7 @@ func MakeHandler(svc readers.MessageRepository, tc mainflux.ThingsServiceClient,
 		opts...,
 	))
 
-	mux.GetFunc("/version", mainflux.Version(svcName))
+	mux.GetFunc("/health", mainflux.Health(svcName))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux

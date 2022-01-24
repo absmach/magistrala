@@ -47,7 +47,7 @@ func MakeHandler(svc provision.Service) http.Handler {
 	))
 
 	r.Handle("/metrics", promhttp.Handler())
-	r.GetFunc("/version", mainflux.Version("provision"))
+	r.GetFunc("/health", mainflux.Health("provision"))
 
 	return r
 }

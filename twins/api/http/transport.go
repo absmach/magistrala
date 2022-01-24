@@ -81,7 +81,7 @@ func MakeHandler(tracer opentracing.Tracer, svc twins.Service) http.Handler {
 		opts...,
 	))
 
-	r.GetFunc("/version", mainflux.Version("twins"))
+	r.GetFunc("/health", mainflux.Health("twins"))
 	r.Handle("/metrics", promhttp.Handler())
 
 	return r

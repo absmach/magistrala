@@ -77,6 +77,6 @@ func (sdk mfSDK) UpdateChannel(channel Channel, token string) error
 func (sdk mfSDK) UpdateThing(thing Thing, token string) error
     UpdateThing - updates thing by ID
 
-func (sdk mfSDK) Version() (string, error)
-    Version - server health check
+func (sdk mfSDK) Health() (mainflux.Health, error)
+    Health - things service health check
 ```

@@ -15,12 +15,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+// MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler(svc auth.Service, tracer opentracing.Tracer) http.Handler {
 	mux := bone.New()
 	mux = keys.MakeHandler(svc, mux, tracer)
 	mux = groups.MakeHandler(svc, mux, tracer)
 	mux = policies.MakeHandler(svc, mux, tracer)
-	mux.GetFunc("/version", mainflux.Version("auth"))
+	mux.GetFunc("/health", mainflux.Health("auth"))
 	mux.Handle("/metrics", promhttp.Handler())
 	return mux
 }

@@ -5,14 +5,14 @@ package cli
 
 import "github.com/spf13/cobra"
 
-// NewVersionCmd returns version command.
-func NewVersionCmd() *cobra.Command {
+// NewHealthCmd returns health check command.
+func NewHealthCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "version",
-		Short: "Mainflux services version",
-		Long:  `Mainflux services version: get version of Mainflux Things Service`,
+		Use:   "health",
+		Short: "Health Check",
+		Long:  `Mainflux Things service Health Check`,
 		Run: func(cmd *cobra.Command, args []string) {
-			v, err := sdk.Version()
+			v, err := sdk.Health()
 			if err != nil {
 				logError(err)
 				return

@@ -14,7 +14,7 @@ import (
 // MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler() http.Handler {
 	r := bone.New()
-	r.GetFunc("/version", mainflux.Version("lora-adapter"))
+	r.GetFunc("/health", mainflux.Health("lora-adapter"))
 	r.Handle("/metrics", promhttp.Handler())
 
 	return r

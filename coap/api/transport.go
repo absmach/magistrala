@@ -40,10 +40,10 @@ var (
 	service coap.Service
 )
 
-//MakeHTTPHandler creates handler for version endpoint.
+// MakeHandler returns a HTTP handler for API endpoints.
 func MakeHTTPHandler() http.Handler {
 	b := bone.New()
-	b.GetFunc("/version", mainflux.Version(protocol))
+	b.GetFunc("/health", mainflux.Health(protocol))
 	b.Handle("/metrics", promhttp.Handler())
 
 	return b

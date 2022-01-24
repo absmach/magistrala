@@ -37,6 +37,16 @@ paths:
           description: Missing or invalid access token provided.
         '500':
           $ref: "#/components/responses/ServiceError"
+  /health:
+    get:
+      summary: Retrieves service health check info.
+      tags:
+        - health
+      responses:
+        '200':
+          $ref: "#/components/responses/HealthRes"
+        '500':
+          $ref: "#/components/responses/ServiceError"
 
 components:
   schemas:
@@ -210,6 +220,11 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/MessagesPage"
-
     ServiceError:
       description: Unexpected server-side error occurred.
+    HealthRes:
+      description: Service Health Check.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/HealthInfo.yml"

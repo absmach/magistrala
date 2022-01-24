@@ -100,7 +100,7 @@ func MakeHandler(svc bootstrap.Service, reader bootstrap.ConfigReader) http.Hand
 		encodeResponse,
 		opts...))
 
-	r.GetFunc("/version", mainflux.Version("bootstrap"))
+	r.GetFunc("/health", mainflux.Health("bootstrap"))
 	r.Handle("/metrics", promhttp.Handler())
 
 	return r

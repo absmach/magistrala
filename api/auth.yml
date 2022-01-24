@@ -87,7 +87,7 @@ paths:
       summary: Gets all groups.
       description: |
         Gets all groups up to a max level of hierarchy that can be fetched in one
-        request ( max level = 5). Result can be filtered by metadata. Groups will 
+        request ( max level = 5). Result can be filtered by metadata. Groups will
         be returned as JSON array or JSON tree.
       tags:
         - auth
@@ -154,7 +154,7 @@ paths:
       summary: Deletes group.
       description: |
         Deletes group. If group is parent and descendant groups do not have any members
-        child groups will be deleted. Group cannot be deleted if has members or if 
+        child groups will be deleted. Group cannot be deleted if has members or if
         any descendant group has members.
       tags:
         - auth
@@ -354,6 +354,17 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
+  /health:
+    get:
+      summary: Retrieves service health check info.
+      tags:
+        - health
+      responses:
+        '200':
+          $ref: "#/components/responses/HealthRes"
+        '500':
+          $ref: "#/components/responses/ServiceError"
+
 components:
   schemas:
     Key:
@@ -736,3 +747,9 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/MembershipPage"
+    HealthRes:
+      description: Service Health Check.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/HealthInfo.yml"

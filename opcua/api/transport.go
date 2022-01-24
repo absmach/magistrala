@@ -43,7 +43,7 @@ func MakeHandler(svc opcua.Service) http.Handler {
 		opts...,
 	))
 
-	r.GetFunc("/version", mainflux.Version("opcua-adapter"))
+	r.GetFunc("/health", mainflux.Health("opcua-adapter"))
 	r.Handle("/metrics", promhttp.Handler())
 
 	return r

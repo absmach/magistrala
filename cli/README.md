@@ -7,9 +7,9 @@ make cli
 
 ## Usage
 ### Service
-#### Get the version of Mainflux services
+#### Get Mainflux Things services Health Check
 ```bash
-mainflux-cli version
+mainflux-cli health
 ```
 
 ### Users management

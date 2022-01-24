@@ -10,7 +10,7 @@ paths:
       summary: Creates a certificate for thing
       description: Creates a certificate for thing
       tags:
-        - Thing to proxy
+        - certs
       parameters:
       - $ref: "#/components/parameters/Authorization"
       requestBody:
@@ -28,7 +28,7 @@ paths:
       description: |
         Retrieves a certificate for a given cert ID.
       tags:
-        - configs
+        - certs
       parameters:
         - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/CertID"
@@ -45,7 +45,7 @@ paths:
       description: |
         Revokes a certificate for a given cert ID.
       tags:
-        - configs
+        - certs
       parameters:
         - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/CertID"
@@ -63,7 +63,7 @@ paths:
       description: |
         Retrieves a list of certificates' serial IDs for a given thing ID.
       tags:
-        - configs
+        - certs
       parameters:
         - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ThingID"
@@ -73,6 +73,16 @@ paths:
         '404':
           description: |
             Failed to retrieve corresponding certificates.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /health:
+    get:
+      summary: Retrieves service health check info.
+      tags:
+        - health
+      responses:
+        '200':
+          $ref: "#/components/responses/HealthRes"
         '500':
           $ref: "#/components/responses/ServiceError"
 
@@ -228,3 +238,9 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Revoke"
+    HealthRes:
+      description: Service Health Check.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/HealthInfo.yml"

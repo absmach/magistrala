@@ -41,7 +41,7 @@ func main() {
 	}
 
 	// API commands
-	versionCmd := cli.NewVersionCmd()
+	healthCmd := cli.NewHealthCmd()
 	usersCmd := cli.NewUsersCmd()
 	thingsCmd := cli.NewThingsCmd()
 	groupsCmd := cli.NewGroupsCmd()
@@ -52,7 +52,7 @@ func main() {
 	certsCmd := cli.NewCertsCmd()
 
 	// Root Commands
-	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(healthCmd)
 	rootCmd.AddCommand(usersCmd)
 	rootCmd.AddCommand(groupsCmd)
 	rootCmd.AddCommand(thingsCmd)

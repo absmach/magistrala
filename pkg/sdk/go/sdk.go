@@ -8,6 +8,8 @@ import (
 	"errors"
 	"net/http"
 	"time"
+
+	"github.com/mainflux/mainflux"
 )
 
 const (
@@ -53,8 +55,8 @@ var (
 	// was passed.
 	ErrInvalidContentType = errors.New("Unknown Content Type")
 
-	// ErrFetchVersion indicates that fetching of version failed.
-	ErrFetchVersion = errors.New("failed to fetch version")
+	// ErrFetchHealth indicates that fetching of health check failed.
+	ErrFetchHealth = errors.New("failed to fetch health check")
 
 	// ErrFailedWhitelist failed to whitelist configs
 	ErrFailedWhitelist = errors.New("failed to whitelist")
@@ -234,8 +236,8 @@ type SDK interface {
 	// SetContentType sets message content type.
 	SetContentType(ct ContentType) error
 
-	// Version returns used mainflux version.
-	Version() (string, error)
+	// Health returns things service health check.
+	Health() (mainflux.HealthInfo, error)
 
 	// AddBootstrap add bootstrap configuration
 	AddBootstrap(token string, cfg BootstrapConfig) (string, error)

@@ -57,7 +57,7 @@ func MakeHandler(svc adapter.Service, tracer opentracing.Tracer) http.Handler {
 		opts...,
 	))
 
-	r.GetFunc("/version", mainflux.Version("http"))
+	r.GetFunc("/health", mainflux.Health("http"))
 	r.Handle("/metrics", promhttp.Handler())
 
 	return r

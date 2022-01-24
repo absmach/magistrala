@@ -109,7 +109,7 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer) http.Handler {
 		opts...,
 	))
 
-	mux.GetFunc("/version", mainflux.Version("users"))
+	mux.GetFunc("/health", mainflux.Health("users"))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux

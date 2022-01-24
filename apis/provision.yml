@@ -40,9 +40,18 @@ paths:
           description: Unauthorized.
         '500':
           description: Unexpected server-side error ocurred.
+  /health:
+    get:
+      summary: Retrieves service health check info.
+      tags:
+        - health
+      responses:
+        '200':
+          $ref: "#/components/responses/HealthRes"
+        '500':
+          $ref: "#/components/responses/ServiceError"
 
 components:
-
   parameters:
     Authorization:
       name: Authorization
@@ -78,3 +87,9 @@ components:
         application/json:
           schema:
             type: object
+    HealthRes:
+      description: Service Health Check.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/HealthInfo.yml"

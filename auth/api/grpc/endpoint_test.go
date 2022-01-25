@@ -37,6 +37,7 @@ const (
 
 	authoritiesObj = "authorities"
 	memberRelation = "member"
+	loginDuration  = 30 * time.Minute
 )
 
 var svc auth.Service
@@ -52,7 +53,7 @@ func newService() auth.Service {
 
 	t := jwt.New(secret)
 
-	return auth.New(repo, groupRepo, idProvider, t, ketoMock)
+	return auth.New(repo, groupRepo, idProvider, t, ketoMock, loginDuration)
 }
 
 func startGRPCServer(svc auth.Service, port int) {

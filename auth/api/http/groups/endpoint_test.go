@@ -24,10 +24,11 @@ import (
 )
 
 const (
-	contentType = "application/json"
-	email       = "user@example.com"
-	secret      = "secret"
-	id          = "testID"
+	contentType   = "application/json"
+	email         = "user@example.com"
+	secret        = "secret"
+	id            = "testID"
+	loginDuration = 30 * time.Minute
 )
 
 type testRequest struct {
@@ -59,7 +60,7 @@ func newService() auth.Service {
 	idProvider := uuid.NewMock()
 	t := jwt.New(secret)
 	policies := mocks.NewKetoMock(map[string][]mocks.MockSubjectSet{})
-	return auth.New(keys, groups, idProvider, t, policies)
+	return auth.New(keys, groups, idProvider, t, policies, loginDuration)
 }
 
 func newServer(svc auth.Service) *httptest.Server {

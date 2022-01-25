@@ -29,6 +29,7 @@ const (
 
 	memberRelation = "member"
 	authoritiesObj = "authorities"
+	loginDuration  = 30 * time.Minute
 )
 
 func newService() auth.Service {
@@ -41,7 +42,7 @@ func newService() auth.Service {
 	ketoMock := mocks.NewKetoMock(mockAuthzDB)
 
 	t := jwt.New(secret)
-	return auth.New(repo, groupRepo, idProvider, t, ketoMock)
+	return auth.New(repo, groupRepo, idProvider, t, ketoMock, loginDuration)
 }
 
 func TestIssue(t *testing.T) {

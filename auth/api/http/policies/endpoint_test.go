@@ -24,12 +24,13 @@ import (
 )
 
 const (
-	secret       = "secret"
-	contentType  = "application/json"
-	id           = uuid.Prefix + "-000000000001"
-	email        = "user@example.com"
-	unauthzID    = uuid.Prefix + "-000000000002"
-	unauthzEmail = "unauthz@example.com"
+	secret        = "secret"
+	contentType   = "application/json"
+	id            = uuid.Prefix + "-000000000001"
+	email         = "user@example.com"
+	unauthzID     = uuid.Prefix + "-000000000002"
+	unauthzEmail  = "unauthz@example.com"
+	loginDuration = 30 * time.Minute
 )
 
 type testRequest struct {
@@ -68,7 +69,7 @@ func newService() auth.Service {
 	mockAuthzDB[unauthzID] = append(mockAuthzDB[unauthzID], mocks.MockSubjectSet{Object: "users", Relation: "member"})
 	ketoMock := mocks.NewKetoMock(mockAuthzDB)
 
-	return auth.New(repo, groupRepo, idProvider, t, ketoMock)
+	return auth.New(repo, groupRepo, idProvider, t, ketoMock, loginDuration)
 }
 
 func newServer(svc auth.Service) *httptest.Server {

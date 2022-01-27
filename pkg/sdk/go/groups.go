@@ -127,7 +127,7 @@ func (sdk mfSDK) Unassign(token, groupID string, memberIDs ...string) error {
 }
 
 func (sdk mfSDK) Members(groupID, token string, offset, limit uint64) (MembersPage, error) {
-	url := fmt.Sprintf("%s, %s/%s/members?offset=%d&limit=%d&", sdk.authURL, groupsEndpoint, groupID, offset, limit)
+	url := fmt.Sprintf("%s/%s/%s/members?offset=%d&limit=%d&", sdk.authURL, groupsEndpoint, groupID, offset, limit)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return MembersPage{}, err

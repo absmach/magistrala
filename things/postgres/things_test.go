@@ -64,33 +64,33 @@ func TestThingsSave(t *testing.T) {
 		{
 			desc:   "create things that already exist",
 			things: ths,
-			err:    things.ErrConflict,
+			err:    errors.ErrConflict,
 		},
 		{
 			desc: "create thing with invalid ID",
 			things: []things.Thing{
 				{ID: "invalid", Owner: email, Key: thkey},
 			},
-			err: things.ErrMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 		{
 			desc: "create thing with invalid name",
 			things: []things.Thing{
 				{ID: thID, Owner: email, Key: thkey, Name: invalidName},
 			},
-			err: things.ErrMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 		{
 			desc: "create thing with invalid Key",
 			things: []things.Thing{
 				{ID: thID, Owner: email, Key: nonexistentThingKey},
 			},
-			err: things.ErrConflict,
+			err: errors.ErrConflict,
 		},
 		{
 			desc:   "create things with conflicting keys",
 			things: ths,
-			err:    things.ErrConflict,
+			err:    errors.ErrConflict,
 		},
 	}
 
@@ -142,7 +142,7 @@ func TestThingUpdate(t *testing.T) {
 				ID:    nonexistentThingID,
 				Owner: email,
 			},
-			err: things.ErrNotFound,
+			err: errors.ErrNotFound,
 		},
 		{
 			desc: "update existing thing ID with non-existing user",
@@ -158,7 +158,7 @@ func TestThingUpdate(t *testing.T) {
 				ID:    nonexistentThingID,
 				Owner: wrongValue,
 			},
-			err: things.ErrNotFound,
+			err: errors.ErrNotFound,
 		},
 		{
 			desc: "update thing with valid name",
@@ -178,7 +178,7 @@ func TestThingUpdate(t *testing.T) {
 				Key:   thkey,
 				Name:  invalidName,
 			},
-			err: things.ErrMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 	}
 
@@ -242,28 +242,28 @@ func TestUpdateKey(t *testing.T) {
 			owner: th2.Owner,
 			id:    nonexistentThingID,
 			key:   newKey,
-			err:   things.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 		{
 			desc:  "update key of an existing thing with non-existing user",
 			owner: wrongValue,
 			id:    th2.ID,
 			key:   newKey,
-			err:   things.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 		{
 			desc:  "update key of a non-existing thing with non-existing user",
 			owner: wrongValue,
 			id:    nonexistentThingID,
 			key:   newKey,
-			err:   things.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 		{
 			desc:  "update key with existing key value",
 			owner: th2.Owner,
 			id:    th2.ID,
 			key:   th1.Key,
-			err:   things.ErrConflict,
+			err:   errors.ErrConflict,
 		},
 	}
 
@@ -308,12 +308,12 @@ func TestSingleThingRetrieval(t *testing.T) {
 		"retrieve non-existing thing with existing user": {
 			owner: th.Owner,
 			ID:    nonexistentThingID,
-			err:   things.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 		"retrieve thing with malformed ID": {
 			owner: th.Owner,
 			ID:    wrongValue,
-			err:   things.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 	}
 
@@ -356,7 +356,7 @@ func TestThingRetrieveByKey(t *testing.T) {
 		"retrieve non-existent thing by key": {
 			key: wrongValue,
 			ID:  "",
-			err: things.ErrNotFound,
+			err: errors.ErrNotFound,
 		},
 	}
 
@@ -640,7 +640,7 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 				Limit:  n,
 			},
 			size: 0,
-			err:  things.ErrNotFound,
+			err:  errors.ErrNotFound,
 		},
 		"retrieve all non connected things by channel with existing owner": {
 			owner: email,
@@ -736,7 +736,7 @@ func TestThingRemoval(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("#%d: failed to remove thing due to: %s", i, err))
 
 		_, err = thingRepo.RetrieveByID(context.Background(), email, thing.ID)
-		require.True(t, errors.Contains(err, things.ErrNotFound), fmt.Sprintf("#%d: expected %s got %s", i, things.ErrNotFound, err))
+		require.True(t, errors.Contains(err, errors.ErrNotFound), fmt.Sprintf("#%d: expected %s got %s", i, errors.ErrNotFound, err))
 	}
 }
 

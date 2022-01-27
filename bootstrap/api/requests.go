@@ -3,7 +3,10 @@
 
 package api
 
-import "github.com/mainflux/mainflux/bootstrap"
+import (
+	"github.com/mainflux/mainflux/bootstrap"
+	"github.com/mainflux/mainflux/pkg/errors"
+)
 
 type apiReq interface {
 	validate() error
@@ -24,11 +27,11 @@ type addReq struct {
 
 func (req addReq) validate() error {
 	if req.token == "" {
-		return bootstrap.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.ExternalID == "" || req.ExternalKey == "" {
-		return bootstrap.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -41,11 +44,11 @@ type entityReq struct {
 
 func (req entityReq) validate() error {
 	if req.key == "" {
-		return bootstrap.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.id == "" {
-		return bootstrap.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -60,11 +63,11 @@ type updateReq struct {
 
 func (req updateReq) validate() error {
 	if req.key == "" {
-		return bootstrap.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.id == "" {
-		return bootstrap.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -80,11 +83,11 @@ type updateCertReq struct {
 
 func (req updateCertReq) validate() error {
 	if req.key == "" {
-		return bootstrap.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.thingID == "" {
-		return bootstrap.ErrNotFound
+		return errors.ErrNotFound
 	}
 
 	return nil
@@ -98,11 +101,11 @@ type updateConnReq struct {
 
 func (req updateConnReq) validate() error {
 	if req.key == "" {
-		return bootstrap.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.id == "" {
-		return bootstrap.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -117,11 +120,11 @@ type listReq struct {
 
 func (req listReq) validate() error {
 	if req.key == "" {
-		return bootstrap.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.limit == 0 || req.limit > maxLimit {
-		return bootstrap.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -134,11 +137,11 @@ type bootstrapReq struct {
 
 func (req bootstrapReq) validate() error {
 	if req.key == "" {
-		return bootstrap.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.id == "" {
-		return bootstrap.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -152,16 +155,16 @@ type changeStateReq struct {
 
 func (req changeStateReq) validate() error {
 	if req.key == "" {
-		return bootstrap.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.id == "" {
-		return bootstrap.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	if req.State != bootstrap.Inactive &&
 		req.State != bootstrap.Active {
-		return bootstrap.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil

@@ -21,11 +21,8 @@ import (
 
 const chansPrefix = "channels"
 
-// Exported errors
-var (
-	ErrUnauthorized = errors.New("unauthorized access")
-	ErrUnsubscribe  = errors.New("unable to unsubscribe")
-)
+// ErrUnsubscribe indicates an error to unsubscribe
+var ErrUnsubscribe = errors.New("unable to unsubscribe")
 
 // Service specifies CoAP service API.
 type Service interface {
@@ -69,7 +66,7 @@ func (svc *adapterService) Publish(ctx context.Context, key string, msg messagin
 	}
 	thid, err := svc.auth.CanAccessByKey(ctx, ar)
 	if err != nil {
-		return errors.Wrap(ErrUnauthorized, err)
+		return errors.Wrap(errors.ErrAuthorization, err)
 	}
 	msg.Publisher = thid.GetValue()
 
@@ -92,7 +89,7 @@ func (svc *adapterService) Subscribe(ctx context.Context, key, chanID, subtopic 
 		ChanID: chanID,
 	}
 	if _, err := svc.auth.CanAccessByKey(ctx, ar); err != nil {
-		return errors.Wrap(ErrUnauthorized, err)
+		return errors.Wrap(errors.ErrAuthorization, err)
 	}
 
 	subject := fmt.Sprintf("%s.%s", chansPrefix, chanID)
@@ -119,7 +116,7 @@ func (svc *adapterService) Unsubscribe(ctx context.Context, key, chanID, subtopi
 		ChanID: chanID,
 	}
 	if _, err := svc.auth.CanAccessByKey(ctx, ar); err != nil {
-		return errors.Wrap(ErrUnauthorized, err)
+		return errors.Wrap(errors.ErrAuthorization, err)
 	}
 	subject := fmt.Sprintf("%s.%s", chansPrefix, chanID)
 	if subtopic != "" {

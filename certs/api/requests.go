@@ -3,7 +3,9 @@
 
 package api
 
-import "github.com/mainflux/mainflux/certs"
+import (
+	"github.com/mainflux/mainflux/pkg/errors"
+)
 
 const maxLimitSize = 100
 
@@ -21,7 +23,7 @@ func (req addCertsReq) validate() error {
 	}
 
 	if req.TTL == "" || req.KeyType == "" || req.KeyBits == 0 {
-		return certs.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 	return nil
 }
@@ -35,10 +37,10 @@ type listReq struct {
 
 func (req *listReq) validate() error {
 	if req.token == "" {
-		return certs.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 	if req.limit == 0 || req.limit > maxLimitSize {
-		return certs.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 	return nil
 }
@@ -53,7 +55,7 @@ func (req *viewReq) validate() error {
 		return errUnauthorized
 	}
 	if req.serialID == "" {
-		return certs.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -66,7 +68,7 @@ type revokeReq struct {
 
 func (req *revokeReq) validate() error {
 	if req.token == "" || req.certID == "" {
-		return certs.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	return nil

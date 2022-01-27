@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/mainflux/mainflux/auth"
+	"github.com/mainflux/mainflux/pkg/errors"
 	acl "github.com/ory/keto/proto/ory/keto/acl/v1alpha1"
 )
 
@@ -38,7 +39,7 @@ func (pa *policyAgentMock) CheckPolicy(ctx context.Context, pr auth.PolicyReq) e
 			return nil
 		}
 	}
-	return auth.ErrAuthorization
+	return errors.ErrAuthorization
 }
 
 func (pa *policyAgentMock) AddPolicy(ctx context.Context, pr auth.PolicyReq) error {

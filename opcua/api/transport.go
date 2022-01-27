@@ -101,7 +101,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", contentType)
 
 	switch err {
-	case opcua.ErrMalformedEntity:
+	case errors.ErrMalformedEntity:
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.ErrInvalidQueryParams:
 		w.WriteHeader(http.StatusBadRequest)

@@ -19,36 +19,6 @@ const (
 )
 
 var (
-	// ErrConflict indicates usage of the existing email during account
-	// registration.
-	ErrConflict = errors.New("email already taken")
-
-	// ErrGroupConflict indicates group name already taken.
-	ErrGroupConflict = errors.New("group already exists")
-
-	// ErrMalformedEntity indicates malformed entity specification
-	// (e.g. invalid username or password).
-	ErrMalformedEntity = errors.New("malformed entity specification")
-
-	// ErrUnauthorizedAccess indicates missing or invalid credentials provided
-	// when accessing a protected resource.
-	ErrUnauthorizedAccess = errors.New("missing or invalid credentials provided")
-
-	// ErrAuthorization indicates failure occurred while authorizing the entity.
-	ErrAuthorization = errors.New("failed to perform authorization over the entity")
-
-	// ErrNotFound indicates a non-existent entity request.
-	ErrNotFound = errors.New("non-existent entity")
-
-	// ErrUserNotFound indicates a non-existent user request.
-	ErrUserNotFound = errors.New("non-existent user")
-
-	// ErrScanMetadata indicates problem with metadata in db.
-	ErrScanMetadata = errors.New("failed to scan metadata")
-
-	// ErrMissingEmail indicates missing email for password reset request.
-	ErrMissingEmail = errors.New("missing email for password reset")
-
 	// ErrMissingResetToken indicates malformed or missing reset token
 	// for reseting password.
 	ErrMissingResetToken = errors.New("missing reset token")
@@ -58,9 +28,6 @@ var (
 
 	// ErrGetToken indicates error in getting signed token.
 	ErrGetToken = errors.New("failed to fetch signed token")
-
-	// ErrCreateUser indicates error in creating user.
-	ErrCreateUser = errors.New("failed to create user")
 
 	// ErrPasswordFormat indicates weak password.
 	ErrPasswordFormat = errors.New("password does not meet the requirements")
@@ -166,7 +133,7 @@ func (svc usersService) Register(ctx context.Context, token string, user User) (
 
 	uid, err := svc.idProvider.ID()
 	if err != nil {
-		return "", errors.Wrap(ErrCreateUser, err)
+		return "", err
 	}
 	user.ID = uid
 
@@ -176,7 +143,7 @@ func (svc usersService) Register(ctx context.Context, token string, user User) (
 
 	hash, err := svc.hasher.Hash(user.Password)
 	if err != nil {
-		return "", errors.Wrap(ErrMalformedEntity, err)
+		return "", errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 	user.Password = hash
 	uid, err = svc.users.Save(ctx, user)
@@ -191,7 +158,7 @@ func (svc usersService) checkAuthz(ctx context.Context, token string) error {
 		return nil
 	}
 	if token == "" {
-		return ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	ir, err := svc.identify(ctx, token)
@@ -205,10 +172,10 @@ func (svc usersService) checkAuthz(ctx context.Context, token string) error {
 func (svc usersService) Login(ctx context.Context, user User) (string, error) {
 	dbUser, err := svc.users.RetrieveByEmail(ctx, user.Email)
 	if err != nil {
-		return "", errors.Wrap(ErrUnauthorizedAccess, err)
+		return "", errors.Wrap(errors.ErrUnauthorizedAccess, err)
 	}
 	if err := svc.hasher.Compare(user.Password, dbUser.Password); err != nil {
-		return "", errors.Wrap(ErrUnauthorizedAccess, err)
+		return "", errors.Wrap(errors.ErrUnauthorizedAccess, err)
 	}
 	return svc.issue(ctx, dbUser.ID, dbUser.Email, auth.LoginKey)
 }
@@ -221,7 +188,7 @@ func (svc usersService) ViewUser(ctx context.Context, token, id string) (User, e
 
 	dbUser, err := svc.users.RetrieveByID(ctx, id)
 	if err != nil {
-		return User{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return User{}, errors.Wrap(errors.ErrUnauthorizedAccess, err)
 	}
 
 	return User{
@@ -240,7 +207,7 @@ func (svc usersService) ViewProfile(ctx context.Context, token string) (User, er
 
 	dbUser, err := svc.users.RetrieveByEmail(ctx, ir.email)
 	if err != nil {
-		return User{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return User{}, errors.Wrap(errors.ErrUnauthorizedAccess, err)
 	}
 
 	return User{
@@ -257,7 +224,7 @@ func (svc usersService) ListUsers(ctx context.Context, token string, offset, lim
 	}
 
 	if err := svc.authorize(ctx, id.id, "authorities", "member"); err != nil {
-		return UserPage{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return UserPage{}, errors.Wrap(errors.ErrUnauthorizedAccess, err)
 	}
 	return svc.users.RetrieveAll(ctx, offset, limit, nil, email, m)
 }
@@ -265,7 +232,7 @@ func (svc usersService) ListUsers(ctx context.Context, token string, offset, lim
 func (svc usersService) UpdateUser(ctx context.Context, token string, u User) error {
 	ir, err := svc.identify(ctx, token)
 	if err != nil {
-		return errors.Wrap(ErrUnauthorizedAccess, err)
+		return err
 	}
 	user := User{
 		Email:    ir.email,
@@ -277,7 +244,7 @@ func (svc usersService) UpdateUser(ctx context.Context, token string, u User) er
 func (svc usersService) GenerateResetToken(ctx context.Context, email, host string) error {
 	user, err := svc.users.RetrieveByEmail(ctx, email)
 	if err != nil || user.Email == "" {
-		return ErrUserNotFound
+		return errors.ErrNotFound
 	}
 	t, err := svc.issue(ctx, user.ID, user.Email, auth.RecoveryKey)
 	if err != nil {
@@ -289,14 +256,14 @@ func (svc usersService) GenerateResetToken(ctx context.Context, email, host stri
 func (svc usersService) ResetPassword(ctx context.Context, resetToken, password string) error {
 	ir, err := svc.identify(ctx, resetToken)
 	if err != nil {
-		return errors.Wrap(ErrUnauthorizedAccess, err)
+		return errors.Wrap(errors.ErrUnauthorizedAccess, err)
 	}
 	u, err := svc.users.RetrieveByEmail(ctx, ir.email)
 	if err != nil {
 		return err
 	}
 	if u.Email == "" {
-		return ErrUserNotFound
+		return errors.ErrNotFound
 	}
 	if !svc.passRegex.MatchString(password) {
 		return ErrPasswordFormat
@@ -311,7 +278,7 @@ func (svc usersService) ResetPassword(ctx context.Context, resetToken, password 
 func (svc usersService) ChangePassword(ctx context.Context, authToken, password, oldPassword string) error {
 	ir, err := svc.identify(ctx, authToken)
 	if err != nil {
-		return errors.Wrap(ErrUnauthorizedAccess, err)
+		return errors.Wrap(errors.ErrUnauthorizedAccess, err)
 	}
 	if !svc.passRegex.MatchString(password) {
 		return ErrPasswordFormat
@@ -321,11 +288,11 @@ func (svc usersService) ChangePassword(ctx context.Context, authToken, password,
 		Password: oldPassword,
 	}
 	if _, err := svc.Login(ctx, u); err != nil {
-		return ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 	u, err = svc.users.RetrieveByEmail(ctx, ir.email)
 	if err != nil || u.Email == "" {
-		return ErrUserNotFound
+		return errors.ErrNotFound
 	}
 
 	password, err = svc.hasher.Hash(password)
@@ -368,7 +335,7 @@ func (svc usersService) ListMembers(ctx context.Context, token, groupID string, 
 func (svc usersService) issue(ctx context.Context, id, email string, keyType uint32) (string, error) {
 	key, err := svc.auth.Issue(ctx, &mainflux.IssueReq{Id: id, Email: email, Type: keyType})
 	if err != nil {
-		return "", errors.Wrap(ErrUserNotFound, err)
+		return "", errors.Wrap(errors.ErrNotFound, err)
 	}
 	return key.GetValue(), nil
 }
@@ -381,7 +348,7 @@ type userIdentity struct {
 func (svc usersService) identify(ctx context.Context, token string) (userIdentity, error) {
 	identity, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return userIdentity{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return userIdentity{}, errors.Wrap(errors.ErrUnauthorizedAccess, err)
 	}
 
 	return userIdentity{identity.Id, identity.Email}, nil
@@ -395,10 +362,10 @@ func (svc usersService) authorize(ctx context.Context, subject, object, relation
 	}
 	res, err := svc.auth.Authorize(ctx, req)
 	if err != nil {
-		return errors.Wrap(ErrAuthorization, err)
+		return errors.Wrap(errors.ErrAuthorization, err)
 	}
 	if !res.GetAuthorized() {
-		return ErrAuthorization
+		return errors.ErrAuthorization
 	}
 	return nil
 }
@@ -411,10 +378,10 @@ func (svc usersService) claimOwnership(ctx context.Context, subject, object, rel
 	}
 	res, err := svc.auth.AddPolicy(ctx, req)
 	if err != nil {
-		return errors.Wrap(ErrAuthorization, err)
+		return errors.Wrap(errors.ErrAuthorization, err)
 	}
 	if !res.GetAuthorized() {
-		return ErrAuthorization
+		return errors.ErrAuthorization
 	}
 	return nil
 }

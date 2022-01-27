@@ -56,28 +56,28 @@ func TestValidate(t *testing.T) {
 				Email:    "user@example..domain.com",
 				Password: password,
 			},
-			err: users.ErrMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 		"validate user with invalid domain": {
 			user: users.User{
 				Email:    "user@.sub.com",
 				Password: password,
 			},
-			err: users.ErrMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 		"validate user with empty email": {
 			user: users.User{
 				Email:    "",
 				Password: password,
 			},
-			err: users.ErrMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 		"validate user with invalid email": {
 			user: users.User{
 				Email:    "userexample.com",
 				Password: password,
 			},
-			err: users.ErrMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 		"validate user with utf8 email (cyrillic)": {
 			user: users.User{
@@ -98,42 +98,42 @@ func TestValidate(t *testing.T) {
 				Email:    "user@example.",
 				Password: password,
 			},
-			err: users.ErrMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 		"validate user with too long email tld": {
 			user: users.User{
 				Email:    "user@example." + randomString(maxTLDLen+1),
 				Password: password,
 			},
-			err: users.ErrMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 		"validate user with no email domain": {
 			user: users.User{
 				Email:    "user@.com",
 				Password: password,
 			},
-			err: users.ErrMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 		"validate user with too long email domain": {
 			user: users.User{
 				Email:    "user@" + randomString(maxDomainLen+1) + ".com",
 				Password: password,
 			},
-			err: users.ErrMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 		"validate user with no email local": {
 			user: users.User{
 				Email:    "@example.com",
 				Password: password,
 			},
-			err: users.ErrMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 		"validate user with too long email local": {
 			user: users.User{
 				Email:    randomString(maxLocalLen+1) + "@example.com",
 				Password: password,
 			},
-			err: users.ErrMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 	}
 

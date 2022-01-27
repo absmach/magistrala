@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux/auth"
+	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 type issueKeyReq struct {
@@ -18,7 +19,7 @@ type issueKeyReq struct {
 // It is not possible to issue Reset key using HTTP API.
 func (req issueKeyReq) validate() error {
 	if req.Type != auth.APIKey || req.token == "" {
-		return auth.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 	return nil
 }
@@ -30,7 +31,7 @@ type keyReq struct {
 
 func (req keyReq) validate() error {
 	if req.token == "" || req.id == "" {
-		return auth.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 	return nil
 }

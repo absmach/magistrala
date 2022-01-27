@@ -14,7 +14,6 @@ import (
 	"github.com/mainflux/mainflux/certs"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/things"
 )
 
 const duplicateErr = "unique_violation"
@@ -166,7 +165,7 @@ func (cr certsRepository) RetrieveBySerial(ctx context.Context, ownerID, serialI
 
 		pqErr, ok := err.(*pq.Error)
 		if err == sql.ErrNoRows || ok && errInvalid == pqErr.Code.Name() {
-			return c, errors.Wrap(things.ErrNotFound, err)
+			return c, errors.Wrap(errors.ErrNotFound, err)
 		}
 
 		return c, errors.Wrap(errRetrieveDB, err)

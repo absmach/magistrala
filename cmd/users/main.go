@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux/internal/email"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/users"
 	"github.com/mainflux/mainflux/users/bcrypt"
@@ -344,7 +345,7 @@ func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServic
 				os.Exit(1)
 			}
 			if !apr.GetAuthorized() {
-				logger.Error("failed to authorized the policy result related to MF_USERS_ALLOW_SELF_REGISTER: " + users.ErrAuthorization.Error())
+				logger.Error("failed to authorized the policy result related to MF_USERS_ALLOW_SELF_REGISTER: " + errors.ErrAuthorization.Error())
 				os.Exit(1)
 			}
 		}
@@ -381,7 +382,7 @@ func createAdmin(svc users.Service, userRepo users.UserRepository, c config, aut
 				return err
 			}
 			if !apr.GetAuthorized() {
-				return users.ErrAuthorization
+				return errors.ErrAuthorization
 			}
 		}
 		return nil
@@ -393,7 +394,7 @@ func createAdmin(svc users.Service, userRepo users.UserRepository, c config, aut
 		return err
 	}
 	if !apr.GetAuthorized() {
-		return users.ErrAuthorization
+		return errors.ErrAuthorization
 	}
 
 	// Create an admin
@@ -407,7 +408,7 @@ func createAdmin(svc users.Service, userRepo users.UserRepository, c config, aut
 		return err
 	}
 	if !apr.GetAuthorized() {
-		return users.ErrAuthorization
+		return errors.ErrAuthorization
 	}
 
 	return nil

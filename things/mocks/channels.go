@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/things"
 )
 
@@ -63,7 +64,7 @@ func (crm *channelRepositoryMock) Update(_ context.Context, channel things.Chann
 	dbKey := key(channel.Owner, channel.ID)
 
 	if _, ok := crm.channels[dbKey]; !ok {
-		return things.ErrNotFound
+		return errors.ErrNotFound
 	}
 
 	crm.channels[dbKey] = channel
@@ -75,7 +76,7 @@ func (crm *channelRepositoryMock) RetrieveByID(_ context.Context, owner, id stri
 		return c, nil
 	}
 
-	return things.Channel{}, things.ErrNotFound
+	return things.Channel{}, errors.ErrNotFound
 }
 
 func (crm *channelRepositoryMock) RetrieveAll(_ context.Context, owner string, pm things.PageMetadata) (things.ChannelsPage, error) {
@@ -221,11 +222,11 @@ func (crm *channelRepositoryMock) Disconnect(_ context.Context, owner string, ch
 	for _, chID := range chIDs {
 		for _, thID := range thIDs {
 			if _, ok := crm.cconns[thID]; !ok {
-				return things.ErrNotFound
+				return errors.ErrNotFound
 			}
 
 			if _, ok := crm.cconns[thID][chID]; !ok {
-				return things.ErrNotFound
+				return errors.ErrNotFound
 			}
 
 			crm.tconns <- Connection{

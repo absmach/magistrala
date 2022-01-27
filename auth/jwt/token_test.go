@@ -83,7 +83,7 @@ func TestParse(t *testing.T) {
 			desc:  "parse ivalid key",
 			key:   auth.Key{},
 			token: "invalid",
-			err:   auth.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:  "parse expired key",

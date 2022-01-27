@@ -42,9 +42,9 @@ func (repo subscriptionsRepo) Save(ctx context.Context, sub notifiers.Subscripti
 	row, err := repo.db.NamedQueryContext(ctx, q, dbSub)
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code.Name() == errDuplicate {
-			return "", errors.Wrap(notifiers.ErrConflict, err)
+			return "", errors.Wrap(errors.ErrConflict, err)
 		}
-		return "", errors.Wrap(notifiers.ErrSave, err)
+		return "", errors.Wrap(errors.ErrCreateEntity, err)
 	}
 	defer row.Close()
 
@@ -56,9 +56,9 @@ func (repo subscriptionsRepo) Retrieve(ctx context.Context, id string) (notifier
 	sub := dbSubscription{}
 	if err := repo.db.QueryRowxContext(ctx, q, id).StructScan(&sub); err != nil {
 		if err == sql.ErrNoRows {
-			return notifiers.Subscription{}, errors.Wrap(notifiers.ErrNotFound, err)
+			return notifiers.Subscription{}, errors.Wrap(errors.ErrNotFound, err)
 		}
-		return notifiers.Subscription{}, errors.Wrap(notifiers.ErrSelectEntity, err)
+		return notifiers.Subscription{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	return fromDBSub(sub), nil
@@ -91,7 +91,7 @@ func (repo subscriptionsRepo) RetrieveAll(ctx context.Context, pm notifiers.Page
 
 	rows, err := repo.db.NamedQueryContext(ctx, q, args)
 	if err != nil {
-		return notifiers.Page{}, errors.Wrap(notifiers.ErrSelectEntity, err)
+		return notifiers.Page{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 	defer rows.Close()
 
@@ -99,19 +99,19 @@ func (repo subscriptionsRepo) RetrieveAll(ctx context.Context, pm notifiers.Page
 	for rows.Next() {
 		sub := dbSubscription{}
 		if err := rows.StructScan(&sub); err != nil {
-			return notifiers.Page{}, errors.Wrap(notifiers.ErrSelectEntity, err)
+			return notifiers.Page{}, errors.Wrap(errors.ErrViewEntity, err)
 		}
 		subs = append(subs, fromDBSub(sub))
 	}
 
 	if len(subs) == 0 {
-		return notifiers.Page{}, notifiers.ErrNotFound
+		return notifiers.Page{}, errors.ErrNotFound
 	}
 
 	cq := fmt.Sprintf(`SELECT COUNT(*) FROM subscriptions %s`, condition)
 	total, err := total(ctx, repo.db, cq, args)
 	if err != nil {
-		return notifiers.Page{}, errors.Wrap(notifiers.ErrSelectEntity, err)
+		return notifiers.Page{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	ret := notifiers.Page{
@@ -127,7 +127,7 @@ func (repo subscriptionsRepo) Remove(ctx context.Context, id string) error {
 	q := `DELETE from subscriptions WHERE id = $1`
 
 	if r := repo.db.QueryRowxContext(ctx, q, id); r.Err() != nil {
-		return errors.Wrap(notifiers.ErrRemoveEntity, r.Err())
+		return errors.Wrap(errors.ErrRemoveEntity, r.Err())
 	}
 	return nil
 }

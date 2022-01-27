@@ -5,7 +5,7 @@ package http
 
 import (
 	"github.com/gofrs/uuid"
-	"github.com/mainflux/mainflux/auth"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/things"
 )
 
@@ -32,7 +32,7 @@ type createThingReq struct {
 func validateUUID(extID string) (err error) {
 	id, err := uuid.FromString(extID)
 	if id.String() != extID || err != nil {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -40,15 +40,15 @@ func validateUUID(extID string) (err error) {
 
 func (req createThingReq) validate() error {
 	if req.token == "" {
-		return things.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.ID != "" && validateUUID(req.ID) != nil {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	if len(req.Name) > maxNameSize {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -61,20 +61,20 @@ type createThingsReq struct {
 
 func (req createThingsReq) validate() error {
 	if req.token == "" {
-		return things.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if len(req.Things) <= 0 {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	for _, thing := range req.Things {
 		if thing.ID != "" && validateUUID(thing.ID) != nil {
-			return things.ErrMalformedEntity
+			return errors.ErrMalformedEntity
 		}
 
 		if len(thing.Name) > maxNameSize {
-			return things.ErrMalformedEntity
+			return errors.ErrMalformedEntity
 		}
 	}
 
@@ -90,15 +90,15 @@ type shareThingReq struct {
 
 func (req shareThingReq) validate() error {
 	if req.token == "" {
-		return things.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.thingID == "" || len(req.UserIDs) == 0 || len(req.Policies) == 0 {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 	for _, p := range req.Policies {
 		if p != readPolicy && p != writePolicy && p != deletePolicy {
-			return things.ErrMalformedEntity
+			return errors.ErrMalformedEntity
 		}
 	}
 	return nil
@@ -113,15 +113,15 @@ type updateThingReq struct {
 
 func (req updateThingReq) validate() error {
 	if req.token == "" {
-		return things.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.id == "" {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	if len(req.Name) > maxNameSize {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -135,11 +135,11 @@ type updateKeyReq struct {
 
 func (req updateKeyReq) validate() error {
 	if req.token == "" {
-		return things.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.id == "" || req.Key == "" {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -154,15 +154,15 @@ type createChannelReq struct {
 
 func (req createChannelReq) validate() error {
 	if req.token == "" {
-		return things.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.ID != "" && validateUUID(req.ID) != nil {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	if len(req.Name) > maxNameSize {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -175,20 +175,20 @@ type createChannelsReq struct {
 
 func (req createChannelsReq) validate() error {
 	if req.token == "" {
-		return things.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if len(req.Channels) <= 0 {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	for _, channel := range req.Channels {
 		if channel.ID != "" && validateUUID(channel.ID) != nil {
-			return things.ErrMalformedEntity
+			return errors.ErrMalformedEntity
 		}
 
 		if len(channel.Name) > maxNameSize {
-			return things.ErrMalformedEntity
+			return errors.ErrMalformedEntity
 		}
 	}
 
@@ -204,15 +204,15 @@ type updateChannelReq struct {
 
 func (req updateChannelReq) validate() error {
 	if req.token == "" {
-		return things.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.id == "" {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	if len(req.Name) > maxNameSize {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -225,11 +225,11 @@ type viewResourceReq struct {
 
 func (req viewResourceReq) validate() error {
 	if req.token == "" {
-		return things.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.id == "" {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -242,7 +242,7 @@ type listResourcesReq struct {
 
 func (req *listResourcesReq) validate() error {
 	if req.token == "" {
-		return things.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.pageMetadata.Limit == 0 {
@@ -250,21 +250,21 @@ func (req *listResourcesReq) validate() error {
 	}
 
 	if req.pageMetadata.Limit > maxLimitSize {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	if len(req.pageMetadata.Name) > maxNameSize {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	if req.pageMetadata.Order != "" &&
 		req.pageMetadata.Order != nameOrder && req.pageMetadata.Order != idOrder {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	if req.pageMetadata.Dir != "" &&
 		req.pageMetadata.Dir != ascDir && req.pageMetadata.Dir != descDir {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -278,25 +278,25 @@ type listByConnectionReq struct {
 
 func (req listByConnectionReq) validate() error {
 	if req.token == "" {
-		return things.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.id == "" {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	if req.pageMetadata.Limit == 0 || req.pageMetadata.Limit > maxLimitSize {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	if req.pageMetadata.Order != "" &&
 		req.pageMetadata.Order != nameOrder && req.pageMetadata.Order != idOrder {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	if req.pageMetadata.Dir != "" &&
 		req.pageMetadata.Dir != ascDir && req.pageMetadata.Dir != descDir {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -310,11 +310,11 @@ type connectThingReq struct {
 
 func (req connectThingReq) validate() error {
 	if req.token == "" {
-		return things.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.chanID == "" || req.thingID == "" {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -328,21 +328,21 @@ type connectReq struct {
 
 func (req connectReq) validate() error {
 	if req.token == "" {
-		return things.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if len(req.ChannelIDs) == 0 || len(req.ThingIDs) == 0 {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	for _, chID := range req.ChannelIDs {
 		if chID == "" {
-			return things.ErrMalformedEntity
+			return errors.ErrMalformedEntity
 		}
 	}
 	for _, thingID := range req.ThingIDs {
 		if thingID == "" {
-			return things.ErrMalformedEntity
+			return errors.ErrMalformedEntity
 		}
 	}
 
@@ -357,29 +357,29 @@ type listThingsGroupReq struct {
 
 func (req listThingsGroupReq) validate() error {
 	if req.token == "" {
-		return auth.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.groupID == "" {
-		return auth.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	if req.pageMetadata.Limit == 0 || req.pageMetadata.Limit > maxLimitSize {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	if len(req.pageMetadata.Name) > maxNameSize {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	if req.pageMetadata.Order != "" &&
 		req.pageMetadata.Order != "name" && req.pageMetadata.Order != "id" {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	if req.pageMetadata.Dir != "" &&
 		req.pageMetadata.Dir != "asc" && req.pageMetadata.Dir != "desc" {
-		return things.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil

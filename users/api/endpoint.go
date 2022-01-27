@@ -7,7 +7,6 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/users"
 )
@@ -177,7 +176,7 @@ func listMembersEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listMemberGroupReq)
 		if err := req.validate(); err != nil {
-			return userPageRes{}, errors.Wrap(auth.ErrMalformedEntity, err)
+			return userPageRes{}, errors.Wrap(errors.ErrMalformedEntity, err)
 		}
 
 		page, err := svc.ListMembers(ctx, req.token, req.groupID, req.offset, req.limit, req.metadata)

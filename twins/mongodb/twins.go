@@ -6,6 +6,7 @@ package mongodb
 import (
 	"context"
 
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/twins"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -33,7 +34,7 @@ func NewTwinRepository(db *mongo.Database) twins.TwinRepository {
 
 func (tr *twinRepository) Save(ctx context.Context, tw twins.Twin) (string, error) {
 	if len(tw.Name) > maxNameSize {
-		return "", twins.ErrMalformedEntity
+		return "", errors.ErrMalformedEntity
 	}
 
 	coll := tr.db.Collection(twinsCollection)
@@ -47,7 +48,7 @@ func (tr *twinRepository) Save(ctx context.Context, tw twins.Twin) (string, erro
 
 func (tr *twinRepository) Update(ctx context.Context, tw twins.Twin) error {
 	if len(tw.Name) > maxNameSize {
-		return twins.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	coll := tr.db.Collection(twinsCollection)
@@ -60,7 +61,7 @@ func (tr *twinRepository) Update(ctx context.Context, tw twins.Twin) error {
 	}
 
 	if res.ModifiedCount < 1 {
-		return twins.ErrNotFound
+		return errors.ErrNotFound
 	}
 
 	return nil
@@ -72,7 +73,7 @@ func (tr *twinRepository) RetrieveByID(_ context.Context, twinID string) (twins.
 
 	filter := bson.M{"id": twinID}
 	if err := coll.FindOne(context.Background(), filter).Decode(&tw); err != nil {
-		return tw, twins.ErrNotFound
+		return tw, errors.ErrNotFound
 	}
 
 	return tw, nil
@@ -185,7 +186,7 @@ func (tr *twinRepository) Remove(ctx context.Context, twinID string) error {
 	}
 
 	if res.DeletedCount < 1 {
-		return twins.ErrNotFound
+		return errors.ErrNotFound
 	}
 
 	return nil

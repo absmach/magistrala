@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/mainflux/mainflux/bootstrap"
+	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 const (
@@ -40,7 +41,7 @@ func (crm *configRepositoryMock) Save(config bootstrap.Config, connections []str
 
 	for _, v := range crm.configs {
 		if v.MFThing == config.MFThing || v.ExternalID == config.ExternalID {
-			return "", bootstrap.ErrConflict
+			return "", errors.ErrConflict
 		}
 	}
 
@@ -69,10 +70,10 @@ func (crm *configRepositoryMock) RetrieveByID(token, id string) (bootstrap.Confi
 
 	c, ok := crm.configs[id]
 	if !ok {
-		return bootstrap.Config{}, bootstrap.ErrNotFound
+		return bootstrap.Config{}, errors.ErrNotFound
 	}
 	if c.Owner != token {
-		return bootstrap.Config{}, bootstrap.ErrUnauthorizedAccess
+		return bootstrap.Config{}, errors.ErrUnauthorizedAccess
 	}
 
 	return c, nil
@@ -137,7 +138,7 @@ func (crm *configRepositoryMock) RetrieveByExternalID(externalID string) (bootst
 		}
 	}
 
-	return bootstrap.Config{}, bootstrap.ErrNotFound
+	return bootstrap.Config{}, errors.ErrNotFound
 }
 
 func (crm *configRepositoryMock) Update(config bootstrap.Config) error {
@@ -146,7 +147,7 @@ func (crm *configRepositoryMock) Update(config bootstrap.Config) error {
 
 	cfg, ok := crm.configs[config.MFThing]
 	if !ok || cfg.Owner != config.Owner {
-		return bootstrap.ErrNotFound
+		return errors.ErrNotFound
 	}
 
 	cfg.Name = config.Name
@@ -167,7 +168,7 @@ func (crm *configRepositoryMock) UpdateCert(owner, thingID, clientCert, clientKe
 		}
 	}
 	if _, ok := crm.configs[forUpdate.MFThing]; !ok {
-		return bootstrap.ErrNotFound
+		return errors.ErrNotFound
 	}
 	forUpdate.ClientCert = clientCert
 	forUpdate.ClientKey = clientKey
@@ -183,7 +184,7 @@ func (crm *configRepositoryMock) UpdateConnections(token, id string, channels []
 
 	config, ok := crm.configs[id]
 	if !ok {
-		return bootstrap.ErrNotFound
+		return errors.ErrNotFound
 	}
 
 	for _, ch := range channels {
@@ -194,7 +195,7 @@ func (crm *configRepositoryMock) UpdateConnections(token, id string, channels []
 	for _, conn := range connections {
 		ch, ok := crm.channels[conn]
 		if !ok {
-			return bootstrap.ErrNotFound
+			return errors.ErrNotFound
 		}
 		config.MFChannels = append(config.MFChannels, ch)
 	}
@@ -223,10 +224,10 @@ func (crm *configRepositoryMock) ChangeState(token, id string, state bootstrap.S
 
 	config, ok := crm.configs[id]
 	if !ok {
-		return bootstrap.ErrNotFound
+		return errors.ErrNotFound
 	}
 	if config.Owner != token {
-		return bootstrap.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	config.State = state

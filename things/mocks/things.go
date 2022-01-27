@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/things"
 )
 
@@ -49,7 +50,7 @@ func (trm *thingRepositoryMock) Save(_ context.Context, ths ...things.Thing) ([]
 	for i := range ths {
 		for _, th := range trm.things {
 			if th.Key == ths[i].Key {
-				return []things.Thing{}, things.ErrConflict
+				return []things.Thing{}, errors.ErrConflict
 			}
 		}
 
@@ -70,7 +71,7 @@ func (trm *thingRepositoryMock) Update(_ context.Context, thing things.Thing) er
 	dbKey := key(thing.Owner, thing.ID)
 
 	if _, ok := trm.things[dbKey]; !ok {
-		return things.ErrNotFound
+		return errors.ErrNotFound
 	}
 
 	trm.things[dbKey] = thing
@@ -84,7 +85,7 @@ func (trm *thingRepositoryMock) UpdateKey(_ context.Context, owner, id, val stri
 
 	for _, th := range trm.things {
 		if th.Key == val {
-			return things.ErrConflict
+			return errors.ErrConflict
 		}
 	}
 
@@ -92,7 +93,7 @@ func (trm *thingRepositoryMock) UpdateKey(_ context.Context, owner, id, val stri
 
 	th, ok := trm.things[dbKey]
 	if !ok {
-		return things.ErrNotFound
+		return errors.ErrNotFound
 	}
 
 	th.Key = val
@@ -109,7 +110,7 @@ func (trm *thingRepositoryMock) RetrieveByID(_ context.Context, owner, id string
 		return c, nil
 	}
 
-	return things.Thing{}, things.ErrNotFound
+	return things.Thing{}, errors.ErrNotFound
 }
 
 func (trm *thingRepositoryMock) RetrieveAll(_ context.Context, owner string, pm things.PageMetadata) (things.Page, error) {
@@ -262,7 +263,7 @@ func (trm *thingRepositoryMock) RetrieveByKey(_ context.Context, key string) (st
 		}
 	}
 
-	return "", things.ErrNotFound
+	return "", errors.ErrNotFound
 }
 
 func (trm *thingRepositoryMock) connect(conn Connection) {
@@ -312,7 +313,7 @@ func (tcm *thingCacheMock) ID(_ context.Context, key string) (string, error) {
 
 	id, ok := tcm.things[key]
 	if !ok {
-		return "", things.ErrNotFound
+		return "", errors.ErrNotFound
 	}
 
 	return id, nil

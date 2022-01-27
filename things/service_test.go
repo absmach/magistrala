@@ -79,7 +79,7 @@ func TestCreateThings(t *testing.T) {
 			desc:   "create thing with wrong credentials",
 			things: []things.Thing{{Name: "e"}},
 			token:  wrongValue,
-			err:    things.ErrUnauthorizedAccess,
+			err:    errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:   "create new things with external UUID",
@@ -124,13 +124,13 @@ func TestUpdateThing(t *testing.T) {
 			desc:  "update thing with wrong credentials",
 			thing: th,
 			token: wrongValue,
-			err:   things.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:  "update non-existing thing",
 			thing: other,
 			token: token,
-			err:   things.ErrAuthorization,
+			err:   errors.ErrAuthorization,
 		},
 	}
 
@@ -166,14 +166,14 @@ func TestUpdateKey(t *testing.T) {
 			token: wrongValue,
 			id:    th.ID,
 			key:   key,
-			err:   things.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:  "update key of non-existing thing",
 			token: token,
 			id:    wrongID,
 			key:   wrongValue,
-			err:   things.ErrAuthorization,
+			err:   errors.ErrAuthorization,
 		},
 	}
 
@@ -212,7 +212,7 @@ func TestShareThing(t *testing.T) {
 			thingID:  th.ID,
 			policies: policies,
 			userIDs:  []string{email2},
-			err:      things.ErrAuthorization,
+			err:      errors.ErrAuthorization,
 		},
 		{
 			desc:     "share a thing with invalid token",
@@ -220,7 +220,7 @@ func TestShareThing(t *testing.T) {
 			thingID:  th.ID,
 			policies: policies,
 			userIDs:  []string{email2},
-			err:      things.ErrUnauthorizedAccess,
+			err:      errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:     "share a thing with partially invalid policies",
@@ -228,7 +228,7 @@ func TestShareThing(t *testing.T) {
 			thingID:  th.ID,
 			policies: []string{"", "read"},
 			userIDs:  []string{email2},
-			err:      fmt.Errorf("cannot claim ownership on object '%s' by user '%s': %s", th.ID, email2, things.ErrMalformedEntity),
+			err:      fmt.Errorf("cannot claim ownership on object '%s' by user '%s': %s", th.ID, email2, errors.ErrMalformedEntity),
 		},
 	}
 
@@ -258,12 +258,12 @@ func TestViewThing(t *testing.T) {
 		"view thing with wrong credentials": {
 			id:    th.ID,
 			token: wrongValue,
-			err:   things.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 		"view non-existing thing": {
 			id:    wrongID,
 			token: token,
-			err:   things.ErrAuthorization,
+			err:   errors.ErrAuthorization,
 		},
 	}
 
@@ -347,7 +347,7 @@ func TestListThings(t *testing.T) {
 				Limit:  0,
 			},
 			size: 0,
-			err:  things.ErrUnauthorizedAccess,
+			err:  errors.ErrUnauthorizedAccess,
 		},
 		"list with metadata": {
 			token: token,
@@ -489,7 +489,7 @@ func TestListThingsByChannel(t *testing.T) {
 				Limit:  0,
 			},
 			size: 0,
-			err:  things.ErrUnauthorizedAccess,
+			err:  errors.ErrUnauthorizedAccess,
 		},
 		"list things by non-existent channel with wrong credentials": {
 			token: token,
@@ -591,7 +591,7 @@ func TestRemoveThing(t *testing.T) {
 			desc:  "remove thing with wrong credentials",
 			id:    sth.ID,
 			token: wrongValue,
-			err:   things.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:  "remove existing thing",
@@ -609,7 +609,7 @@ func TestRemoveThing(t *testing.T) {
 			desc:  "remove non-existing thing",
 			id:    wrongID,
 			token: token,
-			err:   things.ErrAuthorization,
+			err:   errors.ErrAuthorization,
 		},
 	}
 
@@ -638,7 +638,7 @@ func TestCreateChannels(t *testing.T) {
 			desc:     "create channel with wrong credentials",
 			channels: []things.Channel{{Name: "e"}},
 			token:    wrongValue,
-			err:      things.ErrUnauthorizedAccess,
+			err:      errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:     "create new channels with external UUID",
@@ -683,13 +683,13 @@ func TestUpdateChannel(t *testing.T) {
 			desc:    "update channel with wrong credentials",
 			channel: ch,
 			token:   wrongValue,
-			err:     things.ErrUnauthorizedAccess,
+			err:     errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:    "update non-existing channel",
 			channel: other,
 			token:   token,
-			err:     things.ErrNotFound,
+			err:     errors.ErrNotFound,
 		},
 	}
 
@@ -719,17 +719,17 @@ func TestViewChannel(t *testing.T) {
 		"view channel with wrong credentials": {
 			id:    ch.ID,
 			token: wrongValue,
-			err:   things.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 		"view non-existing channel": {
 			id:    wrongID,
 			token: token,
-			err:   things.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 		"view channel with metadata": {
 			id:    wrongID,
 			token: token,
-			err:   things.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 	}
 
@@ -813,7 +813,7 @@ func TestListChannels(t *testing.T) {
 				Limit:  0,
 			},
 			size: 0,
-			err:  things.ErrUnauthorizedAccess,
+			err:  errors.ErrUnauthorizedAccess,
 		},
 		"list with existing name": {
 			token: token,
@@ -976,7 +976,7 @@ func TestListChannelsByThing(t *testing.T) {
 				Limit:  0,
 			},
 			size: 0,
-			err:  things.ErrUnauthorizedAccess,
+			err:  errors.ErrUnauthorizedAccess,
 		},
 		"list channels by non-existent thing": {
 			token: token,
@@ -1078,7 +1078,7 @@ func TestRemoveChannel(t *testing.T) {
 			desc:  "remove channel with wrong credentials",
 			id:    ch.ID,
 			token: wrongValue,
-			err:   things.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:  "remove existing channel",
@@ -1135,21 +1135,21 @@ func TestConnect(t *testing.T) {
 			token:   wrongValue,
 			chanID:  ch.ID,
 			thingID: th.ID,
-			err:     things.ErrUnauthorizedAccess,
+			err:     errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:    "connect thing to non-existing channel",
 			token:   token,
 			chanID:  wrongID,
 			thingID: th.ID,
-			err:     things.ErrNotFound,
+			err:     errors.ErrNotFound,
 		},
 		{
 			desc:    "connect non-existing thing to channel",
 			token:   token,
 			chanID:  ch.ID,
 			thingID: wrongID,
-			err:     things.ErrNotFound,
+			err:     errors.ErrNotFound,
 		},
 	}
 
@@ -1190,28 +1190,28 @@ func TestDisconnect(t *testing.T) {
 			token:   token,
 			chanID:  ch.ID,
 			thingID: th.ID,
-			err:     things.ErrNotFound,
+			err:     errors.ErrNotFound,
 		},
 		{
 			desc:    "disconnect with wrong credentials",
 			token:   wrongValue,
 			chanID:  ch.ID,
 			thingID: th.ID,
-			err:     things.ErrUnauthorizedAccess,
+			err:     errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:    "disconnect from non-existing channel",
 			token:   token,
 			chanID:  wrongID,
 			thingID: th.ID,
-			err:     things.ErrNotFound,
+			err:     errors.ErrNotFound,
 		},
 		{
 			desc:    "disconnect non-existing thing",
 			token:   token,
 			chanID:  ch.ID,
 			thingID: wrongID,
-			err:     things.ErrNotFound,
+			err:     errors.ErrNotFound,
 		},
 	}
 
@@ -1245,7 +1245,7 @@ func TestCanAccessByKey(t *testing.T) {
 		"non-existing thing": {
 			token:   wrongValue,
 			channel: chs[0].ID,
-			err:     things.ErrNotFound,
+			err:     errors.ErrNotFound,
 		},
 		"non-existing chan": {
 			token:   ths[0].Key,
@@ -1330,11 +1330,11 @@ func TestIsChannelOwner(t *testing.T) {
 		},
 		"user does not own channel": {
 			channel: nonOwnedCh.ID,
-			err:     things.ErrNotFound,
+			err:     errors.ErrNotFound,
 		},
 		"access to non-existing channel": {
 			channel: wrongID,
-			err:     things.ErrNotFound,
+			err:     errors.ErrNotFound,
 		},
 	}
 
@@ -1364,7 +1364,7 @@ func TestIdentify(t *testing.T) {
 		"identify non-existing thing": {
 			token: wrongValue,
 			id:    wrongID,
-			err:   things.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 	}
 

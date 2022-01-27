@@ -23,11 +23,8 @@ const (
 )
 
 var (
-	errSaveUserDB       = errors.New("Save user to DB failed")
 	errUpdateDB         = errors.New("Update user email to DB failed")
-	errSelectDb         = errors.New("Select from DB failed")
 	errUpdateUserDB     = errors.New("Update user metadata to DB failed")
-	errRetrieveDB       = errors.New("Retreiving from DB failed")
 	errUpdatePasswordDB = errors.New("Update password to DB failed")
 	errMarshal          = errors.New("Failed to marshal metadata")
 	errUnmarshal        = errors.New("Failed to unmarshal metadata")
@@ -52,12 +49,12 @@ func NewUserRepo(db Database) users.UserRepository {
 func (ur userRepository) Save(ctx context.Context, user users.User) (string, error) {
 	q := `INSERT INTO users (email, password, id, metadata) VALUES (:email, :password, :id, :metadata) RETURNING id`
 	if user.ID == "" || user.Email == "" {
-		return "", users.ErrMalformedEntity
+		return "", errors.ErrMalformedEntity
 	}
 
 	dbu, err := toDBUser(user)
 	if err != nil {
-		return "", errors.Wrap(errSaveUserDB, err)
+		return "", errors.Wrap(errors.ErrCreateEntity, err)
 	}
 
 	row, err := ur.db.NamedQueryContext(ctx, q, dbu)
@@ -66,12 +63,12 @@ func (ur userRepository) Save(ctx context.Context, user users.User) (string, err
 		if ok {
 			switch pqErr.Code.Name() {
 			case errInvalid, errTruncation:
-				return "", errors.Wrap(users.ErrMalformedEntity, err)
+				return "", errors.Wrap(errors.ErrMalformedEntity, err)
 			case errDuplicate:
-				return "", errors.Wrap(users.ErrConflict, err)
+				return "", errors.Wrap(errors.ErrConflict, err)
 			}
 		}
-		return "", errors.Wrap(errSaveUserDB, err)
+		return "", errors.Wrap(errors.ErrCreateEntity, err)
 	}
 
 	defer row.Close()
@@ -122,10 +119,10 @@ func (ur userRepository) RetrieveByEmail(ctx context.Context, email string) (use
 
 	if err := ur.db.QueryRowxContext(ctx, q, email).StructScan(&dbu); err != nil {
 		if err == sql.ErrNoRows {
-			return users.User{}, errors.Wrap(users.ErrNotFound, err)
+			return users.User{}, errors.Wrap(errors.ErrNotFound, err)
 
 		}
-		return users.User{}, errors.Wrap(errRetrieveDB, err)
+		return users.User{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	return toUser(dbu)
@@ -140,10 +137,10 @@ func (ur userRepository) RetrieveByID(ctx context.Context, id string) (users.Use
 
 	if err := ur.db.QueryRowxContext(ctx, q, id).StructScan(&dbu); err != nil {
 		if err == sql.ErrNoRows {
-			return users.User{}, errors.Wrap(users.ErrNotFound, err)
+			return users.User{}, errors.Wrap(errors.ErrNotFound, err)
 
 		}
-		return users.User{}, errors.Wrap(errRetrieveDB, err)
+		return users.User{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	return toUser(dbu)
@@ -152,12 +149,12 @@ func (ur userRepository) RetrieveByID(ctx context.Context, id string) (users.Use
 func (ur userRepository) RetrieveAll(ctx context.Context, offset, limit uint64, userIDs []string, email string, um users.Metadata) (users.UserPage, error) {
 	eq, ep, err := createEmailQuery("", email)
 	if err != nil {
-		return users.UserPage{}, errors.Wrap(errRetrieveDB, err)
+		return users.UserPage{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	mq, mp, err := createMetadataQuery("", um)
 	if err != nil {
-		return users.UserPage{}, errors.Wrap(errRetrieveDB, err)
+		return users.UserPage{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	var query []string
@@ -186,7 +183,7 @@ func (ur userRepository) RetrieveAll(ctx context.Context, offset, limit uint64, 
 
 	rows, err := ur.db.NamedQueryContext(ctx, q, params)
 	if err != nil {
-		return users.UserPage{}, errors.Wrap(errSelectDb, err)
+		return users.UserPage{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 	defer rows.Close()
 
@@ -194,7 +191,7 @@ func (ur userRepository) RetrieveAll(ctx context.Context, offset, limit uint64, 
 	for rows.Next() {
 		dbusr := dbUser{}
 		if err := rows.StructScan(&dbusr); err != nil {
-			return users.UserPage{}, errors.Wrap(errSelectDb, err)
+			return users.UserPage{}, errors.Wrap(errors.ErrViewEntity, err)
 		}
 
 		user, err := toUser(dbusr)
@@ -209,7 +206,7 @@ func (ur userRepository) RetrieveAll(ctx context.Context, offset, limit uint64, 
 
 	total, err := total(ctx, ur.db, cq, params)
 	if err != nil {
-		return users.UserPage{}, errors.Wrap(errSelectDb, err)
+		return users.UserPage{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	page := users.UserPage{
@@ -250,7 +247,7 @@ func (m *dbMetadata) Scan(value interface{}) error {
 
 	b, ok := value.([]byte)
 	if !ok {
-		return users.ErrScanMetadata
+		return errors.ErrScanMetadata
 	}
 
 	if err := json.Unmarshal(b, m); err != nil {

@@ -3,7 +3,7 @@
 
 package api
 
-import "github.com/mainflux/mainflux/opcua"
+import "github.com/mainflux/mainflux/pkg/errors"
 
 type browseReq struct {
 	ServerURI  string
@@ -13,7 +13,7 @@ type browseReq struct {
 
 func (req *browseReq) validate() error {
 	if req.ServerURI == "" {
-		return opcua.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil

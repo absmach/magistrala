@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux/auth"
+	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 var _ auth.GroupRepository = (*groupRepositoryMock)(nil)
@@ -84,7 +85,7 @@ func (grm *groupRepositoryMock) Update(ctx context.Context, group auth.Group) (a
 	defer grm.mu.Unlock()
 	up, ok := grm.groups[group.ID]
 	if !ok {
-		return auth.Group{}, auth.ErrNotFound
+		return auth.Group{}, errors.ErrNotFound
 	}
 	up.Name = group.Name
 	up.Description = group.Description

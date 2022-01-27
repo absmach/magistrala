@@ -56,7 +56,7 @@ func TestSave(t *testing.T) {
 			desc: "save duplicate",
 			sub:  sub2,
 			id:   "",
-			err:  notifiers.ErrConflict,
+			err:  errors.ErrConflict,
 		},
 	}
 
@@ -102,7 +102,7 @@ func TestView(t *testing.T) {
 			desc: "retrieve not existing",
 			sub:  notifiers.Subscription{},
 			id:   "non-existing",
-			err:  notifiers.ErrNotFound,
+			err:  errors.ErrNotFound,
 		},
 	}
 

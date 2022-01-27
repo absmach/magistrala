@@ -48,28 +48,28 @@ func TestChannelsSave(t *testing.T) {
 		{
 			desc:     "create channels that already exist",
 			channels: chs,
-			err:      things.ErrConflict,
+			err:      errors.ErrConflict,
 		},
 		{
 			desc: "create channel with invalid ID",
 			channels: []things.Channel{
 				{ID: "invalid", Owner: email},
 			},
-			err: things.ErrMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 		{
 			desc: "create channel with invalid name",
 			channels: []things.Channel{
 				{ID: id, Owner: email, Name: invalidName},
 			},
-			err: things.ErrMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 		{
 			desc: "create channel with invalid name",
 			channels: []things.Channel{
 				{ID: id, Owner: email, Name: invalidName},
 			},
-			err: things.ErrMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 	}
 
@@ -114,7 +114,7 @@ func TestChannelUpdate(t *testing.T) {
 				ID:    nonexistentChanID,
 				Owner: email,
 			},
-			err: things.ErrNotFound,
+			err: errors.ErrNotFound,
 		},
 		{
 			desc: "update existing channel ID with non-existing user",
@@ -122,7 +122,7 @@ func TestChannelUpdate(t *testing.T) {
 				ID:    ch.ID,
 				Owner: wrongValue,
 			},
-			err: things.ErrNotFound,
+			err: errors.ErrNotFound,
 		},
 		{
 			desc: "update non-existing channel with non-existing user",
@@ -130,7 +130,7 @@ func TestChannelUpdate(t *testing.T) {
 				ID:    nonexistentChanID,
 				Owner: wrongValue,
 			},
-			err: things.ErrNotFound,
+			err: errors.ErrNotFound,
 		},
 	}
 
@@ -184,12 +184,12 @@ func TestSingleChannelRetrieval(t *testing.T) {
 		"retrieve channel with existing user, non-existing channel": {
 			owner: ch.Owner,
 			ID:    nonexistentChanID,
-			err:   things.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 		"retrieve channel with malformed ID": {
 			owner: ch.Owner,
 			ID:    wrongValue,
-			err:   things.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 	}
 
@@ -454,7 +454,7 @@ func TestRetrieveByThing(t *testing.T) {
 				Limit:  n,
 			},
 			size: 0,
-			err:  things.ErrNotFound,
+			err:  errors.ErrNotFound,
 		},
 		"retrieve all non connected channels by thing with existing owner": {
 			owner: email,
@@ -546,7 +546,7 @@ func TestChannelRemoval(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("#%d: failed to remove channel due to: %s", i, err))
 
 		_, err = chanRepo.RetrieveByID(context.Background(), email, chID)
-		assert.True(t, errors.Contains(err, things.ErrNotFound), fmt.Sprintf("#%d: expected %s got %s", i, things.ErrNotFound, err))
+		assert.True(t, errors.Contains(err, errors.ErrNotFound), fmt.Sprintf("#%d: expected %s got %s", i, errors.ErrNotFound, err))
 	}
 }
 
@@ -606,28 +606,28 @@ func TestConnect(t *testing.T) {
 			owner: email,
 			chID:  chID,
 			thID:  thID,
-			err:   things.ErrConflict,
+			err:   errors.ErrConflict,
 		},
 		{
 			desc:  "connect with non-existing user",
 			owner: wrongValue,
 			chID:  chID,
 			thID:  thID,
-			err:   things.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 		{
 			desc:  "connect non-existing channel",
 			owner: email,
 			chID:  nonexistentChanID,
 			thID:  thID,
-			err:   things.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 		{
 			desc:  "connect non-existing thing",
 			owner: email,
 			chID:  chID,
 			thID:  nonexistentThingID,
-			err:   things.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 	}
 
@@ -692,28 +692,28 @@ func TestDisconnect(t *testing.T) {
 			owner: email,
 			chID:  chID,
 			thID:  thID,
-			err:   things.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 		{
 			desc:  "disconnect non-existing user",
 			owner: wrongValue,
 			chID:  chID,
 			thID:  thID,
-			err:   things.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 		{
 			desc:  "disconnect non-existing channel",
 			owner: email,
 			chID:  nonexistentChanID,
 			thID:  thID,
-			err:   things.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 		{
 			desc:  "disconnect non-existing thing",
 			owner: email,
 			chID:  chID,
 			thID:  nonexistentThingID,
-			err:   things.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 	}
 

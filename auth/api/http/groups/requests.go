@@ -15,10 +15,10 @@ type createGroupReq struct {
 
 func (req createGroupReq) validate() error {
 	if req.token == "" {
-		return auth.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 	if len(req.Name) > maxNameSize || req.Name == "" {
-		return errors.Wrap(auth.ErrMalformedEntity, auth.ErrBadGroupName)
+		return errors.Wrap(errors.ErrMalformedEntity, auth.ErrBadGroupName)
 	}
 
 	return nil
@@ -34,11 +34,11 @@ type updateGroupReq struct {
 
 func (req updateGroupReq) validate() error {
 	if req.token == "" {
-		return auth.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.id == "" {
-		return auth.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -56,7 +56,7 @@ type listGroupsReq struct {
 
 func (req listGroupsReq) validate() error {
 	if req.token == "" {
-		return auth.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.level > auth.MaxLevel || req.level < auth.MinLevel {
@@ -78,11 +78,11 @@ type listMembersReq struct {
 
 func (req listMembersReq) validate() error {
 	if req.token == "" {
-		return auth.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.id == "" {
-		return auth.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -98,11 +98,11 @@ type listMembershipsReq struct {
 
 func (req listMembershipsReq) validate() error {
 	if req.token == "" {
-		return auth.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.id == "" {
-		return auth.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -117,11 +117,11 @@ type assignReq struct {
 
 func (req assignReq) validate() error {
 	if req.token == "" {
-		return auth.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.Type == "" || req.groupID == "" || len(req.Members) == 0 {
-		return auth.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -135,11 +135,11 @@ type shareGroupAccessReq struct {
 
 func (req shareGroupAccessReq) validate() error {
 	if req.token == "" {
-		return auth.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.ThingGroupID == "" || req.userGroupID == "" {
-		return auth.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -151,11 +151,11 @@ type unassignReq struct {
 
 func (req unassignReq) validate() error {
 	if req.token == "" {
-		return auth.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.groupID == "" || len(req.Members) == 0 {
-		return auth.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -168,11 +168,11 @@ type groupReq struct {
 
 func (req groupReq) validate() error {
 	if req.token == "" {
-		return auth.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.id == "" {
-		return auth.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil

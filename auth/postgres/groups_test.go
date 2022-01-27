@@ -81,7 +81,7 @@ func TestGroupSave(t *testing.T) {
 				OwnerID: usrID,
 				Name:    invalidName,
 			},
-			err: auth.ErrMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 		{
 			desc: "create group with invalid description",
@@ -91,7 +91,7 @@ func TestGroupSave(t *testing.T) {
 				Name:        groupName,
 				Description: invalidDesc,
 			},
-			err: auth.ErrMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 		{
 			desc: "create group with parent",
@@ -253,7 +253,7 @@ func TestGroupUpdate(t *testing.T) {
 				ID:   groupID,
 				Name: invalidName,
 			},
-			err: auth.ErrMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 		{
 			desc: "update group for invalid description",
@@ -261,7 +261,7 @@ func TestGroupUpdate(t *testing.T) {
 				ID:          groupID,
 				Description: invalidDesc,
 			},
-			err: auth.ErrMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 	}
 

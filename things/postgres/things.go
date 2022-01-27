@@ -40,7 +40,7 @@ func NewThingRepository(db Database) things.ThingRepository {
 func (tr thingRepository) Save(ctx context.Context, ths ...things.Thing) ([]things.Thing, error) {
 	tx, err := tr.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return []things.Thing{}, errors.Wrap(things.ErrCreateEntity, err)
+		return []things.Thing{}, errors.Wrap(errors.ErrCreateEntity, err)
 	}
 
 	q := `INSERT INTO things (id, owner, name, key, metadata)
@@ -49,7 +49,7 @@ func (tr thingRepository) Save(ctx context.Context, ths ...things.Thing) ([]thin
 	for _, thing := range ths {
 		dbth, err := toDBThing(thing)
 		if err != nil {
-			return []things.Thing{}, errors.Wrap(things.ErrCreateEntity, err)
+			return []things.Thing{}, errors.Wrap(errors.ErrCreateEntity, err)
 		}
 
 		if _, err := tx.NamedExecContext(ctx, q, dbth); err != nil {
@@ -58,18 +58,18 @@ func (tr thingRepository) Save(ctx context.Context, ths ...things.Thing) ([]thin
 			if ok {
 				switch pqErr.Code.Name() {
 				case errInvalid, errTruncation:
-					return []things.Thing{}, errors.Wrap(things.ErrMalformedEntity, err)
+					return []things.Thing{}, errors.Wrap(errors.ErrMalformedEntity, err)
 				case errDuplicate:
-					return []things.Thing{}, errors.Wrap(things.ErrConflict, err)
+					return []things.Thing{}, errors.Wrap(errors.ErrConflict, err)
 				}
 			}
 
-			return []things.Thing{}, errors.Wrap(things.ErrCreateEntity, err)
+			return []things.Thing{}, errors.Wrap(errors.ErrCreateEntity, err)
 		}
 	}
 
 	if err = tx.Commit(); err != nil {
-		return []things.Thing{}, errors.Wrap(things.ErrCreateEntity, err)
+		return []things.Thing{}, errors.Wrap(errors.ErrCreateEntity, err)
 	}
 
 	return ths, nil
@@ -80,7 +80,7 @@ func (tr thingRepository) Update(ctx context.Context, t things.Thing) error {
 
 	dbth, err := toDBThing(t)
 	if err != nil {
-		return errors.Wrap(things.ErrUpdateEntity, err)
+		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	res, errdb := tr.db.NamedExecContext(ctx, q, dbth)
@@ -89,20 +89,20 @@ func (tr thingRepository) Update(ctx context.Context, t things.Thing) error {
 		if ok {
 			switch pqErr.Code.Name() {
 			case errInvalid, errTruncation:
-				return errors.Wrap(things.ErrMalformedEntity, errdb)
+				return errors.Wrap(errors.ErrMalformedEntity, errdb)
 			}
 		}
 
-		return errors.Wrap(things.ErrUpdateEntity, errdb)
+		return errors.Wrap(errors.ErrUpdateEntity, errdb)
 	}
 
 	cnt, errdb := res.RowsAffected()
 	if errdb != nil {
-		return errors.Wrap(things.ErrUpdateEntity, errdb)
+		return errors.Wrap(errors.ErrUpdateEntity, errdb)
 	}
 
 	if cnt == 0 {
-		return things.ErrNotFound
+		return errors.ErrNotFound
 	}
 
 	return nil
@@ -123,22 +123,22 @@ func (tr thingRepository) UpdateKey(ctx context.Context, owner, id, key string) 
 		if ok {
 			switch pqErr.Code.Name() {
 			case errInvalid:
-				return errors.Wrap(things.ErrMalformedEntity, err)
+				return errors.Wrap(errors.ErrMalformedEntity, err)
 			case errDuplicate:
-				return errors.Wrap(things.ErrConflict, err)
+				return errors.Wrap(errors.ErrConflict, err)
 			}
 		}
 
-		return errors.Wrap(things.ErrUpdateEntity, err)
+		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	cnt, err := res.RowsAffected()
 	if err != nil {
-		return errors.Wrap(things.ErrUpdateEntity, err)
+		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	if cnt == 0 {
-		return things.ErrNotFound
+		return errors.ErrNotFound
 	}
 
 	return nil
@@ -152,9 +152,9 @@ func (tr thingRepository) RetrieveByID(ctx context.Context, owner, id string) (t
 	if err := tr.db.QueryRowxContext(ctx, q, id).StructScan(&dbth); err != nil {
 		pqErr, ok := err.(*pq.Error)
 		if err == sql.ErrNoRows || ok && errInvalid == pqErr.Code.Name() {
-			return things.Thing{}, errors.Wrap(things.ErrNotFound, err)
+			return things.Thing{}, errors.Wrap(errors.ErrNotFound, err)
 		}
-		return things.Thing{}, errors.Wrap(things.ErrSelectEntity, err)
+		return things.Thing{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	return toThing(dbth)
@@ -166,9 +166,9 @@ func (tr thingRepository) RetrieveByKey(ctx context.Context, key string) (string
 	var id string
 	if err := tr.db.QueryRowxContext(ctx, q, key).Scan(&id); err != nil {
 		if err == sql.ErrNoRows {
-			return "", errors.Wrap(things.ErrNotFound, err)
+			return "", errors.Wrap(errors.ErrNotFound, err)
 		}
-		return "", errors.Wrap(things.ErrSelectEntity, err)
+		return "", errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	return id, nil
@@ -186,7 +186,7 @@ func (tr thingRepository) RetrieveByIDs(ctx context.Context, thingIDs []string, 
 
 	m, mq, err := getMetadataQuery(pm.Metadata)
 	if err != nil {
-		return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
+		return things.Page{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	q := fmt.Sprintf(`SELECT id, owner, name, key, metadata FROM things
@@ -201,7 +201,7 @@ func (tr thingRepository) RetrieveByIDs(ctx context.Context, thingIDs []string, 
 
 	rows, err := tr.db.NamedQueryContext(ctx, q, params)
 	if err != nil {
-		return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
+		return things.Page{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 	defer rows.Close()
 
@@ -209,12 +209,12 @@ func (tr thingRepository) RetrieveByIDs(ctx context.Context, thingIDs []string, 
 	for rows.Next() {
 		dbth := dbThing{}
 		if err := rows.StructScan(&dbth); err != nil {
-			return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
+			return things.Page{}, errors.Wrap(errors.ErrViewEntity, err)
 		}
 
 		th, err := toThing(dbth)
 		if err != nil {
-			return things.Page{}, errors.Wrap(things.ErrViewEntity, err)
+			return things.Page{}, errors.Wrap(errors.ErrViewEntity, err)
 		}
 
 		items = append(items, th)
@@ -224,7 +224,7 @@ func (tr thingRepository) RetrieveByIDs(ctx context.Context, thingIDs []string, 
 
 	total, err := total(ctx, tr.db, cq, params)
 	if err != nil {
-		return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
+		return things.Page{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	page := things.Page{
@@ -255,7 +255,7 @@ func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, pm thin
 	ownerQuery := getOwnerQuery(pm.FetchSharedThings)
 	m, mq, err := getMetadataQuery(pm.Metadata)
 	if err != nil {
-		return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
+		return things.Page{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	var query []string
@@ -286,7 +286,7 @@ func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, pm thin
 
 	rows, err := tr.db.NamedQueryContext(ctx, q, params)
 	if err != nil {
-		return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
+		return things.Page{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 	defer rows.Close()
 
@@ -294,12 +294,12 @@ func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, pm thin
 	for rows.Next() {
 		dbth := dbThing{Owner: owner}
 		if err := rows.StructScan(&dbth); err != nil {
-			return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
+			return things.Page{}, errors.Wrap(errors.ErrViewEntity, err)
 		}
 
 		th, err := toThing(dbth)
 		if err != nil {
-			return things.Page{}, errors.Wrap(things.ErrViewEntity, err)
+			return things.Page{}, errors.Wrap(errors.ErrViewEntity, err)
 		}
 
 		items = append(items, th)
@@ -309,7 +309,7 @@ func (tr thingRepository) RetrieveAll(ctx context.Context, owner string, pm thin
 
 	total, err := total(ctx, tr.db, cq, params)
 	if err != nil {
-		return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
+		return things.Page{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	page := things.Page{
@@ -332,7 +332,7 @@ func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, chID str
 
 	// Verify if UUID format is valid to avoid internal Postgres error
 	if _, err := uuid.FromString(chID); err != nil {
-		return things.Page{}, errors.Wrap(things.ErrNotFound, err)
+		return things.Page{}, errors.Wrap(errors.ErrNotFound, err)
 	}
 
 	var q, qc string
@@ -382,7 +382,7 @@ func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, chID str
 
 	rows, err := tr.db.NamedQueryContext(ctx, q, params)
 	if err != nil {
-		return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
+		return things.Page{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 	defer rows.Close()
 
@@ -390,12 +390,12 @@ func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, chID str
 	for rows.Next() {
 		dbth := dbThing{Owner: owner}
 		if err := rows.StructScan(&dbth); err != nil {
-			return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
+			return things.Page{}, errors.Wrap(errors.ErrViewEntity, err)
 		}
 
 		th, err := toThing(dbth)
 		if err != nil {
-			return things.Page{}, errors.Wrap(things.ErrViewEntity, err)
+			return things.Page{}, errors.Wrap(errors.ErrViewEntity, err)
 		}
 
 		items = append(items, th)
@@ -403,7 +403,7 @@ func (tr thingRepository) RetrieveByChannel(ctx context.Context, owner, chID str
 
 	var total uint64
 	if err := tr.db.GetContext(ctx, &total, qc, owner, chID); err != nil {
-		return things.Page{}, errors.Wrap(things.ErrSelectEntity, err)
+		return things.Page{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	return things.Page{
@@ -423,7 +423,7 @@ func (tr thingRepository) Remove(ctx context.Context, owner, id string) error {
 	}
 	q := `DELETE FROM things WHERE id = :id`
 	if _, err := tr.db.NamedExecContext(ctx, q, dbth); err != nil {
-		return errors.Wrap(things.ErrRemoveEntity, err)
+		return errors.Wrap(errors.ErrRemoveEntity, err)
 	}
 	return nil
 }
@@ -441,7 +441,7 @@ func toDBThing(th things.Thing) (dbThing, error) {
 	if len(th.Metadata) > 0 {
 		b, err := json.Marshal(th.Metadata)
 		if err != nil {
-			return dbThing{}, errors.Wrap(things.ErrMalformedEntity, err)
+			return dbThing{}, errors.Wrap(errors.ErrMalformedEntity, err)
 		}
 		data = b
 	}
@@ -458,7 +458,7 @@ func toDBThing(th things.Thing) (dbThing, error) {
 func toThing(dbth dbThing) (things.Thing, error) {
 	var metadata map[string]interface{}
 	if err := json.Unmarshal([]byte(dbth.Metadata), &metadata); err != nil {
-		return things.Thing{}, errors.Wrap(things.ErrMalformedEntity, err)
+		return things.Thing{}, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return things.Thing{

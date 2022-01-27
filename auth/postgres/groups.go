@@ -17,11 +17,10 @@ import (
 	"github.com/lib/pq"
 	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/users"
 )
 
 var (
-	errStringToUUID        = errors.New("error converting string")
+	errStringToUUID        = errors.New("error converting string to uuid")
 	errGetTotal            = errors.New("failed to get total number of groups")
 	errCreateMetadataQuery = errors.New("failed to create query for metadata")
 
@@ -46,13 +45,13 @@ func NewGroupRepo(db Database) auth.GroupRepository {
 
 func (gr groupRepository) Save(ctx context.Context, g auth.Group) (auth.Group, error) {
 	// For root group path is initialized with id
-	q := `INSERT INTO groups (name, description, id, path, owner_id, metadata, created_at, updated_at) 
-		  VALUES (:name, :description, :id, :id, :owner_id, :metadata, :created_at, :updated_at) 
+	q := `INSERT INTO groups (name, description, id, path, owner_id, metadata, created_at, updated_at)
+		  VALUES (:name, :description, :id, :id, :owner_id, :metadata, :created_at, :updated_at)
 		  RETURNING id, name, owner_id, parent_id, description, metadata, path, nlevel(path) as level, created_at, updated_at`
 	if g.ParentID != "" {
 		// Path is constructed in insert_group_tr - init.go
-		q = `INSERT INTO groups (name, description, id, owner_id, parent_id, metadata, created_at, updated_at) 
-			 VALUES ( :name, :description, :id, :owner_id, :parent_id, :metadata, :created_at, :updated_at) 
+		q = `INSERT INTO groups (name, description, id, owner_id, parent_id, metadata, created_at, updated_at)
+			 VALUES ( :name, :description, :id, :owner_id, :parent_id, :metadata, :created_at, :updated_at)
 			 RETURNING id, name, owner_id, parent_id, description, metadata, path, nlevel(path) as level, created_at, updated_at`
 	}
 
@@ -67,7 +66,7 @@ func (gr groupRepository) Save(ctx context.Context, g auth.Group) (auth.Group, e
 		if ok {
 			switch pqErr.Code.Name() {
 			case errInvalid, errTruncation:
-				return auth.Group{}, errors.Wrap(auth.ErrMalformedEntity, err)
+				return auth.Group{}, errors.Wrap(errors.ErrMalformedEntity, err)
 			case errFK:
 				return auth.Group{}, errors.Wrap(auth.ErrCreateGroup, err)
 			case errDuplicate:
@@ -89,7 +88,7 @@ func (gr groupRepository) Save(ctx context.Context, g auth.Group) (auth.Group, e
 }
 
 func (gr groupRepository) Update(ctx context.Context, g auth.Group) (auth.Group, error) {
-	q := `UPDATE groups SET name = :name, description = :description, metadata = :metadata, updated_at = :updated_at WHERE id = :id 
+	q := `UPDATE groups SET name = :name, description = :description, metadata = :metadata, updated_at = :updated_at WHERE id = :id
 		  RETURNING id, name, owner_id, parent_id, description, metadata, path, nlevel(path) as level, created_at, updated_at`
 
 	dbu, err := toDBGroup(g)
@@ -103,7 +102,7 @@ func (gr groupRepository) Update(ctx context.Context, g auth.Group) (auth.Group,
 		if ok {
 			switch pqErr.Code.Name() {
 			case errInvalid, errTruncation:
-				return auth.Group{}, errors.Wrap(auth.ErrMalformedEntity, err)
+				return auth.Group{}, errors.Wrap(errors.ErrMalformedEntity, err)
 			case errDuplicate:
 				return auth.Group{}, errors.Wrap(auth.ErrGroupConflict, err)
 			}
@@ -137,7 +136,7 @@ func (gr groupRepository) Delete(ctx context.Context, groupID string) error {
 		if ok {
 			switch pqErr.Code.Name() {
 			case errInvalid, errTruncation:
-				return errors.Wrap(auth.ErrMalformedEntity, err)
+				return errors.Wrap(errors.ErrMalformedEntity, err)
 			case errFK:
 				switch pqErr.Constraint {
 				case groupIDFkeyy:
@@ -170,7 +169,7 @@ func (gr groupRepository) RetrieveByID(ctx context.Context, id string) (auth.Gro
 			return auth.Group{}, errors.Wrap(auth.ErrGroupNotFound, err)
 
 		}
-		return auth.Group{}, errors.Wrap(auth.ErrSelectEntity, err)
+		return auth.Group{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 	return toGroup(dbu)
 }
@@ -186,7 +185,7 @@ func (gr groupRepository) RetrieveAll(ctx context.Context, pm auth.PageMetadata)
 		mq = fmt.Sprintf(" AND %s", metaQuery)
 	}
 
-	q := fmt.Sprintf(`SELECT id, owner_id, parent_id, name, description, metadata, path, nlevel(path) as level, created_at, updated_at FROM groups 
+	q := fmt.Sprintf(`SELECT id, owner_id, parent_id, name, description, metadata, path, nlevel(path) as level, created_at, updated_at FROM groups
 					  WHERE nlevel(path) <= :level %s ORDER BY path`, mq)
 
 	dbPage, err := toDBGroupPage("", "", pm)
@@ -240,7 +239,7 @@ func (gr groupRepository) RetrieveAllParents(ctx context.Context, groupID string
 }
 
 func (gr groupRepository) RetrieveAllChildren(ctx context.Context, groupID string, pm auth.PageMetadata) (auth.GroupPage, error) {
-	q := `SELECT g.id, g.name, g.owner_id, g.parent_id, g.description, g.metadata, g.path,  nlevel(g.path) as level, g.created_at, g.updated_at 
+	q := `SELECT g.id, g.name, g.owner_id, g.parent_id, g.description, g.metadata, g.path,  nlevel(g.path) as level, g.created_at, g.updated_at
 	FROM groups parent, groups g
 	WHERE parent.id = :id AND g.path <@ parent.path AND nlevel(g.path) - nlevel(parent.path) < :level`
 
@@ -370,7 +369,7 @@ func (gr groupRepository) Memberships(ctx context.Context, memberID string, pm a
 	if mq != "" {
 		mq = fmt.Sprintf("AND %s", mq)
 	}
-	q := fmt.Sprintf(`SELECT g.id, g.owner_id, g.parent_id, g.name, g.description, g.metadata 
+	q := fmt.Sprintf(`SELECT g.id, g.owner_id, g.parent_id, g.name, g.description, g.metadata
 					  FROM group_relations gr, groups g
 					  WHERE gr.group_id = g.id and gr.member_id = :member_id
 		  			  %s ORDER BY id LIMIT :limit OFFSET :offset;`, mq)
@@ -426,7 +425,7 @@ func (gr groupRepository) Assign(ctx context.Context, groupID, groupType string,
 		return errors.Wrap(auth.ErrAssignToGroup, err)
 	}
 
-	qIns := `INSERT INTO group_relations (group_id, member_id, type, created_at, updated_at) 
+	qIns := `INSERT INTO group_relations (group_id, member_id, type, created_at, updated_at)
 			 VALUES(:group_id, :member_id, :type, :created_at, :updated_at)`
 
 	for _, id := range ids {
@@ -444,9 +443,9 @@ func (gr groupRepository) Assign(ctx context.Context, groupID, groupType string,
 			if ok {
 				switch pqErr.Code.Name() {
 				case errInvalid, errTruncation:
-					return errors.Wrap(auth.ErrMalformedEntity, err)
+					return errors.Wrap(errors.ErrMalformedEntity, err)
 				case errFK:
-					return errors.Wrap(auth.ErrConflict, errors.New(pqErr.Detail))
+					return errors.Wrap(errors.ErrConflict, errors.New(pqErr.Detail))
 				case errDuplicate:
 					return errors.Wrap(auth.ErrMemberAlreadyAssigned, errors.New(pqErr.Detail))
 				}
@@ -483,9 +482,9 @@ func (gr groupRepository) Unassign(ctx context.Context, groupID string, ids ...s
 			if ok {
 				switch pqErr.Code.Name() {
 				case errInvalid, errTruncation:
-					return errors.Wrap(auth.ErrMalformedEntity, err)
+					return errors.Wrap(errors.ErrMalformedEntity, err)
 				case errDuplicate:
-					return errors.Wrap(auth.ErrConflict, err)
+					return errors.Wrap(errors.ErrConflict, err)
 				}
 			}
 
@@ -719,7 +718,7 @@ func (m *dbMetadata) Scan(value interface{}) error {
 
 	b, ok := value.([]byte)
 	if !ok {
-		return users.ErrScanMetadata
+		return errors.ErrScanMetadata
 	}
 
 	if err := json.Unmarshal(b, m); err != nil {

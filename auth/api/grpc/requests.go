@@ -5,6 +5,7 @@ package grpc
 
 import (
 	"github.com/mainflux/mainflux/auth"
+	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 type identityReq struct {
@@ -14,12 +15,12 @@ type identityReq struct {
 
 func (req identityReq) validate() error {
 	if req.token == "" {
-		return auth.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 	if req.kind != auth.LoginKey &&
 		req.kind != auth.APIKey &&
 		req.kind != auth.RecoveryKey {
-		return auth.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -33,12 +34,12 @@ type issueReq struct {
 
 func (req issueReq) validate() error {
 	if req.email == "" {
-		return auth.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 	if req.keyType != auth.LoginKey &&
 		req.keyType != auth.APIKey &&
 		req.keyType != auth.RecoveryKey {
-		return auth.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -53,10 +54,10 @@ type assignReq struct {
 
 func (req assignReq) validate() error {
 	if req.token == "" {
-		return auth.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 	if req.groupID == "" || req.memberID == "" {
-		return auth.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 	return nil
 }
@@ -71,13 +72,13 @@ type membersReq struct {
 
 func (req membersReq) validate() error {
 	if req.token == "" {
-		return auth.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 	if req.groupID == "" {
-		return auth.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 	if req.memberType == "" {
-		return auth.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 	return nil
 }
@@ -94,15 +95,15 @@ type authReq struct {
 
 func (req authReq) validate() error {
 	if req.Sub == "" {
-		return auth.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	if req.Obj == "" {
-		return auth.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	if req.Act == "" {
-		return auth.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -116,7 +117,7 @@ type addPolicyReq struct {
 
 func (req addPolicyReq) validate() error {
 	if req.Sub == "" || req.Obj == "" || req.Act == "" {
-		return auth.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 	return nil
 }
@@ -129,7 +130,7 @@ type deletePolicyReq struct {
 
 func (req deletePolicyReq) validate() error {
 	if req.Sub == "" || req.Obj == "" || req.Act == "" {
-		return auth.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 	return nil
 }

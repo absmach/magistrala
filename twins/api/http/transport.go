@@ -200,13 +200,13 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", contentType)
 
 	switch err {
-	case twins.ErrMalformedEntity:
+	case errors.ErrMalformedEntity:
 		w.WriteHeader(http.StatusBadRequest)
-	case twins.ErrUnauthorizedAccess:
+	case errors.ErrUnauthorizedAccess:
 		w.WriteHeader(http.StatusForbidden)
-	case twins.ErrNotFound:
+	case errors.ErrNotFound:
 		w.WriteHeader(http.StatusNotFound)
-	case twins.ErrConflict:
+	case errors.ErrConflict:
 		w.WriteHeader(http.StatusUnprocessableEntity)
 	case errors.ErrUnsupportedContentType:
 		w.WriteHeader(http.StatusUnsupportedMediaType)

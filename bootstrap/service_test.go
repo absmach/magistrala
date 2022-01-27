@@ -128,19 +128,19 @@ func TestAdd(t *testing.T) {
 			desc:   "add a config with an invalid ID",
 			config: neID,
 			token:  validToken,
-			err:    bootstrap.ErrNotFound,
+			err:    errors.ErrNotFound,
 		},
 		{
 			desc:   "add a config with wrong credentials",
 			config: config,
 			token:  invalidToken,
-			err:    bootstrap.ErrUnauthorizedAccess,
+			err:    errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:   "add a config with invalid list of channels",
 			config: wrongChannels,
 			token:  validToken,
-			err:    bootstrap.ErrMalformedEntity,
+			err:    errors.ErrMalformedEntity,
 		},
 	}
 
@@ -175,13 +175,13 @@ func TestView(t *testing.T) {
 			desc:  "view a non-existing config",
 			id:    unknown,
 			token: validToken,
-			err:   bootstrap.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 		{
 			desc:  "view a config with wrong credentials",
 			id:    config.MFThing,
 			token: invalidToken,
-			err:   bootstrap.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 	}
 
@@ -227,13 +227,13 @@ func TestUpdate(t *testing.T) {
 			desc:   "update a non-existing config",
 			config: nonExisting,
 			token:  validToken,
-			err:    bootstrap.ErrNotFound,
+			err:    errors.ErrNotFound,
 		},
 		{
 			desc:   "update a config with wrong credentials",
 			config: saved,
 			token:  invalidToken,
-			err:    bootstrap.ErrUnauthorizedAccess,
+			err:    errors.ErrUnauthorizedAccess,
 		},
 	}
 
@@ -282,7 +282,7 @@ func TestUpdateCert(t *testing.T) {
 			caCert:     "newCert",
 
 			token: validToken,
-			err:   bootstrap.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 		{
 			desc:       "update config cert with wrong credentials",
@@ -291,7 +291,7 @@ func TestUpdateCert(t *testing.T) {
 			clientKey:  "newKey",
 			caCert:     "newCert",
 			token:      invalidToken,
-			err:        bootstrap.ErrUnauthorizedAccess,
+			err:        errors.ErrUnauthorizedAccess,
 		},
 	}
 
@@ -351,21 +351,21 @@ func TestUpdateConnections(t *testing.T) {
 			token:       validToken,
 			id:          "",
 			connections: []string{"3"},
-			err:         bootstrap.ErrNotFound,
+			err:         errors.ErrNotFound,
 		},
 		{
 			desc:        "update connections with invalid channels",
 			token:       validToken,
 			id:          created.MFThing,
 			connections: []string{"wrong"},
-			err:         bootstrap.ErrMalformedEntity,
+			err:         errors.ErrMalformedEntity,
 		},
 		{
 			desc:        "update connections a config with wrong credentials",
 			token:       invalidToken,
 			id:          created.MFKey,
 			connections: []string{"2", "3"},
-			err:         bootstrap.ErrUnauthorizedAccess,
+			err:         errors.ErrUnauthorizedAccess,
 		},
 	}
 
@@ -443,7 +443,7 @@ func TestList(t *testing.T) {
 			token:  invalidToken,
 			offset: 0,
 			limit:  10,
-			err:    bootstrap.ErrUnauthorizedAccess,
+			err:    errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc: "list last page",
@@ -502,7 +502,7 @@ func TestRemove(t *testing.T) {
 			desc:  "view a config with wrong credentials",
 			id:    saved.MFThing,
 			token: invalidToken,
-			err:   bootstrap.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:  "remove an existing config",
@@ -555,7 +555,7 @@ func TestBootstrap(t *testing.T) {
 			config:      bootstrap.Config{},
 			externalID:  "invalid",
 			externalKey: saved.ExternalKey,
-			err:         bootstrap.ErrNotFound,
+			err:         errors.ErrNotFound,
 			encrypted:   false,
 		},
 		{
@@ -563,7 +563,7 @@ func TestBootstrap(t *testing.T) {
 			config:      bootstrap.Config{},
 			externalID:  saved.ExternalID,
 			externalKey: "invalid",
-			err:         bootstrap.ErrNotFound,
+			err:         errors.ErrNotFound,
 			encrypted:   false,
 		},
 		{
@@ -612,14 +612,14 @@ func TestChangeState(t *testing.T) {
 			state: bootstrap.Active,
 			id:    saved.MFThing,
 			token: invalidToken,
-			err:   bootstrap.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:  "change state of non-existing config",
 			state: bootstrap.Active,
 			id:    unknown,
 			token: validToken,
-			err:   bootstrap.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 		{
 			desc:  "change state to Active",

@@ -17,11 +17,6 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
-var (
-	errInvalidQueryParams     = errors.New("invalid query params")
-	errUnsupportedContentType = errors.New("unsupported content type")
-)
-
 const (
 	contentType = "application/json"
 	maxNameSize = 254
@@ -130,12 +125,12 @@ func MakeHandler(svc auth.Service, mux *bone.Mux, tracer opentracing.Tracer) *bo
 
 func decodeShareGroupRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, auth.ErrUnsupportedContentType
+		return nil, errors.ErrUnsupportedContentType
 	}
 
 	var req shareGroupAccessReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(auth.ErrFailedDecode, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	req.userGroupID = bone.GetValue(r, "subjectGroupID")
@@ -236,12 +231,12 @@ func decodeListMembershipsRequest(_ context.Context, r *http.Request) (interface
 
 func decodeGroupCreate(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, auth.ErrUnsupportedContentType
+		return nil, errors.ErrUnsupportedContentType
 	}
 
 	var req createGroupReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(auth.ErrFailedDecode, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	req.token = r.Header.Get("Authorization")
@@ -250,12 +245,12 @@ func decodeGroupCreate(_ context.Context, r *http.Request) (interface{}, error) 
 
 func decodeGroupUpdate(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, auth.ErrUnsupportedContentType
+		return nil, errors.ErrUnsupportedContentType
 	}
 
 	var req updateGroupReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(auth.ErrFailedDecode, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	req.id = bone.GetValue(r, "groupID")
@@ -279,7 +274,7 @@ func decodeAssignRequest(_ context.Context, r *http.Request) (interface{}, error
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(auth.ErrMalformedEntity, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -294,7 +289,7 @@ func decodeUnassignRequest(_ context.Context, r *http.Request) (interface{}, err
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(auth.ErrMalformedEntity, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -320,15 +315,15 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch {
-	case errors.Contains(err, auth.ErrMalformedEntity):
+	case errors.Contains(err, errors.ErrMalformedEntity):
 		w.WriteHeader(http.StatusBadRequest)
-	case errors.Contains(err, auth.ErrUnauthorizedAccess):
+	case errors.Contains(err, errors.ErrUnauthorizedAccess):
 		w.WriteHeader(http.StatusForbidden)
-	case errors.Contains(err, auth.ErrNotFound):
+	case errors.Contains(err, errors.ErrNotFound):
 		w.WriteHeader(http.StatusNotFound)
-	case errors.Contains(err, auth.ErrConflict):
+	case errors.Contains(err, errors.ErrConflict):
 		w.WriteHeader(http.StatusConflict)
-	case errors.Contains(err, auth.ErrAuthorization):
+	case errors.Contains(err, errors.ErrAuthorization):
 		w.WriteHeader(http.StatusForbidden)
 	case errors.Contains(err, auth.ErrMemberAlreadyAssigned):
 		w.WriteHeader(http.StatusConflict)
@@ -336,7 +331,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, io.ErrUnexpectedEOF):
 		w.WriteHeader(http.StatusBadRequest)
-	case errors.Contains(err, errUnsupportedContentType):
+	case errors.Contains(err, errors.ErrUnsupportedContentType):
 		w.WriteHeader(http.StatusUnsupportedMediaType)
 	default:
 		w.WriteHeader(http.StatusInternalServerError)

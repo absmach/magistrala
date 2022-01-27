@@ -3,7 +3,7 @@
 
 package http
 
-import "github.com/mainflux/mainflux/things"
+import "github.com/mainflux/mainflux/pkg/errors"
 
 type identifyReq struct {
 	Token string `json:"token"`
@@ -11,7 +11,7 @@ type identifyReq struct {
 
 func (req identifyReq) validate() error {
 	if req.Token == "" {
-		return things.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	return nil
@@ -24,7 +24,7 @@ type canAccessByKeyReq struct {
 
 func (req canAccessByKeyReq) validate() error {
 	if req.Token == "" || req.chanID == "" {
-		return things.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	return nil
@@ -37,7 +37,7 @@ type canAccessByIDReq struct {
 
 func (req canAccessByIDReq) validate() error {
 	if req.ThingID == "" || req.chanID == "" {
-		return things.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	return nil

@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/mainflux/mainflux/certs"
+	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 var _ certs.Repository = (*certsRepoMock)(nil)
@@ -62,7 +63,7 @@ func (c *certsRepoMock) RetrieveAll(ctx context.Context, ownerID string, offset,
 
 	oc, ok := c.certsByThingID[ownerID]
 	if !ok {
-		return certs.Page{}, certs.ErrNotFound
+		return certs.Page{}, errors.ErrNotFound
 	}
 
 	var crts []certs.Cert
@@ -88,7 +89,7 @@ func (c *certsRepoMock) Remove(ctx context.Context, ownerID, serial string) erro
 	defer c.mu.Unlock()
 	crt, ok := c.certsBySerial[serial]
 	if !ok {
-		return certs.ErrNotFound
+		return errors.ErrNotFound
 	}
 	delete(c.certsBySerial, crt.Serial)
 	delete(c.certsByThingID, crt.ThingID)
@@ -104,7 +105,7 @@ func (c *certsRepoMock) RetrieveByThing(ctx context.Context, ownerID, thingID st
 
 	cs, ok := c.certsByThingID[ownerID][thingID]
 	if !ok {
-		return certs.Page{}, certs.ErrNotFound
+		return certs.Page{}, errors.ErrNotFound
 	}
 
 	var crts []certs.Cert
@@ -129,7 +130,7 @@ func (c *certsRepoMock) RetrieveBySerial(ctx context.Context, ownerID, serialID 
 
 	crt, ok := c.certsBySerial[serialID]
 	if !ok {
-		return certs.Cert{}, certs.ErrNotFound
+		return certs.Cert{}, errors.ErrNotFound
 	}
 
 	return crt, nil

@@ -4,6 +4,7 @@
 package mocks
 
 import (
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/users"
 )
 
@@ -19,14 +20,14 @@ func NewHasher() users.Hasher {
 
 func (hm *hasherMock) Hash(pwd string) (string, error) {
 	if pwd == "" {
-		return "", users.ErrMalformedEntity
+		return "", errors.ErrMalformedEntity
 	}
 	return pwd, nil
 }
 
 func (hm *hasherMock) Compare(plain, hashed string) error {
 	if plain != hashed {
-		return users.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	return nil

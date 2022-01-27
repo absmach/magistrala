@@ -8,7 +8,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/users"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"google.golang.org/grpc"
 )
 
@@ -27,7 +27,7 @@ func (svc serviceMock) Identify(ctx context.Context, in *mainflux.Token, opts ..
 	if id, ok := svc.users[in.Value]; ok {
 		return &mainflux.UserIdentity{Email: id, Id: id}, nil
 	}
-	return nil, users.ErrUnauthorizedAccess
+	return nil, errors.ErrUnauthorizedAccess
 }
 
 func (svc serviceMock) Issue(ctx context.Context, in *mainflux.IssueReq, opts ...grpc.CallOption) (*mainflux.Token, error) {
@@ -37,7 +37,7 @@ func (svc serviceMock) Issue(ctx context.Context, in *mainflux.IssueReq, opts ..
 			return &mainflux.Token{Value: id}, nil
 		}
 	}
-	return nil, users.ErrUnauthorizedAccess
+	return nil, errors.ErrUnauthorizedAccess
 }
 
 func (svc serviceMock) Authorize(ctx context.Context, req *mainflux.AuthorizeReq, _ ...grpc.CallOption) (r *mainflux.AuthorizeRes, err error) {

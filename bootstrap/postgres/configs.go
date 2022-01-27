@@ -69,7 +69,7 @@ func (cr configRepository) Save(cfg bootstrap.Config, chsConnIDs []string) (stri
 	if _, err := tx.NamedExec(q, dbcfg); err != nil {
 		e := err
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code.Name() == duplicateErr {
-			e = bootstrap.ErrConflict
+			e = errors.ErrConflict
 		}
 
 		cr.rollback("Failed to insert a Config", tx)
@@ -107,7 +107,7 @@ func (cr configRepository) RetrieveByID(owner, id string) (bootstrap.Config, err
 	if err := cr.db.QueryRowx(q, id, owner).StructScan(&dbcfg); err != nil {
 		empty := bootstrap.Config{}
 		if err == sql.ErrNoRows {
-			return empty, errors.Wrap(bootstrap.ErrNotFound, err)
+			return empty, errors.Wrap(errors.ErrNotFound, err)
 		}
 
 		return empty, errors.Wrap(errRetrieve, err)
@@ -204,7 +204,7 @@ func (cr configRepository) RetrieveByExternalID(externalID string) (bootstrap.Co
 	if err := cr.db.QueryRowx(q, externalID).StructScan(&dbcfg); err != nil {
 		empty := bootstrap.Config{}
 		if err == sql.ErrNoRows {
-			return empty, errors.Wrap(bootstrap.ErrNotFound, err)
+			return empty, errors.Wrap(errors.ErrNotFound, err)
 		}
 		return empty, errors.Wrap(errRetrieve, err)
 	}
@@ -261,7 +261,7 @@ func (cr configRepository) Update(cfg bootstrap.Config) error {
 	}
 
 	if cnt == 0 {
-		return bootstrap.ErrNotFound
+		return errors.ErrNotFound
 	}
 
 	return nil
@@ -281,7 +281,7 @@ func (cr configRepository) UpdateCert(owner, thingID, clientCert, clientKey, caC
 	}
 
 	if cnt == 0 {
-		return bootstrap.ErrNotFound
+		return errors.ErrNotFound
 	}
 
 	return nil
@@ -301,7 +301,7 @@ func (cr configRepository) UpdateConnections(owner, id string, channels []bootst
 	if err := updateConnections(owner, id, connections, tx); err != nil {
 		if e, ok := err.(*pq.Error); ok {
 			if e.Code.Name() == fkViolation && e.Constraint == connConstraintErr {
-				return bootstrap.ErrNotFound
+				return errors.ErrNotFound
 			}
 		}
 		cr.rollback("Failed to update connections during the update", tx)
@@ -343,7 +343,7 @@ func (cr configRepository) ChangeState(owner, id string, state bootstrap.State) 
 	}
 
 	if cnt == 0 {
-		return bootstrap.ErrNotFound
+		return errors.ErrNotFound
 	}
 
 	return nil
@@ -471,7 +471,7 @@ func insertChannels(owner string, channels []bootstrap.Channel, tx *sqlx.Tx) err
 	if _, err := tx.NamedExec(q, chans); err != nil {
 		e := err
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code.Name() == duplicateErr {
-			e = bootstrap.ErrConflict
+			e = errors.ErrConflict
 		}
 		return e
 	}

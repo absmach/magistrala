@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/twins"
 )
@@ -34,7 +35,7 @@ func (trm *twinRepositoryMock) Save(ctx context.Context, twin twins.Twin) (strin
 
 	for _, tw := range trm.twins {
 		if tw.ID == twin.ID {
-			return "", twins.ErrConflict
+			return "", errors.ErrConflict
 		}
 	}
 
@@ -49,7 +50,7 @@ func (trm *twinRepositoryMock) Update(ctx context.Context, twin twins.Twin) erro
 
 	dbKey := key(twin.Owner, twin.ID)
 	if _, ok := trm.twins[dbKey]; !ok {
-		return twins.ErrNotFound
+		return errors.ErrNotFound
 	}
 
 	trm.twins[dbKey] = twin
@@ -67,7 +68,7 @@ func (trm *twinRepositoryMock) RetrieveByID(_ context.Context, twinID string) (t
 		}
 	}
 
-	return twins.Twin{}, twins.ErrNotFound
+	return twins.Twin{}, errors.ErrNotFound
 }
 
 func (trm *twinRepositoryMock) RetrieveByAttribute(ctx context.Context, channel, subtopic string) ([]string, error) {

@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/things"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/things/standalone"
 	"github.com/stretchr/testify/assert"
 )
@@ -30,7 +30,7 @@ func TestIdentify(t *testing.T) {
 		"identify non-existing user": {
 			token: "non-existing",
 			id:    "",
-			err:   things.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 		"identify existing user": {
 			token: token,
@@ -57,7 +57,7 @@ func TestIssue(t *testing.T) {
 		"issue key unauthorized": {
 			token: "non-existing",
 			id:    "",
-			err:   things.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 		"issue key": {
 			token: token,

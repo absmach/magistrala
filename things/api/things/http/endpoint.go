@@ -7,7 +7,6 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/things"
 )
@@ -241,7 +240,7 @@ func removeThingEndpoint(svc things.Service) endpoint.Endpoint {
 		req := request.(viewResourceReq)
 
 		err := req.validate()
-		if err == things.ErrNotFound {
+		if err == errors.ErrNotFound {
 			return removeRes{}, nil
 		}
 
@@ -452,7 +451,7 @@ func removeChannelEndpoint(svc things.Service) endpoint.Endpoint {
 		req := request.(viewResourceReq)
 
 		if err := req.validate(); err != nil {
-			if err == things.ErrNotFound {
+			if err == errors.ErrNotFound {
 				return removeRes{}, nil
 			}
 			return nil, err
@@ -533,7 +532,7 @@ func listMembersEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listThingsGroupReq)
 		if err := req.validate(); err != nil {
-			return thingsPageRes{}, errors.Wrap(auth.ErrMalformedEntity, err)
+			return thingsPageRes{}, errors.Wrap(errors.ErrMalformedEntity, err)
 		}
 
 		page, err := svc.ListMembers(ctx, req.token, req.groupID, req.pageMetadata)

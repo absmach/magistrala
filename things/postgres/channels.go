@@ -40,7 +40,7 @@ func NewChannelRepository(db Database) things.ChannelRepository {
 func (cr channelRepository) Save(ctx context.Context, channels ...things.Channel) ([]things.Channel, error) {
 	tx, err := cr.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return nil, errors.Wrap(things.ErrCreateEntity, err)
+		return nil, errors.Wrap(errors.ErrCreateEntity, err)
 	}
 
 	q := `INSERT INTO channels (id, owner, name, metadata)
@@ -56,17 +56,17 @@ func (cr channelRepository) Save(ctx context.Context, channels ...things.Channel
 			if ok {
 				switch pqErr.Code.Name() {
 				case errInvalid, errTruncation:
-					return []things.Channel{}, things.ErrMalformedEntity
+					return []things.Channel{}, errors.ErrMalformedEntity
 				case errDuplicate:
-					return []things.Channel{}, things.ErrConflict
+					return []things.Channel{}, errors.ErrConflict
 				}
 			}
-			return []things.Channel{}, errors.Wrap(things.ErrCreateEntity, err)
+			return []things.Channel{}, errors.Wrap(errors.ErrCreateEntity, err)
 		}
 	}
 
 	if err = tx.Commit(); err != nil {
-		return []things.Channel{}, errors.Wrap(things.ErrCreateEntity, err)
+		return []things.Channel{}, errors.Wrap(errors.ErrCreateEntity, err)
 	}
 
 	return channels, nil
@@ -83,20 +83,20 @@ func (cr channelRepository) Update(ctx context.Context, channel things.Channel) 
 		if ok {
 			switch pqErr.Code.Name() {
 			case errInvalid, errTruncation:
-				return things.ErrMalformedEntity
+				return errors.ErrMalformedEntity
 			}
 		}
 
-		return errors.Wrap(things.ErrUpdateEntity, err)
+		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	cnt, err := res.RowsAffected()
 	if err != nil {
-		return errors.Wrap(things.ErrUpdateEntity, err)
+		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	if cnt == 0 {
-		return things.ErrNotFound
+		return errors.ErrNotFound
 	}
 
 	return nil
@@ -111,9 +111,9 @@ func (cr channelRepository) RetrieveByID(ctx context.Context, owner, id string) 
 	if err := cr.db.QueryRowxContext(ctx, q, id).StructScan(&dbch); err != nil {
 		pqErr, ok := err.(*pq.Error)
 		if err == sql.ErrNoRows || ok && errInvalid == pqErr.Code.Name() {
-			return things.Channel{}, things.ErrNotFound
+			return things.Channel{}, errors.ErrNotFound
 		}
-		return things.Channel{}, errors.Wrap(things.ErrSelectEntity, err)
+		return things.Channel{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	return toChannel(dbch), nil
@@ -126,7 +126,7 @@ func (cr channelRepository) RetrieveAll(ctx context.Context, owner string, pm th
 	ownerQuery := getOwnerQuery(pm.FetchSharedThings)
 	meta, mq, err := getMetadataQuery(pm.Metadata)
 	if err != nil {
-		return things.ChannelsPage{}, errors.Wrap(things.ErrSelectEntity, err)
+		return things.ChannelsPage{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	var whereClause string
@@ -157,7 +157,7 @@ func (cr channelRepository) RetrieveAll(ctx context.Context, owner string, pm th
 	}
 	rows, err := cr.db.NamedQueryContext(ctx, q, params)
 	if err != nil {
-		return things.ChannelsPage{}, errors.Wrap(things.ErrSelectEntity, err)
+		return things.ChannelsPage{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 	defer rows.Close()
 
@@ -165,7 +165,7 @@ func (cr channelRepository) RetrieveAll(ctx context.Context, owner string, pm th
 	for rows.Next() {
 		dbch := dbChannel{Owner: owner}
 		if err := rows.StructScan(&dbch); err != nil {
-			return things.ChannelsPage{}, errors.Wrap(things.ErrSelectEntity, err)
+			return things.ChannelsPage{}, errors.Wrap(errors.ErrViewEntity, err)
 		}
 		ch := toChannel(dbch)
 
@@ -176,7 +176,7 @@ func (cr channelRepository) RetrieveAll(ctx context.Context, owner string, pm th
 
 	total, err := total(ctx, cr.db, cq, params)
 	if err != nil {
-		return things.ChannelsPage{}, errors.Wrap(things.ErrSelectEntity, err)
+		return things.ChannelsPage{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	page := things.ChannelsPage{
@@ -199,7 +199,7 @@ func (cr channelRepository) RetrieveByThing(ctx context.Context, owner, thID str
 
 	// Verify if UUID format is valid to avoid internal Postgres error
 	if _, err := uuid.FromString(thID); err != nil {
-		return things.ChannelsPage{}, errors.Wrap(things.ErrNotFound, err)
+		return things.ChannelsPage{}, errors.Wrap(errors.ErrNotFound, err)
 	}
 
 	var q, qc string
@@ -248,7 +248,7 @@ func (cr channelRepository) RetrieveByThing(ctx context.Context, owner, thID str
 
 	rows, err := cr.db.NamedQueryContext(ctx, q, params)
 	if err != nil {
-		return things.ChannelsPage{}, errors.Wrap(things.ErrSelectEntity, err)
+		return things.ChannelsPage{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 	defer rows.Close()
 
@@ -256,7 +256,7 @@ func (cr channelRepository) RetrieveByThing(ctx context.Context, owner, thID str
 	for rows.Next() {
 		dbch := dbChannel{Owner: owner}
 		if err := rows.StructScan(&dbch); err != nil {
-			return things.ChannelsPage{}, errors.Wrap(things.ErrSelectEntity, err)
+			return things.ChannelsPage{}, errors.Wrap(errors.ErrViewEntity, err)
 		}
 
 		ch := toChannel(dbch)
@@ -265,7 +265,7 @@ func (cr channelRepository) RetrieveByThing(ctx context.Context, owner, thID str
 
 	var total uint64
 	if err := cr.db.GetContext(ctx, &total, qc, owner, thID); err != nil {
-		return things.ChannelsPage{}, errors.Wrap(things.ErrSelectEntity, err)
+		return things.ChannelsPage{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	return things.ChannelsPage{
@@ -312,9 +312,9 @@ func (cr channelRepository) Connect(ctx context.Context, owner string, chIDs, th
 				if ok {
 					switch pqErr.Code.Name() {
 					case errFK:
-						return things.ErrNotFound
+						return errors.ErrNotFound
 					case errDuplicate:
-						return things.ErrConflict
+						return errors.ErrConflict
 					}
 				}
 
@@ -355,9 +355,9 @@ func (cr channelRepository) Disconnect(ctx context.Context, owner string, chIDs,
 				if ok {
 					switch pqErr.Code.Name() {
 					case errFK:
-						return things.ErrNotFound
+						return errors.ErrNotFound
 					case errDuplicate:
-						return things.ErrConflict
+						return errors.ErrConflict
 					}
 				}
 				return errors.Wrap(things.ErrDisconnect, err)
@@ -369,7 +369,7 @@ func (cr channelRepository) Disconnect(ctx context.Context, owner string, chIDs,
 			}
 
 			if cnt == 0 {
-				return things.ErrNotFound
+				return errors.ErrNotFound
 			}
 		}
 	}
@@ -407,7 +407,7 @@ func (cr channelRepository) hasThing(ctx context.Context, chanID, thingID string
 	}
 
 	if !exists {
-		return things.ErrNotFound
+		return errors.ErrNotFound
 	}
 
 	return nil
@@ -428,7 +428,7 @@ func (m *dbMetadata) Scan(value interface{}) error {
 	b, ok := value.([]byte)
 	if !ok {
 		m = &dbMetadata{}
-		return things.ErrScanMetadata
+		return errors.ErrScanMetadata
 	}
 
 	if err := json.Unmarshal(b, m); err != nil {

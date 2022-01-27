@@ -43,7 +43,7 @@ func (kr repo) Save(ctx context.Context, key auth.Key) (string, error) {
 		pqErr, ok := err.(*pq.Error)
 		if ok {
 			if pqErr.Code.Name() == errDuplicate {
-				return "", errors.Wrap(auth.ErrConflict, pqErr)
+				return "", errors.Wrap(errors.ErrConflict, pqErr)
 			}
 		}
 
@@ -59,7 +59,7 @@ func (kr repo) Retrieve(ctx context.Context, issuerID, id string) (auth.Key, err
 	if err := kr.db.QueryRowxContext(ctx, q, issuerID, id).StructScan(&key); err != nil {
 		pqErr, ok := err.(*pq.Error)
 		if err == sql.ErrNoRows || ok && errInvalid == pqErr.Code.Name() {
-			return auth.Key{}, errors.Wrap(auth.ErrNotFound, err)
+			return auth.Key{}, errors.Wrap(errors.ErrNotFound, err)
 		}
 
 		return auth.Key{}, errors.Wrap(errRetrieve, err)

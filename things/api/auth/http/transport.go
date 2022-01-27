@@ -116,9 +116,9 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", contentType)
 
 	switch err {
-	case things.ErrUnauthorizedAccess:
+	case errors.ErrUnauthorizedAccess:
 		w.WriteHeader(http.StatusUnauthorized)
-	case things.ErrNotFound:
+	case errors.ErrNotFound:
 		w.WriteHeader(http.StatusNotFound)
 	case things.ErrEntityConnected:
 		w.WriteHeader(http.StatusForbidden)

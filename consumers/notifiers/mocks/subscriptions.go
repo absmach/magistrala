@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	notifiers "github.com/mainflux/mainflux/consumers/notifiers"
+	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 var _ notifiers.SubscriptionsRepository = (*subRepoMock)(nil)
@@ -29,11 +30,11 @@ func (srm *subRepoMock) Save(_ context.Context, sub notifiers.Subscription) (str
 	srm.mu.Lock()
 	defer srm.mu.Unlock()
 	if _, ok := srm.subs[sub.ID]; ok {
-		return "", notifiers.ErrConflict
+		return "", errors.ErrConflict
 	}
 	for _, s := range srm.subs {
 		if s.Contact == sub.Contact && s.Topic == sub.Topic {
-			return "", notifiers.ErrConflict
+			return "", errors.ErrConflict
 		}
 	}
 
@@ -46,7 +47,7 @@ func (srm *subRepoMock) Retrieve(_ context.Context, id string) (notifiers.Subscr
 	defer srm.mu.Unlock()
 	ret, ok := srm.subs[id]
 	if !ok {
-		return notifiers.Subscription{}, notifiers.ErrNotFound
+		return notifiers.Subscription{}, errors.ErrNotFound
 	}
 	return ret, nil
 }
@@ -100,7 +101,7 @@ func (srm *subRepoMock) RetrieveAll(_ context.Context, pm notifiers.PageMetadata
 	}
 
 	if len(subs) == 0 {
-		return notifiers.Page{}, notifiers.ErrNotFound
+		return notifiers.Page{}, errors.ErrNotFound
 	}
 
 	ret := notifiers.Page{

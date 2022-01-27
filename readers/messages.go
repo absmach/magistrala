@@ -3,8 +3,6 @@
 
 package readers
 
-import "errors"
-
 const (
 	// EqualKey represents the equal comparison operator key.
 	EqualKey = "eq"
@@ -17,9 +15,6 @@ const (
 	// GreaterThanEqualKey represents the greater-than-or-equal comparison operator key.
 	GreaterThanEqualKey = "ge"
 )
-
-// ErrNotFound indicates that requested entity doesn't exist.
-var ErrNotFound = errors.New("entity not found")
 
 // MessageRepository specifies message reader API.
 type MessageRepository interface {

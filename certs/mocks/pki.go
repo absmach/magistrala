@@ -17,7 +17,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mainflux/mainflux/certs"
 	"github.com/mainflux/mainflux/certs/pki"
 	"github.com/mainflux/mainflux/pkg/errors"
 )
@@ -151,7 +150,7 @@ func (a *agent) Read(serial string) (pki.Cert, error) {
 
 	crt, ok := a.certs[serial]
 	if !ok {
-		return pki.Cert{}, certs.ErrNotFound
+		return pki.Cert{}, errors.ErrNotFound
 	}
 
 	return crt, nil

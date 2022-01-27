@@ -113,7 +113,7 @@ func decodeAddRequest(_ context.Context, r *http.Request) (interface{}, error) {
 
 	req := addReq{token: r.Header.Get("Authorization")}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(bootstrap.ErrMalformedEntity, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -127,7 +127,7 @@ func decodeUpdateRequest(_ context.Context, r *http.Request) (interface{}, error
 	req := updateReq{key: r.Header.Get("Authorization")}
 	req.id = bone.GetValue(r, "id")
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(bootstrap.ErrMalformedEntity, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -144,7 +144,7 @@ func decodeUpdateCertRequest(_ context.Context, r *http.Request) (interface{}, e
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(bootstrap.ErrMalformedEntity, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -158,7 +158,7 @@ func decodeUpdateConnRequest(_ context.Context, r *http.Request) (interface{}, e
 	req := updateConnReq{key: r.Header.Get("Authorization")}
 	req.id = bone.GetValue(r, "id")
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(bootstrap.ErrMalformedEntity, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -204,7 +204,7 @@ func decodeStateRequest(_ context.Context, r *http.Request) (interface{}, error)
 	req := changeStateReq{key: r.Header.Get("Authorization")}
 	req.id = bone.GetValue(r, "id")
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(bootstrap.ErrMalformedEntity, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -257,13 +257,13 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		case errors.Contains(errorVal, errors.ErrInvalidQueryParams):
 			w.WriteHeader(http.StatusBadRequest)
 
-		case errors.Contains(errorVal, bootstrap.ErrMalformedEntity):
+		case errors.Contains(errorVal, errors.ErrMalformedEntity):
 			w.WriteHeader(http.StatusBadRequest)
-		case errors.Contains(errorVal, bootstrap.ErrNotFound):
+		case errors.Contains(errorVal, errors.ErrNotFound):
 			w.WriteHeader(http.StatusNotFound)
-		case errors.Contains(errorVal, bootstrap.ErrUnauthorizedAccess):
+		case errors.Contains(errorVal, errors.ErrUnauthorizedAccess):
 			w.WriteHeader(http.StatusForbidden)
-		case errors.Contains(errorVal, bootstrap.ErrConflict):
+		case errors.Contains(errorVal, errors.ErrConflict):
 			w.WriteHeader(http.StatusConflict)
 		case errors.Contains(errorVal, bootstrap.ErrThings):
 			w.WriteHeader(http.StatusServiceUnavailable)

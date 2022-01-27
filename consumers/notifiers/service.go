@@ -14,28 +14,6 @@ import (
 )
 
 var (
-	// ErrUnauthorizedAccess indicates missing or invalid credentials provided
-	// when accessing a protected resource.
-	ErrUnauthorizedAccess = errors.New("missing or invalid credentials provided")
-
-	// ErrCreateID indicates error in creating id for entity creation
-	ErrCreateID = errors.New("failed to create id")
-
-	// ErrConflict indicates usage of the existing subscription.
-	ErrConflict = errors.New("subscription already exist")
-
-	// ErrSave indicates error saving entity.
-	ErrSave = errors.New("failed to subscription")
-
-	// ErrNotFound indicates a non-existent entity request.
-	ErrNotFound = errors.New("non-existent entity")
-
-	// ErrSelectEntity indicates problem with scanning data from db.
-	ErrSelectEntity = errors.New("failed to select entity")
-
-	// ErrRemoveEntity indicates error in removing entity
-	ErrRemoveEntity = errors.New("remove entity failed")
-
 	// ErrMessage indicates an error converting a message to Mainflux message.
 	ErrMessage = errors.New("failed to convert to Mainflux message")
 )
@@ -82,11 +60,11 @@ func New(auth mainflux.AuthServiceClient, subs SubscriptionsRepository, idp main
 func (ns *notifierService) CreateSubscription(ctx context.Context, token string, sub Subscription) (string, error) {
 	res, err := ns.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return "", errors.Wrap(ErrUnauthorizedAccess, err)
+		return "", err
 	}
 	sub.ID, err = ns.idp.ID()
 	if err != nil {
-		return "", errors.Wrap(ErrCreateID, err)
+		return "", err
 	}
 
 	sub.OwnerID = res.GetId()
@@ -95,7 +73,7 @@ func (ns *notifierService) CreateSubscription(ctx context.Context, token string,
 
 func (ns *notifierService) ViewSubscription(ctx context.Context, token, id string) (Subscription, error) {
 	if _, err := ns.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
-		return Subscription{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return Subscription{}, err
 	}
 
 	return ns.subs.Retrieve(ctx, id)
@@ -103,7 +81,7 @@ func (ns *notifierService) ViewSubscription(ctx context.Context, token, id strin
 
 func (ns *notifierService) ListSubscriptions(ctx context.Context, token string, pm PageMetadata) (Page, error) {
 	if _, err := ns.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
-		return Page{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return Page{}, err
 	}
 
 	return ns.subs.RetrieveAll(ctx, pm)
@@ -111,7 +89,7 @@ func (ns *notifierService) ListSubscriptions(ctx context.Context, token string, 
 
 func (ns *notifierService) RemoveSubscription(ctx context.Context, token, id string) error {
 	if _, err := ns.auth.Identify(ctx, &mainflux.Token{Value: token}); err != nil {
-		return errors.Wrap(ErrUnauthorizedAccess, err)
+		return err
 	}
 
 	return ns.subs.Remove(ctx, id)

@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	log "github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/twins"
 	"github.com/mainflux/mainflux/twins/mocks"
@@ -76,7 +77,7 @@ func TestTwinsSave(t *testing.T) {
 				Owner: email,
 				Name:  invalidName,
 			},
-			err: twins.ErrMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 	}
 
@@ -124,7 +125,7 @@ func TestTwinsUpdate(t *testing.T) {
 			twin: twins.Twin{
 				ID: nonexistentTwinID,
 			},
-			err: twins.ErrNotFound,
+			err: errors.ErrNotFound,
 		},
 		{
 			desc: "update twin with invalid name",
@@ -133,7 +134,7 @@ func TestTwinsUpdate(t *testing.T) {
 				Owner: email,
 				Name:  invalidName,
 			},
-			err: twins.ErrMalformedEntity,
+			err: errors.ErrMalformedEntity,
 		},
 	}
 
@@ -177,7 +178,7 @@ func TestTwinsRetrieveByID(t *testing.T) {
 		{
 			desc: "retrieve a non-existing twin",
 			id:   nonexistentTwinID,
-			err:  twins.ErrNotFound,
+			err:  errors.ErrNotFound,
 		},
 	}
 
@@ -376,7 +377,7 @@ func TestTwinsRemove(t *testing.T) {
 		{
 			desc: "remove a non-existing twin",
 			id:   nonexistentTwinID,
-			err:  twins.ErrNotFound,
+			err:  errors.ErrNotFound,
 		},
 	}
 

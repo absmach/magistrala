@@ -195,8 +195,8 @@ func loadConfig() (provision.Config, error) {
 			TLS:            tls,
 		},
 		Cert: provision.Cert{
-			TTL: mainflux.Env(envCertsHoursValid, defCertsHoursValid),
-			KeyBits:    keyBits,
+			TTL:     mainflux.Env(envCertsHoursValid, defCertsHoursValid),
+			KeyBits: keyBits,
 		},
 		Bootstrap: provision.Bootstrap{
 			X509Provision: provisionX509,

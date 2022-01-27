@@ -4,7 +4,7 @@
 package api
 
 import (
-	groups "github.com/mainflux/mainflux/auth"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/users"
 )
 
@@ -32,7 +32,7 @@ type viewUserReq struct {
 
 func (req viewUserReq) validate() error {
 	if req.token == "" {
-		return users.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 	return nil
 }
@@ -47,7 +47,7 @@ type listUsersReq struct {
 
 func (req listUsersReq) validate() error {
 	if req.token == "" {
-		return users.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 	return nil
 }
@@ -59,7 +59,7 @@ type updateUserReq struct {
 
 func (req updateUserReq) validate() error {
 	if req.token == "" {
-		return users.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 	return nil
 }
@@ -71,7 +71,7 @@ type passwResetReq struct {
 
 func (req passwResetReq) validate() error {
 	if req.Email == "" || req.Host == "" {
-		return users.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 	return nil
 }
@@ -84,13 +84,13 @@ type resetTokenReq struct {
 
 func (req resetTokenReq) validate() error {
 	if req.Password == "" || req.ConfPass == "" {
-		return users.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 	if req.Token == "" {
 		return users.ErrMissingResetToken
 	}
 	if req.Password != req.ConfPass {
-		return users.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 	return nil
 }
@@ -103,10 +103,10 @@ type passwChangeReq struct {
 
 func (req passwChangeReq) validate() error {
 	if req.Token == "" {
-		return users.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 	if req.OldPassword == "" {
-		return users.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 	return nil
 }
@@ -121,11 +121,11 @@ type listMemberGroupReq struct {
 
 func (req listMemberGroupReq) validate() error {
 	if req.token == "" {
-		return groups.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.groupID == "" {
-		return groups.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil

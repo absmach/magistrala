@@ -59,7 +59,7 @@ func TestKeySave(t *testing.T) {
 				ID:        id,
 				IssuerID:  id,
 			},
-			err: auth.ErrConflict,
+			err: errors.ErrConflict,
 		},
 	}
 
@@ -101,13 +101,13 @@ func TestKeyRetrieve(t *testing.T) {
 			desc:  "retrieve unauthorized",
 			id:    key.ID,
 			owner: "",
-			err:   auth.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 		{
 			desc:  "retrieve unknown key",
 			id:    "",
 			owner: key.IssuerID,
-			err:   auth.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 	}
 

@@ -49,7 +49,7 @@ func (cc channelCache) Disconnect(ctx context.Context, chanID, thingID string) e
 func (cc channelCache) Remove(ctx context.Context, chanID string) error {
 	cid, _ := kv(chanID, "0")
 	if err := cc.client.Del(ctx, cid).Err(); err != nil {
-		return errors.Wrap(things.ErrRemoveEntity, err)
+		return errors.Wrap(errors.ErrRemoveEntity, err)
 	}
 	return nil
 }

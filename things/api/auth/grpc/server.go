@@ -10,6 +10,7 @@ import (
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/things"
 	opentracing "github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc/codes"
@@ -121,13 +122,13 @@ func encodeError(err error) error {
 	switch err {
 	case nil:
 		return nil
-	case things.ErrMalformedEntity:
+	case errors.ErrMalformedEntity:
 		return status.Error(codes.InvalidArgument, "received invalid can access request")
-	case things.ErrUnauthorizedAccess:
+	case errors.ErrUnauthorizedAccess:
 		return status.Error(codes.PermissionDenied, "missing or invalid credentials provided")
 	case things.ErrEntityConnected:
 		return status.Error(codes.PermissionDenied, "entities are not connected")
-	case things.ErrNotFound:
+	case errors.ErrNotFound:
 		return status.Error(codes.NotFound, "entity does not exist")
 	default:
 		return status.Error(codes.Internal, "internal server error")

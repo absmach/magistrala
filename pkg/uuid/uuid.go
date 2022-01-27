@@ -11,7 +11,7 @@ import (
 )
 
 // ErrGeneratingID indicates error in generating UUID
-var ErrGeneratingID = errors.New("generating id failed")
+var ErrGeneratingID = errors.New("failed to generate uuid")
 
 var _ mainflux.IDProvider = (*uuidProvider)(nil)
 

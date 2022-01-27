@@ -40,12 +40,6 @@ var (
 	// ErrUnassignFromGroup indicates failure to unassign member from a group.
 	ErrUnassignFromGroup = errors.New("failed to unassign member from a group")
 
-	// ErrUnsupportedContentType indicates unacceptable or lack of Content-Type
-	ErrUnsupportedContentType = errors.New("unsupported content type")
-
-	// ErrFailedDecode indicates failed to decode request body
-	ErrFailedDecode = errors.New("failed to decode request body")
-
 	// ErrMissingParent indicates that parent can't be found
 	ErrMissingParent = errors.New("failed to retrieve parent")
 
@@ -54,9 +48,6 @@ var (
 
 	// ErrMemberAlreadyAssigned indicates that members is already assigned.
 	ErrMemberAlreadyAssigned = errors.New("member is already assigned")
-
-	// ErrSelectEntity indicates error while reading entity from database
-	ErrSelectEntity = errors.New("select entity from db error")
 )
 
 type GroupMetadata map[string]interface{}

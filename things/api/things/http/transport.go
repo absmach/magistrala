@@ -17,6 +17,7 @@ import (
 	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/internal/httputil"
 	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/things"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -211,7 +212,7 @@ func decodeThingCreation(_ context.Context, r *http.Request) (interface{}, error
 
 	req := createThingReq{token: r.Header.Get("Authorization")}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(things.ErrMalformedEntity, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -224,7 +225,7 @@ func decodeThingsCreation(_ context.Context, r *http.Request) (interface{}, erro
 
 	req := createThingsReq{token: r.Header.Get("Authorization")}
 	if err := json.NewDecoder(r.Body).Decode(&req.Things); err != nil {
-		return nil, errors.Wrap(things.ErrMalformedEntity, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -237,7 +238,7 @@ func decodeShareThing(ctx context.Context, r *http.Request) (interface{}, error)
 
 	req := shareThingReq{token: r.Header.Get("Authorization"), thingID: bone.GetValue(r, "id")}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(things.ErrMalformedEntity, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -253,7 +254,7 @@ func decodeThingUpdate(_ context.Context, r *http.Request) (interface{}, error) 
 		id:    bone.GetValue(r, "id"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(things.ErrMalformedEntity, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -269,7 +270,7 @@ func decodeKeyUpdate(_ context.Context, r *http.Request) (interface{}, error) {
 		id:    bone.GetValue(r, "id"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(things.ErrMalformedEntity, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -282,7 +283,7 @@ func decodeChannelCreation(_ context.Context, r *http.Request) (interface{}, err
 
 	req := createChannelReq{token: r.Header.Get("Authorization")}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(things.ErrMalformedEntity, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -296,7 +297,7 @@ func decodeChannelsCreation(_ context.Context, r *http.Request) (interface{}, er
 	req := createChannelsReq{token: r.Header.Get("Authorization")}
 
 	if err := json.NewDecoder(r.Body).Decode(&req.Channels); err != nil {
-		return nil, errors.Wrap(things.ErrMalformedEntity, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -312,7 +313,7 @@ func decodeChannelUpdate(_ context.Context, r *http.Request) (interface{}, error
 		id:    bone.GetValue(r, "id"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(things.ErrMalformedEntity, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -381,7 +382,7 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 func decodeListByMetadata(_ context.Context, r *http.Request) (interface{}, error) {
 	req := listResourcesReq{token: r.Header.Get("Authorization")}
 	if err := json.NewDecoder(r.Body).Decode(&req.pageMetadata); err != nil {
-		return nil, errors.Wrap(things.ErrMalformedEntity, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -445,7 +446,7 @@ func decodeConnectList(_ context.Context, r *http.Request) (interface{}, error) 
 
 	req := connectReq{token: r.Header.Get("Authorization")}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(things.ErrMalformedEntity, err)
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -502,32 +503,32 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	case errors.Error:
 		w.Header().Set("Content-Type", contentType)
 		switch {
-		case errors.Contains(errorVal, things.ErrUnauthorizedAccess),
+		case errors.Contains(errorVal, errors.ErrUnauthorizedAccess),
 			errors.Contains(errorVal, things.ErrEntityConnected):
 			w.WriteHeader(http.StatusUnauthorized)
 
-		case errors.Contains(errorVal, things.ErrAuthorization):
+		case errors.Contains(errorVal, errors.ErrAuthorization):
 			w.WriteHeader(http.StatusForbidden)
 		case errors.Contains(errorVal, errors.ErrInvalidQueryParams):
 			w.WriteHeader(http.StatusBadRequest)
 		case errors.Contains(errorVal, errors.ErrUnsupportedContentType):
 			w.WriteHeader(http.StatusUnsupportedMediaType)
 
-		case errors.Contains(errorVal, things.ErrMalformedEntity):
+		case errors.Contains(errorVal, errors.ErrMalformedEntity):
 			w.WriteHeader(http.StatusBadRequest)
-		case errors.Contains(errorVal, things.ErrNotFound):
+		case errors.Contains(errorVal, errors.ErrNotFound):
 			w.WriteHeader(http.StatusNotFound)
-		case errors.Contains(errorVal, things.ErrConflict):
+		case errors.Contains(errorVal, errors.ErrConflict):
 			w.WriteHeader(http.StatusConflict)
 
-		case errors.Contains(errorVal, things.ErrScanMetadata),
-			errors.Contains(errorVal, things.ErrSelectEntity):
+		case errors.Contains(errorVal, errors.ErrScanMetadata),
+			errors.Contains(errorVal, errors.ErrViewEntity):
 			w.WriteHeader(http.StatusUnprocessableEntity)
 
-		case errors.Contains(errorVal, things.ErrCreateEntity),
-			errors.Contains(errorVal, things.ErrUpdateEntity),
-			errors.Contains(errorVal, things.ErrViewEntity),
-			errors.Contains(errorVal, things.ErrRemoveEntity),
+		case errors.Contains(errorVal, errors.ErrCreateEntity),
+			errors.Contains(errorVal, errors.ErrUpdateEntity),
+			errors.Contains(errorVal, errors.ErrViewEntity),
+			errors.Contains(errorVal, errors.ErrRemoveEntity),
 			errors.Contains(errorVal, things.ErrConnect),
 			errors.Contains(errorVal, things.ErrDisconnect),
 			errors.Contains(errorVal, auth.ErrCreateGroup):
@@ -537,7 +538,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 			errors.Contains(errorVal, io.EOF):
 			w.WriteHeader(http.StatusBadRequest)
 
-		case errors.Contains(errorVal, things.ErrCreateUUID):
+		case errors.Contains(errorVal, uuid.ErrGeneratingID):
 			w.WriteHeader(http.StatusInternalServerError)
 
 		default:

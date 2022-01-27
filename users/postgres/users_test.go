@@ -45,7 +45,7 @@ func TestUserSave(t *testing.T) {
 				Email:    email,
 				Password: "pass",
 			},
-			err: users.ErrConflict,
+			err: errors.ErrConflict,
 		},
 	}
 
@@ -81,7 +81,7 @@ func TestSingleUserRetrieval(t *testing.T) {
 		err   error
 	}{
 		"existing user":     {email, nil},
-		"non-existing user": {"unknown@example.com", users.ErrNotFound},
+		"non-existing user": {"unknown@example.com", errors.ErrNotFound},
 	}
 
 	for desc, tc := range cases {

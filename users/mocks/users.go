@@ -7,6 +7,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/users"
 )
 
@@ -33,7 +34,7 @@ func (urm *userRepositoryMock) Save(ctx context.Context, user users.User) (strin
 	defer urm.mu.Unlock()
 
 	if _, ok := urm.users[user.Email]; ok {
-		return "", users.ErrConflict
+		return "", errors.ErrConflict
 	}
 
 	urm.users[user.Email] = user
@@ -46,7 +47,7 @@ func (urm *userRepositoryMock) Update(ctx context.Context, user users.User) erro
 	defer urm.mu.Unlock()
 
 	if _, ok := urm.users[user.Email]; !ok {
-		return users.ErrUserNotFound
+		return errors.ErrNotFound
 	}
 
 	urm.users[user.Email] = user
@@ -58,7 +59,7 @@ func (urm *userRepositoryMock) UpdateUser(ctx context.Context, user users.User) 
 	defer urm.mu.Unlock()
 
 	if _, ok := urm.users[user.Email]; !ok {
-		return users.ErrUserNotFound
+		return errors.ErrNotFound
 	}
 
 	urm.users[user.Email] = user
@@ -71,7 +72,7 @@ func (urm *userRepositoryMock) RetrieveByEmail(ctx context.Context, email string
 
 	val, ok := urm.users[email]
 	if !ok {
-		return users.User{}, users.ErrNotFound
+		return users.User{}, errors.ErrNotFound
 	}
 
 	return val, nil
@@ -83,7 +84,7 @@ func (urm *userRepositoryMock) RetrieveByID(ctx context.Context, id string) (use
 
 	val, ok := urm.usersByID[id]
 	if !ok {
-		return users.User{}, users.ErrNotFound
+		return users.User{}, errors.ErrNotFound
 	}
 
 	return val, nil
@@ -115,7 +116,7 @@ func (urm *userRepositoryMock) UpdatePassword(_ context.Context, token, password
 	defer urm.mu.Unlock()
 
 	if _, ok := urm.users[token]; !ok {
-		return users.ErrUserNotFound
+		return errors.ErrNotFound
 	}
 	return nil
 }

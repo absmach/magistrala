@@ -8,8 +8,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/things"
-	"github.com/mainflux/mainflux/users"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"google.golang.org/grpc"
 )
 
@@ -42,7 +41,7 @@ func (svc authServiceMock) Identify(ctx context.Context, in *mainflux.Token, opt
 	if id, ok := svc.users[in.Value]; ok {
 		return &mainflux.UserIdentity{Id: id, Email: id}, nil
 	}
-	return nil, users.ErrUnauthorizedAccess
+	return nil, errors.ErrUnauthorizedAccess
 }
 
 func (svc authServiceMock) Issue(ctx context.Context, in *mainflux.IssueReq, opts ...grpc.CallOption) (*mainflux.Token, error) {
@@ -52,7 +51,7 @@ func (svc authServiceMock) Issue(ctx context.Context, in *mainflux.IssueReq, opt
 			return &mainflux.Token{Value: id}, nil
 		}
 	}
-	return nil, users.ErrUnauthorizedAccess
+	return nil, errors.ErrUnauthorizedAccess
 }
 
 func (svc authServiceMock) Authorize(ctx context.Context, req *mainflux.AuthorizeReq, _ ...grpc.CallOption) (r *mainflux.AuthorizeRes, err error) {
@@ -61,12 +60,12 @@ func (svc authServiceMock) Authorize(ctx context.Context, req *mainflux.Authoriz
 			return &mainflux.AuthorizeRes{Authorized: true}, nil
 		}
 	}
-	return nil, things.ErrAuthorization
+	return nil, errors.ErrAuthorization
 }
 
 func (svc authServiceMock) AddPolicy(ctx context.Context, in *mainflux.AddPolicyReq, opts ...grpc.CallOption) (*mainflux.AddPolicyRes, error) {
 	if in.GetAct() == "" || in.GetObj() == "" || in.GetSub() == "" {
-		return &mainflux.AddPolicyRes{}, things.ErrMalformedEntity
+		return &mainflux.AddPolicyRes{}, errors.ErrMalformedEntity
 	}
 
 	obj := in.GetObj()

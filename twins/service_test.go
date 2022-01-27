@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/twins"
 	"github.com/mainflux/mainflux/twins/mocks"
 	"github.com/mainflux/senml"
@@ -51,7 +52,7 @@ func TestAddTwin(t *testing.T) {
 			desc:  "add twin with wrong credentials",
 			twin:  twin,
 			token: wrongToken,
-			err:   twins.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 	}
 
@@ -89,13 +90,13 @@ func TestUpdateTwin(t *testing.T) {
 			desc:  "update twin with wrong credentials",
 			twin:  saved,
 			token: wrongToken,
-			err:   twins.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:  "update non-existing twin",
 			twin:  other,
 			token: token,
-			err:   twins.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 	}
 
@@ -125,12 +126,12 @@ func TestViewTwin(t *testing.T) {
 		"view twin with wrong credentials": {
 			id:    saved.ID,
 			token: wrongToken,
-			err:   twins.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 		"view non-existing twin": {
 			id:    wrongID,
 			token: token,
-			err:   twins.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 	}
 
@@ -186,7 +187,7 @@ func TestListTwins(t *testing.T) {
 			token:  wrongToken,
 			limit:  0,
 			offset: n,
-			err:    twins.ErrUnauthorizedAccess,
+			err:    errors.ErrUnauthorizedAccess,
 		},
 	}
 
@@ -215,7 +216,7 @@ func TestRemoveTwin(t *testing.T) {
 			desc:  "remove twin with wrong credentials",
 			id:    saved.ID,
 			token: wrongToken,
-			err:   twins.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:  "remove existing twin",
@@ -288,7 +289,7 @@ func TestSaveStates(t *testing.T) {
 			recs: recs[30:50],
 			size: 0,
 			attr: attrSansTwin,
-			err:  twins.ErrNotFound,
+			err:  errors.ErrNotFound,
 		},
 		{
 			desc: "use empty senml record",
@@ -390,7 +391,7 @@ func TestListStates(t *testing.T) {
 			offset: 0,
 			limit:  10,
 			size:   0,
-			err:    twins.ErrUnauthorizedAccess,
+			err:    errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:   "get a list with id of non-existent twin",

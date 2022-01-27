@@ -21,7 +21,7 @@ type claims struct {
 
 func (c claims) Valid() error {
 	if c.Type == nil || *c.Type > auth.APIKey || c.Issuer != issuerName {
-		return auth.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return c.StandardClaims.Valid()
@@ -62,7 +62,7 @@ func (svc tokenizer) Parse(token string) (auth.Key, error) {
 	c := claims{}
 	_, err := jwt.ParseWithClaims(token, &c, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, auth.ErrUnauthorizedAccess
+			return nil, errors.ErrUnauthorizedAccess
 		}
 		return []byte(svc.secret), nil
 	})
@@ -75,7 +75,7 @@ func (svc tokenizer) Parse(token string) (auth.Key, error) {
 			}
 			return auth.Key{}, errors.Wrap(auth.ErrKeyExpired, err)
 		}
-		return auth.Key{}, errors.Wrap(auth.ErrUnauthorizedAccess, err)
+		return auth.Key{}, errors.Wrap(errors.ErrUnauthorizedAccess, err)
 	}
 
 	return c.toKey(), nil

@@ -16,16 +16,6 @@ import (
 )
 
 var (
-	// ErrNotFound indicates a non-existent entity request.
-	ErrNotFound = errors.New("non-existent entity")
-
-	// ErrMalformedEntity indicates malformed entity specification
-	ErrMalformedEntity = errors.New("malformed entity specification")
-
-	// ErrUnauthorizedAccess indicates missing or invalid credentials provided
-	// when accessing a protected resource.
-	ErrUnauthorizedAccess = errors.New("missing or invalid credentials provided")
-
 	// ErrFailedCertCreation failed to create certificate
 	ErrFailedCertCreation = errors.New("failed to create client certificate")
 
@@ -118,7 +108,7 @@ type Cert struct {
 func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, ttl string, keyBits int, keyType string) (Cert, error) {
 	owner, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return Cert{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return Cert{}, err
 	}
 
 	thing, err := cs.sdk.Thing(thingID, token)
@@ -151,7 +141,7 @@ func (cs *certsService) RevokeCert(ctx context.Context, token, thingID string) (
 	var revoke Revoke
 	u, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return revoke, errors.Wrap(ErrUnauthorizedAccess, err)
+		return revoke, err
 	}
 	thing, err := cs.sdk.Thing(thingID, token)
 	if err != nil {
@@ -182,7 +172,7 @@ func (cs *certsService) RevokeCert(ctx context.Context, token, thingID string) (
 func (cs *certsService) ListCerts(ctx context.Context, token, thingID string, offset, limit uint64) (Page, error) {
 	u, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return Page{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return Page{}, err
 	}
 
 	cp, err := cs.certsRepo.RetrieveByThing(ctx, u.GetId(), thingID, offset, limit)
@@ -205,7 +195,7 @@ func (cs *certsService) ListCerts(ctx context.Context, token, thingID string, of
 func (cs *certsService) ListSerials(ctx context.Context, token, thingID string, offset, limit uint64) (Page, error) {
 	u, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return Page{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return Page{}, err
 	}
 
 	return cs.certsRepo.RetrieveByThing(ctx, u.GetId(), thingID, offset, limit)
@@ -214,7 +204,7 @@ func (cs *certsService) ListSerials(ctx context.Context, token, thingID string, 
 func (cs *certsService) ViewCert(ctx context.Context, token, serialID string) (Cert, error) {
 	u, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return Cert{}, errors.Wrap(ErrUnauthorizedAccess, err)
+		return Cert{}, err
 	}
 
 	cert, err := cs.certsRepo.RetrieveBySerial(ctx, u.GetId(), serialID)

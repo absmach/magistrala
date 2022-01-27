@@ -4,6 +4,7 @@
 package http
 
 import (
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/twins"
 )
 
@@ -25,11 +26,11 @@ type addTwinReq struct {
 
 func (req addTwinReq) validate() error {
 	if req.token == "" {
-		return twins.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if len(req.Name) > maxNameSize {
-		return twins.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -45,15 +46,15 @@ type updateTwinReq struct {
 
 func (req updateTwinReq) validate() error {
 	if req.token == "" {
-		return twins.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.id == "" {
-		return twins.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	if len(req.Name) > maxNameSize {
-		return twins.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -66,11 +67,11 @@ type viewTwinReq struct {
 
 func (req viewTwinReq) validate() error {
 	if req.token == "" {
-		return twins.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.id == "" {
-		return twins.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -86,15 +87,15 @@ type listReq struct {
 
 func (req *listReq) validate() error {
 	if req.token == "" {
-		return twins.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.limit == 0 || req.limit > maxLimitSize {
-		return twins.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	if len(req.name) > maxNameSize {
-		return twins.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -109,15 +110,15 @@ type listStatesReq struct {
 
 func (req *listStatesReq) validate() error {
 	if req.token == "" {
-		return twins.ErrUnauthorizedAccess
+		return errors.ErrUnauthorizedAccess
 	}
 
 	if req.id == "" {
-		return twins.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	if req.limit == 0 || req.limit > maxLimitSize {
-		return twins.ErrMalformedEntity
+		return errors.ErrMalformedEntity
 	}
 
 	return nil

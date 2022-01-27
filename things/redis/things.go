@@ -33,12 +33,12 @@ func NewThingCache(client *redis.Client) things.ThingCache {
 func (tc *thingCache) Save(ctx context.Context, thingKey string, thingID string) error {
 	tkey := fmt.Sprintf("%s:%s", keyPrefix, thingKey)
 	if err := tc.client.Set(ctx, tkey, thingID, 0).Err(); err != nil {
-		return errors.Wrap(things.ErrCreateEntity, err)
+		return errors.Wrap(errors.ErrCreateEntity, err)
 	}
 
 	tid := fmt.Sprintf("%s:%s", idPrefix, thingID)
 	if err := tc.client.Set(ctx, tid, thingKey, 0).Err(); err != nil {
-		return errors.Wrap(things.ErrCreateEntity, err)
+		return errors.Wrap(errors.ErrCreateEntity, err)
 	}
 	return nil
 }
@@ -47,7 +47,7 @@ func (tc *thingCache) ID(ctx context.Context, thingKey string) (string, error) {
 	tkey := fmt.Sprintf("%s:%s", keyPrefix, thingKey)
 	thingID, err := tc.client.Get(ctx, tkey).Result()
 	if err != nil {
-		return "", errors.Wrap(things.ErrNotFound, err)
+		return "", errors.Wrap(errors.ErrNotFound, err)
 	}
 
 	return thingID, nil
@@ -61,12 +61,12 @@ func (tc *thingCache) Remove(ctx context.Context, thingID string) error {
 		return nil
 	}
 	if err != nil {
-		return errors.Wrap(things.ErrRemoveEntity, err)
+		return errors.Wrap(errors.ErrRemoveEntity, err)
 	}
 
 	tkey := fmt.Sprintf("%s:%s", keyPrefix, key)
 	if err := tc.client.Del(ctx, tkey, tid).Err(); err != nil {
-		return errors.Wrap(things.ErrRemoveEntity, err)
+		return errors.Wrap(errors.ErrRemoveEntity, err)
 	}
 	return nil
 }

@@ -89,7 +89,7 @@ func TestIssue(t *testing.T) {
 				IssuedAt: time.Now(),
 			},
 			token: "invalid",
-			err:   auth.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc: "issue API key with no time",
@@ -159,7 +159,7 @@ func TestRevoke(t *testing.T) {
 			desc:  "revoke unauthorized",
 			id:    newKey.ID,
 			token: "",
-			err:   auth.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 	}
 
@@ -206,25 +206,25 @@ func TestRetrieve(t *testing.T) {
 			desc:  "retrieve non-existing login key",
 			id:    "invalid",
 			token: userToken,
-			err:   auth.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 		{
 			desc:  "retrieve unauthorized",
 			id:    apiKey.ID,
 			token: "wrong",
-			err:   auth.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:  "retrieve with API token",
 			id:    apiKey.ID,
 			token: apiToken,
-			err:   auth.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:  "retrieve with reset token",
 			id:    apiKey.ID,
 			token: resetToken,
-			err:   auth.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 	}
 
@@ -287,13 +287,13 @@ func TestIdentify(t *testing.T) {
 			desc: "identify expired key",
 			key:  invalidSecret,
 			idt:  auth.Identity{},
-			err:  auth.ErrUnauthorizedAccess,
+			err:  errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc: "identify invalid key",
 			key:  "invalid",
 			idt:  auth.Identity{},
-			err:  auth.ErrUnauthorizedAccess,
+			err:  errors.ErrUnauthorizedAccess,
 		},
 	}
 
@@ -481,7 +481,7 @@ func TestViewGroup(t *testing.T) {
 			desc:    "view group with unauthorized token",
 			token:   "wrongtoken",
 			groupID: group.ID,
-			err:     auth.ErrUnauthorizedAccess,
+			err:     errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:    "view group for wrong id",
@@ -552,7 +552,7 @@ func TestListGroups(t *testing.T) {
 			token: "wrongToken",
 			level: 5,
 			size:  0,
-			err:   auth.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 	}
 
@@ -618,7 +618,7 @@ func TestListChildren(t *testing.T) {
 			token: "wrongToken",
 			level: 5,
 			size:  0,
-			err:   auth.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 	}
 
@@ -683,7 +683,7 @@ func TestListParents(t *testing.T) {
 			token: "wrongToken",
 			level: 5,
 			size:  0,
-			err:   auth.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 	}
 
@@ -760,7 +760,7 @@ func TestListMembers(t *testing.T) {
 			offset: 0,
 			limit:  n,
 			size:   0,
-			err:    auth.ErrUnauthorizedAccess,
+			err:    errors.ErrUnauthorizedAccess,
 		},
 	}
 
@@ -840,7 +840,7 @@ func TestListMemberships(t *testing.T) {
 			offset: 0,
 			limit:  n,
 			size:   0,
-			err:    auth.ErrUnauthorizedAccess,
+			err:    errors.ErrUnauthorizedAccess,
 		},
 	}
 
@@ -883,7 +883,7 @@ func TestRemoveGroup(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("group save got unexpected error: %s", err))
 
 	err = svc.RemoveGroup(context.Background(), "wrongToken", group.ID)
-	assert.True(t, errors.Contains(err, auth.ErrUnauthorizedAccess), fmt.Sprintf("Unauthorized access: expected %v got %v", auth.ErrUnauthorizedAccess, err))
+	assert.True(t, errors.Contains(err, errors.ErrUnauthorizedAccess), fmt.Sprintf("Unauthorized access: expected %v got %v", errors.ErrUnauthorizedAccess, err))
 
 	err = svc.RemoveGroup(context.Background(), apiToken, "wrongID")
 	assert.True(t, errors.Contains(err, auth.ErrGroupNotFound), fmt.Sprintf("Remove group with wrong id: expected %v got %v", auth.ErrGroupNotFound, err))
@@ -951,7 +951,7 @@ func TestAssign(t *testing.T) {
 	assert.True(t, mp.Total == 1, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 1, mp.Total))
 
 	err = svc.Assign(context.Background(), "wrongToken", group.ID, "things", mid)
-	assert.True(t, errors.Contains(err, auth.ErrUnauthorizedAccess), fmt.Sprintf("Unauthorized access: expected %v got %v", auth.ErrUnauthorizedAccess, err))
+	assert.True(t, errors.Contains(err, errors.ErrUnauthorizedAccess), fmt.Sprintf("Unauthorized access: expected %v got %v", errors.ErrUnauthorizedAccess, err))
 
 }
 
@@ -1003,7 +1003,7 @@ func TestUnassign(t *testing.T) {
 	assert.True(t, mp.Total == 0, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 0, mp.Total))
 
 	err = svc.Unassign(context.Background(), "wrongToken", group.ID, mid)
-	assert.True(t, errors.Contains(err, auth.ErrUnauthorizedAccess), fmt.Sprintf("Unauthorized access: expected %v got %v", auth.ErrUnauthorizedAccess, err))
+	assert.True(t, errors.Contains(err, errors.ErrUnauthorizedAccess), fmt.Sprintf("Unauthorized access: expected %v got %v", errors.ErrUnauthorizedAccess, err))
 
 	err = svc.Unassign(context.Background(), apiToken, group.ID, mid)
 	assert.True(t, errors.Contains(err, auth.ErrGroupNotFound), fmt.Sprintf("Unauthorized access: expected %v got %v", nil, err))
@@ -1132,12 +1132,12 @@ func TestAddPolicies(t *testing.T) {
 		{
 			desc:   "check invalid 'access' policy of user with id",
 			policy: auth.PolicyReq{Object: thingID, Relation: "access", Subject: id},
-			err:    auth.ErrAuthorization,
+			err:    errors.ErrAuthorization,
 		},
 		{
 			desc:   "check invalid 'access' policy of user with tmpid",
 			policy: auth.PolicyReq{Object: thingID, Relation: "access", Subject: tmpID},
-			err:    auth.ErrAuthorization,
+			err:    errors.ErrAuthorization,
 		},
 	}
 
@@ -1192,32 +1192,32 @@ func TestDeletePolicies(t *testing.T) {
 		{
 			desc:   "check non-existing 'read' policy of user with id",
 			policy: auth.PolicyReq{Object: thingID, Relation: readPolicy, Subject: id},
-			err:    auth.ErrAuthorization,
+			err:    errors.ErrAuthorization,
 		},
 		{
 			desc:   "check non-existing 'write' policy of user with id",
 			policy: auth.PolicyReq{Object: thingID, Relation: writePolicy, Subject: id},
-			err:    auth.ErrAuthorization,
+			err:    errors.ErrAuthorization,
 		},
 		{
 			desc:   "check non-existing 'delete' policy of user with id",
 			policy: auth.PolicyReq{Object: thingID, Relation: deletePolicy, Subject: id},
-			err:    auth.ErrAuthorization,
+			err:    errors.ErrAuthorization,
 		},
 		{
 			desc:   "check non-existing 'member' policy of user with id",
 			policy: auth.PolicyReq{Object: thingID, Relation: memberPolicy, Subject: id},
-			err:    auth.ErrAuthorization,
+			err:    errors.ErrAuthorization,
 		},
 		{
 			desc:   "check non-existing 'delete' policy of user with tmpid",
 			policy: auth.PolicyReq{Object: thingID, Relation: deletePolicy, Subject: tmpID},
-			err:    auth.ErrAuthorization,
+			err:    errors.ErrAuthorization,
 		},
 		{
 			desc:   "check non-existing 'member' policy of user with tmpid",
 			policy: auth.PolicyReq{Object: thingID, Relation: memberPolicy, Subject: tmpID},
-			err:    auth.ErrAuthorization,
+			err:    errors.ErrAuthorization,
 		},
 		{
 			desc:   "check valid 'read' policy of user with tmpid",

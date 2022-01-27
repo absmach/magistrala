@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/mainflux/mainflux/bootstrap"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,21 +22,21 @@ func TestAddReqValidation(t *testing.T) {
 			token:       "",
 			externalID:  "external-id",
 			externalKey: "external-key",
-			err:         bootstrap.ErrUnauthorizedAccess,
+			err:         errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:        "empty external ID",
 			token:       "token",
 			externalID:  "",
 			externalKey: "external-key",
-			err:         bootstrap.ErrMalformedEntity,
+			err:         errors.ErrMalformedEntity,
 		},
 		{
 			desc:        "empty external key",
 			token:       "token",
 			externalID:  "external-id",
 			externalKey: "",
-			err:         bootstrap.ErrMalformedEntity,
+			err:         errors.ErrMalformedEntity,
 		},
 	}
 
@@ -62,13 +63,13 @@ func TestEntityReqValidation(t *testing.T) {
 			desc: "empty key",
 			key:  "",
 			id:   "id",
-			err:  bootstrap.ErrUnauthorizedAccess,
+			err:  errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc: "empty id",
 			key:  "key",
 			id:   "",
-			err:  bootstrap.ErrMalformedEntity,
+			err:  errors.ErrMalformedEntity,
 		},
 	}
 
@@ -93,13 +94,13 @@ func TestUpdateReqValidation(t *testing.T) {
 			desc: "empty key",
 			key:  "",
 			id:   "id",
-			err:  bootstrap.ErrUnauthorizedAccess,
+			err:  errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc: "empty id",
 			key:  "key",
 			id:   "",
-			err:  bootstrap.ErrMalformedEntity,
+			err:  errors.ErrMalformedEntity,
 		},
 	}
 
@@ -125,13 +126,13 @@ func TestUpdateCertReqValidation(t *testing.T) {
 			desc:    "empty key",
 			key:     "",
 			thingID: "thingID",
-			err:     bootstrap.ErrUnauthorizedAccess,
+			err:     errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:    "empty thing key",
 			key:     "key",
 			thingID: "",
-			err:     bootstrap.ErrNotFound,
+			err:     errors.ErrNotFound,
 		},
 	}
 
@@ -157,13 +158,13 @@ func TestUpdateConnReqValidation(t *testing.T) {
 			desc: "empty key",
 			key:  "",
 			id:   "id",
-			err:  bootstrap.ErrUnauthorizedAccess,
+			err:  errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc: "empty id",
 			key:  "key",
 			id:   "",
-			err:  bootstrap.ErrMalformedEntity,
+			err:  errors.ErrMalformedEntity,
 		},
 	}
 
@@ -191,21 +192,21 @@ func TestListReqValidation(t *testing.T) {
 			key:    "",
 			offset: 0,
 			limit:  1,
-			err:    bootstrap.ErrUnauthorizedAccess,
+			err:    errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:   "too large limit",
 			key:    "key",
 			offset: 0,
 			limit:  maxLimit + 1,
-			err:    bootstrap.ErrMalformedEntity,
+			err:    errors.ErrMalformedEntity,
 		},
 		{
 			desc:   "zero limit",
 			key:    "key",
 			offset: 0,
 			limit:  0,
-			err:    bootstrap.ErrMalformedEntity,
+			err:    errors.ErrMalformedEntity,
 		},
 	}
 
@@ -232,13 +233,13 @@ func TestBootstrapReqValidation(t *testing.T) {
 			desc:      "empty external key",
 			externKey: "",
 			externID:  "id",
-			err:       bootstrap.ErrUnauthorizedAccess,
+			err:       errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:      "empty external id",
 			externKey: "key",
 			externID:  "",
-			err:       bootstrap.ErrMalformedEntity,
+			err:       errors.ErrMalformedEntity,
 		},
 	}
 
@@ -266,21 +267,21 @@ func TestChangeStateReqValidation(t *testing.T) {
 			key:   "",
 			id:    "id",
 			state: bootstrap.State(1),
-			err:   bootstrap.ErrUnauthorizedAccess,
+			err:   errors.ErrUnauthorizedAccess,
 		},
 		{
 			desc:  "empty id",
 			key:   "key",
 			id:    "",
 			state: bootstrap.State(0),
-			err:   bootstrap.ErrMalformedEntity,
+			err:   errors.ErrMalformedEntity,
 		},
 		{
 			desc:  "invalid state",
 			key:   "key",
 			id:    "id",
 			state: bootstrap.State(14),
-			err:   bootstrap.ErrMalformedEntity,
+			err:   errors.ErrMalformedEntity,
 		},
 	}
 

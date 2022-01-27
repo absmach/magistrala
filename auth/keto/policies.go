@@ -38,10 +38,10 @@ func (pa policyAgent) CheckPolicy(ctx context.Context, pr auth.PolicyReq) error 
 		Subject:   getSubject(pr),
 	})
 	if err != nil {
-		return errors.Wrap(err, auth.ErrAuthorization)
+		return errors.Wrap(err, errors.ErrAuthorization)
 	}
 	if !res.GetAllowed() {
-		return auth.ErrAuthorization
+		return errors.ErrAuthorization
 	}
 	return nil
 }

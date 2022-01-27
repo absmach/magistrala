@@ -74,19 +74,19 @@ func TestSave(t *testing.T) {
 			desc:        "save config with same Thing ID",
 			config:      duplicateThing,
 			connections: nil,
-			err:         bootstrap.ErrConflict,
+			err:         errors.ErrConflict,
 		},
 		{
 			desc:        "save config with same external ID",
 			config:      duplicateExternal,
 			connections: nil,
-			err:         bootstrap.ErrConflict,
+			err:         errors.ErrConflict,
 		},
 		{
 			desc:        "save config with same Channels",
 			config:      duplicateChannels,
 			connections: channels,
-			err:         bootstrap.ErrConflict,
+			err:         errors.ErrConflict,
 		},
 	}
 	for _, tc := range cases {
@@ -130,19 +130,19 @@ func TestRetrieveByID(t *testing.T) {
 			desc:  "retrieve config with wrong owner",
 			owner: "2",
 			id:    id,
-			err:   bootstrap.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 		{
 			desc:  "retrieve a non-existing config",
 			owner: c.Owner,
 			id:    nonexistentConfID.String(),
-			err:   bootstrap.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 		{
 			desc:  "retrieve a config with invalid ID",
 			owner: c.Owner,
 			id:    "invalid",
-			err:   bootstrap.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 	}
 	for _, tc := range cases {
@@ -256,7 +256,7 @@ func TestRetrieveByExternalID(t *testing.T) {
 		{
 			desc:       "retrieve with invalid external ID",
 			externalID: strconv.Itoa(numConfigs + 1),
-			err:        bootstrap.ErrNotFound,
+			err:        errors.ErrNotFound,
 		},
 		{
 			desc:       "retrieve with external key",
@@ -301,7 +301,7 @@ func TestUpdate(t *testing.T) {
 		{
 			desc:   "update with wrong owner",
 			config: wrongOwner,
-			err:    bootstrap.ErrNotFound,
+			err:    errors.ErrNotFound,
 		},
 		{
 			desc:   "update a config",
@@ -353,7 +353,7 @@ func TestUpdateCert(t *testing.T) {
 			certKey: "certKey",
 			ca:      "",
 			owner:   "wrong",
-			err:     bootstrap.ErrNotFound,
+			err:     errors.ErrNotFound,
 		},
 		{
 			desc:    "update a config",
@@ -411,7 +411,7 @@ func TestUpdateConnections(t *testing.T) {
 			id:          "unknown",
 			channels:    nil,
 			connections: []string{channels[1]},
-			err:         bootstrap.ErrNotFound,
+			err:         errors.ErrNotFound,
 		},
 		{
 			desc:        "update connections",
@@ -467,7 +467,7 @@ func TestRemove(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("%d: failed to remove config due to: %s", i, err))
 
 		_, err = repo.RetrieveByID(c.Owner, id)
-		require.True(t, errors.Contains(err, bootstrap.ErrNotFound), fmt.Sprintf("%d: expected %s got %s", i, bootstrap.ErrNotFound, err))
+		require.True(t, errors.Contains(err, errors.ErrNotFound), fmt.Sprintf("%d: expected %s got %s", i, errors.ErrNotFound, err))
 	}
 }
 
@@ -498,13 +498,13 @@ func TestChangeState(t *testing.T) {
 			desc:  "change state with wrong owner",
 			id:    saved,
 			owner: "2",
-			err:   bootstrap.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 		{
 			desc:  "change state with wrong id",
 			id:    "wrong",
 			owner: c.Owner,
-			err:   bootstrap.ErrNotFound,
+			err:   errors.ErrNotFound,
 		},
 		{
 			desc:  "change state to Active",

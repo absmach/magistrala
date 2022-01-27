@@ -5,7 +5,6 @@ package opcua
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/mainflux/mainflux/logger"
@@ -13,11 +12,6 @@ import (
 )
 
 const protocol = "opcua"
-
-var (
-	// ErrMalformedEntity indicates malformed entity specification.
-	ErrMalformedEntity = errors.New("malformed entity specification")
-)
 
 // Service specifies an API that must be fullfiled by the domain service
 // implementation, and all of its decorators (e.g. logging & metrics).

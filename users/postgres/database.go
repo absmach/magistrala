@@ -7,7 +7,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/users"
 	"github.com/opentracing/opentracing-go"
 )
 
@@ -36,7 +35,7 @@ func (dm database) NamedExecContext(ctx context.Context, query string, args inte
 	addSpanTags(ctx, query)
 	result, err := dm.db.NamedExecContext(ctx, query, args)
 	if pqErr, ok := err.(*pq.Error); ok && errDuplicate == pqErr.Code.Name() {
-		return result, errors.Wrap(users.ErrConflict, err)
+		return result, errors.Wrap(errors.ErrConflict, err)
 	}
 	return result, err
 }

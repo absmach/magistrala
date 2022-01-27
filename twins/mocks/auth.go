@@ -8,7 +8,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/users"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"google.golang.org/grpc"
 )
 
@@ -31,7 +31,7 @@ func (svc authServiceClient) Identify(ctx context.Context, in *mainflux.Token, o
 	if id, ok := svc.users[in.Value]; ok {
 		return &mainflux.UserIdentity{Id: id, Email: id}, nil
 	}
-	return nil, users.ErrUnauthorizedAccess
+	return nil, errors.ErrUnauthorizedAccess
 }
 
 func (svc *authServiceClient) Issue(ctx context.Context, in *mainflux.IssueReq, opts ...grpc.CallOption) (*mainflux.Token, error) {

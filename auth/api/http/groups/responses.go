@@ -18,7 +18,8 @@ var (
 
 type memberPageRes struct {
 	pageRes
-	Members []interface{}
+	Type    string   `json:"type"`
+	Members []string `json:"members"`
 }
 
 func (res memberPageRes) Code() int {

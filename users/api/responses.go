@@ -19,8 +19,6 @@ var (
 	_ mainflux.Response = (*createGroupRes)(nil)
 	_ mainflux.Response = (*createUserRes)(nil)
 	_ mainflux.Response = (*deleteRes)(nil)
-	_ mainflux.Response = (*assignUserToGroupRes)(nil)
-	_ mainflux.Response = (*removeUserFromGroupRes)(nil)
 )
 
 // MailSent message response when link is sent
@@ -235,33 +233,5 @@ func (res deleteRes) Headers() map[string]string {
 }
 
 func (res deleteRes) Empty() bool {
-	return true
-}
-
-type assignUserToGroupRes struct{}
-
-func (res assignUserToGroupRes) Code() int {
-	return http.StatusNoContent
-}
-
-func (res assignUserToGroupRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res assignUserToGroupRes) Empty() bool {
-	return true
-}
-
-type removeUserFromGroupRes struct{}
-
-func (res removeUserFromGroupRes) Code() int {
-	return http.StatusNoContent
-}
-
-func (res removeUserFromGroupRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res removeUserFromGroupRes) Empty() bool {
 	return true
 }

@@ -50,6 +50,7 @@ func main() {
 	provisionCmd := cli.NewProvisionCmd()
 	bootstrapCmd := cli.NewBootstrapCmd()
 	certsCmd := cli.NewCertsCmd()
+	keysCmd := cli.NewKeysCmd()
 
 	// Root Commands
 	rootCmd.AddCommand(healthCmd)
@@ -61,6 +62,7 @@ func main() {
 	rootCmd.AddCommand(provisionCmd)
 	rootCmd.AddCommand(bootstrapCmd)
 	rootCmd.AddCommand(certsCmd)
+	rootCmd.AddCommand(keysCmd)
 
 	// Root Flags
 	rootCmd.PersistentFlags().StringVarP(

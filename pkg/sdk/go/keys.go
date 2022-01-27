@@ -6,43 +6,59 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
+type keyReq struct {
+	Type     uint32        `json:"type,omitempty"`
+	Duration time.Duration `json:"duration,omitempty"`
+}
+
 const keysEndpoint = "keys"
 
-func (sdk mfSDK) Issue(token string, k Key) (issueKeyRes, error) {
-	data, err := json.Marshal(k)
+const (
+	// LoginKey is temporary User key received on successfull login.
+	LoginKey uint32 = iota
+	// RecoveryKey represents a key for resseting password.
+	RecoveryKey
+	// APIKey enables the one to act on behalf of the user.
+	APIKey
+)
+
+func (sdk mfSDK) Issue(token string, d time.Duration) (KeyRes, error) {
+	datareq := keyReq{Type: APIKey, Duration: d}
+	data, err := json.Marshal(datareq)
 	if err != nil {
-		return issueKeyRes{}, err
+		return KeyRes{}, err
 	}
 
 	url := fmt.Sprintf("%s/%s", sdk.authURL, keysEndpoint)
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
 	if err != nil {
-		return issueKeyRes{}, err
+		return KeyRes{}, err
 	}
 
 	resp, err := sdk.sendRequest(req, token, string(CTJSON))
 	if err != nil {
-		return issueKeyRes{}, err
+		return KeyRes{}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return issueKeyRes{}, err
+		return KeyRes{}, err
 	}
 
 	if resp.StatusCode != http.StatusCreated {
-		return issueKeyRes{}, errors.Wrap(ErrFailedCreation, errors.New(resp.Status))
+		return KeyRes{}, errors.Wrap(ErrFailedCreation, errors.New(resp.Status))
 	}
 
-	var key issueKeyRes
+	var key KeyRes
 	if err := json.Unmarshal(body, &key); err != nil {
-		return issueKeyRes{}, err
+		return KeyRes{}, err
 	}
 
 	return key, nil

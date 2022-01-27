@@ -270,7 +270,7 @@ type SDK interface {
 	RevokeCert(thingID, certID, token string) error
 
 	// Issue issues a new key, returning its token value alongside.
-	Issue(token string, key Key) (issueKeyRes, error)
+	Issue(token string, duration time.Duration) (KeyRes, error)
 
 	// Revoke removes the key with the provided ID that is issued by the user identified by the provided key.
 	Revoke(token, id string) error

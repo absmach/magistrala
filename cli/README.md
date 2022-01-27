@@ -240,3 +240,17 @@ mainflux-cli groups members <group_id> <user_auth_token>
 ```bash
 mainflux-cli groups membership <user_id> <user_auth_token>
 ```
+
+### Keys management
+#### Issue a new Key
+```bash
+mainflux-cli keys issue <duration> <user_auth_token>
+```
+#### Remove API key from database
+```bash
+mainflux-cli keys revoke <key_id> <user_auth_token>
+```
+#### Retrieve API key with given id
+```bash
+mainflux-cli keys retrieve <key_id> <user_auth_token>
+```

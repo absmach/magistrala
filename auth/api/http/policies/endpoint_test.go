@@ -138,14 +138,14 @@ func TestAddPolicies(t *testing.T) {
 			desc:   "Add policies with invalid token",
 			token:  "invalid",
 			ct:     contentType,
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 			req:    toJSON(valid),
 		},
 		{
 			desc:   "Add policies with empty token",
 			token:  "",
 			ct:     contentType,
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 			req:    toJSON(valid),
 		},
 		{
@@ -248,14 +248,14 @@ func TestDeletePolicies(t *testing.T) {
 			desc:   "Delete policies with invalid token",
 			token:  "invalid",
 			ct:     contentType,
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 			req:    toJSON(validSingleDeleteReq),
 		},
 		{
 			desc:   "Delete policies with empty token",
 			token:  "",
 			ct:     contentType,
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 			req:    toJSON(validSingleDeleteReq),
 		},
 		{

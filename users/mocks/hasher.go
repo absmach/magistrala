@@ -27,7 +27,7 @@ func (hm *hasherMock) Hash(pwd string) (string, error) {
 
 func (hm *hasherMock) Compare(plain, hashed string) error {
 	if plain != hashed {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	return nil

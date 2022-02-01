@@ -20,10 +20,10 @@ paths:
           description: Created
         '400':
           description: Failed due to malformed JSON.
-        '403':
-          description: Unauthorized.
+        "401":
+          description: Missing or invalid access token provided.
         '500':
-          description: Unexpected server-side error ocurred.
+          $ref: "#/components/responses/ServiceError"
     get:
       summary: Gets current mapping.
       description: Gets current mapping. This can be used in UI
@@ -36,10 +36,10 @@ paths:
       responses:
         '200':
           $ref: "#/components/responses/ProvisionRes"
-        '403':
-          description: Unauthorized.
+        "401":
+          description: Missing or invalid access token provided.
         '500':
-          description: Unexpected server-side error ocurred.
+          $ref: "#/components/responses/ServiceError"
   /health:
     get:
       summary: Retrieves service health check info.
@@ -81,6 +81,8 @@ components:
                  type: string
 
   responses:
+    ServiceError:
+      description: Unexpected server-side error occurred.
     ProvisionRes:
       description: Current mapping JSON representation.
       content:

@@ -158,7 +158,7 @@ func (svc usersService) checkAuthz(ctx context.Context, token string) error {
 		return nil
 	}
 	if token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	ir, err := svc.identify(ctx, token)
@@ -172,10 +172,10 @@ func (svc usersService) checkAuthz(ctx context.Context, token string) error {
 func (svc usersService) Login(ctx context.Context, user User) (string, error) {
 	dbUser, err := svc.users.RetrieveByEmail(ctx, user.Email)
 	if err != nil {
-		return "", errors.Wrap(errors.ErrUnauthorizedAccess, err)
+		return "", errors.Wrap(errors.ErrAuthentication, err)
 	}
 	if err := svc.hasher.Compare(user.Password, dbUser.Password); err != nil {
-		return "", errors.Wrap(errors.ErrUnauthorizedAccess, err)
+		return "", errors.Wrap(errors.ErrAuthentication, err)
 	}
 	return svc.issue(ctx, dbUser.ID, dbUser.Email, auth.LoginKey)
 }
@@ -188,7 +188,7 @@ func (svc usersService) ViewUser(ctx context.Context, token, id string) (User, e
 
 	dbUser, err := svc.users.RetrieveByID(ctx, id)
 	if err != nil {
-		return User{}, errors.Wrap(errors.ErrUnauthorizedAccess, err)
+		return User{}, errors.Wrap(errors.ErrAuthentication, err)
 	}
 
 	return User{
@@ -207,7 +207,7 @@ func (svc usersService) ViewProfile(ctx context.Context, token string) (User, er
 
 	dbUser, err := svc.users.RetrieveByEmail(ctx, ir.email)
 	if err != nil {
-		return User{}, errors.Wrap(errors.ErrUnauthorizedAccess, err)
+		return User{}, errors.Wrap(errors.ErrAuthentication, err)
 	}
 
 	return User{
@@ -224,7 +224,7 @@ func (svc usersService) ListUsers(ctx context.Context, token string, offset, lim
 	}
 
 	if err := svc.authorize(ctx, id.id, "authorities", "member"); err != nil {
-		return UserPage{}, errors.Wrap(errors.ErrUnauthorizedAccess, err)
+		return UserPage{}, errors.Wrap(errors.ErrAuthentication, err)
 	}
 	return svc.users.RetrieveAll(ctx, offset, limit, nil, email, m)
 }
@@ -256,7 +256,7 @@ func (svc usersService) GenerateResetToken(ctx context.Context, email, host stri
 func (svc usersService) ResetPassword(ctx context.Context, resetToken, password string) error {
 	ir, err := svc.identify(ctx, resetToken)
 	if err != nil {
-		return errors.Wrap(errors.ErrUnauthorizedAccess, err)
+		return errors.Wrap(errors.ErrAuthentication, err)
 	}
 	u, err := svc.users.RetrieveByEmail(ctx, ir.email)
 	if err != nil {
@@ -278,7 +278,7 @@ func (svc usersService) ResetPassword(ctx context.Context, resetToken, password 
 func (svc usersService) ChangePassword(ctx context.Context, authToken, password, oldPassword string) error {
 	ir, err := svc.identify(ctx, authToken)
 	if err != nil {
-		return errors.Wrap(errors.ErrUnauthorizedAccess, err)
+		return errors.Wrap(errors.ErrAuthentication, err)
 	}
 	if !svc.passRegex.MatchString(password) {
 		return ErrPasswordFormat
@@ -288,7 +288,7 @@ func (svc usersService) ChangePassword(ctx context.Context, authToken, password,
 		Password: oldPassword,
 	}
 	if _, err := svc.Login(ctx, u); err != nil {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 	u, err = svc.users.RetrieveByEmail(ctx, ir.email)
 	if err != nil || u.Email == "" {
@@ -348,7 +348,7 @@ type userIdentity struct {
 func (svc usersService) identify(ctx context.Context, token string) (userIdentity, error) {
 	identity, err := svc.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return userIdentity{}, errors.Wrap(errors.ErrUnauthorizedAccess, err)
+		return userIdentity{}, errors.Wrap(errors.ErrAuthentication, err)
 	}
 
 	return userIdentity{identity.Id, identity.Email}, nil

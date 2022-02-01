@@ -61,13 +61,13 @@ func TestSendMessage(t *testing.T) {
 			chanID: chanID,
 			msg:    msg,
 			auth:   "",
-			err:    createError(sdk.ErrFailedPublish, http.StatusForbidden),
+			err:    createError(sdk.ErrFailedPublish, http.StatusUnauthorized),
 		},
 		"publish message with invalid authorization token": {
 			chanID: chanID,
 			msg:    msg,
 			auth:   invalidToken,
-			err:    createError(sdk.ErrFailedPublish, http.StatusForbidden),
+			err:    createError(sdk.ErrFailedPublish, http.StatusUnauthorized),
 		},
 		"publish message with wrong content type": {
 			chanID: chanID,

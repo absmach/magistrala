@@ -371,7 +371,7 @@ func TestRemove(t *testing.T) {
 			desc:  "remove config with invalid credentials",
 			id:    saved.MFThing,
 			token: "",
-			err:   errors.ErrUnauthorizedAccess,
+			err:   errors.ErrAuthentication,
 			event: nil,
 		},
 	}
@@ -435,7 +435,7 @@ func TestBootstrap(t *testing.T) {
 			desc:        "bootstrap with an error",
 			externalID:  saved.ExternalID,
 			externalKey: "external",
-			err:         errors.ErrNotFound,
+			err:         bootstrap.ErrExternalKey,
 			event: map[string]interface{}{
 				"external_id": saved.ExternalID,
 				"success":     "0",
@@ -507,7 +507,7 @@ func TestChangeState(t *testing.T) {
 			id:    saved.MFThing,
 			token: "",
 			state: bootstrap.Inactive,
-			err:   errors.ErrUnauthorizedAccess,
+			err:   errors.ErrAuthentication,
 			event: nil,
 		},
 	}

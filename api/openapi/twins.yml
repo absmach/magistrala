@@ -22,7 +22,7 @@ paths:
           $ref: "#/components/responses/TwinCreateRes"
         '400':
           description: Failed due to malformed JSON.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '415':
           description: Missing or invalid content type.
@@ -47,7 +47,7 @@ paths:
           $ref: '#/components/responses/TwinsPageRes'
         '400':
           description: Failed due to malformed query parameters.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '500':
           $ref: '#/components/responses/ServiceError'
@@ -65,7 +65,7 @@ paths:
           $ref: '#/components/responses/TwinRes'
         '400':
           description: Failed due to malformed twin's ID.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '404':
           description: Twin does not exist.
@@ -88,7 +88,7 @@ paths:
           description: Twin updated.
         '400':
           description: Failed due to malformed twin's ID or malformed JSON.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '404':
           description: Twin does not exist.
@@ -109,7 +109,7 @@ paths:
           description: Twin removed.
         '400':
           description: Failed due to malformed twin's ID.
-        '403':
+        '401':
           description: Missing or invalid access token provided
         '404':
           description: Twin does not exist.
@@ -134,7 +134,7 @@ paths:
           $ref: '#/components/responses/StatesPageRes'
         '400':
           description: Failed due to malformed query parameters.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '404':
           description: Twin does not exist.

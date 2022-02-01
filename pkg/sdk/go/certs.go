@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 const certsEndpoint = "certs"
@@ -62,7 +64,7 @@ func (sdk mfSDK) RemoveCert(id, token string) error {
 	case http.StatusNoContent:
 		return nil
 	case http.StatusForbidden:
-		return ErrUnauthorized
+		return errors.ErrAuthorization
 	default:
 		return ErrCertsRemove
 	}

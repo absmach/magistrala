@@ -81,11 +81,12 @@ var (
 		CACert:     "newca",
 	}
 
-	bsErrorRes           = toJSON(errorRes{bootstrap.ErrBootstrap.Error()})
-	unauthRes            = toJSON(errorRes{errors.ErrUnauthorizedAccess.Error()})
-	malformedRes         = toJSON(errorRes{errors.ErrMalformedEntity.Error()})
-	extKeyNotFoundRes    = toJSON(errorRes{bootstrap.ErrExternalKeyNotFound.Error()})
-	extSecKeyNotFoundRes = toJSON(errorRes{bootstrap.ErrSecureBootstrap.Error()})
+	bsErrorRes   = toJSON(errorRes{bootstrap.ErrBootstrap.Error()})
+	authnRes     = toJSON(errorRes{errors.ErrAuthentication.Error()})
+	authzRes     = toJSON(errorRes{errors.ErrAuthorization.Error()})
+	malformedRes = toJSON(errorRes{errors.ErrMalformedEntity.Error()})
+	extKeyRes    = toJSON(errorRes{bootstrap.ErrExternalKey.Error()})
+	extSecKeyRes = toJSON(errorRes{bootstrap.ErrExternalKeySecure.Error()})
 )
 
 type testRequest struct {
@@ -226,11 +227,11 @@ func TestAdd(t *testing.T) {
 		location    string
 	}{
 		{
-			desc:        "add a config unauthorized",
+			desc:        "add a config with invalid token",
 			req:         data,
 			auth:        invalidToken,
 			contentType: contentType,
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 			location:    "",
 		},
 		{
@@ -369,10 +370,10 @@ func TestView(t *testing.T) {
 		res    config
 	}{
 		{
-			desc:   "view a config unauthorized",
+			desc:   "view a config with invalid token",
 			auth:   invalidToken,
 			id:     saved.MFThing,
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 			res:    config{},
 		},
 		{
@@ -393,7 +394,7 @@ func TestView(t *testing.T) {
 			desc:   "view a config with an empty token",
 			auth:   "",
 			id:     saved.MFThing,
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 			res:    config{},
 		},
 	}
@@ -445,12 +446,12 @@ func TestUpdate(t *testing.T) {
 		status      int
 	}{
 		{
-			desc:        "update unauthorized",
+			desc:        "update with invalid token",
 			req:         data,
 			id:          saved.MFThing,
 			auth:        invalidToken,
 			contentType: contentType,
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 		},
 		{
 			desc:        "update with an empty token",
@@ -458,7 +459,7 @@ func TestUpdate(t *testing.T) {
 			id:          saved.MFThing,
 			auth:        "",
 			contentType: contentType,
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 		},
 		{
 			desc:        "update a valid config",
@@ -539,12 +540,12 @@ func TestUpdateCert(t *testing.T) {
 		status      int
 	}{
 		{
-			desc:        "update unauthorized",
+			desc:        "update with invalid token",
 			req:         data,
 			id:          saved.MFThing,
 			auth:        invalidToken,
 			contentType: contentType,
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 		},
 		{
 			desc:        "update with an empty token",
@@ -552,7 +553,7 @@ func TestUpdateCert(t *testing.T) {
 			id:          saved.MFThing,
 			auth:        "",
 			contentType: contentType,
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 		},
 		{
 			desc:        "update a valid config",
@@ -639,12 +640,12 @@ func TestUpdateConnections(t *testing.T) {
 		status      int
 	}{
 		{
-			desc:        "update connections unauthorized",
+			desc:        "update connections with invalid token",
 			req:         data,
 			id:          saved.MFThing,
 			auth:        invalidToken,
 			contentType: contentType,
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 		},
 		{
 			desc:        "update connections with an empty token",
@@ -652,7 +653,7 @@ func TestUpdateConnections(t *testing.T) {
 			id:          saved.MFThing,
 			auth:        "",
 			contentType: contentType,
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 		},
 		{
 			desc:        "update connections valid config",
@@ -783,17 +784,17 @@ func TestList(t *testing.T) {
 		res    configPage
 	}{
 		{
-			desc:   "view list unauthorized",
+			desc:   "view list with invalid token",
 			auth:   invalidToken,
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d", path, 0, 10),
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 			res:    configPage{},
 		},
 		{
 			desc:   "view list with an empty token",
 			auth:   "",
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d", path, 0, 10),
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 			res:    configPage{},
 		},
 		{
@@ -991,15 +992,15 @@ func TestRemove(t *testing.T) {
 		status int
 	}{
 		{
-			desc:   "remove unauthorized",
+			desc:   "remove with invalid token",
 			id:     saved.MFThing,
 			auth:   invalidToken,
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 		}, {
 			desc:   "remove with an empty token",
 			id:     saved.MFThing,
 			auth:   "",
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 		},
 		{
 			desc:   "remove non-existing config",
@@ -1102,16 +1103,16 @@ func TestBootstrap(t *testing.T) {
 			desc:        "bootstrap a Thing with unknown key",
 			externalID:  c.ExternalID,
 			externalKey: unknown,
-			status:      http.StatusNotFound,
-			res:         extKeyNotFoundRes,
+			status:      http.StatusForbidden,
+			res:         extKeyRes,
 			secure:      false,
 		},
 		{
 			desc:        "bootstrap a Thing with an empty key",
 			externalID:  c.ExternalID,
 			externalKey: "",
-			status:      http.StatusForbidden,
-			res:         unauthRes,
+			status:      http.StatusUnauthorized,
+			res:         authnRes,
 			secure:      false,
 		},
 		{
@@ -1134,8 +1135,8 @@ func TestBootstrap(t *testing.T) {
 			desc:        "bootstrap secure with unencrypted key",
 			externalID:  fmt.Sprintf("secure/%s", c.ExternalID),
 			externalKey: c.ExternalKey,
-			status:      http.StatusNotFound,
-			res:         extSecKeyNotFoundRes,
+			status:      http.StatusForbidden,
+			res:         extSecKeyRes,
 			secure:      true,
 		},
 	}
@@ -1186,12 +1187,12 @@ func TestChangeState(t *testing.T) {
 		status      int
 	}{
 		{
-			desc:        "change state unauthorized",
+			desc:        "change state with invalid token",
 			id:          saved.MFThing,
 			auth:        invalidToken,
 			state:       active,
 			contentType: contentType,
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 		},
 		{
 			desc:        "change state with an empty token",
@@ -1199,7 +1200,7 @@ func TestChangeState(t *testing.T) {
 			auth:        "",
 			state:       active,
 			contentType: contentType,
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 		},
 		{
 			desc:        "change state with invalid content type",

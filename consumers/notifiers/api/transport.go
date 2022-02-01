@@ -142,10 +142,9 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 			errors.Contains(errorVal, errInvalidTopic),
 			errors.Contains(errorVal, errors.ErrInvalidQueryParams):
 			w.WriteHeader(http.StatusBadRequest)
-		case errors.Contains(errorVal, errors.ErrNotFound),
-			errors.Contains(errorVal, errNotFound):
+		case errors.Contains(errorVal, errors.ErrNotFound):
 			w.WriteHeader(http.StatusNotFound)
-		case errors.Contains(errorVal, errors.ErrUnauthorizedAccess):
+		case errors.Contains(errorVal, errors.ErrAuthentication):
 			w.WriteHeader(http.StatusUnauthorized)
 		case errors.Contains(errorVal, errors.ErrConflict):
 			w.WriteHeader(http.StatusConflict)

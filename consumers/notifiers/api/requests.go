@@ -10,7 +10,6 @@ import (
 var (
 	errInvalidTopic   = errors.New("invalid Subscription topic")
 	errInvalidContact = errors.New("invalid Subscription contact")
-	errNotFound       = errors.New("invalid or empty Subscription id")
 )
 
 type createSubReq struct {
@@ -21,7 +20,7 @@ type createSubReq struct {
 
 func (req createSubReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 	if req.Topic == "" {
 		return errInvalidTopic
@@ -39,10 +38,10 @@ type subReq struct {
 
 func (req subReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 	if req.id == "" {
-		return errNotFound
+		return errors.ErrNotFound
 	}
 	return nil
 }
@@ -57,7 +56,7 @@ type listSubsReq struct {
 
 func (req listSubsReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 	return nil
 }

@@ -26,11 +26,6 @@ const (
 	defLimit    = 10
 )
 
-var (
-	errUnauthorized = errors.New("missing or invalid credentials provided")
-	errConflict     = errors.New("entity already exists")
-)
-
 // MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler(svc certs.Service) http.Handler {
 	opts := []kithttp.ServerOption{
@@ -149,7 +144,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	case io.EOF, errors.ErrMalformedEntity,
 		errors.ErrInvalidQueryParams:
 		w.WriteHeader(http.StatusBadRequest)
-	case errConflict:
+	case errors.ErrConflict:
 		w.WriteHeader(http.StatusConflict)
 	default:
 		switch err.(type) {

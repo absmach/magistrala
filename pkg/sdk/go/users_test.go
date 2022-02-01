@@ -164,7 +164,7 @@ func TestCreateToken(t *testing.T) {
 			desc:  "create token for non existing user",
 			user:  sdk.User{Email: "user2@example.com", Password: "password"},
 			token: "",
-			err:   createError(sdk.ErrFailedCreation, http.StatusForbidden),
+			err:   createError(sdk.ErrFailedCreation, http.StatusUnauthorized),
 		},
 		{
 			desc:  "create user with empty email",

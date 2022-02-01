@@ -40,7 +40,7 @@ const (
 var (
 	user           = users.User{Email: validEmail, Password: validPass}
 	notFoundRes    = toJSON(errorRes{errors.ErrNotFound.Error()})
-	unauthRes      = toJSON(errorRes{errors.ErrUnauthorizedAccess.Error()})
+	unauthRes      = toJSON(errorRes{errors.ErrAuthentication.Error()})
 	malformedRes   = toJSON(errorRes{errors.ErrMalformedEntity.Error()})
 	weakPassword   = toJSON(errorRes{users.ErrPasswordFormat.Error()})
 	unsupportedRes = toJSON(errorRes{errors.ErrUnsupportedContentType.Error()})
@@ -104,10 +104,16 @@ func TestRegister(t *testing.T) {
 	client := ts.Client()
 
 	data := toJSON(user)
+	userNew := toJSON(users.User{Email: "user2@example.com", Password: "password"})
 	invalidData := toJSON(users.User{Email: invalidEmail, Password: validPass})
 	invalidPasswordData := toJSON(users.User{Email: validEmail, Password: invalidPass})
 	invalidFieldData := fmt.Sprintf(`{"email": "%s", "pass": "%s"}`, user.Email, user.Password)
-	unauthzEmail := "unauthz@example.com"
+
+	mockAuthzDB := map[string][]mocks.SubjectSet{}
+	mockAuthzDB[user.Email] = append(mockAuthzDB[user.Email], mocks.SubjectSet{Object: authoritiesObjKey, Relation: memberRelationKey})
+	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email}, mockAuthzDB)
+	tkn, _ := auth.Issue(context.Background(), &mainflux.IssueReq{Id: user.ID, Email: user.Email, Type: 0})
+	token := tkn.GetValue()
 
 	cases := []struct {
 		desc        string
@@ -116,18 +122,18 @@ func TestRegister(t *testing.T) {
 		status      int
 		token       string
 	}{
-		{"register new user", data, contentType, http.StatusCreated, user.Email},
-		{"register user with empty token", data, contentType, http.StatusForbidden, ""},
-		{"register existing user", data, contentType, http.StatusConflict, user.Email},
-		{"register user with invalid email address", invalidData, contentType, http.StatusBadRequest, user.Email},
-		{"register user with weak password", invalidPasswordData, contentType, http.StatusBadRequest, user.Email},
-		{"register new user with unauthorized access", data, contentType, http.StatusForbidden, unauthzEmail},
-		{"register existing user with unauthorized access", data, contentType, http.StatusForbidden, unauthzEmail},
-		{"register user with invalid request format", "{", contentType, http.StatusBadRequest, user.Email},
-		{"register user with empty JSON request", "{}", contentType, http.StatusBadRequest, user.Email},
-		{"register user with empty request", "", contentType, http.StatusBadRequest, user.Email},
-		{"register user with invalid field name", invalidFieldData, contentType, http.StatusBadRequest, user.Email},
-		{"register user with missing content type", data, "", http.StatusUnsupportedMediaType, user.Email},
+		{"register new user", data, contentType, http.StatusCreated, token},
+		{"register user with empty token", data, contentType, http.StatusUnauthorized, ""},
+		{"register existing user", data, contentType, http.StatusConflict, token},
+		{"register user with invalid email address", invalidData, contentType, http.StatusBadRequest, token},
+		{"register user with weak password", invalidPasswordData, contentType, http.StatusBadRequest, token},
+		{"register new user with unauthenticated access", userNew, contentType, http.StatusUnauthorized, "wrong"},
+		{"register existing user with unauthenticated access", data, contentType, http.StatusUnauthorized, "wrong"},
+		{"register user with invalid request format", "{", contentType, http.StatusBadRequest, token},
+		{"register user with empty JSON request", "{}", contentType, http.StatusBadRequest, token},
+		{"register user with empty request", "", contentType, http.StatusBadRequest, token},
+		{"register user with invalid field name", invalidFieldData, contentType, http.StatusBadRequest, token},
+		{"register user with missing content type", data, "", http.StatusUnsupportedMediaType, token},
 	}
 
 	for _, tc := range cases {
@@ -182,9 +188,9 @@ func TestLogin(t *testing.T) {
 		res         string
 	}{
 		{"login with valid credentials", data, contentType, http.StatusCreated, tokenData},
-		{"login with invalid credentials", invalidData, contentType, http.StatusForbidden, unauthRes},
+		{"login with invalid credentials", invalidData, contentType, http.StatusUnauthorized, unauthRes},
 		{"login with invalid email address", invalidEmailData, contentType, http.StatusBadRequest, malformedRes},
-		{"login non-existent user", nonexistentData, contentType, http.StatusForbidden, unauthRes},
+		{"login non-existent user", nonexistentData, contentType, http.StatusUnauthorized, unauthRes},
 		{"login with invalid request format", "{", contentType, http.StatusBadRequest, malformedRes},
 		{"login with empty JSON request", "{}", contentType, http.StatusBadRequest, malformedRes},
 		{"login with empty request", "", contentType, http.StatusBadRequest, malformedRes},
@@ -233,7 +239,7 @@ func TestUser(t *testing.T) {
 		res    string
 	}{
 		{"user info with valid token", token, http.StatusOK, ""},
-		{"user info with invalid token", "", http.StatusForbidden, ""},
+		{"user info with invalid token", "", http.StatusUnauthorized, ""},
 	}
 
 	for _, tc := range cases {
@@ -366,7 +372,7 @@ func TestPasswordReset(t *testing.T) {
 		tok         string
 	}{
 		{"password reset with valid token", reqExisting, contentType, http.StatusCreated, "{}", token},
-		{"password reset with invalid token", reqNoExist, contentType, http.StatusForbidden, unauthRes, token},
+		{"password reset with invalid token", reqNoExist, contentType, http.StatusUnauthorized, unauthRes, token},
 		{"password reset with confirm password not matching", reqPassNoMatch, contentType, http.StatusBadRequest, malformedRes, token},
 		{"password reset request with invalid request format", "{", contentType, http.StatusBadRequest, malformedRes, token},
 		{"password reset request with empty JSON request", "{}", contentType, http.StatusBadRequest, malformedRes, token},
@@ -440,8 +446,8 @@ func TestPasswordChange(t *testing.T) {
 		tok         string
 	}{
 		{"password change with valid token", dataResExisting, contentType, http.StatusCreated, "{}", token},
-		{"password change with invalid token", reqNoExist, contentType, http.StatusForbidden, unauthRes, ""},
-		{"password change with invalid old password", reqWrongPass, contentType, http.StatusForbidden, unauthRes, token},
+		{"password change with invalid token", reqNoExist, contentType, http.StatusUnauthorized, unauthRes, ""},
+		{"password change with invalid old password", reqWrongPass, contentType, http.StatusUnauthorized, unauthRes, token},
 		{"password change with invalid new password", reqWeakPass, contentType, http.StatusBadRequest, weakPassword, token},
 		{"password change with empty JSON request", "{}", contentType, http.StatusBadRequest, malformedRes, token},
 		{"password change empty request", "", contentType, http.StatusBadRequest, malformedRes, token},

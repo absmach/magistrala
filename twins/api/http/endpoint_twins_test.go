@@ -138,7 +138,7 @@ func TestAddTwin(t *testing.T) {
 			req:         data,
 			contentType: contentType,
 			auth:        wrongValue,
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 			location:    "",
 		},
 		{
@@ -146,7 +146,7 @@ func TestAddTwin(t *testing.T) {
 			req:         data,
 			contentType: contentType,
 			auth:        "",
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 			location:    "",
 		},
 		{
@@ -253,20 +253,20 @@ func TestUpdateTwin(t *testing.T) {
 			status:      http.StatusNotFound,
 		},
 		{
-			desc:        "update twin with invalid user token",
+			desc:        "update twin with invalid token",
 			req:         data,
 			id:          stw.ID,
 			contentType: contentType,
 			auth:        wrongValue,
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 		},
 		{
-			desc:        "update twin with empty user token",
+			desc:        "update twin with empty token",
 			req:         data,
 			id:          stw.ID,
 			contentType: contentType,
 			auth:        "",
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 		},
 		{
 			desc:        "update twin with invalid data format",
@@ -359,7 +359,7 @@ func TestViewTwin(t *testing.T) {
 			desc:   "view twin by passing invalid token",
 			id:     stw.ID,
 			auth:   wrongValue,
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 			res:    twinRes{},
 		},
 		{
@@ -373,7 +373,7 @@ func TestViewTwin(t *testing.T) {
 			desc:   "view twin by passing empty token",
 			id:     stw.ID,
 			auth:   "",
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 			res:    twinRes{},
 		},
 	}
@@ -438,14 +438,14 @@ func TestListTwins(t *testing.T) {
 		{
 			desc:   "get a list of twins with invalid token",
 			auth:   wrongValue,
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 			url:    fmt.Sprintf(queryFmt, baseURL, 0, 1),
 			res:    nil,
 		},
 		{
 			desc:   "get a list of twins with empty token",
 			auth:   "",
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 			url:    fmt.Sprintf(queryFmt, baseURL, 0, 1),
 			res:    nil,
 		},
@@ -608,13 +608,13 @@ func TestRemoveTwin(t *testing.T) {
 			desc:   "delete twin with invalid token",
 			id:     stw.ID,
 			auth:   wrongValue,
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 		},
 		{
 			desc:   "delete twin with empty token",
 			id:     stw.ID,
 			auth:   "",
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 		},
 	}
 

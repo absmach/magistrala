@@ -36,7 +36,7 @@ const (
 
 var (
 	notFoundRes = toJSON(errorRes{errors.ErrNotFound.Error()})
-	unauthRes   = toJSON(errorRes{errors.ErrUnauthorizedAccess.Error()})
+	unauthRes   = toJSON(errorRes{errors.ErrAuthentication.Error()})
 	invalidRes  = toJSON(errorRes{errors.ErrInvalidQueryParams.Error()})
 )
 

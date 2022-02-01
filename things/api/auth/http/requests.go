@@ -11,7 +11,7 @@ type identifyReq struct {
 
 func (req identifyReq) validate() error {
 	if req.Token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	return nil
@@ -24,7 +24,7 @@ type canAccessByKeyReq struct {
 
 func (req canAccessByKeyReq) validate() error {
 	if req.Token == "" || req.chanID == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	return nil
@@ -37,7 +37,7 @@ type canAccessByIDReq struct {
 
 func (req canAccessByIDReq) validate() error {
 	if req.ThingID == "" || req.chanID == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	return nil

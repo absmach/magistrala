@@ -18,11 +18,11 @@ type addCertsReq struct {
 }
 
 func (req addCertsReq) validate() error {
-	if req.ThingID == "" && req.token == "" {
-		return errUnauthorized
+	if req.token == "" {
+		return errors.ErrAuthentication
 	}
 
-	if req.TTL == "" || req.KeyType == "" || req.KeyBits == 0 {
+	if req.ThingID == "" || req.TTL == "" || req.KeyType == "" || req.KeyBits == 0 {
 		return errors.ErrMalformedEntity
 	}
 	return nil
@@ -37,7 +37,7 @@ type listReq struct {
 
 func (req *listReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 	if req.limit == 0 || req.limit > maxLimitSize {
 		return errors.ErrMalformedEntity
@@ -52,7 +52,7 @@ type viewReq struct {
 
 func (req *viewReq) validate() error {
 	if req.token == "" {
-		return errUnauthorized
+		return errors.ErrAuthentication
 	}
 	if req.serialID == "" {
 		return errors.ErrMalformedEntity
@@ -67,8 +67,12 @@ type revokeReq struct {
 }
 
 func (req *revokeReq) validate() error {
-	if req.token == "" || req.certID == "" {
-		return errors.ErrUnauthorizedAccess
+	if req.token == "" {
+		return errors.ErrAuthentication
+	}
+
+	if req.certID == "" {
+		return errors.ErrMalformedEntity
 	}
 
 	return nil

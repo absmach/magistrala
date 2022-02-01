@@ -9,12 +9,9 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
-
-var errUnauthorized = status.Error(codes.PermissionDenied, "missing or invalid credentials provided")
 
 var _ mainflux.ThingsServiceClient = (*thingsServiceMock)(nil)
 
@@ -28,11 +25,11 @@ func NewThingsService() mainflux.ThingsServiceClient {
 func (svc thingsServiceMock) CanAccessByKey(ctx context.Context, in *mainflux.AccessByKeyReq, opts ...grpc.CallOption) (*mainflux.ThingID, error) {
 	token := in.GetToken()
 	if token == "invalid" {
-		return nil, errUnauthorized
+		return nil, errors.ErrAuthentication
 	}
 
 	if token == "" {
-		return nil, errUnauthorized
+		return nil, errors.ErrAuthentication
 	}
 
 	return &mainflux.ThingID{Value: token}, nil

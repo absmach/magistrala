@@ -149,7 +149,7 @@ func (ts *twinsService) UpdateTwin(ctx context.Context, token string, twin Twin,
 
 	_, err = ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	tw, err := ts.twins.RetrieveByID(ctx, twin.ID)
@@ -218,7 +218,7 @@ func (ts *twinsService) RemoveTwin(ctx context.Context, token, twinID string) (e
 
 	_, err = ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if err := ts.twins.Remove(ctx, twinID); err != nil {
@@ -231,7 +231,7 @@ func (ts *twinsService) RemoveTwin(ctx context.Context, token, twinID string) (e
 func (ts *twinsService) ListTwins(ctx context.Context, token string, offset uint64, limit uint64, name string, metadata Metadata) (Page, error) {
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return Page{}, errors.ErrUnauthorizedAccess
+		return Page{}, errors.ErrAuthentication
 	}
 
 	return ts.twins.RetrieveAll(ctx, res.GetEmail(), offset, limit, name, metadata)
@@ -240,7 +240,7 @@ func (ts *twinsService) ListTwins(ctx context.Context, token string, offset uint
 func (ts *twinsService) ListStates(ctx context.Context, token string, offset uint64, limit uint64, twinID string) (StatesPage, error) {
 	_, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return StatesPage{}, errors.ErrUnauthorizedAccess
+		return StatesPage{}, errors.ErrAuthentication
 	}
 
 	return ts.states.RetrieveAll(ctx, offset, limit, twinID)

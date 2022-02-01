@@ -18,11 +18,6 @@ const (
 	contentType = "application/json"
 )
 
-var (
-	errUnauthorized = errors.New("missing or invalid credentials provided")
-	errConflict     = errors.New("entity already exists")
-)
-
 // MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler(svc provision.Service) http.Handler {
 
@@ -101,8 +96,10 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusUnsupportedMediaType)
 	case io.EOF, errors.ErrMalformedEntity:
 		w.WriteHeader(http.StatusBadRequest)
-	case errConflict:
+	case errors.ErrConflict:
 		w.WriteHeader(http.StatusConflict)
+	case errors.ErrAuthentication:
+		w.WriteHeader(http.StatusUnauthorized)
 	default:
 		switch err.(type) {
 		case *json.SyntaxError:

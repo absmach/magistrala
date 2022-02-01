@@ -42,7 +42,7 @@ paths:
           $ref: "#/components/responses/KeyRes"
         '400':
           description: Failed due to malformed query parameters.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '500':
           $ref: "#/components/responses/ServiceError"
@@ -58,7 +58,7 @@ paths:
       responses:
         '204':
           description: Key revoked.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '500':
           $ref: "#/components/responses/ServiceError"
@@ -101,7 +101,7 @@ paths:
           $ref: "#/components/responses/GroupsPageRes"
         '400':
           description: Failed due to malformed query parameters.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '404':
           description: Group does not exist.
@@ -122,7 +122,7 @@ paths:
           $ref: "#/components/responses/GroupRes"
         '400':
           description: Failed due to malformed query parameters.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '404':
           description: Group does not exist.
@@ -144,7 +144,7 @@ paths:
           description: Group updated.
         '400':
           description: Failed due to malformed query parameters.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '404':
           description: Group does not exist.
@@ -169,7 +169,7 @@ paths:
           description: Group removed.
         '400':
           description: Failed due to malformed query parameters.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '404':
           description: Group does not exist.
@@ -195,7 +195,7 @@ paths:
           $ref: "#/components/responses/GroupsPageRes"
         '400':
           description: Failed due to malformed query parameters.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '404':
           description: Group does not exist.
@@ -221,7 +221,7 @@ paths:
           $ref: "#/components/responses/GroupsPageRes"
         '400':
           description: Failed due to malformed query parameters.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '404':
           description: Group does not exist.
@@ -244,7 +244,7 @@ paths:
           $ref: "#/components/responses/GroupCreateRes"
         '400':
           description: Failed due to malformed JSON.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '409':
           description: Failed due to using an existing email address.
@@ -264,7 +264,7 @@ paths:
       responses:
         '200':
           $ref: "#/components/responses/MembersRes"
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '500':
           $ref: "#/components/responses/ServiceError"
@@ -285,7 +285,7 @@ paths:
           description: User group shared with thing group.
         '400':
           description: Failed due to malformed JSON.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '415':
           description: Missing or invalid content type.
@@ -305,7 +305,7 @@ paths:
       responses:
         '200':
           $ref: "#/components/responses/GroupRes"
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '500':
           $ref: "#/components/responses/ServiceError"
@@ -326,6 +326,10 @@ paths:
           description: Policies created.
         '400':
           description: Failed due to malformed JSON.
+        '401':
+          description: Missing or invalid access token provided.
+        '403':
+          description: Unauthorized access token provided.
         '409':
           description: Failed due to using an existing email address.
         '415':

@@ -89,7 +89,7 @@ func TestPublish(t *testing.T) {
 			msg:         msg,
 			contentType: contentType,
 			auth:        "",
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 		},
 		"publish message with basic auth": {
 			chanID:      chanID,
@@ -104,7 +104,7 @@ func TestPublish(t *testing.T) {
 			msg:         msg,
 			contentType: contentType,
 			auth:        invalidToken,
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 		},
 		"publish message with invalid basic auth": {
 			chanID:      chanID,
@@ -112,7 +112,7 @@ func TestPublish(t *testing.T) {
 			contentType: contentType,
 			auth:        invalidToken,
 			basicAuth:   true,
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 		},
 		"publish message without content type": {
 			chanID:      chanID,

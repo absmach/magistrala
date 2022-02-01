@@ -52,7 +52,7 @@ var (
 	invalidName    = strings.Repeat("m", maxNameSize+1)
 	notFoundRes    = toJSON(errorRes{errors.ErrNotFound.Error()})
 	unauthzRes     = toJSON(errorRes{errors.ErrAuthorization.Error()})
-	unauthRes      = toJSON(errorRes{errors.ErrUnauthorizedAccess.Error()})
+	unauthRes      = toJSON(errorRes{errors.ErrAuthentication.Error()})
 	searchThingReq = things.PageMetadata{
 		Limit:  5,
 		Offset: 0,

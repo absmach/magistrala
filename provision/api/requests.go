@@ -22,7 +22,7 @@ type mappingReq struct {
 
 func (req mappingReq) validate() error {
 	if req.token == "" {
-		return errUnauthorized
+		return errors.ErrAuthentication
 	}
 	return nil
 }

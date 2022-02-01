@@ -35,7 +35,7 @@ type policiesReq struct {
 
 func (req policiesReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if len(req.SubjectIDs) == 0 || len(req.Policies) == 0 || req.Object == "" {

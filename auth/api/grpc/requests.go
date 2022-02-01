@@ -34,7 +34,7 @@ type issueReq struct {
 
 func (req issueReq) validate() error {
 	if req.email == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 	if req.keyType != auth.LoginKey &&
 		req.keyType != auth.APIKey &&
@@ -54,7 +54,7 @@ type assignReq struct {
 
 func (req assignReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 	if req.groupID == "" || req.memberID == "" {
 		return errors.ErrMalformedEntity
@@ -72,7 +72,7 @@ type membersReq struct {
 
 func (req membersReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 	if req.groupID == "" {
 		return errors.ErrMalformedEntity

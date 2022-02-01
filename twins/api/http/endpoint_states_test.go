@@ -93,14 +93,14 @@ func TestListStates(t *testing.T) {
 		{
 			desc:   "get a list of states with invalid token",
 			auth:   wrongValue,
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 			url:    fmt.Sprintf(queryFmt, baseURL, 0, 5),
 			res:    nil,
 		},
 		{
 			desc:   "get a list of states with empty token",
 			auth:   "",
-			status: http.StatusForbidden,
+			status: http.StatusUnauthorized,
 			url:    fmt.Sprintf(queryFmt, baseURL, 0, 5),
 			res:    nil,
 		},

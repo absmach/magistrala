@@ -83,13 +83,13 @@ func TestIssue(t *testing.T) {
 			err:   nil,
 		},
 		{
-			desc: "issue API key unauthorized",
+			desc: "issue API key with an invalid token",
 			key: auth.Key{
 				Type:     auth.APIKey,
 				IssuedAt: time.Now(),
 			},
 			token: "invalid",
-			err:   errors.ErrUnauthorizedAccess,
+			err:   errors.ErrAuthentication,
 		},
 		{
 			desc: "issue API key with no time",
@@ -156,10 +156,10 @@ func TestRevoke(t *testing.T) {
 			err:   nil,
 		},
 		{
-			desc:  "revoke unauthorized",
+			desc:  "revoke with empty login key",
 			id:    newKey.ID,
 			token: "",
-			err:   errors.ErrUnauthorizedAccess,
+			err:   errors.ErrAuthentication,
 		},
 	}
 
@@ -209,22 +209,22 @@ func TestRetrieve(t *testing.T) {
 			err:   errors.ErrNotFound,
 		},
 		{
-			desc:  "retrieve unauthorized",
+			desc:  "retrieve with wrong login key",
 			id:    apiKey.ID,
 			token: "wrong",
-			err:   errors.ErrUnauthorizedAccess,
+			err:   errors.ErrAuthentication,
 		},
 		{
 			desc:  "retrieve with API token",
 			id:    apiKey.ID,
 			token: apiToken,
-			err:   errors.ErrUnauthorizedAccess,
+			err:   errors.ErrAuthentication,
 		},
 		{
 			desc:  "retrieve with reset token",
 			id:    apiKey.ID,
 			token: resetToken,
-			err:   errors.ErrUnauthorizedAccess,
+			err:   errors.ErrAuthentication,
 		},
 	}
 
@@ -287,13 +287,13 @@ func TestIdentify(t *testing.T) {
 			desc: "identify expired key",
 			key:  invalidSecret,
 			idt:  auth.Identity{},
-			err:  errors.ErrUnauthorizedAccess,
+			err:  errors.ErrAuthentication,
 		},
 		{
 			desc: "identify invalid key",
 			key:  "invalid",
 			idt:  auth.Identity{},
-			err:  errors.ErrUnauthorizedAccess,
+			err:  errors.ErrAuthentication,
 		},
 	}
 
@@ -478,10 +478,10 @@ func TestViewGroup(t *testing.T) {
 			err:     nil,
 		},
 		{
-			desc:    "view group with unauthorized token",
+			desc:    "view group with invalid token",
 			token:   "wrongtoken",
 			groupID: group.ID,
-			err:     errors.ErrUnauthorizedAccess,
+			err:     errors.ErrAuthentication,
 		},
 		{
 			desc:    "view group for wrong id",
@@ -552,7 +552,7 @@ func TestListGroups(t *testing.T) {
 			token: "wrongToken",
 			level: 5,
 			size:  0,
-			err:   errors.ErrUnauthorizedAccess,
+			err:   errors.ErrAuthentication,
 		},
 	}
 
@@ -618,7 +618,7 @@ func TestListChildren(t *testing.T) {
 			token: "wrongToken",
 			level: 5,
 			size:  0,
-			err:   errors.ErrUnauthorizedAccess,
+			err:   errors.ErrAuthentication,
 		},
 	}
 
@@ -683,7 +683,7 @@ func TestListParents(t *testing.T) {
 			token: "wrongToken",
 			level: 5,
 			size:  0,
-			err:   errors.ErrUnauthorizedAccess,
+			err:   errors.ErrAuthentication,
 		},
 	}
 
@@ -760,7 +760,7 @@ func TestListMembers(t *testing.T) {
 			offset: 0,
 			limit:  n,
 			size:   0,
-			err:    errors.ErrUnauthorizedAccess,
+			err:    errors.ErrAuthentication,
 		},
 	}
 
@@ -840,7 +840,7 @@ func TestListMemberships(t *testing.T) {
 			offset: 0,
 			limit:  n,
 			size:   0,
-			err:    errors.ErrUnauthorizedAccess,
+			err:    errors.ErrAuthentication,
 		},
 	}
 
@@ -883,7 +883,7 @@ func TestRemoveGroup(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("group save got unexpected error: %s", err))
 
 	err = svc.RemoveGroup(context.Background(), "wrongToken", group.ID)
-	assert.True(t, errors.Contains(err, errors.ErrUnauthorizedAccess), fmt.Sprintf("Unauthorized access: expected %v got %v", errors.ErrUnauthorizedAccess, err))
+	assert.True(t, errors.Contains(err, errors.ErrAuthentication), fmt.Sprintf("Unauthorized access: expected %v got %v", errors.ErrAuthentication, err))
 
 	err = svc.RemoveGroup(context.Background(), apiToken, "wrongID")
 	assert.True(t, errors.Contains(err, auth.ErrGroupNotFound), fmt.Sprintf("Remove group with wrong id: expected %v got %v", auth.ErrGroupNotFound, err))
@@ -951,7 +951,7 @@ func TestAssign(t *testing.T) {
 	assert.True(t, mp.Total == 1, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 1, mp.Total))
 
 	err = svc.Assign(context.Background(), "wrongToken", group.ID, "things", mid)
-	assert.True(t, errors.Contains(err, errors.ErrUnauthorizedAccess), fmt.Sprintf("Unauthorized access: expected %v got %v", errors.ErrUnauthorizedAccess, err))
+	assert.True(t, errors.Contains(err, errors.ErrAuthentication), fmt.Sprintf("Unauthorized access: expected %v got %v", errors.ErrAuthentication, err))
 
 }
 
@@ -1003,7 +1003,7 @@ func TestUnassign(t *testing.T) {
 	assert.True(t, mp.Total == 0, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 0, mp.Total))
 
 	err = svc.Unassign(context.Background(), "wrongToken", group.ID, mid)
-	assert.True(t, errors.Contains(err, errors.ErrUnauthorizedAccess), fmt.Sprintf("Unauthorized access: expected %v got %v", errors.ErrUnauthorizedAccess, err))
+	assert.True(t, errors.Contains(err, errors.ErrAuthentication), fmt.Sprintf("Unauthorized access: expected %v got %v", errors.ErrAuthentication, err))
 
 	err = svc.Unassign(context.Background(), apiToken, group.ID, mid)
 	assert.True(t, errors.Contains(err, auth.ErrGroupNotFound), fmt.Sprintf("Unauthorized access: expected %v got %v", nil, err))

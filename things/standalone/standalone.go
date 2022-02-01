@@ -31,7 +31,7 @@ func NewAuthService(email, token string) mainflux.AuthServiceClient {
 
 func (repo singleUserRepo) Issue(ctx context.Context, req *mainflux.IssueReq, opts ...grpc.CallOption) (*mainflux.Token, error) {
 	if repo.token != req.GetEmail() {
-		return nil, errors.ErrUnauthorizedAccess
+		return nil, errors.ErrAuthentication
 	}
 
 	return &mainflux.Token{Value: repo.token}, nil
@@ -39,7 +39,7 @@ func (repo singleUserRepo) Issue(ctx context.Context, req *mainflux.IssueReq, op
 
 func (repo singleUserRepo) Identify(ctx context.Context, token *mainflux.Token, opts ...grpc.CallOption) (*mainflux.UserIdentity, error) {
 	if repo.token != token.GetValue() {
-		return nil, errors.ErrUnauthorizedAccess
+		return nil, errors.ErrAuthentication
 	}
 
 	return &mainflux.UserIdentity{Id: repo.email, Email: repo.email}, nil

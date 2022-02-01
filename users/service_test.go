@@ -114,18 +114,18 @@ func TestLogin(t *testing.T) {
 				Email:    wrong,
 				Password: user.Password,
 			},
-			err: errors.ErrUnauthorizedAccess,
+			err: errors.ErrAuthentication,
 		},
 		"login with wrong password": {
 			user: users.User{
 				Email:    user.Email,
 				Password: wrong,
 			},
-			err: errors.ErrUnauthorizedAccess,
+			err: errors.ErrAuthentication,
 		},
 		"login failed auth": {
 			user: noAuthUser,
-			err:  errors.ErrUnauthorizedAccess,
+			err:  errors.ErrAuthentication,
 		},
 	}
 
@@ -158,17 +158,17 @@ func TestViewUser(t *testing.T) {
 			userID: id,
 			err:    nil,
 		},
-		"view user with unauthorized token": {
+		"view user with empty token": {
 			user:   users.User{},
 			token:  "",
 			userID: id,
-			err:    errors.ErrUnauthorizedAccess,
+			err:    errors.ErrAuthentication,
 		},
-		"view user with authorized token and invalid user id": {
+		"view user with valid token and invalid user id": {
 			user:   users.User{},
 			token:  token,
 			userID: "",
-			err:    errors.ErrUnauthorizedAccess,
+			err:    errors.ErrAuthentication,
 		},
 	}
 
@@ -202,7 +202,7 @@ func TestViewProfile(t *testing.T) {
 		"invalid token's user info": {
 			user:  users.User{},
 			token: "",
-			err:   errors.ErrUnauthorizedAccess,
+			err:   errors.ErrAuthentication,
 		},
 	}
 
@@ -246,10 +246,10 @@ func TestListUsers(t *testing.T) {
 			size:  0,
 			err:   nil,
 		},
-		"list user with unauthorized token": {
+		"list user with emtpy token": {
 			token: "",
 			size:  0,
-			err:   errors.ErrUnauthorizedAccess,
+			err:   errors.ErrAuthentication,
 		},
 		"list users with offset and limit": {
 			token:  token,
@@ -291,7 +291,7 @@ func TestUpdateUser(t *testing.T) {
 		"update user with invalid token": {
 			user:  user,
 			token: "non-existent",
-			err:   errors.ErrUnauthorizedAccess,
+			err:   errors.ErrAuthentication,
 		},
 	}
 
@@ -333,8 +333,8 @@ func TestChangePassword(t *testing.T) {
 		err         error
 	}{
 		"valid user change password ":                    {token, "newpassword", user.Password, nil},
-		"valid user change password with wrong password": {token, "newpassword", "wrongpassword", errors.ErrUnauthorizedAccess},
-		"valid user change password invalid token":       {"", "newpassword", user.Password, errors.ErrUnauthorizedAccess},
+		"valid user change password with wrong password": {token, "newpassword", "wrongpassword", errors.ErrAuthentication},
+		"valid user change password invalid token":       {"", "newpassword", user.Password, errors.ErrAuthentication},
 	}
 
 	for desc, tc := range cases {
@@ -361,7 +361,7 @@ func TestResetPassword(t *testing.T) {
 		err      error
 	}{
 		"valid user reset password ":   {resetToken.GetValue(), user.Email, nil},
-		"invalid user reset password ": {"", "newpassword", errors.ErrUnauthorizedAccess},
+		"invalid user reset password ": {"", "newpassword", errors.ErrAuthentication},
 	}
 
 	for desc, tc := range cases {

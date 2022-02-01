@@ -15,7 +15,7 @@ type createGroupReq struct {
 
 func (req createGroupReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 	if len(req.Name) > maxNameSize || req.Name == "" {
 		return errors.Wrap(errors.ErrMalformedEntity, auth.ErrBadGroupName)
@@ -34,7 +34,7 @@ type updateGroupReq struct {
 
 func (req updateGroupReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if req.id == "" {
@@ -56,7 +56,7 @@ type listGroupsReq struct {
 
 func (req listGroupsReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if req.level > auth.MaxLevel || req.level < auth.MinLevel {
@@ -78,7 +78,7 @@ type listMembersReq struct {
 
 func (req listMembersReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if req.id == "" {
@@ -98,7 +98,7 @@ type listMembershipsReq struct {
 
 func (req listMembershipsReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if req.id == "" {
@@ -117,7 +117,7 @@ type assignReq struct {
 
 func (req assignReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if req.Type == "" || req.groupID == "" || len(req.Members) == 0 {
@@ -135,7 +135,7 @@ type shareGroupAccessReq struct {
 
 func (req shareGroupAccessReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if req.ThingGroupID == "" || req.userGroupID == "" {
@@ -151,7 +151,7 @@ type unassignReq struct {
 
 func (req unassignReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if req.groupID == "" || len(req.Members) == 0 {
@@ -168,7 +168,7 @@ type groupReq struct {
 
 func (req groupReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if req.id == "" {

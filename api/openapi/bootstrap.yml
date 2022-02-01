@@ -22,7 +22,7 @@ paths:
           $ref: "#/components/responses/ConfigCreateRes"
         '400':
           description: Failed due to malformed JSON.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '415':
           description: Missing or invalid content type.
@@ -48,7 +48,7 @@ paths:
           $ref: "#/components/responses/ConfigListRes"
         '400':
           description: Failed due to malformed query parameters.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '500':
           $ref: "#/components/responses/ServiceError"
@@ -63,7 +63,7 @@ paths:
       responses:
         '200':
           $ref: "#/components/responses/ConfigRes"
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '404':
           description: Config does not exist.
@@ -87,7 +87,7 @@ paths:
           description: Config updated.
         '400':
           description: Failed due to malformed JSON.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '404':
           description: Config does not exist.
@@ -110,7 +110,7 @@ paths:
           description: Config removed.
         '400':
           description: Failed due to malformed config ID.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '500':
           $ref: "#/components/responses/ServiceError"
@@ -132,7 +132,7 @@ paths:
           description: Config updated.
         '400':
           description: Failed due to malformed JSON.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '404':
           description: Config does not exist.
@@ -158,7 +158,7 @@ paths:
           description: Config updated.
         '400':
           description: Failed due to malformed JSON.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '404':
           description: Config does not exist.
@@ -179,9 +179,12 @@ paths:
       responses:
         '200':
           $ref: "#/components/responses/BootstrapConfigRes"
+        '400':
+          description: Failed due to malformed JSON.
+        '401':
+          description: Missing or invalid external key provided.
         '404':
-          description: |
-            Failed to retrieve corresponding config.
+          description: Failed to retrieve corresponding config.
         '500':
           $ref: "#/components/responses/ServiceError"
   /things/bootstrap/secure/{externalId}:
@@ -220,7 +223,7 @@ paths:
           description: Config removed.
         '400':
           description: Failed due to malformed config's ID.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '500':
           $ref: "#/components/responses/ServiceError"

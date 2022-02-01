@@ -109,11 +109,12 @@ func TestIssue(t *testing.T) {
 			code:  codes.InvalidArgument,
 		},
 		{
-			desc: "issue for user that  exist",
-			id:   "",
-			kind: auth.APIKey,
-			err:  status.Error(codes.Unauthenticated, "unauthorized access"),
-			code: codes.Unauthenticated,
+			desc:  "issue for user that exist",
+			id:    "",
+			email: "",
+			kind:  auth.APIKey,
+			err:   status.Error(codes.Unauthenticated, "unauthenticated access"),
+			code:  codes.Unauthenticated,
 		},
 	}
 
@@ -171,7 +172,7 @@ func TestIdentify(t *testing.T) {
 			desc:  "identify user with invalid user token",
 			token: "invalid",
 			idt:   mainflux.UserIdentity{},
-			err:   status.Error(codes.Unauthenticated, "unauthorized access"),
+			err:   status.Error(codes.Unauthenticated, "unauthenticated access"),
 			code:  codes.Unauthenticated,
 		},
 		{
@@ -230,7 +231,7 @@ func TestAuthorize(t *testing.T) {
 			relation: "unauthorizedRelation",
 			ar:       mainflux.AuthorizeRes{Authorized: false},
 			err:      nil,
-			code:     codes.Unauthenticated,
+			code:     codes.PermissionDenied,
 		},
 		{
 			desc:     "authorize user with unauthorized object",
@@ -240,7 +241,7 @@ func TestAuthorize(t *testing.T) {
 			relation: memberRelation,
 			ar:       mainflux.AuthorizeRes{Authorized: false},
 			err:      nil,
-			code:     codes.Unauthenticated,
+			code:     codes.PermissionDenied,
 		},
 		{
 			desc:     "authorize user with unauthorized subject",
@@ -250,7 +251,7 @@ func TestAuthorize(t *testing.T) {
 			relation: memberRelation,
 			ar:       mainflux.AuthorizeRes{Authorized: false},
 			err:      nil,
-			code:     codes.Unauthenticated,
+			code:     codes.PermissionDenied,
 		},
 		{
 			desc:     "authorize user with invalid ACL",

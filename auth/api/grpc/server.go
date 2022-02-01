@@ -238,9 +238,10 @@ func encodeError(err error) error {
 		return nil
 	case errors.Contains(err, errors.ErrMalformedEntity):
 		return status.Error(codes.InvalidArgument, "received invalid token request")
-	case errors.Contains(err, errors.ErrUnauthorizedAccess),
-		errors.Contains(err, errors.ErrAuthorization):
+	case errors.Contains(err, errors.ErrAuthentication):
 		return status.Error(codes.Unauthenticated, err.Error())
+	case errors.Contains(err, errors.ErrAuthorization):
+		return status.Error(codes.PermissionDenied, err.Error())
 	case errors.Contains(err, auth.ErrKeyExpired):
 		return status.Error(codes.Unauthenticated, err.Error())
 	default:

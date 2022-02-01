@@ -87,7 +87,7 @@ func TestCreateThings(t *testing.T) {
 			desc:  "create things with invalid credentials",
 			ths:   []things.Thing{{Name: "a", Metadata: map[string]interface{}{"test": "test"}}},
 			key:   "",
-			err:   errors.ErrUnauthorizedAccess,
+			err:   errors.ErrAuthentication,
 			event: nil,
 		},
 	}
@@ -256,7 +256,7 @@ func TestRemoveThing(t *testing.T) {
 			desc:  "delete thing with invalid credentials",
 			id:    strconv.FormatUint(math.MaxUint64, 10),
 			key:   "",
-			err:   errors.ErrUnauthorizedAccess,
+			err:   errors.ErrAuthentication,
 			event: nil,
 		},
 	}
@@ -313,7 +313,7 @@ func TestCreateChannels(t *testing.T) {
 			desc:  "create channels with invalid credentials",
 			chs:   []things.Channel{{Name: "a", Metadata: map[string]interface{}{"test": "test"}}},
 			key:   "",
-			err:   errors.ErrUnauthorizedAccess,
+			err:   errors.ErrAuthentication,
 			event: nil,
 		},
 	}
@@ -492,7 +492,7 @@ func TestRemoveChannel(t *testing.T) {
 			desc:  "create non-existent channel",
 			id:    strconv.FormatUint(math.MaxUint64, 10),
 			key:   "",
-			err:   errors.ErrUnauthorizedAccess,
+			err:   errors.ErrAuthentication,
 			event: nil,
 		},
 	}

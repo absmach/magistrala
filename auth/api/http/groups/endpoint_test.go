@@ -154,7 +154,7 @@ func TestShareGroupAccess(t *testing.T) {
 			contentType: contentType,
 			auth:        "token",
 			userGroupID: "ug",
-			status:      http.StatusForbidden,
+			status:      http.StatusUnauthorized,
 		},
 	}
 

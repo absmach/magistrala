@@ -17,14 +17,14 @@ import (
 
 var (
 	// ErrThings indicates failure to communicate with Mainflux Things service.
-	// It can be due to networking error or invalid/unauthorized request.
+	// It can be due to networking error or invalid/unauthenticated request.
 	ErrThings = errors.New("failed to receive response from Things service")
 
-	// ErrExternalKeyNotFound indicates a non-existent bootstrap configuration for given external key
-	ErrExternalKeyNotFound = errors.New("failed to get bootstrap configuration for given external key")
+	// ErrExternalKey indicates a non-existent bootstrap configuration for given external key
+	ErrExternalKey = errors.New("failed to get bootstrap configuration for given external key")
 
-	// ErrSecureBootstrap indicates error in getting bootstrap configuration for given encrypted external key
-	ErrSecureBootstrap = errors.New("failed to get bootstrap configuration for given encrypted external key")
+	// ErrExternalKeySecure indicates error in getting bootstrap configuration for given encrypted external key
+	ErrExternalKeySecure = errors.New("failed to get bootstrap configuration for given encrypted external key")
 
 	// ErrBootstrap indicates error in getting bootstrap configuration.
 	ErrBootstrap = errors.New("failed to read bootstrap configuration")
@@ -284,13 +284,13 @@ func (bs bootstrapService) Bootstrap(ctx context.Context, externalKey, externalI
 	if secure {
 		dec, err := bs.dec(externalKey)
 		if err != nil {
-			return Config{}, errors.Wrap(ErrSecureBootstrap, err)
+			return Config{}, errors.Wrap(ErrExternalKeySecure, err)
 		}
 		externalKey = dec
 	}
 
 	if cfg.ExternalKey != externalKey {
-		return Config{}, errors.Wrap(ErrExternalKeyNotFound, errors.ErrNotFound)
+		return Config{}, ErrExternalKey
 	}
 
 	return cfg, nil
@@ -372,7 +372,7 @@ func (bs bootstrapService) identify(token string) (string, error) {
 
 	res, err := bs.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return "", errors.ErrUnauthorizedAccess
+		return "", errors.ErrAuthentication
 	}
 
 	return res.GetEmail(), nil
@@ -477,14 +477,14 @@ func (bs bootstrapService) toIDList(channels []Channel) []string {
 func (bs bootstrapService) dec(in string) (string, error) {
 	ciphertext, err := hex.DecodeString(in)
 	if err != nil {
-		return "", errors.ErrNotFound
+		return "", err
 	}
 	block, err := aes.NewCipher(bs.encKey)
 	if err != nil {
 		return "", err
 	}
 	if len(ciphertext) < aes.BlockSize {
-		return "", errors.ErrMalformedEntity
+		return "", err
 	}
 	iv := ciphertext[:aes.BlockSize]
 	ciphertext = ciphertext[aes.BlockSize:]

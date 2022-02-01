@@ -134,7 +134,7 @@ func TestAdd(t *testing.T) {
 			desc:   "add a config with wrong credentials",
 			config: config,
 			token:  invalidToken,
-			err:    errors.ErrUnauthorizedAccess,
+			err:    errors.ErrAuthentication,
 		},
 		{
 			desc:   "add a config with invalid list of channels",
@@ -181,7 +181,7 @@ func TestView(t *testing.T) {
 			desc:  "view a config with wrong credentials",
 			id:    config.MFThing,
 			token: invalidToken,
-			err:   errors.ErrUnauthorizedAccess,
+			err:   errors.ErrAuthentication,
 		},
 	}
 
@@ -233,7 +233,7 @@ func TestUpdate(t *testing.T) {
 			desc:   "update a config with wrong credentials",
 			config: saved,
 			token:  invalidToken,
-			err:    errors.ErrUnauthorizedAccess,
+			err:    errors.ErrAuthentication,
 		},
 	}
 
@@ -291,7 +291,7 @@ func TestUpdateCert(t *testing.T) {
 			clientKey:  "newKey",
 			caCert:     "newCert",
 			token:      invalidToken,
-			err:        errors.ErrUnauthorizedAccess,
+			err:        errors.ErrAuthentication,
 		},
 	}
 
@@ -365,7 +365,7 @@ func TestUpdateConnections(t *testing.T) {
 			token:       invalidToken,
 			id:          created.MFKey,
 			connections: []string{"2", "3"},
-			err:         errors.ErrUnauthorizedAccess,
+			err:         errors.ErrAuthentication,
 		},
 	}
 
@@ -437,13 +437,13 @@ func TestList(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:   "list configs unauthorized",
+			desc:   "list configs with invalid token",
 			config: bootstrap.ConfigsPage{},
 			filter: bootstrap.Filter{},
 			token:  invalidToken,
 			offset: 0,
 			limit:  10,
-			err:    errors.ErrUnauthorizedAccess,
+			err:    errors.ErrAuthentication,
 		},
 		{
 			desc: "list last page",
@@ -502,7 +502,7 @@ func TestRemove(t *testing.T) {
 			desc:  "view a config with wrong credentials",
 			id:    saved.MFThing,
 			token: invalidToken,
-			err:   errors.ErrUnauthorizedAccess,
+			err:   errors.ErrAuthentication,
 		},
 		{
 			desc:  "remove an existing config",
@@ -563,7 +563,7 @@ func TestBootstrap(t *testing.T) {
 			config:      bootstrap.Config{},
 			externalID:  saved.ExternalID,
 			externalKey: "invalid",
-			err:         errors.ErrNotFound,
+			err:         bootstrap.ErrExternalKey,
 			encrypted:   false,
 		},
 		{
@@ -612,7 +612,7 @@ func TestChangeState(t *testing.T) {
 			state: bootstrap.Active,
 			id:    saved.MFThing,
 			token: invalidToken,
-			err:   errors.ErrUnauthorizedAccess,
+			err:   errors.ErrAuthentication,
 		},
 		{
 			desc:  "change state of non-existing config",

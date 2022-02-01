@@ -20,6 +20,8 @@ paths:
           $ref: "#/components/responses/UserCreateRes"
         '400':
           description: Failed due to malformed JSON.
+        '401':
+          description: Missing or invalid access token provided.
         '409':
           description: Failed due to using an existing email address.
         '415':
@@ -73,7 +75,7 @@ paths:
           description: Failed due to malformed JSON.
         '404':
           description: Failed due to non existing user.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '500':
          $ref: "#/components/responses/ServiceError"
@@ -92,7 +94,7 @@ paths:
           $ref: "#/components/responses/UserRes"
         '400':
           description: Failed due to malformed query parameters.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '500':
           $ref: "#/components/responses/ServiceError"
@@ -146,7 +148,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '403':
+        '401':
           description: Failed due to using invalid credentials.
           content:
             application/json:

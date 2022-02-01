@@ -32,7 +32,7 @@ type viewUserReq struct {
 
 func (req viewUserReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 	return nil
 }
@@ -47,7 +47,7 @@ type listUsersReq struct {
 
 func (req listUsersReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 	return nil
 }
@@ -59,7 +59,7 @@ type updateUserReq struct {
 
 func (req updateUserReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 	return nil
 }
@@ -103,7 +103,7 @@ type passwChangeReq struct {
 
 func (req passwChangeReq) validate() error {
 	if req.Token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 	if req.OldPassword == "" {
 		return errors.ErrMalformedEntity
@@ -121,7 +121,7 @@ type listMemberGroupReq struct {
 
 func (req listMemberGroupReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if req.groupID == "" {

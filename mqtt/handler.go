@@ -65,7 +65,7 @@ func (h *handler) AuthConnect(c *session.Client) error {
 	}
 
 	if thid != c.Username {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if err := h.es.Connect(c.Username); err != nil {

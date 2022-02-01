@@ -31,7 +31,7 @@ func (svc authServiceClient) Identify(ctx context.Context, in *mainflux.Token, o
 	if id, ok := svc.users[in.Value]; ok {
 		return &mainflux.UserIdentity{Id: id, Email: id}, nil
 	}
-	return nil, errors.ErrUnauthorizedAccess
+	return nil, errors.ErrAuthentication
 }
 
 func (svc *authServiceClient) Issue(ctx context.Context, in *mainflux.IssueReq, opts ...grpc.CallOption) (*mainflux.Token, error) {

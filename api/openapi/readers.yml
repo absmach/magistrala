@@ -33,7 +33,7 @@ paths:
           $ref: "#/components/responses/MessagesPageRes"
         '400':
           description: Failed due to malformed query parameters.
-        '403':
+        '401':
           description: Missing or invalid access token provided.
         '500':
           $ref: "#/components/responses/ServiceError"

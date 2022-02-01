@@ -41,7 +41,7 @@ func (svc *mainfluxThings) CreateThings(_ context.Context, owner string, ths ...
 
 	userID, err := svc.auth.Identify(context.Background(), &mainflux.Token{Value: owner})
 	if err != nil {
-		return []things.Thing{}, errors.ErrUnauthorizedAccess
+		return []things.Thing{}, errors.ErrAuthentication
 	}
 	for i := range ths {
 		svc.counter++
@@ -60,7 +60,7 @@ func (svc *mainfluxThings) ViewThing(_ context.Context, owner, id string) (thing
 
 	userID, err := svc.auth.Identify(context.Background(), &mainflux.Token{Value: owner})
 	if err != nil {
-		return things.Thing{}, errors.ErrUnauthorizedAccess
+		return things.Thing{}, errors.ErrAuthentication
 	}
 
 	if t, ok := svc.things[id]; ok && t.Owner == userID.Email {
@@ -77,11 +77,11 @@ func (svc *mainfluxThings) Connect(_ context.Context, owner string, chIDs, thIDs
 
 	userID, err := svc.auth.Identify(context.Background(), &mainflux.Token{Value: owner})
 	if err != nil {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 	for _, chID := range chIDs {
 		if svc.channels[chID].Owner != userID.Email {
-			return errors.ErrUnauthorizedAccess
+			return errors.ErrAuthentication
 		}
 		for _, thID := range thIDs {
 			svc.connections[chID] = append(svc.connections[chID], thID)
@@ -97,12 +97,12 @@ func (svc *mainfluxThings) Disconnect(_ context.Context, owner string, chIDs, th
 
 	userID, err := svc.auth.Identify(context.Background(), &mainflux.Token{Value: owner})
 	if err != nil {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	for _, chID := range chIDs {
 		if svc.channels[chID].Owner != userID.Email {
-			return errors.ErrUnauthorizedAccess
+			return errors.ErrAuthentication
 		}
 
 		ids := svc.connections[chID]
@@ -132,7 +132,7 @@ func (svc *mainfluxThings) RemoveThing(_ context.Context, owner, id string) erro
 
 	userID, err := svc.auth.Identify(context.Background(), &mainflux.Token{Value: owner})
 	if err != nil {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if t, ok := svc.things[id]; !ok || t.Owner != userID.Email {
@@ -189,7 +189,7 @@ func (svc *mainfluxThings) CreateChannels(_ context.Context, owner string, chs .
 
 	userID, err := svc.auth.Identify(context.Background(), &mainflux.Token{Value: owner})
 	if err != nil {
-		return []things.Channel{}, errors.ErrUnauthorizedAccess
+		return []things.Channel{}, errors.ErrAuthentication
 	}
 	for i := range chs {
 		svc.counter++

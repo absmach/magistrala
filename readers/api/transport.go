@@ -41,10 +41,7 @@ const (
 	defFormat      = "messages"
 )
 
-var (
-	errUnauthorizedAccess = errors.New("missing or invalid credentials provided")
-	auth                  mainflux.ThingsServiceClient
-)
+var auth mainflux.ThingsServiceClient
 
 // MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler(svc readers.MessageRepository, tc mainflux.ThingsServiceClient, svcName string) http.Handler {
@@ -196,8 +193,8 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	case errors.Contains(err, nil):
 	case errors.Contains(err, errors.ErrInvalidQueryParams):
 		w.WriteHeader(http.StatusBadRequest)
-	case errors.Contains(err, errUnauthorizedAccess):
-		w.WriteHeader(http.StatusForbidden)
+	case errors.Contains(err, errors.ErrAuthentication):
+		w.WriteHeader(http.StatusUnauthorized)
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -213,7 +210,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 func authorize(r *http.Request, chanID string) error {
 	token := r.Header.Get("Authorization")
 	if token == "" {
-		return errUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -223,7 +220,7 @@ func authorize(r *http.Request, chanID string) error {
 	if err != nil {
 		e, ok := status.FromError(err)
 		if ok && e.Code() == codes.PermissionDenied {
-			return errUnauthorizedAccess
+			return errors.ErrAuthorization
 		}
 		return err
 	}

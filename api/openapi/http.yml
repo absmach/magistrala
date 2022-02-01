@@ -24,8 +24,8 @@ paths:
           description: Message is accepted for processing.
         "400":
           description: Message discarded due to its malformed content.
-        "403":
-          description: Message discarded due to missing or invalid credentials.
+        "401":
+          description: Missing or invalid access token provided.
         "404":
           description: Message discarded due to invalid channel id.
         "415":

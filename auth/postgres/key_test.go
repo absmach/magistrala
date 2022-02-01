@@ -98,13 +98,13 @@ func TestKeyRetrieve(t *testing.T) {
 			err:   nil,
 		},
 		{
-			desc:  "retrieve unauthorized",
+			desc:  "retrieve key with empty issuer id",
 			id:    key.ID,
 			owner: "",
 			err:   errors.ErrNotFound,
 		},
 		{
-			desc:  "retrieve unknown key",
+			desc:  "retrieve non-existent key",
 			id:    "",
 			owner: key.IssuerID,
 			err:   errors.ErrNotFound,

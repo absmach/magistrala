@@ -40,7 +40,7 @@ func validateUUID(extID string) (err error) {
 
 func (req createThingReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if req.ID != "" && validateUUID(req.ID) != nil {
@@ -61,7 +61,7 @@ type createThingsReq struct {
 
 func (req createThingsReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if len(req.Things) <= 0 {
@@ -90,7 +90,7 @@ type shareThingReq struct {
 
 func (req shareThingReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if req.thingID == "" || len(req.UserIDs) == 0 || len(req.Policies) == 0 {
@@ -113,7 +113,7 @@ type updateThingReq struct {
 
 func (req updateThingReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if req.id == "" {
@@ -135,7 +135,7 @@ type updateKeyReq struct {
 
 func (req updateKeyReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if req.id == "" || req.Key == "" {
@@ -154,7 +154,7 @@ type createChannelReq struct {
 
 func (req createChannelReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if req.ID != "" && validateUUID(req.ID) != nil {
@@ -175,7 +175,7 @@ type createChannelsReq struct {
 
 func (req createChannelsReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if len(req.Channels) <= 0 {
@@ -204,7 +204,7 @@ type updateChannelReq struct {
 
 func (req updateChannelReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if req.id == "" {
@@ -225,7 +225,7 @@ type viewResourceReq struct {
 
 func (req viewResourceReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if req.id == "" {
@@ -242,7 +242,7 @@ type listResourcesReq struct {
 
 func (req *listResourcesReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if req.pageMetadata.Limit == 0 {
@@ -278,7 +278,7 @@ type listByConnectionReq struct {
 
 func (req listByConnectionReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if req.id == "" {
@@ -310,7 +310,7 @@ type connectThingReq struct {
 
 func (req connectThingReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if req.chanID == "" || req.thingID == "" {
@@ -328,7 +328,7 @@ type connectReq struct {
 
 func (req connectReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if len(req.ChannelIDs) == 0 || len(req.ThingIDs) == 0 {
@@ -357,7 +357,7 @@ type listThingsGroupReq struct {
 
 func (req listThingsGroupReq) validate() error {
 	if req.token == "" {
-		return errors.ErrUnauthorizedAccess
+		return errors.ErrAuthentication
 	}
 
 	if req.groupID == "" {

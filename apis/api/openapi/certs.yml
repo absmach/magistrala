@@ -20,6 +20,8 @@ paths:
           description: Created
         '400':
           description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
         '500':
           description: Unexpected server-side error ocurred.
   /certs/{certID}:
@@ -35,6 +37,10 @@ paths:
       responses:
         '200':
           $ref: "#/components/responses/CertRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        "401":
+          description: Missing or invalid access token provided.
         '404':
           description: |
             Failed to retrieve corresponding certificate.
@@ -52,6 +58,8 @@ paths:
       responses:
         '200':
           $ref: "#/components/responses/RevokeRes"
+        "401":
+          description: Missing or invalid access token provided.
         '404':
           description: |
             Failed to revoke corresponding certificate.
@@ -70,6 +78,10 @@ paths:
       responses:
         '200':
           $ref: "#/components/responses/SerialsPageRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        "401":
+          description: Missing or invalid access token provided.
         '404':
           description: |
             Failed to retrieve corresponding certificates.

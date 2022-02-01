@@ -42,7 +42,7 @@ paths:
           $ref: "#/components/responses/Page"
         "400":
           description: Failed due to malformed query parameters.
-        "403":
+        "401":
           description: Missing or invalid access token provided.
         "500":
           $ref: "#/components/responses/ServiceError"
@@ -59,7 +59,7 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/View"
-        "403":
+        "401":
           description: Missing or invalid access token provided.
         "500":
           $ref: "#/components/responses/ServiceError"
@@ -75,7 +75,7 @@ paths:
       responses:
         "204":
           description: Subscription removed
-        "403":
+        "401":
           description: Missing or invalid access token provided.
         "500":
           $ref: "#/components/responses/ServiceError"

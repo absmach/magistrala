@@ -29,8 +29,7 @@ default values.
 | MF_EMAIL_HOST                     | Mail server host                                                        | localhost             |
 | MF_EMAIL_PORT                     | Mail server port                                                        | 25                    |
 | MF_EMAIL_USERNAME                 | Mail server username                                                    |                       |
-| MF_EMAIL_PASSWORD                 | Mail server password for Basic authentication                           |                       |
-| MF_EMAIL_SECRET                   | Mail server secret for CRAM-MD5 authentication                          |                       |
+| MF_EMAIL_PASSWORD                 | Mail server password                                                    |                       |
 | MF_EMAIL_FROM_ADDRESS             | Email "from" address                                                    |                       |
 | MF_EMAIL_FROM_NAME                | Email "from" name                                                       |                       |
 | MF_EMAIL_TEMPLATE                 | Email template for sending notification emails                          | email.tmpl            |

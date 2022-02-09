@@ -29,11 +29,12 @@ func newClient(address string, timeout time.Duration) (mqtt.Client, error) {
 	}
 
 	ok := token.WaitTimeout(timeout)
-	if ok && token.Error() != nil {
-		return nil, token.Error()
-	}
 	if !ok {
 		return nil, errConnect
+	}
+
+	if token.Error() != nil {
+		return nil, token.Error()
 	}
 
 	return client, nil

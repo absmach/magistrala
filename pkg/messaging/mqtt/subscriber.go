@@ -9,17 +9,18 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/gogo/protobuf/proto"
+
 	log "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"
 )
 
-var _ messaging.Publisher = (*publisher)(nil)
-
 var (
 	errSubscribeTimeout   = errors.New("failed to subscribe due to timeout reached")
 	errUnsubscribeTimeout = errors.New("failed to unsubscribe due to timeout reached")
 )
+
+var _ messaging.Subscriber = (*subscriber)(nil)
 
 type subscriber struct {
 	client  mqtt.Client
@@ -48,13 +49,11 @@ func (sub subscriber) Subscribe(topic string, handler messaging.MessageHandler) 
 		return token.Error()
 	}
 	ok := token.WaitTimeout(sub.timeout)
-	if ok && token.Error() != nil {
-		return token.Error()
-	}
 	if !ok {
 		return errSubscribeTimeout
 	}
-	return nil
+
+	return token.Error()
 }
 
 func (sub subscriber) Unsubscribe(topic string) error {
@@ -62,14 +61,13 @@ func (sub subscriber) Unsubscribe(topic string) error {
 	if token.Error() != nil {
 		return token.Error()
 	}
+
 	ok := token.WaitTimeout(sub.timeout)
-	if ok && token.Error() != nil {
-		return token.Error()
-	}
 	if !ok {
 		return errUnsubscribeTimeout
 	}
-	return nil
+
+	return token.Error()
 }
 
 func (sub subscriber) mqttHandler(h messaging.MessageHandler) mqtt.MessageHandler {

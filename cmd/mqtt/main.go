@@ -58,7 +58,7 @@ const (
 	envHTTPTargetPort = "MF_MQTT_ADAPTER_WS_TARGET_PORT"
 	envHTTPTargetPath = "MF_MQTT_ADAPTER_WS_TARGET_PATH"
 	// Things
-	defThingsAuthURL     = "localhost:8181"
+	defThingsAuthURL     = "localhost:8183"
 	defThingsAuthTimeout = "1s"
 	envThingsAuthURL     = "MF_THINGS_AUTH_GRPC_URL"
 	envThingsAuthTimeout = "MF_THINGS_AUTH_GRPC_TIMEOUT"

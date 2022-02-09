@@ -18,6 +18,7 @@ import (
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/jmoiron/sqlx"
 	"github.com/mainflux/mainflux"
+	authapi "github.com/mainflux/mainflux/auth/api/grpc"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/readers"
 	"github.com/mainflux/mainflux/readers/api"
@@ -48,8 +49,10 @@ const (
 	defDBSSLKey          = ""
 	defDBSSLRootCert     = ""
 	defJaegerURL         = ""
-	defThingsAuthURL     = "localhost:8181"
+	defThingsAuthURL     = "localhost:8183"
 	defThingsAuthTimeout = "1s"
+	defUsersAuthURL      = "localhost:8181"
+	defUsersAuthTimeout  = "1s"
 
 	envLogLevel          = "MF_POSTGRES_READER_LOG_LEVEL"
 	envPort              = "MF_POSTGRES_READER_PORT"
@@ -67,6 +70,8 @@ const (
 	envJaegerURL         = "MF_JAEGER_URL"
 	envThingsAuthURL     = "MF_THINGS_AUTH_GRPC_URL"
 	envThingsAuthTimeout = "MF_THINGS_AUTH_GRPC_TIMEOUT"
+	envUsersAuthURL      = "MF_AUTH_GRPC_URL"
+	envUsersAuthTimeout  = "MF_AUTH_GRPC_TIMEOUT"
 )
 
 type config struct {
@@ -77,7 +82,9 @@ type config struct {
 	dbConfig          postgres.Config
 	jaegerURL         string
 	thingsAuthURL     string
+	usersAuthURL      string
 	thingsAuthTimeout time.Duration
+	usersAuthTimeout  time.Duration
 }
 
 func main() {
@@ -96,6 +103,14 @@ func main() {
 
 	tc := thingsapi.NewClient(conn, thingsTracer, cfg.thingsAuthTimeout)
 
+	authTracer, authCloser := initJaeger("auth", cfg.jaegerURL, logger)
+	defer authCloser.Close()
+
+	authConn := connectToAuth(cfg, logger)
+	defer authConn.Close()
+
+	auth := authapi.NewClient(authTracer, authConn, cfg.usersAuthTimeout)
+
 	db := connectToDB(cfg.dbConfig, logger)
 	defer db.Close()
 
@@ -103,7 +118,7 @@ func main() {
 
 	errs := make(chan error, 2)
 
-	go startHTTPServer(repo, tc, cfg.port, logger, errs)
+	go startHTTPServer(repo, tc, auth, cfg.port, logger, errs)
 
 	go func() {
 		c := make(chan os.Signal)
@@ -113,6 +128,32 @@ func main() {
 
 	err = <-errs
 	logger.Error(fmt.Sprintf("Postgres reader service terminated: %s", err))
+}
+
+func connectToAuth(cfg config, logger logger.Logger) *grpc.ClientConn {
+	var opts []grpc.DialOption
+	logger.Info("Connecting to auth via gRPC")
+	if cfg.clientTLS {
+		if cfg.caCerts != "" {
+			tpc, err := credentials.NewClientTLSFromFile(cfg.caCerts, "")
+			if err != nil {
+				logger.Error(fmt.Sprintf("Failed to create tls credentials: %s", err))
+				os.Exit(1)
+			}
+			opts = append(opts, grpc.WithTransportCredentials(tpc))
+		}
+	} else {
+		opts = append(opts, grpc.WithInsecure())
+		logger.Info("gRPC communication is not encrypted")
+	}
+
+	conn, err := grpc.Dial(cfg.usersAuthURL, opts...)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to connect to auth service: %s", err))
+		os.Exit(1)
+	}
+	logger.Info(fmt.Sprintf("Established gRPC connection to auth via gRPC: %s", cfg.usersAuthURL))
+	return conn
 }
 
 func loadConfig() config {
@@ -138,6 +179,11 @@ func loadConfig() config {
 		log.Fatalf("Invalid %s value: %s", envThingsAuthTimeout, err.Error())
 	}
 
+	usersAuthTimeout, err := time.ParseDuration(mainflux.Env(envUsersAuthTimeout, defUsersAuthTimeout))
+	if err != nil {
+		log.Fatalf("Invalid %s value: %s", envThingsAuthTimeout, err.Error())
+	}
+
 	return config{
 		logLevel:          mainflux.Env(envLogLevel, defLogLevel),
 		port:              mainflux.Env(envPort, defPort),
@@ -146,7 +192,9 @@ func loadConfig() config {
 		dbConfig:          dbConfig,
 		jaegerURL:         mainflux.Env(envJaegerURL, defJaegerURL),
 		thingsAuthURL:     mainflux.Env(envThingsAuthURL, defThingsAuthURL),
+		usersAuthURL:      mainflux.Env(envUsersAuthURL, defUsersAuthURL),
 		thingsAuthTimeout: authTimeout,
+		usersAuthTimeout:  usersAuthTimeout,
 	}
 }
 
@@ -204,6 +252,7 @@ func connectToThings(cfg config, logger logger.Logger) *grpc.ClientConn {
 		logger.Error(fmt.Sprintf("Failed to connect to things service: %s", err))
 		os.Exit(1)
 	}
+	logger.Info(fmt.Sprintf("Established gRPC connection to things via gRPC: %s", cfg.thingsAuthURL))
 	return conn
 }
 
@@ -229,8 +278,8 @@ func newService(db *sqlx.DB, logger logger.Logger) readers.MessageRepository {
 	return svc
 }
 
-func startHTTPServer(repo readers.MessageRepository, tc mainflux.ThingsServiceClient, port string, logger logger.Logger, errs chan error) {
+func startHTTPServer(repo readers.MessageRepository, tc mainflux.ThingsServiceClient, ac mainflux.AuthServiceClient, port string, logger logger.Logger, errs chan error) {
 	p := fmt.Sprintf(":%s", port)
 	logger.Info(fmt.Sprintf("Postgres reader service started, exposed port %s", port))
-	errs <- http.ListenAndServe(p, api.MakeHandler(repo, tc, svcName))
+	errs <- http.ListenAndServe(p, api.MakeHandler(repo, tc, ac, svcName))
 }

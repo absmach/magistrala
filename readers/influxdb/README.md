@@ -21,8 +21,11 @@ default values.
 | MF_INFLUX_READER_SERVER_CERT | Path to server certificate in pem format            |                |
 | MF_INFLUX_READER_SERVER_KEY  | Path to server key in pem format                    |                |
 | MF_JAEGER_URL                | Jaeger server URL                                   | localhost:6831 |
-| MF_THINGS_AUTH_GRPC_URL      | Things service Auth gRPC URL                        | localhost:8181 |
+| MF_THINGS_AUTH_GRPC_URL      | Things service Auth gRPC URL                        | localhost:8183 |
 | MF_THINGS_AUTH_GRPC_TIMEOUT  | Things service Auth gRPC request timeout in seconds | 1s             |
+| MF_AUTH_GRPC_URL             | Auth service gRPC URL                               | localhost:8181 |
+| MF_AUTH_GRPC_TIMEOUT         | Auth service gRPC request timeout in seconds        | 1s             |
+
 
 ## Deployment
 

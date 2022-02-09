@@ -37,7 +37,7 @@ const (
 	defPort              = "8180"
 	defNatsURL           = "nats://localhost:4222"
 	defJaegerURL         = ""
-	defThingsAuthURL     = "localhost:8181"
+	defThingsAuthURL     = "localhost:8183"
 	defThingsAuthTimeout = "1s"
 
 	envLogLevel          = "MF_HTTP_ADAPTER_LOG_LEVEL"

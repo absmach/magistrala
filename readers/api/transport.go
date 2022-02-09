@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"time"
+	"strings"
 
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
@@ -22,30 +22,38 @@ import (
 )
 
 const (
-	contentType    = "application/json"
-	offsetKey      = "offset"
-	limitKey       = "limit"
-	formatKey      = "format"
-	subtopicKey    = "subtopic"
-	publisherKey   = "publisher"
-	protocolKey    = "protocol"
-	nameKey        = "name"
-	valueKey       = "v"
-	stringValueKey = "vs"
-	dataValueKey   = "vd"
-	comparatorKey  = "comparator"
-	fromKey        = "from"
-	toKey          = "to"
-	defLimit       = 10
-	defOffset      = 0
-	defFormat      = "messages"
+	contentType      = "application/json"
+	offsetKey        = "offset"
+	limitKey         = "limit"
+	formatKey        = "format"
+	subtopicKey      = "subtopic"
+	publisherKey     = "publisher"
+	protocolKey      = "protocol"
+	nameKey          = "name"
+	valueKey         = "v"
+	stringValueKey   = "vs"
+	dataValueKey     = "vd"
+	comparatorKey    = "comparator"
+	fromKey          = "from"
+	toKey            = "to"
+	defLimit         = 10
+	defOffset        = 0
+	defFormat        = "messages"
+	thingTokenPrefix = "Thing "
+	userTokenPrefix  = "Bearer "
 )
 
-var auth mainflux.ThingsServiceClient
+var (
+	errThingAccess = errors.New("thing has no permission")
+	errUserAccess  = errors.New("user has no permission")
+	thingsAuth     mainflux.ThingsServiceClient
+	usersAuth      mainflux.AuthServiceClient
+)
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc readers.MessageRepository, tc mainflux.ThingsServiceClient, svcName string) http.Handler {
-	auth = tc
+func MakeHandler(svc readers.MessageRepository, tc mainflux.ThingsServiceClient, ac mainflux.AuthServiceClient, svcName string) http.Handler {
+	thingsAuth = tc
+	usersAuth = ac
 
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
@@ -53,7 +61,7 @@ func MakeHandler(svc readers.MessageRepository, tc mainflux.ThingsServiceClient,
 
 	mux := bone.New()
 	mux.Get("/channels/:chanID/messages", kithttp.NewServer(
-		listMessagesEndpoint(svc),
+		listMessagesEndpoint(svc, tc, ac),
 		decodeList,
 		encodeResponse,
 		opts...,
@@ -65,16 +73,7 @@ func MakeHandler(svc readers.MessageRepository, tc mainflux.ThingsServiceClient,
 	return mux
 }
 
-func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
-	chanID := bone.GetValue(r, "chanID")
-	if chanID == "" {
-		return nil, errors.ErrInvalidQueryParams
-	}
-
-	if err := authorize(r, chanID); err != nil {
-		return nil, err
-	}
-
+func decodeList(ctx context.Context, r *http.Request) (interface{}, error) {
 	offset, err := httputil.ReadUintQuery(r, offsetKey, defOffset)
 	if err != nil {
 		return nil, err
@@ -141,7 +140,8 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 	}
 
 	req := listMessagesReq{
-		chanID: chanID,
+		chanID: bone.GetValue(r, "chanID"),
+		token:  r.Header.Get("Authorization"),
 		pageMeta: readers.PageMetadata{
 			Offset:      offset,
 			Limit:       limit,
@@ -191,7 +191,8 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch {
 	case errors.Contains(err, nil):
-	case errors.Contains(err, errors.ErrInvalidQueryParams):
+	case errors.Contains(err, errors.ErrInvalidQueryParams),
+		errors.Contains(err, errors.ErrMalformedEntity):
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, errors.ErrAuthentication):
 		w.WriteHeader(http.StatusUnauthorized)
@@ -207,25 +208,33 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	}
 }
 
-func authorize(r *http.Request, chanID string) error {
-	token := r.Header.Get("Authorization")
-	if token == "" {
-		return errors.ErrAuthentication
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	_, err := auth.CanAccessByKey(ctx, &mainflux.AccessByKeyReq{Token: token, ChanID: chanID})
-	if err != nil {
-		e, ok := status.FromError(err)
-		if ok && e.Code() == codes.PermissionDenied {
-			return errors.ErrAuthorization
+func authorize(ctx context.Context, req listMessagesReq, tc mainflux.ThingsServiceClient, ac mainflux.AuthServiceClient) (err error) {
+	switch {
+	case strings.HasPrefix(req.token, userTokenPrefix):
+		token := strings.TrimPrefix(req.token, userTokenPrefix)
+		user, err := usersAuth.Identify(ctx, &mainflux.Token{Value: token})
+		if err != nil {
+			e, ok := status.FromError(err)
+			if ok && e.Code() == codes.PermissionDenied {
+				return errors.Wrap(errUserAccess, err)
+			}
+			return err
 		}
-		return err
+		if _, err = thingsAuth.IsChannelOwner(ctx, &mainflux.ChannelOwnerReq{Owner: user.Email, ChanID: req.chanID}); err != nil {
+			e, ok := status.FromError(err)
+			if ok && e.Code() == codes.PermissionDenied {
+				return errors.Wrap(errUserAccess, err)
+			}
+			return err
+		}
+		return nil
+	default:
+		token := strings.TrimPrefix(req.token, thingTokenPrefix)
+		if _, err := thingsAuth.CanAccessByKey(ctx, &mainflux.AccessByKeyReq{Token: token, ChanID: req.chanID}); err != nil {
+			return errors.Wrap(errThingAccess, err)
+		}
+		return nil
 	}
-
-	return nil
 }
 
 func readBoolValueQuery(r *http.Request, key string) (bool, error) {

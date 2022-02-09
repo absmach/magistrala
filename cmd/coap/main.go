@@ -37,7 +37,7 @@ const (
 	defClientTLS         = "false"
 	defCACerts           = ""
 	defJaegerURL         = ""
-	defThingsAuthURL     = "localhost:8181"
+	defThingsAuthURL     = "localhost:8183"
 	defThingsAuthTimeout = "1s"
 
 	envPort              = "MF_COAP_ADAPTER_PORT"

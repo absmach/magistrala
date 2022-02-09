@@ -18,13 +18,16 @@ import (
 	"github.com/mainflux/mainflux/readers"
 	"github.com/mainflux/mainflux/readers/api"
 	"github.com/mainflux/mainflux/readers/mocks"
+	authmocks "github.com/mainflux/mainflux/users/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 const (
 	svcName       = "test-service"
-	token         = "1"
+	thingToken    = "1"
+	userToken     = "token"
+	email         = "user@example.com"
 	invalid       = "invalid"
 	numOfMessages = 100
 	valueFields   = 5
@@ -44,8 +47,8 @@ var (
 	idProvider = uuid.New()
 )
 
-func newServer(repo readers.MessageRepository, tc mainflux.ThingsServiceClient) *httptest.Server {
-	mux := api.MakeHandler(repo, tc, svcName)
+func newServer(repo readers.MessageRepository, tc mainflux.ThingsServiceClient, ac mainflux.AuthServiceClient) *httptest.Server {
+	mux := api.MakeHandler(repo, tc, ac, svcName)
 	return httptest.NewServer(mux)
 }
 
@@ -122,9 +125,13 @@ func TestReadAll(t *testing.T) {
 		messages = append(messages, msg)
 	}
 
-	svc := mocks.NewThingsService()
+	thSvc := mocks.NewThingsService(map[string]string{email: chanID})
+	mockAuthzDB := map[string][]authmocks.SubjectSet{}
+	mockAuthzDB[email] = append(mockAuthzDB[email], authmocks.SubjectSet{Object: "authorities", Relation: "member"})
+	usrSvc := authmocks.NewAuthService(map[string]string{userToken: email}, mockAuthzDB)
+
 	repo := mocks.NewMessageRepository(chanID, fromSenml(messages))
-	ts := newServer(repo, svc)
+	ts := newServer(repo, thSvc, usrSvc)
 	defer ts.Close()
 
 	cases := []struct {
@@ -138,7 +145,7 @@ func TestReadAll(t *testing.T) {
 		{
 			desc:   "read page with valid offset and limit",
 			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=10", ts.URL, chanID),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusOK,
 			res: pageRes{
 				Total:    uint64(len(messages)),
@@ -146,69 +153,79 @@ func TestReadAll(t *testing.T) {
 			},
 		},
 		{
-			desc:   "read page with negative offset",
-			url:    fmt.Sprintf("%s/channels/%s/messages?offset=-1&limit=10", ts.URL, chanID),
-			token:  token,
-			status: http.StatusBadRequest,
-		},
-		{
-			desc:   "read page with negative limit",
-			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=-10", ts.URL, chanID),
-			token:  token,
-			status: http.StatusBadRequest,
-		},
-		{
-			desc:   "read page with zero limit",
-			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=0", ts.URL, chanID),
-			token:  token,
-			status: http.StatusBadRequest,
-		},
-		{
-			desc:   "read page with non-integer offset",
-			url:    fmt.Sprintf("%s/channels/%s/messages?offset=abc&limit=10", ts.URL, chanID),
-			token:  token,
-			status: http.StatusBadRequest,
-		},
-		{
-			desc:   "read page with non-integer limit",
-			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=abc", ts.URL, chanID),
-			token:  token,
-			status: http.StatusBadRequest,
-		},
-		{
-			desc:   "read page with invalid channel id",
-			url:    fmt.Sprintf("%s/channels//messages?offset=0&limit=10", ts.URL),
-			token:  token,
-			status: http.StatusBadRequest,
-		},
-		{
-			desc:   "read page with invalid token",
+			desc:   "read page with valid offset and limit as user",
 			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=10", ts.URL, chanID),
-			token:  invalid,
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(messages)),
+				Messages: messages[0:10],
+			},
+		},
+		{
+			desc:   "read page with negative offset as thing",
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=-1&limit=10", ts.URL, chanID),
+			token:  fmt.Sprintf("Thing %s", thingToken),
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with negative limit as thing",
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=-10", ts.URL, chanID),
+			token:  fmt.Sprintf("Thing %s", thingToken),
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with zero limit as thing",
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=0", ts.URL, chanID),
+			token:  fmt.Sprintf("Thing %s", thingToken),
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with non-integer offset as thing",
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=abc&limit=10", ts.URL, chanID),
+			token:  fmt.Sprintf("Thing %s", thingToken),
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with non-integer limit as thing",
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=abc", ts.URL, chanID),
+			token:  fmt.Sprintf("Thing %s", thingToken),
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with invalid channel id as thing",
+			url:    fmt.Sprintf("%s/channels//messages?offset=0&limit=10", ts.URL),
+			token:  fmt.Sprintf("Thing %s", thingToken),
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with invalid token as thing",
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=10", ts.URL, chanID),
+			token:  fmt.Sprintf("Thing %s", invalid),
 			status: http.StatusUnauthorized,
 		},
 		{
-			desc:   "read page with multiple offset",
+			desc:   "read page with multiple offset as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&offset=1&limit=10", ts.URL, chanID),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusBadRequest,
 		},
 		{
-			desc:   "read page with multiple limit",
+			desc:   "read page with multiple limit as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=20&limit=10", ts.URL, chanID),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusBadRequest,
 		},
 		{
-			desc:   "read page with empty token",
+			desc:   "read page with empty token as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=10", ts.URL, chanID),
 			token:  "",
 			status: http.StatusUnauthorized,
 		},
 		{
-			desc:   "read page with default offset",
+			desc:   "read page with default offset as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?limit=10", ts.URL, chanID),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusOK,
 			res: pageRes{
 				Total:    uint64(len(messages)),
@@ -216,9 +233,9 @@ func TestReadAll(t *testing.T) {
 			},
 		},
 		{
-			desc:   "read page with default limit",
+			desc:   "read page with default limit as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0", ts.URL, chanID),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusOK,
 			res: pageRes{
 				Total:    uint64(len(messages)),
@@ -226,9 +243,9 @@ func TestReadAll(t *testing.T) {
 			},
 		},
 		{
-			desc:   "read page with senml fornat",
+			desc:   "read page with senml format as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?format=messages", ts.URL, chanID),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusOK,
 			res: pageRes{
 				Total:    uint64(len(messages)),
@@ -236,9 +253,9 @@ func TestReadAll(t *testing.T) {
 			},
 		},
 		{
-			desc:   "read page with subtopic",
+			desc:   "read page with subtopic as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?subtopic=%s&protocol=%s", ts.URL, chanID, subtopic, httpProt),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusOK,
 			res: pageRes{
 				Total:    uint64(len(queryMsgs)),
@@ -246,9 +263,9 @@ func TestReadAll(t *testing.T) {
 			},
 		},
 		{
-			desc:   "read page with subtopic and protocol",
+			desc:   "read page with subtopic and protocol as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?subtopic=%s&protocol=%s", ts.URL, chanID, subtopic, httpProt),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusOK,
 			res: pageRes{
 				Total:    uint64(len(queryMsgs)),
@@ -256,9 +273,9 @@ func TestReadAll(t *testing.T) {
 			},
 		},
 		{
-			desc:   "read page with publisher",
+			desc:   "read page with publisher as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?publisher=%s", ts.URL, chanID, pubID2),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusOK,
 			res: pageRes{
 				Total:    uint64(len(queryMsgs)),
@@ -266,9 +283,9 @@ func TestReadAll(t *testing.T) {
 			},
 		},
 		{
-			desc:   "read page with protocol",
+			desc:   "read page with protocol as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?protocol=http", ts.URL, chanID),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusOK,
 			res: pageRes{
 				Total:    uint64(len(queryMsgs)),
@@ -276,9 +293,9 @@ func TestReadAll(t *testing.T) {
 			},
 		},
 		{
-			desc:   "read page with name",
+			desc:   "read page with name as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?name=%s", ts.URL, chanID, msgName),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusOK,
 			res: pageRes{
 				Total:    uint64(len(queryMsgs)),
@@ -286,9 +303,9 @@ func TestReadAll(t *testing.T) {
 			},
 		},
 		{
-			desc:   "read page with value",
+			desc:   "read page with value as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?v=%f", ts.URL, chanID, v),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusOK,
 			res: pageRes{
 				Total:    uint64(len(valueMsgs)),
@@ -296,9 +313,9 @@ func TestReadAll(t *testing.T) {
 			},
 		},
 		{
-			desc:   "read page with value and equal comparator",
+			desc:   "read page with value and equal comparator as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?v=%f&comparator=%s", ts.URL, chanID, v, readers.EqualKey),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusOK,
 			res: pageRes{
 				Total:    uint64(len(valueMsgs)),
@@ -306,9 +323,9 @@ func TestReadAll(t *testing.T) {
 			},
 		},
 		{
-			desc:   "read page with value and lower-than comparator",
+			desc:   "read page with value and lower-than comparator as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?v=%f&comparator=%s", ts.URL, chanID, v+1, readers.LowerThanKey),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusOK,
 			res: pageRes{
 				Total:    uint64(len(valueMsgs)),
@@ -316,9 +333,9 @@ func TestReadAll(t *testing.T) {
 			},
 		},
 		{
-			desc:   "read page with value and lower-than-or-equal comparator",
+			desc:   "read page with value and lower-than-or-equal comparator as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?v=%f&comparator=%s", ts.URL, chanID, v+1, readers.LowerThanEqualKey),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusOK,
 			res: pageRes{
 				Total:    uint64(len(valueMsgs)),
@@ -326,9 +343,9 @@ func TestReadAll(t *testing.T) {
 			},
 		},
 		{
-			desc:   "read page with value and greater-than comparator",
+			desc:   "read page with value and greater-than comparator as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?v=%f&comparator=%s", ts.URL, chanID, v-1, readers.GreaterThanKey),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusOK,
 			res: pageRes{
 				Total:    uint64(len(valueMsgs)),
@@ -336,9 +353,9 @@ func TestReadAll(t *testing.T) {
 			},
 		},
 		{
-			desc:   "read page with value and greater-than-or-equal comparator",
+			desc:   "read page with value and greater-than-or-equal comparator as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?v=%f&comparator=%s", ts.URL, chanID, v-1, readers.GreaterThanEqualKey),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusOK,
 			res: pageRes{
 				Total:    uint64(len(valueMsgs)),
@@ -346,21 +363,21 @@ func TestReadAll(t *testing.T) {
 			},
 		},
 		{
-			desc:   "read page with non-float value",
+			desc:   "read page with non-float value as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?v=ab01", ts.URL, chanID),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusBadRequest,
 		},
 		{
-			desc:   "read page with value and wrong comparator",
+			desc:   "read page with value and wrong comparator as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?v=%f&comparator=wrong", ts.URL, chanID, v-1),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusBadRequest,
 		},
 		{
-			desc:   "read page with boolean value",
+			desc:   "read page with boolean value as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?vb=true", ts.URL, chanID),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusOK,
 			res: pageRes{
 				Total:    uint64(len(boolMsgs)),
@@ -368,15 +385,15 @@ func TestReadAll(t *testing.T) {
 			},
 		},
 		{
-			desc:   "read page with non-boolean value",
+			desc:   "read page with non-boolean value as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?vb=yes", ts.URL, chanID),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusBadRequest,
 		},
 		{
-			desc:   "read page with string value",
+			desc:   "read page with string value as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?vs=%s", ts.URL, chanID, vs),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusOK,
 			res: pageRes{
 				Total:    uint64(len(stringMsgs)),
@@ -384,9 +401,9 @@ func TestReadAll(t *testing.T) {
 			},
 		},
 		{
-			desc:   "read page with data value",
+			desc:   "read page with data value as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?vd=%s", ts.URL, chanID, vd),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusOK,
 			res: pageRes{
 				Total:    uint64(len(dataMsgs)),
@@ -394,22 +411,303 @@ func TestReadAll(t *testing.T) {
 			},
 		},
 		{
-			desc:   "read page with non-float from",
+			desc:   "read page with non-float from as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?from=ABCD", ts.URL, chanID),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusBadRequest,
 		},
 
 		{
-			desc:   "read page with non-float to",
+			desc:   "read page with non-float to as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?to=ABCD", ts.URL, chanID),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
 			status: http.StatusBadRequest,
 		},
 		{
-			desc:   "read page with from/to",
+			desc:   "read page with from/to as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?from=%f&to=%f", ts.URL, chanID, messages[19].Time, messages[4].Time),
-			token:  token,
+			token:  fmt.Sprintf("Thing %s", thingToken),
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(messages[5:20])),
+				Messages: messages[5:15],
+			},
+		},
+		{
+			desc:   "read page with valid offset and limit as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=10", ts.URL, chanID),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(messages)),
+				Messages: messages[0:10],
+			},
+		},
+		{
+			desc:   "read page with negative offset as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=-1&limit=10", ts.URL, chanID),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with negative limit as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=-10", ts.URL, chanID),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with zero limit as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=0", ts.URL, chanID),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with non-integer offset as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=abc&limit=10", ts.URL, chanID),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with non-integer limit as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=abc", ts.URL, chanID),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with invalid channel id as user",
+			url:    fmt.Sprintf("%s/channels//messages?offset=0&limit=10", ts.URL),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with invalid token as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=10", ts.URL, chanID),
+			token:  fmt.Sprintf("Bearer %s", invalid),
+			status: http.StatusUnauthorized,
+		},
+		{
+			desc:   "read page with multiple offset as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&offset=1&limit=10", ts.URL, chanID),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with multiple limit as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=20&limit=10", ts.URL, chanID),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with empty token as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=10", ts.URL, chanID),
+			token:  "",
+			status: http.StatusUnauthorized,
+		},
+		{
+			desc:   "read page with default offset as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?limit=10", ts.URL, chanID),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(messages)),
+				Messages: messages[0:10],
+			},
+		},
+		{
+			desc:   "read page with default limit as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0", ts.URL, chanID),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(messages)),
+				Messages: messages[0:10],
+			},
+		},
+		{
+			desc:   "read page with senml format as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?format=messages", ts.URL, chanID),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(messages)),
+				Messages: messages[0:10],
+			},
+		},
+		{
+			desc:   "read page with subtopic as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?subtopic=%s&protocol=%s", ts.URL, chanID, subtopic, httpProt),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(queryMsgs)),
+				Messages: queryMsgs[0:10],
+			},
+		},
+		{
+			desc:   "read page with subtopic and protocol as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?subtopic=%s&protocol=%s", ts.URL, chanID, subtopic, httpProt),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(queryMsgs)),
+				Messages: queryMsgs[0:10],
+			},
+		},
+		{
+			desc:   "read page with publisher as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?publisher=%s", ts.URL, chanID, pubID2),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(queryMsgs)),
+				Messages: queryMsgs[0:10],
+			},
+		},
+		{
+			desc:   "read page with protocol as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?protocol=http", ts.URL, chanID),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(queryMsgs)),
+				Messages: queryMsgs[0:10],
+			},
+		},
+		{
+			desc:   "read page with name as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?name=%s", ts.URL, chanID, msgName),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(queryMsgs)),
+				Messages: queryMsgs[0:10],
+			},
+		},
+		{
+			desc:   "read page with value as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?v=%f", ts.URL, chanID, v),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(valueMsgs)),
+				Messages: valueMsgs[0:10],
+			},
+		},
+		{
+			desc:   "read page with value and equal comparator as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?v=%f&comparator=%s", ts.URL, chanID, v, readers.EqualKey),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(valueMsgs)),
+				Messages: valueMsgs[0:10],
+			},
+		},
+		{
+			desc:   "read page with value and lower-than comparator as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?v=%f&comparator=%s", ts.URL, chanID, v+1, readers.LowerThanKey),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(valueMsgs)),
+				Messages: valueMsgs[0:10],
+			},
+		},
+		{
+			desc:   "read page with value and lower-than-or-equal comparator as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?v=%f&comparator=%s", ts.URL, chanID, v+1, readers.LowerThanEqualKey),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(valueMsgs)),
+				Messages: valueMsgs[0:10],
+			},
+		},
+		{
+			desc:   "read page with value and greater-than comparator as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?v=%f&comparator=%s", ts.URL, chanID, v-1, readers.GreaterThanKey),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(valueMsgs)),
+				Messages: valueMsgs[0:10],
+			},
+		},
+		{
+			desc:   "read page with value and greater-than-or-equal comparator as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?v=%f&comparator=%s", ts.URL, chanID, v-1, readers.GreaterThanEqualKey),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(valueMsgs)),
+				Messages: valueMsgs[0:10],
+			},
+		},
+		{
+			desc:   "read page with non-float value as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?v=ab01", ts.URL, chanID),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with value and wrong comparator as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?v=%f&comparator=wrong", ts.URL, chanID, v-1),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with boolean value as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?vb=true", ts.URL, chanID),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(boolMsgs)),
+				Messages: boolMsgs[0:10],
+			},
+		},
+		{
+			desc:   "read page with non-boolean value as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?vb=yes", ts.URL, chanID),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with string value as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?vs=%s", ts.URL, chanID, vs),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(stringMsgs)),
+				Messages: stringMsgs[0:10],
+			},
+		},
+		{
+			desc:   "read page with data value as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?vd=%s", ts.URL, chanID, vd),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusOK,
+			res: pageRes{
+				Total:    uint64(len(dataMsgs)),
+				Messages: dataMsgs[0:10],
+			},
+		},
+		{
+			desc:   "read page with non-float from as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?from=ABCD", ts.URL, chanID),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusBadRequest,
+		},
+
+		{
+			desc:   "read page with non-float to as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?to=ABCD", ts.URL, chanID),
+			token:  fmt.Sprintf("Bearer %s", userToken),
+			status: http.StatusBadRequest,
+		},
+		{
+			desc:   "read page with from/to as user",
+			url:    fmt.Sprintf("%s/channels/%s/messages?from=%f&to=%f", ts.URL, chanID, messages[19].Time, messages[4].Time),
+			token:  fmt.Sprintf("Bearer %s", userToken),
 			status: http.StatusOK,
 			res: pageRes{
 				Total:    uint64(len(messages[5:20])),

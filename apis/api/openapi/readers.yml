@@ -109,7 +109,10 @@ components:
   parameters:
     Authorization:
       name: Authorization
-      description: Thing access token.
+      description: | 
+        Thing or User access token: 
+        * For thing access use "Authorization: Thing <thing_key>"
+        * For user access use "Authorization: Bearer <user_token>"
       in: header
       schema:
         type: string

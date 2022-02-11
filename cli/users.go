@@ -10,15 +10,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewUsersCmd returns users command.
-func NewUsersCmd() *cobra.Command {
-	createCmd := cobra.Command{
-		Use:   "create",
-		Short: "create <username> <password> <user_auth_token>",
+var cmdUsers = []cobra.Command{
+	{
+		Use:   "create <username> <password> <user_auth_token>",
+		Short: "Create user",
 		Long:  `Creates new user`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) < 2 || len(args) > 3 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 			if len(args) == 2 {
@@ -37,15 +36,14 @@ func NewUsersCmd() *cobra.Command {
 
 			logCreated(id)
 		},
-	}
-
-	getCmd := cobra.Command{
-		Use:   "get",
-		Short: "get <user_auth_token>",
+	},
+	{
+		Use:   "get <user_auth_token>",
+		Short: "Get user",
 		Long:  `Returns user object`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 1 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -57,15 +55,14 @@ func NewUsersCmd() *cobra.Command {
 
 			logJSON(u)
 		},
-	}
-
-	tokenCmd := cobra.Command{
-		Use:   "token",
-		Short: "token <username> <password>",
-		Long:  `Creates new token`,
+	},
+	{
+		Use:   "token <username> <password>",
+		Short: "Get token",
+		Long:  `Generate new token`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -82,15 +79,14 @@ func NewUsersCmd() *cobra.Command {
 			logCreated(token)
 
 		},
-	}
-
-	updateCmd := cobra.Command{
-		Use:   "update",
-		Short: "update <JSON_string> <user_auth_token>",
+	},
+	{
+		Use:   "update <JSON_string> <user_auth_token>",
+		Short: "Update user",
 		Long:  `Update user metadata`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -107,15 +103,14 @@ func NewUsersCmd() *cobra.Command {
 
 			logOK()
 		},
-	}
-
-	passwordCmd := cobra.Command{
-		Use:   "password",
-		Short: "password <old_password> <password> <user_auth_token>",
+	},
+	{
+		Use:   "password <old_password> <password> <user_auth_token>",
+		Short: "Update password",
 		Long:  `Update user password`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -126,19 +121,15 @@ func NewUsersCmd() *cobra.Command {
 
 			logOK()
 		},
-	}
+	},
+}
 
+// NewUsersCmd returns users command.
+func NewUsersCmd() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "users",
+		Use:   "users [create | get | update | token | password]",
 		Short: "Users management",
 		Long:  `Users management: create accounts and tokens"`,
-		Run: func(cmd *cobra.Command, args []string) {
-			logUsage("users [create | get | update | token | password]")
-		},
-	}
-
-	cmdUsers := []cobra.Command{
-		createCmd, getCmd, tokenCmd, updateCmd, passwordCmd,
 	}
 
 	for i := range cmdUsers {

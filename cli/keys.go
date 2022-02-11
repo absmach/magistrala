@@ -11,12 +11,12 @@ import (
 
 var cmdAPIKeys = []cobra.Command{
 	{
-		Use:   "issue",
-		Short: "issue <duration> <user_auth_token>",
+		Use:   "issue <duration> <user_auth_token>",
+		Short: "Issue key",
 		Long:  `Issues a new Key`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -36,12 +36,12 @@ var cmdAPIKeys = []cobra.Command{
 		},
 	},
 	{
-		Use:   "revoke",
-		Short: "revoke <key_id> <user_auth_token>",
+		Use:   "revoke <key_id> <user_auth_token>",
+		Short: "Revoke key",
 		Long:  `Removes API key from database`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -54,12 +54,12 @@ var cmdAPIKeys = []cobra.Command{
 		},
 	},
 	{
-		Use:   "retrieve",
-		Short: "retrieve <key_id> <user_auth_token>",
+		Use:   "retrieve <key_id> <user_auth_token>",
+		Short: "Retrieve key",
 		Long:  `Retrieves API key with given id`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -77,12 +77,9 @@ var cmdAPIKeys = []cobra.Command{
 // NewKeysCmd returns keys command.
 func NewKeysCmd() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "keys",
+		Use:   "keys [issue | revoke | retrieve]",
 		Short: "Keys management",
 		Long:  `Keys management: issue, revoke, or retrieve API key.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			logUsage("keys [issue | revoke | retrieve]")
-		},
 	}
 
 	for i := range cmdAPIKeys {

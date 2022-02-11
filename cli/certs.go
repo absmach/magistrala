@@ -13,12 +13,12 @@ func NewCertsCmd() *cobra.Command {
 	var ttl uint32
 
 	issueCmd := cobra.Command{
-		Use:   "issue",
-		Short: "issue <thing_id> <user_auth_token> [--keysize=2048] [--keytype=rsa] [--ttl=8760]",
+		Use:   "issue <thing_id> <user_auth_token> [--keysize=2048] [--keytype=rsa] [--ttl=8760]",
+		Short: "Issue certificate",
 		Long:  `Issues new certificate for a thing`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -39,12 +39,9 @@ func NewCertsCmd() *cobra.Command {
 	issueCmd.Flags().Uint32Var(&ttl, "ttl", 8760, "certificate time to live in hours")
 
 	cmd := cobra.Command{
-		Use:   "certs",
+		Use:   "certs [issue | get]",
 		Short: "Certificates management",
 		Long:  `Certificates management: create certificates for things"`,
-		Run: func(cmd *cobra.Command, args []string) {
-			logUsage("certs [issue]")
-		},
 	}
 
 	cmdCerts := []cobra.Command{

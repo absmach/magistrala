@@ -11,13 +11,13 @@ import (
 )
 
 var cmdThings = []cobra.Command{
-	cobra.Command{
-		Use:   "create",
-		Short: "create <JSON_thing> <user_auth_token>",
+	{
+		Use:   "create <JSON_thing> <user_auth_token>",
+		Short: "Create thing",
 		Long:  `Create new thing, generate his UUID and store it`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -36,13 +36,13 @@ var cmdThings = []cobra.Command{
 			logCreated(id)
 		},
 	},
-	cobra.Command{
-		Use:   "get",
-		Short: "get [all | <thing_id>] <user_auth_token>",
-		Long:  `Get all things or thing by id`,
+	{
+		Use:   "get [all | <thing_id>] <user_auth_token>",
+		Short: "Get things",
+		Long:  `Get a list of things or thing by id`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -65,13 +65,13 @@ var cmdThings = []cobra.Command{
 			logJSON(t)
 		},
 	},
-	cobra.Command{
-		Use:   "delete",
-		Short: "delete <thing_id> <user_auth_token>",
+	{
+		Use:   "delete <thing_id> <user_auth_token>",
+		Short: "Delete thing",
 		Long:  `Removes thing from database`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -83,13 +83,13 @@ var cmdThings = []cobra.Command{
 			logOK()
 		},
 	},
-	cobra.Command{
-		Use:   "update",
-		Short: "update <JSON_string> <user_auth_token>",
+	{
+		Use:   "update <JSON_string> <user_auth_token>",
+		Short: "Update thing",
 		Long:  `Update thing record`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -107,13 +107,13 @@ var cmdThings = []cobra.Command{
 			logOK()
 		},
 	},
-	cobra.Command{
-		Use:   "connect",
-		Short: "connect <thing_id> <channel_id> <user_auth_token>",
+	{
+		Use:   "connect <thing_id> <channel_id> <user_auth_token>",
+		Short: "Connect thing",
 		Long:  `Connect thing to the channel`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -129,13 +129,13 @@ var cmdThings = []cobra.Command{
 			logOK()
 		},
 	},
-	cobra.Command{
-		Use:   "disconnect",
-		Short: "disconnect <thing_id> <channel_id> <user_auth_token>",
+	{
+		Use:   "disconnect <thing_id> <channel_id> <user_auth_token>",
+		Short: "Disconnect thing",
 		Long:  `Disconnect thing to the channel`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -147,13 +147,13 @@ var cmdThings = []cobra.Command{
 			logOK()
 		},
 	},
-	cobra.Command{
-		Use:   "connections",
-		Short: "connections <thing_id> <user_auth_token>",
+	{
+		Use:   "connections <thing_id> <user_auth_token>",
+		Short: "Connected list",
 		Long:  `List of Channels connected to Thing`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -166,13 +166,13 @@ var cmdThings = []cobra.Command{
 			logJSON(cl)
 		},
 	},
-	cobra.Command{
-		Use:   "not-connected",
-		Short: "not-connected <thing_id> <user_auth_token>",
+	{
+		Use:   "not-connected <thing_id> <user_auth_token>",
+		Short: "Not-connected list",
 		Long:  `List of Channels not connected to a Thing`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -190,12 +190,9 @@ var cmdThings = []cobra.Command{
 // NewThingsCmd returns things command.
 func NewThingsCmd() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "things",
+		Use:   "things [create | get | update | delete | connect | disconnect | connections | not-connected]",
 		Short: "Things management",
 		Long:  `Things management: create, get, update or delete Thing, connect or disconnect Thing from Channel and get the list of Channels connected or disconnected from a Thing`,
-		Run: func(cmd *cobra.Command, args []string) {
-			logUsage("things [create | get | update | delete | connect | disconnect | connections | not-connected]")
-		},
 	}
 
 	for i := range cmdThings {

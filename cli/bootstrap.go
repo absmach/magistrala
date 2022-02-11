@@ -11,13 +11,13 @@ import (
 )
 
 var cmdBootstrap = []cobra.Command{
-	cobra.Command{
-		Use:   "add",
-		Short: "add <JSON_config> <user_auth_token>",
-		Long:  `Adds new Thing Bootstrap Config to the user identified by the provided key`,
+	{
+		Use:   "create <JSON_config> <user_auth_token>",
+		Short: "Create config",
+		Long:  `Create new Thing Bootstrap Config to the user identified by the provided key`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -36,13 +36,13 @@ var cmdBootstrap = []cobra.Command{
 			logCreated(id)
 		},
 	},
-	cobra.Command{
-		Use:   "view",
-		Short: "view <thing_id> <user_auth_token>",
-		Long:  `Returns Thing Config with given ID belonging to the user identified by the given key`,
+	{
+		Use:   "get <thing_id> <user_auth_token>",
+		Short: "Get config",
+		Long:  `Get Thing Config with given ID belonging to the user identified by the given key`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -55,13 +55,13 @@ var cmdBootstrap = []cobra.Command{
 			logJSON(c)
 		},
 	},
-	cobra.Command{
-		Use:   "update",
-		Short: "update <JSON_config> <user_auth_token>",
+	{
+		Use:   "update <JSON_config> <user_auth_token>",
+		Short: "Update config",
 		Long:  `Updates editable fields of the provided Config`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -79,13 +79,13 @@ var cmdBootstrap = []cobra.Command{
 			logOK()
 		},
 	},
-	cobra.Command{
-		Use:   "remove",
-		Short: "remove <thing_id> <user_auth_token>",
+	{
+		Use:   "remove <thing_id> <user_auth_token>",
+		Short: "Remove config",
 		Long:  `Removes Config with specified key that belongs to the user identified by the given key`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -97,13 +97,13 @@ var cmdBootstrap = []cobra.Command{
 			logOK()
 		},
 	},
-	cobra.Command{
-		Use:   "bootstrap",
-		Short: "bootstrap <external_id> <external_key>",
+	{
+		Use:   "bootstrap <external_id> <external_key>",
+		Short: "Bootstrap config",
 		Long:  `Returns Config to the Thing with provided external ID using external key`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -121,12 +121,9 @@ var cmdBootstrap = []cobra.Command{
 // NewBootstrapCmd returns bootstrap command.
 func NewBootstrapCmd() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "bootstrap",
+		Use:   "bootstrap [create | get | update | remove | bootstrap]",
 		Short: "Bootstrap management",
 		Long:  `Bootstrap management: create, get, update or delete Bootstrap config`,
-		Run: func(cmd *cobra.Command, args []string) {
-			logUsage("bootstrap [add | view | update | remove | bootstrap]")
-		},
 	}
 
 	for i := range cmdBootstrap {

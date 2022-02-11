@@ -11,13 +11,13 @@ import (
 )
 
 var cmdChannels = []cobra.Command{
-	cobra.Command{
-		Use:   "create",
-		Short: "create <JSON_channel> <user_auth_token>",
+	{
+		Use:   "create <JSON_channel> <user_auth_token>",
+		Short: "Create channel",
 		Long:  `Creates new channel and generates it's UUID`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -36,13 +36,13 @@ var cmdChannels = []cobra.Command{
 			logCreated(id)
 		},
 	},
-	cobra.Command{
-		Use:   "get",
-		Short: "get [all | <channel_id>] <user_auth_token>",
+	{
+		Use:   "get [all | <channel_id>] <user_auth_token>",
+		Short: "Get channel",
 		Long:  `Gets list of all channels or gets channel by id`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -66,13 +66,13 @@ var cmdChannels = []cobra.Command{
 			logJSON(c)
 		},
 	},
-	cobra.Command{
-		Use:   "update",
-		Short: "update <JSON_string> <user_auth_token>",
+	{
+		Use:   "updatev <JSON_string> <user_auth_token>",
+		Short: "Update channel",
 		Long:  `Updates channel record`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -90,13 +90,13 @@ var cmdChannels = []cobra.Command{
 			logOK()
 		},
 	},
-	cobra.Command{
-		Use:   "delete",
-		Short: "delete <channel_id> <user_auth_token>",
+	{
+		Use:   "delete <channel_id> <user_auth_token>",
+		Short: "Delete channel",
 		Long:  `Delete channel by ID`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -108,13 +108,13 @@ var cmdChannels = []cobra.Command{
 			logOK()
 		},
 	},
-	cobra.Command{
-		Use:   "connections",
-		Short: "connections <channel_id> <user_auth_token>",
+	{
+		Use:   "connections <channel_id> <user_auth_token>",
+		Short: "Connections list",
 		Long:  `List of Things connected to a Channel`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -127,13 +127,13 @@ var cmdChannels = []cobra.Command{
 			logJSON(cl)
 		},
 	},
-	cobra.Command{
-		Use:   "not-connected",
-		Short: "not-connected <channel_id> <user_auth_token>",
+	{
+		Use:   "not-connected <channel_id> <user_auth_token>",
+		Short: "Not-connected list",
 		Long:  `List of Things not connected to a Channel`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
-				logUsage(cmd.Short)
+				logUsage(cmd.Use)
 				return
 			}
 
@@ -151,12 +151,9 @@ var cmdChannels = []cobra.Command{
 // NewChannelsCmd returns channels command.
 func NewChannelsCmd() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "channels",
+		Use:   "channels [create | get | update | delete | connections | not-connected]",
 		Short: "Channels management",
 		Long:  `Channels management: create, get, update or delete Channel and get list of Things connected or not connected to a Channel`,
-		Run: func(cmd *cobra.Command, args []string) {
-			logUsage("channels [create | get | update | delete | connections | not-connected]")
-		},
 	}
 
 	for i := range cmdChannels {

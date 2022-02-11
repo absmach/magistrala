@@ -21,8 +21,8 @@ services:
     image: oryd/keto:v0.6.0-alpha.3
     container_name: mainflux-keto
     ports:
-      - ${MF_KETO_READ_REMOTE_PORT}:4466
-      - ${MF_KETO_WRITE_REMOTE_PORT}:4467
+      - ${MF_KETO_READ_REMOTE_PORT}:${MF_KETO_READ_REMOTE_PORT}
+      - ${MF_KETO_WRITE_REMOTE_PORT}:${MF_KETO_WRITE_REMOTE_PORT}
     environment:
       - DSN=postgresql://${MF_KETO_DB_USER}:${MF_KETO_DB_PASS}@keto-db:${MF_KETO_DB_PORT}/${MF_KETO_DB}?sslmode=disable
     command: serve -c /home/ory/keto.yml
@@ -140,10 +140,10 @@ services:
       MF_AUTH_SECRET: ${MF_AUTH_SECRET}
       MF_AUTH_LOGIN_TOKEN_DURATION: ${MF_AUTH_LOGIN_TOKEN_DURATION}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_KETO_HOST: ${MF_KETO_HOST}
-      MF_KETO_WRITE_REMOTE_PORT: ${MF_KETO_WRITE_REMOTE_PORT}
+      MF_KETO_READ_REMOTE_HOST: ${MF_KETO_READ_REMOTE_HOST}
       MF_KETO_READ_REMOTE_PORT: ${MF_KETO_READ_REMOTE_PORT}
-
+      MF_KETO_WRITE_REMOTE_HOST: ${MF_KETO_WRITE_REMOTE_HOST}
+      MF_KETO_WRITE_REMOTE_PORT: ${MF_KETO_WRITE_REMOTE_PORT}
     ports:
       - ${MF_AUTH_HTTP_PORT}:${MF_AUTH_HTTP_PORT}
       - ${MF_AUTH_GRPC_PORT}:${MF_AUTH_GRPC_PORT}

@@ -74,6 +74,10 @@ default values.
 | MF_AUTH_SECRET                | String used for signing tokens                                           | auth           |
 | MF_AUTH_LOGIN_TOKEN_DURATION  | The login token expiration period                                        | 10h            |
 | MF_JAEGER_URL                 | Jaeger server URL                                                        | localhost:6831 |
+| MF_KETO_READ_REMOTE_HOST      | Keto Read Host                                                           | mainflux-keto  |
+| MF_KETO_WRITE_REMOTE_HOST     | Keto Write Host                                                          | mainflux-keto  |
+| MF_KETO_READ_REMOTE_PORT      | Keto Read Port                                                           | 4466           |
+| MF_KETO_WRITE_REMOTE_PORT     | Keto Write Port                                                          | 4467           |
 
 ## Deployment
 

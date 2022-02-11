@@ -50,9 +50,10 @@ const (
 	defServerCert    = ""
 	defServerKey     = ""
 	defJaegerURL     = ""
-	defKetoHost      = "mainflux-keto"
-	defKetoWritePort = "4467"
+	defKetoReadHost  = "mainflux-keto"
+	defKetoWriteHost = "mainflux-keto"
 	defKetoReadPort  = "4466"
+	defKetoWritePort = "4467"
 	defLoginDuration = "10h"
 
 	envLogLevel      = "MF_AUTH_LOG_LEVEL"
@@ -71,9 +72,10 @@ const (
 	envServerCert    = "MF_AUTH_SERVER_CERT"
 	envServerKey     = "MF_AUTH_SERVER_KEY"
 	envJaegerURL     = "MF_JAEGER_URL"
-	envKetoHost      = "MF_KETO_HOST"
-	envKetoWritePort = "MF_KETO_WRITE_REMOTE_PORT"
+	envKetoReadHost  = "MF_KETO_READ_REMOTE_HOST"
+	envKetoWriteHost = "MF_KETO_WRITE_REMOTE_HOST"
 	envKetoReadPort  = "MF_KETO_READ_REMOTE_PORT"
+	envKetoWritePort = "MF_KETO_WRITE_REMOTE_PORT"
 	envLoginDuration = "MF_AUTH_LOGIN_TOKEN_DURATION"
 )
 
@@ -87,7 +89,8 @@ type config struct {
 	serverKey     string
 	jaegerURL     string
 	resetURL      string
-	ketoHost      string
+	ketoReadHost  string
+	ketoWriteHost string
 	ketoWritePort string
 	ketoReadPort  string
 	loginDuration time.Duration
@@ -115,7 +118,7 @@ func main() {
 	dbTracer, dbCloser := initJaeger("auth_db", cfg.jaegerURL, logger)
 	defer dbCloser.Close()
 
-	readerConn, writerConn := initKeto(cfg.ketoHost, cfg.ketoReadPort, cfg.ketoWritePort, logger)
+	readerConn, writerConn := initKeto(cfg.ketoReadHost, cfg.ketoReadPort, cfg.ketoWriteHost, cfg.ketoWritePort, logger)
 
 	svc := newService(db, dbTracer, cfg.secret, logger, readerConn, writerConn, cfg.loginDuration)
 	errs := make(chan error, 2)
@@ -160,7 +163,8 @@ func loadConfig() config {
 		serverCert:    mainflux.Env(envServerCert, defServerCert),
 		serverKey:     mainflux.Env(envServerKey, defServerKey),
 		jaegerURL:     mainflux.Env(envJaegerURL, defJaegerURL),
-		ketoHost:      mainflux.Env(envKetoHost, defKetoHost),
+		ketoReadHost:  mainflux.Env(envKetoReadHost, defKetoReadHost),
+		ketoWriteHost: mainflux.Env(envKetoWriteHost, defKetoWriteHost),
 		ketoReadPort:  mainflux.Env(envKetoReadPort, defKetoReadPort),
 		ketoWritePort: mainflux.Env(envKetoWritePort, defKetoWritePort),
 		loginDuration: loginDuration,
@@ -192,20 +196,20 @@ func initJaeger(svcName, url string, logger logger.Logger) (opentracing.Tracer, 
 	return tracer, closer
 }
 
-func initKeto(hostAddress, readPort, writePort string, logger logger.Logger) (readerConnection, writerConnection *grpc.ClientConn) {
-	checkConn, err := grpc.Dial(fmt.Sprintf("%s:%s", hostAddress, readPort), grpc.WithInsecure())
+func initKeto(hostReadAddress, readPort, hostWriteAddress, writePort string, logger logger.Logger) (readerConnection, writerConnection *grpc.ClientConn) {
+	readConn, err := grpc.Dial(fmt.Sprintf("%s:%s", hostReadAddress, readPort), grpc.WithInsecure())
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to dial %s:%s for Keto Read Service: %s", hostAddress, readPort, err))
+		logger.Error(fmt.Sprintf("Failed to dial %s:%s for Keto Read Service: %s", hostReadAddress, readPort, err))
 		os.Exit(1)
 	}
 
-	writeConn, err := grpc.Dial(fmt.Sprintf("%s:%s", hostAddress, writePort), grpc.WithInsecure())
+	writeConn, err := grpc.Dial(fmt.Sprintf("%s:%s", hostWriteAddress, writePort), grpc.WithInsecure())
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to dial %s:%s for Keto Write Service: %s", hostAddress, writePort, err))
+		logger.Error(fmt.Sprintf("Failed to dial %s:%s for Keto Write Service: %s", hostWriteAddress, writePort, err))
 		os.Exit(1)
 	}
 
-	return checkConn, writeConn
+	return readConn, writeConn
 }
 
 func connectToDB(dbConfig postgres.Config, logger logger.Logger) *sqlx.DB {

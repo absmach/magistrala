@@ -15,14 +15,18 @@ import (
 
 // ListenAndServe Starts a server on address and network specified Invoke handler
 // for incoming queries.
-func ListenAndServe(network string, addr string, handler mux.Handler) error {
+func ListenAndServe(network string, addr string, handler mux.Handler) (err error) {
 	switch network {
 	case "udp", "udp4", "udp6", "":
 		l, err := net.NewListenUDP(network, addr)
 		if err != nil {
 			return err
 		}
-		defer l.Close()
+		defer func() {
+			if errClose := l.Close(); errClose != nil && err == nil {
+				err = errClose
+			}
+		}()
 		s := udp.NewServer(udp.WithMux(handler))
 		return s.Serve(l)
 	case "tcp", "tcp4", "tcp6":
@@ -30,7 +34,11 @@ func ListenAndServe(network string, addr string, handler mux.Handler) error {
 		if err != nil {
 			return err
 		}
-		defer l.Close()
+		defer func() {
+			if errClose := l.Close(); errClose != nil && err == nil {
+				err = errClose
+			}
+		}()
 		s := tcp.NewServer(tcp.WithMux(handler))
 		return s.Serve(l)
 	default:
@@ -40,24 +48,32 @@ func ListenAndServe(network string, addr string, handler mux.Handler) error {
 
 // ListenAndServeTCPTLS Starts a server on address and network over TLS specified Invoke handler
 // for incoming queries.
-func ListenAndServeTCPTLS(network, addr string, config *tls.Config, handler mux.Handler) error {
+func ListenAndServeTCPTLS(network, addr string, config *tls.Config, handler mux.Handler) (err error) {
 	l, err := net.NewTLSListener(network, addr, config)
 	if err != nil {
 		return err
 	}
-	defer l.Close()
+	defer func() {
+		if errClose := l.Close(); errClose != nil && err == nil {
+			err = errClose
+		}
+	}()
 	s := tcp.NewServer(tcp.WithMux(handler))
 	return s.Serve(l)
 }
 
 // ListenAndServeDTLS Starts a server on address and network over DTLS specified Invoke handler
 // for incoming queries.
-func ListenAndServeDTLS(network string, addr string, config *piondtls.Config, handler mux.Handler) error {
+func ListenAndServeDTLS(network string, addr string, config *piondtls.Config, handler mux.Handler) (err error) {
 	l, err := net.NewDTLSListener(network, addr, config)
 	if err != nil {
 		return err
 	}
-	defer l.Close()
+	defer func() {
+		if errClose := l.Close(); errClose != nil && err == nil {
+			err = errClose
+		}
+	}()
 	s := dtls.NewServer(dtls.WithMux(handler))
 	return s.Serve(l)
 }

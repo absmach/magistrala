@@ -7,7 +7,7 @@ var (
 	ErrInvalidOptionHeaderExt       = errors.New("invalid option header ext")
 	ErrInvalidTokenLen              = errors.New("invalid token length")
 	ErrInvalidValueLength           = errors.New("invalid value length")
-	ErrShortRead                    = errors.New("invalid shor read")
+	ErrShortRead                    = errors.New("invalid short read")
 	ErrOptionTruncated              = errors.New("option truncated")
 	ErrOptionUnexpectedExtendMarker = errors.New("option unexpected extend marker")
 	ErrOptionsTooSmall              = errors.New("too small options buffer")

@@ -94,12 +94,11 @@ var signalAbortOptionDefs = map[message.OptionID]message.OptionDef{
 // TcpMessage is a CoAP MessageBase that can encode itself for Message
 // transport.
 type Message struct {
-	Code codes.Code
-
 	Token   []byte
 	Payload []byte
 
 	Options message.Options //Options must be sorted by ID
+	Code    codes.Code
 }
 
 func (m Message) Size() (int, error) {
@@ -186,25 +185,27 @@ func (m Message) MarshalTo(buf []byte) (int, error) {
 	hdrLen := 1 + len(extLenBytes) + len(m.Token) + 1
 	hdrOff := 0
 
+	copyToHdr := func(offset int, data []byte) int {
+		if len(data) > 0 {
+			copy(hdr[hdrOff:hdrOff+len(data)], data)
+			offset += len(data)
+		}
+		return offset
+	}
+
 	// Length and TKL nibbles.
 	hdr[hdrOff] = uint8(0xf&len(m.Token)) | (lenNib << 4)
 	hdrOff++
 
 	// Extended length, if present.
-	if len(extLenBytes) > 0 {
-		copy(hdr[hdrOff:hdrOff+len(extLenBytes)], extLenBytes)
-		hdrOff += len(extLenBytes)
-	}
+	hdrOff = copyToHdr(hdrOff, extLenBytes)
 
 	// Code.
 	hdr[hdrOff] = byte(m.Code)
 	hdrOff++
 
 	// Token.
-	if len(m.Token) > 0 {
-		copy(hdr[hdrOff:hdrOff+len(m.Token)], m.Token)
-		hdrOff += len(m.Token)
-	}
+	copyToHdr(hdrOff, m.Token)
 
 	bufLen = bufLen + hdrLen
 	if len(buf) < bufLen {
@@ -230,15 +231,15 @@ func (m Message) MarshalTo(buf []byte) (int, error) {
 
 type MessageHeader struct {
 	Token     []byte
+	HeaderLen uint32
+	TotalLen  uint32
 	Code      codes.Code
-	HeaderLen int
-	TotalLen  int
 }
 
 // Unmarshal infers information about a Message CoAP message from the first
 // fragment.
 func (i *MessageHeader) Unmarshal(data []byte) error {
-	hdrOff := 0
+	hdrOff := uint32(0)
 	if len(data) == 0 {
 		return message.ErrShortRead
 	}
@@ -280,7 +281,7 @@ func (i *MessageHeader) Unmarshal(data []byte) error {
 		opLen = MESSAGE_LEN15_BASE + int(extLen)
 	}
 
-	i.TotalLen = hdrOff + 1 + int(tkl) + opLen
+	i.TotalLen = hdrOff + 1 + uint32(tkl) + uint32(opLen)
 	if len(data) < 1 {
 		return message.ErrShortRead
 	}
@@ -293,7 +294,7 @@ func (i *MessageHeader) Unmarshal(data []byte) error {
 	if tkl > 0 {
 		i.Token = data[:tkl]
 	}
-	hdrOff += int(tkl)
+	hdrOff += uint32(tkl)
 
 	i.HeaderLen = hdrOff
 
@@ -319,16 +320,16 @@ func (m *Message) UnmarshalWithHeader(header MessageHeader, data []byte) (int, e
 		return -1, err
 	}
 	data = data[proc:]
-	processed += proc
+	processed += uint32(proc)
 
 	if len(data) > 0 {
 		m.Payload = data
 	}
-	processed = processed + len(data)
+	processed = processed + uint32(len(data))
 	m.Code = header.Code
 	m.Token = header.Token
 
-	return processed, nil
+	return int(processed), nil
 }
 
 func (m *Message) Unmarshal(data []byte) (int, error) {
@@ -337,7 +338,7 @@ func (m *Message) Unmarshal(data []byte) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	if len(data) < header.TotalLen {
+	if uint32(len(data)) < header.TotalLen {
 		return -1, message.ErrShortRead
 	}
 	return m.UnmarshalWithHeader(header, data[header.HeaderLen:])

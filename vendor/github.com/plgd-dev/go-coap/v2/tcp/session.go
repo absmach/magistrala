@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/plgd-dev/go-coap/v2/message"
 	"github.com/plgd-dev/go-coap/v2/message/codes"
@@ -19,42 +21,53 @@ import (
 type EventFunc func()
 
 type Session struct {
-	// This field needs to be the first in the struct to ensure proper word alignment on 32-bit platforms.
-	// See: https://golang.org/pkg/sync/atomic/#pkg-note-BUG
-	sequence   uint64
-	connection *coapNet.Conn
-
-	maxMessageSize                  int
-	peerMaxMessageSize              uint32
-	peerBlockWiseTranferEnabled     uint32
-	disablePeerTCPSignalMessageCSMs bool
-	disableTCPSignalMessageCSM      bool
-	goPool                          GoPoolFunc
-	errors                          ErrorFunc
-	closeSocket                     bool
-	inactivityMonitor               Notifier
-
-	tokenHandlerContainer *HandlerContainer
-	midHandlerContainer   *HandlerContainer
-	handler               HandlerFunc
-
-	blockwiseSZX blockwise.SZX
-	blockWise    *blockwise.BlockWise
-
-	mutex   sync.Mutex
 	onClose []EventFunc
 
-	cancel context.CancelFunc
-	ctx    atomic.Value
+	ctx atomic.Value
+
+	inactivityMonitor inactivity.Monitor
 
 	errSendCSM error
+	// This field needs to be the first in the struct to ensure proper word alignment on 32-bit platforms.
+	// See: https://golang.org/pkg/sync/atomic/#pkg-note-BUG
+	sequence uint64
+
+	cancel context.CancelFunc
+
+	done chan struct{}
+
+	goPool    GoPoolFunc
+	errors    ErrorFunc
+	blockWise *blockwise.BlockWise
+
+	connection *coapNet.Conn
+
+	handler HandlerFunc
+
+	midHandlerContainer *HandlerContainer
+
+	tokenHandlerContainer *HandlerContainer
+
+	messagePool *pool.Pool
+
+	mutex sync.Mutex
+
+	maxMessageSize                  uint32
+	peerBlockWiseTranferEnabled     uint32
+	peerMaxMessageSize              uint32
+	connectionCacheSize             uint16
+	disableTCPSignalMessageCSM      bool
+	disablePeerTCPSignalMessageCSMs bool
+
+	blockwiseSZX blockwise.SZX
+	closeSocket  bool
 }
 
 func NewSession(
 	ctx context.Context,
 	connection *coapNet.Conn,
 	handler HandlerFunc,
-	maxMessageSize int,
+	maxMessageSize uint32,
 	goPool GoPoolFunc,
 	errors ErrorFunc,
 	blockwiseSZX blockwise.SZX,
@@ -62,7 +75,9 @@ func NewSession(
 	disablePeerTCPSignalMessageCSMs bool,
 	disableTCPSignalMessageCSM bool,
 	closeSocket bool,
-	inactivityMonitor Notifier,
+	inactivityMonitor inactivity.Monitor,
+	connectionCacheSize uint16,
+	messagePool *pool.Pool,
 ) *Session {
 	ctx, cancel := context.WithCancel(ctx)
 	if errors == nil {
@@ -87,6 +102,9 @@ func NewSession(
 		disableTCPSignalMessageCSM:      disableTCPSignalMessageCSM,
 		closeSocket:                     closeSocket,
 		inactivityMonitor:               inactivityMonitor,
+		done:                            make(chan struct{}),
+		connectionCacheSize:             connectionCacheSize,
+		messagePool:                     messagePool,
 	}
 	s.ctx.Store(&ctx)
 
@@ -108,8 +126,9 @@ func (s *Session) SetContextValue(key interface{}, val interface{}) {
 	s.ctx.Store(&ctx)
 }
 
+// Done signalizes that connection is not more processed.
 func (s *Session) Done() <-chan struct{} {
-	return s.Context().Done()
+	return s.done
 }
 
 func (s *Session) AddOnClose(f EventFunc) {
@@ -126,18 +145,19 @@ func (s *Session) popOnClose() []EventFunc {
 	return tmp
 }
 
-func (s *Session) close() error {
+func (s *Session) closeAndStop() error {
+	defer close(s.done)
 	for _, f := range s.popOnClose() {
 		f()
 	}
-	if s.closeSocket {
-		return s.connection.Close()
-	}
-	return nil
+	return s.Close()
 }
 
 func (s *Session) Close() error {
 	s.cancel()
+	if s.closeSocket {
+		return s.connection.Close()
+	}
 	return nil
 }
 
@@ -196,20 +216,22 @@ func (s *Session) handleSignals(r *pool.Message, cc *ClientConn) bool {
 		}
 		return true
 	case codes.Ping:
-		if r.HasOption(coapTCP.Custody) {
-			//TODO
+		// if r.HasOption(coapTCP.Custody) {
+		//TODO
+		// }
+		if err := s.sendPong(r.Token()); err != nil && !coapNet.IsConnectionBrokenError(err) {
+			s.errors(fmt.Errorf("cannot handle ping signal: %w", err))
 		}
-		s.sendPong(r.Token())
 		return true
 	case codes.Release:
-		if r.HasOption(coapTCP.AlternativeAddress) {
-			//TODO
-		}
+		// if r.HasOption(coapTCP.AlternativeAddress) {
+		//TODO
+		// }
 		return true
 	case codes.Abort:
-		if r.HasOption(coapTCP.BadCSMOption) {
-			//TODO
-		}
+		// if r.HasOption(coapTCP.BadCSMOption) {
+		//TODO
+		// }
 		return true
 	case codes.Pong:
 		h, err := s.tokenHandlerContainer.Pop(r.Token())
@@ -230,8 +252,12 @@ func (b *bwResponseWriter) Message() blockwise.Message {
 }
 
 func (b *bwResponseWriter) SetMessage(m blockwise.Message) {
-	pool.ReleaseMessage(b.w.response)
+	b.w.cc.session.messagePool.ReleaseMessage(b.w.response)
 	b.w.response = m.(*pool.Message)
+}
+
+func (b *bwResponseWriter) RemoteAddr() net.Addr {
+	return b.w.cc.RemoteAddr()
 }
 
 func (s *Session) Handle(w *ResponseWriter, r *pool.Message) {
@@ -243,18 +269,20 @@ func (s *Session) TokenHandler() *HandlerContainer {
 }
 
 func (s *Session) processReq(req *pool.Message, cc *ClientConn, handler func(w *ResponseWriter, r *pool.Message)) {
-	origResp := pool.AcquireMessage(s.Context())
+	origResp := s.messagePool.AcquireMessage(s.Context())
 	origResp.SetToken(req.Token())
 	w := NewResponseWriter(origResp, cc, req.Options())
 	handler(w, req)
-	defer pool.ReleaseMessage(w.response)
+	defer s.messagePool.ReleaseMessage(w.response)
 	if !req.IsHijacked() {
-		pool.ReleaseMessage(req)
+		s.messagePool.ReleaseMessage(req)
 	}
 	if w.response.IsModified() {
 		err := s.WriteMessage(w.response)
 		if err != nil {
-			s.Close()
+			if errClose := s.Close(); errClose != nil {
+				s.errors(fmt.Errorf("cannot close connection: %w", errClose))
+			}
 			s.errors(fmt.Errorf("cannot write response to %v: %w", s.connection.RemoteAddr(), err))
 		}
 	}
@@ -267,16 +295,16 @@ func (s *Session) processBuffer(buffer *bytes.Buffer, cc *ClientConn) error {
 		if err == message.ErrShortRead {
 			return nil
 		}
-		if s.maxMessageSize >= 0 && hdr.TotalLen > s.maxMessageSize {
+		if hdr.TotalLen > s.maxMessageSize {
 			return fmt.Errorf("max message size(%v) was exceeded %v", s.maxMessageSize, hdr.TotalLen)
 		}
-		if buffer.Len() < hdr.TotalLen {
+		if uint32(buffer.Len()) < hdr.TotalLen {
 			return nil
 		}
-		req := pool.AcquireMessage(s.Context())
+		req := s.messagePool.AcquireMessage(s.Context())
 		readed, err := req.Unmarshal(buffer.Bytes()[:hdr.TotalLen])
 		if err != nil {
-			pool.ReleaseMessage(req)
+			s.messagePool.ReleaseMessage(req)
 			return fmt.Errorf("cannot unmarshal with header: %w", err)
 		}
 		if readed == buffer.Len() {
@@ -300,9 +328,12 @@ func (s *Session) processBuffer(buffer *bytes.Buffer, cc *ClientConn) error {
 		if s.handleSignals(req, cc) {
 			continue
 		}
-		s.goPool(func() {
+		err = s.goPool(func() {
 			s.processReq(req, cc, s.Handle)
 		})
+		if err != nil {
+			return fmt.Errorf("cannot spawn go routine: %w", err)
+		}
 	}
 	return nil
 }
@@ -324,29 +355,32 @@ func (s *Session) sendCSM() error {
 	if err != nil {
 		return fmt.Errorf("cannot get token: %w", err)
 	}
-	req := pool.AcquireMessage(s.Context())
-	defer pool.ReleaseMessage(req)
+	req := s.messagePool.AcquireMessage(s.Context())
+	defer s.messagePool.ReleaseMessage(req)
 	req.SetCode(codes.CSM)
 	req.SetToken(token)
 	return s.WriteMessage(req)
 }
 
 func (s *Session) sendPong(token message.Token) error {
-	req := pool.AcquireMessage(s.Context())
-	defer pool.ReleaseMessage(req)
+	req := s.messagePool.AcquireMessage(s.Context())
+	defer s.messagePool.ReleaseMessage(req)
 	req.SetCode(codes.Pong)
 	req.SetToken(token)
 	return s.WriteMessage(req)
 }
 
+func shrinkBufferIfNecessary(buffer *bytes.Buffer, maxCap uint16) *bytes.Buffer {
+	if buffer.Len() == 0 && buffer.Cap() > int(maxCap) {
+		buffer = bytes.NewBuffer(make([]byte, 0, maxCap))
+	}
+	return buffer
+}
+
 // Run reads and process requests from a connection, until the connection is not closed.
 func (s *Session) Run(cc *ClientConn) (err error) {
 	defer func() {
-		err1 := s.Close()
-		if err == nil {
-			err = err1
-		}
-		err1 = s.close()
+		err1 := s.closeAndStop()
 		if err == nil {
 			err = err1
 		}
@@ -354,19 +388,31 @@ func (s *Session) Run(cc *ClientConn) (err error) {
 	if s.errSendCSM != nil {
 		return s.errSendCSM
 	}
-	buffer := bytes.NewBuffer(make([]byte, 0, 1024))
-	readBuf := make([]byte, 1024)
+	buffer := bytes.NewBuffer(make([]byte, 0, s.connectionCacheSize))
+	readBuf := make([]byte, s.connectionCacheSize)
 	for {
 		err = s.processBuffer(buffer, cc)
 		if err != nil {
 			return err
 		}
+		buffer = shrinkBufferIfNecessary(buffer, s.connectionCacheSize)
 		readLen, err := s.connection.ReadWithContext(s.Context(), readBuf)
 		if err != nil {
+			if coapNet.IsConnectionBrokenError(err) { // other side closed the connection, ignore the error and return
+				return nil
+			}
 			return fmt.Errorf("cannot read from connection: %w", err)
 		}
 		if readLen > 0 {
 			buffer.Write(readBuf[:readLen])
 		}
+	}
+}
+
+// CheckExpirations checks and remove expired items from caches.
+func (s *Session) CheckExpirations(now time.Time, cc *ClientConn) {
+	s.inactivityMonitor.CheckInactivity(now, cc)
+	if s.blockWise != nil {
+		s.blockWise.CheckExpirations(now)
 	}
 }

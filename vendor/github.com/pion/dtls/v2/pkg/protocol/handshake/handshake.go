@@ -58,7 +58,6 @@ func (t Type) String() string {
 type Message interface {
 	Marshal() ([]byte, error)
 	Unmarshal(data []byte) error
-
 	Type() Type
 }
 

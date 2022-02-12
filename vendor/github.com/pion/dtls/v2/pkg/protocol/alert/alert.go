@@ -60,6 +60,7 @@ const (
 	UserCanceled           Description = 90
 	NoRenegotiation        Description = 100
 	UnsupportedExtension   Description = 110
+	NoApplicationProtocol  Description = 120
 )
 
 func (d Description) String() string {
@@ -114,6 +115,8 @@ func (d Description) String() string {
 		return "NoRenegotiation"
 	case UnsupportedExtension:
 		return "UnsupportedExtension"
+	case NoApplicationProtocol:
+		return "NoApplicationProtocol"
 	default:
 		return "Invalid alert description"
 	}

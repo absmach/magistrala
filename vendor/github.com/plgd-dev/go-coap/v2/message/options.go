@@ -12,6 +12,9 @@ const maxPathValue = 255
 // SetPath splits path by '/' to URIPath options and copy it to buffer.
 //
 // Return's modified options, number of used buf bytes and error if occurs.
+//
+// @note the url encoded into URIHost, URIPort, URIPath is expected to be
+// absolute (https://www.rfc-editor.org/rfc/rfc7252.txt)
 func (options Options) SetPath(buf []byte, path string) (Options, int, error) {
 	if len(path) == 0 {
 		return options, 0, nil
@@ -50,15 +53,14 @@ func (options Options) path(buf []byte) (int, error) {
 		needed += len(options[i].Value)
 		needed++
 	}
-	needed--
+
 	if len(buf) < needed {
 		return needed, ErrTooSmall
 	}
 	for i := firstIdx; i < lastIdx; i++ {
-		if i != firstIdx {
-			buf[0] = '/'
-			buf = buf[1:]
-		}
+		buf[0] = '/'
+		buf = buf[1:]
+
 		copy(buf, options[i].Value)
 		buf = buf[len(options[i].Value):]
 	}
@@ -558,7 +560,7 @@ func (options Options) Clone() (Options, error) {
 	opts, used, err := opts.ResetOptionsTo(buf, options)
 	if err == ErrTooSmall {
 		buf = append(buf, make([]byte, used-len(buf))...)
-		opts, used, err = opts.ResetOptionsTo(buf, options)
+		opts, _, err = opts.ResetOptionsTo(buf, options)
 	}
 	if err != nil {
 		return nil, err

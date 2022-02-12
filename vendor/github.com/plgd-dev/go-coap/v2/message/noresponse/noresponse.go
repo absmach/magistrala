@@ -38,7 +38,7 @@ func decodeNoResponseOption(v uint32) []codes.Code {
 	return codes
 }
 
-// IsNoResponseCode validates response code againts NoResponse option from request.
+// IsNoResponseCode validates response code against NoResponse option from request.
 // https://www.rfc-editor.org/rfc/rfc7967.txt
 func IsNoResponseCode(code codes.Code, noRespValue uint32) error {
 	suppressedCodes := decodeNoResponseOption(noRespValue)

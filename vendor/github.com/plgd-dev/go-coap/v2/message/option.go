@@ -127,9 +127,9 @@ const (
 )
 
 type OptionDef struct {
+	MinLen      uint32
+	MaxLen      uint32
 	ValueFormat ValueFormat
-	MinLen      int
-	MaxLen      int
 }
 
 var CoapOptionDefs = map[OptionID]OptionDef{
@@ -243,13 +243,13 @@ func extendOpt(opt int) (int, int) {
 func marshalOptionHeaderExt(buf []byte, opt, ext int) (int, error) {
 	switch opt {
 	case ExtendOptionByteCode:
-		if buf != nil && len(buf) > 0 {
+		if len(buf) > 0 {
 			buf[0] = byte(ext)
 			return 1, nil
 		}
 		return 1, ErrTooSmall
 	case ExtendOptionWordCode:
-		if buf != nil && len(buf) > 1 {
+		if len(buf) > 1 {
 			binary.BigEndian.PutUint16(buf, uint16(ext))
 			return 2, nil
 		}
@@ -264,7 +264,7 @@ func marshalOptionHeader(buf []byte, delta, length int) (int, error) {
 	d, dx := extendOpt(delta)
 	l, lx := extendOpt(length)
 
-	if buf != nil && len(buf) > 0 {
+	if len(buf) > 0 {
 		buf[0] = byte(d<<4) | byte(l)
 		size++
 	} else {
@@ -308,8 +308,8 @@ func marshalOptionHeader(buf []byte, delta, length int) (int, error) {
 }
 
 type Option struct {
-	ID    OptionID
 	Value []byte
+	ID    OptionID
 }
 
 func (o Option) MarshalValue(buf []byte) (int, error) {
@@ -416,7 +416,7 @@ func (o *Option) Unmarshal(data []byte, optionDefs map[OptionID]OptionDef, Optio
 			// Skip unrecognized options (RFC7252 section 5.4.1)
 			return len(data), nil
 		}
-		if len(data) < def.MinLen || len(data) > def.MaxLen {
+		if uint32(len(data)) < def.MinLen || uint32(len(data)) > def.MaxLen {
 			// Skip options with illegal value length (RFC7252 section 5.4.3)
 			return len(data), nil
 		}

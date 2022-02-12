@@ -5,9 +5,11 @@
 # see `.github/generate-authors.sh` for the scripting
 Aleksandr Razumov <ar@gortc.io>
 alvarowolfx <alvarowolfx@gmail.com>
+Arlo Breault <arlolra@gmail.com>
 Atsushi Watanabe <atsushi.w@ieee.org>
 backkem <mail@backkem.me>
 bjdgyc <bjdgyc@163.com>
+boks1971 <raja.gobi@tutanota.com>
 Bragadeesh <bragboy@gmail.com>
 Carson Hoffman <c@rsonhoffman.com>
 Cecylia Bocovich <cohosh@torproject.org>
@@ -27,6 +29,8 @@ Jozef Kralik <jojo.lwin@gmail.com>
 Julien Salleyron <julien.salleyron@gmail.com>
 Kegan Dougal <kegan@matrix.org>
 Lander Noterman <lander.noterman@basalte.be>
+Len <len@hpcnt.com>
+Lukas Lihotzki <lukas@lihotzki.de>
 Michael Zabka <zabka.michael@gmail.com>
 Michiel De Backker <mail@backkem.me>
 Robert Eperjesi <eperjesi@uber.com>

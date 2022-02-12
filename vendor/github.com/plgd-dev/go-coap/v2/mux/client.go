@@ -10,6 +10,7 @@ import (
 
 type Observation = interface {
 	Cancel(ctx context.Context) error
+	Canceled() bool
 }
 
 type Client interface {
@@ -28,4 +29,6 @@ type Client interface {
 	Do(req *message.Message) (*message.Message, error)
 	Close() error
 	Sequence() uint64
+	// Done signalizes that connection is not more processed.
+	Done() <-chan struct{}
 }

@@ -3,12 +3,17 @@ package message
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"hash/crc64"
 )
 
 type Token []byte
 
 func (t Token) String() string {
 	return hex.EncodeToString(t)
+}
+
+func (t Token) Hash() uint64 {
+	return crc64.Checksum(t, crc64.MakeTable(crc64.ISO))
 }
 
 // GetToken generates a random token by a given length

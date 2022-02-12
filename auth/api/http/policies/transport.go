@@ -96,10 +96,10 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}
-	errorVal, ok := err.(errors.Error)
-	if ok {
-		if err := json.NewEncoder(w).Encode(errorRes{Err: errorVal.Msg()}); err != nil {
-			w.Header().Set("Content-Type", contentType)
+
+	if errVal, ok := err.(errors.Error); ok && errVal.Msg() != "" {
+		w.Header().Set("Content-Type", contentType)
+		if err := json.NewEncoder(w).Encode(errorRes{Err: errVal.Msg()}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}

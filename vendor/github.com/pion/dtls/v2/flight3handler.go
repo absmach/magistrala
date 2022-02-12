@@ -57,6 +57,11 @@ func flight3Parse(ctx context.Context, c flightConn, state *State, cache *handsh
 				if cfg.extendedMasterSecret != DisableExtendedMasterSecret {
 					state.extendedMasterSecret = true
 				}
+			case *extension.ALPN:
+				if len(e.ProtocolNameList) > 1 { // This should be exactly 1, the zero case is handle when unmarshalling
+					return 0, &alert.Alert{Level: alert.Fatal, Description: alert.InternalError}, extension.ErrALPNInvalidFormat // Meh, internal error?
+				}
+				state.NegotiatedProtocol = e.ProtocolNameList[0]
 			}
 		}
 		if cfg.extendedMasterSecret == RequireExtendedMasterSecret && !state.extendedMasterSecret {
@@ -237,6 +242,10 @@ func flight3Generate(c flightConn, state *State, cache *handshakeCache, cfg *han
 
 	if len(cfg.serverName) > 0 {
 		extensions = append(extensions, &extension.ServerName{ServerName: cfg.serverName})
+	}
+
+	if len(cfg.supportedProtocols) > 0 {
+		extensions = append(extensions, &extension.ALPN{ProtocolNameList: cfg.supportedProtocols})
 	}
 
 	return []*packet{

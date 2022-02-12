@@ -7,15 +7,15 @@ import (
 
 // MutexMap wraps a map of mutexes.  Each key locks separately.
 type MutexMap struct {
-	ml sync.Mutex                     // lock for entry map
 	ma map[interface{}]*mutexMapEntry // entry map
+	ml sync.Mutex                     // lock for entry map
 }
 
 type mutexMapEntry struct {
+	key interface{} // key in ma
 	m   *MutexMap   // point back to MutexMap, so we can synchronize removing this mutexMapEntry when cnt==0
 	el  sync.Mutex  // entry-specific lock
-	cnt int         // reference count
-	key interface{} // key in ma
+	cnt uint16      // reference count
 }
 
 // Unlocker provides an Unlock method to release the lock.
@@ -23,7 +23,7 @@ type Unlocker interface {
 	Unlock()
 }
 
-// NewMutexMap returns an initalized MutexMap.
+// NewMutexMap returns an initialized MutexMap.
 func NewMutexMap() *MutexMap {
 	return &MutexMap{ma: make(map[interface{}]*mutexMapEntry)}
 }

@@ -127,6 +127,9 @@ type Config struct {
 
 	// SessionStore is the container to store session for resumption.
 	SessionStore SessionStore
+
+	// List of application protocols the peer supports, for ALPN
+	SupportedProtocols []string
 }
 
 func defaultConnectContextMaker() (context.Context, func()) {

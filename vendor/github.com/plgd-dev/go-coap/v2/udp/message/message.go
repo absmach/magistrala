@@ -17,15 +17,14 @@ const (
 // TcpMessage is a CoAP MessageBase that can encode itself for Message
 // transport.
 type Message struct {
-	Code codes.Code
-
 	Token   message.Token
 	Payload []byte
 
+	Options message.Options //Options must be sorted by ID
+	Code    codes.Code
+
 	MessageID uint16
 	Type      Type
-
-	Options message.Options //Options must be sorted by ID
 }
 
 func (m Message) Size() (int, error) {

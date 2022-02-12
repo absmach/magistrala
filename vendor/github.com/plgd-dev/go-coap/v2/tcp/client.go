@@ -29,7 +29,7 @@ func (c *ClientTCP) Delete(ctx context.Context, path string, opts ...message.Opt
 	if err != nil {
 		return nil, err
 	}
-	defer pool.ReleaseMessage(resp)
+	defer c.cc.session.messagePool.ReleaseMessage(resp)
 	return pool.ConvertTo(resp)
 }
 
@@ -38,7 +38,7 @@ func (c *ClientTCP) Put(ctx context.Context, path string, contentFormat message.
 	if err != nil {
 		return nil, err
 	}
-	defer pool.ReleaseMessage(resp)
+	defer c.cc.session.messagePool.ReleaseMessage(resp)
 	return pool.ConvertTo(resp)
 }
 
@@ -47,7 +47,7 @@ func (c *ClientTCP) Post(ctx context.Context, path string, contentFormat message
 	if err != nil {
 		return nil, err
 	}
-	defer pool.ReleaseMessage(resp)
+	defer c.cc.session.messagePool.ReleaseMessage(resp)
 	return pool.ConvertTo(resp)
 }
 
@@ -56,7 +56,7 @@ func (c *ClientTCP) Get(ctx context.Context, path string, opts ...message.Option
 	if err != nil {
 		return nil, err
 	}
-	defer pool.ReleaseMessage(resp)
+	defer c.cc.session.messagePool.ReleaseMessage(resp)
 	return pool.ConvertTo(resp)
 }
 
@@ -77,25 +77,25 @@ func (c *ClientTCP) SetContextValue(key interface{}, val interface{}) {
 }
 
 func (c *ClientTCP) WriteMessage(req *message.Message) error {
-	r, err := pool.ConvertFrom(req)
+	r, err := c.cc.session.messagePool.ConvertFrom(req)
 	if err != nil {
 		return err
 	}
-	defer pool.ReleaseMessage(r)
+	defer c.cc.session.messagePool.ReleaseMessage(r)
 	return c.cc.WriteMessage(r)
 }
 
 func (c *ClientTCP) Do(req *message.Message) (*message.Message, error) {
-	r, err := pool.ConvertFrom(req)
+	r, err := c.cc.session.messagePool.ConvertFrom(req)
 	if err != nil {
 		return nil, err
 	}
-	defer pool.ReleaseMessage(r)
+	defer c.cc.session.messagePool.ReleaseMessage(r)
 	resp, err := c.cc.Do(r)
 	if err != nil {
 		return nil, err
 	}
-	defer pool.ReleaseMessage(resp)
+	defer c.cc.session.messagePool.ReleaseMessage(resp)
 	return pool.ConvertTo(resp)
 }
 
@@ -121,4 +121,9 @@ func (c *ClientTCP) Sequence() uint64 {
 // ClientConn get's underlaying client connection.
 func (c *ClientTCP) ClientConn() interface{} {
 	return c.cc
+}
+
+// Done signalizes that connection is not more processed.
+func (c *ClientTCP) Done() <-chan struct{} {
+	return c.cc.Done()
 }

@@ -162,6 +162,7 @@ func createConn(ctx context.Context, nextConn net.Conn, config *Config, isClient
 		extendedMasterSecret:        config.ExtendedMasterSecret,
 		localSRTPProtectionProfiles: config.SRTPProtectionProfiles,
 		serverName:                  serverName,
+		supportedProtocols:          config.SupportedProtocols,
 		clientAuth:                  config.ClientAuth,
 		localCertificates:           config.Certificates,
 		insecureSkipVerify:          config.InsecureSkipVerify,
@@ -175,6 +176,12 @@ func createConn(ctx context.Context, nextConn net.Conn, config *Config, isClient
 		keyLogWriter:                config.KeyLogWriter,
 		sessionStore:                config.SessionStore,
 	}
+
+	cert, err := hsCfg.getCertificate(serverName)
+	if err != nil && !errors.Is(err, errNoCertificates) {
+		return nil, err
+	}
+	hsCfg.localCipherSuites = filterCipherSuitesForCertificate(cert, cipherSuites)
 
 	var initialFlight flightVal
 	var initialFSMState handshakeState
@@ -564,7 +571,7 @@ func (c *Conn) readAndBuffer(ctx context.Context) error {
 
 	var hasHandshake bool
 	for _, p := range pkts {
-		hs, alert, err := c.handleIncomingPacket(p, true)
+		hs, alert, err := c.handleIncomingPacket(ctx, p, true)
 		if alert != nil {
 			if alertErr := c.notify(ctx, alert.Level, alert.Description); alertErr != nil {
 				if err == nil {
@@ -603,7 +610,7 @@ func (c *Conn) handleQueuedPackets(ctx context.Context) error {
 	c.encryptedPackets = nil
 
 	for _, p := range pkts {
-		_, alert, err := c.handleIncomingPacket(p, false) // don't re-enqueue
+		_, alert, err := c.handleIncomingPacket(ctx, p, false) // don't re-enqueue
 		if alert != nil {
 			if alertErr := c.notify(ctx, alert.Level, alert.Description); alertErr != nil {
 				if err == nil {
@@ -624,7 +631,7 @@ func (c *Conn) handleQueuedPackets(ctx context.Context) error {
 	return nil
 }
 
-func (c *Conn) handleIncomingPacket(buf []byte, enqueue bool) (bool, *alert.Alert, error) { //nolint:gocognit
+func (c *Conn) handleIncomingPacket(ctx context.Context, buf []byte, enqueue bool) (bool, *alert.Alert, error) { //nolint:gocognit
 	h := &recordlayer.Header{}
 	if err := h.Unmarshal(buf); err != nil {
 		// Decode error must be silently discarded
@@ -743,6 +750,7 @@ func (c *Conn) handleIncomingPacket(buf []byte, enqueue bool) (bool, *alert.Aler
 		select {
 		case c.decrypted <- content.Data:
 		case <-c.closed.Done():
+		case <-ctx.Done():
 		}
 
 	default:
@@ -844,6 +852,7 @@ func (c *Conn) handshake(ctx context.Context, cfg *handshakeConfig, initialFligh
 							select {
 							case c.decrypted <- err:
 							case <-c.closed.Done():
+							case <-ctxRead.Done():
 							}
 						}
 						continue // non-fatal alert must not stop read loop
@@ -857,6 +866,7 @@ func (c *Conn) handshake(ctx context.Context, cfg *handshakeConfig, initialFligh
 							select {
 							case c.decrypted <- err:
 							case <-c.closed.Done():
+							case <-ctxRead.Done():
 							}
 							continue // non-fatal alert must not stop read loop
 						}

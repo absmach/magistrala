@@ -8,17 +8,20 @@ import (
 	"sync/atomic"
 	"time"
 
-	atomicTypes "go.uber.org/atomic"
-
-	"github.com/patrickmn/go-cache"
 	"github.com/plgd-dev/go-coap/v2/message"
-	"github.com/plgd-dev/go-coap/v2/net/blockwise"
-
 	"github.com/plgd-dev/go-coap/v2/message/codes"
+	coapNet "github.com/plgd-dev/go-coap/v2/net"
+	"github.com/plgd-dev/go-coap/v2/net/blockwise"
+	"github.com/plgd-dev/go-coap/v2/net/monitor/inactivity"
+	"github.com/plgd-dev/go-coap/v2/pkg/cache"
 	udpMessage "github.com/plgd-dev/go-coap/v2/udp/message"
 	"github.com/plgd-dev/go-coap/v2/udp/message/pool"
-	kitSync "github.com/plgd-dev/kit/sync"
+	kitSync "github.com/plgd-dev/kit/v2/sync"
+	atomicTypes "go.uber.org/atomic"
 )
+
+// https://datatracker.ietf.org/doc/html/rfc7252#section-4.8.2
+const ExchangeLifetime = 247 * time.Second
 
 type HandlerFunc = func(*ResponseWriter, *pool.Message)
 type ErrorFunc = func(error)
@@ -29,39 +32,44 @@ type GetMIDFunc = func() uint16
 type Session interface {
 	Context() context.Context
 	Close() error
-	MaxMessageSize() int
+	MaxMessageSize() uint32
 	RemoteAddr() net.Addr
+	LocalAddr() net.Addr
 	WriteMessage(req *pool.Message) error
+	// WriteMulticast sends multicast to the remote multicast address.
+	// By default it is sent over all network interfaces and all compatible source IP addresses with hop limit 1.
+	// Via opts you can specify the network interface, source IP address, and hop limit.
+	WriteMulticastMessage(req *pool.Message, address *net.UDPAddr, opts ...coapNet.MulticastOption) error
 	Run(cc *ClientConn) error
 	AddOnClose(f EventFunc)
 	SetContextValue(key interface{}, val interface{})
-}
-
-type Notifier interface {
-	Notify()
+	Done() <-chan struct{}
 }
 
 // ClientConn represents a virtual connection to a conceptual endpoint, to perform COAPs commands.
 type ClientConn struct {
-	// This field needs to be the first in the struct to ensure proper word alignment on 32-bit platforms.
-	// See: https://golang.org/pkg/sync/atomic/#pkg-note-BUG
-	sequence                uint64
-	session                 Session
+	session           Session
+	inactivityMonitor inactivity.Monitor
+
+	blockWise               *blockwise.BlockWise
 	handler                 HandlerFunc
 	observationTokenHandler *HandlerContainer
 	observationRequests     *kitSync.Map
 	transmission            *Transmission
-	blockwiseSZX            blockwise.SZX
-	blockWise               *blockwise.BlockWise
-	goPool                  GoPoolFunc
-	errors                  ErrorFunc
-	getMID                  GetMIDFunc
-	responseMsgCache        *cache.Cache
-	msgIdMutex              *MutexMap
-	activityMonitor         Notifier
+	messagePool             *pool.Pool
+
+	// This field needs to be the first in the struct to ensure proper word alignment on 32-bit platforms.
+	// See: https://golang.org/pkg/sync/atomic/#pkg-note-BUG
+	sequence         uint64
+	goPool           GoPoolFunc
+	errors           ErrorFunc
+	responseMsgCache *cache.Cache
+	msgIdMutex       *MutexMap
 
 	tokenHandlerContainer *HandlerContainer
 	midHandlerContainer   *HandlerContainer
+	msgID                 uint32
+	blockwiseSZX          blockwise.SZX
 }
 
 // Transmission is a threadsafe container for transmission related parameters
@@ -94,14 +102,16 @@ func NewClientConn(
 	observationRequests *kitSync.Map,
 	transmissionNStart time.Duration,
 	transmissionAcknowledgeTimeout time.Duration,
-	transmissionMaxRetransmit int,
+	transmissionMaxRetransmit uint32,
 	handler HandlerFunc,
 	blockwiseSZX blockwise.SZX,
 	blockWise *blockwise.BlockWise,
 	goPool GoPoolFunc,
 	errors ErrorFunc,
 	getMID GetMIDFunc,
-	activityMonitor Notifier,
+	inactivityMonitor inactivity.Monitor,
+	responseMsgCache *cache.Cache,
+	messagePool *pool.Pool,
 ) *ClientConn {
 	if errors == nil {
 		errors = func(error) {}
@@ -109,11 +119,9 @@ func NewClientConn(
 	if getMID == nil {
 		getMID = udpMessage.GetMID
 	}
-	if activityMonitor == nil {
-		activityMonitor = &nilNotifier{}
-	}
 
 	return &ClientConn{
+		msgID:                   uint32(getMID() - 0xffff/2),
 		session:                 session,
 		observationTokenHandler: observationTokenHandler,
 		observationRequests:     observationRequests,
@@ -130,11 +138,10 @@ func NewClientConn(
 		midHandlerContainer:   NewHandlerContainer(),
 		goPool:                goPool,
 		errors:                errors,
-		getMID:                getMID,
-		// EXCHANGE_LIFETIME = 247
-		responseMsgCache: cache.New(247*time.Second, 60*time.Second),
-		msgIdMutex:       NewMutexMap(),
-		activityMonitor:  activityMonitor,
+		msgIdMutex:            NewMutexMap(),
+		responseMsgCache:      responseMsgCache,
+		inactivityMonitor:     inactivityMonitor,
+		messagePool:           messagePool,
 	}
 }
 
@@ -142,7 +149,11 @@ func (cc *ClientConn) Session() Session {
 	return cc.session
 }
 
-// Close closes connection without wait of ends Run function.
+func (cc *ClientConn) getMID() uint16 {
+	return uint16(atomic.AddUint32(&cc.msgID, 1))
+}
+
+// Close closes connection without waiting for the end of the Run function.
 func (cc *ClientConn) Close() error {
 	return cc.session.Close()
 }
@@ -164,7 +175,9 @@ func (cc *ClientConn) do(req *pool.Message) (*pool.Message, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot add token handler: %w", err)
 	}
-	defer cc.tokenHandlerContainer.Pop(token)
+	defer func() {
+		_, _ = cc.tokenHandlerContainer.Pop(token)
+	}()
 	err = cc.writeMessage(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot write request: %w", err)
@@ -187,10 +200,17 @@ func (cc *ClientConn) do(req *pool.Message) (*pool.Message, error) {
 // Caller is responsible to release request and response.
 func (cc *ClientConn) Do(req *pool.Message) (*pool.Message, error) {
 	if cc.blockWise == nil {
+		req.UpsertMessageID(cc.getMID())
 		return cc.do(req)
 	}
 	bwresp, err := cc.blockWise.Do(req, cc.blockwiseSZX, cc.session.MaxMessageSize(), func(bwreq blockwise.Message) (blockwise.Message, error) {
-		return cc.do(bwreq.(*pool.Message))
+		req := bwreq.(*pool.Message)
+		if req.Options().HasOption(message.Block1) || req.Options().HasOption(message.Block2) {
+			req.SetMessageID(cc.getMID())
+		} else {
+			req.UpsertMessageID(cc.getMID())
+		}
+		return cc.do(req)
 	})
 	if err != nil {
 		return nil, err
@@ -199,7 +219,6 @@ func (cc *ClientConn) Do(req *pool.Message) (*pool.Message, error) {
 }
 
 func (cc *ClientConn) writeMessage(req *pool.Message) error {
-	req.SetMessageID(cc.getMID())
 	respChan := make(chan struct{})
 
 	// Only confirmable messages ever match an message ID
@@ -215,7 +234,9 @@ func (cc *ClientConn) writeMessage(req *pool.Message) error {
 		if err != nil {
 			return fmt.Errorf("cannot insert mid handler: %w", err)
 		}
-		defer cc.midHandlerContainer.Pop(req.MessageID())
+		defer func() {
+			_, _ = cc.midHandlerContainer.Pop(req.MessageID())
+		}()
 	}
 
 	err := cc.session.WriteMessage(req)
@@ -251,53 +272,32 @@ func (cc *ClientConn) writeMessage(req *pool.Message) error {
 			}
 		}
 	}
-	return fmt.Errorf("timeout: retransmision(%v) was exhausted", cc.transmission.maxRetransmit.Load())
+	return fmt.Errorf("timeout: retransmission(%v) was exhausted", cc.transmission.maxRetransmit.Load())
 }
 
 // WriteMessage sends an coap message.
 func (cc *ClientConn) WriteMessage(req *pool.Message) error {
 	if cc.blockWise == nil {
+		req.UpsertMessageID(cc.getMID())
 		return cc.writeMessage(req)
 	}
-	return cc.blockWise.WriteMessage(req, cc.blockwiseSZX, cc.session.MaxMessageSize(), func(bwreq blockwise.Message) error {
-		return cc.writeMessage(bwreq.(*pool.Message))
-	})
-}
-
-func (cc *ClientConn) doWithMID(req *pool.Message) (*pool.Message, error) {
-	respChan := make(chan *pool.Message, 1)
-	err := cc.midHandlerContainer.Insert(req.MessageID(), func(w *ResponseWriter, r *pool.Message) {
-		r.Hijack()
-		select {
-		case respChan <- r:
-		default:
+	return cc.blockWise.WriteMessage(cc.RemoteAddr(), req, cc.blockwiseSZX, cc.session.MaxMessageSize(), func(bwreq blockwise.Message) error {
+		req := bwreq.(*pool.Message)
+		if req.Options().HasOption(message.Block1) || req.Options().HasOption(message.Block2) {
+			req.SetMessageID(cc.getMID())
+		} else {
+			req.UpsertMessageID(cc.getMID())
 		}
+		return cc.writeMessage(req)
 	})
-	if err != nil {
-		return nil, fmt.Errorf("cannot insert mid handler: %w", err)
-	}
-	defer cc.midHandlerContainer.Pop(req.MessageID())
-	err = cc.session.WriteMessage(req)
-	if err != nil {
-		return nil, fmt.Errorf("cannot write request: %w", err)
-	}
-
-	select {
-	case <-req.Context().Done():
-		return nil, req.Context().Err()
-	case <-cc.session.Context().Done():
-		return nil, fmt.Errorf("connection was closed: %w", cc.session.Context().Err())
-	case resp := <-respChan:
-		return resp, nil
-	}
 }
 
-func newCommonRequest(ctx context.Context, code codes.Code, path string, opts ...message.Option) (*pool.Message, error) {
+func newCommonRequest(ctx context.Context, messagePool *pool.Pool, code codes.Code, path string, opts ...message.Option) (*pool.Message, error) {
 	token, err := message.GetToken()
 	if err != nil {
 		return nil, fmt.Errorf("cannot get token: %w", err)
 	}
-	req := pool.AcquireMessage(ctx)
+	req := messagePool.AcquireMessage(ctx)
 	req.SetCode(code)
 	req.SetToken(token)
 	req.ResetOptionsTo(opts)
@@ -309,8 +309,8 @@ func newCommonRequest(ctx context.Context, code codes.Code, path string, opts ..
 // NewGetRequest creates get request.
 //
 // Use ctx to set timeout.
-func NewGetRequest(ctx context.Context, path string, opts ...message.Option) (*pool.Message, error) {
-	return newCommonRequest(ctx, codes.GET, path, opts...)
+func NewGetRequest(ctx context.Context, messagePool *pool.Pool, path string, opts ...message.Option) (*pool.Message, error) {
+	return newCommonRequest(ctx, messagePool, codes.GET, path, opts...)
 }
 
 // Get issues a GET to the specified path.
@@ -320,11 +320,11 @@ func NewGetRequest(ctx context.Context, path string, opts ...message.Option) (*p
 // An error is returned if by failure to speak COAP (such as a network connectivity problem).
 // Any status code doesn't cause an error.
 func (cc *ClientConn) Get(ctx context.Context, path string, opts ...message.Option) (*pool.Message, error) {
-	req, err := NewGetRequest(ctx, path, opts...)
+	req, err := NewGetRequest(ctx, cc.messagePool, path, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create get request: %w", err)
 	}
-	defer pool.ReleaseMessage(req)
+	defer cc.ReleaseMessage(req)
 	return cc.Do(req)
 }
 
@@ -336,8 +336,8 @@ func (cc *ClientConn) Get(ctx context.Context, path string, opts ...message.Opti
 // Any status code doesn't cause an error.
 //
 // If payload is nil then content format is not used.
-func NewPostRequest(ctx context.Context, path string, contentFormat message.MediaType, payload io.ReadSeeker, opts ...message.Option) (*pool.Message, error) {
-	req, err := newCommonRequest(ctx, codes.POST, path, opts...)
+func NewPostRequest(ctx context.Context, messagePool *pool.Pool, path string, contentFormat message.MediaType, payload io.ReadSeeker, opts ...message.Option) (*pool.Message, error) {
+	req, err := newCommonRequest(ctx, messagePool, codes.POST, path, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -357,11 +357,11 @@ func NewPostRequest(ctx context.Context, path string, contentFormat message.Medi
 //
 // If payload is nil then content format is not used.
 func (cc *ClientConn) Post(ctx context.Context, path string, contentFormat message.MediaType, payload io.ReadSeeker, opts ...message.Option) (*pool.Message, error) {
-	req, err := NewPostRequest(ctx, path, contentFormat, payload, opts...)
+	req, err := NewPostRequest(ctx, cc.messagePool, path, contentFormat, payload, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create post request: %w", err)
 	}
-	defer pool.ReleaseMessage(req)
+	defer cc.ReleaseMessage(req)
 	return cc.Do(req)
 }
 
@@ -370,8 +370,8 @@ func (cc *ClientConn) Post(ctx context.Context, path string, contentFormat messa
 // Use ctx to set timeout.
 //
 // If payload is nil then content format is not used.
-func NewPutRequest(ctx context.Context, path string, contentFormat message.MediaType, payload io.ReadSeeker, opts ...message.Option) (*pool.Message, error) {
-	req, err := newCommonRequest(ctx, codes.PUT, path, opts...)
+func NewPutRequest(ctx context.Context, messagePool *pool.Pool, path string, contentFormat message.MediaType, payload io.ReadSeeker, opts ...message.Option) (*pool.Message, error) {
+	req, err := newCommonRequest(ctx, messagePool, codes.PUT, path, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -391,30 +391,30 @@ func NewPutRequest(ctx context.Context, path string, contentFormat message.Media
 //
 // If payload is nil then content format is not used.
 func (cc *ClientConn) Put(ctx context.Context, path string, contentFormat message.MediaType, payload io.ReadSeeker, opts ...message.Option) (*pool.Message, error) {
-	req, err := NewPutRequest(ctx, path, contentFormat, payload, opts...)
+	req, err := NewPutRequest(ctx, cc.messagePool, path, contentFormat, payload, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create put request: %w", err)
 	}
-	defer pool.ReleaseMessage(req)
+	defer cc.ReleaseMessage(req)
 	return cc.Do(req)
 }
 
 // NewDeleteRequest creates delete request.
 //
 // Use ctx to set timeout.
-func NewDeleteRequest(ctx context.Context, path string, opts ...message.Option) (*pool.Message, error) {
-	return newCommonRequest(ctx, codes.DELETE, path, opts...)
+func NewDeleteRequest(ctx context.Context, messagePool *pool.Pool, path string, opts ...message.Option) (*pool.Message, error) {
+	return newCommonRequest(ctx, messagePool, codes.DELETE, path, opts...)
 }
 
 // Delete deletes the resource identified by the request path.
 //
 // Use ctx to set timeout.
 func (cc *ClientConn) Delete(ctx context.Context, path string, opts ...message.Option) (*pool.Message, error) {
-	req, err := NewDeleteRequest(ctx, path, opts...)
+	req, err := NewDeleteRequest(ctx, cc.messagePool, path, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create delete request: %w", err)
 	}
-	defer pool.ReleaseMessage(req)
+	defer cc.ReleaseMessage(req)
 	return cc.Do(req)
 }
 
@@ -425,7 +425,7 @@ func (cc *ClientConn) Context() context.Context {
 	return cc.session.Context()
 }
 
-// Ping issues a PING to the client and waits for PONG reponse.
+// Ping issues a PING to the client and waits for PONG response.
 //
 // Use ctx to set timeout.
 func (cc *ClientConn) Ping(ctx context.Context) error {
@@ -451,8 +451,8 @@ func (cc *ClientConn) Ping(ctx context.Context) error {
 
 // AsyncPing sends ping and receivedPong will be called when pong arrives. It returns cancellation of ping operation.
 func (cc *ClientConn) AsyncPing(receivedPong func()) (func(), error) {
-	req := pool.AcquireMessage(cc.Context())
-	defer pool.ReleaseMessage(req)
+	req := cc.AcquireMessage(cc.Context())
+	defer cc.ReleaseMessage(req)
 	req.SetType(udpMessage.Confirmable)
 	req.SetCode(codes.Empty)
 	mid := cc.getMID()
@@ -465,14 +465,15 @@ func (cc *ClientConn) AsyncPing(receivedPong func()) (func(), error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot insert mid handler: %w", err)
 	}
+	removeMidHandler := func() {
+		_, _ = cc.midHandlerContainer.Pop(mid)
+	}
 	err = cc.session.WriteMessage(req)
 	if err != nil {
-		cc.midHandlerContainer.Pop(mid)
+		removeMidHandler()
 		return nil, fmt.Errorf("cannot write request: %w", err)
 	}
-	return func() {
-		cc.midHandlerContainer.Pop(mid)
-	}, nil
+	return removeMidHandler, nil
 }
 
 // Run reads and process requests from a connection, until the connection is closed.
@@ -489,8 +490,14 @@ func (cc *ClientConn) RemoteAddr() net.Addr {
 	return cc.session.RemoteAddr()
 }
 
+func (cc *ClientConn) LocalAddr() net.Addr {
+	return cc.session.LocalAddr()
+}
+
 func (cc *ClientConn) sendPong(w *ResponseWriter, r *pool.Message) {
-	w.SetResponse(codes.Empty, message.TextPlain, nil)
+	if err := w.SetResponse(codes.Empty, message.TextPlain, nil); err != nil {
+		cc.errors(fmt.Errorf("cannot send pong response: %w", err))
+	}
 }
 
 type bwResponseWriter struct {
@@ -502,8 +509,12 @@ func (b *bwResponseWriter) Message() blockwise.Message {
 }
 
 func (b *bwResponseWriter) SetMessage(m blockwise.Message) {
-	pool.ReleaseMessage(b.w.response)
+	b.w.cc.ReleaseMessage(b.w.response)
 	b.w.response = m.(*pool.Message)
+}
+
+func (b *bwResponseWriter) RemoteAddr() net.Addr {
+	return b.w.cc.RemoteAddr()
 }
 
 func (cc *ClientConn) handleBW(w *ResponseWriter, r *pool.Message) {
@@ -553,6 +564,10 @@ func (cc *ClientConn) Sequence() uint64 {
 	return atomic.AddUint64(&cc.sequence, 1)
 }
 
+func (cc *ClientConn) responseMsgCacheID(msgID uint16) string {
+	return fmt.Sprintf("resp-%v-%d", cc.RemoteAddr(), msgID)
+}
+
 func (cc *ClientConn) addResponseToCache(resp *pool.Message) error {
 	marshaledResp, err := resp.Marshal()
 	if err != nil {
@@ -560,13 +575,16 @@ func (cc *ClientConn) addResponseToCache(resp *pool.Message) error {
 	}
 	cacheMsg := make([]byte, len(marshaledResp))
 	copy(cacheMsg, marshaledResp)
-	cc.responseMsgCache.SetDefault(fmt.Sprintf("%d", resp.MessageID()), cacheMsg)
+	cc.responseMsgCache.LoadOrStore(cc.responseMsgCacheID(resp.MessageID()), cache.NewElement(cacheMsg, time.Now().Add(ExchangeLifetime), nil))
 	return nil
 }
 
 func (cc *ClientConn) getResponseFromCache(mid uint16, resp *pool.Message) (bool, error) {
-	cachedResp, _ := cc.responseMsgCache.Get(fmt.Sprintf("%d", mid))
-	if rawMsg, ok := cachedResp.([]byte); ok {
+	cachedResp := cc.responseMsgCache.Load(cc.responseMsgCacheID(mid))
+	if cachedResp == nil {
+		return false, nil
+	}
+	if rawMsg, ok := cachedResp.Data().([]byte); ok {
 		_, err := resp.Unmarshal(rawMsg)
 		if err != nil {
 			return false, err
@@ -576,98 +594,157 @@ func (cc *ClientConn) getResponseFromCache(mid uint16, resp *pool.Message) (bool
 	return false, nil
 }
 
+// CheckMyMessageID compare client msgID against peer messageID and if it is near < 0xffff/4 then incrase msgID.
+// When msgIDs met it can cause issue because cache can send message to which doesn't bellows to request.
+func (cc *ClientConn) CheckMyMessageID(req *pool.Message) {
+	if req.Type() == udpMessage.Confirmable && req.MessageID()-uint16(atomic.LoadUint32(&cc.msgID)) < 0xffff/4 {
+		atomic.AddUint32(&cc.msgID, 0xffff/2)
+	}
+}
+
+func (cc *ClientConn) checkResponseCache(req *pool.Message, w *ResponseWriter) (bool, error) {
+	if req.Type() == udpMessage.Confirmable || req.Type() == udpMessage.NonConfirmable {
+		if ok, err := cc.getResponseFromCache(req.MessageID(), w.response); ok {
+			w.response.SetMessageID(req.MessageID())
+			w.response.SetType(udpMessage.NonConfirmable)
+			if req.Type() == udpMessage.Confirmable {
+				// req could be changed from NonConfirmation to confirmation message.
+				w.response.SetType(udpMessage.Acknowledgement)
+			}
+			return true, nil
+		} else if err != nil {
+			return false, fmt.Errorf("cannot unmarshal response from cache: %w", err)
+		}
+	}
+	return false, nil
+}
+
+func isPongOrResetResponse(w *ResponseWriter) bool {
+	return w.response.IsModified() && (w.response.Type() == udpMessage.Reset || w.response.Code() == codes.Empty)
+}
+
+func sendJustAcknowledgeMessage(reqType udpMessage.Type, w *ResponseWriter) bool {
+	return reqType == udpMessage.Confirmable && !w.response.IsModified()
+}
+
+func (cc *ClientConn) processResponse(reqType udpMessage.Type, reqMessageID uint16, w *ResponseWriter) error {
+	switch {
+	case isPongOrResetResponse(w):
+		if reqType == udpMessage.Confirmable {
+			w.response.SetType(udpMessage.Acknowledgement)
+			w.response.SetMessageID(reqMessageID)
+		} else {
+			if w.response.Type() != udpMessage.Reset {
+				w.response.SetType(udpMessage.NonConfirmable)
+			}
+			w.response.SetMessageID(cc.getMID())
+		}
+		return nil
+	case sendJustAcknowledgeMessage(reqType, w):
+		// send message to separate(confirm received) message, if response is not modified
+		w.response.SetCode(codes.Empty)
+		w.response.SetType(udpMessage.Acknowledgement)
+		w.response.SetMessageID(reqMessageID)
+		w.response.SetToken(nil)
+		err := cc.addResponseToCache(w.response)
+		if err != nil {
+			return fmt.Errorf("cannot cache response: %w", err)
+		}
+		return nil
+	case !w.response.IsModified():
+		// don't send response
+		return nil
+	}
+
+	// send piggybacked response
+	w.response.SetType(udpMessage.Confirmable)
+	w.response.SetMessageID(cc.getMID())
+	if reqType == udpMessage.Confirmable {
+		w.response.SetType(udpMessage.Acknowledgement)
+		w.response.SetMessageID(reqMessageID)
+	}
+	if reqType == udpMessage.Confirmable || reqType == udpMessage.NonConfirmable {
+		err := cc.addResponseToCache(w.response)
+		if err != nil {
+			return fmt.Errorf("cannot cache response: %w", err)
+		}
+	}
+	return nil
+}
+
+func (cc *ClientConn) processReq(req *pool.Message, w *ResponseWriter) error {
+	defer cc.inactivityMonitor.Notify()
+	reqMid := req.MessageID()
+
+	// The same message ID can not be handled concurrently
+	// for deduplication to work
+	l := cc.msgIdMutex.Lock(reqMid)
+	defer l.Unlock()
+
+	if ok, err := cc.checkResponseCache(req, w); err != nil {
+		return err
+	} else if ok {
+		return nil
+	}
+
+	w.response.SetModified(false)
+	reqType := req.Type()
+	reqMessageID := req.MessageID()
+	cc.handle(w, req)
+
+	return cc.processResponse(reqType, reqMessageID, w)
+}
+
 func (cc *ClientConn) Process(datagram []byte) error {
-	if cc.session.MaxMessageSize() >= 0 && len(datagram) > cc.session.MaxMessageSize() {
+	if uint32(len(datagram)) > cc.session.MaxMessageSize() {
 		return fmt.Errorf("max message size(%v) was exceeded %v", cc.session.MaxMessageSize(), len(datagram))
 	}
-	req := pool.AcquireMessage(cc.Context())
+	req := cc.AcquireMessage(cc.Context())
 	_, err := req.Unmarshal(datagram)
 	if err != nil {
-		pool.ReleaseMessage(req)
+		cc.ReleaseMessage(req)
 		return err
 	}
+	closeConnection := func() {
+		if errClose := cc.Close(); errClose != nil {
+			cc.errors(fmt.Errorf("cannot close connection: %w", errClose))
+		}
+	}
 	req.SetSequence(cc.Sequence())
-	cc.activityMonitor.Notify()
-	cc.goPool(func() {
-		defer cc.activityMonitor.Notify()
-		reqMid := req.MessageID()
-
-		// The same message ID can not be handled concurrently
-		// for deduplication to work
-		l := cc.msgIdMutex.Lock(reqMid)
-		defer l.Unlock()
-
-		origResp := pool.AcquireMessage(cc.Context())
-		origResp.SetToken(req.Token())
-		// If a request is sent in a Non-confirmable message, then the response
-		// is sent using a new Non-confirmable message, although the server may
-		// instead send a Confirmable message.
-		origResp.SetType(req.Type())
-		w := NewResponseWriter(origResp, cc, req.Options())
-
-		if ok, err := cc.getResponseFromCache(req.MessageID(), w.response); ok {
-			defer pool.ReleaseMessage(w.response)
+	cc.CheckMyMessageID(req)
+	cc.inactivityMonitor.Notify()
+	err = cc.goPool(func() {
+		defer func() {
 			if !req.IsHijacked() {
-				pool.ReleaseMessage(req)
+				cc.ReleaseMessage(req)
 			}
-			err = cc.session.WriteMessage(w.response)
-			if err != nil {
-				cc.Close()
-				cc.errors(fmt.Errorf("cannot write response: %w", err))
-				return
-			}
-			return
-		} else if err != nil {
-			cc.Close()
-			cc.errors(fmt.Errorf("cannot unmarshal response from cache: %w", err))
-			return
-		}
-
-		reqType := req.Type()
-		origResp.SetModified(false)
-		cc.handle(w, req)
-
-		defer pool.ReleaseMessage(w.response)
-		if !req.IsHijacked() {
-			pool.ReleaseMessage(req)
-		}
-		if w.response.IsModified() {
-			switch {
-			case w.response.Type() == udpMessage.Reset:
-				w.response.SetMessageID(reqMid)
-			case reqType == udpMessage.Confirmable:
-				w.response.SetType(udpMessage.Acknowledgement)
-				w.response.SetMessageID(reqMid)
-			default:
-				w.response.SetType(udpMessage.NonConfirmable)
-				w.response.SetMessageID(cc.getMID())
-			}
-			err := cc.session.WriteMessage(w.response)
-			if err != nil {
-				cc.Close()
-				cc.errors(fmt.Errorf("cannot write response: %w", err))
-				return
-			}
-		} else if reqType == udpMessage.Confirmable {
-			w.response.Reset()
-			w.response.SetCode(codes.Empty)
-			w.response.SetType(udpMessage.Acknowledgement)
-			w.response.SetMessageID(reqMid)
-			err := cc.session.WriteMessage(w.response)
-			if err != nil {
-				cc.Close()
-				cc.errors(fmt.Errorf("cannot write ack reponse: %w", err))
-				return
-			}
-		}
-
-		err = cc.addResponseToCache(w.response)
+		}()
+		resp := cc.AcquireMessage(cc.Context())
+		resp.SetToken(req.Token())
+		w := NewResponseWriter(resp, cc, req.Options())
+		defer func() {
+			cc.ReleaseMessage(w.response)
+		}()
+		err := cc.processReq(req, w)
 		if err != nil {
-			cc.Close()
-			cc.errors(fmt.Errorf("cannot cache response: %w", err))
+			closeConnection()
+			cc.errors(fmt.Errorf("cannot write response: %w", err))
 			return
+		}
+		if !w.response.IsModified() {
+			// nothing to send
+			return
+		}
+		err = cc.writeMessage(w.response)
+		if err != nil {
+			closeConnection()
+			cc.errors(fmt.Errorf("cannot write response: %w", err))
 		}
 	})
+	if err != nil {
+		cc.ReleaseMessage(req)
+		return err
+	}
 	return nil
 }
 
@@ -678,4 +755,41 @@ func (cc *ClientConn) Client() *Client {
 // SetContextValue stores the value associated with key to context of connection.
 func (cc *ClientConn) SetContextValue(key interface{}, val interface{}) {
 	cc.session.SetContextValue(key, val)
+}
+
+// Done signalizes that connection is not more processed.
+func (cc *ClientConn) Done() <-chan struct{} {
+	return cc.session.Done()
+}
+
+// CheckExpirations checks and remove expired items from caches.
+func (cc *ClientConn) CheckExpirations(now time.Time) {
+	cc.inactivityMonitor.CheckInactivity(now, cc)
+	if cc.blockWise != nil {
+		cc.blockWise.CheckExpirations(now)
+	}
+}
+
+func (cc *ClientConn) AcquireMessage(ctx context.Context) *pool.Message {
+	return cc.messagePool.AcquireMessage(ctx)
+}
+
+func (cc *ClientConn) ReleaseMessage(m *pool.Message) {
+	cc.messagePool.ReleaseMessage(m)
+}
+
+// WriteMulticastMessage sends multicast to the remote multicast address.
+// By default it is sent over all network interfaces and all compatible source IP addresses with hop limit 1.
+// Via opts you can specify the network interface, source IP address, and hop limit.
+func (cc *ClientConn) WriteMulticastMessage(req *pool.Message, address *net.UDPAddr, options ...coapNet.MulticastOption) error {
+	if req.Type() == udpMessage.Confirmable {
+		return fmt.Errorf("multicast messages cannot be confirmable")
+	}
+	req.SetMessageID(cc.getMID())
+
+	err := cc.session.WriteMulticastMessage(req, address, options...)
+	if err != nil {
+		return fmt.Errorf("cannot write request: %w", err)
+	}
+	return nil
 }

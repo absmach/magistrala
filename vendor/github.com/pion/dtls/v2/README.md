@@ -35,9 +35,11 @@ We would love contributions that fall under the 'Planned Features' and any bug f
 * Key export ([RFC 5705][rfc5705])
 * Serialization and Resumption of sessions
 * Extended Master Secret extension ([RFC 7627][rfc7627])
+* ALPN extension ([RFC 7301][rfc7301])
 
 [rfc5705]: https://tools.ietf.org/html/rfc5705
 [rfc7627]: https://tools.ietf.org/html/rfc7627
+[rfc7301]: https://tools.ietf.org/html/rfc7301
 
 #### Supported ciphers
 

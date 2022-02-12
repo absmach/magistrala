@@ -15,32 +15,42 @@ import (
 type EventFunc = func()
 
 type Session struct {
-	connection     *coapNet.UDPConn
-	raddr          *net.UDPAddr
-	maxMessageSize int
-	closeSocket    bool
-
-	mutex   sync.Mutex
 	onClose []EventFunc
 
+	ctx atomic.Value
+
+	doneCtx    context.Context
+	connection *coapNet.UDPConn
+	doneCancel context.CancelFunc
+
 	cancel context.CancelFunc
-	ctx    atomic.Value
+	raddr  *net.UDPAddr
+
+	mutex          sync.Mutex
+	maxMessageSize uint32
+
+	closeSocket bool
 }
 
 func NewSession(
 	ctx context.Context,
 	connection *coapNet.UDPConn,
 	raddr *net.UDPAddr,
-	maxMessageSize int,
+	maxMessageSize uint32,
 	closeSocket bool,
+	doneCtx context.Context,
 ) *Session {
 	ctx, cancel := context.WithCancel(ctx)
+
+	doneCtx, doneCancel := context.WithCancel(doneCtx)
 	s := &Session{
 		cancel:         cancel,
 		connection:     connection,
 		raddr:          raddr,
 		maxMessageSize: maxMessageSize,
 		closeSocket:    closeSocket,
+		doneCtx:        doneCtx,
+		doneCancel:     doneCancel,
 	}
 	s.ctx.Store(&ctx)
 	return s
@@ -54,8 +64,9 @@ func (s *Session) SetContextValue(key interface{}, val interface{}) {
 	s.ctx.Store(&ctx)
 }
 
+// Done signalizes that connection is not more processed.
 func (s *Session) Done() <-chan struct{} {
-	return s.Context().Done()
+	return s.doneCtx.Done()
 }
 
 func (s *Session) AddOnClose(f EventFunc) {
@@ -73,6 +84,7 @@ func (s *Session) popOnClose() []EventFunc {
 }
 
 func (s *Session) close() error {
+	defer s.doneCancel()
 	for _, f := range s.popOnClose() {
 		f()
 	}
@@ -84,6 +96,9 @@ func (s *Session) close() error {
 
 func (s *Session) Close() error {
 	s.cancel()
+	if s.closeSocket {
+		return s.connection.Close()
+	}
 	return nil
 }
 
@@ -97,6 +112,18 @@ func (s *Session) WriteMessage(req *pool.Message) error {
 		return fmt.Errorf("cannot marshal: %w", err)
 	}
 	return s.connection.WriteWithContext(req.Context(), s.raddr, data)
+}
+
+// WriteMulticastMessage sends multicast to the remote multicast address.
+// By default it is sent over all network interfaces and all compatible source IP addresses with hop limit 1.
+// Via opts you can specify the network interface, source IP address, and hop limit.
+func (s *Session) WriteMulticastMessage(req *pool.Message, address *net.UDPAddr, opts ...coapNet.MulticastOption) error {
+	data, err := req.Marshal()
+	if err != nil {
+		return fmt.Errorf("cannot marshal: %w", err)
+	}
+
+	return s.connection.WriteMulticast(req.Context(), address, data, opts...)
 }
 
 func (s *Session) Run(cc *client.ClientConn) (err error) {
@@ -125,10 +152,14 @@ func (s *Session) Run(cc *client.ClientConn) (err error) {
 	}
 }
 
-func (s *Session) MaxMessageSize() int {
+func (s *Session) MaxMessageSize() uint32 {
 	return s.maxMessageSize
 }
 
 func (s *Session) RemoteAddr() net.Addr {
 	return s.raddr
+}
+
+func (s *Session) LocalAddr() net.Addr {
+	return s.connection.LocalAddr()
 }

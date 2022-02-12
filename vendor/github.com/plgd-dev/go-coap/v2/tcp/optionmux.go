@@ -22,6 +22,7 @@ func WithMux(m mux.Handler) HandlerFuncOpt {
 		m.ServeCOAP(muxw, &mux.Message{
 			Message:        muxr,
 			SequenceNumber: r.Sequence(),
+			RouteParams:    new(mux.RouteParams),
 		})
 	}
 	return WithHandlerFunc(h)

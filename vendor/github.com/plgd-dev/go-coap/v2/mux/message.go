@@ -2,6 +2,12 @@ package mux
 
 import "github.com/plgd-dev/go-coap/v2/message"
 
+// RouteParams contains all the information related to a route
+type RouteParams struct {
+	Path string
+	Vars map[string]string
+}
+
 // Message contains message with sequence number.
 type Message struct {
 	*message.Message
@@ -12,4 +18,5 @@ type Message struct {
 	// Long running handlers can be handled in a go routine and send the response via w.Client().
 	// The ACK is sent as soon as the handler returns.
 	IsConfirmable bool
+	RouteParams   *RouteParams
 }

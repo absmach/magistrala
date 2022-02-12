@@ -1,40 +1,10 @@
 package net
 
-import "time"
+import "net"
 
 // A UDPOption sets options such as heartBeat, errors parameters, etc.
 type UDPOption interface {
 	applyUDP(*udpConnOptions)
-}
-
-type HeartBeatOpt struct {
-	heartBeat time.Duration
-}
-
-func (h HeartBeatOpt) applyUDP(o *udpConnOptions) {
-	o.heartBeat = h.heartBeat
-}
-
-func (h HeartBeatOpt) applyConn(o *connOptions) {
-	o.heartBeat = h.heartBeat
-}
-
-func (h HeartBeatOpt) applyTCPListener(o *tcpListenerOptions) {
-	o.heartBeat = h.heartBeat
-}
-
-func (h HeartBeatOpt) applyTLSListener(o *tlsListenerOptions) {
-	o.heartBeat = h.heartBeat
-}
-
-func (h HeartBeatOpt) applyDTLSListener(o *dtlsListenerOptions) {
-	o.heartBeat = h.heartBeat
-}
-
-func WithHeartBeat(v time.Duration) HeartBeatOpt {
-	return HeartBeatOpt{
-		heartBeat: v,
-	}
 }
 
 type ErrorsOpt struct {
@@ -51,70 +21,84 @@ func WithErrors(v func(err error)) ErrorsOpt {
 	}
 }
 
-type OnTimeoutOpt struct {
-	onTimeout func() error
-}
-
-func WithOnTimeout(onTimeout func() error) OnTimeoutOpt {
-	return OnTimeoutOpt{
-		onTimeout: onTimeout,
+func DefaultMulticastOptions() MulticastOptions {
+	return MulticastOptions{
+		IFaceMode: MulticastAllInterface,
+		HopLimit:  1,
 	}
 }
 
-func (h OnTimeoutOpt) applyConn(o *connOptions) {
-	o.onReadTimeout = h.onTimeout
-	o.onWriteTimeout = h.onTimeout
+type MulticastInterfaceMode int
+
+const (
+	MulticastAllInterface      MulticastInterfaceMode = 0
+	MulticastAnyInterface      MulticastInterfaceMode = 1
+	MulticastSpecificInterface MulticastInterfaceMode = 2
+)
+
+type MulticastOptions struct {
+	IFaceMode MulticastInterfaceMode
+	Iface     *net.Interface
+	Source    *net.IP
+	HopLimit  int
 }
 
-func (h OnTimeoutOpt) applyUDP(o *udpConnOptions) {
-	o.onReadTimeout = h.onTimeout
-	o.onWriteTimeout = h.onTimeout
+func (m *MulticastOptions) Apply(o MulticastOption) {
+	o.applyMC(m)
 }
 
-func (h OnTimeoutOpt) applyTCPListener(o *tcpListenerOptions) {
-	o.onTimeout = h.onTimeout
+// A MulticastOption sets options such as hop limit, etc.
+type MulticastOption interface {
+	applyMC(*MulticastOptions)
 }
 
-func (h OnTimeoutOpt) applyTLSListener(o *tlsListenerOptions) {
-	o.onTimeout = h.onTimeout
+type MulticastInterfaceModeOpt struct {
+	mode MulticastInterfaceMode
 }
 
-func (h OnTimeoutOpt) applyDTLSListener(o *dtlsListenerOptions) {
-	o.onTimeout = h.onTimeout
+func (m MulticastInterfaceModeOpt) applyMC(o *MulticastOptions) {
+	o.IFaceMode = m.mode
 }
 
-type OnReadTimeoutOpt struct {
-	onReadTimeout func() error
+func WithAnyMulticastInterface() MulticastOption {
+	return MulticastInterfaceModeOpt{mode: MulticastAnyInterface}
 }
 
-func WithOnReadTimeout(onReadTimeout func() error) OnReadTimeoutOpt {
-	return OnReadTimeoutOpt{
-		onReadTimeout: onReadTimeout,
-	}
+func WithAllMulticastInterface() MulticastOption {
+	return MulticastInterfaceModeOpt{mode: MulticastAllInterface}
 }
 
-func (h OnReadTimeoutOpt) applyConn(o *connOptions) {
-	o.onReadTimeout = h.onReadTimeout
+type MulticastInterfaceOpt struct {
+	iface net.Interface
 }
 
-func (h OnReadTimeoutOpt) applyUDP(o *udpConnOptions) {
-	o.onReadTimeout = h.onReadTimeout
+func (m MulticastInterfaceOpt) applyMC(o *MulticastOptions) {
+	o.Iface = &m.iface
+	o.IFaceMode = MulticastSpecificInterface
 }
 
-type OnWriteTimeoutOpt struct {
-	onWriteTimeout func() error
+func WithMulticastInterface(iface net.Interface) MulticastOption {
+	return &MulticastInterfaceOpt{iface: iface}
 }
 
-func WithOnWriteTimeout(onWriteTimeout func() error) OnWriteTimeoutOpt {
-	return OnWriteTimeoutOpt{
-		onWriteTimeout: onWriteTimeout,
-	}
+type MulticastHoplimitOpt struct {
+	hoplimit int
 }
 
-func (h OnWriteTimeoutOpt) applyConn(o *connOptions) {
-	o.onWriteTimeout = h.onWriteTimeout
+func (m MulticastHoplimitOpt) applyMC(o *MulticastOptions) {
+	o.HopLimit = m.hoplimit
+}
+func WithMulticastHoplimit(hoplimit int) MulticastOption {
+	return &MulticastHoplimitOpt{hoplimit: hoplimit}
 }
 
-func (h OnWriteTimeoutOpt) applyUDP(o *udpConnOptions) {
-	o.onWriteTimeout = h.onWriteTimeout
+type MulticastSourceOpt struct {
+	source net.IP
+}
+
+func (m MulticastSourceOpt) applyMC(o *MulticastOptions) {
+	o.Source = &m.source
+}
+func WithMulticastSource(source net.IP) MulticastOption {
+	return &MulticastSourceOpt{source: source}
 }

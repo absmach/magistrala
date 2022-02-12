@@ -29,7 +29,7 @@ func (c *Client) Delete(ctx context.Context, path string, opts ...message.Option
 	if err != nil {
 		return nil, err
 	}
-	defer pool.ReleaseMessage(resp)
+	defer c.cc.ReleaseMessage(resp)
 	return pool.ConvertTo(resp)
 }
 
@@ -38,7 +38,7 @@ func (c *Client) Put(ctx context.Context, path string, contentFormat message.Med
 	if err != nil {
 		return nil, err
 	}
-	defer pool.ReleaseMessage(resp)
+	defer c.cc.ReleaseMessage(resp)
 	return pool.ConvertTo(resp)
 }
 
@@ -47,7 +47,7 @@ func (c *Client) Post(ctx context.Context, path string, contentFormat message.Me
 	if err != nil {
 		return nil, err
 	}
-	defer pool.ReleaseMessage(resp)
+	defer c.cc.ReleaseMessage(resp)
 	return pool.ConvertTo(resp)
 }
 
@@ -56,7 +56,7 @@ func (c *Client) Get(ctx context.Context, path string, opts ...message.Option) (
 	if err != nil {
 		return nil, err
 	}
-	defer pool.ReleaseMessage(resp)
+	defer c.cc.ReleaseMessage(resp)
 	return pool.ConvertTo(resp)
 }
 
@@ -77,25 +77,25 @@ func (c *Client) SetContextValue(key interface{}, val interface{}) {
 }
 
 func (c *Client) WriteMessage(req *message.Message) error {
-	r, err := pool.ConvertFrom(req)
+	r, err := c.cc.messagePool.ConvertFrom(req)
 	if err != nil {
 		return err
 	}
-	defer pool.ReleaseMessage(r)
+	defer c.cc.ReleaseMessage(r)
 	return c.cc.WriteMessage(r)
 }
 
 func (c *Client) Do(req *message.Message) (*message.Message, error) {
-	r, err := pool.ConvertFrom(req)
+	r, err := c.cc.messagePool.ConvertFrom(req)
 	if err != nil {
 		return nil, err
 	}
-	defer pool.ReleaseMessage(r)
+	defer c.cc.ReleaseMessage(r)
 	resp, err := c.cc.Do(r)
 	if err != nil {
 		return nil, err
 	}
-	defer pool.ReleaseMessage(resp)
+	defer c.cc.ReleaseMessage(resp)
 	return pool.ConvertTo(resp)
 }
 
@@ -121,4 +121,9 @@ func (c *Client) Sequence() uint64 {
 // ClientConn get's underlaying client connection.
 func (c *Client) ClientConn() interface{} {
 	return c.cc
+}
+
+// Done signalizes that connection is not more processed.
+func (c *Client) Done() <-chan struct{} {
+	return c.cc.Done()
 }

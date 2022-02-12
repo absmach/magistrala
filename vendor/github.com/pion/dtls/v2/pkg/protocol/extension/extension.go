@@ -15,6 +15,7 @@ const (
 	SupportedPointFormatsTypeValue        TypeValue = 11
 	SupportedSignatureAlgorithmsTypeValue TypeValue = 13
 	UseSRTPTypeValue                      TypeValue = 14
+	ALPNTypeValue                         TypeValue = 16
 	UseExtendedMasterSecretTypeValue      TypeValue = 23
 	RenegotiationInfoTypeValue            TypeValue = 65281
 )
@@ -62,6 +63,8 @@ func Unmarshal(buf []byte) ([]Extension, error) {
 			err = unmarshalAndAppend(buf[offset:], &SupportedEllipticCurves{})
 		case UseSRTPTypeValue:
 			err = unmarshalAndAppend(buf[offset:], &UseSRTP{})
+		case ALPNTypeValue:
+			err = unmarshalAndAppend(buf[offset:], &ALPN{})
 		case UseExtendedMasterSecretTypeValue:
 			err = unmarshalAndAppend(buf[offset:], &UseExtendedMasterSecret{})
 		case RenegotiationInfoTypeValue:

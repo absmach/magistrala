@@ -95,6 +95,7 @@ type handshakeConfig struct {
 	extendedMasterSecret        ExtendedMasterSecretType  // Policy for the Extended Master Support extension
 	localSRTPProtectionProfiles []SRTPProtectionProfile   // Available SRTPProtectionProfiles, if empty no SRTP support
 	serverName                  string
+	supportedProtocols          []string
 	clientAuth                  ClientAuthType // If we are a client should we request a client certificate
 	localCertificates           []tls.Certificate
 	nameToCertificate           map[string]*tls.Certificate
@@ -324,6 +325,9 @@ func (s *handshakeFSM) finish(ctx context.Context, c flightConn) (handshakeState
 		}
 		if nextFlight == 0 {
 			break
+		}
+		if nextFlight.isLastRecvFlight() && s.currentFlight == nextFlight {
+			return handshakeFinished, nil
 		}
 		<-retransmitTimer.C
 		// Retransmit last flight

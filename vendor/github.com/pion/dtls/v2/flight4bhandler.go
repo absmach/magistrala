@@ -62,6 +62,17 @@ func flight4bGenerate(c flightConn, state *State, cache *handshakeCache, cfg *ha
 		})
 	}
 
+	selectedProto, err := extension.ALPNProtocolSelection(cfg.supportedProtocols, state.peerSupportedProtocols)
+	if err != nil {
+		return nil, &alert.Alert{Level: alert.Fatal, Description: alert.NoApplicationProtocol}, err
+	}
+	if selectedProto != "" {
+		extensions = append(extensions, &extension.ALPN{
+			ProtocolNameList: []string{selectedProto},
+		})
+		state.NegotiatedProtocol = selectedProto
+	}
+
 	cipherSuiteID := uint16(state.cipherSuite.ID())
 	serverHello := &handshake.Handshake{
 		Message: &handshake.MessageServerHello{

@@ -14,36 +14,31 @@ import (
 	udp "github.com/plgd-dev/go-coap/v2/udp/message"
 )
 
-const maxMessagePool = 10240
-const maxMessageBufferSize = 2048
-
-var (
-	currentMessagesInPool int32
-	messagePool           sync.Pool
-)
-
 type Message struct {
-	*pool.Message
-	messageID uint16
-	typ       udp.Type
 
 	//local vars
 	rawData        []byte
 	rawMarshalData []byte
 
-	ctx        context.Context
+	ctx       context.Context
+	messageID *uint16
+	*pool.Message
+	rawMaxSize uint16
+
+	typ udp.Type
+
 	isModified bool
 }
 
 // Reset clear message for next reuse
 func (r *Message) Reset() {
 	r.Message.Reset()
-	r.messageID = 0
+	r.messageID = nil
 	r.typ = udp.NonConfirmable
-	if cap(r.rawData) > maxMessageBufferSize {
+	if cap(r.rawData) > int(r.rawMaxSize) {
 		r.rawData = make([]byte, 256)
 	}
-	if cap(r.rawMarshalData) > maxMessageBufferSize {
+	if cap(r.rawMarshalData) > int(r.rawMaxSize) {
 		r.rawMarshalData = make([]byte, 256)
 	}
 	r.isModified = false
@@ -54,12 +49,23 @@ func (r *Message) Context() context.Context {
 }
 
 func (r *Message) SetMessageID(mid uint16) {
-	r.messageID = mid
+	r.messageID = &mid
 	r.isModified = true
 }
 
+func (r *Message) UpsertMessageID(mid uint16) uint16 {
+	if r.messageID != nil {
+		return *r.messageID
+	}
+	r.messageID = &mid
+	return mid
+}
+
 func (r *Message) MessageID() uint16 {
-	return r.messageID
+	if r.messageID == nil {
+		panic("messageID is not set")
+	}
+	return *r.messageID
 }
 
 func (r *Message) SetType(typ udp.Type) {
@@ -98,7 +104,7 @@ func (r *Message) Unmarshal(data []byte) (int, error) {
 	r.Message.SetToken(m.Token)
 	r.Message.ResetOptionsTo(m.Options)
 	r.typ = m.Type
-	r.messageID = m.MessageID
+	r.messageID = &m.MessageID
 	if len(m.Payload) > 0 {
 		r.Message.SetBody(bytes.NewReader(m.Payload))
 	}
@@ -110,7 +116,7 @@ func (r *Message) Marshal() ([]byte, error) {
 		Code:      r.Code(),
 		Token:     r.Message.Token(),
 		Options:   r.Message.Options(),
-		MessageID: r.messageID,
+		MessageID: r.MessageID(),
 		Type:      r.typ,
 	}
 	payload, err := r.ReadBody()
@@ -138,7 +144,28 @@ func (r *Message) IsSeparate() bool {
 }
 
 func (r *Message) String() string {
-	return fmt.Sprintf("Type: %v, MID: %v, %s", r.Type(), r.MessageID(), r.Message.String())
+	if r == nil {
+		return "nil"
+	}
+	mid := "nil"
+	if r.messageID != nil {
+		mid = fmt.Sprint(*r.messageID)
+	}
+	return fmt.Sprintf("Type: %v, MID: %v, %s", r.Type(), mid, r.Message.String())
+}
+
+type Pool struct {
+	messagePool           sync.Pool
+	currentMessagesInPool int64
+	maxNumMessages        uint32
+	maxMessageBufferSize  uint16
+}
+
+func New(maxNumMessages uint32, maxMessageBufferSize uint16) *Pool {
+	return &Pool{
+		maxNumMessages:       maxNumMessages,
+		maxMessageBufferSize: maxMessageBufferSize,
+	}
 }
 
 // AcquireMessage returns an empty Message instance from Message pool.
@@ -146,8 +173,8 @@ func (r *Message) String() string {
 // The returned Message instance may be passed to ReleaseMessage when it is
 // no longer needed. This allows Message recycling, reduces GC pressure
 // and usually improves performance.
-func AcquireMessage(ctx context.Context) *Message {
-	v := messagePool.Get()
+func (p *Pool) AcquireMessage(ctx context.Context) *Message {
+	v := p.messagePool.Get()
 	if v == nil {
 		return &Message{
 			Message:        pool.NewMessage(),
@@ -157,7 +184,7 @@ func AcquireMessage(ctx context.Context) *Message {
 		}
 	}
 	r := v.(*Message)
-	atomic.AddInt32(&currentMessagesInPool, -1)
+	atomic.AddInt64(&p.currentMessagesInPool, -1)
 	r.ctx = ctx
 	return r
 }
@@ -166,22 +193,23 @@ func AcquireMessage(ctx context.Context) *Message {
 //
 // It is forbidden accessing req and/or its' members after returning
 // it to Message pool.
-func ReleaseMessage(req *Message) {
-	v := atomic.LoadInt32(&currentMessagesInPool)
-	if v >= maxMessagePool {
+func (p *Pool) ReleaseMessage(req *Message) {
+	v := atomic.LoadInt64(&p.currentMessagesInPool)
+	if v >= int64(p.maxNumMessages) {
 		return
 	}
-	atomic.AddInt32(&currentMessagesInPool, 1)
+	atomic.AddInt64(&p.currentMessagesInPool, 1)
 	req.Reset()
-	messagePool.Put(req)
+	req.ctx = nil
+	p.messagePool.Put(req)
 }
 
 // ConvertFrom converts common message to pool message.
-func ConvertFrom(m *message.Message) (*Message, error) {
+func (p *Pool) ConvertFrom(m *message.Message) (*Message, error) {
 	if m.Context == nil {
 		return nil, fmt.Errorf("invalid context")
 	}
-	r := AcquireMessage(m.Context)
+	r := p.AcquireMessage(m.Context)
 	r.SetCode(m.Code)
 	r.ResetOptionsTo(m.Options)
 	r.SetBody(m.Body)

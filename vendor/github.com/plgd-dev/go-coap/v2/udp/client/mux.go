@@ -23,6 +23,7 @@ func HandlerFuncToMux(m mux.Handler) HandlerFunc {
 			Message:        muxr,
 			SequenceNumber: r.Sequence(),
 			IsConfirmable:  r.Type() == udpMessage.Confirmable,
+			RouteParams:    new(mux.RouteParams),
 		})
 	}
 	return h

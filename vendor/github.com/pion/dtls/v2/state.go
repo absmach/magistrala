@@ -42,6 +42,9 @@ type State struct {
 	peerCertificatesVerified   bool
 
 	replayDetector []replaydetector.ReplayDetector
+
+	peerSupportedProtocols []string
+	NegotiatedProtocol     string
 }
 
 type serializedState struct {

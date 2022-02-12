@@ -1,6 +1,10 @@
 package dtls
 
 import (
+	"crypto/ecdsa"
+	"crypto/ed25519"
+	"crypto/rsa"
+	"crypto/tls"
 	"fmt"
 	"hash"
 
@@ -67,7 +71,6 @@ type CipherSuite interface {
 	// Called when keying material has been generated, should initialize the internal cipher
 	Init(masterSecret, clientRandom, serverRandom []byte, isClient bool) error
 	IsInitialized() bool
-
 	Encrypt(pkt *recordlayer.RecordLayer, raw []byte) ([]byte, error)
 	Decrypt(in []byte) ([]byte, error)
 }
@@ -221,4 +224,25 @@ func parseCipherSuites(userSelectedSuites []CipherSuiteID, customCipherSuites fu
 	}
 
 	return cipherSuites[:i], nil
+}
+
+func filterCipherSuitesForCertificate(cert *tls.Certificate, cipherSuites []CipherSuite) []CipherSuite {
+	if cert == nil || cert.PrivateKey == nil {
+		return cipherSuites
+	}
+	var certType clientcertificate.Type
+	switch cert.PrivateKey.(type) {
+	case ed25519.PrivateKey, *ecdsa.PrivateKey:
+		certType = clientcertificate.ECDSASign
+	case *rsa.PrivateKey:
+		certType = clientcertificate.RSASign
+	}
+
+	filtered := []CipherSuite{}
+	for _, c := range cipherSuites {
+		if c.AuthenticationType() != CipherSuiteAuthenticationTypeCertificate || certType == c.CertificateType() {
+			filtered = append(filtered, c)
+		}
+	}
+	return filtered
 }

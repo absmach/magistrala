@@ -8,6 +8,8 @@ import (
 
 	"github.com/plgd-dev/go-coap/v2/net/blockwise"
 	"github.com/plgd-dev/go-coap/v2/net/monitor/inactivity"
+	"github.com/plgd-dev/go-coap/v2/pkg/runner/periodic"
+	"github.com/plgd-dev/go-coap/v2/tcp/message/pool"
 )
 
 // HandlerFuncOpt handler function option.
@@ -48,7 +50,7 @@ func WithContext(ctx context.Context) ContextOpt {
 
 // MaxMessageSizeOpt handler function option.
 type MaxMessageSizeOpt struct {
-	maxMessageSize int
+	maxMessageSize uint32
 }
 
 func (o MaxMessageSizeOpt) apply(opts *serverOptions) {
@@ -60,7 +62,7 @@ func (o MaxMessageSizeOpt) applyDial(opts *dialOptions) {
 }
 
 // WithMaxMessageSize limit size of processed message.
-func WithMaxMessageSize(maxMessageSize int) MaxMessageSizeOpt {
+func WithMaxMessageSize(maxMessageSize uint32) MaxMessageSizeOpt {
 	return MaxMessageSizeOpt{maxMessageSize: maxMessageSize}
 }
 
@@ -104,9 +106,9 @@ func WithGoPool(goPool GoPoolFunc) GoPoolOpt {
 
 // KeepAliveOpt keepalive option.
 type KeepAliveOpt struct {
-	maxRetries uint32
 	timeout    time.Duration
 	onInactive inactivity.OnInactiveFunc
+	maxRetries uint32
 }
 
 func (o KeepAliveOpt) apply(opts *serverOptions) {
@@ -176,29 +178,29 @@ func WithNetwork(net string) NetOpt {
 	return NetOpt{net: net}
 }
 
-// HeartBeatOpt heatbeat of read/write operations over connection.
-type HeartBeatOpt struct {
-	heartbeat time.Duration
+// PeriodicRunnerOpt function which is executed in every ticks
+type PeriodicRunnerOpt struct {
+	periodicRunner periodic.Func
 }
 
-func (o HeartBeatOpt) apply(opts *serverOptions) {
-	opts.heartBeat = o.heartbeat
+func (o PeriodicRunnerOpt) applyDial(opts *dialOptions) {
+	opts.periodicRunner = o.periodicRunner
 }
 
-func (o HeartBeatOpt) applyDial(opts *dialOptions) {
-	opts.heartBeat = o.heartbeat
+func (o PeriodicRunnerOpt) apply(opts *serverOptions) {
+	opts.periodicRunner = o.periodicRunner
 }
 
-// WithHeartBeat set deadline's for read/write operations over client connection.
-func WithHeartBeat(heartbeat time.Duration) HeartBeatOpt {
-	return HeartBeatOpt{heartbeat: heartbeat}
+// WithPeriodicRunner set function which is executed in every ticks.
+func WithPeriodicRunner(periodicRunner periodic.Func) PeriodicRunnerOpt {
+	return PeriodicRunnerOpt{periodicRunner: periodicRunner}
 }
 
 // BlockwiseOpt network option.
 type BlockwiseOpt struct {
+	transferTimeout time.Duration
 	enable          bool
 	szx             blockwise.SZX
-	transferTimeout time.Duration
 }
 
 func (o BlockwiseOpt) apply(opts *serverOptions) {
@@ -319,5 +321,45 @@ func (o DialerOpt) applyDial(opts *dialOptions) {
 func WithDialer(dialer *net.Dialer) DialerOpt {
 	return DialerOpt{
 		dialer: dialer,
+	}
+}
+
+// ConnectionCacheOpt network option.
+type ConnectionCacheSizeOpt struct {
+	connectionCacheSize uint16
+}
+
+func (o ConnectionCacheSizeOpt) apply(opts *serverOptions) {
+	opts.connectionCacheSize = o.connectionCacheSize
+}
+
+func (o ConnectionCacheSizeOpt) applyDial(opts *dialOptions) {
+	opts.connectionCacheSize = o.connectionCacheSize
+}
+
+// WithConnectionCacheSize configure's maximum size of cache of read buffer.
+func WithConnectionCacheSize(connectionCacheSize uint16) ConnectionCacheSizeOpt {
+	return ConnectionCacheSizeOpt{
+		connectionCacheSize: connectionCacheSize,
+	}
+}
+
+// ConnectionCacheOpt network option.
+type MessagePoolOpt struct {
+	messagePool *pool.Pool
+}
+
+func (o MessagePoolOpt) apply(opts *serverOptions) {
+	opts.messagePool = o.messagePool
+}
+
+func (o MessagePoolOpt) applyDial(opts *dialOptions) {
+	opts.messagePool = o.messagePool
+}
+
+// WithMessagePool configure's message pool for acquire/releasing coap messages
+func WithMessagePool(messagePool *pool.Pool) MessagePoolOpt {
+	return MessagePoolOpt{
+		messagePool: messagePool,
 	}
 }

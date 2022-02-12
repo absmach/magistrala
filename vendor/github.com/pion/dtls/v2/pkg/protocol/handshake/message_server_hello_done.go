@@ -3,8 +3,7 @@ package handshake
 // MessageServerHelloDone is final non-encrypted message from server
 // this communicates server has sent all its handshake messages and next
 // should be MessageFinished
-type MessageServerHelloDone struct {
-}
+type MessageServerHelloDone struct{}
 
 // Type returns the Handshake Type
 func (m MessageServerHelloDone) Type() Type {

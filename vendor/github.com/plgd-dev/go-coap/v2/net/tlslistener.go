@@ -5,88 +5,46 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
-	"sync/atomic"
-	"time"
+
+	"go.uber.org/atomic"
 )
 
 // TLSListener is a TLS listener that provides accept with context.
 type TLSListener struct {
-	tcp       *net.TCPListener
-	listener  net.Listener
-	heartBeat time.Duration
-	closed    uint32
-	onTimeout func() error
-}
-
-var defaultTLSListenerOptions = tlsListenerOptions{
-	heartBeat: time.Millisecond * 200,
-}
-
-type tlsListenerOptions struct {
-	heartBeat time.Duration
-	onTimeout func() error
-}
-
-// A TLSListenerOption sets options such as heartBeat parameters, etc.
-type TLSListenerOption interface {
-	applyTLSListener(*tlsListenerOptions)
+	listener net.Listener
+	tcp      *net.TCPListener
+	closed   atomic.Bool
 }
 
 // NewTLSListener creates tcp listener.
 // Known networks are "tcp", "tcp4" (IPv4-only), "tcp6" (IPv6-only).
-func NewTLSListener(network string, addr string, tlsCfg *tls.Config, opts ...TLSListenerOption) (*TLSListener, error) {
-	cfg := defaultTLSListenerOptions
-	for _, o := range opts {
-		o.applyTLSListener(&cfg)
-	}
+func NewTLSListener(network string, addr string, tlsCfg *tls.Config) (*TLSListener, error) {
 	tcp, err := newNetTCPListen(network, addr)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create new tls listener: %w", err)
 	}
 	tls := tls.NewListener(tcp, tlsCfg)
 	return &TLSListener{
-		tcp:       tcp,
-		listener:  tls,
-		heartBeat: cfg.heartBeat,
+		tcp:      tcp,
+		listener: tls,
 	}, nil
 }
 
 // AcceptWithContext waits with context for a generic Conn.
 func (l *TLSListener) AcceptWithContext(ctx context.Context) (net.Conn, error) {
-	for {
-		select {
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		default:
-		}
-		if atomic.LoadUint32(&l.closed) == 1 {
-			return nil, ErrListenerIsClosed
-		}
-		deadline := time.Now().Add(l.heartBeat)
-		err := l.SetDeadline(deadline)
-		if err != nil {
-			return nil, fmt.Errorf("cannot set deadline to accept connection: %w", err)
-		}
-		rw, err := l.listener.Accept()
-		if err != nil {
-			if isTemporary(err, deadline) {
-				if l.onTimeout != nil {
-					err := l.onTimeout()
-					if err != nil {
-						return nil, fmt.Errorf("cannot accept connection : on timeout returns error: %w", err)
-					}
-				}
-				continue
-			}
-			return nil, fmt.Errorf("cannot accept connection: %w", err)
-		}
-		return rw, nil
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
 	}
-}
-
-// SetDeadline sets deadline for accept operation.
-func (l *TLSListener) SetDeadline(t time.Time) error {
-	return l.tcp.SetDeadline(t)
+	if l.closed.Load() {
+		return nil, ErrListenerIsClosed
+	}
+	rw, err := l.listener.Accept()
+	if err != nil {
+		return nil, err
+	}
+	return rw, nil
 }
 
 // Accept waits for a generic Conn.
@@ -96,7 +54,7 @@ func (l *TLSListener) Accept() (net.Conn, error) {
 
 // Close closes the connection.
 func (l *TLSListener) Close() error {
-	if !atomic.CompareAndSwapUint32(&l.closed, 0, 1) {
+	if !l.closed.CAS(false, true) {
 		return nil
 	}
 	return l.listener.Close()

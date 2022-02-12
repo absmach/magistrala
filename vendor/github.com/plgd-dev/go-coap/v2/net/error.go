@@ -1,5 +1,10 @@
 package net
 
-import "errors"
+import (
+	"errors"
+	"io"
+)
 
-var ErrListenerIsClosed = errors.New("listen socket was closed")
+var ErrListenerIsClosed = io.EOF
+var ErrConnectionIsClosed = io.EOF
+var ErrWriteInterrupted = errors.New("only part data was written to socket")

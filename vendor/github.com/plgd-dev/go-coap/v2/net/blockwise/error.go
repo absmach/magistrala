@@ -15,8 +15,8 @@ var (
 	// ErrInvalidOptionBlock1 message has invalid value of Block1
 	ErrInvalidOptionBlock1 = errors.New("message has invalid value of Block1")
 
-	// ErrInvalidReponseCode response code has invalid value
-	ErrInvalidReponseCode = errors.New("response code has invalid value")
+	// ErrInvalidResponseCode response code has invalid value
+	ErrInvalidResponseCode = errors.New("response code has invalid value")
 
 	// ErrInvalidPayloadSize invalid payload size
 	ErrInvalidPayloadSize = errors.New("invalid payload size")

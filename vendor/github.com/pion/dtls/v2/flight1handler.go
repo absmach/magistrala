@@ -90,6 +90,10 @@ func flight1Generate(c flightConn, state *State, cache *handshakeCache, cfg *han
 		extensions = append(extensions, &extension.ServerName{ServerName: cfg.serverName})
 	}
 
+	if len(cfg.supportedProtocols) > 0 {
+		extensions = append(extensions, &extension.ALPN{ProtocolNameList: cfg.supportedProtocols})
+	}
+
 	if cfg.sessionStore != nil {
 		cfg.log.Tracef("[handshake] try to resume session")
 		if s, err := cfg.sessionStore.Get(c.sessionKey()); err != nil {

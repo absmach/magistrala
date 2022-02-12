@@ -2,6 +2,7 @@ package mux
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"sync"
 
@@ -24,6 +25,8 @@ type Handler interface {
 // Handler object that calls f.
 type HandlerFunc func(w ResponseWriter, r *Message)
 
+type ErrorFunc = func(error)
+
 // ServeCOAP calls f(w, r).
 func (f HandlerFunc) ServeCOAP(w ResponseWriter, r *Message) {
 	f(w, r)
@@ -35,63 +38,79 @@ func (f HandlerFunc) ServeCOAP(w ResponseWriter, r *Message) {
 // with same name.
 // Router is also safe for concurrent access from multiple goroutines.
 type Router struct {
-	z              map[string]muxEntry
+	middlewares []MiddlewareFunc
+	errors      ErrorFunc
+
 	m              *sync.RWMutex
-	defaultHandler Handler
-	middlewares    []MiddlewareFunc
+	defaultHandler Handler          // guarded by m
+	z              map[string]Route // guarded by m
 }
 
-type muxEntry struct {
-	h       Handler
-	pattern string
+type Route struct {
+	h            Handler
+	pattern      string
+	regexMatcher *routeRegexp
+}
+
+func (route *Route) GetRouteRegexp() (string, error) {
+	if route.regexMatcher.regexp == nil {
+		return "", errors.New("mux: route does not have a regexp")
+	}
+	return route.regexMatcher.regexp.String(), nil
 }
 
 // NewRouter allocates and returns a new Router.
 func NewRouter() *Router {
-	return &Router{
-		z:           make(map[string]muxEntry),
-		m:           new(sync.RWMutex),
+	router := &Router{
 		middlewares: make([]MiddlewareFunc, 0, 2),
-		defaultHandler: HandlerFunc(func(w ResponseWriter, r *Message) {
-			w.SetResponse(codes.NotFound, message.TextPlain, nil)
-		}),
+		errors: func(err error) {
+			fmt.Println(err)
+		},
+
+		m: new(sync.RWMutex),
+		z: make(map[string]Route),
 	}
+	router.defaultHandler = HandlerFunc(func(w ResponseWriter, m *Message) {
+		if err := w.SetResponse(codes.NotFound, message.TextPlain, nil); err != nil {
+			router.errors(fmt.Errorf("router handler: cannot set response: %w", err))
+		}
+	})
+	return router
 }
 
 // Does path match pattern?
-func pathMatch(pattern, path string) bool {
-	switch pattern {
-	case "", "/":
-		switch path {
-		case "", "/":
-			return true
-		}
-		return false
-	default:
-		n := len(pattern)
-		if pattern[n-1] != '/' {
-			return pattern == path
-		}
-		return len(path) >= n && path[0:n] == pattern
-	}
+func pathMatch(pattern Route, path string) bool {
+	return pattern.regexMatcher.regexp.MatchString(path)
 }
 
 // Find a handler on a handler map given a path string
 // Most-specific (longest) pattern wins
-func (r *Router) match(path string) (h Handler, pattern string) {
+func (r *Router) Match(path string, routeParams *RouteParams) (matchedRoute *Route, matchedPattern string) {
 	r.m.RLock()
-	defer r.m.RUnlock()
 	var n = 0
-	for k, v := range r.z {
-		if !pathMatch(k, path) {
+	for pattern, route := range r.z {
+		if !pathMatch(route, path) {
 			continue
 		}
-		if h == nil || len(k) > n {
-			n = len(k)
-			h = v.h
-			pattern = v.pattern
+		if matchedRoute == nil || len(pattern) > n {
+			n = len(pattern)
+			r := route
+			matchedRoute = &r
+			matchedPattern = pattern
 		}
 	}
+	r.m.RUnlock()
+
+	if matchedRoute == nil {
+		return
+	}
+
+	routeParams.Path = path
+	if routeParams.Vars == nil {
+		routeParams.Vars = make(map[string]string)
+	}
+	matchedRoute.regexMatcher.extractRouteParams(path, routeParams)
+
 	return
 }
 
@@ -100,18 +119,19 @@ func (r *Router) Handle(pattern string, handler Handler) error {
 	switch pattern {
 	case "", "/":
 		pattern = "/"
-	default:
-		if pattern[0] == '/' {
-			pattern = pattern[1:]
-		}
 	}
 
 	if handler == nil {
 		return errors.New("nil handler")
 	}
 
+	routeRegex, err := newRouteRegexp(pattern)
+	if err != nil {
+		return err
+	}
+
 	r.m.Lock()
-	r.z[pattern] = muxEntry{h: handler, pattern: pattern}
+	r.z[pattern] = Route{h: handler, pattern: pattern, regexMatcher: routeRegex}
 	r.m.Unlock()
 	return nil
 }
@@ -119,13 +139,15 @@ func (r *Router) Handle(pattern string, handler Handler) error {
 // DefaultHandle set default handler to the Router
 func (r *Router) DefaultHandle(handler Handler) {
 	r.m.Lock()
+	defer r.m.Unlock()
 	r.defaultHandler = handler
-	r.m.Unlock()
 }
 
 // HandleFunc adds a handler function to the Router for pattern.
 func (r *Router) HandleFunc(pattern string, handler func(w ResponseWriter, r *Message)) {
-	r.Handle(pattern, HandlerFunc(handler))
+	if err := r.Handle(pattern, HandlerFunc(handler)); err != nil {
+		r.errors(fmt.Errorf("cannot handle pattern(%v): %w", pattern, err))
+	}
 }
 
 // DefaultHandleFunc set a default handler function to the Router.
@@ -148,6 +170,22 @@ func (r *Router) HandleRemove(pattern string) error {
 	return errors.New("pattern is not registered in")
 }
 
+// GetRoute obtains route from the pattern it has been assigned
+func (r *Router) GetRoute(pattern string) *Route {
+	r.m.RLock()
+	defer r.m.RUnlock()
+	if route, ok := r.z[pattern]; ok {
+		return &route
+	}
+	return nil
+}
+
+func (r *Router) GetRoutes() map[string]Route {
+	r.m.RLock()
+	defer r.m.RUnlock()
+	return r.z
+}
+
 // ServeCOAP dispatches the request to the handler whose
 // pattern most closely matches the request message. If DefaultServeMux
 // is used the correct thing for DS queries is done: a possible parent
@@ -155,17 +193,24 @@ func (r *Router) HandleRemove(pattern string) error {
 // If no handler is found a standard NotFound message is returned
 func (r *Router) ServeCOAP(w ResponseWriter, req *Message) {
 	path, err := req.Options.Path()
+	r.m.RLock()
+	defaultHandler := r.defaultHandler
+	r.m.RUnlock()
 	if err != nil {
-		r.defaultHandler.ServeCOAP(w, req)
+		defaultHandler.ServeCOAP(w, req)
 		return
 	}
-	h, _ := r.match(path)
-	if h == nil {
-		h = r.defaultHandler
+	var h Handler
+	matchedMuxEntry, _ := r.Match(path, req.RouteParams)
+	if matchedMuxEntry == nil {
+		h = defaultHandler
+	} else {
+		h = matchedMuxEntry.h
 	}
 	if h == nil {
 		return
 	}
+
 	for i := len(r.middlewares) - 1; i >= 0; i-- {
 		h = r.middlewares[i].Middleware(h)
 	}

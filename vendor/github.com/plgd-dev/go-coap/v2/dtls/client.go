@@ -2,74 +2,93 @@ package dtls
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/pion/dtls/v2"
 	"github.com/plgd-dev/go-coap/v2/message"
-	"github.com/plgd-dev/go-coap/v2/net/blockwise"
-	"github.com/plgd-dev/go-coap/v2/net/monitor/inactivity"
-
 	"github.com/plgd-dev/go-coap/v2/message/codes"
 	coapNet "github.com/plgd-dev/go-coap/v2/net"
+	"github.com/plgd-dev/go-coap/v2/net/blockwise"
+	"github.com/plgd-dev/go-coap/v2/net/monitor/inactivity"
+	"github.com/plgd-dev/go-coap/v2/pkg/cache"
+	"github.com/plgd-dev/go-coap/v2/pkg/runner/periodic"
 	"github.com/plgd-dev/go-coap/v2/udp/client"
 	udpMessage "github.com/plgd-dev/go-coap/v2/udp/message"
 	"github.com/plgd-dev/go-coap/v2/udp/message/pool"
-	kitSync "github.com/plgd-dev/kit/sync"
+	kitSync "github.com/plgd-dev/kit/v2/sync"
 )
 
-var defaultDialOptions = dialOptions{
-	ctx:            context.Background(),
-	maxMessageSize: 64 * 1024,
-	heartBeat:      time.Millisecond * 100,
-	handler: func(w *client.ResponseWriter, r *pool.Message) {
-		switch r.Code() {
+var defaultDialOptions = func() dialOptions {
+	opts := dialOptions{
+		ctx:            context.Background(),
+		maxMessageSize: 64 * 1024,
+		heartBeat:      time.Millisecond * 100,
+		errors: func(err error) {
+			fmt.Println(err)
+		},
+		goPool: func(f func()) error {
+			go func() {
+				f()
+			}()
+			return nil
+		},
+		dialer:                         &net.Dialer{Timeout: time.Second * 3},
+		net:                            "udp",
+		blockwiseSZX:                   blockwise.SZX1024,
+		blockwiseEnable:                true,
+		blockwiseTransferTimeout:       time.Second * 5,
+		transmissionNStart:             time.Second,
+		transmissionAcknowledgeTimeout: time.Second * 2,
+		transmissionMaxRetransmit:      4,
+		getMID:                         udpMessage.GetMID,
+		createInactivityMonitor: func() inactivity.Monitor {
+			return inactivity.NewNilMonitor()
+		},
+		periodicRunner: func(f func(now time.Time) bool) {
+			go func() {
+				for f(time.Now()) {
+					time.Sleep(4 * time.Second)
+				}
+			}()
+		},
+		messagePool: pool.New(1024, 1600),
+	}
+	opts.handler = func(w *client.ResponseWriter, m *pool.Message) {
+		switch m.Code() {
 		case codes.POST, codes.PUT, codes.GET, codes.DELETE:
-			w.SetResponse(codes.NotFound, message.TextPlain, nil)
+			if err := w.SetResponse(codes.NotFound, message.TextPlain, nil); err != nil {
+				opts.errors(fmt.Errorf("client handler: cannot set response: %w", err))
+			}
 		}
-	},
-	errors: func(err error) {
-		fmt.Println(err)
-	},
-	goPool: func(f func()) error {
-		go func() {
-			f()
-		}()
-		return nil
-	},
-	dialer:                         &net.Dialer{Timeout: time.Second * 3},
-	net:                            "udp",
-	blockwiseSZX:                   blockwise.SZX1024,
-	blockwiseEnable:                true,
-	blockwiseTransferTimeout:       time.Second * 5,
-	transmissionNStart:             time.Second,
-	transmissionAcknowledgeTimeout: time.Second * 2,
-	transmissionMaxRetransmit:      4,
-	getMID:                         udpMessage.GetMID,
-	createInactivityMonitor: func() inactivity.Monitor {
-		return inactivity.NewNilMonitor()
-	},
-}
+	}
+	return opts
+}()
 
 type dialOptions struct {
+	net                            string
 	ctx                            context.Context
-	maxMessageSize                 int
-	heartBeat                      time.Duration
+	getMID                         GetMIDFunc
 	handler                        HandlerFunc
 	errors                         ErrorFunc
 	goPool                         GoPoolFunc
 	dialer                         *net.Dialer
-	net                            string
-	blockwiseSZX                   blockwise.SZX
-	blockwiseEnable                bool
+	heartBeat                      time.Duration
+	periodicRunner                 periodic.Func
+	messagePool                    *pool.Pool
 	blockwiseTransferTimeout       time.Duration
 	transmissionNStart             time.Duration
 	transmissionAcknowledgeTimeout time.Duration
-	transmissionMaxRetransmit      int
-	getMID                         GetMIDFunc
-	closeSocket                    bool
 	createInactivityMonitor        func() inactivity.Monitor
+	maxMessageSize                 uint32
+	transmissionMaxRetransmit      uint32
+	closeSocket                    bool
+	blockwiseSZX                   blockwise.SZX
+	blockwiseEnable                bool
 }
 
 // A DialOption sets options such as credentials, keepalive parameters, etc.
@@ -97,19 +116,23 @@ func Dial(target string, dtlsCfg *dtls.Config, opts ...DialOption) (*client.Clie
 	return Client(conn, opts...), nil
 }
 
-func bwAcquireMessage(ctx context.Context) blockwise.Message {
-	return pool.AcquireMessage(ctx)
+func bwCreateAcquireMessage(messagePool *pool.Pool) func(ctx context.Context) blockwise.Message {
+	return func(ctx context.Context) blockwise.Message {
+		return messagePool.AcquireMessage(ctx)
+	}
 }
 
-func bwReleaseMessage(m blockwise.Message) {
-	pool.ReleaseMessage(m.(*pool.Message))
+func bwCreateReleaseMessage(messagePool *pool.Pool) func(m blockwise.Message) {
+	return func(m blockwise.Message) {
+		messagePool.ReleaseMessage(m.(*pool.Message))
+	}
 }
 
-func bwCreateHandlerFunc(observatioRequests *kitSync.Map) func(token message.Token) (blockwise.Message, bool) {
+func bwCreateHandlerFunc(messagePool *pool.Pool, observatioRequests *kitSync.Map) func(token message.Token) (blockwise.Message, bool) {
 	return func(token message.Token) (blockwise.Message, bool) {
-		msg, ok := observatioRequests.LoadWithFunc(token.String(), func(v interface{}) interface{} {
+		msg, ok := observatioRequests.LoadWithFunc(token.Hash(), func(v interface{}) interface{} {
 			r := v.(*pool.Message)
-			d := pool.AcquireMessage(r.Context())
+			d := messagePool.AcquireMessage(r.Context())
 			d.ResetOptionsTo(r.Options())
 			d.SetCode(r.Code())
 			d.SetToken(r.Token())
@@ -138,31 +161,35 @@ func Client(conn *dtls.Conn, opts ...DialOption) *client.ClientConn {
 			return inactivity.NewNilMonitor()
 		}
 	}
-	errors := cfg.errors
+	if cfg.messagePool == nil {
+		cfg.messagePool = pool.New(0, 0)
+	}
+	errorsFunc := cfg.errors
 	cfg.errors = func(err error) {
-		errors(fmt.Errorf("dtls: %v: %w", conn.RemoteAddr(), err))
+		if errors.Is(err, context.Canceled) || errors.Is(err, io.EOF) || strings.Contains(err.Error(), "use of closed network connection") {
+			// this error was produced by cancellation context or closing connection.
+			return
+		}
+		errorsFunc(fmt.Errorf("dtls: %v: %w", conn.RemoteAddr(), err))
 	}
 
 	observatioRequests := kitSync.NewMap()
 	var blockWise *blockwise.BlockWise
 	if cfg.blockwiseEnable {
 		blockWise = blockwise.NewBlockWise(
-			bwAcquireMessage,
-			bwReleaseMessage,
+			bwCreateAcquireMessage(cfg.messagePool),
+			bwCreateReleaseMessage(cfg.messagePool),
 			cfg.blockwiseTransferTimeout,
 			cfg.errors,
 			false,
-			bwCreateHandlerFunc(observatioRequests),
+			bwCreateHandlerFunc(cfg.messagePool, observatioRequests),
 		)
 	}
 
 	observationTokenHandler := client.NewHandlerContainer()
 	monitor := cfg.createInactivityMonitor()
 	var cc *client.ClientConn
-	l := coapNet.NewConn(conn, coapNet.WithHeartBeat(cfg.heartBeat), coapNet.WithOnReadTimeout(func() error {
-		monitor.CheckInactivity(cc)
-		return nil
-	}))
+	l := coapNet.NewConn(conn)
 	session := NewSession(cfg.ctx,
 		l,
 		cfg.maxMessageSize,
@@ -178,7 +205,14 @@ func Client(conn *dtls.Conn, opts ...DialOption) *client.ClientConn {
 		cfg.getMID,
 		// The client does not support activity monitoring yet
 		monitor,
+		cache.NewCache(),
+		cfg.messagePool,
 	)
+
+	cfg.periodicRunner(func(now time.Time) bool {
+		cc.CheckExpirations(now)
+		return cc.Context().Err() == nil
+	})
 
 	go func() {
 		err := cc.Run()

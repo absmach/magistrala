@@ -56,14 +56,14 @@ func (grm *groupRepositoryMock) Save(ctx context.Context, group auth.Group) (aut
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
 	if _, ok := grm.groups[group.ID]; ok {
-		return auth.Group{}, auth.ErrGroupConflict
+		return auth.Group{}, errors.ErrConflict
 	}
 	path := group.ID
 
 	if group.ParentID != "" {
 		parent, ok := grm.groups[group.ParentID]
 		if !ok {
-			return auth.Group{}, auth.ErrCreateGroup
+			return auth.Group{}, errors.ErrCreateEntity
 		}
 		if _, ok := grm.children[group.ParentID]; !ok {
 			grm.children[group.ParentID] = make(map[string]auth.Group)
@@ -100,7 +100,7 @@ func (grm *groupRepositoryMock) Delete(ctx context.Context, id string) error {
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
 	if _, ok := grm.groups[id]; !ok {
-		return auth.ErrGroupNotFound
+		return errors.ErrNotFound
 	}
 
 	if len(grm.members[id]) > 0 {
@@ -132,7 +132,7 @@ func (grm *groupRepositoryMock) RetrieveByID(ctx context.Context, id string) (au
 
 	val, ok := grm.groups[id]
 	if !ok {
-		return auth.Group{}, auth.ErrGroupNotFound
+		return auth.Group{}, errors.ErrNotFound
 	}
 	return val, nil
 }
@@ -156,13 +156,13 @@ func (grm *groupRepositoryMock) Unassign(ctx context.Context, groupID string, me
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
 	if _, ok := grm.groups[groupID]; !ok {
-		return auth.ErrGroupNotFound
+		return errors.ErrNotFound
 	}
 	for _, memberID := range memberIDs {
 		for typ, m := range grm.members[groupID] {
 			_, ok := m[memberID]
 			if !ok {
-				return auth.ErrGroupNotFound
+				return errors.ErrNotFound
 			}
 			delete(grm.members[groupID][typ], memberID)
 			delete(grm.memberships[memberID], groupID)
@@ -176,7 +176,7 @@ func (grm *groupRepositoryMock) Assign(ctx context.Context, groupID, groupType s
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
 	if _, ok := grm.groups[groupID]; !ok {
-		return auth.ErrGroupNotFound
+		return errors.ErrNotFound
 	}
 
 	if _, ok := grm.members[groupID]; !ok {
@@ -230,7 +230,7 @@ func (grm *groupRepositoryMock) Members(ctx context.Context, groupID, groupType 
 	var items []auth.Member
 	members, ok := grm.members[groupID][groupType]
 	if !ok {
-		return auth.MemberPage{}, auth.ErrGroupNotFound
+		return auth.MemberPage{}, errors.ErrNotFound
 	}
 
 	first := uint64(pm.Offset)
@@ -260,7 +260,7 @@ func (grm *groupRepositoryMock) RetrieveAllParents(ctx context.Context, groupID 
 
 	group, ok := grm.groups[groupID]
 	if !ok {
-		return auth.GroupPage{}, auth.ErrGroupNotFound
+		return auth.GroupPage{}, errors.ErrNotFound
 	}
 
 	groups := make([]auth.Group, 0)

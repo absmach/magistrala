@@ -198,15 +198,15 @@ func TestListReqValidation(t *testing.T) {
 			desc:   "too large limit",
 			key:    "key",
 			offset: 0,
-			limit:  maxLimit + 1,
+			limit:  maxLimitSize + 1,
 			err:    errors.ErrMalformedEntity,
 		},
 		{
 			desc:   "zero limit",
 			key:    "key",
 			offset: 0,
-			limit:  0,
-			err:    errors.ErrMalformedEntity,
+			limit:  defLimit,
+			err:    nil,
 		},
 	}
 

@@ -6,7 +6,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"net/http"
 
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -136,23 +135,27 @@ func decodeRevokeCerts(_ context.Context, r *http.Request) (interface{}, error) 
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
-	w.Header().Set("Content-Type", contentType)
-
-	switch err {
-	case errors.ErrUnsupportedContentType:
+	switch {
+	case errors.Contains(err, errors.ErrUnsupportedContentType):
 		w.WriteHeader(http.StatusUnsupportedMediaType)
-	case io.EOF, errors.ErrMalformedEntity,
-		errors.ErrInvalidQueryParams:
+	case errors.Contains(err, errors.ErrMalformedEntity),
+		errors.Contains(err, errors.ErrInvalidQueryParams):
 		w.WriteHeader(http.StatusBadRequest)
-	case errors.ErrConflict:
+	case errors.Contains(err, errors.ErrConflict):
 		w.WriteHeader(http.StatusConflict)
+
+	case errors.Contains(err, errors.ErrCreateEntity),
+		errors.Contains(err, errors.ErrViewEntity),
+		errors.Contains(err, errors.ErrRemoveEntity):
+		w.WriteHeader(http.StatusInternalServerError)
+
 	default:
-		switch err.(type) {
-		case *json.SyntaxError:
-			w.WriteHeader(http.StatusBadRequest)
-		case *json.UnmarshalTypeError:
-			w.WriteHeader(http.StatusBadRequest)
-		default:
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	if errorVal, ok := err.(errors.Error); ok {
+		w.Header().Set("Content-Type", contentType)
+		if err := json.NewEncoder(w).Encode(httputil.ErrorRes{Err: errorVal.Msg()}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}

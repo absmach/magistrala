@@ -249,11 +249,11 @@ func (crm *channelRepositoryMock) HasThing(_ context.Context, chanID, token stri
 
 	chans, ok := crm.cconns[tid]
 	if !ok {
-		return "", things.ErrEntityConnected
+		return "", errors.ErrAuthorization
 	}
 
 	if _, ok := chans[chanID]; !ok {
-		return "", things.ErrEntityConnected
+		return "", errors.ErrAuthorization
 	}
 
 	return tid, nil
@@ -262,11 +262,11 @@ func (crm *channelRepositoryMock) HasThing(_ context.Context, chanID, token stri
 func (crm *channelRepositoryMock) HasThingByID(_ context.Context, chanID, thingID string) error {
 	chans, ok := crm.cconns[thingID]
 	if !ok {
-		return things.ErrEntityConnected
+		return errors.ErrAuthorization
 	}
 
 	if _, ok := chans[chanID]; !ok {
-		return things.ErrEntityConnected
+		return errors.ErrAuthorization
 	}
 
 	return nil

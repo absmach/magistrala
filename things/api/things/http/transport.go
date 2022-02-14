@@ -6,7 +6,6 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"net/http"
 	"strings"
 
@@ -14,7 +13,6 @@ import (
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/internal/httputil"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/uuid"
@@ -499,56 +497,40 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
-	switch errorVal := err.(type) {
-	case errors.Error:
-		w.Header().Set("Content-Type", contentType)
-		switch {
-		case errors.Contains(errorVal, errors.ErrAuthentication),
-			errors.Contains(errorVal, things.ErrEntityConnected):
-			w.WriteHeader(http.StatusUnauthorized)
-		case errors.Contains(errorVal, errors.ErrAuthorization):
-			w.WriteHeader(http.StatusForbidden)
-		case errors.Contains(errorVal, errors.ErrInvalidQueryParams):
-			w.WriteHeader(http.StatusBadRequest)
-		case errors.Contains(errorVal, errors.ErrUnsupportedContentType):
-			w.WriteHeader(http.StatusUnsupportedMediaType)
+	switch {
+	case errors.Contains(err, errors.ErrAuthentication):
+		w.WriteHeader(http.StatusUnauthorized)
+	case errors.Contains(err, errors.ErrAuthorization):
+		w.WriteHeader(http.StatusForbidden)
+	case errors.Contains(err, errors.ErrUnsupportedContentType):
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+	case errors.Contains(err, errors.ErrInvalidQueryParams),
+		errors.Contains(err, errors.ErrMalformedEntity):
+		w.WriteHeader(http.StatusBadRequest)
+	case errors.Contains(err, errors.ErrNotFound):
+		w.WriteHeader(http.StatusNotFound)
+	case errors.Contains(err, errors.ErrConflict):
+		w.WriteHeader(http.StatusConflict)
+	case errors.Contains(err, errors.ErrScanMetadata):
+		w.WriteHeader(http.StatusUnprocessableEntity)
 
-		case errors.Contains(errorVal, errors.ErrMalformedEntity):
-			w.WriteHeader(http.StatusBadRequest)
-		case errors.Contains(errorVal, errors.ErrNotFound):
-			w.WriteHeader(http.StatusNotFound)
-		case errors.Contains(errorVal, errors.ErrConflict):
-			w.WriteHeader(http.StatusConflict)
+	case errors.Contains(err, errors.ErrCreateEntity),
+		errors.Contains(err, errors.ErrUpdateEntity),
+		errors.Contains(err, errors.ErrViewEntity),
+		errors.Contains(err, errors.ErrRemoveEntity):
+		w.WriteHeader(http.StatusInternalServerError)
 
-		case errors.Contains(errorVal, errors.ErrScanMetadata),
-			errors.Contains(errorVal, errors.ErrViewEntity):
-			w.WriteHeader(http.StatusUnprocessableEntity)
+	case errors.Contains(err, uuid.ErrGeneratingID):
+		w.WriteHeader(http.StatusInternalServerError)
 
-		case errors.Contains(errorVal, errors.ErrCreateEntity),
-			errors.Contains(errorVal, errors.ErrUpdateEntity),
-			errors.Contains(errorVal, errors.ErrViewEntity),
-			errors.Contains(errorVal, errors.ErrRemoveEntity),
-			errors.Contains(errorVal, things.ErrConnect),
-			errors.Contains(errorVal, things.ErrDisconnect),
-			errors.Contains(errorVal, auth.ErrCreateGroup):
-			w.WriteHeader(http.StatusBadRequest)
-
-		case errors.Contains(errorVal, io.ErrUnexpectedEOF),
-			errors.Contains(errorVal, io.EOF):
-			w.WriteHeader(http.StatusBadRequest)
-
-		case errors.Contains(errorVal, uuid.ErrGeneratingID):
-			w.WriteHeader(http.StatusInternalServerError)
-
-		default:
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-		if errorVal.Msg() != "" {
-			if err := json.NewEncoder(w).Encode(errorRes{Err: errorVal.Msg()}); err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-			}
-		}
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	if errorVal, ok := err.(errors.Error); ok {
+		w.Header().Set("Content-Type", contentType)
+		if err := json.NewEncoder(w).Encode(httputil.ErrorRes{Err: errorVal.Msg()}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 	}
 }

@@ -570,7 +570,7 @@ func (ts *thingsService) hasThing(ctx context.Context, chanID, thingKey string) 
 	}
 
 	if connected := ts.channelCache.HasThing(ctx, chanID, thingID); !connected {
-		return "", ErrEntityConnected
+		return "", errors.ErrAuthorization
 	}
 	return thingID, nil
 }

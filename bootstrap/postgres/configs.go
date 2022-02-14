@@ -29,17 +29,11 @@ const (
 )
 
 var (
-	errSaveDB           = errors.New("failed to save bootstrap configuration to database")
-	errMarshalChannel   = errors.New("failed to marshal channel into json")
-	errUnmarshalChannel = errors.New("failed to unmarshal json to channel")
-	errSaveChannels     = errors.New("failed to insert channels to database")
-	errSaveConnections  = errors.New("failed to insert connections to database")
-	errRetrieve         = errors.New("failed to retreive bootstrap configuration from database")
-	errUpdate           = errors.New("failed to update bootstrap configuration in database")
-	errRemove           = errors.New("failed to remove bootstrap configuration from database")
-	errUpdateChannels   = errors.New("failed to update channels in bootstrap configuration database")
-	errRemoveChannels   = errors.New("failed to remove channels from bootstrap configuration in database")
-	errDisconnectThing  = errors.New("failed to disconnect thing in bootstrap configuration in database")
+	errSaveChannels    = errors.New("failed to insert channels to database")
+	errSaveConnections = errors.New("failed to insert connections to database")
+	errUpdateChannels  = errors.New("failed to update channels in bootstrap configuration database")
+	errRemoveChannels  = errors.New("failed to remove channels from bootstrap configuration in database")
+	errDisconnectThing = errors.New("failed to disconnect thing in bootstrap configuration in database")
 )
 
 var _ bootstrap.ConfigRepository = (*configRepository)(nil)
@@ -61,7 +55,7 @@ func (cr configRepository) Save(cfg bootstrap.Config, chsConnIDs []string) (stri
 
 	tx, err := cr.db.Beginx()
 	if err != nil {
-		return "", errors.Wrap(errSaveDB, err)
+		return "", errors.Wrap(errors.ErrCreateEntity, err)
 	}
 
 	dbcfg := toDBConfig(cfg)
@@ -73,7 +67,7 @@ func (cr configRepository) Save(cfg bootstrap.Config, chsConnIDs []string) (stri
 		}
 
 		cr.rollback("Failed to insert a Config", tx)
-		return "", errors.Wrap(errSaveDB, e)
+		return "", errors.Wrap(errors.ErrCreateEntity, e)
 	}
 
 	if err := insertChannels(cfg.Owner, cfg.MFChannels, tx); err != nil {
@@ -110,7 +104,7 @@ func (cr configRepository) RetrieveByID(owner, id string) (bootstrap.Config, err
 			return empty, errors.Wrap(errors.ErrNotFound, err)
 		}
 
-		return empty, errors.Wrap(errRetrieve, err)
+		return empty, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	q = `SELECT mainflux_channel, name, metadata FROM channels ch
@@ -121,7 +115,7 @@ func (cr configRepository) RetrieveByID(owner, id string) (bootstrap.Config, err
 	rows, err := cr.db.NamedQuery(q, dbcfg)
 	if err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to retrieve connected due to %s", err))
-		return bootstrap.Config{}, errors.Wrap(errRetrieve, err)
+		return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 	defer rows.Close()
 
@@ -130,13 +124,13 @@ func (cr configRepository) RetrieveByID(owner, id string) (bootstrap.Config, err
 		dbch := dbChannel{}
 		if err := rows.StructScan(&dbch); err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to read connected thing due to %s", err))
-			return bootstrap.Config{}, errors.Wrap(errRetrieve, err)
+			return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
 		}
 		dbch.Owner = nullString(dbcfg.Owner)
 
 		ch, err := toChannel(dbch)
 		if err != nil {
-			return bootstrap.Config{}, errors.Wrap(errRetrieve, err)
+			return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
 		}
 		chans = append(chans, ch)
 	}
@@ -206,7 +200,7 @@ func (cr configRepository) RetrieveByExternalID(externalID string) (bootstrap.Co
 		if err == sql.ErrNoRows {
 			return empty, errors.Wrap(errors.ErrNotFound, err)
 		}
-		return empty, errors.Wrap(errRetrieve, err)
+		return empty, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	q = `SELECT mainflux_channel, name, metadata FROM channels ch
@@ -217,7 +211,7 @@ func (cr configRepository) RetrieveByExternalID(externalID string) (bootstrap.Co
 	rows, err := cr.db.NamedQuery(q, dbcfg)
 	if err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to retrieve connected due to %s", err))
-		return bootstrap.Config{}, errors.Wrap(errRetrieve, err)
+		return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 	defer rows.Close()
 
@@ -226,13 +220,13 @@ func (cr configRepository) RetrieveByExternalID(externalID string) (bootstrap.Co
 		dbch := dbChannel{}
 		if err := rows.StructScan(&dbch); err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to read connected thing due to %s", err))
-			return bootstrap.Config{}, errors.Wrap(errRetrieve, err)
+			return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
 		}
 
 		ch, err := toChannel(dbch)
 		if err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to deserialize channel due to %s", err))
-			return bootstrap.Config{}, errors.Wrap(errRetrieve, err)
+			return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
 		}
 
 		channels = append(channels, ch)
@@ -252,12 +246,12 @@ func (cr configRepository) Update(cfg bootstrap.Config) error {
 
 	res, err := cr.db.Exec(q, name, content, cfg.MFThing, cfg.Owner)
 	if err != nil {
-		return errors.Wrap(errUpdate, err)
+		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	cnt, err := res.RowsAffected()
 	if err != nil {
-		return errors.Wrap(errUpdate, err)
+		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	if cnt == 0 {
@@ -272,12 +266,12 @@ func (cr configRepository) UpdateCert(owner, thingID, clientCert, clientKey, caC
 
 	res, err := cr.db.Exec(q, clientCert, clientKey, caCert, thingID, owner)
 	if err != nil {
-		return err
+		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	cnt, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	if cnt == 0 {
@@ -290,12 +284,12 @@ func (cr configRepository) UpdateCert(owner, thingID, clientCert, clientKey, caC
 func (cr configRepository) UpdateConnections(owner, id string, channels []bootstrap.Channel, connections []string) error {
 	tx, err := cr.db.Beginx()
 	if err != nil {
-		return err
+		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	if err := insertChannels(owner, channels, tx); err != nil {
 		cr.rollback("Failed to insert Channels during the update", tx)
-		return err
+		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	if err := updateConnections(owner, id, connections, tx); err != nil {
@@ -305,12 +299,12 @@ func (cr configRepository) UpdateConnections(owner, id string, channels []bootst
 			}
 		}
 		cr.rollback("Failed to update connections during the update", tx)
-		return err
+		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	if err := tx.Commit(); err != nil {
 		cr.rollback("Failed to commit Config update", tx)
-		return err
+		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	return nil
@@ -319,7 +313,7 @@ func (cr configRepository) UpdateConnections(owner, id string, channels []bootst
 func (cr configRepository) Remove(owner, id string) error {
 	q := `DELETE FROM configs WHERE mainflux_thing = $1 AND owner = $2`
 	if _, err := cr.db.Exec(q, id, owner); err != nil {
-		return errors.Wrap(errRemove, err)
+		return errors.Wrap(errors.ErrRemoveEntity, err)
 	}
 
 	if _, err := cr.db.Exec(cleanupQuery); err != nil {
@@ -334,12 +328,12 @@ func (cr configRepository) ChangeState(owner, id string, state bootstrap.State) 
 
 	res, err := cr.db.Exec(q, state, id, owner)
 	if err != nil {
-		return err
+		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	cnt, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	if cnt == 0 {
@@ -358,14 +352,14 @@ func (cr configRepository) ListExisting(owner string, ids []string) ([]bootstrap
 	q := "SELECT mainflux_channel, name, metadata FROM channels WHERE owner = $1 AND mainflux_channel = ANY ($2)"
 	rows, err := cr.db.Queryx(q, owner, pq.Array(ids))
 	if err != nil {
-		return []bootstrap.Channel{}, err
+		return []bootstrap.Channel{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	for rows.Next() {
 		var dbch dbChannel
 		if err := rows.StructScan(&dbch); err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to read retrieved channels due to %s", err))
-			return []bootstrap.Channel{}, err
+			return []bootstrap.Channel{}, errors.Wrap(errors.ErrViewEntity, err)
 		}
 
 		ch, err := toChannel(dbch)
@@ -388,7 +382,7 @@ func (cr configRepository) RemoveThing(id string) error {
 		cr.log.Warn("Failed to clean dangling channels after removal")
 	}
 	if err != nil {
-		return errors.Wrap(errRemove, err)
+		return errors.Wrap(errors.ErrRemoveEntity, err)
 	}
 	return nil
 }
@@ -396,7 +390,7 @@ func (cr configRepository) RemoveThing(id string) error {
 func (cr configRepository) UpdateChannel(c bootstrap.Channel) error {
 	dbch, err := toDBChannel("", c)
 	if err != nil {
-		return err
+		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	q := `UPDATE channels SET name = :name, metadata = :metadata WHERE mainflux_channel = :mainflux_channel`
@@ -636,7 +630,7 @@ func toDBChannel(owner string, ch bootstrap.Channel) (dbChannel, error) {
 
 	metadata, err := json.Marshal(ch.Metadata)
 	if err != nil {
-		return dbChannel{}, errors.Wrap(errMarshalChannel, err)
+		return dbChannel{}, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	dbch.Metadata = string(metadata)
@@ -653,7 +647,7 @@ func toChannel(dbch dbChannel) (bootstrap.Channel, error) {
 	}
 
 	if err := json.Unmarshal([]byte(dbch.Metadata), &ch.Metadata); err != nil {
-		return bootstrap.Channel{}, errors.Wrap(errUnmarshalChannel, err)
+		return bootstrap.Channel{}, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return ch, nil

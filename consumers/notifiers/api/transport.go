@@ -6,7 +6,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"net/http"
 	"strings"
 
@@ -133,36 +132,34 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
-	switch errorVal := err.(type) {
-	case errors.Error:
-		w.Header().Set("Content-Type", contentType)
-		switch {
-		case errors.Contains(errorVal, errors.ErrMalformedEntity),
-			errors.Contains(errorVal, errInvalidContact),
-			errors.Contains(errorVal, errInvalidTopic),
-			errors.Contains(errorVal, errors.ErrInvalidQueryParams):
-			w.WriteHeader(http.StatusBadRequest)
-		case errors.Contains(errorVal, errors.ErrNotFound):
-			w.WriteHeader(http.StatusNotFound)
-		case errors.Contains(errorVal, errors.ErrAuthentication):
-			w.WriteHeader(http.StatusUnauthorized)
-		case errors.Contains(errorVal, errors.ErrConflict):
-			w.WriteHeader(http.StatusConflict)
-		case errors.Contains(errorVal, errors.ErrUnsupportedContentType):
-			w.WriteHeader(http.StatusUnsupportedMediaType)
-		case errors.Contains(errorVal, io.ErrUnexpectedEOF):
-			w.WriteHeader(http.StatusBadRequest)
-		case errors.Contains(errorVal, io.EOF):
-			w.WriteHeader(http.StatusBadRequest)
-		default:
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-		if errorVal.Msg() != "" {
-			if err := json.NewEncoder(w).Encode(errorRes{Err: errorVal.Msg()}); err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-			}
-		}
+	switch {
+	case errors.Contains(err, errors.ErrMalformedEntity),
+		errors.Contains(err, errInvalidContact),
+		errors.Contains(err, errInvalidTopic),
+		errors.Contains(err, errors.ErrInvalidQueryParams):
+		w.WriteHeader(http.StatusBadRequest)
+	case errors.Contains(err, errors.ErrNotFound):
+		w.WriteHeader(http.StatusNotFound)
+	case errors.Contains(err, errors.ErrAuthentication):
+		w.WriteHeader(http.StatusUnauthorized)
+	case errors.Contains(err, errors.ErrConflict):
+		w.WriteHeader(http.StatusConflict)
+	case errors.Contains(err, errors.ErrUnsupportedContentType):
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+
+	case errors.Contains(err, errors.ErrCreateEntity),
+		errors.Contains(err, errors.ErrViewEntity),
+		errors.Contains(err, errors.ErrRemoveEntity):
+		w.WriteHeader(http.StatusInternalServerError)
+
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	if errorVal, ok := err.(errors.Error); ok {
+		w.Header().Set("Content-Type", contentType)
+		if err := json.NewEncoder(w).Encode(httputil.ErrorRes{Err: errorVal.Msg()}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 	}
 }

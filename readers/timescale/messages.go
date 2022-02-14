@@ -25,8 +25,6 @@ const (
 	errInvalid = "invalid_text_representation"
 )
 
-var errReadMessages = errors.New("failed to read messages from timescale database")
-
 var _ readers.MessageRepository = (*timescaleRepository)(nil)
 
 type timescaleRepository struct {
@@ -74,7 +72,7 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 				return readers.MessagesPage{}, nil
 			}
 		}
-		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
+		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 	}
 	defer rows.Close()
 
@@ -87,7 +85,7 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 		for rows.Next() {
 			msg := senmlMessage{Message: senml.Message{}}
 			if err := rows.StructScan(&msg); err != nil {
-				return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
+				return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 			}
 
 			page.Messages = append(page.Messages, msg.Message)
@@ -96,11 +94,11 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 		for rows.Next() {
 			msg := jsonMessage{}
 			if err := rows.StructScan(&msg); err != nil {
-				return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
+				return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 			}
 			m, err := msg.toMap()
 			if err != nil {
-				return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
+				return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 			}
 			page.Messages = append(page.Messages, m)
 		}
@@ -110,7 +108,7 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 	q = fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, format, fmtCondition(chanID, rpm))
 	rows, err = tr.db.NamedQuery(q, params)
 	if err != nil {
-		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
+		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 	}
 	defer rows.Close()
 

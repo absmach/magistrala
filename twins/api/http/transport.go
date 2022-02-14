@@ -6,7 +6,6 @@ package http
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"net/http"
 	"strings"
 
@@ -94,7 +93,7 @@ func decodeTwinCreation(_ context.Context, r *http.Request) (interface{}, error)
 
 	req := addTwinReq{token: r.Header.Get("Authorization")}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -110,7 +109,7 @@ func decodeTwinUpdate(_ context.Context, r *http.Request) (interface{}, error) {
 		id:    bone.GetValue(r, "id"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
+		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return req, nil
@@ -197,32 +196,33 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
-	w.Header().Set("Content-Type", contentType)
-
-	switch err {
-	case errors.ErrMalformedEntity:
-		w.WriteHeader(http.StatusBadRequest)
-	case errors.ErrAuthentication:
+	switch {
+	case errors.Contains(err, errors.ErrAuthentication):
 		w.WriteHeader(http.StatusUnauthorized)
-	case errors.ErrNotFound:
-		w.WriteHeader(http.StatusNotFound)
-	case errors.ErrConflict:
-		w.WriteHeader(http.StatusUnprocessableEntity)
-	case errors.ErrUnsupportedContentType:
+	case errors.Contains(err, errors.ErrInvalidQueryParams):
+		w.WriteHeader(http.StatusBadRequest)
+	case errors.Contains(err, errors.ErrUnsupportedContentType):
 		w.WriteHeader(http.StatusUnsupportedMediaType)
-	case errors.ErrInvalidQueryParams:
+	case errors.Contains(err, errors.ErrMalformedEntity):
 		w.WriteHeader(http.StatusBadRequest)
-	case io.ErrUnexpectedEOF:
-		w.WriteHeader(http.StatusBadRequest)
-	case io.EOF:
-		w.WriteHeader(http.StatusBadRequest)
+	case errors.Contains(err, errors.ErrNotFound):
+		w.WriteHeader(http.StatusNotFound)
+	case errors.Contains(err, errors.ErrConflict):
+		w.WriteHeader(http.StatusConflict)
+
+	case errors.Contains(err, errors.ErrCreateEntity),
+		errors.Contains(err, errors.ErrUpdateEntity),
+		errors.Contains(err, errors.ErrViewEntity),
+		errors.Contains(err, errors.ErrRemoveEntity):
+		w.WriteHeader(http.StatusInternalServerError)
+
 	default:
-		switch err.(type) {
-		case *json.SyntaxError:
-			w.WriteHeader(http.StatusBadRequest)
-		case *json.UnmarshalTypeError:
-			w.WriteHeader(http.StatusBadRequest)
-		default:
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	if errorVal, ok := err.(errors.Error); ok {
+		w.Header().Set("Content-Type", contentType)
+		if err := json.NewEncoder(w).Encode(httputil.ErrorRes{Err: errorVal.Msg()}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}

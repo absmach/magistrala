@@ -16,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mainflux/mainflux/internal/httputil"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/things"
@@ -50,9 +51,9 @@ var (
 		Metadata: map[string]interface{}{"test": "data"},
 	}
 	invalidName    = strings.Repeat("m", maxNameSize+1)
-	notFoundRes    = toJSON(errorRes{errors.ErrNotFound.Error()})
-	unauthzRes     = toJSON(errorRes{errors.ErrAuthorization.Error()})
-	unauthRes      = toJSON(errorRes{errors.ErrAuthentication.Error()})
+	notFoundRes    = toJSON(httputil.ErrorRes{Err: errors.ErrNotFound.Error()})
+	unauthzRes     = toJSON(httputil.ErrorRes{Err: errors.ErrAuthorization.Error()})
+	unauthRes      = toJSON(httputil.ErrorRes{Err: errors.ErrAuthentication.Error()})
 	searchThingReq = things.PageMetadata{
 		Limit:  5,
 		Offset: 0,
@@ -2861,8 +2862,4 @@ type channelsPageRes struct {
 	Total    uint64       `json:"total"`
 	Offset   uint64       `json:"offset"`
 	Limit    uint64       `json:"limit"`
-}
-
-type errorRes struct {
-	Err string `json:"error"`
 }

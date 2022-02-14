@@ -295,7 +295,3 @@ type pageRes struct {
 	Order  string `json:"order"`
 	Dir    string `json:"direction"`
 }
-
-type errorRes struct {
-	Err string `json:"error"`
-}

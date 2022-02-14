@@ -16,6 +16,7 @@ import (
 	"testing"
 
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/internal/httputil"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/users"
@@ -39,12 +40,12 @@ const (
 
 var (
 	user           = users.User{Email: validEmail, Password: validPass}
-	notFoundRes    = toJSON(errorRes{errors.ErrNotFound.Error()})
-	unauthRes      = toJSON(errorRes{errors.ErrAuthentication.Error()})
-	malformedRes   = toJSON(errorRes{errors.ErrMalformedEntity.Error()})
-	weakPassword   = toJSON(errorRes{users.ErrPasswordFormat.Error()})
-	unsupportedRes = toJSON(errorRes{errors.ErrUnsupportedContentType.Error()})
-	failDecodeRes  = toJSON(errorRes{errors.ErrMalformedEntity.Error()})
+	notFoundRes    = toJSON(httputil.ErrorRes{Err: errors.ErrNotFound.Error()})
+	unauthRes      = toJSON(httputil.ErrorRes{Err: errors.ErrAuthentication.Error()})
+	malformedRes   = toJSON(httputil.ErrorRes{Err: errors.ErrMalformedEntity.Error()})
+	weakPassword   = toJSON(httputil.ErrorRes{Err: users.ErrPasswordFormat.Error()})
+	unsupportedRes = toJSON(httputil.ErrorRes{Err: errors.ErrUnsupportedContentType.Error()})
+	failDecodeRes  = toJSON(httputil.ErrorRes{Err: errors.ErrMalformedEntity.Error()})
 	passRegex      = regexp.MustCompile("^.{8,}$")
 )
 
@@ -296,7 +297,7 @@ func TestPasswordResetRequest(t *testing.T) {
 		res         string
 	}{
 		{"password reset request with valid email", data, contentType, http.StatusCreated, expectedExisting},
-		{"password reset request with invalid email", nonexistentData, contentType, http.StatusBadRequest, notFoundRes},
+		{"password reset request with invalid email", nonexistentData, contentType, http.StatusNotFound, notFoundRes},
 		{"password reset request with invalid request format", "{", contentType, http.StatusBadRequest, malformedRes},
 		{"password reset request with empty JSON request", "{}", contentType, http.StatusBadRequest, malformedRes},
 		{"password reset request with empty request", "", contentType, http.StatusBadRequest, malformedRes},
@@ -473,8 +474,4 @@ func TestPasswordChange(t *testing.T) {
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		assert.Equal(t, tc.res, token, fmt.Sprintf("%s: expected body %s got %s", tc.desc, tc.res, token))
 	}
-}
-
-type errorRes struct {
-	Err string `json:"error"`
 }

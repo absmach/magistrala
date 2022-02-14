@@ -41,7 +41,3 @@ func (res deletePoliciesRes) Headers() map[string]string {
 func (res deletePoliciesRes) Empty() bool {
 	return true
 }
-
-type errorRes struct {
-	Err string `json:"error"`
-}

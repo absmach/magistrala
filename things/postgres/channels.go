@@ -385,7 +385,7 @@ func (cr channelRepository) HasThing(ctx context.Context, chanID, thingKey strin
 	var thingID string
 	q := `SELECT id FROM things WHERE key = $1`
 	if err := cr.db.QueryRowxContext(ctx, q, thingKey).Scan(&thingID); err != nil {
-		return "", errors.Wrap(things.ErrEntityConnected, err)
+		return "", errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	if err := cr.hasThing(ctx, chanID, thingID); err != nil {
@@ -403,7 +403,7 @@ func (cr channelRepository) hasThing(ctx context.Context, chanID, thingID string
 	q := `SELECT EXISTS (SELECT 1 FROM connections WHERE channel_id = $1 AND thing_id = $2);`
 	exists := false
 	if err := cr.db.QueryRowxContext(ctx, q, chanID, thingID).Scan(&exists); err != nil {
-		return errors.Wrap(things.ErrEntityConnected, err)
+		return errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	if !exists {

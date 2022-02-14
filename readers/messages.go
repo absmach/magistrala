@@ -3,6 +3,8 @@
 
 package readers
 
+import "errors"
+
 const (
 	// EqualKey represents the equal comparison operator key.
 	EqualKey = "eq"
@@ -15,6 +17,9 @@ const (
 	// GreaterThanEqualKey represents the greater-than-or-equal comparison operator key.
 	GreaterThanEqualKey = "ge"
 )
+
+// ErrReadMessages indicates failure occurred while reading messages from database.
+var ErrReadMessages = errors.New("failed to read messages from database")
 
 // MessageRepository specifies message reader API.
 type MessageRepository interface {

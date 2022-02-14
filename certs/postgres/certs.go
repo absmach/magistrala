@@ -18,12 +18,7 @@ import (
 
 const duplicateErr = "unique_violation"
 
-var (
-	errSaveDB     = errors.New("failed to save certificate to database")
-	errRetrieveDB = errors.New("failed to retrieve certificate from db")
-	errRemove     = errors.New("failed to remove certificate from database")
-	errInvalid    = "invalid_text_representation"
-)
+var errInvalid = "invalid_text_representation"
 
 var _ certs.Repository = (*certsRepository)(nil)
 
@@ -84,7 +79,7 @@ func (cr certsRepository) Save(ctx context.Context, cert certs.Cert) (string, er
 
 	tx, err := cr.db.Beginx()
 	if err != nil {
-		return "", errors.Wrap(errSaveDB, err)
+		return "", errors.Wrap(errors.ErrCreateEntity, err)
 	}
 
 	dbcrt := toDBCert(cert)
@@ -97,7 +92,7 @@ func (cr certsRepository) Save(ctx context.Context, cert certs.Cert) (string, er
 
 		cr.rollback("Failed to insert a Cert", tx, err)
 
-		return "", errors.Wrap(errSaveDB, e)
+		return "", errors.Wrap(errors.ErrCreateEntity, e)
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -109,14 +104,14 @@ func (cr certsRepository) Save(ctx context.Context, cert certs.Cert) (string, er
 
 func (cr certsRepository) Remove(ctx context.Context, ownerID, serial string) error {
 	if _, err := cr.RetrieveBySerial(ctx, ownerID, serial); err != nil {
-		return errors.Wrap(errRemove, err)
+		return errors.Wrap(errors.ErrRemoveEntity, err)
 	}
 	q := `DELETE FROM certs WHERE serial = :serial`
 	var c certs.Cert
 	c.Serial = serial
 	dbcrt := toDBCert(c)
 	if _, err := cr.db.NamedExecContext(ctx, q, dbcrt); err != nil {
-		return errors.Wrap(errRemove, err)
+		return errors.Wrap(errors.ErrRemoveEntity, err)
 	}
 	return nil
 }
@@ -168,7 +163,7 @@ func (cr certsRepository) RetrieveBySerial(ctx context.Context, ownerID, serialI
 			return c, errors.Wrap(errors.ErrNotFound, err)
 		}
 
-		return c, errors.Wrap(errRetrieveDB, err)
+		return c, errors.Wrap(errors.ErrViewEntity, err)
 	}
 	c = toCert(dbcrt)
 

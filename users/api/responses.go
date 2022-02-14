@@ -187,10 +187,6 @@ func (res viewGroupRes) Empty() bool {
 	return false
 }
 
-type errorRes struct {
-	Err string `json:"error"`
-}
-
 type passwResetReqRes struct {
 	Msg string `json:"msg"`
 }

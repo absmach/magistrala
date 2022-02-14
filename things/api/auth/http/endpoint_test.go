@@ -205,6 +205,12 @@ func TestCanAccessByKey(t *testing.T) {
 			req:         "",
 			status:      http.StatusBadRequest,
 		},
+		"check access with empty channel id": {
+			contentType: contentType,
+			chanID:      "",
+			req:         data,
+			status:      http.StatusBadRequest,
+		},
 	}
 
 	for desc, tc := range cases {
@@ -269,7 +275,7 @@ func TestCanAccessByID(t *testing.T) {
 			contentType: contentType,
 			chanID:      ch.ID,
 			req:         "{}",
-			status:      http.StatusUnauthorized,
+			status:      http.StatusBadRequest,
 		},
 		"check access with invalid JSON request": {
 			contentType: contentType,
@@ -281,6 +287,12 @@ func TestCanAccessByID(t *testing.T) {
 			contentType: contentType,
 			chanID:      ch.ID,
 			req:         "",
+			status:      http.StatusBadRequest,
+		},
+		"check access with empty channel id": {
+			contentType: contentType,
+			chanID:      "",
+			req:         data,
 			status:      http.StatusBadRequest,
 		},
 	}

@@ -13,8 +13,6 @@ import (
 	"github.com/mainflux/mainflux/readers"
 )
 
-var errReadMessages = errors.New("failed to read messages from cassandra database")
-
 const (
 	format = "format"
 	// Table for SenML messages
@@ -86,7 +84,7 @@ func (cr cassandraRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 						return readers.MessagesPage{}, nil
 					}
 				}
-				return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
+				return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 			}
 			page.Messages = append(page.Messages, msg)
 		}
@@ -100,11 +98,11 @@ func (cr cassandraRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 						return readers.MessagesPage{}, nil
 					}
 				}
-				return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
+				return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 			}
 			m, err := msg.toMap()
 			if err != nil {
-				return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
+				return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 			}
 			page.Messages = append(page.Messages, m)
 		}
@@ -116,7 +114,7 @@ func (cr cassandraRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 				return readers.MessagesPage{}, nil
 			}
 		}
-		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
+		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 	}
 
 	return page, nil

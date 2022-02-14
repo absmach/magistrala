@@ -28,7 +28,7 @@ func NewChannelCache(client *redis.Client) things.ChannelCache {
 func (cc channelCache) Connect(ctx context.Context, chanID, thingID string) error {
 	cid, tid := kv(chanID, thingID)
 	if err := cc.client.SAdd(ctx, cid, tid).Err(); err != nil {
-		return errors.Wrap(things.ErrConnect, err)
+		return errors.Wrap(errors.ErrCreateEntity, err)
 	}
 	return nil
 }
@@ -41,7 +41,7 @@ func (cc channelCache) HasThing(ctx context.Context, chanID, thingID string) boo
 func (cc channelCache) Disconnect(ctx context.Context, chanID, thingID string) error {
 	cid, tid := kv(chanID, thingID)
 	if err := cc.client.SRem(ctx, cid, tid).Err(); err != nil {
-		return errors.Wrap(things.ErrDisconnect, err)
+		return errors.Wrap(errors.ErrRemoveEntity, err)
 	}
 	return nil
 }

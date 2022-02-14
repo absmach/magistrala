@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"strings"
 
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -33,6 +32,7 @@ const (
 	valueKey         = "v"
 	stringValueKey   = "vs"
 	dataValueKey     = "vd"
+	boolValueKey     = "vb"
 	comparatorKey    = "comparator"
 	fromKey          = "from"
 	toKey            = "to"
@@ -159,7 +159,7 @@ func decodeList(ctx context.Context, r *http.Request) (interface{}, error) {
 		},
 	}
 
-	vb, err := readBoolValueQuery(r, "vb")
+	vb, err := httputil.ReadBoolQuery(r, boolValueKey, false)
 	if err != nil && err != errors.ErrNotFoundParam {
 		return nil, err
 	}
@@ -196,13 +196,17 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, errors.ErrAuthentication):
 		w.WriteHeader(http.StatusUnauthorized)
+
+	case errors.Contains(err, readers.ErrReadMessages):
+		w.WriteHeader(http.StatusInternalServerError)
+
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}
-	errorVal, ok := err.(errors.Error)
-	if ok {
+
+	if errorVal, ok := err.(errors.Error); ok {
 		w.Header().Set("Content-Type", contentType)
-		if err := json.NewEncoder(w).Encode(errorRes{Err: errorVal.Msg()}); err != nil {
+		if err := json.NewEncoder(w).Encode(httputil.ErrorRes{Err: errorVal.Msg()}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}
@@ -235,22 +239,4 @@ func authorize(ctx context.Context, req listMessagesReq, tc mainflux.ThingsServi
 		}
 		return nil
 	}
-}
-
-func readBoolValueQuery(r *http.Request, key string) (bool, error) {
-	vals := bone.GetQuery(r, key)
-	if len(vals) > 1 {
-		return false, errors.ErrInvalidQueryParams
-	}
-
-	if len(vals) == 0 {
-		return false, errors.ErrNotFoundParam
-	}
-
-	b, err := strconv.ParseBool(vals[0])
-	if err != nil {
-		return false, errors.ErrInvalidQueryParams
-	}
-
-	return b, nil
 }

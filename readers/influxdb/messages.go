@@ -22,8 +22,6 @@ const (
 	defMeasurement = "messages"
 )
 
-var errReadMessages = errors.New("failed to read messages from influxdb database")
-
 var _ readers.MessageRepository = (*influxRepository)(nil)
 
 type influxRepository struct {
@@ -55,10 +53,10 @@ func (repo *influxRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 
 	resp, err := repo.client.Query(q)
 	if err != nil {
-		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
+		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 	}
 	if resp.Error() != nil {
-		return readers.MessagesPage{}, errors.Wrap(errReadMessages, resp.Error())
+		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, resp.Error())
 	}
 
 	if len(resp.Results) == 0 || len(resp.Results[0].Series) == 0 {
@@ -77,7 +75,7 @@ func (repo *influxRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 
 	total, err := repo.count(format, condition)
 	if err != nil {
-		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
+		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 	}
 
 	page := readers.MessagesPage{

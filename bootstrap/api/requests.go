@@ -8,6 +8,8 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
+const maxLimitSize = 100
+
 type apiReq interface {
 	validate() error
 }
@@ -123,7 +125,7 @@ func (req listReq) validate() error {
 		return errors.ErrAuthentication
 	}
 
-	if req.limit == 0 || req.limit > maxLimit {
+	if req.limit > maxLimitSize {
 		return errors.ErrMalformedEntity
 	}
 

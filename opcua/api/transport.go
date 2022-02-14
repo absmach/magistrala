@@ -98,14 +98,19 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
-	w.Header().Set("Content-Type", contentType)
+	switch {
+	case errors.Contains(err, errors.ErrInvalidQueryParams),
+		errors.Contains(err, errors.ErrMalformedEntity):
+		w.WriteHeader(http.StatusBadRequest)
 
-	switch err {
-	case errors.ErrMalformedEntity:
-		w.WriteHeader(http.StatusBadRequest)
-	case errors.ErrInvalidQueryParams:
-		w.WriteHeader(http.StatusBadRequest)
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	if errorVal, ok := err.(errors.Error); ok {
+		w.Header().Set("Content-Type", contentType)
+		if err := json.NewEncoder(w).Encode(httputil.ErrorRes{Err: errorVal.Msg()}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 	}
 }

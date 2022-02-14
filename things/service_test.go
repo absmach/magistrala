@@ -1250,12 +1250,12 @@ func TestCanAccessByKey(t *testing.T) {
 		"non-existing chan": {
 			token:   ths[0].Key,
 			channel: wrongValue,
-			err:     things.ErrEntityConnected,
+			err:     errors.ErrAuthorization,
 		},
 		"non-connected channel": {
 			token:   ths[0].Key,
 			channel: chs[1].ID,
-			err:     things.ErrEntityConnected,
+			err:     errors.ErrAuthorization,
 		},
 	}
 
@@ -1290,17 +1290,17 @@ func TestCanAccessByID(t *testing.T) {
 		"access to non-existing thing": {
 			thingID: wrongValue,
 			channel: ch.ID,
-			err:     things.ErrEntityConnected,
+			err:     errors.ErrAuthorization,
 		},
 		"access to non-existing channel": {
 			thingID: th.ID,
 			channel: wrongID,
-			err:     things.ErrEntityConnected,
+			err:     errors.ErrAuthorization,
 		},
 		"access to not-connected thing": {
 			thingID: ths[1].ID,
 			channel: ch.ID,
-			err:     things.ErrEntityConnected,
+			err:     errors.ErrAuthorization,
 		},
 	}
 

@@ -6,31 +6,30 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/bootstrap"
+	"github.com/mainflux/mainflux/internal/httputil"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
-	contentType  = "application/json"
-	maxLimit     = 100
-	defaultLimit = 10
+	contentType = "application/json"
+	offsetKey   = "offset"
+	limitKey    = "limit"
+	defOffset   = 0
+	defLimit    = 10
 )
 
 var (
-	errInvalidLimitParam  = errors.New("invalid limit query param")
-	errInvalidOffsetParam = errors.New("invalid offset query param")
-	fullMatch             = []string{"state", "external_id", "mainflux_id", "mainflux_key"}
-	partialMatch          = []string{"name"}
+	fullMatch    = []string{"state", "external_id", "mainflux_id", "mainflux_key"}
+	partialMatch = []string{"name"}
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
@@ -165,14 +164,19 @@ func decodeUpdateConnRequest(_ context.Context, r *http.Request) (interface{}, e
 }
 
 func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	o, err := httputil.ReadUintQuery(r, offsetKey, defOffset)
+	if err != nil {
+		return nil, err
+	}
+
+	l, err := httputil.ReadUintQuery(r, limitKey, defLimit)
+	if err != nil {
+		return nil, err
+	}
+
 	q, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
 		return nil, errors.ErrInvalidQueryParams
-	}
-
-	offset, limit, err := parsePagePrams(q)
-	if err != nil {
-		return nil, err
 	}
 
 	filter := parseFilter(q)
@@ -180,8 +184,8 @@ func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) 
 	req := listReq{
 		key:    r.Header.Get("Authorization"),
 		filter: filter,
-		offset: offset,
-		limit:  limit,
+		offset: o,
+		limit:  l,
 	}
 
 	return req, nil
@@ -248,81 +252,41 @@ func encodeSecureRes(_ context.Context, w http.ResponseWriter, response interfac
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
-	switch errorVal := err.(type) {
-	case errors.Error:
-		w.Header().Set("Content-Type", contentType)
-		switch {
-		case errors.Contains(errorVal, errors.ErrUnsupportedContentType):
-			w.WriteHeader(http.StatusUnsupportedMediaType)
-		case errors.Contains(errorVal, errors.ErrInvalidQueryParams):
-			w.WriteHeader(http.StatusBadRequest)
+	switch {
+	case errors.Contains(err, errors.ErrUnsupportedContentType):
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+	case errors.Contains(err, errors.ErrInvalidQueryParams),
+		errors.Contains(err, errors.ErrMalformedEntity):
+		w.WriteHeader(http.StatusBadRequest)
+	case errors.Contains(err, errors.ErrNotFound):
+		w.WriteHeader(http.StatusNotFound)
+	case errors.Contains(err, errors.ErrAuthentication):
+		w.WriteHeader(http.StatusUnauthorized)
+	case errors.Contains(err, bootstrap.ErrExternalKey),
+		errors.Contains(err, bootstrap.ErrExternalKeySecure),
+		errors.Contains(err, errors.ErrAuthorization):
+		w.WriteHeader(http.StatusForbidden)
+	case errors.Contains(err, errors.ErrConflict):
+		w.WriteHeader(http.StatusConflict)
+	case errors.Contains(err, bootstrap.ErrThings):
+		w.WriteHeader(http.StatusServiceUnavailable)
 
-		case errors.Contains(errorVal, errors.ErrMalformedEntity):
-			w.WriteHeader(http.StatusBadRequest)
-		case errors.Contains(errorVal, errors.ErrNotFound):
-			w.WriteHeader(http.StatusNotFound)
-		case errors.Contains(errorVal, errors.ErrAuthentication):
-			w.WriteHeader(http.StatusUnauthorized)
-		case errors.Contains(errorVal, bootstrap.ErrExternalKey),
-			errors.Contains(errorVal, bootstrap.ErrExternalKeySecure),
-			errors.Contains(errorVal, errors.ErrAuthorization):
-			w.WriteHeader(http.StatusForbidden)
-		case errors.Contains(errorVal, errors.ErrConflict):
-			w.WriteHeader(http.StatusConflict)
-		case errors.Contains(errorVal, bootstrap.ErrThings):
-			w.WriteHeader(http.StatusServiceUnavailable)
-		case errors.Contains(errorVal, io.EOF):
-			w.WriteHeader(http.StatusBadRequest)
-		case errors.Contains(errorVal, io.ErrUnexpectedEOF):
-			w.WriteHeader(http.StatusBadRequest)
-		default:
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-		if errorVal.Msg() != "" {
-			if err := json.NewEncoder(w).Encode(errorRes{Err: errorVal.Msg()}); err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-			}
-		}
+	case errors.Contains(err, errors.ErrCreateEntity),
+		errors.Contains(err, errors.ErrUpdateEntity),
+		errors.Contains(err, errors.ErrViewEntity),
+		errors.Contains(err, errors.ErrRemoveEntity):
+		w.WriteHeader(http.StatusInternalServerError)
+
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}
-}
 
-func parseUint(s string) (uint64, error) {
-	if s == "" {
-		return 0, nil
+	if errorVal, ok := err.(errors.Error); ok {
+		w.Header().Set("Content-Type", contentType)
+		if err := json.NewEncoder(w).Encode(httputil.ErrorRes{Err: errorVal.Msg()}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 	}
-
-	ret, err := strconv.ParseUint(s, 10, 64)
-	if err != nil {
-		return 0, errors.ErrInvalidQueryParams
-	}
-
-	return ret, nil
-}
-
-func parsePagePrams(q url.Values) (uint64, uint64, error) {
-	offset, err := parseUint(q.Get("offset"))
-	q.Del("offset")
-	if err != nil {
-		return 0, 0, errors.Wrap(errInvalidOffsetParam, err)
-	}
-
-	limit, err := parseUint(q.Get("limit"))
-	q.Del("limit")
-	if err != nil {
-		return 0, 0, errors.Wrap(errInvalidLimitParam, err)
-	}
-
-	if limit > maxLimit {
-		limit = maxLimit
-	}
-
-	if limit == 0 {
-		limit = defaultLimit
-	}
-
-	return offset, limit, nil
 }
 
 func parseFilter(values url.Values) bootstrap.Filter {

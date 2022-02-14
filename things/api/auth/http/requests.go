@@ -23,8 +23,12 @@ type canAccessByKeyReq struct {
 }
 
 func (req canAccessByKeyReq) validate() error {
-	if req.Token == "" || req.chanID == "" {
+	if req.Token == "" {
 		return errors.ErrAuthentication
+	}
+
+	if req.chanID == "" {
+		return errors.ErrMalformedEntity
 	}
 
 	return nil
@@ -37,7 +41,7 @@ type canAccessByIDReq struct {
 
 func (req canAccessByIDReq) validate() error {
 	if req.ThingID == "" || req.chanID == "" {
-		return errors.ErrAuthentication
+		return errors.ErrMalformedEntity
 	}
 
 	return nil

@@ -22,14 +22,6 @@ const (
 	errTruncation = "string_data_right_truncation"
 )
 
-var (
-	errUpdateDB         = errors.New("Update user email to DB failed")
-	errUpdateUserDB     = errors.New("Update user metadata to DB failed")
-	errUpdatePasswordDB = errors.New("Update password to DB failed")
-	errMarshal          = errors.New("Failed to marshal metadata")
-	errUnmarshal        = errors.New("Failed to unmarshal metadata")
-)
-
 var _ users.UserRepository = (*userRepository)(nil)
 
 const errDuplicate = "unique_violation"
@@ -85,11 +77,11 @@ func (ur userRepository) Update(ctx context.Context, user users.User) error {
 
 	dbu, err := toDBUser(user)
 	if err != nil {
-		return errors.Wrap(errUpdateDB, err)
+		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	if _, err := ur.db.NamedExecContext(ctx, q, dbu); err != nil {
-		return errors.Wrap(errUpdateDB, err)
+		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	return nil
@@ -100,11 +92,11 @@ func (ur userRepository) UpdateUser(ctx context.Context, user users.User) error 
 
 	dbu, err := toDBUser(user)
 	if err != nil {
-		return errors.Wrap(errUpdateUserDB, err)
+		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	if _, err := ur.db.NamedExecContext(ctx, q, dbu); err != nil {
-		return errors.Wrap(errUpdateUserDB, err)
+		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	return nil
@@ -230,7 +222,7 @@ func (ur userRepository) UpdatePassword(ctx context.Context, email, password str
 	}
 
 	if _, err := ur.db.NamedExecContext(ctx, q, db); err != nil {
-		return errors.Wrap(errUpdatePasswordDB, err)
+		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	return nil
@@ -283,7 +275,7 @@ func toDBUser(u users.User) (dbUser, error) {
 	if len(u.Metadata) > 0 {
 		b, err := json.Marshal(u.Metadata)
 		if err != nil {
-			return dbUser{}, errors.Wrap(errMarshal, err)
+			return dbUser{}, errors.Wrap(errors.ErrMalformedEntity, err)
 		}
 		data = b
 	}
@@ -315,7 +307,7 @@ func toUser(dbu dbUser) (users.User, error) {
 	var metadata map[string]interface{}
 	if dbu.Metadata != nil {
 		if err := json.Unmarshal([]byte(dbu.Metadata), &metadata); err != nil {
-			return users.User{}, errors.Wrap(errUnmarshal, err)
+			return users.User{}, errors.Wrap(errors.ErrMalformedEntity, err)
 		}
 	}
 

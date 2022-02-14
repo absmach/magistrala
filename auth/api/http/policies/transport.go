@@ -3,7 +3,6 @@ package policies
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"net/http"
 	"strings"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/auth"
+	"github.com/mainflux/mainflux/internal/httputil"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/opentracing/opentracing-go"
 )
@@ -87,19 +87,15 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusForbidden)
 	case errors.Contains(err, auth.ErrMemberAlreadyAssigned):
 		w.WriteHeader(http.StatusConflict)
-	case errors.Contains(err, io.EOF):
-		w.WriteHeader(http.StatusBadRequest)
-	case errors.Contains(err, io.ErrUnexpectedEOF):
-		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, errors.ErrUnsupportedContentType):
 		w.WriteHeader(http.StatusUnsupportedMediaType)
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
-	if errVal, ok := err.(errors.Error); ok && errVal.Msg() != "" {
+	if errorVal, ok := err.(errors.Error); ok {
 		w.Header().Set("Content-Type", contentType)
-		if err := json.NewEncoder(w).Encode(errorRes{Err: errVal.Msg()}); err != nil {
+		if err := json.NewEncoder(w).Encode(httputil.ErrorRes{Err: errorVal.Msg()}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}

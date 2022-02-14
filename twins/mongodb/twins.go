@@ -40,7 +40,7 @@ func (tr *twinRepository) Save(ctx context.Context, tw twins.Twin) (string, erro
 	coll := tr.db.Collection(twinsCollection)
 
 	if _, err := coll.InsertOne(context.Background(), tw); err != nil {
-		return "", err
+		return "", errors.Wrap(errors.ErrCreateEntity, err)
 	}
 
 	return tw.ID, nil
@@ -108,17 +108,16 @@ func (tr *twinRepository) RetrieveByAttribute(ctx context.Context, channel, subt
 	}
 
 	cur, err := coll.Aggregate(ctx, []bson.M{prj1, match, prj2}, findOptions)
-
-	var ids []string
 	if err != nil {
-		return ids, err
+		return []string{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 	defer cur.Close(ctx)
 
 	if err := cur.Err(); err != nil {
-		return ids, nil
+		return []string{}, nil
 	}
 
+	var ids []string
 	for cur.Next(ctx) {
 		var elem struct {
 			ID string `json:"id"`
@@ -153,17 +152,17 @@ func (tr *twinRepository) RetrieveAll(ctx context.Context, owner string, offset 
 	}
 	cur, err := coll.Find(ctx, filter, findOptions)
 	if err != nil {
-		return twins.Page{}, err
+		return twins.Page{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	results, err := decodeTwins(ctx, cur)
 	if err != nil {
-		return twins.Page{}, err
+		return twins.Page{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	total, err := coll.CountDocuments(ctx, filter)
 	if err != nil {
-		return twins.Page{}, err
+		return twins.Page{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	return twins.Page{
@@ -182,7 +181,7 @@ func (tr *twinRepository) Remove(ctx context.Context, twinID string) error {
 	filter := bson.M{"id": twinID}
 	res, err := coll.DeleteOne(context.Background(), filter)
 	if err != nil {
-		return err
+		return errors.Wrap(errors.ErrRemoveEntity, err)
 	}
 
 	if res.DeletedCount < 1 {

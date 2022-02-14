@@ -23,6 +23,7 @@ import (
 	"github.com/mainflux/mainflux/bootstrap"
 	bsapi "github.com/mainflux/mainflux/bootstrap/api"
 	"github.com/mainflux/mainflux/bootstrap/mocks"
+	"github.com/mainflux/mainflux/internal/httputil"
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
 	"github.com/mainflux/mainflux/things"
@@ -81,12 +82,12 @@ var (
 		CACert:     "newca",
 	}
 
-	bsErrorRes   = toJSON(errorRes{bootstrap.ErrBootstrap.Error()})
-	authnRes     = toJSON(errorRes{errors.ErrAuthentication.Error()})
-	authzRes     = toJSON(errorRes{errors.ErrAuthorization.Error()})
-	malformedRes = toJSON(errorRes{errors.ErrMalformedEntity.Error()})
-	extKeyRes    = toJSON(errorRes{bootstrap.ErrExternalKey.Error()})
-	extSecKeyRes = toJSON(errorRes{bootstrap.ErrExternalKeySecure.Error()})
+	bsErrorRes   = toJSON(httputil.ErrorRes{Err: bootstrap.ErrBootstrap.Error()})
+	authnRes     = toJSON(httputil.ErrorRes{Err: errors.ErrAuthentication.Error()})
+	authzRes     = toJSON(httputil.ErrorRes{Err: errors.ErrAuthorization.Error()})
+	malformedRes = toJSON(httputil.ErrorRes{Err: errors.ErrMalformedEntity.Error()})
+	extKeyRes    = toJSON(httputil.ErrorRes{Err: bootstrap.ErrExternalKey.Error()})
+	extSecKeyRes = toJSON(httputil.ErrorRes{Err: bootstrap.ErrExternalKeySecure.Error()})
 )
 
 type testRequest struct {
@@ -837,13 +838,8 @@ func TestList(t *testing.T) {
 			desc:   "view with limit greater than allowed",
 			auth:   validToken,
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d", path, 0, 1000),
-			status: http.StatusOK,
-			res: configPage{
-				Total:   uint64(len(list)),
-				Offset:  0,
-				Limit:   100,
-				Configs: list[:100],
-			},
+			status: http.StatusBadRequest,
+			res:    configPage{},
 		},
 		{
 			desc:   "view list with no specified limit and offset",
@@ -1289,8 +1285,4 @@ type configPage struct {
 	Offset  uint64   `json:"offset"`
 	Limit   uint64   `json:"limit"`
 	Configs []config `json:"configs"`
-}
-
-type errorRes struct {
-	Err string `json:"error"`
 }

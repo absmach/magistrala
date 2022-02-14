@@ -72,7 +72,7 @@ func TestGroupSave(t *testing.T) {
 				OwnerID: usrID,
 				Name:    groupName,
 			},
-			err: auth.ErrGroupConflict,
+			err: errors.ErrConflict,
 		},
 		{
 			desc: "create group with invalid name",
@@ -121,7 +121,7 @@ func TestGroupSave(t *testing.T) {
 				OwnerID:  usrID,
 				Name:     "wrongParent",
 			},
-			err: auth.ErrCreateGroup,
+			err: errors.ErrCreateEntity,
 		},
 	}
 
@@ -182,7 +182,7 @@ func TestGroupRetrieveByID(t *testing.T) {
 	assert.True(t, retrieved.Path == fmt.Sprintf("%s.%s", group1.ID, group2.ID), fmt.Sprintf("Save group, Path: expected %s got %s\n", fmt.Sprintf("%s.%s", group1.ID, group2.ID), retrieved.Path))
 
 	retrieved, err = groupRepo.RetrieveByID(context.Background(), generateGroupID(t))
-	assert.True(t, errors.Contains(err, auth.ErrGroupNotFound), fmt.Sprintf("Retrieve group: expected %s got %s\n", auth.ErrGroupNotFound, err))
+	assert.True(t, errors.Contains(err, errors.ErrNotFound), fmt.Sprintf("Retrieve group: expected %s got %s\n", errors.ErrNotFound, err))
 }
 
 func TestGroupUpdate(t *testing.T) {
@@ -245,7 +245,7 @@ func TestGroupUpdate(t *testing.T) {
 				ID:   "wrong",
 				Name: groupName + "-2",
 			},
-			err: auth.ErrUpdateGroup,
+			err: errors.ErrUpdateEntity,
 		},
 		{
 			desc: "update group for invalid name",
@@ -356,7 +356,7 @@ func TestGroupDelete(t *testing.T) {
 	assert.True(t, errors.Contains(err, nil), fmt.Sprintf("delete parent with children with no members: expected %v got %v\n", nil, err))
 
 	_, err = groupRepo.RetrieveByID(context.Background(), groupChild1.ID)
-	assert.True(t, errors.Contains(err, auth.ErrGroupNotFound), fmt.Sprintf("retrieve child after parent removed: expected %v got %v\n", nil, err))
+	assert.True(t, errors.Contains(err, errors.ErrNotFound), fmt.Sprintf("retrieve child after parent removed: expected %v got %v\n", nil, err))
 }
 
 func TestRetrieveAll(t *testing.T) {

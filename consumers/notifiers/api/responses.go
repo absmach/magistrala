@@ -87,7 +87,3 @@ func (res removeSubRes) Headers() map[string]string {
 func (res removeSubRes) Empty() bool {
 	return true
 }
-
-type errorRes struct {
-	Err string `json:"error"`
-}

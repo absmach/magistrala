@@ -84,8 +84,8 @@ func TestSendMessage(t *testing.T) {
 		"publish message unable to authorize": {
 			chanID: chanID,
 			msg:    msg,
-			auth:   mocks.ServiceErrToken,
-			err:    createError(sdk.ErrFailedPublish, http.StatusServiceUnavailable),
+			auth:   "invalid-token",
+			err:    createError(sdk.ErrFailedPublish, http.StatusUnauthorized),
 		},
 	}
 	for desc, tc := range cases {

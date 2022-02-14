@@ -21,8 +21,6 @@ const (
 	defCollection = "messages"
 )
 
-var errReadMessages = errors.New("failed to read messages from mongodb database")
-
 var _ readers.MessageRepository = (*mongoRepository)(nil)
 
 type mongoRepository struct {
@@ -53,7 +51,7 @@ func (repo mongoRepository) ReadAll(chanID string, rpm readers.PageMetadata) (re
 	filter := fmtCondition(chanID, rpm)
 	cursor, err := col.Find(context.Background(), filter, options.Find().SetSort(sortMap).SetLimit(int64(rpm.Limit)).SetSkip(int64(rpm.Offset)))
 	if err != nil {
-		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
+		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 	}
 	defer cursor.Close(context.Background())
 
@@ -63,7 +61,7 @@ func (repo mongoRepository) ReadAll(chanID string, rpm readers.PageMetadata) (re
 		for cursor.Next(context.Background()) {
 			var m senml.Message
 			if err := cursor.Decode(&m); err != nil {
-				return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
+				return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 			}
 
 			messages = append(messages, m)
@@ -72,7 +70,7 @@ func (repo mongoRepository) ReadAll(chanID string, rpm readers.PageMetadata) (re
 		for cursor.Next(context.Background()) {
 			var m map[string]interface{}
 			if err := cursor.Decode(&m); err != nil {
-				return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
+				return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 			}
 
 			messages = append(messages, m)
@@ -81,7 +79,7 @@ func (repo mongoRepository) ReadAll(chanID string, rpm readers.PageMetadata) (re
 
 	total, err := col.CountDocuments(context.Background(), filter)
 	if err != nil {
-		return readers.MessagesPage{}, errors.Wrap(errReadMessages, err)
+		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 	}
 
 	mp := readers.MessagesPage{

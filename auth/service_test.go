@@ -365,7 +365,7 @@ func TestCreateGroup(t *testing.T) {
 				Name:     groupName,
 				ParentID: "xxxxxxxxxx",
 			},
-			err: auth.ErrCreateGroup,
+			err: errors.ErrCreateEntity,
 		},
 	}
 
@@ -487,7 +487,7 @@ func TestViewGroup(t *testing.T) {
 			desc:    "view group for wrong id",
 			token:   apiToken,
 			groupID: "wrong",
-			err:     auth.ErrGroupNotFound,
+			err:     errors.ErrNotFound,
 		},
 	}
 
@@ -886,7 +886,7 @@ func TestRemoveGroup(t *testing.T) {
 	assert.True(t, errors.Contains(err, errors.ErrAuthentication), fmt.Sprintf("Unauthorized access: expected %v got %v", errors.ErrAuthentication, err))
 
 	err = svc.RemoveGroup(context.Background(), apiToken, "wrongID")
-	assert.True(t, errors.Contains(err, auth.ErrGroupNotFound), fmt.Sprintf("Remove group with wrong id: expected %v got %v", auth.ErrGroupNotFound, err))
+	assert.True(t, errors.Contains(err, errors.ErrNotFound), fmt.Sprintf("Remove group with wrong id: expected %v got %v", errors.ErrNotFound, err))
 
 	gp, err := svc.ListGroups(context.Background(), apiToken, auth.PageMetadata{Level: auth.MaxLevel})
 	require.Nil(t, err, fmt.Sprintf("list groups unexpected error: %s", err))
@@ -1006,7 +1006,7 @@ func TestUnassign(t *testing.T) {
 	assert.True(t, errors.Contains(err, errors.ErrAuthentication), fmt.Sprintf("Unauthorized access: expected %v got %v", errors.ErrAuthentication, err))
 
 	err = svc.Unassign(context.Background(), apiToken, group.ID, mid)
-	assert.True(t, errors.Contains(err, auth.ErrGroupNotFound), fmt.Sprintf("Unauthorized access: expected %v got %v", nil, err))
+	assert.True(t, errors.Contains(err, errors.ErrNotFound), fmt.Sprintf("Unauthorized access: expected %v got %v", nil, err))
 }
 
 func TestAuthorize(t *testing.T) {

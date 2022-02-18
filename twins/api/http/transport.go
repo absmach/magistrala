@@ -91,7 +91,11 @@ func decodeTwinCreation(_ context.Context, r *http.Request) (interface{}, error)
 		return nil, errors.ErrUnsupportedContentType
 	}
 
-	req := addTwinReq{token: r.Header.Get("Authorization")}
+	t, err := httputil.ExtractAuthToken(r)
+	if err != nil {
+		return nil, err
+	}
+	req := addTwinReq{token: t}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
@@ -104,8 +108,12 @@ func decodeTwinUpdate(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, errors.ErrUnsupportedContentType
 	}
 
+	t, err := httputil.ExtractAuthToken(r)
+	if err != nil {
+		return nil, err
+	}
 	req := updateTwinReq{
-		token: r.Header.Get("Authorization"),
+		token: t,
 		id:    bone.GetValue(r, "id"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -116,8 +124,12 @@ func decodeTwinUpdate(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func decodeView(_ context.Context, r *http.Request) (interface{}, error) {
+	t, err := httputil.ExtractAuthToken(r)
+	if err != nil {
+		return nil, err
+	}
 	req := viewTwinReq{
-		token: r.Header.Get("Authorization"),
+		token: t,
 		id:    bone.GetValue(r, "id"),
 	}
 
@@ -145,8 +157,12 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
+	t, err := httputil.ExtractAuthToken(r)
+	if err != nil {
+		return nil, err
+	}
 	req := listReq{
-		token:    r.Header.Get("Authorization"),
+		token:    t,
 		limit:    l,
 		offset:   o,
 		name:     n,
@@ -167,8 +183,12 @@ func decodeListStates(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
+	t, err := httputil.ExtractAuthToken(r)
+	if err != nil {
+		return nil, err
+	}
 	req := listStatesReq{
-		token:  r.Header.Get("Authorization"),
+		token:  t,
 		limit:  l,
 		offset: o,
 		id:     bone.GetValue(r, "id"),

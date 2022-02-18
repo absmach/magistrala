@@ -72,23 +72,34 @@ func decodeCreate(_ context.Context, r *http.Request) (interface{}, error) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
-
-	req.token = r.Header.Get("Authorization")
+	t, err := httputil.ExtractAuthToken(r)
+	if err != nil {
+		return nil, err
+	}
+	req.token = t
 	return req, nil
 }
 
 func decodeSubscription(_ context.Context, r *http.Request) (interface{}, error) {
+	t, err := httputil.ExtractAuthToken(r)
+	if err != nil {
+		return nil, err
+	}
 	req := subReq{
 		id:    bone.GetValue(r, "id"),
-		token: r.Header.Get("Authorization"),
+		token: t,
 	}
 
 	return req, nil
 }
 
 func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
+	t, err := httputil.ExtractAuthToken(r)
+	if err != nil {
+		return nil, err
+	}
 	req := listSubsReq{
-		token: r.Header.Get("Authorization"),
+		token: t,
 	}
 	vals := bone.GetQuery(r, "topic")
 	if len(vals) > 0 {

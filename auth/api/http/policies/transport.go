@@ -46,12 +46,18 @@ func decodePoliciesRequest(ctx context.Context, r *http.Request) (interface{}, e
 		return nil, errors.ErrUnsupportedContentType
 	}
 
-	var req policiesReq
+	t, err := httputil.ExtractAuthToken(r)
+	if err != nil {
+		return nil, err
+	}
+
+	req := policiesReq{
+		token: t,
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
-	req.token = r.Header.Get("Authorization")
 	return req, nil
 }
 

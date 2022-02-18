@@ -94,8 +94,12 @@ func decodeListCerts(_ context.Context, r *http.Request) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	t, err := httputil.ExtractAuthToken(r)
+	if err != nil {
+		return nil, err
+	}
 	req := listReq{
-		token:   r.Header.Get("Authorization"),
+		token:   t,
 		thingID: bone.GetValue(r, "thingId"),
 		limit:   l,
 		offset:  o,
@@ -104,8 +108,13 @@ func decodeListCerts(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func decodeViewCert(_ context.Context, r *http.Request) (interface{}, error) {
+	t, err := httputil.ExtractAuthToken(r)
+	if err != nil {
+		return nil, err
+	}
+
 	req := viewReq{
-		token:    r.Header.Get("Authorization"),
+		token:    t,
 		serialID: bone.GetValue(r, "certId"),
 	}
 
@@ -116,8 +125,11 @@ func decodeCerts(_ context.Context, r *http.Request) (interface{}, error) {
 	if r.Header.Get("Content-Type") != contentType {
 		return nil, errors.ErrUnsupportedContentType
 	}
-
-	req := addCertsReq{token: r.Header.Get("Authorization")}
+	t, err := httputil.ExtractAuthToken(r)
+	if err != nil {
+		return nil, err
+	}
+	req := addCertsReq{token: t}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
@@ -126,8 +138,12 @@ func decodeCerts(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func decodeRevokeCerts(_ context.Context, r *http.Request) (interface{}, error) {
+	t, err := httputil.ExtractAuthToken(r)
+	if err != nil {
+		return nil, err
+	}
 	req := revokeReq{
-		token:  r.Header.Get("Authorization"),
+		token:  t,
 		certID: bone.GetValue(r, "certId"),
 	}
 

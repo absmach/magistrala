@@ -54,8 +54,12 @@ func decodeIssue(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errors.ErrUnsupportedContentType
 	}
+	t, err := httputil.ExtractAuthToken(r)
+	if err != nil {
+		return nil, err
+	}
 	req := issueKeyReq{
-		token: r.Header.Get("Authorization"),
+		token: t,
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
@@ -65,8 +69,12 @@ func decodeIssue(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func decodeKeyReq(_ context.Context, r *http.Request) (interface{}, error) {
+	t, err := httputil.ExtractAuthToken(r)
+	if err != nil {
+		return nil, err
+	}
 	req := keyReq{
-		token: r.Header.Get("Authorization"),
+		token: t,
 		id:    bone.GetValue(r, "id"),
 	}
 	return req, nil

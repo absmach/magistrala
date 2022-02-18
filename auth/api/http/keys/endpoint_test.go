@@ -18,6 +18,7 @@ import (
 	httpapi "github.com/mainflux/mainflux/auth/api/http"
 	"github.com/mainflux/mainflux/auth/jwt"
 	"github.com/mainflux/mainflux/auth/mocks"
+	"github.com/mainflux/mainflux/internal/httputil"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
@@ -51,7 +52,7 @@ func (tr testRequest) make() (*http.Response, error) {
 		return nil, err
 	}
 	if tr.token != "" {
-		req.Header.Set("Authorization", tr.token)
+		req.Header.Set("Authorization", httputil.BearerPrefix+tr.token)
 	}
 	if tr.contentType != "" {
 		req.Header.Set("Content-Type", tr.contentType)
@@ -157,21 +158,21 @@ func TestIssue(t *testing.T) {
 			desc:   "issue key with invalid request",
 			req:    "{",
 			ct:     contentType,
-			token:  "",
+			token:  loginSecret,
 			status: http.StatusBadRequest,
 		},
 		{
 			desc:   "issue key with invalid JSON",
 			req:    "{invalid}",
 			ct:     contentType,
-			token:  "",
+			token:  loginSecret,
 			status: http.StatusBadRequest,
 		},
 		{
 			desc:   "issue key with invalid JSON content",
 			req:    `{"Type":{"key":"value"}}`,
 			ct:     contentType,
-			token:  "",
+			token:  loginSecret,
 			status: http.StatusBadRequest,
 		},
 	}

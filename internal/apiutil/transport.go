@@ -1,16 +1,58 @@
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
 
-package httputil
+package apiutil
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
 
+	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 )
+
+// LoggingErrorEncoder is a go-kit error encoder logging decorator.
+func LoggingErrorEncoder(logger logger.Logger, enc kithttp.ErrorEncoder) kithttp.ErrorEncoder {
+	return func(ctx context.Context, err error, w http.ResponseWriter) {
+		switch err {
+		case ErrBearerToken,
+			ErrMissingID,
+			ErrBearerKey,
+			ErrInvalidAuthKey,
+			ErrInvalidIDFormat,
+			ErrNameSize,
+			ErrLimitSize,
+			ErrOffsetSize,
+			ErrInvalidOrder,
+			ErrInvalidDirection,
+			ErrEmptyList,
+			ErrMalformedPolicy,
+			ErrMissingPolicySub,
+			ErrMissingPolicyObj,
+			ErrMissingPolicyAct,
+			ErrMissingCertData,
+			ErrInvalidTopic,
+			ErrInvalidContact,
+			ErrMissingEmail,
+			ErrMissingHost,
+			ErrMissingPass,
+			ErrMissingConfPass,
+			ErrInvalidResetPass,
+			ErrInvalidComparator,
+			ErrMissingMemberType,
+			ErrInvalidAPIKey,
+			ErrMaxLevelExceeded,
+			ErrBootstrapState:
+			logger.Error(err.Error())
+		}
+
+		enc(ctx, err, w)
+	}
+}
 
 // ReadUintQuery reads the value of uint64 http query parameters for a given key
 func ReadUintQuery(r *http.Request, key string, def uint64) (uint64, error) {

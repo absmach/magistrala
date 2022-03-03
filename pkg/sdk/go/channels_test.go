@@ -27,7 +27,7 @@ func TestCreateChannel(t *testing.T) {
 	ts := newThingsServer(svc)
 	defer ts.Close()
 
-	chWrongExtID := sdk.Channel{ID: "b0aa-000000000001", Name: "1", Metadata:metadata}
+	chWrongExtID := sdk.Channel{ID: "b0aa-000000000001", Name: "1", Metadata: metadata}
 
 	sdkConf := sdk.Config{
 		ThingsURL:       ts.URL,
@@ -73,14 +73,14 @@ func TestCreateChannel(t *testing.T) {
 			empty:   false,
 		},
 		{
-			desc:   "create a new channel with external UUID",
+			desc:    "create a new channel with external UUID",
 			channel: ch2,
 			token:   token,
 			err:     nil,
 			empty:   false,
 		},
 		{
-			desc:   "create a new channel with wrong external UUID",
+			desc:    "create a new channel with wrong external UUID",
 			channel: chWrongExtID,
 			token:   token,
 			err:     createError(sdk.ErrFailedCreation, http.StatusBadRequest),
@@ -269,8 +269,8 @@ func TestChannels(t *testing.T) {
 			token:    token,
 			offset:   0,
 			limit:    0,
-			err:      nil,
-			response: channels[0:10],
+			err:      createError(sdk.ErrFailedFetch, http.StatusBadRequest),
+			response: nil,
 		},
 		{
 			desc:     "get a list of channels with limit greater than max",

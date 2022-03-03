@@ -18,7 +18,8 @@ import (
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
 	adapter "github.com/mainflux/mainflux/http"
-	"github.com/mainflux/mainflux/internal/httputil"
+	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -39,7 +40,7 @@ var (
 var channelPartRegExp = regexp.MustCompile(`^/channels/([\w\-]+)/messages(/[^?]*)?(\?.*)?$`)
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc adapter.Service, tracer opentracing.Tracer) http.Handler {
+func MakeHandler(svc adapter.Service, tracer opentracing.Tracer, logger logger.Logger) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
 	}
@@ -115,10 +116,7 @@ func decodeRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 	case ok:
 		token = pass
 	case !ok:
-		token, err = httputil.ExtractAuthToken(r)
-		if err != nil {
-			return nil, err
-		}
+		token = apiutil.ExtractBearerToken(r)
 	}
 
 	payload, err := ioutil.ReadAll(r.Body)
@@ -148,7 +146,8 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch {
-	case errors.Contains(err, errors.ErrAuthentication):
+	case errors.Contains(err, errors.ErrAuthentication),
+		err == apiutil.ErrBearerToken:
 		w.WriteHeader(http.StatusUnauthorized)
 	case errors.Contains(err, errors.ErrAuthorization):
 		w.WriteHeader(http.StatusForbidden)
@@ -178,7 +177,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 
 	if errorVal, ok := err.(errors.Error); ok {
 		w.Header().Set("Content-Type", contentType)
-		if err := json.NewEncoder(w).Encode(httputil.ErrorRes{Err: errorVal.Msg()}); err != nil {
+		if err := json.NewEncoder(w).Encode(apiutil.ErrorRes{Err: errorVal.Msg()}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}

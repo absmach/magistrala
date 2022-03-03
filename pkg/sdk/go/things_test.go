@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/mainflux/mainflux/logger"
 	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/things"
@@ -55,7 +56,8 @@ func newThingsService(tokens map[string]string) things.Service {
 }
 
 func newThingsServer(svc things.Service) *httptest.Server {
-	mux := httpapi.MakeHandler(mocktracer.New(), svc)
+	logger := logger.NewMock()
+	mux := httpapi.MakeHandler(mocktracer.New(), svc, logger)
 	return httptest.NewServer(mux)
 }
 
@@ -316,8 +318,8 @@ func TestThings(t *testing.T) {
 			token:    token,
 			offset:   0,
 			limit:    0,
-			err:      nil,
-			response: things[0:10],
+			err:      createError(sdk.ErrFailedFetch, http.StatusBadRequest),
+			response: nil,
 		},
 		{
 			desc:     "get a list of things with limit greater than max",

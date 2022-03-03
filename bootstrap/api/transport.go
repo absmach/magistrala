@@ -14,7 +14,8 @@ import (
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/bootstrap"
-	"github.com/mainflux/mainflux/internal/httputil"
+	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -33,9 +34,9 @@ var (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc bootstrap.Service, reader bootstrap.ConfigReader) http.Handler {
+func MakeHandler(svc bootstrap.Service, reader bootstrap.ConfigReader, logger logger.Logger) http.Handler {
 	opts := []kithttp.ServerOption{
-		kithttp.ServerErrorEncoder(encodeError),
+		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
 	}
 	r := bone.New()
 
@@ -110,12 +111,7 @@ func decodeAddRequest(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, errors.ErrUnsupportedContentType
 	}
 
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
-
-	req := addReq{token: t}
+	req := addReq{token: apiutil.ExtractBearerToken(r)}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
@@ -128,13 +124,10 @@ func decodeUpdateRequest(_ context.Context, r *http.Request) (interface{}, error
 		return nil, errors.ErrUnsupportedContentType
 	}
 
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
+	req := updateReq{
+		key: apiutil.ExtractBearerToken(r),
+		id:  bone.GetValue(r, "id"),
 	}
-
-	req := updateReq{key: t}
-	req.id = bone.GetValue(r, "id")
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
@@ -147,16 +140,10 @@ func decodeUpdateCertRequest(_ context.Context, r *http.Request) (interface{}, e
 		return nil, errors.ErrUnsupportedContentType
 	}
 
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
-
 	req := updateCertReq{
-		key:     t,
+		key:     apiutil.ExtractBearerToken(r),
 		thingID: bone.GetValue(r, "id"),
 	}
-
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
@@ -169,13 +156,10 @@ func decodeUpdateConnRequest(_ context.Context, r *http.Request) (interface{}, e
 		return nil, errors.ErrUnsupportedContentType
 	}
 
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
+	req := updateConnReq{
+		key: apiutil.ExtractBearerToken(r),
+		id:  bone.GetValue(r, "id"),
 	}
-
-	req := updateConnReq{key: t}
-	req.id = bone.GetValue(r, "id")
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
@@ -184,12 +168,12 @@ func decodeUpdateConnRequest(_ context.Context, r *http.Request) (interface{}, e
 }
 
 func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	o, err := httputil.ReadUintQuery(r, offsetKey, defOffset)
+	o, err := apiutil.ReadUintQuery(r, offsetKey, defOffset)
 	if err != nil {
 		return nil, err
 	}
 
-	l, err := httputil.ReadUintQuery(r, limitKey, defLimit)
+	l, err := apiutil.ReadUintQuery(r, limitKey, defLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -199,16 +183,9 @@ func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) 
 		return nil, errors.ErrInvalidQueryParams
 	}
 
-	filter := parseFilter(q)
-
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
-
 	req := listReq{
-		key:    t,
-		filter: filter,
+		key:    apiutil.ExtractBearerToken(r),
+		filter: parseFilter(q),
 		offset: o,
 		limit:  l,
 	}
@@ -217,14 +194,9 @@ func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) 
 }
 
 func decodeBootstrapRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
-
 	req := bootstrapReq{
 		id:  bone.GetValue(r, "external_id"),
-		key: t,
+		key: apiutil.ExtractBearerToken(r),
 	}
 
 	return req, nil
@@ -235,13 +207,10 @@ func decodeStateRequest(_ context.Context, r *http.Request) (interface{}, error)
 		return nil, errors.ErrUnsupportedContentType
 	}
 
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
+	req := changeStateReq{
+		key: apiutil.ExtractBearerToken(r),
+		id:  bone.GetValue(r, "id"),
 	}
-
-	req := changeStateReq{key: t}
-	req.id = bone.GetValue(r, "id")
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
@@ -250,13 +219,8 @@ func decodeStateRequest(_ context.Context, r *http.Request) (interface{}, error)
 }
 
 func decodeEntityRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
-
 	req := entityReq{
-		key: t,
+		key: apiutil.ExtractBearerToken(r),
 		id:  bone.GetValue(r, "id"),
 	}
 
@@ -293,15 +257,20 @@ func encodeSecureRes(_ context.Context, w http.ResponseWriter, response interfac
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch {
+	case errors.Contains(err, errors.ErrAuthentication),
+		err == apiutil.ErrBearerToken,
+		err == apiutil.ErrBearerKey:
+		w.WriteHeader(http.StatusUnauthorized)
 	case errors.Contains(err, errors.ErrUnsupportedContentType):
 		w.WriteHeader(http.StatusUnsupportedMediaType)
 	case errors.Contains(err, errors.ErrInvalidQueryParams),
-		errors.Contains(err, errors.ErrMalformedEntity):
+		errors.Contains(err, errors.ErrMalformedEntity),
+		err == apiutil.ErrMissingID,
+		err == apiutil.ErrBootstrapState,
+		err == apiutil.ErrLimitSize:
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, errors.ErrNotFound):
 		w.WriteHeader(http.StatusNotFound)
-	case errors.Contains(err, errors.ErrAuthentication):
-		w.WriteHeader(http.StatusUnauthorized)
 	case errors.Contains(err, bootstrap.ErrExternalKey),
 		errors.Contains(err, bootstrap.ErrExternalKeySecure),
 		errors.Contains(err, errors.ErrAuthorization):
@@ -323,7 +292,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 
 	if errorVal, ok := err.(errors.Error); ok {
 		w.Header().Set("Content-Type", contentType)
-		if err := json.NewEncoder(w).Encode(httputil.ErrorRes{Err: errorVal.Msg()}); err != nil {
+		if err := json.NewEncoder(w).Encode(apiutil.ErrorRes{Err: errorVal.Msg()}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}

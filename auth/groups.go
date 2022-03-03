@@ -14,12 +14,6 @@ const (
 )
 
 var (
-	// ErrMaxLevelExceeded malformed entity.
-	ErrMaxLevelExceeded = errors.New("level must be less than or equal 5")
-
-	// ErrBadGroupName malformed entity.
-	ErrBadGroupName = errors.New("incorrect group name")
-
 	// ErrAssignToGroup indicates failure to assign member to a group.
 	ErrAssignToGroup = errors.New("failed to assign member to a group")
 

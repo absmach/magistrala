@@ -368,11 +368,11 @@ func startHTTPServer(svc certs.Service, cfg config, logger mflog.Logger, errs ch
 	if cfg.serverCert != "" || cfg.serverKey != "" {
 		logger.Info(fmt.Sprintf("Certs service started using https on port %s with cert %s key %s",
 			cfg.httpPort, cfg.serverCert, cfg.serverKey))
-		errs <- http.ListenAndServeTLS(p, cfg.serverCert, cfg.serverKey, api.MakeHandler(svc))
+		errs <- http.ListenAndServeTLS(p, cfg.serverCert, cfg.serverKey, api.MakeHandler(svc, logger))
 		return
 	}
 	logger.Info(fmt.Sprintf("Certs service started using http on port %s", cfg.httpPort))
-	errs <- http.ListenAndServe(p, api.MakeHandler(svc))
+	errs <- http.ListenAndServe(p, api.MakeHandler(svc, logger))
 }
 
 func loadCertificates(conf config) (tls.Certificate, *x509.Certificate, error) {

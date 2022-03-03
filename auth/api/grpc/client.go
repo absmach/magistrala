@@ -183,7 +183,7 @@ func (client grpcClient) AddPolicy(ctx context.Context, in *mainflux.AddPolicyRe
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
-	res, err := client.addPolicy(ctx, addPolicyReq{Act: in.GetAct(), Obj: in.GetObj(), Sub: in.GetSub()})
+	res, err := client.addPolicy(ctx, policyReq{Act: in.GetAct(), Obj: in.GetObj(), Sub: in.GetSub()})
 	if err != nil {
 		return &mainflux.AddPolicyRes{}, err
 	}
@@ -198,7 +198,7 @@ func decodeAddPolicyResponse(_ context.Context, grpcRes interface{}) (interface{
 }
 
 func encodeAddPolicyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(addPolicyReq)
+	req := grpcReq.(policyReq)
 	return &mainflux.AddPolicyReq{
 		Sub: req.Sub,
 		Obj: req.Obj,
@@ -210,7 +210,7 @@ func (client grpcClient) DeletePolicy(ctx context.Context, in *mainflux.DeletePo
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
-	res, err := client.deletePolicy(ctx, deletePolicyReq{Act: in.GetAct(), Obj: in.GetObj(), Sub: in.GetSub()})
+	res, err := client.deletePolicy(ctx, policyReq{Act: in.GetAct(), Obj: in.GetObj(), Sub: in.GetSub()})
 	if err != nil {
 		return &mainflux.DeletePolicyRes{}, err
 	}
@@ -225,7 +225,7 @@ func decodeDeletePolicyResponse(_ context.Context, grpcRes interface{}) (interfa
 }
 
 func encodeDeletePolicyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(deletePolicyReq)
+	req := grpcReq.(policyReq)
 	return &mainflux.DeletePolicyReq{
 		Sub: req.Sub,
 		Obj: req.Obj,

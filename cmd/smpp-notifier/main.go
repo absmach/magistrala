@@ -327,9 +327,9 @@ func startHTTPServer(tracer opentracing.Tracer, svc notifiers.Service, port stri
 	p := fmt.Sprintf(":%s", port)
 	if certFile != "" || keyFile != "" {
 		logger.Info(fmt.Sprintf("SMPP notifier service started using https, cert %s key %s, exposed port %s", certFile, keyFile, port))
-		errs <- http.ListenAndServeTLS(p, certFile, keyFile, api.MakeHandler(svc, tracer))
+		errs <- http.ListenAndServeTLS(p, certFile, keyFile, api.MakeHandler(svc, tracer, logger))
 	} else {
 		logger.Info(fmt.Sprintf("SMPP notifier service started using http, exposed port %s", port))
-		errs <- http.ListenAndServe(p, api.MakeHandler(svc, tracer))
+		errs <- http.ListenAndServe(p, api.MakeHandler(svc, tracer, logger))
 	}
 }

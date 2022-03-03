@@ -71,7 +71,7 @@ func (client grpcClient) CanAccessByKey(ctx context.Context, req *mainflux.Acces
 	ctx, cancel := context.WithTimeout(ctx, client.timeout)
 	defer cancel()
 
-	ar := AccessByKeyReq{
+	ar := accessByKeyReq{
 		thingKey: req.GetToken(),
 		chanID:   req.GetChanID(),
 	}
@@ -120,7 +120,7 @@ func (client grpcClient) Identify(ctx context.Context, req *mainflux.Token, _ ..
 }
 
 func encodeCanAccessByKeyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(AccessByKeyReq)
+	req := grpcReq.(accessByKeyReq)
 	return &mainflux.AccessByKeyReq{Token: req.thingKey, ChanID: req.chanID}, nil
 }
 

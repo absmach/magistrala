@@ -33,8 +33,8 @@ import (
 )
 
 const (
-	sep = ","
-
+	svcName              = "cassandra-reader"
+	sep                  = ","
 	defLogLevel          = "error"
 	defPort              = "8180"
 	defCluster           = "127.0.0.1"
@@ -284,9 +284,9 @@ func startHTTPServer(repo readers.MessageRepository, tc mainflux.ThingsServiceCl
 	if cfg.serverCert != "" || cfg.serverKey != "" {
 		logger.Info(fmt.Sprintf("Cassandra reader service started using https on port %s with cert %s key %s",
 			cfg.port, cfg.serverCert, cfg.serverKey))
-		errs <- http.ListenAndServeTLS(p, cfg.serverCert, cfg.serverKey, api.MakeHandler(repo, tc, ac, "cassandra-reader"))
+		errs <- http.ListenAndServeTLS(p, cfg.serverCert, cfg.serverKey, api.MakeHandler(repo, tc, ac, svcName, logger))
 		return
 	}
 	logger.Info(fmt.Sprintf("Cassandra reader service started, exposed port %s", cfg.port))
-	errs <- http.ListenAndServe(p, api.MakeHandler(repo, tc, ac, "cassandra-reader"))
+	errs <- http.ListenAndServe(p, api.MakeHandler(repo, tc, ac, svcName, logger))
 }

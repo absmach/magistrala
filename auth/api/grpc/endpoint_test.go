@@ -176,11 +176,11 @@ func TestIdentify(t *testing.T) {
 			code:  codes.Unauthenticated,
 		},
 		{
-			desc:  "identify user that doesn't exist",
+			desc:  "identify user with empty token",
 			token: "",
 			idt:   mainflux.UserIdentity{},
 			err:   status.Error(codes.InvalidArgument, "received invalid token request"),
-			code:  codes.InvalidArgument,
+			code:  codes.Unauthenticated,
 		},
 	}
 

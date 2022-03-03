@@ -5,9 +5,10 @@ package logger
 
 import (
 	"fmt"
-	"github.com/go-kit/kit/log"
 	"io"
 	"time"
+
+	"github.com/go-kit/kit/log"
 )
 
 // Logger specifies logging API.

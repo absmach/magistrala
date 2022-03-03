@@ -110,7 +110,7 @@ func main() {
 	go func() {
 		p := fmt.Sprintf(":%s", cfg.port)
 		logger.Info(fmt.Sprintf("HTTP adapter service started on port %s", cfg.port))
-		errs <- http.ListenAndServe(p, api.MakeHandler(svc, tracer))
+		errs <- http.ListenAndServe(p, api.MakeHandler(svc, tracer, logger))
 	}()
 
 	go func() {

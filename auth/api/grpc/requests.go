@@ -5,7 +5,7 @@ package grpc
 
 import (
 	"github.com/mainflux/mainflux/auth"
-	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/mainflux/mainflux/internal/apiutil"
 )
 
 type identityReq struct {
@@ -15,12 +15,12 @@ type identityReq struct {
 
 func (req identityReq) validate() error {
 	if req.token == "" {
-		return errors.ErrMalformedEntity
+		return apiutil.ErrBearerToken
 	}
 	if req.kind != auth.LoginKey &&
 		req.kind != auth.APIKey &&
 		req.kind != auth.RecoveryKey {
-		return errors.ErrMalformedEntity
+		return apiutil.ErrInvalidAuthKey
 	}
 
 	return nil
@@ -34,12 +34,12 @@ type issueReq struct {
 
 func (req issueReq) validate() error {
 	if req.email == "" {
-		return errors.ErrAuthentication
+		return apiutil.ErrMissingEmail
 	}
 	if req.keyType != auth.LoginKey &&
 		req.keyType != auth.APIKey &&
 		req.keyType != auth.RecoveryKey {
-		return errors.ErrMalformedEntity
+		return apiutil.ErrInvalidAuthKey
 	}
 
 	return nil
@@ -54,10 +54,10 @@ type assignReq struct {
 
 func (req assignReq) validate() error {
 	if req.token == "" {
-		return errors.ErrAuthentication
+		return apiutil.ErrBearerToken
 	}
 	if req.groupID == "" || req.memberID == "" {
-		return errors.ErrMalformedEntity
+		return apiutil.ErrMissingID
 	}
 	return nil
 }
@@ -72,13 +72,13 @@ type membersReq struct {
 
 func (req membersReq) validate() error {
 	if req.token == "" {
-		return errors.ErrAuthentication
+		return apiutil.ErrBearerToken
 	}
 	if req.groupID == "" {
-		return errors.ErrMalformedEntity
+		return apiutil.ErrMissingID
 	}
 	if req.memberType == "" {
-		return errors.ErrMalformedEntity
+		return apiutil.ErrMissingMemberType
 	}
 	return nil
 }
@@ -95,43 +95,39 @@ type authReq struct {
 
 func (req authReq) validate() error {
 	if req.Sub == "" {
-		return errors.ErrMalformedEntity
+		return apiutil.ErrMissingPolicySub
 	}
 
 	if req.Obj == "" {
-		return errors.ErrMalformedEntity
+		return apiutil.ErrMissingPolicyObj
 	}
 
 	if req.Act == "" {
-		return errors.ErrMalformedEntity
+		return apiutil.ErrMissingPolicyAct
 	}
 
 	return nil
 }
 
-type addPolicyReq struct {
+type policyReq struct {
 	Sub string
 	Obj string
 	Act string
 }
 
-func (req addPolicyReq) validate() error {
-	if req.Sub == "" || req.Obj == "" || req.Act == "" {
-		return errors.ErrMalformedEntity
+func (req policyReq) validate() error {
+	if req.Sub == "" {
+		return apiutil.ErrMissingPolicySub
 	}
-	return nil
-}
 
-type deletePolicyReq struct {
-	Sub string
-	Obj string
-	Act string
-}
-
-func (req deletePolicyReq) validate() error {
-	if req.Sub == "" || req.Obj == "" || req.Act == "" {
-		return errors.ErrMalformedEntity
+	if req.Obj == "" {
+		return apiutil.ErrMissingPolicyObj
 	}
+
+	if req.Act == "" {
+		return apiutil.ErrMissingPolicyAct
+	}
+
 	return nil
 }
 

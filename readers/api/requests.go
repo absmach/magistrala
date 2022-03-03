@@ -4,9 +4,11 @@
 package api
 
 import (
-	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/mainflux/mainflux/internal/apiutil"
 	"github.com/mainflux/mainflux/readers"
 )
+
+const maxLimitSize = 1000
 
 type apiReq interface {
 	validate() error
@@ -20,21 +22,28 @@ type listMessagesReq struct {
 
 func (req listMessagesReq) validate() error {
 	if req.token == "" {
-		return errors.ErrAuthentication
+		return apiutil.ErrBearerToken
 	}
+
 	if req.chanID == "" {
-		return errors.ErrMalformedEntity
+		return apiutil.ErrMissingID
 	}
-	if req.pageMeta.Limit < 1 || req.pageMeta.Offset < 0 {
-		return errors.ErrInvalidQueryParams
+
+	if req.pageMeta.Limit < 1 || req.pageMeta.Limit > maxLimitSize {
+		return apiutil.ErrLimitSize
 	}
+
+	if req.pageMeta.Offset < 0 {
+		return apiutil.ErrOffsetSize
+	}
+
 	if req.pageMeta.Comparator != "" &&
 		req.pageMeta.Comparator != readers.EqualKey &&
 		req.pageMeta.Comparator != readers.LowerThanKey &&
 		req.pageMeta.Comparator != readers.LowerThanEqualKey &&
 		req.pageMeta.Comparator != readers.GreaterThanKey &&
 		req.pageMeta.Comparator != readers.GreaterThanEqualKey {
-		return errors.ErrInvalidQueryParams
+		return apiutil.ErrInvalidComparator
 	}
 
 	return nil

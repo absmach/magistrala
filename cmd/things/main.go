@@ -157,8 +157,8 @@ func main() {
 	svc := newService(auth, dbTracer, cacheTracer, db, cacheClient, esClient, logger)
 	errs := make(chan error, 2)
 
-	go startHTTPServer(thhttpapi.MakeHandler(thingsTracer, svc), cfg.httpPort, cfg, logger, errs)
-	go startHTTPServer(authhttpapi.MakeHandler(thingsTracer, svc), cfg.authHTTPPort, cfg, logger, errs)
+	go startHTTPServer(thhttpapi.MakeHandler(thingsTracer, svc, logger), cfg.httpPort, cfg, logger, errs)
+	go startHTTPServer(authhttpapi.MakeHandler(thingsTracer, svc, logger), cfg.authHTTPPort, cfg, logger, errs)
 	go startGRPCServer(svc, thingsTracer, cfg, logger, errs)
 
 	go func() {

@@ -15,6 +15,7 @@ import (
 
 	"github.com/opentracing/opentracing-go/mocktracer"
 
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/things"
 	httpapi "github.com/mainflux/mainflux/things/api/auth/http"
@@ -79,7 +80,8 @@ func newService(tokens map[string]string) things.Service {
 }
 
 func newServer(svc things.Service) *httptest.Server {
-	mux := httpapi.MakeHandler(mocktracer.New(), svc)
+	logger := logger.NewMock()
+	mux := httpapi.MakeHandler(mocktracer.New(), svc, logger)
 	return httptest.NewServer(mux)
 }
 

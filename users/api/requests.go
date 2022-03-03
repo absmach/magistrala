@@ -4,7 +4,7 @@
 package api
 
 import (
-	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/mainflux/mainflux/internal/apiutil"
 	"github.com/mainflux/mainflux/users"
 )
 
@@ -32,7 +32,7 @@ type viewUserReq struct {
 
 func (req viewUserReq) validate() error {
 	if req.token == "" {
-		return errors.ErrAuthentication
+		return apiutil.ErrBearerToken
 	}
 	return nil
 }
@@ -47,7 +47,7 @@ type listUsersReq struct {
 
 func (req listUsersReq) validate() error {
 	if req.token == "" {
-		return errors.ErrAuthentication
+		return apiutil.ErrBearerToken
 	}
 	return nil
 }
@@ -59,7 +59,7 @@ type updateUserReq struct {
 
 func (req updateUserReq) validate() error {
 	if req.token == "" {
-		return errors.ErrAuthentication
+		return apiutil.ErrBearerToken
 	}
 	return nil
 }
@@ -70,9 +70,14 @@ type passwResetReq struct {
 }
 
 func (req passwResetReq) validate() error {
-	if req.Email == "" || req.Host == "" {
-		return errors.ErrMalformedEntity
+	if req.Email == "" {
+		return apiutil.ErrMissingEmail
 	}
+
+	if req.Host == "" {
+		return apiutil.ErrMissingHost
+	}
+
 	return nil
 }
 
@@ -83,30 +88,37 @@ type resetTokenReq struct {
 }
 
 func (req resetTokenReq) validate() error {
-	if req.Password == "" || req.ConfPass == "" {
-		return errors.ErrMalformedEntity
+	if req.Password == "" {
+		return apiutil.ErrMissingPass
 	}
+
+	if req.ConfPass == "" {
+		return apiutil.ErrMissingConfPass
+	}
+
 	if req.Token == "" {
-		return users.ErrMissingResetToken
+		return apiutil.ErrBearerToken
 	}
+
 	if req.Password != req.ConfPass {
-		return errors.ErrMalformedEntity
+		return apiutil.ErrInvalidResetPass
 	}
+
 	return nil
 }
 
 type passwChangeReq struct {
-	Token       string `json:"token"`
+	token       string
 	Password    string `json:"password"`
 	OldPassword string `json:"old_password"`
 }
 
 func (req passwChangeReq) validate() error {
-	if req.Token == "" {
-		return errors.ErrAuthentication
+	if req.token == "" {
+		return apiutil.ErrBearerToken
 	}
 	if req.OldPassword == "" {
-		return errors.ErrMalformedEntity
+		return apiutil.ErrMissingPass
 	}
 	return nil
 }
@@ -121,11 +133,11 @@ type listMemberGroupReq struct {
 
 func (req listMemberGroupReq) validate() error {
 	if req.token == "" {
-		return errors.ErrAuthentication
+		return apiutil.ErrBearerToken
 	}
 
 	if req.groupID == "" {
-		return errors.ErrMalformedEntity
+		return apiutil.ErrMissingID
 	}
 
 	return nil

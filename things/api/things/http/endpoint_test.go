@@ -16,7 +16,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mainflux/mainflux/internal/httputil"
+	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/things"
@@ -51,9 +52,10 @@ var (
 		Metadata: map[string]interface{}{"test": "data"},
 	}
 	invalidName    = strings.Repeat("m", maxNameSize+1)
-	notFoundRes    = toJSON(httputil.ErrorRes{Err: errors.ErrNotFound.Error()})
-	unauthzRes     = toJSON(httputil.ErrorRes{Err: errors.ErrAuthorization.Error()})
-	unauthRes      = toJSON(httputil.ErrorRes{Err: errors.ErrAuthentication.Error()})
+	notFoundRes    = toJSON(apiutil.ErrorRes{Err: errors.ErrNotFound.Error()})
+	unauthzRes     = toJSON(apiutil.ErrorRes{Err: errors.ErrAuthorization.Error()})
+	unauthRes      = toJSON(apiutil.ErrorRes{Err: errors.ErrAuthentication.Error()})
+	missingTokRes  = toJSON(apiutil.ErrorRes{Err: apiutil.ErrBearerToken.Error()})
 	searchThingReq = things.PageMetadata{
 		Limit:  5,
 		Offset: 0,
@@ -75,7 +77,7 @@ func (tr testRequest) make() (*http.Response, error) {
 		return nil, err
 	}
 	if tr.token != "" {
-		req.Header.Set("Authorization", httputil.BearerPrefix+tr.token)
+		req.Header.Set("Authorization", apiutil.BearerPrefix+tr.token)
 	}
 	if tr.contentType != "" {
 		req.Header.Set("Content-Type", tr.contentType)
@@ -99,7 +101,8 @@ func newService(tokens map[string]string) things.Service {
 }
 
 func newServer(svc things.Service) *httptest.Server {
-	mux := httpapi.MakeHandler(mocktracer.New(), svc)
+	logger := logger.NewMock()
+	mux := httpapi.MakeHandler(mocktracer.New(), svc, logger)
 	return httptest.NewServer(mux)
 }
 
@@ -734,7 +737,7 @@ func TestViewThing(t *testing.T) {
 			id:     th.ID,
 			auth:   "",
 			status: http.StatusUnauthorized,
-			res:    unauthRes,
+			res:    missingTokRes,
 		},
 		{
 			desc:   "view thing by passing invalid id",
@@ -857,9 +860,9 @@ func TestListThings(t *testing.T) {
 		{
 			desc:   "get a list of things with zero limit and offset 1",
 			auth:   token,
-			status: http.StatusOK,
+			status: http.StatusBadRequest,
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d", thingURL, 1, 0),
-			res:    data[1:11],
+			res:    nil,
 		},
 		{
 			desc:   "get a list of things without offset",
@@ -1087,9 +1090,9 @@ func TestSearchThings(t *testing.T) {
 		{
 			desc:   "search things with zero limit",
 			auth:   token,
-			status: http.StatusOK,
+			status: http.StatusBadRequest,
 			req:    zeroLimitData,
-			res:    data[0:10],
+			res:    nil,
 		},
 		{
 			desc:   "search things without offset",
@@ -1778,7 +1781,7 @@ func TestViewChannel(t *testing.T) {
 			id:     sch.ID,
 			auth:   "",
 			status: http.StatusUnauthorized,
-			res:    unauthRes,
+			res:    missingTokRes,
 		},
 		{
 			desc:   "view channel with invalid id",
@@ -1907,9 +1910,9 @@ func TestListChannels(t *testing.T) {
 		{
 			desc:   "get a list of channels with zero limit and offset 1",
 			auth:   token,
-			status: http.StatusOK,
+			status: http.StatusBadRequest,
 			url:    fmt.Sprintf("%s?offset=%d&limit=%d", channelURL, 1, 0),
-			res:    channels[1:11],
+			res:    nil,
 		},
 		{
 			desc:   "get a list of channels with no offset provided",

@@ -11,6 +11,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	mainflux "github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/auth"
+	"github.com/mainflux/mainflux/internal/apiutil"
 	"github.com/mainflux/mainflux/pkg/errors"
 	opentracing "github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc/codes"
@@ -172,7 +173,7 @@ func encodeAuthorizeResponse(_ context.Context, grpcRes interface{}) (interface{
 
 func decodeAddPolicyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*mainflux.AddPolicyReq)
-	return addPolicyReq{Sub: req.GetSub(), Obj: req.GetObj(), Act: req.GetAct()}, nil
+	return policyReq{Sub: req.GetSub(), Obj: req.GetObj(), Act: req.GetAct()}, nil
 }
 
 func encodeAddPolicyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -187,7 +188,7 @@ func decodeAssignRequest(_ context.Context, grpcReq interface{}) (interface{}, e
 
 func decodeDeletePolicyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*mainflux.DeletePolicyReq)
-	return deletePolicyReq{Sub: req.GetSub(), Obj: req.GetObj(), Act: req.GetAct()}, nil
+	return policyReq{Sub: req.GetSub(), Obj: req.GetObj(), Act: req.GetAct()}, nil
 }
 
 func encodeDeletePolicyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -236,14 +237,21 @@ func encodeError(err error) error {
 	switch {
 	case errors.Contains(err, nil):
 		return nil
-	case errors.Contains(err, errors.ErrMalformedEntity):
-		return status.Error(codes.InvalidArgument, "received invalid token request")
-	case errors.Contains(err, errors.ErrAuthentication):
+	case errors.Contains(err, errors.ErrMalformedEntity),
+		err == apiutil.ErrInvalidAuthKey,
+		err == apiutil.ErrMissingID,
+		err == apiutil.ErrMissingMemberType,
+		err == apiutil.ErrMissingPolicySub,
+		err == apiutil.ErrMissingPolicyObj,
+		err == apiutil.ErrMissingPolicyAct:
+		return status.Error(codes.InvalidArgument, err.Error())
+	case errors.Contains(err, errors.ErrAuthentication),
+		errors.Contains(err, auth.ErrKeyExpired),
+		err == apiutil.ErrMissingEmail,
+		err == apiutil.ErrBearerToken:
 		return status.Error(codes.Unauthenticated, err.Error())
 	case errors.Contains(err, errors.ErrAuthorization):
 		return status.Error(codes.PermissionDenied, err.Error())
-	case errors.Contains(err, auth.ErrKeyExpired):
-		return status.Error(codes.Unauthenticated, err.Error())
 	default:
 		return status.Error(codes.Internal, "internal server error")
 	}

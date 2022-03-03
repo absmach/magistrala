@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/internal/httputil"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/readers"
@@ -49,7 +49,8 @@ var (
 )
 
 func newServer(repo readers.MessageRepository, tc mainflux.ThingsServiceClient, ac mainflux.AuthServiceClient) *httptest.Server {
-	mux := api.MakeHandler(repo, tc, ac, svcName)
+	logger := logger.NewMock()
+	mux := api.MakeHandler(repo, tc, ac, svcName, logger)
 	return httptest.NewServer(mux)
 }
 
@@ -67,7 +68,7 @@ func (tr testRequest) make() (*http.Response, error) {
 		return nil, err
 	}
 	if tr.token != "" {
-		req.Header.Set("Authorization", httputil.BearerPrefix+tr.token)
+		req.Header.Set("Authorization", tr.token)
 	}
 
 	return tr.client.Do(req)

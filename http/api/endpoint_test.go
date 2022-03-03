@@ -17,7 +17,8 @@ import (
 	adapter "github.com/mainflux/mainflux/http"
 	"github.com/mainflux/mainflux/http/api"
 	"github.com/mainflux/mainflux/http/mocks"
-	"github.com/mainflux/mainflux/internal/httputil"
+	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,7 +28,8 @@ func newService(cc mainflux.ThingsServiceClient) adapter.Service {
 }
 
 func newHTTPServer(svc adapter.Service) *httptest.Server {
-	mux := api.MakeHandler(svc, mocktracer.New())
+	logger := logger.NewMock()
+	mux := api.MakeHandler(svc, mocktracer.New(), logger)
 	return httptest.NewServer(mux)
 }
 
@@ -48,7 +50,7 @@ func (tr testRequest) make() (*http.Response, error) {
 	}
 
 	if tr.token != "" {
-		req.Header.Set("Authorization", httputil.BearerPrefix+tr.token)
+		req.Header.Set("Authorization", apiutil.BearerPrefix+tr.token)
 	}
 	if tr.basicAuth && tr.token != "" {
 		req.SetBasicAuth("", tr.token)

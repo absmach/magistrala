@@ -14,18 +14,27 @@ import (
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
 	notifiers "github.com/mainflux/mainflux/consumers/notifiers"
-	"github.com/mainflux/mainflux/internal/httputil"
+	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-const contentType = "application/json"
+const (
+	contentType = "application/json"
+	offsetKey   = "offset"
+	limitKey    = "limit"
+	topicKey    = "topic"
+	contactKey  = "contact"
+	defOffset   = 0
+	defLimit    = 20
+)
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc notifiers.Service, tracer opentracing.Tracer) http.Handler {
+func MakeHandler(svc notifiers.Service, tracer opentracing.Tracer, logger logger.Logger) http.Handler {
 	opts := []kithttp.ServerOption{
-		kithttp.ServerErrorEncoder(encodeError),
+		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
 	}
 
 	mux := bone.New()
@@ -68,56 +77,43 @@ func decodeCreate(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errors.ErrUnsupportedContentType
 	}
-	var req createSubReq
+
+	req := createSubReq{token: apiutil.ExtractBearerToken(r)}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
-	req.token = t
+
 	return req, nil
 }
 
 func decodeSubscription(_ context.Context, r *http.Request) (interface{}, error) {
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
 	req := subReq{
 		id:    bone.GetValue(r, "id"),
-		token: t,
+		token: apiutil.ExtractBearerToken(r),
 	}
 
 	return req, nil
 }
 
 func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
-	req := listSubsReq{
-		token: t,
-	}
-	vals := bone.GetQuery(r, "topic")
+	req := listSubsReq{token: apiutil.ExtractBearerToken(r)}
+	vals := bone.GetQuery(r, topicKey)
 	if len(vals) > 0 {
 		req.topic = vals[0]
 	}
 
-	vals = bone.GetQuery(r, "contact")
+	vals = bone.GetQuery(r, contactKey)
 	if len(vals) > 0 {
 		req.contact = vals[0]
 	}
 
-	offset, err := httputil.ReadUintQuery(r, "offset", 0)
+	offset, err := apiutil.ReadUintQuery(r, offsetKey, defOffset)
 	if err != nil {
 		return listSubsReq{}, err
 	}
 	req.offset = uint(offset)
 
-	limit, err := httputil.ReadUintQuery(r, "limit", 20)
+	limit, err := apiutil.ReadUintQuery(r, limitKey, defLimit)
 	if err != nil {
 		return listSubsReq{}, err
 	}
@@ -145,13 +141,15 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch {
 	case errors.Contains(err, errors.ErrMalformedEntity),
-		errors.Contains(err, errInvalidContact),
-		errors.Contains(err, errInvalidTopic),
+		err == apiutil.ErrInvalidContact,
+		err == apiutil.ErrInvalidTopic,
+		err == apiutil.ErrMissingID,
 		errors.Contains(err, errors.ErrInvalidQueryParams):
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, errors.ErrNotFound):
 		w.WriteHeader(http.StatusNotFound)
-	case errors.Contains(err, errors.ErrAuthentication):
+	case errors.Contains(err, errors.ErrAuthentication),
+		err == apiutil.ErrBearerToken:
 		w.WriteHeader(http.StatusUnauthorized)
 	case errors.Contains(err, errors.ErrConflict):
 		w.WriteHeader(http.StatusConflict)
@@ -169,7 +167,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 
 	if errorVal, ok := err.(errors.Error); ok {
 		w.Header().Set("Content-Type", contentType)
-		if err := json.NewEncoder(w).Encode(httputil.ErrorRes{Err: errorVal.Msg()}); err != nil {
+		if err := json.NewEncoder(w).Encode(apiutil.ErrorRes{Err: errorVal.Msg()}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}

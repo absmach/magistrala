@@ -72,7 +72,7 @@ func authorizeEndpoint(svc auth.Service) endpoint.Endpoint {
 
 func addPolicyEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(addPolicyReq)
+		req := request.(policyReq)
 		if err := req.validate(); err != nil {
 			return addPolicyRes{}, err
 		}
@@ -87,7 +87,7 @@ func addPolicyEndpoint(svc auth.Service) endpoint.Endpoint {
 
 func deletePolicyEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(deletePolicyReq)
+		req := request.(policyReq)
 		if err := req.validate(); err != nil {
 			return deletePolicyRes{}, err
 		}

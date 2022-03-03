@@ -219,5 +219,5 @@ func newRouteMapRepositoy(client *r.Client, prefix string, logger logger.Logger)
 func startHTTPServer(svc opcua.Service, cfg config, logger logger.Logger, errs chan error) {
 	p := fmt.Sprintf(":%s", cfg.httpPort)
 	logger.Info(fmt.Sprintf("opcua-adapter service started, exposed port %s", cfg.httpPort))
-	errs <- http.ListenAndServe(p, api.MakeHandler(svc))
+	errs <- http.ListenAndServe(p, api.MakeHandler(svc, logger))
 }

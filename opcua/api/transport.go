@@ -11,7 +11,8 @@ import (
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/internal/httputil"
+	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/opcua"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -29,9 +30,9 @@ const (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc opcua.Service) http.Handler {
+func MakeHandler(svc opcua.Service, logger logger.Logger) http.Handler {
 	opts := []kithttp.ServerOption{
-		kithttp.ServerErrorEncoder(encodeError),
+		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
 	}
 
 	r := bone.New()
@@ -50,17 +51,17 @@ func MakeHandler(svc opcua.Service) http.Handler {
 }
 
 func decodeBrowse(_ context.Context, r *http.Request) (interface{}, error) {
-	s, err := httputil.ReadStringQuery(r, serverParam, "")
+	s, err := apiutil.ReadStringQuery(r, serverParam, "")
 	if err != nil {
 		return nil, err
 	}
 
-	n, err := httputil.ReadStringQuery(r, namespaceParam, "")
+	n, err := apiutil.ReadStringQuery(r, namespaceParam, "")
 	if err != nil {
 		return nil, err
 	}
 
-	i, err := httputil.ReadStringQuery(r, identifierParam, "")
+	i, err := apiutil.ReadStringQuery(r, identifierParam, "")
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +101,8 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch {
 	case errors.Contains(err, errors.ErrInvalidQueryParams),
-		errors.Contains(err, errors.ErrMalformedEntity):
+		errors.Contains(err, errors.ErrMalformedEntity),
+		err == apiutil.ErrMissingID:
 		w.WriteHeader(http.StatusBadRequest)
 
 	default:
@@ -109,7 +111,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 
 	if errorVal, ok := err.(errors.Error); ok {
 		w.Header().Set("Content-Type", contentType)
-		if err := json.NewEncoder(w).Encode(httputil.ErrorRes{Err: errorVal.Msg()}); err != nil {
+		if err := json.NewEncoder(w).Encode(apiutil.ErrorRes{Err: errorVal.Msg()}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}

@@ -3,7 +3,7 @@
 
 package api
 
-import "github.com/mainflux/mainflux/pkg/errors"
+import "github.com/mainflux/mainflux/internal/apiutil"
 
 type browseReq struct {
 	ServerURI  string
@@ -13,7 +13,7 @@ type browseReq struct {
 
 func (req *browseReq) validate() error {
 	if req.ServerURI == "" {
-		return errors.ErrMalformedEntity
+		return apiutil.ErrMissingID
 	}
 
 	return nil

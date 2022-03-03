@@ -3,14 +3,7 @@
 
 package api
 
-import (
-	"github.com/mainflux/mainflux/pkg/errors"
-)
-
-var (
-	errInvalidTopic   = errors.New("invalid Subscription topic")
-	errInvalidContact = errors.New("invalid Subscription contact")
-)
+import "github.com/mainflux/mainflux/internal/apiutil"
 
 type createSubReq struct {
 	token   string
@@ -20,13 +13,13 @@ type createSubReq struct {
 
 func (req createSubReq) validate() error {
 	if req.token == "" {
-		return errors.ErrAuthentication
+		return apiutil.ErrBearerToken
 	}
 	if req.Topic == "" {
-		return errInvalidTopic
+		return apiutil.ErrInvalidTopic
 	}
 	if req.Contact == "" {
-		return errInvalidContact
+		return apiutil.ErrInvalidContact
 	}
 	return nil
 }
@@ -38,10 +31,10 @@ type subReq struct {
 
 func (req subReq) validate() error {
 	if req.token == "" {
-		return errors.ErrAuthentication
+		return apiutil.ErrBearerToken
 	}
 	if req.id == "" {
-		return errors.ErrNotFound
+		return apiutil.ErrMissingID
 	}
 	return nil
 }
@@ -56,7 +49,7 @@ type listSubsReq struct {
 
 func (req listSubsReq) validate() error {
 	if req.token == "" {
-		return errors.ErrAuthentication
+		return apiutil.ErrBearerToken
 	}
 	return nil
 }

@@ -12,7 +12,8 @@ import (
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/certs"
-	"github.com/mainflux/mainflux/internal/httputil"
+	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -26,9 +27,9 @@ const (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc certs.Service) http.Handler {
+func MakeHandler(svc certs.Service, logger logger.Logger) http.Handler {
 	opts := []kithttp.ServerOption{
-		kithttp.ServerErrorEncoder(encodeError),
+		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
 	}
 
 	r := bone.New()
@@ -86,20 +87,17 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 }
 
 func decodeListCerts(_ context.Context, r *http.Request) (interface{}, error) {
-	l, err := httputil.ReadUintQuery(r, limitKey, defLimit)
+	l, err := apiutil.ReadUintQuery(r, limitKey, defLimit)
 	if err != nil {
 		return nil, err
 	}
-	o, err := httputil.ReadUintQuery(r, offsetKey, defOffset)
+	o, err := apiutil.ReadUintQuery(r, offsetKey, defOffset)
 	if err != nil {
 		return nil, err
 	}
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
+
 	req := listReq{
-		token:   t,
+		token:   apiutil.ExtractBearerToken(r),
 		thingID: bone.GetValue(r, "thingId"),
 		limit:   l,
 		offset:  o,
@@ -108,13 +106,8 @@ func decodeListCerts(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func decodeViewCert(_ context.Context, r *http.Request) (interface{}, error) {
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
-
 	req := viewReq{
-		token:    t,
+		token:    apiutil.ExtractBearerToken(r),
 		serialID: bone.GetValue(r, "certId"),
 	}
 
@@ -125,11 +118,8 @@ func decodeCerts(_ context.Context, r *http.Request) (interface{}, error) {
 	if r.Header.Get("Content-Type") != contentType {
 		return nil, errors.ErrUnsupportedContentType
 	}
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
-	req := addCertsReq{token: t}
+
+	req := addCertsReq{token: apiutil.ExtractBearerToken(r)}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, err
 	}
@@ -138,12 +128,8 @@ func decodeCerts(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func decodeRevokeCerts(_ context.Context, r *http.Request) (interface{}, error) {
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
 	req := revokeReq{
-		token:  t,
+		token:  apiutil.ExtractBearerToken(r),
 		certID: bone.GetValue(r, "certId"),
 	}
 
@@ -152,10 +138,15 @@ func decodeRevokeCerts(_ context.Context, r *http.Request) (interface{}, error) 
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch {
+	case errors.Contains(err, errors.ErrAuthentication),
+		err == apiutil.ErrBearerToken:
+		w.WriteHeader(http.StatusUnauthorized)
 	case errors.Contains(err, errors.ErrUnsupportedContentType):
 		w.WriteHeader(http.StatusUnsupportedMediaType)
 	case errors.Contains(err, errors.ErrMalformedEntity),
-		errors.Contains(err, errors.ErrInvalidQueryParams):
+		err == apiutil.ErrMissingID,
+		err == apiutil.ErrMissingCertData,
+		err == apiutil.ErrLimitSize:
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, errors.ErrConflict):
 		w.WriteHeader(http.StatusConflict)
@@ -171,7 +162,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 
 	if errorVal, ok := err.(errors.Error); ok {
 		w.Header().Set("Content-Type", contentType)
-		if err := json.NewEncoder(w).Encode(httputil.ErrorRes{Err: errorVal.Msg()}); err != nil {
+		if err := json.NewEncoder(w).Encode(apiutil.ErrorRes{Err: errorVal.Msg()}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}

@@ -12,7 +12,7 @@ import (
 
 func canAccessEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(AccessByKeyReq)
+		req := request.(accessByKeyReq)
 		if err := req.validate(); err != nil {
 			return nil, err
 		}

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/mainflux/mainflux/bootstrap"
-	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/mainflux/mainflux/internal/apiutil"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,21 +22,21 @@ func TestAddReqValidation(t *testing.T) {
 			token:       "",
 			externalID:  "external-id",
 			externalKey: "external-key",
-			err:         errors.ErrAuthentication,
+			err:         apiutil.ErrBearerToken,
 		},
 		{
 			desc:        "empty external ID",
 			token:       "token",
 			externalID:  "",
 			externalKey: "external-key",
-			err:         errors.ErrMalformedEntity,
+			err:         apiutil.ErrMissingID,
 		},
 		{
 			desc:        "empty external key",
 			token:       "token",
 			externalID:  "external-id",
 			externalKey: "",
-			err:         errors.ErrMalformedEntity,
+			err:         apiutil.ErrBearerKey,
 		},
 	}
 
@@ -63,13 +63,13 @@ func TestEntityReqValidation(t *testing.T) {
 			desc: "empty key",
 			key:  "",
 			id:   "id",
-			err:  errors.ErrAuthentication,
+			err:  apiutil.ErrBearerKey,
 		},
 		{
 			desc: "empty id",
 			key:  "key",
 			id:   "",
-			err:  errors.ErrMalformedEntity,
+			err:  apiutil.ErrMissingID,
 		},
 	}
 
@@ -94,13 +94,13 @@ func TestUpdateReqValidation(t *testing.T) {
 			desc: "empty key",
 			key:  "",
 			id:   "id",
-			err:  errors.ErrAuthentication,
+			err:  apiutil.ErrBearerKey,
 		},
 		{
 			desc: "empty id",
 			key:  "key",
 			id:   "",
-			err:  errors.ErrMalformedEntity,
+			err:  apiutil.ErrMissingID,
 		},
 	}
 
@@ -126,13 +126,13 @@ func TestUpdateCertReqValidation(t *testing.T) {
 			desc:    "empty key",
 			key:     "",
 			thingID: "thingID",
-			err:     errors.ErrAuthentication,
+			err:     apiutil.ErrBearerKey,
 		},
 		{
-			desc:    "empty thing key",
+			desc:    "empty thing id",
 			key:     "key",
 			thingID: "",
-			err:     errors.ErrNotFound,
+			err:     apiutil.ErrMissingID,
 		},
 	}
 
@@ -158,13 +158,13 @@ func TestUpdateConnReqValidation(t *testing.T) {
 			desc: "empty key",
 			key:  "",
 			id:   "id",
-			err:  errors.ErrAuthentication,
+			err:  apiutil.ErrBearerKey,
 		},
 		{
 			desc: "empty id",
 			key:  "key",
 			id:   "",
-			err:  errors.ErrMalformedEntity,
+			err:  apiutil.ErrMissingID,
 		},
 	}
 
@@ -192,17 +192,17 @@ func TestListReqValidation(t *testing.T) {
 			key:    "",
 			offset: 0,
 			limit:  1,
-			err:    errors.ErrAuthentication,
+			err:    apiutil.ErrBearerKey,
 		},
 		{
 			desc:   "too large limit",
 			key:    "key",
 			offset: 0,
 			limit:  maxLimitSize + 1,
-			err:    errors.ErrMalformedEntity,
+			err:    apiutil.ErrLimitSize,
 		},
 		{
-			desc:   "zero limit",
+			desc:   "default limit",
 			key:    "key",
 			offset: 0,
 			limit:  defLimit,
@@ -233,13 +233,13 @@ func TestBootstrapReqValidation(t *testing.T) {
 			desc:      "empty external key",
 			externKey: "",
 			externID:  "id",
-			err:       errors.ErrAuthentication,
+			err:       apiutil.ErrBearerKey,
 		},
 		{
 			desc:      "empty external id",
 			externKey: "key",
 			externID:  "",
-			err:       errors.ErrMalformedEntity,
+			err:       apiutil.ErrMissingID,
 		},
 	}
 
@@ -267,21 +267,21 @@ func TestChangeStateReqValidation(t *testing.T) {
 			key:   "",
 			id:    "id",
 			state: bootstrap.State(1),
-			err:   errors.ErrAuthentication,
+			err:   apiutil.ErrBearerKey,
 		},
 		{
 			desc:  "empty id",
 			key:   "key",
 			id:    "",
 			state: bootstrap.State(0),
-			err:   errors.ErrMalformedEntity,
+			err:   apiutil.ErrMissingID,
 		},
 		{
 			desc:  "invalid state",
 			key:   "key",
 			id:    "id",
 			state: bootstrap.State(14),
-			err:   errors.ErrMalformedEntity,
+			err:   apiutil.ErrBootstrapState,
 		},
 	}
 

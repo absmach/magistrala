@@ -13,7 +13,8 @@ import (
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/internal/httputil"
+	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/users"
@@ -32,9 +33,9 @@ const (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc users.Service, tracer opentracing.Tracer) http.Handler {
+func MakeHandler(svc users.Service, tracer opentracing.Tracer, logger logger.Logger) http.Handler {
 	opts := []kithttp.ServerOption{
-		kithttp.ServerErrorEncoder(encodeError),
+		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
 	}
 
 	mux := bone.New()
@@ -116,55 +117,43 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer) http.Handler {
 }
 
 func decodeViewUser(_ context.Context, r *http.Request) (interface{}, error) {
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
 	req := viewUserReq{
-		token:  t,
+		token:  apiutil.ExtractBearerToken(r),
 		userID: bone.GetValue(r, "userID"),
 	}
+
 	return req, nil
 }
 
 func decodeViewProfile(_ context.Context, r *http.Request) (interface{}, error) {
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
-	req := viewUserReq{
-		token: t,
-	}
+	req := viewUserReq{token: apiutil.ExtractBearerToken(r)}
+
 	return req, nil
 }
 
 func decodeListUsers(_ context.Context, r *http.Request) (interface{}, error) {
-	o, err := httputil.ReadUintQuery(r, offsetKey, defOffset)
+	o, err := apiutil.ReadUintQuery(r, offsetKey, defOffset)
 	if err != nil {
 		return nil, err
 	}
 
-	l, err := httputil.ReadUintQuery(r, limitKey, defLimit)
+	l, err := apiutil.ReadUintQuery(r, limitKey, defLimit)
 	if err != nil {
 		return nil, err
 	}
 
-	e, err := httputil.ReadStringQuery(r, emailKey, "")
+	e, err := apiutil.ReadStringQuery(r, emailKey, "")
 	if err != nil {
 		return nil, err
 	}
 
-	m, err := httputil.ReadMetadataQuery(r, metadataKey, nil)
+	m, err := apiutil.ReadMetadataQuery(r, metadataKey, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
 	req := listUsersReq{
-		token:    t,
+		token:    apiutil.ExtractBearerToken(r),
 		offset:   o,
 		limit:    l,
 		email:    e,
@@ -174,16 +163,11 @@ func decodeListUsers(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func decodeUpdateUser(_ context.Context, r *http.Request) (interface{}, error) {
-	var req updateUserReq
+	req := updateUserReq{token: apiutil.ExtractBearerToken(r)}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
-	req.token = t
 	return req, nil
 }
 
@@ -205,11 +189,6 @@ func decodeCreateUserReq(_ context.Context, r *http.Request) (interface{}, error
 		return nil, errors.ErrUnsupportedContentType
 	}
 
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
-
 	var user users.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
@@ -217,7 +196,7 @@ func decodeCreateUserReq(_ context.Context, r *http.Request) (interface{}, error
 
 	req := createUserReq{
 		user:  user,
-		token: t,
+		token: apiutil.ExtractBearerToken(r),
 	}
 
 	return req, nil
@@ -256,42 +235,32 @@ func decodePasswordChange(_ context.Context, r *http.Request) (interface{}, erro
 		return nil, errors.ErrUnsupportedContentType
 	}
 
-	var req passwChangeReq
+	req := passwChangeReq{token: apiutil.ExtractBearerToken(r)}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
-
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
-	req.Token = t
 
 	return req, nil
 }
 
 func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	o, err := httputil.ReadUintQuery(r, offsetKey, defOffset)
+	o, err := apiutil.ReadUintQuery(r, offsetKey, defOffset)
 	if err != nil {
 		return nil, err
 	}
 
-	l, err := httputil.ReadUintQuery(r, limitKey, defLimit)
+	l, err := apiutil.ReadUintQuery(r, limitKey, defLimit)
 	if err != nil {
 		return nil, err
 	}
 
-	m, err := httputil.ReadMetadataQuery(r, metadataKey, nil)
+	m, err := apiutil.ReadMetadataQuery(r, metadataKey, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
 	req := listMemberGroupReq{
-		token:    t,
+		token:    apiutil.ExtractBearerToken(r),
 		groupID:  bone.GetValue(r, "groupId"),
 		offset:   o,
 		limit:    l,
@@ -320,10 +289,15 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch {
 	case errors.Contains(err, errors.ErrInvalidQueryParams),
 		errors.Contains(err, errors.ErrMalformedEntity),
-		errors.Contains(err, users.ErrPasswordFormat):
+		errors.Contains(err, users.ErrPasswordFormat),
+		err == apiutil.ErrMissingEmail,
+		err == apiutil.ErrMissingHost,
+		err == apiutil.ErrMissingPass,
+		err == apiutil.ErrMissingConfPass,
+		err == apiutil.ErrInvalidResetPass:
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, errors.ErrAuthentication),
-		errors.Contains(err, users.ErrRecoveryToken):
+		err == apiutil.ErrBearerToken:
 		w.WriteHeader(http.StatusUnauthorized)
 	case errors.Contains(err, errors.ErrAuthorization):
 		w.WriteHeader(http.StatusForbidden)
@@ -335,7 +309,8 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	case errors.Contains(err, errors.ErrNotFound):
 		w.WriteHeader(http.StatusNotFound)
 
-	case errors.Contains(err, uuid.ErrGeneratingID):
+	case errors.Contains(err, uuid.ErrGeneratingID),
+		errors.Contains(err, users.ErrRecoveryToken):
 		w.WriteHeader(http.StatusInternalServerError)
 
 	case errors.Contains(err, errors.ErrCreateEntity),
@@ -350,7 +325,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 
 	if errorVal, ok := err.(errors.Error); ok {
 		w.Header().Set("Content-Type", contentType)
-		if err := json.NewEncoder(w).Encode(httputil.ErrorRes{Err: errorVal.Msg()}); err != nil {
+		if err := json.NewEncoder(w).Encode(apiutil.ErrorRes{Err: errorVal.Msg()}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}

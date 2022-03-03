@@ -18,7 +18,8 @@ import (
 	httpapi "github.com/mainflux/mainflux/auth/api/http"
 	"github.com/mainflux/mainflux/auth/jwt"
 	"github.com/mainflux/mainflux/auth/mocks"
-	"github.com/mainflux/mainflux/internal/httputil"
+	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
@@ -52,7 +53,7 @@ func (tr testRequest) make() (*http.Response, error) {
 		return nil, err
 	}
 	if tr.token != "" {
-		req.Header.Set("Authorization", httputil.BearerPrefix+tr.token)
+		req.Header.Set("Authorization", apiutil.BearerPrefix+tr.token)
 	}
 	if tr.contentType != "" {
 		req.Header.Set("Content-Type", tr.contentType)
@@ -76,7 +77,8 @@ func newService() auth.Service {
 }
 
 func newServer(svc auth.Service) *httptest.Server {
-	mux := httpapi.MakeHandler(svc, mocktracer.New())
+	logger := logger.NewMock()
+	mux := httpapi.MakeHandler(svc, mocktracer.New(), logger)
 	return httptest.NewServer(mux)
 }
 
@@ -106,7 +108,7 @@ func TestIssue(t *testing.T) {
 		status int
 	}{
 		{
-			desc:   "issue login key",
+			desc:   "issue login key with empty token",
 			req:    toJSON(lk),
 			ct:     contentType,
 			token:  "",
@@ -124,7 +126,7 @@ func TestIssue(t *testing.T) {
 			req:    toJSON(rk),
 			ct:     contentType,
 			token:  loginSecret,
-			status: http.StatusUnauthorized,
+			status: http.StatusCreated,
 		},
 		{
 			desc:   "issue login key wrong content type",

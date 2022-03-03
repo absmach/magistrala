@@ -126,11 +126,11 @@ func startHTTPServer(svc provision.Service, cfg provision.Config, logger logger.
 	if cfg.Server.ServerCert != "" || cfg.Server.ServerKey != "" {
 		logger.Info(fmt.Sprintf("Provision service started using https on port %s with cert %s key %s",
 			cfg.Server.HTTPPort, cfg.Server.ServerCert, cfg.Server.ServerKey))
-		errs <- http.ListenAndServeTLS(p, cfg.Server.ServerCert, cfg.Server.ServerKey, api.MakeHandler(svc))
+		errs <- http.ListenAndServeTLS(p, cfg.Server.ServerCert, cfg.Server.ServerKey, api.MakeHandler(svc, logger))
 		return
 	}
 	logger.Info(fmt.Sprintf("Provision service started using http on port %s", cfg.Server.HTTPPort))
-	errs <- http.ListenAndServe(p, api.MakeHandler(svc))
+	errs <- http.ListenAndServe(p, api.MakeHandler(svc, logger))
 }
 
 func loadConfigFromFile(file string) (provision.Config, error) {

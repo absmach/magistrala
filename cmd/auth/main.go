@@ -258,11 +258,11 @@ func startHTTPServer(tracer opentracing.Tracer, svc auth.Service, port string, c
 	p := fmt.Sprintf(":%s", port)
 	if certFile != "" || keyFile != "" {
 		logger.Info(fmt.Sprintf("Authentication service started using https, cert %s key %s, exposed port %s", certFile, keyFile, port))
-		errs <- http.ListenAndServeTLS(p, certFile, keyFile, httpapi.MakeHandler(svc, tracer))
+		errs <- http.ListenAndServeTLS(p, certFile, keyFile, httpapi.MakeHandler(svc, tracer, logger))
 		return
 	}
 	logger.Info(fmt.Sprintf("Authentication service started using http, exposed port %s", port))
-	errs <- http.ListenAndServe(p, httpapi.MakeHandler(svc, tracer))
+	errs <- http.ListenAndServe(p, httpapi.MakeHandler(svc, tracer, logger))
 
 }
 

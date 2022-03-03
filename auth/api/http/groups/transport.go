@@ -11,7 +11,8 @@ import (
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/auth"
-	"github.com/mainflux/mainflux/internal/httputil"
+	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/opentracing/opentracing-go"
 )
@@ -31,9 +32,9 @@ const (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc auth.Service, mux *bone.Mux, tracer opentracing.Tracer) *bone.Mux {
+func MakeHandler(svc auth.Service, mux *bone.Mux, tracer opentracing.Tracer, logger logger.Logger) *bone.Mux {
 	opts := []kithttp.ServerOption{
-		kithttp.ServerErrorEncoder(encodeError),
+		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
 	}
 	mux.Post("/groups", kithttp.NewServer(
 		kitot.TraceServer(tracer, "create_group")(createGroupEndpoint(svc)),
@@ -127,13 +128,8 @@ func decodeShareGroupRequest(ctx context.Context, r *http.Request) (interface{},
 		return nil, errors.ErrUnsupportedContentType
 	}
 
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
-
 	req := shareGroupAccessReq{
-		token:       t,
+		token:       apiutil.ExtractBearerToken(r),
 		userGroupID: bone.GetValue(r, "subjectGroupID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -144,28 +140,23 @@ func decodeShareGroupRequest(ctx context.Context, r *http.Request) (interface{},
 }
 
 func decodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	l, err := httputil.ReadUintQuery(r, levelKey, defLevel)
+	l, err := apiutil.ReadUintQuery(r, levelKey, defLevel)
 	if err != nil {
 		return nil, err
 	}
 
-	m, err := httputil.ReadMetadataQuery(r, metadataKey, nil)
+	m, err := apiutil.ReadMetadataQuery(r, metadataKey, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	t, err := httputil.ReadBoolQuery(r, treeKey, false)
-	if err != nil {
-		return nil, err
-	}
-
-	to, err := httputil.ExtractAuthToken(r)
+	t, err := apiutil.ReadBoolQuery(r, treeKey, false)
 	if err != nil {
 		return nil, err
 	}
 
 	req := listGroupsReq{
-		token:    to,
+		token:    apiutil.ExtractBearerToken(r),
 		level:    l,
 		metadata: m,
 		tree:     t,
@@ -175,38 +166,33 @@ func decodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, e
 }
 
 func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	o, err := httputil.ReadUintQuery(r, offsetKey, defOffset)
+	o, err := apiutil.ReadUintQuery(r, offsetKey, defOffset)
 	if err != nil {
 		return nil, err
 	}
 
-	l, err := httputil.ReadUintQuery(r, limitKey, defLimit)
+	l, err := apiutil.ReadUintQuery(r, limitKey, defLimit)
 	if err != nil {
 		return nil, err
 	}
 
-	m, err := httputil.ReadMetadataQuery(r, metadataKey, nil)
+	m, err := apiutil.ReadMetadataQuery(r, metadataKey, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	tree, err := httputil.ReadBoolQuery(r, treeKey, false)
+	tree, err := apiutil.ReadBoolQuery(r, treeKey, false)
 	if err != nil {
 		return nil, err
 	}
 
-	t, err := httputil.ReadStringQuery(r, groupType, "")
-	if err != nil {
-		return nil, err
-	}
-
-	to, err := httputil.ExtractAuthToken(r)
+	t, err := apiutil.ReadStringQuery(r, groupType, "")
 	if err != nil {
 		return nil, err
 	}
 
 	req := listMembersReq{
-		token:     to,
+		token:     apiutil.ExtractBearerToken(r),
 		id:        bone.GetValue(r, "groupID"),
 		groupType: t,
 		offset:    o,
@@ -218,28 +204,23 @@ func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 }
 
 func decodeListMembershipsRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	o, err := httputil.ReadUintQuery(r, offsetKey, defOffset)
+	o, err := apiutil.ReadUintQuery(r, offsetKey, defOffset)
 	if err != nil {
 		return nil, err
 	}
 
-	l, err := httputil.ReadUintQuery(r, limitKey, defLimit)
+	l, err := apiutil.ReadUintQuery(r, limitKey, defLimit)
 	if err != nil {
 		return nil, err
 	}
 
-	m, err := httputil.ReadMetadataQuery(r, metadataKey, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	t, err := httputil.ExtractAuthToken(r)
+	m, err := apiutil.ReadMetadataQuery(r, metadataKey, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	req := listMembershipsReq{
-		token:    t,
+		token:    apiutil.ExtractBearerToken(r),
 		id:       bone.GetValue(r, "memberID"),
 		offset:   o,
 		limit:    l,
@@ -254,17 +235,11 @@ func decodeGroupCreate(_ context.Context, r *http.Request) (interface{}, error) 
 		return nil, errors.ErrUnsupportedContentType
 	}
 
-	var req createGroupReq
+	req := createGroupReq{token: apiutil.ExtractBearerToken(r)}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
-
-	req.token = t
 	return req, nil
 }
 
@@ -273,29 +248,20 @@ func decodeGroupUpdate(_ context.Context, r *http.Request) (interface{}, error) 
 		return nil, errors.ErrUnsupportedContentType
 	}
 
-	var req updateGroupReq
+	req := updateGroupReq{
+		id:    bone.GetValue(r, "groupID"),
+		token: apiutil.ExtractBearerToken(r),
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
-
-	req.id = bone.GetValue(r, "groupID")
-	req.token = t
 	return req, nil
 }
 
 func decodeGroupRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
-
 	req := groupReq{
-		token: t,
+		token: apiutil.ExtractBearerToken(r),
 		id:    bone.GetValue(r, "groupID"),
 	}
 
@@ -303,13 +269,8 @@ func decodeGroupRequest(_ context.Context, r *http.Request) (interface{}, error)
 }
 
 func decodeAssignRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
-
 	req := assignReq{
-		token:   t,
+		token:   apiutil.ExtractBearerToken(r),
 		groupID: bone.GetValue(r, "groupID"),
 	}
 
@@ -321,14 +282,9 @@ func decodeAssignRequest(_ context.Context, r *http.Request) (interface{}, error
 }
 
 func decodeUnassignRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
-
 	req := unassignReq{
 		assignReq{
-			token:   t,
+			token:   apiutil.ExtractBearerToken(r),
 			groupID: bone.GetValue(r, "groupID"),
 		},
 	}
@@ -360,7 +316,11 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch {
-	case errors.Contains(err, errors.ErrMalformedEntity):
+	case errors.Contains(err, errors.ErrMalformedEntity),
+		err == apiutil.ErrMissingID,
+		err == apiutil.ErrEmptyList,
+		err == apiutil.ErrMissingMemberType,
+		err == apiutil.ErrNameSize:
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, errors.ErrAuthentication):
 		w.WriteHeader(http.StatusUnauthorized)
@@ -387,7 +347,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 
 	if errorVal, ok := err.(errors.Error); ok {
 		w.Header().Set("Content-Type", contentType)
-		if err := json.NewEncoder(w).Encode(httputil.ErrorRes{Err: errorVal.Msg()}); err != nil {
+		if err := json.NewEncoder(w).Encode(apiutil.ErrorRes{Err: errorVal.Msg()}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}

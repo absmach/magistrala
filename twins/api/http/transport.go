@@ -13,7 +13,8 @@ import (
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/internal/httputil"
+	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/twins"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -31,9 +32,9 @@ const (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(tracer opentracing.Tracer, svc twins.Service) http.Handler {
+func MakeHandler(tracer opentracing.Tracer, svc twins.Service, logger logger.Logger) http.Handler {
 	opts := []kithttp.ServerOption{
-		kithttp.ServerErrorEncoder(encodeError),
+		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
 	}
 
 	r := bone.New()
@@ -91,11 +92,7 @@ func decodeTwinCreation(_ context.Context, r *http.Request) (interface{}, error)
 		return nil, errors.ErrUnsupportedContentType
 	}
 
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
-	req := addTwinReq{token: t}
+	req := addTwinReq{token: apiutil.ExtractBearerToken(r)}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
@@ -108,12 +105,8 @@ func decodeTwinUpdate(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, errors.ErrUnsupportedContentType
 	}
 
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
 	req := updateTwinReq{
-		token: t,
+		token: apiutil.ExtractBearerToken(r),
 		id:    bone.GetValue(r, "id"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -124,12 +117,8 @@ func decodeTwinUpdate(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func decodeView(_ context.Context, r *http.Request) (interface{}, error) {
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
 	req := viewTwinReq{
-		token: t,
+		token: apiutil.ExtractBearerToken(r),
 		id:    bone.GetValue(r, "id"),
 	}
 
@@ -137,32 +126,28 @@ func decodeView(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
-	l, err := httputil.ReadUintQuery(r, limitKey, defLimit)
+	l, err := apiutil.ReadUintQuery(r, limitKey, defLimit)
 	if err != nil {
 		return nil, err
 	}
 
-	o, err := httputil.ReadUintQuery(r, offsetKey, defOffset)
+	o, err := apiutil.ReadUintQuery(r, offsetKey, defOffset)
 	if err != nil {
 		return nil, err
 	}
 
-	n, err := httputil.ReadStringQuery(r, nameKey, "")
+	n, err := apiutil.ReadStringQuery(r, nameKey, "")
 	if err != nil {
 		return nil, err
 	}
 
-	m, err := httputil.ReadMetadataQuery(r, metadataKey, nil)
+	m, err := apiutil.ReadMetadataQuery(r, metadataKey, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
 	req := listReq{
-		token:    t,
+		token:    apiutil.ExtractBearerToken(r),
 		limit:    l,
 		offset:   o,
 		name:     n,
@@ -173,22 +158,18 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func decodeListStates(_ context.Context, r *http.Request) (interface{}, error) {
-	l, err := httputil.ReadUintQuery(r, limitKey, defLimit)
+	l, err := apiutil.ReadUintQuery(r, limitKey, defLimit)
 	if err != nil {
 		return nil, err
 	}
 
-	o, err := httputil.ReadUintQuery(r, offsetKey, defOffset)
+	o, err := apiutil.ReadUintQuery(r, offsetKey, defOffset)
 	if err != nil {
 		return nil, err
 	}
 
-	t, err := httputil.ExtractAuthToken(r)
-	if err != nil {
-		return nil, err
-	}
 	req := listStatesReq{
-		token:  t,
+		token:  apiutil.ExtractBearerToken(r),
 		limit:  l,
 		offset: o,
 		id:     bone.GetValue(r, "id"),
@@ -217,13 +198,17 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch {
-	case errors.Contains(err, errors.ErrAuthentication):
+	case errors.Contains(err, errors.ErrAuthentication),
+		err == apiutil.ErrBearerToken:
 		w.WriteHeader(http.StatusUnauthorized)
 	case errors.Contains(err, errors.ErrInvalidQueryParams):
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, errors.ErrUnsupportedContentType):
 		w.WriteHeader(http.StatusUnsupportedMediaType)
-	case errors.Contains(err, errors.ErrMalformedEntity):
+	case errors.Contains(err, errors.ErrMalformedEntity),
+		err == apiutil.ErrMissingID,
+		err == apiutil.ErrNameSize,
+		err == apiutil.ErrLimitSize:
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, errors.ErrNotFound):
 		w.WriteHeader(http.StatusNotFound)
@@ -242,7 +227,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 
 	if errorVal, ok := err.(errors.Error); ok {
 		w.Header().Set("Content-Type", contentType)
-		if err := json.NewEncoder(w).Encode(httputil.ErrorRes{Err: errorVal.Msg()}); err != nil {
+		if err := json.NewEncoder(w).Encode(apiutil.ErrorRes{Err: errorVal.Msg()}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}

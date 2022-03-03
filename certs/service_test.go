@@ -21,6 +21,7 @@ import (
 	bsmocks "github.com/mainflux/mainflux/bootstrap/mocks"
 	"github.com/mainflux/mainflux/certs"
 	"github.com/mainflux/mainflux/certs/mocks"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
 	"github.com/mainflux/mainflux/things"
@@ -413,7 +414,8 @@ func TestViewCert(t *testing.T) {
 }
 
 func newThingsServer(svc things.Service) *httptest.Server {
-	mux := httpapi.MakeHandler(mocktracer.New(), svc)
+	logger := logger.NewMock()
+	mux := httpapi.MakeHandler(mocktracer.New(), svc, logger)
 	return httptest.NewServer(mux)
 }
 

@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/logger"
 	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/users"
@@ -46,7 +47,8 @@ func newUserService() users.Service {
 }
 
 func newUserServer(svc users.Service) *httptest.Server {
-	mux := api.MakeHandler(svc, mocktracer.New())
+	logger := logger.NewMock()
+	mux := api.MakeHandler(svc, mocktracer.New(), logger)
 	return httptest.NewServer(mux)
 }
 

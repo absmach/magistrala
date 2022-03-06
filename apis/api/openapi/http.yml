@@ -6,9 +6,6 @@ info:
 paths:
   /channels/{id}/messages:
     post:
-      security:
-        - jwtAuth: []
-        - basicAuth: []
       summary: Sends message to the communication channel
       description: |
         Sends message to the communication channel. Messages can be sent as
@@ -106,14 +103,6 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/SenMLRecord"
-  securitySchemes:
-    basicAuth:
-      type: http
-      scheme: basic
-    jwtAuth:
-      type: apiKey
-      in: header
-      name: Authorization
 
   parameters:
     ID:
@@ -139,12 +128,35 @@ components:
           schema:
             $ref: "#/components/schemas/SenMLArray"
 
-responses:
-  ServiceError:
-    description: Unexpected server-side error occurred.
-  HealthRes:
-    description: Service Health Check.
-    content:
-      application/json:
-        schema:
-          $ref: "./schemas/HealthInfo.yml"
+  responses:
+    ServiceError:
+      description: Unexpected server-side error occurred.
+      content:
+        application/json:
+          schema:
+            type: string
+            format: byte
+    HealthRes:
+      description: Service Health Check.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/HealthInfo.yml"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: uuid
+      description: |
+        * Thing access: "Authorization: Thing <thing_key>"
+
+    basicAuth:
+      type: http
+      scheme: basic
+      description: |
+        * Things access: "Authorization: Basic <base64-encoded_credentials>"
+
+security:
+  - bearerAuth: []
+  - basicAuth: []

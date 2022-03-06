@@ -13,8 +13,6 @@ paths:
         the provided access token.
       tags:
         - configs
-      parameters:
-        - $ref: "#/components/parameters/Authorization"
       requestBody:
         $ref: "#/components/requestBodies/ConfigCreateReq"
       responses:
@@ -38,7 +36,6 @@ paths:
       tags:
         - configs
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/State"
@@ -58,7 +55,6 @@ paths:
       tags:
         - configs
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ConfigId"
       responses:
         '200':
@@ -78,7 +74,6 @@ paths:
       tags:
         - configs
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ConfigId"
       requestBody:
           $ref: "#/components/requestBodies/ConfigUpdateReq"
@@ -103,7 +98,6 @@ paths:
       tags:
         - configs
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ConfigId"
       responses:
         '204':
@@ -123,7 +117,6 @@ paths:
       tags:
         - configs
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ConfigId"
       requestBody:
         $ref: "#/components/requestBodies/ConfigCertUpdateReq"
@@ -149,7 +142,6 @@ paths:
       tags:
         - configs
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ConfigId"
       requestBody:
         $ref: "#/components/requestBodies/ConfigConnUpdateReq"
@@ -173,8 +165,9 @@ paths:
         Retrieves a configuration with given external ID and external key.
       tags:
         - configs
+      security:
+        - bootstrapAuth: []
       parameters:
-        - $ref: "#/components/parameters/ConfigAuth"
         - $ref: "#/components/parameters/ExternalId"
       responses:
         '200':
@@ -194,8 +187,9 @@ paths:
         Retrieves a configuration with given external ID and encrypted external key.
       tags:
         - configs
+      security:
+        - bootstrapEncAuth: []
       parameters:
-        - $ref: "#/components/parameters/EncConfigAuth"
         - $ref: "#/components/parameters/ExternalId"
       responses:
         '200':
@@ -214,7 +208,6 @@ paths:
       tags:
         - configs
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ConfigId"
       requestBody:
         $ref: '#/components/requestBodies/ConfigStateUpdateReq'
@@ -344,31 +337,6 @@ components:
         - content
 
   parameters:
-    Authorization:
-      name: Authorization
-      description: User's access token.
-      in: header
-      schema:
-        type: string
-        format: jwt
-      required: true
-    ConfigAuth:
-      name: configAuthorization
-      description: Configuration external key.
-      in: header
-      schema:
-        type: string
-      required: true
-    EncConfigAuth:
-      name: configAuthorization
-      description: |
-        Hex-encoded configuration external key encrypted using
-        the AES algorithm and SHA256 sum of the external key
-        itself as an encryption key.
-      in: header
-      schema:
-        type: string
-      required: true
     ConfigId:
       name: configId
       description: Unique Config identifier. It's the ID of the corresponding Thing.
@@ -533,3 +501,31 @@ components:
         application/json:
           schema:
             $ref: "./schemas/HealthInfo.yml"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        * Users access: "Authorization: Bearer <user_token>"
+
+    bootstrapAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: string
+      description: |
+        * Things access: "Authorization: Thing <external_key>"
+
+    bootstrapEncAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: aes-sha256-uuid
+      description: |
+        * Things access: "Authorization: Thing <external_enc_key>"
+        Hex-encoded configuration external key encrypted using
+        the AES algorithm and SHA256 sum of the external key
+        itself as an encryption key.
+
+security:
+  - bearerAuth: []

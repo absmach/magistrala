@@ -11,8 +11,6 @@ paths:
       description: Creates a certificate for thing
       tags:
         - certs
-      parameters:
-      - $ref: "#/components/parameters/Authorization"
       requestBody:
         $ref: "#/components/requestBodies/CertReq"
       responses:
@@ -32,7 +30,6 @@ paths:
       tags:
         - certs
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/CertID"
       responses:
         '200':
@@ -53,7 +50,6 @@ paths:
       tags:
         - certs
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/CertID"
       responses:
         '200':
@@ -73,7 +69,6 @@ paths:
       tags:
         - certs
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ThingID"
       responses:
         '200':
@@ -100,13 +95,6 @@ paths:
 
 components:
   parameters:
-    Authorization:
-      name: Authorization
-      description: User's access token. Used instead of credentials in env or config.toml.
-      in: header
-      schema:
-        type: string
-      required: false
     ThingID:
       name: thingID
       description: Thing ID
@@ -256,3 +244,14 @@ components:
         application/json:
           schema:
             $ref: "./schemas/HealthInfo.yml"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        * Users access: "Authorization: Bearer <user_token>"
+
+security:
+  - bearerAuth: []

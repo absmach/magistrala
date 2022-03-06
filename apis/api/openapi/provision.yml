@@ -11,8 +11,6 @@ paths:
       description: Adds new device to proxy
       tags:
         - provision
-      parameters:
-      - $ref: "#/components/parameters/Authorization"
       requestBody:
         $ref: "#/components/requestBodies/ProvisionReq"
       responses:
@@ -31,8 +29,6 @@ paths:
         configuration created with provision service.
       tags:
         - provision
-      parameters:
-      - $ref: "#/components/parameters/Authorization"
       responses:
         '200':
           $ref: "#/components/responses/ProvisionRes"
@@ -52,16 +48,6 @@ paths:
           $ref: "#/components/responses/ServiceError"
 
 components:
-  parameters:
-    Authorization:
-      name: Authorization
-      description: User's access token. Used instead of credentials in env or config.toml.
-      in: header
-      schema:
-        type: string
-        format: jwt
-      required: false
-
   requestBodies:
     ProvisionReq:
       description: MAC address of device or other identifier
@@ -95,3 +81,14 @@ components:
         application/json:
           schema:
             $ref: "./schemas/HealthInfo.yml"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        * Users access: "Authorization: Bearer <user_token>"
+
+security:
+  - bearerAuth: []

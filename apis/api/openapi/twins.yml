@@ -13,8 +13,6 @@ paths:
         the provided access token.
       tags:
         - twins
-      parameters:
-        - $ref: '#/components/parameters/Authorization'
       requestBody:
         $ref: "#/components/requestBodies/TwinReq"
       responses:
@@ -37,7 +35,6 @@ paths:
       tags:
         - twins
       parameters:
-        - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
         - $ref: '#/components/parameters/Name'
@@ -58,7 +55,6 @@ paths:
       tags:
         - twins
       parameters:
-        - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/TwinID'
       responses:
         '200':
@@ -79,7 +75,6 @@ paths:
       tags:
         - twins
       parameters:
-        - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/TwinID'
       requestBody:
         $ref: '#/components/requestBodies/TwinReq'
@@ -102,7 +97,6 @@ paths:
       tags:
         - twins
       parameters:
-        - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/TwinID'
       responses:
         '204':
@@ -126,7 +120,6 @@ paths:
         - states
       parameters:
         - $ref: '#/components/parameters/TwinID'
-        - $ref: '#/components/parameters/Authorization'
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
       responses:
@@ -153,14 +146,6 @@ paths:
 
 components:
   parameters:
-    Authorization:
-      name: Authorization
-      description: User's access token.
-      in: header
-      schema:
-        type: string
-        format: uuid
-      required: true
     Limit:
       name: limit
       description: Size of the subset to retrieve.
@@ -381,3 +366,14 @@ components:
         application/json:
           schema:
             $ref: "./schemas/HealthInfo.yml"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        * Users access: "Authorization: Bearer <user_token>"
+
+security:
+  - bearerAuth: []

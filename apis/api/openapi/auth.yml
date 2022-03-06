@@ -12,8 +12,6 @@ paths:
         be uniquely identified by its ID.
       tags:
         - auth
-      parameters:
-        - $ref: "#/components/parameters/Authorization"
       requestBody:
         $ref: "#/components/requestBodies/KeyRequest"
       responses:
@@ -35,7 +33,6 @@ paths:
       tags:
         - auth
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ApiKeyId"
       responses:
         '200':
@@ -53,7 +50,6 @@ paths:
       tags:
         - auth
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ApiKeyId"
       responses:
         '204':
@@ -70,7 +66,6 @@ paths:
       tags:
         - auth
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/requestBodies/GroupCreateReq"
       responses:
         '201':
@@ -92,7 +87,6 @@ paths:
       tags:
         - auth
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/Level"
         - $ref: "#/components/parameters/Metadata"
         - $ref: "#/components/parameters/Tree"
@@ -115,7 +109,6 @@ paths:
       tags:
         - auth
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/GroupId"
       responses:
         '200':
@@ -135,7 +128,6 @@ paths:
       tags:
         - auth
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/GroupId"
       requestBody:
         $ref: "#/components/requestBodies/GroupUpdateReq"
@@ -159,7 +151,6 @@ paths:
       tags:
         - auth
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/Level"
         - $ref: "#/components/parameters/Metadata"
@@ -185,7 +176,6 @@ paths:
       tags:
         - auth
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/Level"
         - $ref: "#/components/parameters/Metadata"
@@ -211,7 +201,6 @@ paths:
       tags:
         - auth
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/Level"
         - $ref: "#/components/parameters/Metadata"
@@ -235,7 +224,6 @@ paths:
       tags:
         - auth
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/GroupId"
       requestBody:
         $ref: "#/components/requestBodies/MembersReq"
@@ -257,7 +245,6 @@ paths:
       description: |
         Array of member ids that are in the group specified with groupID.
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Limit"
@@ -276,7 +263,6 @@ paths:
       tags:
         - auth
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/UserGroupID"
       requestBody:
         $ref: "#/components/requestBodies/ShareGroupAccessReq"
@@ -297,7 +283,6 @@ paths:
       description: |
         Array of groups that member belongs to.
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/MemberId"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Limit"
@@ -317,8 +302,6 @@ paths:
         Also, only policies defined on the system are allowed to add. For more details, please see the docs for Authorization.
       tags:
         - auth
-      parameters:
-        - $ref: "#/components/parameters/AdminAuthorization"
       requestBody:
         $ref: "#/components/requestBodies/PoliciesReq"
       responses:
@@ -343,8 +326,6 @@ paths:
         Also, only policies defined on the system are allowed to delete. For more details, please see the docs for Authorization.
       tags:
         - auth
-      parameters:
-        - $ref: "#/components/parameters/AdminAuthorization"
       requestBody:
         $ref: "#/components/requestBodies/PoliciesReq"
       responses:
@@ -559,14 +540,6 @@ components:
             type: string
 
   parameters:
-    Authorization:
-      name: Authorization
-      description: User's access token.
-      in: header
-      schema:
-        type: string
-        format: jwt
-      required: true
     ApiKeyId:
       name: id
       description: API Key ID.
@@ -643,14 +616,6 @@ components:
       schema:
         type: boolean
         default: false
-    AdminAuthorization:
-      name: Authorization
-      description: Admin's access token.
-      in: header
-      schema:
-        type: string
-        format: jwt
-      required: true
 
   requestBodies:
     KeyRequest:
@@ -757,3 +722,14 @@ components:
         application/json:
           schema:
             $ref: "./schemas/HealthInfo.yml"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        * Users access: "Authorization: Bearer <user_token>"
+
+security:
+  - bearerAuth: []

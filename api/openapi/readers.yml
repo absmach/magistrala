@@ -16,7 +16,6 @@ paths:
       tags:
         - messages
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ChanId"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -107,16 +106,6 @@ components:
                 description: Time of updating measurement.
 
   parameters:
-    Authorization:
-      name: Authorization
-      description: |
-        Thing or User access token: 
-        * For thing access use "Authorization: Thing <thing_key>"
-        * For user access use "Authorization: Bearer <user_token>"
-      in: header
-      schema:
-        type: string
-      required: true
     ChanId:
       name: chanId
       description: Unique channel identifier.
@@ -231,3 +220,22 @@ components:
         application/json:
           schema:
             $ref: "./schemas/HealthInfo.yml"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        * Users access: "Authorization: Bearer <user_token>"
+
+    thingAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: uuid
+      description: |
+        * Things access: "Authorization: Thing <thing_key>"
+
+security:
+  - bearerAuth: []
+  - thingAuth: []

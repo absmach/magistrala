@@ -13,8 +13,6 @@ paths:
         the provided access token.
       tags:
         - things
-      parameters:
-        - $ref: "#/components/parameters/Authorization"
       requestBody:
         $ref: "#/components/requestBodies/ThingCreateReq"
       responses:
@@ -42,7 +40,6 @@ paths:
       tags:
         - things
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Name"
@@ -73,8 +70,6 @@ paths:
         increasing the subset size of the initial request.
       tags:
         - things
-      parameters:
-        - $ref: "#/components/parameters/Authorization"
       requestBody:
         $ref: "#/components/requestBodies/ThingsSearchReq"
       responses:
@@ -98,8 +93,6 @@ paths:
         the provided access token.
       tags:
         - things
-      parameters:
-        - $ref: "#/components/parameters/Authorization"
       requestBody:
         $ref: "#/components/requestBodies/ThingsCreateReq"
       responses:
@@ -119,7 +112,6 @@ paths:
       tags:
         - things
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ThingId"
       responses:
         '200':
@@ -141,7 +133,6 @@ paths:
       tags:
         - things
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ThingId"
       requestBody:
         $ref: "#/components/requestBodies/ThingUpdateReq"
@@ -166,7 +157,6 @@ paths:
       tags:
         - things
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ThingId"
       responses:
         '204':
@@ -186,7 +176,6 @@ paths:
       tags:
         - things
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ThingId"
       requestBody:
         $ref: "#/components/requestBodies/ShareThingReq"
@@ -211,7 +200,6 @@ paths:
       tags:
         - things
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ThingId"
       requestBody:
         $ref: "#/components/requestBodies/KeyUpdateReq"
@@ -238,8 +226,6 @@ paths:
         be the channel's owner.
       tags:
         - channels
-      parameters:
-        - $ref: "#/components/parameters/Authorization"
       requestBody:
         $ref: "#/components/requestBodies/ChannelCreateReq"
       responses:
@@ -265,7 +251,6 @@ paths:
       tags:
         - channels
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Name"
@@ -291,8 +276,6 @@ paths:
         the provided access token.
       tags:
         - channels
-      parameters:
-        - $ref: "#/components/parameters/Authorization"
       requestBody:
         $ref: "#/components/requestBodies/ChannelsCreateReq"
       responses:
@@ -314,7 +297,6 @@ paths:
       tags:
         - channels
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ChanId"
       responses:
         '200':
@@ -338,7 +320,6 @@ paths:
       tags:
         - channels
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ChanId"
       requestBody:
         $ref: "#/components/requestBodies/ChannelCreateReq"
@@ -363,7 +344,6 @@ paths:
       tags:
         - channels
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ChanId"
       responses:
         '204':
@@ -382,8 +362,6 @@ paths:
         Channel and thing are owned by user identified using the provided access token.
       tags:
         - things
-      parameters:
-        - $ref: "#/components/parameters/Authorization"
       requestBody:
         $ref: "#/components/requestBodies/ConnCreateReq"
       responses:
@@ -409,8 +387,6 @@ paths:
         Channels and things are owned by user identified using the provided access token.
       tags:
       - things
-      parameters:
-      - $ref: "#/components/parameters/Authorization"
       requestBody:
         $ref: "#/components/requestBodies/DisconnReq"
       responses:
@@ -435,7 +411,6 @@ paths:
       tags:
         - channels
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ThingId"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Limit"
@@ -462,7 +437,6 @@ paths:
       tags:
         - things
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ChanId"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Limit"
@@ -489,7 +463,6 @@ paths:
       tags:
         - channels
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ChanId"
         - $ref: "#/components/parameters/ThingId"
       responses:
@@ -511,7 +484,6 @@ paths:
       tags:
         - channels
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/ChanId"
         - $ref: "#/components/parameters/ThingId"
       responses:
@@ -601,7 +573,6 @@ paths:
       tags:
         - things
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -811,14 +782,6 @@ components:
             type: string
 
   parameters:
-    Authorization:
-      name: Authorization
-      description: User's access token.
-      in: header
-      schema:
-        type: string
-        format: jwt
-      required: true
     ChanId:
       name: chanId
       description: Unique channel identifier.
@@ -1113,3 +1076,14 @@ components:
         application/json:
           schema:
             $ref: "./schemas/HealthInfo.yml"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        * Users access: "Authorization: Bearer <user_token>"
+
+security:
+  - bearerAuth: []

@@ -10,8 +10,6 @@ paths:
       description: Creates a new subscription give a topic and contact.
       tags:
         - notifiers
-      security:
-        - Authorization: []
       requestBody:
         $ref: "#/components/requestBodies/Create"
       responses:
@@ -30,8 +28,6 @@ paths:
       description: List subscriptions given list parameters.
       tags:
         - notifiers
-      security:
-        - Authorization: []
       parameters:
         - $ref: "#/components/parameters/Topic"
         - $ref: "#/components/parameters/Contact"
@@ -52,8 +48,6 @@ paths:
       description: Retrieves a subscription with the provided id.
       tags:
         - notifiers
-      security:
-        - Authorization: []
       parameters:
         - $ref: "#/components/parameters/Id"
       responses:
@@ -68,8 +62,6 @@ paths:
       description: Removes a subscription with the provided id.
       tags:
         - notifiers
-      security:
-        - Authorization: []
       parameters:
         - $ref: "#/components/parameters/Id"
       responses:
@@ -91,11 +83,6 @@ paths:
           $ref: "#/components/responses/ServiceError"
 
 components:
-  securitySchemes:
-    Authorization:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
   schemas:
     Subscription:
       type: object
@@ -220,3 +207,14 @@ components:
         application/json:
           schema:
             $ref: "./schemas/HealthInfo.yml"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        * Users access: "Authorization: Bearer <user_token>"
+
+security:
+  - bearerAuth: []

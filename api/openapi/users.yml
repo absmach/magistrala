@@ -38,7 +38,6 @@ paths:
       tags:
         - users
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Metadata"
@@ -64,8 +63,6 @@ paths:
         authorization token and the new received info.
       tags:
         - users
-      parameters:
-        - $ref: "#/components/parameters/Authorization"
       requestBody:
         $ref: "#/components/requestBodies/UserUpdateReq"
       responses:
@@ -87,8 +84,6 @@ paths:
         authorization token
       tags:
         - users
-      security:
-        - Authorization: []
       responses:
         '200':
           $ref: "#/components/responses/UserRes"
@@ -109,7 +104,6 @@ paths:
       tags:
         - users
       parameters:
-        - $ref: "#/components/parameters/Authorization"
         - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -210,8 +204,6 @@ paths:
         When authenticated user wants to change password.
       tags:
         - users
-      security:
-        - Authorization: []
       requestBody:
         $ref: '#/components/requestBodies/PasswordChange'
       responses:
@@ -235,12 +227,6 @@ paths:
           $ref: "#/components/responses/ServiceError"
 
 components:
-  securitySchemes:
-    Authorization:
-      type: http
-      scheme: bearer
-      bearerFormat: jwt
-
   schemas:
     Token:
       type: object
@@ -317,14 +303,6 @@ components:
           description: Error message
 
   parameters:
-    Authorization:
-      name: Authorization
-      description: User's access token.
-      in: header
-      schema:
-        type: string
-        format: jwt
-      required: true
     Referer:
       name: Referer
       description: Host being sent by browser.
@@ -473,3 +451,14 @@ components:
         application/json:
           schema:
             $ref: "./schemas/HealthInfo.yml"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        * Users access: "Authorization: Bearer <user_token>"
+
+security:
+  - bearerAuth: []

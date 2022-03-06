@@ -87,7 +87,7 @@ Additionally users or API token can be passed in Authorization header, this auth
 
 * `username`, `password` - (`MF_PROVISION_USER`, `MF_PROVISION_PASSWORD` in [.env](../.env), `mf_user`, `mf_pass` in [config.toml](../docker/addons/provision/configs/config.toml))
 * API Key - (`MF_PROVISION_API_KEY` in [.env](../.env) or [config.toml](../docker/addons/provision/configs/config.toml))
-* `Authorization: Token|ApiKey` - request authorization header containing either users token or API key. Check [auth](../auth/README.md).
+* `Authorization: Bearer Token|ApiKey` - request authorization header containing either users token or API key. Check [auth](../auth/README.md).
 
 ## Running
 Provision service can be run as a standalone or in docker composition as addon to the core docker composition.
@@ -113,7 +113,7 @@ curl -s -S  -X POST  http://localhost:<MF_PROVISION_HTTP_PORT>/mapping  -H 'Cont
 
 In the case that provision service is not deployed with credentials or API key or you want to use user other than one being set in environment (or config file):
 ```bash
-curl -s -S  -X POST  http://localhost:<MF_PROVISION_HTTP_PORT>/mapping -H "Authorization: <token|api_key>" -H 'Content-Type: application/json' -d '{"external_id": "<external_id>", "external_key": "<external_key>"}'
+curl -s -S  -X POST  http://localhost:<MF_PROVISION_HTTP_PORT>/mapping -H "Authorization: Bearer <token|api_key>" -H 'Content-Type: application/json' -d '{"external_id": "<external_id>", "external_key": "<external_key>"}'
 ```
 
 Or if you want to specify a name for thing different than in `config.toml` you can specify post data as:
@@ -162,7 +162,7 @@ Provision service has `/certs` endpoint that can be used to generate certificate
 - `users_token` - users authentication token or API token
 - `thing_id` - id of the thing for which certificate is going to be generated
 ```bash
-curl -s  -X POST  http://localhost:8190/certs -H "Authorization: <users_token>" -H 'Content-Type: application/json'   -d '{"thing_id": "<thing_id>", "key_bits":4096, "ttl":"2400h" }'
+curl -s  -X POST  http://localhost:8190/certs -H "Authorization: Bearer <users_token>" -H 'Content-Type: application/json'   -d '{"thing_id": "<thing_id>", "key_bits":4096, "ttl":"2400h" }'
 ```
 ```json                                                                                                                            
 {

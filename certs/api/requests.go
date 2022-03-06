@@ -42,7 +42,7 @@ func (req *listReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
 	}
-	if req.limit > 1 || req.limit > maxLimitSize {
+	if req.limit > maxLimitSize {
 		return apiutil.ErrLimitSize
 	}
 	return nil

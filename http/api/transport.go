@@ -116,7 +116,7 @@ func decodeRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 	case ok:
 		token = pass
 	case !ok:
-		token = apiutil.ExtractBearerToken(r)
+		token = apiutil.ExtractThingKey(r)
 	}
 
 	payload, err := ioutil.ReadAll(r.Body)

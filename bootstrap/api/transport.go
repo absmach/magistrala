@@ -125,8 +125,8 @@ func decodeUpdateRequest(_ context.Context, r *http.Request) (interface{}, error
 	}
 
 	req := updateReq{
-		key: apiutil.ExtractBearerToken(r),
-		id:  bone.GetValue(r, "id"),
+		token: apiutil.ExtractBearerToken(r),
+		id:    bone.GetValue(r, "id"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
@@ -141,7 +141,7 @@ func decodeUpdateCertRequest(_ context.Context, r *http.Request) (interface{}, e
 	}
 
 	req := updateCertReq{
-		key:     apiutil.ExtractBearerToken(r),
+		token:   apiutil.ExtractBearerToken(r),
 		thingID: bone.GetValue(r, "id"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -157,8 +157,8 @@ func decodeUpdateConnRequest(_ context.Context, r *http.Request) (interface{}, e
 	}
 
 	req := updateConnReq{
-		key: apiutil.ExtractBearerToken(r),
-		id:  bone.GetValue(r, "id"),
+		token: apiutil.ExtractBearerToken(r),
+		id:    bone.GetValue(r, "id"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
@@ -184,7 +184,7 @@ func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) 
 	}
 
 	req := listReq{
-		key:    apiutil.ExtractBearerToken(r),
+		token:  apiutil.ExtractBearerToken(r),
 		filter: parseFilter(q),
 		offset: o,
 		limit:  l,
@@ -196,7 +196,7 @@ func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) 
 func decodeBootstrapRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := bootstrapReq{
 		id:  bone.GetValue(r, "external_id"),
-		key: apiutil.ExtractBearerToken(r),
+		key: apiutil.ExtractThingKey(r),
 	}
 
 	return req, nil
@@ -208,8 +208,8 @@ func decodeStateRequest(_ context.Context, r *http.Request) (interface{}, error)
 	}
 
 	req := changeStateReq{
-		key: apiutil.ExtractBearerToken(r),
-		id:  bone.GetValue(r, "id"),
+		token: apiutil.ExtractBearerToken(r),
+		id:    bone.GetValue(r, "id"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
@@ -220,8 +220,8 @@ func decodeStateRequest(_ context.Context, r *http.Request) (interface{}, error)
 
 func decodeEntityRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := entityReq{
-		key: apiutil.ExtractBearerToken(r),
-		id:  bone.GetValue(r, "id"),
+		token: apiutil.ExtractBearerToken(r),
+		id:    bone.GetValue(r, "id"),
 	}
 
 	return req, nil

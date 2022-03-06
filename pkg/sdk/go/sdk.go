@@ -337,3 +337,15 @@ func (sdk mfSDK) sendRequest(req *http.Request, token, contentType string) (*htt
 
 	return sdk.client.Do(req)
 }
+
+func (sdk mfSDK) sendThingRequest(req *http.Request, key, contentType string) (*http.Response, error) {
+	if key != "" {
+		req.Header.Set("Authorization", apiutil.ThingPrefix+key)
+	}
+
+	if contentType != "" {
+		req.Header.Add("Content-Type", contentType)
+	}
+
+	return sdk.client.Do(req)
+}

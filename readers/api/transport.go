@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strings"
 
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
@@ -22,26 +21,24 @@ import (
 )
 
 const (
-	contentType      = "application/json"
-	offsetKey        = "offset"
-	limitKey         = "limit"
-	formatKey        = "format"
-	subtopicKey      = "subtopic"
-	publisherKey     = "publisher"
-	protocolKey      = "protocol"
-	nameKey          = "name"
-	valueKey         = "v"
-	stringValueKey   = "vs"
-	dataValueKey     = "vd"
-	boolValueKey     = "vb"
-	comparatorKey    = "comparator"
-	fromKey          = "from"
-	toKey            = "to"
-	defLimit         = 10
-	defOffset        = 0
-	defFormat        = "messages"
-	thingTokenPrefix = "Thing "
-	userTokenPrefix  = "Bearer "
+	contentType    = "application/json"
+	offsetKey      = "offset"
+	limitKey       = "limit"
+	formatKey      = "format"
+	subtopicKey    = "subtopic"
+	publisherKey   = "publisher"
+	protocolKey    = "protocol"
+	nameKey        = "name"
+	valueKey       = "v"
+	stringValueKey = "vs"
+	dataValueKey   = "vd"
+	boolValueKey   = "vb"
+	comparatorKey  = "comparator"
+	fromKey        = "from"
+	toKey          = "to"
+	defLimit       = 10
+	defOffset      = 0
+	defFormat      = "messages"
 )
 
 var (
@@ -142,7 +139,8 @@ func decodeList(ctx context.Context, r *http.Request) (interface{}, error) {
 
 	req := listMessagesReq{
 		chanID: bone.GetValue(r, "chanID"),
-		token:  r.Header.Get("Authorization"),
+		token:  apiutil.ExtractBearerToken(r),
+		key:    apiutil.ExtractThingKey(r),
 		pageMeta: readers.PageMetadata{
 			Offset:      offset,
 			Limit:       limit,
@@ -219,9 +217,8 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 
 func authorize(ctx context.Context, req listMessagesReq, tc mainflux.ThingsServiceClient, ac mainflux.AuthServiceClient) (err error) {
 	switch {
-	case strings.HasPrefix(req.token, userTokenPrefix):
-		token := strings.TrimPrefix(req.token, userTokenPrefix)
-		user, err := usersAuth.Identify(ctx, &mainflux.Token{Value: token})
+	case req.token != "":
+		user, err := usersAuth.Identify(ctx, &mainflux.Token{Value: req.token})
 		if err != nil {
 			e, ok := status.FromError(err)
 			if ok && e.Code() == codes.PermissionDenied {
@@ -238,8 +235,7 @@ func authorize(ctx context.Context, req listMessagesReq, tc mainflux.ThingsServi
 		}
 		return nil
 	default:
-		token := strings.TrimPrefix(req.token, thingTokenPrefix)
-		if _, err := thingsAuth.CanAccessByKey(ctx, &mainflux.AccessByKeyReq{Token: token, ChanID: req.chanID}); err != nil {
+		if _, err := thingsAuth.CanAccessByKey(ctx, &mainflux.AccessByKeyReq{Token: req.key, ChanID: req.chanID}); err != nil {
 			return errors.Wrap(errThingAccess, err)
 		}
 		return nil

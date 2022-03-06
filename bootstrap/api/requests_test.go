@@ -54,28 +54,28 @@ func TestAddReqValidation(t *testing.T) {
 
 func TestEntityReqValidation(t *testing.T) {
 	cases := []struct {
-		desc string
-		key  string
-		id   string
-		err  error
+		desc  string
+		token string
+		id    string
+		err   error
 	}{
 		{
-			desc: "empty key",
-			key:  "",
-			id:   "id",
-			err:  apiutil.ErrBearerKey,
+			desc:  "empty token",
+			token: "",
+			id:    "id",
+			err:   apiutil.ErrBearerToken,
 		},
 		{
-			desc: "empty id",
-			key:  "key",
-			id:   "",
-			err:  apiutil.ErrMissingID,
+			desc:  "empty id",
+			token: "token",
+			id:    "",
+			err:   apiutil.ErrMissingID,
 		},
 	}
 
 	for _, tc := range cases {
 		req := entityReq{
-			key: tc.key,
+			token: tc.token,
 		}
 
 		err := req.validate()
@@ -85,29 +85,29 @@ func TestEntityReqValidation(t *testing.T) {
 
 func TestUpdateReqValidation(t *testing.T) {
 	cases := []struct {
-		desc string
-		key  string
-		id   string
-		err  error
+		desc  string
+		token string
+		id    string
+		err   error
 	}{
 		{
-			desc: "empty key",
-			key:  "",
-			id:   "id",
-			err:  apiutil.ErrBearerKey,
+			desc:  "empty token",
+			token: "",
+			id:    "id",
+			err:   apiutil.ErrBearerToken,
 		},
 		{
-			desc: "empty id",
-			key:  "key",
-			id:   "",
-			err:  apiutil.ErrMissingID,
+			desc:  "empty id",
+			token: "token",
+			id:    "",
+			err:   apiutil.ErrMissingID,
 		},
 	}
 
 	for _, tc := range cases {
 		req := updateReq{
-			key: tc.key,
-			id:  tc.id,
+			token: tc.token,
+			id:    tc.id,
 		}
 
 		err := req.validate()
@@ -118,19 +118,19 @@ func TestUpdateReqValidation(t *testing.T) {
 func TestUpdateCertReqValidation(t *testing.T) {
 	cases := []struct {
 		desc    string
-		key     string
+		token   string
 		thingID string
 		err     error
 	}{
 		{
-			desc:    "empty key",
-			key:     "",
+			desc:    "empty token",
+			token:   "",
 			thingID: "thingID",
-			err:     apiutil.ErrBearerKey,
+			err:     apiutil.ErrBearerToken,
 		},
 		{
 			desc:    "empty thing id",
-			key:     "key",
+			token:   "token",
 			thingID: "",
 			err:     apiutil.ErrMissingID,
 		},
@@ -138,7 +138,7 @@ func TestUpdateCertReqValidation(t *testing.T) {
 
 	for _, tc := range cases {
 		req := updateCertReq{
-			key:     tc.key,
+			token:   tc.token,
 			thingID: tc.thingID,
 		}
 
@@ -149,29 +149,29 @@ func TestUpdateCertReqValidation(t *testing.T) {
 
 func TestUpdateConnReqValidation(t *testing.T) {
 	cases := []struct {
-		desc string
-		key  string
-		id   string
-		err  error
+		desc  string
+		token string
+		id    string
+		err   error
 	}{
 		{
-			desc: "empty key",
-			key:  "",
-			id:   "id",
-			err:  apiutil.ErrBearerKey,
+			desc:  "empty token",
+			token: "",
+			id:    "id",
+			err:   apiutil.ErrBearerToken,
 		},
 		{
-			desc: "empty id",
-			key:  "key",
-			id:   "",
-			err:  apiutil.ErrMissingID,
+			desc:  "empty id",
+			token: "token",
+			id:    "",
+			err:   apiutil.ErrMissingID,
 		},
 	}
 
 	for _, tc := range cases {
 		req := updateReq{
-			key: tc.key,
-			id:  tc.id,
+			token: tc.token,
+			id:    tc.id,
 		}
 
 		err := req.validate()
@@ -183,27 +183,27 @@ func TestListReqValidation(t *testing.T) {
 	cases := []struct {
 		desc   string
 		offset uint64
-		key    string
+		token  string
 		limit  uint64
 		err    error
 	}{
 		{
-			desc:   "empty key",
-			key:    "",
+			desc:   "empty token",
+			token:  "",
 			offset: 0,
 			limit:  1,
-			err:    apiutil.ErrBearerKey,
+			err:    apiutil.ErrBearerToken,
 		},
 		{
 			desc:   "too large limit",
-			key:    "key",
+			token:  "token",
 			offset: 0,
 			limit:  maxLimitSize + 1,
 			err:    apiutil.ErrLimitSize,
 		},
 		{
 			desc:   "default limit",
-			key:    "key",
+			token:  "token",
 			offset: 0,
 			limit:  defLimit,
 			err:    nil,
@@ -212,7 +212,7 @@ func TestListReqValidation(t *testing.T) {
 
 	for _, tc := range cases {
 		req := listReq{
-			key:    tc.key,
+			token:  tc.token,
 			offset: tc.offset,
 			limit:  tc.limit,
 		}
@@ -257,28 +257,28 @@ func TestBootstrapReqValidation(t *testing.T) {
 func TestChangeStateReqValidation(t *testing.T) {
 	cases := []struct {
 		desc  string
-		key   string
+		token string
 		id    string
 		state bootstrap.State
 		err   error
 	}{
 		{
-			desc:  "empty key",
-			key:   "",
+			desc:  "empty token",
+			token: "",
 			id:    "id",
 			state: bootstrap.State(1),
-			err:   apiutil.ErrBearerKey,
+			err:   apiutil.ErrBearerToken,
 		},
 		{
 			desc:  "empty id",
-			key:   "key",
+			token: "token",
 			id:    "",
 			state: bootstrap.State(0),
 			err:   apiutil.ErrMissingID,
 		},
 		{
 			desc:  "invalid state",
-			key:   "key",
+			token: "token",
 			id:    "id",
 			state: bootstrap.State(14),
 			err:   apiutil.ErrBootstrapState,
@@ -287,7 +287,7 @@ func TestChangeStateReqValidation(t *testing.T) {
 
 	for _, tc := range cases {
 		req := changeStateReq{
-			key:   tc.key,
+			token: tc.token,
 			id:    tc.id,
 			State: tc.state,
 		}

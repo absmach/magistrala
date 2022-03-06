@@ -99,6 +99,7 @@ type testRequest struct {
 	url         string
 	contentType string
 	token       string
+	key         string
 	body        io.Reader
 }
 
@@ -124,6 +125,9 @@ func (tr testRequest) make() (*http.Response, error) {
 
 	if tr.token != "" {
 		req.Header.Set("Authorization", apiutil.BearerPrefix+tr.token)
+	}
+	if tr.key != "" {
+		req.Header.Set("Authorization", apiutil.ThingPrefix+tr.key)
 	}
 
 	if tr.contentType != "" {
@@ -1147,7 +1151,7 @@ func TestBootstrap(t *testing.T) {
 			client: bs.Client(),
 			method: http.MethodGet,
 			url:    fmt.Sprintf("%s/things/bootstrap/%s", bs.URL, tc.externalID),
-			token:  tc.externalKey,
+			key:    tc.externalKey,
 		}
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))

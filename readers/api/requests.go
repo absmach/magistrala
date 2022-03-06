@@ -17,11 +17,12 @@ type apiReq interface {
 type listMessagesReq struct {
 	chanID   string
 	token    string
+	key      string
 	pageMeta readers.PageMetadata
 }
 
 func (req listMessagesReq) validate() error {
-	if req.token == "" {
+	if req.token == "" && req.key == "" {
 		return apiutil.ErrBearerToken
 	}
 

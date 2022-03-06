@@ -55,7 +55,7 @@ func updateCertEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		if err := svc.UpdateCert(ctx, req.key, req.thingID, req.ClientCert, req.ClientKey, req.CACert); err != nil {
+		if err := svc.UpdateCert(ctx, req.token, req.thingID, req.ClientCert, req.ClientKey, req.CACert); err != nil {
 			return nil, err
 		}
 
@@ -73,7 +73,7 @@ func viewEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		config, err := svc.View(ctx, req.key, req.id)
+		config, err := svc.View(ctx, req.token, req.id)
 		if err != nil {
 			return nil, err
 		}
@@ -116,7 +116,7 @@ func updateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			Content: req.Content,
 		}
 
-		if err := svc.Update(ctx, req.key, config); err != nil {
+		if err := svc.Update(ctx, req.token, config); err != nil {
 			return nil, err
 		}
 
@@ -137,7 +137,7 @@ func updateConnEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		if err := svc.UpdateConnections(ctx, req.key, req.id, req.Channels); err != nil {
+		if err := svc.UpdateConnections(ctx, req.token, req.id, req.Channels); err != nil {
 			return nil, err
 		}
 
@@ -158,7 +158,7 @@ func listEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		page, err := svc.List(ctx, req.key, req.filter, req.offset, req.limit)
+		page, err := svc.List(ctx, req.token, req.filter, req.offset, req.limit)
 		if err != nil {
 			return nil, err
 		}
@@ -204,7 +204,7 @@ func removeEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return removeRes{}, err
 		}
 
-		if err := svc.Remove(ctx, req.key, req.id); err != nil {
+		if err := svc.Remove(ctx, req.token, req.id); err != nil {
 			return nil, err
 		}
 
@@ -236,7 +236,7 @@ func stateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		if err := svc.ChangeState(ctx, req.key, req.id, req.State); err != nil {
+		if err := svc.ChangeState(ctx, req.token, req.id, req.State); err != nil {
 			return nil, err
 		}
 

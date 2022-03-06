@@ -44,13 +44,13 @@ func (req addReq) validate() error {
 }
 
 type entityReq struct {
-	key string
-	id  string
+	token string
+	id    string
 }
 
 func (req entityReq) validate() error {
-	if req.key == "" {
-		return apiutil.ErrBearerKey
+	if req.token == "" {
+		return apiutil.ErrBearerToken
 	}
 
 	if req.id == "" {
@@ -61,15 +61,15 @@ func (req entityReq) validate() error {
 }
 
 type updateReq struct {
-	key     string
+	token   string
 	id      string
 	Name    string `json:"name"`
 	Content string `json:"content"`
 }
 
 func (req updateReq) validate() error {
-	if req.key == "" {
-		return apiutil.ErrBearerKey
+	if req.token == "" {
+		return apiutil.ErrBearerToken
 	}
 
 	if req.id == "" {
@@ -80,7 +80,7 @@ func (req updateReq) validate() error {
 }
 
 type updateCertReq struct {
-	key        string
+	token      string
 	thingID    string
 	ClientCert string `json:"client_cert"`
 	ClientKey  string `json:"client_key"`
@@ -88,8 +88,8 @@ type updateCertReq struct {
 }
 
 func (req updateCertReq) validate() error {
-	if req.key == "" {
-		return apiutil.ErrBearerKey
+	if req.token == "" {
+		return apiutil.ErrBearerToken
 	}
 
 	if req.thingID == "" {
@@ -100,14 +100,14 @@ func (req updateCertReq) validate() error {
 }
 
 type updateConnReq struct {
-	key      string
+	token    string
 	id       string
 	Channels []string `json:"channels"`
 }
 
 func (req updateConnReq) validate() error {
-	if req.key == "" {
-		return apiutil.ErrBearerKey
+	if req.token == "" {
+		return apiutil.ErrBearerToken
 	}
 
 	if req.id == "" {
@@ -118,15 +118,15 @@ func (req updateConnReq) validate() error {
 }
 
 type listReq struct {
-	key    string
+	token  string
 	filter bootstrap.Filter
 	offset uint64
 	limit  uint64
 }
 
 func (req listReq) validate() error {
-	if req.key == "" {
-		return apiutil.ErrBearerKey
+	if req.token == "" {
+		return apiutil.ErrBearerToken
 	}
 
 	if req.limit > maxLimitSize {
@@ -154,14 +154,14 @@ func (req bootstrapReq) validate() error {
 }
 
 type changeStateReq struct {
-	key   string
+	token string
 	id    string
 	State bootstrap.State `json:"state"`
 }
 
 func (req changeStateReq) validate() error {
-	if req.key == "" {
-		return apiutil.ErrBearerKey
+	if req.token == "" {
+		return apiutil.ErrBearerToken
 	}
 
 	if req.id == "" {

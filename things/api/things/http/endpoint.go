@@ -559,6 +559,7 @@ func buildThingsResponse(up things.Page) thingsPageRes {
 			Key:      th.Key,
 			Owner:    th.Owner,
 			Metadata: th.Metadata,
+			Name:     th.Name,
 		}
 		res.Things = append(res.Things, view)
 	}

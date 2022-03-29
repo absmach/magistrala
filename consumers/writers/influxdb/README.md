@@ -13,7 +13,7 @@ default values.
 | MF_NATS_URL                   | NATS instance URL                                                       | nats://localhost:4222  |
 | MF_INFLUX_WRITER_LOG_LEVEL    | Log level for InfluxDB writer (debug, info, warn, error)                | error                  |
 | MF_INFLUX_WRITER_PORT         | Service HTTP port                                                       | 8180                   |
-| MF_INFLUX_WRITER_DB_HOST      | InfluxDB host                                                           | localhost              |
+| MF_INFLUXDB_HOST              | InfluxDB host                                                           | localhost              |
 | MF_INFLUXDB_PORT              | Default port of InfluxDB database                                       | 8086                   |
 | MF_INFLUXDB_ADMIN_USER        | Default user of InfluxDB database                                       | mainflux               |
 | MF_INFLUXDB_ADMIN_PASSWORD    | Default password of InfluxDB user                                       | mainflux               |
@@ -43,7 +43,7 @@ MF_NATS_URL=[NATS instance URL] \
 MF_INFLUX_WRITER_LOG_LEVEL=[Influx writer log level] \
 MF_INFLUX_WRITER_PORT=[Service HTTP port] \
 MF_INFLUXDB_DB=[InfluxDB database name] \
-MF_INFLUX_WRITER_DB_HOST=[InfluxDB database host] \
+MF_INFLUXDB_HOST=[InfluxDB database host] \
 MF_INFLUXDB_PORT=[InfluxDB database port] \
 MF_INFLUXDB_ADMIN_USER=[InfluxDB admin user] \
 MF_INFLUXDB_ADMIN_PASSWORD=[InfluxDB admin password] \

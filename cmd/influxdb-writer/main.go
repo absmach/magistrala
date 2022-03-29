@@ -39,7 +39,7 @@ const (
 	envLogLevel   = "MF_INFLUX_WRITER_LOG_LEVEL"
 	envPort       = "MF_INFLUX_WRITER_PORT"
 	envDB         = "MF_INFLUXDB_DB"
-	envDBHost     = "MF_INFLUX_WRITER_DB_HOST"
+	envDBHost     = "MF_INFLUXDB_HOST"
 	envDBPort     = "MF_INFLUXDB_PORT"
 	envDBUser     = "MF_INFLUXDB_ADMIN_USER"
 	envDBPass     = "MF_INFLUXDB_ADMIN_PASSWORD"

@@ -11,7 +11,7 @@ default values.
 | Variable                     | Description                                         | Default        |
 |------------------------------|-----------------------------------------------------|----------------|
 | MF_INFLUX_READER_PORT        | Service HTTP port                                   | 8180           |
-| MF_INFLUX_READER_DB_HOST     | InfluxDB host                                       | localhost      |
+| MF_INFLUXDB_HOST             | InfluxDB host                                       | localhost      |
 | MF_INFLUXDB_PORT             | Default port of InfluxDB database                   | 8086           |
 | MF_INFLUXDB_ADMIN_USER       | Default user of InfluxDB database                   | mainflux       |
 | MF_INFLUXDB_ADMIN_PASSWORD   | Default password of InfluxDB user                   | mainflux       |
@@ -48,7 +48,7 @@ make install
 # Set the environment variables and run the service
 MF_INFLUX_READER_PORT=[Service HTTP port] \
 MF_INFLUXDB_DB=[InfluxDB database name] \
-MF_INFLUX_READER_DB_HOST=[InfluxDB database host] \
+MF_INFLUXDB_HOST=[InfluxDB database host] \
 MF_INFLUXDB_ADMIN_USER=[InfluxDB database port] \
 MF_INFLUXDB_ADMIN_USER=[InfluxDB admin user] \
 MF_INFLUXDB_ADMIN_PASSWORD=[InfluxDB admin password] \

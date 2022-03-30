@@ -27,13 +27,22 @@ import (
 )
 
 const (
-	protocol  = "coap"
-	authQuery = "auth"
+	protocol     = "coap"
+	authQuery    = "auth"
+	startObserve = 0 // observe option value that indicates start of observation
 )
 
-var channelPartRegExp = regexp.MustCompile(`^channels/([\w\-]+)/messages(/[^?]*)?(\?.*)?$`)
+var channelPartRegExp = regexp.MustCompile(`^/channels/([\w\-]+)/messages(/[^?]*)?(\?.*)?$`)
 
-var errMalformedSubtopic = errors.New("malformed subtopic")
+const (
+	numGroups    = 3 // entire expression + channel group + subtopic group
+	channelGroup = 2 // channel group is second in channel regexp
+)
+
+var (
+	errMalformedSubtopic = errors.New("malformed subtopic")
+	errBadOptions        = errors.New("bad options")
+)
 
 var (
 	logger  log.Logger
@@ -70,73 +79,79 @@ func handler(w mux.ResponseWriter, m *mux.Message) {
 		Context: m.Context,
 		Options: make(message.Options, 0, 16),
 	}
-	defer sendResp(w, &resp)
-	if m.Options == nil {
-		logger.Warn("Nil options")
-		resp.Code = codes.BadOption
-		return
-	}
+
 	msg, err := decodeMessage(m)
 	if err != nil {
 		logger.Warn(fmt.Sprintf("Error decoding message: %s", err))
 		resp.Code = codes.BadRequest
+		sendResp(w, &resp)
 		return
 	}
 	key, err := parseKey(m)
 	if err != nil {
 		logger.Warn(fmt.Sprintf("Error parsing auth: %s", err))
 		resp.Code = codes.Unauthorized
+		sendResp(w, &resp)
 		return
 	}
 	switch m.Code {
 	case codes.GET:
-		var obs uint32
-		obs, err = m.Options.Observe()
-		if err != nil {
-			resp.Code = codes.BadOption
-			logger.Warn(fmt.Sprintf("Error reading observe option: %s", err))
-			return
-		}
-		if obs == 0 {
-			c := coap.NewClient(w.Client(), m.Token, logger)
-			err = service.Subscribe(context.Background(), key, msg.Channel, msg.Subtopic, c)
-			break
-		}
-		service.Unsubscribe(context.Background(), key, msg.Channel, msg.Subtopic, m.Token.String())
+		err = handleGet(m, w.Client(), msg, key)
 	case codes.POST:
 		err = service.Publish(context.Background(), key, msg)
 	default:
-		resp.Code = codes.NotFound
-		return
+		err = errors.ErrNotFound
 	}
 	if err != nil {
 		switch {
-		case errors.Contains(err, errors.ErrAuthorization):
+		case err == errBadOptions:
+			resp.Code = codes.BadOption
+		case err == errors.ErrNotFound:
+			resp.Code = codes.NotFound
+		case errors.Contains(err, errors.ErrAuthorization),
+			errors.Contains(err, errors.ErrAuthentication):
 			resp.Code = codes.Unauthorized
-			return
-		case errors.Contains(err, coap.ErrUnsubscribe):
+		default:
 			resp.Code = codes.InternalServerError
 		}
+		sendResp(w, &resp)
 	}
 }
 
+func handleGet(m *mux.Message, c mux.Client, msg messaging.Message, key string) error {
+	var obs uint32
+	obs, err := m.Options.Observe()
+	if err != nil {
+		logger.Warn(fmt.Sprintf("Error reading observe option: %s", err))
+		return errBadOptions
+	}
+	if obs == startObserve {
+		c := coap.NewClient(c, m.Token, logger)
+		return service.Subscribe(context.Background(), key, msg.Channel, msg.Subtopic, c)
+	}
+	return service.Unsubscribe(context.Background(), key, msg.Channel, msg.Subtopic, m.Token.String())
+}
+
 func decodeMessage(msg *mux.Message) (messaging.Message, error) {
+	if msg.Options == nil {
+		return messaging.Message{}, errBadOptions
+	}
 	path, err := msg.Options.Path()
 	if err != nil {
 		return messaging.Message{}, err
 	}
 	channelParts := channelPartRegExp.FindStringSubmatch(path)
-	if len(channelParts) < 2 {
+	if len(channelParts) < numGroups {
 		return messaging.Message{}, errMalformedSubtopic
 	}
 
-	st, err := parseSubtopic(channelParts[2])
+	st, err := parseSubtopic(channelParts[channelGroup])
 	if err != nil {
 		return messaging.Message{}, err
 	}
 	ret := messaging.Message{
 		Protocol: protocol,
-		Channel:  parseID(path),
+		Channel:  channelParts[1],
 		Subtopic: st,
 		Payload:  []byte{},
 		Created:  time.Now().UnixNano(),
@@ -152,15 +167,10 @@ func decodeMessage(msg *mux.Message) (messaging.Message, error) {
 	return ret, nil
 }
 
-func parseID(path string) string {
-	vars := strings.Split(path, "/")
-	if len(vars) > 1 {
-		return vars[1]
-	}
-	return ""
-}
-
 func parseKey(msg *mux.Message) (string, error) {
+	if obs, _ := msg.Options.Observe(); obs != 0 && msg.Code == codes.GET {
+		return "", nil
+	}
 	authKey, err := msg.Options.GetString(message.URIQuery)
 	if err != nil {
 		return "", err

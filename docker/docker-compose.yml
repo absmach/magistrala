@@ -105,6 +105,8 @@ services:
       - ./nats/:/etc/nats
     networks:
       - mainflux-base-net
+    ports:
+    - 4222:4222
 
   auth-db:
     image: postgres:13.3-alpine

@@ -11,8 +11,9 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/pkg/messaging/nats"
+	broker "github.com/nats-io/nats.go"
 
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/pkg/messaging"
@@ -41,16 +42,16 @@ var _ Service = (*adapterService)(nil)
 // Observers is a map of maps,
 type adapterService struct {
 	auth      mainflux.ThingsServiceClient
-	pubsub    nats.PubSub
+	conn      *broker.Conn
 	observers map[string]observers
 	obsLock   sync.Mutex
 }
 
 // New instantiates the CoAP adapter implementation.
-func New(auth mainflux.ThingsServiceClient, pubsub nats.PubSub) Service {
+func New(auth mainflux.ThingsServiceClient, nc *broker.Conn) Service {
 	as := &adapterService{
 		auth:      auth,
-		pubsub:    pubsub,
+		conn:      nc,
 		observers: make(map[string]observers),
 		obsLock:   sync.Mutex{},
 	}
@@ -69,7 +70,17 @@ func (svc *adapterService) Publish(ctx context.Context, key string, msg messagin
 	}
 	msg.Publisher = thid.GetValue()
 
-	return svc.pubsub.Publish(msg.Channel, msg)
+	data, err := proto.Marshal(&msg)
+	if err != nil {
+		return err
+	}
+
+	subject := fmt.Sprintf("%s.%s", chansPrefix, msg.Channel)
+	if msg.Subtopic != "" {
+		subject = fmt.Sprintf("%s.%s", subject, msg.Subtopic)
+	}
+
+	return svc.conn.Publish(subject, data)
 }
 
 func (svc *adapterService) Subscribe(ctx context.Context, key, chanID, subtopic string, c Client) error {
@@ -86,12 +97,7 @@ func (svc *adapterService) Subscribe(ctx context.Context, key, chanID, subtopic 
 		subject = fmt.Sprintf("%s.%s", subject, subtopic)
 	}
 
-	go func() {
-		<-c.Done()
-		svc.remove(subject, c.Token())
-	}()
-
-	obs, err := NewObserver(subject, c, svc.pubsub)
+	obs, err := NewObserver(subject, c, svc.conn)
 	if err != nil {
 		c.Cancel()
 		return err
@@ -128,7 +134,7 @@ func (svc *adapterService) put(topic, token string, o Observer) error {
 	}
 	// If observer exists, cancel subscription and replace it.
 	if sub, ok := obs[token]; ok {
-		if err := sub.Cancel(topic); err != nil {
+		if err := sub.Cancel(); err != nil {
 			return errors.Wrap(ErrUnsubscribe, err)
 		}
 	}
@@ -139,13 +145,12 @@ func (svc *adapterService) put(topic, token string, o Observer) error {
 func (svc *adapterService) remove(topic, token string) error {
 	svc.obsLock.Lock()
 	defer svc.obsLock.Unlock()
-
 	obs, ok := svc.observers[topic]
 	if !ok {
 		return nil
 	}
 	if current, ok := obs[token]; ok {
-		if err := current.Cancel(topic); err != nil {
+		if err := current.Cancel(); err != nil {
 			return errors.Wrap(ErrUnsubscribe, err)
 		}
 	}

@@ -65,7 +65,7 @@ If you want to run services from specific release checkout code from github and 
 
 ```bash
 git checkout tags/<release_number> -b <release_number>
-# e.g. `git checkout tags/0.12.0 -b 0.12.0`
+# e.g. `git checkout tags/0.13.0 -b 0.13.0`
 ```
 
 Check that `.env` file contains:

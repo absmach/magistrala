@@ -11,17 +11,95 @@ Otherwise, whole log in a similar format can be observed via:
 git log --pretty=oneline --abbrev-commit
 ```
 
+## 0.13.0 - 15. APR 2022.
+### Features and Bugfixes
+- NOISSUE - Update changelog and readme for release 0.13.0
+- MF-1582 - Fix lora-adapter MQTT client (#1583)
+- NOISSUE - Fix CoAP adapter (#1572)
+- NOISSUE - Unify MF_INFLUX_READER_DB_HOST and MF_INFLUX_WRITER_DB_HOST envars (#1585)
+- MF-1580 - Influxdb Writer changes format of update-time to string (#1581)
+- MF-1575 Add 'Name' field to ListMembers response in things svc (#1576)
+- MF-1565 - Document Bearer, Thing and Basic Authorization header (#1566)
+- MF-1567 - Use Bearer, Thing or Basic scheme in Authorization header (#1568)
+- MF-1348 - Add transport errors logging (#1544)
+- NOISSUE - Add nats wrapper for COAP (#1569)
+- MF-1469 - Indicate proper authentication scheme in Authorization header (#1523)
+- MF-1240 - Return to service transport layer only service errors (#1559)
+- Update dependencies (#1564)
+- NOISSUE - Separate Keto hosts for read and write (#1563)
+- MF-1551 - Fix Cobra usage commands and clean unnecessary struct types (#1558)
+- MF-1257 - Access messages from readers endpoint with user access token (#1470)
+- NOISSUE - Refactor MQTT subscriber (#1561)
+- MF-1059 - Add TLS support for email (#1560)
+- MF-1261 - Use StatusUnauthorized for authn and StatusForbidden for authz (#1538)
+- NOISSUE - Fix auth members list response (#1555)
+- MF-1263 - Move repeating errors to the separate package (#1540)
+- NOISSUE - Add API keys functions to CLI (#1537)
+- Fix SDK for group members (#1553)
+- NOISSUE - Fix Swagger UI (#1552)
+- MF-1008 - Make token duration configurable (#1550)
+- MF-1308 - Use IETF Health Check standard (#1541)
+- Fix user listing access control (#1546)
+- Update dependencies (#1545)
+- MF-1478 - TimescaleDB writer and reader add-on (#1542)
+- MF-1149 - Add AsyncAPI MQTT API doc (#1539)
+- MF-1535 - Add API keys functions to SDK (#1536)
+- NOISSUE - Add view and list serials endpoints in certs service (#1483)
+- MF-1516 - Fix API key issuing (#1530)
+- NOISSUE - Add disconnect endpoint in nginx conf (#1528)
+- NOISSUE - Add timestamp transformation rules for specifc JSON fields (#1514)
+- MF-1425 - Support external UUIDs for Things and Channels (#1518)
+- MF-1521 - Fix email headers (#1522)
+- Fix SenML lib dependency version (#1519)
+- Bump vernemq to 1.12.3 (#1520)
+- NOISSUE - Remove auth URL from SDK (#1511)
+- NOISSUE - Apply policies to Channels (#1505)
+- remove dead code (#1503)
+- NOISSUE - Fix listing (#1502)
+- NOISSUE - Listing Policies (#1498)
+- Fix standalone mode (#1497)
+- MF-1489 - Add API for deleting policies (#1491)
+- NOISSUE - Update group sharing policies (#1494)
+- NOISSUE - Refactor InfluxDB Reader: explicit check event + add safe conversion (#1460)
+- NOISSUE - Update users create command for CLI (#1495)
+- NOISSUE - Update self register environment variable name (#1493)
+- Bring back the job add
+- NOISSUE - Fix assigning invalid group policy (#1487)
+- MF-1443 - Add policies (#1482)
+- NOISSUE - Fix retrieving all users (#1477)
+- MF-1468 - Fix ThingsURL in Certs Service (#1474)
+- NOISSUE - Refactor single-user mode (#1471)
+- Fix UpdateChannelHandler for Redis producer (#1473)
+- NOISSUE - Add SMPP notifier (#1464)
+- NOISSUE - Update dependencies (#1453)
+- NOISSUE - Fix security warnings for dependencies (#1452)
+- Bump docker-compose version in prereq (#1449)
+- NOISSUE - Fix bootstraping (#1448)
+- MF 1413 - Use per-service URL in SDK (#1444)
+- MF-1439 - Add support for Basic Authentication in HTTP Adapter (#1441)
+- MF-1421 - Make flattening of JSON transformer only available on InfluxDB (#1432)
+- NOISSUE - Update the /disconnect endpoint HTTP method as PUT (#1438)
+- MF-1389 - Add /disconnect endpoint in Things service (#1433)
+- NOISSUE - Fix httputil implementation in users service (#1434)
+- Fix fetching user members of an empty group (#1436)
+- Change to user friendly docs urls (#1430)
+- NOISSUE - Use github action for showing OpenAPI spec with Swagger UI (#1427)
+- Fix JSON Transformer empty format handling (#1429)
+- Update README
+- NOISSUE - Update docker-compose images to latest release (#1419)
+- MF-1378 - Update dependencies (#1379)
+
 ## 0.12.1 - 05. MAY 2021.
 ### Features and Bugfixes
-NOISSUE - Refactor SDK memberships and fix openapi for memberships.
-NOISSUE - Fix incorrect influxdb credentials
-MF-1408 - Fix error handling for Thing update SQL(#1408)
-MF-1288 - Add tests for JSON messages in message writers and readers
-NOISSUE - Fix Postgres Reader order
-NOISSUE - Fix nginx configuration for groups
-NOISSUE - Add tests and connection route-map to lora-adapter
-MF-1403 - Change vernemq building source revision
-NOISSUE - Rm content-type check from list endpoint
+- NOISSUE - Refactor SDK memberships and fix openapi for memberships.
+- NOISSUE - Fix incorrect influxdb credentials
+- MF-1408 - Fix error handling for Thing update SQL(#1408)
+- MF-1288 - Add tests for JSON messages in message writers and readers
+- NOISSUE - Fix Postgres Reader order
+- NOISSUE - Fix nginx configuration for groups
+- NOISSUE - Add tests and connection route-map to lora-adapter
+- MF-1403 - Change vernemq building source revision
+- NOISSUE - Rm content-type check from list endpoint
 
 ## 0.12.0 - 29. MAR 2021.
 ### Features and Bugfixes

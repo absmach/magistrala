@@ -13,6 +13,8 @@ git log --pretty=oneline --abbrev-commit
 
 ## 0.13.0 - 15. APR 2022.
 ### Features and Bugfixes
+- NOISSUE - Update changelog for release 0.13.0
+- Update VerneMQ release (#1593)
 - NOISSUE - Update changelog and readme for release 0.13.0
 - MF-1582 - Fix lora-adapter MQTT client (#1583)
 - NOISSUE - Fix CoAP adapter (#1572)

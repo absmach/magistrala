@@ -75,13 +75,13 @@ func (cr *cassandraRepository) saveJSON(msgs mfjson.Messages) error {
 }
 
 func (cr *cassandraRepository) insertJSON(msgs mfjson.Messages) error {
+	cql := `INSERT INTO %s (id, channel, created, subtopic, publisher, protocol, payload) VALUES (?, ?, ?, ?, ?, ?, ?)`
+	cql = fmt.Sprintf(cql, msgs.Format)
 	for _, msg := range msgs.Data {
 		pld, err := json.Marshal(msg.Payload)
 		if err != nil {
 			return err
 		}
-		cql := `INSERT INTO %s (id, channel, created, subtopic, publisher, protocol, payload) VALUES (?, ?, ?, ?, ?, ?, ?)`
-		cql = fmt.Sprintf(cql, msgs.Format)
 		id := gocql.TimeUUID()
 
 		err = cr.session.Query(cql, id, msg.Channel, msg.Created, msg.Subtopic, msg.Publisher, msg.Protocol, string(pld)).Exec()

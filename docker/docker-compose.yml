@@ -73,7 +73,7 @@ services:
     restart: on-failure
     volumes:
       - ./nginx/nginx-${AUTH-key}.conf:/etc/nginx/nginx.conf.template
-      - ./nginx/entrypoint.sh:/entrypoint.sh
+      - ./nginx/entrypoint.sh:/docker-entrypoint.d/entrypoint.sh
       - ./nginx/snippets:/etc/nginx/snippets
       - ./ssl/authorization.js:/etc/nginx/authorization.js
       - ./ssl/certs/mainflux-server.crt:/etc/ssl/certs/mainflux-server.crt
@@ -89,7 +89,6 @@ services:
       - mainflux-base-net
     env_file:
       - .env
-    command: /entrypoint.sh
     depends_on:
       - things
       - users

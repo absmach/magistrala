@@ -55,8 +55,8 @@ type Cholesky struct {
 // the norm is estimated from the decomposition.
 func (c *Cholesky) updateCond(norm float64) {
 	n := c.chol.mat.N
-	work := getFloats(3*n, false)
-	defer putFloats(work)
+	work := getFloat64s(3*n, false)
+	defer putFloat64s(work)
 	if norm < 0 {
 		// This is an approximation. By the definition of a norm,
 		//  |AB| <= |A| |B|.
@@ -90,7 +90,7 @@ func (c *Cholesky) At(i, j int) float64 {
 	if !c.valid() {
 		panic(badCholesky)
 	}
-	n := c.Symmetric()
+	n := c.SymmetricDim()
 	if uint(i) >= uint(n) {
 		panic(ErrRowAccess)
 	}
@@ -110,9 +110,9 @@ func (c *Cholesky) T() Matrix {
 	return c
 }
 
-// Symmetric implements the Symmetric interface and returns the number of rows
+// SymmetricDim implements the Symmetric interface and returns the number of rows
 // in the matrix (this is also the number of columns).
-func (c *Cholesky) Symmetric() int {
+func (c *Cholesky) SymmetricDim() int {
 	r, _ := c.chol.Dims()
 	return r
 }
@@ -129,7 +129,7 @@ func (c *Cholesky) Cond() float64 {
 // whether the matrix is positive definite. If Factorize returns false, the
 // factorization must not be used.
 func (c *Cholesky) Factorize(a Symmetric) (ok bool) {
-	n := a.Symmetric()
+	n := a.SymmetricDim()
 	if c.chol == nil {
 		c.chol = NewTriDense(n, Upper, nil)
 	} else {
@@ -139,9 +139,9 @@ func (c *Cholesky) Factorize(a Symmetric) (ok bool) {
 	copySymIntoTriangle(c.chol, a)
 
 	sym := c.chol.asSymBlas()
-	work := getFloats(c.chol.mat.N, false)
+	work := getFloat64s(c.chol.mat.N, false)
 	norm := lapack64.Lansy(CondNorm, sym, work)
-	putFloats(work)
+	putFloat64s(work)
 	_, ok = lapack64.Potrf(sym)
 	if ok {
 		c.updateCond(norm)
@@ -193,7 +193,7 @@ func (c *Cholesky) Clone(chol *Cholesky) {
 	if !chol.valid() {
 		panic(badCholesky)
 	}
-	n := chol.Symmetric()
+	n := chol.SymmetricDim()
 	if c.chol == nil {
 		c.chol = NewTriDense(n, Upper, nil)
 	} else {
@@ -377,7 +377,7 @@ func (c *Cholesky) ToSym(dst *SymDense) {
 	if dst.IsEmpty() {
 		dst.ReuseAsSym(n)
 	} else {
-		n2 := dst.Symmetric()
+		n2 := dst.SymmetricDim()
 		if n != n2 {
 			panic(ErrShape)
 		}
@@ -458,7 +458,7 @@ func (c *Cholesky) Scale(f float64, orig *Cholesky) {
 	if f <= 0 {
 		panic("cholesky: scaling by a non-positive constant")
 	}
-	n := orig.Symmetric()
+	n := orig.SymmetricDim()
 	if c.chol == nil {
 		c.chol = NewTriDense(n, Upper, nil)
 	} else if c.chol.mat.N != n {
@@ -477,10 +477,10 @@ func (c *Cholesky) Scale(f float64, orig *Cholesky) {
 // that k > w' A^-1 w. If this condition does not hold then ExtendVecSym will
 // return false and the receiver will not be updated.
 //
-// ExtendVecSym will panic if v.Len() != a.Symmetric()+1 or if a does not contain
+// ExtendVecSym will panic if v.Len() != a.SymmetricDim()+1 or if a does not contain
 // a valid decomposition.
 func (c *Cholesky) ExtendVecSym(a *Cholesky, v Vector) (ok bool) {
-	n := a.Symmetric()
+	n := a.SymmetricDim()
 
 	if v.Len() != n+1 {
 		panic(badSliceLength)
@@ -549,7 +549,7 @@ func (c *Cholesky) SymRankOne(orig *Cholesky, alpha float64, x Vector) (ok bool)
 	if !orig.valid() {
 		panic(badCholesky)
 	}
-	n := orig.Symmetric()
+	n := orig.SymmetricDim()
 	if r, c := x.Dims(); r != n || c != 1 {
 		panic(ErrShape)
 	}
@@ -592,8 +592,8 @@ func (c *Cholesky) SymRankOne(orig *Cholesky, alpha float64, x Vector) (ok bool)
 	//   EPFL Technical Report 161468 (2004)
 	//   http://infoscience.epfl.ch/record/161468
 
-	work := getFloats(n, false)
-	defer putFloats(work)
+	work := getFloat64s(n, false)
+	defer putFloat64s(work)
 	var xmat blas64.Vector
 	if rv, ok := x.(RawVectorer); ok {
 		xmat = rv.RawVector()
@@ -617,7 +617,7 @@ func (c *Cholesky) SymRankOne(orig *Cholesky, alpha float64, x Vector) (ok bool)
 			c, s, r, _ := blas64.Rotg(umat.Data[i*stride+i], work[i])
 			if r < 0 {
 				// Multiply by -1 to have positive diagonal
-				// elemnts.
+				// elements.
 				r *= -1
 				c *= -1
 				s *= -1
@@ -660,10 +660,10 @@ func (c *Cholesky) SymRankOne(orig *Cholesky, alpha float64, x Vector) (ok bool)
 		return false
 	}
 	norm = math.Sqrt((1 + norm) * (1 - norm))
-	cos := getFloats(n, false)
-	defer putFloats(cos)
-	sin := getFloats(n, false)
-	defer putFloats(sin)
+	cos := getFloat64s(n, false)
+	defer putFloat64s(cos)
+	sin := getFloat64s(n, false)
+	defer putFloat64s(sin)
 	for i := n - 1; i >= 0; i-- {
 		// Compute parameters of Givens matrices that zero elements of p
 		// backwards.
@@ -674,8 +674,8 @@ func (c *Cholesky) SymRankOne(orig *Cholesky, alpha float64, x Vector) (ok bool)
 			sin[i] *= -1
 		}
 	}
-	workMat := getWorkspaceTri(c.chol.mat.N, c.chol.triKind(), false)
-	defer putWorkspaceTri(workMat)
+	workMat := getTriDenseWorkspace(c.chol.mat.N, c.chol.triKind(), false)
+	defer putTriWorkspace(workMat)
 	workMat.Copy(c.chol)
 	umat := workMat.mat
 	stride := workMat.mat.Stride
@@ -752,12 +752,12 @@ func (ch *BandCholesky) Factorize(a SymBanded) (ok bool) {
 		ch.Reset()
 		return false
 	}
-	work := getFloats(3*n, false)
+	work := getFloat64s(3*n, false)
 	iwork := getInts(n, false)
 	aNorm := lapack64.Lansb(CondNorm, cSym, work)
 	ch.cond = 1 / lapack64.Pbcon(cSym, aNorm, work, iwork)
 	putInts(iwork)
-	putFloats(work)
+	putFloat64s(work)
 	return true
 }
 
@@ -872,9 +872,9 @@ func (ch *BandCholesky) TBand() Banded {
 	return ch
 }
 
-// Symmetric implements the Symmetric interface and returns the number of rows
+// SymmetricDim implements the Symmetric interface and returns the number of rows
 // in the matrix (this is also the number of columns).
-func (ch *BandCholesky) Symmetric() int {
+func (ch *BandCholesky) SymmetricDim() int {
 	n, _ := ch.chol.Triangle()
 	return n
 }

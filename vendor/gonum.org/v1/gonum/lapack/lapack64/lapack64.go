@@ -128,6 +128,40 @@ func Pbtrs(t blas64.TriangularBand, b blas64.General) {
 	lapack64.Dpbtrs(t.Uplo, t.N, t.K, b.Cols, t.Data, max(1, t.Stride), b.Data, max(1, b.Stride))
 }
 
+// Pstrf computes the Cholesky factorization with complete pivoting of an n×n
+// symmetric positive semidefinite matrix A.
+//
+// The factorization has the form
+//  Pᵀ * A * P = Uᵀ * U ,  if a.Uplo = blas.Upper,
+//  Pᵀ * A * P = L  * Lᵀ,  if a.Uplo = blas.Lower,
+// where U is an upper triangular matrix, L is lower triangular, and P is a
+// permutation matrix.
+//
+// tol is a user-defined tolerance. The algorithm terminates if the pivot is
+// less than or equal to tol. If tol is negative, then n*eps*max(A[k,k]) will be
+// used instead.
+//
+// The triangular factor U or L from the Cholesky factorization is returned in t
+// and the underlying data between a and t is shared. P is stored on return in
+// vector piv such that P[piv[k],k] = 1.
+//
+// Pstrf returns the computed rank of A and whether the factorization can be
+// used to solve a system. Pstrf does not attempt to check that A is positive
+// semi-definite, so if ok is false, the matrix A is either rank deficient or is
+// not positive semidefinite.
+//
+// The length of piv must be n and the length of work must be at least 2*n,
+// otherwise Pstrf will panic.
+func Pstrf(a blas64.Symmetric, piv []int, tol float64, work []float64) (t blas64.Triangular, rank int, ok bool) {
+	rank, ok = lapack64.Dpstrf(a.Uplo, a.N, a.Data, max(1, a.Stride), piv, tol, work)
+	t.Uplo = a.Uplo
+	t.Diag = blas.NonUnit
+	t.N = a.N
+	t.Data = a.Data
+	t.Stride = a.Stride
+	return t, rank, ok
+}
+
 // Gecon estimates the reciprocal of the condition number of the n×n matrix A
 // given the LU decomposition of the matrix. The condition number computed may
 // be based on the 1-norm or the ∞-norm.
@@ -431,7 +465,7 @@ func Ggsvd3(jobU, jobV, jobQ lapack.GSVDJob, a, b blas64.General, alpha, beta []
 // On entry, b contains the n×nrhs right-hand side matrix B. On return, it will
 // be overwritten. If ok is true, it will be overwritten by the solution matrix X.
 //
-// Gtsv returns whether the solution X has been successfuly computed.
+// Gtsv returns whether the solution X has been successfully computed.
 //
 // Dgtsv is not part of the lapack.Float64 interface and so calls to Gtsv are
 // always executed by the Gonum implementation.
@@ -464,6 +498,15 @@ func Lagtm(trans blas.Transpose, alpha float64, a Tridiagonal, b blas64.General,
 // There are no restrictions on work for the other matrix norms.
 func Lange(norm lapack.MatrixNorm, a blas64.General, work []float64) float64 {
 	return lapack64.Dlange(norm, a.Rows, a.Cols, a.Data, max(1, a.Stride), work)
+}
+
+// Langb returns the given norm of a general m×n band matrix with kl sub-diagonals and
+// ku super-diagonals.
+//
+// Dlangb is not part of the lapack.Float64 interface and so calls to Langb are always
+// executed by the Gonum implementation.
+func Langb(norm lapack.MatrixNorm, a blas64.Band) float64 {
+	return gonum.Implementation{}.Dlangb(norm, a.Rows, a.Cols, a.KL, a.KU, a.Data, max(1, a.Stride))
 }
 
 // Langt computes the specified norm of an n×n tridiagonal matrix.
@@ -578,7 +621,7 @@ func Ormqr(side blas.Side, trans blas.Transpose, a blas64.General, tau []float64
 }
 
 // Pocon estimates the reciprocal of the condition number of a positive-definite
-// matrix A given the Cholesky decmposition of A. The condition number computed
+// matrix A given the Cholesky decomposition of A. The condition number computed
 // is based on the 1-norm and the ∞-norm.
 //
 // anorm is the 1-norm and the ∞-norm of the original matrix A.

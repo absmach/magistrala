@@ -24,7 +24,7 @@ import (
 )
 
 // random is a package-global pseudo-random number generator.
-var random = randutil.NewLockedRand(rand.NewSource(time.Now().UnixNano()))
+var random = randutil.NewLockedRand(rand.NewSource(randutil.CryptoSeed()))
 
 // ParseAndValidate parses the provided URI into a ConnString object.
 // It check that all values are valid.
@@ -746,7 +746,9 @@ func (p *parser) addOption(pair string) error {
 		p.ReadPreference = value
 	case "readpreferencetags":
 		if value == "" {
-			// for when readPreferenceTags= at end of URI
+			// If "readPreferenceTags=" is supplied, append an empty map to tag sets to
+			// represent a wild-card.
+			p.ReadPreferenceTagSets = append(p.ReadPreferenceTagSets, map[string]string{})
 			break
 		}
 

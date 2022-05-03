@@ -34,6 +34,7 @@ import (
 )
 
 const (
+	svcName = "mqtt"
 	// Logging
 	defLogLevel = "error"
 	envLogLevel = "MF_MQTT_ADAPTER_LOG_LEVEL"
@@ -161,7 +162,7 @@ func main() {
 	}
 
 	fwd := mqtt.NewForwarder(nats.SubjectAllChannels, logger)
-	if err := fwd.Forward(nps, mpub); err != nil {
+	if err := fwd.Forward(svcName, nps, mpub); err != nil {
 		logger.Error(fmt.Sprintf("Failed to forward NATS messages: %s", err))
 		os.Exit(1)
 	}

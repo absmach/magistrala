@@ -40,9 +40,9 @@ import (
 )
 
 const (
-	queue        = "twins"
-	stopWaitTime = 5 * time.Second
-
+	svcName            = "twins"
+	queue              = "twins"
+	stopWaitTime       = 5 * time.Second
 	defLogLevel        = "error"
 	defHTTPPort        = "8180"
 	defJaegerURL       = ""
@@ -138,7 +138,7 @@ func main() {
 	}
 	defer pubSub.Close()
 
-	svc := newService(pubSub, cfg.channelID, auth, dbTracer, db, cacheTracer, cacheClient, logger)
+	svc := newService(svcName, pubSub, cfg.channelID, auth, dbTracer, db, cacheTracer, cacheClient, logger)
 
 	tracer, closer := initJaeger("twins", cfg.jaegerURL, logger)
 	defer closer.Close()
@@ -270,7 +270,7 @@ func connectToRedis(cacheURL, cachePass, cacheDB string, logger logger.Logger) *
 	})
 }
 
-func newService(ps messaging.PubSub, chanID string, users mainflux.AuthServiceClient, dbTracer opentracing.Tracer, db *mongo.Database, cacheTracer opentracing.Tracer, cacheClient *redis.Client, logger logger.Logger) twins.Service {
+func newService(id string, ps messaging.PubSub, chanID string, users mainflux.AuthServiceClient, dbTracer opentracing.Tracer, db *mongo.Database, cacheTracer opentracing.Tracer, cacheClient *redis.Client, logger logger.Logger) twins.Service {
 	twinRepo := twmongodb.NewTwinRepository(db)
 	twinRepo = tracing.TwinRepositoryMiddleware(dbTracer, twinRepo)
 
@@ -298,8 +298,17 @@ func newService(ps messaging.PubSub, chanID string, users mainflux.AuthServiceCl
 			Help:      "Total duration of requests in microseconds.",
 		}, []string{"method"}),
 	)
+	err := ps.Subscribe(id, nats.SubjectAllChannels, handle(logger, chanID, svc))
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
 
-	err := ps.Subscribe(nats.SubjectAllChannels, func(msg messaging.Message) error {
+	return svc
+}
+
+func handle(logger logger.Logger, chanID string, svc twins.Service) handlerFunc {
+	return func(msg messaging.Message) error {
 		if msg.Channel == chanID {
 			return nil
 		}
@@ -310,13 +319,7 @@ func newService(ps messaging.PubSub, chanID string, users mainflux.AuthServiceCl
 		}
 
 		return nil
-	})
-	if err != nil {
-		logger.Error(err.Error())
-		os.Exit(1)
 	}
-
-	return svc
 }
 
 func startHTTPServer(ctx context.Context, handler http.Handler, port string, cfg config, logger logger.Logger) error {
@@ -351,4 +354,14 @@ func startHTTPServer(ctx context.Context, handler http.Handler, port string, cfg
 	case err := <-errCh:
 		return err
 	}
+}
+
+type handlerFunc func(msg messaging.Message) error
+
+func (h handlerFunc) Handle(msg messaging.Message) error {
+	return h(msg)
+}
+
+func (h handlerFunc) Cancel() error {
+	return nil
 }

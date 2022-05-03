@@ -21,12 +21,10 @@ import (
 type Client interface {
 	// In CoAP terminology, Token similar to the Session ID.
 	Token() string
-	SendMessage(m messaging.Message) error
+	Handle(m messaging.Message) error
 	Cancel() error
 	Done() <-chan struct{}
 }
-
-type observers map[string]Observer
 
 // ErrOption indicates an error when adding an option.
 var ErrOption = errors.New("unable to set option")
@@ -69,7 +67,7 @@ func (c *client) Token() string {
 	return c.token.String()
 }
 
-func (c *client) SendMessage(msg messaging.Message) error {
+func (c *client) Handle(msg messaging.Message) error {
 	m := message.Message{
 		Code:    codes.Content,
 		Token:   c.token,

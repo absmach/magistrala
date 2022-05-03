@@ -20,7 +20,7 @@ const (
 type Forwarder interface {
 	// Forward subscribes to the Subscriber and
 	// publishes messages using provided Publisher.
-	Forward(sub messaging.Subscriber, pub messaging.Publisher) error
+	Forward(id string, sub messaging.Subscriber, pub messaging.Publisher) error
 }
 
 type forwarder struct {
@@ -36,16 +36,16 @@ func NewForwarder(topic string, logger log.Logger) Forwarder {
 	}
 }
 
-func (f forwarder) Forward(sub messaging.Subscriber, pub messaging.Publisher) error {
-	return sub.Subscribe(f.topic, f.handle(pub))
+func (f forwarder) Forward(id string, sub messaging.Subscriber, pub messaging.Publisher) error {
+	return sub.Subscribe(id, f.topic, handle(pub, f.logger))
 }
 
-func (f forwarder) handle(pub messaging.Publisher) messaging.MessageHandler {
+func handle(pub messaging.Publisher, logger log.Logger) handleFunc {
 	return func(msg messaging.Message) error {
 		if msg.Protocol == protocol {
 			return nil
 		}
-		// Use concatenation instead of mft.Sprintf for the
+		// Use concatenation instead of fmt.Sprintf for the
 		// sake of simplicity and performance.
 		topic := channels + "/" + msg.Channel + "/" + messages
 		if msg.Subtopic != "" {
@@ -53,9 +53,20 @@ func (f forwarder) handle(pub messaging.Publisher) messaging.MessageHandler {
 		}
 		go func() {
 			if err := pub.Publish(topic, msg); err != nil {
-				f.logger.Warn(fmt.Sprintf("Failed to forward message: %s", err))
+				logger.Warn(fmt.Sprintf("Failed to forward message: %s", err))
 			}
 		}()
 		return nil
 	}
+}
+
+type handleFunc func(msg messaging.Message) error
+
+func (h handleFunc) Handle(msg messaging.Message) error {
+	return h(msg)
+
+}
+
+func (h handleFunc) Cancel() error {
+	return nil
 }

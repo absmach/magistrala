@@ -33,7 +33,7 @@ var (
 // Start method starts consuming messages received from NATS.
 // This method transforms messages to SenML format before
 // using MessageRepository to store them.
-func Start(sub messaging.Subscriber, consumer Consumer, configPath string, logger logger.Logger) error {
+func Start(id string, sub messaging.Subscriber, consumer Consumer, configPath string, logger logger.Logger) error {
 	cfg, err := loadConfig(configPath)
 	if err != nil {
 		logger.Warn(fmt.Sprintf("Failed to load consumer config: %s", err))
@@ -42,14 +42,14 @@ func Start(sub messaging.Subscriber, consumer Consumer, configPath string, logge
 	transformer := makeTransformer(cfg.TransformerCfg, logger)
 
 	for _, subject := range cfg.SubscriberCfg.Subjects {
-		if err := sub.Subscribe(subject, handler(transformer, consumer)); err != nil {
+		if err := sub.Subscribe(id, subject, handle(transformer, consumer)); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func handler(t transformers.Transformer, c Consumer) messaging.MessageHandler {
+func handle(t transformers.Transformer, c Consumer) handleFunc {
 	return func(msg messaging.Message) error {
 		m := interface{}(msg)
 		var err error
@@ -61,6 +61,17 @@ func handler(t transformers.Transformer, c Consumer) messaging.MessageHandler {
 		}
 		return c.Consume(m)
 	}
+}
+
+type handleFunc func(msg messaging.Message) error
+
+func (h handleFunc) Handle(msg messaging.Message) error {
+	return h(msg)
+
+}
+
+func (h handleFunc) Cancel() error {
+	return nil
 }
 
 type subscriberConfig struct {

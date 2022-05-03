@@ -87,7 +87,7 @@ func main() {
 
 	repo := newService(db, logger)
 
-	if err = consumers.Start(pubSub, repo, cfg.configPath, logger); err != nil {
+	if err = consumers.Start(svcName, pubSub, repo, cfg.configPath, logger); err != nil {
 		logger.Error(fmt.Sprintf("Failed to create Timescale writer: %s", err))
 	}
 

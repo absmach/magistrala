@@ -4,15 +4,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
 	"strconv"
-	"syscall"
 	"time"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
@@ -23,10 +22,12 @@ import (
 	"github.com/mainflux/mainflux/consumers/notifiers"
 	"github.com/mainflux/mainflux/consumers/notifiers/api"
 	"github.com/mainflux/mainflux/consumers/notifiers/postgres"
+	"golang.org/x/sync/errgroup"
 
 	mfsmpp "github.com/mainflux/mainflux/consumers/notifiers/smpp"
 	"github.com/mainflux/mainflux/consumers/notifiers/tracing"
 	"github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging/nats"
 	"github.com/mainflux/mainflux/pkg/ulid"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -37,6 +38,8 @@ import (
 )
 
 const (
+	stopWaitTime = 5 * time.Second
+
 	defLogLevel      = "error"
 	defDBHost        = "localhost"
 	defDBPort        = "5432"
@@ -121,6 +124,8 @@ type config struct {
 
 func main() {
 	cfg := loadConfig()
+	ctx, cancel := context.WithCancel(context.Background())
+	g, ctx := errgroup.WithContext(ctx)
 
 	logger, err := logger.New(os.Stdout, cfg.logLevel)
 	if err != nil {
@@ -152,22 +157,27 @@ func main() {
 	defer dbCloser.Close()
 
 	svc := newService(db, dbTracer, auth, cfg, logger)
-	errs := make(chan error, 2)
 
 	if err = consumers.Start(pubSub, svc, cfg.configPath, logger); err != nil {
 		logger.Error(fmt.Sprintf("Failed to create Postgres writer: %s", err))
 	}
 
-	go startHTTPServer(tracer, svc, cfg.httpPort, cfg.serverCert, cfg.serverKey, logger, errs)
+	g.Go(func() error {
+		return startHTTPServer(ctx, tracer, svc, cfg.httpPort, cfg.serverCert, cfg.serverKey, logger)
+	})
 
-	go func() {
-		c := make(chan os.Signal)
-		signal.Notify(c, syscall.SIGINT)
-		errs <- fmt.Errorf("%s", <-c)
-	}()
+	g.Go(func() error {
+		if sig := errors.SignalHandler(ctx); sig != nil {
+			cancel()
+			logger.Info(fmt.Sprintf("SMPP notifier service shutdown by signal: %s", sig))
+		}
+		return nil
+	})
 
-	err = <-errs
-	logger.Error(fmt.Sprintf("Users service terminated: %s", err))
+	if err := g.Wait(); err != nil {
+		logger.Error(fmt.Sprintf("SMPP notifier service terminated: %s", err))
+	}
+
 }
 
 func loadConfig() config {
@@ -323,13 +333,36 @@ func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServic
 	return svc
 }
 
-func startHTTPServer(tracer opentracing.Tracer, svc notifiers.Service, port string, certFile string, keyFile string, logger logger.Logger, errs chan error) {
+func startHTTPServer(ctx context.Context, tracer opentracing.Tracer, svc notifiers.Service, port string, certFile string, keyFile string, logger logger.Logger) error {
 	p := fmt.Sprintf(":%s", port)
-	if certFile != "" || keyFile != "" {
+	errCh := make(chan error)
+	server := &http.Server{Addr: p, Handler: api.MakeHandler(svc, tracer, logger)}
+
+	switch {
+	case certFile != "" || keyFile != "":
 		logger.Info(fmt.Sprintf("SMPP notifier service started using https, cert %s key %s, exposed port %s", certFile, keyFile, port))
-		errs <- http.ListenAndServeTLS(p, certFile, keyFile, api.MakeHandler(svc, tracer, logger))
-	} else {
+		go func() {
+			errCh <- server.ListenAndServeTLS(certFile, keyFile)
+		}()
+	default:
 		logger.Info(fmt.Sprintf("SMPP notifier service started using http, exposed port %s", port))
-		errs <- http.ListenAndServe(p, api.MakeHandler(svc, tracer, logger))
+		go func() {
+			errCh <- server.ListenAndServe()
+		}()
 	}
+
+	select {
+	case <-ctx.Done():
+		ctxShutdown, cancelShutdown := context.WithTimeout(context.Background(), stopWaitTime)
+		defer cancelShutdown()
+		if err := server.Shutdown(ctxShutdown); err != nil {
+			logger.Error(fmt.Sprintf("SMPP notifier service error occurred during shutdown at %s: %s", p, err))
+			return fmt.Errorf("smpp notifier service occurred during shutdown at %s: %w", p, err)
+		}
+		logger.Info(fmt.Sprintf("SMPP notifier service  shutdown of http at %s", p))
+		return nil
+	case err := <-errCh:
+		return err
+	}
+
 }

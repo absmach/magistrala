@@ -1,15 +1,15 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
 	"reflect"
 	"strconv"
-	"syscall"
+	"time"
 
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/logger"
@@ -18,10 +18,13 @@ import (
 	"github.com/mainflux/mainflux/provision"
 	"github.com/mainflux/mainflux/provision/api"
 	"github.com/mainflux/mainflux/things"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
-	defLogLevel        = "debug"
+	stopWaitTime = 5 * time.Second
+
+	defLogLevel        = "error"
 	defConfigFile      = "config.toml"
 	defTLS             = "false"
 	defServerCert      = ""
@@ -79,6 +82,9 @@ var (
 
 func main() {
 	cfg, err := loadConfig()
+	ctx, cancel := context.WithCancel(context.Background())
+	g, ctx := errgroup.WithContext(ctx)
+
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
@@ -107,30 +113,56 @@ func main() {
 	svc := provision.New(cfg, SDK, logger)
 	svc = api.NewLoggingMiddleware(svc, logger)
 
-	errs := make(chan error, 2)
+	g.Go(func() error {
+		return startHTTPServer(ctx, svc, cfg, logger)
+	})
 
-	go startHTTPServer(svc, cfg, logger, errs)
+	g.Go(func() error {
+		if sig := errors.SignalHandler(ctx); sig != nil {
+			cancel()
+			logger.Info(fmt.Sprintf("Provision service shutdown by signal: %s", sig))
+		}
+		return nil
+	})
 
-	go func() {
-		c := make(chan os.Signal)
-		signal.Notify(c, syscall.SIGINT)
-		errs <- fmt.Errorf("%s", <-c)
-	}()
+	if err := g.Wait(); err != nil {
+		logger.Error(fmt.Sprintf("Provision service terminated: %s", err))
+	}
 
-	err = <-errs
-	logger.Error(fmt.Sprintf("Provision service terminated: %s", err))
 }
 
-func startHTTPServer(svc provision.Service, cfg provision.Config, logger logger.Logger, errs chan error) {
+func startHTTPServer(ctx context.Context, svc provision.Service, cfg provision.Config, logger logger.Logger) error {
 	p := fmt.Sprintf(":%s", cfg.Server.HTTPPort)
-	if cfg.Server.ServerCert != "" || cfg.Server.ServerKey != "" {
+	errCh := make(chan error)
+	server := &http.Server{Addr: p, Handler: api.MakeHandler(svc, logger)}
+
+	switch {
+	case cfg.Server.ServerCert != "" || cfg.Server.ServerKey != "":
 		logger.Info(fmt.Sprintf("Provision service started using https on port %s with cert %s key %s",
 			cfg.Server.HTTPPort, cfg.Server.ServerCert, cfg.Server.ServerKey))
-		errs <- http.ListenAndServeTLS(p, cfg.Server.ServerCert, cfg.Server.ServerKey, api.MakeHandler(svc, logger))
-		return
+		go func() {
+			errCh <- server.ListenAndServeTLS(cfg.Server.ServerCert, cfg.Server.ServerKey)
+		}()
+	default:
+		logger.Info(fmt.Sprintf("Provision service started using http on port %s", cfg.Server.HTTPPort))
+		go func() {
+			errCh <- server.ListenAndServe()
+		}()
 	}
-	logger.Info(fmt.Sprintf("Provision service started using http on port %s", cfg.Server.HTTPPort))
-	errs <- http.ListenAndServe(p, api.MakeHandler(svc, logger))
+
+	select {
+	case <-ctx.Done():
+		ctxShutdown, cancelShutdown := context.WithTimeout(context.Background(), stopWaitTime)
+		defer cancelShutdown()
+		if err := server.Shutdown(ctxShutdown); err != nil {
+			logger.Error(fmt.Sprintf("Provision service error occurred during shutdown at %s: %s", p, err))
+			return fmt.Errorf("provision service occurred during shutdown at %s: %w", p, err)
+		}
+		logger.Info(fmt.Sprintf("Provision service  shutdown of http at %s", p))
+		return nil
+	case err := <-errCh:
+		return err
+	}
 }
 
 func loadConfigFromFile(file string) (provision.Config, error) {

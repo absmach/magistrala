@@ -9,9 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
 	"strconv"
-	"syscall"
 	"time"
 
 	mqttPaho "github.com/eclipse/paho.mqtt.golang"
@@ -21,7 +19,9 @@ import (
 	"github.com/mainflux/mainflux/lora"
 	"github.com/mainflux/mainflux/lora/api"
 	"github.com/mainflux/mainflux/lora/mqtt"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging/nats"
+	"golang.org/x/sync/errgroup"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/mainflux/mainflux/lora/redis"
@@ -29,6 +29,8 @@ import (
 )
 
 const (
+	stopWaitTime = 5 * time.Second
+
 	defLogLevel       = "error"
 	defHTTPPort       = "8180"
 	defLoraMsgURL     = "tcp://localhost:1883"
@@ -86,6 +88,8 @@ type config struct {
 
 func main() {
 	cfg := loadConfig()
+	ctx, cancel := context.WithCancel(context.Background())
+	g, ctx := errgroup.WithContext(ctx)
 
 	logger, err := logger.New(os.Stdout, cfg.logLevel)
 	if err != nil {
@@ -132,18 +136,22 @@ func main() {
 	go subscribeToLoRaBroker(svc, mqttConn, cfg.loraMsgTimeout, cfg.loraMsgTopic, logger)
 	go subscribeToThingsES(svc, esConn, cfg.esConsumerName, logger)
 
-	errs := make(chan error, 2)
+	g.Go(func() error {
+		return startHTTPServer(ctx, cfg, logger)
+	})
 
-	go startHTTPServer(cfg, logger, errs)
+	g.Go(func() error {
+		if sig := errors.SignalHandler(ctx); sig != nil {
+			cancel()
+			logger.Info(fmt.Sprintf("LoRa adapter shutdown by signal: %s", sig))
+		}
+		return nil
+	})
 
-	go func() {
-		c := make(chan os.Signal)
-		signal.Notify(c, syscall.SIGINT)
-		errs <- fmt.Errorf("%s", <-c)
-	}()
+	if err := g.Wait(); err != nil {
+		logger.Error(fmt.Sprintf("LoRa adapter terminated: %s", err))
+	}
 
-	err = <-errs
-	logger.Error(fmt.Sprintf("LoRa adapter terminated: %s", err))
 }
 
 func loadConfig() config {
@@ -230,8 +238,29 @@ func newRouteMapRepository(client *r.Client, prefix string, logger logger.Logger
 	return redis.NewRouteMapRepository(client, prefix)
 }
 
-func startHTTPServer(cfg config, logger logger.Logger, errs chan error) {
+func startHTTPServer(ctx context.Context, cfg config, logger logger.Logger) error {
 	p := fmt.Sprintf(":%s", cfg.httpPort)
-	logger.Info(fmt.Sprintf("lora-adapter service started, exposed port %s", cfg.httpPort))
-	errs <- http.ListenAndServe(p, api.MakeHandler())
+	errCh := make(chan error)
+	server := &http.Server{Addr: p, Handler: api.MakeHandler()}
+
+	logger.Info(fmt.Sprintf("LoRa-adapter service started, exposed port %s", cfg.httpPort))
+
+	go func() {
+		errCh <- http.ListenAndServe(p, api.MakeHandler())
+	}()
+
+	select {
+	case <-ctx.Done():
+		ctxShutdown, cancelShutdown := context.WithTimeout(context.Background(), stopWaitTime)
+		defer cancelShutdown()
+		if err := server.Shutdown(ctxShutdown); err != nil {
+			logger.Error(fmt.Sprintf("LoRa-adapter service error occurred during shutdown at %s: %s", p, err))
+			return fmt.Errorf("LoRa-adapter service error occurred during shutdown at %s: %w", p, err)
+		}
+		logger.Info(fmt.Sprintf("LoRa-adapter service shutdown of http at %s", p))
+		return nil
+	case err := <-errCh:
+		return err
+	}
+
 }

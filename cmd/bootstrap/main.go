@@ -12,9 +12,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
 	"strconv"
-	"syscall"
 	"time"
 
 	authapi "github.com/mainflux/mainflux/auth/api/grpc"
@@ -22,6 +20,7 @@ import (
 	redisprod "github.com/mainflux/mainflux/bootstrap/redis/producer"
 	"github.com/mainflux/mainflux/logger"
 	opentracing "github.com/opentracing/opentracing-go"
+	"golang.org/x/sync/errgroup"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	r "github.com/go-redis/redis/v8"
@@ -31,6 +30,7 @@ import (
 	api "github.com/mainflux/mainflux/bootstrap/api"
 	"github.com/mainflux/mainflux/bootstrap/postgres"
 	mflog "github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/pkg/errors"
 	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	jconfig "github.com/uber/jaeger-client-go/config"
@@ -39,6 +39,10 @@ import (
 )
 
 const (
+	stopWaitTime  = 5 * time.Second
+	httpProtocol  = "http"
+	httpsProtocol = "https"
+
 	defLogLevel       = "error"
 	defDBHost         = "localhost"
 	defDBPort         = "5432"
@@ -123,6 +127,8 @@ type config struct {
 
 func main() {
 	cfg := loadConfig()
+	ctx, cancel := context.WithCancel(context.Background())
+	g, ctx := errgroup.WithContext(ctx)
 
 	logger, err := mflog.New(os.Stdout, cfg.logLevel)
 	if err != nil {
@@ -147,19 +153,24 @@ func main() {
 	auth := authapi.NewClient(authTracer, authConn, cfg.authTimeout)
 
 	svc := newService(auth, db, logger, esClient, cfg)
-	errs := make(chan error, 2)
 
-	go startHTTPServer(svc, cfg, logger, errs)
+	g.Go(func() error {
+		return startHTTPServer(ctx, svc, cfg, logger)
+	})
+
 	go subscribeToThingsES(svc, thingsESConn, cfg.esConsumerName, logger)
 
-	go func() {
-		c := make(chan os.Signal)
-		signal.Notify(c, syscall.SIGINT)
-		errs <- fmt.Errorf("%s", <-c)
-	}()
+	g.Go(func() error {
+		if sig := errors.SignalHandler(ctx); sig != nil {
+			cancel()
+			logger.Info(fmt.Sprintf("Bootstrap service shutdown by signal: %s", sig))
+		}
+		return nil
+	})
 
-	err = <-errs
-	logger.Error(fmt.Sprintf("Bootstrap service terminated: %s", err))
+	if err := g.Wait(); err != nil {
+		logger.Error(fmt.Sprintf("Bootstrap service terminated: %s", err))
+	}
 }
 
 func loadConfig() config {
@@ -320,16 +331,40 @@ func connectToAuth(cfg config, logger logger.Logger) *grpc.ClientConn {
 	return conn
 }
 
-func startHTTPServer(svc bootstrap.Service, cfg config, logger mflog.Logger, errs chan error) {
+func startHTTPServer(ctx context.Context, svc bootstrap.Service, cfg config, logger mflog.Logger) error {
 	p := fmt.Sprintf(":%s", cfg.httpPort)
-	if cfg.serverCert != "" || cfg.serverKey != "" {
+	server := &http.Server{Addr: p, Handler: api.MakeHandler(svc, bootstrap.NewConfigReader(cfg.encKey), logger)}
+	errCh := make(chan error)
+	protocol := httpProtocol
+	switch {
+	case cfg.serverCert != "" || cfg.serverKey != "":
 		logger.Info(fmt.Sprintf("Bootstrap service started using https on port %s with cert %s key %s",
 			cfg.httpPort, cfg.serverCert, cfg.serverKey))
-		errs <- http.ListenAndServeTLS(p, cfg.serverCert, cfg.serverKey, api.MakeHandler(svc, bootstrap.NewConfigReader(cfg.encKey), logger))
-		return
+		go func() {
+			errCh <- server.ListenAndServeTLS(cfg.serverCert, cfg.serverKey)
+		}()
+		protocol = httpsProtocol
+
+	default:
+		logger.Info(fmt.Sprintf("Bootstrap service started using http on port %s", cfg.httpPort))
+		go func() {
+			errCh <- server.ListenAndServe()
+		}()
 	}
-	logger.Info(fmt.Sprintf("Bootstrap service started using http on port %s", cfg.httpPort))
-	errs <- http.ListenAndServe(p, api.MakeHandler(svc, bootstrap.NewConfigReader(cfg.encKey), logger))
+
+	select {
+	case <-ctx.Done():
+		ctxShutdown, cancelShutdown := context.WithTimeout(context.Background(), stopWaitTime)
+		defer cancelShutdown()
+		if err := server.Shutdown(ctxShutdown); err != nil {
+			logger.Error(fmt.Sprintf("Bootstrap %s service error occurred during shutdown at %s: %s", protocol, p, err))
+			return fmt.Errorf("bootstrap %s service error occurred during shutdown at %s: %w", protocol, p, err)
+		}
+		logger.Info(fmt.Sprintf("Bootstrap %s service shutdown of http at %s", protocol, p))
+		return nil
+	case err := <-errCh:
+		return err
+	}
 }
 
 func subscribeToThingsES(svc bootstrap.Service, client *r.Client, consumer string, logger mflog.Logger) {

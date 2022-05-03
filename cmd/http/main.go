@@ -4,15 +4,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
 	"strconv"
-	"syscall"
 	"time"
 
 	"google.golang.org/grpc/credentials"
@@ -22,15 +21,19 @@ import (
 	adapter "github.com/mainflux/mainflux/http"
 	"github.com/mainflux/mainflux/http/api"
 	"github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging/nats"
 	thingsapi "github.com/mainflux/mainflux/things/api/auth/grpc"
 	"github.com/opentracing/opentracing-go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	jconfig "github.com/uber/jaeger-client-go/config"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 )
 
 const (
+	stopWaitTime = 5 * time.Second
+
 	defLogLevel          = "error"
 	defClientTLS         = "false"
 	defCACerts           = ""
@@ -63,6 +66,8 @@ type config struct {
 
 func main() {
 	cfg := loadConfig()
+	ctx, cancel := context.WithCancel(context.Background())
+	g, ctx := errgroup.WithContext(ctx)
 
 	logger, err := logger.New(os.Stdout, cfg.logLevel)
 	if err != nil {
@@ -105,22 +110,21 @@ func main() {
 		}, []string{"method"}),
 	)
 
-	errs := make(chan error, 2)
+	g.Go(func() error {
+		return startHTTPServer(ctx, svc, cfg, logger, tracer)
+	})
+	g.Go(func() error {
+		if sig := errors.SignalHandler(ctx); sig != nil {
+			cancel()
+			logger.Info(fmt.Sprintf("HTTP adapter service shutdown by signal: %s", sig))
+		}
+		return nil
+	})
 
-	go func() {
-		p := fmt.Sprintf(":%s", cfg.port)
-		logger.Info(fmt.Sprintf("HTTP adapter service started on port %s", cfg.port))
-		errs <- http.ListenAndServe(p, api.MakeHandler(svc, tracer, logger))
-	}()
+	if err := g.Wait(); err != nil {
+		logger.Error(fmt.Sprintf("HTTP adapter service terminated: %s", err))
+	}
 
-	go func() {
-		c := make(chan os.Signal)
-		signal.Notify(c, syscall.SIGINT)
-		errs <- fmt.Errorf("%s", <-c)
-	}()
-
-	err = <-errs
-	logger.Error(fmt.Sprintf("HTTP adapter terminated: %s", err))
 }
 
 func loadConfig() config {
@@ -192,4 +196,28 @@ func connectToThings(cfg config, logger logger.Logger) *grpc.ClientConn {
 		os.Exit(1)
 	}
 	return conn
+}
+
+func startHTTPServer(ctx context.Context, svc adapter.Service, cfg config, logger logger.Logger, tracer opentracing.Tracer) error {
+	p := fmt.Sprintf(":%s", cfg.port)
+	errCh := make(chan error)
+	server := &http.Server{Addr: p, Handler: api.MakeHandler(svc, tracer, logger)}
+	logger.Info(fmt.Sprintf("HTTP adapter service started on port %s", cfg.port))
+	go func() {
+		errCh <- server.ListenAndServe()
+	}()
+
+	select {
+	case <-ctx.Done():
+		ctxShutdown, cancelShutdown := context.WithTimeout(context.Background(), stopWaitTime)
+		defer cancelShutdown()
+		if err := server.Shutdown(ctxShutdown); err != nil {
+			logger.Error(fmt.Sprintf("HTTP adapter service error occurred during shutdown at %s: %s", p, err))
+			return fmt.Errorf("http adapter service error occurred during shutdown at %s: %w", p, err)
+		}
+		logger.Info(fmt.Sprintf("HTTP adapter service shutdown of http at %s", p))
+		return nil
+	case err := <-errCh:
+		return err
+	}
 }

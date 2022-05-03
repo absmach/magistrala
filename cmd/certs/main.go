@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
@@ -11,9 +12,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
 	"strconv"
-	"syscall"
 	"time"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
@@ -27,6 +26,7 @@ import (
 	"github.com/mainflux/mainflux/logger"
 	"github.com/opentracing/opentracing-go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
@@ -38,6 +38,8 @@ import (
 )
 
 const (
+	stopWaitTime = 5 * time.Second
+
 	defLogLevel      = "error"
 	defDBHost        = "localhost"
 	defDBPort        = "5432"
@@ -140,6 +142,8 @@ type config struct {
 
 func main() {
 	cfg := loadConfig()
+	ctx, cancel := context.WithCancel(context.Background())
+	g, ctx := errgroup.WithContext(ctx)
 
 	logger, err := mflog.New(os.Stdout, cfg.logLevel)
 	if err != nil {
@@ -172,18 +176,22 @@ func main() {
 	auth := authapi.NewClient(authTracer, authConn, cfg.authTimeout)
 
 	svc := newService(auth, db, logger, nil, tlsCert, caCert, cfg, pkiClient)
-	errs := make(chan error, 2)
 
-	go startHTTPServer(svc, cfg, logger, errs)
+	g.Go(func() error {
+		return startHTTPServer(ctx, svc, cfg, logger)
+	})
 
-	go func() {
-		c := make(chan os.Signal)
-		signal.Notify(c, syscall.SIGINT)
-		errs <- fmt.Errorf("%s", <-c)
-	}()
+	g.Go(func() error {
+		if sig := errors.SignalHandler(ctx); sig != nil {
+			cancel()
+			logger.Info(fmt.Sprintf("Certs service shutdown by signal: %s", sig))
+		}
+		return nil
+	})
 
-	err = <-errs
-	logger.Error(fmt.Sprintf("Certs service terminated: %s", err))
+	if err := g.Wait(); err != nil {
+		logger.Error(fmt.Sprintf("Certs service terminated: %s", err))
+	}
 }
 
 func loadConfig() config {
@@ -363,16 +371,36 @@ func newService(auth mainflux.AuthServiceClient, db *sqlx.DB, logger mflog.Logge
 	return svc
 }
 
-func startHTTPServer(svc certs.Service, cfg config, logger mflog.Logger, errs chan error) {
+func startHTTPServer(ctx context.Context, svc certs.Service, cfg config, logger mflog.Logger) error {
 	p := fmt.Sprintf(":%s", cfg.httpPort)
-	if cfg.serverCert != "" || cfg.serverKey != "" {
-		logger.Info(fmt.Sprintf("Certs service started using https on port %s with cert %s key %s",
-			cfg.httpPort, cfg.serverCert, cfg.serverKey))
-		errs <- http.ListenAndServeTLS(p, cfg.serverCert, cfg.serverKey, api.MakeHandler(svc, logger))
-		return
+	errCh := make(chan error)
+	server := &http.Server{Addr: p, Handler: api.MakeHandler(svc, logger)}
+	switch {
+	case cfg.serverCert != "" || cfg.serverKey != "":
+		logger.Info(fmt.Sprintf("Certs service started using https on port %s with cert %s key %s", cfg.httpPort, cfg.serverCert, cfg.serverKey))
+		go func() {
+			errCh <- server.ListenAndServeTLS(cfg.serverCert, cfg.serverKey)
+		}()
+
+	default:
+		logger.Info(fmt.Sprintf("Certs service started using http on port %s", cfg.httpPort))
+		go func() {
+			errCh <- http.ListenAndServe(p, api.MakeHandler(svc, logger))
+		}()
 	}
-	logger.Info(fmt.Sprintf("Certs service started using http on port %s", cfg.httpPort))
-	errs <- http.ListenAndServe(p, api.MakeHandler(svc, logger))
+	select {
+	case <-ctx.Done():
+		ctxShutdown, cancelShutdown := context.WithTimeout(context.Background(), stopWaitTime)
+		defer cancelShutdown()
+		if err := server.Shutdown(ctxShutdown); err != nil {
+			logger.Error(fmt.Sprintf("Certs service error occurred during shutdown at %s: %s", p, err))
+			return fmt.Errorf("certs service  error occurred during shutdown at %s: %w", p, err)
+		}
+		logger.Info(fmt.Sprintf("Certs service  shutdown of http at %s", p))
+		return nil
+	case err := <-errCh:
+		return err
+	}
 }
 
 func loadCertificates(conf config) (tls.Certificate, *x509.Certificate, error) {

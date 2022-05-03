@@ -4,12 +4,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
+	"time"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	influxdata "github.com/influxdata/influxdb/client/v2"
@@ -18,12 +18,15 @@ import (
 	"github.com/mainflux/mainflux/consumers/writers/api"
 	"github.com/mainflux/mainflux/consumers/writers/influxdb"
 	"github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging/nats"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
-	svcName = "influxdb-writer"
+	svcName      = "influxdb-writer"
+	stopWaitTime = 5 * time.Second
 
 	defNatsURL    = "nats://localhost:4222"
 	defLogLevel   = "error"
@@ -60,6 +63,8 @@ type config struct {
 
 func main() {
 	cfg, clientCfg := loadConfigs()
+	ctx, cancel := context.WithCancel(context.Background())
+	g, ctx := errgroup.WithContext(ctx)
 
 	logger, err := logger.New(os.Stdout, cfg.logLevel)
 	if err != nil {
@@ -91,17 +96,21 @@ func main() {
 		os.Exit(1)
 	}
 
-	errs := make(chan error, 2)
-	go func() {
-		c := make(chan os.Signal)
-		signal.Notify(c, syscall.SIGINT)
-		errs <- fmt.Errorf("%s", <-c)
-	}()
+	g.Go(func() error {
+		return startHTTPService(ctx, cfg.port, logger)
+	})
 
-	go startHTTPService(cfg.port, logger, errs)
+	g.Go(func() error {
+		if sig := errors.SignalHandler(ctx); sig != nil {
+			cancel()
+			logger.Info(fmt.Sprintf("InfluxDB reader service shutdown by signal: %s", sig))
+		}
+		return nil
+	})
 
-	err = <-errs
-	logger.Error(fmt.Sprintf("InfluxDB writer service terminated: %s", err))
+	if err := g.Wait(); err != nil {
+		logger.Error(fmt.Sprintf("InfluxDB reader service terminated: %s", err))
+	}
 }
 
 func loadConfigs() (config, influxdata.HTTPConfig) {
@@ -144,8 +153,28 @@ func makeMetrics() (*kitprometheus.Counter, *kitprometheus.Summary) {
 	return counter, latency
 }
 
-func startHTTPService(port string, logger logger.Logger, errs chan error) {
+func startHTTPService(ctx context.Context, port string, logger logger.Logger) error {
 	p := fmt.Sprintf(":%s", port)
+	errCh := make(chan error)
+	server := &http.Server{Addr: p, Handler: api.MakeHandler(svcName)}
+
 	logger.Info(fmt.Sprintf("InfluxDB writer service started, exposed port %s", p))
-	errs <- http.ListenAndServe(p, api.MakeHandler(svcName))
+
+	go func() {
+		errCh <- server.ListenAndServe()
+	}()
+
+	select {
+	case <-ctx.Done():
+		ctxShutdown, cancelShutdown := context.WithTimeout(context.Background(), stopWaitTime)
+		defer cancelShutdown()
+		if err := server.Shutdown(ctxShutdown); err != nil {
+			logger.Error(fmt.Sprintf("InfluxDB writer service error occurred during shutdown at %s: %s", p, err))
+			return fmt.Errorf("influxDB writer service occurred during shutdown at %s: %w", p, err)
+		}
+		logger.Info(fmt.Sprintf("InfluxDB writer service  shutdown of http at %s", p))
+		return nil
+	case err := <-errCh:
+		return err
+	}
 }

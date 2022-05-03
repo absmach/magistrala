@@ -4,12 +4,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
+	"time"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	"github.com/jmoiron/sqlx"
@@ -18,13 +18,16 @@ import (
 	"github.com/mainflux/mainflux/consumers/writers/api"
 	"github.com/mainflux/mainflux/consumers/writers/postgres"
 	"github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging/nats"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
-	svcName = "postgres-writer"
-	sep     = ","
+	svcName      = "postgres-writer"
+	sep          = ","
+	stopWaitTime = 5 * time.Second
 
 	defLogLevel      = "error"
 	defNatsURL       = "nats://localhost:4222"
@@ -65,6 +68,8 @@ type config struct {
 
 func main() {
 	cfg := loadConfig()
+	ctx, cancel := context.WithCancel(context.Background())
+	g, ctx := errgroup.WithContext(ctx)
 
 	logger, err := logger.New(os.Stdout, cfg.logLevel)
 	if err != nil {
@@ -87,18 +92,22 @@ func main() {
 		logger.Error(fmt.Sprintf("Failed to create Postgres writer: %s", err))
 	}
 
-	errs := make(chan error, 2)
+	g.Go(func() error {
+		return startHTTPServer(ctx, cfg.port, logger)
+	})
 
-	go startHTTPServer(cfg.port, errs, logger)
+	g.Go(func() error {
+		if sig := errors.SignalHandler(ctx); sig != nil {
+			cancel()
+			logger.Info(fmt.Sprintf("Postgres writer service shutdown by signal: %s", sig))
+		}
+		return nil
+	})
 
-	go func() {
-		c := make(chan os.Signal)
-		signal.Notify(c, syscall.SIGINT)
-		errs <- fmt.Errorf("%s", <-c)
-	}()
+	if err := g.Wait(); err != nil {
+		logger.Error(fmt.Sprintf("Postgres writer service terminated: %s", err))
+	}
 
-	err = <-errs
-	logger.Error(fmt.Sprintf("Postgres writer service terminated: %s", err))
 }
 
 func loadConfig() config {
@@ -154,8 +163,27 @@ func newService(db *sqlx.DB, logger logger.Logger) consumers.Consumer {
 	return svc
 }
 
-func startHTTPServer(port string, errs chan error, logger logger.Logger) {
+func startHTTPServer(ctx context.Context, port string, logger logger.Logger) error {
 	p := fmt.Sprintf(":%s", port)
+	errCh := make(chan error)
+	server := &http.Server{Addr: p, Handler: api.MakeHandler(svcName)}
+
 	logger.Info(fmt.Sprintf("Postgres writer service started, exposed port %s", port))
-	errs <- http.ListenAndServe(p, api.MakeHandler(svcName))
+	go func() {
+		errCh <- server.ListenAndServe()
+	}()
+
+	select {
+	case <-ctx.Done():
+		ctxShutdown, cancelShutdown := context.WithTimeout(context.Background(), stopWaitTime)
+		defer cancelShutdown()
+		if err := server.Shutdown(ctxShutdown); err != nil {
+			logger.Error(fmt.Sprintf("Postgres writer service error occurred during shutdown at %s: %s", p, err))
+			return fmt.Errorf("postgres writer service occurred during shutdown at %s: %w", p, err)
+		}
+		logger.Info(fmt.Sprintf("Postgres writer service  shutdown of http at %s", p))
+		return nil
+	case err := <-errCh:
+		return err
+	}
 }

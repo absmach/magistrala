@@ -1,15 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
 	"strconv"
-	"syscall"
 	"time"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
@@ -17,6 +16,7 @@ import (
 	"github.com/mainflux/mainflux"
 	authapi "github.com/mainflux/mainflux/auth/api/grpc"
 	"github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/readers"
 	"github.com/mainflux/mainflux/readers/api"
 	"github.com/mainflux/mainflux/readers/influxdb"
@@ -24,11 +24,14 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	jconfig "github.com/uber/jaeger-client-go/config"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
 
 const (
+	stopWaitTime = 5 * time.Second
+
 	svcName              = "influxdb-reader"
 	defLogLevel          = "error"
 	defPort              = "8180"
@@ -86,6 +89,9 @@ type config struct {
 
 func main() {
 	cfg, clientCfg := loadConfigs()
+	ctx, cancel := context.WithCancel(context.Background())
+	g, ctx := errgroup.WithContext(ctx)
+
 	logger, err := logger.New(os.Stdout, cfg.logLevel)
 	if err != nil {
 		log.Fatalf(err.Error())
@@ -115,17 +121,21 @@ func main() {
 
 	repo := newService(client, cfg.dbName, logger)
 
-	errs := make(chan error, 2)
-	go func() {
-		c := make(chan os.Signal)
-		signal.Notify(c, syscall.SIGINT)
-		errs <- fmt.Errorf("%s", <-c)
-	}()
+	g.Go(func() error {
+		return startHTTPServer(ctx, repo, tc, auth, cfg, logger)
+	})
 
-	go startHTTPServer(repo, tc, auth, cfg, logger, errs)
+	g.Go(func() error {
+		if sig := errors.SignalHandler(ctx); sig != nil {
+			cancel()
+			logger.Info(fmt.Sprintf("InfluxDB reader service shutdown by signal: %s", sig))
+		}
+		return nil
+	})
 
-	err = <-errs
-	logger.Error(fmt.Sprintf("InfluxDB writer service terminated: %s", err))
+	if err := g.Wait(); err != nil {
+		logger.Error(fmt.Sprintf("InfluxDB reader service terminated: %s", err))
+	}
 }
 
 func connectToAuth(cfg config, logger logger.Logger) *grpc.ClientConn {
@@ -270,14 +280,35 @@ func newService(client influxdata.Client, dbName string, logger logger.Logger) r
 	return repo
 }
 
-func startHTTPServer(repo readers.MessageRepository, tc mainflux.ThingsServiceClient, ac mainflux.AuthServiceClient, cfg config, logger logger.Logger, errs chan error) {
+func startHTTPServer(ctx context.Context, repo readers.MessageRepository, tc mainflux.ThingsServiceClient, ac mainflux.AuthServiceClient, cfg config, logger logger.Logger) error {
 	p := fmt.Sprintf(":%s", cfg.port)
-	if cfg.serverCert != "" || cfg.serverKey != "" {
+	errCh := make(chan error)
+	server := &http.Server{Addr: p, Handler: api.MakeHandler(repo, tc, ac, "influxdb-reader", logger)}
+	switch {
+	case cfg.serverCert != "" || cfg.serverKey != "":
 		logger.Info(fmt.Sprintf("InfluxDB reader service started using https on port %s with cert %s key %s",
 			cfg.port, cfg.serverCert, cfg.serverKey))
-		errs <- http.ListenAndServeTLS(p, cfg.serverCert, cfg.serverKey, api.MakeHandler(repo, tc, ac, svcName, logger))
-		return
+		go func() {
+			errCh <- server.ListenAndServeTLS(cfg.serverCert, cfg.serverKey)
+		}()
+	default:
+		logger.Info(fmt.Sprintf("InfluxDB reader service started, exposed port %s", cfg.port))
+		go func() {
+			errCh <- server.ListenAndServe()
+		}()
 	}
-	logger.Info(fmt.Sprintf("InfluxDB reader service started, exposed port %s", cfg.port))
-	errs <- http.ListenAndServe(p, api.MakeHandler(repo, tc, ac, svcName, logger))
+
+	select {
+	case <-ctx.Done():
+		ctxShutdown, cancelShutdown := context.WithTimeout(context.Background(), stopWaitTime)
+		defer cancelShutdown()
+		if err := server.Shutdown(ctxShutdown); err != nil {
+			logger.Error(fmt.Sprintf("InfluxDB reader service error occurred during shutdown at %s: %s", p, err))
+			return fmt.Errorf("influxDB reader service occurred during shutdown at %s: %w", p, err)
+		}
+		logger.Info(fmt.Sprintf("InfluxDB reader service  shutdown of http at %s", p))
+		return nil
+	case err := <-errCh:
+		return err
+	}
 }

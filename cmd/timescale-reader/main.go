@@ -4,15 +4,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
 	"strconv"
-	"syscall"
 	"time"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
@@ -20,6 +19,7 @@ import (
 	"github.com/mainflux/mainflux"
 	authapi "github.com/mainflux/mainflux/auth/api/grpc"
 	"github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/readers"
 	"github.com/mainflux/mainflux/readers/api"
 	"github.com/mainflux/mainflux/readers/timescale"
@@ -27,12 +27,14 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	jconfig "github.com/uber/jaeger-client-go/config"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
 
 const (
-	svcName = "timescaledb-reader"
+	svcName      = "timescaledb-reader"
+	stopWaitTime = 5 * time.Second
 
 	defLogLevel          = "error"
 	defPort              = "8911"
@@ -84,6 +86,8 @@ type config struct {
 
 func main() {
 	cfg := loadConfig()
+	ctx, cancel := context.WithCancel(context.Background())
+	g, ctx := errgroup.WithContext(ctx)
 
 	logger, err := logger.New(os.Stdout, cfg.logLevel)
 	if err != nil {
@@ -110,18 +114,21 @@ func main() {
 
 	repo := newService(db, logger)
 
-	errs := make(chan error, 2)
+	g.Go(func() error {
+		return startHTTPServer(ctx, repo, tc, auth, cfg.port, logger)
+	})
 
-	go startHTTPServer(repo, tc, auth, cfg.port, logger, errs)
+	g.Go(func() error {
+		if sig := errors.SignalHandler(ctx); sig != nil {
+			cancel()
+			logger.Info(fmt.Sprintf("Timescale reader service shutdown by signal: %s", sig))
+		}
+		return nil
+	})
 
-	go func() {
-		c := make(chan os.Signal)
-		signal.Notify(c, syscall.SIGINT)
-		errs <- fmt.Errorf("%s", <-c)
-	}()
-
-	err = <-errs
-	logger.Error(fmt.Sprintf("Timescale reader service terminated: %s", err))
+	if err := g.Wait(); err != nil {
+		logger.Error(fmt.Sprintf("Timescale reader service terminated: %s", err))
+	}
 }
 
 func loadConfig() config {
@@ -264,8 +271,27 @@ func newService(db *sqlx.DB, logger logger.Logger) readers.MessageRepository {
 	return svc
 }
 
-func startHTTPServer(repo readers.MessageRepository, tc mainflux.ThingsServiceClient, ac mainflux.AuthServiceClient, port string, logger logger.Logger, errs chan error) {
+func startHTTPServer(ctx context.Context, repo readers.MessageRepository, tc mainflux.ThingsServiceClient, ac mainflux.AuthServiceClient, port string, logger logger.Logger) error {
 	p := fmt.Sprintf(":%s", port)
+	errCh := make(chan error)
+	server := &http.Server{Addr: p, Handler: api.MakeHandler(repo, tc, ac, svcName, logger)}
+
 	logger.Info(fmt.Sprintf("Timescale reader service started, exposed port %s", port))
-	errs <- http.ListenAndServe(p, api.MakeHandler(repo, tc, ac, svcName, logger))
+	go func() {
+		errCh <- server.ListenAndServe()
+	}()
+
+	select {
+	case <-ctx.Done():
+		ctxShutdown, cancelShutdown := context.WithTimeout(context.Background(), stopWaitTime)
+		defer cancelShutdown()
+		if err := server.Shutdown(ctxShutdown); err != nil {
+			logger.Error(fmt.Sprintf("Timescale reader service error occurred during shutdown at %s: %s", p, err))
+			return fmt.Errorf("Timescale reader service occurred during shutdown at %s: %w", p, err)
+		}
+		logger.Info(fmt.Sprintf("Timescale reader service  shutdown of http at %s", p))
+		return nil
+	case err := <-errCh:
+		return err
+	}
 }

@@ -3,6 +3,14 @@
 
 package errors
 
+import (
+	"context"
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+)
+
 // Error specifies an API that must be fullfiled by error type
 type Error interface {
 
@@ -92,5 +100,16 @@ func New(text string) Error {
 	return &customError{
 		msg: text,
 		err: nil,
+	}
+}
+
+func SignalHandler(ctx context.Context) error {
+	c := make(chan os.Signal)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGABRT)
+	select {
+	case sig := <-c:
+		return fmt.Errorf("%s", sig)
+	case <-ctx.Done():
+		return nil
 	}
 }

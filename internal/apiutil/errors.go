@@ -27,6 +27,9 @@ var (
 	// ErrNameSize indicates that name size exceeds the max.
 	ErrNameSize = errors.New("invalid name size")
 
+	// ErrEmailSize indicates that email size exceeds the max.
+	ErrEmailSize = errors.New("invalid email size")
+
 	// ErrLimitSize indicates that an invalid limit.
 	ErrLimitSize = errors.New("invalid limit size")
 

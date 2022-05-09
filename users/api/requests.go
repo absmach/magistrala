@@ -8,6 +8,11 @@ import (
 	"github.com/mainflux/mainflux/users"
 )
 
+const (
+	maxLimitSize = 100
+	maxEmailSize = 1024
+)
+
 type userReq struct {
 	user users.User
 }
@@ -49,6 +54,15 @@ func (req listUsersReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
 	}
+
+	if req.limit > maxLimitSize || req.limit < 1 {
+		return apiutil.ErrLimitSize
+	}
+
+	if len(req.email) > maxEmailSize {
+		return apiutil.ErrEmailSize
+	}
+
 	return nil
 }
 

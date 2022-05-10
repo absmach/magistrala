@@ -21,7 +21,8 @@ type certsPageRes struct {
 
 type certsRes struct {
 	ThingID    string    `json:"thing_id"`
-	Cert       string    `json:"cert"`
+	ClientCert string    `json:"client_cert"`
+	ClientKey  string    `json:"client_key"`
 	CertSerial string    `json:"cert_serial"`
 	Expiration time.Time `json:"expiration"`
 	created    bool

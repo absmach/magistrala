@@ -1,14 +1,14 @@
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
 
-package nats_test
+package rabbitmq_test
 
 import (
 	"fmt"
 	"testing"
 
 	"github.com/mainflux/mainflux/pkg/messaging"
-	"github.com/mainflux/mainflux/pkg/messaging/nats"
+	"github.com/mainflux/mainflux/pkg/messaging/rabbitmq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -31,7 +31,6 @@ func TestPublisher(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	err = pubsub.Subscribe(clientID, fmt.Sprintf("%s.%s.%s", chansPrefix, topic, subtopic), handler{})
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
 	cases := []struct {
 		desc     string
 		channel  string
@@ -70,9 +69,7 @@ func TestPublisher(t *testing.T) {
 			Subtopic: tc.subtopic,
 			Payload:  tc.payload,
 		}
-		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
-		err = pubsub.Publish(topic, expectedMsg)
+		err := publisher.Publish(topic, expectedMsg)
 		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 		receivedMsg := <-msgChan
@@ -107,7 +104,7 @@ func TestPubsub(t *testing.T) {
 			desc:         "Subscribe to an already subscribed topic with an ID",
 			topic:        fmt.Sprintf("%s.%s", chansPrefix, topic),
 			clientID:     "clientid1",
-			errorMessage: nats.ErrAlreadySubscribed,
+			errorMessage: rabbitmq.ErrAlreadySubscribed,
 			pubsub:       true,
 		},
 		{
@@ -121,28 +118,28 @@ func TestPubsub(t *testing.T) {
 			desc:         "Unsubscribe from a non-existent topic with an ID",
 			topic:        "h",
 			clientID:     "clientid1",
-			errorMessage: nats.ErrNotSubscribed,
+			errorMessage: rabbitmq.ErrNotSubscribed,
 			pubsub:       false,
 		},
 		{
 			desc:         "Unsubscribe from the same topic with a different ID",
 			topic:        fmt.Sprintf("%s.%s", chansPrefix, topic),
 			clientID:     "clientidd2",
-			errorMessage: nats.ErrNotSubscribed,
+			errorMessage: rabbitmq.ErrNotSubscribed,
 			pubsub:       false,
 		},
 		{
 			desc:         "Unsubscribe from the same topic with a different ID not subscribed",
 			topic:        fmt.Sprintf("%s.%s", chansPrefix, topic),
 			clientID:     "clientidd3",
-			errorMessage: nats.ErrNotSubscribed,
+			errorMessage: rabbitmq.ErrNotSubscribed,
 			pubsub:       false,
 		},
 		{
 			desc:         "Unsubscribe from an already unsubscribed topic with an ID",
 			topic:        fmt.Sprintf("%s.%s", chansPrefix, topic),
 			clientID:     "clientid1",
-			errorMessage: nats.ErrNotSubscribed,
+			errorMessage: rabbitmq.ErrNotSubscribed,
 			pubsub:       false,
 		},
 		{
@@ -156,7 +153,7 @@ func TestPubsub(t *testing.T) {
 			desc:         "Subscribe to an already subscribed topic with a subtopic with an ID",
 			topic:        fmt.Sprintf("%s.%s.%s", chansPrefix, topic, subtopic),
 			clientID:     "clientidd1",
-			errorMessage: nats.ErrAlreadySubscribed,
+			errorMessage: rabbitmq.ErrAlreadySubscribed,
 			pubsub:       true,
 		},
 		{
@@ -170,35 +167,35 @@ func TestPubsub(t *testing.T) {
 			desc:         "Unsubscribe from an already unsubscribed topic with a subtopic with an ID",
 			topic:        fmt.Sprintf("%s.%s.%s", chansPrefix, topic, subtopic),
 			clientID:     "clientid1",
-			errorMessage: nats.ErrNotSubscribed,
+			errorMessage: rabbitmq.ErrNotSubscribed,
 			pubsub:       false,
 		},
 		{
 			desc:         "Subscribe to an empty topic with an ID",
 			topic:        "",
 			clientID:     "clientid1",
-			errorMessage: nats.ErrEmptyTopic,
+			errorMessage: rabbitmq.ErrEmptyTopic,
 			pubsub:       true,
 		},
 		{
 			desc:         "Unsubscribe from an empty topic with an ID",
 			topic:        "",
 			clientID:     "clientid1",
-			errorMessage: nats.ErrEmptyTopic,
+			errorMessage: rabbitmq.ErrEmptyTopic,
 			pubsub:       false,
 		},
 		{
 			desc:         "Subscribe to a topic with empty id",
 			topic:        fmt.Sprintf("%s.%s", chansPrefix, topic),
 			clientID:     "",
-			errorMessage: nats.ErrEmptyID,
+			errorMessage: rabbitmq.ErrEmptyID,
 			pubsub:       true,
 		},
 		{
 			desc:         "Unsubscribe from a topic with empty id",
 			topic:        fmt.Sprintf("%s.%s", chansPrefix, topic),
 			clientID:     "",
-			errorMessage: nats.ErrEmptyID,
+			errorMessage: rabbitmq.ErrEmptyID,
 			pubsub:       false,
 		},
 	}

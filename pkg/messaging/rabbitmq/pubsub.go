@@ -1,7 +1,7 @@
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
 
-package nats
+package rabbitmq
 
 import (
 	"errors"
@@ -9,16 +9,17 @@ import (
 	"sync"
 
 	"github.com/gogo/protobuf/proto"
-
 	log "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging"
-	broker "github.com/nats-io/nats.go"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-const chansPrefix = "channels"
-
-// SubjectAllChannels represents subject to subscribe for all the channels.
-const SubjectAllChannels = "channels.>"
+const (
+	chansPrefix = "channels"
+	// SubjectAllChannels represents subject to subscribe for all the channels.
+	SubjectAllChannels = "channels.>"
+	exchangeName       = "mainflux-exchange"
+)
 
 var (
 	ErrAlreadySubscribed = errors.New("already subscribed to topic")
@@ -30,42 +31,41 @@ var (
 var _ messaging.PubSub = (*pubsub)(nil)
 
 // PubSub wraps messaging Publisher exposing
-// Close() method for NATS connection.
+// Close() method for RabbitMQ connection.
 type PubSub interface {
 	messaging.PubSub
 	Close()
 }
 
 type subscription struct {
-	*broker.Subscription
 	cancel func() error
 }
-
 type pubsub struct {
 	publisher
 	logger        log.Logger
-	mu            sync.Mutex
-	queue         string
 	subscriptions map[string]map[string]subscription
+	mu            sync.Mutex
 }
 
-// NewPubSub returns NATS message publisher/subscriber.
-// Parameter queue specifies the queue for the Subscribe method.
-// If queue is specified (is not an empty string), Subscribe method
-// will execute NATS QueueSubscribe which is conceptually different
-// from ordinary subscribe. For more information, please take a look
-// here: https://docs.nats.io/developing-with-nats/receiving/queues.
-// If the queue is empty, Subscribe will be used.
+// NewPubSub returns RabbitMQ message publisher/subscriber.
 func NewPubSub(url, queue string, logger log.Logger) (PubSub, error) {
-	conn, err := broker.Connect(url)
+	endpoint := fmt.Sprintf("amqp://%s", url)
+	conn, err := amqp.Dial(endpoint)
 	if err != nil {
+		return nil, err
+	}
+	ch, err := conn.Channel()
+	if err != nil {
+		return nil, err
+	}
+	if err := ch.ExchangeDeclare(exchangeName, amqp.ExchangeDirect, true, false, false, false, nil); err != nil {
 		return nil, err
 	}
 	ret := &pubsub{
 		publisher: publisher{
 			conn: conn,
+			ch:   ch,
 		},
-		queue:         queue,
 		logger:        logger,
 		subscriptions: make(map[string]map[string]subscription),
 	}
@@ -93,27 +93,29 @@ func (ps *pubsub) Subscribe(id, topic string, handler messaging.MessageHandler) 
 		s = make(map[string]subscription)
 		ps.subscriptions[topic] = s
 	}
-	nh := ps.natsHandler(handler)
 
-	if ps.queue != "" {
-		sub, err := ps.conn.QueueSubscribe(topic, ps.queue, nh)
-		if err != nil {
-			return err
-		}
-		s[id] = subscription{
-			Subscription: sub,
-			cancel:       handler.Cancel,
-		}
-		return nil
-	}
-	sub, err := ps.conn.Subscribe(topic, nh)
+	_, err := ps.ch.QueueDeclare(topic, true, true, true, false, nil)
 	if err != nil {
 		return err
 	}
-	s[id] = subscription{
-		Subscription: sub,
-		cancel:       handler.Cancel,
+	if err := ps.ch.QueueBind(topic, topic, exchangeName, false, nil); err != nil {
+		return err
 	}
+	clientID := fmt.Sprintf("%s-%s", topic, id)
+	msgs, err := ps.ch.Consume(topic, clientID, true, false, false, false, nil)
+	if err != nil {
+		return err
+	}
+	go ps.handle(msgs, handler)
+	s[id] = subscription{
+		cancel: func() error {
+			if err := ps.ch.Cancel(clientID, false); err != nil {
+				return err
+			}
+			return handler.Cancel()
+		},
+	}
+
 	return nil
 }
 
@@ -126,6 +128,7 @@ func (ps *pubsub) Unsubscribe(id, topic string) error {
 	}
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
+
 	// Check topic
 	s, ok := ps.subscriptions[topic]
 	if !ok {
@@ -141,9 +144,10 @@ func (ps *pubsub) Unsubscribe(id, topic string) error {
 			return err
 		}
 	}
-	if err := current.Unsubscribe(); err != nil {
+	if err := ps.ch.QueueUnbind(topic, topic, exchangeName, nil); err != nil {
 		return err
 	}
+
 	delete(s, id)
 	if len(s) == 0 {
 		delete(ps.subscriptions, topic)
@@ -151,15 +155,16 @@ func (ps *pubsub) Unsubscribe(id, topic string) error {
 	return nil
 }
 
-func (ps *pubsub) natsHandler(h messaging.MessageHandler) broker.MsgHandler {
-	return func(m *broker.Msg) {
+func (ps *pubsub) handle(deliveries <-chan amqp.Delivery, h messaging.MessageHandler) {
+	for d := range deliveries {
 		var msg messaging.Message
-		if err := proto.Unmarshal(m.Data, &msg); err != nil {
+		if err := proto.Unmarshal(d.Body, &msg); err != nil {
 			ps.logger.Warn(fmt.Sprintf("Failed to unmarshal received message: %s", err))
 			return
 		}
 		if err := h.Handle(msg); err != nil {
 			ps.logger.Warn(fmt.Sprintf("Failed to handle Mainflux message: %s", err))
+			return
 		}
 	}
 }

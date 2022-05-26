@@ -483,6 +483,9 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
+# github.com/rabbitmq/amqp091-go v1.3.0
+## explicit; go 1.15
+github.com/rabbitmq/amqp091-go
 # github.com/rubenv/sql-migrate v1.1.1
 ## explicit; go 1.16
 github.com/rubenv/sql-migrate

@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -156,9 +158,28 @@ func (sdk mfSDK) Members(groupID, token string, offset, limit uint64) (MembersPa
 	return tp, nil
 }
 
-func (sdk mfSDK) Groups(offset, limit uint64, token string) (GroupsPage, error) {
-	url := fmt.Sprintf("%s/%s?offset=%d&limit=%d&tree=false", sdk.authURL, groupsEndpoint, offset, limit)
-	return sdk.getGroups(token, url)
+func (sdk mfSDK) Groups(meta PageMetadata, token string) (GroupsPage, error) {
+	u, err := url.Parse(sdk.authURL)
+	if err != nil {
+		return GroupsPage{}, err
+	}
+	u.Path = groupsEndpoint
+	q := u.Query()
+	q.Add("offset", strconv.FormatUint(meta.Offset, 10))
+	if meta.Limit != 0 {
+		q.Add("limit", strconv.FormatUint(meta.Limit, 10))
+	}
+	if meta.Level != 0 {
+		q.Add("level", strconv.FormatUint(meta.Level, 10))
+	}
+	if meta.Name != "" {
+		q.Add("name", meta.Name)
+	}
+	if meta.Type != "" {
+		q.Add("type", meta.Type)
+	}
+	u.RawQuery = q.Encode()
+	return sdk.getGroups(token, u.String())
 }
 
 func (sdk mfSDK) Parents(id string, offset, limit uint64, token string) (GroupsPage, error) {

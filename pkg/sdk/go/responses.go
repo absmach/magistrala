@@ -57,7 +57,7 @@ type UsersPage struct {
 }
 
 type MembersPage struct {
-	Members []Member `json:"members"`
+	Members []string `json:"members"`
 	pageRes
 }
 

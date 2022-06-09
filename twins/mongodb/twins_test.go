@@ -25,7 +25,6 @@ import (
 
 const (
 	maxNameSize = 1024
-	msgsNum     = 10
 	testDB      = "test"
 	collection  = "twins"
 	email       = "mfx_twin@example.com"
@@ -38,7 +37,6 @@ var (
 	addr        string
 	testLog, _  = log.New(os.Stdout, log.Info.String())
 	idProvider  = uuid.New()
-	db          mongo.Database
 	invalidName = strings.Repeat("m", maxNameSize+1)
 )
 

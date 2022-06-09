@@ -17,18 +17,6 @@ type Config struct {
 	RawOutput bool   `toml:"raw_output"`
 }
 
-// save - store config in a file
-func save(c Config, file string) error {
-	b, err := toml.Marshal(c)
-	if err != nil {
-		return errors.New(fmt.Sprintf("failed to read config file: %s", err))
-	}
-	if err := ioutil.WriteFile(file, b, 0644); err != nil {
-		return errors.New(fmt.Sprintf("failed to write config TOML: %s", err))
-	}
-	return nil
-}
-
 // read - retrieve config from a file
 func read(file string) (Config, error) {
 	data, err := ioutil.ReadFile(file)

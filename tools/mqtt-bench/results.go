@@ -67,7 +67,7 @@ func calcMsgRes(m *message, res *runResults) *float64 {
 }
 
 func calcRes(r *runResults, start time.Time, times []float64) *runResults {
-	duration := time.Now().Sub(start)
+	duration := time.Since(start)
 	timeMatrix := mat.NewDense(1, len(times), times)
 	r.MsgTimeMin = mat.Min(timeMatrix)
 	r.MsgTimeMax = mat.Max(timeMatrix)
@@ -159,7 +159,7 @@ func printResults(results []*runResults, totals *totalResults, format string, qu
 		var out bytes.Buffer
 		json.Indent(&out, data, "", "\t")
 
-		fmt.Println(string(out.Bytes()))
+		fmt.Println(out.String())
 	default:
 		if !quiet {
 			for _, res := range results {
@@ -190,5 +190,4 @@ func printResults(results []*runResults, totals *totalResults, format string, qu
 		fmt.Printf("Average Bandwidth (msg/sec): %.3f\n", totals.AvgMsgsPerSec)
 		fmt.Printf("Total Bandwidth (msg/sec):   %.3f\n", totals.TotalMsgsPerSec)
 	}
-	return
 }

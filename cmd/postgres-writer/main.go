@@ -26,7 +26,6 @@ import (
 
 const (
 	svcName      = "postgres-writer"
-	sep          = ","
 	stopWaitTime = 5 * time.Second
 
 	defLogLevel      = "error"

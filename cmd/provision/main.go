@@ -199,13 +199,13 @@ func loadConfig() (provision.Config, error) {
 		return provision.Config{}, errors.New("Can't auto whitelist if auto config save is off")
 	}
 	keyBits, err := strconv.Atoi(mainflux.Env(envCertsKeyBits, defCertsKeyBits))
-	if err != nil && provisionX509 == true {
+	if err != nil && provisionX509 {
 		return provision.Config{}, errFailSettingKeyBits
 	}
 
 	var content map[string]interface{}
 	if c := mainflux.Env(envBSContent, defBSContent); c != "" {
-		if err = json.Unmarshal([]byte(c), content); err != nil {
+		if err = json.Unmarshal([]byte(c), &content); err != nil {
 			return provision.Config{}, errFailedToReadBootstrapContent
 		}
 	}

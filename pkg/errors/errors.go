@@ -104,7 +104,7 @@ func New(text string) Error {
 }
 
 func SignalHandler(ctx context.Context) error {
-	c := make(chan os.Signal)
+	c := make(chan os.Signal, 2)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGABRT)
 	select {
 	case sig := <-c:

@@ -88,7 +88,7 @@ func Benchmark(cfg Config) {
 
 	<-finishedPub
 
-	totalTime := time.Now().Sub(start)
+	totalTime := time.Since(start)
 	totals := calculateTotalResults(results, totalTime, subsResults)
 	if totals == nil {
 		return

@@ -14,10 +14,7 @@ import (
 	"github.com/mainflux/mainflux/readers"
 )
 
-const errInvalid = "invalid_text_representation"
-
 const (
-	format = "format"
 	// Table for SenML messages
 	defTable = "messages"
 

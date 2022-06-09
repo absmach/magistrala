@@ -18,11 +18,7 @@ import (
 	"github.com/mainflux/mainflux/twins/mocks"
 )
 
-const (
-	nanosec   = 1e9
-	publisher = "twins"
-	numRecs   = 100
-)
+const numRecs = 100
 
 var (
 	subtopics = []string{"engine", "chassis", "wheel_2"}

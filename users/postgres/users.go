@@ -6,7 +6,6 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -226,40 +225,6 @@ func (ur userRepository) UpdatePassword(ctx context.Context, email, password str
 	}
 
 	return nil
-}
-
-// dbMetadata type for handling metadata properly in database/sql
-type dbMetadata map[string]interface{}
-
-// Scan - Implement the database/sql scanner interface
-func (m *dbMetadata) Scan(value interface{}) error {
-	if value == nil {
-		return nil
-	}
-
-	b, ok := value.([]byte)
-	if !ok {
-		return errors.ErrScanMetadata
-	}
-
-	if err := json.Unmarshal(b, m); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Value Implements valuer
-func (m dbMetadata) Value() (driver.Value, error) {
-	if len(m) == 0 {
-		return nil, nil
-	}
-
-	b, err := json.Marshal(m)
-	if err != nil {
-		return nil, err
-	}
-	return b, err
 }
 
 type dbUser struct {

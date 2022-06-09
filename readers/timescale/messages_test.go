@@ -29,7 +29,6 @@ const (
 	format1     = "format1"
 	format2     = "format2"
 	wrongID     = "0"
-	wrongValue  = "wrong-value"
 )
 
 var (

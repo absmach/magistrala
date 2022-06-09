@@ -11,11 +11,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/messaging"
 )
 
-const (
-	protocol      = "lora"
-	thingSuffix   = "thing"
-	channelSuffix = "channel"
-)
+const protocol = "lora"
 
 var (
 	// ErrMalformedMessage indicates malformed LoRa message.

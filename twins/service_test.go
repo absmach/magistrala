@@ -22,7 +22,6 @@ const (
 	token      = "token"
 	wrongToken = "wrong-token"
 	email      = "user@example.com"
-	natsURL    = "nats://localhost:4222"
 	numRecs    = 100
 )
 

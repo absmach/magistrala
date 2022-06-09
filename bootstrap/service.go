@@ -107,7 +107,6 @@ type bootstrapService struct {
 	configs ConfigRepository
 	sdk     mfsdk.SDK
 	encKey  []byte
-	reader  ConfigReader
 }
 
 // New returns new Bootstrap service.
@@ -415,7 +414,7 @@ func (bs bootstrapService) connectionChannels(channels, existing []string, token
 	}
 
 	for _, ch := range existing {
-		if add[ch] == true {
+		if add[ch] {
 			delete(add, ch)
 		}
 	}
@@ -442,8 +441,7 @@ func (bs bootstrapService) connectionChannels(channels, existing []string, token
 // 2) IDs of Channels to be removed
 // 3) IDs of common Channels for these two configs
 func (bs bootstrapService) updateList(cfg Config, connections []string) (add, remove []string) {
-	var disconnect map[string]bool
-	disconnect = make(map[string]bool, len(cfg.MFChannels))
+	disconnect := make(map[string]bool, len(cfg.MFChannels))
 	for _, c := range cfg.MFChannels {
 		disconnect[c.ID] = true
 	}

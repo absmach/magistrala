@@ -15,14 +15,11 @@ import (
 )
 
 const (
-	format = "format"
 	// Table for SenML messages
 	defTable = "messages"
 
 	// Error code for Undefined table error.
 	undefinedTableCode = "42P01"
-
-	errInvalid = "invalid_text_representation"
 )
 
 var _ readers.MessageRepository = (*timescaleRepository)(nil)

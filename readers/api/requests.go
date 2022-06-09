@@ -10,10 +10,6 @@ import (
 
 const maxLimitSize = 1000
 
-type apiReq interface {
-	validate() error
-}
-
 type listMessagesReq struct {
 	chanID   string
 	token    string

@@ -10,11 +10,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Keep struct names exported, otherwise Viper unmarshaling won't work
-type mqttBrokerCfg struct {
-	URL string `toml:"url" mapstructure:"url"`
-}
-
 func main() {
 	pconf := provision.Config{}
 

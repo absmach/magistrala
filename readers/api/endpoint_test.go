@@ -6,7 +6,6 @@ package api_test
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -61,7 +60,6 @@ type testRequest struct {
 	url    string
 	token  string
 	key    string
-	body   io.Reader
 }
 
 func (tr testRequest) make() (*http.Response, error) {

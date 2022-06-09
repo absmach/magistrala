@@ -13,10 +13,6 @@ const (
 	maxLimitSize = 100
 )
 
-type apiReq interface {
-	validate() error
-}
-
 type addTwinReq struct {
 	token      string
 	Name       string                 `json:"name,omitempty"`

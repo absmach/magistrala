@@ -14,7 +14,6 @@ import (
 )
 
 const (
-	format = "format"
 	// Table for SenML messages
 	defTable = "messages"
 

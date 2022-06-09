@@ -24,11 +24,11 @@ const (
 
 var (
 	userRegexp    = regexp.MustCompile("^[a-zA-Z0-9!#$%&'*+/=?^_`{|}~.-]+$")
-	hostRegexp    = regexp.MustCompile("^[^\\s]+\\.[^\\s]+$")
+	hostRegexp    = regexp.MustCompile(`^[^\s]+\.[^\s]+$`)
 	userDotRegexp = regexp.MustCompile("(^[.]{1})|([.]{1}$)|([.]{2,})")
 )
 
-// Metadata to be used for mainflux thing or channel for customized
+// Metadata to be used for Mainflux thing or channel for customized
 // describing of particular thing or channel.
 type Metadata map[string]interface{}
 

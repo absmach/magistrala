@@ -14,11 +14,6 @@ import (
 	dockertest "github.com/ory/dockertest/v3"
 )
 
-const (
-	wrongID    = "0"
-	wrongValue = "wrong-value"
-)
-
 var (
 	testLog, _ = logger.New(os.Stdout, logger.Info.String())
 	db         *sqlx.DB

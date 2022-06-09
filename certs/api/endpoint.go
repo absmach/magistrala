@@ -32,39 +32,6 @@ func issueCert(svc certs.Service) endpoint.Endpoint {
 	}
 }
 
-func listCerts(svc certs.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(listReq)
-		if err := req.validate(); err != nil {
-			return nil, err
-		}
-
-		page, err := svc.ListCerts(ctx, req.token, req.thingID, req.offset, req.limit)
-		if err != nil {
-			return certsPageRes{}, err
-		}
-		res := certsPageRes{
-			pageRes: pageRes{
-				Total:  page.Total,
-				Offset: page.Offset,
-				Limit:  page.Limit,
-			},
-			Certs: []certsRes{},
-		}
-
-		for _, cert := range page.Certs {
-			view := certsRes{
-				CertSerial: cert.Serial,
-				ThingID:    cert.ThingID,
-				ClientCert: cert.ClientCert,
-				Expiration: cert.Expire,
-			}
-			res.Certs = append(res.Certs, view)
-		}
-		return res, nil
-	}
-}
-
 func listSerials(svc certs.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listReq)

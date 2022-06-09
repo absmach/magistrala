@@ -36,7 +36,6 @@ import (
 const (
 	stopWaitTime = 5 * time.Second
 
-	svcName              = "cassandra-reader"
 	sep                  = ","
 	defLogLevel          = "error"
 	defPort              = "8180"

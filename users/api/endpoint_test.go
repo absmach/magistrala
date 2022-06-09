@@ -50,7 +50,6 @@ var (
 	missingEmailRes    = toJSON(apiutil.ErrorRes{Err: apiutil.ErrMissingEmail.Error()})
 	missingPassRes     = toJSON(apiutil.ErrorRes{Err: apiutil.ErrMissingPass.Error()})
 	invalidRestPassRes = toJSON(apiutil.ErrorRes{Err: apiutil.ErrInvalidResetPass.Error()})
-	failDecodeRes      = toJSON(apiutil.ErrorRes{Err: errors.ErrMalformedEntity.Error()})
 	passRegex          = regexp.MustCompile("^.{8,}$")
 )
 

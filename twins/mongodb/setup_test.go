@@ -15,10 +15,7 @@ import (
 	dockertest "github.com/ory/dockertest/v3"
 )
 
-const (
-	wrongID    = "0"
-	wrongValue = "wrong-value"
-)
+const wrongValue = "wrong-value"
 
 func TestMain(m *testing.M) {
 	pool, err := dockertest.NewPool("")

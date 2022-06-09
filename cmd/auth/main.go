@@ -93,17 +93,11 @@ type config struct {
 	serverCert    string
 	serverKey     string
 	jaegerURL     string
-	resetURL      string
 	ketoReadHost  string
 	ketoWriteHost string
 	ketoWritePort string
 	ketoReadPort  string
 	loginDuration time.Duration
-}
-
-type tokenConfig struct {
-	hmacSampleSecret []byte // secret for signing token
-	tokenDuration    string // token in duration in min
 }
 
 func main() {

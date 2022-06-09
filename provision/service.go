@@ -353,7 +353,7 @@ func (ps *provisionService) recover(e *error, ths *[]SDK.Thing, chs *[]SDK.Chann
 	if errors.Contains(err, ErrFailedBootstrapValidate) || errors.Contains(err, ErrFailedCertCreation) {
 		clean(ps, things, channels, token)
 		for _, th := range things {
-			if needsBootstrap(th) == true {
+			if needsBootstrap(th) {
 				ps.errLog(ps.sdk.RemoveBootstrap(token, th.ID))
 			}
 
@@ -364,7 +364,7 @@ func (ps *provisionService) recover(e *error, ths *[]SDK.Thing, chs *[]SDK.Chann
 	if errors.Contains(err, ErrFailedBootstrapValidate) || errors.Contains(err, ErrFailedCertCreation) {
 		clean(ps, things, channels, token)
 		for _, th := range things {
-			if needsBootstrap(th) == true {
+			if needsBootstrap(th) {
 				bs, err := ps.sdk.ViewBootstrap(token, th.ID)
 				ps.errLog(errors.Wrap(ErrFailedBootstrapRetrieval, err))
 				ps.errLog(ps.sdk.RemoveBootstrap(token, bs.MFThing))
@@ -378,7 +378,7 @@ func (ps *provisionService) recover(e *error, ths *[]SDK.Thing, chs *[]SDK.Chann
 			if ps.conf.Bootstrap.X509Provision && needsBootstrap(th) {
 				ps.errLog(ps.sdk.RemoveCert(th.ID, token))
 			}
-			if needsBootstrap(th) == true {
+			if needsBootstrap(th) {
 				bs, err := ps.sdk.ViewBootstrap(token, th.ID)
 				ps.errLog(errors.Wrap(ErrFailedBootstrapRetrieval, err))
 				ps.errLog(ps.sdk.RemoveBootstrap(token, bs.MFThing))

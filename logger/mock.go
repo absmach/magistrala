@@ -13,17 +13,13 @@ func NewMock() Logger {
 }
 
 func (l loggerMock) Debug(msg string) {
-	return
 }
 
 func (l loggerMock) Info(msg string) {
-	return
 }
 
 func (l loggerMock) Warn(msg string) {
-	return
 }
 
 func (l loggerMock) Error(msg string) {
-	return
 }

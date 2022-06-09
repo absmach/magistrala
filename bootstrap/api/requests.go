@@ -10,10 +10,6 @@ import (
 
 const maxLimitSize = 100
 
-type apiReq interface {
-	validate() error
-}
-
 type addReq struct {
 	token       string
 	ThingID     string   `json:"thing_id"`

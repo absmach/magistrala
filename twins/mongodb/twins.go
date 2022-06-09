@@ -19,8 +19,7 @@ const (
 )
 
 type twinRepository struct {
-	db               *mongo.Database
-	subtopicWildcard string
+	db *mongo.Database
 }
 
 var _ twins.TwinRepository = (*twinRepository)(nil)

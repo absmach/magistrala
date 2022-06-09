@@ -14,11 +14,6 @@ import (
 	dockertest "github.com/ory/dockertest/v3"
 )
 
-const (
-	wrongID    = 0
-	wrongValue = "wrong-value"
-)
-
 var redisClient *redis.Client
 
 func TestMain(m *testing.M) {

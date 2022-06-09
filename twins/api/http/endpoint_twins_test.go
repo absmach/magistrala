@@ -32,13 +32,11 @@ const (
 	wrongValue  = "wrong_value"
 	wrongID     = 0
 	maxNameSize = 1024
-	topic       = "topic"
 )
 
 var invalidName = strings.Repeat("m", maxNameSize+1)
 
 type twinReq struct {
-	token    string
 	Name     string                 `json:"name,omitempty"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }

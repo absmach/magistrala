@@ -12,15 +12,11 @@ import (
 	"testing"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/readers/postgres"
 	dockertest "github.com/ory/dockertest/v3"
 )
 
-var (
-	testLog, _ = logger.New(os.Stdout, logger.Info.String())
-	db         *sqlx.DB
-)
+var db *sqlx.DB
 
 func TestMain(m *testing.M) {
 	pool, err := dockertest.NewPool("")

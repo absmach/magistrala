@@ -18,12 +18,8 @@ import (
 
 const (
 	duplicateErr      = "unique_violation"
-	uuidErr           = "invalid input syntax for type uuid"
 	fkViolation       = "foreign_key_violation"
 	connConstraintErr = "connections_config_id_config_owner_fkey"
-	configFieldsNum   = 8
-	chanFieldsNum     = 3
-	connFieldsNum     = 2
 	cleanupQuery      = `DELETE FROM channels ch WHERE NOT EXISTS (
 						 SELECT channel_id FROM connections c WHERE ch.mainflux_channel = c.channel_id);`
 )

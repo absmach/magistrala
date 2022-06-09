@@ -49,10 +49,9 @@ const (
 )
 
 var (
-	encKey      = []byte("1234567891011121")
-	addChannels = []string{"1"}
-	metadata    = map[string]interface{}{"meta": "data"}
-	addReq      = struct {
+	encKey   = []byte("1234567891011121")
+	metadata = map[string]interface{}{"meta": "data"}
+	addReq   = struct {
 		ThingID     string   `json:"thing_id"`
 		ExternalID  string   `json:"external_id"`
 		ExternalKey string   `json:"external_key"`
@@ -84,9 +83,6 @@ var (
 	}
 
 	bsErrorRes    = toJSON(apiutil.ErrorRes{Err: bootstrap.ErrBootstrap.Error()})
-	authnRes      = toJSON(apiutil.ErrorRes{Err: errors.ErrAuthentication.Error()})
-	authzRes      = toJSON(apiutil.ErrorRes{Err: errors.ErrAuthorization.Error()})
-	malformedRes  = toJSON(apiutil.ErrorRes{Err: errors.ErrMalformedEntity.Error()})
 	extKeyRes     = toJSON(apiutil.ErrorRes{Err: bootstrap.ErrExternalKey.Error()})
 	extSecKeyRes  = toJSON(apiutil.ErrorRes{Err: bootstrap.ErrExternalKeySecure.Error()})
 	missingIDRes  = toJSON(apiutil.ErrorRes{Err: apiutil.ErrMissingID.Error()})

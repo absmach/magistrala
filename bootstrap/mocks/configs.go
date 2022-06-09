@@ -13,10 +13,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
-const (
-	emptyState  = -1
-	notFoundIdx = -1
-)
+const emptyState = -1
 
 var _ bootstrap.ConfigRepository = (*configRepositoryMock)(nil)
 
@@ -107,7 +104,7 @@ func (crm *configRepositoryMock) RetrieveAll(token string, filter bootstrap.Filt
 	for _, v := range crm.configs {
 		id, _ := strconv.ParseUint(v.MFThing, 10, 64)
 		if (state == emptyState || v.State == state) &&
-			(name == "" || strings.Index(strings.ToLower(v.Name), name) != notFoundIdx) &&
+			(name == "" || strings.Contains(strings.ToLower(v.Name), name)) &&
 			v.Owner == token {
 			if id >= first && id < last {
 				configs = append(configs, v)

@@ -55,5 +55,4 @@ func (b broker) handleMsg(c mqtt.Client, msg mqtt.Message) {
 	}
 
 	b.svc.Publish(context.Background(), m)
-	return
 }

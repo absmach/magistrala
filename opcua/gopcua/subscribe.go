@@ -26,7 +26,6 @@ var (
 	errNotFoundConn      = errors.New("connection not found")
 
 	errFailedConn          = errors.New("failed to connect")
-	errFailedRead          = errors.New("failed to read")
 	errFailedParseInterval = errors.New("failed to parse subscription interval")
 	errFailedSub           = errors.New("failed to subscribe")
 	errFailedFindEndpoint  = errors.New("failed to find suitable endpoint")

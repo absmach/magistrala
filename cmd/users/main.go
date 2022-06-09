@@ -66,7 +66,6 @@ const (
 	defAdminEmail       = ""
 	defAdminPassword    = ""
 	defPassRegex        = "^.{8,}$"
-	defAdminGroup       = "mainflux"
 
 	defTokenResetEndpoint = "/reset-request" // URL where user lands after click on the reset link from email
 
@@ -102,7 +101,6 @@ const (
 	envEmailPassword    = "MF_EMAIL_PASSWORD"
 	envEmailFromAddress = "MF_EMAIL_FROM_ADDRESS"
 	envEmailFromName    = "MF_EMAIL_FROM_NAME"
-	envEmailLogLevel    = "MF_EMAIL_LOG_LEVEL"
 	envEmailTemplate    = "MF_EMAIL_TEMPLATE"
 
 	envTokenResetEndpoint = "MF_TOKEN_RESET_ENDPOINT"

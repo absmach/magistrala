@@ -544,9 +544,7 @@ func TestListExisting(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	var chs []bootstrap.Channel
-	for _, ch := range config.MFChannels {
-		chs = append(chs, ch)
-	}
+	chs = append(chs, config.MFChannels...)
 
 	cases := []struct {
 		desc        string

@@ -83,9 +83,7 @@ func (svc *mainfluxThings) Connect(_ context.Context, owner string, chIDs, thIDs
 		if svc.channels[chID].Owner != userID.Email {
 			return errors.ErrAuthentication
 		}
-		for _, thID := range thIDs {
-			svc.connections[chID] = append(svc.connections[chID], thID)
-		}
+		svc.connections[chID] = append(svc.connections[chID], thIDs...)
 	}
 
 	return nil

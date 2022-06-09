@@ -206,12 +206,6 @@ func subscribeToStoredSubs(sub opcua.Subscriber, cfg opcua.Config, logger logger
 	}
 }
 
-func subscribeToOpcuaServer(gc opcua.Subscriber, cfg opcua.Config, logger logger.Logger) {
-	if err := gc.Subscribe(context.Background(), cfg); err != nil {
-		logger.Warn(fmt.Sprintf("OPC-UA Subscription failed: %s", err))
-	}
-}
-
 func subscribeToThingsES(svc opcua.Service, client *r.Client, prefix string, logger logger.Logger) {
 	eventStore := redis.NewEventStore(svc, client, prefix, logger)
 	if err := eventStore.Subscribe(context.Background(), "mainflux.things"); err != nil {

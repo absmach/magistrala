@@ -15,7 +15,6 @@ const (
 	updateStateOp       = "update_state"
 	countStatesOp       = "count_states"
 	retrieveAllStatesOp = "retrieve_all_states"
-	retrieveLastStateOp = "retrieve_states_by_attribute"
 )
 
 var _ twins.StateRepository = (*stateRepositoryMiddleware)(nil)

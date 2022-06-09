@@ -24,7 +24,6 @@ import (
 
 const (
 	testDB      = "test"
-	collection  = "messages"
 	subtopic    = "subtopic"
 	msgsNum     = 100
 	limit       = 10

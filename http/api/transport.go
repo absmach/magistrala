@@ -30,7 +30,9 @@ import (
 
 const (
 	protocol    = "http"
-	contentType = "application/senml+json"
+	ctSenmlJSON = "application/senml+json"
+	ctSenmlCBOR = "application/senml+cbor"
+	ctJSON      = "application/json"
 )
 
 var (
@@ -96,7 +98,8 @@ func parseSubtopic(subtopic string) (string, error) {
 }
 
 func decodeRequest(ctx context.Context, r *http.Request) (interface{}, error) {
-	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+	ct := r.Header.Get("Content-Type")
+	if ct != ctSenmlJSON && ct != ctJSON && ct != ctSenmlCBOR {
 		return nil, errors.ErrUnsupportedContentType
 	}
 
@@ -176,7 +179,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	}
 
 	if errorVal, ok := err.(errors.Error); ok {
-		w.Header().Set("Content-Type", contentType)
+		w.Header().Set("Content-Type", ctJSON)
 		if err := json.NewEncoder(w).Encode(apiutil.ErrorRes{Err: errorVal.Msg()}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}

@@ -1,5 +1,5 @@
 Pull request title should be `MF-XXX - description` or `NOISSUE - description` where XXX is ID of issue that this PR relate to.
-Please review the [CONTRIBUTING.md](./CONTRIBUTING.md) file for detailed contributing guidelines.
+Please review the [CONTRIBUTING.md](https://github.com/mainflux/mainflux/blob/master/CONTRIBUTING.md) file for detailed contributing guidelines.
 
 ### What does this do?
 

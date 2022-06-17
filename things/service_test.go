@@ -263,7 +263,7 @@ func TestViewThing(t *testing.T) {
 		"view non-existing thing": {
 			id:    wrongID,
 			token: token,
-			err:   errors.ErrAuthorization,
+			err:   errors.ErrNotFound,
 		},
 	}
 

@@ -171,7 +171,6 @@ func (ts *thingsService) CreateThings(ctx context.Context, token string, things 
 
 // createThing saves the Thing and adds identity as an owner(Read, Write, Delete policies) of the Thing.
 func (ts *thingsService) createThing(ctx context.Context, thing *Thing, identity *mainflux.UserIdentity) (Thing, error) {
-
 	thing.Owner = identity.GetEmail()
 
 	if thing.ID == "" {
@@ -258,12 +257,12 @@ func (ts *thingsService) claimOwnership(ctx context.Context, objectID string, ac
 func (ts *thingsService) UpdateKey(ctx context.Context, token, id, key string) error {
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return err
+		return errors.Wrap(errors.ErrAuthentication, err)
 	}
 
 	if err := ts.authorize(ctx, res.GetId(), id, writeRelationKey); err != nil {
 		if err := ts.authorize(ctx, res.GetId(), authoritiesObject, memberRelationKey); err != nil {
-			return err
+			return errors.Wrap(errors.ErrNotFound, err)
 		}
 	}
 
@@ -275,12 +274,12 @@ func (ts *thingsService) UpdateKey(ctx context.Context, token, id, key string) e
 func (ts *thingsService) ViewThing(ctx context.Context, token, id string) (Thing, error) {
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return Thing{}, err
+		return Thing{}, errors.Wrap(errors.ErrAuthentication, err)
 	}
 
 	if err := ts.authorize(ctx, res.GetId(), id, readRelationKey); err != nil {
 		if err := ts.authorize(ctx, res.GetId(), authoritiesObject, memberRelationKey); err != nil {
-			return Thing{}, err
+			return Thing{}, errors.Wrap(errors.ErrNotFound, err)
 		}
 	}
 
@@ -290,7 +289,7 @@ func (ts *thingsService) ViewThing(ctx context.Context, token, id string) (Thing
 func (ts *thingsService) ListThings(ctx context.Context, token string, pm PageMetadata) (Page, error) {
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return Page{}, err
+		return Page{}, errors.Wrap(errors.ErrAuthentication, err)
 	}
 
 	subject := res.GetId()
@@ -333,7 +332,7 @@ func (ts *thingsService) ListThings(ctx context.Context, token string, pm PageMe
 func (ts *thingsService) ListThingsByChannel(ctx context.Context, token, chID string, pm PageMetadata) (Page, error) {
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return Page{}, err
+		return Page{}, errors.Wrap(errors.ErrAuthentication, err)
 	}
 
 	return ts.things.RetrieveByChannel(ctx, res.GetEmail(), chID, pm)
@@ -342,12 +341,13 @@ func (ts *thingsService) ListThingsByChannel(ctx context.Context, token, chID st
 func (ts *thingsService) RemoveThing(ctx context.Context, token, id string) error {
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return err
+		return errors.Wrap(errors.ErrAuthentication, err)
+
 	}
 
 	if err := ts.authorize(ctx, res.GetId(), id, deleteRelationKey); err != nil {
 		if err := ts.authorize(ctx, res.GetId(), authoritiesObject, memberRelationKey); err != nil {
-			return err
+			return errors.Wrap(errors.ErrNotFound, err)
 		}
 	}
 
@@ -360,7 +360,7 @@ func (ts *thingsService) RemoveThing(ctx context.Context, token, id string) erro
 func (ts *thingsService) CreateChannels(ctx context.Context, token string, channels ...Channel) ([]Channel, error) {
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return []Channel{}, err
+		return []Channel{}, errors.Wrap(errors.ErrAuthentication, err)
 	}
 
 	chs := []Channel{}
@@ -402,12 +402,12 @@ func (ts *thingsService) createChannel(ctx context.Context, channel *Channel, id
 func (ts *thingsService) UpdateChannel(ctx context.Context, token string, channel Channel) error {
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return err
+		return errors.Wrap(errors.ErrAuthentication, err)
 	}
 
 	if err := ts.authorize(ctx, res.GetId(), channel.ID, writeRelationKey); err != nil {
 		if err := ts.authorize(ctx, res.GetId(), authoritiesObject, memberRelationKey); err != nil {
-			return err
+			return errors.Wrap(errors.ErrNotFound, err)
 		}
 	}
 
@@ -418,12 +418,12 @@ func (ts *thingsService) UpdateChannel(ctx context.Context, token string, channe
 func (ts *thingsService) ViewChannel(ctx context.Context, token, id string) (Channel, error) {
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return Channel{}, err
+		return Channel{}, errors.Wrap(errors.ErrAuthentication, err)
 	}
 
 	if err := ts.authorize(ctx, res.GetId(), id, readRelationKey); err != nil {
 		if err := ts.authorize(ctx, res.GetId(), authoritiesObject, memberRelationKey); err != nil {
-			return Channel{}, err
+			return Channel{}, errors.Wrap(errors.ErrNotFound, err)
 		}
 	}
 
@@ -433,7 +433,7 @@ func (ts *thingsService) ViewChannel(ctx context.Context, token, id string) (Cha
 func (ts *thingsService) ListChannels(ctx context.Context, token string, pm PageMetadata) (ChannelsPage, error) {
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return ChannelsPage{}, err
+		return ChannelsPage{}, errors.Wrap(errors.ErrAuthentication, err)
 	}
 
 	// If the user is admin, fetch all channels from the database.
@@ -453,7 +453,7 @@ func (ts *thingsService) ListChannels(ctx context.Context, token string, pm Page
 func (ts *thingsService) ListChannelsByThing(ctx context.Context, token, thID string, pm PageMetadata) (ChannelsPage, error) {
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return ChannelsPage{}, err
+		return ChannelsPage{}, errors.Wrap(errors.ErrAuthentication, err)
 	}
 
 	return ts.channels.RetrieveByThing(ctx, res.GetEmail(), thID, pm)
@@ -462,12 +462,12 @@ func (ts *thingsService) ListChannelsByThing(ctx context.Context, token, thID st
 func (ts *thingsService) RemoveChannel(ctx context.Context, token, id string) error {
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return err
+		return errors.Wrap(errors.ErrAuthentication, err)
 	}
 
 	if err := ts.authorize(ctx, res.GetId(), id, deleteRelationKey); err != nil {
 		if err := ts.authorize(ctx, res.GetId(), authoritiesObject, memberRelationKey); err != nil {
-			return err
+			return errors.Wrap(errors.ErrNotFound, err)
 		}
 	}
 
@@ -481,7 +481,7 @@ func (ts *thingsService) RemoveChannel(ctx context.Context, token, id string) er
 func (ts *thingsService) Connect(ctx context.Context, token string, chIDs, thIDs []string) error {
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return err
+		return errors.Wrap(errors.ErrAuthentication, err)
 	}
 
 	return ts.channels.Connect(ctx, res.GetEmail(), chIDs, thIDs)
@@ -490,7 +490,7 @@ func (ts *thingsService) Connect(ctx context.Context, token string, chIDs, thIDs
 func (ts *thingsService) Disconnect(ctx context.Context, token string, chIDs, thIDs []string) error {
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
-		return err
+		return errors.Wrap(errors.ErrAuthentication, err)
 	}
 
 	for _, chID := range chIDs {
@@ -612,10 +612,10 @@ func (ts *thingsService) authorize(ctx context.Context, subject, object string, 
 	}
 	res, err := ts.auth.Authorize(ctx, req)
 	if err != nil {
-		return err
+		return errors.Wrap(errors.ErrAuthorization, err)
 	}
 	if !res.GetAuthorized() {
-		return err
+		return errors.ErrAuthorization
 	}
 	return nil
 }

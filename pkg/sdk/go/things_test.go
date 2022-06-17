@@ -238,7 +238,7 @@ func TestThing(t *testing.T) {
 			desc:     "get non-existent thing",
 			thID:     "43",
 			token:    token,
-			err:      createError(sdk.ErrFailedFetch, http.StatusForbidden),
+			err:      createError(sdk.ErrFailedFetch, http.StatusNotFound),
 			response: sdk.Thing{},
 		},
 		{
@@ -252,7 +252,6 @@ func TestThing(t *testing.T) {
 
 	for _, tc := range cases {
 		respTh, err := mainfluxSDK.Thing(tc.thID, tc.token)
-
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, respTh, fmt.Sprintf("%s: expected response thing %s, got %s", tc.desc, tc.response, respTh))
 	}
@@ -592,7 +591,7 @@ func TestDeleteThing(t *testing.T) {
 			desc:    "delete non-existing thing",
 			thingID: "2",
 			token:   token,
-			err:     createError(sdk.ErrFailedRemoval, http.StatusForbidden),
+			err:     createError(sdk.ErrFailedRemoval, http.StatusNotFound),
 		},
 		{
 			desc:    "delete thing with invalid id",

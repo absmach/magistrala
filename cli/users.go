@@ -38,16 +38,37 @@ var cmdUsers = []cobra.Command{
 		},
 	},
 	{
-		Use:   "get <user_auth_token>",
-		Short: "Get user",
-		Long:  `Returns user object`,
+		Use:   "get [all | <user_id> ] <user_auth_token>",
+		Short: "Get users",
+		Long: `Get all users or get user by id. Users can be filtered by name or metadata
+		all - lists all users
+		<user_id> - shows user with provided <user_id>`,
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 1 {
+			if len(args) != 2 {
 				logUsage(cmd.Use)
 				return
 			}
-
-			u, err := sdk.User(args[0])
+			metadata, err := convertMetadata(Metadata)
+			if err != nil {
+				logError(err)
+				return
+			}
+			pageMetadata := mfxsdk.PageMetadata{
+				Email:    "",
+				Offset:   uint64(Offset),
+				Limit:    uint64(Limit),
+				Metadata: metadata,
+			}
+			if args[0] == "all" {
+				l, err := sdk.Users(args[1], pageMetadata)
+				if err != nil {
+					logError(err)
+					return
+				}
+				logJSON(l)
+				return
+			}
+			u, err := sdk.User(args[0], args[1])
 			if err != nil {
 				logError(err)
 				return

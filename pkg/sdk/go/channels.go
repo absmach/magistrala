@@ -76,8 +76,11 @@ func (sdk mfSDK) CreateChannels(chs []Channel, token string) ([]Channel, error) 
 	return ccr.Channels, nil
 }
 
-func (sdk mfSDK) Channels(token string, offset, limit uint64, name string) (ChannelsPage, error) {
-	url := fmt.Sprintf("%s/%s?offset=%d&limit=%d&name=%s", sdk.thingsURL, channelsEndpoint, offset, limit, name)
+func (sdk mfSDK) Channels(token string, pm PageMetadata) (ChannelsPage, error) {
+	url, err := sdk.withQueryParams(sdk.thingsURL, channelsEndpoint, pm)
+	if err != nil {
+		return ChannelsPage{}, err
+	}
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return ChannelsPage{}, err

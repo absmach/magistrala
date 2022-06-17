@@ -5,8 +5,12 @@ package sdk
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/mainflux/mainflux"
@@ -85,6 +89,16 @@ type User struct {
 	Password string                 `json:"password,omitempty"`
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
+type PageMetadata struct {
+	Total    uint64                 `json:"total"`
+	Offset   uint64                 `json:"offset"`
+	Limit    uint64                 `json:"limit"`
+	Level    uint64                 `json:"level,omitempty"`
+	Email    string                 `json:"email,omitempty"`
+	Name     string                 `json:"name,omitempty"`
+	Type     string                 `json:"type,omitempty"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
+}
 
 // Group represents mainflux users group.
 type Group struct {
@@ -93,16 +107,6 @@ type Group struct {
 	Description string                 `json:"description,omitempty"`
 	ParentID    string                 `json:"parent_id,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-}
-
-type PageMetadata struct {
-	Total    uint64
-	Offset   uint64
-	Limit    uint64
-	Level    uint64
-	Name     string
-	Type     string
-	Metadata map[string]interface{}
 }
 
 // Thing represents mainflux thing.
@@ -134,8 +138,11 @@ type SDK interface {
 	// CreateUser registers mainflux user.
 	CreateUser(token string, user User) (string, error)
 
-	// User returns user object.
-	User(token string) (User, error)
+	// User returns user object by id.
+	User(token, id string) (User, error)
+
+	// Users returns list of users.
+	Users(token string, pm PageMetadata) (UsersPage, error)
 
 	// CreateToken receives credentials and returns user token.
 	CreateToken(user User) (string, error)
@@ -153,7 +160,7 @@ type SDK interface {
 	CreateThings(things []Thing, token string) ([]Thing, error)
 
 	// Things returns page of things.
-	Things(token string, offset, limit uint64, name string) (ThingsPage, error)
+	Things(token string, pm PageMetadata) (ThingsPage, error)
 
 	// ThingsByChannel returns page of things that are connected or not connected
 	// to specified channel.
@@ -214,7 +221,7 @@ type SDK interface {
 	CreateChannels(channels []Channel, token string) ([]Channel, error)
 
 	// Channels returns page of channels.
-	Channels(token string, offset, limit uint64, name string) (ChannelsPage, error)
+	Channels(token string, pm PageMetadata) (ChannelsPage, error)
 
 	// ChannelsByThing returns page of channels that are connected or not connected
 	// to specified thing.
@@ -352,4 +359,39 @@ func (sdk mfSDK) sendThingRequest(req *http.Request, key, contentType string) (*
 	}
 
 	return sdk.client.Do(req)
+}
+
+func (sdk mfSDK) withQueryParams(baseURL, endpoint string, pm PageMetadata) (string, error) {
+	q, err := pm.query()
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s/%s?%s", baseURL, endpoint, q), nil
+}
+
+func (pm PageMetadata) query() (string, error) {
+	q := url.Values{}
+	q.Add("total", strconv.FormatUint(pm.Total, 10))
+	q.Add("offset", strconv.FormatUint(pm.Offset, 10))
+	q.Add("limit", strconv.FormatUint(pm.Limit, 10))
+	if pm.Level != 0 {
+		q.Add("level", strconv.FormatUint(pm.Level, 10))
+	}
+	if pm.Email != "" {
+		q.Add("email", pm.Email)
+	}
+	if pm.Name != "" {
+		q.Add("name", pm.Name)
+	}
+	if pm.Type != "" {
+		q.Add("type", pm.Type)
+	}
+	if pm.Metadata != nil {
+		md, err := json.Marshal(pm.Metadata)
+		if err != nil {
+			return "", err
+		}
+		q.Add("metadata", string(md))
+	}
+	return q.Encode(), nil
 }

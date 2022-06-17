@@ -34,6 +34,9 @@ var (
 	ErrFailedBootstrap          = errors.New("failed to create bootstrap config")
 	ErrFailedBootstrapValidate  = errors.New("failed to validate bootstrap config creation")
 	ErrGatewayUpdate            = errors.New("failed to updated gateway metadata")
+
+	limit  uint = 10
+	offset uint = 0
 )
 
 var _ Service = (*provisionService)(nil)
@@ -89,7 +92,14 @@ func New(cfg Config, sdk SDK.SDK, logger logger.Logger) Service {
 
 // Mapping retrieves current configuration
 func (ps *provisionService) Mapping(token string) (map[string]interface{}, error) {
-	if _, err := ps.sdk.User(token); err != nil {
+	userFilter := SDK.PageMetadata{
+		Email:    "",
+		Offset:   uint64(offset),
+		Limit:    uint64(limit),
+		Metadata: make(map[string]interface{}),
+	}
+
+	if _, err := ps.sdk.Users(token, userFilter); err != nil {
 		return map[string]interface{}{}, errors.Wrap(ErrUnauthorized, err)
 	}
 	return ps.conf.Bootstrap.Content, nil

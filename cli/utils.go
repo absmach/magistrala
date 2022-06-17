@@ -18,6 +18,10 @@ var (
 	Offset uint = 0
 	// Name query parameter
 	Name string = ""
+	// Email query parameter
+	Email string = ""
+	// Metadata query parameter
+	Metadata string = ""
 	// ConfigPath config path parameter
 	ConfigPath string = ""
 	// RawOutput raw output mode
@@ -63,4 +67,15 @@ func logCreated(e string) {
 	} else {
 		fmt.Printf(color.BlueString("\ncreated: %s\n\n"), e)
 	}
+}
+
+func convertMetadata(m string) (map[string]interface{}, error) {
+	var metadata map[string]interface{}
+	if m == "" {
+		return nil, nil
+	}
+	if err := json.Unmarshal([]byte(Metadata), &metadata); err != nil {
+		return nil, err
+	}
+	return nil, nil
 }

@@ -39,15 +39,29 @@ var cmdChannels = []cobra.Command{
 	{
 		Use:   "get [all | <channel_id>] <user_auth_token>",
 		Short: "Get channel",
-		Long:  `Gets list of all channels or gets channel by id`,
+		Long: `Get all channels or get channel by id. Channels can be filtered by name or metadata.
+		all - lists all channels
+		<channel_id> - shows thing with provided <channel_id>`,
+
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				logUsage(cmd.Use)
 				return
 			}
+			metadata, err := convertMetadata(Metadata)
+			if err != nil {
+				logError(err)
+				return
+			}
+			pageMetadata := mfxsdk.PageMetadata{
+				Name:     "",
+				Offset:   uint64(Offset),
+				Limit:    uint64(Limit),
+				Metadata: metadata,
+			}
 
 			if args[0] == "all" {
-				l, err := sdk.Channels(args[1], uint64(Offset), uint64(Limit), Name)
+				l, err := sdk.Channels(args[1], pageMetadata)
 				if err != nil {
 					logError(err)
 					return
@@ -56,7 +70,6 @@ var cmdChannels = []cobra.Command{
 				logJSON(l)
 				return
 			}
-
 			c, err := sdk.Channel(args[0], args[1])
 			if err != nil {
 				logError(err)

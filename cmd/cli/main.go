@@ -84,7 +84,7 @@ func main() {
 	rootCmd.PersistentFlags().StringVarP(
 		&sdkConf.CertsURL,
 		"certs-url",
-		"e",
+		"s",
 		sdkConf.CertsURL,
 		"Certs service URL",
 	)
@@ -168,6 +168,22 @@ func main() {
 		"n",
 		"",
 		"Name query parameter",
+	)
+
+	rootCmd.PersistentFlags().StringVarP(
+		&cli.Email,
+		"email",
+		"e",
+		"",
+		"Email query parameter",
+	)
+
+	rootCmd.PersistentFlags().StringVarP(
+		&cli.Metadata,
+		"metadata",
+		"m",
+		"",
+		"Metadata query parameter",
 	)
 
 	if err := rootCmd.Execute(); err != nil {

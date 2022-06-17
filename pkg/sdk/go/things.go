@@ -80,9 +80,11 @@ func (sdk mfSDK) CreateThings(things []Thing, token string) ([]Thing, error) {
 	return ctr.Things, nil
 }
 
-func (sdk mfSDK) Things(token string, offset, limit uint64, name string) (ThingsPage, error) {
-	endpoint := fmt.Sprintf("%s?offset=%d&limit=%d&name=%s", thingsEndpoint, offset, limit, name)
-	url := fmt.Sprintf("%s/%s", sdk.thingsURL, endpoint)
+func (sdk mfSDK) Things(token string, pm PageMetadata) (ThingsPage, error) {
+	url, err := sdk.withQueryParams(sdk.thingsURL, thingsEndpoint, pm)
+	if err != nil {
+		return ThingsPage{}, err
+	}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {

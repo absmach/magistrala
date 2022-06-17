@@ -5,6 +5,7 @@ package mocks
 
 import (
 	"context"
+	"sort"
 	"sync"
 
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -97,7 +98,19 @@ func (urm *userRepositoryMock) RetrieveAll(ctx context.Context, offset, limit ui
 	up := users.UserPage{}
 	i := uint64(0)
 
-	for _, u := range urm.users {
+	if email != "" {
+		val, ok := urm.users[email]
+		if !ok {
+			return users.UserPage{}, errors.ErrNotFound
+		}
+		up.Offset = offset
+		up.Limit = limit
+		up.Total = uint64(i)
+		up.Users = []users.User{val}
+		return up, nil
+	}
+
+	for _, u := range sortUsers(urm.users) {
 		if i >= offset && i < (limit+offset) {
 			up.Users = append(up.Users, u)
 		}
@@ -119,4 +132,19 @@ func (urm *userRepositoryMock) UpdatePassword(_ context.Context, token, password
 		return errors.ErrNotFound
 	}
 	return nil
+}
+
+func sortUsers(us map[string]users.User) []users.User {
+	users := []users.User{}
+	ids := make([]string, 0, len(us))
+	for k := range us {
+		ids = append(ids, k)
+	}
+
+	sort.Strings(ids)
+	for _, id := range ids {
+		users = append(users, us[id])
+	}
+
+	return users
 }

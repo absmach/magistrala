@@ -81,7 +81,7 @@ type PageMetadata struct {
 	Total  uint64
 	Offset uint64
 	Limit  uint64
-	Name   string
+	Email  string
 }
 
 // GroupPage contains a page of groups.

@@ -19,7 +19,7 @@ import (
 	"github.com/mainflux/mainflux/consumers/writers/postgres"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/pkg/messaging/nats"
+	"github.com/mainflux/mainflux/pkg/messaging/brokers"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/sync/errgroup"
 )
@@ -29,7 +29,7 @@ const (
 	stopWaitTime = 5 * time.Second
 
 	defLogLevel      = "error"
-	defNatsURL       = "nats://localhost:4222"
+	defBrokerURL     = "nats://localhost:4222"
 	defPort          = "8180"
 	defDBHost        = "localhost"
 	defDBPort        = "5432"
@@ -42,7 +42,7 @@ const (
 	defDBSSLRootCert = ""
 	defConfigPath    = "/config.toml"
 
-	envNatsURL       = "MF_NATS_URL"
+	envBrokerURL     = "MF_BROKER_URL"
 	envLogLevel      = "MF_POSTGRES_WRITER_LOG_LEVEL"
 	envPort          = "MF_POSTGRES_WRITER_PORT"
 	envDBHost        = "MF_POSTGRES_WRITER_DB_HOST"
@@ -58,7 +58,7 @@ const (
 )
 
 type config struct {
-	natsURL    string
+	brokerURL  string
 	logLevel   string
 	port       string
 	configPath string
@@ -75,9 +75,9 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
-	pubSub, err := nats.NewPubSub(cfg.natsURL, "", logger)
+	pubSub, err := brokers.NewPubSub(cfg.brokerURL, "", logger)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to NATS: %s", err))
+		logger.Error(fmt.Sprintf("Failed to connect to message broker: %s", err))
 		os.Exit(1)
 	}
 	defer pubSub.Close()
@@ -123,7 +123,7 @@ func loadConfig() config {
 	}
 
 	return config{
-		natsURL:    mainflux.Env(envNatsURL, defNatsURL),
+		brokerURL:  mainflux.Env(envBrokerURL, defBrokerURL),
 		logLevel:   mainflux.Env(envLogLevel, defLogLevel),
 		port:       mainflux.Env(envPort, defPort),
 		configPath: mainflux.Env(envConfigPath, defConfigPath),

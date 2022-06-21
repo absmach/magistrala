@@ -1,0 +1,11 @@
+services:
+  broker:
+    image: rabbitmq:3.9.20-management-alpine
+    environment:
+      RABBITMQ_ERLANG_COOKIE: ${MF_RABBITMQ_COOKIE}
+      RABBITMQ_DEFAULT_USER: ${MF_RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${MF_RABBITMQ_PASS}
+      RABBITMQ_DEFAULT_VHOST: ${MF_RABBITMQ_VHOST}
+    ports:
+      - ${MF_RABBITMQ_PORT}:${MF_RABBITMQ_PORT}
+      - ${MF_RABBITMQ_HTTP_PORT}:${MF_RABBITMQ_HTTP_PORT}

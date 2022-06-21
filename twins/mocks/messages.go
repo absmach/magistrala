@@ -27,3 +27,7 @@ func (mb mockBroker) Publish(topic string, msg messaging.Message) error {
 	}
 	return nil
 }
+
+func (mb mockBroker) Close() error {
+	return nil
+}

@@ -8,21 +8,21 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable                             | Description                                     | Default                |
-| -----------------------------------  | ----------------------------------------------- | ---------------------- |
-| MF_NATS_URL                          | NATS instance URL                               | nats://localhost:4222  |
-| MF_TIMESCALE_WRITER_LOG_LEVEL        | Service log level                               | error                  |
-| MF_TIMESCALE_WRITER_PORT             | Service HTTP port                               | 9104                   |
-| MF_TIMESCALE_WRITER_DB_HOST          | Timescale DB host                               | timescale              |
-| MF_TIMESCALE_WRITER_DB_PORT          | Timescale DB port                               | 5432                   |
-| MF_TIMESCALE_WRITER_DB_USER          | Timescale user                                  | mainflux               |
-| MF_TIMESCALE_WRITER_DB_PASS          | Timescale password                              | mainflux               |
-| MF_TIMESCALE_WRITER_DB               | Timescale database name                         | messages               |
-| MF_TIMESCALE_WRITER_DB_SSL_MODE      | Timescale SSL mode                              | disabled               |
-| MF_TIMESCALE_WRITER_DB_SSL_CERT      | Timescale SSL certificate path                  | ""                     |
-| MF_TIMESCALE_WRITER_DB_SSL_KEY       | Timescale SSL key                               | ""                     |
-| MF_TIMESCALE_WRITER_DB_SSL_ROOT_CERT | Timescale SSL root certificate path             | ""                     |
-| MF_TIMESCALE_WRITER_CONFIG_PATH      | Configuration file path with NATS subjects list | /config.toml           |
+| Variable                             | Description                                               | Default                |
+| -----------------------------------  | --------------------------------------------------------- | ---------------------- |
+| MF_BROKER_URL                        | Message broker instance URL                               | nats://localhost:4222  |
+| MF_TIMESCALE_WRITER_LOG_LEVEL        | Service log level                                         | error                  |
+| MF_TIMESCALE_WRITER_PORT             | Service HTTP port                                         | 9104                   |
+| MF_TIMESCALE_WRITER_DB_HOST          | Timescale DB host                                         | timescale              |
+| MF_TIMESCALE_WRITER_DB_PORT          | Timescale DB port                                         | 5432                   |
+| MF_TIMESCALE_WRITER_DB_USER          | Timescale user                                            | mainflux               |
+| MF_TIMESCALE_WRITER_DB_PASS          | Timescale password                                        | mainflux               |
+| MF_TIMESCALE_WRITER_DB               | Timescale database name                                   | messages               |
+| MF_TIMESCALE_WRITER_DB_SSL_MODE      | Timescale SSL mode                                        | disabled               |
+| MF_TIMESCALE_WRITER_DB_SSL_CERT      | Timescale SSL certificate path                            | ""                     |
+| MF_TIMESCALE_WRITER_DB_SSL_KEY       | Timescale SSL key                                         | ""                     |
+| MF_TIMESCALE_WRITER_DB_SSL_ROOT_CERT | Timescale SSL root certificate path                       | ""                     |
+| MF_TIMESCALE_WRITER_CONFIG_PATH      | Configuration file path with Message broker subjects list | /config.toml           |
 
 ## Deployment
 
@@ -43,7 +43,7 @@ make timescale-writer
 make install
 
 # Set the environment variables and run the service
-MF_NATS_URL=[NATS instance URL] \
+MF_BROKER_URL=[Message broker instance URL] \
 MF_TIMESCALE_WRITER_LOG_LEVEL=[Service log level] \
 MF_TIMESCALE_WRITER_PORT=[Service HTTP port] \
 MF_TIMESCALE_WRITER_DB_HOST=[Timescale host] \
@@ -55,7 +55,7 @@ MF_TIMESCALE_WRITER_DB_SSL_MODE=[Timescale SSL mode] \
 MF_TIMESCALE_WRITER_DB_SSL_CERT=[Timescale SSL cert] \
 MF_TIMESCALE_WRITER_DB_SSL_KEY=[Timescale SSL key] \
 MF_TIMESCALE_WRITER_DB_SSL_ROOT_CERT=[Timescale SSL Root cert] \
-MF_TIMESCALE_WRITER_CONFIG_PATH=[Configuration file path with NATS subjects list] \
+MF_TIMESCALE_WRITER_CONFIG_PATH=[Configuration file path with Message broker subjects list] \
 MF_TIMESCALE_WRITER_TRANSFORMER=[Message transformer type] \
 $GOBIN/mainflux-timescale-writer
 ```

@@ -22,12 +22,12 @@ default values.
 | MF_TWINS_DB                | Database name                                                        | mainflux              |
 | MF_TWINS_DB_HOST           | Database host address                                                | localhost             |
 | MF_TWINS_DB_PORT           | Database host port                                                   | 27017                 |
-| MF_THINGS_STANDALONE_EMAIL | User email for standalone mode (no gRPC communication with users)       |                |
-| MF_THINGS_STANDALONE_TOKEN | User token for standalone mode that should be passed in auth header     |                |
+| MF_THINGS_STANDALONE_EMAIL | User email for standalone mode (no gRPC communication with users)    |                       |
+| MF_THINGS_STANDALONE_TOKEN | User token for standalone mode that should be passed in auth header  |                       |
 | MF_TWINS_CLIENT_TLS        | Flag that indicates if TLS should be turned on                       | false                 |
 | MF_TWINS_CA_CERTS          | Path to trusted CAs in PEM format                                    |                       |
-| MF_TWINS_CHANNEL_ID        | NATS notifications channel ID                                        |                       |
-| MF_NATS_URL                | Mainflux NATS broker URL                                             | nats://localhost:4222 |
+| MF_TWINS_CHANNEL_ID        | Message broker notifications channel ID                              |                       |
+| MF_BROKER_URL              | Mainflux Message broker URL                                          | nats://localhost:4222 |
 | MF_AUTH_GRPC_URL           | Auth service gRPC URL                                                | localhost:8181        |
 | MF_AUTH_GRPC_TIMEOUT       | Auth service gRPC request timeout in seconds                         | 1s                    |
 | MF_TWINS_CACHE_URL         | Cache database URL                                                   | localhost:6379        |
@@ -67,8 +67,8 @@ MF_THINGS_STANDALONE_EMAIL=[User email for standalone mode (no gRPC communicatio
 MF_THINGS_STANDALONE_TOKEN=[User token for standalone mode that should be passed in auth header] \
 MF_TWINS_CLIENT_TLS: [Flag that indicates if TLS should be turned on] \
 MF_TWINS_CA_CERTS: [Path to trusted CAs in PEM format] \
-MF_TWINS_CHANNEL_ID: [NATS notifications channel ID] \
-MF_NATS_URL: [Mainflux NATS broker URL] \
+MF_TWINS_CHANNEL_ID: [Message broker notifications channel ID] \
+MF_BROKER_URL: [Mainflux Message broker URL] \
 MF_AUTH_GRPC_URL: [Auth service gRPC URL] \
 MF_AUTH_GRPC_TIMEOUT: [Auth service gRPC request timeout in seconds] \
 $GOBIN/mainflux-twins
@@ -78,7 +78,7 @@ $GOBIN/mainflux-twins
 
 ### Starting twins service
 
-The twins service publishes notifications on a NATS subject of the format
+The twins service publishes notifications on a Message broker subject of the format
 `channels.<MF_TWINS_CHANNEL_ID>.messages.<twinID>.<crudOp>`, where `crudOp`
 stands for the crud operation done on twin - create, update, delete or
 retrieve - or state - save state. In order to use twin service notifications,

@@ -7,7 +7,7 @@ info:
   version: '1.0.0'
   description: |
     MQTT adapter provides an MQTT API for sending messages through the platform. MQTT adapter uses [mProxy](https://github.com/mainflux/mproxy) for proxying traffic between client and MQTT broker.
-    Additionally, the MQTT adapter and the NATS message broker are replicating the traffic between brokers.
+    Additionally, the MQTT adapter and the message broker are replicating the traffic between brokers.
 
 defaultContentType: application/json
 

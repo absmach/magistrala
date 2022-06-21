@@ -203,7 +203,7 @@ func (c client) runHandler(ctx context.Context, sub *opcuaGopcua.Subscription, u
 	}
 }
 
-// Publish forwards messages from the OPC-UA Server to Mainflux NATS broker
+// Publish forwards messages from the OPC-UA Server to Mainflux Message broker
 func (c client) publish(ctx context.Context, token string, m message) error {
 	// Get route-map of the OPC-UA ServerURI
 	chanID, err := c.channelsRM.Get(ctx, m.ServerURI)
@@ -223,7 +223,7 @@ func (c client) publish(ctx context.Context, token string, m message) error {
 		return fmt.Errorf("%s between channel %s and thing %s", errNotFoundConn, chanID, thingID)
 	}
 
-	// Publish on Mainflux NATS broker
+	// Publish on Mainflux Message broker
 	SenML := fmt.Sprintf(`[{"n":"%s", "t": %d, "%s":%v}]`, m.Type, m.Time, m.DataKey, m.Data)
 	payload := []byte(SenML)
 

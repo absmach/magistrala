@@ -18,17 +18,9 @@ type publisher struct {
 	ch   *amqp.Channel
 }
 
-// Publisher wraps messaging Publisher exposing
-// Close() method for RabbitMQ connection.
-type Publisher interface {
-	messaging.Publisher
-	Close()
-}
-
 // NewPublisher returns RabbitMQ message Publisher.
-func NewPublisher(url string) (Publisher, error) {
-	endpoint := fmt.Sprintf("amqp://%s", url)
-	conn, err := amqp.Dial(endpoint)
+func NewPublisher(url string) (messaging.Publisher, error) {
+	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +47,6 @@ func (pub *publisher) Publish(topic string, msg messaging.Message) error {
 	if err != nil {
 		return err
 	}
-
 	subject := fmt.Sprintf("%s.%s", chansPrefix, topic)
 	if msg.Subtopic != "" {
 		subject = fmt.Sprintf("%s.%s", subject, msg.Subtopic)
@@ -79,6 +70,6 @@ func (pub *publisher) Publish(topic string, msg messaging.Message) error {
 	return nil
 }
 
-func (pub *publisher) Close() {
-	pub.conn.Close()
+func (pub *publisher) Close() error {
+	return pub.conn.Close()
 }

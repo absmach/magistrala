@@ -12,7 +12,7 @@ default values.
 | Variable                       | Description                                            | Default               |
 |--------------------------------|--------------------------------------------------------|-----------------------|
 | MF_COAP_ADAPTER_PORT           | Service listening port                                 | 5683                  |
-| MF_NATS_URL                    | NATS instance URL                                      | nats://localhost:4222 |
+| MF_BROKER_URL                  | Message broker instance URL                            | nats://localhost:4222 |
 | MF_COAP_ADAPTER_LOG_LEVEL      | Service log level                                      | error                 |
 | MF_COAP_ADAPTER_CLIENT_TLS     | Flag that indicates if TLS should be turned on         | false                 |
 | MF_COAP_ADAPTER_CA_CERTS       | Path to trusted CAs in PEM format                      |                       |
@@ -26,7 +26,7 @@ default values.
 The service itself is distributed as Docker container. Check the [`coap-adapter`](https://github.com/mainflux/mainflux/blob/master/docker/docker-compose.yml#L273-L291) service section in 
 docker-compose to see how service is deployed.
 
-Running this service outside of container requires working instance of the NATS service.
+Running this service outside of container requires working instance of the message broker service.
 To start the service outside of the container, execute the following shell script:
 
 ```bash
@@ -42,7 +42,7 @@ make coap
 make install
 
 # set the environment variables and run the service
-MF_NATS_URL=[NATS instance URL] \
+MF_BROKER_URL=[Message broker instance URL] \
 MF_COAP_ADAPTER_PORT=[Service HTTP port] \
 MF_COAP_ADAPTER_LOG_LEVEL=[Service log level] \
 MF_COAP_ADAPTER_CLIENT_TLS=[Flag that indicates if TLS should be turned on] \

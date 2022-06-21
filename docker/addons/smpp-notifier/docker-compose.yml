@@ -36,7 +36,7 @@ services:
       - smpp-notifier-db
     restart: on-failure
     environment:
-      MF_NATS_URL: ${MF_NATS_URL}
+      MF_BROKER_URL: ${MF_BROKER_URL}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
       MF_AUTH_GRPC_URL: ${MF_AUTH_GRPC_URL}
       MF_AUTH_GRPC_TIMEOUT: ${MF_AUTH_GRPC_TIMEOUT}

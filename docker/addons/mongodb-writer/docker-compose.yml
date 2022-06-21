@@ -41,7 +41,7 @@ services:
     restart: on-failure
     environment:
       MF_MONGO_WRITER_LOG_LEVEL: ${MF_MONGO_WRITER_LOG_LEVEL}
-      MF_NATS_URL: ${MF_NATS_URL}
+      MF_BROKER_URL: ${MF_BROKER_URL}
       MF_MONGO_WRITER_PORT: ${MF_MONGO_WRITER_PORT}
       MF_MONGO_WRITER_DB: ${MF_MONGO_WRITER_DB}
       MF_MONGO_WRITER_DB_HOST: mongodb

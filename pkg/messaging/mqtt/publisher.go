@@ -23,7 +23,7 @@ type publisher struct {
 
 // NewPublisher returns a new MQTT message publisher.
 func NewPublisher(address string, timeout time.Duration) (messaging.Publisher, error) {
-	client, err := newClient(address, timeout)
+	client, err := newClient(address, "mqtt-publisher", timeout)
 	if err != nil {
 		return nil, err
 	}
@@ -46,4 +46,9 @@ func (pub publisher) Publish(topic string, msg messaging.Message) error {
 	}
 
 	return token.Error()
+}
+
+func (pub publisher) Close() error {
+	pub.client.Disconnect(uint(pub.timeout))
+	return nil
 }

@@ -95,13 +95,12 @@ services:
       - mqtt-adapter
       - http-adapter
 
-  nats:
-    image: nats:2.2.4-alpine
-    container_name: mainflux-nats
-    command: "-c /etc/nats/nats.conf"
+  broker:
+    extends:
+      file: brokers/nats.yml
+      service: broker
+    container_name: mainflux-broker
     restart: on-failure
-    volumes:
-      - ./nats/:/etc/nats
     networks:
       - mainflux-base-net
     ports:
@@ -280,14 +279,14 @@ services:
     depends_on:
       - vernemq
       - things
-      - nats
+      - broker
     restart: on-failure
     environment:
       MF_MQTT_ADAPTER_LOG_LEVEL: ${MF_MQTT_ADAPTER_LOG_LEVEL}
       MF_MQTT_ADAPTER_MQTT_PORT: ${MF_MQTT_ADAPTER_MQTT_PORT}
       MF_MQTT_ADAPTER_WS_PORT: ${MF_MQTT_ADAPTER_WS_PORT}
       MF_MQTT_ADAPTER_ES_URL: es-redis:${MF_REDIS_TCP_PORT}
-      MF_NATS_URL: ${MF_NATS_URL}
+      MF_BROKER_URL: ${MF_NATS_URL}
       MF_MQTT_ADAPTER_MQTT_TARGET_HOST: vernemq
       MF_MQTT_ADAPTER_MQTT_TARGET_PORT: ${MF_MQTT_BROKER_PORT}
       MF_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK: http://vernemq:8888/health
@@ -305,12 +304,12 @@ services:
     container_name: mainflux-http
     depends_on:
       - things
-      - nats
+      - broker
     restart: on-failure
     environment:
       MF_HTTP_ADAPTER_LOG_LEVEL: debug
       MF_HTTP_ADAPTER_PORT: ${MF_HTTP_ADAPTER_PORT}
-      MF_NATS_URL: ${MF_NATS_URL}
+      MF_BROKER_URL: ${MF_NATS_URL}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
       MF_THINGS_AUTH_GRPC_URL: ${MF_THINGS_AUTH_GRPC_URL}
       MF_THINGS_AUTH_GRPC_TIMEOUT: ${MF_THINGS_AUTH_GRPC_TIMEOUT}
@@ -333,12 +332,12 @@ services:
     container_name: mainflux-coap
     depends_on:
       - things
-      - nats
+      - broker
     restart: on-failure
     environment:
       MF_COAP_ADAPTER_LOG_LEVEL: ${MF_COAP_ADAPTER_LOG_LEVEL}
       MF_COAP_ADAPTER_PORT: ${MF_COAP_ADAPTER_PORT}
-      MF_NATS_URL: ${MF_NATS_URL}
+      MF_BROKER_URL: ${MF_NATS_URL}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
       MF_THINGS_AUTH_GRPC_URL: ${MF_THINGS_AUTH_GRPC_URL}
       MF_THINGS_AUTH_GRPC_TIMEOUT: ${MF_THINGS_AUTH_GRPC_TIMEOUT}

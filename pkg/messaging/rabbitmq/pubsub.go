@@ -30,13 +30,6 @@ var (
 
 var _ messaging.PubSub = (*pubsub)(nil)
 
-// PubSub wraps messaging Publisher exposing
-// Close() method for RabbitMQ connection.
-type PubSub interface {
-	messaging.PubSub
-	Close()
-}
-
 type subscription struct {
 	cancel func() error
 }
@@ -48,9 +41,8 @@ type pubsub struct {
 }
 
 // NewPubSub returns RabbitMQ message publisher/subscriber.
-func NewPubSub(url, queue string, logger log.Logger) (PubSub, error) {
-	endpoint := fmt.Sprintf("amqp://%s", url)
-	conn, err := amqp.Dial(endpoint)
+func NewPubSub(url, queue string, logger log.Logger) (messaging.PubSub, error) {
+	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
 	}

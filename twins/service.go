@@ -422,6 +422,6 @@ func (ts *twinsService) publish(twinID *string, err *error, succOp, failOp strin
 	}
 
 	if err := ts.publisher.Publish(msg.Channel, msg); err != nil {
-		ts.logger.Warn(fmt.Sprintf("Failed to publish notification on NATS: %s", err))
+		ts.logger.Warn(fmt.Sprintf("Failed to publish notification on Message Broker: %s", err))
 	}
 }

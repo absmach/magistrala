@@ -20,8 +20,8 @@ import (
 	"github.com/mainflux/mainflux/pkg/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"
+	"github.com/mainflux/mainflux/pkg/messaging/brokers"
 	mqttpub "github.com/mainflux/mainflux/pkg/messaging/mqtt"
-	"github.com/mainflux/mainflux/pkg/messaging/nats"
 	thingsapi "github.com/mainflux/mainflux/things/api/auth/grpc"
 	mp "github.com/mainflux/mproxy/pkg/mqtt"
 	"github.com/mainflux/mproxy/pkg/session"
@@ -35,62 +35,54 @@ import (
 
 const (
 	svcName = "mqtt"
-	// Logging
-	defLogLevel = "error"
-	envLogLevel = "MF_MQTT_ADAPTER_LOG_LEVEL"
-	// MQTT
+
+	defLogLevel              = "error"
 	defMQTTPort              = "1883"
 	defMQTTTargetHost        = "0.0.0.0"
 	defMQTTTargetPort        = "1883"
 	defMQTTForwarderTimeout  = "30s" // 30 seconds
 	defMQTTTargetHealthCheck = ""
+	defHTTPPort              = "8080"
+	defHTTPTargetHost        = "localhost"
+	defHTTPTargetPort        = "8080"
+	defHTTPTargetPath        = "/mqtt"
+	defThingsAuthURL         = "localhost:8183"
+	defThingsAuthTimeout     = "1s"
+	defBrokerURL             = "nats://localhost:4222"
+	defJaegerURL             = ""
+	defClientTLS             = "false"
+	defCACerts               = ""
+	defInstance              = ""
+	defESURL                 = "localhost:6379"
+	defESPass                = ""
+	defESDB                  = "0"
+	defAuthcacheURL          = "localhost:6379"
+	defAuthCachePass         = ""
+	defAuthCacheDB           = "0"
+
+	envLogLevel              = "MF_MQTT_ADAPTER_LOG_LEVEL"
 	envMQTTPort              = "MF_MQTT_ADAPTER_MQTT_PORT"
 	envMQTTTargetHost        = "MF_MQTT_ADAPTER_MQTT_TARGET_HOST"
 	envMQTTTargetPort        = "MF_MQTT_ADAPTER_MQTT_TARGET_PORT"
 	envMQTTTargetHealthCheck = "MF_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK"
 	envMQTTForwarderTimeout  = "MF_MQTT_ADAPTER_FORWARDER_TIMEOUT"
-	// HTTP
-	defHTTPPort       = "8080"
-	defHTTPTargetHost = "localhost"
-	defHTTPTargetPort = "8080"
-	defHTTPTargetPath = "/mqtt"
-	envHTTPPort       = "MF_MQTT_ADAPTER_WS_PORT"
-	envHTTPTargetHost = "MF_MQTT_ADAPTER_WS_TARGET_HOST"
-	envHTTPTargetPort = "MF_MQTT_ADAPTER_WS_TARGET_PORT"
-	envHTTPTargetPath = "MF_MQTT_ADAPTER_WS_TARGET_PATH"
-	// Things
-	defThingsAuthURL     = "localhost:8183"
-	defThingsAuthTimeout = "1s"
-	envThingsAuthURL     = "MF_THINGS_AUTH_GRPC_URL"
-	envThingsAuthTimeout = "MF_THINGS_AUTH_GRPC_TIMEOUT"
-	// Nats
-	defNatsURL = "nats://localhost:4222"
-	envNatsURL = "MF_NATS_URL"
-	// Jaeger
-	defJaegerURL = ""
-	envJaegerURL = "MF_JAEGER_URL"
-	// TLS
-	defClientTLS = "false"
-	defCACerts   = ""
-	envClientTLS = "MF_MQTT_ADAPTER_CLIENT_TLS"
-	envCACerts   = "MF_MQTT_ADAPTER_CA_CERTS"
-	// Instance
-	envInstance = "MF_MQTT_ADAPTER_INSTANCE"
-	defInstance = ""
-	// ES
-	envESURL  = "MF_MQTT_ADAPTER_ES_URL"
-	envESPass = "MF_MQTT_ADAPTER_ES_PASS"
-	envESDB   = "MF_MQTT_ADAPTER_ES_DB"
-	defESURL  = "localhost:6379"
-	defESPass = ""
-	defESDB   = "0"
-	// Auth cache
-	envAuthCacheURL  = "MF_AUTH_CACHE_URL"
-	envAuthCachePass = "MF_AUTH_CACHE_PASS"
-	envAuthCacheDB   = "MF_AUTH_CACHE_DB"
-	defAuthcacheURL  = "localhost:6379"
-	defAuthCachePass = ""
-	defAuthCacheDB   = "0"
+	envHTTPPort              = "MF_MQTT_ADAPTER_WS_PORT"
+	envHTTPTargetHost        = "MF_MQTT_ADAPTER_WS_TARGET_HOST"
+	envHTTPTargetPort        = "MF_MQTT_ADAPTER_WS_TARGET_PORT"
+	envHTTPTargetPath        = "MF_MQTT_ADAPTER_WS_TARGET_PATH"
+	envThingsAuthURL         = "MF_THINGS_AUTH_GRPC_URL"
+	envThingsAuthTimeout     = "MF_THINGS_AUTH_GRPC_TIMEOUT"
+	envBrokerURL             = "MF_BROKER_URL"
+	envJaegerURL             = "MF_JAEGER_URL"
+	envClientTLS             = "MF_MQTT_ADAPTER_CLIENT_TLS"
+	envCACerts               = "MF_MQTT_ADAPTER_CA_CERTS"
+	envInstance              = "MF_MQTT_ADAPTER_INSTANCE"
+	envESURL                 = "MF_MQTT_ADAPTER_ES_URL"
+	envESPass                = "MF_MQTT_ADAPTER_ES_PASS"
+	envESDB                  = "MF_MQTT_ADAPTER_ES_DB"
+	envAuthCacheURL          = "MF_AUTH_CACHE_URL"
+	envAuthCachePass         = "MF_AUTH_CACHE_PASS"
+	envAuthCacheDB           = "MF_AUTH_CACHE_DB"
 )
 
 type config struct {
@@ -108,7 +100,7 @@ type config struct {
 	thingsURL             string
 	thingsAuthURL         string
 	thingsAuthTimeout     time.Duration
-	natsURL               string
+	brokerURL             string
 	clientTLS             bool
 	caCerts               string
 	instance              string
@@ -148,9 +140,9 @@ func main() {
 	ec := connectToRedis(cfg.esURL, cfg.esPass, cfg.esDB, logger)
 	defer ec.Close()
 
-	nps, err := nats.NewPubSub(cfg.natsURL, "mqtt", logger)
+	nps, err := brokers.NewPubSub(cfg.brokerURL, "mqtt", logger)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to NATS: %s", err))
+		logger.Error(fmt.Sprintf("Failed to connect to message broker: %s", err))
 		os.Exit(1)
 	}
 	defer nps.Close()
@@ -161,15 +153,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	fwd := mqtt.NewForwarder(nats.SubjectAllChannels, logger)
+	fwd := mqtt.NewForwarder(brokers.SubjectAllChannels, logger)
 	if err := fwd.Forward(svcName, nps, mpub); err != nil {
-		logger.Error(fmt.Sprintf("Failed to forward NATS messages: %s", err))
+		logger.Error(fmt.Sprintf("Failed to forward message broker messages: %s", err))
 		os.Exit(1)
 	}
 
-	np, err := nats.NewPublisher(cfg.natsURL)
+	np, err := brokers.NewPublisher(cfg.brokerURL)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to NATS: %s", err))
+		logger.Error(fmt.Sprintf("Failed to connect to message broker: %s", err))
 		os.Exit(1)
 	}
 	defer np.Close()
@@ -241,7 +233,7 @@ func loadConfig() config {
 		thingsAuthURL:         mainflux.Env(envThingsAuthURL, defThingsAuthURL),
 		thingsAuthTimeout:     authTimeout,
 		thingsURL:             mainflux.Env(envThingsAuthURL, defThingsAuthURL),
-		natsURL:               mainflux.Env(envNatsURL, defNatsURL),
+		brokerURL:             mainflux.Env(envBrokerURL, defBrokerURL),
 		logLevel:              mainflux.Env(envLogLevel, defLogLevel),
 		clientTLS:             tls,
 		caCerts:               mainflux.Env(envCACerts, defCACerts),

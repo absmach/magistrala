@@ -14,7 +14,7 @@ import (
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"
-	pubsub "github.com/mainflux/mainflux/pkg/messaging/nats"
+	"github.com/mainflux/mainflux/pkg/messaging/brokers"
 	"github.com/mainflux/mainflux/pkg/transformers"
 	"github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
@@ -30,7 +30,7 @@ var (
 	errParseConfFile = errors.New("unable to parse configuration file")
 )
 
-// Start method starts consuming messages received from NATS.
+// Start method starts consuming messages received from Message broker.
 // This method transforms messages to SenML format before
 // using MessageRepository to store them.
 func Start(id string, sub messaging.Subscriber, consumer Consumer, configPath string, logger logger.Logger) error {
@@ -92,7 +92,7 @@ type config struct {
 func loadConfig(configPath string) (config, error) {
 	cfg := config{
 		SubscriberCfg: subscriberConfig{
-			Subjects: []string{pubsub.SubjectAllChannels},
+			Subjects: []string{brokers.SubjectAllChannels},
 		},
 		TransformerCfg: transformerConfig{
 			Format:      defFormat,

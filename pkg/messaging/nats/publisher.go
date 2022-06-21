@@ -19,13 +19,9 @@ type publisher struct {
 
 // Publisher wraps messaging Publisher exposing
 // Close() method for NATS connection.
-type Publisher interface {
-	messaging.Publisher
-	Close()
-}
 
 // NewPublisher returns NATS message Publisher.
-func NewPublisher(url string) (Publisher, error) {
+func NewPublisher(url string) (messaging.Publisher, error) {
 	conn, err := broker.Connect(url)
 	if err != nil {
 		return nil, err
@@ -56,6 +52,7 @@ func (pub *publisher) Publish(topic string, msg messaging.Message) error {
 	return nil
 }
 
-func (pub *publisher) Close() {
+func (pub *publisher) Close() error {
 	pub.conn.Close()
+	return nil
 }

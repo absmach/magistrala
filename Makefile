@@ -14,9 +14,15 @@ VERSION ?= $(shell git describe --abbrev=0 --tags)
 COMMIT ?= $(shell git rev-parse HEAD)
 TIME ?= $(shell date +%F_%T)
 
+ifneq ($(MF_BROKER_TYPE),)
+    MF_BROKER_TYPE := $(MF_BROKER_TYPE)
+else
+    MF_BROKER_TYPE=nats
+endif
+
 define compile_service
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) GOARM=$(GOARM) \
-	go build -mod=vendor -ldflags "-s -w \
+	go build -mod=vendor -tags $(MF_BROKER_TYPE) -ldflags "-s -w \
 	-X 'github.com/mainflux/mainflux.BuildTime=$(TIME)' \
 	-X 'github.com/mainflux/mainflux.Version=$(VERSION)' \
 	-X 'github.com/mainflux/mainflux.Commit=$(COMMIT)'" \
@@ -111,4 +117,13 @@ rundev:
 	cd scripts && ./run.sh
 
 run:
+ifeq ("$(MF_BROKER_TYPE)", "rabbitmq")
+	sed -i "s,file: brokers/.*.yml,file: brokers/rabbitmq.yml," docker/docker-compose.yml
+	sed -i "s,MF_BROKER_URL: .*,MF_BROKER_URL: $$\{MF_RABBITMQ_URL\}," docker/docker-compose.yml
+else ifeq ("$(MF_BROKER_TYPE)", "nats")
+	sed -i "s,file: brokers/.*.yml,file: brokers/nats.yml," docker/docker-compose.yml
+	sed -i "s,MF_BROKER_URL: .*,MF_BROKER_URL: $$\{MF_NATS_URL\}," docker/docker-compose.yml
+else
+	echo "Invalid broker type"; exit 1
+endif
 	docker-compose -f docker/docker-compose.yml up

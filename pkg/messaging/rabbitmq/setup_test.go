@@ -28,13 +28,13 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	container, err := pool.Run("rabbitmq", "3.9.10", []string{})
+	container, err := pool.Run("rabbitmq", "3.9.20", []string{})
 	if err != nil {
 		log.Fatalf("Could not start container: %s", err)
 	}
 	handleInterrupt(pool, container)
 
-	address := fmt.Sprintf("%s:%s", "localhost", container.GetPort("5672/tcp"))
+	address := fmt.Sprintf("amqp://%s:%s", "localhost", container.GetPort("5672/tcp"))
 	if err := pool.Retry(func() error {
 		publisher, err = rabbitmq.NewPublisher(address)
 		return err

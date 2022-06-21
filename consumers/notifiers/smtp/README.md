@@ -16,7 +16,7 @@ default values.
 | MF_SMTP_NOTIFIER_DB_USER          | Database user                                                           | mainflux              |
 | MF_SMTP_NOTIFIER_DB_PASS          | Database password                                                       | mainflux              |
 | MF_SMTP_NOTIFIER_DB               | Name of the database used by the service                                | subscriptions         |
-| MF_SMTP_NOTIFIER_CONFIG_PATH      | Path to the config file with NATS subjects configuration                | disable               |
+| MF_SMTP_NOTIFIER_CONFIG_PATH      | Path to the config file with message broker subjects configuration      | disable               |
 | MF_SMTP_NOTIFIER_DB_SSL_MODE      | Database connection SSL mode (disable, require, verify-ca, verify-full) |                       |
 | MF_SMTP_NOTIFIER_DB_SSL_CERT      | Path to the PEM encoded cert file                                       |                       |
 | MF_SMTP_NOTIFIER_DB_SSL_KEY       | Path to the PEM encoded certificate key                                 |                       |
@@ -25,7 +25,7 @@ default values.
 | MF_SMTP_NOTIFIER_SERVER_CERT      | Path to server cert in pem format                                       |                       |
 | MF_SMTP_NOTIFIER_SERVER_KEY       | Path to server key in pem format                                        |                       |
 | MF_JAEGER_URL                     | Jaeger server URL                                                       | localhost:6831        |
-| MF_NATS_URL                       | NATS broker URL                                                         | nats://127.0.0.1:4222 |
+| MF_BROKER_URL                     | Message broker URL                                                      | nats://127.0.0.1:4222 |
 | MF_EMAIL_HOST                     | Mail server host                                                        | localhost             |
 | MF_EMAIL_PORT                     | Mail server port                                                        | 25                    |
 | MF_EMAIL_USERNAME                 | Mail server username                                                    |                       |

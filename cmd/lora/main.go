@@ -20,7 +20,7 @@ import (
 	"github.com/mainflux/mainflux/lora/api"
 	"github.com/mainflux/mainflux/lora/mqtt"
 	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/pkg/messaging/nats"
+	"github.com/mainflux/mainflux/pkg/messaging/brokers"
 	"golang.org/x/sync/errgroup"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
@@ -34,11 +34,11 @@ const (
 	defLogLevel       = "error"
 	defHTTPPort       = "8180"
 	defLoraMsgURL     = "tcp://localhost:1883"
+	defBrokerURL      = "nats://localhost:4222"
 	defLoraMsgTopic   = "application/+/device/+/event/up"
 	defLoraMsgUser    = ""
 	defLoraMsgPass    = ""
 	defLoraMsgTimeout = "30s"
-	defNatsURL        = "nats://localhost:4222"
 	defESURL          = "localhost:6379"
 	defESPass         = ""
 	defESDB           = "0"
@@ -49,11 +49,11 @@ const (
 
 	envHTTPPort       = "MF_LORA_ADAPTER_HTTP_PORT"
 	envLoraMsgURL     = "MF_LORA_ADAPTER_MESSAGES_URL"
+	envBrokerURL      = "MF_BROKER_URL"
 	envLoraMsgTopic   = "MF_LORA_ADAPTER_MESSAGES_TOPIC"
 	envLoraMsgUser    = "MF_LORA_ADAPTER_MESSAGES_USER"
 	envLoraMsgPass    = "MF_LORA_ADAPTER_MESSAGES_PASS"
 	envLoraMsgTimeout = "MF_LORA_ADAPTER_MESSAGES_TIMEOUT"
-	envNatsURL        = "MF_NATS_URL"
 	envLogLevel       = "MF_LORA_ADAPTER_LOG_LEVEL"
 	envESURL          = "MF_THINGS_ES_URL"
 	envESPass         = "MF_THINGS_ES_PASS"
@@ -71,11 +71,11 @@ const (
 type config struct {
 	httpPort       string
 	loraMsgURL     string
+	brokerURL      string
 	loraMsgUser    string
 	loraMsgPass    string
 	loraMsgTopic   string
 	loraMsgTimeout time.Duration
-	natsURL        string
 	logLevel       string
 	esURL          string
 	esPass         string
@@ -102,9 +102,9 @@ func main() {
 	esConn := connectToRedis(cfg.esURL, cfg.esPass, cfg.esDB, logger)
 	defer esConn.Close()
 
-	pub, err := nats.NewPublisher(cfg.natsURL)
+	pub, err := brokers.NewPublisher(cfg.brokerURL)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to NATS: %s", err))
+		logger.Error(fmt.Sprintf("Failed to connect to message broker: %s", err))
 		os.Exit(1)
 	}
 	defer pub.Close()
@@ -163,11 +163,11 @@ func loadConfig() config {
 	return config{
 		httpPort:       mainflux.Env(envHTTPPort, defHTTPPort),
 		loraMsgURL:     mainflux.Env(envLoraMsgURL, defLoraMsgURL),
+		brokerURL:      mainflux.Env(envBrokerURL, defBrokerURL),
 		loraMsgTopic:   mainflux.Env(envLoraMsgTopic, defLoraMsgTopic),
 		loraMsgUser:    mainflux.Env(envLoraMsgUser, defLoraMsgUser),
 		loraMsgPass:    mainflux.Env(envLoraMsgPass, defLoraMsgPass),
 		loraMsgTimeout: mqttTimeout,
-		natsURL:        mainflux.Env(envNatsURL, defNatsURL),
 		logLevel:       mainflux.Env(envLogLevel, defLogLevel),
 		esURL:          mainflux.Env(envESURL, defESURL),
 		esPass:         mainflux.Env(envESPass, defESPass),

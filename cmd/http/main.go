@@ -22,7 +22,7 @@ import (
 	"github.com/mainflux/mainflux/http/api"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/pkg/messaging/nats"
+	"github.com/mainflux/mainflux/pkg/messaging/brokers"
 	thingsapi "github.com/mainflux/mainflux/things/api/auth/grpc"
 	"github.com/opentracing/opentracing-go"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
@@ -38,7 +38,7 @@ const (
 	defClientTLS         = "false"
 	defCACerts           = ""
 	defPort              = "8180"
-	defNatsURL           = "nats://localhost:4222"
+	defBrokerURL         = "nats://localhost:4222"
 	defJaegerURL         = ""
 	defThingsAuthURL     = "localhost:8183"
 	defThingsAuthTimeout = "1s"
@@ -47,14 +47,14 @@ const (
 	envClientTLS         = "MF_HTTP_ADAPTER_CLIENT_TLS"
 	envCACerts           = "MF_HTTP_ADAPTER_CA_CERTS"
 	envPort              = "MF_HTTP_ADAPTER_PORT"
-	envNatsURL           = "MF_NATS_URL"
+	envBrokerURL         = "MF_BROKER_URL"
 	envJaegerURL         = "MF_JAEGER_URL"
 	envThingsAuthURL     = "MF_THINGS_AUTH_GRPC_URL"
 	envThingsAuthTimeout = "MF_THINGS_AUTH_GRPC_TIMEOUT"
 )
 
 type config struct {
-	natsURL           string
+	brokerURL         string
 	logLevel          string
 	port              string
 	clientTLS         bool
@@ -83,9 +83,9 @@ func main() {
 	thingsTracer, thingsCloser := initJaeger("things", cfg.jaegerURL, logger)
 	defer thingsCloser.Close()
 
-	pub, err := nats.NewPublisher(cfg.natsURL)
+	pub, err := brokers.NewPublisher(cfg.brokerURL)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to NATS: %s", err))
+		logger.Error(fmt.Sprintf("Failed to connect to message broker: %s", err))
 		os.Exit(1)
 	}
 	defer pub.Close()
@@ -139,7 +139,7 @@ func loadConfig() config {
 	}
 
 	return config{
-		natsURL:           mainflux.Env(envNatsURL, defNatsURL),
+		brokerURL:         mainflux.Env(envBrokerURL, defBrokerURL),
 		logLevel:          mainflux.Env(envLogLevel, defLogLevel),
 		port:              mainflux.Env(envPort, defPort),
 		clientTLS:         tls,

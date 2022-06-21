@@ -25,7 +25,7 @@ default values.
 | MF_SMPP_NOTIFIER_SERVER_CERT        | Path to server cert in pem format                                     |                       |
 | MF_SMPP_NOTIFIER_SERVER_KEY         | Path to server key in pem format                                      |                       |
 | MF_JAEGER_URL                       | Jaeger server URL                                                     | localhost:6831        |
-| MF_NATS_URL                         | NATS broker URL                                                       | nats://127.0.0.1:4222 |
+| MF_BROKER_URL                       | Message broker URL                                                    | nats://127.0.0.1:4222 |
 | MF_SMPP_ADDRESS                     | SMPP address [host:port]                                              |                       |
 | MF_SMPP_USERNAME                    | SMPP Username                                                         |                       |
 | MF_SMPP_PASSWORD                    | SMPP Password                                                         |                       |

@@ -38,7 +38,7 @@ services:
       - postgres
     restart: on-failure
     environment:
-      MF_NATS_URL: ${MF_NATS_URL}
+      MF_BROKER_URL: ${MF_BROKER_URL}
       MF_POSTGRES_WRITER_LOG_LEVEL: ${MF_POSTGRES_WRITER_LOG_LEVEL}
       MF_POSTGRES_WRITER_PORT: ${MF_POSTGRES_WRITER_PORT}
       MF_POSTGRES_WRITER_DB_HOST: postgres

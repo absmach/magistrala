@@ -38,7 +38,7 @@ services:
       - timescale
     restart: on-failure
     environment:
-      MF_NATS_URL: ${MF_NATS_URL}
+      MF_BROKER_URL: ${MF_BROKER_URL}
       MF_TIMESCALE_WRITER_LOG_LEVEL: ${MF_TIMESCALE_WRITER_LOG_LEVEL}
       MF_TIMESCALE_WRITER_PORT: ${MF_TIMESCALE_WRITER_PORT}
       MF_TIMESCALE_WRITER_DB_HOST: timescale

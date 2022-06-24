@@ -95,6 +95,25 @@ var cmdThings = []cobra.Command{
 		},
 	},
 	{
+		Use:   "identify <thing_key>",
+		Short: "Identify thing",
+		Long:  "Validates thing's key and returns its ID",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 1 {
+				logUsage(cmd.Use)
+				return
+			}
+
+			i, err := sdk.IdentifyThing(args[0])
+			if err != nil {
+				logError(err)
+				return
+			}
+
+			logJSON(i)
+		},
+	},
+	{
 		Use:   "update <JSON_string> <user_auth_token>",
 		Short: "Update thing",
 		Long:  `Update thing record`,
@@ -201,9 +220,9 @@ var cmdThings = []cobra.Command{
 // NewThingsCmd returns things command.
 func NewThingsCmd() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "things [create | get | update | delete | connect | disconnect | connections | not-connected]",
+		Use:   "things [create | get | update | delete | identify | connect | disconnect | connections | not-connected]",
 		Short: "Things management",
-		Long:  `Things management: create, get, update or delete Thing, connect or disconnect Thing from Channel and get the list of Channels connected or disconnected from a Thing`,
+		Long:  `Things management: create, get, update, identify or delete Thing, connect or disconnect Thing from Channel and get the list of Channels connected or disconnected from a Thing`,
 	}
 
 	for i := range cmdThings {

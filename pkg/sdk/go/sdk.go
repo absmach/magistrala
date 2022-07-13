@@ -164,7 +164,7 @@ type SDK interface {
 
 	// ThingsByChannel returns page of things that are connected or not connected
 	// to specified channel.
-	ThingsByChannel(token, chanID string, offset, limit uint64, connected bool) (ThingsPage, error)
+	ThingsByChannel(token, chanID string, offset, limit uint64, disconnected bool) (ThingsPage, error)
 
 	// Thing returns thing object by id.
 	Thing(id, token string) (Thing, error)

@@ -12,7 +12,7 @@ networks:
   docker_mainflux-base-net:
     external: true
 
-  
+
 volumes:
   mainflux-certs-db-volume:
 
@@ -29,7 +29,7 @@ services:
       - docker_mainflux-base-net
     volumes:
       - mainflux-certs-db-volume:/var/lib/postgresql/data
-      
+
   certs:
     image: mainflux/certs:${MF_RELEASE_TAG}
     container_name: mainflux-certs
@@ -65,8 +65,7 @@ services:
       MF_VAULT_CA_NAME: ${MF_VAULT_CA_NAME}
       MF_VAULT_CA_ROLE_NAME: ${MF_VAULT_CA_ROLE_NAME}
       MF_VAULT_PKI_PATH: ${MF_VAULT_PKI_PATH}
-      MF_SDK_BASE_URL: ${MF_SDK_BASE_URL}
-      MF_SDK_THINGS_PREFIX: ${MF_SDK_THINGS_PREFIX}
+      MF_THINGS_URL: ${MF_THINGS_URL}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
       MF_AUTH_GRPC_URL: ${MF_AUTH_GRPC_URL}
       MF_AUTH_GRPC_TIMEOUT: ${MF_AUTH_GRPC_TIMEOUT}
@@ -74,4 +73,3 @@ services:
     volumes:
       - ../../ssl/certs/ca.key:/etc/ssl/certs/ca.key
       - ../../ssl/certs/ca.crt:/etc/ssl/certs/ca.crt
-      

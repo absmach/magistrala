@@ -41,6 +41,7 @@ paths:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Metadata"
+        - $ref: "#/components/parameters/Status"
       responses:
         '200':
           $ref: "#/components/responses/UsersPageRes"
@@ -215,6 +216,46 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
+  /users/{userId}/enable:
+    post:
+      summary: Enables a user account
+      description: |
+        Enables a disabled user account for a given user ID.
+      tags:
+        - users
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:       
+        '200':
+          description: User enabled.
+        '400':
+          description: Failed due to malformed JSON.
+        '404':
+          description: Failed due to non existing user.
+        '401':
+          description: Missing or invalid access token provided.
+        '500':
+         $ref: "#/components/responses/ServiceError"
+  /users/{userId}/disable:
+    post:
+      summary: Disables a user account
+      description: |
+        Disables a user account for a given user ID.
+      tags:
+        - users
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:       
+        '200':
+          description: User disabled.
+        '400':
+          description: Failed due to malformed JSON.
+        '404':
+          description: Failed due to non existing user.
+        '401':
+          description: Missing or invalid access token provided.
+        '500':
+         $ref: "#/components/responses/ServiceError"
   /health:
     get:
       summary: Retrieves service health check info.
@@ -318,7 +359,7 @@ components:
         type: string
         minimum: 0
       required: false
-    UserID:
+    UserId:
       name: userId
       description: Unique user identifier.
       in: path
@@ -353,7 +394,14 @@ components:
         default: 0
         minimum: 0
       required: false
-
+    Status:
+      name: status
+      description: User account status.
+      in: query
+      schema:
+        type: string
+        default: enabled
+      required: false
   requestBodies:
     UserCreateReq:
       description: JSON-formatted document describing the new user to be registered

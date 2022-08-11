@@ -186,6 +186,14 @@ func main() {
 		"Metadata query parameter",
 	)
 
+	rootCmd.PersistentFlags().StringVarP(
+		&cli.Status,
+		"status",
+		"S",
+		"",
+		"Status query parameter",
+	)
+
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
 	}

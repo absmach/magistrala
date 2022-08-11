@@ -75,12 +75,20 @@ func (urm userRepositoryMiddleware) UpdatePassword(ctx context.Context, email, p
 	return urm.repo.UpdatePassword(ctx, email, password)
 }
 
-func (urm userRepositoryMiddleware) RetrieveAll(ctx context.Context, offset, limit uint64, ids []string, email string, um users.Metadata) (users.UserPage, error) {
+func (urm userRepositoryMiddleware) RetrieveAll(ctx context.Context, status string, offset, limit uint64, ids []string, email string, um users.Metadata) (users.UserPage, error) {
 	span := createSpan(ctx, urm.tracer, members)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
-	return urm.repo.RetrieveAll(ctx, offset, limit, ids, email, um)
+	return urm.repo.RetrieveAll(ctx, status, offset, limit, ids, email, um)
+}
+
+func (urm userRepositoryMiddleware) ChangeStatus(ctx context.Context, id, status string) error {
+	span := createSpan(ctx, urm.tracer, members)
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
+
+	return urm.repo.ChangeStatus(ctx, id, status)
 }
 
 func createSpan(ctx context.Context, tracer opentracing.Tracer, opName string) opentracing.Span {

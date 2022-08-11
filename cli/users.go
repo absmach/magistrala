@@ -58,6 +58,7 @@ var cmdUsers = []cobra.Command{
 				Offset:   uint64(Offset),
 				Limit:    uint64(Limit),
 				Metadata: metadata,
+				Status:   Status,
 			}
 			if args[0] == "all" {
 				l, err := sdk.Users(args[1], pageMetadata)
@@ -143,12 +144,48 @@ var cmdUsers = []cobra.Command{
 			logOK()
 		},
 	},
+	{
+		Use:   "enable <user_id> <user_auth_token>",
+		Short: "Change user status to enabled",
+		Long:  `Change user status to enabled`,
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 2 {
+				logUsage(cmd.Use)
+				return
+			}
+
+			if err := sdk.EnableUser(args[0], args[1]); err != nil {
+				logError(err)
+				return
+			}
+
+			logOK()
+		},
+	},
+	{
+		Use:   "disable <user_id> <user_auth_token>",
+		Short: "Change user status to disabled",
+		Long:  `Change user status to disabled`,
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 2 {
+				logUsage(cmd.Use)
+				return
+			}
+
+			if err := sdk.DisableUser(args[0], args[1]); err != nil {
+				logError(err)
+				return
+			}
+
+			logOK()
+		},
+	},
 }
 
 // NewUsersCmd returns users command.
 func NewUsersCmd() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "users [create | get | update | token | password]",
+		Use:   "users [create | get | update | token | password | enable | disable]",
 		Short: "Users management",
 		Long:  `Users management: create accounts and tokens"`,
 	}

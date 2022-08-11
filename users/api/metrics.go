@@ -66,13 +66,13 @@ func (ms *metricsMiddleware) ViewProfile(ctx context.Context, token string) (use
 	return ms.svc.ViewProfile(ctx, token)
 }
 
-func (ms *metricsMiddleware) ListUsers(ctx context.Context, token string, offset, limit uint64, email string, um users.Metadata) (users.UserPage, error) {
+func (ms *metricsMiddleware) ListUsers(ctx context.Context, token string, pm users.PageMetadata) (users.UserPage, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_users").Add(1)
 		ms.latency.With("method", "list_users").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListUsers(ctx, token, offset, limit, email, um)
+	return ms.svc.ListUsers(ctx, token, pm)
 }
 
 func (ms *metricsMiddleware) UpdateUser(ctx context.Context, token string, u users.User) (err error) {
@@ -120,11 +120,29 @@ func (ms *metricsMiddleware) SendPasswordReset(ctx context.Context, host, email,
 	return ms.svc.SendPasswordReset(ctx, host, email, token)
 }
 
-func (ms *metricsMiddleware) ListMembers(ctx context.Context, token, groupID string, offset, limit uint64, gm users.Metadata) (users.UserPage, error) {
+func (ms *metricsMiddleware) ListMembers(ctx context.Context, token, groupID string, pm users.PageMetadata) (users.UserPage, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_members").Add(1)
 		ms.latency.With("method", "list_members").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListMembers(ctx, token, groupID, offset, limit, gm)
+	return ms.svc.ListMembers(ctx, token, groupID, pm)
+}
+
+func (ms *metricsMiddleware) EnableUser(ctx context.Context, token string, id string) (err error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "enable_user").Add(1)
+		ms.latency.With("method", "enable_user").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.EnableUser(ctx, token, id)
+}
+
+func (ms *metricsMiddleware) DisableUser(ctx context.Context, token string, id string) (err error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "disable_user").Add(1)
+		ms.latency.With("method", "disable_user").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.DisableUser(ctx, token, id)
 }

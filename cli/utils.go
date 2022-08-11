@@ -22,6 +22,8 @@ var (
 	Email string = ""
 	// Metadata query parameter
 	Metadata string = ""
+	// Status query parameter
+	Status string = ""
 	// ConfigPath config path parameter
 	ConfigPath string = ""
 	// RawOutput raw output mode

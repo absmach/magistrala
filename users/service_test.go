@@ -168,7 +168,7 @@ func TestViewUser(t *testing.T) {
 			user:   users.User{},
 			token:  token,
 			userID: "",
-			err:    errors.ErrAuthentication,
+			err:    errors.ErrNotFound,
 		},
 	}
 
@@ -260,7 +260,13 @@ func TestListUsers(t *testing.T) {
 	}
 
 	for desc, tc := range cases {
-		page, err := svc.ListUsers(context.Background(), tc.token, tc.offset, tc.limit, tc.email, nil)
+		pm := users.PageMetadata{
+			Offset: tc.offset,
+			Limit:  tc.limit,
+			Email:  tc.email,
+			Status: "all",
+		}
+		page, err := svc.ListUsers(context.Background(), tc.token, pm)
 		size := uint64(len(page.Users))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.size, size))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
@@ -388,5 +394,110 @@ func TestSendPasswordReset(t *testing.T) {
 		err := svc.SendPasswordReset(context.Background(), host, tc.email, tc.token)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 
+	}
+}
+
+func TestDisableUser(t *testing.T) {
+	enabledUser1 := users.User{Email: "user1@example.com", Password: "password"}
+	enabledUser2 := users.User{Email: "user2@example.com", Password: "password", Status: "enabled"}
+	disabledUser1 := users.User{Email: "user3@example.com", Password: "password", Status: "disabled"}
+
+	svc := newService()
+
+	id, err := svc.Register(context.Background(), user.Email, user)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	user.ID = id
+	user.Status = "enabled"
+	token, err := svc.Login(context.Background(), user)
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+
+	id, err = svc.Register(context.Background(), token, enabledUser1)
+	require.Nil(t, err, fmt.Sprintf("register enabledUser1 error: %s", err))
+	enabledUser1.ID = id
+	enabledUser1.Status = "enabled"
+
+	id, err = svc.Register(context.Background(), token, enabledUser2)
+	require.Nil(t, err, fmt.Sprintf("register enabledUser2 error: %s", err))
+	enabledUser2.ID = id
+	enabledUser2.Status = "disabled"
+
+	id, err = svc.Register(context.Background(), token, disabledUser1)
+	require.Nil(t, err, fmt.Sprintf("register disabledUser1 error: %s", err))
+	disabledUser1.ID = id
+	disabledUser1.Status = "disabled"
+
+	cases := []struct {
+		desc  string
+		id    string
+		token string
+		err   error
+	}{
+		{
+			desc:  "disable user with wrong credentials",
+			id:    enabledUser2.ID,
+			token: "",
+			err:   errors.ErrAuthentication,
+		},
+		{
+			desc:  "disable existing user",
+			id:    enabledUser2.ID,
+			token: token,
+			err:   nil,
+		},
+		{
+			desc:  "disable disabled user",
+			id:    enabledUser2.ID,
+			token: token,
+			err:   users.ErrAlreadyDisabledUser,
+		},
+		{
+			desc:  "disable non-existing user",
+			id:    "",
+			token: token,
+			err:   errors.ErrNotFound,
+		},
+	}
+
+	for _, tc := range cases {
+		err := svc.DisableUser(context.Background(), tc.token, tc.id)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	}
+
+	_, err = svc.Login(context.Background(), enabledUser2)
+	assert.True(t, errors.Contains(err, errors.ErrNotFound), fmt.Sprintf("Login disabled user: expected %s got %s\n", errors.ErrNotFound, err))
+
+	cases2 := map[string]struct {
+		status   string
+		size     uint64
+		response []users.User
+	}{
+		"list enabled users": {
+			status:   "enabled",
+			size:     2,
+			response: []users.User{enabledUser1, user},
+		},
+		"list disabled users": {
+			status:   "disabled",
+			size:     2,
+			response: []users.User{enabledUser2, disabledUser1},
+		},
+		"list enabled and disabled users": {
+			status:   "all",
+			size:     4,
+			response: []users.User{enabledUser1, enabledUser2, disabledUser1, user},
+		},
+	}
+
+	for desc, tc := range cases2 {
+		pm := users.PageMetadata{
+			Offset: 0,
+			Limit:  100,
+			Status: tc.status,
+		}
+		page, err := svc.ListUsers(context.Background(), token, pm)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		size := uint64(len(page.Users))
+		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.size, size))
+		assert.ElementsMatch(t, tc.response, page.Users, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.response, page.Users))
 	}
 }

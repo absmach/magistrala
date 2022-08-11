@@ -91,7 +91,7 @@ func (urm *userRepositoryMock) RetrieveByID(ctx context.Context, id string) (use
 	return val, nil
 }
 
-func (urm *userRepositoryMock) RetrieveAll(ctx context.Context, offset, limit uint64, ids []string, email string, um users.Metadata) (users.UserPage, error) {
+func (urm *userRepositoryMock) RetrieveAll(ctx context.Context, status string, offset, limit uint64, ids []string, email string, um users.Metadata) (users.UserPage, error) {
 	urm.mu.Lock()
 	defer urm.mu.Unlock()
 
@@ -110,6 +110,20 @@ func (urm *userRepositoryMock) RetrieveAll(ctx context.Context, offset, limit ui
 		return up, nil
 	}
 
+	if status == users.EnabledStatusKey || status == users.DisabledStatusKey {
+		for _, u := range sortUsers(urm.users) {
+			if i >= offset && i < (limit+offset) {
+				if status == u.Status {
+					up.Users = append(up.Users, u)
+				}
+			}
+			i++
+		}
+		up.Offset = offset
+		up.Limit = limit
+		up.Total = uint64(i)
+		return up, nil
+	}
 	for _, u := range sortUsers(urm.users) {
 		if i >= offset && i < (limit+offset) {
 			up.Users = append(up.Users, u)
@@ -134,6 +148,19 @@ func (urm *userRepositoryMock) UpdatePassword(_ context.Context, token, password
 	return nil
 }
 
+func (urm *userRepositoryMock) ChangeStatus(ctx context.Context, id, status string) error {
+	urm.mu.Lock()
+	defer urm.mu.Unlock()
+
+	user, ok := urm.usersByID[id]
+	if !ok {
+		return errors.ErrNotFound
+	}
+	user.Status = status
+	urm.usersByID[id] = user
+	urm.users[user.Email] = user
+	return nil
+}
 func sortUsers(us map[string]users.User) []users.User {
 	users := []users.User{}
 	ids := make([]string, 0, len(us))

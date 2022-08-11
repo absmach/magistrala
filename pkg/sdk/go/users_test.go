@@ -176,7 +176,7 @@ func TestUser(t *testing.T) {
 			desc:     "get non-existent user",
 			userID:   "43",
 			token:    usertoken,
-			err:      createError(sdk.ErrFailedFetch, http.StatusUnauthorized),
+			err:      createError(sdk.ErrFailedFetch, http.StatusNotFound),
 			response: sdk.User{},
 		},
 

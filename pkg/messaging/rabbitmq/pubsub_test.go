@@ -85,6 +85,7 @@ func TestPubsub(t *testing.T) {
 		clientID     string
 		errorMessage error
 		pubsub       bool //true for subscribe and false for unsubscribe
+		handler      messaging.MessageHandler
 	}{
 		{
 			desc:         "Subscribe to a topic with an ID",
@@ -92,6 +93,7 @@ func TestPubsub(t *testing.T) {
 			clientID:     "clientid1",
 			errorMessage: nil,
 			pubsub:       true,
+			handler:      handler{false},
 		},
 		{
 			desc:         "Subscribe to the same topic with a different ID",
@@ -99,13 +101,15 @@ func TestPubsub(t *testing.T) {
 			clientID:     "clientid2",
 			errorMessage: nil,
 			pubsub:       true,
+			handler:      handler{false},
 		},
 		{
 			desc:         "Subscribe to an already subscribed topic with an ID",
 			topic:        fmt.Sprintf("%s.%s", chansPrefix, topic),
 			clientID:     "clientid1",
-			errorMessage: rabbitmq.ErrAlreadySubscribed,
+			errorMessage: nil,
 			pubsub:       true,
+			handler:      handler{false},
 		},
 		{
 			desc:         "Unsubscribe from a topic with an ID",
@@ -113,6 +117,7 @@ func TestPubsub(t *testing.T) {
 			clientID:     "clientid1",
 			errorMessage: nil,
 			pubsub:       false,
+			handler:      handler{false},
 		},
 		{
 			desc:         "Unsubscribe from a non-existent topic with an ID",
@@ -120,6 +125,7 @@ func TestPubsub(t *testing.T) {
 			clientID:     "clientid1",
 			errorMessage: rabbitmq.ErrNotSubscribed,
 			pubsub:       false,
+			handler:      handler{false},
 		},
 		{
 			desc:         "Unsubscribe from the same topic with a different ID",
@@ -127,6 +133,7 @@ func TestPubsub(t *testing.T) {
 			clientID:     "clientidd2",
 			errorMessage: rabbitmq.ErrNotSubscribed,
 			pubsub:       false,
+			handler:      handler{false},
 		},
 		{
 			desc:         "Unsubscribe from the same topic with a different ID not subscribed",
@@ -134,6 +141,7 @@ func TestPubsub(t *testing.T) {
 			clientID:     "clientidd3",
 			errorMessage: rabbitmq.ErrNotSubscribed,
 			pubsub:       false,
+			handler:      handler{false},
 		},
 		{
 			desc:         "Unsubscribe from an already unsubscribed topic with an ID",
@@ -141,6 +149,7 @@ func TestPubsub(t *testing.T) {
 			clientID:     "clientid1",
 			errorMessage: rabbitmq.ErrNotSubscribed,
 			pubsub:       false,
+			handler:      handler{false},
 		},
 		{
 			desc:         "Subscribe to a topic with a subtopic with an ID",
@@ -148,13 +157,15 @@ func TestPubsub(t *testing.T) {
 			clientID:     "clientidd1",
 			errorMessage: nil,
 			pubsub:       true,
+			handler:      handler{false},
 		},
 		{
 			desc:         "Subscribe to an already subscribed topic with a subtopic with an ID",
 			topic:        fmt.Sprintf("%s.%s.%s", chansPrefix, topic, subtopic),
 			clientID:     "clientidd1",
-			errorMessage: rabbitmq.ErrAlreadySubscribed,
+			errorMessage: nil,
 			pubsub:       true,
+			handler:      handler{false},
 		},
 		{
 			desc:         "Unsubscribe from a topic with a subtopic with an ID",
@@ -162,6 +173,7 @@ func TestPubsub(t *testing.T) {
 			clientID:     "clientidd1",
 			errorMessage: nil,
 			pubsub:       false,
+			handler:      handler{false},
 		},
 		{
 			desc:         "Unsubscribe from an already unsubscribed topic with a subtopic with an ID",
@@ -169,6 +181,7 @@ func TestPubsub(t *testing.T) {
 			clientID:     "clientid1",
 			errorMessage: rabbitmq.ErrNotSubscribed,
 			pubsub:       false,
+			handler:      handler{false},
 		},
 		{
 			desc:         "Subscribe to an empty topic with an ID",
@@ -176,6 +189,7 @@ func TestPubsub(t *testing.T) {
 			clientID:     "clientid1",
 			errorMessage: rabbitmq.ErrEmptyTopic,
 			pubsub:       true,
+			handler:      handler{false},
 		},
 		{
 			desc:         "Unsubscribe from an empty topic with an ID",
@@ -183,6 +197,7 @@ func TestPubsub(t *testing.T) {
 			clientID:     "clientid1",
 			errorMessage: rabbitmq.ErrEmptyTopic,
 			pubsub:       false,
+			handler:      handler{false},
 		},
 		{
 			desc:         "Subscribe to a topic with empty id",
@@ -190,6 +205,7 @@ func TestPubsub(t *testing.T) {
 			clientID:     "",
 			errorMessage: rabbitmq.ErrEmptyID,
 			pubsub:       true,
+			handler:      handler{false},
 		},
 		{
 			desc:         "Unsubscribe from a topic with empty id",
@@ -197,12 +213,45 @@ func TestPubsub(t *testing.T) {
 			clientID:     "",
 			errorMessage: rabbitmq.ErrEmptyID,
 			pubsub:       false,
+			handler:      handler{false},
+		},
+		{
+			desc:         "Subscribe to another topic with an ID",
+			topic:        fmt.Sprintf("%s.%s", chansPrefix, topic+"1"),
+			clientID:     "clientid3",
+			errorMessage: nil,
+			pubsub:       true,
+			handler:      handler{true},
+		},
+		{
+			desc:         "Subscribe to another already subscribed topic with an ID with Unsubscribe failing",
+			topic:        fmt.Sprintf("%s.%s", chansPrefix, topic+"1"),
+			clientID:     "clientid3",
+			errorMessage: rabbitmq.ErrFailed,
+			pubsub:       true,
+			handler:      handler{true},
+		},
+		{
+			desc:         "Subscribe to a new topic with an ID",
+			topic:        fmt.Sprintf("%s.%s", chansPrefix, topic+"2"),
+			clientID:     "clientid4",
+			errorMessage: nil,
+			pubsub:       true,
+			handler:      handler{true},
+		},
+		{
+			desc:         "Unsubscribe from a topic with an ID with failing handler",
+			topic:        fmt.Sprintf("%s.%s", chansPrefix, topic+"2"),
+			clientID:     "clientid4",
+			errorMessage: rabbitmq.ErrFailed,
+			pubsub:       false,
+			handler:      handler{true},
 		},
 	}
 
 	for _, pc := range subcases {
 		if pc.pubsub == true {
-			err := pubsub.Subscribe(pc.clientID, pc.topic, handler{})
+			err := pubsub.Subscribe(pc.clientID, pc.topic, pc.handler)
 			if pc.errorMessage == nil {
 				require.Nil(t, err, fmt.Sprintf("%s got unexpected error: %s", pc.desc, err))
 			} else {
@@ -219,7 +268,9 @@ func TestPubsub(t *testing.T) {
 	}
 }
 
-type handler struct{}
+type handler struct {
+	fail bool
+}
 
 func (h handler) Handle(msg messaging.Message) error {
 	msgChan <- msg
@@ -227,5 +278,8 @@ func (h handler) Handle(msg messaging.Message) error {
 }
 
 func (h handler) Cancel() error {
+	if h.fail {
+		return rabbitmq.ErrFailed
+	}
 	return nil
 }

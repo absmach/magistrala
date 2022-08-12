@@ -26,6 +26,7 @@ var (
 	ErrNotSubscribed     = errors.New("not subscribed")
 	ErrEmptyTopic        = errors.New("empty topic")
 	ErrEmptyID           = errors.New("empty id")
+	ErrFailed            = errors.New("failed")
 )
 
 var _ messaging.PubSub = (*pubsub)(nil)
@@ -72,16 +73,24 @@ func (ps *pubsub) Subscribe(id, topic string, handler messaging.MessageHandler) 
 		return ErrEmptyTopic
 	}
 	ps.mu.Lock()
-	defer ps.mu.Unlock()
 	// Check topic
 	s, ok := ps.subscriptions[topic]
-	switch ok {
-	case true:
-		// Check topic ID
+	if ok {
+		// Check client ID
 		if _, ok := s[id]; ok {
-			return ErrAlreadySubscribed
+			// Unlocking, so that Unsubscribe() can access ps.subscriptions
+			ps.mu.Unlock()
+			if err := ps.Unsubscribe(id, topic); err != nil {
+				return err
+			}
+
+			ps.mu.Lock()
+			// value of s can be changed while ps.mu is unlocked
+			s = ps.subscriptions[topic]
 		}
-	default:
+	}
+	defer ps.mu.Unlock()
+	if s == nil {
 		s = make(map[string]subscription)
 		ps.subscriptions[topic] = s
 	}

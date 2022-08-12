@@ -25,7 +25,6 @@ var (
 	errSubscribeTimeout       = errors.New("failed to subscribe due to timeout reached")
 	errUnsubscribeTimeout     = errors.New("failed to unsubscribe due to timeout reached")
 	errUnsubscribeDeleteTopic = errors.New("failed to unsubscribe due to deletion of topic")
-	errAlreadySubscribed      = errors.New("already subscribed to topic")
 	errNotSubscribed          = errors.New("not subscribed")
 	errEmptyTopic             = errors.New("empty topic")
 	errEmptyID                = errors.New("empty ID")
@@ -47,6 +46,7 @@ type pubsub struct {
 	subscriptions map[string]subscription
 }
 
+// NewPubSub returns MQTT message publisher/subscriber.
 func NewPubSub(url, queue string, timeout time.Duration, logger log.Logger) (messaging.PubSub, error) {
 	client, err := newClient(url, "mqtt-publisher", timeout)
 	if err != nil {
@@ -80,7 +80,23 @@ func (ps pubsub) Subscribe(id, topic string, handler messaging.MessageHandler) e
 	case true:
 		// Check topic
 		if ok = s.contains(topic); ok {
-			return errAlreadySubscribed
+			// Unlocking, so that Unsubscribe() can access ps.subscriptions
+			ps.mu.Unlock()
+			err := ps.Unsubscribe(id, topic)
+			ps.mu.Lock() // Lock so that deferred unlock handle it
+			if err != nil {
+				return err
+			}
+			if len(ps.subscriptions) == 0 {
+				client, err := newClient(ps.address, id, ps.timeout)
+				if err != nil {
+					return err
+				}
+				s = subscription{
+					client: client,
+					topics: []string{topic},
+				}
+			}
 		}
 		s.topics = append(s.topics, topic)
 	default:
@@ -93,6 +109,7 @@ func (ps pubsub) Subscribe(id, topic string, handler messaging.MessageHandler) e
 			topics: []string{topic},
 		}
 	}
+
 	token := s.client.Subscribe(topic, qos, ps.mqttHandler(handler))
 	if token.Error() != nil {
 		return token.Error()

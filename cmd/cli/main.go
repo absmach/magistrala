@@ -175,7 +175,7 @@ func main() {
 		"email",
 		"e",
 		"",
-		"Email query parameter",
+		"User email query parameter",
 	)
 
 	rootCmd.PersistentFlags().StringVarP(
@@ -191,7 +191,7 @@ func main() {
 		"status",
 		"S",
 		"",
-		"Status query parameter",
+		"User status query parameter",
 	)
 
 	if err := rootCmd.Execute(); err != nil {

@@ -80,7 +80,7 @@ var cmdChannels = []cobra.Command{
 		},
 	},
 	{
-		Use:   "updatev <JSON_string> <user_auth_token>",
+		Use:   "update <JSON_string> <user_auth_token>",
 		Short: "Update channel",
 		Long:  `Updates channel record`,
 		Run: func(cmd *cobra.Command, args []string) {

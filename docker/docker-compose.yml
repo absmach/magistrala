@@ -94,6 +94,7 @@ services:
       - users
       - mqtt-adapter
       - http-adapter
+      - ws-adapter
 
   broker:
     extends:
@@ -344,5 +345,24 @@ services:
     ports:
       - ${MF_COAP_ADAPTER_PORT}:${MF_COAP_ADAPTER_PORT}/udp
       - ${MF_COAP_ADAPTER_PORT}:${MF_COAP_ADAPTER_PORT}/tcp
+    networks:
+      - mainflux-base-net
+
+  ws-adapter:
+    image: mainflux/ws:${MF_RELEASE_TAG}
+    container_name: mainflux-ws
+    depends_on:
+      - things
+      - broker
+    restart: on-failure
+    environment:
+      MF_WS_ADAPTER_LOG_LEVEL: ${MF_WS_ADAPTER_LOG_LEVEL}
+      MF_WS_ADAPTER_PORT: ${MF_WS_ADAPTER_PORT}
+      MF_BROKER_URL: ${MF_NATS_URL}
+      MF_JAEGER_URL: ${MF_JAEGER_URL}
+      MF_THINGS_AUTH_GRPC_URL: ${MF_THINGS_AUTH_GRPC_URL}
+      MF_THINGS_AUTH_GRPC_TIMEOUT: ${MF_THINGS_AUTH_GRPC_TIMEOUT}
+    ports:
+      - ${MF_WS_ADAPTER_PORT}:${MF_WS_ADAPTER_PORT}
     networks:
       - mainflux-base-net

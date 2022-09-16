@@ -138,6 +138,18 @@ function setKey(r) {
         return '';
     }
 
+    if (r.uri.startsWith('/ws') && (!auth || !auth.length)) {
+        var a;
+        for (a in r.args) {
+            if (a == 'authorization' && r.args[a] === clientKey) {
+                return clientKey
+            }
+        }
+
+        r.error('Authorization param does not match certificate')
+        return '';
+    }
+
     return clientKey;
 }
 

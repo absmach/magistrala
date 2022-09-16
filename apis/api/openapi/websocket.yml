@@ -1,0 +1,41 @@
+openapi: 3.0.1
+info:
+  title: Mainflux ws adapter
+  description: WebSocket API for sending messages through communication channels.
+  version: "1.0.0"
+paths:
+  /channels/{id}/messages:
+    post:
+      summary: Sends message to the communication channel
+      description: |
+        Sends message to the communication channel. Messages can be sent as
+        JSON formatted SenML or as blob.
+      tags:
+        - messages
+      parameters:
+        - $ref: "#/components/parameters/ID"
+      requestBody:
+        $ref: "#/components/requestBodies/MessageReq"
+      responses:
+        "202":
+          description: Message is accepted for processing.
+        "400":
+          description: Message discarded due to its malformed content.
+        "401":
+          description: Missing or invalid access token provided.
+        "404":
+          description: Message discarded due to invalid channel id.
+        "415":
+          description: Message discarded due to invalid or missing content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /health:
+    get:
+      summary: Retrieves service health check info.
+      tags:
+        - health
+      responses:
+        '200':
+          $ref: "#/components/responses/HealthRes"
+        '500':
+          $ref: "#/components/responses/ServiceError"

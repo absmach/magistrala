@@ -117,13 +117,6 @@ rundev:
 	cd scripts && ./run.sh
 
 run:
-ifeq ("$(MF_BROKER_TYPE)", "rabbitmq")
-	sed -i "s,file: brokers/.*.yml,file: brokers/rabbitmq.yml," docker/docker-compose.yml
-	sed -i "s,MF_BROKER_URL: .*,MF_BROKER_URL: $$\{MF_RABBITMQ_URL\}," docker/docker-compose.yml
-else ifeq ("$(MF_BROKER_TYPE)", "nats")
-	sed -i "s,file: brokers/.*.yml,file: brokers/nats.yml," docker/docker-compose.yml
-	sed -i "s,MF_BROKER_URL: .*,MF_BROKER_URL: $$\{MF_NATS_URL\}," docker/docker-compose.yml
-else
-	echo "Invalid broker type"; exit 1
-endif
+	sed -i "s,file: brokers/.*.yml,file: brokers/${MF_BROKER_TYPE}.yml," docker/docker-compose.yml
+	sed -i "s,MF_BROKER_URL=.*,MF_BROKER_URL=$$\{MF_$(shell echo ${MF_BROKER_TYPE} | tr 'a-z' 'A-Z')_URL\}," docker/.env
 	docker-compose -f docker/docker-compose.yml up

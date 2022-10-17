@@ -21,13 +21,29 @@ const (
 )
 
 var (
-	errConnect                = errors.New("failed to connect to MQTT broker")
-	errSubscribeTimeout       = errors.New("failed to subscribe due to timeout reached")
-	errUnsubscribeTimeout     = errors.New("failed to unsubscribe due to timeout reached")
-	errUnsubscribeDeleteTopic = errors.New("failed to unsubscribe due to deletion of topic")
-	errNotSubscribed          = errors.New("not subscribed")
-	errEmptyTopic             = errors.New("empty topic")
-	errEmptyID                = errors.New("empty ID")
+	// ErrConnect indicates that connection to MQTT broker failed
+	ErrConnect = errors.New("failed to connect to MQTT broker")
+
+	// ErrSubscribeTimeout indicates that the subscription failed due to timeout.
+	ErrSubscribeTimeout = errors.New("failed to subscribe due to timeout reached")
+
+	// ErrUnsubscribeTimeout indicates that unsubscribe failed due to timeout.
+	ErrUnsubscribeTimeout = errors.New("failed to unsubscribe due to timeout reached")
+
+	// ErrUnsubscribeDeleteTopic indicates that unsubscribe failed because the topic was deleted.
+	ErrUnsubscribeDeleteTopic = errors.New("failed to unsubscribe due to deletion of topic")
+
+	// ErrNotSubscribed indicates that the topic is not subscribed to.
+	ErrNotSubscribed = errors.New("not subscribed")
+
+	// ErrEmptyTopic indicates the absence of topic.
+	ErrEmptyTopic = errors.New("empty topic")
+
+	// ErrEmptyID indicates the absence of ID.
+	ErrEmptyID = errors.New("empty ID")
+
+	// ErrFailedHandleMessage indicates that the message couldn't be handled.
+	ErrFailedHandleMessage = errors.New("failed to handle mainflux message")
 )
 
 var _ messaging.PubSub = (*pubsub)(nil)
@@ -35,12 +51,13 @@ var _ messaging.PubSub = (*pubsub)(nil)
 type subscription struct {
 	client mqtt.Client
 	topics []string
+	cancel func() error
 }
 
 type pubsub struct {
 	publisher
 	logger        log.Logger
-	mu            *sync.RWMutex
+	mu            sync.RWMutex
 	address       string
 	timeout       time.Duration
 	subscriptions map[string]subscription
@@ -52,7 +69,7 @@ func NewPubSub(url, queue string, timeout time.Duration, logger log.Logger) (mes
 	if err != nil {
 		return nil, err
 	}
-	ret := pubsub{
+	ret := &pubsub{
 		publisher: publisher{
 			client:  client,
 			timeout: timeout,
@@ -65,40 +82,25 @@ func NewPubSub(url, queue string, timeout time.Duration, logger log.Logger) (mes
 	return ret, nil
 }
 
-func (ps pubsub) Subscribe(id, topic string, handler messaging.MessageHandler) error {
+func (ps *pubsub) Subscribe(id, topic string, handler messaging.MessageHandler) error {
 	if id == "" {
-		return errEmptyID
+		return ErrEmptyID
 	}
 	if topic == "" {
-		return errEmptyTopic
+		return ErrEmptyTopic
 	}
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
-	// Check client ID
+
 	s, ok := ps.subscriptions[id]
+	// If the client exists, check if it's subscribed to the topic and unsubscribe if needed.
 	switch ok {
 	case true:
-		// Check topic
-		if ok = s.contains(topic); ok {
-			// Unlocking, so that Unsubscribe() can access ps.subscriptions
-			ps.mu.Unlock()
-			err := ps.Unsubscribe(id, topic)
-			ps.mu.Lock() // Lock so that deferred unlock handle it
-			if err != nil {
+		if ok := s.contains(topic); ok {
+			if err := s.unsubscribe(topic, ps.timeout); err != nil {
 				return err
 			}
-			if len(ps.subscriptions) == 0 {
-				client, err := newClient(ps.address, id, ps.timeout)
-				if err != nil {
-					return err
-				}
-				s = subscription{
-					client: client,
-					topics: []string{topic},
-				}
-			}
 		}
-		s.topics = append(s.topics, topic)
 	default:
 		client, err := newClient(ps.address, id, ps.timeout)
 		if err != nil {
@@ -106,59 +108,94 @@ func (ps pubsub) Subscribe(id, topic string, handler messaging.MessageHandler) e
 		}
 		s = subscription{
 			client: client,
-			topics: []string{topic},
+			topics: []string{},
+			cancel: handler.Cancel,
 		}
 	}
+	s.topics = append(s.topics, topic)
+	ps.subscriptions[id] = s
 
 	token := s.client.Subscribe(topic, qos, ps.mqttHandler(handler))
 	if token.Error() != nil {
 		return token.Error()
 	}
 	if ok := token.WaitTimeout(ps.timeout); !ok {
-		return errSubscribeTimeout
+		return ErrSubscribeTimeout
 	}
 	return token.Error()
 }
 
-func (ps pubsub) Unsubscribe(id, topic string) error {
+func (ps *pubsub) Unsubscribe(id, topic string) error {
 	if id == "" {
-		return errEmptyID
+		return ErrEmptyID
 	}
 	if topic == "" {
-		return errEmptyTopic
+		return ErrEmptyTopic
 	}
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
-	// Check client ID
+
 	s, ok := ps.subscriptions[id]
-	switch ok {
-	case true:
-		// Check topic
-		if ok := s.contains(topic); !ok {
-			return errNotSubscribed
-		}
-	default:
-		return errNotSubscribed
+	if !ok || !s.contains(topic) {
+		return ErrNotSubscribed
 	}
+
+	if err := s.unsubscribe(topic, ps.timeout); err != nil {
+		return err
+	}
+	ps.subscriptions[id] = s
+
+	if len(s.topics) == 0 {
+		delete(ps.subscriptions, id)
+	}
+	return nil
+}
+
+func (s *subscription) unsubscribe(topic string, timeout time.Duration) error {
+	if s.cancel != nil {
+		if err := s.cancel(); err != nil {
+			return err
+		}
+	}
+
 	token := s.client.Unsubscribe(topic)
 	if token.Error() != nil {
 		return token.Error()
 	}
 
-	ok = token.WaitTimeout(ps.timeout)
-	if !ok {
-		return errUnsubscribeTimeout
+	if ok := token.WaitTimeout(timeout); !ok {
+		return ErrUnsubscribeTimeout
 	}
 	if ok := s.delete(topic); !ok {
-		return errUnsubscribeDeleteTopic
-	}
-	if len(s.topics) == 0 {
-		delete(ps.subscriptions, id)
+		return ErrUnsubscribeDeleteTopic
 	}
 	return token.Error()
 }
 
-func (ps pubsub) mqttHandler(h messaging.MessageHandler) mqtt.MessageHandler {
+func newClient(address, id string, timeout time.Duration) (mqtt.Client, error) {
+	opts := mqtt.NewClientOptions().
+		SetUsername(username).
+		AddBroker(address).
+		SetClientID(id)
+	client := mqtt.NewClient(opts)
+	token := client.Connect()
+	if token.Error() != nil {
+		return nil, token.Error()
+	}
+
+	ok := token.WaitTimeout(timeout)
+	if !ok {
+		return nil, ErrConnect
+	}
+
+	if token.Error() != nil {
+		return nil, token.Error()
+	}
+
+	return client, nil
+}
+
+func (ps *pubsub) mqttHandler(h messaging.MessageHandler) mqtt.MessageHandler {
 	return func(c mqtt.Client, m mqtt.Message) {
 		var msg messaging.Message
 		if err := proto.Unmarshal(m.Payload(), &msg); err != nil {
@@ -171,34 +208,14 @@ func (ps pubsub) mqttHandler(h messaging.MessageHandler) mqtt.MessageHandler {
 	}
 }
 
-func newClient(address, id string, timeout time.Duration) (mqtt.Client, error) {
-	opts := mqtt.NewClientOptions().SetUsername(username).AddBroker(address).SetClientID(id)
-	client := mqtt.NewClient(opts)
-	token := client.Connect()
-	if token.Error() != nil {
-		return nil, token.Error()
-	}
-
-	ok := token.WaitTimeout(timeout)
-	if !ok {
-		return nil, errConnect
-	}
-
-	if token.Error() != nil {
-		return nil, token.Error()
-	}
-
-	return client, nil
+// Contains checks if a topic is present.
+func (s subscription) contains(topic string) bool {
+	return s.indexOf(topic) != -1
 }
 
-// contains checks if a topic is present
-func (sub subscription) contains(topic string) bool {
-	return sub.indexOf(topic) != -1
-}
-
-// Finds the index of an item in the topics
-func (sub subscription) indexOf(element string) int {
-	for k, v := range sub.topics {
+// Finds the index of an item in the topics.
+func (s subscription) indexOf(element string) int {
+	for k, v := range s.topics {
 		if element == v {
 			return k
 		}
@@ -206,15 +223,15 @@ func (sub subscription) indexOf(element string) int {
 	return -1
 }
 
-// Deletes a topic from the slice
-func (sub subscription) delete(topic string) bool {
-	index := sub.indexOf(topic)
+// Deletes a topic from the slice.
+func (s *subscription) delete(topic string) bool {
+	index := s.indexOf(topic)
 	if index == -1 {
 		return false
 	}
-	topics := make([]string, len(sub.topics)-1)
-	copy(topics[:index], sub.topics[:index])
-	copy(topics[index:], sub.topics[index+1:])
-	sub.topics = topics
+	topics := make([]string, len(s.topics)-1)
+	copy(topics[:index], s.topics[:index])
+	copy(topics[index:], s.topics[index+1:])
+	s.topics = topics
 	return true
 }

@@ -8,14 +8,14 @@ package brokers
 
 import (
 	"log"
-	
+
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/pkg/messaging/rabbitmq"
 )
 
 // SubjectAllChannels represents subject to subscribe for all the channels.
-const SubjectAllChannels = "channels.>"
+const SubjectAllChannels = "channels.#"
 
 func init() {
 	log.Println("The binary was build using RabbitMQ as the message broker")

@@ -47,21 +47,25 @@ Two output formats supported: human-readable plain text and JSON.
 Before use you need a `mfconn.toml` - a TOML file that describes Mainflux connection data (channels, thingIDs, thingKeys, certs).
 You can use `provision` tool (in tools/provision) to create this TOML config file.
 
+```bash
+go run tools/mqtt-bench/cmd/main.go -u test@mainflux.com -p test1234 --host http://127.0.0.1 --num 100 > tools/mqtt-bench/mfconn.toml 
+```
+
 Example use and output
 
 Without mtls:
 ```
-./mqtt-bench --broker tcp://localhost:1883 --count 100 --size 100 --qos 0 --format text --pubs 10 --mainflux mfconn.toml
+go run tools/mqtt-bench/cmd/main.go --broker tcp://localhost:1883 --count 100 --size 100 --qos 0 --format text --pubs 10 --mainflux tools/mqtt-bench/mfconn.toml
 ```
 
 With mtls
-./mqtt-bench --broker tcps://localhost:8883 --count 100 --size 100 --qos 0 --format text --pubs 10 --mainflux mfconn.toml --mtls -ca ca.crt
+go run tools/mqtt-bench/cmd/main.go --broker tcps://localhost:8883 --count 100 --size 100 --qos 0 --format text --pubs 10 --mainflux tools/mqtt-bench/mfconn.toml --mtls -ca docker/ssl/certs/ca.crt
 ```
 
 You can use `config.toml` to create tests with this tool:
 
 ```
-./mqtt-bench --config config.toml
+go run tools/mqtt-bench/cmd/main.go --config tools/mqtt-bench/config.toml
 ```
 
 Example of `config.toml`:

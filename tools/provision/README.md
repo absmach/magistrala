@@ -5,6 +5,12 @@ A simple utility to create a list of channels and things connected to these chan
 This tool is useful for testing, and it creates a TOML format output (on stdout, can be redirected into the file as needed)
 that can be used by Mainflux MQTT benchmarking tool (`mqtt-bench`).
 
+## Installation
+```
+cd tools/provision
+make
+```
+
 ### Usage
 ```
 ./provision --help
@@ -28,13 +34,13 @@ Flags:
 
 Example:
 ```
-./provision -u test@mainflux.com -p test1234 --host https://142.93.118.47
+go run tools/provision/cmd/main.go -u test@mainflux.com -p test1234 --host https://142.93.118.47
 ```
 
 If you want to create a list of channels with certificates:
 
 ```
-./provision --host http://localhost --num 10 -u test@mainflux.com -p test1234 --ssl true --ca ../../docker/ssl/certs/ca.crt --cakey ../../docker/ssl/certs/ca.key
+go run tools/provision/cmd/main.go  --host http://localhost --num 10 -u test@mainflux.com -p test1234 --ssl true --ca docker/ssl/certs/ca.crt --cakey docker/ssl/certs/ca.key
 
 ```
 

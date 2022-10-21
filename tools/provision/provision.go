@@ -59,8 +59,13 @@ func Provision(conf Config) {
 
 	msgContentType := string(sdk.CTJSONSenML)
 	sdkConf := sdk.Config{
+		AuthURL:         conf.Host,
 		ThingsURL:       conf.Host,
+		UsersURL:        conf.Host,
 		ReaderURL:       defReaderURL,
+		HTTPAdapterURL:  fmt.Sprintf("%s/http", conf.Host),
+		BootstrapURL:    conf.Host,
+		CertsURL:        conf.Host,
 		MsgContentType:  sdk.ContentType(msgContentType),
 		TLSVerification: false,
 	}

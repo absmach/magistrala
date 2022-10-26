@@ -83,15 +83,11 @@ func (s *Session) popOnClose() []EventFunc {
 	return tmp
 }
 
-func (s *Session) close() error {
+func (s *Session) shutdown() {
 	defer s.doneCancel()
 	for _, f := range s.popOnClose() {
 		f()
 	}
-	if s.closeSocket {
-		return s.connection.Close()
-	}
-	return nil
 }
 
 func (s *Session) Close() error {
@@ -132,10 +128,7 @@ func (s *Session) Run(cc *client.ClientConn) (err error) {
 		if err == nil {
 			err = err1
 		}
-		err1 = s.close()
-		if err == nil {
-			err = err1
-		}
+		s.shutdown()
 	}()
 	m := make([]byte, s.maxMessageSize)
 	for {

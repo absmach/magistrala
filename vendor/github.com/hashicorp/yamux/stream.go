@@ -2,6 +2,7 @@ package yamux
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"sync"
 	"sync/atomic"
@@ -127,6 +128,9 @@ START:
 
 	// Send a window update potentially
 	err = s.sendWindowUpdate()
+	if err == ErrSessionShutdown {
+		err = nil
+	}
 	return n, err
 
 WAIT:
@@ -200,6 +204,10 @@ START:
 	// Send the header
 	s.sendHdr.encode(typeData, flags, s.id, max)
 	if err = s.session.waitForSendErr(s.sendHdr, body, s.sendErr); err != nil {
+		if errors.Is(err, ErrSessionShutdown) || errors.Is(err, ErrConnectionWriteTimeout) {
+			// Message left in ready queue, header re-use is unsafe.
+			s.sendHdr = header(make([]byte, headerSize))
+		}
 		return 0, err
 	}
 
@@ -273,6 +281,10 @@ func (s *Stream) sendWindowUpdate() error {
 	// Send the header
 	s.controlHdr.encode(typeWindowUpdate, flags, s.id, delta)
 	if err := s.session.waitForSendErr(s.controlHdr, nil, s.controlErr); err != nil {
+		if errors.Is(err, ErrSessionShutdown) || errors.Is(err, ErrConnectionWriteTimeout) {
+			// Message left in ready queue, header re-use is unsafe.
+			s.controlHdr = header(make([]byte, headerSize))
+		}
 		return err
 	}
 	return nil
@@ -287,6 +299,10 @@ func (s *Stream) sendClose() error {
 	flags |= flagFIN
 	s.controlHdr.encode(typeWindowUpdate, flags, s.id, 0)
 	if err := s.session.waitForSendErr(s.controlHdr, nil, s.controlErr); err != nil {
+		if errors.Is(err, ErrSessionShutdown) || errors.Is(err, ErrConnectionWriteTimeout) {
+			// Message left in ready queue, header re-use is unsafe.
+			s.controlHdr = header(make([]byte, headerSize))
+		}
 		return err
 	}
 	return nil
@@ -362,8 +378,9 @@ func (s *Stream) closeTimeout() {
 	// Send a RST so the remote side closes too.
 	s.sendLock.Lock()
 	defer s.sendLock.Unlock()
-	s.sendHdr.encode(typeWindowUpdate, flagRST, s.id, 0)
-	s.session.sendNoWait(s.sendHdr)
+	hdr := header(make([]byte, headerSize))
+	hdr.encode(typeWindowUpdate, flagRST, s.id, 0)
+	s.session.sendNoWait(hdr)
 }
 
 // forceClose is used for when the session is exiting
@@ -465,6 +482,7 @@ func (s *Stream) readData(hdr header, flags uint16, conn io.Reader) error {
 
 	if length > s.recvWindow {
 		s.session.logger.Printf("[ERR] yamux: receive window exceeded (stream: %d, remain: %d, recv: %d)", s.id, s.recvWindow, length)
+		s.recvLock.Unlock()
 		return ErrRecvWindowExceeded
 	}
 
@@ -473,14 +491,15 @@ func (s *Stream) readData(hdr header, flags uint16, conn io.Reader) error {
 		// This way we can read in the whole packet without further allocations.
 		s.recvBuf = bytes.NewBuffer(make([]byte, 0, length))
 	}
-	if _, err := io.Copy(s.recvBuf, conn); err != nil {
+	copiedLength, err := io.Copy(s.recvBuf, conn)
+	if err != nil {
 		s.session.logger.Printf("[ERR] yamux: Failed to read stream data: %v", err)
 		s.recvLock.Unlock()
 		return err
 	}
 
 	// Decrement the receive window
-	s.recvWindow -= length
+	s.recvWindow -= uint32(copiedLength)
 	s.recvLock.Unlock()
 
 	// Unblock any readers

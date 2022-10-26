@@ -3,10 +3,9 @@ package tls
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"io/ioutil"
 	"net"
-
-	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 var (
@@ -47,6 +46,9 @@ func ClientCert(conn net.Conn) (x509.Certificate, error) {
 		state := connVal.ConnectionState()
 		if state.Version == 0 {
 			return x509.Certificate{}, errTLSdetails
+		}
+		if len(state.PeerCertificates) == 0 {
+			return x509.Certificate{}, nil
 		}
 		cert := *state.PeerCertificates[0]
 		return cert, nil

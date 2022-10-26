@@ -1,10 +1,14 @@
 /*
- * Copyright (c) 2013 IBM Corp.
+ * Copyright (c) 2021 IBM Corp and others.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * are made available under the terms of the Eclipse Public License v2.0
+ * and Eclipse Distribution License v1.0 which accompany this distribution.
+ *
+ * The Eclipse Public License is available at
+ *    https://www.eclipse.org/legal/epl-2.0/
+ * and the Eclipse Distribution License is available at
+ *   http://www.eclipse.org/org/documents/edl-v10.php.
  *
  * Contributors:
  *    Seth Hoenig
@@ -19,6 +23,7 @@ package mqtt
 
 import (
 	"crypto/tls"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -52,8 +57,16 @@ type ReconnectHandler func(Client, *ClientOptions)
 // ConnectionAttemptHandler is invoked prior to making the initial connection.
 type ConnectionAttemptHandler func(broker *url.URL, tlsCfg *tls.Config) *tls.Config
 
+// OpenConnectionFunc is invoked to establish the underlying network connection
+// Its purpose if for custom network transports.
+// Does not carry out any MQTT specific handshakes.
+type OpenConnectionFunc func(uri *url.URL, options ClientOptions) (net.Conn, error)
+
 // ClientOptions contains configurable options for an Client. Note that these should be set using the
 // relevant methods (e.g. AddBroker) rather than directly. See those functions for information on usage.
+// WARNING: Create the below using NewClientOptions unless you have a compelling reason not to. It is easy
+// to create a configuration with difficult to trace issues (e.g. Mosquitto 2.0.12+ will reject connections
+// with KeepAlive=0 by default).
 type ClientOptions struct {
 	Servers                 []*url.URL
 	ClientID                string
@@ -70,7 +83,7 @@ type ClientOptions struct {
 	ProtocolVersion         uint
 	protocolVersionExplicit bool
 	TLSConfig               *tls.Config
-	KeepAlive               int64
+	KeepAlive               int64 // Warning: Some brokers may reject connections with Keepalive = 0.
 	PingTimeout             time.Duration
 	ConnectTimeout          time.Duration
 	MaxReconnectInterval    time.Duration
@@ -88,6 +101,10 @@ type ClientOptions struct {
 	ResumeSubs              bool
 	HTTPHeaders             http.Header
 	WebsocketOptions        *WebsocketOptions
+	MaxResumePubInFlight    int // // 0 = no limit; otherwise this is the maximum simultaneous messages sent while resuming
+	Dialer                  *net.Dialer
+	CustomOpenConnectionFn  OpenConnectionFunc
+	AutoAckDisabled         bool
 }
 
 // NewClientOptions will create a new ClientClientOptions type with some
@@ -129,6 +146,9 @@ func NewClientOptions() *ClientOptions {
 		ResumeSubs:              false,
 		HTTPHeaders:             make(map[string][]string),
 		WebsocketOptions:        &WebsocketOptions{},
+		Dialer:                  &net.Dialer{Timeout: 30 * time.Second},
+		CustomOpenConnectionFn:  nil,
+		AutoAckDisabled:         false,
 	}
 	return o
 }
@@ -347,6 +367,7 @@ func (o *ClientOptions) SetWriteTimeout(t time.Duration) *ClientOptions {
 // Default 30 seconds. Currently only operational on TCP/TLS connections.
 func (o *ClientOptions) SetConnectTimeout(t time.Duration) *ClientOptions {
 	o.ConnectTimeout = t
+	o.Dialer.Timeout = t
 	return o
 }
 
@@ -399,5 +420,38 @@ func (o *ClientOptions) SetHTTPHeaders(h http.Header) *ClientOptions {
 // SetWebsocketOptions sets the additional websocket options used in a WebSocket connection
 func (o *ClientOptions) SetWebsocketOptions(w *WebsocketOptions) *ClientOptions {
 	o.WebsocketOptions = w
+	return o
+}
+
+// SetMaxResumePubInFlight sets the maximum simultaneous publish messages that will be sent while resuming. Note that
+// this only applies to messages coming from the store (so additional sends may push us over the limit)
+// Note that the connect token will not be flagged as complete until all messages have been sent from the
+// store. If broker does not respond to messages then resume may not complete.
+// This option was put in place because resuming after downtime can saturate low capacity links.
+func (o *ClientOptions) SetMaxResumePubInFlight(MaxResumePubInFlight int) *ClientOptions {
+	o.MaxResumePubInFlight = MaxResumePubInFlight
+	return o
+}
+
+// SetDialer sets the tcp dialer options used in a tcp connection
+func (o *ClientOptions) SetDialer(dialer *net.Dialer) *ClientOptions {
+	o.Dialer = dialer
+	return o
+}
+
+// SetCustomOpenConnectionFn replaces the inbuilt function that establishes a network connection with a custom function.
+// The passed in function should return an open `net.Conn` or an error (see the existing openConnection function for an example)
+// It enables custom networking types in addition to the defaults (tcp, tls, websockets...)
+func (o *ClientOptions) SetCustomOpenConnectionFn(customOpenConnectionFn OpenConnectionFunc) *ClientOptions {
+	if customOpenConnectionFn != nil {
+		o.CustomOpenConnectionFn = customOpenConnectionFn
+	}
+	return o
+}
+
+// SetAutoAckDisabled enables or disables the Automated Acking of Messages received by the handler.
+//	By default it is set to false. Setting it to true will disable the auto-ack globally.
+func (o *ClientOptions) SetAutoAckDisabled(autoAckDisabled bool) *ClientOptions {
+	o.AutoAckDisabled = autoAckDisabled
 	return o
 }

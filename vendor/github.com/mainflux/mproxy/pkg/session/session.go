@@ -2,11 +2,12 @@ package session
 
 import (
 	"crypto/x509"
+	"errors"
+	"io"
 	"net"
 
 	"github.com/eclipse/paho.mqtt.golang/packets"
-	"github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/mainflux/mproxy/pkg/logger"
 )
 
 const (
@@ -15,8 +16,8 @@ const (
 )
 
 var (
-	errBroker = errors.New("failed proxying from MQTT client to MQTT broker")
-	errClient = errors.New("failed proxying from MQTT broker to MQTT client")
+	errBroker = "failed proxying from MQTT client to MQTT broker"
+	errClient = "failed proxying from MQTT broker to MQTT client"
 )
 
 type direction int
@@ -129,11 +130,14 @@ func (s *Session) notify(pkt packets.ControlPacket) {
 }
 
 func wrap(err error, dir direction) error {
+	if err == io.EOF {
+		return err
+	}
 	switch dir {
 	case up:
-		return errors.Wrap(errClient, err)
+		return errors.New(errClient + err.Error())
 	case down:
-		return errors.Wrap(errBroker, err)
+		return errors.New(errBroker + err.Error())
 	default:
 		return err
 	}

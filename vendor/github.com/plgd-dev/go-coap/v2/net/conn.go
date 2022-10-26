@@ -63,11 +63,11 @@ func (c *Conn) handshake(ctx context.Context) error {
 		if err == nil {
 			return nil
 		}
-		errClose := c.Close()
-		if errClose == nil {
+		errC := c.Close()
+		if errC == nil {
 			return err
 		}
-		return fmt.Errorf("%v", []error{err, errClose})
+		return fmt.Errorf("%v", []error{err, errC})
 	}
 	return nil
 }

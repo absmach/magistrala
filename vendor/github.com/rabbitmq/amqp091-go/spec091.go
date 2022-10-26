@@ -552,6 +552,66 @@ func (msg *connectionUnblocked) read(r io.Reader) (err error) {
 	return
 }
 
+type connectionUpdateSecret struct {
+	NewSecret string
+	Reason    string
+}
+
+func (msg *connectionUpdateSecret) id() (uint16, uint16) {
+	return 10, 70
+}
+
+func (msg *connectionUpdateSecret) wait() bool {
+	return true
+}
+
+func (msg *connectionUpdateSecret) write(w io.Writer) (err error) {
+
+	if err = writeLongstr(w, msg.NewSecret); err != nil {
+		return
+	}
+
+	if err = writeShortstr(w, msg.Reason); err != nil {
+		return
+	}
+
+	return
+}
+
+func (msg *connectionUpdateSecret) read(r io.Reader) (err error) {
+
+	if msg.NewSecret, err = readLongstr(r); err != nil {
+		return
+	}
+
+	if msg.Reason, err = readShortstr(r); err != nil {
+		return
+	}
+
+	return
+}
+
+type connectionUpdateSecretOk struct {
+}
+
+func (msg *connectionUpdateSecretOk) id() (uint16, uint16) {
+	return 10, 71
+}
+
+func (msg *connectionUpdateSecretOk) wait() bool {
+	return true
+}
+
+func (msg *connectionUpdateSecretOk) write(w io.Writer) (err error) {
+
+	return
+}
+
+func (msg *connectionUpdateSecretOk) read(r io.Reader) (err error) {
+
+	return
+}
+
 type channelOpen struct {
 	reserved1 string
 }
@@ -2847,6 +2907,22 @@ func (r *reader) parseMethodFrame(channel uint16, size uint32) (f frame, err err
 		case 61: // connection unblocked
 			//fmt.Println("NextMethod: class:10 method:61")
 			method := &connectionUnblocked{}
+			if err = method.read(r.r); err != nil {
+				return
+			}
+			mf.Method = method
+
+		case 70: // connection update-secret
+			//fmt.Println("NextMethod: class:10 method:70")
+			method := &connectionUpdateSecret{}
+			if err = method.read(r.r); err != nil {
+				return
+			}
+			mf.Method = method
+
+		case 71: // connection update-secret-ok
+			//fmt.Println("NextMethod: class:10 method:71")
+			method := &connectionUpdateSecretOk{}
 			if err = method.read(r.r); err != nil {
 				return
 			}

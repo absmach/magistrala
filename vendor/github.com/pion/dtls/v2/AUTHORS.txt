@@ -27,10 +27,12 @@ Jim Wert <jimwert@gmail.com>
 jinleileiking <jinleileiking@gmail.com>
 Jozef Kralik <jojo.lwin@gmail.com>
 Julien Salleyron <julien.salleyron@gmail.com>
+Juliusz Chroboczek <jch@irif.fr>
 Kegan Dougal <kegan@matrix.org>
 Lander Noterman <lander.noterman@basalte.be>
 Len <len@hpcnt.com>
 Lukas Lihotzki <lukas@lihotzki.de>
+ManuelBk <26275612+ManuelBk@users.noreply.github.com>
 Michael Zabka <zabka.michael@gmail.com>
 Michiel De Backker <mail@backkem.me>
 Robert Eperjesi <eperjesi@uber.com>

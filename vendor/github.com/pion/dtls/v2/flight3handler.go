@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 
+	"github.com/pion/dtls/v2/internal/ciphersuite/types"
 	"github.com/pion/dtls/v2/pkg/crypto/elliptic"
 	"github.com/pion/dtls/v2/pkg/crypto/prf"
 	"github.com/pion/dtls/v2/pkg/protocol"
@@ -17,7 +18,7 @@ func flight3Parse(ctx context.Context, c flightConn, state *State, cache *handsh
 	// Clients may receive multiple HelloVerifyRequest messages with different cookies.
 	// Clients SHOULD handle this by sending a new ClientHello with a cookie in response
 	// to the new HelloVerifyRequest. RFC 6347 Section 4.2.1
-	seq, msgs, ok := cache.fullPullMap(state.handshakeRecvSequence,
+	seq, msgs, ok := cache.fullPullMap(state.handshakeRecvSequence, state.cipherSuite,
 		handshakeCachePullRule{handshake.TypeHelloVerifyRequest, cfg.initialEpoch, false, true},
 	)
 	if ok {
@@ -33,7 +34,7 @@ func flight3Parse(ctx context.Context, c flightConn, state *State, cache *handsh
 		}
 	}
 
-	_, msgs, ok = cache.fullPullMap(state.handshakeRecvSequence,
+	_, msgs, ok = cache.fullPullMap(state.handshakeRecvSequence, state.cipherSuite,
 		handshakeCachePullRule{handshake.TypeServerHello, cfg.initialEpoch, false, false},
 	)
 	if !ok {
@@ -106,12 +107,12 @@ func flight3Parse(ctx context.Context, c flightConn, state *State, cache *handsh
 	}
 
 	if cfg.localPSKCallback != nil {
-		seq, msgs, ok = cache.fullPullMap(state.handshakeRecvSequence+1,
+		seq, msgs, ok = cache.fullPullMap(state.handshakeRecvSequence+1, state.cipherSuite,
 			handshakeCachePullRule{handshake.TypeServerKeyExchange, cfg.initialEpoch, false, true},
 			handshakeCachePullRule{handshake.TypeServerHelloDone, cfg.initialEpoch, false, false},
 		)
 	} else {
-		seq, msgs, ok = cache.fullPullMap(state.handshakeRecvSequence+1,
+		seq, msgs, ok = cache.fullPullMap(state.handshakeRecvSequence+1, state.cipherSuite,
 			handshakeCachePullRule{handshake.TypeCertificate, cfg.initialEpoch, false, true},
 			handshakeCachePullRule{handshake.TypeServerKeyExchange, cfg.initialEpoch, false, false},
 			handshakeCachePullRule{handshake.TypeCertificateRequest, cfg.initialEpoch, false, true},
@@ -154,7 +155,7 @@ func handleResumption(ctx context.Context, c flightConn, state *State, cache *ha
 		return 0, &alert.Alert{Level: alert.Fatal, Description: alert.InternalError}, err
 	}
 
-	_, msgs, ok := cache.fullPullMap(state.handshakeRecvSequence+1,
+	_, msgs, ok := cache.fullPullMap(state.handshakeRecvSequence+1, state.cipherSuite,
 		handshakeCachePullRule{handshake.TypeFinished, cfg.initialEpoch + 1, false, false},
 	)
 	if !ok {
@@ -187,13 +188,29 @@ func handleResumption(ctx context.Context, c flightConn, state *State, cache *ha
 
 func handleServerKeyExchange(_ flightConn, state *State, cfg *handshakeConfig, h *handshake.MessageServerKeyExchange) (*alert.Alert, error) {
 	var err error
+	if state.cipherSuite == nil {
+		return &alert.Alert{Level: alert.Fatal, Description: alert.InsufficientSecurity}, errInvalidCipherSuite
+	}
 	if cfg.localPSKCallback != nil {
 		var psk []byte
 		if psk, err = cfg.localPSKCallback(h.IdentityHint); err != nil {
 			return &alert.Alert{Level: alert.Fatal, Description: alert.InternalError}, err
 		}
 		state.IdentityHint = h.IdentityHint
-		state.preMasterSecret = prf.PSKPreMasterSecret(psk)
+		switch state.cipherSuite.KeyExchangeAlgorithm() {
+		case types.KeyExchangeAlgorithmPsk:
+			state.preMasterSecret = prf.PSKPreMasterSecret(psk)
+		case (types.KeyExchangeAlgorithmEcdhe | types.KeyExchangeAlgorithmPsk):
+			if state.localKeypair, err = elliptic.GenerateKeypair(h.NamedCurve); err != nil {
+				return &alert.Alert{Level: alert.Fatal, Description: alert.InternalError}, err
+			}
+			state.preMasterSecret, err = prf.EcdhePSKPreMasterSecret(psk, h.PublicKey, state.localKeypair.PrivateKey, state.localKeypair.Curve)
+			if err != nil {
+				return &alert.Alert{Level: alert.Fatal, Description: alert.InternalError}, err
+			}
+		default:
+			return &alert.Alert{Level: alert.Fatal, Description: alert.InsufficientSecurity}, errInvalidCipherSuite
+		}
 	} else {
 		if state.localKeypair, err = elliptic.GenerateKeypair(h.NamedCurve); err != nil {
 			return &alert.Alert{Level: alert.Fatal, Description: alert.InternalError}, err
@@ -204,7 +221,7 @@ func handleServerKeyExchange(_ flightConn, state *State, cfg *handshakeConfig, h
 		}
 	}
 
-	return nil, nil
+	return nil, nil //nolint:nilnil
 }
 
 func flight3Generate(c flightConn, state *State, cache *handshakeCache, cfg *handshakeConfig) ([]*packet, *alert.Alert, error) {
@@ -216,7 +233,7 @@ func flight3Generate(c flightConn, state *State, cache *handshakeCache, cfg *han
 			RenegotiatedConnection: 0,
 		},
 	}
-	if cfg.localPSKCallback == nil {
+	if state.namedCurve != 0 {
 		extensions = append(extensions, []extension.Extension{
 			&extension.SupportedEllipticCurves{
 				EllipticCurves: []elliptic.Curve{elliptic.X25519, elliptic.P256, elliptic.P384},

@@ -155,8 +155,10 @@ func (r *Message) String() string {
 }
 
 type Pool struct {
-	messagePool           sync.Pool
+	// This field needs to be the first in the struct to ensure proper word alignment on 32-bit platforms.
+	// See: https://golang.org/pkg/sync/atomic/#pkg-note-BUG
 	currentMessagesInPool int64
+	messagePool           sync.Pool
 	maxNumMessages        uint32
 	maxMessageBufferSize  uint16
 }

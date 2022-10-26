@@ -74,6 +74,34 @@ func PSKPreMasterSecret(psk []byte) []byte {
 	return out
 }
 
+// EcdhePSKPreMasterSecret implements TLS 1.2 Premaster Secret generation given a psk, a keypair and a curve
+//
+// https://datatracker.ietf.org/doc/html/rfc5489#section-2
+func EcdhePSKPreMasterSecret(psk, publicKey, privateKey []byte, curve elliptic.Curve) ([]byte, error) {
+	preMasterSecret, err := PreMasterSecret(publicKey, privateKey, curve)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]byte, 2+len(preMasterSecret)+2+len(psk))
+
+	// write preMasterSecret length
+	offset := 0
+	binary.BigEndian.PutUint16(out[offset:], uint16(len(preMasterSecret)))
+	offset += 2
+
+	// write preMasterSecret
+	copy(out[offset:], preMasterSecret)
+	offset += len(preMasterSecret)
+
+	// write psk length
+	binary.BigEndian.PutUint16(out[offset:], uint16(len(psk)))
+	offset += 2
+
+	// write psk
+	copy(out[offset:], psk)
+	return out, nil
+}
+
 // PreMasterSecret implements TLS 1.2 Premaster Secret generation given a keypair and a curve
 func PreMasterSecret(publicKey, privateKey []byte, curve elliptic.Curve) ([]byte, error) {
 	switch curve {

@@ -36,7 +36,7 @@ type ErrorFunc = func(error)
 
 type GoPoolFunc = func(func()) error
 
-type BlockwiseFactoryFunc = func(getSendedRequest func(token message.Token) (blockwise.Message, bool)) *blockwise.BlockWise
+type BlockwiseFactoryFunc = func(getSentRequest func(token message.Token) (blockwise.Message, bool)) *blockwise.BlockWise
 
 type OnNewClientConnFunc = func(cc *client.ClientConn)
 
@@ -146,7 +146,7 @@ func NewServer(opt ...ServerOption) *Server {
 
 	if opts.errors == nil {
 		opts.errors = func(error) {
-			// NO-OP
+			// default no-op
 		}
 	}
 
@@ -258,16 +258,14 @@ func (s *Server) Serve(l *coapNet.UDPConn) error {
 			case <-s.ctx.Done():
 				return nil
 			default:
+				if coapNet.IsCancelOrCloseError(err) {
+					return nil
+				}
 				return err
 			}
 		}
 		buf = buf[:n]
-		cc, created := s.getOrCreateClientConn(l, raddr)
-		if created {
-			if s.onNewClientConn != nil {
-				s.onNewClientConn(cc)
-			}
-		}
+		cc := s.getClientConn(l, raddr)
 		err = cc.Process(buf)
 		if err != nil {
 			s.closeConnection(cc)
@@ -276,15 +274,19 @@ func (s *Server) Serve(l *coapNet.UDPConn) error {
 	}
 }
 
+func (s *Server) getListener() *coapNet.UDPConn {
+	s.listenMutex.Lock()
+	defer s.listenMutex.Unlock()
+	return s.listen
+}
+
 // Stop stops server without wait of ends Serve function.
 func (s *Server) Stop() {
 	s.cancel()
-	s.listenMutex.Lock()
-	l := s.listen
-	s.listenMutex.Unlock()
+	l := s.getListener()
 	if l != nil {
-		if errClose := l.Close(); errClose != nil {
-			s.errors(fmt.Errorf("cannot close listener: %w", errClose))
+		if errC := l.Close(); errC != nil {
+			s.errors(fmt.Errorf("cannot close listener: %w", errC))
 		}
 	}
 	s.closeSessions()
@@ -297,9 +299,8 @@ func (s *Server) closeSessions() {
 	s.connsMutex.Unlock()
 	for _, cc := range conns {
 		s.closeConnection(cc)
-		close := getClose(cc)
-		if close != nil {
-			close()
+		if closeFn := getClose(cc); closeFn != nil {
+			closeFn()
 		}
 	}
 }
@@ -333,9 +334,8 @@ func (s *Server) handleInactivityMonitors(now time.Time) {
 	for _, cc := range s.getClientConns() {
 		select {
 		case <-cc.Context().Done():
-			close := getClose(cc)
-			if close != nil {
-				close()
+			if closeFn := getClose(cc); closeFn != nil {
+				closeFn()
 			}
 			continue
 		default:
@@ -405,9 +405,10 @@ func (s *Server) getOrCreateClientConn(UDPConn *coapNet.UDPConn, raddr *net.UDPA
 			s.messagePool,
 		)
 		cc.SetContextValue(closeKey, func() {
-			if err := session.close(); err != nil {
+			if err := session.Close(); err != nil {
 				s.errors(fmt.Errorf("cannot close session: %w", err))
 			}
+			session.shutdown()
 		})
 		cc.AddOnClose(func() {
 			s.connsMutex.Lock()
@@ -417,4 +418,22 @@ func (s *Server) getOrCreateClientConn(UDPConn *coapNet.UDPConn, raddr *net.UDPA
 		s.conns[key] = cc
 	}
 	return cc, created
+}
+
+func (s *Server) getClientConn(l *coapNet.UDPConn, raddr *net.UDPAddr) *client.ClientConn {
+	cc, created := s.getOrCreateClientConn(l, raddr)
+	if created {
+		if s.onNewClientConn != nil {
+			s.onNewClientConn(cc)
+		}
+	}
+	return cc
+}
+
+func (s *Server) NewClientConn(addr *net.UDPAddr) (*client.ClientConn, error) {
+	l := s.getListener()
+	if l == nil {
+		return nil, fmt.Errorf("server is not running")
+	}
+	return s.getClientConn(l, addr), nil
 }

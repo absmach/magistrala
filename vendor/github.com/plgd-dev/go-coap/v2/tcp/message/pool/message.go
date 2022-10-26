@@ -97,8 +97,10 @@ func (r *Message) Marshal() ([]byte, error) {
 }
 
 type Pool struct {
-	messagePool           sync.Pool
+	// This field needs to be the first in the struct to ensure proper word alignment on 32-bit platforms.
+	// See: https://golang.org/pkg/sync/atomic/#pkg-note-BUG
 	currentMessagesInPool int64
+	messagePool           sync.Pool
 	maxNumMessages        uint32
 	maxMessageBufferSize  uint16
 }
@@ -148,11 +150,11 @@ func (p *Pool) ReleaseMessage(req *Message) {
 }
 
 // ConvertFrom converts common message to pool message.
-func (pool *Pool) ConvertFrom(m *message.Message) (*Message, error) {
+func (p *Pool) ConvertFrom(m *message.Message) (*Message, error) {
 	if m.Context == nil {
 		return nil, fmt.Errorf("invalid context")
 	}
-	r := pool.AcquireMessage(m.Context)
+	r := p.AcquireMessage(m.Context)
 	r.SetCode(m.Code)
 	r.ResetOptionsTo(m.Options)
 	r.SetBody(m.Body)

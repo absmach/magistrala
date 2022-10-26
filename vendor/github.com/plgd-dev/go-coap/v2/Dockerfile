@@ -1,4 +1,4 @@
-FROM ubuntu:20.04 AS build
+FROM ubuntu:22.04 AS build
 RUN apt-get update \
     && apt-get install -y gcc make git curl file
 RUN git clone https://github.com/udhos/update-golang.git \

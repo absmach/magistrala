@@ -43,7 +43,7 @@ The following are needed to run Mainflux:
 
 Developing Mainflux will also require:
 
-- [Go](https://golang.org/doc/install) (version 1.13.3)
+- [Go](https://golang.org/doc/install) (version 1.19.2)
 - [Protobuf](https://github.com/protocolbuffers/protobuf#protocol-compiler-installation) (version 3.6.1)
 
 ## Install

@@ -2,11 +2,8 @@ package dtls
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"io"
 	"net"
-	"strings"
 	"time"
 
 	"github.com/pion/dtls/v2"
@@ -27,7 +24,6 @@ var defaultDialOptions = func() dialOptions {
 	opts := dialOptions{
 		ctx:            context.Background(),
 		maxMessageSize: 64 * 1024,
-		heartBeat:      time.Millisecond * 100,
 		errors: func(err error) {
 			fmt.Println(err)
 		},
@@ -77,7 +73,6 @@ type dialOptions struct {
 	errors                         ErrorFunc
 	goPool                         GoPoolFunc
 	dialer                         *net.Dialer
-	heartBeat                      time.Duration
 	periodicRunner                 periodic.Func
 	messagePool                    *pool.Pool
 	blockwiseTransferTimeout       time.Duration
@@ -154,7 +149,9 @@ func Client(conn *dtls.Conn, opts ...DialOption) *client.ClientConn {
 		o.applyDial(&cfg)
 	}
 	if cfg.errors == nil {
-		cfg.errors = func(error) {}
+		cfg.errors = func(error) {
+			// default no-op
+		}
 	}
 	if cfg.createInactivityMonitor == nil {
 		cfg.createInactivityMonitor = func() inactivity.Monitor {
@@ -166,7 +163,7 @@ func Client(conn *dtls.Conn, opts ...DialOption) *client.ClientConn {
 	}
 	errorsFunc := cfg.errors
 	cfg.errors = func(err error) {
-		if errors.Is(err, context.Canceled) || errors.Is(err, io.EOF) || strings.Contains(err.Error(), "use of closed network connection") {
+		if coapNet.IsCancelOrCloseError(err) {
 			// this error was produced by cancellation context or closing connection.
 			return
 		}

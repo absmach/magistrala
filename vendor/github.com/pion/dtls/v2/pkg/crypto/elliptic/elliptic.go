@@ -68,7 +68,7 @@ func Curves() map[Curve]bool {
 
 // GenerateKeypair generates a keypair for the given Curve
 func GenerateKeypair(c Curve) (*Keypair, error) {
-	switch c { //nolint:golint
+	switch c { //nolint:revive
 	case X25519:
 		tmp := make([]byte, 32)
 		if _, err := rand.Read(tmp); err != nil {

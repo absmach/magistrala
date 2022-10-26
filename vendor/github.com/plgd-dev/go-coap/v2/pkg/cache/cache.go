@@ -46,7 +46,7 @@ func NewCache() *Cache {
 
 func (c *Cache) LoadOrStore(key interface{}, e *Element) (actual *Element, loaded bool) {
 	now := time.Now()
-	c.data.ReplaceWithFunc(key, func(oldValue interface{}, oldLoaded bool) (newValue interface{}, delete bool) {
+	c.data.ReplaceWithFunc(key, func(oldValue interface{}, oldLoaded bool) (newValue interface{}, deleteValue bool) {
 		if oldLoaded {
 			o := oldValue.(*Element)
 			if !o.IsExpired(now) {

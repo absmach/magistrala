@@ -2,16 +2,10 @@ package message
 
 import (
 	"encoding/binary"
+	"errors"
 
 	"github.com/plgd-dev/go-coap/v2/message"
 	"github.com/plgd-dev/go-coap/v2/message/codes"
-)
-
-const (
-	MESSAGE_LEN13_BASE = 13
-	MESSAGE_LEN14_BASE = 269
-	MESSAGE_LEN15_BASE = 65805
-	MESSAGE_MAX_LEN    = 0x7fff0000 // Large number that works in 32-bit builds.
 )
 
 // TcpMessage is a CoAP MessageBase that can encode itself for Message
@@ -34,7 +28,7 @@ func (m Message) Size() (int, error) {
 	size := 4 + len(m.Token)
 	payloadLen := len(m.Payload)
 	optionsLen, err := m.Options.Marshal(nil)
-	if err != message.ErrTooSmall {
+	if !errors.Is(err, message.ErrTooSmall) {
 		return -1, err
 	}
 	if payloadLen > 0 {
@@ -48,7 +42,7 @@ func (m Message) Size() (int, error) {
 func (m Message) Marshal() ([]byte, error) {
 	b := make([]byte, 1024)
 	l, err := m.MarshalTo(b)
-	if err == message.ErrTooSmall {
+	if errors.Is(err, message.ErrTooSmall) {
 		b = append(b[:0], make([]byte, l)...)
 		l, err = m.MarshalTo(b)
 	}
@@ -93,9 +87,9 @@ func (m Message) MarshalTo(buf []byte) (int, error) {
 	buf = buf[len(m.Token):]
 
 	optionsLen, err := m.Options.Marshal(buf)
-	switch err {
-	case nil:
-	case message.ErrTooSmall:
+	switch {
+	case err == nil:
+	case errors.Is(err, message.ErrTooSmall):
 		return size, err
 	default:
 		return -1, err

@@ -2,11 +2,12 @@ package message
 
 import (
 	"encoding/binary"
+	"errors"
 	"hash/crc64"
 	"io"
 )
 
-// GetETag calculate ETag from payload via CRC64
+// GetETag calculates ETag from payload via CRC64
 func GetETag(r io.ReadSeeker) ([]byte, error) {
 	if r == nil {
 		return make([]byte, 8), nil
@@ -23,12 +24,12 @@ func GetETag(r io.ReadSeeker) ([]byte, error) {
 	buf := make([]byte, 4096)
 	for {
 		bufR := buf
-		n, err := r.Read(bufR)
-		if err == io.EOF {
+		n, errR := r.Read(bufR)
+		if errors.Is(errR, io.EOF) {
 			break
 		}
-		if err != nil {
-			return nil, err
+		if errR != nil {
+			return nil, errR
 		}
 		bufR = bufR[:n]
 		c64.Write(bufR)

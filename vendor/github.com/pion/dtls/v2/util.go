@@ -11,7 +11,7 @@ func findMatchingSRTPProfile(a, b []SRTPProtectionProfile) (SRTPProtectionProfil
 	return 0, false
 }
 
-func findMatchingCipherSuite(a, b []CipherSuite) (CipherSuite, bool) { //nolint
+func findMatchingCipherSuite(a, b []CipherSuite) (CipherSuite, bool) {
 	for _, aSuite := range a {
 		for _, bSuite := range b {
 			if aSuite.ID() == bSuite.ID() {

@@ -3,6 +3,7 @@ package tcp
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"sync"
@@ -21,6 +22,10 @@ import (
 type EventFunc func()
 
 type Session struct {
+	// This field needs to be the first in the struct to ensure proper word alignment on 32-bit platforms.
+	// See: https://golang.org/pkg/sync/atomic/#pkg-note-BUG
+	sequence uint64
+
 	onClose []EventFunc
 
 	ctx atomic.Value
@@ -28,9 +33,6 @@ type Session struct {
 	inactivityMonitor inactivity.Monitor
 
 	errSendCSM error
-	// This field needs to be the first in the struct to ensure proper word alignment on 32-bit platforms.
-	// See: https://golang.org/pkg/sync/atomic/#pkg-note-BUG
-	sequence uint64
 
 	cancel context.CancelFunc
 
@@ -81,7 +83,9 @@ func NewSession(
 ) *Session {
 	ctx, cancel := context.WithCancel(ctx)
 	if errors == nil {
-		errors = func(error) {}
+		errors = func(error) {
+			// default no-op
+		}
 	}
 	if inactivityMonitor == nil {
 		inactivityMonitor = inactivity.NewNilMonitor()
@@ -145,12 +149,11 @@ func (s *Session) popOnClose() []EventFunc {
 	return tmp
 }
 
-func (s *Session) closeAndStop() error {
+func (s *Session) shutdown() {
 	defer close(s.done)
 	for _, f := range s.popOnClose() {
 		f()
 	}
-	return s.Close()
 }
 
 func (s *Session) Close() error {
@@ -184,13 +187,13 @@ func (s *Session) handleBlockwise(w *ResponseWriter, r *pool.Message) {
 		}
 		s.blockWise.Handle(&bwr, r, s.blockwiseSZX, s.maxMessageSize, func(bw blockwise.ResponseWriter, br blockwise.Message) {
 			h, err := s.tokenHandlerContainer.Pop(r.Token())
-			w := bw.(*bwResponseWriter).w
-			r := br.(*pool.Message)
+			rw := bw.(*bwResponseWriter).w
+			m := br.(*pool.Message)
 			if err == nil {
-				h(w, r)
+				h(rw, m)
 				return
 			}
-			s.handler(w, r)
+			s.handler(rw, m)
 		})
 		return
 	}
@@ -280,19 +283,39 @@ func (s *Session) processReq(req *pool.Message, cc *ClientConn, handler func(w *
 	if w.response.IsModified() {
 		err := s.WriteMessage(w.response)
 		if err != nil {
-			if errClose := s.Close(); errClose != nil {
-				s.errors(fmt.Errorf("cannot close connection: %w", errClose))
+			if errC := s.Close(); errC != nil {
+				s.errors(fmt.Errorf("cannot close connection: %w", errC))
 			}
 			s.errors(fmt.Errorf("cannot write response to %v: %w", s.connection.RemoteAddr(), err))
 		}
 	}
 }
 
+func seekBufferToNextMessage(buffer *bytes.Buffer, msgSize int) *bytes.Buffer {
+	if msgSize == buffer.Len() {
+		// buffer is empty so reset it
+		buffer.Reset()
+		return buffer
+	}
+	// rewind to next message
+	trimmed := 0
+	for trimmed != msgSize {
+		b := make([]byte, 4096)
+		max := 4096
+		if msgSize-trimmed < max {
+			max = msgSize - trimmed
+		}
+		v, _ := buffer.Read(b[:max])
+		trimmed += v
+	}
+	return buffer
+}
+
 func (s *Session) processBuffer(buffer *bytes.Buffer, cc *ClientConn) error {
 	for buffer.Len() > 0 {
 		var hdr coapTCP.MessageHeader
 		err := hdr.Unmarshal(buffer.Bytes())
-		if err == message.ErrShortRead {
+		if errors.Is(err, message.ErrShortRead) {
 			return nil
 		}
 		if hdr.TotalLen > s.maxMessageSize {
@@ -302,27 +325,12 @@ func (s *Session) processBuffer(buffer *bytes.Buffer, cc *ClientConn) error {
 			return nil
 		}
 		req := s.messagePool.AcquireMessage(s.Context())
-		readed, err := req.Unmarshal(buffer.Bytes()[:hdr.TotalLen])
+		read, err := req.Unmarshal(buffer.Bytes()[:hdr.TotalLen])
 		if err != nil {
 			s.messagePool.ReleaseMessage(req)
 			return fmt.Errorf("cannot unmarshal with header: %w", err)
 		}
-		if readed == buffer.Len() {
-			// buffer is empty so reset it
-			buffer.Reset()
-		} else {
-			// rewind to next message
-			trimmed := 0
-			for trimmed != readed {
-				b := make([]byte, 4096)
-				max := 4096
-				if readed-trimmed < max {
-					max = readed - trimmed
-				}
-				v, _ := buffer.Read(b[:max])
-				trimmed += v
-			}
-		}
+		buffer = seekBufferToNextMessage(buffer, read)
 		req.SetSequence(s.Sequence())
 		s.inactivityMonitor.Notify()
 		if s.handleSignals(req, cc) {
@@ -380,10 +388,11 @@ func shrinkBufferIfNecessary(buffer *bytes.Buffer, maxCap uint16) *bytes.Buffer 
 // Run reads and process requests from a connection, until the connection is not closed.
 func (s *Session) Run(cc *ClientConn) (err error) {
 	defer func() {
-		err1 := s.closeAndStop()
+		err1 := s.Close()
 		if err == nil {
 			err = err1
 		}
+		s.shutdown()
 	}()
 	if s.errSendCSM != nil {
 		return s.errSendCSM

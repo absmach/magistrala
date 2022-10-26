@@ -2,7 +2,7 @@ package net
 
 import "net"
 
-// A UDPOption sets options such as heartBeat, errors parameters, etc.
+// A UDPOption sets options such as errors parameters, etc.
 type UDPOption interface {
 	applyUDP(*udpConnOptions)
 }
@@ -36,11 +36,14 @@ const (
 	MulticastSpecificInterface MulticastInterfaceMode = 2
 )
 
+type InterfaceError = func(iface *net.Interface, err error)
+
 type MulticastOptions struct {
-	IFaceMode MulticastInterfaceMode
-	Iface     *net.Interface
-	Source    *net.IP
-	HopLimit  int
+	IFaceMode      MulticastInterfaceMode
+	Iface          *net.Interface
+	Source         *net.IP
+	HopLimit       int
+	InterfaceError InterfaceError
 }
 
 func (m *MulticastOptions) Apply(o MulticastOption) {
@@ -101,4 +104,17 @@ func (m MulticastSourceOpt) applyMC(o *MulticastOptions) {
 }
 func WithMulticastSource(source net.IP) MulticastOption {
 	return &MulticastSourceOpt{source: source}
+}
+
+type MulticastInterfaceErrorOpt struct {
+	interfaceError InterfaceError
+}
+
+func (m MulticastInterfaceErrorOpt) applyMC(o *MulticastOptions) {
+	o.InterfaceError = m.interfaceError
+}
+
+// WithMulticastInterfaceError sets the callback for interface errors. If it is set error is not propagated as result of WriteMulticast.
+func WithMulticastInterfaceError(interfaceError InterfaceError) MulticastOption {
+	return &MulticastInterfaceErrorOpt{interfaceError: interfaceError}
 }

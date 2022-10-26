@@ -1,6 +1,7 @@
 package pool
 
 import (
+	"errors"
 	"fmt"
 	"io"
 
@@ -19,8 +20,10 @@ type Message struct {
 	sequence        uint64
 }
 
+const valueBufferSize = 256
+
 func NewMessage() *Message {
-	valueBuffer := make([]byte, 256)
+	valueBuffer := make([]byte, valueBufferSize)
 	return &Message{
 		msg: message.Message{
 			Options: make(message.Options, 0, 16),
@@ -72,7 +75,7 @@ func (r *Message) SetToken(token message.Token) {
 
 func (r *Message) ResetOptionsTo(in message.Options) {
 	opts, used, err := r.msg.Options.ResetOptionsTo(r.valueBuffer, in)
-	if err == message.ErrTooSmall {
+	if errors.Is(err, message.ErrTooSmall) {
 		r.valueBuffer = append(r.valueBuffer, make([]byte, used)...)
 		opts, used, err = r.msg.Options.ResetOptionsTo(r.valueBuffer, in)
 	}
@@ -90,19 +93,38 @@ func (r *Message) Options() message.Options {
 	return r.msg.Options
 }
 
-func (r *Message) SetPath(p string) {
+// SetPath stores the given path within URI-Path options.
+//
+// The value is stored by the algorithm described in RFC7252 and
+// using the internal buffer. If the path is too long, but valid
+// (URI-Path segments must have maximal length of 255) the internal
+// buffer is expanded.
+// If the path is too long, but not valid then the function returns
+// ErrInvalidValueLength error.
+func (r *Message) SetPath(p string) error {
 	opts, used, err := r.msg.Options.SetPath(r.valueBuffer, p)
-
-	if err == message.ErrTooSmall {
-		r.valueBuffer = append(r.valueBuffer, make([]byte, used)...)
+	if errors.Is(err, message.ErrTooSmall) {
+		expandBy, errSize := message.GetPathBufferSize(p)
+		if errSize != nil {
+			return fmt.Errorf("cannot calculate buffer size for path: %w", errSize)
+		}
+		r.valueBuffer = append(r.valueBuffer, make([]byte, expandBy)...)
 		opts, used, err = r.msg.Options.SetPath(r.valueBuffer, p)
 	}
 	if err != nil {
-		panic(fmt.Errorf("cannot set path: %w", err))
+		return fmt.Errorf("cannot set path: %w", err)
 	}
 	r.msg.Options = opts
 	r.valueBuffer = r.valueBuffer[used:]
 	r.isModified = true
+	return nil
+}
+
+// MustSetPath calls SetPath and panics if it returns an error.
+func (r *Message) MustSetPath(p string) {
+	if err := r.SetPath(p); err != nil {
+		panic(err)
+	}
 }
 
 func (r *Message) Code() codes.Code {
@@ -114,12 +136,39 @@ func (r *Message) SetCode(code codes.Code) {
 	r.isModified = true
 }
 
-func (r *Message) SetETag(value []byte) {
-	r.SetOptionBytes(message.ETag, value)
+// AddETag appends value to existing ETags.
+//
+// Option definition:
+// 	- format: opaque, length: 1-8, repeatable
+func (r *Message) AddETag(value []byte) error {
+	if !message.VerifyOptLen(message.ETag, len(value)) {
+		return message.ErrInvalidValueLength
+	}
+	r.AddOptionBytes(message.ETag, value)
+	return nil
 }
 
-func (r *Message) GetETag() ([]byte, error) {
+// SetETag inserts/replaces ETag option(s).
+//
+// After a successful call only a single ETag value will remain.
+func (r *Message) SetETag(value []byte) error {
+	if !message.VerifyOptLen(message.ETag, len(value)) {
+		return message.ErrInvalidValueLength
+	}
+	r.SetOptionBytes(message.ETag, value)
+	return nil
+}
+
+// ETag returns first ETag value
+func (r *Message) ETag() ([]byte, error) {
 	return r.GetOptionBytes(message.ETag)
+}
+
+// ETags returns all ETag values
+//
+// Writes ETag values to output array, returns number of written values or error.
+func (r *Message) ETags(b [][]byte) (int, error) {
+	return r.GetOptionAllBytes(message.ETag, b)
 }
 
 func (r *Message) AddQuery(query string) {
@@ -132,7 +181,7 @@ func (r *Message) GetOptionUint32(id message.OptionID) (uint32, error) {
 
 func (r *Message) SetOptionString(opt message.OptionID, value string) {
 	opts, used, err := r.msg.Options.SetString(r.valueBuffer, opt, value)
-	if err == message.ErrTooSmall {
+	if errors.Is(err, message.ErrTooSmall) {
 		r.valueBuffer = append(r.valueBuffer, make([]byte, used)...)
 		opts, used, err = r.msg.Options.SetString(r.valueBuffer, opt, value)
 	}
@@ -146,7 +195,7 @@ func (r *Message) SetOptionString(opt message.OptionID, value string) {
 
 func (r *Message) AddOptionString(opt message.OptionID, value string) {
 	opts, used, err := r.msg.Options.AddString(r.valueBuffer, opt, value)
-	if err == message.ErrTooSmall {
+	if errors.Is(err, message.ErrTooSmall) {
 		r.valueBuffer = append(r.valueBuffer, make([]byte, used)...)
 		opts, used, err = r.msg.Options.AddString(r.valueBuffer, opt, value)
 	}
@@ -180,13 +229,19 @@ func (r *Message) SetOptionBytes(opt message.OptionID, value []byte) {
 	r.isModified = true
 }
 
+// GetOptionBytes gets bytes of the first option with given ID.
 func (r *Message) GetOptionBytes(id message.OptionID) ([]byte, error) {
 	return r.msg.Options.GetBytes(id)
 }
 
+// GetOptionAllBytes gets array of bytes of all options with given ID.
+func (r *Message) GetOptionAllBytes(id message.OptionID, b [][]byte) (int, error) {
+	return r.msg.Options.GetBytess(id, b)
+}
+
 func (r *Message) SetOptionUint32(opt message.OptionID, value uint32) {
 	opts, used, err := r.msg.Options.SetUint32(r.valueBuffer, opt, value)
-	if err == message.ErrTooSmall {
+	if errors.Is(err, message.ErrTooSmall) {
 		r.valueBuffer = append(r.valueBuffer, make([]byte, used)...)
 		opts, used, err = r.msg.Options.SetUint32(r.valueBuffer, opt, value)
 	}
@@ -200,7 +255,7 @@ func (r *Message) SetOptionUint32(opt message.OptionID, value uint32) {
 
 func (r *Message) AddOptionUint32(opt message.OptionID, value uint32) {
 	opts, used, err := r.msg.Options.AddUint32(r.valueBuffer, opt, value)
-	if err == message.ErrTooSmall {
+	if errors.Is(err, message.ErrTooSmall) {
 		r.valueBuffer = append(r.valueBuffer, make([]byte, used)...)
 		opts, used, err = r.msg.Options.AddUint32(r.valueBuffer, opt, value)
 	}
@@ -242,10 +297,6 @@ func (r *Message) SetAccept(contentFormat message.MediaType) {
 func (r *Message) Accept() (message.MediaType, error) {
 	v, err := r.GetOptionUint32(message.Accept)
 	return message.MediaType(v), err
-}
-
-func (r *Message) ETag() ([]byte, error) {
-	return r.GetOptionBytes(message.ETag)
 }
 
 func (r *Message) BodySize() (int64, error) {
@@ -328,7 +379,7 @@ func (r *Message) ReadBody() ([]byte, error) {
 		payload = make([]byte, size)
 	}
 	n, err := io.ReadFull(r.Body(), payload)
-	if (err == io.ErrUnexpectedEOF || err == io.EOF) && int64(n) == size {
+	if (errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, io.EOF)) && int64(n) == size {
 		err = nil
 	}
 	if err != nil {

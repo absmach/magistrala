@@ -109,6 +109,7 @@ func (r *Router) Match(path string, routeParams *RouteParams) (matchedRoute *Rou
 	if routeParams.Vars == nil {
 		routeParams.Vars = make(map[string]string)
 	}
+	routeParams.PathTemplate = matchedPattern
 	matchedRoute.regexMatcher.extractRouteParams(path, routeParams)
 
 	return

@@ -32,7 +32,6 @@ func NewMutexMap() *MutexMap {
 // This method will never return nil and Unlock() must be called
 // to release the lock when done.
 func (m *MutexMap) Lock(key interface{}) Unlocker {
-
 	// read or create entry for this key atomically
 	m.ml.Lock()
 	e, ok := m.ma[key]
@@ -51,7 +50,6 @@ func (m *MutexMap) Lock(key interface{}) Unlocker {
 
 // Unlock releases the lock for this entry.
 func (entry *mutexMapEntry) Unlock() {
-
 	m := entry.m
 
 	// decrement and if needed remove entry atomically
@@ -70,5 +68,4 @@ func (entry *mutexMapEntry) Unlock() {
 	// now that map stuff is handled, we unlock and let
 	// anything else waiting on this key through
 	e.el.Unlock()
-
 }

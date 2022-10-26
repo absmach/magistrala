@@ -2,6 +2,7 @@
 package handshake
 
 import (
+	"github.com/pion/dtls/v2/internal/ciphersuite/types"
 	"github.com/pion/dtls/v2/internal/util"
 	"github.com/pion/dtls/v2/pkg/protocol"
 )
@@ -70,6 +71,8 @@ type Message interface {
 type Handshake struct {
 	Header  Header
 	Message Message
+
+	KeyExchangeAlgorithm types.KeyExchangeAlgorithm
 }
 
 // ContentType returns what kind of content this message is carying
@@ -126,13 +129,13 @@ func (h *Handshake) Unmarshal(data []byte) error {
 	case TypeCertificate:
 		h.Message = &MessageCertificate{}
 	case TypeServerKeyExchange:
-		h.Message = &MessageServerKeyExchange{}
+		h.Message = &MessageServerKeyExchange{KeyExchangeAlgorithm: h.KeyExchangeAlgorithm}
 	case TypeCertificateRequest:
 		h.Message = &MessageCertificateRequest{}
 	case TypeServerHelloDone:
 		h.Message = &MessageServerHelloDone{}
 	case TypeClientKeyExchange:
-		h.Message = &MessageClientKeyExchange{}
+		h.Message = &MessageClientKeyExchange{KeyExchangeAlgorithm: h.KeyExchangeAlgorithm}
 	case TypeFinished:
 		h.Message = &MessageFinished{}
 	case TypeCertificateVerify:

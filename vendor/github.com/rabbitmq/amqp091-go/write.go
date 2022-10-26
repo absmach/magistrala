@@ -418,5 +418,5 @@ func writeTable(w io.Writer, table Table) (err error) {
 		}
 	}
 
-	return writeLongstr(w, string(buf.Bytes()))
+	return writeLongstr(w, buf.String())
 }

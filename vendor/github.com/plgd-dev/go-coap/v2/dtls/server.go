@@ -38,7 +38,7 @@ type ErrorFunc = func(error)
 
 type GoPoolFunc = func(func()) error
 
-type BlockwiseFactoryFunc = func(getSendedRequest func(token message.Token) (blockwise.Message, bool)) *blockwise.BlockWise
+type BlockwiseFactoryFunc = func(getSentRequest func(token message.Token) (blockwise.Message, bool)) *blockwise.BlockWise
 
 // OnNewClientConnFunc is the callback for new connections.
 //
@@ -68,7 +68,6 @@ var defaultServerOptions = func() serverOptions {
 		blockwiseSZX:                   blockwise.SZX1024,
 		blockwiseTransferTimeout:       time.Second * 5,
 		onNewClientConn:                func(cc *client.ClientConn, dtlsConn *dtls.Conn) {},
-		heartBeat:                      time.Millisecond * 100,
 		transmissionNStart:             time.Second,
 		transmissionAcknowledgeTimeout: time.Second * 2,
 		transmissionMaxRetransmit:      4,
@@ -101,7 +100,6 @@ type serverOptions struct {
 	getMID                         GetMIDFunc
 	blockwiseTransferTimeout       time.Duration
 	onNewClientConn                OnNewClientConnFunc
-	heartBeat                      time.Duration
 	transmissionNStart             time.Duration
 	transmissionAcknowledgeTimeout time.Duration
 	maxMessageSize                 uint32
@@ -128,7 +126,6 @@ type Server struct {
 
 	blockwiseTransferTimeout time.Duration
 	onNewClientConn          OnNewClientConnFunc
-	heartBeat                time.Duration
 
 	handler                        HandlerFunc
 	transmissionAcknowledgeTimeout time.Duration
@@ -152,7 +149,9 @@ func NewServer(opt ...ServerOption) *Server {
 
 	ctx, cancel := context.WithCancel(opts.ctx)
 	if opts.errors == nil {
-		opts.errors = func(error) {}
+		opts.errors = func(error) {
+			// default no-op
+		}
 	}
 
 	if opts.getMID == nil {
@@ -190,7 +189,6 @@ func NewServer(opt ...ServerOption) *Server {
 		blockwiseEnable:                opts.blockwiseEnable,
 		blockwiseTransferTimeout:       opts.blockwiseTransferTimeout,
 		onNewClientConn:                opts.onNewClientConn,
-		heartBeat:                      opts.heartBeat,
 		transmissionNStart:             opts.transmissionNStart,
 		transmissionAcknowledgeTimeout: opts.transmissionAcknowledgeTimeout,
 		transmissionMaxRetransmit:      opts.transmissionMaxRetransmit,
@@ -215,11 +213,11 @@ func (s *Server) checkAcceptError(err error) (bool, error) {
 	if err == nil {
 		return true, nil
 	}
-	switch err {
-	case coapNet.ErrListenerIsClosed:
+	switch {
+	case errors.Is(err, coapNet.ErrListenerIsClosed):
 		s.Stop()
 		return false, nil
-	case context.DeadlineExceeded, context.Canceled:
+	case errors.Is(err, context.DeadlineExceeded), errors.Is(err, context.Canceled):
 		select {
 		case <-s.ctx.Done():
 		default:
@@ -229,6 +227,15 @@ func (s *Server) checkAcceptError(err error) (bool, error) {
 		return false, nil
 	default:
 		return true, nil
+	}
+}
+
+func (s *Server) serveConnection(connections *connections.Connections, cc *client.ClientConn) {
+	connections.Store(cc)
+	defer connections.Delete(cc)
+
+	if err := cc.Run(); err != nil {
+		s.errors(fmt.Errorf("%v: %w", cc.RemoteAddr(), err))
 	}
 }
 
@@ -265,25 +272,21 @@ func (s *Server) Serve(l Listener) error {
 		if !ok {
 			return nil
 		}
-		if rw != nil {
-			wg.Add(1)
-			var cc *client.ClientConn
-			monitor := s.createInactivityMonitor()
-			cc = s.createClientConn(coapNet.NewConn(rw), monitor)
-			if s.onNewClientConn != nil {
-				dtlsConn := rw.(*dtls.Conn)
-				s.onNewClientConn(cc, dtlsConn)
-			}
-			go func() {
-				defer wg.Done()
-				connections.Store(cc)
-				defer connections.Delete(cc)
-				err := cc.Run()
-				if err != nil {
-					s.errors(fmt.Errorf("%v: %w", cc.RemoteAddr(), err))
-				}
-			}()
+		if rw == nil {
+			continue
 		}
+		wg.Add(1)
+		var cc *client.ClientConn
+		monitor := s.createInactivityMonitor()
+		cc = s.createClientConn(coapNet.NewConn(rw), monitor)
+		if s.onNewClientConn != nil {
+			dtlsConn := rw.(*dtls.Conn)
+			s.onNewClientConn(cc, dtlsConn)
+		}
+		go func() {
+			defer wg.Done()
+			s.serveConnection(connections, cc)
+		}()
 	}
 }
 

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"go.uber.org/atomic"
-
 	"golang.org/x/net/ipv4"
 	"golang.org/x/net/ipv6"
 )
@@ -166,18 +165,17 @@ func NewUDPConn(network string, c *net.UDPConn, opts ...UDPOption) *UDPConn {
 		o.applyUDP(&cfg)
 	}
 
-	var packetConn packetConn
-
+	var pc packetConn
 	if IsIPv6(c.LocalAddr().(*net.UDPAddr).IP) {
-		packetConn = newPacketConnIPv6(ipv6.NewPacketConn(c))
+		pc = newPacketConnIPv6(ipv6.NewPacketConn(c))
 	} else {
-		packetConn = newPacketConnIPv4(ipv4.NewPacketConn(c))
+		pc = newPacketConnIPv4(ipv4.NewPacketConn(c))
 	}
 
 	return &UDPConn{
 		network:    network,
 		connection: c,
-		packetConn: packetConn,
+		packetConn: pc,
 		errors:     cfg.errors,
 	}
 }
@@ -257,7 +255,6 @@ func filterAddressesByNetwork(network string, ifaceAddrs []net.Addr) []net.Addr 
 		filtered = append(filtered, srcAddr)
 	}
 	return filtered
-
 }
 
 func convAddrsToIps(ifaceAddrs []net.Addr) []net.IP {
@@ -303,7 +300,8 @@ func (c *UDPConn) writeMulticastWithInterface(ctx context.Context, raddr *net.UD
 	}
 	var errors []error
 	for _, ip := range convAddrsToIps(filterAddressesByNetwork(netType, ifaceAddrs)) {
-		opt.Source = &ip
+		ipAddr := ip
+		opt.Source = &ipAddr
 		err = c.writeToAddr(opt.Iface, opt.Source, opt.HopLimit, raddr, buffer)
 		if err != nil {
 			errors = append(errors, err)
@@ -337,6 +335,10 @@ func (c *UDPConn) writeMulticastToAllInterfaces(ctx context.Context, raddr *net.
 		specificOpt.IFaceMode = MulticastSpecificInterface
 		err = c.writeMulticastWithInterface(ctx, raddr, buffer, specificOpt)
 		if err != nil {
+			if opt.InterfaceError != nil {
+				opt.InterfaceError(&iface, err)
+				continue
+			}
 			errors = append(errors, err)
 		}
 	}
@@ -387,6 +389,10 @@ func (c *UDPConn) writeMulticast(ctx context.Context, raddr *net.UDPAddr, buffer
 	case MulticastSpecificInterface:
 		err := c.writeMulticastWithInterface(ctx, raddr, buffer, opt)
 		if err != nil {
+			if opt.InterfaceError != nil {
+				opt.InterfaceError(opt.Iface, err)
+				return nil
+			}
 			return fmt.Errorf("cannot write multicast to %v: %w", opt.Iface.Name, err)
 		}
 	}

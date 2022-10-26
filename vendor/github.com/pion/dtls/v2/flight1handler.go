@@ -14,7 +14,7 @@ import (
 func flight1Parse(ctx context.Context, c flightConn, state *State, cache *handshakeCache, cfg *handshakeConfig) (flightVal, *alert.Alert, error) {
 	// HelloVerifyRequest can be skipped by the server,
 	// so allow ServerHello during flight1 also
-	seq, msgs, ok := cache.fullPullMap(state.handshakeRecvSequence,
+	seq, msgs, ok := cache.fullPullMap(state.handshakeRecvSequence, state.cipherSuite,
 		handshakeCachePullRule{handshake.TypeHelloVerifyRequest, cfg.initialEpoch, false, true},
 		handshakeCachePullRule{handshake.TypeServerHello, cfg.initialEpoch, false, true},
 	)
@@ -62,7 +62,16 @@ func flight1Generate(c flightConn, state *State, cache *handshakeCache, cfg *han
 			RenegotiatedConnection: 0,
 		},
 	}
-	if cfg.localPSKCallback == nil {
+
+	var setEllipticCurveCryptographyClientHelloExtensions bool
+	for _, c := range cfg.localCipherSuites {
+		if c.ECC() {
+			setEllipticCurveCryptographyClientHelloExtensions = true
+			break
+		}
+	}
+
+	if setEllipticCurveCryptographyClientHelloExtensions {
 		extensions = append(extensions, []extension.Extension{
 			&extension.SupportedEllipticCurves{
 				EllipticCurves: []elliptic.Curve{elliptic.X25519, elliptic.P256, elliptic.P384},

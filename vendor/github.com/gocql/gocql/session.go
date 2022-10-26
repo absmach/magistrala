@@ -41,6 +41,7 @@ type Session struct {
 	batchObserver       BatchObserver
 	connectObserver     ConnectObserver
 	frameObserver       FrameHeaderObserver
+	streamObserver      StreamObserver
 	hostSource          *ringDescriber
 	stmtsLRU            *preparedLRU
 
@@ -161,6 +162,7 @@ func NewSession(cfg ClusterConfig) (*Session, error) {
 	s.batchObserver = cfg.BatchObserver
 	s.connectObserver = cfg.ConnectObserver
 	s.frameObserver = cfg.FrameHeaderObserver
+	s.streamObserver = cfg.StreamObserver
 
 	//Check the TLS Config before trying to connect to anything external
 	connCfg, err := connConfig(&s.cfg)
@@ -224,13 +226,24 @@ func (s *Session) init() error {
 					filteredHosts = append(filteredHosts, host)
 				}
 			}
-			hosts = append(hosts, filteredHosts...)
+
+			hosts = filteredHosts
+		}
+	}
+
+	for _, host := range hosts {
+		// In case when host lookup is disabled and when we are in unit tests,
+		// host are not discovered, and we are missing host ID information used
+		// by internal logic.
+		// Associate random UUIDs here with all hosts missing this information.
+		if len(host.HostID()) == 0 {
+			host.SetHostID(MustRandomUUID().String())
 		}
 	}
 
 	hostMap := make(map[string]*HostInfo, len(hosts))
 	for _, host := range hosts {
-		hostMap[host.ConnectAddress().String()] = host
+		hostMap[host.HostID()] = host
 	}
 
 	hosts = hosts[:0]
@@ -510,8 +523,9 @@ func (s *Session) executeQuery(qry *Query) (it *Iter) {
 
 func (s *Session) removeHost(h *HostInfo) {
 	s.policy.RemoveHost(h)
-	s.pool.removeHost(h.ConnectAddress())
-	s.ring.removeHost(h.ConnectAddress())
+	hostID := h.HostID()
+	s.pool.removeHost(hostID)
+	s.ring.removeHost(hostID)
 }
 
 // KeyspaceMetadata returns the schema metadata for the keyspace specified. Returns an error if the keyspace does not exist.
@@ -1533,7 +1547,10 @@ func (iter *Iter) Scan(dest ...interface{}) bool {
 // custom QueryHandlers running in your C* cluster.
 // See https://datastax.github.io/java-driver/manual/custom_payloads/
 func (iter *Iter) GetCustomPayload() map[string][]byte {
-	return iter.framer.customPayload
+	if iter.framer != nil {
+		return iter.framer.customPayload
+	}
+	return nil
 }
 
 // Warnings returns any warnings generated if given in the response from Cassandra.

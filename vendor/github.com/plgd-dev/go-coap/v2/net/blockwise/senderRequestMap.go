@@ -29,7 +29,7 @@ func setTypeFrom(to Message, from Message) {
 	}
 }
 
-func (b *BlockWise) newSendRequestMessage(r Message, lock bool) *senderRequest {
+func (b *BlockWise) newSentRequestMessage(r Message, lock bool) *senderRequest {
 	req := b.acquireMessage(r.Context())
 	req.SetCode(r.Code())
 	req.SetToken(r.Token())
@@ -44,7 +44,6 @@ func (b *BlockWise) newSendRequestMessage(r Message, lock bool) *senderRequest {
 		lock: lock,
 	}
 	return data
-
 }
 
 type senderRequestMap struct {
@@ -73,7 +72,7 @@ func (m *senderRequestMap) store(req *senderRequest) error {
 			return req
 		})
 		if err != nil {
-			return fmt.Errorf("cannot lock message: %v", err)
+			return fmt.Errorf("cannot lock message: %w", err)
 		}
 		if !loaded {
 			m.byToken.Store(req.Token().Hash(), req)
@@ -82,7 +81,7 @@ func (m *senderRequestMap) store(req *senderRequest) error {
 		p := v.(*senderRequest)
 		err = p.Acquire(req.Context(), 1)
 		if err != nil {
-			return fmt.Errorf("cannot lock message: %v", err)
+			return fmt.Errorf("cannot lock message: %w", err)
 		}
 		p.Release(1)
 	}

@@ -2,16 +2,17 @@ package message
 
 import (
 	"encoding/binary"
+	"errors"
 
 	"github.com/plgd-dev/go-coap/v2/message"
 	"github.com/plgd-dev/go-coap/v2/message/codes"
 )
 
 const (
-	MESSAGE_LEN13_BASE = 13
-	MESSAGE_LEN14_BASE = 269
-	MESSAGE_LEN15_BASE = 65805
-	MESSAGE_MAX_LEN    = 0x7fff0000 // Large number that works in 32-bit builds.
+	messageLen13Base = 13
+	messageLen14Base = 269
+	messageLen15Base = 65805
+	messageMaxLen    = 0x7fff0000 // Large number that works in 32-bit builds
 )
 
 // Signal CSM Option IDs
@@ -103,7 +104,7 @@ type Message struct {
 
 func (m Message) Size() (int, error) {
 	size, err := m.MarshalTo(nil)
-	if err == message.ErrTooSmall {
+	if errors.Is(err, message.ErrTooSmall) {
 		err = nil
 	}
 	return size, err
@@ -112,7 +113,7 @@ func (m Message) Size() (int, error) {
 func (m Message) Marshal() ([]byte, error) {
 	b := make([]byte, 1024)
 	l, err := m.MarshalTo(b)
-	if err == message.ErrTooSmall {
+	if errors.Is(err, message.ErrTooSmall) {
 		b = append(b[:0], make([]byte, l)...)
 		l, err = m.MarshalTo(b)
 	}
@@ -156,27 +157,27 @@ func (m Message) MarshalTo(buf []byte) (int, error) {
 		payloadLen++
 	}
 	optionsLen, err := m.Options.Marshal(nil)
-	if err != message.ErrTooSmall {
+	if !errors.Is(err, message.ErrTooSmall) {
 		return -1, err
 	}
 	bufLen := payloadLen + optionsLen
 	var lenNib uint8
 	var extLenBytes []byte
 
-	if bufLen < MESSAGE_LEN13_BASE {
+	if bufLen < messageLen13Base {
 		lenNib = uint8(bufLen)
-	} else if bufLen < MESSAGE_LEN14_BASE {
+	} else if bufLen < messageLen14Base {
 		lenNib = 13
-		extLen := bufLen - MESSAGE_LEN13_BASE
+		extLen := bufLen - messageLen13Base
 		extLenBytes = []byte{uint8(extLen)}
-	} else if bufLen < MESSAGE_LEN15_BASE {
+	} else if bufLen < messageLen15Base {
 		lenNib = 14
-		extLen := bufLen - MESSAGE_LEN14_BASE
+		extLen := bufLen - messageLen14Base
 		extLenBytes = make([]byte, 2)
 		binary.BigEndian.PutUint16(extLenBytes, uint16(extLen))
-	} else if bufLen < MESSAGE_MAX_LEN {
+	} else if bufLen < messageMaxLen {
 		lenNib = 15
-		extLen := bufLen - MESSAGE_LEN15_BASE
+		extLen := bufLen - messageLen15Base
 		extLenBytes = make([]byte, 4)
 		binary.BigEndian.PutUint32(extLenBytes, uint32(extLen))
 	}
@@ -214,9 +215,9 @@ func (m Message) MarshalTo(buf []byte) (int, error) {
 
 	copy(buf, hdr[:hdrLen])
 	optionsLen, err = m.Options.Marshal(buf[hdrLen:])
-	switch err {
-	case nil:
-	case message.ErrTooSmall:
+	switch {
+	case err == nil:
+	case errors.Is(err, message.ErrTooSmall):
 		return bufLen, err
 	default:
 		return -1, err
@@ -253,7 +254,7 @@ func (i *MessageHeader) Unmarshal(data []byte) error {
 
 	var opLen int
 	switch {
-	case lenNib < MESSAGE_LEN13_BASE:
+	case lenNib < messageLen13Base:
 		opLen = int(lenNib)
 	case lenNib == 13:
 		if len(data) < 1 {
@@ -262,7 +263,7 @@ func (i *MessageHeader) Unmarshal(data []byte) error {
 		extLen := data[0]
 		data = data[1:]
 		hdrOff++
-		opLen = MESSAGE_LEN13_BASE + int(extLen)
+		opLen = messageLen13Base + int(extLen)
 	case lenNib == 14:
 		if len(data) < 2 {
 			return message.ErrShortRead
@@ -270,7 +271,7 @@ func (i *MessageHeader) Unmarshal(data []byte) error {
 		extLen := binary.BigEndian.Uint16(data)
 		data = data[2:]
 		hdrOff += 2
-		opLen = MESSAGE_LEN14_BASE + int(extLen)
+		opLen = messageLen14Base + int(extLen)
 	case lenNib == 15:
 		if len(data) < 4 {
 			return message.ErrShortRead
@@ -278,7 +279,7 @@ func (i *MessageHeader) Unmarshal(data []byte) error {
 		extLen := binary.BigEndian.Uint32(data)
 		data = data[4:]
 		hdrOff += 4
-		opLen = MESSAGE_LEN15_BASE + int(extLen)
+		opLen = messageLen15Base + int(extLen)
 	}
 
 	i.TotalLen = hdrOff + 1 + uint32(tkl) + uint32(opLen)
@@ -304,7 +305,7 @@ func (i *MessageHeader) Unmarshal(data []byte) error {
 func (m *Message) UnmarshalWithHeader(header MessageHeader, data []byte) (int, error) {
 	optionDefs := message.CoapOptionDefs
 	processed := header.HeaderLen
-	switch codes.Code(header.Code) {
+	switch header.Code {
 	case codes.CSM:
 		optionDefs = signalCSMOptionDefs
 	case codes.Ping, codes.Pong:

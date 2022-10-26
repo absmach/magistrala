@@ -137,15 +137,36 @@ func (o *Observation) wantBeNotified(r *pool.Message) bool {
 	return false
 }
 
-// Observe subscribes for every change of resource on path. It can return canceled observation and it happens when resource doesn't support observation.
-// This is detected when the first notification doesn't contains observe option.
-func (cc *ClientConn) Observe(ctx context.Context, path string, observeFunc func(msg *pool.Message), opts ...message.Option) (*Observation, error) {
-	req, err := NewGetRequest(ctx, cc.messagePool, path, opts...)
+// NewObserveRequest creates observe request.
+//
+// Use ctx to set timeout.
+func NewObserveRequest(ctx context.Context, messagePool *pool.Pool, path string, opts ...message.Option) (*pool.Message, error) {
+	req, err := NewGetRequest(ctx, messagePool, path, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create observe request: %w", err)
 	}
-	token := req.Token()
 	req.SetObserve(0)
+	return req, nil
+}
+
+// ObserveRequest subscribes for every change of resource on path. It can return canceled observation and it happens when resource doesn't support observation.
+// This is detected when the first notification doesn't contains observe option.
+func (cc *ClientConn) ObserveRequest(req *pool.Message, observeFunc func(req *pool.Message)) (*Observation, error) {
+	path, err := req.Path()
+	if err != nil {
+		return nil, fmt.Errorf("cannot get path: %w", err)
+	}
+	observe, err := req.Observe()
+	if err != nil {
+		return nil, fmt.Errorf("cannot get observe option: %w", err)
+	}
+	if observe != 0 {
+		return nil, fmt.Errorf("invalid value of observe(%v): expected 0", observe)
+	}
+	token := req.Token()
+	if len(token) == 0 {
+		return nil, fmt.Errorf("empty token")
+	}
 	respObservationChan := make(chan respObservationMessage, 1)
 	o := newObservation(token, path, cc, observeFunc, respObservationChan)
 
@@ -181,4 +202,14 @@ func (cc *ClientConn) Observe(ctx context.Context, path string, observeFunc func
 		}
 		return o, nil
 	}
+}
+
+// Observe subscribes for every change of resource on path. It can return canceled observation and it happens when resource doesn't support observation.
+// This is detected when the first notification doesn't contains observe option.
+func (cc *ClientConn) Observe(ctx context.Context, path string, observeFunc func(msg *pool.Message), opts ...message.Option) (*Observation, error) {
+	req, err := NewObserveRequest(ctx, cc.messagePool, path, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return cc.ObserveRequest(req, observeFunc)
 }

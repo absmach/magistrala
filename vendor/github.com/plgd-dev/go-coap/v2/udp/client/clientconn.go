@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -64,7 +65,7 @@ type ClientConn struct {
 	goPool           GoPoolFunc
 	errors           ErrorFunc
 	responseMsgCache *cache.Cache
-	msgIdMutex       *MutexMap
+	msgIDMutex       *MutexMap
 
 	tokenHandlerContainer *HandlerContainer
 	midHandlerContainer   *HandlerContainer
@@ -114,7 +115,9 @@ func NewClientConn(
 	messagePool *pool.Pool,
 ) *ClientConn {
 	if errors == nil {
-		errors = func(error) {}
+		errors = func(error) {
+			// default no-op
+		}
 	}
 	if getMID == nil {
 		getMID = udpMessage.GetMID
@@ -138,7 +141,7 @@ func NewClientConn(
 		midHandlerContainer:   NewHandlerContainer(),
 		goPool:                goPool,
 		errors:                errors,
-		msgIdMutex:            NewMutexMap(),
+		msgIDMutex:            NewMutexMap(),
 		responseMsgCache:      responseMsgCache,
 		inactivityMonitor:     inactivityMonitor,
 		messagePool:           messagePool,
@@ -155,7 +158,11 @@ func (cc *ClientConn) getMID() uint16 {
 
 // Close closes connection without waiting for the end of the Run function.
 func (cc *ClientConn) Close() error {
-	return cc.session.Close()
+	err := cc.session.Close()
+	if errors.Is(err, net.ErrClosed) {
+		return nil
+	}
+	return err
 }
 
 func (cc *ClientConn) do(req *pool.Message) (*pool.Message, error) {
@@ -301,7 +308,10 @@ func newCommonRequest(ctx context.Context, messagePool *pool.Pool, code codes.Co
 	req.SetCode(code)
 	req.SetToken(token)
 	req.ResetOptionsTo(opts)
-	req.SetPath(path)
+	if err := req.SetPath(path); err != nil {
+		messagePool.ReleaseMessage(req)
+		return nil, err
+	}
 	req.SetType(udpMessage.Confirmable)
 	return req, nil
 }
@@ -517,29 +527,29 @@ func (b *bwResponseWriter) RemoteAddr() net.Addr {
 	return b.w.cc.RemoteAddr()
 }
 
-func (cc *ClientConn) handleBW(w *ResponseWriter, r *pool.Message) {
+func (cc *ClientConn) handleBW(w *ResponseWriter, m *pool.Message) {
 	if cc.blockWise != nil {
 		bwr := bwResponseWriter{
 			w: w,
 		}
-		cc.blockWise.Handle(&bwr, r, cc.blockwiseSZX, cc.session.MaxMessageSize(), func(bw blockwise.ResponseWriter, br blockwise.Message) {
-			h, err := cc.tokenHandlerContainer.Pop(r.Token())
-			w := bw.(*bwResponseWriter).w
-			r := br.(*pool.Message)
+		cc.blockWise.Handle(&bwr, m, cc.blockwiseSZX, cc.session.MaxMessageSize(), func(bw blockwise.ResponseWriter, br blockwise.Message) {
+			h, err := cc.tokenHandlerContainer.Pop(m.Token())
+			rw := bw.(*bwResponseWriter).w
+			rm := br.(*pool.Message)
 			if err == nil {
-				h(w, r)
+				h(rw, rm)
 				return
 			}
-			cc.handler(w, r)
+			cc.handler(rw, rm)
 		})
 		return
 	}
-	h, err := cc.tokenHandlerContainer.Pop(r.Token())
+	h, err := cc.tokenHandlerContainer.Pop(m.Token())
 	if err == nil {
-		h(w, r)
+		h(w, m)
 		return
 	}
-	cc.handler(w, r)
+	cc.handler(w, m)
 }
 
 func (cc *ClientConn) handle(w *ResponseWriter, r *pool.Message) {
@@ -678,7 +688,7 @@ func (cc *ClientConn) processReq(req *pool.Message, w *ResponseWriter) error {
 
 	// The same message ID can not be handled concurrently
 	// for deduplication to work
-	l := cc.msgIdMutex.Lock(reqMid)
+	l := cc.msgIDMutex.Lock(reqMid)
 	defer l.Unlock()
 
 	if ok, err := cc.checkResponseCache(req, w); err != nil {
@@ -706,8 +716,8 @@ func (cc *ClientConn) Process(datagram []byte) error {
 		return err
 	}
 	closeConnection := func() {
-		if errClose := cc.Close(); errClose != nil {
-			cc.errors(fmt.Errorf("cannot close connection: %w", errClose))
+		if errC := cc.Close(); errC != nil {
+			cc.errors(fmt.Errorf("cannot close connection: %w", errC))
 		}
 	}
 	req.SetSequence(cc.Sequence())
@@ -725,20 +735,20 @@ func (cc *ClientConn) Process(datagram []byte) error {
 		defer func() {
 			cc.ReleaseMessage(w.response)
 		}()
-		err := cc.processReq(req, w)
-		if err != nil {
+		errP := cc.processReq(req, w)
+		if errP != nil {
 			closeConnection()
-			cc.errors(fmt.Errorf("cannot write response: %w", err))
+			cc.errors(fmt.Errorf("cannot write response: %w", errP))
 			return
 		}
 		if !w.response.IsModified() {
 			// nothing to send
 			return
 		}
-		err = cc.writeMessage(w.response)
-		if err != nil {
+		errW := cc.writeMessage(w.response)
+		if errW != nil {
 			closeConnection()
-			cc.errors(fmt.Errorf("cannot write response: %w", err))
+			cc.errors(fmt.Errorf("cannot write response: %w", errW))
 		}
 	})
 	if err != nil {

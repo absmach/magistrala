@@ -6,9 +6,8 @@ import (
 	"net"
 	"time"
 
-	"go.uber.org/atomic"
-
 	dtls "github.com/pion/dtls/v2"
+	"go.uber.org/atomic"
 )
 
 // DTLSListener is a DTLS listener that provides accept with context.

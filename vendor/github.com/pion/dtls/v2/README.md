@@ -12,8 +12,7 @@
   <a href="https://travis-ci.org/pion/dtls"><img src="https://travis-ci.org/pion/dtls.svg?branch=master" alt="Build Status"></a>
   <a href="https://pkg.go.dev/github.com/pion/dtls/v2"><img src="https://godoc.org/github.com/pion/dtls?status.svg" alt="GoDoc"></a>
   <a href="https://codecov.io/gh/pion/dtls"><img src="https://codecov.io/gh/pion/dtls/branch/master/graph/badge.svg" alt="Coverage Status"></a>
-  <a href="https://goreportcard.com/report/github.com/pion/dtls"><img src="https://goreportcard.com/badge/github.com/pion/dtls" alt="Go Report Card"></a>
-  <a href="https://www.codacy.com/app/Sean-Der/dtls"><img src="https://api.codacy.com/project/badge/Grade/18f4aec384894e6aac0b94effe51961d" alt="Codacy Badge"></a>
+  <a href="https://goreportcard.com/report/github.com/pion/dtls/v2"><img src="https://goreportcard.com/badge/github.com/pion/dtls/v2" alt="Go Report Card"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
 </p>
 <br>
@@ -44,6 +43,7 @@ We would love contributions that fall under the 'Planned Features' and any bug f
 #### Supported ciphers
 
 ##### ECDHE
+
 * TLS_ECDHE_ECDSA_WITH_AES_128_CCM ([RFC 6655][rfc6655])
 * TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8 ([RFC 6655][rfc6655])
 * TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 ([RFC 5289][rfc5289])
@@ -54,15 +54,22 @@ We would love contributions that fall under the 'Planned Features' and any bug f
 * TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA ([RFC 8422][rfc8422])
 
 ##### PSK
+
 * TLS_PSK_WITH_AES_128_CCM ([RFC 6655][rfc6655])
 * TLS_PSK_WITH_AES_128_CCM_8 ([RFC 6655][rfc6655])
+* TLS_PSK_WITH_AES_256_CCM_8 ([RFC 6655][rfc6655])
 * TLS_PSK_WITH_AES_128_GCM_SHA256 ([RFC 5487][rfc5487])
 * TLS_PSK_WITH_AES_128_CBC_SHA256 ([RFC 5487][rfc5487])
+
+##### ECDHE & PSK
+
+* TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256 ([RFC 5489][rfc5489])
 
 [rfc5289]: https://tools.ietf.org/html/rfc5289
 [rfc8422]: https://tools.ietf.org/html/rfc8422
 [rfc6655]: https://tools.ietf.org/html/rfc6655
 [rfc5487]: https://tools.ietf.org/html/rfc5487
+[rfc5489]: https://tools.ietf.org/html/rfc5489
 
 #### Planned Features
 * Chacha20Poly1305

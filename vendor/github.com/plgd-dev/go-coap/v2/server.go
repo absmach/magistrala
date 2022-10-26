@@ -23,8 +23,8 @@ func ListenAndServe(network string, addr string, handler mux.Handler) (err error
 			return err
 		}
 		defer func() {
-			if errClose := l.Close(); errClose != nil && err == nil {
-				err = errClose
+			if errC := l.Close(); errC != nil && err == nil {
+				err = errC
 			}
 		}()
 		s := udp.NewServer(udp.WithMux(handler))
@@ -35,8 +35,8 @@ func ListenAndServe(network string, addr string, handler mux.Handler) (err error
 			return err
 		}
 		defer func() {
-			if errClose := l.Close(); errClose != nil && err == nil {
-				err = errClose
+			if errC := l.Close(); errC != nil && err == nil {
+				err = errC
 			}
 		}()
 		s := tcp.NewServer(tcp.WithMux(handler))
@@ -54,8 +54,8 @@ func ListenAndServeTCPTLS(network, addr string, config *tls.Config, handler mux.
 		return err
 	}
 	defer func() {
-		if errClose := l.Close(); errClose != nil && err == nil {
-			err = errClose
+		if errC := l.Close(); errC != nil && err == nil {
+			err = errC
 		}
 	}()
 	s := tcp.NewServer(tcp.WithMux(handler))
@@ -70,8 +70,8 @@ func ListenAndServeDTLS(network string, addr string, config *piondtls.Config, ha
 		return err
 	}
 	defer func() {
-		if errClose := l.Close(); errClose != nil && err == nil {
-			err = errClose
+		if errC := l.Close(); errC != nil && err == nil {
+			err = errC
 		}
 	}()
 	s := dtls.NewServer(dtls.WithMux(handler))

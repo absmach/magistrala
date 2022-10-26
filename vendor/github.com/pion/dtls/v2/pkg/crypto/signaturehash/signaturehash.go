@@ -7,10 +7,10 @@ import (
 	"crypto/ed25519"
 	"crypto/rsa"
 	"crypto/tls"
+	"fmt"
 
 	"github.com/pion/dtls/v2/pkg/crypto/hash"
 	"github.com/pion/dtls/v2/pkg/crypto/signature"
-	"golang.org/x/xerrors"
 )
 
 // Algorithm is a signature/hash algorithm pairs which may be used in
@@ -70,11 +70,11 @@ func ParseSignatureSchemes(sigs []tls.SignatureScheme, insecureHashes bool) ([]A
 		sig := signature.Algorithm(ss & 0xFF)
 		if _, ok := signature.Algorithms()[sig]; !ok {
 			return nil,
-				xerrors.Errorf("SignatureScheme %04x: %w", ss, errInvalidSignatureAlgorithm)
+				fmt.Errorf("SignatureScheme %04x: %w", ss, errInvalidSignatureAlgorithm)
 		}
 		h := hash.Algorithm(ss >> 8)
 		if _, ok := hash.Algorithms()[h]; !ok || (ok && h == hash.None) {
-			return nil, xerrors.Errorf("SignatureScheme %04x: %w", ss, errInvalidHashAlgorithm)
+			return nil, fmt.Errorf("SignatureScheme %04x: %w", ss, errInvalidHashAlgorithm)
 		}
 		if h.Insecure() && !insecureHashes {
 			continue

@@ -97,8 +97,8 @@ func (c *connCtx) ReadContext(ctx context.Context, b []byte) (int, error) {
 	if e := ctx.Err(); e != nil && n == 0 {
 		err = e
 	}
-	if err2 := errSetDeadline.Load(); err == nil && err2 != nil {
-		err = err2.(error)
+	if err2, ok := errSetDeadline.Load().(error); ok && err == nil && err2 != nil {
+		err = err2
 	}
 	return n, err
 }
@@ -141,8 +141,8 @@ func (c *connCtx) WriteContext(ctx context.Context, b []byte) (int, error) {
 	if e := ctx.Err(); e != nil && n == 0 {
 		err = e
 	}
-	if err2 := errSetDeadline.Load(); err == nil && err2 != nil {
-		err = err2.(error)
+	if err2, ok := errSetDeadline.Load().(error); ok && err == nil && err2 != nil {
+		err = err2
 	}
 	return n, err
 }

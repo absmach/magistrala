@@ -46,6 +46,11 @@ func (e ErrMapForOrderedArgument) Error() string {
 }
 
 func replaceErrors(err error) error {
+	// Return nil when err is nil to avoid costly reflection logic below.
+	if err == nil {
+		return nil
+	}
+
 	if err == topology.ErrTopologyClosed {
 		return ErrClientDisconnected
 	}
@@ -102,6 +107,9 @@ func IsTimeout(err error) bool {
 	for ; err != nil; err = unwrap(err) {
 		// check unwrappable errors together
 		if err == context.DeadlineExceeded {
+			return true
+		}
+		if err == driver.ErrDeadlineWouldBeExceeded {
 			return true
 		}
 		if ne, ok := err.(net.Error); ok {

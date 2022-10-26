@@ -12,6 +12,11 @@ func (c *TLSPskWithAes128GcmSha256) CertificateType() clientcertificate.Type {
 	return clientcertificate.Type(0)
 }
 
+// KeyExchangeAlgorithm controls what key exchange algorithm is using during the handshake
+func (c *TLSPskWithAes128GcmSha256) KeyExchangeAlgorithm() KeyExchangeAlgorithm {
+	return KeyExchangeAlgorithmPsk
+}
+
 // ID returns the ID of the CipherSuite
 func (c *TLSPskWithAes128GcmSha256) ID() ID {
 	return TLS_PSK_WITH_AES_128_GCM_SHA256

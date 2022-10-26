@@ -2,32 +2,27 @@ package udp
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"io"
 	"net"
-	"strings"
 	"time"
 
 	"github.com/plgd-dev/go-coap/v2/message"
+	"github.com/plgd-dev/go-coap/v2/message/codes"
+	coapNet "github.com/plgd-dev/go-coap/v2/net"
 	"github.com/plgd-dev/go-coap/v2/net/blockwise"
 	"github.com/plgd-dev/go-coap/v2/net/monitor/inactivity"
 	"github.com/plgd-dev/go-coap/v2/pkg/cache"
 	"github.com/plgd-dev/go-coap/v2/pkg/runner/periodic"
-	kitSync "github.com/plgd-dev/kit/v2/sync"
-
-	"github.com/plgd-dev/go-coap/v2/message/codes"
-	coapNet "github.com/plgd-dev/go-coap/v2/net"
 	"github.com/plgd-dev/go-coap/v2/udp/client"
 	udpMessage "github.com/plgd-dev/go-coap/v2/udp/message"
 	"github.com/plgd-dev/go-coap/v2/udp/message/pool"
+	kitSync "github.com/plgd-dev/kit/v2/sync"
 )
 
 var defaultDialOptions = func() dialOptions {
 	opts := dialOptions{
 		ctx:            context.Background(),
 		maxMessageSize: 64 * 1024,
-		heartBeat:      time.Millisecond * 100,
 
 		errors: func(err error) {
 			fmt.Println(err)
@@ -78,7 +73,6 @@ type dialOptions struct {
 	errors                         ErrorFunc
 	goPool                         GoPoolFunc
 	dialer                         *net.Dialer
-	heartBeat                      time.Duration
 	periodicRunner                 periodic.Func
 	messagePool                    *pool.Pool
 	blockwiseTransferTimeout       time.Duration
@@ -154,7 +148,9 @@ func Client(conn *net.UDPConn, opts ...DialOption) *client.ClientConn {
 		o.applyDial(&cfg)
 	}
 	if cfg.errors == nil {
-		cfg.errors = func(error) {}
+		cfg.errors = func(error) {
+			// default no-op
+		}
 	}
 	if cfg.createInactivityMonitor == nil {
 		cfg.createInactivityMonitor = func() inactivity.Monitor {
@@ -167,7 +163,7 @@ func Client(conn *net.UDPConn, opts ...DialOption) *client.ClientConn {
 
 	errorsFunc := cfg.errors
 	cfg.errors = func(err error) {
-		if errors.Is(err, context.Canceled) || errors.Is(err, io.EOF) || strings.Contains(err.Error(), "use of closed network connection") {
+		if coapNet.IsCancelOrCloseError(err) {
 			// this error was produced by cancellation context or closing connection.
 			return
 		}

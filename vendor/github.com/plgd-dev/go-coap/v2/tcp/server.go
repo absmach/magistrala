@@ -12,16 +12,14 @@ import (
 	"time"
 
 	"github.com/plgd-dev/go-coap/v2/message"
+	"github.com/plgd-dev/go-coap/v2/message/codes"
+	coapNet "github.com/plgd-dev/go-coap/v2/net"
 	"github.com/plgd-dev/go-coap/v2/net/blockwise"
 	"github.com/plgd-dev/go-coap/v2/net/monitor/inactivity"
 	"github.com/plgd-dev/go-coap/v2/pkg/connections"
 	"github.com/plgd-dev/go-coap/v2/pkg/runner/periodic"
 	"github.com/plgd-dev/go-coap/v2/tcp/message/pool"
 	kitSync "github.com/plgd-dev/kit/v2/sync"
-
-	"github.com/plgd-dev/go-coap/v2/message/codes"
-
-	coapNet "github.com/plgd-dev/go-coap/v2/net"
 )
 
 // A ServerOption sets options such as credentials, codec and keepalive parameters, etc.
@@ -37,7 +35,7 @@ type ErrorFunc = func(error)
 
 type GoPoolFunc = func(func()) error
 
-type BlockwiseFactoryFunc = func(getSendedRequest func(token message.Token) (blockwise.Message, bool)) *blockwise.BlockWise
+type BlockwiseFactoryFunc = func(getSentRequest func(token message.Token) (blockwise.Message, bool)) *blockwise.BlockWise
 
 // OnNewClientConnFunc is the callback for new connections.
 //
@@ -152,7 +150,7 @@ func NewServer(opt ...ServerOption) *Server {
 
 	if opts.errors == nil {
 		opts.errors = func(error) {
-			// NO-OP
+			// default no-op
 		}
 	}
 	errorsFunc := opts.errors
@@ -207,11 +205,11 @@ func (s *Server) checkAcceptError(err error) (bool, error) {
 	if err == nil {
 		return true, nil
 	}
-	switch err {
-	case coapNet.ErrListenerIsClosed:
+	switch {
+	case errors.Is(err, coapNet.ErrListenerIsClosed):
 		s.Stop()
 		return false, nil
-	case context.DeadlineExceeded, context.Canceled:
+	case errors.Is(err, context.DeadlineExceeded), errors.Is(err, context.Canceled):
 		select {
 		case <-s.ctx.Done():
 		default:
@@ -221,6 +219,25 @@ func (s *Server) checkAcceptError(err error) (bool, error) {
 		return false, nil
 	default:
 		return true, nil
+	}
+}
+
+func (s *Server) serveConnection(connections *connections.Connections, rw net.Conn) {
+	var cc *ClientConn
+	monitor := s.createInactivityMonitor()
+	cc = s.createClientConn(coapNet.NewConn(rw), monitor)
+	if s.onNewClientConn != nil {
+		if tlscon, ok := rw.(*tls.Conn); ok {
+			s.onNewClientConn(cc, tlscon)
+		} else {
+			s.onNewClientConn(cc, nil)
+		}
+	}
+	connections.Store(cc)
+	defer connections.Delete(cc)
+
+	if err := cc.Run(); err != nil {
+		s.errors(fmt.Errorf("%v: %w", cc.RemoteAddr(), err))
 	}
 }
 
@@ -255,29 +272,14 @@ func (s *Server) Serve(l Listener) error {
 		if !ok {
 			return nil
 		}
-		if rw != nil {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				var cc *ClientConn
-				monitor := s.createInactivityMonitor()
-				cc = s.createClientConn(coapNet.NewConn(rw), monitor)
-				if s.onNewClientConn != nil {
-					if tlscon, ok := rw.(*tls.Conn); ok {
-						s.onNewClientConn(cc, tlscon)
-					} else {
-						s.onNewClientConn(cc, nil)
-					}
-				}
-				connections.Store(cc)
-				defer connections.Delete(cc)
-				err := cc.Run()
-
-				if err != nil {
-					s.errors(fmt.Errorf("%v: %w", cc.RemoteAddr(), err))
-				}
-			}()
+		if rw == nil {
+			continue
 		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			s.serveConnection(connections, rw)
+		}()
 	}
 }
 

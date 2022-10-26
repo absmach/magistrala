@@ -29,8 +29,7 @@ func (r *Message) String() string {
 	}
 	cf, err := r.Options.ContentFormat()
 	if err == nil {
-		mt := MediaType(cf)
-		buf = fmt.Sprintf("%s, ContentFormat: %v", buf, mt)
+		buf = fmt.Sprintf("%s, ContentFormat: %v", buf, cf)
 	}
 	queries, err := r.Options.Queries()
 	if err == nil {

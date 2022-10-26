@@ -6,6 +6,7 @@
 package amqp091
 
 import (
+	"context"
 	"sync"
 )
 
@@ -38,12 +39,12 @@ func (c *confirms) Listen(l chan Confirmation) {
 }
 
 // Publish increments the publishing counter
-func (c *confirms) Publish() *DeferredConfirmation {
+func (c *confirms) Publish(ctx context.Context) *DeferredConfirmation {
 	c.publishedMut.Lock()
 	defer c.publishedMut.Unlock()
 
 	c.published++
-	return c.deferredConfirmations.Add(c.published)
+	return c.deferredConfirmations.Add(ctx, c.published)
 }
 
 // confirm confirms one publishing, increments the expecting delivery tag, and
@@ -98,10 +99,13 @@ func (c *confirms) Multiple(confirmed Confirmation) {
 	c.resequence()
 }
 
-// Close closes all listeners, discarding any out of sequence confirmations
+// Cleans up the confirms struct and its dependencies.
+// Closes all listeners, discarding any out of sequence confirmations
 func (c *confirms) Close() error {
 	c.m.Lock()
 	defer c.m.Unlock()
+
+	c.deferredConfirmations.Close()
 
 	for _, l := range c.listeners {
 		close(l)
@@ -121,12 +125,12 @@ func newDeferredConfirmations() *deferredConfirmations {
 	}
 }
 
-func (d *deferredConfirmations) Add(tag uint64) *DeferredConfirmation {
+func (d *deferredConfirmations) Add(ctx context.Context, tag uint64) *DeferredConfirmation {
 	d.m.Lock()
 	defer d.m.Unlock()
 
 	dc := &DeferredConfirmation{DeliveryTag: tag}
-	dc.wg.Add(1)
+	dc.ctx, dc.cancel = context.WithCancel(ctx)
 	d.confirmations[tag] = dc
 	return dc
 }
@@ -140,8 +144,7 @@ func (d *deferredConfirmations) Confirm(confirmation Confirmation) {
 		// we should never receive a confirmation for a tag that hasn't been published, but a test causes this to happen
 		return
 	}
-	dc.confirmation = confirmation
-	dc.wg.Done()
+	dc.Confirm(confirmation.Ack)
 	delete(d.confirmations, confirmation.DeliveryTag)
 }
 
@@ -151,14 +154,37 @@ func (d *deferredConfirmations) ConfirmMultiple(confirmation Confirmation) {
 
 	for k, v := range d.confirmations {
 		if k <= confirmation.DeliveryTag {
-			v.confirmation = Confirmation{DeliveryTag: k, Ack: confirmation.Ack}
-			v.wg.Done()
+			v.Confirm(confirmation.Ack)
 			delete(d.confirmations, k)
 		}
 	}
 }
 
+// Nacks all pending DeferredConfirmations being blocked by dc.Wait()
+func (d *deferredConfirmations) Close() {
+	d.m.Lock()
+	defer d.m.Unlock()
+
+	for k, v := range d.confirmations {
+		v.Confirm(false)
+		delete(d.confirmations, k)
+	}
+}
+
+// Confirm ack confirmation.
+func (d *DeferredConfirmation) Confirm(ack bool) {
+	d.m.Lock()
+	defer d.m.Unlock()
+
+	d.confirmation.Ack = ack
+	d.cancel()
+}
+
+// Waits for publisher confirmation. Returns true if server successfully received the publishing.
 func (d *DeferredConfirmation) Wait() bool {
-	d.wg.Wait()
+	<-d.ctx.Done()
+
+	d.m.Lock()
+	defer d.m.Unlock()
 	return d.confirmation.Ack
 }

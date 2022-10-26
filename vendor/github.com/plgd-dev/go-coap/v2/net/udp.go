@@ -12,5 +12,4 @@ func WriteToUDP(conn *net.UDPConn, raddr *net.UDPAddr, b []byte) (int, error) {
 		return conn.WriteToUDP(b, raddr)
 	}
 	return conn.Write(b)
-
 }

@@ -5,6 +5,7 @@ package mqtt
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"regexp"
 	"strings"
@@ -22,15 +23,32 @@ var _ session.Handler = (*handler)(nil)
 
 const protocol = "mqtt"
 
+const (
+	LogInfoSubscribed                  = "subscribed with client_id %s to topics %s"
+	LogInfoUnsubscribed                = "unsubscribed client_id %s from topics %s"
+	LogInfoConnected                   = "connected with client_id %s"
+	LogInfoDisconnected                = "disconnected client_id %s and username %s"
+	LogInfoPublished                   = "published with client_id %s to the topic %s"
+	LogErrFailedConnect                = "failed to connect: "
+	LogErrFailedSubscribe              = "failed to subscribe: "
+	LogErrFailedUnsubscribe            = "failed to unsubscribe: "
+	LogErrFailedPublish                = "failed to publish: "
+	LogErrFailedDisconnect             = "failed to disconnect: "
+	LogErrFailedPublishDisconnectEvent = "failed to publish disconnect event: "
+	logErrFailedParseSubtopic          = "failed to parse subtopic: "
+	LogErrFailedPublishConnectEvent    = "failed to publish connect event: "
+	LogErrFailedPublishToMsgBroker     = "failed to publish to mainflux message broker: "
+)
+
 var (
-	channelRegExp        = regexp.MustCompile(`^\/?channels\/([\w\-]+)\/messages(\/[^?]*)?(\?.*)?$`)
-	errMalformedTopic    = errors.New("malformed topic")
-	errMalformedData     = errors.New("malformed request data")
-	errMalformedSubtopic = errors.New("malformed subtopic")
-	errNilClient         = errors.New("using nil client")
-	errInvalidConnect    = errors.New("CONNECT request with invalid username or client ID")
-	errNilTopicPub       = errors.New("PUBLISH to nil topic")
-	errNilTopicSub       = errors.New("SUB to nil topic")
+	channelRegExp           = regexp.MustCompile(`^\/?channels\/([\w\-]+)\/messages(\/[^?]*)?(\?.*)?$`)
+	ErrMalformedSubtopic    = errors.New("malformed subtopic")
+	ErrClientNotInitialized = errors.New("client is not initialized")
+	ErrMalformedTopic       = errors.New("malformed topic")
+	ErrMissingClientID      = errors.New("client_id not found")
+	ErrMissingTopicPub      = errors.New("failed to publish due to missing topic")
+	ErrMissingTopicSub      = errors.New("failed to subscribe due to missing topic")
+	ErrAuthentication       = errors.New("failed to perform authentication over the entity")
 )
 
 // Event implements events.Event interface
@@ -56,7 +74,11 @@ func NewHandler(publishers []messaging.Publisher, es redis.EventStore,
 // prior forwarding to the MQTT broker
 func (h *handler) AuthConnect(c *session.Client) error {
 	if c == nil {
-		return errInvalidConnect
+		return ErrClientNotInitialized
+	}
+
+	if c.ID == "" {
+		return ErrMissingClientID
 	}
 
 	thid, err := h.auth.Identify(context.Background(), string(c.Password))
@@ -69,7 +91,7 @@ func (h *handler) AuthConnect(c *session.Client) error {
 	}
 
 	if err := h.es.Connect(c.Username); err != nil {
-		h.logger.Warn("Failed to publish connect event: " + err.Error())
+		h.logger.Error(LogErrFailedPublishConnectEvent + err.Error())
 	}
 
 	return nil
@@ -79,10 +101,10 @@ func (h *handler) AuthConnect(c *session.Client) error {
 // prior forwarding to the MQTT broker
 func (h *handler) AuthPublish(c *session.Client, topic *string, payload *[]byte) error {
 	if c == nil {
-		return errNilClient
+		return ErrClientNotInitialized
 	}
 	if topic == nil {
-		return errNilTopicPub
+		return ErrMissingTopicPub
 	}
 
 	return h.authAccess(c.Username, *topic)
@@ -92,10 +114,10 @@ func (h *handler) AuthPublish(c *session.Client, topic *string, payload *[]byte)
 // prior forwarding to the MQTT broker
 func (h *handler) AuthSubscribe(c *session.Client, topics *[]string) error {
 	if c == nil {
-		return errNilClient
+		return ErrClientNotInitialized
 	}
 	if topics == nil || *topics == nil {
-		return errNilTopicSub
+		return ErrMissingTopicSub
 	}
 
 	for _, v := range *topics {
@@ -111,25 +133,25 @@ func (h *handler) AuthSubscribe(c *session.Client, topics *[]string) error {
 // Connect - after client successfully connected
 func (h *handler) Connect(c *session.Client) {
 	if c == nil {
-		h.logger.Error("Nil client connect")
+		h.logger.Error(LogErrFailedConnect + (ErrClientNotInitialized).Error())
 		return
 	}
-	h.logger.Info("Connect - client with ID: " + c.ID)
+	h.logger.Info(fmt.Sprintf(LogInfoConnected, c.ID))
 }
 
 // Publish - after client successfully published
 func (h *handler) Publish(c *session.Client, topic *string, payload *[]byte) {
 	if c == nil {
-		h.logger.Error("Nil client publish")
+		h.logger.Error(LogErrFailedPublish + ErrClientNotInitialized.Error())
 		return
 	}
-	h.logger.Info("Publish - client ID " + c.ID + " to the topic: " + *topic)
+	h.logger.Info(fmt.Sprintf(LogInfoPublished, c.ID, *topic))
 	// Topics are in the format:
 	// channels/<channel_id>/messages/<subtopic>/.../ct/<content_type>
 
 	channelParts := channelRegExp.FindStringSubmatch(*topic)
-	if len(channelParts) < 1 {
-		h.logger.Info("Error in mqtt publish %s" + errMalformedData.Error())
+	if len(channelParts) < 2 {
+		h.logger.Error(LogErrFailedPublish + (ErrMalformedTopic).Error())
 		return
 	}
 
@@ -138,7 +160,7 @@ func (h *handler) Publish(c *session.Client, topic *string, payload *[]byte) {
 
 	subtopic, err := parseSubtopic(subtopic)
 	if err != nil {
-		h.logger.Info("Error parsing subtopic: " + err.Error())
+		h.logger.Error(logErrFailedParseSubtopic + err.Error())
 		return
 	}
 
@@ -153,7 +175,7 @@ func (h *handler) Publish(c *session.Client, topic *string, payload *[]byte) {
 
 	for _, pub := range h.publishers {
 		if err := pub.Publish(msg.Channel, msg); err != nil {
-			h.logger.Info("Error publishing to Mainflux " + err.Error())
+			h.logger.Error(LogErrFailedPublishToMsgBroker + err.Error())
 		}
 	}
 }
@@ -161,30 +183,30 @@ func (h *handler) Publish(c *session.Client, topic *string, payload *[]byte) {
 // Subscribe - after client successfully subscribed
 func (h *handler) Subscribe(c *session.Client, topics *[]string) {
 	if c == nil {
-		h.logger.Error("Nil client subscribe")
+		h.logger.Error(LogErrFailedSubscribe + (ErrClientNotInitialized).Error())
 		return
 	}
-	h.logger.Info("Subscribe - client ID: " + c.ID + ", to topics: " + strings.Join(*topics, ","))
+	h.logger.Info(fmt.Sprintf(LogInfoSubscribed, c.ID, strings.Join(*topics, ",")))
 }
 
 // Unsubscribe - after client unsubscribed
 func (h *handler) Unsubscribe(c *session.Client, topics *[]string) {
 	if c == nil {
-		h.logger.Error("Nil client unsubscribe")
+		h.logger.Error(LogErrFailedUnsubscribe + (ErrClientNotInitialized).Error())
 		return
 	}
-	h.logger.Info("Unsubscribe - client ID: " + c.ID + ", form topics: " + strings.Join(*topics, ","))
+	h.logger.Info(fmt.Sprintf(LogInfoUnsubscribed, c.ID, strings.Join(*topics, ",")))
 }
 
 // Disconnect - connection with broker or client lost
 func (h *handler) Disconnect(c *session.Client) {
 	if c == nil {
-		h.logger.Error("Nil client disconnect")
+		h.logger.Error(LogErrFailedDisconnect + (ErrClientNotInitialized).Error())
 		return
 	}
-	h.logger.Info("Disconnect - Client with ID: " + c.ID + " and username " + c.Username + " disconnected")
+	h.logger.Error(fmt.Sprintf(LogInfoDisconnected, c.ID, c.Username))
 	if err := h.es.Disconnect(c.Username); err != nil {
-		h.logger.Warn("Failed to publish disconnect event: " + err.Error())
+		h.logger.Error(LogErrFailedPublishDisconnectEvent + err.Error())
 	}
 }
 
@@ -192,13 +214,12 @@ func (h *handler) authAccess(username string, topic string) error {
 	// Topics are in the format:
 	// channels/<channel_id>/messages/<subtopic>/.../ct/<content_type>
 	if !channelRegExp.Match([]byte(topic)) {
-		h.logger.Info("Malformed topic: " + topic)
-		return errMalformedTopic
+		return ErrMalformedTopic
 	}
 
 	channelParts := channelRegExp.FindStringSubmatch(topic)
 	if len(channelParts) < 1 {
-		return errMalformedData
+		return ErrMalformedTopic
 	}
 
 	chanID := channelParts[1]
@@ -212,7 +233,7 @@ func parseSubtopic(subtopic string) (string, error) {
 
 	subtopic, err := url.QueryUnescape(subtopic)
 	if err != nil {
-		return "", errMalformedSubtopic
+		return "", ErrMalformedSubtopic
 	}
 	subtopic = strings.Replace(subtopic, "/", ".", -1)
 
@@ -224,7 +245,7 @@ func parseSubtopic(subtopic string) (string, error) {
 		}
 
 		if len(elem) > 1 && (strings.Contains(elem, "*") || strings.Contains(elem, ">")) {
-			return "", errMalformedSubtopic
+			return "", ErrMalformedSubtopic
 		}
 
 		filteredElems = append(filteredElems, elem)

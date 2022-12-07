@@ -246,6 +246,11 @@ func TestListUsers(t *testing.T) {
 			size:  0,
 			err:   nil,
 		},
+		"list users with unauthorized token": {
+			token: unauthzToken,
+			size:  0,
+			err:   errors.ErrAuthorization,
+		},
 		"list user with emtpy token": {
 			token: "",
 			size:  0,
@@ -256,6 +261,11 @@ func TestListUsers(t *testing.T) {
 			offset: 6,
 			limit:  nUsers,
 			size:   nUsers - 6,
+		},
+		"list using non-existent user": {
+			token: token,
+			email: nonExistingUser.Email,
+			err:   errors.ErrNotFound,
 		},
 	}
 

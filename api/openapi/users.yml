@@ -48,9 +48,9 @@ paths:
         '400':
           description: Failed due to malformed query parameters.
         '401':
-          description: |
-            Missing or invalid access token provided.
-            This endpoint is available only for administrators.
+          description: Missing or invalid access token provided.
+        '403':
+          description: This endpoint is available only for administrators.
         '404':
           description: A non-existent entity request.
         '422':

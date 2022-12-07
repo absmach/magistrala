@@ -252,7 +252,7 @@ func (svc usersService) ListUsers(ctx context.Context, token string, pm PageMeta
 	}
 
 	if err := svc.authorize(ctx, id.id, "authorities", "member"); err != nil {
-		return UserPage{}, errors.Wrap(errors.ErrAuthentication, err)
+		return UserPage{}, err
 	}
 	return svc.users.RetrieveAll(ctx, pm.Status, pm.Offset, pm.Limit, nil, pm.Email, pm.Metadata)
 }

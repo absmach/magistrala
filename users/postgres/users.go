@@ -10,20 +10,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lib/pq"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/users"
 )
 
-const (
-	errInvalid    = "invalid_text_representation"
-	errTruncation = "string_data_right_truncation"
-)
-
 var _ users.UserRepository = (*userRepository)(nil)
-
-const errDuplicate = "unique_violation"
 
 type userRepository struct {
 	db Database
@@ -49,13 +43,14 @@ func (ur userRepository) Save(ctx context.Context, user users.User) (string, err
 	}
 
 	row, err := ur.db.NamedQueryContext(ctx, q, dbu)
+
 	if err != nil {
-		pqErr, ok := err.(*pq.Error)
+		pgErr, ok := err.(*pgconn.PgError)
 		if ok {
-			switch pqErr.Code.Name() {
-			case errInvalid, errTruncation:
+			switch pgErr.Code {
+			case pgerrcode.InvalidTextRepresentation:
 				return "", errors.Wrap(errors.ErrMalformedEntity, err)
-			case errDuplicate:
+			case pgerrcode.UniqueViolation:
 				return "", errors.Wrap(errors.ErrConflict, err)
 			}
 		}

@@ -11,16 +11,11 @@ import (
 	"strings"
 
 	"github.com/gofrs/uuid"
-	"github.com/lib/pq" // required for DB access
+
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/things"
-)
-
-const (
-	errDuplicate  = "unique_violation"
-	errFK         = "foreign_key_violation"
-	errInvalid    = "invalid_text_representation"
-	errTruncation = "string_data_right_truncation"
 )
 
 var _ things.ThingRepository = (*thingRepository)(nil)
@@ -54,13 +49,15 @@ func (tr thingRepository) Save(ctx context.Context, ths ...things.Thing) ([]thin
 
 		if _, err := tx.NamedExecContext(ctx, q, dbth); err != nil {
 			tx.Rollback()
-			pqErr, ok := err.(*pq.Error)
+			pgErr, ok := err.(*pgconn.PgError)
 			if ok {
-				switch pqErr.Code.Name() {
-				case errInvalid, errTruncation:
+				switch pgErr.Code {
+				case pgerrcode.InvalidTextRepresentation:
 					return []things.Thing{}, errors.Wrap(errors.ErrMalformedEntity, err)
-				case errDuplicate:
+				case pgerrcode.UniqueViolation:
 					return []things.Thing{}, errors.Wrap(errors.ErrConflict, err)
+				case pgerrcode.StringDataRightTruncationDataException:
+					return []things.Thing{}, errors.Wrap(errors.ErrMalformedEntity, err)
 				}
 			}
 
@@ -85,11 +82,13 @@ func (tr thingRepository) Update(ctx context.Context, t things.Thing) error {
 
 	res, errdb := tr.db.NamedExecContext(ctx, q, dbth)
 	if errdb != nil {
-		pqErr, ok := errdb.(*pq.Error)
+		pgErr, ok := errdb.(*pgconn.PgError)
 		if ok {
-			switch pqErr.Code.Name() {
-			case errInvalid, errTruncation:
+			switch pgErr.Code {
+			case pgerrcode.InvalidTextRepresentation:
 				return errors.Wrap(errors.ErrMalformedEntity, errdb)
+			case pgerrcode.StringDataRightTruncationDataException:
+				return errors.Wrap(errors.ErrMalformedEntity, err)
 			}
 		}
 
@@ -119,13 +118,15 @@ func (tr thingRepository) UpdateKey(ctx context.Context, owner, id, key string) 
 
 	res, err := tr.db.NamedExecContext(ctx, q, dbth)
 	if err != nil {
-		pqErr, ok := err.(*pq.Error)
+		pgErr, ok := err.(*pgconn.PgError)
 		if ok {
-			switch pqErr.Code.Name() {
-			case errInvalid:
+			switch pgErr.Code {
+			case pgerrcode.InvalidTextRepresentation:
 				return errors.Wrap(errors.ErrMalformedEntity, err)
-			case errDuplicate:
+			case pgerrcode.UniqueViolation:
 				return errors.Wrap(errors.ErrConflict, err)
+			case pgerrcode.StringDataRightTruncationDataException:
+				return errors.Wrap(errors.ErrMalformedEntity, err)
 			}
 		}
 
@@ -150,8 +151,9 @@ func (tr thingRepository) RetrieveByID(ctx context.Context, owner, id string) (t
 	dbth := dbThing{ID: id}
 
 	if err := tr.db.QueryRowxContext(ctx, q, id).StructScan(&dbth); err != nil {
-		pqErr, ok := err.(*pq.Error)
-		if err == sql.ErrNoRows || ok && errInvalid == pqErr.Code.Name() {
+		pgErr, ok := err.(*pgconn.PgError)
+		//  If there is no result or ID is in an invalid format, return ErrNotFound.
+		if err == sql.ErrNoRows || ok && pgerrcode.InvalidTextRepresentation == pgErr.Code {
 			return things.Thing{}, errors.Wrap(errors.ErrNotFound, err)
 		}
 		return things.Thing{}, errors.Wrap(errors.ErrViewEntity, err)

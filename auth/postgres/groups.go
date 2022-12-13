@@ -12,9 +12,10 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
 
-	"github.com/lib/pq"
 	"github.com/mainflux/mainflux/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
 )
@@ -23,10 +24,7 @@ var (
 	errStringToUUID        = errors.New("error converting string to uuid")
 	errGetTotal            = errors.New("failed to get total number of groups")
 	errCreateMetadataQuery = errors.New("failed to create query for metadata")
-
-	errTruncation = "string_data_right_truncation"
-	errFK         = "foreign_key_violation"
-	groupIDFkeyy  = "group_relations_group_id_fkey"
+	groupIDFkeyy           = "group_relations_group_id_fkey"
 )
 
 var _ auth.GroupRepository = (*groupRepository)(nil)
@@ -62,19 +60,21 @@ func (gr groupRepository) Save(ctx context.Context, g auth.Group) (auth.Group, e
 
 	row, err := gr.db.NamedQueryContext(ctx, q, dbg)
 	if err != nil {
-		pqErr, ok := err.(*pq.Error)
+		pgErr, ok := err.(*pgconn.PgError)
 		if ok {
-			switch pqErr.Code.Name() {
-			case errInvalid, errTruncation:
+			switch pgErr.Code {
+			case pgerrcode.InvalidTextRepresentation:
 				return auth.Group{}, errors.Wrap(errors.ErrMalformedEntity, err)
-			case errFK:
+			case pgerrcode.ForeignKeyViolation:
 				return auth.Group{}, errors.Wrap(errors.ErrCreateEntity, err)
-			case errDuplicate:
+			case pgerrcode.UniqueViolation:
 				return auth.Group{}, errors.Wrap(errors.ErrConflict, err)
+			case pgerrcode.StringDataRightTruncationDataException:
+				return auth.Group{}, errors.Wrap(errors.ErrMalformedEntity, err)
 			}
 		}
 
-		return auth.Group{}, errors.Wrap(errors.ErrCreateEntity, errors.New(pqErr.Message))
+		return auth.Group{}, errors.Wrap(errors.ErrCreateEntity, err)
 	}
 
 	defer row.Close()
@@ -98,16 +98,18 @@ func (gr groupRepository) Update(ctx context.Context, g auth.Group) (auth.Group,
 
 	row, err := gr.db.NamedQueryContext(ctx, q, dbu)
 	if err != nil {
-		pqErr, ok := err.(*pq.Error)
+		pgErr, ok := err.(*pgconn.PgError)
 		if ok {
-			switch pqErr.Code.Name() {
-			case errInvalid, errTruncation:
+			switch pgErr.Code {
+			case pgerrcode.InvalidTextRepresentation:
 				return auth.Group{}, errors.Wrap(errors.ErrMalformedEntity, err)
-			case errDuplicate:
+			case pgerrcode.UniqueViolation:
 				return auth.Group{}, errors.Wrap(errors.ErrConflict, err)
+			case pgerrcode.StringDataRightTruncationDataException:
+				return auth.Group{}, errors.Wrap(errors.ErrMalformedEntity, err)
 			}
 		}
-		return auth.Group{}, errors.Wrap(errors.ErrUpdateEntity, errors.New(pqErr.Message))
+		return auth.Group{}, errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	defer row.Close()
@@ -132,20 +134,20 @@ func (gr groupRepository) Delete(ctx context.Context, groupID string) error {
 
 	res, err := gr.db.NamedExecContext(ctx, qd, dbg)
 	if err != nil {
-		pqErr, ok := err.(*pq.Error)
+		pqErr, ok := err.(*pgconn.PgError)
 		if ok {
-			switch pqErr.Code.Name() {
-			case errInvalid, errTruncation:
+			switch pqErr.Code {
+			case pgerrcode.InvalidTextRepresentation:
 				return errors.Wrap(errors.ErrMalformedEntity, err)
-			case errFK:
-				switch pqErr.Constraint {
+			case pgerrcode.ForeignKeyViolation:
+				switch pqErr.ConstraintName {
 				case groupIDFkeyy:
 					return errors.Wrap(auth.ErrGroupNotEmpty, err)
 				}
 				return errors.Wrap(errors.ErrConflict, err)
 			}
 		}
-		return errors.Wrap(errors.ErrUpdateEntity, errors.New(pqErr.Message))
+		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
 	cnt, err := res.RowsAffected()
@@ -439,15 +441,15 @@ func (gr groupRepository) Assign(ctx context.Context, groupID, groupType string,
 
 		if _, err := tx.NamedExecContext(ctx, qIns, dbg); err != nil {
 			tx.Rollback()
-			pqErr, ok := err.(*pq.Error)
+			pgErr, ok := err.(*pgconn.PgError)
 			if ok {
-				switch pqErr.Code.Name() {
-				case errInvalid, errTruncation:
+				switch pgErr.Code {
+				case pgerrcode.InvalidTextRepresentation:
 					return errors.Wrap(errors.ErrMalformedEntity, err)
-				case errFK:
-					return errors.Wrap(errors.ErrConflict, errors.New(pqErr.Detail))
-				case errDuplicate:
-					return errors.Wrap(auth.ErrMemberAlreadyAssigned, errors.New(pqErr.Detail))
+				case pgerrcode.ForeignKeyViolation:
+					return errors.Wrap(errors.ErrConflict, errors.New(pgErr.Detail))
+				case pgerrcode.UniqueViolation:
+					return errors.Wrap(auth.ErrMemberAlreadyAssigned, errors.New(pgErr.Detail))
 				}
 			}
 
@@ -478,12 +480,12 @@ func (gr groupRepository) Unassign(ctx context.Context, groupID string, ids ...s
 
 		if _, err := tx.NamedExecContext(ctx, qDel, dbg); err != nil {
 			tx.Rollback()
-			pqErr, ok := err.(*pq.Error)
+			pgErr, ok := err.(*pgconn.PgError)
 			if ok {
-				switch pqErr.Code.Name() {
-				case errInvalid, errTruncation:
+				switch pgErr.Code {
+				case pgerrcode.InvalidTextRepresentation:
 					return errors.Wrap(errors.ErrMalformedEntity, err)
-				case errDuplicate:
+				case pgerrcode.UniqueViolation:
 					return errors.Wrap(errors.ErrConflict, err)
 				}
 			}

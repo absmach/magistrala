@@ -1,6 +1,6 @@
 # This script contains commands to be executed by the CI tool.
 NPROC=$(nproc)
-GO_VERSION=1.18.3
+GO_VERSION=1.19.4
 PROTOC_VERSION=3.12.3
 PROTOC_GEN_VERSION=v1.4.2
 PROTOC_GOFAST_VERSION=v1.3.1

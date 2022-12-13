@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 
+	_ "github.com/jackc/pgx/v5/stdlib" // required for SQL access
 	"github.com/jmoiron/sqlx"
 	migrate "github.com/rubenv/sql-migrate"
 )
@@ -37,7 +38,7 @@ type Config struct {
 func Connect(cfg Config) (*sqlx.DB, error) {
 	url := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", cfg.Host, cfg.Port, cfg.User, cfg.Name, cfg.Pass, cfg.SSLMode, cfg.SSLCert, cfg.SSLKey, cfg.SSLRootCert)
 
-	db, err := sqlx.Open("postgres", url)
+	db, err := sqlx.Open("pgx", url)
 	if err != nil {
 		return nil, err
 	}

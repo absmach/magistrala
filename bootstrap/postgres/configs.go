@@ -9,19 +9,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgtype"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 	"github.com/mainflux/mainflux/bootstrap"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
-)
-
-const (
-	duplicateErr      = "unique_violation"
-	fkViolation       = "foreign_key_violation"
-	connConstraintErr = "connections_config_id_config_owner_fkey"
-	cleanupQuery      = `DELETE FROM channels ch WHERE NOT EXISTS (
-						 SELECT channel_id FROM connections c WHERE ch.mainflux_channel = c.channel_id);`
 )
 
 var (
@@ -31,6 +25,9 @@ var (
 	errRemoveChannels  = errors.New("failed to remove channels from bootstrap configuration in database")
 	errDisconnectThing = errors.New("failed to disconnect thing in bootstrap configuration in database")
 )
+
+const cleanupQuery = `DELETE FROM channels ch WHERE NOT EXISTS (
+						 SELECT channel_id FROM connections c WHERE ch.mainflux_channel = c.channel_id);`
 
 var _ bootstrap.ConfigRepository = (*configRepository)(nil)
 
@@ -58,7 +55,7 @@ func (cr configRepository) Save(cfg bootstrap.Config, chsConnIDs []string) (stri
 
 	if _, err := tx.NamedExec(q, dbcfg); err != nil {
 		e := err
-		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code.Name() == duplicateErr {
+		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == pgerrcode.UniqueViolation {
 			e = errors.ErrConflict
 		}
 
@@ -289,8 +286,8 @@ func (cr configRepository) UpdateConnections(owner, id string, channels []bootst
 	}
 
 	if err := updateConnections(owner, id, connections, tx); err != nil {
-		if e, ok := err.(*pq.Error); ok {
-			if e.Code.Name() == fkViolation && e.Constraint == connConstraintErr {
+		if e, ok := err.(*pgconn.PgError); ok {
+			if e.Code == pgerrcode.ForeignKeyViolation {
 				return errors.ErrNotFound
 			}
 		}
@@ -345,8 +342,13 @@ func (cr configRepository) ListExisting(owner string, ids []string) ([]bootstrap
 		return channels, nil
 	}
 
+	var chans pgtype.TextArray
+	if err := chans.Set(ids); err != nil {
+		return []bootstrap.Channel{}, err
+	}
+
 	q := "SELECT mainflux_channel, name, metadata FROM channels WHERE owner = $1 AND mainflux_channel = ANY ($2)"
-	rows, err := cr.db.Queryx(q, owner, pq.Array(ids))
+	rows, err := cr.db.Queryx(q, owner, chans)
 	if err != nil {
 		return []bootstrap.Channel{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
@@ -460,7 +462,7 @@ func insertChannels(owner string, channels []bootstrap.Channel, tx *sqlx.Tx) err
 		  VALUES (:mainflux_channel, :owner, :name, :metadata)`
 	if _, err := tx.NamedExec(q, chans); err != nil {
 		e := err
-		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code.Name() == duplicateErr {
+		if pqErr, ok := err.(*pgconn.PgError); ok && pqErr.Code == pgerrcode.UniqueViolation {
 			e = errors.ErrConflict
 		}
 		return e
@@ -500,7 +502,12 @@ func updateConnections(owner, id string, connections []string, tx *sqlx.Tx) erro
 		  WHERE config_id = $1 AND config_owner = $2 AND channel_owner = $2
 		  AND channel_id NOT IN ($3)`
 
-	res, err := tx.Exec(q, id, owner, pq.Array(connections))
+	var conn pgtype.TextArray
+	if err := conn.Set(connections); err != nil {
+		return err
+	}
+
+	res, err := tx.Exec(q, id, owner, conn)
 	if err != nil {
 		return err
 	}

@@ -9,14 +9,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lib/pq"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	notifiers "github.com/mainflux/mainflux/consumers/notifiers"
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 var _ notifiers.SubscriptionsRepository = (*subscriptionsRepo)(nil)
-
-const errDuplicate = "unique_violation"
 
 type subscriptionsRepo struct {
 	db Database
@@ -41,7 +40,7 @@ func (repo subscriptionsRepo) Save(ctx context.Context, sub notifiers.Subscripti
 
 	row, err := repo.db.NamedQueryContext(ctx, q, dbSub)
 	if err != nil {
-		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code.Name() == errDuplicate {
+		if pqErr, ok := err.(*pgconn.PgError); ok && pqErr.Code == pgerrcode.UniqueViolation {
 			return "", errors.Wrap(errors.ErrConflict, err)
 		}
 		return "", errors.Wrap(errors.ErrCreateEntity, err)

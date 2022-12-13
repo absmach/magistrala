@@ -8,17 +8,13 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq" // required for DB access
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jmoiron/sqlx" // required for DB access
 	"github.com/mainflux/mainflux/consumers"
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfjson "github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
-)
-
-const (
-	errInvalid        = "invalid_text_representation"
-	errUndefinedTable = "undefined_table"
 )
 
 var (
@@ -80,10 +76,10 @@ func (tr timescaleRepo) saveSenml(messages interface{}) (err error) {
 	for _, msg := range msgs {
 		m := senmlMessage{Message: msg}
 		if _, err := tx.NamedExec(q, m); err != nil {
-			pqErr, ok := err.(*pq.Error)
+			pgErr, ok := err.(*pgconn.PgError)
 			if ok {
-				switch pqErr.Code.Name() {
-				case errInvalid:
+				switch pgErr.Code {
+				case pgerrcode.InvalidTextRepresentation:
 					return errors.Wrap(errSaveMessage, errInvalidMessage)
 				}
 			}
@@ -136,12 +132,12 @@ func (tr timescaleRepo) insertJSON(msgs mfjson.Messages) error {
 			return errors.Wrap(errSaveMessage, err)
 		}
 		if _, err = tx.NamedExec(q, dbmsg); err != nil {
-			pqErr, ok := err.(*pq.Error)
+			pgErr, ok := err.(*pgconn.PgError)
 			if ok {
-				switch pqErr.Code.Name() {
-				case errInvalid:
+				switch pgErr.Code {
+				case pgerrcode.InvalidTextRepresentation:
 					return errors.Wrap(errSaveMessage, errInvalidMessage)
-				case errUndefinedTable:
+				case pgerrcode.UndefinedTable:
 					return errNoTable
 				}
 			}

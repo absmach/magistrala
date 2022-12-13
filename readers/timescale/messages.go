@@ -7,19 +7,12 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx" // required for DB access
-	"github.com/lib/pq"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	"github.com/mainflux/mainflux/readers"
-)
-
-const (
-	// Table for SenML messages
-	defTable = "messages"
-
-	// Error code for Undefined table error.
-	undefinedTableCode = "42P01"
 )
 
 var _ readers.MessageRepository = (*timescaleRepository)(nil)
@@ -64,8 +57,8 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 
 	rows, err := tr.db.NamedQuery(q, params)
 	if err != nil {
-		if e, ok := err.(*pq.Error); ok {
-			if e.Code == undefinedTableCode {
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+			if pgErr.Code == pgerrcode.UndefinedTable {
 				return readers.MessagesPage{}, nil
 			}
 		}

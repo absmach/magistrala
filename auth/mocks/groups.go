@@ -228,9 +228,15 @@ func (grm *groupRepositoryMock) Members(ctx context.Context, groupID, groupType 
 	grm.mu.Lock()
 	defer grm.mu.Unlock()
 	var items []auth.Member
-	members, ok := grm.members[groupID][groupType]
-	if !ok {
-		return auth.MemberPage{}, errors.ErrNotFound
+	var members map[string]string
+
+	switch {
+	case groupType == "":
+		for _, value := range grm.members[groupID] {
+			members = value
+		}
+	default:
+		members = grm.members[groupID][groupType]
 	}
 
 	first := uint64(pm.Offset)
@@ -246,7 +252,9 @@ func (grm *groupRepositoryMock) Members(ctx context.Context, groupID, groupType 
 	return auth.MemberPage{
 		Members: items,
 		PageMetadata: auth.PageMetadata{
-			Total: uint64(len(items)),
+			Total:  uint64(len(items)),
+			Offset: pm.Offset,
+			Limit:  pm.Limit,
 		},
 	}, nil
 }

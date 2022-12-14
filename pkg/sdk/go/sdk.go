@@ -282,11 +282,8 @@ type SDK interface {
 	// IssueCert issues a certificate for a thing required for mtls.
 	IssueCert(thingID string, keyBits int, keyType, valid, token string) (Cert, error)
 
-	// RemoveCert removes a certificate
-	RemoveCert(id, token string) error
-
-	// RevokeCert revokes certificate with certID for thing with thingID
-	RevokeCert(thingID, certID, token string) error
+	// RevokeCert revokes certificate for thing with thingID
+	RevokeCert(thingID, token string) error
 
 	// Issue issues a new key, returning its token value alongside.
 	Issue(token string, duration time.Duration) (KeyRes, error)

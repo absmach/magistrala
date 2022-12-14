@@ -14,10 +14,10 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
-const configsEndpoint = "configs"
-const bootstrapEndpoint = "bootstrap"
-const whitelistEndpoint = "state"
-const bootstrapCertsEndpoint = "configs/certs"
+const configsEndpoint = "things/configs"
+const bootstrapEndpoint = "things/bootstrap"
+const whitelistEndpoint = "things/state"
+const bootstrapCertsEndpoint = "things/configs/certs"
 
 // BootstrapConfig represents Configuration entity. It wraps information about external entity
 // as well as info about corresponding Mainflux entities.
@@ -209,7 +209,7 @@ func (sdk mfSDK) Bootstrap(externalKey, externalID string) (BootstrapConfig, err
 		return BootstrapConfig{}, err
 	}
 
-	resp, err := sdk.sendRequest(req, externalKey, string(CTJSON))
+	resp, err := sdk.sendThingRequest(req, externalKey, string(CTJSON))
 	if err != nil {
 		return BootstrapConfig{}, err
 	}

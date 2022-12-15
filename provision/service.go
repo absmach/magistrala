@@ -23,6 +23,7 @@ var (
 	ErrUnauthorized             = errors.New("unauthorized access")
 	ErrFailedToCreateToken      = errors.New("failed to create access token")
 	ErrEmptyThingsList          = errors.New("things list in configuration empty")
+	ErrThingUpdate              = errors.New("failed to update thing")
 	ErrEmptyChannelsList        = errors.New("channels list in configuration is empty")
 	ErrFailedChannelCreation    = errors.New("failed to create channel")
 	ErrFailedChannelRetrieval   = errors.New("failed to retrieve channel")
@@ -239,7 +240,7 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 			}
 			if err := ps.sdk.Whitelist(token, wlReq); err != nil {
 				res.Error = err.Error()
-				return res, SDK.ErrFailedWhitelist
+				return res, ErrThingUpdate
 			}
 			res.Whitelisted[thing.ID] = true
 		}
@@ -311,9 +312,9 @@ func (ps *provisionService) updateGateway(token string, bs SDK.BootstrapConfig, 
 	gw.CfgID = bs.MFThing
 	gw.Type = gateway
 
-	th, err := ps.sdk.Thing(bs.MFThing, token)
-	if err != nil {
-		return errors.Wrap(ErrGatewayUpdate, err)
+	th, sdkerr := ps.sdk.Thing(bs.MFThing, token)
+	if sdkerr != nil {
+		return errors.Wrap(ErrGatewayUpdate, sdkerr)
 	}
 	b, err := json.Marshal(gw)
 	if err != nil {
@@ -344,10 +345,11 @@ func clean(ps *provisionService, things []SDK.Thing, channels []SDK.Channel, tok
 }
 
 func (ps *provisionService) recover(e *error, ths *[]SDK.Thing, chs *[]SDK.Channel, tkn *string) {
-	things, channels, token, err := *ths, *chs, *tkn, *e
 	if e == nil {
 		return
 	}
+	things, channels, token, err := *ths, *chs, *tkn, *e
+
 	if errors.Contains(err, ErrFailedThingRetrieval) || errors.Contains(err, ErrFailedChannelCreation) {
 		for _, th := range things {
 			ps.errLog(ps.sdk.DeleteThing(th.ID, token))
@@ -382,7 +384,7 @@ func (ps *provisionService) recover(e *error, ths *[]SDK.Thing, chs *[]SDK.Chann
 		}
 	}
 
-	if errors.Contains(err, SDK.ErrFailedWhitelist) || errors.Contains(err, ErrGatewayUpdate) {
+	if errors.Contains(err, ErrThingUpdate) || errors.Contains(err, ErrGatewayUpdate) {
 		clean(ps, things, channels, token)
 		for _, th := range things {
 			if ps.conf.Bootstrap.X509Provision && needsBootstrap(th) {

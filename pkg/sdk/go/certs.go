@@ -1,10 +1,12 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package sdk
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -19,8 +21,7 @@ type Cert struct {
 	ClientCert string `json:"client_cert,omitempty"`
 }
 
-func (sdk mfSDK) IssueCert(thingID string, keyBits int, keyType, valid, token string) (Cert, error) {
-	var c Cert
+func (sdk mfSDK) IssueCert(thingID string, keyBits int, keyType, valid, token string) (Cert, errors.SDKError) {
 	r := certReq{
 		ThingID: thingID,
 		KeyBits: keyBits,
@@ -29,62 +30,58 @@ func (sdk mfSDK) IssueCert(thingID string, keyBits int, keyType, valid, token st
 	}
 	d, err := json.Marshal(r)
 	if err != nil {
-		return Cert{}, err
+		return Cert{}, errors.NewSDKError(err)
 	}
 
 	url := fmt.Sprintf("%s/%s", sdk.certsURL, certsEndpoint)
-	res, err := request(http.MethodPost, token, url, d)
+	resp, err := request(http.MethodPost, token, url, d)
 	if err != nil {
+		return Cert{}, errors.NewSDKError(err)
+	}
+	defer resp.Body.Close()
+
+	if err := errors.CheckError(resp, http.StatusOK); err != nil {
 		return Cert{}, err
 	}
-	defer res.Body.Close()
-	if res.StatusCode != http.StatusOK {
-		return Cert{}, ErrCerts
-	}
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		println(err.Error())
-		return Cert{}, err
-	}
-	if err := json.Unmarshal(body, &c); err != nil {
-		return Cert{}, err
+
+	var c Cert
+	if err := json.NewDecoder(resp.Body).Decode(&c); err != nil {
+		return Cert{}, errors.NewSDKError(err)
 	}
 	return c, nil
 }
 
-func (sdk mfSDK) RemoveCert(id, token string) error {
-	res, err := request(http.MethodDelete, token, fmt.Sprintf("%s/%s", sdk.certsURL, id), nil)
-	if res != nil {
-		res.Body.Close()
+func (sdk mfSDK) RemoveCert(id, token string) errors.SDKError {
+	resp, err := request(http.MethodDelete, token, fmt.Sprintf("%s/%s", sdk.certsURL, id), nil)
+	if resp != nil {
+		resp.Body.Close()
 	}
 	if err != nil {
-		return err
+		return errors.NewSDKError(err)
 	}
-	switch res.StatusCode {
-	case http.StatusNoContent:
-		return nil
+	switch resp.StatusCode {
 	case http.StatusForbidden:
-		return errors.ErrAuthorization
+		return errors.NewSDKError(errors.ErrAuthorization)
 	default:
-		return ErrCertsRemove
+		return errors.CheckError(resp, http.StatusNoContent)
 	}
 }
 
-func (sdk mfSDK) RevokeCert(thingID, certID string, token string) error {
+func (sdk mfSDK) RevokeCert(thingID, certID string, token string) errors.SDKError {
 	panic("not implemented")
 }
 
-func request(method, jwt, url string, data []byte) (*http.Response, error) {
+func request(method, jwt, url string, data []byte) (*http.Response, errors.SDKError) {
 	req, err := http.NewRequest(method, url, bytes.NewReader(data))
 	if err != nil {
-		return nil, err
+		return nil, errors.NewSDKError(err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", jwt)
 	c := &http.Client{}
 	res, err := c.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, errors.NewSDKError(err)
 	}
 
 	return res, nil

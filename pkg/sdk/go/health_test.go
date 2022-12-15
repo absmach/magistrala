@@ -1,3 +1,6 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package sdk_test
 
 import (
@@ -5,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/pkg/errors"
 	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
 	"github.com/stretchr/testify/assert"
 )
@@ -28,7 +32,7 @@ func TestHealth(t *testing.T) {
 	mainfluxSDK := sdk.NewSDK(sdkConf)
 	cases := map[string]struct {
 		empty bool
-		err   error
+		err   errors.SDKError
 	}{
 		"get things service health check": {
 			empty: false,

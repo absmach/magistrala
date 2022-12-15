@@ -6,34 +6,28 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
-func (sdk mfSDK) Health() (mainflux.HealthInfo, error) {
+func (sdk mfSDK) Health() (mainflux.HealthInfo, errors.SDKError) {
 	url := fmt.Sprintf("%s/health", sdk.thingsURL)
 
 	resp, err := sdk.client.Get(url)
 	if err != nil {
-		return mainflux.HealthInfo{}, err
+		return mainflux.HealthInfo{}, errors.NewSDKError(err)
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
+	if err := errors.CheckError(resp, http.StatusOK); err != nil {
 		return mainflux.HealthInfo{}, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return mainflux.HealthInfo{}, errors.Wrap(ErrFetchHealth, errors.New(resp.Status))
 	}
 
 	var h mainflux.HealthInfo
-	if err := json.Unmarshal(body, &h); err != nil {
-		return mainflux.HealthInfo{}, err
+	if err := json.NewDecoder(resp.Body).Decode(&h); err != nil {
+		return mainflux.HealthInfo{}, errors.NewSDKError(err)
 	}
 
 	return h, nil

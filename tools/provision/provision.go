@@ -89,6 +89,8 @@ func Provision(conf Config) {
 
 	}
 
+	var err error
+
 	// Login user
 	token, err := s.CreateToken(user)
 	if err != nil {
@@ -119,7 +121,6 @@ func Provision(conf Config) {
 		if err != nil {
 			log.Fatalf("Failed to decode certificate - %s", err.Error())
 		}
-
 	}
 
 	//  Create things and channels
@@ -159,7 +160,7 @@ func Provision(conf Config) {
 
 		if conf.SSL {
 			var priv interface{}
-			priv, err = rsa.GenerateKey(rand.Reader, rsaBits)
+			priv, _ = rsa.GenerateKey(rand.Reader, rsaBits)
 
 			notBefore := time.Now()
 			validFor, err := time.ParseDuration(ttl)

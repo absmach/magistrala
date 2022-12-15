@@ -13,11 +13,15 @@ import (
 	adapter "github.com/mainflux/mainflux/http"
 	"github.com/mainflux/mainflux/http/api"
 	"github.com/mainflux/mainflux/http/mocks"
+	"github.com/mainflux/mainflux/internal/apiutil"
 	"github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/pkg/errors"
 	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 )
+
+const eof = "EOF"
 
 func newMessageService(cc mainflux.ThingsServiceClient) adapter.Service {
 	pub := mocks.NewPublisher()
@@ -51,7 +55,7 @@ func TestSendMessage(t *testing.T) {
 		chanID string
 		msg    string
 		auth   string
-		err    error
+		err    errors.SDKError
 	}{
 		"publish message": {
 			chanID: chanID,
@@ -63,13 +67,13 @@ func TestSendMessage(t *testing.T) {
 			chanID: chanID,
 			msg:    msg,
 			auth:   "",
-			err:    createError(sdk.ErrFailedPublish, http.StatusUnauthorized),
+			err:    errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		"publish message with invalid authorization token": {
 			chanID: chanID,
 			msg:    msg,
 			auth:   invalidToken,
-			err:    createError(sdk.ErrFailedPublish, http.StatusUnauthorized),
+			err:    errors.NewSDKErrorWithStatus(errors.New(eof), http.StatusUnauthorized),
 		},
 		"publish message with wrong content type": {
 			chanID: chanID,
@@ -81,18 +85,22 @@ func TestSendMessage(t *testing.T) {
 			chanID: "",
 			msg:    msg,
 			auth:   atoken,
-			err:    createError(sdk.ErrFailedPublish, http.StatusBadRequest),
+			err:    errors.NewSDKErrorWithStatus(errors.ErrMalformedEntity, http.StatusBadRequest),
 		},
 		"publish message unable to authorize": {
 			chanID: chanID,
 			msg:    msg,
 			auth:   "invalid-token",
-			err:    createError(sdk.ErrFailedPublish, http.StatusUnauthorized),
+			err:    errors.NewSDKErrorWithStatus(errors.New(eof), http.StatusUnauthorized),
 		},
 	}
 	for desc, tc := range cases {
 		err := mainfluxSDK.SendMessage(tc.chanID, tc.msg, tc.auth)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", desc, tc.err, err))
+		if tc.err == nil {
+			assert.Nil(t, err, fmt.Sprintf("%s: got unexpected error: %s", desc, err))
+		} else {
+			assert.Equal(t, tc.err.Error(), err.Error(), fmt.Sprintf("%s: expected error %s, got %s", desc, err, tc.err))
+		}
 	}
 }
 
@@ -115,7 +123,7 @@ func TestSetContentType(t *testing.T) {
 	cases := []struct {
 		desc  string
 		cType sdk.ContentType
-		err   error
+		err   errors.SDKError
 	}{
 		{
 			desc:  "set senml+json content type",
@@ -125,7 +133,7 @@ func TestSetContentType(t *testing.T) {
 		{
 			desc:  "set invalid content type",
 			cType: "invalid",
-			err:   sdk.ErrInvalidContentType,
+			err:   errors.NewSDKError(errors.ErrUnsupportedContentType),
 		},
 	}
 	for _, tc := range cases {

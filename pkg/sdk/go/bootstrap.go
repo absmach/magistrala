@@ -4,10 +4,8 @@
 package sdk
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -46,115 +44,65 @@ type ConfigUpdateCertReq struct {
 	CACert     string `json:"ca_cert"`
 }
 
-func (sdk mfSDK) AddBootstrap(token string, cfg BootstrapConfig) (string, error) {
+func (sdk mfSDK) AddBootstrap(token string, cfg BootstrapConfig) (string, errors.SDKError) {
 	data, err := json.Marshal(cfg)
 	if err != nil {
-		return "", err
+		return "", errors.NewSDKError(err)
 	}
 
 	url := fmt.Sprintf("%s/%s", sdk.bootstrapURL, configsEndpoint)
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
-	if err != nil {
-		return "", err
+
+	headers, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, string(CTJSON), data, http.StatusOK, http.StatusCreated)
+	if sdkerr != nil {
+		return "", sdkerr
 	}
 
-	resp, err := sdk.sendRequest(req, token, string(CTJSON))
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
-		return "", errors.Wrap(ErrFailedCreation, errors.New(resp.Status))
-	}
-
-	id := strings.TrimPrefix(resp.Header.Get("Location"), "/things/configs/")
+	id := strings.TrimPrefix(headers.Get("Location"), "/things/configs/")
 	return id, nil
 }
 
-func (sdk mfSDK) Whitelist(token string, cfg BootstrapConfig) error {
+func (sdk mfSDK) Whitelist(token string, cfg BootstrapConfig) errors.SDKError {
 	data, err := json.Marshal(BootstrapConfig{State: cfg.State})
 	if err != nil {
-		return errors.Wrap(ErrFailedWhitelist, err)
+		return errors.NewSDKError(err)
 	}
 
 	if cfg.MFThing == "" {
-		return ErrFailedWhitelist
+		return errors.NewSDKError(errors.ErrNotFoundParam)
 	}
 
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, whitelistEndpoint, cfg.MFThing)
-	req, err := http.NewRequest(http.MethodPut, url, bytes.NewReader(data))
-	if err != nil {
-		return errors.Wrap(ErrFailedWhitelist, err)
-	}
 
-	resp, err := sdk.sendRequest(req, token, string(CTJSON))
-	if err != nil {
-		return errors.Wrap(ErrFailedWhitelist, err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
-		return errors.Wrap(ErrFailedWhitelist, errors.New(resp.Status))
-	}
-
-	return nil
+	_, _, sdkerr := sdk.processRequest(http.MethodPut, url, token, string(CTJSON), data, http.StatusCreated, http.StatusOK)
+	return sdkerr
 }
 
-func (sdk mfSDK) ViewBootstrap(token, id string) (BootstrapConfig, error) {
+func (sdk mfSDK) ViewBootstrap(token, id string) (BootstrapConfig, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, configsEndpoint, id)
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	_, body, err := sdk.processRequest(http.MethodGet, url, token, string(CTJSON), nil, http.StatusOK)
 	if err != nil {
 		return BootstrapConfig{}, err
-	}
-
-	resp, err := sdk.sendRequest(req, token, string(CTJSON))
-	if err != nil {
-		return BootstrapConfig{}, err
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return BootstrapConfig{}, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return BootstrapConfig{}, errors.Wrap(ErrFailedFetch, errors.New(resp.Status))
 	}
 
 	var bc BootstrapConfig
 	if err := json.Unmarshal(body, &bc); err != nil {
-		return BootstrapConfig{}, err
+		return BootstrapConfig{}, errors.NewSDKError(err)
 	}
 
 	return bc, nil
 }
 
-func (sdk mfSDK) UpdateBootstrap(token string, cfg BootstrapConfig) error {
+func (sdk mfSDK) UpdateBootstrap(token string, cfg BootstrapConfig) errors.SDKError {
 	data, err := json.Marshal(cfg)
 	if err != nil {
-		return err
+		return errors.NewSDKError(err)
 	}
 
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, configsEndpoint, cfg.MFThing)
-	req, err := http.NewRequest(http.MethodPut, url, bytes.NewReader(data))
-	if err != nil {
-		return err
-	}
-
-	resp, err := sdk.sendRequest(req, token, string(CTJSON))
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return errors.Wrap(ErrFailedUpdate, errors.New(resp.Status))
-	}
-
-	return nil
+	_, _, sdkerr := sdk.processRequest(http.MethodPut, url, token, string(CTJSON), data, http.StatusOK)
+	return sdkerr
 }
-func (sdk mfSDK) UpdateBootstrapCerts(token, id, clientCert, clientKey, ca string) error {
+func (sdk mfSDK) UpdateBootstrapCerts(token, id, clientCert, clientKey, ca string) errors.SDKError {
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, bootstrapCertsEndpoint, id)
 	request := ConfigUpdateCertReq{
 		ClientCert: clientCert,
@@ -164,69 +112,29 @@ func (sdk mfSDK) UpdateBootstrapCerts(token, id, clientCert, clientKey, ca strin
 
 	data, err := json.Marshal(request)
 	if err != nil {
-		return errors.Wrap(ErrFailedCertUpdate, err)
-	}
-	req, err := http.NewRequest(http.MethodPatch, url, bytes.NewReader(data))
-	if err != nil {
-		return err
+		return errors.NewSDKError(err)
 	}
 
-	resp, err := sdk.sendRequest(req, token, string(CTJSON))
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return errors.Wrap(ErrFailedCertUpdate, errors.New(resp.Status))
-	}
-
-	return nil
+	_, _, sdkerr := sdk.processRequest(http.MethodPatch, url, token, string(CTJSON), data, http.StatusOK)
+	return sdkerr
 }
 
-func (sdk mfSDK) RemoveBootstrap(token, id string) error {
+func (sdk mfSDK) RemoveBootstrap(token, id string) errors.SDKError {
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, configsEndpoint, id)
-	req, err := http.NewRequest(http.MethodDelete, url, nil)
-	if err != nil {
-		return err
-	}
-
-	resp, err := sdk.sendRequest(req, token, string(CTJSON))
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode != http.StatusNoContent {
-		return errors.Wrap(ErrFailedRemoval, errors.New(resp.Status))
-	}
-
-	return nil
+	_, _, err := sdk.processRequest(http.MethodDelete, url, token, string(CTJSON), nil, http.StatusNoContent)
+	return err
 }
 
-func (sdk mfSDK) Bootstrap(externalKey, externalID string) (BootstrapConfig, error) {
+func (sdk mfSDK) Bootstrap(externalKey, externalID string) (BootstrapConfig, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, bootstrapEndpoint, externalID)
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	_, body, err := sdk.processRequest(http.MethodGet, url, externalKey, string(CTJSON), nil, http.StatusOK)
 	if err != nil {
 		return BootstrapConfig{}, err
-	}
-
-	resp, err := sdk.sendRequest(req, externalKey, string(CTJSON))
-	if err != nil {
-		return BootstrapConfig{}, err
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return BootstrapConfig{}, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return BootstrapConfig{}, errors.Wrap(ErrFailedFetch, errors.New(resp.Status))
 	}
 
 	var bc BootstrapConfig
 	if err := json.Unmarshal(body, &bc); err != nil {
-		return BootstrapConfig{}, err
+		return BootstrapConfig{}, errors.NewSDKError(err)
 	}
 
 	return bc, nil

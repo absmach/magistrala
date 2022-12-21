@@ -1,7 +1,7 @@
 services:
   broker:
     image: nats:2.2.4-alpine
-    command: "-c /etc/nats/nats.conf"
+    command: "-c /etc/nats/nats.conf -DV"
     volumes:
       - ./../nats/:/etc/nats
     ports:

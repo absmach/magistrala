@@ -17,12 +17,11 @@ import (
 
 const chansPrefix = "channels"
 
+// Publisher and Subscriber errors.
 var (
-	ErrAlreadySubscribed = errors.New("already subscribed to topic")
-	ErrNotSubscribed     = errors.New("not subscribed")
-	ErrEmptyTopic        = errors.New("empty topic")
-	ErrEmptyID           = errors.New("empty id")
-	ErrFailed            = errors.New("failed")
+	ErrNotSubscribed = errors.New("not subscribed")
+	ErrEmptyTopic    = errors.New("empty topic")
+	ErrEmptyID       = errors.New("empty id")
 )
 
 var _ messaging.PubSub = (*pubsub)(nil)
@@ -48,7 +47,7 @@ type pubsub struct {
 // here: https://docs.nats.io/developing-with-nats/receiving/queues.
 // If the queue is empty, Subscribe will be used.
 func NewPubSub(url, queue string, logger log.Logger) (messaging.PubSub, error) {
-	conn, err := broker.Connect(url)
+	conn, err := broker.Connect(url, broker.MaxReconnects(maxReconnects))
 	if err != nil {
 		return nil, err
 	}

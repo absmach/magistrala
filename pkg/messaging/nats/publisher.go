@@ -11,6 +11,11 @@ import (
 	broker "github.com/nats-io/nats.go"
 )
 
+// A maximum number of reconnect attempts before NATS connection closes permanently.
+// Value -1 represents an unlimited number of reconnect retries, i.e. the client
+// will never give up on retrying to re-establish connection to NATS server.
+const maxReconnects = -1
+
 var _ messaging.Publisher = (*publisher)(nil)
 
 type publisher struct {
@@ -22,7 +27,7 @@ type publisher struct {
 
 // NewPublisher returns NATS message Publisher.
 func NewPublisher(url string) (messaging.Publisher, error) {
-	conn, err := broker.Connect(url)
+	conn, err := broker.Connect(url, broker.MaxReconnects(maxReconnects))
 	if err != nil {
 		return nil, err
 	}

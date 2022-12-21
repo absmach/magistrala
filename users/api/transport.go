@@ -200,7 +200,7 @@ func decodeCredentials(_ context.Context, r *http.Request) (interface{}, error) 
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
-
+	user.Email = strings.TrimSpace(user.Email)
 	return userReq{user}, nil
 }
 
@@ -214,6 +214,7 @@ func decodeCreateUserReq(_ context.Context, r *http.Request) (interface{}, error
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
+	user.Email = strings.TrimSpace(user.Email)
 	req := createUserReq{
 		user:  user,
 		token: apiutil.ExtractBearerToken(r),

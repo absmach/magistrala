@@ -81,7 +81,12 @@ func migrateDB(db *sqlx.DB) error {
 			{
 				Id: "users_5",
 				Up: []string{
-					`CREATE TYPE USER_STATUS AS ENUM ('enabled', 'disabled');`,
+					`DO $$
+					BEGIN
+						IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_status') THEN
+							CREATE TYPE user_status AS ENUM ('enabled', 'disabled');
+						END IF;
+					END$$;`,
 					`ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS
 					status USER_STATUS NOT NULL DEFAULT 'enabled'`,
 				},

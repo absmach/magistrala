@@ -4,6 +4,7 @@
 package rabbitmq
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -54,7 +55,8 @@ func (pub *publisher) Publish(topic string, msg messaging.Message) error {
 	}
 	subject = formatTopic(subject)
 
-	err = pub.ch.Publish(
+	err = pub.ch.PublishWithContext(
+		context.Background(),
 		exchangeName,
 		subject,
 		false,

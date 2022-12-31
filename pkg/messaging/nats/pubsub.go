@@ -51,6 +51,7 @@ func NewPubSub(url, queue string, logger log.Logger) (messaging.PubSub, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	ret := &pubsub{
 		publisher: publisher{
 			conn: conn,
@@ -145,6 +146,7 @@ func (ps *pubsub) Unsubscribe(id, topic string) error {
 	if err := current.Unsubscribe(); err != nil {
 		return err
 	}
+
 	delete(s, id)
 	if len(s) == 0 {
 		delete(ps.subscriptions, topic)

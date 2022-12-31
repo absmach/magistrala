@@ -22,13 +22,15 @@ const (
 )
 
 var (
-	ErrAlreadySubscribed = errors.New("already subscribed to topic")
-	ErrNotSubscribed     = errors.New("not subscribed")
-	ErrEmptyTopic        = errors.New("empty topic")
-	ErrEmptyID           = errors.New("empty id")
-	ErrFailed            = errors.New("failed")
-)
+	// ErrNotSubscribed indicates that the topic is not subscribed to.
+	ErrNotSubscribed = errors.New("not subscribed")
 
+	// ErrEmptyTopic indicates the absence of topic.
+	ErrEmptyTopic = errors.New("empty topic")
+
+	// ErrEmptyID indicates the absence of ID.
+	ErrEmptyID = errors.New("empty ID")
+)
 var _ messaging.PubSub = (*pubsub)(nil)
 
 type subscription struct {

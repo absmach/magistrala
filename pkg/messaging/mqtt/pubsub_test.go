@@ -4,6 +4,7 @@
 package mqtt_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -26,6 +27,9 @@ const (
 var (
 	data = []byte("payload")
 )
+
+// ErrFailedHandleMessage indicates that the message couldn't be handled.
+var errFailedHandleMessage = errors.New("failed to handle mainflux message")
 
 func TestPublisher(t *testing.T) {
 	msgChan := make(chan []byte)
@@ -384,7 +388,7 @@ func TestUnsubscribe(t *testing.T) {
 			desc:      "Unsubscribe from a topic with an ID with failing handler",
 			topic:     fmt.Sprintf("%s.%s", chansPrefix, topic+"2"),
 			clientID:  "clientid55",
-			err:       mqtt_pubsub.ErrFailedHandleMessage,
+			err:       errFailedHandleMessage,
 			subscribe: false,
 			handler:   handler{true, "clientid5", msgChan},
 		},
@@ -400,7 +404,7 @@ func TestUnsubscribe(t *testing.T) {
 			desc:      "Unsubscribe from a topic with subtopic with an ID with failing handler",
 			topic:     fmt.Sprintf("%s.%s.%s", chansPrefix, topic+"2", subtopic),
 			clientID:  "clientid55",
-			err:       mqtt_pubsub.ErrFailedHandleMessage,
+			err:       errFailedHandleMessage,
 			subscribe: false,
 			handler:   handler{true, "clientid5", msgChan},
 		},
@@ -432,7 +436,7 @@ func (h handler) Handle(msg messaging.Message) error {
 
 func (h handler) Cancel() error {
 	if h.fail {
-		return mqtt_pubsub.ErrFailedHandleMessage
+		return errFailedHandleMessage
 	}
 	return nil
 }

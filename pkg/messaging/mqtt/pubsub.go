@@ -41,9 +41,6 @@ var (
 
 	// ErrEmptyID indicates the absence of ID.
 	ErrEmptyID = errors.New("empty ID")
-
-	// ErrFailedHandleMessage indicates that the message couldn't be handled.
-	ErrFailedHandleMessage = errors.New("failed to handle mainflux message")
 )
 
 var _ messaging.PubSub = (*pubsub)(nil)

@@ -28,7 +28,7 @@ const (
 	APIKey
 )
 
-func (sdk mfSDK) Issue(token string, d time.Duration) (KeyRes, errors.SDKError) {
+func (sdk mfSDK) Issue(d time.Duration, token string) (KeyRes, errors.SDKError) {
 	datareq := keyReq{Type: APIKey, Duration: d}
 	data, err := json.Marshal(datareq)
 	if err != nil {

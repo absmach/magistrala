@@ -59,7 +59,7 @@ var cmdThings = []cobra.Command{
 				Metadata: metadata,
 			}
 			if args[0] == "all" {
-				l, err := sdk.Things(args[1], pageMetadata)
+				l, err := sdk.Things(pageMetadata, args[1])
 				if err != nil {
 					logError(err)
 					return
@@ -186,8 +186,12 @@ var cmdThings = []cobra.Command{
 				logUsage(cmd.Use)
 				return
 			}
-
-			cl, err := sdk.ChannelsByThing(args[1], args[0], uint64(Offset), uint64(Limit), true)
+			pm := mfxsdk.PageMetadata{
+				Offset:       uint64(Offset),
+				Limit:        uint64(Limit),
+				Disconnected: true,
+			}
+			cl, err := sdk.ChannelsByThing(args[0], pm, args[1])
 			if err != nil {
 				logError(err)
 				return
@@ -205,8 +209,12 @@ var cmdThings = []cobra.Command{
 				logUsage(cmd.Use)
 				return
 			}
-
-			cl, err := sdk.ChannelsByThing(args[1], args[0], uint64(Offset), uint64(Limit), false)
+			pm := mfxsdk.PageMetadata{
+				Offset:       uint64(Offset),
+				Limit:        uint64(Limit),
+				Disconnected: false,
+			}
+			cl, err := sdk.ChannelsByThing(args[0], pm, args[1])
 			if err != nil {
 				logError(err)
 				return
@@ -220,9 +228,9 @@ var cmdThings = []cobra.Command{
 // NewThingsCmd returns things command.
 func NewThingsCmd() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "things [create | get | update | delete | identify | connect | disconnect | connections | not-connected]",
+		Use:   "things [create | get | update | delete | connect | disconnect | connections | not-connected]",
 		Short: "Things management",
-		Long:  `Things management: create, get, update, identify or delete Thing, connect or disconnect Thing from Channel and get the list of Channels connected or disconnected from a Thing`,
+		Long:  `Things management: create, get, update or delete Thing, connect or disconnect Thing from Channel and get the list of Channels connected or disconnected from a Thing`,
 	}
 
 	for i := range cmdThings {

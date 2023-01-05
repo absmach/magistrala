@@ -51,7 +51,7 @@ func (sdk mfSDK) CreateChannels(chs []Channel, token string) ([]Channel, errors.
 	return ccr.Channels, nil
 }
 
-func (sdk mfSDK) Channels(token string, pm PageMetadata) (ChannelsPage, errors.SDKError) {
+func (sdk mfSDK) Channels(pm PageMetadata, token string) (ChannelsPage, errors.SDKError) {
 	var url string
 	var err error
 
@@ -72,12 +72,14 @@ func (sdk mfSDK) Channels(token string, pm PageMetadata) (ChannelsPage, errors.S
 	return cp, nil
 }
 
-func (sdk mfSDK) ChannelsByThing(token, thingID string, offset, limit uint64, disconn bool) (ChannelsPage, errors.SDKError) {
-	url := fmt.Sprintf("%s/things/%s/channels?offset=%d&limit=%d&disconnected=%t", sdk.thingsURL, thingID, offset, limit, disconn)
-
-	_, body, err := sdk.processRequest(http.MethodGet, url, token, string(CTJSON), nil, http.StatusOK)
+func (sdk mfSDK) ChannelsByThing(thingID string, pm PageMetadata, token string) (ChannelsPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(fmt.Sprintf("%s/things/%s", sdk.thingsURL, thingID), channelsEndpoint, pm)
 	if err != nil {
-		return ChannelsPage{}, err
+		return ChannelsPage{}, errors.NewSDKError(err)
+	}
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, string(CTJSON), nil, http.StatusOK)
+	if sdkerr != nil {
+		return ChannelsPage{}, sdkerr
 	}
 
 	var cp ChannelsPage

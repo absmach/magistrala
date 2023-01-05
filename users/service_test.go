@@ -271,10 +271,11 @@ func TestListUsers(t *testing.T) {
 
 	for desc, tc := range cases {
 		pm := users.PageMetadata{
-			Offset: tc.offset,
-			Limit:  tc.limit,
-			Email:  tc.email,
-			Status: "all",
+			Offset:   tc.offset,
+			Limit:    tc.limit,
+			Email:    tc.email,
+			Metadata: nil,
+			Status:   "all",
 		}
 		page, err := svc.ListUsers(context.Background(), tc.token, pm)
 		size := uint64(len(page.Users))

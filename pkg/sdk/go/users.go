@@ -19,7 +19,7 @@ const (
 	membersEndpoint  = "members"
 )
 
-func (sdk mfSDK) CreateUser(token string, u User) (string, errors.SDKError) {
+func (sdk mfSDK) CreateUser(u User, token string) (string, errors.SDKError) {
 	data, err := json.Marshal(u)
 	if err != nil {
 		return "", errors.NewSDKError(err)
@@ -51,7 +51,7 @@ func (sdk mfSDK) User(userID, token string) (User, errors.SDKError) {
 	return u, nil
 }
 
-func (sdk mfSDK) Users(token string, pm PageMetadata) (UsersPage, errors.SDKError) {
+func (sdk mfSDK) Users(pm PageMetadata, token string) (UsersPage, errors.SDKError) {
 	var url string
 	var err error
 

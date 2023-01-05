@@ -26,7 +26,7 @@ var cmdAPIKeys = []cobra.Command{
 				return
 			}
 
-			resp, err := sdk.Issue(args[1], d)
+			resp, err := sdk.Issue(d, args[1])
 			if err != nil {
 				logError(err)
 				return

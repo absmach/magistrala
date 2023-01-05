@@ -27,7 +27,7 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 
-			id, err := sdk.AddBootstrap(args[1], cfg)
+			id, err := sdk.AddBootstrap(cfg, args[1])
 			if err != nil {
 				logError(err)
 				return
@@ -46,7 +46,7 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 
-			c, err := sdk.ViewBootstrap(args[1], args[0])
+			c, err := sdk.ViewBootstrap(args[0], args[1])
 			if err != nil {
 				logError(err)
 				return
@@ -71,7 +71,7 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 
-			if err := sdk.UpdateBootstrap(args[1], cfg); err != nil {
+			if err := sdk.UpdateBootstrap(cfg, args[1]); err != nil {
 				logError(err)
 				return
 			}
@@ -89,7 +89,7 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 
-			if err := sdk.RemoveBootstrap(args[1], args[0]); err != nil {
+			if err := sdk.RemoveBootstrap(args[0], args[1]); err != nil {
 				logError(err)
 				return
 			}
@@ -107,7 +107,7 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 
-			c, err := sdk.Bootstrap(args[1], args[0])
+			c, err := sdk.Bootstrap(args[0], args[1])
 			if err != nil {
 				logError(err)
 				return

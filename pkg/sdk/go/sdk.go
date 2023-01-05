@@ -45,15 +45,16 @@ type User struct {
 	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 type PageMetadata struct {
-	Total    uint64                 `json:"total"`
-	Offset   uint64                 `json:"offset"`
-	Limit    uint64                 `json:"limit"`
-	Level    uint64                 `json:"level,omitempty"`
-	Email    string                 `json:"email,omitempty"`
-	Name     string                 `json:"name,omitempty"`
-	Type     string                 `json:"type,omitempty"`
-	Metadata map[string]interface{} `json:"metadata,omitempty"`
-	Status   string                 `json:"status,omitempty"`
+	Total        uint64                 `json:"total"`
+	Offset       uint64                 `json:"offset"`
+	Limit        uint64                 `json:"limit"`
+	Level        uint64                 `json:"level,omitempty"`
+	Email        string                 `json:"email,omitempty"`
+	Name         string                 `json:"name,omitempty"`
+	Type         string                 `json:"type,omitempty"`
+	Disconnected bool                   `json:"disconnected,omitempty"`
+	Metadata     map[string]interface{} `json:"metadata,omitempty"`
+	Status       string                 `json:"status,omitempty"`
 }
 
 // Group represents mainflux users group.
@@ -92,13 +93,13 @@ type Key struct {
 // SDK contains Mainflux API.
 type SDK interface {
 	// CreateUser registers mainflux user.
-	CreateUser(token string, user User) (string, errors.SDKError)
+	CreateUser(user User, token string) (string, errors.SDKError)
 
 	// User returns user object by id.
-	User(token, id string) (User, errors.SDKError)
+	User(id, token string) (User, errors.SDKError)
 
 	// Users returns list of users.
-	Users(token string, pm PageMetadata) (UsersPage, errors.SDKError)
+	Users(pm PageMetadata, token string) (UsersPage, errors.SDKError)
 
 	// CreateToken receives credentials and returns user token.
 	CreateToken(user User) (string, errors.SDKError)
@@ -122,11 +123,11 @@ type SDK interface {
 	CreateThings(things []Thing, token string) ([]Thing, errors.SDKError)
 
 	// Things returns page of things.
-	Things(token string, pm PageMetadata) (ThingsPage, errors.SDKError)
+	Things(pm PageMetadata, token string) (ThingsPage, errors.SDKError)
 
 	// ThingsByChannel returns page of things that are connected or not connected
 	// to specified channel.
-	ThingsByChannel(token, chanID string, offset, limit uint64, disconnected bool) (ThingsPage, errors.SDKError)
+	ThingsByChannel(chanID string, pm PageMetadata, token string) (ThingsPage, errors.SDKError)
 
 	// Thing returns thing object by id.
 	Thing(id, token string) (Thing, errors.SDKError)
@@ -147,28 +148,28 @@ type SDK interface {
 	DeleteGroup(id, token string) errors.SDKError
 
 	// Groups returns page of groups.
-	Groups(meta PageMetadata, token string) (GroupsPage, errors.SDKError)
+	Groups(pm PageMetadata, token string) (GroupsPage, errors.SDKError)
 
 	// Parents returns page of users groups.
-	Parents(id string, offset, limit uint64, token string) (GroupsPage, errors.SDKError)
+	Parents(id string, pm PageMetadata, token string) (GroupsPage, errors.SDKError)
 
 	// Children returns page of users groups.
-	Children(id string, offset, limit uint64, token string) (GroupsPage, errors.SDKError)
+	Children(id string, pm PageMetadata, token string) (GroupsPage, errors.SDKError)
 
 	// Group returns users group object by id.
 	Group(id, token string) (Group, errors.SDKError)
 
 	// Assign assigns member of member type (thing or user) to a group.
-	Assign(memberIDs []string, memberType, groupID string, token string) errors.SDKError
+	Assign(memberIDs []string, memberType, groupID, token string) errors.SDKError
 
 	// Unassign removes member from a group.
-	Unassign(token, groupID string, memberIDs ...string) errors.SDKError
+	Unassign(groupID string, memberIDs []string, token string) errors.SDKError
 
 	// Members lists members of a group.
-	Members(groupID, token string, offset, limit uint64) (MembersPage, errors.SDKError)
+	Members(groupID string, pm PageMetadata, token string) (MembersPage, errors.SDKError)
 
 	// Memberships lists groups for user.
-	Memberships(userID, token string, offset, limit uint64) (GroupsPage, errors.SDKError)
+	Memberships(userID string, pm PageMetadata, token string) (GroupsPage, errors.SDKError)
 
 	// UpdateGroup updates existing group.
 	UpdateGroup(group Group, token string) errors.SDKError
@@ -186,11 +187,11 @@ type SDK interface {
 	CreateChannels(channels []Channel, token string) ([]Channel, errors.SDKError)
 
 	// Channels returns page of channels.
-	Channels(token string, pm PageMetadata) (ChannelsPage, errors.SDKError)
+	Channels(pm PageMetadata, token string) (ChannelsPage, errors.SDKError)
 
 	// ChannelsByThing returns page of channels that are connected or not connected
 	// to specified thing.
-	ChannelsByThing(token, thingID string, offset, limit uint64, connected bool) (ChannelsPage, errors.SDKError)
+	ChannelsByThing(thingID string, pm PageMetadata, token string) (ChannelsPage, errors.SDKError)
 
 	// Channel returns channel data by id.
 	Channel(id, token string) (Channel, errors.SDKError)
@@ -202,7 +203,7 @@ type SDK interface {
 	DeleteChannel(id, token string) errors.SDKError
 
 	// SendMessage send message to specified channel.
-	SendMessage(chanID, msg, token string) errors.SDKError
+	SendMessage(chanID, msg, key string) errors.SDKError
 
 	// ReadMessages read messages of specified channel.
 	ReadMessages(chanID, token string) (MessagesPage, errors.SDKError)
@@ -214,25 +215,25 @@ type SDK interface {
 	Health() (mainflux.HealthInfo, errors.SDKError)
 
 	// AddBootstrap add bootstrap configuration
-	AddBootstrap(token string, cfg BootstrapConfig) (string, errors.SDKError)
+	AddBootstrap(cfg BootstrapConfig, token string) (string, errors.SDKError)
 
 	// View returns Thing Config with given ID belonging to the user identified by the given token.
-	ViewBootstrap(token, id string) (BootstrapConfig, errors.SDKError)
+	ViewBootstrap(id, token string) (BootstrapConfig, errors.SDKError)
 
 	// Update updates editable fields of the provided Config.
-	UpdateBootstrap(token string, cfg BootstrapConfig) errors.SDKError
+	UpdateBootstrap(cfg BootstrapConfig, token string) errors.SDKError
 
 	// Update boostrap config certificates
-	UpdateBootstrapCerts(token string, id string, clientCert, clientKey, ca string) errors.SDKError
+	UpdateBootstrapCerts(id string, clientCert, clientKey, ca string, token string) errors.SDKError
 
 	// Remove removes Config with specified token that belongs to the user identified by the given token.
-	RemoveBootstrap(token, id string) errors.SDKError
+	RemoveBootstrap(id, token string) errors.SDKError
 
 	// Bootstrap returns Config to the Thing with provided external ID using external key.
 	Bootstrap(externalKey, externalID string) (BootstrapConfig, errors.SDKError)
 
 	// Whitelist updates Thing state Config with given ID belonging to the user identified by the given token.
-	Whitelist(token string, cfg BootstrapConfig) errors.SDKError
+	Whitelist(cfg BootstrapConfig, token string) errors.SDKError
 
 	// IssueCert issues a certificate for a thing required for mtls.
 	IssueCert(thingID string, keyBits int, keyType, valid, token string) (Cert, errors.SDKError)
@@ -244,13 +245,13 @@ type SDK interface {
 	RevokeCert(thingID, certID, token string) errors.SDKError
 
 	// Issue issues a new key, returning its token value alongside.
-	Issue(token string, duration time.Duration) (KeyRes, errors.SDKError)
+	Issue(duration time.Duration, token string) (KeyRes, errors.SDKError)
 
 	// Revoke removes the key with the provided ID that is issued by the user identified by the provided key.
-	Revoke(token, id string) errors.SDKError
+	Revoke(id, token string) errors.SDKError
 
 	// RetrieveKey retrieves data for the key identified by the provided ID, that is issued by the user identified by the provided key.
-	RetrieveKey(token, id string) (retrieveKeyRes, errors.SDKError)
+	RetrieveKey(id, token string) (retrieveKeyRes, errors.SDKError)
 }
 
 type mfSDK struct {
@@ -352,6 +353,7 @@ func (pm PageMetadata) query() (string, error) {
 	q.Add("total", strconv.FormatUint(pm.Total, 10))
 	q.Add("offset", strconv.FormatUint(pm.Offset, 10))
 	q.Add("limit", strconv.FormatUint(pm.Limit, 10))
+	q.Add("disconnected", strconv.FormatBool(pm.Disconnected))
 	if pm.Level != 0 {
 		q.Add("level", strconv.FormatUint(pm.Level, 10))
 	}

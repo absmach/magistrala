@@ -67,7 +67,7 @@ func (sdk mfSDK) RemoveCert(id, token string) errors.SDKError {
 	}
 }
 
-func (sdk mfSDK) RevokeCert(thingID, certID string, token string) errors.SDKError {
+func (sdk mfSDK) RevokeCert(thingID, certID, token string) errors.SDKError {
 	panic("not implemented")
 }
 

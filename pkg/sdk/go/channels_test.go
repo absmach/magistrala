@@ -307,7 +307,7 @@ func TestChannels(t *testing.T) {
 			Metadata: tc.metadata,
 		}
 
-		page, err := mainfluxSDK.Channels(tc.token, filter)
+		page, err := mainfluxSDK.Channels(filter, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page.Channels, fmt.Sprintf("%s: expected response channel %s, got %s", tc.desc, tc.response, page.Channels))
 	}
@@ -439,7 +439,12 @@ func TestChannelsByThing(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		page, err := mainfluxSDK.ChannelsByThing(tc.token, tc.thing, tc.offset, tc.limit, tc.disconnected)
+		pm := sdk.PageMetadata{
+			Offset:       tc.offset,
+			Limit:        tc.limit,
+			Disconnected: tc.disconnected,
+		}
+		page, err := mainfluxSDK.ChannelsByThing(tc.thing, pm, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page.Channels, fmt.Sprintf("%s: expected response channel %s, got %s", tc.desc, tc.response, page.Channels))
 	}

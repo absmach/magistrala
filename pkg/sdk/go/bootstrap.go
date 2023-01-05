@@ -44,7 +44,7 @@ type ConfigUpdateCertReq struct {
 	CACert     string `json:"ca_cert"`
 }
 
-func (sdk mfSDK) AddBootstrap(token string, cfg BootstrapConfig) (string, errors.SDKError) {
+func (sdk mfSDK) AddBootstrap(cfg BootstrapConfig, token string) (string, errors.SDKError) {
 	data, err := json.Marshal(cfg)
 	if err != nil {
 		return "", errors.NewSDKError(err)
@@ -61,7 +61,7 @@ func (sdk mfSDK) AddBootstrap(token string, cfg BootstrapConfig) (string, errors
 	return id, nil
 }
 
-func (sdk mfSDK) Whitelist(token string, cfg BootstrapConfig) errors.SDKError {
+func (sdk mfSDK) Whitelist(cfg BootstrapConfig, token string) errors.SDKError {
 	data, err := json.Marshal(BootstrapConfig{State: cfg.State})
 	if err != nil {
 		return errors.NewSDKError(err)
@@ -77,7 +77,7 @@ func (sdk mfSDK) Whitelist(token string, cfg BootstrapConfig) errors.SDKError {
 	return sdkerr
 }
 
-func (sdk mfSDK) ViewBootstrap(token, id string) (BootstrapConfig, errors.SDKError) {
+func (sdk mfSDK) ViewBootstrap(id, token string) (BootstrapConfig, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, configsEndpoint, id)
 	_, body, err := sdk.processRequest(http.MethodGet, url, token, string(CTJSON), nil, http.StatusOK)
 	if err != nil {
@@ -92,7 +92,7 @@ func (sdk mfSDK) ViewBootstrap(token, id string) (BootstrapConfig, errors.SDKErr
 	return bc, nil
 }
 
-func (sdk mfSDK) UpdateBootstrap(token string, cfg BootstrapConfig) errors.SDKError {
+func (sdk mfSDK) UpdateBootstrap(cfg BootstrapConfig, token string) errors.SDKError {
 	data, err := json.Marshal(cfg)
 	if err != nil {
 		return errors.NewSDKError(err)
@@ -102,7 +102,7 @@ func (sdk mfSDK) UpdateBootstrap(token string, cfg BootstrapConfig) errors.SDKEr
 	_, _, sdkerr := sdk.processRequest(http.MethodPut, url, token, string(CTJSON), data, http.StatusOK)
 	return sdkerr
 }
-func (sdk mfSDK) UpdateBootstrapCerts(token, id, clientCert, clientKey, ca string) errors.SDKError {
+func (sdk mfSDK) UpdateBootstrapCerts(id, clientCert, clientKey, ca, token string) errors.SDKError {
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, bootstrapCertsEndpoint, id)
 	request := ConfigUpdateCertReq{
 		ClientCert: clientCert,
@@ -119,7 +119,7 @@ func (sdk mfSDK) UpdateBootstrapCerts(token, id, clientCert, clientKey, ca strin
 	return sdkerr
 }
 
-func (sdk mfSDK) RemoveBootstrap(token, id string) errors.SDKError {
+func (sdk mfSDK) RemoveBootstrap(id, token string) errors.SDKError {
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, configsEndpoint, id)
 	_, _, err := sdk.processRequest(http.MethodDelete, url, token, string(CTJSON), nil, http.StatusNoContent)
 	return err

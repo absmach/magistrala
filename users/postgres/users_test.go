@@ -232,7 +232,14 @@ func TestRetrieveAll(t *testing.T) {
 		},
 	}
 	for desc, tc := range cases {
-		page, err := userRepo.RetrieveAll(context.Background(), users.EnabledStatusKey, tc.offset, tc.limit, tc.ids, tc.email, tc.metadata)
+		pm := users.PageMetadata{
+			Offset:   tc.offset,
+			Limit:    tc.limit,
+			Email:    tc.email,
+			Metadata: tc.metadata,
+			Status:   users.EnabledStatusKey,
+		}
+		page, err := userRepo.RetrieveAll(context.Background(), tc.ids, pm)
 		size := uint64(len(page.Users))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.size, size))
 		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))

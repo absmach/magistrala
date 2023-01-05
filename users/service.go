@@ -254,7 +254,7 @@ func (svc usersService) ListUsers(ctx context.Context, token string, pm PageMeta
 	if err := svc.authorize(ctx, id.id, "authorities", "member"); err != nil {
 		return UserPage{}, err
 	}
-	return svc.users.RetrieveAll(ctx, pm.Status, pm.Offset, pm.Limit, nil, pm.Email, pm.Metadata)
+	return svc.users.RetrieveAll(ctx, nil, pm)
 }
 
 func (svc usersService) UpdateUser(ctx context.Context, token string, u User) error {
@@ -356,7 +356,7 @@ func (svc usersService) ListMembers(ctx context.Context, token, groupID string, 
 		}, nil
 	}
 
-	return svc.users.RetrieveAll(ctx, pm.Status, pm.Offset, pm.Limit, userIDs, pm.Email, pm.Metadata)
+	return svc.users.RetrieveAll(ctx, userIDs, pm)
 }
 
 func (svc usersService) EnableUser(ctx context.Context, token, id string) error {

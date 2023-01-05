@@ -59,11 +59,11 @@ var cmdGroups = []cobra.Command{
 					logUsage(cmd.Use)
 					return
 				}
-				meta := mfxsdk.PageMetadata{
+				pm := mfxsdk.PageMetadata{
 					Offset: uint64(Offset),
 					Limit:  uint64(Limit),
 				}
-				l, err := sdk.Groups(meta, args[1])
+				l, err := sdk.Groups(pm, args[1])
 				if err != nil {
 					logError(err)
 					return
@@ -76,7 +76,11 @@ var cmdGroups = []cobra.Command{
 					logUsage(cmd.Use)
 					return
 				}
-				l, err := sdk.Children(args[1], uint64(Offset), uint64(Limit), args[2])
+				pm := mfxsdk.PageMetadata{
+					Offset: uint64(Offset),
+					Limit:  uint64(Limit),
+				}
+				l, err := sdk.Children(args[1], pm, args[2])
 				if err != nil {
 					logError(err)
 					return
@@ -89,7 +93,11 @@ var cmdGroups = []cobra.Command{
 					logUsage(cmd.Use)
 					return
 				}
-				l, err := sdk.Parents(args[1], uint64(Offset), uint64(Limit), args[2])
+				pm := mfxsdk.PageMetadata{
+					Offset: uint64(Offset),
+					Limit:  uint64(Limit),
+				}
+				l, err := sdk.Parents(args[1], pm, args[2])
 				if err != nil {
 					logError(err)
 					return
@@ -146,7 +154,7 @@ var cmdGroups = []cobra.Command{
 				logError(err)
 				return
 			}
-			if err := sdk.Unassign(args[2], args[1], ids...); err != nil {
+			if err := sdk.Unassign(args[1], ids, args[2]); err != nil {
 				logError(err)
 				return
 			}
@@ -178,7 +186,11 @@ var cmdGroups = []cobra.Command{
 				logUsage(cmd.Use)
 				return
 			}
-			up, err := sdk.Members(args[0], args[1], uint64(Offset), uint64(Limit))
+			pm := mfxsdk.PageMetadata{
+				Offset: uint64(Offset),
+				Limit:  uint64(Limit),
+			}
+			up, err := sdk.Members(args[0], pm, args[1])
 			if err != nil {
 				logError(err)
 				return
@@ -195,7 +207,11 @@ var cmdGroups = []cobra.Command{
 				logUsage(cmd.Use)
 				return
 			}
-			up, err := sdk.Memberships(args[0], args[1], uint64(Offset), uint64(Limit))
+			pm := mfxsdk.PageMetadata{
+				Offset: uint64(Offset),
+				Limit:  uint64(Limit),
+			}
+			up, err := sdk.Memberships(args[0], pm, args[1])
 			if err != nil {
 				logError(err)
 				return

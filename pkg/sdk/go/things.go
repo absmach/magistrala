@@ -63,9 +63,8 @@ func (sdk mfSDK) CreateThings(things []Thing, token string) ([]Thing, errors.SDK
 	return ctr.Things, nil
 }
 
-func (sdk mfSDK) Things(token string, pm PageMetadata) (ThingsPage, errors.SDKError) {
+func (sdk mfSDK) Things(pm PageMetadata, token string) (ThingsPage, errors.SDKError) {
 	url, err := sdk.withQueryParams(sdk.thingsURL, thingsEndpoint, pm)
-
 	if err != nil {
 		return ThingsPage{}, errors.NewSDKError(err)
 	}
@@ -83,12 +82,14 @@ func (sdk mfSDK) Things(token string, pm PageMetadata) (ThingsPage, errors.SDKEr
 	return tp, nil
 }
 
-func (sdk mfSDK) ThingsByChannel(token, chanID string, offset, limit uint64, disconn bool) (ThingsPage, errors.SDKError) {
-	url := fmt.Sprintf("%s/channels/%s/things?offset=%d&limit=%d&disconnected=%t", sdk.thingsURL, chanID, offset, limit, disconn)
-
-	_, body, err := sdk.processRequest(http.MethodGet, url, token, string(CTJSON), nil, http.StatusOK)
+func (sdk mfSDK) ThingsByChannel(chanID string, pm PageMetadata, token string) (ThingsPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(fmt.Sprintf("%s/channels/%s", sdk.thingsURL, chanID), thingsEndpoint, pm)
 	if err != nil {
-		return ThingsPage{}, err
+		return ThingsPage{}, errors.NewSDKError(err)
+	}
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, string(CTJSON), nil, http.StatusOK)
+	if sdkerr != nil {
+		return ThingsPage{}, sdkerr
 	}
 
 	var tp ThingsPage

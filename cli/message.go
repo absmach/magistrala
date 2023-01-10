@@ -25,7 +25,7 @@ var cmdMessages = []cobra.Command{
 		},
 	},
 	{
-		Use:   "read <channel_id.subtopic> <thing_key>",
+		Use:   "read <channel_id.subtopic> <user_token>",
 		Short: "Read messages",
 		Long:  `Reads all channel messages`,
 		Run: func(cmd *cobra.Command, args []string) {

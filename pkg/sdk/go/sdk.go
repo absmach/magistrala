@@ -230,7 +230,7 @@ type SDK interface {
 	RemoveBootstrap(id, token string) errors.SDKError
 
 	// Bootstrap returns Config to the Thing with provided external ID using external key.
-	Bootstrap(externalKey, externalID string) (BootstrapConfig, errors.SDKError)
+	Bootstrap(externalID, externalKey string) (BootstrapConfig, errors.SDKError)
 
 	// Whitelist updates Thing state Config with given ID belonging to the user identified by the given token.
 	Whitelist(cfg BootstrapConfig, token string) errors.SDKError

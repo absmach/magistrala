@@ -114,6 +114,14 @@ func main() {
 	)
 
 	rootCmd.PersistentFlags().StringVarP(
+		&sdkConf.ReaderURL,
+		"reader-url",
+		"R",
+		sdkConf.ReaderURL,
+		"Reader URL",
+	)
+
+	rootCmd.PersistentFlags().StringVarP(
 		&msgContentType,
 		"content-type",
 		"y",

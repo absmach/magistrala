@@ -189,7 +189,7 @@ var cmdThings = []cobra.Command{
 			pm := mfxsdk.PageMetadata{
 				Offset:       uint64(Offset),
 				Limit:        uint64(Limit),
-				Disconnected: true,
+				Disconnected: false,
 			}
 			cl, err := sdk.ChannelsByThing(args[0], pm, args[1])
 			if err != nil {
@@ -212,7 +212,7 @@ var cmdThings = []cobra.Command{
 			pm := mfxsdk.PageMetadata{
 				Offset:       uint64(Offset),
 				Limit:        uint64(Limit),
-				Disconnected: false,
+				Disconnected: true,
 			}
 			cl, err := sdk.ChannelsByThing(args[0], pm, args[1])
 			if err != nil {

@@ -162,7 +162,7 @@ Provision service has `/certs` endpoint that can be used to generate certificate
 - `users_token` - users authentication token or API token
 - `thing_id` - id of the thing for which certificate is going to be generated
 ```bash
-curl -s  -X POST  http://localhost:8190/certs -H "Authorization: Bearer <users_token>" -H 'Content-Type: application/json'   -d '{"thing_id": "<thing_id>", "key_bits":4096, "ttl":"2400h" }'
+curl -s  -X POST  http://localhost:8190/certs -H "Authorization: Bearer <users_token>" -H 'Content-Type: application/json'   -d '{"thing_id": "<thing_id>", "ttl":"2400h" }'
 ```
 ```json                                                                                                                            
 {

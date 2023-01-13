@@ -28,6 +28,10 @@ type certsRes struct {
 	created    bool
 }
 
+type revokeCertsRes struct {
+	RevocationTime time.Time `json:"revocation_time"`
+}
+
 func (res certsPageRes) Code() int {
 	return http.StatusOK
 }
@@ -53,5 +57,17 @@ func (res certsRes) Headers() map[string]string {
 }
 
 func (res certsRes) Empty() bool {
+	return false
+}
+
+func (res revokeCertsRes) Code() int {
+	return http.StatusOK
+}
+
+func (res revokeCertsRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res revokeCertsRes) Empty() bool {
 	return false
 }

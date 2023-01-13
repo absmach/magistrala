@@ -198,18 +198,12 @@ components:
             required:
               - thing_id
               - ttl
-              - key_bits
-              - key_type
             properties:
                thing_id:
                  type: string
                  format: uuid
                ttl:
                  type: string
-               key_type:
-                 type: string
-               key_bits:
-                 type: integer
 
   responses:
     ServiceError:

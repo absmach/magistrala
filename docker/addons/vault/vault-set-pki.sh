@@ -8,7 +8,7 @@ cd $scriptdir
 
 readDotEnv() {
     set -o allexport
-    source $MAINFLUX_DIR/.env
+    source $MAINFLUX_DIR/docker/.env
     set +o allexport
 }
 

@@ -236,13 +236,13 @@ type SDK interface {
 	Whitelist(cfg BootstrapConfig, token string) errors.SDKError
 
 	// IssueCert issues a certificate for a thing required for mtls.
-	IssueCert(thingID string, keyBits int, keyType, valid, token string) (Cert, errors.SDKError)
+	IssueCert(thingID, valid, token string) (Cert, errors.SDKError)
 
-	// RemoveCert removes a certificate
-	RemoveCert(id, token string) errors.SDKError
+	// ViewCert returns a certificate given certificate ID
+	ViewCert(certID, token string) (Cert, errors.SDKError)
 
-	// RevokeCert revokes certificate with certID for thing with thingID
-	RevokeCert(thingID, certID, token string) errors.SDKError
+	// RevokeCert revokes certificate for thing with thingID
+	RevokeCert(thingID, token string) (time.Time, errors.SDKError)
 
 	// Issue issues a new key, returning its token value alongside.
 	Issue(duration time.Duration, token string) (KeyRes, errors.SDKError)

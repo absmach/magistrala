@@ -31,7 +31,7 @@ var _ Service = (*certsService)(nil)
 // implementation, and all of its decorators (e.g. logging & metrics).
 type Service interface {
 	// IssueCert issues certificate for given thing id if access is granted with token
-	IssueCert(ctx context.Context, token, thingID, ttl string, keyBits int, keyType string) (Cert, error)
+	IssueCert(ctx context.Context, token, thingID, ttl string) (Cert, error)
 
 	// ListCerts lists certificates issued for a given thing ID
 	ListCerts(ctx context.Context, token, thingID string, offset, limit uint64) (Page, error)
@@ -105,7 +105,7 @@ type Cert struct {
 	Expire         time.Time `json:"expire" mapstructure:"-"`
 }
 
-func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, ttl string, keyBits int, keyType string) (Cert, error) {
+func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, ttl string) (Cert, error) {
 	owner, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
 		return Cert{}, err
@@ -116,7 +116,7 @@ func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, tt
 		return Cert{}, errors.Wrap(ErrFailedCertCreation, err)
 	}
 
-	cert, err := cs.pki.IssueCert(thing.Key, ttl, keyType, keyBits)
+	cert, err := cs.pki.IssueCert(thing.Key, ttl)
 	if err != nil {
 		return Cert{}, errors.Wrap(ErrFailedCertCreation, err)
 	}
@@ -130,7 +130,7 @@ func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, tt
 		ClientKey:      cert.ClientKey,
 		PrivateKeyType: cert.PrivateKeyType,
 		Serial:         cert.Serial,
-		Expire:         cert.Expire,
+		Expire:         time.Unix(0, int64(cert.Expire)*int64(time.Second)),
 	}
 
 	_, err = cs.certsRepo.Save(context.Background(), c)

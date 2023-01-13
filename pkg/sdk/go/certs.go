@@ -4,10 +4,10 @@
 package sdk
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/mainflux/mainflux/pkg/errors"
 )
@@ -16,16 +16,16 @@ const certsEndpoint = "certs"
 
 // Cert represents certs data.
 type Cert struct {
-	CACert     string `json:"issuing_ca,omitempty"`
-	ClientKey  string `json:"client_key,omitempty"`
-	ClientCert string `json:"client_cert,omitempty"`
+	ThingID    string    `json:"thing_id,omitempty"`
+	CertSerial string    `json:"cert_serial,omitempty"`
+	ClientKey  string    `json:"client_key,omitempty"`
+	ClientCert string    `json:"client_cert,omitempty"`
+	Expiration time.Time `json:"expiration,omitempty"`
 }
 
-func (sdk mfSDK) IssueCert(thingID string, keyBits int, keyType, valid, token string) (Cert, errors.SDKError) {
+func (sdk mfSDK) IssueCert(thingID, valid, token string) (Cert, errors.SDKError) {
 	r := certReq{
 		ThingID: thingID,
-		KeyBits: keyBits,
-		KeyType: keyType,
 		Valid:   valid,
 	}
 	d, err := json.Marshal(r)
@@ -34,63 +34,49 @@ func (sdk mfSDK) IssueCert(thingID string, keyBits int, keyType, valid, token st
 	}
 
 	url := fmt.Sprintf("%s/%s", sdk.certsURL, certsEndpoint)
-	resp, err := request(http.MethodPost, token, url, d)
-	if err != nil {
-		return Cert{}, errors.NewSDKError(err)
-	}
-	defer resp.Body.Close()
-
-	if err := errors.CheckError(resp, http.StatusOK); err != nil {
-		return Cert{}, err
+	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, token, string(CTJSON), d, http.StatusCreated)
+	if sdkerr != nil {
+		return Cert{}, sdkerr
 	}
 
 	var c Cert
-	if err := json.NewDecoder(resp.Body).Decode(&c); err != nil {
+	if err := json.Unmarshal(body, &c); err != nil {
 		return Cert{}, errors.NewSDKError(err)
 	}
 	return c, nil
 }
 
-func (sdk mfSDK) RemoveCert(id, token string) errors.SDKError {
-	resp, err := request(http.MethodDelete, token, fmt.Sprintf("%s/%s", sdk.certsURL, id), nil)
-	if resp != nil {
-		resp.Body.Close()
-	}
+func (sdk mfSDK) ViewCert(id, token string) (Cert, errors.SDKError) {
+	url := fmt.Sprintf("%s/%s/%s", sdk.certsURL, certsEndpoint, id)
+	_, body, err := sdk.processRequest(http.MethodGet, url, token, string(CTJSON), nil, http.StatusOK)
 	if err != nil {
-		return errors.NewSDKError(err)
+		return Cert{}, err
 	}
-	switch resp.StatusCode {
-	case http.StatusForbidden:
-		return errors.NewSDKError(errors.ErrAuthorization)
-	default:
-		return errors.CheckError(resp, http.StatusNoContent)
+
+	var cert Cert
+	if err := json.Unmarshal(body, &cert); err != nil {
+		return Cert{}, errors.NewSDKError(err)
 	}
+
+	return cert, nil
 }
 
-func (sdk mfSDK) RevokeCert(thingID, certID, token string) errors.SDKError {
-	panic("not implemented")
-}
-
-func request(method, jwt, url string, data []byte) (*http.Response, errors.SDKError) {
-	req, err := http.NewRequest(method, url, bytes.NewReader(data))
+func (sdk mfSDK) RevokeCert(id, token string) (time.Time, errors.SDKError) {
+	url := fmt.Sprintf("%s/%s/%s", sdk.certsURL, certsEndpoint, id)
+	_, body, err := sdk.processRequest(http.MethodDelete, url, token, string(CTJSON), nil, http.StatusOK)
 	if err != nil {
-		return nil, errors.NewSDKError(err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", jwt)
-	c := &http.Client{}
-	res, err := c.Do(req)
-	if err != nil {
-		return nil, errors.NewSDKError(err)
+		return time.Time{}, err
 	}
 
-	return res, nil
+	var rcr revokeCertsRes
+	if err := json.Unmarshal(body, &rcr); err != nil {
+		return time.Time{}, errors.NewSDKError(err)
+	}
+
+	return rcr.RevocationTime, nil
 }
 
 type certReq struct {
-	ThingID    string `json:"thing_id"`
-	KeyBits    int    `json:"key_bits"`
-	KeyType    string `json:"key_type"`
-	Encryption string `json:"encryption"`
-	Valid      string `json:"valid"`
+	ThingID string `json:"thing_id"`
+	Valid   string `json:"ttl"`
 }

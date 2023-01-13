@@ -43,7 +43,6 @@ const (
 	defBSAutoWhitelist = "true"
 	defBSContent       = ""
 	defCertsHoursValid = "2400h"
-	defCertsKeyBits    = "4096"
 
 	envConfigFile       = "MF_PROVISION_CONFIG_FILE"
 	envLogLevel         = "MF_PROVISION_LOG_LEVEL"
@@ -64,7 +63,6 @@ const (
 	envBSAutoWhiteList  = "MF_PROVISION_BS_AUTO_WHITELIST"
 	envBSContent        = "MF_PROVISION_BS_CONTENT"
 	envCertsHoursValid  = "MF_PROVISION_CERTS_HOURS_VALID"
-	envCertsKeyBits     = "MF_PROVISION_CERTS_RSA_BITS"
 
 	contentType = "application/json"
 )
@@ -76,7 +74,6 @@ var (
 	errFailGettingCertSettings      = errors.New("failed to get certificate file setting")
 	errFailGettingTLSConf           = errors.New("failed to get TLS setting")
 	errFailGettingProvBS            = errors.New("failed to get BS url setting")
-	errFailSettingKeyBits           = errors.New("failed to set rsa number of bits")
 	errFailedToReadBootstrapContent = errors.New("failed to read bootstrap content from envs")
 )
 
@@ -198,10 +195,6 @@ func loadConfig() (provision.Config, error) {
 	if autoWhiteList && !provisionBS {
 		return provision.Config{}, errors.New("Can't auto whitelist if auto config save is off")
 	}
-	keyBits, err := strconv.Atoi(mainflux.Env(envCertsKeyBits, defCertsKeyBits))
-	if err != nil && provisionX509 {
-		return provision.Config{}, errFailSettingKeyBits
-	}
 
 	var content map[string]interface{}
 	if c := mainflux.Env(envBSContent, defBSContent); c != "" {
@@ -227,8 +220,7 @@ func loadConfig() (provision.Config, error) {
 			TLS:            tls,
 		},
 		Cert: provision.Cert{
-			TTL:     mainflux.Env(envCertsHoursValid, defCertsHoursValid),
-			KeyBits: keyBits,
+			TTL: mainflux.Env(envCertsHoursValid, defCertsHoursValid),
 		},
 		Bootstrap: provision.Bootstrap{
 			X509Provision: provisionX509,

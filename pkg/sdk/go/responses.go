@@ -99,3 +99,7 @@ func (res retrieveKeyRes) Headers() map[string]string {
 func (res retrieveKeyRes) Empty() bool {
 	return false
 }
+
+type revokeCertsRes struct {
+	RevocationTime time.Time `json:"revocation_time"`
+}

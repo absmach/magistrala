@@ -40,8 +40,6 @@ const (
 	thingKey   = "thingKey"
 	thingID    = "1"
 	ttl        = "1h"
-	keyBits    = 2048
-	key        = "rsa"
 	certNum    = 10
 
 	cfgLogLevel    = "error"
@@ -96,7 +94,7 @@ func newService(tokens map[string]string) (certs.Service, error) {
 		SignRSABits:    cfgSignRSABits,
 	}
 
-	pki := mocks.NewPkiAgent(tlsCert, caCert, cfgSignRSABits, cfgSignHoursValid, authTimeout)
+	pki := mocks.NewPkiAgent(tlsCert, caCert, cfgSignHoursValid, authTimeout)
 
 	return certs.New(auth, repo, sdk, c, pki), nil
 }
@@ -125,7 +123,6 @@ func TestIssueCert(t *testing.T) {
 		thingID string
 		ttl     string
 		key     string
-		keyBits int
 		err     error
 	}{
 		{
@@ -133,8 +130,6 @@ func TestIssueCert(t *testing.T) {
 			token:   token,
 			thingID: thingID,
 			ttl:     ttl,
-			key:     key,
-			keyBits: 2048,
 			err:     nil,
 		},
 		{
@@ -142,8 +137,6 @@ func TestIssueCert(t *testing.T) {
 			token:   token,
 			thingID: "2",
 			ttl:     ttl,
-			key:     key,
-			keyBits: 2048,
 			err:     certs.ErrFailedCertCreation,
 		},
 		{
@@ -151,32 +144,12 @@ func TestIssueCert(t *testing.T) {
 			token:   wrongValue,
 			thingID: thingID,
 			ttl:     ttl,
-			key:     key,
-			keyBits: 2048,
 			err:     errors.ErrAuthentication,
-		},
-		{
-			desc:    "issue new cert for bad key bits",
-			token:   token,
-			thingID: thingID,
-			ttl:     ttl,
-			key:     key,
-			keyBits: -2,
-			err:     certs.ErrFailedCertCreation,
-		},
-		{
-			desc:    "issue new cert for bad key bits",
-			token:   token,
-			thingID: thingID,
-			ttl:     ttl,
-			key:     key,
-			keyBits: -2,
-			err:     certs.ErrFailedCertCreation,
 		},
 	}
 
 	for _, tc := range cases {
-		c, err := svc.IssueCert(context.Background(), tc.token, tc.thingID, tc.ttl, tc.keyBits, tc.key)
+		c, err := svc.IssueCert(context.Background(), tc.token, tc.thingID, tc.ttl)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		cert, _ := readCert([]byte(c.ClientCert))
 		if cert != nil {
@@ -190,7 +163,7 @@ func TestRevokeCert(t *testing.T) {
 	svc, err := newService(map[string]string{token: email})
 	require.Nil(t, err, fmt.Sprintf("unexpected service creation error: %s\n", err))
 
-	_, err = svc.IssueCert(context.Background(), token, thingID, ttl, keyBits, key)
+	_, err = svc.IssueCert(context.Background(), token, thingID, ttl)
 	require.Nil(t, err, fmt.Sprintf("unexpected service creation error: %s\n", err))
 
 	cases := []struct {
@@ -231,7 +204,7 @@ func TestListCerts(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("unexpected service creation error: %s\n", err))
 
 	for i := 0; i < certNum; i++ {
-		_, err = svc.IssueCert(context.Background(), token, thingID, ttl, keyBits, key)
+		_, err = svc.IssueCert(context.Background(), token, thingID, ttl)
 		require.Nil(t, err, fmt.Sprintf("unexpected cert creation error: %s\n", err))
 	}
 
@@ -296,7 +269,7 @@ func TestListSerials(t *testing.T) {
 
 	var issuedCerts []certs.Cert
 	for i := 0; i < certNum; i++ {
-		cert, err := svc.IssueCert(context.Background(), token, thingID, ttl, keyBits, key)
+		cert, err := svc.IssueCert(context.Background(), token, thingID, ttl)
 		require.Nil(t, err, fmt.Sprintf("unexpected cert creation error: %s\n", err))
 
 		crt := certs.Cert{
@@ -366,7 +339,7 @@ func TestViewCert(t *testing.T) {
 	svc, err := newService(map[string]string{token: email})
 	require.Nil(t, err, fmt.Sprintf("unexpected service creation error: %s\n", err))
 
-	ic, err := svc.IssueCert(context.Background(), token, thingID, ttl, keyBits, key)
+	ic, err := svc.IssueCert(context.Background(), token, thingID, ttl)
 	require.Nil(t, err, fmt.Sprintf("unexpected cert creation error: %s\n", err))
 
 	cert := certs.Cert{

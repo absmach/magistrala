@@ -61,8 +61,7 @@ type Service interface {
 	// A duration string is a possibly signed sequence of decimal numbers,
 	// each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m".
 	// Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
-	// keyBits for certificate key
-	Cert(token, thingID, duration string, keyBits int) (string, string, error)
+	Cert(token, thingID, duration string) (string, string, error)
 }
 
 type provisionService struct {
@@ -216,7 +215,7 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 		if ps.conf.Bootstrap.X509Provision {
 			var cert SDK.Cert
 
-			cert, err = ps.sdk.IssueCert(thing.ID, ps.conf.Cert.KeyBits, ps.conf.Cert.KeyType, ps.conf.Cert.TTL, token)
+			cert, err = ps.sdk.IssueCert(thing.ID, ps.conf.Cert.TTL, token)
 			if err != nil {
 				e := errors.Wrap(err, fmt.Errorf("thing id: %s", thing.ID))
 				return res, errors.Wrap(ErrFailedCertCreation, e)
@@ -224,10 +223,10 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 
 			res.ClientCert[thing.ID] = cert.ClientCert
 			res.ClientKey[thing.ID] = cert.ClientKey
-			res.CACert = cert.CACert
+			res.CACert = ""
 
 			if needsBootstrap(thing) {
-				if err = ps.sdk.UpdateBootstrapCerts(bsConfig.MFThing, cert.ClientCert, cert.ClientKey, cert.CACert, token); err != nil {
+				if err = ps.sdk.UpdateBootstrapCerts(bsConfig.MFThing, cert.ClientCert, cert.ClientKey, "", token); err != nil {
 					return Result{}, errors.Wrap(ErrFailedCertCreation, err)
 				}
 			}
@@ -253,7 +252,7 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 	return res, nil
 }
 
-func (ps *provisionService) Cert(token, thingID, ttl string, keyBits int) (string, string, error) {
+func (ps *provisionService) Cert(token, thingID, ttl string) (string, string, error) {
 	token, err := ps.createTokenIfEmpty(token)
 	if err != nil {
 		return "", "", err
@@ -263,7 +262,7 @@ func (ps *provisionService) Cert(token, thingID, ttl string, keyBits int) (strin
 	if err != nil {
 		return "", "", errors.Wrap(ErrUnauthorized, err)
 	}
-	cert, err := ps.sdk.IssueCert(th.ID, ps.conf.Cert.KeyBits, ps.conf.Cert.KeyType, ps.conf.Cert.TTL, token)
+	cert, err := ps.sdk.IssueCert(th.ID, ps.conf.Cert.TTL, token)
 	return cert.ClientCert, cert.ClientKey, err
 }
 
@@ -388,7 +387,8 @@ func (ps *provisionService) recover(e *error, ths *[]SDK.Thing, chs *[]SDK.Chann
 		clean(ps, things, channels, token)
 		for _, th := range things {
 			if ps.conf.Bootstrap.X509Provision && needsBootstrap(th) {
-				ps.errLog(ps.sdk.RemoveCert(th.ID, token))
+				_, err := ps.sdk.RevokeCert(th.ID, token)
+				ps.errLog(err)
 			}
 			if needsBootstrap(th) {
 				bs, err := ps.sdk.ViewBootstrap(th.ID, token)

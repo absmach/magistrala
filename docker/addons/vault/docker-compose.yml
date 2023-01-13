@@ -19,7 +19,7 @@ volumes:
 
 services:
   vault:
-    image: vault:1.6.2
+    image: vault:1.12.2
     container_name: mainflux-vault
     ports:
       - ${MF_VAULT_PORT}:8200

@@ -6,8 +6,7 @@ package pki
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"net/http"
+	"fmt"
 	"time"
 
 	"github.com/hashicorp/vault/api"
@@ -19,7 +18,6 @@ const (
 	issue  = "issue"
 	cert   = "cert"
 	revoke = "revoke"
-	apiVer = "v1"
 )
 
 var (
@@ -32,25 +30,23 @@ var (
 	// ErrFailedCertRevocation indicates failed certificate revocation
 	ErrFailedCertRevocation = errors.New("failed to revoke certificate")
 
-	errFailedVaultCertIssue = errors.New("failed to issue vault certificate")
-	errFailedVaultRead      = errors.New("failed to read vault certificate")
-	errFailedCertDecoding   = errors.New("failed to decode response from vault service")
+	errFailedCertDecoding = errors.New("failed to decode response from vault service")
 )
 
 type Cert struct {
-	ClientCert     string    `json:"client_cert" mapstructure:"certificate"`
-	IssuingCA      string    `json:"issuing_ca" mapstructure:"issuing_ca"`
-	CAChain        []string  `json:"ca_chain" mapstructure:"ca_chain"`
-	ClientKey      string    `json:"client_key" mapstructure:"private_key"`
-	PrivateKeyType string    `json:"private_key_type" mapstructure:"private_key_type"`
-	Serial         string    `json:"serial" mapstructure:"serial_number"`
-	Expire         time.Time `json:"expire" mapstructure:"-"`
+	ClientCert     string   `json:"client_cert" mapstructure:"certificate"`
+	IssuingCA      string   `json:"issuing_ca" mapstructure:"issuing_ca"`
+	CAChain        []string `json:"ca_chain" mapstructure:"ca_chain"`
+	ClientKey      string   `json:"client_key" mapstructure:"private_key"`
+	PrivateKeyType string   `json:"private_key_type" mapstructure:"private_key_type"`
+	Serial         string   `json:"serial" mapstructure:"serial_number"`
+	Expire         int64    `json:"expire" mapstructure:"expiration"`
 }
 
 // Agent represents the Vault PKI interface.
 type Agent interface {
 	// IssueCert issues certificate on PKI
-	IssueCert(cn string, ttl, keyType string, keyBits int) (Cert, error)
+	IssueCert(cn, ttl string) (Cert, error)
 
 	// Read retrieves certificate from PKI
 	Read(serial string) (Cert, error)
@@ -73,8 +69,6 @@ type pkiAgent struct {
 type certReq struct {
 	CommonName string `json:"common_name"`
 	TTL        string `json:"ttl"`
-	KeyBits    int    `json:"key_bits"`
-	KeyType    string `json:"key_type"`
 }
 
 type certRevokeReq struct {
@@ -83,9 +77,8 @@ type certRevokeReq struct {
 
 // NewVaultClient instantiates a Vault client.
 func NewVaultClient(token, host, path, role string) (Agent, error) {
-	conf := &api.Config{
-		Address: host,
-	}
+	conf := api.DefaultConfig()
+	conf.Address = host
 
 	client, err := api.NewClient(conf)
 	if err != nil {
@@ -98,44 +91,29 @@ func NewVaultClient(token, host, path, role string) (Agent, error) {
 		role:      role,
 		path:      path,
 		client:    client,
-		issueURL:  "/" + apiVer + "/" + path + "/" + issue + "/" + role,
-		readURL:   "/" + apiVer + "/" + path + "/" + cert + "/",
-		revokeURL: "/" + apiVer + "/" + path + "/" + revoke,
+		issueURL:  "/" + path + "/" + issue + "/" + role,
+		readURL:   "/" + path + "/" + cert + "/",
+		revokeURL: "/" + path + "/" + revoke,
 	}
 	return &p, nil
 }
 
-func (p *pkiAgent) IssueCert(cn string, ttl, keyType string, keyBits int) (Cert, error) {
+func (p *pkiAgent) IssueCert(cn, ttl string) (Cert, error) {
 	cReq := certReq{
 		CommonName: cn,
-		TTL:        ttl,
-		KeyBits:    keyBits,
-		KeyType:    keyType,
+		TTL:        fmt.Sprintf("%sh", ttl),
 	}
 
-	r := p.client.NewRequest("POST", p.issueURL)
-	if err := r.SetJSONBody(cReq); err != nil {
-		return Cert{}, err
-	}
-
-	resp, err := p.client.RawRequest(r)
-	if resp != nil {
-		defer resp.Body.Close()
-	}
-
+	var certIssueReq map[string]interface{}
+	data, err := json.Marshal(cReq)
 	if err != nil {
 		return Cert{}, err
 	}
-
-	if resp.StatusCode >= http.StatusBadRequest {
-		_, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return Cert{}, err
-		}
-		return Cert{}, errors.Wrap(errFailedVaultCertIssue, err)
+	if err := json.Unmarshal(data, &certIssueReq); err != nil {
+		return Cert{}, nil
 	}
 
-	s, err := api.ParseSecret(resp.Body)
+	s, err := p.client.Logical().Write(p.issueURL, certIssueReq)
 	if err != nil {
 		return Cert{}, err
 	}
@@ -149,32 +127,14 @@ func (p *pkiAgent) IssueCert(cn string, ttl, keyType string, keyBits int) (Cert,
 }
 
 func (p *pkiAgent) Read(serial string) (Cert, error) {
-	r := p.client.NewRequest("GET", p.readURL+"/"+serial)
-
-	resp, err := p.client.RawRequest(r)
+	s, err := p.client.Logical().Read(p.readURL + serial)
 	if err != nil {
 		return Cert{}, err
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= http.StatusBadRequest {
-		_, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return Cert{}, err
-		}
-		return Cert{}, errors.Wrap(errFailedVaultRead, err)
-	}
-
-	s, err := api.ParseSecret(resp.Body)
-	if err != nil {
-		return Cert{}, err
-	}
-
 	cert := Cert{}
 	if err = mapstructure.Decode(s.Data, &cert); err != nil {
 		return Cert{}, errors.Wrap(errFailedCertDecoding, err)
 	}
-
 	return cert, nil
 }
 
@@ -183,34 +143,23 @@ func (p *pkiAgent) Revoke(serial string) (time.Time, error) {
 		SerialNumber: serial,
 	}
 
-	r := p.client.NewRequest("POST", p.revokeURL)
-	if err := r.SetJSONBody(cReq); err != nil {
-		return time.Time{}, err
-	}
-
-	resp, err := p.client.RawRequest(r)
+	var certRevokeReq map[string]interface{}
+	data, err := json.Marshal(cReq)
 	if err != nil {
 		return time.Time{}, err
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= http.StatusBadRequest {
-		_, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return time.Time{}, err
-		}
-		return time.Time{}, errors.Wrap(errFailedVaultCertIssue, err)
+	if err := json.Unmarshal(data, &certRevokeReq); err != nil {
+		return time.Time{}, nil
 	}
 
-	s, err := api.ParseSecret(resp.Body)
+	s, err := p.client.Logical().Write(p.revokeURL, certRevokeReq)
 	if err != nil {
 		return time.Time{}, err
 	}
-
 	rev, err := s.Data["revocation_time"].(json.Number).Float64()
 	if err != nil {
 		return time.Time{}, err
 	}
 
-	return time.Unix(0, int64(rev)*int64(time.Millisecond)), nil
+	return time.Unix(0, int64(rev)*int64(time.Second)), nil
 }

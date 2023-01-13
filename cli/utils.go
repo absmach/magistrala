@@ -6,6 +6,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/fatih/color"
 	prettyjson "github.com/hokaccha/go-prettyjson"
@@ -68,6 +69,14 @@ func logCreated(e string) {
 		fmt.Println(e)
 	} else {
 		fmt.Printf(color.BlueString("\ncreated: %s\n\n"), e)
+	}
+}
+
+func logRevokedTime(t time.Time) {
+	if RawOutput {
+		fmt.Println(t)
+	} else {
+		fmt.Printf(color.BlueString("\nrevoked: %v\n\n"), t)
 	}
 }
 

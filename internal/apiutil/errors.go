@@ -60,7 +60,7 @@ var (
 	// ErrMissingPolicyAct indicates missing policies action.
 	ErrMissingPolicyAct = errors.New("falmormed policy action")
 
-	// ErrMissingCertData indicates missing cert data (ttl, key_type or key_bits).
+	// ErrMissingCertData indicates missing cert data (ttl).
 	ErrMissingCertData = errors.New("missing certificate data")
 
 	// ErrInvalidTopic indicates an invalid subscription topic.

@@ -16,7 +16,7 @@ func issueCert(svc certs.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-		res, err := svc.IssueCert(ctx, req.token, req.ThingID, req.TTL, req.KeyBits, req.KeyType)
+		res, err := svc.IssueCert(ctx, req.token, req.ThingID, req.TTL)
 		if err != nil {
 			return certsRes{}, err
 		}
@@ -91,6 +91,12 @@ func revokeCert(svc certs.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-		return svc.RevokeCert(ctx, req.token, req.certID)
+		res, err := svc.RevokeCert(ctx, req.token, req.certID)
+		if err != nil {
+			return nil, err
+		}
+		return revokeCertsRes{
+			RevocationTime: res.RevocationTime,
+		}, nil
 	}
 }

@@ -12,7 +12,7 @@ To issue a certificate:
 
 TOK=`curl  -s --insecure -S -X POST http://localhost/tokens -H 'Content-Type: application/json' -d '{"email":"edge@email.com","password":"12345678"}' | jq -r '.token'`
 
-curl -s -S  -X POST  http://localhost:8204/certs -H "Authorization: Bearer $TOK" -H 'Content-Type: application/json'   -d '{"thing_id":<thing_id>, "key_bits":2048, "key_type":"rsa"}'
+curl -s -S  -X POST  http://localhost:8204/certs -H "Authorization: Bearer $TOK" -H 'Content-Type: application/json'   -d '{"thing_id":<thing_id>}'
 ```
 
 ```json

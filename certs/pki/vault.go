@@ -6,7 +6,6 @@ package pki
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/hashicorp/vault/api"
@@ -101,7 +100,7 @@ func NewVaultClient(token, host, path, role string) (Agent, error) {
 func (p *pkiAgent) IssueCert(cn, ttl string) (Cert, error) {
 	cReq := certReq{
 		CommonName: cn,
-		TTL:        fmt.Sprintf("%sh", ttl),
+		TTL:        ttl,
 	}
 
 	var certIssueReq map[string]interface{}

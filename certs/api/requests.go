@@ -3,7 +3,11 @@
 
 package api
 
-import "github.com/mainflux/mainflux/internal/apiutil"
+import (
+	"time"
+
+	"github.com/mainflux/mainflux/internal/apiutil"
+)
 
 const maxLimitSize = 100
 
@@ -24,6 +28,10 @@ func (req addCertsReq) validate() error {
 
 	if req.TTL == "" {
 		return apiutil.ErrMissingCertData
+	}
+
+	if _, err := time.ParseDuration(req.TTL); err != nil {
+		return apiutil.ErrInvalidCertData
 	}
 
 	return nil

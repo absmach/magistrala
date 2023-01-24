@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"strconv"
-
 	"github.com/spf13/cobra"
 )
 
@@ -45,10 +43,10 @@ var cmdCerts = []cobra.Command{
 
 // NewCertsCmd returns certificate command.
 func NewCertsCmd() *cobra.Command {
-	var ttl uint32
+	var ttl string
 
 	issueCmd := cobra.Command{
-		Use:   "issue <thing_id> <user_auth_token> [--ttl=8760]",
+		Use:   "issue <thing_id> <user_auth_token> [--ttl=8760h]",
 		Short: "Issue certificate",
 		Long:  `Issues new certificate for a thing`,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -58,9 +56,8 @@ func NewCertsCmd() *cobra.Command {
 			}
 
 			thingID := args[0]
-			valid := strconv.FormatUint(uint64(ttl), 10)
 
-			c, err := sdk.IssueCert(thingID, valid, args[1])
+			c, err := sdk.IssueCert(thingID, ttl, args[1])
 			if err != nil {
 				logError(err)
 				return
@@ -69,7 +66,7 @@ func NewCertsCmd() *cobra.Command {
 		},
 	}
 
-	issueCmd.Flags().Uint32Var(&ttl, "ttl", 8760, "certificate time to live in hours")
+	issueCmd.Flags().StringVar(&ttl, "ttl", "8760h", "certificate time to live in duration")
 
 	cmd := cobra.Command{
 		Use:   "certs [issue | get | revoke ]",

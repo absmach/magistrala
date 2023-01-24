@@ -63,6 +63,9 @@ var (
 	// ErrMissingCertData indicates missing cert data (ttl).
 	ErrMissingCertData = errors.New("missing certificate data")
 
+	// ErrInvalidCertData indicates invalid cert data (ttl).
+	ErrInvalidCertData = errors.New("invalid certificate data")
+
 	// ErrInvalidTopic indicates an invalid subscription topic.
 	ErrInvalidTopic = errors.New("invalid Subscription topic")
 

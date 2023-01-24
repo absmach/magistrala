@@ -204,6 +204,7 @@ components:
                  format: uuid
                ttl:
                  type: string
+                 example: "10h"
 
   responses:
     ServiceError:

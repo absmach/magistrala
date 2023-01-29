@@ -68,7 +68,7 @@ services:
       - mainflux-keto-db-volume:/var/lib/postgresql/data
 
   nginx:
-    image: nginx:1.20.0-alpine
+    image: nginx:1.23.3-alpine
     container_name: mainflux-nginx
     restart: on-failure
     volumes:

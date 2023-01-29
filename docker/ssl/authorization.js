@@ -29,8 +29,8 @@ function authenticate(s) {
 
         var pass = parsePackage(s, data);
 
-        if (!clientKey.length || pass !== clientKey) {
-            s.error('Cert CN (' + clientKey + ') does not match client password');
+        if (!clientKey.length || !clientKey.endsWith(pass) ) {
+            s.error('Cert CN (' + clientKey + ') does not contain client password');
             s.off('upload')
             s.deny();
             return;
@@ -167,10 +167,12 @@ function parseCert(cert, key) {
         for (var i = 0; i < pairs.length; i++) {
             var pair = pairs[i].split('=');
             if (pair[0].toUpperCase() == key) {
-                return pair[1];
+                return "Thing " + pair[1].replace("\\", "").trim();
             }
         }
     }
 
     return '';
 }
+
+export default {setKey,authenticate};

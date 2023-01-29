@@ -150,6 +150,7 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch {
 	case errors.Contains(err, errors.ErrAuthentication),
+		err == apiutil.ErrBearerKey,
 		err == apiutil.ErrBearerToken:
 		w.WriteHeader(http.StatusUnauthorized)
 	case errors.Contains(err, errors.ErrAuthorization):

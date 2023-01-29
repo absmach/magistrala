@@ -8,7 +8,7 @@ CN_SRV = localhost
 THING_KEY = <THING_KEY> # e.g. 8f65ed04-0770-4ce4-a291-6d1bf2000f4d
 CRT_FILE_NAME = thing
 
-all: clean_certs ca server_crt
+all: clean_certs ca server_cert
 
 # CA name and key is "ca".
 ca:
@@ -41,4 +41,3 @@ thing_cert:
 clean_certs:
 	rm -r $(CRT_LOCATION)/*.crt
 	rm -r $(CRT_LOCATION)/*.key
-	rm -r $(CRT_LOCATION)/*.srl

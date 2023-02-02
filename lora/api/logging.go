@@ -133,7 +133,7 @@ func (lm loggingMiddleware) DisconnectThing(ctx context.Context, chanID, thingID
 	return lm.svc.DisconnectThing(ctx, chanID, thingID)
 }
 
-func (lm loggingMiddleware) Publish(ctx context.Context, msg lora.Message) (err error) {
+func (lm loggingMiddleware) Publish(ctx context.Context, msg *lora.Message) (err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("publish application/%s/device/%s/rx took %s to complete", msg.ApplicationID, msg.DevEUI, time.Since(begin))
 		if err != nil {

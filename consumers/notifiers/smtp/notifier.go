@@ -27,7 +27,7 @@ func New(agent *email.Agent) notifiers.Notifier {
 	return &notifier{agent: agent}
 }
 
-func (n *notifier) Notify(from string, to []string, msg messaging.Message) error {
+func (n *notifier) Notify(from string, to []string, msg *messaging.Message) error {
 	subject := fmt.Sprintf(`Notification for Channel %s`, msg.Channel)
 	if msg.Subtopic != "" {
 		subject = fmt.Sprintf("%s and subtopic %s", subject, msg.Subtopic)

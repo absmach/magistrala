@@ -50,7 +50,7 @@ func Start(id string, sub messaging.Subscriber, consumer Consumer, configPath st
 }
 
 func handle(t transformers.Transformer, c Consumer) handleFunc {
-	return func(msg messaging.Message) error {
+	return func(msg *messaging.Message) error {
 		m := interface{}(msg)
 		var err error
 		if t != nil {
@@ -63,9 +63,9 @@ func handle(t transformers.Transformer, c Consumer) handleFunc {
 	}
 }
 
-type handleFunc func(msg messaging.Message) error
+type handleFunc func(msg *messaging.Message) error
 
-func (h handleFunc) Handle(msg messaging.Message) error {
+func (h handleFunc) Handle(msg *messaging.Message) error {
 	return h(msg)
 
 }

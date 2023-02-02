@@ -16,5 +16,5 @@ var ErrNotify = errors.New("Error sending notification")
 type Notifier interface {
 	// Notify method is used to send notification for the
 	// received message to the provided list of receivers.
-	Notify(from string, to []string, msg messaging.Message) error
+	Notify(from string, to []string, msg *messaging.Message) error
 }

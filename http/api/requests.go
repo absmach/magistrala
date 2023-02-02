@@ -9,7 +9,7 @@ import (
 )
 
 type publishReq struct {
-	msg   messaging.Message
+	msg   *messaging.Message
 	token string
 }
 

@@ -55,7 +55,7 @@ type Service interface {
 	DisconnectThing(ctx context.Context, chanID, thingID string) error
 
 	// Publish forwards messages from the LoRa MQTT broker to Mainflux Message Broker
-	Publish(ctx context.Context, msg Message) error
+	Publish(ctx context.Context, msg *Message) error
 }
 
 var _ Service = (*adapterService)(nil)
@@ -78,7 +78,7 @@ func New(publisher messaging.Publisher, thingsRM, channelsRM, connectRM RouteMap
 }
 
 // Publish forwards messages from Lora MQTT broker to Mainflux Message broker
-func (as *adapterService) Publish(ctx context.Context, m Message) error {
+func (as *adapterService) Publish(ctx context.Context, m *Message) error {
 	// Get route map of lora application
 	thingID, err := as.thingsRM.Get(ctx, m.DevEUI)
 	if err != nil {
@@ -122,7 +122,7 @@ func (as *adapterService) Publish(ctx context.Context, m Message) error {
 		Created:   time.Now().UnixNano(),
 	}
 
-	return as.publisher.Publish(msg.Channel, msg)
+	return as.publisher.Publish(msg.Channel, &msg)
 }
 
 func (as *adapterService) CreateThing(ctx context.Context, thingID string, devEUI string) error {

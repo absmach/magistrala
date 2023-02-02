@@ -43,23 +43,59 @@ func TestTransformJSON(t *testing.T) {
 		Payload:   []byte(validPayload),
 		Created:   now,
 	}
-	invalid := msg
-	invalid.Payload = []byte(invalidPayload)
+	invalid := messaging.Message{
+		Channel:   "channel-1",
+		Subtopic:  "subtopic-1",
+		Publisher: "publisher-1",
+		Protocol:  "protocol",
+		Payload:   []byte(invalidPayload),
+		Created:   now,
+	}
 
-	listMsg := msg
-	listMsg.Payload = []byte(listPayload)
+	listMsg := messaging.Message{
+		Channel:   "channel-1",
+		Subtopic:  "subtopic-1",
+		Publisher: "publisher-1",
+		Protocol:  "protocol",
+		Payload:   []byte(listPayload),
+		Created:   now,
+	}
 
-	tsMsg := msg
-	tsMsg.Payload = []byte(tsPayload)
+	tsMsg := messaging.Message{
+		Channel:   "channel-1",
+		Subtopic:  "subtopic-1",
+		Publisher: "publisher-1",
+		Protocol:  "protocol",
+		Payload:   []byte(tsPayload),
+		Created:   now,
+	}
 
-	microsMsg := msg
-	microsMsg.Payload = []byte(microsPayload)
+	microsMsg := messaging.Message{
+		Channel:   "channel-1",
+		Subtopic:  "subtopic-1",
+		Publisher: "publisher-1",
+		Protocol:  "protocol",
+		Payload:   []byte(microsPayload),
+		Created:   now,
+	}
 
-	invalidFmt := msg
-	invalidFmt.Subtopic = ""
+	invalidFmt := messaging.Message{
+		Channel:   "channel-1",
+		Subtopic:  "",
+		Publisher: "publisher-1",
+		Protocol:  "protocol",
+		Payload:   []byte(validPayload),
+		Created:   now,
+	}
 
-	invalidTimeField := msg
-	invalidTimeField.Payload = []byte(invalidTsPayload)
+	invalidTimeField := messaging.Message{
+		Channel:   "channel-1",
+		Subtopic:  "subtopic-1",
+		Publisher: "publisher-1",
+		Protocol:  "protocol",
+		Payload:   []byte(invalidTsPayload),
+		Created:   now,
+	}
 
 	jsonMsgs := json.Messages{
 		Data: []json.Message{
@@ -164,49 +200,49 @@ func TestTransformJSON(t *testing.T) {
 
 	cases := []struct {
 		desc string
-		msg  messaging.Message
+		msg  *messaging.Message
 		json interface{}
 		err  error
 	}{
 		{
 			desc: "test transform JSON",
-			msg:  msg,
+			msg:  &msg,
 			json: jsonMsgs,
 			err:  nil,
 		},
 		{
 			desc: "test transform JSON with an invalid subtopic",
-			msg:  invalidFmt,
+			msg:  &invalidFmt,
 			json: nil,
 			err:  json.ErrTransform,
 		},
 		{
 			desc: "test transform JSON array",
-			msg:  listMsg,
+			msg:  &listMsg,
 			json: listJSON,
 			err:  nil,
 		},
 		{
 			desc: "test transform JSON with invalid payload",
-			msg:  invalid,
+			msg:  &invalid,
 			json: nil,
 			err:  json.ErrTransform,
 		},
 		{
 			desc: "test transform JSON with timestamp transformation",
-			msg:  tsMsg,
+			msg:  &tsMsg,
 			json: jsonTsMsgs,
 			err:  nil,
 		},
 		{
 			desc: "test transform JSON with timestamp transformation in micros",
-			msg:  microsMsg,
+			msg:  &microsMsg,
 			json: jsonMicrosMsgs,
 			err:  nil,
 		},
 		{
 			desc: "test transform JSON with invalid timestamp transformation in micros",
-			msg:  invalidTimeField,
+			msg:  &invalidTimeField,
 			json: nil,
 			err:  json.ErrInvalidTimeField,
 		},

@@ -29,6 +29,7 @@ type grpcServer struct {
 	listPolicies kitgrpc.Handler
 	assign       kitgrpc.Handler
 	members      kitgrpc.Handler
+	mainflux.UnimplementedAuthServiceServer
 }
 
 // NewServer returns new AuthServiceServer instance.

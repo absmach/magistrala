@@ -7,6 +7,8 @@ package mainflux;
 
 import "google/protobuf/empty.proto";
 
+option go_package = "./mainflux";
+
 service ThingsService {
     rpc CanAccessByKey(AccessByKeyReq) returns (ThingID) {}
     rpc IsChannelOwner(ChannelOwnerReq) returns (google.protobuf.Empty) {}

@@ -48,7 +48,7 @@ func New(tfs []TimeField) transformers.Transformer {
 }
 
 // Transform transforms Mainflux message to a list of JSON messages.
-func (ts *transformerService) Transform(msg messaging.Message) (interface{}, error) {
+func (ts *transformerService) Transform(msg *messaging.Message) (interface{}, error) {
 	ret := Message{
 		Publisher: msg.Publisher,
 		Created:   msg.Created,

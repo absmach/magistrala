@@ -6,7 +6,7 @@ package messaging
 // Publisher specifies message publishing API.
 type Publisher interface {
 	// Publishes message to the stream.
-	Publish(topic string, msg Message) error
+	Publish(topic string, msg *Message) error
 
 	// Close gracefully closes message publisher's connection.
 	Close() error
@@ -15,7 +15,7 @@ type Publisher interface {
 // MessageHandler represents Message handler for Subscriber.
 type MessageHandler interface {
 	// Handle handles messages passed by underlying implementation.
-	Handle(msg Message) error
+	Handle(msg *Message) error
 
 	// Cancel is used for cleanup during unsubscribing and it's optional.
 	Cancel() error

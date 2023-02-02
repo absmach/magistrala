@@ -19,7 +19,7 @@ func NewNotifier() notifiers.Notifier {
 	return notifier{}
 }
 
-func (n notifier) Notify(from string, to []string, msg messaging.Message) error {
+func (n notifier) Notify(from string, to []string, msg *messaging.Message) error {
 	for _, t := range to {
 		if t == invalidSender {
 			return notifiers.ErrNotify

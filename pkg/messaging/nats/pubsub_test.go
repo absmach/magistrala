@@ -23,7 +23,7 @@ const (
 )
 
 var (
-	msgChan   = make(chan messaging.Message)
+	msgChan   = make(chan *messaging.Message)
 	data      = []byte("payload")
 	errFailed = errors.New("failed")
 )
@@ -74,11 +74,11 @@ func TestPublisher(t *testing.T) {
 		}
 		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-		err = pubsub.Publish(topic, expectedMsg)
+		err = pubsub.Publish(topic, &expectedMsg)
 		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 		receivedMsg := <-msgChan
-		assert.Equal(t, expectedMsg, receivedMsg, fmt.Sprintf("%s: expected %+v got %+v\n", tc.desc, expectedMsg, receivedMsg))
+		assert.Equal(t, expectedMsg.Payload, receivedMsg.Payload, fmt.Sprintf("%s: expected %+v got %+v\n", tc.desc, &expectedMsg.Payload, receivedMsg.Payload))
 	}
 }
 
@@ -277,7 +277,7 @@ type handler struct {
 	fail bool
 }
 
-func (h handler) Handle(msg messaging.Message) error {
+func (h handler) Handle(msg *messaging.Message) error {
 	msgChan <- msg
 	return nil
 }

@@ -8,5 +8,5 @@ import "github.com/mainflux/mainflux/pkg/messaging"
 // Transformer specifies API form Message transformer.
 type Transformer interface {
 	// Transform Mainflux message to any other format.
-	Transform(msg messaging.Message) (interface{}, error)
+	Transform(msg *messaging.Message) (interface{}, error)
 }

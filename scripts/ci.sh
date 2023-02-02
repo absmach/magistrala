@@ -1,9 +1,9 @@
 # This script contains commands to be executed by the CI tool.
 NPROC=$(nproc)
 GO_VERSION=1.19.4
-PROTOC_VERSION=3.12.3
-PROTOC_GEN_VERSION=v1.4.2
-PROTOC_GOFAST_VERSION=v1.3.1
+PROTOC_VERSION=21.12
+PROTOC_GEN_VERSION=v1.28.1
+PROTOC_GRPC_VERSION=v1.2.0
 
 function version_gt() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
 
@@ -37,8 +37,8 @@ setup_protoc() {
     sudo mv protoc3/include/* /usr/local/include/
     rm -f PROTOC_ZIP
 
-    go install github.com/golang/protobuf/protoc-gen-go@$PROTOC_GEN_VERSION
-    go install github.com/gogo/protobuf/protoc-gen-gofast@$PROTOC_GOFAST_VERSION
+    go install google.golang.org/protobuf/cmd/protoc-gen-go@$PROTOC_GEN_VERSION
+    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@$PROTOC_GRPC_VERSION
 
     export PATH=$PATH:/usr/local/bin/protoc
 }

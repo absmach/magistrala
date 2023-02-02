@@ -129,7 +129,7 @@ func decodeRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 	defer r.Body.Close()
 
 	req := publishReq{
-		msg: messaging.Message{
+		msg: &messaging.Message{
 			Protocol: protocol,
 			Channel:  bone.GetValue(r, "id"),
 			Subtopic: subtopic,

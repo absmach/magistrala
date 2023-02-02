@@ -41,7 +41,7 @@ func (f forwarder) Forward(id string, sub messaging.Subscriber, pub messaging.Pu
 }
 
 func handle(pub messaging.Publisher, logger log.Logger) handleFunc {
-	return func(msg messaging.Message) error {
+	return func(msg *messaging.Message) error {
 		if msg.Protocol == protocol {
 			return nil
 		}
@@ -60,9 +60,9 @@ func handle(pub messaging.Publisher, logger log.Logger) handleFunc {
 	}
 }
 
-type handleFunc func(msg messaging.Message) error
+type handleFunc func(msg *messaging.Message) error
 
-func (h handleFunc) Handle(msg messaging.Message) error {
+func (h handleFunc) Handle(msg *messaging.Message) error {
 	return h(msg)
 
 }

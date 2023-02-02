@@ -48,7 +48,7 @@ var (
 // Service specifies web socket service API.
 type Service interface {
 	// Publish Message
-	Publish(ctx context.Context, thingKey string, msg messaging.Message) error
+	Publish(ctx context.Context, thingKey string, msg *messaging.Message) error
 
 	// Subscribes to a channel with specified id.
 	Subscribe(ctx context.Context, thingKey, chanID, subtopic string, client *Client) error
@@ -73,7 +73,7 @@ func New(auth mainflux.ThingsServiceClient, pubsub messaging.PubSub) Service {
 }
 
 // Publish publishes the message using the broker
-func (svc *adapterService) Publish(ctx context.Context, thingKey string, msg messaging.Message) error {
+func (svc *adapterService) Publish(ctx context.Context, thingKey string, msg *messaging.Message) error {
 	thid, err := svc.authorize(ctx, thingKey, msg.GetChannel())
 	if err != nil {
 		return ErrUnauthorizedAccess

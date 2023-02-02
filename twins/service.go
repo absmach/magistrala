@@ -421,7 +421,7 @@ func (ts *twinsService) publish(twinID *string, err *error, succOp, failOp strin
 		Created:   time.Now().UnixNano(),
 	}
 
-	if err := ts.publisher.Publish(msg.Channel, msg); err != nil {
+	if err := ts.publisher.Publish(msg.Channel, &msg); err != nil {
 		ts.logger.Warn(fmt.Sprintf("Failed to publish notification on Message Broker: %s", err))
 	}
 }

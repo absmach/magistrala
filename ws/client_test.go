@@ -84,7 +84,7 @@ func TestHandle(t *testing.T) {
 
 	for _, tc := range cases {
 		msg.Publisher = tc.publisher
-		err = c.Handle(msg)
+		err = c.Handle(&msg)
 		assert.Nil(t, err, fmt.Sprintf("expected nil error from handle, got: %s", err))
 		receivedMsg := []byte{}
 		switch tc.expectMsg {
@@ -94,7 +94,7 @@ func TestHandle(t *testing.T) {
 		case false:
 			time.Sleep(100 * time.Millisecond) // Give time to server to process c.Handle call.
 		}
-		assert.Equal(t, tc.expectedPayload, receivedMsg, fmt.Sprintf("%s: expected %+v, got %+v", tc.desc, msg, receivedMsg))
+		assert.Equal(t, tc.expectedPayload, receivedMsg, fmt.Sprintf("%s: expected %+v, got %+v", tc.desc, &msg, receivedMsg))
 	}
 	c := atomic.LoadUint64(&count)
 	assert.Equal(t, expectedCount, c, fmt.Sprintf("expected message count %d, got %d", expectedCount, c))

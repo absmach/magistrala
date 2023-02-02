@@ -96,7 +96,7 @@ func (ns *notifierService) RemoveSubscription(ctx context.Context, token, id str
 }
 
 func (ns *notifierService) Consume(message interface{}) error {
-	msg, ok := message.(messaging.Message)
+	msg, ok := message.(*messaging.Message)
 	if !ok {
 		return ErrMessage
 	}

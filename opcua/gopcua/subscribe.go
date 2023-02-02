@@ -236,7 +236,7 @@ func (c client) publish(ctx context.Context, token string, m message) error {
 		Created:   time.Now().UnixNano(),
 	}
 
-	if err := c.publisher.Publish(msg.Channel, msg); err != nil {
+	if err := c.publisher.Publish(msg.Channel, &msg); err != nil {
 		return err
 	}
 

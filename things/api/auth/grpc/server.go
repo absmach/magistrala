@@ -25,6 +25,7 @@ type grpcServer struct {
 	canAccessByID  kitgrpc.Handler
 	isChannelOwner kitgrpc.Handler
 	identify       kitgrpc.Handler
+	mainflux.UnimplementedThingsServiceServer
 }
 
 // NewServer returns new ThingsServiceServer instance.

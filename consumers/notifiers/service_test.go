@@ -306,16 +306,16 @@ func TestConsume(t *testing.T) {
 
 	cases := []struct {
 		desc string
-		msg  messaging.Message
+		msg  *messaging.Message
 		err  error
 	}{
 		{
 			desc: "test success",
-			msg:  msg,
+			msg:  &msg,
 		},
 		{
 			desc: "test fail",
-			msg:  errMsg,
+			msg:  &errMsg,
 			err:  notifiers.ErrNotify,
 		},
 	}

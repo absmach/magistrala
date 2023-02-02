@@ -6,9 +6,9 @@ package nats
 import (
 	"fmt"
 
-	"github.com/gogo/protobuf/proto"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	broker "github.com/nats-io/nats.go"
+	"google.golang.org/protobuf/proto"
 )
 
 // A maximum number of reconnect attempts before NATS connection closes permanently.
@@ -37,11 +37,11 @@ func NewPublisher(url string) (messaging.Publisher, error) {
 	return ret, nil
 }
 
-func (pub *publisher) Publish(topic string, msg messaging.Message) error {
+func (pub *publisher) Publish(topic string, msg *messaging.Message) error {
 	if topic == "" {
 		return ErrEmptyTopic
 	}
-	data, err := proto.Marshal(&msg)
+	data, err := proto.Marshal(msg)
 	if err != nil {
 		return err
 	}

@@ -25,7 +25,7 @@ var ErrUnsubscribe = errors.New("unable to unsubscribe")
 // Service specifies CoAP service API.
 type Service interface {
 	// Publish Messssage
-	Publish(ctx context.Context, key string, msg messaging.Message) error
+	Publish(ctx context.Context, key string, msg *messaging.Message) error
 
 	// Subscribes to channel with specified id, subtopic and adds subscription to
 	// service map of subscriptions under given ID.
@@ -55,7 +55,7 @@ func New(auth mainflux.ThingsServiceClient, pubsub messaging.PubSub) Service {
 	return as
 }
 
-func (svc *adapterService) Publish(ctx context.Context, key string, msg messaging.Message) error {
+func (svc *adapterService) Publish(ctx context.Context, key string, msg *messaging.Message) error {
 	ar := &mainflux.AccessByKeyReq{
 		Token:  key,
 		ChanID: msg.Channel,

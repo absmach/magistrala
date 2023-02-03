@@ -12,7 +12,7 @@ default values.
 
 | Variable                                 | Description                                                      | Default               |
 |------------------------------------------|------------------------------------------------------------------|-----------------------|
-| MF_MQTT_ADAPTER_LOG_LEVEL                | mProxy Log level                                                 | error                 |
+| MF_MQTT_ADAPTER_LOG_LEVEL                | mProxy Log level                                                 | info                  |
 | MF_MQTT_ADAPTER_MQTT_PORT                | mProxy port                                                      | 1883                  |
 | MF_MQTT_ADAPTER_MQTT_TARGET_HOST         | MQTT broker host                                                 | 0.0.0.0               |
 | MF_MQTT_ADAPTER_MQTT_TARGET_PORT         | MQTT broker port                                                 | 1883                  |

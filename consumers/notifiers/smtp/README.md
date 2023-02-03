@@ -10,7 +10,7 @@ default values.
 
 | Variable                          | Description                                                             | Default               |
 | --------------------------------- | ----------------------------------------------------------------------- | --------------------- |
-| MF_SMTP_NOTIFIER_LOG_LEVEL        | Log level for SMT Notifier (debug, info, warn, error)                   | error                 |
+| MF_SMTP_NOTIFIER_LOG_LEVEL        | Log level for SMT Notifier (debug, info, warn, error)                   | info                  |
 | MF_SMTP_NOTIFIER_DB_HOST          | Database host address                                                   | localhost             |
 | MF_SMTP_NOTIFIER_DB_PORT          | Database host port                                                      | 5432                  |
 | MF_SMTP_NOTIFIER_DB_USER          | Database user                                                           | mainflux              |

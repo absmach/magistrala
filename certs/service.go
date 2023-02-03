@@ -5,8 +5,6 @@ package certs
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"time"
 
 	"github.com/mainflux/mainflux"
@@ -46,43 +44,19 @@ type Service interface {
 	RevokeCert(ctx context.Context, token, serialID string) (Revoke, error)
 }
 
-// Config defines the service parameters
-type Config struct {
-	LogLevel       string
-	ClientTLS      bool
-	CaCerts        string
-	HTTPPort       string
-	ServerCert     string
-	ServerKey      string
-	CertsURL       string
-	JaegerURL      string
-	AuthURL        string
-	AuthTimeout    time.Duration
-	SignTLSCert    tls.Certificate
-	SignX509Cert   *x509.Certificate
-	SignRSABits    int
-	SignHoursValid string
-	PKIHost        string
-	PKIPath        string
-	PKIRole        string
-	PKIToken       string
-}
-
 type certsService struct {
 	auth      mainflux.AuthServiceClient
 	certsRepo Repository
 	sdk       mfsdk.SDK
-	conf      Config
 	pki       pki.Agent
 }
 
-// New returns new Certs service.
-func New(auth mainflux.AuthServiceClient, certs Repository, sdk mfsdk.SDK, config Config, pki pki.Agent) Service {
+// New returns new Certs service
+func New(auth mainflux.AuthServiceClient, certs Repository, sdk mfsdk.SDK, pki pki.Agent) Service {
 	return &certsService{
 		certsRepo: certs,
 		sdk:       sdk,
 		auth:      auth,
-		conf:      config,
 		pki:       pki,
 	}
 }

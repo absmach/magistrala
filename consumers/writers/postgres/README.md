@@ -11,8 +11,8 @@ default values.
 | Variable                            | Description                                                                       | Default                |
 | ----------------------------------- | --------------------------------------------------------------------------------- | ---------------------- |
 | MF_BROKER_URL                       | Message broker instance URL                                                       | nats://localhost:4222  |
-| MF_POSTGRES_WRITER_LOG_LEVEL        | Service log level                                                                 | error                  |
-| MF_POSTGRES_WRITER_PORT             | Service HTTP port                                                                 | 9104                   |
+| MF_POSTGRES_WRITER_LOG_LEVEL        | Service log level                                                                 | info                   |
+| MF_POSTGRES_WRITER_PORT             | Service HTTP port                                                                 | 8180                    |
 | MF_POSTGRES_WRITER_DB_HOST          | Postgres DB host                                                                  | postgres               |
 | MF_POSTGRES_WRITER_DB_PORT          | Postgres DB port                                                                  | 5432                   |
 | MF_POSTGRES_WRITER_DB_USER          | Postgres user                                                                     | mainflux               |

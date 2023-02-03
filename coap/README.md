@@ -13,7 +13,7 @@ default values.
 |--------------------------------|--------------------------------------------------------|-----------------------|
 | MF_COAP_ADAPTER_PORT           | Service listening port                                 | 5683                  |
 | MF_BROKER_URL                  | Message broker instance URL                            | nats://localhost:4222 |
-| MF_COAP_ADAPTER_LOG_LEVEL      | Service log level                                      | error                 |
+| MF_COAP_ADAPTER_LOG_LEVEL      | Service log level                                      | info                  |
 | MF_COAP_ADAPTER_CLIENT_TLS     | Flag that indicates if TLS should be turned on         | false                 |
 | MF_COAP_ADAPTER_CA_CERTS       | Path to trusted CAs in PEM format                      |                       |
 | MF_COAP_ADAPTER_PING_PERIOD    | Hours between 1 and 24 to ping client with ACK message | 12                    |

@@ -10,6 +10,7 @@ default values.
 
 | Variable                     | Description                                         | Default        |
 |------------------------------|-----------------------------------------------------|----------------|
+| MF_INFLUX_READER_LOG_LEVEL   | Service log level                                   | info           |
 | MF_INFLUX_READER_PORT        | Service HTTP port                                   | 8180           |
 | MF_INFLUXDB_HOST             | InfluxDB host                                       | localhost      |
 | MF_INFLUXDB_PORT             | Default port of InfluxDB database                   | 8086           |

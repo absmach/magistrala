@@ -12,7 +12,7 @@ default values.
 |------------------------------|-----------------------------------------------------|-----------------------|
 | MF_WS_ADAPTER_PORT           | Service WS port                                     | 8190                  |
 | MF_BROKER_URL                | Message broker instance URL                         | nats://localhost:4222 |
-| MF_WS_ADAPTER_LOG_LEVEL      | Log level for the WS Adapter                        | error                 |
+| MF_WS_ADAPTER_LOG_LEVEL      | Log level for the WS Adapter                        | info                  |
 | MF_WS_ADAPTER_CLIENT_TLS     | Flag that indicates if TLS should be turned on      | false                 |
 | MF_WS_ADAPTER_CA_CERTS       | Path to trusted CAs in PEM format                   |                       |
 | MF_JAEGER_URL                | Jaeger server URL                                   | localhost:6831        |

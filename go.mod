@@ -3,6 +3,7 @@ module github.com/mainflux/mainflux
 go 1.19
 
 require (
+	github.com/caarlos0/env/v7 v7.0.0
 	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/docker/docker v20.10.21+incompatible
 	github.com/eclipse/paho.mqtt.golang v1.4.2

@@ -10,6 +10,7 @@ default values.
 
 | Variable                    | Description                                         | Default        |
 |-----------------------------|-----------------------------------------------------|----------------|
+| MF_MONGO_READER_LOG_LEVEL   | Service log level                                   | info           |
 | MF_MONGO_READER_PORT        | Service HTTP port                                   | 8180           |
 | MF_MONGO_READER_DB          | MongoDB database name                               | messages       |
 | MF_MONGO_READER_DB_HOST     | MongoDB database host                               | localhost      |

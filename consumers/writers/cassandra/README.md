@@ -11,7 +11,7 @@ default values.
 | Variable                         | Description                                                             | Default               |
 | -------------------------------- | ----------------------------------------------------------------------- | --------------------- |
 | MF_BROKER_URL                    | Message broker instance URL                                             | nats://localhost:4222 |
-| MF_CASSANDRA_WRITER_LOG_LEVEL    | Log level for Cassandra writer (debug, info, warn, error)               | error                 |
+| MF_CASSANDRA_WRITER_LOG_LEVEL    | Log level for Cassandra writer (debug, info, warn, error)               | info                  |
 | MF_CASSANDRA_WRITER_PORT         | Service HTTP port                                                       | 8180                  |
 | MF_CASSANDRA_WRITER_DB_CLUSTER   | Cassandra cluster comma separated addresses                             | 127.0.0.1             |
 | MF_CASSANDRA_WRITER_DB_KEYSPACE  | Cassandra keyspace name                                                 | mainflux              |

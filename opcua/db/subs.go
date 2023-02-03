@@ -32,7 +32,7 @@ type Node struct {
 func Save(serverURI, nodeID string) error {
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModePerm)
 	if err != nil {
-		errors.Wrap(errWriteFile, err)
+		return errors.Wrap(errWriteFile, err)
 	}
 	csvWriter := csv.NewWriter(file)
 	csvWriter.Write([]string{serverURI, nodeID})

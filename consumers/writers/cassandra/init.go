@@ -3,10 +3,9 @@
 
 package cassandra
 
-import "github.com/gocql/gocql"
-
 const (
-	table = `CREATE TABLE IF NOT EXISTS messages (
+	// Table contains query for default table created in cassandra db
+	Table = `CREATE TABLE IF NOT EXISTS messages (
         id uuid,
         channel text,
         subtopic text,
@@ -35,35 +34,3 @@ const (
         PRIMARY KEY (channel, created, id)
     ) WITH CLUSTERING ORDER BY (created DESC)`
 )
-
-// DBConfig contains Cassandra DB specific parameters.
-type DBConfig struct {
-	Hosts    []string
-	Keyspace string
-	User     string
-	Pass     string
-	Port     int
-}
-
-// Connect establishes connection to the Cassandra cluster.
-func Connect(cfg DBConfig) (*gocql.Session, error) {
-	cluster := gocql.NewCluster(cfg.Hosts...)
-	cluster.Keyspace = cfg.Keyspace
-	cluster.Consistency = gocql.Quorum
-	cluster.Authenticator = gocql.PasswordAuthenticator{
-		Username: cfg.User,
-		Password: cfg.Pass,
-	}
-	cluster.Port = cfg.Port
-
-	session, err := cluster.CreateSession()
-	if err != nil {
-		return nil, err
-	}
-
-	if err := session.Query(table).Exec(); err != nil {
-		return nil, err
-	}
-
-	return session, nil
-}

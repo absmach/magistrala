@@ -36,9 +36,9 @@ func TestMain(m *testing.M) {
 	}
 
 	port := container.GetPort("5432/tcp")
+	url := fmt.Sprintf("host=localhost port=%s user=test dbname=test password=test sslmode=disable", port)
 
 	if err = pool.Retry(func() error {
-		url := fmt.Sprintf("host=localhost port=%s user=test dbname=test password=test sslmode=disable", port)
 		db, err = sqlx.Open("pgx", url)
 		if err != nil {
 			return err

@@ -30,15 +30,15 @@ type email struct {
 	Footer  string
 }
 
-// Config email agent configuration.
+// Config email agent configuration
 type Config struct {
-	Host        string
-	Port        string
-	Username    string
-	Password    string
-	FromAddress string
-	FromName    string
-	Template    string
+	Host        string `env:"MF_EMAIL_HOST"         envDefault:"localhost"`
+	Port        string `env:"MF_EMAIL_PORT"         envDefault:"25"`
+	Username    string `env:"MF_EMAIL_USERNAME"     envDefault:"root"`
+	Password    string `env:"MF_EMAIL_PASSWORD"     envDefault:""`
+	FromAddress string `env:"MF_EMAIL_FROM_ADDRESS" envDefault:""`
+	FromName    string `env:"MF_EMAIL_FROM_NAME"    envDefault:""`
+	Template    string `env:"MF_EMAIL_TEMPLATE"     envDefault:"email.tmpl"`
 }
 
 // Agent for mailing

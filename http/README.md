@@ -10,7 +10,7 @@ default values.
 
 | Variable                    | Description                                                   | Default               |
 | --------------------------- | ------------------------------------------------------------- | --------------------- |
-| MF_HTTP_ADAPTER_LOG_LEVEL   | Log level for the HTTP Adapter                                | error                 |
+| MF_HTTP_ADAPTER_LOG_LEVEL   | Log level for the HTTP Adapter                                | info                  |
 | MF_HTTP_ADAPTER_PORT        | Service HTTP port                                             | 8180                  |
 | MF_BROKER_URL               | Message broker instance URL                                   | nats://localhost:4222 |
 | MF_HTTP_ADAPTER_CLIENT_TLS  | Flag that indicates if TLS should be turned on                | false                 |

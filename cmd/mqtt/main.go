@@ -4,16 +4,15 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/go-redis/redis/v8"
-	"github.com/mainflux/mainflux"
+	thingsClient "github.com/mainflux/mainflux/internal/clients/grpc/things"
+	redisClient "github.com/mainflux/mainflux/internal/clients/redis"
+	"github.com/mainflux/mainflux/internal/env"
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/mqtt"
 	mqttredis "github.com/mainflux/mainflux/mqtt/redis"
@@ -22,170 +21,113 @@ import (
 	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
 	mqttpub "github.com/mainflux/mainflux/pkg/messaging/mqtt"
-	thingsapi "github.com/mainflux/mainflux/things/api/auth/grpc"
 	mp "github.com/mainflux/mproxy/pkg/mqtt"
 	"github.com/mainflux/mproxy/pkg/session"
 	ws "github.com/mainflux/mproxy/pkg/websocket"
-	opentracing "github.com/opentracing/opentracing-go"
-	jconfig "github.com/uber/jaeger-client-go/config"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 const (
-	svcName = "mqtt"
-
-	defLogLevel              = "error"
-	defMQTTPort              = "1883"
-	defMQTTTargetHost        = "0.0.0.0"
-	defMQTTTargetPort        = "1883"
-	defMQTTForwarderTimeout  = "30s" // 30 seconds
-	defMQTTTargetHealthCheck = ""
-	defHTTPPort              = "8080"
-	defHTTPTargetHost        = "localhost"
-	defHTTPTargetPort        = "8080"
-	defHTTPTargetPath        = "/mqtt"
-	defThingsAuthURL         = "localhost:8183"
-	defThingsAuthTimeout     = "1s"
-	defBrokerURL             = "nats://localhost:4222"
-	defJaegerURL             = ""
-	defClientTLS             = "false"
-	defCACerts               = ""
-	defInstance              = ""
-	defESURL                 = "localhost:6379"
-	defESPass                = ""
-	defESDB                  = "0"
-	defAuthcacheURL          = "localhost:6379"
-	defAuthCachePass         = ""
-	defAuthCacheDB           = "0"
-
-	envLogLevel              = "MF_MQTT_ADAPTER_LOG_LEVEL"
-	envMQTTPort              = "MF_MQTT_ADAPTER_MQTT_PORT"
-	envMQTTTargetHost        = "MF_MQTT_ADAPTER_MQTT_TARGET_HOST"
-	envMQTTTargetPort        = "MF_MQTT_ADAPTER_MQTT_TARGET_PORT"
-	envMQTTTargetHealthCheck = "MF_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK"
-	envMQTTForwarderTimeout  = "MF_MQTT_ADAPTER_FORWARDER_TIMEOUT"
-	envHTTPPort              = "MF_MQTT_ADAPTER_WS_PORT"
-	envHTTPTargetHost        = "MF_MQTT_ADAPTER_WS_TARGET_HOST"
-	envHTTPTargetPort        = "MF_MQTT_ADAPTER_WS_TARGET_PORT"
-	envHTTPTargetPath        = "MF_MQTT_ADAPTER_WS_TARGET_PATH"
-	envThingsAuthURL         = "MF_THINGS_AUTH_GRPC_URL"
-	envThingsAuthTimeout     = "MF_THINGS_AUTH_GRPC_TIMEOUT"
-	envBrokerURL             = "MF_BROKER_URL"
-	envJaegerURL             = "MF_JAEGER_URL"
-	envClientTLS             = "MF_MQTT_ADAPTER_CLIENT_TLS"
-	envCACerts               = "MF_MQTT_ADAPTER_CA_CERTS"
-	envInstance              = "MF_MQTT_ADAPTER_INSTANCE"
-	envESURL                 = "MF_MQTT_ADAPTER_ES_URL"
-	envESPass                = "MF_MQTT_ADAPTER_ES_PASS"
-	envESDB                  = "MF_MQTT_ADAPTER_ES_DB"
-	envAuthCacheURL          = "MF_AUTH_CACHE_URL"
-	envAuthCachePass         = "MF_AUTH_CACHE_PASS"
-	envAuthCacheDB           = "MF_AUTH_CACHE_DB"
+	svcName            = "mqtt"
+	envPrefix          = "MF_MQTT_ADAPTER_"
+	envPrefixES        = "MF_MQTT_ADAPTER_ES_"
+	envPrefixAuthCache = "MF_AUTH_CACHE_"
 )
 
 type config struct {
-	mqttPort              string
-	mqttTargetHost        string
-	mqttTargetPort        string
-	mqttForwarderTimeout  time.Duration
-	mqttTargetHealthCheck string
-	httpPort              string
-	httpTargetHost        string
-	httpTargetPort        string
-	httpTargetPath        string
-	jaegerURL             string
-	logLevel              string
-	thingsURL             string
-	thingsAuthURL         string
-	thingsAuthTimeout     time.Duration
-	brokerURL             string
-	clientTLS             bool
-	caCerts               string
-	instance              string
-	esURL                 string
-	esPass                string
-	esDB                  string
-	authURL               string
-	authPass              string
-	authDB                string
+	LogLevel              string        `env:"MF_MQTT_ADAPTER_LOG_LEVEL"                    envDefault:"info"`
+	MqttPort              string        `env:"MF_MQTT_ADAPTER_MQTT_PORT"                    envDefault:"1883"`
+	MqttTargetHost        string        `env:"MF_MQTT_ADAPTER_MQTT_TARGET_HOST"             envDefault:"localhost"`
+	MqttTargetPort        string        `env:"MF_MQTT_ADAPTER_MQTT_TARGET_PORT"             envDefault:"1883"`
+	MqttForwarderTimeout  time.Duration `env:"MF_MQTT_ADAPTER_FORWARDER_TIMEOUT"            envDefault:"30s"`
+	MqttTargetHealthCheck string        `env:"MF_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK"     envDefault:""`
+	HttpPort              string        `env:"MF_MQTT_ADAPTER_WS_PORT"                      envDefault:"8080"`
+	HttpTargetHost        string        `env:"MF_MQTT_ADAPTER_WS_TARGET_HOST"               envDefault:"localhost"`
+	HttpTargetPort        string        `env:"MF_MQTT_ADAPTER_WS_TARGET_PORT"               envDefault:"8080"`
+	HttpTargetPath        string        `env:"MF_MQTT_ADAPTER_WS_TARGET_PATH"               envDefault:"/mqtt"`
+	Instance              string        `env:"MF_MQTT_ADAPTER_INSTANCE"                     envDefault:""`
+	JaegerURL             string        `env:"MF_JAEGER_URL"                                envDefault:"localhost:6831"`
+	BrokerURL             string        `env:"MF_BROKER_URL"                                envDefault:"nats://localhost:4222"`
 }
 
 func main() {
-	cfg := loadConfig()
 	ctx, cancel := context.WithCancel(context.Background())
 	g, ctx := errgroup.WithContext(ctx)
 
-	logger, err := mflog.New(os.Stdout, cfg.logLevel)
+	cfg := config{}
+	if err := env.Parse(&cfg); err != nil {
+		log.Fatalf("failed to load %s configuration : %s", svcName, err.Error())
+	}
+
+	logger, err := mflog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
 
-	if cfg.mqttTargetHealthCheck != "" {
+	if cfg.MqttTargetHealthCheck != "" {
 		notify := func(e error, next time.Duration) {
 			logger.Info(fmt.Sprintf("Broker not ready: %s, next try in %s", e.Error(), next))
 		}
 
 		err := backoff.RetryNotify(healthcheck(cfg), backoff.NewExponentialBackOff(), notify)
 		if err != nil {
-			logger.Info(fmt.Sprintf("MQTT healthcheck limit exceeded, exiting. %s ", err.Error()))
-			os.Exit(1)
+			log.Fatalf("MQTT healthcheck limit exceeded, exiting. %s ", err.Error())
 		}
 	}
 
-	conn := connectToThings(cfg, logger)
-	defer conn.Close()
-
-	ec := connectToRedis(cfg.esURL, cfg.esPass, cfg.esDB, logger)
-	defer ec.Close()
-
-	nps, err := brokers.NewPubSub(cfg.brokerURL, "mqtt", logger)
+	nps, err := brokers.NewPubSub(cfg.BrokerURL, "mqtt", logger)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to message broker: %s", err))
-		os.Exit(1)
+		log.Fatalf("failed to connect to message broker: %s", err.Error())
 	}
 	defer nps.Close()
 
-	mpub, err := mqttpub.NewPublisher(fmt.Sprintf("%s:%s", cfg.mqttTargetHost, cfg.mqttTargetPort), cfg.mqttForwarderTimeout)
+	mpub, err := mqttpub.NewPublisher(fmt.Sprintf("%s:%s", cfg.MqttTargetHost, cfg.MqttTargetPort), cfg.MqttForwarderTimeout)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to create MQTT publisher: %s", err))
-		os.Exit(1)
+		log.Fatalf("failed to create MQTT publisher: %s", err.Error())
 	}
 
 	fwd := mqtt.NewForwarder(brokers.SubjectAllChannels, logger)
 	if err := fwd.Forward(svcName, nps, mpub); err != nil {
-		logger.Error(fmt.Sprintf("Failed to forward message broker messages: %s", err))
-		os.Exit(1)
+		log.Fatalf("failed to forward message broker messages: %s", err)
 	}
 
-	np, err := brokers.NewPublisher(cfg.brokerURL)
+	np, err := brokers.NewPublisher(cfg.BrokerURL)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to message broker: %s", err))
-		os.Exit(1)
+		log.Fatalf("failed to connect to message broker: %s", err.Error())
 	}
 	defer np.Close()
 
-	es := mqttredis.NewEventStore(ec, cfg.instance)
+	ec, err := redisClient.Setup(envPrefixES)
+	if err != nil {
+		log.Fatalf("failed to setup %s event store redis client : %s", svcName, err.Error())
+	}
+	defer ec.Close()
 
-	ac := connectToRedis(cfg.authURL, cfg.authPass, cfg.authDB, logger)
+	es := mqttredis.NewEventStore(ec, cfg.Instance)
+
+	ac, err := redisClient.Setup(envPrefixAuthCache)
+	if err != nil {
+		log.Fatalf("failed to setup %s event store redis client : %s", svcName, err.Error())
+	}
 	defer ac.Close()
 
-	thingsTracer, thingsCloser := initJaeger("things", cfg.jaegerURL, logger)
-	defer thingsCloser.Close()
-	tc := thingsapi.NewClient(conn, thingsTracer, cfg.thingsAuthTimeout)
+	tc, tcHandler, err := thingsClient.Setup(envPrefix, cfg.JaegerURL)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	defer tcHandler.Close()
+	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
 
 	authClient := auth.New(ac, tc)
 
-	// Event handler for MQTT hooks
 	h := mqtt.NewHandler([]messaging.Publisher{np}, es, logger, authClient)
 
-	logger.Info(fmt.Sprintf("Starting MQTT proxy on port %s", cfg.mqttPort))
+	logger.Info(fmt.Sprintf("Starting MQTT proxy on port %s", cfg.MqttPort))
 	g.Go(func() error {
 		return proxyMQTT(ctx, cfg, logger, h)
 	})
 
-	logger.Info(fmt.Sprintf("Starting MQTT over WS  proxy on port %s", cfg.httpPort))
+	logger.Info(fmt.Sprintf("Starting MQTT over WS  proxy on port %s", cfg.HttpPort))
 	g.Go(func() error {
 		return proxyWS(ctx, cfg, logger, h)
 	})
@@ -203,115 +145,9 @@ func main() {
 	}
 }
 
-func loadConfig() config {
-	tls, err := strconv.ParseBool(mainflux.Env(envClientTLS, defClientTLS))
-	if err != nil {
-		log.Fatalf("Invalid value passed for %s\n", envClientTLS)
-	}
-
-	authTimeout, err := time.ParseDuration(mainflux.Env(envThingsAuthTimeout, defThingsAuthTimeout))
-	if err != nil {
-		log.Fatalf("Invalid %s value: %s", envThingsAuthTimeout, err.Error())
-	}
-
-	mqttTimeout, err := time.ParseDuration(mainflux.Env(envMQTTForwarderTimeout, defMQTTForwarderTimeout))
-	if err != nil {
-		log.Fatalf("Invalid %s value: %s", envMQTTForwarderTimeout, err.Error())
-	}
-
-	return config{
-		mqttPort:              mainflux.Env(envMQTTPort, defMQTTPort),
-		mqttTargetHost:        mainflux.Env(envMQTTTargetHost, defMQTTTargetHost),
-		mqttTargetPort:        mainflux.Env(envMQTTTargetPort, defMQTTTargetPort),
-		mqttForwarderTimeout:  mqttTimeout,
-		mqttTargetHealthCheck: mainflux.Env(envMQTTTargetHealthCheck, defMQTTTargetHealthCheck),
-		httpPort:              mainflux.Env(envHTTPPort, defHTTPPort),
-		httpTargetHost:        mainflux.Env(envHTTPTargetHost, defHTTPTargetHost),
-		httpTargetPort:        mainflux.Env(envHTTPTargetPort, defHTTPTargetPort),
-		httpTargetPath:        mainflux.Env(envHTTPTargetPath, defHTTPTargetPath),
-		jaegerURL:             mainflux.Env(envJaegerURL, defJaegerURL),
-		thingsAuthURL:         mainflux.Env(envThingsAuthURL, defThingsAuthURL),
-		thingsAuthTimeout:     authTimeout,
-		thingsURL:             mainflux.Env(envThingsAuthURL, defThingsAuthURL),
-		brokerURL:             mainflux.Env(envBrokerURL, defBrokerURL),
-		logLevel:              mainflux.Env(envLogLevel, defLogLevel),
-		clientTLS:             tls,
-		caCerts:               mainflux.Env(envCACerts, defCACerts),
-		instance:              mainflux.Env(envInstance, defInstance),
-		esURL:                 mainflux.Env(envESURL, defESURL),
-		esPass:                mainflux.Env(envESPass, defESPass),
-		esDB:                  mainflux.Env(envESDB, defESDB),
-		authURL:               mainflux.Env(envAuthCacheURL, defAuthcacheURL),
-		authPass:              mainflux.Env(envAuthCachePass, defAuthCachePass),
-		authDB:                mainflux.Env(envAuthCacheDB, defAuthCacheDB),
-	}
-}
-
-func initJaeger(svcName, url string, logger mflog.Logger) (opentracing.Tracer, io.Closer) {
-	if url == "" {
-		return opentracing.NoopTracer{}, ioutil.NopCloser(nil)
-	}
-
-	tracer, closer, err := jconfig.Configuration{
-		ServiceName: svcName,
-		Sampler: &jconfig.SamplerConfig{
-			Type:  "const",
-			Param: 1,
-		},
-		Reporter: &jconfig.ReporterConfig{
-			LocalAgentHostPort: url,
-			LogSpans:           true,
-		},
-	}.NewTracer()
-	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to init Jaeger client: %s", err))
-		os.Exit(1)
-	}
-
-	return tracer, closer
-}
-
-func connectToThings(cfg config, logger mflog.Logger) *grpc.ClientConn {
-	var opts []grpc.DialOption
-	if cfg.clientTLS {
-		if cfg.caCerts != "" {
-			tpc, err := credentials.NewClientTLSFromFile(cfg.caCerts, "")
-			if err != nil {
-				logger.Error(fmt.Sprintf("Failed to load certs: %s", err))
-				os.Exit(1)
-			}
-			opts = append(opts, grpc.WithTransportCredentials(tpc))
-		}
-	} else {
-		logger.Info("gRPC communication is not encrypted")
-		opts = append(opts, grpc.WithInsecure())
-	}
-
-	conn, err := grpc.Dial(cfg.thingsAuthURL, opts...)
-	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to things service: %s", err))
-		os.Exit(1)
-	}
-	return conn
-}
-
-func connectToRedis(redisURL, redisPass, redisDB string, logger mflog.Logger) *redis.Client {
-	db, err := strconv.Atoi(redisDB)
-	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to connect to redis: %s", err))
-		os.Exit(1)
-	}
-
-	return redis.NewClient(&redis.Options{
-		Addr:     redisURL,
-		Password: redisPass,
-		DB:       db,
-	})
-}
-
 func proxyMQTT(ctx context.Context, cfg config, logger mflog.Logger, handler session.Handler) error {
-	address := fmt.Sprintf(":%s", cfg.mqttPort)
-	target := fmt.Sprintf("%s:%s", cfg.mqttTargetHost, cfg.mqttTargetPort)
+	address := fmt.Sprintf(":%s", cfg.MqttPort)
+	target := fmt.Sprintf("%s:%s", cfg.MqttTargetHost, cfg.MqttTargetPort)
 	mp := mp.New(address, target, handler, logger)
 
 	errCh := make(chan error)
@@ -326,17 +162,17 @@ func proxyMQTT(ctx context.Context, cfg config, logger mflog.Logger, handler ses
 	case err := <-errCh:
 		return err
 	}
-
 }
+
 func proxyWS(ctx context.Context, cfg config, logger mflog.Logger, handler session.Handler) error {
-	target := fmt.Sprintf("%s:%s", cfg.httpTargetHost, cfg.httpTargetPort)
-	wp := ws.New(target, cfg.httpTargetPath, "ws", handler, logger)
+	target := fmt.Sprintf("%s:%s", cfg.HttpTargetHost, cfg.HttpTargetPort)
+	wp := ws.New(target, cfg.HttpTargetPath, "ws", handler, logger)
 	http.Handle("/mqtt", wp.Handler())
 
 	errCh := make(chan error)
 
 	go func() {
-		errCh <- wp.Listen(cfg.httpPort)
+		errCh <- wp.Listen(cfg.HttpPort)
 	}()
 
 	select {
@@ -350,12 +186,12 @@ func proxyWS(ctx context.Context, cfg config, logger mflog.Logger, handler sessi
 
 func healthcheck(cfg config) func() error {
 	return func() error {
-		res, err := http.Get(cfg.mqttTargetHealthCheck)
+		res, err := http.Get(cfg.MqttTargetHealthCheck)
 		if err != nil {
 			return err
 		}
 		defer res.Body.Close()
-		body, err := ioutil.ReadAll(res.Body)
+		body, err := io.ReadAll(res.Body)
 		if err != nil {
 			return err
 		}

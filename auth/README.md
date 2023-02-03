@@ -57,7 +57,7 @@ default values.
 
 | Variable                      | Description                                                              | Default        |
 |-------------------------------|--------------------------------------------------------------------------|----------------|
-| MF_AUTH_LOG_LEVEL             | Service level (debug, info, warn, error)                                 | error          |
+| MF_AUTH_LOG_LEVEL             | Service level (debug, info, warn, error)                                 | info           |
 | MF_AUTH_DB_HOST               | Database host address                                                    | localhost      |
 | MF_AUTH_DB_PORT               | Database host port                                                       | 5432           |
 | MF_AUTH_DB_USER               | Database user                                                            | mainflux       |

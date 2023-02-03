@@ -18,7 +18,7 @@ default values.
 
 | Variable                  | Description                                                             | Default        |
 | ------------------------- | ----------------------------------------------------------------------- | -------------- |
-| MF_USERS_LOG_LEVEL        | Log level for Users (debug, info, warn, error)                          | error          |
+| MF_USERS_LOG_LEVEL        | Log level for Users (debug, info, warn, error)                          | info           |
 | MF_USERS_DB_HOST          | Database host address                                                   | localhost      |
 | MF_USERS_DB_PORT          | Database host port                                                      | 5432           |
 | MF_USERS_DB_USER          | Database user                                                           | mainflux       |

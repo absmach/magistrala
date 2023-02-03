@@ -9,7 +9,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"net/http/httptest"
 	"os"
 	"strconv"
@@ -42,19 +41,11 @@ const (
 	ttl        = "1h"
 	certNum    = 10
 
-	cfgLogLevel    = "error"
-	cfgClientTLS   = false
-	cfgServerCert  = ""
-	cfgServerKey   = ""
-	cfgCertsURL    = "http://localhost"
-	cfgJaegerURL   = ""
-	cfgAuthURL     = "localhost:8181"
 	cfgAuthTimeout = "1s"
 
 	caPath            = "../docker/ssl/certs/ca.crt"
 	caKeyPath         = "../docker/ssl/certs/ca.key"
 	cfgSignHoursValid = "24h"
-	cfgSignRSABits    = 2048
 )
 
 func newService(tokens map[string]string) (certs.Service, error) {
@@ -80,23 +71,9 @@ func newService(tokens map[string]string) (certs.Service, error) {
 		return nil, err
 	}
 
-	c := certs.Config{
-		LogLevel:       cfgLogLevel,
-		ClientTLS:      cfgClientTLS,
-		ServerCert:     cfgServerCert,
-		ServerKey:      cfgServerKey,
-		CertsURL:       cfgCertsURL,
-		JaegerURL:      cfgJaegerURL,
-		AuthURL:        cfgAuthURL,
-		SignTLSCert:    tlsCert,
-		SignX509Cert:   caCert,
-		SignHoursValid: cfgSignHoursValid,
-		SignRSABits:    cfgSignRSABits,
-	}
-
 	pki := mocks.NewPkiAgent(tlsCert, caCert, cfgSignHoursValid, authTimeout)
 
-	return certs.New(auth, repo, sdk, c, pki), nil
+	return certs.New(auth, repo, sdk, pki), nil
 }
 
 func newThingsService(auth mainflux.AuthServiceClient) things.Service {
@@ -413,7 +390,7 @@ func loadCertificates(caPath, caKeyPath string) (tls.Certificate, *x509.Certific
 		return tlsCert, caCert, errors.Wrap(err, err)
 	}
 
-	b, err := ioutil.ReadFile(caPath)
+	b, err := os.ReadFile(caPath)
 	if err != nil {
 		return tlsCert, caCert, err
 	}

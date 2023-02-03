@@ -11,8 +11,8 @@ default values.
 | Variable                             | Description                                               | Default                |
 | -----------------------------------  | --------------------------------------------------------- | ---------------------- |
 | MF_BROKER_URL                        | Message broker instance URL                               | nats://localhost:4222  |
-| MF_TIMESCALE_WRITER_LOG_LEVEL        | Service log level                                         | error                  |
-| MF_TIMESCALE_WRITER_PORT             | Service HTTP port                                         | 9104                   |
+| MF_TIMESCALE_WRITER_LOG_LEVEL        | Service log level                                         | info                   |
+| MF_TIMESCALE_WRITER_PORT             | Service HTTP port                                         | 8180                   |
 | MF_TIMESCALE_WRITER_DB_HOST          | Timescale DB host                                         | timescale              |
 | MF_TIMESCALE_WRITER_DB_PORT          | Timescale DB port                                         | 5432                   |
 | MF_TIMESCALE_WRITER_DB_USER          | Timescale user                                            | mainflux               |

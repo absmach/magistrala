@@ -10,7 +10,7 @@ default values.
 
 | Variable                            | Description                                                           | Default               |
 | ------------------------------------| --------------------------------------------------------------- ----- | --------------------- |
-| MF_SMPP_NOTIFIER_LOG_LEVEL          | Log level for SMPP Notifier (debug, info, warn, error)                | error                 |
+| MF_SMPP_NOTIFIER_LOG_LEVEL          | Log level for SMPP Notifier (debug, info, warn, error)                | info                  |
 | MF_SMPP_NOTIFIER_DB_HOST            | Database host address                                                 | localhost             |
 | MF_SMPP_NOTIFIER_DB_PORT            | Database host port                                                    | 5432                  |
 | MF_SMPP_NOTIFIER_DB_USER            | Database user                                                         | mainflux              |

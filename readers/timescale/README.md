@@ -10,11 +10,11 @@ default values.
 
 | Variable                             | Description                                 | Default        |
 |--------------------------------------|---------------------------------------------|----------------|
-| MF_TIMESCALE_READER_LOG_LEVEL        | Service log level                           | debug          |
+| MF_TIMESCALE_READER_LOG_LEVEL        | Service log level                           | info           |
 | MF_TIMESCALE_READER_PORT             | Service HTTP port                           | 8180           |
 | MF_TIMESCALE_READER_CLIENT_TLS       | TLS mode flag                               | false          |
 | MF_TIMESCALE_READER_CA_CERTS         | Path to trusted CAs in PEM format           |                |
-| MF_TIMESCALE_READER_DB_HOST          | Timescale DB host                           | timescale       |
+| MF_TIMESCALE_READER_DB_HOST          | Timescale DB host                           | localhost      |
 | MF_TIMESCALE_READER_DB_PORT          | Timescale DB port                           | 5432           |
 | MF_TIMESCALE_READER_DB_USER          | Timescale user                              | mainflux       |
 | MF_TIMESCALE_READER_DB_PASS          | Timescale password                          | mainflux       |

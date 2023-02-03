@@ -10,7 +10,7 @@ default values.
 
 | Variable                            | Description                                  | Default        |
 |-------------------------------------|----------------------------------------------|----------------|
-| MF_POSTGRES_READER_LOG_LEVEL        | Service log level                            | debug          |
+| MF_POSTGRES_READER_LOG_LEVEL        | Service log level                            | info           |
 | MF_POSTGRES_READER_PORT             | Service HTTP port                            | 8180           |
 | MF_POSTGRES_READER_CLIENT_TLS       | TLS mode flag                                | false          |
 | MF_POSTGRES_READER_CA_CERTS         | Path to trusted CAs in PEM format            |                |

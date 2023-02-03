@@ -10,6 +10,7 @@ default values.
 
 | Variable                        | Description                                         | Default        |
 |---------------------------------|-----------------------------------------------------|----------------|
+| MF_CASSANDRA_READER_LOG_LEVEL   | Service log level                                   | info           |
 | MF_CASSANDRA_READER_PORT        | Service HTTP port                                   | 8180           |
 | MF_CASSANDRA_READER_DB_CLUSTER  | Cassandra cluster comma separated addresses         | 127.0.0.1      |
 | MF_CASSANDRA_READER_DB_USER     | Cassandra DB username                               |                |

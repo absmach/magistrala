@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/gocql/gocql"
-	"github.com/mainflux/mainflux/consumers/writers/cassandra"
+	casClient "github.com/mainflux/mainflux/internal/clients/cassandra"
 	log "github.com/mainflux/mainflux/logger"
 	dockertest "github.com/ory/dockertest/v3"
 )
@@ -35,7 +35,7 @@ func TestMain(m *testing.M) {
 			return err
 		}
 
-		session, err := cassandra.Connect(cassandra.DBConfig{
+		session, err := casClient.Connect(casClient.Config{
 			Hosts:    []string{addr},
 			Keyspace: keyspace,
 		})

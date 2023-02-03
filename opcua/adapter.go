@@ -46,11 +46,11 @@ type Service interface {
 type Config struct {
 	ServerURI string
 	NodeID    string
-	Interval  string
-	Policy    string
-	Mode      string
-	CertFile  string
-	KeyFile   string
+	Interval  string `env:"MF_OPCUA_ADAPTER_INTERVAL_MS"   envDefault:"1000"`
+	Policy    string `env:"MF_OPCUA_ADAPTER_POLICY"        envDefault:""`
+	Mode      string `env:"MF_OPCUA_ADAPTER_MODE"          envDefault:""`
+	CertFile  string `env:"MF_OPCUA_ADAPTER_CERT_FILE"     envDefault:""`
+	KeyFile   string `env:"MF_OPCUA_ADAPTER_KEY_FILE"      envDefault:""`
 }
 
 var _ Service = (*adapterService)(nil)

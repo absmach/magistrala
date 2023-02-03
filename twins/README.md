@@ -14,8 +14,8 @@ default values.
 
 | Variable                   | Description                                                          | Default               |
 |----------------------------|----------------------------------------------------------------------|-----------------------|
-| MF_TWINS_LOG_LEVEL         | Log level for twin service (debug, info, warn, error)                | error                 |
-| MF_TWINS_HTTP_PORT         | Twins service HTTP port                                              | 9021                  |
+| MF_TWINS_LOG_LEVEL         | Log level for twin service (debug, info, warn, error)                | info                  |
+| MF_TWINS_HTTP_PORT         | Twins service HTTP port                                              | 8180                  |
 | MF_TWINS_SERVER_CERT       | Path to server certificate in PEM format                             |                       |
 | MF_TWINS_SERVER_KEY        | Path to server key in PEM format                                     |                       |
 | MF_JAEGER_URL              | Jaeger server URL                                                    |                       |

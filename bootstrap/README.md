@@ -37,7 +37,7 @@ The service is configured using the environment variables presented in the follo
 
 | Variable                      | Description                                                             | Default                          |
 |-------------------------------|-------------------------------------------------------------------------|----------------------------------|
-| MF_BOOTSTRAP_LOG_LEVEL        | Log level for Bootstrap (debug, info, warn, error)                      | error                            |
+| MF_BOOTSTRAP_LOG_LEVEL        | Log level for Bootstrap (debug, info, warn, error)                      | info                             |
 | MF_BOOTSTRAP_DB_HOST          | Database host address                                                   | localhost                        |
 | MF_BOOTSTRAP_DB_PORT          | Database host port                                                      | 5432                             |
 | MF_BOOTSTRAP_DB_USER          | Database user                                                           | mainflux                         |
@@ -53,8 +53,7 @@ The service is configured using the environment variables presented in the follo
 | MF_BOOTSTRAP_PORT             | Bootstrap service HTTP port                                             | 8180                             |
 | MF_BOOTSTRAP_SERVER_CERT      | Path to server certificate in pem format                                |                                  |
 | MF_BOOTSTRAP_SERVER_KEY       | Path to server key in pem format                                        |                                  |
-| MF_SDK_BASE_URL               | Base url for Mainflux SDK                                               | http://localhost                 |
-| MF_SDK_THINGS_PREFIX          | SDK prefix for Things service                                           |                                  |
+| MF_THINGS_URL                 | Base url for Mainflux Things                                            | http://localhost                 |
 | MF_THINGS_ES_URL              | Things service event source URL                                         | localhost:6379                   |
 | MF_THINGS_ES_PASS             | Things service event source password                                    |                                  |
 | MF_THINGS_ES_DB               | Things service event source database                                    | 0                                |

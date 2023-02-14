@@ -18,9 +18,9 @@ import (
 	"github.com/pion/dtls/v2/pkg/protocol/handshake"
 	"github.com/pion/dtls/v2/pkg/protocol/recordlayer"
 	"github.com/pion/logging"
-	"github.com/pion/transport/connctx"
-	"github.com/pion/transport/deadline"
-	"github.com/pion/transport/replaydetector"
+	"github.com/pion/transport/v2/connctx"
+	"github.com/pion/transport/v2/deadline"
+	"github.com/pion/transport/v2/replaydetector"
 )
 
 const (
@@ -88,7 +88,7 @@ func createConn(ctx context.Context, nextConn net.Conn, config *Config, isClient
 		return nil, errNilNextConn
 	}
 
-	cipherSuites, err := parseCipherSuites(config.CipherSuites, config.CustomCipherSuites, config.PSK == nil || len(config.Certificates) > 0, config.PSK != nil)
+	cipherSuites, err := parseCipherSuites(config.CipherSuites, config.CustomCipherSuites, config.includeCertificateSuites(), config.PSK != nil)
 	if err != nil {
 		return nil, err
 	}
@@ -154,6 +154,11 @@ func createConn(ctx context.Context, nextConn net.Conn, config *Config, isClient
 		serverName = ""
 	}
 
+	curves := config.EllipticCurves
+	if len(curves) == 0 {
+		curves = defaultCurves
+	}
+
 	hsCfg := &handshakeConfig{
 		localPSKCallback:            config.PSK,
 		localPSKIdentityHint:        config.PSKIdentityHint,
@@ -167,6 +172,7 @@ func createConn(ctx context.Context, nextConn net.Conn, config *Config, isClient
 		localCertificates:           config.Certificates,
 		insecureSkipVerify:          config.InsecureSkipVerify,
 		verifyPeerCertificate:       config.VerifyPeerCertificate,
+		verifyConnection:            config.VerifyConnection,
 		rootCAs:                     config.RootCAs,
 		clientCAs:                   config.ClientCAs,
 		customCipherSuites:          config.CustomCipherSuites,
@@ -175,13 +181,17 @@ func createConn(ctx context.Context, nextConn net.Conn, config *Config, isClient
 		initialEpoch:                0,
 		keyLogWriter:                config.KeyLogWriter,
 		sessionStore:                config.SessionStore,
+		ellipticCurves:              curves,
+		localGetCertificate:         config.GetCertificate,
+		localGetClientCertificate:   config.GetClientCertificate,
+		insecureSkipHelloVerify:     config.InsecureSkipVerifyHello,
 	}
 
 	// rfc5246#section-7.4.3
 	// In addition, the hash and signature algorithms MUST be compatible
 	// with the key in the server's end-entity certificate.
 	if !isClient {
-		cert, err := hsCfg.getCertificate("")
+		cert, err := hsCfg.getCertificate(&ClientHelloInfo{})
 		if err != nil && !errors.Is(err, errNoCertificates) {
 			return nil, err
 		}
@@ -889,6 +899,10 @@ func (c *Conn) handshake(ctx context.Context, cfg *handshakeConfig, initialFligh
 						_ = c.close(false) //nolint:contextcheck
 					}
 				}
+				if !c.isConnectionClosed() && errors.Is(err, context.Canceled) {
+					c.log.Trace("handshake timeouts - closing underline connection")
+					_ = c.close(false) //nolint:contextcheck
+				}
 				return
 			}
 		}
@@ -898,10 +912,12 @@ func (c *Conn) handshake(ctx context.Context, cfg *handshakeConfig, initialFligh
 	case err := <-firstErr:
 		cancelRead()
 		cancel()
+		c.handshakeLoopsFinished.Wait()
 		return c.translateHandshakeCtxError(err)
 	case <-ctx.Done():
 		cancelRead()
 		cancel()
+		c.handshakeLoopsFinished.Wait()
 		return c.translateHandshakeCtxError(ctx.Err())
 	case <-done:
 		return nil
@@ -934,11 +950,16 @@ func (c *Conn) close(byUser bool) error {
 	if byUser {
 		c.connectionClosedByUser = true
 	}
+	isClosed := c.isConnectionClosed()
 	c.closed.Close()
 	c.closeLock.Unlock()
 
 	if closedByUser {
 		return ErrConnClosed
+	}
+
+	if isClosed {
+		return nil
 	}
 
 	return c.nextConn.Close()

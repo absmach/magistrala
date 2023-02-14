@@ -3,4 +3,4 @@
 
 package packetio
 
-const sizeHardlimit = false
+const sizeHardLimit = false

@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pion/transport/deadline"
+	"github.com/pion/transport/v2/deadline"
 )
 
 var errPacketTooBig = errors.New("packet too big")
@@ -77,42 +77,42 @@ func (b *Buffer) available(size int) bool {
 // grow increases the size of the buffer.  If it returns nil, then the
 // buffer has been grown.  It returns ErrFull if hits a limit.
 func (b *Buffer) grow() error {
-	var newsize int
+	var newSize int
 	if len(b.data) < cutoffSize {
-		newsize = 2 * len(b.data)
+		newSize = 2 * len(b.data)
 	} else {
-		newsize = 5 * len(b.data) / 4
+		newSize = 5 * len(b.data) / 4
 	}
-	if newsize < minSize {
-		newsize = minSize
+	if newSize < minSize {
+		newSize = minSize
 	}
-	if (b.limitSize <= 0 || sizeHardlimit) && newsize > maxSize {
-		newsize = maxSize
+	if (b.limitSize <= 0 || sizeHardLimit) && newSize > maxSize {
+		newSize = maxSize
 	}
 
 	// one byte slack
-	if b.limitSize > 0 && newsize > b.limitSize+1 {
-		newsize = b.limitSize + 1
+	if b.limitSize > 0 && newSize > b.limitSize+1 {
+		newSize = b.limitSize + 1
 	}
 
-	if newsize <= len(b.data) {
+	if newSize <= len(b.data) {
 		return ErrFull
 	}
 
-	newdata := make([]byte, newsize)
+	newData := make([]byte, newSize)
 
 	var n int
 	if b.head <= b.tail {
 		// data was contiguous
-		n = copy(newdata, b.data[b.head:b.tail])
+		n = copy(newData, b.data[b.head:b.tail])
 	} else {
-		// data was discontiguous
-		n = copy(newdata, b.data[b.head:])
-		n += copy(newdata[n:], b.data[:b.tail])
+		// data was discontinuous
+		n = copy(newData, b.data[b.head:])
+		n += copy(newData[n:], b.data[:b.tail])
 	}
 	b.head = 0
 	b.tail = n
-	b.data = newdata
+	b.data = newData
 
 	return nil
 }
@@ -329,9 +329,9 @@ func (b *Buffer) size() int {
 // Causes Write to return ErrFull when this limit is reached.
 // A zero value means 4MB since v0.11.0.
 //
-// User can set packetioSizeHardlimit build tag to enable 4MB hardlimit.
-// When packetioSizeHardlimit build tag is set, SetLimitSize exceeding
-// the hardlimit will be silently discarded.
+// User can set packetioSizeHardLimit build tag to enable 4MB hard limit.
+// When packetioSizeHardLimit build tag is set, SetLimitSize exceeding
+// the hard limit will be silently discarded.
 func (b *Buffer) SetLimitSize(limit int) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()

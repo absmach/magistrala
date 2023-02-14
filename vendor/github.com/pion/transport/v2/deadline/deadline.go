@@ -59,11 +59,15 @@ func (d *Deadline) Set(t time.Time) {
 		exceeded := d.exceeded
 		stopped := d.stopped
 		go func() {
+			timer := time.NewTimer(dur)
 			select {
-			case <-time.After(dur):
+			case <-timer.C:
 				close(exceeded)
 				stopped <- false
 			case <-d.stop:
+				if !timer.Stop() {
+					<-timer.C
+				}
 				stopped <- true
 			}
 		}()

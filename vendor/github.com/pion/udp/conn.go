@@ -9,8 +9,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/pion/transport/deadline"
-	"github.com/pion/transport/packetio"
+	"github.com/pion/transport/v2/deadline"
+	"github.com/pion/transport/v2/packetio"
+	pkgSync "github.com/pion/udp/pkg/sync"
 )
 
 const (
@@ -37,7 +38,7 @@ type listener struct {
 
 	connLock sync.Mutex
 	conns    map[string]*Conn
-	connWG   sync.WaitGroup
+	connWG   *pkgSync.WaitGroup
 
 	readWG   sync.WaitGroup
 	errClose atomic.Value // error
@@ -138,6 +139,7 @@ func (lc *ListenConfig) Listen(network string, laddr *net.UDPAddr) (net.Listener
 				return &buf
 			},
 		},
+		connWG: pkgSync.NewWaitGroup(),
 	}
 
 	l.accepting.Store(true)
@@ -162,24 +164,28 @@ func Listen(network string, laddr *net.UDPAddr) (net.Listener, error) {
 }
 
 // readLoop has to tasks:
-// 1. Dispatching incoming packets to the correct Conn.
-//    It can therefore not be ended until all Conns are closed.
-// 2. Creating a new Conn when receiving from a new remote.
+//  1. Dispatching incoming packets to the correct Conn.
+//     It can therefore not be ended until all Conns are closed.
+//  2. Creating a new Conn when receiving from a new remote.
 func (l *listener) readLoop() {
 	defer l.readWG.Done()
 
 	for {
-		buf := *(l.readBufferPool.Get().(*[]byte))
-		n, raddr, err := l.pConn.ReadFrom(buf)
+		buf, ok := l.readBufferPool.Get().(*[]byte)
+		if !ok {
+			return
+		}
+
+		n, raddr, err := l.pConn.ReadFrom(*buf)
 		if err != nil {
 			return
 		}
-		conn, ok, err := l.getConn(raddr, buf[:n])
+		conn, ok, err := l.getConn(raddr, (*buf)[:n])
 		if err != nil {
 			continue
 		}
 		if ok {
-			_, _ = conn.buffer.Write(buf[:n])
+			_, _ = conn.buffer.Write((*buf)[:n])
 		}
 	}
 }
@@ -189,7 +195,7 @@ func (l *listener) getConn(raddr net.Addr, buf []byte) (*Conn, bool, error) {
 	defer l.connLock.Unlock()
 	conn, ok := l.conns[raddr.String()]
 	if !ok {
-		if !l.accepting.Load().(bool) {
+		if isAccepting, ok := l.accepting.Load().(bool); !isAccepting || !ok {
 			return nil, false, ErrClosedListener
 		}
 		if l.acceptFilter != nil {
@@ -258,7 +264,7 @@ func (c *Conn) Close() error {
 		nConns := len(c.listener.conns)
 		c.listener.connLock.Unlock()
 
-		if nConns == 0 && !c.listener.accepting.Load().(bool) {
+		if isAccepting, ok := c.listener.accepting.Load().(bool); nConns == 0 && !isAccepting && ok {
 			// Wait if this is the final connection
 			c.listener.readWG.Wait()
 			if errClose, ok := c.listener.errClose.Load().(error); ok {
@@ -266,6 +272,10 @@ func (c *Conn) Close() error {
 			}
 		} else {
 			err = nil
+		}
+
+		if errBuf := c.buffer.Close(); errBuf != nil && err == nil {
+			err = errBuf
 		}
 	})
 

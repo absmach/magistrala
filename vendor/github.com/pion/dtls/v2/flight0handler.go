@@ -81,7 +81,13 @@ func flight0Parse(ctx context.Context, c flightConn, state *State, cache *handsh
 		}
 	}
 
-	return handleHelloResume(clientHello.SessionID, state, cfg, flight2)
+	nextFlight := flight2
+
+	if cfg.insecureSkipHelloVerify {
+		nextFlight = flight4
+	}
+
+	return handleHelloResume(clientHello.SessionID, state, cfg, nextFlight)
 }
 
 func handleHelloResume(sessionID []byte, state *State, cfg *handshakeConfig, next flightVal) (flightVal, *alert.Alert, error) {
@@ -109,9 +115,11 @@ func handleHelloResume(sessionID []byte, state *State, cfg *handshakeConfig, nex
 
 func flight0Generate(c flightConn, state *State, cache *handshakeCache, cfg *handshakeConfig) ([]*packet, *alert.Alert, error) {
 	// Initialize
-	state.cookie = make([]byte, cookieLength)
-	if _, err := rand.Read(state.cookie); err != nil {
-		return nil, nil, err
+	if !cfg.insecureSkipHelloVerify {
+		state.cookie = make([]byte, cookieLength)
+		if _, err := rand.Read(state.cookie); err != nil {
+			return nil, nil, err
+		}
 	}
 
 	var zeroEpoch uint16

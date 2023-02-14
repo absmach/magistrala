@@ -432,7 +432,7 @@ github.com/pelletier/go-toml/v2/internal/tracker
 ## explicit
 github.com/pierrec/lz4
 github.com/pierrec/lz4/internal/xxh32
-# github.com/pion/dtls/v2 v2.1.5
+# github.com/pion/dtls/v2 v2.2.4
 ## explicit; go 1.13
 github.com/pion/dtls/v2
 github.com/pion/dtls/v2/internal/ciphersuite
@@ -455,15 +455,16 @@ github.com/pion/dtls/v2/pkg/protocol/recordlayer
 # github.com/pion/logging v0.2.2
 ## explicit; go 1.12
 github.com/pion/logging
-# github.com/pion/transport v0.13.1
+# github.com/pion/transport/v2 v2.0.0
 ## explicit; go 1.12
-github.com/pion/transport/connctx
-github.com/pion/transport/deadline
-github.com/pion/transport/packetio
-github.com/pion/transport/replaydetector
-# github.com/pion/udp v0.1.1
+github.com/pion/transport/v2/connctx
+github.com/pion/transport/v2/deadline
+github.com/pion/transport/v2/packetio
+github.com/pion/transport/v2/replaydetector
+# github.com/pion/udp v0.1.4
 ## explicit; go 1.14
 github.com/pion/udp
+github.com/pion/udp/pkg/sync
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
@@ -649,7 +650,7 @@ go.mongodb.org/mongo-driver/x/mongo/driver/wiremessage
 # go.uber.org/atomic v1.10.0
 ## explicit; go 1.18
 go.uber.org/atomic
-# golang.org/x/crypto v0.1.0
+# golang.org/x/crypto v0.5.0
 ## explicit; go 1.17
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blake2b
@@ -665,7 +666,7 @@ golang.org/x/crypto/scrypt
 # golang.org/x/mod v0.6.0
 ## explicit; go 1.17
 golang.org/x/mod/semver
-# golang.org/x/net v0.1.0
+# golang.org/x/net v0.5.0
 ## explicit; go 1.17
 golang.org/x/net/bpf
 golang.org/x/net/context
@@ -685,14 +686,14 @@ golang.org/x/net/trace
 ## explicit
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.1.0
+# golang.org/x/sys v0.4.0
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.4.0
+# golang.org/x/text v0.6.0
 ## explicit; go 1.17
 golang.org/x/text/cases
 golang.org/x/text/encoding

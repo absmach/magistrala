@@ -108,6 +108,13 @@ func verifyKeySignature(message, remoteKeySignature []byte, hashAlgorithm hash.A
 // the private key in the certificate.
 // https://tools.ietf.org/html/rfc5246#section-7.3
 func generateCertificateVerify(handshakeBodies []byte, privateKey crypto.PrivateKey, hashAlgorithm hash.Algorithm) ([]byte, error) {
+	if p, ok := privateKey.(ed25519.PrivateKey); ok {
+		// https://pkg.go.dev/crypto/ed25519#PrivateKey.Sign
+		// Sign signs the given message with priv. Ed25519 performs two passes over
+		// messages to be signed and therefore cannot handle pre-hashed messages.
+		return p.Sign(rand.Reader, handshakeBodies, crypto.Hash(0))
+	}
+
 	h := sha256.New()
 	if _, err := h.Write(handshakeBodies); err != nil {
 		return nil, err
@@ -115,9 +122,6 @@ func generateCertificateVerify(handshakeBodies []byte, privateKey crypto.Private
 	hashed := h.Sum(nil)
 
 	switch p := privateKey.(type) {
-	case ed25519.PrivateKey:
-		// https://crypto.stackexchange.com/a/55483
-		return p.Sign(rand.Reader, hashed, crypto.Hash(0))
 	case *ecdsa.PrivateKey:
 		return p.Sign(rand.Reader, hashed, hashAlgorithm.CryptoHash())
 	case *rsa.PrivateKey:

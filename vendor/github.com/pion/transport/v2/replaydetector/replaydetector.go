@@ -55,7 +55,7 @@ func (d *slidingWindowDetector) Check(seq uint64) (accept func(), ok bool) {
 }
 
 // WithWrap creates ReplayDetector allowing sequence wrapping.
-// This is suitable for short bitwidth counter like SRTP and SRTCP.
+// This is suitable for short bit width counter like SRTP and SRTCP.
 func WithWrap(windowSize uint, maxSeq uint64) ReplayDetector {
 	return &wrappedSlidingWindowDetector{
 		maxSeq:     maxSeq,

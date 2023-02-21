@@ -16,30 +16,23 @@ func issueCert(svc certs.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-		res, err := svc.IssueCert(ctx, req.token, req.ThingID, req.TTL)
+		res, err := svc.IssueCert(ctx, req.token, req.ThingID, req.Name, req.TTL)
 		if err != nil {
 			return certsRes{}, err
 		}
 
-		return certsRes{
-			CertSerial: res.Serial,
-			ThingID:    res.ThingID,
-			ClientCert: res.ClientCert,
-			ClientKey:  res.ClientKey,
-			Expiration: res.Expire,
-			created:    true,
-		}, nil
+		return CertToCertResponse(res, true), nil
 	}
 }
 
-func listSerials(svc certs.Service) endpoint.Endpoint {
+func listCerts(svc certs.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listReq)
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
-		page, err := svc.ListSerials(ctx, req.token, req.thingID, req.offset, req.limit)
+		page, err := svc.ListCerts(ctx, req.token, req.certID, req.thingID, req.serial, req.name, req.certStatus, req.offset, req.limit)
 		if err != nil {
 			return certsPageRes{}, err
 		}
@@ -53,9 +46,7 @@ func listSerials(svc certs.Service) endpoint.Endpoint {
 		}
 
 		for _, cert := range page.Certs {
-			cr := certsRes{
-				CertSerial: cert.Serial,
-			}
+			cr := CertToCertResponse(cert, true)
 			res.Certs = append(res.Certs, cr)
 		}
 		return res, nil
@@ -64,39 +55,99 @@ func listSerials(svc certs.Service) endpoint.Endpoint {
 
 func viewCert(svc certs.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(viewReq)
+		req := request.(viewRevokeRenewRemoveReq)
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
 
-		cert, err := svc.ViewCert(ctx, req.token, req.serialID)
+		cert, err := svc.ViewCert(ctx, req.token, req.certID)
 		if err != nil {
 			return certsPageRes{}, err
 		}
 
-		certRes := certsRes{
-			CertSerial: cert.Serial,
-			ThingID:    cert.ThingID,
-			ClientCert: cert.ClientCert,
-			Expiration: cert.Expire,
-		}
-
-		return certRes, nil
+		return CertToCertResponse(cert, false), nil
 	}
 }
 
 func revokeCert(svc certs.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(revokeReq)
+		req := request.(viewRevokeRenewRemoveReq)
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-		res, err := svc.RevokeCert(ctx, req.token, req.certID)
+		return emptyCertRes{}, svc.RevokeCert(ctx, req.token, req.certID)
+	}
+}
+
+func renewCert(svc certs.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(viewRevokeRenewRemoveReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+		cert, err := svc.RenewCert(ctx, req.token, req.certID)
+		if err != nil {
+			return certsPageRes{}, err
+		}
+		return CertToCertResponse(cert, false), nil
+	}
+}
+
+func removeCert(svc certs.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(viewRevokeRenewRemoveReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+		if err := svc.RemoveCert(ctx, req.token, req.certID); err != nil {
+			return nil, err
+		}
+		return emptyCertRes{}, nil
+
+	}
+}
+
+func revokeThingCerts(svc certs.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(revokeRenewRemoveThingIDReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+		c, err := svc.RevokeThingCerts(ctx, req.token, req.thingID, req.limit)
 		if err != nil {
 			return nil, err
 		}
-		return revokeCertsRes{
-			RevocationTime: res.RevocationTime,
-		}, nil
+		rc := map[string]interface{}{"remaining": c}
+		return rc, nil
+	}
+}
+
+func renewThingCerts(svc certs.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(revokeRenewRemoveThingIDReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+		c, err := svc.RenewThingCerts(ctx, req.token, req.thingID, req.limit)
+		if err != nil {
+			return nil, err
+		}
+		rc := map[string]interface{}{"remaining": c}
+		return rc, nil
+	}
+}
+
+func removeThingCerts(svc certs.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(revokeRenewRemoveThingIDReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+		c, err := svc.RemoveThingCerts(ctx, req.token, req.thingID, req.limit)
+		if err != nil {
+			return nil, err
+		}
+		rc := map[string]interface{}{"remaining": c}
+		return rc, nil
 	}
 }

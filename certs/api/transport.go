@@ -22,8 +22,15 @@ const (
 	contentType = "application/json"
 	offsetKey   = "offset"
 	limitKey    = "limit"
-	defOffset   = 0
-	defLimit    = 10
+	certKey     = "cert_id"
+	thingKey    = "thing_id"
+	nameKey     = "name"
+	serialKey   = "serial"
+	statusKey   = "status"
+
+	defStatus = "all"
+	defOffset = 0
+	defLimit  = 10
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
@@ -41,23 +48,58 @@ func MakeHandler(svc certs.Service, logger logger.Logger) http.Handler {
 		opts...,
 	))
 
-	r.Get("/certs/:certId", kithttp.NewServer(
+	r.Get("/certs/:certID", kithttp.NewServer(
 		viewCert(svc),
-		decodeViewCert,
+		decodeViewRevokeRenewRemoveCerts,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Delete("/certs/:certId", kithttp.NewServer(
+	r.Post("/certs/:certID/revoke", kithttp.NewServer(
 		revokeCert(svc),
-		decodeRevokeCerts,
+		decodeViewRevokeRenewRemoveCerts,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Get("/serials/:thingId", kithttp.NewServer(
-		listSerials(svc),
+	r.Post("/certs/:certID/renew", kithttp.NewServer(
+		renewCert(svc),
+		decodeViewRevokeRenewRemoveCerts,
+		encodeResponse,
+		opts...,
+	))
+
+	r.Delete("/certs/:certID", kithttp.NewServer(
+		removeCert(svc),
+		decodeViewRevokeRenewRemoveCerts,
+		encodeResponse,
+		opts...,
+	))
+
+	r.Get("/certs", kithttp.NewServer(
+		listCerts(svc),
 		decodeListCerts,
+		encodeResponse,
+		opts...,
+	))
+
+	r.Post("/things/:thingID/revoke", kithttp.NewServer(
+		revokeThingCerts(svc),
+		decodeRevokeRenewRemoveThing,
+		encodeResponse,
+		opts...,
+	))
+
+	r.Post("/things/:thingID/renew", kithttp.NewServer(
+		renewThingCerts(svc),
+		decodeRevokeRenewRemoveThing,
+		encodeResponse,
+		opts...,
+	))
+
+	r.Delete("/things/:thingID", kithttp.NewServer(
+		removeThingCerts(svc),
+		decodeRevokeRenewRemoveThing,
 		encodeResponse,
 		opts...,
 	))
@@ -96,21 +138,41 @@ func decodeListCerts(_ context.Context, r *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
+	certID, err := apiutil.ReadStringQuery(r, certKey, "")
+	if err != nil {
+		return nil, err
+	}
+
+	thingID, err := apiutil.ReadStringQuery(r, thingKey, "")
+	if err != nil {
+		return nil, err
+	}
+
+	serial, err := apiutil.ReadStringQuery(r, serialKey, "")
+	if err != nil {
+		return nil, err
+	}
+
+	name, err := apiutil.ReadStringQuery(r, nameKey, "")
+	if err != nil {
+		return nil, err
+	}
+
+	status, err := apiutil.ReadStringQuery(r, statusKey, defStatus)
+	if err != nil {
+		return nil, err
+	}
+
 	req := listReq{
 		token:   apiutil.ExtractBearerToken(r),
-		thingID: bone.GetValue(r, "thingId"),
+		certID:  certID,
+		thingID: thingID,
+		serial:  serial,
+		status:  status,
+		name:    name,
 		limit:   l,
 		offset:  o,
 	}
-	return req, nil
-}
-
-func decodeViewCert(_ context.Context, r *http.Request) (interface{}, error) {
-	req := viewReq{
-		token:    apiutil.ExtractBearerToken(r),
-		serialID: bone.GetValue(r, "certId"),
-	}
-
 	return req, nil
 }
 
@@ -127,10 +189,25 @@ func decodeCerts(_ context.Context, r *http.Request) (interface{}, error) {
 	return req, nil
 }
 
-func decodeRevokeCerts(_ context.Context, r *http.Request) (interface{}, error) {
-	req := revokeReq{
+func decodeViewRevokeRenewRemoveCerts(_ context.Context, r *http.Request) (interface{}, error) {
+	req := viewRevokeRenewRemoveReq{
 		token:  apiutil.ExtractBearerToken(r),
-		certID: bone.GetValue(r, "certId"),
+		certID: bone.GetValue(r, "certID"),
+	}
+
+	return req, nil
+}
+
+func decodeRevokeRenewRemoveThing(_ context.Context, r *http.Request) (interface{}, error) {
+	l, err := apiutil.ReadIntQuery(r, limitKey, defLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	req := revokeRenewRemoveThingIDReq{
+		token:   apiutil.ExtractBearerToken(r),
+		thingID: bone.GetValue(r, "thingID"),
+		limit:   l,
 	}
 
 	return req, nil
@@ -138,24 +215,52 @@ func decodeRevokeCerts(_ context.Context, r *http.Request) (interface{}, error) 
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch {
-	case errors.Contains(err, errors.ErrAuthentication),
-		err == apiutil.ErrBearerToken:
+
+	case err == apiutil.ErrBearerToken:
 		w.WriteHeader(http.StatusUnauthorized)
-	case errors.Contains(err, errors.ErrUnsupportedContentType):
-		w.WriteHeader(http.StatusUnsupportedMediaType)
-	case errors.Contains(err, errors.ErrMalformedEntity),
-		err == apiutil.ErrMissingID,
+
+	case err == apiutil.ErrMissingID,
 		err == apiutil.ErrMissingCertData,
-		err == apiutil.ErrInvalidCertData,
+		err == apiutil.ErrLimitSize,
+		err == apiutil.ErrOffsetSize,
 		err == apiutil.ErrLimitSize:
 		w.WriteHeader(http.StatusBadRequest)
+
+	case errors.Contains(err, errors.ErrNotFound):
+		w.WriteHeader(http.StatusNotFound)
+		err = errors.ErrNotFound
+
+	case errors.Contains(err, errors.ErrAuthentication):
+		w.WriteHeader(http.StatusUnauthorized)
+		err = errors.ErrAuthentication
+
+	case errors.Contains(err, errors.ErrUnsupportedContentType):
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+		err = errors.ErrUnsupportedContentType
+
+	case errors.Contains(err, errors.ErrMalformedEntity):
+		w.WriteHeader(http.StatusBadRequest)
+		err = errors.ErrMalformedEntity
+
 	case errors.Contains(err, errors.ErrConflict):
 		w.WriteHeader(http.StatusConflict)
+		err = errors.ErrConflict
 
-	case errors.Contains(err, errors.ErrCreateEntity),
-		errors.Contains(err, errors.ErrViewEntity),
-		errors.Contains(err, errors.ErrRemoveEntity):
+	case errors.Contains(err, errors.ErrCreateEntity):
 		w.WriteHeader(http.StatusInternalServerError)
+		err = errors.ErrCreateEntity
+
+	case errors.Contains(err, errors.ErrViewEntity):
+		w.WriteHeader(http.StatusInternalServerError)
+		err = errors.ErrViewEntity
+
+	case errors.Contains(err, errors.ErrUpdateEntity):
+		w.WriteHeader(http.StatusInternalServerError)
+		err = errors.ErrUpdateEntity
+
+	case errors.Contains(err, errors.ErrRemoveEntity):
+		w.WriteHeader(http.StatusInternalServerError)
+		err = errors.ErrRemoveEntity
 
 	default:
 		w.WriteHeader(http.StatusInternalServerError)

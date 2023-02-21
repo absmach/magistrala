@@ -30,31 +30,22 @@ func MetricsMiddleware(svc certs.Service, counter metrics.Counter, latency metri
 	}
 }
 
-func (ms *metricsMiddleware) IssueCert(ctx context.Context, token, thingID, ttl string) (certs.Cert, error) {
+func (ms *metricsMiddleware) IssueCert(ctx context.Context, token, thingID, name, ttl string) (certs.Cert, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "issue_cert").Add(1)
 		ms.latency.With("method", "issue_cert").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.IssueCert(ctx, token, thingID, ttl)
+	return ms.svc.IssueCert(ctx, token, thingID, name, ttl)
 }
 
-func (ms *metricsMiddleware) ListCerts(ctx context.Context, token, thingID string, offset, limit uint64) (certs.Page, error) {
+func (ms *metricsMiddleware) ListCerts(ctx context.Context, token, certID, thingID, serial, name string, status certs.Status, offset, limit uint64) (certs.Page, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_certs").Add(1)
 		ms.latency.With("method", "list_certs").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.ListCerts(ctx, token, thingID, offset, limit)
-}
-
-func (ms *metricsMiddleware) ListSerials(ctx context.Context, token, thingID string, offset, limit uint64) (certs.Page, error) {
-	defer func(begin time.Time) {
-		ms.counter.With("method", "list_serials").Add(1)
-		ms.latency.With("method", "list_serials").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
-	return ms.svc.ListSerials(ctx, token, thingID, offset, limit)
+	return ms.svc.ListCerts(ctx, token, certID, thingID, serial, name, status, offset, limit)
 }
 
 func (ms *metricsMiddleware) ViewCert(ctx context.Context, token, serialID string) (certs.Cert, error) {
@@ -66,11 +57,56 @@ func (ms *metricsMiddleware) ViewCert(ctx context.Context, token, serialID strin
 	return ms.svc.ViewCert(ctx, token, serialID)
 }
 
-func (ms *metricsMiddleware) RevokeCert(ctx context.Context, token, thingID string) (certs.Revoke, error) {
+func (ms *metricsMiddleware) RevokeCert(ctx context.Context, token, certID string) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "revoke_cert").Add(1)
 		ms.latency.With("method", "revoke_cert").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.RevokeCert(ctx, token, thingID)
+	return ms.svc.RevokeCert(ctx, token, certID)
+}
+
+func (ms *metricsMiddleware) RenewCert(ctx context.Context, token, certID string) (certs.Cert, error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "renew_cert").Add(1)
+		ms.latency.With("method", "renew_cert").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.RenewCert(ctx, token, certID)
+}
+
+func (ms *metricsMiddleware) RemoveCert(ctx context.Context, token, certID string) error {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "remove_cert").Add(1)
+		ms.latency.With("method", "remove_cert").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.RemoveCert(ctx, token, certID)
+}
+
+func (ms *metricsMiddleware) RevokeThingCerts(ctx context.Context, token, thingID string, limit int64) (uint64, error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "revoke_thing_cert").Add(1)
+		ms.latency.With("method", "revoke_thing_cert").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.RevokeThingCerts(ctx, token, thingID, limit)
+}
+
+func (ms *metricsMiddleware) RenewThingCerts(ctx context.Context, token, thingID string, limit int64) (uint64, error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "renew_cert").Add(1)
+		ms.latency.With("method", "renew_cert").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.RenewThingCerts(ctx, token, thingID, limit)
+}
+
+func (ms *metricsMiddleware) RemoveThingCerts(ctx context.Context, token, thingID string, limit int64) (uint64, error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "remove_cert").Add(1)
+		ms.latency.With("method", "remove_cert").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.RemoveThingCerts(ctx, token, thingID, limit)
 }

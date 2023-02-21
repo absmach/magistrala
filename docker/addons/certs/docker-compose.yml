@@ -70,6 +70,9 @@ services:
       MF_AUTH_GRPC_URL: ${MF_AUTH_GRPC_URL}
       MF_AUTH_GRPC_TIMEOUT: ${MF_AUTH_GRPC_TIMEOUT}
       MF_CERTS_VAULT_HOST: ${MF_CERTS_VAULT_HOST}
+      MF_CERTS_ES_URL: ${MF_CERTS_ES_URL}
+      MF_CERTS_ES_PASS: ${MF_CERTS_ES_PASS}
+      MF_CERTS_ES_DB: ${MF_CERTS_ES_DB}
     volumes:
       - ../../ssl/certs/ca.key:/etc/ssl/certs/ca.key
       - ../../ssl/certs/ca.crt:/etc/ssl/certs/ca.crt

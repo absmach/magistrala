@@ -101,4 +101,10 @@ var (
 
 	// ErrBootstrapState indicates an invalid boostrap state.
 	ErrBootstrapState = errors.New("invalid bootstrap state")
+
+	// ErrMissingThingKey indicates an missing thing key
+	ErrMissingThingKey = errors.New("missing thing key")
+
+	// ErrMissingThingID indicates an missing thing ID
+	ErrMissingThingID = errors.New("missing thing ID")
 )

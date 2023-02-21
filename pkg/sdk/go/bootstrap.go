@@ -16,7 +16,7 @@ import (
 const configsEndpoint = "configs"
 const bootstrapEndpoint = "bootstrap"
 const whitelistEndpoint = "state"
-const bootstrapCertsEndpoint = "configs/certs"
+const bootstrapCertsEndpoint = "things/configs/certs"
 
 // BootstrapConfig represents Configuration entity. It wraps information about external entity
 // as well as info about corresponding Mainflux entities.
@@ -115,6 +115,7 @@ func (sdk mfSDK) UpdateBootstrapCerts(id, clientCert, clientKey, ca, token strin
 	if err != nil {
 		return errors.NewSDKError(err)
 	}
+
 
 	_, _, sdkerr := sdk.processRequest(http.MethodPatch, url, token, string(CTJSON), data, http.StatusOK)
 	return sdkerr

@@ -10,30 +10,37 @@ import (
 	"log"
 	"os"
 
-	"github.com/go-redis/redis/v8"
-	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/certs"
 	"github.com/mainflux/mainflux/certs/api"
+	"github.com/mainflux/mainflux/certs/eventhandlers"
 	vault "github.com/mainflux/mainflux/certs/pki"
 	certsPg "github.com/mainflux/mainflux/certs/postgres"
 	"github.com/mainflux/mainflux/internal"
+	"github.com/mainflux/mainflux/internal/clients/events/things"
+	redisClient "github.com/mainflux/mainflux/internal/clients/redis"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
+	"github.com/mainflux/mainflux/internal/sqlxt"
 	"github.com/mainflux/mainflux/logger"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/jmoiron/sqlx"
 	authClient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
 	pgClient "github.com/mainflux/mainflux/internal/clients/postgres"
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
+	"github.com/mainflux/mainflux/pkg/uuid"
 )
 
 const (
-	svcName        = "certs"
-	envPrefix      = "MF_CERTS_"
-	envPrefixHttp  = "MF_CERTS_HTTP_"
+	svcName    = "certs"
+	esGroup    = "mainflux.certs"
+	esConsumer = "certs"
+
+	envPrefix     = "MF_CERTS_"
+	envPrefixHttp = "MF_CERTS_HTTP_"
+	envPrefixES   = "MF_CERTS_ES_"
+
 	defDB          = "certs"
 	defSvcHttpPort = "8204"
 )
@@ -83,6 +90,8 @@ func main() {
 	if err != nil {
 		logger.Error("Failed to load CA certificates for issuing client certs")
 	}
+	_ = tlsCert
+	_ = caCert
 
 	if cfg.PkiHost == "" {
 		log.Fatalf("No host specified for PKI engine")
@@ -107,7 +116,23 @@ func main() {
 	defer authHandler.Close()
 	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 
-	svc := newService(auth, db, logger, nil, tlsCert, caCert, cfg, pkiClient)
+	dbt := sqlxt.NewDatabase(db)
+
+	certsRepo := certsPg.NewRepository(dbt)
+
+	config := mfsdk.Config{
+		CertsURL:  cfg.CertsURL,
+		ThingsURL: cfg.ThingsURL,
+	}
+	sdk := mfsdk.NewSDK(config)
+
+	idProvider := uuid.New()
+
+	svc := certs.New(auth, certsRepo, idProvider, pkiClient, sdk)
+
+	svc = api.NewLoggingMiddleware(svc, logger)
+	counter, latency := internal.MakeMetrics(svcName, "api")
+	svc = api.MetricsMiddleware(svc, counter, latency)
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
@@ -115,8 +140,21 @@ func main() {
 	}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger), logger)
 
+	thingsESClient, err := redisClient.Setup(envPrefixES)
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	defer thingsESClient.Close()
+
+	certsThingsHandler := eventhandlers.NewThingsEventHandlers(certsRepo, pkiClient)
+	te := things.NewEventStore(certsThingsHandler, thingsESClient, esConsumer, logger)
+
 	g.Go(func() error {
 		return hs.Start()
+	})
+
+	g.Go(func() error {
+		return te.Subscribe(ctx, esGroup)
 	})
 
 	g.Go(func() error {
@@ -126,20 +164,6 @@ func main() {
 	if err := g.Wait(); err != nil {
 		logger.Error(fmt.Sprintf("Certs service terminated: %s", err))
 	}
-}
-
-func newService(auth mainflux.AuthServiceClient, db *sqlx.DB, logger logger.Logger, esClient *redis.Client, tlsCert tls.Certificate, x509Cert *x509.Certificate, cfg config, pkiAgent vault.Agent) certs.Service {
-	certsRepo := certsPg.NewRepository(db, logger)
-	config := mfsdk.Config{
-		CertsURL:  cfg.CertsURL,
-		ThingsURL: cfg.ThingsURL,
-	}
-	sdk := mfsdk.NewSDK(config)
-	svc := certs.New(auth, certsRepo, sdk, pkiAgent)
-	svc = api.NewLoggingMiddleware(svc, logger)
-	counter, latency := internal.MakeMetrics(svcName, "api")
-	svc = api.MetricsMiddleware(svc, counter, latency)
-	return svc
 }
 
 func loadCertificates(conf config) (tls.Certificate, *x509.Certificate, error) {

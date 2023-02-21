@@ -6,12 +6,14 @@ package api
 import (
 	"net/http"
 	"time"
+
+	"github.com/mainflux/mainflux/certs"
 )
 
 type pageRes struct {
 	Total  uint64 `json:"total"`
 	Offset uint64 `json:"offset"`
-	Limit  uint64 `json:"limit"`
+	Limit  int64  `json:"limit"`
 }
 
 type certsPageRes struct {
@@ -20,16 +22,19 @@ type certsPageRes struct {
 }
 
 type certsRes struct {
-	ThingID    string    `json:"thing_id"`
-	ClientCert string    `json:"client_cert"`
-	ClientKey  string    `json:"client_key"`
-	CertSerial string    `json:"cert_serial"`
-	Expiration time.Time `json:"expiration"`
-	created    bool
-}
-
-type revokeCertsRes struct {
-	RevocationTime time.Time `json:"revocation_time"`
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	OwnerID     string    `json:"owner_id"`
+	ThingID     string    `json:"thing_id"`
+	Serial      string    `json:"serial"`
+	Certificate string    `json:"certificate"`
+	PrivateKey  string    `json:"private_key"`
+	CAChain     string    `json:"ca_chain"`
+	IssuingCA   string    `json:"issuing_ca"`
+	TTL         string    `json:"ttl"`
+	Expire      time.Time `json:"expire"`
+	Revocation  string    `json:"revocation"`
+	created     bool
 }
 
 func (res certsPageRes) Code() int {
@@ -60,14 +65,38 @@ func (res certsRes) Empty() bool {
 	return false
 }
 
-func (res revokeCertsRes) Code() int {
+func CertToCertResponse(cert certs.Cert, created bool) certsRes {
+	rev := ""
+	if !cert.Revocation.IsZero() {
+		rev = cert.Revocation.Format(time.RFC3339)
+	}
+	return certsRes{
+		ID:          cert.ID,
+		Name:        cert.Name,
+		OwnerID:     cert.OwnerID,
+		ThingID:     cert.ThingID,
+		Serial:      cert.Serial,
+		Certificate: cert.Certificate,
+		PrivateKey:  cert.PrivateKey,
+		CAChain:     cert.CAChain,
+		IssuingCA:   cert.IssuingCA,
+		TTL:         cert.TTL,
+		Expire:      cert.Expire,
+		Revocation:  rev,
+		created:     created,
+	}
+}
+
+type emptyCertRes struct{}
+
+func (res emptyCertRes) Code() int {
 	return http.StatusOK
 }
 
-func (res revokeCertsRes) Headers() map[string]string {
+func (res emptyCertRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res revokeCertsRes) Empty() bool {
-	return false
+func (res emptyCertRes) Empty() bool {
+	return true
 }

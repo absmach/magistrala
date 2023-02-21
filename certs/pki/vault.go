@@ -5,7 +5,11 @@
 package pki
 
 import (
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
+	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/hashicorp/vault/api"
@@ -29,23 +33,26 @@ var (
 	// ErrFailedCertRevocation indicates failed certificate revocation
 	ErrFailedCertRevocation = errors.New("failed to revoke certificate")
 
-	errFailedCertDecoding = errors.New("failed to decode response from vault service")
+	errFailedVaultCertIssue = errors.New("failed to issue vault certificate")
+	errFailedVaultRead      = errors.New("failed to read vault certificate")
+	errFailedCertDecoding   = errors.New("failed to decode response from vault service")
+	expSerialNotFound       = regexp.MustCompile(`Errors:\s*(.*?)\s*certificate with serial\s*(.*?)\s*not found`)
 )
 
 type Cert struct {
-	ClientCert     string   `json:"client_cert" mapstructure:"certificate"`
-	IssuingCA      string   `json:"issuing_ca" mapstructure:"issuing_ca"`
-	CAChain        []string `json:"ca_chain" mapstructure:"ca_chain"`
-	ClientKey      string   `json:"client_key" mapstructure:"private_key"`
-	PrivateKeyType string   `json:"private_key_type" mapstructure:"private_key_type"`
-	Serial         string   `json:"serial" mapstructure:"serial_number"`
-	Expire         int64    `json:"expire" mapstructure:"expiration"`
+	Certificate    string    `json:"certificate" mapstructure:"certificate"`
+	IssuingCA      string    `json:"issuing_ca" mapstructure:"issuing_ca"`
+	CAChain        []string  `json:"ca_chain" mapstructure:"ca_chain"`
+	PrivateKey     string    `json:"private_key" mapstructure:"private_key"`
+	PrivateKeyType string    `json:"private_key_type" mapstructure:"private_key_type"`
+	Serial         string    `json:"serial" mapstructure:"serial_number"`
+	Expire         time.Time `json:"expire" mapstructure:"-"`
 }
 
 // Agent represents the Vault PKI interface.
 type Agent interface {
 	// IssueCert issues certificate on PKI
-	IssueCert(cn, ttl string) (Cert, error)
+	IssueCert(cn string, ttl string) (Cert, error)
 
 	// Read retrieves certificate from PKI
 	Read(serial string) (Cert, error)
@@ -97,7 +104,7 @@ func NewVaultClient(token, host, path, role string) (Agent, error) {
 	return &p, nil
 }
 
-func (p *pkiAgent) IssueCert(cn, ttl string) (Cert, error) {
+func (p *pkiAgent) IssueCert(cn string, ttl string) (Cert, error) {
 	cReq := certReq{
 		CommonName: cn,
 		TTL:        ttl,
@@ -114,13 +121,18 @@ func (p *pkiAgent) IssueCert(cn, ttl string) (Cert, error) {
 
 	s, err := p.client.Logical().Write(p.issueURL, certIssueReq)
 	if err != nil {
-		return Cert{}, err
+		return Cert{}, errors.Wrap(errFailedVaultCertIssue, err)
 	}
 
 	cert := Cert{}
 	if err = mapstructure.Decode(s.Data, &cert); err != nil {
 		return Cert{}, errors.Wrap(errFailedCertDecoding, err)
 	}
+	pubCert, err := p.parseCert(cert.Certificate)
+	if err != nil {
+		return Cert{}, errors.Wrap(errFailedCertDecoding, err)
+	}
+	cert.Expire = pubCert.NotAfter
 
 	return cert, nil
 }
@@ -128,7 +140,7 @@ func (p *pkiAgent) IssueCert(cn, ttl string) (Cert, error) {
 func (p *pkiAgent) Read(serial string) (Cert, error) {
 	s, err := p.client.Logical().Read(p.readURL + serial)
 	if err != nil {
-		return Cert{}, err
+		return Cert{}, errors.Wrap(errFailedVaultRead, err)
 	}
 	cert := Cert{}
 	if err = mapstructure.Decode(s.Data, &cert); err != nil {
@@ -145,6 +157,9 @@ func (p *pkiAgent) Revoke(serial string) (time.Time, error) {
 	var certRevokeReq map[string]interface{}
 	data, err := json.Marshal(cReq)
 	if err != nil {
+		if expSerialNotFound.Match([]byte(err.Error())) {
+			return time.Time{}, errors.ErrNotFound
+		}
 		return time.Time{}, err
 	}
 	if err := json.Unmarshal(data, &certRevokeReq); err != nil {
@@ -161,4 +176,12 @@ func (p *pkiAgent) Revoke(serial string) (time.Time, error) {
 	}
 
 	return time.Unix(0, int64(rev)*int64(time.Second)), nil
+}
+
+func (c *pkiAgent) parseCert(data string) (*x509.Certificate, error) {
+	block, _ := pem.Decode([]byte(data))
+	if block == nil {
+		return nil, fmt.Errorf("failed to decode client certificate")
+	}
+	return x509.ParseCertificate(block.Bytes)
 }

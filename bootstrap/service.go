@@ -28,6 +28,8 @@ var (
 
 	// ErrBootstrap indicates error in getting bootstrap configuration.
 	ErrBootstrap = errors.New("failed to read bootstrap configuration")
+	// ErrUpdateCert indicates error in updating the certificates
+	ErrUpdateCert = errors.New("failed to update cert")
 
 	errAddBootstrap       = errors.New("failed to add bootstrap configuration")
 	errUpdateConnections  = errors.New("failed to update connections")
@@ -40,7 +42,6 @@ var (
 	errDisconnectThing    = errors.New("failed to disconnect thing")
 	errCheckChannels      = errors.New("failed to check if channels exists")
 	errConnectionChannels = errors.New("failed to check channels connections")
-	errUpdateCert         = errors.New("failed to update cert")
 )
 
 var _ Service = (*bootstrapService)(nil)
@@ -191,7 +192,7 @@ func (bs bootstrapService) UpdateCert(ctx context.Context, token, thingID, clien
 		return err
 	}
 	if err := bs.configs.UpdateCert(owner, thingID, clientCert, clientKey, caCert); err != nil {
-		return errors.Wrap(errUpdateCert, err)
+		return errors.Wrap(ErrUpdateCert, err)
 	}
 	return nil
 }

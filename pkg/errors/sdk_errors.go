@@ -33,6 +33,7 @@ type sdkError struct {
 	statusCode int
 }
 
+
 func (ce *sdkError) Error() string {
 	if ce == nil {
 		return ""
@@ -68,6 +69,7 @@ func NewSDKErrorWithStatus(err error, statusCode int) SDKError {
 		},
 	}
 }
+
 
 // CheckError will check the HTTP response status code and matches it with the given status codes.
 // Since multiple status codes can be valid, we can pass multiple status codes to the function.

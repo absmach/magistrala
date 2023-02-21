@@ -65,49 +65,49 @@ func main() {
 	dbConfig := pgClient.Config{Name: defDB}
 	db, err := pgClient.SetupWithConfig(envPrefix, *notifierPg.Migration(), dbConfig)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err.Error())()
 	}
 	defer db.Close()
 
 	smppConfig := mfsmpp.Config{}
 	if err := env.Parse(&smppConfig); err != nil {
-		log.Fatalf("failed to load SMPP configuration from environment : %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to load SMPP configuration from environment : %s", err.Error()))()
 	}
 
 	pubSub, err := brokers.NewPubSub(cfg.BrokerURL, "", logger)
 	if err != nil {
-		log.Fatalf("failed to connect to message broker: %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err.Error()))()
 	}
 	defer pubSub.Close()
 
 	auth, authHandler, err := authClient.Setup(envPrefix, cfg.JaegerURL)
 	if err != nil {
-		log.Fatalf(err.Error())
+		logger.Fatal(err.Error())()
 	}
 	defer authHandler.Close()
 	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 
 	tracer, closer, err := jaegerClient.NewTracer("smpp-notifier", cfg.JaegerURL)
 	if err != nil {
-		log.Fatalf("failed to init Jaeger: %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err.Error()))()
 	}
 	defer closer.Close()
 
 	dbTracer, dbCloser, err := jaegerClient.NewTracer("smpp-notifier_db", cfg.JaegerURL)
 	if err != nil {
-		log.Fatalf("failed to init Jaeger: %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err.Error()))()
 	}
 	defer dbCloser.Close()
 
 	svc := newService(db, dbTracer, auth, cfg, smppConfig, logger)
 
 	if err = consumers.Start(svcName, pubSub, svc, cfg.ConfigPath, logger); err != nil {
-		log.Fatalf("failed to create Postgres writer: %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to create Postgres writer: %s", err.Error()))()
 	}
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		log.Fatalf("failed to load %s HTTP server configuration : %s", svcName, err.Error())
+		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err.Error()))()
 	}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, tracer, logger), logger)
 

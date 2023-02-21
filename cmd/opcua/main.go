@@ -60,12 +60,12 @@ func main() {
 
 	logger, err := logger.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
-		log.Fatalf(err.Error())
+		logger.Fatal(err.Error())()
 	}
 
 	rmConn, err := redisClient.Setup(envPrefixRouteMap)
 	if err != nil {
-		log.Fatalf("failed to setup %s bootstrap event store redis client : %s", svcName, err.Error())
+		logger.Fatal(fmt.Sprintf("failed to setup %s bootstrap event store redis client : %s", svcName, err.Error()))()
 	}
 	defer rmConn.Close()
 
@@ -75,13 +75,13 @@ func main() {
 
 	esConn, err := redisClient.Setup(envPrefixES)
 	if err != nil {
-		log.Fatalf("failed to setup %s bootstrap event store redis client : %s", svcName, err.Error())
+		logger.Fatal(fmt.Sprintf("failed to setup %s bootstrap event store redis client : %s", svcName, err.Error()))()
 	}
 	defer esConn.Close()
 
 	pubSub, err := brokers.NewPubSub(cfg.BrokerURL, "", logger)
 	if err != nil {
-		log.Fatalf("failed to connect to message broker: %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err.Error()))()
 	}
 	defer pubSub.Close()
 
@@ -96,7 +96,7 @@ func main() {
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		log.Fatalf("failed to load %s HTTP server configuration : %s", svcName, err.Error())
+		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err.Error()))()
 	}
 	hs := httpserver.New(httpCtx, httpCancel, svcName, httpServerConfig, api.MakeHandler(svc, logger), logger)
 

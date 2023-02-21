@@ -73,27 +73,27 @@ func main() {
 	dbConfig := pgClient.Config{Name: defDB}
 	db, err := pgClient.SetupWithConfig(envPrefix, *authPg.Migration(), dbConfig)
 	if err != nil {
-		log.Fatalf("failed to setup postgres database : %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to setup postgres database : %s", err.Error()))()
 	}
 	defer db.Close()
 
 	// Create new tracer for database
 	dbTracer, dbCloser, err := jaegerClient.NewTracer("auth_db", cfg.JaegerURL)
 	if err != nil {
-		log.Fatalf("failed to init Jaeger: %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err.Error()))()
 	}
 	defer dbCloser.Close()
 
 	// Create new keto reader grpc client
 	readerConn, _, err := grpcClient.Connect(grpcClient.Config{ClientTLS: false, URL: fmt.Sprintf("%s:%s", cfg.KetoReadHost, cfg.KetoReadPort)})
 	if err != nil {
-		log.Fatalf("failed to connect to keto gRPC: %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to connect to keto gRPC: %s", err.Error()))()
 	}
 
 	// Create new keto writer grpc client
 	writerConn, _, err := grpcClient.Connect(grpcClient.Config{ClientTLS: false, URL: fmt.Sprintf("%s:%s", cfg.KetoWriteHost, cfg.KetoWritePort)})
 	if err != nil {
-		log.Fatalf("failed to connect to keto gRPC: %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to connect to keto gRPC: %s", err.Error()))()
 	}
 
 	svc := newService(db, dbTracer, cfg.Secret, logger, readerConn, writerConn, cfg.LoginDuration)
@@ -101,14 +101,14 @@ func main() {
 	// Create new HTTP Server
 	tracer, closer, err := jaegerClient.NewTracer("auth", cfg.JaegerURL)
 	if err != nil {
-		log.Fatalf("failed to init Jaeger: %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err.Error()))()
 	}
 	defer closer.Close()
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		log.Fatalf("failed to load %s HTTP server configuration : %s", svcName, err.Error())
+		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err.Error()))()
 	}
 
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, tracer, logger), logger)
@@ -117,7 +117,7 @@ func main() {
 	grpcServerConfig := server.Config{Port: defSvcGrpcPort}
 
 	if err := env.Parse(&grpcServerConfig, env.Options{Prefix: envPrefixGrpc, AltPrefix: envPrefix}); err != nil {
-		log.Fatalf("failed to load %s gRPC server configuration : %s", svcName, err.Error())
+		logger.Fatal(fmt.Sprintf("failed to load %s gRPC server configuration : %s", svcName, err.Error()))()
 	}
 	registerAuthServiceServer := func(srv *grpc.Server) {
 		mainflux.RegisterAuthServiceServer(srv, grpcapi.NewServer(tracer, svc))

@@ -68,24 +68,24 @@ func main() {
 
 	cacheClient, err := redisClient.Setup(envPrefixCache)
 	if err != nil {
-		log.Fatalf(err.Error())
+		logger.Fatal(err.Error())()
 	}
 	defer cacheClient.Close()
 
 	cacheTracer, cacheCloser, err := jaegerClient.NewTracer("twins_cache", cfg.JaegerURL)
 	if err != nil {
-		log.Fatalf("failed to init Jaeger: %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err.Error()))()
 	}
 	defer cacheCloser.Close()
 
 	db, err := mongoClient.Setup(envPrefix)
 	if err != nil {
-		log.Fatalf("failed to setup postgres database : %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to setup postgres database : %s", err.Error()))()
 	}
 
 	dbTracer, dbCloser, err := jaegerClient.NewTracer("twins_db", cfg.JaegerURL)
 	if err != nil {
-		log.Fatalf("failed to init Jaeger: %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err.Error()))()
 	}
 	defer dbCloser.Close()
 
@@ -96,7 +96,7 @@ func main() {
 	default:
 		authServiceClient, authHandler, err := authClient.Setup(envPrefix, cfg.JaegerURL)
 		if err != nil {
-			log.Fatal(err.Error())
+			logger.Fatal(err.Error())()
 		}
 		defer authHandler.Close()
 		auth = authServiceClient
@@ -105,7 +105,7 @@ func main() {
 
 	pubSub, err := brokers.NewPubSub(cfg.BrokerURL, queue, logger)
 	if err != nil {
-		log.Fatalf("failed to connect to message broker: %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err.Error()))()
 	}
 	defer pubSub.Close()
 
@@ -113,13 +113,13 @@ func main() {
 
 	tracer, closer, err := jaegerClient.NewTracer("twins", cfg.JaegerURL)
 	if err != nil {
-		log.Fatalf("failed to init Jaeger: %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err.Error()))()
 	}
 	defer closer.Close()
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		log.Fatalf("failed to load %s HTTP server configuration : %s", svcName, err.Error())
+		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err.Error()))()
 	}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, twapi.MakeHandler(tracer, svc, logger), logger)
 
@@ -153,7 +153,7 @@ func newService(id string, ps messaging.PubSub, chanID string, users mainflux.Au
 	svc = api.MetricsMiddleware(svc, counter, latency)
 	err := ps.Subscribe(id, brokers.SubjectAllChannels, handle(logger, chanID, svc))
 	if err != nil {
-		log.Fatalf(err.Error())
+		logger.Fatal(err.Error())()
 	}
 	return svc
 }

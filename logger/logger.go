@@ -6,9 +6,10 @@ package logger
 import (
 	"fmt"
 	"io"
+	"os"
 	"time"
 
-	"github.com/go-kit/kit/log"
+	"github.com/go-kit/log"
 )
 
 // Logger specifies logging API.
@@ -21,6 +22,8 @@ type Logger interface {
 	Warn(string)
 	// Error logs any object in JSON format on error level.
 	Error(string)
+	// Fatal logs any object in JSON format on error level and calls os.Exit(1).
+	Fatal(string) func()
 }
 
 var _ Logger = (*logger)(nil)
@@ -64,4 +67,9 @@ func (l logger) Error(msg string) {
 	if Error.isAllowed(l.level) {
 		l.kitLogger.Log("level", Error.String(), "message", msg)
 	}
+}
+
+func (l logger) Fatal(msg string) func() {
+	l.kitLogger.Log("level", l.level.String(), "message", msg)
+	return func() { os.Exit(1) }
 }

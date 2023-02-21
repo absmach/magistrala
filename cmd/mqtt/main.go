@@ -71,35 +71,35 @@ func main() {
 
 		err := backoff.RetryNotify(healthcheck(cfg), backoff.NewExponentialBackOff(), notify)
 		if err != nil {
-			log.Fatalf("MQTT healthcheck limit exceeded, exiting. %s ", err.Error())
+			logger.Fatal(fmt.Sprintf("MQTT healthcheck limit exceeded, exiting. %s ", err.Error()))()
 		}
 	}
 
 	nps, err := brokers.NewPubSub(cfg.BrokerURL, "mqtt", logger)
 	if err != nil {
-		log.Fatalf("failed to connect to message broker: %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err.Error()))()
 	}
 	defer nps.Close()
 
 	mpub, err := mqttpub.NewPublisher(fmt.Sprintf("%s:%s", cfg.MqttTargetHost, cfg.MqttTargetPort), cfg.MqttForwarderTimeout)
 	if err != nil {
-		log.Fatalf("failed to create MQTT publisher: %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to create MQTT publisher: %s", err.Error()))()
 	}
 
 	fwd := mqtt.NewForwarder(brokers.SubjectAllChannels, logger)
 	if err := fwd.Forward(svcName, nps, mpub); err != nil {
-		log.Fatalf("failed to forward message broker messages: %s", err)
+		logger.Fatal(fmt.Sprintf("failed to forward message broker messages: %s", err))()
 	}
 
 	np, err := brokers.NewPublisher(cfg.BrokerURL)
 	if err != nil {
-		log.Fatalf("failed to connect to message broker: %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err.Error()))()
 	}
 	defer np.Close()
 
 	ec, err := redisClient.Setup(envPrefixES)
 	if err != nil {
-		log.Fatalf("failed to setup %s event store redis client : %s", svcName, err.Error())
+		logger.Fatal(fmt.Sprintf("failed to setup %s event store redis client : %s", svcName, err.Error()))()
 	}
 	defer ec.Close()
 
@@ -107,13 +107,13 @@ func main() {
 
 	ac, err := redisClient.Setup(envPrefixAuthCache)
 	if err != nil {
-		log.Fatalf("failed to setup %s event store redis client : %s", svcName, err.Error())
+		logger.Fatal(fmt.Sprintf("failed to setup %s event store redis client : %s", svcName, err.Error()))()
 	}
 	defer ac.Close()
 
 	tc, tcHandler, err := thingsClient.Setup(envPrefix, cfg.JaegerURL)
 	if err != nil {
-		log.Fatal(err.Error())
+		logger.Fatal(err.Error())()
 	}
 	defer tcHandler.Close()
 	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())

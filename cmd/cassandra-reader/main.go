@@ -55,7 +55,7 @@ func main() {
 	// Create new thing grpc client
 	tc, tcHandler, err := thingsClient.Setup(envPrefix, cfg.JaegerURL)
 	if err != nil {
-		log.Fatal(err.Error())
+		logger.Fatal(err.Error())()
 	}
 	defer tcHandler.Close()
 	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
@@ -63,7 +63,7 @@ func main() {
 	// Create new auth grpc client
 	auth, authHandler, err := authClient.Setup(envPrefix, cfg.JaegerURL)
 	if err != nil {
-		log.Fatal(err.Error())
+		logger.Fatal(err.Error())()
 	}
 	defer authHandler.Close()
 	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
@@ -71,7 +71,7 @@ func main() {
 	// Create new cassandra client
 	csdSession, err := cassandraClient.Setup(envPrefix)
 	if err != nil {
-		log.Fatal(err.Error())
+		logger.Fatal(err.Error())()
 	}
 	defer csdSession.Close()
 
@@ -82,7 +82,7 @@ func main() {
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		log.Fatalf("failed to load %s HTTP server configuration : %s", svcName, err.Error())
+		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err.Error()))()
 	}
 
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(repo, tc, auth, svcName, logger), logger)

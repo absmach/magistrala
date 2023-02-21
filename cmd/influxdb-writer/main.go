@@ -53,29 +53,29 @@ func main() {
 
 	pubSub, err := brokers.NewPubSub(cfg.BrokerURL, "", logger)
 	if err != nil {
-		log.Fatalf("failed to connect to message broker: %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err.Error()))()
 	}
 	defer pubSub.Close()
 
 	influxDBConfig := influxDBClient.Config{}
 	if err := env.Parse(&influxDBConfig, env.Options{Prefix: envPrefixInfluxdb}); err != nil {
-		log.Fatalf("failed to load InfluxDB client configuration from environment variable : %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to load InfluxDB client configuration from environment variable : %s", err.Error()))()
 	}
 	client, err := influxDBClient.Connect(influxDBConfig)
 	if err != nil {
-		log.Fatalf("failed to connect to InfluxDB : %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to connect to InfluxDB : %s", err.Error()))()
 	}
 	defer client.Close()
 
 	repo := newService(client, influxDBConfig.DbName, logger)
 
 	if err := consumers.Start(svcName, pubSub, repo, cfg.ConfigPath, logger); err != nil {
-		log.Fatalf("failed to start InfluxDB writer: %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to start InfluxDB writer: %s", err.Error()))()
 	}
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		log.Fatalf("failed to load %s HTTP server configuration : %s", svcName, err.Error())
+		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err.Error()))()
 	}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svcName), logger)
 

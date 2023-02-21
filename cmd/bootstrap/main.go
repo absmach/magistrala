@@ -64,21 +64,21 @@ func main() {
 
 	db, err := pgClient.SetupWithConfig(envPrefix, *bootstrapPg.Migration(), dbConfig)
 	if err != nil {
-		log.Fatal(err.Error())
+		logger.Fatal(err.Error())()
 	}
 	defer db.Close()
 
 	// Create new redis client for bootstrap event store
 	esClient, err := redisClient.Setup(envPrefixES)
 	if err != nil {
-		log.Fatalf("failed to setup %s bootstrap event store redis client : %s", svcName, err.Error())
+		logger.Fatal(fmt.Sprintf("failed to setup %s bootstrap event store redis client : %s", svcName, err.Error()))()
 	}
 	defer esClient.Close()
 
 	// Create new auth grpc client api
 	auth, authHandler, err := authClient.Setup(envPrefix, cfg.JaegerURL)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err.Error())()
 	}
 	defer authHandler.Close()
 	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
@@ -89,7 +89,7 @@ func main() {
 	// Create an new HTTP server
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		log.Fatalf("failed to load %s HTTP server configuration : %s", svcName, err.Error())
+		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err.Error()))()
 	}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, bootstrap.NewConfigReader([]byte(cfg.EncKey)), logger), logger)
 
@@ -104,7 +104,7 @@ func main() {
 	// Subscribe to things event store
 	thingsESClient, err := redisClient.Setup(envPrefixES)
 	if err != nil {
-		log.Fatalf(err.Error())
+		logger.Fatal(err.Error())()
 	}
 	defer thingsESClient.Close()
 

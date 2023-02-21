@@ -53,11 +53,11 @@ func main() {
 
 	dbConfig := pgClient.Config{Name: defDB}
 	if err := dbConfig.LoadEnv(envPrefix); err != nil {
-		log.Fatal(err.Error())
+		logger.Fatal(err.Error())()
 	}
 	db, err := pgClient.Connect(dbConfig)
 	if err != nil {
-		log.Fatal(err.Error())
+		logger.Fatal(err.Error())()
 	}
 	defer db.Close()
 
@@ -65,21 +65,21 @@ func main() {
 
 	auth, authHandler, err := authClient.Setup(envPrefix, cfg.JaegerURL)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err.Error())()
 	}
 	defer authHandler.Close()
 	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 
 	tc, tcHandler, err := thingsClient.Setup(envPrefix, cfg.JaegerURL)
 	if err != nil {
-		log.Fatal(err.Error())
+		logger.Fatal(err.Error())()
 	}
 	defer tcHandler.Close()
 	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		log.Fatalf("failed to load %s HTTP server configuration : %s", svcName, err.Error())
+		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err.Error()))()
 	}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(repo, tc, auth, svcName, logger), logger)
 

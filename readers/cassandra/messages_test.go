@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mainflux/mainflux/consumers/writers/cassandra"
 	cwriter "github.com/mainflux/mainflux/consumers/writers/cassandra"
 	casClient "github.com/mainflux/mainflux/internal/clients/cassandra"
 	"github.com/mainflux/mainflux/pkg/transformers/json"
@@ -53,7 +52,7 @@ func TestReadSenml(t *testing.T) {
 	})
 	require.Nil(t, err, fmt.Sprintf("failed to connect to Cassandra: %s", err))
 	defer session.Close()
-	err = casClient.InitDB(session, cassandra.Table)
+	err = casClient.InitDB(session, cwriter.Table)
 	require.Nil(t, err, fmt.Sprintf("failed to initialize to Cassandra: %s", err))
 	writer := cwriter.New(session)
 

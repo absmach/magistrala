@@ -76,28 +76,28 @@ func main() {
 	dbConfig := pgClient.Config{Name: defDB}
 	db, err := pgClient.SetupWithConfig(envPrefix, *thingsPg.Migration(), dbConfig)
 	if err != nil {
-		log.Fatal(err.Error())
+		logger.Fatal(err.Error())()
 	}
 	defer db.Close()
 
 	// Setup new redis cache client
 	cacheClient, err := redisClient.Setup(envPrefixCache)
 	if err != nil {
-		log.Fatal(err.Error())
+		logger.Fatal(err.Error())()
 	}
 	defer cacheClient.Close()
 
 	// Setup new redis event store client
 	esClient, err := redisClient.Setup(envPrefixES)
 	if err != nil {
-		log.Fatal(err.Error())
+		logger.Fatal(err.Error())()
 	}
 	defer esClient.Close()
 
 	// Setup new auth grpc client
 	auth, authHandler, err := authClient.Setup(envPrefix, cfg.JaegerURL)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err.Error())()
 	}
 	defer authHandler.Close()
 	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
@@ -105,14 +105,14 @@ func main() {
 	// Create tracer for things database
 	dbTracer, dbCloser, err := jaegerClient.NewTracer("things_db", cfg.JaegerURL)
 	if err != nil {
-		log.Fatalf("failed to init Jaeger: %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err.Error()))()
 	}
 	defer dbCloser.Close()
 
 	// Create tracer for things cache
 	cacheTracer, cacheCloser, err := jaegerClient.NewTracer("things_cache", cfg.JaegerURL)
 	if err != nil {
-		log.Fatalf("failed to init Jaeger: %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err.Error()))()
 	}
 	defer cacheCloser.Close()
 
@@ -122,21 +122,21 @@ func main() {
 	// Create tracer for HTTP handler things
 	thingsTracer, thingsCloser, err := jaegerClient.NewTracer("things", cfg.JaegerURL)
 	if err != nil {
-		log.Fatalf("failed to init Jaeger: %s", err.Error())
+		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err.Error()))()
 	}
 	defer thingsCloser.Close()
 
 	// Create new HTTP server
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		log.Fatalf("failed to load %s gRPC server configuration : %s", svcName, err.Error())
+		logger.Fatal(fmt.Sprintf("failed to load %s gRPC server configuration : %s", svcName, err.Error()))()
 	}
 	hs1 := httpserver.New(ctx, cancel, "thing-http", httpServerConfig, thhttpapi.MakeHandler(thingsTracer, svc, logger), logger)
 
 	// Create new things auth http server
 	authHttpServerConfig := server.Config{Port: defSvcAuthHttpPort}
 	if err := env.Parse(&authHttpServerConfig, env.Options{Prefix: envPrefixAuthHttp, AltPrefix: envPrefix}); err != nil {
-		log.Fatalf("failed to load %s gRPC server configuration : %s", svcName, err.Error())
+		logger.Fatal(fmt.Sprintf("failed to load %s gRPC server configuration : %s", svcName, err.Error()))()
 	}
 	hs2 := httpserver.New(ctx, cancel, "auth-http", authHttpServerConfig, authhttpapi.MakeHandler(thingsTracer, svc, logger), logger)
 
@@ -147,7 +147,7 @@ func main() {
 	}
 	grpcServerConfig := server.Config{Port: defSvcAuthGrpcPort}
 	if err := env.Parse(&grpcServerConfig, env.Options{Prefix: envPrefixAuthGrpc, AltPrefix: envPrefix}); err != nil {
-		log.Fatalf("failed to load %s gRPC server configuration : %s", svcName, err.Error())
+		logger.Fatal(fmt.Sprintf("failed to load %s gRPC server configuration : %s", svcName, err.Error()))()
 	}
 	gs := grpcserver.New(ctx, cancel, svcName, grpcServerConfig, registerThingsServiceServer, logger)
 

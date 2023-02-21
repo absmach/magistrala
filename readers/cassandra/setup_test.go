@@ -30,7 +30,7 @@ func TestMain(m *testing.M) {
 	port := container.GetPort("9042/tcp")
 	addr = fmt.Sprintf("%s:%s", addr, port)
 
-	err = pool.Retry(func() error {
+	if err = pool.Retry(func() error {
 		if err := createKeyspace([]string{addr}); err != nil {
 			return err
 		}
@@ -45,11 +45,8 @@ func TestMain(m *testing.M) {
 		defer session.Close()
 
 		return nil
-	})
-
-	if err != nil {
-		logger.Error(fmt.Sprintf("Could not connect to docker: %s", err))
-		os.Exit(1)
+	}); err != nil {
+		logger.Fatal(fmt.Sprintf("Could not connect to docker: %s", err))()
 	}
 
 	code := m.Run()

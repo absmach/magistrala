@@ -13,7 +13,6 @@ import (
 
 // Error specifies an API that must be fullfiled by error type
 type Error interface {
-
 	// Error implements the error interface.
 	Error() string
 

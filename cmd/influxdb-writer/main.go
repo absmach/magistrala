@@ -18,7 +18,7 @@ import (
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
-	"github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
 	"golang.org/x/sync/errgroup"
 )
@@ -43,39 +43,39 @@ func main() {
 
 	cfg := config{}
 	if err := env.Parse(&cfg); err != nil {
-		log.Fatalf("failed to load %s configuration : %s", svcName, err.Error())
+		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := logger.New(os.Stdout, cfg.LogLevel)
+	logger, err := mflog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatalf("failed to init logger: %s", err)
 	}
 
 	pubSub, err := brokers.NewPubSub(cfg.BrokerURL, "", logger)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err))
 	}
 	defer pubSub.Close()
 
 	influxDBConfig := influxDBClient.Config{}
 	if err := env.Parse(&influxDBConfig, env.Options{Prefix: envPrefixInfluxdb}); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load InfluxDB client configuration from environment variable : %s", err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to load InfluxDB client configuration from environment variable : %s", err))
 	}
 	client, err := influxDBClient.Connect(influxDBConfig)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to connect to InfluxDB : %s", err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to connect to InfluxDB : %s", err))
 	}
 	defer client.Close()
 
 	repo := newService(client, influxDBConfig.DbName, logger)
 
 	if err := consumers.Start(svcName, pubSub, repo, cfg.ConfigPath, logger); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to start InfluxDB writer: %s", err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to start InfluxDB writer: %s", err))
 	}
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 	}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svcName), logger)
 
@@ -92,7 +92,7 @@ func main() {
 	}
 }
 
-func newService(client influxdata.Client, dbName string, logger logger.Logger) consumers.Consumer {
+func newService(client influxdata.Client, dbName string, logger mflog.Logger) consumers.Consumer {
 	repo := influxdb.New(client, dbName)
 	repo = api.LoggingMiddleware(repo, logger)
 	counter, latency := internal.MakeMetrics("influxdb", "message_writer")

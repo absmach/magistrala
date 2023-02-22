@@ -16,7 +16,7 @@ import (
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
-	"github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/readers"
 	"github.com/mainflux/mainflux/readers/api"
 	"github.com/mainflux/mainflux/readers/mongodb"
@@ -43,38 +43,38 @@ func main() {
 
 	cfg := config{}
 	if err := env.Parse(&cfg); err != nil {
-		log.Fatalf("failed to load %s configuration : %s", svcName, err.Error())
+		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := logger.New(os.Stdout, cfg.LogLevel)
+	logger, err := mflog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatalf("failed to init logger: %s", err)
 	}
 
 	db, err := mongoClient.Setup(envPrefixDB)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to setup mongo database : %s", err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to setup mongo database : %s", err))
 	}
 
 	repo := newService(db, logger)
 
 	tc, tcHandler, err := thingsClient.Setup(envPrefix, cfg.JaegerURL)
 	if err != nil {
-		logger.Fatal(err.Error())()
+		logger.Fatal(err.Error())
 	}
 	defer tcHandler.Close()
 	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
 
 	auth, authHandler, err := authClient.Setup(envPrefix, cfg.JaegerURL)
 	if err != nil {
-		logger.Fatal(err.Error())()
+		logger.Fatal(err.Error())
 	}
 	defer authHandler.Close()
 	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 	}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(repo, tc, auth, svcName, logger), logger)
 
@@ -89,10 +89,9 @@ func main() {
 	if err := g.Wait(); err != nil {
 		logger.Error(fmt.Sprintf("MongoDB reader service terminated: %s", err))
 	}
-
 }
 
-func newService(db *mongo.Database, logger logger.Logger) readers.MessageRepository {
+func newService(db *mongo.Database, logger mflog.Logger) readers.MessageRepository {
 	repo := mongodb.New(db)
 	repo = api.LoggingMiddleware(repo, logger)
 	counter, latency := internal.MakeMetrics("mongodb", "message_reader")

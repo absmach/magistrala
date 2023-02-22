@@ -23,7 +23,7 @@ import (
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
-	"github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
 	"golang.org/x/sync/errgroup"
 )
@@ -51,12 +51,12 @@ func main() {
 
 	cfg := config{}
 	if err := env.Parse(&cfg); err != nil {
-		log.Fatalf("failed to load %s configuration : %s", svcName, err.Error())
+		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := logger.New(os.Stdout, cfg.LogLevel)
+	logger, err := mflog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatalf("failed to init logger: %s", err)
 	}
 
 	// Create new postgres client
@@ -64,21 +64,21 @@ func main() {
 
 	db, err := pgClient.SetupWithConfig(envPrefix, *bootstrapPg.Migration(), dbConfig)
 	if err != nil {
-		logger.Fatal(err.Error())()
+		logger.Fatal(err.Error())
 	}
 	defer db.Close()
 
 	// Create new redis client for bootstrap event store
 	esClient, err := redisClient.Setup(envPrefixES)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to setup %s bootstrap event store redis client : %s", svcName, err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to setup %s bootstrap event store redis client : %s", svcName, err))
 	}
 	defer esClient.Close()
 
 	// Create new auth grpc client api
 	auth, authHandler, err := authClient.Setup(envPrefix, cfg.JaegerURL)
 	if err != nil {
-		logger.Fatal(err.Error())()
+		logger.Fatal(err.Error())
 	}
 	defer authHandler.Close()
 	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
@@ -89,7 +89,7 @@ func main() {
 	// Create an new HTTP server
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 	}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, bootstrap.NewConfigReader([]byte(cfg.EncKey)), logger), logger)
 
@@ -104,7 +104,7 @@ func main() {
 	// Subscribe to things event store
 	thingsESClient, err := redisClient.Setup(envPrefixES)
 	if err != nil {
-		logger.Fatal(err.Error())()
+		logger.Fatal(err.Error())
 	}
 	defer thingsESClient.Close()
 
@@ -115,7 +115,7 @@ func main() {
 	}
 }
 
-func newService(auth mainflux.AuthServiceClient, db *sqlx.DB, logger logger.Logger, esClient *r.Client, cfg config) bootstrap.Service {
+func newService(auth mainflux.AuthServiceClient, db *sqlx.DB, logger mflog.Logger, esClient *r.Client, cfg config) bootstrap.Service {
 	repoConfig := bootstrapPg.NewConfigRepository(db, logger)
 
 	config := mfsdk.Config{
@@ -133,7 +133,7 @@ func newService(auth mainflux.AuthServiceClient, db *sqlx.DB, logger logger.Logg
 	return svc
 }
 
-func subscribeToThingsES(svc bootstrap.Service, client *r.Client, consumer string, logger logger.Logger) {
+func subscribeToThingsES(svc bootstrap.Service, client *r.Client, consumer string, logger mflog.Logger) {
 	eventStore := rediscons.NewEventStore(svc, client, consumer, logger)
 	logger.Info("Subscribed to Redis Event Store")
 	if err := eventStore.Subscribe(context.Background(), "mainflux.things"); err != nil {

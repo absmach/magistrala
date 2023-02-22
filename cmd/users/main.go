@@ -28,7 +28,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/mainflux/mainflux"
 	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
-	"github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/users/api"
 	usersPg "github.com/mainflux/mainflux/users/postgres"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -59,7 +59,12 @@ func main() {
 
 	cfg := config{}
 	if err := env.Parse(&cfg); err != nil {
-		log.Fatalf("failed to load %s configuration : %s", svcName, err.Error())
+		log.Fatalf("failed to load %s configuration : %s", svcName, err)
+	}
+
+	logger, err := mflog.New(os.Stdout, cfg.LogLevel)
+	if err != nil {
+		log.Fatalf("failed to init logger: %s", err)
 	}
 	passRegex, err := regexp.Compile(cfg.PassRegexText)
 	if err != nil {
@@ -67,33 +72,28 @@ func main() {
 	}
 	cfg.PassRegex = passRegex
 
-	logger, err := logger.New(os.Stdout, cfg.LogLevel)
-	if err != nil {
-		logger.Fatal(err.Error())()
-	}
-
 	ec := email.Config{}
 	if err := env.Parse(&ec); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load email configuration : %s", err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to load email configuration : %s", err))
 	}
 
 	dbConfig := pgClient.Config{Name: defDB}
 	db, err := pgClient.SetupWithConfig(envPrefix, *usersPg.Migration(), dbConfig)
 	if err != nil {
-		logger.Fatal(err.Error())()
+		logger.Fatal(err.Error())
 	}
 	defer db.Close()
 
 	auth, authHandler, err := authClient.Setup(envPrefix, cfg.JaegerURL)
 	if err != nil {
-		logger.Fatal(err.Error())()
+		logger.Fatal(err.Error())
 	}
 	defer authHandler.Close()
 	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 
 	dbTracer, dbCloser, err := jaegerClient.NewTracer("auth_db", cfg.JaegerURL)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
 	}
 	defer dbCloser.Close()
 
@@ -101,13 +101,13 @@ func main() {
 
 	tracer, closer, err := jaegerClient.NewTracer("users", cfg.JaegerURL)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
 	}
 	defer closer.Close()
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 	}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, tracer, logger), logger)
 
@@ -124,14 +124,14 @@ func main() {
 	}
 }
 
-func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServiceClient, c config, ec email.Config, logger logger.Logger) users.Service {
+func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServiceClient, c config, ec email.Config, logger mflog.Logger) users.Service {
 	database := usersPg.NewDatabase(db)
 	hasher := bcrypt.New()
 	userRepo := tracing.UserRepositoryMiddleware(usersPg.NewUserRepo(database), tracer)
 
 	emailer, err := emailer.New(c.ResetURL, &ec)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to configure e-mailing util: %s", err.Error()))
+		logger.Error(fmt.Sprintf("Failed to configure e-mailing util: %s", err))
 	}
 
 	idProvider := uuid.New()
@@ -142,7 +142,7 @@ func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServic
 	svc = api.MetricsMiddleware(svc, counter, latency)
 
 	if err := createAdmin(svc, userRepo, c, auth); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to create admin user: " + err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to create admin user: %s", err))
 	}
 
 	switch c.SelfRegister {
@@ -156,10 +156,10 @@ func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServic
 			// Add a policy that allows anybody to create a user
 			apr, err := auth.AddPolicy(context.Background(), &mainflux.AddPolicyReq{Obj: "user", Act: "create", Sub: "*"})
 			if err != nil {
-				logger.Fatal(fmt.Sprintf("failed to add the policy related to MF_USERS_ALLOW_SELF_REGISTER: " + err.Error()))()
+				logger.Fatal(fmt.Sprintf("failed to add the policy related to MF_USERS_ALLOW_SELF_REGISTER: %s", err))
 			}
 			if !apr.GetAuthorized() {
-				logger.Fatal(fmt.Sprintf("failed to authorized the policy result related to MF_USERS_ALLOW_SELF_REGISTER: " + errors.ErrAuthorization.Error()))()
+				logger.Fatal(fmt.Sprintf("failed to authorized the policy result related to MF_USERS_ALLOW_SELF_REGISTER: " + errors.ErrAuthorization.Error()))
 			}
 		}
 	default:
@@ -168,10 +168,10 @@ func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServic
 		// allows everybody to create a new user.
 		dpr, err := auth.DeletePolicy(context.Background(), &mainflux.DeletePolicyReq{Obj: "user", Act: "create", Sub: "*"})
 		if err != nil {
-			logger.Fatal(fmt.Sprintf("failed to delete a policy: " + err.Error()))()
+			logger.Fatal(fmt.Sprintf("failed to delete a policy: %s", err))
 		}
 		if !dpr.GetDeleted() {
-			logger.Fatal("deleting a policy expected to succeed.")()
+			logger.Fatal("deleting a policy expected to succeed.")
 		}
 	}
 

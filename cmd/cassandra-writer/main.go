@@ -18,7 +18,7 @@ import (
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
-	"github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
 	"golang.org/x/sync/errgroup"
 )
@@ -42,20 +42,19 @@ func main() {
 
 	// Create new cassandra writer service configurations
 	cfg := config{}
-
 	if err := env.Parse(&cfg); err != nil {
-		log.Fatalf("failed to load %s service configuration : %s", svcName, err.Error())
+		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := logger.New(os.Stdout, cfg.LogLevel)
+	logger, err := mflog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatalf("failed to init logger: %s", err)
 	}
 
 	// Create new to cassandra client
 	csdSession, err := cassandraClient.SetupDB(envPrefix, cassandra.Table)
 	if err != nil {
-		logger.Fatal(err.Error())()
+		logger.Fatal(err.Error())
 	}
 	defer csdSession.Close()
 
@@ -65,7 +64,7 @@ func main() {
 	// Create new pub sub broker
 	pubSub, err := brokers.NewPubSub(cfg.BrokerURL, "", logger)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err))
 	}
 	defer pubSub.Close()
 
@@ -78,7 +77,7 @@ func main() {
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefix, AltPrefix: envPrefixHttp}); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 	}
 
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svcName), logger)
@@ -98,7 +97,7 @@ func main() {
 
 }
 
-func newService(session *gocql.Session, logger logger.Logger) consumers.Consumer {
+func newService(session *gocql.Session, logger mflog.Logger) consumers.Consumer {
 	repo := cassandra.New(session)
 	repo = api.LoggingMiddleware(repo, logger)
 	counter, latency := internal.MakeMetrics("cassandra", "message_writer")

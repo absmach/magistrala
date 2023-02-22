@@ -24,6 +24,5 @@ func (l loggerMock) Warn(msg string) {
 func (l loggerMock) Error(msg string) {
 }
 
-func (l loggerMock) Fatal(msg string) func() {
-	return func() {}
+func (l loggerMock) Fatal(msg string) {
 }

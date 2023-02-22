@@ -89,6 +89,7 @@ func main() {
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
+
 	if cfgFromFile, err := loadConfigFromFile(cfg.File); err != nil {
 		logger.Warn(fmt.Sprintf("Continue with settings from env, failed to load from: %s: %s", cfg.File, err))
 	} else {

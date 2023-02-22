@@ -17,7 +17,7 @@ import (
 	"github.com/mainflux/mainflux/internal/server"
 	coapserver "github.com/mainflux/mainflux/internal/server/coap"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
-	logger "github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
 	"golang.org/x/sync/errgroup"
 )
@@ -43,24 +43,24 @@ func main() {
 
 	cfg := config{}
 	if err := env.Parse(&cfg); err != nil {
-		log.Fatalf("failed to load %s configuration : %s", svcName, err.Error())
+		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := logger.New(os.Stdout, cfg.LogLevel)
+	logger, err := mflog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatalf("failed to init logger: %s", err)
 	}
 
 	tc, tcHandler, err := thingsClient.Setup(envPrefix, cfg.JaegerURL)
 	if err != nil {
-		logger.Fatal(err.Error())()
+		logger.Fatal(err.Error())
 	}
 	defer tcHandler.Close()
 	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
 
 	nps, err := brokers.NewPubSub(cfg.BrokerURL, "", logger)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err))
 	}
 	defer nps.Close()
 
@@ -73,13 +73,13 @@ func main() {
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 	}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHTTPHandler(), logger)
 
 	coapServerConfig := server.Config{Port: defSvcCoapPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixCoap, AltPrefix: envPrefix}); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load %s CoAP server configuration : %s", svcName, err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to load %s CoAP server configuration : %s", svcName, err))
 	}
 	cs := coapserver.New(ctx, cancel, svcName, coapServerConfig, api.MakeCoAPHandler(svc, logger), logger)
 

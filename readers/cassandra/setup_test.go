@@ -46,7 +46,7 @@ func TestMain(m *testing.M) {
 
 		return nil
 	}); err != nil {
-		logger.Fatal(fmt.Sprintf("Could not connect to docker: %s", err))()
+		logger.Fatal(fmt.Sprintf("Could not connect to docker: %s", err))
 	}
 
 	code := m.Run()

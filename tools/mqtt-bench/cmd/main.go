@@ -26,7 +26,7 @@ Complete documentation is available at https://docs.mainflux.io`,
 				viper.SetConfigFile(confFile)
 
 				if err := viper.ReadInConfig(); err != nil {
-					log.Printf("Failed to load config - %s", err.Error())
+					log.Printf("Failed to load config - %s", err)
 				}
 
 				if err := viper.Unmarshal(&bconf); err != nil {

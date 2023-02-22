@@ -25,7 +25,7 @@ import (
 	"github.com/mainflux/mainflux/internal/server"
 	grpcserver "github.com/mainflux/mainflux/internal/server/grpc"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
-	"github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/opentracing/opentracing-go"
 	acl "github.com/ory/keto/proto/ory/keto/acl/v1alpha1"
@@ -61,39 +61,39 @@ func main() {
 	// Create auth service configurations
 	cfg := config{}
 	if err := env.Parse(&cfg); err != nil {
-		log.Fatalf("failed to load %s configuration : %s", svcName, err.Error())
+		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := logger.New(os.Stdout, cfg.LogLevel)
+	logger, err := mflog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatalf("failed to init logger: %s", err)
 	}
 
 	// Create new postgres client
 	dbConfig := pgClient.Config{Name: defDB}
 	db, err := pgClient.SetupWithConfig(envPrefix, *authPg.Migration(), dbConfig)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to setup postgres database : %s", err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to setup postgres database : %s", err))
 	}
 	defer db.Close()
 
 	// Create new tracer for database
 	dbTracer, dbCloser, err := jaegerClient.NewTracer("auth_db", cfg.JaegerURL)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
 	}
 	defer dbCloser.Close()
 
 	// Create new keto reader grpc client
 	readerConn, _, err := grpcClient.Connect(grpcClient.Config{ClientTLS: false, URL: fmt.Sprintf("%s:%s", cfg.KetoReadHost, cfg.KetoReadPort)})
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to connect to keto gRPC: %s", err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to connect to keto gRPC: %s", err))
 	}
 
 	// Create new keto writer grpc client
 	writerConn, _, err := grpcClient.Connect(grpcClient.Config{ClientTLS: false, URL: fmt.Sprintf("%s:%s", cfg.KetoWriteHost, cfg.KetoWritePort)})
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to connect to keto gRPC: %s", err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to connect to keto gRPC: %s", err))
 	}
 
 	svc := newService(db, dbTracer, cfg.Secret, logger, readerConn, writerConn, cfg.LoginDuration)
@@ -101,14 +101,14 @@ func main() {
 	// Create new HTTP Server
 	tracer, closer, err := jaegerClient.NewTracer("auth", cfg.JaegerURL)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
 	}
 	defer closer.Close()
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 	}
 
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, tracer, logger), logger)
@@ -117,7 +117,7 @@ func main() {
 	grpcServerConfig := server.Config{Port: defSvcGrpcPort}
 
 	if err := env.Parse(&grpcServerConfig, env.Options{Prefix: envPrefixGrpc, AltPrefix: envPrefix}); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load %s gRPC server configuration : %s", svcName, err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to load %s gRPC server configuration : %s", svcName, err))
 	}
 	registerAuthServiceServer := func(srv *grpc.Server) {
 		mainflux.RegisterAuthServiceServer(srv, grpcapi.NewServer(tracer, svc))
@@ -141,7 +141,7 @@ func main() {
 	}
 }
 
-func newService(db *sqlx.DB, tracer opentracing.Tracer, secret string, logger logger.Logger, readerConn, writerConn *grpc.ClientConn, duration time.Duration) auth.Service {
+func newService(db *sqlx.DB, tracer opentracing.Tracer, secret string, logger mflog.Logger, readerConn, writerConn *grpc.ClientConn, duration time.Duration) auth.Service {
 	database := authPg.NewDatabase(db)
 	keysRepo := tracing.New(authPg.New(database), tracer)
 

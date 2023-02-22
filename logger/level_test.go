@@ -2,62 +2,178 @@ package logger
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUnmarshalText(t *testing.T) {
-	cases := map[string]struct {
+	cases := []struct {
+		desc   string
 		input  string
 		output Level
 		err    error
 	}{
-		"select log level Not_A_Level": {"Not_A_Level", 0, ErrInvalidLogLevel},
-		"select log level Bad_Input":   {"Bad_Input", 0, ErrInvalidLogLevel},
+		{
+			desc:   "select log level Not_A_Level",
+			input:  "Not_A_Level",
+			output: 0,
+			err:    ErrInvalidLogLevel,
+		},
+		{
+			desc:   "select log level Bad_Input",
+			input:  "Bad_Input",
+			output: 0,
+			err:    ErrInvalidLogLevel,
+		},
 
-		"select log level debug": {"debug", Debug, nil},
-		"select log level DEBUG": {"DEBUG", Debug, nil},
-		"select log level info":  {"info", Info, nil},
-		"select log level INFO":  {"INFO", Info, nil},
-		"select log level warn":  {"warn", Warn, nil},
-		"select log level WARN":  {"WARN", Warn, nil},
-		"select log level Error": {"Error", Error, nil},
-		"select log level ERROR": {"ERROR", Error, nil},
+		{
+			desc:   "select log level debug",
+			input:  "debug",
+			output: Debug,
+			err:    nil,
+		},
+		{
+			desc:   "select log level DEBUG",
+			input:  "DEBUG",
+			output: Debug,
+			err:    nil,
+		},
+		{
+			desc:   "select log level info",
+			input:  "info",
+			output: Info,
+			err:    nil,
+		},
+		{
+			desc:   "select log level INFO",
+			input:  "INFO",
+			output: Info,
+			err:    nil,
+		},
+		{
+			desc:   "select log level warn",
+			input:  "warn",
+			output: Warn,
+			err:    nil,
+		},
+		{
+			desc:   "select log level WARN",
+			input:  "WARN",
+			output: Warn,
+			err:    nil,
+		},
+		{
+			desc:   "select log level Error",
+			input:  "Error",
+			output: Error,
+			err:    nil,
+		},
+		{
+			desc:   "select log level ERROR",
+			input:  "ERROR",
+			output: Error,
+			err:    nil,
+		},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		var logLevel Level
 		err := logLevel.UnmarshalText(tc.input)
-		assert.Equal(t, tc.output, logLevel, fmt.Sprintf("%s: expected %s got %d", desc, tc.output, logLevel))
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %d", desc, tc.err, err))
-
+		assert.Equal(t, tc.output, logLevel, fmt.Sprintf("%s: expected %s got %d", tc.desc, tc.output, logLevel))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %d", tc.desc, tc.err, err))
 	}
-
 }
 
 func TestLevelIsAllowed(t *testing.T) {
-	cases := map[string]struct {
+	cases := []struct {
+		desc           string
 		requestedLevel Level
 		allowedLevel   Level
 		output         bool
 	}{
-		"log debug when level debug": {Debug, Debug, true},
-		"log info when level debug":  {Info, Debug, true},
-		"log warn when level debug":  {Warn, Debug, true},
-		"log error when level debug": {Error, Debug, true},
-		"log warn when level info":   {Warn, Info, true},
-		"log error when level warn":  {Error, Warn, true},
-		"log error when level error": {Error, Error, true},
+		{
+			desc:           "log debug when level debug",
+			requestedLevel: Debug,
+			allowedLevel:   Debug,
+			output:         true,
+		},
+		{
+			desc:           "log info when level debug",
+			requestedLevel: Info,
+			allowedLevel:   Debug,
+			output:         true,
+		},
+		{
+			desc:           "log warn when level debug",
+			requestedLevel: Warn,
+			allowedLevel:   Debug,
+			output:         true,
+		},
+		{
+			desc:           "log error when level debug",
+			requestedLevel: Error,
+			allowedLevel:   Debug,
+			output:         true,
+		},
+		{
+			desc:           "log warn when level info",
+			requestedLevel: Warn,
+			allowedLevel:   Info,
+			output:         true,
+		},
+		{
+			desc:           "log error when level warn",
+			requestedLevel: Error,
+			allowedLevel:   Warn,
+			output:         true,
+		},
+		{
+			desc:           "log error when level error",
+			requestedLevel: Error,
+			allowedLevel:   Error,
+			output:         true,
+		},
 
-		"log debug when level error": {Debug, Error, false},
-		"log info when level error":  {Info, Error, false},
-		"log warn when level error":  {Warn, Error, false},
-		"log debug when level warn":  {Debug, Warn, false},
-		"log info when level warn":   {Info, Warn, false},
-		"log debug when level info":  {Debug, Info, false},
+		{
+			desc:           "log debug when level error",
+			requestedLevel: Debug,
+			allowedLevel:   Error,
+			output:         false,
+		},
+		{
+			desc:           "log info when level error",
+			requestedLevel: Info,
+			allowedLevel:   Error,
+			output:         false,
+		},
+		{
+			desc:           "log warn when level error",
+			requestedLevel: Warn,
+			allowedLevel:   Error,
+			output:         false,
+		},
+		{
+			desc:           "log debug when level warn",
+			requestedLevel: Debug,
+			allowedLevel:   Warn,
+			output:         false,
+		},
+		{
+			desc:           "log info when level warn",
+			requestedLevel: Info,
+			allowedLevel:   Warn,
+			output:         false,
+		},
+		{
+			desc:           "log debug when level info",
+			requestedLevel: Debug,
+			allowedLevel:   Info,
+			output:         false,
+		},
 	}
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		result := tc.requestedLevel.isAllowed(tc.allowedLevel)
-		assert.Equal(t, tc.output, result, fmt.Sprintf("%s: expected %t got %t", desc, tc.output, result))
+		assert.Equal(t, tc.output, result, fmt.Sprintf("%s: expected %t got %t", tc.desc, tc.output, result))
 	}
 }

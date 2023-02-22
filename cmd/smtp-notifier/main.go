@@ -25,7 +25,7 @@ import (
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
-	"github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
 	"github.com/mainflux/mainflux/pkg/ulid"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -54,60 +54,60 @@ func main() {
 
 	cfg := config{}
 	if err := env.Parse(&cfg); err != nil {
-		log.Fatalf("failed to load %s configuration : %s", svcName, err.Error())
+		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := logger.New(os.Stdout, cfg.LogLevel)
+	logger, err := mflog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatalf("failed to init logger: %s", err)
 	}
 
 	dbConfig := pgClient.Config{Name: defDB}
 	db, err := pgClient.SetupWithConfig(envPrefix, *notifierPg.Migration(), dbConfig)
 	if err != nil {
-		logger.Fatal(err.Error())()
+		logger.Fatal(err.Error())
 	}
 	defer db.Close()
 
 	ec := email.Config{}
 	if err := env.Parse(&cfg); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load email configuration : %s", err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to load email configuration : %s", err))
 	}
 
 	pubSub, err := brokers.NewPubSub(cfg.BrokerURL, "", logger)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err))()
+		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err))
 	}
 	defer pubSub.Close()
 
 	auth, authHandler, err := authClient.Setup(envPrefix, cfg.JaegerURL)
 	if err != nil {
-		logger.Fatal(err.Error())()
+		logger.Fatal(err.Error())
 	}
 	defer authHandler.Close()
 	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 
 	tracer, closer, err := jagerClient.NewTracer("smtp-notifier", cfg.JaegerURL)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
 	}
 	defer closer.Close()
 
 	dbTracer, dbCloser, err := jagerClient.NewTracer("smtp-notifier_db", cfg.JaegerURL)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
 	}
 	defer dbCloser.Close()
 
 	svc := newService(db, dbTracer, auth, cfg, ec, logger)
 
 	if err = consumers.Start(svcName, pubSub, svc, cfg.ConfigPath, logger); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to create Postgres writer: %s", err))()
+		logger.Fatal(fmt.Sprintf("failed to create Postgres writer: %s", err))
 	}
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 	}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, tracer, logger), logger)
 
@@ -125,14 +125,14 @@ func main() {
 
 }
 
-func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServiceClient, c config, ec email.Config, logger logger.Logger) notifiers.Service {
+func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServiceClient, c config, ec email.Config, logger mflog.Logger) notifiers.Service {
 	database := notifierPg.NewDatabase(db)
 	repo := tracing.New(notifierPg.New(database), tracer)
 	idp := ulid.New()
 
 	agent, err := email.New(&ec)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to create email agent: %s", err.Error()))()
+		logger.Fatal(fmt.Sprintf("failed to create email agent: %s", err))
 	}
 
 	notifier := smtp.New(agent)

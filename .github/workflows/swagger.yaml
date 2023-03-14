@@ -6,7 +6,7 @@ on:
       - master
 
 jobs:
-  deploy:
+  swagger:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -24,6 +24,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: swagger-ui
           cname: api.mainflux.io
-      - name: Codeball AI Code Review
-        uses: sturdy-dev/codeball-action@v2.6.0
 

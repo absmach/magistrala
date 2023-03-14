@@ -8,6 +8,10 @@ jobs:
   codeball:
     runs-on: ubuntu-latest
     name: Codeball
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
     steps:
       - name: Codeball
         uses: sturdy-dev/codeball-action@v2

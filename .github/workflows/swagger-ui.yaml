@@ -6,12 +6,12 @@ on:
       - master
 
 jobs:
-  swagger:
+  swagger-ui:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Swagger ui action
+      - name: Swagger UI action
         id: swagger-ui-action
         uses: blokovi/swagger-ui-action@main
         with:

@@ -30,10 +30,6 @@ func (req listMessagesReq) validate() error {
 		return apiutil.ErrLimitSize
 	}
 
-	if req.pageMeta.Offset < 0 {
-		return apiutil.ErrOffsetSize
-	}
-
 	if req.pageMeta.Comparator != "" &&
 		req.pageMeta.Comparator != readers.EqualKey &&
 		req.pageMeta.Comparator != readers.LowerThanKey &&

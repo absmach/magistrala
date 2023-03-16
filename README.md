@@ -23,7 +23,7 @@ For more details, check out the [official documentation][docs].
 - Mutual TLS Authentication (mTLS) using X.509 Certificates
 - Fine-grained access control (policies, ABAC/RBAC)
 - Message persistence (Cassandra, InfluxDB, MongoDB and PostgresSQL)
-- Platform logging and instrumentation support (Grafana, Prometheus and OpenTracing)
+- Platform logging and instrumentation support (Prometheus and OpenTracing)
 - Event sourcing
 - Container-based deployment using [Docker][docker] and [Kubernetes][kubernetes]
 - [LoRaWAN][lora] network integration

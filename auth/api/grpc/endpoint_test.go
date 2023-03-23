@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	port        = 8081
+	port        = 7001
 	secret      = "secret"
 	email       = "test@example.com"
 	id          = "testID"

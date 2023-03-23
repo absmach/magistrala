@@ -35,7 +35,7 @@ const (
 	envPrefix      = "MF_CERTS_"
 	envPrefixHttp  = "MF_CERTS_HTTP_"
 	defDB          = "certs"
-	defSvcHttpPort = "8204"
+	defSvcHttpPort = "9019"
 )
 
 var (
@@ -48,7 +48,7 @@ var (
 type config struct {
 	LogLevel  string `env:"MF_CERTS_LOG_LEVEL"        envDefault:"info"`
 	CertsURL  string `env:"MF_SDK_CERTS_URL"          envDefault:"http://localhost"`
-	ThingsURL string `env:"MF_THINGS_URL"             envDefault:"http://things:8182"`
+	ThingsURL string `env:"MF_THINGS_URL"             envDefault:"http://things:9000"`
 	JaegerURL string `env:"MF_JAEGER_URL"             envDefault:"localhost:6831"`
 
 	// Sign and issue certificates without 3rd party PKI

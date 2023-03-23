@@ -67,8 +67,8 @@ default values.
 | MF_AUTH_DB_SSL_CERT           | Path to the PEM encoded certificate file                                 |                |
 | MF_AUTH_DB_SSL_KEY            | Path to the PEM encoded key file                                         |                |
 | MF_AUTH_DB_SSL_ROOT_CERT      | Path to the PEM encoded root certificate file                            |                |
-| MF_AUTH_HTTP_PORT             | Auth service HTTP port                                                   | 8180           |
-| MF_AUTH_GRPC_PORT             | Auth service gRPC port                                                   | 8181           |
+| MF_AUTH_HTTP_PORT             | Auth service HTTP port                                                   | 9020           |
+| MF_AUTH_GRPC_PORT             | Auth service gRPC port                                                   | 7001           |
 | MF_AUTH_SERVER_CERT           | Path to server certificate in pem format                                 |                |
 | MF_AUTH_SERVER_KEY            | Path to server key in pem format                                         |                |
 | MF_AUTH_SECRET                | String used for signing tokens                                           | auth           |

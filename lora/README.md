@@ -13,7 +13,7 @@ default values.
 
 | Variable                         | Description                           | Default                         |
 |----------------------------------|---------------------------------------|---------------------------------|
-| MF_LORA_ADAPTER_HTTP_PORT        | Service HTTP port                     | 8180                            |
+| MF_LORA_ADAPTER_HTTP_PORT        | Service HTTP port                     | 9017                            |
 | MF_LORA_ADAPTER_LOG_LEVEL        | Service Log level                     | info                            |
 | MF_BROKER_URL                    | Message broker instance URL           | nats://localhost:4222           |
 | MF_LORA_ADAPTER_MESSAGES_URL     | LoRa adapter MQTT broker URL          | tcp://localhost:1883            |

@@ -16,7 +16,7 @@ default values.
 | MF_WS_ADAPTER_CLIENT_TLS     | Flag that indicates if TLS should be turned on      | false                 |
 | MF_WS_ADAPTER_CA_CERTS       | Path to trusted CAs in PEM format                   |                       |
 | MF_JAEGER_URL                | Jaeger server URL                                   | localhost:6831        |
-| MF_THINGS_AUTH_GRPC_URL      | Things service Auth gRPC URL                        | localhost:8181        |
+| MF_THINGS_AUTH_GRPC_URL      | Things service Auth gRPC URL                        | localhost:7000        |
 | MF_THINGS_AUTH_GRPC_TIMEOUT  | Things service Auth gRPC request timeout in seconds | 1s                    |
 
 ## Deployment

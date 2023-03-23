@@ -11,7 +11,7 @@ default values.
 | Variable                            | Description                                  | Default        |
 |-------------------------------------|----------------------------------------------|----------------|
 | MF_POSTGRES_READER_LOG_LEVEL        | Service log level                            | info           |
-| MF_POSTGRES_READER_PORT             | Service HTTP port                            | 8180           |
+| MF_POSTGRES_READER_PORT             | Service HTTP port                            | 9009           |
 | MF_POSTGRES_READER_CLIENT_TLS       | TLS mode flag                                | false          |
 | MF_POSTGRES_READER_CA_CERTS         | Path to trusted CAs in PEM format            |                |
 | MF_POSTGRES_READER_DB_HOST          | Postgres DB host                             | postgres       |
@@ -24,9 +24,9 @@ default values.
 | MF_POSTGRES_READER_DB_SSL_KEY       | Postgres SSL key                             | ""             |
 | MF_POSTGRES_READER_DB_SSL_ROOT_CERT | Postgres SSL root certificate path           | ""             |
 | MF_JAEGER_URL                       | Jaeger server URL                            | localhost:6831 |
-| MF_THINGS_AUTH_GRPC_URL             | Things service Auth gRPC URL                 | localhost:8183 |
+| MF_THINGS_AUTH_GRPC_URL             | Things service Auth gRPC URL                 | localhost:7000 |
 | MF_THINGS_AUTH_GRPC_TIMEOUT         | Things service Auth gRPC timeout in seconds  | 1s             |
-| MF_AUTH_GRPC_URL                    | Auth service gRPC URL                        | localhost:8181 |
+| MF_AUTH_GRPC_URL                    | Auth service gRPC URL                        | localhost:7001 |
 | MF_AUTH_GRPC_TIMEOUT                | Auth service gRPC request timeout in seconds | 1s             |
 
 ## Deployment

@@ -28,7 +28,7 @@ const (
 	svcName        = "http_adapter"
 	envPrefix      = "MF_HTTP_ADAPTER_"
 	envPrefixHttp  = "MF_HTTP_ADAPTER_HTTP_"
-	defSvcHttpPort = "8180"
+	defSvcHttpPort = "80"
 )
 
 type config struct {

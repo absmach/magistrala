@@ -41,7 +41,7 @@ const (
 	envPrefix      = "MF_TWINS_"
 	envPrefixHttp  = "MF_TWINS_HTTP_"
 	envPrefixCache = "MF_TWINS_CACHE_"
-	defSvcHttpPort = "8180"
+	defSvcHttpPort = "9018"
 )
 
 type config struct {

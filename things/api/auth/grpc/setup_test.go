@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	port  = 8080
+	port  = 7000
 	token = "token"
 	wrong = "wrong"
 	email = "john.doe@email.com"

@@ -15,7 +15,7 @@ default values.
 | Variable                   | Description                                                          | Default               |
 |----------------------------|----------------------------------------------------------------------|-----------------------|
 | MF_TWINS_LOG_LEVEL         | Log level for twin service (debug, info, warn, error)                | info                  |
-| MF_TWINS_HTTP_PORT         | Twins service HTTP port                                              | 8180                  |
+| MF_TWINS_HTTP_PORT         | Twins service HTTP port                                              | 9018                  |
 | MF_TWINS_SERVER_CERT       | Path to server certificate in PEM format                             |                       |
 | MF_TWINS_SERVER_KEY        | Path to server key in PEM format                                     |                       |
 | MF_JAEGER_URL              | Jaeger server URL                                                    |                       |
@@ -28,7 +28,7 @@ default values.
 | MF_TWINS_CA_CERTS          | Path to trusted CAs in PEM format                                    |                       |
 | MF_TWINS_CHANNEL_ID        | Message broker notifications channel ID                              |                       |
 | MF_BROKER_URL              | Mainflux Message broker URL                                          | nats://localhost:4222 |
-| MF_AUTH_GRPC_URL           | Auth service gRPC URL                                                | localhost:8181        |
+| MF_AUTH_GRPC_URL           | Auth service gRPC URL                                                | localhost:7001        |
 | MF_AUTH_GRPC_TIMEOUT       | Auth service gRPC request timeout in seconds                         | 1s                    |
 | MF_TWINS_CACHE_URL         | Cache database URL                                                   | localhost:6379        |
 | MF_TWINS_CACHE_PASS        | Cache database password                                              |                       |

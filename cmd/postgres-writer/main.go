@@ -28,7 +28,7 @@ const (
 	envPrefix      = "MF_POSTGRES_WRITER_"
 	envPrefixHttp  = "MF_POSTGRES_WRITER_HTTP_"
 	defDB          = "messages"
-	defSvcHttpPort = "8180"
+	defSvcHttpPort = "9010"
 )
 
 type config struct {

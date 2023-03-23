@@ -34,14 +34,14 @@ const (
 	envPrefixES    = "MF_BOOTSTRAP_ES_"
 	envPrefixHttp  = "MF_BOOTSTRAP_HTTP_"
 	defDB          = "bootstrap"
-	defSvcHttpPort = "8180"
+	defSvcHttpPort = "9013"
 )
 
 type config struct {
 	LogLevel       string `env:"MF_BOOTSTRAP_LOG_LEVEL"        envDefault:"info"`
 	EncKey         string `env:"MF_BOOTSTRAP_ENCRYPT_KEY"      envDefault:"12345678910111213141516171819202"`
 	ESConsumerName string `env:"MF_BOOTSTRAP_EVENT_CONSUMER"   envDefault:"bootstrap"`
-	ThingsURL      string `env:"MF_THINGS_URL"                 envDefault:"http://localhost"`
+	ThingsURL      string `env:"MF_THINGS_URL"                 envDefault:"http://localhost:9000"`
 	JaegerURL      string `env:"MF_JAEGER_URL"                 envDefault:"localhost:6831"`
 }
 

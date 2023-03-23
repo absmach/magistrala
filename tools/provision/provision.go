@@ -26,7 +26,7 @@ import (
 
 const (
 	defPass      = "12345678"
-	defReaderURL = "http://localhost:8905"
+	defReaderURL = "http://localhost:9005"
 )
 
 // MfConn - structure describing Mainflux connection set

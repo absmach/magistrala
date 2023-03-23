@@ -23,7 +23,7 @@ default values.
 | MF_MQTT_ADAPTER_WS_TARGET_PATH           | MQTT broker MQTT over WS path                                    | /mqtt                 |
 | MF_MQTT_ADAPTER_FORWARDER_TIMEOUT        | MQTT forwarder for multiprotocol communication timeout           | 30s                   |
 | MF_BROKER_URL                            | Message broker broker URL                                        | nats://127.0.0.1:4222 |
-| MF_THINGS_AUTH_GRPC_URL                  | Things gRPC endpoint URL                                         | localhost:8181        |
+| MF_THINGS_AUTH_GRPC_URL                  | Things gRPC endpoint URL                                         | localhost:7000        |
 | MF_THINGS_AUTH_GRPC_TIMEOUT              | Timeout in seconds for Things service gRPC calls                 | 1s                    |
 | MF_JAEGER_URL                            | URL of Jaeger tracing service                                    | ""                    |
 | MF_MQTT_ADAPTER_CLIENT_TLS               | gRPC client TLS                                                  | false                 |

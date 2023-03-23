@@ -12,7 +12,7 @@ default values.
 | ----------------------------- | --------------------------------------------------------------------------------- | ---------------------- |
 | MF_BROKER_URL                 | Message broker instance URL                                                       | nats://localhost:4222  |
 | MF_INFLUX_WRITER_LOG_LEVEL    | Log level for InfluxDB writer (debug, info, warn, error)                          | info                   |
-| MF_INFLUX_WRITER_PORT         | Service HTTP port                                                                 | 8900                   |
+| MF_INFLUX_WRITER_PORT         | Service HTTP port                                                                 | 9006                   |
 | MF_INFLUX_WRITER_DB_HOST      | InfluxDB host                                                                     | localhost              |
 | MF_INFLUXDB_PORT              | Default port of InfluxDB database                                                 | 8086                   |
 | MF_INFLUXDB_ADMIN_USER        | Default user of InfluxDB database                                                 | mainflux               |

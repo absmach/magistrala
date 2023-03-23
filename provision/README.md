@@ -24,15 +24,15 @@ default values.
 | MF_PROVISION_PASS                   | Mainflux password                                 | user123                               |
 | MF_PROVISION_API_KEY                | Mainflux authentication token                     |                                       |
 | MF_PROVISION_CONFIG_FILE            | Provision config file                             | config.toml                           |
-| MF_PROVISION_HTTP_PORT              | Provision service listening port                  | 8190                                  |
+| MF_PROVISION_HTTP_PORT              | Provision service listening port                  | 9016                                  |
 | MF_PROVISION_ENV_CLIENTS_TLS        | Mainflux SDK TLS verification                     | false                                 |
 | MF_PROVISION_SERVER_CERT            | Mainflux gRPC secure server cert                  |                                       |
 | MF_PROVISION_SERVER_KEY             | Mainflux gRPC secure server key                   |                                       |
-| MF_PROVISION_USERS_LOCATION         | Users service URL                                 | http://users:8180                     |
-| MF_PROVISION_THINGS_LOCATION        | Things service URL                                | http://things:8182                    |
-| MF_PROVISION_BS_SVC_URL             | Mainflux Bootstrap service URL                    | http://bootstrap:8202/things          |
-| MF_PROVISION_BS_SVC_WHITELIST_URL   | Mainflux Bootstrap service whitelist URL          | http://bootstrap:8202/things/state    |
-| MF_PROVISION_CERTS_SVC_URL          | Certificates service URL                          | http://certs:8204/certs               |
+| MF_PROVISION_USERS_LOCATION         | Users service URL                                 | http://users:9002                     |
+| MF_PROVISION_THINGS_LOCATION        | Things service URL                                | http://things:9000                    |
+| MF_PROVISION_BS_SVC_URL             | Mainflux Bootstrap service URL                    | http://bootstrap:9013/things          |
+| MF_PROVISION_BS_SVC_WHITELIST_URL   | Mainflux Bootstrap service whitelist URL          | http://bootstrap:9013/things/state    |
+| MF_PROVISION_CERTS_SVC_URL          | Certificates service URL                          | http://certs:9019/certs               |
 | MF_PROVISION_X509_PROVISIONING      | Should X509 client cert be provisioned            | false                                 |
 | MF_PROVISION_BS_CONFIG_PROVISIONING | Should thing config be saved in Bootstrap service | true                                  |
 | MF_PROVISION_BS_AUTO_WHITELIST      | Should thing be auto whitelisted                  | true                                  |
@@ -94,9 +94,9 @@ Provision service can be run as a standalone or in docker composition as addon t
 
 Standalone:
 ```bash
-MF_PROVISION_BS_SVC_URL=http://localhost:8202/things \
-MF_PROVISION_THINGS_LOCATION=http://localhost:8182 \
-MF_PROVISION_USERS_LOCATION=http://localhost:8180 \
+MF_PROVISION_BS_SVC_URL=http://localhost:9013/things \
+MF_PROVISION_THINGS_LOCATION=http://localhost:9000 \
+MF_PROVISION_USERS_LOCATION=http://localhost:9002 \
 MF_PROVISION_CONFIG_FILE=docker/addons/provision/configs/config.toml \
 build/mainflux-provision
 ```

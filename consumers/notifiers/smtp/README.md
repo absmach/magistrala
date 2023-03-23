@@ -21,7 +21,7 @@ default values.
 | MF_SMTP_NOTIFIER_DB_SSL_CERT      | Path to the PEM encoded cert file                                       |                       |
 | MF_SMTP_NOTIFIER_DB_SSL_KEY       | Path to the PEM encoded certificate key                                 |                       |
 | MF_SMTP_NOTIFIER_DB_SSL_ROOT_CERT | Path to the PEM encoded root certificate file                           |                       |
-| MF_SMTP_NOTIFIER_PORT             | HTTP server port                                                        | 8180                  |
+| MF_SMTP_NOTIFIER_PORT             | HTTP server port                                                        | 9015                  |
 | MF_SMTP_NOTIFIER_SERVER_CERT      | Path to server cert in pem format                                       |                       |
 | MF_SMTP_NOTIFIER_SERVER_KEY       | Path to server key in pem format                                        |                       |
 | MF_JAEGER_URL                     | Jaeger server URL                                                       | localhost:6831        |
@@ -33,7 +33,7 @@ default values.
 | MF_EMAIL_FROM_ADDRESS             | Email "from" address                                                    |                       |
 | MF_EMAIL_FROM_NAME                | Email "from" name                                                       |                       |
 | MF_EMAIL_TEMPLATE                 | Email template for sending notification emails                          | email.tmpl            |
-| MF_AUTH_GRPC_URL                  | Auth service gRPC URL                                                   | localhost:8181        |
+| MF_AUTH_GRPC_URL                  | Auth service gRPC URL                                                   | localhost:7001        |
 | MF_AUTH_GRPC_TIMEOUT              | Auth service gRPC request timeout in seconds                            | 1s                    |
 | MF_AUTH_CLIENT_TLS                | Auth client TLS flag                                                    | false                 |
 | MF_AUTH_CA_CERTS                  | Path to Auth client CA certs in pem format                              |                       |

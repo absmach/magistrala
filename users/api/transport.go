@@ -338,8 +338,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusUnauthorized)
 	case errors.Contains(err, errors.ErrAuthorization):
 		w.WriteHeader(http.StatusForbidden)
-	case errors.Contains(err, errors.ErrConflict),
-		errors.Contains(err, errors.ErrConflict):
+	case errors.Contains(err, errors.ErrConflict):
 		w.WriteHeader(http.StatusConflict)
 	case errors.Contains(err, errors.ErrUnsupportedContentType):
 		w.WriteHeader(http.StatusUnsupportedMediaType)

@@ -84,7 +84,7 @@ func TestSaveSenml(t *testing.T) {
 	}
 
 	err = repo.Consume(msgs)
-	assert.Nil(t, err, fmt.Sprintf("Save operation expected to succeed: %s.\n", err))
+	require.Nil(t, err, fmt.Sprintf("Save operation expected to succeed: %s.\n", err))
 
 	count, err := db.Collection(collection).CountDocuments(context.Background(), bson.D{})
 	assert.Nil(t, err, fmt.Sprintf("Querying database expected to succeed: %s.\n", err))
@@ -99,9 +99,9 @@ func TestSaveJSON(t *testing.T) {
 	repo := mongodb.New(db)
 
 	chid, err := uuid.NewV4()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	pubid, err := uuid.NewV4()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	msg := json.Message{
 		Channel:   chid.String(),

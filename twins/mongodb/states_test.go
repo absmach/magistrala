@@ -26,7 +26,7 @@ func TestStateSave(t *testing.T) {
 	repo := mongodb.NewStateRepository(db)
 
 	twid, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	var id int64
 	state := twins.State{
@@ -63,7 +63,7 @@ func TestStatesRetrieveAll(t *testing.T) {
 	repo := mongodb.NewStateRepository(db)
 
 	twid, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	n := uint64(10)
 	for i := uint64(0); i < n; i++ {
@@ -125,7 +125,7 @@ func TestStatesRetrieveLast(t *testing.T) {
 	repo := mongodb.NewStateRepository(db)
 
 	twid, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	n := int64(10)
 	for i := int64(1); i <= n; i++ {

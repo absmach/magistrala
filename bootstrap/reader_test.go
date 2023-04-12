@@ -15,7 +15,6 @@ import (
 	"github.com/mainflux/mainflux/bootstrap"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type readChan struct {
@@ -57,7 +56,7 @@ func TestReadConfig(t *testing.T) {
 		CACert:     "ca_cert",
 		MFKey:      "mf_key",
 		MFChannels: []bootstrap.Channel{
-			bootstrap.Channel{
+			{
 				ID:       "mf_id",
 				Name:     "mf_name",
 				Metadata: map[string]interface{}{"key": "value}"},
@@ -82,7 +81,7 @@ func TestReadConfig(t *testing.T) {
 	}
 
 	bin, err := json.Marshal(ret)
-	require.Nil(t, err, fmt.Sprintf("Marshalling expected to succeed: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Marshalling expected to succeed: %s.\n", err))
 
 	reader := bootstrap.NewConfigReader(encKey)
 	cases := []struct {
@@ -108,19 +107,19 @@ func TestReadConfig(t *testing.T) {
 
 	for _, tc := range cases {
 		res, err := reader.ReadConfig(tc.config, tc.secret)
-		require.Nil(t, err, fmt.Sprintf("Reading config to succeed: %s.\n", err))
+		assert.Nil(t, err, fmt.Sprintf("Reading config to succeed: %s.\n", err))
 
 		if tc.secret {
 			d, err := dec(res.([]byte))
-			require.Nil(t, err, fmt.Sprintf("Decrypting expected to succeed: %s.\n", err))
+			assert.Nil(t, err, fmt.Sprintf("Decrypting expected to succeed: %s.\n", err))
 			assert.Equal(t, tc.enc, d, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.enc, d))
 			continue
 		}
 		b, err := json.Marshal(res)
-		require.Nil(t, err, fmt.Sprintf("Marshalling expected to succeed: %s.\n", err))
+		assert.Nil(t, err, fmt.Sprintf("Marshalling expected to succeed: %s.\n", err))
 		assert.Equal(t, tc.enc, b, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.enc, b))
 		resp, ok := res.(mainflux.Response)
-		require.True(t, ok, "If not encrypted, reader should return response.")
+		assert.True(t, ok, "If not encrypted, reader should return response.")
 		assert.False(t, resp.Empty(), fmt.Sprintf("Response should not be empty %s.", err))
 		assert.Equal(t, http.StatusOK, resp.Code(), "Default config response code should be 200.")
 	}

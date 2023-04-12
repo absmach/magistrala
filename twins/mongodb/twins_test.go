@@ -48,10 +48,10 @@ func TestTwinsSave(t *testing.T) {
 	repo := mongodb.NewTwinRepository(db)
 
 	twid, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	nonexistentTwinID, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	twin := twins.Twin{
 		Owner: email,
@@ -93,10 +93,10 @@ func TestTwinsUpdate(t *testing.T) {
 	repo := mongodb.NewTwinRepository(db)
 
 	twid, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	nonexistentTwinID, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	twin := twins.Twin{
 		ID:   twid,
@@ -150,10 +150,10 @@ func TestTwinsRetrieveByID(t *testing.T) {
 	repo := mongodb.NewTwinRepository(db)
 
 	twid, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	nonexistentTwinID, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	twin := twins.Twin{
 		ID: twid,
@@ -194,17 +194,17 @@ func TestTwinsRetrieveByAttribute(t *testing.T) {
 	repo := mongodb.NewTwinRepository(db)
 
 	chID, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	empty := mocks.CreateTwin([]string{chID}, []string{""})
 	_, err = repo.Save(context.Background(), empty)
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	wildcard := mocks.CreateTwin([]string{chID}, []string{twins.SubtopicWildcard})
 	_, err = repo.Save(context.Background(), wildcard)
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	nonEmpty := mocks.CreateTwin([]string{chID}, []string{subtopic})
 	_, err = repo.Save(context.Background(), nonEmpty)
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	cases := []struct {
 		desc     string
@@ -230,7 +230,7 @@ func TestTwinsRetrieveByAttribute(t *testing.T) {
 
 	for _, tc := range cases {
 		ids, err := repo.RetrieveByAttribute(context.Background(), chID, tc.subtopic)
-		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 		assert.ElementsMatch(t, ids, tc.ids, fmt.Sprintf("%s: expected ids %v do not match received ids %v", tc.desc, tc.ids, ids))
 	}
 }
@@ -256,7 +256,7 @@ func TestTwinsRetrieveAll(t *testing.T) {
 	n := uint64(10)
 	for i := uint64(0); i < n; i++ {
 		twid, err := idProvider.ID()
-		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 		tw := twins.Twin{
 			Owner:    email,
@@ -349,10 +349,10 @@ func TestTwinsRemove(t *testing.T) {
 	repo := mongodb.NewTwinRepository(db)
 
 	twid, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	nonexistentTwinID, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	twin := twins.Twin{
 		ID: twid,

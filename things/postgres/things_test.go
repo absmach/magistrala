@@ -32,14 +32,14 @@ func TestThingsSave(t *testing.T) {
 	email := "thing-save@example.com"
 
 	nonexistentThingKey, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	ths := []things.Thing{}
 	for i := 1; i <= 5; i++ {
 		thID, err := idProvider.ID()
-		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 		thkey, err := idProvider.ID()
-		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 		thing := things.Thing{
 			ID:    thID,
@@ -95,8 +95,11 @@ func TestThingsSave(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		_, err := thingRepo.Save(context.Background(), tc.things...)
+		resp, err := thingRepo.Save(context.Background(), tc.things...)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		if err == nil {
+			assert.Equal(t, tc.things, resp, fmt.Sprintf("%s: got incorrect list of things from Save()", tc.desc))
+		}
 	}
 }
 
@@ -108,9 +111,9 @@ func TestThingUpdate(t *testing.T) {
 	validName := "mfx_device"
 
 	thID, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	thkey, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	thing := things.Thing{
 		ID:    thID,
@@ -119,12 +122,12 @@ func TestThingUpdate(t *testing.T) {
 	}
 
 	sths, err := thingRepo.Save(context.Background(), thing)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	thing.ID = sths[0].ID
 
 	nonexistentThingID, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	cases := []struct {
 		desc  string
@@ -195,33 +198,33 @@ func TestUpdateKey(t *testing.T) {
 	thingRepo := postgres.NewThingRepository(dbMiddleware)
 
 	id, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	key, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	th1 := things.Thing{
 		ID:    id,
 		Owner: email,
 		Key:   key,
 	}
 	ths, err := thingRepo.Save(context.Background(), th1)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	th1.ID = ths[0].ID
 
 	id, err = idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	key, err = idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	th2 := things.Thing{
 		ID:    id,
 		Owner: email,
 		Key:   key,
 	}
 	ths, err = thingRepo.Save(context.Background(), th2)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	th2.ID = ths[0].ID
 
 	nonexistentThingID, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	cases := []struct {
 		desc  string
@@ -279,47 +282,57 @@ func TestSingleThingRetrieval(t *testing.T) {
 	thingRepo := postgres.NewThingRepository(dbMiddleware)
 
 	id, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	key, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	th := things.Thing{
-		ID:    id,
-		Owner: email,
-		Key:   key,
+		ID:       id,
+		Owner:    email,
+		Key:      key,
+		Metadata: make(things.Metadata),
 	}
 
 	ths, err := thingRepo.Save(context.Background(), th)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	th.ID = ths[0].ID
 
 	nonexistentThingID, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	cases := map[string]struct {
-		owner string
-		ID    string
-		err   error
+	cases := []struct {
+		desc     string
+		owner    string
+		ID       string
+		response things.Thing
+		err      error
 	}{
-		"retrieve thing with existing user": {
-			owner: th.Owner,
-			ID:    th.ID,
-			err:   nil,
+		{
+			desc:     "retrieve thing with existing user",
+			owner:    th.Owner,
+			ID:       th.ID,
+			response: th,
+			err:      nil,
 		},
-		"retrieve non-existing thing with existing user": {
-			owner: th.Owner,
-			ID:    nonexistentThingID,
-			err:   errors.ErrNotFound,
+		{
+			desc:     "retrieve non-existing thing with existing user",
+			owner:    th.Owner,
+			ID:       nonexistentThingID,
+			response: things.Thing{},
+			err:      errors.ErrNotFound,
 		},
-		"retrieve thing with malformed ID": {
-			owner: th.Owner,
-			ID:    wrongValue,
-			err:   errors.ErrNotFound,
+		{
+			desc:     "retrieve thing with malformed ID",
+			owner:    th.Owner,
+			ID:       wrongValue,
+			response: things.Thing{},
+			err:      errors.ErrNotFound,
 		},
 	}
 
-	for desc, tc := range cases {
-		_, err := thingRepo.RetrieveByID(context.Background(), tc.owner, tc.ID)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+	for _, tc := range cases {
+		resp, err := thingRepo.RetrieveByID(context.Background(), tc.owner, tc.ID)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.Equal(t, tc.response, resp, fmt.Sprintf("%s: got incorrect response from RetrieveByID", tc.desc))
 	}
 }
 
@@ -329,9 +342,9 @@ func TestThingRetrieveByKey(t *testing.T) {
 	thingRepo := postgres.NewThingRepository(dbMiddleware)
 
 	id, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	key, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	th := things.Thing{
 		ID:    id,
@@ -343,34 +356,37 @@ func TestThingRetrieveByKey(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	th.ID = ths[0].ID
 
-	cases := map[string]struct {
-		key string
-		ID  string
-		err error
+	cases := []struct {
+		desc string
+		key  string
+		ID   string
+		err  error
 	}{
-		"retrieve existing thing by key": {
-			key: th.Key,
-			ID:  th.ID,
-			err: nil,
+		{
+			desc: "retrieve existing thing by key",
+			key:  th.Key,
+			ID:   th.ID,
+			err:  nil,
 		},
-		"retrieve non-existent thing by key": {
-			key: wrongValue,
-			ID:  "",
-			err: errors.ErrNotFound,
+		{
+			desc: "retrieve non-existent thing by key",
+			key:  wrongValue,
+			ID:   "",
+			err:  errors.ErrNotFound,
 		},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		id, err := thingRepo.RetrieveByKey(context.Background(), tc.key)
-		assert.Equal(t, tc.ID, id, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.ID, id))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.Equal(t, tc.ID, id, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.ID, id))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
 func TestMultiThingRetrieval(t *testing.T) {
 	dbMiddleware := postgres.NewDatabase(db)
 	err := cleanTestTable(context.Background(), "things", dbMiddleware)
-	assert.Nil(t, err, fmt.Sprintf("cleaning table 'things' expected to success %v", err))
+	require.Nil(t, err, fmt.Sprintf("cleaning table 'things' expected to success %v", err))
 	thingRepo := postgres.NewThingRepository(dbMiddleware)
 
 	email := "thing-multi-retrieval@example.com"
@@ -396,9 +412,9 @@ func TestMultiThingRetrieval(t *testing.T) {
 	n := uint64(10)
 	for i := uint64(0); i < n; i++ {
 		id, err := idProvider.ID()
-		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 		key, err := idProvider.ID()
-		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 		th := things.Thing{
 			Owner: email,
 			ID:    id,
@@ -420,15 +436,17 @@ func TestMultiThingRetrieval(t *testing.T) {
 		}
 
 		_, err = thingRepo.Save(context.Background(), th)
-		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	}
 
-	cases := map[string]struct {
+	cases := []struct {
+		desc         string
 		owner        string
 		pageMetadata things.PageMetadata
 		size         uint64
 	}{
-		"retrieve all things": {
+		{
+			desc:  "retrieve all things",
 			owner: email,
 			pageMetadata: things.PageMetadata{
 				Offset: 0,
@@ -437,7 +455,8 @@ func TestMultiThingRetrieval(t *testing.T) {
 			},
 			size: n,
 		},
-		"retrieve subset of things with existing owner": {
+		{
+			desc:  "retrieve subset of things with existing owner",
 			owner: email,
 			pageMetadata: things.PageMetadata{
 				Offset: n / 2,
@@ -446,7 +465,8 @@ func TestMultiThingRetrieval(t *testing.T) {
 			},
 			size: n / 2,
 		},
-		"retrieve things with existing name": {
+		{
+			desc:  "retrieve things with existing name",
 			owner: email,
 			pageMetadata: things.PageMetadata{
 				Offset: 1,
@@ -456,7 +476,8 @@ func TestMultiThingRetrieval(t *testing.T) {
 			},
 			size: nameNum + nameMetaNum - offset,
 		},
-		"retrieve things with non-existing name": {
+		{
+			desc:  "retrieve things with non-existing name",
 			owner: email,
 			pageMetadata: things.PageMetadata{
 				Offset: 0,
@@ -466,7 +487,8 @@ func TestMultiThingRetrieval(t *testing.T) {
 			},
 			size: 0,
 		},
-		"retrieve things with existing metadata": {
+		{
+			desc:  "retrieve things with existing metadata",
 			owner: email,
 			pageMetadata: things.PageMetadata{
 				Offset:   0,
@@ -476,7 +498,8 @@ func TestMultiThingRetrieval(t *testing.T) {
 			},
 			size: metaNum + nameMetaNum,
 		},
-		"retrieve things with partial metadata": {
+		{
+			desc:  "retrieve things with partial metadata",
 			owner: email,
 			pageMetadata: things.PageMetadata{
 				Offset:   0,
@@ -486,7 +509,8 @@ func TestMultiThingRetrieval(t *testing.T) {
 			},
 			size: metaNum + nameMetaNum,
 		},
-		"retrieve things with non-existing metadata": {
+		{
+			desc:  "retrieve things with non-existing metadata",
 			owner: email,
 			pageMetadata: things.PageMetadata{
 				Offset:   0,
@@ -496,7 +520,8 @@ func TestMultiThingRetrieval(t *testing.T) {
 			},
 			size: 0,
 		},
-		"retrieve all things with existing name and metadata": {
+		{
+			desc:  "retrieve all things with existing name and metadata",
 			owner: email,
 			pageMetadata: things.PageMetadata{
 				Offset:   0,
@@ -507,7 +532,8 @@ func TestMultiThingRetrieval(t *testing.T) {
 			},
 			size: nameMetaNum,
 		},
-		"retrieve things sorted by name ascendent": {
+		{
+			desc:  "retrieve things sorted by name ascendent",
 			owner: email,
 			pageMetadata: things.PageMetadata{
 				Offset: 0,
@@ -518,7 +544,8 @@ func TestMultiThingRetrieval(t *testing.T) {
 			},
 			size: n,
 		},
-		"retrieve things sorted by name descendent": {
+		{
+			desc:  "retrieve things sorted by name descendent",
 			owner: email,
 			pageMetadata: things.PageMetadata{
 				Offset: 0,
@@ -531,12 +558,12 @@ func TestMultiThingRetrieval(t *testing.T) {
 		},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		page, err := thingRepo.RetrieveAll(context.Background(), tc.owner, tc.pageMetadata)
 		size := uint64(len(page.Things))
-		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.size, size))
-		assert.Equal(t, tc.pageMetadata.Total, page.Total, fmt.Sprintf("%s: expected total %d got %d\n", desc, tc.pageMetadata.Total, page.Total))
-		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
+		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", tc.desc, tc.size, size))
+		assert.Equal(t, tc.pageMetadata.Total, page.Total, fmt.Sprintf("%s: expected total %d got %d\n", tc.desc, tc.pageMetadata.Total, page.Total))
+		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", tc.desc, err))
 
 		// Check if Things list have been sorted properly
 		testSortThings(t, tc.pageMetadata, page.Things)
@@ -554,7 +581,7 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 	thsDisconNum := uint64(1)
 
 	chID, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	_, err = channelRepo.Save(context.Background(), things.Channel{
 		ID:    chID,
@@ -564,9 +591,9 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 
 	for i := uint64(0); i < n; i++ {
 		thID, err := idProvider.ID()
-		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 		thkey, err := idProvider.ID()
-		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 		th := things.Thing{
 			ID:    thID,
 			Owner: email,
@@ -574,7 +601,7 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 		}
 
 		ths, err := thingRepo.Save(context.Background(), th)
-		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		thID = ths[0].ID
 
 		// Don't connnect last Thing
@@ -583,20 +610,22 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 		}
 
 		err = channelRepo.Connect(context.Background(), email, []string{chID}, []string{thID})
-		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	}
 
 	nonexistentChanID, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	cases := map[string]struct {
+	cases := []struct {
+		desc         string
 		owner        string
 		chID         string
 		pageMetadata things.PageMetadata
 		size         uint64
 		err          error
 	}{
-		"retrieve all things by channel with existing owner": {
+		{
+			desc:  "retrieve all things by channel with existing owner",
 			owner: email,
 			chID:  chID,
 			pageMetadata: things.PageMetadata{
@@ -605,7 +634,8 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 			},
 			size: n - thsDisconNum,
 		},
-		"retrieve subset of things by channel with existing owner": {
+		{
+			desc:  "retrieve subset of things by channel with existing owner",
 			owner: email,
 			chID:  chID,
 			pageMetadata: things.PageMetadata{
@@ -614,7 +644,8 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 			},
 			size: (n / 2) - thsDisconNum,
 		},
-		"retrieve things by channel with non-existing owner": {
+		{
+			desc:  "retrieve things by channel with non-existing owner",
 			owner: wrongValue,
 			chID:  chID,
 			pageMetadata: things.PageMetadata{
@@ -623,7 +654,8 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 			},
 			size: 0,
 		},
-		"retrieve things by non-existing channel": {
+		{
+			desc:  "retrieve things by non-existing channel",
 			owner: email,
 			chID:  nonexistentChanID,
 			pageMetadata: things.PageMetadata{
@@ -632,7 +664,8 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 			},
 			size: 0,
 		},
-		"retrieve things with malformed UUID": {
+		{
+			desc:  "retrieve things with malformed UUID",
 			owner: email,
 			chID:  wrongValue,
 			pageMetadata: things.PageMetadata{
@@ -642,7 +675,8 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 			size: 0,
 			err:  errors.ErrNotFound,
 		},
-		"retrieve all non connected things by channel with existing owner": {
+		{
+			desc:  "retrieve all non connected things by channel with existing owner",
 			owner: email,
 			chID:  chID,
 			pageMetadata: things.PageMetadata{
@@ -652,7 +686,8 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 			},
 			size: thsDisconNum,
 		},
-		"retrieve all things by channel sorted by name ascendent": {
+		{
+			desc:  "retrieve all things by channel sorted by name ascendent",
 			owner: email,
 			chID:  chID,
 			pageMetadata: things.PageMetadata{
@@ -663,7 +698,8 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 			},
 			size: n - thsDisconNum,
 		},
-		"retrieve all non-connected things by channel sorted by name ascendent": {
+		{
+			desc:  "retrieve all non-connected things by channel sorted by name ascendent",
 			owner: email,
 			chID:  chID,
 			pageMetadata: things.PageMetadata{
@@ -675,7 +711,8 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 			},
 			size: thsDisconNum,
 		},
-		"retrieve all things by channel sorted by name descendent": {
+		{
+			desc:  "retrieve all things by channel sorted by name descendent",
 			owner: email,
 			chID:  chID,
 			pageMetadata: things.PageMetadata{
@@ -686,7 +723,8 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 			},
 			size: n - thsDisconNum,
 		},
-		"retrieve all non-connected things by channel sorted by name descendent": {
+		{
+			desc:  "retrieve all non-connected things by channel sorted by name descendent",
 			owner: email,
 			chID:  chID,
 			pageMetadata: things.PageMetadata{
@@ -700,11 +738,11 @@ func TestMultiThingRetrievalByChannel(t *testing.T) {
 		},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		page, err := thingRepo.RetrieveByChannel(context.Background(), tc.owner, tc.chID, tc.pageMetadata)
 		size := uint64(len(page.Things))
-		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.size, size))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected no error got %d\n", desc, err))
+		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", tc.desc, tc.size, size))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected no error got %d\n", tc.desc, err))
 
 		// Check if Things by Channel list have been sorted properly
 		testSortThings(t, tc.pageMetadata, page.Things)
@@ -717,9 +755,9 @@ func TestThingRemoval(t *testing.T) {
 	thingRepo := postgres.NewThingRepository(dbMiddleware)
 
 	id, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	key, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	thing := things.Thing{
 		ID:    id,
 		Owner: email,
@@ -733,10 +771,10 @@ func TestThingRemoval(t *testing.T) {
 	// (removed) thing
 	for i := 0; i < 2; i++ {
 		err := thingRepo.Remove(context.Background(), email, thing.ID)
-		require.Nil(t, err, fmt.Sprintf("#%d: failed to remove thing due to: %s", i, err))
+		assert.Nil(t, err, fmt.Sprintf("#%d: failed to remove thing due to: %s", i, err))
 
 		_, err = thingRepo.RetrieveByID(context.Background(), email, thing.ID)
-		require.True(t, errors.Contains(err, errors.ErrNotFound), fmt.Sprintf("#%d: expected %s got %s", i, errors.ErrNotFound, err))
+		assert.True(t, errors.Contains(err, errors.ErrNotFound), fmt.Sprintf("#%d: expected %s got %s", i, errors.ErrNotFound, err))
 	}
 }
 

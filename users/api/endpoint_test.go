@@ -127,22 +127,100 @@ func TestRegister(t *testing.T) {
 		desc        string
 		req         string
 		contentType string
-		status      int
+		statusCode  int
 		token       string
 	}{
-		{"register new user", data, contentType, http.StatusCreated, token},
-		{"register user with empty token", data, contentType, http.StatusUnauthorized, ""},
-		{"register existing user", data, contentType, http.StatusConflict, token},
-		{"register user with invalid email address", invalidData, contentType, http.StatusBadRequest, token},
-		{"register user with weak password", invalidPasswordData, contentType, http.StatusBadRequest, token},
-		{"register new user with unauthenticated access", userNew, contentType, http.StatusUnauthorized, "wrong"},
-		{"register existing user with unauthenticated access", data, contentType, http.StatusUnauthorized, "wrong"},
-		{"register user with invalid request format", "{", contentType, http.StatusBadRequest, token},
-		{"register user with empty email request", emptyEmailData, contentType, http.StatusBadRequest, token},
-		{"register user with empty host request", emptyHostData, contentType, http.StatusBadRequest, token},
-		{"register user with empty request", "", contentType, http.StatusBadRequest, token},
-		{"register user with invalid field name", invalidFieldData, contentType, http.StatusBadRequest, token},
-		{"register user with missing content type", data, "", http.StatusUnsupportedMediaType, token},
+		{
+			desc:        "register new user",
+			req:         data,
+			contentType: contentType,
+			statusCode:  http.StatusCreated,
+			token:       token,
+		},
+		{
+			desc:        "register user with empty token",
+			req:         data,
+			contentType: contentType,
+			statusCode:  http.StatusUnauthorized,
+			token:       "",
+		},
+		{
+			desc:        "register existing user",
+			req:         data,
+			contentType: contentType,
+			statusCode:  http.StatusConflict,
+			token:       token,
+		},
+		{
+			desc:        "register user with invalid email address",
+			req:         invalidData,
+			contentType: contentType,
+			statusCode:  http.StatusBadRequest,
+			token:       token,
+		},
+		{
+			desc:        "register user with weak password",
+			req:         invalidPasswordData,
+			contentType: contentType,
+			statusCode:  http.StatusBadRequest,
+			token:       token,
+		},
+		{
+			desc:        "register new user with unauthenticated access",
+			req:         userNew,
+			contentType: contentType,
+			statusCode:  http.StatusUnauthorized,
+			token:       "wrong",
+		},
+		{
+			desc:        "register existing user with unauthenticated access",
+			req:         data,
+			contentType: contentType,
+			statusCode:  http.StatusUnauthorized,
+			token:       "wrong",
+		},
+		{
+			desc:        "register user with invalid request format",
+			req:         "{",
+			contentType: contentType,
+			statusCode:  http.StatusBadRequest,
+			token:       token,
+		},
+		{
+			desc:        "register user with empty email request",
+			req:         emptyEmailData,
+			contentType: contentType,
+			statusCode:  http.StatusBadRequest,
+			token:       token,
+		},
+		{
+			desc:        "register user with empty host request",
+			req:         emptyHostData,
+			contentType: contentType,
+			statusCode:  http.StatusBadRequest,
+			token:       token,
+		},
+		{
+			desc:        "register user with empty request",
+			req:         "",
+			contentType: contentType,
+			statusCode:  http.StatusBadRequest,
+			token:       token,
+		},
+		{
+			desc:        "register user with invalid field name",
+			req:         invalidFieldData,
+			contentType: contentType,
+			statusCode:  http.StatusBadRequest,
+			token:       token,
+		},
+		{
+			desc:        "register user with missing content type",
+			req:         data,
+			contentType: "",
+			statusCode:  http.StatusUnsupportedMediaType,
+			token:       token,
+		},
 	}
 
 	for _, tc := range cases {
@@ -156,7 +234,7 @@ func TestRegister(t *testing.T) {
 		}
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+		assert.Equal(t, tc.statusCode, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.statusCode, res.StatusCode))
 	}
 }
 
@@ -193,17 +271,65 @@ func TestLogin(t *testing.T) {
 		desc        string
 		req         string
 		contentType string
-		status      int
+		statusCode  int
 		res         string
 	}{
-		{"login with valid credentials", data, contentType, http.StatusCreated, tokenData},
-		{"login with invalid credentials", invalidData, contentType, http.StatusUnauthorized, unauthRes},
-		{"login with invalid email address", invalidEmailData, contentType, http.StatusBadRequest, malformedRes},
-		{"login non-existent user", nonexistentData, contentType, http.StatusUnauthorized, unauthRes},
-		{"login with invalid request format", "{", contentType, http.StatusBadRequest, malformedRes},
-		{"login with empty JSON request", "{}", contentType, http.StatusBadRequest, malformedRes},
-		{"login with empty request", "", contentType, http.StatusBadRequest, malformedRes},
-		{"login with missing content type", data, "", http.StatusUnsupportedMediaType, unsupportedRes},
+		{
+			desc:        "login with valid credentials",
+			req:         data,
+			contentType: contentType,
+			statusCode:  http.StatusCreated,
+			res:         tokenData,
+		},
+		{
+			desc:        "login with invalid credentials",
+			req:         invalidData,
+			contentType: contentType,
+			statusCode:  http.StatusUnauthorized,
+			res:         unauthRes,
+		},
+		{
+			desc:        "login with invalid email address",
+			req:         invalidEmailData,
+			contentType: contentType,
+			statusCode:  http.StatusBadRequest,
+			res:         malformedRes,
+		},
+		{
+			desc:        "login non-existent user",
+			req:         nonexistentData,
+			contentType: contentType,
+			statusCode:  http.StatusUnauthorized,
+			res:         unauthRes,
+		},
+		{
+			desc:        "login with invalid request format",
+			req:         "{",
+			contentType: contentType,
+			statusCode:  http.StatusBadRequest,
+			res:         malformedRes,
+		},
+		{
+			desc:        "login with empty JSON request",
+			req:         "{}",
+			contentType: contentType,
+			statusCode:  http.StatusBadRequest,
+			res:         malformedRes,
+		},
+		{
+			desc:        "login with empty request",
+			req:         "",
+			contentType: contentType,
+			statusCode:  http.StatusBadRequest,
+			res:         malformedRes,
+		},
+		{
+			desc:        "login with missing content type",
+			req:         data,
+			contentType: "",
+			statusCode:  http.StatusUnsupportedMediaType,
+			res:         unsupportedRes,
+		},
 	}
 
 	for _, tc := range cases {
@@ -220,7 +346,7 @@ func TestLogin(t *testing.T) {
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		token := strings.Trim(string(body), "\n")
 
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+		assert.Equal(t, tc.statusCode, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.statusCode, res.StatusCode))
 		assert.Equal(t, tc.res, token, fmt.Sprintf("%s: expected body %s got %s", tc.desc, tc.res, token))
 	}
 }
@@ -242,13 +368,23 @@ func TestUser(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("register user got unexpected error: %s", err))
 
 	cases := []struct {
-		desc   string
-		token  string
-		status int
-		res    string
+		desc       string
+		token      string
+		statusCode int
+		res        string
 	}{
-		{"user info with valid token", token, http.StatusOK, ""},
-		{"user info with invalid token", "", http.StatusUnauthorized, ""},
+		{
+			desc:       "user info with valid token",
+			token:      token,
+			statusCode: http.StatusOK,
+			res:        "",
+		},
+		{
+			desc:       "user info with invalid token",
+			token:      "",
+			statusCode: http.StatusUnauthorized,
+			res:        "",
+		},
 	}
 
 	for _, tc := range cases {
@@ -264,7 +400,7 @@ func TestUser(t *testing.T) {
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		token := strings.Trim(string(body), "\n")
 
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+		assert.Equal(t, tc.statusCode, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.statusCode, res.StatusCode))
 		assert.Equal(t, tc.res, "", fmt.Sprintf("%s: expected body %s got %s", tc.desc, tc.res, token))
 	}
 }
@@ -301,7 +437,7 @@ func TestPasswordResetRequest(t *testing.T) {
 		desc        string
 		req         string
 		contentType string
-		status      int
+		statusCode  int
 		res         string
 	}{
 		{"password reset request with valid email", data, contentType, http.StatusCreated, expectedExisting},
@@ -326,7 +462,7 @@ func TestPasswordResetRequest(t *testing.T) {
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		token := strings.Trim(string(body), "\n")
 
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+		assert.Equal(t, tc.statusCode, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.statusCode, res.StatusCode))
 		assert.Equal(t, tc.res, token, fmt.Sprintf("%s: expected body %s got %s", tc.desc, tc.res, token))
 	}
 }
@@ -348,7 +484,7 @@ func TestPasswordReset(t *testing.T) {
 	auth := mocks.NewAuthService(map[string]string{user.Email: user.Email}, mockAuthzDB)
 
 	tkn, err := auth.Issue(context.Background(), &mainflux.IssueReq{Id: user.ID, Email: user.Email, Type: 0})
-	require.Nil(t, err, fmt.Sprintf("issue user token error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("issue user token error: %s", err))
 
 	token := tkn.GetValue()
 
@@ -376,7 +512,7 @@ func TestPasswordReset(t *testing.T) {
 		desc        string
 		req         string
 		contentType string
-		status      int
+		statusCode  int
 		res         string
 		tok         string
 	}{
@@ -405,7 +541,7 @@ func TestPasswordReset(t *testing.T) {
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		token := strings.Trim(string(body), "\n")
 
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+		assert.Equal(t, tc.statusCode, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.statusCode, res.StatusCode))
 		assert.Equal(t, tc.res, token, fmt.Sprintf("%s: expected body %s got %s", tc.desc, tc.res, token))
 	}
 }
@@ -450,7 +586,7 @@ func TestPasswordChange(t *testing.T) {
 		desc        string
 		req         string
 		contentType string
-		status      int
+		statusCode  int
 		res         string
 		tok         string
 	}{
@@ -479,7 +615,7 @@ func TestPasswordChange(t *testing.T) {
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		token := strings.Trim(string(body), "\n")
 
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+		assert.Equal(t, tc.statusCode, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.statusCode, res.StatusCode))
 		assert.Equal(t, tc.res, token, fmt.Sprintf("%s: expected body %s got %s", tc.desc, tc.res, token))
 	}
 }

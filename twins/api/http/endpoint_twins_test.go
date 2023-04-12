@@ -104,11 +104,11 @@ func TestAddTwin(t *testing.T) {
 
 	tw := twinReq{}
 	data, err := toJSON(tw)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	tw.Name = invalidName
 	invalidData, err := toJSON(tw)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := []struct {
 		desc        string
@@ -214,12 +214,12 @@ func TestUpdateTwin(t *testing.T) {
 
 	twin.Name = twinName
 	data, err := toJSON(twin)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	tw := twin
 	tw.Name = invalidName
 	invalidData, err := toJSON(tw)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := []struct {
 		desc        string
@@ -392,6 +392,7 @@ func TestViewTwin(t *testing.T) {
 
 		var resData twinRes
 		err = json.NewDecoder(res.Body).Decode(&resData)
+		assert.Nil(t, err, fmt.Sprintf("%s: got unexpected error while decoding json: %s", tc.desc, err))
 		assert.Equal(t, tc.res, resData, fmt.Sprintf("%s: expected body %v got %v", tc.desc, tc.res, resData))
 	}
 }
@@ -409,7 +410,7 @@ func TestListTwins(t *testing.T) {
 			Name:  name,
 		}
 		tw, err := svc.AddTwin(context.Background(), token, twin, twins.Definition{})
-		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		twres := twinRes{
 			Owner:    tw.Owner,
 			ID:       tw.ID,
@@ -567,7 +568,7 @@ func TestListTwins(t *testing.T) {
 		}
 
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		assert.ElementsMatch(t, tc.res, resData.Twins, fmt.Sprintf("%s: expected body %v got %v", tc.desc, tc.res, resData.Twins))
+		assert.ElementsMatch(t, tc.res, resData.Twins, fmt.Sprintf("%s: got incorrect list of twins", tc.desc))
 	}
 }
 

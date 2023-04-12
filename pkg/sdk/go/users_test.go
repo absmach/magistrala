@@ -23,7 +23,6 @@ import (
 	"github.com/mainflux/mainflux/users/mocks"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -154,9 +153,9 @@ func TestUser(t *testing.T) {
 	tkn, _ := auth.Issue(context.Background(), &mainflux.IssueReq{Id: user.ID, Email: user.Email, Type: mfauth.APIKey})
 	token := tkn.GetValue()
 	userID, err := mainfluxSDK.CreateUser(user, token)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	usertoken, err := mainfluxSDK.CreateToken(user)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	user.ID = userID
 	user.Password = ""
 
@@ -225,7 +224,7 @@ func TestUsers(t *testing.T) {
 		metadata := map[string]interface{}{"name": fmt.Sprintf("user%d", i)}
 		us := sdk.User{Email: email, Password: password, Metadata: metadata}
 		userID, err := mainfluxSDK.CreateUser(us, token)
-		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		us.ID = userID
 		us.Password = ""
 		users = append(users, us)
@@ -343,7 +342,7 @@ func TestCreateToken(t *testing.T) {
 	tkn, _ := auth.Issue(context.Background(), &mainflux.IssueReq{Id: user.ID, Email: user.Email, Type: mfauth.APIKey})
 	token := tkn.GetValue()
 	_, err := mainfluxSDK.CreateUser(user, token)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := []struct {
 		desc  string
@@ -397,9 +396,9 @@ func TestUpdateUser(t *testing.T) {
 	tkn, _ := auth.Issue(context.Background(), &mainflux.IssueReq{Id: user.ID, Email: user.Email, Type: mfauth.APIKey})
 	token := tkn.GetValue()
 	userID, err := mainfluxSDK.CreateUser(user, token)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	usertoken, err := mainfluxSDK.CreateToken(user)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := []struct {
 		desc  string
@@ -458,9 +457,9 @@ func TestUpdatePassword(t *testing.T) {
 	tkn, _ := auth.Issue(context.Background(), &mainflux.IssueReq{Id: user.ID, Email: user.Email, Type: mfauth.APIKey})
 	token := tkn.GetValue()
 	_, err := mainfluxSDK.CreateUser(user, token)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	usertoken, err := mainfluxSDK.CreateToken(user)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := []struct {
 		desc    string

@@ -127,7 +127,7 @@ func TestIssue(t *testing.T) {
 func TestRevoke(t *testing.T) {
 	svc := newService()
 	_, secret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.LoginKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})
-	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
+	require.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
 	key := auth.Key{
 		Type:     auth.APIKey,
 		IssuedAt: time.Now(),
@@ -135,7 +135,7 @@ func TestRevoke(t *testing.T) {
 		Subject:  email,
 	}
 	newKey, _, err := svc.Issue(context.Background(), secret, key)
-	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
+	require.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
 
 	cases := []struct {
 		desc  string
@@ -525,7 +525,7 @@ func TestListGroups(t *testing.T) {
 		group.Name = fmt.Sprintf("Group%d", i)
 		group.ParentID = parentID
 		g, err := svc.CreateGroup(context.Background(), apiToken, group)
-		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 		parentID = g.ID
 	}
 
@@ -594,7 +594,7 @@ func TestListChildren(t *testing.T) {
 		group.Name = fmt.Sprintf("Group%d", i)
 		group.ParentID = parentID
 		g, err := svc.CreateGroup(context.Background(), apiToken, group)
-		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 		parentID = g.ID
 		groupIDs[i] = g.ID
 	}
@@ -659,7 +659,7 @@ func TestListParents(t *testing.T) {
 		group.Name = fmt.Sprintf("Group%d", i)
 		group.ParentID = parentID
 		g, err := svc.CreateGroup(context.Background(), apiToken, group)
-		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 		parentID = g.ID
 		groupIDs[i] = g.ID
 	}
@@ -724,10 +724,10 @@ func TestListMembers(t *testing.T) {
 	n := uint64(10)
 	for i := uint64(0); i < n; i++ {
 		uid, err := idProvider.ID()
-		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
 		err = svc.Assign(context.Background(), apiToken, group.ID, "things", uid)
-		require.Nil(t, err, fmt.Sprintf("Assign member expected to succeed: %s\n", err))
+		assert.Nil(t, err, fmt.Sprintf("Assign member expected to succeed: %s\n", err))
 	}
 
 	cases := map[string]struct {
@@ -797,17 +797,17 @@ func TestListMemberships(t *testing.T) {
 	}
 
 	memberID, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
 	n := uint64(10)
 	for i := uint64(0); i < n; i++ {
 		group.Name = fmt.Sprintf("Group%d", i)
 		g, err := svc.CreateGroup(context.Background(), apiToken, group)
-		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
 		_ = svc.AddPolicy(context.Background(), auth.PolicyReq{Subject: id, Object: memberID, Relation: "owner"})
 		err = svc.Assign(context.Background(), apiToken, g.ID, "things", memberID)
-		require.Nil(t, err, fmt.Sprintf("Assign member expected to succeed: %s\n", err))
+		assert.Nil(t, err, fmt.Sprintf("Assign member expected to succeed: %s\n", err))
 	}
 
 	cases := map[string]struct {
@@ -869,7 +869,7 @@ func TestRemoveGroup(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
 
 	uid, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	creationTime := time.Now().UTC()
 	group := auth.Group{
@@ -880,7 +880,7 @@ func TestRemoveGroup(t *testing.T) {
 	}
 
 	group, err = svc.CreateGroup(context.Background(), apiToken, group)
-	require.Nil(t, err, fmt.Sprintf("group save got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("group save got unexpected error: %s", err))
 
 	err = svc.RemoveGroup(context.Background(), "wrongToken", group.ID)
 	assert.True(t, errors.Contains(err, errors.ErrAuthentication), fmt.Sprintf("Unauthorized access: expected %v got %v", errors.ErrAuthentication, err))
@@ -889,14 +889,14 @@ func TestRemoveGroup(t *testing.T) {
 	assert.True(t, errors.Contains(err, errors.ErrNotFound), fmt.Sprintf("Remove group with wrong id: expected %v got %v", errors.ErrNotFound, err))
 
 	gp, err := svc.ListGroups(context.Background(), apiToken, auth.PageMetadata{Level: auth.MaxLevel})
-	require.Nil(t, err, fmt.Sprintf("list groups unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("list groups unexpected error: %s", err))
 	assert.True(t, gp.Total == 1, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 1, gp.Total))
 
 	err = svc.RemoveGroup(context.Background(), apiToken, group.ID)
 	assert.True(t, errors.Contains(err, nil), fmt.Sprintf("Unauthorized access: expected %v got %v", nil, err))
 
 	gp, err = svc.ListGroups(context.Background(), apiToken, auth.PageMetadata{Level: auth.MaxLevel})
-	require.Nil(t, err, fmt.Sprintf("list groups save unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("list groups save unexpected error: %s", err))
 	assert.True(t, gp.Total == 0, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 0, gp.Total))
 
 }
@@ -918,7 +918,7 @@ func TestAssign(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
 
 	uid, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	creationTime := time.Now().UTC()
 	group := auth.Group{
@@ -929,25 +929,25 @@ func TestAssign(t *testing.T) {
 	}
 
 	group, err = svc.CreateGroup(context.Background(), apiToken, group)
-	require.Nil(t, err, fmt.Sprintf("group save got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("group save got unexpected error: %s", err))
 
 	mid, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	err = svc.Assign(context.Background(), apiToken, group.ID, "things", mid)
-	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 
 	// check access control policies things members.
 	subjectSet := fmt.Sprintf("%s:%s#%s", "members", group.ID, memberRelation)
 	err = svc.Authorize(context.Background(), auth.PolicyReq{Object: mid, Relation: "read", Subject: subjectSet})
-	require.Nil(t, err, fmt.Sprintf("entites having an access to group %s must have %s policy on %s: %s", group.ID, "read", mid, err))
+	assert.Nil(t, err, fmt.Sprintf("entites having an access to group %s must have %s policy on %s: %s", group.ID, "read", mid, err))
 	err = svc.Authorize(context.Background(), auth.PolicyReq{Object: mid, Relation: "write", Subject: subjectSet})
-	require.Nil(t, err, fmt.Sprintf("entites having an access to group %s must have %s policy on %s: %s", group.ID, "write", mid, err))
+	assert.Nil(t, err, fmt.Sprintf("entites having an access to group %s must have %s policy on %s: %s", group.ID, "write", mid, err))
 	err = svc.Authorize(context.Background(), auth.PolicyReq{Object: mid, Relation: "delete", Subject: subjectSet})
-	require.Nil(t, err, fmt.Sprintf("entites having an access to group %s must have %s policy on %s: %s", group.ID, "delete", mid, err))
+	assert.Nil(t, err, fmt.Sprintf("entites having an access to group %s must have %s policy on %s: %s", group.ID, "delete", mid, err))
 
 	mp, err := svc.ListMembers(context.Background(), apiToken, group.ID, "things", auth.PageMetadata{Offset: 0, Limit: 10})
-	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 	assert.True(t, mp.Total == 1, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 1, mp.Total))
 
 	err = svc.Assign(context.Background(), "wrongToken", group.ID, "things", mid)
@@ -972,7 +972,7 @@ func TestUnassign(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
 
 	uid, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	creationTime := time.Now().UTC()
 	group := auth.Group{
@@ -983,23 +983,23 @@ func TestUnassign(t *testing.T) {
 	}
 
 	group, err = svc.CreateGroup(context.Background(), apiToken, group)
-	require.Nil(t, err, fmt.Sprintf("group save got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("group save got unexpected error: %s", err))
 
 	mid, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	err = svc.Assign(context.Background(), apiToken, group.ID, "things", mid)
-	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 
 	mp, err := svc.ListMembers(context.Background(), apiToken, group.ID, "things", auth.PageMetadata{Limit: 10, Offset: 0})
-	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 	assert.True(t, mp.Total == 1, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 1, mp.Total))
 
 	err = svc.Unassign(context.Background(), apiToken, group.ID, mid)
-	require.Nil(t, err, fmt.Sprintf("member unassign save unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("member unassign save unexpected error: %s", err))
 
 	mp, err = svc.ListMembers(context.Background(), apiToken, group.ID, "things", auth.PageMetadata{Limit: 10, Offset: 0})
-	require.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("member assign save unexpected error: %s", err))
 	assert.True(t, mp.Total == 0, fmt.Sprintf("retrieve members of a group: expected %d got %d\n", 0, mp.Total))
 
 	err = svc.Unassign(context.Background(), "wrongToken", group.ID, mid)
@@ -1014,7 +1014,7 @@ func TestAuthorize(t *testing.T) {
 
 	pr := auth.PolicyReq{Object: authoritiesObj, Relation: memberRelation, Subject: id}
 	err := svc.Authorize(context.Background(), pr)
-	require.Nil(t, err, fmt.Sprintf("authorizing initial %v policy expected to succeed: %s", pr, err))
+	assert.Nil(t, err, fmt.Sprintf("authorizing initial %v policy expected to succeed: %s", pr, err))
 }
 
 func TestAddPolicy(t *testing.T) {
@@ -1022,10 +1022,10 @@ func TestAddPolicy(t *testing.T) {
 
 	pr := auth.PolicyReq{Object: "obj", Relation: "rel", Subject: "sub"}
 	err := svc.AddPolicy(context.Background(), pr)
-	require.Nil(t, err, fmt.Sprintf("adding %v policy expected to succeed: %v", pr, err))
+	assert.Nil(t, err, fmt.Sprintf("adding %v policy expected to succeed: %v", pr, err))
 
 	err = svc.Authorize(context.Background(), pr)
-	require.Nil(t, err, fmt.Sprintf("checking shared %v policy expected to be succeed: %#v", pr, err))
+	assert.Nil(t, err, fmt.Sprintf("checking shared %v policy expected to be succeed: %#v", pr, err))
 }
 
 func TestDeletePolicy(t *testing.T) {
@@ -1033,7 +1033,7 @@ func TestDeletePolicy(t *testing.T) {
 
 	pr := auth.PolicyReq{Object: authoritiesObj, Relation: memberRelation, Subject: id}
 	err := svc.DeletePolicy(context.Background(), pr)
-	require.Nil(t, err, fmt.Sprintf("deleting %v policy expected to succeed: %s", pr, err))
+	assert.Nil(t, err, fmt.Sprintf("deleting %v policy expected to succeed: %s", pr, err))
 }
 
 func TestAssignAccessRights(t *testing.T) {
@@ -1056,10 +1056,10 @@ func TestAssignAccessRights(t *testing.T) {
 	userGroupID := "user-group"
 	thingGroupID := "thing-group"
 	err = svc.AssignGroupAccessRights(context.Background(), apiToken, thingGroupID, userGroupID)
-	require.Nil(t, err, fmt.Sprintf("sharing the user group with thing group expected to succeed: %v", err))
+	assert.Nil(t, err, fmt.Sprintf("sharing the user group with thing group expected to succeed: %v", err))
 
 	err = svc.Authorize(context.Background(), auth.PolicyReq{Object: thingGroupID, Relation: memberRelation, Subject: fmt.Sprintf("%s:%s#%s", "members", userGroupID, memberRelation)})
-	require.Nil(t, err, fmt.Sprintf("checking shared group access policy expected to be succeed: %#v", err))
+	assert.Nil(t, err, fmt.Sprintf("checking shared group access policy expected to be succeed: %#v", err))
 }
 
 func TestAddPolicies(t *testing.T) {

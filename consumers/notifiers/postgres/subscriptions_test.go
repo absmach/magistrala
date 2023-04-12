@@ -25,10 +25,10 @@ func TestSave(t *testing.T) {
 	repo := postgres.New(dbMiddleware)
 
 	id1, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	id2, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	sub1 := notifiers.Subscription{
 		OwnerID: id1,
@@ -125,7 +125,7 @@ func TestRetrieveAll(t *testing.T) {
 
 	for i := 0; i < numSubs; i++ {
 		id, err := idProvider.ID()
-		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 		sub := notifiers.Subscription{
 			OwnerID: "owner",
 			ID:      id,
@@ -216,7 +216,7 @@ func TestRetrieveAll(t *testing.T) {
 
 	for _, tc := range cases {
 		page, err := repo.RetrieveAll(context.Background(), tc.pageMeta)
-		assert.Equal(t, tc.page, page, fmt.Sprintf("%s: expected page %v got %v\n", tc.desc, tc.page, page))
+		assert.Equal(t, tc.page, page, fmt.Sprintf("%s: got unexpected page\n", tc.desc))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }

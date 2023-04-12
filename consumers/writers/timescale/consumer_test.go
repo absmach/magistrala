@@ -12,7 +12,6 @@ import (
 	"github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/gofrs/uuid"
 )
@@ -35,13 +34,13 @@ func TestSaveSenml(t *testing.T) {
 	repo := timescale.New(db)
 
 	chid, err := uuid.NewV4()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	msg := senml.Message{}
 	msg.Channel = chid.String()
 
 	pubid, err := uuid.NewV4()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	msg.Publisher = pubid.String()
 
 	now := time.Now().Unix()
@@ -76,9 +75,9 @@ func TestSaveJSON(t *testing.T) {
 	repo := timescale.New(db)
 
 	chid, err := uuid.NewV4()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	pubid, err := uuid.NewV4()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	msg := json.Message{
 		Channel:   chid.String(),

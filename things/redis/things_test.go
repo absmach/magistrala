@@ -59,10 +59,10 @@ func TestThingID(t *testing.T) {
 	thingCache := redis.NewThingCache(redisClient)
 
 	key, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	id := "123"
 	err = thingCache.Save(context.Background(), key, id)
-	require.Nil(t, err, fmt.Sprintf("Save thing to cache: expected nil got %s", err))
+	assert.Nil(t, err, fmt.Sprintf("Save thing to cache: expected nil got %s", err))
 
 	cases := map[string]struct {
 		ID  string
@@ -92,7 +92,7 @@ func TestThingRemove(t *testing.T) {
 	thingCache := redis.NewThingCache(redisClient)
 
 	key, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	id := "123"
 	id2 := "321"
 	thingCache.Save(context.Background(), key, id)

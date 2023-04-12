@@ -247,7 +247,7 @@ func TestListSerials(t *testing.T) {
 	var issuedCerts []certs.Cert
 	for i := 0; i < certNum; i++ {
 		cert, err := svc.IssueCert(context.Background(), token, thingID, ttl)
-		require.Nil(t, err, fmt.Sprintf("unexpected cert creation error: %s\n", err))
+		assert.Nil(t, err, fmt.Sprintf("unexpected cert creation error: %s\n", err))
 
 		crt := certs.Cert{
 			OwnerID: cert.OwnerID,

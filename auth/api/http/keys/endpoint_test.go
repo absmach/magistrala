@@ -23,6 +23,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -90,7 +91,7 @@ func toJSON(data interface{}) string {
 func TestIssue(t *testing.T) {
 	svc := newService()
 	_, loginSecret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.LoginKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})
-	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
+	require.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
 
 	ts := newServer(svc)
 	defer ts.Close()
@@ -197,11 +198,11 @@ func TestIssue(t *testing.T) {
 func TestRetrieve(t *testing.T) {
 	svc := newService()
 	_, loginSecret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.LoginKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})
-	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
+	require.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
 	key := auth.Key{Type: auth.APIKey, IssuedAt: time.Now(), IssuerID: id, Subject: email}
 
 	k, _, err := svc.Issue(context.Background(), loginSecret, key)
-	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
+	require.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
 
 	ts := newServer(svc)
 	defer ts.Close()
@@ -249,11 +250,11 @@ func TestRetrieve(t *testing.T) {
 func TestRevoke(t *testing.T) {
 	svc := newService()
 	_, loginSecret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.LoginKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})
-	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
+	require.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
 	key := auth.Key{Type: auth.APIKey, IssuedAt: time.Now(), IssuerID: id, Subject: email}
 
 	k, _, err := svc.Issue(context.Background(), loginSecret, key)
-	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
+	require.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
 
 	ts := newServer(svc)
 	defer ts.Close()

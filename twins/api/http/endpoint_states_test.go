@@ -196,7 +196,7 @@ func TestListStates(t *testing.T) {
 		}
 
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		assert.ElementsMatch(t, tc.res, resData.States, fmt.Sprintf("%s: expected body %v got %v", tc.desc, tc.res, resData.States))
+		assert.ElementsMatch(t, tc.res, resData.States, fmt.Sprintf("%s: got incorrect body from response", tc.desc))
 	}
 }
 

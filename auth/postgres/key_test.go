@@ -16,7 +16,6 @@ import (
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const email = "user-save@example.com"
@@ -32,7 +31,7 @@ func TestKeySave(t *testing.T) {
 	repo := postgres.New(dbMiddleware)
 
 	id, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	cases := []struct {
 		desc string
@@ -74,7 +73,7 @@ func TestKeyRetrieve(t *testing.T) {
 	repo := postgres.New(dbMiddleware)
 
 	id, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	key := auth.Key{
 		Subject:   email,
@@ -122,7 +121,7 @@ func TestKeyRemove(t *testing.T) {
 	repo := postgres.New(dbMiddleware)
 
 	id, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	key := auth.Key{
 		Subject:   email,

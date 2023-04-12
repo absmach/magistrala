@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 )
 
@@ -41,7 +42,7 @@ func TestCanAccessByKey(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
 	usersAddr := fmt.Sprintf("localhost:%d", port)
-	conn, err := grpc.Dial(usersAddr, grpc.WithInsecure())
+	conn, err := grpc.Dial(usersAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	cli := grpcapi.NewClient(conn, mocktracer.New(), time.Second)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -102,7 +103,7 @@ func TestCanAccessByID(t *testing.T) {
 	svc.Connect(context.Background(), token, []string{ch.ID}, []string{th2.ID})
 
 	usersAddr := fmt.Sprintf("localhost:%d", port)
-	conn, err := grpc.Dial(usersAddr, grpc.WithInsecure())
+	conn, err := grpc.Dial(usersAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	cli := grpcapi.NewClient(conn, mocktracer.New(), time.Second)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -154,7 +155,7 @@ func TestIdentify(t *testing.T) {
 	sth := ths[0]
 
 	usersAddr := fmt.Sprintf("localhost:%d", port)
-	conn, err := grpc.Dial(usersAddr, grpc.WithInsecure())
+	conn, err := grpc.Dial(usersAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	cli := grpcapi.NewClient(conn, mocktracer.New(), time.Second)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)

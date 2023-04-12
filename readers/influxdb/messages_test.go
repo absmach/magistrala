@@ -14,6 +14,7 @@ import (
 	ireader "github.com/mainflux/mainflux/readers/influxdb"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -53,9 +54,13 @@ func TestReadSenml(t *testing.T) {
 
 	chanID, err := idProvider.ID()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	pubID, err := idProvider.ID()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	pubID2, err := idProvider.ID()
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	wrongID, err := idProvider.ID()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	m := senml.Message{
@@ -106,7 +111,7 @@ func TestReadSenml(t *testing.T) {
 	}
 
 	err = writer.Consume(messages)
-	assert.Nil(t, err, fmt.Sprintf("failed to store message to InfluxDB: %s", err))
+	require.Nil(t, err, fmt.Sprintf("failed to store message to InfluxDB: %s", err))
 
 	reader := ireader.New(client, repoCfg)
 
@@ -395,9 +400,9 @@ func TestReadSenml(t *testing.T) {
 
 	for _, tc := range cases {
 		result, err := reader.ReadAll(tc.chanID, tc.pageMeta)
-		assert.Nil(t, err, fmt.Sprintf("%s: got unexpected error: %s\n", tc.desc, err))
-		assert.ElementsMatch(t, tc.page.Messages, result.Messages, fmt.Sprintf("%s: expected: %v, got: %v\n", tc.desc, tc.page.Messages, result.Messages))
-		assert.Equal(t, tc.page.Total, result.Total, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.page.Total, result.Total))
+		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %s", tc.desc, err))
+		assert.ElementsMatch(t, tc.page.Messages, result.Messages, fmt.Sprintf("%s: got incorrect list of senml Messages from ReadAll()", tc.desc))
+		assert.Equal(t, tc.page.Total, result.Total, fmt.Sprintf("%s: expected %d got %d", tc.desc, tc.page.Total, result.Total))
 	}
 }
 
@@ -406,7 +411,6 @@ func TestReadJSON(t *testing.T) {
 
 	id1, err := idProvider.ID()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
 	m := json.Message{
 		Channel:   id1,
 		Publisher: id1,
@@ -429,11 +433,10 @@ func TestReadJSON(t *testing.T) {
 		msgs1 = append(msgs1, m)
 	}
 	err = writer.Consume(messages1)
-	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
+	require.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 
 	id2, err := idProvider.ID()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
 	m = json.Message{
 		Channel:   id2,
 		Publisher: id2,
@@ -538,7 +541,7 @@ func TestReadJSON(t *testing.T) {
 			result.Messages[i] = m
 		}
 		assert.ElementsMatch(t, tc.page.Messages, result.Messages, fmt.Sprintf("%s: expected \n%v got \n%v", tc.desc, tc.page.Messages, result.Messages))
-		assert.Equal(t, tc.page.Total, result.Total, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.page.Total, result.Total))
+		assert.Equal(t, tc.page.Total, result.Total, fmt.Sprintf("%s: got incorrect list of json Messages from ReadAll()", tc.desc))
 	}
 }
 

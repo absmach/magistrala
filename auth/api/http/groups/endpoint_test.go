@@ -23,6 +23,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -82,7 +83,7 @@ func TestShareGroupAccess(t *testing.T) {
 	defer ts.Close()
 
 	_, secret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.LoginKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})
-	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
+	require.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
 
 	key := auth.Key{
 		ID:       "id",
@@ -93,7 +94,7 @@ func TestShareGroupAccess(t *testing.T) {
 	}
 
 	_, apiToken, err := svc.Issue(context.Background(), secret, key)
-	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
+	require.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
 
 	type shareGroupAccessReq struct {
 		token        string

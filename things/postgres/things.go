@@ -148,7 +148,7 @@ func (tr thingRepository) UpdateKey(ctx context.Context, owner, id, key string) 
 func (tr thingRepository) RetrieveByID(ctx context.Context, owner, id string) (things.Thing, error) {
 	q := `SELECT name, key, metadata FROM things WHERE id = $1;`
 
-	dbth := dbThing{ID: id}
+	dbth := dbThing{ID: id, Owner: owner}
 
 	if err := tr.db.QueryRowxContext(ctx, q, id).StructScan(&dbth); err != nil {
 		pgErr, ok := err.(*pgconn.PgError)
@@ -158,7 +158,9 @@ func (tr thingRepository) RetrieveByID(ctx context.Context, owner, id string) (t
 		}
 		return things.Thing{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
-
+	fmt.Println()
+	fmt.Println(dbth)
+	fmt.Println()
 	return toThing(dbth)
 }
 

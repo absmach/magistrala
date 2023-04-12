@@ -23,7 +23,6 @@ import (
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -203,7 +202,7 @@ func TestView(t *testing.T) {
 		Contact: contact1,
 	}
 	id, err := svc.CreateSubscription(context.Background(), token, sub)
-	require.Nil(t, err, fmt.Sprintf("got an error creating id: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got an error creating id: %s", err))
 	sr := subRes{
 		ID:      id,
 		OwnerID: email,
@@ -289,7 +288,7 @@ func TestList(t *testing.T) {
 			Contact: sub.Contact,
 			Topic:   sub.Topic,
 		}
-		require.Nil(t, err, fmt.Sprintf("got an error creating id: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("got an error creating id: %s", err))
 		subs = append(subs, sr)
 	}
 	noLimit := toJSON(page{Offset: 5, Limit: 20, Total: numSubs, Subscriptions: subs[5:25]})
@@ -382,7 +381,7 @@ func TestList(t *testing.T) {
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		data := strings.Trim(string(body), "\n")
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-		assert.Equal(t, tc.res, data, fmt.Sprintf("%s: expected body %s got %s", tc.desc, tc.res, data))
+		assert.Equal(t, tc.res, data, fmt.Sprintf("%s: got unexpected body\n", tc.desc))
 	}
 }
 
@@ -396,7 +395,7 @@ func TestRemove(t *testing.T) {
 		Contact: contact1,
 	}
 	id, err := svc.CreateSubscription(context.Background(), token, sub)
-	require.Nil(t, err, fmt.Sprintf("got an error creating id: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got an error creating id: %s", err))
 
 	cases := []struct {
 		desc   string

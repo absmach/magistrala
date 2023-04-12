@@ -250,7 +250,7 @@ func TestTransformJSON(t *testing.T) {
 
 	for _, tc := range cases {
 		m, err := tr.Transform(tc.msg)
-		assert.Equal(t, tc.json, m, fmt.Sprintf("%s expected %v, got %v", tc.desc, tc.json, m))
+		assert.Equal(t, tc.json, m, fmt.Sprintf("%s got incorrect json response from Transform()", tc.desc))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s, got %s", tc.desc, tc.err, err))
 	}
 }

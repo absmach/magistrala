@@ -23,6 +23,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -94,10 +95,10 @@ type addPolicyRequest struct {
 func TestAddPolicies(t *testing.T) {
 	svc := newService()
 	_, loginSecret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.LoginKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})
-	assert.Nil(t, err, fmt.Sprintf("Issuing user key expected to succeed: %s", err))
+	require.Nil(t, err, fmt.Sprintf("Issuing user key expected to succeed: %s", err))
 
 	_, userLoginSecret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.LoginKey, IssuedAt: time.Now(), IssuerID: unauthzID, Subject: unauthzEmail})
-	assert.Nil(t, err, fmt.Sprintf("Issuing unauthorized user's key expected to succeed: %s", err))
+	require.Nil(t, err, fmt.Sprintf("Issuing unauthorized user's key expected to succeed: %s", err))
 
 	ts := newServer(svc)
 	defer ts.Close()
@@ -214,10 +215,10 @@ func TestAddPolicies(t *testing.T) {
 func TestDeletePolicies(t *testing.T) {
 	svc := newService()
 	_, loginSecret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.LoginKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})
-	assert.Nil(t, err, fmt.Sprintf("Issuing user key expected to succeed: %s", err))
+	require.Nil(t, err, fmt.Sprintf("Issuing user key expected to succeed: %s", err))
 
 	_, userLoginSecret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.LoginKey, IssuedAt: time.Now(), IssuerID: unauthzID, Subject: unauthzEmail})
-	assert.Nil(t, err, fmt.Sprintf("Issuing unauthorized user's key expected to succeed: %s", err))
+	require.Nil(t, err, fmt.Sprintf("Issuing unauthorized user's key expected to succeed: %s", err))
 
 	ts := newServer(svc)
 	defer ts.Close()
@@ -225,7 +226,7 @@ func TestDeletePolicies(t *testing.T) {
 
 	policies := addPolicyRequest{Object: "obj", Policies: []string{"read", "write", "delete"}, SubjectIDs: []string{"user1", "user2", "user3"}}
 	err = svc.AddPolicies(context.Background(), loginSecret, policies.Object, policies.SubjectIDs, policies.Policies)
-	assert.Nil(t, err, fmt.Sprintf("Adding policies expected to succeed: %s", err))
+	require.Nil(t, err, fmt.Sprintf("Adding policies expected to succeed: %s", err))
 
 	validSingleDeleteReq := addPolicyRequest{Object: "obj", Policies: []string{"read"}, SubjectIDs: []string{"user1"}}
 	validMultipleDeleteReq := addPolicyRequest{Object: "obj", Policies: []string{"write", "delete"}, SubjectIDs: []string{"user2", "user3"}}

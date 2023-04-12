@@ -22,53 +22,59 @@ const (
 func TestIdentify(t *testing.T) {
 	svc := standalone.NewAuthService(email, token)
 
-	cases := map[string]struct {
+	cases := []struct {
+		desc  string
 		token string
 		id    string
 		err   error
 	}{
-		"identify non-existing user": {
+		{
+			desc:  "identify non-existing user",
 			token: "non-existing",
 			id:    "",
 			err:   errors.ErrAuthentication,
 		},
-		"identify existing user": {
+		{
+			desc:  "identify existing user",
 			token: token,
 			id:    email,
 			err:   nil,
 		},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		id, err := svc.Identify(context.Background(), &mainflux.Token{Value: tc.token})
-		assert.Equal(t, tc.id, id.GetEmail(), fmt.Sprintf("%s: expected %s, got %s", desc, tc.id, id.GetEmail()))
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s, got %s", desc, tc.err, err))
+		assert.Equal(t, tc.id, id.GetEmail(), fmt.Sprintf("%s: expected %s, got %s", tc.desc, tc.id, id.GetEmail()))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s, got %s", tc.desc, tc.err, err))
 	}
 }
 
 func TestIssue(t *testing.T) {
 	svc := standalone.NewAuthService(email, token)
 
-	cases := map[string]struct {
+	cases := []struct {
+		desc  string
 		token string
 		id    string
 		err   error
 	}{
-		"issue key with an invalid token": {
-			token: "non-existing",
-			id:    "",
-			err:   errors.ErrAuthentication,
-		},
-		"issue key": {
+		{
+			desc:  "issue key",
 			token: token,
 			id:    token,
 			err:   nil,
 		},
+		{
+			desc:  "issue key with an invalid token",
+			token: "non-existing",
+			id:    "",
+			err:   errors.ErrAuthentication,
+		},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		id, err := svc.Issue(context.Background(), &mainflux.IssueReq{Id: tc.id, Email: tc.token, Type: 0})
-		assert.Equal(t, tc.id, id.GetValue(), fmt.Sprintf("%s: expected %s, got %s", desc, tc.id, id.GetValue()))
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s, got %s", desc, tc.err, err))
+		assert.Equal(t, tc.id, id.GetValue(), fmt.Sprintf("%s: expected %s, got %s", tc.desc, tc.id, id.GetValue()))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s, got %s", tc.desc, tc.err, err))
 	}
 }

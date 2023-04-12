@@ -50,21 +50,23 @@ func TestReadSenml(t *testing.T) {
 		Hosts:    []string{addr},
 		Keyspace: keyspace,
 	})
-	assert.Nil(t, err, fmt.Sprintf("failed to connect to Cassandra: %s", err))
+	require.Nil(t, err, fmt.Sprintf("failed to connect to Cassandra: %s", err))
 	defer session.Close()
-	err = casClient.InitDB(session, cwriter.Table)
-	assert.Nil(t, err, fmt.Sprintf("failed to initialize to Cassandra: %s", err))
 	err = casClient.InitDB(session, cwriter.Table)
 	require.Nil(t, err, fmt.Sprintf("failed to initialize to Cassandra: %s", err))
 	writer := cwriter.New(session)
 
 	chanID, err := idProvider.ID()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	pubID, err := idProvider.ID()
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	pubID2, err := idProvider.ID()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	wrongID, err := idProvider.ID()
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	m := senml.Message{
@@ -113,7 +115,7 @@ func TestReadSenml(t *testing.T) {
 	}
 
 	err = writer.Consume(messages)
-	assert.Nil(t, err, fmt.Sprintf("failed to store message to Cassandra: %s", err))
+	require.Nil(t, err, fmt.Sprintf("failed to store message to Cassandra: %s", err))
 
 	reader := creader.New(session)
 
@@ -405,9 +407,9 @@ func TestReadSenml(t *testing.T) {
 
 	for _, tc := range cases {
 		result, err := reader.ReadAll(tc.chanID, tc.pageMeta)
-		assert.Nil(t, err, fmt.Sprintf("%s: got unexpected error: %s", tc.desc, err))
-		assert.ElementsMatch(t, tc.page.Messages, result.Messages, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.page.Messages, result.Messages))
-		assert.Equal(t, tc.page.Total, result.Total, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.page.Total, result.Total))
+		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %s", tc.desc, err))
+		assert.ElementsMatch(t, tc.page.Messages, result.Messages, fmt.Sprintf("%s: got incorrect list of senml Messages from ReadAll()", tc.desc))
+		assert.Equal(t, tc.page.Total, result.Total, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.page.Total, result.Total))
 	}
 }
 
@@ -416,12 +418,12 @@ func TestReadJSON(t *testing.T) {
 		Hosts:    []string{addr},
 		Keyspace: keyspace,
 	})
-	assert.Nil(t, err, fmt.Sprintf("failed to connect to Cassandra: %s", err))
+	require.Nil(t, err, fmt.Sprintf("failed to connect to Cassandra: %s", err))
 	defer session.Close()
 	writer := cwriter.New(session)
 
 	id1, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	m := json.Message{
 		Channel:   id1,
 		Publisher: id1,
@@ -449,10 +451,10 @@ func TestReadJSON(t *testing.T) {
 		msgs1 = append(msgs1, m)
 	}
 	err = writer.Consume(messages1)
-	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
+	require.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 
 	id2, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	m = json.Message{
 		Channel:   id2,
 		Publisher: id2,
@@ -482,7 +484,7 @@ func TestReadJSON(t *testing.T) {
 		msgs2 = append(msgs2, m)
 	}
 	err = writer.Consume(messages2)
-	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
+	require.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 
 	httpMsgs := []map[string]interface{}{}
 	for i := 0; i < msgsNum; i += 2 {
@@ -559,9 +561,9 @@ func TestReadJSON(t *testing.T) {
 			delete(m.(map[string]interface{}), "id")
 			result.Messages[i] = m
 		}
-		assert.Nil(t, err, fmt.Sprintf("%s: got unexpected error: %s", tc.desc, err))
-		assert.ElementsMatch(t, tc.page.Messages, result.Messages, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.page.Messages, result.Messages))
-		assert.Equal(t, tc.page.Total, result.Total, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.page.Total, result.Total))
+		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %s", tc.desc, err))
+		assert.ElementsMatch(t, tc.page.Messages, result.Messages, fmt.Sprintf("%s: got incorrect list of json Messages from ReadAll()", tc.desc))
+		assert.Equal(t, tc.page.Total, result.Total, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.page.Total, result.Total))
 	}
 }
 

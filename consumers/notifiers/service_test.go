@@ -229,7 +229,7 @@ func TestListSubscriptions(t *testing.T) {
 	for _, tc := range cases {
 		page, err := svc.ListSubscriptions(context.Background(), tc.token, tc.pageMeta)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.page, page, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.page, page))
+		assert.Equal(t, tc.page, page, fmt.Sprintf("%s: got unexpected page\n", tc.desc))
 	}
 }
 
@@ -312,6 +312,7 @@ func TestConsume(t *testing.T) {
 		{
 			desc: "test success",
 			msg:  &msg,
+			err:  nil,
 		},
 		{
 			desc: "test fail",

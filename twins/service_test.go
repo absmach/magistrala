@@ -112,31 +112,35 @@ func TestViewTwin(t *testing.T) {
 	saved, err := svc.AddTwin(context.Background(), token, twin, def)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
-	cases := map[string]struct {
+	cases := []struct {
+		desc  string
 		id    string
 		token string
 		err   error
 	}{
-		"view existing twin": {
+		{
+			desc:  "view existing twin",
 			id:    saved.ID,
 			token: token,
 			err:   nil,
 		},
-		"view twin with wrong credentials": {
+		{
+			desc:  "view twin with wrong credentials",
 			id:    saved.ID,
 			token: wrongToken,
 			err:   errors.ErrAuthentication,
 		},
-		"view non-existing twin": {
+		{
+			desc:  "view non-existing twin",
 			id:    wrongID,
 			token: token,
 			err:   errors.ErrNotFound,
 		},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		_, err := svc.ViewTwin(context.Background(), tc.token, tc.id)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -153,7 +157,8 @@ func TestListTwins(t *testing.T) {
 		svc.AddTwin(context.Background(), token, twin, def)
 	}
 
-	cases := map[string]struct {
+	cases := []struct {
+		desc     string
 		token    string
 		offset   uint64
 		limit    uint64
@@ -161,28 +166,33 @@ func TestListTwins(t *testing.T) {
 		metadata map[string]interface{}
 		err      error
 	}{
-		"list all twins": {
+		{
+			desc:   "list all twins",
 			token:  token,
 			offset: 0,
 			limit:  n,
 			size:   n,
 			err:    nil,
 		},
-		"list with zero limit": {
+		{
+
+			desc:   "list with zero limit",
 			token:  token,
 			limit:  0,
 			offset: 0,
 			size:   0,
 			err:    nil,
 		},
-		"list with offset and limit": {
+		{
+			desc:   "list with offset and limit",
 			token:  token,
 			offset: 8,
 			limit:  5,
 			size:   2,
 			err:    nil,
 		},
-		"list with wrong credentials": {
+		{
+			desc:   "list with wrong credentials",
 			token:  wrongToken,
 			limit:  0,
 			offset: n,
@@ -190,11 +200,11 @@ func TestListTwins(t *testing.T) {
 		},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		page, err := svc.ListTwins(context.Background(), tc.token, tc.offset, tc.limit, twinName, tc.metadata)
 		size := uint64(len(page.Twins))
-		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.size, size))
+		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -301,18 +311,18 @@ func TestSaveStates(t *testing.T) {
 
 	for _, tc := range cases {
 		message, err := mocks.CreateMessage(tc.attr, tc.recs)
-		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 		err = svc.SaveStates(message)
-		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 		ttlAdded += tc.size
 		page, err := svc.ListStates(context.TODO(), token, 0, 10, tw.ID)
-		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		assert.Equal(t, ttlAdded, page.Total, fmt.Sprintf("%s: expected %d total got %d total\n", tc.desc, ttlAdded, page.Total))
 
 		page, err = svc.ListStates(context.TODO(), token, 0, 10, twWildcard.ID)
-		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		assert.Equal(t, ttlAdded, page.Total, fmt.Sprintf("%s: expected %d total got %d total\n", tc.desc, ttlAdded, page.Total))
 	}
 }

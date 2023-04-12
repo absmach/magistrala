@@ -25,7 +25,6 @@ import (
 	"github.com/mainflux/mainflux/things"
 	httpapi "github.com/mainflux/mainflux/things/api/things/http"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -106,7 +105,7 @@ func TestAdd(t *testing.T) {
 	}
 
 	invalidConfig := config
-	invalidConfig.MFChannels = []bootstrap.Channel{bootstrap.Channel{ID: "empty"}}
+	invalidConfig.MFChannels = []bootstrap.Channel{{ID: "empty"}}
 
 	cases := []struct {
 		desc   string
@@ -168,7 +167,7 @@ func TestView(t *testing.T) {
 	svc := newService(users, server.URL)
 
 	saved, err := svc.Add(context.Background(), validToken, config)
-	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	svcConfig, svcErr := svc.View(context.Background(), validToken, saved.MFThing)
 
@@ -193,7 +192,7 @@ func TestUpdate(t *testing.T) {
 	ch.ID = "2"
 	c.MFChannels = append(c.MFChannels, ch)
 	saved, err := svc.Add(context.Background(), validToken, c)
-	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	redisClient.FlushAll(context.Background()).Err()
 
 	modified := saved
@@ -263,7 +262,7 @@ func TestUpdateConnections(t *testing.T) {
 	svc = producer.NewEventStoreMiddleware(svc, redisClient)
 
 	saved, err := svc.Add(context.Background(), validToken, config)
-	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	redisClient.FlushAll(context.Background()).Err()
 
 	cases := []struct {
@@ -324,7 +323,7 @@ func TestList(t *testing.T) {
 	svc := newService(users, server.URL)
 
 	_, err := svc.Add(context.Background(), validToken, config)
-	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	offset := uint64(0)
 	limit := uint64(10)
@@ -332,9 +331,8 @@ func TestList(t *testing.T) {
 
 	svc = producer.NewEventStoreMiddleware(svc, redisClient)
 	esConfigs, esErr := svc.List(context.Background(), validToken, bootstrap.Filter{}, offset, limit)
-
-	assert.Equal(t, svcConfigs, esConfigs, fmt.Sprintf("event sourcing changed service behavior: expected %v got %v", svcConfigs, esConfigs))
-	assert.Equal(t, svcErr, esErr, fmt.Sprintf("event sourcing changed service behavior: expected %v got %v", svcErr, esErr))
+	assert.Equal(t, svcConfigs, esConfigs)
+	assert.Equal(t, svcErr, esErr)
 }
 
 func TestRemove(t *testing.T) {
@@ -348,7 +346,7 @@ func TestRemove(t *testing.T) {
 	c := config
 
 	saved, err := svc.Add(context.Background(), validToken, c)
-	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	redisClient.FlushAll(context.Background()).Err()
 
 	cases := []struct {
@@ -411,7 +409,7 @@ func TestBootstrap(t *testing.T) {
 	c := config
 
 	saved, err := svc.Add(context.Background(), validToken, c)
-	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	redisClient.FlushAll(context.Background()).Err()
 
 	cases := []struct {
@@ -480,7 +478,7 @@ func TestChangeState(t *testing.T) {
 	c := config
 
 	saved, err := svc.Add(context.Background(), validToken, c)
-	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	redisClient.FlushAll(context.Background()).Err()
 
 	cases := []struct {
@@ -540,9 +538,11 @@ func test(t *testing.T, expected, actual map[string]interface{}, description str
 	if expected != nil && actual != nil {
 		ts1 := expected["timestamp"].(int64)
 		ts2, err := strconv.ParseInt(actual["timestamp"].(string), 10, 64)
-		require.Nil(t, err, fmt.Sprintf("%s: expected to get a valid timestamp, got %s", description, err))
+		assert.Nil(t, err, fmt.Sprintf("%s: expected to get a valid timestamp, got %s", description, err))
+
 		val := ts1 == ts2 || ts2 <= ts1+defaultTimout
 		assert.True(t, val, fmt.Sprintf("%s: timestamp is not in valid range", description))
+
 		delete(expected, "timestamp")
 		delete(actual, "timestamp")
 		assert.Equal(t, expected, actual, fmt.Sprintf("%s: expected %v got %v\n", description, expected, actual))

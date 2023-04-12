@@ -12,7 +12,6 @@ import (
 	"github.com/mainflux/mainflux/twins/mocks"
 	"github.com/mainflux/mainflux/twins/redis"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -62,7 +61,7 @@ func TestTwinSave(t *testing.T) {
 		def := tc.twin.Definitions[len(tc.twin.Definitions)-1]
 		for _, attr := range def.Attributes {
 			ids, err := twinCache.IDs(ctx, attr.Channel, attr.Subtopic)
-			require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+			assert.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 			assert.Contains(t, ids, tc.twin.ID, fmt.Sprintf("%s: id %s not found in %v", tc.desc, tc.twin.ID, ids))
 		}
 	}
@@ -117,8 +116,8 @@ func TestTwinSaveIDs(t *testing.T) {
 		assert.Nil(t, err, fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.err, err))
 
 		ids, err := twinCache.IDs(ctx, tc.channel, tc.subtopic)
-		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
-		assert.ElementsMatch(t, ids, tc.ids, fmt.Sprintf("%s: ids %v not found in %v", tc.desc, tc.ids, ids))
+		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+		assert.ElementsMatch(t, ids, tc.ids, fmt.Sprintf("%s: got incorrect ids", tc.desc))
 	}
 }
 
@@ -133,7 +132,7 @@ func TestTwinUpdate(t *testing.T) {
 		tws = append(tws, tw)
 	}
 	err := twinCache.Save(ctx, tws[0])
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	tws[1].ID = tws[0].ID
 
 	cases := []struct {
@@ -168,8 +167,8 @@ func TestTwinUpdate(t *testing.T) {
 
 		attr := tc.twin.Definitions[0].Attributes[0]
 		ids, err := twinCache.IDs(ctx, attr.Channel, attr.Subtopic)
-		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-		assert.Contains(t, ids, tc.twinID, fmt.Sprintf("%s: ids %v do not contain id %s", tc.desc, ids, tc.twinID))
+		assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+		assert.Contains(t, ids, tc.twinID, fmt.Sprintf("%s: the list doesn't contain the correct elements", tc.desc))
 	}
 }
 
@@ -182,21 +181,21 @@ func TestTwinIDs(t *testing.T) {
 	for i := 0; i < len(channels); i++ {
 		tw := mocks.CreateTwin(channels[0:1], subtopics[0:1])
 		err := twinCache.Save(ctx, tw)
-		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 		tws = append(tws, tw)
 	}
 	for i := 0; i < len(channels); i++ {
 		tw := mocks.CreateTwin(channels[1:2], subtopics[1:2])
 		err := twinCache.Save(ctx, tw)
-		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 		tws = append(tws, tw)
 	}
 	twEmptySubt := mocks.CreateTwin(channels[0:1], []string{""})
 	err := twinCache.Save(ctx, twEmptySubt)
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	twSubtWild := mocks.CreateTwin(channels[0:1], []string{twins.SubtopicWildcard})
 	err = twinCache.Save(ctx, twSubtWild)
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	nonExistAttr := twins.Attribute{
 		Channel:      channels[2],
@@ -239,7 +238,7 @@ func TestTwinIDs(t *testing.T) {
 	for _, tc := range cases {
 		ids, err := twinCache.IDs(ctx, tc.attr.Channel, tc.attr.Subtopic)
 		assert.Nil(t, err, fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.err, err))
-		assert.ElementsMatch(t, ids, tc.ids, fmt.Sprintf("%s: expected ids %v got ids %v", tc.desc, tc.ids, ids))
+		assert.ElementsMatch(t, ids, tc.ids, fmt.Sprintf("%s: got unexpected list of IDs", tc.desc))
 	}
 }
 
@@ -252,7 +251,7 @@ func TestTwinRemove(t *testing.T) {
 	for i := range channels {
 		tw := mocks.CreateTwin(channels[i:i+1], subtopics[i:i+1])
 		err := twinCache.Save(ctx, tw)
-		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 		tws = append(tws, tw)
 	}
 
@@ -285,8 +284,8 @@ func TestTwinRemove(t *testing.T) {
 		def := tc.twin.Definitions[len(tc.twin.Definitions)-1]
 		for _, attr := range def.Attributes {
 			ids, err := twinCache.IDs(ctx, attr.Channel, attr.Subtopic)
-			require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
-			assert.NotContains(t, ids, tc.twin.ID, fmt.Sprintf("%s: id %s found in %v", tc.desc, tc.twin.ID, ids))
+			assert.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+			assert.NotContains(t, ids, tc.twin.ID, fmt.Sprintf("%s: found unexpected ID in the list", tc.desc))
 		}
 	}
 }

@@ -101,44 +101,55 @@ func TestLogin(t *testing.T) {
 		Password: "12345678",
 	}
 
-	cases := map[string]struct {
-		user users.User
-		err  error
+	cases := []struct {
+		desc     string
+		user     users.User
+		response string
+		err      error
 	}{
-		"login with good credentials": {
-			user: user,
-			err:  nil,
+		{
+			desc:     "login with good credentials",
+			user:     user,
+			response: user.Email,
+			err:      nil,
 		},
-		"login with wrong e-mail": {
+		{
+			desc: "login with wrong e-mail",
 			user: users.User{
 				Email:    wrong,
 				Password: user.Password,
 			},
-			err: errors.ErrAuthentication,
+			response: "",
+			err:      errors.ErrAuthentication,
 		},
-		"login with wrong password": {
+		{
+			desc: "login with wrong password",
 			user: users.User{
 				Email:    user.Email,
 				Password: wrong,
 			},
-			err: errors.ErrAuthentication,
+			response: "",
+			err:      errors.ErrAuthentication,
 		},
-		"login failed auth": {
-			user: noAuthUser,
-			err:  errors.ErrAuthentication,
+		{
+			desc:     "login failed auth",
+			user:     noAuthUser,
+			response: "",
+			err:      errors.ErrAuthentication,
 		},
 	}
 
-	for desc, tc := range cases {
-		_, err := svc.Login(context.Background(), tc.user)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+	for _, tc := range cases {
+		email, err := svc.Login(context.Background(), tc.user)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.Equal(t, tc.response, email, fmt.Sprintf("%s: expected %s but got %s", tc.desc, tc.response, email))
 	}
 }
 
 func TestViewUser(t *testing.T) {
 	svc := newService()
 	id, err := svc.Register(context.Background(), user.Email, user)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	token, err := svc.Login(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
@@ -146,25 +157,29 @@ func TestViewUser(t *testing.T) {
 	u := user
 	u.Password = ""
 
-	cases := map[string]struct {
+	cases := []struct {
+		desc   string
 		user   users.User
 		token  string
 		userID string
 		err    error
 	}{
-		"view user with authorized token": {
+		{
+			desc:   "view user with authorized token",
 			user:   u,
 			token:  token,
 			userID: id,
 			err:    nil,
 		},
-		"view user with empty token": {
+		{
+			desc:   "view user with empty token",
 			user:   users.User{},
 			token:  "",
 			userID: id,
 			err:    errors.ErrAuthentication,
 		},
-		"view user with valid token and invalid user id": {
+		{
+			desc:   "view user with valid token and invalid user id",
 			user:   users.User{},
 			token:  token,
 			userID: "",
@@ -172,9 +187,9 @@ func TestViewUser(t *testing.T) {
 		},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		_, err := svc.ViewUser(context.Background(), tc.token, tc.userID)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -189,26 +204,29 @@ func TestViewProfile(t *testing.T) {
 	u := user
 	u.Password = ""
 
-	cases := map[string]struct {
+	cases := []struct {
+		desc  string
 		user  users.User
 		token string
 		err   error
 	}{
-		"valid token's user info": {
+		{
+			desc:  "valid token's user info",
 			user:  u,
 			token: token,
 			err:   nil,
 		},
-		"invalid token's user info": {
+		{
+			desc:  "invalid token's user info",
 			user:  users.User{},
 			token: "",
 			err:   errors.ErrAuthentication,
 		},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		_, err := svc.ViewProfile(context.Background(), tc.token)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -230,10 +248,11 @@ func TestListUsers(t *testing.T) {
 			Password: "passpass",
 		}
 		_, err := svc.Register(context.Background(), token, user)
-		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	}
 
-	cases := map[string]struct {
+	cases := []struct {
+		desc   string
 		token  string
 		offset uint64
 		limit  uint64
@@ -241,35 +260,40 @@ func TestListUsers(t *testing.T) {
 		size   uint64
 		err    error
 	}{
-		"list users with authorized token": {
+		{
+			desc:  "list users with authorized token",
 			token: token,
 			size:  0,
 			err:   nil,
 		},
-		"list users with unauthorized token": {
+		{
+			desc:  "list users with unauthorized token",
 			token: unauthzToken,
 			size:  0,
 			err:   errors.ErrAuthorization,
 		},
-		"list user with emtpy token": {
+		{
+			desc:  "list user with emtpy token",
 			token: "",
 			size:  0,
 			err:   errors.ErrAuthentication,
 		},
-		"list users with offset and limit": {
+		{
+			desc:   "list users with offset and limit",
 			token:  token,
 			offset: 6,
 			limit:  nUsers,
 			size:   nUsers - 6,
 		},
-		"list using non-existent user": {
+		{
+			desc:  "list using non-existent user",
 			token: token,
 			email: nonExistingUser.Email,
 			err:   errors.ErrNotFound,
 		},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		pm := users.PageMetadata{
 			Offset:   tc.offset,
 			Limit:    tc.limit,
@@ -277,10 +301,11 @@ func TestListUsers(t *testing.T) {
 			Metadata: nil,
 			Status:   "all",
 		}
+
 		page, err := svc.ListUsers(context.Background(), tc.token, pm)
 		size := uint64(len(page.Users))
-		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.size, size))
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", tc.desc, tc.size, size))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -295,26 +320,29 @@ func TestUpdateUser(t *testing.T) {
 
 	user.Metadata = map[string]interface{}{"role": "test"}
 
-	cases := map[string]struct {
+	cases := []struct {
+		desc  string
 		user  users.User
 		token string
 		err   error
 	}{
-		"update user with valid token": {
+		{
+			desc:  "update user with valid token",
 			user:  user,
 			token: token,
 			err:   nil,
 		},
-		"update user with invalid token": {
+		{
+			desc:  "update user with invalid token",
 			user:  user,
 			token: "non-existent",
 			err:   errors.ErrAuthentication,
 		},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		err := svc.UpdateUser(context.Background(), tc.token, tc.user)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -323,17 +351,26 @@ func TestGenerateResetToken(t *testing.T) {
 	_, err := svc.Register(context.Background(), user.Email, user)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
-	cases := map[string]struct {
+	cases := []struct {
+		desc  string
 		email string
 		err   error
 	}{
-		"valid user reset token":  {user.Email, nil},
-		"invalid user rest token": {nonExistingUser.Email, errors.ErrNotFound},
+		{
+			desc:  "valid user reset token",
+			email: user.Email,
+			err:   nil,
+		},
+		{
+			desc:  "invalid user rest token",
+			email: nonExistingUser.Email,
+			err:   errors.ErrNotFound,
+		},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		err := svc.GenerateResetToken(context.Background(), tc.email, host)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -343,20 +380,39 @@ func TestChangePassword(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("register user error: %s", err))
 	token, _ := svc.Login(context.Background(), user)
 
-	cases := map[string]struct {
+	cases := []struct {
+		desc        string
 		token       string
 		password    string
 		oldPassword string
 		err         error
 	}{
-		"valid user change password ":                    {token, "newpassword", user.Password, nil},
-		"valid user change password with wrong password": {token, "newpassword", "wrongpassword", errors.ErrAuthentication},
-		"valid user change password invalid token":       {"", "newpassword", user.Password, errors.ErrAuthentication},
+		{
+			desc:        "valid user change password ",
+			token:       token,
+			password:    "newpassword",
+			oldPassword: user.Password,
+			err:         nil,
+		},
+		{
+			desc:        "valid user change password with wrong password",
+			token:       token,
+			password:    "newpassword",
+			oldPassword: "wrongpassword",
+			err:         errors.ErrAuthentication,
+		},
+		{
+			desc:        "valid user change password invalid token",
+			token:       "",
+			password:    "newpassword",
+			oldPassword: user.Password,
+			err:         errors.ErrAuthentication,
+		},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		err := svc.ChangePassword(context.Background(), tc.token, tc.password, tc.oldPassword)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 	}
 }
@@ -371,19 +427,36 @@ func TestResetPassword(t *testing.T) {
 	authSvc := mocks.NewAuthService(map[string]string{user.Email: user.Email}, mockAuthzDB)
 
 	resetToken, err := authSvc.Issue(context.Background(), &mainflux.IssueReq{Id: user.ID, Email: user.Email, Type: 2})
-	assert.Nil(t, err, fmt.Sprintf("Generating reset token expected to succeed: %s", err))
-	cases := map[string]struct {
+	require.Nil(t, err, fmt.Sprintf("Generating reset token expected to succeed: %s", err))
+	cases := []struct {
+		desc     string
 		token    string
 		password string
 		err      error
 	}{
-		"valid user reset password ":   {resetToken.GetValue(), user.Email, nil},
-		"invalid user reset password ": {"", "newpassword", errors.ErrAuthentication},
+		{
+			desc:     "reset user password with valid resetToken",
+			token:    resetToken.GetValue(),
+			password: password,
+			err:      nil,
+		},
+		{
+			desc:     "reset user password with invalid resetToken",
+			token:    unauthzToken,
+			password: password,
+			err:      errors.ErrNotFound,
+		},
+		{
+			desc:     "reset user password with empty resetToken",
+			token:    unauthzToken,
+			password: password,
+			err:      errors.ErrNotFound,
+		},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		err := svc.ResetPassword(context.Background(), tc.token, tc.password)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -393,18 +466,23 @@ func TestSendPasswordReset(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("register user error: %s", err))
 	token, _ := svc.Login(context.Background(), user)
 
-	cases := map[string]struct {
+	cases := []struct {
+		desc  string
 		token string
 		email string
 		err   error
 	}{
-		"valid user reset password ": {token, user.Email, nil},
+		{
+			desc:  "send password reset",
+			token: token,
+			email: user.Email,
+			err:   nil,
+		},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		err := svc.SendPasswordReset(context.Background(), host, tc.email, tc.token)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
-
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 
@@ -416,14 +494,14 @@ func TestDisableUser(t *testing.T) {
 	svc := newService()
 
 	id, err := svc.Register(context.Background(), user.Email, user)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	user.ID = id
 	user.Status = "enabled"
 	token, err := svc.Login(context.Background(), user)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	id, err = svc.Register(context.Background(), token, enabledUser1)
-	require.Nil(t, err, fmt.Sprintf("register enabledUser1 error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("register enabledUser1 error: %s", err))
 	enabledUser1.ID = id
 	enabledUser1.Status = "enabled"
 
@@ -506,7 +584,7 @@ func TestDisableUser(t *testing.T) {
 			Status: tc.status,
 		}
 		page, err := svc.ListUsers(context.Background(), token, pm)
-		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		size := uint64(len(page.Users))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.size, size))
 		assert.ElementsMatch(t, tc.response, page.Users, fmt.Sprintf("%s: expected %s got %s\n", desc, tc.response, page.Users))

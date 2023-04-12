@@ -159,7 +159,7 @@ func TestView(t *testing.T) {
 	svc := newService(users, server.URL)
 
 	saved, err := svc.Add(context.Background(), validToken, config)
-	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	cases := []struct {
 		desc  string
@@ -204,7 +204,7 @@ func TestUpdate(t *testing.T) {
 	ch.ID = "2"
 	c.MFChannels = append(c.MFChannels, ch)
 	saved, err := svc.Add(context.Background(), validToken, c)
-	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	modifiedCreated := saved
 	modifiedCreated.Content = "new-config"
@@ -256,7 +256,7 @@ func TestUpdateCert(t *testing.T) {
 	ch.ID = "2"
 	c.MFChannels = append(c.MFChannels, ch)
 	saved, err := svc.Add(context.Background(), validToken, c)
-	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	cases := []struct {
 		desc       string
@@ -314,15 +314,15 @@ func TestUpdateConnections(t *testing.T) {
 	ch.ID = "2"
 	c.MFChannels = append(c.MFChannels, ch)
 	created, err := svc.Add(context.Background(), validToken, c)
-	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	externalID, err := uuid.NewV4()
-	require.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
 	c.ExternalID = externalID.String()
 	active, err := svc.Add(context.Background(), validToken, c)
-	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	err = svc.ChangeState(context.Background(), validToken, active.MFThing, bootstrap.Active)
-	require.Nil(t, err, fmt.Sprintf("Changing state expected to succeed: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Changing state expected to succeed: %s.\n", err))
 
 	nonExisting := config
 	nonExisting.MFThing = unknown
@@ -388,17 +388,17 @@ func TestList(t *testing.T) {
 	for i := 0; i < numThings; i++ {
 		c := config
 		id, err := uuid.NewV4()
-		require.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
+		assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
 		c.ExternalID = id.String()
 		c.ExternalKey = id.String()
 		c.Name = fmt.Sprintf("%s-%d", config.Name, i)
 		s, err := svc.Add(context.Background(), validToken, c)
 		saved = append(saved, s)
-		require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+		assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	}
 	// Set one Thing to the different state
 	err := svc.ChangeState(context.Background(), validToken, "42", bootstrap.Active)
-	require.Nil(t, err, fmt.Sprintf("Changing config state expected to succeed: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Changing config state expected to succeed: %s.\n", err))
 	saved[41].State = bootstrap.Active
 
 	cases := []struct {
@@ -492,7 +492,7 @@ func TestRemove(t *testing.T) {
 	svc := newService(users, server.URL)
 
 	saved, err := svc.Add(context.Background(), validToken, config)
-	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	cases := []struct {
 		desc  string
@@ -539,10 +539,10 @@ func TestBootstrap(t *testing.T) {
 	svc := newService(users, server.URL)
 
 	saved, err := svc.Add(context.Background(), validToken, config)
-	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	e, err := enc([]byte(saved.ExternalKey))
-	require.Nil(t, err, fmt.Sprintf("Encrypting external key expected to succeed: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Encrypting external key expected to succeed: %s.\n", err))
 
 	cases := []struct {
 		desc        string
@@ -600,7 +600,7 @@ func TestChangeState(t *testing.T) {
 	svc := newService(users, server.URL)
 
 	saved, err := svc.Add(context.Background(), validToken, config)
-	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	cases := []struct {
 		desc  string
@@ -659,7 +659,7 @@ func TestUpdateChannelHandler(t *testing.T) {
 	svc := newService(users, server.URL)
 
 	_, err := svc.Add(context.Background(), validToken, config)
-	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	ch := bootstrap.Channel{
 		ID:       channel.ID,
 		Name:     "new name",
@@ -696,7 +696,7 @@ func TestRemoveChannelHandler(t *testing.T) {
 	svc := newService(users, server.URL)
 
 	_, err := svc.Add(context.Background(), validToken, config)
-	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	cases := []struct {
 		desc string
@@ -728,7 +728,7 @@ func TestRemoveCoinfigHandler(t *testing.T) {
 	svc := newService(users, server.URL)
 
 	saved, err := svc.Add(context.Background(), validToken, config)
-	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 
 	cases := []struct {
 		desc string

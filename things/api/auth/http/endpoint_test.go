@@ -99,39 +99,45 @@ func TestIdentify(t *testing.T) {
 
 	nonexistentData := toJSON(identifyReq{Token: wrong})
 
-	cases := map[string]struct {
+	cases := []struct {
+		desc        string
 		contentType string
 		req         string
-		status      int
+		statusCode  int
 	}{
-		"identify existing thing": {
+		{
+			desc:        "identify existing thing",
 			contentType: contentType,
 			req:         data,
-			status:      http.StatusOK,
+			statusCode:  http.StatusOK,
 		},
-		"identify non-existent thing": {
+		{
+			desc:        "identify non-existent thing",
 			contentType: contentType,
 			req:         nonexistentData,
-			status:      http.StatusNotFound,
+			statusCode:  http.StatusNotFound,
 		},
-		"identify with missing content type": {
+		{
+			desc:        "identify with missing content type",
 			contentType: wrong,
 			req:         data,
-			status:      http.StatusUnsupportedMediaType,
+			statusCode:  http.StatusUnsupportedMediaType,
 		},
-		"identify with empty JSON request": {
+		{
+			desc:        "identify with empty JSON request",
 			contentType: contentType,
 			req:         "{}",
-			status:      http.StatusUnauthorized,
+			statusCode:  http.StatusUnauthorized,
 		},
-		"identify with invalid JSON request": {
+		{
+			desc:        "identify with invalid JSON request",
 			contentType: contentType,
 			req:         "",
-			status:      http.StatusBadRequest,
+			statusCode:  http.StatusBadRequest,
 		},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
@@ -140,8 +146,8 @@ func TestIdentify(t *testing.T) {
 			body:        strings.NewReader(tc.req),
 		}
 		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", desc, tc.status, res.StatusCode))
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		assert.Equal(t, tc.statusCode, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.statusCode, res.StatusCode))
 	}
 }
 
@@ -165,57 +171,65 @@ func TestCanAccessByKey(t *testing.T) {
 		Token: th.Key,
 	})
 
-	cases := map[string]struct {
+	cases := []struct {
+		desc        string
 		contentType string
 		chanID      string
 		req         string
-		status      int
+		statusCode  int
 	}{
-		"check access for connected thing and channel": {
+		{
+			desc:        "check access for connected thing and channel",
 			contentType: contentType,
 			chanID:      ch.ID,
 			req:         data,
-			status:      http.StatusOK,
+			statusCode:  http.StatusOK,
 		},
-		"check access for not connected thing and channel": {
+		{
+			desc:        "check access for not connected thing and channel",
 			contentType: contentType,
 			chanID:      wrong,
 			req:         data,
-			status:      http.StatusForbidden,
+			statusCode:  http.StatusForbidden,
 		},
-		"check access with invalid content type": {
+		{
+			desc:        "check access with invalid content type",
 			contentType: wrong,
 			chanID:      ch.ID,
 			req:         data,
-			status:      http.StatusUnsupportedMediaType,
+			statusCode:  http.StatusUnsupportedMediaType,
 		},
-		"check access with empty JSON request": {
+		{
+			desc:        "check access with empty JSON request",
 			contentType: contentType,
 			chanID:      ch.ID,
 			req:         "{}",
-			status:      http.StatusUnauthorized,
+			statusCode:  http.StatusUnauthorized,
 		},
-		"check access with invalid JSON request": {
+		{
+			desc:        "check access with invalid JSON request",
 			contentType: contentType,
 			chanID:      ch.ID,
 			req:         "}",
-			status:      http.StatusBadRequest,
+			statusCode:  http.StatusBadRequest,
 		},
-		"check access with empty request": {
+		{
+			desc:        "check access with empty request",
 			contentType: contentType,
 			chanID:      ch.ID,
 			req:         "",
-			status:      http.StatusBadRequest,
+			statusCode:  http.StatusBadRequest,
 		},
-		"check access with empty channel id": {
+		{
+			desc:        "check access with empty channel id",
 			contentType: contentType,
 			chanID:      "",
 			req:         data,
-			status:      http.StatusBadRequest,
+			statusCode:  http.StatusBadRequest,
 		},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
@@ -224,8 +238,8 @@ func TestCanAccessByKey(t *testing.T) {
 			body:        strings.NewReader(tc.req),
 		}
 		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", desc, tc.status, res.StatusCode))
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		assert.Equal(t, tc.statusCode, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.statusCode, res.StatusCode))
 	}
 }
 
@@ -249,57 +263,65 @@ func TestCanAccessByID(t *testing.T) {
 		ThingID: th.ID,
 	})
 
-	cases := map[string]struct {
+	cases := []struct {
+		desc        string
 		contentType string
 		chanID      string
 		req         string
-		status      int
+		statusCode  int
 	}{
-		"check access for connected thing and channel": {
+		{
+			desc:        "check access for connected thing and channel",
 			contentType: contentType,
 			chanID:      ch.ID,
 			req:         data,
-			status:      http.StatusOK,
+			statusCode:  http.StatusOK,
 		},
-		"check access for not connected thing and channel": {
+		{
+			desc:        "check access for not connected thing and channel",
 			contentType: contentType,
 			chanID:      wrong,
 			req:         data,
-			status:      http.StatusForbidden,
+			statusCode:  http.StatusForbidden,
 		},
-		"check access with invalid content type": {
+		{
+			desc:        "check access with invalid content type",
 			contentType: wrong,
 			chanID:      ch.ID,
 			req:         data,
-			status:      http.StatusUnsupportedMediaType,
+			statusCode:  http.StatusUnsupportedMediaType,
 		},
-		"check access with empty JSON request": {
+		{
+			desc:        "check access with empty JSON request",
 			contentType: contentType,
 			chanID:      ch.ID,
 			req:         "{}",
-			status:      http.StatusBadRequest,
+			statusCode:  http.StatusBadRequest,
 		},
-		"check access with invalid JSON request": {
+		{
+			desc:        "check access with invalid JSON request",
 			contentType: contentType,
 			chanID:      ch.ID,
 			req:         "}",
-			status:      http.StatusBadRequest,
+			statusCode:  http.StatusBadRequest,
 		},
-		"check access with empty request": {
+		{
+			desc:        "check access with empty request",
 			contentType: contentType,
 			chanID:      ch.ID,
 			req:         "",
-			status:      http.StatusBadRequest,
+			statusCode:  http.StatusBadRequest,
 		},
-		"check access with empty channel id": {
+		{
+			desc:        "check access with empty channel id",
 			contentType: contentType,
 			chanID:      "",
 			req:         data,
-			status:      http.StatusBadRequest,
+			statusCode:  http.StatusBadRequest,
 		},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
@@ -308,8 +330,8 @@ func TestCanAccessByID(t *testing.T) {
 			body:        strings.NewReader(tc.req),
 		}
 		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", desc, err))
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", desc, tc.status, res.StatusCode))
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		assert.Equal(t, tc.statusCode, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.statusCode, res.StatusCode))
 	}
 }
 

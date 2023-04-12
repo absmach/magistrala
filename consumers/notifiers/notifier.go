@@ -10,7 +10,7 @@ import (
 )
 
 // ErrNotify wraps sending notification errors,
-var ErrNotify = errors.New("Error sending notification")
+var ErrNotify = errors.New("error sending notification")
 
 // Notifier represents an API for sending notification.
 type Notifier interface {

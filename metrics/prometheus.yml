@@ -1,9 +1,0 @@
-global:
-  scrape_interval:     15s
-  evaluation_interval: 15s
-
-scrape_configs:
-  - job_name: 'mainflux'
-
-    static_configs:
-    - targets: ['mainflux-things:9000',  'mainflux-users:9002', 'mainflux-auth:9020', 'mainflux-http:8008', 'mainflux-ws:8186','mainflux-coap:5683']

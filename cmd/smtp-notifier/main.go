@@ -70,7 +70,7 @@ func main() {
 	defer db.Close()
 
 	ec := email.Config{}
-	if err := env.Parse(&cfg); err != nil {
+	if err := env.Parse(&ec); err != nil {
 		logger.Fatal(fmt.Sprintf("failed to load email configuration : %s", err))
 	}
 

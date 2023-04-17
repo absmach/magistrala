@@ -100,6 +100,7 @@ func main() {
 	}
 
 	SDKCfg := mfSDK.Config{
+		UsersURL:        cfg.Server.UsersURL,
 		ThingsURL:       cfg.Server.ThingsURL,
 		BootstrapURL:    cfg.Server.MfBSURL,
 		CertsURL:        cfg.Server.MfCertsURL,

@@ -94,7 +94,7 @@ paths:
           description: Missing or invalid access token provided.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /groups/{groupId}:
+  /groups/{groupID}:
     get:
       summary: Retrieves users
       description: |
@@ -216,7 +216,7 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /users/{userId}/enable:
+  /users/{userID}/enable:
     post:
       summary: Enables a user account
       description: |
@@ -236,7 +236,7 @@ paths:
           description: Missing or invalid access token provided.
         '500':
          $ref: "#/components/responses/ServiceError"
-  /users/{userId}/disable:
+  /users/{userID}/disable:
     post:
       summary: Disables a user account
       description: |
@@ -360,7 +360,7 @@ components:
         minimum: 0
       required: false
     UserId:
-      name: userId
+      name: userID
       description: Unique user identifier.
       in: path
       schema:
@@ -368,7 +368,7 @@ components:
         format: uuid
       required: true
     GroupId:
-      name: groupId
+      name: groupID
       description: Unique group identifier.
       in: path
       schema:

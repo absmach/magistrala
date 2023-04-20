@@ -25,7 +25,7 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /keys/{id}:
+  /keys/{keyID}:
     get:
       summary: Gets API key details.
       description: |
@@ -65,8 +65,8 @@ paths:
         Creates new group that can be used for grouping entities - things, users.
       tags:
         - auth
-      parameters:
-        - $ref: "#/components/requestBodies/GroupCreateReq"
+      requestBody:
+        $ref: "#/components/requestBodies/GroupCreateReq"
       responses:
         '201':
           $ref: "#/components/responses/GroupCreateRes"
@@ -101,7 +101,7 @@ paths:
           description: Group does not exist.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /groups/{groupId}:
+  /groups/{groupID}:
     get:
       summary: Gets group info.
       description: |
@@ -166,7 +166,7 @@ paths:
           description: Group does not exist.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /groups/{groupId}/children:
+  /groups/{groupID}/children:
     get:
       summary: Gets group children.
       description: |
@@ -191,7 +191,7 @@ paths:
           description: Group does not exist.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /groups/{groupId}/parents:
+  /groups/{groupID}/parents:
     get:
       summary: Gets group info.
       description: |
@@ -216,7 +216,7 @@ paths:
           description: Group does not exist.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /groups/{groupId}/members:
+  /groups/{groupID}/members:
     post:
       summary: Assigns members to a group.
       description: |
@@ -277,7 +277,7 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /members/{memberId}/groups:
+  /members/{memberID}/groups:
     get:
       summary: Gets memberships for a member with member id.
       description: |
@@ -541,7 +541,7 @@ components:
 
   parameters:
     ApiKeyId:
-      name: id
+      name: keyID
       description: API Key ID.
       in: path
       schema:
@@ -557,7 +557,7 @@ components:
         format: uuid
       required: true
     GroupId:
-      name: groupId
+      name: groupID
       description: Group ID.
       in: path
       schema:
@@ -565,7 +565,7 @@ components:
         format: uuid
       required: true
     MemberId:
-      name: memberId
+      name: memberID
       description: Member id.
       in: path
       schema:

@@ -4,7 +4,7 @@ info:
   description: HTTP API for sending messages through communication channels.
   version: "1.0.0"
 paths:
-  /channels/{id}/messages:
+  /channels/{chanID}/messages:
     post:
       summary: Sends message to the communication channel
       description: |
@@ -106,7 +106,7 @@ components:
 
   parameters:
     ID:
-      name: id
+      name: chanID
       description: Unique channel identifier.
       in: path
       schema:

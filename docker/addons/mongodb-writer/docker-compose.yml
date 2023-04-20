@@ -46,6 +46,7 @@ services:
       MF_MONGO_WRITER_DB: ${MF_MONGO_WRITER_DB}
       MF_MONGO_WRITER_DB_HOST: mongodb
       MF_MONGO_WRITER_DB_PORT: ${MF_MONGO_WRITER_DB_PORT}
+      MF_JAEGER_URL: ${MF_JAEGER_URL}
     ports:
       - ${MF_MONGO_WRITER_PORT}:${MF_MONGO_WRITER_PORT}
     networks:

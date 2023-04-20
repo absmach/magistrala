@@ -14,12 +14,14 @@ import (
 	"github.com/mainflux/mainflux/consumers/writers/api"
 	"github.com/mainflux/mainflux/consumers/writers/timescale"
 	"github.com/mainflux/mainflux/internal"
+	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
 	pgClient "github.com/mainflux/mainflux/internal/clients/postgres"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
+	"github.com/mainflux/mainflux/pkg/messaging/tracing"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -35,6 +37,7 @@ type config struct {
 	LogLevel   string `env:"MF_TIMESCALE_WRITER_LOG_LEVEL"   envDefault:"info"`
 	ConfigPath string `env:"MF_TIMESCALE_WRITER_CONFIG_PATH" envDefault:"/config.toml"`
 	BrokerURL  string `env:"MF_BROKER_URL"                   envDefault:"nats://localhost:4222"`
+	JaegerURL  string `env:"MF_JAEGER_URL"                   envDefault:"localhost:6831"`
 }
 
 func main() {
@@ -58,15 +61,22 @@ func main() {
 	}
 	defer db.Close()
 
+	tracer, traceCloser, err := jaegerClient.NewTracer(svcName, cfg.JaegerURL)
+	if err != nil {
+		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
+	}
+	defer traceCloser.Close()
+
 	repo := newService(db, logger)
 
 	pubSub, err := brokers.NewPubSub(cfg.BrokerURL, "", logger)
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err))
 	}
+	pubSub = tracing.NewPubSub(tracer, pubSub)
 	defer pubSub.Close()
 
-	if err = consumers.Start(svcName, pubSub, repo, cfg.ConfigPath, logger); err != nil {
+	if err = consumers.Start(ctx, svcName, pubSub, repo, cfg.ConfigPath, logger); err != nil {
 		logger.Fatal(fmt.Sprintf("failed to create Timescale writer: %s", err))
 	}
 

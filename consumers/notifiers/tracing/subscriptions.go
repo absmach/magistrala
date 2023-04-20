@@ -28,7 +28,7 @@ type subRepositoryMiddleware struct {
 
 // New instantiates a new Subscriptions repository that
 // tracks request and their latency, and adds spans to context.
-func New(repo notifiers.SubscriptionsRepository, tracer opentracing.Tracer) notifiers.SubscriptionsRepository {
+func New(tracer opentracing.Tracer, repo notifiers.SubscriptionsRepository) notifiers.SubscriptionsRepository {
 	return subRepositoryMiddleware{
 		tracer: tracer,
 		repo:   repo,

@@ -27,6 +27,7 @@ default values.
 | MF_INFLUXDB_HTTP_ENABLED      | InfluxDB http enabled status                                                      | true                   |
 | MF_INFLUXDB_INIT_MODE         | InfluxDB initialization mode                                                      | setup                  |
 | MF_INFLUX_WRITER_CONFIG_PATH  | Config file path with message broker subjects list, payload type and content-type | /configs.toml          |
+| MF_JAEGER_URL                 | Jaeger server URL                                                        | localhost:6831 |
 
 ## Deployment
 

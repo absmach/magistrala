@@ -12,6 +12,7 @@ import (
 	"github.com/mainflux/mainflux"
 	adapter "github.com/mainflux/mainflux/http"
 	"github.com/mainflux/mainflux/http/api"
+	"github.com/mainflux/mainflux/http/tracing"
 	"github.com/mainflux/mainflux/internal"
 	thingsClient "github.com/mainflux/mainflux/internal/clients/grpc/things"
 	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
@@ -21,6 +22,8 @@ import (
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
+	pstracing "github.com/mainflux/mainflux/pkg/messaging/tracing"
+	"github.com/opentracing/opentracing-go"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -58,19 +61,20 @@ func main() {
 	defer tcHandler.Close()
 	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
 
-	pub, err := brokers.NewPublisher(cfg.BrokerURL)
-	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err))
-	}
-	defer pub.Close()
-
-	svc := newService(pub, tc, logger)
-
-	tracer, closer, err := jaegerClient.NewTracer("http_adapter", cfg.JaegerURL)
+	tracer, closer, err := jaegerClient.NewTracer(svcName, cfg.JaegerURL)
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
 	}
 	defer closer.Close()
+
+	pub, err := brokers.NewPublisher(cfg.BrokerURL)
+	if err != nil {
+		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err))
+	}
+	pub = pstracing.New(tracer, pub)
+	defer pub.Close()
+
+	svc := newService(pub, tc, logger, tracer)
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
@@ -91,8 +95,9 @@ func main() {
 	}
 }
 
-func newService(pub messaging.Publisher, tc mainflux.ThingsServiceClient, logger mflog.Logger) adapter.Service {
+func newService(pub messaging.Publisher, tc mainflux.ThingsServiceClient, logger mflog.Logger, tracer opentracing.Tracer) adapter.Service {
 	svc := adapter.New(pub, tc)
+	svc = tracing.New(tracer, svc)
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := internal.MakeMetrics(svcName, "api")
 	svc = api.MetricsMiddleware(svc, counter, latency)

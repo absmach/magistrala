@@ -99,7 +99,7 @@ func main() {
 	svc := newService(db, dbTracer, cfg.Secret, logger, readerConn, writerConn, cfg.LoginDuration)
 
 	// Create new HTTP Server
-	tracer, closer, err := jaegerClient.NewTracer("auth", cfg.JaegerURL)
+	tracer, closer, err := jaegerClient.NewTracer(svcName, cfg.JaegerURL)
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
 	}
@@ -143,7 +143,7 @@ func main() {
 
 func newService(db *sqlx.DB, tracer opentracing.Tracer, secret string, logger mflog.Logger, readerConn, writerConn *grpc.ClientConn, duration time.Duration) auth.Service {
 	database := authPg.NewDatabase(db)
-	keysRepo := tracing.New(authPg.New(database), tracer)
+	keysRepo := tracing.New(tracer, authPg.New(database))
 
 	groupsRepo := authPg.NewGroupRepo(database)
 	groupsRepo = tracing.GroupRepositoryMiddleware(tracer, groupsRepo)

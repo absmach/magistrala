@@ -127,7 +127,7 @@ func main() {
 func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServiceClient, c config, ec email.Config, logger mflog.Logger) users.Service {
 	database := usersPg.NewDatabase(db)
 	hasher := bcrypt.New()
-	userRepo := tracing.UserRepositoryMiddleware(usersPg.NewUserRepo(database), tracer)
+	userRepo := tracing.UserRepositoryMiddleware(tracer, usersPg.NewUserRepo(database))
 
 	emailer, err := emailer.New(c.ResetURL, &ec)
 	if err != nil {

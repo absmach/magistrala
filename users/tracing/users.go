@@ -28,7 +28,7 @@ type userRepositoryMiddleware struct {
 
 // UserRepositoryMiddleware tracks request and their latency, and adds spans
 // to context.
-func UserRepositoryMiddleware(repo users.UserRepository, tracer opentracing.Tracer) users.UserRepository {
+func UserRepositoryMiddleware(tracer opentracing.Tracer, repo users.UserRepository) users.UserRepository {
 	return userRepositoryMiddleware{
 		tracer: tracer,
 		repo:   repo,

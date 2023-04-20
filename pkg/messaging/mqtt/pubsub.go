@@ -4,6 +4,7 @@
 package mqtt
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -79,7 +80,7 @@ func NewPubSub(url, queue string, timeout time.Duration, logger log.Logger) (mes
 	return ret, nil
 }
 
-func (ps *pubsub) Subscribe(id, topic string, handler messaging.MessageHandler) error {
+func (ps *pubsub) Subscribe(ctx context.Context, id, topic string, handler messaging.MessageHandler) error {
 	if id == "" {
 		return ErrEmptyID
 	}
@@ -122,7 +123,7 @@ func (ps *pubsub) Subscribe(id, topic string, handler messaging.MessageHandler) 
 	return token.Error()
 }
 
-func (ps *pubsub) Unsubscribe(id, topic string) error {
+func (ps *pubsub) Unsubscribe(ctx context.Context, id, topic string) error {
 	if id == "" {
 		return ErrEmptyID
 	}

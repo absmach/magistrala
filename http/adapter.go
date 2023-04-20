@@ -44,5 +44,5 @@ func (as *adapterService) Publish(ctx context.Context, token string, msg *messag
 	}
 	msg.Publisher = thid.GetValue()
 
-	return as.publisher.Publish(msg.Channel, msg)
+	return as.publisher.Publish(ctx, msg.Channel, msg)
 }

@@ -29,13 +29,12 @@ type keyRepositoryMiddleware struct {
 
 // New tracks request and their latency, and adds spans
 // to context.
-func New(repo auth.KeyRepository, tracer opentracing.Tracer) auth.KeyRepository {
+func New(tracer opentracing.Tracer, repo auth.KeyRepository) auth.KeyRepository {
 	return keyRepositoryMiddleware{
 		tracer: tracer,
 		repo:   repo,
 	}
 }
-
 
 func (krm keyRepositoryMiddleware) Save(ctx context.Context, key auth.Key) (string, error) {
 	span := createSpan(ctx, krm.tracer, saveOp)

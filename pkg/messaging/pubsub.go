@@ -3,10 +3,12 @@
 
 package messaging
 
+import "context"
+
 // Publisher specifies message publishing API.
 type Publisher interface {
 	// Publishes message to the stream.
-	Publish(topic string, msg *Message) error
+	Publish(ctx context.Context, topic string, msg *Message) error
 
 	// Close gracefully closes message publisher's connection.
 	Close() error
@@ -24,11 +26,11 @@ type MessageHandler interface {
 // Subscriber specifies message subscription API.
 type Subscriber interface {
 	// Subscribe subscribes to the message stream and consumes messages.
-	Subscribe(id, topic string, handler MessageHandler) error
+	Subscribe(ctx context.Context, id, topic string, handler MessageHandler) error
 
 	// Unsubscribe unsubscribes from the message stream and
 	// stops consuming messages.
-	Unsubscribe(id, topic string) error
+	Unsubscribe(ctx context.Context, id, topic string) error
 
 	// Close gracefully closes message subscriber's connection.
 	Close() error

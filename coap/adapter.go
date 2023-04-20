@@ -66,7 +66,7 @@ func (svc *adapterService) Publish(ctx context.Context, key string, msg *messagi
 	}
 	msg.Publisher = thid.GetValue()
 
-	return svc.pubsub.Publish(msg.Channel, msg)
+	return svc.pubsub.Publish(ctx, msg.Channel, msg)
 }
 
 func (svc *adapterService) Subscribe(ctx context.Context, key, chanID, subtopic string, c Client) error {
@@ -81,7 +81,7 @@ func (svc *adapterService) Subscribe(ctx context.Context, key, chanID, subtopic 
 	if subtopic != "" {
 		subject = fmt.Sprintf("%s.%s", subject, subtopic)
 	}
-	return svc.pubsub.Subscribe(c.Token(), subject, c)
+	return svc.pubsub.Subscribe(ctx, c.Token(), subject, c)
 }
 
 func (svc *adapterService) Unsubscribe(ctx context.Context, key, chanID, subtopic, token string) error {
@@ -96,5 +96,5 @@ func (svc *adapterService) Unsubscribe(ctx context.Context, key, chanID, subtopi
 	if subtopic != "" {
 		subject = fmt.Sprintf("%s.%s", subject, subtopic)
 	}
-	return svc.pubsub.Unsubscribe(token, subject)
+	return svc.pubsub.Unsubscribe(ctx, token, subject)
 }

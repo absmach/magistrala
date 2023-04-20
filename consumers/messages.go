@@ -4,6 +4,7 @@
 package consumers
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -32,7 +33,7 @@ var (
 // Start method starts consuming messages received from Message broker.
 // This method transforms messages to SenML format before
 // using MessageRepository to store them.
-func Start(id string, sub messaging.Subscriber, consumer interface{}, configPath string, logger logger.Logger) error {
+func Start(ctx context.Context, id string, sub messaging.Subscriber, consumer interface{}, configPath string, logger logger.Logger) error {
 	cfg, err := loadConfig(configPath)
 	if err != nil {
 		logger.Warn(fmt.Sprintf("Failed to load consumer config: %s", err))
@@ -43,11 +44,11 @@ func Start(id string, sub messaging.Subscriber, consumer interface{}, configPath
 	for _, subject := range cfg.SubscriberCfg.Subjects {
 		switch c := consumer.(type) {
 		case AsyncConsumer:
-			if err := sub.Subscribe(id, subject, handleAsync(transformer, c)); err != nil {
+			if err := sub.Subscribe(ctx, id, subject, handleAsync(transformer, c)); err != nil {
 				return err
 			}
 		case BlockingConsumer:
-			if err := sub.Subscribe(id, subject, handleSync(transformer, c)); err != nil {
+			if err := sub.Subscribe(ctx, id, subject, handleSync(transformer, c)); err != nil {
 				return err
 			}
 		default:
@@ -92,7 +93,6 @@ type handleFunc func(msg *messaging.Message) error
 
 func (h handleFunc) Handle(msg *messaging.Message) error {
 	return h(msg)
-
 }
 
 func (h handleFunc) Cancel() error {

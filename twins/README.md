@@ -18,7 +18,7 @@ default values.
 | MF_TWINS_HTTP_PORT         | Twins service HTTP port                                              | 9018                  |
 | MF_TWINS_SERVER_CERT       | Path to server certificate in PEM format                             |                       |
 | MF_TWINS_SERVER_KEY        | Path to server key in PEM format                                     |                       |
-| MF_JAEGER_URL              | Jaeger server URL                                                    |                       |
+| MF_JAEGER_URL               | Jaeger server URL                                             | localhost:6831        |
 | MF_TWINS_DB                | Database name                                                        | mainflux              |
 | MF_TWINS_DB_HOST           | Database host address                                                | localhost             |
 | MF_TWINS_DB_PORT           | Database host port                                                   | 27017                 |

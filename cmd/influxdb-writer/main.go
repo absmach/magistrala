@@ -13,11 +13,13 @@ import (
 	"github.com/mainflux/mainflux/consumers/writers/api"
 	"github.com/mainflux/mainflux/consumers/writers/influxdb"
 	influxDBClient "github.com/mainflux/mainflux/internal/clients/influxdb"
+	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
+	"github.com/mainflux/mainflux/pkg/messaging/tracing"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -33,6 +35,7 @@ type config struct {
 	LogLevel   string `env:"MF_INFLUX_WRITER_LOG_LEVEL"     envDefault:"info"`
 	ConfigPath string `env:"MF_INFLUX_WRITER_CONFIG_PATH"   envDefault:"/config.toml"`
 	BrokerURL  string `env:"MF_BROKER_URL"                  envDefault:"nats://localhost:4222"`
+	JaegerURL  string `env:"MF_JAEGER_URL"                  envDefault:"localhost:6831"`
 }
 
 func main() {
@@ -49,10 +52,17 @@ func main() {
 		log.Fatalf("failed to init logger: %s", err)
 	}
 
+	tracer, traceCloser, err := jaegerClient.NewTracer(svcName, cfg.JaegerURL)
+	if err != nil {
+		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
+	}
+	defer traceCloser.Close()
+
 	pubSub, err := brokers.NewPubSub(cfg.BrokerURL, "", logger)
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err))
 	}
+	pubSub = tracing.NewPubSub(tracer, pubSub)
 	defer pubSub.Close()
 
 	influxDBConfig := influxDBClient.Config{}
@@ -83,7 +93,7 @@ func main() {
 		}
 	}(logger)
 
-	if err := consumers.Start(svcName, pubSub, repo, cfg.ConfigPath, logger); err != nil {
+	if err := consumers.Start(ctx, svcName, pubSub, repo, cfg.ConfigPath, logger); err != nil {
 		logger.Fatal(fmt.Sprintf("failed to start InfluxDB writer: %s", err))
 	}
 

@@ -41,7 +41,7 @@ func NewPublisher(url string) (messaging.Publisher, error) {
 	return ret, nil
 }
 
-func (pub *publisher) Publish(topic string, msg *messaging.Message) error {
+func (pub *publisher) Publish(ctx context.Context, topic string, msg *messaging.Message) error {
 	if topic == "" {
 		return ErrEmptyTopic
 	}

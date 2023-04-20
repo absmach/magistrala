@@ -102,7 +102,7 @@ func New(publisher messaging.Publisher, auth mainflux.AuthServiceClient, twins T
 func (ts *twinsService) AddTwin(ctx context.Context, token string, twin Twin, def Definition) (tw Twin, err error) {
 	var id string
 	var b []byte
-	defer ts.publish(&id, &err, crudOp["createSucc"], crudOp["createFail"], &b)
+	defer ts.publish(ctx, &id, &err, crudOp["createSucc"], crudOp["createFail"], &b)
 
 	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
@@ -145,7 +145,7 @@ func (ts *twinsService) AddTwin(ctx context.Context, token string, twin Twin, de
 func (ts *twinsService) UpdateTwin(ctx context.Context, token string, twin Twin, def Definition) (err error) {
 	var b []byte
 	var id string
-	defer ts.publish(&id, &err, crudOp["updateSucc"], crudOp["updateFail"], &b)
+	defer ts.publish(ctx, &id, &err, crudOp["updateSucc"], crudOp["updateFail"], &b)
 
 	_, err = ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
@@ -195,7 +195,7 @@ func (ts *twinsService) UpdateTwin(ctx context.Context, token string, twin Twin,
 
 func (ts *twinsService) ViewTwin(ctx context.Context, token, twinID string) (tw Twin, err error) {
 	var b []byte
-	defer ts.publish(&twinID, &err, crudOp["getSucc"], crudOp["getFail"], &b)
+	defer ts.publish(ctx, &twinID, &err, crudOp["getSucc"], crudOp["getFail"], &b)
 
 	_, err = ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
@@ -214,7 +214,7 @@ func (ts *twinsService) ViewTwin(ctx context.Context, token, twinID string) (tw 
 
 func (ts *twinsService) RemoveTwin(ctx context.Context, token, twinID string) (err error) {
 	var b []byte
-	defer ts.publish(&twinID, &err, crudOp["removeSucc"], crudOp["removeFail"], &b)
+	defer ts.publish(ctx, &twinID, &err, crudOp["removeSucc"], crudOp["removeFail"], &b)
 
 	_, err = ts.auth.Identify(ctx, &mainflux.Token{Value: token})
 	if err != nil {
@@ -280,9 +280,9 @@ func (ts *twinsService) SaveStates(msg *messaging.Message) error {
 func (ts *twinsService) saveState(msg *messaging.Message, twinID string) error {
 	var b []byte
 	var err error
-	defer ts.publish(&twinID, &err, crudOp["stateSucc"], crudOp["stateFail"], &b)
-
 	ctx := context.TODO()
+	defer ts.publish(ctx, &twinID, &err, crudOp["stateSucc"], crudOp["stateFail"], &b)
+
 	tw, err := ts.twins.RetrieveByID(ctx, twinID)
 	if err != nil {
 		return fmt.Errorf("Retrieving twin for %s failed: %s", msg.Publisher, err)
@@ -396,7 +396,7 @@ func findAttribute(name string, attrs []Attribute) (idx int) {
 	return -1
 }
 
-func (ts *twinsService) publish(twinID *string, err *error, succOp, failOp string, payload *[]byte) {
+func (ts *twinsService) publish(ctx context.Context, twinID *string, err *error, succOp, failOp string, payload *[]byte) {
 	if ts.channelID == "" {
 		return
 	}
@@ -421,7 +421,7 @@ func (ts *twinsService) publish(twinID *string, err *error, succOp, failOp strin
 		Created:   time.Now().UnixNano(),
 	}
 
-	if err := ts.publisher.Publish(msg.Channel, &msg); err != nil {
+	if err := ts.publisher.Publish(ctx, msg.Channel, &msg); err != nil {
 		ts.logger.Warn(fmt.Sprintf("Failed to publish notification on Message Broker: %s", err))
 	}
 }

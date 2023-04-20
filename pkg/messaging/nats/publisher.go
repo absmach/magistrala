@@ -4,6 +4,7 @@
 package nats
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/mainflux/mainflux/pkg/messaging"
@@ -37,10 +38,11 @@ func NewPublisher(url string) (messaging.Publisher, error) {
 	return ret, nil
 }
 
-func (pub *publisher) Publish(topic string, msg *messaging.Message) error {
+func (pub *publisher) Publish(ctx context.Context, topic string, msg *messaging.Message) error {
 	if topic == "" {
 		return ErrEmptyTopic
 	}
+
 	data, err := proto.Marshal(msg)
 	if err != nil {
 		return err
@@ -50,6 +52,7 @@ func (pub *publisher) Publish(topic string, msg *messaging.Message) error {
 	if msg.Subtopic != "" {
 		subject = fmt.Sprintf("%s.%s", subject, msg.Subtopic)
 	}
+
 	if err := pub.conn.Publish(subject, data); err != nil {
 		return err
 	}

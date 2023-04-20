@@ -10,18 +10,22 @@ import (
 	"os"
 
 	"github.com/mainflux/mainflux"
+	"github.com/opentracing/opentracing-go"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/mainflux/mainflux/internal"
 	thingsClient "github.com/mainflux/mainflux/internal/clients/grpc/things"
+	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
+	pstracing "github.com/mainflux/mainflux/pkg/messaging/tracing"
 	adapter "github.com/mainflux/mainflux/ws"
 	"github.com/mainflux/mainflux/ws/api"
+	"github.com/mainflux/mainflux/ws/tracing"
 )
 
 const (
@@ -58,14 +62,20 @@ func main() {
 	defer internal.Close(logger, tcHandler)
 	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
 
+	tracer, traceCloser, err := jaegerClient.NewTracer(svcName, cfg.JaegerURL)
+	if err != nil {
+		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
+	}
+	defer traceCloser.Close()
+
 	nps, err := brokers.NewPubSub(cfg.BrokerURL, "", logger)
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("Failed to connect to message broker: %s", err))
-
 	}
+	nps = pstracing.NewPubSub(tracer, nps)
 	defer nps.Close()
 
-	svc := newService(tc, nps, logger)
+	svc := newService(tc, nps, logger, tracer)
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
@@ -86,8 +96,9 @@ func main() {
 	}
 }
 
-func newService(tc mainflux.ThingsServiceClient, nps messaging.PubSub, logger mflog.Logger) adapter.Service {
+func newService(tc mainflux.ThingsServiceClient, nps messaging.PubSub, logger mflog.Logger, tracer opentracing.Tracer) adapter.Service {
 	svc := adapter.New(tc, nps)
+	svc = tracing.New(tracer, svc)
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := internal.MakeMetrics("ws_adapter", "api")
 	svc = api.MetricsMiddleware(svc, counter, latency)

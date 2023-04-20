@@ -18,25 +18,24 @@ const senmlCollection string = "messages"
 
 var errSaveMessage = errors.New("failed to save message to mongodb database")
 
-var _ consumers.Consumer = (*mongoRepo)(nil)
+var _ consumers.BlockingConsumer = (*mongoRepo)(nil)
 
 type mongoRepo struct {
 	db *mongo.Database
 }
 
 // New returns new MongoDB writer.
-func New(db *mongo.Database) consumers.Consumer {
+func New(db *mongo.Database) consumers.BlockingConsumer {
 	return &mongoRepo{db}
 }
 
-func (repo *mongoRepo) Consume(message interface{}) error {
+func (repo *mongoRepo) ConsumeBlocking(message interface{}) error {
 	switch m := message.(type) {
 	case json.Messages:
 		return repo.saveJSON(m)
 	default:
 		return repo.saveSenml(m)
 	}
-
 }
 
 func (repo *mongoRepo) saveSenml(messages interface{}) error {

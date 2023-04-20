@@ -24,18 +24,18 @@ var (
 	errNoTable        = errors.New("relation does not exist")
 )
 
-var _ consumers.Consumer = (*timescaleRepo)(nil)
+var _ consumers.BlockingConsumer = (*timescaleRepo)(nil)
 
 type timescaleRepo struct {
 	db *sqlx.DB
 }
 
 // New returns new TimescaleSQL writer.
-func New(db *sqlx.DB) consumers.Consumer {
+func New(db *sqlx.DB) consumers.BlockingConsumer {
 	return &timescaleRepo{db: db}
 }
 
-func (tr timescaleRepo) Consume(message interface{}) (err error) {
+func (tr *timescaleRepo) ConsumeBlocking(message interface{}) (err error) {
 	switch m := message.(type) {
 	case mfjson.Messages:
 		return tr.saveJSON(m)

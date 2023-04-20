@@ -89,7 +89,7 @@ func main() {
 	}
 }
 
-func newService(db *sqlx.DB, logger mflog.Logger) consumers.Consumer {
+func newService(db *sqlx.DB, logger mflog.Logger) consumers.BlockingConsumer {
 	svc := writerPg.New(db)
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := internal.MakeMetrics("postgres", "message_writer")

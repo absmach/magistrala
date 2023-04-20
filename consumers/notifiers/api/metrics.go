@@ -66,11 +66,11 @@ func (ms *metricsMiddleware) RemoveSubscription(ctx context.Context, token, id s
 	return ms.svc.RemoveSubscription(ctx, token, id)
 }
 
-func (ms *metricsMiddleware) Consume(msg interface{}) error {
+func (ms *metricsMiddleware) ConsumeBlocking(msg interface{}) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "consume").Add(1)
 		ms.latency.With("method", "consume").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.Consume(msg)
+	return ms.svc.ConsumeBlocking(msg)
 }

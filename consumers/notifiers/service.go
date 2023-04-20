@@ -18,6 +18,8 @@ var (
 	ErrMessage = errors.New("failed to convert to Mainflux message")
 )
 
+var _ consumers.AsyncConsumer = (*notifierService)(nil)
+
 // Service reprents a notification service.
 type Service interface {
 	// CreateSubscription persists a subscription.
@@ -33,7 +35,7 @@ type Service interface {
 	// RemoveSubscription removes the subscription having the provided identifier.
 	RemoveSubscription(ctx context.Context, token, id string) error
 
-	consumers.Consumer
+	consumers.BlockingConsumer
 }
 
 var _ Service = (*notifierService)(nil)
@@ -43,6 +45,7 @@ type notifierService struct {
 	subs     SubscriptionsRepository
 	idp      mainflux.IDProvider
 	notifier Notifier
+	errCh    chan error
 	from     string
 }
 
@@ -53,6 +56,7 @@ func New(auth mainflux.AuthServiceClient, subs SubscriptionsRepository, idp main
 		subs:     subs,
 		idp:      idp,
 		notifier: notifier,
+		errCh:    make(chan error, 1),
 		from:     from,
 	}
 }
@@ -95,7 +99,7 @@ func (ns *notifierService) RemoveSubscription(ctx context.Context, token, id str
 	return ns.subs.Remove(ctx, id)
 }
 
-func (ns *notifierService) Consume(message interface{}) error {
+func (ns *notifierService) ConsumeBlocking(message interface{}) error {
 	msg, ok := message.(*messaging.Message)
 	if !ok {
 		return ErrMessage
@@ -126,4 +130,40 @@ func (ns *notifierService) Consume(message interface{}) error {
 	}
 
 	return nil
+}
+
+func (ns *notifierService) ConsumeAsync(message interface{}) {
+	msg, ok := message.(*messaging.Message)
+	if !ok {
+		ns.errCh <- ErrMessage
+		return
+	}
+	topic := msg.Channel
+	if msg.Subtopic != "" {
+		topic = fmt.Sprintf("%s.%s", msg.Channel, msg.Subtopic)
+	}
+	pm := PageMetadata{
+		Topic:  topic,
+		Offset: 0,
+		Limit:  -1,
+	}
+	page, err := ns.subs.RetrieveAll(context.Background(), pm)
+	if err != nil {
+		ns.errCh <- err
+		return
+	}
+
+	var to []string
+	for _, sub := range page.Subscriptions {
+		to = append(to, sub.Contact)
+	}
+	if len(to) > 0 {
+		if err := ns.notifier.Notify(ns.from, to, msg); err != nil {
+			ns.errCh <- errors.Wrap(ErrNotify, err)
+		}
+	}
+}
+
+func (ns *notifierService) Errors() <-chan error {
+	return ns.errCh
 }

@@ -117,108 +117,272 @@ func queryDB(fluxQuery string) (int, error) {
 	return rowCount, nil
 }
 
-func TestSaveSenml(t *testing.T) {
-	for i := 0; i < 2; i++ {
-		// Testing both async and sync
-		repo := writer.New(client, repoCfg, i == 0)
+func TestAsyncSaveSenml(t *testing.T) {
+	asyncRepo := writer.NewAsync(client, repoCfg)
 
-		cases := []struct {
-			desc         string
-			msgsNum      int
-			expectedSize int
-		}{
-			{
-				desc:         "save a single message",
-				msgsNum:      1,
-				expectedSize: 1,
-			},
-			{
-				desc:         "save a batch of messages",
-				msgsNum:      streamsSize,
-				expectedSize: streamsSize,
-			},
-		}
+	cases := []struct {
+		desc         string
+		msgsNum      int
+		expectedSize int
+	}{
+		{
+			desc:         "save a single message",
+			msgsNum:      1,
+			expectedSize: 1,
+		},
+		{
+			desc:         "save a batch of messages",
+			msgsNum:      streamsSize,
+			expectedSize: streamsSize,
+		},
+	}
 
-		for _, tc := range cases {
-			err := resetBucket()
-			assert.Nil(t, err, fmt.Sprintf("Cleaning data from InfluxDB expected to succeed: %s.\n", err))
-			now := time.Now().UnixNano()
-			var msgs []senml.Message
+	for _, tc := range cases {
+		err := resetBucket()
+		assert.Nil(t, err, fmt.Sprintf("Cleaning data from InfluxDB expected to succeed: %s.\n", err))
+		now := time.Now().UnixNano()
+		var msgs []senml.Message
 
-			chanID, err := idProvider.ID()
-			assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s\n", err))
-			pubID, err := idProvider.ID()
-			assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s\n", err))
-			for i := 0; i < tc.msgsNum; i++ {
-				msg := senml.Message{
-					Channel:    chanID,
-					Publisher:  pubID,
-					Protocol:   "http",
-					Name:       "test name",
-					Unit:       "km",
-					UpdateTime: 5456565466,
-				}
-				// Mix possible values as well as value sum.
-				count := i % valueFields
-				switch count {
-				case 0:
-					msg.Subtopic = subtopic
-					msg.Value = &v
-				case 1:
-					msg.BoolValue = &boolV
-				case 2:
-					msg.StringValue = &stringV
-				case 3:
-					msg.DataValue = &dataV
-				case 4:
-					msg.Sum = &sum
-				}
-
-				msg.Time = float64(now)/float64(1e9) - float64(i)
-				msgs = append(msgs, msg)
+		chanID, err := idProvider.ID()
+		assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s\n", err))
+		pubID, err := idProvider.ID()
+		assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s\n", err))
+		for i := 0; i < tc.msgsNum; i++ {
+			msg := senml.Message{
+				Channel:    chanID,
+				Publisher:  pubID,
+				Protocol:   "http",
+				Name:       "test name",
+				Unit:       "km",
+				UpdateTime: 5456565466,
+			}
+			// Mix possible values as well as value sum.
+			count := i % valueFields
+			switch count {
+			case 0:
+				msg.Subtopic = subtopic
+				msg.Value = &v
+			case 1:
+				msg.BoolValue = &boolV
+			case 2:
+				msg.StringValue = &stringV
+			case 3:
+				msg.DataValue = &dataV
+			case 4:
+				msg.Sum = &sum
 			}
 
-			err = repo.Consume(msgs)
-			assert.Nil(t, err, fmt.Sprintf("Save operation expected to succeed: %s.\n", err))
+			msg.Time = float64(now)/float64(1e9) - float64(i)
+			msgs = append(msgs, msg)
+		}
 
-			count, err := queryDB(rowCountSenml)
+		errs := asyncRepo.Errors()
+		asyncRepo.ConsumeAsync(msgs)
+		err = <-errs
+		assert.Nil(t, err, fmt.Sprintf("Save operation expected to succeed: %s.\n", err))
+
+		count, err := queryDB(rowCountSenml)
+		assert.Nil(t, err, fmt.Sprintf("Querying InfluxDB to retrieve data expected to succeed: %s.\n", err))
+		assert.Equal(t, tc.expectedSize, count, fmt.Sprintf("Expected to have %d messages saved, found %d instead.\n", tc.expectedSize, count))
+	}
+}
+
+func TestBlockingSaveSenml(t *testing.T) {
+	syncRepo := writer.NewSync(client, repoCfg)
+
+	cases := []struct {
+		desc         string
+		msgsNum      int
+		expectedSize int
+	}{
+		{
+			desc:         "save a single message",
+			msgsNum:      1,
+			expectedSize: 1,
+		},
+		{
+			desc:         "save a batch of messages",
+			msgsNum:      streamsSize,
+			expectedSize: streamsSize,
+		},
+	}
+
+	for _, tc := range cases {
+		err := resetBucket()
+		assert.Nil(t, err, fmt.Sprintf("Cleaning data from InfluxDB expected to succeed: %s.\n", err))
+		now := time.Now().UnixNano()
+		var msgs []senml.Message
+
+		chanID, err := idProvider.ID()
+		assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s\n", err))
+		pubID, err := idProvider.ID()
+		assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s\n", err))
+		for i := 0; i < tc.msgsNum; i++ {
+			msg := senml.Message{
+				Channel:    chanID,
+				Publisher:  pubID,
+				Protocol:   "http",
+				Name:       "test name",
+				Unit:       "km",
+				UpdateTime: 5456565466,
+			}
+			// Mix possible values as well as value sum.
+			count := i % valueFields
+			switch count {
+			case 0:
+				msg.Subtopic = subtopic
+				msg.Value = &v
+			case 1:
+				msg.BoolValue = &boolV
+			case 2:
+				msg.StringValue = &stringV
+			case 3:
+				msg.DataValue = &dataV
+			case 4:
+				msg.Sum = &sum
+			}
+
+			msg.Time = float64(now)/float64(1e9) - float64(i)
+			msgs = append(msgs, msg)
+		}
+
+		err = syncRepo.ConsumeBlocking(msgs)
+		assert.Nil(t, err, fmt.Sprintf("Save operation expected to succeed: %s.\n", err))
+
+		count, err := queryDB(rowCountSenml)
+		assert.Nil(t, err, fmt.Sprintf("Querying InfluxDB to retrieve data expected to succeed: %s.\n", err))
+		assert.Equal(t, tc.expectedSize, count, fmt.Sprintf("Expected to have %d messages saved, found %d instead.\n", tc.expectedSize, count))
+	}
+}
+
+func TestAsyncSaveJSON(t *testing.T) {
+	asyncRepo := writer.NewAsync(client, repoCfg)
+
+	chanID, err := idProvider.ID()
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	pubID, err := idProvider.ID()
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
+	msg := json.Message{
+		Channel:   chanID,
+		Publisher: pubID,
+		Created:   time.Now().UnixNano(),
+		Subtopic:  "subtopic/format/some_json",
+		Protocol:  "mqtt",
+		Payload: map[string]interface{}{
+			"field_1": 123,
+			"field_2": "value",
+			"field_3": false,
+			"field_4": 12.344,
+			"field_5": map[string]interface{}{
+				"field_1": "value",
+				"field_2": 42,
+			},
+		},
+	}
+
+	invalidKeySepMsg := msg
+	invalidKeySepMsg.Payload = map[string]interface{}{
+		"field_1": 123,
+		"field_2": "value",
+		"field_3": false,
+		"field_4": 12.344,
+		"field_5": map[string]interface{}{
+			"field_1": "value",
+			"field_2": 42,
+		},
+		"field_6/field_7": "value",
+	}
+	invalidKeyNameMsg := msg
+	invalidKeyNameMsg.Payload = map[string]interface{}{
+		"field_1": 123,
+		"field_2": "value",
+		"field_3": false,
+		"field_4": 12.344,
+		"field_5": map[string]interface{}{
+			"field_1": "value",
+			"field_2": 42,
+		},
+		"publisher": "value",
+	}
+
+	now := time.Now().UnixNano()
+	msgs := json.Messages{
+		Format: "some_json",
+	}
+	invalidKeySepMsgs := json.Messages{
+		Format: "some_json",
+	}
+	invalidKeyNameMsgs := json.Messages{
+		Format: "some_json",
+	}
+
+	for i := 0; i < streamsSize; i++ {
+		msg.Created = now
+		msgs.Data = append(msgs.Data, msg)
+		invalidKeySepMsgs.Data = append(invalidKeySepMsgs.Data, invalidKeySepMsg)
+		invalidKeyNameMsgs.Data = append(invalidKeyNameMsgs.Data, invalidKeyNameMsg)
+	}
+
+	cases := []struct {
+		desc string
+		msgs json.Messages
+		err  error
+	}{
+		{
+			desc: "consume valid json messages",
+			msgs: msgs,
+			err:  nil,
+		},
+		{
+			desc: "consume invalid json messages containing invalid key separator",
+			msgs: invalidKeySepMsgs,
+			err:  json.ErrInvalidKey,
+		},
+		{
+			desc: "consume invalid json messages containing invalid key name",
+			msgs: invalidKeySepMsgs,
+			err:  json.ErrInvalidKey,
+		},
+	}
+
+	for _, tc := range cases {
+		err := resetBucket()
+		assert.Nil(t, err, fmt.Sprintf("Cleaning data from InfluxDB expected to succeed: %s.\n", err))
+
+		asyncRepo.ConsumeAsync(msgs)
+		timer := time.NewTimer(1 * time.Millisecond)
+		select {
+		case err = <-asyncRepo.Errors():
+		case <-timer.C:
+			t.Error("errors channel blocked, nothing returned.")
+		}
+		switch err {
+		case nil:
+			count, err := queryDB(rowCountJson)
 			assert.Nil(t, err, fmt.Sprintf("Querying InfluxDB to retrieve data expected to succeed: %s.\n", err))
-			assert.Equal(t, tc.expectedSize, count, fmt.Sprintf("Expected to have %d messages saved, found %d instead.\n", tc.expectedSize, count))
+			assert.Equal(t, streamsSize, count, fmt.Sprintf("Expected to have %d messages saved, found %d instead.\n", streamsSize, count))
+		default:
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s, got %s", tc.desc, tc.err, err))
 		}
 	}
 }
 
-func TestSaveJSON(t *testing.T) {
-	// Testing both async and sync
-	for i := 0; i < 2; i++ {
-		// Testing both async and sync
-		repo := writer.New(client, repoCfg, i == 0)
+func TestBlockingSaveJSON(t *testing.T) {
+	syncRepo := writer.NewSync(client, repoCfg)
 
-		chanID, err := idProvider.ID()
-		assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-		pubID, err := idProvider.ID()
-		assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	chanID, err := idProvider.ID()
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	pubID, err := idProvider.ID()
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-		msg := json.Message{
-			Channel:   chanID,
-			Publisher: pubID,
-			Created:   time.Now().UnixNano(),
-			Subtopic:  "subtopic/format/some_json",
-			Protocol:  "mqtt",
-			Payload: map[string]interface{}{
-				"field_1": 123,
-				"field_2": "value",
-				"field_3": false,
-				"field_4": 12.344,
-				"field_5": map[string]interface{}{
-					"field_1": "value",
-					"field_2": 42,
-				},
-			},
-		}
-
-		invalidKeySepMsg := msg
-		invalidKeySepMsg.Payload = map[string]interface{}{
+	msg := json.Message{
+		Channel:   chanID,
+		Publisher: pubID,
+		Created:   time.Now().UnixNano(),
+		Subtopic:  "subtopic/format/some_json",
+		Protocol:  "mqtt",
+		Payload: map[string]interface{}{
 			"field_1": 123,
 			"field_2": "value",
 			"field_3": false,
@@ -227,72 +391,85 @@ func TestSaveJSON(t *testing.T) {
 				"field_1": "value",
 				"field_2": 42,
 			},
-			"field_6/field_7": "value",
-		}
-		invalidKeyNameMsg := msg
-		invalidKeyNameMsg.Payload = map[string]interface{}{
-			"field_1": 123,
-			"field_2": "value",
-			"field_3": false,
-			"field_4": 12.344,
-			"field_5": map[string]interface{}{
-				"field_1": "value",
-				"field_2": 42,
-			},
-			"publisher": "value",
-		}
+		},
+	}
 
-		now := time.Now().UnixNano()
-		msgs := json.Messages{
-			Format: "some_json",
-		}
-		invalidKeySepMsgs := json.Messages{
-			Format: "some_json",
-		}
-		invalidKeyNameMsgs := json.Messages{
-			Format: "some_json",
-		}
+	invalidKeySepMsg := msg
+	invalidKeySepMsg.Payload = map[string]interface{}{
+		"field_1": 123,
+		"field_2": "value",
+		"field_3": false,
+		"field_4": 12.344,
+		"field_5": map[string]interface{}{
+			"field_1": "value",
+			"field_2": 42,
+		},
+		"field_6/field_7": "value",
+	}
+	invalidKeyNameMsg := msg
+	invalidKeyNameMsg.Payload = map[string]interface{}{
+		"field_1": 123,
+		"field_2": "value",
+		"field_3": false,
+		"field_4": 12.344,
+		"field_5": map[string]interface{}{
+			"field_1": "value",
+			"field_2": 42,
+		},
+		"publisher": "value",
+	}
 
-		for i := 0; i < streamsSize; i++ {
-			msg.Created = now
-			msgs.Data = append(msgs.Data, msg)
-			invalidKeySepMsgs.Data = append(invalidKeySepMsgs.Data, invalidKeySepMsg)
-			invalidKeyNameMsgs.Data = append(invalidKeyNameMsgs.Data, invalidKeyNameMsg)
-		}
+	now := time.Now().UnixNano()
+	msgs := json.Messages{
+		Format: "some_json",
+	}
+	invalidKeySepMsgs := json.Messages{
+		Format: "some_json",
+	}
+	invalidKeyNameMsgs := json.Messages{
+		Format: "some_json",
+	}
 
-		cases := []struct {
-			desc string
-			msgs json.Messages
-			err  error
-		}{
-			{
-				desc: "consume valid json messages",
-				msgs: msgs,
-				err:  nil,
-			},
-			{
-				desc: "consume invalid json messages containing invalid key separator",
-				msgs: invalidKeySepMsgs,
-				err:  json.ErrInvalidKey,
-			},
-			{
-				desc: "consume invalid json messages containing invalid key name",
-				msgs: invalidKeySepMsgs,
-				err:  json.ErrInvalidKey,
-			},
-		}
-		for _, tc := range cases {
-			err := resetBucket()
-			assert.Nil(t, err, fmt.Sprintf("Cleaning data from InfluxDB expected to succeed: %s.\n", err))
+	for i := 0; i < streamsSize; i++ {
+		msg.Created = now
+		msgs.Data = append(msgs.Data, msg)
+		invalidKeySepMsgs.Data = append(invalidKeySepMsgs.Data, invalidKeySepMsg)
+		invalidKeyNameMsgs.Data = append(invalidKeyNameMsgs.Data, invalidKeyNameMsg)
+	}
 
-			switch err = repo.Consume(tc.msgs); err {
-			case nil:
-				count, err := queryDB(rowCountJson)
-				assert.Nil(t, err, fmt.Sprintf("Querying InfluxDB to retrieve data expected to succeed: %s.\n", err))
-				assert.Equal(t, streamsSize, count, fmt.Sprintf("Expected to have %d messages saved, found %d instead.\n", streamsSize, count))
-			default:
-				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s, got %s", tc.desc, tc.err, err))
-			}
+	cases := []struct {
+		desc string
+		msgs json.Messages
+		err  error
+	}{
+		{
+			desc: "consume valid json messages",
+			msgs: msgs,
+			err:  nil,
+		},
+		{
+			desc: "consume invalid json messages containing invalid key separator",
+			msgs: invalidKeySepMsgs,
+			err:  json.ErrInvalidKey,
+		},
+		{
+			desc: "consume invalid json messages containing invalid key name",
+			msgs: invalidKeySepMsgs,
+			err:  json.ErrInvalidKey,
+		},
+	}
+
+	for _, tc := range cases {
+		err := resetBucket()
+		assert.Nil(t, err, fmt.Sprintf("Cleaning data from InfluxDB expected to succeed: %s.\n", err))
+
+		switch err = syncRepo.ConsumeBlocking(tc.msgs); err {
+		case nil:
+			count, err := queryDB(rowCountJson)
+			assert.Nil(t, err, fmt.Sprintf("Querying InfluxDB to retrieve data expected to succeed: %s.\n", err))
+			assert.Equal(t, streamsSize, count, fmt.Sprintf("Expected to have %d messages saved, found %d instead.\n", streamsSize, count))
+		default:
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s, got %s", tc.desc, tc.err, err))
 		}
 	}
 }

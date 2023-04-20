@@ -13,22 +13,22 @@ import (
 	log "github.com/mainflux/mainflux/logger"
 )
 
-var _ consumers.Consumer = (*loggingMiddleware)(nil)
+var _ consumers.BlockingConsumer = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
 	logger   log.Logger
-	consumer consumers.Consumer
+	consumer consumers.BlockingConsumer
 }
 
 // LoggingMiddleware adds logging facilities to the adapter.
-func LoggingMiddleware(consumer consumers.Consumer, logger log.Logger) consumers.Consumer {
+func LoggingMiddleware(consumer consumers.BlockingConsumer, logger log.Logger) consumers.BlockingConsumer {
 	return &loggingMiddleware{
 		logger:   logger,
 		consumer: consumer,
 	}
 }
 
-func (lm *loggingMiddleware) Consume(msgs interface{}) (err error) {
+func (lm *loggingMiddleware) ConsumeBlocking(msgs interface{}) (err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method consume took %s to complete", time.Since(begin))
 		if err != nil {
@@ -38,5 +38,5 @@ func (lm *loggingMiddleware) Consume(msgs interface{}) (err error) {
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.consumer.Consume(msgs)
+	return lm.consumer.ConsumeBlocking(msgs)
 }

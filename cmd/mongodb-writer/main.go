@@ -87,7 +87,7 @@ func main() {
 	}
 }
 
-func newService(db *mongo.Database, logger mflog.Logger) consumers.Consumer {
+func newService(db *mongo.Database, logger mflog.Logger) consumers.BlockingConsumer {
 	repo := mongodb.New(db)
 	repo = api.LoggingMiddleware(repo, logger)
 	counter, latency := internal.MakeMetrics("mongodb", "message_writer")

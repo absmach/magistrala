@@ -25,18 +25,18 @@ var (
 	errNoTable        = errors.New("relation does not exist")
 )
 
-var _ consumers.Consumer = (*postgresRepo)(nil)
+var _ consumers.BlockingConsumer = (*postgresRepo)(nil)
 
 type postgresRepo struct {
 	db *sqlx.DB
 }
 
 // New returns new PostgreSQL writer.
-func New(db *sqlx.DB) consumers.Consumer {
+func New(db *sqlx.DB) consumers.BlockingConsumer {
 	return &postgresRepo{db: db}
 }
 
-func (pr postgresRepo) Consume(message interface{}) (err error) {
+func (pr postgresRepo) ConsumeBlocking(message interface{}) (err error) {
 	switch m := message.(type) {
 	case mfjson.Messages:
 		return pr.saveJSON(m)

@@ -99,7 +99,7 @@ func TestReadSenml(t *testing.T) {
 		messages = append(messages, msg)
 	}
 
-	err = writer.Consume(messages)
+	err = writer.ConsumeBlocking(messages)
 	require.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 
 	reader := preader.New(db)
@@ -408,7 +408,8 @@ func TestReadJSON(t *testing.T) {
 		m := toMap(msg)
 		msgs1 = append(msgs1, m)
 	}
-	err = writer.Consume(messages1)
+
+	err = writer.ConsumeBlocking(messages1)
 	require.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 
 	id2, err := idProvider.ID()
@@ -438,7 +439,8 @@ func TestReadJSON(t *testing.T) {
 		m := toMap(msg)
 		msgs2 = append(msgs2, m)
 	}
-	err = writer.Consume(messages2)
+
+	err = writer.ConsumeBlocking(messages2)
 	require.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 
 	httpMsgs := []map[string]interface{}{}

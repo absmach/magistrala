@@ -9,11 +9,9 @@ import (
 	"log"
 	"os"
 
-	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/mainflux/mainflux/consumers"
 	"github.com/mainflux/mainflux/consumers/writers/api"
 	"github.com/mainflux/mainflux/consumers/writers/influxdb"
-	"github.com/mainflux/mainflux/internal"
 	influxDBClient "github.com/mainflux/mainflux/internal/clients/influxdb"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
@@ -62,6 +60,7 @@ func main() {
 		logger.Fatal(fmt.Sprintf("failed to load InfluxDB client configuration from environment variable : %s", err))
 	}
 	influxDBConfig.DBUrl = fmt.Sprintf("%s://%s:%s", influxDBConfig.Protocol, influxDBConfig.Host, influxDBConfig.Port)
+
 	repocfg := influxdb.RepoConfig{
 		Bucket: influxDBConfig.Bucket,
 		Org:    influxDBConfig.Org,
@@ -73,7 +72,16 @@ func main() {
 	}
 	defer client.Close()
 
-	repo := newService(client, repocfg, logger)
+	repo := influxdb.NewAsync(client, repocfg)
+
+	// Start consuming and logging errors.
+	go func(log mflog.Logger) {
+		for err := range repo.Errors() {
+			if err != nil {
+				log.Error(err.Error())
+			}
+		}
+	}(logger)
 
 	if err := consumers.Start(svcName, pubSub, repo, cfg.ConfigPath, logger); err != nil {
 		logger.Fatal(fmt.Sprintf("failed to start InfluxDB writer: %s", err))
@@ -96,12 +104,4 @@ func main() {
 	if err := g.Wait(); err != nil {
 		logger.Error(fmt.Sprintf("InfluxDB reader service terminated: %s", err))
 	}
-}
-
-func newService(client influxdb2.Client, repocfg influxdb.RepoConfig, logger mflog.Logger) consumers.Consumer {
-	repo := influxdb.New(client, repocfg, true)
-	repo = api.LoggingMiddleware(repo, logger)
-	counter, latency := internal.MakeMetrics("influxdb", "message_writer")
-	repo = api.MetricsMiddleware(repo, counter, latency)
-	return repo
 }

@@ -22,7 +22,8 @@ const senmlPoints = "messages"
 
 var errSaveMessage = errors.New("failed to save message to influxdb database")
 
-var _ consumers.Consumer = (*influxRepo)(nil)
+var _ consumers.AsyncConsumer = (*influxRepo)(nil)
+var _ consumers.BlockingConsumer = (*influxRepo)(nil)
 
 type RepoConfig struct {
 	Bucket string
@@ -32,19 +33,76 @@ type RepoConfig struct {
 type influxRepo struct {
 	client           influxdb2.Client
 	cfg              RepoConfig
+	errCh            chan error
+	writeAPI         api.WriteAPI
 	writeAPIBlocking api.WriteAPIBlocking
 }
 
-// New returns new InfluxDB writer.
-func New(client influxdb2.Client, config RepoConfig, async bool) consumers.Consumer {
+// NewSync returns new InfluxDB writer.
+func NewSync(client influxdb2.Client, config RepoConfig) consumers.BlockingConsumer {
 	return &influxRepo{
 		client:           client,
 		cfg:              config,
+		writeAPI:         nil,
 		writeAPIBlocking: client.WriteAPIBlocking(config.Org, config.Bucket),
 	}
 }
 
-func (repo *influxRepo) Consume(message interface{}) error {
+func NewAsync(client influxdb2.Client, config RepoConfig) consumers.AsyncConsumer {
+	return &influxRepo{
+		client:           client,
+		cfg:              config,
+		errCh:            make(chan error, 1),
+		writeAPI:         client.WriteAPI(config.Org, config.Bucket),
+		writeAPIBlocking: nil,
+	}
+}
+
+func (repo *influxRepo) ConsumeAsync(message interface{}) {
+	var err error
+	var pts []*write.Point
+	switch m := message.(type) {
+	case json.Messages:
+		pts, err = repo.jsonPoints(m)
+	default:
+		pts, err = repo.senmlPoints(m)
+	}
+	if err != nil {
+		repo.errCh <- err
+		return
+	}
+
+	done := make(chan bool)
+	defer close(done)
+
+	go func(done <-chan bool) {
+		for {
+			select {
+			case err := <-repo.writeAPI.Errors():
+				repo.errCh <- err
+			case <-done:
+				repo.errCh <- nil // pass nil error to the error channel
+				return
+			}
+		}
+	}(done)
+
+	for _, pt := range pts {
+		repo.writeAPI.WritePoint(pt)
+	}
+
+	repo.writeAPI.Flush()
+}
+
+func (repo *influxRepo) Errors() <-chan error {
+	if repo.errCh != nil {
+		return repo.errCh
+	}
+
+	return nil
+}
+
+func (repo *influxRepo) ConsumeBlocking(message interface{}) error {
 	var err error
 	var pts []*write.Point
 	switch m := message.(type) {

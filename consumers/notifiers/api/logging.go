@@ -78,7 +78,7 @@ func (lm *loggingMiddleware) RemoveSubscription(ctx context.Context, token, id s
 	return lm.svc.RemoveSubscription(ctx, token, id)
 }
 
-func (lm *loggingMiddleware) Consume(msg interface{}) (err error) {
+func (lm *loggingMiddleware) ConsumeBlocking(msg interface{}) (err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method consume took %s to complete", time.Since(begin))
 		if err != nil {
@@ -88,5 +88,5 @@ func (lm *loggingMiddleware) Consume(msg interface{}) (err error) {
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.Consume(msg)
+	return lm.svc.ConsumeBlocking(msg)
 }

@@ -67,6 +67,7 @@ func main() {
 		logger.Fatal(fmt.Sprintf("failed to load InfluxDB client configuration from environment variable : %s", err))
 	}
 	influxDBConfig.DBUrl = fmt.Sprintf("%s://%s:%s", influxDBConfig.Protocol, influxDBConfig.Host, influxDBConfig.Port)
+
 	repocfg := influxdb.RepoConfig{
 		Bucket: influxDBConfig.Bucket,
 		Org:    influxDBConfig.Org,

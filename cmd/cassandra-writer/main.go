@@ -97,7 +97,7 @@ func main() {
 
 }
 
-func newService(session *gocql.Session, logger mflog.Logger) consumers.Consumer {
+func newService(session *gocql.Session, logger mflog.Logger) consumers.BlockingConsumer {
 	repo := cassandra.New(session)
 	repo = api.LoggingMiddleware(repo, logger)
 	counter, latency := internal.MakeMetrics("cassandra", "message_writer")

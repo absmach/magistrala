@@ -55,7 +55,7 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, logger logger.Log
 		opts...,
 	))
 
-	mux.Get("/users/:id", kithttp.NewServer(
+	mux.Get("/users/:userID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "view_user")(viewUserEndpoint(svc)),
 		decodeViewUser,
 		encodeResponse,
@@ -97,7 +97,7 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, logger logger.Log
 		opts...,
 	))
 
-	mux.Get("/groups/:id", kithttp.NewServer(
+	mux.Get("/groups/:groupID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "list_members")(listMembersEndpoint(svc)),
 		decodeListMembersRequest,
 		encodeResponse,
@@ -111,14 +111,14 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, logger logger.Log
 		opts...,
 	))
 
-	mux.Post("/users/:id/enable", kithttp.NewServer(
+	mux.Post("/users/:userID/enable", kithttp.NewServer(
 		kitot.TraceServer(tracer, "enable_user")(enableUserEndpoint(svc)),
 		decodeChangeUserStatus,
 		encodeResponse,
 		opts...,
 	))
 
-	mux.Post("/users/:id/disable", kithttp.NewServer(
+	mux.Post("/users/:userID/disable", kithttp.NewServer(
 		kitot.TraceServer(tracer, "disable_user")(disableUserEndpoint(svc)),
 		decodeChangeUserStatus,
 		encodeResponse,
@@ -134,7 +134,7 @@ func MakeHandler(svc users.Service, tracer opentracing.Tracer, logger logger.Log
 func decodeViewUser(_ context.Context, r *http.Request) (interface{}, error) {
 	req := viewUserReq{
 		token: apiutil.ExtractBearerToken(r),
-		id:    bone.GetValue(r, "id"),
+		id:    bone.GetValue(r, "userID"),
 	}
 
 	return req, nil
@@ -287,7 +287,7 @@ func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 	req := listMemberGroupReq{
 		token:    apiutil.ExtractBearerToken(r),
 		status:   s,
-		id:       bone.GetValue(r, "id"),
+		id:       bone.GetValue(r, "groupID"),
 		offset:   o,
 		limit:    l,
 		metadata: m,
@@ -298,7 +298,7 @@ func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 func decodeChangeUserStatus(_ context.Context, r *http.Request) (interface{}, error) {
 	req := changeUserStatusReq{
 		token: apiutil.ExtractBearerToken(r),
-		id:    bone.GetValue(r, "id"),
+		id:    bone.GetValue(r, "userID"),
 	}
 
 	return req, nil

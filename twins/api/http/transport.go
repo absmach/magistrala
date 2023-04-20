@@ -46,21 +46,21 @@ func MakeHandler(tracer opentracing.Tracer, svc twins.Service, logger logger.Log
 		opts...,
 	))
 
-	r.Put("/twins/:id", kithttp.NewServer(
+	r.Put("/twins/:twinID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "update_twin")(updateTwinEndpoint(svc)),
 		decodeTwinUpdate,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Get("/twins/:id", kithttp.NewServer(
+	r.Get("/twins/:twinID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "view_twin")(viewTwinEndpoint(svc)),
 		decodeView,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Delete("/twins/:id", kithttp.NewServer(
+	r.Delete("/twins/:twinID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "remove_twin")(removeTwinEndpoint(svc)),
 		decodeView,
 		encodeResponse,
@@ -74,7 +74,7 @@ func MakeHandler(tracer opentracing.Tracer, svc twins.Service, logger logger.Log
 		opts...,
 	))
 
-	r.Get("/states/:id", kithttp.NewServer(
+	r.Get("/states/:twinID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "list_states")(listStatesEndpoint(svc)),
 		decodeListStates,
 		encodeResponse,
@@ -107,7 +107,7 @@ func decodeTwinUpdate(_ context.Context, r *http.Request) (interface{}, error) {
 
 	req := updateTwinReq{
 		token: apiutil.ExtractBearerToken(r),
-		id:    bone.GetValue(r, "id"),
+		id:    bone.GetValue(r, "twinID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
@@ -119,7 +119,7 @@ func decodeTwinUpdate(_ context.Context, r *http.Request) (interface{}, error) {
 func decodeView(_ context.Context, r *http.Request) (interface{}, error) {
 	req := viewTwinReq{
 		token: apiutil.ExtractBearerToken(r),
-		id:    bone.GetValue(r, "id"),
+		id:    bone.GetValue(r, "twinID"),
 	}
 
 	return req, nil
@@ -172,7 +172,7 @@ func decodeListStates(_ context.Context, r *http.Request) (interface{}, error) {
 		token:  apiutil.ExtractBearerToken(r),
 		limit:  l,
 		offset: o,
-		id:     bone.GetValue(r, "id"),
+		id:     bone.GetValue(r, "twinID"),
 	}
 
 	return req, nil

@@ -106,7 +106,7 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /things/{thingId}:
+  /things/{thingID}:
     get:
       summary: Retrieves thing info
       tags:
@@ -167,7 +167,7 @@ paths:
           description: Missing or invalid access token provided.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /things/{thingId}/share:
+  /things/{thingID}/share:
     post:
       summary: Shares a thing with user identified by request body.
       description: |
@@ -192,7 +192,7 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /things/{thingId}/key:
+  /things/{thingID}/key:
     patch:
       summary: Updates thing key
       description: |
@@ -291,7 +291,7 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /channels/{chanId}:
+  /channels/{chanID}:
     get:
       summary: Retrieves channel info
       tags:
@@ -402,7 +402,7 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /things/{thingId}/channels:
+  /things/{thingID}/channels:
     get:
       summary: List of channels connected to specified thing
       description: |
@@ -428,7 +428,7 @@ paths:
           description: Database can't process request.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /channels/{chanId}/things:
+  /channels/{chanID}/things:
     get:
       summary: List of things connected to specified channel
       description: |
@@ -454,7 +454,7 @@ paths:
           description: Database can't process request.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /channels/{chanId}/things/{thingId}:
+  /channels/{chanID}/things/{thingID}:
     put:
       summary: Connects the thing to the channel
       description: |
@@ -497,7 +497,7 @@ paths:
           description: Channel or thing does not exist.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /identify/channels/{chanId}/access-by-key:
+  /identify/channels/{chanID}/access-by-key:
     post:
       summary: Checks if thing has access to a channel.
       description: |
@@ -520,7 +520,7 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /identify/channels/{chanId}/access-by-id:
+  /identify/channels/{chanID}/access-by-id:
     post:
       summary: Checks if thing has access to a channel.
       description: |
@@ -562,7 +562,7 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /groups/{groupId}:
+  /groups/{groupID}:
     get:
       summary: Retrieves things
       description: |
@@ -783,7 +783,7 @@ components:
 
   parameters:
     ChanId:
-      name: chanId
+      name: chanID
       description: Unique channel identifier.
       in: path
       schema:
@@ -791,7 +791,7 @@ components:
         format: uuid
       required: true
     ThingId:
-      name: thingId
+      name: thingID
       description: Unique thing identifier.
       in: path
       schema:
@@ -799,7 +799,7 @@ components:
         format: uuid
       required: true
     GroupId:
-      name: groupId
+      name: groupID
       description: Unique group identifier.
       in: path
       schema:

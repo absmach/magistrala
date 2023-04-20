@@ -34,14 +34,14 @@ func MakeHandler(svc auth.Service, mux *bone.Mux, tracer opentracing.Tracer, log
 		opts...,
 	))
 
-	mux.Get("/keys/:id", kithttp.NewServer(
+	mux.Get("/keys/:keyID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "retrieve")(retrieveEndpoint(svc)),
 		decodeKeyReq,
 		encodeResponse,
 		opts...,
 	))
 
-	mux.Delete("/keys/:id", kithttp.NewServer(
+	mux.Delete("/keys/:keyID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "revoke")(revokeEndpoint(svc)),
 		decodeKeyReq,
 		encodeResponse,
@@ -67,7 +67,7 @@ func decodeIssue(_ context.Context, r *http.Request) (interface{}, error) {
 func decodeKeyReq(_ context.Context, r *http.Request) (interface{}, error) {
 	req := keyReq{
 		token: apiutil.ExtractBearerToken(r),
-		id:    bone.GetValue(r, "id"),
+		id:    bone.GetValue(r, "keyID"),
 	}
 	return req, nil
 }

@@ -39,8 +39,8 @@ func MakeHandler(svc ws.Service, l log.Logger) http.Handler {
 	logger = l
 
 	mux := bone.New()
-	mux.GetFunc("/channels/:id/messages", handshake(svc))
-	mux.GetFunc("/channels/:id/messages/*", handshake(svc))
+	mux.GetFunc("/channels/:chanID/messages", handshake(svc))
+	mux.GetFunc("/channels/:chanID/messages/*", handshake(svc))
 	mux.GetFunc("/version", mainflux.Health(protocol))
 	mux.Handle("/metrics", promhttp.Handler())
 

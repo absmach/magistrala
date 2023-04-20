@@ -58,44 +58,44 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service, logger log.Logge
 		opts...,
 	))
 
-	r.Post("/things/:id/share", kithttp.NewServer(
+	r.Post("/things/:thingID/share", kithttp.NewServer(
 		kitot.TraceServer(tracer, "share_thing")(shareThingEndpoint(svc)),
 		decodeShareThing,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Patch("/things/:id/key", kithttp.NewServer(
+	r.Patch("/things/:thingID/key", kithttp.NewServer(
 		kitot.TraceServer(tracer, "update_key")(updateKeyEndpoint(svc)),
 		decodeKeyUpdate,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Put("/things/:id", kithttp.NewServer(
+	r.Put("/things/:thingID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "update_thing")(updateThingEndpoint(svc)),
 		decodeThingUpdate,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Delete("/things/:id", kithttp.NewServer(
+	r.Delete("/things/:thingID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "remove_thing")(removeThingEndpoint(svc)),
-		decodeView,
+		decodeThingView,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Get("/things/:id", kithttp.NewServer(
+	r.Get("/things/:thingID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "view_thing")(viewThingEndpoint(svc)),
-		decodeView,
+		decodeThingView,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Get("/things/:id/channels", kithttp.NewServer(
+	r.Get("/things/:thingID/channels", kithttp.NewServer(
 		kitot.TraceServer(tracer, "list_channels_by_thing")(listChannelsByThingEndpoint(svc)),
-		decodeListByConnection,
+		decodeThingListByConnection,
 		encodeResponse,
 		opts...,
 	))
@@ -128,30 +128,30 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service, logger log.Logge
 		opts...,
 	))
 
-	r.Put("/channels/:id", kithttp.NewServer(
+	r.Put("/channels/:chanID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "update_channel")(updateChannelEndpoint(svc)),
 		decodeChannelUpdate,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Delete("/channels/:id", kithttp.NewServer(
+	r.Delete("/channels/:chanID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "remove_channel")(removeChannelEndpoint(svc)),
-		decodeView,
+		decodeChannelView,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Get("/channels/:id", kithttp.NewServer(
+	r.Get("/channels/:chanID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "view_channel")(viewChannelEndpoint(svc)),
-		decodeView,
+		decodeChannelView,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Get("/channels/:id/things", kithttp.NewServer(
+	r.Get("/channels/:chanID/things", kithttp.NewServer(
 		kitot.TraceServer(tracer, "list_things_by_channel")(listThingsByChannelEndpoint(svc)),
-		decodeListByConnection,
+		decodeChannelListByConnection,
 		encodeResponse,
 		opts...,
 	))
@@ -177,21 +177,21 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service, logger log.Logge
 		opts...,
 	))
 
-	r.Put("/channels/:chanId/things/:thingId", kithttp.NewServer(
+	r.Put("/channels/:chanID/things/:thingID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "connect_thing")(connectThingEndpoint(svc)),
 		decodeConnectThing,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Delete("/channels/:chanId/things/:thingId", kithttp.NewServer(
+	r.Delete("/channels/:chanID/things/:thingID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "disconnect_thing")(disconnectThingEndpoint(svc)),
 		decodeConnectThing,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Get("/groups/:groupId", kithttp.NewServer(
+	r.Get("/groups/:groupID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "list_members")(listMembersEndpoint(svc)),
 		decodeListMembersRequest,
 		encodeResponse,
@@ -237,7 +237,7 @@ func decodeShareThing(ctx context.Context, r *http.Request) (interface{}, error)
 
 	req := shareThingReq{
 		token:   apiutil.ExtractBearerToken(r),
-		thingID: bone.GetValue(r, "id"),
+		thingID: bone.GetValue(r, "thingID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
@@ -253,7 +253,7 @@ func decodeThingUpdate(_ context.Context, r *http.Request) (interface{}, error) 
 
 	req := updateThingReq{
 		token: apiutil.ExtractBearerToken(r),
-		id:    bone.GetValue(r, "id"),
+		id:    bone.GetValue(r, "thingID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
@@ -269,7 +269,7 @@ func decodeKeyUpdate(_ context.Context, r *http.Request) (interface{}, error) {
 
 	req := updateKeyReq{
 		token: apiutil.ExtractBearerToken(r),
-		id:    bone.GetValue(r, "id"),
+		id:    bone.GetValue(r, "thingID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
@@ -311,7 +311,7 @@ func decodeChannelUpdate(_ context.Context, r *http.Request) (interface{}, error
 
 	req := updateChannelReq{
 		token: apiutil.ExtractBearerToken(r),
-		id:    bone.GetValue(r, "id"),
+		id:    bone.GetValue(r, "chanID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
@@ -320,10 +320,18 @@ func decodeChannelUpdate(_ context.Context, r *http.Request) (interface{}, error
 	return req, nil
 }
 
-func decodeView(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeChannelView(_ context.Context, r *http.Request) (interface{}, error) {
 	req := viewResourceReq{
 		token: apiutil.ExtractBearerToken(r),
-		id:    bone.GetValue(r, "id"),
+		id:    bone.GetValue(r, "chanID"),
+	}
+
+	return req, nil
+}
+func decodeThingView(_ context.Context, r *http.Request) (interface{}, error) {
+	req := viewResourceReq{
+		token: apiutil.ExtractBearerToken(r),
+		id:    bone.GetValue(r, "thingID"),
 	}
 
 	return req, nil
@@ -389,7 +397,7 @@ func decodeListByMetadata(_ context.Context, r *http.Request) (interface{}, erro
 	return req, nil
 }
 
-func decodeListByConnection(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeChannelListByConnection(_ context.Context, r *http.Request) (interface{}, error) {
 	o, err := apiutil.ReadUintQuery(r, offsetKey, defOffset)
 	if err != nil {
 		return nil, err
@@ -417,7 +425,48 @@ func decodeListByConnection(_ context.Context, r *http.Request) (interface{}, er
 
 	req := listByConnectionReq{
 		token: apiutil.ExtractBearerToken(r),
-		id:    bone.GetValue(r, "id"),
+		id:    bone.GetValue(r, "chanID"),
+		pageMetadata: things.PageMetadata{
+			Offset:       o,
+			Limit:        l,
+			Disconnected: c,
+			Order:        or,
+			Dir:          d,
+		},
+	}
+
+	return req, nil
+}
+
+func decodeThingListByConnection(_ context.Context, r *http.Request) (interface{}, error) {
+	o, err := apiutil.ReadUintQuery(r, offsetKey, defOffset)
+	if err != nil {
+		return nil, err
+	}
+
+	l, err := apiutil.ReadUintQuery(r, limitKey, defLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	c, err := apiutil.ReadBoolQuery(r, disconnKey, false)
+	if err != nil {
+		return nil, err
+	}
+
+	or, err := apiutil.ReadStringQuery(r, orderKey, "")
+	if err != nil {
+		return nil, err
+	}
+
+	d, err := apiutil.ReadStringQuery(r, dirKey, "")
+	if err != nil {
+		return nil, err
+	}
+
+	req := listByConnectionReq{
+		token: apiutil.ExtractBearerToken(r),
+		id:    bone.GetValue(r, "thingID"),
 		pageMetadata: things.PageMetadata{
 			Offset:       o,
 			Limit:        l,
@@ -433,8 +482,8 @@ func decodeListByConnection(_ context.Context, r *http.Request) (interface{}, er
 func decodeConnectThing(_ context.Context, r *http.Request) (interface{}, error) {
 	req := connectThingReq{
 		token:   apiutil.ExtractBearerToken(r),
-		chanID:  bone.GetValue(r, "chanId"),
-		thingID: bone.GetValue(r, "thingId"),
+		chanID:  bone.GetValue(r, "chanID"),
+		thingID: bone.GetValue(r, "thingID"),
 	}
 
 	return req, nil
@@ -471,7 +520,7 @@ func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 
 	req := listThingsGroupReq{
 		token:   apiutil.ExtractBearerToken(r),
-		groupID: bone.GetValue(r, "groupId"),
+		groupID: bone.GetValue(r, "groupID"),
 		pageMetadata: things.PageMetadata{
 			Offset:   o,
 			Limit:    l,

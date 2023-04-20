@@ -1,14 +1,21 @@
-asyncapi: '2.2.0'
+asyncapi: '2.6.0'
+id: 'https://github.com/mainflux/mainflux/blob/master/api/asyncapi/mqtt.yml'
 info:
-  title: MQTT Adapter
-  license:
-    name: Apache 2.0
-    url: https://www.apache.org/licenses/LICENSE-2.0
+  title: Mainflux MQTT Adapter
   version: '1.0.0'
+  contact:
+    name: Mainflux Team
+    url: 'https://github.com/mainflux/mainflux'
+    email: info@mainflux.com
   description: |
     MQTT adapter provides an MQTT API for sending messages through the platform. MQTT adapter uses [mProxy](https://github.com/mainflux/mproxy) for proxying traffic between client and MQTT broker.
     Additionally, the MQTT adapter and the message broker are replicating the traffic between brokers.
 
+  license:
+    name: Apache 2.0
+    url: 'https://github.com/mainflux/mainflux/blob/master/LICENSE'
+  
+  
 defaultContentType: application/json
 
 servers:
@@ -23,18 +30,21 @@ servers:
         enum:
           - '1883'
           - '8883'
-      username:
-        description: Thing ID connected to the channel defined in the MQTT topic.
-      password:
-        description: Thing Key corresponding to the Thing ID.
+    security: 
+      - user-password: []
 
 channels:
-  channels/{channelId}/messages/{subtopic}:
+  channels/{channelID}/messages/{subtopic}:
     parameters:
-      channelId:
-        $ref: '#/components/parameters/channelId'
+      channelID:
+        $ref: '#/components/parameters/channelID'
+        in: path
+        required: true
       subtopic:
         $ref: '#/components/parameters/subtopic'
+        in: path 
+        required: false
+
     publish:
       traits:
         - $ref: '#/components/operationTraits/mqtt'
@@ -74,7 +84,7 @@ components:
         ```
 
   parameters:
-    channelId:
+    channelID:
       description: Channel ID connected to the Thing ID defined in the username.
       schema:
         type: string
@@ -84,6 +94,13 @@ components:
       schema:
         type: string
         default: ''
+  
+  securitySchemes:
+    user-password:
+      type: userPassword
+      description: |
+        username is thing ID connected to the channel defined in the mqtt topic and 
+        password is thing key corresponding to the thing ID 
 
   operationTraits:
     mqtt:

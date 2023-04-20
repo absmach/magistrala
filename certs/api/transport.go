@@ -41,21 +41,21 @@ func MakeHandler(svc certs.Service, logger logger.Logger) http.Handler {
 		opts...,
 	))
 
-	r.Get("/certs/:certId", kithttp.NewServer(
+	r.Get("/certs/:certID", kithttp.NewServer(
 		viewCert(svc),
 		decodeViewCert,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Delete("/certs/:certId", kithttp.NewServer(
+	r.Delete("/certs/:certID", kithttp.NewServer(
 		revokeCert(svc),
 		decodeRevokeCerts,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Get("/serials/:thingId", kithttp.NewServer(
+	r.Get("/serials/:thingID", kithttp.NewServer(
 		listSerials(svc),
 		decodeListCerts,
 		encodeResponse,
@@ -98,7 +98,7 @@ func decodeListCerts(_ context.Context, r *http.Request) (interface{}, error) {
 
 	req := listReq{
 		token:   apiutil.ExtractBearerToken(r),
-		thingID: bone.GetValue(r, "thingId"),
+		thingID: bone.GetValue(r, "thingID"),
 		limit:   l,
 		offset:  o,
 	}
@@ -108,7 +108,7 @@ func decodeListCerts(_ context.Context, r *http.Request) (interface{}, error) {
 func decodeViewCert(_ context.Context, r *http.Request) (interface{}, error) {
 	req := viewReq{
 		token:    apiutil.ExtractBearerToken(r),
-		serialID: bone.GetValue(r, "certId"),
+		serialID: bone.GetValue(r, "certID"),
 	}
 
 	return req, nil
@@ -130,7 +130,7 @@ func decodeCerts(_ context.Context, r *http.Request) (interface{}, error) {
 func decodeRevokeCerts(_ context.Context, r *http.Request) (interface{}, error) {
 	req := revokeReq{
 		token:  apiutil.ExtractBearerToken(r),
-		certID: bone.GetValue(r, "certId"),
+		certID: bone.GetValue(r, "certID"),
 	}
 
 	return req, nil

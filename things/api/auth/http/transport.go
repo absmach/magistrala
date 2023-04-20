@@ -37,14 +37,14 @@ func MakeHandler(tracer opentracing.Tracer, svc things.Service, logger logger.Lo
 		opts...,
 	))
 
-	r.Post("/identify/channels/:chanId/access-by-key", kithttp.NewServer(
+	r.Post("/identify/channels/:chanID/access-by-key", kithttp.NewServer(
 		kitot.TraceServer(tracer, "can_access_by_key")(canAccessByKeyEndpoint(svc)),
 		decodeCanAccessByKey,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Post("/identify/channels/:chanId/access-by-id", kithttp.NewServer(
+	r.Post("/identify/channels/:chanID/access-by-id", kithttp.NewServer(
 		kitot.TraceServer(tracer, "can_access_by_id")(canAccessByIDEndpoint(svc)),
 		decodeCanAccessByID,
 		encodeResponse,
@@ -73,7 +73,7 @@ func decodeCanAccessByKey(_ context.Context, r *http.Request) (interface{}, erro
 	}
 
 	req := canAccessByKeyReq{
-		chanID: bone.GetValue(r, "chanId"),
+		chanID: bone.GetValue(r, "chanID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
@@ -88,7 +88,7 @@ func decodeCanAccessByID(_ context.Context, r *http.Request) (interface{}, error
 	}
 
 	req := canAccessByIDReq{
-		chanID: bone.GetValue(r, "chanId"),
+		chanID: bone.GetValue(r, "chanID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(errors.ErrMalformedEntity, err)

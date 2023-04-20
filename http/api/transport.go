@@ -48,14 +48,14 @@ func MakeHandler(svc adapter.Service, tracer opentracing.Tracer, logger logger.L
 	}
 
 	r := bone.New()
-	r.Post("/channels/:id/messages", kithttp.NewServer(
+	r.Post("/channels/:chanID/messages", kithttp.NewServer(
 		kitot.TraceServer(tracer, "publish")(sendMessageEndpoint(svc)),
 		decodeRequest,
 		encodeResponse,
 		opts...,
 	))
 
-	r.Post("/channels/:id/messages/*", kithttp.NewServer(
+	r.Post("/channels/:chanID/messages/*", kithttp.NewServer(
 		kitot.TraceServer(tracer, "publish")(sendMessageEndpoint(svc)),
 		decodeRequest,
 		encodeResponse,
@@ -131,7 +131,7 @@ func decodeRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 	req := publishReq{
 		msg: &messaging.Message{
 			Protocol: protocol,
-			Channel:  bone.GetValue(r, "id"),
+			Channel:  bone.GetValue(r, "chanID"),
 			Subtopic: subtopic,
 			Payload:  payload,
 			Created:  time.Now().UnixNano(),

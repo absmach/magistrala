@@ -61,7 +61,7 @@ func decodeRequest(r *http.Request) (connReq, error) {
 		authKey = authKeys[0]
 	}
 
-	chanID := bone.GetValue(r, "id")
+	chanID := bone.GetValue(r, "chanID")
 
 	req := connReq{
 		thingKey: authKey,

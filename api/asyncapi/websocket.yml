@@ -1,0 +1,141 @@
+asyncapi: 2.6.0
+id: 'https://github.com/mainflux/mainflux/blob/master/api/asyncapi/websocket.yml'
+info:
+  title: Mainflux WebSocket adapter
+  description: WebSocket API for sending messages through communication channels
+  version: '1.0.0'
+  contact:
+    name: Mainflux Team
+    url: 'https://github.com/mainflux/mainflux'
+    email: info@mainflux.com
+  license:
+    name: Apache 2.0
+    url: 'https://github.com/mainflux/mainflux/blob/master/LICENSE'
+tags:
+  - name: WebSocket
+defaultContentType: application/json
+
+servers:
+  dev:
+    url: 'ws://{host}:{port}'
+    protocol: ws
+    description: Default WebSocket Adapter URL
+    variables:
+      host:
+        description: Hostname of the WebSocket adapter
+        default: localhost
+      port:
+        description: Mainflux WebSocket Adapter port
+        default: '8186'
+
+channels:
+  'channels/{channelID}/messages/{subtopic}':
+    parameters:
+      channelID:
+        $ref: '#/components/parameters/channelID'
+        in: path
+        required: true
+      subtopic:
+        $ref: '#/components/parameters/subtopic'
+        in: path
+        required: false
+    publish:
+      summary: Publish messages to a channel
+      operationId: publishToChannel
+      message:
+        $ref: '#/components/messages/jsonMsg'
+        messageId: publishMessage
+      bindings:
+        ws:
+          method: POST
+          query:
+            subtopic: '{$request.query.subtopic}'
+      security:
+        - bearerAuth: []
+    subscribe:
+      summary: Subscribe to receive messages from a channel
+      operationId: subscribeToChannel
+      message:
+        $ref: '#/components/messages/jsonMsg'
+        messageId: subscribeMessage
+      bindings:
+        ws:
+          method: GET
+          query:
+            subtopic: '{$request.query.subtopic}'
+      security:
+        - bearerAuth: []
+  /version:
+    subscribe:
+      summary: Get the version of the Mainflux adapter
+      operationId: getVersion
+      bindings:
+        http:
+          method: GET
+  metrics:
+    description: Endpoint for getting service metrics.
+    subscribe:
+      operationId: metrics
+      summary: Service metrics
+    bindings:
+      http:
+        type: request
+        method: GET
+
+components:
+  messages:
+    jsonMsg:
+      title: JSON Message
+      summary: Arbitrary JSON array or object.
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/jsonMsg'
+  schemas:
+    jsonMsg:
+      type: object
+      description: Arbitrary JSON object or array. SenML format is recommended.
+      example: >
+        ### SenML
+
+        ```json
+
+        [{"bn":"some-base-name:","bt":1641646520, "bu":"A","bver":5,
+        "n":"voltage","u":"V","v":120.1}, {"n":"current","t":-5,"v":1.2},
+        {"n":"current","t":-4,"v":1.3}]
+
+        ```
+
+        ### JSON
+
+        ```json
+
+        {"field_1":"val_1", "t": 1641646525}
+
+        ```
+
+        ### JSON Array
+
+        ```json
+
+        [{"field_1":"val_1", "t": 1641646520},{"field_2":"val_2", "t":
+        1641646522}]
+
+        ```
+  parameters:
+    channelID:
+      description: Channel ID connected to the Thing ID defined in the username.
+      schema:
+        type: string
+        format: uuid
+    subtopic:
+      description: Arbitrary message subtopic.
+      schema:
+        type: string
+        default: ''
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: uuid
+      description: |
+        * Thing access: "Authorization: Thing <thing_key>"

@@ -46,7 +46,7 @@ func MakeHandler(svc notifiers.Service, tracer opentracing.Tracer, logger logger
 		opts...,
 	))
 
-	mux.Get("/subscriptions/:id", kithttp.NewServer(
+	mux.Get("/subscriptions/:subID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "view_subscription")(viewSubscriptionEndpint(svc)),
 		decodeSubscription,
 		encodeResponse,
@@ -60,7 +60,7 @@ func MakeHandler(svc notifiers.Service, tracer opentracing.Tracer, logger logger
 		opts...,
 	))
 
-	mux.Delete("/subscriptions/:id", kithttp.NewServer(
+	mux.Delete("/subscriptions/:subID", kithttp.NewServer(
 		kitot.TraceServer(tracer, "delete_subscription")(deleteSubscriptionEndpint(svc)),
 		decodeSubscription,
 		encodeResponse,
@@ -88,7 +88,7 @@ func decodeCreate(_ context.Context, r *http.Request) (interface{}, error) {
 
 func decodeSubscription(_ context.Context, r *http.Request) (interface{}, error) {
 	req := subReq{
-		id:    bone.GetValue(r, "id"),
+		id:    bone.GetValue(r, "subID"),
 		token: apiutil.ExtractBearerToken(r),
 	}
 

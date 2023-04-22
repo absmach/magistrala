@@ -14,7 +14,7 @@ import (
 
 const (
 	statesCollection string = "states"
-	twinid                  = "twinid"
+	twinid           string = "twinid"
 )
 
 type stateRepository struct {

@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const all = "all"
+
 var cmdChannels = []cobra.Command{
 	{
 		Use:   "create <JSON_channel> <user_auth_token>",
@@ -60,7 +62,7 @@ var cmdChannels = []cobra.Command{
 				Metadata: metadata,
 			}
 
-			if args[0] == "all" {
+			if args[0] == all {
 				l, err := sdk.Channels(pageMetadata, args[1])
 				if err != nil {
 					logError(err)

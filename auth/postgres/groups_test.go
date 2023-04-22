@@ -154,7 +154,7 @@ func TestGroupRetrieveByID(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	assert.True(t, retrieved.ID == group1.ID, fmt.Sprintf("Save group, ID: expected %s got %s\n", group1.ID, retrieved.ID))
 
-	// Round to milliseconds as otherwise saving and retriving from DB
+	// Round to milliseconds as otherwise saving and retrieving from DB
 	// adds rounding error.
 	creationTime := time.Now().UTC().Round(time.Millisecond)
 	group2 := auth.Group{

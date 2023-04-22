@@ -45,6 +45,7 @@ type testRequest struct {
 
 func (tr testRequest) make() (*http.Response, error) {
 	req, err := http.NewRequest(tr.method, tr.url, tr.body)
+	req.Close = true
 	if err != nil {
 		return nil, err
 	}

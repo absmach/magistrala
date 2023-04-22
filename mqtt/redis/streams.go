@@ -52,11 +52,7 @@ func (es eventStore) storeEvent(clientID, eventType string) error {
 		Values:       event.Encode(),
 	}
 
-	if err := es.client.XAdd(context.Background(), record).Err(); err != nil {
-		return err
-	}
-
-	return nil
+	return es.client.XAdd(context.Background(), record).Err()
 }
 
 // Connect issues event on MQTT CONNECT

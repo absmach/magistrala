@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -19,7 +18,7 @@ type Config struct {
 
 // read - retrieve config from a file
 func read(file string) (Config, error) {
-	data, err := ioutil.ReadFile(file)
+	data, err := os.ReadFile(file)
 	c := Config{}
 	if err != nil {
 		return c, errors.New(fmt.Sprintf("failed to read config file: %s", err))

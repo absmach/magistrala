@@ -147,7 +147,6 @@ func (c *Client) connect() error {
 			cfg.Certificates = []tls.Certificate{c.ClientCert}
 		}
 
-		cfg.BuildNameToCertificate()
 		opts.SetTLSConfig(cfg)
 		opts.SetProtocolVersion(4)
 	}

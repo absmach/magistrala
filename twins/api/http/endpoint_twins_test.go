@@ -392,7 +392,7 @@ func TestViewTwin(t *testing.T) {
 
 		var resData twinRes
 		err = json.NewDecoder(res.Body).Decode(&resData)
-		assert.Nil(t, err, fmt.Sprintf("%s: got unexpected error while decoding json: %s", tc.desc, err))
+		assert.Nil(t, err, fmt.Sprintf("%s: got unexpected error while decoding response body: %s\n", tc.desc, err))
 		assert.Equal(t, tc.res, resData, fmt.Sprintf("%s: expected body %v got %v", tc.desc, tc.res, resData))
 	}
 }

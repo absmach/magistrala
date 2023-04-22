@@ -285,17 +285,17 @@ func (ts *twinsService) saveState(msg *messaging.Message, twinID string) error {
 
 	tw, err := ts.twins.RetrieveByID(ctx, twinID)
 	if err != nil {
-		return fmt.Errorf("Retrieving twin for %s failed: %s", msg.Publisher, err)
+		return fmt.Errorf("retrieving twin for %s failed: %s", msg.Publisher, err)
 	}
 
 	var recs []senml.Record
 	if err := json.Unmarshal(msg.Payload, &recs); err != nil {
-		return fmt.Errorf("Unmarshal payload for %s failed: %s", msg.Publisher, err)
+		return fmt.Errorf("unmarshal payload for %s failed: %s", msg.Publisher, err)
 	}
 
 	st, err := ts.states.RetrieveLast(ctx, tw.ID)
 	if err != nil {
-		return fmt.Errorf("Retrieve last state for %s failed: %s", msg.Publisher, err)
+		return fmt.Errorf("retrieve last state for %s failed: %s", msg.Publisher, err)
 	}
 
 	for _, rec := range recs {
@@ -305,11 +305,11 @@ func (ts *twinsService) saveState(msg *messaging.Message, twinID string) error {
 			return nil
 		case update:
 			if err := ts.states.Update(ctx, st); err != nil {
-				return fmt.Errorf("Update state for %s failed: %s", msg.Publisher, err)
+				return fmt.Errorf("update state for %s failed: %s", msg.Publisher, err)
 			}
 		case save:
 			if err := ts.states.Save(ctx, st); err != nil {
-				return fmt.Errorf("Save state for %s failed: %s", msg.Publisher, err)
+				return fmt.Errorf("save state for %s failed: %s", msg.Publisher, err)
 			}
 		}
 	}

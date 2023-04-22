@@ -53,11 +53,7 @@ func (pub *publisher) Publish(ctx context.Context, topic string, msg *messaging.
 		subject = fmt.Sprintf("%s.%s", subject, msg.Subtopic)
 	}
 
-	if err := pub.conn.Publish(subject, data); err != nil {
-		return err
-	}
-
-	return nil
+	return pub.conn.Publish(subject, data)
 }
 
 func (pub *publisher) Close() error {

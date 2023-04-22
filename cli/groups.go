@@ -54,7 +54,7 @@ var cmdGroups = []cobra.Command{
 				logUsage(cmd.Use)
 				return
 			}
-			if args[0] == "all" {
+			if args[0] == all {
 				if len(args) > 2 {
 					logUsage(cmd.Use)
 					return

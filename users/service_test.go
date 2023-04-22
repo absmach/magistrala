@@ -273,7 +273,7 @@ func TestListUsers(t *testing.T) {
 			err:   errors.ErrAuthorization,
 		},
 		{
-			desc:  "list user with emtpy token",
+			desc:  "list user with empty token",
 			token: "",
 			size:  0,
 			err:   errors.ErrAuthentication,

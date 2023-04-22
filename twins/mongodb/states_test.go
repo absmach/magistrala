@@ -58,7 +58,8 @@ func TestStatesRetrieveAll(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Creating new MongoDB client expected to succeed: %s.\n", err))
 
 	db := client.Database(testDB)
-	db.Collection("states").DeleteMany(context.Background(), bson.D{})
+	_, err = db.Collection("states").DeleteMany(context.Background(), bson.D{})
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
 	repo := mongodb.NewStateRepository(db)
 
@@ -73,7 +74,8 @@ func TestStatesRetrieveAll(t *testing.T) {
 			Created: time.Now(),
 		}
 
-		repo.Save(context.Background(), st)
+		err = repo.Save(context.Background(), st)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	}
 
 	cases := map[string]struct {
@@ -120,7 +122,8 @@ func TestStatesRetrieveLast(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Creating new MongoDB client expected to succeed: %s.\n", err))
 
 	db := client.Database(testDB)
-	db.Collection("states").DeleteMany(context.Background(), bson.D{})
+	_, err = db.Collection("states").DeleteMany(context.Background(), bson.D{})
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
 	repo := mongodb.NewStateRepository(db)
 
@@ -135,7 +138,8 @@ func TestStatesRetrieveLast(t *testing.T) {
 			Created: time.Now(),
 		}
 
-		repo.Save(context.Background(), st)
+		err = repo.Save(context.Background(), st)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	}
 
 	cases := map[string]struct {

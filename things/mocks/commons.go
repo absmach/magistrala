@@ -12,6 +12,8 @@ import (
 )
 
 const uuidLen = 36
+const asc = "asc"
+const desc = "desc"
 
 // Since mocks will store data in map, and they need to resemble the real
 // identifiers as much as possible, a key will be created as combination of
@@ -24,23 +26,23 @@ func key(owner string, id string) string {
 func sortThings(pm things.PageMetadata, ths []things.Thing) []things.Thing {
 	switch pm.Order {
 	case "name":
-		if pm.Dir == "asc" {
+		if pm.Dir == asc {
 			sort.SliceStable(ths, func(i, j int) bool {
 				return ths[i].Name < ths[j].Name
 			})
 		}
-		if pm.Dir == "desc" {
+		if pm.Dir == desc {
 			sort.SliceStable(ths, func(i, j int) bool {
 				return ths[i].Name > ths[j].Name
 			})
 		}
 	case "id":
-		if pm.Dir == "asc" {
+		if pm.Dir == asc {
 			sort.SliceStable(ths, func(i, j int) bool {
 				return ths[i].ID < ths[j].ID
 			})
 		}
-		if pm.Dir == "desc" {
+		if pm.Dir == desc {
 			sort.SliceStable(ths, func(i, j int) bool {
 				return ths[i].ID > ths[j].ID
 			})
@@ -57,23 +59,23 @@ func sortThings(pm things.PageMetadata, ths []things.Thing) []things.Thing {
 func sortChannels(pm things.PageMetadata, chs []things.Channel) []things.Channel {
 	switch pm.Order {
 	case "name":
-		if pm.Dir == "asc" {
+		if pm.Dir == asc {
 			sort.SliceStable(chs, func(i, j int) bool {
 				return chs[i].Name < chs[j].Name
 			})
 		}
-		if pm.Dir == "desc" {
+		if pm.Dir == desc {
 			sort.SliceStable(chs, func(i, j int) bool {
 				return chs[i].Name > chs[j].Name
 			})
 		}
 	case "id":
-		if pm.Dir == "asc" {
+		if pm.Dir == asc {
 			sort.SliceStable(chs, func(i, j int) bool {
 				return chs[i].ID < chs[j].ID
 			})
 		}
-		if pm.Dir == "desc" {
+		if pm.Dir == desc {
 			sort.SliceStable(chs, func(i, j int) bool {
 				return chs[i].ID > chs[j].ID
 			})

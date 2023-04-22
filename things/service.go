@@ -244,7 +244,7 @@ func (ts *thingsService) claimOwnership(ctx context.Context, objectID string, ac
 		for _, action := range actions {
 			apr, err := ts.auth.AddPolicy(ctx, &mainflux.AddPolicyReq{Obj: objectID, Act: action, Sub: userID})
 			if err != nil {
-				errs = errors.Wrap(fmt.Errorf("cannot claim ownership on object '%s' by user '%s': %s", objectID, userID, err), errs)
+				errs = errors.Wrap(fmt.Errorf("cannot claim ownership on object '%s' by user '%s': %w", objectID, userID, err), errs)
 			}
 			if !apr.GetAuthorized() {
 				errs = errors.Wrap(fmt.Errorf("cannot claim ownership on object '%s' by user '%s': unauthorized", objectID, userID), errs)

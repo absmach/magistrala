@@ -53,7 +53,7 @@ func (es eventStore) Add(ctx context.Context, token string, cfg bootstrap.Config
 		timestamp:  time.Now(),
 	}
 
-	es.add(ctx, ev)
+	err = es.add(ctx, ev)
 
 	return saved, err
 }
@@ -74,9 +74,7 @@ func (es eventStore) Update(ctx context.Context, token string, cfg bootstrap.Con
 		timestamp: time.Now(),
 	}
 
-	es.add(ctx, ev)
-
-	return nil
+	return es.add(ctx, ev)
 }
 
 func (es eventStore) UpdateCert(ctx context.Context, token, thingKey, clientCert, clientKey, caCert string) error {
@@ -94,9 +92,7 @@ func (es eventStore) UpdateConnections(ctx context.Context, token, id string, co
 		timestamp:  time.Now(),
 	}
 
-	es.add(ctx, ev)
-
-	return nil
+	return es.add(ctx, ev)
 }
 
 func (es eventStore) List(ctx context.Context, token string, filter bootstrap.Filter, offset, limit uint64) (bootstrap.ConfigsPage, error) {
@@ -113,9 +109,7 @@ func (es eventStore) Remove(ctx context.Context, token, id string) error {
 		timestamp: time.Now(),
 	}
 
-	es.add(ctx, ev)
-
-	return nil
+	return es.add(ctx, ev)
 }
 
 func (es eventStore) Bootstrap(ctx context.Context, externalKey, externalID string, secure bool) (bootstrap.Config, error) {
@@ -130,8 +124,7 @@ func (es eventStore) Bootstrap(ctx context.Context, externalKey, externalID stri
 	if err != nil {
 		ev.success = false
 	}
-
-	es.add(ctx, ev)
+	_ = es.add(ctx, ev)
 
 	return cfg, err
 }
@@ -147,9 +140,7 @@ func (es eventStore) ChangeState(ctx context.Context, token, id string, state bo
 		timestamp: time.Now(),
 	}
 
-	es.add(ctx, ev)
-
-	return nil
+	return es.add(ctx, ev)
 }
 
 func (es eventStore) RemoveConfigHandler(ctx context.Context, id string) error {

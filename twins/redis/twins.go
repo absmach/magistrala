@@ -23,7 +23,7 @@ var (
 	// ErrRedisTwinUpdate indicates error while saving Twin in redis cache
 	ErrRedisTwinUpdate = errors.New("failed to update twin in redis cache")
 
-	// ErrRedisTwinIDs indicates error while geting Twin IDs from redis cache
+	// ErrRedisTwinIDs indicates error while getting Twin IDs from redis cache
 	ErrRedisTwinIDs = errors.New("failed to get twin id from redis cache")
 
 	// ErrRedisTwinRemove indicates error while removing Twin from redis cache

@@ -39,7 +39,7 @@ func (c client) Identify(ctx context.Context, thingKey string) (string, error) {
 	thingID, err := c.redisClient.Get(ctx, tkey).Result()
 	if err != nil {
 		t := &mainflux.Token{
-			Value: string(thingKey),
+			Value: thingKey,
 		}
 
 		thid, err := c.thingsClient.Identify(context.TODO(), t)

@@ -95,7 +95,8 @@ func TestThingRemove(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	id := "123"
 	id2 := "321"
-	thingCache.Save(context.Background(), key, id)
+	err = thingCache.Save(context.Background(), key, id)
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error while saving thingKey-thingID pair: %s", err))
 
 	cases := []struct {
 		desc string

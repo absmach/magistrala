@@ -33,11 +33,7 @@ func (mr *routerMap) Save(ctx context.Context, mfxID, loraID string) error {
 	}
 
 	lkey := fmt.Sprintf("%s:%s", mr.prefix, loraID)
-	if err := mr.client.Set(ctx, lkey, mfxID, 0).Err(); err != nil {
-		return err
-	}
-
-	return nil
+	return mr.client.Set(ctx, lkey, mfxID, 0).Err()
 }
 
 func (mr *routerMap) Get(ctx context.Context, id string) (string, error) {

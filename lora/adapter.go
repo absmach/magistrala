@@ -110,7 +110,7 @@ func (as *adapterService) Publish(ctx context.Context, m *Message) error {
 		if err != nil {
 			return err
 		}
-		payload = []byte(jo)
+		payload = jo
 	}
 
 	// Publish on Mainflux Message broker

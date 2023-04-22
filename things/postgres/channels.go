@@ -20,6 +20,8 @@ import (
 
 var _ things.ChannelRepository = (*channelRepository)(nil)
 
+const name = "name"
+
 type channelRepository struct {
 	db Database
 }
@@ -52,7 +54,9 @@ func (cr channelRepository) Save(ctx context.Context, channels ...things.Channel
 
 		_, err = tx.NamedExecContext(ctx, q, dbch)
 		if err != nil {
-			tx.Rollback()
+			if err := tx.Rollback(); err != nil {
+				return []things.Channel{}, errors.Wrap(errors.ErrCreateEntity, err)
+			}
 			pgErr, ok := err.(*pgconn.PgError)
 			if ok {
 				switch pgErr.Code {
@@ -64,6 +68,7 @@ func (cr channelRepository) Save(ctx context.Context, channels ...things.Channel
 					return []things.Channel{}, errors.Wrap(errors.ErrMalformedEntity, err)
 				}
 			}
+
 			return []things.Channel{}, errors.Wrap(errors.ErrCreateEntity, err)
 		}
 	}
@@ -291,8 +296,9 @@ func (cr channelRepository) Remove(ctx context.Context, owner, id string) error 
 		Owner: owner,
 	}
 	q := `DELETE FROM channels WHERE id = :id AND owner = :owner`
-	cr.db.NamedExecContext(ctx, q, dbch)
-	return nil
+
+	_, err := cr.db.NamedExecContext(ctx, q, dbch)
+	return err
 }
 
 func (cr channelRepository) Connect(ctx context.Context, owner string, chIDs, thIDs []string) error {
@@ -314,7 +320,10 @@ func (cr channelRepository) Connect(ctx context.Context, owner string, chIDs, th
 
 			_, err := tx.NamedExecContext(ctx, q, dbco)
 			if err != nil {
-				tx.Rollback()
+				if err := tx.Rollback(); err != nil {
+					return errors.Wrap(things.ErrConnect, err)
+				}
+
 				pgErr, ok := err.(*pgconn.PgError)
 				if ok {
 					switch pgErr.Code {
@@ -357,7 +366,11 @@ func (cr channelRepository) Disconnect(ctx context.Context, owner string, chIDs,
 
 			res, err := tx.NamedExecContext(ctx, q, dbco)
 			if err != nil {
-				tx.Rollback()
+				err = tx.Rollback()
+				if err != nil {
+					return errors.Wrap(things.ErrConnect, err)
+				}
+
 				pgErr, ok := err.(*pgconn.PgError)
 				if ok {
 					switch pgErr.Code {
@@ -428,13 +441,13 @@ type dbMetadata map[string]interface{}
 // If error occurs on casting data then m points to empty metadata.
 func (m *dbMetadata) Scan(value interface{}) error {
 	if value == nil {
-		m = nil
+		*m = dbMetadata{}
 		return nil
 	}
 
 	b, ok := value.([]byte)
 	if !ok {
-		m = &dbMetadata{}
+		*m = dbMetadata{}
 		return errors.ErrScanMetadata
 	}
 
@@ -494,8 +507,8 @@ func getNameQuery(name string) (string, string) {
 
 func getOrderQuery(order string) string {
 	switch order {
-	case "name":
-		return "name"
+	case name:
+		return name
 	default:
 		return "id"
 	}
@@ -503,7 +516,7 @@ func getOrderQuery(order string) string {
 
 func getConnOrderQuery(order string, level string) string {
 	switch order {
-	case "name":
+	case name:
 		return level + ".name"
 	default:
 		return level + ".id"

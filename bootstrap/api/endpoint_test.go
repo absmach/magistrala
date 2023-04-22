@@ -967,7 +967,9 @@ func TestList(t *testing.T) {
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		var body configPage
 
-		json.NewDecoder(res.Body).Decode(&body)
+		err = json.NewDecoder(res.Body).Decode(&body)
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.ElementsMatch(t, tc.res.Configs, body.Configs, fmt.Sprintf("%s: expected response '%s' got '%s'", tc.desc, tc.res.Configs, body.Configs))
 		assert.Equal(t, tc.res.Total, body.Total, fmt.Sprintf("%s: expected response total '%d' got '%d'", tc.desc, tc.res.Total, body.Total))
@@ -1157,7 +1159,7 @@ func TestBootstrap(t *testing.T) {
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		if tc.secure && tc.status == http.StatusOK {
 			body, err = dec(body)
-			assert.Nil(t, err, fmt.Sprintf("%sGot unexpected error: %s\n", tc.desc, err))
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding body: %s", tc.desc, err))
 		}
 
 		data := strings.Trim(string(body), "\n")

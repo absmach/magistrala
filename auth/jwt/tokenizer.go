@@ -14,7 +14,7 @@ import (
 const issuerName = "mainflux.auth"
 
 type claims struct {
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 	IssuerID string  `json:"issuer_id,omitempty"`
 	Type     *uint32 `json:"type,omitempty"`
 }
@@ -24,7 +24,7 @@ func (c claims) Valid() error {
 		return errors.ErrMalformedEntity
 	}
 
-	return c.StandardClaims.Valid()
+	return c.RegisteredClaims.Valid()
 }
 
 type tokenizer struct {
@@ -38,20 +38,20 @@ func New(secret string) auth.Tokenizer {
 
 func (svc tokenizer) Issue(key auth.Key) (string, error) {
 	claims := claims{
-		StandardClaims: jwt.StandardClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:   issuerName,
 			Subject:  key.Subject,
-			IssuedAt: key.IssuedAt.UTC().Unix(),
+			IssuedAt: &jwt.NumericDate{Time: key.IssuedAt.UTC()},
 		},
 		IssuerID: key.IssuerID,
 		Type:     &key.Type,
 	}
 
 	if !key.ExpiresAt.IsZero() {
-		claims.ExpiresAt = key.ExpiresAt.UTC().Unix()
+		claims.ExpiresAt = &jwt.NumericDate{Time: key.ExpiresAt.UTC()}
 	}
 	if key.ID != "" {
-		claims.Id = key.ID
+		claims.ID = key.ID
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -70,6 +70,7 @@ func (svc tokenizer) Parse(token string) (auth.Key, error) {
 	if err != nil {
 		if e, ok := err.(*jwt.ValidationError); ok && e.Errors == jwt.ValidationErrorExpired {
 			// Expired User key needs to be revoked.
+
 			if c.Type != nil && *c.Type == auth.APIKey {
 				return c.toKey(), auth.ErrAPIKeyExpired
 			}
@@ -83,18 +84,20 @@ func (svc tokenizer) Parse(token string) (auth.Key, error) {
 
 func (c claims) toKey() auth.Key {
 	key := auth.Key{
-		ID:       c.Id,
+		ID:       c.ID,
 		IssuerID: c.IssuerID,
 		Subject:  c.Subject,
-		IssuedAt: time.Unix(c.IssuedAt, 0).UTC(),
+		IssuedAt: c.IssuedAt.Time.UTC(),
 	}
-	if c.ExpiresAt != 0 {
-		key.ExpiresAt = time.Unix(c.ExpiresAt, 0).UTC()
+
+	key.ExpiresAt = time.Time{}
+	if c.ExpiresAt != nil && c.ExpiresAt.Time.UTC().Unix() != 0 {
+		key.ExpiresAt = c.ExpiresAt.Time.UTC()
 	}
 
 	// Default type is 0.
 	if c.Type != nil {
-		key.Type = *c.Type
+		key.Type = *(c.Type)
 	}
 
 	return key

@@ -83,10 +83,6 @@ func (crm *configRepositoryMock) RetrieveAll(token string, filter bootstrap.Filt
 
 	configs := make([]bootstrap.Config, 0)
 
-	if offset < 0 || limit <= 0 {
-		return bootstrap.ConfigsPage{}
-	}
-
 	first := uint64(offset) + 1
 	last := first + uint64(limit)
 	var state bootstrap.State = emptyState

@@ -119,8 +119,8 @@ func (repo *influxRepository) count(measurement, condition string, timeRange str
 		measurement,
 		condition)
 	queryAPI := repo.client.QueryAPI(repo.cfg.Org)
-	resp, err := queryAPI.Query(context.Background(), cmd)
 
+	resp, err := queryAPI.Query(context.Background(), cmd)
 	if err != nil {
 		return 0, err
 	}
@@ -168,7 +168,7 @@ func fmtCondition(chanID string, rpm readers.PageMetadata) (string, string) {
 		toValue := int64(value.(float64) * 1e9)
 		to = fmt.Sprintf(`, stop: time(v: %d )`, toValue)
 	}
-	// timeRange returned seperately because
+	// timeRange returned separately because
 	// in FluxQL time range must be at the
 	// beginning of the query.
 	timeRange = fmt.Sprintf(`|> range(%s %s)`, from, to)

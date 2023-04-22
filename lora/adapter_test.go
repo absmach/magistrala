@@ -13,6 +13,7 @@ import (
 	"github.com/mainflux/mainflux/lora/mocks"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -40,19 +41,19 @@ func TestPublish(t *testing.T) {
 	svc := newService()
 
 	err := svc.CreateChannel(context.Background(), chanID, appID)
-	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
 	err = svc.CreateThing(context.Background(), thingID, devEUI)
-	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
 	err = svc.ConnectThing(context.Background(), chanID, thingID)
-	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
 	err = svc.CreateChannel(context.Background(), chanID2, appID2)
-	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
 	err = svc.CreateThing(context.Background(), thingID2, devEUI2)
-	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
 	msgBase64 := base64.StdEncoding.EncodeToString([]byte(msg))
 

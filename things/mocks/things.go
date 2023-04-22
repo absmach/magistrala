@@ -117,10 +117,6 @@ func (trm *thingRepositoryMock) RetrieveAll(_ context.Context, owner string, pm 
 	trm.mu.Lock()
 	defer trm.mu.Unlock()
 
-	if pm.Limit < 0 {
-		return things.Page{}, nil
-	}
-
 	first := uint64(pm.Offset) + 1
 	last := first + uint64(pm.Limit)
 

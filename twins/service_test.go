@@ -154,7 +154,8 @@ func TestListTwins(t *testing.T) {
 
 	n := uint64(10)
 	for i := uint64(0); i < n; i++ {
-		svc.AddTwin(context.Background(), token, twin, def)
+		_, err := svc.AddTwin(context.Background(), token, twin, def)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	}
 
 	cases := []struct {

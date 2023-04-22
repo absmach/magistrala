@@ -5,6 +5,7 @@ package grpc_test
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"testing"
@@ -28,17 +29,31 @@ const (
 var svc things.Service
 
 func TestMain(m *testing.M) {
-	startServer()
-	code := m.Run()
-	os.Exit(code)
-}
+	serverErr := make(chan error)
 
-func startServer() {
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	if err != nil {
+		log.Fatalf("got unexpected error while creating new listerner: %s", err)
+	}
+
 	svc = newService(map[string]string{token: email})
-	listener, _ := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	server := grpc.NewServer()
 	mainflux.RegisterThingsServiceServer(server, grpcapi.NewServer(mocktracer.New(), svc))
-	go server.Serve(listener)
+
+	// Start gRPC server in detached mode.
+	go func() {
+		serverErr <- server.Serve(listener)
+	}()
+
+	code := m.Run()
+
+	server.GracefulStop()
+	err = <-serverErr
+	if err != nil {
+		log.Fatalln("gPRC Server Terminated : ", err)
+	}
+	close(serverErr)
+	os.Exit(code)
 }
 
 func newService(tokens map[string]string) things.Service {

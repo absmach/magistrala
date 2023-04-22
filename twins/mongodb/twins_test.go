@@ -249,7 +249,8 @@ func TestTwinsRetrieveAll(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Creating new MongoDB client expected to succeed: %s.\n", err))
 
 	db := client.Database(testDB)
-	db.Collection(collection).DeleteMany(context.Background(), bson.D{})
+	_, err = db.Collection(collection).DeleteMany(context.Background(), bson.D{})
+	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 
 	twinRepo := mongodb.NewTwinRepository(db)
 
@@ -269,7 +270,8 @@ func TestTwinsRetrieveAll(t *testing.T) {
 			tw.Name = name
 		}
 
-		twinRepo.Save(context.Background(), tw)
+		_, err = twinRepo.Save(context.Background(), tw)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	}
 
 	cases := map[string]struct {

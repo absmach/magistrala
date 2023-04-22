@@ -58,7 +58,7 @@ var cmdThings = []cobra.Command{
 				Limit:    uint64(Limit),
 				Metadata: metadata,
 			}
-			if args[0] == "all" {
+			if args[0] == all {
 				l, err := sdk.Things(pageMetadata, args[1])
 				if err != nil {
 					logError(err)

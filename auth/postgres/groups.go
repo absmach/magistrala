@@ -440,7 +440,11 @@ func (gr groupRepository) Assign(ctx context.Context, groupID, groupType string,
 		dbg.UpdatedAt = created
 
 		if _, err := tx.NamedExecContext(ctx, qIns, dbg); err != nil {
-			tx.Rollback()
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				err = errors.Wrap(err, rollbackErr)
+				return errors.Wrap(auth.ErrAssignToGroup, err)
+			}
+
 			pgErr, ok := err.(*pgconn.PgError)
 			if ok {
 				switch pgErr.Code {
@@ -479,7 +483,11 @@ func (gr groupRepository) Unassign(ctx context.Context, groupID string, ids ...s
 		}
 
 		if _, err := tx.NamedExecContext(ctx, qDel, dbg); err != nil {
-			tx.Rollback()
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				err = errors.Wrap(rollbackErr, err)
+				return errors.Wrap(auth.ErrAssignToGroup, err)
+			}
+
 			pgErr, ok := err.(*pgconn.PgError)
 			if ok {
 				switch pgErr.Code {

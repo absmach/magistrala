@@ -395,10 +395,12 @@ func TestMultiThingRetrieval(t *testing.T) {
 	subMetaStr := `{"field2":{"subfield12":{"subfield121":"value3"}}}`
 
 	metadata := things.Metadata{}
-	json.Unmarshal([]byte(metaStr), &metadata)
+	err = json.Unmarshal([]byte(metaStr), &metadata)
+	assert.Nil(t, err, fmt.Sprintf("got expected error while unmarshalling %s\n", err))
 
 	subMeta := things.Metadata{}
-	json.Unmarshal([]byte(subMetaStr), &subMeta)
+	err = json.Unmarshal([]byte(subMetaStr), &subMeta)
+	assert.Nil(t, err, fmt.Sprintf("got expected error while unmarshalling %s\n", err))
 
 	wrongMeta := things.Metadata{
 		"field": "value1",

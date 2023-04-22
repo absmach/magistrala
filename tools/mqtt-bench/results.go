@@ -157,7 +157,9 @@ func printResults(results []*runResults, totals *totalResults, format string, qu
 			log.Printf("Failed to prepare results for printing - %s\n", err.Error())
 		}
 		var out bytes.Buffer
-		json.Indent(&out, data, "", "\t")
+		if err = json.Indent(&out, data, "", "\t"); err != nil {
+			return
+		}
 
 		fmt.Println(out.String())
 	default:

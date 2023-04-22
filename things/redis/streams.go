@@ -49,7 +49,10 @@ func (es eventStore) CreateThings(ctx context.Context, token string, ths ...thin
 			MaxLenApprox: streamLen,
 			Values:       event.Encode(),
 		}
-		es.client.XAdd(ctx, record).Err()
+
+		if err = es.client.XAdd(ctx, record).Err(); err != nil {
+			return sths, err
+		}
 	}
 
 	return sths, nil
@@ -70,9 +73,8 @@ func (es eventStore) UpdateThing(ctx context.Context, token string, thing things
 		MaxLenApprox: streamLen,
 		Values:       event.Encode(),
 	}
-	es.client.XAdd(ctx, record).Err()
 
-	return nil
+	return es.client.XAdd(ctx, record).Err()
 }
 
 // UpdateKey doesn't send event because key shouldn't be sent over stream.
@@ -111,9 +113,8 @@ func (es eventStore) RemoveThing(ctx context.Context, token, id string) error {
 		MaxLenApprox: streamLen,
 		Values:       event.Encode(),
 	}
-	es.client.XAdd(ctx, record).Err()
 
-	return nil
+	return es.client.XAdd(ctx, record).Err()
 }
 
 func (es eventStore) CreateChannels(ctx context.Context, token string, channels ...things.Channel) ([]things.Channel, error) {
@@ -134,7 +135,9 @@ func (es eventStore) CreateChannels(ctx context.Context, token string, channels 
 			MaxLenApprox: streamLen,
 			Values:       event.Encode(),
 		}
-		es.client.XAdd(ctx, record).Err()
+		if err = es.client.XAdd(ctx, record).Err(); err != nil {
+			return schs, err
+		}
 	}
 
 	return schs, nil
@@ -155,9 +158,7 @@ func (es eventStore) UpdateChannel(ctx context.Context, token string, channel th
 		MaxLenApprox: streamLen,
 		Values:       event.Encode(),
 	}
-	es.client.XAdd(ctx, record).Err()
-
-	return nil
+	return es.client.XAdd(ctx, record).Err()
 }
 
 func (es eventStore) ViewChannel(ctx context.Context, token, id string) (things.Channel, error) {
@@ -185,9 +186,7 @@ func (es eventStore) RemoveChannel(ctx context.Context, token, id string) error 
 		MaxLenApprox: streamLen,
 		Values:       event.Encode(),
 	}
-	es.client.XAdd(ctx, record).Err()
-
-	return nil
+	return es.client.XAdd(ctx, record).Err()
 }
 
 func (es eventStore) Connect(ctx context.Context, token string, chIDs, thIDs []string) error {
@@ -206,7 +205,9 @@ func (es eventStore) Connect(ctx context.Context, token string, chIDs, thIDs []s
 				MaxLenApprox: streamLen,
 				Values:       event.Encode(),
 			}
-			es.client.XAdd(ctx, record).Err()
+			if err := es.client.XAdd(ctx, record).Err(); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -229,7 +230,9 @@ func (es eventStore) Disconnect(ctx context.Context, token string, chIDs, thIDs 
 				MaxLenApprox: streamLen,
 				Values:       event.Encode(),
 			}
-			es.client.XAdd(ctx, record).Err()
+			if err := es.client.XAdd(ctx, record).Err(); err != nil {
+				return err
+			}
 		}
 	}
 

@@ -74,10 +74,9 @@ func (cr cassandraRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 	case defTable:
 		for scanner.Next() {
 			var msg senml.Message
-			err := scanner.Scan(&msg.Channel, &msg.Subtopic, &msg.Publisher, &msg.Protocol,
+			if err := scanner.Scan(&msg.Channel, &msg.Subtopic, &msg.Publisher, &msg.Protocol,
 				&msg.Name, &msg.Unit, &msg.Value, &msg.StringValue, &msg.BoolValue,
-				&msg.DataValue, &msg.Sum, &msg.Time, &msg.UpdateTime)
-			if err != nil {
+				&msg.DataValue, &msg.Sum, &msg.Time, &msg.UpdateTime); err != nil {
 				if e, ok := err.(gocql.RequestError); ok {
 					if e.Code() == undefinedTableCode {
 						return readers.MessagesPage{}, nil
@@ -90,8 +89,7 @@ func (cr cassandraRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 	default:
 		for scanner.Next() {
 			var msg jsonMessage
-			err := scanner.Scan(&msg.Channel, &msg.Subtopic, &msg.Publisher, &msg.Protocol, &msg.Created, &msg.Payload)
-			if err != nil {
+			if err := scanner.Scan(&msg.Channel, &msg.Subtopic, &msg.Publisher, &msg.Protocol, &msg.Created, &msg.Payload); err != nil {
 				if e, ok := err.(gocql.RequestError); ok {
 					if e.Code() == undefinedTableCode {
 						return readers.MessagesPage{}, nil
@@ -128,7 +126,9 @@ func buildQuery(chanID string, rpm readers.PageMetadata) (string, []interface{})
 	if err != nil {
 		return condCQL, vals
 	}
-	json.Unmarshal(meta, &query)
+	if err := json.Unmarshal(meta, &query); err != nil {
+		return condCQL, vals
+	}
 
 	for name, val := range query {
 		switch name {

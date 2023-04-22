@@ -6,7 +6,6 @@ package mocks
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/gorilla/websocket"
 	"github.com/mainflux/mainflux/pkg/messaging"
@@ -37,7 +36,6 @@ func (pubsub *mockPubSub) Publish(ctx context.Context, s string, msg *messaging.
 	if pubsub.conn != nil {
 		data, err := json.Marshal(msg)
 		if err != nil {
-			fmt.Println("can't marshall")
 			return ws.ErrFailedMessagePublish
 		}
 		return pubsub.conn.WriteMessage(websocket.BinaryMessage, data)

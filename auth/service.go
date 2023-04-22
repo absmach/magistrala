@@ -183,7 +183,7 @@ func (svc service) AddPolicies(ctx context.Context, token, object string, subjec
 	for _, subjectID := range subjectIDs {
 		for _, relation := range relations {
 			if err := svc.AddPolicy(ctx, PolicyReq{Object: object, Relation: relation, Subject: subjectID}); err != nil {
-				errs = errors.Wrap(fmt.Errorf("cannot add '%s' policy on object '%s' for subject '%s': %s", relation, object, subjectID, err), errs)
+				errs = errors.Wrap(fmt.Errorf("cannot add '%s' policy on object '%s' for subject '%s': %w", relation, object, subjectID, err), errs)
 			}
 		}
 	}
@@ -209,7 +209,7 @@ func (svc service) DeletePolicies(ctx context.Context, token, object string, sub
 	for _, subjectID := range subjectIDs {
 		for _, relation := range relations {
 			if err := svc.DeletePolicy(ctx, PolicyReq{Object: object, Relation: relation, Subject: subjectID}); err != nil {
-				errs = errors.Wrap(fmt.Errorf("cannot delete '%s' policy on object '%s' for subject '%s': %s", relation, object, subjectID, err), errs)
+				errs = errors.Wrap(fmt.Errorf("cannot delete '%s' policy on object '%s' for subject '%s': %w", relation, object, subjectID, err), errs)
 			}
 		}
 	}

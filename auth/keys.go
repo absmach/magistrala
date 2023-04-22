@@ -22,7 +22,7 @@ var (
 )
 
 const (
-	// LoginKey is temporary User key received on successfull login.
+	// LoginKey is temporary User key received on successful login.
 	LoginKey uint32 = iota
 	// RecoveryKey represents a key for resseting password.
 	RecoveryKey

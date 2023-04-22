@@ -29,17 +29,20 @@ import (
 )
 
 const (
-	contentType = "application/json"
-	email       = "user@example.com"
-	adminEmail  = "admin@example.com"
-	token       = "token"
-	wrongValue  = "wrong_value"
-	wrongID     = 0
-	maxNameSize = 1024
-	nameKey     = "name"
-	ascKey      = "asc"
-	descKey     = "desc"
-	prefix      = "fe6b4e92-cc98-425e-b0aa-"
+	contentType       = "application/json"
+	email             = "user@example.com"
+	adminEmail        = "admin@example.com"
+	otherExampleEmail = "other_user@example.com"
+	token             = "token"
+	otherExampleToken = "other_token"
+	wrongValue        = "wrong_value"
+	thingKey          = "key"
+	wrongID           = 0
+	maxNameSize       = 1024
+	nameKey           = "name"
+	ascKey            = "asc"
+	descKey           = "desc"
+	prefix            = "fe6b4e92-cc98-425e-b0aa-"
 )
 
 var (
@@ -116,7 +119,7 @@ func TestCreateThing(t *testing.T) {
 	defer ts.Close()
 
 	th := thing
-	th.Key = "key"
+	th.Key = thingKey
 	data := toJSON(th)
 
 	th.Name = invalidName
@@ -956,12 +959,14 @@ func TestListThings(t *testing.T) {
 			token:  tc.auth,
 		}
 		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: got unexpected error %s", tc.desc, err))
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 
 		var data thingsPageRes
-		json.NewDecoder(res.Body).Decode(&data)
+		err = json.NewDecoder(res.Body).Decode(&data)
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+
 		assert.Equal(t, tc.statusCode, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.statusCode, res.StatusCode))
-		assert.ElementsMatch(t, tc.res, data.Things, fmt.Sprintf("%s: got incorrect list of things from response body", tc.desc))
+		assert.ElementsMatch(t, tc.res, data.Things, fmt.Sprintf("%s: expected body %v got %v", tc.desc, tc.res, data.Things))
 	}
 }
 
@@ -1153,12 +1158,14 @@ func TestSearchThings(t *testing.T) {
 			body:   strings.NewReader(tc.req),
 		}
 		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: got unexpected error %s", tc.desc, err))
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 
 		var data thingsPageRes
-		json.NewDecoder(res.Body).Decode(&data)
+		err = json.NewDecoder(res.Body).Decode(&data)
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+
 		assert.Equal(t, tc.statusCode, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.statusCode, res.StatusCode))
-		assert.ElementsMatch(t, tc.res, data.Things, fmt.Sprintf("%s: got incorrect list of things from response body", tc.desc))
+		assert.ElementsMatch(t, tc.res, data.Things, fmt.Sprintf("%s: expected body %v got %v", tc.desc, tc.res, data.Things))
 	}
 }
 
@@ -1337,12 +1344,14 @@ func TestListThingsByChannel(t *testing.T) {
 			token:  tc.auth,
 		}
 		res, err := req.make()
-		assert.Nil(t, err, fmt.Sprintf("%s: got unexpected error %s", tc.desc, err))
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 
 		var data thingsPageRes
-		json.NewDecoder(res.Body).Decode(&data)
+		err = json.NewDecoder(res.Body).Decode(&data)
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+
 		assert.Equal(t, tc.statusCode, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.statusCode, res.StatusCode))
-		assert.ElementsMatch(t, tc.res, data.Things, fmt.Sprintf("%s: got incorrect list of things from response body", tc.desc))
+		assert.ElementsMatch(t, tc.res, data.Things, fmt.Sprintf("%s: expected body %v got %v", tc.desc, tc.res, data.Things))
 	}
 }
 
@@ -1725,7 +1734,8 @@ func TestViewChannel(t *testing.T) {
 	ths, err := svc.CreateThings(context.Background(), token, thing)
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s\n", err))
 	th := ths[0]
-	svc.Connect(context.Background(), token, []string{sch.ID}, []string{th.ID})
+	err = svc.Connect(context.Background(), token, []string{sch.ID}, []string{th.ID})
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error when connecting to service: %s", err))
 
 	data := toJSON(channelRes{
 		ID:       sch.ID,
@@ -1815,7 +1825,8 @@ func TestListChannels(t *testing.T) {
 		ths, err := svc.CreateThings(context.Background(), token, thing)
 		assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 		th := ths[0]
-		svc.Connect(context.Background(), token, []string{ch.ID}, []string{th.ID})
+		err = svc.Connect(context.Background(), token, []string{ch.ID}, []string{th.ID})
+		assert.Nil(t, err, fmt.Sprintf("got unexpected error while connecting to service: %s", err))
 
 		channels = append(channels, channelRes{
 			ID:       ch.ID,
@@ -2006,9 +2017,11 @@ func TestListChannels(t *testing.T) {
 		assert.Nil(t, err, fmt.Sprintf("%s: got unexpected error %s", tc.desc, err))
 
 		var body channelsPageRes
-		json.NewDecoder(res.Body).Decode(&body)
+		err = json.NewDecoder(res.Body).Decode(&body)
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while deconding response body: %s", tc.desc, err))
+
 		assert.Equal(t, tc.statusCode, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.statusCode, res.StatusCode))
-		assert.ElementsMatch(t, tc.res, body.Channels, fmt.Sprintf("%s: got incorrect list of channels from response body", tc.desc))
+		assert.ElementsMatch(t, tc.res, body.Channels, fmt.Sprintf("%s: expected body %v got %v", tc.desc, tc.res, body.Channels))
 	}
 }
 
@@ -2186,9 +2199,11 @@ func TestListChannelsByThing(t *testing.T) {
 		assert.Nil(t, err, fmt.Sprintf("%s: got unexpected error %s", tc.desc, err))
 
 		var body channelsPageRes
-		json.NewDecoder(res.Body).Decode(&body)
+		err = json.NewDecoder(res.Body).Decode(&body)
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+
 		assert.Equal(t, tc.statusCode, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.statusCode, res.StatusCode))
-		assert.ElementsMatch(t, tc.res, body.Channels, fmt.Sprintf("%s: got incorrect list of channels from response body", tc.desc))
+		assert.ElementsMatch(t, tc.res, body.Channels, fmt.Sprintf("%s: expected body %v got %v", tc.desc, tc.res, body.Channels))
 	}
 }
 
@@ -2252,8 +2267,8 @@ func TestRemoveChannel(t *testing.T) {
 }
 
 func TestConnect(t *testing.T) {
-	otherToken := "other_token"
-	otherEmail := "other_user@example.com"
+	otherToken := otherExampleToken
+	otherEmail := otherExampleEmail
 	svc := newService(map[string]string{
 		token:      email,
 		otherToken: otherEmail,
@@ -2348,8 +2363,8 @@ func TestConnect(t *testing.T) {
 }
 
 func TestCreateConnections(t *testing.T) {
-	otherToken := "other_token"
-	otherEmail := "other_user@example.com"
+	otherToken := otherExampleToken
+	otherEmail := otherExampleEmail
 	svc := newService(map[string]string{
 		token:      email,
 		otherToken: otherEmail,
@@ -2537,8 +2552,8 @@ func TestCreateConnections(t *testing.T) {
 }
 
 func TestDisconnectList(t *testing.T) {
-	otherToken := "other_token"
-	otherEmail := "other_user@example.com"
+	otherToken := otherExampleToken
+	otherEmail := otherExampleEmail
 	svc := newService(map[string]string{
 		token:      email,
 		otherToken: otherEmail,
@@ -2730,8 +2745,8 @@ func TestDisconnectList(t *testing.T) {
 }
 
 func TestDisconnnect(t *testing.T) {
-	otherToken := "other_token"
-	otherEmail := "other_user@example.com"
+	otherToken := otherExampleToken
+	otherEmail := otherExampleEmail
 	svc := newService(map[string]string{
 		token:      email,
 		otherToken: otherEmail,
@@ -2741,9 +2756,13 @@ func TestDisconnnect(t *testing.T) {
 
 	ths, _ := svc.CreateThings(context.Background(), token, thing)
 	th1 := ths[0]
+
 	chs, _ := svc.CreateChannels(context.Background(), token, channel)
 	ch1 := chs[0]
-	svc.Connect(context.Background(), token, []string{ch1.ID}, []string{th1.ID})
+
+	err := svc.Connect(context.Background(), token, []string{ch1.ID}, []string{th1.ID})
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error  while connecting to service: %s", err))
+
 	chs, _ = svc.CreateChannels(context.Background(), otherToken, channel)
 	ch2 := chs[0]
 

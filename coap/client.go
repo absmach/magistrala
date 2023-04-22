@@ -88,7 +88,7 @@ func (c *client) Handle(msg *messaging.Message) error {
 		return errors.Wrap(ErrOption, err)
 	}
 	opts = append(opts, message.Option{ID: message.Observe, Value: []byte{byte(c.observe)}})
-	opts, n, err = opts.SetObserve(buff, uint32(c.observe))
+	opts, n, err = opts.SetObserve(buff, c.observe)
 	if err == message.ErrTooSmall {
 		buff = append(buff, make([]byte, n)...)
 		opts, _, err = opts.SetObserve(buff, uint32(c.observe))

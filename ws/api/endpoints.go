@@ -145,7 +145,7 @@ func process(svc ws.Service, req connReq, msgs <-chan []byte) {
 			Payload:  msg,
 			Created:  time.Now().UnixNano(),
 		}
-		svc.Publish(context.Background(), req.thingKey, &m)
+		_ = svc.Publish(context.Background(), req.thingKey, &m)
 	}
 	if err := svc.Unsubscribe(context.Background(), req.thingKey, req.chanID, req.subtopic); err != nil {
 		req.conn.Close()
@@ -153,7 +153,7 @@ func process(svc ws.Service, req connReq, msgs <-chan []byte) {
 }
 
 func encodeError(w http.ResponseWriter, err error) {
-	statusCode := http.StatusUnauthorized
+	var statusCode int
 
 	switch err {
 	case ws.ErrEmptyID, ws.ErrEmptyTopic:

@@ -15,7 +15,7 @@ require (
 	github.com/go-zoo/bone v1.3.0
 	github.com/gocql/gocql v1.2.1
 	github.com/gofrs/uuid v4.3.0+incompatible
-	github.com/golang-jwt/jwt/v4 v4.4.2
+	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/golang/protobuf v1.5.2
 	github.com/gopcua/opcua v0.1.6
 	github.com/gorilla/websocket v1.5.0

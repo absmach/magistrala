@@ -28,15 +28,18 @@ type Node struct {
 	NodeID    string
 }
 
-// Save stores a successfull subscription
+// Save stores a successful subscription
 func Save(serverURI, nodeID string) error {
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModePerm)
 	if err != nil {
 		return errors.Wrap(errWriteFile, err)
 	}
 	csvWriter := csv.NewWriter(file)
-	csvWriter.Write([]string{serverURI, nodeID})
+	err = csvWriter.Write([]string{serverURI, nodeID})
 	csvWriter.Flush()
+	if err != nil {
+		return errors.Wrap(errWriteFile, err)
+	}
 
 	return nil
 }

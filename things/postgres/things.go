@@ -48,7 +48,10 @@ func (tr thingRepository) Save(ctx context.Context, ths ...things.Thing) ([]thin
 		}
 
 		if _, err := tx.NamedExecContext(ctx, q, dbth); err != nil {
-			tx.Rollback()
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				err = errors.Wrap(err, rollbackErr)
+				return []things.Thing{}, errors.Wrap(errors.ErrCreateEntity, err)
+			}
 			pgErr, ok := err.(*pgconn.PgError)
 			if ok {
 				switch pgErr.Code {
@@ -158,9 +161,6 @@ func (tr thingRepository) RetrieveByID(ctx context.Context, owner, id string) (t
 		}
 		return things.Thing{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
-	fmt.Println()
-	fmt.Println(dbth)
-	fmt.Println()
 	return toThing(dbth)
 }
 

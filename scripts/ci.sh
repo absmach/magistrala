@@ -4,6 +4,7 @@ GO_VERSION=1.19.4
 PROTOC_VERSION=21.12
 PROTOC_GEN_VERSION=v1.28.1
 PROTOC_GRPC_VERSION=v1.2.0
+GOLANGCI_LINT_VERSION=v1.52.1
 
 function version_gt() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
 
@@ -71,7 +72,7 @@ setup_mf() {
 
 setup_lint() {
     # binary will be $(go env GOBIN)/golangci-lint
-    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOBIN) v1.46.2
+    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOBIN) $GOLANGCI_LINT_VERSION
 
 }
 
@@ -85,7 +86,7 @@ setup() {
 
 run_test() {
     echo "Running lint..."
-    golangci-lint run --no-config --disable-all --enable gosimple --enable govet --enable unused --enable deadcode --timeout 3m
+    golangci-lint run --no-config --disable-all --enable gosimple --enable errcheck --enable govet --enable unused --enable goconst --timeout 3m
     echo "Running tests..."
     echo "" > coverage.txt
     for d in $(go list ./... | grep -v 'vendor\|cmd'); do

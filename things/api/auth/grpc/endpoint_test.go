@@ -100,7 +100,9 @@ func TestCanAccessByID(t *testing.T) {
 	chs, err := svc.CreateChannels(context.Background(), token, channel)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s\n", err))
 	ch := chs[0]
-	svc.Connect(context.Background(), token, []string{ch.ID}, []string{th2.ID})
+
+	err = svc.Connect(context.Background(), token, []string{ch.ID}, []string{th2.ID})
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error while connecting to service: %s", err))
 
 	usersAddr := fmt.Sprintf("localhost:%d", port)
 	conn, err := grpc.Dial(usersAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))

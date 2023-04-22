@@ -598,7 +598,7 @@ func TestRemoveThing(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
 	for i := 0; i < 2; i++ {
 		err := repo.RemoveThing(saved)
-		assert.Nil(t, err, fmt.Sprintf("an unexpected error occured: %s\n", err))
+		assert.Nil(t, err, fmt.Sprintf("an unexpected error occurred: %s\n", err))
 	}
 }
 

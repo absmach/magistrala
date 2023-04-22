@@ -15,7 +15,7 @@ type RxInfo []struct {
 // DataRate lora data rate
 type DataRate struct {
 	Modulation   string  `json:"modulation"`
-	Bandwith     float64 `json:"bandwith"`
+	Bandwidth    float64 `json:"bandwidth"`
 	SpreadFactor int64   `json:"spreadFactor"`
 }
 

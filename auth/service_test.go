@@ -26,6 +26,7 @@ const (
 	id          = "testID"
 	groupName   = "mfx"
 	description = "Description"
+	read        = "read"
 
 	memberRelation = "member"
 	authoritiesObj = "authorities"
@@ -939,8 +940,8 @@ func TestAssign(t *testing.T) {
 
 	// check access control policies things members.
 	subjectSet := fmt.Sprintf("%s:%s#%s", "members", group.ID, memberRelation)
-	err = svc.Authorize(context.Background(), auth.PolicyReq{Object: mid, Relation: "read", Subject: subjectSet})
-	assert.Nil(t, err, fmt.Sprintf("entites having an access to group %s must have %s policy on %s: %s", group.ID, "read", mid, err))
+	err = svc.Authorize(context.Background(), auth.PolicyReq{Object: mid, Relation: read, Subject: subjectSet})
+	assert.Nil(t, err, fmt.Sprintf("entites having an access to group %s must have %s policy on %s: %s", group.ID, read, mid, err))
 	err = svc.Authorize(context.Background(), auth.PolicyReq{Object: mid, Relation: "write", Subject: subjectSet})
 	assert.Nil(t, err, fmt.Sprintf("entites having an access to group %s must have %s policy on %s: %s", group.ID, "write", mid, err))
 	err = svc.Authorize(context.Background(), auth.PolicyReq{Object: mid, Relation: "delete", Subject: subjectSet})
@@ -1082,7 +1083,7 @@ func TestAddPolicies(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	tmpID := "tmpid"
-	readPolicy := "read"
+	readPolicy := read
 	writePolicy := "write"
 	deletePolicy := "delete"
 
@@ -1167,7 +1168,7 @@ func TestDeletePolicies(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	tmpID := "tmpid"
-	readPolicy := "read"
+	readPolicy := read
 	writePolicy := "write"
 	deletePolicy := "delete"
 	memberPolicy := "member"
@@ -1253,7 +1254,7 @@ func TestListPolicies(t *testing.T) {
 	_, apiToken, err := svc.Issue(context.Background(), secret, key)
 	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
 
-	readPolicy := "read"
+	readPolicy := read
 	pageLen := 15
 
 	// Add arbitrary policies to the user.

@@ -14,33 +14,42 @@ import (
 	"strconv"
 	"time"
 
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/pelletier/go-toml"
 )
 
 // Benchmark - main benchmarking function
 func Benchmark(cfg Config) {
 	checkConnection(cfg.MQTT.Broker.URL, 1)
+	logger, err := mflog.New(os.Stdout, mflog.Debug.String())
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
 
-	var err error
 	subsResults := map[string](*[]float64){}
 	var caByte []byte
 	if cfg.MQTT.TLS.MTLS {
 		caFile, err := os.Open(cfg.MQTT.TLS.CA)
-		defer caFile.Close()
+
+		defer func() {
+			if err = caFile.Close(); err != nil {
+				logger.Warn(fmt.Sprintf("Could  not close file: %s", err))
+			}
+		}()
 		if err != nil {
-			fmt.Println(err)
+			logger.Warn(err.Error())
 		}
 		caByte, _ = ioutil.ReadAll(caFile)
 	}
 
 	data, err := ioutil.ReadFile(cfg.Mf.ConnFile)
 	if err != nil {
-		log.Fatalf("Error loading connections file: %s", err)
+		logger.Fatal(fmt.Sprintf("Error loading connections file: %s", err))
 	}
 
 	mf := mainflux{}
 	if err := toml.Unmarshal(data, &mf); err != nil {
-		log.Fatalf("Cannot load Mainflux connections config %s \nUse tools/provision to create file", cfg.Mf.ConnFile)
+		logger.Fatal(fmt.Sprintf("Cannot load Mainflux connections config %s \nUse tools/provision to create file", cfg.Mf.ConnFile))
 	}
 
 	resCh := make(chan *runResults)
@@ -61,12 +70,12 @@ func Benchmark(cfg Config) {
 		if cfg.MQTT.TLS.MTLS {
 			cert, err = tls.X509KeyPair([]byte(mfThing.MTLSCert), []byte(mfThing.MTLSKey))
 			if err != nil {
-				log.Fatal(err)
+				logger.Fatal(err.Error())
 			}
 		}
 		c, err := makeClient(i, cfg, mfChan, mfThing, startStamp, caByte, cert)
 		if err != nil {
-			log.Fatalf("Unable to create message payload %s", err.Error())
+			logger.Fatal(fmt.Sprintf("Unable to create message payload %s", err.Error()))
 		}
 
 		go c.publish(resCh)
@@ -110,7 +119,9 @@ func getBytePayload(size int, m message) (handler, error) {
 		sz := size - n
 		for {
 			b = make([]byte, sz)
-			rand.Read(b)
+			if _, err = rand.Read(b); err != nil {
+				return nil, err
+			}
 			m.Payload = b
 			content, err := json.Marshal(&m)
 			if err != nil {

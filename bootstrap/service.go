@@ -275,7 +275,6 @@ func (bs bootstrapService) Bootstrap(ctx context.Context, externalKey, externalI
 	if err != nil {
 		return cfg, errors.Wrap(ErrBootstrap, err)
 	}
-
 	if secure {
 		dec, err := bs.dec(externalKey)
 		if err != nil {
@@ -283,7 +282,6 @@ func (bs bootstrapService) Bootstrap(ctx context.Context, externalKey, externalI
 		}
 		externalKey = dec
 	}
-
 	if cfg.ExternalKey != externalKey {
 		return Config{}, ErrExternalKey
 	}

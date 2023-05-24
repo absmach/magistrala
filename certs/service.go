@@ -20,7 +20,7 @@ var (
 	// ErrFailedCertRevocation failed to revoke certificate
 	ErrFailedCertRevocation = errors.New("failed to revoke certificate")
 
-	errFailedToRemoveCertFromDB = errors.New("failed to remove cert serial from db")
+	ErrFailedToRemoveCertFromDB = errors.New("failed to remove cert serial from db")
 )
 
 var _ Service = (*certsService)(nil)
@@ -136,7 +136,7 @@ func (cs *certsService) RevokeCert(ctx context.Context, token, thingID string) (
 		}
 		revoke.RevocationTime = revTime
 		if err = cs.certsRepo.Remove(context.Background(), u.GetId(), c.Serial); err != nil {
-			return revoke, errors.Wrap(errFailedToRemoveCertFromDB, err)
+			return revoke, errors.Wrap(ErrFailedToRemoveCertFromDB, err)
 		}
 	}
 

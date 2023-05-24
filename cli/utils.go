@@ -27,6 +27,12 @@ var (
 	Status string = ""
 	// ConfigPath config path parameter
 	ConfigPath string = ""
+	// State query parameter
+	State string = ""
+	// Topic query parameter
+	Topic string = ""
+	// Contact query parameter
+	Contact string = ""
 	// RawOutput raw output mode
 	RawOutput bool = false
 )

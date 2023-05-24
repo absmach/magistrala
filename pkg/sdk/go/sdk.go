@@ -55,6 +55,9 @@ type PageMetadata struct {
 	Disconnected bool                   `json:"disconnected,omitempty"`
 	Metadata     map[string]interface{} `json:"metadata,omitempty"`
 	Status       string                 `json:"status,omitempty"`
+	State        string                 `json:"state,omitempty"`
+	Topic        string                 `json:"topic,omitempty"`
+	Contact      string                 `json:"contact,omitempty"`
 }
 
 // Group represents mainflux users group.
@@ -141,6 +144,21 @@ type SDK interface {
 	// IdentifyThing validates thing's key and returns its ID
 	IdentifyThing(key string) (string, errors.SDKError)
 
+	// ShareThing shares a thing with user identified by request body.
+	ShareThing(thingID, userID string, policies []string, token string) errors.SDKError
+
+	// UpdateThingKey updates thing key
+	UpdateThingKey(id, key, token string) errors.SDKError
+
+	// AccessByThingKey checks if thing has access to a channel.
+	AccessByThingKey(channelID, key string) (string, errors.SDKError)
+
+	// AccessByThingID checks if thing has access to a channel.
+	AccessByThingID(channelID, id string) errors.SDKError
+
+	// SearchThing search and retrieves things
+	SearchThing(t Thing, pm PageMetadata, token string) (ThingsPage, errors.SDKError)
+
 	// CreateGroup creates new group and returns its id.
 	CreateGroup(group Group, token string) (string, errors.SDKError)
 
@@ -176,6 +194,12 @@ type SDK interface {
 
 	// Connect bulk connects things to channels specified by id.
 	Connect(conns ConnectionIDs, token string) errors.SDKError
+
+	// Disconnect bulk disconnects things to channels specified by id.
+	Disconnect(connIDs ConnectionIDs, token string) errors.SDKError
+
+	// ConnectThing connect thing from specified channel by id.
+	ConnectThing(thingID, chanID, token string) errors.SDKError
 
 	// DisconnectThing disconnect thing from specified channel by id.
 	DisconnectThing(thingID, chanID, token string) errors.SDKError
@@ -226,11 +250,20 @@ type SDK interface {
 	// Update boostrap config certificates
 	UpdateBootstrapCerts(id string, clientCert, clientKey, ca string, token string) errors.SDKError
 
+	// UpdateBootstrapConnection updates connections performs update of the channel list corresponding Thing is connected to.
+	UpdateBootstrapConnection(id string, channels []string, token string) errors.SDKError
+
 	// Remove removes Config with specified token that belongs to the user identified by the given token.
 	RemoveBootstrap(id, token string) errors.SDKError
 
 	// Bootstrap returns Config to the Thing with provided external ID using external key.
 	Bootstrap(externalID, externalKey string) (BootstrapConfig, errors.SDKError)
+
+	// BootstrapSecure retrieves a configuration with given external ID and encrypted external key.
+	BootstrapSecure(externalID, externalKey string) (BootstrapConfig, errors.SDKError)
+
+	// Bootstraps retrieves a list of managed configs.
+	Bootstraps(pm PageMetadata, token string) (BoostrapsPage, errors.SDKError)
 
 	// Whitelist updates Thing state Config with given ID belonging to the user identified by the given token.
 	Whitelist(cfg BootstrapConfig, token string) errors.SDKError
@@ -240,6 +273,9 @@ type SDK interface {
 
 	// ViewCert returns a certificate given certificate ID
 	ViewCert(certID, token string) (Cert, errors.SDKError)
+
+	// ViewCertByThing retrieves a list of certificates' serial IDs for a given thing ID.
+	ViewCertByThing(thingID, token string) (CertSerials, errors.SDKError)
 
 	// RevokeCert revokes certificate for thing with thingID
 	RevokeCert(thingID, token string) (time.Time, errors.SDKError)
@@ -252,6 +288,24 @@ type SDK interface {
 
 	// RetrieveKey retrieves data for the key identified by the provided ID, that is issued by the user identified by the provided key.
 	RetrieveKey(id, token string) (retrieveKeyRes, errors.SDKError)
+
+	// CreateSubscription creates a new subscription
+	CreateSubscription(topic, contact, token string) (string, errors.SDKError)
+
+	// ListSubscriptions list subscriptions given list parameters.
+	ListSubscriptions(pm PageMetadata, token string) (SubscriptionPage, errors.SDKError)
+
+	// ViewSubscription retrieves a subscription with the provided id.
+	ViewSubscription(id, token string) (Subscription, errors.SDKError)
+
+	// DeleteSubscription removes a subscription with the provided id.
+	DeleteSubscription(id, token string) errors.SDKError
+
+	// CreatePolicy creates new policies.
+	CreatePolicy(policy Policy, token string) errors.SDKError
+
+	// DeletePolicy deletes policies.
+	DeletePolicy(policy Policy, token string) errors.SDKError
 }
 
 type mfSDK struct {

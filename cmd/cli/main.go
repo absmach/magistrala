@@ -51,6 +51,8 @@ func main() {
 	bootstrapCmd := cli.NewBootstrapCmd()
 	certsCmd := cli.NewCertsCmd()
 	keysCmd := cli.NewKeysCmd()
+	subscriptionsCmd := cli.NewSubscriptionCmd()
+	policiesCmd := cli.NewPolicyCmd()
 
 	// Root Commands
 	rootCmd.AddCommand(healthCmd)
@@ -63,6 +65,8 @@ func main() {
 	rootCmd.AddCommand(bootstrapCmd)
 	rootCmd.AddCommand(certsCmd)
 	rootCmd.AddCommand(keysCmd)
+	rootCmd.AddCommand(subscriptionsCmd)
+	rootCmd.AddCommand(policiesCmd)
 
 	// Root Flags
 	rootCmd.PersistentFlags().StringVarP(
@@ -158,7 +162,7 @@ func main() {
 		&cli.Limit,
 		"limit",
 		"l",
-		100,
+		10,
 		"Limit query parameter",
 	)
 
@@ -202,6 +206,29 @@ func main() {
 		"User status query parameter",
 	)
 
+	rootCmd.PersistentFlags().StringVarP(
+		&cli.State,
+		"state",
+		"z",
+		"",
+		"Bootstrap state query parameter",
+	)
+
+	rootCmd.PersistentFlags().StringVarP(
+		&cli.Topic,
+		"topic",
+		"T",
+		"",
+		"Subscription topic query parameter",
+	)
+
+	rootCmd.PersistentFlags().StringVarP(
+		&cli.Contact,
+		"contact",
+		"C",
+		"",
+		"Subscription contact query parameter",
+	)
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
 	}

@@ -411,6 +411,16 @@ components:
                   type: string
               content:
                 type: string
+              name:
+                type: string
+              client_cert:
+                type: string
+                description: Thing Certificate.
+              client_key:
+                type: string
+                description: Thing Private Key.        
+              ca_cert:
+                type: string
             required:
               - external_id
               - external_key

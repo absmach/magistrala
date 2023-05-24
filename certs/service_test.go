@@ -5,12 +5,8 @@ package certs_test
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"net/http/httptest"
-	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -61,7 +57,7 @@ func newService(tokens map[string]string) (certs.Service, error) {
 	sdk := mfsdk.NewSDK(config)
 	repo := mocks.NewCertsRepository()
 
-	tlsCert, caCert, err := loadCertificates(caPath, caKeyPath)
+	tlsCert, caCert, err := certs.LoadCertificates(caPath, caKeyPath)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +124,7 @@ func TestIssueCert(t *testing.T) {
 	for _, tc := range cases {
 		c, err := svc.IssueCert(context.Background(), tc.token, tc.thingID, tc.ttl)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		cert, _ := readCert([]byte(c.ClientCert))
+		cert, _ := certs.ReadCert([]byte(c.ClientCert))
 		if cert != nil {
 			assert.True(t, strings.Contains(cert.Subject.CommonName, thingKey), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		}
@@ -367,47 +363,4 @@ func newThingsServer(svc things.Service) *httptest.Server {
 	logger := logger.NewMock()
 	mux := httpapi.MakeHandler(mocktracer.New(), svc, logger)
 	return httptest.NewServer(mux)
-}
-
-func loadCertificates(caPath, caKeyPath string) (tls.Certificate, *x509.Certificate, error) {
-	var tlsCert tls.Certificate
-	var caCert *x509.Certificate
-
-	if caPath == "" || caKeyPath == "" {
-		return tlsCert, caCert, nil
-	}
-
-	if _, err := os.Stat(caPath); os.IsNotExist(err) {
-		return tlsCert, caCert, err
-	}
-
-	if _, err := os.Stat(caKeyPath); os.IsNotExist(err) {
-		return tlsCert, caCert, err
-	}
-
-	tlsCert, err := tls.LoadX509KeyPair(caPath, caKeyPath)
-	if err != nil {
-		return tlsCert, caCert, errors.Wrap(err, err)
-	}
-
-	b, err := os.ReadFile(caPath)
-	if err != nil {
-		return tlsCert, caCert, err
-	}
-
-	caCert, err = readCert(b)
-	if err != nil {
-		return tlsCert, caCert, errors.Wrap(err, err)
-	}
-
-	return tlsCert, caCert, nil
-}
-
-func readCert(b []byte) (*x509.Certificate, error) {
-	block, _ := pem.Decode(b)
-	if block == nil {
-		return nil, errors.New("failed to decode PEM data")
-	}
-
-	return x509.ParseCertificate(block.Bytes)
 }

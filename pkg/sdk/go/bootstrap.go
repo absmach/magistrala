@@ -13,10 +13,14 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
-const configsEndpoint = "configs"
-const bootstrapEndpoint = "bootstrap"
-const whitelistEndpoint = "state"
-const bootstrapCertsEndpoint = "configs/certs"
+const (
+	configsEndpoint        = "configs"
+	bootstrapEndpoint      = "bootstrap"
+	whitelistEndpoint      = "state"
+	bootstrapCertsEndpoint = "configs/certs"
+	bootstrapConnEndpoint  = "configs/connections"
+	secureEndpoint         = "secure"
+)
 
 // BootstrapConfig represents Configuration entity. It wraps information about external entity
 // as well as info about corresponding Mainflux entities.
@@ -62,6 +66,25 @@ func (sdk mfSDK) AddBootstrap(cfg BootstrapConfig, token string) (string, errors
 	return id, nil
 }
 
+func (sdk mfSDK) Bootstraps(pm PageMetadata, token string) (BoostrapsPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(sdk.bootstrapURL, configsEndpoint, pm)
+	if err != nil {
+		return BoostrapsPage{}, errors.NewSDKError(err)
+	}
+
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, string(CTJSON), nil, http.StatusOK)
+	if sdkerr != nil {
+		return BoostrapsPage{}, sdkerr
+	}
+
+	var bb BoostrapsPage
+	if err = json.Unmarshal(body, &bb); err != nil {
+		return BoostrapsPage{}, errors.NewSDKError(err)
+	}
+
+	return bb, nil
+}
+
 func (sdk mfSDK) Whitelist(cfg BootstrapConfig, token string) errors.SDKError {
 	data, err := json.Marshal(BootstrapConfig{State: cfg.State})
 	if err != nil {
@@ -103,6 +126,7 @@ func (sdk mfSDK) UpdateBootstrap(cfg BootstrapConfig, token string) errors.SDKEr
 	_, _, sdkerr := sdk.processRequest(http.MethodPut, url, token, string(CTJSON), data, http.StatusOK)
 	return sdkerr
 }
+
 func (sdk mfSDK) UpdateBootstrapCerts(id, clientCert, clientKey, ca, token string) errors.SDKError {
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, bootstrapCertsEndpoint, id)
 	request := ConfigUpdateCertReq{
@@ -120,6 +144,20 @@ func (sdk mfSDK) UpdateBootstrapCerts(id, clientCert, clientKey, ca, token strin
 	return sdkerr
 }
 
+func (sdk mfSDK) UpdateBootstrapConnection(id string, channels []string, token string) errors.SDKError {
+	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, bootstrapConnEndpoint, id)
+	request := map[string][]string{
+		"channels": channels,
+	}
+	data, err := json.Marshal(request)
+	if err != nil {
+		return errors.NewSDKError(err)
+	}
+
+	_, _, sdkerr := sdk.processRequest(http.MethodPut, url, token, string(CTJSON), data, http.StatusOK)
+	return sdkerr
+}
+
 func (sdk mfSDK) RemoveBootstrap(id, token string) errors.SDKError {
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, configsEndpoint, id)
 	_, _, err := sdk.processRequest(http.MethodDelete, url, token, string(CTJSON), nil, http.StatusNoContent)
@@ -128,6 +166,21 @@ func (sdk mfSDK) RemoveBootstrap(id, token string) errors.SDKError {
 
 func (sdk mfSDK) Bootstrap(externalID, externalKey string) (BootstrapConfig, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, bootstrapEndpoint, externalID)
+	_, body, err := sdk.processRequest(http.MethodGet, url, apiutil.ThingPrefix+externalKey, string(CTJSON), nil, http.StatusOK)
+	if err != nil {
+		return BootstrapConfig{}, err
+	}
+
+	var bc BootstrapConfig
+	if err := json.Unmarshal(body, &bc); err != nil {
+		return BootstrapConfig{}, errors.NewSDKError(err)
+	}
+
+	return bc, nil
+}
+
+func (sdk mfSDK) BootstrapSecure(externalID, externalKey string) (BootstrapConfig, errors.SDKError) {
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, bootstrapEndpoint, secureEndpoint, externalID)
 	_, body, err := sdk.processRequest(http.MethodGet, url, apiutil.ThingPrefix+externalKey, string(CTJSON), nil, http.StatusOK)
 	if err != nil {
 		return BootstrapConfig{}, err

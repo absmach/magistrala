@@ -114,15 +114,23 @@ var cmdThings = []cobra.Command{
 		},
 	},
 	{
-		Use:   "update <JSON_string> <user_auth_token>",
+		Use:   "update [<JSON_string> | key <thing_id> <thing_key>] <user_auth_token>",
 		Short: "Update thing",
 		Long:  `Update thing record`,
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) < 2 {
 				logUsage(cmd.Use)
 				return
 			}
+			if args[0] == "key" {
+				if err := sdk.UpdateThingKey(args[1], args[2], args[3]); err != nil {
+					logError(err)
+					return
+				}
 
+				logOK()
+				return
+			}
 			var thing mfxsdk.Thing
 			if err := json.Unmarshal([]byte(args[0]), &thing); err != nil {
 				logError(err)
@@ -130,6 +138,31 @@ var cmdThings = []cobra.Command{
 			}
 
 			if err := sdk.UpdateThing(thing, args[1]); err != nil {
+				logError(err)
+				return
+			}
+
+			logOK()
+		},
+	},
+	{
+		Use:   "share <thing_id> <user_id> <policies> <user_auth_token>",
+		Short: "share thing",
+		Long: `Shares a thing with user identified.
+				policies - '["policy1", ...]'`,
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 4 {
+				logUsage(cmd.Use)
+				return
+			}
+
+			var policies []string
+			if err := json.Unmarshal([]byte(args[2]), &policies); err != nil {
+				logError(err)
+				return
+			}
+
+			if err := sdk.ShareThing(args[0], args[1], policies, args[2]); err != nil {
 				logError(err)
 				return
 			}

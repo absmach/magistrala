@@ -103,3 +103,19 @@ func (res retrieveKeyRes) Empty() bool {
 type revokeCertsRes struct {
 	RevocationTime time.Time `json:"revocation_time"`
 }
+
+// BoostrapsPage contains list of boostrap configs in a page with proper metadata.
+type BoostrapsPage struct {
+	Configs []BootstrapConfig `json:"configs"`
+	pageRes
+}
+
+type CertSerials struct {
+	Serials []string `json:"serials"`
+	pageRes
+}
+
+type SubscriptionPage struct {
+	Subscriptions []Subscription `json:"subscriptions"`
+	pageRes
+}

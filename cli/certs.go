@@ -6,12 +6,21 @@ import (
 
 var cmdCerts = []cobra.Command{
 	{
-		Use:   "get <cert_serial> <user_auth_token>",
+		Use:   "get [<cert_serial> | thing <thing_id> ] <user_auth_token>",
 		Short: "Get certificate",
 		Long:  `Gets a certificate for a given cert ID.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) < 2 {
 				logUsage(cmd.Use)
+				return
+			}
+			if args[0] == "thing" {
+				cert, err := sdk.ViewCertByThing(args[1], args[2])
+				if err != nil {
+					logError(err)
+					return
+				}
+				logJSON(cert)
 				return
 			}
 			cert, err := sdk.ViewCert(args[0], args[1])

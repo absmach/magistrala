@@ -43,11 +43,36 @@ var cmdGroups = []cobra.Command{
 		},
 	},
 	{
-		Use:   "get [all | children <group_id> | parents <group_id> | <group_id>] <user_auth_token>",
+		Use:   "update <JSON_group> <user_auth_token>",
+		Short: "Update group",
+		Long:  `Updates group record`,
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 2 {
+				logUsage(cmd.Use)
+				return
+			}
+
+			var group mfxsdk.Group
+			if err := json.Unmarshal([]byte(args[0]), &group); err != nil {
+				logError(err)
+				return
+			}
+
+			if err := sdk.UpdateGroup(group, args[1]); err != nil {
+				logError(err)
+				return
+			}
+
+			logOK()
+		},
+	},
+	{
+		Use:   "get [all | children <group_id> | parents <group_id> | members <group_id> | <group_id>] <user_auth_token>",
 		Short: "Get group",
 		Long: `Get all users groups, group children or group by id.
 		all - lists all groups
 		children <group_id> - lists all children groups of <group_id>
+		members <group_id> - shows members of the provided group ID
 		<group_id> - shows group with provided group ID`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) < 2 {
@@ -224,9 +249,9 @@ var cmdGroups = []cobra.Command{
 // NewGroupsCmd returns users command.
 func NewGroupsCmd() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "groups [create | get | delete | assign | unassign | members | membership]",
+		Use:   "groups [create | get | update | delete | assign | unassign | members | membership]",
 		Short: "Groups management",
-		Long:  `Groups management: create groups and assigns member to groups"`,
+		Long:  `Groups management: create, update, delete group and assign and unassign member to groups"`,
 	}
 
 	for i := range cmdGroups {

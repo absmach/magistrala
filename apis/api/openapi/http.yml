@@ -131,11 +131,7 @@ components:
   responses:
     ServiceError:
       description: Unexpected server-side error occurred.
-      content:
-        application/json:
-          schema:
-            type: string
-            format: byte
+      
     HealthRes:
       description: Service Health Check.
       content:

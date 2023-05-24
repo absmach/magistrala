@@ -217,6 +217,24 @@ paths:
         '500':
           $ref: "#/components/responses/ServiceError"
   /groups/{groupID}/members:
+    get:
+      summary: Gets members of a group.
+      description: |
+        Array of member ids that are in the group specified with groupID.
+      tags:
+        - auth        
+      parameters:
+        - $ref: "#/components/parameters/GroupId"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        '200':
+          $ref: "#/components/responses/MembersRes"
+        '401':
+          description: Missing or invalid access token provided.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+  /groups/{groupID}/members/assign:
     post:
       summary: Assigns members to a group.
       description: |
@@ -240,19 +258,28 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
-    get:
-      summary: Gets members of a group.
+  /groups/{groupID}/members/unassign:
+    post:
+      summary: Unassigns members to a group.
       description: |
-        Array of member ids that are in the group specified with groupID.
+        Unassigns thing or user id to a group.
+      tags:
+        - auth
       parameters:
         - $ref: "#/components/parameters/GroupId"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/Limit"
+      requestBody:
+        $ref: "#/components/requestBodies/MembersReq"
       responses:
-        '200':
-          $ref: "#/components/responses/MembersRes"
+        '201':
+          $ref: "#/components/responses/GroupCreateRes"
+        '400':
+          description: Failed due to malformed JSON.
         '401':
           description: Missing or invalid access token provided.
+        '409':
+          description: Failed due to using an existing email address.
+        '415':
+          description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
   /groups/{userGroupID}/share:
@@ -282,6 +309,8 @@ paths:
       summary: Gets memberships for a member with member id.
       description: |
         Array of groups that member belongs to.
+      tags:
+        - auth        
       parameters:
         - $ref: "#/components/parameters/MemberId"
         - $ref: "#/components/parameters/Offset"

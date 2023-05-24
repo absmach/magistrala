@@ -105,6 +105,17 @@ components:
           type: string
           example: user@example.com
           description: The contact of the user to which the notification will be sent.
+    CreateSubscription:
+      type: object
+      properties:
+        topic:
+          type: string
+          example: topic.subtopic
+          description: Topic to which the user subscribes.
+        contact:
+          type: string
+          example: user@example.com
+          description: The contact of the user to which the notification will be sent.          
     Page:
       type: object
       properties:
@@ -174,7 +185,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Subscription"
+            $ref: "#/components/schemas/CreateSubscription"
 
   responses:
     Create:

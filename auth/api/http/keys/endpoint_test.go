@@ -247,6 +247,139 @@ func TestRetrieve(t *testing.T) {
 	}
 }
 
+func TestRetrieveAll(t *testing.T) {
+	svc := newService()
+	_, loginSecret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.LoginKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})
+	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
+
+	n := uint64(100)
+	var data []auth.Key
+	for i := uint64(0); i < n; i++ {
+		key := auth.Key{Type: auth.APIKey, IssuedAt: time.Now(), IssuerID: id, Subject: fmt.Sprintf("user_%d@example.com", i)}
+
+		k, _, err := svc.Issue(context.Background(), loginSecret, key)
+		assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
+		k.ExpiresAt = time.Time{}
+		data = append(data, k)
+	}
+
+	ts := newServer(svc)
+	defer ts.Close()
+	client := ts.Client()
+
+	cases := []struct {
+		desc   string
+		url    string
+		auth   string
+		status int
+		res    []auth.Key
+	}{
+		{
+			desc:   "get a list of keys",
+			auth:   loginSecret,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("?offset=%d&limit=%d", 0, 5),
+			res:    data[0:5],
+		},
+		{
+			desc:   "get a list of keys with invalid token",
+			auth:   "wrongValue",
+			status: http.StatusUnauthorized,
+			url:    fmt.Sprintf("?offset=%d&limit=%d", 0, 1),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of keys with empty token",
+			auth:   "",
+			status: http.StatusUnauthorized,
+			url:    fmt.Sprintf("?offset=%d&limit=%d", 0, 1),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of keys with negative offset",
+			auth:   loginSecret,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("?offset=%d&limit=%d", -1, 5),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of keys with negative limit",
+			auth:   loginSecret,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("?offset=%d&limit=%d", 1, -5),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of keys with zero limit and offset 1",
+			auth:   loginSecret,
+			status: http.StatusBadRequest,
+			url:    fmt.Sprintf("?offset=%d&limit=%d", 1, 0),
+			res:    nil,
+		},
+		{
+			desc:   "get a list of keys without offset",
+			auth:   loginSecret,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("?limit=%d", 5),
+			res:    data[0:5],
+		},
+		{
+			desc:   "get a list of keys without limit",
+			auth:   loginSecret,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("?offset=%d", 1),
+			res:    data[1:11],
+		},
+		{
+			desc:   "get a list of keys with redundant query params",
+			auth:   loginSecret,
+			status: http.StatusOK,
+			url:    fmt.Sprintf("?offset=%d&limit=%d&value=something", 0, 5),
+			res:    data[0:5],
+		},
+		{
+			desc:   "get a list of keys with default URL",
+			auth:   loginSecret,
+			status: http.StatusOK,
+			url:    "",
+			res:    data[0:10],
+		},
+		{
+			desc:   "get a list of keys with invalid number of params",
+			auth:   loginSecret,
+			status: http.StatusBadRequest,
+			url:    "?offset=4&limit=4&limit=5&offset=5",
+			res:    nil,
+		},
+		{
+			desc:   "get a list of keys with invalid offset",
+			auth:   loginSecret,
+			status: http.StatusBadRequest,
+			url:    "?offset=e&limit=5",
+			res:    nil,
+		},
+		{
+			desc:   "get a list of keys with invalid limit",
+			auth:   loginSecret,
+			status: http.StatusBadRequest,
+			url:    "?offset=5&limit=e",
+			res:    nil,
+		},
+	}
+
+	for _, tc := range cases {
+		req := testRequest{
+			client: client,
+			method: http.MethodGet,
+			url:    fmt.Sprintf("%s/keys%s", ts.URL, tc.url),
+			token:  tc.auth,
+		}
+		res, err := req.make()
+		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+	}
+}
+
 func TestRevoke(t *testing.T) {
 	svc := newService()
 	_, loginSecret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.LoginKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})

@@ -25,6 +25,29 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
+
+    get:
+      summary: Lists API key
+      description: |
+        List the API keys issued by the logged in user.
+      tags:
+        - auth
+      parameters:
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Subject"
+        - $ref: "#/components/parameters/Type"
+      responses:
+        '201':
+          description: Issued new key.
+        '400':
+          description: Failed due to malformed JSON.
+        '409':
+          description: Failed due to using already existing ID.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"          
   /keys/{keyID}:
     get:
       summary: Gets API key details.
@@ -645,7 +668,23 @@ components:
       schema:
         type: boolean
         default: false
-
+    Type:
+      name: type
+      description: The type of the API Key.
+      in: query
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+      required: false
+    Subject:
+      name: subject
+      description: The subject of an API Key
+      in: query
+      schema:
+        type: string
+      required: false  
+  
   requestBodies:
     KeyRequest:
       description: JSON-formatted document describing key request.

@@ -40,6 +40,12 @@ type Key struct {
 	ExpiresAt time.Time
 }
 
+// KeyPage contains a page of keys.
+type KeyPage struct {
+	PageMetadata
+	Keys []Key
+}
+
 // Identity contains ID and Email.
 type Identity struct {
 	ID    string
@@ -60,8 +66,11 @@ type KeyRepository interface {
 	// operation failure
 	Save(context.Context, Key) (string, error)
 
-	// Retrieve retrieves Key by its unique identifier.
-	Retrieve(context.Context, string, string) (Key, error)
+	// RetrieveByID retrieves Key by its unique identifier.
+	RetrieveByID(context.Context, string, string) (Key, error)
+
+	// RetrieveAll retrieves all keys for given user ID.
+	RetrieveAll(context.Context, string, PageMetadata) (KeyPage, error)
 
 	// Remove removes Key with provided ID.
 	Remove(context.Context, string, string) error

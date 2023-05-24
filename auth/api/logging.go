@@ -82,6 +82,19 @@ func (lm *loggingMiddleware) RetrieveKey(ctx context.Context, token, id string) 
 	return lm.svc.RetrieveKey(ctx, token, id)
 }
 
+func (lm *loggingMiddleware) RetrieveKeys(ctx context.Context, token string, pm auth.PageMetadata) (kp auth.KeyPage, err error) {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("Method retrieve for token %s took %s to complete", token, time.Since(begin))
+		if err != nil {
+			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
+			return
+		}
+		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
+	}(time.Now())
+
+	return lm.svc.RetrieveKeys(ctx, token, pm)
+}
+
 func (lm *loggingMiddleware) Identify(ctx context.Context, key string) (id auth.Identity, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method identify took %s to complete", time.Since(begin))

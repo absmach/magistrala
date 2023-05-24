@@ -16,6 +16,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/opentracing/opentracing-go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const email = "user-save@example.com"
@@ -68,7 +69,7 @@ func TestKeySave(t *testing.T) {
 	}
 }
 
-func TestKeyRetrieve(t *testing.T) {
+func TestKeyRetrieveByID(t *testing.T) {
 	dbMiddleware := postgres.NewDatabase(db)
 	repo := postgres.New(dbMiddleware)
 
@@ -111,8 +112,131 @@ func TestKeyRetrieve(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		_, err := repo.Retrieve(context.Background(), tc.owner, tc.id)
+		_, err := repo.RetrieveByID(context.Background(), tc.owner, tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+	}
+}
+
+func TestKeyRetrieveAll(t *testing.T) {
+	dbMiddleware := postgres.NewDatabase(db)
+	repo := postgres.New(dbMiddleware)
+
+	issuerID1, err := idProvider.ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
+	issuerID2, err := idProvider.ID()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
+	n := uint64(100)
+	for i := uint64(0); i < n; i++ {
+		id, err := idProvider.ID()
+		require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+		key := auth.Key{
+			Subject:   fmt.Sprintf("key-%d@email.com", i),
+			IssuedAt:  time.Now(),
+			ExpiresAt: expTime,
+			ID:        id,
+			IssuerID:  issuerID1,
+			Type:      auth.LoginKey,
+		}
+		if i%10 == 0 {
+			key.Type = auth.APIKey
+		}
+		if i == n-1 {
+			key.IssuerID = issuerID2
+		}
+		_, err = repo.Save(context.Background(), key)
+		assert.Nil(t, err, fmt.Sprintf("Storing Key expected to succeed: %s", err))
+	}
+
+	cases := map[string]struct {
+		owner        string
+		pageMetadata auth.PageMetadata
+		size         uint64
+	}{
+		"retrieve all keys": {
+			owner: issuerID1,
+			pageMetadata: auth.PageMetadata{
+				Offset: 0,
+				Limit:  n,
+				Total:  n,
+			},
+			size: n - 1,
+		},
+		"retrieve all keys with different issuer ID": {
+			owner: issuerID2,
+			pageMetadata: auth.PageMetadata{
+				Offset: 0,
+				Limit:  n,
+				Total:  n,
+			},
+			size: 1,
+		},
+		"retrieve subset of keys with existing owner": {
+			owner: issuerID1,
+			pageMetadata: auth.PageMetadata{
+				Offset: n/2 - 1,
+				Limit:  n,
+				Total:  n,
+			},
+			size: n / 2,
+		},
+		"retrieve keys with existing subject": {
+			owner: issuerID1,
+			pageMetadata: auth.PageMetadata{
+				Offset:  0,
+				Limit:   n,
+				Subject: "key-10@email.com",
+			},
+			size: 1,
+		},
+		"retrieve keys with non-existing subject": {
+			owner: issuerID1,
+			pageMetadata: auth.PageMetadata{
+				Offset:  0,
+				Limit:   n,
+				Subject: "wrong",
+				Total:   0,
+			},
+			size: 0,
+		},
+		"retrieve keys with existing type": {
+			owner: issuerID1,
+			pageMetadata: auth.PageMetadata{
+				Offset: 0,
+				Limit:  n,
+				Type:   auth.APIKey,
+			},
+			size: 10,
+		},
+		"retrieve keys with non-existing type": {
+			owner: issuerID1,
+			pageMetadata: auth.PageMetadata{
+				Offset: 0,
+				Limit:  n,
+				Total:  0,
+				Type:   uint32(9),
+			},
+			size: 0,
+		},
+		"retrieve all keys with existing subject and type": {
+			owner: issuerID1,
+			pageMetadata: auth.PageMetadata{
+				Offset:  0,
+				Limit:   n,
+				Subject: "key-10@email.com",
+				Type:    auth.APIKey,
+			},
+			size: 1,
+		},
+	}
+
+	for desc, tc := range cases {
+		page, err := repo.RetrieveAll(context.Background(), tc.owner, tc.pageMetadata)
+		size := uint64(len(page.Keys))
+		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.size, size))
+		// assert.Equal(t, tc.pageMetadata.Total, page.Total, fmt.Sprintf("%s: expected total %d got %d\n", desc, tc.pageMetadata.Total, page.Total))
+		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
 	}
 }
 

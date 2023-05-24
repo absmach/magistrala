@@ -3,6 +3,8 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgerrcode"
@@ -46,7 +48,7 @@ func (kr repo) Save(ctx context.Context, key auth.Key) (string, error) {
 	return dbKey.ID, nil
 }
 
-func (kr repo) Retrieve(ctx context.Context, issuerID, id string) (auth.Key, error) {
+func (kr repo) RetrieveByID(ctx context.Context, issuerID, id string) (auth.Key, error) {
 	q := `SELECT id, type, issuer_id, subject, issued_at, expires_at FROM keys WHERE issuer_id = $1 AND id = $2`
 	key := dbKey{}
 	if err := kr.db.QueryRowxContext(ctx, q, issuerID, id).StructScan(&key); err != nil {
@@ -59,6 +61,62 @@ func (kr repo) Retrieve(ctx context.Context, issuerID, id string) (auth.Key, err
 	}
 
 	return toKey(key), nil
+}
+
+func (kr repo) RetrieveAll(ctx context.Context, issuerID string, pm auth.PageMetadata) (auth.KeyPage, error) {
+	var query []string
+	var emq string
+	query = append(query, fmt.Sprintf("issuer_id = '%s'", issuerID))
+	if pm.Type != 0 {
+		query = append(query, fmt.Sprintf("type = '%d'", pm.Type))
+	}
+	if pm.Subject != "" {
+		query = append(query, fmt.Sprintf("subject = '%s'", pm.Subject))
+	}
+	if len(query) > 0 {
+		emq = fmt.Sprintf(" WHERE %s", strings.Join(query, " AND "))
+	}
+
+	q := fmt.Sprintf(`SELECT id, type, issuer_id, subject, issued_at, expires_at FROM keys %s ORDER BY issued_at LIMIT :limit OFFSET :offset;`, emq)
+	params := map[string]interface{}{
+		"limit":  pm.Limit,
+		"offset": pm.Offset,
+	}
+
+	rows, err := kr.db.NamedQueryContext(ctx, q, params)
+	if err != nil {
+		return auth.KeyPage{}, errors.Wrap(errors.ErrViewEntity, err)
+	}
+	defer rows.Close()
+
+	var items []auth.Key
+	for rows.Next() {
+		dbkey := dbKey{}
+		if err := rows.StructScan(&dbkey); err != nil {
+			return auth.KeyPage{}, errors.Wrap(errors.ErrViewEntity, err)
+		}
+
+		key := toKey(dbkey)
+		items = append(items, key)
+	}
+
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM keys %s;`, emq)
+
+	total, err := total(ctx, kr.db, cq, params)
+	if err != nil {
+		return auth.KeyPage{}, errors.Wrap(errors.ErrViewEntity, err)
+	}
+
+	page := auth.KeyPage{
+		Keys: items,
+		PageMetadata: auth.PageMetadata{
+			Total:  total,
+			Offset: pm.Offset,
+			Limit:  pm.Limit,
+		},
+	}
+
+	return page, nil
 }
 
 func (kr repo) Remove(ctx context.Context, issuerID, id string) error {

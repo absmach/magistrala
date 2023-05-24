@@ -235,6 +235,66 @@ func TestRetrieve(t *testing.T) {
 	}
 }
 
+func TestRetrieveAll(t *testing.T) {
+	svc := newService()
+	_, secret, err := svc.Issue(context.Background(), "", auth.Key{Type: auth.LoginKey, IssuedAt: time.Now(), IssuerID: id, Subject: email})
+	assert.Nil(t, err, fmt.Sprintf("Issuing login key expected to succeed: %s", err))
+
+	n := uint64(100)
+	for i := uint64(0); i < n; i++ {
+		key := auth.Key{
+			ID:       "id",
+			Type:     auth.APIKey,
+			IssuerID: id,
+			Subject:  fmt.Sprintf("email-%d@mail.com", i),
+			IssuedAt: time.Now(),
+		}
+		_, _, err := svc.Issue(context.Background(), secret, key)
+		assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
+	}
+
+	cases := map[string]struct {
+		token string
+		size  uint64
+		pm    auth.PageMetadata
+		err   error
+	}{
+		"list all keys": {
+			token: secret,
+			pm: auth.PageMetadata{
+				Offset: 0,
+				Limit:  n,
+				Total:  n,
+			},
+			size: n,
+			err:  nil,
+		},
+		"list all keys with offset": {
+			token: secret,
+			pm: auth.PageMetadata{
+				Offset: 50,
+				Limit:  n,
+				Total:  n,
+			},
+			size: 50,
+			err:  nil,
+		},
+		"list all keys with wrong token": {
+			token: "wrongToken",
+			size:  0,
+			err:   errors.ErrAuthentication,
+		},
+	}
+
+	for desc, tc := range cases {
+		page, err := svc.RetrieveKeys(context.Background(), tc.token, tc.pm)
+		size := uint64(len(page.Keys))
+		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", desc, tc.size, size))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+	}
+
+}
+
 func TestIdentify(t *testing.T) {
 	svc := newService()
 

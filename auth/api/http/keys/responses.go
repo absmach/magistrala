@@ -55,6 +55,17 @@ func (res retrieveKeyRes) Empty() bool {
 	return false
 }
 
+type keyPageRes struct {
+	pageRes
+	Keys []retrieveKeyRes `json:"keys"`
+}
+
+type pageRes struct {
+	Limit  uint64 `json:"limit,omitempty"`
+	Offset uint64 `json:"offset,omitempty"`
+	Total  uint64 `json:"total"`
+}
+
 type revokeKeyRes struct {
 }
 

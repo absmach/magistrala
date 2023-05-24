@@ -13,9 +13,10 @@ import (
 )
 
 const (
-	saveOp     = "save"
-	retrieveOp = "retrieve_by_id"
-	revokeOp   = "remove"
+	saveOp        = "save"
+	retrieveOp    = "retrieve_by_id"
+	retrieveAllOp = "retrieve_all"
+	revokeOp      = "remove"
 )
 
 var _ auth.KeyRepository = (*keyRepositoryMiddleware)(nil)
@@ -44,12 +45,20 @@ func (krm keyRepositoryMiddleware) Save(ctx context.Context, key auth.Key) (stri
 	return krm.repo.Save(ctx, key)
 }
 
-func (krm keyRepositoryMiddleware) Retrieve(ctx context.Context, owner, id string) (auth.Key, error) {
+func (krm keyRepositoryMiddleware) RetrieveByID(ctx context.Context, owner, id string) (auth.Key, error) {
 	span := createSpan(ctx, krm.tracer, retrieveOp)
 	defer span.Finish()
 	ctx = opentracing.ContextWithSpan(ctx, span)
 
-	return krm.repo.Retrieve(ctx, owner, id)
+	return krm.repo.RetrieveByID(ctx, owner, id)
+}
+
+func (krm keyRepositoryMiddleware) RetrieveAll(ctx context.Context, owner string, pm auth.PageMetadata) (auth.KeyPage, error) {
+	span := createSpan(ctx, krm.tracer, retrieveAllOp)
+	defer span.Finish()
+	ctx = opentracing.ContextWithSpan(ctx, span)
+
+	return krm.repo.RetrieveAll(ctx, owner, pm)
 }
 
 func (krm keyRepositoryMiddleware) Remove(ctx context.Context, owner, id string) error {

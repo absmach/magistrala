@@ -75,6 +75,49 @@ func retrieveEndpoint(svc auth.Service) endpoint.Endpoint {
 	}
 }
 
+func retrieveKeysEndpoint(svc auth.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(listKeysReq)
+
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+		pm := auth.PageMetadata{
+			Offset:  req.offset,
+			Limit:   req.limit,
+			Subject: req.subject,
+			Type:    req.keyType,
+		}
+		kp, err := svc.RetrieveKeys(ctx, req.token, pm)
+		if err != nil {
+			return nil, err
+		}
+
+		res := keyPageRes{
+			pageRes: pageRes{
+				Limit:  kp.Limit,
+				Offset: kp.Offset,
+				Total:  kp.Total,
+			},
+			Keys: []retrieveKeyRes{},
+		}
+
+		for _, key := range kp.Keys {
+			view := retrieveKeyRes{
+				ID:        key.ID,
+				IssuerID:  key.IssuerID,
+				Subject:   key.Subject,
+				Type:      key.Type,
+				IssuedAt:  key.IssuedAt,
+				ExpiresAt: &key.ExpiresAt,
+			}
+			res.Keys = append(res.Keys, view)
+		}
+
+		return res, nil
+	}
+}
+
 func revokeEndpoint(svc auth.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(keyReq)

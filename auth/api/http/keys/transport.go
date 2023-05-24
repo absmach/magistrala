@@ -20,7 +20,16 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
-const contentType = "application/json"
+const (
+	contentType = "application/json"
+	offsetKey   = "offset"
+	limitKey    = "limit"
+	subjectKey  = "subject"
+	typeKey     = "type"
+	defOffset   = 0
+	defLimit    = 10
+	defType     = 2
+)
 
 // MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler(svc auth.Service, mux *bone.Mux, tracer opentracing.Tracer, logger logger.Logger) *bone.Mux {
@@ -30,6 +39,12 @@ func MakeHandler(svc auth.Service, mux *bone.Mux, tracer opentracing.Tracer, log
 	mux.Post("/keys", kithttp.NewServer(
 		kitot.TraceServer(tracer, "issue")(issueEndpoint(svc)),
 		decodeIssue,
+		encodeResponse,
+		opts...,
+	))
+	mux.Get("/keys", kithttp.NewServer(
+		kitot.TraceServer(tracer, "issue")(retrieveKeysEndpoint(svc)),
+		decodeListKeysRequest,
 		encodeResponse,
 		opts...,
 	))
@@ -72,6 +87,37 @@ func decodeKeyReq(_ context.Context, r *http.Request) (interface{}, error) {
 	return req, nil
 }
 
+func decodeListKeysRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	s, err := apiutil.ReadStringQuery(r, subjectKey, "")
+	if err != nil {
+		return nil, err
+	}
+
+	t, err := apiutil.ReadUintQuery(r, typeKey, defType)
+	if err != nil {
+		return nil, err
+	}
+
+	o, err := apiutil.ReadUintQuery(r, offsetKey, defOffset)
+	if err != nil {
+		return nil, err
+	}
+
+	l, err := apiutil.ReadUintQuery(r, limitKey, defLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	req := listKeysReq{
+		token:   apiutil.ExtractBearerToken(r),
+		subject: s,
+		keyType: uint32(t),
+		offset:  o,
+		limit:   l,
+	}
+	return req, nil
+}
+
 func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-Type", contentType)
 
@@ -101,6 +147,14 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusUnauthorized)
 	case errors.Contains(err, errors.ErrNotFound):
 		w.WriteHeader(http.StatusNotFound)
+	case errors.Contains(err, errors.ErrInvalidQueryParams),
+		errors.Contains(err, errors.ErrMalformedEntity),
+		err == apiutil.ErrMissingID,
+		err == apiutil.ErrBearerKey,
+		err == apiutil.ErrLimitSize,
+		err == apiutil.ErrOffsetSize,
+		err == apiutil.ErrInvalidIDFormat:
+		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, errors.ErrConflict):
 		w.WriteHeader(http.StatusConflict)
 	case errors.Contains(err, errors.ErrUnsupportedContentType):

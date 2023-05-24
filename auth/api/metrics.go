@@ -66,6 +66,15 @@ func (ms *metricsMiddleware) RetrieveKey(ctx context.Context, token, id string) 
 	return ms.svc.RetrieveKey(ctx, token, id)
 }
 
+func (ms *metricsMiddleware) RetrieveKeys(ctx context.Context, token string, pm auth.PageMetadata) (auth.KeyPage, error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "retrieve_keys").Add(1)
+		ms.latency.With("method", "retrieve_keys").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.RetrieveKeys(ctx, token, pm)
+}
+
 func (ms *metricsMiddleware) Identify(ctx context.Context, token string) (auth.Identity, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "identify").Add(1)

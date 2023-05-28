@@ -31,7 +31,7 @@ services:
         target: /etc/prometheus/prometheus.yml
       - mainflux-prometheus-volume:/prometheus
   grafana:
-    image: grafana/grafana:8.2.6
+    image: grafana/grafana:9.4.7
     container_name: mainflux-grafana
     depends_on:
       - promethues

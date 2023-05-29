@@ -40,6 +40,7 @@ var (
 	errDisconnectThing    = errors.New("failed to disconnect thing")
 	errCheckChannels      = errors.New("failed to check if channels exists")
 	errConnectionChannels = errors.New("failed to check channels connections")
+	errThingNotFound      = errors.New("failed to find thing")
 	errUpdateCert         = errors.New("failed to update cert")
 )
 
@@ -141,7 +142,7 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 	id := cfg.MFThing
 	mfThing, err := bs.thing(token, id)
 	if err != nil {
-		return Config{}, errors.Wrap(errAddBootstrap, err)
+		return Config{}, errors.Wrap(errThingNotFound, err)
 	}
 
 	cfg.MFThing = mfThing.ID

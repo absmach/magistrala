@@ -137,6 +137,9 @@ func encodeError(err error) error {
 	case errors.ErrNotFound:
 		return status.Error(codes.NotFound, "entity does not exist")
 	default:
+		if errors.Contains(err, errors.ErrNotFound) || errors.Contains(err, errors.ErrViewEntity) {
+			return status.Error(codes.NotFound, "entity does not exist")
+		}
 		return status.Error(codes.Internal, "internal server error")
 	}
 }

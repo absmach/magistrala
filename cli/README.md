@@ -180,7 +180,7 @@ mainflux-cli messages read <channel_id> <thing_auth_token>
 
 #### Add configuration
 ```bash
-mainflux-cli bootstrap add '{"external_id": "myExtID", "external_key": "myExtKey", "name": "myName", "content": "myContent"}' <user_auth_token>
+mainflux-cli bootstrap create '{"external_id": "myExtID", "external_key": "myExtKey", "name": "myName", "content": "myContent"}' <user_auth_token>
 ```
 
 #### View configuration

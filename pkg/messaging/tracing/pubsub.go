@@ -36,9 +36,8 @@ func NewPubSub(tracer opentracing.Tracer, pubsub messaging.PubSub) messaging.Pub
 
 // Subscribe creates a new subscription and traces the operation.
 func (pm *pubsubMiddleware) Subscribe(ctx context.Context, id string, topic string, handler messaging.MessageHandler) error {
-	span := createSpan(ctx, subscribeOP, topic, "", id, pm.tracer)
+	span, ctx := createSpan(ctx, subscribeOP, topic, "", id, pm.tracer)
 	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
 	h := &traceHandler{
 		handler: handler,
 		tracer:  pm.tracer,
@@ -49,9 +48,8 @@ func (pm *pubsubMiddleware) Subscribe(ctx context.Context, id string, topic stri
 
 // Unsubscribe removes an existing subscription and traces the operation.
 func (pm *pubsubMiddleware) Unsubscribe(ctx context.Context, id string, topic string) error {
-	span := createSpan(ctx, unsubscribeOp, topic, "", id, pm.tracer)
+	span, ctx := createSpan(ctx, unsubscribeOp, topic, "", id, pm.tracer)
 	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
 	return pm.pubsub.Unsubscribe(ctx, id, topic)
 }
 
@@ -65,7 +63,7 @@ type traceHandler struct {
 
 // Handle instruments the message handling operation
 func (h *traceHandler) Handle(msg *messaging.Message) error {
-	span := createSpan(h.ctx, handleOp, h.topic, msg.Subtopic, msg.Publisher, h.tracer)
+	span, _ := createSpan(h.ctx, handleOp, h.topic, msg.Subtopic, msg.Publisher, h.tracer)
 	defer span.Finish()
 	return h.handler.Handle(msg)
 }

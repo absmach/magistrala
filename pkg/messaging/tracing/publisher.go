@@ -27,9 +27,8 @@ func New(tracer opentracing.Tracer, publisher messaging.Publisher) messaging.Pub
 
 // Publish traces nats publish operations.
 func (pm *publisherMiddleware) Publish(ctx context.Context, topic string, msg *messaging.Message) error {
-	span := createSpan(ctx, publishOP, topic, msg.Subtopic, msg.Publisher, pm.tracer)
+	span, ctx := createSpan(ctx, publishOP, topic, msg.Subtopic, msg.Publisher, pm.tracer)
 	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
 	return pm.publisher.Publish(ctx, topic, msg)
 }
 
@@ -38,8 +37,8 @@ func (pm *publisherMiddleware) Close() error {
 	return pm.publisher.Close()
 }
 
-func createSpan(ctx context.Context, operation, topic, subTopic, thingID string, tracer opentracing.Tracer) opentracing.Span {
-	span, _ := opentracing.StartSpanFromContextWithTracer(ctx, tracer, operation)
+func createSpan(ctx context.Context, operation, topic, subTopic, thingID string, tracer opentracing.Tracer) (opentracing.Span, context.Context) {
+	span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, tracer, operation)
 	switch operation {
 	case publishOP:
 		span.SetTag("publisher", thingID)
@@ -50,5 +49,5 @@ func createSpan(ctx context.Context, operation, topic, subTopic, thingID string,
 	if subTopic != "" {
 		span.SetTag("sub-topic", subTopic)
 	}
-	return span
+	return span, ctx
 }

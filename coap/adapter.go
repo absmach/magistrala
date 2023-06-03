@@ -37,6 +37,20 @@ type Service interface {
 
 var _ Service = (*adapterService)(nil)
 
+var (
+	// ErrFailedMessagePublish indicates that message publishing failed
+	ErrFailedMessagePublish = errors.New("failed to publish message")
+
+	// ErrFailedSubscription indicates that client couldn't subscribe to specified channel
+	ErrFailedSubscription = errors.New("failed to subscribe to a channel")
+
+	// ErrFailedUnsubscribe indicates that client couldn't unsubscribe from specified channel
+	ErrFailedUnsubscribe = errors.New("failed to unsubscribe from a channel")
+
+	// ErrUnauthorizedAccess indicates that client provided missing or invalid credentials
+	ErrUnauthorizedAccess = errors.New("missing or invalid credentials provided")
+)
+
 // Observers is a map of maps,
 type adapterService struct {
 	auth    mainflux.ThingsServiceClient

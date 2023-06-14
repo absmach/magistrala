@@ -135,6 +135,12 @@ components:
         expire:
           type: string
           description: Certificate expiry date
+    Serial:
+      type: object
+      properties:
+        serial:
+          type: string
+          description: Certificate serial
     CertsPage:
       type: object
       properties:

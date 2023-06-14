@@ -49,7 +49,7 @@ paths:
           description: Missing or invalid access token provided.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /things/configs/{configID}:
+  /things/configs/{configId}:
     get:
       summary: Retrieves config info (with channels).
       tags:
@@ -108,7 +108,7 @@ paths:
           description: Missing or invalid access token provided.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /things/configs/certs/{configID}:
+  /things/configs/certs/{configId}:
     patch:
       summary: Updates certs
       description: |
@@ -133,7 +133,7 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /things/configs/connections/{configID}:
+  /things/configs/connections/{configId}:
     put:
       summary: Updates channels the thing is connected to
       description: |
@@ -158,7 +158,7 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /things/bootstrap/{externalID}:
+  /things/bootstrap/{externalId}:
     get:
       summary: Retrieves configuration.
       description: |
@@ -180,7 +180,7 @@ paths:
           description: Failed to retrieve corresponding config.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /things/bootstrap/secure/{externalID}:
+  /things/bootstrap/secure/{externalId}:
     get:
       summary: Retrieves configuration.
       description: |
@@ -199,7 +199,7 @@ paths:
             Failed to retrieve corresponding config.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /things/state/{configID}:
+  /things/state/{configId}:
     put:
       summary: Updates Config state.
       description: |
@@ -338,7 +338,7 @@ components:
 
   parameters:
     ConfigId:
-      name: configID
+      name: configId
       description: Unique Config identifier. It's the ID of the corresponding Thing.
       in: path
       schema:
@@ -346,7 +346,7 @@ components:
         format: uuid
       required: true
     ExternalId:
-      name: externalID
+      name: externalId
       description: Unique Config identifier provided by external entity.
       in: path
       schema:

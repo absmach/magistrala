@@ -1,90 +1,100 @@
-openapi: 3.0.1
+openapi: 3.0.3
 info:
-  title: Mainflux things service
-  description: HTTP API for managing platform things and channels.
-  version: "1.0.0"
+  title: Mainflux Things Service
+  description: |
+    This is the Things Server based on the OpenAPI 3.0 specification.  It is the HTTP API for managing platform things and channels. You can now help us improve the API whether it's by making changes to the definition itself or to the code.
+    Some useful links:
+    - [The Mainflux repository](https://github.com/mainflux/mainflux)
+    - [The Mainflux Postman Collection](https://github.com/mainflux/mainflux/blob/master/api/postman/postman.yaml)
+  contact:
+    email: info@mainflux.com
+  license:
+    name: Apache 2.0
+    url: https://github.com/mainflux/mainflux/blob/master/LICENSE
+  version: 0.14.0
+
+servers:
+  - url: http://localhost:9000
+  - url: https://localhost:9000
+
+tags:
+  - name: Things
+    description: Everything about your Things
+    externalDocs:
+      description: Find out more about things
+      url: http://docs.mainflux.io/
+  - name: Channels
+    description: Everything about your Channels
+    externalDocs:
+      description: Find out more about things channels
+      url: http://docs.mainflux.io/
+  - name: Policies
+    description: Access to things policies
+    externalDocs:
+      description: Find out more about things policies
+      url: http://docs.mainflux.io/
 
 paths:
   /things:
     post:
+      tags:
+        - Things
       summary: Adds new thing
       description: |
         Adds new thing to the list of things owned by user identified using
         the provided access token.
-      tags:
-        - things
       requestBody:
         $ref: "#/components/requestBodies/ThingCreateReq"
       responses:
         '201':
-          $ref: "#/components/responses/CreateThingRes"
+          $ref: "#/components/responses/ThingCreateRes"
         '400':
           description: Failed due to malformed JSON.
         '401':
           description: Missing or invalid access token provided.
         '409':
-          description: Entity already exist.
+          description: Failed due to using an existing identity.
         '415':
           description: Missing or invalid content type.
         '422':
-          description: Database can't process request.
+          description: Database can't process request.          
         '500':
           $ref: "#/components/responses/ServiceError"
+
     get:
+      tags:
+        - Things
       summary: Retrieves things
       description: |
         Retrieves a list of things. Due to performance concerns, data
         is retrieved in subsets. The API things must ensure that the entire
         dataset is consumed either by making subsequent requests, or by
         increasing the subset size of the initial request.
-      tags:
-        - things
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/Name"
-        - $ref: "#/components/parameters/Order"
-        - $ref: "#/components/parameters/Direction"
         - $ref: "#/components/parameters/Metadata"
+        - $ref: "#/components/parameters/Status"
+        - $ref: "#/components/parameters/ThingName"
+        - $ref: "#/components/parameters/Tags"
+        - $ref: "#/components/parameters/Owner"   
+      security:
+        - bearerAuth: []
       responses:
         '200':
-          $ref: "#/components/responses/ThingsPageRes"
+          $ref: "#/components/responses/ThingPageRes"
         '400':
           description: Failed due to malformed query parameters.
         '401':
-          description: Missing or invalid access token provided.
+          description: |
+            Missing or invalid access token provided.
         '404':
           description: A non-existent entity request.
         '422':
           description: Database can't process request.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /things/search:
-    post:
-      summary: Search and retrieves things
-      description: |
-        Retrieves a list of things with name and metadata filtering.
-        Due to performance concerns, data is retrieved in subsets.
-        The API things must ensure that the entire
-        dataset is consumed either by making subsequent requests, or by
-        increasing the subset size of the initial request.
-      tags:
-        - things
-      requestBody:
-        $ref: "#/components/requestBodies/ThingsSearchReq"
-      responses:
-        '200':
-          $ref: "#/components/responses/ThingsPageRes"
-        '400':
-          description: Failed due to malformed query parameters.
-        '401':
-          description: Missing or invalid access token provided.
-        '404':
-          description: A non-existent entity request.
-        '422':
-          description: Unprocessable Entity
-        '500':
-          $ref: "#/components/responses/ServiceError"
+          
   /things/bulk:
     post:
       summary: Bulk provisions new things
@@ -92,12 +102,12 @@ paths:
         Adds new things to the list of things owned by user identified using
         the provided access token.
       tags:
-        - things
+        - Things
       requestBody:
         $ref: "#/components/requestBodies/ThingsCreateReq"
       responses:
         '201':
-          description: Things registered.
+          $ref: "#/components/responses/ThingPageRes"
         '400':
           description: Failed due to malformed JSON.
         '401':
@@ -106,67 +116,191 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
+          
+
   /things/{thingID}:
     get:
       summary: Retrieves thing info
+      description: |
+        Retrieves a specific thing that is identifier by the thing ID.
       tags:
-        - things
+        - Things
       parameters:
-        - $ref: "#/components/parameters/ThingId"
+        - $ref: "#/components/parameters/ThingID"
+      security:
+        - bearerAuth: []
       responses:
         '200':
           $ref: "#/components/responses/ThingRes"
         '401':
           description: Missing or invalid access token provided.
         '404':
-          description: Thing does not exist.
+          description: A non-existent entity request.
         '422':
           description: Database can't process request.
         '500':
           $ref: "#/components/responses/ServiceError"
-    put:
-      summary: Updates thing info
+        
+    patch:
+      summary: Updates name and metadata of the thing.
       description: |
         Update is performed by replacing the current resource data with values
         provided in a request payload. Note that the thing's type and ID
         cannot be changed.
       tags:
-        - things
+        - Things
       parameters:
-        - $ref: "#/components/parameters/ThingId"
+        - $ref: "#/components/parameters/ThingID"
       requestBody:
         $ref: "#/components/requestBodies/ThingUpdateReq"
+      security:
+        - bearerAuth: []
       responses:
         '200':
-          description: Thing updated.
+          $ref: "#/components/responses/ThingRes"
         '400':
           description: Failed due to malformed JSON.
         '401':
+          description: Missing or invalid access token provided.          
+        '404':
+          description: Failed due to non existing thing.
+        '415':
+          description: Missing or invalid content type.          
+        '500':
+         $ref: "#/components/responses/ServiceError"
+          
+  /things/{thingID}/tags:
+    patch:
+      summary: Updates tags the thing.
+      description: |
+        Updates tags of the thing with provided ID. Tags is updated using
+        authorization token and the new tags received in request.
+      tags:
+        - Things
+      parameters:
+        - $ref: "#/components/parameters/ThingID"
+      requestBody:
+        $ref: "#/components/requestBodies/ThingUpdateTagsReq"
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: "#/components/responses/ThingRes"
+        '400':
+          description: Failed due to malformed JSON.
+        '404':
+          description: Failed due to non existing thing.
+        '401':
+          description: Missing or invalid access token provided.
+        '500':
+         $ref: "#/components/responses/ServiceError"
+
+  /things/{thingID}/owner:
+    patch:
+      summary: Updates the thing owner.
+      description: |
+        Updates owner for the thing with provided ID. Owner is updated using
+        authorization token and a new owner identifier received in request.
+      tags:
+        - Things
+      parameters:
+        - $ref: "#/components/parameters/ThingID"
+      requestBody:
+        $ref: "#/components/requestBodies/ThingUpdateOwnerReq"
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: "#/components/responses/ThingRes"
+        '400':
+          description: Failed due to malformed JSON.
+        '404':
+          description: Failed due to non existing thing.
+        '401':
+          description: Missing or invalid access token provided.
+        '500':
+         $ref: "#/components/responses/ServiceError"
+
+  /things/{thingID}/secret:
+    patch:
+      summary: Updates Secret of the identified thing.
+      description: |
+        Updates secret of the identified in thing. Secret is updated using
+        authorization token and the new received info. Update is performed by replacing current key with a new one.
+      tags:
+        - Things
+      parameters:
+        - $ref: "#/components/parameters/ThingID"
+      requestBody:
+        $ref: "#/components/requestBodies/ThingUpdateSecretReq"
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: "#/components/responses/ThingRes"
+        '400':
+          description: Failed due to malformed JSON.
+        '401':
+          description: Missing or invalid access token provided.          
+        '404':
+          description: Failed due to non existing thing.
+        '409':
+          description: Specified key already exists.
+        '415':
+          description: Missing or invalid content type.          
+        '500':
+         $ref: "#/components/responses/ServiceError"
+          
+  /things/{thingID}/disable:
+    post:
+      summary: Disables a thing
+      description: |
+        Disables a specific thing that is identifier by the thing ID.
+      tags:
+        - Things
+      parameters:
+        - $ref: "#/components/parameters/ThingID"
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: "#/components/responses/ThingRes"
+        '400':
+          description: Failed due to malformed thing's ID.          
+        '401':
           description: Missing or invalid access token provided.
         '404':
-          description: Thing does not exist.
-        '415':
-          description: Missing or invalid content type.
+          description: A non-existent entity request.
+        '422':
+          description: Database can't process request.
         '500':
           $ref: "#/components/responses/ServiceError"
-    delete:
-      summary: Removes a thing
+          
+  /things/{thingID}/enable:
+    post:
+      summary: Enables a thing
       description: |
-        Removes a thing. The service will ensure that the removed thing is
-        disconnected from all of the existing channels.
+        Enables a specific thing that is identifier by the thing ID.
       tags:
-        - things
+        - Things
       parameters:
-        - $ref: "#/components/parameters/ThingId"
+        - $ref: "#/components/parameters/ThingID"
+      security:
+        - bearerAuth: []
       responses:
-        '204':
-          description: Thing removed.
+        '200':
+          $ref: "#/components/responses/ThingRes"
         '400':
           description: Failed due to malformed thing's ID.
         '401':
           description: Missing or invalid access token provided.
+        '404':
+          description: A non-existent entity request.
+        '422':
+          description: Database can't process request.
         '500':
           $ref: "#/components/responses/ServiceError"
+
   /things/{thingID}/share:
     post:
       summary: Shares a thing with user identified by request body.
@@ -174,9 +308,9 @@ paths:
         Adds 'read', 'write' or 'delete' policies to the user identified by the request body.
         Sharing a particular thing is only allowed to users who have 'write' access to that thing.
       tags:
-        - things
+        - Things
       parameters:
-        - $ref: "#/components/parameters/ThingId"
+        - $ref: "#/components/parameters/ThingID"
       requestBody:
         $ref: "#/components/requestBodies/ShareThingReq"
       responses:
@@ -192,42 +326,45 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
-  /things/{thingID}/key:
-    patch:
-      summary: Updates thing key
+          
+  /things/{thingID}/channels:
+    get:
+      summary: List of channels connected to specified thing
       description: |
-        Update is performed by replacing current key with a new one.
+        Retrieves list of channels connected to specified thing with pagination
+        metadata.
       tags:
-        - things
+        - Things
       parameters:
-        - $ref: "#/components/parameters/ThingId"
-      requestBody:
-        $ref: "#/components/requestBodies/KeyUpdateReq"
+        - $ref: "#/components/parameters/ThingID"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Limit"
       responses:
         '200':
-          description: Thing key updated.
+          $ref: "#/components/responses/ChannelPageRes"
         '400':
-          description: Failed due to malformed JSON.
+          description: Failed due to malformed query parameters.
         '401':
           description: Missing or invalid access token provided.
         '404':
           description: Thing does not exist.
-        '409':
-          description: Specified key already exists.
-        '415':
-          description: Missing or invalid content type.
+        '422':
+          description: Database can't process request.
         '500':
           $ref: "#/components/responses/ServiceError"
+          
   /channels:
     post:
+      tags:
+        - Channels
       summary: Creates new channel
       description: |
         Creates new channel. User identified by the provided access token will
         be the channel's owner.
-      tags:
-        - channels
       requestBody:
         $ref: "#/components/requestBodies/ChannelCreateReq"
+      security:
+        - bearerAuth: []
       responses:
         '201':
           $ref: "#/components/responses/ChannelCreateRes"
@@ -236,38 +373,43 @@ paths:
         '401':
           description: Missing or invalid access token provided.
         '409':
-          description: Entity already exist.
+          description: Failed due to using an existing identity.
         '415':
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
+          
     get:
-      summary: Retrieves channels
+      summary: Lists channels.
       description: |
         Retrieves a list of channels. Due to performance concerns, data
         is retrieved in subsets. The API things must ensure that the entire
         dataset is consumed either by making subsequent requests, or by
         increasing the subset size of the initial request.
       tags:
-        - channels
+        - Channels
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/Name"
-        - $ref: "#/components/parameters/Order"
-        - $ref: "#/components/parameters/Direction"
         - $ref: "#/components/parameters/Metadata"
+        - $ref: "#/components/parameters/ChannelName"
+        - $ref: "#/components/parameters/OwnerId"
       responses:
         '200':
-          $ref: "#/components/responses/ChannelsPageRes"
+          $ref: "#/components/responses/ChannelPageRes"
         '400':
           description: Failed due to malformed query parameters.
         '401':
           description: Missing or invalid access token provided.
+        '404':
+          description: Channel does not exist.
         '422':
-          description: Database can't process request.
+          description: Database can't process request.          
         '500':
           $ref: "#/components/responses/ServiceError"
+
   /channels/bulk:
     post:
       summary: Bulk provisions new channels
@@ -275,7 +417,7 @@ paths:
         Adds new channels to the list of channels owned by user identified using
         the provided access token.
       tags:
-        - channels
+        - Channels
       requestBody:
         $ref: "#/components/requestBodies/ChannelsCreateReq"
       responses:
@@ -291,13 +433,18 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
+          
   /channels/{chanID}:
     get:
-      summary: Retrieves channel info
+      summary: Retrieves channel info.
+      description: |
+        Gets info on a channel specified by id.
       tags:
-        - channels
+        - Channels
       parameters:
-        - $ref: "#/components/parameters/ChanId"
+        - $ref: "#/components/parameters/chanID"
+      security:
+        - bearerAuth: []
       responses:
         '200':
           $ref: "#/components/responses/ChannelRes"
@@ -308,52 +455,115 @@ paths:
         '404':
           description: Channel does not exist.
         '422':
-          description: Database can't process request.
+          description: Database can't process request.          
         '500':
           $ref: "#/components/responses/ServiceError"
+
     put:
-      summary: Updates channel info
+      summary: Updates channel data.
       description: |
         Update is performed by replacing the current resource data with values
         provided in a request payload. Note that the channel's ID will not be
         affected.
       tags:
-        - channels
+        - Channels
       parameters:
-        - $ref: "#/components/parameters/ChanId"
+        - $ref: "#/components/parameters/chanID"
+      security:
+        - bearerAuth: []
       requestBody:
-        $ref: "#/components/requestBodies/ChannelCreateReq"
+        $ref: "#/components/requestBodies/ChannelUpdateReq"
       responses:
         '200':
-          description: Channel updated.
+          $ref: "#/components/responses/ChannelRes"
         '400':
-          description: Failed due to malformed JSON.
+          description: Failed due to malformed query parameters.
         '401':
           description: Missing or invalid access token provided.
         '404':
           description: Channel does not exist.
         '415':
-          description: Missing or invalid content type.
+          description: Missing or invalid content type.          
         '500':
           $ref: "#/components/responses/ServiceError"
-    delete:
-      summary: Removes a channel
+          
+  /channels/{chanID}/enable:
+    post:
+      summary: Enables a channel
       description: |
-        Removes a channel. The service will ensure that the subscribed apps and
-        things are unsubscribed from the removed channel.
+        Enables a specific channel that is identifier by the channel ID.
       tags:
-        - channels
+        - Channels
       parameters:
-        - $ref: "#/components/parameters/ChanId"
+        - $ref: "#/components/parameters/chanID"
+      security:
+        - bearerAuth: []
       responses:
-        '204':
-          description: Channel removed.
+        '200':
+          $ref: "#/components/responses/ChannelRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        '401':
+          description: Missing or invalid access token provided.
+        '404':
+          description: A non-existent entity request.
+        '422':
+          description: Database can't process request.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+          
+  /channels/{chanID}/disable:
+    post:
+      summary: Disables a channel
+      description: |
+        Disables a specific channel that is identifier by the channel ID.
+      tags:
+        - Channels
+      parameters:
+        - $ref: "#/components/parameters/chanID"
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: "#/components/responses/ChannelRes"
         '400':
           description: Failed due to malformed channel's ID.
         '401':
           description: Missing or invalid access token provided.
+        '404':
+          description: A non-existent entity request.
+        '422':
+          description: Database can't process request.
         '500':
           $ref: "#/components/responses/ServiceError"
+
+  /channels/{chanID}/things:
+    get:
+      summary: List of things connected to specified channel
+      description: |
+        Retrieves list of things connected to specified channel with pagination
+        metadata.
+      tags:
+        - Channels
+      parameters:
+        - $ref: "#/components/parameters/chanID"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Connected"
+      responses:
+        '200':
+          $ref: "#/components/responses/ThingsPageRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        '401':
+          description: Missing or invalid access token provided.
+        '404':
+          description: A non-existent entity request.
+        '422':
+          description: Database can't process request.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+          
   /connect:
     post:
       summary: Connects thing and channel.
@@ -361,7 +571,7 @@ paths:
         Connect things specified by IDs to channels specified by IDs.
         Channel and thing are owned by user identified using the provided access token.
       tags:
-        - things
+        - Policies
       requestBody:
         $ref: "#/components/requestBodies/ConnCreateReq"
       responses:
@@ -379,18 +589,19 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
+          
   /disconnect:
-    put:
+    post:
       summary: Disconnect things and channels using lists of IDs.
       description: |
         Disconnect things from channels specified by lists of IDs.
         Channels and things are owned by user identified using the provided access token.
       tags:
-      - things
+        - Policies
       requestBody:
         $ref: "#/components/requestBodies/DisconnReq"
       responses:
-        '200':
+        '204':
           $ref: "#/components/responses/DisconnRes"
         '400':
           description: Failed due to malformed JSON.
@@ -401,73 +612,22 @@ paths:
         '415':
           description: Missing or invalid content type.
         '500':
-          $ref: "#/components/responses/ServiceError"
-  /things/{thingID}/channels:
-    get:
-      summary: List of channels connected to specified thing
-      description: |
-        Retrieves list of channels connected to specified thing with pagination
-        metadata.
-      tags:
-        - channels
-      parameters:
-        - $ref: "#/components/parameters/ThingId"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Connected"
-      responses:
-        '200':
-          $ref: "#/components/responses/ChannelsPageRes"
-        '400':
-          description: Failed due to malformed query parameters.
-        '401':
-          description: Missing or invalid access token provided.
-        '404':
-          description: Thing does not exist.
-        '422':
-          description: Database can't process request.
-        '500':
-          $ref: "#/components/responses/ServiceError"
-  /channels/{chanID}/things:
-    get:
-      summary: List of things connected to specified channel
-      description: |
-        Retrieves list of things connected to specified channel with pagination
-        metadata.
-      tags:
-        - things
-      parameters:
-        - $ref: "#/components/parameters/ChanId"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Connected"
-      responses:
-        '200':
-          $ref: "#/components/responses/ThingsPageRes"
-        '400':
-          description: Failed due to malformed query parameters.
-        '401':
-          description: Missing or invalid access token provided.
-        '404':
-          description: A non-existent entity request.
-        '422':
-          description: Database can't process request.
-        '500':
-          $ref: "#/components/responses/ServiceError"
+          $ref: "#/components/responses/ServiceError"     
+
   /channels/{chanID}/things/{thingID}:
-    put:
+    post:
       summary: Connects the thing to the channel
       description: |
         Creates connection between a thing and a channel. Once connected to
         the channel, things are allowed to exchange messages through it.
       tags:
-        - channels
+        - Policies
       parameters:
-        - $ref: "#/components/parameters/ChanId"
-        - $ref: "#/components/parameters/ThingId"
+        - $ref: "#/components/parameters/chanID"
+        - $ref: "#/components/parameters/ThingID"
       responses:
         '200':
-          description: Thing connected.
+          $ref: "#/components/responses/ConnCreateRes"
         '400':
           description: Failed due to malformed query parameters.
         '401':
@@ -476,16 +636,17 @@ paths:
           description: Channel or thing does not exist.
         '500':
           $ref: "#/components/responses/ServiceError"
+          
     delete:
       summary: Disconnects the thing from the channel
       description: |
         Removes connection between a thing and a channel. Once connection is
         removed, thing can no longer exchange messages through the channel.
       tags:
-        - channels
+        - Policies
       parameters:
-        - $ref: "#/components/parameters/ChanId"
-        - $ref: "#/components/parameters/ThingId"
+        - $ref: "#/components/parameters/chanID"
+        - $ref: "#/components/parameters/ThingID"
       responses:
         '204':
           description: Thing disconnected.
@@ -496,7 +657,8 @@ paths:
         '404':
           description: Channel or thing does not exist.
         '500':
-          $ref: "#/components/responses/ServiceError"
+          $ref: "#/components/responses/ServiceError" 
+
   /identify/channels/{chanID}/access-by-key:
     post:
       summary: Checks if thing has access to a channel.
@@ -504,11 +666,11 @@ paths:
         Checks if a thing with a specified key has an access to a specified
         channel and if it has, it returns that things id.
       tags:
-        - access
+        - Policies
       parameters:
-        - $ref: "#/components/parameters/ChanId"
+        - $ref: "#/components/parameters/chanID"
       requestBody:
-        $ref: "#/components/requestBodies/IdentityReq"
+        $ref: "#/components/requestBodies/AccessByIDReq"
       responses:
         '200':
           $ref: "#/components/responses/AccessGrantedRes"
@@ -520,6 +682,7 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
+          
   /identify/channels/{chanID}/access-by-id:
     post:
       summary: Checks if thing has access to a channel.
@@ -527,9 +690,9 @@ paths:
         Checks if a thing with a specified ID has an access to a specified
         channel.
       tags:
-        - access
+        - Policies
       parameters:
-        - $ref: "#/components/parameters/ChanId"
+        - $ref: "#/components/parameters/chanID"
       requestBody:
         $ref: "#/components/requestBodies/AccessByIDReq"
       responses:
@@ -543,6 +706,7 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
+          
   /identify:
     post:
       summary: Validates thing's key and returns it's ID if key is valid.
@@ -550,7 +714,7 @@ paths:
         Validates thing's key and returns it's ID if specified key exists
         and is valid.
       tags:
-        - identity
+        - Policies
       requestBody:
         $ref: "#/components/requestBodies/IdentityReq"
       responses:
@@ -561,37 +725,84 @@ paths:
         '415':
           description: Missing or invalid content type.
         '500':
-          $ref: "#/components/responses/ServiceError"
-  /groups/{groupID}:
+          $ref: "#/components/responses/ServiceError"  
+          
     get:
-      summary: Retrieves things
+      summary: Fetches policy data.
       description: |
-        Retrieves a list of things that belong to a group. Due to performance concerns, data
-        is retrieved in subsets. The API things must ensure that the entire
-        dataset is consumed either by making subsequent requests, or by
-        increasing the subset size of the initial request.
+        List available policies.
       tags:
-        - things
+        - Policies
       parameters:
-        - $ref: "#/components/parameters/GroupId"
         - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/Order"
-        - $ref: "#/components/parameters/Direction"
-        - $ref: "#/components/parameters/Metadata"
+        - $ref: "#/components/parameters/Offset"      
+        - $ref: "#/components/parameters/Subject"
+        - $ref: "#/components/parameters/Object"
+        - $ref: "#/components/parameters/Actions"
+      security:
+        - bearerAuth: []
       responses:
         '200':
-          $ref: "#/components/responses/ThingsPageRes"
+          $ref: "#/components/responses/PolicyPageRes"
         '400':
           description: Failed due to malformed query parameters.
         '401':
           description: Missing or invalid access token provided.
         '404':
-          description: A non-existent entity request.
-        '422':
-          description: Database can't process request.
+          description: Channel does not exist.
+        '500':
+          $ref: "#/components/responses/ServiceError"  
+          
+    put:
+      summary: Updates policy data.
+      description: |
+        Updates Actions of a policy.
+      tags:
+        - Policies
+      parameters:
+        - $ref: "#/components/parameters/Subject"
+        - $ref: "#/components/parameters/Object"
+        - $ref: "#/components/parameters/Actions"
+      security:
+        - bearerAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/PolicyUpdateReq"
+      responses:
+        '200':
+          description: Channel updated.
+        '400':
+          description: Failed due to malformed query parameters.
+        '401':
+          description: Missing or invalid access token provided.
+        '404':
+          description: Channel does not exist.
         '500':
           $ref: "#/components/responses/ServiceError"
+          
+  /policies/{obj}/{sub}:
+    delete:
+      tags:
+        - Policies
+      summary: Delete policy
+      description: |
+        Delete specified policies
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Obj"
+        - $ref: "#/components/parameters/Sub"
+      responses:
+        '200':
+          $ref: "#/components/responses/PolicyPageRes"
+        '400':
+          description: Failed due to malformed query parameters.
+        '401':
+          description: Missing or invalid access token provided.
+        '404':
+          description: Policy does not exist.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+
   /health:
     get:
       summary: Retrieves service health check info.
@@ -605,13 +816,571 @@ paths:
 
 components:
   schemas:
-    Key:
-      type: string
-      format: uuid
-      description: |
-        Thing key that is used for thing auth. If there is
-        not one provided service will generate one in UUID
-        format.
+    ThingReqObj:
+      type: object
+      properties:
+        name:
+          type: string
+          example: thingName
+          description: Thing name.
+        tags:
+          type: array
+          minItems: 0
+          items:
+            type: string
+          example: ['tag1', 'tag2']
+          description: Thing tags.
+        credentials:
+          type: object
+          properties:
+            identity:
+              type: string
+              example: "thingidentity"
+              description: Thing's identity will be used as its unique identifier
+            secret:
+              type: string
+              format: password
+              example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+              minimum: 8
+              description: Free-form account secret used for acquiring auth token(s).
+        owner:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Thing owner must be exsiting in the databse.
+        metadata:
+          type: object
+          example: {"domain": "example.com"}
+          description: Arbitrary, object-encoded thing's data.
+        status:
+          type: string
+          description: Thing Status
+          format: string
+          example: enabled
+      required:
+        - credentials
+
+    ChannelReqObj:
+      type: object
+      properties:
+        name:
+          type: string
+          example: channelName
+          description: Free-form channel name. Channel name is unique on the given hierarchy level.
+        description:
+          type: string
+          example: long channel description
+          description: Channel description, free form text.
+        parent_id:
+          type: string
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Id of parent channel, it must be existing channel.
+        metadata:
+          type: object
+          example: {"domain": "example.com"}
+          description: Arbitrary, object-encoded channels's data.
+        status:
+          type: string
+          description: Channel Status
+          format: string
+          example: enabled          
+        owner_id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Channel owner ID must be exsiting in the databse.
+      required:
+        - name
+        
+    PolicyReqObj:
+      type: object
+      properties:
+        subject:
+          type: string
+          description: Policy subject refers to the thing id
+          example: 'bb7edb32-2eac-4aad-aebe-ed96fe073879'
+        object:
+          type: string
+          description: Policy object refers to either the thing id, channel id, computation id or dataset id
+          example: 'bb7edb32-2eac-4aad-aebe-ed96fe073879'
+        actions:
+          type: array
+          minItems: 0
+          items:
+            type: string
+          example: ['m_write', 'g_add']
+          description: Policy actions.
+      required:
+        - subject
+        - object
+        - actions
+        
+    Thing:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Thing unique identifier.
+        name:
+          type: string
+          example: thingName
+          description: Thing name.
+        tags:
+          type: array
+          minItems: 0
+          items:
+            type: string
+          example: ['tag1', 'tag2']
+          description: Thing tags.
+        owner:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Thing owner identifier.
+        credentials:
+          type: object
+          properties:
+            identity:
+              type: string
+              example: thingidentity
+              description: Thing Identity for example email address.
+            secret:
+              type: string
+              example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+              description: Thing secret password.
+        metadata:
+          type: object
+          example: {"domain": "example.com"}
+          description: Arbitrary, object-encoded thing's data.
+        status:
+          type: string
+          description: Thing Status
+          format: string
+          example: enabled
+        created_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Time when the channel was created.
+        updated_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Time when the channel was created.
+      xml:
+        name: thing
+
+    Channel:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Unique channel identifier generated by the service.
+        name:
+          type: string
+          example: channelName
+          description: Free-form channel name. Channel name is unique on the given hierarchy level.
+        owner_id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Channel owner identifier of thing that created the channel..
+        parent_id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Channel parent identifier.
+        description:
+          type: string
+          example: long channel description
+          description: Channel description, free form text.
+        metadata:
+          type: object
+          example: {"role": "general"}
+          description: Arbitrary, object-encoded channels's data.
+        path:
+          type: string
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879.bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Hierarchy path, concatenated ids of channel ancestors.
+        level:
+          type: integer
+          description: Level in hierarchy, distance from the root channel.
+          format: int32
+          example: 2
+          maximum: 5
+        created_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Datetime when the channel was created.
+        updated_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Datetime when the channel was created.
+        status:
+          type: string
+          description: Channel Status
+          format: string
+          example: enabled          
+      xml:
+        name: channel
+
+    Memberships:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Unique channel identifier generated by the service.
+        name:
+          type: string
+          example: channelName
+          description: Free-form channel name. Channel name is unique on the given hierarchy level.
+        owner_id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Channel owner identifier of thing that created the channel..
+        parent_id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Channel parent identifier.
+        description:
+          type: string
+          example: long channel description
+          description: Channel description, free form text.
+        metadata:
+          type: object
+          example: {"role": "general"}
+          description: Arbitrary, object-encoded channels's data.
+        path:
+          type: string
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879.bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Hierarchy path, concatenated ids of channel ancestors.
+        level:
+          type: integer
+          description: Level in hierarchy, distance from the root channel.
+          format: int32
+          example: 2
+        created_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Datetime when the channel was created.
+        updated_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Datetime when the channel was created.
+      xml:
+        name: memberships
+
+    Members:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Thing unique identifier.
+        name:
+          type: string
+          example: thingName
+          description: Thing name.
+        tags:
+          type: array
+          minItems: 0
+          items:
+            type: string
+          example: ['computations', 'datasets']
+          description: Thing tags.
+        owner:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Thing owner identifier.
+        credentials:
+          type: object
+          properties:
+            identity:
+              type: string
+              example: thing@mainflux.com
+              description: Thing Identity for example email address.
+            secret:
+              type: string
+              example: password
+              description: Thing secret password.
+        metadata:
+          type: object
+          example: {"role": "general"}
+          description: Arbitrary, object-encoded thing's data.
+        status:
+          type: string
+          description: Thing Status
+          format: string
+          example: enabled
+        created_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Time when the channel was created.
+        updated_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Time when the channel was created.
+      xml:
+        name: members
+        
+    Policy:
+      type: object
+      properties:
+        owner_id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Policy owner identifier.
+        subject:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Policy subject identifier.
+        object:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Policy object identifier.
+        actions:
+          type: array
+          minItems: 0
+          items:
+            type: string
+          example: ['m_write', 'g_add']
+          description: Policy actions.
+        created_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Time when the policy was created.
+        updated_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Time when the policy was updated.
+      xml:
+        name: policy
+        
+    ThingsPage:
+      type: object
+      properties:
+        things:
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/Thing"
+        total:
+          type: integer
+          example: 1
+          description: Total number of items.
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval.
+        limit:
+          type: integer
+          example: 10
+          description: Maximum number of items to return in one page.
+      required:
+        - things
+        - total
+        - offset
+
+    ChannelsPage:
+      type: object
+      properties:
+        channels:
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/Channel"
+        total:
+          type: integer
+          example: 1
+          description: Total number of items.
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval.
+        limit:
+          type: integer
+          example: 10
+          description: Maximum number of items to return in one page.
+      required:
+        - channels
+        - total
+        - level
+
+    MembershipsPage:
+      type: object
+      properties:
+        memberships:
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/Memberships"
+        total:
+          type: integer
+          example: 1
+          description: Total number of items.
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval.
+        limit:
+          type: integer
+          example: 10
+          description: Maximum number of items to return in one page.
+      required:
+        - memberships
+        - total
+        - level
+
+    MembersPage:
+      type: object
+      properties:
+        members:
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/Members"
+        total:
+          type: integer
+          example: 1
+          description: Total number of items.
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval.
+        limit:
+          type: integer
+          example: 10
+          description: Maximum number of items to return in one page.
+      required:
+        - members
+        - total
+        - level
+        
+    PoliciesPage:
+      type: object
+      properties:
+        policies:
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/Policy"
+        total:
+          type: integer
+          example: 1
+          description: Total number of items.
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval.
+        limit:
+          type: integer
+          example: 10
+          description: Maximum number of items to return in one page.
+      required:
+        - policies
+        - total
+        - offset
+        
+    ThingUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          example: thingName
+          description: Thing name.
+        metadata:
+          type: object
+          example: {"role": "general"}
+          description: Arbitrary, object-encoded thing's data.
+      required:
+        - name
+        - metadata
+        
+    ThingTags:
+      type: object
+      properties:
+        tags:
+          type: array
+          example: ['tag1', 'tag2']
+          description: Thing tags.
+          minItems: 0
+          uniqueItems: true
+          items:
+            type: string
+
+    ThingSecret:
+      type: object
+      properties:
+        secret:
+          type: string
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: New thing secret.
+      required:
+        - secret
+
+    ThingOwner:
+      type: object
+      properties:
+        owner:
+          type: string
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Thing owner for example email address.
+      required:
+        - owner
+    
+    ChannelUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          example: channelName
+          description: Free-form channel name. Channel name is unique on the given hierarchy level.
+        description:
+          type: string
+          example: long description but not too long
+          description: Channel description, free form text.
+        metadata:
+          type: object
+          example: {"role": "general"}
+          description: Arbitrary, object-encoded channels's data.
+      required:
+        - name
+        - metadata
+        - description
+        
+    PolicyUpdate:
+      type: object
+      properties:
+        actions:
+          type: array
+          example: ['m_write', 'g_add']
+          description: Policy actions.
+          minItems: 0
+          uniqueItems: true
+          items:
+            type: string
+
     Identity:
       type: object
       properties:
@@ -622,330 +1391,394 @@ components:
             provided by the user or left blank. If the user provides a UUID,
             it would be validated. If there is not one provided then
             the service will generate one in UUID format.
-    ThingReqSchema:
-      type: object
-      properties:
-        key:
-          $ref: "#/components/schemas/Key"
-        name:
-          type: string
-          description: Free-form thing name.
-        metadata:
-          type: object
-          description: Arbitrary, object-encoded thing's data.
-    ThingsReqSchema:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Name filter. Filtering is performed as a case-insensitive partial match.
-        metadata:
-          type: object
-          description: Metadata filter. Filtering is performed matching the parameter with metadata on top level. Parameter is json.
-        total:
-          type: integer
-          description: Total number of items.
-        offset:
-          type: integer
-          description: Number of items to skip during retrieval.
-          default: 0
-          minimum: 0
-        limit:
-          type: integer
-          description: Size of the subset to retrieve.
-          default: 10
-          maximum: 100
-          minimum: 1
-        order:
-          type: string
-          description: Order type.
-          default: id
-          enum:
-            - name
-            - id
-        dir:
-          type: string
-          description: Order direction.
-          default: desc
-          enum:
-            - asc
-            - desc
-    ThingResSchema:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Unique thing identifier generated by the service.
-        name:
-          type: string
-          description: Free-form thing name.
-        key:
-          type: string
-          format: uuid
-          description: Auto-generated access key.
-        metadata:
-          type: object
-          description: Arbitrary, object-encoded thing's data.
-      required:
-        - id
-        - type
-        - key
-    ThingsPage:
-      type: object
-      properties:
-        things:
-          type: array
-          minItems: 0
-          uniqueItems: true
-          items:
-            $ref: "#/components/schemas/ThingResSchema"
-        total:
-          type: integer
-          description: Total number of items.
-        offset:
-          type: integer
-          description: Number of items to skip during retrieval.
-        limit:
-          type: integer
-          description: Maximum number of items to return in one page.
-      required:
-        - things
-    ChannelReqSchema:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Free-form channel name.
-        metadata:
-          type: object
-          description: Arbitrary, object-encoded channel's data.
-    ChannelResSchema:
-      type: object
-      properties:
-        id:
-          type: string
-          description: Unique channel identifier generated by the service.
-        name:
-          type: string
-          description: Free-form channel name.
-        metadata:
-          type: object
-          description: Arbitrary, object-encoded channel's data.
-      required:
-        - id
-    ChannelsPage:
-      type: object
-      properties:
-        channels:
-          type: array
-          minItems: 0
-          uniqueItems: true
-          items:
-            $ref: "#/components/schemas/ChannelResSchema"
-        total:
-          type: integer
-          description: Total number of items.
-        offset:
-          type: integer
-          description: Number of items to skip during retrieval.
-        limit:
-          type: integer
-          description: Maximum number of items to return in one page.
-      required:
-        - channels
+
     ConnectionReqSchema:
       type: object
       properties:
-        channel_ids:
+        group_ids:
           type: array
           description: Channel IDs.
           items:
-            type: string
-        thing_ids:
+            example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+        client_ids:
           type: array
           description: Thing IDs
           items:
-            type: string
+            example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+            
     ShareThingReqSchema:
       type: object
       properties:
-        user_id:
-          type: string
-          description: User ID.
+        user_ids:
+          type: array
+          description: User IDs.
           items:
-            type: string
+            example: bb7edb32-2eac-4aad-aebe-ed96fe073879
         policies:
           type: array
           description: Policies
           items:
-            type: string
+            example: c_update
+            
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+      example: {"error": "malformed entity specification"}
 
+    HealthRes:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Service status.
+          enum:
+            - pass
+        version:
+          type: string
+          description: Service version.
+          example: 0.14.0
+        commit:
+          type: string
+          description: Service commit hash.
+          example: 7d6f4dc4f7f0c1fa3dc24eddfb18bb5073ff4f62
+        description:
+          type: string
+          description: Service description.
+          example: things service
+        build_time:
+          type: string
+          description: Service build time.
+          example: 1970-01-01_00:00:00
+          
   parameters:
-    ChanId:
-      name: chanID
-      description: Unique channel identifier.
-      in: path
-      schema:
-        type: string
-        format: uuid
-      required: true
-    ThingId:
-      name: thingID
-      description: Unique thing identifier.
-      in: path
-      schema:
-        type: string
-        format: uuid
-      required: true
-    GroupId:
-      name: groupID
-      description: Unique group identifier.
-      in: path
-      schema:
-        type: string
-        format: ulid
-      required: true
-    Limit:
-      name: limit
-      description: Size of the subset to retrieve.
-      in: query
-      schema:
-        type: integer
-        default: 10
-        maximum: 100
-        minimum: 1
-      required: false
-    Offset:
-      name: offset
-      description: Number of items to skip during retrieval.
-      in: query
-      schema:
-        type: integer
-        default: 0
-        minimum: 0
-      required: false
-    Connected:
-      name: connected
-      description: Connection state of the subset to retrieve.
-      in: query
-      schema:
-        type: boolean
-        default: true
-      required: false
-    Name:
-      name: name
-      description: Name filter. Filtering is performed as a case-insensitive partial match.
-      in: query
-      schema:
-        type: string
-      required: false
-    Order:
-      name: order
-      description: Order type.
-      in: query
-      schema:
-        type: string
-        default: id
-        enum:
-          - name
-          - id
-      required: false
-    Direction:
-      name: dir
-      description: Order direction.
-      in: query
-      schema:
-        type: string
-        default: desc
-        enum:
-          - asc
-          - desc
-      required: false
-    Metadata:
-      name: metadata
-      description: Metadata filter. Filtering is performed matching the parameter with metadata on top level. Parameter is json.
-      in: query
-      required: false
-      schema:
-        type: object
-        additionalProperties: {}
+      ThingID:
+        name: thingID
+        description: Unique thing identifier.
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+        example: bb7edb32-2eac-4aad-aebe-ed96fe073879
 
+      ThingName:
+        name: name
+        description: Thing's name.
+        in: query
+        schema:
+          type: string
+        required: false
+        example: 'thingName'
+        
+      ThingIdentity:
+        name: identity
+        description: Thing's identity.
+        in: query
+        schema:
+          type: string
+        required: false
+        example: 'admin@example.com'
+        
+      Owner:
+        name: owner
+        description: Thing's owner.
+        in: query
+        schema:
+          type: string
+          format: uuid
+        required: false
+        example: bb7edb32-2eac-4aad-aebe-ed96fe073879   
+        
+      ThingOwner:
+        name: owner
+        description: Unique owner identifier for a thing.
+        in: query
+        schema:
+          type: string
+          format: uuid
+        required: false
+        example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+        
+      Status:
+        name: status
+        description: Thing account status.
+        in: query
+        schema:
+          type: string
+          default: enabled
+        required: false
+        example: enabled
+
+      Tags:
+        name: tags
+        description: Thing tags.
+        in: query
+        schema:
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            type: string
+        required: false
+        example: ['yello', 'orange']
+        
+      ChannelName:
+        name: name
+        description: Channel's name.
+        in: query
+        schema:
+          type: string
+        required: false
+        example: 'channelName'
+
+      ChannelDescription:
+        name: name
+        description: Channel's description.
+        in: query
+        schema:
+          type: string
+        required: false
+        example: 'channel description'
+
+      chanID:
+        name: chanID
+        description: Unique channel identifier.
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+        example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+        
+      ParentId:
+        name: parentId
+        description: Unique parent identifier for a channel.
+        in: query
+        schema:
+          type: string
+          format: uuid
+        required: false
+        example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+      
+      Level:
+        name: level
+        description: Level of hierarchy up to which to retrieve channels from given channel id.
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5
+        required: false
+
+      Tree:
+        name: tree
+        description: Specify type of response, JSON array or tree.
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+
+      OwnerId:
+        name: ownerId
+        description: Unique owner identifier for a channel.
+        in: query
+        schema:
+          type: string
+          format: uuid
+        required: false
+        example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+        
+      Subject:
+        name: subject
+        description: Unique subject identifier for a policy.
+        in: query
+        schema:
+          type: string
+          format: uuid
+        required: false
+        example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+
+      Object:
+        name: object
+        description: Unique object identifier for a policy.
+        in: query
+        schema:
+          type: string
+          format: uuid
+        required: false
+        example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+
+      Actions:
+        name: actions
+        description: Policy action types.
+        in: query
+        schema:
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            type: string
+        required: false
+        example: ['m_write', 'g_add']
+        
+      Sub:
+        name: sub
+        description: Unique subject identifier for a policy.
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+        example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+        
+      Obj:
+        name: obj
+        description: Unique object identifier for a policy.
+        in: path
+        schema:
+          type: string
+          format: uuid
+        required: true
+        example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+        
+      Metadata:
+        name: metadata
+        description: Metadata filter. Filtering is performed matching the parameter with metadata on top level. Parameter is json.
+        in: query
+        schema:
+          type: string
+          minimum: 0
+        required: false
+        
+      Limit:
+        name: limit
+        description: Size of the subset to retrieve.
+        in: query
+        schema:
+          type: integer
+          default: 10
+          maximum: 100
+          minimum: 1
+        required: false
+        example: '100'
+
+      Offset:
+        name: offset
+        description: Number of items to skip during retrieval.
+        in: query
+        schema:
+          type: integer
+          default: 0
+          minimum: 0
+        required: false
+        example: '0'
+
+      Connected:
+        name: connected
+        description: Connection state of the subset to retrieve.
+        in: query
+        schema:
+          type: boolean
+          default: true
+        required: false
+        
   requestBodies:
     ThingCreateReq:
-      description: JSON-formatted document describing the new thing.
+      description: JSON-formatted document describing the new thing to be registered
       required: true
       content:
         application/json:
           schema:
-           $ref: "#/components/schemas/ThingReqSchema"
+            $ref: '#/components/schemas/ThingReqObj'
+            
+    ThingUpdateReq:
+      description: JSON-formated document describing the metadata and name of thing to be update
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ThingUpdate"
+    
+    ThingUpdateTagsReq:
+      description: JSON-formated document describing the tags of thing to be update
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ThingTags"
+
+    ThingUpdateSecretReq:
+      description: Secret change data. Thing can change its secret.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ThingSecret'
+
+    ThingUpdateOwnerReq:
+      description: JSON-formated document describing the owner of thing to be update
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ThingOwner"
+           
+    ChannelCreateReq:
+      description: JSON-formatted document describing the new channel to be registered
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ChannelReqObj'
+      
+    ChannelUpdateReq:
+      description: JSON-formated document describing the metadata and name of channel to be update
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ChannelUpdate"
+            
+    PolicyCreateReq:
+      description: JSON-formatted document describing the new channel to be registered
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PolicyReqObj'
+            
+    PolicyUpdateReq:
+      description: JSON-formated document describing the actions of a policy to be update
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PolicyUpdate"
+                
     ThingsCreateReq:
       description: JSON-formatted document describing the new things.
       required: true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              key:
-                $ref: "#/components/schemas/Key"
-              things:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ThingReqSchema"
-    ThingUpdateReq:
-      description: Arbitrary, object-encoded thing's data.
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              name:
-                type: string
-                description: Free-form thing name.
-              metadata:
-                type: object
-    ThingsSearchReq:
-      description: JSON-formatted document describing search parameters.
-      required: true
-      content:
-        application/json:
-          schema:
-           $ref: "#/components/schemas/ThingsReqSchema"
-    KeyUpdateReq:
-      required: true
-      description: JSON containing thing.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              key:
-                type: string
-                format: uuid
-                description: Thing key that is used for thing auth.
-    ChannelCreateReq:
-      description: JSON-formatted document describing the updated channel.
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ChannelReqSchema"
+            type: array
+            items:
+              $ref: "#/components/schemas/ThingReqObj"
+                  
     ChannelsCreateReq:
       description: JSON-formatted document describing the new channels.
       required: true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              key:
-                $ref: "#/components/schemas/Key"
-              things:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ChannelReqSchema"
+            type: array
+            items:
+              $ref: "#/components/schemas/ChannelReqObj"
+
     ConnCreateReq:
       description: JSON-formatted document describing the new connection.
       required: true
@@ -953,6 +1786,7 @@ components:
         application/json:
           schema:
            $ref: "#/components/schemas/ConnectionReqSchema"
+    
     DisconnReq:
       description: JSON-formatted document describing the entities for disconnection.
       required: true
@@ -960,6 +1794,7 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ConnectionReqSchema"
+    
     IdentityReq:
       description: JSON-formatted document that contains thing key.
       required: true
@@ -974,6 +1809,7 @@ components:
                 description: Thing key that is used for thing auth.
             required:
               - token
+    
     AccessByIDReq:
       description: JSON-formatted document that contains thing key.
       required: true
@@ -982,10 +1818,21 @@ components:
           schema:
             type: object
             properties:
-              thing_id:
+              client_id:
                 type: string
                 format: uuid
                 description: Thing ID by which thing is uniquely identified.
+              action:
+                type: string
+                format: string
+                example: "m_read"
+                description: Action you want to check access against.    
+              entity_type:
+                type: string
+                format: string
+                example: group
+                description: Entity Type.
+                
     ShareThingReq:
       description: JSON-formatted document describing sharing things policies.
       required: true
@@ -995,61 +1842,117 @@ components:
             $ref: "#/components/schemas/ShareThingReqSchema"
 
   responses:
-    CreateThingRes:
-      description: Thing registered.
+    ThingCreateRes:
+      description: Registered new thing.
       headers:
         Location:
-          content:
-            text/plain:
-              schema:
-                type: string
-                description: Created thing's relative URL.
-                example: /things/{thingId}
+          schema:
+            type: string
+            format: url
+          description: Registered thing relative URL in the format `/things/<thing_id>`
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Thing"
+
     ThingRes:
       description: Data retrieved.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ThingResSchema"
+            $ref: "#/components/schemas/Thing"
+            
+    ThingPageRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ThingsPage"
+            
     ThingsPageRes:
       description: Data retrieved.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ThingsPage"
+            
+    MembershipsPageRes:
+      description: Memberships associated with the thing.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/MembershipsPage"
+    
     ChannelCreateRes:
-      description: Channel created.
+      description: Registered new channel.
       headers:
         Location:
-          content:
-            text/plain:
-              schema:
-                type: string
-                description: Created channel's relative URL (i.e. /channels/{chanId}).
+          schema:
+            type: string
+            format: url
+          description: Registered channel relative URL in the format `/channels/<channel_id>`
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Channel"
+            
     ChannelRes:
       description: Data retrieved.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ChannelResSchema"
-    ChannelsPageRes:
+            $ref: "#/components/schemas/Channel"
+    
+    ChannelPageRes:
       description: Data retrieved.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ChannelsPage"
-    ConnCreateRes:
-      description: Thing registered.
+
+    MembersPageRes:
+      description: Channel members retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/MembersPage"
+            
+    PolicyCreateRes:
+      description: Registered new policy.
       headers:
         Location:
           content:
             text/plain:
               schema:
                 type: string
-                description: Created thing's relative URL.
-                example: /things/{thingId}
+                format: url
+                description: Registered policy relative URL.
+                example: /policy/{subject}/{object}
+                
+    PolicyRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Policy"
+            
+    PolicyPageRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PoliciesPage"
+
+    ConnCreateRes:
+      description: Thing registered.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PoliciesPage"                
+                
     DisconnRes:
       description: Things disconnected.
+      
     AccessGrantedRes:
       description: |
         Thing has access to the specified channel and the thing ID is returned.
@@ -1057,33 +1960,35 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Identity"
+            
     IdentityRes:
       description: Thing ID returned.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Identity"
+                
+    HealthRes:
+      description: Service Health Check.
+      content:
+        application/health+json:
+          schema:
+            $ref: "#/components/schemas/HealthRes"
+  
     ServiceError:
       description: Unexpected server-side error occurred.
       content:
         application/json:
           schema:
-            type: string
-            format: byte
-    HealthRes:
-      description: Service Health Check.
-      content:
-        application/json:
-          schema:
-            $ref: "./schemas/HealthInfo.yml"
-
+            $ref: "#/components/schemas/Error"
+  
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
       description: |
-        * Users access: "Authorization: Bearer <user_token>"
-
+        * Thing access: "Authorization: Bearer <thing_access_token>"
+        
 security:
   - bearerAuth: []

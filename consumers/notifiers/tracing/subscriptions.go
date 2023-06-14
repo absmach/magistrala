@@ -9,7 +9,8 @@ import (
 	"context"
 
 	notifiers "github.com/mainflux/mainflux/consumers/notifiers"
-	opentracing "github.com/opentracing/opentracing-go"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -22,57 +23,51 @@ const (
 var _ notifiers.SubscriptionsRepository = (*subRepositoryMiddleware)(nil)
 
 type subRepositoryMiddleware struct {
-	tracer opentracing.Tracer
+	tracer trace.Tracer
 	repo   notifiers.SubscriptionsRepository
 }
 
 // New instantiates a new Subscriptions repository that
 // tracks request and their latency, and adds spans to context.
-func New(tracer opentracing.Tracer, repo notifiers.SubscriptionsRepository) notifiers.SubscriptionsRepository {
+func New(tracer trace.Tracer, repo notifiers.SubscriptionsRepository) notifiers.SubscriptionsRepository {
 	return subRepositoryMiddleware{
 		tracer: tracer,
 		repo:   repo,
 	}
 }
 
+// Save traces the "Save" operation of the wrapped Subscriptions repository.
 func (urm subRepositoryMiddleware) Save(ctx context.Context, sub notifiers.Subscription) (string, error) {
-	span := createSpan(ctx, urm.tracer, saveOp)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
+	ctx, span := urm.tracer.Start(ctx, saveOp, trace.WithAttributes(
+		attribute.String("id", sub.ID),
+		attribute.String("contact", sub.Contact),
+		attribute.String("topic", sub.Topic),
+	))
+	defer span.End()
 
 	return urm.repo.Save(ctx, sub)
 }
 
+// Retrieve traces the "Retrieve" operation of the wrapped Subscriptions repository.
 func (urm subRepositoryMiddleware) Retrieve(ctx context.Context, id string) (notifiers.Subscription, error) {
-	span := createSpan(ctx, urm.tracer, retrieveOp)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
+	ctx, span := urm.tracer.Start(ctx, retrieveOp, trace.WithAttributes(attribute.String("id", id)))
+	defer span.End()
 
 	return urm.repo.Retrieve(ctx, id)
 }
 
+// RetrieveAll traces the "RetrieveAll" operation of the wrapped Subscriptions repository.
 func (urm subRepositoryMiddleware) RetrieveAll(ctx context.Context, pm notifiers.PageMetadata) (notifiers.Page, error) {
-	span := createSpan(ctx, urm.tracer, retrieveAllOp)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
+	ctx, span := urm.tracer.Start(ctx, retrieveAllOp)
+	defer span.End()
 
 	return urm.repo.RetrieveAll(ctx, pm)
 }
 
+// Remove traces the "Remove" operation of the wrapped Subscriptions repository.
 func (urm subRepositoryMiddleware) Remove(ctx context.Context, id string) error {
-	span := createSpan(ctx, urm.tracer, removeOp)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
+	ctx, span := urm.tracer.Start(ctx, removeOp, trace.WithAttributes(attribute.String("id", id)))
+	defer span.End()
 
 	return urm.repo.Remove(ctx, id)
-}
-
-func createSpan(ctx context.Context, tracer opentracing.Tracer, opName string) opentracing.Span {
-	if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
-		return tracer.StartSpan(
-			opName,
-			opentracing.ChildOf(parentSpan.Context()),
-		)
-	}
-	return tracer.StartSpan(opName)
 }

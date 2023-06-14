@@ -17,16 +17,16 @@ const (
 )
 
 var (
-	// ErrRedisTwinSave indicates error while saving Twin in redis cache
+	// ErrRedisTwinSave indicates error while saving Twin in redis cache.
 	ErrRedisTwinSave = errors.New("failed to save twin in redis cache")
 
-	// ErrRedisTwinUpdate indicates error while saving Twin in redis cache
+	// ErrRedisTwinUpdate indicates error while saving Twin in redis cache.
 	ErrRedisTwinUpdate = errors.New("failed to update twin in redis cache")
 
-	// ErrRedisTwinIDs indicates error while getting Twin IDs from redis cache
+	// ErrRedisTwinIDs indicates error while getting Twin IDs from redis cache.
 	ErrRedisTwinIDs = errors.New("failed to get twin id from redis cache")
 
-	// ErrRedisTwinRemove indicates error while removing Twin from redis cache
+	// ErrRedisTwinRemove indicates error while removing Twin from redis cache.
 	ErrRedisTwinRemove = errors.New("failed to remove twin from redis cache")
 )
 

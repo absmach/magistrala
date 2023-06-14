@@ -5,8 +5,6 @@ package redis
 
 import (
 	"context"
-	"strconv"
-	"time"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -21,7 +19,7 @@ type EventStore interface {
 	Disconnect(clientID string) error
 }
 
-// EventStore is a struct used to store event streams in Redis
+// EventStore is a struct used to store event streams in Redis.
 type eventStore struct {
 	client   *redis.Client
 	instance string
@@ -37,11 +35,8 @@ func NewEventStore(client *redis.Client, instance string) EventStore {
 }
 
 func (es eventStore) storeEvent(clientID, eventType string) error {
-	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
-
 	event := mqttEvent{
 		clientID:  clientID,
-		timestamp: timestamp,
 		eventType: eventType,
 		instance:  es.instance,
 	}
@@ -55,12 +50,12 @@ func (es eventStore) storeEvent(clientID, eventType string) error {
 	return es.client.XAdd(context.Background(), record).Err()
 }
 
-// Connect issues event on MQTT CONNECT
+// Connect issues event on MQTT CONNECT.
 func (es eventStore) Connect(clientID string) error {
 	return es.storeEvent(clientID, "connect")
 }
 
-// Disconnect issues event on MQTT CONNECT
+// Disconnect issues event on MQTT CONNECT.
 func (es eventStore) Disconnect(clientID string) error {
 	return es.storeEvent(clientID, "disconnect")
 }

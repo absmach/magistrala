@@ -9,7 +9,7 @@ package brokers
 import (
 	"log"
 
-	"github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/pkg/messaging/rabbitmq"
 )
@@ -29,7 +29,7 @@ func NewPublisher(url string) (messaging.Publisher, error) {
 	return pb, nil
 }
 
-func NewPubSub(url, queue string, logger logger.Logger) (messaging.PubSub, error) {
+func NewPubSub(url, queue string, logger mflog.Logger) (messaging.PubSub, error) {
 	pb, err := rabbitmq.NewPubSub(url, queue, logger)
 	if err != nil {
 		return nil, err

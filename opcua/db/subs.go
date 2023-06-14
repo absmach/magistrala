@@ -22,13 +22,13 @@ var (
 	errEmptyLine = errors.New("empty or incomplete line found in file")
 )
 
-// Node represents an OPC-UA node
+// Node represents an OPC-UA node.
 type Node struct {
 	ServerURI string
 	NodeID    string
 }
 
-// Save stores a successful subscription
+// Save stores a successful subscription.
 func Save(serverURI, nodeID string) error {
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModePerm)
 	if err != nil {
@@ -44,7 +44,7 @@ func Save(serverURI, nodeID string) error {
 	return nil
 }
 
-// ReadAll returns all stored subscriptions
+// ReadAll returns all stored subscriptions.
 func ReadAll() ([]Node, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return nil, errors.Wrap(errNotFound, err)

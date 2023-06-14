@@ -1,3 +1,6 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package influxdb
 
 import (
@@ -17,7 +20,7 @@ import (
 )
 
 const (
-	// Measurement for SenML messages
+	// Measurement for SenML messages.
 	defMeasurement = "messages"
 )
 

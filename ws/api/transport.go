@@ -10,7 +10,7 @@ import (
 	"github.com/go-zoo/bone"
 	"github.com/gorilla/websocket"
 	"github.com/mainflux/mainflux"
-	log "github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/ws"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -31,11 +31,11 @@ var (
 		WriteBufferSize: readwriteBufferSize,
 		CheckOrigin:     func(r *http.Request) bool { return true },
 	}
-	logger log.Logger
+	logger mflog.Logger
 )
 
 // MakeHandler returns http handler with handshake endpoint.
-func MakeHandler(svc ws.Service, l log.Logger) http.Handler {
+func MakeHandler(svc ws.Service, l mflog.Logger) http.Handler {
 	logger = l
 
 	mux := bone.New()

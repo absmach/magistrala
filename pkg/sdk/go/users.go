@@ -1,61 +1,61 @@
-// Copyright (c) Mainflux
-// SPDX-License-Identifier: Apache-2.0
-
 package sdk
 
 import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
+	"time"
 
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 const (
-	usersEndpoint    = "users"
-	tokensEndpoint   = "tokens"
-	passwordEndpoint = "password"
-	membersEndpoint  = "members"
+	usersEndpoint        = "users"
+	enableEndpoint       = "enable"
+	disableEndpoint      = "disable"
+	issueTokenEndpoint   = "tokens/issue"
+	refreshTokenEndpoint = "tokens/refresh"
+	membersEndpoint      = "members"
 )
 
-func (sdk mfSDK) CreateUser(u User, token string) (string, errors.SDKError) {
-	data, err := json.Marshal(u)
-	if err != nil {
-		return "", errors.NewSDKError(err)
-	}
-	url := fmt.Sprintf("%s/%s", sdk.usersURL, usersEndpoint)
-
-	headers, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, string(CTJSON), data, http.StatusCreated)
-	if sdkerr != nil {
-		return "", sdkerr
-	}
-
-	id := strings.TrimPrefix(headers.Get("Location"), fmt.Sprintf("/%s/", usersEndpoint))
-	return id, nil
+// User represents mainflux user its credentials.
+type User struct {
+	ID          string      `json:"id"`
+	Name        string      `json:"name,omitempty"`
+	Credentials Credentials `json:"credentials"`
+	Tags        []string    `json:"tags,omitempty"`
+	Owner       string      `json:"owner,omitempty"`
+	Metadata    Metadata    `json:"metadata,omitempty"`
+	CreatedAt   time.Time   `json:"created_at,omitempty"`
+	UpdatedAt   time.Time   `json:"updated_at,omitempty"`
+	Status      string      `json:"status,omitempty"`
+	Role        string      `json:"role,omitempty"`
 }
 
-func (sdk mfSDK) User(userID, token string) (User, errors.SDKError) {
-	url := fmt.Sprintf("%s/%s/%s", sdk.usersURL, usersEndpoint, userID)
-
-	_, body, err := sdk.processRequest(http.MethodGet, url, token, string(CTJSON), nil, http.StatusOK)
+func (sdk mfSDK) CreateUser(user User, token string) (User, errors.SDKError) {
+	data, err := json.Marshal(user)
 	if err != nil {
-		return User{}, err
-	}
-
-	var u User
-	if err := json.Unmarshal(body, &u); err != nil {
 		return User{}, errors.NewSDKError(err)
 	}
 
-	return u, nil
+	url := fmt.Sprintf("%s/%s", sdk.usersURL, usersEndpoint)
+
+	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, token, string(CTJSON), data, http.StatusCreated)
+	if sdkerr != nil {
+		return User{}, sdkerr
+	}
+
+	user = User{}
+	if err := json.Unmarshal(body, &user); err != nil {
+		return User{}, errors.NewSDKError(err)
+	}
+
+	return user, nil
 }
 
 func (sdk mfSDK) Users(pm PageMetadata, token string) (UsersPage, errors.SDKError) {
-	var url string
-	var err error
-
-	if url, err = sdk.withQueryParams(sdk.usersURL, usersEndpoint, pm); err != nil {
+	url, err := sdk.withQueryParams(sdk.usersURL, usersEndpoint, pm)
+	if err != nil {
 		return UsersPage{}, errors.NewSDKError(err)
 	}
 
@@ -64,71 +64,193 @@ func (sdk mfSDK) Users(pm PageMetadata, token string) (UsersPage, errors.SDKErro
 		return UsersPage{}, sdkerr
 	}
 
-	var up UsersPage
-	if err := json.Unmarshal(body, &up); err != nil {
+	var cp UsersPage
+	if err := json.Unmarshal(body, &cp); err != nil {
 		return UsersPage{}, errors.NewSDKError(err)
 	}
 
-	return up, nil
+	return cp, nil
 }
 
-func (sdk mfSDK) CreateToken(user User) (string, errors.SDKError) {
+func (sdk mfSDK) Members(groupID string, meta PageMetadata, token string) (MembersPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s", groupsEndpoint, groupID, membersEndpoint), meta)
+	if err != nil {
+		return MembersPage{}, errors.NewSDKError(err)
+	}
+
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, string(CTJSON), nil, http.StatusOK)
+	if sdkerr != nil {
+		return MembersPage{}, sdkerr
+	}
+
+	var mp MembersPage
+	if err := json.Unmarshal(body, &mp); err != nil {
+		return MembersPage{}, errors.NewSDKError(err)
+	}
+
+	return mp, nil
+}
+
+func (sdk mfSDK) User(id, token string) (User, errors.SDKError) {
+	url := fmt.Sprintf("%s/%s/%s", sdk.usersURL, usersEndpoint, id)
+
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, string(CTJSON), nil, http.StatusOK)
+	if sdkerr != nil {
+		return User{}, sdkerr
+	}
+
+	var user User
+	if err := json.Unmarshal(body, &user); err != nil {
+		return User{}, errors.NewSDKError(err)
+	}
+
+	return user, nil
+}
+
+func (sdk mfSDK) UserProfile(token string) (User, errors.SDKError) {
+	url := fmt.Sprintf("%s/%s/profile", sdk.usersURL, usersEndpoint)
+
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, string(CTJSON), nil, http.StatusOK)
+	if sdkerr != nil {
+		return User{}, sdkerr
+	}
+
+	var user User
+	if err := json.Unmarshal(body, &user); err != nil {
+		return User{}, errors.NewSDKError(err)
+	}
+
+	return user, nil
+}
+
+func (sdk mfSDK) UpdateUser(user User, token string) (User, errors.SDKError) {
 	data, err := json.Marshal(user)
 	if err != nil {
-		return "", errors.NewSDKError(err)
+		return User{}, errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s", sdk.usersURL, tokensEndpoint)
+	url := fmt.Sprintf("%s/%s/%s", sdk.usersURL, usersEndpoint, user.ID)
 
-	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, "", string(CTJSON), data, http.StatusCreated)
+	_, body, sdkerr := sdk.processRequest(http.MethodPatch, url, token, string(CTJSON), data, http.StatusOK)
 	if sdkerr != nil {
-		return "", sdkerr
+		return User{}, sdkerr
 	}
 
-	var tr tokenRes
-	if err := json.Unmarshal(body, &tr); err != nil {
-		return "", errors.NewSDKError(err)
+	user = User{}
+	if err := json.Unmarshal(body, &user); err != nil {
+		return User{}, errors.NewSDKError(err)
 	}
-
-	return tr.Token, nil
+	
+	return user, nil
 }
 
-func (sdk mfSDK) UpdateUser(u User, token string) errors.SDKError {
-	data, err := json.Marshal(u)
+func (sdk mfSDK) UpdateUserTags(user User, token string) (User, errors.SDKError) {
+	data, err := json.Marshal(user)
 	if err != nil {
-		return errors.NewSDKError(err)
+		return User{}, errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s", sdk.usersURL, usersEndpoint)
+	url := fmt.Sprintf("%s/%s/%s/tags", sdk.usersURL, usersEndpoint, user.ID)
 
-	_, _, sdkerr := sdk.processRequest(http.MethodPut, url, token, string(CTJSON), data, http.StatusOK)
-	return sdkerr
+	_, body, sdkerr := sdk.processRequest(http.MethodPatch, url, token, string(CTJSON), data, http.StatusOK)
+	if sdkerr != nil {
+		return User{}, sdkerr
+	}
+
+	user = User{}
+	if err := json.Unmarshal(body, &user); err != nil {
+		return User{}, errors.NewSDKError(err)
+	}
+	
+	return user, nil
 }
 
-func (sdk mfSDK) UpdatePassword(oldPass, newPass, token string) errors.SDKError {
-	ur := UserPasswordReq{
-		OldPassword: oldPass,
-		Password:    newPass,
-	}
-	data, err := json.Marshal(ur)
+func (sdk mfSDK) UpdateUserIdentity(user User, token string) (User, errors.SDKError) {
+	ucir := updateClientIdentityReq{token: token, id: user.ID, Identity: user.Credentials.Identity}
+
+	data, err := json.Marshal(ucir)
 	if err != nil {
-		return errors.NewSDKError(err)
+		return User{}, errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s", sdk.usersURL, passwordEndpoint)
+	url := fmt.Sprintf("%s/%s/%s/identity", sdk.usersURL, usersEndpoint, user.ID)
 
-	_, _, sdkerr := sdk.processRequest(http.MethodPatch, url, token, string(CTJSON), data, http.StatusCreated)
-	return sdkerr
+	_, body, sdkerr := sdk.processRequest(http.MethodPatch, url, token, string(CTJSON), data, http.StatusOK)
+	if sdkerr != nil {
+		return User{}, sdkerr
+	}
+
+	user = User{}
+	if err := json.Unmarshal(body, &user); err != nil {
+		return User{}, errors.NewSDKError(err)
+	}
+
+	return user, nil
 }
 
-func (sdk mfSDK) EnableUser(id, token string) errors.SDKError {
-	url := fmt.Sprintf("%s/%s/%s/enable", sdk.usersURL, usersEndpoint, id)
-	_, _, err := sdk.processRequest(http.MethodPost, url, token, string(CTJSON), nil, http.StatusNoContent)
-	return err
+func (sdk mfSDK) UpdatePassword(oldPass, newPass, token string) (User, errors.SDKError) {
+	var ucsr = updateClientSecretReq{OldSecret: oldPass, NewSecret: newPass}
+
+	data, err := json.Marshal(ucsr)
+	if err != nil {
+		return User{}, errors.NewSDKError(err)
+	}
+
+	url := fmt.Sprintf("%s/%s/secret", sdk.usersURL, usersEndpoint)
+
+	_, body, sdkerr := sdk.processRequest(http.MethodPatch, url, token, string(CTJSON), data, http.StatusOK)
+	if sdkerr != nil {
+		return User{}, sdkerr
+	}
+
+	var user User
+	if err = json.Unmarshal(body, &user); err != nil {
+		return User{}, errors.NewSDKError(err)
+	}
+
+	return user, nil
 }
 
-func (sdk mfSDK) DisableUser(id, token string) errors.SDKError {
-	url := fmt.Sprintf("%s/%s/%s/disable", sdk.usersURL, usersEndpoint, id)
-	_, _, err := sdk.processRequest(http.MethodPost, url, token, string(CTJSON), nil, http.StatusNoContent)
-	return err
+func (sdk mfSDK) UpdateUserOwner(user User, token string) (User, errors.SDKError) {
+	data, err := json.Marshal(user)
+	if err != nil {
+		return User{}, errors.NewSDKError(err)
+	}
+
+	url := fmt.Sprintf("%s/%s/%s/owner", sdk.usersURL, usersEndpoint, user.ID)
+
+	_, body, sdkerr := sdk.processRequest(http.MethodPatch, url, token, string(CTJSON), data, http.StatusOK)
+	if sdkerr != nil {
+		return User{}, sdkerr
+	}
+
+	user = User{}
+	if err = json.Unmarshal(body, &user); err != nil {
+		return User{}, errors.NewSDKError(err)
+	}
+
+	return user, nil
+}
+
+func (sdk mfSDK) EnableUser(id, token string) (User, errors.SDKError) {
+	return sdk.changeClientStatus(token, id, enableEndpoint)
+}
+
+func (sdk mfSDK) DisableUser(id, token string) (User, errors.SDKError) {
+	return sdk.changeClientStatus(token, id, disableEndpoint)
+}
+
+func (sdk mfSDK) changeClientStatus(token, id, status string) (User, errors.SDKError) {
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.usersURL, usersEndpoint, id, status)
+	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, token, string(CTJSON), nil, http.StatusOK)
+	if sdkerr != nil {
+		return User{}, sdkerr
+	}
+
+	user := User{}
+	if err := json.Unmarshal(body, &user); err != nil {
+		return User{}, errors.NewSDKError(err)
+	}
+
+	return user, nil
 }

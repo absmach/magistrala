@@ -14,7 +14,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
-// ConfigsPage contains page related metadata as well as list
+// ConfigsPage contains page related metadata as well as list.
 type Page struct {
 	Total  uint64
 	Offset uint64

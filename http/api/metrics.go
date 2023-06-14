@@ -31,6 +31,7 @@ func MetricsMiddleware(svc http.Service, counter metrics.Counter, latency metric
 	}
 }
 
+// Publish instruments Publish method with metrics.
 func (mm *metricsMiddleware) Publish(ctx context.Context, token string, msg *messaging.Message) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "publish").Add(1)

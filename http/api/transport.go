@@ -6,23 +6,22 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
 	"time"
 
-	kitot "github.com/go-kit/kit/tracing/opentracing"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/go-kit/kit/otelkit"
+
 	adapter "github.com/mainflux/mainflux/http"
 	"github.com/mainflux/mainflux/internal/apiutil"
-	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"
-	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -42,21 +41,21 @@ var (
 var channelPartRegExp = regexp.MustCompile(`^/channels/([\w\-]+)/messages(/[^?]*)?(\?.*)?$`)
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc adapter.Service, tracer opentracing.Tracer, logger logger.Logger) http.Handler {
+func MakeHandler(svc adapter.Service) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
 	}
 
 	r := bone.New()
 	r.Post("/channels/:chanID/messages", kithttp.NewServer(
-		kitot.TraceServer(tracer, "publish")(sendMessageEndpoint(svc)),
+		otelkit.EndpointMiddleware(otelkit.WithOperation("publish"))(sendMessageEndpoint(svc)),
 		decodeRequest,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Post("/channels/:chanID/messages/*", kithttp.NewServer(
-		kitot.TraceServer(tracer, "publish")(sendMessageEndpoint(svc)),
+		otelkit.EndpointMiddleware(otelkit.WithOperation("publish"))(sendMessageEndpoint(svc)),
 		decodeRequest,
 		encodeResponse,
 		opts...,
@@ -97,7 +96,7 @@ func parseSubtopic(subtopic string) (string, error) {
 	return subtopic, nil
 }
 
-func decodeRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+func decodeRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	ct := r.Header.Get("Content-Type")
 	if ct != ctSenmlJSON && ct != ctJSON && ct != ctSenmlCBOR {
 		return nil, errors.ErrUnsupportedContentType
@@ -122,7 +121,7 @@ func decodeRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 		token = apiutil.ExtractThingKey(r)
 	}
 
-	payload, err := ioutil.ReadAll(r.Body)
+	payload, err := io.ReadAll(r.Body)
 	if err != nil {
 		return nil, errors.ErrMalformedEntity
 	}
@@ -142,7 +141,7 @@ func decodeRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 	return req, nil
 }
 
-func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
+func encodeResponse(_ context.Context, w http.ResponseWriter, _ interface{}) error {
 	w.WriteHeader(http.StatusAccepted)
 	return nil
 }

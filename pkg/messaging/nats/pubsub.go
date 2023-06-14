@@ -11,7 +11,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	log "github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	broker "github.com/nats-io/nats.go"
 )
@@ -34,7 +34,7 @@ type subscription struct {
 
 type pubsub struct {
 	publisher
-	logger        log.Logger
+	logger        mflog.Logger
 	mu            sync.Mutex
 	queue         string
 	subscriptions map[string]map[string]subscription
@@ -47,7 +47,7 @@ type pubsub struct {
 // from ordinary subscribe. For more information, please take a look
 // here: https://docs.nats.io/developing-with-nats/receiving/queues.
 // If the queue is empty, Subscribe will be used.
-func NewPubSub(url, queue string, logger log.Logger) (messaging.PubSub, error) {
+func NewPubSub(url, queue string, logger mflog.Logger) (messaging.PubSub, error) {
 	conn, err := broker.Connect(url, broker.MaxReconnects(maxReconnects))
 	if err != nil {
 		return nil, err

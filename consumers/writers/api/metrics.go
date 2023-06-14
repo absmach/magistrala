@@ -30,6 +30,7 @@ func MetricsMiddleware(consumer consumers.BlockingConsumer, counter metrics.Coun
 	}
 }
 
+// ConsumeBlocking instruments ConsumeBlocking method with metrics.
 func (mm *metricsMiddleware) ConsumeBlocking(msgs interface{}) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "consume").Add(1)

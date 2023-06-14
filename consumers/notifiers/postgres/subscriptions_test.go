@@ -13,6 +13,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
 )
 
 const (
@@ -20,8 +21,10 @@ const (
 	numSubs = 100
 )
 
+var tracer = otel.Tracer("tests")
+
 func TestSave(t *testing.T) {
-	dbMiddleware := postgres.NewDatabase(db)
+	dbMiddleware := postgres.NewDatabase(db, tracer)
 	repo := postgres.New(dbMiddleware)
 
 	id1, err := idProvider.ID()
@@ -69,7 +72,7 @@ func TestSave(t *testing.T) {
 }
 
 func TestView(t *testing.T) {
-	dbMiddleware := postgres.NewDatabase(db)
+	dbMiddleware := postgres.NewDatabase(db, tracer)
 	repo := postgres.New(dbMiddleware)
 
 	id, err := idProvider.ID()
@@ -118,7 +121,7 @@ func TestRetrieveAll(t *testing.T) {
 	_, err := db.Exec("DELETE FROM subscriptions")
 	require.Nil(t, err, fmt.Sprintf("cleanup must not fail: %s", err))
 
-	dbMiddleware := postgres.NewDatabase(db)
+	dbMiddleware := postgres.NewDatabase(db, tracer)
 	repo := postgres.New(dbMiddleware)
 
 	var subs []notifiers.Subscription
@@ -222,7 +225,7 @@ func TestRetrieveAll(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	dbMiddleware := postgres.NewDatabase(db)
+	dbMiddleware := postgres.NewDatabase(db, tracer)
 	repo := postgres.New(dbMiddleware)
 	id, err := idProvider.ID()
 	require.Nil(t, err, fmt.Sprintf("got an error creating id: %s", err))

@@ -7,17 +7,17 @@ import (
 	"context"
 	"time"
 
-	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/certs/pki"
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
+	"github.com/mainflux/mainflux/users/policies"
 )
 
 var (
-	// ErrFailedCertCreation failed to create certificate
+	// ErrFailedCertCreation failed to create certificate.
 	ErrFailedCertCreation = errors.New("failed to create client certificate")
 
-	// ErrFailedCertRevocation failed to revoke certificate
+	// ErrFailedCertRevocation failed to revoke certificate.
 	ErrFailedCertRevocation = errors.New("failed to revoke certificate")
 
 	ErrFailedToRemoveCertFromDB = errors.New("failed to remove cert serial from db")
@@ -45,14 +45,14 @@ type Service interface {
 }
 
 type certsService struct {
-	auth      mainflux.AuthServiceClient
+	auth      policies.AuthServiceClient
 	certsRepo Repository
 	sdk       mfsdk.SDK
 	pki       pki.Agent
 }
 
-// New returns new Certs service
-func New(auth mainflux.AuthServiceClient, certs Repository, sdk mfsdk.SDK, pki pki.Agent) Service {
+// New returns new Certs service.
+func New(auth policies.AuthServiceClient, certs Repository, sdk mfsdk.SDK, pki pki.Agent) Service {
 	return &certsService{
 		certsRepo: certs,
 		sdk:       sdk,
@@ -61,12 +61,12 @@ func New(auth mainflux.AuthServiceClient, certs Repository, sdk mfsdk.SDK, pki p
 	}
 }
 
-// Revoke defines the conditions to revoke a certificate
+// Revoke defines the conditions to revoke a certificate.
 type Revoke struct {
 	RevocationTime time.Time `mapstructure:"revocation_time"`
 }
 
-// Cert defines the certificate paremeters
+// Cert defines the certificate paremeters.
 type Cert struct {
 	OwnerID        string    `json:"owner_id" mapstructure:"owner_id"`
 	ThingID        string    `json:"thing_id" mapstructure:"thing_id"`
@@ -80,7 +80,7 @@ type Cert struct {
 }
 
 func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, ttl string) (Cert, error) {
-	owner, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
+	owner, err := cs.auth.Identify(ctx, &policies.Token{Value: token})
 	if err != nil {
 		return Cert{}, err
 	}
@@ -90,7 +90,7 @@ func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, tt
 		return Cert{}, errors.Wrap(ErrFailedCertCreation, err)
 	}
 
-	cert, err := cs.pki.IssueCert(thing.Key, ttl)
+	cert, err := cs.pki.IssueCert(thing.Credentials.Secret, ttl)
 	if err != nil {
 		return Cert{}, errors.Wrap(ErrFailedCertCreation, err)
 	}
@@ -113,7 +113,7 @@ func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, tt
 
 func (cs *certsService) RevokeCert(ctx context.Context, token, thingID string) (Revoke, error) {
 	var revoke Revoke
-	u, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
+	u, err := cs.auth.Identify(ctx, &policies.Token{Value: token})
 	if err != nil {
 		return revoke, err
 	}
@@ -144,7 +144,7 @@ func (cs *certsService) RevokeCert(ctx context.Context, token, thingID string) (
 }
 
 func (cs *certsService) ListCerts(ctx context.Context, token, thingID string, offset, limit uint64) (Page, error) {
-	u, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
+	u, err := cs.auth.Identify(ctx, &policies.Token{Value: token})
 	if err != nil {
 		return Page{}, err
 	}
@@ -167,7 +167,7 @@ func (cs *certsService) ListCerts(ctx context.Context, token, thingID string, of
 }
 
 func (cs *certsService) ListSerials(ctx context.Context, token, thingID string, offset, limit uint64) (Page, error) {
-	u, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
+	u, err := cs.auth.Identify(ctx, &policies.Token{Value: token})
 	if err != nil {
 		return Page{}, err
 	}
@@ -176,7 +176,7 @@ func (cs *certsService) ListSerials(ctx context.Context, token, thingID string, 
 }
 
 func (cs *certsService) ViewCert(ctx context.Context, token, serialID string) (Cert, error) {
-	u, err := cs.auth.Identify(ctx, &mainflux.Token{Value: token})
+	u, err := cs.auth.Identify(ctx, &policies.Token{Value: token})
 	if err != nil {
 		return Cert{}, err
 	}

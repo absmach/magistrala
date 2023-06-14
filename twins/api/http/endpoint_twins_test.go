@@ -19,7 +19,6 @@ import (
 	"github.com/mainflux/mainflux/twins"
 	httpapi "github.com/mainflux/mainflux/twins/api/http"
 	"github.com/mainflux/mainflux/twins/mocks"
-	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -85,7 +84,7 @@ func (tr testRequest) make() (*http.Response, error) {
 
 func newServer(svc twins.Service) *httptest.Server {
 	logger := logger.NewMock()
-	mux := httpapi.MakeHandler(mocktracer.New(), svc, logger)
+	mux := httpapi.MakeHandler(svc, logger)
 	return httptest.NewServer(mux)
 }
 

@@ -39,7 +39,7 @@ type MessagesPage struct {
 	Messages []Message
 }
 
-// PageMetadata represents the parameters used to create database queries
+// PageMetadata represents the parameters used to create database queries.
 type PageMetadata struct {
 	Offset      uint64  `json:"offset"`
 	Limit       uint64  `json:"limit"`
@@ -57,7 +57,7 @@ type PageMetadata struct {
 	Format      string  `json:"format,omitempty"`
 }
 
-// ParseValueComparator convert comparison operator keys into mathematic anotation
+// ParseValueComparator convert comparison operator keys into mathematic anotation.
 func ParseValueComparator(query map[string]interface{}) string {
 	comparator := "="
 	val, ok := query["comparator"]

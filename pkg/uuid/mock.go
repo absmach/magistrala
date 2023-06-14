@@ -10,7 +10,7 @@ import (
 	"github.com/mainflux/mainflux"
 )
 
-// Prefix represents the prefix used to generate UUID mocks
+// Prefix represents the prefix used to generate UUID mocks.
 const Prefix = "123e4567-e89b-12d3-a456-"
 
 var _ mainflux.IDProvider = (*uuidProviderMock)(nil)

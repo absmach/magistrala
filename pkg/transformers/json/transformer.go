@@ -29,7 +29,7 @@ var (
 	errInvalidNestedJSON = errors.New("invalid nested JSON object")
 )
 
-// TimeField represents the message fields to use as timestamp
+// TimeField represents the message fields to use as timestamp.
 type TimeField struct {
 	FieldName   string `toml:"field_name"`
 	FieldFormat string `toml:"field_format"`

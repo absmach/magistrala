@@ -10,10 +10,10 @@ import (
 	migrate "github.com/rubenv/sql-migrate"
 )
 
-// Table for SenML messages
+// Table for SenML messages.
 const defTable = "messages"
 
-// Config defines the options that are used when connecting to a PostgreSQL instance
+// Config defines the options that are used when connecting to a PostgreSQL instance.
 type Config struct {
 	Host        string
 	Port        string

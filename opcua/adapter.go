@@ -42,7 +42,7 @@ type Service interface {
 	Browse(ctx context.Context, serverURI, namespace, identifier string) ([]BrowsedNode, error)
 }
 
-// Config OPC-UA Server
+// Config OPC-UA Server.
 type Config struct {
 	ServerURI string
 	NodeID    string

@@ -8,13 +8,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
 	"github.com/mainflux/mainflux/bootstrap"
-	"github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
@@ -33,12 +35,12 @@ var _ bootstrap.ConfigRepository = (*configRepository)(nil)
 
 type configRepository struct {
 	db  *sqlx.DB
-	log logger.Logger
+	log mflog.Logger
 }
 
 // NewConfigRepository instantiates a PostgreSQL implementation of config
 // repository.
-func NewConfigRepository(db *sqlx.DB, log logger.Logger) bootstrap.ConfigRepository {
+func NewConfigRepository(db *sqlx.DB, log mflog.Logger) bootstrap.ConfigRepository {
 	return &configRepository{db: db, log: log}
 }
 
@@ -391,7 +393,8 @@ func (cr configRepository) UpdateChannel(c bootstrap.Channel) error {
 		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
-	q := `UPDATE channels SET name = :name, metadata = :metadata WHERE mainflux_channel = :mainflux_channel`
+	q := `UPDATE channels SET name = :name, metadata = :metadata, updated_at = :updated_at, updated_by = :updated_by 
+			WHERE mainflux_channel = :mainflux_channel`
 	if _, err = cr.db.NamedExec(q, dbch); err != nil {
 		return errors.Wrap(errUpdateChannels, err)
 	}
@@ -457,9 +460,8 @@ func insertChannels(owner string, channels []bootstrap.Channel, tx *sqlx.Tx) err
 		}
 		chans = append(chans, dbch)
 	}
-
-	q := `INSERT INTO channels (mainflux_channel, owner, name, metadata)
-		  VALUES (:mainflux_channel, :owner, :name, :metadata)`
+	q := `INSERT INTO channels (mainflux_channel, owner, name, metadata, parent_id, description, created_at, updated_at, updated_by, status)
+		  VALUES (:mainflux_channel, :owner, :name, :metadata, :parent_id, :description, :created_at, :updated_at, :updated_by, :status)`
 	if _, err := tx.NamedExec(q, chans); err != nil {
 		e := err
 		if pqErr, ok := err.(*pgconn.PgError); ok && pqErr.Code == pgerrcode.UniqueViolation {
@@ -555,6 +557,17 @@ func nullString(s string) sql.NullString {
 	}
 }
 
+func nullTime(t time.Time) sql.NullTime {
+	if t.IsZero() {
+		return sql.NullTime{}
+	}
+
+	return sql.NullTime{
+		Time:  t,
+		Valid: true,
+	}
+}
+
 type dbConfig struct {
 	MFThing     string          `db:"mainflux_thing"`
 	Owner       string          `db:"owner"`
@@ -618,17 +631,29 @@ func toConfig(dbcfg dbConfig) bootstrap.Config {
 }
 
 type dbChannel struct {
-	ID       string         `db:"mainflux_channel"`
-	Name     sql.NullString `db:"name"`
-	Owner    sql.NullString `db:"owner"`
-	Metadata string         `db:"metadata"`
+	ID          string         `db:"mainflux_channel"`
+	Name        sql.NullString `db:"name"`
+	Owner       sql.NullString `db:"owner"`
+	Metadata    string         `db:"metadata"`
+	Parent      sql.NullString `db:"parent_id,omitempty"`
+	Description string         `db:"description,omitempty"`
+	CreatedAt   time.Time      `db:"created_at"`
+	UpdatedAt   sql.NullTime   `db:"updated_at,omitempty"`
+	UpdatedBy   sql.NullString `db:"updated_by,omitempty"`
+	Status      clients.Status `db:"status"`
 }
 
 func toDBChannel(owner string, ch bootstrap.Channel) (dbChannel, error) {
 	dbch := dbChannel{
-		ID:    ch.ID,
-		Name:  nullString(ch.Name),
-		Owner: nullString(owner),
+		ID:          ch.ID,
+		Name:        nullString(ch.Name),
+		Owner:       nullString(owner),
+		Parent:      nullString(ch.Parent),
+		Description: ch.Description,
+		CreatedAt:   ch.CreatedAt,
+		UpdatedAt:   nullTime(ch.UpdatedAt),
+		UpdatedBy:   nullString(ch.UpdatedBy),
+		Status:      ch.Status,
 	}
 
 	metadata, err := json.Marshal(ch.Metadata)
@@ -642,11 +667,26 @@ func toDBChannel(owner string, ch bootstrap.Channel) (dbChannel, error) {
 
 func toChannel(dbch dbChannel) (bootstrap.Channel, error) {
 	ch := bootstrap.Channel{
-		ID: dbch.ID,
+		ID:          dbch.ID,
+		Description: dbch.Description,
+		CreatedAt:   dbch.CreatedAt,
+		Status:      dbch.Status,
 	}
 
 	if dbch.Name.Valid {
 		ch.Name = dbch.Name.String
+	}
+	if dbch.Owner.Valid {
+		ch.Owner = dbch.Owner.String
+	}
+	if dbch.Parent.Valid {
+		ch.Parent = dbch.Parent.String
+	}
+	if dbch.UpdatedBy.Valid {
+		ch.UpdatedBy = dbch.UpdatedBy.String
+	}
+	if dbch.UpdatedAt.Valid {
+		ch.UpdatedAt = dbch.UpdatedAt.Time
 	}
 
 	if err := json.Unmarshal([]byte(dbch.Metadata), &ch.Metadata); err != nil {

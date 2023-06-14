@@ -5,3 +5,9 @@
 # https://digitalfortress.tech/tricks/creating-a-global-gitignore/
 
 build
+
+# tools
+tools/e2e/e2e
+tools/mqtt-bench/mqtt-bench
+tools/provision/provision
+tools/provision/mfconn.toml

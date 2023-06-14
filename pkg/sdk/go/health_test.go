@@ -10,6 +10,12 @@ import (
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/pkg/errors"
 	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
+	"github.com/mainflux/mainflux/things/clients"
+	"github.com/mainflux/mainflux/things/clients/mocks"
+	gmocks "github.com/mainflux/mainflux/things/groups/mocks"
+	"github.com/mainflux/mainflux/things/policies"
+	pmocks "github.com/mainflux/mainflux/things/policies/mocks"
+	cmocks "github.com/mainflux/mainflux/users/clients/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,8 +25,17 @@ const (
 )
 
 func TestHealth(t *testing.T) {
-	svc := newThingsService(map[string]string{token: email})
-	ts := newThingsServer(svc)
+	cRepo := new(mocks.Repository)
+	gRepo := new(gmocks.Repository)
+	uauth := cmocks.NewAuthService(users, map[string][]cmocks.SubjectSet{adminID: {uadminPolicy}})
+	thingCache := mocks.NewCache()
+	policiesCache := pmocks.NewCache()
+
+	pRepo := new(pmocks.Repository)
+	psvc := policies.NewService(uauth, pRepo, policiesCache, idProvider)
+
+	svc := clients.NewService(uauth, psvc, cRepo, gRepo, thingCache, idProvider)
+	ts := newThingsServer(svc, psvc)
 	defer ts.Close()
 
 	sdkConf := sdk.Config{
@@ -29,7 +44,7 @@ func TestHealth(t *testing.T) {
 		TLSVerification: false,
 	}
 
-	mainfluxSDK := sdk.NewSDK(sdkConf)
+	mfsdk := sdk.NewSDK(sdkConf)
 	cases := map[string]struct {
 		empty bool
 		err   errors.SDKError
@@ -40,7 +55,7 @@ func TestHealth(t *testing.T) {
 		},
 	}
 	for desc, tc := range cases {
-		h, err := mainfluxSDK.Health()
+		h, err := mfsdk.Health()
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", desc, tc.err, err))
 		assert.Equal(t, thingsStatus, h.Status, fmt.Sprintf("%s: expected %s status, got %s", desc, thingsStatus, h.Status))
 		assert.Equal(t, tc.empty, h.Version == "", fmt.Sprintf("%s: expected non-empty version", desc))

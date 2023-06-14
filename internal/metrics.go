@@ -8,6 +8,7 @@ import (
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
+// MakeMetrics returns an instance of metrics.
 func MakeMetrics(namespace, subsystem string) (*kitprometheus.Counter, *kitprometheus.Summary) {
 	counter := kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
 		Namespace: namespace,

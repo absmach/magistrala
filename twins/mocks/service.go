@@ -15,7 +15,7 @@ const publisher = "twins"
 
 var id = 0
 
-// NewService use mock dependencies to create real twins service
+// NewService use mock dependencies to create real twins service.
 func NewService(tokens map[string]string) twins.Service {
 	auth := NewAuthServiceClient(tokens)
 	twinsRepo := NewTwinRepository()
@@ -28,7 +28,7 @@ func NewService(tokens map[string]string) twins.Service {
 	return twins.New(broker, auth, twinsRepo, twinCache, statesRepo, idProvider, "chanID", nil)
 }
 
-// CreateDefinition creates twin definition
+// CreateDefinition creates twin definition.
 func CreateDefinition(channels []string, subtopics []string) twins.Definition {
 	var def twins.Definition
 	for i := range channels {
@@ -42,7 +42,7 @@ func CreateDefinition(channels []string, subtopics []string) twins.Definition {
 	return def
 }
 
-// CreateTwin creates twin
+// CreateTwin creates twin.
 func CreateTwin(channels []string, subtopics []string) twins.Twin {
 	id++
 	return twins.Twin{
@@ -51,8 +51,8 @@ func CreateTwin(channels []string, subtopics []string) twins.Twin {
 	}
 }
 
-// CreateSenML creates SenML record array
-func CreateSenML(n int, recs []senml.Record) {
+// CreateSenML creates SenML record array.
+func CreateSenML(recs []senml.Record) {
 	for i, rec := range recs {
 		rec.BaseTime = float64(time.Now().Unix())
 		rec.Time = float64(i)
@@ -60,7 +60,7 @@ func CreateSenML(n int, recs []senml.Record) {
 	}
 }
 
-// CreateMessage creates Mainflux message using SenML record array
+// CreateMessage creates Mainflux message using SenML record array.
 func CreateMessage(attr twins.Attribute, recs []senml.Record) (*messaging.Message, error) {
 	mRecs, err := json.Marshal(recs)
 	if err != nil {

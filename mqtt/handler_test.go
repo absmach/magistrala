@@ -1,3 +1,6 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package mqtt_test
 
 import (
@@ -12,16 +15,20 @@ import (
 	"github.com/mainflux/mainflux/mqtt/mocks"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"
+	"github.com/mainflux/mainflux/things/policies"
 	"github.com/mainflux/mproxy/pkg/session"
 	"github.com/stretchr/testify/assert"
 )
 
 const (
 	thingID               = "513d02d2-16c1-4f23-98be-9e12f8fee898"
+	thingID1              = "513d02d2-16c1-4f23-98be-9e12f8fee899"
+	password              = "password"
+	password1             = "password1"
 	chanID                = "123e4567-e89b-12d3-a456-000000000001"
 	invalidID             = "invalidID"
 	clientID              = "clientID"
-	password              = "password"
+	clientID1             = "clientID1"
 	subtopic              = "testSubtopic"
 	invalidChannelIDTopic = "channels/**/messages"
 )
@@ -40,6 +47,11 @@ var (
 		ID:       clientID,
 		Username: thingID,
 		Password: []byte(password),
+	}
+	sessionClientSub = session.Session{
+		ID:       clientID1,
+		Username: thingID1,
+		Password: []byte(password1),
 	}
 	invalidThingSessionClient = session.Session{
 		ID:       clientID,
@@ -112,7 +124,7 @@ func TestAuthPublish(t *testing.T) {
 		payload []byte
 	}{
 		{
-			desc:    "publish with inactive client",
+			desc:    "publish with an inactive client",
 			session: nil,
 			err:     mqtt.ErrClientNotInitialized,
 			topic:   &topic,
@@ -130,6 +142,13 @@ func TestAuthPublish(t *testing.T) {
 			session: &sessionClient,
 			err:     mqtt.ErrMalformedTopic,
 			topic:   &invalidTopic,
+			payload: payload,
+		},
+		{
+			desc:    "publish with invalid access rights",
+			session: &sessionClientSub,
+			err:     errors.ErrAuthorization,
+			topic:   &topic,
 			payload: payload,
 		},
 		{
@@ -181,18 +200,18 @@ func TestAuthSubscribe(t *testing.T) {
 		{
 			desc:    "subscribe with invalid channel ID",
 			session: &sessionClient,
-			err:     mqtt.ErrAuthentication,
+			err:     errors.ErrAuthorization,
 			topic:   &invalidChanIDTopics,
 		},
 		{
-			desc:    "subscribe with invalid thing ID",
-			session: &invalidThingSessionClient,
-			err:     mqtt.ErrAuthentication,
+			desc:    "subscribe with active session, valid topics, but invalid access rights",
+			session: &sessionClient,
+			err:     errors.ErrAuthorization,
 			topic:   &topics,
 		},
 		{
-			desc:    "subscribe with active session and valid topics",
-			session: &sessionClient,
+			desc:    "subscribe successfully",
+			session: &sessionClientSub,
 			err:     nil,
 			topic:   &topics,
 		},
@@ -403,7 +422,7 @@ func TestDisconnect(t *testing.T) {
 			desc:    "disconnect with valid session",
 			session: &sessionClient,
 			topic:   topics,
-			logMsg:  fmt.Sprintf(mqtt.LogInfoDisconnected, clientID, thingID),
+			logMsg:  mqtt.ErrClientNotInitialized.Error(),
 		},
 	}
 
@@ -422,8 +441,11 @@ func newHandler() session.Handler {
 	if err != nil {
 		log.Fatalf("failed to create logger: %s", err)
 	}
-
-	authClient := mocks.NewClient(map[string]string{password: thingID}, map[string]interface{}{chanID: thingID})
+	k := mocks.Key(&policies.AuthorizeReq{Sub: password, Obj: chanID})
+	elems := map[string][]string{k: {policies.WriteAction}}
+	k = mocks.Key(&policies.AuthorizeReq{Sub: password1, Obj: chanID})
+	elems[k] = []string{policies.ReadAction}
+	authClient := mocks.NewClient(map[string]string{password: thingID, password1: thingID1}, elems)
 	eventStore := mocks.NewEventStore()
 	return mqtt.NewHandler([]messaging.Publisher{mocks.NewPublisher()}, eventStore, logger, authClient)
 }

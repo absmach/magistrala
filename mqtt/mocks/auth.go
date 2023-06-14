@@ -2,31 +2,46 @@ package mocks
 
 import (
 	"context"
-	"github.com/mainflux/mainflux/pkg/auth"
+	"fmt"
+
 	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/mainflux/mainflux/things/policies"
+	"google.golang.org/grpc"
 )
 
-type MockClient struct {
-	key   map[string]string
-	conns map[string]interface{}
+const separator = ":"
+
+type mockClient struct {
+	ids   map[string]string   // (password,id) for Identify
+	elems map[string][]string // (password:channel, []actions) for Authorize
 }
 
-func NewClient(key map[string]string, conns map[string]interface{}) auth.Client {
-	return MockClient{key: key, conns: conns}
+// NewClient returns a new mock Things gRPC client.
+func NewClient(ids map[string]string, elems map[string][]string) policies.ThingsServiceClient {
+	return mockClient{elems: elems, ids: ids}
 }
 
-func (cli MockClient) Authorize(ctx context.Context, chanID, thingID string) error {
-	for k, v := range cli.conns {
-		if k == chanID && v == thingID {
-			return nil
+func (cli mockClient) Authorize(ctx context.Context, ar *policies.AuthorizeReq, opts ...grpc.CallOption) (*policies.AuthorizeRes, error) {
+	actions, ok := cli.elems[Key(ar)]
+	if !ok {
+		return &policies.AuthorizeRes{Authorized: false}, nil
+	}
+	for _, a := range actions {
+		if a == ar.Act {
+			return &policies.AuthorizeRes{ThingID: ar.Sub, Authorized: true}, nil
 		}
 	}
-	return errors.ErrAuthentication
+	return &policies.AuthorizeRes{Authorized: false}, nil
 }
 
-func (cli MockClient) Identify(ctx context.Context, thingKey string) (string, error) {
-	if id, ok := cli.key[thingKey]; ok {
-		return id, nil
+func (cli mockClient) Identify(ctx context.Context, in *policies.Key, opts ...grpc.CallOption) (*policies.ClientID, error) {
+	if id, ok := cli.ids[in.GetValue()]; ok {
+		return &policies.ClientID{Value: id}, nil
 	}
-	return "", errors.ErrAuthentication
+	return &policies.ClientID{}, errors.ErrAuthentication
+}
+
+// Key generates key for internal auth map.
+func Key(ar *policies.AuthorizeReq) string {
+	return fmt.Sprintf("%s%s%s", ar.Sub, separator, ar.Obj)
 }

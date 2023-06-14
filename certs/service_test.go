@@ -12,17 +12,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mainflux/mainflux"
+	"github.com/go-zoo/bone"
 	bsmocks "github.com/mainflux/mainflux/bootstrap/mocks"
 	"github.com/mainflux/mainflux/certs"
 	"github.com/mainflux/mainflux/certs/mocks"
 	"github.com/mainflux/mainflux/logger"
+	mfclients "github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
-	"github.com/mainflux/mainflux/things"
-	httpapi "github.com/mainflux/mainflux/things/api/things/http"
-	thmocks "github.com/mainflux/mainflux/things/mocks"
-	"github.com/opentracing/opentracing-go/mocktracer"
+	"github.com/mainflux/mainflux/things/clients"
+	httpapi "github.com/mainflux/mainflux/things/clients/api"
+	thmocks "github.com/mainflux/mainflux/things/clients/mocks"
+	"github.com/mainflux/mainflux/users/policies"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -48,8 +49,9 @@ func newService(tokens map[string]string) (certs.Service, error) {
 	ac := bsmocks.NewAuthClient(map[string]string{token: email})
 	server := newThingsServer(newThingsService(ac))
 
-	policies := []thmocks.MockSubjectSet{{Object: "users", Relation: "member"}}
-	auth := thmocks.NewAuthService(tokens, map[string][]thmocks.MockSubjectSet{email: policies})
+	policies := []thmocks.MockSubjectSet{{Object: "token", Relation: clients.AdminRelationKey}}
+	auth := thmocks.NewAuthService(tokens, map[string][]thmocks.MockSubjectSet{token: policies})
+
 	config := mfsdk.Config{
 		ThingsURL: server.URL,
 	}
@@ -72,18 +74,20 @@ func newService(tokens map[string]string) (certs.Service, error) {
 	return certs.New(auth, repo, sdk, pki), nil
 }
 
-func newThingsService(auth mainflux.AuthServiceClient) things.Service {
-	ths := make(map[string]things.Thing, thingsNum)
+func newThingsService(auth policies.AuthServiceClient) clients.Service {
+	ths := make(map[string]mfclients.Client, thingsNum)
 	for i := 0; i < thingsNum; i++ {
 		id := strconv.Itoa(i + 1)
-		ths[id] = things.Thing{
-			ID:    id,
-			Key:   thingKey,
+		ths[id] = mfclients.Client{
+			ID: id,
+			Credentials: mfclients.Credentials{
+				Secret: thingKey,
+			},
 			Owner: email,
 		}
 	}
 
-	return bsmocks.NewThingsService(ths, map[string]things.Channel{}, auth)
+	return bsmocks.NewThingsService(ths, auth)
 }
 
 func TestIssueCert(t *testing.T) {
@@ -359,8 +363,9 @@ func TestViewCert(t *testing.T) {
 	}
 }
 
-func newThingsServer(svc things.Service) *httptest.Server {
+func newThingsServer(svc clients.Service) *httptest.Server {
 	logger := logger.NewMock()
-	mux := httpapi.MakeHandler(mocktracer.New(), svc, logger)
+	mux := bone.New()
+	httpapi.MakeHandler(svc, mux, logger)
 	return httptest.NewServer(mux)
 }

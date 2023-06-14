@@ -14,17 +14,19 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mainflux/mainflux"
 	bsmocks "github.com/mainflux/mainflux/bootstrap/mocks"
 	"github.com/mainflux/mainflux/certs"
 	httpapi "github.com/mainflux/mainflux/certs/api"
 	"github.com/mainflux/mainflux/certs/mocks"
 	"github.com/mainflux/mainflux/internal/apiutil"
 	"github.com/mainflux/mainflux/logger"
+	mfclients "github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
 	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
-	"github.com/mainflux/mainflux/things"
-	thmocks "github.com/mainflux/mainflux/things/mocks"
+	"github.com/mainflux/mainflux/things/clients"
+	"github.com/mainflux/mainflux/things/policies"
+	pmocks "github.com/mainflux/mainflux/things/policies/mocks"
+	upolicies "github.com/mainflux/mainflux/users/policies"
 )
 
 var (
@@ -37,26 +39,31 @@ var (
 	cfgSignHoursValid = "24h"
 )
 
-func newCertsThingsService(auth mainflux.AuthServiceClient) things.Service {
-	ths := make(map[string]things.Thing, thingsNum)
+func newCertsThingsService(auth upolicies.AuthServiceClient) clients.Service {
+	ths := make(map[string]mfclients.Client, thingsNum)
 	for i := 0; i < thingsNum; i++ {
 		id := strconv.Itoa(i + 1)
-		ths[id] = things.Thing{
-			ID:    id,
-			Key:   thingKey,
-			Owner: email,
+		ths[id] = mfclients.Client{
+			ID: id,
+			Credentials: mfclients.Credentials{
+				Secret: thingKey,
+			},
+			Owner:  adminID,
+			Status: mfclients.EnabledStatus,
 		}
 	}
 
-	return bsmocks.NewThingsService(ths, map[string]things.Channel{}, auth)
+	return bsmocks.NewThingsService(ths, auth)
 }
 
 func newCertService() (certs.Service, error) {
-	ac := bsmocks.NewAuthClient(map[string]string{token: email})
-	server := newThingsServer(newCertsThingsService(ac))
+	uauth := bsmocks.NewAuthClient(map[string]string{adminToken: adminID})
+	policiesCache := pmocks.NewCache()
 
-	policies := []thmocks.MockSubjectSet{{Object: "users", Relation: "member"}}
-	auth := thmocks.NewAuthService(map[string]string{token: email}, map[string][]thmocks.MockSubjectSet{email: policies})
+	pRepo := new(pmocks.Repository)
+	psvc := policies.NewService(uauth, pRepo, policiesCache, idProvider)
+	server := newThingsServer(newCertsThingsService(uauth), psvc)
+
 	config := sdk.Config{
 		ThingsURL: server.URL,
 	}
@@ -76,7 +83,7 @@ func newCertService() (certs.Service, error) {
 
 	pki := mocks.NewPkiAgent(tlsCert, caCert, cfgSignHoursValid, authTimeout)
 
-	return certs.New(auth, repo, mfsdk, pki), nil
+	return certs.New(uauth, repo, mfsdk, pki), nil
 }
 
 func newCertServer(svc certs.Service) *httptest.Server {
@@ -97,7 +104,7 @@ func TestIssueCert(t *testing.T) {
 		TLSVerification: false,
 	}
 
-	mainfluxSDK := sdk.NewSDK(sdkConf)
+	mfsdk := sdk.NewSDK(sdkConf)
 
 	cases := []struct {
 		desc     string
@@ -110,21 +117,21 @@ func TestIssueCert(t *testing.T) {
 			desc:     "create new cert with thing id and duration",
 			thingID:  thingID,
 			duration: "10h",
-			token:    token,
+			token:    adminToken,
 			err:      nil,
 		},
 		{
 			desc:     "create new cert with empty thing id and duration",
 			thingID:  "",
 			duration: "10h",
-			token:    token,
+			token:    adminToken,
 			err:      errors.NewSDKErrorWithStatus(apiutil.ErrMissingID, http.StatusBadRequest),
 		},
 		{
 			desc:     "create new cert with invalid thing id and duration",
 			thingID:  "ah",
 			duration: "10h",
-			token:    token,
+			token:    adminToken,
 			err:      errors.NewSDKErrorWithStatus(certs.ErrFailedCertCreation, http.StatusInternalServerError),
 		},
 		{
@@ -159,13 +166,13 @@ func TestIssueCert(t *testing.T) {
 			desc:     "create new empty cert",
 			thingID:  "",
 			duration: "",
-			token:    token,
+			token:    adminToken,
 			err:      errors.NewSDKErrorWithStatus(apiutil.ErrMissingID, http.StatusBadRequest),
 		},
 	}
 
 	for _, tc := range cases {
-		cert, err := mainfluxSDK.IssueCert(tc.thingID, tc.duration, tc.token)
+		cert, err := mfsdk.IssueCert(tc.thingID, tc.duration, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		if err == nil {
 			assert.NotEmpty(t, cert, fmt.Sprintf("%s: got empty cert", tc.desc))
@@ -185,9 +192,9 @@ func TestViewCert(t *testing.T) {
 		TLSVerification: false,
 	}
 
-	mainfluxSDK := sdk.NewSDK(sdkConf)
+	mfsdk := sdk.NewSDK(sdkConf)
 
-	cert, err := mainfluxSDK.IssueCert(thingID, "10h", token)
+	cert, err := mfsdk.IssueCert(thingID, "10h", token)
 	require.Nil(t, err, fmt.Sprintf("unexpected error during creating cert: %s", err))
 
 	cases := []struct {
@@ -221,7 +228,7 @@ func TestViewCert(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		cert, err := mainfluxSDK.ViewCert(tc.certID, tc.token)
+		cert, err := mfsdk.ViewCert(tc.certID, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		if err == nil {
 			assert.NotEmpty(t, cert, fmt.Sprintf("%s: got empty cert", tc.desc))
@@ -241,9 +248,9 @@ func TestViewCertByThing(t *testing.T) {
 		TLSVerification: false,
 	}
 
-	mainfluxSDK := sdk.NewSDK(sdkConf)
+	mfsdk := sdk.NewSDK(sdkConf)
 
-	_, err = mainfluxSDK.IssueCert(thingID, "10h", token)
+	_, err = mfsdk.IssueCert(thingID, "10h", token)
 	require.Nil(t, err, fmt.Sprintf("unexpected error during creating cert: %s", err))
 
 	cases := []struct {
@@ -277,7 +284,7 @@ func TestViewCertByThing(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		cert, err := mainfluxSDK.ViewCertByThing(tc.thingID, tc.token)
+		cert, err := mfsdk.ViewCertByThing(tc.thingID, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		if err == nil {
 			assert.NotEmpty(t, cert, fmt.Sprintf("%s: got empty cert", tc.desc))
@@ -297,9 +304,9 @@ func TestRevokeCert(t *testing.T) {
 		TLSVerification: false,
 	}
 
-	mainfluxSDK := sdk.NewSDK(sdkConf)
+	mfsdk := sdk.NewSDK(sdkConf)
 
-	_, err = mainfluxSDK.IssueCert(thingID, "10h", token)
+	_, err = mfsdk.IssueCert(thingID, "10h", adminToken)
 	require.Nil(t, err, fmt.Sprintf("unexpected error during creating cert: %s", err))
 
 	cases := []struct {
@@ -347,7 +354,7 @@ func TestRevokeCert(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		response, err := mainfluxSDK.RevokeCert(tc.thingID, tc.token)
+		response, err := mfsdk.RevokeCert(tc.thingID, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		if err == nil {
 			assert.NotEmpty(t, response, fmt.Sprintf("%s: got empty revocation time", tc.desc))

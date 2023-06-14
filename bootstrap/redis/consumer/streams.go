@@ -7,19 +7,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/mainflux/mainflux/bootstrap"
 	"github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/pkg/clients"
 )
 
 const (
 	stream = "mainflux.things"
 	group  = "mainflux.bootstrap"
 
-	thingPrefix     = "thing."
-	thingRemove     = thingPrefix + "remove"
-	thingDisconnect = thingPrefix + "disconnect"
+	thingRemove     = "thing.remove"
+	thingDisconnect = "policy.delete"
 
 	channelPrefix = "channel."
 	channelUpdate = channelPrefix + "update"
@@ -31,7 +32,7 @@ const (
 // Subscriber represents event source for things and channels provisioning.
 type Subscriber interface {
 	// Subscribes to given subject and receives events.
-	Subscribe(context.Context, string) error
+	Subscribe(ctx context.Context, subject string) error
 }
 
 type eventStore struct {
@@ -96,8 +97,20 @@ func (es eventStore) Subscribe(ctx context.Context, subject string) error {
 }
 
 func decodeRemoveThing(event map[string]interface{}) removeEvent {
-	return removeEvent{
-		id: read(event, "id", ""),
+	status := read(event, "status", "")
+	st, err := clients.ToStatus(status)
+	if err != nil {
+		return removeEvent{}
+	}
+	switch st {
+	case clients.EnabledStatus:
+		return removeEvent{}
+	case clients.DisabledStatus:
+		return removeEvent{
+			id: read(event, "id", ""),
+		}
+	default:
+		return removeEvent{}
 	}
 }
 
@@ -109,15 +122,29 @@ func decodeUpdateChannel(event map[string]interface{}) updateChannelEvent {
 	}
 
 	return updateChannelEvent{
-		id:       read(event, "id", ""),
-		name:     read(event, "name", ""),
-		metadata: metadata,
+		id:        read(event, "id", ""),
+		name:      read(event, "name", ""),
+		metadata:  metadata,
+		updatedAt: readTime(event, "updated_at", time.Now()),
+		updatedBy: read(event, "updated_by", ""),
 	}
 }
 
 func decodeRemoveChannel(event map[string]interface{}) removeEvent {
-	return removeEvent{
-		id: read(event, "id", ""),
+	status := read(event, "status", "")
+	st, err := clients.ToStatus(status)
+	if err != nil {
+		return removeEvent{}
+	}
+	switch st {
+	case clients.EnabledStatus:
+		return removeEvent{}
+	case clients.DisabledStatus:
+		return removeEvent{
+			id: read(event, "id", ""),
+		}
+	default:
+		return removeEvent{}
 	}
 }
 
@@ -130,15 +157,26 @@ func decodeDisconnectThing(event map[string]interface{}) disconnectEvent {
 
 func (es eventStore) handleUpdateChannel(ctx context.Context, uce updateChannelEvent) error {
 	channel := bootstrap.Channel{
-		ID:       uce.id,
-		Name:     uce.name,
-		Metadata: uce.metadata,
+		ID:        uce.id,
+		Name:      uce.name,
+		Metadata:  uce.metadata,
+		UpdatedAt: uce.updatedAt,
+		UpdatedBy: uce.updatedBy,
 	}
 	return es.svc.UpdateChannelHandler(ctx, channel)
 }
 
 func read(event map[string]interface{}, key, def string) string {
 	val, ok := event[key].(string)
+	if !ok {
+		return def
+	}
+
+	return val
+}
+
+func readTime(event map[string]interface{}, key string, def time.Time) time.Time {
+	val, ok := event[key].(time.Time)
 	if !ok {
 		return def
 	}

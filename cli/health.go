@@ -11,7 +11,7 @@ func NewHealthCmd() *cobra.Command {
 		Use:   "health",
 		Short: "Health Check",
 		Long:  `Mainflux Things service Health Check`,
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			v, err := sdk.Health()
 			if err != nil {
 				logError(err)

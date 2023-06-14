@@ -32,9 +32,10 @@ default values.
 | MF_MQTT_ADAPTER_ES_URL                   | Event sourcing URL                                               | localhost:6379        |
 | MF_MQTT_ADAPTER_ES_PASS                  | Event sourcing password                                          | ""                    |
 | MF_MQTT_ADAPTER_ES_DB                    | Event sourcing database                                          | "0"                   |
-| MF_AUTH_CACHE_URL                        | Auth cache URL                                                   | localhost:6379        |
-| MF_AUTH_CACHE_PASS                       | Auth cache password                                              | ""                    |
-| MF_AUTH_CACHE_DB                         | Auth cache database                                              | "0"                   |
+| MF_AUTH_CACHE_URL                        | Users cache URL                                                  | localhost:6379        |
+| MF_AUTH_CACHE_PASS                       | Users cache password                                             | ""                    |
+| MF_AUTH_CACHE_DB                         | Users cache database                                             | "0"                   |
+| MF_SEND_TELEMETRY                        | Send telemetry to mainflux call home server                      | true                  |
 
 ## Deployment
 
@@ -76,9 +77,9 @@ MF_MQTT_ADAPTER_INSTANCE=[Instance for event sourcing] \
 MF_MQTT_ADAPTER_ES_URL=[Event sourcing URL] \
 MF_MQTT_ADAPTER_ES_PASS=[Event sourcing pass] \
 MF_MQTT_ADAPTER_ES_DB=[Event sourcing database] \
-MF_AUTH_CACHE_URL=[Auth cache URL] \
-MF_AUTH_CACHE_PASS=[Auth cache pass] \
-MF_AUTH_CACHE_DB=[Auth cache DB name] \
+MF_AUTH_CACHE_URL=[Users cache URL] \
+MF_AUTH_CACHE_PASS=[Users cache pass] \
+MF_AUTH_CACHE_DB=[Users cache DB name] \
 $GOBIN/mainflux-mqtt
 ```
 

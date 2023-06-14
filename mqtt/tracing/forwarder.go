@@ -1,3 +1,6 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package tracing
 
 import (
@@ -5,7 +8,8 @@ import (
 
 	"github.com/mainflux/mainflux/mqtt"
 	"github.com/mainflux/mainflux/pkg/messaging"
-	"github.com/opentracing/opentracing-go"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const forwardOP = "forward_op"
@@ -15,11 +19,11 @@ var _ mqtt.Forwarder = (*forwarderMiddleware)(nil)
 type forwarderMiddleware struct {
 	topic     string
 	forwarder mqtt.Forwarder
-	tracer    opentracing.Tracer
+	tracer    trace.Tracer
 }
 
 // New creates new mqtt forwarder tracing middleware.
-func New(tracer opentracing.Tracer, forwarder mqtt.Forwarder, topic string) mqtt.Forwarder {
+func New(tracer trace.Tracer, forwarder mqtt.Forwarder, topic string) mqtt.Forwarder {
 	return &forwarderMiddleware{
 		forwarder: forwarder,
 		tracer:    tracer,
@@ -27,11 +31,16 @@ func New(tracer opentracing.Tracer, forwarder mqtt.Forwarder, topic string) mqtt
 	}
 }
 
-// Forward traces mqtt forward operations
+// Forward traces mqtt forward operations.
 func (fm *forwarderMiddleware) Forward(ctx context.Context, id string, sub messaging.Subscriber, pub messaging.Publisher) error {
-	span, ctx := opentracing.StartSpanFromContextWithTracer(ctx, fm.tracer, forwardOP)
-	defer span.Finish()
-	span.SetTag("subscriber", id)
-	span.SetTag("topic", fm.topic)
+	ctx, span := fm.tracer.Start(ctx,
+		forwardOP,
+		trace.WithAttributes(
+			attribute.String("topic", fm.topic),
+			attribute.String("subscriber", id),
+		),
+	)
+	defer span.End()
+
 	return fm.forwarder.Forward(ctx, id, sub, pub)
 }

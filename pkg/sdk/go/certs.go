@@ -46,6 +46,7 @@ func (sdk mfSDK) IssueCert(thingID, valid, token string) (Cert, errors.SDKError)
 	if err := json.Unmarshal(body, &c); err != nil {
 		return Cert{}, errors.NewSDKError(err)
 	}
+	
 	return c, nil
 }
 

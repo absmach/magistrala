@@ -15,7 +15,7 @@ import (
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/bootstrap"
 	"github.com/mainflux/mainflux/internal/apiutil"
-	"github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -34,7 +34,7 @@ var (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc bootstrap.Service, reader bootstrap.ConfigReader, logger logger.Logger) http.Handler {
+func MakeHandler(svc bootstrap.Service, reader bootstrap.ConfigReader, logger mflog.Logger) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
 	}

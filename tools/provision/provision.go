@@ -14,7 +14,6 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math/big"
 	"os"
@@ -29,7 +28,7 @@ const (
 	defReaderURL = "http://localhost:9005"
 )
 
-// MfConn - structure describing Mainflux connection set
+// MfConn - structure describing Mainflux connection set.
 type MfConn struct {
 	ChannelID string
 	ThingID   string
@@ -38,7 +37,7 @@ type MfConn struct {
 	MTLSKey   string
 }
 
-// Config - provisioning configuration
+// Config - provisioning configuration.
 type Config struct {
 	Host     string
 	Username string
@@ -50,7 +49,7 @@ type Config struct {
 	Prefix   string
 }
 
-// Provision - function that does actual provisiong
+// Provision - function that does actual provisiong.
 func Provision(conf Config) {
 	const (
 		rsaBits = 4096
@@ -59,7 +58,6 @@ func Provision(conf Config) {
 
 	msgContentType := string(sdk.CTJSONSenML)
 	sdkConf := sdk.Config{
-		AuthURL:         conf.Host,
 		ThingsURL:       conf.Host,
 		UsersURL:        conf.Host,
 		ReaderURL:       defReaderURL,
@@ -73,13 +71,15 @@ func Provision(conf Config) {
 	s := sdk.NewSDK(sdkConf)
 
 	user := sdk.User{
-		Email:    conf.Username,
-		Password: conf.Password,
+		Credentials: sdk.Credentials{
+			Identity: conf.Username,
+			Secret:   conf.Password,
+		},
 	}
 
-	if user.Email == "" {
-		user.Email = fmt.Sprintf("%s@email.com", namesgenerator.GetRandomName(0))
-		user.Password = defPass
+	if user.Credentials.Identity == "" {
+		user.Credentials.Identity = fmt.Sprintf("%s@email.com", namesgenerator.GetRandomName(0))
+		user.Credentials.Secret = defPass
 	}
 
 	// Create new user
@@ -107,7 +107,7 @@ func Provision(conf Config) {
 			log.Fatalf("Failed to load CA cert")
 		}
 
-		b, err := ioutil.ReadFile(conf.CA)
+		b, err := os.ReadFile(conf.CA)
 		if err != nil {
 			log.Fatalf("Failed to load CA cert")
 		}
@@ -136,12 +136,12 @@ func Provision(conf Config) {
 		channels[i] = sdk.Channel{Name: fmt.Sprintf("%s-channel-%d", conf.Prefix, i)}
 	}
 
-	things, err = s.CreateThings(things, token)
+	things, err = s.CreateThings(things, token.AccessToken)
 	if err != nil {
 		log.Fatalf("Failed to create the things: %s", err.Error())
 	}
 
-	channels, err = s.CreateChannels(channels, token)
+	channels, err = s.CreateChannels(channels, token.AccessToken)
 	if err != nil {
 		log.Fatalf("Failed to create the chennels: %s", err.Error())
 	}
@@ -179,7 +179,7 @@ func Provision(conf Config) {
 				SerialNumber: serialNumber,
 				Subject: pkix.Name{
 					Organization:       []string{"Mainflux"},
-					CommonName:         things[i].Key,
+					CommonName:         things[i].Credentials.Secret,
 					OrganizationalUnit: []string{"mainflux"},
 				},
 				NotBefore: notBefore,
@@ -213,7 +213,7 @@ func Provision(conf Config) {
 		}
 
 		// Print output
-		fmt.Printf("[[things]]\nthing_id = \"%s\"\nthing_key = \"%s\"\n", things[i].ID, things[i].Key)
+		fmt.Printf("[[things]]\nthing_id = \"%s\"\nthing_key = \"%s\"\n", things[i].ID, things[i].Credentials.Secret)
 		if conf.SSL {
 			fmt.Printf("mtls_cert = \"\"\"%s\"\"\"\n", cert)
 			fmt.Printf("mtls_key = \"\"\"%s\"\"\"\n", key)
@@ -231,7 +231,7 @@ func Provision(conf Config) {
 		ChannelIDs: cIDs,
 		ThingIDs:   tIDs,
 	}
-	if err := s.Connect(conIDs, token); err != nil {
+	if err := s.Connect(conIDs, token.AccessToken); err != nil {
 		log.Fatalf("Failed to connect things %s to channels %s: %s", conIDs.ThingIDs, conIDs.ChannelIDs, err)
 	}
 }

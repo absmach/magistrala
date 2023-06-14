@@ -39,6 +39,7 @@ default values.
 | MF_PROVISION_BS_CONTENT             | Bootstrap service configs content, JSON format    | {}                                    |
 | MF_PROVISION_CERTS_RSA_BITS         | Certificate RSA bits parameter                    | 4096                                  |
 | MF_PROVISION_CERTS_HOURS_VALID      | Number of hours that certificate is valid         | "2400h"                               |
+| MF_SEND_TELEMETRY                   | Send telemetry to mainflux call home server       | true                                  |
 
 By default, call to `/mapping` endpoint will create one thing and two channels (`control` and `data`) and connect it. If there is a requirement for different provision layout we can use [config](docker/configs/config.toml) file in addition to environment variables.
 
@@ -81,13 +82,13 @@ Example of provision layout below
 ```
 
 ## Authentication
-In order to create necessary entities provision service needs to authenticate against Mainflux. To provide authentication credentials to the provision service you can pass it in an environment variable or in a config file as Mainflux user and password or as API token (that can be issued on `/users` or `/keys` endpoint of [auth](../auth/README.md)).
+In order to create necessary entities provision service needs to authenticate against Mainflux. To provide authentication credentials to the provision service you can pass it in an environment variable or in a config file as Mainflux user and password or as API token that can be issued on `/users/tokens/issue`.
 
 Additionally users or API token can be passed in Authorization header, this authentication takes precedence over others.
 
 * `username`, `password` - (`MF_PROVISION_USER`, `MF_PROVISION_PASSWORD` in [.env](../.env), `mf_user`, `mf_pass` in [config.toml](../docker/addons/provision/configs/config.toml))
 * API Key - (`MF_PROVISION_API_KEY` in [.env](../.env) or [config.toml](../docker/addons/provision/configs/config.toml))
-* `Authorization: Bearer Token|ApiKey` - request authorization header containing either users token or API key. Check [auth](../auth/README.md).
+* `Authorization: Bearer Token` - request authorization header containing either users token.
 
 ## Running
 Provision service can be run as a standalone or in docker composition as addon to the core docker composition.

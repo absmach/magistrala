@@ -190,7 +190,7 @@ func wrap(level int) error {
 	return errors.Wrap(errors.New(strconv.Itoa(level)), wrap(level-1))
 }
 
-// message generates error message of wrap() generated wrapper error
+// message generates error message of wrap() generated wrapper error.
 func message(level int) string {
 	if level == 0 {
 		return "0"

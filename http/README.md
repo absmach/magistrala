@@ -11,13 +11,14 @@ default values.
 | Variable                    | Description                                                   | Default               |
 | --------------------------- | ------------------------------------------------------------- | --------------------- |
 | MF_HTTP_ADAPTER_LOG_LEVEL   | Log level for the HTTP Adapter                                | info                  |
-| MF_HTTP_ADAPTER_PORT        | Service HTTP port                                             | 80                  |
+| MF_HTTP_ADAPTER_PORT        | Service HTTP port                                             | 80                    |
 | MF_BROKER_URL               | Message broker instance URL                                   | nats://localhost:4222 |
 | MF_HTTP_ADAPTER_CLIENT_TLS  | Flag that indicates if TLS should be turned on                | false                 |
 | MF_HTTP_ADAPTER_CA_CERTS    | Path to trusted CAs in PEM format                             |                       |
 | MF_JAEGER_URL               | Jaeger server URL                                             | localhost:6831        |
 | MF_THINGS_AUTH_GRPC_URL     | Things service Auth gRPC URL                                  | localhost:7000        |
 | MF_THINGS_AUTH_GRPC_TIMEOUT | Things service Auth gRPC request timeout in seconds           | 1s                    |
+| MF_SEND_TELEMETRY           | Send telemetry to mainflux call home server                   | true                  |
 
 ## Deployment
 

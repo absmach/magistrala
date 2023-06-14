@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mainflux/mainflux"
 	httpmock "github.com/mainflux/mainflux/http/mocks"
 	"github.com/mainflux/mainflux/pkg/messaging"
+	"github.com/mainflux/mainflux/things/policies"
 	"github.com/mainflux/mainflux/ws"
 	"github.com/mainflux/mainflux/ws/mocks"
 	"github.com/stretchr/testify/assert"
@@ -32,7 +32,7 @@ var msg = messaging.Message{
 	Payload:   []byte(`[{"n":"current","t":-5,"v":1.2}]`),
 }
 
-func newService(cc mainflux.ThingsServiceClient) (ws.Service, mocks.MockPubSub) {
+func newService(cc policies.ThingsServiceClient) (ws.Service, mocks.MockPubSub) {
 	pubsub := mocks.NewPubSub()
 	return ws.New(cc, pubsub), pubsub
 }

@@ -1,3 +1,6 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package influxdb
 
 import (
@@ -30,7 +33,7 @@ type Config struct {
 	InsecureSkipVerify bool          `env:"INSECURE_SKIP_VERIFY"  envDefault:"false"`
 }
 
-// Setup load configuration from environment variable, create InfluxDB client and connect to InfluxDB server
+// Setup load configuration from environment variable, create InfluxDB client and connect to InfluxDB server.
 func Setup(envPrefix string, ctx context.Context) (influxdb2.Client, error) {
 	config := Config{}
 	if err := env.Parse(&config, env.Options{Prefix: envPrefix}); err != nil {
@@ -39,7 +42,7 @@ func Setup(envPrefix string, ctx context.Context) (influxdb2.Client, error) {
 	return Connect(config, ctx)
 }
 
-// Connect create InfluxDB client and connect to InfluxDB server
+// Connect create InfluxDB client and connect to InfluxDB server.
 func Connect(config Config, ctx context.Context) (influxdb2.Client, error) {
 	client := influxdb2.NewClientWithOptions(config.DBUrl, config.Token,
 		influxdb2.DefaultOptions().

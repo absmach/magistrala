@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	SDK "github.com/mainflux/mainflux/pkg/sdk/go"
 )
@@ -65,7 +65,7 @@ type Service interface {
 }
 
 type provisionService struct {
-	logger logger.Logger
+	logger mflog.Logger
 	sdk    SDK.SDK
 	conf   Config
 }
@@ -82,7 +82,7 @@ type Result struct {
 }
 
 // New returns new provision service.
-func New(cfg Config, sdk SDK.SDK, logger logger.Logger) Service {
+func New(cfg Config, sdk SDK.SDK, logger mflog.Logger) Service {
 	return &provisionService{
 		logger: logger,
 		conf:   cfg,
@@ -90,7 +90,7 @@ func New(cfg Config, sdk SDK.SDK, logger logger.Logger) Service {
 	}
 }
 
-// Mapping retrieves current configuration
+// Mapping retrieves current configuration.
 func (ps *provisionService) Mapping(token string) (map[string]interface{}, error) {
 	userFilter := SDK.PageMetadata{
 		Email:    "",
@@ -106,7 +106,7 @@ func (ps *provisionService) Mapping(token string) (map[string]interface{}, error
 }
 
 // Provision is provision method for creating setup according to
-// provision layout specified in config.toml
+// provision layout specified in config.toml.
 func (ps *provisionService) Provision(token, name, externalID, externalKey string) (res Result, err error) {
 	var channels []SDK.Channel
 	var things []SDK.Thing
@@ -137,16 +137,16 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 			name = thing.Name
 		}
 		th.Name = name
-		thID, err := ps.sdk.CreateThing(th, token)
+		th, err := ps.sdk.CreateThing(th, token)
 		if err != nil {
 			res.Error = err.Error()
 			return res, errors.Wrap(ErrFailedThingCreation, err)
 		}
 
 		// Get newly created thing (in order to get the key).
-		th, err = ps.sdk.Thing(thID, token)
+		th, err = ps.sdk.Thing(th.ID, token)
 		if err != nil {
-			e := errors.Wrap(err, fmt.Errorf("thing id: %s", thID))
+			e := errors.Wrap(err, fmt.Errorf("thing id: %s", th.ID))
 			return res, errors.Wrap(ErrFailedThingRetrieval, e)
 		}
 		things = append(things, th)
@@ -155,15 +155,15 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 	for _, channel := range ps.conf.Channels {
 		ch := SDK.Channel{
 			Name:     channel.Name,
-			Metadata: channel.Metadata,
+			Metadata: SDK.Metadata(channel.Metadata),
 		}
-		chCreated, err := ps.sdk.CreateChannel(ch, token)
+		ch, err := ps.sdk.CreateChannel(ch, token)
 		if err != nil {
 			return res, err
 		}
-		ch, err = ps.sdk.Channel(chCreated, token)
+		ch, err = ps.sdk.Channel(ch.ID, token)
 		if err != nil {
-			e := errors.Wrap(err, fmt.Errorf("channel id: %s", chCreated))
+			e := errors.Wrap(err, fmt.Errorf("channel id: %s", ch.ID))
 			return res, errors.Wrap(ErrFailedChannelRetrieval, e)
 		}
 		channels = append(channels, ch)
@@ -283,15 +283,17 @@ func (ps *provisionService) createTokenIfEmpty(token string) (string, error) {
 	}
 
 	u := SDK.User{
-		Email:    ps.conf.Server.MfUser,
-		Password: ps.conf.Server.MfPass,
+		Credentials: SDK.Credentials{
+			Identity: ps.conf.Server.MfUser,
+			Secret:   ps.conf.Server.MfPass,
+		},
 	}
-	token, err := ps.sdk.CreateToken(u)
+	tkn, err := ps.sdk.CreateToken(u)
 	if err != nil {
 		return token, errors.Wrap(ErrFailedToCreateToken, err)
 	}
 
-	return token, nil
+	return tkn.AccessToken, nil
 }
 
 func (ps *provisionService) updateGateway(token string, bs SDK.BootstrapConfig, channels []SDK.Channel) error {
@@ -322,7 +324,7 @@ func (ps *provisionService) updateGateway(token string, bs SDK.BootstrapConfig, 
 	if err := json.Unmarshal(b, &th.Metadata); err != nil {
 		return errors.Wrap(ErrGatewayUpdate, err)
 	}
-	if err := ps.sdk.UpdateThing(th, token); err != nil {
+	if _, err := ps.sdk.UpdateThing(th, token); err != nil {
 		return errors.Wrap(ErrGatewayUpdate, err)
 	}
 	return nil
@@ -336,10 +338,12 @@ func (ps *provisionService) errLog(err error) {
 
 func clean(ps *provisionService, things []SDK.Thing, channels []SDK.Channel, token string) {
 	for _, t := range things {
-		ps.errLog(ps.sdk.DeleteThing(t.ID, token))
+		_, err := ps.sdk.DisableThing(t.ID, token)
+		ps.errLog(err)
 	}
 	for _, c := range channels {
-		ps.errLog(ps.sdk.DeleteChannel(c.ID, token))
+		_, err := ps.sdk.DisableChannel(c.ID, token)
+		ps.errLog(err)
 	}
 }
 
@@ -351,7 +355,8 @@ func (ps *provisionService) recover(e *error, ths *[]SDK.Thing, chs *[]SDK.Chann
 
 	if errors.Contains(err, ErrFailedThingRetrieval) || errors.Contains(err, ErrFailedChannelCreation) {
 		for _, th := range things {
-			ps.errLog(ps.sdk.DeleteThing(th.ID, token))
+			_, err := ps.sdk.DisableThing(th.ID, token)
+			ps.errLog(err)
 		}
 		return
 	}

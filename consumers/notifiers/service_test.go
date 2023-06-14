@@ -257,7 +257,7 @@ func TestRemoveSubscription(t *testing.T) {
 			desc:  "test not existing",
 			token: exampleUser1,
 			id:    "not_exist",
-			err:   nil,
+			err:   errors.ErrNotFound,
 		},
 		{
 			desc:  "test with empty token",

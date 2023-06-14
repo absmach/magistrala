@@ -11,24 +11,25 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable                         | Description                           | Default                         |
-|----------------------------------|---------------------------------------|---------------------------------|
-| MF_LORA_ADAPTER_HTTP_PORT        | Service HTTP port                     | 9017                            |
-| MF_LORA_ADAPTER_LOG_LEVEL        | Service Log level                     | info                            |
-| MF_BROKER_URL                    | Message broker instance URL           | nats://localhost:4222           |
-| MF_LORA_ADAPTER_MESSAGES_URL     | LoRa adapter MQTT broker URL          | tcp://localhost:1883            |
-| MF_LORA_ADAPTER_MESSAGES_TOPIC   | LoRa adapter MQTT subscriber Topic    | application/+/device/+/event/up |
-| MF_LORA_ADAPTER_MESSAGES_USER    | LoRa adapter MQTT subscriber Username |                                 |
-| MF_LORA_ADAPTER_MESSAGES_PASS    | LoRa adapter MQTT subscriber Password |                                 |
-| MF_LORA_ADAPTER_MESSAGES_TIMEOUT | LoRa adapter MQTT subscriber Timeout  | 30s                             |
-| MF_LORA_ADAPTER_ROUTE_MAP_URL    | Route-map database URL                | localhost:6379                  |
-| MF_LORA_ADAPTER_ROUTE_MAP_PASS   | Route-map database password           |                                 |
-| MF_LORA_ADAPTER_ROUTE_MAP_DB     | Route-map instance                    | 0                               |
-| MF_THINGS_ES_URL                 | Things service event source URL       | localhost:6379                  |
-| MF_THINGS_ES_PASS                | Things service event source password  |                                 |
-| MF_THINGS_ES_DB                  | Things service event source DB        | 0                               |
-| MF_LORA_ADAPTER_EVENT_CONSUMER   | Service event consumer name           | lora                            |
-| MF_JAEGER_URL               | Jaeger server URL                                             | localhost:6831        |
+| Variable                         | Description                                  | Default                         |
+|----------------------------------|----------------------------------------------|---------------------------------|
+| MF_LORA_ADAPTER_HTTP_PORT        | Service HTTP port                            | 9017                            |
+| MF_LORA_ADAPTER_LOG_LEVEL        | Service Log level                            | info                            |
+| MF_BROKER_URL                    | Message broker instance URL                  | nats://localhost:4222           |
+| MF_LORA_ADAPTER_MESSAGES_URL     | LoRa adapter MQTT broker URL                 | tcp://localhost:1883            |
+| MF_LORA_ADAPTER_MESSAGES_TOPIC   | LoRa adapter MQTT subscriber Topic           | application/+/device/+/event/up |
+| MF_LORA_ADAPTER_MESSAGES_USER    | LoRa adapter MQTT subscriber Username        |                                 |
+| MF_LORA_ADAPTER_MESSAGES_PASS    | LoRa adapter MQTT subscriber Password        |                                 |
+| MF_LORA_ADAPTER_MESSAGES_TIMEOUT | LoRa adapter MQTT subscriber Timeout         | 30s                             |
+| MF_LORA_ADAPTER_ROUTE_MAP_URL    | Route-map database URL                       | localhost:6379                  |
+| MF_LORA_ADAPTER_ROUTE_MAP_PASS   | Route-map database password                  |                                 |
+| MF_LORA_ADAPTER_ROUTE_MAP_DB     | Route-map instance                           | 0                               |
+| MF_THINGS_ES_URL                 | Things service event source URL              | localhost:6379                  |
+| MF_THINGS_ES_PASS                | Things service event source password         |                                 |
+| MF_THINGS_ES_DB                  | Things service event source DB               | 0                               |
+| MF_LORA_ADAPTER_EVENT_CONSUMER   | Service event consumer name                  | lora                            |
+| MF_JAEGER_URL                    | Jaeger server URL                            | localhost:6831                  |
+| MF_SEND_TELEMETRY                | Send telemetry to mainflux call home server  | true                            |
 
 ## Deployment
 

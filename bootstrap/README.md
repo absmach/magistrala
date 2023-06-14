@@ -62,8 +62,9 @@ The service is configured using the environment variables presented in the follo
 | MF_BOOTSTRAP_ES_DB            | Bootstrap service event source database                                 | 0                                |
 | MF_BOOTSTRAP_EVENT_CONSUMER   | Bootstrap service event source consumer name                            | bootstrap                        |
 | MF_JAEGER_URL                 | Jaeger server URL                                                       | localhost:6831                   |
-| MF_AUTH_GRPC_URL              | Auth service gRPC URL                                                   | localhost:7001                   |
-| MF_AUTH_GRPC_TIMEOUT          | Auth service gRPC request timeout in seconds                            | 1s                               |
+| MF_AUTH_GRPC_URL              | Users service gRPC URL                                                  | localhost:7001                   |
+| MF_AUTH_GRPC_TIMEOUT          | Users service gRPC request timeout in seconds                           | 1s                               |
+| MF_SEND_TELEMETRY             | Send telemetry to mainflux call home server                             | true                             |
 
 ## Deployment
 
@@ -104,8 +105,8 @@ MF_BOOTSTRAP_SERVER_KEY=[Path to server key] \
 MF_SDK_BASE_URL=[Base SDK URL for the Mainflux services] \
 MF_SDK_THINGS_PREFIX=[SDK prefix for Things service] \
 MF_JAEGER_URL=[Jaeger server URL] \
-MF_AUTH_GRPC_URL=[Auth service gRPC URL] \
-MF_AUTH_GRPC_TIMEOUT=[Auth service gRPC request timeout in seconds] \
+MF_AUTH_GRPC_URL=[Users service gRPC URL] \
+MF_AUTH_GRPC_TIMEOUT=[Users service gRPC request timeout in seconds] \
 $GOBIN/mainflux-bootstrap
 ```
 

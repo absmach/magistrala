@@ -15,17 +15,23 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/opentracing/opentracing-go/mocktracer"
+	"github.com/go-zoo/bone"
 
 	"github.com/gofrs/uuid"
-	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/bootstrap"
 	"github.com/mainflux/mainflux/bootstrap/mocks"
-	"github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
+	mfclients "github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
+	mfgroups "github.com/mainflux/mainflux/pkg/groups"
 	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
-	"github.com/mainflux/mainflux/things"
-	httpapi "github.com/mainflux/mainflux/things/api/things/http"
+	"github.com/mainflux/mainflux/things/clients"
+	capi "github.com/mainflux/mainflux/things/clients/api"
+	"github.com/mainflux/mainflux/things/groups"
+	gapi "github.com/mainflux/mainflux/things/groups/api"
+	tpolicies "github.com/mainflux/mainflux/things/policies"
+	papi "github.com/mainflux/mainflux/things/policies/api/http"
+	upolicies "github.com/mainflux/mainflux/users/policies"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -55,7 +61,7 @@ var (
 	}
 )
 
-func newService(auth mainflux.AuthServiceClient, url string) bootstrap.Service {
+func newService(auth upolicies.AuthServiceClient, url string) bootstrap.Service {
 	things := mocks.NewConfigsRepository()
 	config := mfsdk.Config{
 		ThingsURL: url,
@@ -65,23 +71,30 @@ func newService(auth mainflux.AuthServiceClient, url string) bootstrap.Service {
 	return bootstrap.New(auth, things, sdk, encKey)
 }
 
-func newThingsService(auth mainflux.AuthServiceClient) things.Service {
-	channels := make(map[string]things.Channel, channelsNum)
+func newThingsService(auth upolicies.AuthServiceClient) (clients.Service, groups.Service, tpolicies.Service) {
+	channels := make(map[string]mfgroups.Group, channelsNum)
 	for i := 0; i < channelsNum; i++ {
 		id := strconv.Itoa(i + 1)
-		channels[id] = things.Channel{
+		channels[id] = mfgroups.Group{
 			ID:       id,
 			Owner:    email,
 			Metadata: map[string]interface{}{"meta": "data"},
+			Status:   mfclients.EnabledStatus,
 		}
 	}
 
-	return mocks.NewThingsService(map[string]things.Thing{}, channels, auth)
+	csvc := mocks.NewThingsService(map[string]mfclients.Client{}, auth)
+	gsvc := mocks.NewChannelsService(channels, auth)
+	psvc := mocks.NewPoliciesService(auth)
+	return csvc, gsvc, psvc
 }
 
-func newThingsServer(svc things.Service) *httptest.Server {
-	logger := logger.NewMock()
-	mux := httpapi.MakeHandler(mocktracer.New(), svc, logger)
+func newThingsServer(csvc clients.Service, gsvc groups.Service, psvc tpolicies.Service) *httptest.Server {
+	logger := mflog.NewMock()
+	mux := bone.New()
+	capi.MakeHandler(csvc, mux, logger)
+	gapi.MakeHandler(gsvc, mux, logger)
+	papi.MakeHandler(csvc, psvc, mux, logger)
 	return httptest.NewServer(mux)
 }
 
@@ -648,7 +661,7 @@ func TestChangeState(t *testing.T) {
 
 	for _, tc := range cases {
 		err := svc.ChangeState(context.Background(), tc.token, tc.id, tc.state)
-		assert.True(t, errors.Contains(err, tc.err), err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }
 

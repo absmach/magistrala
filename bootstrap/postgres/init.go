@@ -5,7 +5,7 @@ package postgres
 
 import migrate "github.com/rubenv/sql-migrate"
 
-// Migration of bootstrap service
+// Migration of bootstrap service.
 func Migration() *migrate.MemoryMigrationSource {
 	return &migrate.MemoryMigrationSource{
 		Migrations: []*migrate.Migration{
@@ -62,6 +62,17 @@ func Migration() *migrate.MemoryMigrationSource {
 				},
 				Down: []string{
 					"CREATE TABLE IF NOT EXISTS unknown_configs",
+				},
+			},
+			{
+				Id: "configs_3",
+				Up: []string{
+					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS parent_id VARCHAR(36)`,
+					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS description VARCHAR(1024)`,
+					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS created_at TIMESTAMP`,
+					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP`,
+					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS updated_by VARCHAR(254)`,
+					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS status SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0)`,
 				},
 			},
 		},

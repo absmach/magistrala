@@ -30,6 +30,7 @@ func MetricsMiddleware(svc bootstrap.Service, counter metrics.Counter, latency m
 	}
 }
 
+// Add instruments Add method with metrics.
 func (mm *metricsMiddleware) Add(ctx context.Context, token string, cfg bootstrap.Config) (saved bootstrap.Config, err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "add").Add(1)
@@ -39,6 +40,7 @@ func (mm *metricsMiddleware) Add(ctx context.Context, token string, cfg bootstra
 	return mm.svc.Add(ctx, token, cfg)
 }
 
+// View instruments View method with metrics.
 func (mm *metricsMiddleware) View(ctx context.Context, token, id string) (saved bootstrap.Config, err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "view").Add(1)
@@ -48,6 +50,7 @@ func (mm *metricsMiddleware) View(ctx context.Context, token, id string) (saved 
 	return mm.svc.View(ctx, token, id)
 }
 
+// Update instruments Update method with metrics.
 func (mm *metricsMiddleware) Update(ctx context.Context, token string, cfg bootstrap.Config) (err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update").Add(1)
@@ -57,6 +60,7 @@ func (mm *metricsMiddleware) Update(ctx context.Context, token string, cfg boots
 	return mm.svc.Update(ctx, token, cfg)
 }
 
+// UpdateCert instruments UpdateCert method with metrics.
 func (mm *metricsMiddleware) UpdateCert(ctx context.Context, token, thingKey, clientCert, clientKey, caCert string) (err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_cert").Add(1)
@@ -66,6 +70,7 @@ func (mm *metricsMiddleware) UpdateCert(ctx context.Context, token, thingKey, cl
 	return mm.svc.UpdateCert(ctx, token, thingKey, clientCert, clientKey, caCert)
 }
 
+// UpdateConnections instruments UpdateConnections method with metrics.
 func (mm *metricsMiddleware) UpdateConnections(ctx context.Context, token, id string, connections []string) (err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_connections").Add(1)
@@ -75,6 +80,7 @@ func (mm *metricsMiddleware) UpdateConnections(ctx context.Context, token, id st
 	return mm.svc.UpdateConnections(ctx, token, id, connections)
 }
 
+// List instruments List method with metrics.
 func (mm *metricsMiddleware) List(ctx context.Context, token string, filter bootstrap.Filter, offset, limit uint64) (saved bootstrap.ConfigsPage, err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "list").Add(1)
@@ -84,6 +90,7 @@ func (mm *metricsMiddleware) List(ctx context.Context, token string, filter boot
 	return mm.svc.List(ctx, token, filter, offset, limit)
 }
 
+// Remove instruments Remove method with metrics.
 func (mm *metricsMiddleware) Remove(ctx context.Context, token, id string) (err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "remove").Add(1)
@@ -93,6 +100,7 @@ func (mm *metricsMiddleware) Remove(ctx context.Context, token, id string) (err 
 	return mm.svc.Remove(ctx, token, id)
 }
 
+// Bootstrap instruments Bootstrap method with metrics.
 func (mm *metricsMiddleware) Bootstrap(ctx context.Context, externalKey, externalID string, secure bool) (cfg bootstrap.Config, err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "bootstrap").Add(1)
@@ -102,6 +110,7 @@ func (mm *metricsMiddleware) Bootstrap(ctx context.Context, externalKey, externa
 	return mm.svc.Bootstrap(ctx, externalKey, externalID, secure)
 }
 
+// ChangeState instruments ChangeState method with metrics.
 func (mm *metricsMiddleware) ChangeState(ctx context.Context, token, id string, state bootstrap.State) (err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "change_state").Add(1)
@@ -111,6 +120,7 @@ func (mm *metricsMiddleware) ChangeState(ctx context.Context, token, id string, 
 	return mm.svc.ChangeState(ctx, token, id, state)
 }
 
+// UpdateChannelHandler instruments UpdateChannelHandler method with metrics.
 func (mm *metricsMiddleware) UpdateChannelHandler(ctx context.Context, channel bootstrap.Channel) (err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_channel").Add(1)
@@ -120,6 +130,7 @@ func (mm *metricsMiddleware) UpdateChannelHandler(ctx context.Context, channel b
 	return mm.svc.UpdateChannelHandler(ctx, channel)
 }
 
+// RemoveConfigHandler instruments RemoveConfigHandler method with metrics.
 func (mm *metricsMiddleware) RemoveConfigHandler(ctx context.Context, id string) (err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "remove_config").Add(1)
@@ -129,6 +140,7 @@ func (mm *metricsMiddleware) RemoveConfigHandler(ctx context.Context, id string)
 	return mm.svc.RemoveConfigHandler(ctx, id)
 }
 
+// RemoveChannelHandler instruments RemoveChannelHandler method with metrics.
 func (mm *metricsMiddleware) RemoveChannelHandler(ctx context.Context, id string) (err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "remove_channel").Add(1)
@@ -138,6 +150,7 @@ func (mm *metricsMiddleware) RemoveChannelHandler(ctx context.Context, id string
 	return mm.svc.RemoveChannelHandler(ctx, id)
 }
 
+// DisconnectThingHandler instruments DisconnectThingHandler method with metrics.
 func (mm *metricsMiddleware) DisconnectThingHandler(ctx context.Context, channelID, thingID string) (err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "disconnect_thing_handler").Add(1)

@@ -1,6 +1,7 @@
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
 
+// Package main contains opcua-adapter main function to start the opcua-adapter service.
 package main
 
 import (
@@ -10,6 +11,8 @@ import (
 	"os"
 
 	r "github.com/go-redis/redis/v8"
+	chclient "github.com/mainflux/callhome/pkg/client"
+	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/internal"
 	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
 	redisClient "github.com/mainflux/mainflux/internal/clients/redis"
@@ -45,6 +48,7 @@ type config struct {
 	ESConsumerName string `env:"MF_OPCUA_ADAPTER_EVENT_CONSUMER"     envDefault:""`
 	BrokerURL      string `env:"MF_BROKER_URL"                       envDefault:"nats://localhost:4222"`
 	JaegerURL      string `env:"MF_JAEGER_URL"                       envDefault:"localhost:6831"`
+	SendTelemetry  bool   `env:"MF_SEND_TELEMETRY"                   envDefault:"true"`
 }
 
 func main() {
@@ -82,11 +86,16 @@ func main() {
 	}
 	defer esConn.Close()
 
-	tracer, traceCloser, err := jaegerClient.NewTracer(svcName, cfg.JaegerURL)
+	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
+		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
 	}
-	defer traceCloser.Close()
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			logger.Error(fmt.Sprintf("Error shutting down tracer provider: %v", err))
+		}
+	}()
+	tracer := tp.Tracer(svcName)
 
 	pubSub, err := brokers.NewPubSub(cfg.BrokerURL, "", logger)
 	if err != nil {
@@ -109,6 +118,11 @@ func main() {
 		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 	}
 	hs := httpserver.New(httpCtx, httpCancel, svcName, httpServerConfig, api.MakeHandler(svc, logger), logger)
+
+	if cfg.SendTelemetry {
+		chc := chclient.New(svcName, mainflux.Version, logger, httpCancel)
+		go chc.CallHome(httpCtx)
+	}
 
 	g.Go(func() error {
 		return hs.Start()
@@ -156,7 +170,7 @@ func newRouteMapRepositoy(client *r.Client, prefix string, logger mflog.Logger) 
 func newService(sub opcua.Subscriber, browser opcua.Browser, thingRM, chanRM, connRM opcua.RouteMapRepository, opcuaConfig opcua.Config, logger mflog.Logger) opcua.Service {
 	svc := opcua.New(sub, browser, thingRM, chanRM, connRM, opcuaConfig, logger)
 	svc = api.LoggingMiddleware(svc, logger)
-	counter, latency := internal.MakeMetrics(svcName, "api")
+	counter, latency := internal.MakeMetrics("opc_ua_adapter", "api")
 	svc = api.MetricsMiddleware(svc, counter, latency)
 
 	return svc

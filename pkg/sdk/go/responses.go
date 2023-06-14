@@ -4,15 +4,10 @@
 package sdk
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 )
-
-type tokenRes struct {
-	Token string `json:"token,omitempty"`
-}
 
 type createThingsRes struct {
 	Things []Thing `json:"things"`
@@ -57,47 +52,22 @@ type UsersPage struct {
 }
 
 type MembersPage struct {
-	Members []string `json:"members"`
+	Members []User `json:"members"`
 	pageRes
 }
 
-type KeyRes struct {
-	ID        string     `json:"id,omitempty"`
-	Value     string     `json:"value,omitempty"`
-	IssuedAt  time.Time  `json:"issued_at,omitempty"`
-	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+// MembershipsPage contains page related metadata as well as list of memberships that
+// belong to this page.
+type MembershipsPage struct {
+	pageRes
+	Memberships []Group `json:"memberships"`
 }
 
-func (res KeyRes) Code() int {
-	return http.StatusCreated
-}
-
-func (res KeyRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res KeyRes) Empty() bool {
-	return res.Value == ""
-}
-
-type retrieveKeyRes struct {
-	ID        string     `json:"id,omitempty"`
-	IssuerID  string     `json:"issuer_id,omitempty"`
-	Subject   string     `json:"subject,omitempty"`
-	IssuedAt  time.Time  `json:"issued_at,omitempty"`
-	ExpiresAt *time.Time `json:"expires_at,omitempty"`
-}
-
-func (res retrieveKeyRes) Code() int {
-	return http.StatusOK
-}
-
-func (res retrieveKeyRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res retrieveKeyRes) Empty() bool {
-	return false
+// PolicyPage contains page related metadata as well as list
+// of Policies that belong to the page.
+type PolicyPage struct {
+	PageMetadata
+	Policies []Policy
 }
 
 type revokeCertsRes struct {
@@ -118,4 +88,17 @@ type CertSerials struct {
 type SubscriptionPage struct {
 	Subscriptions []Subscription `json:"subscriptions"`
 	pageRes
+}
+
+type identifyThingResp struct {
+	ID string `json:"id,omitempty"`
+}
+
+type authorizeRes struct {
+	Authorized bool `json:"authorized"`
+}
+
+type canAccessRes struct {
+	ThingID    string `json:"thing_id"`
+	Authorized bool   `json:"authorized"`
 }

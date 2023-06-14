@@ -13,7 +13,7 @@ import (
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-	mainflux_log "github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	mqtt_pubsub "github.com/mainflux/mainflux/pkg/messaging/mqtt"
 	"github.com/ory/dockertest/v3"
@@ -21,7 +21,7 @@ import (
 
 var (
 	pubsub  messaging.PubSub
-	logger  mainflux_log.Logger
+	logger  mflog.Logger
 	address string
 )
 
@@ -51,7 +51,7 @@ func TestMain(m *testing.M) {
 	address = fmt.Sprintf("%s:%s", "localhost", container.GetPort(port))
 	pool.MaxWait = poolMaxWait
 
-	logger, err = mainflux_log.New(os.Stdout, mainflux_log.Debug.String())
+	logger, err = mflog.New(os.Stdout, mflog.Debug.String())
 	if err != nil {
 		log.Fatalf(err.Error())
 	}

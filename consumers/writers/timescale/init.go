@@ -5,7 +5,7 @@ package timescale
 
 import migrate "github.com/rubenv/sql-migrate"
 
-// Migration of timescale-writer
+// Migration of timescale-writer.
 func Migration() *migrate.MemoryMigrationSource {
 	return &migrate.MemoryMigrationSource{
 		Migrations: []*migrate.Migration{

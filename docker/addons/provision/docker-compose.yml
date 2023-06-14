@@ -42,6 +42,7 @@ services:
       MF_PROVISION_BS_CONTENT: ${MF_PROVISION_BS_CONTENT}
       MF_PROVISION_CERTS_RSA_BITS: ${MF_PROVISION_CERTS_RSA_BITS}
       MF_PROVISION_CERTS_HOURS_VALID: ${MF_PROVISION_CERTS_HOURS_VALID}
+      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
     volumes:
       - ./configs:/configs
       - ../../ssl/certs/ca.key:/etc/ssl/certs/ca.key

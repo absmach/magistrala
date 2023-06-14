@@ -1,3 +1,7 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
+// Package main contains mqtt-adapter main function to start the mqtt-adapter service.
 package main
 
 import (
@@ -10,6 +14,8 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	chclient "github.com/mainflux/callhome/pkg/client"
+	"github.com/mainflux/mainflux"
 	thingsClient "github.com/mainflux/mainflux/internal/clients/grpc/things"
 	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
 	redisClient "github.com/mainflux/mainflux/internal/clients/redis"
@@ -18,7 +24,6 @@ import (
 	"github.com/mainflux/mainflux/mqtt"
 	mqttredis "github.com/mainflux/mainflux/mqtt/redis"
 	mqtttracing "github.com/mainflux/mainflux/mqtt/tracing"
-	"github.com/mainflux/mainflux/pkg/auth"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
@@ -49,8 +54,9 @@ type config struct {
 	HttpTargetPort        string        `env:"MF_MQTT_ADAPTER_WS_TARGET_PORT"               envDefault:"8080"`
 	HttpTargetPath        string        `env:"MF_MQTT_ADAPTER_WS_TARGET_PATH"               envDefault:"/mqtt"`
 	Instance              string        `env:"MF_MQTT_ADAPTER_INSTANCE"                     envDefault:""`
-	JaegerURL             string        `env:"MF_JAEGER_URL"                                envDefault:"localhost:6831"`
+	JaegerURL             string        `env:"MF_JAEGER_URL"                                envDefault:"http://jaeger:14268/api/traces"`
 	BrokerURL             string        `env:"MF_BROKER_URL"                                envDefault:"nats://localhost:4222"`
+	SendTelemetry         bool          `env:"MF_SEND_TELEMETRY"                            envDefault:"true"`
 }
 
 func main() {
@@ -78,11 +84,16 @@ func main() {
 		}
 	}
 
-	tracer, traceCloser, err := jaegerClient.NewTracer(svcName, cfg.JaegerURL)
+	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
+		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
 	}
-	defer traceCloser.Close()
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			logger.Error(fmt.Sprintf("Error shutting down tracer provider: %v", err))
+		}
+	}()
+	tracer := tp.Tracer(svcName)
 
 	nps, err := brokers.NewPubSub(cfg.BrokerURL, "mqtt", logger)
 	if err != nil {
@@ -131,10 +142,13 @@ func main() {
 	defer tcHandler.Close()
 	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
 
-	authClient := auth.New(ac, tc)
-
-	h := mqtt.NewHandler([]messaging.Publisher{np}, es, logger, authClient)
+	h := mqtt.NewHandler([]messaging.Publisher{np}, es, logger, tc)
 	h = mqtttracing.NewHandler(tracer, h)
+
+	if cfg.SendTelemetry {
+		chc := chclient.New(svcName, mainflux.Version, logger, cancel)
+		go chc.CallHome(ctx)
+	}
 
 	logger.Info(fmt.Sprintf("Starting MQTT proxy on port %s", cfg.MqttPort))
 	g.Go(func() error {

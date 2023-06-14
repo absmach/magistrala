@@ -16,7 +16,7 @@ import (
 
 const maxChildrens = 4 // max browsing node children level
 
-// NodeDef represents the node browser responnse
+// NodeDef represents the node browser responnse.
 type NodeDef struct {
 	NodeID      *uaGopcua.NodeID
 	NodeClass   uaGopcua.NodeClass

@@ -18,7 +18,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 
-	log "github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -27,7 +27,7 @@ import (
 var (
 	port        string
 	addr        string
-	testLog, _  = log.New(os.Stdout, log.Info.String())
+	testLog, _  = mflog.New(os.Stdout, mflog.Info.String())
 	testDB      = "test"
 	collection  = "messages"
 	msgsNum     = 100

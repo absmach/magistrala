@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/mainflux/mainflux/internal/apiutil"
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
@@ -63,6 +62,7 @@ func (sdk mfSDK) AddBootstrap(cfg BootstrapConfig, token string) (string, errors
 	}
 
 	id := strings.TrimPrefix(headers.Get("Location"), "/things/configs/")
+
 	return id, nil
 }
 
@@ -98,6 +98,7 @@ func (sdk mfSDK) Whitelist(cfg BootstrapConfig, token string) errors.SDKError {
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, whitelistEndpoint, cfg.MFThing)
 
 	_, _, sdkerr := sdk.processRequest(http.MethodPut, url, token, string(CTJSON), data, http.StatusCreated, http.StatusOK)
+
 	return sdkerr
 }
 
@@ -124,6 +125,7 @@ func (sdk mfSDK) UpdateBootstrap(cfg BootstrapConfig, token string) errors.SDKEr
 
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, configsEndpoint, cfg.MFThing)
 	_, _, sdkerr := sdk.processRequest(http.MethodPut, url, token, string(CTJSON), data, http.StatusOK)
+
 	return sdkerr
 }
 
@@ -141,6 +143,7 @@ func (sdk mfSDK) UpdateBootstrapCerts(id, clientCert, clientKey, ca, token strin
 	}
 
 	_, _, sdkerr := sdk.processRequest(http.MethodPatch, url, token, string(CTJSON), data, http.StatusOK)
+	
 	return sdkerr
 }
 
@@ -155,18 +158,20 @@ func (sdk mfSDK) UpdateBootstrapConnection(id string, channels []string, token s
 	}
 
 	_, _, sdkerr := sdk.processRequest(http.MethodPut, url, token, string(CTJSON), data, http.StatusOK)
+	
 	return sdkerr
 }
 
 func (sdk mfSDK) RemoveBootstrap(id, token string) errors.SDKError {
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, configsEndpoint, id)
 	_, _, err := sdk.processRequest(http.MethodDelete, url, token, string(CTJSON), nil, http.StatusNoContent)
+	
 	return err
 }
 
 func (sdk mfSDK) Bootstrap(externalID, externalKey string) (BootstrapConfig, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, bootstrapEndpoint, externalID)
-	_, body, err := sdk.processRequest(http.MethodGet, url, apiutil.ThingPrefix+externalKey, string(CTJSON), nil, http.StatusOK)
+	_, body, err := sdk.processRequest(http.MethodGet, url, ThingPrefix+externalKey, string(CTJSON), nil, http.StatusOK)
 	if err != nil {
 		return BootstrapConfig{}, err
 	}
@@ -181,7 +186,7 @@ func (sdk mfSDK) Bootstrap(externalID, externalKey string) (BootstrapConfig, err
 
 func (sdk mfSDK) BootstrapSecure(externalID, externalKey string) (BootstrapConfig, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, bootstrapEndpoint, secureEndpoint, externalID)
-	_, body, err := sdk.processRequest(http.MethodGet, url, apiutil.ThingPrefix+externalKey, string(CTJSON), nil, http.StatusOK)
+	_, body, err := sdk.processRequest(http.MethodGet, url, ThingPrefix+externalKey, string(CTJSON), nil, http.StatusOK)
 	if err != nil {
 		return BootstrapConfig{}, err
 	}

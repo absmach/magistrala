@@ -14,7 +14,7 @@ import (
 
 	influxdata "github.com/influxdata/influxdb-client-go/v2"
 	writer "github.com/mainflux/mainflux/consumers/writers/influxdb"
-	log "github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	"github.com/mainflux/mainflux/pkg/uuid"
@@ -24,7 +24,7 @@ import (
 const valueFields = 5
 
 var (
-	testLog, _    = log.New(os.Stdout, log.Info.String())
+	testLog, _    = mflog.New(os.Stdout, mflog.Info.String())
 	streamsSize   = 250
 	rowCountSenml = fmt.Sprintf(`from(bucket: "%s") 
 	|> range(start: -1h, stop: 1h) 

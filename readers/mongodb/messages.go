@@ -15,7 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// Collection for SenML messages
+// Collection for SenML messages.
 const defCollection = "messages"
 
 var _ readers.MessageRepository = (*mongoRepository)(nil)

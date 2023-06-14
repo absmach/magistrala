@@ -23,7 +23,8 @@ default values.
 | MF_TIMESCALE_WRITER_DB_SSL_KEY       | Timescale SSL key                                         | ""                     |
 | MF_TIMESCALE_WRITER_DB_SSL_ROOT_CERT | Timescale SSL root certificate path                       | ""                     |
 | MF_TIMESCALE_WRITER_CONFIG_PATH      | Configuration file path with Message broker subjects list | /config.toml           |
-| MF_JAEGER_URL                 | Jaeger server URL                                                        | localhost:6831 |
+| MF_JAEGER_URL                        | Jaeger server URL                                         | localhost:6831         |
+| MF_SEND_TELEMETRY                    | Send telemetry to mainflux call home server               | true                   |
 
 ## Deployment
 

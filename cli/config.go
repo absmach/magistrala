@@ -1,3 +1,6 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package cli
 
 import (
@@ -16,7 +19,7 @@ type Config struct {
 	RawOutput bool   `toml:"raw_output"`
 }
 
-// read - retrieve config from a file
+// read - retrieve config from a file.
 func read(file string) (Config, error) {
 	data, err := os.ReadFile(file)
 	c := Config{}

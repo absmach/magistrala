@@ -1,6 +1,7 @@
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
 
+// Package main contains the entry point of the mqtt-bench tool.
 package main
 
 import (

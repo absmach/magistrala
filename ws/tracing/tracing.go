@@ -1,3 +1,6 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package tracing
 
 import (
@@ -5,7 +8,7 @@ import (
 
 	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/ws"
-	"github.com/opentracing/opentracing-go"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var _ ws.Service = (*tracingMiddleware)(nil)
@@ -17,12 +20,12 @@ const (
 )
 
 type tracingMiddleware struct {
-	tracer opentracing.Tracer
+	tracer trace.Tracer
 	svc    ws.Service
 }
 
-// New returns a new ws.Service that traces incoming requests using the given tracer.
-func New(tracer opentracing.Tracer, svc ws.Service) ws.Service {
+// New returns a new websocket service with tracing capabilities.
+func New(tracer trace.Tracer, svc ws.Service) ws.Service {
 	return &tracingMiddleware{
 		tracer: tracer,
 		svc:    svc,
@@ -31,35 +34,24 @@ func New(tracer opentracing.Tracer, svc ws.Service) ws.Service {
 
 // Publish traces the "Publish" operation of the wrapped ws.Service.
 func (tm *tracingMiddleware) Publish(ctx context.Context, thingKey string, msg *messaging.Message) error {
-	span := tm.createSpan(ctx, publishOP)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
+	ctx, span := tm.tracer.Start(ctx, publishOP)
+	defer span.End()
+
 	return tm.svc.Publish(ctx, thingKey, msg)
 }
 
 // Subscribe traces the "Subscribe" operation of the wrapped ws.Service.
 func (tm *tracingMiddleware) Subscribe(ctx context.Context, thingKey string, chanID string, subtopic string, client *ws.Client) error {
-	span := tm.createSpan(ctx, subscribeOP)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
+	ctx, span := tm.tracer.Start(ctx, subscribeOP)
+	defer span.End()
+
 	return tm.svc.Subscribe(ctx, thingKey, chanID, subtopic, client)
 }
 
 // Unsubscribe traces the "Unsubscribe" operation of the wrapped ws.Service.
 func (tm *tracingMiddleware) Unsubscribe(ctx context.Context, thingKey string, chanID string, subtopic string) error {
-	span := tm.createSpan(ctx, unsubscribeOP)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
-	return tm.svc.Unsubscribe(ctx, thingKey, chanID, subtopic)
-}
+	ctx, span := tm.tracer.Start(ctx, unsubscribeOP)
+	defer span.End()
 
-// createSpan creates a new tracing span using the given context and operation name.
-func (tm *tracingMiddleware) createSpan(ctx context.Context, opName string) opentracing.Span {
-	if parentSpan := opentracing.SpanFromContext(ctx); parentSpan != nil {
-		return tm.tracer.StartSpan(
-			opName,
-			opentracing.ChildOf(parentSpan.Context()),
-		)
-	}
-	return tm.tracer.StartSpan(opName)
+	return tm.svc.Unsubscribe(ctx, thingKey, chanID, subtopic)
 }

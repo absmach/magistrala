@@ -9,29 +9,31 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/mainflux/mainflux/internal/apiutil"
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
+const channelParts = 2
+
 func (sdk mfSDK) SendMessage(chanName, msg, key string) errors.SDKError {
-	chanNameParts := strings.SplitN(chanName, ".", 2)
+	chanNameParts := strings.SplitN(chanName, ".", channelParts)
 	chanID := chanNameParts[0]
 	subtopicPart := ""
-	if len(chanNameParts) == 2 {
+	if len(chanNameParts) == channelParts {
 		subtopicPart = fmt.Sprintf("/%s", strings.Replace(chanNameParts[1], ".", "/", -1))
 	}
 
 	url := fmt.Sprintf("%s/channels/%s/messages/%s", sdk.httpAdapterURL, chanID, subtopicPart)
 
-	_, _, err := sdk.processRequest(http.MethodPost, url, apiutil.ThingPrefix+key, string(CTJSON), []byte(msg), http.StatusAccepted)
+	_, _, err := sdk.processRequest(http.MethodPost, url, ThingPrefix+key, string(CTJSON), []byte(msg), http.StatusAccepted)
+
 	return err
 }
 
 func (sdk mfSDK) ReadMessages(chanName, token string) (MessagesPage, errors.SDKError) {
-	chanNameParts := strings.SplitN(chanName, ".", 2)
+	chanNameParts := strings.SplitN(chanName, ".", channelParts)
 	chanID := chanNameParts[0]
 	subtopicPart := ""
-	if len(chanNameParts) == 2 {
+	if len(chanNameParts) == channelParts {
 		subtopicPart = fmt.Sprintf("?subtopic=%s", strings.Replace(chanNameParts[1], ".", "/", -1))
 	}
 
@@ -56,5 +58,6 @@ func (sdk *mfSDK) SetContentType(ct ContentType) errors.SDKError {
 	}
 
 	sdk.msgContentType = ct
+
 	return nil
 }

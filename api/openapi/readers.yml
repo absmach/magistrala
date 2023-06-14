@@ -5,7 +5,7 @@ info:
   version: "1.0.0"
 
 paths:
-  /channels/{chanID}/messages:
+  /channels/{chanId}/messages:
     get:
       summary: Retrieves messages sent to single channel
       description: |
@@ -107,7 +107,7 @@ components:
 
   parameters:
     ChanId:
-      name: chanID
+      name: chanId
       description: Unique channel identifier.
       in: path
       schema:

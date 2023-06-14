@@ -11,22 +11,24 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux/coap"
-	log "github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging"
 )
 
 var _ coap.Service = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
-	logger log.Logger
+	logger mflog.Logger
 	svc    coap.Service
 }
 
 // LoggingMiddleware adds logging facilities to the adapter.
-func LoggingMiddleware(svc coap.Service, logger log.Logger) coap.Service {
+func LoggingMiddleware(svc coap.Service, logger mflog.Logger) coap.Service {
 	return &loggingMiddleware{logger, svc}
 }
 
+// Publish logs the publish request. It logs the channel ID, subtopic (if any) and the time it took to complete the request.
+// If the request fails, it logs the error.
 func (lm *loggingMiddleware) Publish(ctx context.Context, key string, msg *messaging.Message) (err error) {
 	defer func(begin time.Time) {
 		destChannel := msg.Channel
@@ -44,6 +46,8 @@ func (lm *loggingMiddleware) Publish(ctx context.Context, key string, msg *messa
 	return lm.svc.Publish(ctx, key, msg)
 }
 
+// Subscribe logs the subscribe request. It logs the channel ID, subtopic (if any) and the time it took to complete the request.
+// If the request fails, it logs the error.
 func (lm *loggingMiddleware) Subscribe(ctx context.Context, key, chanID, subtopic string, c coap.Client) (err error) {
 	defer func(begin time.Time) {
 		destChannel := chanID
@@ -61,6 +65,8 @@ func (lm *loggingMiddleware) Subscribe(ctx context.Context, key, chanID, subtopi
 	return lm.svc.Subscribe(ctx, key, chanID, subtopic, c)
 }
 
+// Unsubscribe logs the unsubscribe request. It logs the channel ID, subtopic (if any) and the time it took to complete the request.
+// If the request fails, it logs the error.
 func (lm *loggingMiddleware) Unsubscribe(ctx context.Context, key, chanID, subtopic, token string) (err error) {
 	defer func(begin time.Time) {
 		destChannel := chanID

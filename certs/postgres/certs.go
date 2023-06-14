@@ -11,7 +11,6 @@ import (
 
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
-
 	"github.com/jmoiron/sqlx"
 	"github.com/mainflux/mainflux/certs"
 	"github.com/mainflux/mainflux/logger"

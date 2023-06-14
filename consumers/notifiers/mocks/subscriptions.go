@@ -123,6 +123,9 @@ func appendSubs(subs []notifiers.Subscription, sub notifiers.Subscription, max i
 func (srm *subRepoMock) Remove(_ context.Context, id string) error {
 	srm.mu.Lock()
 	defer srm.mu.Unlock()
+	if _, ok := srm.subs[id]; !ok {
+		return errors.ErrNotFound
+	}
 	delete(srm.subs, id)
 	return nil
 }

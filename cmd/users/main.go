@@ -1,6 +1,7 @@
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
 
+// Package main contains users main function to start the users service.
 package main
 
 import (
@@ -9,48 +10,71 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"time"
 
+	"github.com/go-zoo/bone"
+	"github.com/jmoiron/sqlx"
+	chclient "github.com/mainflux/callhome/pkg/client"
+	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/internal"
-	authClient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
+	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
 	pgClient "github.com/mainflux/mainflux/internal/clients/postgres"
 	"github.com/mainflux/mainflux/internal/email"
 	"github.com/mainflux/mainflux/internal/env"
+	"github.com/mainflux/mainflux/internal/postgres"
 	"github.com/mainflux/mainflux/internal/server"
+	grpcserver "github.com/mainflux/mainflux/internal/server/grpc"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
-	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/pkg/uuid"
-	"github.com/mainflux/mainflux/users"
-	"github.com/mainflux/mainflux/users/bcrypt"
-	"github.com/mainflux/mainflux/users/emailer"
-	"github.com/mainflux/mainflux/users/tracing"
-	"golang.org/x/sync/errgroup"
-
-	"github.com/jmoiron/sqlx"
-	"github.com/mainflux/mainflux"
-	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
 	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/users/api"
-	usersPg "github.com/mainflux/mainflux/users/postgres"
-	opentracing "github.com/opentracing/opentracing-go"
+	mfclients "github.com/mainflux/mainflux/pkg/clients"
+	"github.com/mainflux/mainflux/pkg/uuid"
+	"github.com/mainflux/mainflux/users/clients"
+	capi "github.com/mainflux/mainflux/users/clients/api"
+	"github.com/mainflux/mainflux/users/clients/emailer"
+	cpostgres "github.com/mainflux/mainflux/users/clients/postgres"
+	ctracing "github.com/mainflux/mainflux/users/clients/tracing"
+	"github.com/mainflux/mainflux/users/groups"
+	gapi "github.com/mainflux/mainflux/users/groups/api"
+	gpostgres "github.com/mainflux/mainflux/users/groups/postgres"
+	gtracing "github.com/mainflux/mainflux/users/groups/tracing"
+	"github.com/mainflux/mainflux/users/hasher"
+	"github.com/mainflux/mainflux/users/jwt"
+	jtracing "github.com/mainflux/mainflux/users/jwt/tracing"
+	"github.com/mainflux/mainflux/users/policies"
+	papi "github.com/mainflux/mainflux/users/policies/api"
+	grpcapi "github.com/mainflux/mainflux/users/policies/api/grpc"
+	httpapi "github.com/mainflux/mainflux/users/policies/api/http"
+	ppostgres "github.com/mainflux/mainflux/users/policies/postgres"
+	ptracing "github.com/mainflux/mainflux/users/policies/tracing"
+	clientsPg "github.com/mainflux/mainflux/users/postgres"
+	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 const (
 	svcName        = "users"
 	envPrefix      = "MF_USERS_"
 	envPrefixHttp  = "MF_USERS_HTTP_"
+	envPrefixGrpc  = "MF_USERS_GRPC_"
 	defDB          = "users"
 	defSvcHttpPort = "9002"
+	defSvcGrpcPort = "9192"
 )
 
 type config struct {
-	LogLevel      string `env:"MF_USERS_LOG_LEVEL"               envDefault:"info"`
-	AdminEmail    string `env:"MF_USERS_ADMIN_EMAIL"             envDefault:""`
-	AdminPassword string `env:"MF_USERS_ADMIN_PASSWORD"          envDefault:""`
-	PassRegexText string `env:"MF_USERS_PASS_REGEX"              envDefault:"^.{8,}$"`
-	SelfRegister  bool   `env:"MF_USERS_ALLOW_SELF_REGISTER"     envDefault:"true"`
-	ResetURL      string `env:"MF_TOKEN_RESET_ENDPOINT"          envDefault:"email.tmpl"`
-	JaegerURL     string `env:"MF_JAEGER_URL"                    envDefault:"localhost:6831"`
-	PassRegex     *regexp.Regexp
+	LogLevel        string `env:"MF_USERS_LOG_LEVEL"              envDefault:"info"`
+	SecretKey       string `env:"MF_USERS_SECRET_KEY"             envDefault:"secret"`
+	AdminEmail      string `env:"MF_USERS_ADMIN_EMAIL"            envDefault:""`
+	AdminPassword   string `env:"MF_USERS_ADMIN_PASSWORD"         envDefault:""`
+	PassRegexText   string `env:"MF_USERS_PASS_REGEX"             envDefault:"^.{8,}$"`
+	AccessDuration  string `env:"MF_USERS_ACCESS_TOKEN_DURATION"  envDefault:"15m"`
+	RefreshDuration string `env:"MF_USERS_REFRESH_TOKEN_DURATION" envDefault:"24h"`
+	ResetURL        string `env:"MF_TOKEN_RESET_ENDPOINT"         envDefault:"/reset-request"`
+	JaegerURL       string `env:"MF_JAEGER_URL"                   envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry   bool   `env:"MF_SEND_TELEMETRY"               envDefault:"true"`
+	PassRegex       *regexp.Regexp
 }
 
 func main() {
@@ -59,167 +83,171 @@ func main() {
 
 	cfg := config{}
 	if err := env.Parse(&cfg); err != nil {
-		log.Fatalf("failed to load %s configuration : %s", svcName, err)
-	}
-
-	logger, err := mflog.New(os.Stdout, cfg.LogLevel)
-	if err != nil {
-		log.Fatalf("failed to init logger: %s", err)
+		log.Fatalf("failed to load %s configuration : %s", svcName, err.Error())
 	}
 	passRegex, err := regexp.Compile(cfg.PassRegexText)
 	if err != nil {
-		log.Fatalf("Invalid password validation rules %s\n", cfg.PassRegexText)
+		log.Fatalf("invalid password validation rules %s\n", cfg.PassRegexText)
 	}
 	cfg.PassRegex = passRegex
 
+	logger, err := mflog.New(os.Stdout, cfg.LogLevel)
+	if err != nil {
+		logger.Fatal(fmt.Sprintf("failed to init logger: %s", err.Error()))
+	}
+
 	ec := email.Config{}
 	if err := env.Parse(&ec); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load email configuration : %s", err))
+		logger.Fatal(fmt.Sprintf("failed to load email configuration : %s", err.Error()))
 	}
 
 	dbConfig := pgClient.Config{Name: defDB}
-	db, err := pgClient.SetupWithConfig(envPrefix, *usersPg.Migration(), dbConfig)
+	db, err := pgClient.SetupWithConfig(envPrefix, *clientsPg.Migration(), dbConfig)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
 	defer db.Close()
 
-	auth, authHandler, err := authClient.Setup(envPrefix, cfg.JaegerURL)
-	if err != nil {
-		logger.Fatal(err.Error())
-	}
-	defer authHandler.Close()
-	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
-
-	dbTracer, dbCloser, err := jaegerClient.NewTracer("auth_db", cfg.JaegerURL)
+	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL)
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
 	}
-	defer dbCloser.Close()
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			logger.Error(fmt.Sprintf("error shutting down tracer provider: %v", err))
+		}
+	}()
+	tracer := tp.Tracer(svcName)
 
-	svc := newService(db, dbTracer, auth, cfg, ec, logger)
-
-	tracer, closer, err := jaegerClient.NewTracer("users", cfg.JaegerURL)
-	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
-	}
-	defer closer.Close()
+	csvc, gsvc, psvc := newService(db, tracer, cfg, ec, logger)
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err.Error()))
 	}
-	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, tracer, logger), logger)
+	mux := bone.New()
+	hsc := httpserver.New(ctx, cancel, svcName, httpServerConfig, capi.MakeHandler(csvc, mux, logger), logger)
+	hsg := httpserver.New(ctx, cancel, svcName, httpServerConfig, gapi.MakeHandler(gsvc, mux, logger), logger)
+	hsp := httpserver.New(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(psvc, mux, logger), logger)
+
+	registerAuthServiceServer := func(srv *grpc.Server) {
+		reflection.Register(srv)
+		policies.RegisterAuthServiceServer(srv, grpcapi.NewServer(csvc, psvc))
+
+	}
+	grpcServerConfig := server.Config{Port: defSvcGrpcPort}
+	if err := env.Parse(&grpcServerConfig, env.Options{Prefix: envPrefixGrpc, AltPrefix: envPrefix}); err != nil {
+		log.Fatalf("failed to load %s gRPC server configuration : %s", svcName, err.Error())
+	}
+	gs := grpcserver.New(ctx, cancel, svcName, grpcServerConfig, registerAuthServiceServer, logger)
+
+	if cfg.SendTelemetry {
+		chc := chclient.New(svcName, mainflux.Version, logger, cancel)
+		go chc.CallHome(ctx)
+	}
 
 	g.Go(func() error {
-		return hs.Start()
+		return hsp.Start()
+	})
+	g.Go(func() error {
+		return gs.Start()
 	})
 
 	g.Go(func() error {
-		return server.StopSignalHandler(ctx, cancel, logger, svcName, hs)
+		return server.StopSignalHandler(ctx, cancel, logger, svcName, hsc, hsg, hsp, gs)
 	})
 
 	if err := g.Wait(); err != nil {
-		logger.Error(fmt.Sprintf("Users service terminated: %s", err))
+		logger.Error(fmt.Sprintf("users service terminated: %s", err))
 	}
 }
 
-func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServiceClient, c config, ec email.Config, logger mflog.Logger) users.Service {
-	database := usersPg.NewDatabase(db)
-	hasher := bcrypt.New()
-	userRepo := tracing.UserRepositoryMiddleware(tracer, usersPg.NewUserRepo(database))
+func newService(db *sqlx.DB, tracer trace.Tracer, c config, ec email.Config, logger mflog.Logger) (clients.Service, groups.Service, policies.Service) {
+	database := postgres.NewDatabase(db, tracer)
+	cRepo := cpostgres.NewRepository(database)
+	gRepo := gpostgres.NewRepository(database)
+	pRepo := ppostgres.NewRepository(database)
+
+	idp := uuid.New()
+	hsr := hasher.New()
+
+	aDuration, err := time.ParseDuration(c.AccessDuration)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to parse access token duration: %s", err.Error()))
+	}
+	rDuration, err := time.ParseDuration(c.RefreshDuration)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to parse refresh token duration: %s", err.Error()))
+	}
+	tokenizer := jwt.NewRepository([]byte(c.SecretKey), aDuration, rDuration)
+	tokenizer = jtracing.New(tokenizer, tracer)
 
 	emailer, err := emailer.New(c.ResetURL, &ec)
 	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to configure e-mailing util: %s", err))
+		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
 	}
+	csvc := clients.NewService(cRepo, pRepo, tokenizer, emailer, hsr, idp, c.PassRegex)
+	gsvc := groups.NewService(gRepo, pRepo, tokenizer, idp)
+	psvc := policies.NewService(pRepo, tokenizer, idp)
 
-	idProvider := uuid.New()
-
-	svc := users.New(userRepo, hasher, auth, emailer, idProvider, c.PassRegex)
-	svc = api.LoggingMiddleware(svc, logger)
+	csvc = ctracing.New(csvc, tracer)
+	csvc = capi.LoggingMiddleware(csvc, logger)
 	counter, latency := internal.MakeMetrics(svcName, "api")
-	svc = api.MetricsMiddleware(svc, counter, latency)
+	csvc = capi.MetricsMiddleware(csvc, counter, latency)
 
-	if err := createAdmin(svc, userRepo, c, auth); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to create admin user: %s", err))
+	gsvc = gtracing.New(gsvc, tracer)
+	gsvc = gapi.LoggingMiddleware(gsvc, logger)
+	counter, latency = internal.MakeMetrics("groups", "api")
+	gsvc = gapi.MetricsMiddleware(gsvc, counter, latency)
+
+	psvc = ptracing.New(psvc, tracer)
+	psvc = papi.LoggingMiddleware(psvc, logger)
+	counter, latency = internal.MakeMetrics("policies", "api")
+	psvc = papi.MetricsMiddleware(psvc, counter, latency)
+
+	if err := createAdmin(c, cRepo, hsr, csvc); err != nil {
+		logger.Error(fmt.Sprintf("failed to create admin client: %s", err))
 	}
-
-	switch c.SelfRegister {
-	case true:
-		// If MF_USERS_ALLOW_SELF_REGISTER environment variable is "true",
-		// everybody can create a new user. Here, check the existence of that
-		// policy. If the policy does not exist, create it; otherwise, there is
-		// no need to do anything further.
-		_, err := auth.Authorize(context.Background(), &mainflux.AuthorizeReq{Obj: "user", Act: "create", Sub: "*"})
-		if err != nil {
-			// Add a policy that allows anybody to create a user
-			apr, err := auth.AddPolicy(context.Background(), &mainflux.AddPolicyReq{Obj: "user", Act: "create", Sub: "*"})
-			if err != nil {
-				logger.Fatal(fmt.Sprintf("failed to add the policy related to MF_USERS_ALLOW_SELF_REGISTER: %s", err))
-			}
-			if !apr.GetAuthorized() {
-				logger.Fatal(fmt.Sprintf("failed to authorized the policy result related to MF_USERS_ALLOW_SELF_REGISTER: " + errors.ErrAuthorization.Error()))
-			}
-		}
-	default:
-		// If MF_USERS_ALLOW_SELF_REGISTER environment variable is "false",
-		// everybody cannot create a new user. Therefore, delete a policy that
-		// allows everybody to create a new user.
-		dpr, err := auth.DeletePolicy(context.Background(), &mainflux.DeletePolicyReq{Obj: "user", Act: "create", Sub: "*"})
-		if err != nil {
-			logger.Fatal(fmt.Sprintf("failed to delete a policy: %s", err))
-		}
-		if !dpr.GetDeleted() {
-			logger.Fatal("deleting a policy expected to succeed.")
-		}
-	}
-
-	return svc
+	return csvc, gsvc, psvc
 }
 
-func createAdmin(svc users.Service, userRepo users.UserRepository, c config, auth mainflux.AuthServiceClient) error {
-	user := users.User{
-		Email:    c.AdminEmail,
-		Password: c.AdminPassword,
+func createAdmin(c config, crepo mfclients.Repository, hsr clients.Hasher, svc clients.Service) error {
+	id, err := uuid.New().ID()
+	if err != nil {
+		return err
+	}
+	hash, err := hsr.Hash(c.AdminPassword)
+	if err != nil {
+		return err
 	}
 
-	if admin, err := userRepo.RetrieveByEmail(context.Background(), user.Email); err == nil {
-		// The admin is already created. Check existence of the admin policy.
-		_, err := auth.Authorize(context.Background(), &mainflux.AuthorizeReq{Obj: "authorities", Act: "member", Sub: admin.ID})
-		if err != nil {
-			apr, err := auth.AddPolicy(context.Background(), &mainflux.AddPolicyReq{Obj: "authorities", Act: "member", Sub: admin.ID})
-			if err != nil {
-				return err
-			}
-			if !apr.GetAuthorized() {
-				return errors.ErrAuthorization
-			}
-		}
+	client := mfclients.Client{
+		ID:   id,
+		Name: "admin",
+		Credentials: mfclients.Credentials{
+			Identity: c.AdminEmail,
+			Secret:   hash,
+		},
+		Metadata: mfclients.Metadata{
+			"role": "admin",
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Role:      mfclients.AdminRole,
+		Status:    mfclients.EnabledStatus,
+	}
+
+	if _, err := crepo.RetrieveByIdentity(context.Background(), client.Credentials.Identity); err == nil {
 		return nil
 	}
 
-	// Add a policy that allows anybody to create a user
-	apr, err := auth.AddPolicy(context.Background(), &mainflux.AddPolicyReq{Obj: "user", Act: "create", Sub: "*"})
-	if err != nil {
-		return err
-	}
-	if !apr.GetAuthorized() {
-		return errors.ErrAuthorization
-	}
-
 	// Create an admin
-	uid, err := svc.Register(context.Background(), "", user)
-	if err != nil {
+	if _, err = crepo.Save(context.Background(), client); err != nil {
 		return err
 	}
-
-	apr, err = auth.AddPolicy(context.Background(), &mainflux.AddPolicyReq{Obj: "authorities", Act: "member", Sub: uid})
+	_, err = svc.IssueToken(context.Background(), c.AdminEmail, c.AdminPassword)
 	if err != nil {
 		return err
-	}
-	if !apr.GetAuthorized() {
-		return errors.ErrAuthorization
 	}
 
 	return nil

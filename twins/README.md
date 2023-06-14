@@ -18,21 +18,22 @@ default values.
 | MF_TWINS_HTTP_PORT         | Twins service HTTP port                                              | 9018                  |
 | MF_TWINS_SERVER_CERT       | Path to server certificate in PEM format                             |                       |
 | MF_TWINS_SERVER_KEY        | Path to server key in PEM format                                     |                       |
-| MF_JAEGER_URL               | Jaeger server URL                                             | localhost:6831        |
+| MF_JAEGER_URL              | Jaeger server URL                                                    | localhost:6831        |
 | MF_TWINS_DB                | Database name                                                        | mainflux              |
 | MF_TWINS_DB_HOST           | Database host address                                                | localhost             |
 | MF_TWINS_DB_PORT           | Database host port                                                   | 27017                 |
-| MF_THINGS_STANDALONE_EMAIL | User email for standalone mode (no gRPC communication with users)    |                       |
+| MF_THINGS_STANDALONE_ID    | User ID for standalone mode (no gRPC communication with users)       |                       |
 | MF_THINGS_STANDALONE_TOKEN | User token for standalone mode that should be passed in auth header  |                       |
 | MF_TWINS_CLIENT_TLS        | Flag that indicates if TLS should be turned on                       | false                 |
 | MF_TWINS_CA_CERTS          | Path to trusted CAs in PEM format                                    |                       |
 | MF_TWINS_CHANNEL_ID        | Message broker notifications channel ID                              |                       |
 | MF_BROKER_URL              | Mainflux Message broker URL                                          | nats://localhost:4222 |
-| MF_AUTH_GRPC_URL           | Auth service gRPC URL                                                | localhost:7001        |
-| MF_AUTH_GRPC_TIMEOUT       | Auth service gRPC request timeout in seconds                         | 1s                    |
+| MF_AUTH_GRPC_URL           | Users service gRPC URL                                               | localhost:7001        |
+| MF_AUTH_GRPC_TIMEOUT       | Users service gRPC request timeout in seconds                        | 1s                    |
 | MF_TWINS_CACHE_URL         | Cache database URL                                                   | localhost:6379        |
 | MF_TWINS_CACHE_PASS        | Cache database password                                              |                       |
 | MF_TWINS_CACHE_DB          | Cache instance name                                                  | 0                     |
+| MF_SEND_TELEMETRY          | Send telemetry to mainflux call home server                          | true                  |
 
 
 ## Deployment
@@ -69,8 +70,8 @@ MF_TWINS_CLIENT_TLS: [Flag that indicates if TLS should be turned on] \
 MF_TWINS_CA_CERTS: [Path to trusted CAs in PEM format] \
 MF_TWINS_CHANNEL_ID: [Message broker notifications channel ID] \
 MF_BROKER_URL: [Mainflux Message broker URL] \
-MF_AUTH_GRPC_URL: [Auth service gRPC URL] \
-MF_AUTH_GRPC_TIMEOUT: [Auth service gRPC request timeout in seconds] \
+MF_AUTH_GRPC_URL: [Users service gRPC URL] \
+MF_AUTH_GRPC_TIMEOUT: [Users service gRPC request timeout in seconds] \
 $GOBIN/mainflux-twins
 ```
 

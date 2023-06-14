@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	log "github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/twins"
@@ -35,7 +35,7 @@ const (
 var (
 	port        string
 	addr        string
-	testLog, _  = log.New(os.Stdout, log.Info.String())
+	testLog, _  = mflog.New(os.Stdout, mflog.Info.String())
 	idProvider  = uuid.New()
 	invalidName = strings.Repeat("m", maxNameSize+1)
 )

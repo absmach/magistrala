@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"net/mail"
 	"strconv"
+	"strings"
 	"text/template"
 
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -14,7 +15,7 @@ import (
 )
 
 var (
-	// ErrMissingEmailTemplate missing email template file
+	// ErrMissingEmailTemplate missing email template file.
 	errMissingEmailTemplate = errors.New("Missing e-mail template file")
 	errParseTemplate        = errors.New("Parse e-mail template failed")
 	errExecTemplate         = errors.New("Execute e-mail template failed")
@@ -26,11 +27,13 @@ type email struct {
 	From    string
 	Subject string
 	Header  string
+	User    string
 	Content string
+	Host    string
 	Footer  string
 }
 
-// Config email agent configuration
+// Config email agent configuration.
 type Config struct {
 	Host        string `env:"MF_EMAIL_HOST"         envDefault:"localhost"`
 	Port        string `env:"MF_EMAIL_PORT"         envDefault:"25"`
@@ -41,14 +44,14 @@ type Config struct {
 	Template    string `env:"MF_EMAIL_TEMPLATE"     envDefault:"email.tmpl"`
 }
 
-// Agent for mailing
+// Agent for mailing.
 type Agent struct {
 	conf *Config
 	tmpl *template.Template
 	dial *gomail.Dialer
 }
 
-// New creates new email agent
+// New creates new email agent.
 func New(c *Config) (*Agent, error) {
 	a := &Agent{}
 	a.conf = c
@@ -67,8 +70,8 @@ func New(c *Config) (*Agent, error) {
 	return a, nil
 }
 
-// Send sends e-mail
-func (a *Agent) Send(To []string, From, Subject, Header, Content, Footer string) error {
+// Send sends e-mail.
+func (a *Agent) Send(To []string, From, Subject, Header, User, Content, Footer string) error {
 	if a.tmpl == nil {
 		return errMissingEmailTemplate
 	}
@@ -79,7 +82,9 @@ func (a *Agent) Send(To []string, From, Subject, Header, Content, Footer string)
 		From:    From,
 		Subject: Subject,
 		Header:  Header,
+		User:    User,
 		Content: Content,
+		Host:    strings.Split(Content, "?")[0],
 		Footer:  Footer,
 	}
 	if From == "" {

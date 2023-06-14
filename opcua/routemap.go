@@ -5,7 +5,7 @@ package opcua
 
 import "context"
 
-// RouteMapRepository store route-map between the OPC-UA Server and Mainflux
+// RouteMapRepository store route-map between the OPC-UA Server and Mainflux.
 type RouteMapRepository interface {
 	// Save stores/routes pair OPC-UA Server & Mainflux.
 	Save(context.Context, string, string) error

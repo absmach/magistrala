@@ -636,7 +636,7 @@ func TestUpdateChannel(t *testing.T) {
 			break
 		}
 	}
-
+	update.Owner = retreved.Owner
 	assert.Equal(t, update, retreved, fmt.Sprintf("expected %s, go %s", update, retreved))
 }
 

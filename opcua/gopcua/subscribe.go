@@ -207,7 +207,7 @@ func (c client) runHandler(ctx context.Context, sub *opcuaGopcua.Subscription, u
 	}
 }
 
-// Publish forwards messages from the OPC-UA Server to Mainflux Message broker
+// Publish forwards messages from the OPC-UA Server to Mainflux Message broker.
 func (c client) publish(ctx context.Context, token string, m message) error {
 	// Get route-map of the OPC-UA ServerURI
 	chanID, err := c.channelsRM.Get(ctx, m.ServerURI)

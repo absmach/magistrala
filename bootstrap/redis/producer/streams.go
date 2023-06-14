@@ -5,10 +5,10 @@ package producer
 
 import (
 	"context"
-	"time"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/mainflux/mainflux/bootstrap"
+	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 const (
@@ -38,28 +38,31 @@ func (es eventStore) Add(ctx context.Context, token string, cfg bootstrap.Config
 		return saved, err
 	}
 
-	var channels []string
-	for _, ch := range saved.MFChannels {
-		channels = append(channels, ch.ID)
+	ev := configEvent{
+		saved, configCreate,
 	}
 
-	ev := createConfigEvent{
-		mfThing:    saved.MFThing,
-		owner:      saved.Owner,
-		name:       saved.Name,
-		mfChannels: channels,
-		externalID: saved.ExternalID,
-		content:    saved.Content,
-		timestamp:  time.Now(),
+	if err1 := es.add(ctx, ev); err1 != nil {
+		return saved, errors.Wrap(err, err1)
 	}
-
-	err = es.add(ctx, ev)
 
 	return saved, err
 }
 
 func (es eventStore) View(ctx context.Context, token, id string) (bootstrap.Config, error) {
-	return es.svc.View(ctx, token, id)
+	cfg, err := es.svc.View(ctx, token, id)
+	if err != nil {
+		return cfg, err
+	}
+	ev := configEvent{
+		cfg, configList,
+	}
+
+	if err1 := es.add(ctx, ev); err1 != nil {
+		return cfg, errors.Wrap(err, err1)
+	}
+
+	return cfg, err
 }
 
 func (es eventStore) Update(ctx context.Context, token string, cfg bootstrap.Config) error {
@@ -67,18 +70,26 @@ func (es eventStore) Update(ctx context.Context, token string, cfg bootstrap.Con
 		return err
 	}
 
-	ev := updateConfigEvent{
-		mfThing:   cfg.MFThing,
-		name:      cfg.Name,
-		content:   cfg.Content,
-		timestamp: time.Now(),
+	ev := configEvent{
+		cfg, configUpdate,
 	}
 
 	return es.add(ctx, ev)
 }
 
 func (es eventStore) UpdateCert(ctx context.Context, token, thingKey, clientCert, clientKey, caCert string) error {
-	return es.svc.UpdateCert(ctx, token, thingKey, clientCert, clientKey, caCert)
+	if err := es.svc.UpdateCert(ctx, token, thingKey, clientCert, clientKey, caCert); err != nil {
+		return err
+	}
+
+	ev := updateCertEvent{
+		thingKey:   thingKey,
+		clientCert: clientCert,
+		clientKey:  clientKey,
+		caCert:     caCert,
+	}
+
+	return es.add(ctx, ev)
 }
 
 func (es eventStore) UpdateConnections(ctx context.Context, token, id string, connections []string) error {
@@ -89,14 +100,29 @@ func (es eventStore) UpdateConnections(ctx context.Context, token, id string, co
 	ev := updateConnectionsEvent{
 		mfThing:    id,
 		mfChannels: connections,
-		timestamp:  time.Now(),
 	}
 
 	return es.add(ctx, ev)
 }
 
 func (es eventStore) List(ctx context.Context, token string, filter bootstrap.Filter, offset, limit uint64) (bootstrap.ConfigsPage, error) {
-	return es.svc.List(ctx, token, filter, offset, limit)
+	bp, err := es.svc.List(ctx, token, filter, offset, limit)
+	if err != nil {
+		return bp, err
+	}
+
+	ev := listConfigsEvent{
+		offset:       offset,
+		limit:        limit,
+		fullMatch:    filter.FullMatch,
+		partialMatch: filter.PartialMatch,
+	}
+
+	if err1 := es.add(ctx, ev); err1 != nil {
+		return bp, errors.Wrap(err, err1)
+	}
+
+	return bp, nil
 }
 
 func (es eventStore) Remove(ctx context.Context, token, id string) error {
@@ -105,8 +131,7 @@ func (es eventStore) Remove(ctx context.Context, token, id string) error {
 	}
 
 	ev := removeConfigEvent{
-		mfThing:   id,
-		timestamp: time.Now(),
+		mfThing: id,
 	}
 
 	return es.add(ctx, ev)
@@ -116,15 +141,18 @@ func (es eventStore) Bootstrap(ctx context.Context, externalKey, externalID stri
 	cfg, err := es.svc.Bootstrap(ctx, externalKey, externalID, secure)
 
 	ev := bootstrapEvent{
-		externalID: externalID,
-		timestamp:  time.Now(),
-		success:    true,
+		cfg,
+		externalID,
+		true,
 	}
 
 	if err != nil {
 		ev.success = false
 	}
-	_ = es.add(ctx, ev)
+
+	if err1 := es.add(ctx, ev); err1 != nil {
+		return cfg, err1
+	}
 
 	return cfg, err
 }
@@ -135,35 +163,74 @@ func (es eventStore) ChangeState(ctx context.Context, token, id string, state bo
 	}
 
 	ev := changeStateEvent{
-		mfThing:   id,
-		state:     state,
-		timestamp: time.Now(),
+		mfThing: id,
+		state:   state,
 	}
 
 	return es.add(ctx, ev)
 }
 
 func (es eventStore) RemoveConfigHandler(ctx context.Context, id string) error {
-	return es.svc.RemoveConfigHandler(ctx, id)
+	if err := es.svc.RemoveConfigHandler(ctx, id); err != nil {
+		return err
+	}
+
+	ev := removeHandlerEvent{
+		id:        id,
+		operation: configHandlerRemove,
+	}
+
+	return es.add(ctx, ev)
 }
 
 func (es eventStore) RemoveChannelHandler(ctx context.Context, id string) error {
-	return es.svc.RemoveChannelHandler(ctx, id)
+	if err := es.svc.RemoveChannelHandler(ctx, id); err != nil {
+		return err
+	}
+
+	ev := removeHandlerEvent{
+		id:        id,
+		operation: channelHandlerRemove,
+	}
+
+	return es.add(ctx, ev)
 }
 
 func (es eventStore) UpdateChannelHandler(ctx context.Context, channel bootstrap.Channel) error {
-	return es.svc.UpdateChannelHandler(ctx, channel)
+	if err := es.svc.UpdateChannelHandler(ctx, channel); err != nil {
+		return err
+	}
+
+	ev := updateChannelHandlerEvent{
+		channel,
+	}
+
+	return es.add(ctx, ev)
 }
 
 func (es eventStore) DisconnectThingHandler(ctx context.Context, channelID, thingID string) error {
-	return es.svc.DisconnectThingHandler(ctx, channelID, thingID)
+	if err := es.svc.DisconnectThingHandler(ctx, channelID, thingID); err != nil {
+		return err
+	}
+
+	ev := disconnectThingEvent{
+		channelID,
+		thingID,
+	}
+
+	return es.add(ctx, ev)
 }
 
 func (es eventStore) add(ctx context.Context, ev event) error {
+	values, err := ev.encode()
+	if err != nil {
+		return err
+	}
+
 	record := &redis.XAddArgs{
 		Stream:       streamID,
 		MaxLenApprox: streamLen,
-		Values:       ev.encode(),
+		Values:       values,
 	}
 
 	return es.client.XAdd(ctx, record).Err()

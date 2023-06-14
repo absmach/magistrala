@@ -6,7 +6,7 @@ package redis
 import (
 	"strconv"
 
-	r "github.com/go-redis/redis/v8"
+	"github.com/go-redis/redis/v8"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/pkg/errors"
 )
@@ -16,15 +16,15 @@ var (
 	errConnect = errors.New("failed to connect to redis server")
 )
 
-// Config of RedisDB
+// Config of RedisDB.
 type Config struct {
 	URL  string `env:"URL"    envDefault:"localhost:6379"`
 	Pass string `env:"PASS"   envDefault:""`
 	DB   string `env:"DB"     envDefault:"0"`
 }
 
-// Setup load configuration from environment, creates new RedisDB client and connect to RedisDB Server
-func Setup(prefix string) (*r.Client, error) {
+// Setup load configuration from environment, creates new RedisDB client and connect to RedisDB Server.
+func Setup(prefix string) (*redis.Client, error) {
 	cfg := Config{}
 	if err := env.Parse(&cfg, env.Options{Prefix: prefix}); err != nil {
 		return nil, errors.Wrap(errConfig, err)
@@ -36,14 +36,14 @@ func Setup(prefix string) (*r.Client, error) {
 	return client, nil
 }
 
-// Connect create new RedisDB client and connect to RedisDB server
-func Connect(cfg Config) (*r.Client, error) {
+// Connect create new RedisDB client and connect to RedisDB server.
+func Connect(cfg Config) (*redis.Client, error) {
 	db, err := strconv.Atoi(cfg.DB)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.NewClient(&r.Options{
+	return redis.NewClient(&redis.Options{
 		Addr:     cfg.URL,
 		Password: cfg.Pass,
 		DB:       db,

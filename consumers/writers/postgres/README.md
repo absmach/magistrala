@@ -22,8 +22,9 @@ default values.
 | MF_POSTGRES_WRITER_DB_SSL_CERT      | Postgres SSL certificate path                                                     | ""                     |
 | MF_POSTGRES_WRITER_DB_SSL_KEY       | Postgres SSL key                                                                  | ""                     |
 | MF_POSTGRES_WRITER_DB_SSL_ROOT_CERT | Postgres SSL root certificate path                                                | ""                     |
-| MF_POSTGRES_WRITER_CONFIG_PATH      | Config file path with Message broker subjects list, payload type and content-type | /config.toml           |
-| MF_JAEGER_URL                 | Jaeger server URL                                                        | localhost:6831 |
+| MF_POSTGRES_WRITER_CONFIG_PATH      | Config file path with Message broker subjects list, payload type and content-type | /config.toml                   |
+| MF_JAEGER_URL                       | Jaeger server URL                                                                 | localhost:6831         |
+| MF_SEND_TELEMETRY                   | Send telemetry to mainflux call home server                                       | true                   |
 
 ## Deployment
 

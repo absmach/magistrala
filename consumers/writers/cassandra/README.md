@@ -19,7 +19,8 @@ default values.
 | MF_CASSANDRA_WRITER_DB_PASS      | Cassandra DB password                                                   |                       |
 | MF_CASSANDRA_WRITER_DB_PORT      | Cassandra DB port                                                       | 9042                  |
 | MF_CASSANDRA_WRITER_CONFIG_PATH  | Config file path with NATS subjects list, payload type and content-type | /config.toml          || MF_JAEGER_URL                 | Jaeger server URL                                                        | localhost:6831 |
-| MF_JAEGER_URL                 | Jaeger server URL                                                        | localhost:6831 |
+| MF_JAEGER_URL                    | Jaeger server URL                                                       | localhost:6831 |
+| MF_SEND_TELEMETRY                | Send telemetry to mainflux call home server                             | true                  |
 
 ## Deployment
 The service itself is distributed as Docker container. Check the [`cassandra-writer`](https://github.com/mainflux/mainflux/blob/master/docker/addons/cassandra-writer/docker-compose.yml#L30-L49) service section in docker-compose to see how service is deployed.

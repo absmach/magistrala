@@ -1,6 +1,7 @@
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
 
+// Package main contains postgres-writer main function to start the postgres-writer service.
 package main
 
 import (
@@ -10,6 +11,8 @@ import (
 	"os"
 
 	"github.com/jmoiron/sqlx"
+	chclient "github.com/mainflux/callhome/pkg/client"
+	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/consumers"
 	"github.com/mainflux/mainflux/consumers/writers/api"
 	writerPg "github.com/mainflux/mainflux/consumers/writers/postgres"
@@ -34,10 +37,11 @@ const (
 )
 
 type config struct {
-	LogLevel   string `env:"MF_POSTGRES_WRITER_LOG_LEVEL"     envDefault:"info"`
-	ConfigPath string `env:"MF_POSTGRES_WRITER_CONFIG_PATH"   envDefault:"/config.toml"`
-	BrokerURL  string `env:"MF_BROKER_URL"                    envDefault:"nats://localhost:4222"`
-	JaegerURL  string `env:"MF_JAEGER_URL"                    envDefault:"localhost:6831"`
+	LogLevel      string `env:"MF_POSTGRES_WRITER_LOG_LEVEL"     envDefault:"info"`
+	ConfigPath    string `env:"MF_POSTGRES_WRITER_CONFIG_PATH"   envDefault:"/config.toml"`
+	BrokerURL     string `env:"MF_BROKER_URL"                    envDefault:"nats://localhost:4222"`
+	JaegerURL     string `env:"MF_JAEGER_URL"                    envDefault:"localhost:6831"`
+	SendTelemetry bool   `env:"MF_SEND_TELEMETRY"                envDefault:"true"`
 }
 
 func main() {
@@ -54,11 +58,16 @@ func main() {
 		log.Fatalf("failed to init logger: %s", err)
 	}
 
-	tracer, traceCloser, err := jaegerClient.NewTracer(svcName, cfg.JaegerURL)
+	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
+		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
 	}
-	defer traceCloser.Close()
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			logger.Error(fmt.Sprintf("Error shutting down tracer provider: %v", err))
+		}
+	}()
+	tracer := tp.Tracer(svcName)
 
 	pubSub, err := brokers.NewPubSub(cfg.BrokerURL, "", logger)
 	if err != nil {
@@ -85,6 +94,11 @@ func main() {
 		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 	}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svcName), logger)
+
+	if cfg.SendTelemetry {
+		chc := chclient.New(svcName, mainflux.Version, logger, cancel)
+		go chc.CallHome(ctx)
+	}
 
 	g.Go(func() error {
 		return hs.Start()

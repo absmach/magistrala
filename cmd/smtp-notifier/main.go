@@ -1,6 +1,7 @@
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
 
+// Package main contains smtp-notifier main function to start the smtp-notifier service.
 package main
 
 import (
@@ -10,6 +11,7 @@ import (
 	"os"
 
 	"github.com/jmoiron/sqlx"
+	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/consumers"
 	"github.com/mainflux/mainflux/consumers/notifiers"
@@ -21,6 +23,7 @@ import (
 	authClient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
 	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
 	pgClient "github.com/mainflux/mainflux/internal/clients/postgres"
+
 	"github.com/mainflux/mainflux/internal/email"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
@@ -29,7 +32,8 @@ import (
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
 	pstracing "github.com/mainflux/mainflux/pkg/messaging/tracing"
 	"github.com/mainflux/mainflux/pkg/ulid"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/mainflux/mainflux/users/policies"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -42,11 +46,12 @@ const (
 )
 
 type config struct {
-	LogLevel   string `env:"MF_SMTP_NOTIFIER_LOG_LEVEL"   envDefault:"info"`
-	ConfigPath string `env:"MF_SMTP_NOTIFIER_CONFIG_PATH" envDefault:"/config.toml"`
-	From       string `env:"MF_SMTP_NOTIFIER_FROM_ADDR"   envDefault:""`
-	BrokerURL  string `env:"MF_BROKER_URL"                envDefault:"nats://localhost:4222"`
-	JaegerURL  string `env:"MF_JAEGER_URL"                envDefault:"localhost:6831"`
+	LogLevel      string `env:"MF_SMTP_NOTIFIER_LOG_LEVEL"   envDefault:"info"`
+	ConfigPath    string `env:"MF_SMTP_NOTIFIER_CONFIG_PATH" envDefault:"/config.toml"`
+	From          string `env:"MF_SMTP_NOTIFIER_FROM_ADDR"   envDefault:""`
+	BrokerURL     string `env:"MF_BROKER_URL"                envDefault:"nats://localhost:4222"`
+	JaegerURL     string `env:"MF_JAEGER_URL"                envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry bool   `env:"MF_SEND_TELEMETRY"            envDefault:"true"`
 }
 
 func main() {
@@ -75,11 +80,16 @@ func main() {
 		logger.Fatal(fmt.Sprintf("failed to load email configuration : %s", err))
 	}
 
-	tracer, traceCloser, err := jaegerClient.NewTracer(svcName, cfg.JaegerURL)
+	tp, err := jaegerClient.NewProvider("smtp-notifier_db", cfg.JaegerURL)
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
 	}
-	defer traceCloser.Close()
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			logger.Error(fmt.Sprintf("Error shutting down tracer provider: %v", err))
+		}
+	}()
+	tracer := tp.Tracer(svcName)
 
 	pubSub, err := brokers.NewPubSub(cfg.BrokerURL, "", logger)
 	if err != nil {
@@ -88,20 +98,14 @@ func main() {
 	pubSub = pstracing.NewPubSub(tracer, pubSub)
 	defer pubSub.Close()
 
-	auth, authHandler, err := authClient.Setup(envPrefix, cfg.JaegerURL)
+	auth, authHandler, err := authClient.Setup(envPrefix, svcName, cfg.JaegerURL)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
 	defer authHandler.Close()
 	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 
-	dbTracer, dbCloser, err := jaegerClient.NewTracer("smtp-notifier_db", cfg.JaegerURL)
-	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
-	}
-	defer dbCloser.Close()
-
-	svc := newService(db, dbTracer, auth, cfg, ec, logger, tracer)
+	svc := newService(db, tracer, auth, cfg, ec, logger)
 
 	if err = consumers.Start(ctx, svcName, pubSub, svc, cfg.ConfigPath, logger); err != nil {
 		logger.Fatal(fmt.Sprintf("failed to create Postgres writer: %s", err))
@@ -111,7 +115,12 @@ func main() {
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
 		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 	}
-	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, tracer, logger), logger)
+	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger), logger)
+
+	if cfg.SendTelemetry {
+		chc := chclient.New(svcName, mainflux.Version, logger, cancel)
+		go chc.CallHome(ctx)
+	}
 
 	g.Go(func() error {
 		return hs.Start()
@@ -127,8 +136,8 @@ func main() {
 
 }
 
-func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServiceClient, c config, ec email.Config, logger mflog.Logger, svcTracer opentracing.Tracer) notifiers.Service {
-	database := notifierPg.NewDatabase(db)
+func newService(db *sqlx.DB, tracer trace.Tracer, auth policies.AuthServiceClient, c config, ec email.Config, logger mflog.Logger) notifiers.Service {
+	database := notifierPg.NewDatabase(db, tracer)
 	repo := tracing.New(tracer, notifierPg.New(database))
 	idp := ulid.New()
 
@@ -138,7 +147,6 @@ func newService(db *sqlx.DB, tracer opentracing.Tracer, auth mainflux.AuthServic
 	}
 
 	notifier := smtp.New(agent)
-	notifier = tracing.NewNotifier(tracer, notifier)
 	svc := notifiers.New(auth, repo, idp, notifier, c.From)
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := internal.MakeMetrics("notifier", "smtp")

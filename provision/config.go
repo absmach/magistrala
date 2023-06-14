@@ -5,10 +5,11 @@ package provision
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
+	mfclients "github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/things"
+	"github.com/mainflux/mainflux/pkg/groups"
 	"github.com/pelletier/go-toml"
 )
 
@@ -30,7 +31,7 @@ type ServiceConf struct {
 	MfCertsURL     string `toml:"mf_certs_url"`
 }
 
-// Bootstrap represetns the Bootstrap config
+// Bootstrap represetns the Bootstrap config.
 type Bootstrap struct {
 	X509Provision bool                   `toml:"x509_provision"`
 	Provision     bool                   `toml:"provision"`
@@ -38,7 +39,7 @@ type Bootstrap struct {
 	Content       map[string]interface{} `toml:"content"`
 }
 
-// Gateway represetns the Gateway config
+// Gateway represetns the Gateway config.
 type Gateway struct {
 	Type            string `toml:"type" json:"type"`
 	ExternalID      string `toml:"external_id" json:"external_id"`
@@ -49,36 +50,37 @@ type Gateway struct {
 	CfgID           string `toml:"cfg_id" json:"cfg_id"`
 }
 
-// Cert represetns the certificate config
+// Cert represetns the certificate config.
 type Cert struct {
 	TTL string `json:"ttl" toml:"ttl"`
 }
 
-// Config struct of Provision
+// Config struct of Provision.
 type Config struct {
-	File      string           `toml:"file"`
-	Server    ServiceConf      `toml:"server" mapstructure:"server"`
-	Bootstrap Bootstrap        `toml:"bootstrap" mapstructure:"bootstrap"`
-	Things    []things.Thing   `toml:"things" mapstructure:"things"`
-	Channels  []things.Channel `toml:"channels" mapstructure:"channels"`
-	Cert      Cert             `toml:"cert" mapstructure:"cert"`
+	File          string             `toml:"file"`
+	Server        ServiceConf        `toml:"server" mapstructure:"server"`
+	Bootstrap     Bootstrap          `toml:"bootstrap" mapstructure:"bootstrap"`
+	Things        []mfclients.Client `toml:"things" mapstructure:"things"`
+	Channels      []groups.Group     `toml:"channels" mapstructure:"channels"`
+	Cert          Cert               `toml:"cert" mapstructure:"cert"`
+	SendTelemetry bool               `toml:"-"`
 }
 
-// Save - store config in a file
+// Save - store config in a file.
 func Save(c Config, file string) error {
 	b, err := toml.Marshal(c)
 	if err != nil {
 		return errors.New(fmt.Sprintf("Error reading config file: %s", err))
 	}
-	if err := ioutil.WriteFile(file, b, 0644); err != nil {
+	if err := os.WriteFile(file, b, 0644); err != nil {
 		return errors.New(fmt.Sprintf("Error writing toml: %s", err))
 	}
 	return nil
 }
 
-// Read - retrieve config from a file
+// Read - retrieve config from a file.
 func Read(file string) (Config, error) {
-	data, err := ioutil.ReadFile(file)
+	data, err := os.ReadFile(file)
 	c := Config{}
 	if err != nil {
 		return c, errors.New(fmt.Sprintf("Error reading config file: %s", err))

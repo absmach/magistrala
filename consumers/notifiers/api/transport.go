@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"strings"
 
-	kitot "github.com/go-kit/kit/tracing/opentracing"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
@@ -17,8 +16,8 @@ import (
 	"github.com/mainflux/mainflux/internal/apiutil"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
-	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/go-kit/kit/otelkit"
 )
 
 const (
@@ -32,7 +31,7 @@ const (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc notifiers.Service, tracer opentracing.Tracer, logger logger.Logger) http.Handler {
+func MakeHandler(svc notifiers.Service, logger logger.Logger) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
 	}
@@ -40,28 +39,28 @@ func MakeHandler(svc notifiers.Service, tracer opentracing.Tracer, logger logger
 	mux := bone.New()
 
 	mux.Post("/subscriptions", kithttp.NewServer(
-		kitot.TraceServer(tracer, "create_subscription")(createSubscriptionEndpoint(svc)),
+		otelkit.EndpointMiddleware(otelkit.WithOperation("create_subscription"))(createSubscriptionEndpoint(svc)),
 		decodeCreate,
 		encodeResponse,
 		opts...,
 	))
 
 	mux.Get("/subscriptions/:subID", kithttp.NewServer(
-		kitot.TraceServer(tracer, "view_subscription")(viewSubscriptionEndpint(svc)),
+		otelkit.EndpointMiddleware(otelkit.WithOperation("view_subscription"))(viewSubscriptionEndpint(svc)),
 		decodeSubscription,
 		encodeResponse,
 		opts...,
 	))
 
 	mux.Get("/subscriptions", kithttp.NewServer(
-		kitot.TraceServer(tracer, "list_subscriptions")(listSubscriptionsEndpoint(svc)),
+		otelkit.EndpointMiddleware(otelkit.WithOperation("list_subscriptions"))(listSubscriptionsEndpoint(svc)),
 		decodeList,
 		encodeResponse,
 		opts...,
 	))
 
 	mux.Delete("/subscriptions/:subID", kithttp.NewServer(
-		kitot.TraceServer(tracer, "delete_subscription")(deleteSubscriptionEndpint(svc)),
+		otelkit.EndpointMiddleware(otelkit.WithOperation("delete_subscription"))(deleteSubscriptionEndpint(svc)),
 		decodeSubscription,
 		encodeResponse,
 		opts...,

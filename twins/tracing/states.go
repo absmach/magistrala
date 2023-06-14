@@ -7,7 +7,7 @@ import (
 	"context"
 
 	"github.com/mainflux/mainflux/twins"
-	opentracing "github.com/opentracing/opentracing-go"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -20,13 +20,13 @@ const (
 var _ twins.StateRepository = (*stateRepositoryMiddleware)(nil)
 
 type stateRepositoryMiddleware struct {
-	tracer opentracing.Tracer
+	tracer trace.Tracer
 	repo   twins.StateRepository
 }
 
 // StateRepositoryMiddleware tracks request and their latency, and adds spans
 // to context.
-func StateRepositoryMiddleware(tracer opentracing.Tracer, repo twins.StateRepository) twins.StateRepository {
+func StateRepositoryMiddleware(tracer trace.Tracer, repo twins.StateRepository) twins.StateRepository {
 	return stateRepositoryMiddleware{
 		tracer: tracer,
 		repo:   repo,
@@ -34,41 +34,36 @@ func StateRepositoryMiddleware(tracer opentracing.Tracer, repo twins.StateReposi
 }
 
 func (trm stateRepositoryMiddleware) Save(ctx context.Context, st twins.State) error {
-	span := createSpan(ctx, trm.tracer, saveStateOp)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
+	ctx, span := createSpan(ctx, trm.tracer, saveStateOp)
+	defer span.End()
 
 	return trm.repo.Save(ctx, st)
 }
 
 func (trm stateRepositoryMiddleware) Update(ctx context.Context, st twins.State) error {
-	span := createSpan(ctx, trm.tracer, updateStateOp)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
+	ctx, span := createSpan(ctx, trm.tracer, updateStateOp)
+	defer span.End()
 
 	return trm.repo.Update(ctx, st)
 }
 
 func (trm stateRepositoryMiddleware) Count(ctx context.Context, tw twins.Twin) (int64, error) {
-	span := createSpan(ctx, trm.tracer, countStatesOp)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
+	ctx, span := createSpan(ctx, trm.tracer, countStatesOp)
+	defer span.End()
 
 	return trm.repo.Count(ctx, tw)
 }
 
 func (trm stateRepositoryMiddleware) RetrieveAll(ctx context.Context, offset, limit uint64, twinID string) (twins.StatesPage, error) {
-	span := createSpan(ctx, trm.tracer, retrieveAllStatesOp)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
+	ctx, span := createSpan(ctx, trm.tracer, retrieveAllStatesOp)
+	defer span.End()
 
 	return trm.repo.RetrieveAll(ctx, offset, limit, twinID)
 }
 
 func (trm stateRepositoryMiddleware) RetrieveLast(ctx context.Context, twinID string) (twins.State, error) {
-	span := createSpan(ctx, trm.tracer, retrieveAllStatesOp)
-	defer span.Finish()
-	ctx = opentracing.ContextWithSpan(ctx, span)
+	ctx, span := createSpan(ctx, trm.tracer, retrieveAllStatesOp)
+	defer span.End()
 
 	return trm.repo.RetrieveLast(ctx, twinID)
 }

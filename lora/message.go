@@ -1,6 +1,9 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package lora
 
-// RxInfo receiver parameters
+// RxInfo receiver parameters.
 type RxInfo []struct {
 	Mac       string  `json:"mac"`
 	Name      string  `json:"name"`
@@ -12,14 +15,14 @@ type RxInfo []struct {
 	LoRaSNR   float64 `json:"loRaSNR"`
 }
 
-// DataRate lora data rate
+// DataRate lora data rate.
 type DataRate struct {
 	Modulation   string  `json:"modulation"`
 	Bandwidth    float64 `json:"bandwidth"`
 	SpreadFactor int64   `json:"spreadFactor"`
 }
 
-// TxInfo transmeter parameters
+// TxInfo transmeter parameters.
 type TxInfo struct {
 	Frequency float64  `json:"frequency"`
 	DataRate  DataRate `json:"dataRate"`
@@ -27,7 +30,7 @@ type TxInfo struct {
 	CodeRate  string   `json:"codeRate"`
 }
 
-// Message lora msg (https://www.chirpstack.io/application-server/integrations/events)
+// Message lora msg (https://www.chirpstack.io/application-server/integrations/events).
 type Message struct {
 	ApplicationID       string      `json:"applicationID"`
 	ApplicationName     string      `json:"applicationName"`

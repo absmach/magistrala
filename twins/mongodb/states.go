@@ -31,7 +31,7 @@ func NewStateRepository(db *mongo.Database) twins.StateRepository {
 	}
 }
 
-// SaveState persists the state
+// SaveState persists the state.
 func (sr *stateRepository) Save(ctx context.Context, st twins.State) error {
 	coll := sr.db.Collection(statesCollection)
 
@@ -42,7 +42,7 @@ func (sr *stateRepository) Save(ctx context.Context, st twins.State) error {
 	return nil
 }
 
-// Update persists the state
+// Update persists the state.
 func (sr *stateRepository) Update(ctx context.Context, st twins.State) error {
 	coll := sr.db.Collection(statesCollection)
 
@@ -55,7 +55,7 @@ func (sr *stateRepository) Update(ctx context.Context, st twins.State) error {
 	return nil
 }
 
-// CountStates returns the number of states related to twin
+// CountStates returns the number of states related to twin.
 func (sr *stateRepository) Count(ctx context.Context, tw twins.Twin) (int64, error) {
 	coll := sr.db.Collection(statesCollection)
 
@@ -68,7 +68,7 @@ func (sr *stateRepository) Count(ctx context.Context, tw twins.Twin) (int64, err
 	return total, nil
 }
 
-// RetrieveAll retrieves the subset of states related to twin specified by id
+// RetrieveAll retrieves the subset of states related to twin specified by id.
 func (sr *stateRepository) RetrieveAll(ctx context.Context, offset uint64, limit uint64, twinID string) (twins.StatesPage, error) {
 	coll := sr.db.Collection(statesCollection)
 
@@ -103,7 +103,7 @@ func (sr *stateRepository) RetrieveAll(ctx context.Context, offset uint64, limit
 	}, nil
 }
 
-// RetrieveLast returns the last state related to twin spec by id
+// RetrieveLast returns the last state related to twin spec by id.
 func (sr *stateRepository) RetrieveLast(ctx context.Context, twinID string) (twins.State, error) {
 	coll := sr.db.Collection(statesCollection)
 

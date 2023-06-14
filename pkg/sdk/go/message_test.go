@@ -9,28 +9,27 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/mainflux/mainflux"
 	adapter "github.com/mainflux/mainflux/http"
 	"github.com/mainflux/mainflux/http/api"
 	"github.com/mainflux/mainflux/http/mocks"
 	"github.com/mainflux/mainflux/internal/apiutil"
-	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
-	"github.com/opentracing/opentracing-go/mocktracer"
+	"github.com/mainflux/mainflux/things/policies"
 	"github.com/stretchr/testify/assert"
 )
 
 const eof = "EOF"
 
-func newMessageService(cc mainflux.ThingsServiceClient) adapter.Service {
+func newMessageService(cc policies.ThingsServiceClient) adapter.Service {
 	pub := mocks.NewPublisher()
+
 	return adapter.New(pub, cc)
 }
 
 func newMessageServer(svc adapter.Service) *httptest.Server {
-	logger := logger.NewMock()
-	mux := api.MakeHandler(svc, mocktracer.New(), logger)
+	mux := api.MakeHandler(svc)
+
 	return httptest.NewServer(mux)
 }
 
@@ -49,7 +48,7 @@ func TestSendMessage(t *testing.T) {
 		TLSVerification: false,
 	}
 
-	mainfluxSDK := sdk.NewSDK(sdkConf)
+	mfsdk := sdk.NewSDK(sdkConf)
 
 	cases := map[string]struct {
 		chanID string
@@ -95,8 +94,12 @@ func TestSendMessage(t *testing.T) {
 		},
 	}
 	for desc, tc := range cases {
-		err := mainfluxSDK.SendMessage(tc.chanID, tc.msg, tc.auth)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", desc, tc.err, err))
+		err := mfsdk.SendMessage(tc.chanID, tc.msg, tc.auth)
+		if tc.err == nil {
+			assert.Nil(t, err, fmt.Sprintf("%s: got unexpected error: %s", desc, err))
+		} else {
+			assert.Equal(t, tc.err.Error(), err.Error(), fmt.Sprintf("%s: expected error %s, got %s", desc, err, tc.err))
+		}
 	}
 }
 
@@ -114,7 +117,7 @@ func TestSetContentType(t *testing.T) {
 		MsgContentType:  contentType,
 		TLSVerification: false,
 	}
-	mainfluxSDK := sdk.NewSDK(sdkConf)
+	mfsdk := sdk.NewSDK(sdkConf)
 
 	cases := []struct {
 		desc  string
@@ -133,7 +136,7 @@ func TestSetContentType(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		err := mainfluxSDK.SetContentType(tc.cType)
+		err := mfsdk.SetContentType(tc.cType)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 	}
 }

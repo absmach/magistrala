@@ -13,6 +13,7 @@ import (
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"
+	"github.com/mainflux/mainflux/users/policies"
 
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/senml"
@@ -74,7 +75,7 @@ var crudOp = map[string]string{
 
 type twinsService struct {
 	publisher  messaging.Publisher
-	auth       mainflux.AuthServiceClient
+	auth       policies.AuthServiceClient
 	twins      TwinRepository
 	states     StateRepository
 	idProvider mainflux.IDProvider
@@ -86,7 +87,7 @@ type twinsService struct {
 var _ Service = (*twinsService)(nil)
 
 // New instantiates the twins service implementation.
-func New(publisher messaging.Publisher, auth mainflux.AuthServiceClient, twins TwinRepository, tcache TwinCache, sr StateRepository, idp mainflux.IDProvider, chann string, logger logger.Logger) Service {
+func New(publisher messaging.Publisher, auth policies.AuthServiceClient, twins TwinRepository, tcache TwinCache, sr StateRepository, idp mainflux.IDProvider, chann string, logger logger.Logger) Service {
 	return &twinsService{
 		publisher:  publisher,
 		auth:       auth,
@@ -104,7 +105,7 @@ func (ts *twinsService) AddTwin(ctx context.Context, token string, twin Twin, de
 	var b []byte
 	defer ts.publish(ctx, &id, &err, crudOp["createSucc"], crudOp["createFail"], &b)
 
-	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
+	res, err := ts.auth.Identify(ctx, &policies.Token{Value: token})
 	if err != nil {
 		return Twin{}, err
 	}
@@ -114,7 +115,7 @@ func (ts *twinsService) AddTwin(ctx context.Context, token string, twin Twin, de
 		return Twin{}, err
 	}
 
-	twin.Owner = res.GetEmail()
+	twin.Owner = res.GetId()
 
 	t := time.Now()
 	twin.Created = t
@@ -147,7 +148,7 @@ func (ts *twinsService) UpdateTwin(ctx context.Context, token string, twin Twin,
 	var id string
 	defer ts.publish(ctx, &id, &err, crudOp["updateSucc"], crudOp["updateFail"], &b)
 
-	_, err = ts.auth.Identify(ctx, &mainflux.Token{Value: token})
+	_, err = ts.auth.Identify(ctx, &policies.Token{Value: token})
 	if err != nil {
 		return errors.ErrAuthentication
 	}
@@ -197,7 +198,7 @@ func (ts *twinsService) ViewTwin(ctx context.Context, token, twinID string) (tw 
 	var b []byte
 	defer ts.publish(ctx, &twinID, &err, crudOp["getSucc"], crudOp["getFail"], &b)
 
-	_, err = ts.auth.Identify(ctx, &mainflux.Token{Value: token})
+	_, err = ts.auth.Identify(ctx, &policies.Token{Value: token})
 	if err != nil {
 		return Twin{}, err
 	}
@@ -216,7 +217,7 @@ func (ts *twinsService) RemoveTwin(ctx context.Context, token, twinID string) (e
 	var b []byte
 	defer ts.publish(ctx, &twinID, &err, crudOp["removeSucc"], crudOp["removeFail"], &b)
 
-	_, err = ts.auth.Identify(ctx, &mainflux.Token{Value: token})
+	_, err = ts.auth.Identify(ctx, &policies.Token{Value: token})
 	if err != nil {
 		return errors.ErrAuthentication
 	}
@@ -229,16 +230,16 @@ func (ts *twinsService) RemoveTwin(ctx context.Context, token, twinID string) (e
 }
 
 func (ts *twinsService) ListTwins(ctx context.Context, token string, offset uint64, limit uint64, name string, metadata Metadata) (Page, error) {
-	res, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
+	res, err := ts.auth.Identify(ctx, &policies.Token{Value: token})
 	if err != nil {
 		return Page{}, errors.ErrAuthentication
 	}
 
-	return ts.twins.RetrieveAll(ctx, res.GetEmail(), offset, limit, name, metadata)
+	return ts.twins.RetrieveAll(ctx, res.GetId(), offset, limit, name, metadata)
 }
 
 func (ts *twinsService) ListStates(ctx context.Context, token string, offset uint64, limit uint64, twinID string) (StatesPage, error) {
-	_, err := ts.auth.Identify(ctx, &mainflux.Token{Value: token})
+	_, err := ts.auth.Identify(ctx, &policies.Token{Value: token})
 	if err != nil {
 		return StatesPage{}, errors.ErrAuthentication
 	}

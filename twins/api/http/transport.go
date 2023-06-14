@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"strings"
 
-	kitot "github.com/go-kit/kit/tracing/opentracing"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
@@ -17,8 +16,8 @@ import (
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/twins"
-	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/go-kit/kit/otelkit"
 )
 
 const (
@@ -32,7 +31,7 @@ const (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(tracer opentracing.Tracer, svc twins.Service, logger logger.Logger) http.Handler {
+func MakeHandler(svc twins.Service, logger logger.Logger) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
 	}
@@ -40,42 +39,42 @@ func MakeHandler(tracer opentracing.Tracer, svc twins.Service, logger logger.Log
 	r := bone.New()
 
 	r.Post("/twins", kithttp.NewServer(
-		kitot.TraceServer(tracer, "add_twin")(addTwinEndpoint(svc)),
+		otelkit.EndpointMiddleware(otelkit.WithOperation("add_twin"))(addTwinEndpoint(svc)),
 		decodeTwinCreation,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Put("/twins/:twinID", kithttp.NewServer(
-		kitot.TraceServer(tracer, "update_twin")(updateTwinEndpoint(svc)),
+		otelkit.EndpointMiddleware(otelkit.WithOperation("update_twin"))(updateTwinEndpoint(svc)),
 		decodeTwinUpdate,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Get("/twins/:twinID", kithttp.NewServer(
-		kitot.TraceServer(tracer, "view_twin")(viewTwinEndpoint(svc)),
+		otelkit.EndpointMiddleware(otelkit.WithOperation("view_twin"))(viewTwinEndpoint(svc)),
 		decodeView,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Delete("/twins/:twinID", kithttp.NewServer(
-		kitot.TraceServer(tracer, "remove_twin")(removeTwinEndpoint(svc)),
+		otelkit.EndpointMiddleware(otelkit.WithOperation("remove_twin"))(removeTwinEndpoint(svc)),
 		decodeView,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Get("/twins", kithttp.NewServer(
-		kitot.TraceServer(tracer, "list_twins")(listTwinsEndpoint(svc)),
+		otelkit.EndpointMiddleware(otelkit.WithOperation("list_twins"))(listTwinsEndpoint(svc)),
 		decodeList,
 		encodeResponse,
 		opts...,
 	))
 
 	r.Get("/states/:twinID", kithttp.NewServer(
-		kitot.TraceServer(tracer, "list_states")(listStatesEndpoint(svc)),
+		otelkit.EndpointMiddleware(otelkit.WithOperation("list_states"))(listStatesEndpoint(svc)),
 		decodeListStates,
 		encodeResponse,
 		opts...,

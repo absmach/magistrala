@@ -1,6 +1,6 @@
 package mqtt
 
-// LoraSubscribe subscribe to lora server messages
+// LoraSubscribe subscribe to lora server messages.
 import (
 	"context"
 	"encoding/json"
@@ -36,7 +36,7 @@ func NewBroker(svc lora.Service, client mqtt.Client, t time.Duration, log logger
 	}
 }
 
-// Subscribe subscribes to the Lora MQTT message broker
+// Subscribe subscribes to the Lora MQTT message broker.
 func (b broker) Subscribe(subject string) error {
 	s := b.client.Subscribe(subject, 0, b.handleMsg)
 	if err := s.Error(); s.WaitTimeout(b.timeout) && err != nil {
@@ -46,7 +46,7 @@ func (b broker) Subscribe(subject string) error {
 	return nil
 }
 
-// handleMsg triggered when new message is received on Lora MQTT broker
+// handleMsg triggered when new message is received on Lora MQTT broker.
 func (b broker) handleMsg(c mqtt.Client, msg mqtt.Message) {
 	m := lora.Message{}
 	if err := json.Unmarshal(msg.Payload(), &m); err != nil {

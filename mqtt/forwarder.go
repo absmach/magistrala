@@ -8,13 +8,8 @@ import (
 	"fmt"
 	"strings"
 
-	log "github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging"
-)
-
-const (
-	channels = "channels"
-	messages = "messages"
 )
 
 // Forwarder specifies MQTT forwarder interface API.
@@ -26,11 +21,11 @@ type Forwarder interface {
 
 type forwarder struct {
 	topic  string
-	logger log.Logger
+	logger mflog.Logger
 }
 
 // NewForwarder returns new Forwarder implementation.
-func NewForwarder(topic string, logger log.Logger) Forwarder {
+func NewForwarder(topic string, logger mflog.Logger) Forwarder {
 	return forwarder{
 		topic:  topic,
 		logger: logger,
@@ -41,16 +36,16 @@ func (f forwarder) Forward(ctx context.Context, id string, sub messaging.Subscri
 	return sub.Subscribe(ctx, id, f.topic, handle(ctx, pub, f.logger))
 }
 
-func handle(ctx context.Context, pub messaging.Publisher, logger log.Logger) handleFunc {
+func handle(ctx context.Context, pub messaging.Publisher, logger mflog.Logger) handleFunc {
 	return func(msg *messaging.Message) error {
 		if msg.Protocol == protocol {
 			return nil
 		}
 		// Use concatenation instead of fmt.Sprintf for the
 		// sake of simplicity and performance.
-		topic := channels + "/" + msg.Channel + "/" + messages
+		topic := fmt.Sprintf("channels/%s/messages", msg.Channel)
 		if msg.Subtopic != "" {
-			topic += "/" + strings.ReplaceAll(msg.Subtopic, ".", "/")
+			topic += fmt.Sprintf("%s/%s", topic, strings.ReplaceAll(msg.Subtopic, ".", "/"))
 		}
 		go func() {
 			if err := pub.Publish(ctx, topic, msg); err != nil {

@@ -18,14 +18,14 @@ var (
 	errConnect = errors.New("failed to connect to mongodb server")
 )
 
-// Config defines the options that are used when connecting to a MongoDB instance
+// Config defines the options that are used when connecting to a MongoDB instance.
 type Config struct {
 	Host string `env:"HOST" envDefault:"localhost"`
 	Port string `env:"PORT" envDefault:"27017"`
 	DB   string `env:"DB"   envDefault:"messages"`
 }
 
-// Connect creates a connection to the MongoDB instance
+// Connect creates a connection to the MongoDB instance.
 func Connect(cfg Config) (*mongo.Database, error) {
 	addr := fmt.Sprintf("mongodb://%s:%s", cfg.Host, cfg.Port)
 	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(addr))
@@ -37,7 +37,7 @@ func Connect(cfg Config) (*mongo.Database, error) {
 	return db, nil
 }
 
-// Setup load configuration from environment, create new MongoDB client and connect to MongoDB server
+// Setup load configuration from environment, create new MongoDB client and connect to MongoDB server.
 func Setup(envPrefix string) (*mongo.Database, error) {
 	cfg := Config{}
 	if err := env.Parse(&cfg, env.Options{Prefix: envPrefix}); err != nil {

@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"sync"
 
-	log "github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"google.golang.org/protobuf/proto"
@@ -39,13 +39,13 @@ type subscription struct {
 }
 type pubsub struct {
 	publisher
-	logger        log.Logger
+	logger        mflog.Logger
 	subscriptions map[string]map[string]subscription
 	mu            sync.Mutex
 }
 
 // NewPubSub returns RabbitMQ message publisher/subscriber.
-func NewPubSub(url, queue string, logger log.Logger) (messaging.PubSub, error) {
+func NewPubSub(url, queue string, logger mflog.Logger) (messaging.PubSub, error) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err

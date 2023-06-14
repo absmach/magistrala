@@ -11,7 +11,7 @@ import (
 	"os/exec"
 	"testing"
 
-	log "github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +24,7 @@ const (
 )
 
 var _ io.Writer = (*mockWriter)(nil)
-var logger log.Logger
+var logger mflog.Logger
 var err error
 var output logMsg
 
@@ -59,32 +59,32 @@ func TestDebug(t *testing.T) {
 		{
 			desc:   "debug log ordinary string",
 			input:  "input_string",
-			level:  log.Debug.String(),
-			output: logMsg{log.Debug.String(), "input_string", ""},
+			level:  mflog.Debug.String(),
+			output: logMsg{mflog.Debug.String(), "input_string", ""},
 		},
 		{
 			desc:   "debug log empty string",
 			input:  "",
-			level:  log.Debug.String(),
-			output: logMsg{log.Debug.String(), "", ""},
+			level:  mflog.Debug.String(),
+			output: logMsg{mflog.Debug.String(), "", ""},
 		},
 		{
 			desc:   "debug ordinary string lvl not allowed",
 			input:  "input_string",
-			level:  log.Info.String(),
+			level:  mflog.Info.String(),
 			output: logMsg{"", "", ""},
 		},
 		{
 			desc:   "debug empty string lvl not allowed",
 			input:  "",
-			level:  log.Info.String(),
+			level:  mflog.Info.String(),
 			output: logMsg{"", "", ""},
 		},
 	}
 
 	for _, tc := range cases {
 		writer := mockWriter{}
-		logger, err = log.New(&writer, tc.level)
+		logger, err = mflog.New(&writer, tc.level)
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		logger.Debug(tc.input)
 		output, err = writer.Read()
@@ -102,32 +102,32 @@ func TestInfo(t *testing.T) {
 		{
 			desc:   "info log ordinary string",
 			input:  "input_string",
-			level:  log.Info.String(),
-			output: logMsg{log.Info.String(), "input_string", ""},
+			level:  mflog.Info.String(),
+			output: logMsg{mflog.Info.String(), "input_string", ""},
 		},
 		{
 			desc:   "info log empty string",
 			input:  "",
-			level:  log.Info.String(),
-			output: logMsg{log.Info.String(), "", ""},
+			level:  mflog.Info.String(),
+			output: logMsg{mflog.Info.String(), "", ""},
 		},
 		{
 			desc:   "info ordinary string lvl not allowed",
 			input:  "input_string",
-			level:  log.Warn.String(),
+			level:  mflog.Warn.String(),
 			output: logMsg{"", "", ""},
 		},
 		{
 			desc:   "info empty string lvl not allowed",
 			input:  "",
-			level:  log.Warn.String(),
+			level:  mflog.Warn.String(),
 			output: logMsg{"", "", ""},
 		},
 	}
 
 	for _, tc := range cases {
 		writer := mockWriter{}
-		logger, err = log.New(&writer, tc.level)
+		logger, err = mflog.New(&writer, tc.level)
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		logger.Info(tc.input)
 		output, err = writer.Read()
@@ -145,32 +145,32 @@ func TestWarn(t *testing.T) {
 		{
 			desc:   "warn log ordinary string",
 			input:  "input_string",
-			level:  log.Warn.String(),
-			output: logMsg{log.Warn.String(), "input_string", ""},
+			level:  mflog.Warn.String(),
+			output: logMsg{mflog.Warn.String(), "input_string", ""},
 		},
 		{
 			desc:   "warn log empty string",
 			input:  "",
-			level:  log.Warn.String(),
-			output: logMsg{log.Warn.String(), "", ""},
+			level:  mflog.Warn.String(),
+			output: logMsg{mflog.Warn.String(), "", ""},
 		},
 		{
 			desc:   "warn ordinary string lvl not allowed",
 			input:  "input_string",
-			level:  log.Error.String(),
+			level:  mflog.Error.String(),
 			output: logMsg{"", "", ""},
 		},
 		{
 			desc:   "warn empty string lvl not allowed",
 			input:  "",
-			level:  log.Error.String(),
+			level:  mflog.Error.String(),
 			output: logMsg{"", "", ""},
 		},
 	}
 
 	for _, tc := range cases {
 		writer := mockWriter{}
-		logger, err = log.New(&writer, tc.level)
+		logger, err = mflog.New(&writer, tc.level)
 		require.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		logger.Warn(tc.input)
 		output, err = writer.Read()
@@ -187,17 +187,17 @@ func TestError(t *testing.T) {
 		{
 			desc:   "error log ordinary string",
 			input:  "input_string",
-			output: logMsg{log.Error.String(), "input_string", ""},
+			output: logMsg{mflog.Error.String(), "input_string", ""},
 		},
 		{
 			desc:   "error log empty string",
 			input:  "",
-			output: logMsg{log.Error.String(), "", ""},
+			output: logMsg{mflog.Error.String(), "", ""},
 		},
 	}
 
 	writer := mockWriter{}
-	logger, err := log.New(&writer, log.Error.String())
+	logger, err := mflog.New(&writer, mflog.Error.String())
 	require.Nil(t, err)
 	for _, tc := range cases {
 		logger.Error(tc.input)
@@ -211,7 +211,7 @@ func TestFatal(t *testing.T) {
 	// This is the actually Fatal call we test that will
 	// be executed in the subprocess spawned by the test.
 	if os.Getenv(testFlag) == testFlagVal {
-		logger, err := log.New(os.Stderr, log.Error.String())
+		logger, err := mflog.New(os.Stderr, mflog.Error.String())
 		require.Nil(t, err)
 		msg := os.Getenv(testMsg)
 		logger.Fatal(msg)

@@ -1,3 +1,7 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
+// Package main contains provision main function to start the provision service.
 package main
 
 import (
@@ -9,15 +13,17 @@ import (
 	"reflect"
 	"strconv"
 
+	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
 	"github.com/mainflux/mainflux/logger"
+	mfclients "github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
+	mfgroups "github.com/mainflux/mainflux/pkg/groups"
 	mfSDK "github.com/mainflux/mainflux/pkg/sdk/go"
 	"github.com/mainflux/mainflux/provision"
 	"github.com/mainflux/mainflux/provision/api"
-	"github.com/mainflux/mainflux/things"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -43,6 +49,7 @@ const (
 	defBSAutoWhitelist = "true"
 	defBSContent       = ""
 	defCertsHoursValid = "2400h"
+	defSendTelemetry   = "true"
 
 	envConfigFile       = "MF_PROVISION_CONFIG_FILE"
 	envLogLevel         = "MF_PROVISION_LOG_LEVEL"
@@ -63,6 +70,7 @@ const (
 	envBSAutoWhiteList  = "MF_PROVISION_BS_AUTO_WHITELIST"
 	envBSContent        = "MF_PROVISION_BS_CONTENT"
 	envCertsHoursValid  = "MF_PROVISION_CERTS_HOURS_VALID"
+	envSendTelemetry    = "MF_SEND_TELEMETRY"
 
 	contentType = "application/json"
 )
@@ -75,6 +83,7 @@ var (
 	errFailGettingTLSConf           = errors.New("failed to get TLS setting")
 	errFailGettingProvBS            = errors.New("failed to get BS url setting")
 	errFailedToReadBootstrapContent = errors.New("failed to read bootstrap content from envs")
+	errFailedToSetupCallHome        = errors.New("failed to set up callhome")
 )
 
 func main() {
@@ -114,6 +123,11 @@ func main() {
 
 	httpServerConfig := server.Config{Host: "", Port: cfg.Server.HTTPPort, KeyFile: cfg.Server.ServerKey, CertFile: cfg.Server.ServerCert}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger), logger)
+
+	if cfg.SendTelemetry {
+		chc := chclient.New(svcName, mainflux.Version, logger, cancel)
+		go chc.CallHome(ctx)
+	}
 
 	g.Go(func() error {
 		return hs.Start()
@@ -197,7 +211,7 @@ func loadConfig() (provision.Config, error) {
 		},
 
 		// This is default conf for provision if there is no config file
-		Channels: []things.Channel{
+		Channels: []mfgroups.Group{
 			{
 				Name:     "control-channel",
 				Metadata: map[string]interface{}{"type": "control"},
@@ -206,7 +220,7 @@ func loadConfig() (provision.Config, error) {
 				Metadata: map[string]interface{}{"type": "data"},
 			},
 		},
-		Things: []things.Thing{
+		Things: []mfclients.Client{
 			{
 				Name:     "thing",
 				Metadata: map[string]interface{}{"external_id": "xxxxxx"},
@@ -215,6 +229,10 @@ func loadConfig() (provision.Config, error) {
 	}
 
 	cfg.File = mainflux.Env(envConfigFile, defConfigFile)
+	cfg.SendTelemetry, err = strconv.ParseBool(mainflux.Env(envSendTelemetry, defSendTelemetry))
+	if err != nil {
+		return cfg, errors.Wrap(errFailedToSetupCallHome, err)
+	}
 	return cfg, nil
 }
 

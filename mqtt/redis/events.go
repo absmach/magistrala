@@ -13,7 +13,6 @@ var (
 
 type mqttEvent struct {
 	clientID  string
-	timestamp string
 	eventType string
 	instance  string
 }
@@ -21,7 +20,6 @@ type mqttEvent struct {
 func (me mqttEvent) Encode() map[string]interface{} {
 	return map[string]interface{}{
 		"thing_id":   me.clientID,
-		"timestamp":  me.timestamp,
 		"event_type": me.eventType,
 		"instance":   me.instance,
 	}

@@ -1,3 +1,6 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package grpc
 
 import (
@@ -8,6 +11,7 @@ import (
 
 	"github.com/mainflux/mainflux/internal/server"
 	"github.com/mainflux/mainflux/logger"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -56,10 +60,15 @@ func (s *Server) Start() error {
 			return fmt.Errorf("failed to load auth certificates: %w", err)
 		}
 		s.Logger.Info(fmt.Sprintf("%s service gRPC server listening at %s with TLS cert %s and key %s", s.Name, s.Address, s.Config.CertFile, s.Config.KeyFile))
-		s.server = grpc.NewServer(grpc.Creds(creds))
+		s.server = grpc.NewServer(
+			grpc.Creds(creds),
+			grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
+		)
 	default:
 		s.Logger.Info(fmt.Sprintf("%s service gRPC server listening at %s without TLS", s.Name, s.Address))
-		s.server = grpc.NewServer()
+		s.server = grpc.NewServer(
+			grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
+		)
 	}
 
 	s.registerService(s.server)

@@ -20,13 +20,13 @@ const (
 )
 
 var (
-	// ErrMissingCACertificate indicates missing CA certificate
+	// ErrMissingCACertificate indicates missing CA certificate.
 	ErrMissingCACertificate = errors.New("missing CA certificate for certificate signing")
 
-	// ErrFailedCertCreation indicates failed to certificate creation
+	// ErrFailedCertCreation indicates failed to certificate creation.
 	ErrFailedCertCreation = errors.New("failed to create client certificate")
 
-	// ErrFailedCertRevocation indicates failed certificate revocation
+	// ErrFailedCertRevocation indicates failed certificate revocation.
 	ErrFailedCertRevocation = errors.New("failed to revoke certificate")
 
 	errFailedCertDecoding = errors.New("failed to decode response from vault service")

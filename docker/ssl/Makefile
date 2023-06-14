@@ -5,7 +5,7 @@ OU_CRT = mainflux_crt
 EA = info@mainflux.com
 CN_CA = Mainflux_Self_Signed_CA
 CN_SRV = localhost
-THING_KEY = <THING_KEY> # e.g. 8f65ed04-0770-4ce4-a291-6d1bf2000f4d
+THING_SECRET = <THING_SECRET> # e.g. 8f65ed04-0770-4ce4-a291-6d1bf2000f4d
 CRT_FILE_NAME = thing
 
 all: clean_certs ca server_cert
@@ -30,7 +30,7 @@ server_cert:
 thing_cert:
 	# Create mainflux server key and CSR.
 	openssl req -new -sha256 -newkey rsa:4096 -nodes -keyout $(CRT_LOCATION)/$(CRT_FILE_NAME).key \
-				-out $(CRT_LOCATION)/$(CRT_FILE_NAME).csr -subj "/CN=$(THING_KEY)/O=$(O)/OU=$(OU_CRT)/emailAddress=$(EA)"
+				-out $(CRT_LOCATION)/$(CRT_FILE_NAME).csr -subj "/CN=$(THING_SECRET)/O=$(O)/OU=$(OU_CRT)/emailAddress=$(EA)"
 
 	# Sign client CSR.
 	openssl x509 -req -days 730 -in $(CRT_LOCATION)/$(CRT_FILE_NAME).csr -CA $(CRT_LOCATION)/ca.crt -CAkey $(CRT_LOCATION)/ca.key -CAcreateserial -out $(CRT_LOCATION)/$(CRT_FILE_NAME).crt

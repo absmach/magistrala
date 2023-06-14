@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	// Table for SenML messages
+	// Table for SenML messages.
 	defTable = "messages"
 
 	// Error code for Undefined table error.

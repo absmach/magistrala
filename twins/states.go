@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// State stores actual snapshot of entity's values
+// State stores actual snapshot of entity's values.
 type State struct {
 	TwinID     string
 	ID         int64

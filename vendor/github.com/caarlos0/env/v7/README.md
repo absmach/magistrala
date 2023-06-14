@@ -2,7 +2,7 @@
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/caarlos0/env/build.yml?branch=main&style=for-the-badge)](https://github.com/caarlos0/env/actions?workflow=build)
 [![Coverage Status](https://img.shields.io/codecov/c/gh/caarlos0/env.svg?logo=codecov&style=for-the-badge)](https://codecov.io/gh/caarlos0/env)
-[![](http://img.shields.io/badge/godoc-reference-5272B4.svg?style=for-the-badge)](https://pkg.go.dev/github.com/caarlos0/env/v6)
+[![](http://img.shields.io/badge/godoc-reference-5272B4.svg?style=for-the-badge)](https://pkg.go.dev/github.com/caarlos0/env/v7)
 
 A simple and zero-dependencies library to parse environment variables into structs.
 
@@ -11,7 +11,7 @@ A simple and zero-dependencies library to parse environment variables into struc
 Get the module with:
 
 ```sh
-go get github.com/caarlos0/env/v6
+go get github.com/caarlos0/env/v7
 ```
 
 The usage looks like this:
@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/caarlos0/env/v6"
+	"github.com/caarlos0/env/v7"
 )
 
 type config struct {
@@ -53,9 +53,14 @@ $ PRODUCTION=true HOSTS="host1:host2:host3" DURATION=1s go run main.go
 {Home:/your/home Port:3000 IsProduction:true Hosts:[host1 host2 host3] Duration:1s}
 ```
 
+## Caveats
+
 > **Warning**
-> 
-> _Unexported fields_ are **ignored** by `env`.
+>
+> **This is important!**
+
+- _Unexported fields_ are **ignored**
+
 
 ## Supported types and defaults
 
@@ -82,10 +87,14 @@ Complete list:
 - `encoding.TextUnmarshaler`
 - `url.URL`
 
-Pointers, slices and slices of pointers of those types are also supported.
+Pointers, slices and slices of pointers, and maps of those types are also
+supported.
 
 You can also use/define a [custom parser func](#custom-parser-funcs) for any
 other type you want.
+
+You can also use custom keys and values in your maps, as long as you provide a
+parser function for them.
 
 If you set the `envDefault` tag for something, this value will be used in the
 case of absence of it in the environment.
@@ -109,7 +118,7 @@ also accepts a `map[reflect.Type]env.ParserFunc`.
 If you add a custom parser for, say `Foo`, it will also be used to parse
 `*Foo` and `[]Foo` types.
 
-Check the examples in the [go doc](http://pkg.go.dev/github.com/caarlos0/env/v6)
+Check the examples in the [go doc](http://pkg.go.dev/github.com/caarlos0/env/v7)
 for more info.
 
 ### A note about `TextUnmarshaler` and `time.Time`
@@ -187,7 +196,7 @@ package main
 import (
 	"fmt"
 	"time"
-	"github.com/caarlos0/env/v6"
+	"github.com/caarlos0/env/v7"
 )
 
 type config struct {
@@ -219,6 +228,46 @@ $ SECRET=/tmp/secret  \
 
 ## Options
 
+### Use field names as environment variables by default
+
+If you don't want to set the `env` tag on every field, you can use the
+`UseFieldNameByDefault` option.
+
+It will use the field name as environment variable name.
+
+Here's an example:
+
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+
+	"github.com/caarlos0/env/v7"
+)
+
+type Config struct {
+	Username     string // will use $USERNAME
+	Password     string // will use $PASSWORD
+	UserFullName string // will use $USER_FULL_NAME
+}
+
+func main() {
+	cfg := &Config{}
+	opts := &env.Options{UseFieldNameByDefault: true}
+
+	// Load env vars.
+	if err := env.Parse(cfg, opts); err != nil {
+		log.Fatal(err)
+	}
+
+	// Print the loaded data.
+	fmt.Printf("%+v\n", cfg)
+}
+```
+
 ### Environment
 
 By setting the `Options.Environment` map you can tell `Parse` to add those `keys` and `values`
@@ -234,7 +283,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/caarlos0/env/v6"
+	"github.com/caarlos0/env/v7"
 )
 
 type Config struct {
@@ -253,7 +302,7 @@ func main() {
 	}
 
 	// Print the loaded data.
-	fmt.Printf("%+v\n", cfg.envData)
+	fmt.Printf("%+v\n", cfg)
 }
 ```
 
@@ -270,7 +319,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/caarlos0/env/v6"
+	"github.com/caarlos0/env/v7"
 )
 
 type Config struct {
@@ -287,7 +336,7 @@ func main() {
 	}
 
 	// Print the loaded data.
-	fmt.Printf("%+v\n", cfg.envData)
+	fmt.Printf("%+v\n", cfg)
 }
 ```
 
@@ -304,7 +353,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/caarlos0/env/v6"
+	"github.com/caarlos0/env/v7"
 )
 
 type Config struct {
@@ -320,7 +369,7 @@ type ComplexConfig struct {
 
 func main() {
 	cfg := ComplexConfig{}
-	if 	err := Parse(&cfg, Options{
+	if err := Parse(&cfg, Options{
 		Prefix: "T_",
 		Environment: map[string]string{
 			"T_FOO_HOME": "/foo",
@@ -338,7 +387,7 @@ func main() {
 	}
 
 	// Print the loaded data.
-	fmt.Printf("%+v\n", cfg.envData)
+	fmt.Printf("%+v\n", cfg)
 }
 ```
 
@@ -354,7 +403,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/caarlos0/env/v6"
+	"github.com/caarlos0/env/v7"
 )
 
 type Config struct {
@@ -376,7 +425,7 @@ func main() {
 	}
 
 	// Print the loaded data.
-	fmt.Printf("%+v\n", cfg.envData)
+	fmt.Printf("%+v\n", cfg)
 }
 ```
 
@@ -393,7 +442,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/caarlos0/env/v6"
+	"github.com/caarlos0/env/v7"
 )
 
 type Config struct {
@@ -411,7 +460,7 @@ func main() {
 	}
 
 	// Print the loaded data.
-	fmt.Printf("%+v\n", cfg.envData)
+	fmt.Printf("%+v\n", cfg)
 }
 ```
 
@@ -427,7 +476,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/caarlos0/env/v6"
+	"github.com/caarlos0/env/v7"
 )
 
 type Config struct {
@@ -448,6 +497,54 @@ func main() {
 	fmt.Printf("%+v", cfg)  // {Username:admin Password:123456}
 }
 ```
+
+## Error handling
+
+You can handle the errors the library throws like so:
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+
+	"github.com/caarlos0/env/v7"
+)
+
+type Config struct {
+	Username string `env:"USERNAME" envDefault:"admin"`
+	Password string `env:"PASSWORD"`
+}
+
+func main() {
+	var cfg Config
+	err := env.Parse(&cfg)
+	if e, ok := err.(*env.AggregateError); ok {
+		for _, er := range e.Errors {
+			switch v := er.(type) {
+			case env.ParseError:
+				// handle it
+			case env.NotStructPtrError:
+				// handle it
+			case env.NoParserError:
+				// handle it
+			case env.NoSupportedTagOptionError:
+				// handle it
+			default:
+				fmt.Printf("Unknown error type %v", v)
+			}
+		}
+	}
+
+	fmt.Printf("%+v", cfg)  // {Username:admin Password:123456}
+}
+```
+
+> **Info**
+>
+> If you want to check if an specific error is in the chain, you can also use
+> `errors.Is()`.
 
 ## Stargazers over time
 

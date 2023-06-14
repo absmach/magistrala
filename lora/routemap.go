@@ -5,7 +5,7 @@ package lora
 
 import "context"
 
-// RouteMapRepository store route map between Lora App Server and Mainflux
+// RouteMapRepository store route map between Lora App Server and Mainflux.
 type RouteMapRepository interface {
 	// Save stores/routes pair lora application topic & mainflux channel.
 	Save(context.Context, string, string) error

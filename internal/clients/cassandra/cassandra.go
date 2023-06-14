@@ -15,7 +15,7 @@ var (
 	errInit    = errors.New("failed to execute initialization query in Cassandra ")
 )
 
-// Config contains Cassandra DB specific parameters
+// Config contains Cassandra DB specific parameters.
 type Config struct {
 	Hosts    []string `env:"DB_CLUSTER"     envDefault:"127.0.0.1" envSeparator:","`
 	Keyspace string   `env:"DB_KEYSPACE"    envDefault:"mainflux"`
@@ -24,7 +24,7 @@ type Config struct {
 	Port     int      `env:"DB_PORT"        envDefault:"9042"`
 }
 
-// Setup load configuration from environment and creates new cassandra connection
+// Setup load configuration from environment and creates new cassandra connection.
 func Setup(envPrefix string) (*gocql.Session, error) {
 	return SetupDB(envPrefix, "")
 }

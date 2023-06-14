@@ -1,0 +1,36 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package mainflux.things.policies;
+
+option go_package = "./policies";
+
+service ThingsService {
+    rpc Authorize(AuthorizeReq) returns (AuthorizeRes) {}
+    rpc Identify(Key) returns (ClientID) {}
+}
+
+message AuthorizeReq {
+    string sub        = 1;
+    string obj        = 2;
+    string act        = 3;
+    string entityType = 4;
+}
+
+message AuthorizeRes {
+    string thingID  = 1;
+    bool authorized = 2;
+}
+
+// If a key is not carrying any information itself, the type
+// field can be used to determine how to validate the token.
+// Also, different tokens can be encoded in different ways.
+message Key {
+    string value = 1;
+}
+
+message ClientID {
+    string value = 1;
+}

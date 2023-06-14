@@ -11,8 +11,8 @@ import (
 	"github.com/jmoiron/sqlx"
 	bootstrapRepo "github.com/mainflux/mainflux/bootstrap/postgres"
 	pgClient "github.com/mainflux/mainflux/internal/clients/postgres"
-
 	"github.com/mainflux/mainflux/logger"
+
 	dockertest "github.com/ory/dockertest/v3"
 )
 

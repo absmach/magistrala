@@ -36,5 +36,5 @@ func (n *notifier) Notify(from string, to []string, msg *messaging.Message) erro
 	values := string(msg.Payload)
 	content := fmt.Sprintf(contentTemplate, msg.Publisher, msg.Protocol, values)
 
-	return n.agent.Send(to, from, subject, "", content, footer)
+	return n.agent.Send(to, from, subject, "", "", content, footer)
 }

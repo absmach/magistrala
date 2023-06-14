@@ -17,7 +17,7 @@ const (
 // | State    | What it means                                                                  |
 // |----------+--------------------------------------------------------------------------------|
 // | Inactive | Thing is created, but isn't able to communicate over Mainflux                  |
-// | Active   | Thing is able to communicate using Mainflux                                    |
+// | Active   | Thing is able to communicate using Mainflux                                    |.
 type State int
 
 // String returns string representation of State.

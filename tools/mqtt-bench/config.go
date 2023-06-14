@@ -1,6 +1,9 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package bench
 
-// Keep struct names exported, otherwise Viper unmarshalling won't work
+// Keep struct names exported, otherwise Viper unmarshalling won't work.
 type mqttBrokerConfig struct {
 	URL string `toml:"url" mapstructure:"url"`
 }
@@ -56,7 +59,7 @@ type mainflux struct {
 	Channels []mfChannel `toml:"channels" mapstructure:"channels"`
 }
 
-// Config struct holds benchmark configuration
+// Config struct holds benchmark configuration.
 type Config struct {
 	MQTT mqttConfig   `toml:"mqtt" mapstructure:"mqtt"`
 	Test testConfig   `toml:"test" mapstructure:"test"`

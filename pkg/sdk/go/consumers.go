@@ -1,3 +1,6 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package sdk
 
 import (
@@ -37,11 +40,12 @@ func (sdk mfSDK) CreateSubscription(topic, contact, token string) (string, error
 	}
 
 	id := strings.TrimPrefix(headers.Get("Location"), fmt.Sprintf("/%s/", subscriptionEndpoint))
+
 	return id, nil
 }
 
 func (sdk mfSDK) ListSubscriptions(pm PageMetadata, token string) (SubscriptionPage, errors.SDKError) {
-	url, err := sdk.withQueryParams(sdk.certsURL, subscriptionEndpoint, pm)
+	url, err := sdk.withQueryParams(sdk.usersURL, subscriptionEndpoint, pm)
 	if err != nil {
 		return SubscriptionPage{}, errors.NewSDKError(err)
 	}
@@ -77,5 +81,6 @@ func (sdk mfSDK) DeleteSubscription(id, token string) errors.SDKError {
 	url := fmt.Sprintf("%s/%s/%s", sdk.usersURL, subscriptionEndpoint, id)
 
 	_, _, err := sdk.processRequest(http.MethodDelete, url, token, string(CTJSON), nil, http.StatusNoContent)
+
 	return err
 }

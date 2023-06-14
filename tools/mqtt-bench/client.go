@@ -21,7 +21,7 @@ import (
 // won't fail in the case of broker pingresp delay.
 const pingTimeout = 10000
 
-// Client - represents mqtt client
+// Client - represents mqtt client.
 type Client struct {
 	ID         string
 	BrokerURL  string

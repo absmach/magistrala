@@ -1,8 +1,6 @@
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
 
-// go:build !test
-
 package api
 
 import (
@@ -10,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/ws"
 )
@@ -18,15 +16,17 @@ import (
 var _ ws.Service = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
-	logger log.Logger
+	logger mflog.Logger
 	svc    ws.Service
 }
 
-// LoggingMiddleware adds logging facilities to the adapter
-func LoggingMiddleware(svc ws.Service, logger log.Logger) ws.Service {
+// LoggingMiddleware adds logging facilities to the websocket service.
+func LoggingMiddleware(svc ws.Service, logger mflog.Logger) ws.Service {
 	return &loggingMiddleware{logger, svc}
 }
 
+// Publish logs the publish request. It logs the channel and subtopic(if present) and the time it took to complete the request.
+// If the request fails, it logs the error.
 func (lm *loggingMiddleware) Publish(ctx context.Context, thingKey string, msg *messaging.Message) (err error) {
 	defer func(begin time.Time) {
 		destChannel := msg.GetChannel()
@@ -44,6 +44,8 @@ func (lm *loggingMiddleware) Publish(ctx context.Context, thingKey string, msg *
 	return lm.svc.Publish(ctx, thingKey, msg)
 }
 
+// Subscribe logs the subscribe request. It logs the channel and subtopic(if present) and the time it took to complete the request.
+// If the request fails, it logs the error.
 func (lm *loggingMiddleware) Subscribe(ctx context.Context, thingKey, chanID, subtopic string, c *ws.Client) (err error) {
 	defer func(begin time.Time) {
 		destChannel := chanID
@@ -61,6 +63,8 @@ func (lm *loggingMiddleware) Subscribe(ctx context.Context, thingKey, chanID, su
 	return lm.svc.Subscribe(ctx, thingKey, chanID, subtopic, c)
 }
 
+// Unsubscribe logs the unsubscribe request. It logs the channel and subtopic(if present) and the time it took to complete the request.
+// If the request fails, it logs the error.
 func (lm *loggingMiddleware) Unsubscribe(ctx context.Context, thingKey, chanID, subtopic string) (err error) {
 	defer func(begin time.Time) {
 		destChannel := chanID

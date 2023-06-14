@@ -14,7 +14,7 @@ import (
 	mathrand "math/rand"
 )
 
-// ErrGeneratingID indicates error in generating ULID
+// ErrGeneratingID indicates error in generating ULID.
 var ErrGeneratingID = errors.New("generating id failed")
 
 var _ mainflux.IDProvider = (*ulidProvider)(nil)

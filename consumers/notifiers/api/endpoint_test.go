@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -21,7 +20,6 @@ import (
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/uuid"
-	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -76,7 +74,7 @@ func newService(tokens map[string]string) notifiers.Service {
 
 func newServer(svc notifiers.Service) *httptest.Server {
 	logger := logger.NewMock()
-	mux := httpapi.MakeHandler(svc, mocktracer.New(), logger)
+	mux := httpapi.MakeHandler(svc, logger)
 	return httptest.NewServer(mux)
 }
 
@@ -257,7 +255,7 @@ func TestView(t *testing.T) {
 		}
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected request error %s", tc.desc, err))
-		body, err := ioutil.ReadAll(res.Body)
+		body, err := io.ReadAll(res.Body)
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected read error %s", tc.desc, err))
 		data := strings.Trim(string(body), "\n")
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
@@ -377,7 +375,7 @@ func TestList(t *testing.T) {
 		}
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-		body, err := ioutil.ReadAll(res.Body)
+		body, err := io.ReadAll(res.Body)
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		data := strings.Trim(string(body), "\n")
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
@@ -414,7 +412,7 @@ func TestRemove(t *testing.T) {
 			desc:   "remove not existing",
 			id:     "not existing",
 			auth:   token,
-			status: http.StatusNoContent,
+			status: http.StatusNotFound,
 		},
 		{
 			desc:   "remove empty id",

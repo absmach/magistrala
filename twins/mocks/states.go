@@ -27,7 +27,7 @@ func NewStateRepository() twins.StateRepository {
 	}
 }
 
-// SaveState persists the state
+// SaveState persists the state.
 func (srm *stateRepositoryMock) Save(ctx context.Context, st twins.State) error {
 	srm.mu.Lock()
 	defer srm.mu.Unlock()
@@ -37,7 +37,7 @@ func (srm *stateRepositoryMock) Save(ctx context.Context, st twins.State) error 
 	return nil
 }
 
-// UpdateState updates the state
+// UpdateState updates the state.
 func (srm *stateRepositoryMock) Update(ctx context.Context, st twins.State) error {
 	srm.mu.Lock()
 	defer srm.mu.Unlock()
@@ -47,7 +47,7 @@ func (srm *stateRepositoryMock) Update(ctx context.Context, st twins.State) erro
 	return nil
 }
 
-// CountStates returns the number of states related to twin
+// CountStates returns the number of states related to twin.
 func (srm *stateRepositoryMock) Count(ctx context.Context, tw twins.Twin) (int64, error) {
 	return int64(len(srm.states)), nil
 }
@@ -100,7 +100,7 @@ func (srm *stateRepositoryMock) total(twinID string) uint64 {
 	return total
 }
 
-// RetrieveLast returns the last state related to twin spec by id
+// RetrieveLast returns the last state related to twin spec by id.
 func (srm *stateRepositoryMock) RetrieveLast(ctx context.Context, twinID string) (twins.State, error) {
 	srm.mu.Lock()
 	defer srm.mu.Unlock()

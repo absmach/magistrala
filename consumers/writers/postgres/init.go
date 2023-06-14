@@ -5,7 +5,7 @@ package postgres
 
 import migrate "github.com/rubenv/sql-migrate"
 
-// Migration of postgres-writer
+// Migration of postgres-writer.
 func Migration() *migrate.MemoryMigrationSource {
 	return &migrate.MemoryMigrationSource{
 		Migrations: []*migrate.Migration{

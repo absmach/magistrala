@@ -51,7 +51,7 @@ func TestListStates(t *testing.T) {
 	attr := def.Attributes[0]
 
 	var recs = make([]senml.Record, numRecs)
-	mocks.CreateSenML(numRecs, recs)
+	mocks.CreateSenML(recs)
 	message, err := mocks.CreateMessage(attr, recs)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	err = svc.SaveStates(message)

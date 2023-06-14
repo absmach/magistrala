@@ -10,11 +10,11 @@ import (
 
 	"github.com/gocql/gocql"
 	casClient "github.com/mainflux/mainflux/internal/clients/cassandra"
-	log "github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	dockertest "github.com/ory/dockertest/v3"
 )
 
-var logger, _ = log.New(os.Stdout, log.Info.String())
+var logger, _ = mflog.New(os.Stdout, mflog.Info.String())
 
 func TestMain(m *testing.M) {
 	pool, err := dockertest.NewPool("")

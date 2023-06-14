@@ -1,11 +1,14 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package internal
 
 import (
 	grpcClient "github.com/mainflux/mainflux/internal/clients/grpc"
-	logger "github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 )
 
-func Close(log logger.Logger, clientHandler grpcClient.ClientHandler) {
+func Close(log mflog.Logger, clientHandler grpcClient.ClientHandler) {
 	if err := clientHandler.Close(); err != nil {
 		log.Warn(err.Error())
 	}

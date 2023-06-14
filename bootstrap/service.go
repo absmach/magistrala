@@ -10,9 +10,9 @@ import (
 	"encoding/hex"
 	"time"
 
-	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
+	"github.com/mainflux/mainflux/users/policies"
 )
 
 var (
@@ -20,10 +20,10 @@ var (
 	// It can be due to networking error or invalid/unauthenticated request.
 	ErrThings = errors.New("failed to receive response from Things service")
 
-	// ErrExternalKey indicates a non-existent bootstrap configuration for given external key
+	// ErrExternalKey indicates a non-existent bootstrap configuration for given external key.
 	ErrExternalKey = errors.New("failed to get bootstrap configuration for given external key")
 
-	// ErrExternalKeySecure indicates error in getting bootstrap configuration for given encrypted external key
+	// ErrExternalKeySecure indicates error in getting bootstrap configuration for given encrypted external key.
 	ErrExternalKeySecure = errors.New("failed to get bootstrap configuration for given encrypted external key")
 
 	// ErrBootstrap indicates error in getting bootstrap configuration.
@@ -103,14 +103,14 @@ type ConfigReader interface {
 }
 
 type bootstrapService struct {
-	auth    mainflux.AuthServiceClient
+	auth    policies.AuthServiceClient
 	configs ConfigRepository
 	sdk     mfsdk.SDK
 	encKey  []byte
 }
 
 // New returns new Bootstrap service.
-func New(auth mainflux.AuthServiceClient, configs ConfigRepository, sdk mfsdk.SDK, encKey []byte) Service {
+func New(auth policies.AuthServiceClient, configs ConfigRepository, sdk mfsdk.SDK, encKey []byte) Service {
 	return &bootstrapService{
 		configs: configs,
 		sdk:     sdk,
@@ -140,7 +140,7 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 	}
 
 	id := cfg.MFThing
-	mfThing, err := bs.thing(token, id)
+	mfThing, err := bs.thing(id, token)
 	if err != nil {
 		return Config{}, errors.Wrap(errThingNotFound, err)
 	}
@@ -148,12 +148,12 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 	cfg.MFThing = mfThing.ID
 	cfg.Owner = owner
 	cfg.State = Inactive
-	cfg.MFKey = mfThing.Key
+	cfg.MFKey = mfThing.Credentials.Secret
 
 	saved, err := bs.configs.Save(cfg, toConnect)
 	if err != nil {
 		if id == "" {
-			if errT := bs.sdk.DeleteThing(cfg.MFThing, token); errT != nil {
+			if _, errT := bs.sdk.DisableThing(cfg.MFThing, token); errT != nil {
 				err = errors.Wrap(err, errT)
 			}
 		}
@@ -364,30 +364,31 @@ func (bs bootstrapService) identify(token string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	res, err := bs.auth.Identify(ctx, &mainflux.Token{Value: token})
+	res, err := bs.auth.Identify(ctx, &policies.Token{Value: token})
 	if err != nil {
 		return "", errors.ErrAuthentication
 	}
 
-	return res.GetEmail(), nil
+	return res.GetId(), nil
 }
 
 // Method thing retrieves Mainflux Thing creating one if an empty ID is passed.
-func (bs bootstrapService) thing(token, id string) (mfsdk.Thing, error) {
-	thingID := id
+func (bs bootstrapService) thing(id, token string) (mfsdk.Thing, error) {
+	var thing mfsdk.Thing
 	var err error
 
+	thing.ID = id
 	if id == "" {
-		thingID, err = bs.sdk.CreateThing(mfsdk.Thing{}, token)
+		thing, err = bs.sdk.CreateThing(mfsdk.Thing{}, token)
 		if err != nil {
 			return mfsdk.Thing{}, errors.Wrap(errCreateThing, err)
 		}
 	}
 
-	thing, err := bs.sdk.Thing(thingID, token)
+	thing, err = bs.sdk.Thing(thing.ID, token)
 	if err != nil {
 		if id != "" {
-			if errT := bs.sdk.DeleteThing(thingID, token); errT != nil {
+			if _, errT := bs.sdk.DisableThing(thing.ID, token); errT != nil {
 				err = errors.Wrap(err, errT)
 			}
 		}
@@ -430,7 +431,7 @@ func (bs bootstrapService) connectionChannels(channels, existing []string, token
 // Method updateList accepts config and channel IDs and returns three lists:
 // 1) IDs of Channels to be added
 // 2) IDs of Channels to be removed
-// 3) IDs of common Channels for these two configs
+// 3) IDs of common Channels for these two configs.
 func (bs bootstrapService) updateList(cfg Config, connections []string) (add, remove []string) {
 	disconnect := make(map[string]bool, len(cfg.MFChannels))
 	for _, c := range cfg.MFChannels {

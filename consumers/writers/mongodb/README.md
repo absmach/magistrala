@@ -17,7 +17,8 @@ default values.
 | MF_MONGO_WRITER_DB_HOST      | Default MongoDB database host                                                     | localhost              |
 | MF_MONGO_WRITER_DB_PORT      | Default MongoDB database port                                                     | 27017                  |
 | MF_MONGO_WRITER_CONFIG_PATH  | Config file path with Message broker subjects list, payload type and content-type | /config.toml           |
-| MF_JAEGER_URL                 | Jaeger server URL                                                        | localhost:6831 |
+| MF_JAEGER_URL                | Jaeger server URL                                                                 | localhost:6831         |
+| MF_SEND_TELEMETRY            | Send telemetry to mainflux call home server                                       | true                   |
 
 ## Deployment
 

@@ -6,60 +6,46 @@ package mocks
 import (
 	"context"
 
-	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/mainflux/mainflux/users/policies"
 	"google.golang.org/grpc"
 )
 
-var _ mainflux.AuthServiceClient = (*serviceMock)(nil)
+var _ policies.AuthServiceClient = (*serviceMock)(nil)
 
 type serviceMock struct {
 	users map[string]string
 }
 
 // NewAuthClient creates mock of users service.
-func NewAuthClient(users map[string]string) mainflux.AuthServiceClient {
+func NewAuthClient(users map[string]string) policies.AuthServiceClient {
 	return &serviceMock{users}
 }
 
-func (svc serviceMock) Identify(ctx context.Context, in *mainflux.Token, opts ...grpc.CallOption) (*mainflux.UserIdentity, error) {
-	if id, ok := svc.users[in.Value]; ok {
-		return &mainflux.UserIdentity{Email: id, Id: id}, nil
+func (svc serviceMock) Identify(ctx context.Context, in *policies.Token, opts ...grpc.CallOption) (*policies.UserIdentity, error) {
+	if id, ok := svc.users[in.GetValue()]; ok {
+		return &policies.UserIdentity{Id: id}, nil
 	}
 	return nil, errors.ErrAuthentication
 }
 
-func (svc serviceMock) Issue(ctx context.Context, in *mainflux.IssueReq, opts ...grpc.CallOption) (*mainflux.Token, error) {
+func (svc serviceMock) Issue(ctx context.Context, in *policies.IssueReq, opts ...grpc.CallOption) (*policies.Token, error) {
 	if id, ok := svc.users[in.GetEmail()]; ok {
-		switch in.Type {
-		default:
-			return &mainflux.Token{Value: id}, nil
-		}
+		return &policies.Token{Value: id}, nil
 	}
 	return nil, errors.ErrAuthentication
 }
 
-func (svc serviceMock) Authorize(ctx context.Context, req *mainflux.AuthorizeReq, _ ...grpc.CallOption) (r *mainflux.AuthorizeRes, err error) {
+func (svc serviceMock) Authorize(ctx context.Context, req *policies.AuthorizeReq, _ ...grpc.CallOption) (r *policies.AuthorizeRes, err error) {
 	panic("not implemented")
 }
 
-func (svc serviceMock) AddPolicy(ctx context.Context, in *mainflux.AddPolicyReq, opts ...grpc.CallOption) (*mainflux.AddPolicyRes, error) {
+func (svc serviceMock) AddPolicy(ctx context.Context, req *policies.AddPolicyReq, _ ...grpc.CallOption) (r *policies.AddPolicyRes, err error) {
 	panic("not implemented")
 }
-
-func (svc serviceMock) DeletePolicy(ctx context.Context, in *mainflux.DeletePolicyReq, opts ...grpc.CallOption) (*mainflux.DeletePolicyRes, error) {
+func (svc serviceMock) DeletePolicy(ctx context.Context, req *policies.DeletePolicyReq, _ ...grpc.CallOption) (r *policies.DeletePolicyRes, err error) {
 	panic("not implemented")
 }
-
-func (svc serviceMock) ListPolicies(ctx context.Context, in *mainflux.ListPoliciesReq, opts ...grpc.CallOption) (*mainflux.ListPoliciesRes, error) {
-	panic("not implemented")
-}
-
-func (svc serviceMock) Members(ctx context.Context, req *mainflux.MembersReq, _ ...grpc.CallOption) (r *mainflux.MembersRes, err error) {
-	panic("not implemented")
-}
-
-func (svc serviceMock) Assign(ctx context.Context, req *mainflux.Assignment, _ ...grpc.CallOption) (r *empty.Empty, err error) {
+func (svc serviceMock) ListPolicies(ctx context.Context, req *policies.ListPoliciesReq, _ ...grpc.CallOption) (r *policies.ListPoliciesRes, err error) {
 	panic("not implemented")
 }

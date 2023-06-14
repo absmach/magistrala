@@ -1,6 +1,7 @@
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
 
+// Package main contains postgres-reader main function to start the postgres-reader service.
 package main
 
 import (
@@ -10,6 +11,8 @@ import (
 	"os"
 
 	"github.com/jmoiron/sqlx"
+	chclient "github.com/mainflux/callhome/pkg/client"
+	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/internal"
 	authClient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
 	thingsClient "github.com/mainflux/mainflux/internal/clients/grpc/things"
@@ -33,8 +36,9 @@ const (
 )
 
 type config struct {
-	LogLevel  string `env:"MF_POSTGRES_READER_LOG_LEVEL"     envDefault:"info"`
-	JaegerURL string `env:"MF_JAEGER_URL"                    envDefault:"localhost:6831"`
+	LogLevel      string `env:"MF_POSTGRES_READER_LOG_LEVEL"     envDefault:"info"`
+	JaegerURL     string `env:"MF_JAEGER_URL"                    envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry bool   `env:"MF_SEND_TELEMETRY"                envDefault:"true"`
 }
 
 func main() {
@@ -58,7 +62,7 @@ func main() {
 	defer tcHandler.Close()
 	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
 
-	auth, authHandler, err := authClient.Setup(envPrefix, cfg.JaegerURL)
+	auth, authHandler, err := authClient.Setup(envPrefix, svcName, cfg.JaegerURL)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
@@ -81,7 +85,12 @@ func main() {
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
 		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 	}
-	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(repo, tc, auth, svcName, logger), logger)
+	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(repo, tc, auth, svcName), logger)
+
+	if cfg.SendTelemetry {
+		chc := chclient.New(svcName, mainflux.Version, logger, cancel)
+		go chc.CallHome(ctx)
+	}
 
 	g.Go(func() error {
 		return hs.Start()

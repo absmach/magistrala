@@ -11,24 +11,26 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux/bootstrap"
-	log "github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 )
 
 var _ bootstrap.Service = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
-	logger log.Logger
+	logger mflog.Logger
 	svc    bootstrap.Service
 }
 
-// NewLoggingMiddleware adds logging facilities to the core service.
-func NewLoggingMiddleware(svc bootstrap.Service, logger log.Logger) bootstrap.Service {
+// LoggingMiddleware adds logging facilities to the bootstrap service.
+func LoggingMiddleware(svc bootstrap.Service, logger mflog.Logger) bootstrap.Service {
 	return &loggingMiddleware{logger, svc}
 }
 
+// Add logs the add request. It logs the thing ID and the time it took to complete the request.
+// If the request fails, it logs the error.
 func (lm *loggingMiddleware) Add(ctx context.Context, token string, cfg bootstrap.Config) (saved bootstrap.Config, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method add for token %s and thing %s took %s to complete", token, saved.MFThing, time.Since(begin))
+		message := fmt.Sprintf("Method add using token %s with thing %s took %s to complete", token, saved.MFThing, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -39,9 +41,11 @@ func (lm *loggingMiddleware) Add(ctx context.Context, token string, cfg bootstra
 	return lm.svc.Add(ctx, token, cfg)
 }
 
+// View logs the view request. It logs the thing ID and the time it took to complete the request.
+// If the request fails, it logs the error.
 func (lm *loggingMiddleware) View(ctx context.Context, token, id string) (saved bootstrap.Config, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method view for token %s and thing %s took %s to complete", token, saved.MFThing, time.Since(begin))
+		message := fmt.Sprintf("Method view using token %s with thing %s took %s to complete", token, saved.MFThing, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -52,9 +56,11 @@ func (lm *loggingMiddleware) View(ctx context.Context, token, id string) (saved 
 	return lm.svc.View(ctx, token, id)
 }
 
+// Update logs the update request. It logs token, bootstrap thing ID and the time it took to complete the request.
+// If the request fails, it logs the error.
 func (lm *loggingMiddleware) Update(ctx context.Context, token string, cfg bootstrap.Config) (err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method update for token %s and thing %s took %s to complete", token, cfg.MFThing, time.Since(begin))
+		message := fmt.Sprintf("Method update using token %s with thing %s took %s to complete", token, cfg.MFThing, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -65,9 +71,11 @@ func (lm *loggingMiddleware) Update(ctx context.Context, token string, cfg boots
 	return lm.svc.Update(ctx, token, cfg)
 }
 
+// UpdateCert logs the update_cert request. It logs token, thing ID and the time it took to complete the request.
+// If the request fails, it logs the error.
 func (lm *loggingMiddleware) UpdateCert(ctx context.Context, token, thingID, clientCert, clientKey, caCert string) (err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method update_cert for thing with id %s took %s to complete", thingID, time.Since(begin))
+		message := fmt.Sprintf("Method update_cert using token %s with thing id %s took %s to complete", token, thingID, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -78,9 +86,11 @@ func (lm *loggingMiddleware) UpdateCert(ctx context.Context, token, thingID, cli
 	return lm.svc.UpdateCert(ctx, token, thingID, clientCert, clientKey, caCert)
 }
 
+// UpdateConnections logs the update_connections request. It logs token, bootstrap ID and the time it took to complete the request.
+// If the request fails, it logs the error.
 func (lm *loggingMiddleware) UpdateConnections(ctx context.Context, token, id string, connections []string) (err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method update_connections for token %s and thing %s took %s to complete", token, id, time.Since(begin))
+		message := fmt.Sprintf("Method update_connections using token %s with thing %s took %s to complete", token, id, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -91,9 +101,11 @@ func (lm *loggingMiddleware) UpdateConnections(ctx context.Context, token, id st
 	return lm.svc.UpdateConnections(ctx, token, id, connections)
 }
 
+// List logs the list request. It logs token, offset, limit and the time it took to complete the request.
+// If the request fails, it logs the error.
 func (lm *loggingMiddleware) List(ctx context.Context, token string, filter bootstrap.Filter, offset, limit uint64) (res bootstrap.ConfigsPage, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method list for token %s and offset %d and limit %d took %s to complete", token, offset, limit, time.Since(begin))
+		message := fmt.Sprintf("Method list using token %s with offset %d and limit %d took %s to complete", token, offset, limit, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
@@ -104,9 +116,11 @@ func (lm *loggingMiddleware) List(ctx context.Context, token string, filter boot
 	return lm.svc.List(ctx, token, filter, offset, limit)
 }
 
+// Remove logs the remove request. It logs token, bootstrap ID and the time it took to complete the request.
+// If the request fails, it logs the error.
 func (lm *loggingMiddleware) Remove(ctx context.Context, token, id string) (err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method remove for token %s and thing %s took %s to complete", token, id, time.Since(begin))
+		message := fmt.Sprintf("Method remove using token %s with thing %s took %s to complete", token, id, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return

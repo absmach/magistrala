@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/pkg/messaging/nats"
 	dockertest "github.com/ory/dockertest/v3"
@@ -42,7 +42,7 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	logger, err := logger.New(os.Stdout, "error")
+	logger, err := mflog.New(os.Stdout, "error")
 	if err != nil {
 		log.Fatalf(err.Error())
 	}

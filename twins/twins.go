@@ -8,10 +8,10 @@ import (
 	"time"
 )
 
-// Metadata stores arbitrary twin data
+// Metadata stores arbitrary twin data.
 type Metadata map[string]interface{}
 
-// Attribute stores individual attribute data
+// Attribute stores individual attribute data.
 type Attribute struct {
 	Name         string `json:"name"`
 	Channel      string `json:"channel"`
@@ -19,7 +19,7 @@ type Attribute struct {
 	PersistState bool   `json:"persist_state"`
 }
 
-// Definition stores entity's attributes
+// Definition stores entity's attributes.
 type Definition struct {
 	ID         int         `json:"id"`
 	Created    time.Time   `json:"created"`

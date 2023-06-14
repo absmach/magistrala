@@ -50,7 +50,7 @@ type totalResults struct {
 	AvgMsgsPerSec     float64 `json:"avg_msgs_per_sec"`
 }
 
-// JSONResults are used to export results as a JSON document
+// JSONResults are used to export results as a JSON document.
 type JSONResults struct {
 	Runs   []*runResults `json:"runs"`
 	Totals *totalResults `json:"totals"`

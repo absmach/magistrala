@@ -8,65 +8,13 @@ networks:
     driver: bridge
 
 volumes:
-  mainflux-auth-db-volume:
   mainflux-users-db-volume:
   mainflux-things-db-volume:
-  mainflux-keto-db-volume:
-  mainflux-auth-redis-volume:
+  mainflux-things-redis-volume:
   mainflux-es-redis-volume:
   mainflux-mqtt-broker-volume:
 
 services:
-  keto:
-    image: oryd/keto:v0.6.0-alpha.3
-    container_name: mainflux-keto
-    ports:
-      - ${MF_KETO_READ_REMOTE_PORT}:${MF_KETO_READ_REMOTE_PORT}
-      - ${MF_KETO_WRITE_REMOTE_PORT}:${MF_KETO_WRITE_REMOTE_PORT}
-    environment:
-      - DSN=postgresql://${MF_KETO_DB_USER}:${MF_KETO_DB_PASS}@keto-db:${MF_KETO_DB_PORT}/${MF_KETO_DB}?sslmode=disable
-    command: serve -c /home/ory/keto.yml
-    restart: on-failure
-    volumes:
-      - type: bind
-        source: ./keto
-        target: /home/ory
-    networks:
-      - mainflux-base-net
-    depends_on:
-      - keto-db
-
-  keto-migrate:
-    image: oryd/keto:v0.6.0-alpha.3
-    container_name: mainflux-keto-migrate
-    environment:
-      - KETO_WRITE_REMOTE=keto:${MF_KETO_WRITE_REMOTE_PORT}
-      - KETO_READ_REMOTE=keto:${MF_KETO_READ_REMOTE_PORT}
-      - DSN=postgresql://${MF_KETO_DB_USER}:${MF_KETO_DB_PASS}@keto-db:${MF_KETO_DB_PORT}/${MF_KETO_DB}?sslmode=disable
-    volumes:
-      - type: bind
-        source: ./keto
-        target: /home/ory
-    command: migrate up --all-namespaces -c /home/ory/keto.yml --yes
-    restart: on-failure
-    networks:
-      - mainflux-base-net
-    depends_on:
-      - keto-db
-
-  keto-db:
-    image: postgres:13.3-alpine
-    container_name: mainflux-keto-db
-    restart: on-failure
-    environment:
-      POSTGRES_USER: ${MF_KETO_DB_USER}
-      POSTGRES_PASSWORD: ${MF_KETO_DB_PASS}
-      POSTGRES_DB: ${MF_KETO_DB}
-    networks:
-      - mainflux-base-net
-    volumes:
-      - mainflux-keto-db-volume:/var/lib/postgresql/data
-
   nginx:
     image: nginx:1.23.3-alpine
     container_name: mainflux-nginx
@@ -107,99 +55,6 @@ services:
     ports:
     - 4222:4222
 
-  auth-db:
-    image: postgres:13.3-alpine
-    container_name: mainflux-auth-db
-    restart: on-failure
-    environment:
-      POSTGRES_USER: ${MF_AUTH_DB_USER}
-      POSTGRES_PASSWORD: ${MF_AUTH_DB_PASS}
-      POSTGRES_DB: ${MF_AUTH_DB}
-    networks:
-      - mainflux-base-net
-    volumes:
-      - mainflux-auth-db-volume:/var/lib/postgresql/data
-
-  auth:
-    image: mainflux/auth:${MF_RELEASE_TAG}
-    container_name: mainflux-auth
-    depends_on:
-      - auth-db
-      - keto
-    expose:
-      - ${MF_AUTH_GRPC_PORT}
-    restart: on-failure
-    environment:
-      MF_AUTH_LOG_LEVEL: ${MF_AUTH_LOG_LEVEL}
-      MF_AUTH_DB_HOST: auth-db
-      MF_AUTH_DB_PORT: ${MF_AUTH_DB_PORT}
-      MF_AUTH_DB_USER: ${MF_AUTH_DB_USER}
-      MF_AUTH_DB_PASS: ${MF_AUTH_DB_PASS}
-      MF_AUTH_DB: ${MF_AUTH_DB}
-      MF_AUTH_HTTP_PORT: ${MF_AUTH_HTTP_PORT}
-      MF_AUTH_GRPC_PORT: ${MF_AUTH_GRPC_PORT}
-      MF_AUTH_SECRET: ${MF_AUTH_SECRET}
-      MF_AUTH_LOGIN_TOKEN_DURATION: ${MF_AUTH_LOGIN_TOKEN_DURATION}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_KETO_READ_REMOTE_HOST: ${MF_KETO_READ_REMOTE_HOST}
-      MF_KETO_READ_REMOTE_PORT: ${MF_KETO_READ_REMOTE_PORT}
-      MF_KETO_WRITE_REMOTE_HOST: ${MF_KETO_WRITE_REMOTE_HOST}
-      MF_KETO_WRITE_REMOTE_PORT: ${MF_KETO_WRITE_REMOTE_PORT}
-    ports:
-      - ${MF_AUTH_HTTP_PORT}:${MF_AUTH_HTTP_PORT}
-      - ${MF_AUTH_GRPC_PORT}:${MF_AUTH_GRPC_PORT}
-    networks:
-      - mainflux-base-net
-
-  users-db:
-    image: postgres:13.3-alpine
-    container_name: mainflux-users-db
-    restart: on-failure
-    environment:
-      POSTGRES_USER: ${MF_USERS_DB_USER}
-      POSTGRES_PASSWORD: ${MF_USERS_DB_PASS}
-      POSTGRES_DB: ${MF_USERS_DB}
-    networks:
-      - mainflux-base-net
-    volumes:
-      - mainflux-users-db-volume:/var/lib/postgresql/data
-
-  users:
-    image: mainflux/users:${MF_RELEASE_TAG}
-    container_name: mainflux-users
-    volumes:
-      - ./templates/${MF_USERS_RESET_PWD_TEMPLATE}:/${MF_EMAIL_TEMPLATE}
-    depends_on:
-      - users-db
-      - auth
-    restart: on-failure
-    environment:
-      MF_USERS_LOG_LEVEL: ${MF_USERS_LOG_LEVEL}
-      MF_USERS_DB_HOST: users-db
-      MF_USERS_DB_PORT: ${MF_USERS_DB_PORT}
-      MF_USERS_DB_USER: ${MF_USERS_DB_USER}
-      MF_USERS_DB_PASS: ${MF_USERS_DB_PASS}
-      MF_USERS_DB: ${MF_USERS_DB}
-      MF_USERS_HTTP_PORT: ${MF_USERS_HTTP_PORT}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_EMAIL_HOST: ${MF_EMAIL_HOST}
-      MF_EMAIL_PORT: ${MF_EMAIL_PORT}
-      MF_EMAIL_USERNAME: ${MF_EMAIL_USERNAME}
-      MF_EMAIL_PASSWORD: ${MF_EMAIL_PASSWORD}
-      MF_EMAIL_FROM_ADDRESS: ${MF_EMAIL_FROM_ADDRESS}
-      MF_EMAIL_FROM_NAME: ${MF_EMAIL_FROM_NAME}
-      MF_EMAIL_TEMPLATE: ${MF_EMAIL_TEMPLATE}
-      MF_TOKEN_RESET_ENDPOINT: ${MF_TOKEN_RESET_ENDPOINT}
-      MF_AUTH_GRPC_URL: ${MF_AUTH_GRPC_URL}
-      MF_AUTH_GRPC_TIMEOUT: ${MF_AUTH_GRPC_TIMEOUT}
-      MF_USERS_ADMIN_EMAIL: ${MF_USERS_ADMIN_EMAIL}
-      MF_USERS_ADMIN_PASSWORD: ${MF_USERS_ADMIN_PASSWORD}
-      MF_USERS_ALLOW_SELF_REGISTER: ${MF_USERS_ALLOW_SELF_REGISTER}
-    ports:
-      - ${MF_USERS_HTTP_PORT}:${MF_USERS_HTTP_PORT}
-    networks:
-      - mainflux-base-net
-
   things-db:
     image: postgres:13.3-alpine
     container_name: mainflux-things-db
@@ -213,37 +68,36 @@ services:
     volumes:
       - mainflux-things-db-volume:/var/lib/postgresql/data
 
-  auth-redis:
-    image: redis:6.2.2-alpine
-    container_name: mainflux-auth-redis
-    restart: on-failure
-    networks:
-      - mainflux-base-net
-    volumes:
-      - mainflux-auth-redis-volume:/data
-
   things:
     image: mainflux/things:${MF_RELEASE_TAG}
     container_name: mainflux-things
     depends_on:
       - things-db
-      - auth
+      - users
     restart: on-failure
     environment:
       MF_THINGS_LOG_LEVEL: ${MF_THINGS_LOG_LEVEL}
-      MF_THINGS_DB_HOST: things-db
+      MF_THINGS_DB_HOST: ${MF_THINGS_DB_HOST}
       MF_THINGS_DB_PORT: ${MF_THINGS_DB_PORT}
       MF_THINGS_DB_USER: ${MF_THINGS_DB_USER}
       MF_THINGS_DB_PASS: ${MF_THINGS_DB_PASS}
       MF_THINGS_DB: ${MF_THINGS_DB}
-      MF_THINGS_CACHE_URL: auth-redis:${MF_REDIS_TCP_PORT}
-      MF_THINGS_ES_URL: es-redis:${MF_REDIS_TCP_PORT}
+      MF_THINGS_CACHE_URL: ${MF_THINGS_CACHE_URL}
+      MF_THINGS_CACHE_PASS: ${MF_THINGS_CACHE_PASS}
+      MF_THINGS_CACHE_DB: ${MF_THINGS_CACHE_DB}
+      MF_THINGS_ES_URL: ${MF_THINGS_ES_URL}
+      MF_THINGS_ES_PASS: ${MF_THINGS_ES_PASS}
+      MF_THINGS_ES_DB: ${MF_THINGS_ES_DB}
       MF_THINGS_HTTP_PORT: ${MF_THINGS_HTTP_PORT}
+      MF_JAEGER_URL: ${MF_JAEGER_URL}
       MF_THINGS_AUTH_HTTP_PORT: ${MF_THINGS_AUTH_HTTP_PORT}
       MF_THINGS_AUTH_GRPC_PORT: ${MF_THINGS_AUTH_GRPC_PORT}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_AUTH_GRPC_URL: ${MF_AUTH_GRPC_URL}
-      MF_AUTH_GRPC_TIMEOUT: ${MF_AUTH_GRPC_TIMEOUT}
+      MF_AUTH_GRPC_URL: ${MF_USERS_GRPC_URL}
+      MF_AUTH_GRPC_TIMEOUT: ${MF_USERS_GRPC_TIMEOUT}
+      MF_THINGS_STANDALONE_ID: ${MF_THINGS_STANDALONE_ID}
+      MF_THINGS_STANDALONE_TOKEN: ${MF_THINGS_STANDALONE_TOKEN}
+      MF_THINGS_CACHE_KEY_DURATION: ${MF_THINGS_CACHE_KEY_DURATION}
+      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
     ports:
       - ${MF_THINGS_HTTP_PORT}:${MF_THINGS_HTTP_PORT}
       - ${MF_THINGS_AUTH_HTTP_PORT}:${MF_THINGS_AUTH_HTTP_PORT}
@@ -251,8 +105,77 @@ services:
     networks:
       - mainflux-base-net
 
+  users-db:
+    image: postgres:15.1-alpine
+    container_name: mainflux-users-db
+    restart: on-failure
+    environment:
+      POSTGRES_USER: ${MF_USERS_DB_USER}
+      POSTGRES_PASSWORD: ${MF_USERS_DB_PASS}
+      POSTGRES_DB: ${MF_USERS_DB}
+    networks:
+      - mainflux-base-net
+    volumes:
+      - mainflux-users-db-volume:/var/lib/postgresql/data
+
+  things-redis:
+    image: redis:6.2.2-alpine
+    container_name: mainflux-things-redis
+    restart: on-failure
+    networks:
+      - mainflux-base-net
+    volumes:
+      - mainflux-things-redis-volume:/data
+
+  users:
+    image: mainflux/users:${MF_RELEASE_TAG}
+    container_name: mainflux-users
+    depends_on:
+      - users-db
+    restart: on-failure
+    environment:
+      MF_USERS_LOG_LEVEL: ${MF_USERS_LOG_LEVEL}
+      MF_USERS_DB_HOST: ${MF_USERS_DB_HOST}
+      MF_USERS_DB_PORT: ${MF_USERS_DB_PORT}
+      MF_USERS_DB_USER: ${MF_USERS_DB_USER}
+      MF_USERS_DB_PASS: ${MF_USERS_DB_PASS}
+      MF_USERS_DB: ${MF_USERS_DB}
+      MF_USERS_DB_SSL_MODE: ${MF_USERS_DB_SSL_MODE}
+      MF_USERS_DB_SSL_CERT: ${MF_USERS_DB_SSL_CERT}
+      MF_USERS_DB_SSL_KEY: ${MF_USERS_DB_SSL_KEY}
+      MF_USERS_DB_SSL_ROOT_CERT: ${MF_USERS_DB_SSL_ROOT_CERT}
+      MF_USERS_HTTP_PORT: ${MF_USERS_HTTP_PORT}
+      MF_USERS_GRPC_PORT: ${MF_USERS_GRPC_PORT}
+      MF_USERS_GRPC_URL: ${MF_USERS_GRPC_URL}
+      MF_USERS_GRPC_TIMEOUT: ${MF_USERS_GRPC_TIMEOUT}
+      MF_USERS_SERVER_CERT: ${MF_USERS_SERVER_CERT}
+      MF_USERS_SERVER_KEY: ${MF_USERS_SERVER_KEY}
+      MF_USERS_SECRET_KEY: ${MF_USERS_SECRET_KEY}
+      MF_USERS_ADMIN_EMAIL: ${MF_USERS_ADMIN_EMAIL}
+      MF_USERS_ADMIN_PASSWORD: ${MF_USERS_ADMIN_PASSWORD}
+      MF_USERS_PASS_REGEX: ${MF_USERS_PASS_REGEX}
+      MF_USERS_ACCESS_TOKEN_DURATION: ${MF_USERS_ACCESS_TOKEN_DURATION}
+      MF_USERS_REFRESH_TOKEN_DURATION: ${MF_USERS_REFRESH_TOKEN_DURATION}
+      MF_TOKEN_RESET_ENDPOINT: ${MF_TOKEN_RESET_ENDPOINT}
+      MF_JAEGER_URL: ${MF_JAEGER_URL}
+      MF_EMAIL_HOST: ${MF_EMAIL_HOST}
+      MF_EMAIL_PORT: ${MF_EMAIL_PORT}
+      MF_EMAIL_USERNAME: ${MF_EMAIL_USERNAME}
+      MF_EMAIL_PASSWORD: ${MF_EMAIL_PASSWORD}
+      MF_EMAIL_FROM_ADDRESS: ${MF_EMAIL_FROM_ADDRESS}
+      MF_EMAIL_FROM_NAME: ${MF_EMAIL_FROM_NAME}
+      MF_EMAIL_TEMPLATE: ${MF_EMAIL_TEMPLATE}
+      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
+    ports:
+      - ${MF_USERS_HTTP_PORT}:${MF_USERS_HTTP_PORT}
+      - ${MF_USERS_GRPC_PORT}:${MF_USERS_GRPC_PORT}
+    networks:
+      - mainflux-base-net
+    volumes:
+      - ./templates/${MF_USERS_RESET_PWD_TEMPLATE}:/email.tmpl     
+  
   jaeger:
-    image: jaegertracing/all-in-one:1.20
+    image: jaegertracing/all-in-one:1.38.0
     container_name: mainflux-jaeger
     ports:
       - ${MF_JAEGER_PORT}:${MF_JAEGER_PORT}/udp
@@ -296,7 +219,8 @@ services:
       MF_JAEGER_URL: ${MF_JAEGER_URL}
       MF_THINGS_AUTH_GRPC_URL: ${MF_THINGS_AUTH_GRPC_URL}
       MF_THINGS_AUTH_GRPC_TIMEOUT: ${MF_THINGS_AUTH_GRPC_TIMEOUT}
-      MF_AUTH_CACHE_URL: auth-redis:${MF_REDIS_TCP_PORT}
+      MF_AUTH_CACHE_URL: things-redis:${MF_REDIS_TCP_PORT}
+      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
     networks:
       - mainflux-base-net
 
@@ -314,6 +238,7 @@ services:
       MF_JAEGER_URL: ${MF_JAEGER_URL}
       MF_THINGS_AUTH_GRPC_URL: ${MF_THINGS_AUTH_GRPC_URL}
       MF_THINGS_AUTH_GRPC_TIMEOUT: ${MF_THINGS_AUTH_GRPC_TIMEOUT}
+      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
     ports:
       - ${MF_HTTP_ADAPTER_PORT}:${MF_HTTP_ADAPTER_PORT}
     networks:
@@ -342,6 +267,7 @@ services:
       MF_JAEGER_URL: ${MF_JAEGER_URL}
       MF_THINGS_AUTH_GRPC_URL: ${MF_THINGS_AUTH_GRPC_URL}
       MF_THINGS_AUTH_GRPC_TIMEOUT: ${MF_THINGS_AUTH_GRPC_TIMEOUT}
+      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
     ports:
       - ${MF_COAP_ADAPTER_PORT}:${MF_COAP_ADAPTER_PORT}/udp
       - ${MF_COAP_ADAPTER_PORT}:${MF_COAP_ADAPTER_PORT}/tcp
@@ -362,6 +288,7 @@ services:
       MF_JAEGER_URL: ${MF_JAEGER_URL}
       MF_THINGS_AUTH_GRPC_URL: ${MF_THINGS_AUTH_GRPC_URL}
       MF_THINGS_AUTH_GRPC_TIMEOUT: ${MF_THINGS_AUTH_GRPC_TIMEOUT}
+      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
     ports:
       - ${MF_WS_ADAPTER_PORT}:${MF_WS_ADAPTER_PORT}
     networks:

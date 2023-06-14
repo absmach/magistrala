@@ -29,13 +29,13 @@ var cmdChannels = []cobra.Command{
 				return
 			}
 
-			id, err := sdk.CreateChannel(channel, args[1])
+			channel, err := sdk.CreateChannel(channel, args[1])
 			if err != nil {
 				logError(err)
 				return
 			}
 
-			logCreated(id)
+			logJSON(channel)
 		},
 	},
 	{
@@ -82,45 +82,28 @@ var cmdChannels = []cobra.Command{
 		},
 	},
 	{
-		Use:   "update <JSON_string> <user_auth_token>",
+		Use:   "update <channel_id> <JSON_string> <user_auth_token>",
 		Short: "Update channel",
 		Long:  `Updates channel record`,
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
+			if len(args) != 3 {
 				logUsage(cmd.Use)
 				return
 			}
 
 			var channel mfxsdk.Channel
-			if err := json.Unmarshal([]byte(args[0]), &channel); err != nil {
+			if err := json.Unmarshal([]byte(args[1]), &channel); err != nil {
+				logError(err)
+				return
+			}
+			channel.ID = args[0]
+			channel, err := sdk.UpdateChannel(channel, args[2])
+			if err != nil {
 				logError(err)
 				return
 			}
 
-			if err := sdk.UpdateChannel(channel, args[1]); err != nil {
-				logError(err)
-				return
-			}
-
-			logOK()
-		},
-	},
-	{
-		Use:   "delete <channel_id> <user_auth_token>",
-		Short: "Delete channel",
-		Long:  `Delete channel by ID`,
-		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 2 {
-				logUsage(cmd.Use)
-				return
-			}
-
-			if err := sdk.DeleteChannel(args[0], args[1]); err != nil {
-				logError(err)
-				return
-			}
-
-			logOK()
+			logJSON(channel)
 		},
 	},
 	{
@@ -133,9 +116,8 @@ var cmdChannels = []cobra.Command{
 				return
 			}
 			pm := mfxsdk.PageMetadata{
-				Offset:       uint64(Offset),
-				Limit:        uint64(Limit),
-				Disconnected: false,
+				Offset: uint64(Offset),
+				Limit:  uint64(Limit),
 			}
 			cl, err := sdk.ThingsByChannel(args[0], pm, args[1])
 			if err != nil {
@@ -147,26 +129,41 @@ var cmdChannels = []cobra.Command{
 		},
 	},
 	{
-		Use:   "not-connected <channel_id> <user_auth_token>",
-		Short: "Not-connected list",
-		Long:  `List of Things not connected to a Channel`,
+		Use:   "enable <channel_id> <user_auth_token>",
+		Short: "Change channel status to enabled",
+		Long:  `Change channel status to enabled`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				logUsage(cmd.Use)
 				return
 			}
-			pm := mfxsdk.PageMetadata{
-				Offset:       uint64(Offset),
-				Limit:        uint64(Limit),
-				Disconnected: true,
-			}
-			cl, err := sdk.ThingsByChannel(args[0], pm, args[1])
+
+			channel, err := sdk.EnableChannel(args[0], args[1])
 			if err != nil {
 				logError(err)
 				return
 			}
 
-			logJSON(cl)
+			logJSON(channel)
+		},
+	},
+	{
+		Use:   "disable <channel_id> <user_auth_token>",
+		Short: "Change channel status to disabled",
+		Long:  `Change channel status to disabled`,
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 2 {
+				logUsage(cmd.Use)
+				return
+			}
+
+			channel, err := sdk.DisableChannel(args[0], args[1])
+			if err != nil {
+				logError(err)
+				return
+			}
+
+			logJSON(channel)
 		},
 	},
 }

@@ -21,8 +21,14 @@ import (
 type Client interface {
 	// In CoAP terminology, Token similar to the Session ID.
 	Token() string
+
+	// Handle handles incoming messages.
 	Handle(m *messaging.Message) error
+
+	// Cancel cancels the client.
 	Cancel() error
+
+	// Done returns a channel that's closed when the client is done.
 	Done() <-chan struct{}
 }
 

@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/twins"
 )
@@ -18,12 +18,12 @@ import (
 var _ twins.Service = (*loggingMiddleware)(nil)
 
 type loggingMiddleware struct {
-	logger log.Logger
+	logger mflog.Logger
 	svc    twins.Service
 }
 
 // LoggingMiddleware adds logging facilities to the core service.
-func LoggingMiddleware(svc twins.Service, logger log.Logger) twins.Service {
+func LoggingMiddleware(svc twins.Service, logger mflog.Logger) twins.Service {
 	return &loggingMiddleware{logger, svc}
 }
 

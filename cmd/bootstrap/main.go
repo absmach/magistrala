@@ -1,5 +1,7 @@
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
+
+// Package main contains bootstrap main function to start the bootstrap service.
 package main
 
 import (
@@ -8,11 +10,9 @@ import (
 	"log"
 	"os"
 
-	r "github.com/go-redis/redis/v8"
-	"github.com/jmoiron/sqlx"
+	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/bootstrap"
-	api "github.com/mainflux/mainflux/bootstrap/api"
+
 	bootstrapPg "github.com/mainflux/mainflux/bootstrap/postgres"
 	rediscons "github.com/mainflux/mainflux/bootstrap/redis/consumer"
 	redisprod "github.com/mainflux/mainflux/bootstrap/redis/producer"
@@ -25,7 +25,13 @@ import (
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
 	mflog "github.com/mainflux/mainflux/logger"
 	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
+	"github.com/mainflux/mainflux/users/policies"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/go-redis/redis/v8"
+	"github.com/jmoiron/sqlx"
+	"github.com/mainflux/mainflux/bootstrap"
+	"github.com/mainflux/mainflux/bootstrap/api"
 )
 
 const (
@@ -42,7 +48,8 @@ type config struct {
 	EncKey         string `env:"MF_BOOTSTRAP_ENCRYPT_KEY"      envDefault:"12345678910111213141516171819202"`
 	ESConsumerName string `env:"MF_BOOTSTRAP_EVENT_CONSUMER"   envDefault:"bootstrap"`
 	ThingsURL      string `env:"MF_THINGS_URL"                 envDefault:"http://localhost:9000"`
-	JaegerURL      string `env:"MF_JAEGER_URL"                 envDefault:"localhost:6831"`
+	JaegerURL      string `env:"MF_JAEGER_URL"                 envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry  bool   `env:"MF_SEND_TELEMETRY"             envDefault:"true"`
 }
 
 func main() {
@@ -76,7 +83,7 @@ func main() {
 	defer esClient.Close()
 
 	// Create new auth grpc client api
-	auth, authHandler, err := authClient.Setup(envPrefix, cfg.JaegerURL)
+	auth, authHandler, err := authClient.Setup(envPrefix, svcName, cfg.JaegerURL)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
@@ -92,6 +99,11 @@ func main() {
 		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 	}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, bootstrap.NewConfigReader([]byte(cfg.EncKey)), logger), logger)
+
+	if cfg.SendTelemetry {
+		chc := chclient.New(svcName, mainflux.Version, logger, cancel)
+		go chc.CallHome(ctx)
+	}
 
 	// Start servers
 	g.Go(func() error {
@@ -115,7 +127,7 @@ func main() {
 	}
 }
 
-func newService(auth mainflux.AuthServiceClient, db *sqlx.DB, logger mflog.Logger, esClient *r.Client, cfg config) bootstrap.Service {
+func newService(auth policies.AuthServiceClient, db *sqlx.DB, logger mflog.Logger, esClient *redis.Client, cfg config) bootstrap.Service {
 	repoConfig := bootstrapPg.NewConfigRepository(db, logger)
 
 	config := mfsdk.Config{
@@ -126,14 +138,14 @@ func newService(auth mainflux.AuthServiceClient, db *sqlx.DB, logger mflog.Logge
 
 	svc := bootstrap.New(auth, repoConfig, sdk, []byte(cfg.EncKey))
 	svc = redisprod.NewEventStoreMiddleware(svc, esClient)
-	svc = api.NewLoggingMiddleware(svc, logger)
+	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := internal.MakeMetrics(svcName, "api")
 	svc = api.MetricsMiddleware(svc, counter, latency)
 
 	return svc
 }
 
-func subscribeToThingsES(svc bootstrap.Service, client *r.Client, consumer string, logger mflog.Logger) {
+func subscribeToThingsES(svc bootstrap.Service, client *redis.Client, consumer string, logger mflog.Logger) {
 	eventStore := rediscons.NewEventStore(svc, client, consumer, logger)
 	logger.Info("Subscribed to Redis Event Store")
 	if err := eventStore.Subscribe(context.Background(), "mainflux.things"); err != nil {

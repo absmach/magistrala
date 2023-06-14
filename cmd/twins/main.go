@@ -1,6 +1,7 @@
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
 
+// Package main contains twins main function to start the twins service.
 package main
 
 import (
@@ -10,6 +11,7 @@ import (
 	"os"
 
 	"github.com/go-redis/redis/v8"
+	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/internal"
 	authClient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
@@ -24,15 +26,16 @@ import (
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
 	pstracing "github.com/mainflux/mainflux/pkg/messaging/tracing"
 	"github.com/mainflux/mainflux/pkg/uuid"
-	localusers "github.com/mainflux/mainflux/things/standalone"
+	localusers "github.com/mainflux/mainflux/things/clients/standalone"
 	"github.com/mainflux/mainflux/twins"
 	"github.com/mainflux/mainflux/twins/api"
 	twapi "github.com/mainflux/mainflux/twins/api/http"
 	twmongodb "github.com/mainflux/mainflux/twins/mongodb"
 	rediscache "github.com/mainflux/mainflux/twins/redis"
 	"github.com/mainflux/mainflux/twins/tracing"
-	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/mainflux/mainflux/users/policies"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -47,11 +50,12 @@ const (
 
 type config struct {
 	LogLevel        string `env:"MF_TWINS_LOG_LEVEL"          envDefault:"info"`
-	StandaloneEmail string `env:"MF_TWINS_STANDALONE_EMAIL"   envDefault:""`
+	StandaloneID    string `env:"MF_TWINS_STANDALONE_ID"      envDefault:""`
 	StandaloneToken string `env:"MF_TWINS_STANDALONE_TOKEN"   envDefault:""`
 	ChannelID       string `env:"MF_TWINS_CHANNEL_ID"         envDefault:""`
 	BrokerURL       string `env:"MF_BROKER_URL"               envDefault:"nats://localhost:4222"`
-	JaegerURL       string `env:"MF_JAEGER_URL"               envDefault:"localhost:6831"`
+	JaegerURL       string `env:"MF_JAEGER_URL"               envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry   bool   `env:"MF_SEND_TELEMETRY"           envDefault:"true"`
 }
 
 func main() {
@@ -74,29 +78,28 @@ func main() {
 	}
 	defer cacheClient.Close()
 
-	cacheTracer, cacheCloser, err := jaegerClient.NewTracer("twins_cache", cfg.JaegerURL)
-	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
-	}
-	defer cacheCloser.Close()
-
 	db, err := mongoClient.Setup(envPrefix)
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("failed to setup postgres database : %s", err))
 	}
 
-	dbTracer, dbCloser, err := jaegerClient.NewTracer("twins_db", cfg.JaegerURL)
+	tp, err := jaegerClient.NewProvider("twins_db", cfg.JaegerURL)
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
 	}
-	defer dbCloser.Close()
+	defer func() {
+		if err := tp.Shutdown(context.Background()); err != nil {
+			logger.Error(fmt.Sprintf("Error shutting down tracer provider: %v", err))
+		}
+	}()
+	tracer := tp.Tracer(svcName)
 
-	var auth mainflux.AuthServiceClient
-	switch cfg.StandaloneEmail != "" && cfg.StandaloneToken != "" {
+	var auth policies.AuthServiceClient
+	switch cfg.StandaloneID != "" && cfg.StandaloneToken != "" {
 	case true:
-		auth = localusers.NewAuthService(cfg.StandaloneEmail, cfg.StandaloneToken)
+		auth = localusers.NewAuthService(cfg.StandaloneID, cfg.StandaloneToken)
 	default:
-		authServiceClient, authHandler, err := authClient.Setup(envPrefix, cfg.JaegerURL)
+		authServiceClient, authHandler, err := authClient.Setup(envPrefix, svcName, cfg.JaegerURL)
 		if err != nil {
 			logger.Fatal(err.Error())
 		}
@@ -105,12 +108,6 @@ func main() {
 		logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 	}
 
-	tracer, traceCloser, err := jaegerClient.NewTracer(svcName, cfg.JaegerURL)
-	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
-	}
-	defer traceCloser.Close()
-
 	pubSub, err := brokers.NewPubSub(cfg.BrokerURL, queue, logger)
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err))
@@ -118,13 +115,18 @@ func main() {
 	pubSub = pstracing.NewPubSub(tracer, pubSub)
 	defer pubSub.Close()
 
-	svc := newService(ctx, svcName, pubSub, cfg.ChannelID, auth, dbTracer, db, cacheTracer, cacheClient, logger)
+	svc := newService(ctx, svcName, pubSub, cfg.ChannelID, auth, tracer, db, cacheClient, logger)
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
 		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 	}
-	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, twapi.MakeHandler(tracer, svc, logger), logger)
+	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, twapi.MakeHandler(svc, logger), logger)
+
+	if cfg.SendTelemetry {
+		chc := chclient.New(svcName, mainflux.Version, logger, cancel)
+		go chc.CallHome(ctx)
+	}
 
 	g.Go(func() error {
 		return hs.Start()
@@ -139,16 +141,16 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, id string, ps messaging.PubSub, chanID string, users mainflux.AuthServiceClient, dbTracer opentracing.Tracer, db *mongo.Database, cacheTracer opentracing.Tracer, cacheClient *redis.Client, logger mflog.Logger) twins.Service {
+func newService(ctx context.Context, id string, ps messaging.PubSub, chanID string, users policies.AuthServiceClient, tracer trace.Tracer, db *mongo.Database, cacheClient *redis.Client, logger mflog.Logger) twins.Service {
 	twinRepo := twmongodb.NewTwinRepository(db)
-	twinRepo = tracing.TwinRepositoryMiddleware(dbTracer, twinRepo)
+	twinRepo = tracing.TwinRepositoryMiddleware(tracer, twinRepo)
 
 	stateRepo := twmongodb.NewStateRepository(db)
-	stateRepo = tracing.StateRepositoryMiddleware(dbTracer, stateRepo)
+	stateRepo = tracing.StateRepositoryMiddleware(tracer, stateRepo)
 
 	idProvider := uuid.New()
 	twinCache := rediscache.NewTwinCache(cacheClient)
-	twinCache = tracing.TwinCacheMiddleware(cacheTracer, twinCache)
+	twinCache = tracing.TwinCacheMiddleware(tracer, twinCache)
 
 	svc := twins.New(ps, users, twinRepo, twinCache, stateRepo, idProvider, chanID, logger)
 	svc = api.LoggingMiddleware(svc, logger)

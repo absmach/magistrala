@@ -25,7 +25,6 @@ const (
 	updateRelationKey = "g_update"
 	listRelationKey   = "g_list"
 	deleteRelationKey = "g_delete"
-	entityType        = "group"
 )
 
 type service struct {
@@ -68,7 +67,11 @@ func (svc service) CreateGroup(ctx context.Context, token string, g groups.Group
 }
 
 func (svc service) ViewGroup(ctx context.Context, token string, id string) (groups.Group, error) {
-	if err := svc.authorizeByToken(ctx, token, id, listRelationKey); err != nil {
+	userID, err := svc.identify(ctx, token)
+	if err != nil {
+		return groups.Group{}, err
+	}
+	if err := svc.authorizeByID(ctx, userID, id, listRelationKey); err != nil {
 		return groups.Group{}, err
 	}
 
@@ -175,19 +178,11 @@ func (svc service) authorizeByID(ctx context.Context, subject, object, action st
 	if err := svc.policies.CheckAdmin(ctx, policy.Subject); err == nil {
 		return nil
 	}
-	aReq := policies.AccessRequest{Subject: subject, Object: object, Action: action, Entity: entityType}
-	if _, err := svc.policies.EvaluateUserAccess(ctx, aReq); err != nil {
+	aReq := policies.AccessRequest{Subject: subject, Object: object, Action: action}
+	if _, err := svc.policies.EvaluateGroupAccess(ctx, aReq); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (svc service) authorizeByToken(ctx context.Context, token, object, action string) error {
-	id, err := svc.identify(ctx, token)
-	if err != nil {
-		return err
-	}
-	return svc.authorizeByID(ctx, id, object, action)
 }
 
 func (svc service) identify(ctx context.Context, token string) (string, error) {

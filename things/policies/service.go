@@ -123,6 +123,11 @@ func (svc service) AddPolicy(ctx context.Context, token string, p Policy) (Polic
 
 		p.UpdatedAt = time.Now()
 		p.UpdatedBy = userID
+
+		if err := svc.policyCache.Remove(ctx, p); err != nil {
+			return Policy{}, err
+		}
+
 		return svc.policies.Update(ctx, p)
 	}
 

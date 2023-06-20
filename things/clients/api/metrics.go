@@ -69,14 +69,6 @@ func (ms *metricsMiddleware) UpdateClientTags(ctx context.Context, token string,
 	return ms.svc.UpdateClientTags(ctx, token, client)
 }
 
-func (ms *metricsMiddleware) ShareClient(ctx context.Context, token, userID, groupID, thingID string, actions []string) error {
-	defer func(begin time.Time) {
-		ms.counter.With("method", "share_thing").Add(1)
-		ms.latency.With("method", "share_thing").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-	return ms.svc.ShareClient(ctx, token, userID, groupID, thingID, actions)
-}
-
 func (ms *metricsMiddleware) UpdateClientSecret(ctx context.Context, token, oldSecret, newSecret string) (mfclients.Client, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "update_thing_secret").Add(1)

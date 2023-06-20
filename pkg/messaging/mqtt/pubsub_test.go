@@ -39,7 +39,7 @@ func TestPublisher(t *testing.T) {
 	client, err := newClient(address, "clientID1", brokerTimeout)
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	token := client.Subscribe(topic, qos, func(c mqtt.Client, m mqtt.Message) {
+	token := client.Subscribe(topic, qos, func(_ mqtt.Client, m mqtt.Message) {
 		msgChan <- m.Payload()
 	})
 	if ok := token.WaitTimeout(tokenTimeout); !ok {
@@ -47,7 +47,7 @@ func TestPublisher(t *testing.T) {
 	}
 	assert.Nil(t, token.Error(), fmt.Sprintf("got unexpected error: %s", token.Error()))
 
-	token = client.Subscribe(fmt.Sprintf("%s.%s", topic, subtopic), qos, func(c mqtt.Client, m mqtt.Message) {
+	token = client.Subscribe(fmt.Sprintf("%s.%s", topic, subtopic), qos, func(_ mqtt.Client, m mqtt.Message) {
 		msgChan <- m.Payload()
 	})
 	if ok := token.WaitTimeout(tokenTimeout); !ok {

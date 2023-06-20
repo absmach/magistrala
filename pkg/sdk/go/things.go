@@ -250,18 +250,12 @@ func (sdk mfSDK) IdentifyThing(key string) (string, errors.SDKError) {
 	return i.ID, nil
 }
 
-func (sdk mfSDK) ShareThing(thingID, groupID, userID string, actions []string, token string) errors.SDKError {
-	sreq := shareThingReq{GroupID: groupID, UserID: userID, Actions: actions}
-	data, err := json.Marshal(sreq)
-	if err != nil {
-		return errors.NewSDKError(err)
+func (sdk mfSDK) ShareThing(groupID, userID string, actions []string, token string) errors.SDKError {
+	policy := ConnectionIDs{
+		ChannelIDs: []string{groupID},
+		ThingIDs:   []string{userID},
+		Actions:    actions,
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.thingsURL, thingsEndpoint, thingID, shareEndpoint)
-	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, string(CTJSON), data, http.StatusOK)
-	if sdkerr != nil {
-		return sdkerr
-	}
-
-	return nil
+	return sdk.Connect(policy, token)
 }

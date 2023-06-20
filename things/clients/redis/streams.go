@@ -5,8 +5,6 @@ package redis
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/go-redis/redis/v8"
 	mfclients "github.com/mainflux/mainflux/pkg/clients"
@@ -114,32 +112,6 @@ func (es eventStore) update(ctx context.Context, operation string, cli mfclients
 	}
 
 	return cli, nil
-}
-
-func (es eventStore) ShareClient(ctx context.Context, token, userID, groupID, thingID string, actions []string) error {
-	if err := es.svc.ShareClient(ctx, token, userID, groupID, thingID, actions); err != nil {
-		return err
-	}
-	event := shareClientEvent{
-		thingID: thingID,
-		userID:  userID,
-		groupID: groupID,
-		actions: fmt.Sprintf("[%s]", strings.Join(actions, ",")),
-	}
-	values, err := event.Encode()
-	if err != nil {
-		return err
-	}
-	record := &redis.XAddArgs{
-		Stream:       streamID,
-		MaxLenApprox: streamLen,
-		Values:       values,
-	}
-	if err := es.client.XAdd(ctx, record).Err(); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (es eventStore) ViewClient(ctx context.Context, token, id string) (mfclients.Client, error) {

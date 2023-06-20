@@ -77,13 +77,6 @@ func MakeHandler(svc clients.Service, mux *bone.Mux, logger mflog.Logger) http.H
 		opts...,
 	))
 
-	mux.Post("/things/:thingID/share", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("share_thing"))(shareClientEndpoint(svc)),
-		decodeShareClient,
-		api.EncodeResponse,
-		opts...,
-	))
-
 	mux.Patch("/things/:thingID/secret", kithttp.NewServer(
 		otelkit.EndpointMiddleware(otelkit.WithOperation("update_thing_secret"))(updateClientSecretEndpoint(svc)),
 		decodeUpdateClientCredentials,
@@ -121,22 +114,6 @@ func decodeViewClient(_ context.Context, r *http.Request) (interface{}, error) {
 	req := viewClientReq{
 		token: apiutil.ExtractBearerToken(r),
 		id:    bone.GetValue(r, "thingID"),
-	}
-
-	return req, nil
-}
-
-func decodeShareClient(_ context.Context, r *http.Request) (interface{}, error) {
-	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return nil, errors.ErrUnsupportedContentType
-	}
-
-	req := shareClientReq{
-		token:    apiutil.ExtractBearerToken(r),
-		clientID: bone.GetValue(r, "thingID"),
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
 	}
 
 	return req, nil

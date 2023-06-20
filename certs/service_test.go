@@ -23,7 +23,7 @@ import (
 	"github.com/mainflux/mainflux/things/clients"
 	httpapi "github.com/mainflux/mainflux/things/clients/api"
 	thmocks "github.com/mainflux/mainflux/things/clients/mocks"
-	"github.com/mainflux/mainflux/users/policies"
+	upolicies "github.com/mainflux/mainflux/users/policies"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -47,6 +47,7 @@ const (
 
 func newService(tokens map[string]string) (certs.Service, error) {
 	ac := bsmocks.NewAuthClient(map[string]string{token: email})
+
 	server := newThingsServer(newThingsService(ac))
 
 	policies := []thmocks.MockSubjectSet{{Object: "token", Relation: clients.AdminRelationKey}}
@@ -74,7 +75,7 @@ func newService(tokens map[string]string) (certs.Service, error) {
 	return certs.New(auth, repo, sdk, pki), nil
 }
 
-func newThingsService(auth policies.AuthServiceClient) clients.Service {
+func newThingsService(auth upolicies.AuthServiceClient) clients.Service {
 	ths := make(map[string]mfclients.Client, thingsNum)
 	for i := 0; i < thingsNum; i++ {
 		id := strconv.Itoa(i + 1)

@@ -159,19 +159,6 @@ func updateClientTagsEndpoint(svc clients.Service) endpoint.Endpoint {
 	}
 }
 
-func shareClientEndpoint(svc clients.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(shareClientReq)
-		if err := req.validate(); err != nil {
-			return nil, err
-		}
-		if err := svc.ShareClient(ctx, req.token, req.UserID, req.GroupID, req.clientID, req.Actions); err != nil {
-			return nil, err
-		}
-		return shareClientRes{}, nil
-	}
-}
-
 func updateClientSecretEndpoint(svc clients.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateClientCredentialsReq)

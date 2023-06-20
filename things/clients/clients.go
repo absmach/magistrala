@@ -45,11 +45,6 @@ type Service interface {
 	// DisableClient logically disables the client identified with the provided ID
 	DisableClient(ctx context.Context, token, id string) (clients.Client, error)
 
-	// ShareClient gives actions associated with the thing to the given user IDs.
-	// The requester user identified by the token has to have a "write" relation
-	// on the thing in order to share the thing.
-	ShareClient(ctx context.Context, token, userID, groupID, thingID string, actions []string) error
-
 	// Identify returns thing ID for given thing key.
 	Identify(ctx context.Context, key string) (string, error)
 }

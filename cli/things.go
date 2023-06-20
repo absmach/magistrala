@@ -215,23 +215,23 @@ var cmdThings = []cobra.Command{
 		},
 	},
 	{
-		Use:   "share <thing_id> <group_id> <user_id> <allowed_actions> <user_auth_token>",
+		Use:   "share <channel_id> <user_id> <allowed_actions> <user_auth_token>",
 		Short: "Share thing with a user",
 		Long: "Share thing with a user\n" +
 			"Usage:\n" +
-			"\tmainflux-cli things share <thing_id> <group_id> <user_id> '[\"c_list\", \"c_delete\"]' $USERTOKEN\n",
+			"\tmainflux-cli things share <channel_id> <user_id> '[\"c_list\", \"c_delete\"]' $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 5 {
+			if len(args) != 4 {
 				logUsage(cmd.Use)
 				return
 			}
 			var actions []string
-			if err := json.Unmarshal([]byte(args[3]), &actions); err != nil {
+			if err := json.Unmarshal([]byte(args[2]), &actions); err != nil {
 				logError(err)
 				return
 			}
 
-			err := sdk.ShareThing(args[0], args[1], args[2], actions, args[4])
+			err := sdk.ShareThing(args[0], args[1], actions, args[3])
 			if err != nil {
 				logError(err)
 				return

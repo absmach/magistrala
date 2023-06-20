@@ -38,12 +38,6 @@ type tokenReq struct {
 	Secret   string `json:"secret"`
 }
 
-type shareThingReq struct {
-	GroupID string   `json:"group_id"`
-	UserID  string   `json:"user_id"`
-	Actions []string `json:"actions"`
-}
-
 type canAccessReq struct {
 	ClientSecret string `json:"secret"`
 	GroupID      string `json:"group_id"`

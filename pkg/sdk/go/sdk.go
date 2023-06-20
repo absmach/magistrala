@@ -370,12 +370,17 @@ type SDK interface {
 	//  fmt.Println(id)
 	IdentifyThing(key string) (string, errors.SDKError)
 
-	// ShareThing shares thing with other user.
+	// ShareThing shares thing with other user. It assumes that you have
+	// already created a group and added things to it. It also assumes that
+	// you have required policy to share a thing with the specified user.
+	//
+	// The `ShareThing` method calls the `Connect` method with the
+	// subject as `userID` rather than `thingID`.
 	//
 	// example:
-	//  err := sdk.ShareThing("thingID", "groupID", "userID", []string{"c_list", "c_delete"}, "token")
+	//  err := sdk.ShareThing("channelID", "userID", []string{"c_list", "c_delete"}, "token")
 	//  fmt.Println(err)
-	ShareThing(thingID, groupID, userID string, actions []string, token string) errors.SDKError
+	ShareThing(channelID, userID string, actions []string, token string) errors.SDKError
 
 	// CreateGroup creates new group and returns its id.
 	//

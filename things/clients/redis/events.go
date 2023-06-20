@@ -17,7 +17,6 @@ const (
 	clientCreate      = clientPrefix + "create"
 	clientUpdate      = clientPrefix + "update"
 	clientRemove      = clientPrefix + "remove"
-	clientShare       = clientPrefix + "share"
 	clientView        = clientPrefix + "view"
 	clientList        = clientPrefix + "list"
 	clientListByGroup = clientPrefix + "list_by_group"
@@ -32,7 +31,6 @@ var (
 	_ event = (*createClientEvent)(nil)
 	_ event = (*updateClientEvent)(nil)
 	_ event = (*removeClientEvent)(nil)
-	_ event = (*shareClientEvent)(nil)
 	_ event = (*viewClientEvent)(nil)
 	_ event = (*listClientEvent)(nil)
 	_ event = (*listClientByGroupEvent)(nil)
@@ -133,23 +131,6 @@ func (rce removeClientEvent) Encode() (map[string]interface{}, error) {
 		"status":     rce.status,
 		"updated_at": rce.updatedAt,
 		"updated_by": rce.updatedBy,
-	}, nil
-}
-
-type shareClientEvent struct {
-	thingID string
-	actions string
-	userID  string
-	groupID string
-}
-
-func (sce shareClientEvent) Encode() (map[string]interface{}, error) {
-	return map[string]interface{}{
-		"operation": clientShare,
-		"thing_id":  sce.thingID,
-		"actions":   sce.actions,
-		"user_id":   sce.userID,
-		"group_id":  sce.groupID,
 	}, nil
 }
 

@@ -208,27 +208,3 @@ func (req changeClientStatusReq) validate() error {
 	}
 	return nil
 }
-
-type shareClientReq struct {
-	token    string
-	clientID string
-	GroupID  string   `json:"group_id"`
-	UserID   string   `json:"user_id"`
-	Actions  []string `json:"actions"`
-}
-
-func (req shareClientReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
-	if req.clientID == "" || req.GroupID == "" || req.UserID == "" {
-		return apiutil.ErrMissingID
-	}
-
-	if len(req.Actions) == 0 {
-		return apiutil.ErrEmptyList
-	}
-
-	return nil
-}

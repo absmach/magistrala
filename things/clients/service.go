@@ -4,7 +4,6 @@ package clients
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/mainflux/mainflux"
@@ -278,36 +277,6 @@ func (svc service) Identify(ctx context.Context, key string) (string, error) {
 		return "", err
 	}
 	return client.ID, nil
-}
-
-// ShareClient shares a thing with a user.
-// We assume the user has already created the things anf group.
-func (svc service) ShareClient(ctx context.Context, token, userID, groupID, thingID string, actions []string) error {
-	id, err := svc.identify(ctx, token)
-	if err != nil {
-		return err
-	}
-
-	areq := tpolicies.AccessRequest{Subject: id, Object: groupID, Action: addRelationKey, Entity: groupEntityType}
-	if _, err := svc.policies.Authorize(ctx, areq); err != nil {
-		return fmt.Errorf("cannot share things using group %s to user %s: %s", groupID, userID, err)
-	}
-
-	areq = tpolicies.AccessRequest{Subject: id, Object: thingID, Action: addRelationKey, Entity: clientEntityType}
-	if _, err := svc.policies.Authorize(ctx, areq); err != nil {
-		return fmt.Errorf("cannot share thing %s with user %s: %s", thingID, userID, err)
-	}
-
-	policy := tpolicies.Policy{
-		Subject: userID,
-		Object:  groupID,
-		Actions: actions,
-	}
-	if _, err = svc.policies.AddPolicy(ctx, token, policy); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (svc service) identify(ctx context.Context, token string) (string, error) {

@@ -8,7 +8,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"io/ioutil"
 	"os"
 
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -62,7 +61,7 @@ func LoadCertificates(caPath, caKeyPath string) (tls.Certificate, *x509.Certific
 		return tlsCert, &x509.Certificate{}, err
 	}
 
-	b, err := ioutil.ReadFile(caPath)
+	b, err := os.ReadFile(caPath)
 	if err != nil {
 		return tlsCert, &x509.Certificate{}, err
 	}

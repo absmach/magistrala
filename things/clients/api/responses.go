@@ -18,7 +18,6 @@ var (
 	_ mainflux.Response = (*clientsPageRes)(nil)
 	_ mainflux.Response = (*viewMembersRes)(nil)
 	_ mainflux.Response = (*memberPageRes)(nil)
-	_ mainflux.Response = (*shareClientRes)(nil)
 )
 
 type pageRes struct {
@@ -149,19 +148,5 @@ func (res deleteClientRes) Headers() map[string]string {
 }
 
 func (res deleteClientRes) Empty() bool {
-	return false
-}
-
-type shareClientRes struct{}
-
-func (res shareClientRes) Code() int {
-	return http.StatusOK
-}
-
-func (res shareClientRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res shareClientRes) Empty() bool {
 	return false
 }

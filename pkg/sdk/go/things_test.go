@@ -1383,7 +1383,6 @@ func TestShareThing(t *testing.T) {
 
 	cases := []struct {
 		desc    string
-		thingID string
 		groupID string
 		userID  string
 		token   string
@@ -1391,7 +1390,6 @@ func TestShareThing(t *testing.T) {
 	}{
 		{
 			desc:    "share thing with valid token",
-			thingID: generateUUID(t),
 			groupID: generateUUID(t),
 			userID:  generateUUID(t),
 			token:   adminToken,
@@ -1399,7 +1397,6 @@ func TestShareThing(t *testing.T) {
 		},
 		{
 			desc:    "share thing with invalid token",
-			thingID: generateUUID(t),
 			groupID: generateUUID(t),
 			userID:  generateUUID(t),
 			token:   invalidToken,
@@ -1412,7 +1409,7 @@ func TestShareThing(t *testing.T) {
 		repoCall1 := pRepo.On("EvaluateThingAccess", mock.Anything, mock.Anything).Return(policies.Policy{}, nil)
 		repoCall3 := pRepo.On("Retrieve", mock.Anything, mock.Anything).Return(policies.PolicyPage{}, nil)
 		repoCall4 := pRepo.On("Save", mock.Anything, mock.Anything).Return(policies.Policy{}, nil)
-		err := mfsdk.ShareThing(tc.thingID, tc.groupID, tc.userID, []string{"c_list", "c_delete"}, tc.token)
+		err := mfsdk.ShareThing(tc.groupID, tc.userID, []string{"c_list", "c_delete"}, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		if tc.err == nil {
 			ok := repoCall4.Parent.AssertCalled(t, "Save", mock.Anything, mock.Anything)

@@ -110,19 +110,6 @@ func (tm *tracingMiddleware) ListClientsByGroup(ctx context.Context, token, grou
 
 }
 
-// ShareClient traces the "ShareClient" operation of the wrapped policies.Service.
-func (tm *tracingMiddleware) ShareClient(ctx context.Context, token, userID, groupID, thingID string, actions []string) error {
-	ctx, span := tm.tracer.Start(ctx, "svc_share_client", trace.WithAttributes(
-		attribute.String("userID", userID),
-		attribute.String("groupID", groupID),
-		attribute.String("thingID", thingID),
-		attribute.StringSlice("actions", actions),
-	))
-	defer span.End()
-
-	return tm.svc.ShareClient(ctx, token, userID, groupID, thingID, actions)
-}
-
 // ListMemberships traces the "ListMemberships" operation of the wrapped policies.Service.
 func (tm *tracingMiddleware) Identify(ctx context.Context, key string) (string, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_identify", trace.WithAttributes(attribute.String("key", key)))

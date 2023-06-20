@@ -131,7 +131,6 @@ func TestAddPolicy(t *testing.T) {
 		repoCall1 := pRepo.On("EvaluateThingAccess", mock.Anything, mock.Anything).Return(policies.Policy{}, tc.err)
 		repoCall2 := pRepo.On("Update", context.Background(), tc.policy).Return(tc.err)
 		repoCall3 := pRepo.On("Save", context.Background(), mock.Anything).Return(tc.policy, tc.err)
-		repoCall4 := pRepo.On("Retrieve", context.Background(), mock.Anything).Return(tc.page, nil)
 		_, err := svc.AddPolicy(context.Background(), tc.token, tc.policy)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		if err == nil {
@@ -145,7 +144,6 @@ func TestAddPolicy(t *testing.T) {
 		repoCall2.Unset()
 		repoCall3.Parent.AssertCalled(t, "Save", context.Background(), mock.Anything)
 		repoCall3.Unset()
-		repoCall4.Unset()
 	}
 
 }

@@ -73,7 +73,7 @@ func TestPoliciesSave(t *testing.T) {
 				Object:  uid,
 				Actions: []string{"c_delete"},
 			},
-			err: errors.ErrConflict,
+			err: nil,
 		},
 	}
 

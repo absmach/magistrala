@@ -109,45 +109,26 @@ func (svc service) AddPolicy(ctx context.Context, token string, p Policy) (Polic
 	if err := p.Validate(); err != nil {
 		return Policy{}, err
 	}
-	pm := Page{Subject: p.Subject, Object: p.Object, Offset: 0, Limit: 1}
-	page, err := svc.policies.Retrieve(ctx, pm)
-	if err != nil {
-		return Policy{}, err
-	}
-
-	// If the policy already exists, replace the actions
-	if len(page.Policies) == 1 {
-		if err := svc.checkPolicy(ctx, userID, p); err != nil {
-			return Policy{}, err
-		}
-
-		p.UpdatedAt = time.Now()
-		p.UpdatedBy = userID
-
-		if err := svc.policyCache.Remove(ctx, p); err != nil {
-			return Policy{}, err
-		}
-
-		return svc.policies.Update(ctx, p)
-	}
 
 	p.OwnerID = userID
 	p.CreatedAt = time.Now()
 
+	// incase the policy exists, use these for update.
+	p.UpdatedAt = time.Now()
+	p.UpdatedBy = userID
+
+	if err := svc.policyCache.Remove(ctx, p); err != nil {
+		return Policy{}, err
+	}
+
 	// If the client is admin, add the policy
 	if err := svc.checkAdmin(ctx, userID); err == nil {
-		if err := svc.policyCache.Put(ctx, p); err != nil {
-			return Policy{}, err
-		}
 		return svc.policies.Save(ctx, p)
 	}
 
 	// If the client has `g_add` action on the object or is the owner of the object, add the policy
 	ar := AccessRequest{Subject: userID, Object: p.Object, Action: "g_add"}
 	if _, err := svc.policies.EvaluateGroupAccess(ctx, ar); err == nil {
-		if err := svc.policyCache.Put(ctx, p); err != nil {
-			return Policy{}, err
-		}
 		return svc.policies.Save(ctx, p)
 	}
 

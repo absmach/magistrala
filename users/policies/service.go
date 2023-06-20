@@ -65,25 +65,12 @@ func (svc service) AddPolicy(ctx context.Context, token string, p Policy) error 
 		return err
 	}
 
-	pm := Page{Subject: p.Subject, Object: p.Object, Offset: 0, Limit: 1}
-	page, err := svc.policies.RetrieveAll(ctx, pm)
-	if err != nil {
-		return err
-	}
-
-	// If the policy already exists, replace the actions
-	if len(page.Policies) == 1 {
-		if err := svc.checkPolicy(ctx, id, p); err != nil {
-			return err
-		}
-
-		p.UpdatedAt = time.Now()
-		p.UpdatedBy = id
-		return svc.policies.Update(ctx, p)
-	}
-
 	p.OwnerID = id
 	p.CreatedAt = time.Now()
+
+	// incase the policy exists, use these for update.
+	p.UpdatedAt = time.Now()
+	p.UpdatedBy = id
 
 	// check if the client is admin
 	if err = svc.policies.CheckAdmin(ctx, id); err == nil {

@@ -32,7 +32,9 @@ func NewRepository(db postgres.Database) policies.Repository {
 
 func (pr prepo) Save(ctx context.Context, policy policies.Policy) error {
 	q := `INSERT INTO policies (owner_id, subject, object, actions, created_at)
-		VALUES (:owner_id, :subject, :object, :actions, :created_at)`
+		VALUES (:owner_id, :subject, :object, :actions, :created_at)
+		ON CONFLICT (subject, object) DO UPDATE SET actions = :actions,
+		updated_at = :updated_at, updated_by = :updated_by`
 
 	dbp, err := toDBPolicy(policy)
 	if err != nil {

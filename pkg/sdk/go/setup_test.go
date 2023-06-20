@@ -83,14 +83,14 @@ func generateValidToken(t *testing.T, svc clients.Service, cRepo *umocks.Reposit
 	token, err := svc.IssueToken(context.Background(), client.Credentials.Identity, client.Credentials.Secret)
 	assert.True(t, errors.Contains(err, nil), fmt.Sprintf("Create token expected nil got %s\n", err))
 	repoCall.Unset()
-	
+
 	return token.AccessToken
 }
 
 func generateUUID(t *testing.T) string {
 	ulid, err := idProvider.ID()
 	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-	
+
 	return ulid
 }
 
@@ -156,16 +156,6 @@ func convertUserPolicies(cs []sdk.Policy) []upolicies.Policy {
 	return ccs
 }
 
-func convertThingPolicies(cs []sdk.Policy) []tpolicies.Policy {
-	ccs := []tpolicies.Policy{}
-
-	for _, c := range cs {
-		ccs = append(ccs, convertThingPolicy(c))
-	}
-
-	return ccs
-}
-
 func convertUserPolicy(sp sdk.Policy) upolicies.Policy {
 	return upolicies.Policy{
 		OwnerID:   sp.OwnerID,
@@ -218,7 +208,7 @@ func convertClientPage(p sdk.PageMetadata) mfclients.Page {
 	if err != nil {
 		return mfclients.Page{}
 	}
-	
+
 	return mfclients.Page{
 		Status:   status,
 		Total:    p.Total,
@@ -248,7 +238,7 @@ func convertGroup(g sdk.Group) mfgroups.Group {
 	if err != nil {
 		return mfgroups.Group{}
 	}
-	
+
 	return mfgroups.Group{
 		ID:          g.ID,
 		Owner:       g.OwnerID,
@@ -288,7 +278,7 @@ func convertClient(c sdk.User) mfclients.Client {
 	if err != nil {
 		return mfclients.Client{}
 	}
-	
+
 	return mfclients.Client{
 		ID:          c.ID,
 		Name:        c.Name,
@@ -354,17 +344,6 @@ func convertUserPolicyPage(pp sdk.PolicyPage) upolicies.PolicyPage {
 			Offset: pp.Offset,
 		},
 		Policies: convertUserPolicies(pp.Policies),
-	}
-}
-
-func convertThingPolicyPage(pp sdk.PolicyPage) tpolicies.PolicyPage {
-	return tpolicies.PolicyPage{
-		Page: tpolicies.Page{
-			Limit:  pp.Limit,
-			Total:  pp.Total,
-			Offset: pp.Offset,
-		},
-		Policies: convertThingPolicies(pp.Policies),
 	}
 }
 

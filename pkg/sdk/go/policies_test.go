@@ -28,8 +28,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-const addExistingPolicyDesc = "add existing policy"
-
 var utadminPolicy = umocks.SubjectSet{Subject: "things", Relation: []string{"g_add"}}
 
 func newPolicyServer(svc upolicies.Service) *httptest.Server {
@@ -75,7 +73,7 @@ func TestCreatePolicy(t *testing.T) {
 			err:   nil,
 		},
 		{
-			desc: addExistingPolicyDesc,
+			desc: "add existing policy",
 			policy: sdk.Policy{
 				Subject: subject,
 				Object:  object,
@@ -153,25 +151,15 @@ func TestCreatePolicy(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall := pRepo.On("CheckAdmin", mock.Anything, mock.Anything).Return(nil)
-		repoCall1 := pRepo.On("RetrieveAll", mock.Anything, mock.Anything).Return(convertUserPolicyPage(tc.page), nil)
-		repoCall2 := pRepo.On("Update", mock.Anything, mock.Anything).Return(tc.err)
-		repoCall3 := pRepo.On("Save", mock.Anything, mock.Anything).Return(tc.err)
+		repoCall1 := pRepo.On("Save", mock.Anything, mock.Anything).Return(tc.err)
 		err := mfsdk.CreatePolicy(tc.policy, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		if tc.err == nil {
-			ok := repoCall.Parent.AssertCalled(t, "RetrieveAll", mock.Anything, mock.Anything)
-			assert.True(t, ok, fmt.Sprintf("RetrieveAll was not called on %s", tc.desc))
-			ok = repoCall2.Parent.AssertCalled(t, "Save", mock.Anything, mock.Anything)
+			ok := repoCall1.Parent.AssertCalled(t, "Save", mock.Anything, mock.Anything)
 			assert.True(t, ok, fmt.Sprintf("Save was not called on %s", tc.desc))
-			if tc.desc == addExistingPolicyDesc {
-				ok = repoCall1.Parent.AssertCalled(t, "Update", mock.Anything, mock.Anything)
-				assert.True(t, ok, fmt.Sprintf("Update was not called on %s", tc.desc))
-			}
 		}
 		repoCall.Unset()
 		repoCall1.Unset()
-		repoCall2.Unset()
-		repoCall3.Unset()
 	}
 }
 
@@ -315,7 +303,7 @@ func TestAssign(t *testing.T) {
 			err:   nil,
 		},
 		{
-			desc: addExistingPolicyDesc,
+			desc: "add existing policy",
 			policy: sdk.Policy{
 				Subject: subject,
 				Object:  object,
@@ -393,25 +381,15 @@ func TestAssign(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall := pRepo.On("CheckAdmin", mock.Anything, mock.Anything).Return(nil)
-		repoCall1 := pRepo.On("RetrieveAll", mock.Anything, mock.Anything).Return(convertUserPolicyPage(tc.page), nil)
-		repoCall2 := pRepo.On("Update", mock.Anything, mock.Anything).Return(tc.err)
-		repoCall3 := pRepo.On("Save", mock.Anything, mock.Anything).Return(tc.err)
+		repoCall1 := pRepo.On("Save", mock.Anything, mock.Anything).Return(tc.err)
 		err := mfsdk.Assign(tc.policy.Actions, tc.policy.Subject, tc.policy.Object, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		if tc.err == nil {
-			ok := repoCall.Parent.AssertCalled(t, "RetrieveAll", mock.Anything, mock.Anything)
-			assert.True(t, ok, fmt.Sprintf("RetrieveAll was not called on %s", tc.desc))
-			ok = repoCall2.Parent.AssertCalled(t, "Save", mock.Anything, mock.Anything)
+			ok := repoCall1.Parent.AssertCalled(t, "Save", mock.Anything, mock.Anything)
 			assert.True(t, ok, fmt.Sprintf("Save was not called on %s", tc.desc))
-			if tc.desc == addExistingPolicyDesc {
-				ok = repoCall1.Parent.AssertCalled(t, "Update", mock.Anything, mock.Anything)
-				assert.True(t, ok, fmt.Sprintf("Update was not called on %s", tc.desc))
-			}
 		}
 		repoCall.Unset()
 		repoCall1.Unset()
-		repoCall2.Unset()
-		repoCall3.Unset()
 	}
 }
 func TestUpdatePolicy(t *testing.T) {
@@ -800,7 +778,7 @@ func TestConnect(t *testing.T) {
 			err:   nil,
 		},
 		{
-			desc: addExistingPolicyDesc,
+			desc: "add existing policy",
 			policy: sdk.Policy{
 				Subject: subject,
 				Object:  object,
@@ -877,25 +855,15 @@ func TestConnect(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := pRepo.On("Retrieve", mock.Anything, mock.Anything).Return(convertThingPolicyPage(tc.page), nil)
-		repoCall1 := pRepo.On("Update", mock.Anything, mock.Anything).Return(convertThingPolicy(tc.policy), tc.err)
-		repoCall2 := pRepo.On("Save", mock.Anything, mock.Anything).Return(convertThingPolicy(tc.policy), tc.err)
+		repoCall := pRepo.On("Save", mock.Anything, mock.Anything).Return(convertThingPolicy(tc.policy), tc.err)
 		conn := sdk.ConnectionIDs{ChannelIDs: []string{tc.policy.Object}, ThingIDs: []string{tc.policy.Subject}, Actions: tc.policy.Actions}
 		err := mfsdk.Connect(conn, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		if tc.err == nil {
-			ok := repoCall.Parent.AssertCalled(t, "Retrieve", mock.Anything, mock.Anything)
-			assert.True(t, ok, fmt.Sprintf("Retrieve was not called on %s", tc.desc))
-			ok = repoCall2.Parent.AssertCalled(t, "Save", mock.Anything, mock.Anything)
+			ok := repoCall.Parent.AssertCalled(t, "Save", mock.Anything, mock.Anything)
 			assert.True(t, ok, fmt.Sprintf("Save was not called on %s", tc.desc))
-			if tc.desc == addExistingPolicyDesc {
-				ok = repoCall1.Parent.AssertCalled(t, "Update", mock.Anything, mock.Anything)
-				assert.True(t, ok, fmt.Sprintf("Update was not called on %s", tc.desc))
-			}
 		}
 		repoCall.Unset()
-		repoCall1.Unset()
-		repoCall2.Unset()
 	}
 }
 
@@ -939,7 +907,7 @@ func TestConnectThing(t *testing.T) {
 			err:   nil,
 		},
 		{
-			desc: addExistingPolicyDesc,
+			desc: "add existing policy",
 			policy: sdk.Policy{
 				Subject: subject,
 				Object:  object,
@@ -1016,24 +984,14 @@ func TestConnectThing(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := pRepo.On("Retrieve", mock.Anything, mock.Anything).Return(convertThingPolicyPage(tc.page), nil)
-		repoCall1 := pRepo.On("Update", mock.Anything, mock.Anything).Return(convertThingPolicy(tc.policy), tc.err)
-		repoCall2 := pRepo.On("Save", mock.Anything, mock.Anything).Return(convertThingPolicy(tc.policy), tc.err)
+		repoCall := pRepo.On("Save", mock.Anything, mock.Anything).Return(convertThingPolicy(tc.policy), tc.err)
 		err := mfsdk.ConnectThing(tc.policy.Subject, tc.policy.Object, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		if tc.err == nil {
-			ok := repoCall.Parent.AssertCalled(t, "Retrieve", mock.Anything, mock.Anything)
-			assert.True(t, ok, fmt.Sprintf("Retrieve was not called on %s", tc.desc))
-			ok = repoCall2.Parent.AssertCalled(t, "Save", mock.Anything, mock.Anything)
+			ok := repoCall.Parent.AssertCalled(t, "Save", mock.Anything, mock.Anything)
 			assert.True(t, ok, fmt.Sprintf("Save was not called on %s", tc.desc))
-			if tc.desc == addExistingPolicyDesc {
-				ok = repoCall1.Parent.AssertCalled(t, "Update", mock.Anything, mock.Anything)
-				assert.True(t, ok, fmt.Sprintf("Update was not called on %s", tc.desc))
-			}
 		}
 		repoCall.Unset()
-		repoCall1.Unset()
-		repoCall2.Unset()
 	}
 }
 

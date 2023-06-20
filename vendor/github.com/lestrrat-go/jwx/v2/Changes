@@ -4,6 +4,73 @@ Changes
 v2 has many incompatibilities with v1. To see the full list of differences between
 v1 and v2, please read the Changes-v2.md file (https://github.com/lestrrat-go/jwx/blob/develop/v2/Changes-v2.md)
 
+v2.0.11 - 14 Jun 2023
+[Security]
+  * Potential Padding Oracle Attack Vulnerability and Timing Attack Vulnerability 
+    for JWE AES-CBC encrypted payloads affecting all v2 releases up to v2.0.10,
+    all v1 releases up to v1.2.25, and all v0 releases up to v0.9.2 have been reported by
+    @shogo82148.
+
+    Please note that v0 versions will NOT receive fixes.
+    This release fixes these vulnerabilities for the v2 series.
+
+v2.0.10 - 12 Jun 2023
+[New Features]
+  * [jwe] (EXPERIMENTAL) Added `jwe.KeyEncrypter` and `jwe.KeyDecrypter` interfaces
+    that works in similar ways as how `crypto.Signer` works for signature
+    generation and verification. It can act as the interface for your encryption/decryption
+    keys that are for example stored in an hardware device.
+
+    This feature is labeled experimental because the API for the above interfaces have not
+    been battle tested, and may need to changed yet. Please be aware that until the API
+    is deemed stable, you may have to adapat our code to these possible changes,
+    _even_ during minor version upgrades of this library.
+   
+[Bug fixes]
+  * Registering JWS signers/verifiers did not work since v2.0.0, because the
+    way we handle algorithm names changed in 2aa98ce6884187180a7145b73da78c859dd46c84.
+    (We previously thought that this would be checked by the example code, but it
+     apparently failed to flag us properly)
+
+    The logic behind managing the internal database has been fixed, and
+    `jws.RegisterSigner` and `jws.RegisterVerifier` now properly hooks into the new
+    `jwa.RegisterSignatureAlgorithm` to automatically register new algorithm names
+    (#910, #911)
+[Miscellaneous]
+  * Added limited support for github.com/segmentio/asm/base64. Compile your code
+    with the `jwx_asmbase64` build tag. This feature is EXPERIMENTAL.
+
+    Through limited testing, the use of a faster base64 library provide 1~5% increase
+    in throughput on average. It might make more difference if the input/output is large.
+    If you care about this performance improvement, you should probably enable
+    `goccy` JSON parser as well, by specifying `jwx_goccy,jwx_asmbase64` in your build call.
+  * Slightly changed the way global variables underneath `jwk.Fetch` are initialized and
+    configured. `jwk.Fetch` creates an object that spawns wokers to fetch JWKS when it's
+    first called.
+    You can now also use `jwk.SetGlobalFetcher()` to set a fetcher object which you can
+    control.
+
+v2.0.9 - 21 Mar 2023
+[Security Fixes]
+  * Updated use of golang.org/x/crypto to v0.7.0
+[Bug fixes]
+  * Emitted PEM file for EC private key types used the wrong PEM armor (#875)
+[Miscellaneous]
+  * Banners for generated files have been modified to allow tools to pick them up (#867)
+  * Remove unused variables around ReadFileOption (#866)
+  * Fix test failures
+  * Support bazel out of the box
+  * Now you can create JWS messages using `{"alg":"none"}`, by calling `jws.Sign()`
+    with `jws.WithInsecureNoSignature()` option. (#888, #890).
+
+    Note that there is no way to call
+    `jws.Verify()` while allowing `{"alg":"none"}` as you wouldn't be _verifying_
+    the message if we allowed the "none" algorithm. `jws.Parse()` will parse such
+    messages witout verification.
+
+    `jwt` also allows you to sign using alg="none", but there's no symmetrical
+    way to verify such messages.
+
 v2.0.8 - 25 Nov 2022
 [Security Fixes]
   * [jws][jwe] Starting from go 1.19, code related to elliptic algorithms

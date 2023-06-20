@@ -7,6 +7,7 @@ import (
 )
 
 type identHeaders struct{}
+type identInsecureNoSignature struct{}
 
 // WithHeaders allows you to specify extra header values to include in the
 // final JWS message
@@ -58,6 +59,10 @@ func (w *withKey) Protected(v Headers) Headers {
 // types. It is this way so that the value in `(jwk.Key).Algorithm()` can be directly
 // passed to the option. If you specify other algorithm types such as `jwa.ContentEncryptionAlgorithm`,
 // then you will get an error when `jws.Sign()` or `jws.Verify()` is executed.
+//
+// The `alg` parameter cannot be "none" (jwa.NoSignature) for security reasons.
+// You will have to use a separate, more explicit option to allow the use of "none"
+// algorithm.
 //
 // The algorithm specified in the `alg` parameter must be able to support
 // the type of key you provided, otherwise an error is returned.
@@ -156,4 +161,44 @@ func WithVerifyAuto(f jwk.Fetcher, options ...jwk.FetchOption) VerifyOption {
 		fetcher: f,
 		options: options,
 	})
+}
+
+type withInsecureNoSignature struct {
+	protected Headers
+}
+
+// This exist as escape hatches to modify the header values after the fact
+func (w *withInsecureNoSignature) Protected(v Headers) Headers {
+	if w.protected == nil && v != nil {
+		w.protected = v
+	}
+	return w.protected
+}
+
+// WithInsecureNoSignature creates an option that allows the user to use the
+// "none" signature algorithm.
+//
+// Please note that this is insecure, and should never be used in production
+// (this is exactly why specifying "none"/jwa.NoSignature to `jws.WithKey()`
+// results in an error when `jws.Sign()` is called -- we do not allow using
+// "none" by accident)
+//
+// TODO: create specific sub-option set for this option
+func WithInsecureNoSignature(options ...WithKeySuboption) SignOption {
+	var protected Headers
+	for _, option := range options {
+		//nolint:forcetypeassert
+		switch option.Ident() {
+		case identProtectedHeaders{}:
+			protected = option.Value().(Headers)
+		}
+	}
+
+	return &signOption{
+		option.New(identInsecureNoSignature{},
+			&withInsecureNoSignature{
+				protected: protected,
+			},
+		),
+	}
 }

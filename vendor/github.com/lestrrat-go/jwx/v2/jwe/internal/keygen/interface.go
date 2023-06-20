@@ -12,9 +12,6 @@ type Generator interface {
 	Generate() (ByteSource, error)
 }
 
-// StaticKeyGenerate uses a static byte buffer to provide keys.
-type Static []byte
-
 // RandomKeyGenerate generates random keys
 type Random struct {
 	keysize int

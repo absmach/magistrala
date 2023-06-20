@@ -85,11 +85,13 @@ func (s *Signature) UnmarshalJSON(data []byte) error {
 		s.protected = prt
 	}
 
-	decoded, err := base64.DecodeString(*sup.Signature)
-	if err != nil {
-		return fmt.Errorf(`failed to base decode signature: %w`, err)
+	if sup.Signature != nil {
+		decoded, err := base64.DecodeString(*sup.Signature)
+		if err != nil {
+			return fmt.Errorf(`failed to base decode signature: %w`, err)
+		}
+		s.signature = decoded
 	}
-	s.signature = decoded
 	return nil
 }
 
@@ -427,12 +429,16 @@ func (m Message) marshalFull() ([]byte, error) {
 			wrote = true
 		}
 
-		if wrote {
-			buf.WriteRune(',')
+		if len(sig.signature) > 0 {
+			// If InsecureNoSignature is enabled, signature may not exist
+			if wrote {
+				buf.WriteRune(',')
+			}
+			buf.WriteString(`"signature":"`)
+			buf.WriteString(base64.EncodeToString(sig.signature))
+			buf.WriteString(`"`)
 		}
-		buf.WriteString(`"signature":"`)
-		buf.WriteString(base64.EncodeToString(sig.signature))
-		buf.WriteString(`"}`)
+		buf.WriteString(`}`)
 	}
 	buf.WriteString(`]}`)
 

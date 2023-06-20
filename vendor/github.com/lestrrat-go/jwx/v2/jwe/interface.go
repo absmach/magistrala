@@ -3,8 +3,62 @@ package jwe
 import (
 	"github.com/lestrrat-go/iter/mapiter"
 	"github.com/lestrrat-go/jwx/v2/internal/iter"
+	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jwe/internal/keygen"
 )
+
+// KeyEncrypter is an interface for object that can encrypt a
+// content encryption key.
+//
+// You can use this in place of a regular key (i.e. in jwe.WithKey())
+// to encrypt the content encryption key in a JWE message without
+// having to expose the secret key in memory, for example, when you
+// want to use hardware security modules (HSMs) to encrypt the key.
+//
+// This API is experimental and may change without notice, even
+// in minor releases.
+type KeyEncrypter interface {
+	// Algorithm returns the algorithm used to encrypt the key.
+	Algorithm() jwa.KeyEncryptionAlgorithm
+
+	// EncryptKey encrypts the given content encryption key.
+	EncryptKey([]byte) ([]byte, error)
+}
+
+// KeyIDer is an interface for things that can return a key ID.
+//
+// As of this writing, this is solely used to identify KeyEncrypter
+// objects that also carry a key ID on its own.
+type KeyIDer interface {
+	KeyID() string
+}
+
+// KeyDecrypter is an interface for objects that can decrypt a content
+// encryption key.
+//
+// You can use this in place of a regular key (i.e. in jwe.WithKey())
+// to decrypt the encrypted key in a JWE message without having to
+// expose the secret key in memory, for example, when you want to use
+// hardware security modules (HSMs) to decrypt the key.
+//
+// This API is experimental and may change without notice, even
+// in minor releases.
+type KeyDecrypter interface {
+	// Decrypt decrypts the encrypted key of a JWE message.
+	//
+	// Make sure you understand how JWE messages are structured.
+	//
+	// For example, while in most circumstances a JWE message will only have one recipient,
+	// a JWE message may contain multiple recipients, each with their own
+	// encrypted key. This method will be called for each recipient, instead of
+	// just once for a message.
+	//
+	// Also, header values could be found in either protected/unprotected headers
+	// of a JWE message, as well as in protected/unprotected headers for each recipient.
+	// When checking a header value, you can decide to use either one, or both, but you
+	// must be aware that there are multiple places to look for.
+	DecryptKey(alg jwa.KeyEncryptionAlgorithm, encryptedKey []byte, recipient Recipient, message *Message) ([]byte, error)
+}
 
 // Recipient holds the encrypted key and hints to decrypt the key
 type Recipient interface {

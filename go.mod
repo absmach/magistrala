@@ -27,7 +27,7 @@ require (
 	github.com/jackc/pgtype v1.13.0
 	github.com/jackc/pgx/v5 v5.3.1
 	github.com/jmoiron/sqlx v1.3.5
-	github.com/lestrrat-go/jwx/v2 v2.0.8
+	github.com/lestrrat-go/jwx/v2 v2.0.11
 	github.com/mainflux/callhome v0.0.0-20230608115609-cc5a014a27ae
 	github.com/mainflux/mproxy v0.3.0
 	github.com/mainflux/senml v1.5.0
@@ -42,7 +42,7 @@ require (
 	github.com/rubenv/sql-migrate v1.4.0
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.13.0
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.4
 	github.com/subosito/gotenv v1.4.1
 	go.mongodb.org/mongo-driver v1.10.3
 	go.opentelemetry.io/contrib/instrumentation/github.com/go-kit/kit/otelkit v0.38.0
@@ -52,7 +52,7 @@ require (
 	go.opentelemetry.io/otel/exporters/jaeger v1.12.0
 	go.opentelemetry.io/otel/sdk v1.12.0
 	go.opentelemetry.io/otel/trace v1.14.0
-	golang.org/x/crypto v0.6.0
+	golang.org/x/crypto v0.9.0
 	golang.org/x/net v0.10.0
 	golang.org/x/sync v0.1.0
 	gonum.org/v1/gonum v0.12.0
@@ -72,7 +72,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/containerd/continuity v0.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 // indirect
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
 	github.com/deepmap/oapi-codegen v1.8.2 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/docker/cli v20.10.21+incompatible // indirect
@@ -85,7 +85,7 @@ require (
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/goccy/go-json v0.9.11 // indirect
+	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
@@ -112,7 +112,6 @@ require (
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 // indirect
-	github.com/ip2location/ip2location-go/v9 v9.5.0 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
@@ -121,8 +120,7 @@ require (
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
 	github.com/lestrrat-go/httprc v1.0.4 // indirect
 	github.com/lestrrat-go/iter v1.0.2 // indirect
-	github.com/lestrrat-go/option v1.0.0 // indirect
-	github.com/lib/pq v1.10.7 // indirect
+	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
@@ -152,6 +150,7 @@ require (
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
+	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect

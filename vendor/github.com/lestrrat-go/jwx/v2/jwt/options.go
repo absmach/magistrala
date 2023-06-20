@@ -11,6 +11,7 @@ import (
 	"github.com/lestrrat-go/option"
 )
 
+type identInsecureNoSignature struct{}
 type identKey struct{}
 type identKeySet struct{}
 type identTypedClaim struct{}
@@ -21,6 +22,8 @@ func toSignOptions(options ...Option) ([]jws.SignOption, error) {
 	for _, option := range options {
 		//nolint:forcetypeassert
 		switch option.Ident() {
+		case identInsecureNoSignature{}:
+			soptions = append(soptions, jws.WithInsecureNoSignature())
 		case identKey{}:
 			wk := option.Value().(*withKey) // this always succeeds
 			var wksoptions []jws.WithKeySuboption
@@ -184,7 +187,7 @@ func WithJwtID(s string) ValidateOption {
 
 // WithAudience specifies that expected audience value.
 // `Validate()` will return true if one of the values in the `aud` element
-// matches this value.  If not specified, the value of issuer is not
+// matches this value. If not specified, the value of `aud` is not
 // verified at all.
 func WithAudience(s string) ValidateOption {
 	return WithValidator(audienceClaimContainsString(s))
@@ -293,4 +296,8 @@ func WithMinDelta(dur time.Duration, c1, c2 string) ValidateOption {
 // in the `jwk` package
 func WithVerifyAuto(f jwk.Fetcher, options ...jwk.FetchOption) ParseOption {
 	return &parseOption{option.New(identVerifyAuto{}, jws.WithVerifyAuto(f, options...))}
+}
+
+func WithInsecureNoSignature() SignOption {
+	return &signEncryptParseOption{option.New(identInsecureNoSignature{}, nil)}
 }

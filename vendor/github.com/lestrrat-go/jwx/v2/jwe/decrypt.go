@@ -137,8 +137,8 @@ func (d *decrypter) ContentCipher() (content_crypt.Cipher, error) {
 	return d.cipher, nil
 }
 
-func (d *decrypter) Decrypt(recipientKey, ciphertext []byte) (plaintext []byte, err error) {
-	cek, keyerr := d.DecryptKey(recipientKey)
+func (d *decrypter) Decrypt(recipient Recipient, ciphertext []byte, msg *Message) (plaintext []byte, err error) {
+	cek, keyerr := d.DecryptKey(recipient, msg)
 	if keyerr != nil {
 		err = fmt.Errorf(`failed to decrypt key: %w`, keyerr)
 		return
@@ -226,7 +226,12 @@ func (d *decrypter) decryptSymmetricKey(recipientKey, cek []byte) ([]byte, error
 	}
 }
 
-func (d *decrypter) DecryptKey(recipientKey []byte) (cek []byte, err error) {
+func (d *decrypter) DecryptKey(recipient Recipient, msg *Message) (cek []byte, err error) {
+	recipientKey := recipient.EncryptedKey()
+	if kd, ok := d.privkey.(KeyDecrypter); ok {
+		return kd.DecryptKey(d.keyalg, recipientKey, recipient, msg)
+	}
+
 	if d.keyalg.IsSymmetric() {
 		var ok bool
 		cek, ok = d.privkey.([]byte)

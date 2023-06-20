@@ -1,8 +1,10 @@
 package option
 
+import "fmt"
+
 // Interface defines the minimum interface that an option must fulfill
 type Interface interface {
-	// Ident returns the "indentity" of this option, a unique identifier that
+	// Ident returns the "identity" of this option, a unique identifier that
 	// can be used to differentiate between options
 	Ident() interface{}
 
@@ -29,4 +31,8 @@ func (p *pair) Ident() interface{} {
 
 func (p *pair) Value() interface{} {
 	return p.value
+}
+
+func (p *pair) String() string {
+	return fmt.Sprintf(`%v(%v)`, p.ident, p.value)
 }

@@ -7,6 +7,7 @@ import (
 	"crypto/sha512"
 	"crypto/subtle"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"hash"
 )
@@ -30,39 +31,56 @@ func pad(buf []byte, n int) []byte {
 	return newbuf
 }
 
-func unpad(buf []byte, n int) ([]byte, error) {
-	lbuf := len(buf)
-	rem := lbuf % n
-
-	// First, `buf` must be a multiple of `n`
-	if rem != 0 {
-		return nil, fmt.Errorf("input buffer must be multiple of block size %d", n)
+// ref. https://github.com/golang/go/blob/c3db64c0f45e8f2d75c5b59401e0fc925701b6f4/src/crypto/tls/conn.go#L279-L324
+//
+// extractPadding returns, in constant time, the length of the padding to remove
+// from the end of payload. It also returns a byte which is equal to 255 if the
+// padding was valid and 0 otherwise. See RFC 2246, Section 6.2.3.2.
+func extractPadding(payload []byte) (toRemove int, good byte) {
+	if len(payload) < 1 {
+		return 0, 0
 	}
 
-	// Find the last byte, which is the encoded padding
-	// i.e. 0x1 == 1 byte worth of padding
-	last := buf[lbuf-1]
+	paddingLen := payload[len(payload)-1]
+	t := uint(len(payload)) - uint(paddingLen)
+	// if len(payload) > paddingLen then the MSB of t is zero
+	good = byte(int32(^t) >> 31)
 
-	// This is the number of padding bytes that we expect
-	expected := int(last)
-
-	if expected == 0 || /* we _have_ to have padding here. therefore, 0x0 is not an option */
-		expected > n || /* we also must make sure that we don't go over the block size (n) */
-		expected > lbuf /* finally, it can't be more than the buffer itself. unlikely, but could happen */ {
-		return nil, fmt.Errorf(`invalid padding byte at the end of buffer`)
+	// The maximum possible padding length plus the actual length field
+	toCheck := 256
+	// The length of the padded data is public, so we can use an if here
+	if toCheck > len(payload) {
+		toCheck = len(payload)
 	}
 
-	// start i = 1 because we have already established that expected == int(last) where
-	// last = buf[lbuf-1].
+	for i := 1; i <= toCheck; i++ {
+		t := uint(paddingLen) - uint(i)
+		// if i <= paddingLen then the MSB of t is zero
+		mask := byte(int32(^t) >> 31)
+		b := payload[len(payload)-i]
+		good &^= mask&paddingLen ^ mask&b
+	}
+
+	// We AND together the bits of good and replicate the result across
+	// all the bits.
+	good &= good << 4
+	good &= good << 2
+	good &= good << 1
+	good = uint8(int8(good) >> 7)
+
+	// Zero the padding length on error. This ensures any unchecked bytes
+	// are included in the MAC. Otherwise, an attacker that could
+	// distinguish MAC failures from padding failures could mount an attack
+	// similar to POODLE in SSL 3.0: given a good ciphertext that uses a
+	// full block's worth of padding, replace the final block with another
+	// block. If the MAC check passed but the padding check failed, the
+	// last byte of that block decrypted to the block size.
 	//
-	// we also don't check against lbuf-i in range, because we have established expected <= lbuf
-	for i := 1; i < expected; i++ {
-		if buf[lbuf-i] != last {
-			return nil, fmt.Errorf(`invalid padding`)
-		}
-	}
+	// See also macAndPaddingGood logic below.
+	paddingLen &= good
 
-	return buf[:lbuf-expected], nil
+	toRemove = int(paddingLen)
+	return
 }
 
 type Hmac struct {
@@ -199,18 +217,17 @@ func (c Hmac) Open(dst, nonce, ciphertext, data []byte) ([]byte, error) {
 		return nil, fmt.Errorf(`failed to compute auth tag: %w`, err)
 	}
 
-	if subtle.ConstantTimeCompare(expectedTag, tag) != 1 {
-		return nil, fmt.Errorf(`invalid ciphertext (tag mismatch)`)
-	}
-
 	cbc := cipher.NewCBCDecrypter(c.blockCipher, nonce)
 	buf := make([]byte, tagOffset)
 	cbc.CryptBlocks(buf, ciphertext)
 
-	plaintext, err := unpad(buf, c.blockCipher.BlockSize())
-	if err != nil {
-		return nil, fmt.Errorf(`failed to generate plaintext from decrypted blocks: %w`, err)
+	toRemove, good := extractPadding(buf)
+	cmp := subtle.ConstantTimeCompare(expectedTag, tag) & int(good)
+	if cmp != 1 {
+		return nil, errors.New(`invalid ciphertext`)
 	}
+
+	plaintext := buf[:len(buf)-toRemove]
 	ret := ensureSize(dst, len(plaintext))
 	out := ret[len(dst):]
 	copy(out, plaintext)

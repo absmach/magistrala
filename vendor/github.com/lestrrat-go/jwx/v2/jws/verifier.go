@@ -2,6 +2,7 @@ package jws
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/lestrrat-go/jwx/v2/jwa"
 )
@@ -15,6 +16,7 @@ func (fn VerifierFactoryFn) Create() (Verifier, error) {
 	return fn()
 }
 
+var muVerifierDB sync.RWMutex
 var verifierDB map[jwa.SignatureAlgorithm]VerifierFactory
 
 // RegisterVerifier is used to register a factory object that creates
@@ -23,8 +25,30 @@ var verifierDB map[jwa.SignatureAlgorithm]VerifierFactory
 // For example, if you would like to provide a custom verifier for
 // jwa.EdDSA, use this function to register a `VerifierFactory`
 // (probably in your `init()`)
+//
+// Unlike the `UnregisterVerifier` function, this function automatically
+// calls `jwa.RegisterSignatureAlgorithm` to register the algorithm
+// in the known algorithms database.
 func RegisterVerifier(alg jwa.SignatureAlgorithm, f VerifierFactory) {
+	jwa.RegisterSignatureAlgorithm(alg)
+	muVerifierDB.Lock()
 	verifierDB[alg] = f
+	muVerifierDB.Unlock()
+}
+
+// UnregisterVerifier removes the signer factory associated with
+// the given algorithm.
+//
+// Note that when you call this function, the algorithm itself is
+// not automatically unregistered from the known algorithms database.
+// This is because the algorithm may still be required for signing or
+// some other operation (however unlikely, it is still possible).
+// Therefore, in order to completely remove the algorithm, you must
+// call `jwa.UnregisterSignatureAlgorithm` yourself.
+func UnregisterVerifier(alg jwa.SignatureAlgorithm) {
+	muVerifierDB.Lock()
+	delete(verifierDB, alg)
+	muVerifierDB.Unlock()
 }
 
 func init() {
@@ -61,7 +85,10 @@ func init() {
 
 // NewVerifier creates a verifier that signs payloads using the given signature algorithm.
 func NewVerifier(alg jwa.SignatureAlgorithm) (Verifier, error) {
+	muVerifierDB.RLock()
 	f, ok := verifierDB[alg]
+	muVerifierDB.RUnlock()
+
 	if ok {
 		return f.Create()
 	}

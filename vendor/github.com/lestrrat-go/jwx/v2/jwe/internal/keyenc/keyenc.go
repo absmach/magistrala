@@ -46,7 +46,7 @@ func (kw *Noop) KeyID() string {
 	return kw.keyID
 }
 
-func (kw *Noop) Encrypt(cek []byte) (keygen.ByteSource, error) {
+func (kw *Noop) EncryptKey(cek []byte) (keygen.ByteSource, error) {
 	return keygen.ByteKey(kw.sharedkey), nil
 }
 
@@ -88,7 +88,7 @@ func (kw *AES) Decrypt(enckey []byte) ([]byte, error) {
 }
 
 // KeyEncrypt encrypts the given content encryption key
-func (kw *AES) Encrypt(cek []byte) (keygen.ByteSource, error) {
+func (kw *AES) EncryptKey(cek []byte) (keygen.ByteSource, error) {
 	block, err := aes.NewCipher(kw.sharedkey)
 	if err != nil {
 		return nil, fmt.Errorf(`failed to create cipher from shared key: %w`, err)
@@ -119,7 +119,7 @@ func (kw AESGCMEncrypt) KeyID() string {
 	return kw.keyID
 }
 
-func (kw AESGCMEncrypt) Encrypt(cek []byte) (keygen.ByteSource, error) {
+func (kw AESGCMEncrypt) EncryptKey(cek []byte) (keygen.ByteSource, error) {
 	block, err := aes.NewCipher(kw.sharedkey)
 	if err != nil {
 		return nil, fmt.Errorf(`failed to create cipher from shared key: %w`, err)
@@ -181,7 +181,7 @@ func (kw PBES2Encrypt) KeyID() string {
 	return kw.keyID
 }
 
-func (kw PBES2Encrypt) Encrypt(cek []byte) (keygen.ByteSource, error) {
+func (kw PBES2Encrypt) EncryptKey(cek []byte) (keygen.ByteSource, error) {
 	count := 10000
 	salt := make([]byte, kw.keylen)
 	_, err := io.ReadFull(rand.Reader, salt)
@@ -245,7 +245,7 @@ func (kw ECDHESEncrypt) KeyID() string {
 }
 
 // KeyEncrypt encrypts the content encryption key using ECDH-ES
-func (kw ECDHESEncrypt) Encrypt(cek []byte) (keygen.ByteSource, error) {
+func (kw ECDHESEncrypt) EncryptKey(cek []byte) (keygen.ByteSource, error) {
 	kg, err := kw.generator.Generate()
 	if err != nil {
 		return nil, fmt.Errorf(`failed to create key generator: %w`, err)
@@ -443,7 +443,7 @@ func (e RSAOAEPEncrypt) KeyID() string {
 }
 
 // KeyEncrypt encrypts the content encryption key using RSA PKCS1v15
-func (e RSAPKCSEncrypt) Encrypt(cek []byte) (keygen.ByteSource, error) {
+func (e RSAPKCSEncrypt) EncryptKey(cek []byte) (keygen.ByteSource, error) {
 	if e.alg != jwa.RSA1_5 {
 		return nil, fmt.Errorf("invalid RSA PKCS encrypt algorithm (%s)", e.alg)
 	}
@@ -455,7 +455,7 @@ func (e RSAPKCSEncrypt) Encrypt(cek []byte) (keygen.ByteSource, error) {
 }
 
 // KeyEncrypt encrypts the content encryption key using RSA OAEP
-func (e RSAOAEPEncrypt) Encrypt(cek []byte) (keygen.ByteSource, error) {
+func (e RSAOAEPEncrypt) EncryptKey(cek []byte) (keygen.ByteSource, error) {
 	var hash hash.Hash
 	switch e.alg {
 	case jwa.RSA_OAEP:

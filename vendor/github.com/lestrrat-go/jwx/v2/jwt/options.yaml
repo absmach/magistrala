@@ -26,7 +26,7 @@ interfaces:
       - readFileOption
       - signOption
     comment: |
-      SignParseOption describes an Option that can be passed to both `jwt.Sign()` or
+      SignEncryptParseOption describes an Option that can be passed to both `jwt.Sign()` or
       `jwt.Parse()`
   - name: ValidateOption
     methods:

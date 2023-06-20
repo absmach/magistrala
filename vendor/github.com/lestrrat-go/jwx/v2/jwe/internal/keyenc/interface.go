@@ -11,13 +11,7 @@ import (
 // Encrypter is an interface for things that can encrypt keys
 type Encrypter interface {
 	Algorithm() jwa.KeyEncryptionAlgorithm
-	Encrypt([]byte) (keygen.ByteSource, error)
-	// KeyID returns the key id for this Encrypter. This exists so that
-	// you can pass in a Encrypter to MultiEncrypt, you can rest assured
-	// that the generated key will have the proper key ID.
-	KeyID() string
-
-	SetKeyID(string)
+	EncryptKey([]byte) (keygen.ByteSource, error)
 }
 
 // Decrypter is an interface for things that can decrypt keys

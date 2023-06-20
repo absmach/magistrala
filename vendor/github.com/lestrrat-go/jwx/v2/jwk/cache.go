@@ -113,6 +113,9 @@ type jwksTransform struct {
 var defaultTransform = &jwksTransform{}
 
 func (t *jwksTransform) Transform(u string, res *http.Response) (interface{}, error) {
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf(`failed to process response: non-200 response code %q`, res.Status)
+	}
 	buf, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, fmt.Errorf(`failed to read response body status: %w`, err)

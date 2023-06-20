@@ -22,18 +22,6 @@ func (k ByteKey) Bytes() []byte {
 	return []byte(k)
 }
 
-// Size returns the size of the key
-func (g Static) Size() int {
-	return len(g)
-}
-
-// Generate returns the key
-func (g Static) Generate() (ByteSource, error) {
-	buf := make([]byte, g.Size())
-	copy(buf, g)
-	return ByteKey(buf), nil
-}
-
 // NewRandom creates a new Generator that returns
 // random bytes
 func NewRandom(n int) Random {

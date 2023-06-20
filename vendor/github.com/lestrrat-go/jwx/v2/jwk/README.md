@@ -81,8 +81,7 @@ MAIN:
       return
     }
     _ = keyset
-    // The returned `keyset` will always be "reasonably" new. It is important that
-    // you always call `ar.Fetch()` before using the `keyset` as this is where the refreshing occurs.
+    // The returned `keyset` will always be "reasonably" new.
     //
     // By "reasonably" we mean that we cannot guarantee that the keys will be refreshed
     // immediately after it has been rotated in the remote source. But it should be close\
@@ -112,10 +111,7 @@ Parse and use a JWK key:
 package examples_test
 
 import (
-  "bytes"
   "context"
-  "crypto/ecdsa"
-  "crypto/elliptic"
   "fmt"
   "log"
 
@@ -180,22 +176,23 @@ func ExampleJWK_Usage() {
 
 //nolint:govet
 func ExampleJWK_MarshalJSON() {
-  // to get the same values every time, we need to create a static source
-  // of "randomness"
-  rdr := bytes.NewReader([]byte("01234567890123456789012345678901234567890123456789ABCDEF"))
-  raw, err := ecdsa.GenerateKey(elliptic.P384(), rdr)
-  if err != nil {
-    fmt.Printf("failed to generate new ECDSA private key: %s\n", err)
-    return
-  }
+  // JWKs that inherently involve randomness such as RSA and EC keys are
+  // not used in this example, because they may produce different results
+  // depending on the environment.
+  //
+  // (In fact, even if you use a static source of randomness, tests may fail
+  // because of internal changes in the Go runtime).
 
+  raw := []byte("01234567890123456789012345678901234567890123456789ABCDEF")
+
+  // This would create a symmetric key
   key, err := jwk.FromRaw(raw)
   if err != nil {
-    fmt.Printf("failed to create ECDSA key: %s\n", err)
+    fmt.Printf("failed to create symmetric key: %s\n", err)
     return
   }
-  if _, ok := key.(jwk.ECDSAPrivateKey); !ok {
-    fmt.Printf("expected jwk.ECDSAPrivateKey, got %T\n", key)
+  if _, ok := key.(jwk.SymmetricKey); !ok {
+    fmt.Printf("expected jwk.SymmetricKey, got %T\n", key)
     return
   }
 
@@ -210,12 +207,9 @@ func ExampleJWK_MarshalJSON() {
 
   // OUTPUT:
   // {
-  //   "crv": "P-384",
-  //   "d": "ODkwMTIzNDU2Nzg5MDEyMz7deMbyLt8g4cjcxozuIoygLLlAeoQ1AfM9TSvxkFHJ",
+  //   "k": "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODlBQkNERUY",
   //   "kid": "mykey",
-  //   "kty": "EC",
-  //   "x": "gvvRMqm1w5aHn7sVNA2QUJeOVcedUnmiug6VhU834gzS9k87crVwu9dz7uLOdoQl",
-  //   "y": "7fVF7b6J_6_g6Wu9RuJw8geWxEi5ja9Gp2TSdELm5u2E-M7IF-bsxqcdOj3n1n7N"
+  //   "kty": "oct"
   // }
 }
 ```

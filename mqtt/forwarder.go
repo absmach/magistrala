@@ -45,7 +45,7 @@ func handle(ctx context.Context, pub messaging.Publisher, logger mflog.Logger) h
 		// sake of simplicity and performance.
 		topic := fmt.Sprintf("channels/%s/messages", msg.Channel)
 		if msg.Subtopic != "" {
-			topic += fmt.Sprintf("%s/%s", topic, strings.ReplaceAll(msg.Subtopic, ".", "/"))
+			topic = fmt.Sprintf("%s/%s", topic, strings.ReplaceAll(msg.Subtopic, ".", "/"))
 		}
 		go func() {
 			if err := pub.Publish(ctx, topic, msg); err != nil {

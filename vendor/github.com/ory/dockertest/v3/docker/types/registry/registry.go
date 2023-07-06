@@ -1,3 +1,6 @@
+// Copyright © 2023 Ory Corp
+// SPDX-License-Identifier: Apache-2.0
+
 package registry // import "github.com/ory/dockertest/v3/docker/types/registry"
 
 import (
@@ -45,31 +48,32 @@ func (ipnet *NetIPNet) UnmarshalJSON(b []byte) (err error) {
 // IndexInfo contains information about a registry
 //
 // RepositoryInfo Examples:
-// {
-//   "Index" : {
-//     "Name" : "docker.io",
-//     "Mirrors" : ["https://registry-2.docker.io/v1/", "https://registry-3.docker.io/v1/"],
-//     "Secure" : true,
-//     "Official" : true,
-//   },
-//   "RemoteName" : "library/debian",
-//   "LocalName" : "debian",
-//   "CanonicalName" : "docker.io/debian"
-//   "Official" : true,
-// }
 //
-// {
-//   "Index" : {
-//     "Name" : "127.0.0.1:5000",
-//     "Mirrors" : [],
-//     "Secure" : false,
-//     "Official" : false,
-//   },
-//   "RemoteName" : "user/repo",
-//   "LocalName" : "127.0.0.1:5000/user/repo",
-//   "CanonicalName" : "127.0.0.1:5000/user/repo",
-//   "Official" : false,
-// }
+//	{
+//	  "Index" : {
+//	    "Name" : "docker.io",
+//	    "Mirrors" : ["https://registry-2.docker.io/v1/", "https://registry-3.docker.io/v1/"],
+//	    "Secure" : true,
+//	    "Official" : true,
+//	  },
+//	  "RemoteName" : "library/debian",
+//	  "LocalName" : "debian",
+//	  "CanonicalName" : "docker.io/debian"
+//	  "Official" : true,
+//	}
+//
+//	{
+//	  "Index" : {
+//	    "Name" : "127.0.0.1:5000",
+//	    "Mirrors" : [],
+//	    "Secure" : false,
+//	    "Official" : false,
+//	  },
+//	  "RemoteName" : "user/repo",
+//	  "LocalName" : "127.0.0.1:5000/user/repo",
+//	  "CanonicalName" : "127.0.0.1:5000/user/repo",
+//	  "Official" : false,
+//	}
 type IndexInfo struct {
 	// Name is the name of the registry, such as "docker.io"
 	Name string

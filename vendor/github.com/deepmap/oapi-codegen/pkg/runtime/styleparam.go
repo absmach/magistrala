@@ -14,6 +14,10 @@
 package runtime
 
 import (
+	"bytes"
+	"encoding"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"reflect"
@@ -22,12 +26,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/google/uuid"
 )
 
 // Parameter escaping works differently based on where a header is found
+
 type ParamLocation int
 
 const (
@@ -38,7 +42,7 @@ const (
 	ParamLocationCookie
 )
 
-// This function is used by older generated code, and must remain compatible
+// StyleParam is used by older generated code, and must remain compatible
 // with that code. It is not to be used in new templates. Please see the
 // function below, which can specialize its output based on the location of
 // the parameter.
@@ -61,6 +65,25 @@ func StyleParamWithLocation(style string, explode bool, paramName string, paramL
 		}
 		v = reflect.Indirect(v)
 		t = v.Type()
+	}
+
+	// If the value implements encoding.TextMarshaler we use it for marshaling
+	// https://github.com/deepmap/oapi-codegen/issues/504
+	if tu, ok := value.(encoding.TextMarshaler); ok {
+		t := reflect.Indirect(reflect.ValueOf(value)).Type()
+		convertableToTime := t.ConvertibleTo(reflect.TypeOf(time.Time{}))
+		convertableToDate := t.ConvertibleTo(reflect.TypeOf(types.Date{}))
+
+		// Since both time.Time and types.Date implement encoding.TextMarshaler
+		// we should avoid calling theirs MarshalText()
+		if !convertableToTime && !convertableToDate {
+			b, err := tu.MarshalText()
+			if err != nil {
+				return "", fmt.Errorf("error marshaling '%s' as text: %s", value, err)
+			}
+
+			return stylePrimitive(style, explode, paramName, paramLocation, string(b))
+		}
 	}
 
 	switch t.Kind() {
@@ -159,9 +182,9 @@ func sortedKeys(strMap map[string]string) []string {
 	return keys
 }
 
-// This is a special case. The struct may be a date or time, in
-// which case, marshal it in correct format.
-func marshalDateTimeValue(value interface{}) (string, bool) {
+// These are special cases. The value may be a date, time, or uuid,
+// in which case, marshal it into the correct format.
+func marshalKnownTypes(value interface{}) (string, bool) {
 	v := reflect.Indirect(reflect.ValueOf(value))
 	t := v.Type()
 
@@ -177,15 +200,20 @@ func marshalDateTimeValue(value interface{}) (string, bool) {
 		return dateVal.Format(types.DateFormat), true
 	}
 
+	if t.ConvertibleTo(reflect.TypeOf(types.UUID{})) {
+		u := v.Convert(reflect.TypeOf(types.UUID{}))
+		uuidVal := u.Interface().(types.UUID)
+		return uuidVal.String(), true
+	}
+
 	return "", false
 }
 
 func styleStruct(style string, explode bool, paramName string, paramLocation ParamLocation, value interface{}) (string, error) {
-
-	if timeVal, ok := marshalDateTimeValue(value); ok {
+	if timeVal, ok := marshalKnownTypes(value); ok {
 		styledVal, err := stylePrimitive(style, explode, paramName, paramLocation, timeVal)
 		if err != nil {
-			return "", errors.Wrap(err, "failed to style time")
+			return "", fmt.Errorf("failed to style time: %w", err)
 		}
 		return styledVal, nil
 	}
@@ -195,6 +223,27 @@ func styleStruct(style string, explode bool, paramName string, paramLocation Par
 			return "", errors.New("deepObjects must be exploded")
 		}
 		return MarshalDeepObject(value, paramName)
+	}
+
+	// If input has Marshaler, such as object has Additional Property or AnyOf,
+	// We use this Marshaler and convert into interface{} before styling.
+	if m, ok := value.(json.Marshaler); ok {
+		buf, err := m.MarshalJSON()
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal input to JSON: %w", err)
+		}
+		e := json.NewDecoder(bytes.NewReader(buf))
+		e.UseNumber()
+		var i2 interface{}
+		err = e.Decode(&i2)
+		if err != nil {
+			return "", fmt.Errorf("failed to unmarshal JSON: %w", err)
+		}
+		s, err := StyleParamWithLocation(style, explode, paramName, paramLocation, i2)
+		if err != nil {
+			return "", fmt.Errorf("error style JSON structure: %w", err)
+		}
+		return s, nil
 	}
 
 	// Otherwise, we need to build a dictionary of the struct's fields. Each
@@ -349,14 +398,22 @@ func stylePrimitive(style string, explode bool, paramName string, paramLocation 
 func primitiveToString(value interface{}) (string, error) {
 	var output string
 
+	// sometimes time and date used like primitive types
+	// it can happen if paramether is object and has time or date as field
+	if res, ok := marshalKnownTypes(value); ok {
+		return res, nil
+	}
+
 	// Values may come in by pointer for optionals, so make sure to dereferene.
 	v := reflect.Indirect(reflect.ValueOf(value))
 	t := v.Type()
 	kind := t.Kind()
 
 	switch kind {
-	case reflect.Int8, reflect.Int32, reflect.Int64, reflect.Int:
+	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int:
 		output = strconv.FormatInt(v.Int(), 10)
+	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
+		output = strconv.FormatUint(v.Uint(), 10)
 	case reflect.Float64:
 		output = strconv.FormatFloat(v.Float(), 'f', -1, 64)
 	case reflect.Float32:
@@ -369,8 +426,39 @@ func primitiveToString(value interface{}) (string, error) {
 		}
 	case reflect.String:
 		output = v.String()
+	case reflect.Struct:
+		// If input has Marshaler, such as object has Additional Property or AnyOf,
+		// We use this Marshaler and convert into interface{} before styling.
+		if v, ok := value.(uuid.UUID); ok {
+			output = v.String()
+			break
+		}
+		if m, ok := value.(json.Marshaler); ok {
+			buf, err := m.MarshalJSON()
+			if err != nil {
+				return "", fmt.Errorf("failed to marshal input to JSON: %w", err)
+			}
+			e := json.NewDecoder(bytes.NewReader(buf))
+			e.UseNumber()
+			var i2 interface{}
+			err = e.Decode(&i2)
+			if err != nil {
+				return "", fmt.Errorf("failed to unmarshal JSON: %w", err)
+			}
+			output, err = primitiveToString(i2)
+			if err != nil {
+				return "", fmt.Errorf("error convert JSON structure: %w", err)
+			}
+			break
+		}
+		fallthrough
 	default:
-		return "", fmt.Errorf("unsupported type %s", reflect.TypeOf(value).String())
+		v, ok := value.(fmt.Stringer)
+		if !ok {
+			return "", fmt.Errorf("unsupported type %s", reflect.TypeOf(value).String())
+		}
+
+		output = v.String()
 	}
 	return output, nil
 }

@@ -1,3 +1,9 @@
+# 1.14.0 (February 11, 2023)
+
+* Fix: BC timestamp text format support (jozeflami)
+* Add Scanner and Valuer interfaces to CIDR (Yurii Popivniak)
+* Fix crash when nilifying pointer to sql.Scanner
+
 # 1.13.0 (December 1, 2022)
 
 * Fix: Reset jsonb before unmarshal (Tomas Odinas)

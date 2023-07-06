@@ -1,3 +1,6 @@
+// Copyright © 2023 Ory Corp
+// SPDX-License-Identifier: Apache-2.0
+
 package archive // import "github.com/ory/dockertest/v3/docker/pkg/archive"
 
 import (
@@ -17,8 +20,8 @@ import (
 // Generate("foo.txt", "hello world", "emptyfile")
 //
 // The above call will return an archive with 2 files:
-//  * ./foo.txt with content "hello world"
-//  * ./empty with empty content
+//   - ./foo.txt with content "hello world"
+//   - ./empty with empty content
 //
 // FIXME: stream content instead of buffering
 // FIXME: specify permissions and other archive metadata

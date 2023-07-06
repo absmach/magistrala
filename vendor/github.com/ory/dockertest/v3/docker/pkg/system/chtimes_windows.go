@@ -1,3 +1,6 @@
+// Copyright © 2023 Ory Corp
+// SPDX-License-Identifier: Apache-2.0
+
 package system // import "github.com/ory/dockertest/v3/docker/pkg/system"
 
 import (
@@ -6,8 +9,8 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-//setCTime will set the create time on a file. On Windows, this requires
-//calling SetFileTime and explicitly including the create time.
+// setCTime will set the create time on a file. On Windows, this requires
+// calling SetFileTime and explicitly including the create time.
 func setCTime(path string, ctime time.Time) error {
 	ctimespec := windows.NsecToTimespec(ctime.UnixNano())
 	pathp, e := windows.UTF16PtrFromString(path)

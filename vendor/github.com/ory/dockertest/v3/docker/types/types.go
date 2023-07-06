@@ -1,3 +1,6 @@
+// Copyright © 2023 Ory Corp
+// SPDX-License-Identifier: Apache-2.0
+
 package types // import "github.com/ory/dockertest/v3/docker/types"
 
 import (
@@ -8,12 +11,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/docker/go-connections/nat"
 	"github.com/ory/dockertest/v3/docker/types/container"
 	"github.com/ory/dockertest/v3/docker/types/filters"
 	"github.com/ory/dockertest/v3/docker/types/mount"
 	"github.com/ory/dockertest/v3/docker/types/network"
 	"github.com/ory/dockertest/v3/docker/types/registry"
-	"github.com/docker/go-connections/nat"
 )
 
 // RootFS returns Image's RootFS description including the layer IDs.
@@ -180,18 +183,18 @@ type Info struct {
 	NCPU               int
 	MemTotal           int64
 	//GenericResources   []swarm.GenericResource
-	DockerRootDir      string
-	HTTPProxy          string `json:"HttpProxy"`
-	HTTPSProxy         string `json:"HttpsProxy"`
-	NoProxy            string
-	Name               string
-	Labels             []string
-	ExperimentalBuild  bool
-	ServerVersion      string
-	ClusterStore       string
-	ClusterAdvertise   string
-	Runtimes           map[string]Runtime
-	DefaultRuntime     string
+	DockerRootDir     string
+	HTTPProxy         string `json:"HttpProxy"`
+	HTTPSProxy        string `json:"HttpsProxy"`
+	NoProxy           string
+	Name              string
+	Labels            []string
+	ExperimentalBuild bool
+	ServerVersion     string
+	ClusterStore      string
+	ClusterAdvertise  string
+	Runtimes          map[string]Runtime
+	DefaultRuntime    string
 	//Swarm              swarm.Info
 	// LiveRestoreEnabled determines whether containers should be kept
 	// running when the daemon is shutdown or upon daemon start if

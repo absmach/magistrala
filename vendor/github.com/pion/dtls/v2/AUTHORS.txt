@@ -14,6 +14,7 @@ Bragadeesh <bragboy@gmail.com>
 Carson Hoffman <c@rsonhoffman.com>
 Cecylia Bocovich <cohosh@torproject.org>
 Chris Hiszpanski <thinkski@users.noreply.github.com>
+cnderrauber <zengjie9004@gmail.com>
 Daniele Sluijters <daenney@users.noreply.github.com>
 folbrich <frank.olbricht@gmail.com>
 Hayden James <hayden.james@gmail.com>
@@ -40,6 +41,7 @@ Rachel Chen <rachel@chens.email>
 Robert Eperjesi <eperjesi@uber.com>
 Ryan Gordon <ryan.gordon@getcruise.com>
 Sam Lancia <sam.lancia@motorolasolutions.com>
+Sean DuBois <duboisea@justin.tv>
 Sean DuBois <seaduboi@amazon.com>
 Sean DuBois <sean@siobud.com>
 Shelikhoo <xiaokangwang@outlook.com>

@@ -1,3 +1,6 @@
+// Copyright © 2023 Ory Corp
+// SPDX-License-Identifier: Apache-2.0
+
 // Copyright 2013 go-dockerclient authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
@@ -8,7 +11,6 @@ import (
 	"encoding/json"
 	"net"
 	"strings"
-
 )
 
 // Version returns version information about the docker server.
@@ -114,13 +116,11 @@ type ServiceConfig struct {
 type NetIPNet net.IPNet
 
 // MarshalJSON returns the JSON representation of the IPNet.
-//
 func (ipnet *NetIPNet) MarshalJSON() ([]byte, error) {
 	return json.Marshal((*net.IPNet)(ipnet).String())
 }
 
 // UnmarshalJSON sets the IPNet from a byte array of JSON.
-//
 func (ipnet *NetIPNet) UnmarshalJSON(b []byte) (err error) {
 	var ipnetStr string
 	if err = json.Unmarshal(b, &ipnetStr); err == nil {
@@ -164,9 +164,9 @@ func (c *Client) Info() (*DockerInfo, error) {
 //
 // Some examples:
 //
-//     localhost.localdomain:5000/samalba/hipache:latest -> localhost.localdomain:5000/samalba/hipache, latest
-//     localhost.localdomain:5000/samalba/hipache -> localhost.localdomain:5000/samalba/hipache, ""
-//     busybox:latest@sha256:4a731fb46adc5cefe3ae374a8b6020fc1b6ad667a279647766e9a3cd89f6fa92 -> busybox, latest
+//	localhost.localdomain:5000/samalba/hipache:latest -> localhost.localdomain:5000/samalba/hipache, latest
+//	localhost.localdomain:5000/samalba/hipache -> localhost.localdomain:5000/samalba/hipache, ""
+//	busybox:latest@sha256:4a731fb46adc5cefe3ae374a8b6020fc1b6ad667a279647766e9a3cd89f6fa92 -> busybox, latest
 func ParseRepositoryTag(repoTag string) (repository string, tag string) {
 	parts := strings.SplitN(repoTag, "@", 2)
 	repoTag = parts[0]

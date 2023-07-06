@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2023 The Pion community <https://pion.ly>
+// SPDX-License-Identifier: MIT
+
 // Package packetio provides packet buffer
 package packetio
 
@@ -35,8 +38,7 @@ type Buffer struct {
 	data       []byte
 	head, tail int
 
-	notify chan struct{}
-	subs   bool
+	notify chan struct{} // non-nil when we have blocked readers
 	closed bool
 
 	count                 int
@@ -54,7 +56,6 @@ const (
 // NewBuffer creates a new Buffer.
 func NewBuffer() *Buffer {
 	return &Buffer{
-		notify:       make(chan struct{}),
 		readDeadline: deadline.New(),
 	}
 }
@@ -149,13 +150,11 @@ func (b *Buffer) Write(packet []byte) (int, error) {
 	}
 
 	var notify chan struct{}
-
-	if b.subs {
-		// readers are waiting.  Prepare to notify, but only
+	if b.notify != nil {
+		// Prepare to notify readers, but only
 		// actually do it after we release the lock.
 		notify = b.notify
-		b.notify = make(chan struct{})
-		b.subs = false
+		b.notify = nil
 	}
 
 	// store the length of the packet
@@ -192,7 +191,7 @@ func (b *Buffer) Write(packet []byte) (int, error) {
 // Blocks until data is available or the buffer is closed.
 // Returns io.ErrShortBuffer is the packet is too small to copy the Write.
 // Returns io.EOF if the buffer is closed.
-func (b *Buffer) Read(packet []byte) (n int, err error) {
+func (b *Buffer) Read(packet []byte) (n int, err error) { //nolint:gocognit
 	// Return immediately if the deadline is already exceeded.
 	select {
 	case <-b.readDeadline.Done():
@@ -259,8 +258,10 @@ func (b *Buffer) Read(packet []byte) (n int, err error) {
 			return 0, io.EOF
 		}
 
+		if b.notify == nil {
+			b.notify = make(chan struct{})
+		}
 		notify := b.notify
-		b.subs = true
 		b.mutex.Unlock()
 
 		select {
@@ -282,11 +283,14 @@ func (b *Buffer) Close() (err error) {
 	}
 
 	notify := b.notify
+	b.notify = nil
 	b.closed = true
 
 	b.mutex.Unlock()
 
-	close(notify)
+	if notify != nil {
+		close(notify)
+	}
 
 	return nil
 }

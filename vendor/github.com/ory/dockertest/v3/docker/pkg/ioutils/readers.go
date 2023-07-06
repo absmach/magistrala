@@ -1,11 +1,13 @@
+// Copyright © 2023 Ory Corp
+// SPDX-License-Identifier: Apache-2.0
+
 package ioutils // import "github.com/ory/dockertest/v3/docker/pkg/ioutils"
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"io"
-
-	"golang.org/x/net/context"
 )
 
 // ReadCloserWrapper wraps an io.Reader, and implements an io.ReadCloser

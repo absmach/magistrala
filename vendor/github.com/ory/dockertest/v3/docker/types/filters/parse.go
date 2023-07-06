@@ -1,4 +1,8 @@
-/*Package filters provides tools for encoding a mapping of keys to a set of
+// Copyright © 2023 Ory Corp
+// SPDX-License-Identifier: Apache-2.0
+
+/*
+Package filters provides tools for encoding a mapping of keys to a set of
 multiple values.
 */
 package filters // import "github.com/ory/dockertest/v3/docker/types/filters"

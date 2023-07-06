@@ -1,3 +1,6 @@
+// Copyright © 2023 Ory Corp
+// SPDX-License-Identifier: Apache-2.0
+
 package system // import "github.com/ory/dockertest/v3/docker/pkg/system"
 
 import (
@@ -27,7 +30,8 @@ type memorystatusex struct {
 }
 
 // ReadMemInfo retrieves memory statistics of the host system and returns a
-//  MemInfo type.
+//
+//	MemInfo type.
 func ReadMemInfo() (*MemInfo, error) {
 	msi := &memorystatusex{
 		dwLength: 64,

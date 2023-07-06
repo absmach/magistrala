@@ -51,7 +51,7 @@ func ParseYAML(source []byte) (map[string]interface{}, error) {
 	}
 	cfgMap, ok := cfg.(map[interface{}]interface{})
 	if !ok {
-		return nil, errors.Errorf("Top-level object must be a mapping")
+		return nil, errors.Errorf("top-level object must be a mapping")
 	}
 	converted, err := convertToStringKeysRecursive(cfgMap, "")
 	if err != nil {
@@ -143,7 +143,7 @@ func loadSections(config map[string]interface{}, configDetails types.ConfigDetai
 		Version: schema.Version(config),
 	}
 
-	var loaders = []struct {
+	loaders := []struct {
 		key string
 		fnc func(config map[string]interface{}) error
 	}{
@@ -386,9 +386,9 @@ func formatInvalidKeyError(keyPrefix string, key interface{}) error {
 	if keyPrefix == "" {
 		location = "at top level"
 	} else {
-		location = fmt.Sprintf("in %s", keyPrefix)
+		location = "in " + keyPrefix
 	}
-	return errors.Errorf("Non-string key %s: %#v", location, key)
+	return errors.Errorf("non-string key %s: %#v", location, key)
 }
 
 // LoadServices produces a ServiceConfig map from a compose file Dict
@@ -829,21 +829,20 @@ func transformListOrMapping(listOrMapping interface{}, sep string, allowNil bool
 }
 
 func transformMappingOrList(mappingOrList interface{}, sep string, allowNil bool) interface{} {
-	switch value := mappingOrList.(type) {
+	switch values := mappingOrList.(type) {
 	case map[string]interface{}:
-		return toMapStringString(value, allowNil)
-	case ([]interface{}):
+		return toMapStringString(values, allowNil)
+	case []interface{}:
 		result := make(map[string]interface{})
-		for _, value := range value {
-			parts := strings.SplitN(value.(string), sep, 2)
-			key := parts[0]
+		for _, v := range values {
+			key, val, hasValue := strings.Cut(v.(string), sep)
 			switch {
-			case len(parts) == 1 && allowNil:
+			case !hasValue && allowNil:
 				result[key] = nil
-			case len(parts) == 1 && !allowNil:
+			case !hasValue && !allowNil:
 				result[key] = ""
 			default:
-				result[key] = parts[1]
+				result[key] = val
 			}
 		}
 		return result

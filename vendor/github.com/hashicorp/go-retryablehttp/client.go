@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 // Package retryablehttp provides a familiar HTTP client interface with
 // automatic retries and exponential backoff. It is a thin wrapper over the
 // standard net/http client library and exposes nearly the same public API.
@@ -80,8 +83,15 @@ var (
 type ReaderFunc func() (io.Reader, error)
 
 // ResponseHandlerFunc is a type of function that takes in a Response, and does something with it.
-// It only runs if the initial part of the request was successful.
-// If an error is returned, the client's retry policy will be used to determine whether to retry the whole request.
+// The ResponseHandlerFunc is called when the HTTP client successfully receives a response and the
+// CheckRetry function indicates that a retry of the base request is not necessary.
+// If an error is returned from this function, the CheckRetry policy will be used to determine
+// whether to retry the whole request (including this handler).
+//
+// Make sure to check status codes! Even if the request was completed it may have a non-2xx status code.
+//
+// The response body is not automatically closed. It must be closed either by the ResponseHandlerFunc or
+// by the caller out-of-band. Failure to do so will result in a memory leak.
 type ResponseHandlerFunc func(*http.Response) error
 
 // LenReader is an interface implemented by many in-memory io.Reader's. Used
@@ -250,10 +260,17 @@ func getBodyReaderAndContentLength(rawBody interface{}) (ReaderFunc, int64, erro
 		if err != nil {
 			return nil, 0, err
 		}
-		bodyReader = func() (io.Reader, error) {
-			return bytes.NewReader(buf), nil
+		if len(buf) == 0 {
+			bodyReader = func() (io.Reader, error) {
+				return http.NoBody, nil
+			}
+			contentLength = 0
+		} else {
+			bodyReader = func() (io.Reader, error) {
+				return bytes.NewReader(buf), nil
+			}
+			contentLength = int64(len(buf))
 		}
-		contentLength = int64(len(buf))
 
 	// No body provided, nothing to do
 	case nil:

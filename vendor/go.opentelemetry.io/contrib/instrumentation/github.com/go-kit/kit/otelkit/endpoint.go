@@ -52,7 +52,7 @@ func EndpointMiddleware(options ...Option) endpoint.Middleware {
 
 	tracer := cfg.TracerProvider.Tracer(
 		tracerName,
-		trace.WithInstrumentationVersion(SemVersion()),
+		trace.WithInstrumentationVersion(Version()),
 	)
 
 	return func(next endpoint.Endpoint) endpoint.Endpoint {

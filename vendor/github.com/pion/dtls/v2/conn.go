@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2023 The Pion community <https://pion.ly>
+// SPDX-License-Identifier: MIT
+
 package dtls
 
 import (
@@ -427,6 +430,11 @@ func (c *Conn) writePackets(ctx context.Context, pkts []*packet) error {
 }
 
 func (c *Conn) compactRawPackets(rawPackets [][]byte) [][]byte {
+	// avoid a useless copy in the common case
+	if len(rawPackets) == 1 {
+		return rawPackets
+	}
+
 	combinedRawPackets := make([][]byte, 0)
 	currentCombinedRawPacket := make([]byte, 0)
 

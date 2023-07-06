@@ -196,7 +196,7 @@ timestamp =
 	('-'? digit{1,19}) >begin %timestamp;
 
 fieldkeychar =
-	[^\t\n\f\r ,=\\] | ( '\\' [^\t\n\f\r] );
+	[^\t\n\v\f\r ,=\\] | ( '\\' [^\t\n\v\f\r] );
 
 fieldkey =
 	fieldkeychar+ >begin %fieldkey;
@@ -237,7 +237,7 @@ fieldset =
 	field ( ',' field )*;
 
 tagchar =
-	[^\t\n\f\r ,=\\] | ( '\\' [^\t\n\f\r\\] ) | '\\\\' %to{ fhold; };
+	[^\t\n\v\f\r ,=\\] | ( '\\' [^\t\n\v\f\r\\] ) | '\\\\' %to{ fhold; };
 
 tagkey =
 	tagchar+ >begin %tagkey;
@@ -249,7 +249,7 @@ tagset =
 	((',' tagkey '=' tagvalue) $err(tagset_error))*;
 
 measurement_chars =
-	[^\t\n\f\r ,\\] | ( '\\' [^\t\n\f\r] );
+	[^\t\n\v\f\r ,\\] | ( '\\' [^\t\n\v\f\r] );
 
 measurement_start =
 	measurement_chars - '#';

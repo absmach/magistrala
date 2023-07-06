@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2023 The Pion community <https://pion.ly>
+// SPDX-License-Identifier: MIT
+
 // Package deadline provides deadline timer used to implement
 // net.Conn compatible connection
 package deadline

@@ -43,6 +43,7 @@ type Session struct {
 	frameObserver       FrameHeaderObserver
 	streamObserver      StreamObserver
 	hostSource          *ringDescriber
+	ringRefresher       *refreshDebouncer
 	stmtsLRU            *preparedLRU
 
 	connCfg *ConnConfig
@@ -73,8 +74,10 @@ type Session struct {
 
 	// sessionStateMu protects isClosed and isInitialized.
 	sessionStateMu sync.RWMutex
-	// isClosed is true once Session.Close is called.
+	// isClosed is true once Session.Close is finished.
 	isClosed bool
+	// isClosing bool is true once Session.Close is started.
+	isClosing bool
 	// isInitialized is true once Session.init succeeds.
 	// you can use initialized() to read the value.
 	isInitialized bool
@@ -84,7 +87,7 @@ type Session struct {
 
 var queryPool = &sync.Pool{
 	New: func() interface{} {
-		return new(Query)
+		return &Query{refCount: 1}
 	},
 }
 
@@ -144,6 +147,7 @@ func NewSession(cfg ClusterConfig) (*Session, error) {
 	s.routingKeyInfoCache.lru = lru.New(cfg.MaxRoutingKeyInfo)
 
 	s.hostSource = &ringDescriber{session: s}
+	s.ringRefresher = newRefreshDebouncer(ringRefreshDebounceTime, func() error { return refreshRing(s.hostSource) })
 
 	if cfg.PoolConfig.HostSelectionPolicy == nil {
 		cfg.PoolConfig.HostSelectionPolicy = RoundRobinHostPolicy()
@@ -463,11 +467,12 @@ func (s *Session) Bind(stmt string, b func(q *QueryInfo) ([]interface{}, error))
 func (s *Session) Close() {
 
 	s.sessionStateMu.Lock()
-	defer s.sessionStateMu.Unlock()
-	if s.isClosed {
+	if s.isClosing {
+		s.sessionStateMu.Unlock()
 		return
 	}
-	s.isClosed = true
+	s.isClosing = true
+	s.sessionStateMu.Unlock()
 
 	if s.pool != nil {
 		s.pool.Close()
@@ -485,9 +490,17 @@ func (s *Session) Close() {
 		s.schemaEvents.stop()
 	}
 
+	if s.ringRefresher != nil {
+		s.ringRefresher.stop()
+	}
+
 	if s.cancel != nil {
 		s.cancel()
 	}
+
+	s.sessionStateMu.Lock()
+	s.isClosed = true
+	s.sessionStateMu.Unlock()
 }
 
 func (s *Session) Closed() bool {
@@ -886,6 +899,7 @@ type Query struct {
 	idempotent            bool
 	customPayload         map[string][]byte
 	metrics               *queryMetrics
+	refCount              uint32
 
 	disableAutoPage bool
 
@@ -921,12 +935,18 @@ func (q Query) Statement() string {
 	return q.stmt
 }
 
+// Values returns the values passed in via Bind.
+// This can be used by a wrapper type that needs to access the bound values.
+func (q Query) Values() []interface{} {
+	return q.values
+}
+
 // String implements the stringer interface.
 func (q Query) String() string {
 	return fmt.Sprintf("[query statement=%q values=%+v consistency=%s]", q.stmt, q.values, q.cons)
 }
 
-//Attempts returns the number of times the query was executed.
+// Attempts returns the number of times the query was executed.
 func (q *Query) Attempts() int {
 	return q.metrics.attempts()
 }
@@ -935,7 +955,7 @@ func (q *Query) AddAttempts(i int, host *HostInfo) {
 	q.metrics.attempt(i, 0, host, false)
 }
 
-//Latency returns the average amount of nanoseconds per attempt of the query.
+// Latency returns the average amount of nanoseconds per attempt of the query.
 func (q *Query) Latency() int64 {
 	return q.metrics.latency()
 }
@@ -1319,17 +1339,37 @@ func (q *Query) MapScanCAS(dest map[string]interface{}) (applied bool, err error
 // cannot be reused.
 //
 // Example:
-// 		qry := session.Query("SELECT * FROM my_table")
-// 		qry.Exec()
-// 		qry.Release()
+//
+//	qry := session.Query("SELECT * FROM my_table")
+//	qry.Exec()
+//	qry.Release()
 func (q *Query) Release() {
-	q.reset()
-	queryPool.Put(q)
+	q.decRefCount()
 }
 
 // reset zeroes out all fields of a query so that it can be safely pooled.
 func (q *Query) reset() {
-	*q = Query{}
+	*q = Query{refCount: 1}
+}
+
+func (q *Query) incRefCount() {
+	atomic.AddUint32(&q.refCount, 1)
+}
+
+func (q *Query) decRefCount() {
+	if res := atomic.AddUint32(&q.refCount, ^uint32(0)); res == 0 {
+		// do release
+		q.reset()
+		queryPool.Put(q)
+	}
+}
+
+func (q *Query) borrowForExecution() {
+	q.incRefCount()
+}
+
+func (q *Query) releaseAfterExecution() {
+	q.decRefCount()
 }
 
 // Iter represents an iterator that can be used to iterate over all rows that
@@ -1712,7 +1752,7 @@ func (b *Batch) AddAttempts(i int, host *HostInfo) {
 	b.metrics.attempt(i, 0, host, false)
 }
 
-//Latency returns the average number of nanoseconds to execute a single attempt of the batch.
+// Latency returns the average number of nanoseconds to execute a single attempt of the batch.
 func (b *Batch) Latency() int64 {
 	return b.metrics.latency()
 }
@@ -1931,6 +1971,16 @@ func createRoutingKey(routingKeyInfo *routingKeyInfo, values []interface{}) ([]b
 	return routingKey, nil
 }
 
+func (b *Batch) borrowForExecution() {
+	// empty, because Batch has no equivalent of Query.Release()
+	// that would race with speculative executions.
+}
+
+func (b *Batch) releaseAfterExecution() {
+	// empty, because Batch has no equivalent of Query.Release()
+	// that would race with speculative executions.
+}
+
 type BatchType byte
 
 const (
@@ -1978,8 +2028,8 @@ func (r *routingKeyInfoLRU) Remove(key string) {
 	r.mu.Unlock()
 }
 
-//Max adjusts the maximum size of the cache and cleans up the oldest records if
-//the new max is lower than the previous value. Not concurrency safe.
+// Max adjusts the maximum size of the cache and cleans up the oldest records if
+// the new max is lower than the previous value. Not concurrency safe.
 func (r *routingKeyInfoLRU) Max(max int) {
 	r.mu.Lock()
 	for r.lru.Len() > max {

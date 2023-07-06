@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2023 The Pion community <https://pion.ly>
+// SPDX-License-Identifier: MIT
+
 package dtls
 
 import (
@@ -169,10 +172,8 @@ func (s *State) UnmarshalBinary(data []byte) error {
 	}
 
 	s.deserialize(serialized)
-	if err := s.initCipherSuite(); err != nil {
-		return err
-	}
-	return nil
+
+	return s.initCipherSuite()
 }
 
 // ExportKeyingMaterial returns length bytes of exported key material in a new

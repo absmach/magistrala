@@ -79,7 +79,7 @@ func (lm *loggingMiddleware) ListTwins(ctx context.Context, token string, offset
 	return lm.svc.ListTwins(ctx, token, offset, limit, name, metadata)
 }
 
-func (lm *loggingMiddleware) SaveStates(msg *messaging.Message) (err error) {
+func (lm *loggingMiddleware) SaveStates(ctx context.Context, msg *messaging.Message) (err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method save_states took %s to complete", time.Since(begin))
 		if err != nil {
@@ -89,7 +89,7 @@ func (lm *loggingMiddleware) SaveStates(msg *messaging.Message) (err error) {
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
 
-	return lm.svc.SaveStates(msg)
+	return lm.svc.SaveStates(ctx, msg)
 }
 
 func (lm *loggingMiddleware) ListStates(ctx context.Context, token string, offset uint64, limit uint64, twinID string) (page twins.StatesPage, err error) {

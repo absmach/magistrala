@@ -48,7 +48,7 @@ type Service interface {
 	ListStates(ctx context.Context, token string, offset uint64, limit uint64, twinID string) (StatesPage, error)
 
 	// SaveStates persists states into database
-	SaveStates(msg *messaging.Message) error
+	SaveStates(ctx context.Context, msg *messaging.Message) error
 }
 
 const (
@@ -247,10 +247,9 @@ func (ts *twinsService) ListStates(ctx context.Context, token string, offset uin
 	return ts.states.RetrieveAll(ctx, offset, limit, twinID)
 }
 
-func (ts *twinsService) SaveStates(msg *messaging.Message) error {
+func (ts *twinsService) SaveStates(ctx context.Context, msg *messaging.Message) error {
 	var ids []string
 
-	ctx := context.TODO()
 	channel, subtopic := msg.Channel, msg.Subtopic
 	ids, err := ts.twinCache.IDs(ctx, channel, subtopic)
 	if err != nil {
@@ -270,7 +269,7 @@ func (ts *twinsService) SaveStates(msg *messaging.Message) error {
 	}
 
 	for _, id := range ids {
-		if err := ts.saveState(msg, id); err != nil {
+		if err := ts.saveState(ctx, msg, id); err != nil {
 			return err
 		}
 	}
@@ -278,10 +277,10 @@ func (ts *twinsService) SaveStates(msg *messaging.Message) error {
 	return nil
 }
 
-func (ts *twinsService) saveState(msg *messaging.Message, twinID string) error {
+func (ts *twinsService) saveState(ctx context.Context, msg *messaging.Message, twinID string) error {
 	var b []byte
 	var err error
-	ctx := context.TODO()
+
 	defer ts.publish(ctx, &twinID, &err, crudOp["stateSucc"], crudOp["stateFail"], &b)
 
 	tw, err := ts.twins.RetrieveByID(ctx, twinID)

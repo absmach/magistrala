@@ -35,7 +35,7 @@ func NewStateRepository(db *mongo.Database) twins.StateRepository {
 func (sr *stateRepository) Save(ctx context.Context, st twins.State) error {
 	coll := sr.db.Collection(statesCollection)
 
-	if _, err := coll.InsertOne(context.Background(), st); err != nil {
+	if _, err := coll.InsertOne(ctx, st); err != nil {
 		return err
 	}
 
@@ -48,7 +48,7 @@ func (sr *stateRepository) Update(ctx context.Context, st twins.State) error {
 
 	filter := bson.M{"id": st.ID, twinid: st.TwinID}
 	update := bson.M{"$set": st}
-	if _, err := coll.UpdateOne(context.Background(), filter, update); err != nil {
+	if _, err := coll.UpdateOne(ctx, filter, update); err != nil {
 		return err
 	}
 

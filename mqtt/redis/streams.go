@@ -15,8 +15,8 @@ const (
 )
 
 type EventStore interface {
-	Connect(clientID string) error
-	Disconnect(clientID string) error
+	Connect(ctx context.Context, clientID string) error
+	Disconnect(ctx context.Context, clientID string) error
 }
 
 // EventStore is a struct used to store event streams in Redis.
@@ -34,7 +34,7 @@ func NewEventStore(client *redis.Client, instance string) EventStore {
 	}
 }
 
-func (es eventStore) storeEvent(clientID, eventType string) error {
+func (es eventStore) storeEvent(ctx context.Context, clientID, eventType string) error {
 	event := mqttEvent{
 		clientID:  clientID,
 		eventType: eventType,
@@ -47,15 +47,15 @@ func (es eventStore) storeEvent(clientID, eventType string) error {
 		Values:       event.Encode(),
 	}
 
-	return es.client.XAdd(context.Background(), record).Err()
+	return es.client.XAdd(ctx, record).Err()
 }
 
 // Connect issues event on MQTT CONNECT.
-func (es eventStore) Connect(clientID string) error {
-	return es.storeEvent(clientID, "connect")
+func (es eventStore) Connect(ctx context.Context, clientID string) error {
+	return es.storeEvent(ctx, clientID, "connect")
 }
 
 // Disconnect issues event on MQTT CONNECT.
-func (es eventStore) Disconnect(clientID string) error {
-	return es.storeEvent(clientID, "disconnect")
+func (es eventStore) Disconnect(ctx context.Context, clientID string) error {
+	return es.storeEvent(ctx, clientID, "disconnect")
 }

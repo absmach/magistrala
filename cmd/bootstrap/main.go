@@ -120,7 +120,7 @@ func main() {
 	}
 	defer thingsESClient.Close()
 
-	go subscribeToThingsES(svc, thingsESClient, cfg.ESConsumerName, logger)
+	go subscribeToThingsES(ctx, svc, thingsESClient, cfg.ESConsumerName, logger)
 
 	if err := g.Wait(); err != nil {
 		logger.Error(fmt.Sprintf("Bootstrap service terminated: %s", err))
@@ -145,10 +145,10 @@ func newService(auth policies.AuthServiceClient, db *sqlx.DB, logger mflog.Logge
 	return svc
 }
 
-func subscribeToThingsES(svc bootstrap.Service, client *redis.Client, consumer string, logger mflog.Logger) {
+func subscribeToThingsES(ctx context.Context, svc bootstrap.Service, client *redis.Client, consumer string, logger mflog.Logger) {
 	eventStore := rediscons.NewEventStore(svc, client, consumer, logger)
 	logger.Info("Subscribed to Redis Event Store")
-	if err := eventStore.Subscribe(context.Background(), "mainflux.things"); err != nil {
+	if err := eventStore.Subscribe(ctx, "mainflux.things"); err != nil {
 		logger.Warn(fmt.Sprintf("Bootstrap service failed to subscribe to event sourcing: %s", err))
 	}
 }

@@ -99,7 +99,7 @@ func (h *handler) AuthConnect(ctx context.Context) error {
 		return errors.ErrAuthentication
 	}
 
-	if err := h.es.Connect(string(s.Password)); err != nil {
+	if err := h.es.Connect(ctx, string(s.Password)); err != nil {
 		h.logger.Error(errors.Wrap(ErrFailedPublishConnectEvent, err).Error())
 	}
 
@@ -221,7 +221,7 @@ func (h *handler) Disconnect(ctx context.Context) {
 		return
 	}
 	h.logger.Error(fmt.Sprintf(LogInfoDisconnected, s.ID, s.Password))
-	if err := h.es.Disconnect(string(s.Password)); err != nil {
+	if err := h.es.Disconnect(ctx, string(s.Password)); err != nil {
 		h.logger.Error(errors.Wrap(ErrFailedPublishDisconnectEvent, err).Error())
 	}
 }

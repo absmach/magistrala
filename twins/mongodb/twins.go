@@ -38,7 +38,7 @@ func (tr *twinRepository) Save(ctx context.Context, tw twins.Twin) (string, erro
 
 	coll := tr.db.Collection(twinsCollection)
 
-	if _, err := coll.InsertOne(context.Background(), tw); err != nil {
+	if _, err := coll.InsertOne(ctx, tw); err != nil {
 		return "", errors.Wrap(errors.ErrCreateEntity, err)
 	}
 
@@ -54,7 +54,7 @@ func (tr *twinRepository) Update(ctx context.Context, tw twins.Twin) error {
 
 	filter := bson.M{"id": tw.ID}
 	update := bson.M{"$set": tw}
-	res, err := coll.UpdateOne(context.Background(), filter, update)
+	res, err := coll.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return err
 	}
@@ -66,12 +66,12 @@ func (tr *twinRepository) Update(ctx context.Context, tw twins.Twin) error {
 	return nil
 }
 
-func (tr *twinRepository) RetrieveByID(_ context.Context, twinID string) (twins.Twin, error) {
+func (tr *twinRepository) RetrieveByID(ctx context.Context, twinID string) (twins.Twin, error) {
 	coll := tr.db.Collection(twinsCollection)
 	var tw twins.Twin
 
 	filter := bson.M{"id": twinID}
-	if err := coll.FindOne(context.Background(), filter).Decode(&tw); err != nil {
+	if err := coll.FindOne(ctx, filter).Decode(&tw); err != nil {
 		return tw, errors.ErrNotFound
 	}
 
@@ -178,7 +178,7 @@ func (tr *twinRepository) Remove(ctx context.Context, twinID string) error {
 	coll := tr.db.Collection(twinsCollection)
 
 	filter := bson.M{"id": twinID}
-	res, err := coll.DeleteOne(context.Background(), filter)
+	res, err := coll.DeleteOne(ctx, filter)
 	if err != nil {
 		return errors.Wrap(errors.ErrRemoveEntity, err)
 	}

@@ -113,13 +113,13 @@ func main() {
 		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
 	}
 	defer func() {
-		if err := tp.Shutdown(context.Background()); err != nil {
+		if err := tp.Shutdown(ctx); err != nil {
 			logger.Error(fmt.Sprintf("error shutting down tracer provider: %v", err))
 		}
 	}()
 	tracer := tp.Tracer(svcName)
 
-	csvc, gsvc, psvc := newService(db, tracer, cfg, ec, logger)
+	csvc, gsvc, psvc := newService(ctx, db, tracer, cfg, ec, logger)
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
@@ -162,7 +162,7 @@ func main() {
 	}
 }
 
-func newService(db *sqlx.DB, tracer trace.Tracer, c config, ec email.Config, logger mflog.Logger) (clients.Service, groups.Service, policies.Service) {
+func newService(ctx context.Context, db *sqlx.DB, tracer trace.Tracer, c config, ec email.Config, logger mflog.Logger) (clients.Service, groups.Service, policies.Service) {
 	database := postgres.NewDatabase(db, tracer)
 	cRepo := cpostgres.NewRepository(database)
 	gRepo := gpostgres.NewRepository(database)
@@ -205,13 +205,13 @@ func newService(db *sqlx.DB, tracer trace.Tracer, c config, ec email.Config, log
 	counter, latency = internal.MakeMetrics("policies", "api")
 	psvc = papi.MetricsMiddleware(psvc, counter, latency)
 
-	if err := createAdmin(c, cRepo, hsr, csvc); err != nil {
+	if err := createAdmin(ctx, c, cRepo, hsr, csvc); err != nil {
 		logger.Error(fmt.Sprintf("failed to create admin client: %s", err))
 	}
 	return csvc, gsvc, psvc
 }
 
-func createAdmin(c config, crepo mfclients.Repository, hsr clients.Hasher, svc clients.Service) error {
+func createAdmin(ctx context.Context, c config, crepo mfclients.Repository, hsr clients.Hasher, svc clients.Service) error {
 	id, err := uuid.New().ID()
 	if err != nil {
 		return err
@@ -237,16 +237,15 @@ func createAdmin(c config, crepo mfclients.Repository, hsr clients.Hasher, svc c
 		Status:    mfclients.EnabledStatus,
 	}
 
-	if _, err := crepo.RetrieveByIdentity(context.Background(), client.Credentials.Identity); err == nil {
+	if _, err := crepo.RetrieveByIdentity(ctx, client.Credentials.Identity); err == nil {
 		return nil
 	}
 
 	// Create an admin
-	if _, err = crepo.Save(context.Background(), client); err != nil {
+	if _, err = crepo.Save(ctx, client); err != nil {
 		return err
 	}
-	_, err = svc.IssueToken(context.Background(), c.AdminEmail, c.AdminPassword)
-	if err != nil {
+	if _, err = svc.IssueToken(ctx, c.AdminEmail, c.AdminPassword); err != nil {
 		return err
 	}
 

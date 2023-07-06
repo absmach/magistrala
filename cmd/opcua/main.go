@@ -52,8 +52,8 @@ type config struct {
 }
 
 func main() {
-	httpCtx, httpCancel := context.WithCancel(context.Background())
-	g, httpCtx := errgroup.WithContext(httpCtx)
+	ctx, httpCancel := context.WithCancel(context.Background())
+	g, ctx := errgroup.WithContext(ctx)
 
 	cfg := config{}
 	if err := env.Parse(&cfg); err != nil {
@@ -91,7 +91,7 @@ func main() {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
 	}
 	defer func() {
-		if err := tp.Shutdown(context.Background()); err != nil {
+		if err := tp.Shutdown(ctx); err != nil {
 			logger.Error(fmt.Sprintf("Error shutting down tracer provider: %v", err))
 		}
 	}()
@@ -104,24 +104,23 @@ func main() {
 	pubSub = tracing.NewPubSub(tracer, pubSub)
 	defer pubSub.Close()
 
-	ctx := context.Background()
 	sub := gopcua.NewSubscriber(ctx, pubSub, thingRM, chanRM, connRM, logger)
 	browser := gopcua.NewBrowser(ctx, logger)
 
 	svc := newService(sub, browser, thingRM, chanRM, connRM, opcConfig, logger)
 
-	go subscribeToStoredSubs(sub, opcConfig, logger)
-	go subscribeToThingsES(svc, esConn, cfg.ESConsumerName, logger)
+	go subscribeToStoredSubs(ctx, sub, opcConfig, logger)
+	go subscribeToThingsES(ctx, svc, esConn, cfg.ESConsumerName, logger)
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
 		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 	}
-	hs := httpserver.New(httpCtx, httpCancel, svcName, httpServerConfig, api.MakeHandler(svc, logger), logger)
+	hs := httpserver.New(ctx, httpCancel, svcName, httpServerConfig, api.MakeHandler(svc, logger), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, mainflux.Version, logger, httpCancel)
-		go chc.CallHome(httpCtx)
+		go chc.CallHome(ctx)
 	}
 
 	g.Go(func() error {
@@ -129,7 +128,7 @@ func main() {
 	})
 
 	g.Go(func() error {
-		return server.StopSignalHandler(httpCtx, httpCancel, logger, svcName, hs)
+		return server.StopSignalHandler(ctx, httpCancel, logger, svcName, hs)
 	})
 
 	if err := g.Wait(); err != nil {
@@ -137,7 +136,7 @@ func main() {
 	}
 }
 
-func subscribeToStoredSubs(sub opcua.Subscriber, cfg opcua.Config, logger mflog.Logger) {
+func subscribeToStoredSubs(ctx context.Context, sub opcua.Subscriber, cfg opcua.Config, logger mflog.Logger) {
 	// Get all stored subscriptions
 	nodes, err := db.ReadAll()
 	if err != nil {
@@ -148,16 +147,16 @@ func subscribeToStoredSubs(sub opcua.Subscriber, cfg opcua.Config, logger mflog.
 		cfg.ServerURI = n.ServerURI
 		cfg.NodeID = n.NodeID
 		go func() {
-			if err := sub.Subscribe(context.Background(), cfg); err != nil {
+			if err := sub.Subscribe(ctx, cfg); err != nil {
 				logger.Warn(fmt.Sprintf("Subscription failed: %s", err))
 			}
 		}()
 	}
 }
 
-func subscribeToThingsES(svc opcua.Service, client *r.Client, prefix string, logger mflog.Logger) {
+func subscribeToThingsES(ctx context.Context, svc opcua.Service, client *r.Client, prefix string, logger mflog.Logger) {
 	eventStore := redis.NewEventStore(svc, client, prefix, logger)
-	if err := eventStore.Subscribe(context.Background(), "mainflux.things"); err != nil {
+	if err := eventStore.Subscribe(ctx, "mainflux.things"); err != nil {
 		logger.Warn(fmt.Sprintf("Failed to subscribe to Redis event source: %s", err))
 	}
 }

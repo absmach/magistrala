@@ -46,7 +46,7 @@ func (svc *mainfluxPolicies) DeletePolicy(ctx context.Context, token string, p t
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
-	if _, err := svc.auth.Identify(context.Background(), &upolicies.Token{Value: token}); err != nil {
+	if _, err := svc.auth.Identify(ctx, &upolicies.Token{Value: token}); err != nil {
 		return errors.ErrAuthentication
 	}
 

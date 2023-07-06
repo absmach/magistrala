@@ -120,7 +120,7 @@ func New(auth policies.AuthServiceClient, configs ConfigRepository, sdk mfsdk.SD
 }
 
 func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (Config, error) {
-	owner, err := bs.identify(token)
+	owner, err := bs.identify(ctx, token)
 	if err != nil {
 		return Config{}, err
 	}
@@ -167,7 +167,7 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 }
 
 func (bs bootstrapService) View(ctx context.Context, token, id string) (Config, error) {
-	owner, err := bs.identify(token)
+	owner, err := bs.identify(ctx, token)
 	if err != nil {
 		return Config{}, err
 	}
@@ -176,7 +176,7 @@ func (bs bootstrapService) View(ctx context.Context, token, id string) (Config, 
 }
 
 func (bs bootstrapService) Update(ctx context.Context, token string, cfg Config) error {
-	owner, err := bs.identify(token)
+	owner, err := bs.identify(ctx, token)
 	if err != nil {
 		return err
 	}
@@ -187,7 +187,7 @@ func (bs bootstrapService) Update(ctx context.Context, token string, cfg Config)
 }
 
 func (bs bootstrapService) UpdateCert(ctx context.Context, token, thingID, clientCert, clientKey, caCert string) error {
-	owner, err := bs.identify(token)
+	owner, err := bs.identify(ctx, token)
 	if err != nil {
 		return err
 	}
@@ -198,7 +198,7 @@ func (bs bootstrapService) UpdateCert(ctx context.Context, token, thingID, clien
 }
 
 func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id string, connections []string) error {
-	owner, err := bs.identify(token)
+	owner, err := bs.identify(ctx, token)
 	if err != nil {
 		return err
 	}
@@ -252,7 +252,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id stri
 }
 
 func (bs bootstrapService) List(ctx context.Context, token string, filter Filter, offset, limit uint64) (ConfigsPage, error) {
-	owner, err := bs.identify(token)
+	owner, err := bs.identify(ctx, token)
 	if err != nil {
 		return ConfigsPage{}, err
 	}
@@ -261,7 +261,7 @@ func (bs bootstrapService) List(ctx context.Context, token string, filter Filter
 }
 
 func (bs bootstrapService) Remove(ctx context.Context, token, id string) error {
-	owner, err := bs.identify(token)
+	owner, err := bs.identify(ctx, token)
 	if err != nil {
 		return err
 	}
@@ -291,7 +291,7 @@ func (bs bootstrapService) Bootstrap(ctx context.Context, externalKey, externalI
 }
 
 func (bs bootstrapService) ChangeState(ctx context.Context, token, id string, state State) error {
-	owner, err := bs.identify(token)
+	owner, err := bs.identify(ctx, token)
 	if err != nil {
 		return err
 	}
@@ -360,8 +360,8 @@ func (bs bootstrapService) DisconnectThingHandler(ctx context.Context, channelID
 	return nil
 }
 
-func (bs bootstrapService) identify(token string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+func (bs bootstrapService) identify(ctx context.Context, token string) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 
 	res, err := bs.auth.Identify(ctx, &policies.Token{Value: token})

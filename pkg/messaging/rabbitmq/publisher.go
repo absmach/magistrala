@@ -56,7 +56,7 @@ func (pub *publisher) Publish(ctx context.Context, topic string, msg *messaging.
 	subject = formatTopic(subject)
 
 	err = pub.ch.PublishWithContext(
-		context.Background(),
+		ctx,
 		exchangeName,
 		subject,
 		false,

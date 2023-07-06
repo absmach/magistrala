@@ -314,7 +314,7 @@ func TestSaveStates(t *testing.T) {
 		message, err := mocks.CreateMessage(tc.attr, tc.recs)
 		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
-		err = svc.SaveStates(message)
+		err = svc.SaveStates(context.Background(), message)
 		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 		ttlAdded += tc.size
@@ -346,7 +346,7 @@ func TestListStates(t *testing.T) {
 	mocks.CreateSenML(recs)
 	message, err := mocks.CreateMessage(attr, recs)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-	err = svc.SaveStates(message)
+	err = svc.SaveStates(context.Background(), message)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := []struct {

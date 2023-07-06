@@ -107,7 +107,7 @@ func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, tt
 		Expire:         time.Unix(0, int64(cert.Expire)*int64(time.Second)),
 	}
 
-	_, err = cs.certsRepo.Save(context.Background(), c)
+	_, err = cs.certsRepo.Save(ctx, c)
 	return c, err
 }
 
@@ -135,7 +135,7 @@ func (cs *certsService) RevokeCert(ctx context.Context, token, thingID string) (
 			return revoke, errors.Wrap(ErrFailedCertRevocation, err)
 		}
 		revoke.RevocationTime = revTime
-		if err = cs.certsRepo.Remove(context.Background(), u.GetId(), c.Serial); err != nil {
+		if err = cs.certsRepo.Remove(ctx, u.GetId(), c.Serial); err != nil {
 			return revoke, errors.Wrap(ErrFailedToRemoveCertFromDB, err)
 		}
 	}

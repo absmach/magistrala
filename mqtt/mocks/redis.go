@@ -1,6 +1,8 @@
 package mocks
 
 import (
+	"context"
+
 	"github.com/mainflux/mainflux/mqtt/redis"
 )
 
@@ -10,10 +12,10 @@ func NewEventStore() redis.EventStore {
 	return MockEventStore{}
 }
 
-func (es MockEventStore) Connect(clientID string) error {
+func (es MockEventStore) Connect(ctx context.Context, clientID string) error {
 	return nil
 }
 
-func (es MockEventStore) Disconnect(clientID string) error {
+func (es MockEventStore) Disconnect(ctx context.Context, clientID string) error {
 	return nil
 }

@@ -63,7 +63,7 @@ func main() {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
 	}
 	defer func() {
-		if err := tp.Shutdown(context.Background()); err != nil {
+		if err := tp.Shutdown(ctx); err != nil {
 			logger.Error(fmt.Sprintf("Error shutting down tracer provider: %v", err))
 		}
 	}()

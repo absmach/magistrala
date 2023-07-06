@@ -88,7 +88,7 @@ func main() {
 		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
 	}
 	defer func() {
-		if err := tp.Shutdown(context.Background()); err != nil {
+		if err := tp.Shutdown(ctx); err != nil {
 			logger.Error(fmt.Sprintf("Error shutting down tracer provider: %v", err))
 		}
 	}()
@@ -156,20 +156,20 @@ func newService(ctx context.Context, id string, ps messaging.PubSub, chanID stri
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := internal.MakeMetrics(svcName, "api")
 	svc = api.MetricsMiddleware(svc, counter, latency)
-	err := ps.Subscribe(ctx, id, brokers.SubjectAllChannels, handle(logger, chanID, svc))
+	err := ps.Subscribe(ctx, id, brokers.SubjectAllChannels, handle(ctx, logger, chanID, svc))
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
 	return svc
 }
 
-func handle(logger mflog.Logger, chanID string, svc twins.Service) handlerFunc {
+func handle(ctx context.Context, logger mflog.Logger, chanID string, svc twins.Service) handlerFunc {
 	return func(msg *messaging.Message) error {
 		if msg.Channel == chanID {
 			return nil
 		}
 
-		if err := svc.SaveStates(msg); err != nil {
+		if err := svc.SaveStates(ctx, msg); err != nil {
 			logger.Error(fmt.Sprintf("State save failed: %s", err))
 			return err
 		}

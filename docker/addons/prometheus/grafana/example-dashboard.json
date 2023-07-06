@@ -24,6 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
+  "id": 1,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -395,180 +396,6 @@
         "x": 0,
         "y": 22
       },
-      "id": 37,
-      "panels": [],
-      "title": "Auth-Service",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 10,
-        "x": 0,
-        "y": 23
-      },
-      "id": 16,
-      "options": {
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "text": {}
-      },
-      "pluginVersion": "9.4.7",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "exemplar": true,
-          "expr": "auth_api_request_count{}",
-          "interval": "",
-          "legendFormat": "{{method}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Auth Request count",
-      "type": "gauge"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 35,
-            "gradientMode": "hue",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "µs"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 14,
-        "x": 10,
-        "y": 23
-      },
-      "id": 43,
-      "interval": "30",
-      "options": {
-        "legend": {
-          "calcs": [
-            "min",
-            "max",
-            "mean"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "9.4.7",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "label_replace(label_replace(label_replace(auth_api_request_latency_microseconds, \"quantile\", \"50th percentile\", \"quantile\", \"0.5\"), \"quantile\", \"90th percentile\", \"quantile\", \"0.9\"), \"quantile\", \"99th percentile\", \"quantile\", \"0.99\")",
-          "format": "time_series",
-          "instant": false,
-          "interval": "",
-          "key": "Q-cc5a9d33-5437-4862-abd9-60afd75f3f39-0",
-          "legendFormat": "{{method}} - {{quantile}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Auth Latency Quantiles",
-      "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 33
-      },
       "id": 35,
       "panels": [],
       "title": "Things-Service",
@@ -601,7 +428,7 @@
         "h": 10,
         "w": 10,
         "x": 0,
-        "y": 34
+        "y": 23
       },
       "id": 10,
       "options": {
@@ -704,7 +531,7 @@
         "h": 10,
         "w": 14,
         "x": 10,
-        "y": 34
+        "y": 23
       },
       "id": 42,
       "interval": "30",
@@ -751,7 +578,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 44
+        "y": 33
       },
       "id": 33,
       "panels": [],
@@ -785,7 +612,7 @@
         "h": 10,
         "w": 10,
         "x": 0,
-        "y": 45
+        "y": 34
       },
       "id": 22,
       "options": {
@@ -887,7 +714,7 @@
         "h": 10,
         "w": 14,
         "x": 10,
-        "y": 45
+        "y": 34
       },
       "id": 41,
       "interval": "30",
@@ -934,7 +761,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 55
+        "y": 44
       },
       "id": 31,
       "panels": [],
@@ -968,7 +795,7 @@
         "h": 10,
         "w": 10,
         "x": 0,
-        "y": 56
+        "y": 45
       },
       "id": 18,
       "options": {
@@ -1070,7 +897,7 @@
         "h": 10,
         "w": 14,
         "x": 10,
-        "y": 56
+        "y": 45
       },
       "id": 44,
       "interval": "30",
@@ -1117,7 +944,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 66
+        "y": 55
       },
       "id": 29,
       "panels": [],
@@ -1151,7 +978,7 @@
         "h": 10,
         "w": 10,
         "x": 0,
-        "y": 67
+        "y": 56
       },
       "id": 20,
       "options": {
@@ -1253,7 +1080,7 @@
         "h": 10,
         "w": 14,
         "x": 10,
-        "y": 67
+        "y": 56
       },
       "id": 23,
       "options": {
@@ -1299,7 +1126,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 77
+        "y": 66
       },
       "id": 27,
       "panels": [],
@@ -1333,7 +1160,7 @@
         "h": 10,
         "w": 10,
         "x": 0,
-        "y": 78
+        "y": 67
       },
       "id": 6,
       "options": {
@@ -1427,7 +1254,7 @@
         "h": 10,
         "w": 14,
         "x": 10,
-        "y": 78
+        "y": 67
       },
       "id": 40,
       "options": {
@@ -1485,6 +1312,6 @@
   "timezone": "",
   "title": "mainflux",
   "uid": "sgKwOwY4k",
-  "version": 5,
+  "version": 1,
   "weekStart": ""
 }

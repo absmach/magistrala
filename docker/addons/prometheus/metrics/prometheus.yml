@@ -14,7 +14,6 @@ scrape_configs:
     - targets: 
       - mainflux-things:9000
       - mainflux-users:9002
-      - mainflux-auth:9020
       - mainflux-http:8008
       - mainflux-ws:8186
       - mainflux-coap:5683

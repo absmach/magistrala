@@ -43,7 +43,6 @@ type config struct {
 	LogLevel      string `env:"MF_CERTS_LOG_LEVEL"        envDefault:"info"`
 	CertsURL      string `env:"MF_SDK_CERTS_URL"          envDefault:"http://localhost"`
 	ThingsURL     string `env:"MF_THINGS_URL"             envDefault:"http://things:9000"`
-	JaegerURL     string `env:"MF_JAEGER_URL"             envDefault:"http://jaeger:14268/api/traces"`
 	SendTelemetry bool   `env:"MF_SEND_TELEMETRY"         envDefault:"true"`
 
 	// Sign and issue certificates without 3rd party PKI
@@ -90,7 +89,7 @@ func main() {
 	}
 	defer db.Close()
 
-	auth, authHandler, err := authClient.Setup(envPrefix, svcName, cfg.JaegerURL)
+	auth, authHandler, err := authClient.Setup(envPrefix, svcName)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}

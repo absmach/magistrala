@@ -4,6 +4,7 @@
 package bootstrap
 
 import (
+	"context"
 	"time"
 
 	"github.com/mainflux/mainflux/pkg/clients"
@@ -62,54 +63,54 @@ type ConfigsPage struct {
 type ConfigRepository interface {
 	// Save persists the Config. Successful operation is indicated by non-nil
 	// error response.
-	Save(cfg Config, chsConnIDs []string) (string, error)
+	Save(ctx context.Context, cfg Config, chsConnIDs []string) (string, error)
 
 	// RetrieveByID retrieves the Config having the provided identifier, that is owned
 	// by the specified user.
-	RetrieveByID(owner, id string) (Config, error)
+	RetrieveByID(ctx context.Context, owner, id string) (Config, error)
 
 	// RetrieveAll retrieves a subset of Configs that are owned
 	// by the specific user, with given filter parameters.
-	RetrieveAll(owner string, filter Filter, offset, limit uint64) ConfigsPage
+	RetrieveAll(ctx context.Context, owner string, filter Filter, offset, limit uint64) ConfigsPage
 
 	// RetrieveByExternalID returns Config for given external ID.
-	RetrieveByExternalID(externalID string) (Config, error)
+	RetrieveByExternalID(ctx context.Context, externalID string) (Config, error)
 
 	// Update updates an existing Config. A non-nil error is returned
 	// to indicate operation failure.
-	Update(cfg Config) error
+	Update(ctx context.Context, cfg Config) error
 
 	// UpdateCerts updates an existing Config certificate and owner.
 	// A non-nil error is returned to indicate operation failure.
-	UpdateCert(owner, thingID, clientCert, clientKey, caCert string) error
+	UpdateCert(ctx context.Context, owner, thingID, clientCert, clientKey, caCert string) error
 
 	// UpdateConnections updates a list of Channels the Config is connected to
 	// adding new Channels if needed.
-	UpdateConnections(owner, id string, channels []Channel, connections []string) error
+	UpdateConnections(ctx context.Context, owner, id string, channels []Channel, connections []string) error
 
 	// Remove removes the Config having the provided identifier, that is owned
 	// by the specified user.
-	Remove(owner, id string) error
+	Remove(ctx context.Context, owner, id string) error
 
 	// ChangeState changes of the Config, that is owned by the specific user.
-	ChangeState(owner, id string, state State) error
+	ChangeState(ctx context.Context, owner, id string, state State) error
 
 	// ListExisting retrieves those channels from the given list that exist in DB.
-	ListExisting(owner string, ids []string) ([]Channel, error)
+	ListExisting(ctx context.Context, owner string, ids []string) ([]Channel, error)
 
 	// Methods RemoveThing, UpdateChannel, and RemoveChannel are related to
 	// event sourcing. That's why these methods surpass ownership check.
 
 	// RemoveThing removes Config of the Thing with the given ID.
-	RemoveThing(id string) error
+	RemoveThing(ctx context.Context, id string) error
 
 	// UpdateChannel updates channel with the given ID.
-	UpdateChannel(c Channel) error
+	UpdateChannel(ctx context.Context, c Channel) error
 
 	// RemoveChannel removes channel with the given ID.
-	RemoveChannel(id string) error
+	RemoveChannel(ctx context.Context, id string) error
 
 	// DisconnectHandler changes state of the Config when the corresponding Thing is
 	// disconnected from the Channel.
-	DisconnectThing(channelID, thingID string) error
+	DisconnectThing(ctx context.Context, channelID, thingID string) error
 }

@@ -34,6 +34,9 @@ type Database interface {
 	// QueryxContext queries the database and returns an *sqlx.Rows
 	QueryxContext(context.Context, string, ...interface{}) (*sqlx.Rows, error)
 
+	// QueryContext executes a query that returns rows, typically a SELECT.
+	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
+
 	// ExecContext executes a query without returning any rows
 	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
 
@@ -79,8 +82,14 @@ func (d database) QueryxContext(ctx context.Context, query string, args ...inter
 	return d.db.QueryxContext(ctx, query, args...)
 }
 
+func (d database) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+	ctx, span := d.addSpanTags(ctx, "QueryContext", query)
+	defer span.End()
+	return d.db.QueryContext(ctx, query, args...)
+}
+
 func (d database) BeginTxx(ctx context.Context, opts *sql.TxOptions) (*sqlx.Tx, error) {
-	ctx, span := d.addSpanTags(ctx, "sql_beginTxx", "")
+	ctx, span := d.addSpanTags(ctx, "BeginTxx", "")
 	defer span.End()
 	return d.db.BeginTxx(ctx, opts)
 }

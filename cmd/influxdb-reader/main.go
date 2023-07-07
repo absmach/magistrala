@@ -38,7 +38,6 @@ const (
 
 type config struct {
 	LogLevel      string `env:"MF_INFLUX_READER_LOG_LEVEL"  envDefault:"info"`
-	JaegerURL     string `env:"MF_JAEGER_URL"               envDefault:"http://jaeger:14268/api/traces"`
 	SendTelemetry bool   `env:"MF_SEND_TELEMETRY"           envDefault:"true"`
 }
 
@@ -56,14 +55,14 @@ func main() {
 		log.Fatalf("failed to init logger: %s", err)
 	}
 
-	tc, tcHandler, err := thingsClient.Setup(envPrefix, cfg.JaegerURL)
+	tc, tcHandler, err := thingsClient.Setup(envPrefix)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
 	defer tcHandler.Close()
 	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
 
-	auth, authHandler, err := authClient.Setup(envPrefix, svcName, cfg.JaegerURL)
+	auth, authHandler, err := authClient.Setup(envPrefix, svcName)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}

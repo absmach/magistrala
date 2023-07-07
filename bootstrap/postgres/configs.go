@@ -4,6 +4,7 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
 	"github.com/mainflux/mainflux/bootstrap"
+	"github.com/mainflux/mainflux/internal/postgres"
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -34,21 +36,21 @@ const cleanupQuery = `DELETE FROM channels ch WHERE NOT EXISTS (
 var _ bootstrap.ConfigRepository = (*configRepository)(nil)
 
 type configRepository struct {
-	db  *sqlx.DB
+	db  postgres.Database
 	log mflog.Logger
 }
 
 // NewConfigRepository instantiates a PostgreSQL implementation of config
 // repository.
-func NewConfigRepository(db *sqlx.DB, log mflog.Logger) bootstrap.ConfigRepository {
+func NewConfigRepository(db postgres.Database, log mflog.Logger) bootstrap.ConfigRepository {
 	return &configRepository{db: db, log: log}
 }
 
-func (cr configRepository) Save(cfg bootstrap.Config, chsConnIDs []string) (string, error) {
+func (cr configRepository) Save(ctx context.Context, cfg bootstrap.Config, chsConnIDs []string) (string, error) {
 	q := `INSERT INTO configs (mainflux_thing, owner, name, client_cert, client_key, ca_cert, mainflux_key, external_id, external_key, content, state)
 		  VALUES (:mainflux_thing, :owner, :name, :client_cert, :client_key, :ca_cert, :mainflux_key, :external_id, :external_key, :content, :state)`
 
-	tx, err := cr.db.Beginx()
+	tx, err := cr.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return "", errors.Wrap(errors.ErrCreateEntity, err)
 	}
@@ -65,12 +67,12 @@ func (cr configRepository) Save(cfg bootstrap.Config, chsConnIDs []string) (stri
 		return "", errors.Wrap(errors.ErrCreateEntity, e)
 	}
 
-	if err := insertChannels(cfg.Owner, cfg.MFChannels, tx); err != nil {
+	if err := insertChannels(ctx, cfg.Owner, cfg.MFChannels, tx); err != nil {
 		cr.rollback("Failed to insert Channels", tx)
 		return "", errors.Wrap(errSaveChannels, err)
 	}
 
-	if err := insertConnections(cfg, chsConnIDs, tx); err != nil {
+	if err := insertConnections(ctx, cfg, chsConnIDs, tx); err != nil {
 		cr.rollback("Failed to insert connections", tx)
 		return "", errors.Wrap(errSaveConnections, err)
 	}
@@ -83,7 +85,7 @@ func (cr configRepository) Save(cfg bootstrap.Config, chsConnIDs []string) (stri
 	return cfg.MFThing, nil
 }
 
-func (cr configRepository) RetrieveByID(owner, id string) (bootstrap.Config, error) {
+func (cr configRepository) RetrieveByID(ctx context.Context, owner, id string) (bootstrap.Config, error) {
 	q := `SELECT mainflux_thing, mainflux_key, external_id, external_key, name, content, state
 		  FROM configs
 		  WHERE mainflux_thing = $1 AND owner = $2`
@@ -93,7 +95,7 @@ func (cr configRepository) RetrieveByID(owner, id string) (bootstrap.Config, err
 		Owner:   owner,
 	}
 
-	if err := cr.db.QueryRowx(q, id, owner).StructScan(&dbcfg); err != nil {
+	if err := cr.db.QueryRowxContext(ctx, q, id, owner).StructScan(&dbcfg); err != nil {
 		empty := bootstrap.Config{}
 		if err == sql.ErrNoRows {
 			return empty, errors.Wrap(errors.ErrNotFound, err)
@@ -107,7 +109,7 @@ func (cr configRepository) RetrieveByID(owner, id string) (bootstrap.Config, err
 		 ON ch.mainflux_channel = conn.channel_id AND ch.owner = conn.config_owner
 		 WHERE conn.config_id = :mainflux_thing AND conn.config_owner = :owner`
 
-	rows, err := cr.db.NamedQuery(q, dbcfg)
+	rows, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
 	if err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to retrieve connected due to %s", err))
 		return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
@@ -136,7 +138,7 @@ func (cr configRepository) RetrieveByID(owner, id string) (bootstrap.Config, err
 	return cfg, nil
 }
 
-func (cr configRepository) RetrieveAll(owner string, filter bootstrap.Filter, offset, limit uint64) bootstrap.ConfigsPage {
+func (cr configRepository) RetrieveAll(ctx context.Context, owner string, filter bootstrap.Filter, offset, limit uint64) bootstrap.ConfigsPage {
 	search, params := cr.retrieveAll(owner, filter)
 	n := len(params)
 
@@ -144,7 +146,7 @@ func (cr configRepository) RetrieveAll(owner string, filter bootstrap.Filter, of
 	      FROM configs %s ORDER BY mainflux_thing LIMIT $%d OFFSET $%d`
 	q = fmt.Sprintf(q, search, n+1, n+2)
 
-	rows, err := cr.db.Query(q, append(params, limit, offset)...)
+	rows, err := cr.db.QueryContext(ctx, q, append(params, limit, offset)...)
 	if err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to retrieve configs due to %s", err))
 		return bootstrap.ConfigsPage{}
@@ -169,7 +171,7 @@ func (cr configRepository) RetrieveAll(owner string, filter bootstrap.Filter, of
 	q = fmt.Sprintf(`SELECT COUNT(*) FROM configs %s`, search)
 
 	var total uint64
-	if err := cr.db.QueryRow(q, params...).Scan(&total); err != nil {
+	if err := cr.db.QueryRowxContext(ctx, q, params...).Scan(&total); err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to count configs due to %s", err))
 		return bootstrap.ConfigsPage{}
 	}
@@ -182,7 +184,7 @@ func (cr configRepository) RetrieveAll(owner string, filter bootstrap.Filter, of
 	}
 }
 
-func (cr configRepository) RetrieveByExternalID(externalID string) (bootstrap.Config, error) {
+func (cr configRepository) RetrieveByExternalID(ctx context.Context, externalID string) (bootstrap.Config, error) {
 	q := `SELECT mainflux_thing, mainflux_key, external_key, owner, name, client_cert, client_key, ca_cert, content, state
 		  FROM configs
 		  WHERE external_id = $1`
@@ -190,7 +192,7 @@ func (cr configRepository) RetrieveByExternalID(externalID string) (bootstrap.Co
 		ExternalID: externalID,
 	}
 
-	if err := cr.db.QueryRowx(q, externalID).StructScan(&dbcfg); err != nil {
+	if err := cr.db.QueryRowxContext(ctx, q, externalID).StructScan(&dbcfg); err != nil {
 		empty := bootstrap.Config{}
 		if err == sql.ErrNoRows {
 			return empty, errors.Wrap(errors.ErrNotFound, err)
@@ -203,7 +205,7 @@ func (cr configRepository) RetrieveByExternalID(externalID string) (bootstrap.Co
 		 ON ch.mainflux_channel = conn.channel_id AND ch.owner = conn.config_owner
 		 WHERE conn.config_id = :mainflux_thing AND conn.config_owner = :owner`
 
-	rows, err := cr.db.NamedQuery(q, dbcfg)
+	rows, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
 	if err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to retrieve connected due to %s", err))
 		return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
@@ -233,13 +235,13 @@ func (cr configRepository) RetrieveByExternalID(externalID string) (bootstrap.Co
 	return cfg, nil
 }
 
-func (cr configRepository) Update(cfg bootstrap.Config) error {
+func (cr configRepository) Update(ctx context.Context, cfg bootstrap.Config) error {
 	q := `UPDATE configs SET name = $1, content = $2 WHERE mainflux_thing = $3 AND owner = $4`
 
 	content := nullString(cfg.Content)
 	name := nullString(cfg.Name)
 
-	res, err := cr.db.Exec(q, name, content, cfg.MFThing, cfg.Owner)
+	res, err := cr.db.ExecContext(ctx, q, name, content, cfg.MFThing, cfg.Owner)
 	if err != nil {
 		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
@@ -256,10 +258,10 @@ func (cr configRepository) Update(cfg bootstrap.Config) error {
 	return nil
 }
 
-func (cr configRepository) UpdateCert(owner, thingID, clientCert, clientKey, caCert string) error {
+func (cr configRepository) UpdateCert(ctx context.Context, owner, thingID, clientCert, clientKey, caCert string) error {
 	q := `UPDATE configs SET client_cert = $1, client_key = $2, ca_cert = $3 WHERE mainflux_thing = $4 AND owner = $5`
 
-	res, err := cr.db.Exec(q, clientCert, clientKey, caCert, thingID, owner)
+	res, err := cr.db.ExecContext(ctx, q, clientCert, clientKey, caCert, thingID, owner)
 	if err != nil {
 		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
@@ -276,18 +278,18 @@ func (cr configRepository) UpdateCert(owner, thingID, clientCert, clientKey, caC
 	return nil
 }
 
-func (cr configRepository) UpdateConnections(owner, id string, channels []bootstrap.Channel, connections []string) error {
-	tx, err := cr.db.Beginx()
+func (cr configRepository) UpdateConnections(ctx context.Context, owner, id string, channels []bootstrap.Channel, connections []string) error {
+	tx, err := cr.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
-	if err := insertChannels(owner, channels, tx); err != nil {
+	if err := insertChannels(ctx, owner, channels, tx); err != nil {
 		cr.rollback("Failed to insert Channels during the update", tx)
 		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
 
-	if err := updateConnections(owner, id, connections, tx); err != nil {
+	if err := updateConnections(ctx, owner, id, connections, tx); err != nil {
 		if e, ok := err.(*pgconn.PgError); ok {
 			if e.Code == pgerrcode.ForeignKeyViolation {
 				return errors.ErrNotFound
@@ -305,23 +307,23 @@ func (cr configRepository) UpdateConnections(owner, id string, channels []bootst
 	return nil
 }
 
-func (cr configRepository) Remove(owner, id string) error {
+func (cr configRepository) Remove(ctx context.Context, owner, id string) error {
 	q := `DELETE FROM configs WHERE mainflux_thing = $1 AND owner = $2`
-	if _, err := cr.db.Exec(q, id, owner); err != nil {
+	if _, err := cr.db.ExecContext(ctx, q, id, owner); err != nil {
 		return errors.Wrap(errors.ErrRemoveEntity, err)
 	}
 
-	if _, err := cr.db.Exec(cleanupQuery); err != nil {
+	if _, err := cr.db.ExecContext(ctx, cleanupQuery); err != nil {
 		cr.log.Warn("Failed to clean dangling channels after removal")
 	}
 
 	return nil
 }
 
-func (cr configRepository) ChangeState(owner, id string, state bootstrap.State) error {
+func (cr configRepository) ChangeState(ctx context.Context, owner, id string, state bootstrap.State) error {
 	q := `UPDATE configs SET state = $1 WHERE mainflux_thing = $2 AND owner = $3;`
 
-	res, err := cr.db.Exec(q, state, id, owner)
+	res, err := cr.db.ExecContext(ctx, q, state, id, owner)
 	if err != nil {
 		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
@@ -338,7 +340,7 @@ func (cr configRepository) ChangeState(owner, id string, state bootstrap.State) 
 	return nil
 }
 
-func (cr configRepository) ListExisting(owner string, ids []string) ([]bootstrap.Channel, error) {
+func (cr configRepository) ListExisting(ctx context.Context, owner string, ids []string) ([]bootstrap.Channel, error) {
 	var channels []bootstrap.Channel
 	if len(ids) == 0 {
 		return channels, nil
@@ -350,7 +352,7 @@ func (cr configRepository) ListExisting(owner string, ids []string) ([]bootstrap
 	}
 
 	q := "SELECT mainflux_channel, name, metadata FROM channels WHERE owner = $1 AND mainflux_channel = ANY ($2)"
-	rows, err := cr.db.Queryx(q, owner, chans)
+	rows, err := cr.db.QueryxContext(ctx, q, owner, chans)
 	if err != nil {
 		return []bootstrap.Channel{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
@@ -374,11 +376,11 @@ func (cr configRepository) ListExisting(owner string, ids []string) ([]bootstrap
 	return channels, nil
 }
 
-func (cr configRepository) RemoveThing(id string) error {
+func (cr configRepository) RemoveThing(ctx context.Context, id string) error {
 	q := `DELETE FROM configs WHERE mainflux_thing = $1`
-	_, err := cr.db.Exec(q, id)
+	_, err := cr.db.ExecContext(ctx, q, id)
 
-	if _, err := cr.db.Exec(cleanupQuery); err != nil {
+	if _, err := cr.db.ExecContext(ctx, cleanupQuery); err != nil {
 		cr.log.Warn("Failed to clean dangling channels after removal")
 	}
 	if err != nil {
@@ -387,7 +389,7 @@ func (cr configRepository) RemoveThing(id string) error {
 	return nil
 }
 
-func (cr configRepository) UpdateChannel(c bootstrap.Channel) error {
+func (cr configRepository) UpdateChannel(ctx context.Context, c bootstrap.Channel) error {
 	dbch, err := toDBChannel("", c)
 	if err != nil {
 		return errors.Wrap(errors.ErrUpdateEntity, err)
@@ -395,24 +397,24 @@ func (cr configRepository) UpdateChannel(c bootstrap.Channel) error {
 
 	q := `UPDATE channels SET name = :name, metadata = :metadata, updated_at = :updated_at, updated_by = :updated_by 
 			WHERE mainflux_channel = :mainflux_channel`
-	if _, err = cr.db.NamedExec(q, dbch); err != nil {
+	if _, err = cr.db.NamedExecContext(ctx, q, dbch); err != nil {
 		return errors.Wrap(errUpdateChannels, err)
 	}
 	return nil
 }
 
-func (cr configRepository) RemoveChannel(id string) error {
+func (cr configRepository) RemoveChannel(ctx context.Context, id string) error {
 	q := `DELETE FROM channels WHERE mainflux_channel = $1`
-	if _, err := cr.db.Exec(q, id); err != nil {
+	if _, err := cr.db.ExecContext(ctx, q, id); err != nil {
 		return errors.Wrap(errRemoveChannels, err)
 	}
 	return nil
 }
 
-func (cr configRepository) DisconnectThing(channelID, thingID string) error {
+func (cr configRepository) DisconnectThing(ctx context.Context, channelID, thingID string) error {
 	q := `UPDATE configs SET state = $1 WHERE EXISTS (
 		SELECT 1 FROM connections WHERE config_id = $2 AND channel_id = $3)`
-	if _, err := cr.db.Exec(q, bootstrap.Inactive, thingID, channelID); err != nil {
+	if _, err := cr.db.ExecContext(ctx, q, bootstrap.Inactive, thingID, channelID); err != nil {
 		return errors.Wrap(errDisconnectThing, err)
 	}
 	return nil
@@ -447,7 +449,7 @@ func (cr configRepository) rollback(content string, tx *sqlx.Tx) {
 	}
 }
 
-func insertChannels(owner string, channels []bootstrap.Channel, tx *sqlx.Tx) error {
+func insertChannels(ctx context.Context, owner string, channels []bootstrap.Channel, tx *sqlx.Tx) error {
 	if len(channels) == 0 {
 		return nil
 	}
@@ -473,7 +475,7 @@ func insertChannels(owner string, channels []bootstrap.Channel, tx *sqlx.Tx) err
 	return nil
 }
 
-func insertConnections(cfg bootstrap.Config, connections []string, tx *sqlx.Tx) error {
+func insertConnections(ctx context.Context, cfg bootstrap.Config, connections []string, tx *sqlx.Tx) error {
 	if len(connections) == 0 {
 		return nil
 	}
@@ -495,7 +497,7 @@ func insertConnections(cfg bootstrap.Config, connections []string, tx *sqlx.Tx) 
 	return err
 }
 
-func updateConnections(owner, id string, connections []string, tx *sqlx.Tx) error {
+func updateConnections(ctx context.Context, owner, id string, connections []string, tx *sqlx.Tx) error {
 	if len(connections) == 0 {
 		return nil
 	}

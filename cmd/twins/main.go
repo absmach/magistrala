@@ -83,7 +83,7 @@ func main() {
 		logger.Fatal(fmt.Sprintf("failed to setup postgres database : %s", err))
 	}
 
-	tp, err := jaegerClient.NewProvider("twins_db", cfg.JaegerURL)
+	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL)
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
 	}
@@ -99,7 +99,7 @@ func main() {
 	case true:
 		auth = localusers.NewAuthService(cfg.StandaloneID, cfg.StandaloneToken)
 	default:
-		authServiceClient, authHandler, err := authClient.Setup(envPrefix, svcName, cfg.JaegerURL)
+		authServiceClient, authHandler, err := authClient.Setup(envPrefix, svcName)
 		if err != nil {
 			logger.Fatal(err.Error())
 		}

@@ -4,14 +4,10 @@
 package grpc
 
 import (
-	"context"
-	"fmt"
 	"time"
 
-	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
-	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	gogrpc "google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -19,9 +15,7 @@ import (
 
 var (
 	errGrpcConnect = errors.New("failed to connect to grpc server")
-	errJaeger      = errors.New("failed to initialize jaeger ")
 	errGrpcClose   = errors.New("failed to close grpc connection")
-	errJaegerClose = errors.New("failed to shut down jaeger tracer provider")
 )
 
 type Config struct {
@@ -39,7 +33,6 @@ type ClientHandler interface {
 
 type Client struct {
 	*gogrpc.ClientConn
-	*tracesdk.TracerProvider
 	secure bool
 }
 
@@ -75,7 +68,7 @@ func Connect(cfg Config) (*gogrpc.ClientConn, bool, error) {
 }
 
 // Setup load gRPC configuration from environment variable, creates new gRPC client and connect to gRPC server.
-func Setup(config Config, svcName, jaegerURL string) (*Client, ClientHandler, error) {
+func Setup(config Config, svcName string) (*Client, ClientHandler, error) {
 	secure := false
 
 	// connect to auth grpc server
@@ -84,13 +77,7 @@ func Setup(config Config, svcName, jaegerURL string) (*Client, ClientHandler, er
 		return nil, nil, errors.Wrap(errGrpcConnect, err)
 	}
 
-	// initialize auth tracer for auth grpc client
-	tp, err := jaegerClient.NewProvider(fmt.Sprintf("auth.%s", svcName), jaegerURL)
-	if err != nil {
-		grpcClient.Close()
-		return nil, nil, errors.Wrap(errJaeger, err)
-	}
-	c := &Client{grpcClient, tp, secure}
+	c := &Client{grpcClient, secure}
 
 	return c, NewClientHandler(c), nil
 }
@@ -101,9 +88,6 @@ func (c *Client) Close() error {
 	err := c.ClientConn.Close()
 	if err != nil {
 		retErr = errors.Wrap(errGrpcClose, err)
-	}
-	if err := c.TracerProvider.Shutdown(context.Background()); err != nil {
-		retErr = errors.Wrap(retErr, errors.Wrap(errJaegerClose, err))
 	}
 	return retErr
 }

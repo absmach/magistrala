@@ -59,7 +59,7 @@ func main() {
 		log.Fatalf("failed to init logger: %s", err)
 	}
 
-	tc, tcHandler, err := thingsClient.Setup(envPrefix, cfg.JaegerURL)
+	tc, tcHandler, err := thingsClient.Setup(envPrefix)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}

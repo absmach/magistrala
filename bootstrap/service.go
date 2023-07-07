@@ -128,7 +128,7 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 	toConnect := bs.toIDList(cfg.MFChannels)
 
 	// Check if channels exist. This is the way to prevent fetching channels that already exist.
-	existing, err := bs.configs.ListExisting(owner, toConnect)
+	existing, err := bs.configs.ListExisting(ctx, owner, toConnect)
 	if err != nil {
 		return Config{}, errors.Wrap(errCheckChannels, err)
 	}
@@ -150,7 +150,7 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 	cfg.State = Inactive
 	cfg.MFKey = mfThing.Credentials.Secret
 
-	saved, err := bs.configs.Save(cfg, toConnect)
+	saved, err := bs.configs.Save(ctx, cfg, toConnect)
 	if err != nil {
 		if id == "" {
 			if _, errT := bs.sdk.DisableThing(cfg.MFThing, token); errT != nil {
@@ -172,7 +172,7 @@ func (bs bootstrapService) View(ctx context.Context, token, id string) (Config, 
 		return Config{}, err
 	}
 
-	return bs.configs.RetrieveByID(owner, id)
+	return bs.configs.RetrieveByID(ctx, owner, id)
 }
 
 func (bs bootstrapService) Update(ctx context.Context, token string, cfg Config) error {
@@ -183,7 +183,7 @@ func (bs bootstrapService) Update(ctx context.Context, token string, cfg Config)
 
 	cfg.Owner = owner
 
-	return bs.configs.Update(cfg)
+	return bs.configs.Update(ctx, cfg)
 }
 
 func (bs bootstrapService) UpdateCert(ctx context.Context, token, thingID, clientCert, clientKey, caCert string) error {
@@ -191,7 +191,7 @@ func (bs bootstrapService) UpdateCert(ctx context.Context, token, thingID, clien
 	if err != nil {
 		return err
 	}
-	if err := bs.configs.UpdateCert(owner, thingID, clientCert, clientKey, caCert); err != nil {
+	if err := bs.configs.UpdateCert(ctx, owner, thingID, clientCert, clientKey, caCert); err != nil {
 		return errors.Wrap(errUpdateCert, err)
 	}
 	return nil
@@ -203,7 +203,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id stri
 		return err
 	}
 
-	cfg, err := bs.configs.RetrieveByID(owner, id)
+	cfg, err := bs.configs.RetrieveByID(ctx, owner, id)
 	if err != nil {
 		return errors.Wrap(errUpdateConnections, err)
 	}
@@ -211,7 +211,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id stri
 	add, remove := bs.updateList(cfg, connections)
 
 	// Check if channels exist. This is the way to prevent fetching channels that already exist.
-	existing, err := bs.configs.ListExisting(owner, connections)
+	existing, err := bs.configs.ListExisting(ctx, owner, connections)
 	if err != nil {
 		return errors.Wrap(errUpdateConnections, err)
 	}
@@ -248,7 +248,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id stri
 		}
 	}
 
-	return bs.configs.UpdateConnections(owner, id, channels, connections)
+	return bs.configs.UpdateConnections(ctx, owner, id, channels, connections)
 }
 
 func (bs bootstrapService) List(ctx context.Context, token string, filter Filter, offset, limit uint64) (ConfigsPage, error) {
@@ -257,7 +257,7 @@ func (bs bootstrapService) List(ctx context.Context, token string, filter Filter
 		return ConfigsPage{}, err
 	}
 
-	return bs.configs.RetrieveAll(owner, filter, offset, limit), nil
+	return bs.configs.RetrieveAll(ctx, owner, filter, offset, limit), nil
 }
 
 func (bs bootstrapService) Remove(ctx context.Context, token, id string) error {
@@ -265,14 +265,14 @@ func (bs bootstrapService) Remove(ctx context.Context, token, id string) error {
 	if err != nil {
 		return err
 	}
-	if err := bs.configs.Remove(owner, id); err != nil {
+	if err := bs.configs.Remove(ctx, owner, id); err != nil {
 		return errors.Wrap(errRemoveBootstrap, err)
 	}
 	return nil
 }
 
 func (bs bootstrapService) Bootstrap(ctx context.Context, externalKey, externalID string, secure bool) (Config, error) {
-	cfg, err := bs.configs.RetrieveByExternalID(externalID)
+	cfg, err := bs.configs.RetrieveByExternalID(ctx, externalID)
 	if err != nil {
 		return cfg, errors.Wrap(ErrBootstrap, err)
 	}
@@ -296,7 +296,7 @@ func (bs bootstrapService) ChangeState(ctx context.Context, token, id string, st
 		return err
 	}
 
-	cfg, err := bs.configs.RetrieveByID(owner, id)
+	cfg, err := bs.configs.RetrieveByID(ctx, owner, id)
 	if err != nil {
 		return errors.Wrap(errChangeState, err)
 	}
@@ -326,35 +326,35 @@ func (bs bootstrapService) ChangeState(ctx context.Context, token, id string, st
 			}
 		}
 	}
-	if err := bs.configs.ChangeState(owner, id, state); err != nil {
+	if err := bs.configs.ChangeState(ctx, owner, id, state); err != nil {
 		return errors.Wrap(errChangeState, err)
 	}
 	return nil
 }
 
 func (bs bootstrapService) UpdateChannelHandler(ctx context.Context, channel Channel) error {
-	if err := bs.configs.UpdateChannel(channel); err != nil {
+	if err := bs.configs.UpdateChannel(ctx, channel); err != nil {
 		return errors.Wrap(errUpdateChannel, err)
 	}
 	return nil
 }
 
 func (bs bootstrapService) RemoveConfigHandler(ctx context.Context, id string) error {
-	if err := bs.configs.RemoveThing(id); err != nil {
+	if err := bs.configs.RemoveThing(ctx, id); err != nil {
 		return errors.Wrap(errRemoveConfig, err)
 	}
 	return nil
 }
 
 func (bs bootstrapService) RemoveChannelHandler(ctx context.Context, id string) error {
-	if err := bs.configs.RemoveChannel(id); err != nil {
+	if err := bs.configs.RemoveChannel(ctx, id); err != nil {
 		return errors.Wrap(errRemoveChannel, err)
 	}
 	return nil
 }
 
 func (bs bootstrapService) DisconnectThingHandler(ctx context.Context, channelID, thingID string) error {
-	if err := bs.configs.DisconnectThing(channelID, thingID); err != nil {
+	if err := bs.configs.DisconnectThing(ctx, channelID, thingID); err != nil {
 		return errors.Wrap(errDisconnectThing, err)
 	}
 	return nil

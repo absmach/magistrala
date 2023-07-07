@@ -4,6 +4,7 @@
 package mocks
 
 import (
+	"context"
 	"sort"
 	"strconv"
 	"strings"
@@ -32,7 +33,7 @@ func NewConfigsRepository() bootstrap.ConfigRepository {
 	}
 }
 
-func (crm *configRepositoryMock) Save(config bootstrap.Config, connections []string) (string, error) {
+func (crm *configRepositoryMock) Save(_ context.Context, config bootstrap.Config, connections []string) (string, error) {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 
@@ -61,7 +62,7 @@ func (crm *configRepositoryMock) Save(config bootstrap.Config, connections []str
 	return config.MFThing, nil
 }
 
-func (crm *configRepositoryMock) RetrieveByID(token, id string) (bootstrap.Config, error) {
+func (crm *configRepositoryMock) RetrieveByID(_ context.Context, token, id string) (bootstrap.Config, error) {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 
@@ -77,7 +78,7 @@ func (crm *configRepositoryMock) RetrieveByID(token, id string) (bootstrap.Confi
 
 }
 
-func (crm *configRepositoryMock) RetrieveAll(token string, filter bootstrap.Filter, offset, limit uint64) bootstrap.ConfigsPage {
+func (crm *configRepositoryMock) RetrieveAll(_ context.Context, token string, filter bootstrap.Filter, offset, limit uint64) bootstrap.ConfigsPage {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 
@@ -121,7 +122,7 @@ func (crm *configRepositoryMock) RetrieveAll(token string, filter bootstrap.Filt
 	}
 }
 
-func (crm *configRepositoryMock) RetrieveByExternalID(externalID string) (bootstrap.Config, error) {
+func (crm *configRepositoryMock) RetrieveByExternalID(_ context.Context, externalID string) (bootstrap.Config, error) {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 
@@ -134,7 +135,7 @@ func (crm *configRepositoryMock) RetrieveByExternalID(externalID string) (bootst
 	return bootstrap.Config{}, errors.ErrNotFound
 }
 
-func (crm *configRepositoryMock) Update(config bootstrap.Config) error {
+func (crm *configRepositoryMock) Update(_ context.Context, config bootstrap.Config) error {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 
@@ -150,7 +151,7 @@ func (crm *configRepositoryMock) Update(config bootstrap.Config) error {
 	return nil
 }
 
-func (crm *configRepositoryMock) UpdateCert(owner, thingID, clientCert, clientKey, caCert string) error {
+func (crm *configRepositoryMock) UpdateCert(_ context.Context, owner, thingID, clientCert, clientKey, caCert string) error {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 	var forUpdate bootstrap.Config
@@ -171,7 +172,7 @@ func (crm *configRepositoryMock) UpdateCert(owner, thingID, clientCert, clientKe
 	return nil
 }
 
-func (crm *configRepositoryMock) UpdateConnections(token, id string, channels []bootstrap.Channel, connections []string) error {
+func (crm *configRepositoryMock) UpdateConnections(_ context.Context, token, id string, channels []bootstrap.Channel, connections []string) error {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 
@@ -197,7 +198,7 @@ func (crm *configRepositoryMock) UpdateConnections(token, id string, channels []
 	return nil
 }
 
-func (crm *configRepositoryMock) Remove(token, id string) error {
+func (crm *configRepositoryMock) Remove(_ context.Context, token, id string) error {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 
@@ -211,7 +212,7 @@ func (crm *configRepositoryMock) Remove(token, id string) error {
 	return nil
 }
 
-func (crm *configRepositoryMock) ChangeState(token, id string, state bootstrap.State) error {
+func (crm *configRepositoryMock) ChangeState(_ context.Context, token, id string, state bootstrap.State) error {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 
@@ -228,7 +229,7 @@ func (crm *configRepositoryMock) ChangeState(token, id string, state bootstrap.S
 	return nil
 }
 
-func (crm *configRepositoryMock) ListExisting(token string, connections []string) ([]bootstrap.Channel, error) {
+func (crm *configRepositoryMock) ListExisting(_ context.Context, token string, connections []string) ([]bootstrap.Channel, error) {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 
@@ -246,7 +247,7 @@ func (crm *configRepositoryMock) ListExisting(token string, connections []string
 	return ret, nil
 }
 
-func (crm *configRepositoryMock) RemoveThing(id string) error {
+func (crm *configRepositoryMock) RemoveThing(_ context.Context, id string) error {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 
@@ -254,7 +255,7 @@ func (crm *configRepositoryMock) RemoveThing(id string) error {
 	return nil
 }
 
-func (crm *configRepositoryMock) UpdateChannel(ch bootstrap.Channel) error {
+func (crm *configRepositoryMock) UpdateChannel(_ context.Context, ch bootstrap.Channel) error {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 
@@ -269,7 +270,7 @@ func (crm *configRepositoryMock) UpdateChannel(ch bootstrap.Channel) error {
 	return nil
 }
 
-func (crm *configRepositoryMock) RemoveChannel(id string) error {
+func (crm *configRepositoryMock) RemoveChannel(_ context.Context, id string) error {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 
@@ -277,7 +278,7 @@ func (crm *configRepositoryMock) RemoveChannel(id string) error {
 	return nil
 }
 
-func (crm *configRepositoryMock) DisconnectThing(channelID, thingID string) error {
+func (crm *configRepositoryMock) DisconnectThing(_ context.Context, channelID, thingID string) error {
 	crm.mu.Lock()
 	defer crm.mu.Unlock()
 

@@ -80,7 +80,7 @@ func main() {
 		logger.Fatal(fmt.Sprintf("failed to load email configuration : %s", err))
 	}
 
-	tp, err := jaegerClient.NewProvider("smtp-notifier_db", cfg.JaegerURL)
+	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL)
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
 	}
@@ -98,7 +98,7 @@ func main() {
 	pubSub = pstracing.NewPubSub(tracer, pubSub)
 	defer pubSub.Close()
 
-	auth, authHandler, err := authClient.Setup(envPrefix, svcName, cfg.JaegerURL)
+	auth, authHandler, err := authClient.Setup(envPrefix, svcName)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}

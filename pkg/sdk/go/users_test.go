@@ -30,7 +30,7 @@ var id = generateUUID(&testing.T{})
 func newClientServer(svc clients.Service) *httptest.Server {
 	logger := mflog.NewMock()
 	mux := bone.New()
-	api.MakeHandler(svc, mux, logger)
+	api.MakeHandler(svc, mux, logger, instanceID)
 
 	return httptest.NewServer(mux)
 }

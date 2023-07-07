@@ -51,6 +51,7 @@ const (
 	thingStateChange       = thingPrefix + "state_change"
 	thingBootstrap         = thingPrefix + "bootstrap"
 	thingUpdateConnections = thingPrefix + "update_connections"
+	instanceID             = "5de9b29a-feb9-11ed-be56-0242ac120002"
 )
 
 var (
@@ -101,7 +102,7 @@ func newThingsService(auth upolicies.AuthServiceClient) (clients.Service, groups
 func newThingsServer(csvc clients.Service, gsvc groups.Service, psvc tpolicies.Service) *httptest.Server {
 	logger := logger.NewMock()
 	mux := bone.New()
-	capi.MakeHandler(csvc, mux, logger)
+	capi.MakeHandler(csvc, mux, logger, instanceID)
 	gapi.MakeHandler(gsvc, mux, logger)
 	papi.MakeHandler(csvc, psvc, mux, logger)
 	return httptest.NewServer(mux)

@@ -27,7 +27,7 @@ const (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc certs.Service, logger logger.Logger) http.Handler {
+func MakeHandler(svc certs.Service, logger logger.Logger, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
 	}
@@ -63,7 +63,7 @@ func MakeHandler(svc certs.Service, logger logger.Logger) http.Handler {
 	))
 
 	r.Handle("/metrics", promhttp.Handler())
-	r.GetFunc("/health", mainflux.Health("certs"))
+	r.GetFunc("/health", mainflux.Health("certs", instanceID))
 
 	return r
 }

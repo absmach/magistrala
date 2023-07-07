@@ -31,7 +31,7 @@ const (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc notifiers.Service, logger logger.Logger) http.Handler {
+func MakeHandler(svc notifiers.Service, logger logger.Logger, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
 	}
@@ -66,7 +66,7 @@ func MakeHandler(svc notifiers.Service, logger logger.Logger) http.Handler {
 		opts...,
 	))
 
-	mux.GetFunc("/health", mainflux.Health("notifier"))
+	mux.GetFunc("/health", mainflux.Health("notifier", instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux

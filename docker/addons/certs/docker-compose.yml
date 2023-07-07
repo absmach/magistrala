@@ -70,6 +70,7 @@ services:
       MF_AUTH_GRPC_TIMEOUT: ${MF_USERS_GRPC_TIMEOUT}
       MF_CERTS_VAULT_HOST: ${MF_CERTS_VAULT_HOST}
       MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
+      MF_CERTS_INSTANCE_ID: ${MF_CERTS_INSTANCE_ID}
     volumes:
       - ../../ssl/certs/ca.key:/etc/ssl/certs/ca.key
       - ../../ssl/certs/ca.crt:/etc/ssl/certs/ca.crt

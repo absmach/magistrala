@@ -34,7 +34,7 @@ var (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc bootstrap.Service, reader bootstrap.ConfigReader, logger mflog.Logger) http.Handler {
+func MakeHandler(svc bootstrap.Service, reader bootstrap.ConfigReader, logger mflog.Logger, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
 	}
@@ -100,7 +100,7 @@ func MakeHandler(svc bootstrap.Service, reader bootstrap.ConfigReader, logger mf
 		encodeResponse,
 		opts...))
 
-	r.GetFunc("/health", mainflux.Health("bootstrap"))
+	r.GetFunc("/health", mainflux.Health("bootstrap", instanceID))
 	r.Handle("/metrics", promhttp.Handler())
 
 	return r

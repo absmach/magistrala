@@ -37,7 +37,7 @@ var (
 func newThingsServer(svc clients.Service, psvc policies.Service) *httptest.Server {
 	logger := mflog.NewMock()
 	mux := bone.New()
-	api.MakeHandler(svc, mux, logger)
+	api.MakeHandler(svc, mux, logger, instanceID)
 	papi.MakeHandler(svc, psvc, mux, logger)
 	return httptest.NewServer(mux)
 }

@@ -22,7 +22,7 @@ var (
 )
 
 // NewProvider initializes Jaeger TraceProvider.
-func NewProvider(svcName, url string) (*tracesdk.TracerProvider, error) {
+func NewProvider(svcName, url, instanceID string) (*tracesdk.TracerProvider, error) {
 	if url == "" {
 		return nil, errNoURL
 	}
@@ -36,7 +36,10 @@ func NewProvider(svcName, url string) (*tracesdk.TracerProvider, error) {
 		return nil, err
 	}
 
-	attributes := []attribute.KeyValue{semconv.ServiceNameKey.String(svcName)}
+	attributes := []attribute.KeyValue{
+		semconv.ServiceNameKey.String(svcName),
+		attribute.String("InstanceID", instanceID),
+	}
 
 	hostAttr, err := resource.New(context.TODO(), resource.WithHost(), resource.WithOSDescription(), resource.WithContainer())
 	if err != nil {

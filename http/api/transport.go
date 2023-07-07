@@ -41,7 +41,7 @@ var (
 var channelPartRegExp = regexp.MustCompile(`^/channels/([\w\-]+)/messages(/[^?]*)?(\?.*)?$`)
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc adapter.Service) http.Handler {
+func MakeHandler(svc adapter.Service, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
 	}
@@ -61,7 +61,7 @@ func MakeHandler(svc adapter.Service) http.Handler {
 		opts...,
 	))
 
-	r.GetFunc("/health", mainflux.Health("http"))
+	r.GetFunc("/health", mainflux.Health("http", instanceID))
 	r.Handle("/metrics", promhttp.Handler())
 
 	return r

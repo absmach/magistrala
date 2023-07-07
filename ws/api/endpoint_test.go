@@ -23,10 +23,11 @@ import (
 )
 
 const (
-	chanID   = "30315311-56ba-484d-b500-c1e08305511f"
-	id       = "1"
-	thingKey = "c02ff576-ccd5-40f6-ba5f-c85377aad529"
-	protocol = "ws"
+	chanID     = "30315311-56ba-484d-b500-c1e08305511f"
+	id         = "1"
+	thingKey   = "c02ff576-ccd5-40f6-ba5f-c85377aad529"
+	protocol   = "ws"
+	instanceID = "5de9b29a-feb9-11ed-be56-0242ac120002"
 )
 
 var msg = []byte(`[{"n":"current","t":-1,"v":1.6}]`)
@@ -38,7 +39,7 @@ func newService(cc policies.ThingsServiceClient) (ws.Service, mocks.MockPubSub) 
 
 func newHTTPServer(svc ws.Service) *httptest.Server {
 	logger := mflog.NewMock()
-	mux := api.MakeHandler(svc, logger)
+	mux := api.MakeHandler(svc, logger, instanceID)
 	return httptest.NewServer(mux)
 }
 

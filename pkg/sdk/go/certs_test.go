@@ -29,6 +29,8 @@ import (
 	upolicies "github.com/mainflux/mainflux/users/policies"
 )
 
+const instanceID = "5de9b29a-feb9-11ed-be56-0242ac120002"
+
 var (
 	thingsNum         = 1
 	thingKey          = "thingKey"
@@ -88,7 +90,7 @@ func newCertService() (certs.Service, error) {
 
 func newCertServer(svc certs.Service) *httptest.Server {
 	logger := logger.NewMock()
-	mux := httpapi.MakeHandler(svc, logger)
+	mux := httpapi.MakeHandler(svc, logger, instanceID)
 	return httptest.NewServer(mux)
 }
 

@@ -22,6 +22,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfgroups "github.com/mainflux/mainflux/pkg/groups"
 	mfSDK "github.com/mainflux/mainflux/pkg/sdk/go"
+	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/provision"
 	"github.com/mainflux/mainflux/provision/api"
 	"golang.org/x/sync/errgroup"
@@ -50,6 +51,7 @@ const (
 	defBSContent       = ""
 	defCertsHoursValid = "2400h"
 	defSendTelemetry   = "true"
+	defInstanceID      = ""
 
 	envConfigFile       = "MF_PROVISION_CONFIG_FILE"
 	envLogLevel         = "MF_PROVISION_LOG_LEVEL"
@@ -71,6 +73,7 @@ const (
 	envBSContent        = "MF_PROVISION_BS_CONTENT"
 	envCertsHoursValid  = "MF_PROVISION_CERTS_HOURS_VALID"
 	envSendTelemetry    = "MF_SEND_TELEMETRY"
+	envInstanceID       = "MF_PROVISION_INSTANCE_ID"
 
 	contentType = "application/json"
 )
@@ -99,6 +102,14 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
+	instanceID := mainflux.Env(envInstanceID, defInstanceID)
+	if instanceID == "" {
+		instanceID, err = uuid.New().ID()
+		if err != nil {
+			log.Fatalf("Failed to generate instanceID: %s", err)
+		}
+	}
+
 	if cfgFromFile, err := loadConfigFromFile(cfg.File); err != nil {
 		logger.Warn(fmt.Sprintf("Continue with settings from env, failed to load from: %s: %s", cfg.File, err))
 	} else {
@@ -122,7 +133,7 @@ func main() {
 	svc = api.NewLoggingMiddleware(svc, logger)
 
 	httpServerConfig := server.Config{Host: "", Port: cfg.Server.HTTPPort, KeyFile: cfg.Server.ServerKey, CertFile: cfg.Server.ServerCert}
-	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger), logger)
+	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, instanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, mainflux.Version, logger, cancel)

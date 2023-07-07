@@ -43,6 +43,7 @@ const (
 	caPath            = "../docker/ssl/certs/ca.crt"
 	caKeyPath         = "../docker/ssl/certs/ca.key"
 	cfgSignHoursValid = "24h"
+	instanceID        = "5de9b29a-feb9-11ed-be56-0242ac120002"
 )
 
 func newService(tokens map[string]string) (certs.Service, error) {
@@ -367,6 +368,6 @@ func TestViewCert(t *testing.T) {
 func newThingsServer(svc clients.Service) *httptest.Server {
 	logger := logger.NewMock()
 	mux := bone.New()
-	httpapi.MakeHandler(svc, mux, logger)
+	httpapi.MakeHandler(svc, mux, logger, instanceID)
 	return httptest.NewServer(mux)
 }

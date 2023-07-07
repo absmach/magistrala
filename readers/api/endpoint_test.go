@@ -36,6 +36,7 @@ const (
 	mqttProt      = "mqtt"
 	httpProt      = "http"
 	msgName       = "temperature"
+	instanceID    = "5de9b29a-feb9-11ed-be56-0242ac120002"
 )
 
 var (
@@ -49,7 +50,7 @@ var (
 )
 
 func newServer(repo readers.MessageRepository, tc tpolicies.ThingsServiceClient, ac upolicies.AuthServiceClient) *httptest.Server {
-	mux := api.MakeHandler(repo, tc, ac, svcName)
+	mux := api.MakeHandler(repo, tc, ac, svcName, instanceID)
 	return httptest.NewServer(mux)
 }
 

@@ -28,7 +28,7 @@ const (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc opcua.Service, logger mflog.Logger) http.Handler {
+func MakeHandler(svc opcua.Service, logger mflog.Logger, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, encodeError)),
 	}
@@ -42,7 +42,7 @@ func MakeHandler(svc opcua.Service, logger mflog.Logger) http.Handler {
 		opts...,
 	))
 
-	r.GetFunc("/health", mainflux.Health("opcua-adapter"))
+	r.GetFunc("/health", mainflux.Health("opcua-adapter", instanceID))
 	r.Handle("/metrics", promhttp.Handler())
 
 	return r

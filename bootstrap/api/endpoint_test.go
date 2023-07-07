@@ -51,6 +51,7 @@ const (
 	addExternalKey = "external-key"
 	addName        = "name"
 	addContent     = "config"
+	instanceID     = "5de9b29a-feb9-11ed-be56-0242ac120002"
 )
 
 var (
@@ -201,7 +202,7 @@ func newThingsService(auth upolicies.AuthServiceClient) (clients.Service, groups
 func newThingsServer(csvc clients.Service, gsvc groups.Service, psvc tpolicies.Service) *httptest.Server {
 	logger := mflog.NewMock()
 	mux := bone.New()
-	capi.MakeHandler(csvc, mux, logger)
+	capi.MakeHandler(csvc, mux, logger, instanceID)
 	gapi.MakeHandler(gsvc, mux, logger)
 	papi.MakeHandler(csvc, psvc, mux, logger)
 	return httptest.NewServer(mux)
@@ -209,7 +210,7 @@ func newThingsServer(csvc clients.Service, gsvc groups.Service, psvc tpolicies.S
 
 func newBootstrapServer(svc bootstrap.Service) *httptest.Server {
 	logger := mflog.NewMock()
-	mux := bsapi.MakeHandler(svc, bootstrap.NewConfigReader(encKey), logger)
+	mux := bsapi.MakeHandler(svc, bootstrap.NewConfigReader(encKey), logger, instanceID)
 	return httptest.NewServer(mux)
 }
 

@@ -31,6 +31,7 @@ const (
 	wrongValue  = "wrong_value"
 	wrongID     = 0
 	maxNameSize = 1024
+	instanceID  = "5de9b29a-feb9-11ed-be56-0242ac120002"
 )
 
 var invalidName = strings.Repeat("m", maxNameSize+1)
@@ -84,7 +85,7 @@ func (tr testRequest) make() (*http.Response, error) {
 
 func newServer(svc twins.Service) *httptest.Server {
 	logger := logger.NewMock()
-	mux := httpapi.MakeHandler(svc, logger)
+	mux := httpapi.MakeHandler(svc, logger, instanceID)
 	return httptest.NewServer(mux)
 }
 

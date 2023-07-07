@@ -23,7 +23,7 @@ import (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc clients.Service, mux *bone.Mux, logger mflog.Logger) http.Handler {
+func MakeHandler(svc clients.Service, mux *bone.Mux, logger mflog.Logger, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
@@ -140,7 +140,7 @@ func MakeHandler(svc clients.Service, mux *bone.Mux, logger mflog.Logger) http.H
 		opts...,
 	))
 
-	mux.GetFunc("/health", mainflux.Health("users"))
+	mux.GetFunc("/health", mainflux.Health("users", instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux

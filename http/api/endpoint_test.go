@@ -19,13 +19,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const instanceID = "5de9b29a-feb9-11ed-be56-0242ac120002"
+
 func newService(cc policies.ThingsServiceClient) adapter.Service {
 	pub := mocks.NewPublisher()
 	return adapter.New(pub, cc)
 }
 
 func newHTTPServer(svc adapter.Service) *httptest.Server {
-	mux := api.MakeHandler(svc)
+	mux := api.MakeHandler(svc, instanceID)
 	return httptest.NewServer(mux)
 }
 

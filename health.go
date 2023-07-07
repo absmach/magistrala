@@ -46,10 +46,13 @@ type HealthInfo struct {
 
 	// BuildTime contains service build time.
 	BuildTime string `json:"build_time"`
+
+	// InstanceID contains the ID of the current service instance
+	InstanceID string `json:"instance_id"`
 }
 
 // Health exposes an HTTP handler for retrieving service health.
-func Health(service string) http.HandlerFunc {
+func Health(service, instanceID string) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add(contentType, contentTypeJSON)
 		if r.Method != http.MethodGet && r.Method != http.MethodHead {
@@ -63,6 +66,7 @@ func Health(service string) http.HandlerFunc {
 			Commit:      Commit,
 			Description: service + description,
 			BuildTime:   BuildTime,
+			InstanceID:  instanceID,
 		}
 
 		w.WriteHeader(http.StatusOK)

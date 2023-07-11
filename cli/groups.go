@@ -171,7 +171,7 @@ var cmdGroups = []cobra.Command{
 			"Usage:\n" +
 			"\tmainflux-cli groups unassign <member_id> <group_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 4 {
+			if len(args) != 3 {
 				logUsage(cmd.Use)
 				return
 			}

@@ -18,6 +18,7 @@ import (
 	vault "github.com/mainflux/mainflux/certs/pki"
 	certsPg "github.com/mainflux/mainflux/certs/postgres"
 	"github.com/mainflux/mainflux/internal"
+	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
@@ -46,6 +47,7 @@ type config struct {
 	ThingsURL     string `env:"MF_THINGS_URL"             envDefault:"http://things:9000"`
 	SendTelemetry bool   `env:"MF_SEND_TELEMETRY"         envDefault:"true"`
 	InstanceID    string `env:"MF_CERTS_INSTANCE_ID"      envDefault:""`
+	JaegerURL     string `env:"MF_JAEGER_URL"             envDefault:"http://jaeger:14268/api/traces"`
 
 	// Sign and issue certificates without 3rd party PKI
 	SignCAPath    string `env:"MF_CERTS_SIGN_CA_PATH"        envDefault:"ca.crt"`
@@ -112,6 +114,15 @@ func main() {
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
 		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 	}
+	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, instanceID)
+	if err != nil {
+		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
+	}
+	defer func() {
+		if err := tp.Shutdown(ctx); err != nil {
+			logger.Error(fmt.Sprintf("error shutting down tracer provider: %v", err))
+		}
+	}()
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, instanceID), logger)
 
 	if cfg.SendTelemetry {

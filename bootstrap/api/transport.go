@@ -18,6 +18,7 @@ import (
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/go-kit/kit/otelkit"
 )
 
 const (
@@ -41,61 +42,61 @@ func MakeHandler(svc bootstrap.Service, reader bootstrap.ConfigReader, logger mf
 	r := bone.New()
 
 	r.Post("/things/configs", kithttp.NewServer(
-		addEndpoint(svc),
+		otelkit.EndpointMiddleware(otelkit.WithOperation("add"))(addEndpoint(svc)),
 		decodeAddRequest,
 		encodeResponse,
 		opts...))
 
 	r.Get("/things/configs/:configID", kithttp.NewServer(
-		viewEndpoint(svc),
+		otelkit.EndpointMiddleware(otelkit.WithOperation("view"))(viewEndpoint(svc)),
 		decodeEntityRequest,
 		encodeResponse,
 		opts...))
 
 	r.Put("/things/configs/:configID", kithttp.NewServer(
-		updateEndpoint(svc),
+		otelkit.EndpointMiddleware(otelkit.WithOperation("update"))(updateEndpoint(svc)),
 		decodeUpdateRequest,
 		encodeResponse,
 		opts...))
 
 	r.Patch("/things/configs/certs/:certID", kithttp.NewServer(
-		updateCertEndpoint(svc),
+		otelkit.EndpointMiddleware(otelkit.WithOperation("update_cert"))(updateCertEndpoint(svc)),
 		decodeUpdateCertRequest,
 		encodeResponse,
 		opts...))
 
 	r.Put("/things/configs/connections/:connID", kithttp.NewServer(
-		updateConnEndpoint(svc),
+		otelkit.EndpointMiddleware(otelkit.WithOperation("update_connections"))(updateConnEndpoint(svc)),
 		decodeUpdateConnRequest,
 		encodeResponse,
 		opts...))
 
 	r.Get("/things/configs", kithttp.NewServer(
-		listEndpoint(svc),
+		otelkit.EndpointMiddleware(otelkit.WithOperation("list"))(listEndpoint(svc)),
 		decodeListRequest,
 		encodeResponse,
 		opts...))
 
 	r.Get("/things/bootstrap/:externalID", kithttp.NewServer(
-		bootstrapEndpoint(svc, reader, false),
+		otelkit.EndpointMiddleware(otelkit.WithOperation("bootstrap"))(bootstrapEndpoint(svc, reader, false)),
 		decodeBootstrapRequest,
 		encodeResponse,
 		opts...))
 
 	r.Get("/things/bootstrap/secure/:externalID", kithttp.NewServer(
-		bootstrapEndpoint(svc, reader, true),
+		otelkit.EndpointMiddleware(otelkit.WithOperation("bootstrap_secure"))(bootstrapEndpoint(svc, reader, true)),
 		decodeBootstrapRequest,
 		encodeSecureRes,
 		opts...))
 
 	r.Put("/things/state/:thingID", kithttp.NewServer(
-		stateEndpoint(svc),
+		otelkit.EndpointMiddleware(otelkit.WithOperation("state"))(stateEndpoint(svc)),
 		decodeStateRequest,
 		encodeResponse,
 		opts...))
 
 	r.Delete("/things/configs/:configID", kithttp.NewServer(
-		removeEndpoint(svc),
+		otelkit.EndpointMiddleware(otelkit.WithOperation("remove"))(removeEndpoint(svc)),
 		decodeEntityRequest,
 		encodeResponse,
 		opts...))

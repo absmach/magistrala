@@ -39,7 +39,6 @@ import (
 	gtracing "github.com/mainflux/mainflux/users/groups/tracing"
 	"github.com/mainflux/mainflux/users/hasher"
 	"github.com/mainflux/mainflux/users/jwt"
-	jtracing "github.com/mainflux/mainflux/users/jwt/tracing"
 	"github.com/mainflux/mainflux/users/policies"
 	papi "github.com/mainflux/mainflux/users/policies/api"
 	grpcapi "github.com/mainflux/mainflux/users/policies/api/grpc"
@@ -189,7 +188,6 @@ func newService(ctx context.Context, db *sqlx.DB, tracer trace.Tracer, c config,
 		logger.Error(fmt.Sprintf("failed to parse refresh token duration: %s", err.Error()))
 	}
 	tokenizer := jwt.NewRepository([]byte(c.SecretKey), aDuration, rDuration)
-	tokenizer = jtracing.New(tokenizer, tracer)
 
 	emailer, err := emailer.New(c.ResetURL, &ec)
 	if err != nil {

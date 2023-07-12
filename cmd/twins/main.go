@@ -45,6 +45,7 @@ const (
 	envPrefix      = "MF_TWINS_"
 	envPrefixHttp  = "MF_TWINS_HTTP_"
 	envPrefixCache = "MF_TWINS_CACHE_"
+	envPrefixES    = "MF_TWINS_ES_"
 	defSvcHttpPort = "9018"
 )
 
@@ -87,6 +88,13 @@ func main() {
 	}
 	defer cacheClient.Close()
 
+	// Setup new redis event store client
+	esClient, err := redisClient.Setup(envPrefixES)
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
+	defer esClient.Close()
+
 	db, err := mongoClient.Setup(envPrefix)
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("failed to setup postgres database : %s", err))
@@ -124,7 +132,7 @@ func main() {
 	pubSub = pstracing.NewPubSub(tracer, pubSub)
 	defer pubSub.Close()
 
-	svc := newService(ctx, svcName, pubSub, cfg.ChannelID, auth, tracer, db, cacheClient, logger)
+	svc := newService(ctx, svcName, pubSub, cfg.ChannelID, auth, tracer, db, cacheClient, esClient, logger)
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
@@ -150,7 +158,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, id string, ps messaging.PubSub, chanID string, users policies.AuthServiceClient, tracer trace.Tracer, db *mongo.Database, cacheClient *redis.Client, logger mflog.Logger) twins.Service {
+func newService(ctx context.Context, id string, ps messaging.PubSub, chanID string, users policies.AuthServiceClient, tracer trace.Tracer, db *mongo.Database, cacheClient *redis.Client, esClient *redis.Client, logger mflog.Logger) twins.Service {
 	twinRepo := twmongodb.NewTwinRepository(db)
 	twinRepo = tracing.TwinRepositoryMiddleware(tracer, twinRepo)
 
@@ -162,6 +170,9 @@ func newService(ctx context.Context, id string, ps messaging.PubSub, chanID stri
 	twinCache = tracing.TwinCacheMiddleware(tracer, twinCache)
 
 	svc := twins.New(ps, users, twinRepo, twinCache, stateRepo, idProvider, chanID, logger)
+
+	svc = rediscache.NewEventStoreMiddleware(svc, esClient)
+
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := internal.MakeMetrics(svcName, "api")
 	svc = api.MetricsMiddleware(svc, counter, latency)

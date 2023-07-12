@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
 	"github.com/mainflux/mainflux/certs"
+	"github.com/mainflux/mainflux/internal/postgres"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 )
@@ -27,19 +28,19 @@ type Cert struct {
 }
 
 type certsRepository struct {
-	db  *sqlx.DB
+	db  postgres.Database
 	log logger.Logger
 }
 
 // NewRepository instantiates a PostgreSQL implementation of certs
 // repository.
-func NewRepository(db *sqlx.DB, log logger.Logger) certs.Repository {
+func NewRepository(db postgres.Database, log logger.Logger) certs.Repository {
 	return &certsRepository{db: db, log: log}
 }
 
 func (cr certsRepository) RetrieveAll(ctx context.Context, ownerID string, offset, limit uint64) (certs.Page, error) {
 	q := `SELECT thing_id, owner_id, serial, expire FROM certs WHERE owner_id = $1 ORDER BY expire LIMIT $2 OFFSET $3;`
-	rows, err := cr.db.Query(q, ownerID, limit, offset)
+	rows, err := cr.db.QueryContext(ctx, q, ownerID, limit, offset)
 	if err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to retrieve configs due to %s", err))
 		return certs.Page{}, err
@@ -59,7 +60,7 @@ func (cr certsRepository) RetrieveAll(ctx context.Context, ownerID string, offse
 
 	q = `SELECT COUNT(*) FROM certs WHERE owner_id = $1`
 	var total uint64
-	if err := cr.db.QueryRow(q, ownerID).Scan(&total); err != nil {
+	if err := cr.db.QueryRowxContext(ctx, q, ownerID).Scan(&total); err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to count certs due to %s", err))
 		return certs.Page{}, err
 	}
@@ -75,7 +76,7 @@ func (cr certsRepository) RetrieveAll(ctx context.Context, ownerID string, offse
 func (cr certsRepository) Save(ctx context.Context, cert certs.Cert) (string, error) {
 	q := `INSERT INTO certs (thing_id, owner_id, serial, expire) VALUES (:thing_id, :owner_id, :serial, :expire)`
 
-	tx, err := cr.db.Beginx()
+	tx, err := cr.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return "", errors.Wrap(errors.ErrCreateEntity, err)
 	}
@@ -116,7 +117,7 @@ func (cr certsRepository) Remove(ctx context.Context, ownerID, serial string) er
 
 func (cr certsRepository) RetrieveByThing(ctx context.Context, ownerID, thingID string, offset, limit uint64) (certs.Page, error) {
 	q := `SELECT thing_id, owner_id, serial, expire FROM certs WHERE owner_id = $1 AND thing_id = $2 ORDER BY expire LIMIT $3 OFFSET $4;`
-	rows, err := cr.db.Query(q, ownerID, thingID, limit, offset)
+	rows, err := cr.db.QueryContext(ctx, q, ownerID, thingID, limit, offset)
 	if err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to retrieve configs due to %s", err))
 		return certs.Page{}, err
@@ -136,7 +137,7 @@ func (cr certsRepository) RetrieveByThing(ctx context.Context, ownerID, thingID 
 
 	q = `SELECT COUNT(*) FROM certs WHERE owner_id = $1 AND thing_id = $2`
 	var total uint64
-	if err := cr.db.QueryRow(q, ownerID, thingID).Scan(&total); err != nil {
+	if err := cr.db.QueryRowxContext(ctx, q, ownerID, thingID).Scan(&total); err != nil {
 		cr.log.Error(fmt.Sprintf("Failed to count certs due to %s", err))
 		return certs.Page{}, err
 	}

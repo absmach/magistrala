@@ -111,7 +111,7 @@ func (svc service) IssueToken(ctx context.Context, identity, secret string) (jwt
 		return jwt.Token{}, errors.Wrap(errors.ErrAuthentication, err)
 	}
 	if err := svc.hasher.Compare(secret, dbUser.Credentials.Secret); err != nil {
-		return jwt.Token{}, errors.Wrap(errors.ErrAuthentication, err)
+		return jwt.Token{}, errors.Wrap(errors.ErrWrongSecret, err)
 	}
 
 	claims := jwt.Claims{
@@ -315,7 +315,7 @@ func (svc service) UpdateClientSecret(ctx context.Context, token, oldSecret, new
 		return mfclients.Client{}, err
 	}
 	if _, err := svc.IssueToken(ctx, dbClient.Credentials.Identity, oldSecret); err != nil {
-		return mfclients.Client{}, errors.ErrAuthentication
+		return mfclients.Client{}, err
 	}
 	newSecret, err = svc.hasher.Hash(newSecret)
 	if err != nil {

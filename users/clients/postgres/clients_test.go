@@ -522,6 +522,81 @@ func TestClientsRetrieveAll(t *testing.T) {
 	}
 }
 
+func TestGroupsMembers(t *testing.T) {
+	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
+	postgres.NewDatabase(db, tracer)
+	crepo := cpostgres.NewRepository(database)
+	grepo := gpostgres.NewRepository(database)
+	prepo := ppostgres.NewRepository(database)
+
+	clientA := mfclients.Client{
+		ID:   testsutil.GenerateUUID(t, idProvider),
+		Name: "client-memberships",
+		Credentials: mfclients.Credentials{
+			Identity: "client-memberships1@example.com",
+			Secret:   password,
+		},
+		Metadata: mfclients.Metadata{},
+		Status:   mfclients.EnabledStatus,
+	}
+	clientB := mfclients.Client{
+		ID:   testsutil.GenerateUUID(t, idProvider),
+		Name: "client-memberships",
+		Credentials: mfclients.Credentials{
+			Identity: "client-memberships2@example.com",
+			Secret:   password,
+		},
+		Metadata: mfclients.Metadata{},
+		Status:   mfclients.EnabledStatus,
+	}
+	group := mfgroups.Group{
+		ID:       testsutil.GenerateUUID(t, idProvider),
+		Name:     "group-membership",
+		Metadata: mfclients.Metadata{},
+		Status:   mfclients.EnabledStatus,
+	}
+
+	policyA := policies.Policy{
+		Subject: clientA.ID,
+		Object:  group.ID,
+		Actions: []string{"g_list"},
+	}
+	policyB := policies.Policy{
+		Subject: clientB.ID,
+		Object:  group.ID,
+		Actions: []string{"g_list"},
+	}
+
+	_, err := crepo.Save(context.Background(), clientA)
+	assert.True(t, errors.Contains(err, nil), fmt.Sprintf("save client: expected %v got %s\n", nil, err))
+	clientA.Credentials.Secret = ""
+	_, err = crepo.Save(context.Background(), clientB)
+	assert.True(t, errors.Contains(err, nil), fmt.Sprintf("save client: expected %v got %s\n", nil, err))
+	clientB.Credentials.Secret = ""
+	_, err = grepo.Save(context.Background(), group)
+	assert.True(t, errors.Contains(err, nil), fmt.Sprintf("save group: expected %v got %s\n", nil, err))
+	err = prepo.Save(context.Background(), policyA)
+	assert.True(t, errors.Contains(err, nil), fmt.Sprintf("save policy: expected %v got %s\n", nil, err))
+	err = prepo.Save(context.Background(), policyB)
+	assert.True(t, errors.Contains(err, nil), fmt.Sprintf("save policy: expected %v got %s\n", nil, err))
+
+	cases := map[string]struct {
+		ID  string
+		err error
+	}{
+		"retrieve members for existing group":     {group.ID, nil},
+		"retrieve members for non-existing group": {wrongID, nil},
+	}
+
+	for desc, tc := range cases {
+		mp, err := crepo.Members(context.Background(), tc.ID, mfclients.Page{Total: 10, Offset: 0, Limit: 10, Status: mfclients.AllStatus, Subject: clientB.ID, Action: "g_list"})
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		if tc.ID == group.ID {
+			assert.ElementsMatch(t, mp.Members, []mfclients.Client{clientA, clientB}, fmt.Sprintf("%s: expected %v got %v\n", desc, []mfclients.Client{clientA, clientB}, mp.Members))
+		}
+	}
+}
+
 func TestClientsUpdateMetadata(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
 	postgres.NewDatabase(db, tracer)

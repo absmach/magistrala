@@ -165,9 +165,9 @@ func (repo clientRepo) Members(ctx context.Context, groupID string, pm mfclients
 	}
 
 	aq := ""
-	// If not admin, the client needs to have a g_list action on the group
+	// If not admin, the client needs to have a g_list action on the group or they are the owner.
 	if pm.Subject != "" {
-		aq = fmt.Sprintf("AND EXISTS (SELECT 1 FROM policies WHERE policies.subject = '%s' AND policies.object = :group_id AND '%s'=ANY(actions))", pm.Subject, pm.Action)
+		aq = `AND EXISTS (SELECT 1 FROM policies WHERE policies.subject = :subject AND policies.object = :group_id AND :action=ANY(actions)) OR c.owner_id = :subject`
 	}
 
 	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.metadata, c.identity, c.secret, c.status, c.created_at FROM clients c
@@ -406,26 +406,26 @@ func pageQuery(pm mfclients.Page) (string, error) {
 		query = append(query, fmt.Sprintf("id IN ('%s')", strings.Join(pm.IDs, "','")))
 	}
 	if pm.Name != "" {
-		query = append(query, fmt.Sprintf("c.name = '%s'", pm.Name))
+		query = append(query, "c.name = :name")
 	}
 	if pm.Tag != "" {
-		query = append(query, fmt.Sprintf("'%s' = ANY(c.tags)", pm.Tag))
+		query = append(query, ":tag = ANY(c.tags)")
 	}
 	if pm.Status != mfclients.AllStatus {
-		query = append(query, fmt.Sprintf("c.status = %d", pm.Status))
+		query = append(query, "c.status = :status")
 	}
 	// For listing clients that the specified client owns but not sharedby
 	if pm.Owner != "" && pm.SharedBy == "" {
-		query = append(query, fmt.Sprintf("c.owner_id = '%s'", pm.Owner))
+		query = append(query, "c.owner_id = :owner_id")
 	}
 
 	// For listing clients that the specified client owns and that are shared with the specified client
 	if pm.Owner != "" && pm.SharedBy != "" {
-		query = append(query, fmt.Sprintf("(c.owner_id = '%s' OR c.id IN (SELECT subject FROM policies WHERE object IN (SELECT object FROM policies WHERE subject = '%s' AND '%s'=ANY(actions))))", pm.Owner, pm.SharedBy, pm.Action))
+		query = append(query, "(c.owner_id = :owner_id OR c.id IN (SELECT subject FROM policies WHERE object IN (SELECT object FROM policies WHERE subject = :shared_by AND :action=ANY(actions))))")
 	}
 	// For listing clients that the specified client is shared with
 	if pm.SharedBy != "" && pm.Owner == "" {
-		query = append(query, fmt.Sprintf("c.owner_id != '%s' AND (c.id IN (SELECT subject FROM policies WHERE object IN (SELECT object FROM policies WHERE subject = '%s' AND '%s'=ANY(actions))))", pm.SharedBy, pm.SharedBy, pm.Action))
+		query = append(query, "c.owner_id != :shared_by AND (c.id IN (SELECT subject FROM policies WHERE object IN (SELECT object FROM policies WHERE subject = :shared_by AND :action=ANY(actions))))")
 	}
 	if len(query) > 0 {
 		emq = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
@@ -448,6 +448,10 @@ func toDBClientsPage(pm mfclients.Page) (dbClientsPage, error) {
 		Limit:    pm.Limit,
 		Status:   pm.Status,
 		Tag:      pm.Tag,
+		Identity: pm.Identity,
+		SharedBy: pm.SharedBy,
+		Subject:  pm.Subject,
+		Action:   pm.Action,
 	}, nil
 }
 
@@ -462,4 +466,7 @@ type dbClientsPage struct {
 	Total    uint64           `db:"total"`
 	Limit    uint64           `db:"limit"`
 	Offset   uint64           `db:"offset"`
+	SharedBy string           `db:"shared_by"`
+	Subject  string           `db:"subject"`
+	Action   string           `db:"action"`
 }

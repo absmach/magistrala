@@ -1199,7 +1199,8 @@ func TestListMembers(t *testing.T) {
 
 	var nClients = uint64(10)
 	var aClients = []mfclients.Client{}
-	for i := uint64(1); i < nClients; i++ {
+	owner := testsutil.GenerateUUID(t, idProvider)
+	for i := uint64(0); i < nClients; i++ {
 		identity := fmt.Sprintf("member_%d@example.com", i)
 		client := mfclients.Client{
 			ID:   testsutil.GenerateUUID(t, idProvider),
@@ -1210,6 +1211,9 @@ func TestListMembers(t *testing.T) {
 			},
 			Tags:     []string{"tag1", "tag2"},
 			Metadata: mfclients.Metadata{"role": "client"},
+		}
+		if i%3 == 0 {
+			client.Owner = owner
 		}
 		aClients = append(aClients, client)
 	}
@@ -1293,6 +1297,22 @@ func TestListMembers(t *testing.T) {
 				},
 			},
 			err: errors.ErrNotFound,
+		},
+		{
+			desc:    "list clients for an owner",
+			token:   validToken,
+			groupID: testsutil.GenerateUUID(t, idProvider),
+			page: mfclients.Page{
+				Subject: owner,
+				Action:  "g_list",
+			},
+			response: mfclients.MembersPage{
+				Page: mfclients.Page{
+					Total: 4,
+				},
+				Members: []mfclients.Client{aClients[0], aClients[3], aClients[6], aClients[9]},
+			},
+			err: nil,
 		},
 	}
 

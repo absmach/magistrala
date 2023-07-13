@@ -177,9 +177,9 @@ func (repo clientRepo) Members(ctx context.Context, groupID string, pm mfclients
 	}
 
 	aq := ""
-	// If not admin, the client needs to have a g_list action on the group
+	// If not admin, the client needs to have a g_list action on the group or they are the owner.
 	if pm.Subject != "" {
-		aq = `AND EXISTS (SELECT 1 FROM policies WHERE policies.subject = :subject AND :action=ANY(actions))`
+		aq = `AND EXISTS (SELECT 1 FROM policies WHERE policies.subject = :subject AND :action=ANY(actions)) OR c.owner_id = :subject`
 	}
 	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.metadata, c.identity, c.status,
 		c.created_at, c.updated_at FROM clients c

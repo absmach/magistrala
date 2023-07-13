@@ -212,7 +212,7 @@ func TestClientsRetrieveAll(t *testing.T) {
 	prepo := ppostgres.NewRepository(database)
 
 	var nClients = uint64(200)
-	var ownerID string
+	var ownerID = testsutil.GenerateUUID(t, idProvider)
 
 	meta := mfclients.Metadata{
 		"admin": "true",
@@ -240,9 +240,6 @@ func TestClientsRetrieveAll(t *testing.T) {
 			},
 			Metadata: mfclients.Metadata{},
 			Status:   mfclients.EnabledStatus,
-		}
-		if i == 1 {
-			ownerID = client.ID
 		}
 		if i%10 == 0 {
 			client.Owner = ownerID
@@ -374,11 +371,11 @@ func TestClientsRetrieveAll(t *testing.T) {
 				Owner:  ownerID,
 				Status: mfclients.AllStatus,
 			},
-			response: []mfclients.Client{expectedClients[10], expectedClients[20], expectedClients[30], expectedClients[40], expectedClients[50], expectedClients[60],
+			response: []mfclients.Client{expectedClients[0], expectedClients[10], expectedClients[20], expectedClients[30], expectedClients[40], expectedClients[50], expectedClients[60],
 				expectedClients[70], expectedClients[80], expectedClients[90], expectedClients[100], expectedClients[110], expectedClients[120], expectedClients[130],
 				expectedClients[140], expectedClients[150], expectedClients[160], expectedClients[170], expectedClients[180], expectedClients[190],
 			},
-			size: 19,
+			size: 20,
 		},
 		"retrieve clients by wrong owner": {
 			pm: mfclients.Page{
@@ -390,6 +387,33 @@ func TestClientsRetrieveAll(t *testing.T) {
 			},
 			response: []mfclients.Client{},
 			size:     0,
+		},
+		"retrieve all clients shared by": {
+			pm: mfclients.Page{
+				Offset:   0,
+				Limit:    nClients,
+				Total:    nClients,
+				SharedBy: expectedClients[0].ID,
+				Action:   "c_list",
+				Status:   mfclients.AllStatus,
+			},
+			response: expectedClients,
+			size:     nClients,
+		},
+		"retrieve all clients shared by and owned by": {
+			pm: mfclients.Page{
+				Offset:   0,
+				Limit:    nClients,
+				Total:    nClients,
+				SharedBy: ownerID,
+				Owner:    ownerID,
+				Status:   mfclients.AllStatus,
+			},
+			response: []mfclients.Client{expectedClients[0], expectedClients[10], expectedClients[20], expectedClients[30], expectedClients[40], expectedClients[50], expectedClients[60],
+				expectedClients[70], expectedClients[80], expectedClients[90], expectedClients[100], expectedClients[110], expectedClients[120], expectedClients[130],
+				expectedClients[140], expectedClients[150], expectedClients[160], expectedClients[170], expectedClients[180], expectedClients[190],
+			},
+			size: 20,
 		},
 		"retrieve all clients by disabled status": {
 			pm: mfclients.Page{
@@ -453,6 +477,78 @@ func TestClientsRetrieveAll(t *testing.T) {
 		assert.ElementsMatch(t, page.Clients, tc.response, fmt.Sprintf("%s: expected %v got %v\n", desc, tc.response, page.Clients))
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected size %d got %d\n", desc, tc.size, size))
 		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %d\n", desc, err))
+	}
+}
+
+func TestGroupsMembers(t *testing.T) {
+	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
+	postgres.NewDatabase(db, tracer)
+	crepo := cpostgres.NewRepository(database)
+	grepo := gpostgres.NewRepository(database)
+	prepo := ppostgres.NewRepository(database)
+
+	clientA := mfclients.Client{
+		ID:   testsutil.GenerateUUID(t, idProvider),
+		Name: "client-memberships",
+		Credentials: mfclients.Credentials{
+			Secret: testsutil.GenerateUUID(t, idProvider),
+		},
+		Metadata: mfclients.Metadata{},
+		Status:   mfclients.EnabledStatus,
+	}
+	clientB := mfclients.Client{
+		ID:   testsutil.GenerateUUID(t, idProvider),
+		Name: "client-memberships",
+		Credentials: mfclients.Credentials{
+			Identity: "client-memberships2@example.com",
+			Secret:   testsutil.GenerateUUID(t, idProvider),
+		},
+		Metadata: mfclients.Metadata{},
+		Status:   mfclients.EnabledStatus,
+	}
+	group := mfgroups.Group{
+		ID:       testsutil.GenerateUUID(t, idProvider),
+		Name:     "group-membership",
+		Metadata: mfclients.Metadata{},
+		Status:   mfclients.EnabledStatus,
+	}
+
+	policyA := policies.Policy{
+		Subject: clientA.ID,
+		Object:  group.ID,
+		Actions: []string{"g_list"},
+	}
+	policyB := policies.Policy{
+		Subject: clientB.ID,
+		Object:  group.ID,
+		Actions: []string{"g_list"},
+	}
+
+	_, err := crepo.Save(context.Background(), clientA)
+	assert.True(t, errors.Contains(err, nil), fmt.Sprintf("save client: expected %v got %s\n", nil, err))
+	_, err = crepo.Save(context.Background(), clientB)
+	assert.True(t, errors.Contains(err, nil), fmt.Sprintf("save client: expected %v got %s\n", nil, err))
+	_, err = grepo.Save(context.Background(), group)
+	assert.True(t, errors.Contains(err, nil), fmt.Sprintf("save group: expected %v got %s\n", nil, err))
+	_, err = prepo.Save(context.Background(), policyA)
+	assert.True(t, errors.Contains(err, nil), fmt.Sprintf("save policy: expected %v got %s\n", nil, err))
+	_, err = prepo.Save(context.Background(), policyB)
+	assert.True(t, errors.Contains(err, nil), fmt.Sprintf("save policy: expected %v got %s\n", nil, err))
+
+	cases := map[string]struct {
+		ID  string
+		err error
+	}{
+		"retrieve members for existing group":     {group.ID, nil},
+		"retrieve members for non-existing group": {wrongID, nil},
+	}
+
+	for desc, tc := range cases {
+		mp, err := crepo.Members(context.Background(), tc.ID, mfclients.Page{Total: 10, Offset: 0, Limit: 10, Status: mfclients.AllStatus, Subject: clientB.ID, Action: "g_list"})
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
+		if tc.ID == group.ID {
+			assert.ElementsMatch(t, mp.Members, []mfclients.Client{clientA, clientB}, fmt.Sprintf("%s: expected %v got %v\n", desc, []mfclients.Client{clientA, clientB}, mp.Members))
+		}
 	}
 }
 

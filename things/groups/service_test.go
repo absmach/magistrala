@@ -637,10 +637,14 @@ func TestListMemberships(t *testing.T) {
 
 	var nGroups = uint64(100)
 	var aGroups = []mfgroups.Group{}
+	owner := testsutil.GenerateUUID(t, idProvider)
 	for i := uint64(1); i < nGroups; i++ {
 		group := mfgroups.Group{
 			Name:     fmt.Sprintf("membership_%d@example.com", i),
 			Metadata: mfclients.Metadata{"role": "group"},
+		}
+		if i%3 == 0 {
+			group.Owner = owner
 		}
 		aGroups = append(aGroups, group)
 	}
@@ -735,6 +739,27 @@ func TestListMemberships(t *testing.T) {
 				},
 			},
 			err: errors.ErrNotFound,
+		},
+		{
+			desc:     "list clients with an owner",
+			token:    token,
+			clientID: testsutil.GenerateUUID(t, idProvider),
+			page: mfgroups.GroupsPage{
+				Page: mfgroups.Page{
+					Offset:  0,
+					Total:   nGroups,
+					Limit:   nGroups,
+					Status:  mfclients.AllStatus,
+					Subject: owner,
+					Action:  "g_list",
+				},
+			},
+			response: mfgroups.MembershipsPage{
+				Page: mfgroups.Page{
+					Total: 4,
+				},
+				Memberships: []mfgroups.Group{aGroups[0], aGroups[3], aGroups[6], aGroups[9]},
+			},
 		},
 	}
 

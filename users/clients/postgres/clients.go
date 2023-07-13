@@ -439,7 +439,7 @@ func pageQuery(pm mfclients.Page) (string, error) {
 
 	// For listing clients that the specified client owns and that are shared with the specified client
 	if pm.Owner != "" && pm.SharedBy != "" {
-		query = append(query, "(c.owner_id = :owner_id OR EXISTS (SELECT 1 FROM policies WHERE subject = :shared_by AND :action=ANY(actions) AND object = policies.object))")
+		query = append(query, "(c.owner_id = :owner_id OR (policies.object IN (SELECT object FROM policies WHERE subject = :shared_by AND :action=ANY(actions))))")
 	}
 	// For listing clients that the specified client is shared with
 	if pm.SharedBy != "" && pm.Owner == "" {

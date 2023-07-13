@@ -99,23 +99,37 @@ func (svc service) ListClients(ctx context.Context, token string, pm mfclients.P
 		return mfclients.ClientsPage{}, err
 	}
 
+	
+	switch err = svc.checkAdmin(ctx, userID, thingsObjectKey, listRelationKey); err {
 	// If the user is admin, fetch all things from database.
-	if err := svc.checkAdmin(ctx, userID, thingsObjectKey, listRelationKey); err == nil {
-		pm.Owner = ""
-		pm.SharedBy = ""
-		return svc.clients.RetrieveAll(ctx, pm)
-	}
+	case nil:
+		switch {
+		case pm.SharedBy == MyKey && pm.Owner == MyKey:
+			pm.SharedBy = ""
+			pm.Owner = ""
+		case pm.SharedBy == MyKey && pm.Owner != MyKey:
+			pm.SharedBy = userID
+		case pm.Owner == MyKey && pm.SharedBy != MyKey:
+			pm.Owner = userID
+		}
 
-	// If the user is not admin, check 'sharedby' parameter from page metadata.
-	// If user provides 'sharedby' key, fetch things from policies. Otherwise,
-	// fetch things from the database based on thing's 'owner' field.
-	if pm.SharedBy == MyKey {
-		pm.SharedBy = userID
+	default:
+		// If the user is not admin, check 'sharedby' parameter from page metadata.
+		// If user provides 'sharedby' key, fetch things from policies. Otherwise,
+		// fetch things from the database based on thing's 'owner' field.
+		switch {
+		case pm.SharedBy == MyKey && pm.Owner == MyKey:
+			pm.SharedBy = userID
+		case pm.SharedBy == MyKey && pm.Owner != MyKey:
+			pm.SharedBy = userID
+			pm.Owner = ""
+		case pm.Owner == MyKey && pm.SharedBy != MyKey:
+			pm.Owner = userID
+		default:
+			pm.Owner = userID
+		}
+		pm.Action = listRelationKey
 	}
-	if pm.Owner == MyKey {
-		pm.Owner = userID
-	}
-	pm.Action = "c_list"
 
 	return svc.clients.RetrieveAll(ctx, pm)
 }

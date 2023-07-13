@@ -163,19 +163,33 @@ func (svc service) ListClients(ctx context.Context, token string, pm mfclients.P
 		return mfclients.ClientsPage{}, err
 	}
 
-	if pm.SharedBy == MyKey {
-		pm.SharedBy = id
-	}
-	if pm.Owner == MyKey {
-		pm.Owner = id
-	}
-	pm.Action = "c_list"
+	switch err := svc.authorize(ctx, id, clientsObjectKey, listRelationKey); err {
+	// If the user is admin, fetch all users from database.
+	case nil:
+		switch {
+		case pm.SharedBy == MyKey && pm.Owner == MyKey:
+			pm.SharedBy = ""
+			pm.Owner = ""
+		case pm.SharedBy == MyKey && pm.Owner != MyKey:
+			pm.SharedBy = id
+		case pm.Owner == MyKey && pm.SharedBy != MyKey:
+			pm.Owner = id
+		}
 
-	// If the user is admin, fetch all things from database.
-	if err := svc.authorize(ctx, id, clientsObjectKey, listRelationKey); err == nil {
-		pm.SharedBy = ""
-		pm.Owner = ""
-		pm.Action = ""
+	// If the user is not admin, fetch users that they own or are shared with them.
+	default:
+		switch {
+		case pm.SharedBy == MyKey && pm.Owner == MyKey:
+			pm.SharedBy = id
+		case pm.SharedBy == MyKey && pm.Owner != MyKey:
+			pm.SharedBy = id
+			pm.Owner = ""
+		case pm.Owner == MyKey && pm.SharedBy != MyKey:
+			pm.Owner = id
+		default:
+			pm.Owner = id
+		}
+		pm.Action = listRelationKey
 	}
 
 	clients, err := svc.clients.RetrieveAll(ctx, pm)

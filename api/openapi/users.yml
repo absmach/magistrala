@@ -1477,7 +1477,7 @@ components:
         example: 'admin@example.com'
         
       Owner:
-        name: owner
+        name: owner_id
         description: User's owner.
         in: query
         schema:

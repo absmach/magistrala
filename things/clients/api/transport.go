@@ -120,7 +120,7 @@ func decodeViewClient(_ context.Context, r *http.Request) (interface{}, error) {
 }
 
 func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) {
-	var sid, oid string
+	var sharedID, ownerID string
 	s, err := apiutil.ReadStringQuery(r, api.StatusKey, api.DefClientStatus)
 	if err != nil {
 		return nil, err
@@ -145,18 +145,25 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 	if err != nil {
 		return nil, err
 	}
-	visibility, err := apiutil.ReadStringQuery(r, api.VisibilityKey, api.MyVisibility)
+	oid, err := apiutil.ReadStringQuery(r, api.OwnerKey, "")
+	if err != nil {
+		return nil, err
+	}
+	visibility, err := apiutil.ReadStringQuery(r, api.VisibilityKey, "")
 	if err != nil {
 		return nil, err
 	}
 	switch visibility {
 	case api.MyVisibility:
-		oid = api.MyVisibility
+		ownerID = api.MyVisibility
 	case api.SharedVisibility:
-		sid = api.MyVisibility
+		sharedID = api.MyVisibility
 	case api.AllVisibility:
-		sid = api.MyVisibility
-		oid = api.MyVisibility
+		sharedID = api.MyVisibility
+		ownerID = api.MyVisibility
+	}
+	if oid != "" {
+		ownerID = oid
 	}
 	st, err := mfclients.ToStatus(s)
 	if err != nil {
@@ -170,8 +177,8 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 		metadata: m,
 		name:     n,
 		tag:      t,
-		sharedBy: sid,
-		owner:    oid,
+		sharedBy: sharedID,
+		owner:    ownerID,
 	}
 	return req, nil
 }

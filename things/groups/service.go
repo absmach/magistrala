@@ -93,11 +93,7 @@ func (svc service) ListGroups(ctx context.Context, token string, gm groups.Group
 
 	// If the user is admin, fetch all channels from the database.
 	if err := svc.authorize(ctx, userID, thingsObjectKey, listRelationKey); err == nil {
-		page, err := svc.groups.RetrieveAll(ctx, gm)
-		if err != nil {
-			return groups.GroupsPage{}, err
-		}
-		return page, err
+		return svc.groups.RetrieveAll(ctx, gm)
 	}
 
 	gm.Subject = userID
@@ -118,6 +114,7 @@ func (svc service) ListMemberships(ctx context.Context, token, clientID string, 
 	}
 
 	gm.OwnerID = userID
+	gm.Action = listRelationKey
 	return svc.groups.Memberships(ctx, clientID, gm)
 }
 

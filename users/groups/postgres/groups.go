@@ -295,7 +295,12 @@ func buildQuery(gm mfgroups.GroupsPage) (string, error) {
 	if gm.Status != mfclients.AllStatus {
 		queries = append(queries, "g.status = :status")
 	}
-
+	if gm.OwnerID != "" {
+		queries = append(queries, "g.owner_id = :owner_id")
+	}
+	if gm.Tag != "" {
+		queries = append(queries, ":tag = ANY(c.tags)")
+	}
 	if gm.Subject != "" {
 		queries = append(queries, "(g.owner_id = :owner_id OR id IN (SELECT object as id FROM policies WHERE subject = :subject AND :action=ANY(actions)))")
 	}

@@ -75,7 +75,7 @@ type revokeCertsRes struct {
 }
 
 // BoostrapsPage contains list of boostrap configs in a page with proper metadata.
-type BoostrapsPage struct {
+type BootstrapPage struct {
 	Configs []BootstrapConfig `json:"configs"`
 	pageRes
 }

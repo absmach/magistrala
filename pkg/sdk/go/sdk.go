@@ -830,7 +830,7 @@ type SDK interface {
 	//  }
 	//  bootstraps, _ := sdk.Bootstraps(pm, "token")
 	//  fmt.Println(bootstraps)
-	Bootstraps(pm PageMetadata, token string) (BoostrapsPage, errors.SDKError)
+	Bootstraps(pm PageMetadata, token string) (BootstrapPage, errors.SDKError)
 
 	// Whitelist updates Thing state Config with given ID belonging to the user identified by the given token.
 	//

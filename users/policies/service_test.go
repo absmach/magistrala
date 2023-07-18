@@ -85,6 +85,50 @@ func TestAddPolicy(t *testing.T) {
 			token: testsutil.GenerateValidToken(t, testsutil.GenerateUUID(t, idProvider), csvc, cRepo, phasher),
 		},
 		{
+			desc: "add a new policy with c_update action",
+			page: policies.PolicyPage{},
+			policy: policies.Policy{
+				Subject: testsutil.GenerateUUID(t, idProvider),
+				Object:  testsutil.GenerateUUID(t, idProvider),
+				Actions: []string{"c_update"},
+			},
+			err:   nil,
+			token: testsutil.GenerateValidToken(t, testsutil.GenerateUUID(t, idProvider), csvc, cRepo, phasher),
+		},
+		{
+			desc: "add a new policy with c_update and c_list action",
+			page: policies.PolicyPage{},
+			policy: policies.Policy{
+				Subject: testsutil.GenerateUUID(t, idProvider),
+				Object:  testsutil.GenerateUUID(t, idProvider),
+				Actions: []string{"c_update", "c_list"},
+			},
+			err:   nil,
+			token: testsutil.GenerateValidToken(t, testsutil.GenerateUUID(t, idProvider), csvc, cRepo, phasher),
+		},
+		{
+			desc: "add a new policy with g_update action",
+			page: policies.PolicyPage{},
+			policy: policies.Policy{
+				Subject: testsutil.GenerateUUID(t, idProvider),
+				Object:  testsutil.GenerateUUID(t, idProvider),
+				Actions: []string{"g_update"},
+			},
+			err:   nil,
+			token: testsutil.GenerateValidToken(t, testsutil.GenerateUUID(t, idProvider), csvc, cRepo, phasher),
+		},
+		{
+			desc: "add a new policy with g_update and g_list action",
+			page: policies.PolicyPage{},
+			policy: policies.Policy{
+				Subject: testsutil.GenerateUUID(t, idProvider),
+				Object:  testsutil.GenerateUUID(t, idProvider),
+				Actions: []string{"g_update", "g_list"},
+			},
+			err:   nil,
+			token: testsutil.GenerateValidToken(t, testsutil.GenerateUUID(t, idProvider), csvc, cRepo, phasher),
+		},
+		{
 			desc: "add a new policy with more actions",
 			page: policies.PolicyPage{},
 			policy: policies.Policy{

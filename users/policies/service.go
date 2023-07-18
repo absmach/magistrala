@@ -64,6 +64,7 @@ func (svc service) AddPolicy(ctx context.Context, token string, p Policy) error 
 	if err := p.Validate(); err != nil {
 		return err
 	}
+	p.Actions = addListAction(p.Actions)
 
 	p.OwnerID = id
 	p.CreatedAt = time.Now()

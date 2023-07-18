@@ -5,6 +5,7 @@ package policies
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/mainflux/mainflux/internal/apiutil"
@@ -159,4 +160,51 @@ func ValidateAction(act string) bool {
 	}
 	return false
 
+}
+
+// addListAction adds list actions to the actions slice if c_ or g_ actions are present.
+//
+// 1. If c_<anything> actions are present, add c_list and g_list actions to the actions slice.
+//
+// 2. If g_<anything> actions are present, add g_list action to the actions slice.
+func addListAction(actions []string) []string {
+	hasCAction := false
+	hasGAction := false
+
+	for _, action := range actions {
+		if strings.HasPrefix(action, "c_") {
+			hasCAction = true
+		}
+		if strings.HasPrefix(action, "g_") {
+			hasGAction = true
+		}
+	}
+
+	updatedActions := make([]string, 0)
+
+	updatedActions = append(updatedActions, actions...)
+
+	if hasCAction {
+		updatedActions = append(updatedActions, "c_list", "g_list")
+	}
+
+	if hasGAction {
+		updatedActions = append(updatedActions, "g_list")
+	}
+
+	return removeDuplicates(updatedActions)
+}
+
+func removeDuplicates(slice []string) []string {
+	unique := make(map[string]bool)
+	result := make([]string, 0, len(slice))
+
+	for _, item := range slice {
+		if !unique[item] {
+			unique[item] = true
+			result = append(result, item)
+		}
+	}
+
+	return result
 }

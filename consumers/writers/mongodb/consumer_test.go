@@ -83,7 +83,7 @@ func TestSaveSenml(t *testing.T) {
 		msgs = append(msgs, msg)
 	}
 
-	err = repo.ConsumeBlocking(msgs)
+	err = repo.ConsumeBlocking(context.TODO(), msgs)
 	require.Nil(t, err, fmt.Sprintf("Save operation expected to succeed: %s.\n", err))
 
 	count, err := db.Collection(collection).CountDocuments(context.Background(), bson.D{})
@@ -131,6 +131,6 @@ func TestSaveJSON(t *testing.T) {
 		msgs.Data = append(msgs.Data, msg)
 	}
 
-	err = repo.ConsumeBlocking(msgs)
+	err = repo.ConsumeBlocking(context.TODO(), msgs)
 	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 }

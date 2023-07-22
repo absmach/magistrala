@@ -15,6 +15,7 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/mainflux/mainflux/consumers"
+	consumerTracing "github.com/mainflux/mainflux/consumers/tracing"
 	"github.com/mainflux/mainflux/consumers/writers/api"
 	"github.com/mainflux/mainflux/consumers/writers/cassandra"
 	"github.com/mainflux/mainflux/internal"
@@ -87,8 +88,14 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
+	httpServerConfig := server.Config{Port: defSvcHttpPort}
+	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefix, AltPrefix: envPrefixHttp}); err != nil {
+		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+	}
+
 	// Create new cassandra-writer repo
 	repo := newService(csdSession, logger)
+	repo = consumerTracing.NewBlocking(tracer, repo, httpServerConfig)
 
 	// Create new pub sub broker
 	pubSub, err := brokers.NewPubSub(cfg.BrokerURL, "", logger)
@@ -104,12 +111,6 @@ func main() {
 	}
 
 	// Create new http server
-	httpServerConfig := server.Config{Port: defSvcHttpPort}
-
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefix, AltPrefix: envPrefixHttp}); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
-	}
-
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svcName, instanceID), logger)
 
 	if cfg.SendTelemetry {

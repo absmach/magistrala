@@ -4,6 +4,7 @@
 package timescale_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -98,7 +99,7 @@ func TestReadSenml(t *testing.T) {
 		messages = append(messages, msg)
 	}
 
-	err = writer.ConsumeBlocking(messages)
+	err = writer.ConsumeBlocking(context.TODO(), messages)
 	require.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 
 	reader := treader.New(db)
@@ -411,7 +412,7 @@ func TestReadJSON(t *testing.T) {
 		msgs1 = append(msgs1, mapped)
 	}
 
-	err = writer.ConsumeBlocking(messages1)
+	err = writer.ConsumeBlocking(context.TODO(), messages1)
 	require.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 
 	id2, err := idProvider.ID()
@@ -443,7 +444,7 @@ func TestReadJSON(t *testing.T) {
 		msgs2 = append(msgs2, mapped)
 	}
 
-	err = writer.ConsumeBlocking(messages2)
+	err = writer.ConsumeBlocking(context.TODO(), messages2)
 	require.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 
 	httpMsgs := []map[string]interface{}{}

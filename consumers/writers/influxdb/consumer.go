@@ -58,7 +58,7 @@ func NewAsync(client influxdb2.Client, config RepoConfig) consumers.AsyncConsume
 	}
 }
 
-func (repo *influxRepo) ConsumeAsync(message interface{}) {
+func (repo *influxRepo) ConsumeAsync(_ context.Context, message interface{}) {
 	var err error
 	var pts []*write.Point
 	switch m := message.(type) {
@@ -102,7 +102,7 @@ func (repo *influxRepo) Errors() <-chan error {
 	return nil
 }
 
-func (repo *influxRepo) ConsumeBlocking(message interface{}) error {
+func (repo *influxRepo) ConsumeBlocking(ctx context.Context, message interface{}) error {
 	var err error
 	var pts []*write.Point
 	switch m := message.(type) {
@@ -115,7 +115,7 @@ func (repo *influxRepo) ConsumeBlocking(message interface{}) error {
 		return err
 	}
 
-	return repo.writeAPIBlocking.WritePoint(context.Background(), pts...)
+	return repo.writeAPIBlocking.WritePoint(ctx, pts...)
 }
 
 func (repo *influxRepo) senmlPoints(messages interface{}) ([]*write.Point, error) {

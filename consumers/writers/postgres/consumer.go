@@ -36,16 +36,16 @@ func New(db *sqlx.DB) consumers.BlockingConsumer {
 	return &postgresRepo{db: db}
 }
 
-func (pr postgresRepo) ConsumeBlocking(message interface{}) (err error) {
+func (pr postgresRepo) ConsumeBlocking(ctx context.Context, message interface{}) (err error) {
 	switch m := message.(type) {
 	case mfjson.Messages:
 		return pr.saveJSON(m)
 	default:
-		return pr.saveSenml(m)
+		return pr.saveSenml(ctx, m)
 	}
 }
 
-func (pr postgresRepo) saveSenml(messages interface{}) (err error) {
+func (pr postgresRepo) saveSenml(ctx context.Context, messages interface{}) (err error) {
 	msgs, ok := messages.([]senml.Message)
 	if !ok {
 		return errSaveMessage
@@ -57,7 +57,7 @@ func (pr postgresRepo) saveSenml(messages interface{}) (err error) {
           :value, :string_value, :bool_value, :data_value, :sum,
           :time, :update_time);`
 
-	tx, err := pr.db.BeginTxx(context.Background(), nil)
+	tx, err := pr.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return errors.Wrap(errSaveMessage, err)
 	}

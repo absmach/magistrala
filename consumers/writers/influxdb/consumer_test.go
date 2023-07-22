@@ -177,7 +177,7 @@ func TestAsyncSaveSenml(t *testing.T) {
 		}
 
 		errs := asyncRepo.Errors()
-		asyncRepo.ConsumeAsync(msgs)
+		asyncRepo.ConsumeAsync(context.TODO(), msgs)
 		err = <-errs
 		assert.Nil(t, err, fmt.Sprintf("Save operation expected to succeed: %s.\n", err))
 
@@ -246,7 +246,7 @@ func TestBlockingSaveSenml(t *testing.T) {
 			msgs = append(msgs, msg)
 		}
 
-		err = syncRepo.ConsumeBlocking(msgs)
+		err = syncRepo.ConsumeBlocking(context.TODO(), msgs)
 		assert.Nil(t, err, fmt.Sprintf("Save operation expected to succeed: %s.\n", err))
 
 		count, err := queryDB(rowCountSenml)
@@ -350,7 +350,7 @@ func TestAsyncSaveJSON(t *testing.T) {
 		err := resetBucket()
 		assert.Nil(t, err, fmt.Sprintf("Cleaning data from InfluxDB expected to succeed: %s.\n", err))
 
-		asyncRepo.ConsumeAsync(msgs)
+		asyncRepo.ConsumeAsync(context.TODO(), msgs)
 		timer := time.NewTimer(1 * time.Millisecond)
 		select {
 		case err = <-asyncRepo.Errors():
@@ -463,7 +463,7 @@ func TestBlockingSaveJSON(t *testing.T) {
 		err := resetBucket()
 		assert.Nil(t, err, fmt.Sprintf("Cleaning data from InfluxDB expected to succeed: %s.\n", err))
 
-		switch err = syncRepo.ConsumeBlocking(tc.msgs); err {
+		switch err = syncRepo.ConsumeBlocking(context.TODO(), tc.msgs); err {
 		case nil:
 			count, err := queryDB(rowCountJson)
 			assert.Nil(t, err, fmt.Sprintf("Querying InfluxDB to retrieve data expected to succeed: %s.\n", err))

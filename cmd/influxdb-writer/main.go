@@ -13,6 +13,7 @@ import (
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/consumers"
+	consumerTracing "github.com/mainflux/mainflux/consumers/tracing"
 	"github.com/mainflux/mainflux/consumers/writers/api"
 	"github.com/mainflux/mainflux/consumers/writers/influxdb"
 	influxDBClient "github.com/mainflux/mainflux/internal/clients/influxdb"
@@ -101,7 +102,13 @@ func main() {
 	}
 	defer client.Close()
 
+	httpServerConfig := server.Config{Port: defSvcHttpPort}
+	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
+		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+	}
+
 	repo := influxdb.NewAsync(client, repocfg)
+	repo = consumerTracing.NewAsync(tracer, repo, httpServerConfig)
 
 	// Start consuming and logging errors.
 	go func(log mflog.Logger) {
@@ -116,10 +123,6 @@ func main() {
 		logger.Fatal(fmt.Sprintf("failed to start InfluxDB writer: %s", err))
 	}
 
-	httpServerConfig := server.Config{Port: defSvcHttpPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
-	}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svcName, instanceID), logger)
 
 	if cfg.SendTelemetry {

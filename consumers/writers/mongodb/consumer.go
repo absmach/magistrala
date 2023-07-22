@@ -29,16 +29,16 @@ func New(db *mongo.Database) consumers.BlockingConsumer {
 	return &mongoRepo{db}
 }
 
-func (repo *mongoRepo) ConsumeBlocking(message interface{}) error {
+func (repo *mongoRepo) ConsumeBlocking(ctx context.Context, message interface{}) error {
 	switch m := message.(type) {
 	case json.Messages:
-		return repo.saveJSON(m)
+		return repo.saveJSON(ctx, m)
 	default:
-		return repo.saveSenml(m)
+		return repo.saveSenml(ctx, m)
 	}
 }
 
-func (repo *mongoRepo) saveSenml(messages interface{}) error {
+func (repo *mongoRepo) saveSenml(ctx context.Context, messages interface{}) error {
 	msgs, ok := messages.([]senml.Message)
 	if !ok {
 		return errSaveMessage
@@ -49,7 +49,7 @@ func (repo *mongoRepo) saveSenml(messages interface{}) error {
 		dbMsgs = append(dbMsgs, msg)
 	}
 
-	_, err := coll.InsertMany(context.Background(), dbMsgs)
+	_, err := coll.InsertMany(ctx, dbMsgs)
 	if err != nil {
 		return errors.Wrap(errSaveMessage, err)
 	}
@@ -57,7 +57,7 @@ func (repo *mongoRepo) saveSenml(messages interface{}) error {
 	return nil
 }
 
-func (repo *mongoRepo) saveJSON(msgs json.Messages) error {
+func (repo *mongoRepo) saveJSON(ctx context.Context, msgs json.Messages) error {
 	m := []interface{}{}
 	for _, msg := range msgs.Data {
 		m = append(m, msg)
@@ -65,7 +65,7 @@ func (repo *mongoRepo) saveJSON(msgs json.Messages) error {
 
 	coll := repo.db.Collection(msgs.Format)
 
-	_, err := coll.InsertMany(context.Background(), m)
+	_, err := coll.InsertMany(ctx, m)
 	if err != nil {
 		return errors.Wrap(errSaveMessage, err)
 	}

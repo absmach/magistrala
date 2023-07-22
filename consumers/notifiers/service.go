@@ -100,7 +100,7 @@ func (ns *notifierService) RemoveSubscription(ctx context.Context, token, id str
 	return ns.subs.Remove(ctx, id)
 }
 
-func (ns *notifierService) ConsumeBlocking(message interface{}) error {
+func (ns *notifierService) ConsumeBlocking(ctx context.Context, message interface{}) error {
 	msg, ok := message.(*messaging.Message)
 	if !ok {
 		return ErrMessage
@@ -114,7 +114,7 @@ func (ns *notifierService) ConsumeBlocking(message interface{}) error {
 		Offset: 0,
 		Limit:  -1,
 	}
-	page, err := ns.subs.RetrieveAll(context.Background(), pm)
+	page, err := ns.subs.RetrieveAll(ctx, pm)
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (ns *notifierService) ConsumeBlocking(message interface{}) error {
 	return nil
 }
 
-func (ns *notifierService) ConsumeAsync(message interface{}) {
+func (ns *notifierService) ConsumeAsync(ctx context.Context, message interface{}) {
 	msg, ok := message.(*messaging.Message)
 	if !ok {
 		ns.errCh <- ErrMessage
@@ -148,7 +148,7 @@ func (ns *notifierService) ConsumeAsync(message interface{}) {
 		Offset: 0,
 		Limit:  -1,
 	}
-	page, err := ns.subs.RetrieveAll(context.Background(), pm)
+	page, err := ns.subs.RetrieveAll(ctx, pm)
 	if err != nil {
 		ns.errCh <- err
 		return

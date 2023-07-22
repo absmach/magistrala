@@ -35,16 +35,16 @@ func New(db *sqlx.DB) consumers.BlockingConsumer {
 	return &timescaleRepo{db: db}
 }
 
-func (tr *timescaleRepo) ConsumeBlocking(message interface{}) (err error) {
+func (tr *timescaleRepo) ConsumeBlocking(ctx context.Context, message interface{}) (err error) {
 	switch m := message.(type) {
 	case mfjson.Messages:
-		return tr.saveJSON(m)
+		return tr.saveJSON(ctx, m)
 	default:
-		return tr.saveSenml(m)
+		return tr.saveSenml(ctx, m)
 	}
 }
 
-func (tr timescaleRepo) saveSenml(messages interface{}) (err error) {
+func (tr timescaleRepo) saveSenml(ctx context.Context, messages interface{}) (err error) {
 	msgs, ok := messages.([]senml.Message)
 	if !ok {
 		return errSaveMessage
@@ -56,7 +56,7 @@ func (tr timescaleRepo) saveSenml(messages interface{}) (err error) {
           :value, :string_value, :bool_value, :data_value, :sum,
           :time, :update_time);`
 
-	tx, err := tr.db.BeginTxx(context.Background(), nil)
+	tx, err := tr.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return errors.Wrap(errSaveMessage, err)
 	}
@@ -90,21 +90,21 @@ func (tr timescaleRepo) saveSenml(messages interface{}) (err error) {
 	return err
 }
 
-func (tr timescaleRepo) saveJSON(msgs mfjson.Messages) error {
-	if err := tr.insertJSON(msgs); err != nil {
+func (tr timescaleRepo) saveJSON(ctx context.Context, msgs mfjson.Messages) error {
+	if err := tr.insertJSON(ctx, msgs); err != nil {
 		if err == errNoTable {
 			if err := tr.createTable(msgs.Format); err != nil {
 				return err
 			}
-			return tr.insertJSON(msgs)
+			return tr.insertJSON(ctx, msgs)
 		}
 		return err
 	}
 	return nil
 }
 
-func (tr timescaleRepo) insertJSON(msgs mfjson.Messages) error {
-	tx, err := tr.db.BeginTxx(context.Background(), nil)
+func (tr timescaleRepo) insertJSON(ctx context.Context, msgs mfjson.Messages) error {
+	tx, err := tr.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return errors.Wrap(errSaveMessage, err)
 	}

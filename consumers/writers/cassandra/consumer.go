@@ -4,6 +4,7 @@
 package cassandra
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -29,7 +30,7 @@ func New(session *gocql.Session) consumers.BlockingConsumer {
 	return &cassandraRepository{session}
 }
 
-func (cr *cassandraRepository) ConsumeBlocking(message interface{}) error {
+func (cr *cassandraRepository) ConsumeBlocking(_ context.Context, message interface{}) error {
 	switch m := message.(type) {
 	case mfjson.Messages:
 		return cr.saveJSON(m)

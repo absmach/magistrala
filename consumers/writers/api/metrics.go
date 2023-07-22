@@ -6,6 +6,7 @@
 package api
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-kit/kit/metrics"
@@ -31,10 +32,10 @@ func MetricsMiddleware(consumer consumers.BlockingConsumer, counter metrics.Coun
 }
 
 // ConsumeBlocking instruments ConsumeBlocking method with metrics.
-func (mm *metricsMiddleware) ConsumeBlocking(msgs interface{}) error {
+func (mm *metricsMiddleware) ConsumeBlocking(ctx context.Context, msgs interface{}) error {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "consume").Add(1)
 		mm.latency.With("method", "consume").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return mm.consumer.ConsumeBlocking(msgs)
+	return mm.consumer.ConsumeBlocking(ctx, msgs)
 }

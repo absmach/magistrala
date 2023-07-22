@@ -3,12 +3,14 @@
 
 package consumers
 
+import "context"
+
 // AsyncConsumer specifies a non-blocking message-consuming API,
 // which can be used for writing data to the DB, publishing messages
 // to broker, sending notifications, or any other asynchronous job.
 type AsyncConsumer interface {
 	// ConsumeAsync method is used to asynchronously consume received messages.
-	ConsumeAsync(messages interface{})
+	ConsumeAsync(ctx context.Context, messages interface{})
 
 	// Errors method returns a channel for reading errors which occur during async writes.
 	// Must be  called before performing any writes for errors to be collected.
@@ -24,5 +26,5 @@ type AsyncConsumer interface {
 type BlockingConsumer interface {
 	// ConsumeBlocking method is used to consume received messages synchronously.
 	// A non-nil error is returned to indicate operation failure.
-	ConsumeBlocking(messages interface{}) error
+	ConsumeBlocking(ctx context.Context, messages interface{}) error
 }

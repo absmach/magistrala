@@ -4,6 +4,7 @@
 package postgres_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -67,7 +68,7 @@ func TestSaveSenml(t *testing.T) {
 		msgs = append(msgs, msg)
 	}
 
-	err = repo.ConsumeBlocking(msgs)
+	err = repo.ConsumeBlocking(context.TODO(), msgs)
 	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 }
 
@@ -107,6 +108,6 @@ func TestSaveJSON(t *testing.T) {
 		msgs.Data = append(msgs.Data, msg)
 	}
 
-	err = repo.ConsumeBlocking(msgs)
+	err = repo.ConsumeBlocking(context.TODO(), msgs)
 	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 }

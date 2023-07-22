@@ -44,11 +44,11 @@ func Start(ctx context.Context, id string, sub messaging.Subscriber, consumer in
 	for _, subject := range cfg.SubscriberCfg.Subjects {
 		switch c := consumer.(type) {
 		case AsyncConsumer:
-			if err := sub.Subscribe(ctx, id, subject, handleAsync(transformer, c)); err != nil {
+			if err := sub.Subscribe(ctx, id, subject, handleAsync(ctx, transformer, c)); err != nil {
 				return err
 			}
 		case BlockingConsumer:
-			if err := sub.Subscribe(ctx, id, subject, handleSync(transformer, c)); err != nil {
+			if err := sub.Subscribe(ctx, id, subject, handleSync(ctx, transformer, c)); err != nil {
 				return err
 			}
 		default:
@@ -59,7 +59,7 @@ func Start(ctx context.Context, id string, sub messaging.Subscriber, consumer in
 	return nil
 }
 
-func handleSync(t transformers.Transformer, sc BlockingConsumer) handleFunc {
+func handleSync(ctx context.Context, t transformers.Transformer, sc BlockingConsumer) handleFunc {
 	return func(msg *messaging.Message) error {
 		m := interface{}(msg)
 		var err error
@@ -69,11 +69,11 @@ func handleSync(t transformers.Transformer, sc BlockingConsumer) handleFunc {
 				return err
 			}
 		}
-		return sc.ConsumeBlocking(m)
+		return sc.ConsumeBlocking(ctx, m)
 	}
 }
 
-func handleAsync(t transformers.Transformer, ac AsyncConsumer) handleFunc {
+func handleAsync(ctx context.Context, t transformers.Transformer, ac AsyncConsumer) handleFunc {
 	return func(msg *messaging.Message) error {
 		m := interface{}(msg)
 		var err error
@@ -84,7 +84,7 @@ func handleAsync(t transformers.Transformer, ac AsyncConsumer) handleFunc {
 			}
 		}
 
-		ac.ConsumeAsync(m)
+		ac.ConsumeAsync(ctx, m)
 		return nil
 	}
 }

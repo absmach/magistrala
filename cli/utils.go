@@ -6,6 +6,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/fatih/color"
@@ -51,38 +52,38 @@ func logJSON(iList ...interface{}) {
 			return
 		}
 
-		fmt.Printf("\n%s\n\n", string(pj))
+		fmt.Fprintf(os.Stdout, "\n%s\n\n", string(pj))
 	}
 }
 
 func logUsage(u string) {
-	fmt.Printf(color.YellowString("\nusage: %s\n\n"), u)
+	fmt.Fprintf(os.Stdout, color.YellowString("\nusage: %s\n\n"), u)
 }
 
 func logError(err error) {
 	boldRed := color.New(color.FgRed, color.Bold)
-	boldRed.Print("\nerror: ")
+	boldRed.Fprintf(os.Stderr, "\nerror: ")
 
-	fmt.Printf("%s\n\n", color.RedString(err.Error()))
+	fmt.Fprintf(os.Stderr, "%s\n\n", color.RedString(err.Error()))
 }
 
 func logOK() {
-	fmt.Printf("\n%s\n\n", color.BlueString("ok"))
+	fmt.Fprintf(os.Stdout, "\n%s\n\n", color.BlueString("ok"))
 }
 
 func logCreated(e string) {
 	if RawOutput {
-		fmt.Println(e)
+		fmt.Fprintln(os.Stdout, e)
 	} else {
-		fmt.Printf(color.BlueString("\ncreated: %s\n\n"), e)
+		fmt.Fprintf(os.Stdout, color.BlueString("\ncreated: %s\n\n"), e)
 	}
 }
 
 func logRevokedTime(t time.Time) {
 	if RawOutput {
-		fmt.Println(t)
+		fmt.Fprintln(os.Stdout, t)
 	} else {
-		fmt.Printf(color.BlueString("\nrevoked: %v\n\n"), t)
+		fmt.Fprintf(os.Stdout, color.BlueString("\nrevoked: %v\n\n"), t)
 	}
 }
 

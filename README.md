@@ -1,6 +1,6 @@
 # Mainflux
 
-[![build][ci-badge]][ci-url]
+[![Build Status](https://mainflux.semaphoreci.com/badges/mainflux/branches/master.svg?style=shields)](https://mainflux.semaphoreci.com/projects/mainflux)
 [![go report card][grc-badge]][grc-url]
 [![coverage][cov-badge]][cov-url]
 [![license][license]](LICENSE)

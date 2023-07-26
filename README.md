@@ -145,6 +145,22 @@ You like Mainflux and you would like to make it your day job? We're always looki
 
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fmainflux%2Fmainflux.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fmainflux%2Fmainflux?ref=badge_large)
 
+## Data Collection for Mainflux
+Mainflux is committed to continuously improving its services and ensuring a seamless experience for its users. To achieve this, we collect certain data from your deployments. Rest assured, this data is collected solely for the purpose of enhancing Mainflux and is not used with any malicious intent. The deployment summary can be found on our [website][callhome].
+
+The collected data includes:
+- **IP Address** - Used for approximate location information on deployments.
+- **Services Used** - To understand which features are popular and prioritize future developments.
+- **Last Seen Time** - To ensure the stability and availability of Mainflux.
+- **Mainflux Version** - To track the software version and deliver relevant updates.
+
+We take your privacy and data security seriously. All data collected is handled in accordance with our stringent privacy policies and industry best practices.
+
+Data collection is on by default and can be disabled by setting the env variable:
+`MF_SEND_TELEMETRY=false`
+
+By utilizing Mainflux, you actively contribute to its improvement. Together, we can build a more robust and efficient IoT platform. Thank you for your trust in Mainflux!
+
 [banner]: https://github.com/mainflux/docs/blob/master/docs/img/gopherBanner.jpg
 [ci-badge]: https://semaphoreci.com/api/v1/mainflux/mainflux/branches/master/badge.svg
 [ci-url]: https://semaphoreci.com/mainflux/mainflux
@@ -184,3 +200,4 @@ You like Mainflux and you would like to make it your day job? We're always looki
 [kole]: https://github.com/chombium
 [dusanm]: https://github.com/malidukica
 [mirko]: https://github.com/mteodor
+[callhome]: https://deployments.mainflux.io

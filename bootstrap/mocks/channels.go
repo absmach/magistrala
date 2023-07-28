@@ -37,7 +37,7 @@ func (svc *mainfluxChannels) CreateGroups(ctx context.Context, token string, chs
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
-	userID, err := svc.auth.Identify(ctx, &upolicies.Token{Value: token})
+	userID, err := svc.auth.Identify(ctx, &upolicies.IdentifyReq{Token: token})
 	if err != nil {
 		return []mfgroups.Group{}, errors.ErrAuthentication
 	}
@@ -74,7 +74,7 @@ func (svc *mainfluxChannels) EnableGroup(ctx context.Context, token, id string) 
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
-	userID, err := svc.auth.Identify(ctx, &upolicies.Token{Value: token})
+	userID, err := svc.auth.Identify(ctx, &upolicies.IdentifyReq{Token: token})
 	if err != nil {
 		return mfgroups.Group{}, errors.ErrAuthentication
 	}
@@ -93,7 +93,7 @@ func (svc *mainfluxChannels) DisableGroup(ctx context.Context, token, id string)
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
-	userID, err := svc.auth.Identify(ctx, &upolicies.Token{Value: token})
+	userID, err := svc.auth.Identify(ctx, &upolicies.IdentifyReq{Token: token})
 	if err != nil {
 		return mfgroups.Group{}, errors.ErrAuthentication
 	}

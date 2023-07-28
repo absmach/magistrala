@@ -105,7 +105,7 @@ func (ts *twinsService) AddTwin(ctx context.Context, token string, twin Twin, de
 	var b []byte
 	defer ts.publish(ctx, &id, &err, crudOp["createSucc"], crudOp["createFail"], &b)
 
-	res, err := ts.auth.Identify(ctx, &policies.Token{Value: token})
+	res, err := ts.auth.Identify(ctx, &policies.IdentifyReq{Token: token})
 	if err != nil {
 		return Twin{}, err
 	}
@@ -148,7 +148,7 @@ func (ts *twinsService) UpdateTwin(ctx context.Context, token string, twin Twin,
 	var id string
 	defer ts.publish(ctx, &id, &err, crudOp["updateSucc"], crudOp["updateFail"], &b)
 
-	_, err = ts.auth.Identify(ctx, &policies.Token{Value: token})
+	_, err = ts.auth.Identify(ctx, &policies.IdentifyReq{Token: token})
 	if err != nil {
 		return errors.ErrAuthentication
 	}
@@ -198,7 +198,7 @@ func (ts *twinsService) ViewTwin(ctx context.Context, token, twinID string) (tw 
 	var b []byte
 	defer ts.publish(ctx, &twinID, &err, crudOp["getSucc"], crudOp["getFail"], &b)
 
-	_, err = ts.auth.Identify(ctx, &policies.Token{Value: token})
+	_, err = ts.auth.Identify(ctx, &policies.IdentifyReq{Token: token})
 	if err != nil {
 		return Twin{}, err
 	}
@@ -217,7 +217,7 @@ func (ts *twinsService) RemoveTwin(ctx context.Context, token, twinID string) (e
 	var b []byte
 	defer ts.publish(ctx, &twinID, &err, crudOp["removeSucc"], crudOp["removeFail"], &b)
 
-	_, err = ts.auth.Identify(ctx, &policies.Token{Value: token})
+	_, err = ts.auth.Identify(ctx, &policies.IdentifyReq{Token: token})
 	if err != nil {
 		return errors.ErrAuthentication
 	}
@@ -230,7 +230,7 @@ func (ts *twinsService) RemoveTwin(ctx context.Context, token, twinID string) (e
 }
 
 func (ts *twinsService) ListTwins(ctx context.Context, token string, offset uint64, limit uint64, name string, metadata Metadata) (Page, error) {
-	res, err := ts.auth.Identify(ctx, &policies.Token{Value: token})
+	res, err := ts.auth.Identify(ctx, &policies.IdentifyReq{Token: token})
 	if err != nil {
 		return Page{}, errors.ErrAuthentication
 	}
@@ -239,7 +239,7 @@ func (ts *twinsService) ListTwins(ctx context.Context, token string, offset uint
 }
 
 func (ts *twinsService) ListStates(ctx context.Context, token string, offset uint64, limit uint64, twinID string) (StatesPage, error) {
-	_, err := ts.auth.Identify(ctx, &policies.Token{Value: token})
+	_, err := ts.auth.Identify(ctx, &policies.IdentifyReq{Token: token})
 	if err != nil {
 		return StatesPage{}, errors.ErrAuthentication
 	}

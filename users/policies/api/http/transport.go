@@ -159,8 +159,8 @@ func decodeListPoliciesRequest(_ context.Context, r *http.Request) (interface{},
 func deletePolicyRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := deletePolicyReq{
 		token:   apiutil.ExtractBearerToken(r),
-		Subject: bone.GetValue(r, "subject"),
-		Object:  bone.GetValue(r, "object"),
+		Subject: bone.GetValue(r, api.SubjectKey),
+		Object:  bone.GetValue(r, api.ObjectKey),
 	}
 
 	return req, nil

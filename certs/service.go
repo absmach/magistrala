@@ -80,7 +80,7 @@ type Cert struct {
 }
 
 func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, ttl string) (Cert, error) {
-	owner, err := cs.auth.Identify(ctx, &policies.Token{Value: token})
+	owner, err := cs.auth.Identify(ctx, &policies.IdentifyReq{Token: token})
 	if err != nil {
 		return Cert{}, err
 	}
@@ -113,7 +113,7 @@ func (cs *certsService) IssueCert(ctx context.Context, token, thingID string, tt
 
 func (cs *certsService) RevokeCert(ctx context.Context, token, thingID string) (Revoke, error) {
 	var revoke Revoke
-	u, err := cs.auth.Identify(ctx, &policies.Token{Value: token})
+	u, err := cs.auth.Identify(ctx, &policies.IdentifyReq{Token: token})
 	if err != nil {
 		return revoke, err
 	}
@@ -144,7 +144,7 @@ func (cs *certsService) RevokeCert(ctx context.Context, token, thingID string) (
 }
 
 func (cs *certsService) ListCerts(ctx context.Context, token, thingID string, offset, limit uint64) (Page, error) {
-	u, err := cs.auth.Identify(ctx, &policies.Token{Value: token})
+	u, err := cs.auth.Identify(ctx, &policies.IdentifyReq{Token: token})
 	if err != nil {
 		return Page{}, err
 	}
@@ -167,7 +167,7 @@ func (cs *certsService) ListCerts(ctx context.Context, token, thingID string, of
 }
 
 func (cs *certsService) ListSerials(ctx context.Context, token, thingID string, offset, limit uint64) (Page, error) {
-	u, err := cs.auth.Identify(ctx, &policies.Token{Value: token})
+	u, err := cs.auth.Identify(ctx, &policies.IdentifyReq{Token: token})
 	if err != nil {
 		return Page{}, err
 	}
@@ -176,7 +176,7 @@ func (cs *certsService) ListSerials(ctx context.Context, token, thingID string, 
 }
 
 func (cs *certsService) ViewCert(ctx context.Context, token, serialID string) (Cert, error) {
-	u, err := cs.auth.Identify(ctx, &policies.Token{Value: token})
+	u, err := cs.auth.Identify(ctx, &policies.IdentifyReq{Token: token})
 	if err != nil {
 		return Cert{}, err
 	}

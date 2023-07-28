@@ -5,6 +5,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 	"time"
@@ -29,8 +30,8 @@ func NewRepository(db postgres.Database) policies.Repository {
 }
 
 func (pr prepo) Save(ctx context.Context, policy policies.Policy) (policies.Policy, error) {
-	q := `INSERT INTO policies (owner_id, subject, object, actions, created_at, updated_at, updated_by)
-		VALUES (:owner_id, :subject, :object, :actions, :created_at, :updated_at, :updated_by)
+	q := `INSERT INTO policies (owner_id, subject, object, actions, created_at)
+		VALUES (:owner_id, :subject, :object, :actions, :created_at)
 		ON CONFLICT (subject, object) DO UPDATE SET actions = :actions,
 		updated_at = :updated_at, updated_by = :updated_by
 		RETURNING owner_id, subject, object, actions, created_at, updated_at, updated_by;`
@@ -159,7 +160,7 @@ func (pr prepo) Retrieve(ctx context.Context, pm policies.Page) (policies.Policy
 		emq = fmt.Sprintf(" WHERE %s", strings.Join(query, " AND "))
 	}
 
-	q := fmt.Sprintf(`SELECT owner_id, subject, object, actions
+	q := fmt.Sprintf(`SELECT owner_id, subject, object, actions, created_at, updated_at, updated_by
 		FROM policies %s ORDER BY updated_at LIMIT :limit OFFSET :offset;`, emq)
 
 	dbPage, err := toDBPoliciesPage(pm)
@@ -225,41 +226,55 @@ type dbPolicy struct {
 	Object    string           `db:"object"`
 	Actions   pgtype.TextArray `db:"actions"`
 	CreatedAt time.Time        `db:"created_at"`
-	UpdatedAt time.Time        `db:"updated_at"`
-	UpdatedBy string           `db:"updated_by"`
+	UpdatedAt sql.NullTime     `db:"updated_at,omitempty"`
+	UpdatedBy *string          `db:"updated_by,omitempty"`
 }
 
 func toDBPolicy(p policies.Policy) (dbPolicy, error) {
-	var ps pgtype.TextArray
-	if err := ps.Set(p.Actions); err != nil {
+	var actions pgtype.TextArray
+	if err := actions.Set(p.Actions); err != nil {
 		return dbPolicy{}, err
 	}
-
+	var updatedAt sql.NullTime
+	if !p.UpdatedAt.IsZero() {
+		updatedAt = sql.NullTime{Time: p.UpdatedAt, Valid: true}
+	}
+	var updatedBy *string
+	if p.UpdatedBy != "" {
+		updatedBy = &p.UpdatedBy
+	}
 	return dbPolicy{
 		OwnerID:   p.OwnerID,
 		Subject:   p.Subject,
 		Object:    p.Object,
-		Actions:   ps,
+		Actions:   actions,
 		CreatedAt: p.CreatedAt,
-		UpdatedAt: p.UpdatedAt,
-		UpdatedBy: p.UpdatedBy,
+		UpdatedAt: updatedAt,
+		UpdatedBy: updatedBy,
 	}, nil
 }
 
 func toPolicy(dbp dbPolicy) (policies.Policy, error) {
-	var ps []string
+	var actions []string
 	for _, e := range dbp.Actions.Elements {
-		ps = append(ps, e.String)
+		actions = append(actions, e.String)
 	}
-
+	var updatedAt time.Time
+	if dbp.UpdatedAt.Valid {
+		updatedAt = dbp.UpdatedAt.Time
+	}
+	var updatedBy string
+	if dbp.UpdatedBy != nil {
+		updatedBy = *dbp.UpdatedBy
+	}
 	return policies.Policy{
 		OwnerID:   dbp.OwnerID,
 		Subject:   dbp.Subject,
 		Object:    dbp.Object,
-		Actions:   ps,
+		Actions:   actions,
 		CreatedAt: dbp.CreatedAt,
-		UpdatedAt: dbp.UpdatedAt,
-		UpdatedBy: dbp.UpdatedBy,
+		UpdatedAt: updatedAt,
+		UpdatedBy: updatedBy,
 	}, nil
 }
 

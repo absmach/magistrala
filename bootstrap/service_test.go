@@ -96,6 +96,7 @@ func newThingsServer(csvc clients.Service, gsvc groups.Service, psvc tpolicies.S
 	capi.MakeHandler(csvc, mux, logger, instanceID)
 	gapi.MakeHandler(gsvc, mux, logger)
 	papi.MakeHandler(csvc, psvc, mux, logger)
+
 	return httptest.NewServer(mux)
 }
 

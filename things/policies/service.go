@@ -213,7 +213,7 @@ func (svc service) checkPolicy(ctx context.Context, clientID string, p Policy) e
 }
 
 func (svc service) identify(ctx context.Context, token string) (string, error) {
-	req := &upolicies.Token{Value: token}
+	req := &upolicies.IdentifyReq{Token: token}
 	res, err := svc.auth.Identify(ctx, req)
 	if err != nil {
 		return "", errors.Wrap(errors.ErrAuthorization, err)
@@ -224,9 +224,9 @@ func (svc service) identify(ctx context.Context, token string) (string, error) {
 func (svc service) checkAdmin(ctx context.Context, id string) error {
 	// for checking admin rights policy object, action and entity type are not important
 	req := &upolicies.AuthorizeReq{
-		Sub:        id,
-		Obj:        thingsObjectKey,
-		Act:        addPolicyAction,
+		Subject:    id,
+		Object:     thingsObjectKey,
+		Action:     addPolicyAction,
 		EntityType: GroupEntityType,
 	}
 	res, err := svc.auth.Authorize(ctx, req)

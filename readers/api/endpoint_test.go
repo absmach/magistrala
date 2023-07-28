@@ -49,7 +49,7 @@ var (
 	idProvider = uuid.New()
 )
 
-func newServer(repo readers.MessageRepository, tc tpolicies.ThingsServiceClient, ac upolicies.AuthServiceClient) *httptest.Server {
+func newServer(repo readers.MessageRepository, tc tpolicies.AuthServiceClient, ac upolicies.AuthServiceClient) *httptest.Server {
 	mux := api.MakeHandler(repo, tc, ac, svcName, instanceID)
 	return httptest.NewServer(mux)
 }

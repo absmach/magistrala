@@ -15,17 +15,17 @@ func authorizeEndpoint(svc policies.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(authorizeReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return authorizeRes{}, err
 		}
 		ar := policies.AccessRequest{
-			Subject: req.clientID,
-			Object:  req.groupID,
+			Subject: req.subject,
+			Object:  req.object,
 			Action:  req.action,
 			Entity:  req.entityType,
 		}
 		policy, err := svc.Authorize(ctx, ar)
 		if err != nil {
-			return authorizeRes{authorized: false}, err
+			return authorizeRes{}, err
 		}
 
 		return authorizeRes{authorized: true, thingID: policy.Subject}, nil
@@ -35,10 +35,10 @@ func authorizeEndpoint(svc policies.Service) endpoint.Endpoint {
 func identifyEndpoint(svc clients.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(identifyReq)
-		id, err := svc.Identify(ctx, req.key)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return identityRes{}, err
 		}
+		id, err := svc.Identify(ctx, req.secret)
 		if err != nil {
 			return identityRes{}, err
 		}

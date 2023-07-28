@@ -14,7 +14,7 @@ func authorizeEndpoint(svc policies.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(authorizeReq)
 		if err := req.validate(); err != nil {
-			return authorizeRes{Authorized: false}, err
+			return authorizeRes{}, err
 		}
 		aReq := policies.AccessRequest{
 			Subject: req.Subject,
@@ -24,10 +24,10 @@ func authorizeEndpoint(svc policies.Service) endpoint.Endpoint {
 		}
 		err := svc.Authorize(ctx, aReq)
 		if err != nil {
-			return authorizeRes{Authorized: false}, err
+			return authorizeRes{}, err
 		}
 
-		return authorizeRes{Authorized: true}, nil
+		return authorizeRes{authorized: true}, nil
 	}
 }
 
@@ -70,8 +70,7 @@ func updatePolicyEndpoint(svc policies.Service) endpoint.Endpoint {
 			return updatePolicyRes{}, err
 		}
 
-		res := updatePolicyRes{updated: false}
-		return res, nil
+		return updatePolicyRes{updated: true}, nil
 	}
 }
 
@@ -94,7 +93,7 @@ func listPolicyEndpoint(svc policies.Service) endpoint.Endpoint {
 		if err != nil {
 			return listPolicyRes{}, err
 		}
-		return buildGroupsResponse(page), nil
+		return buildPoliciesResponse(page), nil
 	}
 }
 
@@ -112,22 +111,11 @@ func deletePolicyEndpoint(svc policies.Service) endpoint.Endpoint {
 			return deletePolicyRes{}, err
 		}
 
-		return deletePolicyRes{}, nil
+		return deletePolicyRes{deleted: true}, nil
 	}
 }
 
-func toViewPolicyRes(group policies.Policy) viewPolicyRes {
-	return viewPolicyRes{
-		OwnerID:   group.OwnerID,
-		Subject:   group.Subject,
-		Object:    group.Object,
-		Actions:   group.Actions,
-		CreatedAt: group.CreatedAt,
-		UpdatedAt: group.UpdatedAt,
-	}
-}
-
-func buildGroupsResponse(page policies.PolicyPage) listPolicyRes {
+func buildPoliciesResponse(page policies.PolicyPage) listPolicyRes {
 	res := listPolicyRes{
 		pageRes: pageRes{
 			Limit:  page.Limit,
@@ -137,8 +125,8 @@ func buildGroupsResponse(page policies.PolicyPage) listPolicyRes {
 		Policies: []viewPolicyRes{},
 	}
 
-	for _, group := range page.Policies {
-		res.Policies = append(res.Policies, toViewPolicyRes(group))
+	for _, policy := range page.Policies {
+		res.Policies = append(res.Policies, viewPolicyRes{policy})
 	}
 
 	return res

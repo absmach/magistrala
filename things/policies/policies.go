@@ -36,7 +36,7 @@ type AccessRequest struct {
 // PolicyPage contains a page of policies.
 type PolicyPage struct {
 	Page
-	Policies []Policy
+	Policies []Policy `json:"policies"`
 }
 
 // Repository specifies an account persistence API.

@@ -14,9 +14,9 @@ import (
 	"google.golang.org/grpc"
 )
 
-const svcName = "mainflux.things.policies.ThingsService"
+const svcName = "mainflux.things.policies.AuthService"
 
-var _ policies.ThingsServiceClient = (*grpcClient)(nil)
+var _ policies.AuthServiceClient = (*grpcClient)(nil)
 
 type grpcClient struct {
 	authorize endpoint.Endpoint
@@ -25,7 +25,7 @@ type grpcClient struct {
 }
 
 // NewClient returns new gRPC client instance.
-func NewClient(conn *grpc.ClientConn, timeout time.Duration) policies.ThingsServiceClient {
+func NewClient(conn *grpc.ClientConn, timeout time.Duration) policies.AuthServiceClient {
 	return &grpcClient{
 		authorize: otelkit.EndpointMiddleware(otelkit.WithOperation("authorize"))(kitgrpc.NewClient(
 			conn,
@@ -41,7 +41,7 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) policies.ThingsServ
 			"Identify",
 			encodeIdentifyRequest,
 			decodeIdentityResponse,
-			policies.ClientID{},
+			policies.IdentifyRes{},
 		).Endpoint()),
 
 		timeout: timeout,
@@ -53,10 +53,10 @@ func (client grpcClient) Authorize(ctx context.Context, req *policies.AuthorizeR
 	defer cancel()
 
 	areq := authorizeReq{
+		subject:    req.GetSubject(),
+		object:     req.GetObject(),
+		action:     req.GetAction(),
 		entityType: req.GetEntityType(),
-		clientID:   req.GetSub(),
-		groupID:    req.GetObj(),
-		action:     req.GetAct(),
 	}
 	res, err := client.authorize(ctx, areq)
 	if err != nil {
@@ -67,32 +67,32 @@ func (client grpcClient) Authorize(ctx context.Context, req *policies.AuthorizeR
 	return &policies.AuthorizeRes{ThingID: ares.thingID, Authorized: ares.authorized}, nil
 }
 
-func (client grpcClient) Identify(ctx context.Context, req *policies.Key, _ ...grpc.CallOption) (*policies.ClientID, error) {
+func (client grpcClient) Identify(ctx context.Context, req *policies.IdentifyReq, _ ...grpc.CallOption) (*policies.IdentifyRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, client.timeout)
 	defer cancel()
 
-	res, err := client.identify(ctx, identifyReq{key: req.GetValue()})
+	res, err := client.identify(ctx, identifyReq{secret: req.GetSecret()})
 	if err != nil {
 		return nil, err
 	}
 
-	ir := res.(identityRes)
-	return &policies.ClientID{Value: ir.id}, nil
+	ires := res.(identityRes)
+	return &policies.IdentifyRes{Id: ires.id}, nil
 }
 
 func encodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(authorizeReq)
-	return &policies.AuthorizeReq{Sub: req.clientID, Obj: req.groupID, Act: req.action, EntityType: req.entityType}, nil
+	return &policies.AuthorizeReq{Subject: req.subject, Object: req.object, Action: req.action, EntityType: req.entityType}, nil
 }
 
 func encodeIdentifyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(identifyReq)
-	return &policies.Key{Value: req.key}, nil
+	return &policies.IdentifyReq{Secret: req.secret}, nil
 }
 
 func decodeIdentityResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(*policies.ClientID)
-	return identityRes{id: res.GetValue()}, nil
+	res := grpcRes.(*policies.IdentifyRes)
+	return identityRes{id: res.GetId()}, nil
 }
 
 func decodeAuthorizeResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {

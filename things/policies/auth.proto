@@ -7,15 +7,20 @@ package mainflux.things.policies;
 
 option go_package = "./policies";
 
-service ThingsService {
+// AuthService is a service that provides authentication and authorization
+// functionalities for the things service.
+service AuthService {
+    // Authorize checks if the subject is authorized to perform
+    // the action on the object.
     rpc Authorize(AuthorizeReq) returns (AuthorizeRes) {}
-    rpc Identify(Key) returns (ClientID) {}
+    // Identify returns the ID of the thing has the given secret.
+    rpc Identify(IdentifyReq) returns (IdentifyRes) {}
 }
 
 message AuthorizeReq {
-    string sub        = 1;
-    string obj        = 2;
-    string act        = 3;
+    string subject    = 1;
+    string object     = 2;
+    string action     = 3;
     string entityType = 4;
 }
 
@@ -24,13 +29,10 @@ message AuthorizeRes {
     bool authorized = 2;
 }
 
-// If a key is not carrying any information itself, the type
-// field can be used to determine how to validate the token.
-// Also, different tokens can be encoded in different ways.
-message Key {
-    string value = 1;
+message IdentifyReq {
+    string secret = 1;
 }
 
-message ClientID {
-    string value = 1;
+message IdentifyRes {
+    string id = 1;
 }

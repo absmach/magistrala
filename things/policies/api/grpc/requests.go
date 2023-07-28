@@ -9,17 +9,17 @@ import (
 )
 
 type authorizeReq struct {
-	entityType string
-	clientID   string
-	groupID    string
+	subject    string
+	object     string
 	action     string
+	entityType string
 }
 
 func (req authorizeReq) validate() error {
-	if req.clientID == "" {
+	if req.subject == "" {
 		return apiutil.ErrMissingPolicySub
 	}
-	if req.groupID == "" {
+	if req.object == "" {
 		return apiutil.ErrMissingPolicyObj
 	}
 	if ok := policies.ValidateAction(req.action); !ok {
@@ -30,11 +30,11 @@ func (req authorizeReq) validate() error {
 }
 
 type identifyReq struct {
-	key string
+	secret string
 }
 
 func (req identifyReq) validate() error {
-	if req.key == "" {
+	if req.secret == "" {
 		return apiutil.ErrBearerKey
 	}
 

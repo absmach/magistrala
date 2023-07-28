@@ -62,12 +62,12 @@ type Service interface {
 var _ Service = (*adapterService)(nil)
 
 type adapterService struct {
-	auth   policies.ThingsServiceClient
+	auth   policies.AuthServiceClient
 	pubsub messaging.PubSub
 }
 
 // New instantiates the WS adapter implementation.
-func New(auth policies.ThingsServiceClient, pubsub messaging.PubSub) Service {
+func New(auth policies.AuthServiceClient, pubsub messaging.PubSub) Service {
 	return &adapterService{
 		auth:   auth,
 		pubsub: pubsub,
@@ -139,9 +139,9 @@ func (svc *adapterService) Unsubscribe(ctx context.Context, thingKey, chanID, su
 // and returns the thingID if it is.
 func (svc *adapterService) authorize(ctx context.Context, thingKey, chanID string) (string, error) {
 	ar := &policies.AuthorizeReq{
-		Sub:        thingKey,
-		Obj:        chanID,
-		Act:        policies.ReadAction,
+		Subject:    thingKey,
+		Object:     chanID,
+		Action:     policies.ReadAction,
 		EntityType: policies.ThingEntityType,
 	}
 	res, err := svc.auth.Authorize(ctx, ar)

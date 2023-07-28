@@ -21,7 +21,7 @@ import (
 
 const eof = "EOF"
 
-func newMessageService(cc policies.ThingsServiceClient) adapter.Service {
+func newMessageService(cc policies.AuthServiceClient) adapter.Service {
 	pub := mocks.NewPublisher()
 
 	return adapter.New(pub, cc)

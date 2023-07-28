@@ -364,7 +364,7 @@ func (bs bootstrapService) identify(ctx context.Context, token string) (string, 
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 
-	res, err := bs.auth.Identify(ctx, &policies.Token{Value: token})
+	res, err := bs.auth.Identify(ctx, &policies.IdentifyReq{Token: token})
 	if err != nil {
 		return "", errors.ErrAuthentication
 	}

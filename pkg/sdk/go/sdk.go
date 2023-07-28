@@ -571,21 +571,11 @@ type SDK interface {
 	//  fmt.Println(channel)
 	DisableChannel(id, token string) (Channel, errors.SDKError)
 
-	// CreatePolicy creates a policy for the given subject, so that, after
-	// CreatePolicy, `subject` has a `relation` on `object`. Returns a non-nil
+	// CreateUserPolicy creates a policy for the given subject, so that, after
+	// CreateUserPolicy, `subject` has a `relation` on `object`. Returns a non-nil
 	// error in case of failures.
 	//
-	// example:
-	//  policy := sdk.Policy{
-	//    Subject: "userID:1",
-	//    Object:  "groupID:1",
-	//    Actions: []string{"g_add"},
-	//  }
-	//  err := sdk.CreatePolicy(policy, "token")
-	//  fmt.Println(err)
-	CreatePolicy(policy Policy, token string) errors.SDKError
-
-	// DeletePolicy deletes policies.
+	// The subject in this case is the `userID` and the object is the `groupID`.
 	//
 	// example:
 	//  policy := sdk.Policy{
@@ -593,23 +583,25 @@ type SDK interface {
 	//    Object:  "groupID:1",
 	//    Actions: []string{"g_add"},
 	//  }
-	//  err := sdk.DeletePolicy(policy, "token")
+	//  err := sdk.CreateUserPolicy(policy, "token")
 	//  fmt.Println(err)
-	DeletePolicy(policy Policy, token string) errors.SDKError
+	CreateUserPolicy(policy Policy, token string) errors.SDKError
 
-	// UpdatePolicy updates policies based on the given policy structure.
+	// UpdateUserPolicy updates policies based on the given policy structure.
 	//
+	// The subject in this case is the `userID` and the object is the `groupID`.
+
 	// example:
 	//  policy := sdk.Policy{
 	//    Subject: "userID:1",
 	//    Object:  "groupID:1",
 	//    Actions: []string{"g_add"},
 	//  }
-	//  err := sdk.UpdatePolicy(policy, "token")
+	//  err := sdk.UpdateUserPolicy(policy, "token")
 	//  fmt.Println(err)
-	UpdatePolicy(p Policy, token string) errors.SDKError
+	UpdateUserPolicy(p Policy, token string) errors.SDKError
 
-	// ListPolicies lists policies based on the given policy structure.
+	// ListUserPolicies lists policies based on the given policy structure.
 	//
 	// example:
 	//  pm := sdk.PageMetadata{
@@ -617,11 +609,81 @@ type SDK interface {
 	//    Limit:  10,
 	//    Subject: "userID:1",
 	//  }
-	//  policies, _ := sdk.ListPolicies(pm, "token")
+	//  policies, _ := sdk.ListUserPolicies(pm, "token")
 	//  fmt.Println(policies)
-	ListPolicies(pm PageMetadata, token string) (PolicyPage, errors.SDKError)
+	ListUserPolicies(pm PageMetadata, token string) (PolicyPage, errors.SDKError)
 
-	// Authorize returns true if the given policy structure allows the action.
+	// DeleteUserPolicy deletes policies.
+	//
+	// The subject in this case is the `userID` and the object is the `groupID`.
+	//
+	// example:
+	//  policy := sdk.Policy{
+	//    Subject: "userID:1",
+	//    Object:  "groupID:1",
+	//  }
+	//  err := sdk.DeleteUserPolicy(policy, "token")
+	//  fmt.Println(err)
+	DeleteUserPolicy(policy Policy, token string) errors.SDKError
+
+	// CreateThingPolicy creates a policy for the given subject, so that, after
+	// CreateThingPolicy, `subject` has a `relation` on `object`. Returns a non-nil
+	// error in case of failures.
+	//
+	// The subject in this case can be a `thingID` or a `userID` and the object is the `channelID`.
+	//
+	// example:
+	//  policy := sdk.Policy{
+	//    Subject: "thingID:1",
+	//    Object:  "channelID:1",
+	//    Actions: []string{"m_write"},
+	//  }
+	//  err := sdk.CreateThingPolicy(policy, "token")
+	//  fmt.Println(err)
+	CreateThingPolicy(policy Policy, token string) errors.SDKError
+
+	// UpdateThingPolicy updates policies based on the given policy structure.
+	//
+	// The subject in this case can be a `thingID` or a `userID` and the object is the `channelID`.
+	//
+	// example:
+	//  policy := sdk.Policy{
+	//    Subject: "thingID:1",
+	//    Object:  "channelID:1",
+	//    Actions: []string{"m_write"},
+	//  }
+	//  err := sdk.UpdateThingPolicy(policy, "token")
+	//  fmt.Println(err)
+	UpdateThingPolicy(p Policy, token string) errors.SDKError
+
+	// ListThingPolicies lists policies based on the given policy structure.
+	//
+	// example:
+	//  pm := sdk.PageMetadata{
+	//    Offset: 0,
+	//    Limit:  10,
+	//    Subject: "thingID:1",
+	//  }
+	//  policies, _ := sdk.ListThingPolicies(pm, "token")
+	//  fmt.Println(policies)
+	ListThingPolicies(pm PageMetadata, token string) (PolicyPage, errors.SDKError)
+
+	// DeleteThingPolicy deletes policies.
+	//
+	// The subject in this case can be a `thingID` or a `userID` and the object is the `channelID`.
+	//
+	// example:
+	//  policy := sdk.Policy{
+	//    Subject: "thingID:1",
+	//    Object:  "channelID:1",
+	//  }
+	//  err := sdk.DeleteThingPolicy(policy, "token")
+	//  fmt.Println(err)
+	DeleteThingPolicy(policy Policy, token string) errors.SDKError
+
+	// AuthorizeUser returns true if the given policy structure allows the action.
+	//
+	// The subject in this case is the `userID` and the object is the `groupID`.
 	//
 	// example:
 	//  aReq := sdk.AccessRequest{
@@ -630,23 +692,27 @@ type SDK interface {
 	//    Actions:    "g_add",
 	//    EntityType: "clients",
 	//  }
-	//  ok, _ := sdk.Authorize(aReq, "token")
+	//  ok, _ := sdk.AuthorizeUser(aReq, "token")
 	//  fmt.Println(ok)
-	Authorize(accessReq AccessRequest, token string) (bool, errors.SDKError)
+	AuthorizeUser(accessReq AccessRequest, token string) (bool, errors.SDKError)
 
-	// Assign assigns member of member type (thing or user) to a group.
+	// Assign assigns users to a group with the given actions.
+	//
+	// The `Assign` method calls the `CreateUserPolicy` method under the hood.
 	//
 	// example:
 	//  err := sdk.Assign([]string{"g_add"}, "userID:1", "groupID:1", "token")
 	//  fmt.Println(err)
-	Assign(memberType []string, memberID, groupID, token string) errors.SDKError
+	Assign(action []string, userID, groupID, token string) errors.SDKError
 
-	// Unassign removes member from a group.
+	// Unassign removes a user from a group.
+	//
+	// The `Unassign` method calls the `DeleteUserPolicy` method under the hood.
 	//
 	// example:
 	//  err := sdk.Unassign("userID:1", "groupID:1", "token")
 	//  fmt.Println(err)
-	Unassign(memberID, groupID, token string) errors.SDKError
+	Unassign(userID, groupID, token string) errors.SDKError
 
 	// Connect bulk connects things to channels specified by id.
 	//
@@ -671,7 +737,9 @@ type SDK interface {
 	//  fmt.Println(err)
 	Disconnect(connIDs ConnectionIDs, token string) errors.SDKError
 
-	// ConnectThing
+	// ConnectThing connects thing to specified channel by id.
+	//
+	// The `ConnectThing` method calls the `CreateThingPolicy` method under the hood.
 	//
 	// example:
 	//  err := sdk.ConnectThing("thingID", "channelID", "token")
@@ -680,36 +748,14 @@ type SDK interface {
 
 	// DisconnectThing disconnect thing from specified channel by id.
 	//
+	// The `DisconnectThing` method calls the `DeleteThingPolicy` method under the hood.
+	//
 	// example:
 	//  err := sdk.DisconnectThing("thingID", "channelID", "token")
 	//  fmt.Println(err)
 	DisconnectThing(thingID, chanID, token string) errors.SDKError
 
-	// UpdateThingsPolicy updates policies based on the given policy structure.
-	//
-	// example:
-	//  policy := sdk.Policy{
-	//    Subject: "thingID",
-	//    Object:  "channelID",
-	//    Actions: []string{"m_read"},
-	//  }
-	//  err := sdk.UpdateThingsPolicy(policy, "token")
-	//  fmt.Println(err)
-	UpdateThingsPolicy(p Policy, token string) errors.SDKError
-
-	// ListThingsPolicies lists policies based on the given policy structure.
-	//
-	// example:
-	//  pm := sdk.PageMetadata{
-	//    Offset: 0,
-	//    Limit:  10,
-	//    Subject: "thingID:1",
-	//  }
-	//  policies, _ := sdk.ListThingsPolicies(pm, "token")
-	//  fmt.Println(policies)
-	ListThingsPolicies(pm PageMetadata, token string) (PolicyPage, errors.SDKError)
-
-	// ThingCanAccess returns true if the given policy structure allows the action.
+	// AuthorizeThing returns true if the given policy structure allows the action.
 	//
 	// example:
 	//  aReq := sdk.AccessRequest{
@@ -718,9 +764,9 @@ type SDK interface {
 	//    Actions:    "m_read",
 	//    EntityType: "things",
 	//  }
-	//  ok, _ := sdk.ThingCanAccess(aReq "token")
+	//  ok, _ := sdk.AuthorizeThing(aReq "token")
 	//  fmt.Println(ok)
-	ThingCanAccess(accessReq AccessRequest, token string) (bool, string, errors.SDKError)
+	AuthorizeThing(accessReq AccessRequest, token string) (bool, string, errors.SDKError)
 
 	// SendMessage send message to specified channel.
 	//

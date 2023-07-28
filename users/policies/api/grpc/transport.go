@@ -19,12 +19,8 @@ import (
 var _ policies.AuthServiceServer = (*grpcServer)(nil)
 
 type grpcServer struct {
-	authorize    kitgrpc.Handler
-	issue        kitgrpc.Handler
-	identify     kitgrpc.Handler
-	addPolicy    kitgrpc.Handler
-	deletePolicy kitgrpc.Handler
-	listPolicies kitgrpc.Handler
+	authorize kitgrpc.Handler
+	identify  kitgrpc.Handler
 	policies.UnimplementedAuthServiceServer
 }
 
@@ -36,30 +32,10 @@ func NewServer(csvc clients.Service, psvc policies.Service) policies.AuthService
 			decodeAuthorizeRequest,
 			encodeAuthorizeResponse,
 		),
-		issue: kitgrpc.NewServer(
-			otelkit.EndpointMiddleware(otelkit.WithOperation("issue"))(issueEndpoint(csvc)),
-			decodeIssueRequest,
-			encodeIssueResponse,
-		),
 		identify: kitgrpc.NewServer(
 			otelkit.EndpointMiddleware(otelkit.WithOperation("identify"))(identifyEndpoint(csvc)),
 			decodeIdentifyRequest,
 			encodeIdentifyResponse,
-		),
-		addPolicy: kitgrpc.NewServer(
-			otelkit.EndpointMiddleware(otelkit.WithOperation("add_policy"))(addPolicyEndpoint(psvc)),
-			decodeAddPolicyRequest,
-			encodeAddPolicyResponse,
-		),
-		deletePolicy: kitgrpc.NewServer(
-			otelkit.EndpointMiddleware(otelkit.WithOperation("delete_policy"))(deletePolicyEndpoint(psvc)),
-			decodeDeletePolicyRequest,
-			encodeDeletePolicyResponse,
-		),
-		listPolicies: kitgrpc.NewServer(
-			otelkit.EndpointMiddleware(otelkit.WithOperation("list_policies"))(listPoliciesEndpoint(psvc)),
-			decodeListPoliciesRequest,
-			encodeListPoliciesResponse,
 		),
 	}
 }
@@ -72,49 +48,17 @@ func (s *grpcServer) Authorize(ctx context.Context, req *policies.AuthorizeReq) 
 	return res.(*policies.AuthorizeRes), nil
 }
 
-func (s *grpcServer) Issue(ctx context.Context, req *policies.IssueReq) (*policies.Token, error) {
-	_, res, err := s.issue.ServeGRPC(ctx, req)
-	if err != nil {
-		return nil, encodeError(err)
-	}
-	return res.(*policies.Token), nil
-}
-
-func (s *grpcServer) Identify(ctx context.Context, token *policies.Token) (*policies.UserIdentity, error) {
+func (s *grpcServer) Identify(ctx context.Context, token *policies.IdentifyReq) (*policies.IdentifyRes, error) {
 	_, res, err := s.identify.ServeGRPC(ctx, token)
 	if err != nil {
 		return nil, encodeError(err)
 	}
-	return res.(*policies.UserIdentity), nil
-}
-
-func (s *grpcServer) AddPolicy(ctx context.Context, req *policies.AddPolicyReq) (*policies.AddPolicyRes, error) {
-	_, res, err := s.addPolicy.ServeGRPC(ctx, req)
-	if err != nil {
-		return nil, encodeError(err)
-	}
-	return res.(*policies.AddPolicyRes), nil
-}
-
-func (s *grpcServer) DeletePolicy(ctx context.Context, req *policies.DeletePolicyReq) (*policies.DeletePolicyRes, error) {
-	_, res, err := s.deletePolicy.ServeGRPC(ctx, req)
-	if err != nil {
-		return nil, encodeError(err)
-	}
-	return res.(*policies.DeletePolicyRes), nil
-}
-
-func (s *grpcServer) ListPolicies(ctx context.Context, req *policies.ListPoliciesReq) (*policies.ListPoliciesRes, error) {
-	_, res, err := s.listPolicies.ServeGRPC(ctx, req)
-	if err != nil {
-		return nil, encodeError(err)
-	}
-	return res.(*policies.ListPoliciesRes), nil
+	return res.(*policies.IdentifyRes), nil
 }
 
 func decodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*policies.AuthorizeReq)
-	return authReq{Act: req.GetAct(), Obj: req.GetObj(), Sub: req.GetSub(), EntityType: req.GetEntityType()}, nil
+	return authReq{subject: req.GetSubject(), object: req.GetObject(), action: req.GetAction(), entityType: req.GetEntityType()}, nil
 }
 
 func encodeAuthorizeResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -122,54 +66,14 @@ func encodeAuthorizeResponse(_ context.Context, grpcRes interface{}) (interface{
 	return &policies.AuthorizeRes{Authorized: res.authorized}, nil
 }
 
-func decodeIssueRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(*policies.IssueReq)
-	return issueReq{email: req.GetEmail(), password: req.GetPassword()}, nil
-}
-
-func encodeIssueResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(issueRes)
-	return &policies.Token{Value: res.value}, nil
-}
-
 func decodeIdentifyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(*policies.Token)
-	return identityReq{token: req.GetValue()}, nil
+	req := grpcReq.(*policies.IdentifyReq)
+	return identifyReq{token: req.GetToken()}, nil
 }
 
 func encodeIdentifyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(identityRes)
-	return &policies.UserIdentity{Id: res.id}, nil
-}
-
-func decodeAddPolicyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(*policies.AddPolicyReq)
-	return addPolicyReq{Token: req.GetToken(), Sub: req.GetSub(), Obj: req.GetObj(), Act: req.GetAct()}, nil
-}
-
-func encodeAddPolicyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(addPolicyRes)
-	return &policies.AddPolicyRes{Authorized: res.authorized}, nil
-}
-
-func decodeDeletePolicyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(*policies.DeletePolicyReq)
-	return policyReq{Token: req.GetToken(), Sub: req.GetSub(), Obj: req.GetObj(), Act: req.GetAct()}, nil
-}
-
-func encodeDeletePolicyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(deletePolicyRes)
-	return &policies.DeletePolicyRes{Deleted: res.deleted}, nil
-}
-
-func decodeListPoliciesRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(*policies.ListPoliciesReq)
-	return listPoliciesReq{Token: req.GetToken(), Sub: req.GetSub(), Obj: req.GetObj(), Act: req.GetAct()}, nil
-}
-
-func encodeListPoliciesResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(listPoliciesRes)
-	return &policies.ListPoliciesRes{Objects: res.objects}, nil
+	res := grpcRes.(identifyRes)
+	return &policies.IdentifyRes{Id: res.id}, nil
 }
 
 func encodeError(err error) error {

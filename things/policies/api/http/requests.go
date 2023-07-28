@@ -9,29 +9,27 @@ import (
 )
 
 type createPolicyReq struct {
-	token    string
-	Owner    string   `json:"owner,omitempty"`
-	ClientID string   `json:"client,omitempty"`
-	GroupID  string   `json:"group,omitempty"`
-	Actions  []string `json:"actions,omitempty"`
+	token   string
+	Subject string   `json:"subject,omitempty"`
+	Object  string   `json:"object,omitempty"`
+	Actions []string `json:"actions,omitempty"`
 }
 
 func (req createPolicyReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
 	}
-	if req.GroupID == "" || req.ClientID == "" {
+	if req.Object == "" || req.Subject == "" {
 		return apiutil.ErrMissingID
 	}
 	return nil
 }
 
 type createPoliciesReq struct {
-	token     string
-	Owner     string   `json:"owner,omitempty"`
-	ClientIDs []string `json:"client_ids,omitempty"`
-	GroupIDs  []string `json:"group_ids,omitempty"`
-	Actions   []string `json:"actions,omitempty"`
+	token    string
+	Subjects []string `json:"subjects,omitempty"`
+	Objects  []string `json:"objects,omitempty"`
+	Actions  []string `json:"actions,omitempty"`
 }
 
 func (req createPoliciesReq) validate() error {
@@ -39,16 +37,16 @@ func (req createPoliciesReq) validate() error {
 		return apiutil.ErrBearerToken
 	}
 
-	if len(req.GroupIDs) == 0 || len(req.ClientIDs) == 0 {
+	if len(req.Objects) == 0 || len(req.Subjects) == 0 {
 		return apiutil.ErrEmptyList
 	}
 
-	for _, chID := range req.GroupIDs {
-		if chID == "" {
+	for _, channelID := range req.Objects {
+		if channelID == "" {
 			return apiutil.ErrMissingID
 		}
 	}
-	for _, thingID := range req.ClientIDs {
+	for _, thingID := range req.Subjects {
 		if thingID == "" {
 			return apiutil.ErrMissingID
 		}
@@ -57,11 +55,11 @@ func (req createPoliciesReq) validate() error {
 }
 
 type identifyReq struct {
-	Secret string `json:"token"`
+	secret string
 }
 
 func (req identifyReq) validate() error {
-	if req.Secret == "" {
+	if req.secret == "" {
 		return apiutil.ErrMissingSecret
 	}
 
@@ -69,8 +67,8 @@ func (req identifyReq) validate() error {
 }
 
 type authorizeReq struct {
-	Subject    string `json:"secret"`
-	Object     string
+	Subject    string `json:"subject"`
+	Object     string `json:"object"`
 	Action     string `json:"action"`
 	EntityType string `json:"entity_type"`
 }

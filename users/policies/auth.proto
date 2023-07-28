@@ -7,19 +7,19 @@ package mainflux.users.policies;
 
 option go_package = "./policies";
 
+// AuthService is a service that provides authentication and authorization
+// functionalities for the users service.
 service AuthService {
+    rpc Identify(IdentifyReq) returns (IdentifyRes) {}
+    // Authorize authorizes the given subject to perform the given action on the
+    // given object.
     rpc Authorize(AuthorizeReq) returns (AuthorizeRes) {}
-    rpc Issue(IssueReq) returns (Token) {}
-    rpc Identify(Token) returns (UserIdentity) {}
-    rpc AddPolicy(AddPolicyReq) returns (AddPolicyRes) {}
-    rpc DeletePolicy(DeletePolicyReq) returns (DeletePolicyRes) {}
-    rpc ListPolicies(ListPoliciesReq) returns (ListPoliciesRes) {}
 }
 
 message AuthorizeReq {
-    string sub        = 1;
-    string obj        = 2;
-    string act        = 3;
+    string subject    = 1;
+    string object     = 2;
+    string action     = 3;
     string entityType = 4;
 }
 
@@ -27,49 +27,10 @@ message AuthorizeRes {
     bool authorized = 1;
 }
 
-message IssueReq {
-    string email    = 1;
-    string password = 2;
-    uint32 type     = 3;
-}
-
-message Token {
-    string value = 1;
-}
-
-message UserIdentity {
-    string id    = 1;
-}
-
-message AddPolicyReq {
-    string token        = 1;
-    string sub          = 2;
-    string obj          = 3;
-    repeated string act = 4;
-}
-
-message AddPolicyRes {
-    bool authorized = 1;
-}
-
-message DeletePolicyReq {
+message IdentifyReq {
     string token = 1;
-    string sub   = 2;
-    string obj   = 3;
-    string act   = 4;
 }
 
-message DeletePolicyRes {
-    bool deleted = 1;
-}
-
-message ListPoliciesReq {
-    string token = 1;
-    string sub   = 2;
-    string obj   = 3;
-    string act   = 4;
-}
-
-message ListPoliciesRes {
-    repeated string objects = 1;
+message IdentifyRes {
+    string id = 1;
 }

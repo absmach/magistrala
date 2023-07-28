@@ -48,7 +48,7 @@ var (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc readers.MessageRepository, tc tpolicies.ThingsServiceClient, ac upolicies.AuthServiceClient, svcName, instanceID string) http.Handler {
+func MakeHandler(svc readers.MessageRepository, tc tpolicies.AuthServiceClient, ac upolicies.AuthServiceClient, svcName, instanceID string) http.Handler {
 
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
@@ -210,10 +210,10 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	}
 }
 
-func authorize(ctx context.Context, req listMessagesReq, tc tpolicies.ThingsServiceClient, ac upolicies.AuthServiceClient) (err error) {
+func authorize(ctx context.Context, req listMessagesReq, tc tpolicies.AuthServiceClient, ac upolicies.AuthServiceClient) (err error) {
 	switch {
 	case req.token != "":
-		user, err := ac.Identify(ctx, &upolicies.Token{Value: req.token})
+		user, err := ac.Identify(ctx, &upolicies.IdentifyReq{Token: req.token})
 		if err != nil {
 			e, ok := status.FromError(err)
 			if ok && e.Code() == codes.PermissionDenied {
@@ -221,7 +221,7 @@ func authorize(ctx context.Context, req listMessagesReq, tc tpolicies.ThingsServ
 			}
 			return err
 		}
-		if _, err = tc.Authorize(ctx, &tpolicies.AuthorizeReq{Sub: user.GetId(), Obj: req.chanID, Act: tpolicies.ReadAction, EntityType: tpolicies.GroupEntityType}); err != nil {
+		if _, err = tc.Authorize(ctx, &tpolicies.AuthorizeReq{Subject: user.GetId(), Object: req.chanID, Action: tpolicies.ReadAction, EntityType: tpolicies.GroupEntityType}); err != nil {
 			e, ok := status.FromError(err)
 			if ok && e.Code() == codes.PermissionDenied {
 				return errors.Wrap(errUserAccess, err)
@@ -230,7 +230,7 @@ func authorize(ctx context.Context, req listMessagesReq, tc tpolicies.ThingsServ
 		}
 		return nil
 	default:
-		if _, err := tc.Authorize(ctx, &tpolicies.AuthorizeReq{Sub: req.key, Obj: req.chanID, Act: tpolicies.ReadAction, EntityType: tpolicies.GroupEntityType}); err != nil {
+		if _, err := tc.Authorize(ctx, &tpolicies.AuthorizeReq{Subject: req.key, Object: req.chanID, Action: tpolicies.ReadAction, EntityType: tpolicies.GroupEntityType}); err != nil {
 			return errors.Wrap(errThingAccess, err)
 		}
 		return nil

@@ -441,9 +441,9 @@ func newHandler() session.Handler {
 	if err != nil {
 		log.Fatalf("failed to create logger: %s", err)
 	}
-	k := mocks.Key(&policies.AuthorizeReq{Sub: password, Obj: chanID})
+	k := mocks.Key(&policies.AuthorizeReq{Subject: password, Object: chanID})
 	elems := map[string][]string{k: {policies.WriteAction}}
-	k = mocks.Key(&policies.AuthorizeReq{Sub: password1, Obj: chanID})
+	k = mocks.Key(&policies.AuthorizeReq{Subject: password1, Object: chanID})
 	elems[k] = []string{policies.ReadAction}
 	authClient := mocks.NewClient(map[string]string{password: thingID, password1: thingID1}, elems)
 	eventStore := mocks.NewEventStore()

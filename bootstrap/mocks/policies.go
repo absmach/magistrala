@@ -34,7 +34,7 @@ func (svc *mainfluxPolicies) AddPolicy(ctx context.Context, token string, p tpol
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
-	if _, err := svc.auth.Identify(ctx, &upolicies.Token{Value: token}); err != nil {
+	if _, err := svc.auth.Identify(ctx, &upolicies.IdentifyReq{Token: token}); err != nil {
 		return tpolicies.Policy{}, errors.ErrAuthentication
 	}
 	svc.connections[fmt.Sprintf("%s:%s", p.Subject, p.Object)] = p
@@ -46,7 +46,7 @@ func (svc *mainfluxPolicies) DeletePolicy(ctx context.Context, token string, p t
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
-	if _, err := svc.auth.Identify(ctx, &upolicies.Token{Value: token}); err != nil {
+	if _, err := svc.auth.Identify(ctx, &upolicies.IdentifyReq{Token: token}); err != nil {
 		return errors.ErrAuthentication
 	}
 

@@ -67,7 +67,7 @@ type MembershipsPage struct {
 // of Policies that belong to the page.
 type PolicyPage struct {
 	PageMetadata
-	Policies []Policy
+	Policies []Policy `json:"policies"`
 }
 
 type revokeCertsRes struct {
@@ -92,10 +92,6 @@ type SubscriptionPage struct {
 
 type identifyThingResp struct {
 	ID string `json:"id,omitempty"`
-}
-
-type authorizeRes struct {
-	Authorized bool `json:"authorized"`
 }
 
 type canAccessRes struct {

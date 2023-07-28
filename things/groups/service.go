@@ -182,7 +182,7 @@ func (svc service) changeGroupStatus(ctx context.Context, token string, group gr
 }
 
 func (svc service) identify(ctx context.Context, token string) (string, error) {
-	req := &upolicies.Token{Value: token}
+	req := &upolicies.IdentifyReq{Token: token}
 	res, err := svc.uauth.Identify(ctx, req)
 	if err != nil {
 		return "", errors.Wrap(errors.ErrAuthorization, err)
@@ -205,9 +205,9 @@ func (svc service) authorize(ctx context.Context, subject, object, action string
 func (svc service) checkAdmin(ctx context.Context, subject, object, action string) error {
 	// for checking admin rights policy object, action and entity type are not important
 	req := &upolicies.AuthorizeReq{
-		Sub:        subject,
-		Obj:        object,
-		Act:        action,
+		Subject:    subject,
+		Object:     object,
+		Action:     action,
 		EntityType: entityType,
 	}
 	res, err := svc.uauth.Authorize(ctx, req)

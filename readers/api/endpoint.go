@@ -13,7 +13,7 @@ import (
 	upolicies "github.com/mainflux/mainflux/users/policies"
 )
 
-func listMessagesEndpoint(svc readers.MessageRepository, tc tpolicies.ThingsServiceClient, ac upolicies.AuthServiceClient) endpoint.Endpoint {
+func listMessagesEndpoint(svc readers.MessageRepository, tc tpolicies.AuthServiceClient, ac upolicies.AuthServiceClient) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listMessagesReq)
 

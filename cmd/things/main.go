@@ -170,7 +170,7 @@ func main() {
 
 	registerThingsServiceServer := func(srv *grpc.Server) {
 		reflection.Register(srv)
-		tpolicies.RegisterThingsServiceServer(srv, grpcapi.NewServer(csvc, psvc))
+		tpolicies.RegisterAuthServiceServer(srv, grpcapi.NewServer(csvc, psvc))
 	}
 	grpcServerConfig := server.Config{Port: defSvcAuthGrpcPort}
 	if err := env.Parse(&grpcServerConfig, env.Options{Prefix: envPrefixAuthGrpc, AltPrefix: envPrefix}); err != nil {

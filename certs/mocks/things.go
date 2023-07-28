@@ -32,11 +32,11 @@ func NewThingsService(things map[string]mfclients.Client, auth upolicies.AuthSer
 	}
 }
 
-func (svc *mainfluxThings) CreateThings(ctx context.Context, owner string, ths ...mfclients.Client) ([]mfclients.Client, error) {
+func (svc *mainfluxThings) CreateThings(ctx context.Context, token string, ths ...mfclients.Client) ([]mfclients.Client, error) {
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
-	userID, err := svc.auth.Identify(ctx, &upolicies.Token{Value: owner})
+	userID, err := svc.auth.Identify(ctx, &upolicies.IdentifyReq{Token: token})
 	if err != nil {
 		return []mfclients.Client{}, errors.ErrAuthentication
 	}
@@ -51,11 +51,11 @@ func (svc *mainfluxThings) CreateThings(ctx context.Context, owner string, ths .
 	return ths, nil
 }
 
-func (svc *mainfluxThings) ViewClient(ctx context.Context, owner, id string) (mfclients.Client, error) {
+func (svc *mainfluxThings) ViewClient(ctx context.Context, token, id string) (mfclients.Client, error) {
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
-	userID, err := svc.auth.Identify(ctx, &upolicies.Token{Value: owner})
+	userID, err := svc.auth.Identify(ctx, &upolicies.IdentifyReq{Token: token})
 	if err != nil {
 		return mfclients.Client{}, errors.ErrAuthentication
 	}
@@ -72,7 +72,7 @@ func (svc *mainfluxThings) EnableClient(ctx context.Context, token, id string) (
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
-	userID, err := svc.auth.Identify(ctx, &upolicies.Token{Value: token})
+	userID, err := svc.auth.Identify(ctx, &upolicies.IdentifyReq{Token: token})
 	if err != nil {
 		return mfclients.Client{}, errors.ErrAuthentication
 	}
@@ -91,7 +91,7 @@ func (svc *mainfluxThings) DisableClient(ctx context.Context, token, id string) 
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
-	userID, err := svc.auth.Identify(ctx, &upolicies.Token{Value: token})
+	userID, err := svc.auth.Identify(ctx, &upolicies.IdentifyReq{Token: token})
 	if err != nil {
 		return mfclients.Client{}, errors.ErrAuthentication
 	}

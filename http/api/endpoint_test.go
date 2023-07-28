@@ -21,7 +21,7 @@ import (
 
 const instanceID = "5de9b29a-feb9-11ed-be56-0242ac120002"
 
-func newService(cc policies.ThingsServiceClient) adapter.Service {
+func newService(cc policies.AuthServiceClient) adapter.Service {
 	pub := mocks.NewPublisher()
 	return adapter.New(pub, cc)
 }

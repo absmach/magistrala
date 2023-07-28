@@ -58,7 +58,7 @@ func (lm *loggingMiddleware) IssueToken(ctx context.Context, identity, secret st
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) RefreshToken(ctx context.Context, refreshToken string) (t jwt.Token, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method refresh_token of type %s for token %s took %s to complete", t.AccessType, refreshToken, time.Since(begin))
+		message := fmt.Sprintf("Method refresh_token of type %s for refresh token %s took %s to complete", t.AccessType, refreshToken, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return

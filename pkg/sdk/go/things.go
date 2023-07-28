@@ -14,7 +14,6 @@ const (
 	connectEndpoint    = "connect"
 	disconnectEndpoint = "disconnect"
 	identifyEndpoint   = "identify"
-	shareEndpoint      = "share"
 )
 
 // Thing represents mainflux thing.

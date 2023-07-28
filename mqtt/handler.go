@@ -57,14 +57,14 @@ var channelRegExp = regexp.MustCompile(`^\/?channels\/([\w\-]+)\/messages(\/[^?]
 // Event implements events.Event interface.
 type handler struct {
 	publishers []messaging.Publisher
-	auth       policies.ThingsServiceClient
+	auth       policies.AuthServiceClient
 	logger     logger.Logger
 	es         redis.EventStore
 }
 
 // NewHandler creates new Handler entity.
 func NewHandler(publishers []messaging.Publisher, es redis.EventStore,
-	logger logger.Logger, auth policies.ThingsServiceClient) session.Handler {
+	logger logger.Logger, auth policies.AuthServiceClient) session.Handler {
 	return &handler{
 		es:         es,
 		logger:     logger,
@@ -87,15 +87,15 @@ func (h *handler) AuthConnect(ctx context.Context) error {
 
 	pwd := string(s.Password)
 
-	t := &policies.Key{
-		Value: pwd,
+	t := &policies.IdentifyReq{
+		Secret: pwd,
 	}
 
 	thid, err := h.auth.Identify(ctx, t)
 	if err != nil {
 		return err
 	}
-	if thid.GetValue() != s.Username {
+	if thid.GetId() != s.Username {
 		return errors.ErrAuthentication
 	}
 
@@ -241,9 +241,9 @@ func (h *handler) authAccess(ctx context.Context, password, topic, action string
 	chanID := channelParts[1]
 
 	ar := &policies.AuthorizeReq{
-		Sub:        password,
-		Obj:        chanID,
-		Act:        action,
+		Subject:    password,
+		Object:     chanID,
+		Action:     action,
 		EntityType: policies.ThingEntityType,
 	}
 	res, err := h.auth.Authorize(ctx, ar)

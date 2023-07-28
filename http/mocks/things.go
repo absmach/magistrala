@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var _ policies.ThingsServiceClient = (*thingsClient)(nil)
+var _ policies.AuthServiceClient = (*thingsClient)(nil)
 
 // ServiceErrToken is used to simulate internal server error.
 const ServiceErrToken = "unavailable"
@@ -23,12 +23,12 @@ type thingsClient struct {
 }
 
 // NewThingsClient returns mock implementation of things service client.
-func NewThingsClient(data map[string]string) policies.ThingsServiceClient {
+func NewThingsClient(data map[string]string) policies.AuthServiceClient {
 	return &thingsClient{data}
 }
 
 func (tc thingsClient) Authorize(ctx context.Context, req *policies.AuthorizeReq, opts ...grpc.CallOption) (*policies.AuthorizeRes, error) {
-	secret := req.GetSub()
+	secret := req.GetSubject()
 
 	// Since there is no appropriate way to simulate internal server error,
 	// we had to use this obscure approach. ErrorToken simulates gRPC
@@ -48,6 +48,6 @@ func (tc thingsClient) Authorize(ctx context.Context, req *policies.AuthorizeReq
 	return &policies.AuthorizeRes{ThingID: id, Authorized: true}, nil
 }
 
-func (tc thingsClient) Identify(ctx context.Context, req *policies.Key, opts ...grpc.CallOption) (*policies.ClientID, error) {
+func (tc thingsClient) Identify(ctx context.Context, req *policies.IdentifyReq, opts ...grpc.CallOption) (*policies.IdentifyRes, error) {
 	panic("not implemented")
 }

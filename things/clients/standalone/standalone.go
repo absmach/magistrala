@@ -11,8 +11,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-var errUnsupported = errors.New("not supported in standalone mode")
-
 var _ policies.AuthServiceClient = (*singleUserRepo)(nil)
 
 type singleUserRepo struct {
@@ -28,39 +26,17 @@ func NewAuthService(id, token string) policies.AuthServiceClient {
 	}
 }
 
-func (repo singleUserRepo) Issue(ctx context.Context, req *policies.IssueReq, opts ...grpc.CallOption) (*policies.Token, error) {
-	return &policies.Token{}, errUnsupported
-}
-
-func (repo singleUserRepo) Identify(ctx context.Context, token *policies.Token, opts ...grpc.CallOption) (*policies.UserIdentity, error) {
-	if repo.token != token.GetValue() {
+func (repo singleUserRepo) Identify(ctx context.Context, req *policies.IdentifyReq, opts ...grpc.CallOption) (*policies.IdentifyRes, error) {
+	if repo.token != req.GetToken() {
 		return nil, errors.ErrAuthentication
 	}
 
-	return &policies.UserIdentity{Id: repo.id}, nil
+	return &policies.IdentifyRes{Id: repo.id}, nil
 }
 
 func (repo singleUserRepo) Authorize(ctx context.Context, req *policies.AuthorizeReq, _ ...grpc.CallOption) (r *policies.AuthorizeRes, err error) {
-	if repo.id != req.GetSub() {
+	if repo.id != req.GetSubject() {
 		return &policies.AuthorizeRes{}, errors.ErrAuthorization
 	}
 	return &policies.AuthorizeRes{Authorized: true}, nil
-}
-
-func (repo singleUserRepo) AddPolicy(ctx context.Context, req *policies.AddPolicyReq, opts ...grpc.CallOption) (*policies.AddPolicyRes, error) {
-	if repo.token != req.GetToken() {
-		return &policies.AddPolicyRes{}, errors.ErrAuthorization
-	}
-	return &policies.AddPolicyRes{Authorized: true}, nil
-}
-
-func (repo singleUserRepo) DeletePolicy(ctx context.Context, req *policies.DeletePolicyReq, opts ...grpc.CallOption) (*policies.DeletePolicyRes, error) {
-	if repo.token != req.GetToken() {
-		return &policies.DeletePolicyRes{}, errors.ErrAuthorization
-	}
-	return &policies.DeletePolicyRes{Deleted: true}, nil
-}
-
-func (repo singleUserRepo) ListPolicies(ctx context.Context, in *policies.ListPoliciesReq, opts ...grpc.CallOption) (*policies.ListPoliciesRes, error) {
-	return &policies.ListPoliciesRes{}, errUnsupported
 }

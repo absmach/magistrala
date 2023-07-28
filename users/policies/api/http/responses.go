@@ -5,9 +5,9 @@ package http
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/users/policies"
 )
 
 var (
@@ -26,10 +26,14 @@ type pageRes struct {
 }
 
 type authorizeRes struct {
-	Authorized bool `json:"authorized"`
+	authorized bool
 }
 
 func (res authorizeRes) Code() int {
+	if !res.authorized {
+		return http.StatusForbidden
+	}
+
 	return http.StatusOK
 }
 
@@ -50,7 +54,7 @@ func (res addPolicyRes) Code() int {
 		return http.StatusCreated
 	}
 
-	return http.StatusOK
+	return http.StatusBadRequest
 }
 
 func (res addPolicyRes) Headers() map[string]string {
@@ -62,12 +66,7 @@ func (res addPolicyRes) Empty() bool {
 }
 
 type viewPolicyRes struct {
-	OwnerID   string    `json:"owner_id"`
-	Subject   string    `json:"subject"`
-	Object    string    `json:"object"`
-	Actions   []string  `json:"actions"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	policies.Policy `json:",inline"`
 }
 
 func (res viewPolicyRes) Code() int {
@@ -87,7 +86,11 @@ type updatePolicyRes struct {
 }
 
 func (res updatePolicyRes) Code() int {
-	return http.StatusNoContent
+	if res.updated {
+		return http.StatusNoContent
+	}
+
+	return http.StatusBadRequest
 }
 
 func (res updatePolicyRes) Headers() map[string]string {
@@ -115,10 +118,16 @@ func (res listPolicyRes) Empty() bool {
 	return false
 }
 
-type deletePolicyRes struct{}
+type deletePolicyRes struct {
+	deleted bool
+}
 
 func (res deletePolicyRes) Code() int {
-	return http.StatusNoContent
+	if res.deleted {
+		return http.StatusNoContent
+	}
+
+	return http.StatusBadRequest
 }
 
 func (res deletePolicyRes) Headers() map[string]string {

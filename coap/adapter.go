@@ -40,13 +40,13 @@ var _ Service = (*adapterService)(nil)
 
 // Observers is a map of maps,.
 type adapterService struct {
-	auth    policies.ThingsServiceClient
+	auth    policies.AuthServiceClient
 	pubsub  messaging.PubSub
 	obsLock sync.Mutex
 }
 
 // New instantiates the CoAP adapter implementation.
-func New(auth policies.ThingsServiceClient, pubsub messaging.PubSub) Service {
+func New(auth policies.AuthServiceClient, pubsub messaging.PubSub) Service {
 	as := &adapterService{
 		auth:    auth,
 		pubsub:  pubsub,
@@ -58,9 +58,9 @@ func New(auth policies.ThingsServiceClient, pubsub messaging.PubSub) Service {
 
 func (svc *adapterService) Publish(ctx context.Context, key string, msg *messaging.Message) error {
 	ar := &policies.AuthorizeReq{
-		Sub:        key,
-		Obj:        msg.Channel,
-		Act:        policies.WriteAction,
+		Subject:    key,
+		Object:     msg.Channel,
+		Action:     policies.WriteAction,
 		EntityType: policies.ThingEntityType,
 	}
 	res, err := svc.auth.Authorize(ctx, ar)
@@ -77,9 +77,9 @@ func (svc *adapterService) Publish(ctx context.Context, key string, msg *messagi
 
 func (svc *adapterService) Subscribe(ctx context.Context, key, chanID, subtopic string, c Client) error {
 	ar := &policies.AuthorizeReq{
-		Sub:        key,
-		Obj:        chanID,
-		Act:        policies.ReadAction,
+		Subject:    key,
+		Object:     chanID,
+		Action:     policies.ReadAction,
 		EntityType: policies.GroupEntityType,
 	}
 	res, err := svc.auth.Authorize(ctx, ar)
@@ -98,9 +98,9 @@ func (svc *adapterService) Subscribe(ctx context.Context, key, chanID, subtopic 
 
 func (svc *adapterService) Unsubscribe(ctx context.Context, key, chanID, subtopic, token string) error {
 	ar := &policies.AuthorizeReq{
-		Sub:        key,
-		Obj:        chanID,
-		Act:        policies.ReadAction,
+		Subject:    key,
+		Object:     chanID,
+		Action:     policies.ReadAction,
 		EntityType: policies.GroupEntityType,
 	}
 	res, err := svc.auth.Authorize(ctx, ar)

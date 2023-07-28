@@ -23,11 +23,11 @@ var _ Service = (*adapterService)(nil)
 
 type adapterService struct {
 	publisher messaging.Publisher
-	things    policies.ThingsServiceClient
+	things    policies.AuthServiceClient
 }
 
 // New instantiates the HTTP adapter implementation.
-func New(publisher messaging.Publisher, things policies.ThingsServiceClient) Service {
+func New(publisher messaging.Publisher, things policies.AuthServiceClient) Service {
 	return &adapterService{
 		publisher: publisher,
 		things:    things,
@@ -36,9 +36,9 @@ func New(publisher messaging.Publisher, things policies.ThingsServiceClient) Ser
 
 func (as *adapterService) Publish(ctx context.Context, token string, msg *messaging.Message) error {
 	ar := &policies.AuthorizeReq{
-		Sub:        token,
-		Obj:        msg.Channel,
-		Act:        policies.WriteAction,
+		Subject:    token,
+		Object:     msg.Channel,
+		Action:     policies.WriteAction,
 		EntityType: policies.ThingEntityType,
 	}
 	res, err := as.things.Authorize(ctx, ar)

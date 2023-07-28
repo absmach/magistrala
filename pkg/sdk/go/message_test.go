@@ -19,8 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const eof = "EOF"
-
 func newMessageService(cc policies.AuthServiceClient) adapter.Service {
 	pub := mocks.NewPublisher()
 
@@ -72,7 +70,7 @@ func TestSendMessage(t *testing.T) {
 			chanID: chanID,
 			msg:    msg,
 			auth:   invalidToken,
-			err:    errors.NewSDKErrorWithStatus(errors.New(eof), http.StatusUnauthorized),
+			err:    errors.NewSDKErrorWithStatus(errors.New(""), http.StatusUnauthorized),
 		},
 		"publish message with wrong content type": {
 			chanID: chanID,
@@ -90,7 +88,7 @@ func TestSendMessage(t *testing.T) {
 			chanID: chanID,
 			msg:    msg,
 			auth:   "invalid-token",
-			err:    errors.NewSDKErrorWithStatus(errors.New(eof), http.StatusUnauthorized),
+			err:    errors.NewSDKErrorWithStatus(errors.New(""), http.StatusUnauthorized),
 		},
 	}
 	for desc, tc := range cases {

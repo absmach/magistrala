@@ -35,7 +35,7 @@ const (
 
 var (
 	v   float64 = 5
-	vs          = "value"
+	vs          = "stringValue"
 	vb          = true
 	vd          = "dataValue"
 	sum float64 = 42
@@ -108,12 +108,14 @@ func TestReadSenml(t *testing.T) {
 	// Since messages are not saved in natural order,
 	// cases that return subset of messages are only
 	// checking data result set size, but not content.
-	cases := map[string]struct {
+	cases := []struct {
+		desc     string
 		chanID   string
 		pageMeta readers.PageMetadata
 		page     readers.MessagesPage
 	}{
-		"read message page for existing channel": {
+		{
+			desc:   "read message page for existing channel",
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{
 				Offset: 0,
@@ -124,7 +126,8 @@ func TestReadSenml(t *testing.T) {
 				Messages: fromSenml(messages),
 			},
 		},
-		"read message page for non-existent channel": {
+		{
+			desc:   "read message page for non-existent channel",
 			chanID: wrongID,
 			pageMeta: readers.PageMetadata{
 				Offset: 0,
@@ -134,7 +137,8 @@ func TestReadSenml(t *testing.T) {
 				Messages: []readers.Message{},
 			},
 		},
-		"read message last page": {
+		{
+			desc:   "read message last page",
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{
 				Offset: msgsNum - 20,
@@ -145,7 +149,8 @@ func TestReadSenml(t *testing.T) {
 				Messages: fromSenml(messages[msgsNum-20 : msgsNum]),
 			},
 		},
-		"read message with non-existent subtopic": {
+		{
+			desc:   "read message with non-existent subtopic",
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{
 				Offset:   0,
@@ -156,7 +161,8 @@ func TestReadSenml(t *testing.T) {
 				Messages: []readers.Message{},
 			},
 		},
-		"read message with subtopic": {
+		{
+			desc:   "read message with subtopic",
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{
 				Offset:   0,
@@ -168,7 +174,8 @@ func TestReadSenml(t *testing.T) {
 				Messages: fromSenml(queryMsgs),
 			},
 		},
-		"read message with publisher": {
+		{
+			desc:   "read message with publisher",
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{
 				Offset:    0,
@@ -180,7 +187,8 @@ func TestReadSenml(t *testing.T) {
 				Messages: fromSenml(queryMsgs),
 			},
 		},
-		"read message with wrong format": {
+		{
+			desc:   "read message with wrong format",
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{
 				Format:    "messagess",
@@ -193,7 +201,8 @@ func TestReadSenml(t *testing.T) {
 				Messages: []readers.Message{},
 			},
 		},
-		"read message with protocol": {
+		{
+			desc:   "read message with protocol",
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{
 				Offset:   0,
@@ -205,7 +214,8 @@ func TestReadSenml(t *testing.T) {
 				Messages: fromSenml(queryMsgs),
 			},
 		},
-		"read message with name": {
+		{
+			desc:   "read message with name",
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{
 				Offset: 0,
@@ -217,7 +227,8 @@ func TestReadSenml(t *testing.T) {
 				Messages: fromSenml(queryMsgs[0:limit]),
 			},
 		},
-		"read message with value": {
+		{
+			desc:   "read message with value",
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{
 				Offset: 0,
@@ -229,7 +240,8 @@ func TestReadSenml(t *testing.T) {
 				Messages: fromSenml(valueMsgs[0:limit]),
 			},
 		},
-		"read message with value and equal comparator": {
+		{
+			desc:   "read message with value and equal comparator",
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{
 				Offset:     0,
@@ -242,7 +254,8 @@ func TestReadSenml(t *testing.T) {
 				Messages: fromSenml(valueMsgs[0:limit]),
 			},
 		},
-		"read message with value and lower-than comparator": {
+		{
+			desc:   "read message with value and lower-than comparator",
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{
 				Offset:     0,
@@ -255,7 +268,8 @@ func TestReadSenml(t *testing.T) {
 				Messages: fromSenml(valueMsgs[0:limit]),
 			},
 		},
-		"read message with value and lower-than-or-equal comparator": {
+		{
+			desc:   "read message with value and lower-than-or-equal comparator",
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{
 				Offset:     0,
@@ -268,7 +282,8 @@ func TestReadSenml(t *testing.T) {
 				Messages: fromSenml(valueMsgs[0:limit]),
 			},
 		},
-		"read message with value and greater-than comparator": {
+		{
+			desc:   "read message with value and greater-than comparator",
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{
 				Offset:     0,
@@ -281,7 +296,8 @@ func TestReadSenml(t *testing.T) {
 				Messages: fromSenml(valueMsgs[0:limit]),
 			},
 		},
-		"read message with value and greater-than-or-equal comparator": {
+		{
+			desc:   "read message with value and greater-than-or-equal comparator",
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{
 				Offset:     0,
@@ -294,7 +310,8 @@ func TestReadSenml(t *testing.T) {
 				Messages: fromSenml(valueMsgs[0:limit]),
 			},
 		},
-		"read message with boolean value": {
+		{
+			desc:   "read message with boolean value",
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{
 				Offset:    0,
@@ -306,7 +323,8 @@ func TestReadSenml(t *testing.T) {
 				Messages: fromSenml(boolMsgs[0:limit]),
 			},
 		},
-		"read message with string value": {
+		{
+			desc:   "read message with string value",
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{
 				Offset:      0,
@@ -318,7 +336,78 @@ func TestReadSenml(t *testing.T) {
 				Messages: fromSenml(stringMsgs[0:limit]),
 			},
 		},
-		"read message with data value": {
+		{
+			desc:   "read message with string value and equal comparator",
+			chanID: chanID,
+			pageMeta: readers.PageMetadata{
+				Offset:      0,
+				Limit:       limit,
+				StringValue: vs,
+				Comparator:  readers.EqualKey,
+			},
+			page: readers.MessagesPage{
+				Total:    uint64(len(stringMsgs)),
+				Messages: fromSenml(stringMsgs[0:limit]),
+			},
+		},
+		{
+			desc:   "read message with string value and lower-than comparator",
+			chanID: chanID,
+			pageMeta: readers.PageMetadata{
+				Offset:      0,
+				Limit:       limit,
+				StringValue: "a stringValues b",
+				Comparator:  readers.LowerThanKey,
+			},
+			page: readers.MessagesPage{
+				Total:    uint64(len(stringMsgs)),
+				Messages: fromSenml(stringMsgs[0:limit]),
+			},
+		},
+		{
+			desc:   "read message with string value and lower-than-or-equal comparator",
+			chanID: chanID,
+			pageMeta: readers.PageMetadata{
+				Offset:      0,
+				Limit:       limit,
+				StringValue: vs,
+				Comparator:  readers.LowerThanEqualKey,
+			},
+			page: readers.MessagesPage{
+				Total:    uint64(len(stringMsgs)),
+				Messages: fromSenml(stringMsgs[0:limit]),
+			},
+		},
+		{
+			desc:   "read message with string value and greater-than comparator",
+			chanID: chanID,
+			pageMeta: readers.PageMetadata{
+				Offset:      0,
+				Limit:       limit,
+				StringValue: "alu",
+				Comparator:  readers.GreaterThanKey,
+			},
+			page: readers.MessagesPage{
+				Total:    uint64(len(stringMsgs)),
+				Messages: fromSenml(stringMsgs[0:limit]),
+			},
+		},
+		{
+			desc:   "read message with string value and greater-than-or-equal comparator",
+			chanID: chanID,
+			pageMeta: readers.PageMetadata{
+				Offset:      0,
+				Limit:       limit,
+				StringValue: vs,
+				Comparator:  readers.GreaterThanEqualKey,
+			},
+			page: readers.MessagesPage{
+				Total:    uint64(len(stringMsgs)),
+				Messages: fromSenml(stringMsgs[0:limit]),
+			},
+		},
+		{
+			desc:   "read message with data value",
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{
 				Offset:    0,
@@ -330,7 +419,64 @@ func TestReadSenml(t *testing.T) {
 				Messages: fromSenml(dataMsgs[0:limit]),
 			},
 		},
-		"read message with from": {
+		{
+			desc:   "read message with data value and lower-than comparator",
+			chanID: chanID,
+			pageMeta: readers.PageMetadata{
+				Offset:     0,
+				Limit:      limit,
+				DataValue:  vd + string(rune(1)),
+				Comparator: readers.LowerThanKey,
+			},
+			page: readers.MessagesPage{
+				Total:    uint64(len(dataMsgs)),
+				Messages: fromSenml(dataMsgs[0:limit]),
+			},
+		},
+		{
+			desc:   "read message with data value and lower-than-or-equal comparator",
+			chanID: chanID,
+			pageMeta: readers.PageMetadata{
+				Offset:     0,
+				Limit:      limit,
+				DataValue:  vd + string(rune(1)),
+				Comparator: readers.LowerThanEqualKey,
+			},
+			page: readers.MessagesPage{
+				Total:    uint64(len(dataMsgs)),
+				Messages: fromSenml(dataMsgs[0:limit]),
+			},
+		},
+		{
+			desc:   "read message with data value and greater-than comparator",
+			chanID: chanID,
+			pageMeta: readers.PageMetadata{
+				Offset:     0,
+				Limit:      limit,
+				DataValue:  vd[:len(vd)-1],
+				Comparator: readers.GreaterThanKey,
+			},
+			page: readers.MessagesPage{
+				Total:    uint64(len(dataMsgs)),
+				Messages: fromSenml(dataMsgs[0:limit]),
+			},
+		},
+		{
+			desc:   "read message with data value and greater-than-or-equal comparator",
+			chanID: chanID,
+			pageMeta: readers.PageMetadata{
+				Offset:     0,
+				Limit:      limit,
+				DataValue:  vd[:len(vd)-1],
+				Comparator: readers.GreaterThanEqualKey,
+			},
+			page: readers.MessagesPage{
+				Total:    uint64(len(dataMsgs)),
+				Messages: fromSenml(dataMsgs[0:limit]),
+			},
+		},
+		{
+			desc:   "read message with from",
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{
 				Offset: 0,
@@ -342,7 +488,8 @@ func TestReadSenml(t *testing.T) {
 				Messages: fromSenml(messages[0:21]),
 			},
 		},
-		"read message with to": {
+		{
+			desc:   "read message with to",
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{
 				Offset: 0,
@@ -354,7 +501,8 @@ func TestReadSenml(t *testing.T) {
 				Messages: fromSenml(messages[21:]),
 			},
 		},
-		"read message with from/to": {
+		{
+			desc:   "read message with from/to",
 			chanID: chanID,
 			pageMeta: readers.PageMetadata{
 				Offset: 0,
@@ -369,11 +517,11 @@ func TestReadSenml(t *testing.T) {
 		},
 	}
 
-	for desc, tc := range cases {
+	for _, tc := range cases {
 		result, err := reader.ReadAll(tc.chanID, tc.pageMeta)
-		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %s", desc, err))
-		assert.ElementsMatch(t, tc.page.Messages, result.Messages, fmt.Sprintf("%s: got incorrect list of senml Messages from ReadAll()", desc))
-		assert.Equal(t, tc.page.Total, result.Total, fmt.Sprintf("%s: expected %v got %v", desc, tc.page.Total, result.Total))
+		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %s", tc.desc, err))
+		assert.ElementsMatch(t, tc.page.Messages, result.Messages, fmt.Sprintf("%s: got incorrect list of senml Messages from ReadAll()", tc.desc))
+		assert.Equal(t, tc.page.Total, result.Total, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.page.Total, result.Total))
 	}
 }
 

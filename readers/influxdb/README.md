@@ -8,15 +8,15 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable                     | Description                                         | Default        |
-|------------------------------|-----------------------------------------------------|----------------|
-| MF_INFLUX_READER_LOG_LEVEL   | Service log level                                   | info           |
-| MF_INFLUX_READER_PORT        | Service HTTP port                                   | 9005           |
-| MF_INFLUXDB_HOST             | InfluxDB host                                       | localhost      |
-| MF_INFLUXDB_PORT             | Default port of InfluxDB database                   | 8086           |
-| MF_INFLUXDB_ADMIN_USER       | Default user of InfluxDB database                   | mainflux       |
-| MF_INFLUXDB_ADMIN_PASSWORD   | Default password of InfluxDB user                   | mainflux       |
-| MF_INFLUXDB_DB               | InfluxDB database name                              | mainflux       |
+| Variable                     | Description                                         | Default           |
+|------------------------------|-----------------------------------------------------|-------------------|
+| MF_INFLUX_READER_LOG_LEVEL   | Service log level                                   | info              |
+| MF_INFLUX_READER_PORT        | Service HTTP port                                   | 9005              |
+| MF_INFLUXDB_HOST             | InfluxDB host                                       | localhost         |
+| MF_INFLUXDB_PORT             | Default port of InfluxDB database                   | 8086              |
+| MF_INFLUXDB_ADMIN_USER       | Default user of InfluxDB database                   | mainflux          |
+| MF_INFLUXDB_ADMIN_PASSWORD   | Default password of InfluxDB user                   | mainflux          |
+| MF_INFLUXDB_DB               | InfluxDB database name                              | mainflux          |
 | MF_INFLUXDB_HOST             | InfluxDB host name                                  | mainflux-influxdb |
 | MF_INFLUXDB_PROTOCOL         | InfluxDB protocol                                   | http              |
 | MF_INFLUXDB_TIMEOUT          | InfluxDB client connection readiness timeout        | 1s                |
@@ -101,5 +101,14 @@ docker-compose -f docker/addons/influxdb-reader/docker-compose.yml up --env-file
 ## Usage
 
 Service exposes [HTTP API](https://api.mainflux.io/?urls.primaryName=readers-openapi.yml) for fetching messages.
+
+Comparator Usage Guide:
+| Comparator           | Usage                                                                       |      Example                       |  
+|----------------------|-----------------------------------------------------------------------------|------------------------------------|
+| eq                   | Return values that are equal to the query                                   | eq["active"] -> "active"           |  
+| ge                   | Return values that are substrings of the query                              | ge["tiv"] -> "active" and "tiv"    |  
+| gt                   | Return values that are substrings of the query and not equal to the query   | gt["tiv"] -> "active"              |  
+| le                   | Return values that are superstrings of the query                            | le["active"] -> "tiv"              |  
+| lt                   | Return values that are superstrings of the query and not equal to the query | lt["active"] -> "active" and "tiv" |  
 
 Official docs can be found [here](https://docs.mainflux.io).

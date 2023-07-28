@@ -72,3 +72,14 @@ $GOBIN/mainflux-postgres-reader
 ## Usage
 
 Starting service will start consuming normalized messages in SenML format.
+
+Comparator Usage Guide:
+| Comparator           | Usage                                                                       |      Example                       |  
+|----------------------|-----------------------------------------------------------------------------|------------------------------------|
+| eq                   | Return values that are equal to the query                                   | eq["active"] -> "active"           |  
+| ge                   | Return values that are substrings of the query                              | ge["tiv"] -> "active" and "tiv"    |  
+| gt                   | Return values that are substrings of the query and not equal to the query   | gt["tiv"] -> "active"              |  
+| le                   | Return values that are superstrings of the query                            | le["active"] -> "tiv"              |  
+| lt                   | Return values that are superstrings of the query and not equal to the query | lt["active"] -> "active" and "tiv" |  
+
+Official docs can be found [here](https://docs.mainflux.io).

@@ -36,10 +36,11 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 		order = "created"
 		format = rpm.Format
 	}
+	cond := fmtCondition(chanID, rpm)
 
 	q := fmt.Sprintf(`SELECT * FROM %s
     WHERE %s ORDER BY %s DESC
-	LIMIT :limit OFFSET :offset;`, format, fmtCondition(chanID, rpm), order)
+	LIMIT :limit OFFSET :offset;`, format, cond, order)
 
 	params := map[string]interface{}{
 		"channel":      chanID,
@@ -56,7 +57,6 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 		"from":         rpm.From,
 		"to":           rpm.To,
 	}
-
 	rows, err := tr.db.NamedQuery(q, params)
 	if err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
@@ -97,7 +97,7 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 
 	}
 
-	q = fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, format, fmtCondition(chanID, rpm))
+	q = fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, format, cond)
 	rows, err = tr.db.NamedQuery(q, params)
 	if err != nil {
 		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
@@ -141,9 +141,22 @@ func fmtCondition(chanID string, rpm readers.PageMetadata) string {
 		case "vb":
 			condition = fmt.Sprintf(`%s AND bool_value = :bool_value`, condition)
 		case "vs":
-			condition = fmt.Sprintf(`%s AND string_value = :string_value`, condition)
+			comparator := readers.ParseValueComparator(query)
+			switch comparator {
+			case "=":
+				condition = fmt.Sprintf("%s AND string_value = :string_value ", condition)
+			case ">":
+				condition = fmt.Sprintf("%s AND string_value LIKE '%%' || :string_value || '%%' AND string_value <> :string_value", condition)
+			case ">=":
+				condition = fmt.Sprintf("%s AND string_value LIKE '%%' || :string_value || '%%'", condition)
+			case "<=":
+				condition = fmt.Sprintf("%s AND :string_value LIKE '%%' || string_value || '%%'", condition)
+			case "<":
+				condition = fmt.Sprintf("%s AND :string_value LIKE '%%' || string_value || '%%' AND string_value <> :string_value", condition)
+			}
 		case "vd":
-			condition = fmt.Sprintf(`%s AND data_value = :data_value`, condition)
+			comparator := readers.ParseValueComparator(query)
+			condition = fmt.Sprintf(`%s AND data_value %s :data_value`, condition, comparator)
 		case "from":
 			condition = fmt.Sprintf(`%s AND time >= :from`, condition)
 		case "to":

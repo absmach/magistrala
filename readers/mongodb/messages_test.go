@@ -42,7 +42,7 @@ var (
 	addr string
 
 	v   float64 = 5
-	vs          = "value"
+	vs          = "stringValue"
 	vb          = true
 	vd          = "dataValue"
 	sum float64 = 42

@@ -83,4 +83,8 @@ docker-compose -f docker/addons/casandra-reader/docker-compose.yml up -d
 
 Service exposes [HTTP API](https://api.mainflux.io/?urls.primaryName=readers-openapi.yml) for fetching messages.
 
+```
+Note: Cassandra Reader doesn't support searching substrings from string_value, due to inefficient searching as the current data model is not suitable for this type of queries.
+```
+
 [doc]: https://docs.mainflux.io

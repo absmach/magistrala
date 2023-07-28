@@ -55,8 +55,11 @@ func (repo *influxRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 
 	queryAPI := repo.client.QueryAPI(repo.cfg.Org)
 	condition, timeRange := fmtCondition(chanID, rpm)
+
 	query := fmt.Sprintf(`
-	import "influxdata/influxdb/v1" from(bucket: "%s")
+	import "influxdata/influxdb/v1"
+	import "strings"
+	from(bucket: "%s")
 	%s
 	|> v1.fieldsAsCols()
 	|> group()
@@ -108,7 +111,9 @@ func (repo *influxRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 
 func (repo *influxRepository) count(measurement, condition string, timeRange string) (uint64, error) {
 	cmd := fmt.Sprintf(`
-	import "influxdata/influxdb/v1" from(bucket: "%s")
+	import "influxdata/influxdb/v1"
+	import "strings"
+	from(bucket: "%s")
 	%s
 	|> v1.fieldsAsCols()
 	|> filter(fn: (r) => r._measurement == "%s")
@@ -122,8 +127,8 @@ func (repo *influxRepository) count(measurement, condition string, timeRange str
 		measurement,
 		condition)
 	queryAPI := repo.client.QueryAPI(repo.cfg.Org)
-
 	resp, err := queryAPI.Query(context.Background(), cmd)
+
 	if err != nil {
 		return 0, err
 	}
@@ -197,11 +202,29 @@ func fmtCondition(chanID string, rpm readers.PageMetadata) (string, string) {
 			sb.WriteString(`|> filter(fn: (r) => exists r.boolValue)`)
 			sb.WriteString(fmt.Sprintf(`|> filter(fn: (r) => r.boolValue == %v)`, value))
 		case "vs":
+			comparator := readers.ParseValueComparator(query)
 			sb.WriteString(`|> filter(fn: (r) => exists r.stringValue)`)
-			sb.WriteString(fmt.Sprintf(`|> filter(fn: (r) => r.stringValue == "%s")`, value))
+			switch comparator {
+			case "=":
+				sb.WriteString(fmt.Sprintf(`|> filter(fn: (r) =>  r.stringValue == "%s")`, value))
+			case "<":
+				sb.WriteString(fmt.Sprintf(`|> filter(fn: (r) => strings.containsStr(v: "%s", substr: r.stringValue) == true)`, value))
+				sb.WriteString(fmt.Sprintf(`|> filter(fn: (r) =>  r.stringValue !="%s")`, value))
+			case "<=":
+				sb.WriteString(fmt.Sprintf(`|> filter(fn: (r) => strings.containsStr(v: "%s", substr: r.stringValue) == true)`, value))
+			case ">":
+				sb.WriteString(fmt.Sprintf(`|> filter(fn: (r) => strings.containsStr(v: r.stringValue, substr: "%s") == true)`, value))
+				sb.WriteString(fmt.Sprintf(`|> filter(fn: (r) =>  r.stringValue != "%s")`, value))
+			case ">=":
+				sb.WriteString(fmt.Sprintf(`|> filter(fn: (r) => strings.containsStr(v: r.stringValue, substr: "%s") == true)`, value))
+			}
 		case "vd":
+			comparator := readers.ParseValueComparator(query)
+			if comparator == "=" {
+				comparator = "=="
+			}
 			sb.WriteString(`|> filter(fn: (r) => exists r.dataValue)`)
-			sb.WriteString(fmt.Sprintf(`|> filter(fn: (r) => r.dataValue == "%s")`, value))
+			sb.WriteString(fmt.Sprintf(`|> filter(fn: (r) => r.dataValue%s"%s")`, comparator, value))
 		}
 	}
 

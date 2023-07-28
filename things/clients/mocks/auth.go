@@ -37,10 +37,7 @@ func (svc authServiceMock) Identify(ctx context.Context, in *policies.Token, opt
 
 func (svc authServiceMock) Issue(ctx context.Context, in *policies.IssueReq, opts ...grpc.CallOption) (*policies.Token, error) {
 	if id, ok := svc.users[in.GetEmail()]; ok {
-		switch in.Type {
-		default:
-			return &policies.Token{Value: id}, nil
-		}
+		return &policies.Token{Value: id}, nil
 	}
 	return nil, errors.ErrAuthentication
 }

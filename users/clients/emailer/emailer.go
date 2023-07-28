@@ -23,7 +23,7 @@ func New(url string, c *email.Config) (clients.Emailer, error) {
 	return &emailer{resetURL: url, agent: e}, err
 }
 
-func (e *emailer) SendPasswordReset(To []string, host, user, token string) error {
+func (e *emailer) SendPasswordReset(to []string, host, user, token string) error {
 	url := fmt.Sprintf("%s%s?token=%s", host, e.resetURL, token)
-	return e.agent.Send(To, "", "Password Reset Request", "", user, url, "")
+	return e.agent.Send(to, "", "Password Reset Request", "", user, url, "")
 }

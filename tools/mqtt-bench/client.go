@@ -7,6 +7,7 @@ import (
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -55,7 +56,7 @@ type message struct {
 
 type handler func(*message) ([]byte, error)
 
-func (c *Client) publish(r chan *runResults) {
+func (c *Client) publish(r chan *runResults, errChan chan<- error) {
 	res := &runResults{}
 	times := make([]*float64, c.MsgCount)
 
@@ -67,7 +68,6 @@ func (c *Client) publish(r chan *runResults) {
 			times[i] = calcMsgRes(&m, res)
 		}
 		r <- calcRes(res, start, arr(times))
-		return
 	}
 	if !c.Quiet {
 		log.Printf("Client %v is connected to the broker %v\n", c.ID, c.BrokerURL)
@@ -83,7 +83,7 @@ func (c *Client) publish(r chan *runResults) {
 	}
 	payload, err := c.SendMsg(&m)
 	if err != nil {
-		log.Fatalf("Failed to marshal payload - %s", err.Error())
+		errChan <- fmt.Errorf("Failed to marshal payload - %s", err.Error())
 	}
 
 	for i := 0; i < c.MsgCount; i++ {
@@ -165,10 +165,10 @@ func (c *Client) connect() error {
 	return nil
 }
 
-func checkConnection(broker string, timeoutSecs int) {
+func checkConnection(broker string, timeoutSecs int) error {
 	s := strings.Split(broker, ":")
 	if len(s) != 3 {
-		log.Fatalf("Wrong host address format")
+		return errors.New("Wrong host address format")
 	}
 
 	network := s[0]
@@ -186,14 +186,15 @@ func checkConnection(broker string, timeoutSecs int) {
 
 	defer conClose()
 	if err, ok := err.(*net.OpError); ok && err.Timeout() {
-		log.Fatalf("Timeout error: %s\n", err.Error())
+		return fmt.Errorf("Timeout error: %s\n", err.Error())
 	}
 
 	if err != nil {
-		log.Fatalf("Error: %s\n", err.Error())
+		return fmt.Errorf("Error: %s\n", err.Error())
 	}
 
 	log.Printf("Connection to %s://%s:%s looks OK\n", network, host, port)
+	return nil
 }
 
 func arr(a []*float64) []float64 {

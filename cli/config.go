@@ -5,7 +5,6 @@ package cli
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -33,21 +32,21 @@ func read(file string) (Config, error) {
 	return c, nil
 }
 
-func ParseConfig() {
+func ParseConfig() error {
 	if ConfigPath == "" {
 		// No config file
-		return
+		return nil
 	}
 
 	if _, err := os.Stat(ConfigPath); os.IsNotExist(err) {
 		errConfigNotFound := errors.Wrap(errors.New("config file was not found"), err)
 		logError(errConfigNotFound)
-		return
+		return nil
 	}
 
 	config, err := read(ConfigPath)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	if config.Offset != 0 {
@@ -65,4 +64,5 @@ func ParseConfig() {
 	if config.RawOutput {
 		RawOutput = config.RawOutput
 	}
+	return nil
 }

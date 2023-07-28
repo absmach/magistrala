@@ -75,6 +75,8 @@ func main() {
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
+	var exitCode int
+	defer mflog.ExitWithError(&exitCode)
 	defer db.Close()
 
 	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, instanceID)
@@ -90,7 +92,9 @@ func main() {
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		exitCode = 1
+		return
 	}
 
 	repo := newService(db, logger)
@@ -98,13 +102,17 @@ func main() {
 
 	pubSub, err := brokers.NewPubSub(cfg.BrokerURL, "", logger)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err))
+		logger.Error(fmt.Sprintf("failed to connect to message broker: %s", err))
+		exitCode = 1
+		return
 	}
 	pubSub = tracing.NewPubSub(tracer, pubSub)
 	defer pubSub.Close()
 
 	if err = consumers.Start(ctx, svcName, pubSub, repo, cfg.ConfigPath, logger); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to create Timescale writer: %s", err))
+		logger.Error(fmt.Sprintf("failed to create Timescale writer: %s", err))
+		exitCode = 1
+		return
 	}
 
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svcName, instanceID), logger)

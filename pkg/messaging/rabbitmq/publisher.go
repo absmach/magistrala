@@ -83,5 +83,5 @@ func (pub *publisher) Close() error {
 }
 
 func formatTopic(topic string) string {
-	return strings.Replace(topic, ">", "#", -1)
+	return strings.ReplaceAll(topic, ">", "#")
 }

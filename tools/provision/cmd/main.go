@@ -20,7 +20,9 @@ func main() {
 		Long: `Tool for provisioning series of Mainflux channels and things and connecting them together.
 Complete documentation is available at https://docs.mainflux.io`,
 		Run: func(cmd *cobra.Command, args []string) {
-			provision.Provision(pconf)
+			if err := provision.Provision(pconf); err != nil {
+				log.Fatal(err)
+			}
 		},
 	}
 

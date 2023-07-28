@@ -35,7 +35,9 @@ Complete documentation is available at https://docs.mainflux.io`,
 				}
 			}
 
-			bench.Benchmark(bconf)
+			if err := bench.Benchmark(bconf); err != nil {
+				log.Fatal(err)
+			}
 		},
 	}
 

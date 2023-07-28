@@ -87,6 +87,8 @@ func main() {
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("failed to setup route map redis client : %s", err))
 	}
+	var exitCode int
+	defer mflog.ExitWithError(&exitCode)
 	defer rmConn.Close()
 
 	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, instanceID)
@@ -102,7 +104,9 @@ func main() {
 
 	pub, err := brokers.NewPublisher(cfg.BrokerURL)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err))
+		logger.Error(fmt.Sprintf("failed to connect to message broker: %s", err))
+		exitCode = 1
+		return
 	}
 	pub = tracing.New(tracer, pub)
 	defer pub.Close()
@@ -111,18 +115,29 @@ func main() {
 
 	esConn, err := redisClient.Setup(envPrefixThingsES)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to setup things event store redis client : %s", err))
+		logger.Error(fmt.Sprintf("failed to setup things event store redis client : %s", err))
+		exitCode = 1
+		return
 	}
 	defer esConn.Close()
 
-	mqttConn := connectToMQTTBroker(cfg.LoraMsgURL, cfg.LoraMsgUser, cfg.LoraMsgPass, cfg.LoraMsgTimeout, logger)
+	mqttConn, err := connectToMQTTBroker(cfg.LoraMsgURL, cfg.LoraMsgUser, cfg.LoraMsgPass, cfg.LoraMsgTimeout, logger)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
 
-	go subscribeToLoRaBroker(svc, mqttConn, cfg.LoraMsgTimeout, cfg.LoraMsgTopic, logger)
+	g.Go(func() error {
+		return subscribeToLoRaBroker(svc, mqttConn, cfg.LoraMsgTimeout, cfg.LoraMsgTopic, logger)
+	})
 	go subscribeToThingsES(svc, esConn, cfg.ESConsumerName, logger)
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		exitCode = 1
+		return
 	}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(instanceID), logger)
 
@@ -144,7 +159,7 @@ func main() {
 	}
 }
 
-func connectToMQTTBroker(url, user, password string, timeout time.Duration, logger mflog.Logger) mqttPaho.Client {
+func connectToMQTTBroker(url, user, password string, timeout time.Duration, logger mflog.Logger) (mqttPaho.Client, error) {
 	opts := mqttPaho.NewClientOptions()
 	opts.AddBroker(url)
 	opts.SetUsername(user)
@@ -153,24 +168,25 @@ func connectToMQTTBroker(url, user, password string, timeout time.Duration, logg
 		logger.Info("Connected to Lora MQTT broker")
 	})
 	opts.SetConnectionLostHandler(func(c mqttPaho.Client, err error) {
-		logger.Fatal(fmt.Sprintf("MQTT connection lost: %s", err))
+		logger.Error(fmt.Sprintf("MQTT connection lost: %s", err))
 	})
 
 	client := mqttPaho.NewClient(opts)
 
 	if token := client.Connect(); token.WaitTimeout(timeout) && token.Error() != nil {
-		logger.Fatal(fmt.Sprintf("failed to connect to Lora MQTT broker: %s", token.Error()))
+		return nil, fmt.Errorf("failed to connect to Lora MQTT broker: %s", token.Error())
 	}
 
-	return client
+	return client, nil
 }
 
-func subscribeToLoRaBroker(svc lora.Service, mc mqttPaho.Client, timeout time.Duration, topic string, logger mflog.Logger) {
+func subscribeToLoRaBroker(svc lora.Service, mc mqttPaho.Client, timeout time.Duration, topic string, logger mflog.Logger) error {
 	mqtt := mqtt.NewBroker(svc, mc, timeout, logger)
 	logger.Info("Subscribed to Lora MQTT broker")
 	if err := mqtt.Subscribe(topic); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to subscribe to Lora MQTT broker: %s", err))
+		return fmt.Errorf("failed to subscribe to Lora MQTT broker: %s", err)
 	}
+	return nil
 }
 
 func subscribeToThingsES(svc lora.Service, client *r.Client, consumer string, logger mflog.Logger) {

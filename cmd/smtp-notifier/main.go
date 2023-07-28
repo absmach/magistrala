@@ -83,16 +83,22 @@ func main() {
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
+	var exitCode int
+	defer mflog.ExitWithError(&exitCode)
 	defer db.Close()
 
 	ec := email.Config{}
 	if err := env.Parse(&ec); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load email configuration : %s", err))
+		logger.Error(fmt.Sprintf("failed to load email configuration : %s", err))
+		exitCode = 1
+		return
 	}
 
 	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, instanceID)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
+		logger.Error(fmt.Sprintf("failed to init Jaeger: %s", err))
+		exitCode = 1
+		return
 	}
 	defer func() {
 		if err := tp.Shutdown(ctx); err != nil {
@@ -103,27 +109,40 @@ func main() {
 
 	pubSub, err := brokers.NewPubSub(cfg.BrokerURL, "", logger)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err))
+		logger.Error(fmt.Sprintf("failed to connect to message broker: %s", err))
+		exitCode = 1
+		return
 	}
 	pubSub = pstracing.NewPubSub(tracer, pubSub)
 	defer pubSub.Close()
 
 	auth, authHandler, err := authClient.Setup(envPrefix, svcName)
 	if err != nil {
-		logger.Fatal(err.Error())
+		logger.Error(err.Error())
+		exitCode = 1
+		return
 	}
 	defer authHandler.Close()
 	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 
-	svc := newService(db, tracer, auth, cfg, ec, logger)
+	svc, err := newService(db, tracer, auth, cfg, ec, logger)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
 
 	if err = consumers.Start(ctx, svcName, pubSub, svc, cfg.ConfigPath, logger); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to create Postgres writer: %s", err))
+		logger.Error(fmt.Sprintf("failed to create Postgres writer: %s", err))
+		exitCode = 1
+		return
 	}
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		exitCode = 1
+		return
 	}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, instanceID), logger)
 
@@ -146,14 +165,14 @@ func main() {
 
 }
 
-func newService(db *sqlx.DB, tracer trace.Tracer, auth policies.AuthServiceClient, c config, ec email.Config, logger mflog.Logger) notifiers.Service {
+func newService(db *sqlx.DB, tracer trace.Tracer, auth policies.AuthServiceClient, c config, ec email.Config, logger mflog.Logger) (notifiers.Service, error) {
 	database := notifierPg.NewDatabase(db, tracer)
 	repo := tracing.New(tracer, notifierPg.New(database))
 	idp := ulid.New()
 
 	agent, err := email.New(&ec)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to create email agent: %s", err))
+		return nil, fmt.Errorf("failed to create email agent: %s", err)
 	}
 
 	notifier := smtp.New(agent)
@@ -162,5 +181,5 @@ func newService(db *sqlx.DB, tracer trace.Tracer, auth policies.AuthServiceClien
 	counter, latency := internal.MakeMetrics("notifier", "smtp")
 	svc = api.MetricsMiddleware(svc, counter, latency)
 
-	return svc
+	return svc, nil
 }

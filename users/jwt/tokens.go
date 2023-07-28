@@ -65,8 +65,8 @@ func (repo tokenRepo) Issue(ctx context.Context, claim Claims) (Token, error) {
 	}
 
 	return Token{
-		AccessToken:  string(signedAccessToken[:]),
-		RefreshToken: string(signedRefreshToken[:]),
+		AccessToken:  string(signedAccessToken),
+		RefreshToken: string(signedRefreshToken),
 		AccessType:   "Bearer",
 	}, nil
 }

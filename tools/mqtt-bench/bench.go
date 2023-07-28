@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strconv"
 	"time"
@@ -19,11 +18,13 @@ import (
 )
 
 // Benchmark - main benchmarking function.
-func Benchmark(cfg Config) {
-	checkConnection(cfg.MQTT.Broker.URL, 1)
+func Benchmark(cfg Config) error {
+	if err := checkConnection(cfg.MQTT.Broker.URL, 1); err != nil {
+		return err
+	}
 	logger, err := mflog.New(os.Stdout, mflog.Debug.String())
 	if err != nil {
-		log.Fatalf(err.Error())
+		return err
 	}
 
 	subsResults := map[string](*[]float64){}
@@ -44,12 +45,12 @@ func Benchmark(cfg Config) {
 
 	data, err := os.ReadFile(cfg.Mf.ConnFile)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("Error loading connections file: %s", err))
+		return fmt.Errorf("Error loading connections file: %s", err)
 	}
 
 	mf := mainflux{}
 	if err := toml.Unmarshal(data, &mf); err != nil {
-		logger.Fatal(fmt.Sprintf("Cannot load Mainflux connections config %s \nUse tools/provision to create file", cfg.Mf.ConnFile))
+		return fmt.Errorf("Cannot load Mainflux connections config %s \nUse tools/provision to create file", cfg.Mf.ConnFile)
 	}
 
 	resCh := make(chan *runResults)
@@ -70,15 +71,23 @@ func Benchmark(cfg Config) {
 		if cfg.MQTT.TLS.MTLS {
 			cert, err = tls.X509KeyPair([]byte(mfThing.MTLSCert), []byte(mfThing.MTLSKey))
 			if err != nil {
-				logger.Fatal(err.Error())
+				return err
 			}
 		}
 		c, err := makeClient(i, cfg, mfChan, mfThing, startStamp, caByte, cert)
 		if err != nil {
-			logger.Fatal(fmt.Sprintf("Unable to create message payload %s", err.Error()))
+			return fmt.Errorf("Unable to create message payload %s", err.Error())
 		}
 
-		go c.publish(resCh)
+		errorChan := make(chan error)
+		go c.publish(resCh, errorChan)
+
+		for {
+			err := <-errorChan
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	// Collect the results
@@ -100,11 +109,12 @@ func Benchmark(cfg Config) {
 	totalTime := time.Since(start)
 	totals := calculateTotalResults(results, totalTime, subsResults)
 	if totals == nil {
-		return
+		return fmt.Errorf("totals not assigned")
 	}
 
 	// Print sats
 	printResults(results, totals, cfg.MQTT.Message.Format, cfg.Log.Quiet)
+	return nil
 }
 
 func getBytePayload(size int, m message) (handler, error) {

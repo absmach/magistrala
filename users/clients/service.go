@@ -200,7 +200,7 @@ func (svc service) ListClients(ctx context.Context, token string, pm mfclients.P
 		if client.ID == id {
 			clients.Clients = append(clients.Clients[:i], clients.Clients[i+1:]...)
 			if clients.Total != 0 {
-				clients.Total = clients.Total - 1
+				clients.Total--
 			}
 		}
 	}

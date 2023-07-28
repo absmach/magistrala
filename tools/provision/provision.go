@@ -50,7 +50,7 @@ type Config struct {
 }
 
 // Provision - function that does actual provisiong.
-func Provision(conf Config) {
+func Provision(conf Config) error {
 	const (
 		rsaBits = 4096
 		ttl     = "2400h"
@@ -84,8 +84,7 @@ func Provision(conf Config) {
 
 	// Create new user
 	if _, err := s.CreateUser(user, ""); err != nil {
-		log.Fatalf("Unable to create new user: %s", err.Error())
-		return
+		return fmt.Errorf("Unable to create new user: %s", err.Error())
 
 	}
 
@@ -94,8 +93,7 @@ func Provision(conf Config) {
 	// Login user
 	token, err := s.CreateToken(user)
 	if err != nil {
-		log.Fatalf("Unable to login user: %s", err.Error())
-		return
+		return fmt.Errorf("Unable to login user: %s", err.Error())
 	}
 
 	var tlsCert tls.Certificate
@@ -104,22 +102,22 @@ func Provision(conf Config) {
 	if conf.SSL {
 		tlsCert, err = tls.LoadX509KeyPair(conf.CA, conf.CAKey)
 		if err != nil {
-			log.Fatalf("Failed to load CA cert")
+			return fmt.Errorf("Failed to load CA cert")
 		}
 
 		b, err := os.ReadFile(conf.CA)
 		if err != nil {
-			log.Fatalf("Failed to load CA cert")
+			return fmt.Errorf("Failed to load CA cert")
 		}
 
 		block, _ := pem.Decode(b)
 		if block == nil {
-			log.Fatalf("No PEM data found, failed to decode CA")
+			return fmt.Errorf("No PEM data found, failed to decode CA")
 		}
 
 		caCert, err = x509.ParseCertificate(block.Bytes)
 		if err != nil {
-			log.Fatalf("Failed to decode certificate - %s", err.Error())
+			return fmt.Errorf("Failed to decode certificate - %s", err.Error())
 		}
 	}
 
@@ -138,12 +136,12 @@ func Provision(conf Config) {
 
 	things, err = s.CreateThings(things, token.AccessToken)
 	if err != nil {
-		log.Fatalf("Failed to create the things: %s", err.Error())
+		return fmt.Errorf("Failed to create the things: %s", err.Error())
 	}
 
 	channels, err = s.CreateChannels(channels, token.AccessToken)
 	if err != nil {
-		log.Fatalf("Failed to create the chennels: %s", err.Error())
+		return fmt.Errorf("Failed to create the chennels: %s", err.Error())
 	}
 
 	for _, t := range things {
@@ -165,14 +163,14 @@ func Provision(conf Config) {
 			notBefore := time.Now()
 			validFor, err := time.ParseDuration(ttl)
 			if err != nil {
-				log.Fatalf("Failed to set date %v", validFor)
+				return fmt.Errorf("Failed to set date %v", validFor)
 			}
 			notAfter := notBefore.Add(validFor)
 
 			serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 			serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 			if err != nil {
-				log.Fatalf("Failed to generate serial number: %s", err)
+				return fmt.Errorf("Failed to generate serial number: %s", err)
 			}
 
 			tmpl := x509.Certificate{
@@ -192,7 +190,7 @@ func Provision(conf Config) {
 
 			derBytes, err := x509.CreateCertificate(rand.Reader, &tmpl, caCert, publicKey(priv), tlsCert.PrivateKey)
 			if err != nil {
-				log.Fatalf("Failed to create certificate: %s", err)
+				return fmt.Errorf("Failed to create certificate: %s", err)
 			}
 
 			var bw, keyOut bytes.Buffer
@@ -200,13 +198,13 @@ func Provision(conf Config) {
 			buffKeyOut := bufio.NewWriter(&keyOut)
 
 			if err := pem.Encode(buffWriter, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes}); err != nil {
-				log.Fatalf("Failed to write cert pem data: %s", err)
+				return fmt.Errorf("Failed to write cert pem data: %s", err)
 			}
 			buffWriter.Flush()
 			cert = bw.String()
 
 			if err := pem.Encode(buffKeyOut, pemBlockForKey(priv)); err != nil {
-				log.Fatalf("Failed to write key pem data: %s", err)
+				return fmt.Errorf("Failed to write key pem data: %s", err)
 			}
 			buffKeyOut.Flush()
 			key = keyOut.String()
@@ -234,6 +232,7 @@ func Provision(conf Config) {
 	if err := s.Connect(conIDs, token.AccessToken); err != nil {
 		log.Fatalf("Failed to connect things %s to channels %s: %s", conIDs.ThingIDs, conIDs.ChannelIDs, err)
 	}
+	return nil
 }
 
 func publicKey(priv interface{}) interface{} {

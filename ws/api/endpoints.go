@@ -94,7 +94,7 @@ func parseSubTopic(subtopic string) (string, error) {
 		return "", errMalformedSubtopic
 	}
 
-	subtopic = strings.Replace(subtopic, "/", ".", -1)
+	subtopic = strings.ReplaceAll(subtopic, "/", ".")
 
 	elems := strings.Split(subtopic, ".")
 	filteredElems := []string{}

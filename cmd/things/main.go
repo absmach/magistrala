@@ -105,6 +105,8 @@ func main() {
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
+	var exitCode int
+	defer mflog.ExitWithError(&exitCode)
 	defer db.Close()
 
 	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, instanceID)
@@ -121,14 +123,18 @@ func main() {
 	// Setup new redis cache client
 	cacheClient, err := redisClient.Setup(envPrefixCache)
 	if err != nil {
-		logger.Fatal(err.Error())
+		logger.Error(err.Error())
+		exitCode = 1
+		return
 	}
 	defer cacheClient.Close()
 
 	// Setup new redis event store client
 	esClient, err := redisClient.Setup(envPrefixES)
 	if err != nil {
-		logger.Fatal(err.Error())
+		logger.Error(err.Error())
+		exitCode = 1
+		return
 	}
 	defer esClient.Close()
 
@@ -140,7 +146,9 @@ func main() {
 	default:
 		authServiceClient, authHandler, err := authClient.Setup(envPrefix, svcName)
 		if err != nil {
-			logger.Fatal(err.Error())
+			logger.Error(err.Error())
+			exitCode = 1
+			return
 		}
 		defer authHandler.Close()
 		auth = authServiceClient
@@ -151,7 +159,9 @@ func main() {
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load %s gRPC server configuration : %s", svcName, err))
+		logger.Error(fmt.Sprintf("failed to load %s gRPC server configuration : %s", svcName, err))
+		exitCode = 1
+		return
 	}
 	mux := bone.New()
 	hsp := httpserver.New(ctx, cancel, "things-policies", httpServerConfig, httpapi.MakeHandler(csvc, psvc, mux, logger), logger)
@@ -164,7 +174,9 @@ func main() {
 	}
 	grpcServerConfig := server.Config{Port: defSvcAuthGrpcPort}
 	if err := env.Parse(&grpcServerConfig, env.Options{Prefix: envPrefixAuthGrpc, AltPrefix: envPrefix}); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load %s gRPC server configuration : %s", svcName, err))
+		logger.Error(fmt.Sprintf("failed to load %s gRPC server configuration : %s", svcName, err))
+		exitCode = 1
+		return
 	}
 	gs := grpcserver.New(ctx, cancel, svcName, grpcServerConfig, registerThingsServiceServer, logger)
 

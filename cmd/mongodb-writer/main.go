@@ -73,6 +73,8 @@ func main() {
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
 	}
+	var exitCode int
+	defer mflog.ExitWithError(&exitCode)
 	defer func() {
 		if err := tp.Shutdown(ctx); err != nil {
 			logger.Error(fmt.Sprintf("Error shutting down tracer provider: %v", err))
@@ -82,26 +84,34 @@ func main() {
 
 	pubSub, err := brokers.NewPubSub(cfg.BrokerURL, "", logger)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err))
+		logger.Error(fmt.Sprintf("failed to connect to message broker: %s", err))
+		exitCode = 1
+		return
 	}
 	pubSub = tracing.NewPubSub(tracer, pubSub)
 	defer pubSub.Close()
 
 	db, err := mongoClient.Setup(envPrefixDB)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to setup mongo database : %s", err))
+		logger.Error(fmt.Sprintf("failed to setup mongo database : %s", err))
+		exitCode = 1
+		return
 	}
 
 	httpServerConfig := server.Config{Port: defSvcHttpPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		exitCode = 1
+		return
 	}
 
 	repo := newService(db, logger)
 	repo = consumerTracing.NewBlocking(tracer, repo, httpServerConfig)
 
 	if err := consumers.Start(ctx, svcName, pubSub, repo, cfg.ConfigPath, logger); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to start MongoDB writer: %s", err))
+		logger.Error(fmt.Sprintf("failed to start MongoDB writer: %s", err))
+		exitCode = 1
+		return
 	}
 
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svcName, instanceID), logger)

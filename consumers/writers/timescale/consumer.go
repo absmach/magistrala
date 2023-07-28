@@ -78,8 +78,7 @@ func (tr timescaleRepo) saveSenml(ctx context.Context, messages interface{}) (er
 		if _, err := tx.NamedExec(q, m); err != nil {
 			pgErr, ok := err.(*pgconn.PgError)
 			if ok {
-				switch pgErr.Code {
-				case pgerrcode.InvalidTextRepresentation:
+				if pgErr.Code == pgerrcode.InvalidTextRepresentation {
 					return errors.Wrap(errSaveMessage, errInvalidMessage)
 				}
 			}

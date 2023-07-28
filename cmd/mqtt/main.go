@@ -98,6 +98,8 @@ func main() {
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
 	}
+	var exitCode int
+	defer mflog.ExitWithError(&exitCode)
 	defer func() {
 		if err := tp.Shutdown(ctx); err != nil {
 			logger.Error(fmt.Sprintf("Error shutting down tracer provider: %v", err))
@@ -107,33 +109,43 @@ func main() {
 
 	nps, err := brokers.NewPubSub(cfg.BrokerURL, "mqtt", logger)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err))
+		logger.Error(fmt.Sprintf("failed to connect to message broker: %s", err))
+		exitCode = 1
+		return
 	}
 	nps = tracing.NewPubSub(tracer, nps)
 	defer nps.Close()
 
 	mpub, err := mqttpub.NewPublisher(fmt.Sprintf("%s:%s", cfg.MqttTargetHost, cfg.MqttTargetPort), cfg.MqttForwarderTimeout)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to create MQTT publisher: %s", err))
+		logger.Error(fmt.Sprintf("failed to create MQTT publisher: %s", err))
+		exitCode = 1
+		return
 	}
 	mpub = tracing.New(tracer, mpub)
 
 	fwd := mqtt.NewForwarder(brokers.SubjectAllChannels, logger)
 	fwd = mqtttracing.New(tracer, fwd, brokers.SubjectAllChannels)
 	if err := fwd.Forward(ctx, svcName, nps, mpub); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to forward message broker messages: %s", err))
+		logger.Error(fmt.Sprintf("failed to forward message broker messages: %s", err))
+		exitCode = 1
+		return
 	}
 
 	np, err := brokers.NewPublisher(cfg.BrokerURL)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to connect to message broker: %s", err))
+		logger.Error(fmt.Sprintf("failed to connect to message broker: %s", err))
+		exitCode = 1
+		return
 	}
 	np = tracing.New(tracer, np)
 	defer np.Close()
 
 	ec, err := redisClient.Setup(envPrefixES)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to setup %s event store redis client : %s", svcName, err))
+		logger.Error(fmt.Sprintf("failed to setup %s event store redis client : %s", svcName, err))
+		exitCode = 1
+		return
 	}
 	defer ec.Close()
 
@@ -141,13 +153,17 @@ func main() {
 
 	ac, err := redisClient.Setup(envPrefixAuthCache)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to setup %s event store redis client : %s", svcName, err))
+		logger.Error(fmt.Sprintf("failed to setup %s event store redis client : %s", svcName, err))
+		exitCode = 1
+		return
 	}
 	defer ac.Close()
 
 	tc, tcHandler, err := thingsClient.Setup(envPrefix)
 	if err != nil {
-		logger.Fatal(err.Error())
+		logger.Error(err.Error())
+		exitCode = 1
+		return
 	}
 	defer tcHandler.Close()
 	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())

@@ -179,7 +179,6 @@ func encodeError(err error) error {
 	case errors.Contains(err, errors.ErrMalformedEntity),
 		err == apiutil.ErrInvalidAuthKey,
 		err == apiutil.ErrMissingID,
-		err == apiutil.ErrBearerToken,
 		err == apiutil.ErrMissingPolicySub,
 		err == apiutil.ErrMissingPolicyObj,
 		err == apiutil.ErrMalformedPolicyAct,

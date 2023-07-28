@@ -119,8 +119,7 @@ func (ts *transformerService) Transform(msg *messaging.Message) (interface{}, er
 // of the Flatten function.
 func ParseFlat(flat interface{}) interface{} {
 	msg := make(map[string]interface{})
-	switch v := flat.(type) {
-	case map[string]interface{}:
+	if v, ok := flat.(map[string]interface{}); ok {
 		for key, value := range v {
 			if value == nil {
 				continue

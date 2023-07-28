@@ -39,7 +39,7 @@ func (req createGroupsReq) validate() error {
 		return apiutil.ErrBearerToken
 	}
 
-	if len(req.Groups) <= 0 {
+	if len(req.Groups) == 0 {
 		return apiutil.ErrEmptyList
 	}
 

@@ -41,7 +41,7 @@ var (
 	topics              = []string{topic}
 	invalidTopics       = []string{invalidTopic}
 	invalidChanIDTopics = []string{fmt.Sprintf(topicMsg, invalidTopic)}
-	//Test log messages for cases the handler does not provide a return value.
+	// Test log messages for cases the handler does not provide a return value.
 	logBuffer     = bytes.Buffer{}
 	sessionClient = session.Session{
 		ID:       clientID,

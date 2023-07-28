@@ -71,23 +71,23 @@ func New(c *Config) (*Agent, error) {
 }
 
 // Send sends e-mail.
-func (a *Agent) Send(To []string, From, Subject, Header, User, Content, Footer string) error {
+func (a *Agent) Send(to []string, from, subject, header, user, content, footer string) error {
 	if a.tmpl == nil {
 		return errMissingEmailTemplate
 	}
 
 	buff := new(bytes.Buffer)
 	e := email{
-		To:      To,
-		From:    From,
-		Subject: Subject,
-		Header:  Header,
-		User:    User,
-		Content: Content,
-		Host:    strings.Split(Content, "?")[0],
-		Footer:  Footer,
+		To:      to,
+		From:    from,
+		Subject: subject,
+		Header:  header,
+		User:    user,
+		Content: content,
+		Host:    strings.Split(content, "?")[0],
+		Footer:  footer,
 	}
-	if From == "" {
+	if from == "" {
 		from := mail.Address{Name: a.conf.FromName, Address: a.conf.FromAddress}
 		e.From = from.String()
 	}
@@ -98,8 +98,8 @@ func (a *Agent) Send(To []string, From, Subject, Header, User, Content, Footer s
 
 	m := gomail.NewMessage()
 	m.SetHeader("From", e.From)
-	m.SetHeader("To", To...)
-	m.SetHeader("Subject", Subject)
+	m.SetHeader("To", to...)
+	m.SetHeader("Subject", subject)
 	m.SetBody("text/plain", buff.String())
 
 	if err := a.dial.DialAndSend(m); err != nil {

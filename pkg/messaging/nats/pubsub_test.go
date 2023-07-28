@@ -88,13 +88,13 @@ func TestPublisher(t *testing.T) {
 }
 
 func TestPubsub(t *testing.T) {
-	// Test Subscribe and Unsubscribe
+	// Test Subscribe and Unsubscribe.
 	subcases := []struct {
 		desc         string
 		topic        string
 		clientID     string
 		errorMessage error
-		pubsub       bool //true for subscribe and false for unsubscribe
+		pubsub       bool // true for subscribe and false for unsubscribe.
 		handler      messaging.MessageHandler
 	}{
 		{

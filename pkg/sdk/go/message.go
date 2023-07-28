@@ -22,7 +22,7 @@ func (sdk mfSDK) SendMessage(chanName, msg, key string) errors.SDKError {
 		subtopicPart = fmt.Sprintf("/%s", strings.ReplaceAll(chanNameParts[1], ".", "/"))
 	}
 
-	url := fmt.Sprintf("%s/channels/%s/messages/%s", sdk.httpAdapterURL, chanID, subtopicPart)
+	url := fmt.Sprintf("%s/channels/%s/messages%s", sdk.httpAdapterURL, chanID, subtopicPart)
 
 	_, _, err := sdk.processRequest(http.MethodPost, url, ThingPrefix+key, string(CTJSON), []byte(msg), http.StatusAccepted)
 
@@ -34,7 +34,7 @@ func (sdk mfSDK) ReadMessages(chanName, token string) (MessagesPage, errors.SDKE
 	chanID := chanNameParts[0]
 	subtopicPart := ""
 	if len(chanNameParts) == channelParts {
-		subtopicPart = fmt.Sprintf("?subtopic=%s", strings.ReplaceAll(chanNameParts[1], ".", "/"))
+		subtopicPart = fmt.Sprintf("?subtopic=%s", chanNameParts[1])
 	}
 
 	url := fmt.Sprintf("%s/channels/%s/messages%s", sdk.readerURL, chanID, subtopicPart)

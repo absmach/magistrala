@@ -17,7 +17,7 @@ import (
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
-	"github.com/mainflux/mainflux/logger"
+	mflog "github.com/mainflux/mainflux/logger"
 	mfclients "github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfgroups "github.com/mainflux/mainflux/pkg/groups"
@@ -97,16 +97,21 @@ func main() {
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
-	logger, err := logger.New(os.Stdout, cfg.Server.LogLevel)
+	logger, err := mflog.New(os.Stdout, cfg.Server.LogLevel)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
+
+	var exitCode int
+	defer mflog.ExitWithError(&exitCode)
 
 	instanceID := mainflux.Env(envInstanceID, defInstanceID)
 	if instanceID == "" {
 		instanceID, err = uuid.New().ID()
 		if err != nil {
-			log.Fatalf("Failed to generate instanceID: %s", err)
+			logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
+			exitCode = 1
+			return
 		}
 	}
 

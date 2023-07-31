@@ -16,9 +16,9 @@ const envAuthGrpcPrefix = "MF_AUTH_GRPC_"
 var errGrpcConfig = errors.New("failed to load grpc configuration")
 
 // Setup loads Auth gRPC configuration from environment variable and creates new Auth gRPC API.
-func Setup(envPrefix, svcName string) (policies.AuthServiceClient, grpcClient.ClientHandler, error) {
+func Setup(svcName string) (policies.AuthServiceClient, grpcClient.ClientHandler, error) {
 	config := grpcClient.Config{}
-	if err := env.Parse(&config, env.Options{Prefix: envAuthGrpcPrefix, AltPrefix: envPrefix}); err != nil {
+	if err := env.Parse(&config, env.Options{Prefix: envAuthGrpcPrefix}); err != nil {
 		return nil, nil, errors.Wrap(errGrpcConfig, err)
 	}
 	c, ch, err := grpcClient.Setup(config, svcName)

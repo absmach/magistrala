@@ -140,7 +140,7 @@ func (sdk mfSDK) UpdateUser(user User, token string) (User, errors.SDKError) {
 	if err := json.Unmarshal(body, &user); err != nil {
 		return User{}, errors.NewSDKError(err)
 	}
-	
+
 	return user, nil
 }
 
@@ -161,7 +161,7 @@ func (sdk mfSDK) UpdateUserTags(user User, token string) (User, errors.SDKError)
 	if err := json.Unmarshal(body, &user); err != nil {
 		return User{}, errors.NewSDKError(err)
 	}
-	
+
 	return user, nil
 }
 

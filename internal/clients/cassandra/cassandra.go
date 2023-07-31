@@ -17,11 +17,11 @@ var (
 
 // Config contains Cassandra DB specific parameters.
 type Config struct {
-	Hosts    []string `env:"DB_CLUSTER"     envDefault:"127.0.0.1" envSeparator:","`
-	Keyspace string   `env:"DB_KEYSPACE"    envDefault:"mainflux"`
-	User     string   `env:"DB_USER"        envDefault:""`
-	Pass     string   `env:"DB_PASS"        envDefault:""`
-	Port     int      `env:"DB_PORT"        envDefault:"9042"`
+	Hosts    []string `env:"CLUSTER"     envDefault:"127.0.0.1" envSeparator:","`
+	Keyspace string   `env:"KEYSPACE"    envDefault:"mainflux"`
+	User     string   `env:"USER"        envDefault:""`
+	Pass     string   `env:"PASS"        envDefault:""`
+	Port     int      `env:"PORT"        envDefault:"9042"`
 }
 
 // Setup load configuration from environment and creates new cassandra connection.

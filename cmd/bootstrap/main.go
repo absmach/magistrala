@@ -10,10 +10,12 @@ import (
 	"log"
 	"os"
 
+	"github.com/go-redis/redis/v8"
+	"github.com/jmoiron/sqlx"
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
-	"go.opentelemetry.io/otel/trace"
-
+	"github.com/mainflux/mainflux/bootstrap"
+	"github.com/mainflux/mainflux/bootstrap/api"
 	bootstrapPg "github.com/mainflux/mainflux/bootstrap/postgres"
 	rediscons "github.com/mainflux/mainflux/bootstrap/redis/consumer"
 	redisprod "github.com/mainflux/mainflux/bootstrap/redis/producer"
@@ -31,21 +33,17 @@ import (
 	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/users/policies"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
-
-	"github.com/go-redis/redis/v8"
-	"github.com/jmoiron/sqlx"
-	"github.com/mainflux/mainflux/bootstrap"
-	"github.com/mainflux/mainflux/bootstrap/api"
 )
 
 const (
 	svcName        = "bootstrap"
-	envPrefix      = "MF_BOOTSTRAP_"
+	envPrefixDB    = "MF_BOOTSTRAP_DB_"
 	envPrefixES    = "MF_BOOTSTRAP_ES_"
-	envPrefixHttp  = "MF_BOOTSTRAP_HTTP_"
+	envPrefixHTTP  = "MF_BOOTSTRAP_HTTP_"
 	defDB          = "bootstrap"
-	defSvcHttpPort = "9013"
+	defSvcHTTPPort = "9013"
 )
 
 type config struct {
@@ -72,23 +70,27 @@ func main() {
 		log.Fatalf("failed to init logger: %s", err)
 	}
 
+	var exitCode int
+	defer mflog.ExitWithError(&exitCode)
+
 	instanceID := cfg.InstanceID
 	if instanceID == "" {
 		instanceID, err = uuid.New().ID()
 		if err != nil {
-			log.Fatalf("Failed to generate instanceID: %s", err)
+			logger.Error(fmt.Sprintf("Failed to generate instanceID: %s", err))
+			exitCode = 1
+			return
 		}
 	}
 
 	// Create new postgres client
 	dbConfig := pgClient.Config{Name: defDB}
-
-	db, err := pgClient.SetupWithConfig(envPrefix, *bootstrapPg.Migration(), dbConfig)
+	db, err := pgClient.SetupWithConfig(envPrefixDB, *bootstrapPg.Migration(), dbConfig)
 	if err != nil {
-		logger.Fatal(err.Error())
+		logger.Error(err.Error())
+		exitCode = 1
+		return
 	}
-	var exitCode int
-	defer mflog.ExitWithError(&exitCode)
 	defer db.Close()
 
 	// Create new redis client for bootstrap event store
@@ -101,7 +103,7 @@ func main() {
 	defer esClient.Close()
 
 	// Create new auth grpc client api
-	auth, authHandler, err := authClient.Setup(envPrefix, svcName)
+	auth, authHandler, err := authClient.Setup(svcName)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -112,10 +114,12 @@ func main() {
 
 	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, instanceID)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("failed to init Jaeger: %s", err))
+		logger.Error(fmt.Sprintf("failed to init Jaeger: %s", err))
+		exitCode = 1
+		return
 	}
 	defer func() {
-		if err := tp.Shutdown(context.Background()); err != nil {
+		if err := tp.Shutdown(ctx); err != nil {
 			logger.Error(fmt.Sprintf("error shutting down tracer provider: %v", err))
 		}
 	}()
@@ -125,8 +129,8 @@ func main() {
 	svc := newService(auth, db, tracer, logger, esClient, cfg)
 
 	// Create an new HTTP server
-	httpServerConfig := server.Config{Port: defSvcHttpPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
+	httpServerConfig := server.Config{Port: defSvcHTTPPort}
+	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 		exitCode = 1
 		return
@@ -150,9 +154,7 @@ func main() {
 	// Subscribe to things event store
 	thingsESClient, err := redisClient.Setup(envPrefixES)
 	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
+		logger.Fatal(err.Error())
 	}
 	defer thingsESClient.Close()
 

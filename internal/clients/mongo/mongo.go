@@ -22,7 +22,7 @@ var (
 type Config struct {
 	Host string `env:"HOST" envDefault:"localhost"`
 	Port string `env:"PORT" envDefault:"27017"`
-	DB   string `env:"DB"   envDefault:"messages"`
+	Name string `env:"NAME" envDefault:"messages"`
 }
 
 // Connect creates a connection to the MongoDB instance.
@@ -33,7 +33,7 @@ func Connect(cfg Config) (*mongo.Database, error) {
 		return nil, errors.Wrap(errConnect, err)
 	}
 
-	db := client.Database(cfg.DB)
+	db := client.Database(cfg.Name)
 	return db, nil
 }
 

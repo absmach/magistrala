@@ -20,15 +20,15 @@ var (
 )
 
 type Config struct {
-	Host        string `env:"DB_HOST,notEmpty"           envDefault:"localhost"`
-	Port        string `env:"DB_PORT,notEmpty"           envDefault:"5432"`
-	User        string `env:"DB_USER,notEmpty"           envDefault:"mainflux"`
-	Pass        string `env:"DB_PASS,notEmpty"           envDefault:"mainflux"`
-	Name        string `env:"DB"                         envDefault:""`
-	SSLMode     string `env:"DB_SSL_MODE,notEmpty"       envDefault:"disable"`
-	SSLCert     string `env:"DB_SSL_CERT"                envDefault:""`
-	SSLKey      string `env:"DB_SSL_KEY"                 envDefault:""`
-	SSLRootCert string `env:"DB_SSL_ROOT_CERT"           envDefault:""`
+	Host        string `env:"HOST,notEmpty"           envDefault:"localhost"`
+	Port        string `env:"PORT,notEmpty"           envDefault:"5432"`
+	User        string `env:"USER,notEmpty"           envDefault:"mainflux"`
+	Pass        string `env:"PASS,notEmpty"           envDefault:"mainflux"`
+	Name        string `env:"NAME"                    envDefault:""`
+	SSLMode     string `env:"SSL_MODE,notEmpty"       envDefault:"disable"`
+	SSLCert     string `env:"SSL_CERT"                envDefault:""`
+	SSLKey      string `env:"SSL_KEY"                 envDefault:""`
+	SSLRootCert string `env:"SSL_ROOT_CERT"           envDefault:""`
 }
 
 // Setup creates a connection to the PostgreSQL instance and applies any

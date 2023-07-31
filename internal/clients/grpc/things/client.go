@@ -16,9 +16,9 @@ const envThingsAuthGrpcPrefix = "MF_THINGS_AUTH_GRPC_"
 var errGrpcConfig = errors.New("failed to load grpc configuration")
 
 // Setup loads Things gRPC configuration from environment variable and creates new Things gRPC API.
-func Setup(envPrefix string) (policies.AuthServiceClient, grpcClient.ClientHandler, error) {
+func Setup() (policies.AuthServiceClient, grpcClient.ClientHandler, error) {
 	config := grpcClient.Config{}
-	if err := env.Parse(&config, env.Options{Prefix: envThingsAuthGrpcPrefix, AltPrefix: envPrefix}); err != nil {
+	if err := env.Parse(&config, env.Options{Prefix: envThingsAuthGrpcPrefix}); err != nil {
 		return nil, nil, errors.Wrap(errGrpcConfig, err)
 	}
 

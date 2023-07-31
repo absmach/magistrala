@@ -23,7 +23,7 @@ type Config struct {
 	Port               string        `env:"PORT"                  envDefault:"8086"`
 	Username           string        `env:"ADMIN_USER"            envDefault:"mainflux"`
 	Password           string        `env:"ADMIN_PASSWORD"        envDefault:"mainflux"`
-	DbName             string        `env:"DB"                    envDefault:"mainflux"`
+	DbName             string        `env:"NAME"                  envDefault:"mainflux"`
 	Bucket             string        `env:"BUCKET"                envDefault:"mainflux-bucket"`
 	Org                string        `env:"ORG"                   envDefault:"mainflux"`
 	Token              string        `env:"TOKEN"                 envDefault:"mainflux-token"`
@@ -34,16 +34,16 @@ type Config struct {
 }
 
 // Setup load configuration from environment variable, create InfluxDB client and connect to InfluxDB server.
-func Setup(envPrefix string, ctx context.Context) (influxdb2.Client, error) {
+func Setup(ctx context.Context, envPrefix string) (influxdb2.Client, error) {
 	config := Config{}
 	if err := env.Parse(&config, env.Options{Prefix: envPrefix}); err != nil {
 		return nil, errors.Wrap(errConfig, err)
 	}
-	return Connect(config, ctx)
+	return Connect(ctx, config)
 }
 
 // Connect create InfluxDB client and connect to InfluxDB server.
-func Connect(config Config, ctx context.Context) (influxdb2.Client, error) {
+func Connect(ctx context.Context, config Config) (influxdb2.Client, error) {
 	client := influxdb2.NewClientWithOptions(config.DBUrl, config.Token,
 		influxdb2.DefaultOptions().
 			SetUseGZip(true).

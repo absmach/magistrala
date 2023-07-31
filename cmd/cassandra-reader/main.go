@@ -30,9 +30,9 @@ import (
 
 const (
 	svcName        = "cassandra-reader"
-	envPrefix      = "MF_CASSANDRA_READER_"
-	envPrefixHttp  = "MF_CASSANDRA_READER_HTTP_"
-	defSvcHttpPort = "9003"
+	envPrefixDB    = "MF_CASSANDRA_"
+	envPrefixHTTP  = "MF_CASSANDRA_READER_HTTP_"
+	defSvcHTTPPort = "9003"
 )
 
 type config struct {
@@ -47,7 +47,6 @@ func main() {
 
 	// Create cassandra reader service configurations
 	cfg := config{}
-
 	if err := env.Parse(&cfg); err != nil {
 		log.Fatalf("failed to load %s service configuration : %s", svcName, err)
 	}
@@ -57,36 +56,43 @@ func main() {
 		log.Fatalf("failed to init logger: %s", err)
 	}
 
+	var exitCode int
+	defer mflog.ExitWithError(&exitCode)
+
 	instanceID := cfg.InstanceID
 	if instanceID == "" {
 		instanceID, err = uuid.New().ID()
 		if err != nil {
-			log.Fatalf("Failed to generate instanceID: %s", err)
+			logger.Error(fmt.Sprintf("Failed to generate instanceID: %s", err))
+			exitCode = 1
+			return
 		}
 	}
 
 	// Create new thing grpc client
-	tc, tcHandler, err := thingsClient.Setup(envPrefix)
+	tc, tcHandler, err := thingsClient.Setup()
 	if err != nil {
-		logger.Fatal(err.Error())
+		logger.Error(err.Error())
+		exitCode = 1
+		return
 	}
-	var exitCode int
-	defer mflog.ExitWithError(&exitCode)
 	defer tcHandler.Close()
+
 	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
 
 	// Create new auth grpc client
-	auth, authHandler, err := authClient.Setup(envPrefix, svcName)
+	auth, authHandler, err := authClient.Setup(svcName)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
 	defer authHandler.Close()
+
 	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 
 	// Create new cassandra client
-	csdSession, err := cassandraClient.Setup(envPrefix)
+	csdSession, err := cassandraClient.Setup(envPrefixDB)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -98,14 +104,12 @@ func main() {
 	repo := newService(csdSession, logger)
 
 	// Create new http server
-	httpServerConfig := server.Config{Port: defSvcHttpPort}
-
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
+	httpServerConfig := server.Config{Port: defSvcHTTPPort}
+	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 		exitCode = 1
 		return
 	}
-
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(repo, tc, auth, svcName, instanceID), logger)
 
 	if cfg.SendTelemetry {

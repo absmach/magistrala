@@ -56,14 +56,14 @@ import (
 
 const (
 	svcName            = "things"
-	envPrefix          = "MF_THINGS_"
+	envPrefixDB        = "MF_THINGS_DB_"
 	envPrefixCache     = "MF_THINGS_CACHE_"
 	envPrefixES        = "MF_THINGS_ES_"
-	envPrefixHttp      = "MF_THINGS_HTTP_"
-	envPrefixAuthGrpc  = "MF_THINGS_AUTH_GRPC_"
+	envPrefixHTTP      = "MF_THINGS_HTTP_"
+	envPrefixGRPC      = "MF_THINGS_GRPC_"
 	defDB              = "things"
-	defSvcHttpPort     = "9000"
-	defSvcAuthGrpcPort = "7000"
+	defSvcHTTPPort     = "9000"
+	defSvcAuthGRPCPort = "7000"
 )
 
 type config struct {
@@ -91,27 +91,34 @@ func main() {
 		log.Fatalf("failed to init logger: %s", err)
 	}
 
+	var exitCode int
+	defer mflog.ExitWithError(&exitCode)
+
 	instanceID := cfg.InstanceID
 	if instanceID == "" {
 		instanceID, err = uuid.New().ID()
 		if err != nil {
-			log.Fatalf("Failed to generate instanceID: %s", err)
+			logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
+			exitCode = 1
+			return
 		}
 	}
 
 	// Create new database for things
 	dbConfig := pgClient.Config{Name: defDB}
-	db, err := pgClient.SetupWithConfig(envPrefix, *thingsPg.Migration(), dbConfig)
+	db, err := pgClient.SetupWithConfig(envPrefixDB, *thingsPg.Migration(), dbConfig)
 	if err != nil {
-		logger.Fatal(err.Error())
+		logger.Error(err.Error())
+		exitCode = 1
+		return
 	}
-	var exitCode int
-	defer mflog.ExitWithError(&exitCode)
 	defer db.Close()
 
 	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, instanceID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
+		exitCode = 1
+		return
 	}
 	defer func() {
 		if err := tp.Shutdown(ctx); err != nil {
@@ -144,7 +151,7 @@ func main() {
 		auth = localusers.NewAuthService(cfg.StandaloneID, cfg.StandaloneToken)
 		logger.Info("Using standalone auth service")
 	default:
-		authServiceClient, authHandler, err := authClient.Setup(envPrefix, svcName)
+		authServiceClient, authHandler, err := authClient.Setup(svcName)
 		if err != nil {
 			logger.Error(err.Error())
 			exitCode = 1
@@ -157,8 +164,8 @@ func main() {
 
 	csvc, gsvc, psvc := newService(db, auth, cacheClient, esClient, cfg.CacheKeyDuration, tracer, logger)
 
-	httpServerConfig := server.Config{Port: defSvcHttpPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
+	httpServerConfig := server.Config{Port: defSvcHTTPPort}
+	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s gRPC server configuration : %s", svcName, err))
 		exitCode = 1
 		return
@@ -172,8 +179,8 @@ func main() {
 		reflection.Register(srv)
 		tpolicies.RegisterAuthServiceServer(srv, grpcapi.NewServer(csvc, psvc))
 	}
-	grpcServerConfig := server.Config{Port: defSvcAuthGrpcPort}
-	if err := env.Parse(&grpcServerConfig, env.Options{Prefix: envPrefixAuthGrpc, AltPrefix: envPrefix}); err != nil {
+	grpcServerConfig := server.Config{Port: defSvcAuthGRPCPort}
+	if err := env.Parse(&grpcServerConfig, env.Options{Prefix: envPrefixGRPC}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s gRPC server configuration : %s", svcName, err))
 		exitCode = 1
 		return
@@ -189,6 +196,7 @@ func main() {
 	g.Go(func() error {
 		return hsp.Start()
 	})
+
 	g.Go(func() error {
 		return gs.Start()
 	})

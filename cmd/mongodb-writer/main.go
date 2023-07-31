@@ -32,17 +32,16 @@ import (
 
 const (
 	svcName        = "mongodb-writer"
-	envPrefix      = "MF_MONGO_WRITER_"
-	envPrefixDB    = "MF_MONGO_WRITER_DB_"
-	envPrefixHttp  = "MF_MONGO_WRITER_HTTP_"
-	defSvcHttpPort = "9008"
+	envPrefixDB    = "MF_MONGO_"
+	envPrefixHTTP  = "MF_MONGO_WRITER_HTTP_"
+	defSvcHTTPPort = "9008"
 )
 
 type config struct {
 	LogLevel      string `env:"MF_MONGO_WRITER_LOG_LEVEL"     envDefault:"info"`
 	ConfigPath    string `env:"MF_MONGO_WRITER_CONFIG_PATH"   envDefault:"/config.toml"`
 	BrokerURL     string `env:"MF_BROKER_URL"                 envDefault:"nats://localhost:4222"`
-	JaegerURL     string `env:"MF_JAEGER_URL"                 envDefault:"localhost:6831"`
+	JaegerURL     string `env:"MF_JAEGER_URL"                 envDefault:"http://jaeger:14268/api/traces"`
 	SendTelemetry bool   `env:"MF_SEND_TELEMETRY"             envDefault:"true"`
 	InstanceID    string `env:"MF_MONGO_WRITER_INSTANCE_ID"   envDefault:""`
 }
@@ -61,20 +60,25 @@ func main() {
 		log.Fatalf("failed to init logger: %s", err)
 	}
 
+	var exitCode int
+	defer mflog.ExitWithError(&exitCode)
+
 	instanceID := cfg.InstanceID
 	if instanceID == "" {
 		instanceID, err = uuid.New().ID()
 		if err != nil {
-			log.Fatalf("Failed to generate instanceID: %s", err)
+			logger.Error(fmt.Sprintf("Failed to generate instanceID: %s", err))
+			exitCode = 1
+			return
 		}
 	}
 
 	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, instanceID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
+		exitCode = 1
+		return
 	}
-	var exitCode int
-	defer mflog.ExitWithError(&exitCode)
 	defer func() {
 		if err := tp.Shutdown(ctx); err != nil {
 			logger.Error(fmt.Sprintf("Error shutting down tracer provider: %v", err))
@@ -98,8 +102,8 @@ func main() {
 		return
 	}
 
-	httpServerConfig := server.Config{Port: defSvcHttpPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
+	httpServerConfig := server.Config{Port: defSvcHTTPPort}
+	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 		exitCode = 1
 		return

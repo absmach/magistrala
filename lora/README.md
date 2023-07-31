@@ -28,7 +28,7 @@ default values.
 | MF_THINGS_ES_PASS                | Things service event source password         |                                 |
 | MF_THINGS_ES_DB                  | Things service event source DB               | 0                               |
 | MF_LORA_ADAPTER_EVENT_CONSUMER   | Service event consumer name                  | lora                            |
-| MF_JAEGER_URL                    | Jaeger server URL                            | localhost:6831                  |
+| MF_JAEGER_URL                    | Jaeger server URL                            | http://jaeger:14268/api/traces                  |
 | MF_SEND_TELEMETRY                | Send telemetry to mainflux call home server  | true                            |
 
 ## Deployment

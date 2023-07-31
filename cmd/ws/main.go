@@ -34,9 +34,8 @@ import (
 
 const (
 	svcName        = "ws-adapter"
-	envPrefix      = "MF_WS_ADAPTER_"
-	envPrefixHttp  = "MF_WS_ADAPTER_HTTP_"
-	defSvcHttpPort = "8190"
+	envPrefixHTTP  = "MF_WS_ADAPTER_HTTP_"
+	defSvcHTTPPort = "8190"
 )
 
 type config struct {
@@ -61,21 +60,27 @@ func main() {
 		log.Fatalf("failed to init logger: %s", err)
 	}
 
+	var exitCode int
+	defer mflog.ExitWithError(&exitCode)
+
 	instanceID := cfg.InstanceID
 	if instanceID == "" {
 		instanceID, err = uuid.New().ID()
 		if err != nil {
-			log.Fatalf("Failed to generate instanceID: %s", err)
+			logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
+			exitCode = 1
+			return
 		}
 	}
 
-	tc, tcHandler, err := thingsClient.Setup(envPrefix)
+	tc, tcHandler, err := thingsClient.Setup()
 	if err != nil {
-		logger.Fatal(err.Error())
+		logger.Error(err.Error())
+		exitCode = 1
+		return
 	}
-	var exitCode int
-	defer mflog.ExitWithError(&exitCode)
 	defer internal.Close(logger, tcHandler)
+
 	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
 
 	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, instanceID)
@@ -102,8 +107,8 @@ func main() {
 
 	svc := newService(tc, nps, logger, tracer)
 
-	httpServerConfig := server.Config{Port: defSvcHttpPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
+	httpServerConfig := server.Config{Port: defSvcHTTPPort}
+	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 		exitCode = 1
 		return

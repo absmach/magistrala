@@ -8,21 +8,25 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable                    | Description                                                   | Default               |
-| --------------------------- | ------------------------------------------------------------- | --------------------- |
-| MF_HTTP_ADAPTER_LOG_LEVEL   | Log level for the HTTP Adapter                                | info                  |
-| MF_HTTP_ADAPTER_PORT        | Service HTTP port                                             | 80                    |
-| MF_BROKER_URL               | Message broker instance URL                                   | nats://localhost:4222 |
-| MF_HTTP_ADAPTER_CLIENT_TLS  | Flag that indicates if TLS should be turned on                | false                 |
-| MF_HTTP_ADAPTER_CA_CERTS    | Path to trusted CAs in PEM format                             |                       |
-| MF_JAEGER_URL               | Jaeger server URL                                             | localhost:6831        |
-| MF_THINGS_AUTH_GRPC_URL     | Things service Auth gRPC URL                                  | localhost:7000        |
-| MF_THINGS_AUTH_GRPC_TIMEOUT | Things service Auth gRPC request timeout in seconds           | 1s                    |
-| MF_SEND_TELEMETRY           | Send telemetry to mainflux call home server                   | true                  |
+| Variable                       | Description                                         | Default                        |
+| ------------------------------ | --------------------------------------------------- | ------------------------------ |
+| MF_HTTP_ADAPTER_LOG_LEVEL      | Log level for the HTTP Adapter                      | debug                          |
+| MF_HTTP_ADAPTER_HOST           | HTTP adapter listening host                         |                                |
+| MF_HTTP_ADAPTER_PORT           | Service HTTP port                                   | 80                             |
+| MF_HTTP_ADAPTER_SERVER_CERT    | Service server certificate                          |                                |
+| MF_HTTP_ADAPTER_SERVER_KEY     | Service server key                                  |                                |
+| MF_THINGS_AUTH_GRPC_URL        | Things service Auth gRPC URL                        | localhost:7000                 |
+| MF_THINGS_AUTH_GRPC_TIMEOUT    | Things service Auth gRPC request timeout in seconds | 1s                             |
+| MF_THINGS_AUTH_GRPC_CLIENT_TLS | Flag that indicates if TLS should be turned on      | false                          |
+| MF_THINGS_AUTH_GRPC_CA_CERTS   | Path to trusted CAs in PEM format                   |                                |
+| MF_BROKER_URL                  | Message broker instance URL                         | nats://localhost:4222          |
+| MF_JAEGER_URL                  | Jaeger server URL                                   | http://jaeger:14268/api/traces |
+| MF_SEND_TELEMETRY              | Send telemetry to mainflux call home server         | true                           |
+| MF_HTTP_ADAPTER_INSTANCE_ID    | HTTP Adapter instance ID                            |                                |
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`http-adapter`](https://github.com/mainflux/mainflux/blob/master/docker/docker-compose.yml#L245-L262) service section in 
+The service itself is distributed as Docker container. Check the [`http-adapter`](https://github.com/mainflux/mainflux/blob/master/docker/docker-compose.yml#L245-L262) service section in
 docker-compose to see how service is deployed.
 
 To start the service outside of the container, execute the following shell script:
@@ -40,13 +44,19 @@ make http
 make install
 
 # set the environment variables and run the service
-MF_BROKER_URL=[Message broker instance URL] \
 MF_HTTP_ADAPTER_LOG_LEVEL=[HTTP Adapter Log Level] \
+MF_HTTP_ADAPTER_HOST=[Service HTTP host] \
 MF_HTTP_ADAPTER_PORT=[Service HTTP port] \
-MF_HTTP_ADAPTER_CA_CERTS=[Path to trusted CAs in PEM format] \
-MF_JAEGER_URL=[Jaeger server URL] \
+MF_HTTP_ADAPTER_SERVER_CERT=[Path to server certificate] \
+MF_HTTP_ADAPTER_SERVER_KEY=[Path to server key] \
 MF_THINGS_AUTH_GRPC_URL=[Things service Auth gRPC URL] \
 MF_THINGS_AUTH_GRPC_TIMEOUT=[Things service Auth gRPC request timeout in seconds] \
+MF_THINGS_AUTH_GRPC_CLIENT_TLS=[Flag that indicates if TLS should be turned on] \
+MF_THINGS_AUTH_GRPC_CA_CERTS=[Path to trusted CAs in PEM format] \
+MF_BROKER_URL=[Message broker instance URL] \
+MF_JAEGER_URL=[Jaeger server URL] \
+MF_SEND_TELEMETRY=[Send telemetry to mainflux call home server] \
+MF_HTTP_ADAPTER_INSTANCE_ID=[HTTP Adapter instance ID] \
 $GOBIN/mainflux-http
 ```
 

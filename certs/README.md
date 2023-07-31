@@ -1,13 +1,17 @@
 # Certs Service
+
 Issues certificates for things. `Certs` service can create certificates to be used when `Mainflux` is deployed to support mTLS.
 Certificate service can create certificates in two modes:
+
 1. Development mode - to be used when no PKI is deployed, this works similar to the [make thing_cert](../docker/ssl/Makefile)
 2. PKI mode - certificates issued by PKI, when you deploy `Vault` as PKI certificate management `cert` service will proxy requests to `Vault` previously checking access rights and saving info on successfully created certificate.
 
 ## Development mode
+
 If `MF_CERTS_VAULT_HOST` is empty than Development mode is on.
 
 To issue a certificate:
+
 ```bash
 
 TOK=`curl  -s --insecure -S -X POST http://localhost/tokens -H 'Content-Type: application/json' -d '{"email":"edge@email.com","password":"12345678"}' | jq -r '.token'`

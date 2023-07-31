@@ -40,10 +40,10 @@ import (
 
 const (
 	svcName        = "smtp-notifier"
-	envPrefix      = "MF_SMTP_NOTIFIER_"
-	envPrefixHttp  = "MF_SMTP_NOTIFIER_HTTP_"
+	envPrefixDB    = "MF_SMTP_NOTIFIER_DB_"
+	envPrefixHTTP  = "MF_SMTP_NOTIFIER_HTTP_"
 	defDB          = "subscriptions"
-	defSvcHttpPort = "9015"
+	defSvcHTTPPort = "9015"
 )
 
 type config struct {
@@ -70,21 +70,26 @@ func main() {
 		log.Fatalf("failed to init logger: %s", err)
 	}
 
+	var exitCode int
+	defer mflog.ExitWithError(&exitCode)
+
 	instanceID := cfg.InstanceID
 	if instanceID == "" {
 		instanceID, err = uuid.New().ID()
 		if err != nil {
-			log.Fatalf("Failed to generate instanceID: %s", err)
+			logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
+			exitCode = 1
+			return
 		}
 	}
 
 	dbConfig := pgClient.Config{Name: defDB}
-	db, err := pgClient.SetupWithConfig(envPrefix, *notifierPg.Migration(), dbConfig)
+	db, err := pgClient.SetupWithConfig(envPrefixDB, *notifierPg.Migration(), dbConfig)
 	if err != nil {
 		logger.Fatal(err.Error())
+		exitCode = 1
+		return
 	}
-	var exitCode int
-	defer mflog.ExitWithError(&exitCode)
 	defer db.Close()
 
 	ec := email.Config{}
@@ -116,13 +121,14 @@ func main() {
 	pubSub = pstracing.NewPubSub(tracer, pubSub)
 	defer pubSub.Close()
 
-	auth, authHandler, err := authClient.Setup(envPrefix, svcName)
+	auth, authHandler, err := authClient.Setup(svcName)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
 	defer authHandler.Close()
+
 	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 
 	svc, err := newService(db, tracer, auth, cfg, ec, logger)
@@ -138,8 +144,8 @@ func main() {
 		return
 	}
 
-	httpServerConfig := server.Config{Port: defSvcHttpPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
+	httpServerConfig := server.Config{Port: defSvcHTTPPort}
+	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 		exitCode = 1
 		return

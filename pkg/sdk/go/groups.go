@@ -53,7 +53,7 @@ func (sdk mfSDK) CreateGroup(g Group, token string) (Group, errors.SDKError) {
 	if err := json.Unmarshal(body, &g); err != nil {
 		return Group{}, errors.NewSDKError(err)
 	}
-	
+
 	return g, nil
 }
 
@@ -81,7 +81,7 @@ func (sdk mfSDK) Groups(pm PageMetadata, token string) (GroupsPage, errors.SDKEr
 	if err != nil {
 		return GroupsPage{}, errors.NewSDKError(err)
 	}
-	
+
 	return sdk.getGroups(url, token)
 }
 
@@ -91,7 +91,7 @@ func (sdk mfSDK) Parents(id string, pm PageMetadata, token string) (GroupsPage, 
 	if err != nil {
 		return GroupsPage{}, errors.NewSDKError(err)
 	}
-	
+
 	return sdk.getGroups(url, token)
 }
 
@@ -101,7 +101,7 @@ func (sdk mfSDK) Children(id string, pm PageMetadata, token string) (GroupsPage,
 	if err != nil {
 		return GroupsPage{}, errors.NewSDKError(err)
 	}
-	
+
 	return sdk.getGroups(url, token)
 }
 
@@ -115,7 +115,7 @@ func (sdk mfSDK) getGroups(url, token string) (GroupsPage, errors.SDKError) {
 	if err := json.Unmarshal(body, &tp); err != nil {
 		return GroupsPage{}, errors.NewSDKError(err)
 	}
-	
+
 	return tp, nil
 }
 

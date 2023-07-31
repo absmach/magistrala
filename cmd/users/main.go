@@ -54,12 +54,12 @@ import (
 
 const (
 	svcName        = "users"
-	envPrefix      = "MF_USERS_"
-	envPrefixHttp  = "MF_USERS_HTTP_"
+	envPrefixDB    = "MF_USERS_DB_"
+	envPrefixHTTP  = "MF_USERS_HTTP_"
 	envPrefixGrpc  = "MF_USERS_GRPC_"
 	defDB          = "users"
-	defSvcHttpPort = "9002"
-	defSvcGrpcPort = "9192"
+	defSvcHTTPPort = "9002"
+	defSvcGRPCPort = "9192"
 )
 
 type config struct {
@@ -96,26 +96,33 @@ func main() {
 		logger.Fatal(fmt.Sprintf("failed to init logger: %s", err.Error()))
 	}
 
+	var exitCode int
+	defer mflog.ExitWithError(&exitCode)
+
 	instanceID := cfg.InstanceID
 	if instanceID == "" {
 		instanceID, err = uuid.New().ID()
 		if err != nil {
-			log.Fatalf("Failed to generate instanceID: %s", err)
+			logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
+			exitCode = 1
+			return
 		}
 	}
 
 	ec := email.Config{}
 	if err := env.Parse(&ec); err != nil {
-		logger.Fatal(fmt.Sprintf("failed to load email configuration : %s", err.Error()))
+		logger.Error(fmt.Sprintf("failed to load email configuration : %s", err.Error()))
+		exitCode = 1
+		return
 	}
 
 	dbConfig := pgClient.Config{Name: defDB}
-	db, err := pgClient.SetupWithConfig(envPrefix, *clientsPg.Migration(), dbConfig)
+	db, err := pgClient.SetupWithConfig(envPrefixDB, *clientsPg.Migration(), dbConfig)
 	if err != nil {
-		logger.Fatal(err.Error())
+		logger.Error(err.Error())
+		exitCode = 1
+		return
 	}
-	var exitCode int
-	defer mflog.ExitWithError(&exitCode)
 	defer db.Close()
 
 	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, instanceID)
@@ -133,8 +140,8 @@ func main() {
 
 	csvc, gsvc, psvc := newService(ctx, db, tracer, cfg, ec, logger)
 
-	httpServerConfig := server.Config{Port: defSvcHttpPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHttp, AltPrefix: envPrefix}); err != nil {
+	httpServerConfig := server.Config{Port: defSvcHTTPPort}
+	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err.Error()))
 		exitCode = 1
 		return
@@ -149,8 +156,8 @@ func main() {
 		policies.RegisterAuthServiceServer(srv, grpcapi.NewServer(csvc, psvc))
 
 	}
-	grpcServerConfig := server.Config{Port: defSvcGrpcPort}
-	if err := env.Parse(&grpcServerConfig, env.Options{Prefix: envPrefixGrpc, AltPrefix: envPrefix}); err != nil {
+	grpcServerConfig := server.Config{Port: defSvcGRPCPort}
+	if err := env.Parse(&grpcServerConfig, env.Options{Prefix: envPrefixGrpc}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s gRPC server configuration : %s", svcName, err.Error()))
 		exitCode = 1
 		return

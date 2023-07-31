@@ -66,29 +66,6 @@ func TestParseServerConfig(t *testing.T) {
 			nil,
 		},
 		{
-			"Parsing with Server Config with Alt-Prefix",
-			&server.Config{},
-			&server.Config{
-				Host:     "localhost",
-				Port:     "8080",
-				CertFile: "cert",
-				KeyFile:  "key",
-			},
-			[]Options{
-				{
-					Environment: map[string]string{
-						"MF-HOST":        "localhost",
-						"MF-HTTP-PORT":   "8080",
-						"MF-SERVER_CERT": "cert",
-						"MF-SERVER_KEY":  "key",
-					},
-					Prefix:    "MF-",
-					AltPrefix: "MF-HTTP-",
-				},
-			},
-			nil,
-		},
-		{
 			"Parsing with conflicting configs",
 			&server.Config{},
 			&server.Config{
@@ -100,17 +77,14 @@ func TestParseServerConfig(t *testing.T) {
 			[]Options{
 				{
 					Environment: map[string]string{
-						"PORT":                "",
-						"MF-PORT":             "",
-						"MF-HOST":             "localhost",
-						"MF-HTTP-PORT":        "8080",
-						"MF-SERVER_CERT":      "",
-						"MF-SERVER_KEY":       "",
-						"MF-HTTP-SERVER_CERT": "cert",
-						"MF-HTTP-SERVER_KEY":  "key",
+						"PORT":           "",
+						"MF-PORT":        "8080",
+						"MF-HOST":        "localhost",
+						"MF-HTTP-PORT":   "8080",
+						"MF-SERVER_CERT": "cert",
+						"MF-SERVER_KEY":  "key",
 					},
-					Prefix:    "MF-",
-					AltPrefix: "MF-HTTP-",
+					Prefix: "MF-",
 				},
 			},
 			nil,
@@ -120,11 +94,11 @@ func TestParseServerConfig(t *testing.T) {
 		err := Parse(test.config, test.options...)
 		switch test.err {
 		case nil:
-			assert.NoError(t, err, fmt.Sprintf("expected no error but got %v", err))
+			assert.NoError(t, err, fmt.Sprintf("%s: expected no error but got %v", test.description, err))
 		default:
-			assert.Error(t, err, "expected error but got nil")
+			assert.Error(t, err, fmt.Sprintf("%s: expected error but got nil", test.description))
 		}
-		assert.Equal(t, test.expectedConfig, test.config, fmt.Sprintf("expected %v got %v", test.expectedConfig, test.config))
+		assert.Equal(t, test.expectedConfig, test.config, fmt.Sprintf("%s: expected %v got %v", test.description, test.expectedConfig, test.config))
 	}
 }
 
@@ -168,44 +142,6 @@ func TestParseGRPCConfig(t *testing.T) {
 			errNotDuration,
 		},
 		{
-			"Parsing a grpc.Config with Alt-Prefix",
-			&grpc.Config{},
-			&grpc.Config{
-				URL:     "val.com",
-				Timeout: time.Second,
-			},
-			[]Options{
-				{
-					Environment: map[string]string{
-						"MF-URL":          "val.com",
-						"MF-GRPC-TIMEOUT": time.Second.String(),
-					},
-					Prefix:    "MF-",
-					AltPrefix: "MF-GRPC-",
-				},
-			},
-			nil,
-		},
-		{
-			"Parsing a grpc.Config with Alt-Prefix and errors",
-			&grpc.Config{},
-			&grpc.Config{
-				URL:     "val.com",
-				Timeout: time.Second,
-			},
-			[]Options{
-				{
-					Environment: map[string]string{
-						"MF-URL":          "val.com",
-						"MF-GRPC-TIMEOUT": "not-duration",
-					},
-					Prefix:    "MF-",
-					AltPrefix: "MF-GRPC-",
-				},
-			},
-			errNotDuration,
-		},
-		{
 			"Parsing conflicting configs",
 			&grpc.Config{},
 			&grpc.Config{
@@ -217,15 +153,12 @@ func TestParseGRPCConfig(t *testing.T) {
 			[]Options{
 				{
 					Environment: map[string]string{
-						"MF-URL":             "val.com",
-						"MF-GRPC-TIMEOUT":    "1s",
-						"MF-GRPC-CLIENT_TLS": "true",
-						"MF-GRPC-CA_CERTS":   "cert",
-						"MF-CLIENT_TLS":      "",
-						"MF-CA_CERTS":        "",
+						"MF-URL":        "val.com",
+						"MF-TIMEOUT":    "1s",
+						"MF-CLIENT_TLS": "true",
+						"MF-CA_CERTS":   "cert",
 					},
-					Prefix:    "MF-",
-					AltPrefix: "MF-GRPC-",
+					Prefix: "MF-",
 				},
 			},
 			nil,
@@ -235,11 +168,11 @@ func TestParseGRPCConfig(t *testing.T) {
 		err := Parse(test.config, test.options...)
 		switch test.err {
 		case nil:
-			assert.NoError(t, err, fmt.Sprintf("expected no error but got %v", err))
+			assert.NoError(t, err, fmt.Sprintf("%s: expected no error but got %v", test.description, err))
 		default:
-			assert.Error(t, err, "expected error but got nil")
+			assert.Error(t, err, fmt.Sprintf("%s: expected error but got nil", test.description))
 		}
-		assert.Equal(t, test.expectedConfig, test.config, fmt.Sprintf("expected %v got %v", test.expectedConfig, test.config))
+		assert.Equal(t, test.expectedConfig, test.config, fmt.Sprintf("%s: expected %v got %v", test.description, test.expectedConfig, test.config))
 	}
 }
 

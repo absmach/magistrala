@@ -17,13 +17,20 @@ volumes:
   mainflux-twins-db-configdb-volume:
 
 services:
+  twins-redis:
+    image: redis:5.0-alpine
+    container_name: mainflux-twins-redis
+    restart: on-failure
+    networks:
+      - docker_mainflux-base-net
+
   twins-db:
     image: mongo:bionic
     command: mongod --port ${MF_TWINS_DB_PORT}
     container_name: mainflux-twins-db
     restart: on-failure
     environment:
-      MONGO_INITDB_DATABASE: ${MF_TWINS_DB}
+      MONGO_INITDB_DATABASE: ${MF_TWINS_DB_NAME}
     ports:
       - ${MF_TWINS_DB_PORT}:${MF_TWINS_DB_PORT}
     networks:
@@ -38,14 +45,13 @@ services:
     restart: on-failure
     environment:
       MF_TWINS_LOG_LEVEL: ${MF_TWINS_LOG_LEVEL}
-      MF_TWINS_HTTP_PORT: ${MF_TWINS_HTTP_PORT}
-      MF_TWINS_DB: ${MF_TWINS_DB}
-      MF_TWINS_DB_HOST: ${MF_TWINS_DB_HOST}
-      MF_TWINS_DB_PORT: ${MF_TWINS_DB_PORT}
+      MF_TWINS_STANDALONE_ID: ${MF_TWINS_STANDALONE_ID}
+      MF_TWINS_STANDALONE_TOKEN: ${MF_TWINS_STANDALONE_TOKEN}
       MF_TWINS_CHANNEL_ID: ${MF_TWINS_CHANNEL_ID}
-      MF_BROKER_URL: ${MF_BROKER_URL}
-      MF_AUTH_GRPC_URL: ${MF_USERS_GRPC_URL}
-      MF_AUTH_GRPC_TIMEOUT: ${MF_USERS_GRPC_TIMEOUT}
+      MF_TWINS_HTTP_HOST: ${MF_TWINS_HTTP_HOST}
+      MF_TWINS_HTTP_PORT: ${MF_TWINS_HTTP_PORT}
+      MF_TWINS_HTTP_SERVER_CERT: ${MF_TWINS_HTTP_SERVER_CERT}
+      MF_TWINS_HTTP_SERVER_KEY: ${MF_TWINS_HTTP_SERVER_KEY}
       MF_TWINS_CACHE_URL: ${MF_TWINS_CACHE_URL}
       MF_TWINS_CACHE_PASS: ${MF_TWINS_CACHE_PASS}
       MF_TWINS_CACHE_DB: ${MF_TWINS_CACHE_DB}
@@ -54,6 +60,14 @@ services:
       MF_TWINS_ES_DB: ${MF_TWINS_ES_DB}
       MF_THINGS_STANDALONE_ID: ${MF_THINGS_STANDALONE_ID}
       MF_THINGS_STANDALONE_TOKEN: ${MF_THINGS_STANDALONE_TOKEN}
+      MF_TWINS_DB_HOST: ${MF_TWINS_DB_HOST}
+      MF_TWINS_DB_PORT: ${MF_TWINS_DB_PORT}
+      MF_TWINS_DB_NAME: ${MF_TWINS_DB_NAME}
+      MF_AUTH_GRPC_URL: ${MF_USERS_GRPC_URL}
+      MF_AUTH_GRPC_TIMEOUT : ${MF_USERS_GRPC_TIMEOUT}
+      MF_AUTH_GRPC_CLIENT_TLS: ${MF_USERS_GRPC_CLIENT_TLS}
+      MF_AUTH_GRPC_CA_CERT: ${MF_USERS_GRPC_CA_CERT}
+      MF_BROKER_URL: ${MF_BROKER_URL}
       MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
       MF_TWINS_INSTANCE_ID: ${MF_TWINS_INSTANCE_ID}
     ports:
@@ -62,3 +76,4 @@ services:
        docker_mainflux-base-net:
     depends_on:
       - twins-db
+      - twins-redis

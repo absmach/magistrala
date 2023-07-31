@@ -154,7 +154,7 @@ func main() {
 	}
 	defer ec.Close()
 
-	es := mqttredis.NewEventStore(ec, cfg.Instance)
+	es := mqttredis.NewEventStore(ctx, ec, cfg.Instance)
 
 	tc, tcHandler, err := thingsClient.Setup()
 	if err != nil {

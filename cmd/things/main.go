@@ -162,7 +162,7 @@ func main() {
 		logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 	}
 
-	csvc, gsvc, psvc := newService(db, auth, cacheClient, esClient, cfg.CacheKeyDuration, tracer, logger)
+	csvc, gsvc, psvc := newService(ctx, db, auth, cacheClient, esClient, cfg.CacheKeyDuration, tracer, logger)
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
@@ -210,7 +210,7 @@ func main() {
 	}
 }
 
-func newService(db *sqlx.DB, auth upolicies.AuthServiceClient, cacheClient *redis.Client, esClient *redis.Client, keyDuration string, tracer trace.Tracer, logger mflog.Logger) (clients.Service, groups.Service, tpolicies.Service) {
+func newService(ctx context.Context, db *sqlx.DB, auth upolicies.AuthServiceClient, cacheClient *redis.Client, esClient *redis.Client, keyDuration string, tracer trace.Tracer, logger mflog.Logger) (clients.Service, groups.Service, tpolicies.Service) {
 	database := postgres.NewDatabase(db, tracer)
 	cRepo := cpostgres.NewRepository(database)
 	gRepo := gpostgres.NewRepository(database)
@@ -230,9 +230,9 @@ func newService(db *sqlx.DB, auth upolicies.AuthServiceClient, cacheClient *redi
 	csvc := clients.NewService(auth, psvc, cRepo, gRepo, thingCache, idp)
 	gsvc := groups.NewService(auth, psvc, gRepo, idp)
 
-	csvc = redisthcache.NewEventStoreMiddleware(csvc, esClient)
-	gsvc = redischcache.NewEventStoreMiddleware(gsvc, esClient)
-	psvc = redispcache.NewEventStoreMiddleware(psvc, esClient)
+	csvc = redisthcache.NewEventStoreMiddleware(ctx, csvc, esClient)
+	gsvc = redischcache.NewEventStoreMiddleware(ctx, gsvc, esClient)
+	psvc = redispcache.NewEventStoreMiddleware(ctx, psvc, esClient)
 
 	csvc = ctracing.New(csvc, tracer)
 	csvc = capi.LoggingMiddleware(csvc, logger)

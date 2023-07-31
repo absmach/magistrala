@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"github.com/go-redis/redis/v8"
+	mfredis "github.com/mainflux/mainflux/internal/clients/redis"
 )
 
 const (
@@ -21,41 +22,43 @@ type EventStore interface {
 
 // EventStore is a struct used to store event streams in Redis.
 type eventStore struct {
+	mfredis.Publisher
 	client   *redis.Client
 	instance string
 }
 
 // NewEventStore returns wrapper around mProxy service that sends
 // events to event store.
-func NewEventStore(client *redis.Client, instance string) EventStore {
-	return eventStore{
-		client:   client,
-		instance: instance,
-	}
-}
-
-func (es eventStore) storeEvent(ctx context.Context, clientID, eventType string) error {
-	event := mqttEvent{
-		clientID:  clientID,
-		eventType: eventType,
-		instance:  es.instance,
+func NewEventStore(ctx context.Context, client *redis.Client, instance string) EventStore {
+	es := &eventStore{
+		client:    client,
+		instance:  instance,
+		Publisher: mfredis.NewEventStore(client, streamID, streamLen),
 	}
 
-	record := &redis.XAddArgs{
-		Stream:       streamID,
-		MaxLenApprox: streamLen,
-		Values:       event.Encode(),
-	}
+	go es.StartPublishingRoutine(ctx)
 
-	return es.client.XAdd(ctx, record).Err()
+	return es
 }
 
 // Connect issues event on MQTT CONNECT.
-func (es eventStore) Connect(ctx context.Context, clientID string) error {
-	return es.storeEvent(ctx, clientID, "connect")
+func (es *eventStore) Connect(ctx context.Context, clientID string) error {
+	ev := mqttEvent{
+		clientID:  clientID,
+		eventType: "connect",
+		instance:  es.instance,
+	}
+
+	return es.Publish(ctx, ev)
 }
 
 // Disconnect issues event on MQTT CONNECT.
-func (es eventStore) Disconnect(ctx context.Context, clientID string) error {
-	return es.storeEvent(ctx, clientID, "disconnect")
+func (es *eventStore) Disconnect(ctx context.Context, clientID string) error {
+	ev := mqttEvent{
+		clientID:  clientID,
+		eventType: "disconnect",
+		instance:  es.instance,
+	}
+
+	return es.Publish(ctx, ev)
 }

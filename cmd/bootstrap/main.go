@@ -126,7 +126,7 @@ func main() {
 	tracer := tp.Tracer(svcName)
 
 	// Create new service
-	svc := newService(auth, db, tracer, logger, esClient, cfg)
+	svc := newService(ctx, auth, db, tracer, logger, esClient, cfg)
 
 	// Create an new HTTP server
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
@@ -165,7 +165,7 @@ func main() {
 	}
 }
 
-func newService(auth policies.AuthServiceClient, db *sqlx.DB, tracer trace.Tracer, logger mflog.Logger, esClient *redis.Client, cfg config) bootstrap.Service {
+func newService(ctx context.Context, auth policies.AuthServiceClient, db *sqlx.DB, tracer trace.Tracer, logger mflog.Logger, esClient *redis.Client, cfg config) bootstrap.Service {
 	database := postgres.NewDatabase(db, tracer)
 	repoConfig := bootstrapPg.NewConfigRepository(database, logger)
 
@@ -176,7 +176,7 @@ func newService(auth policies.AuthServiceClient, db *sqlx.DB, tracer trace.Trace
 	sdk := mfsdk.NewSDK(config)
 
 	svc := bootstrap.New(auth, repoConfig, sdk, []byte(cfg.EncKey))
-	svc = redisprod.NewEventStoreMiddleware(svc, esClient)
+	svc = redisprod.NewEventStoreMiddleware(ctx, svc, esClient)
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := internal.MakeMetrics(svcName, "api")
 	svc = api.MetricsMiddleware(svc, counter, latency)

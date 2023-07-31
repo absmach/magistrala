@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/mainflux/mainflux/bootstrap"
+	"github.com/mainflux/mainflux/internal/clients/redis"
 )
 
 const (
@@ -32,19 +33,15 @@ const (
 	certUpdate = "cert.update"
 )
 
-type event interface {
-	encode() (map[string]interface{}, error)
-}
-
 var (
-	_ event = (*configEvent)(nil)
-	_ event = (*removeConfigEvent)(nil)
-	_ event = (*bootstrapEvent)(nil)
-	_ event = (*changeStateEvent)(nil)
-	_ event = (*updateConnectionsEvent)(nil)
-	_ event = (*updateCertEvent)(nil)
-	_ event = (*listConfigsEvent)(nil)
-	_ event = (*removeHandlerEvent)(nil)
+	_ redis.Event = (*configEvent)(nil)
+	_ redis.Event = (*removeConfigEvent)(nil)
+	_ redis.Event = (*bootstrapEvent)(nil)
+	_ redis.Event = (*changeStateEvent)(nil)
+	_ redis.Event = (*updateConnectionsEvent)(nil)
+	_ redis.Event = (*updateCertEvent)(nil)
+	_ redis.Event = (*listConfigsEvent)(nil)
+	_ redis.Event = (*removeHandlerEvent)(nil)
 )
 
 type configEvent struct {
@@ -52,7 +49,7 @@ type configEvent struct {
 	operation string
 }
 
-func (ce configEvent) encode() (map[string]interface{}, error) {
+func (ce configEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
 		"state":     ce.State.String(),
 		"operation": ce.operation,
@@ -99,7 +96,7 @@ type removeConfigEvent struct {
 	mfThing string
 }
 
-func (rce removeConfigEvent) encode() (map[string]interface{}, error) {
+func (rce removeConfigEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
 		"thing_id":  rce.mfThing,
 		"operation": configRemove,
@@ -113,7 +110,7 @@ type listConfigsEvent struct {
 	partialMatch map[string]string
 }
 
-func (rce listConfigsEvent) encode() (map[string]interface{}, error) {
+func (rce listConfigsEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
 		"offset":    rce.offset,
 		"limit":     rce.limit,
@@ -145,7 +142,7 @@ type bootstrapEvent struct {
 	success    bool
 }
 
-func (be bootstrapEvent) encode() (map[string]interface{}, error) {
+func (be bootstrapEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
 		"external_id": be.externalID,
 		"success":     be.success,
@@ -194,7 +191,7 @@ type changeStateEvent struct {
 	state   bootstrap.State
 }
 
-func (cse changeStateEvent) encode() (map[string]interface{}, error) {
+func (cse changeStateEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
 		"thing_id":  cse.mfThing,
 		"state":     cse.state.String(),
@@ -207,7 +204,7 @@ type updateConnectionsEvent struct {
 	mfChannels []string
 }
 
-func (uce updateConnectionsEvent) encode() (map[string]interface{}, error) {
+func (uce updateConnectionsEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
 		"thing_id":  uce.mfThing,
 		"channels":  fmt.Sprintf("[%s]", strings.Join(uce.mfChannels, ", ")),
@@ -219,7 +216,7 @@ type updateCertEvent struct {
 	thingKey, clientCert, clientKey, caCert string
 }
 
-func (uce updateCertEvent) encode() (map[string]interface{}, error) {
+func (uce updateCertEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
 		"thing_key":   uce.thingKey,
 		"client_cert": uce.clientCert,
@@ -234,7 +231,7 @@ type removeHandlerEvent struct {
 	operation string
 }
 
-func (rhe removeHandlerEvent) encode() (map[string]interface{}, error) {
+func (rhe removeHandlerEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
 		"config_id": rhe.id,
 		"operation": rhe.operation,
@@ -245,7 +242,7 @@ type updateChannelHandlerEvent struct {
 	bootstrap.Channel
 }
 
-func (uche updateChannelHandlerEvent) encode() (map[string]interface{}, error) {
+func (uche updateChannelHandlerEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
 		"operation": channelUpdateHandler,
 	}
@@ -272,7 +269,7 @@ type disconnectThingEvent struct {
 	channelID string
 }
 
-func (dte disconnectThingEvent) encode() (map[string]interface{}, error) {
+func (dte disconnectThingEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
 		"thing_id":   dte.thingID,
 		"channel_id": dte.channelID,

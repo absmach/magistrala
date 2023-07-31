@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mainflux/mainflux/internal/clients/redis"
 	mfclients "github.com/mainflux/mainflux/pkg/clients"
 )
 
@@ -23,18 +24,14 @@ const (
 	clientIdentify    = clientPrefix + "identify"
 )
 
-type event interface {
-	Encode() (map[string]interface{}, error)
-}
-
 var (
-	_ event = (*createClientEvent)(nil)
-	_ event = (*updateClientEvent)(nil)
-	_ event = (*removeClientEvent)(nil)
-	_ event = (*viewClientEvent)(nil)
-	_ event = (*listClientEvent)(nil)
-	_ event = (*listClientByGroupEvent)(nil)
-	_ event = (*identifyClientEvent)(nil)
+	_ redis.Event = (*createClientEvent)(nil)
+	_ redis.Event = (*updateClientEvent)(nil)
+	_ redis.Event = (*removeClientEvent)(nil)
+	_ redis.Event = (*viewClientEvent)(nil)
+	_ redis.Event = (*listClientEvent)(nil)
+	_ redis.Event = (*listClientByGroupEvent)(nil)
+	_ redis.Event = (*identifyClientEvent)(nil)
 )
 
 type createClientEvent struct {

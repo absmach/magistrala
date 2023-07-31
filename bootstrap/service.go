@@ -60,7 +60,7 @@ type Service interface {
 
 	// UpdateCert updates an existing Config certificate and token.
 	// A non-nil error is returned to indicate operation failure.
-	UpdateCert(ctx context.Context, token, thingID, clientCert, clientKey, caCert string) error
+	UpdateCert(ctx context.Context, token, thingID, clientCert, clientKey, caCert string) (Config, error)
 
 	// UpdateConnections updates list of Channels related to given Config.
 	UpdateConnections(ctx context.Context, token, id string, connections []string) error
@@ -125,7 +125,7 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 		return Config{}, err
 	}
 
-	toConnect := bs.toIDList(cfg.MFChannels)
+	toConnect := bs.toIDList(cfg.Channels)
 
 	// Check if channels exist. This is the way to prevent fetching channels that already exist.
 	existing, err := bs.configs.ListExisting(ctx, owner, toConnect)
@@ -133,35 +133,35 @@ func (bs bootstrapService) Add(ctx context.Context, token string, cfg Config) (C
 		return Config{}, errors.Wrap(errCheckChannels, err)
 	}
 
-	cfg.MFChannels, err = bs.connectionChannels(toConnect, bs.toIDList(existing), token)
+	cfg.Channels, err = bs.connectionChannels(toConnect, bs.toIDList(existing), token)
 
 	if err != nil {
 		return Config{}, errors.Wrap(errConnectionChannels, err)
 	}
 
-	id := cfg.MFThing
+	id := cfg.ThingID
 	mfThing, err := bs.thing(id, token)
 	if err != nil {
 		return Config{}, errors.Wrap(errThingNotFound, err)
 	}
 
-	cfg.MFThing = mfThing.ID
+	cfg.ThingID = mfThing.ID
 	cfg.Owner = owner
 	cfg.State = Inactive
-	cfg.MFKey = mfThing.Credentials.Secret
+	cfg.ThingKey = mfThing.Credentials.Secret
 
 	saved, err := bs.configs.Save(ctx, cfg, toConnect)
 	if err != nil {
 		if id == "" {
-			if _, errT := bs.sdk.DisableThing(cfg.MFThing, token); errT != nil {
+			if _, errT := bs.sdk.DisableThing(cfg.ThingID, token); errT != nil {
 				err = errors.Wrap(err, errT)
 			}
 		}
 		return Config{}, errors.Wrap(errAddBootstrap, err)
 	}
 
-	cfg.MFThing = saved
-	cfg.MFChannels = append(cfg.MFChannels, existing...)
+	cfg.ThingID = saved
+	cfg.Channels = append(cfg.Channels, existing...)
 
 	return cfg, nil
 }
@@ -186,15 +186,16 @@ func (bs bootstrapService) Update(ctx context.Context, token string, cfg Config)
 	return bs.configs.Update(ctx, cfg)
 }
 
-func (bs bootstrapService) UpdateCert(ctx context.Context, token, thingID, clientCert, clientKey, caCert string) error {
+func (bs bootstrapService) UpdateCert(ctx context.Context, token, thingID, clientCert, clientKey, caCert string) (Config, error) {
 	owner, err := bs.identify(ctx, token)
 	if err != nil {
-		return err
+		return Config{}, err
 	}
-	if err := bs.configs.UpdateCert(ctx, owner, thingID, clientCert, clientKey, caCert); err != nil {
-		return errors.Wrap(errUpdateCert, err)
+	cfg, err := bs.configs.UpdateCert(ctx, owner, thingID, clientCert, clientKey, caCert)
+	if err != nil {
+		return Config{}, errors.Wrap(errUpdateCert, err)
 	}
-	return nil
+	return cfg, nil
 }
 
 func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id string, connections []string) error {
@@ -221,7 +222,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id stri
 		return errors.Wrap(errUpdateConnections, err)
 	}
 
-	cfg.MFChannels = channels
+	cfg.Channels = channels
 	var connect, disconnect []string
 
 	if cfg.State == Active {
@@ -307,18 +308,18 @@ func (bs bootstrapService) ChangeState(ctx context.Context, token, id string, st
 
 	switch state {
 	case Active:
-		for _, c := range cfg.MFChannels {
+		for _, c := range cfg.Channels {
 			conIDs := mfsdk.ConnectionIDs{
 				ChannelIDs: []string{c.ID},
-				ThingIDs:   []string{cfg.MFThing},
+				ThingIDs:   []string{cfg.ThingID},
 			}
 			if err := bs.sdk.Connect(conIDs, token); err != nil {
 				return ErrThings
 			}
 		}
 	case Inactive:
-		for _, c := range cfg.MFChannels {
-			if err := bs.sdk.DisconnectThing(cfg.MFThing, c.ID, token); err != nil {
+		for _, c := range cfg.Channels {
+			if err := bs.sdk.DisconnectThing(cfg.ThingID, c.ID, token); err != nil {
 				if errors.Contains(err, errors.ErrNotFound) {
 					continue
 				}
@@ -433,8 +434,8 @@ func (bs bootstrapService) connectionChannels(channels, existing []string, token
 // 2) IDs of Channels to be removed
 // 3) IDs of common Channels for these two configs.
 func (bs bootstrapService) updateList(cfg Config, connections []string) (add, remove []string) {
-	disconnect := make(map[string]bool, len(cfg.MFChannels))
-	for _, c := range cfg.MFChannels {
+	disconnect := make(map[string]bool, len(cfg.Channels))
+	for _, c := range cfg.Channels {
 		disconnect[c.ID] = true
 	}
 

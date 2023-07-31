@@ -67,14 +67,16 @@ type channelRes struct {
 }
 
 type viewRes struct {
-	MFThing     string          `json:"mainflux_id,omitempty"`
-	MFKey       string          `json:"mainflux_key,omitempty"`
-	Channels    []channelRes    `json:"mainflux_channels,omitempty"`
+	ThingID     string          `json:"thing_id,omitempty"`
+	ThingKey    string          `json:"thing_key,omitempty"`
+	Channels    []channelRes    `json:"channels,omitempty"`
 	ExternalID  string          `json:"external_id"`
 	ExternalKey string          `json:"external_key,omitempty"`
 	Content     string          `json:"content,omitempty"`
 	Name        string          `json:"name,omitempty"`
 	State       bootstrap.State `json:"state"`
+	ClientCert  string          `json:"client_cert,omitempty"`
+	CACert      string          `json:"ca_cert,omitempty"`
 }
 
 func (res viewRes) Code() int {
@@ -120,4 +122,23 @@ func (res stateRes) Headers() map[string]string {
 
 func (res stateRes) Empty() bool {
 	return true
+}
+
+type updateConfigRes struct {
+	ThingID    string `json:"thing_id,omitempty"`
+	ClientCert string `json:"client_cert,omitempty"`
+	CACert     string `json:"ca_cert,omitempty"`
+	ClientKey  string `json:"client_key,omitempty"`
+}
+
+func (res updateConfigRes) Code() int {
+	return http.StatusOK
+}
+
+func (res updateConfigRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res updateConfigRes) Empty() bool {
+	return false
 }

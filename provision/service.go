@@ -226,7 +226,7 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 			res.CACert = ""
 
 			if needsBootstrap(thing) {
-				if err = ps.sdk.UpdateBootstrapCerts(bsConfig.MFThing, cert.ClientCert, cert.ClientKey, "", token); err != nil {
+				if _, err = ps.sdk.UpdateBootstrapCerts(bsConfig.ThingID, cert.ClientCert, cert.ClientKey, "", token); err != nil {
 					return Result{}, errors.Wrap(ErrFailedCertCreation, err)
 				}
 			}
@@ -234,7 +234,7 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 
 		if ps.conf.Bootstrap.AutoWhiteList {
 			wlReq := SDK.BootstrapConfig{
-				MFThing: thing.ID,
+				ThingID: thing.ID,
 				State:   Active,
 			}
 			if err := ps.sdk.Whitelist(wlReq, token); err != nil {
@@ -310,10 +310,10 @@ func (ps *provisionService) updateGateway(token string, bs SDK.BootstrapConfig, 
 	}
 	gw.ExternalID = bs.ExternalID
 	gw.ExternalKey = bs.ExternalKey
-	gw.CfgID = bs.MFThing
+	gw.CfgID = bs.ThingID
 	gw.Type = gateway
 
-	th, sdkerr := ps.sdk.Thing(bs.MFThing, token)
+	th, sdkerr := ps.sdk.Thing(bs.ThingID, token)
 	if sdkerr != nil {
 		return errors.Wrap(ErrGatewayUpdate, sdkerr)
 	}
@@ -383,7 +383,7 @@ func (ps *provisionService) recover(e *error, ths *[]SDK.Thing, chs *[]SDK.Chann
 			if needsBootstrap(th) {
 				bs, err := ps.sdk.ViewBootstrap(th.ID, token)
 				ps.errLog(errors.Wrap(ErrFailedBootstrapRetrieval, err))
-				ps.errLog(ps.sdk.RemoveBootstrap(bs.MFThing, token))
+				ps.errLog(ps.sdk.RemoveBootstrap(bs.ThingID, token))
 			}
 		}
 	}
@@ -398,7 +398,7 @@ func (ps *provisionService) recover(e *error, ths *[]SDK.Thing, chs *[]SDK.Chann
 			if needsBootstrap(th) {
 				bs, err := ps.sdk.ViewBootstrap(th.ID, token)
 				ps.errLog(errors.Wrap(ErrFailedBootstrapRetrieval, err))
-				ps.errLog(ps.sdk.RemoveBootstrap(bs.MFThing, token))
+				ps.errLog(ps.sdk.RemoveBootstrap(bs.ThingID, token))
 			}
 		}
 		return

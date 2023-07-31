@@ -77,9 +77,10 @@ func (es eventStore) Update(ctx context.Context, token string, cfg bootstrap.Con
 	return es.add(ctx, ev)
 }
 
-func (es eventStore) UpdateCert(ctx context.Context, token, thingKey, clientCert, clientKey, caCert string) error {
-	if err := es.svc.UpdateCert(ctx, token, thingKey, clientCert, clientKey, caCert); err != nil {
-		return err
+func (es eventStore) UpdateCert(ctx context.Context, token, thingKey, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
+	cfg, err := es.svc.UpdateCert(ctx, token, thingKey, clientCert, clientKey, caCert)
+	if err != nil {
+		return bootstrap.Config{}, err
 	}
 
 	ev := updateCertEvent{
@@ -89,7 +90,7 @@ func (es eventStore) UpdateCert(ctx context.Context, token, thingKey, clientCert
 		caCert:     caCert,
 	}
 
-	return es.add(ctx, ev)
+	return cfg, es.add(ctx, ev)
 }
 
 func (es eventStore) UpdateConnections(ctx context.Context, token, id string, connections []string) error {

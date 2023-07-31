@@ -61,7 +61,7 @@ func (mm *metricsMiddleware) Update(ctx context.Context, token string, cfg boots
 }
 
 // UpdateCert instruments UpdateCert method with metrics.
-func (mm *metricsMiddleware) UpdateCert(ctx context.Context, token, thingKey, clientCert, clientKey, caCert string) (err error) {
+func (mm *metricsMiddleware) UpdateCert(ctx context.Context, token, thingKey, clientCert, clientKey, caCert string) (cfg bootstrap.Config, err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_cert").Add(1)
 		mm.latency.With("method", "update_cert").Observe(time.Since(begin).Seconds())

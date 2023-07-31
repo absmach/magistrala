@@ -115,12 +115,13 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 			if args[0] == "certs" {
-				if err := sdk.UpdateBootstrapCerts(args[0], args[1], args[2], args[3], args[4]); err != nil {
+				cfg, err := sdk.UpdateBootstrapCerts(args[0], args[1], args[2], args[3], args[4])
+				if err != nil {
 					logError(err)
 					return
 				}
 
-				logOK()
+				logJSON(cfg)
 				return
 			}
 			logUsage(cmd.Use)

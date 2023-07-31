@@ -67,7 +67,7 @@ func (cr configRepository) Save(ctx context.Context, cfg bootstrap.Config, chsCo
 		return "", errors.Wrap(errors.ErrCreateEntity, e)
 	}
 
-	if err := insertChannels(ctx, cfg.Owner, cfg.MFChannels, tx); err != nil {
+	if err := insertChannels(ctx, cfg.Owner, cfg.Channels, tx); err != nil {
 		cr.rollback("Failed to insert Channels", tx)
 		return "", errors.Wrap(errSaveChannels, err)
 	}
@@ -82,26 +82,33 @@ func (cr configRepository) Save(ctx context.Context, cfg bootstrap.Config, chsCo
 		return "", err
 	}
 
-	return cfg.MFThing, nil
+	return cfg.ThingID, nil
 }
 
 func (cr configRepository) RetrieveByID(ctx context.Context, owner, id string) (bootstrap.Config, error) {
-	q := `SELECT mainflux_thing, mainflux_key, external_id, external_key, name, content, state
+	q := `SELECT mainflux_thing, mainflux_key, external_id, external_key, name, content, state, client_cert, ca_cert
 		  FROM configs
-		  WHERE mainflux_thing = $1 AND owner = $2`
+		  WHERE mainflux_thing = :mainflux_thing AND owner = :owner`
 
 	dbcfg := dbConfig{
 		MFThing: id,
 		Owner:   owner,
 	}
-
-	if err := cr.db.QueryRowxContext(ctx, q, id, owner).StructScan(&dbcfg); err != nil {
-		empty := bootstrap.Config{}
+	row, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
+	if err != nil {
 		if err == sql.ErrNoRows {
-			return empty, errors.Wrap(errors.ErrNotFound, err)
+			return bootstrap.Config{}, errors.Wrap(errors.ErrNotFound, err)
 		}
 
-		return empty, errors.Wrap(errors.ErrViewEntity, err)
+		return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
+	}
+
+	if ok := row.Next(); !ok {
+		return bootstrap.Config{}, errors.Wrap(errors.ErrNotFound, row.Err())
+	}
+
+	if err := row.StructScan(&dbcfg); err != nil {
+		return bootstrap.Config{}, err
 	}
 
 	q = `SELECT mainflux_channel, name, metadata FROM channels ch
@@ -133,7 +140,7 @@ func (cr configRepository) RetrieveByID(ctx context.Context, owner, id string) (
 	}
 
 	cfg := toConfig(dbcfg)
-	cfg.MFChannels = chans
+	cfg.Channels = chans
 
 	return cfg, nil
 }
@@ -158,7 +165,7 @@ func (cr configRepository) RetrieveAll(ctx context.Context, owner string, filter
 
 	for rows.Next() {
 		c := bootstrap.Config{Owner: owner}
-		if err := rows.Scan(&c.MFThing, &c.MFKey, &c.ExternalID, &c.ExternalKey, &name, &content, &c.State); err != nil {
+		if err := rows.Scan(&c.ThingID, &c.ThingKey, &c.ExternalID, &c.ExternalKey, &name, &content, &c.State); err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to read retrieved config due to %s", err))
 			return bootstrap.ConfigsPage{}
 		}
@@ -187,17 +194,25 @@ func (cr configRepository) RetrieveAll(ctx context.Context, owner string, filter
 func (cr configRepository) RetrieveByExternalID(ctx context.Context, externalID string) (bootstrap.Config, error) {
 	q := `SELECT mainflux_thing, mainflux_key, external_key, owner, name, client_cert, client_key, ca_cert, content, state
 		  FROM configs
-		  WHERE external_id = $1`
+		  WHERE external_id = :external_id`
 	dbcfg := dbConfig{
 		ExternalID: externalID,
 	}
 
-	if err := cr.db.QueryRowxContext(ctx, q, externalID).StructScan(&dbcfg); err != nil {
-		empty := bootstrap.Config{}
+	row, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
+	if err != nil {
 		if err == sql.ErrNoRows {
-			return empty, errors.Wrap(errors.ErrNotFound, err)
+			return bootstrap.Config{}, errors.Wrap(errors.ErrNotFound, err)
 		}
-		return empty, errors.Wrap(errors.ErrViewEntity, err)
+		return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
+	}
+
+	if ok := row.Next(); !ok {
+		return bootstrap.Config{}, errors.Wrap(errors.ErrNotFound, row.Err())
+	}
+
+	if err := row.StructScan(&dbcfg); err != nil {
+		return bootstrap.Config{}, errors.Wrap(errors.ErrViewEntity, err)
 	}
 
 	q = `SELECT mainflux_channel, name, metadata FROM channels ch
@@ -230,18 +245,22 @@ func (cr configRepository) RetrieveByExternalID(ctx context.Context, externalID 
 	}
 
 	cfg := toConfig(dbcfg)
-	cfg.MFChannels = channels
+	cfg.Channels = channels
 
 	return cfg, nil
 }
 
 func (cr configRepository) Update(ctx context.Context, cfg bootstrap.Config) error {
-	q := `UPDATE configs SET name = $1, content = $2 WHERE mainflux_thing = $3 AND owner = $4`
+	q := `UPDATE configs SET name = :name, content = :content WHERE mainflux_thing = :mainflux_thing AND owner = :owner `
 
-	content := nullString(cfg.Content)
-	name := nullString(cfg.Name)
+	dbcfg := dbConfig{
+		Name:    nullString(cfg.Name),
+		Content: nullString(cfg.Content),
+		MFThing: cfg.ThingID,
+		Owner:   cfg.Owner,
+	}
 
-	res, err := cr.db.ExecContext(ctx, q, name, content, cfg.MFThing, cfg.Owner)
+	res, err := cr.db.NamedExecContext(ctx, q, dbcfg)
 	if err != nil {
 		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
@@ -258,24 +277,33 @@ func (cr configRepository) Update(ctx context.Context, cfg bootstrap.Config) err
 	return nil
 }
 
-func (cr configRepository) UpdateCert(ctx context.Context, owner, thingID, clientCert, clientKey, caCert string) error {
-	q := `UPDATE configs SET client_cert = $1, client_key = $2, ca_cert = $3 WHERE mainflux_thing = $4 AND owner = $5`
+func (cr configRepository) UpdateCert(ctx context.Context, owner, thingID, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
+	q := `UPDATE configs SET client_cert = :client_cert, client_key = :client_key, ca_cert = :ca_cert WHERE mainflux_thing = :mainflux_thing AND owner = :owner 
+	RETURNING mainflux_thing, client_cert, client_key, ca_cert`
 
-	res, err := cr.db.ExecContext(ctx, q, clientCert, clientKey, caCert, thingID, owner)
+	dbcfg := dbConfig{
+		MFThing:    thingID,
+		ClientCert: nullString(clientCert),
+		Owner:      owner,
+		ClientKey:  nullString(clientKey),
+		CaCert:     nullString(caCert),
+	}
+
+	row, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
 	if err != nil {
-		return errors.Wrap(errors.ErrUpdateEntity, err)
+		return bootstrap.Config{}, errors.Wrap(errors.ErrUpdateEntity, err)
+	}
+	defer row.Close()
+
+	if ok := row.Next(); !ok {
+		return bootstrap.Config{}, errors.Wrap(errors.ErrNotFound, row.Err())
 	}
 
-	cnt, err := res.RowsAffected()
-	if err != nil {
-		return errors.Wrap(errors.ErrUpdateEntity, err)
+	if err := row.StructScan(&dbcfg); err != nil {
+		return bootstrap.Config{}, err
 	}
 
-	if cnt == 0 {
-		return errors.ErrNotFound
-	}
-
-	return nil
+	return toConfig(dbcfg), nil
 }
 
 func (cr configRepository) UpdateConnections(ctx context.Context, owner, id string, channels []bootstrap.Channel, connections []string) error {
@@ -308,8 +336,13 @@ func (cr configRepository) UpdateConnections(ctx context.Context, owner, id stri
 }
 
 func (cr configRepository) Remove(ctx context.Context, owner, id string) error {
-	q := `DELETE FROM configs WHERE mainflux_thing = $1 AND owner = $2`
-	if _, err := cr.db.ExecContext(ctx, q, id, owner); err != nil {
+	q := `DELETE FROM configs WHERE mainflux_thing = :mainflux_thing AND owner = :owner`
+	dbcfg := dbConfig{
+		MFThing: id,
+		Owner:   owner,
+	}
+
+	if _, err := cr.db.NamedExecContext(ctx, q, dbcfg); err != nil {
 		return errors.Wrap(errors.ErrRemoveEntity, err)
 	}
 
@@ -321,9 +354,15 @@ func (cr configRepository) Remove(ctx context.Context, owner, id string) error {
 }
 
 func (cr configRepository) ChangeState(ctx context.Context, owner, id string, state bootstrap.State) error {
-	q := `UPDATE configs SET state = $1 WHERE mainflux_thing = $2 AND owner = $3;`
+	q := `UPDATE configs SET state = :state WHERE mainflux_thing = :mainflux_thing AND owner = :owner;`
 
-	res, err := cr.db.ExecContext(ctx, q, state, id, owner)
+	dbcfg := dbConfig{
+		MFThing: id,
+		State:   state,
+		Owner:   owner,
+	}
+
+	res, err := cr.db.NamedExecContext(ctx, q, dbcfg)
 	if err != nil {
 		return errors.Wrap(errors.ErrUpdateEntity, err)
 	}
@@ -485,7 +524,7 @@ func insertConnections(ctx context.Context, cfg bootstrap.Config, connections []
 	conns := []dbConnection{}
 	for _, conn := range connections {
 		dbconn := dbConnection{
-			Config:       cfg.MFThing,
+			Config:       cfg.ThingID,
 			Channel:      conn,
 			ConfigOwner:  cfg.Owner,
 			ChannelOwner: cfg.Owner,
@@ -586,13 +625,13 @@ type dbConfig struct {
 
 func toDBConfig(cfg bootstrap.Config) dbConfig {
 	return dbConfig{
-		MFThing:     cfg.MFThing,
+		MFThing:     cfg.ThingID,
 		Owner:       cfg.Owner,
 		Name:        nullString(cfg.Name),
 		ClientCert:  nullString(cfg.ClientCert),
 		ClientKey:   nullString(cfg.ClientKey),
 		CaCert:      nullString(cfg.CACert),
-		MFKey:       cfg.MFKey,
+		MFKey:       cfg.ThingKey,
 		ExternalID:  cfg.ExternalID,
 		ExternalKey: cfg.ExternalKey,
 		Content:     nullString(cfg.Content),
@@ -602,9 +641,9 @@ func toDBConfig(cfg bootstrap.Config) dbConfig {
 
 func toConfig(dbcfg dbConfig) bootstrap.Config {
 	cfg := bootstrap.Config{
-		MFThing:     dbcfg.MFThing,
+		ThingID:     dbcfg.MFThing,
 		Owner:       dbcfg.Owner,
-		MFKey:       dbcfg.MFKey,
+		ThingKey:    dbcfg.MFKey,
 		ExternalID:  dbcfg.ExternalID,
 		ExternalKey: dbcfg.ExternalKey,
 		State:       dbcfg.State,

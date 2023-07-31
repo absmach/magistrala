@@ -16,9 +16,9 @@ import (
 // This is used as a response from ConfigReader and can easily be
 // replace with any other response format.
 type bootstrapRes struct {
-	MFThing    string       `json:"mainflux_id"`
-	MFKey      string       `json:"mainflux_key"`
-	MFChannels []channelRes `json:"mainflux_channels"`
+	ThingID    string       `json:"thing_id"`
+	ThingKey   string       `json:"thing_key"`
+	Channels   []channelRes `json:"channels"`
 	Content    string       `json:"content,omitempty"`
 	ClientCert string       `json:"client_cert,omitempty"`
 	ClientKey  string       `json:"client_key,omitempty"`
@@ -55,14 +55,14 @@ func NewConfigReader(encKey []byte) ConfigReader {
 
 func (r reader) ReadConfig(cfg Config, secure bool) (interface{}, error) {
 	var channels []channelRes
-	for _, ch := range cfg.MFChannels {
+	for _, ch := range cfg.Channels {
 		channels = append(channels, channelRes{ID: ch.ID, Name: ch.Name, Metadata: ch.Metadata})
 	}
 
 	res := bootstrapRes{
-		MFKey:      cfg.MFKey,
-		MFThing:    cfg.MFThing,
-		MFChannels: channels,
+		ThingKey:   cfg.ThingKey,
+		ThingID:    cfg.ThingID,
+		Channels:   channels,
 		Content:    cfg.Content,
 		ClientCert: cfg.ClientCert,
 		ClientKey:  cfg.ClientKey,

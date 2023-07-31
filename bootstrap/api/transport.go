@@ -30,7 +30,7 @@ const (
 )
 
 var (
-	fullMatch    = []string{"state", "external_id", "mainflux_id", "mainflux_key"}
+	fullMatch    = []string{"state", "external_id", "thing_id", "thing_key"}
 	partialMatch = []string{"name"}
 )
 

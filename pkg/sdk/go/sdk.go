@@ -837,7 +837,7 @@ type SDK interface {
 	// example:
 	//  err := sdk.UpdateBootstrapCerts("id", "clientCert", "clientKey", "ca", "token")
 	//  fmt.Println(err)
-	UpdateBootstrapCerts(id string, clientCert, clientKey, ca string, token string) errors.SDKError
+	UpdateBootstrapCerts(id string, clientCert, clientKey, ca string, token string) (BootstrapConfig, errors.SDKError)
 
 	// UpdateBootstrapConnection updates connections performs update of the channel list corresponding Thing is connected to.
 	//

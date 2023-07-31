@@ -16,14 +16,14 @@ import (
 // MFKey is key of corresponding Mainflux Thing.
 // MFChannels is a list of Mainflux Channels corresponding Mainflux Thing connects to.
 type Config struct {
-	MFThing     string    `json:"mainflux_thing"`
+	ThingID     string    `json:"thing_id"`
 	Owner       string    `json:"owner,omitempty"`
 	Name        string    `json:"name,omitempty"`
 	ClientCert  string    `json:"client_cert,omitempty"`
 	ClientKey   string    `json:"client_key,omitempty"`
 	CACert      string    `json:"ca_cert,omitempty"`
-	MFKey       string    `json:"mainflux_key"`
-	MFChannels  []Channel `json:"mainflux_channels,omitempty"`
+	ThingKey    string    `json:"thing_key"`
+	Channels    []Channel `json:"channels,omitempty"`
 	ExternalID  string    `json:"external_id"`
 	ExternalKey string    `json:"external_key"`
 	Content     string    `json:"content,omitempty"`
@@ -80,9 +80,9 @@ type ConfigRepository interface {
 	// to indicate operation failure.
 	Update(ctx context.Context, cfg Config) error
 
-	// UpdateCerts updates an existing Config certificate and owner.
+	// UpdateCerts updates and returns an existing Config certificate and owner.
 	// A non-nil error is returned to indicate operation failure.
-	UpdateCert(ctx context.Context, owner, thingID, clientCert, clientKey, caCert string) error
+	UpdateCert(ctx context.Context, owner, thingID, clientCert, clientKey, caCert string) (Config, error)
 
 	// UpdateConnections updates a list of Channels the Config is connected to
 	// adding new Channels if needed.

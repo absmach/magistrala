@@ -27,25 +27,66 @@ const (
 // MFKey is key of corresponding Mainflux Thing.
 // MFChannels is a list of Mainflux Channels corresponding Mainflux Thing connects to.
 type BootstrapConfig struct {
-	ThingID     string    `json:"thing_id,omitempty"`
-	Channels    []string  `json:"channels,omitempty"`
-	ExternalID  string    `json:"external_id,omitempty"`
-	ExternalKey string    `json:"external_key,omitempty"`
-	MFThing     string    `json:"mainflux_id,omitempty"`
-	MFChannels  []Channel `json:"mainflux_channels,omitempty"`
-	MFKey       string    `json:"mainflux_key,omitempty"`
-	Name        string    `json:"name,omitempty"`
-	ClientCert  string    `json:"client_cert,omitempty"`
-	ClientKey   string    `json:"client_key,omitempty"`
-	CACert      string    `json:"ca_cert,omitempty"`
-	Content     string    `json:"content,omitempty"`
-	State       int       `json:"state,omitempty"`
+	Channels    interface{} `json:"channels,omitempty"`
+	ExternalID  string      `json:"external_id,omitempty"`
+	ExternalKey string      `json:"external_key,omitempty"`
+	ThingID     string      `json:"thing_id,omitempty"`
+	ThingKey    string      `json:"thing_key,omitempty"`
+	Name        string      `json:"name,omitempty"`
+	ClientCert  string      `json:"client_cert,omitempty"`
+	ClientKey   string      `json:"client_key,omitempty"`
+	CACert      string      `json:"ca_cert,omitempty"`
+	Content     string      `json:"content,omitempty"`
+	State       int         `json:"state,omitempty"`
 }
 
-type ConfigUpdateCertReq struct {
-	ClientCert string `json:"client_cert"`
-	ClientKey  string `json:"client_key"`
-	CACert     string `json:"ca_cert"`
+func (ts *BootstrapConfig) UnmarshalJSON(data []byte) error {
+	var rawData map[string]json.RawMessage
+	if err := json.Unmarshal(data, &rawData); err != nil {
+		return err
+	}
+
+	if channelData, ok := rawData["channels"]; ok {
+		var stringData []string
+		if err := json.Unmarshal(channelData, &stringData); err == nil {
+			ts.Channels = stringData
+		} else {
+			var channels []Channel
+			if err := json.Unmarshal(channelData, &channels); err == nil {
+				ts.Channels = channels
+			} else {
+				return fmt.Errorf("unsupported channel data type")
+			}
+		}
+	}
+
+	if err := json.Unmarshal(data, &struct {
+		ExternalID  *string `json:"external_id,omitempty"`
+		ExternalKey *string `json:"external_key,omitempty"`
+		ThingID     *string `json:"thing_id,omitempty"`
+		ThingKey    *string `json:"thing_key,omitempty"`
+		Name        *string `json:"name,omitempty"`
+		ClientCert  *string `json:"client_cert,omitempty"`
+		ClientKey   *string `json:"client_key,omitempty"`
+		CACert      *string `json:"ca_cert,omitempty"`
+		Content     *string `json:"content,omitempty"`
+		State       *int    `json:"state,omitempty"`
+	}{
+		ExternalID:  &ts.ExternalID,
+		ExternalKey: &ts.ExternalKey,
+		ThingID:     &ts.ThingID,
+		ThingKey:    &ts.ThingKey,
+		Name:        &ts.Name,
+		ClientCert:  &ts.ClientCert,
+		ClientKey:   &ts.ClientKey,
+		CACert:      &ts.CACert,
+		Content:     &ts.Content,
+		State:       &ts.State,
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (sdk mfSDK) AddBootstrap(cfg BootstrapConfig, token string) (string, errors.SDKError) {
@@ -91,11 +132,11 @@ func (sdk mfSDK) Whitelist(cfg BootstrapConfig, token string) errors.SDKError {
 		return errors.NewSDKError(err)
 	}
 
-	if cfg.MFThing == "" {
+	if cfg.ThingID == "" {
 		return errors.NewSDKError(errors.ErrNotFoundParam)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, whitelistEndpoint, cfg.MFThing)
+	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, whitelistEndpoint, cfg.ThingID)
 
 	_, _, sdkerr := sdk.processRequest(http.MethodPut, url, token, string(CTJSON), data, http.StatusCreated, http.StatusOK)
 
@@ -123,15 +164,15 @@ func (sdk mfSDK) UpdateBootstrap(cfg BootstrapConfig, token string) errors.SDKEr
 		return errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, configsEndpoint, cfg.MFThing)
+	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, configsEndpoint, cfg.ThingID)
 	_, _, sdkerr := sdk.processRequest(http.MethodPut, url, token, string(CTJSON), data, http.StatusOK)
 
 	return sdkerr
 }
 
-func (sdk mfSDK) UpdateBootstrapCerts(id, clientCert, clientKey, ca, token string) errors.SDKError {
+func (sdk mfSDK) UpdateBootstrapCerts(id, clientCert, clientKey, ca, token string) (BootstrapConfig, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, bootstrapCertsEndpoint, id)
-	request := ConfigUpdateCertReq{
+	request := BootstrapConfig{
 		ClientCert: clientCert,
 		ClientKey:  clientKey,
 		CACert:     ca,
@@ -139,11 +180,17 @@ func (sdk mfSDK) UpdateBootstrapCerts(id, clientCert, clientKey, ca, token strin
 
 	data, err := json.Marshal(request)
 	if err != nil {
-		return errors.NewSDKError(err)
+		return BootstrapConfig{}, errors.NewSDKError(err)
 	}
 
-	_, _, sdkerr := sdk.processRequest(http.MethodPatch, url, token, string(CTJSON), data, http.StatusOK)
-	return sdkerr
+	_, body, sdkerr := sdk.processRequest(http.MethodPatch, url, token, string(CTJSON), data, http.StatusOK)
+
+	var bc BootstrapConfig
+	if err := json.Unmarshal(body, &bc); err != nil {
+		return BootstrapConfig{}, errors.NewSDKError(err)
+	}
+
+	return bc, sdkerr
 }
 
 func (sdk mfSDK) UpdateBootstrapConnection(id string, channels []string, token string) errors.SDKError {

@@ -343,7 +343,7 @@ mainflux-cli bootstrap get <thing_id> <user_token> -b <bootstrap-url>
 #### Update configuration
 
 ```bash
-mainflux-cli bootstrap update '{"mainflux_id":"<thing_id>", "name": "newName", "content": "newContent"}' <user_token> -b <bootstrap-url>
+mainflux-cli bootstrap update '{"thing_id":"<thing_id>", "name": "newName", "content": "newContent"}' <user_token> -b <bootstrap-url>
 ```
 
 #### Remove configuration

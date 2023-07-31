@@ -24,7 +24,7 @@ import (
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
-	pstracing "github.com/mainflux/mainflux/pkg/messaging/tracing"
+	brokerstracing "github.com/mainflux/mainflux/pkg/messaging/brokers/tracing"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"golang.org/x/sync/errgroup"
 )
@@ -70,6 +70,20 @@ func main() {
 		}
 	}
 
+	httpServerConfig := server.Config{Port: defSvcHTTPPort}
+	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		exitCode = 1
+		return
+	}
+
+	coapServerConfig := server.Config{Port: defSvcCoAPPort}
+	if err := env.Parse(&coapServerConfig, env.Options{Prefix: envPrefix}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load %s CoAP server configuration : %s", svcName, err))
+		exitCode = 1
+		return
+	}
+
 	tc, tcHandler, err := thingsClient.Setup()
 	if err != nil {
 		logger.Error(err.Error())
@@ -99,8 +113,8 @@ func main() {
 		exitCode = 1
 		return
 	}
-	nps = pstracing.NewPubSub(tracer, nps)
 	defer nps.Close()
+	nps = brokerstracing.NewPubSub(coapServerConfig, tracer, nps)
 
 	svc := coap.New(tc, nps)
 
@@ -111,20 +125,8 @@ func main() {
 	counter, latency := internal.MakeMetrics(svcName, "api")
 	svc = api.MetricsMiddleware(svc, counter, latency)
 
-	httpServerConfig := server.Config{Port: defSvcHTTPPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
-		exitCode = 1
-		return
-	}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(instanceID), logger)
 
-	coapServerConfig := server.Config{Port: defSvcCoAPPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefix}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s CoAP server configuration : %s", svcName, err))
-		exitCode = 1
-		return
-	}
 	cs := coapserver.New(ctx, cancel, svcName, coapServerConfig, api.MakeCoAPHandler(svc, logger), logger)
 
 	if cfg.SendTelemetry {

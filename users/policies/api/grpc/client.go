@@ -10,7 +10,6 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	"github.com/mainflux/mainflux/users/policies"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/go-kit/kit/otelkit"
 	"google.golang.org/grpc"
 )
 
@@ -27,22 +26,22 @@ type grpcClient struct {
 // NewClient returns new gRPC client instance.
 func NewClient(conn *grpc.ClientConn, timeout time.Duration) policies.AuthServiceClient {
 	return &grpcClient{
-		authorize: otelkit.EndpointMiddleware(otelkit.WithOperation("authorize"))(kitgrpc.NewClient(
+		authorize: kitgrpc.NewClient(
 			conn,
 			svcName,
 			"Authorize",
 			encodeAuthorizeRequest,
 			decodeAuthorizeResponse,
 			policies.AuthorizeRes{},
-		).Endpoint()),
-		identify: otelkit.EndpointMiddleware(otelkit.WithOperation("identify"))(kitgrpc.NewClient(
+		).Endpoint(),
+		identify: kitgrpc.NewClient(
 			conn,
 			svcName,
 			"Identify",
 			encodeIdentifyRequest,
 			decodeIdentifyResponse,
 			policies.IdentifyRes{},
-		).Endpoint()),
+		).Endpoint(),
 
 		timeout: timeout,
 	}

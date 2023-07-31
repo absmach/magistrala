@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mainflux/mainflux/internal/postgres"
 	"github.com/mainflux/mainflux/internal/testsutil"
 	mfclients "github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -39,7 +38,6 @@ var (
 
 func TestClientsSave(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
-	postgres.NewDatabase(db, tracer)
 	repo := cpostgres.NewRepository(database)
 
 	uid := testsutil.GenerateUUID(t, idProvider)
@@ -185,7 +183,6 @@ func TestClientsSave(t *testing.T) {
 
 func TestClientsRetrieveByID(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
-	postgres.NewDatabase(db, tracer)
 	repo := cpostgres.NewRepository(database)
 
 	client := mfclients.Client{
@@ -224,7 +221,6 @@ func TestClientsRetrieveByID(t *testing.T) {
 
 func TestClientsRetrieveByIdentity(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
-	postgres.NewDatabase(db, tracer)
 	repo := cpostgres.NewRepository(database)
 
 	client := mfclients.Client{
@@ -256,7 +252,6 @@ func TestClientsRetrieveByIdentity(t *testing.T) {
 
 func TestClientsRetrieveAll(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
-	postgres.NewDatabase(db, tracer)
 	repo := cpostgres.NewRepository(database)
 	grepo := gpostgres.NewRepository(database)
 	prepo := ppostgres.NewRepository(database)
@@ -524,7 +519,6 @@ func TestClientsRetrieveAll(t *testing.T) {
 
 func TestGroupsMembers(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
-	postgres.NewDatabase(db, tracer)
 	crepo := cpostgres.NewRepository(database)
 	grepo := gpostgres.NewRepository(database)
 	prepo := ppostgres.NewRepository(database)
@@ -599,7 +593,6 @@ func TestGroupsMembers(t *testing.T) {
 
 func TestClientsUpdateMetadata(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
-	postgres.NewDatabase(db, tracer)
 	repo := cpostgres.NewRepository(database)
 
 	client1 := mfclients.Client{
@@ -757,7 +750,6 @@ func TestClientsUpdateMetadata(t *testing.T) {
 
 func TestClientsUpdateTags(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
-	postgres.NewDatabase(db, tracer)
 	repo := cpostgres.NewRepository(database)
 
 	client1 := mfclients.Client{
@@ -834,7 +826,6 @@ func TestClientsUpdateTags(t *testing.T) {
 
 func TestClientsUpdateSecret(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
-	postgres.NewDatabase(db, tracer)
 	repo := cpostgres.NewRepository(database)
 
 	client1 := mfclients.Client{
@@ -919,7 +910,6 @@ func TestClientsUpdateSecret(t *testing.T) {
 
 func TestClientsUpdateIdentity(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
-	postgres.NewDatabase(db, tracer)
 	repo := cpostgres.NewRepository(database)
 
 	client1 := mfclients.Client{
@@ -999,7 +989,6 @@ func TestClientsUpdateIdentity(t *testing.T) {
 
 func TestClientsUpdateOwner(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
-	postgres.NewDatabase(db, tracer)
 	repo := cpostgres.NewRepository(database)
 
 	client1 := mfclients.Client{
@@ -1076,7 +1065,6 @@ func TestClientsUpdateOwner(t *testing.T) {
 
 func TestClientsChangeStatus(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
-	postgres.NewDatabase(db, tracer)
 	repo := cpostgres.NewRepository(database)
 
 	client1 := mfclients.Client{

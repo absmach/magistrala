@@ -85,6 +85,9 @@ func main() {
 
 	// Create new postgres client
 	dbConfig := pgClient.Config{Name: defDB}
+	if err := dbConfig.LoadEnv(envPrefixDB); err != nil {
+		logger.Fatal(err.Error())
+	}
 	db, err := pgClient.SetupWithConfig(envPrefixDB, *bootstrapPg.Migration(), dbConfig)
 	if err != nil {
 		logger.Error(err.Error())
@@ -126,16 +129,14 @@ func main() {
 	tracer := tp.Tracer(svcName)
 
 	// Create new service
-	svc := newService(ctx, auth, db, tracer, logger, esClient, cfg)
+	svc := newService(ctx, auth, db, tracer, logger, esClient, cfg, dbConfig)
 
-	// Create an new HTTP server
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 		exitCode = 1
 		return
 	}
-
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, bootstrap.NewConfigReader([]byte(cfg.EncKey)), logger, instanceID), logger)
 
 	if cfg.SendTelemetry {
@@ -165,8 +166,9 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, auth policies.AuthServiceClient, db *sqlx.DB, tracer trace.Tracer, logger mflog.Logger, esClient *redis.Client, cfg config) bootstrap.Service {
-	database := postgres.NewDatabase(db, tracer)
+func newService(ctx context.Context, auth policies.AuthServiceClient, db *sqlx.DB, tracer trace.Tracer, logger mflog.Logger, esClient *redis.Client, cfg config, dbConfig pgClient.Config) bootstrap.Service {
+	database := postgres.NewDatabase(db, dbConfig, tracer)
+
 	repoConfig := bootstrapPg.NewConfigRepository(database, logger)
 
 	config := mfsdk.Config{

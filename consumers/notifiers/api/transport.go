@@ -17,7 +17,7 @@ import (
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/go-kit/kit/otelkit"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 const (
@@ -38,33 +38,33 @@ func MakeHandler(svc notifiers.Service, logger logger.Logger, instanceID string)
 
 	mux := bone.New()
 
-	mux.Post("/subscriptions", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("create_subscription"))(createSubscriptionEndpoint(svc)),
+	mux.Post("/subscriptions", otelhttp.NewHandler(kithttp.NewServer(
+		createSubscriptionEndpoint(svc),
 		decodeCreate,
 		encodeResponse,
 		opts...,
-	))
+	), "create"))
 
-	mux.Get("/subscriptions/:subID", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("view_subscription"))(viewSubscriptionEndpint(svc)),
+	mux.Get("/subscriptions/:subID", otelhttp.NewHandler(kithttp.NewServer(
+		viewSubscriptionEndpint(svc),
 		decodeSubscription,
 		encodeResponse,
 		opts...,
-	))
+	), "view"))
 
-	mux.Get("/subscriptions", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("list_subscriptions"))(listSubscriptionsEndpoint(svc)),
+	mux.Get("/subscriptions", otelhttp.NewHandler(kithttp.NewServer(
+		listSubscriptionsEndpoint(svc),
 		decodeList,
 		encodeResponse,
 		opts...,
-	))
+	), "list"))
 
-	mux.Delete("/subscriptions/:subID", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("delete_subscription"))(deleteSubscriptionEndpint(svc)),
+	mux.Delete("/subscriptions/:subID", otelhttp.NewHandler(kithttp.NewServer(
+		deleteSubscriptionEndpint(svc),
 		decodeSubscription,
 		encodeResponse,
 		opts...,
-	))
+	), "delete"))
 
 	mux.GetFunc("/health", mainflux.Health("notifier", instanceID))
 	mux.Handle("/metrics", promhttp.Handler())

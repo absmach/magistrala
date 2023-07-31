@@ -102,6 +102,9 @@ func main() {
 	}
 
 	dbConfig := pgClient.Config{Name: defDB}
+	if err := dbConfig.LoadEnv(envPrefixDB); err != nil {
+		logger.Fatal(fmt.Sprintf("failed to load %s database configuration : %s", svcName, err))
+	}
 	db, err := pgClient.SetupWithConfig(envPrefixDB, *certsPg.Migration(), dbConfig)
 	if err != nil {
 		logger.Error(err.Error())
@@ -133,7 +136,7 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
-	svc := newService(auth, db, tracer, logger, cfg, pkiClient)
+	svc := newService(auth, db, tracer, logger, cfg, dbConfig, pkiClient)
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
@@ -161,8 +164,8 @@ func main() {
 	}
 }
 
-func newService(auth policies.AuthServiceClient, db *sqlx.DB, tracer trace.Tracer, logger mflog.Logger, cfg config, pkiAgent vault.Agent) certs.Service {
-	database := postgres.NewDatabase(db, tracer)
+func newService(auth policies.AuthServiceClient, db *sqlx.DB, tracer trace.Tracer, logger mflog.Logger, cfg config, dbConfig pgClient.Config, pkiAgent vault.Agent) certs.Service {
+	database := postgres.NewDatabase(db, dbConfig, tracer)
 	certsRepo := certsPg.NewRepository(database, logger)
 	config := mfsdk.Config{
 		CertsURL:  cfg.CertsURL,

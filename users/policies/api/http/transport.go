@@ -16,7 +16,7 @@ import (
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/users/policies"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/go-kit/kit/otelkit"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
@@ -24,40 +24,40 @@ func MakeHandler(svc policies.Service, mux *bone.Mux, logger logger.Logger) http
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
-	mux.Post("/authorize", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("authorize"))(authorizeEndpoint(svc)),
+	mux.Post("/authorize", otelhttp.NewHandler(kithttp.NewServer(
+		authorizeEndpoint(svc),
 		decodeAuthorize,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "authorize"))
 
-	mux.Post("/policies", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("add_policy"))(createPolicyEndpoint(svc)),
+	mux.Post("/policies", otelhttp.NewHandler(kithttp.NewServer(
+		createPolicyEndpoint(svc),
 		decodePolicyCreate,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "add_policy"))
 
-	mux.Put("/policies", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("update_policy"))(updatePolicyEndpoint(svc)),
+	mux.Put("/policies", otelhttp.NewHandler(kithttp.NewServer(
+		updatePolicyEndpoint(svc),
 		decodePolicyUpdate,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "update_policy"))
 
-	mux.Get("/policies", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("list_policies"))(listPolicyEndpoint(svc)),
+	mux.Get("/policies", otelhttp.NewHandler(kithttp.NewServer(
+		listPolicyEndpoint(svc),
 		decodeListPoliciesRequest,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "list_policies"))
 
-	mux.Delete("/policies/:subject/:object", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("delete_policy"))(deletePolicyEndpoint(svc)),
+	mux.Delete("/policies/:subject/:object", otelhttp.NewHandler(kithttp.NewServer(
+		deletePolicyEndpoint(svc),
 		deletePolicyRequest,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "delete_policy"))
 
 	return mux
 }

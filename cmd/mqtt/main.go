@@ -20,6 +20,7 @@ import (
 	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
 	redisClient "github.com/mainflux/mainflux/internal/clients/redis"
 	"github.com/mainflux/mainflux/internal/env"
+	"github.com/mainflux/mainflux/internal/server"
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/mqtt"
 	mqttredis "github.com/mainflux/mainflux/mqtt/redis"
@@ -27,8 +28,8 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
+	brokerstracing "github.com/mainflux/mainflux/pkg/messaging/brokers/tracing"
 	mqttpub "github.com/mainflux/mainflux/pkg/messaging/mqtt"
-	"github.com/mainflux/mainflux/pkg/messaging/tracing"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	mp "github.com/mainflux/mproxy/pkg/mqtt"
 	"github.com/mainflux/mproxy/pkg/session"
@@ -99,6 +100,11 @@ func main() {
 		}
 	}
 
+	serverConfig := server.Config{
+		Host: cfg.HTTPTargetHost,
+		Port: cfg.HTTPTargetPort,
+	}
+
 	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, instanceID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
@@ -118,8 +124,8 @@ func main() {
 		exitCode = 1
 		return
 	}
-	nps = tracing.NewPubSub(tracer, nps)
 	defer nps.Close()
+	nps = brokerstracing.NewPubSub(serverConfig, tracer, nps)
 
 	mpub, err := mqttpub.NewPublisher(fmt.Sprintf("%s:%s", cfg.MQTTTargetHost, cfg.MQTTTargetPort), cfg.MQTTForwarderTimeout)
 	if err != nil {
@@ -127,10 +133,10 @@ func main() {
 		exitCode = 1
 		return
 	}
-	mpub = tracing.New(tracer, mpub)
+	defer mpub.Close()
 
 	fwd := mqtt.NewForwarder(brokers.SubjectAllChannels, logger)
-	fwd = mqtttracing.New(tracer, fwd, brokers.SubjectAllChannels)
+	fwd = mqtttracing.New(serverConfig, tracer, fwd, brokers.SubjectAllChannels)
 	if err := fwd.Forward(ctx, svcName, nps, mpub); err != nil {
 		logger.Error(fmt.Sprintf("failed to forward message broker messages: %s", err))
 		exitCode = 1
@@ -143,8 +149,8 @@ func main() {
 		exitCode = 1
 		return
 	}
-	np = tracing.New(tracer, np)
 	defer np.Close()
+	np = brokerstracing.NewPublisher(serverConfig, tracer, np)
 
 	ec, err := redisClient.Setup(envPrefixES)
 	if err != nil {

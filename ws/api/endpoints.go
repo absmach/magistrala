@@ -23,6 +23,7 @@ var channelPartRegExp = regexp.MustCompile(`^/channels/([\w\-]+)/messages(/[^?]*
 
 func handshake(svc ws.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		req, err := decodeRequest(r)
 		if err != nil {
 			encodeError(w, err)
@@ -36,7 +37,7 @@ func handshake(svc ws.Service) http.HandlerFunc {
 		req.conn = conn
 		client := ws.NewClient(conn)
 
-		if err := svc.Subscribe(context.Background(), req.thingKey, req.chanID, req.subtopic, client); err != nil {
+		if err := svc.Subscribe(ctx, req.thingKey, req.chanID, req.subtopic, client); err != nil {
 			req.conn.Close()
 			return
 		}
@@ -45,7 +46,7 @@ func handshake(svc ws.Service) http.HandlerFunc {
 		msgs := make(chan []byte)
 
 		// Listen for messages received from the chan messages, and publish them to broker
-		go process(svc, req, msgs)
+		go process(ctx, svc, req, msgs)
 		go listen(conn, msgs)
 	}
 }
@@ -136,7 +137,7 @@ func listen(conn *websocket.Conn, msgs chan<- []byte) {
 	}
 }
 
-func process(svc ws.Service, req connReq, msgs <-chan []byte) {
+func process(ctx context.Context, svc ws.Service, req connReq, msgs <-chan []byte) {
 	for msg := range msgs {
 		m := messaging.Message{
 			Channel:  req.chanID,
@@ -145,9 +146,9 @@ func process(svc ws.Service, req connReq, msgs <-chan []byte) {
 			Payload:  msg,
 			Created:  time.Now().UnixNano(),
 		}
-		_ = svc.Publish(context.Background(), req.thingKey, &m)
+		_ = svc.Publish(ctx, req.thingKey, &m)
 	}
-	if err := svc.Unsubscribe(context.Background(), req.thingKey, req.chanID, req.subtopic); err != nil {
+	if err := svc.Unsubscribe(ctx, req.thingKey, req.chanID, req.subtopic); err != nil {
 		req.conn.Close()
 	}
 }

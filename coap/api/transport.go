@@ -94,10 +94,10 @@ func handler(w mux.ResponseWriter, m *mux.Message) {
 	}
 	switch m.Code {
 	case codes.GET:
-		err = handleGet(m, w.Client(), msg, key)
+		err = handleGet(m.Context, m, w.Client(), msg, key)
 	case codes.POST:
 		resp.Code = codes.Created
-		err = service.Publish(context.Background(), key, msg)
+		err = service.Publish(m.Context, key, msg)
 	default:
 		err = errors.ErrNotFound
 	}
@@ -116,7 +116,7 @@ func handler(w mux.ResponseWriter, m *mux.Message) {
 	}
 }
 
-func handleGet(m *mux.Message, c mux.Client, msg *messaging.Message, key string) error {
+func handleGet(ctx context.Context, m *mux.Message, c mux.Client, msg *messaging.Message, key string) error {
 	var obs uint32
 	obs, err := m.Options.Observe()
 	if err != nil {
@@ -125,9 +125,9 @@ func handleGet(m *mux.Message, c mux.Client, msg *messaging.Message, key string)
 	}
 	if obs == startObserve {
 		c := coap.NewClient(c, m.Token, logger)
-		return service.Subscribe(context.Background(), key, msg.Channel, msg.Subtopic, c)
+		return service.Subscribe(ctx, key, msg.Channel, msg.Subtopic, c)
 	}
-	return service.Unsubscribe(context.Background(), key, msg.Channel, msg.Subtopic, m.Token.String())
+	return service.Unsubscribe(ctx, key, msg.Channel, msg.Subtopic, m.Token.String())
 }
 
 func decodeMessage(msg *mux.Message) (*messaging.Message, error) {

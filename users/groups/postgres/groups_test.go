@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mainflux/mainflux/internal/postgres"
 	"github.com/mainflux/mainflux/internal/testsutil"
 	mfclients "github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -464,7 +463,6 @@ func TestGroupUpdate(t *testing.T) {
 
 func TestClientsMemberships(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
-	postgres.NewDatabase(db, tracer)
 	crepo := cpostgres.NewRepository(database)
 	grepo := gpostgres.NewRepository(database)
 	prepo := ppostgres.NewRepository(database)
@@ -537,8 +535,7 @@ func TestClientsMemberships(t *testing.T) {
 
 func TestGroupChangeStatus(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
-	dbMiddleware := postgres.NewDatabase(db, tracer)
-	repo := gpostgres.NewRepository(dbMiddleware)
+	repo := gpostgres.NewRepository(database)
 
 	group1 := mfgroups.Group{
 		ID:     testsutil.GenerateUUID(t, idProvider),

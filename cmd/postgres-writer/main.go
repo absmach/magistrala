@@ -25,7 +25,7 @@ import (
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
-	"github.com/mainflux/mainflux/pkg/messaging/tracing"
+	brokerstracing "github.com/mainflux/mainflux/pkg/messaging/brokers/tracing"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"golang.org/x/sync/errgroup"
 )
@@ -74,6 +74,20 @@ func main() {
 		}
 	}
 
+	httpServerConfig := server.Config{Port: defSvcHTTPPort}
+	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		exitCode = 1
+		return
+	}
+
+	dbConfig := pgClient.Config{Name: defDB}
+	db, err := pgClient.SetupWithConfig(envPrefixDB, *writerPg.Migration(), dbConfig)
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
+	defer db.Close()
+
 	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, instanceID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
@@ -93,24 +107,8 @@ func main() {
 		exitCode = 1
 		return
 	}
-	pubSub = tracing.NewPubSub(tracer, pubSub)
 	defer pubSub.Close()
-
-	dbConfig := pgClient.Config{Name: defDB}
-	db, err := pgClient.SetupWithConfig(envPrefixDB, *writerPg.Migration(), dbConfig)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	defer db.Close()
-
-	httpServerConfig := server.Config{Port: defSvcHTTPPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
-		exitCode = 1
-		return
-	}
+	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
 
 	repo := newService(db, logger)
 	repo = consumerTracing.NewBlocking(tracer, repo, httpServerConfig)

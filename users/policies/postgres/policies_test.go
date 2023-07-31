@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/mainflux/mainflux/internal/apiutil"
-	"github.com/mainflux/mainflux/internal/postgres"
 	"github.com/mainflux/mainflux/internal/testsutil"
 	mfclients "github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -360,7 +359,6 @@ func TestPoliciesUpdate(t *testing.T) {
 
 func TestPoliciesRetrievalAll(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
-	postgres.NewDatabase(db, tracer)
 	repo := ppostgres.NewRepository(database)
 	crepo := cpostgres.NewRepository(database)
 

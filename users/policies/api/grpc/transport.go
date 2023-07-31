@@ -11,7 +11,6 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/users/clients"
 	"github.com/mainflux/mainflux/users/policies"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/go-kit/kit/otelkit"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -28,12 +27,12 @@ type grpcServer struct {
 func NewServer(csvc clients.Service, psvc policies.Service) policies.AuthServiceServer {
 	return &grpcServer{
 		authorize: kitgrpc.NewServer(
-			otelkit.EndpointMiddleware(otelkit.WithOperation("authorize"))(authorizeEndpoint(psvc)),
+			authorizeEndpoint(psvc),
 			decodeAuthorizeRequest,
 			encodeAuthorizeResponse,
 		),
 		identify: kitgrpc.NewServer(
-			otelkit.EndpointMiddleware(otelkit.WithOperation("identify"))(identifyEndpoint(csvc)),
+			identifyEndpoint(csvc),
 			decodeIdentifyRequest,
 			encodeIdentifyResponse,
 		),

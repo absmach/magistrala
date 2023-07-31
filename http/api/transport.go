@@ -16,7 +16,7 @@ import (
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
 	"github.com/mainflux/mainflux"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/go-kit/kit/otelkit"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	adapter "github.com/mainflux/mainflux/http"
 	"github.com/mainflux/mainflux/internal/apiutil"
@@ -47,19 +47,19 @@ func MakeHandler(svc adapter.Service, instanceID string) http.Handler {
 	}
 
 	r := bone.New()
-	r.Post("/channels/:chanID/messages", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("publish"))(sendMessageEndpoint(svc)),
+	r.Post("/channels/:chanID/messages", otelhttp.NewHandler(kithttp.NewServer(
+		sendMessageEndpoint(svc),
 		decodeRequest,
 		encodeResponse,
 		opts...,
-	))
+	), "publish"))
 
-	r.Post("/channels/:chanID/messages/*", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("publish"))(sendMessageEndpoint(svc)),
+	r.Post("/channels/:chanID/messages/*", otelhttp.NewHandler(kithttp.NewServer(
+		sendMessageEndpoint(svc),
 		decodeRequest,
 		encodeResponse,
 		opts...,
-	))
+	), "publish"))
 
 	r.GetFunc("/health", mainflux.Health("http", instanceID))
 	r.Handle("/metrics", promhttp.Handler())

@@ -10,10 +10,9 @@ import (
 	"log"
 	"os"
 
+	"github.com/jmoiron/sqlx"
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
-
-	"github.com/jmoiron/sqlx"
 	"github.com/mainflux/mainflux/consumers"
 	consumerTracing "github.com/mainflux/mainflux/consumers/tracing"
 	"github.com/mainflux/mainflux/consumers/writers/api"
@@ -26,7 +25,7 @@ import (
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
-	"github.com/mainflux/mainflux/pkg/messaging/tracing"
+	brokerstracing "github.com/mainflux/mainflux/pkg/messaging/brokers/tracing"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"golang.org/x/sync/errgroup"
 )
@@ -75,6 +74,13 @@ func main() {
 		}
 	}
 
+	httpServerConfig := server.Config{Port: defSvcHTTPPort}
+	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		exitCode = 1
+		return
+	}
+
 	dbConfig := pgClient.Config{Name: defDB}
 	db, err := pgClient.SetupWithConfig(envPrefixDB, *timescale.Migration(), dbConfig)
 	if err != nil {
@@ -97,13 +103,6 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
-	httpServerConfig := server.Config{Port: defSvcHTTPPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
-		exitCode = 1
-		return
-	}
-
 	repo := newService(db, logger)
 	repo = consumerTracing.NewBlocking(tracer, repo, httpServerConfig)
 
@@ -113,8 +112,8 @@ func main() {
 		exitCode = 1
 		return
 	}
-	pubSub = tracing.NewPubSub(tracer, pubSub)
 	defer pubSub.Close()
+	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
 
 	if err = consumers.Start(ctx, svcName, pubSub, repo, cfg.ConfigPath, logger); err != nil {
 		logger.Error(fmt.Sprintf("failed to create Timescale writer: %s", err))

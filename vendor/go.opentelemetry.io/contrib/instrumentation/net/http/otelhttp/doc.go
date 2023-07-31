@@ -12,11 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package otelkit instruments the github.com/go-kit/kit package.
-//
-// Compared to other instrumentation libraries provided by go-kit itself,
-// this package only provides instrumentation for the endpoint layer.
-// For instrumenting the transport layer,
-// look at the instrumentation libraries provided by go.opentelemetry.io/contrib.
-// Learn more about go-kit's layers at https://gokit.io/faq/#architecture-and-design.
-package otelkit // import "go.opentelemetry.io/contrib/instrumentation/github.com/go-kit/kit/otelkit"
+// Package otelhttp provides an http.Handler and functions that are intended
+// to be used to add tracing by wrapping existing handlers (with Handler) and
+// routes WithRouteTag.
+package otelhttp // import "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"

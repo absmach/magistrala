@@ -17,7 +17,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/things/clients"
 	"github.com/mainflux/mainflux/things/policies"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/go-kit/kit/otelkit"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
@@ -25,61 +25,61 @@ func MakeHandler(csvc clients.Service, psvc policies.Service, mux *bone.Mux, log
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
-	mux.Post("/channels/:chanID/access", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("authorize"))(authorizeEndpoint(psvc)),
+	mux.Post("/channels/:chanID/access", otelhttp.NewHandler(kithttp.NewServer(
+		authorizeEndpoint(psvc),
 		decodeCanAccess,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "authorize"))
 
-	mux.Post("/identify", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("identify"))(identifyEndpoint(csvc)),
+	mux.Post("/identify", otelhttp.NewHandler(kithttp.NewServer(
+		identifyEndpoint(csvc),
 		decodeIdentify,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "identify"))
 
-	mux.Post("/policies", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("connect"))(connectEndpoint(psvc)),
+	mux.Post("/policies", otelhttp.NewHandler(kithttp.NewServer(
+		connectEndpoint(psvc),
 		decodeConnectThing,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "connect"))
 
-	mux.Put("/policies", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("update_policy"))(updatePolicyEndpoint(psvc)),
+	mux.Put("/policies", otelhttp.NewHandler(kithttp.NewServer(
+		updatePolicyEndpoint(psvc),
 		decodeUpdatePolicy,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "update_policy"))
 
-	mux.Get("/policies", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("list_policies"))(listPoliciesEndpoint(psvc)),
+	mux.Get("/policies", otelhttp.NewHandler(kithttp.NewServer(
+		listPoliciesEndpoint(psvc),
 		decodeListPolicies,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "list_policies"))
 
-	mux.Delete("/policies/:subject/:object", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("disconnect"))(disconnectEndpoint(psvc)),
+	mux.Delete("/policies/:subject/:object", otelhttp.NewHandler(kithttp.NewServer(
+		disconnectEndpoint(psvc),
 		decodeDisconnectThing,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "disconnect"))
 
-	mux.Post("/connect", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("bulk_connect"))(connectThingsEndpoint(psvc)),
+	mux.Post("/connect", otelhttp.NewHandler(kithttp.NewServer(
+		connectThingsEndpoint(psvc),
 		decodeConnectList,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "bulk_connect"))
 
-	mux.Post("/disconnect", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("bulk_disconnect"))(disconnectThingsEndpoint(psvc)),
+	mux.Post("/disconnect", otelhttp.NewHandler(kithttp.NewServer(
+		disconnectThingsEndpoint(psvc),
 		decodeConnectList,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "bulk_disconnect"))
 
 	return mux
 

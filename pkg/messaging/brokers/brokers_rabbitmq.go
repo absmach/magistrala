@@ -26,6 +26,7 @@ func NewPublisher(url string) (messaging.Publisher, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return pb, nil
 }
 
@@ -34,5 +35,6 @@ func NewPubSub(url, queue string, logger mflog.Logger) (messaging.PubSub, error)
 	if err != nil {
 		return nil, err
 	}
+
 	return pb, nil
 }

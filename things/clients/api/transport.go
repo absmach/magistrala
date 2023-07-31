@@ -19,7 +19,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/things/clients"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/go-kit/kit/otelkit"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
@@ -28,82 +28,82 @@ func MakeHandler(svc clients.Service, mux *bone.Mux, logger mflog.Logger, instan
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
 
-	mux.Post("/things", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("create_thing"))(createClientEndpoint(svc)),
+	mux.Post("/things", otelhttp.NewHandler(kithttp.NewServer(
+		createClientEndpoint(svc),
 		decodeCreateClientReq,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "create_thing"))
 
-	mux.Post("/things/bulk", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("create_things"))(createClientsEndpoint(svc)),
+	mux.Post("/things/bulk", otelhttp.NewHandler(kithttp.NewServer(
+		createClientsEndpoint(svc),
 		decodeCreateClientsReq,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "create_things"))
 
-	mux.Get("/things/:thingID", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("view_thing"))(viewClientEndpoint(svc)),
+	mux.Get("/things/:thingID", otelhttp.NewHandler(kithttp.NewServer(
+		viewClientEndpoint(svc),
 		decodeViewClient,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "view_thing"))
 
-	mux.Get("/things", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("list_things"))(listClientsEndpoint(svc)),
+	mux.Get("/things", otelhttp.NewHandler(kithttp.NewServer(
+		listClientsEndpoint(svc),
 		decodeListClients,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "list_things"))
 
-	mux.Get("/channels/:thingID/things", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("list_things_by_channel"))(listMembersEndpoint(svc)),
+	mux.Get("/channels/:thingID/things", otelhttp.NewHandler(kithttp.NewServer(
+		listMembersEndpoint(svc),
 		decodeListMembersRequest,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "list_things_by_channel"))
 
-	mux.Patch("/things/:thingID", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("update_thing_name_and_metadata"))(updateClientEndpoint(svc)),
+	mux.Patch("/things/:thingID", otelhttp.NewHandler(kithttp.NewServer(
+		updateClientEndpoint(svc),
 		decodeUpdateClient,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "update_thing"))
 
-	mux.Patch("/things/:thingID/tags", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("update_thing_tags"))(updateClientTagsEndpoint(svc)),
+	mux.Patch("/things/:thingID/tags", otelhttp.NewHandler(kithttp.NewServer(
+		updateClientTagsEndpoint(svc),
 		decodeUpdateClientTags,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "update_thing_tags"))
 
-	mux.Patch("/things/:thingID/secret", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("update_thing_secret"))(updateClientSecretEndpoint(svc)),
+	mux.Patch("/things/:thingID/secret", otelhttp.NewHandler(kithttp.NewServer(
+		updateClientSecretEndpoint(svc),
 		decodeUpdateClientCredentials,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "update_thing_credentials"))
 
-	mux.Patch("/things/:thingID/owner", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("update_thing_owner"))(updateClientOwnerEndpoint(svc)),
+	mux.Patch("/things/:thingID/owner", otelhttp.NewHandler(kithttp.NewServer(
+		updateClientOwnerEndpoint(svc),
 		decodeUpdateClientOwner,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "update_thing_owner"))
 
-	mux.Post("/things/:thingID/enable", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("enable_thing"))(enableClientEndpoint(svc)),
+	mux.Post("/things/:thingID/enable", otelhttp.NewHandler(kithttp.NewServer(
+		enableClientEndpoint(svc),
 		decodeChangeClientStatus,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "enable_thing"))
 
-	mux.Post("/things/:thingID/disable", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("disable_thing"))(disableClientEndpoint(svc)),
+	mux.Post("/things/:thingID/disable", otelhttp.NewHandler(kithttp.NewServer(
+		disableClientEndpoint(svc),
 		decodeChangeClientStatus,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "disable_thing"))
 
 	mux.GetFunc("/health", mainflux.Health("things", instanceID))
 	mux.Handle("/metrics", promhttp.Handler())

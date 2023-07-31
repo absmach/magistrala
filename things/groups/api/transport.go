@@ -18,7 +18,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfgroups "github.com/mainflux/mainflux/pkg/groups"
 	"github.com/mainflux/mainflux/things/groups"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/go-kit/kit/otelkit"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
@@ -26,61 +26,62 @@ func MakeHandler(svc groups.Service, mux *bone.Mux, logger logger.Logger) http.H
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
-	mux.Post("/channels", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("create_channel"))(createGroupEndpoint(svc)),
+	mux.Post("/channels", otelhttp.NewHandler(kithttp.NewServer(
+		createGroupEndpoint(svc),
 		decodeGroupCreate,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "create_channel"))
 
-	mux.Post("/channels/bulk", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("create_channels"))(createGroupsEndpoint(svc)),
+	mux.Post("/channels/bulk", otelhttp.NewHandler(kithttp.NewServer(
+		createGroupsEndpoint(svc),
 		decodeGroupsCreate,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "create_channels"))
 
-	mux.Get("/channels/:chanID", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("view_channel"))(viewGroupEndpoint(svc)),
+	mux.Get("/channels/:chanID", otelhttp.NewHandler(kithttp.NewServer(
+		viewGroupEndpoint(svc),
 		decodeGroupRequest,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "view_channel"))
 
-	mux.Put("/channels/:chanID", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("update_channel"))(updateGroupEndpoint(svc)),
+	mux.Put("/channels/:chanID", otelhttp.NewHandler(kithttp.NewServer(
+		updateGroupEndpoint(svc),
 		decodeGroupUpdate,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "update_channel"))
 
-	mux.Get("/things/:thingID/channels", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("list_channels_by_thing"))(listMembershipsEndpoint(svc)),
+	mux.Get("/things/:thingID/channels", otelhttp.NewHandler(kithttp.NewServer(
+		listMembershipsEndpoint(svc),
 		decodeListMembershipRequest,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "list_channels_by_thing"))
 
-	mux.Get("/channels", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("list_channels"))(listGroupsEndpoint(svc)),
+	mux.Get("/channels", otelhttp.NewHandler(kithttp.NewServer(
+		listGroupsEndpoint(svc),
 		decodeListGroupsRequest,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "list_channels"))
 
-	mux.Post("/channels/:chanID/enable", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("enable_channel"))(enableGroupEndpoint(svc)),
+	mux.Post("/channels/:chanID/enable", otelhttp.NewHandler(kithttp.NewServer(
+		enableGroupEndpoint(svc),
 		decodeChangeGroupStatus,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "enable_channel"))
 
-	mux.Post("/channels/:chanID/disable", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("disable_channel"))(disableGroupEndpoint(svc)),
+	mux.Post("/channels/:chanID/disable", otelhttp.NewHandler(kithttp.NewServer(
+		disableGroupEndpoint(svc),
 		decodeChangeGroupStatus,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "disable_channel"))
+
 	return mux
 }
 

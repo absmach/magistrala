@@ -17,24 +17,23 @@ import (
 	"github.com/mainflux/mainflux/consumers/notifiers"
 	"github.com/mainflux/mainflux/consumers/notifiers/api"
 	notifierPg "github.com/mainflux/mainflux/consumers/notifiers/postgres"
-	"github.com/mainflux/mainflux/internal"
-	"github.com/mainflux/mainflux/internal/env"
-	"github.com/mainflux/mainflux/internal/server"
-	httpserver "github.com/mainflux/mainflux/internal/server/http"
-	"github.com/mainflux/mainflux/users/policies"
-	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/sync/errgroup"
-
 	mfsmpp "github.com/mainflux/mainflux/consumers/notifiers/smpp"
 	"github.com/mainflux/mainflux/consumers/notifiers/tracing"
+	"github.com/mainflux/mainflux/internal"
 	authClient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
 	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
 	pgClient "github.com/mainflux/mainflux/internal/clients/postgres"
+	"github.com/mainflux/mainflux/internal/env"
+	"github.com/mainflux/mainflux/internal/server"
+	httpserver "github.com/mainflux/mainflux/internal/server/http"
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
-	pstracing "github.com/mainflux/mainflux/pkg/messaging/tracing"
+	brokerstracing "github.com/mainflux/mainflux/pkg/messaging/brokers/tracing"
 	"github.com/mainflux/mainflux/pkg/ulid"
 	"github.com/mainflux/mainflux/pkg/uuid"
+	"github.com/mainflux/mainflux/users/policies"
+	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -96,6 +95,13 @@ func main() {
 		return
 	}
 
+	httpServerConfig := server.Config{Port: defSvcHTTPPort}
+	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		exitCode = 1
+		return
+	}
+
 	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, instanceID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
@@ -115,8 +121,8 @@ func main() {
 		exitCode = 1
 		return
 	}
-	pubSub = pstracing.NewPubSub(tracer, pubSub)
 	defer pubSub.Close()
+	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
 
 	auth, authHandler, err := authClient.Setup(svcName)
 	if err != nil {
@@ -134,12 +140,6 @@ func main() {
 		return
 	}
 
-	httpServerConfig := server.Config{Port: defSvcHTTPPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
-		exitCode = 1
-		return
-	}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, instanceID), logger)
 
 	if cfg.SendTelemetry {

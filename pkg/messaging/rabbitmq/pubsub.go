@@ -19,7 +19,7 @@ const (
 	chansPrefix = "channels"
 	// SubjectAllChannels represents subject to subscribe for all the channels.
 	SubjectAllChannels = "channels.#"
-	exchangeName       = "mainflux-exchange"
+	exchangeName       = "mainflux"
 )
 
 var (
@@ -45,7 +45,7 @@ type pubsub struct {
 }
 
 // NewPubSub returns RabbitMQ message publisher/subscriber.
-func NewPubSub(url, queue string, logger mflog.Logger) (messaging.PubSub, error) {
+func NewPubSub(url, _ string, logger mflog.Logger) (messaging.PubSub, error) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err

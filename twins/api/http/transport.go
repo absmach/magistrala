@@ -17,7 +17,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/twins"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/go-kit/kit/otelkit"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 const (
@@ -38,47 +38,47 @@ func MakeHandler(svc twins.Service, logger logger.Logger, instanceID string) htt
 
 	r := bone.New()
 
-	r.Post("/twins", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("add_twin"))(addTwinEndpoint(svc)),
+	r.Post("/twins", otelhttp.NewHandler(kithttp.NewServer(
+		addTwinEndpoint(svc),
 		decodeTwinCreation,
 		encodeResponse,
 		opts...,
-	))
+	), "add_twin"))
 
-	r.Put("/twins/:twinID", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("update_twin"))(updateTwinEndpoint(svc)),
+	r.Put("/twins/:twinID", otelhttp.NewHandler(kithttp.NewServer(
+		updateTwinEndpoint(svc),
 		decodeTwinUpdate,
 		encodeResponse,
 		opts...,
-	))
+	), "update_twin"))
 
-	r.Get("/twins/:twinID", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("view_twin"))(viewTwinEndpoint(svc)),
+	r.Get("/twins/:twinID", otelhttp.NewHandler(kithttp.NewServer(
+		viewTwinEndpoint(svc),
 		decodeView,
 		encodeResponse,
 		opts...,
-	))
+	), "view_twin"))
 
-	r.Delete("/twins/:twinID", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("remove_twin"))(removeTwinEndpoint(svc)),
+	r.Delete("/twins/:twinID", otelhttp.NewHandler(kithttp.NewServer(
+		removeTwinEndpoint(svc),
 		decodeView,
 		encodeResponse,
 		opts...,
-	))
+	), "remove_twin"))
 
-	r.Get("/twins", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("list_twins"))(listTwinsEndpoint(svc)),
+	r.Get("/twins", otelhttp.NewHandler(kithttp.NewServer(
+		listTwinsEndpoint(svc),
 		decodeList,
 		encodeResponse,
 		opts...,
-	))
+	), "list_twins"))
 
-	r.Get("/states/:twinID", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("list_states"))(listStatesEndpoint(svc)),
+	r.Get("/states/:twinID", otelhttp.NewHandler(kithttp.NewServer(
+		listStatesEndpoint(svc),
 		decodeListStates,
 		encodeResponse,
 		opts...,
-	))
+	), "list_states"))
 
 	r.GetFunc("/health", mainflux.Health("twins", instanceID))
 	r.Handle("/metrics", promhttp.Handler())

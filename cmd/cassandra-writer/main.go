@@ -26,7 +26,7 @@ import (
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
-	"github.com/mainflux/mainflux/pkg/messaging/tracing"
+	brokerstracing "github.com/mainflux/mainflux/pkg/messaging/brokers/tracing"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"golang.org/x/sync/errgroup"
 )
@@ -75,6 +75,13 @@ func main() {
 		}
 	}
 
+	httpServerConfig := server.Config{Port: defSvcHTTPPort}
+	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		exitCode = 1
+		return
+	}
+
 	// Create new to cassandra client
 	csdSession, err := cassandraClient.SetupDB(envPrefixDB, cassandra.Table)
 	if err != nil {
@@ -97,13 +104,6 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
-	httpServerConfig := server.Config{Port: defSvcHTTPPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
-		exitCode = 1
-		return
-	}
-
 	// Create new cassandra-writer repo
 	repo := newService(csdSession, logger)
 	repo = consumerTracing.NewBlocking(tracer, repo, httpServerConfig)
@@ -115,8 +115,8 @@ func main() {
 		exitCode = 1
 		return
 	}
-	pubSub = tracing.NewPubSub(tracer, pubSub)
 	defer pubSub.Close()
+	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
 
 	// Start new consumer
 	if err := consumers.Start(ctx, svcName, pubSub, repo, cfg.ConfigPath, logger); err != nil {
@@ -125,7 +125,6 @@ func main() {
 		return
 	}
 
-	// Create new http server
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svcName, instanceID), logger)
 
 	if cfg.SendTelemetry {

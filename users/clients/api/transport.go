@@ -19,7 +19,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/users/clients"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/go-kit/kit/otelkit"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
@@ -28,117 +28,117 @@ func MakeHandler(svc clients.Service, mux *bone.Mux, logger mflog.Logger, instan
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
 
-	mux.Post("/users", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("register_client"))(registrationEndpoint(svc)),
+	mux.Post("/users", otelhttp.NewHandler(kithttp.NewServer(
+		registrationEndpoint(svc),
 		decodeCreateClientReq,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "register_client"))
 
-	mux.Get("/users/profile", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("view_profile"))(viewProfileEndpoint(svc)),
+	mux.Get("/users/profile", otelhttp.NewHandler(kithttp.NewServer(
+		viewProfileEndpoint(svc),
 		decodeViewProfile,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "view_profile"))
 
-	mux.Get("/users/:id", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("view_client"))(viewClientEndpoint(svc)),
+	mux.Get("/users/:id", otelhttp.NewHandler(kithttp.NewServer(
+		viewClientEndpoint(svc),
 		decodeViewClient,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "view_client"))
 
-	mux.Get("/users", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("list_clients"))(listClientsEndpoint(svc)),
+	mux.Get("/users", otelhttp.NewHandler(kithttp.NewServer(
+		listClientsEndpoint(svc),
 		decodeListClients,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "list_clients"))
 
-	mux.Get("/groups/:id/members", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("list_members"))(listMembersEndpoint(svc)),
+	mux.Get("/groups/:id/members", otelhttp.NewHandler(kithttp.NewServer(
+		listMembersEndpoint(svc),
 		decodeListMembersRequest,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "list_members"))
 
-	mux.Patch("/users/secret", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("update_client_secret"))(updateClientSecretEndpoint(svc)),
+	mux.Patch("/users/secret", otelhttp.NewHandler(kithttp.NewServer(
+		updateClientSecretEndpoint(svc),
 		decodeUpdateClientSecret,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "update_client_secret"))
 
-	mux.Patch("/users/:id", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("update_client_name_and_metadata"))(updateClientEndpoint(svc)),
+	mux.Patch("/users/:id", otelhttp.NewHandler(kithttp.NewServer(
+		updateClientEndpoint(svc),
 		decodeUpdateClient,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "update_client"))
 
-	mux.Patch("/users/:id/tags", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("update_client_tags"))(updateClientTagsEndpoint(svc)),
+	mux.Patch("/users/:id/tags", otelhttp.NewHandler(kithttp.NewServer(
+		updateClientTagsEndpoint(svc),
 		decodeUpdateClientTags,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "update_client_tags"))
 
-	mux.Patch("/users/:id/identity", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("update_client_identity"))(updateClientIdentityEndpoint(svc)),
+	mux.Patch("/users/:id/identity", otelhttp.NewHandler(kithttp.NewServer(
+		updateClientIdentityEndpoint(svc),
 		decodeUpdateClientIdentity,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "update_client_identity"))
 
-	mux.Post("/password/reset-request", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("password_reset_req"))(passwordResetRequestEndpoint(svc)),
+	mux.Post("/password/reset-request", otelhttp.NewHandler(kithttp.NewServer(
+		passwordResetRequestEndpoint(svc),
 		decodePasswordResetRequest,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "password_reset_req"))
 
-	mux.Put("/password/reset", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("password_reset"))(passwordResetEndpoint(svc)),
+	mux.Put("/password/reset", otelhttp.NewHandler(kithttp.NewServer(
+		passwordResetEndpoint(svc),
 		decodePasswordReset,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "password_reset"))
 
-	mux.Patch("/users/:id/owner", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("update_client_owner"))(updateClientOwnerEndpoint(svc)),
+	mux.Patch("/users/:id/owner", otelhttp.NewHandler(kithttp.NewServer(
+		updateClientOwnerEndpoint(svc),
 		decodeUpdateClientOwner,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "update_client_owner"))
 
-	mux.Post("/users/tokens/issue", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("issue_token"))(issueTokenEndpoint(svc)),
+	mux.Post("/users/tokens/issue", otelhttp.NewHandler(kithttp.NewServer(
+		issueTokenEndpoint(svc),
 		decodeCredentials,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "issue_token"))
 
-	mux.Post("/users/tokens/refresh", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("refresh_token"))(refreshTokenEndpoint(svc)),
+	mux.Post("/users/tokens/refresh", otelhttp.NewHandler(kithttp.NewServer(
+		refreshTokenEndpoint(svc),
 		decodeRefreshToken,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "refresh_token"))
 
-	mux.Post("/users/:id/enable", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("enable_client"))(enableClientEndpoint(svc)),
+	mux.Post("/users/:id/enable", otelhttp.NewHandler(kithttp.NewServer(
+		enableClientEndpoint(svc),
 		decodeChangeClientStatus,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "enable_client"))
 
-	mux.Post("/users/:id/disable", kithttp.NewServer(
-		otelkit.EndpointMiddleware(otelkit.WithOperation("disable_client"))(disableClientEndpoint(svc)),
+	mux.Post("/users/:id/disable", otelhttp.NewHandler(kithttp.NewServer(
+		disableClientEndpoint(svc),
 		decodeChangeClientStatus,
 		api.EncodeResponse,
 		opts...,
-	))
+	), "disable_client"))
 
 	mux.GetFunc("/health", mainflux.Health("users", instanceID))
 	mux.Handle("/metrics", promhttp.Handler())

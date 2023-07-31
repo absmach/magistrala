@@ -117,6 +117,9 @@ func main() {
 	}
 
 	dbConfig := pgClient.Config{Name: defDB}
+	if err := dbConfig.LoadEnv(envPrefixDB); err != nil {
+		logger.Fatal(err.Error())
+	}
 	db, err := pgClient.SetupWithConfig(envPrefixDB, *clientsPg.Migration(), dbConfig)
 	if err != nil {
 		logger.Error(err.Error())
@@ -138,7 +141,7 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
-	csvc, gsvc, psvc := newService(ctx, db, tracer, cfg, ec, logger)
+	csvc, gsvc, psvc := newService(ctx, db, dbConfig, tracer, cfg, ec, logger)
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
@@ -151,16 +154,15 @@ func main() {
 	hsg := httpserver.New(ctx, cancel, svcName, httpServerConfig, gapi.MakeHandler(gsvc, mux, logger), logger)
 	hsp := httpserver.New(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(psvc, mux, logger), logger)
 
-	registerAuthServiceServer := func(srv *grpc.Server) {
-		reflection.Register(srv)
-		policies.RegisterAuthServiceServer(srv, grpcapi.NewServer(csvc, psvc))
-
-	}
 	grpcServerConfig := server.Config{Port: defSvcGRPCPort}
 	if err := env.Parse(&grpcServerConfig, env.Options{Prefix: envPrefixGrpc}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s gRPC server configuration : %s", svcName, err.Error()))
 		exitCode = 1
 		return
+	}
+	registerAuthServiceServer := func(srv *grpc.Server) {
+		reflection.Register(srv)
+		policies.RegisterAuthServiceServer(srv, grpcapi.NewServer(csvc, psvc))
 	}
 	gs := grpcserver.New(ctx, cancel, svcName, grpcServerConfig, registerAuthServiceServer, logger)
 
@@ -185,8 +187,8 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, db *sqlx.DB, tracer trace.Tracer, c config, ec email.Config, logger mflog.Logger) (clients.Service, groups.Service, policies.Service) {
-	database := postgres.NewDatabase(db, tracer)
+func newService(ctx context.Context, db *sqlx.DB, dbConfig pgClient.Config, tracer trace.Tracer, c config, ec email.Config, logger mflog.Logger) (clients.Service, groups.Service, policies.Service) {
+	database := postgres.NewDatabase(db, dbConfig, tracer)
 	cRepo := cpostgres.NewRepository(database)
 	gRepo := gpostgres.NewRepository(database)
 	pRepo := ppostgres.NewRepository(database)

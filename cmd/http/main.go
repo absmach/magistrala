@@ -24,11 +24,10 @@ import (
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
-	pstracing "github.com/mainflux/mainflux/pkg/messaging/tracing"
+	brokerstracing "github.com/mainflux/mainflux/pkg/messaging/brokers/tracing"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/things/policies"
 	"go.opentelemetry.io/otel/trace"
-
 	"golang.org/x/sync/errgroup"
 )
 
@@ -73,6 +72,13 @@ func main() {
 		}
 	}
 
+	httpServerConfig := server.Config{Port: defSvcHTTPPort}
+	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefix}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		exitCode = 1
+		return
+	}
+
 	tc, tcHandler, err := thingsClient.Setup()
 	if err != nil {
 		logger.Error(err.Error())
@@ -102,17 +108,11 @@ func main() {
 		exitCode = 1
 		return
 	}
-	pub = pstracing.New(tracer, pub)
 	defer pub.Close()
+	pub = brokerstracing.NewPublisher(httpServerConfig, tracer, pub)
 
 	svc := newService(pub, tc, logger, tracer)
 
-	httpServerConfig := server.Config{Port: defSvcHTTPPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefix}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
-		exitCode = 1
-		return
-	}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, instanceID), logger)
 
 	if cfg.SendTelemetry {

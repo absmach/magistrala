@@ -69,6 +69,20 @@ func main() {
 		}
 	}
 
+	dbConfig := pgClient.Config{Name: defDB}
+	if err := dbConfig.LoadEnv(envPrefixDB); err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+	db, err := pgClient.Connect(dbConfig)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to setup postgres database : %s", err))
+		exitCode = 1
+		return
+	}
+	defer db.Close()
+
 	tc, tcHandler, err := thingsClient.Setup()
 	if err != nil {
 		logger.Error(err.Error())
@@ -88,20 +102,6 @@ func main() {
 	defer authHandler.Close()
 
 	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
-
-	dbConfig := pgClient.Config{Name: defDB}
-	if err := dbConfig.LoadEnv(envPrefixDB); err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	db, err := pgClient.Connect(dbConfig)
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to setup postgres database : %s", err))
-		exitCode = 1
-		return
-	}
-	defer db.Close()
 
 	repo := newService(db, logger)
 

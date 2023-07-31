@@ -16,6 +16,8 @@ import (
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/internal"
+	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
+	redisClient "github.com/mainflux/mainflux/internal/clients/redis"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
@@ -23,15 +25,12 @@ import (
 	"github.com/mainflux/mainflux/lora"
 	"github.com/mainflux/mainflux/lora/api"
 	"github.com/mainflux/mainflux/lora/mqtt"
+	"github.com/mainflux/mainflux/lora/redis"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
-	"github.com/mainflux/mainflux/pkg/messaging/tracing"
+	brokerstracing "github.com/mainflux/mainflux/pkg/messaging/brokers/tracing"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"golang.org/x/sync/errgroup"
-
-	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
-	redisClient "github.com/mainflux/mainflux/internal/clients/redis"
-	"github.com/mainflux/mainflux/lora/redis"
 )
 
 const (
@@ -87,6 +86,13 @@ func main() {
 		}
 	}
 
+	httpServerConfig := server.Config{Port: defSvcHTTPPort}
+	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
+		exitCode = 1
+		return
+	}
+
 	rmConn, err := redisClient.Setup(envPrefixRouteMap)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to setup route map redis client : %s", err))
@@ -114,8 +120,8 @@ func main() {
 		exitCode = 1
 		return
 	}
-	pub = tracing.New(tracer, pub)
 	defer pub.Close()
+	pub = brokerstracing.NewPublisher(httpServerConfig, tracer, pub)
 
 	svc := newService(pub, rmConn, thingsRMPrefix, channelsRMPrefix, connsRMPrefix, logger)
 
@@ -138,14 +144,8 @@ func main() {
 		return subscribeToLoRaBroker(svc, mqttConn, cfg.LoraMsgTimeout, cfg.LoraMsgTopic, logger)
 	})
 
-	go subscribeToThingsES(svc, esConn, cfg.ESConsumerName, logger)
+	go subscribeToThingsES(ctx, svc, esConn, cfg.ESConsumerName, logger)
 
-	httpServerConfig := server.Config{Port: defSvcHTTPPort}
-	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
-		exitCode = 1
-		return
-	}
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(instanceID), logger)
 
 	if cfg.SendTelemetry {
@@ -171,7 +171,7 @@ func connectToMQTTBroker(url, user, password string, timeout time.Duration, logg
 	opts.AddBroker(url)
 	opts.SetUsername(user)
 	opts.SetPassword(password)
-	opts.SetOnConnectHandler(func(c mqttPaho.Client) {
+	opts.SetOnConnectHandler(func(_ mqttPaho.Client) {
 		logger.Info("Connected to Lora MQTT broker")
 	})
 	opts.SetConnectionLostHandler(func(c mqttPaho.Client, err error) {
@@ -196,10 +196,10 @@ func subscribeToLoRaBroker(svc lora.Service, mc mqttPaho.Client, timeout time.Du
 	return nil
 }
 
-func subscribeToThingsES(svc lora.Service, client *r.Client, consumer string, logger mflog.Logger) {
+func subscribeToThingsES(ctx context.Context, svc lora.Service, client *r.Client, consumer string, logger mflog.Logger) {
 	eventStore := redis.NewEventStore(svc, client, consumer, logger)
 	logger.Info("Subscribed to Redis Event Store")
-	if err := eventStore.Subscribe(context.Background(), "mainflux.things"); err != nil {
+	if err := eventStore.Subscribe(ctx, "mainflux.things"); err != nil {
 		logger.Warn(fmt.Sprintf("Lora-adapter service failed to subscribe to Redis event source: %s", err))
 	}
 }

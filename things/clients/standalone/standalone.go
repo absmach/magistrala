@@ -38,5 +38,6 @@ func (repo singleUserRepo) Authorize(ctx context.Context, req *policies.Authoriz
 	if repo.id != req.GetSubject() {
 		return &policies.AuthorizeRes{}, errors.ErrAuthorization
 	}
+
 	return &policies.AuthorizeRes{Authorized: true}, nil
 }

@@ -1,8 +1,30 @@
 openapi: 3.0.1
 info:
   title: Mainflux Notifiers service
-  description: HTTP API for Notifiers service.
-  version: "1.0.0"
+  description: |
+    HTTP API for Notifiers service.
+    Some useful links:
+    - [The Mainflux repository](https://github.com/mainflux/mainflux)
+  contact:
+    email: info@mainflux.com
+  license:
+    name: Apache 2.0
+    url: https://github.com/mainflux/mainflux/blob/master/LICENSE
+  version: 0.14.0
+
+servers:
+  - url: http://localhost:9014
+  - url: https://localhost:9014
+  - url: http://localhost:9015
+  - url: https://localhost:9015
+  
+tags:
+  - name: notifiers
+    description: Everything about your Notifiers
+    externalDocs:
+      description: Find out more about notifiers
+      url: http://docs.mainflux.io/
+      
 paths:
   /subscriptions:
     post:

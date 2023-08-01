@@ -1,8 +1,28 @@
 openapi: 3.0.1
 info:
   title: Mainflux twins service
-  description: HTTP API for managing digital twins and their states.
-  version: '1.0.0'
+  description: |
+    HTTP API for managing digital twins and their states.
+    Some useful links:
+    - [The Mainflux repository](https://github.com/mainflux/mainflux)
+  contact:
+    email: info@mainflux.com
+  license:
+    name: Apache 2.0
+    url: https://github.com/mainflux/mainflux/blob/master/LICENSE
+  version: 0.14.0
+
+servers:
+  - url: http://localhost:9018
+  - url: https://localhost:9018
+    
+tags:
+  - name: twins
+    description: Everything about your Twins
+    externalDocs:
+      description: Find out more about twins
+      url: http://docs.mainflux.io/
+
 
 paths:
   /twins:

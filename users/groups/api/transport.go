@@ -47,7 +47,7 @@ func MakeHandler(svc groups.Service, mux *bone.Mux, logger logger.Logger) http.H
 		opts...,
 	), "update_group"))
 
-	mux.Get("/users/:groupID/memberships", otelhttp.NewHandler(kithttp.NewServer(
+	mux.Get("/users/:userID/memberships", otelhttp.NewHandler(kithttp.NewServer(
 		listMembershipsEndpoint(svc),
 		decodeListMembershipRequest,
 		api.EncodeResponse,
@@ -135,7 +135,7 @@ func decodeListMembershipRequest(_ context.Context, r *http.Request) (interface{
 	}
 	req := listMembershipReq{
 		token:    apiutil.ExtractBearerToken(r),
-		clientID: bone.GetValue(r, "groupID"),
+		clientID: bone.GetValue(r, "userID"),
 		GroupsPage: mfgroups.GroupsPage{
 			Level: level,
 			ID:    parentID,

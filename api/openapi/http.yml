@@ -1,8 +1,28 @@
 openapi: 3.0.1
 info:
   title: Mainflux http adapter
-  description: HTTP API for sending messages through communication channels.
-  version: "1.0.0"
+  description: |
+    HTTP API for sending messages through communication channels.
+    Some useful links:
+    - [The Mainflux repository](https://github.com/mainflux/mainflux)
+  contact:
+    email: info@mainflux.com
+  license:
+    name: Apache 2.0
+    url: https://github.com/mainflux/mainflux/blob/master/LICENSE
+  version: 0.14.0
+
+servers:
+  - url: http://localhost:8008
+  - url: https://localhost:8008
+
+tags:
+  - name: messages
+    description: Everything about your Messages
+    externalDocs:
+      description: Find out more about messages
+      url: http://docs.mainflux.io/
+      
 paths:
   /channels/{id}/messages:
     post:

@@ -1,8 +1,35 @@
 openapi: 3.0.1
 info:
   title: Mainflux reader service
-  description: HTTP API for reading messages.
-  version: "1.0.0"
+  description: |
+    HTTP API for reading messages.
+    Some useful links:
+    - [The Mainflux repository](https://github.com/mainflux/mainflux)
+  contact:
+    email: info@mainflux.com
+  license:
+    name: Apache 2.0
+    url: https://github.com/mainflux/mainflux/blob/master/LICENSE
+  version: 0.14.0
+
+servers:
+  - url: http://localhost:9003
+  - url: https://localhost:9003
+  - url: http://localhost:9005
+  - url: https://localhost:9005
+  - url: http://localhost:9007
+  - url: https://localhost:9007
+  - url: http://localhost:9009
+  - url: https://localhost:9009
+  - url: http://localhost:9011
+  - url: https://localhost:9011
+    
+tags:
+  - name: readers
+    description: Everything about your Readers
+    externalDocs:
+      description: Find out more about readers
+      url: http://docs.mainflux.io/
 
 paths:
   /channels/{chanId}/messages:
@@ -14,7 +41,7 @@ paths:
         ensure that the entire dataset is consumed either by making subsequent
         requests, or by increasing the subset size of the initial request.
       tags:
-        - messages
+        - readers
       parameters:
         - $ref: "#/components/parameters/ChanId"
         - $ref: "#/components/parameters/Limit"

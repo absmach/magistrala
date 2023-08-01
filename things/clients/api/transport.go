@@ -56,7 +56,7 @@ func MakeHandler(svc clients.Service, mux *bone.Mux, logger mflog.Logger, instan
 		opts...,
 	), "list_things"))
 
-	mux.Get("/channels/:thingID/things", otelhttp.NewHandler(kithttp.NewServer(
+	mux.Get("/channels/:chanID/things", otelhttp.NewHandler(kithttp.NewServer(
 		listMembersEndpoint(svc),
 		decodeListMembersRequest,
 		api.EncodeResponse,
@@ -311,7 +311,7 @@ func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, 
 			Limit:    l,
 			Metadata: m,
 		},
-		groupID: bone.GetValue(r, "thingID"),
+		groupID: bone.GetValue(r, "chanID"),
 	}
 	return req, nil
 }

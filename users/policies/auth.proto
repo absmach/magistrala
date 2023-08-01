@@ -10,6 +10,7 @@ option go_package = "./policies";
 // AuthService is a service that provides authentication and authorization
 // functionalities for the users service.
 service AuthService {
+    // Identify identifies the user based on the given token.
     rpc Identify(IdentifyReq) returns (IdentifyRes) {}
     // Authorize authorizes the given subject to perform the given action on the
     // given object.

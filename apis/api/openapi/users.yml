@@ -5,7 +5,6 @@ info:
     This is the Users Server based on the OpenAPI 3.0 specification.  It is the HTTP API for managing platform users. You can now help us improve the API whether it's by making changes to the definition itself or to the code.
     Some useful links:
     - [The Mainflux repository](https://github.com/mainflux/mainflux)
-    - [The Mainflux Postman Collection](https://github.com/mainflux/mainflux/blob/master/api/postman/postman.yaml)
   contact:
     email: info@mainflux.com
   license:
@@ -14,8 +13,8 @@ info:
   version: 0.14.0
 
 servers:
-  - url: http://localhost:8180
-  - url: https://localhost:8180
+  - url: http://localhost:9002
+  - url: https://localhost:9002
 
 tags:
   - name: Users
@@ -779,7 +778,7 @@ paths:
         - $ref: "#/components/parameters/Obj"
       responses:
         '204':
-          description: Group deleted.
+          description: Policy deleted.
         '400':
           description: Failed due to malformed query parameters.
         '401':

@@ -1,9 +1,28 @@
 openapi: 3.0.1
 info:
   title: Mainflux Bootstrap service
-  description: HTTP API for managing platform things configuration.
-  version: "1.0.0"
+  description: |
+    HTTP API for managing platform things configuration.
+    Some useful links:
+    - [The Mainflux repository](https://github.com/mainflux/mainflux)
+  contact:
+    email: info@mainflux.com
+  license:
+    name: Apache 2.0
+    url: https://github.com/mainflux/mainflux/blob/master/LICENSE
+  version: 0.14.0
 
+servers:
+  - url: http://localhost:9013
+  - url: https://localhost:9013
+
+tags:
+  - name: configs
+    description: Everything about your Configs
+    externalDocs:
+      description: Find out more about Configs
+      url: http://docs.mainflux.io/
+  
 paths:
   /things/configs:
     post:

@@ -5,7 +5,6 @@ info:
     This is the Things Server based on the OpenAPI 3.0 specification.  It is the HTTP API for managing platform things and channels. You can now help us improve the API whether it's by making changes to the definition itself or to the code.
     Some useful links:
     - [The Mainflux repository](https://github.com/mainflux/mainflux)
-    - [The Mainflux Postman Collection](https://github.com/mainflux/mainflux/blob/master/api/postman/postman.yaml)
   contact:
     email: info@mainflux.com
   license:
@@ -300,32 +299,6 @@ paths:
           description: Database can't process request.
         '500':
           $ref: "#/components/responses/ServiceError"
-
-  /things/{thingID}/share:
-    post:
-      summary: Shares a thing with user identified by request body.
-      description: |
-        Adds 'read', 'write' or 'delete' policies to the user identified by the request body.
-        Sharing a particular thing is only allowed to users who have 'write' access to that thing.
-      tags:
-        - Things
-      parameters:
-        - $ref: "#/components/parameters/ThingID"
-      requestBody:
-        $ref: "#/components/requestBodies/ShareThingReq"
-      responses:
-        '200':
-          description: Policies shared.
-        '400':
-          description: Failed due to malformed JSON.
-        '401':
-          description: Missing or invalid access token provided.
-        '403':
-          description: Lack of policies in order to share the thing.
-        '415':
-          description: Missing or invalid content type.
-        '500':
-          $ref: "#/components/responses/ServiceError"
           
   /things/{thingID}/channels:
     get:
@@ -614,52 +587,7 @@ paths:
         '500':
           $ref: "#/components/responses/ServiceError"     
 
-  /channels/{chanID}/things/{thingID}:
-    post:
-      summary: Connects the thing to the channel
-      description: |
-        Creates connection between a thing and a channel. Once connected to
-        the channel, things are allowed to exchange messages through it.
-      tags:
-        - Policies
-      parameters:
-        - $ref: "#/components/parameters/chanID"
-        - $ref: "#/components/parameters/ThingID"
-      responses:
-        '200':
-          $ref: "#/components/responses/ConnCreateRes"
-        '400':
-          description: Failed due to malformed query parameters.
-        '401':
-          description: Missing or invalid access token provided.
-        '404':
-          description: Channel or thing does not exist.
-        '500':
-          $ref: "#/components/responses/ServiceError"
-          
-    delete:
-      summary: Disconnects the thing from the channel
-      description: |
-        Removes connection between a thing and a channel. Once connection is
-        removed, thing can no longer exchange messages through the channel.
-      tags:
-        - Policies
-      parameters:
-        - $ref: "#/components/parameters/chanID"
-        - $ref: "#/components/parameters/ThingID"
-      responses:
-        '204':
-          description: Thing disconnected.
-        '400':
-          description: Failed due to malformed query parameters.
-        '401':
-          description: Missing or invalid access token provided.
-        '404':
-          description: Channel or thing does not exist.
-        '500':
-          $ref: "#/components/responses/ServiceError" 
-
-  /identify/channels/{chanID}/access-by-key:
+  /channels/{chanID}/access:
     post:
       summary: Checks if thing has access to a channel.
       description: |
@@ -682,37 +610,12 @@ paths:
           description: Missing or invalid content type.
         '500':
           $ref: "#/components/responses/ServiceError"
-          
-  /identify/channels/{chanID}/access-by-id:
-    post:
-      summary: Checks if thing has access to a channel.
-      description: |
-        Checks if a thing with a specified ID has an access to a specified
-        channel.
-      tags:
-        - Policies
-      parameters:
-        - $ref: "#/components/parameters/chanID"
-      requestBody:
-        $ref: "#/components/requestBodies/AccessByIDReq"
-      responses:
-        '200':
-          description: Thing has access to the specified channel.
-        '401':
-          description: |
-            Thing and channel are not connected, or thing with specified ID doesn't
-            exist.
-        '415':
-          description: Missing or invalid content type.
-        '500':
-          $ref: "#/components/responses/ServiceError"
-          
+
   /identify:
     post:
-      summary: Validates thing's key and returns it's ID if key is valid.
+      summary: Returns thing ID of the give thing secret.
       description: |
-        Validates thing's key and returns it's ID if specified key exists
-        and is valid.
+        Returns thing ID of the given thing secret, hence identifying the thing.
       tags:
         - Policies
       requestBody:
@@ -720,6 +623,27 @@ paths:
       responses:
         '200':
           $ref: "#/components/responses/IdentityRes"
+        '401':
+          description: |
+            Thing and channel are not connected, or thing with specified key doesn't
+            exist.
+        '415':
+          description: Missing or invalid content type.
+        '500':
+          $ref: "#/components/responses/ServiceError"
+          
+  /policies:
+    post:
+      summary: Adds Thing Policy.
+      description: |
+        Adds thing policy. The subject can be userID or thingID and the object is channelID
+      tags:
+        - Policies
+      requestBody:
+        $ref: "#/components/requestBodies/PolicyReq"
+      responses:
+        '201':
+          description: Policy created.
         '401':
           description: Thing with specified key doesn't exist.
         '415':
@@ -759,27 +683,23 @@ paths:
         Updates Actions of a policy.
       tags:
         - Policies
-      parameters:
-        - $ref: "#/components/parameters/Subject"
-        - $ref: "#/components/parameters/Object"
-        - $ref: "#/components/parameters/Actions"
       security:
         - bearerAuth: []
       requestBody:
         $ref: "#/components/requestBodies/PolicyUpdateReq"
       responses:
         '200':
-          description: Channel updated.
+          description: Policy updated.
         '400':
           description: Failed due to malformed query parameters.
         '401':
           description: Missing or invalid access token provided.
         '404':
-          description: Channel does not exist.
+          description: Policy does not exist.
         '500':
           $ref: "#/components/responses/ServiceError"
           
-  /policies/{obj}/{sub}:
+  /policies/{sub}/{obj}:
     delete:
       tags:
         - Policies
@@ -789,11 +709,11 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/Obj"
         - $ref: "#/components/parameters/Sub"
+        - $ref: "#/components/parameters/Obj"
       responses:
-        '200':
-          $ref: "#/components/responses/PolicyPageRes"
+        '204':
+          description: Policy deleted.
         '400':
           description: Failed due to malformed query parameters.
         '401':
@@ -1372,9 +1292,17 @@ components:
     PolicyUpdate:
       type: object
       properties:
+        subject:
+          type: string
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Thing ID
+        object:
+          type: string
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Channel ID        
         actions:
           type: array
-          example: ['m_write', 'g_add']
+          example: ['m_write', 'm_write']
           description: Policy actions.
           minItems: 0
           uniqueItems: true
@@ -1395,30 +1323,35 @@ components:
     ConnectionReqSchema:
       type: object
       properties:
-        group_ids:
+        objects:
           type: array
           description: Channel IDs.
           items:
             example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-        client_ids:
+        subjects:
           type: array
           description: Thing IDs
           items:
             example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-            
-    ShareThingReqSchema:
+        actions:
+          type: array
+          description: policy actions
+          items:
+            example: m_read
+
+    DisConnectionReqSchema:
       type: object
       properties:
-        user_ids:
+        objects:
           type: array
-          description: User IDs.
+          description: Channel IDs.
           items:
             example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-        policies:
+        subjects:
           type: array
-          description: Policies
+          description: Thing IDs
           items:
-            example: c_update
+            example: bb7edb32-2eac-4aad-aebe-ed96fe073879
             
     Error:
       type: object
@@ -1793,32 +1726,55 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ConnectionReqSchema"
+            $ref: "#/components/schemas/DisConnectionReqSchema"
     
-    IdentityReq:
-      description: JSON-formatted document that contains thing key.
+    PolicyReq:
+      description: JSON-formatted document that contains subject object and action.
       required: true
       content:
         application/json:
           schema:
             type: object
             properties:
-              token:
+              subject:
                 type: string
                 format: uuid
-                description: Thing key that is used for thing auth.
+                description: Thing ID that is used for policy.
+              object:
+                type: string
+                format: uuid
+                description: Channel ID that is used for policy.
+              action:
+                type: string
+                description: Policy action
+                example: m_read
             required:
-              - token
-    
-    AccessByIDReq:
-      description: JSON-formatted document that contains thing key.
+              - subject
+              - object
+              - action
+
+    IdentityReq:
+      description: JSON-formatted document that contains thing secret.
       required: true
       content:
         application/json:
           schema:
             type: object
             properties:
-              client_id:
+              secret:
+                type: string
+                format: uuid
+                description: Thing Secret by which thing is uniquely identified.
+                
+    AccessByIDReq:
+      description: JSON-formatted document that contains subject object and action.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              subject:
                 type: string
                 format: uuid
                 description: Thing ID by which thing is uniquely identified.
@@ -1832,14 +1788,6 @@ components:
                 format: string
                 example: group
                 description: Entity Type.
-                
-    ShareThingReq:
-      description: JSON-formatted document describing sharing things policies.
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ShareThingReqSchema"
 
   responses:
     ThingCreateRes:

@@ -37,7 +37,8 @@ func (sdk mfSDK) IssueCert(thingID, valid, token string) (Cert, errors.SDKError)
 	}
 
 	url := fmt.Sprintf("%s/%s", sdk.certsURL, certsEndpoint)
-	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, token, string(CTJSON), d, http.StatusCreated)
+
+	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, token, d, nil, http.StatusCreated)
 	if sdkerr != nil {
 		return Cert{}, sdkerr
 	}
@@ -52,7 +53,8 @@ func (sdk mfSDK) IssueCert(thingID, valid, token string) (Cert, errors.SDKError)
 
 func (sdk mfSDK) ViewCert(id, token string) (Cert, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.certsURL, certsEndpoint, id)
-	_, body, err := sdk.processRequest(http.MethodGet, url, token, string(CTJSON), nil, http.StatusOK)
+
+	_, body, err := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
 	if err != nil {
 		return Cert{}, err
 	}
@@ -67,7 +69,8 @@ func (sdk mfSDK) ViewCert(id, token string) (Cert, errors.SDKError) {
 
 func (sdk mfSDK) ViewCertByThing(thingID, token string) (CertSerials, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.certsURL, serialsEndpoint, thingID)
-	_, body, err := sdk.processRequest(http.MethodGet, url, token, string(CTJSON), nil, http.StatusOK)
+
+	_, body, err := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
 	if err != nil {
 		return CertSerials{}, err
 	}
@@ -82,7 +85,8 @@ func (sdk mfSDK) ViewCertByThing(thingID, token string) (CertSerials, errors.SDK
 
 func (sdk mfSDK) RevokeCert(id, token string) (time.Time, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.certsURL, certsEndpoint, id)
-	_, body, err := sdk.processRequest(http.MethodDelete, url, token, string(CTJSON), nil, http.StatusOK)
+
+	_, body, err := sdk.processRequest(http.MethodDelete, url, token, nil, nil, http.StatusOK)
 	if err != nil {
 		return time.Time{}, err
 	}

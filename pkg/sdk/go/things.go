@@ -37,7 +37,7 @@ func (sdk mfSDK) CreateThing(thing Thing, token string) (Thing, errors.SDKError)
 
 	url := fmt.Sprintf("%s/%s", sdk.thingsURL, thingsEndpoint)
 
-	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, token, string(CTJSON), data, http.StatusCreated)
+	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusCreated)
 	if sdkerr != nil {
 		return Thing{}, sdkerr
 	}
@@ -58,7 +58,7 @@ func (sdk mfSDK) CreateThings(things []Thing, token string) ([]Thing, errors.SDK
 
 	url := fmt.Sprintf("%s/%s/%s", sdk.thingsURL, thingsEndpoint, "bulk")
 
-	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, token, string(CTJSON), data, http.StatusOK)
+	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusOK)
 	if sdkerr != nil {
 		return []Thing{}, sdkerr
 	}
@@ -77,7 +77,7 @@ func (sdk mfSDK) Things(pm PageMetadata, token string) (ThingsPage, errors.SDKEr
 		return ThingsPage{}, errors.NewSDKError(err)
 	}
 
-	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, string(CTJSON), nil, http.StatusOK)
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
 	if sdkerr != nil {
 		return ThingsPage{}, sdkerr
 	}
@@ -96,7 +96,7 @@ func (sdk mfSDK) ThingsByChannel(chanID string, pm PageMetadata, token string) (
 		return ThingsPage{}, errors.NewSDKError(err)
 	}
 
-	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, string(CTJSON), nil, http.StatusOK)
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
 	if sdkerr != nil {
 		return ThingsPage{}, sdkerr
 	}
@@ -112,7 +112,7 @@ func (sdk mfSDK) ThingsByChannel(chanID string, pm PageMetadata, token string) (
 func (sdk mfSDK) Thing(id, token string) (Thing, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s", sdk.thingsURL, thingsEndpoint, id)
 
-	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, string(CTJSON), nil, http.StatusOK)
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
 	if sdkerr != nil {
 		return Thing{}, sdkerr
 	}
@@ -133,7 +133,7 @@ func (sdk mfSDK) UpdateThing(t Thing, token string) (Thing, errors.SDKError) {
 
 	url := fmt.Sprintf("%s/%s/%s", sdk.thingsURL, thingsEndpoint, t.ID)
 
-	_, body, sdkerr := sdk.processRequest(http.MethodPatch, url, token, string(CTJSON), data, http.StatusOK)
+	_, body, sdkerr := sdk.processRequest(http.MethodPatch, url, token, data, nil, http.StatusOK)
 	if sdkerr != nil {
 		return Thing{}, sdkerr
 	}
@@ -154,7 +154,7 @@ func (sdk mfSDK) UpdateThingTags(t Thing, token string) (Thing, errors.SDKError)
 
 	url := fmt.Sprintf("%s/%s/%s/tags", sdk.thingsURL, thingsEndpoint, t.ID)
 
-	_, body, sdkerr := sdk.processRequest(http.MethodPatch, url, token, string(CTJSON), data, http.StatusOK)
+	_, body, sdkerr := sdk.processRequest(http.MethodPatch, url, token, data, nil, http.StatusOK)
 	if sdkerr != nil {
 		return Thing{}, sdkerr
 	}
@@ -177,7 +177,7 @@ func (sdk mfSDK) UpdateThingSecret(id, secret, token string) (Thing, errors.SDKE
 
 	url := fmt.Sprintf("%s/%s/%s/secret", sdk.thingsURL, thingsEndpoint, id)
 
-	_, body, sdkerr := sdk.processRequest(http.MethodPatch, url, token, string(CTJSON), data, http.StatusOK)
+	_, body, sdkerr := sdk.processRequest(http.MethodPatch, url, token, data, nil, http.StatusOK)
 	if sdkerr != nil {
 		return Thing{}, sdkerr
 	}
@@ -198,7 +198,7 @@ func (sdk mfSDK) UpdateThingOwner(t Thing, token string) (Thing, errors.SDKError
 
 	url := fmt.Sprintf("%s/%s/%s/owner", sdk.thingsURL, thingsEndpoint, t.ID)
 
-	_, body, sdkerr := sdk.processRequest(http.MethodPatch, url, token, string(CTJSON), data, http.StatusOK)
+	_, body, sdkerr := sdk.processRequest(http.MethodPatch, url, token, data, nil, http.StatusOK)
 	if sdkerr != nil {
 		return Thing{}, sdkerr
 	}
@@ -221,7 +221,8 @@ func (sdk mfSDK) DisableThing(id, token string) (Thing, errors.SDKError) {
 
 func (sdk mfSDK) changeThingStatus(id, status, token string) (Thing, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s/%s/%s", sdk.thingsURL, thingsEndpoint, id, status)
-	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, token, string(CTJSON), nil, http.StatusOK)
+
+	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, token, nil, nil, http.StatusOK)
 	if sdkerr != nil {
 		return Thing{}, sdkerr
 	}
@@ -236,7 +237,8 @@ func (sdk mfSDK) changeThingStatus(id, status, token string) (Thing, errors.SDKE
 
 func (sdk mfSDK) IdentifyThing(key string) (string, errors.SDKError) {
 	url := fmt.Sprintf("%s/%s", sdk.thingsURL, identifyEndpoint)
-	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, ThingPrefix+key, string(CTJSON), nil, http.StatusOK)
+
+	_, body, sdkerr := sdk.processRequest(http.MethodPost, url, ThingPrefix+key, nil, nil, http.StatusOK)
 	if sdkerr != nil {
 		return "", sdkerr
 	}

@@ -200,6 +200,20 @@ type SDK interface {
 	//  fmt.Println(user)
 	UpdateUserOwner(user User, token string) (User, errors.SDKError)
 
+	// ResetPasswordRequest sends a password request email to a user.
+	//
+	// example:
+	//  err := sdk.ResetPasswordRequest("example@email.com")
+	//  fmt.Println(err)
+	ResetPasswordRequest(email string) errors.SDKError
+
+	// ResetPassword changes a user's password to the one passed in the argument.
+	//
+	// example:
+	//  err := sdk.ResetPassword("password","password","token")
+	//  fmt.Println(err)
+	ResetPassword(password, confPass, token string) errors.SDKError
+
 	// UpdatePassword updates user password.
 	//
 	// example:
@@ -960,6 +974,7 @@ type mfSDK struct {
 	readerURL      string
 	thingsURL      string
 	usersURL       string
+	HostURL        string
 
 	msgContentType ContentType
 	client         *http.Client
@@ -973,6 +988,7 @@ type Config struct {
 	ReaderURL      string
 	ThingsURL      string
 	UsersURL       string
+	HostURL        string
 
 	MsgContentType  ContentType
 	TLSVerification bool
@@ -987,6 +1003,7 @@ func NewSDK(conf Config) SDK {
 		readerURL:      conf.ReaderURL,
 		thingsURL:      conf.ThingsURL,
 		usersURL:       conf.UsersURL,
+		HostURL:        conf.HostURL,
 
 		msgContentType: conf.MsgContentType,
 		client: &http.Client{
@@ -1001,10 +1018,18 @@ func NewSDK(conf Config) SDK {
 
 // processRequest creates and send a new HTTP request, and checks for errors in the HTTP response.
 // It then returns the response headers, the response body, and the associated error(s) (if any).
-func (sdk mfSDK) processRequest(method, url, token, contentType string, data []byte, expectedRespCodes ...int) (http.Header, []byte, errors.SDKError) {
+func (sdk mfSDK) processRequest(method, url, token string, data []byte, headers map[string]string, expectedRespCodes ...int) (http.Header, []byte, errors.SDKError) {
 	req, err := http.NewRequest(method, url, bytes.NewReader(data))
 	if err != nil {
 		return make(http.Header), []byte{}, errors.NewSDKError(err)
+	}
+
+	// Sets a default value for the Content-Type.
+	// Overridden if Content-Type is passed in the headers arguments.
+	req.Header.Add("Content-Type", string(CTJSON))
+
+	for key, value := range headers {
+		req.Header.Add(key, value)
 	}
 
 	if token != "" {
@@ -1012,9 +1037,6 @@ func (sdk mfSDK) processRequest(method, url, token, contentType string, data []b
 			token = BearerPrefix + token
 		}
 		req.Header.Set("Authorization", token)
-	}
-	if contentType != "" {
-		req.Header.Add("Content-Type", contentType)
 	}
 
 	resp, err := sdk.client.Do(req)

@@ -9,6 +9,17 @@ type updateClientSecretReq struct {
 	NewSecret string `json:"new_secret,omitempty"`
 }
 
+type resetPasswordRequestreq struct {
+	Email string `json:"email"`
+	Host  string `json:"host"`
+}
+
+type resetPasswordReq struct {
+	Token    string `json:"token"`
+	Password string `json:"password"`
+	ConfPass string `json:"confirm_password"`
+}
+
 type updateThingSecretReq struct {
 	Secret string `json:"secret,omitempty"`
 }

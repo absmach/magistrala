@@ -32,6 +32,7 @@ func main() {
 		CertsURL:        defCertsURL,
 		MsgContentType:  sdk.ContentType(msgContentType),
 		TLSVerification: false,
+		HostURL:         defURL,
 	}
 
 	// Root
@@ -121,6 +122,14 @@ func main() {
 		"R",
 		sdkConf.ReaderURL,
 		"Reader URL",
+	)
+
+	rootCmd.PersistentFlags().StringVarP(
+		&sdkConf.HostURL,
+		"host-url",
+		"H",
+		sdkConf.HostURL,
+		"Host URL",
 	)
 
 	rootCmd.PersistentFlags().StringVarP(

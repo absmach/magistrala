@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/mainflux/mainflux/pkg/errors"
 	upolicies "github.com/mainflux/mainflux/users/policies"
+	"golang.org/x/exp/slices"
 )
 
 // PolicyTypes contains a list of the available policy types currently supported.
@@ -103,8 +105,8 @@ type Cache interface {
 	Remove(ctx context.Context, policy Policy) error
 }
 
-// Validate returns an error if policy representation is invalid.
-func (p Policy) Validate() error {
+// validate returns an error if policy representation is invalid.
+func (p Policy) validate() error {
 	if p.Subject == "" {
 		return apiutil.ErrMissingPolicySub
 	}
@@ -134,4 +136,14 @@ func ValidateAction(act string) bool {
 		}
 	}
 	return false
+}
+
+// checkActions checks if the incoming actions are in the current actions.
+func checkActions(currentActions, incomingActions []string) error {
+	for _, action := range incomingActions {
+		if !slices.Contains(currentActions, action) {
+			return errors.ErrAuthorization
+		}
+	}
+	return nil
 }

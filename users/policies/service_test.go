@@ -45,36 +45,22 @@ func TestAddPolicy(t *testing.T) {
 	csvc := clients.NewService(cRepo, pRepo, tokenizer, e, phasher, idProvider, passRegex)
 	svc := policies.NewService(pRepo, tokenizer, idProvider)
 
-	policy := policies.Policy{Object: testsutil.GenerateUUID(t, idProvider), Subject: testsutil.GenerateUUID(t, idProvider), Actions: []string{"m_read"}}
+	policy := policies.Policy{Object: testsutil.GenerateUUID(t, idProvider), Subject: testsutil.GenerateUUID(t, idProvider), Actions: []string{"c_list"}}
 
 	cases := []struct {
 		desc   string
 		policy policies.Policy
-		page   policies.PolicyPage
 		token  string
 		err    error
 	}{
 		{
 			desc:   "add new policy",
 			policy: policy,
-			page:   policies.PolicyPage{},
 			token:  testsutil.GenerateValidToken(t, testsutil.GenerateUUID(t, idProvider), csvc, cRepo, phasher),
 			err:    nil,
 		},
 		{
-			desc: "add existing policy",
-			policy: policies.Policy{
-				Object:  policy.Object,
-				Subject: policy.Subject,
-				Actions: []string{"m_write"},
-			},
-			page:  policies.PolicyPage{Policies: []policies.Policy{policy}},
-			token: testsutil.GenerateValidToken(t, testsutil.GenerateUUID(t, idProvider), csvc, cRepo, phasher),
-			err:   errors.ErrConflict,
-		},
-		{
 			desc: "add a new policy with owner",
-			page: policies.PolicyPage{},
 			policy: policies.Policy{
 				OwnerID: testsutil.GenerateUUID(t, idProvider),
 				Subject: testsutil.GenerateUUID(t, idProvider),
@@ -86,7 +72,6 @@ func TestAddPolicy(t *testing.T) {
 		},
 		{
 			desc: "add a new policy with c_update action",
-			page: policies.PolicyPage{},
 			policy: policies.Policy{
 				Subject: testsutil.GenerateUUID(t, idProvider),
 				Object:  testsutil.GenerateUUID(t, idProvider),
@@ -97,7 +82,6 @@ func TestAddPolicy(t *testing.T) {
 		},
 		{
 			desc: "add a new policy with c_update and c_list action",
-			page: policies.PolicyPage{},
 			policy: policies.Policy{
 				Subject: testsutil.GenerateUUID(t, idProvider),
 				Object:  testsutil.GenerateUUID(t, idProvider),
@@ -108,7 +92,6 @@ func TestAddPolicy(t *testing.T) {
 		},
 		{
 			desc: "add a new policy with g_update action",
-			page: policies.PolicyPage{},
 			policy: policies.Policy{
 				Subject: testsutil.GenerateUUID(t, idProvider),
 				Object:  testsutil.GenerateUUID(t, idProvider),
@@ -119,7 +102,6 @@ func TestAddPolicy(t *testing.T) {
 		},
 		{
 			desc: "add a new policy with g_update and g_list action",
-			page: policies.PolicyPage{},
 			policy: policies.Policy{
 				Subject: testsutil.GenerateUUID(t, idProvider),
 				Object:  testsutil.GenerateUUID(t, idProvider),
@@ -130,7 +112,6 @@ func TestAddPolicy(t *testing.T) {
 		},
 		{
 			desc: "add a new policy with more actions",
-			page: policies.PolicyPage{},
 			policy: policies.Policy{
 				Subject: testsutil.GenerateUUID(t, idProvider),
 				Object:  testsutil.GenerateUUID(t, idProvider),
@@ -141,7 +122,6 @@ func TestAddPolicy(t *testing.T) {
 		},
 		{
 			desc: "add a new policy with wrong action",
-			page: policies.PolicyPage{},
 			policy: policies.Policy{
 				Subject: testsutil.GenerateUUID(t, idProvider),
 				Object:  testsutil.GenerateUUID(t, idProvider),
@@ -152,7 +132,6 @@ func TestAddPolicy(t *testing.T) {
 		},
 		{
 			desc: "add a new policy with empty object",
-			page: policies.PolicyPage{},
 			policy: policies.Policy{
 				Subject: testsutil.GenerateUUID(t, idProvider),
 				Actions: []string{"c_delete"},
@@ -162,7 +141,6 @@ func TestAddPolicy(t *testing.T) {
 		},
 		{
 			desc: "add a new policy with empty subject",
-			page: policies.PolicyPage{},
 			policy: policies.Policy{
 				Object:  testsutil.GenerateUUID(t, idProvider),
 				Actions: []string{"c_delete"},
@@ -172,7 +150,6 @@ func TestAddPolicy(t *testing.T) {
 		},
 		{
 			desc: "add a new policy with empty action",
-			page: policies.PolicyPage{},
 			policy: policies.Policy{
 				Subject: testsutil.GenerateUUID(t, idProvider),
 				Object:  testsutil.GenerateUUID(t, idProvider),
@@ -183,9 +160,10 @@ func TestAddPolicy(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := pRepo.On("CheckAdmin", context.Background(), mock.Anything).Return(nil)
-		repoCall1 := pRepo.On("Update", context.Background(), mock.Anything).Return(tc.err)
-		repoCall2 := pRepo.On("Save", context.Background(), mock.Anything).Return(tc.err)
+		repoCall := pRepo.On("CheckAdmin", context.Background(), mock.Anything).Return(errors.ErrAuthorization)
+		repoCall1 := pRepo.On("EvaluateGroupAccess", context.Background(), mock.Anything).Return(policies.Policy{}, tc.err)
+		repoCall2 := pRepo.On("EvaluateUserAccess", context.Background(), mock.Anything).Return(policies.Policy{}, tc.err)
+		repoCall3 := pRepo.On("Save", context.Background(), mock.Anything).Return(tc.err)
 		err := svc.AddPolicy(context.Background(), tc.token, tc.policy)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		if err == nil {
@@ -195,16 +173,13 @@ func TestAddPolicy(t *testing.T) {
 			require.Nil(t, err, fmt.Sprintf("checking shared %v policy expected to be succeed: %#v", tc.policy, err))
 			ok := repoCall.Parent.AssertCalled(t, "CheckAdmin", context.Background(), mock.Anything)
 			assert.True(t, ok, fmt.Sprintf("CheckAdmin was not called on %s", tc.desc))
-			ok = repoCall2.Parent.AssertCalled(t, "Save", context.Background(), mock.Anything)
+			ok = repoCall3.Parent.AssertCalled(t, "Save", context.Background(), mock.Anything)
 			assert.True(t, ok, fmt.Sprintf("Save was not called on %s", tc.desc))
-			if tc.desc == "add existing policy" {
-				ok = repoCall1.Parent.AssertCalled(t, "Update", context.Background(), mock.Anything)
-				assert.True(t, ok, fmt.Sprintf("Update was not called on %s", tc.desc))
-			}
 		}
 		repoCall.Unset()
 		repoCall1.Unset()
 		repoCall2.Unset()
+		repoCall3.Unset()
 	}
 
 }

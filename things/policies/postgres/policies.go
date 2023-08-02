@@ -67,21 +67,19 @@ func (pr prepo) EvaluateMessagingAccess(ctx context.Context, ar policies.AccessR
 func (pr prepo) EvaluateThingAccess(ctx context.Context, ar policies.AccessRequest) (policies.Policy, error) {
 	// Evaluates if two clients are connected to the same group and the subject has the specified action
 	// or subject is the owner of the object
-	query := fmt.Sprintf(`(SELECT subject FROM policies p 
+	query := fmt.Sprintf(`(SELECT subject, object, actions FROM policies p 
 		WHERE p.subject = :subject AND '%s' = ANY(p.actions) AND object IN (SELECT object FROM policies WHERE subject = :object))
 		UNION
-		(SELECT id as subject FROM clients c WHERE c.owner_id = :subject AND c.id = :object) LIMIT 1;`, ar.Action)
+		(SELECT owner_id as subject, id as object, '{}' as actions FROM clients c WHERE c.owner_id = :subject AND c.id = :object) LIMIT 1;`, ar.Action)
 
 	return pr.evaluate(ctx, query, ar)
 }
 
 func (pr prepo) EvaluateGroupAccess(ctx context.Context, ar policies.AccessRequest) (policies.Policy, error) {
 	// Evaluates if client is connected to the specified group and has the required action
-	query := fmt.Sprintf(`(SELECT policies.subject FROM policies
-		WHERE policies.subject = :subject AND policies.object = :object AND '%s' = ANY(policies.actions))
+	query := fmt.Sprintf(`(SELECT subject, object, actions FROM policies p WHERE p.subject = :subject AND p.object = :object AND '%s' = ANY(p.actions))
 		UNION
-		(SELECT groups.owner_id as subject FROM groups
-		WHERE groups.owner_id = :subject AND groups.id = :object)`, ar.Action)
+		(SELECT owner_id as subject, id as object, '{}' as actions FROM groups g WHERE g.owner_id = :subject AND g.id = :object) LIMIT 1;`, ar.Action)
 
 	return pr.evaluate(ctx, query, ar)
 }

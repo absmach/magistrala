@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mainflux/mainflux/internal/apiutil"
 	"github.com/mainflux/mainflux/internal/testsutil"
 	mfclients "github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -306,7 +305,7 @@ func TestPoliciesUpdate(t *testing.T) {
 				Object:  pid,
 				Actions: []string{"c_delete"},
 			},
-			err: apiutil.ErrMissingPolicySub,
+			err: nil,
 		},
 		{
 			desc: "update policy with missing object",
@@ -323,7 +322,7 @@ func TestPoliciesUpdate(t *testing.T) {
 				Actions: []string{"c_delete"},
 			},
 
-			err: apiutil.ErrMissingPolicyObj,
+			err: nil,
 		},
 		{
 			desc: "update policy with missing action",
@@ -337,9 +336,9 @@ func TestPoliciesUpdate(t *testing.T) {
 				OwnerID: cid,
 				Subject: cid,
 				Object:  pid,
-				Actions: []string{"c_delete"},
+				Actions: []string{""},
 			},
-			err: apiutil.ErrMalformedPolicyAct,
+			err: nil,
 		},
 	}
 

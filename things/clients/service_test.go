@@ -284,7 +284,7 @@ func TestViewClient(t *testing.T) {
 			response: mfclients.Client{},
 			token:    inValidToken,
 			clientID: "",
-			err:      errors.ErrAuthorization,
+			err:      errors.ErrAuthentication,
 		},
 		{
 			desc:     "view client with valid token and invalid client id",
@@ -298,7 +298,7 @@ func TestViewClient(t *testing.T) {
 			response: mfclients.Client{},
 			token:    inValidToken,
 			clientID: mocks.WrongID,
-			err:      errors.ErrAuthorization,
+			err:      errors.ErrAuthentication,
 		},
 	}
 
@@ -616,7 +616,7 @@ func TestUpdateClient(t *testing.T) {
 			client:   client1,
 			response: mfclients.Client{},
 			token:    "non-existent",
-			err:      errors.ErrAuthorization,
+			err:      errors.ErrAuthentication,
 		},
 		{
 			desc: "update client name with invalid ID",
@@ -625,8 +625,8 @@ func TestUpdateClient(t *testing.T) {
 				Name: "Updated Client",
 			},
 			response: mfclients.Client{},
-			token:    "non-existent",
-			err:      errors.ErrAuthorization,
+			token:    token,
+			err:      errors.ErrNotFound,
 		},
 		{
 			desc:     "update client metadata with valid token",
@@ -640,7 +640,7 @@ func TestUpdateClient(t *testing.T) {
 			client:   client2,
 			response: mfclients.Client{},
 			token:    "non-existent",
-			err:      errors.ErrAuthorization,
+			err:      errors.ErrAuthentication,
 		},
 	}
 
@@ -681,7 +681,7 @@ func TestUpdateClientTags(t *testing.T) {
 			client:   client,
 			token:    "non-existent",
 			response: mfclients.Client{},
-			err:      errors.ErrAuthorization,
+			err:      errors.ErrAuthentication,
 		},
 		{
 			desc: "update client name with invalid ID",
@@ -690,8 +690,8 @@ func TestUpdateClientTags(t *testing.T) {
 				Name: "Updated name",
 			},
 			response: mfclients.Client{},
-			token:    "non-existent",
-			err:      errors.ErrAuthorization,
+			token:    token,
+			err:      errors.ErrNotFound,
 		},
 	}
 
@@ -732,7 +732,7 @@ func TestUpdateClientOwner(t *testing.T) {
 			client:   client,
 			token:    "non-existent",
 			response: mfclients.Client{},
-			err:      errors.ErrAuthorization,
+			err:      errors.ErrAuthentication,
 		},
 		{
 			desc: "update client owner with invalid ID",
@@ -741,8 +741,8 @@ func TestUpdateClientOwner(t *testing.T) {
 				Owner: "updatedowner@mail.com",
 			},
 			response: mfclients.Client{},
-			token:    "non-existent",
-			err:      errors.ErrAuthorization,
+			token:    token,
+			err:      errors.ErrNotFound,
 		},
 	}
 
@@ -784,7 +784,7 @@ func TestUpdateClientSecret(t *testing.T) {
 			newSecret: "newPassword",
 			token:     "non-existent",
 			response:  mfclients.Client{},
-			err:       errors.ErrAuthorization,
+			err:       errors.ErrAuthentication,
 		},
 	}
 

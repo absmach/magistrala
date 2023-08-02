@@ -294,7 +294,7 @@ func (svc service) identify(ctx context.Context, token string) (string, error) {
 	req := &upolicies.IdentifyReq{Token: token}
 	res, err := svc.uauth.Identify(ctx, req)
 	if err != nil {
-		return "", errors.Wrap(errors.ErrAuthorization, err)
+		return "", errors.Wrap(errors.ErrAuthentication, err)
 	}
 	return res.GetId(), nil
 }

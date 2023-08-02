@@ -590,7 +590,7 @@ func TestListThingsByChannel(t *testing.T) {
 			channelID: testsutil.GenerateUUID(t, idProvider),
 			page:      sdk.PageMetadata{},
 			response:  []sdk.Thing(nil),
-			err:       errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusUnauthorized),
+			err:       errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:      "list things with an invalid id",
@@ -660,7 +660,7 @@ func TestThing(t *testing.T) {
 			response: sdk.Thing{},
 			token:    invalidToken,
 			thingID:  generateUUID(t),
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:     "view thing with valid token and invalid thing id",
@@ -674,7 +674,7 @@ func TestThing(t *testing.T) {
 			response: sdk.Thing{},
 			token:    invalidToken,
 			thingID:  mocks.WrongID,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
 		},
 	}
 
@@ -746,7 +746,7 @@ func TestUpdateThing(t *testing.T) {
 			thing:    thing1,
 			response: sdk.Thing{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:     "update thing name with invalid id",
@@ -838,7 +838,7 @@ func TestUpdateThingTags(t *testing.T) {
 			thing:    thing1,
 			response: sdk.Thing{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:     "update thing name with invalid id",
@@ -923,7 +923,7 @@ func TestUpdateThingSecret(t *testing.T) {
 			newSecret: "newPassword",
 			token:     "non-existent",
 			response:  sdk.Thing{},
-			err:       errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusUnauthorized),
+			err:       errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:      "update thing secret with wrong old secret",
@@ -1001,7 +1001,7 @@ func TestUpdateThingOwner(t *testing.T) {
 			thing:    thing2,
 			response: sdk.Thing{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
 			desc:     "update thing name with invalid id",

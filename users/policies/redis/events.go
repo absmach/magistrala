@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mainflux/mainflux/internal/clients/redis"
-	"github.com/mainflux/mainflux/things/policies"
+	mfredis "github.com/mainflux/mainflux/internal/clients/redis"
+	"github.com/mainflux/mainflux/users/policies"
 )
 
 const (
@@ -21,9 +21,9 @@ const (
 )
 
 var (
-	_ redis.Event = (*policyEvent)(nil)
-	_ redis.Event = (*authorizeEvent)(nil)
-	_ redis.Event = (*listPoliciesEvent)(nil)
+	_ mfredis.Event = (*policyEvent)(nil)
+	_ mfredis.Event = (*authorizeEvent)(nil)
+	_ mfredis.Event = (*listPoliciesEvent)(nil)
 )
 
 type policyEvent struct {
@@ -75,7 +75,7 @@ func (ae authorizeEvent) Encode() (map[string]interface{}, error) {
 		val["object"] = ae.Object
 	}
 	if ae.Action != "" {
-		val["actions"] = ae.Action
+		val["action"] = ae.Action
 	}
 	return val, nil
 }
@@ -84,24 +84,24 @@ type listPoliciesEvent struct {
 	policies.Page
 }
 
-func (ae listPoliciesEvent) Encode() (map[string]interface{}, error) {
+func (lpe listPoliciesEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
 		"operation": policyList,
-		"total":     ae.Total,
-		"limit":     ae.Limit,
-		"offset":    ae.Offset,
+		"total":     lpe.Total,
+		"limit":     lpe.Limit,
+		"offset":    lpe.Offset,
 	}
-	if ae.OwnerID != "" {
-		val["owner_id"] = ae.OwnerID
+	if lpe.OwnerID != "" {
+		val["owner_id"] = lpe.OwnerID
 	}
-	if ae.Subject != "" {
-		val["subject"] = ae.Subject
+	if lpe.Subject != "" {
+		val["subject"] = lpe.Subject
 	}
-	if ae.Object != "" {
-		val["object"] = ae.Object
+	if lpe.Object != "" {
+		val["object"] = lpe.Object
 	}
-	if ae.Action != "" {
-		val["action"] = ae.Action
+	if lpe.Action != "" {
+		val["action"] = lpe.Action
 	}
 	return val, nil
 }

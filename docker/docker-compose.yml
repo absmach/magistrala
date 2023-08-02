@@ -14,6 +14,7 @@ volumes:
   mainflux-es-redis-volume:
   mainflux-mqtt-broker-volume:
 
+
 services:
   nginx:
     image: nginx:1.23.3-alpine
@@ -176,6 +177,9 @@ services:
       MF_EMAIL_FROM_ADDRESS: ${MF_EMAIL_FROM_ADDRESS}
       MF_EMAIL_FROM_NAME: ${MF_EMAIL_FROM_NAME}
       MF_EMAIL_TEMPLATE: ${MF_EMAIL_TEMPLATE}
+      MF_USERS_ES_URL: ${MF_USERS_ES_URL}
+      MF_USERS_ES_PASS: ${MF_USERS_ES_PASS}
+      MF_USERS_ES_DB: ${MF_USERS_ES_DB}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
       MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
     ports:

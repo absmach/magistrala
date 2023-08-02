@@ -8,11 +8,11 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	mfredis "github.com/mainflux/mainflux/internal/clients/redis"
-	"github.com/mainflux/mainflux/things/policies"
+	"github.com/mainflux/mainflux/users/policies"
 )
 
 const (
-	streamID  = "mainflux.things"
+	streamID  = "mainflux.users"
 	streamLen = 1000
 )
 
@@ -27,7 +27,7 @@ type eventStore struct {
 // NewEventStoreMiddleware returns wrapper around policy service that sends
 // events to event store.
 func NewEventStoreMiddleware(ctx context.Context, svc policies.Service, client *redis.Client) policies.Service {
-	es := &eventStore{
+	es := eventStore{
 		svc:       svc,
 		client:    client,
 		Publisher: mfredis.NewEventStore(client, streamID, streamLen),
@@ -38,55 +38,43 @@ func NewEventStoreMiddleware(ctx context.Context, svc policies.Service, client *
 	return es
 }
 
-func (es *eventStore) Authorize(ctx context.Context, ar policies.AccessRequest) (policies.Policy, error) {
-	policy, err := es.svc.Authorize(ctx, ar)
-	if err != nil {
-		return policy, err
+func (es eventStore) Authorize(ctx context.Context, ar policies.AccessRequest) error {
+	if err := es.svc.Authorize(ctx, ar); err != nil {
+		return err
 	}
 
 	event := authorizeEvent{
 		ar,
 	}
-	if err := es.Publish(ctx, event); err != nil {
-		return policy, err
-	}
 
-	return policy, nil
+	return es.Publish(ctx, event)
 }
 
-func (es *eventStore) AddPolicy(ctx context.Context, token string, policy policies.Policy) (policies.Policy, error) {
-	policy, err := es.svc.AddPolicy(ctx, token, policy)
-	if err != nil {
-		return policy, err
+func (es eventStore) AddPolicy(ctx context.Context, token string, policy policies.Policy) error {
+	if err := es.svc.AddPolicy(ctx, token, policy); err != nil {
+		return err
 	}
 
 	event := policyEvent{
 		policy, policyAdd,
 	}
-	if err := es.Publish(ctx, event); err != nil {
-		return policy, err
-	}
 
-	return policy, nil
+	return es.Publish(ctx, event)
 }
 
-func (es *eventStore) UpdatePolicy(ctx context.Context, token string, policy policies.Policy) (policies.Policy, error) {
-	policy, err := es.svc.UpdatePolicy(ctx, token, policy)
-	if err != nil {
-		return policy, err
+func (es eventStore) UpdatePolicy(ctx context.Context, token string, policy policies.Policy) error {
+	if err := es.svc.UpdatePolicy(ctx, token, policy); err != nil {
+		return err
 	}
 
 	event := policyEvent{
 		policy, policyUpdate,
 	}
-	if err := es.Publish(ctx, event); err != nil {
-		return policy, err
-	}
 
-	return policy, nil
+	return es.Publish(ctx, event)
 }
 
-func (es *eventStore) ListPolicies(ctx context.Context, token string, page policies.Page) (policies.PolicyPage, error) {
+func (es eventStore) ListPolicies(ctx context.Context, token string, page policies.Page) (policies.PolicyPage, error) {
 	pp, err := es.svc.ListPolicies(ctx, token, page)
 	if err != nil {
 		return pp, err
@@ -95,6 +83,7 @@ func (es *eventStore) ListPolicies(ctx context.Context, token string, page polic
 	event := listPoliciesEvent{
 		page,
 	}
+
 	if err := es.Publish(ctx, event); err != nil {
 		return pp, err
 	}
@@ -102,7 +91,7 @@ func (es *eventStore) ListPolicies(ctx context.Context, token string, page polic
 	return pp, nil
 }
 
-func (es *eventStore) DeletePolicy(ctx context.Context, token string, policy policies.Policy) error {
+func (es eventStore) DeletePolicy(ctx context.Context, token string, policy policies.Policy) error {
 	if err := es.svc.DeletePolicy(ctx, token, policy); err != nil {
 		return err
 	}

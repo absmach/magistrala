@@ -9,29 +9,41 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mainflux/mainflux/internal/clients/redis"
+	mfredis "github.com/mainflux/mainflux/internal/clients/redis"
 	mfclients "github.com/mainflux/mainflux/pkg/clients"
 )
 
 const (
-	clientPrefix      = "thing."
-	clientCreate      = clientPrefix + "create"
-	clientUpdate      = clientPrefix + "update"
-	clientRemove      = clientPrefix + "remove"
-	clientView        = clientPrefix + "view"
-	clientList        = clientPrefix + "list"
-	clientListByGroup = clientPrefix + "list_by_group"
-	clientIdentify    = clientPrefix + "identify"
+	clientPrefix       = "user."
+	clientCreate       = clientPrefix + "create"
+	clientUpdate       = clientPrefix + "update"
+	clientRemove       = clientPrefix + "remove"
+	clientView         = clientPrefix + "view"
+	profileView        = clientPrefix + "view_profile"
+	clientList         = clientPrefix + "list"
+	clientListByGroup  = clientPrefix + "list_by_group"
+	clientIdentify     = clientPrefix + "identify"
+	generateResetToken = clientPrefix + "generate_reset_token"
+	issueToken         = clientPrefix + "issue_token"
+	refreshToken       = clientPrefix + "refresh_token"
+	resetSecret        = clientPrefix + "reset_secret"
+	sendPasswordReset  = clientPrefix + "send_password_reset"
 )
 
 var (
-	_ redis.Event = (*createClientEvent)(nil)
-	_ redis.Event = (*updateClientEvent)(nil)
-	_ redis.Event = (*removeClientEvent)(nil)
-	_ redis.Event = (*viewClientEvent)(nil)
-	_ redis.Event = (*listClientEvent)(nil)
-	_ redis.Event = (*listClientByGroupEvent)(nil)
-	_ redis.Event = (*identifyClientEvent)(nil)
+	_ mfredis.Event = (*createClientEvent)(nil)
+	_ mfredis.Event = (*updateClientEvent)(nil)
+	_ mfredis.Event = (*removeClientEvent)(nil)
+	_ mfredis.Event = (*viewClientEvent)(nil)
+	_ mfredis.Event = (*viewProfileEvent)(nil)
+	_ mfredis.Event = (*listClientEvent)(nil)
+	_ mfredis.Event = (*listClientByGroupEvent)(nil)
+	_ mfredis.Event = (*identifyClientEvent)(nil)
+	_ mfredis.Event = (*generateResetTokenEvent)(nil)
+	_ mfredis.Event = (*issueTokenEvent)(nil)
+	_ mfredis.Event = (*refreshTokenEvent)(nil)
+	_ mfredis.Event = (*resetSecretEvent)(nil)
+	_ mfredis.Event = (*sendPasswordResetEvent)(nil)
 )
 
 type createClientEvent struct {
@@ -95,9 +107,6 @@ func (uce updateClientEvent) Encode() (map[string]interface{}, error) {
 	if len(uce.Tags) > 0 {
 		tags := fmt.Sprintf("[%s]", strings.Join(uce.Tags, ","))
 		val["tags"] = tags
-	}
-	if uce.Owner != "" {
-		val["owner"] = uce.Owner
 	}
 	if uce.Credentials.Identity != "" {
 		val["identity"] = uce.Credentials.Identity
@@ -184,6 +193,53 @@ func (vce viewClientEvent) Encode() (map[string]interface{}, error) {
 	return val, nil
 }
 
+type viewProfileEvent struct {
+	mfclients.Client
+}
+
+func (vpe viewProfileEvent) Encode() (map[string]interface{}, error) {
+	val := map[string]interface{}{
+		"operation": profileView,
+		"id":        vpe.ID,
+	}
+
+	if vpe.Name != "" {
+		val["name"] = vpe.Name
+	}
+	if len(vpe.Tags) > 0 {
+		tags := fmt.Sprintf("[%s]", strings.Join(vpe.Tags, ","))
+		val["tags"] = tags
+	}
+	if vpe.Owner != "" {
+		val["owner"] = vpe.Owner
+	}
+	if vpe.Credentials.Identity != "" {
+		val["identity"] = vpe.Credentials.Identity
+	}
+	if vpe.Metadata != nil {
+		metadata, err := json.Marshal(vpe.Metadata)
+		if err != nil {
+			return map[string]interface{}{}, err
+		}
+
+		val["metadata"] = metadata
+	}
+	if !vpe.CreatedAt.IsZero() {
+		val["created_at"] = vpe.CreatedAt
+	}
+	if !vpe.UpdatedAt.IsZero() {
+		val["updated_at"] = vpe.UpdatedAt
+	}
+	if vpe.UpdatedBy != "" {
+		val["updated_by"] = vpe.UpdatedBy
+	}
+	if vpe.Status.String() != "" {
+		val["status"] = vpe.Status.String()
+	}
+
+	return val, nil
+}
+
 type listClientEvent struct {
 	mfclients.Page
 }
@@ -230,10 +286,6 @@ func (lce listClientEvent) Encode() (map[string]interface{}, error) {
 	}
 	if lce.Subject != "" {
 		val["subject"] = lce.Subject
-	}
-	if len(lce.IDs) > 0 {
-		ids := fmt.Sprintf("[%s]", strings.Join(lce.IDs, ","))
-		val["ids"] = ids
 	}
 	if lce.Identity != "" {
 		val["identity"] = lce.Identity
@@ -299,12 +351,67 @@ func (lcge listClientByGroupEvent) Encode() (map[string]interface{}, error) {
 }
 
 type identifyClientEvent struct {
-	thingID string
+	userID string
 }
 
 func (ice identifyClientEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
 		"operation": clientIdentify,
-		"thing_id":  ice.thingID,
+		"user_id":   ice.userID,
+	}, nil
+}
+
+type generateResetTokenEvent struct {
+	email string
+	host  string
+}
+
+func (grte generateResetTokenEvent) Encode() (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"operation": generateResetToken,
+		"email":     grte.email,
+		"host":      grte.host,
+	}, nil
+}
+
+type issueTokenEvent struct {
+	identity string
+}
+
+func (ite issueTokenEvent) Encode() (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"operation": issueToken,
+		"identity":  ite.identity,
+	}, nil
+}
+
+type refreshTokenEvent struct{}
+
+func (rte refreshTokenEvent) Encode() (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"operation": refreshToken,
+	}, nil
+}
+
+type resetSecretEvent struct{}
+
+func (rse resetSecretEvent) Encode() (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"operation": resetSecret,
+	}, nil
+}
+
+type sendPasswordResetEvent struct {
+	host  string
+	email string
+	user  string
+}
+
+func (spre sendPasswordResetEvent) Encode() (map[string]interface{}, error) {
+	return map[string]interface{}{
+		"operation": sendPasswordReset,
+		"host":      spre.host,
+		"email":     spre.email,
+		"user":      spre.user,
 	}, nil
 }

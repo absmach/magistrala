@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/go-zoo/bone"
 	"github.com/jmoiron/sqlx"
 	chclient "github.com/mainflux/callhome/pkg/client"
@@ -19,6 +20,7 @@ import (
 	"github.com/mainflux/mainflux/internal"
 	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
 	pgClient "github.com/mainflux/mainflux/internal/clients/postgres"
+	redisClient "github.com/mainflux/mainflux/internal/clients/redis"
 	"github.com/mainflux/mainflux/internal/email"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/postgres"
@@ -32,10 +34,12 @@ import (
 	capi "github.com/mainflux/mainflux/users/clients/api"
 	"github.com/mainflux/mainflux/users/clients/emailer"
 	cpostgres "github.com/mainflux/mainflux/users/clients/postgres"
+	ucache "github.com/mainflux/mainflux/users/clients/redis"
 	ctracing "github.com/mainflux/mainflux/users/clients/tracing"
 	"github.com/mainflux/mainflux/users/groups"
 	gapi "github.com/mainflux/mainflux/users/groups/api"
 	gpostgres "github.com/mainflux/mainflux/users/groups/postgres"
+	gcache "github.com/mainflux/mainflux/users/groups/redis"
 	gtracing "github.com/mainflux/mainflux/users/groups/tracing"
 	"github.com/mainflux/mainflux/users/hasher"
 	"github.com/mainflux/mainflux/users/jwt"
@@ -44,6 +48,7 @@ import (
 	grpcapi "github.com/mainflux/mainflux/users/policies/api/grpc"
 	httpapi "github.com/mainflux/mainflux/users/policies/api/http"
 	ppostgres "github.com/mainflux/mainflux/users/policies/postgres"
+	pcache "github.com/mainflux/mainflux/users/policies/redis"
 	ptracing "github.com/mainflux/mainflux/users/policies/tracing"
 	clientsPg "github.com/mainflux/mainflux/users/postgres"
 	"go.opentelemetry.io/otel/trace"
@@ -55,6 +60,7 @@ import (
 const (
 	svcName        = "users"
 	envPrefixDB    = "MF_USERS_DB_"
+	envPrefixES    = "MF_USERS_ES_"
 	envPrefixHTTP  = "MF_USERS_HTTP_"
 	envPrefixGrpc  = "MF_USERS_GRPC_"
 	defDB          = "users"
@@ -139,7 +145,14 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
-	csvc, gsvc, psvc := newService(ctx, db, dbConfig, tracer, cfg, ec, logger)
+	// Setup new redis event store client
+	esClient, err := redisClient.Setup(envPrefixES)
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
+	defer esClient.Close()
+
+	csvc, gsvc, psvc := newService(ctx, db, dbConfig, esClient, tracer, cfg, ec, logger)
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
@@ -185,7 +198,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, db *sqlx.DB, dbConfig pgClient.Config, tracer trace.Tracer, c config, ec email.Config, logger mflog.Logger) (clients.Service, groups.Service, policies.Service) {
+func newService(ctx context.Context, db *sqlx.DB, dbConfig pgClient.Config, esClient *redis.Client, tracer trace.Tracer, c config, ec email.Config, logger mflog.Logger) (clients.Service, groups.Service, policies.Service) {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	cRepo := cpostgres.NewRepository(database)
 	gRepo := gpostgres.NewRepository(database)
@@ -211,6 +224,10 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgClient.Config, trac
 	csvc := clients.NewService(cRepo, pRepo, tokenizer, emailer, hsr, idp, c.PassRegex)
 	gsvc := groups.NewService(gRepo, pRepo, tokenizer, idp)
 	psvc := policies.NewService(pRepo, tokenizer, idp)
+
+	csvc = ucache.NewEventStoreMiddleware(ctx, csvc, esClient)
+	gsvc = gcache.NewEventStoreMiddleware(ctx, gsvc, esClient)
+	psvc = pcache.NewEventStoreMiddleware(ctx, psvc, esClient)
 
 	csvc = ctracing.New(csvc, tracer)
 	csvc = capi.LoggingMiddleware(csvc, logger)

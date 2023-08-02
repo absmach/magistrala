@@ -31,20 +31,20 @@ import (
 	"github.com/mainflux/mainflux/things/clients"
 	capi "github.com/mainflux/mainflux/things/clients/api"
 	cpostgres "github.com/mainflux/mainflux/things/clients/postgres"
-	redisthcache "github.com/mainflux/mainflux/things/clients/redis"
+	thcache "github.com/mainflux/mainflux/things/clients/redis"
 	localusers "github.com/mainflux/mainflux/things/clients/standalone"
 	ctracing "github.com/mainflux/mainflux/things/clients/tracing"
 	"github.com/mainflux/mainflux/things/groups"
 	gapi "github.com/mainflux/mainflux/things/groups/api"
 	gpostgres "github.com/mainflux/mainflux/things/groups/postgres"
-	redischcache "github.com/mainflux/mainflux/things/groups/redis"
+	chcache "github.com/mainflux/mainflux/things/groups/redis"
 	gtracing "github.com/mainflux/mainflux/things/groups/tracing"
 	tpolicies "github.com/mainflux/mainflux/things/policies"
 	papi "github.com/mainflux/mainflux/things/policies/api"
 	grpcapi "github.com/mainflux/mainflux/things/policies/api/grpc"
 	httpapi "github.com/mainflux/mainflux/things/policies/api/http"
 	ppostgres "github.com/mainflux/mainflux/things/policies/postgres"
-	redispcache "github.com/mainflux/mainflux/things/policies/redis"
+	pcache "github.com/mainflux/mainflux/things/policies/redis"
 	ppracing "github.com/mainflux/mainflux/things/policies/tracing"
 	thingsPg "github.com/mainflux/mainflux/things/postgres"
 	upolicies "github.com/mainflux/mainflux/users/policies"
@@ -224,16 +224,16 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgClient.Config, auth
 		logger.Error(fmt.Sprintf("failed to parse cache key duration: %s", err.Error()))
 	}
 
-	policyCache := redispcache.NewCache(cacheClient, kDuration)
-	thingCache := redisthcache.NewCache(cacheClient, kDuration)
+	policyCache := pcache.NewCache(cacheClient, kDuration)
+	thingCache := thcache.NewCache(cacheClient, kDuration)
 
 	psvc := tpolicies.NewService(auth, pRepo, policyCache, idp)
 	csvc := clients.NewService(auth, psvc, cRepo, gRepo, thingCache, idp)
 	gsvc := groups.NewService(auth, psvc, gRepo, idp)
 
-	csvc = redisthcache.NewEventStoreMiddleware(ctx, csvc, esClient)
-	gsvc = redischcache.NewEventStoreMiddleware(ctx, gsvc, esClient)
-	psvc = redispcache.NewEventStoreMiddleware(ctx, psvc, esClient)
+	csvc = thcache.NewEventStoreMiddleware(ctx, csvc, esClient)
+	gsvc = chcache.NewEventStoreMiddleware(ctx, gsvc, esClient)
+	psvc = pcache.NewEventStoreMiddleware(ctx, psvc, esClient)
 
 	csvc = ctracing.New(csvc, tracer)
 	csvc = capi.LoggingMiddleware(csvc, logger)

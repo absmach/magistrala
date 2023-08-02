@@ -108,9 +108,6 @@ func (uce updateGroupEvent) Encode() (map[string]interface{}, error) {
 	if !uce.CreatedAt.IsZero() {
 		val["created_at"] = uce.CreatedAt
 	}
-	if !uce.UpdatedAt.IsZero() {
-		val["updated_at"] = uce.UpdatedAt
-	}
 	if uce.Status.String() != "" {
 		val["status"] = uce.Status.String()
 	}

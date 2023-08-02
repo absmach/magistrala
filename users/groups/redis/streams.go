@@ -9,11 +9,11 @@ import (
 	"github.com/go-redis/redis/v8"
 	mfredis "github.com/mainflux/mainflux/internal/clients/redis"
 	mfgroups "github.com/mainflux/mainflux/pkg/groups"
-	"github.com/mainflux/mainflux/things/groups"
+	"github.com/mainflux/mainflux/users/groups"
 )
 
 const (
-	streamID  = "mainflux.things"
+	streamID  = "mainflux.users"
 	streamLen = 1000
 )
 
@@ -28,7 +28,7 @@ type eventStore struct {
 // NewEventStoreMiddleware returns wrapper around things service that sends
 // events to event store.
 func NewEventStoreMiddleware(ctx context.Context, svc groups.Service, client *redis.Client) groups.Service {
-	es := &eventStore{
+	es := eventStore{
 		svc:       svc,
 		client:    client,
 		Publisher: mfredis.NewEventStore(client, streamID, streamLen),
@@ -39,24 +39,24 @@ func NewEventStoreMiddleware(ctx context.Context, svc groups.Service, client *re
 	return es
 }
 
-func (es *eventStore) CreateGroups(ctx context.Context, token string, groups ...mfgroups.Group) ([]mfgroups.Group, error) {
-	grps, err := es.svc.CreateGroups(ctx, token, groups...)
+func (es eventStore) CreateGroup(ctx context.Context, token string, group mfgroups.Group) (mfgroups.Group, error) {
+	group, err := es.svc.CreateGroup(ctx, token, group)
 	if err != nil {
-		return grps, err
+		return group, err
 	}
 
-	for _, group := range grps {
-		event := createGroupEvent{
-			group,
-		}
-		if err := es.Publish(ctx, event); err != nil {
-			return grps, err
-		}
+	event := createGroupEvent{
+		group,
 	}
-	return grps, nil
+
+	if err := es.Publish(ctx, event); err != nil {
+		return group, err
+	}
+
+	return group, nil
 }
 
-func (es *eventStore) UpdateGroup(ctx context.Context, token string, group mfgroups.Group) (mfgroups.Group, error) {
+func (es eventStore) UpdateGroup(ctx context.Context, token string, group mfgroups.Group) (mfgroups.Group, error) {
 	group, err := es.svc.UpdateGroup(ctx, token, group)
 	if err != nil {
 		return group, err
@@ -65,6 +65,7 @@ func (es *eventStore) UpdateGroup(ctx context.Context, token string, group mfgro
 	event := updateGroupEvent{
 		group,
 	}
+
 	if err := es.Publish(ctx, event); err != nil {
 		return group, err
 	}
@@ -72,7 +73,7 @@ func (es *eventStore) UpdateGroup(ctx context.Context, token string, group mfgro
 	return group, nil
 }
 
-func (es *eventStore) ViewGroup(ctx context.Context, token, id string) (mfgroups.Group, error) {
+func (es eventStore) ViewGroup(ctx context.Context, token, id string) (mfgroups.Group, error) {
 	group, err := es.svc.ViewGroup(ctx, token, id)
 	if err != nil {
 		return group, err
@@ -80,6 +81,7 @@ func (es *eventStore) ViewGroup(ctx context.Context, token, id string) (mfgroups
 	event := viewGroupEvent{
 		group,
 	}
+
 	if err := es.Publish(ctx, event); err != nil {
 		return group, err
 	}
@@ -87,7 +89,7 @@ func (es *eventStore) ViewGroup(ctx context.Context, token, id string) (mfgroups
 	return group, nil
 }
 
-func (es *eventStore) ListGroups(ctx context.Context, token string, pm mfgroups.GroupsPage) (mfgroups.GroupsPage, error) {
+func (es eventStore) ListGroups(ctx context.Context, token string, pm mfgroups.GroupsPage) (mfgroups.GroupsPage, error) {
 	gp, err := es.svc.ListGroups(ctx, token, pm)
 	if err != nil {
 		return gp, err
@@ -95,6 +97,7 @@ func (es *eventStore) ListGroups(ctx context.Context, token string, pm mfgroups.
 	event := listGroupEvent{
 		pm,
 	}
+
 	if err := es.Publish(ctx, event); err != nil {
 		return gp, err
 	}
@@ -102,7 +105,7 @@ func (es *eventStore) ListGroups(ctx context.Context, token string, pm mfgroups.
 	return gp, nil
 }
 
-func (es *eventStore) ListMemberships(ctx context.Context, token, clientID string, pm mfgroups.GroupsPage) (mfgroups.MembershipsPage, error) {
+func (es eventStore) ListMemberships(ctx context.Context, token, clientID string, pm mfgroups.GroupsPage) (mfgroups.MembershipsPage, error) {
 	mp, err := es.svc.ListMemberships(ctx, token, clientID, pm)
 	if err != nil {
 		return mp, err
@@ -110,6 +113,7 @@ func (es *eventStore) ListMemberships(ctx context.Context, token, clientID strin
 	event := listGroupMembershipEvent{
 		pm, clientID,
 	}
+
 	if err := es.Publish(ctx, event); err != nil {
 		return mp, err
 	}
@@ -117,7 +121,7 @@ func (es *eventStore) ListMemberships(ctx context.Context, token, clientID strin
 	return mp, nil
 }
 
-func (es *eventStore) EnableGroup(ctx context.Context, token, id string) (mfgroups.Group, error) {
+func (es eventStore) EnableGroup(ctx context.Context, token, id string) (mfgroups.Group, error) {
 	group, err := es.svc.EnableGroup(ctx, token, id)
 	if err != nil {
 		return group, err
@@ -126,7 +130,7 @@ func (es *eventStore) EnableGroup(ctx context.Context, token, id string) (mfgrou
 	return es.delete(ctx, group)
 }
 
-func (es *eventStore) DisableGroup(ctx context.Context, token, id string) (mfgroups.Group, error) {
+func (es eventStore) DisableGroup(ctx context.Context, token, id string) (mfgroups.Group, error) {
 	group, err := es.svc.DisableGroup(ctx, token, id)
 	if err != nil {
 		return group, err
@@ -135,13 +139,14 @@ func (es *eventStore) DisableGroup(ctx context.Context, token, id string) (mfgro
 	return es.delete(ctx, group)
 }
 
-func (es *eventStore) delete(ctx context.Context, group mfgroups.Group) (mfgroups.Group, error) {
+func (es eventStore) delete(ctx context.Context, group mfgroups.Group) (mfgroups.Group, error) {
 	event := removeGroupEvent{
 		id:        group.ID,
 		updatedAt: group.UpdatedAt,
 		updatedBy: group.UpdatedBy,
 		status:    group.Status.String(),
 	}
+
 	if err := es.Publish(ctx, event); err != nil {
 		return group, err
 	}

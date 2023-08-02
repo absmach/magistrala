@@ -65,11 +65,9 @@ func main() {
 	var exitCode int
 	defer mflog.ExitWithError(&exitCode)
 
-	instanceID := cfg.InstanceID
-	if instanceID == "" {
-		instanceID, err = uuid.New().ID()
-		if err != nil {
-			logger.Error(fmt.Sprintf("Failed to generate instanceID: %s", err))
+	if cfg.InstanceID == "" {
+		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
+			logger.Error(fmt.Sprintf("failed to generate instanceID: %s", err))
 			exitCode = 1
 			return
 		}
@@ -91,7 +89,7 @@ func main() {
 	}
 	defer csdSession.Close()
 
-	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, instanceID)
+	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
 		exitCode = 1
@@ -125,7 +123,7 @@ func main() {
 		return
 	}
 
-	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svcName, instanceID), logger)
+	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svcName, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, mainflux.Version, logger, cancel)

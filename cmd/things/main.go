@@ -94,11 +94,9 @@ func main() {
 	var exitCode int
 	defer mflog.ExitWithError(&exitCode)
 
-	instanceID := cfg.InstanceID
-	if instanceID == "" {
-		instanceID, err = uuid.New().ID()
-		if err != nil {
-			logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
+	if cfg.InstanceID == "" {
+		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
+			logger.Error(fmt.Sprintf("failed to generate instanceID: %s", err))
 			exitCode = 1
 			return
 		}
@@ -117,7 +115,7 @@ func main() {
 	}
 	defer db.Close()
 
-	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, instanceID)
+	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
 		exitCode = 1
@@ -175,7 +173,7 @@ func main() {
 	}
 	mux := bone.New()
 	hsp := httpserver.New(ctx, cancel, "things-policies", httpServerConfig, httpapi.MakeHandler(csvc, psvc, mux, logger), logger)
-	hsc := httpserver.New(ctx, cancel, "things-clients", httpServerConfig, capi.MakeHandler(csvc, mux, logger, instanceID), logger)
+	hsc := httpserver.New(ctx, cancel, "things-clients", httpServerConfig, capi.MakeHandler(csvc, mux, logger, cfg.InstanceID), logger)
 	hsg := httpserver.New(ctx, cancel, "things-groups", httpServerConfig, gapi.MakeHandler(gsvc, mux, logger), logger)
 
 	grpcServerConfig := server.Config{Port: defSvcAuthGRPCPort}

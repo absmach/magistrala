@@ -99,11 +99,9 @@ func main() {
 	var exitCode int
 	defer mflog.ExitWithError(&exitCode)
 
-	instanceID := cfg.InstanceID
-	if instanceID == "" {
-		instanceID, err = uuid.New().ID()
-		if err != nil {
-			logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
+	if cfg.InstanceID == "" {
+		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
+			logger.Error(fmt.Sprintf("failed to generate instanceID: %s", err))
 			exitCode = 1
 			return
 		}
@@ -128,7 +126,7 @@ func main() {
 	}
 	defer db.Close()
 
-	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, instanceID)
+	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to init Jaeger: %s", err))
 		exitCode = 1
@@ -150,7 +148,7 @@ func main() {
 		return
 	}
 	mux := bone.New()
-	hsc := httpserver.New(ctx, cancel, svcName, httpServerConfig, capi.MakeHandler(csvc, mux, logger, instanceID), logger)
+	hsc := httpserver.New(ctx, cancel, svcName, httpServerConfig, capi.MakeHandler(csvc, mux, logger, cfg.InstanceID), logger)
 	hsg := httpserver.New(ctx, cancel, svcName, httpServerConfig, gapi.MakeHandler(gsvc, mux, logger), logger)
 	hsp := httpserver.New(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(psvc, mux, logger), logger)
 

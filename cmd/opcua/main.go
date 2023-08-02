@@ -74,11 +74,9 @@ func main() {
 	var exitCode int
 	defer mflog.ExitWithError(&exitCode)
 
-	instanceID := cfg.InstanceID
-	if instanceID == "" {
-		instanceID, err = uuid.New().ID()
-		if err != nil {
-			logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
+	if cfg.InstanceID == "" {
+		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
+			logger.Error(fmt.Sprintf("failed to generate instanceID: %s", err))
 			exitCode = 1
 			return
 		}
@@ -111,7 +109,7 @@ func main() {
 	}
 	defer esConn.Close()
 
-	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, instanceID)
+	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
 		exitCode = 1
@@ -141,7 +139,7 @@ func main() {
 	go subscribeToStoredSubs(ctx, sub, opcConfig, logger)
 	go subscribeToThingsES(ctx, svc, esConn, cfg.ESConsumerName, logger)
 
-	hs := httpserver.New(ctx, httpCancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, instanceID), logger)
+	hs := httpserver.New(ctx, httpCancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, mainflux.Version, logger, httpCancel)

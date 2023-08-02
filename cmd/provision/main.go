@@ -107,9 +107,8 @@ func main() {
 
 	instanceID := mainflux.Env(envInstanceID, defInstanceID)
 	if instanceID == "" {
-		instanceID, err = uuid.New().ID()
-		if err != nil {
-			logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
+		if instanceID, err = uuid.New().ID(); err != nil {
+			logger.Error(fmt.Sprintf("failed to generate instanceID: %s", err))
 			exitCode = 1
 			return
 		}

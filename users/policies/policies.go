@@ -30,7 +30,10 @@ import (
 // Message policies
 //  9. m_write - write a message
 //  10. m_read - read a message
-var PolicyTypes = []string{"g_add", "g_delete", "g_update", "g_list", "c_delete", "c_update", "c_list", "m_write", "m_read"}
+//
+// Sharing policies
+//  11. c_share - share a client - allows a user to add another user to a group.
+var PolicyTypes = []string{"g_add", "g_delete", "g_update", "g_list", "c_delete", "c_update", "c_list", "m_write", "m_read", "c_share"}
 
 // Policy represents an argument struct for making a policy related function calls.
 type Policy struct {
@@ -164,12 +167,12 @@ func ValidateAction(act string) bool {
 
 }
 
-// addListAction adds list actions to the actions slice if c_ or g_ actions are present.
+// AddListAction adds list actions to the actions slice if c_ or g_ actions are present.
 //
 // 1. If c_<anything> actions are present, add c_list and g_list actions to the actions slice.
 //
 // 2. If g_<anything> actions are present, add g_list action to the actions slice.
-func addListAction(actions []string) []string {
+func AddListAction(actions []string) []string {
 	hasCAction := false
 	hasGAction := false
 

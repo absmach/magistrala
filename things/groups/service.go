@@ -17,11 +17,13 @@ import (
 )
 
 const (
-	thingsObjectKey   = "things"
+	thingsObjectKey = "things"
+
 	updateRelationKey = "g_update"
 	listRelationKey   = "g_list"
 	deleteRelationKey = "g_delete"
-	entityType        = "group"
+
+	entityType = "group"
 )
 
 type service struct {

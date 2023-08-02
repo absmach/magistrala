@@ -9,10 +9,12 @@ import (
 )
 
 type createPolicyReq struct {
-	token   string
-	Subject string   `json:"subject,omitempty"`
-	Object  string   `json:"object,omitempty"`
-	Actions []string `json:"actions,omitempty"`
+	token    string
+	Owner    string   `json:"owner,omitempty"`
+	Subject  string   `json:"subject,omitempty"`
+	Object   string   `json:"object,omitempty"`
+	Actions  []string `json:"actions,omitempty"`
+	External bool     `json:"external,omitempty"`
 }
 
 func (req createPolicyReq) validate() error {
@@ -27,9 +29,11 @@ func (req createPolicyReq) validate() error {
 
 type createPoliciesReq struct {
 	token    string
+	Owner    string   `json:"owner,omitempty"`
 	Subjects []string `json:"subjects,omitempty"`
 	Objects  []string `json:"objects,omitempty"`
 	Actions  []string `json:"actions,omitempty"`
+	External bool     `json:"external,omitempty"`
 }
 
 func (req createPoliciesReq) validate() error {

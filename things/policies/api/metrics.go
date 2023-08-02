@@ -28,12 +28,12 @@ func MetricsMiddleware(svc policies.Service, counter metrics.Counter, latency me
 	}
 }
 
-func (ms *metricsMiddleware) AddPolicy(ctx context.Context, token string, p policies.Policy) (policy policies.Policy, err error) {
+func (ms *metricsMiddleware) AddPolicy(ctx context.Context, token string, external bool, p policies.Policy) (policy policies.Policy, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "add_policy").Add(1)
 		ms.latency.With("method", "add_policy").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return ms.svc.AddPolicy(ctx, token, p)
+	return ms.svc.AddPolicy(ctx, token, external, p)
 }
 
 func (ms *metricsMiddleware) UpdatePolicy(ctx context.Context, token string, p policies.Policy) (policy policies.Policy, err error) {

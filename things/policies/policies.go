@@ -81,7 +81,9 @@ type Service interface {
 	// AddPolicy creates a policy for the given subject, so that, after
 	// AddPolicy, `subject` has a `relation` on `object`. Returns a non-nil
 	// error in case of failures.
-	AddPolicy(ctx context.Context, token string, p Policy) (Policy, error)
+	// External is used to check if the policy subject is from external source i.e
+	// if it is true then the subject is `userID` else it is `thingID`.
+	AddPolicy(ctx context.Context, token string, external bool, p Policy) (Policy, error)
 
 	// DeletePolicy removes a policy.
 	DeletePolicy(ctx context.Context, token string, p Policy) error

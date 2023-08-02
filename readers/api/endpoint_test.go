@@ -17,7 +17,6 @@ import (
 	"github.com/mainflux/mainflux/readers"
 	"github.com/mainflux/mainflux/readers/api"
 	"github.com/mainflux/mainflux/readers/mocks"
-	"github.com/mainflux/mainflux/things/clients"
 	tpolicies "github.com/mainflux/mainflux/things/policies"
 	authmocks "github.com/mainflux/mainflux/users/clients/mocks"
 	upolicies "github.com/mainflux/mainflux/users/policies"
@@ -46,7 +45,8 @@ var (
 	vd          = "dataValue"
 	sum float64 = 42
 
-	idProvider = uuid.New()
+	idProvider        = uuid.New()
+	adminRelationKeys = []string{"c_update", "c_list", "c_delete", "c_share"}
 )
 
 func newServer(repo readers.MessageRepository, tc tpolicies.AuthServiceClient, ac upolicies.AuthServiceClient) *httptest.Server {
@@ -132,7 +132,7 @@ func TestReadAll(t *testing.T) {
 
 	thSvc := mocks.NewThingsService(map[string]string{email: chanID})
 	mockAuthzDB := map[string][]authmocks.SubjectSet{}
-	mockAuthzDB["token"] = append(mockAuthzDB[email], authmocks.SubjectSet{Subject: "token", Relation: clients.AdminRelationKey})
+	mockAuthzDB["token"] = append(mockAuthzDB[email], authmocks.SubjectSet{Subject: "token", Relation: adminRelationKeys})
 
 	usrSvc := authmocks.NewAuthService(map[string]string{userToken: email}, mockAuthzDB)
 

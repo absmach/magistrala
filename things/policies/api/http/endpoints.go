@@ -63,7 +63,7 @@ func connectEndpoint(svc policies.Service) endpoint.Endpoint {
 			Object:  cr.Object,
 			Actions: cr.Actions,
 		}
-		policy, err := svc.AddPolicy(ctx, cr.token, policy)
+		policy, err := svc.AddPolicy(ctx, cr.token, cr.External, policy)
 		if err != nil {
 			return nil, err
 		}
@@ -90,10 +90,11 @@ func connectThingsEndpoint(svc policies.Service) endpoint.Endpoint {
 					Object:  cid,
 					Actions: cr.Actions,
 				}
-				p, err := svc.AddPolicy(ctx, cr.token, policy)
+				p, err := svc.AddPolicy(ctx, cr.token, cr.External, policy)
 				if err != nil {
 					return listPolicyRes{}, err
 				}
+
 				pols.Policies = append(pols.Policies, p)
 			}
 		}

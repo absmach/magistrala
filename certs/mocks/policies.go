@@ -30,7 +30,7 @@ func NewPoliciesService(auth upolicies.AuthServiceClient) tpolicies.Service {
 	}
 }
 
-func (svc *mainfluxPolicies) AddPolicy(ctx context.Context, token string, p tpolicies.Policy) (tpolicies.Policy, error) {
+func (svc *mainfluxPolicies) AddPolicy(ctx context.Context, token string, external bool, p tpolicies.Policy) (tpolicies.Policy, error) {
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 

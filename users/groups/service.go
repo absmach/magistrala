@@ -18,10 +18,13 @@ import (
 
 // Possible token types are access and refresh tokens.
 const (
-	RefreshToken      = "refresh"
-	AccessToken       = "access"
-	MyKey             = "mine"
-	groupsObjectKey   = "groups"
+	RefreshToken = "refresh"
+	AccessToken  = "access"
+
+	MyKey = "mine"
+
+	groupsObjectKey = "groups"
+
 	updateRelationKey = "g_update"
 	listRelationKey   = "g_list"
 	deleteRelationKey = "g_delete"

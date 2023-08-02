@@ -13,19 +13,25 @@ import (
 )
 
 const (
-	ReadAction       = "m_read"
-	WriteAction      = "m_write"
-	addPolicyAction  = "g_add"
+	// Messaging policy actions.
+	ReadAction  = "m_read"
+	WriteAction = "m_write"
+
+	// Add policy actions to check if the client is admin.
+	addPolicyAction = "g_add"
+
+	sharePolicyAction = "c_share"
+
+	// Entity types.
 	ClientEntityType = "client"
 	GroupEntityType  = "group"
 	ThingEntityType  = "thing"
-	thingsObjectKey  = "things"
+
+	thingsObjectKey = "things"
 )
 
-var (
-	// ErrInvalidEntityType indicates that the entity type is invalid.
-	ErrInvalidEntityType = errors.New("invalid entity type")
-)
+// ErrInvalidEntityType indicates that the entity type is invalid.
+var ErrInvalidEntityType = errors.New("invalid entity type")
 
 type service struct {
 	auth        upolicies.AuthServiceClient
@@ -45,7 +51,7 @@ func NewService(auth upolicies.AuthServiceClient, p Repository, ccache Cache, id
 }
 
 func (svc service) Authorize(ctx context.Context, ar AccessRequest) (Policy, error) {
-	// fetch from cache first
+	// Fetch from cache first.
 	policy := Policy{
 		Subject: ar.Subject,
 		Object:  ar.Object,
@@ -63,7 +69,7 @@ func (svc service) Authorize(ctx context.Context, ar AccessRequest) (Policy, err
 		return Policy{}, err
 	}
 
-	// fetch from repo as a fallback if not found in cache
+	// Fetch from repo as a fallback if not found in cache.
 	switch ar.Entity {
 	case GroupEntityType:
 		policy, err = svc.policies.EvaluateGroupAccess(ctx, ar)
@@ -101,7 +107,7 @@ func (svc service) Authorize(ctx context.Context, ar AccessRequest) (Policy, err
 //  1. The client is admin
 //
 //  2. The client has `g_add` action on the object or is the owner of the object.
-func (svc service) AddPolicy(ctx context.Context, token string, p Policy) (Policy, error) {
+func (svc service) AddPolicy(ctx context.Context, token string, external bool, p Policy) (Policy, error) {
 	userID, err := svc.identify(ctx, token)
 	if err != nil {
 		return Policy{}, err
@@ -109,11 +115,14 @@ func (svc service) AddPolicy(ctx context.Context, token string, p Policy) (Polic
 	if err := p.validate(); err != nil {
 		return Policy{}, err
 	}
+	if external {
+		p.Actions = upolicies.AddListAction(p.Actions)
+	}
 
 	p.OwnerID = userID
 	p.CreatedAt = time.Now()
 
-	// incase the policy exists, use these for update.
+	// Incase the policy exists, use these for update.
 	p.UpdatedAt = time.Now()
 	p.UpdatedBy = userID
 
@@ -129,6 +138,10 @@ func (svc service) AddPolicy(ctx context.Context, token string, p Policy) (Polic
 	// If the client has `g_add` action on the object or is the owner of the object, add the policy
 	areq := AccessRequest{Subject: userID, Object: p.Object, Action: "g_add"}
 	if pol, err := svc.policies.EvaluateGroupAccess(ctx, areq); err == nil {
+		if err := svc.checkSubject(ctx, userID, external, p); err != nil {
+			return Policy{}, err
+		}
+
 		// the client has `g_add` action on the object
 		if len(pol.Actions) > 0 {
 			if err := checkActions(pol.Actions, p.Actions); err != nil {
@@ -141,6 +154,28 @@ func (svc service) AddPolicy(ctx context.Context, token string, p Policy) (Polic
 	}
 
 	return Policy{}, errors.ErrAuthorization
+}
+
+// checkSubject is used to check if the subject is valid.
+//
+// 1. If the subject is a thing (external is false), check the following:
+//   - The user is the owner of the thing
+//   - The user has `c_share` action on the thing
+//
+// 2. If the subject is a user (external is true), check the following:
+//   - The user is the owner of the user
+//   - The user has `c_share` action on the user
+func (svc service) checkSubject(ctx context.Context, userID string, external bool, p Policy) error {
+	if external {
+		return svc.usersAuthorize(ctx, userID, p.Subject, sharePolicyAction, ClientEntityType)
+	}
+
+	ar := AccessRequest{Subject: userID, Object: p.Subject, Action: sharePolicyAction}
+	if _, err := svc.policies.EvaluateThingAccess(ctx, ar); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (svc service) UpdatePolicy(ctx context.Context, token string, p Policy) (Policy, error) {
@@ -173,12 +208,12 @@ func (svc service) ListPolicies(ctx context.Context, token string, pm Page) (Pol
 	if err := pm.Validate(); err != nil {
 		return PolicyPage{}, err
 	}
-	// If the user is admin, return all policies
+	// If the user is admin, return all policies.
 	if err := svc.checkAdmin(ctx, userID); err == nil {
 		return svc.policies.Retrieve(ctx, pm)
 	}
 
-	// If the user is not admin, return only the policies that they created
+	// If the user is not admin, return only the policies that they created.
 	pm.OwnerID = userID
 
 	return svc.policies.Retrieve(ctx, pm)
@@ -230,12 +265,16 @@ func (svc service) identify(ctx context.Context, token string) (string, error) {
 }
 
 func (svc service) checkAdmin(ctx context.Context, id string) error {
-	// for checking admin rights policy object, action and entity type are not important
+	// For checking admin rights policy object, action and entity type are not important.
+	return svc.usersAuthorize(ctx, id, thingsObjectKey, addPolicyAction, GroupEntityType)
+}
+
+func (svc service) usersAuthorize(ctx context.Context, subject, object, action, entity string) error {
 	req := &upolicies.AuthorizeReq{
-		Subject:    id,
-		Object:     thingsObjectKey,
-		Action:     addPolicyAction,
-		EntityType: GroupEntityType,
+		Subject:    subject,
+		Object:     object,
+		Action:     action,
+		EntityType: entity,
 	}
 	res, err := svc.auth.Authorize(ctx, req)
 	if err != nil {

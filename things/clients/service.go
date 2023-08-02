@@ -16,15 +16,17 @@ import (
 )
 
 const (
-	MyKey             = "mine"
-	thingsObjectKey   = "things"
+	myKey = "mine"
+
+	thingsObjectKey = "things"
+
+	addRelationKey    = "g_add"
 	updateRelationKey = "c_update"
 	listRelationKey   = "c_list"
 	deleteRelationKey = "c_delete"
-	clientEntityType  = "client"
-)
 
-var AdminRelationKey = []string{updateRelationKey, listRelationKey, deleteRelationKey}
+	clientEntityType = "client"
+)
 
 type service struct {
 	uauth       upolicies.AuthServiceClient
@@ -101,12 +103,12 @@ func (svc service) ListClients(ctx context.Context, token string, pm mfclients.P
 	// If the user is admin, fetch all things from database.
 	case nil:
 		switch {
-		case pm.SharedBy == MyKey && pm.Owner == MyKey:
+		case pm.SharedBy == myKey && pm.Owner == myKey:
 			pm.SharedBy = ""
 			pm.Owner = ""
-		case pm.SharedBy == MyKey && pm.Owner != MyKey:
+		case pm.SharedBy == myKey && pm.Owner != myKey:
 			pm.SharedBy = userID
-		case pm.Owner == MyKey && pm.SharedBy != MyKey:
+		case pm.Owner == myKey && pm.SharedBy != myKey:
 			pm.Owner = userID
 		}
 
@@ -115,12 +117,12 @@ func (svc service) ListClients(ctx context.Context, token string, pm mfclients.P
 		// If user provides 'sharedby' key, fetch things from policies. Otherwise,
 		// fetch things from the database based on thing's 'owner' field.
 		switch {
-		case pm.SharedBy == MyKey && pm.Owner == MyKey:
+		case pm.SharedBy == myKey && pm.Owner == myKey:
 			pm.SharedBy = userID
-		case pm.SharedBy == MyKey && pm.Owner != MyKey:
+		case pm.SharedBy == myKey && pm.Owner != myKey:
 			pm.SharedBy = userID
 			pm.Owner = ""
-		case pm.Owner == MyKey && pm.SharedBy != MyKey:
+		case pm.Owner == myKey && pm.SharedBy != myKey:
 			pm.Owner = userID
 		default:
 			pm.Owner = userID

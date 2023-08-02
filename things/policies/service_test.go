@@ -12,7 +12,6 @@ import (
 	"github.com/mainflux/mainflux/internal/testsutil"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/uuid"
-	"github.com/mainflux/mainflux/things/clients"
 	"github.com/mainflux/mainflux/things/clients/mocks"
 	"github.com/mainflux/mainflux/things/policies"
 	pmocks "github.com/mainflux/mainflux/things/policies/mocks"
@@ -23,15 +22,16 @@ import (
 )
 
 var (
-	idProvider    = uuid.New()
-	inValidToken  = "invalidToken"
-	memberActions = []string{"g_list"}
-	adminEmail    = "admin@example.com"
-	token         = "token"
+	idProvider        = uuid.New()
+	inValidToken      = "invalidToken"
+	memberActions     = []string{"g_list"}
+	adminEmail        = "admin@example.com"
+	token             = "token"
+	adminRelationKeys = []string{"c_update", "c_list", "c_delete", "c_share"}
 )
 
 func newService(tokens map[string]string) (policies.Service, *pmocks.Repository, *umocks.Repository) {
-	adminPolicy := mocks.MockSubjectSet{Object: "things", Relation: clients.AdminRelationKey}
+	adminPolicy := mocks.MockSubjectSet{Object: "things", Relation: adminRelationKeys}
 	auth := mocks.NewAuthService(tokens, map[string][]mocks.MockSubjectSet{adminEmail: {adminPolicy}})
 	idProvider := uuid.NewMock()
 	policiesCache := pmocks.NewCache()
@@ -122,7 +122,7 @@ func TestAddPolicy(t *testing.T) {
 		repoCall := pRepo.On("EvaluateGroupAccess", mock.Anything, mock.Anything).Return(policies.Policy{}, tc.err)
 		repoCall1 := pRepo.On("EvaluateThingAccess", mock.Anything, mock.Anything).Return(policies.Policy{}, tc.err)
 		repoCall2 := pRepo.On("Save", context.Background(), mock.Anything).Return(tc.policy, tc.err)
-		_, err := svc.AddPolicy(context.Background(), tc.token, tc.policy)
+		_, err := svc.AddPolicy(context.Background(), tc.token, false, tc.policy)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		if err == nil {
 			tc.policy.Subject = tc.token

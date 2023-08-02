@@ -43,6 +43,7 @@ var (
 	passRegex       = regexp.MustCompile("^.{8,}$")
 	accessDuration  = time.Minute * 1
 	refreshDuration = time.Minute * 10
+	myKey = "mine"
 )
 
 func TestRegisterClient(t *testing.T) {
@@ -395,7 +396,7 @@ func TestListClients(t *testing.T) {
 			page: mfclients.Page{
 				Offset:   6,
 				Limit:    nClients,
-				SharedBy: clients.MyKey,
+				SharedBy: myKey,
 				Status:   mfclients.EnabledStatus,
 			},
 			response: mfclients.ClientsPage{
@@ -414,7 +415,7 @@ func TestListClients(t *testing.T) {
 			page: mfclients.Page{
 				Offset:   6,
 				Limit:    nClients,
-				SharedBy: clients.MyKey,
+				SharedBy: myKey,
 				Name:     "TestListClients3",
 				Status:   mfclients.EnabledStatus,
 			},
@@ -434,7 +435,7 @@ func TestListClients(t *testing.T) {
 			page: mfclients.Page{
 				Offset:   6,
 				Limit:    nClients,
-				SharedBy: clients.MyKey,
+				SharedBy: myKey,
 				Name:     "notpresentclient",
 				Status:   mfclients.EnabledStatus,
 			},
@@ -454,7 +455,7 @@ func TestListClients(t *testing.T) {
 			page: mfclients.Page{
 				Offset: 6,
 				Limit:  nClients,
-				Owner:  clients.MyKey,
+				Owner:  myKey,
 				Status: mfclients.EnabledStatus,
 			},
 			response: mfclients.ClientsPage{
@@ -473,7 +474,7 @@ func TestListClients(t *testing.T) {
 			page: mfclients.Page{
 				Offset: 6,
 				Limit:  nClients,
-				Owner:  clients.MyKey,
+				Owner:  myKey,
 				Name:   "TestListClients3",
 				Status: mfclients.AllStatus,
 			},
@@ -493,7 +494,7 @@ func TestListClients(t *testing.T) {
 			page: mfclients.Page{
 				Offset: 6,
 				Limit:  nClients,
-				Owner:  clients.MyKey,
+				Owner:  myKey,
 				Name:   "notpresentclient",
 				Status: mfclients.AllStatus,
 			},
@@ -513,8 +514,8 @@ func TestListClients(t *testing.T) {
 			page: mfclients.Page{
 				Offset:   6,
 				Limit:    nClients,
-				Owner:    clients.MyKey,
-				SharedBy: clients.MyKey,
+				Owner:    myKey,
+				SharedBy: myKey,
 				Status:   mfclients.AllStatus,
 			},
 			response: mfclients.ClientsPage{
@@ -533,8 +534,8 @@ func TestListClients(t *testing.T) {
 			page: mfclients.Page{
 				Offset:   6,
 				Limit:    nClients,
-				SharedBy: clients.MyKey,
-				Owner:    clients.MyKey,
+				SharedBy: myKey,
+				Owner:    myKey,
 				Name:     "TestListClients3",
 				Status:   mfclients.AllStatus,
 			},
@@ -554,8 +555,8 @@ func TestListClients(t *testing.T) {
 			page: mfclients.Page{
 				Offset:   6,
 				Limit:    nClients,
-				SharedBy: clients.MyKey,
-				Owner:    clients.MyKey,
+				SharedBy: myKey,
+				Owner:    myKey,
 				Name:     "notpresentclient",
 				Status:   mfclients.AllStatus,
 			},

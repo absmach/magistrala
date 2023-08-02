@@ -55,6 +55,7 @@ func Migration() *migrate.MemoryMigrationSource {
 						updated_at  TIMESTAMP,
 						updated_by  VARCHAR(254),
 						FOREIGN KEY (subject) REFERENCES clients (id) ON DELETE CASCADE ON UPDATE CASCADE,
+						FOREIGN KEY (object) REFERENCES groups (id) ON DELETE CASCADE ON UPDATE CASCADE,
 						PRIMARY KEY (subject, object)
 					)`,
 				},

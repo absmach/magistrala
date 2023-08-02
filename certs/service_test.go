@@ -46,12 +46,14 @@ const (
 	instanceID        = "5de9b29a-feb9-11ed-be56-0242ac120002"
 )
 
+var adminRelationKeys = []string{"c_update", "c_list", "c_delete", "c_share"}
+
 func newService(tokens map[string]string) (certs.Service, error) {
 	ac := bsmocks.NewAuthClient(map[string]string{token: email})
 
 	server := newThingsServer(newThingsService(ac))
 
-	policies := []thmocks.MockSubjectSet{{Object: "token", Relation: clients.AdminRelationKey}}
+	policies := []thmocks.MockSubjectSet{{Object: "token", Relation: adminRelationKeys}}
 	auth := thmocks.NewAuthService(tokens, map[string][]thmocks.MockSubjectSet{token: policies})
 
 	config := mfsdk.Config{

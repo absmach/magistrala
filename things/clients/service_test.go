@@ -37,14 +37,16 @@ var (
 		Metadata:    validCMetadata,
 		Status:      mfclients.EnabledStatus,
 	}
-	inValidToken   = "invalidToken"
-	withinDuration = 5 * time.Second
-	adminEmail     = "admin@example.com"
-	token          = "token"
+	inValidToken      = "invalidToken"
+	withinDuration    = 5 * time.Second
+	adminEmail        = "admin@example.com"
+	token             = "token"
+	myKey             = "mine"
+	adminRelationKeys = []string{"c_update", "c_list", "c_delete", "c_share"}
 )
 
 func newService(tokens map[string]string) (clients.Service, *mocks.Repository, *pmocks.Repository) {
-	adminPolicy := mocks.MockSubjectSet{Object: ID, Relation: clients.AdminRelationKey}
+	adminPolicy := mocks.MockSubjectSet{Object: ID, Relation: adminRelationKeys}
 	auth := mocks.NewAuthService(tokens, map[string][]mocks.MockSubjectSet{adminEmail: {adminPolicy}})
 	thingCache := mocks.NewCache()
 	policiesCache := pmocks.NewCache()
@@ -385,7 +387,7 @@ func TestListClients(t *testing.T) {
 			page: mfclients.Page{
 				Offset:   6,
 				Limit:    nClients,
-				SharedBy: clients.MyKey,
+				SharedBy: myKey,
 				Status:   mfclients.EnabledStatus,
 			},
 			response: mfclients.ClientsPage{
@@ -404,7 +406,7 @@ func TestListClients(t *testing.T) {
 			page: mfclients.Page{
 				Offset:   6,
 				Limit:    nClients,
-				SharedBy: clients.MyKey,
+				SharedBy: myKey,
 				Name:     "TestListClients3",
 				Status:   mfclients.EnabledStatus,
 			},
@@ -424,7 +426,7 @@ func TestListClients(t *testing.T) {
 			page: mfclients.Page{
 				Offset:   6,
 				Limit:    nClients,
-				SharedBy: clients.MyKey,
+				SharedBy: myKey,
 				Name:     "notpresentclient",
 				Status:   mfclients.EnabledStatus,
 			},
@@ -444,7 +446,7 @@ func TestListClients(t *testing.T) {
 			page: mfclients.Page{
 				Offset: 6,
 				Limit:  nClients,
-				Owner:  clients.MyKey,
+				Owner:  myKey,
 				Status: mfclients.EnabledStatus,
 			},
 			response: mfclients.ClientsPage{
@@ -463,7 +465,7 @@ func TestListClients(t *testing.T) {
 			page: mfclients.Page{
 				Offset: 6,
 				Limit:  nClients,
-				Owner:  clients.MyKey,
+				Owner:  myKey,
 				Name:   "TestListClients3",
 				Status: mfclients.AllStatus,
 			},
@@ -483,7 +485,7 @@ func TestListClients(t *testing.T) {
 			page: mfclients.Page{
 				Offset: 6,
 				Limit:  nClients,
-				Owner:  clients.MyKey,
+				Owner:  myKey,
 				Name:   "notpresentclient",
 				Status: mfclients.AllStatus,
 			},
@@ -503,8 +505,8 @@ func TestListClients(t *testing.T) {
 			page: mfclients.Page{
 				Offset:   6,
 				Limit:    nClients,
-				Owner:    clients.MyKey,
-				SharedBy: clients.MyKey,
+				Owner:    myKey,
+				SharedBy: myKey,
 				Status:   mfclients.AllStatus,
 			},
 			response: mfclients.ClientsPage{
@@ -523,8 +525,8 @@ func TestListClients(t *testing.T) {
 			page: mfclients.Page{
 				Offset:   6,
 				Limit:    nClients,
-				SharedBy: clients.MyKey,
-				Owner:    clients.MyKey,
+				SharedBy: myKey,
+				Owner:    myKey,
 				Name:     "TestListClients3",
 				Status:   mfclients.AllStatus,
 			},
@@ -544,8 +546,8 @@ func TestListClients(t *testing.T) {
 			page: mfclients.Page{
 				Offset:   6,
 				Limit:    nClients,
-				SharedBy: clients.MyKey,
-				Owner:    clients.MyKey,
+				SharedBy: myKey,
+				Owner:    myKey,
 				Name:     "notpresentclient",
 				Status:   mfclients.AllStatus,
 			},

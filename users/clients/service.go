@@ -199,14 +199,6 @@ func (svc service) ListClients(ctx context.Context, token string, pm mfclients.P
 	if err != nil {
 		return mfclients.ClientsPage{}, err
 	}
-	for i, client := range clients.Clients {
-		if client.ID == id {
-			clients.Clients = append(clients.Clients[:i], clients.Clients[i+1:]...)
-			if clients.Total != 0 {
-				clients.Total--
-			}
-		}
-	}
 
 	return clients, nil
 }

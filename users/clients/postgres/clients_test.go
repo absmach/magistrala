@@ -586,7 +586,7 @@ func TestGroupsMembers(t *testing.T) {
 		mp, err := crepo.Members(context.Background(), tc.ID, mfclients.Page{Total: 10, Offset: 0, Limit: 10, Status: mfclients.AllStatus, Subject: clientB.ID, Action: "g_list"})
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", desc, tc.err, err))
 		if tc.ID == group.ID {
-			assert.ElementsMatch(t, mp.Members, []mfclients.Client{clientA, clientB}, fmt.Sprintf("%s: expected %v got %v\n", desc, []mfclients.Client{clientA, clientB}, mp.Members))
+			assert.ElementsMatch(t, mp.Members, []mfclients.Client{clientA}, fmt.Sprintf("%s: expected %v got %v\n", desc, []mfclients.Client{clientA, clientB}, mp.Members))
 		}
 	}
 }

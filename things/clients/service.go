@@ -103,13 +103,18 @@ func (svc service) ListClients(ctx context.Context, token string, pm mfclients.P
 	// If the user is admin, fetch all things from database.
 	case nil:
 		switch {
+		// visibility = all
 		case pm.SharedBy == myKey && pm.Owner == myKey:
 			pm.SharedBy = ""
 			pm.Owner = ""
+		// visibility = shared
 		case pm.SharedBy == myKey && pm.Owner != myKey:
 			pm.SharedBy = userID
+			pm.Owner = ""
+		// visibility = mine
 		case pm.Owner == myKey && pm.SharedBy != myKey:
 			pm.Owner = userID
+			pm.SharedBy = ""
 		}
 
 	default:
@@ -117,13 +122,18 @@ func (svc service) ListClients(ctx context.Context, token string, pm mfclients.P
 		// If user provides 'sharedby' key, fetch things from policies. Otherwise,
 		// fetch things from the database based on thing's 'owner' field.
 		switch {
+		// visibility = all
 		case pm.SharedBy == myKey && pm.Owner == myKey:
 			pm.SharedBy = userID
+			pm.Owner = userID
+		// visibility = shared
 		case pm.SharedBy == myKey && pm.Owner != myKey:
 			pm.SharedBy = userID
 			pm.Owner = ""
+		// visibility = mine
 		case pm.Owner == myKey && pm.SharedBy != myKey:
 			pm.Owner = userID
+			pm.SharedBy = ""
 		default:
 			pm.Owner = userID
 		}

@@ -29,8 +29,22 @@ type HealthInfo struct {
 	BuildTime string `json:"build_time"`
 }
 
-func (sdk mfSDK) Health() (HealthInfo, errors.SDKError) {
-	url := fmt.Sprintf("%s/health", sdk.thingsURL)
+func (sdk mfSDK) Health(service string) (HealthInfo, errors.SDKError) {
+	var url string
+	switch service {
+	case "things":
+		url = fmt.Sprintf("%s/health", sdk.thingsURL)
+	case "users":
+		url = fmt.Sprintf("%s/health", sdk.usersURL)
+	case "bootstrap":
+		url = fmt.Sprintf("%s/health", sdk.bootstrapURL)
+	case "certs":
+		url = fmt.Sprintf("%s/health", sdk.certsURL)
+	case "reader":
+		url = fmt.Sprintf("%s/health", sdk.readerURL)
+	case "http-adapter":
+		url = fmt.Sprintf("%s/health", sdk.httpAdapterURL)
+	}
 
 	resp, err := sdk.client.Get(url)
 	if err != nil {

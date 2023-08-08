@@ -12,10 +12,10 @@ make cli
 
 ### Service
 
-#### Get Mainflux Things services Health Check
+#### Get Mainflux Services Health Check
 
 ```bash
-mainflux-cli health
+mainflux-cli health <service>
 ```
 
 ### Users management
@@ -90,8 +90,8 @@ mainflux-cli things create '{"name":"myThing", "metadata": {"key1":"value1"}}' <
 mainflux-cli provision things <file> <user_token>
 ```
 
-* `file` - A CSV or JSON file containing thing names (must have extension `.csv` or `.json`)
-* `user_token` - A valid user auth token for the current system
+- `file` - A CSV or JSON file containing thing names (must have extension `.csv` or `.json`)
+- `user_token` - A valid user auth token for the current system
 
 An example CSV file might be:
 
@@ -106,22 +106,23 @@ in which the first column is the thing's name.
 A comparable JSON file would be
 
 ```json
-[{
-        "name": "<thing1_name>",
-        "status": "enabled"
-    },
-    {
-        "name": "<thing2_name>",
-        "status": "disabled"
-    }, {
-
-        "name": "<thing3_name>",
-        "status": "enabled",
-        "credentials": {
-            "identity": "<thing3_identity>",
-            "secret": "<thing3_secret>"
-        }
+[
+  {
+    "name": "<thing1_name>",
+    "status": "enabled"
+  },
+  {
+    "name": "<thing2_name>",
+    "status": "disabled"
+  },
+  {
+    "name": "<thing3_name>",
+    "status": "enabled",
+    "credentials": {
+      "identity": "<thing3_identity>",
+      "secret": "<thing3_secret>"
     }
+  }
 ]
 ```
 
@@ -181,8 +182,8 @@ mainflux-cli channels create '{"name":"myChannel"}' <user_token>
 mainflux-cli provision channels <file> <user_token>
 ```
 
-* `file` - A CSV or JSON file containing channel names (must have extension `.csv` or `.json`)
-* `user_token` - A valid user auth token for the current system
+- `file` - A CSV or JSON file containing channel names (must have extension `.csv` or `.json`)
+- `user_token` - A valid user auth token for the current system
 
 An example CSV file might be:
 
@@ -197,21 +198,22 @@ in which the first column is channel names.
 A comparable JSON file would be
 
 ```json
-[{
-        "name": "<channel1_name>",
-        "description": "<channel1_description>",
-        "status": "enabled"
-    },
-    {
-        "name": "<channel2_name>",
-        "description": "<channel2_description>",
-        "status": "disabled"
-    }, {
-
-        "name": "<channel3_name>",
-        "description": "<channel3_description>",
-        "status": "enabled"
-    }
+[
+  {
+    "name": "<channel1_name>",
+    "description": "<channel1_description>",
+    "status": "enabled"
+  },
+  {
+    "name": "<channel2_name>",
+    "description": "<channel2_description>",
+    "status": "disabled"
+  },
+  {
+    "name": "<channel3_name>",
+    "description": "<channel3_description>",
+    "status": "enabled"
+  }
 ]
 ```
 
@@ -267,8 +269,8 @@ mainflux-cli things connect <thing_id> <channel_id> <user_token>
 mainflux-cli provision connect <file> <user_token>
 ```
 
-* `file` - A CSV or JSON file containing thing and channel ids (must have extension `.csv` or `.json`)
-* `user_token` - A valid user auth token for the current system
+- `file` - A CSV or JSON file containing thing and channel ids (must have extension `.csv` or `.json`)
+- `user_token` - A valid user auth token for the current system
 
 An example CSV file might be
 
@@ -277,20 +279,14 @@ An example CSV file might be
 <thing_id2>,<channel_id2>
 ```
 
-in which the first column is thing IDs and the second column is channel IDs.  A connection will be created for each thing to each channel.  This example would result in 4 connections being created.
+in which the first column is thing IDs and the second column is channel IDs. A connection will be created for each thing to each channel. This example would result in 4 connections being created.
 
 A comparable JSON file would be
 
 ```json
 {
-    "client_ids": [
-        "<thing_id1>",
-        "<thing_id2>"
-    ],
-    "group_ids": [
-        "<channel_id1>",
-        "<channel_id2>"
-    ]
+  "client_ids": ["<thing_id1>", "<thing_id2>"],
+  "group_ids": ["<channel_id1>", "<channel_id2>"]
 }
 ```
 

@@ -804,12 +804,12 @@ type SDK interface {
 	//  fmt.Println(err)
 	SetContentType(ct ContentType) errors.SDKError
 
-	// Health returns things service health check.
+	// Health returns service health check.
 	//
 	// example:
-	//  health, _ := sdk.Health()
+	//  health, _ := sdk.Health("service")
 	//  fmt.Println(health)
-	Health() (HealthInfo, errors.SDKError)
+	Health(service string) (HealthInfo, errors.SDKError)
 
 	// AddBootstrap add bootstrap configuration
 	//

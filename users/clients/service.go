@@ -12,6 +12,7 @@ import (
 	"github.com/mainflux/mainflux/internal/apiutil"
 	mfclients "github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/mainflux/mainflux/users/clients/postgres"
 	"github.com/mainflux/mainflux/users/jwt"
 	"github.com/mainflux/mainflux/users/policies"
 )
@@ -50,7 +51,7 @@ type Service interface {
 }
 
 type service struct {
-	clients    mfclients.Repository
+	clients    postgres.Repository
 	policies   policies.Repository
 	idProvider mainflux.IDProvider
 	hasher     Hasher
@@ -60,7 +61,7 @@ type service struct {
 }
 
 // NewService returns a new Clients service implementation.
-func NewService(c mfclients.Repository, p policies.Repository, t jwt.Repository, e Emailer, h Hasher, idp mainflux.IDProvider, pr *regexp.Regexp) Service {
+func NewService(c postgres.Repository, p policies.Repository, t jwt.Repository, e Emailer, h Hasher, idp mainflux.IDProvider, pr *regexp.Regexp) Service {
 	return service{
 		clients:    c,
 		policies:   p,
@@ -105,7 +106,7 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mfclien
 		return mfclients.Client{}, err
 	}
 
-	return client[0], nil
+	return client, nil
 }
 
 func (svc service) IssueToken(ctx context.Context, identity, secret string) (jwt.Token, error) {

@@ -12,9 +12,9 @@ import (
 	mfclients "github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfgroups "github.com/mainflux/mainflux/pkg/groups"
+	gpostgres "github.com/mainflux/mainflux/pkg/groups/postgres"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	cpostgres "github.com/mainflux/mainflux/things/clients/postgres"
-	gpostgres "github.com/mainflux/mainflux/things/groups/postgres"
 	"github.com/mainflux/mainflux/things/policies"
 	ppostgres "github.com/mainflux/mainflux/things/policies/postgres"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +28,7 @@ var (
 func TestPoliciesSave(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
 	repo := ppostgres.NewRepository(database)
-	grepo := gpostgres.NewRepository(database)
+	grepo := gpostgres.New(database)
 
 	uid := testsutil.GenerateUUID(t, idProvider)
 
@@ -80,7 +80,7 @@ func TestPoliciesEvaluate(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
 	repo := ppostgres.NewRepository(database)
 	crepo := cpostgres.NewRepository(database)
-	grepo := gpostgres.NewRepository(database)
+	grepo := gpostgres.New(database)
 
 	client1 := mfclients.Client{
 		ID:   testsutil.GenerateUUID(t, idProvider),
@@ -167,7 +167,7 @@ func TestPoliciesRetrieve(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
 	repo := ppostgres.NewRepository(database)
 	crepo := cpostgres.NewRepository(database)
-	grepo := gpostgres.NewRepository(database)
+	grepo := gpostgres.New(database)
 
 	uid := testsutil.GenerateUUID(t, idProvider)
 
@@ -225,7 +225,7 @@ func TestPoliciesUpdate(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
 	repo := ppostgres.NewRepository(database)
 	crepo := cpostgres.NewRepository(database)
-	grepo := gpostgres.NewRepository(database)
+	grepo := gpostgres.New(database)
 
 	client := mfclients.Client{
 		ID:   testsutil.GenerateUUID(t, idProvider),
@@ -347,7 +347,7 @@ func TestPoliciesRetrievalAll(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
 	repo := ppostgres.NewRepository(database)
 	crepo := cpostgres.NewRepository(database)
-	grepo := gpostgres.NewRepository(database)
+	grepo := gpostgres.New(database)
 
 	var nPolicies = uint64(10)
 
@@ -605,7 +605,7 @@ func TestPoliciesDelete(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
 	repo := ppostgres.NewRepository(database)
 	crepo := cpostgres.NewRepository(database)
-	grepo := gpostgres.NewRepository(database)
+	grepo := gpostgres.New(database)
 
 	client := mfclients.Client{
 		ID:   testsutil.GenerateUUID(t, idProvider),

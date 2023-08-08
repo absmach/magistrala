@@ -8,12 +8,13 @@ import (
 
 	mfclients "github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/mainflux/mainflux/users/clients/postgres"
 	"github.com/stretchr/testify/mock"
 )
 
 const WrongID = "wrongID"
 
-var _ mfclients.Repository = (*Repository)(nil)
+var _ postgres.Repository = (*Repository)(nil)
 
 type Repository struct {
 	mock.Mock
@@ -68,17 +69,16 @@ func (m *Repository) RetrieveByIdentity(ctx context.Context, identity string) (m
 	return ret.Get(0).(mfclients.Client), ret.Error(1)
 }
 
-func (m *Repository) Save(ctx context.Context, clients ...mfclients.Client) ([]mfclients.Client, error) {
-	client := clients[0]
+func (m *Repository) Save(ctx context.Context, client mfclients.Client) (mfclients.Client, error) {
 	ret := m.Called(ctx, client)
 	if client.Owner == WrongID {
-		return []mfclients.Client{}, errors.ErrMalformedEntity
+		return mfclients.Client{}, errors.ErrMalformedEntity
 	}
 	if client.Credentials.Secret == "" {
-		return []mfclients.Client{}, errors.ErrMalformedEntity
+		return mfclients.Client{}, errors.ErrMalformedEntity
 	}
 
-	return clients, ret.Error(1)
+	return client, ret.Error(1)
 }
 
 func (m *Repository) Update(ctx context.Context, client mfclients.Client) (mfclients.Client, error) {

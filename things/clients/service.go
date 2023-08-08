@@ -11,6 +11,7 @@ import (
 	mfclients "github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfgroups "github.com/mainflux/mainflux/pkg/groups"
+	"github.com/mainflux/mainflux/things/clients/postgres"
 	tpolicies "github.com/mainflux/mainflux/things/policies"
 	upolicies "github.com/mainflux/mainflux/users/policies"
 )
@@ -31,14 +32,14 @@ const (
 type service struct {
 	uauth       upolicies.AuthServiceClient
 	policies    tpolicies.Service
-	clients     mfclients.Repository
+	clients     postgres.Repository
 	clientCache Cache
 	idProvider  mainflux.IDProvider
 	grepo       mfgroups.Repository
 }
 
 // NewService returns a new Clients service implementation.
-func NewService(uauth upolicies.AuthServiceClient, policies tpolicies.Service, c mfclients.Repository, grepo mfgroups.Repository, tcache Cache, idp mainflux.IDProvider) Service {
+func NewService(uauth upolicies.AuthServiceClient, policies tpolicies.Service, c postgres.Repository, grepo mfgroups.Repository, tcache Cache, idp mainflux.IDProvider) Service {
 	return service{
 		uauth:       uauth,
 		policies:    policies,
@@ -198,6 +199,7 @@ func (svc service) UpdateClientSecret(ctx context.Context, token, id, key string
 		},
 		UpdatedAt: time.Now(),
 		UpdatedBy: userID,
+		Status:    mfclients.EnabledStatus,
 	}
 
 	return svc.clients.UpdateSecret(ctx, client)
@@ -217,6 +219,7 @@ func (svc service) UpdateClientOwner(ctx context.Context, token string, cli mfcl
 		Owner:     cli.Owner,
 		UpdatedAt: time.Now(),
 		UpdatedBy: userID,
+		Status:    mfclients.EnabledStatus,
 	}
 
 	return svc.clients.UpdateOwner(ctx, client)

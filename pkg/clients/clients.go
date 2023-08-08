@@ -68,9 +68,6 @@ type MembersPage struct {
 
 // Repository specifies an account persistence API.
 type Repository interface {
-	// Save persists the client account. A non-nil error is returned to indicate
-	// operation failure.
-	Save(ctx context.Context, client ...Client) ([]Client, error)
 
 	// RetrieveByID retrieves client by its unique ID.
 	RetrieveByID(ctx context.Context, id string) (Client, error)
@@ -101,8 +98,6 @@ type Repository interface {
 
 	// ChangeStatus changes client status to enabled or disabled
 	ChangeStatus(ctx context.Context, client Client) (Client, error)
-
-	RetrieveBySecret(ctx context.Context, key string) (Client, error)
 }
 
 // Validate returns an error if client representation is invalid.

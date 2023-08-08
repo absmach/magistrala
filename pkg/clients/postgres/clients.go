@@ -1,0 +1,456 @@
+package postgres
+
+import (
+	"context"
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/jackc/pgtype"
+	"github.com/mainflux/mainflux/internal/postgres"
+	"github.com/mainflux/mainflux/pkg/clients"
+	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/mainflux/mainflux/pkg/groups"
+)
+
+type ClientRepository struct {
+	DB postgres.Database
+}
+
+func (repo ClientRepository) Update(ctx context.Context, client clients.Client) (clients.Client, error) {
+	var query []string
+	var upq string
+	if client.Name != "" {
+		query = append(query, "name = :name,")
+	}
+	if client.Metadata != nil {
+		query = append(query, "metadata = :metadata,")
+	}
+	if len(query) > 0 {
+		upq = strings.Join(query, " ")
+	}
+	client.Status = clients.EnabledStatus
+	q := fmt.Sprintf(`UPDATE clients SET %s updated_at = :updated_at, updated_by = :updated_by
+        WHERE id = :id AND status = :status
+        RETURNING id, name, tags, identity, secret,  metadata, COALESCE(owner_id, '') AS owner_id, status, created_at, updated_at, updated_by`,
+		upq)
+
+	return repo.update(ctx, client, q)
+}
+
+func (repo ClientRepository) UpdateTags(ctx context.Context, client clients.Client) (clients.Client, error) {
+	client.Status = clients.EnabledStatus
+	q := `UPDATE clients SET tags = :tags, updated_at = :updated_at, updated_by = :updated_by
+        WHERE id = :id AND status = :status
+        RETURNING id, name, tags, identity, metadata, COALESCE(owner_id, '') AS owner_id, status, created_at, updated_at, updated_by`
+
+	return repo.update(ctx, client, q)
+}
+
+func (repo ClientRepository) UpdateIdentity(ctx context.Context, client clients.Client) (clients.Client, error) {
+	q := `UPDATE clients SET identity = :identity, updated_at = :updated_at, updated_by = :updated_by
+        WHERE id = :id AND status = :status
+        RETURNING id, name, tags, identity, metadata, COALESCE(owner_id, '') AS owner_id, status, created_at, updated_at, updated_by`
+
+	return repo.update(ctx, client, q)
+}
+
+func (repo ClientRepository) UpdateSecret(ctx context.Context, client clients.Client) (clients.Client, error) {
+	q := `UPDATE clients SET secret = :secret, updated_at = :updated_at, updated_by = :updated_by
+        WHERE id = :id AND status = :status
+        RETURNING id, name, tags, identity, metadata, COALESCE(owner_id, '') AS owner_id, status, created_at, updated_at, updated_by`
+
+	return repo.update(ctx, client, q)
+}
+
+func (repo ClientRepository) UpdateOwner(ctx context.Context, client clients.Client) (clients.Client, error) {
+	q := `UPDATE clients SET owner_id = :owner_id, updated_at = :updated_at, updated_by = :updated_by
+        WHERE id = :id AND status = :status
+        RETURNING id, name, tags, identity, metadata, COALESCE(owner_id, '') AS owner_id, status, created_at, updated_at, updated_by`
+
+	return repo.update(ctx, client, q)
+}
+
+func (repo ClientRepository) ChangeStatus(ctx context.Context, client clients.Client) (clients.Client, error) {
+	q := `UPDATE clients SET status = :status WHERE id = :id
+        RETURNING id, name, tags, identity, metadata, COALESCE(owner_id, '') AS owner_id, status, created_at, updated_at, updated_by`
+
+	return repo.update(ctx, client, q)
+}
+
+func (repo ClientRepository) RetrieveByID(ctx context.Context, id string) (clients.Client, error) {
+	q := `SELECT id, name, tags, COALESCE(owner_id, '') AS owner_id, identity, secret, metadata, created_at, updated_at, updated_by, status 
+        FROM clients WHERE id = :id`
+
+	dbc := DBClient{
+		ID: id,
+	}
+
+	row, err := repo.DB.NamedQueryContext(ctx, q, dbc)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return clients.Client{}, errors.Wrap(errors.ErrNotFound, err)
+		}
+		return clients.Client{}, errors.Wrap(errors.ErrViewEntity, err)
+	}
+
+	defer row.Close()
+	row.Next()
+	dbc = DBClient{}
+	if err := row.StructScan(&dbc); err != nil {
+		return clients.Client{}, errors.Wrap(errors.ErrNotFound, err)
+	}
+
+	return ToClient(dbc)
+}
+
+func (repo ClientRepository) RetrieveByIdentity(ctx context.Context, identity string) (clients.Client, error) {
+	q := `SELECT id, name, tags, COALESCE(owner_id, '') AS owner_id, identity, secret, metadata, created_at, updated_at, updated_by, status
+        FROM clients WHERE identity = :identity AND status = :status`
+
+	dbc := DBClient{
+		Identity: identity,
+		Status:   clients.EnabledStatus,
+	}
+
+	row, err := repo.DB.NamedQueryContext(ctx, q, dbc)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return clients.Client{}, errors.Wrap(errors.ErrNotFound, err)
+		}
+		return clients.Client{}, errors.Wrap(errors.ErrViewEntity, err)
+	}
+
+	defer row.Close()
+	row.Next()
+	dbc = DBClient{}
+	if err := row.StructScan(&dbc); err != nil {
+		return clients.Client{}, errors.Wrap(errors.ErrNotFound, err)
+	}
+
+	return ToClient(dbc)
+}
+
+func (repo ClientRepository) RetrieveAll(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
+	query, err := pageQuery(pm)
+	if err != nil {
+		return clients.ClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
+	}
+
+	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.identity, c.secret, c.metadata, COALESCE(c.owner_id, '') AS owner_id, c.status,
+					c.created_at, c.updated_at, COALESCE(c.updated_by, '') AS updated_by FROM clients c %s ORDER BY c.created_at LIMIT :limit OFFSET :offset;`, query)
+
+	dbPage, err := toDBClientsPage(pm)
+	if err != nil {
+		return clients.ClientsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+	}
+	rows, err := repo.DB.NamedQueryContext(ctx, q, dbPage)
+	if err != nil {
+		return clients.ClientsPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+	}
+	defer rows.Close()
+
+	var items []clients.Client
+	for rows.Next() {
+		dbc := DBClient{}
+		if err := rows.StructScan(&dbc); err != nil {
+			return clients.ClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
+		}
+
+		c, err := ToClient(dbc)
+		if err != nil {
+			return clients.ClientsPage{}, err
+		}
+
+		items = append(items, c)
+	}
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM clients c %s;`, query)
+
+	total, err := postgres.Total(ctx, repo.DB, cq, dbPage)
+	if err != nil {
+		return clients.ClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
+	}
+
+	page := clients.ClientsPage{
+		Clients: items,
+		Page: clients.Page{
+			Total:  total,
+			Offset: pm.Offset,
+			Limit:  pm.Limit,
+		},
+	}
+
+	return page, nil
+}
+
+func (repo ClientRepository) Members(ctx context.Context, groupID string, pm clients.Page) (clients.MembersPage, error) {
+	emq, err := pageQuery(pm)
+	if err != nil {
+		return clients.MembersPage{}, err
+	}
+
+	aq := ""
+	// If not admin, the client needs to have a g_list action on the group or they are the owner.
+	if pm.Subject != "" {
+		aq = `AND (EXISTS (SELECT 1 FROM policies p WHERE p.subject = :subject AND :action=ANY(actions)) 
+				OR EXISTS (SELECT 1 FROM groups g WHERE g.owner_id = :subject AND g.id = :group_id))
+				AND c.id != :subject`
+	}
+	q := fmt.Sprintf(`SELECT c.id, c.name, c.tags, c.metadata, c.identity, c.status,
+		c.created_at, c.updated_at FROM clients c
+		INNER JOIN policies ON c.id=policies.subject %s AND policies.object = :group_id %s
+	  	ORDER BY c.created_at LIMIT :limit OFFSET :offset;`, emq, aq)
+	dbPage, err := toDBClientsPage(pm)
+	if err != nil {
+		return clients.MembersPage{}, errors.Wrap(postgres.ErrFailedToRetrieveAll, err)
+	}
+	dbPage.GroupID = groupID
+	rows, err := repo.DB.NamedQueryContext(ctx, q, dbPage)
+	if err != nil {
+		return clients.MembersPage{}, errors.Wrap(postgres.ErrFailedToRetrieveMembers, err)
+	}
+	defer rows.Close()
+
+	var items []clients.Client
+	for rows.Next() {
+		dbc := DBClient{}
+		if err := rows.StructScan(&dbc); err != nil {
+			return clients.MembersPage{}, errors.Wrap(postgres.ErrFailedToRetrieveMembers, err)
+		}
+
+		c, err := ToClient(dbc)
+		if err != nil {
+			return clients.MembersPage{}, err
+		}
+
+		items = append(items, c)
+	}
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM clients c INNER JOIN policies ON c.id=policies.subject %s AND policies.object = :group_id`, emq)
+	if pm.Subject != "" {
+		cq = fmt.Sprintf("%s AND c.id != :subject", cq)
+	}
+
+	total, err := postgres.Total(ctx, repo.DB, cq, dbPage)
+	if err != nil {
+		return clients.MembersPage{}, errors.Wrap(postgres.ErrFailedToRetrieveMembers, err)
+	}
+
+	page := clients.MembersPage{
+		Members: items,
+		Page: clients.Page{
+			Total:  total,
+			Offset: pm.Offset,
+			Limit:  pm.Limit,
+		},
+	}
+	return page, nil
+}
+
+// generic update function.
+func (repo ClientRepository) update(ctx context.Context, client clients.Client, query string) (clients.Client, error) {
+	dbc, err := ToDBClient(client)
+	if err != nil {
+		return clients.Client{}, errors.Wrap(errors.ErrUpdateEntity, err)
+	}
+
+	row, err := repo.DB.NamedQueryContext(ctx, query, dbc)
+	if err != nil {
+		return clients.Client{}, postgres.HandleError(err, errors.ErrUpdateEntity)
+	}
+
+	defer row.Close()
+	if ok := row.Next(); !ok {
+		return clients.Client{}, errors.Wrap(errors.ErrNotFound, row.Err())
+	}
+	dbc = DBClient{}
+	if err := row.StructScan(&dbc); err != nil {
+		return clients.Client{}, err
+	}
+
+	return ToClient(dbc)
+}
+
+type DBClient struct {
+	ID        string           `db:"id"`
+	Name      string           `db:"name,omitempty"`
+	Tags      pgtype.TextArray `db:"tags,omitempty"`
+	Identity  string           `db:"identity"`
+	Owner     *string          `db:"owner_id,omitempty"` // nullable
+	Secret    string           `db:"secret"`
+	Metadata  []byte           `db:"metadata,omitempty"`
+	CreatedAt time.Time        `db:"created_at"`
+	UpdatedAt sql.NullTime     `db:"updated_at,omitempty"`
+	UpdatedBy *string          `db:"updated_by,omitempty"`
+	Groups    []groups.Group   `db:"groups,omitempty"`
+	Status    clients.Status   `db:"status"`
+	Role      clients.Role     `db:"role,omitempty"`
+}
+
+func ToDBClient(c clients.Client) (DBClient, error) {
+	data := []byte("{}")
+	if len(c.Metadata) > 0 {
+		b, err := json.Marshal(c.Metadata)
+		if err != nil {
+			return DBClient{}, errors.Wrap(errors.ErrMalformedEntity, err)
+		}
+		data = b
+	}
+	var tags pgtype.TextArray
+	if err := tags.Set(c.Tags); err != nil {
+		return DBClient{}, err
+	}
+	var owner *string
+	if c.Owner != "" {
+		owner = &c.Owner
+	}
+	var updatedBy *string
+	if c.UpdatedBy != "" {
+		updatedBy = &c.UpdatedBy
+	}
+	var updatedAt sql.NullTime
+	if c.UpdatedAt != (time.Time{}) {
+		updatedAt = sql.NullTime{Time: c.UpdatedAt, Valid: true}
+	}
+
+	return DBClient{
+		ID:        c.ID,
+		Name:      c.Name,
+		Tags:      tags,
+		Owner:     owner,
+		Identity:  c.Credentials.Identity,
+		Secret:    c.Credentials.Secret,
+		Metadata:  data,
+		CreatedAt: c.CreatedAt,
+		UpdatedAt: updatedAt,
+		UpdatedBy: updatedBy,
+		Status:    c.Status,
+		Role:      c.Role,
+	}, nil
+}
+
+func ToClient(c DBClient) (clients.Client, error) {
+	var metadata clients.Metadata
+	if c.Metadata != nil {
+		if err := json.Unmarshal([]byte(c.Metadata), &metadata); err != nil {
+			return clients.Client{}, errors.Wrap(errors.ErrMalformedEntity, err)
+		}
+	}
+	var tags []string
+	for _, e := range c.Tags.Elements {
+		tags = append(tags, e.String)
+	}
+	var owner string
+	if c.Owner != nil {
+		owner = *c.Owner
+	}
+	var updatedBy string
+	if c.UpdatedBy != nil {
+		updatedBy = *c.UpdatedBy
+	}
+	var updatedAt time.Time
+	if c.UpdatedAt.Valid {
+		updatedAt = c.UpdatedAt.Time
+	}
+
+	return clients.Client{
+		ID:    c.ID,
+		Name:  c.Name,
+		Tags:  tags,
+		Owner: owner,
+		Credentials: clients.Credentials{
+			Identity: c.Identity,
+			Secret:   c.Secret,
+		},
+		Metadata:  metadata,
+		CreatedAt: c.CreatedAt,
+		UpdatedAt: updatedAt,
+		UpdatedBy: updatedBy,
+		Status:    c.Status,
+	}, nil
+}
+
+func toDBClientsPage(pm clients.Page) (dbClientsPage, error) {
+	_, data, err := postgres.CreateMetadataQuery("", pm.Metadata)
+	if err != nil {
+		return dbClientsPage{}, errors.Wrap(errors.ErrViewEntity, err)
+	}
+	return dbClientsPage{
+		Name:     pm.Name,
+		Identity: pm.Identity,
+		Metadata: data,
+		Owner:    pm.Owner,
+		Total:    pm.Total,
+		Offset:   pm.Offset,
+		Limit:    pm.Limit,
+		Status:   pm.Status,
+		Tag:      pm.Tag,
+		Subject:  pm.Subject,
+		Action:   pm.Action,
+		SharedBy: pm.SharedBy,
+	}, nil
+}
+
+type dbClientsPage struct {
+	Total    uint64         `db:"total"`
+	Limit    uint64         `db:"limit"`
+	Offset   uint64         `db:"offset"`
+	Name     string         `db:"name"`
+	Owner    string         `db:"owner_id"`
+	Identity string         `db:"identity"`
+	Metadata []byte         `db:"metadata"`
+	Tag      string         `db:"tag"`
+	Status   clients.Status `db:"status"`
+	GroupID  string         `db:"group_id"`
+	SharedBy string         `db:"shared_by"`
+	Subject  string         `db:"subject"`
+	Action   string         `db:"action"`
+}
+
+func pageQuery(pm clients.Page) (string, error) {
+	mq, _, err := postgres.CreateMetadataQuery("", pm.Metadata)
+	if err != nil {
+		return "", errors.Wrap(errors.ErrViewEntity, err)
+	}
+	var query []string
+	var emq string
+	if mq != "" {
+		query = append(query, mq)
+	}
+	if len(pm.IDs) != 0 {
+		query = append(query, fmt.Sprintf("id IN ('%s')", strings.Join(pm.IDs, "','")))
+	}
+	if pm.Identity != "" {
+		query = append(query, "c.identity = :identity")
+	}
+	if pm.Name != "" {
+		query = append(query, "c.name = :name")
+	}
+	if pm.Tag != "" {
+		query = append(query, ":tag = ANY(c.tags)")
+	}
+	if pm.Status != clients.AllStatus {
+		query = append(query, "c.status = :status")
+	}
+	// For listing clients that the specified client owns but not sharedby
+	if pm.Owner != "" && pm.SharedBy == "" {
+		query = append(query, "c.owner_id = :owner_id")
+	}
+
+	// For listing clients that the specified client owns and that are shared with the specified client
+	if pm.Owner != "" && pm.SharedBy != "" {
+		query = append(query, "(c.owner_id = :owner_id OR (policies.object IN (SELECT object FROM policies WHERE subject = :shared_by AND :action=ANY(actions)))) AND c.id != :shared_by")
+	}
+	// For listing clients that the specified client is shared with
+	if pm.SharedBy != "" && pm.Owner == "" {
+		query = append(query, "c.owner_id != :shared_by AND (policies.object IN (SELECT object FROM policies WHERE subject = :shared_by AND :action=ANY(actions)))")
+	}
+	if len(query) > 0 {
+		emq = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
+		if strings.Contains(emq, "policies") {
+			emq = fmt.Sprintf("LEFT JOIN policies ON policies.subject = c.id %s", emq)
+		}
+	}
+	return emq, nil
+}

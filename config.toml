@@ -1,0 +1,16 @@
+raw_output = ""
+user_token = ""
+
+[filter]
+  limit = ""
+  offset = ""
+  topic = ""
+
+[remotes]
+  bootstrap_url = "http://localhost"
+  certs_url = "https://localhost:9019"
+  http_adapter_url = "http://localhost/http:9016"
+  reader_url = "http://localhost"
+  things_url = "http://localhost:9000"
+  tls_verification = false
+  users_url = "http://localhost:9002"

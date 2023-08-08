@@ -111,8 +111,8 @@ var cmdPolicies = []cobra.Command{
 				return
 			}
 			pm := mfxsdk.PageMetadata{
-				Offset: uint64(Offset),
-				Limit:  uint64(Limit),
+				Offset: Offset,
+				Limit:  Limit,
 			}
 			switch args[0] {
 			case things:

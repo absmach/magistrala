@@ -40,8 +40,8 @@ var cmdSubscription = []cobra.Command{
 				return
 			}
 			pageMetadata := mfxsdk.PageMetadata{
-				Offset:  uint64(Offset),
-				Limit:   uint64(Limit),
+				Offset:  Offset,
+				Limit:   Limit,
 				Topic:   Topic,
 				Contact: Contact,
 			}

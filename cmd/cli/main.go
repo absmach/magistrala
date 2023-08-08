@@ -39,16 +39,17 @@ func main() {
 	var rootCmd = &cobra.Command{
 		Use: "mainflux-cli",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			if err := cli.ParseConfig(); err != nil {
-				log.Fatal(err)
+			cliConf, err := cli.ParseConfig(sdkConf)
+			if err != nil {
+				log.Fatalf("Failed to parse config: %s", err)
 			}
-
-			sdkConf.MsgContentType = sdk.ContentType(msgContentType)
-			s := sdk.NewSDK(sdkConf)
+			if cliConf.MsgContentType == "" {
+				cliConf.MsgContentType = sdk.ContentType(msgContentType)
+			}
+			s := sdk.NewSDK(cliConf)
 			cli.SetSDK(s)
 		},
 	}
-
 	// API commands
 	healthCmd := cli.NewHealthCmd()
 	usersCmd := cli.NewUsersCmd()
@@ -61,6 +62,7 @@ func main() {
 	certsCmd := cli.NewCertsCmd()
 	subscriptionsCmd := cli.NewSubscriptionCmd()
 	policiesCmd := cli.NewPolicyCmd()
+	configCmd := cli.NewConfigCmd()
 
 	// Root Commands
 	rootCmd.AddCommand(healthCmd)
@@ -74,6 +76,7 @@ func main() {
 	rootCmd.AddCommand(certsCmd)
 	rootCmd.AddCommand(subscriptionsCmd)
 	rootCmd.AddCommand(policiesCmd)
+	rootCmd.AddCommand(configCmd)
 
 	// Root Flags
 	rootCmd.PersistentFlags().StringVarP(
@@ -165,7 +168,7 @@ func main() {
 	)
 
 	// Client and Channels Flags
-	rootCmd.PersistentFlags().UintVarP(
+	rootCmd.PersistentFlags().Uint64VarP(
 		&cli.Limit,
 		"limit",
 		"l",
@@ -173,7 +176,7 @@ func main() {
 		"Limit query parameter",
 	)
 
-	rootCmd.PersistentFlags().UintVarP(
+	rootCmd.PersistentFlags().Uint64VarP(
 		&cli.Offset,
 		"offset",
 		"o",

@@ -15,9 +15,9 @@ import (
 
 var (
 	// Limit query parameter.
-	Limit uint = 10
+	Limit uint64 = 10
 	// Offset query parameter.
-	Offset uint = 0
+	Offset uint64 = 0
 	// Name query parameter.
 	Name string = ""
 	// Email query parameter.

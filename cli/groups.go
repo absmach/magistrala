@@ -84,8 +84,8 @@ var cmdGroups = []cobra.Command{
 					return
 				}
 				pm := mfxsdk.PageMetadata{
-					Offset: uint64(Offset),
-					Limit:  uint64(Limit),
+					Offset: Offset,
+					Limit:  Limit,
 				}
 				l, err := sdk.Groups(pm, args[1])
 				if err != nil {
@@ -101,8 +101,8 @@ var cmdGroups = []cobra.Command{
 					return
 				}
 				pm := mfxsdk.PageMetadata{
-					Offset: uint64(Offset),
-					Limit:  uint64(Limit),
+					Offset: Offset,
+					Limit:  Limit,
 				}
 				l, err := sdk.Children(args[1], pm, args[2])
 				if err != nil {
@@ -118,8 +118,8 @@ var cmdGroups = []cobra.Command{
 					return
 				}
 				pm := mfxsdk.PageMetadata{
-					Offset: uint64(Offset),
-					Limit:  uint64(Limit),
+					Offset: Offset,
+					Limit:  Limit,
 				}
 				l, err := sdk.Parents(args[1], pm, args[2])
 				if err != nil {
@@ -194,8 +194,8 @@ var cmdGroups = []cobra.Command{
 				return
 			}
 			pm := mfxsdk.PageMetadata{
-				Offset: uint64(Offset),
-				Limit:  uint64(Limit),
+				Offset: Offset,
+				Limit:  Limit,
 				Status: Status,
 			}
 			up, err := sdk.Members(args[0], pm, args[1])
@@ -218,8 +218,8 @@ var cmdGroups = []cobra.Command{
 				return
 			}
 			pm := mfxsdk.PageMetadata{
-				Offset: uint64(Offset),
-				Limit:  uint64(Limit),
+				Offset: Offset,
+				Limit:  Limit,
 			}
 			up, err := sdk.Memberships(args[0], pm, args[1])
 			if err != nil {

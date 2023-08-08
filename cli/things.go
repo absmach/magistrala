@@ -58,9 +58,9 @@ var cmdThings = []cobra.Command{
 				return
 			}
 			pageMetadata := mfxsdk.PageMetadata{
-				Name:     "",
-				Offset:   uint64(Offset),
-				Limit:    uint64(Limit),
+				Name:     Name,
+				Offset:   Offset,
+				Limit:    Limit,
 				Metadata: metadata,
 			}
 			if args[0] == all {
@@ -300,8 +300,8 @@ var cmdThings = []cobra.Command{
 				return
 			}
 			pm := mfxsdk.PageMetadata{
-				Offset: uint64(Offset),
-				Limit:  uint64(Limit),
+				Offset: Offset,
+				Limit:  Limit,
 			}
 			cl, err := sdk.ChannelsByThing(args[0], pm, args[1])
 			if err != nil {

@@ -63,9 +63,9 @@ var cmdUsers = []cobra.Command{
 				return
 			}
 			pageMetadata := mfxsdk.PageMetadata{
-				Email:    "",
-				Offset:   uint64(Offset),
-				Limit:    uint64(Limit),
+				Email:    Email,
+				Offset:   Offset,
+				Limit:    Limit,
 				Metadata: metadata,
 				Status:   Status,
 			}

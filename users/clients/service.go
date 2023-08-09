@@ -149,8 +149,13 @@ func (svc service) ViewClient(ctx context.Context, token string, id string) (mfc
 	if err := svc.authorize(ctx, ir, id, listRelationKey); err != nil {
 		return mfclients.Client{}, err
 	}
+	client, err := svc.clients.RetrieveByID(ctx, id)
+	if err != nil {
+		return mfclients.Client{}, err
+	}
+	client.Credentials.Secret = ""
 
-	return svc.clients.RetrieveByID(ctx, id)
+	return client, nil
 }
 
 func (svc service) ViewProfile(ctx context.Context, token string) (mfclients.Client, error) {
@@ -158,7 +163,13 @@ func (svc service) ViewProfile(ctx context.Context, token string) (mfclients.Cli
 	if err != nil {
 		return mfclients.Client{}, err
 	}
-	return svc.clients.RetrieveByID(ctx, id)
+	client, err := svc.clients.RetrieveByID(ctx, id)
+	if err != nil {
+		return mfclients.Client{}, err
+	}
+	client.Credentials.Secret = ""
+
+	return client, nil
 }
 
 func (svc service) ListClients(ctx context.Context, token string, pm mfclients.Page) (mfclients.ClientsPage, error) {

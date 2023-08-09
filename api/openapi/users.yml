@@ -931,10 +931,6 @@ components:
               type: string
               example: admin@mainflux.com
               description: User Identity for example email address.
-            secret:
-              type: string
-              example: password
-              description: User secret password.
         metadata:
           type: object
           example: {"domain": "example.com"}

@@ -143,7 +143,7 @@ func TestClientsRetrieveAll(t *testing.T) {
 		if i%50 == 0 {
 			client.Status = mfclients.DisabledStatus
 		}
-		_, err := repo.Save(context.Background(), client)
+		client, err = repo.Save(context.Background(), client)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		expectedClients = append(expectedClients, client)
 		var policy = policies.Policy{

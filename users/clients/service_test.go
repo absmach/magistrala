@@ -43,7 +43,7 @@ var (
 	passRegex       = regexp.MustCompile("^.{8,}$")
 	accessDuration  = time.Minute * 1
 	refreshDuration = time.Minute * 10
-	myKey = "mine"
+	myKey           = "mine"
 )
 
 func TestRegisterClient(t *testing.T) {
@@ -307,6 +307,7 @@ func TestViewClient(t *testing.T) {
 		repoCall2 := cRepo.On("RetrieveByID", context.Background(), tc.clientID).Return(tc.response, tc.err)
 		rClient, err := svc.ViewClient(context.Background(), tc.token, tc.clientID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		tc.response.Credentials.Secret = ""
 		assert.Equal(t, tc.response, rClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, rClient))
 		if tc.err == nil {
 			ok := repoCall1.Parent.AssertCalled(t, "CheckAdmin", context.Background(), mock.Anything)

@@ -34,7 +34,7 @@ var (
 // and "secret" which can be a password or access token.
 type Credentials struct {
 	Identity string `json:"identity,omitempty"` // username or generated login ID
-	Secret   string `json:"secret"`             // password or token
+	Secret   string `json:"secret,omitempty"`   // password or token
 }
 
 // Client represents generic Client.
@@ -43,7 +43,7 @@ type Client struct {
 	Name        string      `json:"name,omitempty"`
 	Tags        []string    `json:"tags,omitempty"`
 	Owner       string      `json:"owner,omitempty"` // nullable
-	Credentials Credentials `json:"credentials"`
+	Credentials Credentials `json:"credentials,omitempty"`
 	Metadata    Metadata    `json:"metadata,omitempty"`
 	CreatedAt   time.Time   `json:"created_at"`
 	UpdatedAt   time.Time   `json:"updated_at,omitempty"`

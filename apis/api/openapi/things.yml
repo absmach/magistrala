@@ -892,6 +892,63 @@ components:
       xml:
         name: thing
 
+    ThingWithEmptySecret:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Thing unique identifier.
+        name:
+          type: string
+          example: thingName
+          description: Thing name.
+        tags:
+          type: array
+          minItems: 0
+          items:
+            type: string
+          example: ['tag1', 'tag2']
+          description: Thing tags.
+        owner:
+          type: string
+          format: uuid
+          example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+          description: Thing owner identifier.
+        credentials:
+          type: object
+          properties:
+            identity:
+              type: string
+              example: thingidentity
+              description: Thing Identity for example email address.
+            secret:
+              type: string
+              example: ""
+              description: Thing secret password.
+        metadata:
+          type: object
+          example: {"domain": "example.com"}
+          description: Arbitrary, object-encoded thing's data.
+        status:
+          type: string
+          description: Thing Status
+          format: string
+          example: enabled
+        created_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Time when the channel was created.
+        updated_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Time when the channel was created.
+      xml:
+        name: thing
+        
     Channel:
       type: object
       properties:
@@ -1105,7 +1162,7 @@ components:
           minItems: 0
           uniqueItems: true
           items:
-            $ref: "#/components/schemas/Thing"
+            $ref: "#/components/schemas/ThingWithEmptySecret"
         total:
           type: integer
           example: 1

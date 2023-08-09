@@ -252,11 +252,12 @@ func (sdk mfSDK) IdentifyThing(key string) (string, errors.SDKError) {
 }
 
 func (sdk mfSDK) ShareThing(groupID, userID string, actions []string, token string) errors.SDKError {
-	policy := ConnectionIDs{
-		ChannelIDs: []string{groupID},
-		ThingIDs:   []string{userID},
-		Actions:    actions,
+	policy := Policy{
+		Subject:  userID,
+		Object:   groupID,
+		Actions:  actions,
+		External: true,
 	}
 
-	return sdk.Connect(policy, token)
+	return sdk.CreateThingPolicy(policy, token)
 }

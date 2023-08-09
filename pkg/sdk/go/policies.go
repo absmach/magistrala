@@ -21,6 +21,7 @@ type Policy struct {
 	Subject   string    `json:"subject"`
 	Object    string    `json:"object"`
 	Actions   []string  `json:"actions"`
+	External  bool      `json:"external,omitempty"` // This is specificially used in things service. If set to true, it means the subject is userID otherwise it is thingID.
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

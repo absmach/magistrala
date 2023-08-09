@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/mainflux/mainflux/internal/apiutil"
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
@@ -57,7 +58,7 @@ func (sdk mfSDK) ReadMessages(chanName, token string) (MessagesPage, errors.SDKE
 
 func (sdk *mfSDK) SetContentType(ct ContentType) errors.SDKError {
 	if ct != CTJSON && ct != CTJSONSenML && ct != CTBinary {
-		return errors.NewSDKError(errors.ErrUnsupportedContentType)
+		return errors.NewSDKError(apiutil.ErrUnsupportedContentType)
 	}
 
 	sdk.msgContentType = ct

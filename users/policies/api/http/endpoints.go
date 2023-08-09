@@ -7,6 +7,8 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/endpoint"
+	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/users/policies"
 )
 
@@ -14,7 +16,7 @@ func authorizeEndpoint(svc policies.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(authorizeReq)
 		if err := req.validate(); err != nil {
-			return authorizeRes{}, err
+			return authorizeRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		aReq := policies.AccessRequest{
 			Subject: req.Subject,
@@ -35,7 +37,7 @@ func createPolicyEndpoint(svc policies.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createPolicyReq)
 		if err := req.validate(); err != nil {
-			return addPolicyRes{}, err
+			return addPolicyRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		policy := policies.Policy{
@@ -56,7 +58,7 @@ func updatePolicyEndpoint(svc policies.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updatePolicyReq)
 		if err := req.validate(); err != nil {
-			return updatePolicyRes{}, err
+			return updatePolicyRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		policy := policies.Policy{
@@ -78,7 +80,7 @@ func listPolicyEndpoint(svc policies.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listPolicyReq)
 		if err := req.validate(); err != nil {
-			return listPolicyRes{}, err
+			return listPolicyRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		pm := policies.Page{
 			Total:   req.Total,
@@ -101,7 +103,7 @@ func deletePolicyEndpoint(svc policies.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(deletePolicyReq)
 		if err := req.validate(); err != nil {
-			return deletePolicyRes{}, err
+			return deletePolicyRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		policy := policies.Policy{
 			Subject: req.Subject,

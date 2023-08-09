@@ -73,14 +73,14 @@ func TestCreateClient(t *testing.T) {
 			client:   user,
 			response: sdk.User{},
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedCreation, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedCreation), http.StatusInternalServerError),
 		},
 		{
 			desc:     "register empty user",
 			client:   sdk.User{},
 			response: sdk.User{},
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrMalformedEntity, http.StatusBadRequest),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, errors.ErrMalformedEntity), http.StatusBadRequest),
 		},
 		{
 			desc: "register a user that can't be marshalled",
@@ -107,7 +107,7 @@ func TestCreateClient(t *testing.T) {
 			},
 			response: sdk.User{},
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrMalformedEntity, http.StatusBadRequest),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, errors.ErrMalformedEntity), http.StatusBadRequest),
 		},
 		{
 			desc: "register user with empty secret",
@@ -119,7 +119,7 @@ func TestCreateClient(t *testing.T) {
 			},
 			response: sdk.User{},
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrMalformedEntity, http.StatusBadRequest),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, errors.ErrMalformedEntity), http.StatusBadRequest),
 		},
 		{
 			desc: "register user with empty identity",
@@ -131,14 +131,14 @@ func TestCreateClient(t *testing.T) {
 			},
 			response: sdk.User{},
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrMalformedEntity, http.StatusBadRequest),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, errors.ErrMalformedEntity), http.StatusBadRequest),
 		},
 		{
 			desc:     "register empty user",
 			client:   sdk.User{},
 			response: sdk.User{},
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(apiutil.ErrMalformedEntity, http.StatusBadRequest),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, errors.ErrMalformedEntity), http.StatusBadRequest),
 		},
 		{
 			desc: "register user with every field defined",
@@ -249,7 +249,7 @@ func TestListClients(t *testing.T) {
 			token:    invalidToken,
 			offset:   offset,
 			limit:    limit,
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedList, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedList), http.StatusInternalServerError),
 			response: nil,
 		},
 		{
@@ -257,7 +257,7 @@ func TestListClients(t *testing.T) {
 			token:    "",
 			offset:   offset,
 			limit:    limit,
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedList, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedList), http.StatusInternalServerError),
 			response: nil,
 		},
 		{
@@ -265,7 +265,7 @@ func TestListClients(t *testing.T) {
 			token:    token,
 			offset:   offset,
 			limit:    0,
-			err:      errors.NewSDKErrorWithStatus(apiutil.ErrLimitSize, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrLimitSize), http.StatusInternalServerError),
 			response: nil,
 		},
 		{
@@ -273,7 +273,7 @@ func TestListClients(t *testing.T) {
 			token:    token,
 			offset:   offset,
 			limit:    110,
-			err:      errors.NewSDKErrorWithStatus(apiutil.ErrLimitSize, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrLimitSize), http.StatusInternalServerError),
 			response: []sdk.User(nil),
 		},
 		{
@@ -484,7 +484,7 @@ func TestListMembers(t *testing.T) {
 			groupID:  testsutil.GenerateUUID(t, idProvider),
 			page:     sdk.PageMetadata{},
 			response: []sdk.User(nil),
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthentication, sdk.ErrInvalidJWT), http.StatusUnauthorized),
 		},
 		{
 			desc:     "list clients with an invalid id",
@@ -497,6 +497,10 @@ func TestListMembers(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		fmt.Println()
+		fmt.Println(tc.desc)
+		fmt.Println()
+
 		repoCall := pRepo.On("CheckAdmin", mock.Anything, mock.Anything).Return(nil)
 		repoCall1 := cRepo.On("Members", mock.Anything, tc.groupID, mock.Anything).Return(mfclients.MembersPage{Members: convertClients(tc.response)}, tc.err)
 		membersPage, err := mfsdk.Members(tc.groupID, tc.page, tc.token)
@@ -553,7 +557,7 @@ func TestClient(t *testing.T) {
 			response: sdk.User{},
 			token:    invalidToken,
 			clientID: generateUUID(t),
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthentication, sdk.ErrInvalidJWT), http.StatusUnauthorized),
 		},
 		{
 			desc:     "view client with valid token and invalid client id",
@@ -567,7 +571,7 @@ func TestClient(t *testing.T) {
 			response: sdk.User{},
 			token:    invalidToken,
 			clientID: mocks.WrongID,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthentication, sdk.ErrInvalidJWT), http.StatusUnauthorized),
 		},
 	}
 
@@ -628,7 +632,7 @@ func TestProfile(t *testing.T) {
 			desc:     "view client with an invalid token",
 			response: sdk.User{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthentication, sdk.ErrInvalidJWT), http.StatusUnauthorized),
 		},
 	}
 
@@ -695,14 +699,14 @@ func TestUpdateClient(t *testing.T) {
 			client:   client1,
 			response: sdk.User{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthentication, sdk.ErrInvalidJWT), http.StatusUnauthorized),
 		},
 		{
 			desc:     "update client name with invalid id",
 			client:   client2,
 			response: sdk.User{},
 			token:    generateValidToken(t, svc, cRepo),
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedUpdate, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedUpdate), http.StatusInternalServerError),
 		},
 		{
 			desc: "update a user that can't be marshalled",
@@ -786,14 +790,14 @@ func TestUpdateClientTags(t *testing.T) {
 			client:   client1,
 			response: sdk.User{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthentication, sdk.ErrInvalidJWT), http.StatusUnauthorized),
 		},
 		{
 			desc:     "update client name with invalid id",
 			client:   client2,
 			response: sdk.User{},
 			token:    generateValidToken(t, svc, cRepo),
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedUpdate, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedUpdate), http.StatusInternalServerError),
 		},
 		{
 			desc: "update a user that can't be marshalled",
@@ -876,14 +880,14 @@ func TestUpdateClientIdentity(t *testing.T) {
 			client:   user,
 			response: sdk.User{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthentication, sdk.ErrInvalidJWT), http.StatusUnauthorized),
 		},
 		{
 			desc:     "update client name with invalid id",
 			client:   client2,
 			response: sdk.User{},
 			token:    generateValidToken(t, svc, cRepo),
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedUpdate, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedUpdate), http.StatusInternalServerError),
 		},
 		{
 			desc: "update a user that can't be marshalled",
@@ -899,7 +903,7 @@ func TestUpdateClientIdentity(t *testing.T) {
 			},
 			response: sdk.User{},
 			token:    generateValidToken(t, svc, cRepo),
-			err:      errors.NewSDKErrorWithStatus(fmt.Errorf("json: unsupported type: chan int"), http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, fmt.Errorf("json: unsupported type: chan int")), http.StatusInternalServerError),
 		},
 	}
 
@@ -950,6 +954,7 @@ func TestUpdateClientSecret(t *testing.T) {
 		token     string
 		response  sdk.User
 		err       error
+		repoErr   error
 	}{
 		{
 			desc:      "update client secret with valid token",
@@ -957,6 +962,7 @@ func TestUpdateClientSecret(t *testing.T) {
 			newSecret: "newSecret",
 			token:     token.AccessToken,
 			response:  rclient,
+			repoErr:   nil,
 			err:       nil,
 		},
 		{
@@ -965,7 +971,8 @@ func TestUpdateClientSecret(t *testing.T) {
 			newSecret: "newPassword",
 			token:     "non-existent",
 			response:  sdk.User{},
-			err:       errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			repoErr:   errors.ErrAuthentication,
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthentication, sdk.ErrInvalidJWT), http.StatusUnauthorized),
 		},
 		{
 			desc:      "update client secret with wrong old secret",
@@ -973,14 +980,15 @@ func TestUpdateClientSecret(t *testing.T) {
 			newSecret: "newSecret",
 			token:     token.AccessToken,
 			response:  sdk.User{},
+			repoErr:   apiutil.ErrInvalidSecret,
 			err:       errors.NewSDKErrorWithStatus(apiutil.ErrInvalidSecret, http.StatusBadRequest),
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := cRepo.On("RetrieveByID", mock.Anything, user.ID).Return(convertClient(tc.response), tc.err)
-		repoCall1 := cRepo.On("RetrieveByIdentity", mock.Anything, user.Credentials.Identity).Return(convertClient(tc.response), tc.err)
-		repoCall2 := cRepo.On("UpdateSecret", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.err)
+		repoCall := cRepo.On("RetrieveByID", mock.Anything, user.ID).Return(convertClient(tc.response), tc.repoErr)
+		repoCall1 := cRepo.On("RetrieveByIdentity", mock.Anything, user.Credentials.Identity).Return(convertClient(tc.response), tc.repoErr)
+		repoCall2 := cRepo.On("UpdateSecret", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.repoErr)
 		uClient, err := mfsdk.UpdatePassword(tc.oldSecret, tc.newSecret, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, uClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, uClient))
@@ -1044,14 +1052,14 @@ func TestUpdateClientOwner(t *testing.T) {
 			client:   client2,
 			response: sdk.User{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthentication, sdk.ErrInvalidJWT), http.StatusUnauthorized),
 		},
 		{
 			desc:     "update client name with invalid id",
 			client:   client2,
 			response: sdk.User{},
 			token:    generateValidToken(t, svc, cRepo),
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedUpdate, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedUpdate), http.StatusInternalServerError),
 		},
 		{
 			desc: "update a user that can't be marshalled",
@@ -1113,6 +1121,7 @@ func TestEnableClient(t *testing.T) {
 		token    string
 		client   sdk.User
 		response sdk.User
+		repoErr  error
 		err      errors.SDKError
 	}{
 		{
@@ -1121,6 +1130,7 @@ func TestEnableClient(t *testing.T) {
 			token:    generateValidToken(t, svc, cRepo),
 			client:   disabledClient1,
 			response: endisabledClient1,
+			repoErr:  nil,
 			err:      nil,
 		},
 		{
@@ -1129,7 +1139,8 @@ func TestEnableClient(t *testing.T) {
 			token:    generateValidToken(t, svc, cRepo),
 			client:   enabledClient1,
 			response: sdk.User{},
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedEnable, http.StatusInternalServerError),
+			repoErr:  sdk.ErrFailedEnable,
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedEnable, sdk.ErrFailedEnable), http.StatusInternalServerError),
 		},
 		{
 			desc:     "enable non-existing client",
@@ -1137,14 +1148,15 @@ func TestEnableClient(t *testing.T) {
 			token:    generateValidToken(t, svc, cRepo),
 			client:   sdk.User{},
 			response: sdk.User{},
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedEnable, http.StatusNotFound),
+			repoErr:  sdk.ErrFailedEnable,
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedEnable, errors.ErrNotFound), http.StatusNotFound),
 		},
 	}
 
 	for _, tc := range cases {
 		repoCall := pRepo.On("CheckAdmin", mock.Anything, mock.Anything).Return(nil)
-		repoCall1 := cRepo.On("RetrieveByID", mock.Anything, tc.id).Return(convertClient(tc.client), tc.err)
-		repoCall2 := cRepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.err)
+		repoCall1 := cRepo.On("RetrieveByID", mock.Anything, tc.id).Return(convertClient(tc.client), tc.repoErr)
+		repoCall2 := cRepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.repoErr)
 		eClient, err := mfsdk.EnableUser(tc.id, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, eClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, eClient))
@@ -1239,6 +1251,7 @@ func TestDisableClient(t *testing.T) {
 		token    string
 		client   sdk.User
 		response sdk.User
+		repoErr  error
 		err      errors.SDKError
 	}{
 		{
@@ -1248,6 +1261,7 @@ func TestDisableClient(t *testing.T) {
 			client:   enabledClient1,
 			response: disenabledClient1,
 			err:      nil,
+			repoErr:  nil,
 		},
 		{
 			desc:     "disable disabled client",
@@ -1255,7 +1269,8 @@ func TestDisableClient(t *testing.T) {
 			token:    generateValidToken(t, svc, cRepo),
 			client:   disabledClient1,
 			response: sdk.User{},
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedDisable, http.StatusInternalServerError),
+			repoErr:  sdk.ErrFailedDisable,
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedDisable, sdk.ErrFailedDisable), http.StatusInternalServerError),
 		},
 		{
 			desc:     "disable non-existing client",
@@ -1263,14 +1278,15 @@ func TestDisableClient(t *testing.T) {
 			client:   sdk.User{},
 			token:    generateValidToken(t, svc, cRepo),
 			response: sdk.User{},
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedDisable, http.StatusNotFound),
+			repoErr:  sdk.ErrFailedDisable,
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedDisable, errors.ErrNotFound), http.StatusNotFound),
 		},
 	}
 
 	for _, tc := range cases {
 		repoCall := pRepo.On("CheckAdmin", mock.Anything, mock.Anything).Return(nil)
-		repoCall1 := cRepo.On("RetrieveByID", mock.Anything, tc.id).Return(convertClient(tc.client), tc.err)
-		repoCall2 := cRepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.err)
+		repoCall1 := cRepo.On("RetrieveByID", mock.Anything, tc.id).Return(convertClient(tc.client), tc.repoErr)
+		repoCall2 := cRepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(convertClient(tc.response), tc.repoErr)
 		dClient, err := mfsdk.DisableUser(tc.id, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, dClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, dClient))

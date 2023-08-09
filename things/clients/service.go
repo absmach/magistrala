@@ -80,6 +80,7 @@ func (svc service) CreateThings(ctx context.Context, token string, clis ...mfcli
 		cli.CreatedAt = time.Now()
 		clients = append(clients, cli)
 	}
+
 	return svc.clients.Save(ctx, clients...)
 }
 
@@ -309,7 +310,7 @@ func (svc service) identify(ctx context.Context, token string) (string, error) {
 	req := &upolicies.IdentifyReq{Token: token}
 	res, err := svc.uauth.Identify(ctx, req)
 	if err != nil {
-		return "", errors.Wrap(errors.ErrAuthentication, err)
+		return "", err
 	}
 	return res.GetId(), nil
 }
@@ -336,7 +337,7 @@ func (svc service) checkAdmin(ctx context.Context, subject, object, action strin
 	}
 	res, err := svc.uauth.Authorize(ctx, req)
 	if err != nil {
-		return errors.Wrap(errors.ErrAuthorization, err)
+		return err
 	}
 	if !res.GetAuthorized() {
 		return errors.ErrAuthorization

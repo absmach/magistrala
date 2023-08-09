@@ -125,7 +125,7 @@ func TestCreateChannel(t *testing.T) {
 			channel: sdk.Channel{
 				Status: mfclients.EnabledStatus.String(),
 			},
-			err: errors.NewSDKErrorWithStatus(apiutil.ErrNameSize, http.StatusBadRequest),
+			err: errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrNameSize), http.StatusBadRequest),
 		},
 		{
 			desc: "create a channel with every field defined",
@@ -209,7 +209,7 @@ func TestCreateChannels(t *testing.T) {
 			channels: []sdk.Channel{},
 			response: []sdk.Channel{},
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(apiutil.ErrEmptyList, http.StatusBadRequest),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrEmptyList), http.StatusBadRequest),
 		},
 		{
 			desc: "register channels that can't be marshalled",
@@ -299,7 +299,7 @@ func TestListChannels(t *testing.T) {
 			token:    invalidToken,
 			offset:   offset,
 			limit:    limit,
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedList, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedList), http.StatusInternalServerError),
 			response: nil,
 		},
 		{
@@ -307,7 +307,7 @@ func TestListChannels(t *testing.T) {
 			token:    "",
 			offset:   offset,
 			limit:    limit,
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedList, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedList), http.StatusInternalServerError),
 			response: nil,
 		},
 		{
@@ -315,7 +315,7 @@ func TestListChannels(t *testing.T) {
 			token:    token,
 			offset:   offset,
 			limit:    0,
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedList, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedList), http.StatusInternalServerError),
 			response: nil,
 		},
 		{
@@ -323,7 +323,7 @@ func TestListChannels(t *testing.T) {
 			token:    token,
 			offset:   offset,
 			limit:    110,
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedList, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedList), http.StatusInternalServerError),
 			response: []sdk.Channel(nil),
 		},
 		{
@@ -421,7 +421,7 @@ func TestViewChannel(t *testing.T) {
 			token:     "wrongtoken",
 			channelID: channel.ID,
 			response:  sdk.Channel{Children: []*sdk.Channel{}},
-			err:       errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusUnauthorized),
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthorization, errors.ErrAuthentication), http.StatusUnauthorized),
 		},
 		{
 			desc:      "view channel for wrong id",
@@ -575,7 +575,7 @@ func TestUpdateChannel(t *testing.T) {
 			},
 			response: sdk.Channel{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthorization, errors.ErrAuthentication), http.StatusUnauthorized),
 		},
 		{
 			desc: "update channel description with invalid token",
@@ -585,7 +585,7 @@ func TestUpdateChannel(t *testing.T) {
 			},
 			response: sdk.Channel{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthorization, errors.ErrAuthentication), http.StatusUnauthorized),
 		},
 		{
 			desc: "update channel metadata with invalid token",
@@ -597,7 +597,7 @@ func TestUpdateChannel(t *testing.T) {
 			},
 			response: sdk.Channel{},
 			token:    invalidToken,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthorization, errors.ErrAuthentication), http.StatusUnauthorized),
 		},
 		{
 			desc: "update channel that can't be marshalled",
@@ -739,7 +739,7 @@ func TestListChannelsByThing(t *testing.T) {
 			clientID: testsutil.GenerateUUID(t, idProvider),
 			page:     sdk.PageMetadata{},
 			response: []sdk.Channel(nil),
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthorization, errors.ErrAuthentication), http.StatusUnauthorized),
 		},
 		{
 			desc:     "list channel with an invalid id",
@@ -803,7 +803,7 @@ func TestEnableChannel(t *testing.T) {
 	repoCall1 := gRepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(nil)
 	repoCall2 := gRepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(nil)
 	_, err := mfsdk.EnableChannel("wrongID", adminToken)
-	assert.Equal(t, err, errors.NewSDKErrorWithStatus(mfgroups.ErrEnableGroup, http.StatusNotFound), fmt.Sprintf("Enable channel with wrong id: expected %v got %v", errors.ErrNotFound, err))
+	assert.Equal(t, err, errors.NewSDKErrorWithStatus(errors.Wrap(mfgroups.ErrEnableGroup, errors.ErrNotFound), http.StatusNotFound), fmt.Sprintf("Enable channel with wrong id: expected %v got %v", errors.ErrNotFound, err))
 	ok := repoCall.Parent.AssertCalled(t, "EvaluateGroupAccess", mock.Anything, mock.Anything)
 	assert.True(t, ok, "EvaluateGroupAccess was not called on enabling channel")
 	ok = repoCall1.Parent.AssertCalled(t, "RetrieveByID", mock.Anything, "wrongID")
@@ -873,7 +873,7 @@ func TestDisableChannel(t *testing.T) {
 	repoCall1 := gRepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(sdk.ErrFailedRemoval)
 	repoCall2 := gRepo.On("RetrieveByID", mock.Anything, mock.Anything).Return(nil)
 	_, err := mfsdk.DisableChannel("wrongID", adminToken)
-	assert.Equal(t, err, errors.NewSDKErrorWithStatus(mfgroups.ErrDisableGroup, http.StatusNotFound), fmt.Sprintf("Disable channel with wrong id: expected %v got %v", errors.ErrNotFound, err))
+	assert.Equal(t, err, errors.NewSDKErrorWithStatus(errors.Wrap(mfgroups.ErrDisableGroup, errors.ErrNotFound), http.StatusNotFound), fmt.Sprintf("Disable channel with wrong id: expected %v got %v", errors.ErrNotFound, err))
 	ok := repoCall.Parent.AssertCalled(t, "EvaluateGroupAccess", mock.Anything, mock.Anything)
 	assert.True(t, ok, "EvaluateGroupAccess was not called on disabling group with wrong id")
 	ok = repoCall1.Parent.AssertCalled(t, "RetrieveByID", mock.Anything, "wrongID")

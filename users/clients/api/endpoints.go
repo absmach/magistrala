@@ -7,7 +7,9 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/endpoint"
+	"github.com/mainflux/mainflux/internal/apiutil"
 	mfclients "github.com/mainflux/mainflux/pkg/clients"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/users/clients"
 )
 
@@ -15,7 +17,7 @@ func registrationEndpoint(svc clients.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createClientReq)
 		if err := req.validate(); err != nil {
-			return createClientRes{}, err
+			return createClientRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		client, err := svc.RegisterClient(ctx, req.token, req.client)
 		if err != nil {
@@ -34,7 +36,7 @@ func viewClientEndpoint(svc clients.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(viewClientReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		client, err := svc.ViewClient(ctx, req.token, req.id)
@@ -49,7 +51,7 @@ func viewProfileEndpoint(svc clients.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(viewProfileReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		client, err := svc.ViewProfile(ctx, req.token)
@@ -66,7 +68,7 @@ func listClientsEndpoint(svc clients.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listClientsReq)
 		if err := req.validate(); err != nil {
-			return mfclients.ClientsPage{}, err
+			return mfclients.ClientsPage{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		pm := mfclients.Page{
@@ -105,7 +107,7 @@ func listMembersEndpoint(svc clients.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listMembersReq)
 		if err := req.validate(); err != nil {
-			return memberPageRes{}, err
+			return memberPageRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		page, err := svc.ListMembers(ctx, req.token, req.groupID, req.Page)
 		if err != nil {
@@ -119,7 +121,7 @@ func updateClientEndpoint(svc clients.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateClientReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		client := mfclients.Client{
@@ -139,7 +141,7 @@ func updateClientTagsEndpoint(svc clients.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateClientTagsReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		client := mfclients.Client{
@@ -158,7 +160,7 @@ func updateClientIdentityEndpoint(svc clients.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateClientIdentityReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		client, err := svc.UpdateClientIdentity(ctx, req.token, req.id, req.Identity)
 		if err != nil {
@@ -182,7 +184,7 @@ func passwordResetRequestEndpoint(svc clients.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(passwResetReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		if err := svc.GenerateResetToken(ctx, req.Email, req.Host); err != nil {
 			return nil, err
@@ -199,7 +201,7 @@ func passwordResetEndpoint(svc clients.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(resetTokenReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		if err := svc.ResetSecret(ctx, req.Token, req.Password); err != nil {
 			return nil, err
@@ -212,7 +214,7 @@ func updateClientSecretEndpoint(svc clients.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateClientSecretReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		client, err := svc.UpdateClientSecret(ctx, req.token, req.OldSecret, req.NewSecret)
 		if err != nil {
@@ -226,7 +228,7 @@ func updateClientOwnerEndpoint(svc clients.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(updateClientOwnerReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		client := mfclients.Client{
@@ -246,7 +248,7 @@ func issueTokenEndpoint(svc clients.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(loginClientReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		token, err := svc.IssueToken(ctx, req.Identity, req.Secret)
@@ -265,7 +267,7 @@ func refreshTokenEndpoint(svc clients.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(tokenReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		token, err := svc.RefreshToken(ctx, req.RefreshToken)
@@ -285,7 +287,7 @@ func enableClientEndpoint(svc clients.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(changeClientStatusReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		client, err := svc.EnableClient(ctx, req.token, req.id)
 		if err != nil {
@@ -299,7 +301,7 @@ func disableClientEndpoint(svc clients.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(changeClientStatusReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		client, err := svc.DisableClient(ctx, req.token, req.id)
 		if err != nil {

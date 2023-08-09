@@ -8,13 +8,15 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	notifiers "github.com/mainflux/mainflux/consumers/notifiers"
+	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 func createSubscriptionEndpoint(svc notifiers.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createSubReq)
 		if err := req.validate(); err != nil {
-			return createSubRes{}, err
+			return createSubRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		sub := notifiers.Subscription{
 			Contact: req.Contact,
@@ -36,7 +38,7 @@ func viewSubscriptionEndpint(svc notifiers.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(subReq)
 		if err := req.validate(); err != nil {
-			return viewSubRes{}, err
+			return viewSubRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		sub, err := svc.ViewSubscription(ctx, req.token, req.id)
 		if err != nil {
@@ -56,7 +58,7 @@ func listSubscriptionsEndpoint(svc notifiers.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listSubsReq)
 		if err := req.validate(); err != nil {
-			return listSubsRes{}, err
+			return listSubsRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		pm := notifiers.PageMetadata{
 			Topic:   req.topic,
@@ -82,6 +84,7 @@ func listSubscriptionsEndpoint(svc notifiers.Service) endpoint.Endpoint {
 			}
 			res.Subscriptions = append(res.Subscriptions, r)
 		}
+
 		return res, nil
 	}
 }
@@ -90,7 +93,7 @@ func deleteSubscriptionEndpint(svc notifiers.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(subReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		if err := svc.RemoveSubscription(ctx, req.token, req.id); err != nil {
 			return nil, err

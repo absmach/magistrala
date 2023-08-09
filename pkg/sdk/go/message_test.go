@@ -64,7 +64,7 @@ func TestSendMessage(t *testing.T) {
 			chanID: chanID,
 			msg:    msg,
 			auth:   "",
-			err:    errors.NewSDKErrorWithStatus(apiutil.ErrBearerKey, http.StatusUnauthorized),
+			err:    errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerKey), http.StatusUnauthorized),
 		},
 		"publish message with invalid authorization token": {
 			chanID: chanID,
@@ -82,7 +82,7 @@ func TestSendMessage(t *testing.T) {
 			chanID: "",
 			msg:    msg,
 			auth:   atoken,
-			err:    errors.NewSDKErrorWithStatus(errors.ErrMalformedEntity, http.StatusBadRequest),
+			err:    errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, errors.ErrMalformedEntity), http.StatusBadRequest),
 		},
 		"publish message unable to authorize": {
 			chanID: chanID,
@@ -130,7 +130,7 @@ func TestSetContentType(t *testing.T) {
 		{
 			desc:  "set invalid content type",
 			cType: "invalid",
-			err:   errors.NewSDKError(errors.ErrUnsupportedContentType),
+			err:   errors.NewSDKError(apiutil.ErrUnsupportedContentType),
 		},
 	}
 	for _, tc := range cases {

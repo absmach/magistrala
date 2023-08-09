@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/mainflux/mainflux/internal/apiutil"
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
@@ -133,7 +134,7 @@ func (sdk mfSDK) Whitelist(cfg BootstrapConfig, token string) errors.SDKError {
 	}
 
 	if cfg.ThingID == "" {
-		return errors.NewSDKError(errors.ErrNotFoundParam)
+		return errors.NewSDKError(apiutil.ErrNotFoundParam)
 	}
 
 	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, whitelistEndpoint, cfg.ThingID)

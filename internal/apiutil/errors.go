@@ -9,6 +9,9 @@ import "github.com/mainflux/mainflux/pkg/errors"
 // to distinguish and log API request validation errors and avoid that service
 // errors are logged twice.
 var (
+	// ErrValidation indicates that an error was returned by the API.
+	ErrValidation = errors.New("something went wrong with the request")
+
 	// ErrBearerToken indicates missing or invalid bearer user token.
 	ErrBearerToken = errors.New("missing or invalid bearer user token")
 
@@ -132,12 +135,12 @@ var (
 	// ErrNotFoundParam indicates that the parameter was not found in the query.
 	ErrNotFoundParam = errors.New("parameter not found in the query")
 
-	// ErrMalformedEntity indicates a malformed entity specification.
-	ErrMalformedEntity = errors.New("malformed entity specification")
-
 	// ErrInvalidQueryParams indicates invalid query parameters.
 	ErrInvalidQueryParams = errors.New("invalid query parameters")
 
 	// ErrInvalidVisibilityType indicates invalid visibility type.
 	ErrInvalidVisibilityType = errors.New("invalid visibility type")
+
+	// ErrUnsupportedContentType indicates unacceptable or lack of Content-Type.
+	ErrUnsupportedContentType = errors.New("unsupported content type")
 )

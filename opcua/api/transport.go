@@ -6,6 +6,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -51,17 +52,17 @@ func MakeHandler(svc opcua.Service, logger mflog.Logger, instanceID string) http
 func decodeBrowse(_ context.Context, r *http.Request) (interface{}, error) {
 	s, err := apiutil.ReadStringQuery(r, serverParam, "")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 
 	n, err := apiutil.ReadStringQuery(r, namespaceParam, "")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 
 	i, err := apiutil.ReadStringQuery(r, identifierParam, "")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 
 	if n == "" || i == "" {
@@ -97,8 +98,13 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
+	var wrapper error
+	if errors.Contains(err, apiutil.ErrValidation) {
+		wrapper, err = errors.Unwrap(err)
+	}
+
 	switch {
-	case errors.Contains(err, errors.ErrInvalidQueryParams),
+	case errors.Contains(err, apiutil.ErrInvalidQueryParams),
 		errors.Contains(err, errors.ErrMalformedEntity),
 		err == apiutil.ErrMissingID:
 		w.WriteHeader(http.StatusBadRequest)
@@ -107,9 +113,19 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
+	if wrapper != nil {
+		err = errors.Wrap(wrapper, err)
+	}
+
 	if errorVal, ok := err.(errors.Error); ok {
 		w.Header().Set("Content-Type", contentType)
-		if err := json.NewEncoder(w).Encode(apiutil.ErrorRes{Err: errorVal.Msg()}); err != nil {
+
+		errMsg := errorVal.Msg()
+		if errorVal.Err() != nil {
+			errMsg = fmt.Sprintf("%s : %s", errMsg, errorVal.Err().Msg())
+		}
+
+		if err := json.NewEncoder(w).Encode(apiutil.ErrorRes{Err: errMsg}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}

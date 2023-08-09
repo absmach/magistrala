@@ -6,6 +6,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gofrs/uuid"
@@ -89,14 +90,19 @@ func EncodeResponse(_ context.Context, w http.ResponseWriter, response interface
 
 // EncodeError encodes an error response.
 func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
+	var wrapper error
+	if errors.Contains(err, apiutil.ErrValidation) {
+		wrapper, err = errors.Unwrap(err)
+	}
+
 	w.Header().Set("Content-Type", ContentType)
 	switch {
-	case errors.Contains(err, errors.ErrMalformedEntity),
-		err == apiutil.ErrMissingID,
-		err == apiutil.ErrEmptyList,
-		err == apiutil.ErrMissingMemberType,
-		errors.Contains(err, apiutil.ErrInvalidSecret),
-		err == apiutil.ErrNameSize:
+	case errors.Contains(err, apiutil.ErrInvalidSecret),
+		errors.Contains(err, errors.ErrMalformedEntity),
+		errors.Contains(err, apiutil.ErrMissingID),
+		errors.Contains(err, apiutil.ErrEmptyList),
+		errors.Contains(err, apiutil.ErrMissingMemberType),
+		errors.Contains(err, apiutil.ErrNameSize):
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, errors.ErrAuthentication):
 		w.WriteHeader(http.StatusUnauthorized)
@@ -108,7 +114,7 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusForbidden)
 	case errors.Contains(err, postgres.ErrMemberAlreadyAssigned):
 		w.WriteHeader(http.StatusConflict)
-	case errors.Contains(err, errors.ErrUnsupportedContentType):
+	case errors.Contains(err, apiutil.ErrUnsupportedContentType):
 		w.WriteHeader(http.StatusUnsupportedMediaType)
 	case errors.Contains(err, errors.ErrCreateEntity),
 		errors.Contains(err, errors.ErrUpdateEntity),
@@ -119,8 +125,16 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
+	if wrapper != nil {
+		err = errors.Wrap(wrapper, err)
+	}
+
 	if errorVal, ok := err.(errors.Error); ok {
-		if err := json.NewEncoder(w).Encode(apiutil.ErrorRes{Err: errorVal.Msg()}); err != nil {
+		errMsg := errorVal.Msg()
+		if errorVal.Err() != nil {
+			errMsg = fmt.Sprintf("%s : %s", errMsg, errorVal.Err().Msg())
+		}
+		if err := json.NewEncoder(w).Encode(apiutil.ErrorRes{Err: errMsg}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}

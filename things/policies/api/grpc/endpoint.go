@@ -7,6 +7,8 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/endpoint"
+	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/things/clients"
 	"github.com/mainflux/mainflux/things/policies"
 )
@@ -40,7 +42,7 @@ func identifyEndpoint(svc clients.Service) endpoint.Endpoint {
 		}
 		id, err := svc.Identify(ctx, req.secret)
 		if err != nil {
-			return identityRes{}, err
+			return identityRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		return identityRes{id: id}, nil
 	}

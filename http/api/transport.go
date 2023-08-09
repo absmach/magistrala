@@ -6,6 +6,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -31,7 +32,7 @@ const (
 	protocol    = "http"
 	ctSenmlJSON = "application/senml+json"
 	ctSenmlCBOR = "application/senml+cbor"
-	ctJSON      = "application/json"
+	contentType = "application/json"
 )
 
 var (
@@ -74,7 +75,7 @@ func parseSubtopic(subtopic string) (string, error) {
 
 	subtopic, err := url.QueryUnescape(subtopic)
 	if err != nil {
-		return "", errMalformedSubtopic
+		return "", errors.Wrap(apiutil.ErrValidation, errMalformedSubtopic)
 	}
 	subtopic = strings.ReplaceAll(subtopic, "/", ".")
 
@@ -86,7 +87,7 @@ func parseSubtopic(subtopic string) (string, error) {
 		}
 
 		if len(elem) > 1 && (strings.Contains(elem, "*") || strings.Contains(elem, ">")) {
-			return "", errMalformedSubtopic
+			return "", errors.Wrap(apiutil.ErrValidation, errMalformedSubtopic)
 		}
 
 		filteredElems = append(filteredElems, elem)
@@ -98,18 +99,18 @@ func parseSubtopic(subtopic string) (string, error) {
 
 func decodeRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	ct := r.Header.Get("Content-Type")
-	if ct != ctSenmlJSON && ct != ctJSON && ct != ctSenmlCBOR {
-		return nil, errors.ErrUnsupportedContentType
+	if ct != ctSenmlJSON && ct != contentType && ct != ctSenmlCBOR {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
 	channelParts := channelPartRegExp.FindStringSubmatch(r.RequestURI)
 	if len(channelParts) < 2 {
-		return nil, errors.ErrMalformedEntity
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.ErrMalformedEntity)
 	}
 
 	subtopic, err := parseSubtopic(channelParts[2])
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 
 	var token string
@@ -123,7 +124,7 @@ func decodeRequest(_ context.Context, r *http.Request) (interface{}, error) {
 
 	payload, err := io.ReadAll(r.Body)
 	if err != nil {
-		return nil, errors.ErrMalformedEntity
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.ErrMalformedEntity)
 	}
 	defer r.Body.Close()
 
@@ -147,14 +148,19 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, _ interface{}) err
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
+	var wrapper error
+	if errors.Contains(err, apiutil.ErrValidation) {
+		wrapper, err = errors.Unwrap(err)
+	}
+
 	switch {
 	case errors.Contains(err, errors.ErrAuthentication),
-		err == apiutil.ErrBearerKey,
-		err == apiutil.ErrBearerToken:
+		errors.Contains(err, apiutil.ErrBearerKey),
+		errors.Contains(err, apiutil.ErrBearerToken):
 		w.WriteHeader(http.StatusUnauthorized)
 	case errors.Contains(err, errors.ErrAuthorization):
 		w.WriteHeader(http.StatusForbidden)
-	case errors.Contains(err, errors.ErrUnsupportedContentType):
+	case errors.Contains(err, apiutil.ErrUnsupportedContentType):
 		w.WriteHeader(http.StatusUnsupportedMediaType)
 	case errors.Contains(err, errMalformedSubtopic),
 		errors.Contains(err, errors.ErrMalformedEntity):
@@ -181,9 +187,19 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		}
 	}
 
+	if wrapper != nil {
+		err = errors.Wrap(wrapper, err)
+	}
+
 	if errorVal, ok := err.(errors.Error); ok {
-		w.Header().Set("Content-Type", ctJSON)
-		if err := json.NewEncoder(w).Encode(apiutil.ErrorRes{Err: errorVal.Msg()}); err != nil {
+		w.Header().Set("Content-Type", contentType)
+
+		errMsg := errorVal.Msg()
+		if errorVal.Err() != nil {
+			errMsg = fmt.Sprintf("%s : %s", errMsg, errorVal.Err().Msg())
+		}
+
+		if err := json.NewEncoder(w).Encode(apiutil.ErrorRes{Err: errMsg}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}

@@ -82,17 +82,17 @@ func encodeError(err error) error {
 	case errors.Contains(err, nil):
 		return nil
 	case errors.Contains(err, errors.ErrMalformedEntity),
-		err == apiutil.ErrInvalidAuthKey,
-		err == apiutil.ErrMissingID,
-		err == apiutil.ErrMissingPolicySub,
-		err == apiutil.ErrMissingPolicyObj,
-		err == apiutil.ErrMalformedPolicyAct,
-		err == apiutil.ErrMalformedPolicy,
-		err == apiutil.ErrMissingPolicyOwner,
-		err == apiutil.ErrBearerKey:
+		errors.Contains(err, apiutil.ErrInvalidAuthKey),
+		errors.Contains(err, apiutil.ErrMissingID),
+		errors.Contains(err, apiutil.ErrMissingPolicySub),
+		errors.Contains(err, apiutil.ErrMissingPolicyObj),
+		errors.Contains(err, apiutil.ErrMalformedPolicyAct),
+		errors.Contains(err, apiutil.ErrMalformedPolicy),
+		errors.Contains(err, apiutil.ErrMissingPolicyOwner),
+		errors.Contains(err, apiutil.ErrBearerKey):
 		return status.Error(codes.InvalidArgument, err.Error())
 	case errors.Contains(err, errors.ErrAuthentication),
-		err == apiutil.ErrBearerToken:
+		errors.Contains(err, apiutil.ErrBearerToken):
 		return status.Error(codes.Unauthenticated, err.Error())
 	case errors.Contains(err, errors.ErrAuthorization):
 		return status.Error(codes.PermissionDenied, err.Error())

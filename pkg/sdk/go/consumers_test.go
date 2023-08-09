@@ -83,7 +83,7 @@ func TestCreateSubscription(t *testing.T) {
 			desc:         "create new subscription with empty token",
 			subscription: sub1,
 			token:        "",
-			err:          errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
+			err:          errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
 			empty:        true,
 		},
 		{
@@ -97,7 +97,7 @@ func TestCreateSubscription(t *testing.T) {
 			desc:         "create new empty subscription",
 			subscription: emptySubscription,
 			token:        token,
-			err:          errors.NewSDKErrorWithStatus(apiutil.ErrInvalidTopic, http.StatusBadRequest),
+			err:          errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrInvalidTopic), http.StatusBadRequest),
 			empty:        true,
 		},
 	}
@@ -148,7 +148,7 @@ func TestViewSubscription(t *testing.T) {
 			desc:     "get subscription with invalid token",
 			subID:    id,
 			token:    "",
-			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
 			response: sdk.Subscription{},
 		},
 	}
@@ -260,7 +260,7 @@ func TestDeleteSubscription(t *testing.T) {
 			desc:     "delete subscription with invalid token",
 			subID:    id,
 			token:    "",
-			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
 			response: sdk.Subscription{},
 		},
 	}

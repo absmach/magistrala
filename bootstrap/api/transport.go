@@ -6,6 +6,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -109,12 +110,12 @@ func MakeHandler(svc bootstrap.Service, reader bootstrap.ConfigReader, logger mf
 
 func decodeAddRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errors.ErrUnsupportedContentType
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
 	req := addReq{token: apiutil.ExtractBearerToken(r)}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
 
 	return req, nil
@@ -122,7 +123,7 @@ func decodeAddRequest(_ context.Context, r *http.Request) (interface{}, error) {
 
 func decodeUpdateRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errors.ErrUnsupportedContentType
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
 	req := updateReq{
@@ -130,7 +131,7 @@ func decodeUpdateRequest(_ context.Context, r *http.Request) (interface{}, error
 		id:    bone.GetValue(r, "configID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
 
 	return req, nil
@@ -138,7 +139,7 @@ func decodeUpdateRequest(_ context.Context, r *http.Request) (interface{}, error
 
 func decodeUpdateCertRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errors.ErrUnsupportedContentType
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
 	req := updateCertReq{
@@ -146,7 +147,7 @@ func decodeUpdateCertRequest(_ context.Context, r *http.Request) (interface{}, e
 		thingID: bone.GetValue(r, "certID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
 
 	return req, nil
@@ -154,7 +155,7 @@ func decodeUpdateCertRequest(_ context.Context, r *http.Request) (interface{}, e
 
 func decodeUpdateConnRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errors.ErrUnsupportedContentType
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
 	req := updateConnReq{
@@ -162,7 +163,7 @@ func decodeUpdateConnRequest(_ context.Context, r *http.Request) (interface{}, e
 		id:    bone.GetValue(r, "connID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
 
 	return req, nil
@@ -171,17 +172,17 @@ func decodeUpdateConnRequest(_ context.Context, r *http.Request) (interface{}, e
 func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	o, err := apiutil.ReadUintQuery(r, offsetKey, defOffset)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 
 	l, err := apiutil.ReadUintQuery(r, limitKey, defLimit)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 
 	q, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
-		return nil, errors.ErrInvalidQueryParams
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrInvalidQueryParams)
 	}
 
 	req := listReq{
@@ -205,7 +206,7 @@ func decodeBootstrapRequest(_ context.Context, r *http.Request) (interface{}, er
 
 func decodeStateRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errors.ErrUnsupportedContentType
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
 	req := changeStateReq{
@@ -213,7 +214,7 @@ func decodeStateRequest(_ context.Context, r *http.Request) (interface{}, error)
 		id:    bone.GetValue(r, "thingID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
 
 	return req, nil
@@ -257,20 +258,26 @@ func encodeSecureRes(_ context.Context, w http.ResponseWriter, response interfac
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
+	var wrapper error
+	if errors.Contains(err, apiutil.ErrValidation) {
+		wrapper, err = errors.Unwrap(err)
+	}
+
 	switch {
 	case errors.Contains(err, errors.ErrAuthentication),
-		err == apiutil.ErrBearerToken,
-		err == apiutil.ErrBearerKey:
+		errors.Contains(err, apiutil.ErrBearerToken),
+		errors.Contains(err, apiutil.ErrBearerKey):
 		w.WriteHeader(http.StatusUnauthorized)
-	case errors.Contains(err, errors.ErrUnsupportedContentType):
+	case errors.Contains(err, apiutil.ErrUnsupportedContentType):
 		w.WriteHeader(http.StatusUnsupportedMediaType)
-	case errors.Contains(err, errors.ErrInvalidQueryParams),
+	case errors.Contains(err, apiutil.ErrInvalidQueryParams),
 		errors.Contains(err, errors.ErrMalformedEntity),
-		err == apiutil.ErrMissingID,
-		err == apiutil.ErrBootstrapState,
-		err == apiutil.ErrLimitSize:
+		errors.Contains(err, apiutil.ErrMissingID),
+		errors.Contains(err, apiutil.ErrBootstrapState),
+		errors.Contains(err, apiutil.ErrLimitSize):
 		w.WriteHeader(http.StatusBadRequest)
-	case errors.Contains(err, errors.ErrNotFound):
+	case errors.Contains(err, errors.ErrNotFound),
+		errors.Contains(err, bootstrap.ErrThings):
 		w.WriteHeader(http.StatusNotFound)
 	case errors.Contains(err, bootstrap.ErrExternalKey),
 		errors.Contains(err, bootstrap.ErrExternalKeySecure),
@@ -291,9 +298,19 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
+	if wrapper != nil {
+		err = errors.Wrap(wrapper, err)
+	}
+
 	if errorVal, ok := err.(errors.Error); ok {
 		w.Header().Set("Content-Type", contentType)
-		if err := json.NewEncoder(w).Encode(apiutil.ErrorRes{Err: errorVal.Msg()}); err != nil {
+
+		errMsg := errorVal.Msg()
+		if errorVal.Err() != nil {
+			errMsg = fmt.Sprintf("%s : %s", errMsg, errorVal.Err().Msg())
+		}
+
+		if err := json.NewEncoder(w).Encode(apiutil.ErrorRes{Err: errMsg}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}

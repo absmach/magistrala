@@ -8,17 +8,19 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/mainflux/mainflux/certs"
+	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 func issueCert(svc certs.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(addCertsReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		res, err := svc.IssueCert(ctx, req.token, req.ThingID, req.TTL)
 		if err != nil {
-			return certsRes{}, err
+			return certsRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		return certsRes{
@@ -36,12 +38,12 @@ func listSerials(svc certs.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		page, err := svc.ListSerials(ctx, req.token, req.thingID, req.offset, req.limit)
 		if err != nil {
-			return certsPageRes{}, err
+			return certsPageRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		res := certsPageRes{
 			pageRes: pageRes{
@@ -66,12 +68,12 @@ func viewCert(svc certs.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(viewReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		cert, err := svc.ViewCert(ctx, req.token, req.serialID)
 		if err != nil {
-			return certsPageRes{}, err
+			return certsPageRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		certRes := certsRes{
@@ -89,7 +91,7 @@ func revokeCert(svc certs.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(revokeReq)
 		if err := req.validate(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		res, err := svc.RevokeCert(ctx, req.token, req.certID)
 		if err != nil {

@@ -164,13 +164,17 @@ func TestAdd(t *testing.T) {
 
 	for _, tc := range cases {
 		_, err := svc.Add(context.Background(), tc.token, tc.config)
-		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		switch err {
+		case nil:
+			assert.Nil(t, err, fmt.Sprintf("%s: got unexpected error : %s", tc.desc, err))
+		default:
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		}
 	}
 }
 
 func TestView(t *testing.T) {
 	users := mocks.NewAuthClient(map[string]string{validToken: email})
-
 	server := newThingsServer(newThingsService(users))
 	svc := newService(users, server.URL)
 

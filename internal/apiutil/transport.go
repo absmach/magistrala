@@ -18,41 +18,9 @@ import (
 // LoggingErrorEncoder is a go-kit error encoder logging decorator.
 func LoggingErrorEncoder(logger logger.Logger, enc kithttp.ErrorEncoder) kithttp.ErrorEncoder {
 	return func(ctx context.Context, err error, w http.ResponseWriter) {
-		switch {
-		case errors.Contains(err, ErrBearerToken),
-			errors.Contains(err, ErrMissingID),
-			errors.Contains(err, ErrBearerKey),
-			errors.Contains(err, ErrInvalidAuthKey),
-			errors.Contains(err, ErrInvalidIDFormat),
-			errors.Contains(err, ErrNameSize),
-			errors.Contains(err, ErrLimitSize),
-			errors.Contains(err, ErrOffsetSize),
-			errors.Contains(err, ErrInvalidOrder),
-			errors.Contains(err, ErrInvalidDirection),
-			errors.Contains(err, ErrEmptyList),
-			errors.Contains(err, ErrMalformedPolicy),
-			errors.Contains(err, ErrMissingPolicySub),
-			errors.Contains(err, ErrMissingPolicyObj),
-			errors.Contains(err, ErrMalformedPolicyAct),
-			errors.Contains(err, ErrMissingCertData),
-			errors.Contains(err, ErrInvalidTopic),
-			errors.Contains(err, ErrInvalidContact),
-			errors.Contains(err, ErrMissingEmail),
-			errors.Contains(err, ErrMissingHost),
-			errors.Contains(err, ErrMissingPass),
-			errors.Contains(err, ErrMissingConfPass),
-			errors.Contains(err, ErrInvalidResetPass),
-			errors.Contains(err, ErrInvalidComparator),
-			errors.Contains(err, ErrMissingMemberType),
-			errors.Contains(err, ErrMaxLevelExceeded),
-			errors.Contains(err, ErrInvalidAPIKey),
-			errors.Contains(err, ErrInvalidLevel),
-			errors.Contains(err, ErrBootstrapState),
-			errors.Contains(err, ErrInvalidQueryParams),
-			errors.Contains(err, ErrMalformedEntity):
+		if errors.Contains(err, ErrValidation) {
 			logger.Error(err.Error())
 		}
-
 		enc(ctx, err, w)
 	}
 }
@@ -61,7 +29,7 @@ func LoggingErrorEncoder(logger logger.Logger, enc kithttp.ErrorEncoder) kithttp
 func ReadUintQuery(r *http.Request, key string, def uint64) (uint64, error) {
 	vals := bone.GetQuery(r, key)
 	if len(vals) > 1 {
-		return 0, errors.ErrInvalidQueryParams
+		return 0, ErrInvalidQueryParams
 	}
 
 	if len(vals) == 0 {
@@ -71,7 +39,7 @@ func ReadUintQuery(r *http.Request, key string, def uint64) (uint64, error) {
 	strval := vals[0]
 	val, err := strconv.ParseUint(strval, 10, 64)
 	if err != nil {
-		return 0, errors.ErrInvalidQueryParams
+		return 0, ErrInvalidQueryParams
 	}
 
 	return val, nil
@@ -81,7 +49,7 @@ func ReadUintQuery(r *http.Request, key string, def uint64) (uint64, error) {
 func ReadStringQuery(r *http.Request, key string, def string) (string, error) {
 	vals := bone.GetQuery(r, key)
 	if len(vals) > 1 {
-		return "", errors.ErrInvalidQueryParams
+		return "", ErrInvalidQueryParams
 	}
 
 	if len(vals) == 0 {
@@ -95,7 +63,7 @@ func ReadStringQuery(r *http.Request, key string, def string) (string, error) {
 func ReadMetadataQuery(r *http.Request, key string, def map[string]interface{}) (map[string]interface{}, error) {
 	vals := bone.GetQuery(r, key)
 	if len(vals) > 1 {
-		return nil, errors.ErrInvalidQueryParams
+		return nil, ErrInvalidQueryParams
 	}
 
 	if len(vals) == 0 {
@@ -105,7 +73,7 @@ func ReadMetadataQuery(r *http.Request, key string, def map[string]interface{}) 
 	m := make(map[string]interface{})
 	err := json.Unmarshal([]byte(vals[0]), &m)
 	if err != nil {
-		return nil, errors.Wrap(errors.ErrInvalidQueryParams, err)
+		return nil, errors.Wrap(ErrInvalidQueryParams, err)
 	}
 
 	return m, nil
@@ -115,7 +83,7 @@ func ReadMetadataQuery(r *http.Request, key string, def map[string]interface{}) 
 func ReadBoolQuery(r *http.Request, key string, def bool) (bool, error) {
 	vals := bone.GetQuery(r, key)
 	if len(vals) > 1 {
-		return false, errors.ErrInvalidQueryParams
+		return false, ErrInvalidQueryParams
 	}
 
 	if len(vals) == 0 {
@@ -124,7 +92,7 @@ func ReadBoolQuery(r *http.Request, key string, def bool) (bool, error) {
 
 	b, err := strconv.ParseBool(vals[0])
 	if err != nil {
-		return false, errors.ErrInvalidQueryParams
+		return false, ErrInvalidQueryParams
 	}
 
 	return b, nil
@@ -134,7 +102,7 @@ func ReadBoolQuery(r *http.Request, key string, def bool) (bool, error) {
 func ReadFloatQuery(r *http.Request, key string, def float64) (float64, error) {
 	vals := bone.GetQuery(r, key)
 	if len(vals) > 1 {
-		return 0, errors.ErrInvalidQueryParams
+		return 0, ErrInvalidQueryParams
 	}
 
 	if len(vals) == 0 {
@@ -144,7 +112,7 @@ func ReadFloatQuery(r *http.Request, key string, def float64) (float64, error) {
 	fval := vals[0]
 	val, err := strconv.ParseFloat(fval, 64)
 	if err != nil {
-		return 0, errors.ErrInvalidQueryParams
+		return 0, ErrInvalidQueryParams
 	}
 
 	return val, nil
@@ -158,7 +126,7 @@ type number interface {
 func ReadNumQuery[N number](r *http.Request, key string, def N) (N, error) {
 	vals := bone.GetQuery(r, key)
 	if len(vals) > 1 {
-		return 0, errors.ErrInvalidQueryParams
+		return 0, ErrInvalidQueryParams
 	}
 	if len(vals) == 0 {
 		return def, nil

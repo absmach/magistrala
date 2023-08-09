@@ -65,6 +65,8 @@ var (
 
 	// ErrFailedDisable indicates that client disable failed.
 	ErrFailedDisable = errors.New("failed to disable client")
+
+	ErrInvalidJWT = errors.New("invalid JWT")
 )
 
 type PageMetadata struct {

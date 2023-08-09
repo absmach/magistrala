@@ -466,7 +466,7 @@ func (svc service) authorize(ctx context.Context, subject, object, action string
 func (svc service) Identify(ctx context.Context, token string) (string, error) {
 	claims, err := svc.tokens.Parse(ctx, token)
 	if err != nil {
-		return "", errors.Wrap(errors.ErrAuthentication, err)
+		return "", err
 	}
 	if claims.Type != jwt.AccessToken {
 		return "", errors.ErrAuthentication

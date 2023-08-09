@@ -11,6 +11,7 @@ import (
 
 	"github.com/pelletier/go-toml"
 
+	"github.com/mainflux/mainflux/internal/apiutil"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"
@@ -52,7 +53,7 @@ func Start(ctx context.Context, id string, sub messaging.Subscriber, consumer in
 				return err
 			}
 		default:
-			return errors.ErrInvalidQueryParams
+			return apiutil.ErrInvalidQueryParams
 		}
 
 	}

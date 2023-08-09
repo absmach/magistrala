@@ -7,7 +7,9 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/endpoint"
+	"github.com/mainflux/mainflux/internal/apiutil"
 	"github.com/mainflux/mainflux/opcua"
+	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 func browseEndpoint(svc opcua.Service) endpoint.Endpoint {
@@ -15,7 +17,7 @@ func browseEndpoint(svc opcua.Service) endpoint.Endpoint {
 		req := request.(browseReq)
 
 		if err := req.validate(); err != nil {
-			return nil, err
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		nodes, err := svc.Browse(ctx, req.ServerURI, req.Namespace, req.Identifier)

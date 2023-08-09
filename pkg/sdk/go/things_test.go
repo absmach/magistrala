@@ -72,6 +72,7 @@ func TestCreateThing(t *testing.T) {
 		client   sdk.Thing
 		response sdk.Thing
 		token    string
+		repoErr  error
 		err      errors.SDKError
 	}{
 		{
@@ -79,6 +80,7 @@ func TestCreateThing(t *testing.T) {
 			client:   thing,
 			response: thing,
 			token:    token,
+			repoErr:  nil,
 			err:      nil,
 		},
 		{
@@ -86,6 +88,7 @@ func TestCreateThing(t *testing.T) {
 			client:   thing,
 			response: sdk.Thing{},
 			token:    token,
+			repoErr:  sdk.ErrFailedCreation,
 			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedCreation, http.StatusInternalServerError),
 		},
 		{
@@ -93,6 +96,7 @@ func TestCreateThing(t *testing.T) {
 			client:   sdk.Thing{},
 			response: sdk.Thing{},
 			token:    token,
+			repoErr:  errors.ErrMalformedEntity,
 			err:      errors.NewSDKErrorWithStatus(errors.ErrMalformedEntity, http.StatusBadRequest),
 		},
 		{
@@ -106,6 +110,7 @@ func TestCreateThing(t *testing.T) {
 			response: sdk.Thing{},
 			token:    token,
 			err:      errors.NewSDKError(fmt.Errorf("json: unsupported type: chan int")),
+			repoErr:  errors.NewSDKError(fmt.Errorf("json: unsupported type: chan int")),
 		},
 		{
 			desc: "register thing with empty secret",
@@ -121,8 +126,9 @@ func TestCreateThing(t *testing.T) {
 					Secret: "",
 				},
 			},
-			token: token,
-			err:   nil,
+			token:   token,
+			err:     nil,
+			repoErr: nil,
 		},
 		{
 			desc: "register thing with empty identity",
@@ -138,15 +144,9 @@ func TestCreateThing(t *testing.T) {
 					Secret:   secret,
 				},
 			},
-			token: token,
-			err:   nil,
-		},
-		{
-			desc:     "register empty thing",
-			client:   sdk.Thing{},
-			response: sdk.Thing{},
-			token:    token,
-			err:      errors.NewSDKErrorWithStatus(apiutil.ErrMalformedEntity, http.StatusBadRequest),
+			token:   token,
+			repoErr: nil,
+			err:     nil,
 		},
 		{
 			desc: "register thing with every field defined",
@@ -172,13 +172,15 @@ func TestCreateThing(t *testing.T) {
 				UpdatedAt:   time.Now(),
 				Status:      mfclients.EnabledStatus.String(),
 			},
-			token: token,
-			err:   nil,
+			token:   token,
+			repoErr: nil,
+			err:     nil,
 		},
 	}
 	for _, tc := range cases {
-		repoCall := cRepo.On("Save", mock.Anything, mock.Anything).Return(tc.response, tc.err)
+		repoCall := cRepo.On("Save", mock.Anything, mock.Anything).Return(tc.response, tc.repoErr)
 		rThing, err := mfsdk.CreateThing(tc.client, tc.token)
+
 		tc.response.ID = rThing.ID
 		tc.response.Owner = rThing.Owner
 		tc.response.CreatedAt = rThing.CreatedAt
@@ -243,14 +245,14 @@ func TestCreateThings(t *testing.T) {
 			things:   things,
 			response: []sdk.Thing{},
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedCreation, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedCreation), http.StatusInternalServerError),
 		},
 		{
 			desc:     "register empty things",
 			things:   []sdk.Thing{},
 			response: []sdk.Thing{},
 			token:    token,
-			err:      errors.NewSDKErrorWithStatus(apiutil.ErrEmptyList, http.StatusBadRequest),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrEmptyList), http.StatusBadRequest),
 		},
 		{
 			desc: "register things that can't be marshalled",
@@ -357,7 +359,7 @@ func TestListThings(t *testing.T) {
 			token:    invalidToken,
 			offset:   offset,
 			limit:    limit,
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedList, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedList), http.StatusInternalServerError),
 			response: nil,
 		},
 		{
@@ -365,7 +367,7 @@ func TestListThings(t *testing.T) {
 			token:    "",
 			offset:   offset,
 			limit:    limit,
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedList, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedList), http.StatusInternalServerError),
 			response: nil,
 		},
 		{
@@ -373,7 +375,7 @@ func TestListThings(t *testing.T) {
 			token:    token,
 			offset:   offset,
 			limit:    0,
-			err:      errors.NewSDKErrorWithStatus(apiutil.ErrLimitSize, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrLimitSize), http.StatusInternalServerError),
 			response: nil,
 		},
 		{
@@ -381,7 +383,7 @@ func TestListThings(t *testing.T) {
 			token:    token,
 			offset:   offset,
 			limit:    110,
-			err:      errors.NewSDKErrorWithStatus(apiutil.ErrLimitSize, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrLimitSize), http.StatusInternalServerError),
 			response: []sdk.Thing(nil),
 		},
 		{
@@ -755,7 +757,7 @@ func TestUpdateThing(t *testing.T) {
 			thing:    thing2,
 			response: sdk.Thing{},
 			token:    adminToken,
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedUpdate, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedUpdate), http.StatusInternalServerError),
 		},
 		{
 			desc: "update thing that can't be marshalled",
@@ -847,7 +849,7 @@ func TestUpdateThingTags(t *testing.T) {
 			thing:    thing2,
 			response: sdk.Thing{},
 			token:    adminToken,
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedUpdate, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedUpdate), http.StatusInternalServerError),
 		},
 		{
 			desc: "update thing that can't be marshalled",
@@ -909,6 +911,7 @@ func TestUpdateThingSecret(t *testing.T) {
 		newSecret string
 		token     string
 		response  sdk.Thing
+		repoErr   error
 		err       error
 	}{
 		{
@@ -917,6 +920,7 @@ func TestUpdateThingSecret(t *testing.T) {
 			newSecret: "newSecret",
 			token:     adminToken,
 			response:  rthing,
+			repoErr:   nil,
 			err:       nil,
 		},
 		{
@@ -925,6 +929,7 @@ func TestUpdateThingSecret(t *testing.T) {
 			newSecret: "newPassword",
 			token:     "non-existent",
 			response:  sdk.Thing{},
+			repoErr:   errors.ErrAuthorization,
 			err:       errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
@@ -933,13 +938,13 @@ func TestUpdateThingSecret(t *testing.T) {
 			newSecret: "newSecret",
 			token:     adminToken,
 			response:  sdk.Thing{},
+			repoErr:   apiutil.ErrInvalidSecret,
 			err:       errors.NewSDKErrorWithStatus(apiutil.ErrInvalidSecret, http.StatusBadRequest),
 		},
 	}
-
 	for _, tc := range cases {
 		repoCall := pRepo.On("EvaluateThingAccess", mock.Anything, mock.Anything).Return(policies.Policy{}, nil)
-		repoCall1 := cRepo.On("UpdateSecret", mock.Anything, mock.Anything).Return(convertThing(tc.response), tc.err)
+		repoCall1 := cRepo.On("UpdateSecret", mock.Anything, mock.Anything).Return(convertThing(tc.response), tc.repoErr)
 		uClient, err := mfsdk.UpdateThingSecret(tc.oldSecret, tc.newSecret, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, uClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, uClient))
@@ -1010,7 +1015,7 @@ func TestUpdateThingOwner(t *testing.T) {
 			thing:    thing2,
 			response: sdk.Thing{},
 			token:    adminToken,
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedUpdate, http.StatusInternalServerError),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, sdk.ErrFailedUpdate), http.StatusInternalServerError),
 		},
 		{
 			desc: "update thing that can't be marshalled",
@@ -1074,6 +1079,7 @@ func TestEnableThing(t *testing.T) {
 		token    string
 		thing    sdk.Thing
 		response sdk.Thing
+		repoErr  error
 		err      errors.SDKError
 	}{
 		{
@@ -1082,6 +1088,7 @@ func TestEnableThing(t *testing.T) {
 			token:    adminToken,
 			thing:    disabledThing1,
 			response: endisabledThing1,
+			repoErr:  nil,
 			err:      nil,
 		},
 		{
@@ -1090,7 +1097,8 @@ func TestEnableThing(t *testing.T) {
 			token:    adminToken,
 			thing:    enabledThing1,
 			response: sdk.Thing{},
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedEnable, http.StatusInternalServerError),
+			repoErr:  sdk.ErrFailedEnable,
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedEnable, sdk.ErrFailedEnable), http.StatusInternalServerError),
 		},
 		{
 			desc:     "enable non-existing thing",
@@ -1098,14 +1106,15 @@ func TestEnableThing(t *testing.T) {
 			token:    adminToken,
 			thing:    sdk.Thing{},
 			response: sdk.Thing{},
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedEnable, http.StatusNotFound),
+			repoErr:  sdk.ErrFailedEnable,
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedEnable, errors.ErrNotFound), http.StatusNotFound),
 		},
 	}
 
 	for _, tc := range cases {
 		repoCall := pRepo.On("EvaluateThingAccess", mock.Anything, mock.Anything).Return(policies.Policy{}, nil)
-		repoCall1 := cRepo.On("RetrieveByID", mock.Anything, tc.id).Return(convertThing(tc.thing), tc.err)
-		repoCall2 := cRepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(convertThing(tc.response), tc.err)
+		repoCall1 := cRepo.On("RetrieveByID", mock.Anything, tc.id).Return(convertThing(tc.thing), tc.repoErr)
+		repoCall2 := cRepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(convertThing(tc.response), tc.repoErr)
 		eClient, err := mfsdk.EnableThing(tc.id, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, eClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, eClient))
@@ -1205,6 +1214,7 @@ func TestDisableThing(t *testing.T) {
 		token    string
 		thing    sdk.Thing
 		response sdk.Thing
+		repoErr  error
 		err      errors.SDKError
 	}{
 		{
@@ -1213,6 +1223,7 @@ func TestDisableThing(t *testing.T) {
 			token:    adminToken,
 			thing:    enabledThing1,
 			response: disenabledThing1,
+			repoErr:  nil,
 			err:      nil,
 		},
 		{
@@ -1221,7 +1232,8 @@ func TestDisableThing(t *testing.T) {
 			token:    adminToken,
 			thing:    disabledThing1,
 			response: sdk.Thing{},
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedDisable, http.StatusInternalServerError),
+			repoErr:  sdk.ErrFailedDisable,
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedDisable, sdk.ErrFailedDisable), http.StatusInternalServerError),
 		},
 		{
 			desc:     "disable non-existing thing",
@@ -1229,14 +1241,15 @@ func TestDisableThing(t *testing.T) {
 			thing:    sdk.Thing{},
 			token:    adminToken,
 			response: sdk.Thing{},
-			err:      errors.NewSDKErrorWithStatus(sdk.ErrFailedDisable, http.StatusNotFound),
+			repoErr:  sdk.ErrFailedDisable,
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(sdk.ErrFailedDisable, errors.ErrNotFound), http.StatusNotFound),
 		},
 	}
 
 	for _, tc := range cases {
 		repoCall := pRepo.On("EvaluateThingAccess", mock.Anything, mock.Anything).Return(policies.Policy{}, nil)
-		repoCall1 := cRepo.On("RetrieveByID", mock.Anything, tc.id).Return(convertThing(tc.thing), tc.err)
-		repoCall2 := cRepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(convertThing(tc.response), tc.err)
+		repoCall1 := cRepo.On("RetrieveByID", mock.Anything, tc.id).Return(convertThing(tc.thing), tc.repoErr)
+		repoCall2 := cRepo.On("ChangeStatus", mock.Anything, mock.Anything).Return(convertThing(tc.response), tc.repoErr)
 		dThing, err := mfsdk.DisableThing(tc.id, tc.token)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, dThing, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, dThing))
@@ -1335,24 +1348,27 @@ func TestIdentify(t *testing.T) {
 		desc     string
 		secret   string
 		response string
+		repoErr  error
 		err      errors.SDKError
 	}{
 		{
 			desc:     "identify thing successfully",
 			response: thing.ID,
 			secret:   thing.Credentials.Secret,
+			repoErr:  nil,
 			err:      nil,
 		},
 		{
 			desc:     "identify thing with an invalid token",
 			response: "",
 			secret:   invalidToken,
+			repoErr:  errors.ErrAuthentication,
 			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
 		},
 	}
 
 	for _, tc := range cases {
-		repoCall := cRepo.On("RetrieveBySecret", mock.Anything, mock.Anything).Return(convertThing(thing), tc.err)
+		repoCall := cRepo.On("RetrieveBySecret", mock.Anything, mock.Anything).Return(convertThing(thing), tc.repoErr)
 		id, err := mfsdk.IdentifyThing(tc.secret)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, id, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, id))
@@ -1407,7 +1423,7 @@ func TestShareThing(t *testing.T) {
 			channelID: generateUUID(t),
 			thingID:   thingID,
 			token:     invalidToken,
-			err:       errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusUnauthorized),
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthorization, errors.ErrAuthentication), http.StatusUnauthorized),
 		},
 		{
 			desc:      "share thing with valid token for unauthorized user",

@@ -165,32 +165,32 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 	var sharedID, ownerID string
 	s, err := apiutil.ReadStringQuery(r, api.StatusKey, api.DefClientStatus)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	o, err := apiutil.ReadNumQuery[uint64](r, api.OffsetKey, api.DefOffset)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	l, err := apiutil.ReadNumQuery[uint64](r, api.LimitKey, api.DefLimit)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	m, err := apiutil.ReadMetadataQuery(r, api.MetadataKey, nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 
 	n, err := apiutil.ReadStringQuery(r, api.NameKey, "")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	i, err := apiutil.ReadStringQuery(r, api.IdentityKey, "")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	t, err := apiutil.ReadStringQuery(r, api.TagKey, "")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	oid, err := apiutil.ReadStringQuery(r, api.OwnerKey, "")
 	if err != nil {
@@ -198,7 +198,7 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 	}
 	visibility, err := apiutil.ReadStringQuery(r, api.VisibilityKey, "")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	switch visibility {
 	case api.MyVisibility:
@@ -214,7 +214,7 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 	}
 	st, err := mfclients.ToStatus(s)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	req := listClientsReq{
 		token:    apiutil.ExtractBearerToken(r),
@@ -233,14 +233,14 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 
 func decodeUpdateClient(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return nil, errors.ErrUnsupportedContentType
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 	req := updateClientReq{
 		token: apiutil.ExtractBearerToken(r),
 		id:    bone.GetValue(r, "id"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
 
 	return req, nil
@@ -248,14 +248,14 @@ func decodeUpdateClient(_ context.Context, r *http.Request) (interface{}, error)
 
 func decodeUpdateClientTags(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return nil, errors.ErrUnsupportedContentType
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 	req := updateClientTagsReq{
 		token: apiutil.ExtractBearerToken(r),
 		id:    bone.GetValue(r, "id"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
 
 	return req, nil
@@ -263,14 +263,14 @@ func decodeUpdateClientTags(_ context.Context, r *http.Request) (interface{}, er
 
 func decodeUpdateClientIdentity(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return nil, errors.ErrUnsupportedContentType
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 	req := updateClientIdentityReq{
 		token: apiutil.ExtractBearerToken(r),
 		id:    bone.GetValue(r, "id"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
 
 	return req, nil
@@ -278,13 +278,13 @@ func decodeUpdateClientIdentity(_ context.Context, r *http.Request) (interface{}
 
 func decodeUpdateClientSecret(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return nil, errors.ErrUnsupportedContentType
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 	req := updateClientSecretReq{
 		token: apiutil.ExtractBearerToken(r),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
 
 	return req, nil
@@ -292,13 +292,13 @@ func decodeUpdateClientSecret(_ context.Context, r *http.Request) (interface{}, 
 
 func decodePasswordResetRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return nil, errors.ErrUnsupportedContentType
+		return nil, apiutil.ErrUnsupportedContentType
 	}
 
 	var req passwResetReq
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
 
 	req.Host = r.Header.Get("Referer")
@@ -307,12 +307,12 @@ func decodePasswordResetRequest(_ context.Context, r *http.Request) (interface{}
 
 func decodePasswordReset(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return nil, errors.ErrUnsupportedContentType
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
 	var req resetTokenReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
 
 	return req, nil
@@ -320,14 +320,14 @@ func decodePasswordReset(_ context.Context, r *http.Request) (interface{}, error
 
 func decodeUpdateClientOwner(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return nil, errors.ErrUnsupportedContentType
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 	req := updateClientOwnerReq{
 		token: apiutil.ExtractBearerToken(r),
 		id:    bone.GetValue(r, "id"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
 
 	return req, nil
@@ -335,11 +335,11 @@ func decodeUpdateClientOwner(_ context.Context, r *http.Request) (interface{}, e
 
 func decodeCredentials(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return nil, errors.ErrUnsupportedContentType
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 	req := loginClientReq{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
 
 	return req, nil
@@ -352,12 +352,12 @@ func decodeRefreshToken(_ context.Context, r *http.Request) (interface{}, error)
 }
 func decodeCreateClientReq(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return nil, errors.ErrUnsupportedContentType
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
 	var c mfclients.Client
 	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
-		return nil, errors.Wrap(errors.ErrMalformedEntity, err)
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
 	}
 	req := createClientReq{
 		client: c,
@@ -379,39 +379,39 @@ func decodeChangeClientStatus(_ context.Context, r *http.Request) (interface{}, 
 func decodeListMembersRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	s, err := apiutil.ReadStringQuery(r, api.StatusKey, api.DefClientStatus)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	o, err := apiutil.ReadNumQuery[uint64](r, api.OffsetKey, api.DefOffset)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	l, err := apiutil.ReadNumQuery[uint64](r, api.LimitKey, api.DefLimit)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	m, err := apiutil.ReadMetadataQuery(r, api.MetadataKey, nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	n, err := apiutil.ReadStringQuery(r, api.NameKey, "")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	i, err := apiutil.ReadStringQuery(r, api.IdentityKey, "")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	t, err := apiutil.ReadStringQuery(r, api.TagKey, "")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	oid, err := apiutil.ReadStringQuery(r, api.OwnerKey, "")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	st, err := mfclients.ToStatus(s)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	req := listMembersReq{
 		token: apiutil.ExtractBearerToken(r),

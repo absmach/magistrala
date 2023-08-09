@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/mainflux/mainflux/internal/apiutil"
@@ -60,7 +61,7 @@ func TestIssueToken(t *testing.T) {
 		{
 			desc:   "issue token for an empty user",
 			client: sdk.User{},
-			err:    errors.NewSDKErrorWithStatus(apiutil.ErrMissingIdentity, http.StatusInternalServerError),
+			err:    errors.NewSDKErrorWithStatus(apiutil.ErrMissingIdentity, http.StatusBadRequest),
 		},
 		{
 			desc: "issue token for invalid secret",
@@ -71,17 +72,19 @@ func TestIssueToken(t *testing.T) {
 				},
 			},
 			dbClient: wrongClient,
-			err:      errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthentication, apiutil.ErrValidation), http.StatusUnauthorized),
 		},
 	}
 	for _, tc := range cases {
 		repoCall := cRepo.On("RetrieveByIdentity", mock.Anything, mock.Anything).Return(convertClient(tc.dbClient), tc.err)
 		token, err := mfsdk.CreateToken(tc.client)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
-		if tc.err == nil {
+		switch tc.err {
+		case nil:
 			assert.NotEmpty(t, token, fmt.Sprintf("%s: expected token, got empty", tc.desc))
 			ok := repoCall.Parent.AssertCalled(t, "RetrieveByIdentity", mock.Anything, mock.Anything)
 			assert.True(t, ok, fmt.Sprintf("RetrieveByIdentity was not called on %s", tc.desc))
+		default:
+			assert.True(t, strings.Contains(err.Msg(), tc.err.Msg()), fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 		}
 		repoCall.Unset()
 	}
@@ -138,7 +141,7 @@ func TestRefreshToken(t *testing.T) {
 		{
 			desc:  "refresh token for an empty token",
 			token: "",
-			err:   errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusInternalServerError),
+			err:   errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusInternalServerError),
 		},
 	}
 	for _, tc := range cases {

@@ -377,23 +377,24 @@ func (bs bootstrapService) identify(ctx context.Context, token string) (string, 
 func (bs bootstrapService) thing(id, token string) (mfsdk.Thing, error) {
 	var thing mfsdk.Thing
 	var err error
+	var sdkErr errors.SDKError
 
 	thing.ID = id
 	if id == "" {
-		thing, err = bs.sdk.CreateThing(mfsdk.Thing{}, token)
+		thing, sdkErr = bs.sdk.CreateThing(mfsdk.Thing{}, token)
 		if err != nil {
-			return mfsdk.Thing{}, errors.Wrap(errCreateThing, err)
+			return mfsdk.Thing{}, errors.Wrap(errCreateThing, errors.New(sdkErr.Err().Msg()))
 		}
 	}
 
-	thing, err = bs.sdk.Thing(thing.ID, token)
-	if err != nil {
+	thing, sdkErr = bs.sdk.Thing(thing.ID, token)
+	if sdkErr != nil {
+		err = errors.New(sdkErr.Error())
 		if id != "" {
-			if _, errT := bs.sdk.DisableThing(thing.ID, token); errT != nil {
-				err = errors.Wrap(err, errT)
+			if _, sdkErr2 := bs.sdk.DisableThing(thing.ID, token); sdkErr2 != nil {
+				err = errors.Wrap(errors.New(sdkErr.Msg()), errors.New(sdkErr2.Msg()))
 			}
 		}
-
 		return mfsdk.Thing{}, errors.Wrap(ErrThings, err)
 	}
 

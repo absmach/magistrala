@@ -88,11 +88,11 @@ var (
 		CACert:     "newca",
 	}
 
-	bsErrorRes    = toJSON(apiutil.ErrorRes{Err: bootstrap.ErrBootstrap.Error()})
+	missingIDRes  = toJSON(apiutil.ErrorRes{Err: errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID).Error()})
+	missingKeyRes = toJSON(apiutil.ErrorRes{Err: errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerKey).Error()})
+	bsErrorRes    = toJSON(apiutil.ErrorRes{Err: errors.Wrap(bootstrap.ErrBootstrap, errors.ErrNotFound).Error()})
 	extKeyRes     = toJSON(apiutil.ErrorRes{Err: bootstrap.ErrExternalKey.Error()})
-	extSecKeyRes  = toJSON(apiutil.ErrorRes{Err: bootstrap.ErrExternalKeySecure.Error()})
-	missingIDRes  = toJSON(apiutil.ErrorRes{Err: apiutil.ErrMissingID.Error()})
-	missingKeyRes = toJSON(apiutil.ErrorRes{Err: apiutil.ErrBearerKey.Error()})
+	extSecKeyRes  = toJSON(apiutil.ErrorRes{Err: errors.Wrap(bootstrap.ErrExternalKeySecure, errors.New("encoding/hex: invalid byte: U+0078 'x'")).Error()})
 )
 
 type testRequest struct {

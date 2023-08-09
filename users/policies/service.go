@@ -169,7 +169,7 @@ func (svc service) checkPolicy(ctx context.Context, clientID string, p Policy) e
 func (svc service) identify(ctx context.Context, token string) (string, error) {
 	claims, err := svc.tokens.Parse(ctx, token)
 	if err != nil {
-		return "", errors.Wrap(errors.ErrAuthentication, err)
+		return "", err
 	}
 	if claims.Type != AccessToken {
 		return "", errors.ErrAuthentication

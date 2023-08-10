@@ -1,0 +1,27 @@
+run:
+  timeout: 3m
+linters-settings:
+  gocritic:
+    enabled-checks:
+      - captLocal
+      - dupImport
+      - singleCaseSwitch
+    disabled-checks:
+      - appendAssign
+    enabled-tags:
+    - diagnostic
+    disabled-tags:
+      - performance
+      - style
+      - experimental
+      - opinionated
+linters:
+  disable-all: true
+  enable:
+    - gocritic
+    - gosimple
+    - errcheck
+    - govet
+    - unused
+    - goconst
+    - godot

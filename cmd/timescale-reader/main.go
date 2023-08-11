@@ -14,9 +14,9 @@ import (
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/internal"
-	authClient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
-	thingsClient "github.com/mainflux/mainflux/internal/clients/grpc/things"
-	pgClient "github.com/mainflux/mainflux/internal/clients/postgres"
+	authclient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
+	thingsclient "github.com/mainflux/mainflux/internal/clients/grpc/things"
+	pgclient "github.com/mainflux/mainflux/internal/clients/postgres"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
@@ -67,13 +67,13 @@ func main() {
 		}
 	}
 
-	dbConfig := pgClient.Config{Name: defDB}
+	dbConfig := pgclient.Config{Name: defDB}
 	if err := dbConfig.LoadEnv(envPrefixDB); err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-	db, err := pgClient.Connect(dbConfig)
+	db, err := pgclient.Connect(dbConfig)
 	if err != nil {
 		logger.Error(err.Error())
 	}
@@ -81,7 +81,7 @@ func main() {
 
 	repo := newService(db, logger)
 
-	auth, authHandler, err := authClient.Setup(svcName)
+	auth, authHandler, err := authclient.Setup(svcName)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -91,7 +91,7 @@ func main() {
 
 	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 
-	tc, tcHandler, err := thingsClient.Setup()
+	tc, tcHandler, err := thingsclient.Setup()
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1

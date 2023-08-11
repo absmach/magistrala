@@ -13,9 +13,9 @@ import (
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/internal"
-	authClient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
-	thingsClient "github.com/mainflux/mainflux/internal/clients/grpc/things"
-	mongoClient "github.com/mainflux/mainflux/internal/clients/mongo"
+	authclient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
+	thingsclient "github.com/mainflux/mainflux/internal/clients/grpc/things"
+	mongoclient "github.com/mainflux/mainflux/internal/clients/mongo"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
@@ -66,7 +66,7 @@ func main() {
 		}
 	}
 
-	db, err := mongoClient.Setup(envPrefixDB)
+	db, err := mongoclient.Setup(envPrefixDB)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to setup mongo database : %s", err))
 		exitCode = 1
@@ -75,7 +75,7 @@ func main() {
 
 	repo := newService(db, logger)
 
-	tc, tcHandler, err := thingsClient.Setup()
+	tc, tcHandler, err := thingsclient.Setup()
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -85,7 +85,7 @@ func main() {
 
 	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
 
-	auth, authHandler, err := authClient.Setup(svcName)
+	auth, authHandler, err := authclient.Setup(svcName)
 	if err != nil {
 		logger.Fatal(err.Error())
 		exitCode = 1

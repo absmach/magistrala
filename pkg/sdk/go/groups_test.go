@@ -535,6 +535,7 @@ func TestListChildrenGroups(t *testing.T) {
 		repoCall1.Unset()
 	}
 }
+
 func TestViewGroup(t *testing.T) {
 	cRepo := new(cmocks.Repository)
 	gRepo := new(gmocks.Repository)
@@ -568,7 +569,6 @@ func TestViewGroup(t *testing.T) {
 		err      errors.SDKError
 	}{
 		{
-
 			desc:     "view group",
 			token:    generateValidToken(t, csvc, cRepo),
 			groupID:  group.ID,
@@ -799,8 +799,8 @@ func TestListMemberships(t *testing.T) {
 	}
 	mfsdk := sdk.NewSDK(conf)
 
-	var nGroups = uint64(100)
-	var aGroups = []sdk.Group{}
+	nGroups := uint64(100)
+	aGroups := []sdk.Group{}
 
 	for i := uint64(1); i < nGroups; i++ {
 		group := sdk.Group{

@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/mainflux/mainflux/pkg/errors"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -121,7 +120,6 @@ func TestContains(t *testing.T) {
 		contains := errors.Contains(tc.container, tc.contained)
 		assert.Equal(t, tc.contains, contains, fmt.Sprintf("%s: expected %v to contain %v\n", tc.desc, tc.container, tc.contained))
 	}
-
 }
 
 func TestWrap(t *testing.T) {

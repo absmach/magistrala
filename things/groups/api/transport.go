@@ -144,7 +144,6 @@ func decodeListMembershipRequest(_ context.Context, r *http.Request) (interface{
 		},
 	}
 	return req, nil
-
 }
 
 func decodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {

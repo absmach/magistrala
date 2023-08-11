@@ -5,10 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mainflux/mainflux/pkg/errors"
-
 	"github.com/mainflux/mainflux/internal/clients/grpc"
 	"github.com/mainflux/mainflux/internal/server"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 

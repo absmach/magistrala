@@ -36,7 +36,7 @@ func main() {
 	}
 
 	// Root
-	var rootCmd = &cobra.Command{
+	rootCmd := &cobra.Command{
 		Use: "mainflux-cli",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			cliConf, err := cli.ParseConfig(sdkConf)

@@ -168,7 +168,6 @@ func TestGroupSave(t *testing.T) {
 		_, err := groupRepo.Save(context.Background(), tc.group)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
-
 }
 
 func TestGroupRetrieveByID(t *testing.T) {
@@ -223,8 +222,8 @@ func TestGroupRetrieveAll(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
 	groupRepo := gpostgres.New(database)
 
-	var nGroups = uint64(200)
-	var ownerID = testsutil.GenerateUUID(t, idProvider)
+	nGroups := uint64(200)
+	ownerID := testsutil.GenerateUUID(t, idProvider)
 	var parentID string
 	for i := uint64(0); i < nGroups; i++ {
 		creationTime := time.Now().UTC()

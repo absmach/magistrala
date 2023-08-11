@@ -4,8 +4,8 @@
 package groups_test
 
 import (
-	context "context"
-	fmt "fmt"
+	"context"
+	"fmt"
 	"regexp"
 	"testing"
 	"time"
@@ -266,7 +266,6 @@ func TestUpdateGroup(t *testing.T) {
 		repoCall.Unset()
 		repoCall1.Unset()
 	}
-
 }
 
 func TestViewGroup(t *testing.T) {
@@ -288,7 +287,6 @@ func TestViewGroup(t *testing.T) {
 		err      error
 	}{
 		{
-
 			desc:     "view group",
 			token:    testsutil.GenerateValidToken(t, testsutil.GenerateUUID(t, idProvider), csvc, cRepo, phasher),
 			groupID:  group.ID,
@@ -339,7 +337,7 @@ func TestListGroups(t *testing.T) {
 
 	nGroups := uint64(200)
 	parentID := ""
-	var aGroups = []mfgroups.Group{}
+	aGroups := []mfgroups.Group{}
 	for i := uint64(0); i < nGroups; i++ {
 		group := mfgroups.Group{
 			ID:          testsutil.GenerateUUID(t, idProvider),
@@ -419,7 +417,6 @@ func TestListGroups(t *testing.T) {
 		repoCall.Unset()
 		repoCall1.Unset()
 	}
-
 }
 
 func TestEnableGroup(t *testing.T) {
@@ -693,8 +690,8 @@ func TestListMemberships(t *testing.T) {
 	csvc := clients.NewService(cRepo, pRepo, tokenizer, e, phasher, idProvider, passRegex)
 	svc := groups.NewService(gRepo, pRepo, tokenizer, idProvider)
 
-	var nGroups = uint64(100)
-	var aGroups = []mfgroups.Group{}
+	nGroups := uint64(100)
+	aGroups := []mfgroups.Group{}
 	owner := testsutil.GenerateUUID(t, idProvider)
 	for i := uint64(1); i < nGroups; i++ {
 		group := mfgroups.Group{

@@ -12,10 +12,8 @@ import (
 
 const errorKey = "error"
 
-var (
-	// Failed to read response body.
-	errRespBody = New("failed to read response body")
-)
+// Failed to read response body.
+var errRespBody = New("failed to read response body")
 
 // SDKError is an error type for Mainflux SDK.
 type SDKError interface {
@@ -86,7 +84,6 @@ func CheckError(resp *http.Response, expectedStatusCodes ...int) SDKError {
 	if msg, ok := content[errorKey]; ok {
 		if v, ok := msg.(string); ok {
 			return NewSDKErrorWithStatus(New(v), resp.StatusCode)
-
 		}
 		return NewSDKErrorWithStatus(fmt.Errorf("%v", msg), resp.StatusCode)
 	}

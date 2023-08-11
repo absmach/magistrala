@@ -12,7 +12,7 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/mainflux/mainflux/pkg/messaging"
-	mqtt_pubsub "github.com/mainflux/mainflux/pkg/messaging/mqtt"
+	mqttpubsub "github.com/mainflux/mainflux/pkg/messaging/mqtt"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
 )
@@ -25,9 +25,7 @@ const (
 	tokenTimeout = 100 * time.Millisecond
 )
 
-var (
-	data = []byte("payload")
-)
+var data = []byte("payload")
 
 // ErrFailedHandleMessage indicates that the message couldn't be handled.
 var errFailedHandleMessage = errors.New("failed to handle mainflux message")
@@ -65,7 +63,7 @@ func TestPublisher(t *testing.T) {
 
 	// Test publish with an empty topic.
 	err = pubsub.Publish(context.TODO(), "", &messaging.Message{Payload: data})
-	assert.Equal(t, err, mqtt_pubsub.ErrEmptyTopic, fmt.Sprintf("Publish with empty topic: expected: %s, got: %s", mqtt_pubsub.ErrEmptyTopic, err))
+	assert.Equal(t, err, mqttpubsub.ErrEmptyTopic, fmt.Sprintf("Publish with empty topic: expected: %s, got: %s", mqttpubsub.ErrEmptyTopic, err))
 
 	cases := []struct {
 		desc     string
@@ -175,14 +173,14 @@ func TestSubscribe(t *testing.T) {
 			desc:     "Subscribe to an empty topic with an ID",
 			topic:    "",
 			clientID: "clientid1",
-			err:      mqtt_pubsub.ErrEmptyTopic,
+			err:      mqttpubsub.ErrEmptyTopic,
 			handler:  handler{false, "clientid1", msgChan},
 		},
 		{
 			desc:     "Subscribe to a topic with empty id",
 			topic:    topic,
 			clientID: "",
-			err:      mqtt_pubsub.ErrEmptyID,
+			err:      mqttpubsub.ErrEmptyID,
 			handler:  handler{false, "", msgChan},
 		},
 	}
@@ -250,14 +248,14 @@ func TestPubSub(t *testing.T) {
 			desc:     "Subscribe to an empty topic with an ID",
 			topic:    "",
 			clientID: "clientid7",
-			err:      mqtt_pubsub.ErrEmptyTopic,
+			err:      mqttpubsub.ErrEmptyTopic,
 			handler:  handler{false, "clientid7", msgChan},
 		},
 		{
 			desc:     "Subscribe to a topic with empty id",
 			topic:    topic,
 			clientID: "",
-			err:      mqtt_pubsub.ErrEmptyID,
+			err:      mqttpubsub.ErrEmptyID,
 			handler:  handler{false, "", msgChan},
 		},
 	}
@@ -336,7 +334,7 @@ func TestUnsubscribe(t *testing.T) {
 			desc:      "Unsubscribe from a non-existent topic with an ID",
 			topic:     "h",
 			clientID:  "clientid4",
-			err:       mqtt_pubsub.ErrNotSubscribed,
+			err:       mqttpubsub.ErrNotSubscribed,
 			subscribe: false,
 			handler:   handler{false, "clientid4", msgChan},
 		},
@@ -344,7 +342,7 @@ func TestUnsubscribe(t *testing.T) {
 			desc:      "Unsubscribe from an already unsubscribed topic with an ID",
 			topic:     fmt.Sprintf("%s.%s", chansPrefix, topic),
 			clientID:  "clientid4",
-			err:       mqtt_pubsub.ErrNotSubscribed,
+			err:       mqttpubsub.ErrNotSubscribed,
 			subscribe: false,
 			handler:   handler{false, "clientid4", msgChan},
 		},
@@ -368,7 +366,7 @@ func TestUnsubscribe(t *testing.T) {
 			desc:      "Unsubscribe from an already unsubscribed topic with a subtopic with an ID",
 			topic:     fmt.Sprintf("%s.%s.%s", chansPrefix, topic, subtopic),
 			clientID:  "clientid4",
-			err:       mqtt_pubsub.ErrNotSubscribed,
+			err:       mqttpubsub.ErrNotSubscribed,
 			subscribe: false,
 			handler:   handler{false, "clientid4", msgChan},
 		},
@@ -376,7 +374,7 @@ func TestUnsubscribe(t *testing.T) {
 			desc:      "Unsubscribe from an empty topic with an ID",
 			topic:     "",
 			clientID:  "clientid4",
-			err:       mqtt_pubsub.ErrEmptyTopic,
+			err:       mqttpubsub.ErrEmptyTopic,
 			subscribe: false,
 			handler:   handler{false, "clientid4", msgChan},
 		},
@@ -384,7 +382,7 @@ func TestUnsubscribe(t *testing.T) {
 			desc:      "Unsubscribe from a topic with empty ID",
 			topic:     fmt.Sprintf("%s.%s", chansPrefix, topic),
 			clientID:  "",
-			err:       mqtt_pubsub.ErrEmptyID,
+			err:       mqttpubsub.ErrEmptyID,
 			subscribe: false,
 			handler:   handler{false, "", msgChan},
 		},

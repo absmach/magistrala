@@ -15,7 +15,6 @@ import (
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/readers"
 	preader "github.com/mainflux/mainflux/readers/postgres"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

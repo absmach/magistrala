@@ -400,6 +400,7 @@ func TestAssign(t *testing.T) {
 		repoCall1.Unset()
 	}
 }
+
 func TestUpdatePolicy(t *testing.T) {
 	cRepo := new(umocks.Repository)
 	pRepo := new(upmocks.Repository)
@@ -544,8 +545,8 @@ func TestListPolicies(t *testing.T) {
 	mfsdk := sdk.NewSDK(conf)
 	id := generateUUID(t)
 
-	var nPolicy = uint64(10)
-	var aPolicies = []sdk.Policy{}
+	nPolicy := uint64(10)
+	aPolicies := []sdk.Policy{}
 	for i := uint64(0); i < nPolicy; i++ {
 		pr := sdk.Policy{
 			OwnerID: id,

@@ -6,12 +6,11 @@ package mongodb
 import (
 	"context"
 
-	"go.mongodb.org/mongo-driver/mongo"
-
 	"github.com/mainflux/mainflux/consumers"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 const senmlCollection string = "messages"

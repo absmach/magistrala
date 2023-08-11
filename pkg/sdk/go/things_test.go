@@ -496,8 +496,8 @@ func TestListThingsByChannel(t *testing.T) {
 	}
 	mfsdk := sdk.NewSDK(conf)
 
-	var nThing = uint64(10)
-	var aThings = []sdk.Thing{}
+	nThing := uint64(10)
+	aThings := []sdk.Thing{}
 
 	for i := uint64(1); i < nThing; i++ {
 		thing := sdk.Thing{

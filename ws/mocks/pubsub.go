@@ -43,6 +43,7 @@ type mockPubSub struct {
 func NewPubSub() MockPubSub {
 	return &mockPubSub{false, nil}
 }
+
 func (pubsub *mockPubSub) Publish(ctx context.Context, s string, msg *messaging.Message) error {
 	if pubsub.conn != nil {
 		data, err := json.Marshal(msg)

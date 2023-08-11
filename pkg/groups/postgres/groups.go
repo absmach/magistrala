@@ -274,6 +274,7 @@ func buildHierachy(gm mfgroups.GroupsPage) string {
 	}
 	return query
 }
+
 func buildQuery(gm mfgroups.GroupsPage) (string, error) {
 	queries := []string{}
 

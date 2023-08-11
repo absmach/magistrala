@@ -21,7 +21,7 @@ import (
 	mfclients "github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfgroups "github.com/mainflux/mainflux/pkg/groups"
-	mfSDK "github.com/mainflux/mainflux/pkg/sdk/go"
+	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/provision"
 	"github.com/mainflux/mainflux/provision/api"
@@ -123,7 +123,7 @@ func main() {
 		logger.Info("Continue with settings from file: " + cfg.File)
 	}
 
-	SDKCfg := mfSDK.Config{
+	SDKCfg := mfsdk.Config{
 		UsersURL:        cfg.Server.UsersURL,
 		ThingsURL:       cfg.Server.ThingsURL,
 		BootstrapURL:    cfg.Server.MfBSURL,
@@ -131,7 +131,7 @@ func main() {
 		MsgContentType:  contentType,
 		TLSVerification: cfg.Server.TLS,
 	}
-	SDK := mfSDK.NewSDK(SDKCfg)
+	SDK := mfsdk.NewSDK(SDKCfg)
 
 	svc := provision.New(cfg, SDK, logger)
 	svc = api.NewLoggingMiddleware(svc, logger)
@@ -155,7 +155,6 @@ func main() {
 	if err := g.Wait(); err != nil {
 		logger.Error(fmt.Sprintf("Provision service terminated: %s", err))
 	}
-
 }
 
 func loadConfigFromFile(file string) (provision.Config, error) {

@@ -10,7 +10,6 @@ import (
 )
 
 func TestValidate(t *testing.T) {
-
 	cases := map[string]struct {
 		ExternalID  string
 		ExternalKey string

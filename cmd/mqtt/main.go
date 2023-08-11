@@ -16,9 +16,9 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
-	thingsClient "github.com/mainflux/mainflux/internal/clients/grpc/things"
-	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
-	redisClient "github.com/mainflux/mainflux/internal/clients/redis"
+	thingsclient "github.com/mainflux/mainflux/internal/clients/grpc/things"
+	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
+	redisclient "github.com/mainflux/mainflux/internal/clients/redis"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	mflog "github.com/mainflux/mainflux/logger"
@@ -33,7 +33,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/uuid"
 	mp "github.com/mainflux/mproxy/pkg/mqtt"
 	"github.com/mainflux/mproxy/pkg/session"
-	ws "github.com/mainflux/mproxy/pkg/websocket"
+	"github.com/mainflux/mproxy/pkg/websocket"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -103,7 +103,7 @@ func main() {
 		Port: cfg.HTTPTargetPort,
 	}
 
-	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
+	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
 		exitCode = 1
@@ -150,7 +150,7 @@ func main() {
 	defer np.Close()
 	np = brokerstracing.NewPublisher(serverConfig, tracer, np)
 
-	ec, err := redisClient.Setup(envPrefixES)
+	ec, err := redisclient.Setup(envPrefixES)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to setup %s event store redis client : %s", svcName, err))
 		exitCode = 1
@@ -160,7 +160,7 @@ func main() {
 
 	es := mqttredis.NewEventStore(ctx, ec, cfg.Instance)
 
-	tc, tcHandler, err := thingsClient.Setup()
+	tc, tcHandler, err := thingsclient.Setup()
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -222,7 +222,7 @@ func proxyMQTT(ctx context.Context, cfg config, logger mflog.Logger, handler ses
 
 func proxyWS(ctx context.Context, cfg config, logger mflog.Logger, handler session.Handler) error {
 	target := fmt.Sprintf("%s:%s", cfg.HTTPTargetHost, cfg.HTTPTargetPort)
-	wp := ws.New(target, cfg.HTTPTargetPath, "ws", handler, logger)
+	wp := websocket.New(target, cfg.HTTPTargetPath, "ws", handler, logger)
 	http.Handle("/mqtt", wp.Handler())
 
 	errCh := make(chan error)

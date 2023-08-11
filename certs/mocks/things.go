@@ -62,7 +62,6 @@ func (svc *mainfluxThings) ViewClient(ctx context.Context, token, id string) (mf
 
 	if t, ok := svc.things[id]; ok && t.Owner == userID.GetId() {
 		return t, nil
-
 	}
 
 	return mfclients.Client{}, errors.ErrNotFound

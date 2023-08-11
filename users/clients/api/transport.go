@@ -350,6 +350,7 @@ func decodeRefreshToken(_ context.Context, r *http.Request) (interface{}, error)
 
 	return req, nil
 }
+
 func decodeCreateClientReq(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)

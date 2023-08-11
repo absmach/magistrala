@@ -6,8 +6,6 @@ package postgres
 import (
 	"context"
 
-	// required for SQL access.
-
 	"github.com/mainflux/mainflux/internal/postgres"
 	mfclients "github.com/mainflux/mainflux/pkg/clients"
 	pgclients "github.com/mainflux/mainflux/pkg/clients/postgres"

@@ -4,8 +4,8 @@
 package clients_test
 
 import (
-	context "context"
-	fmt "fmt"
+	"context"
+	"fmt"
 	"regexp"
 	"testing"
 	"time"
@@ -328,9 +328,9 @@ func TestListClients(t *testing.T) {
 	e := mocks.NewEmailer()
 	svc := clients.NewService(cRepo, pRepo, tokenizer, e, phasher, idProvider, passRegex)
 
-	var nClients = uint64(200)
-	var aClients = []mfclients.Client{}
-	var OwnerID = testsutil.GenerateUUID(t, idProvider)
+	nClients := uint64(200)
+	aClients := []mfclients.Client{}
+	OwnerID := testsutil.GenerateUUID(t, idProvider)
 	for i := uint64(1); i < nClients; i++ {
 		identity := fmt.Sprintf("TestListClients_%d@example.com", i)
 		client := mfclients.Client{
@@ -1199,8 +1199,8 @@ func TestListMembers(t *testing.T) {
 	e := mocks.NewEmailer()
 	svc := clients.NewService(cRepo, pRepo, tokenizer, e, phasher, idProvider, passRegex)
 
-	var nClients = uint64(10)
-	var aClients = []mfclients.Client{}
+	nClients := uint64(10)
+	aClients := []mfclients.Client{}
 	owner := testsutil.GenerateUUID(t, idProvider)
 	for i := uint64(0); i < nClients; i++ {
 		identity := fmt.Sprintf("member_%d@example.com", i)

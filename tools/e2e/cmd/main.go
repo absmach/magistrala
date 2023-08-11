@@ -17,7 +17,7 @@ const defNum = uint64(10)
 func main() {
 	econf := e2e.Config{}
 
-	var rootCmd = &cobra.Command{
+	rootCmd := &cobra.Command{
 		Use:   "e2e",
 		Short: "e2e is end-to-end testing tool for Mainflux",
 		Long: "Tool for testing end-to-end flow of mainflux by doing a couple of operations namely:\n" +

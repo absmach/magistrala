@@ -46,6 +46,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		msgChan <- message
 	}
 }
+
 func TestHandle(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(handler))
 	defer s.Close()

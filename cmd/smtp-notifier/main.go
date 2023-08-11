@@ -16,13 +16,13 @@ import (
 	"github.com/mainflux/mainflux/consumers"
 	"github.com/mainflux/mainflux/consumers/notifiers"
 	"github.com/mainflux/mainflux/consumers/notifiers/api"
-	notifierPg "github.com/mainflux/mainflux/consumers/notifiers/postgres"
+	notifierpg "github.com/mainflux/mainflux/consumers/notifiers/postgres"
 	"github.com/mainflux/mainflux/consumers/notifiers/smtp"
 	"github.com/mainflux/mainflux/consumers/notifiers/tracing"
 	"github.com/mainflux/mainflux/internal"
-	authClient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
-	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
-	pgClient "github.com/mainflux/mainflux/internal/clients/postgres"
+	authclient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
+	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
+	pgclient "github.com/mainflux/mainflux/internal/clients/postgres"
 	"github.com/mainflux/mainflux/internal/email"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
@@ -80,8 +80,8 @@ func main() {
 		}
 	}
 
-	dbConfig := pgClient.Config{Name: defDB}
-	db, err := pgClient.SetupWithConfig(envPrefixDB, *notifierPg.Migration(), dbConfig)
+	dbConfig := pgclient.Config{Name: defDB}
+	db, err := pgclient.SetupWithConfig(envPrefixDB, *notifierpg.Migration(), dbConfig)
 	if err != nil {
 		logger.Fatal(err.Error())
 		exitCode = 1
@@ -103,7 +103,7 @@ func main() {
 		return
 	}
 
-	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
+	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to init Jaeger: %s", err))
 		exitCode = 1
@@ -125,7 +125,7 @@ func main() {
 	defer pubSub.Close()
 	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
 
-	auth, authHandler, err := authClient.Setup(svcName)
+	auth, authHandler, err := authclient.Setup(svcName)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -166,12 +166,11 @@ func main() {
 	if err := g.Wait(); err != nil {
 		logger.Error(fmt.Sprintf("SMTP notifier service terminated: %s", err))
 	}
-
 }
 
 func newService(db *sqlx.DB, tracer trace.Tracer, auth policies.AuthServiceClient, c config, ec email.Config, logger mflog.Logger) (notifiers.Service, error) {
-	database := notifierPg.NewDatabase(db, tracer)
-	repo := tracing.New(tracer, notifierPg.New(database))
+	database := notifierpg.NewDatabase(db, tracer)
+	repo := tracing.New(tracer, notifierpg.New(database))
 	idp := ulid.New()
 
 	agent, err := email.New(&ec)

@@ -41,7 +41,7 @@ type config struct {
 }
 
 // Readable by all user groups but writeable by the user only.
-const filePermission = 0644
+const filePermission = 0o644
 
 var (
 	errReadFail            = errors.New("failed to read config file")
@@ -189,7 +189,7 @@ func setConfigValue(key string, value string) error {
 		}
 	}
 
-	var configKeyToField = map[string]interface{}{
+	configKeyToField := map[string]interface{}{
 		"things_url":       &config.Remotes.ThingsURL,
 		"users_url":        &config.Remotes.UsersURL,
 		"reader_url":       &config.Remotes.ReaderURL,

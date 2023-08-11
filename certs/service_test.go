@@ -137,7 +137,6 @@ func TestIssueCert(t *testing.T) {
 			assert.True(t, strings.Contains(cert.Subject.CommonName, thingKey), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		}
 	}
-
 }
 
 func TestRevokeCert(t *testing.T) {
@@ -177,7 +176,6 @@ func TestRevokeCert(t *testing.T) {
 		_, err := svc.RevokeCert(context.Background(), tc.token, tc.thingID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
-
 }
 
 func TestListCerts(t *testing.T) {

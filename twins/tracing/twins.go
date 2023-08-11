@@ -126,6 +126,5 @@ func (tcm twinCacheMiddleware) Remove(ctx context.Context, twinID string) error 
 }
 
 func createSpan(ctx context.Context, tracer trace.Tracer, opName string) (context.Context, trace.Span) {
-
 	return tracer.Start(ctx, opName)
 }

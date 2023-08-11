@@ -17,7 +17,7 @@ func main() {
 	bconf := bench.Config{}
 
 	// Command
-	var rootCmd = &cobra.Command{
+	rootCmd := &cobra.Command{
 		Use:   "mqtt-bench",
 		Short: "mqtt-bench is MQTT benchmark tool for Mainflux",
 		Long: `Tool for exctensive load and benchmarking of MQTT brokers used within the Mainflux platform.

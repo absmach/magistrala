@@ -14,9 +14,9 @@ import (
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/internal"
-	cassandraClient "github.com/mainflux/mainflux/internal/clients/cassandra"
-	authClient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
-	thingsClient "github.com/mainflux/mainflux/internal/clients/grpc/things"
+	cassandraclient "github.com/mainflux/mainflux/internal/clients/cassandra"
+	authclient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
+	thingsclient "github.com/mainflux/mainflux/internal/clients/grpc/things"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
@@ -68,7 +68,7 @@ func main() {
 	}
 
 	// Create new thing grpc client
-	tc, tcHandler, err := thingsClient.Setup()
+	tc, tcHandler, err := thingsclient.Setup()
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -79,7 +79,7 @@ func main() {
 	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
 
 	// Create new auth grpc client
-	auth, authHandler, err := authClient.Setup(svcName)
+	auth, authHandler, err := authclient.Setup(svcName)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -90,7 +90,7 @@ func main() {
 	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 
 	// Create new cassandra client
-	csdSession, err := cassandraClient.Setup(envPrefixDB)
+	csdSession, err := cassandraclient.Setup(envPrefixDB)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1

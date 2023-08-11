@@ -189,8 +189,7 @@ func (res passwResetReqRes) Empty() bool {
 	return false
 }
 
-type passwChangeRes struct {
-}
+type passwChangeRes struct{}
 
 func (res passwChangeRes) Code() int {
 	return http.StatusCreated

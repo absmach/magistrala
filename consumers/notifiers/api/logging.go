@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"time"
 
-	notifiers "github.com/mainflux/mainflux/consumers/notifiers"
+	"github.com/mainflux/mainflux/consumers/notifiers"
 	mflog "github.com/mainflux/mainflux/logger"
 )
 

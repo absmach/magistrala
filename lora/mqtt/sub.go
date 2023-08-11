@@ -7,10 +7,9 @@ import (
 	"fmt"
 	"time"
 
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/lora"
-
-	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
 // Subscriber represents the MQTT broker.

@@ -68,7 +68,6 @@ func (s *Server) Start() error {
 	case err := <-errCh:
 		return err
 	}
-
 }
 
 func (s *Server) Stop() error {

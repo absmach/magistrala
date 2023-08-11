@@ -14,12 +14,12 @@ import (
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/consumers"
-	consumerTracing "github.com/mainflux/mainflux/consumers/tracing"
+	consumertracing "github.com/mainflux/mainflux/consumers/tracing"
 	"github.com/mainflux/mainflux/consumers/writers/api"
 	"github.com/mainflux/mainflux/consumers/writers/timescale"
 	"github.com/mainflux/mainflux/internal"
-	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
-	pgClient "github.com/mainflux/mainflux/internal/clients/postgres"
+	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
+	pgclient "github.com/mainflux/mainflux/internal/clients/postgres"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
@@ -79,8 +79,8 @@ func main() {
 		return
 	}
 
-	dbConfig := pgClient.Config{Name: defDB}
-	db, err := pgClient.SetupWithConfig(envPrefixDB, *timescale.Migration(), dbConfig)
+	dbConfig := pgclient.Config{Name: defDB}
+	db, err := pgclient.SetupWithConfig(envPrefixDB, *timescale.Migration(), dbConfig)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -88,7 +88,7 @@ func main() {
 	}
 	defer db.Close()
 
-	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
+	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
 		exitCode = 1
@@ -102,7 +102,7 @@ func main() {
 	tracer := tp.Tracer(svcName)
 
 	repo := newService(db, logger)
-	repo = consumerTracing.NewBlocking(tracer, repo, httpServerConfig)
+	repo = consumertracing.NewBlocking(tracer, repo, httpServerConfig)
 
 	pubSub, err := brokers.NewPubSub(cfg.BrokerURL, "", logger)
 	if err != nil {

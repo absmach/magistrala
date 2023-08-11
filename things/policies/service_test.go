@@ -4,8 +4,8 @@
 package policies_test
 
 import (
-	context "context"
-	fmt "fmt"
+	"context"
+	"fmt"
 	"testing"
 
 	"github.com/mainflux/mainflux/internal/apiutil"
@@ -135,7 +135,6 @@ func TestAddPolicy(t *testing.T) {
 		repoCall2.Parent.AssertCalled(t, "Save", context.Background(), mock.Anything)
 		repoCall2.Unset()
 	}
-
 }
 
 func TestAuthorize(t *testing.T) {
@@ -197,7 +196,6 @@ func TestDeletePolicy(t *testing.T) {
 }
 
 func TestListPolicies(t *testing.T) {
-
 	svc, pRepo, _ := newService(map[string]string{token: adminEmail})
 
 	id := testsutil.GenerateUUID(t, idProvider)
@@ -205,8 +203,8 @@ func TestListPolicies(t *testing.T) {
 	readPolicy := "m_read"
 	writePolicy := "m_write"
 
-	var nPolicy = uint64(10)
-	var aPolicies = []policies.Policy{}
+	nPolicy := uint64(10)
+	aPolicies := []policies.Policy{}
 	for i := uint64(0); i < nPolicy; i++ {
 		pr := policies.Policy{
 			OwnerID: id,
@@ -282,11 +280,9 @@ func TestListPolicies(t *testing.T) {
 		assert.Equal(t, tc.response, page, fmt.Sprintf("%s: expected size %v got %v\n", tc.desc, tc.response, page))
 		repoCall.Unset()
 	}
-
 }
 
 func TestUpdatePolicies(t *testing.T) {
-
 	svc, pRepo, _ := newService(map[string]string{token: adminEmail})
 
 	policy := policies.Policy{Object: "obj1", Actions: []string{"m_read"}, Subject: "sub1"}

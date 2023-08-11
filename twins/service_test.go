@@ -176,7 +176,6 @@ func TestListTwins(t *testing.T) {
 			err:    nil,
 		},
 		{
-
 			desc:   "list with zero limit",
 			token:  token,
 			limit:  0,
@@ -268,7 +267,7 @@ func TestSaveStates(t *testing.T) {
 	twWildcard, err := svc.AddTwin(context.Background(), token, twin, defWildcard)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
-	var recs = make([]senml.Record, numRecs)
+	recs := make([]senml.Record, numRecs)
 	mocks.CreateSenML(recs)
 
 	var ttlAdded uint64
@@ -342,7 +341,7 @@ func TestListStates(t *testing.T) {
 		mocks.CreateDefinition(channels[2:3], subtopics[2:3]))
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
-	var recs = make([]senml.Record, numRecs)
+	recs := make([]senml.Record, numRecs)
 	mocks.CreateSenML(recs)
 	message, err := mocks.CreateMessage(attr, recs)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))

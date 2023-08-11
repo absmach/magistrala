@@ -15,13 +15,12 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/go-zoo/bone"
-	"github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/errors"
-
 	"github.com/mainflux/mainflux/bootstrap"
 	"github.com/mainflux/mainflux/bootstrap/mocks"
 	"github.com/mainflux/mainflux/bootstrap/redis/producer"
+	"github.com/mainflux/mainflux/logger"
 	mfclients "github.com/mainflux/mainflux/pkg/clients"
+	"github.com/mainflux/mainflux/pkg/errors"
 	mfgroups "github.com/mainflux/mainflux/pkg/groups"
 	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
 	"github.com/mainflux/mainflux/things/clients"

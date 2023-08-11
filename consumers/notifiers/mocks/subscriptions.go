@@ -8,7 +8,7 @@ import (
 	"sort"
 	"sync"
 
-	notifiers "github.com/mainflux/mainflux/consumers/notifiers"
+	"github.com/mainflux/mainflux/consumers/notifiers"
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 

@@ -12,9 +12,8 @@ import (
 	"sync"
 
 	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/things/policies"
-
 	"github.com/mainflux/mainflux/pkg/messaging"
+	"github.com/mainflux/mainflux/things/policies"
 )
 
 const chansPrefix = "channels"

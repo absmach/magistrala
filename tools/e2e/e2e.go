@@ -170,7 +170,8 @@ func createUsers(s sdk.SDK, conf Config, token string) ([]sdk.User, error) {
 			Name: fmt.Sprintf("%s-%s", conf.Prefix, namesgenerator.Generate()),
 			Credentials: sdk.Credentials{
 				Identity: fmt.Sprintf("%s-%s@email.com", conf.Prefix, namesgenerator.Generate()),
-				Secret:   defPass},
+				Secret:   defPass,
+			},
 			Status: sdk.EnabledStatus,
 		}
 

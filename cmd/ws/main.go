@@ -13,8 +13,8 @@ import (
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/internal"
-	thingsClient "github.com/mainflux/mainflux/internal/clients/grpc/things"
-	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
+	thingsclient "github.com/mainflux/mainflux/internal/clients/grpc/things"
+	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
@@ -77,7 +77,7 @@ func main() {
 		return
 	}
 
-	tc, tcHandler, err := thingsClient.Setup()
+	tc, tcHandler, err := thingsclient.Setup()
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -87,7 +87,7 @@ func main() {
 
 	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
 
-	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
+	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to init Jaeger: %s", err))
 		exitCode = 1

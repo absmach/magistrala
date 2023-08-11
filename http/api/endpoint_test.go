@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	adapter "github.com/mainflux/mainflux/http"
+	server "github.com/mainflux/mainflux/http"
 	"github.com/mainflux/mainflux/http/api"
 	"github.com/mainflux/mainflux/http/mocks"
 	"github.com/mainflux/mainflux/internal/apiutil"
@@ -21,12 +21,12 @@ import (
 
 const instanceID = "5de9b29a-feb9-11ed-be56-0242ac120002"
 
-func newService(cc policies.AuthServiceClient) adapter.Service {
+func newService(cc policies.AuthServiceClient) server.Service {
 	pub := mocks.NewPublisher()
-	return adapter.New(pub, cc)
+	return server.New(pub, cc)
 }
 
-func newHTTPServer(svc adapter.Service) *httptest.Server {
+func newHTTPServer(svc server.Service) *httptest.Server {
 	mux := api.MakeHandler(svc, instanceID)
 	return httptest.NewServer(mux)
 }

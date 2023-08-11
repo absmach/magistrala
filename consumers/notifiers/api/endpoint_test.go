@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	notifiers "github.com/mainflux/mainflux/consumers/notifiers"
+	"github.com/mainflux/mainflux/consumers/notifiers"
 	httpapi "github.com/mainflux/mainflux/consumers/notifiers/api"
 	"github.com/mainflux/mainflux/consumers/notifiers/mocks"
 	"github.com/mainflux/mainflux/internal/apiutil"

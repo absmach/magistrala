@@ -14,10 +14,10 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	pgClient "github.com/mainflux/mainflux/internal/clients/postgres"
+	pgclient "github.com/mainflux/mainflux/internal/clients/postgres"
 	"github.com/mainflux/mainflux/internal/postgres"
 	upostgres "github.com/mainflux/mainflux/users/postgres"
-	dockertest "github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"go.opentelemetry.io/otel"
 )
@@ -66,7 +66,7 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	dbConfig := pgClient.Config{
+	dbConfig := pgclient.Config{
 		Host:        "localhost",
 		Port:        port,
 		User:        "test",
@@ -78,7 +78,7 @@ func TestMain(m *testing.M) {
 		SSLRootCert: "",
 	}
 
-	if db, err = pgClient.SetupDB(dbConfig, *upostgres.Migration()); err != nil {
+	if db, err = pgclient.SetupDB(dbConfig, *upostgres.Migration()); err != nil {
 		log.Fatalf("Could not setup test DB connection: %s", err)
 	}
 

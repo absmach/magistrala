@@ -177,7 +177,6 @@ func (tm *tracingMiddleware) ListMembers(ctx context.Context, token, groupID str
 	defer span.End()
 
 	return tm.svc.ListMembers(ctx, token, groupID, pm)
-
 }
 
 // Identify traces the "Identify" operation of the wrapped clients.Service.

@@ -11,7 +11,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/mainflux/mainflux/consumers/writers/cassandra"
-	casClient "github.com/mainflux/mainflux/internal/clients/cassandra"
+	casclient "github.com/mainflux/mainflux/internal/clients/cassandra"
 	"github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	"github.com/stretchr/testify/assert"
@@ -36,12 +36,12 @@ var (
 )
 
 func TestSaveSenml(t *testing.T) {
-	session, err := casClient.Connect(casClient.Config{
+	session, err := casclient.Connect(casclient.Config{
 		Hosts:    []string{addr},
 		Keyspace: keyspace,
 	})
 	require.Nil(t, err, fmt.Sprintf("failed to connect to Cassandra: %s", err))
-	err = casClient.InitDB(session, cassandra.Table)
+	err = casclient.InitDB(session, cassandra.Table)
 	require.Nil(t, err, fmt.Sprintf("failed to initialize to Cassandra: %s", err))
 	repo := cassandra.New(session)
 	now := time.Now().Unix()
@@ -78,7 +78,7 @@ func TestSaveSenml(t *testing.T) {
 }
 
 func TestSaveJSON(t *testing.T) {
-	session, err := casClient.Connect(casClient.Config{
+	session, err := casclient.Connect(casclient.Config{
 		Hosts:    []string{addr},
 		Keyspace: keyspace,
 	})

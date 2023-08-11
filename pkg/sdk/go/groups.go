@@ -106,7 +106,6 @@ func (sdk mfSDK) Children(id string, pm PageMetadata, token string) (GroupsPage,
 }
 
 func (sdk mfSDK) getGroups(url, token string) (GroupsPage, errors.SDKError) {
-
 	_, body, err := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
 	if err != nil {
 		return GroupsPage{}, err

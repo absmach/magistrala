@@ -10,8 +10,8 @@ import (
 	"log"
 	"time"
 
-	mat "gonum.org/v1/gonum/mat"
-	stat "gonum.org/v1/gonum/stat"
+	"gonum.org/v1/gonum/mat"
+	"gonum.org/v1/gonum/stat"
 )
 
 type subsResults map[string](*[]float64)

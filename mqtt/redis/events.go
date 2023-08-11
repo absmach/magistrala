@@ -5,9 +5,7 @@ package redis
 
 import "github.com/mainflux/mainflux/internal/clients/redis"
 
-var (
-	_ redis.Event = (*mqttEvent)(nil)
-)
+var _ redis.Event = (*mqttEvent)(nil)
 
 type mqttEvent struct {
 	clientID  string

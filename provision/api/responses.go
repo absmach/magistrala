@@ -3,12 +3,12 @@ package api
 import (
 	"net/http"
 
-	SDK "github.com/mainflux/mainflux/pkg/sdk/go"
+	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
 )
 
 type provisionRes struct {
-	Things      []SDK.Thing       `json:"things"`
-	Channels    []SDK.Channel     `json:"channels"`
+	Things      []sdk.Thing       `json:"things"`
+	Channels    []sdk.Channel     `json:"channels"`
 	ClientCert  map[string]string `json:"client_cert,omitempty"`
 	ClientKey   map[string]string `json:"client_key,omitempty"`
 	CACert      string            `json:"ca_cert,omitempty"`

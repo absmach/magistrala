@@ -40,7 +40,7 @@ func (sdk mfSDK) ReadMessages(chanName, token string) (MessagesPage, errors.SDKE
 
 	url := fmt.Sprintf("%s/channels/%s/messages%s", sdk.readerURL, chanID, subtopicPart)
 
-	var header = make(map[string]string)
+	header := make(map[string]string)
 	header["Content-Type"] = string(sdk.msgContentType)
 
 	_, body, err := sdk.processRequest(http.MethodGet, url, token, nil, header, http.StatusOK)

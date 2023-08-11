@@ -85,7 +85,6 @@ func Provision(conf Config) error {
 	// Create new user
 	if _, err := s.CreateUser(user, ""); err != nil {
 		return fmt.Errorf("Unable to create new user: %s", err.Error())
-
 	}
 
 	var err error

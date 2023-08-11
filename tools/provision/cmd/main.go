@@ -14,7 +14,7 @@ import (
 func main() {
 	pconf := provision.Config{}
 
-	var rootCmd = &cobra.Command{
+	rootCmd := &cobra.Command{
 		Use:   "provision",
 		Short: "provision is provisioning tool for Mainflux",
 		Long: `Tool for provisioning series of Mainflux channels and things and connecting them together.

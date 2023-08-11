@@ -4,8 +4,8 @@
 package clients_test
 
 import (
-	context "context"
-	fmt "fmt"
+	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -318,9 +318,9 @@ func TestViewClient(t *testing.T) {
 func TestListClients(t *testing.T) {
 	svc, cRepo, _ := newService(map[string]string{token: adminEmail})
 
-	var nClients = uint64(200)
-	var aClients = []mfclients.Client{}
-	var OwnerID = testsutil.GenerateUUID(t, idProvider)
+	nClients := uint64(200)
+	aClients := []mfclients.Client{}
+	OwnerID := testsutil.GenerateUUID(t, idProvider)
 	for i := uint64(1); i < nClients; i++ {
 		identity := fmt.Sprintf("TestListClients_%d@example.com", i)
 		client := mfclients.Client{
@@ -1034,8 +1034,8 @@ func TestDisableClient(t *testing.T) {
 func TestListMembers(t *testing.T) {
 	svc, cRepo, _ := newService(map[string]string{token: adminEmail})
 
-	var nClients = uint64(10)
-	var aClients = []mfclients.Client{}
+	nClients := uint64(10)
+	aClients := []mfclients.Client{}
 	owner := testsutil.GenerateUUID(t, idProvider)
 	for i := uint64(0); i < nClients; i++ {
 		identity := fmt.Sprintf("member_%d@example.com", i)

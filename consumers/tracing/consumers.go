@@ -28,8 +28,10 @@ var defaultAttributes = []attribute.KeyValue{
 	attribute.String("network.type", "ipv4"),
 }
 
-var _ consumers.AsyncConsumer = (*tracingMiddlewareAsync)(nil)
-var _ consumers.BlockingConsumer = (*tracingMiddlewareBlock)(nil)
+var (
+	_ consumers.AsyncConsumer    = (*tracingMiddlewareAsync)(nil)
+	_ consumers.BlockingConsumer = (*tracingMiddlewareBlock)(nil)
+)
 
 type tracingMiddlewareAsync struct {
 	consumer consumers.AsyncConsumer
@@ -106,7 +108,7 @@ func (tm *tracingMiddlewareAsync) Errors() <-chan error {
 }
 
 func createSpan(ctx context.Context, operation, clientID, topic, subTopic string, noMessages int, cfg server.Config, spanKind trace.SpanKind, tracer trace.Tracer) (context.Context, trace.Span) {
-	var subject = fmt.Sprintf("channels.%s.messages", topic)
+	subject := fmt.Sprintf("channels.%s.messages", topic)
 	if subTopic != "" {
 		subject = fmt.Sprintf("%s.%s", subject, subTopic)
 	}

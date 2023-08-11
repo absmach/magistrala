@@ -17,7 +17,7 @@ type Token struct {
 }
 
 func (sdk mfSDK) CreateToken(user User) (Token, errors.SDKError) {
-	var treq = tokenReq{
+	treq := tokenReq{
 		Identity: user.Credentials.Identity,
 		Secret:   user.Credentials.Secret,
 	}
@@ -48,7 +48,7 @@ func (sdk mfSDK) RefreshToken(token string) (Token, errors.SDKError) {
 		return Token{}, sdkerr
 	}
 
-	var t = Token{}
+	t := Token{}
 	if err := json.Unmarshal(body, &t); err != nil {
 		return Token{}, errors.NewSDKError(err)
 	}

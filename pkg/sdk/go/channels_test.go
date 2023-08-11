@@ -409,7 +409,6 @@ func TestViewChannel(t *testing.T) {
 		err       errors.SDKError
 	}{
 		{
-
 			desc:      "view channel",
 			token:     adminToken,
 			channelID: channel.ID,
@@ -650,8 +649,8 @@ func TestListChannelsByThing(t *testing.T) {
 	}
 	mfsdk := sdk.NewSDK(conf)
 
-	var nChannels = uint64(100)
-	var aChannels = []sdk.Channel{}
+	nChannels := uint64(100)
+	aChannels := []sdk.Channel{}
 
 	for i := uint64(1); i < nChannels; i++ {
 		channel := sdk.Channel{

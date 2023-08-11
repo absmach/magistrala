@@ -71,7 +71,6 @@ func (tm *tracingMiddleware) UpdateClientSecret(ctx context.Context, token, oldS
 	defer span.End()
 
 	return tm.svc.UpdateClientSecret(ctx, token, oldSecret, newSecret)
-
 }
 
 // UpdateClientOwner traces the "UpdateClientOwner" operation of the wrapped policies.Service.
@@ -107,7 +106,6 @@ func (tm *tracingMiddleware) ListClientsByGroup(ctx context.Context, token, grou
 	defer span.End()
 
 	return tm.svc.ListClientsByGroup(ctx, token, groupID, pm)
-
 }
 
 // ListMemberships traces the "ListMemberships" operation of the wrapped policies.Service.

@@ -82,5 +82,4 @@ func (lm *loggingMiddleware) Unsubscribe(ctx context.Context, key, chanID, subto
 	}(time.Now())
 
 	return lm.svc.Unsubscribe(ctx, key, chanID, subtopic, token)
-
 }

@@ -105,8 +105,8 @@ func TestClientsRetrieveAll(t *testing.T) {
 	grepo := gpostgres.New(database)
 	prepo := ppostgres.NewRepository(database)
 
-	var nClients = uint64(200)
-	var ownerID = testsutil.GenerateUUID(t, idProvider)
+	nClients := uint64(200)
+	ownerID := testsutil.GenerateUUID(t, idProvider)
 
 	meta := mfclients.Metadata{
 		"admin": "true",
@@ -114,9 +114,9 @@ func TestClientsRetrieveAll(t *testing.T) {
 	wrongMeta := mfclients.Metadata{
 		"admin": "false",
 	}
-	var expectedClients = []mfclients.Client{}
+	expectedClients := []mfclients.Client{}
 
-	var sharedGroup = mfgroups.Group{
+	sharedGroup := mfgroups.Group{
 		ID:   testsutil.GenerateUUID(t, idProvider),
 		Name: "shared-group",
 	}
@@ -146,7 +146,7 @@ func TestClientsRetrieveAll(t *testing.T) {
 		client, err = repo.Save(context.Background(), client)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		expectedClients = append(expectedClients, client)
-		var policy = policies.Policy{
+		policy := policies.Policy{
 			Subject: client.ID,
 			Object:  sharedGroup.ID,
 			Actions: []string{"c_list"},
@@ -218,7 +218,8 @@ func TestClientsRetrieveAll(t *testing.T) {
 				Metadata: meta,
 				Status:   mfclients.AllStatus,
 			},
-			response: []mfclients.Client{expectedClients[0], expectedClients[10], expectedClients[20], expectedClients[30], expectedClients[40], expectedClients[50], expectedClients[60],
+			response: []mfclients.Client{
+				expectedClients[0], expectedClients[10], expectedClients[20], expectedClients[30], expectedClients[40], expectedClients[50], expectedClients[60],
 				expectedClients[70], expectedClients[80], expectedClients[90], expectedClients[100], expectedClients[110], expectedClients[120], expectedClients[130],
 				expectedClients[140], expectedClients[150], expectedClients[160], expectedClients[170], expectedClients[180], expectedClients[190],
 			},
@@ -265,7 +266,8 @@ func TestClientsRetrieveAll(t *testing.T) {
 				Owner:  ownerID,
 				Status: mfclients.AllStatus,
 			},
-			response: []mfclients.Client{expectedClients[0], expectedClients[10], expectedClients[20], expectedClients[30], expectedClients[40], expectedClients[50], expectedClients[60],
+			response: []mfclients.Client{
+				expectedClients[0], expectedClients[10], expectedClients[20], expectedClients[30], expectedClients[40], expectedClients[50], expectedClients[60],
 				expectedClients[70], expectedClients[80], expectedClients[90], expectedClients[100], expectedClients[110], expectedClients[120], expectedClients[130],
 				expectedClients[140], expectedClients[150], expectedClients[160], expectedClients[170], expectedClients[180], expectedClients[190],
 			},
@@ -291,7 +293,8 @@ func TestClientsRetrieveAll(t *testing.T) {
 				Action:   "c_list",
 				Status:   mfclients.AllStatus,
 			},
-			response: []mfclients.Client{expectedClients[0], expectedClients[10], expectedClients[20], expectedClients[30], expectedClients[40], expectedClients[50], expectedClients[60],
+			response: []mfclients.Client{
+				expectedClients[0], expectedClients[10], expectedClients[20], expectedClients[30], expectedClients[40], expectedClients[50], expectedClients[60],
 				expectedClients[70], expectedClients[80], expectedClients[90], expectedClients[100], expectedClients[110], expectedClients[120], expectedClients[130],
 				expectedClients[140], expectedClients[150], expectedClients[160], expectedClients[170], expectedClients[180], expectedClients[190],
 			},
@@ -306,7 +309,8 @@ func TestClientsRetrieveAll(t *testing.T) {
 				Owner:    ownerID,
 				Status:   mfclients.AllStatus,
 			},
-			response: []mfclients.Client{expectedClients[0], expectedClients[10], expectedClients[20], expectedClients[30], expectedClients[40], expectedClients[50], expectedClients[60],
+			response: []mfclients.Client{
+				expectedClients[0], expectedClients[10], expectedClients[20], expectedClients[30], expectedClients[40], expectedClients[50], expectedClients[60],
 				expectedClients[70], expectedClients[80], expectedClients[90], expectedClients[100], expectedClients[110], expectedClients[120], expectedClients[130],
 				expectedClients[140], expectedClients[150], expectedClients[160], expectedClients[170], expectedClients[180], expectedClients[190],
 			},
@@ -350,7 +354,8 @@ func TestClientsRetrieveAll(t *testing.T) {
 				Tag:    "Test",
 				Status: mfclients.AllStatus,
 			},
-			response: []mfclients.Client{expectedClients[0], expectedClients[10], expectedClients[20], expectedClients[30], expectedClients[40], expectedClients[50], expectedClients[60],
+			response: []mfclients.Client{
+				expectedClients[0], expectedClients[10], expectedClients[20], expectedClients[30], expectedClients[40], expectedClients[50], expectedClients[60],
 				expectedClients[70], expectedClients[80], expectedClients[90], expectedClients[100], expectedClients[110], expectedClients[120], expectedClients[130],
 				expectedClients[140], expectedClients[150], expectedClients[160], expectedClients[170], expectedClients[180], expectedClients[190],
 			},
@@ -376,7 +381,8 @@ func TestClientsRetrieveAll(t *testing.T) {
 				Status:   mfclients.AllStatus,
 				Action:   "c_list",
 			},
-			response: []mfclients.Client{expectedClients[0], expectedClients[10], expectedClients[20], expectedClients[30], expectedClients[40], expectedClients[50], expectedClients[60],
+			response: []mfclients.Client{
+				expectedClients[0], expectedClients[10], expectedClients[20], expectedClients[30], expectedClients[40], expectedClients[50], expectedClients[60],
 				expectedClients[70], expectedClients[80], expectedClients[90], expectedClients[100], expectedClients[110], expectedClients[120], expectedClients[130],
 				expectedClients[140], expectedClients[150], expectedClients[160], expectedClients[170], expectedClients[180], expectedClients[190],
 			},

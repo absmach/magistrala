@@ -73,8 +73,7 @@ func (res listSubsRes) Empty() bool {
 	return false
 }
 
-type removeSubRes struct {
-}
+type removeSubRes struct{}
 
 func (res removeSubRes) Code() int {
 	return http.StatusNoContent

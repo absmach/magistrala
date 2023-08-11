@@ -35,7 +35,7 @@ var cmdPolicies = []cobra.Command{
 				return
 			}
 
-			var policy = mfxsdk.Policy{
+			policy := mfxsdk.Policy{
 				Subject: args[1],
 				Object:  args[2],
 				Actions: actions,
@@ -76,7 +76,7 @@ var cmdPolicies = []cobra.Command{
 				return
 			}
 
-			var policy = mfxsdk.Policy{
+			policy := mfxsdk.Policy{
 				Subject: args[1],
 				Object:  args[2],
 				Actions: actions,
@@ -150,7 +150,7 @@ var cmdPolicies = []cobra.Command{
 				return
 			}
 
-			var policy = mfxsdk.Policy{
+			policy := mfxsdk.Policy{
 				Subject: args[1],
 				Object:  args[2],
 			}
@@ -183,7 +183,7 @@ var cmdPolicies = []cobra.Command{
 				return
 			}
 
-			var areq = mfxsdk.AccessRequest{
+			areq := mfxsdk.AccessRequest{
 				Subject:    args[1],
 				Object:     args[2],
 				Action:     args[3],

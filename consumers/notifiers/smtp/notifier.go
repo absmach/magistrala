@@ -6,7 +6,7 @@ package smtp
 import (
 	"fmt"
 
-	notifiers "github.com/mainflux/mainflux/consumers/notifiers"
+	"github.com/mainflux/mainflux/consumers/notifiers"
 	"github.com/mainflux/mainflux/internal/email"
 	"github.com/mainflux/mainflux/pkg/messaging"
 )

@@ -9,9 +9,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/mainflux/mainflux/consumers/notifiers"
 	httpapi "github.com/mainflux/mainflux/consumers/notifiers/api"
 	"github.com/mainflux/mainflux/consumers/notifiers/mocks"
@@ -20,6 +17,8 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
 	"github.com/mainflux/mainflux/pkg/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const wrongValue = "wrong_value"
@@ -174,7 +173,7 @@ func TestListSubscription(t *testing.T) {
 	}
 
 	mfsdk := sdk.NewSDK(sdkConf)
-	var nSubs = 10
+	nSubs := 10
 	subs := make([]sdk.Subscription, nSubs)
 	for i := 0; i < nSubs; i++ {
 		id, err := mfsdk.CreateSubscription(fmt.Sprintf("topic_%d", i), fmt.Sprintf("contact_%d", i), exampleUser1)

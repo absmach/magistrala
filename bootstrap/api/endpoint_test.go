@@ -120,7 +120,6 @@ func newConfig(channels []bootstrap.Channel) bootstrap.Config {
 
 func (tr testRequest) make() (*http.Response, error) {
 	req, err := http.NewRequest(tr.method, tr.url, tr.body)
-
 	if err != nil {
 		return nil, err
 	}
@@ -536,6 +535,7 @@ func TestUpdate(t *testing.T) {
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 	}
 }
+
 func TestUpdateCert(t *testing.T) {
 	auth := mocks.NewAuthClient(map[string]string{validToken: email})
 
@@ -1012,7 +1012,8 @@ func TestRemove(t *testing.T) {
 			id:     saved.ThingID,
 			auth:   invalidToken,
 			status: http.StatusUnauthorized,
-		}, {
+		},
+		{
 			desc:   "remove with an empty token",
 			id:     saved.ThingID,
 			auth:   "",

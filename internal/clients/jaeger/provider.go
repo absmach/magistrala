@@ -10,7 +10,7 @@ import (
 	jaegerp "go.opentelemetry.io/contrib/propagators/jaeger"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/exporters/jaeger"
+	jaegerexp "go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
@@ -31,7 +31,7 @@ func NewProvider(svcName, url, instanceID string) (*tracesdk.TracerProvider, err
 		return nil, errNoSvcName
 	}
 
-	exporter, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(url)))
+	exporter, err := jaegerexp.New(jaegerexp.WithCollectorEndpoint(jaegerexp.WithEndpoint(url)))
 	if err != nil {
 		return nil, err
 	}

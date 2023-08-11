@@ -6,9 +6,9 @@ package gopcua
 import (
 	"context"
 
-	opcuaGopcua "github.com/gopcua/opcua"
+	opcuagocpua "github.com/gopcua/opcua"
 	"github.com/gopcua/opcua/id"
-	uaGopcua "github.com/gopcua/opcua/ua"
+	uagocpua "github.com/gopcua/opcua/ua"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/opcua"
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -18,11 +18,11 @@ const maxChildrens = 4 // max browsing node children level
 
 // NodeDef represents the node browser responnse.
 type NodeDef struct {
-	NodeID      *uaGopcua.NodeID
-	NodeClass   uaGopcua.NodeClass
+	NodeID      *uagocpua.NodeID
+	NodeClass   uagocpua.NodeClass
 	BrowseName  string
 	Description string
-	AccessLevel uaGopcua.AccessLevelType
+	AccessLevel uagocpua.AccessLevelType
 	Path        string
 	DataType    string
 	Writable    bool
@@ -48,11 +48,11 @@ func NewBrowser(ctx context.Context, log logger.Logger) opcua.Browser {
 }
 
 func (c browser) Browse(serverURI, nodeID string) ([]opcua.BrowsedNode, error) {
-	opts := []opcuaGopcua.Option{
-		opcuaGopcua.SecurityMode(uaGopcua.MessageSecurityModeNone),
+	opts := []opcuagocpua.Option{
+		opcuagocpua.SecurityMode(uagocpua.MessageSecurityModeNone),
 	}
 
-	oc := opcuaGopcua.NewClient(serverURI, opts...)
+	oc := opcuagocpua.NewClient(serverURI, opts...)
 	if err := oc.Connect(c.ctx); err != nil {
 		return nil, errors.Wrap(errFailedConn, err)
 	}
@@ -79,67 +79,67 @@ func (c browser) Browse(serverURI, nodeID string) ([]opcua.BrowsedNode, error) {
 	return nodes, nil
 }
 
-func browse(oc *opcuaGopcua.Client, nodeID, path string, level int) ([]NodeDef, error) {
+func browse(oc *opcuagocpua.Client, nodeID, path string, level int) ([]NodeDef, error) {
 	if level > maxChildrens {
 		return nil, nil
 	}
 
-	nid, err := uaGopcua.ParseNodeID(nodeID)
+	nid, err := uagocpua.ParseNodeID(nodeID)
 	if err != nil {
 		return []NodeDef{}, err
 	}
 	n := oc.Node(nid)
 
 	attrs, err := n.Attributes(
-		uaGopcua.AttributeIDNodeClass,
-		uaGopcua.AttributeIDBrowseName,
-		uaGopcua.AttributeIDDescription,
-		uaGopcua.AttributeIDAccessLevel,
-		uaGopcua.AttributeIDDataType,
+		uagocpua.AttributeIDNodeClass,
+		uagocpua.AttributeIDBrowseName,
+		uagocpua.AttributeIDDescription,
+		uagocpua.AttributeIDAccessLevel,
+		uagocpua.AttributeIDDataType,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	var def = NodeDef{
+	def := NodeDef{
 		NodeID: n.ID,
 	}
 
 	switch err := attrs[0].Status; err {
-	case uaGopcua.StatusOK:
-		def.NodeClass = uaGopcua.NodeClass(attrs[0].Value.Int())
+	case uagocpua.StatusOK:
+		def.NodeClass = uagocpua.NodeClass(attrs[0].Value.Int())
 	default:
 		return nil, err
 	}
 
 	switch err := attrs[1].Status; err {
-	case uaGopcua.StatusOK:
+	case uagocpua.StatusOK:
 		def.BrowseName = attrs[1].Value.String()
 	default:
 		return nil, err
 	}
 
 	switch err := attrs[2].Status; err {
-	case uaGopcua.StatusOK:
+	case uagocpua.StatusOK:
 		def.Description = attrs[2].Value.String()
-	case uaGopcua.StatusBadAttributeIDInvalid:
+	case uagocpua.StatusBadAttributeIDInvalid:
 		// ignore
 	default:
 		return nil, err
 	}
 
 	switch err := attrs[3].Status; err {
-	case uaGopcua.StatusOK:
-		def.AccessLevel = uaGopcua.AccessLevelType(attrs[3].Value.Int())
-		def.Writable = def.AccessLevel&uaGopcua.AccessLevelTypeCurrentWrite == uaGopcua.AccessLevelTypeCurrentWrite
-	case uaGopcua.StatusBadAttributeIDInvalid:
+	case uagocpua.StatusOK:
+		def.AccessLevel = uagocpua.AccessLevelType(attrs[3].Value.Int())
+		def.Writable = def.AccessLevel&uagocpua.AccessLevelTypeCurrentWrite == uagocpua.AccessLevelTypeCurrentWrite
+	case uagocpua.StatusBadAttributeIDInvalid:
 		// ignore
 	default:
 		return nil, err
 	}
 
 	switch err := attrs[4].Status; err {
-	case uaGopcua.StatusOK:
+	case uagocpua.StatusOK:
 		switch v := attrs[4].Value.NodeID().IntID(); v {
 		case id.DateTime:
 			def.DataType = "time.Time"
@@ -168,7 +168,7 @@ func browse(oc *opcuaGopcua.Client, nodeID, path string, level int) ([]NodeDef, 
 		default:
 			def.DataType = attrs[4].Value.NodeID().String()
 		}
-	case uaGopcua.StatusBadAttributeIDInvalid:
+	case uagocpua.StatusBadAttributeIDInvalid:
 		// ignore
 	default:
 		return nil, err
@@ -177,7 +177,7 @@ func browse(oc *opcuaGopcua.Client, nodeID, path string, level int) ([]NodeDef, 
 	def.Path = join(path, def.BrowseName)
 
 	var nodes []NodeDef
-	if def.NodeClass == uaGopcua.NodeClassVariable {
+	if def.NodeClass == uagocpua.NodeClassVariable {
 		nodes = append(nodes, def)
 	}
 
@@ -202,9 +202,9 @@ func browse(oc *opcuaGopcua.Client, nodeID, path string, level int) ([]NodeDef, 
 	return nodes, nil
 }
 
-func browseChildren(c *opcuaGopcua.Client, n *opcuaGopcua.Node, path string, level int, typeDef uint32) ([]NodeDef, error) {
+func browseChildren(c *opcuagocpua.Client, n *opcuagocpua.Node, path string, level int, typeDef uint32) ([]NodeDef, error) {
 	nodes := []NodeDef{}
-	refs, err := n.ReferencedNodes(typeDef, uaGopcua.BrowseDirectionForward, uaGopcua.NodeClassAll, true)
+	refs, err := n.ReferencedNodes(typeDef, uagocpua.BrowseDirectionForward, uagocpua.NodeClassAll, true)
 	if err != nil {
 		return []NodeDef{}, err
 	}

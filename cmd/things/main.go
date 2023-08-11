@@ -17,10 +17,10 @@ import (
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/internal"
-	authClient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
-	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
-	pgClient "github.com/mainflux/mainflux/internal/clients/postgres"
-	redisClient "github.com/mainflux/mainflux/internal/clients/redis"
+	authclient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
+	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
+	pgclient "github.com/mainflux/mainflux/internal/clients/postgres"
+	redisclient "github.com/mainflux/mainflux/internal/clients/redis"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/postgres"
 	"github.com/mainflux/mainflux/internal/server"
@@ -46,7 +46,7 @@ import (
 	ppostgres "github.com/mainflux/mainflux/things/policies/postgres"
 	pcache "github.com/mainflux/mainflux/things/policies/redis"
 	ppracing "github.com/mainflux/mainflux/things/policies/tracing"
-	thingsPg "github.com/mainflux/mainflux/things/postgres"
+	thingspg "github.com/mainflux/mainflux/things/postgres"
 	upolicies "github.com/mainflux/mainflux/users/policies"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
@@ -103,11 +103,11 @@ func main() {
 	}
 
 	// Create new database for things
-	dbConfig := pgClient.Config{Name: defDB}
+	dbConfig := pgclient.Config{Name: defDB}
 	if err := dbConfig.LoadEnv(envPrefixDB); err != nil {
 		logger.Fatal(err.Error())
 	}
-	db, err := pgClient.SetupWithConfig(envPrefixDB, *thingsPg.Migration(), dbConfig)
+	db, err := pgclient.SetupWithConfig(envPrefixDB, *thingspg.Migration(), dbConfig)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -115,7 +115,7 @@ func main() {
 	}
 	defer db.Close()
 
-	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
+	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
 		exitCode = 1
@@ -129,22 +129,22 @@ func main() {
 	tracer := tp.Tracer(svcName)
 
 	// Setup new redis cache client
-	cacheClient, err := redisClient.Setup(envPrefixCache)
+	cacheclient, err := redisclient.Setup(envPrefixCache)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-	defer cacheClient.Close()
+	defer cacheclient.Close()
 
 	// Setup new redis event store client
-	esClient, err := redisClient.Setup(envPrefixES)
+	esclient, err := redisclient.Setup(envPrefixES)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-	defer esClient.Close()
+	defer esclient.Close()
 
 	var auth upolicies.AuthServiceClient
 	switch cfg.StandaloneID != "" && cfg.StandaloneToken != "" {
@@ -152,7 +152,7 @@ func main() {
 		auth = localusers.NewAuthService(cfg.StandaloneID, cfg.StandaloneToken)
 		logger.Info("Using standalone auth service")
 	default:
-		authServiceClient, authHandler, err := authClient.Setup(svcName)
+		authServiceClient, authHandler, err := authclient.Setup(svcName)
 		if err != nil {
 			logger.Error(err.Error())
 			exitCode = 1
@@ -163,7 +163,7 @@ func main() {
 		logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 	}
 
-	csvc, gsvc, psvc := newService(ctx, db, dbConfig, auth, cacheClient, esClient, cfg.CacheKeyDuration, tracer, logger)
+	csvc, gsvc, psvc := newService(ctx, db, dbConfig, auth, cacheclient, esclient, cfg.CacheKeyDuration, tracer, logger)
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
@@ -211,7 +211,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, db *sqlx.DB, dbConfig pgClient.Config, auth upolicies.AuthServiceClient, cacheClient *redis.Client, esClient *redis.Client, keyDuration string, tracer trace.Tracer, logger mflog.Logger) (clients.Service, groups.Service, tpolicies.Service) {
+func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth upolicies.AuthServiceClient, cacheClient *redis.Client, esClient *redis.Client, keyDuration string, tracer trace.Tracer, logger mflog.Logger) (clients.Service, groups.Service, tpolicies.Service) {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	cRepo := cpostgres.NewRepository(database)
 	gRepo := gpostgres.New(database)

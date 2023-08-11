@@ -5,13 +5,12 @@
 package ulid
 
 import (
+	"math/rand"
 	"time"
 
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/oklog/ulid/v2"
-
-	mathrand "math/rand"
 )
 
 // ErrGeneratingID indicates error in generating ULID.
@@ -20,15 +19,15 @@ var ErrGeneratingID = errors.New("generating id failed")
 var _ mainflux.IDProvider = (*ulidProvider)(nil)
 
 type ulidProvider struct {
-	entropy *mathrand.Rand
+	entropy *rand.Rand
 }
 
 // New instantiates a ULID provider.
 func New() mainflux.IDProvider {
 	seed := time.Now().UnixNano()
-	source := mathrand.NewSource(seed)
+	source := rand.NewSource(seed)
 	return &ulidProvider{
-		entropy: mathrand.New(source),
+		entropy: rand.New(source),
 	}
 }
 

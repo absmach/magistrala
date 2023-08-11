@@ -170,7 +170,6 @@ func updateClientSecretEndpoint(svc clients.Service) endpoint.Endpoint {
 		client, err := svc.UpdateClientSecret(ctx, req.token, req.id, req.Secret)
 		if err != nil {
 			return nil, err
-
 		}
 		return updateClientRes{Client: client}, nil
 	}

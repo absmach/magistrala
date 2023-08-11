@@ -385,8 +385,8 @@ func TestListMembers(t *testing.T) {
 	}
 	mfsdk := sdk.NewSDK(conf)
 
-	var nClients = uint64(10)
-	var aClients = []sdk.User{}
+	nClients := uint64(10)
+	aClients := []sdk.User{}
 
 	for i := uint64(1); i < nClients; i++ {
 		client := sdk.User{

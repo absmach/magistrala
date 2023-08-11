@@ -4,8 +4,8 @@
 package policies_test
 
 import (
-	context "context"
-	fmt "fmt"
+	"context"
+	"fmt"
 	"regexp"
 	"testing"
 	"time"
@@ -181,7 +181,6 @@ func TestAddPolicy(t *testing.T) {
 		repoCall2.Unset()
 		repoCall3.Unset()
 	}
-
 }
 
 func TestAuthorize(t *testing.T) {
@@ -257,7 +256,6 @@ func TestAuthorize(t *testing.T) {
 		repoCall.Unset()
 		repoCall1.Unset()
 	}
-
 }
 
 func TestDeletePolicy(t *testing.T) {
@@ -293,8 +291,8 @@ func TestListPolicies(t *testing.T) {
 	readPolicy := "m_read"
 	writePolicy := "m_write"
 
-	var nPolicy = uint64(10)
-	var aPolicies = []policies.Policy{}
+	nPolicy := uint64(10)
+	aPolicies := []policies.Policy{}
 	for i := uint64(0); i < nPolicy; i++ {
 		pr := policies.Policy{
 			OwnerID: id,
@@ -376,7 +374,6 @@ func TestListPolicies(t *testing.T) {
 		repoCall1.Unset()
 		repoCall.Unset()
 	}
-
 }
 
 func TestUpdatePolicies(t *testing.T) {

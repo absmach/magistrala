@@ -8,7 +8,7 @@ package tracing
 import (
 	"context"
 
-	notifiers "github.com/mainflux/mainflux/consumers/notifiers"
+	"github.com/mainflux/mainflux/consumers/notifiers"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )

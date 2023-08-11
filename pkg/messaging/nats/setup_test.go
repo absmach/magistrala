@@ -14,7 +14,7 @@ import (
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/pkg/messaging/nats"
-	dockertest "github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3"
 )
 
 var (

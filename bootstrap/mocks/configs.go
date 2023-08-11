@@ -75,7 +75,6 @@ func (crm *configRepositoryMock) RetrieveByID(_ context.Context, token, id strin
 	}
 
 	return c, nil
-
 }
 
 func (crm *configRepositoryMock) RetrieveAll(_ context.Context, token string, filter bootstrap.Filter, offset, limit uint64) bootstrap.ConfigsPage {

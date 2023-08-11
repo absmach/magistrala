@@ -10,11 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mainflux/mainflux/pkg/errors"
-
 	influxdata "github.com/influxdata/influxdb-client-go/v2"
 	writer "github.com/mainflux/mainflux/consumers/writers/influxdb"
 	mflog "github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
 	"github.com/mainflux/mainflux/pkg/uuid"
@@ -70,6 +69,7 @@ func deleteBucket() error {
 
 	return nil
 }
+
 func createBucket() error {
 	orgAPI := client.OrganizationsAPI()
 	org, err := orgAPI.FindOrganizationByName(context.Background(), repoCfg.Org)
@@ -83,6 +83,7 @@ func createBucket() error {
 
 	return nil
 }
+
 func resetBucket() error {
 	if err := deleteBucket(); err != nil {
 		return err

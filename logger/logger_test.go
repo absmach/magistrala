@@ -23,10 +23,12 @@ const (
 	testFlagVal = "assert_test"
 )
 
-var _ io.Writer = (*mockWriter)(nil)
-var logger mflog.Logger
-var err error
-var output logMsg
+var (
+	_      io.Writer = (*mockWriter)(nil)
+	logger mflog.Logger
+	err    error
+	output logMsg
+)
 
 type mockWriter struct {
 	value []byte

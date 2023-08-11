@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/go-redis/redis/v8"
-	dockertest "github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3"
 )
 
 var redisClient *redis.Client

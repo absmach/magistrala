@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	mfserver "github.com/mainflux/mainflux/internal/server"
+	"github.com/mainflux/mainflux/internal/server"
 	"github.com/mainflux/mainflux/logger"
 )
 
@@ -20,17 +20,17 @@ const (
 )
 
 type Server struct {
-	mfserver.BaseServer
+	server.BaseServer
 	server *http.Server
 }
 
-var _ mfserver.Server = (*Server)(nil)
+var _ server.Server = (*Server)(nil)
 
-func New(ctx context.Context, cancel context.CancelFunc, name string, config mfserver.Config, handler http.Handler, logger logger.Logger) mfserver.Server {
+func New(ctx context.Context, cancel context.CancelFunc, name string, config server.Config, handler http.Handler, logger logger.Logger) server.Server {
 	listenFullAddress := fmt.Sprintf("%s:%s", config.Host, config.Port)
-	server := &http.Server{Addr: listenFullAddress, Handler: handler}
+	httpServer := &http.Server{Addr: listenFullAddress, Handler: handler}
 	return &Server{
-		BaseServer: mfserver.BaseServer{
+		BaseServer: server.BaseServer{
 			Ctx:     ctx,
 			Cancel:  cancel,
 			Name:    name,
@@ -38,7 +38,7 @@ func New(ctx context.Context, cancel context.CancelFunc, name string, config mfs
 			Config:  config,
 			Logger:  logger,
 		},
-		server: server,
+		server: httpServer,
 	}
 }
 

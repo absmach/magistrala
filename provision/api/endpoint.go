@@ -32,7 +32,6 @@ func doProvision(svc provision.Service) endpoint.Endpoint {
 		}
 
 		return provisionResponse, nil
-
 	}
 }
 

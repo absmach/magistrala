@@ -9,16 +9,18 @@ import (
 	"strconv"
 	"time"
 
-	opcuaGopcua "github.com/gopcua/opcua"
-	uaGopcua "github.com/gopcua/opcua/ua"
+	opcuagopcua "github.com/gopcua/opcua"
+	uagopcua "github.com/gopcua/opcua/ua"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/opcua"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"
 )
 
-const protocol = "opcua"
-const token = ""
+const (
+	protocol = "opcua"
+	token    = ""
+)
 
 var (
 	errNotFoundServerURI = errors.New("route map not found for Server URI")
@@ -69,32 +71,32 @@ func NewSubscriber(ctx context.Context, publisher messaging.Publisher, thingsRM,
 
 // Subscribe subscribes to the OPC-UA Server.
 func (c client) Subscribe(ctx context.Context, cfg opcua.Config) error {
-	opts := []opcuaGopcua.Option{
-		opcuaGopcua.SecurityMode(uaGopcua.MessageSecurityModeNone),
+	opts := []opcuagopcua.Option{
+		opcuagopcua.SecurityMode(uagopcua.MessageSecurityModeNone),
 	}
 
 	if cfg.Mode != "" {
-		endpoints, err := opcuaGopcua.GetEndpoints(cfg.ServerURI)
+		endpoints, err := opcuagopcua.GetEndpoints(cfg.ServerURI)
 		if err != nil {
 			return errors.Wrap(errFailedFetchEndpoint, err)
 		}
 
-		ep := opcuaGopcua.SelectEndpoint(endpoints, cfg.Policy, uaGopcua.MessageSecurityModeFromString(cfg.Mode))
+		ep := opcuagopcua.SelectEndpoint(endpoints, cfg.Policy, uagopcua.MessageSecurityModeFromString(cfg.Mode))
 		if ep == nil {
 			return errFailedFindEndpoint
 		}
 
-		opts = []opcuaGopcua.Option{
-			opcuaGopcua.SecurityPolicy(cfg.Policy),
-			opcuaGopcua.SecurityModeString(cfg.Mode),
-			opcuaGopcua.CertificateFile(cfg.CertFile),
-			opcuaGopcua.PrivateKeyFile(cfg.KeyFile),
-			opcuaGopcua.AuthAnonymous(),
-			opcuaGopcua.SecurityFromEndpoint(ep, uaGopcua.UserTokenTypeAnonymous),
+		opts = []opcuagopcua.Option{
+			opcuagopcua.SecurityPolicy(cfg.Policy),
+			opcuagopcua.SecurityModeString(cfg.Mode),
+			opcuagopcua.CertificateFile(cfg.CertFile),
+			opcuagopcua.PrivateKeyFile(cfg.KeyFile),
+			opcuagopcua.AuthAnonymous(),
+			opcuagopcua.SecurityFromEndpoint(ep, uagopcua.UserTokenTypeAnonymous),
 		}
 	}
 
-	oc := opcuaGopcua.NewClient(cfg.ServerURI, opts...)
+	oc := opcuagopcua.NewClient(cfg.ServerURI, opts...)
 	if err := oc.Connect(c.ctx); err != nil {
 		return errors.Wrap(errFailedConn, err)
 	}
@@ -105,7 +107,7 @@ func (c client) Subscribe(ctx context.Context, cfg opcua.Config) error {
 		return errors.Wrap(errFailedParseInterval, err)
 	}
 
-	sub, err := oc.Subscribe(&opcuaGopcua.SubscriptionParameters{
+	sub, err := oc.Subscribe(&opcuagopcua.SubscriptionParameters{
 		Interval: time.Duration(i) * time.Millisecond,
 	})
 	if err != nil {
@@ -124,20 +126,20 @@ func (c client) Subscribe(ctx context.Context, cfg opcua.Config) error {
 	return nil
 }
 
-func (c client) runHandler(ctx context.Context, sub *opcuaGopcua.Subscription, uri, node string) error {
-	nodeID, err := uaGopcua.ParseNodeID(node)
+func (c client) runHandler(ctx context.Context, sub *opcuagopcua.Subscription, uri, node string) error {
+	nodeID, err := uagopcua.ParseNodeID(node)
 	if err != nil {
 		return errors.Wrap(errFailedParseNodeID, err)
 	}
 
 	// arbitrary client handle for the monitoring item
 	handle := uint32(42)
-	miCreateRequest := opcuaGopcua.NewMonitoredItemCreateRequestWithDefaults(nodeID, uaGopcua.AttributeIDValue, handle)
-	res, err := sub.Monitor(uaGopcua.TimestampsToReturnBoth, miCreateRequest)
+	miCreateRequest := opcuagopcua.NewMonitoredItemCreateRequestWithDefaults(nodeID, uagopcua.AttributeIDValue, handle)
+	res, err := sub.Monitor(uagopcua.TimestampsToReturnBoth, miCreateRequest)
 	if err != nil {
 		return errors.Wrap(errFailedCreateReq, err)
 	}
-	if res.Results[0].StatusCode != uaGopcua.StatusOK {
+	if res.Results[0].StatusCode != uagopcua.StatusOK {
 		return errResponseStatus
 	}
 
@@ -156,7 +158,7 @@ func (c client) runHandler(ctx context.Context, sub *opcuaGopcua.Subscription, u
 			}
 
 			switch x := res.Value.(type) {
-			case *uaGopcua.DataChangeNotification:
+			case *uagopcua.DataChangeNotification:
 				for _, item := range x.MonitoredItems {
 					msg := message{
 						ServerURI: uri,
@@ -167,24 +169,24 @@ func (c client) runHandler(ctx context.Context, sub *opcuaGopcua.Subscription, u
 					}
 
 					switch item.Value.Value.Type() {
-					case uaGopcua.TypeIDBoolean:
+					case uagopcua.TypeIDBoolean:
 						msg.DataKey = "vb"
 						msg.Data = item.Value.Value.Bool()
-					case uaGopcua.TypeIDString, uaGopcua.TypeIDByteString:
+					case uagopcua.TypeIDString, uagopcua.TypeIDByteString:
 						msg.DataKey = "vs"
 						msg.Data = item.Value.Value.String()
-					case uaGopcua.TypeIDDataValue:
+					case uagopcua.TypeIDDataValue:
 						msg.DataKey = "vd"
 						msg.Data = item.Value.Value.String()
-					case uaGopcua.TypeIDInt64, uaGopcua.TypeIDInt32, uaGopcua.TypeIDInt16:
+					case uagopcua.TypeIDInt64, uagopcua.TypeIDInt32, uagopcua.TypeIDInt16:
 						msg.Data = float64(item.Value.Value.Int())
-					case uaGopcua.TypeIDUint64, uaGopcua.TypeIDUint32, uaGopcua.TypeIDUint16:
+					case uagopcua.TypeIDUint64, uagopcua.TypeIDUint32, uagopcua.TypeIDUint16:
 						msg.Data = float64(item.Value.Value.Uint())
-					case uaGopcua.TypeIDFloat, uaGopcua.TypeIDDouble:
+					case uagopcua.TypeIDFloat, uagopcua.TypeIDDouble:
 						msg.Data = item.Value.Value.Float()
-					case uaGopcua.TypeIDByte:
+					case uagopcua.TypeIDByte:
 						msg.Data = float64(item.Value.Value.Uint())
-					case uaGopcua.TypeIDDateTime:
+					case uagopcua.TypeIDDateTime:
 						msg.Data = item.Value.Value.Time().Unix()
 					default:
 						msg.Data = 0

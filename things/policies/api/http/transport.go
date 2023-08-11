@@ -82,7 +82,6 @@ func MakeHandler(csvc clients.Service, psvc policies.Service, mux *bone.Mux, log
 	), "bulk_disconnect"))
 
 	return mux
-
 }
 
 func decodeConnectThing(_ context.Context, r *http.Request) (interface{}, error) {

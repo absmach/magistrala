@@ -17,7 +17,6 @@ import (
 	"testing"
 
 	"github.com/go-zoo/bone"
-
 	"github.com/gofrs/uuid"
 	"github.com/mainflux/mainflux/bootstrap"
 	"github.com/mainflux/mainflux/bootstrap/mocks"

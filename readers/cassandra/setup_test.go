@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	"github.com/gocql/gocql"
-	casClient "github.com/mainflux/mainflux/internal/clients/cassandra"
+	casclient "github.com/mainflux/mainflux/internal/clients/cassandra"
 	mflog "github.com/mainflux/mainflux/logger"
-	dockertest "github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3"
 )
 
 var logger, _ = mflog.New(os.Stdout, mflog.Info.String())
@@ -35,7 +35,7 @@ func TestMain(m *testing.M) {
 			return err
 		}
 
-		session, err := casClient.Connect(casClient.Config{
+		session, err := casclient.Connect(casclient.Config{
 			Hosts:    []string{addr},
 			Keyspace: keyspace,
 		})

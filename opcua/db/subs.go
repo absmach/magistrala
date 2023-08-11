@@ -11,8 +11,10 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 )
 
-const columns = 2
-const path = "/store/nodes.csv"
+const (
+	columns = 2
+	path    = "/store/nodes.csv"
+)
 
 var (
 	errNotFound  = errors.New("file not found")

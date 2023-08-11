@@ -72,7 +72,7 @@ func Save(c Config, file string) error {
 	if err != nil {
 		return errors.New(fmt.Sprintf("Error reading config file: %s", err))
 	}
-	if err := os.WriteFile(file, b, 0644); err != nil {
+	if err := os.WriteFile(file, b, 0o644); err != nil {
 		return errors.New(fmt.Sprintf("Error writing toml: %s", err))
 	}
 	return nil

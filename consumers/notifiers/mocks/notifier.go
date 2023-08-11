@@ -4,7 +4,7 @@
 package mocks
 
 import (
-	notifiers "github.com/mainflux/mainflux/consumers/notifiers"
+	"github.com/mainflux/mainflux/consumers/notifiers"
 	"github.com/mainflux/mainflux/pkg/messaging"
 )
 

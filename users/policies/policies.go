@@ -164,7 +164,6 @@ func ValidateAction(act string) bool {
 		}
 	}
 	return false
-
 }
 
 // AddListAction adds list actions to the actions slice if c_ or g_ actions are present.

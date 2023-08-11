@@ -16,7 +16,6 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/things/policies"
-
 	"github.com/mainflux/mproxy/pkg/session"
 )
 
@@ -63,8 +62,7 @@ type handler struct {
 }
 
 // NewHandler creates new Handler entity.
-func NewHandler(publishers []messaging.Publisher, es redis.EventStore,
-	logger logger.Logger, auth policies.AuthServiceClient) session.Handler {
+func NewHandler(publishers []messaging.Publisher, es redis.EventStore, logger logger.Logger, auth policies.AuthServiceClient) session.Handler {
 	return &handler{
 		es:         es,
 		logger:     logger,
@@ -135,7 +133,6 @@ func (h *handler) AuthSubscribe(ctx context.Context, topics *[]string) error {
 		if err := h.authAccess(ctx, string(s.Password), v, policies.ReadAction); err != nil {
 			return err
 		}
-
 	}
 
 	return nil

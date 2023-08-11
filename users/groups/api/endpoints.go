@@ -175,7 +175,6 @@ func buildGroupsResponseTree(page mfgroups.GroupsPage) groupPageRes {
 		if children, ok := parentsMap[group.ID]; ok {
 			group.Children = children
 		}
-
 	}
 
 	for _, group := range groupsMap {

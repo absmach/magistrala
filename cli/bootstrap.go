@@ -125,7 +125,6 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 			logUsage(cmd.Use)
-
 		},
 	},
 	{

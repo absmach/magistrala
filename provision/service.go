@@ -6,7 +6,7 @@ import (
 
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
-	SDK "github.com/mainflux/mainflux/pkg/sdk/go"
+	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
 )
 
 const (
@@ -66,14 +66,14 @@ type Service interface {
 
 type provisionService struct {
 	logger mflog.Logger
-	sdk    SDK.SDK
+	sdk    sdk.SDK
 	conf   Config
 }
 
 // Result represent what is created with additional info.
 type Result struct {
-	Things      []SDK.Thing       `json:"things,omitempty"`
-	Channels    []SDK.Channel     `json:"channels,omitempty"`
+	Things      []sdk.Thing       `json:"things,omitempty"`
+	Channels    []sdk.Channel     `json:"channels,omitempty"`
 	ClientCert  map[string]string `json:"client_cert,omitempty"`
 	ClientKey   map[string]string `json:"client_key,omitempty"`
 	CACert      string            `json:"ca_cert,omitempty"`
@@ -82,7 +82,7 @@ type Result struct {
 }
 
 // New returns new provision service.
-func New(cfg Config, sdk SDK.SDK, logger mflog.Logger) Service {
+func New(cfg Config, sdk sdk.SDK, logger mflog.Logger) Service {
 	return &provisionService{
 		logger: logger,
 		conf:   cfg,
@@ -92,7 +92,7 @@ func New(cfg Config, sdk SDK.SDK, logger mflog.Logger) Service {
 
 // Mapping retrieves current configuration.
 func (ps *provisionService) Mapping(token string) (map[string]interface{}, error) {
-	userFilter := SDK.PageMetadata{
+	userFilter := sdk.PageMetadata{
 		Email:    "",
 		Offset:   uint64(offset),
 		Limit:    uint64(limit),
@@ -108,8 +108,8 @@ func (ps *provisionService) Mapping(token string) (map[string]interface{}, error
 // Provision is provision method for creating setup according to
 // provision layout specified in config.toml.
 func (ps *provisionService) Provision(token, name, externalID, externalKey string) (res Result, err error) {
-	var channels []SDK.Channel
-	var things []SDK.Thing
+	var channels []sdk.Channel
+	var things []sdk.Thing
 	defer ps.recover(&err, &things, &channels, &token)
 
 	token, err = ps.createTokenIfEmpty(token)
@@ -130,7 +130,7 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 			thing.Metadata[externalIDKey] = externalID
 		}
 
-		th := SDK.Thing{
+		th := sdk.Thing{
 			Metadata: thing.Metadata,
 		}
 		if name == "" {
@@ -153,9 +153,9 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 	}
 
 	for _, channel := range ps.conf.Channels {
-		ch := SDK.Channel{
+		ch := sdk.Channel{
 			Name:     channel.Name,
-			Metadata: SDK.Metadata(channel.Metadata),
+			Metadata: sdk.Metadata(channel.Metadata),
 		}
 		ch, err := ps.sdk.CreateChannel(ch, token)
 		if err != nil {
@@ -177,8 +177,8 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 		ClientKey:   map[string]string{},
 	}
 
-	var cert SDK.Cert
-	var bsConfig SDK.BootstrapConfig
+	var cert sdk.Cert
+	var bsConfig sdk.BootstrapConfig
 	for _, thing := range things {
 		var chanIDs []string
 
@@ -191,7 +191,7 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 		}
 
 		if ps.conf.Bootstrap.Provision && needsBootstrap(thing) {
-			bsReq := SDK.BootstrapConfig{
+			bsReq := sdk.BootstrapConfig{
 				ThingID:     thing.ID,
 				ExternalID:  externalID,
 				ExternalKey: externalKey,
@@ -213,7 +213,7 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 		}
 
 		if ps.conf.Bootstrap.X509Provision {
-			var cert SDK.Cert
+			var cert sdk.Cert
 
 			cert, err = ps.sdk.IssueCert(thing.ID, ps.conf.Cert.TTL, token)
 			if err != nil {
@@ -233,7 +233,7 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 		}
 
 		if ps.conf.Bootstrap.AutoWhiteList {
-			wlReq := SDK.BootstrapConfig{
+			wlReq := sdk.BootstrapConfig{
 				ThingID: thing.ID,
 				State:   Active,
 			}
@@ -282,8 +282,8 @@ func (ps *provisionService) createTokenIfEmpty(token string) (string, error) {
 		return token, ErrMissingCredentials
 	}
 
-	u := SDK.User{
-		Credentials: SDK.Credentials{
+	u := sdk.User{
+		Credentials: sdk.Credentials{
 			Identity: ps.conf.Server.MfUser,
 			Secret:   ps.conf.Server.MfPass,
 		},
@@ -296,7 +296,7 @@ func (ps *provisionService) createTokenIfEmpty(token string) (string, error) {
 	return tkn.AccessToken, nil
 }
 
-func (ps *provisionService) updateGateway(token string, bs SDK.BootstrapConfig, channels []SDK.Channel) error {
+func (ps *provisionService) updateGateway(token string, bs sdk.BootstrapConfig, channels []sdk.Channel) error {
 	var gw Gateway
 	for _, ch := range channels {
 		switch ch.Metadata["type"] {
@@ -336,7 +336,7 @@ func (ps *provisionService) errLog(err error) {
 	}
 }
 
-func clean(ps *provisionService, things []SDK.Thing, channels []SDK.Channel, token string) {
+func clean(ps *provisionService, things []sdk.Thing, channels []sdk.Channel, token string) {
 	for _, t := range things {
 		_, err := ps.sdk.DisableThing(t.ID, token)
 		ps.errLog(err)
@@ -347,7 +347,7 @@ func clean(ps *provisionService, things []SDK.Thing, channels []SDK.Channel, tok
 	}
 }
 
-func (ps *provisionService) recover(e *error, ths *[]SDK.Thing, chs *[]SDK.Channel, tkn *string) {
+func (ps *provisionService) recover(e *error, ths *[]sdk.Thing, chs *[]sdk.Channel, tkn *string) {
 	if e == nil {
 		return
 	}
@@ -372,7 +372,6 @@ func (ps *provisionService) recover(e *error, ths *[]SDK.Thing, chs *[]SDK.Chann
 			if needsBootstrap(th) {
 				ps.errLog(ps.sdk.RemoveBootstrap(th.ID, token))
 			}
-
 		}
 		return
 	}
@@ -405,7 +404,7 @@ func (ps *provisionService) recover(e *error, ths *[]SDK.Thing, chs *[]SDK.Chann
 	}
 }
 
-func needsBootstrap(th SDK.Thing) bool {
+func needsBootstrap(th sdk.Thing) bool {
 	if th.Metadata == nil {
 		return false
 	}

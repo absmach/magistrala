@@ -11,9 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	bsmocks "github.com/mainflux/mainflux/bootstrap/mocks"
 	"github.com/mainflux/mainflux/certs"
 	httpapi "github.com/mainflux/mainflux/certs/api"
@@ -27,6 +24,8 @@ import (
 	"github.com/mainflux/mainflux/things/policies"
 	pmocks "github.com/mainflux/mainflux/things/policies/mocks"
 	upolicies "github.com/mainflux/mainflux/users/policies"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const instanceID = "5de9b29a-feb9-11ed-be56-0242ac120002"

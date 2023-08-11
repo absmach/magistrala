@@ -168,7 +168,7 @@ func (sdk mfSDK) UpdateThingTags(t Thing, token string) (Thing, errors.SDKError)
 }
 
 func (sdk mfSDK) UpdateThingSecret(id, secret, token string) (Thing, errors.SDKError) {
-	var ucsr = updateThingSecretReq{Secret: secret}
+	ucsr := updateThingSecretReq{Secret: secret}
 
 	data, err := json.Marshal(ucsr)
 	if err != nil {

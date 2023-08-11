@@ -17,7 +17,6 @@ import (
 	mreader "github.com/mainflux/mainflux/readers/mongodb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )

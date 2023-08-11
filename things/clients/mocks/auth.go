@@ -42,7 +42,6 @@ func (svc authServiceMock) Authorize(ctx context.Context, req *policies.Authoriz
 				return &policies.AuthorizeRes{Authorized: true}, nil
 			}
 		}
-
 	}
 	return nil, errors.ErrAuthorization
 }

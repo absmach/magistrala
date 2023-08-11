@@ -7,8 +7,7 @@ import (
 	"github.com/mainflux/mainflux/users/clients"
 )
 
-type emailerMock struct {
-}
+type emailerMock struct{}
 
 // NewEmailer provides emailer instance for  the test.
 func NewEmailer() clients.Emailer {

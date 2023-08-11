@@ -14,10 +14,10 @@ import (
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/internal"
-	authClient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
-	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
-	mongoClient "github.com/mainflux/mainflux/internal/clients/mongo"
-	redisClient "github.com/mainflux/mainflux/internal/clients/redis"
+	authclient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
+	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
+	mongoclient "github.com/mainflux/mainflux/internal/clients/mongo"
+	redisclient "github.com/mainflux/mainflux/internal/clients/redis"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
@@ -92,7 +92,7 @@ func main() {
 		return
 	}
 
-	cacheClient, err := redisClient.Setup(envPrefixCache)
+	cacheClient, err := redisclient.Setup(envPrefixCache)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -101,7 +101,7 @@ func main() {
 	defer cacheClient.Close()
 
 	// Setup new redis event store client
-	esClient, err := redisClient.Setup(envPrefixES)
+	esClient, err := redisclient.Setup(envPrefixES)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -109,14 +109,14 @@ func main() {
 	}
 	defer esClient.Close()
 
-	db, err := mongoClient.Setup(envPrefixDB)
+	db, err := mongoclient.Setup(envPrefixDB)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to setup postgres database : %s", err))
 		exitCode = 1
 		return
 	}
 
-	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
+	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to init Jaeger: %s", err))
 		exitCode = 1
@@ -134,7 +134,7 @@ func main() {
 	case true:
 		auth = localusers.NewAuthService(cfg.StandaloneID, cfg.StandaloneToken)
 	default:
-		authServiceClient, authHandler, err := authClient.Setup(svcName)
+		authServiceClient, authHandler, err := authclient.Setup(svcName)
 		if err != nil {
 			logger.Error(err.Error())
 			exitCode = 1
@@ -176,7 +176,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, id string, ps messaging.PubSub, chanID string, users policies.AuthServiceClient, tracer trace.Tracer, db *mongo.Database, cacheClient *redis.Client, esClient *redis.Client, logger mflog.Logger) twins.Service {
+func newService(ctx context.Context, id string, ps messaging.PubSub, chanID string, users policies.AuthServiceClient, tracer trace.Tracer, db *mongo.Database, cacheclient *redis.Client, esClient *redis.Client, logger mflog.Logger) twins.Service {
 	twinRepo := twmongodb.NewTwinRepository(db)
 	twinRepo = tracing.TwinRepositoryMiddleware(tracer, twinRepo)
 
@@ -184,7 +184,7 @@ func newService(ctx context.Context, id string, ps messaging.PubSub, chanID stri
 	stateRepo = tracing.StateRepositoryMiddleware(tracer, stateRepo)
 
 	idProvider := uuid.New()
-	twinCache := rediscache.NewTwinCache(cacheClient)
+	twinCache := rediscache.NewTwinCache(cacheclient)
 	twinCache = tracing.TwinCacheMiddleware(tracer, twinCache)
 
 	svc := twins.New(ps, users, twinRepo, twinCache, stateRepo, idProvider, chanID, logger)

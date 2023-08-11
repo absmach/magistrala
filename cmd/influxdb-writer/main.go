@@ -13,11 +13,11 @@ import (
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/consumers"
-	consumerTracing "github.com/mainflux/mainflux/consumers/tracing"
+	consumertracing "github.com/mainflux/mainflux/consumers/tracing"
 	"github.com/mainflux/mainflux/consumers/writers/api"
 	"github.com/mainflux/mainflux/consumers/writers/influxdb"
-	influxDBClient "github.com/mainflux/mainflux/internal/clients/influxdb"
-	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
+	influxdbclient "github.com/mainflux/mainflux/internal/clients/influxdb"
+	"github.com/mainflux/mainflux/internal/clients/jaeger"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
@@ -76,7 +76,7 @@ func main() {
 		return
 	}
 
-	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
+	tp, err := jaeger.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
 		exitCode = 1
@@ -98,7 +98,7 @@ func main() {
 	defer pubSub.Close()
 	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
 
-	influxDBConfig := influxDBClient.Config{}
+	influxDBConfig := influxdbclient.Config{}
 	if err := env.Parse(&influxDBConfig, env.Options{Prefix: envPrefixDB}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load InfluxDB client configuration from environment variable : %s", err))
 		exitCode = 1
@@ -111,7 +111,7 @@ func main() {
 		Org:    influxDBConfig.Org,
 	}
 
-	client, err := influxDBClient.Connect(ctx, influxDBConfig)
+	client, err := influxdbclient.Connect(ctx, influxDBConfig)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to connect to InfluxDB : %s", err))
 		exitCode = 1
@@ -120,7 +120,7 @@ func main() {
 	defer client.Close()
 
 	repo := influxdb.NewAsync(client, repocfg)
-	repo = consumerTracing.NewAsync(tracer, repo, httpServerConfig)
+	repo = consumertracing.NewAsync(tracer, repo, httpServerConfig)
 
 	// Start consuming and logging errors.
 	go func(log mflog.Logger) {

@@ -8,22 +8,23 @@ import (
 	"math"
 	"time"
 
+	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+	"github.com/influxdata/influxdb-client-go/v2/api"
+	"github.com/influxdata/influxdb-client-go/v2/api/write"
 	"github.com/mainflux/mainflux/consumers"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
-
-	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
-	"github.com/influxdata/influxdb-client-go/v2/api"
-	"github.com/influxdata/influxdb-client-go/v2/api/write"
 )
 
 const senmlPoints = "messages"
 
 var errSaveMessage = errors.New("failed to save message to influxdb database")
 
-var _ consumers.AsyncConsumer = (*influxRepo)(nil)
-var _ consumers.BlockingConsumer = (*influxRepo)(nil)
+var (
+	_ consumers.AsyncConsumer    = (*influxRepo)(nil)
+	_ consumers.BlockingConsumer = (*influxRepo)(nil)
+)
 
 type RepoConfig struct {
 	Bucket string

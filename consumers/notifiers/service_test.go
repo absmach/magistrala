@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"testing"
 
-	notifiers "github.com/mainflux/mainflux/consumers/notifiers"
+	"github.com/mainflux/mainflux/consumers/notifiers"
 	"github.com/mainflux/mainflux/consumers/notifiers/mocks"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"

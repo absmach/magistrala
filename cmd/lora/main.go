@@ -11,13 +11,13 @@ import (
 	"os"
 	"time"
 
-	mqttPaho "github.com/eclipse/paho.mqtt.golang"
-	r "github.com/go-redis/redis/v8"
+	mqttpaho "github.com/eclipse/paho.mqtt.golang"
+	"github.com/go-redis/redis/v8"
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/internal"
-	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
-	redisClient "github.com/mainflux/mainflux/internal/clients/redis"
+	"github.com/mainflux/mainflux/internal/clients/jaeger"
+	redisclient "github.com/mainflux/mainflux/internal/clients/redis"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
@@ -25,7 +25,7 @@ import (
 	"github.com/mainflux/mainflux/lora"
 	"github.com/mainflux/mainflux/lora/api"
 	"github.com/mainflux/mainflux/lora/mqtt"
-	"github.com/mainflux/mainflux/lora/redis"
+	loraredis "github.com/mainflux/mainflux/lora/redis"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
 	brokerstracing "github.com/mainflux/mainflux/pkg/messaging/brokers/tracing"
@@ -91,7 +91,7 @@ func main() {
 		return
 	}
 
-	rmConn, err := redisClient.Setup(envPrefixRouteMap)
+	rmConn, err := redisclient.Setup(envPrefixRouteMap)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to setup route map redis client : %s", err))
 		exitCode = 1
@@ -99,7 +99,7 @@ func main() {
 	}
 	defer rmConn.Close()
 
-	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
+	tp, err := jaeger.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
 		exitCode = 1
@@ -123,7 +123,7 @@ func main() {
 
 	svc := newService(pub, rmConn, thingsRMPrefix, channelsRMPrefix, connsRMPrefix, logger)
 
-	esConn, err := redisClient.Setup(envPrefixThingsES)
+	esConn, err := redisclient.Setup(envPrefixThingsES)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to setup things event store redis client : %s", err))
 		exitCode = 1
@@ -164,19 +164,19 @@ func main() {
 	}
 }
 
-func connectToMQTTBroker(url, user, password string, timeout time.Duration, logger mflog.Logger) (mqttPaho.Client, error) {
-	opts := mqttPaho.NewClientOptions()
+func connectToMQTTBroker(url, user, password string, timeout time.Duration, logger mflog.Logger) (mqttpaho.Client, error) {
+	opts := mqttpaho.NewClientOptions()
 	opts.AddBroker(url)
 	opts.SetUsername(user)
 	opts.SetPassword(password)
-	opts.SetOnConnectHandler(func(_ mqttPaho.Client) {
+	opts.SetOnConnectHandler(func(_ mqttpaho.Client) {
 		logger.Info("Connected to Lora MQTT broker")
 	})
-	opts.SetConnectionLostHandler(func(c mqttPaho.Client, err error) {
+	opts.SetConnectionLostHandler(func(c mqttpaho.Client, err error) {
 		logger.Error(fmt.Sprintf("MQTT connection lost: %s", err))
 	})
 
-	client := mqttPaho.NewClient(opts)
+	client := mqttpaho.NewClient(opts)
 
 	if token := client.Connect(); token.WaitTimeout(timeout) && token.Error() != nil {
 		return nil, fmt.Errorf("failed to connect to Lora MQTT broker: %s", token.Error())
@@ -185,7 +185,7 @@ func connectToMQTTBroker(url, user, password string, timeout time.Duration, logg
 	return client, nil
 }
 
-func subscribeToLoRaBroker(svc lora.Service, mc mqttPaho.Client, timeout time.Duration, topic string, logger mflog.Logger) error {
+func subscribeToLoRaBroker(svc lora.Service, mc mqttpaho.Client, timeout time.Duration, topic string, logger mflog.Logger) error {
 	mqtt := mqtt.NewBroker(svc, mc, timeout, logger)
 	logger.Info("Subscribed to Lora MQTT broker")
 	if err := mqtt.Subscribe(topic); err != nil {
@@ -194,20 +194,20 @@ func subscribeToLoRaBroker(svc lora.Service, mc mqttPaho.Client, timeout time.Du
 	return nil
 }
 
-func subscribeToThingsES(ctx context.Context, svc lora.Service, client *r.Client, consumer string, logger mflog.Logger) {
-	eventStore := redis.NewEventStore(svc, client, consumer, logger)
+func subscribeToThingsES(ctx context.Context, svc lora.Service, client *redis.Client, consumer string, logger mflog.Logger) {
+	eventStore := loraredis.NewEventStore(svc, client, consumer, logger)
 	logger.Info("Subscribed to Redis Event Store")
 	if err := eventStore.Subscribe(ctx, "mainflux.things"); err != nil {
 		logger.Warn(fmt.Sprintf("Lora-adapter service failed to subscribe to Redis event source: %s", err))
 	}
 }
 
-func newRouteMapRepository(client *r.Client, prefix string, logger mflog.Logger) lora.RouteMapRepository {
+func newRouteMapRepository(client *redis.Client, prefix string, logger mflog.Logger) lora.RouteMapRepository {
 	logger.Info(fmt.Sprintf("Connected to %s Redis Route-map", prefix))
-	return redis.NewRouteMapRepository(client, prefix)
+	return loraredis.NewRouteMapRepository(client, prefix)
 }
 
-func newService(pub messaging.Publisher, rmConn *r.Client, thingsRMPrefix, channelsRMPrefix, connsRMPrefix string, logger mflog.Logger) lora.Service {
+func newService(pub messaging.Publisher, rmConn *redis.Client, thingsRMPrefix, channelsRMPrefix, connsRMPrefix string, logger mflog.Logger) lora.Service {
 	thingsRM := newRouteMapRepository(rmConn, thingsRMPrefix, logger)
 	chansRM := newRouteMapRepository(rmConn, channelsRMPrefix, logger)
 	connsRM := newRouteMapRepository(rmConn, connsRMPrefix, logger)

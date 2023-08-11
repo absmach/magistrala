@@ -112,7 +112,6 @@ var cmdUsers = []cobra.Command{
 			}
 
 			logJSON(token)
-
 		},
 	},
 	{
@@ -134,7 +133,6 @@ var cmdUsers = []cobra.Command{
 			}
 
 			logJSON(token)
-
 		},
 	},
 	{

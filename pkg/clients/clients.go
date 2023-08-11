@@ -68,7 +68,6 @@ type MembersPage struct {
 
 // Repository specifies an account persistence API.
 type Repository interface {
-
 	// RetrieveByID retrieves client by its unique ID.
 	RetrieveByID(ctx context.Context, id string) (Client, error)
 

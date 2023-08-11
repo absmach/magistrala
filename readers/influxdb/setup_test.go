@@ -15,7 +15,7 @@ import (
 
 	influxdata "github.com/influxdata/influxdb-client-go/v2"
 	mflog "github.com/mainflux/mainflux/logger"
-	dockertest "github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3"
 )
 
 var (

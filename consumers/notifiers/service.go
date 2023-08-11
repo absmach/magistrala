@@ -14,10 +14,8 @@ import (
 	"github.com/mainflux/mainflux/users/policies"
 )
 
-var (
-	// ErrMessage indicates an error converting a message to Mainflux message.
-	ErrMessage = errors.New("failed to convert to Mainflux message")
-)
+// ErrMessage indicates an error converting a message to Mainflux message.
+var ErrMessage = errors.New("failed to convert to Mainflux message")
 
 var _ consumers.AsyncConsumer = (*notifierService)(nil)
 

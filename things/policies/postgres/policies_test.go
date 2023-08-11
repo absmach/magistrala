@@ -21,9 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var (
-	idProvider = uuid.New()
-)
+var idProvider = uuid.New()
 
 func TestPoliciesSave(t *testing.T) {
 	t.Cleanup(func() { testsutil.CleanUpDB(t, db) })
@@ -349,7 +347,7 @@ func TestPoliciesRetrievalAll(t *testing.T) {
 	crepo := cpostgres.NewRepository(database)
 	grepo := gpostgres.New(database)
 
-	var nPolicies = uint64(10)
+	nPolicies := uint64(10)
 
 	clientA := mfclients.Client{
 		ID:   testsutil.GenerateUUID(t, idProvider),

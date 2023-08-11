@@ -11,12 +11,11 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/readers"
-
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+	"github.com/mainflux/mainflux/pkg/errors"
 	jsont "github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
+	"github.com/mainflux/mainflux/readers"
 )
 
 const (
@@ -26,9 +25,7 @@ const (
 
 var _ readers.MessageRepository = (*influxRepository)(nil)
 
-var (
-	errResultTime = errors.New("invalid result time")
-)
+var errResultTime = errors.New("invalid result time")
 
 type RepoConfig struct {
 	Bucket string
@@ -106,7 +103,6 @@ func (repo *influxRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 	}
 
 	return page, nil
-
 }
 
 func (repo *influxRepository) count(measurement, condition string, timeRange string) (uint64, error) {
@@ -128,7 +124,6 @@ func (repo *influxRepository) count(measurement, condition string, timeRange str
 		condition)
 	queryAPI := repo.client.QueryAPI(repo.cfg.Org)
 	resp, err := queryAPI.Query(context.Background(), cmd)
-
 	if err != nil {
 		return 0, err
 	}

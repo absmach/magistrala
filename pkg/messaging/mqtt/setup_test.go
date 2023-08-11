@@ -15,7 +15,7 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging"
-	mqtt_pubsub "github.com/mainflux/mainflux/pkg/messaging/mqtt"
+	mqttpubsub "github.com/mainflux/mainflux/pkg/messaging/mqtt"
 	"github.com/ory/dockertest/v3"
 )
 
@@ -57,7 +57,7 @@ func TestMain(m *testing.M) {
 	}
 
 	if err := pool.Retry(func() error {
-		pubsub, err = mqtt_pubsub.NewPubSub(address, "mainflux", brokerTimeout, logger)
+		pubsub, err = mqttpubsub.NewPubSub(address, "mainflux", brokerTimeout, logger)
 		return err
 	}); err != nil {
 		log.Fatalf("Could not connect to docker: %s", err)
@@ -104,7 +104,7 @@ func newClient(address, id string, timeout time.Duration) (mqtt.Client, error) {
 
 	ok := token.WaitTimeout(timeout)
 	if !ok {
-		return nil, mqtt_pubsub.ErrConnect
+		return nil, mqttpubsub.ErrConnect
 	}
 
 	if token.Error() != nil {

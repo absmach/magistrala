@@ -33,10 +33,8 @@ const (
 	Unknown  = "unknown"
 )
 
-var (
-	// ErrStatusAlreadyAssigned indicated that the client or group has already been assigned the status.
-	ErrStatusAlreadyAssigned = errors.New("status already assigned")
-)
+// ErrStatusAlreadyAssigned indicated that the client or group has already been assigned the status.
+var ErrStatusAlreadyAssigned = errors.New("status already assigned")
 
 // String converts client/group status to string literal.
 func (s Status) String() string {

@@ -4,13 +4,13 @@
 package groups_test
 
 import (
-	context "context"
-	fmt "fmt"
+	"context"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/mainflux/mainflux/internal/testsutil"
-	mfclients "github.com/mainflux/mainflux/pkg/clients"
+	"github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfgroups "github.com/mainflux/mainflux/pkg/groups"
 	"github.com/mainflux/mainflux/pkg/uuid"
@@ -26,7 +26,7 @@ import (
 
 var (
 	idProvider     = uuid.New()
-	validGMetadata = mfclients.Metadata{"role": "client"}
+	validGMetadata = clients.Metadata{"role": "client"}
 	inValidToken   = "invalidToken"
 	description    = "shortdescription"
 	gName          = "groupname"
@@ -36,7 +36,7 @@ var (
 		Name:        gName,
 		Description: description,
 		Metadata:    validGMetadata,
-		Status:      mfclients.EnabledStatus,
+		Status:      clients.EnabledStatus,
 	}
 	withinDuration = 5 * time.Second
 	adminEmail     = "admin@example.com"
@@ -58,7 +58,6 @@ func newService(tokens map[string]string) (groups.Service, *gmocks.Repository, *
 }
 
 func TestCreateGroup(t *testing.T) {
-
 	svc, gRepo, _ := newService(map[string]string{token: adminEmail})
 
 	cases := []struct {
@@ -81,7 +80,7 @@ func TestCreateGroup(t *testing.T) {
 			group: mfgroups.Group{
 				Name:   gName,
 				Parent: testsutil.GenerateUUID(t, idProvider),
-				Status: mfclients.EnabledStatus,
+				Status: clients.EnabledStatus,
 			},
 			err: nil,
 		},
@@ -128,7 +127,6 @@ func TestCreateGroup(t *testing.T) {
 }
 
 func TestUpdateGroup(t *testing.T) {
-
 	svc, gRepo, pRepo := newService(map[string]string{token: adminEmail})
 
 	cases := []struct {
@@ -168,13 +166,13 @@ func TestUpdateGroup(t *testing.T) {
 			desc: "update group metadata",
 			group: mfgroups.Group{
 				ID: group.ID,
-				Metadata: mfclients.Metadata{
+				Metadata: clients.Metadata{
 					"field": "value2",
 				},
 			},
 			response: mfgroups.Group{
 				ID: group.ID,
-				Metadata: mfclients.Metadata{
+				Metadata: clients.Metadata{
 					"field": "value2",
 				},
 			},
@@ -205,7 +203,7 @@ func TestUpdateGroup(t *testing.T) {
 			desc: "update group metadata with invalid group id",
 			group: mfgroups.Group{
 				ID: mocks.WrongID,
-				Metadata: mfclients.Metadata{
+				Metadata: clients.Metadata{
 					"field": "value2",
 				},
 			},
@@ -237,7 +235,7 @@ func TestUpdateGroup(t *testing.T) {
 			desc: "update group metadata with invalid token",
 			group: mfgroups.Group{
 				ID: group.ID,
-				Metadata: mfclients.Metadata{
+				Metadata: clients.Metadata{
 					"field": "value2",
 				},
 			},
@@ -258,11 +256,9 @@ func TestUpdateGroup(t *testing.T) {
 		repoCall1.Unset()
 		repoCall2.Unset()
 	}
-
 }
 
 func TestViewGroup(t *testing.T) {
-
 	svc, gRepo, pRepo := newService(map[string]string{token: adminEmail})
 
 	cases := []struct {
@@ -273,7 +269,6 @@ func TestViewGroup(t *testing.T) {
 		err      error
 	}{
 		{
-
 			desc:     "view group",
 			token:    token,
 			groupID:  group.ID,
@@ -308,18 +303,17 @@ func TestViewGroup(t *testing.T) {
 }
 
 func TestListGroups(t *testing.T) {
-
 	svc, gRepo, pRepo := newService(map[string]string{token: adminEmail})
 
 	nGroups := uint64(200)
 	parentID := ""
-	var aGroups = []mfgroups.Group{}
+	aGroups := []mfgroups.Group{}
 	for i := uint64(0); i < nGroups; i++ {
 		group := mfgroups.Group{
 			ID:          testsutil.GenerateUUID(t, idProvider),
 			Name:        fmt.Sprintf("Group_%d", i),
 			Description: description,
-			Metadata: mfclients.Metadata{
+			Metadata: clients.Metadata{
 				"field": "value",
 			},
 			Parent: parentID,
@@ -392,13 +386,12 @@ func TestListGroups(t *testing.T) {
 }
 
 func TestEnableGroup(t *testing.T) {
-
 	svc, gRepo, pRepo := newService(map[string]string{token: adminEmail})
 
-	enabledGroup1 := mfgroups.Group{ID: ID, Name: "group1", Status: mfclients.EnabledStatus}
-	disabledGroup := mfgroups.Group{ID: ID, Name: "group2", Status: mfclients.DisabledStatus}
+	enabledGroup1 := mfgroups.Group{ID: ID, Name: "group1", Status: clients.EnabledStatus}
+	disabledGroup := mfgroups.Group{ID: ID, Name: "group2", Status: clients.DisabledStatus}
 	disabledGroup1 := disabledGroup
-	disabledGroup1.Status = mfclients.EnabledStatus
+	disabledGroup1.Status = clients.EnabledStatus
 
 	casesEnabled := []struct {
 		desc     string
@@ -422,7 +415,7 @@ func TestEnableGroup(t *testing.T) {
 			token:    token,
 			group:    enabledGroup1,
 			response: enabledGroup1,
-			err:      mfclients.ErrStatusAlreadyAssigned,
+			err:      clients.ErrStatusAlreadyAssigned,
 		},
 		{
 			desc:     "enable non-existing group",
@@ -447,13 +440,13 @@ func TestEnableGroup(t *testing.T) {
 
 	casesDisabled := []struct {
 		desc     string
-		status   mfclients.Status
+		status   clients.Status
 		size     uint64
 		response mfgroups.GroupsPage
 	}{
 		{
 			desc:   "list activated groups",
-			status: mfclients.EnabledStatus,
+			status: clients.EnabledStatus,
 			size:   2,
 			response: mfgroups.GroupsPage{
 				Page: mfgroups.Page{
@@ -466,7 +459,7 @@ func TestEnableGroup(t *testing.T) {
 		},
 		{
 			desc:   "list deactivated groups",
-			status: mfclients.DisabledStatus,
+			status: clients.DisabledStatus,
 			size:   1,
 			response: mfgroups.GroupsPage{
 				Page: mfgroups.Page{
@@ -479,7 +472,7 @@ func TestEnableGroup(t *testing.T) {
 		},
 		{
 			desc:   "list activated and deactivated groups",
-			status: mfclients.AllStatus,
+			status: clients.AllStatus,
 			size:   3,
 			response: mfgroups.GroupsPage{
 				Page: mfgroups.Page{
@@ -512,13 +505,12 @@ func TestEnableGroup(t *testing.T) {
 }
 
 func TestDisableGroup(t *testing.T) {
-
 	svc, gRepo, pRepo := newService(map[string]string{token: adminEmail})
 
-	enabledGroup1 := mfgroups.Group{ID: ID, Name: "group1", Status: mfclients.EnabledStatus}
-	disabledGroup := mfgroups.Group{ID: ID, Name: "group2", Status: mfclients.DisabledStatus}
+	enabledGroup1 := mfgroups.Group{ID: ID, Name: "group1", Status: clients.EnabledStatus}
+	disabledGroup := mfgroups.Group{ID: ID, Name: "group2", Status: clients.DisabledStatus}
 	disabledGroup1 := enabledGroup1
-	disabledGroup1.Status = mfclients.DisabledStatus
+	disabledGroup1.Status = clients.DisabledStatus
 
 	casesDisabled := []struct {
 		desc     string
@@ -542,7 +534,7 @@ func TestDisableGroup(t *testing.T) {
 			token:    token,
 			group:    disabledGroup,
 			response: mfgroups.Group{},
-			err:      mfclients.ErrStatusAlreadyAssigned,
+			err:      clients.ErrStatusAlreadyAssigned,
 		},
 		{
 			desc:     "disable non-existing group",
@@ -567,13 +559,13 @@ func TestDisableGroup(t *testing.T) {
 
 	casesEnabled := []struct {
 		desc     string
-		status   mfclients.Status
+		status   clients.Status
 		size     uint64
 		response mfgroups.GroupsPage
 	}{
 		{
 			desc:   "list activated groups",
-			status: mfclients.EnabledStatus,
+			status: clients.EnabledStatus,
 			size:   1,
 			response: mfgroups.GroupsPage{
 				Page: mfgroups.Page{
@@ -586,7 +578,7 @@ func TestDisableGroup(t *testing.T) {
 		},
 		{
 			desc:   "list deactivated groups",
-			status: mfclients.DisabledStatus,
+			status: clients.DisabledStatus,
 			size:   2,
 			response: mfgroups.GroupsPage{
 				Page: mfgroups.Page{
@@ -599,7 +591,7 @@ func TestDisableGroup(t *testing.T) {
 		},
 		{
 			desc:   "list activated and deactivated groups",
-			status: mfclients.AllStatus,
+			status: clients.AllStatus,
 			size:   3,
 			response: mfgroups.GroupsPage{
 				Page: mfgroups.Page{
@@ -632,16 +624,15 @@ func TestDisableGroup(t *testing.T) {
 }
 
 func TestListMemberships(t *testing.T) {
-
 	svc, gRepo, pRepo := newService(map[string]string{token: adminEmail})
 
-	var nGroups = uint64(100)
-	var aGroups = []mfgroups.Group{}
+	nGroups := uint64(100)
+	aGroups := []mfgroups.Group{}
 	owner := testsutil.GenerateUUID(t, idProvider)
 	for i := uint64(1); i < nGroups; i++ {
 		group := mfgroups.Group{
 			Name:     fmt.Sprintf("membership_%d@example.com", i),
-			Metadata: mfclients.Metadata{"role": "group"},
+			Metadata: clients.Metadata{"role": "group"},
 		}
 		if i%3 == 0 {
 			group.Owner = owner
@@ -687,7 +678,7 @@ func TestListMemberships(t *testing.T) {
 					Offset:  6,
 					Total:   nGroups,
 					Limit:   nGroups,
-					Status:  mfclients.AllStatus,
+					Status:  clients.AllStatus,
 					Subject: adminEmail,
 					OwnerID: adminEmail,
 					Action:  "g_list",
@@ -749,7 +740,7 @@ func TestListMemberships(t *testing.T) {
 					Offset:  0,
 					Total:   nGroups,
 					Limit:   nGroups,
-					Status:  mfclients.AllStatus,
+					Status:  clients.AllStatus,
 					Subject: owner,
 					Action:  "g_list",
 				},

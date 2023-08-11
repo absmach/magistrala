@@ -11,12 +11,10 @@ import (
 	"testing"
 
 	"github.com/gorilla/websocket"
-
+	httpmock "github.com/mainflux/mainflux/http/mocks"
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/things/policies"
 	"github.com/mainflux/mainflux/ws"
-
-	httpmock "github.com/mainflux/mainflux/http/mocks"
 	"github.com/mainflux/mainflux/ws/api"
 	"github.com/mainflux/mainflux/ws/mocks"
 	"github.com/stretchr/testify/assert"

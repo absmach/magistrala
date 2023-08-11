@@ -12,10 +12,9 @@ import (
 	"testing"
 
 	"github.com/jmoiron/sqlx"
-
 	"github.com/mainflux/mainflux/consumers/writers/timescale"
-	pgClient "github.com/mainflux/mainflux/internal/clients/postgres"
-	dockertest "github.com/ory/dockertest/v3"
+	pgclient "github.com/mainflux/mainflux/internal/clients/postgres"
+	"github.com/ory/dockertest/v3"
 )
 
 var db *sqlx.DB
@@ -49,7 +48,7 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	dbConfig := pgClient.Config{
+	dbConfig := pgclient.Config{
 		Host:        "localhost",
 		Port:        port,
 		User:        "test",
@@ -61,7 +60,7 @@ func TestMain(m *testing.M) {
 		SSLRootCert: "",
 	}
 
-	db, err = pgClient.SetupDB(dbConfig, *timescale.Migration())
+	db, err = pgclient.SetupDB(dbConfig, *timescale.Migration())
 	if err != nil {
 		log.Fatalf("Could not setup test DB connection: %s", err)
 	}

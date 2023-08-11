@@ -14,7 +14,7 @@ import (
 	"time"
 
 	influxdata "github.com/influxdata/influxdb-client-go/v2"
-	dockertest "github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3"
 )
 
 const (

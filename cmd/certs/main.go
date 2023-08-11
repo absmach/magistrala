@@ -16,12 +16,12 @@ import (
 	"github.com/mainflux/mainflux/certs"
 	"github.com/mainflux/mainflux/certs/api"
 	vault "github.com/mainflux/mainflux/certs/pki"
-	certsPg "github.com/mainflux/mainflux/certs/postgres"
+	certspg "github.com/mainflux/mainflux/certs/postgres"
 	"github.com/mainflux/mainflux/certs/tracing"
 	"github.com/mainflux/mainflux/internal"
-	authClient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
-	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
-	pgClient "github.com/mainflux/mainflux/internal/clients/postgres"
+	authclient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
+	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
+	pgclient "github.com/mainflux/mainflux/internal/clients/postgres"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/postgres"
 	"github.com/mainflux/mainflux/internal/server"
@@ -92,18 +92,18 @@ func main() {
 		return
 	}
 
-	pkiClient, err := vault.NewVaultClient(cfg.PkiToken, cfg.PkiHost, cfg.PkiPath, cfg.PkiRole)
+	pkiclient, err := vault.NewVaultClient(cfg.PkiToken, cfg.PkiHost, cfg.PkiPath, cfg.PkiRole)
 	if err != nil {
 		logger.Error("failed to configure client for PKI engine")
 		exitCode = 1
 		return
 	}
 
-	dbConfig := pgClient.Config{Name: defDB}
+	dbConfig := pgclient.Config{Name: defDB}
 	if err := dbConfig.LoadEnv(envPrefixDB); err != nil {
 		logger.Fatal(fmt.Sprintf("failed to load %s database configuration : %s", svcName, err))
 	}
-	db, err := pgClient.SetupWithConfig(envPrefixDB, *certsPg.Migration(), dbConfig)
+	db, err := pgclient.SetupWithConfig(envPrefixDB, *certspg.Migration(), dbConfig)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -111,7 +111,7 @@ func main() {
 	}
 	defer db.Close()
 
-	auth, authHandler, err := authClient.Setup(svcName)
+	auth, authHandler, err := authclient.Setup(svcName)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -121,7 +121,7 @@ func main() {
 
 	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 
-	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
+	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to init Jaeger: %s", err))
 		exitCode = 1
@@ -134,7 +134,7 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
-	svc := newService(auth, db, tracer, logger, cfg, dbConfig, pkiClient)
+	svc := newService(auth, db, tracer, logger, cfg, dbConfig, pkiclient)
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
@@ -162,9 +162,9 @@ func main() {
 	}
 }
 
-func newService(auth policies.AuthServiceClient, db *sqlx.DB, tracer trace.Tracer, logger mflog.Logger, cfg config, dbConfig pgClient.Config, pkiAgent vault.Agent) certs.Service {
+func newService(auth policies.AuthServiceClient, db *sqlx.DB, tracer trace.Tracer, logger mflog.Logger, cfg config, dbConfig pgclient.Config, pkiAgent vault.Agent) certs.Service {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
-	certsRepo := certsPg.NewRepository(database, logger)
+	certsRepo := certspg.NewRepository(database, logger)
 	config := mfsdk.Config{
 		CertsURL:  cfg.CertsURL,
 		ThingsURL: cfg.ThingsURL,

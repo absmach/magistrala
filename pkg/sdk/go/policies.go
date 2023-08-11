@@ -168,7 +168,7 @@ func (sdk mfSDK) DeleteThingPolicy(p Policy, token string) errors.SDKError {
 }
 
 func (sdk mfSDK) Assign(actions []string, userID, groupID, token string) errors.SDKError {
-	var policy = Policy{
+	policy := Policy{
 		Subject: userID,
 		Object:  groupID,
 		Actions: actions,
@@ -177,7 +177,7 @@ func (sdk mfSDK) Assign(actions []string, userID, groupID, token string) errors.
 }
 
 func (sdk mfSDK) Unassign(userID, groupID, token string) errors.SDKError {
-	var policy = Policy{
+	policy := Policy{
 		Subject: userID,
 		Object:  groupID,
 	}
@@ -212,7 +212,7 @@ func (sdk mfSDK) Disconnect(connIDs ConnectionIDs, token string) errors.SDKError
 }
 
 func (sdk mfSDK) ConnectThing(thingID, channelID, token string) errors.SDKError {
-	var policy = Policy{
+	policy := Policy{
 		Subject: thingID,
 		Object:  channelID,
 	}
@@ -221,7 +221,7 @@ func (sdk mfSDK) ConnectThing(thingID, channelID, token string) errors.SDKError 
 }
 
 func (sdk mfSDK) DisconnectThing(thingID, channelID, token string) errors.SDKError {
-	var policy = Policy{
+	policy := Policy{
 		Subject: thingID,
 		Object:  channelID,
 	}

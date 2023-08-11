@@ -11,11 +11,10 @@ import (
 	"testing"
 
 	"github.com/mainflux/mainflux/twins"
+	"github.com/mainflux/mainflux/twins/mocks"
 	"github.com/mainflux/senml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/mainflux/mainflux/twins/mocks"
 )
 
 const numRecs = 100
@@ -50,7 +49,7 @@ func TestListStates(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	attr := def.Attributes[0]
 
-	var recs = make([]senml.Record, numRecs)
+	recs := make([]senml.Record, numRecs)
 	mocks.CreateSenML(recs)
 	message, err := mocks.CreateMessage(attr, recs)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))

@@ -9,8 +9,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/pelletier/go-toml"
-
 	"github.com/mainflux/mainflux/internal/apiutil"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -19,6 +17,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/transformers"
 	"github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
+	"github.com/pelletier/go-toml"
 )
 
 const (
@@ -55,7 +54,6 @@ func Start(ctx context.Context, id string, sub messaging.Subscriber, consumer in
 		default:
 			return apiutil.ErrInvalidQueryParams
 		}
-
 	}
 	return nil
 }

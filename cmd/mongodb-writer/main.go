@@ -13,12 +13,12 @@ import (
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/consumers"
-	consumerTracing "github.com/mainflux/mainflux/consumers/tracing"
+	consumertracing "github.com/mainflux/mainflux/consumers/tracing"
 	"github.com/mainflux/mainflux/consumers/writers/api"
 	"github.com/mainflux/mainflux/consumers/writers/mongodb"
 	"github.com/mainflux/mainflux/internal"
-	jaegerClient "github.com/mainflux/mainflux/internal/clients/jaeger"
-	mongoClient "github.com/mainflux/mainflux/internal/clients/mongo"
+	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
+	mongoclient "github.com/mainflux/mainflux/internal/clients/mongo"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
@@ -78,7 +78,7 @@ func main() {
 		return
 	}
 
-	tp, err := jaegerClient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
+	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
 		exitCode = 1
@@ -100,7 +100,7 @@ func main() {
 	defer pubSub.Close()
 	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
 
-	db, err := mongoClient.Setup(envPrefixDB)
+	db, err := mongoclient.Setup(envPrefixDB)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to setup mongo database : %s", err))
 		exitCode = 1
@@ -108,7 +108,7 @@ func main() {
 	}
 
 	repo := newService(db, logger)
-	repo = consumerTracing.NewBlocking(tracer, repo, httpServerConfig)
+	repo = consumertracing.NewBlocking(tracer, repo, httpServerConfig)
 
 	if err := consumers.Start(ctx, svcName, pubSub, repo, cfg.ConfigPath, logger); err != nil {
 		logger.Error(fmt.Sprintf("failed to start MongoDB writer: %s", err))

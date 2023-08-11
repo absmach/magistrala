@@ -20,7 +20,7 @@ var defaultAttributes = []attribute.KeyValue{
 }
 
 func CreateSpan(ctx context.Context, operation, clientID, topic, subTopic string, msgSize int, cfg server.Config, spanKind trace.SpanKind, tracer trace.Tracer) (context.Context, trace.Span) {
-	var subject = fmt.Sprintf("channels.%s.messages", topic)
+	subject := fmt.Sprintf("channels.%s.messages", topic)
 	if subTopic != "" {
 		subject = fmt.Sprintf("%s.%s", subject, subTopic)
 	}

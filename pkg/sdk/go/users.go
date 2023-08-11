@@ -190,7 +190,7 @@ func (sdk mfSDK) UpdateUserIdentity(user User, token string) (User, errors.SDKEr
 }
 
 func (sdk mfSDK) ResetPasswordRequest(email string) errors.SDKError {
-	var rpr = resetPasswordRequestreq{Email: email}
+	rpr := resetPasswordRequestreq{Email: email}
 
 	data, err := json.Marshal(rpr)
 	if err != nil {
@@ -198,7 +198,7 @@ func (sdk mfSDK) ResetPasswordRequest(email string) errors.SDKError {
 	}
 	url := fmt.Sprintf("%s/%s/reset-request", sdk.usersURL, PasswordResetEndpoint)
 
-	var header = make(map[string]string)
+	header := make(map[string]string)
 	header["Referer"] = sdk.HostURL
 
 	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, "", data, header, http.StatusCreated)
@@ -207,7 +207,7 @@ func (sdk mfSDK) ResetPasswordRequest(email string) errors.SDKError {
 }
 
 func (sdk mfSDK) ResetPassword(password, confPass, token string) errors.SDKError {
-	var rpr = resetPasswordReq{Token: token, Password: password, ConfPass: confPass}
+	rpr := resetPasswordReq{Token: token, Password: password, ConfPass: confPass}
 
 	data, err := json.Marshal(rpr)
 	if err != nil {
@@ -221,7 +221,7 @@ func (sdk mfSDK) ResetPassword(password, confPass, token string) errors.SDKError
 }
 
 func (sdk mfSDK) UpdatePassword(oldPass, newPass, token string) (User, errors.SDKError) {
-	var ucsr = updateClientSecretReq{OldSecret: oldPass, NewSecret: newPass}
+	ucsr := updateClientSecretReq{OldSecret: oldPass, NewSecret: newPass}
 
 	data, err := json.Marshal(ucsr)
 	if err != nil {

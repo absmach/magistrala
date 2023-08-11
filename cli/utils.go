@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-	prettyjson "github.com/hokaccha/go-prettyjson"
+	"github.com/hokaccha/go-prettyjson"
 )
 
 var (

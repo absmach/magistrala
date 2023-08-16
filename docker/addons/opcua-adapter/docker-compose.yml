@@ -9,8 +9,7 @@
 version: "3.7"
 
 networks:
-  docker_mainflux-base-net:
-    external: true
+  mainflux-base-net:
 
 volumes:
   mainflux-opcua-adapter-volume:
@@ -22,7 +21,7 @@ services:
     container_name: mainflux-opcua-redis
     restart: on-failure
     networks:
-      - docker_mainflux-base-net
+      - mainflux-base-net
     volumes:
       - mainflux-opcua-redis-volume:/data
 
@@ -50,6 +49,6 @@ services:
     ports:
       - ${MF_OPCUA_ADAPTER_HTTP_PORT}:${MF_OPCUA_ADAPTER_HTTP_PORT}
     networks:
-      - docker_mainflux-base-net
+      - mainflux-base-net
     volumes:
       - mainflux-opcua-adapter-volume:/store

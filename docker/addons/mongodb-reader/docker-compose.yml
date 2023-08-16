@@ -10,8 +10,7 @@
 version: "3.7"
 
 networks:
-  docker_mainflux-base-net:
-    external: true
+  mainflux-base-net:
 
 services:
   mongodb-reader:
@@ -29,18 +28,51 @@ services:
       MF_MONGO_NAME: ${MF_MONGO_NAME}
       MF_THINGS_AUTH_GRPC_URL: ${MF_THINGS_AUTH_GRPC_URL}
       MF_THINGS_AUTH_GRPC_TIMEOUT: ${MF_THINGS_AUTH_GRPC_TIMEOUT}
-      MF_THINGS_AUTH_GRPC_CLIENT_TLS: ${MF_THINGS_AUTH_GRPC_CLIENT_TLS}
-      MF_THINGS_AUTH_GRPC_CA_CERTS: ${MF_THINGS_AUTH_GRPC_CA_CERTS}
+      MF_THINGS_AUTH_GRPC_CLIENT_CERT: ${MF_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
+      MF_THINGS_AUTH_GRPC_CLIENT_KEY: ${MF_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
+      MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
       MF_AUTH_GRPC_URL: ${MF_USERS_GRPC_URL}
       MF_AUTH_GRPC_TIMEOUT : ${MF_USERS_GRPC_TIMEOUT}
-      MF_AUTH_GRPC_CLIENT_TLS: ${MF_USERS_GRPC_CLIENT_TLS}
-      MF_AUTH_GRPC_CA_CERT: ${MF_USERS_GRPC_CA_CERT}
+      MF_AUTH_GRPC_CLIENT_CERT: ${MF_USERS_GRPC_CLIENT_CERT:+/users-grpc-client.crt}
+      MF_AUTH_GRPC_CLIENT_KEY: ${MF_USERS_GRPC_CLIENT_KEY:+/users-grpc-client.key}
+      MF_AUTH_GRPC_SERVER_CA_CERTS: ${MF_USERS_GRPC_SERVER_CA_CERTS:+/users-grpc-server-ca.crt}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}   
+      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
       MF_MONGO_READER_INSTANCE_ID: ${MF_MONGO_READER_INSTANCE_ID}
     ports:
       - ${MF_MONGO_READER_HTTP_PORT}:${MF_MONGO_READER_HTTP_PORT}
     networks:
-      - docker_mainflux-base-net
+      - mainflux-base-net
     volumes:
       - ../../ssl/certs:/etc/ssl/certs
+      # Users gRPC client certificates
+      - type: bind
+        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_USERS_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
+        target: /users-grpc-client${MF_USERS_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_USERS_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
+        target: /users-grpc-client${MF_USERS_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_USERS_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
+        target: /users-grpc-server-ca${MF_USERS_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_THINGS_AUTH_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
+        target: /things-grpc-client${MF_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_THINGS_AUTH_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
+        target: /things-grpc-client${MF_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
+        target: /things-grpc-server-ca${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true

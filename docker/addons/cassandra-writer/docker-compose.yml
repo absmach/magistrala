@@ -9,8 +9,7 @@
 version: "3.7"
 
 networks:
-  docker_mainflux-base-net:
-    external: true
+  mainflux-base-net:
 
 volumes:
   mainflux-cassandra-volume:
@@ -21,11 +20,22 @@ services:
     container_name: mainflux-cassandra
     restart: on-failure
     networks:
-      - docker_mainflux-base-net
+      - mainflux-base-net
     ports:
       - ${MF_CASSANDRA_PORT}:${MF_CASSANDRA_PORT}
     volumes:
       - mainflux-cassandra-volume:/var/lib/cassandra
+
+  cassandra-init-keyspace:
+    image: cassandra:3.11.10
+    depends_on:
+      - cassandra
+    restart: on-failure
+    volumes:
+      - ./init.sh:/init.sh
+    entrypoint: ["/init.sh"]
+    networks:
+      - mainflux-base-net
 
   cassandra-writer:
     image: mainflux/cassandra-writer:${MF_RELEASE_TAG}
@@ -52,6 +62,6 @@ services:
     ports:
       - ${MF_CASSANDRA_WRITER_HTTP_PORT}:${MF_CASSANDRA_WRITER_HTTP_PORT}
     networks:
-      - docker_mainflux-base-net
+      - mainflux-base-net
     volumes:
       - ./config.toml:/config.toml

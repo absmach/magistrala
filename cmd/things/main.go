@@ -60,7 +60,7 @@ const (
 	envPrefixCache     = "MF_THINGS_CACHE_"
 	envPrefixES        = "MF_THINGS_ES_"
 	envPrefixHTTP      = "MF_THINGS_HTTP_"
-	envPrefixGRPC      = "MF_THINGS_GRPC_"
+	envPrefixGRPC      = "MF_THINGS_AUTH_GRPC_"
 	defDB              = "things"
 	defSvcHTTPPort     = "9000"
 	defSvcAuthGRPCPort = "7000"

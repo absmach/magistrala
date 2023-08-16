@@ -9,8 +9,7 @@
 version: "3.7"
 
 networks:
-  docker_mainflux-base-net:
-    external: true
+  mainflux-base-net:
 
 volumes:
   mainflux-twins-db-volume:
@@ -22,7 +21,7 @@ services:
     container_name: mainflux-twins-redis
     restart: on-failure
     networks:
-      - docker_mainflux-base-net
+      - mainflux-base-net
 
   twins-db:
     image: mongo:bionic
@@ -34,7 +33,7 @@ services:
     ports:
       - ${MF_TWINS_DB_PORT}:${MF_TWINS_DB_PORT}
     networks:
-      docker_mainflux-base-net:
+      mainflux-base-net:
     volumes:
       - mainflux-twins-db-volume:/data/db
       - mainflux-twins-db-configdb-volume:/data/configdb
@@ -65,15 +64,32 @@ services:
       MF_TWINS_DB_NAME: ${MF_TWINS_DB_NAME}
       MF_AUTH_GRPC_URL: ${MF_USERS_GRPC_URL}
       MF_AUTH_GRPC_TIMEOUT : ${MF_USERS_GRPC_TIMEOUT}
-      MF_AUTH_GRPC_CLIENT_TLS: ${MF_USERS_GRPC_CLIENT_TLS}
-      MF_AUTH_GRPC_CA_CERT: ${MF_USERS_GRPC_CA_CERT}
+      MF_AUTH_GRPC_CLIENT_CERT: ${MF_USERS_GRPC_CLIENT_CERT:+/users-grpc-client.crt}
+      MF_AUTH_GRPC_CLIENT_KEY: ${MF_USERS_GRPC_CLIENT_KEY:+/users-grpc-client.key}
+      MF_AUTH_GRPC_SERVER_CA_CERTS: ${MF_USERS_GRPC_SERVER_CA_CERTS:+/users-grpc-server-ca.crt}
       MF_BROKER_URL: ${MF_BROKER_URL}
       MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
       MF_TWINS_INSTANCE_ID: ${MF_TWINS_INSTANCE_ID}
     ports:
       - ${MF_TWINS_HTTP_PORT}:${MF_TWINS_HTTP_PORT}
     networks:
-       docker_mainflux-base-net:
+       mainflux-base-net:
     depends_on:
       - twins-db
       - twins-redis
+    volumes:
+      - type: bind
+        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_USERS_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
+        target: /users-grpc-client${MF_USERS_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_USERS_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
+        target: /users-grpc-client${MF_USERS_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_USERS_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
+        target: /users-grpc-server-ca${MF_USERS_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true

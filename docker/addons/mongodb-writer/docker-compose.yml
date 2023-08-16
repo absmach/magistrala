@@ -11,8 +11,7 @@
 version: "3.7"
 
 networks:
-  docker_mainflux-base-net:
-    external: true
+  mainflux-base-net:
 
 volumes:
   mainflux-mongodb-db-volume:
@@ -28,7 +27,7 @@ services:
     ports:
       - ${MF_MONGO_PORT}:${MF_MONGO_PORT}
     networks:
-      - docker_mainflux-base-net
+      - mainflux-base-net
     volumes:
       - mainflux-mongodb-db-volume:/data/db
       - mainflux-mongodb-configdb-volume:/data/configdb
@@ -56,6 +55,6 @@ services:
     ports:
       - ${MF_MONGO_WRITER_HTTP_PORT}:${MF_MONGO_WRITER_HTTP_PORT}
     networks:
-      - docker_mainflux-base-net
+      - mainflux-base-net
     volumes:
       - ./config.toml:/config.toml

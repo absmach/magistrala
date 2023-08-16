@@ -11,8 +11,7 @@
 version: "3.7"
 
 networks:
-  docker_mainflux-base-net:
-    external: true
+  mainflux-base-net:
 
 volumes:
   mainflux-timescale-writer-volume:
@@ -27,7 +26,7 @@ services:
       POSTGRES_USER: ${MF_TIMESCALE_USER}
       POSTGRES_DB: ${MF_TIMESCALE_NAME}
     networks:
-      - docker_mainflux-base-net
+      - mainflux-base-net
     volumes:
       - mainflux-timescale-writer-volume:/var/lib/timescalesql/data
 
@@ -60,6 +59,6 @@ services:
     ports:
       - ${MF_TIMESCALE_WRITER_HTTP_PORT}:${MF_TIMESCALE_WRITER_HTTP_PORT}
     networks:
-      - docker_mainflux-base-net
+      - mainflux-base-net
     volumes:
       - ./config.toml:/config.toml

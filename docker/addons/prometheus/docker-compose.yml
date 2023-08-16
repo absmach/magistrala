@@ -10,8 +10,7 @@
 version: "3.7"
 
 networks:
-  docker_mainflux-base-net:
-    external: true
+  mainflux-base-net:
 
 volumes:
   mainflux-prometheus-volume:
@@ -24,7 +23,7 @@ services:
     ports:
       - ${MF_PROMETHEUS_PORT}:${MF_PROMETHEUS_PORT}
     networks:
-      - docker_mainflux-base-net
+      - mainflux-base-net
     volumes:
       - type: bind
         source: ./metrics/prometheus.yml
@@ -41,9 +40,9 @@ services:
       - ${MF_GRAFANA_PORT}:${MF_GRAFANA_PORT}
     environment:
       - GF_SECURITY_ADMIN_USER=${MF_GRAFANA_ADMIN_USER}
-      - GF_SECURITY_ADMIN_PASSWORD=${MF_GRAFANA_ADMIN_PASSWORD}      
+      - GF_SECURITY_ADMIN_PASSWORD=${MF_GRAFANA_ADMIN_PASSWORD}
     networks:
-      - docker_mainflux-base-net
+      - mainflux-base-net
     volumes:
       - type: bind
         source: ./grafana/datasource.yml

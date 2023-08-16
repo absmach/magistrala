@@ -9,8 +9,7 @@
 version: "3.7"
 
 networks:
-  docker_mainflux-base-net:
-    external: true
+  mainflux-base-net:
 
 services:
   provision:
@@ -18,7 +17,7 @@ services:
     container_name: mainflux-provision
     restart: on-failure
     networks:
-      - docker_mainflux-base-net
+      - mainflux-base-net
     ports:
       - ${MF_PROVISION_HTTP_PORT}:${MF_PROVISION_HTTP_PORT}
     environment:

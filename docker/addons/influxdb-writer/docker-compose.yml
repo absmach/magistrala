@@ -9,8 +9,7 @@
 version: "3.7"
 
 networks:
-  docker_mainflux-base-net:
-    external: true
+  mainflux-base-net:
 
 volumes:
   mainflux-influxdb-volume:
@@ -30,7 +29,7 @@ services:
       DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${MF_INFLUXDB_TOKEN}
       INFLUXDB_HTTP_FLUX_ENABLED: ${MF_INFLUXDB_HTTP_ENABLED}
     networks:
-      - docker_mainflux-base-net
+      - mainflux-base-net
     ports:
       - ${MF_INFLUXDB_PORT}:${MF_INFLUXDB_PORT}
     volumes:
@@ -69,6 +68,6 @@ services:
     ports:
       - ${MF_INFLUX_WRITER_HTTP_PORT}:${MF_INFLUX_WRITER_HTTP_PORT}
     networks:
-      - docker_mainflux-base-net
+      - mainflux-base-net
     volumes:
       - ./config.toml:/config.toml

@@ -29,7 +29,7 @@ require (
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/lestrrat-go/jwx/v2 v2.0.11
 	github.com/mainflux/callhome v0.0.0-20230626140149-b03b1f4c46f2
-	github.com/mainflux/mproxy v0.3.0
+	github.com/mainflux/mproxy v0.3.1-0.20230822124450-4b4dfe600cc2
 	github.com/mainflux/senml v1.5.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/nats-io/nats.go v1.27.1

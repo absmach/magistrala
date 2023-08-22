@@ -139,21 +139,20 @@ func (h *handler) AuthSubscribe(ctx context.Context, topics *[]string) error {
 }
 
 // Connect - after client successfully connected.
-func (h *handler) Connect(ctx context.Context) {
+func (h *handler) Connect(ctx context.Context) error {
 	s, ok := session.FromContext(ctx)
 	if !ok {
-		h.logger.Error(errors.Wrap(ErrFailedConnect, ErrClientNotInitialized).Error())
-		return
+		return errors.Wrap(ErrFailedConnect, ErrClientNotInitialized)
 	}
 	h.logger.Info(fmt.Sprintf(LogInfoConnected, s.ID))
+	return nil
 }
 
 // Publish - after client successfully published.
-func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) {
+func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) error {
 	s, ok := session.FromContext(ctx)
 	if !ok {
-		h.logger.Error(errors.Wrap(ErrFailedPublish, ErrClientNotInitialized).Error())
-		return
+		return errors.Wrap(ErrFailedPublish, ErrClientNotInitialized)
 	}
 	h.logger.Info(fmt.Sprintf(LogInfoPublished, s.ID, *topic))
 	// Topics are in the format:
@@ -161,8 +160,7 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) {
 
 	channelParts := channelRegExp.FindStringSubmatch(*topic)
 	if len(channelParts) < 2 {
-		h.logger.Error(errors.Wrap(ErrFailedPublish, ErrMalformedTopic).Error())
-		return
+		return errors.Wrap(ErrFailedPublish, ErrMalformedTopic)
 	}
 
 	chanID := channelParts[1]
@@ -170,8 +168,7 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) {
 
 	subtopic, err := parseSubtopic(subtopic)
 	if err != nil {
-		h.logger.Error(errors.Wrap(ErrFailedParseSubtopic, err).Error())
-		return
+		return errors.Wrap(ErrFailedParseSubtopic, err)
 	}
 
 	msg := messaging.Message{
@@ -185,42 +182,43 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) {
 
 	for _, pub := range h.publishers {
 		if err := pub.Publish(ctx, msg.Channel, &msg); err != nil {
-			h.logger.Error(errors.Wrap(ErrFailedPublishToMsgBroker, err).Error())
+			return errors.Wrap(ErrFailedPublishToMsgBroker, err)
 		}
 	}
+	return nil
 }
 
 // Subscribe - after client successfully subscribed.
-func (h *handler) Subscribe(ctx context.Context, topics *[]string) {
+func (h *handler) Subscribe(ctx context.Context, topics *[]string) error {
 	s, ok := session.FromContext(ctx)
 	if !ok {
-		h.logger.Error(errors.Wrap(ErrFailedSubscribe, ErrClientNotInitialized).Error())
-		return
+		return errors.Wrap(ErrFailedSubscribe, ErrClientNotInitialized)
 	}
 	h.logger.Info(fmt.Sprintf(LogInfoSubscribed, s.ID, strings.Join(*topics, ",")))
+	return nil
 }
 
 // Unsubscribe - after client unsubscribed.
-func (h *handler) Unsubscribe(ctx context.Context, topics *[]string) {
+func (h *handler) Unsubscribe(ctx context.Context, topics *[]string) error {
 	s, ok := session.FromContext(ctx)
 	if !ok {
-		h.logger.Error(errors.Wrap(ErrFailedUnsubscribe, ErrClientNotInitialized).Error())
-		return
+		return errors.Wrap(ErrFailedUnsubscribe, ErrClientNotInitialized)
 	}
 	h.logger.Info(fmt.Sprintf(LogInfoUnsubscribed, s.ID, strings.Join(*topics, ",")))
+	return nil
 }
 
 // Disconnect - connection with broker or client lost.
-func (h *handler) Disconnect(ctx context.Context) {
+func (h *handler) Disconnect(ctx context.Context) error {
 	s, ok := session.FromContext(ctx)
 	if !ok {
-		h.logger.Error(errors.Wrap(ErrFailedDisconnect, ErrClientNotInitialized).Error())
-		return
+		return errors.Wrap(ErrFailedDisconnect, ErrClientNotInitialized)
 	}
 	h.logger.Error(fmt.Sprintf(LogInfoDisconnected, s.ID, s.Password))
 	if err := h.es.Disconnect(ctx, string(s.Password)); err != nil {
-		h.logger.Error(errors.Wrap(ErrFailedPublishDisconnectEvent, err).Error())
+		return errors.Wrap(ErrFailedPublishDisconnectEvent, err)
 	}
+	return nil
 }
 
 func (h *handler) authAccess(ctx context.Context, password, topic, action string) error {

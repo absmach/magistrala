@@ -81,36 +81,36 @@ func (h *handlerMiddleware) AuthSubscribe(ctx context.Context, topics *[]string)
 }
 
 // Connect traces connect operations.
-func (h *handlerMiddleware) Connect(ctx context.Context) {
+func (h *handlerMiddleware) Connect(ctx context.Context) error {
 	ctx, span := h.tracer.Start(ctx, connectOP)
 	defer span.End()
-	h.handler.Connect(ctx)
+	return h.handler.Connect(ctx)
 }
 
 // Disconnect traces disconnect operations.
-func (h *handlerMiddleware) Disconnect(ctx context.Context) {
+func (h *handlerMiddleware) Disconnect(ctx context.Context) error {
 	ctx, span := h.tracer.Start(ctx, disconnectOP)
 	defer span.End()
-	h.handler.Disconnect(ctx)
+	return h.handler.Disconnect(ctx)
 }
 
 // Publish traces publish operations.
-func (h *handlerMiddleware) Publish(ctx context.Context, topic *string, payload *[]byte) {
+func (h *handlerMiddleware) Publish(ctx context.Context, topic *string, payload *[]byte) error {
 	ctx, span := h.tracer.Start(ctx, publishOP)
 	defer span.End()
-	h.handler.Publish(ctx, topic, payload)
+	return h.handler.Publish(ctx, topic, payload)
 }
 
 // Subscribe traces subscribe operations.
-func (h *handlerMiddleware) Subscribe(ctx context.Context, topics *[]string) {
+func (h *handlerMiddleware) Subscribe(ctx context.Context, topics *[]string) error {
 	ctx, span := h.tracer.Start(ctx, subscribeOP)
 	defer span.End()
-	h.handler.Subscribe(ctx, topics)
+	return h.handler.Subscribe(ctx, topics)
 }
 
 // Unsubscribe traces unsubscribe operations.
-func (h *handlerMiddleware) Unsubscribe(ctx context.Context, topics *[]string) {
+func (h *handlerMiddleware) Unsubscribe(ctx context.Context, topics *[]string) error {
 	ctx, span := h.tracer.Start(ctx, unsubscribeOP)
 	defer span.End()
-	h.handler.Unsubscribe(ctx, topics)
+	return h.handler.Unsubscribe(ctx, topics)
 }

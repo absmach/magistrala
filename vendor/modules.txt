@@ -430,7 +430,7 @@ github.com/magiconair/properties
 # github.com/mainflux/callhome v0.0.0-20230626140149-b03b1f4c46f2
 ## explicit; go 1.20
 github.com/mainflux/callhome/pkg/client
-# github.com/mainflux/mproxy v0.3.0
+# github.com/mainflux/mproxy v0.3.1-0.20230822124450-4b4dfe600cc2
 ## explicit; go 1.19
 github.com/mainflux/mproxy/pkg/logger
 github.com/mainflux/mproxy/pkg/mqtt

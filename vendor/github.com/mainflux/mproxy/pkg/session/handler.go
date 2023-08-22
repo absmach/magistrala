@@ -17,17 +17,17 @@ type Handler interface {
 	AuthSubscribe(ctx context.Context, topics *[]string) error
 
 	// After client successfully connected
-	Connect(ctx context.Context)
+	Connect(ctx context.Context) error
 
 	// After client successfully published
-	Publish(ctx context.Context, topic *string, payload *[]byte)
+	Publish(ctx context.Context, topic *string, payload *[]byte) error
 
 	// After client successfully subscribed
-	Subscribe(ctx context.Context, topics *[]string)
+	Subscribe(ctx context.Context, topics *[]string) error
 
 	// After client unsubscribed
-	Unsubscribe(ctx context.Context, topics *[]string)
+	Unsubscribe(ctx context.Context, topics *[]string) error
 
 	// Disconnect on connection with client lost
-	Disconnect(ctx context.Context)
+	Disconnect(ctx context.Context) error
 }

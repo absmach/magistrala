@@ -67,7 +67,9 @@ func stream(ctx context.Context, dir direction, r, w net.Conn, h Handler, errs c
 		}
 
 		if dir == up {
-			notify(ctx, pkt, h)
+			if err := notify(ctx, pkt, h); err != nil {
+				errs <- wrap(ctx, err, dir)
+			}
 		}
 	}
 }
@@ -101,18 +103,18 @@ func authorize(ctx context.Context, pkt packets.ControlPacket, h Handler) error 
 	}
 }
 
-func notify(ctx context.Context, pkt packets.ControlPacket, h Handler) {
+func notify(ctx context.Context, pkt packets.ControlPacket, h Handler) error {
 	switch p := pkt.(type) {
 	case *packets.ConnectPacket:
-		h.Connect(ctx)
+		return h.Connect(ctx)
 	case *packets.PublishPacket:
-		h.Publish(ctx, &p.TopicName, &p.Payload)
+		return h.Publish(ctx, &p.TopicName, &p.Payload)
 	case *packets.SubscribePacket:
-		h.Subscribe(ctx, &p.Topics)
+		return h.Subscribe(ctx, &p.Topics)
 	case *packets.UnsubscribePacket:
-		h.Unsubscribe(ctx, &p.Topics)
+		return h.Unsubscribe(ctx, &p.Topics)
 	default:
-		return
+		return nil
 	}
 }
 

@@ -12,8 +12,8 @@ import (
 const cost int = 10
 
 var (
-	errHashPassword    = errors.New("Generate hash from password failed")
-	errComparePassword = errors.New("Compare hash and password failed")
+	errHashPassword    = errors.New("generate hash from password failed")
+	errComparePassword = errors.New("compare hash and password failed")
 )
 
 var _ clients.Hasher = (*bcryptHasher)(nil)

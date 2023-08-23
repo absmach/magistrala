@@ -36,4 +36,7 @@ var (
 
 	// ErrWrongSecret indicates a wrong secret was provided.
 	ErrWrongSecret = New("wrong secret")
+
+	// ErrLogin indicates wrong login credentials.
+	ErrLogin = New("invalid user id or secret")
 )

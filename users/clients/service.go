@@ -115,7 +115,7 @@ func (svc service) IssueToken(ctx context.Context, identity, secret string) (jwt
 		return jwt.Token{}, errors.Wrap(errors.ErrAuthentication, err)
 	}
 	if err := svc.hasher.Compare(secret, dbUser.Credentials.Secret); err != nil {
-		return jwt.Token{}, errors.Wrap(errors.ErrWrongSecret, err)
+		return jwt.Token{}, errors.Wrap(errors.ErrLogin, err)
 	}
 
 	claims := jwt.Claims{

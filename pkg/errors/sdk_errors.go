@@ -10,7 +10,10 @@ import (
 	"net/http"
 )
 
-const errorKey = "error"
+type errorRes struct {
+	Err string `json:"error"`
+	Msg string `json:"message"`
+}
 
 // Failed to read response body.
 var errRespBody = New("failed to read response body")
@@ -44,6 +47,15 @@ func (ce *sdkError) StatusCode() int {
 
 // NewSDKError returns an SDK Error that formats as the given text.
 func NewSDKError(err error) SDKError {
+	if e, ok := err.(Error); ok {
+		return &sdkError{
+			statusCode: 0,
+			customError: &customError{
+				msg: e.Msg(),
+				err: cast(e.Err()),
+			},
+		}
+	}
 	return &sdkError{
 		customError: &customError{
 			msg: err.Error(),
@@ -55,6 +67,15 @@ func NewSDKError(err error) SDKError {
 
 // NewSDKErrorWithStatus returns an SDK Error setting the status code.
 func NewSDKErrorWithStatus(err error, statusCode int) SDKError {
+	if e, ok := err.(Error); ok {
+		return &sdkError{
+			statusCode: statusCode,
+			customError: &customError{
+				msg: e.Msg(),
+				err: cast(e.Err()),
+			},
+		}
+	}
 	return &sdkError{
 		statusCode: statusCode,
 		customError: &customError{
@@ -78,15 +99,13 @@ func CheckError(resp *http.Response, expectedStatusCodes ...int) SDKError {
 	if err != nil {
 		return NewSDKErrorWithStatus(Wrap(errRespBody, err), resp.StatusCode)
 	}
-	var content map[string]interface{}
-	_ = json.Unmarshal(body, &content)
-
-	if msg, ok := content[errorKey]; ok {
-		if v, ok := msg.(string); ok {
-			return NewSDKErrorWithStatus(New(v), resp.StatusCode)
-		}
-		return NewSDKErrorWithStatus(fmt.Errorf("%v", msg), resp.StatusCode)
+	var content errorRes
+	if err := json.Unmarshal(body, &content); err != nil {
+		return NewSDKErrorWithStatus(err, resp.StatusCode)
+	}
+	if content.Err == "" {
+		return NewSDKErrorWithStatus(New(content.Msg), resp.StatusCode)
 	}
 
-	return NewSDKErrorWithStatus(New(string(body)), resp.StatusCode)
+	return NewSDKErrorWithStatus(Wrap(New(content.Msg), New(content.Err)), resp.StatusCode)
 }

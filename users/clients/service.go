@@ -112,7 +112,7 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mfclien
 func (svc service) IssueToken(ctx context.Context, identity, secret string) (jwt.Token, error) {
 	dbUser, err := svc.clients.RetrieveByIdentity(ctx, identity)
 	if err != nil {
-		return jwt.Token{}, errors.Wrap(errors.ErrAuthentication, err)
+		return jwt.Token{}, err
 	}
 	if err := svc.hasher.Compare(secret, dbUser.Credentials.Secret); err != nil {
 		return jwt.Token{}, errors.Wrap(errors.ErrLogin, err)

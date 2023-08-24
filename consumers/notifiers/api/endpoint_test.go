@@ -35,10 +35,10 @@ const (
 )
 
 var (
-	notFoundRes   = toJSON(apiutil.ErrorRes{Err: errors.ErrNotFound.Error()})
-	unauthRes     = toJSON(apiutil.ErrorRes{Err: errors.ErrAuthentication.Error()})
-	invalidRes    = toJSON(apiutil.ErrorRes{Err: errors.Wrap(apiutil.ErrValidation, apiutil.ErrInvalidQueryParams).Error()})
-	missingTokRes = toJSON(apiutil.ErrorRes{Err: errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken).Error()})
+	notFoundRes   = toJSON(apiutil.ErrorRes{Msg: errors.ErrNotFound.Error()})
+	unauthRes     = toJSON(apiutil.ErrorRes{Msg: errors.ErrAuthentication.Error()})
+	invalidRes    = toJSON(apiutil.ErrorRes{Err: apiutil.ErrInvalidQueryParams.Error(), Msg: apiutil.ErrValidation.Error()})
+	missingTokRes = toJSON(apiutil.ErrorRes{Err: apiutil.ErrBearerToken.Error(), Msg: apiutil.ErrValidation.Error()})
 )
 
 type testRequest struct {

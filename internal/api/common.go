@@ -6,7 +6,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/gofrs/uuid"
@@ -130,11 +129,7 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 	}
 
 	if errorVal, ok := err.(errors.Error); ok {
-		errMsg := errorVal.Msg()
-		if errorVal.Err() != nil {
-			errMsg = fmt.Sprintf("%s : %s", errMsg, errorVal.Err().Msg())
-		}
-		if err := json.NewEncoder(w).Encode(apiutil.ErrorRes{Err: errMsg}); err != nil {
+		if err := json.NewEncoder(w).Encode(errorVal); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	}

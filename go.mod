@@ -16,6 +16,9 @@ require (
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/go-kit/kit v0.13.0
 	github.com/go-redis/redis/v8 v8.11.5
+	github.com/go-zoo/bone v1.3.0
+	github.com/go-zookeeper/zk v1.0.2
+	github.com/gocql/gocql v1.6.0
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/gookit/color v1.5.4
 	github.com/gorilla/websocket v1.5.3
@@ -55,6 +58,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240723171418-e6d459c13d2a
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
+	github.com/segmentio/kafka-go v0.4.42
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	moul.io/http2curl v1.0.0
 )
@@ -131,6 +135,7 @@ require (
 	github.com/opencontainers/runc v1.1.12 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/pion/dtls/v2 v2.2.8-0.20240501061905-2c36d63320a0 // indirect
+	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	github.com/pion/logging v0.2.2 // indirect
 	github.com/pion/transport/v3 v3.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

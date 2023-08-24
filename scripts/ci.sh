@@ -73,6 +73,8 @@ setup_mg() {
     MG_MESSAGE_BROKER_TYPE=rabbitmq make http
     echo "Compile check for redis..."
     MG_ES_TYPE=redis make http
+    echo "Compile check for kafka..."
+    MG_MESSAGE_BROKER_TYPE=kafka make http
     make -j$NPROC
 }
 

@@ -13,7 +13,7 @@ volumes:
   mainflux-things-redis-volume:
   mainflux-es-redis-volume:
   mainflux-mqtt-broker-volume:
-
+  mainflux-broker-volume:
 
 services:
   nginx:
@@ -53,8 +53,8 @@ services:
     restart: on-failure
     networks:
       - mainflux-base-net
-    ports:
-      - 4222:4222
+    volumes:
+      - mainflux-broker-volume:/data
 
   things-db:
     image: postgres:13.3-alpine

@@ -1,8 +1,13 @@
 services:
   broker:
-    image: nats:2.2.4-alpine
-    command: "-c /etc/nats/nats.conf -DV"
+    image: nats:2.9.21-alpine
+    command: "--config=/etc/nats/nats.conf"
     volumes:
       - ./../nats/:/etc/nats
+    environment:
+      - MF_NATS_PORT=${MF_NATS_PORT}
+      - MF_NATS_HTTP_PORT=${MF_NATS_HTTP_PORT}
+      - MF_NATS_JETSTREAM_KEY=${MF_NATS_JETSTREAM_KEY}
     ports:
       - ${MF_NATS_PORT}:${MF_NATS_PORT}
+      - ${MF_NATS_HTTP_PORT}:${MF_NATS_HTTP_PORT}

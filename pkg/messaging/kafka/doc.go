@@ -18,7 +18,7 @@
 // library to get a list of all topics and then subscribe to each of them.
 // The list of topics is obtained by connecting to the Zookeeper server
 // and reading the list of topics from the /brokers/topics node. The
-// first message received from the topic can be lost if subscription
+// first message published from the topic can be lost if subscription
 // happens closely followed by publishing. After the subscription, we
 // guarantee that all messages will be received.
 package kafka

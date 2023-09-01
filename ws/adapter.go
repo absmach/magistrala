@@ -75,7 +75,7 @@ func New(auth policies.AuthServiceClient, pubsub messaging.PubSub) Service {
 }
 
 func (svc *adapterService) Publish(ctx context.Context, thingKey string, msg *messaging.Message) error {
-	thid, err := svc.authorize(ctx, thingKey, msg.GetChannel())
+	thid, err := svc.authorize(ctx, thingKey, msg.GetChannel(), policies.WriteAction)
 	if err != nil {
 		return ErrUnauthorizedAccess
 	}
@@ -98,7 +98,7 @@ func (svc *adapterService) Subscribe(ctx context.Context, thingKey, chanID, subt
 		return ErrUnauthorizedAccess
 	}
 
-	thid, err := svc.authorize(ctx, thingKey, chanID)
+	thid, err := svc.authorize(ctx, thingKey, chanID, policies.ReadAction)
 	if err != nil {
 		return ErrUnauthorizedAccess
 	}
@@ -122,7 +122,7 @@ func (svc *adapterService) Unsubscribe(ctx context.Context, thingKey, chanID, su
 		return ErrUnauthorizedAccess
 	}
 
-	thid, err := svc.authorize(ctx, thingKey, chanID)
+	thid, err := svc.authorize(ctx, thingKey, chanID, policies.ReadAction)
 	if err != nil {
 		return ErrUnauthorizedAccess
 	}
@@ -137,11 +137,11 @@ func (svc *adapterService) Unsubscribe(ctx context.Context, thingKey, chanID, su
 
 // authorize checks if the thingKey is authorized to access the channel
 // and returns the thingID if it is.
-func (svc *adapterService) authorize(ctx context.Context, thingKey, chanID string) (string, error) {
+func (svc *adapterService) authorize(ctx context.Context, thingKey, chanID, action string) (string, error) {
 	ar := &policies.AuthorizeReq{
 		Subject:    thingKey,
 		Object:     chanID,
-		Action:     policies.ReadAction,
+		Action:     action,
 		EntityType: policies.ThingEntityType,
 	}
 	res, err := svc.auth.Authorize(ctx, ar)

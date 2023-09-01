@@ -79,7 +79,7 @@ func (svc *adapterService) Subscribe(ctx context.Context, key, chanID, subtopic 
 		Subject:    key,
 		Object:     chanID,
 		Action:     policies.ReadAction,
-		EntityType: policies.GroupEntityType,
+		EntityType: policies.ThingEntityType,
 	}
 	res, err := svc.auth.Authorize(ctx, ar)
 	if err != nil {
@@ -100,7 +100,7 @@ func (svc *adapterService) Unsubscribe(ctx context.Context, key, chanID, subtopi
 		Subject:    key,
 		Object:     chanID,
 		Action:     policies.ReadAction,
-		EntityType: policies.GroupEntityType,
+		EntityType: policies.ThingEntityType,
 	}
 	res, err := svc.auth.Authorize(ctx, ar)
 	if err != nil {

@@ -4,6 +4,7 @@
 package api_test
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -37,7 +38,7 @@ func newService(cc policies.AuthServiceClient) (ws.Service, mocks.MockPubSub) {
 
 func newHTTPServer(svc ws.Service) *httptest.Server {
 	logger := mflog.NewMock()
-	mux := api.MakeHandler(svc, logger, instanceID)
+	mux := api.MakeHandler(context.Background(), svc, logger, instanceID)
 	return httptest.NewServer(mux)
 }
 

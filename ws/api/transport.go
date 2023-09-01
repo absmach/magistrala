@@ -4,6 +4,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -35,12 +36,12 @@ var (
 )
 
 // MakeHandler returns http handler with handshake endpoint.
-func MakeHandler(svc ws.Service, l mflog.Logger, instanceID string) http.Handler {
+func MakeHandler(ctx context.Context, svc ws.Service, l mflog.Logger, instanceID string) http.Handler {
 	logger = l
 
 	mux := bone.New()
-	mux.GetFunc("/channels/:chanID/messages", handshake(svc))
-	mux.GetFunc("/channels/:chanID/messages/*", handshake(svc))
+	mux.GetFunc("/channels/:chanID/messages", handshake(ctx, svc))
+	mux.GetFunc("/channels/:chanID/messages/*", handshake(ctx, svc))
 	mux.GetFunc("/version", mainflux.Health(protocol, instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 

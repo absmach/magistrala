@@ -21,9 +21,8 @@ import (
 
 var channelPartRegExp = regexp.MustCompile(`^/channels/([\w\-]+)/messages(/[^?]*)?(\?.*)?$`)
 
-func handshake(svc ws.Service) http.HandlerFunc {
+func handshake(ctx context.Context, svc ws.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
 		req, err := decodeRequest(r)
 		if err != nil {
 			encodeError(w, err)
@@ -146,10 +145,10 @@ func process(ctx context.Context, svc ws.Service, req connReq, msgs <-chan []byt
 			Payload:  msg,
 			Created:  time.Now().UnixNano(),
 		}
-		_ = svc.Publish(ctx, req.thingKey, &m)
-	}
-	if err := svc.Unsubscribe(ctx, req.thingKey, req.chanID, req.subtopic); err != nil {
-		req.conn.Close()
+
+		if err := svc.Publish(ctx, req.thingKey, &m); err != nil {
+			logger.Warn(fmt.Sprintf("Failed to publish message: %s", err.Error()))
+		}
 	}
 }
 

@@ -97,7 +97,7 @@ func (h *handler) AuthConnect(ctx context.Context) error {
 		return errors.ErrAuthentication
 	}
 
-	if err := h.es.Connect(ctx, string(s.Password)); err != nil {
+	if err := h.es.Connect(ctx, pwd); err != nil {
 		h.logger.Error(errors.Wrap(ErrFailedPublishConnectEvent, err).Error())
 	}
 
@@ -249,7 +249,7 @@ func (h *handler) authAccess(ctx context.Context, password, topic, action string
 		return errors.ErrAuthorization
 	}
 
-	return err
+	return nil
 }
 
 func parseSubtopic(subtopic string) (string, error) {

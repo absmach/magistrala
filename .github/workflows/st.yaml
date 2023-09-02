@@ -1,0 +1,146 @@
+name: Test OpenAPI using Schemathesis
+
+on: [push, pull_request] 
+
+env:
+  MF_TOKEN: abcd
+  EMAIL: admin@example.com
+  PASSWORD: 12345678
+  DEVICE: mf-device
+
+jobs:
+  api-tests:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v2
+
+      - name: find number of cores
+        run: lscpu|egrep 'Model name|Socket|Thread|NUMA|CPU\(s\)'
+
+      - name: create images
+        if: always()
+        run: make all -j 2 && make -j 2 dockers_dev
+
+      - name: run containers
+        if: always()
+        run: sudo docker-compose -f docker/docker-compose.yml up -d
+
+      - name: REST API with curl to provision user
+        if: always()
+        run: |
+          curl -sSiX POST http://localhost:9002/users -H "Content-Type: application/json" -d '{"name": "John Doe","credentials": {"identity": "admin@example.com","secret": "12345678"}}'
+      
+      - name: Set ACCESS_TOKEN
+        id: set-access-token
+        run: |
+          response='{"access_token":"..." ... }' # Replace with your JSON response
+          access_token=$(echo "$response" | grep -o '"access_token":"[^"]*' | cut -d'"' -f4)
+          echo "ACCESS_TOKEN=$access_token" >> $GITHUB_ENV
+
+      - name: Set BEARER_TOKEN
+        run: echo "BEARER_TOKEN=rer $MF_TOKEN" >> $GITHUB_ENV
+
+      - name: print bearer token
+        if: always()
+        run: echo $BEARER_TOKEN
+      
+      - name: Set token env variable
+        run: echo "MF_TOKEN=$(echo $MF_TOKEN)" >> $GITHUB_ENV
+
+      - name: Test
+        run: echo ${{ env.ACCESS_TOKEN }}
+      
+      # Bootstrap.yml
+      - name: Run st for bootstrap.yml
+        if: always()
+        uses: schemathesis/action@v1
+        with:
+          schema: './api/openapi/bootstrap.yml'
+          base-url: 'http://localhost'
+          args: '-H "Authorization: Bearer {{ env.ACCESS_TOKEN }}"'
+          token: ${{ secrets.SCHEMATHESIS_TOKEN }}
+        
+      # Certs.yml
+      - name: Run st for certs.yml
+        if: always()
+        uses: schemathesis/action@v1
+        with:
+          schema: './api/openapi/certs.yml'
+          base-url: 'http://localhost'
+          args: '-H "Authorization: Bearer {{ env.ACCESS_TOKEN }}"'
+          token: ${{ secrets.SCHEMATHESIS_TOKEN }}
+
+      # Consumers-notifiers.yml
+      - name: Run st for consumers-notifiers.yml
+        if: always()
+        uses: schemathesis/action@v1
+        with:
+          schema: './api/openapi/consumers-notifiers.yml'
+          base-url: 'http://localhost'
+          args: '-H "Authorization: Bearer {{ env.ACCESS_TOKEN }}"'
+          token: ${{ secrets.SCHEMATHESIS_TOKEN }}
+      
+      # Http.yml
+      - name: Run st for http.yml
+        if: always()
+        uses: schemathesis/action@v1
+        with:
+          schema: './api/openapi/http.yml'
+          base-url: 'http://localhost'
+          args: '-H "Authorization: Bearer {{ env.ACCESS_TOKEN }}"'
+          token: ${{ secrets.SCHEMATHESIS_TOKEN }}
+
+      # Provision.yml
+      - name: Run st for provision.yml
+        if: always()
+        uses: schemathesis/action@v1
+        with:
+          schema: './api/openapi/provision.yml'
+          base-url: 'http://localhost'
+          args: '-H "Authorization: Bearer {{ env.ACCESS_TOKEN }}"'
+          token: ${{ secrets.SCHEMATHESIS_TOKEN }}
+
+      # Readers.yml
+      - name: Run st for readers.yml
+        if: always()
+        uses: schemathesis/action@v1
+        with:
+          schema: './api/openapi/readers.yml'
+          base-url: 'http://localhost'
+          args: '-H "Authorization: Bearer {{ env.ACCESS_TOKEN }}"'
+          token: ${{ secrets.SCHEMATHESIS_TOKEN }}
+
+      # Things.yml
+      - name: Run st for things.yml
+        if: always()
+        uses: schemathesis/action@v1
+        with:
+          schema: './api/openapi/things.yml'
+          base-url: 'http://localhost'
+          args: '-H "Authorization: Bearer {{ env.ACCESS_TOKEN }}"'
+          token: ${{ secrets.SCHEMATHESIS_TOKEN }}
+
+      # Twins.yml
+      - name: Run st for twins.yml
+        if: always()
+        uses: schemathesis/action@v1
+        with:
+          schema: './api/openapi/twins.yml'
+          base-url: 'http://localhost'
+          args: '-H "Authorization: Bearer {{ env.ACCESS_TOKEN }}"'
+          token: ${{ secrets.SCHEMATHESIS_TOKEN }}
+
+      # Users.yml
+      - name: Run st for users.yml
+        if: always()
+        uses: schemathesis/action@v1
+        with:
+          schema: './api/openapi/users.yml'
+          base-url: 'http://localhost'
+          args: '-H "Authorization: Bearer {{ env.ACCESS_TOKEN }}"'
+          token: ${{ secrets.SCHEMATHESIS_TOKEN }}
+
+      - name: Stop the running docker containers
+        if: always()
+        run: make stop 

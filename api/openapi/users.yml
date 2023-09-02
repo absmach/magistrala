@@ -1173,6 +1173,10 @@ components:
           description: Total number of items.
         offset:
           type: integer
+          format: int64   # Indicates a 64-bit integer
+          default: 0
+          minimum: 0      # Minimum value is 0 (unsigned)
+          maximum: 18446744073709551615  # Maximum value for uint64
           description: Number of items to skip during retrieval.
         limit:
           type: integer
@@ -1185,6 +1189,10 @@ components:
 
     GroupsPage:
       type: object
+      not:
+        type: string
+        enum: ["\u0000"]
+      nullable: false
       properties:
         groups:
           type: array
@@ -1198,6 +1206,10 @@ components:
           description: Total number of items.
         offset:
           type: integer
+          format: int64   # Indicates a 64-bit integer
+          default: 0
+          minimum: 0      # Minimum value is 0 (unsigned)
+          maximum: 18446744073709551615  # Maximum value for uint64
           description: Number of items to skip during retrieval.
         limit:
           type: integer
@@ -1223,6 +1235,10 @@ components:
           description: Total number of items.
         offset:
           type: integer
+          format: int64   # Indicates a 64-bit integer
+          default: 0
+          minimum: 0      # Minimum value is 0 (unsigned)
+          maximum: 18446744073709551615  # Maximum value for uint64
           description: Number of items to skip during retrieval.
         limit:
           type: integer
@@ -1248,6 +1264,10 @@ components:
           description: Total number of items.
         offset:
           type: integer
+          format: int64   # Indicates a 64-bit integer
+          default: 0
+          minimum: 0      # Minimum value is 0 (unsigned)
+          maximum: 18446744073709551615  # Maximum value for uint64
           description: Number of items to skip during retrieval.
         limit:
           type: integer
@@ -1273,6 +1293,10 @@ components:
           description: Total number of items.
         offset:
           type: integer
+          format: int64   # Indicates a 64-bit integer
+          default: 0
+          minimum: 0      # Minimum value is 0 (unsigned)
+          maximum: 18446744073709551615  # Maximum value for uint64
           description: Number of items to skip during retrieval.
         limit:
           type: integer
@@ -1670,8 +1694,11 @@ components:
         in: query
         schema:
           type: integer
+          format: int64   # Indicates a 64-bit integer
           default: 0
           minimum: 0
+          maximum: 18446744073709551615  # Maximum value for uint64
+          description: Number of items to skip during retrieval.
         required: false
         example: '0'
 

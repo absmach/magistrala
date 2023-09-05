@@ -62,7 +62,7 @@ type pubsub struct {
 }
 
 // NewPubSub returns MQTT message publisher/subscriber.
-func NewPubSub(url, queue string, timeout time.Duration, logger mflog.Logger) (messaging.PubSub, error) {
+func NewPubSub(url, _ string, timeout time.Duration, logger mflog.Logger) (messaging.PubSub, error) {
 	client, err := newClient(url, "mqtt-publisher", timeout)
 	if err != nil {
 		return nil, err
@@ -194,7 +194,7 @@ func newClient(address, id string, timeout time.Duration) (mqtt.Client, error) {
 }
 
 func (ps *pubsub) mqttHandler(h messaging.MessageHandler) mqtt.MessageHandler {
-	return func(c mqtt.Client, m mqtt.Message) {
+	return func(_ mqtt.Client, m mqtt.Message) {
 		var msg messaging.Message
 		if err := proto.Unmarshal(m.Payload(), &msg); err != nil {
 			ps.logger.Warn(fmt.Sprintf("Failed to unmarshal received message: %s", err))

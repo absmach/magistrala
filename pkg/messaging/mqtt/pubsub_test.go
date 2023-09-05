@@ -111,7 +111,9 @@ func TestPublisher(t *testing.T) {
 		assert.Nil(t, err, fmt.Sprintf("%s: failed to serialize protobuf error: %s\n", tc.desc, err))
 
 		receivedMsg := <-msgChan
-		assert.Equal(t, data, receivedMsg, fmt.Sprintf("%s: expected %+v got %+v\n", tc.desc, data, receivedMsg))
+		if tc.payload != nil {
+			assert.Equal(t, expectedMsg.GetPayload(), receivedMsg, fmt.Sprintf("%s: expected %+v got %+v\n", tc.desc, data, receivedMsg))
+		}
 	}
 }
 
@@ -271,9 +273,14 @@ func TestPubSub(t *testing.T) {
 				Subtopic:  subtopic,
 				Payload:   data,
 			}
+			data, err := proto.Marshal(&expectedMsg)
+			assert.Nil(t, err, fmt.Sprintf("%s: failed to serialize protobuf error: %s\n", tc.desc, err))
 
+			msg := messaging.Message{
+				Payload: data,
+			}
 			// Publish message, and then receive it on message channel.
-			err := pubsub.Publish(context.TODO(), topic, &expectedMsg)
+			err = pubsub.Publish(context.TODO(), topic, &msg)
 			assert.Nil(t, err, fmt.Sprintf("%s: got unexpected error: %s\n", tc.desc, err))
 
 			receivedMsg := <-msgChan

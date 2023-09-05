@@ -10,7 +10,6 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/mainflux/mainflux/pkg/messaging"
-	"google.golang.org/protobuf/proto"
 )
 
 var errPublishTimeout = errors.New("failed to publish due to timeout reached")
@@ -40,20 +39,18 @@ func (pub publisher) Publish(ctx context.Context, topic string, msg *messaging.M
 	if topic == "" {
 		return ErrEmptyTopic
 	}
-	data, err := proto.Marshal(msg)
-	if err != nil {
-		return err
-	}
-	token := pub.client.Publish(topic, qos, false, data)
+
+	// Publish only the payload and not the whole message.
+	token := pub.client.Publish(topic, qos, false, msg.GetPayload())
 	if token.Error() != nil {
 		return token.Error()
 	}
-	ok := token.WaitTimeout(pub.timeout)
-	if !ok {
+
+	if ok := token.WaitTimeout(pub.timeout); !ok {
 		return errPublishTimeout
 	}
 
-	return token.Error()
+	return nil
 }
 
 func (pub publisher) Close() error {

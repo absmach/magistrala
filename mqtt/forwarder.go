@@ -43,15 +43,17 @@ func handle(ctx context.Context, pub messaging.Publisher, logger mflog.Logger) h
 		}
 		// Use concatenation instead of fmt.Sprintf for the
 		// sake of simplicity and performance.
-		topic := fmt.Sprintf("channels/%s/messages", msg.Channel)
+		topic := "channels/" + msg.Channel + "/messages"
 		if msg.Subtopic != "" {
-			topic = fmt.Sprintf("%s/%s", topic, strings.ReplaceAll(msg.Subtopic, ".", "/"))
+			topic = topic + "/" + strings.ReplaceAll(msg.Subtopic, ".", "/")
 		}
+
 		go func() {
 			if err := pub.Publish(ctx, topic, msg); err != nil {
 				logger.Warn(fmt.Sprintf("Failed to forward message: %s", err))
 			}
 		}()
+
 		return nil
 	}
 }

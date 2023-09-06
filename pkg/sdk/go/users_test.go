@@ -497,10 +497,6 @@ func TestListMembers(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		fmt.Println()
-		fmt.Println(tc.desc)
-		fmt.Println()
-
 		repoCall := pRepo.On("CheckAdmin", mock.Anything, mock.Anything).Return(nil)
 		repoCall1 := cRepo.On("Members", mock.Anything, tc.groupID, mock.Anything).Return(mfclients.MembersPage{Members: convertClients(tc.response)}, tc.err)
 		membersPage, err := mfsdk.Members(tc.groupID, tc.page, tc.token)

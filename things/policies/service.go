@@ -52,24 +52,32 @@ func NewService(auth upolicies.AuthServiceClient, p Repository, ccache Cache, id
 
 func (svc service) Authorize(ctx context.Context, ar AccessRequest) (Policy, error) {
 	// Fetch from cache first.
-	policy := Policy{
-		Subject: ar.Subject,
-		Object:  ar.Object,
+	cpolicy := CachedPolicy{
+		ThingKey:  ar.Subject,
+		ChannelID: ar.Object,
 	}
-	policy, err := svc.policyCache.Get(ctx, policy)
+
+	cpolicy, err := svc.policyCache.Get(ctx, cpolicy)
 	if err == nil {
-		for _, action := range policy.Actions {
+		for _, action := range cpolicy.Actions {
 			if action == ar.Action {
+				var policy = Policy{
+					Subject: cpolicy.ThingID,
+				}
+
 				return policy, nil
 			}
 		}
+
 		return Policy{}, errors.ErrAuthorization
 	}
+
 	if !errors.Contains(err, errors.ErrNotFound) {
 		return Policy{}, err
 	}
 
-	// Fetch from repo as a fallback if not found in cache.
+	// Fetch from database as a fallback if not found in cache.
+	var policy Policy
 	switch ar.Entity {
 	case GroupEntityType:
 		policy, err = svc.policies.EvaluateGroupAccess(ctx, ar)
@@ -84,14 +92,18 @@ func (svc service) Authorize(ctx context.Context, ar AccessRequest) (Policy, err
 		}
 
 	case ThingEntityType:
-		policy, err := svc.policies.EvaluateMessagingAccess(ctx, ar)
+		policy, err = svc.policies.EvaluateMessagingAccess(ctx, ar)
 		if err != nil {
 			return Policy{}, err
 		}
-		// Replace Subject since AccessRequest Subject is Thing Key,
-		// and Policy subject is Thing ID.
-		policy.Subject = ar.Subject
-		if err := svc.policyCache.Put(ctx, policy); err != nil {
+
+		cpolicy = CachedPolicy{
+			ThingID:   policy.Subject,
+			ThingKey:  ar.Subject,
+			ChannelID: ar.Object,
+			Actions:   policy.Actions,
+		}
+		if err := svc.policyCache.Put(ctx, cpolicy); err != nil {
 			return policy, err
 		}
 
@@ -126,7 +138,11 @@ func (svc service) AddPolicy(ctx context.Context, token string, external bool, p
 	p.UpdatedAt = time.Now()
 	p.UpdatedBy = userID
 
-	if err := svc.policyCache.Remove(ctx, p); err != nil {
+	var cpolicy = CachedPolicy{
+		ThingKey:  p.Subject,
+		ChannelID: p.Object,
+	}
+	if err := svc.policyCache.Remove(ctx, cpolicy); err != nil {
 		return Policy{}, err
 	}
 
@@ -193,7 +209,11 @@ func (svc service) UpdatePolicy(ctx context.Context, token string, p Policy) (Po
 	p.UpdatedAt = time.Now()
 	p.UpdatedBy = userID
 
-	if err := svc.policyCache.Remove(ctx, p); err != nil {
+	var cpolicy = CachedPolicy{
+		ThingKey:  p.Subject,
+		ChannelID: p.Object,
+	}
+	if err := svc.policyCache.Remove(ctx, cpolicy); err != nil {
 		return Policy{}, err
 	}
 
@@ -228,9 +248,14 @@ func (svc service) DeletePolicy(ctx context.Context, token string, p Policy) err
 		return err
 	}
 
-	if err := svc.policyCache.Remove(ctx, p); err != nil {
+	var cpolicy = CachedPolicy{
+		ThingKey:  p.Subject,
+		ChannelID: p.Object,
+	}
+	if err := svc.policyCache.Remove(ctx, cpolicy); err != nil {
 		return err
 	}
+
 	return svc.policies.Delete(ctx, p)
 }
 

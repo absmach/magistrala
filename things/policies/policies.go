@@ -95,16 +95,23 @@ type Service interface {
 	ListPolicies(ctx context.Context, token string, p Page) (PolicyPage, error)
 }
 
+type CachedPolicy struct {
+	ThingID   string
+	ThingKey  string
+	ChannelID string
+	Actions   []string
+}
+
 // Cache contains channel-thing connection caching interface.
 type Cache interface {
 	// Put adds policy to cahce.
-	Put(ctx context.Context, policy Policy) error
+	Put(ctx context.Context, policy CachedPolicy) error
 
 	// Get retrieves policy from cache.
-	Get(ctx context.Context, policy Policy) (Policy, error)
+	Get(ctx context.Context, policy CachedPolicy) (CachedPolicy, error)
 
 	// Remove deletes a policy from cache.
-	Remove(ctx context.Context, policy Policy) error
+	Remove(ctx context.Context, policy CachedPolicy) error
 }
 
 // validate returns an error if policy representation is invalid.

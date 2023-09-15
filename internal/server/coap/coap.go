@@ -24,6 +24,8 @@ type Server struct {
 	handler mux.HandlerFunc
 }
 
+var enableDTLS = true
+
 var _ server.Server = (*Server)(nil)
 
 func New(ctx context.Context, cancel context.CancelFunc, name string, config server.Config, handler mux.HandlerFunc, logger logger.Logger) server.Server {
@@ -58,6 +60,23 @@ func (s *Server) Start() error {
 		go func() {
 			errCh <- gocoap.ListenAndServeTCPTLS("udp", s.Address, tlsConfig, s.handler)
 		}()
+
+	case enableDTLS:
+		s.Logger.Info(fmt.Sprintf("%s service %s server listening at %s with TLS cert %s and key %s"s.Name, s.Protocol, s.Address, s.Config.Certfile, s.config.KeyFile))
+		
+		
+		go func(){
+			errCh <- gocoap.ListenAndServeDTLS("udp", ":5688", &piondtls.Config{
+				PSK: func(hint []byte) ([]byte, error) {
+					fmt.Printf("Client's hint: %s \n", hint)
+					return []byte{0xAB, 0xC1, 0x23}, nil
+				},
+				PSKIdentityHint: []byte("Pion DTLS Client"),
+				CipherSuites:    []piondtls.CipherSuiteID{piondtls.TLS_PSK_WITH_AES_128_CCM_8},
+			}, s.handler)
+	
+		}
+		
 	default:
 		s.Logger.Info(fmt.Sprintf("%s service %s server listening at %s without TLS", s.Name, s.Protocol, s.Address))
 		go func() {

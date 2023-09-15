@@ -11,6 +11,7 @@ import (
 
 	"github.com/mainflux/mainflux/internal/server"
 	"github.com/mainflux/mainflux/logger"
+	piondtls "github.com/pion/dtls/v2"
 	gocoap "github.com/plgd-dev/go-coap/v2"
 	"github.com/plgd-dev/go-coap/v2/mux"
 )
@@ -62,10 +63,9 @@ func (s *Server) Start() error {
 		}()
 
 	case enableDTLS:
-		s.Logger.Info(fmt.Sprintf("%s service %s server listening at %s with TLS cert %s and key %s"s.Name, s.Protocol, s.Address, s.Config.Certfile, s.config.KeyFile))
-		
-		
-		go func(){
+		s.Logger.Info(fmt.Sprintf("%s service %s server listening at %s with TLS cert %s and key %s", s.Name, s.Protocol, s.Address, s.Config.Certfile, s.config.KeyFile))
+
+		go func() {
 			errCh <- gocoap.ListenAndServeDTLS("udp", ":5688", &piondtls.Config{
 				PSK: func(hint []byte) ([]byte, error) {
 					fmt.Printf("Client's hint: %s \n", hint)
@@ -74,9 +74,9 @@ func (s *Server) Start() error {
 				PSKIdentityHint: []byte("Pion DTLS Client"),
 				CipherSuites:    []piondtls.CipherSuiteID{piondtls.TLS_PSK_WITH_AES_128_CCM_8},
 			}, s.handler)
-	
-		}
-		
+
+		}()
+
 	default:
 		s.Logger.Info(fmt.Sprintf("%s service %s server listening at %s without TLS", s.Name, s.Protocol, s.Address))
 		go func() {

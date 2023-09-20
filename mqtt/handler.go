@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/mqtt/redis"
+	"github.com/mainflux/mainflux/mqtt/events"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/things/policies"
@@ -58,11 +58,11 @@ type handler struct {
 	publishers []messaging.Publisher
 	auth       policies.AuthServiceClient
 	logger     logger.Logger
-	es         redis.EventStore
+	es         events.EventStore
 }
 
 // NewHandler creates new Handler entity.
-func NewHandler(publishers []messaging.Publisher, es redis.EventStore, logger logger.Logger, auth policies.AuthServiceClient) session.Handler {
+func NewHandler(publishers []messaging.Publisher, es events.EventStore, logger logger.Logger, auth policies.AuthServiceClient) session.Handler {
 	return &handler{
 		es:         es,
 		logger:     logger,

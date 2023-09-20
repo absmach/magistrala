@@ -30,8 +30,8 @@ import (
 	"github.com/mainflux/mainflux/twins"
 	"github.com/mainflux/mainflux/twins/api"
 	twapi "github.com/mainflux/mainflux/twins/api/http"
+	"github.com/mainflux/mainflux/twins/events"
 	twmongodb "github.com/mainflux/mainflux/twins/mongodb"
-	rediscache "github.com/mainflux/mainflux/twins/redis"
 	"github.com/mainflux/mainflux/twins/tracing"
 	"github.com/mainflux/mainflux/users/policies"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -45,7 +45,6 @@ const (
 	envPrefixDB    = "MF_TWINS_DB_"
 	envPrefixHTTP  = "MF_TWINS_HTTP_"
 	envPrefixCache = "MF_TWINS_CACHE_"
-	envPrefixES    = "MF_TWINS_ES_"
 	defSvcHTTPPort = "9018"
 )
 
@@ -58,6 +57,7 @@ type config struct {
 	JaegerURL       string `env:"MF_JAEGER_URL"               envDefault:"http://jaeger:14268/api/traces"`
 	SendTelemetry   bool   `env:"MF_SEND_TELEMETRY"           envDefault:"true"`
 	InstanceID      string `env:"MF_TWINS_INSTANCE_ID"        envDefault:""`
+	ESURL           string `env:"MF_TWINS_ES_URL"             envDefault:"redis://localhost:6379/0"`
 }
 
 func main() {
@@ -99,15 +99,6 @@ func main() {
 		return
 	}
 	defer cacheClient.Close()
-
-	// Setup new redis event store client
-	esClient, err := redisclient.Setup(envPrefixES)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	defer esClient.Close()
 
 	db, err := mongoclient.Setup(envPrefixDB)
 	if err != nil {
@@ -154,7 +145,12 @@ func main() {
 	defer pubSub.Close()
 	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
 
-	svc := newService(ctx, svcName, pubSub, cfg.ChannelID, auth, tracer, db, cacheClient, esClient, logger)
+	svc, err := newService(ctx, svcName, pubSub, cfg, auth, tracer, db, cacheClient, logger)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to create %s service: %s", svcName, err))
+		exitCode = 1
+		return
+	}
 
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, twapi.MakeHandler(svc, logger, cfg.InstanceID), logger)
 
@@ -176,7 +172,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, id string, ps messaging.PubSub, chanID string, users policies.AuthServiceClient, tracer trace.Tracer, db *mongo.Database, cacheclient *redis.Client, esClient *redis.Client, logger mflog.Logger) twins.Service {
+func newService(ctx context.Context, id string, ps messaging.PubSub, cfg config, users policies.AuthServiceClient, tracer trace.Tracer, db *mongo.Database, cacheclient *redis.Client, logger mflog.Logger) (twins.Service, error) {
 	twinRepo := twmongodb.NewTwinRepository(db)
 	twinRepo = tracing.TwinRepositoryMiddleware(tracer, twinRepo)
 
@@ -184,21 +180,26 @@ func newService(ctx context.Context, id string, ps messaging.PubSub, chanID stri
 	stateRepo = tracing.StateRepositoryMiddleware(tracer, stateRepo)
 
 	idProvider := uuid.New()
-	twinCache := rediscache.NewTwinCache(cacheclient)
+	twinCache := events.NewTwinCache(cacheclient)
 	twinCache = tracing.TwinCacheMiddleware(tracer, twinCache)
 
-	svc := twins.New(ps, users, twinRepo, twinCache, stateRepo, idProvider, chanID, logger)
+	svc := twins.New(ps, users, twinRepo, twinCache, stateRepo, idProvider, cfg.ChannelID, logger)
 
-	svc = rediscache.NewEventStoreMiddleware(svc, esClient)
+	var err error
+	svc, err = events.NewEventStoreMiddleware(ctx, svc, cfg.ESURL)
+	if err != nil {
+		return nil, err
+	}
 
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := internal.MakeMetrics(svcName, "api")
 	svc = api.MetricsMiddleware(svc, counter, latency)
-	err := ps.Subscribe(ctx, id, brokers.SubjectAllChannels, handle(ctx, logger, chanID, svc))
-	if err != nil {
-		logger.Fatal(err.Error())
+
+	if err = ps.Subscribe(ctx, id, brokers.SubjectAllChannels, handle(ctx, logger, cfg.ChannelID, svc)); err != nil {
+		return nil, err
 	}
-	return svc
+
+	return svc, nil
 }
 
 func handle(ctx context.Context, logger mflog.Logger, chanID string, svc twins.Service) handlerFunc {

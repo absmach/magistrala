@@ -13,7 +13,7 @@ networks:
 
 services:
   lora-redis:
-    image: redis:5.0-alpine
+    image: redis:7.2.0-alpine
     container_name: mainflux-lora-redis
     restart: on-failure
     networks:
@@ -38,9 +38,7 @@ services:
       MF_LORA_ADAPTER_ROUTE_MAP_URL: lora-redis:${MF_REDIS_TCP_PORT}
       MF_LORA_ADAPTER_ROUTE_MAP_PASS: ${MF_LORA_ADAPTER_ROUTE_MAP_PASS}
       MF_LORA_ADAPTER_ROUTE_MAP_DB: ${MF_LORA_ADAPTER_ROUTE_MAP_DB}
-      MF_THINGS_ES_URL: ${MF_THINGS_ES_URL}
-      MF_THINGS_ES_PASS: ${MF_THINGS_ES_PASS}
-      MF_THINGS_ES_DB: ${MF_THINGS_ES_DB}
+      MF_LORA_ADAPTER_ES_URL: ${MF_ES_URL}
       MF_BROKER_URL: ${MF_BROKER_URL}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
       MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}

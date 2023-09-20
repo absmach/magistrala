@@ -17,7 +17,7 @@ volumes:
 
 services:
   twins-redis:
-    image: redis:5.0-alpine
+    image: redis:7.2.0-alpine
     container_name: mainflux-twins-redis
     restart: on-failure
     networks:
@@ -54,9 +54,7 @@ services:
       MF_TWINS_CACHE_URL: ${MF_TWINS_CACHE_URL}
       MF_TWINS_CACHE_PASS: ${MF_TWINS_CACHE_PASS}
       MF_TWINS_CACHE_DB: ${MF_TWINS_CACHE_DB}
-      MF_TWINS_ES_URL: ${MF_TWINS_ES_URL}
-      MF_TWINS_ES_PASS: ${MF_TWINS_ES_PASS}
-      MF_TWINS_ES_DB: ${MF_TWINS_ES_DB}
+      MF_TWINS_ES_URL: ${MF_ES_URL}
       MF_THINGS_STANDALONE_ID: ${MF_THINGS_STANDALONE_ID}
       MF_THINGS_STANDALONE_TOKEN: ${MF_THINGS_STANDALONE_TOKEN}
       MF_TWINS_DB_HOST: ${MF_TWINS_DB_HOST}

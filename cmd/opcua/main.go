@@ -23,8 +23,9 @@ import (
 	"github.com/mainflux/mainflux/opcua"
 	"github.com/mainflux/mainflux/opcua/api"
 	"github.com/mainflux/mainflux/opcua/db"
+	"github.com/mainflux/mainflux/opcua/events"
 	"github.com/mainflux/mainflux/opcua/gopcua"
-	opcuaredis "github.com/mainflux/mainflux/opcua/redis"
+	mfredis "github.com/mainflux/mainflux/pkg/events/redis"
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
 	brokerstracing "github.com/mainflux/mainflux/pkg/messaging/brokers/tracing"
 	"github.com/mainflux/mainflux/pkg/uuid"
@@ -33,7 +34,6 @@ import (
 
 const (
 	svcName           = "opc-ua-adapter"
-	envPrefixES       = "MF_OPCUA_ADAPTER_ES_"
 	envPrefixHTTP     = "MF_OPCUA_ADAPTER_HTTP_"
 	envPrefixRouteMap = "MF_OPCUA_ADAPTER_ROUTE_MAP_"
 	defSvcHTTPPort    = "8180"
@@ -41,15 +41,18 @@ const (
 	thingsRMPrefix     = "thing"
 	channelsRMPrefix   = "channel"
 	connectionRMPrefix = "connection"
+
+	thingsStream = "mainflux.things"
 )
 
 type config struct {
 	LogLevel       string `env:"MF_OPCUA_ADAPTER_LOG_LEVEL"          envDefault:"info"`
-	ESConsumerName string `env:"MF_OPCUA_ADAPTER_EVENT_CONSUMER"     envDefault:""`
+	ESConsumerName string `env:"MF_OPCUA_ADAPTER_EVENT_CONSUMER"     envDefault:"opcua-adapter"`
 	BrokerURL      string `env:"MF_BROKER_URL"                       envDefault:"nats://localhost:4222"`
 	JaegerURL      string `env:"MF_JAEGER_URL"                       envDefault:"http://jaeger:14268/api/traces"`
 	SendTelemetry  bool   `env:"MF_SEND_TELEMETRY"                   envDefault:"true"`
 	InstanceID     string `env:"MF_OPCUA_ADAPTER_INSTANCE_ID"        envDefault:""`
+	ESURL          string `env:"MF_OPCUA_ADAPTER_ES_URL"             envDefault:"redis://localhost:6379/0"`
 }
 
 func main() {
@@ -101,14 +104,6 @@ func main() {
 	chanRM := newRouteMapRepositoy(rmConn, channelsRMPrefix, logger)
 	connRM := newRouteMapRepositoy(rmConn, connectionRMPrefix, logger)
 
-	esConn, err := redisclient.Setup(envPrefixES)
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to setup %s bootstrap event store redis client : %s", svcName, err))
-		exitCode = 1
-		return
-	}
-	defer esConn.Close()
-
 	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
@@ -137,7 +132,12 @@ func main() {
 	svc := newService(sub, browser, thingRM, chanRM, connRM, opcConfig, logger)
 
 	go subscribeToStoredSubs(ctx, sub, opcConfig, logger)
-	go subscribeToThingsES(ctx, svc, esConn, cfg.ESConsumerName, logger)
+
+	if err = subscribeToThingsES(ctx, svc, cfg, logger); err != nil {
+		logger.Error(fmt.Sprintf("failed to subscribe to things event store: %s", err))
+		exitCode = 1
+		return
+	}
 
 	hs := httpserver.New(ctx, httpCancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, cfg.InstanceID), logger)
 
@@ -177,16 +177,22 @@ func subscribeToStoredSubs(ctx context.Context, sub opcua.Subscriber, cfg opcua.
 	}
 }
 
-func subscribeToThingsES(ctx context.Context, svc opcua.Service, client *redis.Client, prefix string, logger mflog.Logger) {
-	eventStore := opcuaredis.NewEventStore(svc, client, prefix, logger)
-	if err := eventStore.Subscribe(ctx, "mainflux.things"); err != nil {
-		logger.Warn(fmt.Sprintf("Failed to subscribe to Redis event source: %s", err))
+func subscribeToThingsES(ctx context.Context, svc opcua.Service, cfg config, logger mflog.Logger) error {
+	subscriber, err := mfredis.NewSubscriber(cfg.ESURL, thingsStream, cfg.ESConsumerName, logger)
+	if err != nil {
+		return err
 	}
+
+	handler := events.NewEventHandler(svc)
+
+	logger.Info("Subscribed to Redis Event Store")
+
+	return subscriber.Subscribe(ctx, handler)
 }
 
 func newRouteMapRepositoy(client *redis.Client, prefix string, logger mflog.Logger) opcua.RouteMapRepository {
 	logger.Info(fmt.Sprintf("Connected to %s Redis Route-map", prefix))
-	return opcuaredis.NewRouteMapRepository(client, prefix)
+	return events.NewRouteMapRepository(client, prefix)
 }
 
 func newService(sub opcua.Subscriber, browser opcua.Browser, thingRM, chanRM, connRM opcua.RouteMapRepository, opcuaConfig opcua.Config, logger mflog.Logger) opcua.Service {

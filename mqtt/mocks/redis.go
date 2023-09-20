@@ -3,12 +3,12 @@ package mocks
 import (
 	"context"
 
-	"github.com/mainflux/mainflux/mqtt/redis"
+	"github.com/mainflux/mainflux/mqtt/events"
 )
 
 type MockEventStore struct{}
 
-func NewEventStore() redis.EventStore {
+func NewEventStore() events.EventStore {
 	return MockEventStore{}
 }
 

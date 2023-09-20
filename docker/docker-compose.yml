@@ -70,7 +70,7 @@ services:
       - mainflux-things-db-volume:/var/lib/postgresql/data
 
   things-redis:
-    image: redis:6.2.2-alpine
+    image: redis:7.2.0-alpine
     container_name: mainflux-things-redis
     restart: on-failure
     networks:
@@ -101,9 +101,7 @@ services:
       MF_THINGS_AUTH_GRPC_SERVER_KEY: ${MF_THINGS_AUTH_GRPC_SERVER_KEY:+/things-grpc-server.key}
       MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
       MF_THINGS_AUTH_GRPC_CLIENT_CA_CERTS: ${MF_THINGS_AUTH_GRPC_CLIENT_CA_CERTS:+/things-grpc-client-ca.crt}
-      MF_THINGS_ES_URL: ${MF_THINGS_ES_URL}
-      MF_THINGS_ES_PASS: ${MF_THINGS_ES_PASS}
-      MF_THINGS_ES_DB: ${MF_THINGS_ES_DB}
+      MF_THINGS_ES_URL: ${MF_ES_URL}
       MF_THINGS_CACHE_URL: ${MF_THINGS_CACHE_URL}
       MF_THINGS_CACHE_PASS: ${MF_THINGS_CACHE_PASS}
       MF_THINGS_CACHE_DB: ${MF_THINGS_CACHE_DB}
@@ -221,9 +219,7 @@ services:
       MF_EMAIL_FROM_ADDRESS: ${MF_EMAIL_FROM_ADDRESS}
       MF_EMAIL_FROM_NAME: ${MF_EMAIL_FROM_NAME}
       MF_EMAIL_TEMPLATE: ${MF_EMAIL_TEMPLATE}
-      MF_USERS_ES_URL: ${MF_USERS_ES_URL}
-      MF_USERS_ES_PASS: ${MF_USERS_ES_PASS}
-      MF_USERS_ES_DB: ${MF_USERS_ES_DB}
+      MF_USERS_ES_URL: ${MF_ES_URL}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
       MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
     ports:
@@ -299,9 +295,7 @@ services:
       MF_MQTT_ADAPTER_WS_TARGET_PORT: ${MF_MQTT_ADAPTER_WS_TARGET_PORT}
       MF_MQTT_ADAPTER_WS_TARGET_PATH: ${MF_MQTT_ADAPTER_WS_TARGET_PATH}
       MF_MQTT_ADAPTER_INSTANCE: ${MF_MQTT_ADAPTER_INSTANCE}
-      MF_MQTT_ADAPTER_ES_URL: ${MF_MQTT_ADAPTER_ES_URL}
-      MF_MQTT_ADAPTER_ES_PASS: ${MF_MQTT_ADAPTER_ES_PASS}
-      MF_MQTT_ADAPTER_ES_DB: ${MF_MQTT_ADAPTER_ES_DB}
+      MF_MQTT_ADAPTER_ES_URL: ${MF_ES_URL}
       MF_THINGS_AUTH_GRPC_URL: ${MF_THINGS_AUTH_GRPC_URL}
       MF_THINGS_AUTH_GRPC_TIMEOUT: ${MF_THINGS_AUTH_GRPC_TIMEOUT}
       MF_THINGS_AUTH_GRPC_CLIENT_CERT: ${MF_THINGS_AUTH_GRPC_CLIENT_CERT:+/client.crt}
@@ -375,7 +369,7 @@ services:
           create_host_path: true
 
   es-redis:
-    image: redis:6.2.2-alpine
+    image: redis:7.2.0-alpine
     container_name: mainflux-es-redis
     restart: on-failure
     networks:

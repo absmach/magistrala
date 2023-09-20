@@ -18,12 +18,11 @@ import (
 	"github.com/mainflux/mainflux"
 	thingsclient "github.com/mainflux/mainflux/internal/clients/grpc/things"
 	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
-	redisclient "github.com/mainflux/mainflux/internal/clients/redis"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/mqtt"
-	mqttredis "github.com/mainflux/mainflux/mqtt/redis"
+	"github.com/mainflux/mainflux/mqtt/events"
 	mqtttracing "github.com/mainflux/mainflux/mqtt/tracing"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"
@@ -37,10 +36,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-const (
-	svcName     = "mqtt"
-	envPrefixES = "MF_MQTT_ADAPTER_ES_"
-)
+const svcName = "mqtt"
 
 type config struct {
 	LogLevel              string        `env:"MF_MQTT_ADAPTER_LOG_LEVEL"                    envDefault:"info"`
@@ -58,6 +54,7 @@ type config struct {
 	BrokerURL             string        `env:"MF_BROKER_URL"                                envDefault:"nats://localhost:4222"`
 	SendTelemetry         bool          `env:"MF_SEND_TELEMETRY"                            envDefault:"true"`
 	InstanceID            string        `env:"MF_MQTT_ADAPTER_INSTANCE_ID"                  envDefault:""`
+	ESURL                 string        `env:"MF_MQTT_ADAPTER_ES_URL"                       envDefault:"redis://localhost:6379/0"`
 }
 
 func main() {
@@ -150,15 +147,12 @@ func main() {
 	defer np.Close()
 	np = brokerstracing.NewPublisher(serverConfig, tracer, np)
 
-	ec, err := redisclient.Setup(envPrefixES)
+	es, err := events.NewEventStore(ctx, cfg.ESURL, cfg.Instance)
 	if err != nil {
-		logger.Error(fmt.Sprintf("failed to setup %s event store redis client : %s", svcName, err))
+		logger.Error(fmt.Sprintf("failed to create %s event store : %s", svcName, err))
 		exitCode = 1
 		return
 	}
-	defer ec.Close()
-
-	es := mqttredis.NewEventStore(ctx, ec, cfg.Instance)
 
 	tc, tcHandler, err := thingsclient.Setup()
 	if err != nil {

@@ -31,20 +31,22 @@ import (
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/things/clients"
 	capi "github.com/mainflux/mainflux/things/clients/api"
+	thcache "github.com/mainflux/mainflux/things/clients/cache"
+	thevents "github.com/mainflux/mainflux/things/clients/events"
 	cpostgres "github.com/mainflux/mainflux/things/clients/postgres"
-	thcache "github.com/mainflux/mainflux/things/clients/redis"
 	localusers "github.com/mainflux/mainflux/things/clients/standalone"
 	ctracing "github.com/mainflux/mainflux/things/clients/tracing"
 	"github.com/mainflux/mainflux/things/groups"
 	gapi "github.com/mainflux/mainflux/things/groups/api"
-	chcache "github.com/mainflux/mainflux/things/groups/redis"
+	chevents "github.com/mainflux/mainflux/things/groups/events"
 	gtracing "github.com/mainflux/mainflux/things/groups/tracing"
 	tpolicies "github.com/mainflux/mainflux/things/policies"
 	papi "github.com/mainflux/mainflux/things/policies/api"
 	grpcapi "github.com/mainflux/mainflux/things/policies/api/grpc"
 	httpapi "github.com/mainflux/mainflux/things/policies/api/http"
+	pcache "github.com/mainflux/mainflux/things/policies/cache"
+	pevents "github.com/mainflux/mainflux/things/policies/events"
 	ppostgres "github.com/mainflux/mainflux/things/policies/postgres"
-	pcache "github.com/mainflux/mainflux/things/policies/redis"
 	ppracing "github.com/mainflux/mainflux/things/policies/tracing"
 	thingspg "github.com/mainflux/mainflux/things/postgres"
 	upolicies "github.com/mainflux/mainflux/users/policies"
@@ -58,7 +60,6 @@ const (
 	svcName            = "things"
 	envPrefixDB        = "MF_THINGS_DB_"
 	envPrefixCache     = "MF_THINGS_CACHE_"
-	envPrefixES        = "MF_THINGS_ES_"
 	envPrefixHTTP      = "MF_THINGS_HTTP_"
 	envPrefixGRPC      = "MF_THINGS_AUTH_GRPC_"
 	defDB              = "things"
@@ -73,7 +74,8 @@ type config struct {
 	JaegerURL        string `env:"MF_JAEGER_URL"                 envDefault:"http://jaeger:14268/api/traces"`
 	CacheKeyDuration string `env:"MF_THINGS_CACHE_KEY_DURATION"  envDefault:"10m"`
 	SendTelemetry    bool   `env:"MF_SEND_TELEMETRY"             envDefault:"true"`
-	InstanceID       string `env:"MF_THINGS_INSTANCE_ID"        envDefault:""`
+	InstanceID       string `env:"MF_THINGS_INSTANCE_ID"         envDefault:""`
+	ESURL            string `env:"MF_THINGS_ES_URL"              envDefault:"redis://localhost:6379/0"`
 }
 
 func main() {
@@ -137,15 +139,6 @@ func main() {
 	}
 	defer cacheclient.Close()
 
-	// Setup new redis event store client
-	esclient, err := redisclient.Setup(envPrefixES)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	defer esclient.Close()
-
 	var auth upolicies.AuthServiceClient
 	switch cfg.StandaloneID != "" && cfg.StandaloneToken != "" {
 	case true:
@@ -163,7 +156,12 @@ func main() {
 		logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 	}
 
-	csvc, gsvc, psvc := newService(ctx, db, dbConfig, auth, cacheclient, esclient, cfg.CacheKeyDuration, tracer, logger)
+	csvc, gsvc, psvc, err := newService(ctx, db, dbConfig, auth, cacheclient, cfg, tracer, logger)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to create %s service: %s", svcName, err))
+		exitCode = 1
+		return
+	}
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.Parse(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
@@ -211,7 +209,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth upolicies.AuthServiceClient, cacheClient *redis.Client, esClient *redis.Client, keyDuration string, tracer trace.Tracer, logger mflog.Logger) (clients.Service, groups.Service, tpolicies.Service) {
+func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth upolicies.AuthServiceClient, cacheClient *redis.Client, cfg config, tracer trace.Tracer, logger mflog.Logger) (clients.Service, groups.Service, tpolicies.Service, error) {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	cRepo := cpostgres.NewRepository(database)
 	gRepo := gpostgres.New(database)
@@ -219,7 +217,7 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth
 
 	idp := uuid.New()
 
-	kDuration, err := time.ParseDuration(keyDuration)
+	kDuration, err := time.ParseDuration(cfg.CacheKeyDuration)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to parse cache key duration: %s", err.Error()))
 	}
@@ -231,9 +229,20 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth
 	csvc := clients.NewService(auth, psvc, cRepo, gRepo, thingCache, idp)
 	gsvc := groups.NewService(auth, psvc, gRepo, idp)
 
-	csvc = thcache.NewEventStoreMiddleware(ctx, csvc, esClient)
-	gsvc = chcache.NewEventStoreMiddleware(ctx, gsvc, esClient)
-	psvc = pcache.NewEventStoreMiddleware(ctx, psvc, esClient)
+	csvc, err = thevents.NewEventStoreMiddleware(ctx, csvc, cfg.ESURL)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	gsvc, err = chevents.NewEventStoreMiddleware(ctx, gsvc, cfg.ESURL)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	psvc, err = pevents.NewEventStoreMiddleware(ctx, psvc, cfg.ESURL)
+	if err != nil {
+		return nil, nil, nil, err
+	}
 
 	csvc = ctracing.New(csvc, tracer)
 	csvc = capi.LoggingMiddleware(csvc, logger)
@@ -249,5 +258,5 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth
 	counter, latency = internal.MakeMetrics(fmt.Sprintf("%s_policies", svcName), "api")
 	psvc = papi.MetricsMiddleware(psvc, counter, latency)
 
-	return csvc, gsvc, psvc
+	return csvc, gsvc, psvc, nil
 }

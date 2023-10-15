@@ -16,7 +16,7 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
-	thingsclient "github.com/mainflux/mainflux/internal/clients/grpc/things"
+	authapi "github.com/mainflux/mainflux/internal/clients/grpc/auth"
 	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
@@ -154,17 +154,17 @@ func main() {
 		return
 	}
 
-	tc, tcHandler, err := thingsclient.Setup()
+	auth, aHandler, err := authapi.SetupAuthz("authz")
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-	defer tcHandler.Close()
+	defer aHandler.Close()
 
-	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
+	logger.Info("Successfully connected to things grpc server " + aHandler.Secure())
 
-	h := mqtt.NewHandler([]messaging.Publisher{np}, es, logger, tc)
+	h := mqtt.NewHandler([]messaging.Publisher{np}, es, logger, auth)
 	h = mqtttracing.NewHandler(tracer, h)
 
 	if cfg.SendTelemetry {

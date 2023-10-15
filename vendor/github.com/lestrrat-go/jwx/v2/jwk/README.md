@@ -137,7 +137,7 @@ func ExampleJWK_Usage() {
     log.Printf("%s", jsonbuf)
   }
 
-  for it := set.Iterate(context.Background()); it.Next(context.Background()); {
+  for it := set.Keys(context.Background()); it.Next(context.Background()); {
     pair := it.Pair()
     key := pair.Value.(jwk.Key)
 

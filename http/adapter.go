@@ -8,9 +8,9 @@ package http
 import (
 	"context"
 
+	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"
-	"github.com/mainflux/mainflux/things/policies"
 )
 
 // Service specifies coap service API.
@@ -23,32 +23,35 @@ var _ Service = (*adapterService)(nil)
 
 type adapterService struct {
 	publisher messaging.Publisher
-	things    policies.AuthServiceClient
+	auth      mainflux.AuthzServiceClient
 }
 
 // New instantiates the HTTP adapter implementation.
-func New(publisher messaging.Publisher, things policies.AuthServiceClient) Service {
+func New(publisher messaging.Publisher, auth mainflux.AuthzServiceClient) Service {
 	return &adapterService{
 		publisher: publisher,
-		things:    things,
+		auth:      auth,
 	}
 }
 
 func (as *adapterService) Publish(ctx context.Context, token string, msg *messaging.Message) error {
-	ar := &policies.AuthorizeReq{
-		Subject:    token,
-		Object:     msg.Channel,
-		Action:     policies.WriteAction,
-		EntityType: policies.ThingEntityType,
+	ar := &mainflux.AuthorizeReq{
+		Namespace:   "",
+		SubjectType: "thing",
+		Permission:  "publish",
+		Subject:     token,
+		Object:      msg.Channel,
+		ObjectType:  "group",
 	}
-	res, err := as.things.Authorize(ctx, ar)
+
+	res, err := as.auth.Authorize(ctx, ar)
 	if err != nil {
 		return err
 	}
 	if !res.GetAuthorized() {
 		return errors.ErrAuthorization
 	}
-	msg.Publisher = res.GetThingID()
+	msg.Publisher = res.GetId()
 
 	return as.publisher.Publish(ctx, msg.Channel, msg)
 }

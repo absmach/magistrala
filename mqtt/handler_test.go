@@ -10,12 +10,12 @@ import (
 	"log"
 	"testing"
 
+	authmocks "github.com/mainflux/mainflux/auth/mocks"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/mqtt"
 	"github.com/mainflux/mainflux/mqtt/mocks"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"
-	"github.com/mainflux/mainflux/things/policies"
 	"github.com/mainflux/mproxy/pkg/session"
 	"github.com/stretchr/testify/assert"
 )
@@ -453,11 +453,7 @@ func newHandler() session.Handler {
 	if err != nil {
 		log.Fatalf("failed to create logger: %s", err)
 	}
-	k := mocks.Key(&policies.AuthorizeReq{Subject: password, Object: chanID})
-	elems := map[string][]string{k: {policies.WriteAction}}
-	k = mocks.Key(&policies.AuthorizeReq{Subject: password1, Object: chanID})
-	elems[k] = []string{policies.ReadAction}
-	authClient := mocks.NewClient(map[string]string{password: thingID, password1: thingID1}, elems)
+	auth := new(authmocks.Service)
 	eventStore := mocks.NewEventStore()
-	return mqtt.NewHandler([]messaging.Publisher{mocks.NewPublisher()}, eventStore, logger, authClient)
+	return mqtt.NewHandler([]messaging.Publisher{mocks.NewPublisher()}, eventStore, logger, auth)
 }

@@ -29,5 +29,6 @@ func HandleError(err, wrapper error) error {
 			return errors.Wrap(errors.ErrCreateEntity, err)
 		}
 	}
+
 	return errors.Wrap(wrapper, err)
 }

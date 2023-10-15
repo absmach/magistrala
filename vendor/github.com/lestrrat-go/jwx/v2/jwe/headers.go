@@ -69,7 +69,7 @@ func (h *stdHeaders) Clone(ctx context.Context) (Headers, error) {
 	return dst, nil
 }
 
-func (h *stdHeaders) Copy(ctx context.Context, dst Headers) error {
+func (h *stdHeaders) Copy(_ context.Context, dst Headers) error {
 	for _, pair := range h.makePairs() {
 		//nolint:forcetypeassert
 		key := pair.Key.(string)

@@ -18,7 +18,7 @@ type identTypedClaim struct{}
 type identVerifyAuto struct{}
 
 func toSignOptions(options ...Option) ([]jws.SignOption, error) {
-	var soptions []jws.SignOption
+	soptions := make([]jws.SignOption, 0, len(options))
 	for _, option := range options {
 		//nolint:forcetypeassert
 		switch option.Ident() {
@@ -36,13 +36,16 @@ func toSignOptions(options ...Option) ([]jws.SignOption, error) {
 			}
 
 			soptions = append(soptions, jws.WithKey(wk.alg, wk.key, wksoptions...))
+		case identSignOption{}:
+			sigOpt := option.Value().(jws.SignOption) // this always succeeds
+			soptions = append(soptions, sigOpt)
 		}
 	}
 	return soptions, nil
 }
 
 func toEncryptOptions(options ...Option) ([]jwe.EncryptOption, error) {
-	var soptions []jwe.EncryptOption
+	soptions := make([]jwe.EncryptOption, 0, len(options))
 	for _, option := range options {
 		//nolint:forcetypeassert
 		switch option.Ident() {
@@ -58,13 +61,16 @@ func toEncryptOptions(options ...Option) ([]jwe.EncryptOption, error) {
 			}
 
 			soptions = append(soptions, jwe.WithKey(wk.alg, wk.key, wksoptions...))
+		case identEncryptOption{}:
+			encOpt := option.Value().(jwe.EncryptOption) // this always succeeds
+			soptions = append(soptions, encOpt)
 		}
 	}
 	return soptions, nil
 }
 
 func toVerifyOptions(options ...Option) ([]jws.VerifyOption, error) {
-	var voptions []jws.VerifyOption
+	voptions := make([]jws.VerifyOption, 0, len(options))
 	for _, option := range options {
 		//nolint:forcetypeassert
 		switch option.Ident() {

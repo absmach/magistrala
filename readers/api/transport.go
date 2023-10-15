@@ -14,8 +14,6 @@ import (
 	"github.com/mainflux/mainflux/internal/apiutil"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/readers"
-	tpolicies "github.com/mainflux/mainflux/things/policies"
-	upolicies "github.com/mainflux/mainflux/users/policies"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -40,6 +38,23 @@ const (
 	defLimit       = 10
 	defOffset      = 0
 	defFormat      = "messages"
+
+	thingsKind            = "things"
+	channelsKind          = "channels"
+	usersKind             = "users"
+	tokenKind             = "token"
+	thingType             = "thing"
+	channelType           = "channel"
+	userType              = "user"
+	groupType             = "group"
+	memberRelation        = "member"
+	groupRelation         = "group"
+	administratorRelation = "administrator"
+	parentGroupRelation   = "parent_group"
+	viewerRelation        = "viewer"
+	adminPermission       = "admin"
+	editPermission        = "edit"
+	viewPermission        = "view"
 )
 
 var (
@@ -48,14 +63,14 @@ var (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc readers.MessageRepository, tc tpolicies.AuthServiceClient, ac upolicies.AuthServiceClient, svcName, instanceID string) http.Handler {
+func MakeHandler(svc readers.MessageRepository, ac mainflux.AuthServiceClient, svcName, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
 	}
 
 	mux := bone.New()
 	mux.Get("/channels/:chanID/messages", kithttp.NewServer(
-		listMessagesEndpoint(svc, tc, ac),
+		listMessagesEndpoint(svc, ac),
 		decodeList,
 		encodeResponse,
 		opts...,
@@ -216,18 +231,17 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	}
 }
 
-func authorize(ctx context.Context, req listMessagesReq, tc tpolicies.AuthServiceClient, ac upolicies.AuthServiceClient) (err error) {
+func authorize(ctx context.Context, req listMessagesReq, ac mainflux.AuthServiceClient) (err error) {
 	switch {
 	case req.token != "":
-		user, err := ac.Identify(ctx, &upolicies.IdentifyReq{Token: req.token})
-		if err != nil {
-			e, ok := status.FromError(err)
-			if ok && e.Code() == codes.PermissionDenied {
-				return errors.Wrap(errUserAccess, err)
-			}
-			return err
-		}
-		if _, err = tc.Authorize(ctx, &tpolicies.AuthorizeReq{Subject: user.GetId(), Object: req.chanID, Action: tpolicies.ReadAction, EntityType: tpolicies.GroupEntityType}); err != nil {
+		if _, err = ac.Authorize(ctx, &mainflux.AuthorizeReq{
+			SubjectType: userType,
+			SubjectKind: tokenKind,
+			Subject:     req.token,
+			Permission:  viewPermission,
+			Object:      channelType,
+			ObjectType:  req.chanID,
+		}); err != nil {
 			e, ok := status.FromError(err)
 			if ok && e.Code() == codes.PermissionDenied {
 				return errors.Wrap(errUserAccess, err)
@@ -236,9 +250,6 @@ func authorize(ctx context.Context, req listMessagesReq, tc tpolicies.AuthServic
 		}
 		return nil
 	default:
-		if _, err := tc.Authorize(ctx, &tpolicies.AuthorizeReq{Subject: req.key, Object: req.chanID, Action: tpolicies.ReadAction, EntityType: tpolicies.GroupEntityType}); err != nil {
-			return errors.Wrap(errThingAccess, err)
-		}
-		return nil
+		return errors.ErrAuthorization
 	}
 }

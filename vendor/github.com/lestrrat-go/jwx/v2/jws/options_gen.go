@@ -235,8 +235,13 @@ func WithFS(v fs.FS) ReadFileOption {
 // should be inferred by looking at the provided key, in case the JWS
 // message or the key does not have a proper `alg` header.
 //
+// When this option is set to true, a list of algorithm(s) that is compatible
+// with the key type will be enumerated, and _ALL_ of them will be tried
+// against the key/message pair. If any of them succeeds, the verification
+// will be considered successful.
+//
 // Compared to providing explicit `alg` from the key this is slower, and
-// verification may fail to verify if some how our heuristics are wrong
+// verification may fail to verify if somehow our heuristics are wrong
 // or outdated.
 //
 // Also, automatic detection of signature verification methods are always

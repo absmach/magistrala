@@ -12,47 +12,37 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/go-zoo/bone"
+	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/internal"
+	authclient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
 	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
 	pgclient "github.com/mainflux/mainflux/internal/clients/postgres"
 	"github.com/mainflux/mainflux/internal/email"
 	"github.com/mainflux/mainflux/internal/env"
+	mfgroups "github.com/mainflux/mainflux/internal/groups"
+	gapi "github.com/mainflux/mainflux/internal/groups/api"
+	gevents "github.com/mainflux/mainflux/internal/groups/events"
+	gpostgres "github.com/mainflux/mainflux/internal/groups/postgres"
+	gtracing "github.com/mainflux/mainflux/internal/groups/tracing"
 	"github.com/mainflux/mainflux/internal/postgres"
 	"github.com/mainflux/mainflux/internal/server"
-	grpcserver "github.com/mainflux/mainflux/internal/server/grpc"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
 	mflog "github.com/mainflux/mainflux/logger"
 	mfclients "github.com/mainflux/mainflux/pkg/clients"
-	gpostgres "github.com/mainflux/mainflux/pkg/groups/postgres"
+	"github.com/mainflux/mainflux/pkg/groups"
 	"github.com/mainflux/mainflux/pkg/uuid"
-	"github.com/mainflux/mainflux/users/clients"
-	capi "github.com/mainflux/mainflux/users/clients/api"
-	"github.com/mainflux/mainflux/users/clients/emailer"
-	uevents "github.com/mainflux/mainflux/users/clients/events"
-	uclients "github.com/mainflux/mainflux/users/clients/postgres"
-	ctracing "github.com/mainflux/mainflux/users/clients/tracing"
-	"github.com/mainflux/mainflux/users/groups"
-	gapi "github.com/mainflux/mainflux/users/groups/api"
-	gevents "github.com/mainflux/mainflux/users/groups/events"
-	gtracing "github.com/mainflux/mainflux/users/groups/tracing"
+	"github.com/mainflux/mainflux/users"
+	capi "github.com/mainflux/mainflux/users/api"
+	"github.com/mainflux/mainflux/users/emailer"
+	uevents "github.com/mainflux/mainflux/users/events"
 	"github.com/mainflux/mainflux/users/hasher"
-	"github.com/mainflux/mainflux/users/jwt"
-	"github.com/mainflux/mainflux/users/policies"
-	papi "github.com/mainflux/mainflux/users/policies/api"
-	grpcapi "github.com/mainflux/mainflux/users/policies/api/grpc"
-	httpapi "github.com/mainflux/mainflux/users/policies/api/http"
-	pevents "github.com/mainflux/mainflux/users/policies/events"
-	ppostgres "github.com/mainflux/mainflux/users/policies/postgres"
-	ptracing "github.com/mainflux/mainflux/users/policies/tracing"
 	clientspg "github.com/mainflux/mainflux/users/postgres"
+	ctracing "github.com/mainflux/mainflux/users/tracing"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 )
 
 const (
@@ -120,9 +110,15 @@ func main() {
 
 	dbConfig := pgclient.Config{Name: defDB}
 	if err := dbConfig.LoadEnv(envPrefixDB); err != nil {
-		logger.Fatal(err.Error())
+		logger.Error(fmt.Sprintf("failed to load %s database configuration : %s", svcName, err.Error()))
+		exitCode = 1
+		return
 	}
-	db, err := pgclient.SetupWithConfig(envPrefixDB, *clientspg.Migration(), dbConfig)
+
+	cm := clientspg.Migration()
+	gm := gpostgres.Migration()
+	cm.Migrations = append(cm.Migrations, gm.Migrations...)
+	db, err := pgclient.SetupWithConfig(envPrefixDB, *cm, dbConfig)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -143,9 +139,18 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
-	csvc, gsvc, psvc, err := newService(ctx, db, dbConfig, tracer, cfg, ec, logger)
+	auth, authHandler, err := authclient.Setup(svcName)
 	if err != nil {
-		logger.Error(fmt.Sprintf("failed to create %s service: %s", svcName, err.Error()))
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+	defer authHandler.Close()
+	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
+
+	csvc, gsvc, err := newService(ctx, auth, db, dbConfig, tracer, cfg, ec, logger)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to setup service: %s", err))
 		exitCode = 1
 		return
 	}
@@ -156,22 +161,9 @@ func main() {
 		exitCode = 1
 		return
 	}
-	mux := bone.New()
-	hsc := httpserver.New(ctx, cancel, svcName, httpServerConfig, capi.MakeHandler(csvc, mux, logger, cfg.InstanceID), logger)
-	hsg := httpserver.New(ctx, cancel, svcName, httpServerConfig, gapi.MakeHandler(gsvc, mux, logger), logger)
-	hsp := httpserver.New(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(psvc, mux, logger), logger)
 
-	grpcServerConfig := server.Config{Port: defSvcGRPCPort}
-	if err := env.Parse(&grpcServerConfig, env.Options{Prefix: envPrefixGrpc}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s gRPC server configuration : %s", svcName, err.Error()))
-		exitCode = 1
-		return
-	}
-	registerAuthServiceServer := func(srv *grpc.Server) {
-		reflection.Register(srv)
-		policies.RegisterAuthServiceServer(srv, grpcapi.NewServer(csvc, psvc))
-	}
-	gs := grpcserver.New(ctx, cancel, svcName, grpcServerConfig, registerAuthServiceServer, logger)
+	mux := chi.NewRouter()
+	httpSrv := httpserver.New(ctx, cancel, svcName, httpServerConfig, capi.MakeHandler(csvc, gsvc, mux, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, mainflux.Version, logger, cancel)
@@ -179,14 +171,11 @@ func main() {
 	}
 
 	g.Go(func() error {
-		return hsp.Start()
-	})
-	g.Go(func() error {
-		return gs.Start()
+		return httpSrv.Start()
 	})
 
 	g.Go(func() error {
-		return server.StopSignalHandler(ctx, cancel, logger, svcName, hsc, hsg, hsp, gs)
+		return server.StopSignalHandler(ctx, cancel, logger, svcName, httpSrv)
 	})
 
 	if err := g.Wait(); err != nil {
@@ -194,44 +183,29 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, tracer trace.Tracer, c config, ec email.Config, logger mflog.Logger) (clients.Service, groups.Service, policies.Service, error) {
+func newService(ctx context.Context, auth mainflux.AuthServiceClient, db *sqlx.DB, dbConfig pgclient.Config, tracer trace.Tracer, c config, ec email.Config, logger mflog.Logger) (users.Service, groups.Service, error) {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
-	cRepo := uclients.NewRepository(database)
+	cRepo := clientspg.NewRepository(database)
 	gRepo := gpostgres.New(database)
-	pRepo := ppostgres.NewRepository(database)
 
 	idp := uuid.New()
 	hsr := hasher.New()
-
-	aDuration, err := time.ParseDuration(c.AccessDuration)
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to parse access token duration: %s", err.Error()))
-	}
-	rDuration, err := time.ParseDuration(c.RefreshDuration)
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to parse refresh token duration: %s", err.Error()))
-	}
-	tokenizer := jwt.NewRepository([]byte(c.SecretKey), aDuration, rDuration)
 
 	emailer, err := emailer.New(c.ResetURL, &ec)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
 	}
-	csvc := clients.NewService(cRepo, pRepo, tokenizer, emailer, hsr, idp, c.PassRegex)
-	gsvc := groups.NewService(gRepo, pRepo, tokenizer, idp)
-	psvc := policies.NewService(pRepo, tokenizer, idp)
+
+	csvc := users.NewService(cRepo, auth, emailer, hsr, idp, c.PassRegex)
+	gsvc := mfgroups.NewService(gRepo, idp, auth)
 
 	csvc, err = uevents.NewEventStoreMiddleware(ctx, csvc, c.ESURL)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 	gsvc, err = gevents.NewEventStoreMiddleware(ctx, gsvc, c.ESURL)
 	if err != nil {
-		return nil, nil, nil, err
-	}
-	psvc, err = pevents.NewEventStoreMiddleware(ctx, psvc, c.ESURL)
-	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	csvc = ctracing.New(csvc, tracer)
@@ -244,18 +218,14 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, trac
 	counter, latency = internal.MakeMetrics("groups", "api")
 	gsvc = gapi.MetricsMiddleware(gsvc, counter, latency)
 
-	psvc = ptracing.New(psvc, tracer)
-	psvc = papi.LoggingMiddleware(psvc, logger)
-	counter, latency = internal.MakeMetrics("policies", "api")
-	psvc = papi.MetricsMiddleware(psvc, counter, latency)
-
 	if err := createAdmin(ctx, c, cRepo, hsr, csvc); err != nil {
 		logger.Error(fmt.Sprintf("failed to create admin client: %s", err))
 	}
-	return csvc, gsvc, psvc, nil
+
+	return csvc, gsvc, err
 }
 
-func createAdmin(ctx context.Context, c config, crepo uclients.Repository, hsr clients.Hasher, svc clients.Service) error {
+func createAdmin(ctx context.Context, c config, crepo clientspg.Repository, hsr users.Hasher, svc users.Service) error {
 	id, err := uuid.New().ID()
 	if err != nil {
 		return err

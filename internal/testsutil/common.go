@@ -9,8 +9,8 @@ import (
 	"github.com/mainflux/mainflux"
 	mfclients "github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/users/clients"
-	cmocks "github.com/mainflux/mainflux/users/clients/mocks"
+	"github.com/mainflux/mainflux/users"
+	cmocks "github.com/mainflux/mainflux/users/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -21,7 +21,7 @@ func GenerateUUID(t *testing.T, idProvider mainflux.IDProvider) string {
 	return ulid
 }
 
-func GenerateValidToken(t *testing.T, clientID string, svc clients.Service, cRepo *cmocks.Repository, phasher clients.Hasher) string {
+func GenerateValidToken(t *testing.T, clientID string, svc users.Service, cRepo *cmocks.Repository, phasher users.Hasher) string {
 	client := mfclients.Client{
 		ID:   clientID,
 		Name: "validtoken",
@@ -44,9 +44,7 @@ func GenerateValidToken(t *testing.T, clientID string, svc clients.Service, cRep
 }
 
 func CleanUpDB(t *testing.T, db *sqlx.DB) {
-	_, err := db.Exec("DELETE FROM policies")
-	require.Nil(t, err, fmt.Sprintf("clean policies unexpected error: %s", err))
-	_, err = db.Exec("DELETE FROM groups")
+	_, err := db.Exec("DELETE FROM groups")
 	require.Nil(t, err, fmt.Sprintf("clean groups unexpected error: %s", err))
 	_, err = db.Exec("DELETE FROM clients")
 	require.Nil(t, err, fmt.Sprintf("clean clients unexpected error: %s", err))

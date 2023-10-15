@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"testing"
 
+	authmocks "github.com/mainflux/mainflux/auth/mocks"
 	"github.com/mainflux/mainflux/consumers/notifiers"
 	"github.com/mainflux/mainflux/consumers/notifiers/mocks"
 	"github.com/mainflux/mainflux/pkg/errors"
@@ -26,7 +27,7 @@ const (
 
 func newService() notifiers.Service {
 	repo := mocks.NewRepo(make(map[string]notifiers.Subscription))
-	auth := mocks.NewAuth(map[string]string{exampleUser1: exampleUser1, exampleUser2: exampleUser2, invalidUser: invalidUser})
+	auth := new(authmocks.Service)
 	notifier := mocks.NewNotifier()
 	idp := uuid.NewMock()
 	from := "exampleFrom"

@@ -5,7 +5,7 @@ package hasher
 
 import (
 	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/users/clients"
+	"github.com/mainflux/mainflux/users"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -16,12 +16,12 @@ var (
 	errComparePassword = errors.New("compare hash and password failed")
 )
 
-var _ clients.Hasher = (*bcryptHasher)(nil)
+var _ users.Hasher = (*bcryptHasher)(nil)
 
 type bcryptHasher struct{}
 
 // New instantiates a bcrypt-based hasher implementation.
-func New() clients.Hasher {
+func New() users.Hasher {
 	return &bcryptHasher{}
 }
 
@@ -38,5 +38,6 @@ func (bh *bcryptHasher) Compare(plain, hashed string) error {
 	if err := bcrypt.CompareHashAndPassword([]byte(hashed), []byte(plain)); err != nil {
 		return errors.Wrap(errComparePassword, err)
 	}
+
 	return nil
 }

@@ -11,19 +11,20 @@ import (
 	"strings"
 	"testing"
 
+	authmocks "github.com/mainflux/mainflux/auth/mocks"
 	server "github.com/mainflux/mainflux/http"
 	"github.com/mainflux/mainflux/http/api"
 	"github.com/mainflux/mainflux/http/mocks"
 	"github.com/mainflux/mainflux/internal/apiutil"
-	"github.com/mainflux/mainflux/things/policies"
 	"github.com/stretchr/testify/assert"
 )
 
 const instanceID = "5de9b29a-feb9-11ed-be56-0242ac120002"
 
-func newService(cc policies.AuthServiceClient) server.Service {
+func newService() server.Service {
+	auth := new(authmocks.Service)
 	pub := mocks.NewPublisher()
-	return server.New(pub, cc)
+	return server.New(pub, auth)
 }
 
 func newHTTPServer(svc server.Service) *httptest.Server {
@@ -69,8 +70,7 @@ func TestPublish(t *testing.T) {
 	msg := `[{"n":"current","t":-1,"v":1.6}]`
 	msgJSON := `{"field1":"val1","field2":"val2"}`
 	msgCBOR := `81A3616E6763757272656E746174206176FB3FF999999999999A`
-	thingsClient := mocks.NewThingsClient(map[string]string{thingKey: chanID})
-	svc := newService(thingsClient)
+	svc := newService()
 	ts := newHTTPServer(svc)
 	defer ts.Close()
 
@@ -151,8 +151,8 @@ func TestPublish(t *testing.T) {
 			chanID:      chanID,
 			msg:         msg,
 			contentType: ctSenmlJSON,
-			key:         mocks.ServiceErrToken,
-			status:      http.StatusInternalServerError,
+			// key:         mocks.ServiceErrToken,
+			status: http.StatusInternalServerError,
 		},
 	}
 

@@ -185,8 +185,8 @@ func (sdk mfSDK) Unassign(userID, groupID, token string) errors.SDKError {
 	return sdk.DeleteUserPolicy(policy, token)
 }
 
-func (sdk mfSDK) Connect(connIDs ConnectionIDs, token string) errors.SDKError {
-	data, err := json.Marshal(connIDs)
+func (sdk mfSDK) Connect(conn Connection, token string) errors.SDKError {
+	data, err := json.Marshal(conn)
 	if err != nil {
 		return errors.NewSDKError(err)
 	}
@@ -198,7 +198,7 @@ func (sdk mfSDK) Connect(connIDs ConnectionIDs, token string) errors.SDKError {
 	return sdkerr
 }
 
-func (sdk mfSDK) Disconnect(connIDs ConnectionIDs, token string) errors.SDKError {
+func (sdk mfSDK) Disconnect(connIDs Connection, token string) errors.SDKError {
 	data, err := json.Marshal(connIDs)
 	if err != nil {
 		return errors.NewSDKError(err)

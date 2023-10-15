@@ -44,6 +44,7 @@ const (
  *************************************************************/
 
 // RGBColor definition.
+// Support RGB color on Windows CMD, PowerShell
 //
 // The first to third digits represent the color value.
 // The last digit represents the foreground(0), background(1), >1 is unset value
@@ -54,8 +55,6 @@ const (
 //	// 3rd: Fg=0, Bg=1, >1: unset value
 //	RGBColor{30,144,255, 0}
 //	RGBColor{30,144,255, 1}
-//
-// NOTICE: now support RGB color on Windows CMD, PowerShell
 type RGBColor [4]uint8
 
 // create an empty RGBColor
@@ -249,6 +248,18 @@ func (c RGBColor) String() string {
 
 	// c[3] > 1 is empty
 	return ""
+}
+
+// ToBg convert to background color
+func (c RGBColor) ToBg() RGBColor {
+	c[3] = AsBg
+	return c
+}
+
+// ToFg convert to foreground color
+func (c RGBColor) ToFg() RGBColor {
+	c[3] = AsFg
+	return c
 }
 
 // IsEmpty value

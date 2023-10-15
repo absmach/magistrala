@@ -1,0 +1,169 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package mainflux;
+option go_package = "./mainflux";
+
+// AuthzService is a service that provides authentication and authorization
+// functionalities for the things service.
+service AuthzService {
+  // Authorize checks if the subject is authorized to perform
+  // the action on the object.
+  rpc Authorize(AuthorizeReq) returns (AuthorizeRes) {}
+}
+
+// AuthService is a service that provides authentication and authorization
+// functionalities for the users service.
+service AuthService {
+  rpc Issue(IssueReq) returns (Token) {}
+  rpc Login(LoginReq) returns (Token) {}
+  rpc Refresh(RefreshReq) returns (Token) {}
+  rpc Identify(IdentityReq) returns (IdentityRes) {}
+  rpc Authorize(AuthorizeReq) returns (AuthorizeRes) {}
+  rpc AddPolicy(AddPolicyReq) returns (AddPolicyRes) {}
+  rpc DeletePolicy(DeletePolicyReq) returns (DeletePolicyRes) {}
+  rpc ListObjects(ListObjectsReq) returns (ListObjectsRes) {}
+  rpc ListAllObjects(ListObjectsReq) returns (ListObjectsRes) {}
+  rpc CountObjects(CountObjectsReq) returns (CountObjectsRes) {}
+  rpc ListSubjects(ListSubjectsReq) returns (ListSubjectsRes) {}
+  rpc ListAllSubjects(ListSubjectsReq) returns (ListSubjectsRes) {}
+  rpc CountSubjects(CountSubjectsReq) returns (CountSubjectsRes) {}
+}
+
+// If a token is not carrying any information itself, the type
+// field can be used to determine how to validate the token.
+// Also, different tokens can be encoded in different ways.
+message Token {
+    string accessToken = 1;
+    optional string refreshToken = 2;
+    string accessType = 3;
+}
+
+message IdentityReq {
+    string token = 1;
+}
+
+message IdentityRes {
+    string id    = 1;
+}
+
+message IssueReq {
+  string id = 1;
+  uint32 type = 3;
+}
+
+message LoginReq {
+  string id = 1;
+  string domain = 3;
+}
+
+message RefreshReq { string value = 1; }
+
+message AuthorizeReq {
+  string namespace = 1;        // Namespace = Domain
+  string subject_type = 2;     // Thing or User
+  string subject_kind = 3;     // ID or Token
+  string subject_relation = 4; // Subject relation
+  string subject = 5;          // Subject value (id or token, depending on kind)
+  string relation = 6;         // Relation to filter
+  string permission = 7;       // Action
+  string object = 8;           // Object ID
+  string object_type = 9;      // Thing, User, Group
+}
+
+message AuthorizeRes {
+  bool authorized = 1;
+  string id = 2;
+}
+
+message AddPolicyReq {
+  string namespace = 1;
+  string subject_type = 2;
+  string subject_relation = 3;
+  string subject = 4;
+  string relation = 5;
+  string permission = 6;
+  string object = 7;
+  string object_type = 8;
+}
+
+message AddPolicyRes { bool authorized = 1; }
+
+message DeletePolicyReq {
+  string namespace = 1;
+  string subject_type = 2;
+  string subject_relation = 3;
+  string subject = 4;
+  string relation = 5;
+  string permission = 6;
+  string object = 7;
+  string object_type = 8;
+}
+
+message DeletePolicyRes { bool deleted = 1; }
+
+message ListObjectsReq {
+  string namespace = 1;
+  string subject_type = 2;
+  string subject_relation = 3;
+  string subject = 4;
+  string relation = 5;
+  string permission = 6;
+  string object = 7;
+  string object_type = 8;
+  string nextPageToken = 9;
+  int32 limit = 10;
+}
+
+message ListObjectsRes {
+  repeated string policies = 1;
+  string nextPageToken = 2;
+}
+
+message CountObjectsReq {
+  string namespace = 1;
+  string subject_type = 2;
+  string subject_relation = 3;
+  string subject = 4;
+  string relation = 5;
+  string permission = 6;
+  string object = 7;
+  string object_type = 8;
+  string nextPageToken = 9;
+}
+
+message CountObjectsRes { int64 count = 1; }
+
+message ListSubjectsReq {
+  string namespace = 1;
+  string subject_type = 2;
+  string subject_relation = 3;
+  string subject = 4;
+  string relation = 5;
+  string permission = 6;
+  string object = 7;
+  string object_type = 8;
+  string nextPageToken = 9;
+  int32 limit = 10;
+}
+
+message ListSubjectsRes {
+  repeated string policies = 1;
+  string nextPageToken = 2;
+}
+
+message CountSubjectsReq {
+  string namespace = 1;
+  string subject_type = 2;
+  string subject_relation = 3;
+  string subject = 4;
+  string relation = 5;
+  string permission = 6;
+  string object = 7;
+  string object_type = 8;
+  string nextPageToken = 9;
+}
+
+message CountSubjectsRes { int64 count = 1; }

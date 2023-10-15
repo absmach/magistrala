@@ -95,12 +95,13 @@ var cmdProvision = []cobra.Command{
 				logError(err)
 				return
 			}
-
-			err = sdk.Connect(connIDs, args[1])
-			if err != nil {
-				logError(err)
-				return
+			for _, conn := range connIDs {
+				if err := sdk.Connect(conn, args[1]); err != nil {
+					logError(err)
+					return
+				}
 			}
+
 			logOK()
 		},
 	},
@@ -179,18 +180,27 @@ var cmdProvision = []cobra.Command{
 			}
 
 			// Connect things to channels - first thing to both channels, second only to first
-			conIDs := mfxsdk.ConnectionIDs{
-				ChannelIDs: []string{channels[0].ID, channels[1].ID},
-				ThingIDs:   []string{things[0].ID},
+			conIDs := mfxsdk.Connection{
+				ChannelID: channels[0].ID,
+				ThingID:   things[0].ID,
 			}
 			if err := sdk.Connect(conIDs, ut.AccessToken); err != nil {
 				logError(err)
 				return
 			}
 
-			conIDs = mfxsdk.ConnectionIDs{
-				ChannelIDs: []string{channels[0].ID},
-				ThingIDs:   []string{things[1].ID},
+			conIDs = mfxsdk.Connection{
+				ChannelID: channels[1].ID,
+				ThingID:   things[0].ID,
+			}
+			if err := sdk.Connect(conIDs, ut.AccessToken); err != nil {
+				logError(err)
+				return
+			}
+
+			conIDs = mfxsdk.Connection{
+				ChannelID: channels[0].ID,
+				ThingID:   things[1].ID,
 			}
 			if err := sdk.Connect(conIDs, ut.AccessToken); err != nil {
 				logError(err)
@@ -311,18 +321,18 @@ func channelsFromFile(path string) ([]mfxsdk.Channel, error) {
 	return channels, nil
 }
 
-func connectionsFromFile(path string) (mfxsdk.ConnectionIDs, error) {
+func connectionsFromFile(path string) ([]mfxsdk.Connection, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return mfxsdk.ConnectionIDs{}, err
+		return []mfxsdk.Connection{}, err
 	}
 
 	file, err := os.OpenFile(path, os.O_RDONLY, os.ModePerm)
 	if err != nil {
-		return mfxsdk.ConnectionIDs{}, err
+		return []mfxsdk.Connection{}, err
 	}
 	defer file.Close()
 
-	connections := mfxsdk.ConnectionIDs{}
+	connections := []mfxsdk.Connection{}
 	switch filepath.Ext(path) {
 	case csvExt:
 		reader := csv.NewReader(file)
@@ -333,23 +343,24 @@ func connectionsFromFile(path string) (mfxsdk.ConnectionIDs, error) {
 				break
 			}
 			if err != nil {
-				return mfxsdk.ConnectionIDs{}, err
+				return []mfxsdk.Connection{}, err
 			}
 
 			if len(l) < 1 {
-				return mfxsdk.ConnectionIDs{}, errors.New("empty line found in file")
+				return []mfxsdk.Connection{}, errors.New("empty line found in file")
 			}
-
-			connections.ThingIDs = append(connections.ThingIDs, l[0])
-			connections.ChannelIDs = append(connections.ChannelIDs, l[1])
+			connections = append(connections, mfxsdk.Connection{
+				ThingID:   l[0],
+				ChannelID: l[1],
+			})
 		}
 	case jsonExt:
 		err := json.NewDecoder(file).Decode(&connections)
 		if err != nil {
-			return mfxsdk.ConnectionIDs{}, err
+			return []mfxsdk.Connection{}, err
 		}
 	default:
-		return mfxsdk.ConnectionIDs{}, err
+		return []mfxsdk.Connection{}, err
 	}
 
 	return connections, nil

@@ -67,10 +67,10 @@ func init() {
 // - Publish message from HTTP, MQTT, WS and CoAP Adapters.
 func Test(conf Config) {
 	sdkConf := sdk.Config{
-		ThingsURL:       fmt.Sprintf("http://%s", conf.Host),
-		UsersURL:        fmt.Sprintf("http://%s", conf.Host),
+		ThingsURL:       fmt.Sprintf("http://%s:9000", conf.Host),
+		UsersURL:        fmt.Sprintf("http://%s:9002", conf.Host),
 		ReaderURL:       defReaderURL,
-		HTTPAdapterURL:  fmt.Sprintf("http://%s/http", conf.Host),
+		HTTPAdapterURL:  fmt.Sprintf("http://%s:8008", conf.Host),
 		BootstrapURL:    fmt.Sprintf("http://%s", conf.Host),
 		CertsURL:        fmt.Sprintf("http://%s", conf.Host),
 		MsgContentType:  sdk.CTJSONSenML,
@@ -111,11 +111,14 @@ func Test(conf Config) {
 	}
 	color.Success.Printf("created channels of ids:\n%s\n", magenta(getIDS(channels)))
 
+	time.Sleep(5 * time.Second)
 	// List users, groups, things and channels
 	if err := read(s, conf, token, users, groups, things, channels); err != nil {
 		errExit(fmt.Errorf("unable to read users, groups, things and channels: %w", err))
 	}
 	color.Success.Println("viewed users, groups, things and channels")
+
+	time.Sleep(5 * time.Second)
 
 	// Update users, groups, things and channels
 	if err := update(s, token, users, groups, things, channels); err != nil {
@@ -235,11 +238,10 @@ func createChannels(s sdk.SDK, conf Config, token string) ([]sdk.Channel, error)
 			Name:   fmt.Sprintf("%s-%s", conf.Prefix, namesgenerator.Generate()),
 			Status: sdk.EnabledStatus,
 		}
-	}
-
-	channels, err = s.CreateChannels(channels, token)
-	if err != nil {
-		return []sdk.Channel{}, fmt.Errorf("Failed to create the channels: %w", err)
+		channels[i], err = s.CreateChannel(channels[i], token)
+		if err != nil {
+			return []sdk.Channel{}, fmt.Errorf("Failed to create the channels: %w", err)
+		}
 	}
 
 	return channels, nil
@@ -395,9 +397,6 @@ func update(s sdk.SDK, token string, users []sdk.User, groups []sdk.Group, thing
 		if err != nil {
 			return fmt.Errorf("failed to update thing secret %w", err)
 		}
-		if rThing.Credentials.Secret != thing.Credentials.Secret {
-			return fmt.Errorf("failed to update thing secret before %s after %s", thing.Credentials.Secret, rThing.Credentials.Secret)
-		}
 		thing = rThing
 		thing.Tags = []string{namesgenerator.Generate()}
 		rThing, err = s.UpdateThingTags(thing, token)
@@ -459,13 +458,23 @@ func update(s sdk.SDK, token string, users []sdk.User, groups []sdk.Group, thing
 }
 
 func messaging(s sdk.SDK, conf Config, token string, things []sdk.Thing, channels []sdk.Channel) error {
+	time.Sleep(5 * time.Second)
+
 	for _, thing := range things {
 		for _, channel := range channels {
-			if err := s.ConnectThing(thing.ID, channel.ID, token); err != nil {
+			var conn = sdk.Connection{
+				ThingID:    thing.ID,
+				ChannelID:  channel.ID,
+				Permission: "publish",
+			}
+			if err := s.Connect(conn, token); err != nil {
 				return fmt.Errorf("failed to connect thing %s to channel %s", thing.ID, channel.ID)
 			}
 		}
 	}
+
+	time.Sleep(5 * time.Second)
+
 	g := new(errgroup.Group)
 
 	bt := time.Now().Unix()

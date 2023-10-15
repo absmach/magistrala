@@ -123,6 +123,8 @@ type watchOpts struct {
 	ignoreDeletes bool
 	// Include all history per subject, not just last one.
 	includeHistory bool
+	// Include only updates for keys.
+	updatesOnly bool
 	// retrieve only the meta data of the entry
 	metaOnly bool
 }
@@ -136,7 +138,21 @@ func (opt watchOptFn) configureWatcher(opts *watchOpts) error {
 // IncludeHistory instructs the key watcher to include historical values as well.
 func IncludeHistory() WatchOpt {
 	return watchOptFn(func(opts *watchOpts) error {
+		if opts.updatesOnly {
+			return errors.New("nats: include history can not be used with updates only")
+		}
 		opts.includeHistory = true
+		return nil
+	})
+}
+
+// UpdatesOnly instructs the key watcher to only include updates on values (without latest values when started).
+func UpdatesOnly() WatchOpt {
+	return watchOptFn(func(opts *watchOpts) error {
+		if opts.includeHistory {
+			return errors.New("nats: updates only can not be used with include history")
+		}
+		opts.updatesOnly = true
 		return nil
 	})
 }
@@ -416,14 +432,21 @@ func (js *js) CreateKeyValue(cfg *KeyValueConfig) (KeyValue, error) {
 		scfg.Mirror = m
 		scfg.MirrorDirect = true
 	} else if len(cfg.Sources) > 0 {
-		// For now we do not allow direct subjects for sources. If that is desired a user could use stream API directly.
 		for _, ss := range cfg.Sources {
-			if !strings.HasPrefix(ss.Name, kvBucketNamePre) {
-				ss = ss.copy()
+			var sourceBucketName string
+			if strings.HasPrefix(ss.Name, kvBucketNamePre) {
+				sourceBucketName = ss.Name[len(kvBucketNamePre):]
+			} else {
+				sourceBucketName = ss.Name
 				ss.Name = fmt.Sprintf(kvBucketNameTmpl, ss.Name)
+			}
+
+			if ss.External == nil || sourceBucketName != cfg.Bucket {
+				ss.SubjectTransforms = []SubjectTransformConfig{{Source: fmt.Sprintf(kvSubjectsTmpl, sourceBucketName), Destination: fmt.Sprintf(kvSubjectsTmpl, cfg.Bucket)}}
 			}
 			scfg.Sources = append(scfg.Sources, ss)
 		}
+		scfg.Subjects = []string{fmt.Sprintf(kvSubjectsTmpl, cfg.Bucket)}
 	} else {
 		scfg.Subjects = []string{fmt.Sprintf(kvSubjectsTmpl, cfg.Bucket)}
 	}
@@ -622,7 +645,7 @@ func (kv *kvs) PutString(key string, value string) (revision uint64, err error) 
 	return kv.Put(key, []byte(value))
 }
 
-// Create will add the key/value pair iff it does not exist.
+// Create will add the key/value pair if it does not exist.
 func (kv *kvs) Create(key string, value []byte) (revision uint64, err error) {
 	v, err := kv.Update(key, value, 0)
 	if err == nil {
@@ -645,7 +668,7 @@ func (kv *kvs) Create(key string, value []byte) (revision uint64, err error) {
 	return 0, err
 }
 
-// Update will update the value iff the latest revision matches.
+// Update will update the value if the latest revision matches.
 func (kv *kvs) Update(key string, value []byte, revision uint64) (uint64, error) {
 	if !keyValid(key) {
 		return 0, ErrInvalidKey
@@ -909,7 +932,7 @@ func (kv *kvs) Watch(keys string, opts ...WatchOpt) (KeyWatcher, error) {
 				op = KeyValuePurge
 			}
 		}
-		delta := parser.ParseNum(tokens[ackNumPendingTokenPos])
+		delta := parser.ParseNum(tokens[parser.AckNumPendingTokenPos])
 		w.mu.Lock()
 		defer w.mu.Unlock()
 		if !o.ignoreDeletes || (op != KeyValueDelete && op != KeyValuePurge) {
@@ -917,14 +940,15 @@ func (kv *kvs) Watch(keys string, opts ...WatchOpt) (KeyWatcher, error) {
 				bucket:   kv.name,
 				key:      subj,
 				value:    m.Data,
-				revision: parser.ParseNum(tokens[ackStreamSeqTokenPos]),
-				created:  time.Unix(0, int64(parser.ParseNum(tokens[ackTimestampSeqTokenPos]))),
+				revision: parser.ParseNum(tokens[parser.AckStreamSeqTokenPos]),
+				created:  time.Unix(0, int64(parser.ParseNum(tokens[parser.AckTimestampSeqTokenPos]))),
 				delta:    delta,
 				op:       op,
 			}
 			w.updates <- entry
 		}
 		// Check if done and initial values.
+		// Skip if UpdatesOnly() is set, since there will never be updates initially.
 		if !w.initDone {
 			w.received++
 			// We set this on the first trip through..
@@ -942,6 +966,9 @@ func (kv *kvs) Watch(keys string, opts ...WatchOpt) (KeyWatcher, error) {
 	subOpts := []SubOpt{BindStream(kv.stream), OrderedConsumer()}
 	if !o.includeHistory {
 		subOpts = append(subOpts, DeliverLastPerSubject())
+	}
+	if o.updatesOnly {
+		subOpts = append(subOpts, DeliverNew())
 	}
 	if o.metaOnly {
 		subOpts = append(subOpts, HeadersOnly())
@@ -961,12 +988,18 @@ func (kv *kvs) Watch(keys string, opts ...WatchOpt) (KeyWatcher, error) {
 	sub.mu.Lock()
 	// If there were no pending messages at the time of the creation
 	// of the consumer, send the marker.
-	if sub.jsi != nil && sub.jsi.pending == 0 {
+	// Skip if UpdatesOnly() is set, since there will never be updates initially.
+	if !o.updatesOnly {
+		if sub.jsi != nil && sub.jsi.pending == 0 {
+			w.initDone = true
+			w.updates <- nil
+		}
+	} else {
+		// if UpdatesOnly was used, mark initialization as complete
 		w.initDone = true
-		w.updates <- nil
 	}
 	// Set us up to close when the waitForMessages func returns.
-	sub.pDone = func() {
+	sub.pDone = func(_ string) {
 		close(w.updates)
 	}
 	sub.mu.Unlock()
@@ -1020,16 +1053,16 @@ func (kv *kvs) Status() (KeyValueStatus, error) {
 // KeyValueStoreNames is used to retrieve a list of key value store names
 func (js *js) KeyValueStoreNames() <-chan string {
 	ch := make(chan string)
-	l := &streamLister{js: js}
+	l := &streamNamesLister{js: js}
 	l.js.opts.streamListSubject = fmt.Sprintf(kvSubjectsTmpl, "*")
 	go func() {
 		defer close(ch)
 		for l.Next() {
-			for _, info := range l.Page() {
-				if !strings.HasPrefix(info.Config.Name, kvBucketNamePre) {
+			for _, name := range l.Page() {
+				if !strings.HasPrefix(name, kvBucketNamePre) {
 					continue
 				}
-				ch <- info.Config.Name
+				ch <- name
 			}
 		}
 	}()

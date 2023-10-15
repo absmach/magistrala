@@ -37,7 +37,8 @@ func (s *Style) Add(cs ...Color) {
 	*s = append(*s, cs...)
 }
 
-// Render render text
+// Render colored text
+//
 // Usage:
 //
 //	color.New(color.FgGreen).Render("text")
@@ -46,8 +47,9 @@ func (s Style) Render(a ...any) string {
 	return RenderCode(s.String(), a...)
 }
 
-// Renderln render text line.
+// Renderln render text with newline.
 // like Println, will add spaces for each argument
+//
 // Usage:
 //
 //	color.New(color.FgGreen).Renderln("text", "more")

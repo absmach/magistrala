@@ -11,10 +11,10 @@ import (
 	"log"
 	"os"
 	"reflect"
-	"strconv"
 
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"
 	mflog "github.com/mainflux/mainflux/logger"
@@ -29,74 +29,25 @@ import (
 )
 
 const (
-	svcName = "provision"
-
-	defLogLevel        = "error"
-	defConfigFile      = "config.toml"
-	defTLS             = "false"
-	defServerCert      = ""
-	defServerKey       = ""
-	defThingsURL       = "http://localhost"
-	defUsersURL        = "http://localhost"
-	defHTTPPort        = "9016"
-	defMfUser          = "test@example.com"
-	defMfPass          = "test"
-	defMfAPIKey        = ""
-	defMfBSURL         = "http://localhost:9000/things/configs"
-	defMfWhiteListURL  = "http://localhost:9000/things/state"
-	defMfCertsURL      = "http://localhost:9019"
-	defProvisionCerts  = "false"
-	defProvisionBS     = "true"
-	defBSAutoWhitelist = "true"
-	defBSContent       = ""
-	defCertsHoursValid = "2400h"
-	defSendTelemetry   = "true"
-	defInstanceID      = ""
-
-	envConfigFile       = "MF_PROVISION_CONFIG_FILE"
-	envLogLevel         = "MF_PROVISION_LOG_LEVEL"
-	envHTTPPort         = "MF_PROVISION_HTTP_PORT"
-	envTLS              = "MF_PROVISION_ENV_CLIENTS_TLS"
-	envServerCert       = "MF_PROVISION_SERVER_CERT"
-	envServerKey        = "MF_PROVISION_SERVER_KEY"
-	envUsersURL         = "MF_PROVISION_USERS_LOCATION"
-	envThingsURL        = "MF_PROVISION_THINGS_LOCATION"
-	envMfUser           = "MF_PROVISION_USER"
-	envMfPass           = "MF_PROVISION_PASS"
-	envMfAPIKey         = "MF_PROVISION_API_KEY"
-	envMfCertsURL       = "MF_PROVISION_CERTS_SVC_URL"
-	envProvisionCerts   = "MF_PROVISION_X509_PROVISIONING"
-	envMfBSURL          = "MF_PROVISION_BS_SVC_URL"
-	envMfBSWhiteListURL = "MF_PROVISION_BS_SVC_WHITELIST_URL"
-	envProvisionBS      = "MF_PROVISION_BS_CONFIG_PROVISIONING"
-	envBSAutoWhiteList  = "MF_PROVISION_BS_AUTO_WHITELIST"
-	envBSContent        = "MF_PROVISION_BS_CONTENT"
-	envCertsHoursValid  = "MF_PROVISION_CERTS_HOURS_VALID"
-	envSendTelemetry    = "MF_SEND_TELEMETRY"
-	envInstanceID       = "MF_PROVISION_INSTANCE_ID"
-
+	svcName     = "provision"
 	contentType = "application/json"
 )
 
 var (
 	errMissingConfigFile            = errors.New("missing config file setting")
 	errFailLoadingConfigFile        = errors.New("failed to load config from file")
-	errFailGettingAutoWhiteList     = errors.New("failed to get auto whitelist setting")
-	errFailGettingCertSettings      = errors.New("failed to get certificate file setting")
-	errFailGettingTLSConf           = errors.New("failed to get TLS setting")
-	errFailGettingProvBS            = errors.New("failed to get BS url setting")
 	errFailedToReadBootstrapContent = errors.New("failed to read bootstrap content from envs")
-	errFailedToSetupCallHome        = errors.New("failed to set up callhome")
 )
 
 func main() {
-	cfg, err := loadConfig()
 	ctx, cancel := context.WithCancel(context.Background())
 	g, ctx := errgroup.WithContext(ctx)
 
+	cfg, err := loadConfig()
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatalf(fmt.Sprintf("failed to load %s configuration : %s", svcName, err))
 	}
+
 	logger, err := mflog.New(os.Stdout, cfg.Server.LogLevel)
 	if err != nil {
 		log.Fatalf(err.Error())
@@ -105,9 +56,8 @@ func main() {
 	var exitCode int
 	defer mflog.ExitWithError(&exitCode)
 
-	instanceID := mainflux.Env(envInstanceID, defInstanceID)
-	if instanceID == "" {
-		if instanceID, err = uuid.New().ID(); err != nil {
+	if cfg.InstanceID == "" {
+		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
 			logger.Error(fmt.Sprintf("failed to generate instanceID: %s", err))
 			exitCode = 1
 			return
@@ -137,7 +87,7 @@ func main() {
 	svc = api.NewLoggingMiddleware(svc, logger)
 
 	httpServerConfig := server.Config{Host: "", Port: cfg.Server.HTTPPort, KeyFile: cfg.Server.ServerKey, CertFile: cfg.Server.ServerCert}
-	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, instanceID), logger)
+	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, mainflux.Version, logger, cancel)
@@ -170,60 +120,26 @@ func loadConfigFromFile(file string) (provision.Config, error) {
 }
 
 func loadConfig() (provision.Config, error) {
-	tls, err := strconv.ParseBool(mainflux.Env(envTLS, defTLS))
-	if err != nil {
-		return provision.Config{}, errors.Wrap(errFailGettingTLSConf, err)
-	}
-	provisionX509, err := strconv.ParseBool(mainflux.Env(envProvisionCerts, defProvisionCerts))
-	if err != nil {
-		return provision.Config{}, errors.Wrap(errFailGettingCertSettings, err)
-	}
-	provisionBS, err := strconv.ParseBool(mainflux.Env(envProvisionBS, defProvisionBS))
-	if err != nil {
-		return provision.Config{}, errors.Wrap(errFailGettingProvBS, fmt.Errorf(" for %s", envProvisionBS))
+	cfg := provision.Config{}
+	if err := env.Parse(&cfg); err != nil {
+		return provision.Config{}, err
 	}
 
-	autoWhiteList, err := strconv.ParseBool(mainflux.Env(envBSAutoWhiteList, defBSAutoWhitelist))
-	if err != nil {
-		return provision.Config{}, errors.Wrap(errFailGettingAutoWhiteList, fmt.Errorf(" for %s", envBSAutoWhiteList))
-	}
-	if autoWhiteList && !provisionBS {
+	if cfg.Bootstrap.AutoWhiteList && !cfg.Bootstrap.Provision {
 		return provision.Config{}, errors.New("Can't auto whitelist if auto config save is off")
 	}
 
 	var content map[string]interface{}
-	if c := mainflux.Env(envBSContent, defBSContent); c != "" {
-		if err = json.Unmarshal([]byte(c), &content); err != nil {
+	if cfg.BSContent != "" {
+		if err := json.Unmarshal([]byte(cfg.BSContent), &content); err != nil {
 			return provision.Config{}, errFailedToReadBootstrapContent
 		}
 	}
 
-	cfg := provision.Config{
-		Server: provision.ServiceConf{
-			LogLevel:       mainflux.Env(envLogLevel, defLogLevel),
-			ServerCert:     mainflux.Env(envServerCert, defServerCert),
-			ServerKey:      mainflux.Env(envServerKey, defServerKey),
-			HTTPPort:       mainflux.Env(envHTTPPort, defHTTPPort),
-			MfBSURL:        mainflux.Env(envMfBSURL, defMfBSURL),
-			MfWhiteListURL: mainflux.Env(envMfBSWhiteListURL, defMfWhiteListURL),
-			MfCertsURL:     mainflux.Env(envMfCertsURL, defMfCertsURL),
-			MfUser:         mainflux.Env(envMfUser, defMfUser),
-			MfPass:         mainflux.Env(envMfPass, defMfPass),
-			MfAPIKey:       mainflux.Env(envMfAPIKey, defMfAPIKey),
-			ThingsURL:      mainflux.Env(envThingsURL, defThingsURL),
-			UsersURL:       mainflux.Env(envUsersURL, defUsersURL),
-			TLS:            tls,
-		},
-		Cert: provision.Cert{
-			TTL: mainflux.Env(envCertsHoursValid, defCertsHoursValid),
-		},
+	cfg = provision.Config{
 		Bootstrap: provision.Bootstrap{
-			X509Provision: provisionX509,
-			Provision:     provisionBS,
-			AutoWhiteList: autoWhiteList,
-			Content:       content,
+			Content: content,
 		},
-
 		// This is default conf for provision if there is no config file
 		Channels: []mfgroups.Group{
 			{
@@ -242,11 +158,6 @@ func loadConfig() (provision.Config, error) {
 		},
 	}
 
-	cfg.File = mainflux.Env(envConfigFile, defConfigFile)
-	cfg.SendTelemetry, err = strconv.ParseBool(mainflux.Env(envSendTelemetry, defSendTelemetry))
-	if err != nil {
-		return cfg, errors.Wrap(errFailedToSetupCallHome, err)
-	}
 	return cfg, nil
 }
 

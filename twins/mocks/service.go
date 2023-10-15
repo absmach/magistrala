@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	authmocks "github.com/mainflux/mainflux/auth/mocks"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/twins"
@@ -17,7 +18,7 @@ var id = 0
 
 // NewService use mock dependencies to create real twins service.
 func NewService(tokens map[string]string) twins.Service {
-	auth := NewAuthServiceClient(tokens)
+	auth := new(authmocks.Service)
 	twinsRepo := NewTwinRepository()
 	twinCache := NewTwinCache()
 	statesRepo := NewStateRepository()

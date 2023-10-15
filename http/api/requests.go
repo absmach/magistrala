@@ -17,6 +17,5 @@ func (req publishReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerKey
 	}
-
 	return nil
 }

@@ -31,7 +31,6 @@ import (
 	brokerstracing "github.com/mainflux/mainflux/pkg/messaging/brokers/tracing"
 	"github.com/mainflux/mainflux/pkg/ulid"
 	"github.com/mainflux/mainflux/pkg/uuid"
-	"github.com/mainflux/mainflux/users/policies"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
@@ -158,7 +157,7 @@ func main() {
 	}
 }
 
-func newService(db *sqlx.DB, tracer trace.Tracer, auth policies.AuthServiceClient, c config, sc mfsmpp.Config, logger mflog.Logger) notifiers.Service {
+func newService(db *sqlx.DB, tracer trace.Tracer, auth mainflux.AuthServiceClient, c config, sc mfsmpp.Config, logger mflog.Logger) notifiers.Service {
 	database := notifierpg.NewDatabase(db, tracer)
 	repo := tracing.New(tracer, notifierpg.New(database))
 	idp := ulid.New()

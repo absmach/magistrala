@@ -39,4 +39,6 @@ var (
 
 	// ErrLogin indicates wrong login credentials.
 	ErrLogin = New("invalid user id or secret")
+
+	ErrUnsupportedContentType = New("invalid content type")
 )

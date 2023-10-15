@@ -4,6 +4,23 @@ Changes
 v2 has many incompatibilities with v1. To see the full list of differences between
 v1 and v2, please read the Changes-v2.md file (https://github.com/lestrrat-go/jwx/blob/develop/v2/Changes-v2.md)
 
+v2.0.13 26 Sep 2023
+[New Features]
+  * [jwk] jwk.Equal has been added. Please note that this is equivalent to
+  comparing the keys' thumbprints, therefore it does NOT take in consideration
+  non-essential fields.
+
+[Miscellaneous]
+  * Various documentation fixes and additions.
+
+v2.0.12 - 11 Aug 2023
+[Bug fixes]
+  * [jwt] jwt.Serializer was ignoring JWE flags (#951)
+
+[Miscellaneous]
+  * [jwk] Check for seed length on OKP JWKs to avoid panics (#947)
+  * [jws] Documentation for jws.WithKeySet()
+
 v2.0.11 - 14 Jun 2023
 [Security]
   * Potential Padding Oracle Attack Vulnerability and Timing Attack Vulnerability 

@@ -77,8 +77,8 @@ type Repository interface {
 	// RetrieveAll retrieves all clients.
 	RetrieveAll(ctx context.Context, pm Page) (ClientsPage, error)
 
-	// Members retrieves everything that is assigned to a group identified by groupID.
-	Members(ctx context.Context, groupID string, pm Page) (MembersPage, error)
+	// RetrieveAllByIDs retrieves for given client IDs .
+	RetrieveAllByIDs(ctx context.Context, pm Page) (ClientsPage, error)
 
 	// Update updates the client name and metadata.
 	Update(ctx context.Context, client Client) (Client, error)

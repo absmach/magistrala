@@ -34,7 +34,7 @@ func (h *stdHeaders) AsMap(ctx context.Context) (map[string]interface{}, error) 
 	return iter.AsMap(ctx, h)
 }
 
-func (h *stdHeaders) Copy(ctx context.Context, dst Headers) error {
+func (h *stdHeaders) Copy(_ context.Context, dst Headers) error {
 	for _, pair := range h.makePairs() {
 		//nolint:forcetypeassert
 		key := pair.Key.(string)

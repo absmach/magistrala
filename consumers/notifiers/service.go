@@ -11,7 +11,6 @@ import (
 	"github.com/mainflux/mainflux/consumers"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"
-	"github.com/mainflux/mainflux/users/policies"
 )
 
 // ErrMessage indicates an error converting a message to Mainflux message.
@@ -40,7 +39,7 @@ type Service interface {
 var _ Service = (*notifierService)(nil)
 
 type notifierService struct {
-	auth     policies.AuthServiceClient
+	auth     mainflux.AuthServiceClient
 	subs     SubscriptionsRepository
 	idp      mainflux.IDProvider
 	notifier Notifier
@@ -49,7 +48,7 @@ type notifierService struct {
 }
 
 // New instantiates the subscriptions service implementation.
-func New(auth policies.AuthServiceClient, subs SubscriptionsRepository, idp mainflux.IDProvider, notifier Notifier, from string) Service {
+func New(auth mainflux.AuthServiceClient, subs SubscriptionsRepository, idp mainflux.IDProvider, notifier Notifier, from string) Service {
 	return &notifierService{
 		auth:     auth,
 		subs:     subs,
@@ -61,7 +60,7 @@ func New(auth policies.AuthServiceClient, subs SubscriptionsRepository, idp main
 }
 
 func (ns *notifierService) CreateSubscription(ctx context.Context, token string, sub Subscription) (string, error) {
-	res, err := ns.auth.Identify(ctx, &policies.IdentifyReq{Token: token})
+	res, err := ns.auth.Identify(ctx, &mainflux.IdentityReq{Token: token})
 	if err != nil {
 		return "", err
 	}
@@ -75,7 +74,7 @@ func (ns *notifierService) CreateSubscription(ctx context.Context, token string,
 }
 
 func (ns *notifierService) ViewSubscription(ctx context.Context, token, id string) (Subscription, error) {
-	if _, err := ns.auth.Identify(ctx, &policies.IdentifyReq{Token: token}); err != nil {
+	if _, err := ns.auth.Identify(ctx, &mainflux.IdentityReq{Token: token}); err != nil {
 		return Subscription{}, err
 	}
 
@@ -83,7 +82,7 @@ func (ns *notifierService) ViewSubscription(ctx context.Context, token, id strin
 }
 
 func (ns *notifierService) ListSubscriptions(ctx context.Context, token string, pm PageMetadata) (Page, error) {
-	if _, err := ns.auth.Identify(ctx, &policies.IdentifyReq{Token: token}); err != nil {
+	if _, err := ns.auth.Identify(ctx, &mainflux.IdentityReq{Token: token}); err != nil {
 		return Page{}, err
 	}
 
@@ -91,7 +90,7 @@ func (ns *notifierService) ListSubscriptions(ctx context.Context, token string, 
 }
 
 func (ns *notifierService) RemoveSubscription(ctx context.Context, token, id string) error {
-	if _, err := ns.auth.Identify(ctx, &policies.IdentifyReq{Token: token}); err != nil {
+	if _, err := ns.auth.Identify(ctx, &mainflux.IdentityReq{Token: token}); err != nil {
 		return err
 	}
 

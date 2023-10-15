@@ -31,7 +31,7 @@ type ThingsPage struct {
 
 // ChannelsPage contains list of channels in a page with proper metadata.
 type ChannelsPage struct {
-	Channels []Channel `json:"channels"`
+	Channels []Channel `json:"groups"`
 	pageRes
 }
 

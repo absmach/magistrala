@@ -727,3 +727,20 @@ func AvailableCurves() []elliptic.Curve {
 func CurveForAlgorithm(alg jwa.EllipticCurveAlgorithm) (elliptic.Curve, bool) {
 	return ecutil.CurveForAlgorithm(alg)
 }
+
+// Equal compares two keys and returns true if they are equal. The comparison
+// is solely done against the thumbprints of k1 and k2. It is possible for keys
+// that have, for example, different key IDs, key usage, etc, to be considered equal.
+func Equal(k1, k2 Key) bool {
+	h := crypto.SHA256
+	tp1, err := k1.Thumbprint(h)
+	if err != nil {
+		return false // can't report error
+	}
+	tp2, err := k2.Thumbprint(h)
+	if err != nil {
+		return false // can't report error
+	}
+
+	return bytes.Equal(tp1, tp2)
+}

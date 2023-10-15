@@ -12,9 +12,8 @@ import (
 	"testing"
 
 	"github.com/gorilla/websocket"
-	httpmock "github.com/mainflux/mainflux/http/mocks"
+	authmocks "github.com/mainflux/mainflux/auth/mocks"
 	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/things/policies"
 	"github.com/mainflux/mainflux/ws"
 	"github.com/mainflux/mainflux/ws/api"
 	"github.com/mainflux/mainflux/ws/mocks"
@@ -31,9 +30,10 @@ const (
 
 var msg = []byte(`[{"n":"current","t":-1,"v":1.6}]`)
 
-func newService(cc policies.AuthServiceClient) (ws.Service, mocks.MockPubSub) {
+func newService() (ws.Service, mocks.MockPubSub) {
+	auth := new(authmocks.Service)
 	pubsub := mocks.NewPubSub()
-	return ws.New(cc, pubsub), pubsub
+	return ws.New(auth, pubsub), pubsub
 }
 
 func newHTTPServer(svc ws.Service) *httptest.Server {
@@ -77,8 +77,7 @@ func handshake(tsURL, chanID, subtopic, thingKey string, addHeader bool) (*webso
 }
 
 func TestHandshake(t *testing.T) {
-	thingsClient := httpmock.NewThingsClient(map[string]string{thingKey: chanID})
-	svc, _ := newService(thingsClient)
+	svc, _ := newService()
 	ts := newHTTPServer(svc)
 	defer ts.Close()
 

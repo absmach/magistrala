@@ -16,7 +16,7 @@ import (
 	"github.com/mainflux/mainflux/http/api"
 	"github.com/mainflux/mainflux/http/tracing"
 	"github.com/mainflux/mainflux/internal"
-	thingsclient "github.com/mainflux/mainflux/internal/clients/grpc/things"
+	authapi "github.com/mainflux/mainflux/internal/clients/grpc/auth"
 	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
@@ -26,7 +26,6 @@ import (
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
 	brokerstracing "github.com/mainflux/mainflux/pkg/messaging/brokers/tracing"
 	"github.com/mainflux/mainflux/pkg/uuid"
-	"github.com/mainflux/mainflux/things/policies"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
@@ -77,15 +76,15 @@ func main() {
 		return
 	}
 
-	tc, tcHandler, err := thingsclient.Setup()
+	auth, aHandler, err := authapi.SetupAuthz("authz")
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-	defer tcHandler.Close()
+	defer aHandler.Close()
 
-	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
+	logger.Info("Successfully connected to things grpc server " + aHandler.Secure())
 
 	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
 	if err != nil {
@@ -109,7 +108,7 @@ func main() {
 	defer pub.Close()
 	pub = brokerstracing.NewPublisher(httpServerConfig, tracer, pub)
 
-	svc := newService(pub, tc, logger, tracer)
+	svc := newService(pub, auth, logger, tracer)
 
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, cfg.InstanceID), logger)
 
@@ -131,7 +130,7 @@ func main() {
 	}
 }
 
-func newService(pub messaging.Publisher, tc policies.AuthServiceClient, logger mflog.Logger, tracer trace.Tracer) adapter.Service {
+func newService(pub messaging.Publisher, tc mainflux.AuthzServiceClient, logger mflog.Logger, tracer trace.Tracer) adapter.Service {
 	svc := adapter.New(pub, tc)
 	svc = tracing.New(tracer, svc)
 	svc = api.LoggingMiddleware(svc, logger)

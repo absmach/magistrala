@@ -60,7 +60,7 @@ func getGlobalFetcher() httprc.Fetcher {
 }
 
 // SetGlobalFetcher allows users to specify a custom global fetcher,
-// which is used by the `Fetch` function. Assigning `nil` forces the
+// which is used by the `Fetch` function. Assigning `nil` forces
 // the default fetcher to be (re)created when the next call to
 // `jwk.Fetch` occurs
 //

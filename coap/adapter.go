@@ -11,9 +11,9 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"
-	"github.com/mainflux/mainflux/things/policies"
 )
 
 const chansPrefix = "channels"
@@ -39,13 +39,13 @@ var _ Service = (*adapterService)(nil)
 
 // Observers is a map of maps,.
 type adapterService struct {
-	auth    policies.AuthServiceClient
+	auth    mainflux.AuthzServiceClient
 	pubsub  messaging.PubSub
 	obsLock sync.Mutex
 }
 
 // New instantiates the CoAP adapter implementation.
-func New(auth policies.AuthServiceClient, pubsub messaging.PubSub) Service {
+func New(auth mainflux.AuthzServiceClient, pubsub messaging.PubSub) Service {
 	as := &adapterService{
 		auth:    auth,
 		pubsub:  pubsub,
@@ -56,11 +56,13 @@ func New(auth policies.AuthServiceClient, pubsub messaging.PubSub) Service {
 }
 
 func (svc *adapterService) Publish(ctx context.Context, key string, msg *messaging.Message) error {
-	ar := &policies.AuthorizeReq{
-		Subject:    key,
-		Object:     msg.Channel,
-		Action:     policies.WriteAction,
-		EntityType: policies.ThingEntityType,
+	ar := &mainflux.AuthorizeReq{
+		Namespace:   "",
+		SubjectType: "thing",
+		Permission:  "publish",
+		Subject:     key,
+		Object:      msg.Channel,
+		ObjectType:  "group",
 	}
 	res, err := svc.auth.Authorize(ctx, ar)
 	if err != nil {
@@ -69,17 +71,19 @@ func (svc *adapterService) Publish(ctx context.Context, key string, msg *messagi
 	if !res.GetAuthorized() {
 		return errors.ErrAuthorization
 	}
-	msg.Publisher = res.GetThingID()
+	msg.Publisher = res.GetId()
 
 	return svc.pubsub.Publish(ctx, msg.Channel, msg)
 }
 
 func (svc *adapterService) Subscribe(ctx context.Context, key, chanID, subtopic string, c Client) error {
-	ar := &policies.AuthorizeReq{
-		Subject:    key,
-		Object:     chanID,
-		Action:     policies.ReadAction,
-		EntityType: policies.ThingEntityType,
+	ar := &mainflux.AuthorizeReq{
+		Namespace:   "",
+		SubjectType: "thing",
+		Permission:  "subscribe",
+		Subject:     key,
+		Object:      chanID,
+		ObjectType:  "group",
 	}
 	res, err := svc.auth.Authorize(ctx, ar)
 	if err != nil {
@@ -96,11 +100,13 @@ func (svc *adapterService) Subscribe(ctx context.Context, key, chanID, subtopic 
 }
 
 func (svc *adapterService) Unsubscribe(ctx context.Context, key, chanID, subtopic, token string) error {
-	ar := &policies.AuthorizeReq{
-		Subject:    key,
-		Object:     chanID,
-		Action:     policies.ReadAction,
-		EntityType: policies.ThingEntityType,
+	ar := &mainflux.AuthorizeReq{
+		Namespace:   "",
+		SubjectType: "thing",
+		Permission:  "subscribe",
+		Subject:     key,
+		Object:      chanID,
+		ObjectType:  "group",
 	}
 	res, err := svc.auth.Authorize(ctx, ar)
 	if err != nil {

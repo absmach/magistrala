@@ -37,11 +37,11 @@ type UserPasswordReq struct {
 	Password    string `json:"password,omitempty"`
 }
 
-// ConnectionIDs contains ID lists of things and channels to be connected.
-type ConnectionIDs struct {
-	ThingIDs   []string `json:"subjects"`
-	ChannelIDs []string `json:"objects"`
-	Actions    []string `json:"actions,omitempty"`
+// Connection contains thing and channel ID that are connected.
+type Connection struct {
+	ThingID    string `json:"thing_id,omitempty"`
+	ChannelID  string `json:"channel_id,omitempty"`
+	Permission string `json:"permission,omitempty"`
 }
 
 type tokenReq struct {

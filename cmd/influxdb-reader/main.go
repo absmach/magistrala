@@ -15,7 +15,6 @@ import (
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/internal"
 	authclient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
-	thingsclient "github.com/mainflux/mainflux/internal/clients/grpc/things"
 	influxdbclient "github.com/mainflux/mainflux/internal/clients/influxdb"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
@@ -66,16 +65,6 @@ func main() {
 		}
 	}
 
-	tc, tcHandler, err := thingsclient.Setup()
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	defer tcHandler.Close()
-
-	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
-
 	auth, authHandler, err := authclient.Setup(svcName)
 	if err != nil {
 		logger.Error(err.Error())
@@ -115,7 +104,7 @@ func main() {
 		exitCode = 1
 		return
 	}
-	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(repo, tc, auth, svcName, cfg.InstanceID), logger)
+	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(repo, auth, svcName, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, mainflux.Version, logger, cancel)

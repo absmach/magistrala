@@ -13,7 +13,7 @@ import (
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/internal"
-	thingsclient "github.com/mainflux/mainflux/internal/clients/grpc/things"
+	authapi "github.com/mainflux/mainflux/internal/clients/grpc/auth"
 	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
@@ -23,7 +23,6 @@ import (
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
 	brokerstracing "github.com/mainflux/mainflux/pkg/messaging/brokers/tracing"
 	"github.com/mainflux/mainflux/pkg/uuid"
-	"github.com/mainflux/mainflux/things/policies"
 	adapter "github.com/mainflux/mainflux/ws"
 	"github.com/mainflux/mainflux/ws/api"
 	"github.com/mainflux/mainflux/ws/tracing"
@@ -77,15 +76,15 @@ func main() {
 		return
 	}
 
-	tc, tcHandler, err := thingsclient.Setup()
+	auth, aHandler, err := authapi.SetupAuthz("authz")
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-	defer internal.Close(logger, tcHandler)
+	defer aHandler.Close()
 
-	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
+	logger.Info("Successfully connected to things grpc server " + aHandler.Secure())
 
 	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
 	if err != nil {
@@ -109,7 +108,7 @@ func main() {
 	defer nps.Close()
 	nps = brokerstracing.NewPubSub(httpServerConfig, tracer, nps)
 
-	svc := newService(tc, nps, logger, tracer)
+	svc := newService(auth, nps, logger, tracer)
 
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(ctx, svc, logger, cfg.InstanceID), logger)
 
@@ -131,7 +130,7 @@ func main() {
 	}
 }
 
-func newService(tc policies.AuthServiceClient, nps messaging.PubSub, logger mflog.Logger, tracer trace.Tracer) adapter.Service {
+func newService(tc mainflux.AuthzServiceClient, nps messaging.PubSub, logger mflog.Logger, tracer trace.Tracer) adapter.Service {
 	svc := adapter.New(tc, nps)
 	svc = tracing.New(tracer, svc)
 	svc = api.LoggingMiddleware(svc, logger)

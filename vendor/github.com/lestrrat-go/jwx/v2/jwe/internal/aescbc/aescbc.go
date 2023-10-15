@@ -140,17 +140,20 @@ func (c Hmac) Overhead() int {
 }
 
 func (c Hmac) ComputeAuthTag(aad, nonce, ciphertext []byte) ([]byte, error) {
-	buf := make([]byte, len(aad)+len(nonce)+len(ciphertext)+8)
-	n := 0
-	n += copy(buf, aad)
-	n += copy(buf[n:], nonce)
-	n += copy(buf[n:], ciphertext)
-	binary.BigEndian.PutUint64(buf[n:], uint64(len(aad)*8))
+	var buf [8]byte
+	binary.BigEndian.PutUint64(buf[:], uint64(len(aad)*8))
 
 	h := hmac.New(c.hash, c.integrityKey)
-	if _, err := h.Write(buf); err != nil {
-		return nil, fmt.Errorf(`failed to write ComputeAuthTag using Hmac: %w`, err)
-	}
+
+	// compute the tag
+	// no need to check errors because Write never returns an error: https://pkg.go.dev/hash#Hash
+	//
+	// > Write (via the embedded io.Writer interface) adds more data to the running hash.
+	// > It never returns an error.
+	h.Write(aad)
+	h.Write(nonce)
+	h.Write(ciphertext)
+	h.Write(buf[:])
 	s := h.Sum(nil)
 	return s[:c.tagsize], nil
 }

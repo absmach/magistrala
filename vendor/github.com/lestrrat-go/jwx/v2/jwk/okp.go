@@ -81,8 +81,14 @@ func (k *okpPublicKey) Raw(v interface{}) error {
 }
 
 func buildOKPPrivateKey(alg jwa.EllipticCurveAlgorithm, xbuf []byte, dbuf []byte) (interface{}, error) {
+	if len(dbuf) == 0 {
+		return nil, fmt.Errorf(`cannot use empty seed`)
+	}
 	switch alg {
 	case jwa.Ed25519:
+		if len(dbuf) != ed25519.SeedSize {
+			return nil, fmt.Errorf(`wrong private key size`)
+		}
 		ret := ed25519.NewKeyFromSeed(dbuf)
 		//nolint:forcetypeassert
 		if !bytes.Equal(xbuf, ret.Public().(ed25519.PublicKey)) {

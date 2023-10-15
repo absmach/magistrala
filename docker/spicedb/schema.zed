@@ -1,0 +1,34 @@
+definition user {
+	relation owner: user
+}
+
+definition thing {
+	relation owner: user
+	relation group: group
+	permission delete = owner + group->admin
+	permission edit = owner + group->edit
+	permission view = edit + group->view
+	permission share = edit
+	permission publish = group
+	permission subscribe = group
+}
+
+definition role {
+	relation admin: user
+	relation editor: user
+	relation viewer: user
+}
+
+definition group {
+	relation owner: user
+	relation admin: user
+	relation editor: user
+	relation viewer: user
+	relation parent_group: group
+	relation role_group: role
+	permission administrator = owner + admin + parent_group->admin + role_group->admin
+	permission delete = administrator
+	permission edit = administrator + editor + parent_group->editor + role_group->editor
+	permission view = viewer + edit + parent_group->view + role_group->viewer + role_group->editor
+	permission share = edit
+}

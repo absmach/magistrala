@@ -51,6 +51,9 @@ var (
 	// ErrInvalidDirection indicates an invalid list direction.
 	ErrInvalidDirection = errors.New("invalid list direction provided")
 
+	// ErrInvalidMemberKind indicates an invalid member kind.
+	ErrInvalidMemberKind = errors.New("invalid member kind")
+
 	// ErrEmptyList indicates that entity data is empty.
 	ErrEmptyList = errors.New("empty list provided")
 
@@ -98,6 +101,12 @@ var (
 
 	// ErrMissingMemberType indicates missing group member type.
 	ErrMissingMemberType = errors.New("missing group member type")
+
+	// ErrMissingMemberKind indicates missing group member kind.
+	ErrMissingMemberKind = errors.New("missing group member kind")
+
+	// ErrMissingRelation indicates missing relation.
+	ErrMissingRelation = errors.New("missing relation")
 
 	// ErrInvalidAPIKey indicates an invalid API key type.
 	ErrInvalidAPIKey = errors.New("invalid api key type")

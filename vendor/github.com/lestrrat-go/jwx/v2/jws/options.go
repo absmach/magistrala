@@ -64,7 +64,7 @@ func (w *withKey) Protected(v Headers) Headers {
 // You will have to use a separate, more explicit option to allow the use of "none"
 // algorithm.
 //
-// The algorithm specified in the `alg` parameter must be able to support
+// The algorithm specified in the `alg` parameter MUST be able to support
 // the type of key you provided, otherwise an error is returned.
 //
 // Any of the followin is accepted for the `key` parameter:
@@ -117,11 +117,23 @@ func WithKey(alg jwa.KeyAlgorithm, key interface{}, options ...WithKeySuboption)
 
 // WithKeySet specifies a JWKS (jwk.Set) to use for verification.
 //
-// By default both `alg` and `kid` fields in the JWS _and_ the
-// key must match for a key in the JWKS to be considered to be used.
+// Because a JWKS can contain multiple keys and this library cannot tell
+// which one of the keys should be used for verification, we by default
+// require that both `alg` and `kid` fields in the JWS _and_ the
+// key match before a key is considered to be used.
 //
-// The behavior can be tweaked by using the `jws.WithKeySetSuboption`
-// suboption types.
+// There are ways to override this behavior, but they must be explicitly
+// specified by the caller.
+//
+// To work with keys/JWS messages not having a `kid` field, you may specify
+// the suboption `WithKeySetRequired` via `jws.WithKeySetSuboption(jws.WithKeySetRequireKid(false))`.
+// This will allow the library to proceed without having to match the `kid` field.
+//
+// However, it will still check if the `alg` fields in the JWS message and the key(s)
+// match. If you must work with JWS messages that do not have an `alg` field,
+// you will need to use `jws.WithKeySetSuboption(jws.WithInferAlgorithm(true))`.
+//
+// See the documentation for `WithInferAlgorithm()` for more details.
 func WithKeySet(set jwk.Set, options ...WithKeySetSuboption) VerifyOption {
 	requireKid := true
 	var useDefault, inferAlgorithm, multipleKeysPerKeyID bool

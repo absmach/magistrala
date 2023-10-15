@@ -16,7 +16,7 @@ import (
 	"github.com/mainflux/mainflux/coap/api"
 	"github.com/mainflux/mainflux/coap/tracing"
 	"github.com/mainflux/mainflux/internal"
-	thingsclient "github.com/mainflux/mainflux/internal/clients/grpc/things"
+	authapi "github.com/mainflux/mainflux/internal/clients/grpc/auth"
 	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
 	"github.com/mainflux/mainflux/internal/env"
 	"github.com/mainflux/mainflux/internal/server"
@@ -42,7 +42,7 @@ type config struct {
 	BrokerURL     string `env:"MF_BROKER_URL"               envDefault:"nats://localhost:4222"`
 	JaegerURL     string `env:"MF_JAEGER_URL"               envDefault:"http://jaeger:14268/api/traces"`
 	SendTelemetry bool   `env:"MF_SEND_TELEMETRY"           envDefault:"true"`
-	InstanceID    string `env:"MF_COAP_ADAPTER_INSTANCE_ID"   envDefault:""`
+	InstanceID    string `env:"MF_COAP_ADAPTER_INSTANCE_ID" envDefault:""`
 }
 
 func main() {
@@ -84,15 +84,15 @@ func main() {
 		return
 	}
 
-	tc, tcHandler, err := thingsclient.Setup()
+	auth, aHandler, err := authapi.SetupAuthz(svcName)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-	defer tcHandler.Close()
+	defer aHandler.Close()
 
-	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
+	logger.Info("Successfully connected to things grpc server " + aHandler.Secure())
 
 	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
 	if err != nil {
@@ -116,7 +116,7 @@ func main() {
 	defer nps.Close()
 	nps = brokerstracing.NewPubSub(coapServerConfig, tracer, nps)
 
-	svc := coap.New(tc, nps)
+	svc := coap.New(auth, nps)
 
 	svc = tracing.New(tracer, svc)
 

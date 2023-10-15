@@ -733,25 +733,25 @@ type SDK interface {
 	// Connect bulk connects things to channels specified by id.
 	//
 	// example:
-	//  conns := sdk.ConnectionIDs{
+	//  conns := sdk.Connection{
 	//    ChannelIDs: []string{"thingID:1", "thingID:2"},
 	//    ThingIDs:   []string{"channelID:1", "channelID:2"},
 	//    Actions:    []string{"m_read"},
 	//  }
 	//  err := sdk.Connect(conns, "token")
 	//  fmt.Println(err)
-	Connect(conns ConnectionIDs, token string) errors.SDKError
+	Connect(conns Connection, token string) errors.SDKError
 
 	// Disconnect
 	//
 	// example:
-	//  conns := sdk.ConnectionIDs{
+	//  conns := sdk.Connection{
 	//    ChannelIDs: []string{"thingID:1", "thingID:2"},
 	//    ThingIDs:   []string{"channelID:1", "channelID:2"},
 	//  }
 	//  err := sdk.Disconnect(conns, "token")
 	//  fmt.Println(err)
-	Disconnect(connIDs ConnectionIDs, token string) errors.SDKError
+	Disconnect(connIDs Connection, token string) errors.SDKError
 
 	// ConnectThing connects thing to specified channel by id.
 	//

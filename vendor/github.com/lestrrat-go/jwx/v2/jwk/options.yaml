@@ -4,7 +4,7 @@ interfaces:
   - name: CacheOption
     comment: |
       CacheOption is a type of Option that can be passed to the
-      `jwk.Cache` object.
+      the `jwk.NewCache()` function.
   - name: AssignKeyIDOption
   - name: FetchOption
     methods:
@@ -13,8 +13,8 @@ interfaces:
       - registerOption
     comment: |
       FetchOption is a type of Option that can be passed to `jwk.Fetch()`
-      FetchOption also implements the `CacheOption`, and thus can
-      safely be passed to `(*jwk.Cache).Configure()`
+      FetchOption also implements the `RegisterOption`, and thus can
+      safely be passed to `(*jwk.Cache).Register()`
   - name: ParseOption
     methods:
       - fetchOption

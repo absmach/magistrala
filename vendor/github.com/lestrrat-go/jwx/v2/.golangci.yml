@@ -11,6 +11,8 @@ linters:
   enable-all: true
   disable:
     - cyclop
+    - deadcode # deprecated
+    - depguard
     - dupl
     - exhaustive
     - exhaustivestruct
@@ -44,9 +46,11 @@ linters:
     - nosnakecase
     - paralleltest
     - scopelint # deprecated
+    - structcheck # deprecated
     - tagliatelle
     - testpackage
     - thelper    # Tests are fine
+    - varcheck # deprecated
     - varnamelen # Short names are ok
     - wrapcheck
     - wsl

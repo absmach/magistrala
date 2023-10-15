@@ -7,9 +7,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"
-	"github.com/mainflux/mainflux/things/policies"
 )
 
 const chansPrefix = "channels"
@@ -62,12 +62,12 @@ type Service interface {
 var _ Service = (*adapterService)(nil)
 
 type adapterService struct {
-	auth   policies.AuthServiceClient
+	auth   mainflux.AuthzServiceClient
 	pubsub messaging.PubSub
 }
 
 // New instantiates the WS adapter implementation.
-func New(auth policies.AuthServiceClient, pubsub messaging.PubSub) Service {
+func New(auth mainflux.AuthzServiceClient, pubsub messaging.PubSub) Service {
 	return &adapterService{
 		auth:   auth,
 		pubsub: pubsub,
@@ -75,7 +75,7 @@ func New(auth policies.AuthServiceClient, pubsub messaging.PubSub) Service {
 }
 
 func (svc *adapterService) Publish(ctx context.Context, thingKey string, msg *messaging.Message) error {
-	thid, err := svc.authorize(ctx, thingKey, msg.GetChannel(), policies.WriteAction)
+	thid, err := svc.authorize(ctx, thingKey, msg.GetChannel(), "publish")
 	if err != nil {
 		return ErrUnauthorizedAccess
 	}
@@ -98,20 +98,20 @@ func (svc *adapterService) Subscribe(ctx context.Context, thingKey, chanID, subt
 		return ErrUnauthorizedAccess
 	}
 
-	thid, err := svc.authorize(ctx, thingKey, chanID, policies.ReadAction)
+	thingID, err := svc.authorize(ctx, thingKey, chanID, "subscribe")
 	if err != nil {
 		return ErrUnauthorizedAccess
 	}
 
-	c.id = thid
+	c.id = thingID
 
 	subject := fmt.Sprintf("%s.%s", chansPrefix, chanID)
 	if subtopic != "" {
 		subject = fmt.Sprintf("%s.%s", subject, subtopic)
 	}
 
-	if err := svc.pubsub.Subscribe(ctx, thid, subject, c); err != nil {
-		return ErrFailedSubscription
+	if err := svc.pubsub.Subscribe(ctx, thingID, subject, c); err != nil {
+		return errors.Wrap(ErrFailedSubscription, err)
 	}
 
 	return nil
@@ -122,7 +122,7 @@ func (svc *adapterService) Unsubscribe(ctx context.Context, thingKey, chanID, su
 		return ErrUnauthorizedAccess
 	}
 
-	thid, err := svc.authorize(ctx, thingKey, chanID, policies.ReadAction)
+	thid, err := svc.authorize(ctx, thingKey, chanID, "subscribe")
 	if err != nil {
 		return ErrUnauthorizedAccess
 	}
@@ -138,11 +138,13 @@ func (svc *adapterService) Unsubscribe(ctx context.Context, thingKey, chanID, su
 // authorize checks if the thingKey is authorized to access the channel
 // and returns the thingID if it is.
 func (svc *adapterService) authorize(ctx context.Context, thingKey, chanID, action string) (string, error) {
-	ar := &policies.AuthorizeReq{
-		Subject:    thingKey,
-		Object:     chanID,
-		Action:     action,
-		EntityType: policies.ThingEntityType,
+	ar := &mainflux.AuthorizeReq{
+		Namespace:   "",
+		SubjectType: "thing",
+		Permission:  action,
+		Subject:     thingKey,
+		Object:      chanID,
+		ObjectType:  "group",
 	}
 	res, err := svc.auth.Authorize(ctx, ar)
 	if err != nil {
@@ -152,5 +154,5 @@ func (svc *adapterService) authorize(ctx context.Context, thingKey, chanID, acti
 		return "", errors.Wrap(errors.ErrAuthorization, err)
 	}
 
-	return res.GetThingID(), nil
+	return res.GetId(), nil
 }

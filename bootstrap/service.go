@@ -10,9 +10,9 @@ import (
 	"encoding/hex"
 	"time"
 
+	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
-	"github.com/mainflux/mainflux/users/policies"
 )
 
 var (
@@ -103,14 +103,14 @@ type ConfigReader interface {
 }
 
 type bootstrapService struct {
-	auth    policies.AuthServiceClient
+	auth    mainflux.AuthServiceClient
 	configs ConfigRepository
 	sdk     mfsdk.SDK
 	encKey  []byte
 }
 
 // New returns new Bootstrap service.
-func New(auth policies.AuthServiceClient, configs ConfigRepository, sdk mfsdk.SDK, encKey []byte) Service {
+func New(auth mainflux.AuthServiceClient, configs ConfigRepository, sdk mfsdk.SDK, encKey []byte) Service {
 	return &bootstrapService{
 		configs: configs,
 		sdk:     sdk,
@@ -240,9 +240,9 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, token, id stri
 	}
 
 	for _, c := range connect {
-		conIDs := mfsdk.ConnectionIDs{
-			ChannelIDs: []string{c},
-			ThingIDs:   []string{id},
+		conIDs := mfsdk.Connection{
+			ChannelID: c,
+			ThingID:   id,
 		}
 		if err := bs.sdk.Connect(conIDs, token); err != nil {
 			return ErrThings
@@ -309,9 +309,9 @@ func (bs bootstrapService) ChangeState(ctx context.Context, token, id string, st
 	switch state {
 	case Active:
 		for _, c := range cfg.Channels {
-			conIDs := mfsdk.ConnectionIDs{
-				ChannelIDs: []string{c.ID},
-				ThingIDs:   []string{cfg.ThingID},
+			conIDs := mfsdk.Connection{
+				ChannelID: c.ID,
+				ThingID:   cfg.ThingID,
 			}
 			if err := bs.sdk.Connect(conIDs, token); err != nil {
 				return ErrThings
@@ -365,7 +365,7 @@ func (bs bootstrapService) identify(ctx context.Context, token string) (string, 
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 
-	res, err := bs.auth.Identify(ctx, &policies.IdentifyReq{Token: token})
+	res, err := bs.auth.Identify(ctx, &mainflux.IdentityReq{Token: token})
 	if err != nil {
 		return "", errors.ErrAuthentication
 	}

@@ -17,6 +17,9 @@ import (
 )
 
 const (
+	MemberKindKey    = "member_kind"
+	PermissionKey    = "permission"
+	RelationKey      = "relation"
 	StatusKey        = "status"
 	OffsetKey        = "offset"
 	LimitKey         = "limit"
@@ -38,6 +41,7 @@ const (
 	VisibilityKey    = "visibility"
 	SharedByKey      = "shared_by"
 	TokenKey         = "token"
+	DefPermission    = "view"
 	DefTotal         = uint64(100)
 	DefOffset        = 0
 	DefLimit         = 10
@@ -101,6 +105,7 @@ func EncodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrMissingID),
 		errors.Contains(err, apiutil.ErrEmptyList),
 		errors.Contains(err, apiutil.ErrMissingMemberType),
+		errors.Contains(err, apiutil.ErrMissingMemberKind),
 		errors.Contains(err, apiutil.ErrNameSize):
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, errors.ErrAuthentication):

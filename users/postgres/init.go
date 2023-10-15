@@ -30,39 +30,11 @@ func Migration() *migrate.MemoryMigrationSource {
 						updated_at  TIMESTAMP,
 						updated_by  VARCHAR(254),
 						status      SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0),
-						role        SMALLINT DEFAULT 0 CHECK (status >= 0)						
-					)`,
-					`CREATE TABLE IF NOT EXISTS groups (
-						id          VARCHAR(36) PRIMARY KEY,
-						parent_id   VARCHAR(36),
-						owner_id    VARCHAR(36) NOT NULL,
-						name        VARCHAR(254) NOT NULL,
-						description VARCHAR(1024),
-						metadata    JSONB,
-						created_at  TIMESTAMP,
-						updated_at  TIMESTAMP,
-						updated_by  VARCHAR(254),
-						status      SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0),
-						UNIQUE (owner_id, name),
-						FOREIGN KEY (parent_id) REFERENCES groups (id) ON DELETE CASCADE
-					)`,
-					`CREATE TABLE IF NOT EXISTS policies (
-						owner_id    VARCHAR(36) NOT NULL,
-						subject     VARCHAR(36) NOT NULL,
-						object      VARCHAR(36) NOT NULL,
-						actions     TEXT[] NOT NULL,
-						created_at  TIMESTAMP,
-						updated_at  TIMESTAMP,
-						updated_by  VARCHAR(254),
-						FOREIGN KEY (subject) REFERENCES clients (id) ON DELETE CASCADE ON UPDATE CASCADE,
-						FOREIGN KEY (object) REFERENCES groups (id) ON DELETE CASCADE ON UPDATE CASCADE,
-						PRIMARY KEY (subject, object)
+						role        SMALLINT DEFAULT 0 CHECK (status >= 0)
 					)`,
 				},
 				Down: []string{
 					`DROP TABLE IF EXISTS clients`,
-					`DROP TABLE IF EXISTS groups`,
-					`DROP TABLE IF EXISTS policies`,
 				},
 			},
 		},

@@ -33,7 +33,7 @@ func MakeHandler(svc auth.Service, mux *bone.Mux, logger logger.Logger) *bone.Mu
 		opts...,
 	))
 
-	mux.Put("/policies", kithttp.NewServer(
+	mux.Post("/policies/delete", kithttp.NewServer(
 		(deletePoliciesEndpoint(svc)),
 		decodePoliciesRequest,
 		encodeResponse,
@@ -43,7 +43,7 @@ func MakeHandler(svc auth.Service, mux *bone.Mux, logger logger.Logger) *bone.Mu
 	return mux
 }
 
-func decodePoliciesRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+func decodePoliciesRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errors.ErrUnsupportedContentType
 	}

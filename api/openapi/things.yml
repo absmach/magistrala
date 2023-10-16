@@ -437,30 +437,6 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /channels/bulk:
-    post:
-      summary: Bulk provisions new channels
-      description: |
-        Adds new channels to the list of channels owned by user identified using
-        the provided access token.
-      tags:
-        - Channels
-      requestBody:
-        $ref: "#/components/requestBodies/ChannelsCreateReq"
-      responses:
-        "201":
-          description: Channels registered.
-        "400":
-          description: Failed due to malformed JSON.
-        "401":
-          description: Missing or invalid access token provided.
-        "409":
-          description: Entity already exist.
-        "415":
-          description: Missing or invalid content type.
-        "500":
-          $ref: "#/components/responses/ServiceError"
-
   /channels/{chanID}:
     get:
       summary: Retrieves channel info.
@@ -854,48 +830,51 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /channels/{chanID}/access:
+  /channels/{chanID}/things/{thingID}/connect:
     post:
-      summary: Checks if thing has access to a channel.
+      summary: Connects a thing to a channel
       description: |
-        Checks if a thing with a specified key has an access to a specified
-        channel and if it has, it returns that things id.
+        Connects a specific thing to a channel that is identifier by the channel ID.
       tags:
         - Policies
       parameters:
         - $ref: "#/components/parameters/chanID"
-      requestBody:
-        $ref: "#/components/requestBodies/AccessByIDReq"
+        - $ref: "#/components/parameters/ThingID"
       responses:
         "200":
-          $ref: "#/components/responses/AccessGrantedRes"
+          description: Thing connected.
+        "400":
+          description: Failed due to malformed thing's ID.
         "401":
-          description: |
-            Thing and channel are not connected, or thing with specified key doesn't
-            exist.
-        "415":
-          description: Missing or invalid content type.
+          description: Missing or invalid access token provided.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /identify:
+  /channels/{chanID}/things/{thingID}/disconnect:
     post:
-      summary: Returns thing ID of the give thing secret.
+      summary: Disconnects a thing to a channel
       description: |
-        Returns thing ID of the given thing secret, hence identifying the thing.
+        Disconnects a specific thing to a channel that is identifier by the channel ID.
       tags:
         - Policies
-      requestBody:
-        $ref: "#/components/requestBodies/IdentityReq"
+      parameters:
+        - $ref: "#/components/parameters/chanID"
+        - $ref: "#/components/parameters/ThingID"
       responses:
         "200":
-          $ref: "#/components/responses/IdentityRes"
+          description: Thing connected.
+        "400":
+          description: Failed due to malformed thing's ID.
         "401":
-          description: |
-            Thing and channel are not connected, or thing with specified key doesn't
-            exist.
-        "415":
-          description: Missing or invalid content type.
+          description: Missing or invalid access token provided.
+        "404":
+          description: A non-existent entity request.
+        "422":
+          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
@@ -1431,17 +1410,6 @@ components:
         - metadata
         - description
 
-    Identity:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Thing unique identifier. This can be either
-            provided by the user or left blank. If the user provides a UUID,
-            it would be validated. If there is not one provided then
-            the service will generate one in UUID format.
-
     ConnectionReqSchema:
       type: object
       properties:
@@ -1797,16 +1765,6 @@ components:
             items:
               $ref: "#/components/schemas/ThingReqObj"
 
-    ChannelsCreateReq:
-      description: JSON-formatted document describing the new channels.
-      required: true
-      content:
-        application/json:
-          schema:
-            type: array
-            items:
-              $ref: "#/components/schemas/ChannelReqObj"
-
     ConnCreateReq:
       description: JSON-formatted document describing the new connection.
       required: true
@@ -1822,42 +1780,6 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/DisConnectionReqSchema"
-
-    IdentityReq:
-      description: JSON-formatted document that contains thing secret.
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              secret:
-                type: string
-                format: uuid
-                description: Thing Secret by which thing is uniquely identified.
-
-    AccessByIDReq:
-      description: JSON-formatted document that contains subject object and action.
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              subject:
-                type: string
-                format: uuid
-                description: Thing ID by which thing is uniquely identified.
-              action:
-                type: string
-                format: string
-                example: "publish"
-                description: Action you want to check access against.
-              entity_type:
-                type: string
-                format: string
-                example: group
-                description: Entity Type.
 
   responses:
     ThingCreateRes:
@@ -1930,21 +1852,6 @@ components:
 
     DisconnRes:
       description: Things disconnected.
-
-    AccessGrantedRes:
-      description: |
-        Thing has access to the specified channel and the thing ID is returned.
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Identity"
-
-    IdentityRes:
-      description: Thing ID returned.
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Identity"
 
     HealthRes:
       description: Service Health Check.

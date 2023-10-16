@@ -11,6 +11,23 @@ import (
 	"github.com/pion/dtls/v2/pkg/protocol/handshake"
 )
 
+// DTLS fixed size record layer header when Connection IDs are not in-use.
+
+// ---------------------------------
+// | Type   |   Version   |  Epoch |
+// ---------------------------------
+// | Epoch  |    Sequence Number   |
+// ---------------------------------
+// |   Sequence Number   |  Length |
+// ---------------------------------
+// | Length |      Fragment...     |
+// ---------------------------------
+
+// fixedHeaderLenIdx is the index at which the record layer content length is
+// specified in a fixed length header (i.e. one that does not include a
+// Connection ID).
+const fixedHeaderLenIdx = 11
+
 // RecordLayer which handles all data transport.
 // The record layer is assumed to sit directly on top of some
 // reliable transport such as TCP. The record layer can carry four types of content:
@@ -51,14 +68,11 @@ func (r *RecordLayer) Marshal() ([]byte, error) {
 
 // Unmarshal populates the RecordLayer from binary
 func (r *RecordLayer) Unmarshal(data []byte) error {
-	if len(data) < HeaderSize {
-		return errBufferTooSmall
-	}
 	if err := r.Header.Unmarshal(data); err != nil {
 		return err
 	}
 
-	switch protocol.ContentType(data[0]) {
+	switch r.Header.ContentType {
 	case protocol.ContentTypeChangeCipherSpec:
 		r.Content = &protocol.ChangeCipherSpec{}
 	case protocol.ContentTypeAlert:
@@ -71,7 +85,7 @@ func (r *RecordLayer) Unmarshal(data []byte) error {
 		return errInvalidContentType
 	}
 
-	return r.Content.Unmarshal(data[HeaderSize:])
+	return r.Content.Unmarshal(data[r.Header.Size()+len(r.Header.ConnectionID):])
 }
 
 // UnpackDatagram extracts all RecordLayer messages from a single datagram.
@@ -85,11 +99,40 @@ func UnpackDatagram(buf []byte) ([][]byte, error) {
 	out := [][]byte{}
 
 	for offset := 0; len(buf) != offset; {
-		if len(buf)-offset <= HeaderSize {
+		if len(buf)-offset <= FixedHeaderSize {
 			return nil, errInvalidPacketLength
 		}
 
-		pktLen := (HeaderSize + int(binary.BigEndian.Uint16(buf[offset+11:])))
+		pktLen := (FixedHeaderSize + int(binary.BigEndian.Uint16(buf[offset+11:])))
+		if offset+pktLen > len(buf) {
+			return nil, errInvalidPacketLength
+		}
+
+		out = append(out, buf[offset:offset+pktLen])
+		offset += pktLen
+	}
+
+	return out, nil
+}
+
+// ContentAwareUnpackDatagram is the same as UnpackDatagram but considers the
+// presence of a connection identifier if the record is of content type
+// tls12_cid.
+func ContentAwareUnpackDatagram(buf []byte, cidLength int) ([][]byte, error) {
+	out := [][]byte{}
+
+	for offset := 0; len(buf) != offset; {
+		headerSize := FixedHeaderSize
+		lenIdx := fixedHeaderLenIdx
+		if protocol.ContentType(buf[offset]) == protocol.ContentTypeConnectionID {
+			headerSize += cidLength
+			lenIdx += cidLength
+		}
+		if len(buf)-offset <= headerSize {
+			return nil, errInvalidPacketLength
+		}
+
+		pktLen := (headerSize + int(binary.BigEndian.Uint16(buf[offset+lenIdx:])))
 		if offset+pktLen > len(buf) {
 			return nil, errInvalidPacketLength
 		}

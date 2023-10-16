@@ -1,0 +1,4 @@
+ignore:
+  - "examples"
+  - "**/*_test.go"
+  - "v3"

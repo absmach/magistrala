@@ -22,6 +22,12 @@ func flight0Parse(_ context.Context, _ flightConn, state *State, cache *handshak
 		// No valid message received. Keep reading
 		return 0, nil, nil
 	}
+
+	// Connection Identifiers must be negotiated afresh on session resumption.
+	// https://datatracker.ietf.org/doc/html/rfc9146#name-the-connection_id-extension
+	state.localConnectionID = nil
+	state.remoteConnectionID = nil
+
 	state.handshakeRecvSequence = seq
 
 	var clientHello *handshake.MessageClientHello
@@ -69,7 +75,19 @@ func flight0Parse(_ context.Context, _ flightConn, state *State, cache *handshak
 			state.serverName = e.ServerName // remote server name
 		case *extension.ALPN:
 			state.peerSupportedProtocols = e.ProtocolNameList
+		case *extension.ConnectionID:
+			// Only set connection ID to be sent if server supports connection
+			// IDs.
+			if cfg.connectionIDGenerator != nil {
+				state.remoteConnectionID = e.CID
+			}
 		}
+	}
+
+	// If the client doesn't support connection IDs, the server should not
+	// expect one to be sent.
+	if state.remoteConnectionID == nil {
+		state.localConnectionID = nil
 	}
 
 	if cfg.extendedMasterSecret == RequireExtendedMasterSecret && !state.extendedMasterSecret {

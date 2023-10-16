@@ -15,6 +15,7 @@ import ( //nolint:gci
 	"github.com/pion/dtls/v2/pkg/crypto/prf"
 	"github.com/pion/dtls/v2/pkg/protocol"
 	"github.com/pion/dtls/v2/pkg/protocol/recordlayer"
+	"golang.org/x/crypto/cryptobyte"
 )
 
 // block ciphers using cipher block chaining.
@@ -64,18 +65,24 @@ func NewCBC(localKey, localWriteIV, localMac, remoteKey, remoteWriteIV, remoteMa
 
 // Encrypt encrypt a DTLS RecordLayer message
 func (c *CBC) Encrypt(pkt *recordlayer.RecordLayer, raw []byte) ([]byte, error) {
-	payload := raw[recordlayer.HeaderSize:]
-	raw = raw[:recordlayer.HeaderSize]
+	payload := raw[pkt.Header.Size():]
+	raw = raw[:pkt.Header.Size()]
 	blockSize := c.writeCBC.BlockSize()
 
 	// Generate + Append MAC
 	h := pkt.Header
 
-	MAC, err := c.hmac(h.Epoch, h.SequenceNumber, h.ContentType, h.Version, payload, c.writeMac, c.h)
+	var err error
+	var mac []byte
+	if h.ContentType == protocol.ContentTypeConnectionID {
+		mac, err = c.hmacCID(h.Epoch, h.SequenceNumber, h.Version, payload, c.writeMac, c.h, h.ConnectionID)
+	} else {
+		mac, err = c.hmac(h.Epoch, h.SequenceNumber, h.ContentType, h.Version, payload, c.writeMac, c.h)
+	}
 	if err != nil {
 		return nil, err
 	}
-	payload = append(payload, MAC...)
+	payload = append(payload, mac...)
 
 	// Generate + Append padding
 	padding := make([]byte, blockSize-len(payload)%blockSize)
@@ -96,26 +103,26 @@ func (c *CBC) Encrypt(pkt *recordlayer.RecordLayer, raw []byte) ([]byte, error) 
 	c.writeCBC.CryptBlocks(payload, payload)
 	payload = append(iv, payload...)
 
-	// Prepend unencrypte header with encrypted payload
+	// Prepend unencrypted header with encrypted payload
 	raw = append(raw, payload...)
 
 	// Update recordLayer size to include IV+MAC+Padding
-	binary.BigEndian.PutUint16(raw[recordlayer.HeaderSize-2:], uint16(len(raw)-recordlayer.HeaderSize))
+	binary.BigEndian.PutUint16(raw[pkt.Header.Size()-2:], uint16(len(raw)-pkt.Header.Size()))
 
 	return raw, nil
 }
 
 // Decrypt decrypts a DTLS RecordLayer message
-func (c *CBC) Decrypt(in []byte) ([]byte, error) {
-	body := in[recordlayer.HeaderSize:]
+func (c *CBC) Decrypt(h recordlayer.Header, in []byte) ([]byte, error) {
 	blockSize := c.readCBC.BlockSize()
 	mac := c.h()
 
-	var h recordlayer.Header
-	err := h.Unmarshal(in)
-	switch {
-	case err != nil:
+	if err := h.Unmarshal(in); err != nil {
 		return nil, err
+	}
+	body := in[h.Size():]
+
+	switch {
 	case h.ContentType == protocol.ContentTypeChangeCipherSpec:
 		// Nothing to encrypt with ChangeCipherSpec
 		return in, nil
@@ -145,14 +152,19 @@ func (c *CBC) Decrypt(in []byte) ([]byte, error) {
 	dataEnd := len(body) - macSize - paddingLen
 
 	expectedMAC := body[dataEnd : dataEnd+macSize]
-	actualMAC, err := c.hmac(h.Epoch, h.SequenceNumber, h.ContentType, h.Version, body[:dataEnd], c.readMac, c.h)
-
+	var err error
+	var actualMAC []byte
+	if h.ContentType == protocol.ContentTypeConnectionID {
+		actualMAC, err = c.hmacCID(h.Epoch, h.SequenceNumber, h.Version, body[:dataEnd], c.readMac, c.h, h.ConnectionID)
+	} else {
+		actualMAC, err = c.hmac(h.Epoch, h.SequenceNumber, h.ContentType, h.Version, body[:dataEnd], c.readMac, c.h)
+	}
 	// Compute Local MAC and compare
 	if err != nil || !hmac.Equal(actualMAC, expectedMAC) {
 		return nil, errInvalidMAC
 	}
 
-	return append(in[:recordlayer.HeaderSize], body[:dataEnd]...), nil
+	return append(in[:h.Size()], body[:dataEnd]...), nil
 }
 
 func (c *CBC) hmac(epoch uint16, sequenceNumber uint64, contentType protocol.ContentType, protocolVersion protocol.Version, payload []byte, key []byte, hf func() hash.Hash) ([]byte, error) {
@@ -169,7 +181,45 @@ func (c *CBC) hmac(epoch uint16, sequenceNumber uint64, contentType protocol.Con
 
 	if _, err := h.Write(msg); err != nil {
 		return nil, err
-	} else if _, err := h.Write(payload); err != nil {
+	}
+	if _, err := h.Write(payload); err != nil {
+		return nil, err
+	}
+
+	return h.Sum(nil), nil
+}
+
+// hmacCID calculates a MAC according to
+// https://datatracker.ietf.org/doc/html/rfc9146#section-5.1
+func (c *CBC) hmacCID(epoch uint16, sequenceNumber uint64, protocolVersion protocol.Version, payload []byte, key []byte, hf func() hash.Hash, cid []byte) ([]byte, error) {
+	// Must unmarshal inner plaintext in orde to perform MAC.
+	ip := &recordlayer.InnerPlaintext{}
+	if err := ip.Unmarshal(payload); err != nil {
+		return nil, err
+	}
+
+	h := hmac.New(hf, key)
+
+	var msg cryptobyte.Builder
+
+	msg.AddUint64(seqNumPlaceholder)
+	msg.AddUint8(uint8(protocol.ContentTypeConnectionID))
+	msg.AddUint8(uint8(len(cid)))
+	msg.AddUint8(uint8(protocol.ContentTypeConnectionID))
+	msg.AddUint8(protocolVersion.Major)
+	msg.AddUint8(protocolVersion.Minor)
+	msg.AddUint16(epoch)
+	util.AddUint48(&msg, sequenceNumber)
+	msg.AddBytes(cid)
+	msg.AddUint16(uint16(len(payload)))
+	msg.AddBytes(ip.Content)
+	msg.AddUint8(uint8(ip.RealType))
+	msg.AddBytes(make([]byte, ip.Zeros))
+
+	if _, err := h.Write(msg.BytesOrPanic()); err != nil {
+		return nil, err
+	}
+	if _, err := h.Write(payload); err != nil {
 		return nil, err
 	}
 

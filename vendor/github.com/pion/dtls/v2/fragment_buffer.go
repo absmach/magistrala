@@ -58,7 +58,7 @@ func (f *fragmentBuffer) push(buf []byte) (bool, error) {
 		return false, nil
 	}
 
-	for buf = buf[recordlayer.HeaderSize:]; len(buf) != 0; frag = new(fragment) {
+	for buf = buf[recordlayer.FixedHeaderSize:]; len(buf) != 0; frag = new(fragment) {
 		if err := frag.handshakeHeader.Unmarshal(buf); err != nil {
 			return false, err
 		}

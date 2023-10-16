@@ -104,11 +104,11 @@ func (c *TLSEcdheEcdsaWithAes256CbcSha) Encrypt(pkt *recordlayer.RecordLayer, ra
 }
 
 // Decrypt decrypts a single TLS RecordLayer
-func (c *TLSEcdheEcdsaWithAes256CbcSha) Decrypt(raw []byte) ([]byte, error) {
+func (c *TLSEcdheEcdsaWithAes256CbcSha) Decrypt(h recordlayer.Header, raw []byte) ([]byte, error) {
 	cipherSuite, ok := c.cbc.Load().(*ciphersuite.CBC)
 	if !ok {
 		return nil, fmt.Errorf("%w, unable to decrypt", errCipherSuiteNotInit)
 	}
 
-	return cipherSuite.Decrypt(raw)
+	return cipherSuite.Decrypt(h, raw)
 }

@@ -29,6 +29,7 @@ func NewAuthService(id, token string) mainflux.AuthServiceClient {
 func (repo singleUserRepo) Login(ctx context.Context, in *mainflux.LoginReq, opts ...grpc.CallOption) (*mainflux.Token, error) {
 	return nil, nil
 }
+
 func (repo singleUserRepo) Refresh(ctx context.Context, in *mainflux.RefreshReq, opts ...grpc.CallOption) (*mainflux.Token, error) {
 	return nil, nil
 }
@@ -56,24 +57,31 @@ func (repo singleUserRepo) Authorize(ctx context.Context, in *mainflux.Authorize
 func (repo singleUserRepo) AddPolicy(ctx context.Context, in *mainflux.AddPolicyReq, opts ...grpc.CallOption) (*mainflux.AddPolicyRes, error) {
 	return nil, nil
 }
+
 func (repo singleUserRepo) DeletePolicy(ctx context.Context, in *mainflux.DeletePolicyReq, opts ...grpc.CallOption) (*mainflux.DeletePolicyRes, error) {
 	return nil, nil
 }
+
 func (repo singleUserRepo) ListObjects(ctx context.Context, in *mainflux.ListObjectsReq, opts ...grpc.CallOption) (*mainflux.ListObjectsRes, error) {
 	return nil, nil
 }
+
 func (repo singleUserRepo) ListAllObjects(ctx context.Context, in *mainflux.ListObjectsReq, opts ...grpc.CallOption) (*mainflux.ListObjectsRes, error) {
 	return nil, nil
 }
+
 func (repo singleUserRepo) CountObjects(ctx context.Context, in *mainflux.CountObjectsReq, opts ...grpc.CallOption) (*mainflux.CountObjectsRes, error) {
 	return nil, nil
 }
+
 func (repo singleUserRepo) ListSubjects(ctx context.Context, in *mainflux.ListSubjectsReq, opts ...grpc.CallOption) (*mainflux.ListSubjectsRes, error) {
 	return nil, nil
 }
+
 func (repo singleUserRepo) ListAllSubjects(ctx context.Context, in *mainflux.ListSubjectsReq, opts ...grpc.CallOption) (*mainflux.ListSubjectsRes, error) {
 	return nil, nil
 }
+
 func (repo singleUserRepo) CountSubjects(ctx context.Context, in *mainflux.CountSubjectsReq, opts ...grpc.CallOption) (*mainflux.CountSubjectsRes, error) {
 	return nil, nil
 }

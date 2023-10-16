@@ -136,7 +136,8 @@ func addPolicyEndpoint(svc auth.Service) endpoint.Endpoint {
 			Relation:    req.Relation,
 			Permission:  req.Permission,
 			ObjectType:  req.ObjectType,
-			Object:      req.Object})
+			Object:      req.Object,
+		})
 		if err != nil {
 			return addPolicyRes{}, err
 		}

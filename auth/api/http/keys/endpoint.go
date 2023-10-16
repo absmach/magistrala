@@ -54,7 +54,6 @@ func retrieveEndpoint(svc auth.Service) endpoint.Endpoint {
 		}
 
 		key, err := svc.RetrieveKey(ctx, req.token, req.id)
-
 		if err != nil {
 			return nil, err
 		}

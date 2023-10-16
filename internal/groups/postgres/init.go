@@ -35,5 +35,4 @@ func Migration() *migrate.MemoryMigrationSource {
 			},
 		},
 	}
-
 }

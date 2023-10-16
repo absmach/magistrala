@@ -1,3 +1,6 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package mocks
 
 import (
@@ -7,8 +10,10 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var _ auth.Authz = (*Authz)(nil)
-var _ auth.PolicyAgent = (*PolicyAgent)(nil)
+var (
+	_ auth.Authz       = (*Authz)(nil)
+	_ auth.PolicyAgent = (*PolicyAgent)(nil)
+)
 
 type Authz struct {
 	mock.Mock
@@ -78,7 +83,6 @@ func (m *Authz) ListSubjects(ctx context.Context, pr auth.PolicyReq, nextPageTok
 	ret := m.Called(ctx, pr, nextPageToken, limit)
 
 	return ret.Get(0).(auth.PolicyPage), ret.Error(1)
-
 }
 
 type PolicyAgent struct {

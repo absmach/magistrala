@@ -155,8 +155,7 @@ func (res deleteClientRes) Empty() bool {
 	return false
 }
 
-type assignUsersGroupsRes struct {
-}
+type assignUsersGroupsRes struct{}
 
 func (res assignUsersGroupsRes) Code() int {
 	return http.StatusOK
@@ -170,8 +169,7 @@ func (res assignUsersGroupsRes) Empty() bool {
 	return true
 }
 
-type unassignUsersGroupsRes struct {
-}
+type unassignUsersGroupsRes struct{}
 
 func (res unassignUsersGroupsRes) Code() int {
 	return http.StatusNoContent
@@ -185,8 +183,7 @@ func (res unassignUsersGroupsRes) Empty() bool {
 	return true
 }
 
-type assignUsersRes struct {
-}
+type assignUsersRes struct{}
 
 func (res assignUsersRes) Code() int {
 	return http.StatusOK
@@ -200,8 +197,7 @@ func (res assignUsersRes) Empty() bool {
 	return true
 }
 
-type unassignUsersRes struct {
-}
+type unassignUsersRes struct{}
 
 func (res unassignUsersRes) Code() int {
 	return http.StatusNoContent
@@ -215,8 +211,7 @@ func (res unassignUsersRes) Empty() bool {
 	return true
 }
 
-type assignUserGroupsRes struct {
-}
+type assignUserGroupsRes struct{}
 
 func (res assignUserGroupsRes) Code() int {
 	return http.StatusOK
@@ -230,8 +225,7 @@ func (res assignUserGroupsRes) Empty() bool {
 	return true
 }
 
-type unassignUserGroupsRes struct {
-}
+type unassignUserGroupsRes struct{}
 
 func (res unassignUserGroupsRes) Code() int {
 	return http.StatusNoContent
@@ -245,8 +239,7 @@ func (res unassignUserGroupsRes) Empty() bool {
 	return true
 }
 
-type connectChannelThingRes struct {
-}
+type connectChannelThingRes struct{}
 
 func (res connectChannelThingRes) Code() int {
 	return http.StatusOK
@@ -260,8 +253,7 @@ func (res connectChannelThingRes) Empty() bool {
 	return true
 }
 
-type disconnectChannelThingRes struct {
-}
+type disconnectChannelThingRes struct{}
 
 func (res disconnectChannelThingRes) Code() int {
 	return http.StatusNoContent

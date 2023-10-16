@@ -43,11 +43,3 @@ type listSubjectsRes struct {
 type countSubjectsRes struct {
 	count int
 }
-
-type membersRes struct {
-	total     uint64
-	offset    uint64
-	limit     uint64
-	groupType string
-	members   []string
-}

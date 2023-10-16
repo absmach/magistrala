@@ -224,7 +224,7 @@ func (h *handler) Disconnect(ctx context.Context) error {
 func (h *handler) authAccess(ctx context.Context, password, topic, action string) error {
 	// Topics are in the format:
 	// channels/<channel_id>/messages/<subtopic>/.../ct/<content_type>
-	if !channelRegExp.Match([]byte(topic)) {
+	if !channelRegExp.MatchString(topic) {
 		return ErrMalformedTopic
 	}
 

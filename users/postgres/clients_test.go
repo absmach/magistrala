@@ -242,6 +242,5 @@ func TestIsOwner(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("%s: save client unexpected error: %s", tc.desc, err))
 		err = repo.IsOwner(context.Background(), tc.client.ID, tc.ownerID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-
 	}
 }

@@ -33,7 +33,7 @@ var (
 	|> count()
 	|> yield(name: "count")`, repoCfg.Bucket)
 
-	rowCountJson = fmt.Sprintf(`from(bucket: "%s")
+	rowCountJSON = fmt.Sprintf(`from(bucket: "%s")
 	|> range(start: -1h, stop: 1h)
 	|> filter(fn: (r) => r["_measurement"] == "some_json")
 	|> filter(fn: (r) => r["_field"] == "field_1" or r["_field"] == "field_2" or r["_field"] == "field_3" or r["_field"] == "field_4" or r["_field"] == "field_5/field_1" or r["_field"] == "field_5/field_2")
@@ -360,7 +360,7 @@ func TestAsyncSaveJSON(t *testing.T) {
 		}
 		switch err {
 		case nil:
-			count, err := queryDB(rowCountJson)
+			count, err := queryDB(rowCountJSON)
 			assert.Nil(t, err, fmt.Sprintf("Querying InfluxDB to retrieve data expected to succeed: %s.\n", err))
 			assert.Equal(t, streamsSize, count, fmt.Sprintf("Expected to have %d messages saved, found %d instead.\n", streamsSize, count))
 		default:
@@ -466,7 +466,7 @@ func TestBlockingSaveJSON(t *testing.T) {
 
 		switch err = syncRepo.ConsumeBlocking(context.TODO(), tc.msgs); err {
 		case nil:
-			count, err := queryDB(rowCountJson)
+			count, err := queryDB(rowCountJSON)
 			assert.Nil(t, err, fmt.Sprintf("Querying InfluxDB to retrieve data expected to succeed: %s.\n", err))
 			assert.Equal(t, streamsSize, count, fmt.Sprintf("Expected to have %d messages saved, found %d instead.\n", streamsSize, count))
 		default:

@@ -1,3 +1,6 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package postgres
 
 import (
@@ -243,6 +246,7 @@ func (repo groupRepository) RetrieveByIDs(ctx context.Context, gm mfgroups.Page,
 
 	return page, nil
 }
+
 func buildHierachy(gm mfgroups.Page) string {
 	query := ""
 	switch {

@@ -246,14 +246,16 @@ func encodeIdentifyResponse(_ context.Context, grpcRes interface{}) (interface{}
 
 func decodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*mainflux.AuthorizeReq)
-	return authReq{Namespace: req.GetNamespace(),
+	return authReq{
+		Namespace:   req.GetNamespace(),
 		SubjectType: req.GetSubjectType(),
 		SubjectKind: req.GetSubjectKind(),
 		Subject:     req.GetSubject(),
 		Relation:    req.GetRelation(),
 		Permission:  req.GetPermission(),
 		ObjectType:  req.GetObjectType(),
-		Object:      req.GetObject()}, nil
+		Object:      req.GetObject(),
+	}, nil
 }
 
 func encodeAuthorizeResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -263,13 +265,15 @@ func encodeAuthorizeResponse(_ context.Context, grpcRes interface{}) (interface{
 
 func decodeAddPolicyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*mainflux.AddPolicyReq)
-	return policyReq{Namespace: req.GetNamespace(),
+	return policyReq{
+		Namespace:   req.GetNamespace(),
 		SubjectType: req.GetSubjectType(),
 		Subject:     req.GetSubject(),
 		Relation:    req.GetRelation(),
 		Permission:  req.GetPermission(),
 		ObjectType:  req.GetObjectType(),
-		Object:      req.GetObject()}, nil
+		Object:      req.GetObject(),
+	}, nil
 }
 
 func encodeAddPolicyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -279,13 +283,15 @@ func encodeAddPolicyResponse(_ context.Context, grpcRes interface{}) (interface{
 
 func decodeDeletePolicyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*mainflux.DeletePolicyReq)
-	return policyReq{Namespace: req.GetNamespace(),
+	return policyReq{
+		Namespace:   req.GetNamespace(),
 		SubjectType: req.GetSubjectType(),
 		Subject:     req.GetSubject(),
 		Relation:    req.GetRelation(),
 		Permission:  req.GetPermission(),
 		ObjectType:  req.GetObjectType(),
-		Object:      req.GetObject()}, nil
+		Object:      req.GetObject(),
+	}, nil
 }
 
 func encodeDeletePolicyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -295,7 +301,8 @@ func encodeDeletePolicyResponse(_ context.Context, grpcRes interface{}) (interfa
 
 func decodeListObjectsRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*mainflux.ListObjectsReq)
-	return listObjectsReq{Namespace: req.GetNamespace(),
+	return listObjectsReq{
+		Namespace:     req.GetNamespace(),
 		SubjectType:   req.GetSubjectType(),
 		Subject:       req.GetSubject(),
 		Relation:      req.GetRelation(),
@@ -303,7 +310,8 @@ func decodeListObjectsRequest(_ context.Context, grpcReq interface{}) (interface
 		ObjectType:    req.GetObjectType(),
 		Object:        req.GetObject(),
 		NextPageToken: req.GetNextPageToken(),
-		Limit:         req.GetLimit()}, nil
+		Limit:         req.GetLimit(),
+	}, nil
 }
 
 func encodeListObjectsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -313,13 +321,15 @@ func encodeListObjectsResponse(_ context.Context, grpcRes interface{}) (interfac
 
 func decodeCountObjectsRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*mainflux.CountObjectsReq)
-	return countObjectsReq{Namespace: req.GetNamespace(),
+	return countObjectsReq{
+		Namespace:   req.GetNamespace(),
 		SubjectType: req.GetSubjectType(),
 		Subject:     req.GetSubject(),
 		Relation:    req.GetRelation(),
 		Permission:  req.GetPermission(),
 		ObjectType:  req.GetObjectType(),
-		Object:      req.GetObject()}, nil
+		Object:      req.GetObject(),
+	}, nil
 }
 
 func encodeCountObjectsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -329,13 +339,15 @@ func encodeCountObjectsResponse(_ context.Context, grpcRes interface{}) (interfa
 
 func decodeListSubjectsRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*mainflux.ListSubjectsReq)
-	return listSubjectsReq{Namespace: req.GetNamespace(),
+	return listSubjectsReq{
+		Namespace:   req.GetNamespace(),
 		SubjectType: req.GetSubjectType(),
 		Subject:     req.GetSubject(),
 		Relation:    req.GetRelation(),
 		Permission:  req.GetPermission(),
 		ObjectType:  req.GetObjectType(),
-		Object:      req.GetObject(), NextPageToken: req.GetNextPageToken(), Limit: req.GetLimit()}, nil
+		Object:      req.GetObject(), NextPageToken: req.GetNextPageToken(), Limit: req.GetLimit(),
+	}, nil
 }
 
 func encodeListSubjectsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -345,13 +357,15 @@ func encodeListSubjectsResponse(_ context.Context, grpcRes interface{}) (interfa
 
 func decodeCountSubjectsRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*mainflux.CountSubjectsReq)
-	return countSubjectsReq{Namespace: req.GetNamespace(),
+	return countSubjectsReq{
+		Namespace:   req.GetNamespace(),
 		SubjectType: req.GetSubjectType(),
 		Subject:     req.GetSubject(),
 		Relation:    req.GetRelation(),
 		Permission:  req.GetPermission(),
 		ObjectType:  req.GetObjectType(),
-		Object:      req.GetObject()}, nil
+		Object:      req.GetObject(),
+	}, nil
 }
 
 func encodeCountSubjectsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {

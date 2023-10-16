@@ -84,7 +84,7 @@ func Provision(conf Config) error {
 
 	// Create new user
 	if _, err := s.CreateUser(user, ""); err != nil {
-		return fmt.Errorf("Unable to create new user: %s", err.Error())
+		return fmt.Errorf("unable to create new user: %s", err.Error())
 	}
 
 	var err error
@@ -92,7 +92,7 @@ func Provision(conf Config) error {
 	// Login user
 	token, err := s.CreateToken(user)
 	if err != nil {
-		return fmt.Errorf("Unable to login user: %s", err.Error())
+		return fmt.Errorf("unable to login user: %s", err.Error())
 	}
 
 	var tlsCert tls.Certificate
@@ -101,22 +101,22 @@ func Provision(conf Config) error {
 	if conf.SSL {
 		tlsCert, err = tls.LoadX509KeyPair(conf.CA, conf.CAKey)
 		if err != nil {
-			return fmt.Errorf("Failed to load CA cert")
+			return fmt.Errorf("failed to load CA cert")
 		}
 
 		b, err := os.ReadFile(conf.CA)
 		if err != nil {
-			return fmt.Errorf("Failed to load CA cert")
+			return fmt.Errorf("failed to load CA cert")
 		}
 
 		block, _ := pem.Decode(b)
 		if block == nil {
-			return fmt.Errorf("No PEM data found, failed to decode CA")
+			return fmt.Errorf("no PEM data found, failed to decode CA")
 		}
 
 		caCert, err = x509.ParseCertificate(block.Bytes)
 		if err != nil {
-			return fmt.Errorf("Failed to decode certificate - %s", err.Error())
+			return fmt.Errorf("failed to decode certificate - %s", err.Error())
 		}
 	}
 
@@ -135,12 +135,12 @@ func Provision(conf Config) error {
 
 	things, err = s.CreateThings(things, token.AccessToken)
 	if err != nil {
-		return fmt.Errorf("Failed to create the things: %s", err.Error())
+		return fmt.Errorf("failed to create the things: %s", err.Error())
 	}
 
 	channels, err = s.CreateChannels(channels, token.AccessToken)
 	if err != nil {
-		return fmt.Errorf("Failed to create the chennels: %s", err.Error())
+		return fmt.Errorf("failed to create the chennels: %s", err.Error())
 	}
 
 	for _, t := range things {
@@ -162,14 +162,14 @@ func Provision(conf Config) error {
 			notBefore := time.Now()
 			validFor, err := time.ParseDuration(ttl)
 			if err != nil {
-				return fmt.Errorf("Failed to set date %v", validFor)
+				return fmt.Errorf("failed to set date %v", validFor)
 			}
 			notAfter := notBefore.Add(validFor)
 
 			serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 			serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 			if err != nil {
-				return fmt.Errorf("Failed to generate serial number: %s", err)
+				return fmt.Errorf("failed to generate serial number: %s", err)
 			}
 
 			tmpl := x509.Certificate{
@@ -189,7 +189,7 @@ func Provision(conf Config) error {
 
 			derBytes, err := x509.CreateCertificate(rand.Reader, &tmpl, caCert, publicKey(priv), tlsCert.PrivateKey)
 			if err != nil {
-				return fmt.Errorf("Failed to create certificate: %s", err)
+				return fmt.Errorf("failed to create certificate: %s", err)
 			}
 
 			var bw, keyOut bytes.Buffer
@@ -197,13 +197,13 @@ func Provision(conf Config) error {
 			buffKeyOut := bufio.NewWriter(&keyOut)
 
 			if err := pem.Encode(buffWriter, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes}); err != nil {
-				return fmt.Errorf("Failed to write cert pem data: %s", err)
+				return fmt.Errorf("failed to write cert pem data: %s", err)
 			}
 			buffWriter.Flush()
 			cert = bw.String()
 
 			if err := pem.Encode(buffKeyOut, pemBlockForKey(priv)); err != nil {
-				return fmt.Errorf("Failed to write key pem data: %s", err)
+				return fmt.Errorf("failed to write key pem data: %s", err)
 			}
 			buffKeyOut.Flush()
 			key = keyOut.String()
@@ -224,13 +224,17 @@ func Provision(conf Config) error {
 		fmt.Printf("[[channels]]\nchannel_id = \"%s\"\n\n", cIDs[i])
 	}
 
-	conIDs := sdk.ConnectionIDs{
-		ChannelIDs: cIDs,
-		ThingIDs:   tIDs,
+	for i := 0; i < conf.Num; i++ {
+		conIDs := sdk.Connection{
+			ChannelID: cIDs[i],
+			ThingID:   tIDs[i],
+		}
+
+		if err := s.Connect(conIDs, token.AccessToken); err != nil {
+			log.Fatalf("Failed to connect thing %s to channel %s: %s", conIDs.ThingID, conIDs.ChannelID, err)
+		}
 	}
-	if err := s.Connect(conIDs, token.AccessToken); err != nil {
-		log.Fatalf("Failed to connect things %s to channels %s: %s", conIDs.ThingIDs, conIDs.ChannelIDs, err)
-	}
+
 	return nil
 }
 

@@ -92,7 +92,6 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 			}
 			page.Messages = append(page.Messages, m)
 		}
-
 	}
 
 	q = fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, format, fmtCondition(chanID, rpm))

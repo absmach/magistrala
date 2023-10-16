@@ -83,7 +83,7 @@ func (c *Client) publish(r chan *runResults, errChan chan<- error) {
 	}
 	payload, err := c.SendMsg(&m)
 	if err != nil {
-		errChan <- fmt.Errorf("Failed to marshal payload - %s", err.Error())
+		errChan <- fmt.Errorf("failed to marshal payload - %s", err.Error())
 	}
 
 	for i := 0; i < c.MsgCount; i++ {
@@ -168,7 +168,7 @@ func (c *Client) connect() error {
 func checkConnection(broker string, timeoutSecs int) error {
 	s := strings.Split(broker, ":")
 	if len(s) != 3 {
-		return errors.New("Wrong host address format")
+		return errors.New("wrong host address format")
 	}
 
 	network := s[0]
@@ -186,11 +186,11 @@ func checkConnection(broker string, timeoutSecs int) error {
 
 	defer conClose()
 	if err, ok := err.(*net.OpError); ok && err.Timeout() {
-		return fmt.Errorf("Timeout error: %s\n", err.Error())
+		return fmt.Errorf("timeout error: %s", err.Error())
 	}
 
 	if err != nil {
-		return fmt.Errorf("Error: %s\n", err.Error())
+		return fmt.Errorf("error: %s", err.Error())
 	}
 
 	log.Printf("Connection to %s://%s:%s looks OK\n", network, host, port)

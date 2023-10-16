@@ -43,8 +43,7 @@ var (
 	vd          = "dataValue"
 	sum float64 = 42
 
-	idProvider        = uuid.New()
-	adminRelationKeys = []string{"c_update", "c_list", "c_delete", "c_share"}
+	idProvider = uuid.New()
 )
 
 func newServer(repo readers.MessageRepository) *httptest.Server {

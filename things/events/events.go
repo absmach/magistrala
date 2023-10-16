@@ -314,7 +314,7 @@ type authorizeClientEvent struct {
 }
 
 func (ice authorizeClientEvent) Encode() (map[string]interface{}, error) {
-	var val = map[string]interface{}{
+	val := map[string]interface{}{
 		"operation": clientAuthorize,
 		"thing_id":  ice.thingID,
 	}

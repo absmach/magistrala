@@ -10,7 +10,6 @@ import (
 	"github.com/mainflux/mainflux/internal/apiutil"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/groups"
-	mfgroups "github.com/mainflux/mainflux/pkg/groups"
 )
 
 func CreateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
@@ -52,7 +51,7 @@ func UpdateGroupEndpoint(svc groups.Service) endpoint.Endpoint {
 			return updateGroupRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		group := mfgroups.Group{
+		group := groups.Group{
 			ID:          req.id,
 			Name:        req.Name,
 			Description: req.Description,
@@ -183,14 +182,14 @@ func UnassignMembersEndpoint(svc groups.Service, relation string, memberKind str
 	}
 }
 
-func buildGroupsResponseTree(page mfgroups.Page) groupPageRes {
-	groupsMap := map[string]*mfgroups.Group{}
+func buildGroupsResponseTree(page groups.Page) groupPageRes {
+	groupsMap := map[string]*groups.Group{}
 	// Parents' map keeps its array of children.
-	parentsMap := map[string][]*mfgroups.Group{}
+	parentsMap := map[string][]*groups.Group{}
 	for i := range page.Groups {
 		if _, ok := groupsMap[page.Groups[i].ID]; !ok {
 			groupsMap[page.Groups[i].ID] = &page.Groups[i]
-			parentsMap[page.Groups[i].ID] = make([]*mfgroups.Group, 0)
+			parentsMap[page.Groups[i].ID] = make([]*groups.Group, 0)
 		}
 	}
 
@@ -227,14 +226,14 @@ func buildGroupsResponseTree(page mfgroups.Page) groupPageRes {
 	return res
 }
 
-func toViewGroupRes(group mfgroups.Group) viewGroupRes {
+func toViewGroupRes(group groups.Group) viewGroupRes {
 	view := viewGroupRes{
 		Group: group,
 	}
 	return view
 }
 
-func buildGroupsResponse(gp mfgroups.Page) groupPageRes {
+func buildGroupsResponse(gp groups.Page) groupPageRes {
 	res := groupPageRes{
 		pageRes: pageRes{
 			Total: gp.Total,

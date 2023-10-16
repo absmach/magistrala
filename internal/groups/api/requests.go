@@ -77,27 +77,6 @@ func (req listGroupsReq) validate() error {
 	return nil
 }
 
-type listMembershipReq struct {
-	mfgroups.Page
-	token      string
-	groupID    string
-	memberKind string
-}
-
-func (req listMembershipReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-	if req.groupID == "" {
-		return apiutil.ErrMissingID
-	}
-
-	if req.memberKind == "" {
-		return apiutil.ErrMissingMemberKind
-	}
-	return nil
-}
-
 type groupReq struct {
 	token string
 	id    string

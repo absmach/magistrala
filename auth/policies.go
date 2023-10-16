@@ -23,7 +23,10 @@ type PolicyReq struct {
 }
 
 func (pr PolicyReq) String() string {
-	data, _ := json.Marshal(pr)
+	data, err := json.Marshal(pr)
+	if err != nil {
+		return ""
+	}
 	return string(data)
 }
 

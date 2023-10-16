@@ -18,7 +18,7 @@ const (
 	validPayload     = `{"key1": "val1", "key2": 123, "key3": "val3", "key4": {"key5": "val5"}}`
 	tsPayload        = `{"custom_ts_key": "1638310819", "key1": "val1", "key2": 123, "key3": "val3", "key4": {"key5": "val5"}}`
 	microsPayload    = `{"custom_ts_micro_key": "1638310819000000", "key1": "val1", "key2": 123, "key3": "val3", "key4": {"key5": "val5"}}`
-	invalidTsPayload = `{"custom_ts_key": "abc", "key1": "val1", "key2": 123, "key3": "val3", "key4": {"key5": "val5"}}`
+	invalidTSPayload = `{"custom_ts_key": "abc", "key1": "val1", "key2": 123, "key3": "val3", "key4": {"key5": "val5"}}`
 	listPayload      = `[{"key1": "val1", "key2": 123, "keylist3": "val3", "key4": {"key5": "val5"}}, {"key1": "val1", "key2": 123, "key3": "val3", "key4": {"key5": "val5"}}]`
 	invalidPayload   = `{"key1": }`
 )
@@ -93,7 +93,7 @@ func TestTransformJSON(t *testing.T) {
 		Subtopic:  "subtopic-1",
 		Publisher: "publisher-1",
 		Protocol:  "protocol",
-		Payload:   []byte(invalidTsPayload),
+		Payload:   []byte(invalidTSPayload),
 		Created:   now,
 	}
 
@@ -118,7 +118,7 @@ func TestTransformJSON(t *testing.T) {
 		Format: msg.Subtopic,
 	}
 
-	jsonTsMsgs := json.Messages{
+	jsonTSMsgs := json.Messages{
 		Data: []json.Message{
 			{
 				Channel:   msg.Channel,
@@ -231,7 +231,7 @@ func TestTransformJSON(t *testing.T) {
 		{
 			desc: "test transform JSON with timestamp transformation",
 			msg:  &tsMsg,
-			json: jsonTsMsgs,
+			json: jsonTSMsgs,
 			err:  nil,
 		},
 		{

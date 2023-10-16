@@ -111,8 +111,6 @@ func Connect(cfg Config) (*grpc.ClientConn, security, error) {
 
 // Setup load gRPC configuration from environment variable, creates new gRPC client and connect to gRPC server.
 func Setup(config Config, svcName string) (*Client, ClientHandler, error) {
-	secure := withoutTLS
-
 	// connect to auth grpc server
 	grpcClient, secure, err := Connect(config)
 	if err != nil {

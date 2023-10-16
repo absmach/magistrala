@@ -17,7 +17,7 @@ import (
 
 var (
 	errNoURL     = errors.New("URL is empty")
-	errNoSvcName = errors.New("Service Name is empty")
+	errNoSvcName = errors.New("service Name is empty")
 )
 
 // NewProvider initializes Jaeger TraceProvider.

@@ -33,6 +33,10 @@ const (
 	loginDuration   = 30 * time.Minute
 	refreshDuration = 24 * time.Hour
 	accessToken     = "access"
+
+	readPolicy   = "read"
+	writePolicy  = "write"
+	deletePolicy = "delete"
 )
 
 func newService() (auth.Service, *mocks.Keys) {
@@ -348,9 +352,6 @@ func TestAddPolicies(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	tmpID := "tmpid"
-	readPolicy := "read"
-	writePolicy := "write"
-	deletePolicy := "delete"
 
 	// Add read policy to users.
 	err = svc.AddPolicies(context.Background(), apiToken.AccessToken, thingID, []string{id, tmpID}, []string{readPolicy})
@@ -432,9 +433,6 @@ func TestDeletePolicies(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	tmpID := "tmpid"
-	readPolicy := "read"
-	writePolicy := "write"
-	deletePolicy := "delete"
 	memberPolicy := "member"
 
 	// Add read, write and delete policies to users.
@@ -516,8 +514,6 @@ func TestListPolicies(t *testing.T) {
 
 	apiToken, err := svc.Issue(context.Background(), secret.AccessToken, key)
 	assert.Nil(t, err, fmt.Sprintf("Issuing user's key expected to succeed: %s", err))
-
-	readPolicy := "read"
 	pageLen := 15
 
 	// Add arbitrary policies to the user.
@@ -529,5 +525,4 @@ func TestListPolicies(t *testing.T) {
 	page, err := svc.ListObjects(context.Background(), auth.PolicyReq{Subject: id, Relation: readPolicy}, "", 100)
 	assert.Nil(t, err, fmt.Sprintf("listing policies expected to succeed: %s", err))
 	assert.Equal(t, pageLen, len(page.Policies), fmt.Sprintf("unexpected listing page size, expected %d, got %d: %v", pageLen, len(page.Policies), err))
-
 }

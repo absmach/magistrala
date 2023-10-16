@@ -45,12 +45,12 @@ func Benchmark(cfg Config) error {
 
 	data, err := os.ReadFile(cfg.Mf.ConnFile)
 	if err != nil {
-		return fmt.Errorf("Error loading connections file: %s", err)
+		return fmt.Errorf("error loading connections file: %s", err)
 	}
 
 	mf := mainflux{}
 	if err := toml.Unmarshal(data, &mf); err != nil {
-		return fmt.Errorf("Cannot load Mainflux connections config %s \nUse tools/provision to create file", cfg.Mf.ConnFile)
+		return fmt.Errorf("cannot load Mainflux connections config %s \nUse tools/provision to create file", cfg.Mf.ConnFile)
 	}
 
 	resCh := make(chan *runResults)
@@ -76,7 +76,7 @@ func Benchmark(cfg Config) error {
 		}
 		c, err := makeClient(i, cfg, mfChan, mfThing, startStamp, caByte, cert)
 		if err != nil {
-			return fmt.Errorf("Unable to create message payload %s", err.Error())
+			return fmt.Errorf("unable to create message payload %s", err.Error())
 		}
 
 		errorChan := make(chan error)

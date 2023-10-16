@@ -1,3 +1,6 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package provision
 
 import (
@@ -243,7 +246,6 @@ func (ps *provisionService) Provision(token, name, externalID, externalKey strin
 			}
 			res.Whitelisted[thing.ID] = true
 		}
-
 	}
 
 	if err = ps.updateGateway(token, bsConfig, channels); err != nil {

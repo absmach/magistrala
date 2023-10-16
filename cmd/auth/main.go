@@ -1,3 +1,6 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 import (
@@ -24,9 +27,8 @@ import (
 	"github.com/mainflux/mainflux/internal"
 	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
 	pgclient "github.com/mainflux/mainflux/internal/clients/postgres"
-	"github.com/mainflux/mainflux/internal/postgres"
-
 	"github.com/mainflux/mainflux/internal/env"
+	"github.com/mainflux/mainflux/internal/postgres"
 	"github.com/mainflux/mainflux/internal/server"
 	grpcserver "github.com/mainflux/mainflux/internal/server/grpc"
 	httpserver "github.com/mainflux/mainflux/internal/server/http"

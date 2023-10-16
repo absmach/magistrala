@@ -94,7 +94,6 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 			}
 			page.Messages = append(page.Messages, m)
 		}
-
 	}
 
 	q = fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, format, cond)

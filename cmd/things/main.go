@@ -11,11 +11,10 @@ import (
 	"os"
 	"time"
 
-	callhome "github.com/mainflux/callhome/pkg/client"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-redis/redis/v8"
 	"github.com/jmoiron/sqlx"
+	callhome "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/internal"
 	authclient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
@@ -41,7 +40,6 @@ import (
 	thcache "github.com/mainflux/mainflux/things/cache"
 	thevents "github.com/mainflux/mainflux/things/events"
 	thingspg "github.com/mainflux/mainflux/things/postgres"
-
 	localusers "github.com/mainflux/mainflux/things/standalone"
 	ctracing "github.com/mainflux/mainflux/things/tracing"
 	"go.opentelemetry.io/otel/trace"

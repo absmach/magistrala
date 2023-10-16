@@ -1,3 +1,6 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package api
 
 import (
@@ -18,20 +21,6 @@ const (
 	defRelation   = "viewer"
 	defPermission = "view"
 )
-
-func DecodeListMembershipRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	memberKind, err := apiutil.ReadStringQuery(r, api.MemberKindKey, "")
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-
-	req := listMembershipReq{
-		token:      apiutil.ExtractBearerToken(r),
-		groupID:    chi.URLParam(r, "groupID"),
-		memberKind: memberKind,
-	}
-	return req, nil
-}
 
 func DecodeListGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	pm, err := decodePageMeta(r)

@@ -7,22 +7,22 @@ import (
 	"context"
 	"fmt"
 	"net/http/httptest"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/mainflux/mainflux"
 	authmocks "github.com/mainflux/mainflux/auth/mocks"
 	"github.com/mainflux/mainflux/certs"
 	"github.com/mainflux/mainflux/certs/mocks"
+	chmocks "github.com/mainflux/mainflux/internal/groups/mocks"
 	"github.com/mainflux/mainflux/logger"
-	mfclients "github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
+	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/things"
-	httpapi "github.com/mainflux/mainflux/things/api"
+	httpapi "github.com/mainflux/mainflux/things/api/http"
+	thmocks "github.com/mainflux/mainflux/things/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -45,13 +45,9 @@ const (
 	instanceID        = "5de9b29a-feb9-11ed-be56-0242ac120002"
 )
 
-var adminRelationKeys = []string{"c_update", "c_list", "c_delete", "c_share"}
-
 func newService(tokens map[string]string) (certs.Service, error) {
-
-	server := newThingsServer(newThingsService(ac))
-
-	auth := new(authmocks.Service)
+	tsvc, auth := newThingsService()
+	server := newThingsServer(tsvc)
 
 	config := mfsdk.Config{
 		ThingsURL: server.URL,
@@ -75,20 +71,14 @@ func newService(tokens map[string]string) (certs.Service, error) {
 	return certs.New(auth, repo, sdk, pki), nil
 }
 
-func newThingsService(auth mainflux.AuthServiceClient) things.Service {
-	ths := make(map[string]mfclients.Client, thingsNum)
-	for i := 0; i < thingsNum; i++ {
-		id := strconv.Itoa(i + 1)
-		ths[id] = mfclients.Client{
-			ID: id,
-			Credentials: mfclients.Credentials{
-				Secret: thingKey,
-			},
-			Owner: email,
-		}
-	}
+func newThingsService() (things.Service, *authmocks.Service) {
+	auth := new(authmocks.Service)
+	thingCache := thmocks.NewCache()
+	idProvider := uuid.NewMock()
+	cRepo := new(thmocks.Repository)
+	gRepo := new(chmocks.Repository)
 
-	return things.NewService(ths, auth)
+	return things.NewService(auth, cRepo, gRepo, thingCache, idProvider), auth
 }
 
 func TestIssueCert(t *testing.T) {

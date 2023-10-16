@@ -111,7 +111,6 @@ func (s *Server) Start() error {
 		}
 	default:
 		s.Logger.Info(fmt.Sprintf("%s service gRPC server listening at %s without TLS", s.Name, s.Address))
-
 	}
 
 	grpcServerOptions = append(grpcServerOptions, creds)

@@ -535,7 +535,6 @@ func TestReadJSON(t *testing.T) {
 	msgs1 := []map[string]interface{}{}
 	timeNow := time.Now().UnixMilli()
 	for i := 0; i < msgsNum; i++ {
-
 		m := json.Message{
 			Channel:   id1,
 			Publisher: id1,

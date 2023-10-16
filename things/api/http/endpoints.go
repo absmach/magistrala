@@ -283,6 +283,7 @@ func unassignUsersGroupsEndpoint(svc groups.Service) endpoint.Endpoint {
 		return unassignUsersGroupsRes{}, nil
 	}
 }
+
 func assignUsersEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(assignUsersRequest)

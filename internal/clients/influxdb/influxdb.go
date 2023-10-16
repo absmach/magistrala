@@ -23,7 +23,7 @@ type Config struct {
 	Port               string        `env:"PORT"                  envDefault:"8086"`
 	Username           string        `env:"ADMIN_USER"            envDefault:"mainflux"`
 	Password           string        `env:"ADMIN_PASSWORD"        envDefault:"mainflux"`
-	DbName             string        `env:"NAME"                  envDefault:"mainflux"`
+	DBName             string        `env:"NAME"                  envDefault:"mainflux"`
 	Bucket             string        `env:"BUCKET"                envDefault:"mainflux-bucket"`
 	Org                string        `env:"ORG"                   envDefault:"mainflux"`
 	Token              string        `env:"TOKEN"                 envDefault:"mainflux-token"`

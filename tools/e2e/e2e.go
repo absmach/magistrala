@@ -180,7 +180,7 @@ func createUsers(s sdk.SDK, conf Config, token string) ([]sdk.User, error) {
 
 		user, err = s.CreateUser(user, token)
 		if err != nil {
-			return []sdk.User{}, fmt.Errorf("Failed to create the users: %w", err)
+			return []sdk.User{}, fmt.Errorf("failed to create the users: %w", err)
 		}
 		users = append(users, user)
 	}
@@ -202,7 +202,7 @@ func createGroups(s sdk.SDK, conf Config, token string) ([]sdk.Group, error) {
 
 		group, err = s.CreateGroup(group, token)
 		if err != nil {
-			return []sdk.Group{}, fmt.Errorf("Failed to create the group: %w", err)
+			return []sdk.Group{}, fmt.Errorf("failed to create the group: %w", err)
 		}
 		groups = append(groups, group)
 		parentID = group.ID
@@ -223,7 +223,7 @@ func createThings(s sdk.SDK, conf Config, token string) ([]sdk.Thing, error) {
 	}
 	things, err = s.CreateThings(things, token)
 	if err != nil {
-		return []sdk.Thing{}, fmt.Errorf("Failed to create the things: %w", err)
+		return []sdk.Thing{}, fmt.Errorf("failed to create the things: %w", err)
 	}
 
 	return things, nil
@@ -240,7 +240,7 @@ func createChannels(s sdk.SDK, conf Config, token string) ([]sdk.Channel, error)
 		}
 		channels[i], err = s.CreateChannel(channels[i], token)
 		if err != nil {
-			return []sdk.Channel{}, fmt.Errorf("Failed to create the channels: %w", err)
+			return []sdk.Channel{}, fmt.Errorf("failed to create the channels: %w", err)
 		}
 	}
 
@@ -462,7 +462,7 @@ func messaging(s sdk.SDK, conf Config, token string, things []sdk.Thing, channel
 
 	for _, thing := range things {
 		for _, channel := range channels {
-			var conn = sdk.Connection{
+			conn := sdk.Connection{
 				ThingID:    thing.ID,
 				ChannelID:  channel.ID,
 				Permission: "publish",

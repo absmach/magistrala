@@ -33,7 +33,7 @@ type testEvent struct {
 }
 
 func (te testEvent) Encode() (map[string]interface{}, error) {
-	var data = make(map[string]interface{})
+	data := make(map[string]interface{})
 	for k, v := range te.Data {
 		switch v.(type) {
 		case string:
@@ -123,7 +123,7 @@ func TestPublish(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		var event = testEvent{Data: tc.event}
+		event := testEvent{Data: tc.event}
 
 		err := publisher.Publish(context.Background(), event)
 		switch tc.err {

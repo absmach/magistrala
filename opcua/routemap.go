@@ -13,6 +13,6 @@ type RouteMapRepository interface {
 	// Get returns the stored Mainflux route-map for a given OPC-UA pair.
 	Get(context.Context, string) (string, error)
 
-	// Remove Remove route-map from cache.
+	// Remove route-map from cache.
 	Remove(context.Context, string) error
 }

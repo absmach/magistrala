@@ -80,7 +80,10 @@ func newServer(svc auth.Service) *httptest.Server {
 }
 
 func toJSON(data interface{}) string {
-	jsonData, _ := json.Marshal(data)
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return ""
+	}
 	return string(jsonData)
 }
 
@@ -278,7 +281,8 @@ func TestRevoke(t *testing.T) {
 			desc:   "revoke key with invalid token",
 			id:     k.AccessToken,
 			token:  "wrong",
-			status: http.StatusUnauthorized},
+			status: http.StatusUnauthorized,
+		},
 	}
 
 	for _, tc := range cases {

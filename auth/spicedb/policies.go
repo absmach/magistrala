@@ -1,3 +1,6 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package spicedb
 
 import (
@@ -35,7 +38,7 @@ func (pa *policyAgent) CheckPolicy(ctx context.Context, pr auth.PolicyReq) error
 		Subject:    &v1.SubjectReference{Object: &v1.ObjectReference{ObjectType: pr.SubjectType, ObjectId: pr.Subject}, OptionalRelation: pr.SubjectRelation},
 	}
 
-	resp, err := pa.permissionClient.CheckPermission(context.Background(), &checkReq)
+	resp, err := pa.permissionClient.CheckPermission(ctx, &checkReq)
 	if err != nil {
 		return errors.Wrap(errors.ErrMalformedEntity, fmt.Errorf("failed to check permission: %w", err))
 	}
@@ -68,6 +71,7 @@ func (pa *policyAgent) AddPolicies(ctx context.Context, prs []auth.PolicyReq) er
 	}
 	return nil
 }
+
 func (pa *policyAgent) AddPolicy(ctx context.Context, pr auth.PolicyReq) error {
 	updates := []*v1.RelationshipUpdate{
 		{
@@ -302,10 +306,10 @@ func subjectsToAuthPolicies(subjects []*v1.LookupSubjectsResponse) []auth.Policy
 	return policies
 }
 
-func (pa *policyAgent) Watch(continue_token string) {
+func (pa *policyAgent) Watch(continueToken string) {
 	stream, err := pa.client.WatchServiceClient.Watch(context.Background(), &v1.WatchRequest{
 		OptionalObjectTypes: []string{},
-		OptionalStartCursor: &v1.ZedToken{Token: continue_token},
+		OptionalStartCursor: &v1.ZedToken{Token: continueToken},
 	})
 	if err != nil {
 		pa.logger.Error(fmt.Sprintf("got error while watching: %s", err.Error()))
@@ -332,15 +336,14 @@ func (pa *policyAgent) publishToStream(resp *v1.WatchResponse) {
 	for _, update := range resp.Updates {
 		operation := v1.RelationshipUpdate_Operation_name[int32(update.Operation)]
 		objectType := update.Relationship.Resource.ObjectType
-		objectId := update.Relationship.Resource.ObjectId
+		objectID := update.Relationship.Resource.ObjectId
 		relation := update.Relationship.Relation
 		subjectType := update.Relationship.Subject.Object.ObjectType
 		subjectRelation := update.Relationship.Subject.OptionalRelation
-		subjectId := update.Relationship.Subject.Object.ObjectId
+		subjectID := update.Relationship.Subject.Object.ObjectId
 
 		pa.logger.Info(fmt.Sprintf(`
 		Operation : %s	object_type: %s		object_id: %s 	relation: %s 	subject_type: %s 	subject_relation: %s	subject_id: %s
-		`, operation, objectType, objectId, relation, subjectType, subjectRelation, subjectId))
-
+		`, operation, objectType, objectID, relation, subjectType, subjectRelation, subjectID))
 	}
 }

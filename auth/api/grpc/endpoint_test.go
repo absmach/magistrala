@@ -32,9 +32,6 @@ const (
 	usersType   = "users"
 	description = "Description"
 
-	numOfThings = 5
-	numOfUsers  = 5
-
 	authoritiesObj  = "authorities"
 	memberRelation  = "member"
 	loginDuration   = 30 * time.Minute

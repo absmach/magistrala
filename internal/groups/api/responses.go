@@ -9,7 +9,6 @@ import (
 
 	"github.com/mainflux/mainflux"
 	"github.com/mainflux/mainflux/pkg/groups"
-	mfgroups "github.com/mainflux/mainflux/pkg/groups"
 )
 
 var (
@@ -25,7 +24,7 @@ var (
 )
 
 type viewMembershipRes struct {
-	mfgroups.Group `json:",inline"`
+	groups.Group `json:",inline"`
 }
 
 func (res viewMembershipRes) Code() int {
@@ -58,7 +57,7 @@ func (res membershipPageRes) Empty() bool {
 }
 
 type viewGroupRes struct {
-	mfgroups.Group `json:",inline"`
+	groups.Group `json:",inline"`
 }
 
 func (res viewGroupRes) Code() int {
@@ -74,8 +73,8 @@ func (res viewGroupRes) Empty() bool {
 }
 
 type createGroupRes struct {
-	mfgroups.Group `json:",inline"`
-	created        bool
+	groups.Group `json:",inline"`
+	created      bool
 }
 
 func (res createGroupRes) Code() int {
@@ -125,7 +124,7 @@ func (res groupPageRes) Empty() bool {
 }
 
 type updateGroupRes struct {
-	mfgroups.Group `json:",inline"`
+	groups.Group `json:",inline"`
 }
 
 func (res updateGroupRes) Code() int {
@@ -141,7 +140,7 @@ func (res updateGroupRes) Empty() bool {
 }
 
 type changeStatusRes struct {
-	mfgroups.Group `json:",inline"`
+	groups.Group `json:",inline"`
 }
 
 func (res changeStatusRes) Code() int {
@@ -186,7 +185,7 @@ func (res unassignRes) Empty() bool {
 
 type listMembersRes struct {
 	pageRes
-	Members []mfgroups.Member `json:"members"`
+	Members []groups.Member `json:"members"`
 }
 
 func (res listMembersRes) Code() int {

@@ -243,7 +243,7 @@ func decodeListClients(_ context.Context, r *http.Request) (interface{}, error) 
 		sharedBy: sharedID,
 		owner:    ownerID,
 	}
-	
+
 	return req, nil
 }
 

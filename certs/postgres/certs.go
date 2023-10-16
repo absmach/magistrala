@@ -53,7 +53,6 @@ func (cr certsRepository) RetrieveAll(ctx context.Context, ownerID string, offse
 		if err := rows.Scan(&c.ThingID, &c.OwnerID, &c.Serial, &c.Expire); err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to read retrieved config due to %s", err))
 			return certs.Page{}, err
-
 		}
 		certificates = append(certificates, c)
 	}
@@ -130,7 +129,6 @@ func (cr certsRepository) RetrieveByThing(ctx context.Context, ownerID, thingID 
 		if err := rows.Scan(&c.ThingID, &c.OwnerID, &c.Serial, &c.Expire); err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to read retrieved config due to %s", err))
 			return certs.Page{}, err
-
 		}
 		certificates = append(certificates, c)
 	}
@@ -156,7 +154,6 @@ func (cr certsRepository) RetrieveBySerial(ctx context.Context, ownerID, serialI
 	var c certs.Cert
 
 	if err := cr.db.QueryRowxContext(ctx, q, ownerID, serialID).StructScan(&dbcrt); err != nil {
-
 		pqErr, ok := err.(*pgconn.PgError)
 		if err == sql.ErrNoRows || ok && pgerrcode.InvalidTextRepresentation == pqErr.Code {
 			return c, errors.Wrap(errors.ErrNotFound, err)

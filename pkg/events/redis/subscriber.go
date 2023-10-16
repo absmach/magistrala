@@ -1,3 +1,6 @@
+// Copyright (c) Mainflux
+// SPDX-License-Identifier: Apache-2.0
+
 package redis
 
 import (
@@ -99,7 +102,7 @@ func (re redisEvent) Encode() (map[string]interface{}, error) {
 
 func (es *subEventStore) handle(ctx context.Context, msgs []redis.XMessage, h events.EventHandler) {
 	for _, msg := range msgs {
-		var event = redisEvent{
+		event := redisEvent{
 			Data: msg.Values,
 		}
 

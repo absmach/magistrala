@@ -93,7 +93,6 @@ func calculateTotalResults(results []*runResults, totalTime time.Duration, sr su
 
 	totals.MsgTimeMin = results[0].MsgTimeMin
 	for i, res := range results {
-
 		totals.Successes += res.Successes
 		totals.Failures += res.Failures
 		totals.TotalMsgsPerSec += res.MsgsPerSec

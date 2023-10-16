@@ -97,7 +97,7 @@ func (c client) Subscribe(ctx context.Context, cfg opcua.Config) error {
 	}
 
 	oc := opcuagopcua.NewClient(cfg.ServerURI, opts...)
-	if err := oc.Connect(c.ctx); err != nil {
+	if err := oc.Connect(ctx); err != nil {
 		return errors.Wrap(errFailedConn, err)
 	}
 	defer oc.Close()
@@ -143,7 +143,7 @@ func (c client) runHandler(ctx context.Context, sub *opcuagopcua.Subscription, u
 		return errResponseStatus
 	}
 
-	go sub.Run(c.ctx)
+	go sub.Run(ctx)
 
 	c.logger.Info(fmt.Sprintf("subscribed to server %s and node_id %s", uri, node))
 

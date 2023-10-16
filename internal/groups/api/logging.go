@@ -10,7 +10,6 @@ import (
 
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/groups"
-	mfgroups "github.com/mainflux/mainflux/pkg/groups"
 )
 
 var _ groups.Service = (*loggingMiddleware)(nil)
@@ -27,7 +26,7 @@ func LoggingMiddleware(svc groups.Service, logger mflog.Logger) groups.Service {
 
 // CreateGroup logs the create_group request. It logs the group name, id and token and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) CreateGroup(ctx context.Context, token string, group mfgroups.Group) (g mfgroups.Group, err error) {
+func (lm *loggingMiddleware) CreateGroup(ctx context.Context, token string, group groups.Group) (g groups.Group, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method create_group for group %s with id %s using token %s took %s to complete", g.Name, g.ID, token, time.Since(begin))
 		if err != nil {
@@ -41,7 +40,7 @@ func (lm *loggingMiddleware) CreateGroup(ctx context.Context, token string, grou
 
 // UpdateGroup logs the update_group request. It logs the group name, id and token and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) UpdateGroup(ctx context.Context, token string, group mfgroups.Group) (g mfgroups.Group, err error) {
+func (lm *loggingMiddleware) UpdateGroup(ctx context.Context, token string, group groups.Group) (g groups.Group, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method update_group for group %s with id %s using token %s took %s to complete", g.Name, g.ID, token, time.Since(begin))
 		if err != nil {
@@ -55,7 +54,7 @@ func (lm *loggingMiddleware) UpdateGroup(ctx context.Context, token string, grou
 
 // ViewGroup logs the view_group request. It logs the group name, id and token and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) ViewGroup(ctx context.Context, token, id string) (g mfgroups.Group, err error) {
+func (lm *loggingMiddleware) ViewGroup(ctx context.Context, token, id string) (g groups.Group, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method view_group for group %s with id %s using token %s took %s to complete", g.Name, g.ID, token, time.Since(begin))
 		if err != nil {
@@ -69,7 +68,7 @@ func (lm *loggingMiddleware) ViewGroup(ctx context.Context, token, id string) (g
 
 // ListGroups logs the list_groups request. It logs the token and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) ListGroups(ctx context.Context, token string, memberKind, memberID string, gp mfgroups.Page) (cg mfgroups.Page, err error) {
+func (lm *loggingMiddleware) ListGroups(ctx context.Context, token string, memberKind, memberID string, gp groups.Page) (cg groups.Page, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list_groups %d groups using token %s took %s to complete", cg.Total, token, time.Since(begin))
 		if err != nil {
@@ -83,7 +82,7 @@ func (lm *loggingMiddleware) ListGroups(ctx context.Context, token string, membe
 
 // EnableGroup logs the enable_group request. It logs the group name, id and token and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) EnableGroup(ctx context.Context, token, id string) (g mfgroups.Group, err error) {
+func (lm *loggingMiddleware) EnableGroup(ctx context.Context, token, id string) (g groups.Group, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method enable_group for group with id %s using token %s took %s to complete", g.ID, token, time.Since(begin))
 		if err != nil {
@@ -97,7 +96,7 @@ func (lm *loggingMiddleware) EnableGroup(ctx context.Context, token, id string) 
 
 // DisableGroup logs the disable_group request. It logs the group name, id and token and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) DisableGroup(ctx context.Context, token, id string) (g mfgroups.Group, err error) {
+func (lm *loggingMiddleware) DisableGroup(ctx context.Context, token, id string) (g groups.Group, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method disable_group for group with id %s using token %s took %s to complete", g.ID, token, time.Since(begin))
 		if err != nil {
@@ -111,7 +110,7 @@ func (lm *loggingMiddleware) DisableGroup(ctx context.Context, token, id string)
 
 // ListMembers logs the list_members request. It logs the groupID and token and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) ListMembers(ctx context.Context, token, groupID, permission, memberKind string) (mp mfgroups.MembersPage, err error) {
+func (lm *loggingMiddleware) ListMembers(ctx context.Context, token, groupID, permission, memberKind string) (mp groups.MembersPage, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list_memberships for group with id %s using token %s took %s to complete", groupID, token, time.Since(begin))
 		if err != nil {

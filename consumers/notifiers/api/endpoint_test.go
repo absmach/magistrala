@@ -81,7 +81,10 @@ func newServer(svc notifiers.Service) *httptest.Server {
 }
 
 func toJSON(data interface{}) string {
-	jsonData, _ := json.Marshal(data)
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return ""
+	}
 	return string(jsonData)
 }
 

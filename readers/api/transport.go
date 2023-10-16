@@ -57,10 +57,7 @@ const (
 	viewPermission        = "view"
 )
 
-var (
-	errThingAccess = errors.New("thing has no permission")
-	errUserAccess  = errors.New("user has no permission")
-)
+var errUserAccess = errors.New("user has no permission")
 
 // MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler(svc readers.MessageRepository, ac mainflux.AuthServiceClient, svcName, instanceID string) http.Handler {

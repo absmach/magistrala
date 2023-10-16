@@ -460,7 +460,8 @@ func (client grpcClient) ListSubjects(ctx context.Context, in *mainflux.ListSubj
 		Permission:    in.GetPermission(),
 		ObjectType:    in.GetObjectType(),
 		Object:        in.GetObject(),
-		NextPageToken: in.GetNextPageToken()})
+		NextPageToken: in.GetNextPageToken(),
+	})
 	if err != nil {
 		return &mainflux.ListSubjectsRes{}, err
 	}

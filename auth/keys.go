@@ -31,7 +31,7 @@ type Token struct {
 type KeyType uint32
 
 const (
-	// AccessKey is temporary User key received on successfull login.
+	// AccessKey is temporary User key received on successful login.
 	AccessKey KeyType = iota
 	// RefreshKey is a temporary User key used to generate a new access key.
 	RefreshKey

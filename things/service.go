@@ -15,10 +15,6 @@ import (
 )
 
 const (
-	myKey = "mine"
-
-	listRelationKey = "c_list"
-
 	ownerRelation = "owner"
 	groupRelation = "group"
 
@@ -154,46 +150,6 @@ func (svc service) ListClients(ctx context.Context, token string, pm mfclients.P
 	}
 
 	pm.IDs = tids.Policies
-	// switch err {
-	// // If the user is admin, fetch all things from database.
-	// case nil:
-	// 	switch {
-	// 	// visibility = all
-	// 	case pm.SharedBy == myKey && pm.Owner == myKey:
-	// 		pm.SharedBy = ""
-	// 		pm.Owner = ""
-	// 	// visibility = shared
-	// 	case pm.SharedBy == myKey && pm.Owner != myKey:
-	// 		pm.SharedBy = userID
-	// 		pm.Owner = ""
-	// 	// visibility = mine
-	// 	case pm.Owner == myKey && pm.SharedBy != myKey:
-	// 		pm.Owner = userID
-	// 		pm.SharedBy = ""
-	// 	}
-
-	// default:
-	// 	// If the user is not admin, check 'sharedby' parameter from page metadata.
-	// 	// If user provides 'sharedby' key, fetch things from policies. Otherwise,
-	// 	// fetch things from the database based on thing's 'owner' field.
-	// 	switch {
-	// 	// visibility = all
-	// 	case pm.SharedBy == myKey && pm.Owner == myKey:
-	// 		pm.SharedBy = userID
-	// 		pm.Owner = userID
-	// 	// visibility = shared
-	// 	case pm.SharedBy == myKey && pm.Owner != myKey:
-	// 		pm.SharedBy = userID
-	// 		pm.Owner = ""
-	// 	// visibility = mine
-	// 	case pm.Owner == myKey && pm.SharedBy != myKey:
-	// 		pm.Owner = userID
-	// 		pm.SharedBy = ""
-	// 	default:
-	// 		pm.Owner = userID
-	// 	}
-	// 	pm.Action = listRelationKey
-	// }
 
 	return svc.clients.RetrieveAllByIDs(ctx, pm)
 }
@@ -377,7 +333,6 @@ func (svc service) ListClientsByGroup(ctx context.Context, token, groupID string
 	})
 	if err != nil {
 		return mfclients.MembersPage{}, err
-
 	}
 
 	pm.IDs = tids.Policies

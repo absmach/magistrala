@@ -67,7 +67,6 @@ func TestSave(t *testing.T) {
 		id, err := repo.Save(context.Background(), tc.sub)
 		assert.Equal(t, tc.id, id, fmt.Sprintf("%s: expected id %s got %s\n", tc.desc, tc.id, id))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-
 	}
 }
 
@@ -113,7 +112,6 @@ func TestView(t *testing.T) {
 		sub, err := repo.Retrieve(context.Background(), tc.id)
 		assert.Equal(t, tc.sub, sub, fmt.Sprintf("%s: expected sub %v got %v\n", tc.desc, tc.sub, sub))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-
 	}
 }
 

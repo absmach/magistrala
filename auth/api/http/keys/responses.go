@@ -56,8 +56,7 @@ func (res retrieveKeyRes) Empty() bool {
 	return false
 }
 
-type revokeKeyRes struct {
-}
+type revokeKeyRes struct{}
 
 func (res revokeKeyRes) Code() int {
 	return http.StatusNoContent

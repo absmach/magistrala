@@ -1,0 +1,312 @@
+openapi: 3.0.3
+info:
+  title: Mainflux Auth Service
+  description: |
+    This is the Auth Server based on the OpenAPI 3.0 specification.  It is the HTTP API for managing platform users. You can now help us improve the API whether it's by making changes to the definition itself or to the code.
+    Some useful links:
+    - [The Mainflux repository](https://github.com/mainflux/mainflux)
+  contact:
+    email: info@mainflux.com
+  license:
+    name: Apache 2.0
+    url: https://github.com/mainflux/mainflux/blob/master/LICENSE
+  version: 0.14.0
+
+servers:
+  - url: http://localhost:8180
+  - url: https://localhost:8180
+
+tags:
+  - name: Auth
+    description: Everything about your Authentication and Authorization.
+    externalDocs:
+      description: Find out more about auth
+      url: http://docs.mainflux.io/
+  - name: Keys
+    description: Everything about your Keys.
+    externalDocs:
+      description: Find out more about keys
+      url: http://docs.mainflux.io/
+
+paths:
+  /keys:
+    post:
+      tags:
+        - Keys
+      summary: Issue API key
+      description: |
+        Generates a new API key. Thew new API key will
+        be uniquely identified by its ID.
+      requestBody:
+        $ref: "#/components/requestBodies/KeyRequest"
+      responses:
+        "201":
+          description: Issued new key.
+        "400":
+          description: Failed due to malformed JSON.
+        "409":
+          description: Failed due to using already existing ID.
+        "415":
+          description: Missing or invalid content type.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /keys/{keyID}:
+    get:
+      summary: Gets API key details.
+      description: |
+        Gets API key details for the given key.
+      tags:
+        - Keys
+      parameters:
+        - $ref: "#/components/parameters/ApiKeyId"
+      responses:
+        "200":
+          $ref: "#/components/responses/KeyRes"
+        "400":
+          description: Failed due to malformed query parameters.
+        "401":
+          description: Missing or invalid access token provided.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+    delete:
+      summary: Revoke API key
+      description: |
+        Revoke API key identified by the given ID.
+      tags:
+        - Keys
+      parameters:
+        - $ref: "#/components/parameters/ApiKeyId"
+      responses:
+        "204":
+          description: Key revoked.
+        "401":
+          description: Missing or invalid access token provided.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /policies:
+    post:
+      summary: Creates new policies.
+      description: |
+        Creates new policies. Only admin can use this endpoint. Therefore, you need an authentication token for the admin.
+        Also, only policies defined on the system are allowed to add. For more details, please see the docs for Authorization.
+      tags:
+        - Auth
+      requestBody:
+        $ref: "#/components/requestBodies/PoliciesReq"
+      responses:
+        "201":
+          description: Policies created.
+        "400":
+          description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Unauthorized access token provided.
+        "409":
+          description: Failed due to using an existing email address.
+        "415":
+          description: Missing or invalid content type.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /policies/delete:
+    post:
+      summary: Deletes policies.
+      description: |
+        Deletes policies. Only admin can use this endpoint. Therefore, you need an authentication token for the admin.
+        Also, only policies defined on the system are allowed to delete. For more details, please see the docs for Authorization.
+      tags:
+        - Auth
+      requestBody:
+        $ref: "#/components/requestBodies/PoliciesReq"
+      responses:
+        "204":
+          description: Policies deleted.
+        "400":
+          description: Failed due to malformed JSON.
+        "409":
+          description: Failed due to using an existing email address.
+        "415":
+          description: Missing or invalid content type.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /health:
+    get:
+      summary: Retrieves service health check info.
+      tags:
+        - health
+      responses:
+        "200":
+          $ref: "#/components/responses/HealthRes"
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+components:
+  schemas:
+    Key:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "c5747f2f-2a7c-4fe1-b41a-51a5ae290945"
+          description: API key unique identifier
+        issuer_id:
+          type: string
+          format: uuid
+          example: "9118de62-c680-46b7-ad0a-21748a52833a"
+          description: In ID of the entity that issued the token.
+        type:
+          type: integer
+          example: 0
+          description: API key type. Keys of different type are processed differently.
+        subject:
+          type: string
+          format: string
+          example: "test@example.com"
+          description: User's email or service identifier of API key subject.
+        issued_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Time when the key is generated.
+        expires_at:
+          type: string
+          format: date-time
+          example: "2019-11-26 13:31:52"
+          description: Time when the Key expires. If this field is missing,
+            that means that Key is valid indefinitely.
+
+    PoliciesReqSchema:
+      type: object
+      properties:
+        object:
+          type: string
+          description: |
+            Specifies an object field for the field.
+            Object indicates application objects such as ThingID.
+        subjects:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+        policies:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+
+  parameters:
+    ApiKeyId:
+      name: keyID
+      description: API Key ID.
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    Limit:
+      name: limit
+      description: Size of the subset to retrieve.
+      in: query
+      schema:
+        type: integer
+        default: 10
+        maximum: 100
+        minimum: 1
+      required: false
+    Offset:
+      name: offset
+      description: Number of items to skip during retrieval.
+      in: query
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+      required: false
+    Metadata:
+      name: metadata
+      description: Metadata filter. Filtering is performed matching the parameter with metadata on top level. Parameter is json.
+      in: query
+      required: false
+      schema:
+        type: object
+        additionalProperties: {}
+    Type:
+      name: type
+      description: The type of the API Key.
+      in: query
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+      required: false
+    Subject:
+      name: subject
+      description: The subject of an API Key
+      in: query
+      schema:
+        type: string
+      required: false
+
+  requestBodies:
+    KeyRequest:
+      description: JSON-formatted document describing key request.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              type:
+                type: integer
+                example: 0
+                description: API key type. Keys of different type are processed differently.
+              duration:
+                type: number
+                format: integer
+                example: 23456
+                description: Number of seconds issued token is valid for.
+
+    PoliciesReq:
+      description: JSON-formatted document describing adding policies request.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/PoliciesReqSchema"
+
+  responses:
+    ServiceError:
+      description: Unexpected server-side error occurred.
+
+    KeyRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Key"
+
+    HealthRes:
+      description: Service Health Check.
+      content:
+        application/json:
+          schema:
+            $ref: "./schemas/HealthInfo.yml"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        * Users access: "Authorization: Bearer <user_token>"
+
+security:
+  - bearerAuth: []

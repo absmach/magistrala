@@ -215,23 +215,45 @@ var cmdThings = []cobra.Command{
 		},
 	},
 	{
-		Use:   "share <channel_id> <user_id> <allowed_actions> <user_auth_token>",
+		Use:   "share <thing_id> <user_id> <relation> <user_auth_token>",
 		Short: "Share thing with a user",
 		Long: "Share thing with a user\n" +
 			"Usage:\n" +
-			"\tmainflux-cli things share <channel_id> <user_id> '[\"c_list\", \"c_delete\"]' $USERTOKEN\n",
+			"\tmainflux-cli things share <thing_id> <user_id> <relation> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 4 {
 				logUsage(cmd.Use)
 				return
 			}
-			var actions []string
-			if err := json.Unmarshal([]byte(args[2]), &actions); err != nil {
+			req := mfxsdk.UsersRelationRequest{
+				Relation: args[2],
+				UserIDs:  []string{args[1]},
+			}
+			err := sdk.ShareThing(args[0], req, args[3])
+			if err != nil {
 				logError(err)
 				return
 			}
 
-			err := sdk.ShareThing(args[0], args[1], actions, args[3])
+			logOK()
+		},
+	},
+	{
+		Use:   "unshare <thing_id> <user_id> <relation> <user_auth_token>",
+		Short: "Unshare thing with a user",
+		Long: "Unshare thing with a user\n" +
+			"Usage:\n" +
+			"\tmainflux-cli things share  <thing_id> <user_id> <relation> $USERTOKEN\n",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 4 {
+				logUsage(cmd.Use)
+				return
+			}
+			req := mfxsdk.UsersRelationRequest{
+				Relation: args[2],
+				UserIDs:  []string{args[1]},
+			}
+			err := sdk.UnshareThing(args[0], req, args[3])
 			if err != nil {
 				logError(err)
 				return
@@ -312,12 +334,36 @@ var cmdThings = []cobra.Command{
 			logJSON(cl)
 		},
 	},
+	{
+		Use:   "users <thing_id> <user_auth_token>",
+		Short: "List users",
+		Long: "List users of a thing\n" +
+			"Usage:\n" +
+			"\tmainflux-cli things users <thing_id> $USERTOKEN\n",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 2 {
+				logUsage(cmd.Use)
+				return
+			}
+			pm := mfxsdk.PageMetadata{
+				Offset: Offset,
+				Limit:  Limit,
+			}
+			ul, err := sdk.ListThingUsers(args[0], pm, args[1])
+			if err != nil {
+				logError(err)
+				return
+			}
+
+			logJSON(ul)
+		},
+	},
 }
 
 // NewThingsCmd returns things command.
 func NewThingsCmd() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "things [create | get | update | delete | share | connect | disconnect | connections | not-connected]",
+		Use:   "things [create | get | update | delete | share | connect | disconnect | connections | not-connected | users ]",
 		Short: "Things management",
 		Long:  `Things management: create, get, update, delete or share Thing, connect or disconnect Thing from Channel and get the list of Channels connected or disconnected from a Thing`,
 	}

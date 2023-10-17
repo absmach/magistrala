@@ -166,12 +166,152 @@ var cmdChannels = []cobra.Command{
 			logJSON(channel)
 		},
 	},
+	{
+		Use:   "assign user <relation> <user_ids> <channel_id> <user_auth_token>",
+		Short: "Assign user",
+		Long: "Assign user to a channel\n" +
+			"Usage:\n" +
+			"\tmainflux-cli channels assign user <relation> '[\"<user_id_1>\", \"<user_id_2>\"]' <channel_id> $USERTOKEN\n",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 5 {
+				logUsage(cmd.Use)
+				return
+			}
+			var userIDs []string
+			if err := json.Unmarshal([]byte(args[1]), &userIDs); err != nil {
+				logError(err)
+				return
+			}
+			if err := sdk.AddUserToChannel(args[2], mfxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3]); err != nil {
+				logError(err)
+				return
+			}
+			logOK()
+		},
+	},
+	{
+		Use:   "unassign user <relation> <user_ids> <channel_id> <user_auth_token>",
+		Short: "Unassign user",
+		Long: "Unassign user from a channel\n" +
+			"Usage:\n" +
+			"\tmainflux-cli channels unassign user <relation> '[\"<user_id_1>\", \"<user_id_2>\"]'  <channel_id> $USERTOKEN\n",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 5 {
+				logUsage(cmd.Use)
+				return
+			}
+			var userIDs []string
+			if err := json.Unmarshal([]byte(args[1]), &userIDs); err != nil {
+				logError(err)
+				return
+			}
+			if err := sdk.RemoveUserFromChannel(args[2], mfxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3]); err != nil {
+				logError(err)
+				return
+			}
+			logOK()
+		},
+	},
+	{
+		Use:   "assign group  <group_ids> <channel_id> <user_auth_token>",
+		Short: "Assign group",
+		Long: "Assign group to a channel\n" +
+			"Usage:\n" +
+			"\tmainflux-cli channels assign group  '[\"<group_id_1>\", \"<group_id_2>\"]' <channel_id> $USERTOKEN\n",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 5 {
+				logUsage(cmd.Use)
+				return
+			}
+			var groupIDs []string
+			if err := json.Unmarshal([]byte(args[0]), &groupIDs); err != nil {
+				logError(err)
+				return
+			}
+			if err := sdk.AddUserGroupToChannel(args[1], mfxsdk.UserGroupsRequest{UserGroupIDs: groupIDs}, args[2]); err != nil {
+				logError(err)
+				return
+			}
+			logOK()
+		},
+	},
+	{
+		Use:   "unassign group  <group_ids> <channel_id> <user_auth_token>",
+		Short: "Unassign group",
+		Long: "Unassign group from a channel\n" +
+			"Usage:\n" +
+			"\tmainflux-cli channels unassign group '[\"<group_id_1>\", \"<group_id_2>\"]'  <channel_id> $USERTOKEN\n",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 5 {
+				logUsage(cmd.Use)
+				return
+			}
+			var groupIDs []string
+			if err := json.Unmarshal([]byte(args[0]), &groupIDs); err != nil {
+				logError(err)
+				return
+			}
+			if err := sdk.RemoveUserGroupFromChannel(args[1], mfxsdk.UserGroupsRequest{UserGroupIDs: groupIDs}, args[2]); err != nil {
+				logError(err)
+				return
+			}
+			logOK()
+		},
+	},
+	{
+		Use:   "users <channel_id> <user_auth_token>",
+		Short: "List users",
+		Long: "List users of a channel\n" +
+			"Usage:\n" +
+			"\tmainflux-cli channels users <channel_id> $USERTOKEN\n",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 2 {
+				logUsage(cmd.Use)
+				return
+			}
+			pm := mfxsdk.PageMetadata{
+				Offset: Offset,
+				Limit:  Limit,
+			}
+			ul, err := sdk.ListChannelUsers(args[0], pm, args[1])
+			if err != nil {
+				logError(err)
+				return
+			}
+
+			logJSON(ul)
+		},
+	},
+	{
+		Use:   "groups <channel_id> <user_auth_token>",
+		Short: "List groups",
+		Long: "List groups of a channel\n" +
+			"Usage:\n" +
+			"\tmainflux-cli channels groups <channel_id> $USERTOKEN\n",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 2 {
+				logUsage(cmd.Use)
+				return
+			}
+			pm := mfxsdk.PageMetadata{
+				Offset: Offset,
+				Limit:  Limit,
+			}
+			ul, err := sdk.ListChannelUserGroups(args[0], pm, args[1])
+			if err != nil {
+				logError(err)
+				return
+			}
+
+			logJSON(ul)
+		},
+	},
 }
 
 // NewChannelsCmd returns channels command.
 func NewChannelsCmd() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "channels [create | get | update | delete | connections | not-connected]",
+		Use:   "channels [create | get | update | delete | connections | not-connected | assign | unassign | users | groups]",
 		Short: "Channels management",
 		Long:  `Channels management: create, get, update or delete Channel and get list of Things connected or not connected to a Channel`,
 	}

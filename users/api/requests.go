@@ -83,18 +83,22 @@ func (req listClientsReq) validate() error {
 	return nil
 }
 
-type listMembersReq struct {
+type listMembersByObjectReq struct {
 	mfclients.Page
-	token   string
-	groupID string
+	token      string
+	objectKind string
+	objectID   string
 }
 
-func (req listMembersReq) validate() error {
+func (req listMembersByObjectReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
 	}
-	if req.groupID == "" {
+	if req.objectID == "" {
 		return apiutil.ErrMissingID
+	}
+	if req.objectKind == "" {
+		return apiutil.ErrMissingMemberKind
 	}
 
 	return nil

@@ -67,26 +67,6 @@ func groupsHandler(svc groups.Service, r *chi.Mux, logger logger.Logger) http.Ha
 			opts...,
 		), "disable_channel").ServeHTTP)
 
-		// Instead of having this endpoint /channels/{groupID}/assign separately,
-		// we can have two separate endpoints for each member kind
-		// users (/channels/{groupID}/users) & user_groups (/channels/{groupID}/groups)
-		r.Post("/{groupID}/assign", otelhttp.NewHandler(kithttp.NewServer(
-			assignUsersGroupsEndpoint(svc),
-			decodeAssignUsersGroupsRequest,
-			api.EncodeResponse,
-			opts...,
-		), "assign_members").ServeHTTP)
-
-		// Instead of having this endpoint /channels/{groupID}/unassign separately,
-		// we can have two separate endpoints for each member kind
-		// users (/channels/{groupID}/users) & user_groups (/channels/{groupID}/groups)
-		r.Post("/{groupID}/unassign", otelhttp.NewHandler(kithttp.NewServer(
-			unassignUsersGroupsEndpoint(svc),
-			decodeUnassignUsersGroupsRequest,
-			api.EncodeResponse,
-			opts...,
-		), "unassign_members").ServeHTTP)
-
 		// Request to add users to a channel
 		// This endpoint can be used alternative to /channels/{groupID}/members
 		r.Post("/{groupID}/users/assign", otelhttp.NewHandler(kithttp.NewServer(
@@ -190,38 +170,6 @@ func groupsHandler(svc groups.Service, r *chi.Mux, logger logger.Logger) http.Ha
 	), "disconnect").ServeHTTP)
 
 	return r
-}
-
-func decodeAssignUsersGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
-	}
-
-	req := assignUsersGroupsRequest{
-		token:   apiutil.ExtractBearerToken(r),
-		groupID: chi.URLParam(r, "groupID"),
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
-	}
-
-	return req, nil
-}
-
-func decodeUnassignUsersGroupsRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
-	}
-
-	req := unassignUsersGroupsRequest{
-		token:   apiutil.ExtractBearerToken(r),
-		groupID: chi.URLParam(r, "groupID"),
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
-	}
-
-	return req, nil
 }
 
 func decodeAssignUsersRequest(_ context.Context, r *http.Request) (interface{}, error) {

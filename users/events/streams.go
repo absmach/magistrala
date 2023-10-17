@@ -160,13 +160,13 @@ func (es *eventStore) ListClients(ctx context.Context, token string, pm mfclient
 	return cp, nil
 }
 
-func (es *eventStore) ListMembers(ctx context.Context, token, groupID string, pm mfclients.Page) (mfclients.MembersPage, error) {
-	mp, err := es.svc.ListMembers(ctx, token, groupID, pm)
+func (es *eventStore) ListMembers(ctx context.Context, token, objectKind, objectID string, pm mfclients.Page) (mfclients.MembersPage, error) {
+	mp, err := es.svc.ListMembers(ctx, token, objectKind, objectID, pm)
 	if err != nil {
 		return mp, err
 	}
 	event := listClientByGroupEvent{
-		pm, groupID,
+		pm, objectKind, objectID,
 	}
 
 	if err := es.Publish(ctx, event); err != nil {

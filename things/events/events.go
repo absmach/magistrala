@@ -188,12 +188,14 @@ func (vce viewClientEvent) Encode() (map[string]interface{}, error) {
 }
 
 type listClientEvent struct {
+	reqUserID string
 	mfclients.Page
 }
 
 func (lce listClientEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
 		"operation": clientList,
+		"reqUserID": lce.reqUserID,
 		"total":     lce.Total,
 		"offset":    lce.Offset,
 		"limit":     lce.Limit,

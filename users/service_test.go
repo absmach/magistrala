@@ -1321,7 +1321,7 @@ func TestListMembers(t *testing.T) {
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: true}, nil)
 		repoCall2 := auth.On("ListAllSubjects", mock.Anything, mock.Anything).Return(&mainflux.ListSubjectsRes{}, nil)
 		repoCall3 := cRepo.On("RetrieveAll", context.Background(), tc.page).Return(mfclients.ClientsPage{Page: tc.response.Page, Clients: tc.response.Members}, tc.err)
-		page, err := svc.ListMembers(context.Background(), tc.token, tc.groupID, tc.page)
+		page, err := svc.ListMembers(context.Background(), tc.token, "groups", tc.groupID, tc.page)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.response, page, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.response, page))
 		if tc.err == nil {

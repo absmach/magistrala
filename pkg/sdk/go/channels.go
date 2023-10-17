@@ -146,6 +146,131 @@ func (sdk mfSDK) UpdateChannel(c Channel, token string) (Channel, errors.SDKErro
 	return c, nil
 }
 
+func (sdk mfSDK) AddUserToChannel(channelID string, req UsersRelationRequest, token string) errors.SDKError {
+	data, err := json.Marshal(req)
+	if err != nil {
+		return errors.NewSDKError(err)
+	}
+
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, usersEndpoint)
+
+	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusOK)
+	return sdkerr
+}
+
+func (sdk mfSDK) RemoveUserFromChannel(channelID string, req UsersRelationRequest, token string) errors.SDKError {
+	data, err := json.Marshal(req)
+	if err != nil {
+		return errors.NewSDKError(err)
+	}
+
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, usersEndpoint)
+
+	_, _, sdkerr := sdk.processRequest(http.MethodDelete, url, token, data, nil, http.StatusOK)
+	return sdkerr
+}
+
+func (sdk mfSDK) ListChannelUsers(channelID string, pm PageMetadata, token string) (UsersPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(sdk.thingsURL, fmt.Sprintf("%s/%s/%s", channelsEndpoint, channelID, usersEndpoint), pm)
+	if err != nil {
+		return UsersPage{}, errors.NewSDKError(err)
+	}
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
+	if sdkerr != nil {
+		return UsersPage{}, sdkerr
+	}
+	up := UsersPage{}
+	if err := json.Unmarshal(body, &up); err != nil {
+		return UsersPage{}, errors.NewSDKError(err)
+	}
+
+	return up, nil
+}
+
+func (sdk mfSDK) AddUserGroupToChannel(channelID string, req UserGroupsRequest, token string) errors.SDKError {
+	data, err := json.Marshal(req)
+	if err != nil {
+		return errors.NewSDKError(err)
+	}
+
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, groupsEndpoint)
+
+	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusOK)
+	return sdkerr
+}
+
+func (sdk mfSDK) RemoveUserGroupFromChannel(channelID string, req UserGroupsRequest, token string) errors.SDKError {
+	data, err := json.Marshal(req)
+	if err != nil {
+		return errors.NewSDKError(err)
+	}
+
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, groupsEndpoint)
+
+	_, _, sdkerr := sdk.processRequest(http.MethodDelete, url, token, data, nil, http.StatusOK)
+	return sdkerr
+}
+
+func (sdk mfSDK) ListChannelUserGroups(channelID string, pm PageMetadata, token string) (GroupsPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(sdk.thingsURL, fmt.Sprintf("%s/%s/%s", channelsEndpoint, channelID, groupsEndpoint), pm)
+	if err != nil {
+		return GroupsPage{}, errors.NewSDKError(err)
+	}
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
+	if sdkerr != nil {
+		return GroupsPage{}, sdkerr
+	}
+	gp := GroupsPage{}
+	if err := json.Unmarshal(body, &gp); err != nil {
+		return GroupsPage{}, errors.NewSDKError(err)
+	}
+
+	return gp, nil
+}
+
+func (sdk mfSDK) Connect(conn Connection, token string) errors.SDKError {
+	data, err := json.Marshal(conn)
+	if err != nil {
+		return errors.NewSDKError(err)
+	}
+
+	url := fmt.Sprintf("%s/%s", sdk.thingsURL, connectEndpoint)
+
+	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusOK)
+
+	return sdkerr
+}
+
+func (sdk mfSDK) Disconnect(connIDs Connection, token string) errors.SDKError {
+	data, err := json.Marshal(connIDs)
+	if err != nil {
+		return errors.NewSDKError(err)
+	}
+
+	url := fmt.Sprintf("%s/%s", sdk.thingsURL, disconnectEndpoint)
+
+	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusNoContent)
+
+	return sdkerr
+}
+
+func (sdk mfSDK) ConnectThing(thingID, channelID, token string) errors.SDKError {
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, thingsEndpoint, thingID)
+
+	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, nil, nil, http.StatusNoContent)
+
+	return sdkerr
+
+}
+
+func (sdk mfSDK) DisconnectThing(thingID, channelID, token string) errors.SDKError {
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, thingsEndpoint, thingID)
+
+	_, _, sdkerr := sdk.processRequest(http.MethodDelete, url, token, nil, nil, http.StatusNoContent)
+
+	return sdkerr
+}
+
 func (sdk mfSDK) EnableChannel(id, token string) (Channel, errors.SDKError) {
 	return sdk.changeChannelStatus(id, enableEndpoint, token)
 }

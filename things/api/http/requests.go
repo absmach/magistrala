@@ -75,6 +75,7 @@ type listClientsReq struct {
 	owner      string
 	permission string
 	visibility string
+	userID     string
 	metadata   mfclients.Metadata
 }
 
@@ -378,10 +379,9 @@ func (req *connectChannelThingRequest) validate() error {
 }
 
 type disconnectChannelThingRequest struct {
-	token      string
-	ThingID    string `json:"thing_id,omitempty"`
-	ChannelID  string `json:"channel_id,omitempty"`
-	Permission string `json:"permission,omitempty"`
+	token     string
+	ThingID   string `json:"thing_id,omitempty"`
+	ChannelID string `json:"channel_id,omitempty"`
 }
 
 func (req *disconnectChannelThingRequest) validate() error {

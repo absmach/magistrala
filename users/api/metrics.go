@@ -175,12 +175,12 @@ func (ms *metricsMiddleware) DisableClient(ctx context.Context, token string, id
 }
 
 // ListMembers instruments ListMembers method with metrics.
-func (ms *metricsMiddleware) ListMembers(ctx context.Context, token, groupID string, pm mfclients.Page) (mp mfclients.MembersPage, err error) {
+func (ms *metricsMiddleware) ListMembers(ctx context.Context, token, objectKind, objectID string, pm mfclients.Page) (mp mfclients.MembersPage, err error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_members").Add(1)
 		ms.latency.With("method", "list_members").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return ms.svc.ListMembers(ctx, token, groupID, pm)
+	return ms.svc.ListMembers(ctx, token, objectKind, objectID, pm)
 }
 
 // Identify instruments Identify method with metrics.

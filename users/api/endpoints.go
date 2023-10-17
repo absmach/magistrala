@@ -102,14 +102,50 @@ func listClientsEndpoint(svc users.Service) endpoint.Endpoint {
 	}
 }
 
-func listMembersEndpoint(svc users.Service) endpoint.Endpoint {
+func listMembersByGroupEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(listMembersReq)
+		req := request.(listMembersByObjectReq)
+		req.objectKind = "groups"
 		if err := req.validate(); err != nil {
 			return memberPageRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		page, err := svc.ListMembers(ctx, req.token, req.groupID, req.Page)
+		page, err := svc.ListMembers(ctx, req.token, req.objectKind, req.objectID, req.Page)
+		if err != nil {
+			return memberPageRes{}, err
+		}
+
+		return buildMembersResponse(page), nil
+	}
+}
+
+func listMembersByChannelEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(listMembersByObjectReq)
+		// In spiceDB schema, using the same 'group' type for both channels and groups, rather than having a separate type for channels.
+		req.objectKind = "groups"
+		if err := req.validate(); err != nil {
+			return memberPageRes{}, errors.Wrap(apiutil.ErrValidation, err)
+		}
+
+		page, err := svc.ListMembers(ctx, req.token, req.objectKind, req.objectID, req.Page)
+		if err != nil {
+			return memberPageRes{}, err
+		}
+
+		return buildMembersResponse(page), nil
+	}
+}
+
+func listMembersByThingEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(listMembersByObjectReq)
+		req.objectKind = "things"
+		if err := req.validate(); err != nil {
+			return memberPageRes{}, errors.Wrap(apiutil.ErrValidation, err)
+		}
+
+		page, err := svc.ListMembers(ctx, req.token, req.objectKind, req.objectID, req.Page)
 		if err != nil {
 			return memberPageRes{}, err
 		}

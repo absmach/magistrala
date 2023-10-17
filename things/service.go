@@ -133,27 +133,78 @@ func (svc service) ViewClient(ctx context.Context, token string, id string) (mfc
 	return svc.clients.RetrieveByID(ctx, id)
 }
 
-func (svc service) ListClients(ctx context.Context, token string, pm mfclients.Page) (mfclients.ClientsPage, error) {
+func (svc service) ListClients(ctx context.Context, token string, reqUserID string, pm mfclients.Page) (mfclients.ClientsPage, error) {
+	var ids []string
+
 	userID, err := svc.identify(ctx, token)
 	if err != nil {
 		return mfclients.ClientsPage{}, err
 	}
 
-	tids, err := svc.auth.ListAllObjects(ctx, &mainflux.ListObjectsReq{
-		SubjectType: userType,
-		Subject:     userID,
-		Permission:  pm.Permission,
-		ObjectType:  thingType,
-	})
-	if err != nil {
-		return mfclients.ClientsPage{}, err
+	switch {
+	case (reqUserID != "" && reqUserID != userID):
+		if _, err := svc.authorize(ctx, userType, tokenKind, userID, ownerPermission, userType, reqUserID); err != nil {
+			return mfclients.ClientsPage{}, err
+		}
+		rtids, err := svc.listClientIDs(ctx, reqUserID, pm.Permission)
+		if err != nil {
+			return mfclients.ClientsPage{}, err
+		}
+		ids, err = svc.filterAllowedThingIDs(ctx, userID, pm.Permission, rtids)
+		if err != nil {
+			return mfclients.ClientsPage{}, err
+		}
+	default:
+		ids, err = svc.listClientIDs(ctx, userID, pm.Permission)
+		if err != nil {
+			return mfclients.ClientsPage{}, err
+		}
 	}
 
-	pm.IDs = tids.Policies
+	if len(ids) == 0 {
+		return mfclients.ClientsPage{
+			Page: mfclients.Page{Total: 0, Limit: pm.Limit, Offset: pm.Offset},
+		}, nil
+	}
+
+	pm.IDs = ids
 
 	return svc.clients.RetrieveAllByIDs(ctx, pm)
 }
 
+func (svc service) listClientIDs(ctx context.Context, userID, permission string) ([]string, error) {
+	tids, err := svc.auth.ListAllObjects(ctx, &mainflux.ListObjectsReq{
+		SubjectType: userType,
+		Subject:     userID,
+		Permission:  permission,
+		ObjectType:  thingType,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return tids.Policies, nil
+}
+
+func (svc service) filterAllowedThingIDs(ctx context.Context, userID, permission string, thingIDs []string) ([]string, error) {
+	var ids []string
+	tids, err := svc.auth.ListAllObjects(ctx, &mainflux.ListObjectsReq{
+		SubjectType: userType,
+		Subject:     userID,
+		Permission:  permission,
+		ObjectType:  thingType,
+	})
+	if err != nil {
+		return nil, err
+	}
+	for _, thingID := range thingIDs {
+		for _, tid := range tids.Policies {
+			if thingID == tid {
+				ids = append(ids, thingID)
+			}
+		}
+	}
+	return ids, nil
+}
 func (svc service) UpdateClient(ctx context.Context, token string, cli mfclients.Client) (mfclients.Client, error) {
 	userID, err := svc.authorize(ctx, userType, tokenKind, token, editPermission, thingType, cli.ID)
 	if err != nil {
@@ -258,6 +309,7 @@ func (svc service) Share(ctx context.Context, token, id, relation string, userid
 	}
 
 	for _, userid := range userids {
+
 		addPolicyReq := &mainflux.AddPolicyReq{
 			SubjectType: userType,
 			Subject:     userid,
@@ -265,6 +317,7 @@ func (svc service) Share(ctx context.Context, token, id, relation string, userid
 			ObjectType:  thingType,
 			Object:      id,
 		}
+
 		res, err := svc.auth.AddPolicy(ctx, addPolicyReq)
 		if err != nil {
 			return err
@@ -273,7 +326,6 @@ func (svc service) Share(ctx context.Context, token, id, relation string, userid
 			return errors.ErrAuthorization
 		}
 	}
-
 	return nil
 }
 
@@ -284,6 +336,7 @@ func (svc service) Unshare(ctx context.Context, token, id, relation string, user
 	}
 
 	for _, userid := range userids {
+
 		delPolicyReq := &mainflux.DeletePolicyReq{
 			SubjectType: userType,
 			Subject:     userid,
@@ -291,6 +344,7 @@ func (svc service) Unshare(ctx context.Context, token, id, relation string, user
 			ObjectType:  thingType,
 			Object:      id,
 		}
+
 		res, err := svc.auth.DeletePolicy(ctx, delPolicyReq)
 		if err != nil {
 			return err
@@ -299,7 +353,6 @@ func (svc service) Unshare(ctx context.Context, token, id, relation string, user
 			return errors.ErrAuthorization
 		}
 	}
-
 	return nil
 }
 
@@ -336,6 +389,7 @@ func (svc service) ListClientsByGroup(ctx context.Context, token, groupID string
 	}
 
 	pm.IDs = tids.Policies
+
 	cp, err := svc.clients.RetrieveAllByIDs(ctx, pm)
 	if err != nil {
 		return mfclients.MembersPage{}, err

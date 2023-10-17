@@ -333,12 +333,92 @@ var cmdUsers = []cobra.Command{
 			logJSON(user)
 		},
 	},
+
+	{
+		Use:   "channels <user_id> <user_auth_token>",
+		Short: "List channels",
+		Long: "List channels of user\n" +
+			"Usage:\n" +
+			"\tmainflux-cli users channels <user_id> <user_auth_token>\n",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 2 {
+				logUsage(cmd.Use)
+				return
+			}
+
+			pm := mfxsdk.PageMetadata{
+				Offset: Offset,
+				Limit:  Limit,
+			}
+
+			users, err := sdk.ListUserChannels(args[0], pm, args[1])
+			if err != nil {
+				logError(err)
+				return
+			}
+
+			logJSON(users)
+		},
+	},
+
+	{
+		Use:   "things <user_id> <user_auth_token>",
+		Short: "List things",
+		Long: "List things of user\n" +
+			"Usage:\n" +
+			"\tmainflux-cli users things <user_id> <user_auth_token>\n",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 2 {
+				logUsage(cmd.Use)
+				return
+			}
+
+			pm := mfxsdk.PageMetadata{
+				Offset: Offset,
+				Limit:  Limit,
+			}
+
+			users, err := sdk.ListUserThings(args[0], pm, args[1])
+			if err != nil {
+				logError(err)
+				return
+			}
+
+			logJSON(users)
+		},
+	},
+	{
+		Use:   "groups <user_id> <user_auth_token>",
+		Short: "List groups",
+		Long: "List groups of user\n" +
+			"Usage:\n" +
+			"\tmainflux-cli users groups <user_id> <user_auth_token>\n",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 2 {
+				logUsage(cmd.Use)
+				return
+			}
+
+			pm := mfxsdk.PageMetadata{
+				Offset: Offset,
+				Limit:  Limit,
+			}
+
+			users, err := sdk.ListUserGroups(args[0], pm, args[1])
+			if err != nil {
+				logError(err)
+				return
+			}
+
+			logJSON(users)
+		},
+	},
 }
 
 // NewUsersCmd returns users command.
 func NewUsersCmd() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "users [create | get | update | token | password | enable | disable]",
+		Use:   "users [create | get | update | token | password | enable | disable | channels | things | groups]",
 		Short: "Users management",
 		Long:  `Users management: create accounts and tokens"`,
 	}

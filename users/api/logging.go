@@ -252,16 +252,16 @@ func (lm *loggingMiddleware) DisableClient(ctx context.Context, token, id string
 
 // ListMembers logs the list_members request. It logs the group id, token and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) ListMembers(ctx context.Context, token, groupID string, cp mfclients.Page) (mp mfclients.MembersPage, err error) {
+func (lm *loggingMiddleware) ListMembers(ctx context.Context, token, objectKind, objectID string, cp mfclients.Page) (mp mfclients.MembersPage, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method list_members %d members for group with id %s and token %s took %s to complete", mp.Total, groupID, token, time.Since(begin))
+		message := fmt.Sprintf("Method list_members %d members for object kind %s and object id %s and token %s took %s to complete", mp.Total, objectKind, objectID, token, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return
 		}
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
-	return lm.svc.ListMembers(ctx, token, groupID, cp)
+	return lm.svc.ListMembers(ctx, token, objectKind, objectID, cp)
 }
 
 // Identify logs the identify request. It logs the token and the time it took to complete the request.

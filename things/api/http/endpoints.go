@@ -92,7 +92,7 @@ func listClientsEndpoint(svc things.Service) endpoint.Endpoint {
 			Permission: req.permission,
 			Metadata:   req.metadata,
 		}
-		page, err := svc.ListClients(ctx, req.token, pm)
+		page, err := svc.ListClients(ctx, req.token, req.userID, pm)
 		if err != nil {
 			return mfclients.ClientsPage{}, err
 		}
@@ -252,36 +252,6 @@ func buildMembersResponse(cp mfclients.MembersPage) memberPageRes {
 	}
 
 	return res
-}
-
-func assignUsersGroupsEndpoint(svc groups.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(assignUsersGroupsRequest)
-		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
-		}
-
-		if err := svc.Assign(ctx, req.token, req.groupID, req.Relation, req.MemberKind, req.Members...); err != nil {
-			return nil, err
-		}
-
-		return assignUsersGroupsRes{}, nil
-	}
-}
-
-func unassignUsersGroupsEndpoint(svc groups.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(unassignUsersGroupsRequest)
-		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
-		}
-
-		if err := svc.Unassign(ctx, req.token, req.groupID, req.Relation, req.MemberKind, req.Members...); err != nil {
-			return nil, err
-		}
-
-		return unassignUsersGroupsRes{}, nil
-	}
 }
 
 func assignUsersEndpoint(svc groups.Service) endpoint.Endpoint {

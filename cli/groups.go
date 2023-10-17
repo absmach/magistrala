@@ -142,22 +142,22 @@ var cmdGroups = []cobra.Command{
 		},
 	},
 	{
-		Use:   "assign <allowed_actions> <member_id> <group_id> <user_auth_token>",
-		Short: "Assign member",
-		Long: "Assign members to a group\n" +
+		Use:   "assign user <relation> <user_ids> <group_id> <user_auth_token>",
+		Short: "Assign user",
+		Long: "Assign user to a group\n" +
 			"Usage:\n" +
-			"\tmainflux-cli groups assign '[\"<allowed_action>\", \"<allowed_action>\"]' <member_id> <group_id> $USERTOKEN\n",
+			"\tmainflux-cli groups assign user <relation> '[\"<user_id_1>\", \"<user_id_2>\"]' <group_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 4 {
+			if len(args) != 5 {
 				logUsage(cmd.Use)
 				return
 			}
-			var actions []string
-			if err := json.Unmarshal([]byte(args[0]), &actions); err != nil {
+			var userIDs []string
+			if err := json.Unmarshal([]byte(args[1]), &userIDs); err != nil {
 				logError(err)
 				return
 			}
-			if err := sdk.Assign(actions, args[1], args[2], args[3]); err != nil {
+			if err := sdk.AddUserToGroup(args[2], mfxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3]); err != nil {
 				logError(err)
 				return
 			}
@@ -165,29 +165,35 @@ var cmdGroups = []cobra.Command{
 		},
 	},
 	{
-		Use:   "unassign <member_id> <group_id> <user_auth_token>",
-		Short: "Unassign member",
-		Long: "Unassign member from a group\n" +
+		Use:   "unassign user <relation> <user_ids> <group_id> <user_auth_token>",
+		Short: "Unassign user",
+		Long: "Unassign user from a group\n" +
 			"Usage:\n" +
-			"\tmainflux-cli groups unassign <member_id> <group_id> $USERTOKEN\n",
+			"\tmainflux-cli groups unassign user <relation> '[\"<user_id_1>\", \"<user_id_2>\"]' <group_id> $USERTOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) != 3 {
+			if len(args) != 5 {
 				logUsage(cmd.Use)
 				return
 			}
-			if err := sdk.Unassign(args[0], args[1], args[2]); err != nil {
+			var userIDs []string
+			if err := json.Unmarshal([]byte(args[1]), &userIDs); err != nil {
+				logError(err)
+				return
+			}
+			if err := sdk.RemoveUserFromGroup(args[2], mfxsdk.UsersRelationRequest{Relation: args[0], UserIDs: userIDs}, args[3]); err != nil {
 				logError(err)
 				return
 			}
 			logOK()
 		},
 	},
+
 	{
-		Use:   "members <group_id> <user_auth_token>",
-		Short: "Members list",
-		Long: "List group's members\n" +
+		Use:   "users <group_id> <user_auth_token>",
+		Short: "List users",
+		Long: "List users in a group\n" +
 			"Usage:\n" +
-			"\tmainflux-cli groups members <group_id> $USERTOKEN",
+			"\tmainflux-cli groups users <group_id> $USERTOKEN",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				logUsage(cmd.Use)
@@ -198,20 +204,20 @@ var cmdGroups = []cobra.Command{
 				Limit:  Limit,
 				Status: Status,
 			}
-			up, err := sdk.Members(args[0], pm, args[1])
+			users, err := sdk.ListGroupUsers(args[0], pm, args[1])
 			if err != nil {
 				logError(err)
 				return
 			}
-			logJSON(up)
+			logJSON(users)
 		},
 	},
 	{
-		Use:   "membership <member_id> <user_auth_token>",
-		Short: "Membership list",
-		Long: "List memberships of a member\n" +
+		Use:   "channels <group_id> <user_auth_token>",
+		Short: "List channels",
+		Long: "List channels in a group\n" +
 			"Usage:\n" +
-			"\tmainflux-cli groups membership <member_id> $USERTOKEN",
+			"\tmainflux-cli groups channels <group_id> $USERTOKEN",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				logUsage(cmd.Use)
@@ -220,13 +226,14 @@ var cmdGroups = []cobra.Command{
 			pm := mfxsdk.PageMetadata{
 				Offset: Offset,
 				Limit:  Limit,
+				Status: Status,
 			}
-			up, err := sdk.Memberships(args[0], pm, args[1])
+			channels, err := sdk.ListGroupChannels(args[0], pm, args[1])
 			if err != nil {
 				logError(err)
 				return
 			}
-			logJSON(up)
+			logJSON(channels)
 		},
 	},
 	{
@@ -276,7 +283,7 @@ var cmdGroups = []cobra.Command{
 // NewGroupsCmd returns users command.
 func NewGroupsCmd() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "groups [create | get | update | delete | assign | unassign | members | membership]",
+		Use:   "groups [create | get | update | delete | assign | unassign | users | channels ]",
 		Short: "Groups management",
 		Long:  `Groups management: create, update, delete group and assign and unassign member to groups"`,
 	}

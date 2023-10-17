@@ -224,16 +224,18 @@ func Provision(conf Config) error {
 		fmt.Printf("[[channels]]\nchannel_id = \"%s\"\n\n", cIDs[i])
 	}
 
-	for i := 0; i < conf.Num; i++ {
-		conIDs := sdk.Connection{
-			ChannelID: cIDs[i],
-			ThingID:   tIDs[i],
-		}
-
-		if err := s.Connect(conIDs, token.AccessToken); err != nil {
-			log.Fatalf("Failed to connect thing %s to channel %s: %s", conIDs.ThingID, conIDs.ChannelID, err)
+	for _, cID := range cIDs {
+		for _, tID := range tIDs {
+			conIDs := sdk.Connection{
+				ThingID:   tID,
+				ChannelID: cID,
+			}
+			if err := s.Connect(conIDs, token.AccessToken); err != nil {
+				log.Fatalf("Failed to connect things %s to channels %s: %s", tID, cID, err)
+			}
 		}
 	}
+
 
 	return nil
 }

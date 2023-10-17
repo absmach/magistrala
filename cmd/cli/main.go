@@ -61,7 +61,6 @@ func main() {
 	bootstrapCmd := cli.NewBootstrapCmd()
 	certsCmd := cli.NewCertsCmd()
 	subscriptionsCmd := cli.NewSubscriptionCmd()
-	policiesCmd := cli.NewPolicyCmd()
 	configCmd := cli.NewConfigCmd()
 
 	// Root Commands
@@ -75,7 +74,6 @@ func main() {
 	rootCmd.AddCommand(bootstrapCmd)
 	rootCmd.AddCommand(certsCmd)
 	rootCmd.AddCommand(subscriptionsCmd)
-	rootCmd.AddCommand(policiesCmd)
 	rootCmd.AddCommand(configCmd)
 
 	// Root Flags

@@ -267,6 +267,58 @@ func (sdk mfSDK) UpdateUserOwner(user User, token string) (User, errors.SDKError
 	return user, nil
 }
 
+func (sdk mfSDK) ListUserChannels(userID string, pm PageMetadata, token string) (ChannelsPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s", usersEndpoint, userID, channelsEndpoint), pm)
+	if err != nil {
+		return ChannelsPage{}, errors.NewSDKError(err)
+	}
+
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
+	if sdkerr != nil {
+		return ChannelsPage{}, sdkerr
+	}
+	cp := ChannelsPage{}
+	if err := json.Unmarshal(body, &cp); err != nil {
+		return ChannelsPage{}, errors.NewSDKError(err)
+	}
+
+	return cp, nil
+}
+
+func (sdk mfSDK) ListUserGroups(userID string, pm PageMetadata, token string) (GroupsPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s", usersEndpoint, userID, groupsEndpoint), pm)
+	if err != nil {
+		return GroupsPage{}, errors.NewSDKError(err)
+	}
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
+	if sdkerr != nil {
+		return GroupsPage{}, sdkerr
+	}
+	gp := GroupsPage{}
+	if err := json.Unmarshal(body, &gp); err != nil {
+		return GroupsPage{}, errors.NewSDKError(err)
+	}
+
+	return gp, nil
+}
+
+func (sdk mfSDK) ListUserThings(userID string, pm PageMetadata, token string) (ThingsPage, errors.SDKError) {
+	url, err := sdk.withQueryParams(sdk.usersURL, fmt.Sprintf("%s/%s/%s", usersEndpoint, userID, thingsEndpoint), pm)
+	if err != nil {
+		return ThingsPage{}, errors.NewSDKError(err)
+	}
+	_, body, sdkerr := sdk.processRequest(http.MethodGet, url, token, nil, nil, http.StatusOK)
+	if sdkerr != nil {
+		return ThingsPage{}, sdkerr
+	}
+	tp := ThingsPage{}
+	if err := json.Unmarshal(body, &tp); err != nil {
+		return ThingsPage{}, errors.NewSDKError(err)
+	}
+
+	return tp, nil
+}
+
 func (sdk mfSDK) EnableUser(id, token string) (User, errors.SDKError) {
 	return sdk.changeClientStatus(token, id, enableEndpoint)
 }

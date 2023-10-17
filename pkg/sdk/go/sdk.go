@@ -82,6 +82,7 @@ type PageMetadata struct {
 	Action     string   `json:"action,omitempty"`
 	Subject    string   `json:"subject,omitempty"`
 	Object     string   `json:"object,omitempty"`
+	Permission string   `json:"permission,omitempty"`
 	Tag        string   `json:"tag,omitempty"`
 	Owner      string   `json:"owner,omitempty"`
 	SharedBy   string   `json:"shared_by,omitempty"`
@@ -134,17 +135,6 @@ type SDK interface {
 	//	users, _ := sdk.Users(pm, "token")
 	//	fmt.Println(users)
 	Users(pm PageMetadata, token string) (UsersPage, errors.SDKError)
-
-	// Members retrieves everything that is assigned to a group identified by groupID.
-	//
-	// example:
-	//	pm := sdk.PageMetadata{
-	//		Offset: 0,
-	//		Limit:  10,
-	//	}
-	//	members, _ := sdk.Members("groupID", pm, "token")
-	//	fmt.Println(members)
-	Members(groupID string, meta PageMetadata, token string) (MembersPage, errors.SDKError)
 
 	// UserProfile returns user logged in.
 	//
@@ -256,6 +246,42 @@ type SDK interface {
 	//  token, _ := sdk.RefreshToken("refresh_token")
 	//  fmt.Println(token)
 	RefreshToken(token string) (Token, errors.SDKError)
+
+	// ListUserChannels list all channels belongs a particular user id.
+	//
+	// example:
+	//	pm := sdk.PageMetadata{
+	//		Offset: 0,
+	//		Limit:  10,
+	//		Permission: "edit", // available Options:  "administrator", "delete", edit", "view", "share", "owner", "admin", "editor", "viewer"
+	//	}
+	//  channels, _ := sdk.ListUserChannels("user_id_1", pm, "token")
+	//  fmt.Println(channels)
+	ListUserChannels(userID string, pm PageMetadata, token string) (ChannelsPage, errors.SDKError)
+
+	// ListUserGroups list all groups belongs a particular user id.
+	//
+	// example:
+	//	pm := sdk.PageMetadata{
+	//		Offset: 0,
+	//		Limit:  10,
+	//		Permission: "edit", // available Options:  "administrator", "delete", edit", "view", "share", "owner", "admin", "editor", "viewer"
+	//	}
+	//  groups, _ := sdk.ListUserGroups("user_id_1", pm, "token")
+	//  fmt.Println(channels)
+	ListUserGroups(userID string, pm PageMetadata, token string) (GroupsPage, errors.SDKError)
+
+	// ListUserThings list all things belongs a particular user id.
+	//
+	// example:
+	//	pm := sdk.PageMetadata{
+	//		Offset: 0,
+	//		Limit:  10,
+	//		Permission: "edit", // available Options:  "administrator", "delete", edit", "view", "share", "owner", "admin", "editor", "viewer"
+	//	}
+	//  things, _ := sdk.ListUserThings("user_id_1", pm, "token")
+	//  fmt.Println(things)
+	ListUserThings(userID string, pm PageMetadata, token string) (ThingsPage, errors.SDKError)
 
 	// CreateThing registers new thing and returns its id.
 	//
@@ -386,17 +412,39 @@ type SDK interface {
 	//  fmt.Println(id)
 	IdentifyThing(key string) (string, errors.SDKError)
 
-	// ShareThing shares thing with other user. It assumes that you have
-	// already created a group and added things to it. It also assumes that
-	// you have required policy to share a thing with the specified user.
-	//
-	// The `ShareThing` method calls the `Connect` method with the
-	// subject as `userID` rather than `thingID`.
+	// ShareThing shares thing with other users.
 	//
 	// example:
-	//  err := sdk.ShareThing("channelID", "userID", []string{"c_list", "c_delete"}, "token")
+	// req := sdk.UsersRelationRequest{
+	//		Relation: "viewer", // available options: "owner", "admin", "editor", "viewer"
+	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
+	// }
+	//  err := sdk.ShareThing("thing_id", req, "token")
 	//  fmt.Println(err)
-	ShareThing(channelID, userID string, actions []string, token string) errors.SDKError
+	ShareThing(thingID string, req UsersRelationRequest, token string) errors.SDKError
+
+	// UnshareThing unshare a thing with other users.
+	//
+	// example:
+	// req := sdk.UsersRelationRequest{
+	//		Relation: "viewer", // available options: "owner", "admin", "editor", "viewer"
+	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
+	// }
+	//  err := sdk.UnshareThing("thing_id", req, "token")
+	//  fmt.Println(err)
+	UnshareThing(thingID string, req UsersRelationRequest, token string) errors.SDKError
+
+	// ListThingUsers all users in a thing.
+	//
+	// example:
+	//	pm := sdk.PageMetadata{
+	//		Offset: 0,
+	//		Limit:  10,
+	//		Permission: "edit", // available Options:  "administrator", "delete", edit", "view", "share", "owner", "admin", "editor", "viewer"
+	//	}
+	//  users, _ := sdk.ListThingUsers("thing_id", pm, "token")
+	//  fmt.Println(users)
+	ListThingUsers(thingID string, pm PageMetadata, token string) (UsersPage, errors.SDKError)
 
 	// CreateGroup creates new group and returns its id.
 	//
@@ -410,18 +458,6 @@ type SDK interface {
 	//  group, _ := sdk.CreateGroup(group, "token")
 	//  fmt.Println(group)
 	CreateGroup(group Group, token string) (Group, errors.SDKError)
-
-	// Memberships
-	//
-	// example:
-	//  pm := sdk.PageMetadata{
-	//    Offset: 0,
-	//    Limit:  10,
-	//    Name:   "My Group",
-	//  }
-	//  groups, _ := sdk.Memberships("userID", pm, "token")
-	//  fmt.Println(groups)
-	Memberships(clientID string, pm PageMetadata, token string) (MembershipsPage, errors.SDKError)
 
 	// Groups returns page of groups.
 	//
@@ -493,6 +529,52 @@ type SDK interface {
 	//  group, _ := sdk.DisableGroup("groupID", "token")
 	//  fmt.Println(group)
 	DisableGroup(id, token string) (Group, errors.SDKError)
+
+	// AddUserToGroup add user to a group.
+	//
+	// example:
+	// req := sdk.UsersRelationRequest{
+	//		Relation: "viewer", // available options: "owner", "admin", "editor", "viewer"
+	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
+	// }
+	// group, _ := sdk.AddUserToGroup("groupID",req, "token")
+	// fmt.Println(group)
+	AddUserToGroup(groupID string, req UsersRelationRequest, token string) errors.SDKError
+
+	// RemoveUserFromGroup remove user from a group.
+	//
+	// example:
+	// req := sdk.UsersRelationRequest{
+	//		Relation: "viewer", // available options: "owner", "admin", "editor", "viewer"
+	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
+	// }
+	// group, _ := sdk.RemoveUserFromGroup("groupID",req, "token")
+	// fmt.Println(group)
+	RemoveUserFromGroup(groupID string, req UsersRelationRequest, token string) errors.SDKError
+
+	// ListGroupUsers list all users in the group id .
+	//
+	// example:
+	//	pm := sdk.PageMetadata{
+	//		Offset: 0,
+	//		Limit:  10,
+	//		Permission: "edit", // available Options:  "administrator", "delete", edit", "view", "share", "owner", "admin", "editor", "viewer"
+	//	}
+	//  groups, _ := sdk.ListGroupUsers("groupID", pm, "token")
+	//  fmt.Println(groups)
+	ListGroupUsers(groupID string, pm PageMetadata, token string) (GroupsPage, errors.SDKError)
+
+	// ListGroupChannels list all channels in the group id .
+	//
+	// example:
+	//	pm := sdk.PageMetadata{
+	//		Offset: 0,
+	//		Limit:  10,
+	//		Permission: "edit", // available Options:  "administrator", "delete", edit", "view", "share", "owner", "admin", "editor", "viewer"
+	//	}
+	//  groups, _ := sdk.ListGroupChannels("groupID", pm, "token")
+	//  fmt.Println(groups)
+	ListGroupChannels(groupID string, pm PageMetadata, token string) (GroupsPage, errors.SDKError)
 
 	// CreateChannel creates new channel and returns its id.
 	//
@@ -587,156 +669,78 @@ type SDK interface {
 	//  fmt.Println(channel)
 	DisableChannel(id, token string) (Channel, errors.SDKError)
 
-	// CreateUserPolicy creates a policy for the given subject, so that, after
-	// CreateUserPolicy, `subject` has a `relation` on `object`. Returns a non-nil
-	// error in case of failures.
-	//
-	// The subject in this case is the `userID` and the object is the `groupID`.
+	// AddUserToChannel add user to a channel.
 	//
 	// example:
-	//  policy := sdk.Policy{
-	//    Subject: "userID:1",
-	//    Object:  "groupID:1",
-	//    Actions: []string{"g_add"},
-	//  }
-	//  err := sdk.CreateUserPolicy(policy, "token")
-	//  fmt.Println(err)
-	CreateUserPolicy(policy Policy, token string) errors.SDKError
+	// req := sdk.UsersRelationRequest{
+	//		Relation: "viewer", // available options: "owner", "admin", "editor", "viewer"
+	// 		UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
+	// }
+	// err := sdk.AddUserToChannel("channel_id", req, "token")
+	// fmt.Println(err)
+	AddUserToChannel(channelID string, req UsersRelationRequest, token string) errors.SDKError
 
-	// UpdateUserPolicy updates policies based on the given policy structure.
-	//
-	// The subject in this case is the `userID` and the object is the `groupID`.
-
-	// example:
-	//  policy := sdk.Policy{
-	//    Subject: "userID:1",
-	//    Object:  "groupID:1",
-	//    Actions: []string{"g_add"},
-	//  }
-	//  err := sdk.UpdateUserPolicy(policy, "token")
-	//  fmt.Println(err)
-	UpdateUserPolicy(p Policy, token string) errors.SDKError
-
-	// ListUserPolicies lists policies based on the given policy structure.
+	// RemoveUserFromChannel remove user from a group.
 	//
 	// example:
-	//  pm := sdk.PageMetadata{
-	//    Offset: 0,
-	//    Limit:  10,
-	//    Subject: "userID:1",
-	//  }
-	//  policies, _ := sdk.ListUserPolicies(pm, "token")
-	//  fmt.Println(policies)
-	ListUserPolicies(pm PageMetadata, token string) (PolicyPage, errors.SDKError)
+	// req := sdk.UsersRelationRequest{
+	//		Relation: "viewer", // available options: "owner", "admin", "editor", "viewer"
+	//  	UserIDs: ["user_id_1", "user_id_2", "user_id_3"]
+	// }
+	// err := sdk.RemoveUserFromChannel("channel_id", req, "token")
+	// fmt.Println(err)
+	RemoveUserFromChannel(channelID string, req UsersRelationRequest, token string) errors.SDKError
 
-	// DeleteUserPolicy deletes policies.
-	//
-	// The subject in this case is the `userID` and the object is the `groupID`.
+	// ListChannelUsers list all users in a channel .
 	//
 	// example:
-	//  policy := sdk.Policy{
-	//    Subject: "userID:1",
-	//    Object:  "groupID:1",
-	//  }
-	//  err := sdk.DeleteUserPolicy(policy, "token")
-	//  fmt.Println(err)
-	DeleteUserPolicy(policy Policy, token string) errors.SDKError
+	//	pm := sdk.PageMetadata{
+	//		Offset: 0,
+	//		Limit:  10,
+	//		Permission: "edit",  // available Options:  "administrator", "delete", edit", "view", "share", "owner", "admin", "editor", "viewer"
+	//	}
+	//  users, _ := sdk.ListChannelUsers("channel_id", pm, "token")
+	//  fmt.Println(users)
+	ListChannelUsers(channelID string, pm PageMetadata, token string) (UsersPage, errors.SDKError)
 
-	// CreateThingPolicy creates a policy for the given subject, so that, after
-	// CreateThingPolicy, `subject` has a `relation` on `object`. Returns a non-nil
-	// error in case of failures.
-	//
-	// The subject in this case can be a `thingID` or a `userID` and the object is the `channelID`.
+	// AddUserGroupToChannel add user group to a channel.
 	//
 	// example:
-	//  policy := sdk.Policy{
-	//    Subject: "thingID:1",
-	//    Object:  "channelID:1",
-	//    Actions: []string{"m_write"},
-	//  }
-	//  err := sdk.CreateThingPolicy(policy, "token")
-	//  fmt.Println(err)
-	CreateThingPolicy(policy Policy, token string) errors.SDKError
+	// req := sdk.UserGroupsRequest{
+	//  	GroupsIDs: ["group_id_1", "group_id_2", "group_id_3"]
+	// }
+	// err := sdk.AddUserGroupToChannel("channel_id",req, "token")
+	// fmt.Println(err)
+	AddUserGroupToChannel(channelID string, req UserGroupsRequest, token string) errors.SDKError
 
-	// UpdateThingPolicy updates policies based on the given policy structure.
-	//
-	// The subject in this case can be a `thingID` or a `userID` and the object is the `channelID`.
+	// RemoveUserGroupFromChannel remove user group from a channel.
 	//
 	// example:
-	//  policy := sdk.Policy{
-	//    Subject: "thingID:1",
-	//    Object:  "channelID:1",
-	//    Actions: []string{"m_write"},
-	//  }
-	//  err := sdk.UpdateThingPolicy(policy, "token")
-	//  fmt.Println(err)
-	UpdateThingPolicy(p Policy, token string) errors.SDKError
+	// req := sdk.UserGroupsRequest{
+	//  	GroupsIDs: ["group_id_1", "group_id_2", "group_id_3"]
+	// }
+	// err := sdk.RemoveUserGroupFromChannel("channel_id",req, "token")
+	// fmt.Println(err)
+	RemoveUserGroupFromChannel(channelID string, req UserGroupsRequest, token string) errors.SDKError
 
-	// ListThingPolicies lists policies based on the given policy structure.
+	// ListChannelUserGroups list all user groups in a channel.
 	//
 	// example:
-	//  pm := sdk.PageMetadata{
-	//    Offset: 0,
-	//    Limit:  10,
-	//    Subject: "thingID:1",
-	//  }
-	//  policies, _ := sdk.ListThingPolicies(pm, "token")
-	//  fmt.Println(policies)
-	ListThingPolicies(pm PageMetadata, token string) (PolicyPage, errors.SDKError)
-
-	// DeleteThingPolicy deletes policies.
-	//
-	// The subject in this case can be a `thingID` or a `userID` and the object is the `channelID`.
-	//
-	// example:
-	//  policy := sdk.Policy{
-	//    Subject: "thingID:1",
-	//    Object:  "channelID:1",
-	//  }
-	//  err := sdk.DeleteThingPolicy(policy, "token")
-	//  fmt.Println(err)
-	DeleteThingPolicy(policy Policy, token string) errors.SDKError
-
-	// AuthorizeUser returns true if the given policy structure allows the action.
-	//
-	// The subject in this case is the `userID` and the object is the `groupID`.
-	//
-	// example:
-	//  aReq := sdk.AccessRequest{
-	//    Subject:    "userID:1",
-	//    Object:     "groupID:1",
-	//    Actions:    "g_add",
-	//    EntityType: "clients",
-	//  }
-	//  ok, _ := sdk.AuthorizeUser(aReq, "token")
-	//  fmt.Println(ok)
-	AuthorizeUser(accessReq AccessRequest, token string) (bool, errors.SDKError)
-
-	// Assign assigns users to a group with the given actions.
-	//
-	// The `Assign` method calls the `CreateUserPolicy` method under the hood.
-	//
-	// example:
-	//  err := sdk.Assign([]string{"g_add"}, "userID:1", "groupID:1", "token")
-	//  fmt.Println(err)
-	Assign(action []string, userID, groupID, token string) errors.SDKError
-
-	// Unassign removes a user from a group.
-	//
-	// The `Unassign` method calls the `DeleteUserPolicy` method under the hood.
-	//
-	// example:
-	//  err := sdk.Unassign("userID:1", "groupID:1", "token")
-	//  fmt.Println(err)
-	Unassign(userID, groupID, token string) errors.SDKError
+	//	pm := sdk.PageMetadata{
+	//		Offset: 0,
+	//		Limit:  10,
+	//		Permission: "view",
+	//	}
+	//  groups, _ := sdk.ListChannelUserGroups("channel_id_1", pm, "token")
+	//  fmt.Println(groups)
+	ListChannelUserGroups(channelID string, pm PageMetadata, token string) (GroupsPage, errors.SDKError)
 
 	// Connect bulk connects things to channels specified by id.
 	//
 	// example:
 	//  conns := sdk.Connection{
-	//    ChannelIDs: []string{"thingID:1", "thingID:2"},
-	//    ThingIDs:   []string{"channelID:1", "channelID:2"},
-	//    Actions:    []string{"m_read"},
+	//    ChannelID: "channel_id_1",
+	//    ThingID:   "thing_id_1",
 	//  }
 	//  err := sdk.Connect(conns, "token")
 	//  fmt.Println(err)
@@ -746,8 +750,8 @@ type SDK interface {
 	//
 	// example:
 	//  conns := sdk.Connection{
-	//    ChannelIDs: []string{"thingID:1", "thingID:2"},
-	//    ThingIDs:   []string{"channelID:1", "channelID:2"},
+	//    ChannelID: "channel_id_1",
+	//    ThingID:   "thing_id_1",
 	//  }
 	//  err := sdk.Disconnect(conns, "token")
 	//  fmt.Println(err)
@@ -770,19 +774,6 @@ type SDK interface {
 	//  err := sdk.DisconnectThing("thingID", "channelID", "token")
 	//  fmt.Println(err)
 	DisconnectThing(thingID, chanID, token string) errors.SDKError
-
-	// AuthorizeThing returns true if the given policy structure allows the action.
-	//
-	// example:
-	//  aReq := sdk.AccessRequest{
-	//    Subject:    "thingID",
-	//    Object:     "channelID",
-	//    Actions:    "m_read",
-	//    EntityType: "things",
-	//  }
-	//  ok, _ := sdk.AuthorizeThing(aReq "token")
-	//  fmt.Println(ok)
-	AuthorizeThing(accessReq AccessRequest, token string) (bool, string, errors.SDKError)
 
 	// SendMessage send message to specified channel.
 	//

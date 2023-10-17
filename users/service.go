@@ -17,11 +17,13 @@ import (
 )
 
 const (
-	userKind  = "users"
-	tokenKind = "token"
+	userKind   = "users"
+	tokenKind  = "token"
+	thingsKind = "things"
 
 	userType  = "user"
 	groupType = "group"
+	thingType = "thing"
 )
 
 var (
@@ -145,52 +147,11 @@ func (svc service) ListClients(ctx context.Context, token string, pm mfclients.P
 	if err != nil {
 		return mfclients.ClientsPage{}, err
 	}
-
-	// switch err := svc.authorize(ctx, id, clientsObjectKey, listRelationKey); err {
-	// // If the user is admin, fetch all users from database.
-	// case nil:
-	// 	switch {
-	// 	// visibility = all
-	// 	case pm.SharedBy == myKey && pm.Owner == myKey:
-	// 		pm.SharedBy = ""
-	// 		pm.Owner = ""
-	// 	// visibility = shared
-	// 	case pm.SharedBy == myKey && pm.Owner != myKey:
-	// 		pm.SharedBy = id
-	// 		pm.Owner = ""
-	// 	// visibility = mine
-	// 	case pm.Owner == myKey && pm.SharedBy != myKey:
-	// 		pm.Owner = id
-	// 		pm.SharedBy = ""
-	// 	}
-
-	// // If the user is not admin, fetch users that they own or are shared with them.
-	// default:
-	// 	switch {
-	// 	// visibility = all
-	// 	case pm.SharedBy == myKey && pm.Owner == myKey:
-	// 		pm.SharedBy = id
-	// 		pm.Owner = id
-	// 	// visibility = shared
-	// 	case pm.SharedBy == myKey && pm.Owner != myKey:
-	// 		pm.SharedBy = id
-	// 		pm.Owner = ""
-	// 	// visibility = mine
-	// 	case pm.Owner == myKey && pm.SharedBy != myKey:
-	// 		pm.Owner = id
-	// 		pm.SharedBy = ""
-	// 	default:
-	// 		pm.Owner = id
-	// 	}
-	// 	pm.Action = listRelationKey
-	// }
 	pm.Owner = id
-
 	clients, err := svc.clients.RetrieveAll(ctx, pm)
 	if err != nil {
 		return mfclients.ClientsPage{}, err
 	}
-
 	return clients, nil
 }
 
@@ -413,18 +374,31 @@ func (svc service) changeClientStatus(ctx context.Context, token string, client 
 	return svc.clients.ChangeStatus(ctx, client)
 }
 
-func (svc service) ListMembers(ctx context.Context, token, groupID string, pm mfclients.Page) (mfclients.MembersPage, error) {
-	if _, err := svc.authorize(ctx, userType, tokenKind, token, pm.Permission, groupType, groupID); err != nil {
+func (svc service) ListMembers(ctx context.Context, token, objectKind string, objectID string, pm mfclients.Page) (mfclients.MembersPage, error) {
+	var objectType string
+	switch objectKind {
+	case thingsKind:
+		objectType = thingType
+	default:
+		objectType = groupType
+	}
+
+	if _, err := svc.authorize(ctx, userType, tokenKind, token, pm.Permission, objectType, objectID); err != nil {
 		return mfclients.MembersPage{}, err
 	}
 	uids, err := svc.auth.ListAllSubjects(ctx, &mainflux.ListSubjectsReq{
 		SubjectType: userType,
 		Permission:  pm.Permission,
-		Object:      groupID,
-		ObjectType:  groupType,
+		Object:      objectID,
+		ObjectType:  objectType,
 	})
 	if err != nil {
 		return mfclients.MembersPage{}, err
+	}
+	if len(uids.Policies) == 0 {
+		return mfclients.MembersPage{
+			Page: mfclients.Page{Total: 0, Offset: pm.Offset, Limit: pm.Limit},
+		}, nil
 	}
 
 	pm.IDs = uids.Policies
@@ -433,6 +407,7 @@ func (svc service) ListMembers(ctx context.Context, token, groupID string, pm mf
 	if err != nil {
 		return mfclients.MembersPage{}, err
 	}
+
 	return mfclients.MembersPage{
 		Page:    cp.Page,
 		Members: cp.Clients,

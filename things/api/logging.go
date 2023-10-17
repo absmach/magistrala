@@ -49,7 +49,7 @@ func (lm *loggingMiddleware) ViewClient(ctx context.Context, token, id string) (
 	return lm.svc.ViewClient(ctx, token, id)
 }
 
-func (lm *loggingMiddleware) ListClients(ctx context.Context, token string, pm mfclients.Page) (cp mfclients.ClientsPage, err error) {
+func (lm *loggingMiddleware) ListClients(ctx context.Context, token string, reqUserID string, pm mfclients.Page) (cp mfclients.ClientsPage, err error) {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("Method list_things using token %s took %s to complete", token, time.Since(begin))
 		if err != nil {
@@ -58,7 +58,7 @@ func (lm *loggingMiddleware) ListClients(ctx context.Context, token string, pm m
 		}
 		lm.logger.Info(fmt.Sprintf("%s without errors.", message))
 	}(time.Now())
-	return lm.svc.ListClients(ctx, token, pm)
+	return lm.svc.ListClients(ctx, token, reqUserID, pm)
 }
 
 func (lm *loggingMiddleware) UpdateClient(ctx context.Context, token string, client mfclients.Client) (c mfclients.Client, err error) {

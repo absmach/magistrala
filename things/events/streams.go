@@ -118,12 +118,13 @@ func (es *eventStore) ViewClient(ctx context.Context, token, id string) (mfclien
 	return cli, nil
 }
 
-func (es *eventStore) ListClients(ctx context.Context, token string, pm mfclients.Page) (mfclients.ClientsPage, error) {
-	cp, err := es.svc.ListClients(ctx, token, pm)
+func (es *eventStore) ListClients(ctx context.Context, token string, reqUserID string, pm mfclients.Page) (mfclients.ClientsPage, error) {
+	cp, err := es.svc.ListClients(ctx, token, reqUserID, pm)
 	if err != nil {
 		return cp, err
 	}
 	event := listClientEvent{
+		reqUserID,
 		pm,
 	}
 	if err := es.Publish(ctx, event); err != nil {

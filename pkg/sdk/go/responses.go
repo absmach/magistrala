@@ -63,13 +63,6 @@ type MembershipsPage struct {
 	Memberships []Group `json:"memberships"`
 }
 
-// PolicyPage contains page related metadata as well as list
-// of Policies that belong to the page.
-type PolicyPage struct {
-	PageMetadata
-	Policies []Policy `json:"policies"`
-}
-
 type revokeCertsRes struct {
 	RevocationTime time.Time `json:"revocation_time"`
 }

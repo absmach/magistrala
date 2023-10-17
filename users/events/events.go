@@ -290,16 +290,18 @@ func (lce listClientEvent) Encode() (map[string]interface{}, error) {
 
 type listClientByGroupEvent struct {
 	mfclients.Page
-	channelID string
+	objectKind string
+	objectID   string
 }
 
 func (lcge listClientByGroupEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation":  clientListByGroup,
-		"total":      lcge.Total,
-		"offset":     lcge.Offset,
-		"limit":      lcge.Limit,
-		"channel_id": lcge.channelID,
+		"operation":   clientListByGroup,
+		"total":       lcge.Total,
+		"offset":      lcge.Offset,
+		"limit":       lcge.Limit,
+		"object_kind": lcge.objectKind,
+		"object_id":   lcge.objectID,
 	}
 
 	if lcge.Name != "" {

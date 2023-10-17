@@ -46,12 +46,12 @@ func (ms *metricsMiddleware) ViewClient(ctx context.Context, token, id string) (
 	return ms.svc.ViewClient(ctx, token, id)
 }
 
-func (ms *metricsMiddleware) ListClients(ctx context.Context, token string, pm mfclients.Page) (mfclients.ClientsPage, error) {
+func (ms *metricsMiddleware) ListClients(ctx context.Context, token string, reqUserID string, pm mfclients.Page) (mfclients.ClientsPage, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "list_things").Add(1)
 		ms.latency.With("method", "list_things").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return ms.svc.ListClients(ctx, token, pm)
+	return ms.svc.ListClients(ctx, token, reqUserID, pm)
 }
 
 func (ms *metricsMiddleware) UpdateClient(ctx context.Context, token string, client mfclients.Client) (mfclients.Client, error) {

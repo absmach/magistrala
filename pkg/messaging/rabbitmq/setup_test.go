@@ -58,7 +58,7 @@ func TestMain(m *testing.M) {
 		log.Fatalf(err.Error())
 	}
 	if err := pool.Retry(func() error {
-		pubsub, err = rabbitmq.NewPubSub(address, "", logger)
+		pubsub, err = rabbitmq.NewPubSub(address, logger)
 		return err
 	}); err != nil {
 		log.Fatalf("Could not connect to docker: %s", err)

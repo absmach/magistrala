@@ -40,7 +40,6 @@ import (
 
 const (
 	svcName        = "twins"
-	queue          = "twins"
 	envPrefixDB    = "MF_TWINS_DB_"
 	envPrefixHTTP  = "MF_TWINS_HTTP_"
 	envPrefixCache = "MF_TWINS_CACHE_"
@@ -135,7 +134,7 @@ func main() {
 		logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 	}
 
-	pubSub, err := brokers.NewPubSub(cfg.BrokerURL, queue, logger)
+	pubSub, err := brokers.NewPubSub(ctx, cfg.BrokerURL, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to connect to message broker: %s", err))
 		exitCode = 1

@@ -7,11 +7,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
+	"strings"
+	"time"
 
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	broker "github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -22,21 +24,26 @@ var (
 	ErrNotSubscribed = errors.New("not subscribed")
 	ErrEmptyTopic    = errors.New("empty topic")
 	ErrEmptyID       = errors.New("empty id")
+
+	jsStreamConfig = jetstream.StreamConfig{
+		Name:              "channels",
+		Description:       "Mainflux stream for sending and receiving messages in between Mainflux channels",
+		Subjects:          []string{"channels.>"},
+		Retention:         jetstream.LimitsPolicy,
+		MaxMsgsPerSubject: 1e6,
+		MaxAge:            time.Hour * 24,
+		MaxMsgSize:        1024 * 1024,
+		Discard:           jetstream.DiscardOld,
+		Storage:           jetstream.FileStorage,
+	}
 )
 
 var _ messaging.PubSub = (*pubsub)(nil)
 
-type subscription struct {
-	*broker.Subscription
-	cancel func() error
-}
-
 type pubsub struct {
 	publisher
-	logger        mflog.Logger
-	mu            sync.Mutex
-	queue         string
-	subscriptions map[string]map[string]subscription
+	logger mflog.Logger
+	stream jetstream.Stream
 }
 
 // NewPubSub returns NATS message publisher/subscriber.
@@ -46,20 +53,29 @@ type pubsub struct {
 // from ordinary subscribe. For more information, please take a look
 // here: https://docs.nats.io/developing-with-nats/receiving/queues.
 // If the queue is empty, Subscribe will be used.
-func NewPubSub(url, queue string, logger mflog.Logger) (messaging.PubSub, error) {
+func NewPubSub(ctx context.Context, url string, logger mflog.Logger) (messaging.PubSub, error) {
 	conn, err := broker.Connect(url, broker.MaxReconnects(maxReconnects))
+	if err != nil {
+		return nil, err
+	}
+	js, err := jetstream.New(conn)
+	if err != nil {
+		return nil, err
+	}
+	stream, err := js.CreateStream(ctx, jsStreamConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	ret := &pubsub{
 		publisher: publisher{
+			js:   js,
 			conn: conn,
 		},
-		queue:         queue,
-		logger:        logger,
-		subscriptions: make(map[string]map[string]subscription),
+		stream: stream,
+		logger: logger,
 	}
+
 	return ret, nil
 }
 
@@ -71,49 +87,23 @@ func (ps *pubsub) Subscribe(ctx context.Context, id, topic string, handler messa
 		return ErrEmptyTopic
 	}
 
-	ps.mu.Lock()
-	// Check topic
-	s, ok := ps.subscriptions[topic]
-	if ok {
-		// Check client ID
-		if _, ok := s[id]; ok {
-			// Unlocking, so that Unsubscribe() can access ps.subscriptions
-			ps.mu.Unlock()
-			if err := ps.Unsubscribe(ctx, id, topic); err != nil {
-				return err
-			}
-
-			ps.mu.Lock()
-			// value of s can be changed while ps.mu is unlocked
-			s = ps.subscriptions[topic]
-		}
-	}
-	defer ps.mu.Unlock()
-	if s == nil {
-		s = make(map[string]subscription)
-		ps.subscriptions[topic] = s
-	}
-
 	nh := ps.natsHandler(handler)
 
-	if ps.queue != "" {
-		sub, err := ps.conn.QueueSubscribe(topic, ps.queue, nh)
-		if err != nil {
-			return err
-		}
-		s[id] = subscription{
-			Subscription: sub,
-			cancel:       handler.Cancel,
-		}
-		return nil
+	consumerConfig := jetstream.ConsumerConfig{
+		Name:          formatConsumerName(topic, id),
+		Durable:       formatConsumerName(topic, id),
+		Description:   fmt.Sprintf("Mainflux consumer of id %s for topic %s", id, topic),
+		DeliverPolicy: jetstream.DeliverNewPolicy,
+		FilterSubject: topic,
 	}
-	sub, err := ps.conn.Subscribe(topic, nh)
+
+	consumer, err := ps.stream.CreateOrUpdateConsumer(ctx, consumerConfig)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create consumer: %w", err)
 	}
-	s[id] = subscription{
-		Subscription: sub,
-		cancel:       handler.Cancel,
+
+	if _, err = consumer.Consume(nh); err != nil {
+		return fmt.Errorf("failed to consume: %w", err)
 	}
 
 	return nil
@@ -126,44 +116,45 @@ func (ps *pubsub) Unsubscribe(ctx context.Context, id, topic string) error {
 	if topic == "" {
 		return ErrEmptyTopic
 	}
-	ps.mu.Lock()
-	defer ps.mu.Unlock()
-	// Check topic
-	s, ok := ps.subscriptions[topic]
-	if !ok {
+
+	err := ps.stream.DeleteConsumer(ctx, formatConsumerName(topic, id))
+	switch {
+	case errors.Is(err, jetstream.ErrConsumerNotFound):
 		return ErrNotSubscribed
-	}
-	// Check topic ID
-	current, ok := s[id]
-	if !ok {
-		return ErrNotSubscribed
-	}
-	if current.cancel != nil {
-		if err := current.cancel(); err != nil {
-			return err
-		}
-	}
-	if err := current.Unsubscribe(); err != nil {
+	default:
 		return err
 	}
-
-	delete(s, id)
-	if len(s) == 0 {
-		delete(ps.subscriptions, topic)
-	}
-	return nil
 }
 
-func (ps *pubsub) natsHandler(h messaging.MessageHandler) broker.MsgHandler {
-	return func(m *broker.Msg) {
+func (ps *pubsub) natsHandler(h messaging.MessageHandler) func(m jetstream.Msg) {
+	return func(m jetstream.Msg) {
 		var msg messaging.Message
-		if err := proto.Unmarshal(m.Data, &msg); err != nil {
+		if err := proto.Unmarshal(m.Data(), &msg); err != nil {
 			ps.logger.Warn(fmt.Sprintf("Failed to unmarshal received message: %s", err))
+
 			return
 		}
 
 		if err := h.Handle(&msg); err != nil {
 			ps.logger.Warn(fmt.Sprintf("Failed to handle Mainflux message: %s", err))
 		}
+		if err := m.Ack(); err != nil {
+			ps.logger.Warn(fmt.Sprintf("Failed to ack message: %s", err))
+		}
 	}
+}
+
+func formatConsumerName(topic, id string) string {
+	// A durable name cannot contain whitespace, ., *, >, path separators (forward or backwards slash), and non-printable characters.
+	chars := []string{
+		" ", "_",
+		".", "_",
+		"*", "_",
+		">", "_",
+		"/", "_",
+		"\\", "_",
+	}
+	topic = strings.NewReplacer(chars...).Replace(topic)
+
+	return fmt.Sprintf("%s-%s", topic, id)
 }

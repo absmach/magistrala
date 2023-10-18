@@ -4,6 +4,7 @@
 package nats_test
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -28,7 +29,11 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	container, err := pool.Run("nats", "1.3.0", []string{})
+	container, err := pool.RunWithOptions(&dockertest.RunOptions{
+		Repository: "nats",
+		Tag:        "2.9.21-alpine",
+		Cmd:        []string{"-DVV", "-js"},
+	})
 	if err != nil {
 		log.Fatalf("Could not start container: %s", err)
 	}
@@ -36,7 +41,7 @@ func TestMain(m *testing.M) {
 
 	address := fmt.Sprintf("%s:%s", "localhost", container.GetPort("4222/tcp"))
 	if err := pool.Retry(func() error {
-		publisher, err = nats.NewPublisher(address)
+		publisher, err = nats.NewPublisher(context.Background(), address)
 		return err
 	}); err != nil {
 		log.Fatalf("Could not connect to docker: %s", err)
@@ -47,7 +52,7 @@ func TestMain(m *testing.M) {
 		log.Fatalf(err.Error())
 	}
 	if err := pool.Retry(func() error {
-		pubsub, err = nats.NewPubSub(address, "", logger)
+		pubsub, err = nats.NewPubSub(context.Background(), address, logger)
 		return err
 	}); err != nil {
 		log.Fatalf("Could not connect to docker: %s", err)

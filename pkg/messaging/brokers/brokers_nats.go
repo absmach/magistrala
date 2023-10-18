@@ -7,6 +7,7 @@
 package brokers
 
 import (
+	"context"
 	"log"
 
 	mflog "github.com/mainflux/mainflux/logger"
@@ -21,8 +22,8 @@ func init() {
 	log.Println("The binary was build using Nats as the message broker")
 }
 
-func NewPublisher(url string) (messaging.Publisher, error) {
-	pb, err := nats.NewPublisher(url)
+func NewPublisher(ctx context.Context, url string) (messaging.Publisher, error) {
+	pb, err := nats.NewPublisher(ctx, url)
 	if err != nil {
 		return nil, err
 	}
@@ -30,8 +31,8 @@ func NewPublisher(url string) (messaging.Publisher, error) {
 	return pb, nil
 }
 
-func NewPubSub(url, queue string, logger mflog.Logger) (messaging.PubSub, error) {
-	pb, err := nats.NewPubSub(url, queue, logger)
+func NewPubSub(ctx context.Context, url string, logger mflog.Logger) (messaging.PubSub, error) {
+	pb, err := nats.NewPubSub(ctx, url, logger)
 	if err != nil {
 		return nil, err
 	}

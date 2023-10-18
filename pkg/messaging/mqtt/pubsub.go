@@ -62,7 +62,7 @@ type pubsub struct {
 }
 
 // NewPubSub returns MQTT message publisher/subscriber.
-func NewPubSub(url, _ string, timeout time.Duration, logger mflog.Logger) (messaging.PubSub, error) {
+func NewPubSub(url string, timeout time.Duration, logger mflog.Logger) (messaging.PubSub, error) {
 	client, err := newClient(url, "mqtt-publisher", timeout)
 	if err != nil {
 		return nil, err

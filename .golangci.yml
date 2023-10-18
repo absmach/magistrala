@@ -42,6 +42,7 @@ linters:
     - unused
     - goconst
     - godot
+    - godox
     - ineffassign
     - misspell
     - stylecheck
@@ -68,5 +69,5 @@ linters:
     - importas
     - makezero
     - mirror
-    - misspell
     - nakedret
+    - dupword

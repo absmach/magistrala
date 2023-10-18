@@ -85,18 +85,6 @@ func (h *handler) AuthConnect(ctx context.Context) error {
 
 	pwd := string(s.Password)
 
-	// t := &policies.IdentifyReq{
-	// 	Secret: pwd,
-	// }
-
-	// thid, err := h.auth.Identify(ctx, t)
-	// if err != nil {
-	// 	return err
-	// }
-	// if thid.GetId() != s.Username {
-	// 	return errors.ErrAuthentication
-	// }
-
 	if err := h.es.Connect(ctx, pwd); err != nil {
 		h.logger.Error(errors.Wrap(ErrFailedPublishConnectEvent, err).Error())
 	}

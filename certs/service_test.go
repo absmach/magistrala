@@ -45,7 +45,7 @@ const (
 	instanceID        = "5de9b29a-feb9-11ed-be56-0242ac120002"
 )
 
-func newService(tokens map[string]string) (certs.Service, error) {
+func newService() (certs.Service, error) {
 	tsvc, auth := newThingsService()
 	server := newThingsServer(tsvc)
 
@@ -82,7 +82,7 @@ func newThingsService() (things.Service, *authmocks.Service) {
 }
 
 func TestIssueCert(t *testing.T) {
-	svc, err := newService(map[string]string{token: email})
+	svc, err := newService()
 	require.Nil(t, err, fmt.Sprintf("unexpected service creation error: %s\n", err))
 
 	cases := []struct {
@@ -127,7 +127,7 @@ func TestIssueCert(t *testing.T) {
 }
 
 func TestRevokeCert(t *testing.T) {
-	svc, err := newService(map[string]string{token: email})
+	svc, err := newService()
 	require.Nil(t, err, fmt.Sprintf("unexpected service creation error: %s\n", err))
 
 	_, err = svc.IssueCert(context.Background(), token, thingID, ttl)
@@ -166,7 +166,7 @@ func TestRevokeCert(t *testing.T) {
 }
 
 func TestListCerts(t *testing.T) {
-	svc, err := newService(map[string]string{token: email})
+	svc, err := newService()
 	require.Nil(t, err, fmt.Sprintf("unexpected service creation error: %s\n", err))
 
 	for i := 0; i < certNum; i++ {
@@ -230,7 +230,7 @@ func TestListCerts(t *testing.T) {
 }
 
 func TestListSerials(t *testing.T) {
-	svc, err := newService(map[string]string{token: email})
+	svc, err := newService()
 	require.Nil(t, err, fmt.Sprintf("unexpected service creation error: %s\n", err))
 
 	var issuedCerts []certs.Cert
@@ -302,7 +302,7 @@ func TestListSerials(t *testing.T) {
 }
 
 func TestViewCert(t *testing.T) {
-	svc, err := newService(map[string]string{token: email})
+	svc, err := newService()
 	require.Nil(t, err, fmt.Sprintf("unexpected service creation error: %s\n", err))
 
 	ic, err := svc.IssueCert(context.Background(), token, thingID, ttl)

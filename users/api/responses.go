@@ -206,7 +206,7 @@ func (res passwChangeRes) Empty() bool {
 type assignUsersRes struct{}
 
 func (res assignUsersRes) Code() int {
-	return http.StatusOK
+	return http.StatusCreated
 }
 
 func (res assignUsersRes) Headers() map[string]string {
@@ -214,7 +214,7 @@ func (res assignUsersRes) Headers() map[string]string {
 }
 
 func (res assignUsersRes) Empty() bool {
-	return false
+	return true
 }
 
 type unassignUsersRes struct{}
@@ -228,5 +228,5 @@ func (res unassignUsersRes) Headers() map[string]string {
 }
 
 func (res unassignUsersRes) Empty() bool {
-	return false
+	return true
 }

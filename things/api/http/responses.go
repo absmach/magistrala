@@ -158,7 +158,7 @@ func (res deleteClientRes) Empty() bool {
 type assignUsersGroupsRes struct{}
 
 func (res assignUsersGroupsRes) Code() int {
-	return http.StatusOK
+	return http.StatusCreated
 }
 
 func (res assignUsersGroupsRes) Headers() map[string]string {
@@ -186,7 +186,7 @@ func (res unassignUsersGroupsRes) Empty() bool {
 type assignUsersRes struct{}
 
 func (res assignUsersRes) Code() int {
-	return http.StatusOK
+	return http.StatusCreated
 }
 
 func (res assignUsersRes) Headers() map[string]string {
@@ -214,7 +214,7 @@ func (res unassignUsersRes) Empty() bool {
 type assignUserGroupsRes struct{}
 
 func (res assignUserGroupsRes) Code() int {
-	return http.StatusOK
+	return http.StatusCreated
 }
 
 func (res assignUserGroupsRes) Headers() map[string]string {
@@ -242,7 +242,7 @@ func (res unassignUserGroupsRes) Empty() bool {
 type connectChannelThingRes struct{}
 
 func (res connectChannelThingRes) Code() int {
-	return http.StatusOK
+	return http.StatusCreated
 }
 
 func (res connectChannelThingRes) Headers() map[string]string {
@@ -270,7 +270,7 @@ func (res disconnectChannelThingRes) Empty() bool {
 type thingShareRes struct{}
 
 func (res thingShareRes) Code() int {
-	return http.StatusOK
+	return http.StatusCreated
 }
 
 func (res thingShareRes) Headers() map[string]string {

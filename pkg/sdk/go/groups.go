@@ -151,7 +151,7 @@ func (sdk mfSDK) AddUserToGroup(groupID string, req UsersRelationRequest, token 
 		return errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.usersURL, groupsEndpoint, groupID, usersEndpoint)
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.usersURL, groupsEndpoint, groupID, usersEndpoint, assignEndpoint)
 
 	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusOK)
 	return sdkerr
@@ -163,9 +163,9 @@ func (sdk mfSDK) RemoveUserFromGroup(groupID string, req UsersRelationRequest, t
 		return errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.usersURL, groupsEndpoint, groupID, usersEndpoint)
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.usersURL, groupsEndpoint, groupID, usersEndpoint, unassignEndpoint)
 
-	_, _, sdkerr := sdk.processRequest(http.MethodDelete, url, token, data, nil, http.StatusOK)
+	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusOK)
 	return sdkerr
 }
 

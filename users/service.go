@@ -17,6 +17,8 @@ import (
 )
 
 const (
+	ownerRelation = "owner"
+
 	userKind   = "users"
 	tokenKind  = "token"
 	thingsKind = "things"
@@ -85,6 +87,10 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mfclien
 
 	client, err := svc.clients.Save(ctx, cli)
 	if err != nil {
+		return mfclients.Client{}, err
+	}
+
+	if err := svc.addOwnerPolicy(ctx, ownerID, client.ID); err != nil {
 		return mfclients.Client{}, err
 	}
 
@@ -322,6 +328,9 @@ func (svc service) UpdateClientOwner(ctx context.Context, token string, cli mfcl
 		UpdatedBy: tokenUserID,
 	}
 
+	if err := svc.updateOwnerPolicy(ctx, tokenUserID, cli.Owner, cli.ID); err != nil {
+		return mfclients.Client{}, err
+	}
 	return svc.clients.UpdateOwner(ctx, client)
 }
 
@@ -383,7 +392,7 @@ func (svc service) ListMembers(ctx context.Context, token, objectKind string, ob
 		objectType = groupType
 	}
 
-	if _, err := svc.authorize(ctx, userType, tokenKind, token, pm.Permission, objectType, objectID); err != nil {
+	if _, err := svc.authorize(ctx, userType, tokenKind, token, auth.SwitchToPermission(pm.Permission), objectType, objectID); err != nil {
 		return mfclients.MembersPage{}, err
 	}
 	uids, err := svc.auth.ListAllSubjects(ctx, &mainflux.ListSubjectsReq{
@@ -415,7 +424,8 @@ func (svc service) ListMembers(ctx context.Context, token, objectKind string, ob
 }
 
 func (svc *service) isOwner(ctx context.Context, clientID, ownerID string) error {
-	return svc.clients.IsOwner(ctx, clientID, ownerID)
+	_, err := svc.authorize(ctx, userType, userKind, ownerID, ownerRelation, userType, clientID)
+	return err
 }
 
 func (svc *service) authorize(ctx context.Context, subjType, subjKind, subj, perm, objType, obj string) (string, error) {
@@ -444,4 +454,33 @@ func (svc service) Identify(ctx context.Context, token string) (string, error) {
 		return "", err
 	}
 	return user.GetId(), nil
+}
+
+func (svc service) updateOwnerPolicy(ctx context.Context, previousOwnerID, ownerID, userID string) error {
+	if previousOwnerID != "" {
+		if _, err := svc.auth.DeletePolicy(ctx, &mainflux.DeletePolicyReq{
+			SubjectType: userType,
+			Subject:     previousOwnerID,
+			Relation:    ownerRelation,
+			ObjectType:  userType,
+			Object:      userID,
+		}); err != nil {
+			return err
+		}
+	}
+	return svc.addOwnerPolicy(ctx, ownerID, userID)
+}
+func (svc service) addOwnerPolicy(ctx context.Context, ownerID, userID string) error {
+	if ownerID != "" {
+		if _, err := svc.auth.AddPolicy(ctx, &mainflux.AddPolicyReq{
+			SubjectType: userType,
+			Subject:     ownerID,
+			Relation:    ownerRelation,
+			ObjectType:  userType,
+			Object:      userID,
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
 }

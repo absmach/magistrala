@@ -152,7 +152,7 @@ func (sdk mfSDK) AddUserToChannel(channelID string, req UsersRelationRequest, to
 		return errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, usersEndpoint)
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, usersEndpoint, assignEndpoint)
 
 	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusOK)
 	return sdkerr
@@ -164,9 +164,9 @@ func (sdk mfSDK) RemoveUserFromChannel(channelID string, req UsersRelationReques
 		return errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, usersEndpoint)
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, usersEndpoint, unassignEndpoint)
 
-	_, _, sdkerr := sdk.processRequest(http.MethodDelete, url, token, data, nil, http.StatusOK)
+	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusOK)
 	return sdkerr
 }
 
@@ -193,7 +193,7 @@ func (sdk mfSDK) AddUserGroupToChannel(channelID string, req UserGroupsRequest, 
 		return errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, groupsEndpoint)
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, groupsEndpoint, assignEndpoint)
 
 	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusOK)
 	return sdkerr
@@ -205,9 +205,9 @@ func (sdk mfSDK) RemoveUserGroupFromChannel(channelID string, req UserGroupsRequ
 		return errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, groupsEndpoint)
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, groupsEndpoint, unassignEndpoint)
 
-	_, _, sdkerr := sdk.processRequest(http.MethodDelete, url, token, data, nil, http.StatusOK)
+	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusOK)
 	return sdkerr
 }
 
@@ -255,7 +255,7 @@ func (sdk mfSDK) Disconnect(connIDs Connection, token string) errors.SDKError {
 }
 
 func (sdk mfSDK) ConnectThing(thingID, channelID, token string) errors.SDKError {
-	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, thingsEndpoint, thingID)
+	url := fmt.Sprintf("%s/%s/%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, thingsEndpoint, thingID, connectEndpoint)
 
 	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, nil, nil, http.StatusNoContent)
 
@@ -263,9 +263,9 @@ func (sdk mfSDK) ConnectThing(thingID, channelID, token string) errors.SDKError 
 }
 
 func (sdk mfSDK) DisconnectThing(thingID, channelID, token string) errors.SDKError {
-	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, thingsEndpoint, thingID)
+	url := fmt.Sprintf("%s/%s/%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, thingsEndpoint, thingID, disconnectEndpoint)
 
-	_, _, sdkerr := sdk.processRequest(http.MethodDelete, url, token, nil, nil, http.StatusNoContent)
+	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, nil, nil, http.StatusNoContent)
 
 	return sdkerr
 }

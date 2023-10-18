@@ -14,6 +14,8 @@ import (
 
 const (
 	usersEndpoint         = "users"
+	assignEndpoint        = "assign"
+	unassignEndpoint      = "unassign"
 	enableEndpoint        = "enable"
 	disableEndpoint       = "disable"
 	issueTokenEndpoint    = "tokens/issue"

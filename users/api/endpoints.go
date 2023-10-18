@@ -17,12 +17,12 @@ func registrationEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createClientReq)
 		if err := req.validate(); err != nil {
-			return createClientRes{}, errors.Wrap(apiutil.ErrValidation, err)
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		client, err := svc.RegisterClient(ctx, req.token, req.client)
 		if err != nil {
-			return createClientRes{}, err
+			return nil, err
 		}
 
 		return createClientRes{
@@ -68,7 +68,7 @@ func listClientsEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listClientsReq)
 		if err := req.validate(); err != nil {
-			return mfclients.ClientsPage{}, errors.Wrap(apiutil.ErrValidation, err)
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		pm := mfclients.Page{
@@ -83,7 +83,7 @@ func listClientsEndpoint(svc users.Service) endpoint.Endpoint {
 		}
 		page, err := svc.ListClients(ctx, req.token, pm)
 		if err != nil {
-			return mfclients.ClientsPage{}, err
+			return nil, err
 		}
 
 		res := clientsPageRes{
@@ -107,12 +107,12 @@ func listMembersByGroupEndpoint(svc users.Service) endpoint.Endpoint {
 		req := request.(listMembersByObjectReq)
 		req.objectKind = "groups"
 		if err := req.validate(); err != nil {
-			return memberPageRes{}, errors.Wrap(apiutil.ErrValidation, err)
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		page, err := svc.ListMembers(ctx, req.token, req.objectKind, req.objectID, req.Page)
 		if err != nil {
-			return memberPageRes{}, err
+			return nil, err
 		}
 
 		return buildMembersResponse(page), nil
@@ -125,12 +125,12 @@ func listMembersByChannelEndpoint(svc users.Service) endpoint.Endpoint {
 		// In spiceDB schema, using the same 'group' type for both channels and groups, rather than having a separate type for channels.
 		req.objectKind = "groups"
 		if err := req.validate(); err != nil {
-			return memberPageRes{}, errors.Wrap(apiutil.ErrValidation, err)
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		page, err := svc.ListMembers(ctx, req.token, req.objectKind, req.objectID, req.Page)
 		if err != nil {
-			return memberPageRes{}, err
+			return nil, err
 		}
 
 		return buildMembersResponse(page), nil
@@ -142,12 +142,12 @@ func listMembersByThingEndpoint(svc users.Service) endpoint.Endpoint {
 		req := request.(listMembersByObjectReq)
 		req.objectKind = "things"
 		if err := req.validate(); err != nil {
-			return memberPageRes{}, errors.Wrap(apiutil.ErrValidation, err)
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		page, err := svc.ListMembers(ctx, req.token, req.objectKind, req.objectID, req.Page)
 		if err != nil {
-			return memberPageRes{}, err
+			return nil, err
 		}
 
 		return buildMembersResponse(page), nil

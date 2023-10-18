@@ -8,6 +8,35 @@ import (
 	"encoding/json"
 )
 
+const (
+	TokenKind    = "token"
+	GroupsKind   = "groups"
+	ChannelsKind = "channels"
+	ThingsKind   = "things"
+	UsersKind    = "users"
+
+	GroupType   = "group"
+	ChannelType = "channel"
+	ThingType   = "thing"
+	UserType    = "user"
+
+	OwnerRelation       = "owner"
+	AdminRelation       = "admin"
+	EditorRelation      = "editor"
+	ViewerRelation      = "viewer"
+	ParentGroupRelation = "parent_group"
+	RoleGroupRelation   = "role_group"
+	GroupRelation       = "group"
+
+	AdministratorPermission = "administrator"
+	DeletePermission        = "delete"
+	EditPermission          = "edit"
+	ViewPermission          = "view"
+	SharePermission         = "share"
+	PublishPermission       = "publish"
+	SubscribePermission     = "subscribe"
+)
+
 // PolicyReq represents an argument struct for making a policy related
 // function calls.
 type PolicyReq struct {

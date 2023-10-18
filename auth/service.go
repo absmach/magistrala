@@ -404,3 +404,19 @@ func (svc service) authenticate(token string) (string, string, error) {
 
 	return key.Issuer, key.Subject, nil
 }
+
+// Switch the relative permission for the relation
+func SwitchToPermission(relation string) string {
+	switch relation {
+	case OwnerRelation:
+		return AdministratorPermission
+	case AdminRelation:
+		return AdministratorPermission
+	case EditorRelation:
+		return EditPermission
+	case ViewerRelation:
+		return ViewPermission
+	default:
+		return relation
+	}
+}

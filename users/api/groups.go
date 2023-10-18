@@ -143,10 +143,10 @@ func assignUsersEndpoint(svc groups.Service) endpoint.Endpoint {
 		req := request.(assignUsersReq)
 
 		if err := req.validate(); err != nil {
-			return assignUsersRes{}, errors.Wrap(apiutil.ErrValidation, err)
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 		if err := svc.Assign(ctx, req.token, req.groupID, req.Relation, "users", req.UserIDs...); err != nil {
-			return assignUsersRes{}, err
+			return nil, err
 		}
 		return assignUsersRes{}, nil
 	}
@@ -157,7 +157,7 @@ func unassignUsersEndpoint(svc groups.Service) endpoint.Endpoint {
 		req := request.(unassignUsersReq)
 
 		if err := req.validate(); err != nil {
-			return unassignUsersRes{}, errors.Wrap(apiutil.ErrValidation, err)
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		if err := svc.Unassign(ctx, req.token, req.groupID, req.Relation, "users", req.UserIDs...); err != nil {

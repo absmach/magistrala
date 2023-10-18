@@ -158,7 +158,7 @@ func (res changeStatusRes) Empty() bool {
 type assignRes struct{}
 
 func (res assignRes) Code() int {
-	return http.StatusOK
+	return http.StatusCreated
 }
 
 func (res assignRes) Headers() map[string]string {

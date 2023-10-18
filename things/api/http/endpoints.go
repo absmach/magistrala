@@ -18,12 +18,12 @@ func createClientEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createClientReq)
 		if err := req.validate(); err != nil {
-			return createClientRes{}, errors.Wrap(apiutil.ErrValidation, err)
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		client, err := svc.CreateThings(ctx, req.token, req.client)
 		if err != nil {
-			return createClientRes{}, err
+			return nil, err
 		}
 
 		return createClientRes{
@@ -37,12 +37,12 @@ func createClientsEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createClientsReq)
 		if err := req.validate(); err != nil {
-			return clientsPageRes{}, errors.Wrap(apiutil.ErrValidation, err)
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		page, err := svc.CreateThings(ctx, req.token, req.Clients...)
 		if err != nil {
-			return clientsPageRes{}, err
+			return nil, err
 		}
 
 		res := clientsPageRes{
@@ -79,7 +79,7 @@ func listClientsEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listClientsReq)
 		if err := req.validate(); err != nil {
-			return mfclients.ClientsPage{}, errors.Wrap(apiutil.ErrValidation, err)
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		pm := mfclients.Page{
@@ -94,7 +94,7 @@ func listClientsEndpoint(svc things.Service) endpoint.Endpoint {
 		}
 		page, err := svc.ListClients(ctx, req.token, req.userID, pm)
 		if err != nil {
-			return mfclients.ClientsPage{}, err
+			return nil, err
 		}
 
 		res := clientsPageRes{
@@ -117,12 +117,12 @@ func listMembersEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listMembersReq)
 		if err := req.validate(); err != nil {
-			return memberPageRes{}, errors.Wrap(apiutil.ErrValidation, err)
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		page, err := svc.ListClientsByGroup(ctx, req.token, req.groupID, req.Page)
 		if err != nil {
-			return memberPageRes{}, err
+			return nil, err
 		}
 
 		return buildMembersResponse(page), nil
@@ -348,11 +348,11 @@ func connectEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(connectChannelThingRequest)
 		if err := req.validate(); err != nil {
-			return connectChannelThingRes{}, errors.Wrap(apiutil.ErrValidation, err)
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		if err := svc.Assign(ctx, req.token, req.ChannelID, "group", "things", req.ThingID); err != nil {
-			return connectChannelThingRes{}, err
+			return nil, err
 		}
 
 		return connectChannelThingRes{}, nil
@@ -363,11 +363,11 @@ func disconnectEndpoint(svc groups.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(disconnectChannelThingRequest)
 		if err := req.validate(); err != nil {
-			return disconnectChannelThingRes{}, errors.Wrap(apiutil.ErrValidation, err)
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		if err := svc.Unassign(ctx, req.token, req.ChannelID, "group", "things", req.ThingID); err != nil {
-			return disconnectChannelThingRes{}, err
+			return nil, err
 		}
 
 		return disconnectChannelThingRes{}, nil
@@ -378,11 +378,11 @@ func thingShareEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(thingShareRequest)
 		if err := req.validate(); err != nil {
-			return thingShareRes{}, errors.Wrap(apiutil.ErrValidation, err)
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		if err := svc.Share(ctx, req.token, req.thingID, req.Relation, req.UserIDs...); err != nil {
-			return thingShareRes{}, err
+			return nil, err
 		}
 
 		return thingShareRes{}, nil
@@ -393,11 +393,11 @@ func thingUnshareEndpoint(svc things.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(thingUnshareRequest)
 		if err := req.validate(); err != nil {
-			return thingUnshareRes{}, errors.Wrap(apiutil.ErrValidation, err)
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
 		if err := svc.Unshare(ctx, req.token, req.thingID, req.Relation, req.UserIDs...); err != nil {
-			return thingShareRes{}, err
+			return nil, err
 		}
 
 		return thingUnshareRes{}, nil

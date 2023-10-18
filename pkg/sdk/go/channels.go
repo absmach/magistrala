@@ -260,7 +260,6 @@ func (sdk mfSDK) ConnectThing(thingID, channelID, token string) errors.SDKError 
 	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, nil, nil, http.StatusNoContent)
 
 	return sdkerr
-
 }
 
 func (sdk mfSDK) DisconnectThing(thingID, channelID, token string) errors.SDKError {

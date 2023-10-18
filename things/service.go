@@ -205,6 +205,7 @@ func (svc service) filterAllowedThingIDs(ctx context.Context, userID, permission
 	}
 	return ids, nil
 }
+
 func (svc service) UpdateClient(ctx context.Context, token string, cli mfclients.Client) (mfclients.Client, error) {
 	userID, err := svc.authorize(ctx, userType, tokenKind, token, editPermission, thingType, cli.ID)
 	if err != nil {
@@ -309,7 +310,6 @@ func (svc service) Share(ctx context.Context, token, id, relation string, userid
 	}
 
 	for _, userid := range userids {
-
 		addPolicyReq := &mainflux.AddPolicyReq{
 			SubjectType: userType,
 			Subject:     userid,
@@ -336,7 +336,6 @@ func (svc service) Unshare(ctx context.Context, token, id, relation string, user
 	}
 
 	for _, userid := range userids {
-
 		delPolicyReq := &mainflux.DeletePolicyReq{
 			SubjectType: userType,
 			Subject:     userid,

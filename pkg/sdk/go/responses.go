@@ -86,8 +86,3 @@ type SubscriptionPage struct {
 type identifyThingResp struct {
 	ID string `json:"id,omitempty"`
 }
-
-type canAccessRes struct {
-	ThingID    string `json:"thing_id"`
-	Authorized bool   `json:"authorized"`
-}

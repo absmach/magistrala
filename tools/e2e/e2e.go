@@ -463,9 +463,8 @@ func messaging(s sdk.SDK, conf Config, token string, things []sdk.Thing, channel
 	for _, thing := range things {
 		for _, channel := range channels {
 			conn := sdk.Connection{
-				ThingID:    thing.ID,
-				ChannelID:  channel.ID,
-				Permission: "publish",
+				ThingID:   thing.ID,
+				ChannelID: channel.ID,
 			}
 			if err := s.Connect(conn, token); err != nil {
 				return fmt.Errorf("failed to connect thing %s to channel %s", thing.ID, channel.ID)

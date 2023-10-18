@@ -108,7 +108,6 @@ func clientsHandler(svc things.Service, r *chi.Mux, logger mflog.Logger) http.Ha
 			api.EncodeResponse,
 			opts...,
 		), "thing_delete_share").ServeHTTP)
-
 	})
 
 	// Ideal location: things service,  channels endpoint

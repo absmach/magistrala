@@ -20,7 +20,7 @@ const (
 	clientRemove      = clientPrefix + "remove"
 	clientView        = clientPrefix + "view"
 	clientList        = clientPrefix + "list"
-	clientListByGroup = clientPrefix + "list_by_group"
+	clientListByGroup = clientPrefix + "list_by_channel"
 	clientIdentify    = clientPrefix + "identify"
 	clientAuthorize   = clientPrefix + "authorize"
 )

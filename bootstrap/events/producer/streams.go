@@ -57,7 +57,7 @@ func (es *eventStore) View(ctx context.Context, token, id string) (bootstrap.Con
 		return cfg, err
 	}
 	ev := configEvent{
-		cfg, configList,
+		cfg, configView,
 	}
 
 	if err := es.Publish(ctx, ev); err != nil {

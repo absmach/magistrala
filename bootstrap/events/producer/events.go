@@ -17,6 +17,7 @@ const (
 	configCreate        = configPrefix + "create"
 	configUpdate        = configPrefix + "update"
 	configRemove        = configPrefix + "remove"
+	configView          = configPrefix + "view"
 	configList          = configPrefix + "list"
 	configHandlerRemove = configPrefix + "remove_handler"
 

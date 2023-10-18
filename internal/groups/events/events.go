@@ -18,7 +18,7 @@ const (
 	groupRemove          = groupPrefix + "remove"
 	groupView            = groupPrefix + "view"
 	groupList            = groupPrefix + "list"
-	groupListMemberships = groupPrefix + "list_by_group"
+	groupListMemberships = groupPrefix + "list_by_user"
 )
 
 var (
@@ -220,6 +220,7 @@ type listGroupMembershipEvent struct {
 
 func (lgme listGroupMembershipEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
+		"operation":   groupListMemberships,
 		"group_id":    lgme.groupID,
 		"permission":  lgme.permission,
 		"member_kind": lgme.memberKind,

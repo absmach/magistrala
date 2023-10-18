@@ -74,7 +74,7 @@ type BootstrapPage struct {
 }
 
 type CertSerials struct {
-	Serials []string `json:"serials"`
+	Certs []Cert `json:"certs"`
 	pageRes
 }
 

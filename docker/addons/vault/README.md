@@ -1,27 +1,28 @@
+# Vault
+
 This is Vault service deployment to be used with Mainflux.
 
 When the Vault service is started, some initialization steps need to be done to set things up.
 
 ## Configuration
 
-| Variable                  | Description                                                             | Default        |
-| ------------------------- | ----------------------------------------------------------------------- | -------------- |
-| MF_VAULT_HOST             | Vault service address                                                   | vault          |
-| MF_VAULT_PORT             | Vault service port                                                      | 8200           |
-| MF_VAULT_UNSEAL_KEY_1     | Vault unseal key                                                        | ""             |
-| MF_VAULT_UNSEAL_KEY_2     | Vault unseal key                                                        | ""             |
-| MF_VAULT_UNSEAL_KEY_3     | Vault unseal key                                                        | ""             |
-| MF_VAULT_TOKEN            | Vault cli access token                                                  | ""             |
-| MF_VAULT_PKI_PATH         | Vault secrets engine path for CA                                        | pki            |
-| MF_VAULT_PKI_INT_PATH     | Vault secrets engine path for intermediate CA                           | pki_int        |
-| MF_VAULT_CA_ROLE_NAME     | Vault secrets engine role                                               | mainflux       |
-| MF_VAULT_CA_NAME          | Certificates name used by `vault-set-pki.sh`                            | mainflux       |
-| MF_VAULT_CA_CN            | Common name used for CA creation by `vault-set-pki.sh`                  | mainflux.com   |
-| MF_VAULT_CA_OU            | Org unit used for CA creation by `vault-set-pki.sh`                     | Mainflux Cloud |
-| MF_VAULT_CA_O             | Organization used for CA creation by `vault-set-pki.sh`                 | Mainflux Labs  |
-| MF_VAULT_CA_C             | Country used for CA creation by `vault-set-pki.sh`                      | Serbia         |
-| MF_VAULT_CA_L             | Location used for CA creation by `vault-set-pki.sh`                     | Belgrade       |
-
+| Variable              | Description                                             | Default        |
+| --------------------- | ------------------------------------------------------- | -------------- |
+| MF_VAULT_HOST         | Vault service address                                   | vault          |
+| MF_VAULT_PORT         | Vault service port                                      | 8200           |
+| MF_VAULT_UNSEAL_KEY_1 | Vault unseal key                                        | ""             |
+| MF_VAULT_UNSEAL_KEY_2 | Vault unseal key                                        | ""             |
+| MF_VAULT_UNSEAL_KEY_3 | Vault unseal key                                        | ""             |
+| MF_VAULT_TOKEN        | Vault cli access token                                  | ""             |
+| MF_VAULT_PKI_PATH     | Vault secrets engine path for CA                        | pki            |
+| MF_VAULT_PKI_INT_PATH | Vault secrets engine path for intermediate CA           | pki_int        |
+| MF_VAULT_CA_ROLE_NAME | Vault secrets engine role                               | mainflux       |
+| MF_VAULT_CA_NAME      | Certificates name used by `vault-set-pki.sh`            | mainflux       |
+| MF_VAULT_CA_CN        | Common name used for CA creation by `vault-set-pki.sh`  | mainflux.com   |
+| MF_VAULT_CA_OU        | Org unit used for CA creation by `vault-set-pki.sh`     | Mainflux Cloud |
+| MF_VAULT_CA_O         | Organization used for CA creation by `vault-set-pki.sh` | Mainflux Labs  |
+| MF_VAULT_CA_C         | Country used for CA creation by `vault-set-pki.sh`      | Serbia         |
+| MF_VAULT_CA_L         | Location used for CA creation by `vault-set-pki.sh`     | Belgrade       |
 
 ## Setup
 
@@ -37,7 +38,7 @@ After this step, the corresponding Vault environment variables (`MF_VAULT_TOKEN`
 
 Example contents for `data/secrets`:
 
-```
+```bash
 Unseal Key 1: Ay0YZecYJ2HVtNtXfPootXK5LtF+JZoDmBb7IbbYdLBI
 Unseal Key 2: P6hb7x2cglv0p61jdLyNE3+d44cJUOFaDt9jHFDfr8Df
 Unseal Key 3: zSBfDHzUiWoOzXKY1pnnBqKO8UD2MDLuy8DNTxNtEBFy
@@ -79,13 +80,13 @@ After it runs, it copies the necessary certificates and keys to the `docker/ssl/
 
 The CA parameters are obtained from the environment variables starting with `MF_VAULT_CA` in `.env` file.
 
-## Vault CLI 
+## Vault CLI
 
 It can also be useful to run the Vault CLI for inspection and administration work.
 
 This can be done directly using the Vault image in Docker: `docker run -it mainflux/vault:latest vault`
 
-```
+```bash
 Usage: vault <command> [args]
 
 Common commands:

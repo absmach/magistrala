@@ -12,7 +12,6 @@ import (
 	"github.com/mainflux/mainflux/internal/testsutil"
 	"github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/things/postgres"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,7 +20,6 @@ import (
 const maxNameSize = 1024
 
 var (
-	idProvider     = uuid.New()
 	invalidName    = strings.Repeat("m", maxNameSize+10)
 	clientIdentity = "client-identity@example.com"
 	clientName     = "client name"
@@ -34,7 +32,7 @@ func TestClientsSave(t *testing.T) {
 	})
 	repo := postgres.NewRepository(database)
 
-	uid := testsutil.GenerateUUID(t, idProvider)
+	uid := testsutil.GenerateUUID(t)
 
 	cases := []struct {
 		desc   string
@@ -48,7 +46,7 @@ func TestClientsSave(t *testing.T) {
 				Name: clientName,
 				Credentials: clients.Credentials{
 					Identity: clientIdentity,
-					Secret:   testsutil.GenerateUUID(t, idProvider),
+					Secret:   testsutil.GenerateUUID(t),
 				},
 				Metadata: clients.Metadata{},
 				Status:   clients.EnabledStatus,
@@ -58,12 +56,12 @@ func TestClientsSave(t *testing.T) {
 		{
 			desc: "add new client with an owner",
 			client: clients.Client{
-				ID:    testsutil.GenerateUUID(t, idProvider),
+				ID:    testsutil.GenerateUUID(t),
 				Owner: uid,
 				Name:  clientName,
 				Credentials: clients.Credentials{
 					Identity: "withowner-client@example.com",
-					Secret:   testsutil.GenerateUUID(t, idProvider),
+					Secret:   testsutil.GenerateUUID(t),
 				},
 				Metadata: clients.Metadata{},
 				Status:   clients.EnabledStatus,
@@ -77,7 +75,7 @@ func TestClientsSave(t *testing.T) {
 				Name: clientName,
 				Credentials: clients.Credentials{
 					Identity: "invalidid-client@example.com",
-					Secret:   testsutil.GenerateUUID(t, idProvider),
+					Secret:   testsutil.GenerateUUID(t),
 				},
 				Metadata: clients.Metadata{},
 				Status:   clients.EnabledStatus,
@@ -87,11 +85,11 @@ func TestClientsSave(t *testing.T) {
 		{
 			desc: "add client with invalid client name",
 			client: clients.Client{
-				ID:   testsutil.GenerateUUID(t, idProvider),
+				ID:   testsutil.GenerateUUID(t),
 				Name: invalidName,
 				Credentials: clients.Credentials{
 					Identity: "invalidname-client@example.com",
-					Secret:   testsutil.GenerateUUID(t, idProvider),
+					Secret:   testsutil.GenerateUUID(t),
 				},
 				Metadata: clients.Metadata{},
 				Status:   clients.EnabledStatus,
@@ -101,11 +99,11 @@ func TestClientsSave(t *testing.T) {
 		{
 			desc: "add client with invalid client owner",
 			client: clients.Client{
-				ID:    testsutil.GenerateUUID(t, idProvider),
+				ID:    testsutil.GenerateUUID(t),
 				Owner: invalidName,
 				Credentials: clients.Credentials{
 					Identity: "invalidowner-client@example.com",
-					Secret:   testsutil.GenerateUUID(t, idProvider),
+					Secret:   testsutil.GenerateUUID(t),
 				},
 				Metadata: clients.Metadata{},
 				Status:   clients.EnabledStatus,
@@ -115,11 +113,11 @@ func TestClientsSave(t *testing.T) {
 		{
 			desc: "add client with invalid client identity",
 			client: clients.Client{
-				ID:   testsutil.GenerateUUID(t, idProvider),
+				ID:   testsutil.GenerateUUID(t),
 				Name: clientName,
 				Credentials: clients.Credentials{
 					Identity: invalidName,
-					Secret:   testsutil.GenerateUUID(t, idProvider),
+					Secret:   testsutil.GenerateUUID(t),
 				},
 				Metadata: clients.Metadata{},
 				Status:   clients.EnabledStatus,
@@ -129,10 +127,10 @@ func TestClientsSave(t *testing.T) {
 		{
 			desc: "add client with a missing client identity",
 			client: clients.Client{
-				ID: testsutil.GenerateUUID(t, idProvider),
+				ID: testsutil.GenerateUUID(t),
 				Credentials: clients.Credentials{
 					Identity: "",
-					Secret:   testsutil.GenerateUUID(t, idProvider),
+					Secret:   testsutil.GenerateUUID(t),
 				},
 				Metadata: clients.Metadata{},
 			},
@@ -141,7 +139,7 @@ func TestClientsSave(t *testing.T) {
 		{
 			desc: "add client with a missing client secret",
 			client: clients.Client{
-				ID: testsutil.GenerateUUID(t, idProvider),
+				ID: testsutil.GenerateUUID(t),
 				Credentials: clients.Credentials{
 					Identity: "missing-client-secret@example.com",
 					Secret:   "",
@@ -169,11 +167,11 @@ func TestClientsRetrieveBySecret(t *testing.T) {
 	repo := postgres.NewRepository(database)
 
 	client := clients.Client{
-		ID:   testsutil.GenerateUUID(t, idProvider),
+		ID:   testsutil.GenerateUUID(t),
 		Name: clientName,
 		Credentials: clients.Credentials{
 			Identity: clientIdentity,
-			Secret:   testsutil.GenerateUUID(t, idProvider),
+			Secret:   testsutil.GenerateUUID(t),
 		},
 		Status: clients.EnabledStatus,
 	}

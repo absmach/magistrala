@@ -31,7 +31,7 @@ var (
 	secret         = "strongsecret"
 	validCMetadata = mfclients.Metadata{"role": "client"}
 	client         = mfclients.Client{
-		ID:          testsutil.GenerateUUID(&testing.T{}, idProvider),
+		ID:          testsutil.GenerateUUID(&testing.T{}),
 		Name:        "clientname",
 		Tags:        []string{"tag1", "tag2"},
 		Credentials: mfclients.Credentials{Identity: "clientidentity", Secret: secret},
@@ -212,7 +212,7 @@ func TestRegisterClient(t *testing.T) {
 		{
 			desc: "register a new client with empty secret",
 			client: mfclients.Client{
-				Owner: testsutil.GenerateUUID(t, idProvider),
+				Owner: testsutil.GenerateUUID(t),
 				Credentials: mfclients.Credentials{
 					Identity: "newclientwithemptysecret@example.com",
 				},
@@ -336,7 +336,7 @@ func TestListClients(t *testing.T) {
 
 	nClients := uint64(200)
 	aClients := []mfclients.Client{}
-	OwnerID := testsutil.GenerateUUID(t, idProvider)
+	OwnerID := testsutil.GenerateUUID(t)
 	for i := uint64(1); i < nClients; i++ {
 		identity := fmt.Sprintf("TestListClients_%d@example.com", i)
 		client := mfclients.Client{
@@ -350,7 +350,7 @@ func TestListClients(t *testing.T) {
 		}
 		if i%50 == 0 {
 			client.Owner = OwnerID
-			client.Owner = testsutil.GenerateUUID(t, idProvider)
+			client.Owner = testsutil.GenerateUUID(t)
 		}
 		aClients = append(aClients, client)
 	}
@@ -954,8 +954,8 @@ func TestEnableClient(t *testing.T) {
 	e := mocks.NewEmailer()
 	svc := users.NewService(cRepo, auth, e, phasher, idProvider, passRegex)
 
-	enabledClient1 := mfclients.Client{ID: testsutil.GenerateUUID(t, idProvider), Credentials: mfclients.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mfclients.EnabledStatus}
-	disabledClient1 := mfclients.Client{ID: testsutil.GenerateUUID(t, idProvider), Credentials: mfclients.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mfclients.DisabledStatus}
+	enabledClient1 := mfclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mfclients.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mfclients.EnabledStatus}
+	disabledClient1 := mfclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mfclients.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mfclients.DisabledStatus}
 	endisabledClient1 := disabledClient1
 	endisabledClient1.Status = mfclients.EnabledStatus
 
@@ -1082,8 +1082,8 @@ func TestDisableClient(t *testing.T) {
 	e := mocks.NewEmailer()
 	svc := users.NewService(cRepo, auth, e, phasher, idProvider, passRegex)
 
-	enabledClient1 := mfclients.Client{ID: testsutil.GenerateUUID(t, idProvider), Credentials: mfclients.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mfclients.EnabledStatus}
-	disabledClient1 := mfclients.Client{ID: testsutil.GenerateUUID(t, idProvider), Credentials: mfclients.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mfclients.DisabledStatus}
+	enabledClient1 := mfclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mfclients.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mfclients.EnabledStatus}
+	disabledClient1 := mfclients.Client{ID: testsutil.GenerateUUID(t), Credentials: mfclients.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mfclients.DisabledStatus}
 	disenabledClient1 := enabledClient1
 	disenabledClient1.Status = mfclients.DisabledStatus
 
@@ -1212,11 +1212,11 @@ func TestListMembers(t *testing.T) {
 
 	nClients := uint64(10)
 	aClients := []mfclients.Client{}
-	owner := testsutil.GenerateUUID(t, idProvider)
+	owner := testsutil.GenerateUUID(t)
 	for i := uint64(0); i < nClients; i++ {
 		identity := fmt.Sprintf("member_%d@example.com", i)
 		client := mfclients.Client{
-			ID:   testsutil.GenerateUUID(t, idProvider),
+			ID:   testsutil.GenerateUUID(t),
 			Name: identity,
 			Credentials: mfclients.Credentials{
 				Identity: identity,
@@ -1242,7 +1242,7 @@ func TestListMembers(t *testing.T) {
 		{
 			desc:    "list clients with authorized token",
 			token:   validToken,
-			groupID: testsutil.GenerateUUID(t, idProvider),
+			groupID: testsutil.GenerateUUID(t),
 			page:    mfclients.Page{},
 			response: mfclients.MembersPage{
 				Page: mfclients.Page{
@@ -1257,7 +1257,7 @@ func TestListMembers(t *testing.T) {
 		{
 			desc:    "list clients with offset and limit",
 			token:   validToken,
-			groupID: testsutil.GenerateUUID(t, idProvider),
+			groupID: testsutil.GenerateUUID(t),
 			page: mfclients.Page{
 				Offset: 6,
 				Limit:  nClients,
@@ -1273,7 +1273,7 @@ func TestListMembers(t *testing.T) {
 		{
 			desc:    "list clients with an invalid token",
 			token:   inValidToken,
-			groupID: testsutil.GenerateUUID(t, idProvider),
+			groupID: testsutil.GenerateUUID(t),
 			page:    mfclients.Page{},
 			response: mfclients.MembersPage{
 				Page: mfclients.Page{
@@ -1301,7 +1301,7 @@ func TestListMembers(t *testing.T) {
 		{
 			desc:    "list clients for an owner",
 			token:   validToken,
-			groupID: testsutil.GenerateUUID(t, idProvider),
+			groupID: testsutil.GenerateUUID(t),
 			page:    mfclients.Page{},
 			response: mfclients.MembersPage{
 				Page: mfclients.Page{

@@ -37,7 +37,7 @@ func TestClientsSave(t *testing.T) {
 	})
 	repo := cpostgres.NewRepository(database)
 
-	uid := testsutil.GenerateUUID(t, idProvider)
+	uid := testsutil.GenerateUUID(t)
 
 	cases := []struct {
 		desc   string
@@ -61,7 +61,7 @@ func TestClientsSave(t *testing.T) {
 		{
 			desc: "add new client with an owner",
 			client: mfclients.Client{
-				ID:    testsutil.GenerateUUID(t, idProvider),
+				ID:    testsutil.GenerateUUID(t),
 				Owner: uid,
 				Name:  clientName,
 				Credentials: mfclients.Credentials{
@@ -76,7 +76,7 @@ func TestClientsSave(t *testing.T) {
 		{
 			desc: "add client with duplicate client identity",
 			client: mfclients.Client{
-				ID:   testsutil.GenerateUUID(t, idProvider),
+				ID:   testsutil.GenerateUUID(t),
 				Name: clientName,
 				Credentials: mfclients.Credentials{
 					Identity: clientIdentity,
@@ -104,7 +104,7 @@ func TestClientsSave(t *testing.T) {
 		{
 			desc: "add client with invalid client name",
 			client: mfclients.Client{
-				ID:   testsutil.GenerateUUID(t, idProvider),
+				ID:   testsutil.GenerateUUID(t),
 				Name: invalidName,
 				Credentials: mfclients.Credentials{
 					Identity: "invalidname-client@example.com",
@@ -118,7 +118,7 @@ func TestClientsSave(t *testing.T) {
 		{
 			desc: "add client with invalid client owner",
 			client: mfclients.Client{
-				ID:    testsutil.GenerateUUID(t, idProvider),
+				ID:    testsutil.GenerateUUID(t),
 				Owner: invalidName,
 				Credentials: mfclients.Credentials{
 					Identity: "invalidowner-client@example.com",
@@ -132,7 +132,7 @@ func TestClientsSave(t *testing.T) {
 		{
 			desc: "add client with invalid client identity",
 			client: mfclients.Client{
-				ID:   testsutil.GenerateUUID(t, idProvider),
+				ID:   testsutil.GenerateUUID(t),
 				Name: clientName,
 				Credentials: mfclients.Credentials{
 					Identity: invalidName,
@@ -146,7 +146,7 @@ func TestClientsSave(t *testing.T) {
 		{
 			desc: "add client with a missing client identity",
 			client: mfclients.Client{
-				ID: testsutil.GenerateUUID(t, idProvider),
+				ID: testsutil.GenerateUUID(t),
 				Credentials: mfclients.Credentials{
 					Identity: "",
 					Secret:   password,
@@ -158,7 +158,7 @@ func TestClientsSave(t *testing.T) {
 		{
 			desc: "add client with a missing client secret",
 			client: mfclients.Client{
-				ID: testsutil.GenerateUUID(t, idProvider),
+				ID: testsutil.GenerateUUID(t),
 				Credentials: mfclients.Credentials{
 					Identity: "missing-client-secret@example.com",
 					Secret:   "",
@@ -186,7 +186,7 @@ func TestIsOwner(t *testing.T) {
 	repo := cpostgres.NewRepository(database)
 
 	owner := mfclients.Client{
-		ID:   testsutil.GenerateUUID(t, idProvider),
+		ID:   testsutil.GenerateUUID(t),
 		Name: "owner",
 		Credentials: mfclients.Credentials{
 			Identity: "owner@example.com",
@@ -208,7 +208,7 @@ func TestIsOwner(t *testing.T) {
 			desc:    "add new client successfully with an owner",
 			ownerID: owner.ID,
 			client: mfclients.Client{
-				ID:   testsutil.GenerateUUID(t, idProvider),
+				ID:   testsutil.GenerateUUID(t),
 				Name: clientName,
 				Credentials: mfclients.Credentials{
 					Identity: "withowner@example.com",
@@ -224,7 +224,7 @@ func TestIsOwner(t *testing.T) {
 			desc:    "add new client successfully without an owner",
 			ownerID: owner.ID,
 			client: mfclients.Client{
-				ID:   testsutil.GenerateUUID(t, idProvider),
+				ID:   testsutil.GenerateUUID(t),
 				Name: clientName,
 				Credentials: mfclients.Credentials{
 					Identity: "withoutowner@example.com",

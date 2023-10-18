@@ -12,12 +12,15 @@ import (
 	"testing"
 
 	"github.com/gorilla/websocket"
+	"github.com/mainflux/mainflux"
 	authmocks "github.com/mainflux/mainflux/auth/mocks"
+	"github.com/mainflux/mainflux/internal/testsutil"
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/ws"
 	"github.com/mainflux/mainflux/ws/api"
 	"github.com/mainflux/mainflux/ws/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 const (
@@ -30,10 +33,10 @@ const (
 
 var msg = []byte(`[{"n":"current","t":-1,"v":1.6}]`)
 
-func newService() (ws.Service, mocks.MockPubSub) {
+func newService() (ws.Service, mocks.MockPubSub, *authmocks.Service) {
 	auth := new(authmocks.Service)
 	pubsub := mocks.NewPubSub()
-	return ws.New(auth, pubsub), pubsub
+	return ws.New(auth, pubsub), pubsub, auth
 }
 
 func newHTTPServer(svc ws.Service) *httptest.Server {
@@ -77,7 +80,7 @@ func handshake(tsURL, chanID, subtopic, thingKey string, addHeader bool) (*webso
 }
 
 func TestHandshake(t *testing.T) {
-	svc, _ := newService()
+	svc, _, auth := newService()
 	ts := newHTTPServer(svc)
 	defer ts.Close()
 
@@ -175,6 +178,7 @@ func TestHandshake(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		repocall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: true, Id: testsutil.GenerateUUID(t)}, nil)
 		conn, res, err := handshake(ts.URL, tc.chanID, tc.subtopic, tc.thingKey, tc.header)
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code '%d' got '%d'\n", tc.desc, tc.status, res.StatusCode))
 
@@ -184,5 +188,6 @@ func TestHandshake(t *testing.T) {
 			err = conn.WriteMessage(websocket.TextMessage, tc.msg)
 			assert.Nil(t, err, fmt.Sprintf("%s: got unexpected error %s\n", tc.desc, err))
 		}
+		repocall.Unset()
 	}
 }

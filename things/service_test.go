@@ -28,7 +28,7 @@ var (
 	idProvider     = uuid.New()
 	secret         = "strongsecret"
 	validCMetadata = mfclients.Metadata{"role": "client"}
-	ID             = testsutil.GenerateUUID(&testing.T{}, idProvider)
+	ID             = testsutil.GenerateUUID(&testing.T{})
 	client         = mfclients.Client{
 		ID:          ID,
 		Name:        "clientname",
@@ -218,7 +218,7 @@ func TestRegisterClient(t *testing.T) {
 		{
 			desc: "register a new client with empty secret",
 			client: mfclients.Client{
-				Owner: testsutil.GenerateUUID(t, idProvider),
+				Owner: testsutil.GenerateUUID(t),
 				Credentials: mfclients.Credentials{
 					Identity: "newclientwithemptysecret@example.com",
 				},
@@ -327,7 +327,7 @@ func TestListClients(t *testing.T) {
 
 	nClients := uint64(200)
 	aClients := []mfclients.Client{}
-	OwnerID := testsutil.GenerateUUID(t, idProvider)
+	OwnerID := testsutil.GenerateUUID(t)
 	for i := uint64(1); i < nClients; i++ {
 		identity := fmt.Sprintf("TestListClients_%d@example.com", i)
 		client := mfclients.Client{
@@ -341,7 +341,7 @@ func TestListClients(t *testing.T) {
 		}
 		if i%50 == 0 {
 			client.Owner = OwnerID
-			client.Owner = testsutil.GenerateUUID(t, idProvider)
+			client.Owner = testsutil.GenerateUUID(t)
 		}
 		aClients = append(aClients, client)
 	}
@@ -1089,11 +1089,11 @@ func TestListMembers(t *testing.T) {
 
 	nClients := uint64(10)
 	aClients := []mfclients.Client{}
-	owner := testsutil.GenerateUUID(t, idProvider)
+	owner := testsutil.GenerateUUID(t)
 	for i := uint64(0); i < nClients; i++ {
 		identity := fmt.Sprintf("member_%d@example.com", i)
 		client := mfclients.Client{
-			ID:   testsutil.GenerateUUID(t, idProvider),
+			ID:   testsutil.GenerateUUID(t),
 			Name: identity,
 			Credentials: mfclients.Credentials{
 				Identity: identity,
@@ -1119,7 +1119,7 @@ func TestListMembers(t *testing.T) {
 		{
 			desc:    "list clients with authorized token",
 			token:   validToken,
-			groupID: testsutil.GenerateUUID(t, idProvider),
+			groupID: testsutil.GenerateUUID(t),
 			page: mfclients.Page{
 				Owner: adminEmail,
 			},
@@ -1136,7 +1136,7 @@ func TestListMembers(t *testing.T) {
 		{
 			desc:    "list clients with offset and limit",
 			token:   validToken,
-			groupID: testsutil.GenerateUUID(t, idProvider),
+			groupID: testsutil.GenerateUUID(t),
 			page: mfclients.Page{
 				Offset: 6,
 				Limit:  nClients,
@@ -1153,7 +1153,7 @@ func TestListMembers(t *testing.T) {
 		{
 			desc:    "list clients with an invalid token",
 			token:   inValidToken,
-			groupID: testsutil.GenerateUUID(t, idProvider),
+			groupID: testsutil.GenerateUUID(t),
 			page: mfclients.Page{
 				Owner: adminEmail,
 			},
@@ -1185,7 +1185,7 @@ func TestListMembers(t *testing.T) {
 		{
 			desc:    "list clients for an owner",
 			token:   validToken,
-			groupID: testsutil.GenerateUUID(t, idProvider),
+			groupID: testsutil.GenerateUUID(t),
 			page: mfclients.Page{
 				Owner: adminEmail,
 			},

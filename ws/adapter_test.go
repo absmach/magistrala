@@ -8,11 +8,15 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/mainflux/mainflux"
 	authmocks "github.com/mainflux/mainflux/auth/mocks"
+	"github.com/mainflux/mainflux/internal/testsutil"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/ws"
 	"github.com/mainflux/mainflux/ws/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 const (
@@ -31,15 +35,15 @@ var msg = messaging.Message{
 	Payload:   []byte(`[{"n":"current","t":-5,"v":1.2}]`),
 }
 
-func newService() (ws.Service, mocks.MockPubSub) {
+func newService() (ws.Service, mocks.MockPubSub, *authmocks.Service) {
 	pubsub := mocks.NewPubSub()
 	auth := new(authmocks.Service)
 
-	return ws.New(auth, pubsub), pubsub
+	return ws.New(auth, pubsub), pubsub, auth
 }
 
 func TestPublish(t *testing.T) {
-	svc, _ := newService()
+	svc, _, auth := newService()
 
 	cases := []struct {
 		desc     string
@@ -61,7 +65,7 @@ func TestPublish(t *testing.T) {
 		},
 		{
 			desc:     "publish a valid message with invalid thingKey",
-			thingKey: "invalid",
+			thingKey: authmocks.InvalidValue,
 			msg:      &msg,
 			err:      ws.ErrUnauthorizedAccess,
 		},
@@ -75,24 +79,26 @@ func TestPublish(t *testing.T) {
 			desc:     "publish an empty message with empty thingKey",
 			thingKey: "",
 			msg:      &messaging.Message{},
-			err:      ws.ErrUnauthorizedAccess,
+			err:      ws.ErrFailedMessagePublish,
 		},
 		{
 			desc:     "publish an empty message with invalid thingKey",
-			thingKey: "invalid",
+			thingKey: authmocks.InvalidValue,
 			msg:      &messaging.Message{},
-			err:      ws.ErrUnauthorizedAccess,
+			err:      ws.ErrFailedMessagePublish,
 		},
 	}
 
 	for _, tc := range cases {
+		repocall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: true, Id: testsutil.GenerateUUID(t)}, nil)
 		err := svc.Publish(context.Background(), tc.thingKey, tc.msg)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		repocall.Unset()
 	}
 }
 
 func TestSubscribe(t *testing.T) {
-	svc, pubsub := newService()
+	svc, pubsub, auth := newService()
 
 	c := ws.NewClient(nil)
 
@@ -126,12 +132,12 @@ func TestSubscribe(t *testing.T) {
 			chanID:   chanID,
 			subtopic: subTopic,
 			fail:     true,
-			err:      ws.ErrFailedSubscription,
+			err:      errors.Wrap(ws.ErrFailedSubscription, ws.ErrFailedSubscription),
 		},
 		{
 			desc:     "subscribe to channel with invalid chanID and invalid thingKey",
-			thingKey: "invalid",
-			chanID:   "0",
+			thingKey: authmocks.InvalidValue,
+			chanID:   authmocks.InvalidValue,
 			subtopic: subTopic,
 			fail:     false,
 			err:      ws.ErrUnauthorizedAccess,
@@ -164,13 +170,15 @@ func TestSubscribe(t *testing.T) {
 
 	for _, tc := range cases {
 		pubsub.SetFail(tc.fail)
+		repocall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: true, Id: testsutil.GenerateUUID(t)}, nil)
 		err := svc.Subscribe(context.Background(), tc.thingKey, tc.chanID, tc.subtopic, c)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		repocall.Unset()
 	}
 }
 
 func TestUnsubscribe(t *testing.T) {
-	svc, pubsub := newService()
+	svc, pubsub, auth := newService()
 
 	cases := []struct {
 		desc     string
@@ -232,7 +240,9 @@ func TestUnsubscribe(t *testing.T) {
 
 	for _, tc := range cases {
 		pubsub.SetFail(tc.fail)
+		repocall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: true, Id: testsutil.GenerateUUID(t)}, nil)
 		err := svc.Unsubscribe(context.Background(), tc.thingKey, tc.chanID, tc.subtopic)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		repocall.Unset()
 	}
 }

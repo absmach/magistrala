@@ -7,9 +7,12 @@ import (
 	context "context"
 
 	"github.com/mainflux/mainflux"
+	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc"
 )
+
+const InvalidValue = "invalid"
 
 var _ mainflux.AuthServiceClient = (*Service)(nil)
 
@@ -19,30 +22,48 @@ type Service struct {
 
 func (m *Service) Issue(ctx context.Context, in *mainflux.IssueReq, opts ...grpc.CallOption) (*mainflux.Token, error) {
 	ret := m.Called(ctx, in)
+	if in.GetId() == InvalidValue || in.GetId() == "" {
+		return &mainflux.Token{}, errors.ErrAuthentication
+	}
 
 	return ret.Get(0).(*mainflux.Token), ret.Error(1)
 }
 
 func (m *Service) Login(ctx context.Context, in *mainflux.LoginReq, opts ...grpc.CallOption) (*mainflux.Token, error) {
 	ret := m.Called(ctx, in)
+	if in.GetId() == InvalidValue || in.GetId() == "" {
+		return &mainflux.Token{}, errors.ErrAuthentication
+	}
 
 	return ret.Get(0).(*mainflux.Token), ret.Error(1)
 }
 
 func (m *Service) Refresh(ctx context.Context, in *mainflux.RefreshReq, opts ...grpc.CallOption) (*mainflux.Token, error) {
 	ret := m.Called(ctx, in)
+	if in.GetValue() == InvalidValue || in.GetValue() == "" {
+		return &mainflux.Token{}, errors.ErrAuthentication
+	}
 
 	return ret.Get(0).(*mainflux.Token), ret.Error(1)
 }
 
 func (m *Service) Identify(ctx context.Context, in *mainflux.IdentityReq, opts ...grpc.CallOption) (*mainflux.IdentityRes, error) {
 	ret := m.Called(ctx, in)
+	if in.GetToken() == InvalidValue || in.GetToken() == "" {
+		return &mainflux.IdentityRes{}, errors.ErrAuthentication
+	}
 
 	return ret.Get(0).(*mainflux.IdentityRes), ret.Error(1)
 }
 
 func (m *Service) Authorize(ctx context.Context, in *mainflux.AuthorizeReq, opts ...grpc.CallOption) (*mainflux.AuthorizeRes, error) {
 	ret := m.Called(ctx, in)
+	if in.GetSubject() == InvalidValue || in.GetSubject() == "" {
+		return &mainflux.AuthorizeRes{Authorized: false}, errors.ErrAuthorization
+	}
+	if in.GetObject() == InvalidValue || in.GetObject() == "" {
+		return &mainflux.AuthorizeRes{Authorized: false}, errors.ErrAuthorization
+	}
 
 	return ret.Get(0).(*mainflux.AuthorizeRes), ret.Error(1)
 }

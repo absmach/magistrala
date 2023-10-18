@@ -75,13 +75,13 @@ func New(auth mainflux.AuthzServiceClient, pubsub messaging.PubSub) Service {
 }
 
 func (svc *adapterService) Publish(ctx context.Context, thingKey string, msg *messaging.Message) error {
+	if len(msg.Payload) == 0 {
+		return ErrFailedMessagePublish
+	}
+
 	thid, err := svc.authorize(ctx, thingKey, msg.GetChannel(), "publish")
 	if err != nil {
 		return ErrUnauthorizedAccess
-	}
-
-	if len(msg.Payload) == 0 {
-		return ErrFailedMessagePublish
 	}
 
 	msg.Publisher = thid

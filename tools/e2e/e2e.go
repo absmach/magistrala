@@ -13,23 +13,24 @@ import (
 	"strings"
 	"time"
 
+	"github.com/0x6flab/namegenerator"
 	"github.com/gookit/color"
-	namegen "github.com/goombaio/namegenerator"
 	"github.com/gorilla/websocket"
 	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
 	"golang.org/x/sync/errgroup"
 )
 
 const (
-	defPass      = "12345678"
-	defReaderURL = "http://localhost:8905"
-	defWSPort    = "8186"
-	numAdapters  = 4
+	defPass     = "12345678"
+	defWSPort   = "8186"
+	numAdapters = 4
+	batchSize   = 99
+	usersPort   = "9002"
+	thingsPort  = "9000"
 )
 
 var (
-	seed           = time.Now().UTC().UnixNano()
-	namesgenerator = namegen.NewNameGenerator(seed)
+	namesgenerator = namegenerator.NewNameGenerator()
 	msgFormat      = `[{"bn":"demo", "bu":"V", "t": %d, "bver":5, "n":"voltage", "u":"V", "v":%d}]`
 )
 
@@ -42,10 +43,6 @@ type Config struct {
 	CA       string
 	CAKey    string
 	Prefix   string
-}
-
-func init() {
-	rand.Seed(seed)
 }
 
 // Test - function that does actual end to end testing.
@@ -67,12 +64,9 @@ func init() {
 // - Publish message from HTTP, MQTT, WS and CoAP Adapters.
 func Test(conf Config) {
 	sdkConf := sdk.Config{
-		ThingsURL:       fmt.Sprintf("http://%s:9000", conf.Host),
-		UsersURL:        fmt.Sprintf("http://%s:9002", conf.Host),
-		ReaderURL:       defReaderURL,
-		HTTPAdapterURL:  fmt.Sprintf("http://%s:8008", conf.Host),
-		BootstrapURL:    fmt.Sprintf("http://%s", conf.Host),
-		CertsURL:        fmt.Sprintf("http://%s", conf.Host),
+		ThingsURL:       fmt.Sprintf("http://%s:%s", conf.Host, thingsPort),
+		UsersURL:        fmt.Sprintf("http://%s:%s", conf.Host, usersPort),
+		HTTPAdapterURL:  fmt.Sprintf("http://%s/http", conf.Host),
 		MsgContentType:  sdk.CTJSONSenML,
 		TLSVerification: false,
 	}
@@ -211,16 +205,16 @@ func createGroups(s sdk.SDK, conf Config, token string) ([]sdk.Group, error) {
 	return groups, nil
 }
 
-func createThings(s sdk.SDK, conf Config, token string) ([]sdk.Thing, error) {
+func createThingsInBatch(s sdk.SDK, conf Config, token string, num uint64) ([]sdk.Thing, error) {
 	var err error
-	things := make([]sdk.Thing, conf.Num)
+	things := make([]sdk.Thing, num)
 
-	for i := uint64(0); i < conf.Num; i++ {
+	for i := uint64(0); i < num; i++ {
 		things[i] = sdk.Thing{
-			Name:   fmt.Sprintf("%s-%s", conf.Prefix, namesgenerator.Generate()),
-			Status: sdk.EnabledStatus,
+			Name: fmt.Sprintf("%s-%s", conf.Prefix, namesgenerator.Generate()),
 		}
 	}
+
 	things, err = s.CreateThings(things, token)
 	if err != nil {
 		return []sdk.Thing{}, fmt.Errorf("failed to create the things: %w", err)
@@ -229,19 +223,74 @@ func createThings(s sdk.SDK, conf Config, token string) ([]sdk.Thing, error) {
 	return things, nil
 }
 
-func createChannels(s sdk.SDK, conf Config, token string) ([]sdk.Channel, error) {
-	var err error
-	channels := make([]sdk.Channel, conf.Num)
+func createThings(s sdk.SDK, conf Config, token string) ([]sdk.Thing, error) {
+	things := []sdk.Thing{}
 
-	for i := uint64(0); i < conf.Num; i++ {
+	if conf.Num > batchSize {
+		batches := int(conf.Num) / batchSize
+		for i := 0; i < batches; i++ {
+			ths, err := createThingsInBatch(s, conf, token, batchSize)
+			if err != nil {
+				return []sdk.Thing{}, fmt.Errorf("Failed to create the things: %w", err)
+			}
+			things = append(things, ths...)
+		}
+		ths, err := createThingsInBatch(s, conf, token, conf.Num%uint64(batchSize))
+		if err != nil {
+			return []sdk.Thing{}, fmt.Errorf("Failed to create the things: %w", err)
+		}
+		things = append(things, ths...)
+	} else {
+		ths, err := createThingsInBatch(s, conf, token, conf.Num)
+		if err != nil {
+			return []sdk.Thing{}, fmt.Errorf("Failed to create the things: %w", err)
+		}
+		things = append(things, ths...)
+	}
+
+	return things, nil
+}
+
+func createChannelsInBatch(s sdk.SDK, conf Config, token string, num uint64) ([]sdk.Channel, error) {
+	var err error
+	channels := make([]sdk.Channel, num)
+
+	for i := uint64(0); i < num; i++ {
 		channels[i] = sdk.Channel{
-			Name:   fmt.Sprintf("%s-%s", conf.Prefix, namesgenerator.Generate()),
-			Status: sdk.EnabledStatus,
+			Name: fmt.Sprintf("%s-%s", conf.Prefix, namesgenerator.Generate()),
 		}
 		channels[i], err = s.CreateChannel(channels[i], token)
 		if err != nil {
 			return []sdk.Channel{}, fmt.Errorf("failed to create the channels: %w", err)
 		}
+	}
+
+	return channels, nil
+}
+
+func createChannels(s sdk.SDK, conf Config, token string) ([]sdk.Channel, error) {
+	channels := []sdk.Channel{}
+
+	if conf.Num > batchSize {
+		batches := int(conf.Num) / batchSize
+		for i := 0; i < batches; i++ {
+			chs, err := createChannelsInBatch(s, conf, token, batchSize)
+			if err != nil {
+				return []sdk.Channel{}, fmt.Errorf("Failed to create the channels: %w", err)
+			}
+			channels = append(channels, chs...)
+		}
+		chs, err := createChannelsInBatch(s, conf, token, conf.Num%uint64(batchSize))
+		if err != nil {
+			return []sdk.Channel{}, fmt.Errorf("Failed to create the channels: %w", err)
+		}
+		channels = append(channels, chs...)
+	} else {
+		chs, err := createChannelsInBatch(s, conf, token, conf.Num)
+		if err != nil {
+			return []sdk.Channel{}, fmt.Errorf("Failed to create the channels: %w", err)
+		}
+		channels = append(channels, chs...)
 	}
 
 	return channels, nil
@@ -534,7 +583,7 @@ func sendMQTTMessage(msg string, thing sdk.Thing, chanID string) error {
 
 func sendWSMessage(conf Config, msg string, thing sdk.Thing, chanID string) error {
 	socketURL := fmt.Sprintf("ws://%s:%s/channels/%s/messages", conf.Host, defWSPort, chanID)
-	header := http.Header{"authorization": []string{thing.Credentials.Secret}}
+	header := http.Header{"Authorization": []string{thing.Credentials.Secret}}
 	conn, _, err := websocket.DefaultDialer.Dial(socketURL, header)
 	if err != nil {
 		return fmt.Errorf("unable to connect to websocket: %w", err)

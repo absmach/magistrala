@@ -36,14 +36,14 @@ type Client interface {
 var ErrOption = errors.New("unable to set option")
 
 type client struct {
-	client  mux.Client
+	client  mux.Conn
 	token   message.Token
 	observe uint32
 	logger  logger.Logger
 }
 
 // NewClient instantiates a new Observer.
-func NewClient(c mux.Client, tkn message.Token, l logger.Logger) Client {
+func NewClient(c mux.Conn, tkn message.Token, l logger.Logger) Client {
 	return &client{
 		client:  c,
 		token:   tkn,
@@ -57,13 +57,10 @@ func (c *client) Done() <-chan struct{} {
 }
 
 func (c *client) Cancel() error {
-	m := message.Message{
-		Code:    codes.Content,
-		Token:   c.token,
-		Context: context.Background(),
-		Options: make(message.Options, 0, 16),
-	}
-	if err := c.client.WriteMessage(&m); err != nil {
+	pm := c.client.AcquireMessage(context.Background())
+	pm.SetCode(codes.Content)
+	pm.SetToken(c.token)
+	if err := c.client.WriteMessage(pm); err != nil {
 		c.logger.Error(fmt.Sprintf("Error sending message: %s.", err))
 	}
 	return c.client.Close()
@@ -74,12 +71,10 @@ func (c *client) Token() string {
 }
 
 func (c *client) Handle(msg *messaging.Message) error {
-	m := message.Message{
-		Code:    codes.Content,
-		Token:   c.token,
-		Context: c.client.Context(),
-		Body:    bytes.NewReader(msg.GetPayload()),
-	}
+	pm := c.client.AcquireMessage(context.Background())
+	pm.SetCode(codes.Content)
+	pm.SetToken(c.token)
+	pm.SetBody(bytes.NewReader(msg.Payload))
 
 	atomic.AddUint32(&c.observe, 1)
 	var opts message.Options
@@ -103,6 +98,8 @@ func (c *client) Handle(msg *messaging.Message) error {
 		return fmt.Errorf("cannot set options to response: %w", err)
 	}
 
-	m.Options = opts
-	return c.client.WriteMessage(&m)
+	for _, option := range opts {
+		pm.SetOptionBytes(option.ID, option.Value)
+	}
+	return c.client.WriteMessage(pm)
 }

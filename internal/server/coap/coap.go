@@ -6,7 +6,7 @@ package coap
 import (
 	"context"
 	"crypto/tls"
-	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"time"
 	"os"
@@ -53,23 +53,21 @@ func (s *Server) Start() error {
 	case s.Config.CertFile != "" || s.Config.KeyFile != "":
 		s.Logger.Info(fmt.Sprintf("%s service %s server listening at %s with TLS cert %s and key %s", s.Name, s.Protocol, s.Address, s.Config.CertFile, s.Config.KeyFile))
 		certificate, err := tls.LoadX509KeyPair(s.Config.CertFile, s.Config.KeyFile)
+		if err != nil {
+			return fmt.Errorf("failed to load auth certificates: %w", err)
+		}
 		dtlsConfig := &piondtls.Config{
 			Certificates:         []tls.Certificate{certificate},
 			ExtendedMasterSecret: piondtls.RequireExtendedMasterSecret,
-			ClientCAs:            tlsConfi,
 			ClientAuth:           piondtls.RequireAndVerifyClientCert,
 			ConnectContextMaker: func() (context.Context, func()) {
-				return context.WithTimeout(ctx, 30*time.Second)
+				return context.WithTimeout(s.Ctx, 30*time.Second)
 			},
-		}
-		if err != nil {
-			return fmt.Errorf("failed to load auth certificates: %w", err)
 		}
 		clientCA, err := loadCertFile(s.Config.ClientCAFile)
 		if err != nil {
 			return fmt.Errorf("failed to load client ca file: %w", err)
 		}
-
 		if len(clientCA) > 0 {
 			if dtlsConfig.ClientCAs == nil {
 				dtlsConfig.ClientCAs = x509.NewCertPool()
@@ -81,20 +79,6 @@ func (s *Server) Start() error {
 
 		go func() {
 			errCh <- gocoap.ListenAndServeDTLS("udp", s.Address, dtlsConfig, s.handler)
-		}()
-
-	case s.Config.CertFile != "" || s.Config.KeyFile != "":
-		s.Logger.Info(fmt.Sprintf("%s service %s server listening at %s with TLS cert %s and key %s", s.Name, s.Protocol, s.Address, s.Config.CertFile, s.Config.KeyFile))
-		certificate, err := tls.LoadX509KeyPair(s.Config.CertFile, s.Config.KeyFile)
-		if err != nil {
-			return fmt.Errorf("failed to load auth certificates: %w", err)
-		}
-		tlsConfig := &tls.Config{
-			Certificates: []tls.Certificate{certificate},
-		}
-
-		go func() {
-			errCh <- gocoap.ListenAndServeTCPTLS("udp", s.Address, tlsConfig, s.handler)
 		}()
 
 	default:

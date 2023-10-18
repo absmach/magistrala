@@ -12,13 +12,8 @@ import (
 	"sync/atomic"
 	"time"
 
-<<<<<<< HEAD:vendor/github.com/pion/transport/v2/udp/conn.go
-	"github.com/pion/transport/v2/deadline"
-	"github.com/pion/transport/v2/packetio"
-=======
 	"github.com/pion/transport/v3/deadline"
 	"github.com/pion/transport/v3/packetio"
->>>>>>> 03615721 (Add internal server dtls config):vendor/github.com/pion/transport/v3/udp/conn.go
 	"golang.org/x/net/ipv4"
 )
 

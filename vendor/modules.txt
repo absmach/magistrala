@@ -638,7 +638,7 @@ github.com/opencontainers/go-digest
 ## explicit
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
-# github.com/opencontainers/runc v1.1.9
+# github.com/opencontainers/runc v1.1.7
 ## explicit; go 1.17
 github.com/opencontainers/runc/libcontainer/user
 # github.com/ory/dockertest/v3 v3.10.0
@@ -702,11 +702,7 @@ github.com/pion/dtls/v2/pkg/protocol/recordlayer
 # github.com/pion/logging v0.2.2
 ## explicit; go 1.12
 github.com/pion/logging
-<<<<<<< HEAD
-# github.com/pion/transport/v2 v2.2.4
-=======
 # github.com/pion/transport/v3 v3.0.1
->>>>>>> 03615721 (Add internal server dtls config)
 ## explicit; go 1.12
 github.com/pion/transport/v3/deadline
 github.com/pion/transport/v3/netctx
@@ -718,33 +714,6 @@ github.com/pion/transport/v3/udp
 github.com/pkg/errors
 # github.com/plgd-dev/go-coap/v3 v3.1.5
 ## explicit; go 1.18
-<<<<<<< HEAD
-github.com/plgd-dev/go-coap/v2
-github.com/plgd-dev/go-coap/v2/dtls
-github.com/plgd-dev/go-coap/v2/message
-github.com/plgd-dev/go-coap/v2/message/codes
-github.com/plgd-dev/go-coap/v2/message/noresponse
-github.com/plgd-dev/go-coap/v2/message/pool
-github.com/plgd-dev/go-coap/v2/mux
-github.com/plgd-dev/go-coap/v2/net
-github.com/plgd-dev/go-coap/v2/net/blockwise
-github.com/plgd-dev/go-coap/v2/net/monitor/inactivity
-github.com/plgd-dev/go-coap/v2/net/observation
-github.com/plgd-dev/go-coap/v2/pkg/cache
-github.com/plgd-dev/go-coap/v2/pkg/connections
-github.com/plgd-dev/go-coap/v2/pkg/runner/periodic
-github.com/plgd-dev/go-coap/v2/tcp
-github.com/plgd-dev/go-coap/v2/tcp/message
-github.com/plgd-dev/go-coap/v2/tcp/message/pool
-github.com/plgd-dev/go-coap/v2/udp
-github.com/plgd-dev/go-coap/v2/udp/client
-github.com/plgd-dev/go-coap/v2/udp/message
-github.com/plgd-dev/go-coap/v2/udp/message/pool
-# github.com/plgd-dev/kit/v2 v2.0.0-20211006190727-057b33161b90
-## explicit; go 1.13
-github.com/plgd-dev/kit/v2/sync
-# github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
-=======
 github.com/plgd-dev/go-coap/v3
 github.com/plgd-dev/go-coap/v3/dtls
 github.com/plgd-dev/go-coap/v3/dtls/server
@@ -777,17 +746,16 @@ github.com/plgd-dev/go-coap/v3/udp
 github.com/plgd-dev/go-coap/v3/udp/client
 github.com/plgd-dev/go-coap/v3/udp/coder
 github.com/plgd-dev/go-coap/v3/udp/server
-# github.com/pmezard/go-difflib v1.0.0
->>>>>>> 03615721 (Add internal server dtls config)
+# github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 ## explicit
 github.com/pmezard/go-difflib/difflib
-# github.com/prometheus/client_golang v1.17.0
-## explicit; go 1.19
+# github.com/prometheus/client_golang v1.16.0
+## explicit; go 1.17
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/internal
 github.com/prometheus/client_golang/prometheus/promhttp
-# github.com/prometheus/client_model v0.5.0
-## explicit; go 1.19
+# github.com/prometheus/client_model v0.4.0
+## explicit; go 1.18
 github.com/prometheus/client_model/go
 # github.com/prometheus/common v0.44.0
 ## explicit; go 1.18
@@ -799,10 +767,10 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/rabbitmq/amqp091-go v1.9.0
+# github.com/rabbitmq/amqp091-go v1.8.1
 ## explicit; go 1.16
 github.com/rabbitmq/amqp091-go
-# github.com/rubenv/sql-migrate v1.5.2
+# github.com/rubenv/sql-migrate v1.5.1
 ## explicit; go 1.17
 github.com/rubenv/sql-migrate
 github.com/rubenv/sql-migrate/sqlparse
@@ -961,7 +929,7 @@ github.com/yosssi/ace
 # github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a
 ## explicit; go 1.12
 github.com/youmark/pkcs8
-# go.mongodb.org/mongo-driver v1.12.1
+# go.mongodb.org/mongo-driver v1.12.0
 ## explicit; go 1.13
 go.mongodb.org/mongo-driver/bson
 go.mongodb.org/mongo-driver/bson/bsoncodec
@@ -1003,14 +971,13 @@ go.mongodb.org/mongo-driver/x/mongo/driver/operation
 go.mongodb.org/mongo-driver/x/mongo/driver/session
 go.mongodb.org/mongo-driver/x/mongo/driver/topology
 go.mongodb.org/mongo-driver/x/mongo/driver/wiremessage
-# go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.45.0
+# go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.42.0
 ## explicit; go 1.19
 go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc
 go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc/internal
-# go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.45.0
+# go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.42.0
 ## explicit; go 1.19
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp
-go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp/internal/semconvutil
 # go.opentelemetry.io/otel v1.19.0
 ## explicit; go 1.20
 go.opentelemetry.io/otel
@@ -1023,10 +990,11 @@ go.opentelemetry.io/otel/internal/baggage
 go.opentelemetry.io/otel/internal/global
 go.opentelemetry.io/otel/propagation
 go.opentelemetry.io/otel/semconv/internal
+go.opentelemetry.io/otel/semconv/internal/v2
 go.opentelemetry.io/otel/semconv/v1.12.0
 go.opentelemetry.io/otel/semconv/v1.17.0
-go.opentelemetry.io/otel/semconv/v1.21.0
-# go.opentelemetry.io/otel/exporters/jaeger v1.17.0
+go.opentelemetry.io/otel/semconv/v1.17.0/httpconv
+# go.opentelemetry.io/otel/exporters/jaeger v1.16.0
 ## explicit; go 1.19
 go.opentelemetry.io/otel/exporters/jaeger
 go.opentelemetry.io/otel/exporters/jaeger/internal/gen-go/agent
@@ -1037,8 +1005,8 @@ go.opentelemetry.io/otel/exporters/jaeger/internal/third_party/thrift/lib/go/thr
 ## explicit; go 1.20
 go.opentelemetry.io/otel/metric
 go.opentelemetry.io/otel/metric/embedded
-# go.opentelemetry.io/otel/sdk v1.19.0
-## explicit; go 1.20
+# go.opentelemetry.io/otel/sdk v1.16.0
+## explicit; go 1.19
 go.opentelemetry.io/otel/sdk
 go.opentelemetry.io/otel/sdk/instrumentation
 go.opentelemetry.io/otel/sdk/internal
@@ -1051,17 +1019,13 @@ go.opentelemetry.io/otel/trace
 # go.uber.org/atomic v1.11.0
 ## explicit; go 1.18
 go.uber.org/atomic
-# go.uber.org/multierr v1.11.0
+# go.uber.org/multierr v1.9.0
 ## explicit; go 1.19
 go.uber.org/multierr
-# golang.org/x/arch v0.5.0
+# golang.org/x/arch v0.4.0
 ## explicit; go 1.17
 golang.org/x/arch/x86/x86asm
-<<<<<<< HEAD
 # golang.org/x/crypto v0.14.0
-=======
-# golang.org/x/crypto v0.13.0
->>>>>>> 03615721 (Add internal server dtls config)
 ## explicit; go 1.17
 golang.org/x/crypto/acme
 golang.org/x/crypto/acme/autocert
@@ -1082,11 +1046,7 @@ golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/salsa20/salsa
 golang.org/x/crypto/scrypt
 golang.org/x/crypto/sha3
-<<<<<<< HEAD
-# golang.org/x/exp v0.0.0-20231006140011-7918f672742d
-=======
 # golang.org/x/exp v0.0.0-20230905200255-921286631fa9
->>>>>>> 03615721 (Add internal server dtls config)
 ## explicit; go 1.20
 golang.org/x/exp/constraints
 golang.org/x/exp/maps
@@ -1094,14 +1054,10 @@ golang.org/x/exp/slices
 golang.org/x/exp/slog
 golang.org/x/exp/slog/internal
 golang.org/x/exp/slog/internal/buffer
-# golang.org/x/mod v0.13.0
-## explicit; go 1.18
+# golang.org/x/mod v0.12.0
+## explicit; go 1.17
 golang.org/x/mod/semver
-<<<<<<< HEAD
 # golang.org/x/net v0.17.0
-=======
-# golang.org/x/net v0.15.0
->>>>>>> 03615721 (Add internal server dtls config)
 ## explicit; go 1.17
 golang.org/x/net/bpf
 golang.org/x/net/html
@@ -1120,16 +1076,12 @@ golang.org/x/net/ipv6
 golang.org/x/net/proxy
 golang.org/x/net/publicsuffix
 golang.org/x/net/trace
-# golang.org/x/sync v0.4.0
+# golang.org/x/sync v0.3.0
 ## explicit; go 1.17
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
 golang.org/x/sync/singleflight
-<<<<<<< HEAD
 # golang.org/x/sys v0.13.0
-=======
-# golang.org/x/sys v0.12.0
->>>>>>> 03615721 (Add internal server dtls config)
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
@@ -1167,11 +1119,7 @@ golang.org/x/text/width
 # golang.org/x/time v0.3.0
 ## explicit
 golang.org/x/time/rate
-<<<<<<< HEAD
-# golang.org/x/tools v0.14.0
-=======
 # golang.org/x/tools v0.13.0
->>>>>>> 03615721 (Add internal server dtls config)
 ## explicit; go 1.18
 golang.org/x/tools/cmd/stringer
 golang.org/x/tools/go/gcexportdata
@@ -1190,8 +1138,8 @@ golang.org/x/tools/internal/pkgbits
 golang.org/x/tools/internal/tokeninternal
 golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
-# gonum.org/v1/gonum v0.14.0
-## explicit; go 1.20
+# gonum.org/v1/gonum v0.13.0
+## explicit; go 1.18
 gonum.org/v1/gonum/blas
 gonum.org/v1/gonum/blas/blas64
 gonum.org/v1/gonum/blas/cblas128
@@ -1209,18 +1157,18 @@ gonum.org/v1/gonum/lapack/gonum
 gonum.org/v1/gonum/lapack/lapack64
 gonum.org/v1/gonum/mat
 gonum.org/v1/gonum/stat
-# google.golang.org/genproto v0.0.0-20231012201019-e917dd12ba7a
+# google.golang.org/genproto v0.0.0-20230913181813-007df8e322eb
 ## explicit; go 1.19
 google.golang.org/genproto/internal
-# google.golang.org/genproto/googleapis/api v0.0.0-20231012201019-e917dd12ba7a
+# google.golang.org/genproto/googleapis/api v0.0.0-20230913181813-007df8e322eb
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/api
 google.golang.org/genproto/googleapis/api/annotations
 google.golang.org/genproto/googleapis/api/httpbody
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20231012201019-e917dd12ba7a
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20230920204549-e6e6cdab5c13
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.58.3
+# google.golang.org/grpc v1.58.2
 ## explicit; go 1.19
 google.golang.org/grpc
 google.golang.org/grpc/attributes

@@ -1,15 +1,8 @@
 // SPDX-FileCopyrightText: 2023 The Pion community <https://pion.ly>
 // SPDX-License-Identifier: MIT
 
-<<<<<<< HEAD:vendor/github.com/pion/transport/v2/connctx/connctx.go
-// Package connctx wraps net.Conn using context.Context.
-//
-// Deprecated: use netctx instead.
-package connctx
-=======
 // Package netctx wraps common net interfaces using context.Context.
 package netctx
->>>>>>> 03615721 (Add internal server dtls config):vendor/github.com/pion/transport/v3/netctx/conn.go
 
 import (
 	"context"

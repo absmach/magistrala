@@ -7,10 +7,10 @@ user_token = ""
   topic = ""
 
 [remotes]
-  bootstrap_url = "http://localhost"
-  certs_url = "https://localhost:9019"
-  http_adapter_url = "http://localhost/http:9016"
-  reader_url = "http://localhost"
+  bootstrap_url = "http://localhost:9013"
+  certs_url = "http://localhost:9019"
+  http_adapter_url = "http://localhost/http"
+  reader_url = "http://localhost:9009"
   things_url = "http://localhost:9000"
   tls_verification = false
   users_url = "http://localhost:9002"

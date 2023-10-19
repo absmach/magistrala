@@ -27,7 +27,7 @@ default values.
 | MF_SMTP_NOTIFIER_DB_SSL_KEY       | Path to the PEM encoded certificate key                                 | ""                             |
 | MF_SMTP_NOTIFIER_DB_SSL_ROOT_CERT | Path to the PEM encoded root certificate file                           | ""                             |
 | MF_JAEGER_URL                     | Jaeger server URL                                                       | http://jaeger:14268/api/traces |
-| MF_BROKER_URL                     | Message broker URL                                                      | nats://127.0.0.1:4222          |
+| MF_MESSAGE_BROKER_URL             | Message broker URL                                                      | nats://127.0.0.1:4222          |
 | MF_EMAIL_HOST                     | Mail server host                                                        | localhost                      |
 | MF_EMAIL_PORT                     | Mail server port                                                        | 25                             |
 | MF_EMAIL_USERNAME                 | Mail server username                                                    |                                |

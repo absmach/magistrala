@@ -51,7 +51,7 @@ type config struct {
 	StandaloneID    string `env:"MF_TWINS_STANDALONE_ID"      envDefault:""`
 	StandaloneToken string `env:"MF_TWINS_STANDALONE_TOKEN"   envDefault:""`
 	ChannelID       string `env:"MF_TWINS_CHANNEL_ID"         envDefault:""`
-	BrokerURL       string `env:"MF_BROKER_URL"               envDefault:"nats://localhost:4222"`
+	BrokerURL       string `env:"MF_MESSAGE_BROKER_URL"       envDefault:"nats://localhost:4222"`
 	JaegerURL       string `env:"MF_JAEGER_URL"               envDefault:"http://jaeger:14268/api/traces"`
 	SendTelemetry   bool   `env:"MF_SEND_TELEMETRY"           envDefault:"true"`
 	InstanceID      string `env:"MF_TWINS_INSTANCE_ID"        envDefault:""`

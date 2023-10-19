@@ -38,7 +38,7 @@ default values.
 | MF_AUTH_GRPC_TIMEOUT              | Users service gRPC request timeout in seconds                                     | 1s                             |
 | MF_AUTH_GRPC_CLIENT_TLS           | Users client TLS flag                                                             | false                          |
 | MF_AUTH_GRPC_CA_CERT              | Path to Auth client CA certs in pem format                                        | ""                             |
-| MF_BROKER_URL                     | Message broker URL                                                                | nats://127.0.0.1:4222          |
+| MF_MESSAGE_BROKER_URL             | Message broker URL                                                                | nats://127.0.0.1:4222          |
 | MF_JAEGER_URL                     | Jaeger server URL                                                                 | http://jaeger:14268/api/traces |
 | MF_SEND_TELEMETRY                 | Send telemetry to mainflux call home server                                       | true                           |
 | MF_SMPP_NOTIFIER_INSTANCE_ID      | SMPP Notifier instance ID                                                         | ""                             |

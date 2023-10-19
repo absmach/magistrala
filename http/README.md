@@ -19,7 +19,7 @@ default values.
 | MF_THINGS_AUTH_GRPC_TIMEOUT    | Things service Auth gRPC request timeout in seconds | 1s                             |
 | MF_THINGS_AUTH_GRPC_CLIENT_TLS | Flag that indicates if TLS should be turned on      | false                          |
 | MF_THINGS_AUTH_GRPC_CA_CERTS   | Path to trusted CAs in PEM format                   |                                |
-| MF_BROKER_URL                  | Message broker instance URL                         | nats://localhost:4222          |
+| MF_MESSAGE_BROKER_URL          | Message broker instance URL                         | nats://localhost:4222          |
 | MF_JAEGER_URL                  | Jaeger server URL                                   | http://jaeger:14268/api/traces |
 | MF_SEND_TELEMETRY              | Send telemetry to mainflux call home server         | true                           |
 | MF_HTTP_ADAPTER_INSTANCE_ID    | HTTP Adapter instance ID                            |                                |
@@ -53,7 +53,7 @@ MF_THINGS_AUTH_GRPC_URL=[Things service Auth gRPC URL] \
 MF_THINGS_AUTH_GRPC_TIMEOUT=[Things service Auth gRPC request timeout in seconds] \
 MF_THINGS_AUTH_GRPC_CLIENT_TLS=[Flag that indicates if TLS should be turned on] \
 MF_THINGS_AUTH_GRPC_CA_CERTS=[Path to trusted CAs in PEM format] \
-MF_BROKER_URL=[Message broker instance URL] \
+MF_MESSAGE_BROKER_URL=[Message broker instance URL] \
 MF_JAEGER_URL=[Jaeger server URL] \
 MF_SEND_TELEMETRY=[Send telemetry to mainflux call home server] \
 MF_HTTP_ADAPTER_INSTANCE_ID=[HTTP Adapter instance ID] \

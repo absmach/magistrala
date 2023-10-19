@@ -19,7 +19,7 @@ default values.
 | MF_MONGO_NAME                    | Default MongoDB database name                                                     | messages                       |
 | MF_MONGO_HOST                    | Default MongoDB database host                                                     | localhost                      |
 | MF_MONGO_PORT                    | Default MongoDB database port                                                     | 27017                          |
-| MF_BROKER_URL                    | Message broker instance URL                                                       | nats://localhost:4222          |
+| MF_MESSAGE_BROKER_URL            | Message broker instance URL                                                       | nats://localhost:4222          |
 | MF_JAEGER_URL                    | Jaeger server URL                                                                 | http://jaeger:14268/api/traces |
 | MF_SEND_TELEMETRY                | Send telemetry to mainflux call home server                                       | true                           |
 | MF_MONGO_WRITER_INSTANCE_ID      | MongoDB writer instance ID                                                        | ""                             |
@@ -52,7 +52,7 @@ MF_MONGO_WRITER_HTTP_SERVER_KEY=[Service HTTP server key] \
 MF_MONGO_NAME=[MongoDB database name] \
 MF_MONGO_HOST=[MongoDB database host] \
 MF_MONGO_PORT=[MongoDB database port] \
-MF_BROKER_URL=[Message broker instance URL] \
+MF_MESSAGE_BROKER_URL=[Message broker instance URL] \
 MF_JAEGER_URL=[Jaeger server URL] \
 MF_SEND_TELEMETRY=[Send telemetry to mainflux call home server] \
 MF_MONGO_WRITER_INSTANCE_ID=[MongoDB writer instance ID] \

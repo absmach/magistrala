@@ -25,7 +25,6 @@ import (
 	"github.com/mainflux/mainflux/mqtt/events"
 	mqtttracing "github.com/mainflux/mainflux/mqtt/tracing"
 	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
 	brokerstracing "github.com/mainflux/mainflux/pkg/messaging/brokers/tracing"
 	mqttpub "github.com/mainflux/mainflux/pkg/messaging/mqtt"
@@ -45,13 +44,14 @@ type config struct {
 	MQTTTargetPort        string        `env:"MF_MQTT_ADAPTER_MQTT_TARGET_PORT"             envDefault:"1883"`
 	MQTTForwarderTimeout  time.Duration `env:"MF_MQTT_ADAPTER_FORWARDER_TIMEOUT"            envDefault:"30s"`
 	MQTTTargetHealthCheck string        `env:"MF_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK"     envDefault:""`
+	MQTTQoS               uint8         `env:"MF_MQTT_ADAPTER_MQTT_QOS"                     envDefault:"1"`
 	HTTPPort              string        `env:"MF_MQTT_ADAPTER_WS_PORT"                      envDefault:"8080"`
 	HTTPTargetHost        string        `env:"MF_MQTT_ADAPTER_WS_TARGET_HOST"               envDefault:"localhost"`
 	HTTPTargetPort        string        `env:"MF_MQTT_ADAPTER_WS_TARGET_PORT"               envDefault:"8080"`
 	HTTPTargetPath        string        `env:"MF_MQTT_ADAPTER_WS_TARGET_PATH"               envDefault:"/mqtt"`
 	Instance              string        `env:"MF_MQTT_ADAPTER_INSTANCE"                     envDefault:""`
 	JaegerURL             string        `env:"MF_JAEGER_URL"                                envDefault:"http://jaeger:14268/api/traces"`
-	BrokerURL             string        `env:"MF_BROKER_URL"                                envDefault:"nats://localhost:4222"`
+	BrokerURL             string        `env:"MF_MESSAGE_BROKER_URL"                        envDefault:"nats://localhost:4222"`
 	SendTelemetry         bool          `env:"MF_SEND_TELEMETRY"                            envDefault:"true"`
 	InstanceID            string        `env:"MF_MQTT_ADAPTER_INSTANCE_ID"                  envDefault:""`
 	ESURL                 string        `env:"MF_MQTT_ADAPTER_ES_URL"                       envDefault:"redis://localhost:6379/0"`
@@ -113,16 +113,16 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
-	nps, err := brokers.NewPubSub(ctx, cfg.BrokerURL, logger)
+	bsub, err := brokers.NewPubSub(ctx, cfg.BrokerURL, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to connect to message broker: %s", err))
 		exitCode = 1
 		return
 	}
-	defer nps.Close()
-	nps = brokerstracing.NewPubSub(serverConfig, tracer, nps)
+	defer bsub.Close()
+	bsub = brokerstracing.NewPubSub(serverConfig, tracer, bsub)
 
-	mpub, err := mqttpub.NewPublisher(fmt.Sprintf("%s:%s", cfg.MQTTTargetHost, cfg.MQTTTargetPort), cfg.MQTTForwarderTimeout)
+	mpub, err := mqttpub.NewPublisher(fmt.Sprintf("mqtt://%s:%s", cfg.MQTTTargetHost, cfg.MQTTTargetPort), cfg.MQTTQoS, cfg.MQTTForwarderTimeout)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create MQTT publisher: %s", err))
 		exitCode = 1
@@ -132,7 +132,7 @@ func main() {
 
 	fwd := mqtt.NewForwarder(brokers.SubjectAllChannels, logger)
 	fwd = mqtttracing.New(serverConfig, tracer, fwd, brokers.SubjectAllChannels)
-	if err := fwd.Forward(ctx, svcName, nps, mpub); err != nil {
+	if err := fwd.Forward(ctx, svcName, bsub, mpub); err != nil {
 		logger.Error(fmt.Sprintf("failed to forward message broker messages: %s", err))
 		exitCode = 1
 		return
@@ -164,7 +164,7 @@ func main() {
 
 	logger.Info("Successfully connected to things grpc server " + aHandler.Secure())
 
-	h := mqtt.NewHandler([]messaging.Publisher{np}, es, logger, auth)
+	h := mqtt.NewHandler(np, es, logger, auth)
 	h = mqtttracing.NewHandler(tracer, h)
 
 	if cfg.SendTelemetry {

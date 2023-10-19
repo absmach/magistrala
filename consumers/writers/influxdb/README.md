@@ -29,7 +29,7 @@ default values.
 | MF_INFLUXDB_USER_AGENT            | InfluxDB user agent                                                               |                                |
 | MF_INFLUXDB_TIMEOUT               | InfluxDB client connection readiness timeout                                      | 1s                             |
 | MF_INFLUXDB_INSECURE_SKIP_VERIFY  | InfluxDB client connection insecure skip verify                                   | false                          |
-| MF_BROKER_URL                     | Message broker instance URL                                                       | nats://localhost:4222          |
+| MF_MESSAGE_BROKER_URL             | Message broker instance URL                                                       | nats://localhost:4222          |
 | MF_JAEGER_URL                     | Jaeger server URL                                                                 | http://jaeger:14268/api/traces |
 | MF_SEND_TELEMETRY                 | Send telemetry to mainflux call home server                                       | true                           |
 | MF_INFLUX_WRITER_INSTANCE_ID      | InfluxDB writer instance ID                                                       |                                |
@@ -72,7 +72,7 @@ MF_INFLUXDB_DBURL=[InfluxDB database url] \
 MF_INFLUXDB_USER_AGENT=[InfluxDB user agent] \
 MF_INFLUXDB_TIMEOUT=[InfluxDB timeout] \
 MF_INFLUXDB_INSECURE_SKIP_VERIFY=[InfluxDB insecure skip verify] \
-MF_BROKER_URL=[Message broker instance URL] \
+MF_MESSAGE_BROKER_URL=[Message broker instance URL] \
 MF_JAEGER_URL=[Jaeger server URL] \
 MF_SEND_TELEMETRY=[Send telemetry to mainflux call home server] \
 MF_INFLUX_WRITER_INSTANCE_ID=[Influx writer instance ID] \

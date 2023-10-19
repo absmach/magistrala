@@ -48,7 +48,7 @@ const (
 type config struct {
 	LogLevel       string `env:"MF_OPCUA_ADAPTER_LOG_LEVEL"          envDefault:"info"`
 	ESConsumerName string `env:"MF_OPCUA_ADAPTER_EVENT_CONSUMER"     envDefault:"opcua-adapter"`
-	BrokerURL      string `env:"MF_BROKER_URL"                       envDefault:"nats://localhost:4222"`
+	BrokerURL      string `env:"MF_MESSAGE_BROKER_URL"               envDefault:"nats://localhost:4222"`
 	JaegerURL      string `env:"MF_JAEGER_URL"                       envDefault:"http://jaeger:14268/api/traces"`
 	SendTelemetry  bool   `env:"MF_SEND_TELEMETRY"                   envDefault:"true"`
 	InstanceID     string `env:"MF_OPCUA_ADAPTER_INSTANCE_ID"        envDefault:""`

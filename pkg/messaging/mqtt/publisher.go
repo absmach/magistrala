@@ -19,10 +19,11 @@ var _ messaging.Publisher = (*publisher)(nil)
 type publisher struct {
 	client  mqtt.Client
 	timeout time.Duration
+	qos     uint8
 }
 
 // NewPublisher returns a new MQTT message publisher.
-func NewPublisher(address string, timeout time.Duration) (messaging.Publisher, error) {
+func NewPublisher(address string, qos uint8, timeout time.Duration) (messaging.Publisher, error) {
 	client, err := newClient(address, "mqtt-publisher", timeout)
 	if err != nil {
 		return nil, err
@@ -31,6 +32,7 @@ func NewPublisher(address string, timeout time.Duration) (messaging.Publisher, e
 	ret := publisher{
 		client:  client,
 		timeout: timeout,
+		qos:     qos,
 	}
 	return ret, nil
 }
@@ -41,7 +43,7 @@ func (pub publisher) Publish(ctx context.Context, topic string, msg *messaging.M
 	}
 
 	// Publish only the payload and not the whole message.
-	token := pub.client.Publish(topic, qos, false, msg.GetPayload())
+	token := pub.client.Publish(topic, byte(pub.qos), false, msg.GetPayload())
 	if token.Error() != nil {
 		return token.Error()
 	}

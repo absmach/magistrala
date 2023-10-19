@@ -36,7 +36,6 @@ func New(publisher messaging.Publisher, auth mainflux.AuthzServiceClient) Servic
 
 func (as *adapterService) Publish(ctx context.Context, token string, msg *messaging.Message) error {
 	ar := &mainflux.AuthorizeReq{
-		Namespace:   "",
 		SubjectType: "thing",
 		Permission:  "publish",
 		Subject:     token,

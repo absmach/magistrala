@@ -16,10 +16,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-const (
-	username = "mainflux-mqtt"
-	qos      = 2
-)
+const username = "mainflux-mqtt"
 
 var (
 	// ErrConnect indicates that connection to MQTT broker failed.
@@ -62,7 +59,7 @@ type pubsub struct {
 }
 
 // NewPubSub returns MQTT message publisher/subscriber.
-func NewPubSub(url string, timeout time.Duration, logger mflog.Logger) (messaging.PubSub, error) {
+func NewPubSub(url string, qos uint8, timeout time.Duration, logger mflog.Logger) (messaging.PubSub, error) {
 	client, err := newClient(url, "mqtt-publisher", timeout)
 	if err != nil {
 		return nil, err
@@ -71,6 +68,7 @@ func NewPubSub(url string, timeout time.Duration, logger mflog.Logger) (messagin
 		publisher: publisher{
 			client:  client,
 			timeout: timeout,
+			qos:     qos,
 		},
 		address:       url,
 		timeout:       timeout,
@@ -113,14 +111,15 @@ func (ps *pubsub) Subscribe(ctx context.Context, id, topic string, handler messa
 	s.topics = append(s.topics, topic)
 	ps.subscriptions[id] = s
 
-	token := s.client.Subscribe(topic, qos, ps.mqttHandler(handler))
+	token := s.client.Subscribe(topic, byte(ps.qos), ps.mqttHandler(handler))
 	if token.Error() != nil {
 		return token.Error()
 	}
 	if ok := token.WaitTimeout(ps.timeout); !ok {
 		return ErrSubscribeTimeout
 	}
-	return token.Error()
+
+	return nil
 }
 
 func (ps *pubsub) Unsubscribe(ctx context.Context, id, topic string) error {
@@ -181,13 +180,8 @@ func newClient(address, id string, timeout time.Duration) (mqtt.Client, error) {
 		return nil, token.Error()
 	}
 
-	ok := token.WaitTimeout(timeout)
-	if !ok {
+	if ok := token.WaitTimeout(timeout); !ok {
 		return nil, ErrConnect
-	}
-
-	if token.Error() != nil {
-		return nil, token.Error()
 	}
 
 	return client, nil
@@ -200,6 +194,7 @@ func (ps *pubsub) mqttHandler(h messaging.MessageHandler) mqtt.MessageHandler {
 			ps.logger.Warn(fmt.Sprintf("Failed to unmarshal received message: %s", err))
 			return
 		}
+
 		if err := h.Handle(&msg); err != nil {
 			ps.logger.Warn(fmt.Sprintf("Failed to handle Mainflux message: %s", err))
 		}

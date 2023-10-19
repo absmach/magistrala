@@ -1,0 +1,16 @@
+# This file is used to configure NATS broker.
+# It used when running nats both as an MQTT and Message broker.
+services:
+  nats:
+    extends:
+      file: ../nats.yml
+      service: broker
+    container_name: mainflux-nats
+    restart: on-failure
+    networks:
+      - mainflux-base-net
+    volumes:
+      - mainflux-broker-volume:/data
+    profiles:
+      - nats_nats
+      - nats_rabbitmq

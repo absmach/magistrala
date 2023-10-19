@@ -18,6 +18,10 @@ volumes:
   mainflux-spicedb-db-volume:
   mainflux-auth-db-volume:
 
+include:
+  - path: brokers/docker-compose.yml
+    env_file: docker/.env
+
 services:
   spicedb:
     image: "authzed/spicedb"
@@ -138,17 +142,6 @@ services:
       - mqtt-adapter
       - http-adapter
       - ws-adapter
-
-  broker:
-    extends:
-      file: brokers/nats.yml
-      service: broker
-    container_name: mainflux-broker
-    restart: on-failure
-    networks:
-      - mainflux-base-net
-    volumes:
-      - mainflux-broker-volume:/data
 
   things-db:
     image: postgres:13.3-alpine
@@ -362,25 +355,12 @@ services:
     networks:
       - mainflux-base-net
 
-  vernemq:
-    image: mainflux/vernemq:${MF_RELEASE_TAG}
-    container_name: mainflux-vernemq
-    restart: on-failure
-    environment:
-      DOCKER_VERNEMQ_ALLOW_ANONYMOUS: ${MF_DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
-      DOCKER_VERNEMQ_LOG__CONSOLE__LEVEL: ${MF_DOCKER_VERNEMQ_LOG__CONSOLE__LEVEL}
-    networks:
-      - mainflux-base-net
-    volumes:
-      - mainflux-mqtt-broker-volume:/var/lib/vernemq
-
   mqtt-adapter:
     image: mainflux/mqtt:${MF_RELEASE_TAG}
     container_name: mainflux-mqtt
     depends_on:
-      - vernemq
       - things
-      - broker
+      - nats
     restart: on-failure
     environment:
       MF_MQTT_ADAPTER_LOG_LEVEL: ${MF_MQTT_ADAPTER_LOG_LEVEL}
@@ -402,7 +382,7 @@ services:
       MF_AUTH_GRPC_CLIENT_KEY: ${MF_THINGS_AUTH_GRPC_CLIENT_KEY:+/client.key}
       MF_AUTH_GRPC_SERVER_CA_CERTS: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/server_ca.crt}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_BROKER_URL: ${MF_BROKER_URL}
+      MF_MESSAGE_BROKER_URL: ${MF_MESSAGE_BROKER_URL}
       MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
     networks:
       - mainflux-base-net
@@ -429,7 +409,7 @@ services:
     container_name: mainflux-http
     depends_on:
       - things
-      - broker
+      - nats
     restart: on-failure
     environment:
       MF_HTTP_ADAPTER_LOG_LEVEL: ${MF_HTTP_ADAPTER_LOG_LEVEL}
@@ -442,7 +422,7 @@ services:
       MF_AUTH_GRPC_CLIENT_CERT: ${MF_THINGS_AUTH_GRPC_CLIENT_CERT:+/client.crt}
       MF_AUTH_GRPC_CLIENT_KEY: ${MF_THINGS_AUTH_GRPC_CLIENT_KEY:+/client.key}
       MF_AUTH_GRPC_SERVER_CA_CERTS: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/server_ca.crt}
-      MF_BROKER_URL: ${MF_BROKER_URL}
+      MF_MESSAGE_BROKER_URL: ${MF_MESSAGE_BROKER_URL}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
       MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
       MF_HTTP_ADAPTER_INSTANCE_ID: ${MF_HTTP_ADAPTER_INSTANCE_ID}
@@ -482,7 +462,7 @@ services:
     container_name: mainflux-coap
     depends_on:
       - things
-      - broker
+      - nats
     restart: on-failure
     environment:
       MF_COAP_ADAPTER_LOG_LEVEL: ${MF_COAP_ADAPTER_LOG_LEVEL}
@@ -499,7 +479,7 @@ services:
       MF_AUTH_GRPC_CLIENT_CERT: ${MF_THINGS_AUTH_GRPC_CLIENT_CERT:+/client.crt}
       MF_AUTH_GRPC_CLIENT_KEY: ${MF_THINGS_AUTH_GRPC_CLIENT_KEY:+/client.key}
       MF_AUTH_GRPC_SERVER_CA_CERTS: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/server_ca.crt}
-      MF_BROKER_URL: ${MF_BROKER_URL}
+      MF_MESSAGE_BROKER_URL: ${MF_MESSAGE_BROKER_URL}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
       MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
       MF_COAP_ADAPTER_INSTANCE_ID: ${MF_COAP_ADAPTER_INSTANCE_ID}
@@ -531,7 +511,7 @@ services:
     container_name: mainflux-ws
     depends_on:
       - things
-      - broker
+      - nats
     restart: on-failure
     environment:
       MF_WS_ADAPTER_LOG_LEVEL: ${MF_WS_ADAPTER_LOG_LEVEL}
@@ -544,7 +524,7 @@ services:
       MF_AUTH_GRPC_CLIENT_CERT: ${MF_THINGS_AUTH_GRPC_CLIENT_CERT:+/client.crt}
       MF_AUTH_GRPC_CLIENT_KEY: ${MF_THINGS_AUTH_GRPC_CLIENT_KEY:+/client.key}
       MF_AUTH_GRPC_SERVER_CA_CERTS: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/server_ca.crt}
-      MF_BROKER_URL: ${MF_BROKER_URL}
+      MF_MESSAGE_BROKER_URL: ${MF_MESSAGE_BROKER_URL}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
       MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
       MF_WS_ADAPTER_INSTANCE_ID: ${MF_WS_ADAPTER_INSTANCE_ID}

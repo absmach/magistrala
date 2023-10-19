@@ -78,7 +78,7 @@ func (c *client) Handle(msg *messaging.Message) error {
 		Code:    codes.Content,
 		Token:   c.token,
 		Context: c.client.Context(),
-		Body:    bytes.NewReader(msg.Payload),
+		Body:    bytes.NewReader(msg.GetPayload()),
 	}
 
 	atomic.AddUint32(&c.observe, 1)

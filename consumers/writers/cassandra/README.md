@@ -21,7 +21,7 @@ default values.
 | MF_CASSANDRA_USER                    | Cassandra DB username                                                   | mainflux                       |
 | MF_CASSANDRA_PASS                    | Cassandra DB password                                                   | mainflux                       |
 | MF_CASSANDRA_PORT                    | Cassandra DB port                                                       | 9042                           |
-| MF_BROKER_URL                        | Message broker instance URL                                             | nats://localhost:4222          |
+| MF_MESSAGE_BROKER_URL                | Message broker instance URL                                             | nats://localhost:4222          |
 | MF_JAEGER_URL                        | Jaeger server URL                                                       | http://jaeger:14268/api/traces |
 | MF_SEND_TELEMETRY                    | Send telemetry to mainflux call home server                             | true                           |
 | MF_CASSANDRA_WRITER_INSANCE_ID       | Cassandra writer instance ID                                            |                                |
@@ -56,7 +56,7 @@ MF_CASSANDRA_KEYSPACE=[Cassandra keyspace name] \
 MF_CASSANDRA_USER=[Cassandra DB username] \
 MF_CASSANDRA_PASS=[Cassandra DB password] \
 MF_CASSANDRA_PORT=[Cassandra DB port] \
-MF_BROKER_URL=[Message Broker instance URL] \
+MF_MESSAGE_BROKER_URL=[Message Broker instance URL] \
 MF_JAEGER_URL=[Jaeger server URL] \
 MF_SEND_TELEMETRY=[Send telemetry to mainflux call home server] \
 MF_CASSANDRA_WRITER_INSANCE_ID=[Cassandra writer instance ID] \

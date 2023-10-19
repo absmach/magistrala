@@ -695,5 +695,5 @@ blocks:
       jobs:
         - name: Compile For RabbitMQ
           commands:
-            - MF_BROKER_TYPE=rabbitmq make mqtt
+            - MF_MESSAGE_BROKER_TYPE=rabbitmq make mqtt
 

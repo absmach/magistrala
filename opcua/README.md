@@ -15,7 +15,7 @@ default values.
 |----------------------------------|--------------------------------------------------|----------------------------|
 | MF_OPCUA_ADAPTER_HTTP_PORT       | Service HTTP port                                | 8180                       |
 | MF_OPCUA_ADAPTER_LOG_LEVEL       | Service Log level                                | info                       |
-| MF_BROKER_URL                    | Message broker instance URL                      | nats://localhost:4222      |
+| MF_MESSAGE_BROKER_URL            | Message broker instance URL                      | nats://localhost:4222      |
 | MF_OPCUA_ADAPTER_INTERVAL_MS     | OPC-UA Server Interval in milliseconds           | 1000                       |
 | MF_OPCUA_ADAPTER_POLICY          | OPC-UA Server Policy                             |                            |
 | MF_OPCUA_ADAPTER_MODE            | OPC-UA Server Mode                               |                            |
@@ -53,7 +53,7 @@ make install
 # set the environment variables and run the service
 MF_OPCUA_ADAPTER_HTTP_PORT=[Service HTTP port] \
 MF_OPCUA_ADAPTER_LOG_LEVEL=[OPC-UA Adapter Log Level] \
-MF_BROKER_URL=[Message broker instance URL] \
+MF_MESSAGE_BROKER_URL=[Message broker instance URL] \
 MF_OPCUA_ADAPTER_INTERVAL_MS: [OPC-UA Server Interval (milliseconds)] \
 MF_OPCUA_ADAPTER_POLICY=[OPC-UA Server Policy] \
 MF_OPCUA_ADAPTER_MODE=[OPC-UA Server Mode] \

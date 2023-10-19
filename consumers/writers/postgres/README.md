@@ -25,7 +25,7 @@ default values.
 | MF_POSTGRES_SSL_CERT                | Postgres SSL certificate path                                                     | ""                             |
 | MF_POSTGRES_SSL_KEY                 | Postgres SSL key                                                                  | ""                             |
 | MF_POSTGRES_SSL_ROOT_CERT           | Postgres SSL root certificate path                                                | ""                             |
-| MF_BROKER_URL                       | Message broker instance URL                                                       | nats://localhost:4222          |
+| MF_MESSAGE_BROKER_URL               | Message broker instance URL                                                       | nats://localhost:4222          |
 | MF_JAEGER_URL                       | Jaeger server URL                                                                 | http://jaeger:14268/api/traces |
 | MF_SEND_TELEMETRY                   | Send telemetry to mainflux call home server                                       | true                           |
 | MF_POSTGRES_WRITER_INSTANCE_ID      | Service instance ID                                                               | ""                             |
@@ -64,7 +64,7 @@ MF_POSTGRES_SSL_MODE=[Postgres SSL mode] \
 MF_POSTGRES_SSL_CERT=[Postgres SSL cert] \
 MF_POSTGRES_SSL_KEY=[Postgres SSL key] \
 MF_POSTGRES_SSL_ROOT_CERT=[Postgres SSL Root cert] \
-MF_BROKER_URL=[Message broker instance URL] \
+MF_MESSAGE_BROKER_URL=[Message broker instance URL] \
 MF_JAEGER_URL=[Jaeger server URL] \
 MF_SEND_TELEMETRY=[Send telemetry to mainflux call home server] \
 MF_POSTGRES_WRITER_INSTANCE_ID=[Service instance ID] \

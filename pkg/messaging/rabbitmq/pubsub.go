@@ -100,14 +100,18 @@ func (ps *pubsub) Subscribe(ctx context.Context, id, topic string, handler messa
 		ps.subscriptions[topic] = s
 	}
 
-	if _, err := ps.ch.QueueDeclare(topic, true, false, false, false, nil); err != nil {
-		return err
-	}
-	if err := ps.ch.QueueBind(topic, topic, exchangeName, false, nil); err != nil {
-		return err
-	}
 	clientID := fmt.Sprintf("%s-%s", topic, id)
-	msgs, err := ps.ch.Consume(topic, clientID, true, false, false, false, nil)
+
+	queue, err := ps.ch.QueueDeclare(clientID, true, false, false, false, nil)
+	if err != nil {
+		return err
+	}
+
+	if err := ps.ch.QueueBind(queue.Name, topic, exchangeName, false, nil); err != nil {
+		return err
+	}
+
+	msgs, err := ps.ch.Consume(queue.Name, clientID, true, false, false, false, nil)
 	if err != nil {
 		return err
 	}

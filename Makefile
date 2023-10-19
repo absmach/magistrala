@@ -22,15 +22,23 @@ DOCKER_PROJECT ?= $(shell echo $(subst $(space),,$(USER_REPO)_$(BRANCH)) | tr -c
 DOCKER_COMPOSE_COMMANDS_SUPPORTED := up down config
 DEFAULT_DOCKER_COMPOSE_COMMAND  := up
 GRPC_MTLS_CERT_FILES_EXISTS = 0
-ifneq ($(MF_BROKER_TYPE),)
-    MF_BROKER_TYPE := $(MF_BROKER_TYPE)
+DOCKER_PROFILE ?= $(MF_MQTT_BROKER_TYPE)_$(MF_MESSAGE_BROKER_TYPE)
+ifneq ($(MF_MESSAGE_BROKER_TYPE),)
+    MF_MESSAGE_BROKER_TYPE := $(MF_MESSAGE_BROKER_TYPE)
 else
-    MF_BROKER_TYPE=nats
+    MF_MESSAGE_BROKER_TYPE=nats
 endif
+
+ifneq ($(MF_MQTT_BROKER_TYPE),)
+    MF_MQTT_BROKER_TYPE := $(MF_MQTT_BROKER_TYPE)
+else
+    MF_MQTT_BROKER_TYPE=nats
+endif
+
 
 define compile_service
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) GOARM=$(GOARM) \
-	go build -mod=vendor -tags $(MF_BROKER_TYPE) -ldflags "-s -w \
+	go build -mod=vendor -tags $(MF_MESSAGE_BROKER_TYPE) -ldflags "-s -w \
 	-X 'github.com/mainflux/mainflux.BuildTime=$(TIME)' \
 	-X 'github.com/mainflux/mainflux.Version=$(VERSION)' \
 	-X 'github.com/mainflux/mainflux.Commit=$(COMMIT)'" \
@@ -183,12 +191,45 @@ endif
 endif
 endif
 
-run: check_certs
-	sed -i "s,file: brokers/.*.yml,file: brokers/${MF_BROKER_TYPE}.yml," docker/docker-compose.yml
-	sed -i "s,MF_BROKER_URL=.*,MF_BROKER_URL=$$\{MF_$(shell echo ${MF_BROKER_TYPE} | tr 'a-z' 'A-Z')_URL\}," docker/.env
-	docker-compose -f docker/docker-compose.yml -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+define edit_docker_config
+	sed -i "s/MF_MQTT_BROKER_TYPE=.*/MF_MQTT_BROKER_TYPE=$(1)/" docker/.env
+	sed -i "s/MF_MQTT_BROKER_HEALTH_CHECK=.*/MF_MQTT_BROKER_HEALTH_CHECK=$$\{MF_$(shell echo ${MF_MQTT_BROKER_TYPE} | tr 'a-z' 'A-Z')_HEALTH_CHECK}/" docker/.env
+	sed -i "s/MF_MQTT_ADAPTER_WS_TARGET_PATH=.*/MF_MQTT_ADAPTER_WS_TARGET_PATH=$$\{MF_$(shell echo ${MF_MQTT_BROKER_TYPE} | tr 'a-z' 'A-Z')_WS_TARGET_PATH}/" docker/.env
+	sed -i "s/MF_MESSAGE_BROKER_TYPE=.*/MF_MESSAGE_BROKER_TYPE=$(2)/" docker/.env
+	sed -i "s,file: .*.yml,file: $(2).yml," docker/brokers/docker-compose.yml
+	sed -i "s,MF_MESSAGE_BROKER_URL=.*,MF_MESSAGE_BROKER_URL=$$\{MF_$(shell echo ${MF_MESSAGE_BROKER_TYPE} | tr 'a-z' 'A-Z')_URL\}," docker/.env
+	sed -i "s,MF_MQTT_ADAPTER_MQTT_QOS=.*,MF_MQTT_ADAPTER_MQTT_QOS=$$\{MF_$(shell echo ${MF_MQTT_BROKER_TYPE} | tr 'a-z' 'A-Z')_MQTT_QOS\}," docker/.env
+endef
+
+change_config:
+ifeq ($(DOCKER_PROFILE),nats_nats)
+	sed -i "s/- broker/- nats/g" docker/docker-compose.yml
+	sed -i "s/- rabbitmq/- nats/g" docker/docker-compose.yml
+	sed -i "s,MF_NATS_URL=.*,MF_NATS_URL=nats://nats:$$\{MF_NATS_PORT}," docker/.env
+	$(call edit_docker_config,nats,nats)
+else ifeq ($(DOCKER_PROFILE),nats_rabbitmq)
+	sed -i "s/nats/broker/g" docker/docker-compose.yml
+	sed -i "s,MF_NATS_URL=.*,MF_NATS_URL=nats://nats:$$\{MF_NATS_PORT}," docker/.env
+	sed -i "s/rabbitmq/broker/g" docker/docker-compose.yml
+	$(call edit_docker_config,nats,rabbitmq)
+else ifeq ($(DOCKER_PROFILE),vernemq_nats)
+	sed -i "s/nats/broker/g" docker/docker-compose.yml
+	sed -i "s/rabbitmq/broker/g" docker/docker-compose.yml
+	sed -i "s,MF_NATS_URL=.*,MF_NATS_URL=nats://broker:$$\{MF_NATS_PORT}," docker/.env
+	$(call edit_docker_config,vernemq,nats)
+else ifeq ($(DOCKER_PROFILE),vernemq_rabbitmq)
+	sed -i "s/nats/broker/g" docker/docker-compose.yml
+	sed -i "s/rabbitmq/broker/g" docker/docker-compose.yml
+	$(call edit_docker_config,vernemq,rabbitmq)
+else
+	$(error Invalid DOCKER_PROFILE $(DOCKER_PROFILE))
+endif
+
+run: check_certs change_config
+	docker-compose -f docker/docker-compose.yml --profile $(DOCKER_PROFILE) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
 run_addons: check_certs
+	$(call change_config)
 	$(foreach SVC,$(RUN_ADDON_ARGS),$(if $(filter $(SVC),$(ADDON_SERVICES) $(EXTERNAL_SERVICES)),,$(error Invalid Service $(SVC))))
 	@for SVC in $(RUN_ADDON_ARGS); do \
 		MF_ADDONS_CERTS_PATH_PREFIX="../."  docker-compose -f docker/addons/$$SVC/docker-compose.yml -p $(DOCKER_PROJECT) --env-file ./docker/.env $(DOCKER_COMPOSE_COMMAND) $(args) & \

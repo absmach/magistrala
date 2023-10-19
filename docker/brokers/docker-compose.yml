@@ -1,0 +1,48 @@
+# This file configures Mainflux brokers. Mainflux uses two types of brokers:
+# 1. MQTT_BROKER: Handles MQTT communication between MQTT adapters and message broker.
+# 2. MESSAGE_BROKER: Manages communication between adapters and Mainflux writer services.
+#
+# MQTT_BROKER can be either 'vernemq' or 'nats'.
+# MESSAGE_BROKER can be either 'nats' or 'rabbitmq'.
+#
+# Each broker has a unique profile for configuration. The available profiles are:
+# - vernemq_nats: Uses 'vernemq' as MQTT_BROKER and 'nats' as MESSAGE_BROKER.
+# - vernemq_rabbitmq: Uses 'vernemq' as MQTT_BROKER and 'rabbitmq' as MESSAGE_BROKER.
+# - nats_nats: Uses 'nats' as both MQTT_BROKER and MESSAGE_BROKER.
+# - nats_rabbitmq: Uses 'nats' as MQTT_BROKER and 'rabbitmq' as MESSAGE_BROKER.
+#
+
+include:
+  - path: profiles/nats.yml
+    env_file: docker/.env
+
+services:
+  vernemq:
+    image: mainflux/vernemq:${MF_RELEASE_TAG}
+    container_name: mainflux-vernemq
+    restart: on-failure
+    environment:
+      DOCKER_VERNEMQ_ALLOW_ANONYMOUS: ${MF_DOCKER_VERNEMQ_ALLOW_ANONYMOUS}
+      DOCKER_VERNEMQ_LOG__CONSOLE__LEVEL: ${MF_DOCKER_VERNEMQ_LOG__CONSOLE__LEVEL}
+    networks:
+      - mainflux-base-net
+    volumes:
+      - mainflux-mqtt-broker-volume:/var/lib/vernemq
+    profiles:
+      - vernemq_nats
+      - vernemq_rabbitmq
+
+  broker:
+    extends:
+      file: nats.yml
+      service: broker
+    container_name: mainflux-broker
+    restart: on-failure
+    networks:
+      - mainflux-base-net
+    volumes:
+      - mainflux-broker-volume:/data
+    profiles:
+      - vernemq_nats
+      - vernemq_rabbitmq
+      - nats_rabbitmq

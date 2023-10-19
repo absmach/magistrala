@@ -25,7 +25,7 @@ default values.
 | MF_TIMESCALE_SSL_CERT                | Timescale SSL certificate path                            | ""                             |
 | MF_TIMESCALE_SSL_KEY                 | Timescale SSL key                                         | ""                             |
 | MF_TIMESCALE_SSL_ROOT_CERT           | Timescale SSL root certificate path                       | ""                             |
-| MF_BROKER_URL                        | Message broker instance URL                               | nats://localhost:4222          |
+| MF_MESSAGE_BROKER_URL                | Message broker instance URL                               | nats://localhost:4222          |
 | MF_JAEGER_URL                        | Jaeger server URL                                         | http://jaeger:14268/api/traces |
 | MF_SEND_TELEMETRY                    | Send telemetry to mainflux call home server               | true                           |
 | MF_TIMESCALE_WRITER_INSTANCE_ID      | Timescale writer instance ID                              | ""                             |
@@ -64,7 +64,7 @@ MF_TIMESCALE_SSL_MODE=[Timescale SSL mode] \
 MF_TIMESCALE_SSL_CERT=[Timescale SSL cert] \
 MF_TIMESCALE_SSL_KEY=[Timescale SSL key] \
 MF_TIMESCALE_SSL_ROOT_CERT=[Timescale SSL Root cert] \
-MF_BROKER_URL=[Message broker instance URL] \
+MF_MESSAGE_BROKER_URL=[Message broker instance URL] \
 MF_JAEGER_URL=[Jaeger server URL] \
 MF_SEND_TELEMETRY=[Send telemetry to mainflux call home server] \
 MF_TIMESCALE_WRITER_INSTANCE_ID=[Timescale writer instance ID] \

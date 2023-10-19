@@ -54,7 +54,7 @@ type config struct {
 	LoraMsgTopic   string        `env:"MF_LORA_ADAPTER_MESSAGES_TOPIC"      envDefault:"application/+/device/+/event/up"`
 	LoraMsgTimeout time.Duration `env:"MF_LORA_ADAPTER_MESSAGES_TIMEOUT"    envDefault:"30s"`
 	ESConsumerName string        `env:"MF_LORA_ADAPTER_EVENT_CONSUMER"      envDefault:"lora-adapter"`
-	BrokerURL      string        `env:"MF_BROKER_URL"                       envDefault:"nats://localhost:4222"`
+	BrokerURL      string        `env:"MF_MESSAGE_BROKER_URL"               envDefault:"nats://localhost:4222"`
 	JaegerURL      string        `env:"MF_JAEGER_URL"                       envDefault:"http://jaeger:14268/api/traces"`
 	SendTelemetry  bool          `env:"MF_SEND_TELEMETRY"                   envDefault:"true"`
 	InstanceID     string        `env:"MF_LORA_ADAPTER_INSTANCE_ID"         envDefault:""`

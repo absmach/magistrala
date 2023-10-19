@@ -15,7 +15,6 @@ import (
 	"github.com/mainflux/mainflux/mqtt"
 	"github.com/mainflux/mainflux/mqtt/mocks"
 	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mproxy/pkg/session"
 	"github.com/stretchr/testify/assert"
 )
@@ -455,5 +454,5 @@ func newHandler() session.Handler {
 	}
 	auth := new(authmocks.Service)
 	eventStore := mocks.NewEventStore()
-	return mqtt.NewHandler([]messaging.Publisher{mocks.NewPublisher()}, eventStore, logger, auth)
+	return mqtt.NewHandler(mocks.NewPublisher(), eventStore, logger, auth)
 }

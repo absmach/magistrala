@@ -66,7 +66,7 @@ setup_mf() {
         fi
     done
     echo "Compile check for rabbitmq..."
-    MF_BROKER_TYPE=rabbitmq make http
+    MF_MESSAGE_BROKER_TYPE=rabbitmq make http
     make -j$NPROC
 }
 

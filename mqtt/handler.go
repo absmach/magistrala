@@ -55,19 +55,19 @@ var channelRegExp = regexp.MustCompile(`^\/?channels\/([\w\-]+)\/messages(\/[^?]
 
 // Event implements events.Event interface.
 type handler struct {
-	publishers []messaging.Publisher
-	auth       mainflux.AuthzServiceClient
-	logger     logger.Logger
-	es         events.EventStore
+	publisher messaging.Publisher
+	auth      mainflux.AuthzServiceClient
+	logger    logger.Logger
+	es        events.EventStore
 }
 
 // NewHandler creates new Handler entity.
-func NewHandler(publishers []messaging.Publisher, es events.EventStore, logger logger.Logger, auth mainflux.AuthzServiceClient) session.Handler {
+func NewHandler(publisher messaging.Publisher, es events.EventStore, logger logger.Logger, auth mainflux.AuthzServiceClient) session.Handler {
 	return &handler{
-		es:         es,
-		logger:     logger,
-		publishers: publishers,
-		auth:       auth,
+		es:        es,
+		logger:    logger,
+		publisher: publisher,
+		auth:      auth,
 	}
 }
 
@@ -168,11 +168,10 @@ func (h *handler) Publish(ctx context.Context, topic *string, payload *[]byte) e
 		Created:   time.Now().UnixNano(),
 	}
 
-	for _, pub := range h.publishers {
-		if err := pub.Publish(ctx, msg.Channel, &msg); err != nil {
-			return errors.Wrap(ErrFailedPublishToMsgBroker, err)
-		}
+	if err := h.publisher.Publish(ctx, msg.Channel, &msg); err != nil {
+		return errors.Wrap(ErrFailedPublishToMsgBroker, err)
 	}
+
 	return nil
 }
 

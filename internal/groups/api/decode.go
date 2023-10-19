@@ -87,15 +87,19 @@ func DecodeListParentsRequest(_ context.Context, r *http.Request) (interface{}, 
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
-
+	permission, err := apiutil.ReadStringQuery(r, api.PermissionKey, api.DefPermission)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 	req := listGroupsReq{
 		token: apiutil.ExtractBearerToken(r),
 		tree:  tree,
 		Page: mfgroups.Page{
-			Level:     level,
-			ID:        chi.URLParam(r, "groupID"),
-			PageMeta:  pm,
-			Direction: 1,
+			Level:      level,
+			ID:         chi.URLParam(r, "groupID"),
+			Permission: permission,
+			PageMeta:   pm,
+			Direction:  +1,
 		},
 	}
 	return req, nil
@@ -116,15 +120,19 @@ func DecodeListChildrenRequest(_ context.Context, r *http.Request) (interface{},
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
-
+	permission, err := apiutil.ReadStringQuery(r, api.PermissionKey, api.DefPermission)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 	req := listGroupsReq{
 		token: apiutil.ExtractBearerToken(r),
 		tree:  tree,
 		Page: mfgroups.Page{
-			Level:     level,
-			ID:        chi.URLParam(r, "groupID"),
-			PageMeta:  pm,
-			Direction: -1,
+			Level:      level,
+			ID:         chi.URLParam(r, "groupID"),
+			Permission: permission,
+			PageMeta:   pm,
+			Direction:  -1,
 		},
 	}
 	return req, nil

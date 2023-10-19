@@ -17,7 +17,6 @@ var (
 	_ mainflux.Response = (*deleteClientRes)(nil)
 	_ mainflux.Response = (*clientsPageRes)(nil)
 	_ mainflux.Response = (*viewMembersRes)(nil)
-	_ mainflux.Response = (*memberPageRes)(nil)
 	_ mainflux.Response = (*assignUsersGroupsRes)(nil)
 	_ mainflux.Response = (*unassignUsersGroupsRes)(nil)
 	_ mainflux.Response = (*connectChannelThingRes)(nil)
@@ -119,23 +118,6 @@ func (res viewMembersRes) Headers() map[string]string {
 }
 
 func (res viewMembersRes) Empty() bool {
-	return false
-}
-
-type memberPageRes struct {
-	pageRes
-	Members []viewMembersRes `json:"things"`
-}
-
-func (res memberPageRes) Code() int {
-	return http.StatusOK
-}
-
-func (res memberPageRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res memberPageRes) Empty() bool {
 	return false
 }
 

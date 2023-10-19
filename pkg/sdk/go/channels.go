@@ -154,7 +154,7 @@ func (sdk mfSDK) AddUserToChannel(channelID string, req UsersRelationRequest, to
 
 	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, usersEndpoint, assignEndpoint)
 
-	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusOK)
+	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusCreated)
 	return sdkerr
 }
 
@@ -166,7 +166,7 @@ func (sdk mfSDK) RemoveUserFromChannel(channelID string, req UsersRelationReques
 
 	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, usersEndpoint, unassignEndpoint)
 
-	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusOK)
+	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusNoContent)
 	return sdkerr
 }
 
@@ -195,7 +195,7 @@ func (sdk mfSDK) AddUserGroupToChannel(channelID string, req UserGroupsRequest, 
 
 	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, groupsEndpoint, assignEndpoint)
 
-	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusOK)
+	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusCreated)
 	return sdkerr
 }
 
@@ -207,7 +207,7 @@ func (sdk mfSDK) RemoveUserGroupFromChannel(channelID string, req UserGroupsRequ
 
 	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, groupsEndpoint, unassignEndpoint)
 
-	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusOK)
+	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusNoContent)
 	return sdkerr
 }
 
@@ -236,7 +236,7 @@ func (sdk mfSDK) Connect(conn Connection, token string) errors.SDKError {
 
 	url := fmt.Sprintf("%s/%s", sdk.thingsURL, connectEndpoint)
 
-	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusOK)
+	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, data, nil, http.StatusCreated)
 
 	return sdkerr
 }
@@ -257,7 +257,7 @@ func (sdk mfSDK) Disconnect(connIDs Connection, token string) errors.SDKError {
 func (sdk mfSDK) ConnectThing(thingID, channelID, token string) errors.SDKError {
 	url := fmt.Sprintf("%s/%s/%s/%s/%s/%s", sdk.thingsURL, channelsEndpoint, channelID, thingsEndpoint, thingID, connectEndpoint)
 
-	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, nil, nil, http.StatusNoContent)
+	_, _, sdkerr := sdk.processRequest(http.MethodPost, url, token, nil, nil, http.StatusCreated)
 
 	return sdkerr
 }

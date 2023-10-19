@@ -21,7 +21,6 @@ var (
 	_ mainflux.Response = (*deleteClientRes)(nil)
 	_ mainflux.Response = (*clientsPageRes)(nil)
 	_ mainflux.Response = (*viewMembersRes)(nil)
-	_ mainflux.Response = (*memberPageRes)(nil)
 )
 
 type pageRes struct {
@@ -140,22 +139,6 @@ func (res viewMembersRes) Empty() bool {
 	return false
 }
 
-type memberPageRes struct {
-	pageRes
-	Members []viewMembersRes `json:"members"`
-}
-
-func (res memberPageRes) Code() int {
-	return http.StatusOK
-}
-
-func (res memberPageRes) Headers() map[string]string {
-	return map[string]string{}
-}
-
-func (res memberPageRes) Empty() bool {
-	return false
-}
 
 type deleteClientRes struct {
 	mfclients.Client `json:",inline"`

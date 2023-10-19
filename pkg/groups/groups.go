@@ -59,7 +59,7 @@ type Page struct {
 	Level      uint64
 	ID         string
 	Permission string
-	Direction  int64 // ancestors (-1) or descendants (+1)
+	Direction  int64 // ancestors (+1) or descendants (-1)
 	Groups     []Group
 }
 

@@ -110,12 +110,13 @@ func listMembersByGroupEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
+		// TODO : remove svc.ListMembers and all functions to svc.ListClients https://github.com/absmach/magistrala/issues/5
 		page, err := svc.ListMembers(ctx, req.token, req.objectKind, req.objectID, req.Page)
 		if err != nil {
 			return nil, err
 		}
 
-		return buildMembersResponse(page), nil
+		return buildClientsResponse(page), nil
 	}
 }
 
@@ -128,12 +129,13 @@ func listMembersByChannelEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
+		// TODO : remove svc.ListMembers and all functions to svc.ListClients https://github.com/absmach/magistrala/issues/5
 		page, err := svc.ListMembers(ctx, req.token, req.objectKind, req.objectID, req.Page)
 		if err != nil {
 			return nil, err
 		}
 
-		return buildMembersResponse(page), nil
+		return buildClientsResponse(page), nil
 	}
 }
 
@@ -145,12 +147,13 @@ func listMembersByThingEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
+		// TODO : remove svc.ListMembers and all functions to svc.ListClients https://github.com/absmach/magistrala/issues/5
 		page, err := svc.ListMembers(ctx, req.token, req.objectKind, req.objectID, req.Page)
 		if err != nil {
 			return nil, err
 		}
 
-		return buildMembersResponse(page), nil
+		return buildClientsResponse(page), nil
 	}
 }
 
@@ -362,18 +365,18 @@ func disableClientEndpoint(svc users.Service) endpoint.Endpoint {
 	}
 }
 
-func buildMembersResponse(cp mfclients.MembersPage) memberPageRes {
-	res := memberPageRes{
+func buildClientsResponse(cp mfclients.MembersPage) clientsPageRes {
+	res := clientsPageRes{
 		pageRes: pageRes{
 			Total:  cp.Total,
 			Offset: cp.Offset,
 			Limit:  cp.Limit,
 		},
-		Members: []viewMembersRes{},
+		Clients: []viewClientRes{},
 	}
 
 	for _, client := range cp.Members {
-		res.Members = append(res.Members, viewMembersRes{Client: client})
+		res.Clients = append(res.Clients, viewClientRes{Client: client})
 	}
 
 	return res

@@ -562,7 +562,7 @@ type SDK interface {
 	//	}
 	//  groups, _ := sdk.ListGroupUsers("groupID", pm, "token")
 	//  fmt.Println(groups)
-	ListGroupUsers(groupID string, pm PageMetadata, token string) (GroupsPage, errors.SDKError)
+	ListGroupUsers(groupID string, pm PageMetadata, token string) (UsersPage, errors.SDKError)
 
 	// ListGroupChannels list all channels in the group id .
 	//

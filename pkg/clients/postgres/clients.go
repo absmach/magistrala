@@ -190,7 +190,9 @@ func (repo ClientRepository) RetrieveAll(ctx context.Context, pm clients.Page) (
 
 func (repo ClientRepository) RetrieveAllByIDs(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
 	if len(pm.IDs) <= 0 {
-		return clients.ClientsPage{}, errors.ErrNotFound
+		return clients.ClientsPage{
+			Page: clients.Page{Total: pm.Total, Offset: pm.Offset, Limit: pm.Limit},
+		}, nil
 	}
 	query, err := pageQuery(pm)
 	if err != nil {

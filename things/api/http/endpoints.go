@@ -119,13 +119,13 @@ func listMembersEndpoint(svc things.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
-
+		// TODO : remove svc.ListMembers and all functions to svc.ListClients https://github.com/absmach/magistrala/issues/5
 		page, err := svc.ListClientsByGroup(ctx, req.token, req.groupID, req.Page)
 		if err != nil {
 			return nil, err
 		}
 
-		return buildMembersResponse(page), nil
+		return buildClientsResponse(page), nil
 	}
 }
 
@@ -238,17 +238,17 @@ func disableClientEndpoint(svc things.Service) endpoint.Endpoint {
 	}
 }
 
-func buildMembersResponse(cp mfclients.MembersPage) memberPageRes {
-	res := memberPageRes{
+func buildClientsResponse(cp mfclients.MembersPage) clientsPageRes {
+	res := clientsPageRes{
 		pageRes: pageRes{
 			Total:  cp.Total,
 			Offset: cp.Offset,
 			Limit:  cp.Limit,
 		},
-		Members: []viewMembersRes{},
+		Clients: []viewClientRes{},
 	}
 	for _, c := range cp.Members {
-		res.Members = append(res.Members, viewMembersRes{Client: c})
+		res.Clients = append(res.Clients, viewClientRes{Client: c})
 	}
 
 	return res

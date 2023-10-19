@@ -22,6 +22,7 @@ const (
 	userKind   = "users"
 	tokenKind  = "token"
 	thingsKind = "things"
+	groupsKind = "groups"
 
 	userType  = "user"
 	groupType = "group"
@@ -385,14 +386,19 @@ func (svc service) changeClientStatus(ctx context.Context, token string, client 
 
 func (svc service) ListMembers(ctx context.Context, token, objectKind string, objectID string, pm mfclients.Page) (mfclients.MembersPage, error) {
 	var objectType string
+	var authzPerm string
 	switch objectKind {
 	case thingsKind:
 		objectType = thingType
+		authzPerm = pm.Permission
+	case groupsKind:
+		fallthrough
 	default:
 		objectType = groupType
+		authzPerm = auth.SwitchToPermission(pm.Permission)
 	}
 
-	if _, err := svc.authorize(ctx, userType, tokenKind, token, auth.SwitchToPermission(pm.Permission), objectType, objectID); err != nil {
+	if _, err := svc.authorize(ctx, userType, tokenKind, token, authzPerm, objectType, objectID); err != nil {
 		return mfclients.MembersPage{}, err
 	}
 	uids, err := svc.auth.ListAllSubjects(ctx, &mainflux.ListSubjectsReq{

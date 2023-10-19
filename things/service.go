@@ -25,6 +25,7 @@ const (
 
 	userType  = "user"
 	tokenKind = "token"
+	userKind  = "users"
 	thingType = "thing"
 	groupType = "group"
 )
@@ -143,7 +144,7 @@ func (svc service) ListClients(ctx context.Context, token string, reqUserID stri
 
 	switch {
 	case (reqUserID != "" && reqUserID != userID):
-		if _, err := svc.authorize(ctx, userType, tokenKind, userID, ownerPermission, userType, reqUserID); err != nil {
+		if _, err := svc.authorize(ctx, userType, userKind, userID, ownerRelation, userType, reqUserID); err != nil {
 			return mfclients.ClientsPage{}, err
 		}
 		rtids, err := svc.listClientIDs(ctx, reqUserID, pm.Permission)

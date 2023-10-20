@@ -10,10 +10,14 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/mainflux/mainflux"
+	authmocks "github.com/mainflux/mainflux/auth/mocks"
+	"github.com/mainflux/mainflux/internal/testsutil"
 	"github.com/mainflux/mainflux/twins"
 	"github.com/mainflux/mainflux/twins/mocks"
 	"github.com/mainflux/senml"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,7 +41,7 @@ type statesPageRes struct {
 }
 
 func TestListStates(t *testing.T) {
-	svc := mocks.NewService(map[string]string{token: email})
+	svc, auth := mocks.NewService()
 	ts := newServer(svc)
 	defer ts.Close()
 
@@ -45,8 +49,10 @@ func TestListStates(t *testing.T) {
 		Owner: email,
 	}
 	def := mocks.CreateDefinition(channels[0:2], subtopics[0:2])
+	repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: token}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 	tw, err := svc.AddTwin(context.Background(), token, twin, def)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	repoCall.Unset()
 	attr := def.Attributes[0]
 
 	recs := make([]senml.Record, numRecs)
@@ -87,7 +93,7 @@ func TestListStates(t *testing.T) {
 		},
 		{
 			desc:   "get a list of states with invalid token",
-			auth:   wrongValue,
+			auth:   authmocks.InvalidValue,
 			status: http.StatusUnauthorized,
 			url:    fmt.Sprintf(queryFmt, baseURL, 0, 5),
 			res:    nil,
@@ -179,6 +185,7 @@ func TestListStates(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		repoCall := auth.On("Identify", mock.Anything, mock.Anything).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 		req := testRequest{
 			client: ts.Client(),
 			method: http.MethodGet,
@@ -196,6 +203,7 @@ func TestListStates(t *testing.T) {
 
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		assert.ElementsMatch(t, tc.res, resData.States, fmt.Sprintf("%s: got incorrect body from response", tc.desc))
+		repoCall.Unset()
 	}
 }
 

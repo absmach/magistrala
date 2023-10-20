@@ -20,7 +20,7 @@ const publisher = "twins"
 var id = 0
 
 // NewService use mock dependencies to create real twins service.
-func NewService(tokens map[string]string) twins.Service {
+func NewService() (twins.Service, *authmocks.Service) {
 	auth := new(authmocks.Service)
 	twinsRepo := NewTwinRepository()
 	twinCache := NewTwinCache()
@@ -29,7 +29,7 @@ func NewService(tokens map[string]string) twins.Service {
 	subs := map[string]string{"chanID": "chanID"}
 	broker := NewBroker(subs)
 
-	return twins.New(broker, auth, twinsRepo, twinCache, statesRepo, idProvider, "chanID", nil)
+	return twins.New(broker, auth, twinsRepo, twinCache, statesRepo, idProvider, "chanID", nil), auth
 }
 
 // CreateDefinition creates twin definition.

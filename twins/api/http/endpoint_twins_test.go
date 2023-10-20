@@ -14,12 +14,16 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mainflux/mainflux"
+	authmocks "github.com/mainflux/mainflux/auth/mocks"
 	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/mainflux/mainflux/internal/testsutil"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/twins"
 	httpapi "github.com/mainflux/mainflux/twins/api/http"
 	"github.com/mainflux/mainflux/twins/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,7 +32,6 @@ const (
 	contentType = "application/json"
 	email       = "user@example.com"
 	token       = "token"
-	wrongValue  = "wrong_value"
 	wrongID     = 0
 	maxNameSize = 1024
 	instanceID  = "5de9b29a-feb9-11ed-be56-0242ac120002"
@@ -98,7 +101,7 @@ func toJSON(data interface{}) (string, error) {
 }
 
 func TestAddTwin(t *testing.T) {
-	svc := mocks.NewService(map[string]string{token: email})
+	svc, auth := mocks.NewService()
 	ts := newServer(svc)
 	defer ts.Close()
 
@@ -138,7 +141,7 @@ func TestAddTwin(t *testing.T) {
 			desc:        "add twin with invalid auth token",
 			req:         data,
 			contentType: contentType,
-			auth:        wrongValue,
+			auth:        authmocks.InvalidValue,
 			status:      http.StatusUnauthorized,
 			location:    "",
 		},
@@ -185,6 +188,7 @@ func TestAddTwin(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: tc.auth}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
@@ -199,18 +203,21 @@ func TestAddTwin(t *testing.T) {
 		location := res.Header.Get("Location")
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		assert.Equal(t, tc.location, location, fmt.Sprintf("%s: expected location %s got %s", tc.desc, tc.location, location))
+		repoCall.Unset()
 	}
 }
 
 func TestUpdateTwin(t *testing.T) {
-	svc := mocks.NewService(map[string]string{token: email})
+	svc, auth := mocks.NewService()
 	ts := newServer(svc)
 	defer ts.Close()
 
 	twin := twins.Twin{}
 	def := twins.Definition{}
+	repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: token}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 	stw, err := svc.AddTwin(context.Background(), token, twin, def)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	repoCall.Unset()
 
 	twin.Name = twinName
 	data, err := toJSON(twin)
@@ -258,7 +265,7 @@ func TestUpdateTwin(t *testing.T) {
 			req:         data,
 			id:          stw.ID,
 			contentType: contentType,
-			auth:        wrongValue,
+			auth:        authmocks.InvalidValue,
 			status:      http.StatusUnauthorized,
 		},
 		{
@@ -303,6 +310,7 @@ func TestUpdateTwin(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: tc.auth}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPut,
@@ -314,18 +322,21 @@ func TestUpdateTwin(t *testing.T) {
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+		repoCall.Unset()
 	}
 }
 
 func TestViewTwin(t *testing.T) {
-	svc := mocks.NewService(map[string]string{token: email})
+	svc, auth := mocks.NewService()
 	ts := newServer(svc)
 	defer ts.Close()
 
 	def := twins.Definition{}
 	twin := twins.Twin{}
+	repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: token}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 	stw, err := svc.AddTwin(context.Background(), token, twin, def)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	repoCall.Unset()
 
 	twres := twinRes{
 		Owner:    stw.Owner,
@@ -359,7 +370,7 @@ func TestViewTwin(t *testing.T) {
 		{
 			desc:   "view twin by passing invalid token",
 			id:     stw.ID,
-			auth:   wrongValue,
+			auth:   authmocks.InvalidValue,
 			status: http.StatusUnauthorized,
 			res:    twinRes{},
 		},
@@ -380,6 +391,7 @@ func TestViewTwin(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: tc.auth}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 		req := testRequest{
 			client: ts.Client(),
 			method: http.MethodGet,
@@ -394,23 +406,27 @@ func TestViewTwin(t *testing.T) {
 		err = json.NewDecoder(res.Body).Decode(&resData)
 		assert.Nil(t, err, fmt.Sprintf("%s: got unexpected error while decoding response body: %s\n", tc.desc, err))
 		assert.Equal(t, tc.res, resData, fmt.Sprintf("%s: expected body %v got %v", tc.desc, tc.res, resData))
+		repoCall.Unset()
 	}
 }
 
 func TestListTwins(t *testing.T) {
-	svc := mocks.NewService(map[string]string{token: email})
+	svc, auth := mocks.NewService()
 	ts := newServer(svc)
 	defer ts.Close()
 
 	var data []twinRes
+	userID := testsutil.GenerateUUID(t)
 	for i := 0; i < 100; i++ {
 		name := fmt.Sprintf("%s-%d", twinName, i)
 		twin := twins.Twin{
 			Owner: email,
 			Name:  name,
 		}
+		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: token}).Return(&mainflux.IdentityRes{Id: userID}, nil)
 		tw, err := svc.AddTwin(context.Background(), token, twin, twins.Definition{})
 		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		repoCall.Unset()
 		twres := twinRes{
 			Owner:    tw.Owner,
 			ID:       tw.ID,
@@ -439,7 +455,7 @@ func TestListTwins(t *testing.T) {
 		},
 		{
 			desc:   "get a list of twins with invalid token",
-			auth:   wrongValue,
+			auth:   authmocks.InvalidValue,
 			status: http.StatusUnauthorized,
 			url:    fmt.Sprintf(queryFmt, baseURL, 0, 1),
 			res:    nil,
@@ -552,6 +568,7 @@ func TestListTwins(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: tc.auth}).Return(&mainflux.IdentityRes{Id: userID}, nil)
 		req := testRequest{
 			client: ts.Client(),
 			method: http.MethodGet,
@@ -569,18 +586,21 @@ func TestListTwins(t *testing.T) {
 
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 		assert.ElementsMatch(t, tc.res, resData.Twins, fmt.Sprintf("%s: got incorrect list of twins", tc.desc))
+		repoCall.Unset()
 	}
 }
 
 func TestRemoveTwin(t *testing.T) {
-	svc := mocks.NewService(map[string]string{token: email})
+	svc, auth := mocks.NewService()
 	ts := newServer(svc)
 	defer ts.Close()
 
 	def := twins.Definition{}
 	twin := twins.Twin{}
+	repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: token}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 	stw, err := svc.AddTwin(context.Background(), token, twin, def)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	repoCall.Unset()
 
 	cases := []struct {
 		desc   string
@@ -609,7 +629,7 @@ func TestRemoveTwin(t *testing.T) {
 		{
 			desc:   "delete twin with invalid token",
 			id:     stw.ID,
-			auth:   wrongValue,
+			auth:   authmocks.InvalidValue,
 			status: http.StatusUnauthorized,
 		},
 		{
@@ -621,6 +641,7 @@ func TestRemoveTwin(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: tc.auth}).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
 		req := testRequest{
 			client: ts.Client(),
 			method: http.MethodDelete,
@@ -630,5 +651,6 @@ func TestRemoveTwin(t *testing.T) {
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+		repoCall.Unset()
 	}
 }

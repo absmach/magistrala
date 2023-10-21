@@ -476,6 +476,7 @@ func (svc service) updateOwnerPolicy(ctx context.Context, previousOwnerID, owner
 	}
 	return svc.addOwnerPolicy(ctx, ownerID, userID)
 }
+
 func (svc service) addOwnerPolicy(ctx context.Context, ownerID, userID string) error {
 	if ownerID != "" {
 		if _, err := svc.auth.AddPolicy(ctx, &mainflux.AddPolicyReq{

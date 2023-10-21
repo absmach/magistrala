@@ -13,14 +13,12 @@ import (
 	mfclients "github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
 	mfgroups "github.com/mainflux/mainflux/pkg/groups"
-	"github.com/mainflux/mainflux/pkg/uuid"
 	cpostgres "github.com/mainflux/mainflux/users/postgres"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 var (
-	idProvider     = uuid.New()
 	password       = "$tr0ngPassw0rd"
 	clientIdentity = "client-identity@example.com"
 	clientName     = "client name"
@@ -33,7 +31,7 @@ func TestClientsRetrieveByID(t *testing.T) {
 	repo := cpostgres.NewRepository(database)
 
 	client := mfclients.Client{
-		ID:   testsutil.GenerateUUID(t, idProvider),
+		ID:   testsutil.GenerateUUID(t),
 		Name: clientName,
 		Credentials: mfclients.Credentials{
 			Identity: clientIdentity,
@@ -71,7 +69,7 @@ func TestClientsRetrieveByIdentity(t *testing.T) {
 	repo := cpostgres.NewRepository(database)
 
 	client := mfclients.Client{
-		ID:   testsutil.GenerateUUID(t, idProvider),
+		ID:   testsutil.GenerateUUID(t),
 		Name: clientName,
 		Credentials: mfclients.Credentials{
 			Identity: clientIdentity,
@@ -103,7 +101,7 @@ func TestClientsRetrieveAll(t *testing.T) {
 	grepo := gpostgres.New(database)
 
 	nClients := uint64(200)
-	ownerID := testsutil.GenerateUUID(t, idProvider)
+	ownerID := testsutil.GenerateUUID(t)
 
 	meta := mfclients.Metadata{
 		"admin": "true",
@@ -114,7 +112,7 @@ func TestClientsRetrieveAll(t *testing.T) {
 	expectedClients := []mfclients.Client{}
 
 	sharedGroup := mfgroups.Group{
-		ID:   testsutil.GenerateUUID(t, idProvider),
+		ID:   testsutil.GenerateUUID(t),
 		Name: "shared-group",
 	}
 	_, err := grepo.Save(context.Background(), sharedGroup)
@@ -123,7 +121,7 @@ func TestClientsRetrieveAll(t *testing.T) {
 	for i := uint64(0); i < nClients; i++ {
 		identity := fmt.Sprintf("TestRetrieveAll%d@example.com", i)
 		client := mfclients.Client{
-			ID:   testsutil.GenerateUUID(t, idProvider),
+			ID:   testsutil.GenerateUUID(t),
 			Name: identity,
 			Credentials: mfclients.Credentials{
 				Identity: identity,
@@ -388,7 +386,7 @@ func TestClientsUpdateMetadata(t *testing.T) {
 	repo := cpostgres.NewRepository(database)
 
 	client1 := mfclients.Client{
-		ID:   testsutil.GenerateUUID(t, idProvider),
+		ID:   testsutil.GenerateUUID(t),
 		Name: "enabled-client",
 		Credentials: mfclients.Credentials{
 			Identity: "client1-update@example.com",
@@ -402,7 +400,7 @@ func TestClientsUpdateMetadata(t *testing.T) {
 	}
 
 	client2 := mfclients.Client{
-		ID:   testsutil.GenerateUUID(t, idProvider),
+		ID:   testsutil.GenerateUUID(t),
 		Name: "disabled-client",
 		Credentials: mfclients.Credentials{
 			Identity: "client2-update@example.com",
@@ -544,7 +542,7 @@ func TestClientsUpdateTags(t *testing.T) {
 	repo := cpostgres.NewRepository(database)
 
 	client1 := mfclients.Client{
-		ID:   testsutil.GenerateUUID(t, idProvider),
+		ID:   testsutil.GenerateUUID(t),
 		Name: "enabled-client-with-tags",
 		Credentials: mfclients.Credentials{
 			Identity: "client1-update-tags@example.com",
@@ -554,7 +552,7 @@ func TestClientsUpdateTags(t *testing.T) {
 		Status: mfclients.EnabledStatus,
 	}
 	client2 := mfclients.Client{
-		ID:   testsutil.GenerateUUID(t, idProvider),
+		ID:   testsutil.GenerateUUID(t),
 		Name: "disabled-client-with-tags",
 		Credentials: mfclients.Credentials{
 			Identity: "client2-update-tags@example.com",
@@ -620,7 +618,7 @@ func TestClientsUpdateSecret(t *testing.T) {
 	repo := cpostgres.NewRepository(database)
 
 	client1 := mfclients.Client{
-		ID:   testsutil.GenerateUUID(t, idProvider),
+		ID:   testsutil.GenerateUUID(t),
 		Name: "enabled-client",
 		Credentials: mfclients.Credentials{
 			Identity: "client1-update@example.com",
@@ -629,7 +627,7 @@ func TestClientsUpdateSecret(t *testing.T) {
 		Status: mfclients.EnabledStatus,
 	}
 	client2 := mfclients.Client{
-		ID:   testsutil.GenerateUUID(t, idProvider),
+		ID:   testsutil.GenerateUUID(t),
 		Name: "disabled-client",
 		Credentials: mfclients.Credentials{
 			Identity: "client2-update@example.com",
@@ -704,7 +702,7 @@ func TestClientsUpdateIdentity(t *testing.T) {
 	repo := cpostgres.NewRepository(database)
 
 	client1 := mfclients.Client{
-		ID:   testsutil.GenerateUUID(t, idProvider),
+		ID:   testsutil.GenerateUUID(t),
 		Name: "enabled-client",
 		Credentials: mfclients.Credentials{
 			Identity: "client1-update@example.com",
@@ -713,7 +711,7 @@ func TestClientsUpdateIdentity(t *testing.T) {
 		Status: mfclients.EnabledStatus,
 	}
 	client2 := mfclients.Client{
-		ID:   testsutil.GenerateUUID(t, idProvider),
+		ID:   testsutil.GenerateUUID(t),
 		Name: "disabled-client",
 		Credentials: mfclients.Credentials{
 			Identity: "client2-update@example.com",
@@ -783,23 +781,23 @@ func TestClientsUpdateOwner(t *testing.T) {
 	repo := cpostgres.NewRepository(database)
 
 	client1 := mfclients.Client{
-		ID:   testsutil.GenerateUUID(t, idProvider),
+		ID:   testsutil.GenerateUUID(t),
 		Name: "enabled-client-with-owner",
 		Credentials: mfclients.Credentials{
 			Identity: "client1-update-owner@example.com",
 			Secret:   password,
 		},
-		Owner:  testsutil.GenerateUUID(t, idProvider),
+		Owner:  testsutil.GenerateUUID(t),
 		Status: mfclients.EnabledStatus,
 	}
 	client2 := mfclients.Client{
-		ID:   testsutil.GenerateUUID(t, idProvider),
+		ID:   testsutil.GenerateUUID(t),
 		Name: "disabled-client-with-owner",
 		Credentials: mfclients.Credentials{
 			Identity: "client2-update-owner@example.com",
 			Secret:   password,
 		},
-		Owner:  testsutil.GenerateUUID(t, idProvider),
+		Owner:  testsutil.GenerateUUID(t),
 		Status: mfclients.DisabledStatus,
 	}
 
@@ -824,7 +822,7 @@ func TestClientsUpdateOwner(t *testing.T) {
 			desc: "update owner for enabled client",
 			client: mfclients.Client{
 				ID:    client1.ID,
-				Owner: testsutil.GenerateUUID(t, idProvider),
+				Owner: testsutil.GenerateUUID(t),
 			},
 			err: nil,
 		},
@@ -832,7 +830,7 @@ func TestClientsUpdateOwner(t *testing.T) {
 			desc: "update owner for disabled client",
 			client: mfclients.Client{
 				ID:    client2.ID,
-				Owner: testsutil.GenerateUUID(t, idProvider),
+				Owner: testsutil.GenerateUUID(t),
 			},
 			err: errors.ErrNotFound,
 		},
@@ -840,7 +838,7 @@ func TestClientsUpdateOwner(t *testing.T) {
 			desc: "update owner for invalid client",
 			client: mfclients.Client{
 				ID:    wrongID,
-				Owner: testsutil.GenerateUUID(t, idProvider),
+				Owner: testsutil.GenerateUUID(t),
 			},
 			err: errors.ErrNotFound,
 		},
@@ -859,7 +857,7 @@ func TestClientsChangeStatus(t *testing.T) {
 	repo := cpostgres.NewRepository(database)
 
 	client1 := mfclients.Client{
-		ID:   testsutil.GenerateUUID(t, idProvider),
+		ID:   testsutil.GenerateUUID(t),
 		Name: "enabled-client",
 		Credentials: mfclients.Credentials{
 			Identity: "client1-update@example.com",

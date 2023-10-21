@@ -12,7 +12,6 @@ import (
 	"github.com/mainflux/mainflux/internal/testsutil"
 	mfclients "github.com/mainflux/mainflux/pkg/clients"
 	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/pkg/uuid"
 	cpostgres "github.com/mainflux/mainflux/users/postgres"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,7 +22,6 @@ const (
 )
 
 var (
-	idProvider     = uuid.New()
 	invalidName    = strings.Repeat("m", maxNameSize+10)
 	password       = "$tr0ngPassw0rd"
 	clientIdentity = "client-identity@example.com"

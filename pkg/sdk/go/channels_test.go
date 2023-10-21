@@ -90,7 +90,7 @@ func TestCreateChannel(t *testing.T) {
 			desc: "create channel with parent",
 			channel: sdk.Channel{
 				Name:     gName,
-				ParentID: testsutil.GenerateUUID(t, idProvider),
+				ParentID: testsutil.GenerateUUID(t),
 				Status:   mfclients.EnabledStatus.String(),
 			},
 			err: nil,
@@ -596,7 +596,7 @@ func TestListChannelsByThing(t *testing.T) {
 		{
 			desc:     "list channel with authorized token",
 			token:    adminToken,
-			clientID: testsutil.GenerateUUID(t, idProvider),
+			clientID: testsutil.GenerateUUID(t),
 			page:     sdk.PageMetadata{},
 			response: aChannels,
 			err:      nil,
@@ -604,7 +604,7 @@ func TestListChannelsByThing(t *testing.T) {
 		{
 			desc:     "list channel with offset and limit",
 			token:    adminToken,
-			clientID: testsutil.GenerateUUID(t, idProvider),
+			clientID: testsutil.GenerateUUID(t),
 			page: sdk.PageMetadata{
 				Offset: 6,
 				Total:  nChannels,
@@ -617,7 +617,7 @@ func TestListChannelsByThing(t *testing.T) {
 		{
 			desc:     "list channel with given name",
 			token:    adminToken,
-			clientID: testsutil.GenerateUUID(t, idProvider),
+			clientID: testsutil.GenerateUUID(t),
 			page: sdk.PageMetadata{
 				Name:   gName,
 				Offset: 6,
@@ -631,7 +631,7 @@ func TestListChannelsByThing(t *testing.T) {
 		{
 			desc:     "list channel with given level",
 			token:    adminToken,
-			clientID: testsutil.GenerateUUID(t, idProvider),
+			clientID: testsutil.GenerateUUID(t),
 			page: sdk.PageMetadata{
 				Level:  1,
 				Offset: 6,
@@ -645,7 +645,7 @@ func TestListChannelsByThing(t *testing.T) {
 		{
 			desc:     "list channel with metadata",
 			token:    adminToken,
-			clientID: testsutil.GenerateUUID(t, idProvider),
+			clientID: testsutil.GenerateUUID(t),
 			page: sdk.PageMetadata{
 				Metadata: validMetadata,
 				Offset:   6,
@@ -659,7 +659,7 @@ func TestListChannelsByThing(t *testing.T) {
 		{
 			desc:     "list channel with an invalid token",
 			token:    invalidToken,
-			clientID: testsutil.GenerateUUID(t, idProvider),
+			clientID: testsutil.GenerateUUID(t),
 			page:     sdk.PageMetadata{},
 			response: []sdk.Channel(nil),
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.ErrAuthorization, errors.ErrAuthentication), http.StatusUnauthorized),

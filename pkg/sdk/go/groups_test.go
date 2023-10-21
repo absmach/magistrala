@@ -77,7 +77,7 @@ func TestCreateGroup(t *testing.T) {
 			desc: "create group with parent",
 			group: sdk.Group{
 				Name:     gName,
-				ParentID: testsutil.GenerateUUID(t, idProvider),
+				ParentID: testsutil.GenerateUUID(t),
 				Status:   clients.EnabledStatus.String(),
 			},
 			err: nil,

@@ -487,7 +487,7 @@ func TestListThingsByChannel(t *testing.T) {
 		{
 			desc:      "list things with authorized token",
 			token:     adminToken,
-			channelID: testsutil.GenerateUUID(t, idProvider),
+			channelID: testsutil.GenerateUUID(t),
 			page:      sdk.PageMetadata{},
 			response:  aThings,
 			err:       nil,
@@ -495,7 +495,7 @@ func TestListThingsByChannel(t *testing.T) {
 		{
 			desc:      "list things with offset and limit",
 			token:     adminToken,
-			channelID: testsutil.GenerateUUID(t, idProvider),
+			channelID: testsutil.GenerateUUID(t),
 			page: sdk.PageMetadata{
 				Offset: 4,
 				Limit:  nThing,
@@ -506,7 +506,7 @@ func TestListThingsByChannel(t *testing.T) {
 		{
 			desc:      "list things with given name",
 			token:     adminToken,
-			channelID: testsutil.GenerateUUID(t, idProvider),
+			channelID: testsutil.GenerateUUID(t),
 			page: sdk.PageMetadata{
 				Name:   Identity,
 				Offset: 6,
@@ -519,7 +519,7 @@ func TestListThingsByChannel(t *testing.T) {
 		{
 			desc:      "list things with given ownerID",
 			token:     adminToken,
-			channelID: testsutil.GenerateUUID(t, idProvider),
+			channelID: testsutil.GenerateUUID(t),
 			page: sdk.PageMetadata{
 				OwnerID: user.Owner,
 				Offset:  6,
@@ -531,7 +531,7 @@ func TestListThingsByChannel(t *testing.T) {
 		{
 			desc:      "list things with given subject",
 			token:     adminToken,
-			channelID: testsutil.GenerateUUID(t, idProvider),
+			channelID: testsutil.GenerateUUID(t),
 			page: sdk.PageMetadata{
 				Subject: subject,
 				Offset:  6,
@@ -543,7 +543,7 @@ func TestListThingsByChannel(t *testing.T) {
 		{
 			desc:      "list things with given object",
 			token:     adminToken,
-			channelID: testsutil.GenerateUUID(t, idProvider),
+			channelID: testsutil.GenerateUUID(t),
 			page: sdk.PageMetadata{
 				Object: object,
 				Offset: 6,
@@ -555,7 +555,7 @@ func TestListThingsByChannel(t *testing.T) {
 		{
 			desc:      "list things with an invalid token",
 			token:     invalidToken,
-			channelID: testsutil.GenerateUUID(t, idProvider),
+			channelID: testsutil.GenerateUUID(t),
 			page:      sdk.PageMetadata{},
 			response:  []sdk.Thing(nil),
 			err:       errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusUnauthorized),
@@ -955,11 +955,11 @@ func TestEnableThing(t *testing.T) {
 	}
 	mfsdk := sdk.NewSDK(conf)
 
-	enabledThing1 := sdk.Thing{ID: testsutil.GenerateUUID(t, idProvider), Credentials: sdk.Credentials{Identity: "client1@example.com", Secret: generateUUID(t)}, Status: mfclients.EnabledStatus.String()}
-	disabledThing1 := sdk.Thing{ID: testsutil.GenerateUUID(t, idProvider), Credentials: sdk.Credentials{Identity: "client3@example.com", Secret: generateUUID(t)}, Status: mfclients.DisabledStatus.String()}
+	enabledThing1 := sdk.Thing{ID: testsutil.GenerateUUID(t), Credentials: sdk.Credentials{Identity: "client1@example.com", Secret: generateUUID(t)}, Status: mfclients.EnabledStatus.String()}
+	disabledThing1 := sdk.Thing{ID: testsutil.GenerateUUID(t), Credentials: sdk.Credentials{Identity: "client3@example.com", Secret: generateUUID(t)}, Status: mfclients.DisabledStatus.String()}
 	endisabledThing1 := disabledThing1
 	endisabledThing1.Status = mfclients.EnabledStatus.String()
-	endisabledThing1.ID = testsutil.GenerateUUID(t, idProvider)
+	endisabledThing1.ID = testsutil.GenerateUUID(t)
 
 	cases := []struct {
 		desc     string
@@ -1076,11 +1076,11 @@ func TestDisableThing(t *testing.T) {
 	}
 	mfsdk := sdk.NewSDK(conf)
 
-	enabledThing1 := sdk.Thing{ID: testsutil.GenerateUUID(t, idProvider), Credentials: sdk.Credentials{Identity: "client1@example.com", Secret: generateUUID(t)}, Status: mfclients.EnabledStatus.String()}
-	disabledThing1 := sdk.Thing{ID: testsutil.GenerateUUID(t, idProvider), Credentials: sdk.Credentials{Identity: "client3@example.com", Secret: generateUUID(t)}, Status: mfclients.DisabledStatus.String()}
+	enabledThing1 := sdk.Thing{ID: testsutil.GenerateUUID(t), Credentials: sdk.Credentials{Identity: "client1@example.com", Secret: generateUUID(t)}, Status: mfclients.EnabledStatus.String()}
+	disabledThing1 := sdk.Thing{ID: testsutil.GenerateUUID(t), Credentials: sdk.Credentials{Identity: "client3@example.com", Secret: generateUUID(t)}, Status: mfclients.DisabledStatus.String()}
 	disenabledThing1 := enabledThing1
 	disenabledThing1.Status = mfclients.DisabledStatus.String()
-	disenabledThing1.ID = testsutil.GenerateUUID(t, idProvider)
+	disenabledThing1.ID = testsutil.GenerateUUID(t)
 
 	cases := []struct {
 		desc     string

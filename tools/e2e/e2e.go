@@ -186,12 +186,10 @@ func createGroups(s sdk.SDK, conf Config, token string) ([]sdk.Group, error) {
 	var err error
 	groups := []sdk.Group{}
 
-	parentID := ""
 	for i := uint64(0); i < conf.Num; i++ {
 		group := sdk.Group{
-			Name:     fmt.Sprintf("%s-%s", conf.Prefix, namesgenerator.Generate()),
-			ParentID: parentID,
-			Status:   sdk.EnabledStatus,
+			Name:   fmt.Sprintf("%s-%s", conf.Prefix, namesgenerator.Generate()),
+			Status: sdk.EnabledStatus,
 		}
 
 		group, err = s.CreateGroup(group, token)
@@ -199,7 +197,6 @@ func createGroups(s sdk.SDK, conf Config, token string) ([]sdk.Group, error) {
 			return []sdk.Group{}, fmt.Errorf("failed to create the group: %w", err)
 		}
 		groups = append(groups, group)
-		parentID = group.ID
 	}
 
 	return groups, nil

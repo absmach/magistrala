@@ -917,11 +917,11 @@ func TestEnableClient(t *testing.T) {
 	}
 	mfsdk := sdk.NewSDK(conf)
 
-	enabledClient1 := sdk.User{ID: testsutil.GenerateUUID(t, idProvider), Credentials: sdk.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mfclients.EnabledStatus.String()}
-	disabledClient1 := sdk.User{ID: testsutil.GenerateUUID(t, idProvider), Credentials: sdk.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mfclients.DisabledStatus.String()}
+	enabledClient1 := sdk.User{ID: testsutil.GenerateUUID(t), Credentials: sdk.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mfclients.EnabledStatus.String()}
+	disabledClient1 := sdk.User{ID: testsutil.GenerateUUID(t), Credentials: sdk.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mfclients.DisabledStatus.String()}
 	endisabledClient1 := disabledClient1
 	endisabledClient1.Status = mfclients.EnabledStatus.String()
-	endisabledClient1.ID = testsutil.GenerateUUID(t, idProvider)
+	endisabledClient1.ID = testsutil.GenerateUUID(t)
 
 	cases := []struct {
 		desc     string
@@ -1042,11 +1042,11 @@ func TestDisableClient(t *testing.T) {
 	}
 	mfsdk := sdk.NewSDK(conf)
 
-	enabledClient1 := sdk.User{ID: testsutil.GenerateUUID(t, idProvider), Credentials: sdk.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mfclients.EnabledStatus.String()}
-	disabledClient1 := sdk.User{ID: testsutil.GenerateUUID(t, idProvider), Credentials: sdk.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mfclients.DisabledStatus.String()}
+	enabledClient1 := sdk.User{ID: testsutil.GenerateUUID(t), Credentials: sdk.Credentials{Identity: "client1@example.com", Secret: "password"}, Status: mfclients.EnabledStatus.String()}
+	disabledClient1 := sdk.User{ID: testsutil.GenerateUUID(t), Credentials: sdk.Credentials{Identity: "client3@example.com", Secret: "password"}, Status: mfclients.DisabledStatus.String()}
 	disenabledClient1 := enabledClient1
 	disenabledClient1.Status = mfclients.DisabledStatus.String()
-	disenabledClient1.ID = testsutil.GenerateUUID(t, idProvider)
+	disenabledClient1.ID = testsutil.GenerateUUID(t)
 
 	cases := []struct {
 		desc     string

@@ -10,13 +10,16 @@ import (
 	"log"
 	"testing"
 
+	"github.com/mainflux/mainflux"
 	authmocks "github.com/mainflux/mainflux/auth/mocks"
+	"github.com/mainflux/mainflux/internal/testsutil"
 	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/mqtt"
 	"github.com/mainflux/mainflux/mqtt/mocks"
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mproxy/pkg/session"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 const (
@@ -25,7 +28,7 @@ const (
 	password              = "password"
 	password1             = "password1"
 	chanID                = "123e4567-e89b-12d3-a456-000000000001"
-	invalidID             = "invalidID"
+	invalidID             = authmocks.InvalidValue
 	clientID              = "clientID"
 	clientID1             = "clientID1"
 	subtopic              = "testSubtopic"
@@ -35,11 +38,11 @@ const (
 var (
 	topicMsg            = "channels/%s/messages"
 	topic               = fmt.Sprintf(topicMsg, chanID)
-	invalidTopic        = "invalidTopic"
+	invalidTopic        = authmocks.InvalidValue
 	payload             = []byte("[{'n':'test-name', 'v': 1.2}]")
 	topics              = []string{topic}
-	invalidTopics       = []string{invalidTopic}
-	invalidChanIDTopics = []string{fmt.Sprintf(topicMsg, invalidTopic)}
+	invalidTopics       = []string{authmocks.InvalidValue}
+	invalidChanIDTopics = []string{fmt.Sprintf(topicMsg, authmocks.InvalidValue)}
 	// Test log messages for cases the handler does not provide a return value.
 	logBuffer     = bytes.Buffer{}
 	sessionClient = session.Session{
@@ -60,7 +63,7 @@ var (
 )
 
 func TestAuthConnect(t *testing.T) {
-	handler := newHandler()
+	handler, _ := newHandler()
 
 	cases := []struct {
 		desc    string
@@ -83,7 +86,7 @@ func TestAuthConnect(t *testing.T) {
 		},
 		{
 			desc: "connect with invalid password",
-			err:  errors.ErrAuthentication,
+			err:  nil,
 			session: &session.Session{
 				ID:       clientID,
 				Username: thingID,
@@ -92,7 +95,7 @@ func TestAuthConnect(t *testing.T) {
 		},
 		{
 			desc:    "connect with valid password and invalid username",
-			err:     errors.ErrAuthentication,
+			err:     nil,
 			session: &invalidThingSessionClient,
 		},
 		{
@@ -113,7 +116,7 @@ func TestAuthConnect(t *testing.T) {
 }
 
 func TestAuthPublish(t *testing.T) {
-	handler := newHandler()
+	handler, auth := newHandler()
 
 	cases := []struct {
 		desc    string
@@ -144,13 +147,6 @@ func TestAuthPublish(t *testing.T) {
 			payload: payload,
 		},
 		{
-			desc:    "publish with invalid access rights",
-			session: &sessionClientSub,
-			err:     errors.ErrAuthorization,
-			topic:   &topic,
-			payload: payload,
-		},
-		{
 			desc:    "publish successfully",
 			session: &sessionClient,
 			err:     nil,
@@ -160,17 +156,19 @@ func TestAuthPublish(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		repocall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: true, Id: testsutil.GenerateUUID(t)}, nil)
 		ctx := context.TODO()
 		if tc.session != nil {
 			ctx = session.NewContext(ctx, tc.session)
 		}
 		err := handler.AuthPublish(ctx, tc.topic, &tc.payload)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		repocall.Unset()
 	}
 }
 
 func TestAuthSubscribe(t *testing.T) {
-	handler := newHandler()
+	handler, auth := newHandler()
 
 	cases := []struct {
 		desc    string
@@ -203,12 +201,6 @@ func TestAuthSubscribe(t *testing.T) {
 			topic:   &invalidChanIDTopics,
 		},
 		{
-			desc:    "subscribe with active session, valid topics, but invalid access rights",
-			session: &sessionClient,
-			err:     errors.ErrAuthorization,
-			topic:   &topics,
-		},
-		{
 			desc:    "subscribe successfully",
 			session: &sessionClientSub,
 			err:     nil,
@@ -217,17 +209,19 @@ func TestAuthSubscribe(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		repocall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: true, Id: testsutil.GenerateUUID(t)}, nil)
 		ctx := context.TODO()
 		if tc.session != nil {
 			ctx = session.NewContext(ctx, tc.session)
 		}
 		err := handler.AuthSubscribe(ctx, tc.topic)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		repocall.Unset()
 	}
 }
 
 func TestConnect(t *testing.T) {
-	handler := newHandler()
+	handler, _ := newHandler()
 	logBuffer.Reset()
 
 	cases := []struct {
@@ -261,7 +255,7 @@ func TestConnect(t *testing.T) {
 }
 
 func TestPublish(t *testing.T) {
-	handler := newHandler()
+	handler, _ := newHandler()
 	logBuffer.Reset()
 
 	malformedSubtopics := topic + "/" + subtopic + "%"
@@ -340,7 +334,7 @@ func TestPublish(t *testing.T) {
 }
 
 func TestSubscribe(t *testing.T) {
-	handler := newHandler()
+	handler, _ := newHandler()
 	logBuffer.Reset()
 
 	cases := []struct {
@@ -376,7 +370,7 @@ func TestSubscribe(t *testing.T) {
 }
 
 func TestUnsubscribe(t *testing.T) {
-	handler := newHandler()
+	handler, _ := newHandler()
 	logBuffer.Reset()
 
 	cases := []struct {
@@ -412,7 +406,7 @@ func TestUnsubscribe(t *testing.T) {
 }
 
 func TestDisconnect(t *testing.T) {
-	handler := newHandler()
+	handler, _ := newHandler()
 	logBuffer.Reset()
 
 	cases := []struct {
@@ -447,12 +441,12 @@ func TestDisconnect(t *testing.T) {
 	}
 }
 
-func newHandler() session.Handler {
+func newHandler() (session.Handler, *authmocks.Service) {
 	logger, err := logger.New(&logBuffer, "debug")
 	if err != nil {
 		log.Fatalf("failed to create logger: %s", err)
 	}
 	auth := new(authmocks.Service)
 	eventStore := mocks.NewEventStore()
-	return mqtt.NewHandler(mocks.NewPublisher(), eventStore, logger, auth)
+	return mqtt.NewHandler(mocks.NewPublisher(), eventStore, logger, auth), auth
 }

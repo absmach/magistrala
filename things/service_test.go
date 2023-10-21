@@ -25,7 +25,6 @@ import (
 )
 
 var (
-	idProvider     = uuid.New()
 	secret         = "strongsecret"
 	validCMetadata = mfclients.Metadata{"role": "client"}
 	ID             = testsutil.GenerateUUID(&testing.T{})
@@ -41,7 +40,6 @@ var (
 	adminEmail     = "admin@example.com"
 	myKey          = "mine"
 	validToken     = "token"
-	inValidToken   = "invalidToken"
 	validID        = "d4ebb847-5d0e-4e46-bdd9-b6aceaaa3a22"
 )
 
@@ -241,12 +239,8 @@ func TestRegisterClient(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: validToken}).Return(&mainflux.IdentityRes{Id: validID}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: tc.token}).Return(&mainflux.IdentityRes{Id: validID}, nil)
 		repoCall1 := auth.On("AddPolicy", mock.Anything, mock.Anything).Return(&mainflux.AddPolicyRes{Authorized: true}, nil)
-		if tc.token == inValidToken {
-			repoCall = auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: inValidToken}).Return(&mainflux.IdentityRes{}, errors.ErrAuthentication)
-			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
-		}
 		repoCall2 := cRepo.On("Save", context.Background(), mock.Anything).Return(&mfclients.Client{}, tc.err)
 		registerTime := time.Now()
 		expected, err := svc.CreateThings(context.Background(), tc.token, tc.client)
@@ -288,9 +282,9 @@ func TestViewClient(t *testing.T) {
 		{
 			desc:     "view client with an invalid token",
 			response: mfclients.Client{},
-			token:    inValidToken,
+			token:    authmocks.InvalidValue,
 			clientID: "",
-			err:      errors.ErrAuthentication,
+			err:      errors.ErrAuthorization,
 		},
 		{
 			desc:     "view client with valid token and invalid client id",
@@ -302,7 +296,7 @@ func TestViewClient(t *testing.T) {
 		{
 			desc:     "view client with an invalid token and invalid client id",
 			response: mfclients.Client{},
-			token:    inValidToken,
+			token:    authmocks.InvalidValue,
 			clientID: mocks.WrongID,
 			err:      errors.ErrAuthorization,
 		},
@@ -310,7 +304,7 @@ func TestViewClient(t *testing.T) {
 
 	for _, tc := range cases {
 		repoCall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: true}, tc.err)
-		if tc.token == inValidToken {
+		if tc.token == authmocks.InvalidValue {
 			repoCall = auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
 		}
 		repoCall1 := cRepo.On("RetrieveByID", context.Background(), mock.Anything).Return(tc.response, tc.err)
@@ -368,13 +362,13 @@ func TestListClients(t *testing.T) {
 					Offset: 0,
 					Limit:  0,
 				},
-				Clients: []mfclients.Client{},
+				Clients: []mfclients.Client(nil),
 			},
 			err: nil,
 		},
 		{
 			desc:  "list clients with an invalid token",
-			token: inValidToken,
+			token: authmocks.InvalidValue,
 			page: mfclients.Page{
 				Status: mfclients.AllStatus,
 			},
@@ -429,18 +423,15 @@ func TestListClients(t *testing.T) {
 			desc:  "list clients that are shared with me with an invalid name",
 			token: validToken,
 			page: mfclients.Page{
-				Offset: 6,
 				Limit:  nClients,
 				Name:   "notpresentclient",
 				Status: mfclients.EnabledStatus,
 			},
 			response: mfclients.ClientsPage{
 				Page: mfclients.Page{
-					Total:  0,
-					Offset: 0,
-					Limit:  0,
+					Limit: nClients,
 				},
-				Clients: []mfclients.Client{},
+				Clients: []mfclients.Client(nil),
 			},
 			size: 0,
 		},
@@ -487,7 +478,6 @@ func TestListClients(t *testing.T) {
 			desc:  "list clients that I own with an invalid name",
 			token: validToken,
 			page: mfclients.Page{
-				Offset: 6,
 				Limit:  nClients,
 				Owner:  myKey,
 				Name:   "notpresentclient",
@@ -497,9 +487,9 @@ func TestListClients(t *testing.T) {
 				Page: mfclients.Page{
 					Total:  0,
 					Offset: 0,
-					Limit:  0,
+					Limit:  nClients,
 				},
-				Clients: []mfclients.Client{},
+				Clients: []mfclients.Client(nil),
 			},
 			size: 0,
 		},
@@ -546,7 +536,6 @@ func TestListClients(t *testing.T) {
 			desc:  "list clients that I own and are shared with me with an invalid name",
 			token: validToken,
 			page: mfclients.Page{
-				Offset: 6,
 				Limit:  nClients,
 				Owner:  myKey,
 				Name:   "notpresentclient",
@@ -556,9 +545,9 @@ func TestListClients(t *testing.T) {
 				Page: mfclients.Page{
 					Total:  0,
 					Offset: 0,
-					Limit:  0,
+					Limit:  nClients,
 				},
-				Clients: []mfclients.Client{},
+				Clients: []mfclients.Client(nil),
 			},
 			size: 0,
 		},
@@ -584,10 +573,10 @@ func TestListClients(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: validToken}).Return(&mainflux.IdentityRes{Id: validID}, nil)
-		repoCall1 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&mainflux.ListObjectsRes{}, nil)
-		if tc.token == inValidToken {
-			repoCall = auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: inValidToken}).Return(&mainflux.IdentityRes{}, errors.ErrAuthentication)
+		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: tc.token}).Return(&mainflux.IdentityRes{Id: validID}, nil)
+		repoCall1 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&mainflux.ListObjectsRes{Policies: getIDs(tc.response.Clients)}, nil)
+		if tc.token == authmocks.InvalidValue {
+			repoCall = auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: authmocks.InvalidValue}).Return(&mainflux.IdentityRes{}, errors.ErrAuthentication)
 			repoCall1 = auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&mainflux.ListObjectsRes{}, errors.ErrAuthorization)
 		}
 		repoCall2 := cRepo.On("RetrieveAllByIDs", context.Background(), mock.Anything).Return(tc.response, tc.err)
@@ -656,12 +645,8 @@ func TestUpdateClient(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: validToken}).Return(&mainflux.IdentityRes{Id: validID}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: tc.token}).Return(&mainflux.IdentityRes{Id: validID}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: true}, nil)
-		if tc.token == inValidToken {
-			repoCall = auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: inValidToken}).Return(&mainflux.IdentityRes{}, errors.ErrAuthentication)
-			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
-		}
 		repoCall2 := cRepo.On("RetrieveByID", context.Background(), mock.Anything).Return(mfclients.Client{}, tc.err)
 		repoCall3 := cRepo.On("Update", context.Background(), mock.Anything).Return(tc.response, tc.err)
 		updatedClient, err := svc.UpdateClient(context.Background(), tc.token, tc.client)
@@ -713,12 +698,8 @@ func TestUpdateClientTags(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: validToken}).Return(&mainflux.IdentityRes{Id: validID}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: tc.token}).Return(&mainflux.IdentityRes{Id: validID}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: true}, nil)
-		if tc.token == inValidToken {
-			repoCall = auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: inValidToken}).Return(&mainflux.IdentityRes{}, errors.ErrAuthentication)
-			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
-		}
 		repoCall2 := cRepo.On("RetrieveByID", context.Background(), mock.Anything).Return(mfclients.Client{}, tc.err)
 		repoCall3 := cRepo.On("UpdateTags", context.Background(), mock.Anything).Return(tc.response, tc.err)
 		updatedClient, err := svc.UpdateClientTags(context.Background(), tc.token, tc.client)
@@ -770,12 +751,8 @@ func TestUpdateClientOwner(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: validToken}).Return(&mainflux.IdentityRes{Id: validID}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: tc.token}).Return(&mainflux.IdentityRes{Id: validID}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: true}, nil)
-		if tc.token == inValidToken {
-			repoCall = auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: inValidToken}).Return(&mainflux.IdentityRes{}, errors.ErrAuthentication)
-			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
-		}
 		repoCall2 := cRepo.On("RetrieveByID", context.Background(), mock.Anything).Return(mfclients.Client{}, tc.err)
 		repoCall3 := cRepo.On("UpdateOwner", context.Background(), mock.Anything).Return(tc.response, tc.err)
 		updatedClient, err := svc.UpdateClientOwner(context.Background(), tc.token, tc.client)
@@ -818,12 +795,8 @@ func TestUpdateClientSecret(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: validToken}).Return(&mainflux.IdentityRes{Id: validID}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: tc.token}).Return(&mainflux.IdentityRes{Id: validID}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: true}, nil)
-		if tc.token == inValidToken {
-			repoCall = auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: inValidToken}).Return(&mainflux.IdentityRes{}, errors.ErrAuthentication)
-			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
-		}
 		repoCall2 := cRepo.On("UpdateSecret", context.Background(), mock.Anything).Return(tc.response, tc.err)
 		updatedClient, err := svc.UpdateClientSecret(context.Background(), tc.token, tc.id, tc.newSecret)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -877,12 +850,8 @@ func TestEnableClient(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: validToken}).Return(&mainflux.IdentityRes{Id: validID}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: tc.token}).Return(&mainflux.IdentityRes{Id: validID}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: true}, nil)
-		if tc.token == inValidToken {
-			repoCall = auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: inValidToken}).Return(&mainflux.IdentityRes{}, errors.ErrAuthentication)
-			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
-		}
 		repoCall2 := cRepo.On("RetrieveByID", context.Background(), mock.Anything).Return(tc.client, tc.err)
 		repoCall3 := cRepo.On("ChangeStatus", context.Background(), mock.Anything).Return(tc.response, tc.err)
 		_, err := svc.EnableClient(context.Background(), tc.token, tc.id)
@@ -947,7 +916,7 @@ func TestEnableClient(t *testing.T) {
 			Status: tc.status,
 		}
 		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: validToken}).Return(&mainflux.IdentityRes{Id: validID}, nil)
-		repoCall1 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&mainflux.ListObjectsRes{}, nil)
+		repoCall1 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&mainflux.ListObjectsRes{Policies: getIDs(tc.response.Clients)}, nil)
 		repoCall2 := cRepo.On("RetrieveAllByIDs", context.Background(), mock.Anything).Return(tc.response, nil)
 		page, err := svc.ListClients(context.Background(), validToken, "", pm)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
@@ -1002,12 +971,8 @@ func TestDisableClient(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: validToken}).Return(&mainflux.IdentityRes{Id: validID}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: tc.token}).Return(&mainflux.IdentityRes{Id: validID}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: true}, nil)
-		if tc.token == inValidToken {
-			repoCall = auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: inValidToken}).Return(&mainflux.IdentityRes{}, errors.ErrAuthentication)
-			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
-		}
 		repoCall2 := cRepo.On("RetrieveByID", context.Background(), mock.Anything).Return(tc.client, tc.err)
 		repoCall3 := cRepo.On("ChangeStatus", context.Background(), mock.Anything).Return(tc.response, tc.err)
 		_, err := svc.DisableClient(context.Background(), tc.token, tc.id)
@@ -1072,7 +1037,7 @@ func TestDisableClient(t *testing.T) {
 			Status: tc.status,
 		}
 		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: validToken}).Return(&mainflux.IdentityRes{Id: validID}, nil)
-		repoCall1 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&mainflux.ListObjectsRes{}, nil)
+		repoCall1 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&mainflux.ListObjectsRes{Policies: getIDs(tc.response.Clients)}, nil)
 		repoCall2 := cRepo.On("RetrieveAllByIDs", context.Background(), mock.Anything).Return(tc.response, nil)
 		page, err := svc.ListClients(context.Background(), validToken, "", pm)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
@@ -1152,7 +1117,7 @@ func TestListMembers(t *testing.T) {
 		},
 		{
 			desc:    "list clients with an invalid token",
-			token:   inValidToken,
+			token:   authmocks.InvalidValue,
 			groupID: testsutil.GenerateUUID(t),
 			page: mfclients.Page{
 				Owner: adminEmail,
@@ -1164,7 +1129,7 @@ func TestListMembers(t *testing.T) {
 					Limit:  0,
 				},
 			},
-			err: errors.ErrAuthentication,
+			err: errors.ErrAuthorization,
 		},
 		{
 			desc:    "list clients with an invalid id",
@@ -1200,12 +1165,8 @@ func TestListMembers(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: validToken}).Return(&mainflux.IdentityRes{Id: validID}, nil)
+		repoCall := auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: tc.token}).Return(&mainflux.IdentityRes{Id: validID}, nil)
 		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: true}, nil)
-		if tc.token == inValidToken {
-			repoCall = auth.On("Identify", mock.Anything, &mainflux.IdentityReq{Token: inValidToken}).Return(&mainflux.IdentityRes{}, errors.ErrAuthentication)
-			repoCall1 = auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: false}, errors.ErrAuthorization)
-		}
 		repoCall2 := auth.On("ListAllObjects", mock.Anything, mock.Anything).Return(&mainflux.ListObjectsRes{}, nil)
 		repoCall3 := cRepo.On("RetrieveAllByIDs", context.Background(), tc.page).Return(mfclients.ClientsPage{Page: tc.response.Page, Clients: tc.response.Members}, tc.err)
 		page, err := svc.ListClientsByGroup(context.Background(), tc.token, tc.groupID, tc.page)
@@ -1216,4 +1177,12 @@ func TestListMembers(t *testing.T) {
 		repoCall2.Unset()
 		repoCall3.Unset()
 	}
+}
+
+func getIDs(clients []mfclients.Client) []string {
+	ids := []string{}
+	for _, client := range clients {
+		ids = append(ids, client.ID)
+	}
+	return ids
 }

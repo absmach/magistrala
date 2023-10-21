@@ -11,20 +11,23 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mainflux/mainflux"
 	authmocks "github.com/mainflux/mainflux/auth/mocks"
 	server "github.com/mainflux/mainflux/http"
 	"github.com/mainflux/mainflux/http/api"
 	"github.com/mainflux/mainflux/http/mocks"
 	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/mainflux/mainflux/internal/testsutil"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 const instanceID = "5de9b29a-feb9-11ed-be56-0242ac120002"
 
-func newService() server.Service {
+func newService() (server.Service, *authmocks.Service) {
 	auth := new(authmocks.Service)
 	pub := mocks.NewPublisher()
-	return server.New(pub, auth)
+	return server.New(pub, auth), auth
 }
 
 func newHTTPServer(svc server.Service) *httptest.Server {
@@ -66,11 +69,11 @@ func TestPublish(t *testing.T) {
 	ctSenmlCBOR := "application/senml+cbor"
 	ctJSON := "application/json"
 	thingKey := "thing_key"
-	invalidKey := "invalid_key"
+	invalidKey := authmocks.InvalidValue
 	msg := `[{"n":"current","t":-1,"v":1.6}]`
 	msgJSON := `{"field1":"val1","field2":"val2"}`
 	msgCBOR := `81A3616E6763757272656E746174206176FB3FF999999999999A`
-	svc := newService()
+	svc, auth := newService()
 	ts := newHTTPServer(svc)
 	defer ts.Close()
 
@@ -123,7 +126,7 @@ func TestPublish(t *testing.T) {
 			msg:         msg,
 			contentType: ctSenmlJSON,
 			key:         invalidKey,
-			status:      http.StatusUnauthorized,
+			status:      http.StatusForbidden,
 		},
 		"publish message with invalid basic auth": {
 			chanID:      chanID,
@@ -131,7 +134,7 @@ func TestPublish(t *testing.T) {
 			contentType: ctSenmlJSON,
 			key:         invalidKey,
 			basicAuth:   true,
-			status:      http.StatusUnauthorized,
+			status:      http.StatusForbidden,
 		},
 		"publish message without content type": {
 			chanID:      chanID,
@@ -151,12 +154,13 @@ func TestPublish(t *testing.T) {
 			chanID:      chanID,
 			msg:         msg,
 			contentType: ctSenmlJSON,
-			// key:         mocks.ServiceErrToken,
-			status: http.StatusInternalServerError,
+			key:         authmocks.InvalidValue,
+			status:      http.StatusForbidden,
 		},
 	}
 
 	for desc, tc := range cases {
+		repocall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: true, Id: testsutil.GenerateUUID(t)}, nil)
 		req := testRequest{
 			client:      ts.Client(),
 			method:      http.MethodPost,
@@ -169,5 +173,6 @@ func TestPublish(t *testing.T) {
 		res, err := req.make()
 		assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", desc, err))
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", desc, tc.status, res.StatusCode))
+		repocall.Unset()
 	}
 }

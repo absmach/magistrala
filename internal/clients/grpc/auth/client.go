@@ -12,7 +12,10 @@ import (
 	thingsauth "github.com/mainflux/mainflux/things/api/grpc"
 )
 
-const envAuthGrpcPrefix = "MF_AUTH_GRPC_"
+const (
+	envAuthGrpcPrefix  = "MF_AUTH_GRPC_"
+	envAuthzGrpcPrefix = "MF_THINGS_AUTH_GRPC_"
+)
 
 var errGrpcConfig = errors.New("failed to load grpc configuration")
 
@@ -33,7 +36,7 @@ func Setup(svcName string) (mainflux.AuthServiceClient, grpcclient.ClientHandler
 // Setup loads Auth gRPC configuration from environment variable and creates new Auth gRPC API.
 func SetupAuthz(svcName string) (mainflux.AuthzServiceClient, grpcclient.ClientHandler, error) {
 	config := grpcclient.Config{}
-	if err := env.Parse(&config, env.Options{Prefix: envAuthGrpcPrefix}); err != nil {
+	if err := env.Parse(&config, env.Options{Prefix: envAuthzGrpcPrefix}); err != nil {
 		return nil, nil, errors.Wrap(errGrpcConfig, err)
 	}
 	c, ch, err := grpcclient.Setup(config, svcName)

@@ -65,15 +65,25 @@ func main() {
 		}
 	}
 
-	auth, authHandler, err := authclient.Setup(svcName)
+	ac, acHandler, err := authclient.Setup(svcName)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
-	defer authHandler.Close()
+	defer acHandler.Close()
 
-	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
+	logger.Info("Successfully connected to auth grpc server " + acHandler.Secure())
+
+	tc, tcHandler, err := authclient.SetupAuthz(svcName)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+	defer tcHandler.Close()
+
+	logger.Info("Successfully connected to things grpc server " + tcHandler.Secure())
 
 	influxDBConfig := influxdbclient.Config{}
 	if err := env.Parse(&influxDBConfig, env.Options{Prefix: envPrefixDB}); err != nil {
@@ -104,7 +114,7 @@ func main() {
 		exitCode = 1
 		return
 	}
-	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(repo, auth, svcName, cfg.InstanceID), logger)
+	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(repo, ac, tc, svcName, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, mainflux.Version, logger, cancel)

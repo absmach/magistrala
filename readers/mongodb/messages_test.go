@@ -10,9 +10,9 @@ import (
 	"time"
 
 	mwriter "github.com/mainflux/mainflux/consumers/writers/mongodb"
+	"github.com/mainflux/mainflux/internal/testsutil"
 	"github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
-	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/readers"
 	mreader "github.com/mainflux/mainflux/readers/mongodb"
 	"github.com/stretchr/testify/assert"
@@ -45,8 +45,6 @@ var (
 	vb          = true
 	vd          = "dataValue"
 	sum float64 = 42
-
-	idProvider = uuid.New()
 )
 
 func TestReadSenml(t *testing.T) {
@@ -56,14 +54,10 @@ func TestReadSenml(t *testing.T) {
 	db := client.Database(testDB)
 	writer := mwriter.New(db)
 
-	chanID, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	pubID, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	pubID2, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	wrongID, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	chanID := testsutil.GenerateUUID(t)
+	pubID := testsutil.GenerateUUID(t)
+	pubID2 := testsutil.GenerateUUID(t)
+	wrongID := testsutil.GenerateUUID(t)
 
 	m := senml.Message{
 		Channel:   chanID,
@@ -387,8 +381,7 @@ func TestReadJSON(t *testing.T) {
 	db := client.Database(testDB)
 	writer := mwriter.New(db)
 
-	id1, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	id1 := testsutil.GenerateUUID(t)
 	m := json.Message{
 		Channel:   id1,
 		Publisher: id1,
@@ -419,8 +412,7 @@ func TestReadJSON(t *testing.T) {
 	err = writer.ConsumeBlocking(context.TODO(), messages1)
 	require.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 
-	id2, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	id2 := testsutil.GenerateUUID(t)
 	m = json.Message{
 		Channel:   id2,
 		Publisher: id2,

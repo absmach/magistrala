@@ -10,9 +10,9 @@ import (
 	"time"
 
 	pwriter "github.com/mainflux/mainflux/consumers/writers/postgres"
+	"github.com/mainflux/mainflux/internal/testsutil"
 	"github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
-	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/readers"
 	preader "github.com/mainflux/mainflux/readers/postgres"
 	"github.com/stretchr/testify/assert"
@@ -38,21 +38,15 @@ var (
 	vb          = true
 	vd          = "dataValue"
 	sum float64 = 42
-
-	idProvider = uuid.New()
 )
 
 func TestReadSenml(t *testing.T) {
 	writer := pwriter.New(db)
 
-	chanID, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	pubID, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	pubID2, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	wrongID, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	chanID := testsutil.GenerateUUID(t)
+	pubID := testsutil.GenerateUUID(t)
+	pubID2 := testsutil.GenerateUUID(t)
+	wrongID := testsutil.GenerateUUID(t)
 
 	m := senml.Message{
 		Channel:   chanID,
@@ -99,7 +93,7 @@ func TestReadSenml(t *testing.T) {
 		messages = append(messages, msg)
 	}
 
-	err = writer.ConsumeBlocking(context.TODO(), messages)
+	err := writer.ConsumeBlocking(context.TODO(), messages)
 	require.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 
 	reader := preader.New(db)
@@ -527,8 +521,7 @@ func TestReadSenml(t *testing.T) {
 func TestReadJSON(t *testing.T) {
 	writer := pwriter.New(db)
 
-	id1, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	id1 := testsutil.GenerateUUID(t)
 	m := json.Message{
 		Channel:   id1,
 		Publisher: id1,
@@ -557,11 +550,10 @@ func TestReadJSON(t *testing.T) {
 		msgs1 = append(msgs1, m)
 	}
 
-	err = writer.ConsumeBlocking(context.TODO(), messages1)
+	err := writer.ConsumeBlocking(context.TODO(), messages1)
 	require.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 
-	id2, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	id2 := testsutil.GenerateUUID(t)
 	m = json.Message{
 		Channel:   id2,
 		Publisher: id2,

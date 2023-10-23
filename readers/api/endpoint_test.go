@@ -11,14 +11,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mainflux/mainflux"
 	authmocks "github.com/mainflux/mainflux/auth/mocks"
 	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/mainflux/mainflux/internal/testsutil"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
-	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/readers"
 	"github.com/mainflux/mainflux/readers/api"
 	"github.com/mainflux/mainflux/readers/mocks"
+	thmocks "github.com/mainflux/mainflux/things/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 const (
@@ -42,14 +45,10 @@ var (
 	vb          = true
 	vd          = "dataValue"
 	sum float64 = 42
-
-	idProvider = uuid.New()
 )
 
-func newServer(repo readers.MessageRepository) *httptest.Server {
-	auth := new(authmocks.Service)
-
-	mux := api.MakeHandler(repo, auth, svcName, instanceID)
+func newServer(repo readers.MessageRepository, ac *authmocks.Service, tc *thmocks.Service) *httptest.Server {
+	mux := api.MakeHandler(repo, ac, tc, svcName, instanceID)
 	return httptest.NewServer(mux)
 }
 
@@ -77,12 +76,9 @@ func (tr testRequest) make() (*http.Response, error) {
 }
 
 func TestReadAll(t *testing.T) {
-	chanID, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	pubID, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	pubID2, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	chanID := testsutil.GenerateUUID(t)
+	pubID := testsutil.GenerateUUID(t)
+	pubID2 := testsutil.GenerateUUID(t)
 
 	now := time.Now().Unix()
 
@@ -130,7 +126,9 @@ func TestReadAll(t *testing.T) {
 	}
 
 	repo := mocks.NewMessageRepository(chanID, fromSenml(messages))
-	ts := newServer(repo)
+	auth := new(authmocks.Service)
+	tauth := new(thmocks.Service)
+	ts := newServer(repo, auth, tauth)
 	defer ts.Close()
 
 	cases := []struct {
@@ -145,7 +143,7 @@ func TestReadAll(t *testing.T) {
 		{
 			desc:   "read page with valid offset and limit",
 			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=10", ts.URL, chanID),
-			key:    thingToken,
+			token:  userToken,
 			status: http.StatusOK,
 			res: pageRes{
 				Total:    uint64(len(messages)),
@@ -201,7 +199,7 @@ func TestReadAll(t *testing.T) {
 		{
 			desc:   "read page with invalid token as thing",
 			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=10", ts.URL, chanID),
-			token:  invalid,
+			token:  authmocks.InvalidValue,
 			status: http.StatusUnauthorized,
 		},
 		{
@@ -482,7 +480,7 @@ func TestReadAll(t *testing.T) {
 		{
 			desc:   "read page with invalid token as user",
 			url:    fmt.Sprintf("%s/channels/%s/messages?offset=0&limit=10", ts.URL, chanID),
-			token:  invalid,
+			token:  authmocks.InvalidValue,
 			status: http.StatusUnauthorized,
 		},
 		{
@@ -697,7 +695,6 @@ func TestReadAll(t *testing.T) {
 			token:  userToken,
 			status: http.StatusBadRequest,
 		},
-
 		{
 			desc:   "read page with non-float to as user",
 			url:    fmt.Sprintf("%s/channels/%s/messages?to=ABCD", ts.URL, chanID),
@@ -717,6 +714,11 @@ func TestReadAll(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		repoCall := auth.On("Identify", mock.Anything, mock.Anything).Return(&mainflux.IdentityRes{Id: testsutil.GenerateUUID(t)}, nil)
+		repoCall1 := auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: true, Id: testsutil.GenerateUUID(t)}, nil)
+		if tc.key != "" {
+			repoCall1 = tauth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: true, Id: testsutil.GenerateUUID(t)}, nil)
+		}
 		req := testRequest{
 			client: ts.Client(),
 			method: http.MethodGet,
@@ -735,6 +737,8 @@ func TestReadAll(t *testing.T) {
 		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected %d got %d", tc.desc, tc.status, res.StatusCode))
 		assert.Equal(t, tc.res.Total, page.Total, fmt.Sprintf("%s: expected %d got %d", tc.desc, tc.res.Total, page.Total))
 		assert.ElementsMatch(t, tc.res.Messages, page.Messages, fmt.Sprintf("%s: got incorrect body from response", tc.desc))
+		repoCall.Unset()
+		repoCall1.Unset()
 	}
 }
 

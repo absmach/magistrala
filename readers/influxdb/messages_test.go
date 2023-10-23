@@ -11,9 +11,9 @@ import (
 
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	iwriter "github.com/mainflux/mainflux/consumers/writers/influxdb"
+	"github.com/mainflux/mainflux/internal/testsutil"
 	"github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
-	"github.com/mainflux/mainflux/pkg/uuid"
 	"github.com/mainflux/mainflux/readers"
 	ireader "github.com/mainflux/mainflux/readers/influxdb"
 	"github.com/stretchr/testify/assert"
@@ -49,22 +49,15 @@ var (
 		Bucket: dbBucket,
 		Org:    dbOrg,
 	}
-	idProvider = uuid.New()
 )
 
 func TestReadSenml(t *testing.T) {
 	asyncWriter := iwriter.NewAsync(client, repoCfg)
 
-	chanID, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	pubID, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	pubID2, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	wrongID, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	chanID := testsutil.GenerateUUID(t)
+	pubID := testsutil.GenerateUUID(t)
+	pubID2 := testsutil.GenerateUUID(t)
+	wrongID := testsutil.GenerateUUID(t)
 
 	m := senml.Message{
 		Channel:    chanID,
@@ -115,7 +108,7 @@ func TestReadSenml(t *testing.T) {
 
 	errs := asyncWriter.Errors()
 	asyncWriter.ConsumeAsync(context.TODO(), messages)
-	err = <-errs
+	err := <-errs
 	assert.Nil(t, err, fmt.Sprintf("Save operation expected to succeed: %s.\n", err))
 
 	reader := ireader.New(client, repoCfg)
@@ -566,8 +559,7 @@ func TestReadSenml(t *testing.T) {
 func TestReadJSON(t *testing.T) {
 	asyncWriter := iwriter.NewAsync(client, repoCfg)
 
-	id1, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	id1 := testsutil.GenerateUUID(t)
 	m := json.Message{
 		Channel:   id1,
 		Publisher: id1,
@@ -592,11 +584,10 @@ func TestReadJSON(t *testing.T) {
 
 	errs := asyncWriter.Errors()
 	asyncWriter.ConsumeAsync(context.TODO(), messages1)
-	err = <-errs
+	err := <-errs
 	require.Nil(t, err, fmt.Sprintf("Save operation expected to succeed: %s.\n", err))
 
-	id2, err := idProvider.ID()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	id2 := testsutil.GenerateUUID(t)
 	m = json.Message{
 		Channel:   id2,
 		Publisher: id2,

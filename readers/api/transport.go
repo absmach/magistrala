@@ -39,35 +39,24 @@ const (
 	defOffset      = 0
 	defFormat      = "messages"
 
-	thingsKind            = "things"
-	channelsKind          = "channels"
-	usersKind             = "users"
-	tokenKind             = "token"
-	thingType             = "thing"
-	channelType           = "channel"
-	userType              = "user"
-	groupType             = "group"
-	memberRelation        = "member"
-	groupRelation         = "group"
-	administratorRelation = "administrator"
-	parentGroupRelation   = "parent_group"
-	viewerRelation        = "viewer"
-	adminPermission       = "admin"
-	editPermission        = "edit"
-	viewPermission        = "view"
+	tokenKind           = "token"
+	thingType           = "thing"
+	userType            = "user"
+	subscribePermission = "subscribe"
+	groupType           = "group"
 )
 
 var errUserAccess = errors.New("user has no permission")
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc readers.MessageRepository, ac mainflux.AuthServiceClient, svcName, instanceID string) http.Handler {
+func MakeHandler(svc readers.MessageRepository, uauth mainflux.AuthServiceClient, taauth mainflux.AuthzServiceClient, svcName, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
 	}
 
 	mux := bone.New()
 	mux.Get("/channels/:chanID/messages", kithttp.NewServer(
-		listMessagesEndpoint(svc, ac),
+		listMessagesEndpoint(svc, uauth, taauth),
 		decodeList,
 		encodeResponse,
 		opts...,
@@ -209,6 +198,7 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrInvalidComparator):
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, errors.ErrAuthentication),
+		errors.Contains(err, errors.ErrAuthorization),
 		errors.Contains(err, apiutil.ErrBearerToken):
 		w.WriteHeader(http.StatusUnauthorized)
 	case errors.Contains(err, readers.ErrReadMessages):
@@ -228,16 +218,31 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	}
 }
 
-func authorize(ctx context.Context, req listMessagesReq, ac mainflux.AuthServiceClient) (err error) {
+func authorize(ctx context.Context, req listMessagesReq, uauth mainflux.AuthServiceClient, taauth mainflux.AuthzServiceClient) (err error) {
 	switch {
 	case req.token != "":
-		if _, err = ac.Authorize(ctx, &mainflux.AuthorizeReq{
+		if _, err = uauth.Authorize(ctx, &mainflux.AuthorizeReq{
 			SubjectType: userType,
 			SubjectKind: tokenKind,
 			Subject:     req.token,
-			Permission:  viewPermission,
-			Object:      channelType,
-			ObjectType:  req.chanID,
+			Permission:  subscribePermission,
+			ObjectType:  groupType,
+			Object:      req.chanID,
+		}); err != nil {
+			e, ok := status.FromError(err)
+			if ok && e.Code() == codes.PermissionDenied {
+				return errors.Wrap(errUserAccess, err)
+			}
+			return err
+		}
+		return nil
+	case req.key != "":
+		if _, err = taauth.Authorize(ctx, &mainflux.AuthorizeReq{
+			SubjectType: groupType,
+			Subject:     req.key,
+			ObjectType:  thingType,
+			Object:      req.chanID,
+			Permission:  subscribePermission,
 		}); err != nil {
 			e, ok := status.FromError(err)
 			if ok && e.Code() == codes.PermissionDenied {

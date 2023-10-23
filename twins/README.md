@@ -30,9 +30,7 @@ default values.
 | MF_MESSAGE_BROKER_URL      | Mainflux Message broker URL                                         | nats://localhost:4222          |
 | MF_AUTH_GRPC_URL           | Users service gRPC URL                                              | localhost:7001                 |
 | MF_AUTH_GRPC_TIMEOUT       | Users service gRPC request timeout in seconds                       | 1s                             |
-| MF_TWINS_CACHE_URL         | Cache database URL                                                  | localhost:6379                 |
-| MF_TWINS_CACHE_PASS        | Cache database password                                             |                                |
-| MF_TWINS_CACHE_DB          | Cache instance name                                                 | 0                              |
+| MF_TWINS_CACHE_URL         | Cache database URL                                                  | redis://localhost:6379/0       |
 | MF_SEND_TELEMETRY          | Send telemetry to mainflux call home server                         | true                           |
 
 ## Deployment
@@ -72,6 +70,7 @@ MF_TWINS_CHANNEL_ID=[Message broker notifications channel ID] \
 MF_MESSAGE_BROKER_URL=[Mainflux Message broker URL] \
 MF_AUTH_GRPC_URL=[Users service gRPC URL] \
 MF_AUTH_GRPC_TIMEOUT=[Users service gRPC request timeout in seconds] \
+MF_TWINS_CACHE_URL=[Cache database URL] \
 $GOBIN/mainflux-twins
 ```
 

@@ -1,4 +1,5 @@
 # OPC-UA Adapter
+
 Adapter between Mainflux IoT system and an OPC-UA Server.
 
 This adapter sits between Mainflux and an OPC-UA server and just forwards the messages from one system to another.
@@ -11,29 +12,27 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable                         | Description                                      | Default                    |
-|----------------------------------|--------------------------------------------------|----------------------------|
-| MF_OPCUA_ADAPTER_HTTP_PORT       | Service HTTP port                                | 8180                       |
-| MF_OPCUA_ADAPTER_LOG_LEVEL       | Service Log level                                | info                       |
-| MF_MESSAGE_BROKER_URL            | Message broker instance URL                      | nats://localhost:4222      |
-| MF_OPCUA_ADAPTER_INTERVAL_MS     | OPC-UA Server Interval in milliseconds           | 1000                       |
-| MF_OPCUA_ADAPTER_POLICY          | OPC-UA Server Policy                             |                            |
-| MF_OPCUA_ADAPTER_MODE            | OPC-UA Server Mode                               |                            |
-| MF_OPCUA_ADAPTER_CERT_FILE       | OPC-UA Server Certificate file                   |                            |
-| MF_OPCUA_ADAPTER_KEY_FILE        | OPC-UA Server Key file                           |                            |
-| MF_OPCUA_ADAPTER_ROUTE_MAP_URL   | Route-map database URL                           | localhost:6379             |
-| MF_OPCUA_ADAPTER_ROUTE_MAP_PASS  | Route-map database password                      |                            |
-| MF_OPCUA_ADAPTER_ROUTE_MAP_DB    | Route-map instance name                          | 0                          |
-| MF_THINGS_ES_URL                 | Things service event source URL                  | localhost:6379             |
-| MF_THINGS_ES_PASS                | Things service event source password             |                            |
-| MF_THINGS_ES_DB                  | Things service event source DB                   | 0                          |
-| MF_OPCUA_ADAPTER_EVENT_CONSUMER  | Service event consumer name                      | opcua                      |
-| MF_JAEGER_URL                    | Jaeger server URL                                | http://jaeger:14268/api/traces             |
-| MF_SEND_TELEMETRY                | Send telemetry to mainflux call home server      | true                       |
+| Variable                        | Description                                 | Default                        |
+| ------------------------------- | ------------------------------------------- | ------------------------------ |
+| MF_OPCUA_ADAPTER_HTTP_PORT      | Service HTTP port                           | 8180                           |
+| MF_OPCUA_ADAPTER_LOG_LEVEL      | Service Log level                           | info                           |
+| MF_MESSAGE_BROKER_URL           | Message broker instance URL                 | nats://localhost:4222          |
+| MF_OPCUA_ADAPTER_INTERVAL_MS    | OPC-UA Server Interval in milliseconds      | 1000                           |
+| MF_OPCUA_ADAPTER_POLICY         | OPC-UA Server Policy                        |                                |
+| MF_OPCUA_ADAPTER_MODE           | OPC-UA Server Mode                          |                                |
+| MF_OPCUA_ADAPTER_CERT_FILE      | OPC-UA Server Certificate file              |                                |
+| MF_OPCUA_ADAPTER_KEY_FILE       | OPC-UA Server Key file                      |                                |
+| MF_OPCUA_ADAPTER_ROUTE_MAP_URL  | Route-map database URL                      | redis://localhost:6379/0       |
+| MF_THINGS_ES_URL                | Things service event source URL             | localhost:6379                 |
+| MF_THINGS_ES_PASS               | Things service event source password        |                                |
+| MF_THINGS_ES_DB                 | Things service event source DB              | 0                              |
+| MF_OPCUA_ADAPTER_EVENT_CONSUMER | Service event consumer name                 | opcua                          |
+| MF_JAEGER_URL                   | Jaeger server URL                           | http://jaeger:14268/api/traces |
+| MF_SEND_TELEMETRY               | Send telemetry to mainflux call home server | true                           |
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`opcua-adapter`](https://github.com/mainflux/mainflux/blob/master/docker/addons/opcua-adapter/docker-compose.yml#L29-L53) service section in 
+The service itself is distributed as Docker container. Check the [`opcua-adapter`](https://github.com/mainflux/mainflux/blob/master/docker/addons/opcua-adapter/docker-compose.yml#L29-L53) service section in
 docker-compose to see how service is deployed.
 
 To start the service outside of the container, execute the following shell script:
@@ -60,8 +59,6 @@ MF_OPCUA_ADAPTER_MODE=[OPC-UA Server Mode] \
 MF_OPCUA_ADAPTER_CERT_FILE=[OPC-UA Server Certificate file] \
 MF_OPCUA_ADAPTER_KEY_FILE=[OPC-UA Server Key file] \
 MF_OPCUA_ADAPTER_ROUTE_MAP_URL=[Route-map database URL] \
-MF_OPCUA_ADAPTER_ROUTE_MAP_PASS=[Route-map database password] \
-MF_OPCUA_ADAPTER_ROUTE_MAP_DB=[Route-map instance name] \
 MF_THINGS_ES_URL=[Things service event source URL] \
 MF_THINGS_ES_PASS=[Things service event source password] \
 MF_THINGS_ES_DB=[Things service event source password] \

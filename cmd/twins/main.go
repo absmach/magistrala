@@ -42,7 +42,6 @@ const (
 	svcName        = "twins"
 	envPrefixDB    = "MF_TWINS_DB_"
 	envPrefixHTTP  = "MF_TWINS_HTTP_"
-	envPrefixCache = "MF_TWINS_CACHE_"
 	defSvcHTTPPort = "9018"
 )
 
@@ -56,6 +55,7 @@ type config struct {
 	SendTelemetry   bool   `env:"MF_SEND_TELEMETRY"           envDefault:"true"`
 	InstanceID      string `env:"MF_TWINS_INSTANCE_ID"        envDefault:""`
 	ESURL           string `env:"MF_TWINS_ES_URL"             envDefault:"redis://localhost:6379/0"`
+	CacheURL        string `env:"MF_TWINS_CACHE_URL"          envDefault:"redis://localhost:6379/0"`
 }
 
 func main() {
@@ -90,7 +90,7 @@ func main() {
 		return
 	}
 
-	cacheClient, err := redisclient.Setup(envPrefixCache)
+	cacheClient, err := redisclient.Connect(cfg.CacheURL)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1

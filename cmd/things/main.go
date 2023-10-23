@@ -51,8 +51,6 @@ import (
 const (
 	svcName            = "things"
 	envPrefixDB        = "MF_THINGS_DB_"
-	envPrefixCache     = "MF_THINGS_CACHE_"
-	envPrefixES        = "MF_THINGS_ES_"
 	envPrefixHTTP      = "MF_THINGS_HTTP_"
 	envPrefixGRPC      = "MF_THINGS_AUTH_GRPC_"
 	defDB              = "things"
@@ -67,8 +65,9 @@ type config struct {
 	JaegerURL        string `env:"MF_JAEGER_URL"                 envDefault:"http://jaeger:14268/api/traces"`
 	CacheKeyDuration string `env:"MF_THINGS_CACHE_KEY_DURATION"  envDefault:"10m"`
 	SendTelemetry    bool   `env:"MF_SEND_TELEMETRY"             envDefault:"true"`
-	InstanceID       string `env:"MF_THINGS_INSTANCE_ID"        envDefault:""`
+	InstanceID       string `env:"MF_THINGS_INSTANCE_ID"         envDefault:""`
 	ESURL            string `env:"MF_THINGS_ES_URL"              envDefault:"redis://localhost:6379/0"`
+	CacheURL         string `env:"MF_THINGS_CACHE_URL"           envDefault:"redis://localhost:6379/0"`
 }
 
 func main() {
@@ -128,22 +127,13 @@ func main() {
 	tracer := tp.Tracer(svcName)
 
 	// Setup new redis cache client
-	cacheclient, err := redisclient.Setup(envPrefixCache)
+	cacheclient, err := redisclient.Connect(cfg.CacheURL)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
 		return
 	}
 	defer cacheclient.Close()
-
-	// Setup new redis event store client
-	esclient, err := redisclient.Setup(envPrefixES)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	defer esclient.Close()
 
 	var auth mainflux.AuthServiceClient
 
@@ -163,7 +153,7 @@ func main() {
 		logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 	}
 
-	csvc, gsvc, err := newService(ctx, db, dbConfig, auth, cacheclient, esclient, cfg.CacheKeyDuration, cfg.ESURL, tracer, logger)
+	csvc, gsvc, err := newService(ctx, db, dbConfig, auth, cacheclient, cfg.CacheKeyDuration, cfg.ESURL, tracer, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -214,7 +204,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth mainflux.AuthServiceClient, cacheClient *redis.Client, esClient *redis.Client, keyDuration, esURL string, tracer trace.Tracer, logger mflog.Logger) (things.Service, groups.Service, error) {
+func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth mainflux.AuthServiceClient, cacheClient *redis.Client, keyDuration, esURL string, tracer trace.Tracer, logger mflog.Logger) (things.Service, groups.Service, error) {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	cRepo := thingspg.NewRepository(database)
 	gRepo := gpostgres.New(database)

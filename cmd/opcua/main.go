@@ -33,10 +33,9 @@ import (
 )
 
 const (
-	svcName           = "opc-ua-adapter"
-	envPrefixHTTP     = "MF_OPCUA_ADAPTER_HTTP_"
-	envPrefixRouteMap = "MF_OPCUA_ADAPTER_ROUTE_MAP_"
-	defSvcHTTPPort    = "8180"
+	svcName        = "opc-ua-adapter"
+	envPrefixHTTP  = "MF_OPCUA_ADAPTER_HTTP_"
+	defSvcHTTPPort = "8180"
 
 	thingsRMPrefix     = "thing"
 	channelsRMPrefix   = "channel"
@@ -53,6 +52,7 @@ type config struct {
 	SendTelemetry  bool   `env:"MF_SEND_TELEMETRY"                   envDefault:"true"`
 	InstanceID     string `env:"MF_OPCUA_ADAPTER_INSTANCE_ID"        envDefault:""`
 	ESURL          string `env:"MF_OPCUA_ADAPTER_ES_URL"             envDefault:"redis://localhost:6379/0"`
+	RouteMapURL    string `env:"MF_OPCUA_ADAPTER_ROUTE_MAP_URL"      envDefault:"redis://localhost:6379/0"`
 }
 
 func main() {
@@ -92,7 +92,7 @@ func main() {
 		return
 	}
 
-	rmConn, err := redisclient.Setup(envPrefixRouteMap)
+	rmConn, err := redisclient.Connect(cfg.RouteMapURL)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to setup %s bootstrap event store redis client : %s", svcName, err))
 		exitCode = 1

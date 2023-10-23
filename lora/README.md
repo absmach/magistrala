@@ -1,4 +1,5 @@
 # LoRa Adapter
+
 Adapter between Mainflux IoT system and [LoRa Server](https://github.com/brocaar/chirpstack-network-server).
 
 This adapter sits between Mainflux and LoRa Server and just forwards the messages from one system to another via MQTT protocol, using the adequate MQTT topics and in the good message format (JSON and SenML), i.e. respecting the APIs of both systems.
@@ -11,25 +12,23 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable                         | Description                                  | Default                         |
-|----------------------------------|----------------------------------------------|---------------------------------|
-| MF_LORA_ADAPTER_HTTP_PORT        | Service HTTP port                            | 9017                            |
-| MF_LORA_ADAPTER_LOG_LEVEL        | Service Log level                            | info                            |
-| MF_MESSAGE_BROKER_URL            | Message broker instance URL                  | nats://localhost:4222           |
-| MF_LORA_ADAPTER_MESSAGES_URL     | LoRa adapter MQTT broker URL                 | tcp://localhost:1883            |
-| MF_LORA_ADAPTER_MESSAGES_TOPIC   | LoRa adapter MQTT subscriber Topic           | application/+/device/+/event/up |
-| MF_LORA_ADAPTER_MESSAGES_USER    | LoRa adapter MQTT subscriber Username        |                                 |
-| MF_LORA_ADAPTER_MESSAGES_PASS    | LoRa adapter MQTT subscriber Password        |                                 |
-| MF_LORA_ADAPTER_MESSAGES_TIMEOUT | LoRa adapter MQTT subscriber Timeout         | 30s                             |
-| MF_LORA_ADAPTER_ROUTE_MAP_URL    | Route-map database URL                       | localhost:6379                  |
-| MF_LORA_ADAPTER_ROUTE_MAP_PASS   | Route-map database password                  |                                 |
-| MF_LORA_ADAPTER_ROUTE_MAP_DB     | Route-map instance                           | 0                               |
-| MF_THINGS_ES_URL                 | Things service event source URL              | localhost:6379                  |
-| MF_THINGS_ES_PASS                | Things service event source password         |                                 |
-| MF_THINGS_ES_DB                  | Things service event source DB               | 0                               |
-| MF_LORA_ADAPTER_EVENT_CONSUMER   | Service event consumer name                  | lora                            |
-| MF_JAEGER_URL                    | Jaeger server URL                            | http://jaeger:14268/api/traces                  |
-| MF_SEND_TELEMETRY                | Send telemetry to mainflux call home server  | true                            |
+| Variable                         | Description                                 | Default                         |
+| -------------------------------- | ------------------------------------------- | ------------------------------- |
+| MF_LORA_ADAPTER_HTTP_PORT        | Service HTTP port                           | 9017                            |
+| MF_LORA_ADAPTER_LOG_LEVEL        | Service Log level                           | info                            |
+| MF_MESSAGE_BROKER_URL            | Message broker instance URL                 | nats://localhost:4222           |
+| MF_LORA_ADAPTER_MESSAGES_URL     | LoRa adapter MQTT broker URL                | tcp://localhost:1883            |
+| MF_LORA_ADAPTER_MESSAGES_TOPIC   | LoRa adapter MQTT subscriber Topic          | application/+/device/+/event/up |
+| MF_LORA_ADAPTER_MESSAGES_USER    | LoRa adapter MQTT subscriber Username       |                                 |
+| MF_LORA_ADAPTER_MESSAGES_PASS    | LoRa adapter MQTT subscriber Password       |                                 |
+| MF_LORA_ADAPTER_MESSAGES_TIMEOUT | LoRa adapter MQTT subscriber Timeout        | 30s                             |
+| MF_LORA_ADAPTER_ROUTE_MAP_URL    | Route-map database URL                      | redis://localhost:6379          |
+| MF_THINGS_ES_URL                 | Things service event source URL             | localhost:6379                  |
+| MF_THINGS_ES_PASS                | Things service event source password        |                                 |
+| MF_THINGS_ES_DB                  | Things service event source DB              | 0                               |
+| MF_LORA_ADAPTER_EVENT_CONSUMER   | Service event consumer name                 | lora                            |
+| MF_JAEGER_URL                    | Jaeger server URL                           | http://jaeger:14268/api/traces  |
+| MF_SEND_TELEMETRY                | Send telemetry to mainflux call home server | true                            |
 
 ## Deployment
 
@@ -59,8 +58,6 @@ MF_LORA_ADAPTER_MESSAGES_USER=[LoRa adapter MQTT subscriber Username] \
 MF_LORA_ADAPTER_MESSAGES_PASS=[LoRa adapter MQTT subscriber Password] \
 MF_LORA_ADAPTER_MESSAGES_TIMEOUT=[LoRa adapter MQTT subscriber Timeout]
 MF_LORA_ADAPTER_ROUTE_MAP_URL=[Lora adapter routemap URL] \
-MF_LORA_ADAPTER_ROUTE_MAP_PASS=[Lora adapter routemap password] \
-MF_LORA_ADAPTER_ROUTE_MAP_DB=[Lora adapter routemap instance] \
 MF_THINGS_ES_URL=[Things service event source URL] \
 MF_THINGS_ES_PASS=[Things service event source password] \
 MF_THINGS_ES_DB=[Things service event source password] \

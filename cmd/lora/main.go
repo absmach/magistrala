@@ -35,10 +35,9 @@ import (
 )
 
 const (
-	svcName           = "lora-adapter"
-	envPrefixHTTP     = "MF_LORA_ADAPTER_HTTP_"
-	envPrefixRouteMap = "MF_LORA_ADAPTER_ROUTE_MAP_"
-	defSvcHTTPPort    = "9017"
+	svcName        = "lora-adapter"
+	envPrefixHTTP  = "MF_LORA_ADAPTER_HTTP_"
+	defSvcHTTPPort = "9017"
 
 	thingsRMPrefix   = "thing"
 	channelsRMPrefix = "channel"
@@ -59,6 +58,7 @@ type config struct {
 	SendTelemetry  bool          `env:"MF_SEND_TELEMETRY"                   envDefault:"true"`
 	InstanceID     string        `env:"MF_LORA_ADAPTER_INSTANCE_ID"         envDefault:""`
 	ESURL          string        `env:"MF_LORA_ADAPTER_ES_URL"              envDefault:"redis://localhost:6379/0"`
+	RouteMapURL    string        `env:"MF_LORA_ADAPTER_ROUTE_MAP_URL"       envDefault:"redis://localhost:6379/0"`
 }
 
 func main() {
@@ -93,7 +93,7 @@ func main() {
 		return
 	}
 
-	rmConn, err := redisclient.Setup(envPrefixRouteMap)
+	rmConn, err := redisclient.Connect(cfg.RouteMapURL)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to setup route map redis client : %s", err))
 		exitCode = 1

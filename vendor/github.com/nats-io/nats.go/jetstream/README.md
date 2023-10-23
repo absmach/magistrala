@@ -62,9 +62,12 @@ experimenting with the new APIs as soon as possible.
 ## Basic usage
 
 ```go
+package main
+
 import (
     "context"
     "fmt"
+    "strconv"
     "time"
 
     "github.com/nats-io/nats.go"
@@ -73,7 +76,7 @@ import (
 
 func main() {
     // In the `jetstream` package, almost all API calls rely on `context.Context` for timeout/cancellation handling
-    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
     defer cancel()
     nc, _ := nats.Connect(nats.DefaultURL)
 
@@ -88,7 +91,8 @@ func main() {
 
     // Publish some messages
     for i := 0; i < 100; i++ {
-        js.Publish(ctx, "ORDERS.new", []byte("hello"))
+        js.Publish(ctx, "ORDERS.new", []byte("hello message "+strconv.Itoa(i)))
+        fmt.Printf("Published hello message %d\n", i)
     }
 
     // Create durable consumer
@@ -98,35 +102,40 @@ func main() {
     })
 
     // Get 10 messages from the consumer
+    messageCounter := 0
     msgs, _ := c.Fetch(10)
-    var msg jetstream.Msg
     for msg := range msgs.Messages() {
         msg.Ack()
-        fmt.Printf("Received a JetStream message: %s\n", string(msg.Data()))
+        fmt.Printf("Received a JetStream message via fetch: %s\n", string(msg.Data()))
+        messageCounter++
     }
-    if msgs.Error() {
+    fmt.Printf("received %d messages\n", messageCounter)
+    if msgs.Error() != nil {
         fmt.Println("Error during Fetch(): ", msgs.Error())
     }
 
     // Receive messages continuously in a callback
-    cons, _ := c.Consume(ctx, func(msg jetstream.Msg) {
+    cons, _ := c.Consume(func(msg jetstream.Msg) {
         msg.Ack()
-        fmt.Printf("Received a JetStream message: %s\n", string(msg.Data()))
+        fmt.Printf("Received a JetStream message via callback: %s\n", string(msg.Data()))
+        messageCounter++
     })
     defer cons.Stop()
 
-
     // Iterate over messages continuously
-    it, _ := cons.Messages()
+    it, _ := c.Messages()
     for i := 0; i < 10; i++ {
-        msg, err := it.Next()
-        if err != nil {
-            log.Fatal(err)
-        }
+        msg, _ := it.Next()
         msg.Ack()
-        fmt.Println("Received a JetStream message: %s\n", string(msg.Data()))
+        fmt.Printf("Received a JetStream message via iterator: %s\n", string(msg.Data()))
+        messageCounter++
     }
     it.Stop()
+
+    // block until all 100 published messages have been processed
+    for messageCounter < 100 {
+        time.Sleep(10 * time.Millisecond)
+    }
 }
 ```
 
@@ -165,29 +174,20 @@ js.DeleteStream(ctx, "ORDERS")
 ```go
 // list streams
 streams := js.ListStreams(ctx)
-var err error
-for err != nil {
-    select {
-    case s := <-streams.Info():
-        fmt.Println(s.Config.Name)
-    case err = <-streams.Err():
-    }
+for s := range streams.Info() {
+    fmt.Println(s.Config.Name)
 }
-if err != nil && !errors.Is(err, jetstream.ErrEndOfData) {
-    fmt.Println("Unexpected error ocurred")
+if streams.Err() != nil {
+    fmt.Println("Unexpected error occurred")
 }
 
 // list stream names
 names := js.StreamNames(ctx)
-for err != nil {
-    select {
-    case name := <-names.Name():
-        fmt.Println(name)
-    case err = <-names.Err():
-    }
+for name := range names.Name() {
+    fmt.Println(name)
 }
-if err != nil && !errors.Is(err, jetstream.ErrEndOfData) {
-    fmt.Println("Unexpected error ocurred")
+if names.Err() != nil {
+    fmt.Println("Unexpected error occurred")
 }
 ```
 
@@ -202,13 +202,13 @@ Using `Stream` interface, it is also possible to:
 _ = s.Purge(ctx)
 
 // remove all messages from a stream that are stored on a specific subject
-_ = s.Purge(ctx, jetstream.WithSubject("ORDERS.new"))
+_ = s.Purge(ctx, jetstream.WithPurgeSubject("ORDERS.new"))
 
 // remove all messages up to specified sequence number
-_ = s.Purge(ctx, jetstream.WithSequence(100))
+_ = s.Purge(ctx, jetstream.WithPurgeSequence(100))
 
 // remove messages, but keep 10 newest
-_ = s.Purge(ctx, jetstream.WithKeep(10))
+_ = s.Purge(ctx, jetstream.WithPurgeKeep(10))
 ```
 
 - Get and messages from stream
@@ -253,14 +253,31 @@ CRUD operations on consumers can be achieved on 2 levels:
 js, _ := jetstream.New(nc)
 
 // create a consumer (this is an idempotent operation)
-cons, _ := js.CreateOrUpdateConsumer(ctx, "ORDERS", jetstream.ConsumerConfig{
+// an error will be returned if consumer already exists and has different configuration.
+cons, _ := js.CreateConsumer(ctx, "ORDERS", jetstream.ConsumerConfig{
     Durable: "foo",
     AckPolicy: jetstream.AckExplicitPolicy,
 })
 
 // create an ephemeral pull consumer by not providing `Durable`
-ephemeral, _ := js.CreateOrUpdateConsumer(ctx, "ORDERS", jetstream.ConsumerConfig{
+ephemeral, _ := js.CreateConsumer(ctx, "ORDERS", jetstream.ConsumerConfig{
     AckPolicy: jetstream.AckExplicitPolicy,
+})
+
+
+// consumer can also be created using CreateOrUpdateConsumer
+// this method will either create a consumer if it does not exist
+// or update existing consumer (if possible)
+cons2 := js.CreateOrUpdateConsumer(ctx, "ORDERS", jetstream.ConsumerConfig{
+    Name: "bar",
+})
+
+// consumers can be updated
+// an error will be returned if consumer with given name does not exists
+// or an illegal property is to be updated (e.g. AckPolicy)
+updated, _ := js.UpdateConsumer(ctx, "ORDERS", jetstream.ConsumerConfig{
+    AckPolicy: jetstream.AckExplicitPolicy,
+    Description: "updated consumer"
 })
 
 // get consumer handle
@@ -280,7 +297,7 @@ js, _ := jetstream.New(nc)
 stream, _ := js.Stream(ctx, "ORDERS")
 
 // create consumer
-cons, _ := stream.CreateOrUpdateConsumer(ctx, jetstream.ConsumerConfig{
+cons, _ := stream.CreateConsumer(ctx, jetstream.ConsumerConfig{
     Durable:   "foo",
     AckPolicy: jetstream.AckExplicitPolicy,
 })
@@ -310,29 +327,20 @@ fmt.Println(cachedInfo.Config.Durable)
 ```go
 // list consumers
 consumers := s.ListConsumers(ctx)
-var err error
-for err != nil {
-    select {
-    case s := <-consumers.Info():
-        fmt.Println(s.Name)
-    case err = <-consumers.Err():
-    }
+for cons := range consumers.Info() {
+    fmt.Println(cons.Name)
 }
-if err != nil && !errors.Is(err, jetstream.ErrEndOfData) {
-    fmt.Println("Unexpected error occured")
+if consumers.Err() != nil {
+    fmt.Println("Unexpected error occurred")
 }
 
 // list consumer names
 names := s.ConsumerNames(ctx)
-for err != nil {
-    select {
-    case name := <-names.Name():
-        fmt.Println(name)
-    case err = <-names.Err():
-    }
+for name := range names.Name() {
+    fmt.Println(name)
 }
-if err != nil && !errors.Is(err, jetstream.ErrEndOfData) {
-    fmt.Println("Unexpected error occured")
+if names.Err() != nil {
+    fmt.Println("Unexpected error occurred")
 }
 ```
 
@@ -413,8 +421,12 @@ and new subscription is created for each execution.
 #### Continuous polling
 
 There are 2 ways to achieve push-like behavior using pull consumers in
-`jetstream` package. Both `Messages()` and `Consume()` methods perform exactly
-the same optimizations and can be used interchangeably.
+`jetstream` package. Both `Messages()` and `Consume()` methods perform similar optimizations
+and for most cases can be used interchangeably.
+
+There is an advantage of using `Messages()` instead of `Consume()` for work-queue scenarios,
+where messages should be fetched one by one, as it allows for finer control over fetching
+single messages on demand.
 
 Subject filtering is achieved by configuring a consumer with a `FilterSubject`
 value.
@@ -494,6 +506,34 @@ type PullThresholdMessages int
 request. An error will be triggered if at least 2 heartbeats are missed (unless
 `WithMessagesErrOnMissingHeartbeat(false)` is used)
 
+##### Using `Messages()` to fetch single messages one by one
+
+When implementing work queue, it is possible to use `Messages()` in order to
+fetch messages from the server one-by-one, without optimizations and
+pre-buffering (to avoid redeliveries when processing messages at slow rate).
+
+```go
+// PullMaxMessages determines how many messages will be sent to the client in a single pull request
+iter, _ := cons.Messages(jetstream.PullMaxMessages(1))
+numWorkers := 5
+sem := make(chan struct{}, numWorkers)
+for {
+    sem <- struct{}{}
+    go func() {
+        defer func() {
+            <-sem
+        }()
+        msg, err := iter.Next()
+        if err != nil {
+            // handle err
+        }
+        fmt.Printf("Processing msg: %s\n", string(msg.Data()))
+        doWork()
+        msg.Ack()
+    }()
+}
+```
+
 ## Publishing on stream
 
 `JetStream` interface allows publishing messages on stream in 2 ways:
@@ -556,9 +596,13 @@ case err := <-ackF.Err():
     fmt.Println(err)
 }
 
-// similarly to syncronous publish, there is a helper method accepting subject and data
+// similarly to synchronous publish, there is a helper method accepting subject and data
 ackF, err = js.PublishAsync("ORDERS.new", []byte("hello"))
 ```
 
 Just as for synchronous publish, `PublishAsync()` and `PublishMsgAsync()` accept
 options for setting headers.
+
+## Examples
+
+You can find more examples of `jetstream` usage [here](https://github.com/nats-io/nats.go/tree/main/examples/jetstream).

@@ -56,6 +56,16 @@ type (
 		// Consumer interface is returned, serving as a hook to operate on a consumer (e.g. fetch messages).
 		CreateOrUpdateConsumer(ctx context.Context, cfg ConsumerConfig) (Consumer, error)
 
+		// CreateConsumer creates a consumer on a given stream with given config.
+		// If consumer already exists, an ErrConsumerExists is returned.
+		// Consumer interface is returned, serving as a hook to operate on a consumer (e.g. fetch messages).
+		CreateConsumer(ctx context.Context, cfg ConsumerConfig) (Consumer, error)
+
+		// UpdateConsumer updates an existing consumer with given config.
+		// If consumer does not exist, an ErrConsumerDoesNotExist is returned.
+		// Consumer interface is returned, serving as a hook to operate on a consumer (e.g. fetch messages).
+		UpdateConsumer(ctx context.Context, cfg ConsumerConfig) (Consumer, error)
+
 		// OrderedConsumer returns an OrderedConsumer instance.
 		// OrderedConsumer allows fetching messages from a stream (just like standard consumer),
 		// for in order delivery of messages. Underlying consumer is re-created when necessary,
@@ -71,9 +81,10 @@ type (
 		// ListConsumers returns ConsumerInfoLister enabling iterating over a channel of consumer infos
 		ListConsumers(context.Context) ConsumerInfoLister
 
-		// ConsumerNames returns a  ConsumerNameLister enabling iterating over a channel of consumer names
+		// ConsumerNames returns a ConsumerNameLister enabling iterating over a channel of consumer names
 		ConsumerNames(context.Context) ConsumerNameLister
 	}
+
 	RawStreamMsg struct {
 		Subject  string
 		Sequence uint64
@@ -98,11 +109,6 @@ type (
 	consumerInfoResponse struct {
 		apiResponse
 		*ConsumerInfo
-	}
-
-	createConsumerRequest struct {
-		Stream string          `json:"stream_name"`
-		Config *ConsumerConfig `json:"config"`
 	}
 
 	StreamPurgeOpt func(*StreamPurgeRequest) error
@@ -162,12 +168,12 @@ type (
 
 	ConsumerInfoLister interface {
 		Info() <-chan *ConsumerInfo
-		Err() <-chan error
+		Err() error
 	}
 
 	ConsumerNameLister interface {
 		Name() <-chan string
-		Err() <-chan error
+		Err() error
 	}
 
 	consumerLister struct {
@@ -177,7 +183,7 @@ type (
 
 		consumers chan *ConsumerInfo
 		names     chan string
-		errs      chan error
+		err       error
 	}
 
 	consumerListResponse struct {
@@ -194,7 +200,15 @@ type (
 )
 
 func (s *stream) CreateOrUpdateConsumer(ctx context.Context, cfg ConsumerConfig) (Consumer, error) {
-	return upsertConsumer(ctx, s.jetStream, s.name, cfg)
+	return upsertConsumer(ctx, s.jetStream, s.name, cfg, consumerActionCreateOrUpdate)
+}
+
+func (s *stream) CreateConsumer(ctx context.Context, cfg ConsumerConfig) (Consumer, error) {
+	return upsertConsumer(ctx, s.jetStream, s.name, cfg, consumerActionCreate)
+}
+
+func (s *stream) UpdateConsumer(ctx context.Context, cfg ConsumerConfig) (Consumer, error) {
+	return upsertConsumer(ctx, s.jetStream, s.name, cfg, consumerActionUpdate)
 }
 
 func (s *stream) OrderedConsumer(ctx context.Context, cfg OrderedConsumerConfig) (Consumer, error) {
@@ -207,6 +221,10 @@ func (s *stream) OrderedConsumer(ctx context.Context, cfg OrderedConsumerConfig)
 	}
 	if cfg.OptStartSeq != 0 {
 		oc.cursor.streamSeq = cfg.OptStartSeq - 1
+	}
+	err := oc.reset()
+	if err != nil {
+		return nil, err
 	}
 
 	return oc, nil
@@ -226,6 +244,10 @@ func (s *stream) DeleteConsumer(ctx context.Context, name string) error {
 // [WithDeletedDetails] - use to display the information about messages deleted from a stream
 // [WithSubjectFilter] - use to display the information about messages stored on given subjects
 func (s *stream) Info(ctx context.Context, opts ...StreamInfoOpt) (*StreamInfo, error) {
+	ctx, cancel := wrapContextWithoutDeadline(ctx)
+	if cancel != nil {
+		defer cancel()
+	}
 	var infoReq *streamInfoRequest
 	for _, opt := range opts {
 		if infoReq == nil {
@@ -272,10 +294,14 @@ func (s *stream) CachedInfo() *StreamInfo {
 // Purge removes messages from a stream
 //
 // Available options:
-// [WithPurgeSubject] - can be used set a sprecific subject for which messages on a stream will be purged
-// [WithPurgeSequence] - can be used to set a sprecific sequence number up to which (but not including) messages will be purged from a stream
+// [WithPurgeSubject] - can be used set a specific subject for which messages on a stream will be purged
+// [WithPurgeSequence] - can be used to set a specific sequence number up to which (but not including) messages will be purged from a stream
 // [WithPurgeKeep] - can be used to set the number of messages to be kept in the stream after purge.
 func (s *stream) Purge(ctx context.Context, opts ...StreamPurgeOpt) error {
+	ctx, cancel := wrapContextWithoutDeadline(ctx)
+	if cancel != nil {
+		defer cancel()
+	}
 	var purgeReq StreamPurgeRequest
 	for _, opt := range opts {
 		if err := opt(&purgeReq); err != nil {
@@ -317,6 +343,10 @@ func (s *stream) GetLastMsgForSubject(ctx context.Context, subject string) (*Raw
 }
 
 func (s *stream) getMsg(ctx context.Context, mreq *apiMsgGetRequest) (*RawStreamMsg, error) {
+	ctx, cancel := wrapContextWithoutDeadline(ctx)
+	if cancel != nil {
+		defer cancel()
+	}
 	req, err := json.Marshal(mreq)
 	if err != nil {
 		return nil, err
@@ -444,6 +474,10 @@ func (s *stream) SecureDeleteMsg(ctx context.Context, seq uint64) error {
 }
 
 func (s *stream) deleteMsg(ctx context.Context, req *msgDeleteRequest) error {
+	ctx, cancel := wrapContextWithoutDeadline(ctx)
+	if cancel != nil {
+		defer cancel()
+	}
 	r, err := json.Marshal(req)
 	if err != nil {
 		return err
@@ -459,24 +493,28 @@ func (s *stream) deleteMsg(ctx context.Context, req *msgDeleteRequest) error {
 	return nil
 }
 
-// ListConsumers returns ConsumerInfoLister enabling iterating over a channel of consumer infos
+// ListConsumers returns ConsumerInfoLister enabling iterating over a channel of consumer infos.
 func (s *stream) ListConsumers(ctx context.Context) ConsumerInfoLister {
 	l := &consumerLister{
 		js:        s.jetStream,
 		consumers: make(chan *ConsumerInfo),
-		errs:      make(chan error, 1),
 	}
 	go func() {
+		defer close(l.consumers)
+		ctx, cancel := wrapContextWithoutDeadline(ctx)
+		if cancel != nil {
+			defer cancel()
+		}
 		for {
 			page, err := l.consumerInfos(ctx, s.name)
 			if err != nil && !errors.Is(err, ErrEndOfData) {
-				l.errs <- err
+				l.err = err
 				return
 			}
 			for _, info := range page {
 				select {
 				case <-ctx.Done():
-					l.errs <- ctx.Err()
+					l.err = ctx.Err()
 					return
 				default:
 				}
@@ -485,7 +523,6 @@ func (s *stream) ListConsumers(ctx context.Context) ConsumerInfoLister {
 				}
 			}
 			if errors.Is(err, ErrEndOfData) {
-				l.errs <- err
 				return
 			}
 		}
@@ -498,34 +535,37 @@ func (s *consumerLister) Info() <-chan *ConsumerInfo {
 	return s.consumers
 }
 
-func (s *consumerLister) Err() <-chan error {
-	return s.errs
+func (s *consumerLister) Err() error {
+	return s.err
 }
 
-// ConsumerNames returns a  ConsumerNameLister enabling iterating over a channel of consumer names
+// ConsumerNames returns a ConsumerNameLister enabling iterating over a channel of consumer names
 func (s *stream) ConsumerNames(ctx context.Context) ConsumerNameLister {
 	l := &consumerLister{
 		js:    s.jetStream,
 		names: make(chan string),
-		errs:  make(chan error, 1),
 	}
 	go func() {
+		defer close(l.names)
+		ctx, cancel := wrapContextWithoutDeadline(ctx)
+		if cancel != nil {
+			defer cancel()
+		}
 		for {
 			page, err := l.consumerNames(ctx, s.name)
 			if err != nil && !errors.Is(err, ErrEndOfData) {
-				l.errs <- err
+				l.err = err
 				return
 			}
 			for _, info := range page {
 				select {
 				case l.names <- info:
 				case <-ctx.Done():
-					l.errs <- ctx.Err()
+					l.err = ctx.Err()
 					return
 				}
 			}
 			if errors.Is(err, ErrEndOfData) {
-				l.errs <- err
 				return
 			}
 		}

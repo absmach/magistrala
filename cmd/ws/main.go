@@ -23,9 +23,11 @@ import (
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
 	brokerstracing "github.com/mainflux/mainflux/pkg/messaging/brokers/tracing"
 	"github.com/mainflux/mainflux/pkg/uuid"
-	adapter "github.com/mainflux/mainflux/ws"
+	"github.com/mainflux/mainflux/ws"
 	"github.com/mainflux/mainflux/ws/api"
 	"github.com/mainflux/mainflux/ws/tracing"
+	"github.com/mainflux/mproxy/pkg/session"
+	"github.com/mainflux/mproxy/pkg/websockets"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
@@ -34,6 +36,8 @@ const (
 	svcName        = "ws-adapter"
 	envPrefixHTTP  = "MF_WS_ADAPTER_HTTP_"
 	defSvcHTTPPort = "8190"
+	targetWSPort   = "8191"
+	targetWSHost   = "localhost"
 )
 
 type config struct {
@@ -76,6 +80,11 @@ func main() {
 		return
 	}
 
+	targetServerConf := server.Config{
+		Port: targetWSPort,
+		Host: targetWSHost,
+	}
+
 	auth, aHandler, err := authapi.SetupAuthz("authz")
 	if err != nil {
 		logger.Error(err.Error())
@@ -106,11 +115,11 @@ func main() {
 		return
 	}
 	defer nps.Close()
-	nps = brokerstracing.NewPubSub(httpServerConfig, tracer, nps)
+	nps = brokerstracing.NewPubSub(targetServerConf, tracer, nps)
 
 	svc := newService(auth, nps, logger, tracer)
 
-	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(ctx, svc, logger, cfg.InstanceID), logger)
+	hs := httpserver.New(ctx, cancel, svcName, targetServerConf, api.MakeHandler(ctx, svc, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, mainflux.Version, logger, cancel)
@@ -118,7 +127,11 @@ func main() {
 	}
 
 	g.Go(func() error {
-		return hs.Start()
+		g.Go(func() error {
+			return hs.Start()
+		})
+		handler := ws.NewHandler(nps, logger, auth)
+		return proxyWS(ctx, httpServerConfig, logger, handler)
 	})
 
 	g.Go(func() error {
@@ -130,11 +143,40 @@ func main() {
 	}
 }
 
-func newService(tc mainflux.AuthzServiceClient, nps messaging.PubSub, logger mflog.Logger, tracer trace.Tracer) adapter.Service {
-	svc := adapter.New(tc, nps)
+func newService(tc mainflux.AuthzServiceClient, nps messaging.PubSub, logger mflog.Logger, tracer trace.Tracer) ws.Service {
+	svc := ws.New(tc, nps)
 	svc = tracing.New(tracer, svc)
 	svc = api.LoggingMiddleware(svc, logger)
 	counter, latency := internal.MakeMetrics("ws_adapter", "api")
 	svc = api.MetricsMiddleware(svc, counter, latency)
 	return svc
+}
+
+func proxyWS(ctx context.Context, cfg server.Config, logger mflog.Logger, handler session.Handler) error {
+	target := fmt.Sprintf("ws://%s:%s", targetWSHost, targetWSPort)
+	address := fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)
+	wp, err := websockets.NewProxy(address, target, logger, handler)
+	if err != nil {
+		return err
+	}
+
+	errCh := make(chan error)
+
+	go func() {
+		if cfg.CertFile != "" && cfg.KeyFile != "" {
+			logger.Info(fmt.Sprintf("ws-adapter service http server listening at %s:%s with TLS", cfg.Host, cfg.Port))
+			errCh <- wp.ListenTLS(cfg.CertFile, cfg.KeyFile)
+		} else {
+			logger.Info(fmt.Sprintf("ws-adapter service http server listening at %s:%s without TLS", cfg.Host, cfg.Port))
+			errCh <- wp.Listen()
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		logger.Info(fmt.Sprintf("proxy MQTT WS shutdown at %s", target))
+		return nil
+	case err := <-errCh:
+		return err
+	}
 }

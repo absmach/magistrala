@@ -6,7 +6,6 @@ package tracing
 import (
 	"context"
 
-	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/ws"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -32,26 +31,10 @@ func New(tracer trace.Tracer, svc ws.Service) ws.Service {
 	}
 }
 
-// Publish traces the "Publish" operation of the wrapped ws.Service.
-func (tm *tracingMiddleware) Publish(ctx context.Context, thingKey string, msg *messaging.Message) error {
-	ctx, span := tm.tracer.Start(ctx, publishOP)
-	defer span.End()
-
-	return tm.svc.Publish(ctx, thingKey, msg)
-}
-
 // Subscribe traces the "Subscribe" operation of the wrapped ws.Service.
 func (tm *tracingMiddleware) Subscribe(ctx context.Context, thingKey string, chanID string, subtopic string, client *ws.Client) error {
 	ctx, span := tm.tracer.Start(ctx, subscribeOP)
 	defer span.End()
 
 	return tm.svc.Subscribe(ctx, thingKey, chanID, subtopic, client)
-}
-
-// Unsubscribe traces the "Unsubscribe" operation of the wrapped ws.Service.
-func (tm *tracingMiddleware) Unsubscribe(ctx context.Context, thingKey string, chanID string, subtopic string) error {
-	ctx, span := tm.tracer.Start(ctx, unsubscribeOP)
-	defer span.End()
-
-	return tm.svc.Unsubscribe(ctx, thingKey, chanID, subtopic)
 }

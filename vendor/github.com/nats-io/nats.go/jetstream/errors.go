@@ -49,20 +49,27 @@ const (
 	JSErrCodeStreamNotFound  ErrorCode = 10059
 	JSErrCodeStreamNameInUse ErrorCode = 10058
 
-	JSErrCodeConsumerCreate        ErrorCode = 10012
-	JSErrCodeConsumerNotFound      ErrorCode = 10014
-	JSErrCodeConsumerNameExists    ErrorCode = 10013
-	JSErrCodeConsumerAlreadyExists ErrorCode = 10105
+	JSErrCodeConsumerCreate            ErrorCode = 10012
+	JSErrCodeConsumerNotFound          ErrorCode = 10014
+	JSErrCodeConsumerNameExists        ErrorCode = 10013
+	JSErrCodeConsumerAlreadyExists     ErrorCode = 10105
+	JSErrCodeConsumerExists            ErrorCode = 10148
+	JSErrCodeDuplicateFilterSubjects   ErrorCode = 10136
+	JSErrCodeOverlappingFilterSubjects ErrorCode = 10138
+	JSErrCodeConsumerEmptyFilter       ErrorCode = 10139
+	JSErrCodeConsumerDoesNotExist      ErrorCode = 10149
 
 	JSErrCodeMessageNotFound ErrorCode = 10037
 
 	JSErrCodeBadRequest ErrorCode = 10003
+
+	JSErrCodeStreamWrongLastSequence ErrorCode = 10071
 )
 
 var (
 	// API errors
 
-	// ErrJetStreamNotEnabled is an error returned when JetStream is not enabled for an account.
+	// ErrJetStreamNotEnabled is an error returned when JetStream is not enabled.
 	ErrJetStreamNotEnabled JetStreamError = &jsError{apiErr: &APIError{ErrorCode: JSErrCodeJetStreamNotEnabled, Description: "jetstream not enabled", Code: 503}}
 
 	// ErrJetStreamNotEnabledForAccount is an error returned when JetStream is not enabled for an account.
@@ -71,13 +78,39 @@ var (
 	// ErrStreamNotFound is an error returned when stream with given name does not exist.
 	ErrStreamNotFound JetStreamError = &jsError{apiErr: &APIError{ErrorCode: JSErrCodeStreamNotFound, Description: "stream not found", Code: 404}}
 
-	// ErrStreamNameAlreadyInUse is returned when a stream with given name already exists and has a different configuration
+	// ErrStreamNameAlreadyInUse is returned when a stream with given name already exists and has a different configuration.
 	ErrStreamNameAlreadyInUse JetStreamError = &jsError{apiErr: &APIError{ErrorCode: JSErrCodeStreamNameInUse, Description: "stream name already in use", Code: 400}}
+
+	// ErrStreamSubjectTransformNotSupported is returned when the connected nats-server version does not support setting
+	// the stream subject transform. If this error is returned when executing CreateStream(), the stream with invalid
+	// configuration was already created in the server.
+	ErrStreamSubjectTransformNotSupported JetStreamError = &jsError{message: "stream subject transformation not supported by nats-server"}
+
+	// ErrStreamSourceSubjectTransformNotSupported is returned when the connected nats-server version does not support setting
+	// the stream source subject transform. If this error is returned when executing CreateStream(), the stream with invalid
+	// configuration was already created in the server.
+	ErrStreamSourceSubjectTransformNotSupported JetStreamError = &jsError{message: "stream subject transformation not supported by nats-server"}
+
+	// ErrStreamSourceNotSupported is returned when the connected nats-server version does not support setting
+	// the stream sources. If this error is returned when executing CreateStream(), the stream with invalid
+	// configuration was already created in the server.
+	ErrStreamSourceNotSupported JetStreamError = &jsError{message: "stream sourcing is not supported by nats-server"}
+
+	// ErrStreamSourceMultipleFilterSubjectsNotSupported is returned when the connected nats-server version does not support setting
+	// the stream sources. If this error is returned when executing CreateStream(), the stream with invalid
+	// configuration was already created in the server.
+	ErrStreamSourceMultipleFilterSubjectsNotSupported JetStreamError = &jsError{message: "stream sourcing with multiple subject filters not supported by nats-server"}
 
 	// ErrConsumerNotFound is an error returned when consumer with given name does not exist.
 	ErrConsumerNotFound JetStreamError = &jsError{apiErr: &APIError{ErrorCode: JSErrCodeConsumerNotFound, Description: "consumer not found", Code: 404}}
 
-	// ErrMsgNotFound is returned when message with provided sequence number does npt exist.
+	// ErrConsumerExists is returned when attempting to create a consumer with CreateConsumer but a consumer with given name already exists.
+	ErrConsumerExists JetStreamError = &jsError{apiErr: &APIError{ErrorCode: JSErrCodeConsumerExists, Description: "consumer already exists", Code: 400}}
+
+	// ErrConsumerNameExists is returned when attempting to update a consumer with UpdateConsumer but a consumer with given name does not exist.
+	ErrConsumerDoesNotExist JetStreamError = &jsError{apiErr: &APIError{ErrorCode: JSErrCodeConsumerDoesNotExist, Description: "consumer does not exist", Code: 400}}
+
+	// ErrMsgNotFound is returned when message with provided sequence number does not exist.
 	ErrMsgNotFound JetStreamError = &jsError{apiErr: &APIError{ErrorCode: JSErrCodeMessageNotFound, Description: "message not found", Code: 404}}
 
 	// ErrBadRequest is returned when invalid request is sent to JetStream API.
@@ -86,7 +119,21 @@ var (
 	// ErrConsumerCreate is returned when nats-server reports error when creating consumer (e.g. illegal update).
 	ErrConsumerCreate JetStreamError = &jsError{apiErr: &APIError{ErrorCode: JSErrCodeConsumerCreate, Description: "could not create consumer", Code: 500}}
 
+	// ErrDuplicateFilterSubjects is returned when both FilterSubject and FilterSubjects are specified when creating consumer.
+	ErrDuplicateFilterSubjects JetStreamError = &jsError{apiErr: &APIError{ErrorCode: JSErrCodeDuplicateFilterSubjects, Description: "consumer cannot have both FilterSubject and FilterSubjects specified", Code: 500}}
+
+	// ErrDuplicateFilterSubjects is returned when filter subjects overlap when creating consumer.
+	ErrOverlappingFilterSubjects JetStreamError = &jsError{apiErr: &APIError{ErrorCode: JSErrCodeOverlappingFilterSubjects, Description: "consumer subject filters cannot overlap", Code: 500}}
+
+	// ErrEmptyFilter is returned when a filter in FilterSubjects is empty.
+	ErrEmptyFilter JetStreamError = &jsError{apiErr: &APIError{ErrorCode: JSErrCodeConsumerEmptyFilter, Description: "consumer filter in FilterSubjects cannot be empty", Code: 500}}
+
 	// Client errors
+
+	// ErrConsumerMultipleFilterSubjectsNotSupported is returned when the connected nats-server version does not support setting
+	// multiple filter subjects with filter_subjects field. If this error is returned when executing AddConsumer(), the consumer with invalid
+	// configuration was already created in the server.
+	ErrConsumerMultipleFilterSubjectsNotSupported JetStreamError = &jsError{message: "multiple consumer filter subjects not supported by nats-server"}
 
 	// ErrConsumerNotFound is an error returned when consumer with given name does not exist.
 	ErrConsumerNameAlreadyInUse JetStreamError = &jsError{message: "consumer name already in use"}
@@ -167,7 +214,7 @@ var (
 	// messages using Fetch (or FetchBytes).
 	ErrOrderConsumerUsedAsFetch = &jsError{message: "ordered consumer initialized as fetch"}
 
-	// ErrOrderConsumerUsedAsFetch is returned when ordered consumer was already used to process
+	// ErrOrderConsumerUsedAsConsume is returned when ordered consumer was already used to process
 	// messages using Consume or Messages.
 	ErrOrderConsumerUsedAsConsume = &jsError{message: "ordered consumer initialized as consume"}
 
@@ -178,6 +225,38 @@ var (
 	// ErrOrderedConsumerNotCreated is returned when trying to get consumer info of an
 	// ordered consumer which was not yet created.
 	ErrOrderedConsumerNotCreated = &jsError{message: "consumer instance not yet created"}
+
+	// KeyValue Errors
+
+	// ErrKeyExists is returned when attempting to create a key that already exists.
+	ErrKeyExists JetStreamError = &jsError{apiErr: &APIError{ErrorCode: JSErrCodeStreamWrongLastSequence, Code: 400}, message: "key exists"}
+
+	// ErrKeyValueConfigRequired is returned when attempting to create a bucket without a config.
+	ErrKeyValueConfigRequired = &jsError{message: "config required"}
+
+	// ErrInvalidBucketName is returned when attempting to create a bucket with an invalid name.
+	ErrInvalidBucketName = &jsError{message: "invalid bucket name"}
+
+	// ErrInvalidKey is returned when attempting to create a key with an invalid name.
+	ErrInvalidKey = &jsError{message: "invalid key"}
+
+	// ErrBucketNotFound is returned when attempting to access a bucket that does not exist.
+	ErrBucketNotFound = &jsError{message: "bucket not found"}
+
+	// ErrBadBucket is returned when attempting to access a bucket that is not a key-value store.
+	ErrBadBucket = &jsError{message: "bucket not valid key-value store"}
+
+	// ErrKeyNotFound is returned when attempting to access a key that does not exist.
+	ErrKeyNotFound = &jsError{message: "key not found"}
+
+	// ErrKeyDeleted is returned when attempting to access a key that was deleted.
+	ErrKeyDeleted = &jsError{message: "key was deleted"}
+
+	// ErrHistoryToLarge is returned when provided history limit is larger than 64.
+	ErrHistoryTooLarge = &jsError{message: "history limited to a max of 64"}
+
+	// ErrNoKeysFound is returned when no keys are found.
+	ErrNoKeysFound = &jsError{message: "no keys found"}
 )
 
 // Error prints the JetStream API error code and description

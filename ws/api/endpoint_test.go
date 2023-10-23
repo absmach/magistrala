@@ -9,18 +9,21 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/gorilla/websocket"
 	"github.com/mainflux/mainflux"
 	authmocks "github.com/mainflux/mainflux/auth/mocks"
-	"github.com/mainflux/mainflux/internal/testsutil"
-	mflog "github.com/mainflux/mainflux/logger"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/ws"
 	"github.com/mainflux/mainflux/ws/api"
 	"github.com/mainflux/mainflux/ws/mocks"
+	"github.com/mainflux/mproxy/pkg/session"
+	"github.com/mainflux/mproxy/pkg/websockets"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -33,16 +36,23 @@ const (
 
 var msg = []byte(`[{"n":"current","t":-1,"v":1.6}]`)
 
-func newService() (ws.Service, mocks.MockPubSub, *authmocks.Service) {
-	auth := new(authmocks.Service)
+func newService(auth mainflux.AuthzServiceClient) (ws.Service, mocks.MockPubSub) {
 	pubsub := mocks.NewPubSub()
-	return ws.New(auth, pubsub), pubsub, auth
+	return ws.New(auth, pubsub), pubsub
 }
 
 func newHTTPServer(svc ws.Service) *httptest.Server {
-	logger := mflog.NewMock()
-	mux := api.MakeHandler(context.Background(), svc, logger, instanceID)
+	mux := api.MakeHandler(context.Background(), svc, logger.NewMock(), instanceID)
 	return httptest.NewServer(mux)
+}
+
+func newProxyHTPPServer(svc session.Handler, targetServer *httptest.Server) (*httptest.Server, error) {
+	url := strings.ReplaceAll(targetServer.URL, "http", "ws")
+	mp, err := websockets.NewProxy("", url, logger.NewMock(), svc)
+	if err != nil {
+		return nil, err
+	}
+	return httptest.NewServer(http.HandlerFunc(mp.Handler)), nil
 }
 
 func makeURL(tsURL, chanID, subtopic, thingKey string, header bool) (string, error) {
@@ -80,9 +90,29 @@ func handshake(tsURL, chanID, subtopic, thingKey string, addHeader bool) (*webso
 }
 
 func TestHandshake(t *testing.T) {
-	svc, _, auth := newService()
-	ts := newHTTPServer(svc)
+	auth := new(authmocks.Service)
+	svc, pubsub := newService(auth)
+	target := newHTTPServer(svc)
+	defer target.Close()
+	handler := ws.NewHandler(pubsub, logger.NewMock(), auth)
+	ts, err := newProxyHTPPServer(handler, target)
+	require.Nil(t, err)
 	defer ts.Close()
+	auth.On("Authorize", mock.Anything, &mainflux.AuthorizeReq{
+		Subject:     thingKey,
+		Object:      id,
+		Namespace:   "",
+		SubjectType: "thing",
+		Permission:  "publish",
+		ObjectType:  "group"}).Return(&mainflux.AuthorizeRes{Authorized: true, Id: "1"}, nil)
+	auth.On("Authorize", mock.Anything, &mainflux.AuthorizeReq{
+		Subject:     thingKey,
+		Object:      id,
+		Namespace:   "",
+		SubjectType: "thing",
+		Permission:  "subscribe",
+		ObjectType:  "group"}).Return(&mainflux.AuthorizeRes{Authorized: true, Id: "2"}, nil)
+	auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: false, Id: "3"}, nil)
 
 	cases := []struct {
 		desc     string
@@ -154,7 +184,7 @@ func TestHandshake(t *testing.T) {
 			subtopic: "",
 			header:   true,
 			thingKey: thingKey,
-			status:   http.StatusBadRequest,
+			status:   http.StatusBadGateway,
 			msg:      []byte{},
 		},
 		{
@@ -163,7 +193,7 @@ func TestHandshake(t *testing.T) {
 			subtopic: "",
 			header:   true,
 			thingKey: "",
-			status:   http.StatusForbidden,
+			status:   http.StatusUnauthorized,
 			msg:      []byte{},
 		},
 		{
@@ -172,22 +202,22 @@ func TestHandshake(t *testing.T) {
 			subtopic: "sub/a*b/topic",
 			header:   true,
 			thingKey: thingKey,
-			status:   http.StatusBadRequest,
+			status:   http.StatusBadGateway,
 			msg:      msg,
 		},
 	}
 
 	for _, tc := range cases {
-		repocall := auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: true, Id: testsutil.GenerateUUID(t)}, nil)
-		conn, res, err := handshake(ts.URL, tc.chanID, tc.subtopic, tc.thingKey, tc.header)
-		assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code '%d' got '%d'\n", tc.desc, tc.status, res.StatusCode))
+		t.Run(tc.desc, func(t *testing.T) {
+			conn, res, err := handshake(ts.URL, tc.chanID, tc.subtopic, tc.thingKey, tc.header)
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code '%d' got '%d'\n", tc.desc, tc.status, res.StatusCode))
 
-		if tc.status == http.StatusSwitchingProtocols {
-			assert.Nil(t, err, fmt.Sprintf("%s: got unexpected error %s\n", tc.desc, err))
+			if tc.status == http.StatusSwitchingProtocols {
+				assert.Nil(t, err, fmt.Sprintf("%s: got unexpected error %s\n", tc.desc, err))
 
-			err = conn.WriteMessage(websocket.TextMessage, tc.msg)
-			assert.Nil(t, err, fmt.Sprintf("%s: got unexpected error %s\n", tc.desc, err))
-		}
-		repocall.Unset()
+				err = conn.WriteMessage(websocket.TextMessage, tc.msg)
+				assert.Nil(t, err, fmt.Sprintf("%s: got unexpected error %s\n", tc.desc, err))
+			}
+		})
 	}
 }

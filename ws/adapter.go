@@ -42,21 +42,10 @@ var (
 
 // Service specifies web socket service API.
 type Service interface {
-	// Publish publishes the message to the internal message broker.
-	// ThingKey is used for authorization.
-	// If the message is published successfully, nil is returned otherwise
-	// error is returned.
-	Publish(ctx context.Context, thingKey string, msg *messaging.Message) error
-
 	// Subscribe subscribes message from the broker using the thingKey for authorization,
 	// and the channelID for subscription. Subtopic is optional.
 	// If the subscription is successful, nil is returned otherwise error is returned.
 	Subscribe(ctx context.Context, thingKey, chanID, subtopic string, client *Client) error
-
-	// Unsubscribe unsubscribes message from the broker using the thingKey for authorization,
-	// and the channelID for subscription. Subtopic is optional.
-	// If the unsubscription is successful, nil is returned otherwise error is returned.
-	Unsubscribe(ctx context.Context, thingKey, chanID, subtopic string) error
 }
 
 var _ Service = (*adapterService)(nil)
@@ -72,25 +61,6 @@ func New(auth mainflux.AuthzServiceClient, pubsub messaging.PubSub) Service {
 		auth:   auth,
 		pubsub: pubsub,
 	}
-}
-
-func (svc *adapterService) Publish(ctx context.Context, thingKey string, msg *messaging.Message) error {
-	if len(msg.Payload) == 0 {
-		return ErrFailedMessagePublish
-	}
-
-	thid, err := svc.authorize(ctx, thingKey, msg.GetChannel(), "publish")
-	if err != nil {
-		return ErrUnauthorizedAccess
-	}
-
-	msg.Publisher = thid
-
-	if err := svc.pubsub.Publish(ctx, msg.GetChannel(), msg); err != nil {
-		return ErrFailedMessagePublish
-	}
-
-	return nil
 }
 
 func (svc *adapterService) Subscribe(ctx context.Context, thingKey, chanID, subtopic string, c *Client) error {
@@ -120,24 +90,6 @@ func (svc *adapterService) Subscribe(ctx context.Context, thingKey, chanID, subt
 	}
 
 	return nil
-}
-
-func (svc *adapterService) Unsubscribe(ctx context.Context, thingKey, chanID, subtopic string) error {
-	if chanID == "" || thingKey == "" {
-		return ErrUnauthorizedAccess
-	}
-
-	thid, err := svc.authorize(ctx, thingKey, chanID, "subscribe")
-	if err != nil {
-		return ErrUnauthorizedAccess
-	}
-
-	subject := fmt.Sprintf("%s.%s", chansPrefix, chanID)
-	if subtopic != "" {
-		subject = fmt.Sprintf("%s.%s", subject, subtopic)
-	}
-
-	return svc.pubsub.Unsubscribe(ctx, thid, subject)
 }
 
 // authorize checks if the thingKey is authorized to access the channel

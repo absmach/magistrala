@@ -56,7 +56,7 @@ func WithPublishAsyncMaxPending(max int) JetStreamOpt {
 	}
 }
 
-// WithPurgeSubject sets a sprecific subject for which messages on a stream will be purged
+// WithPurgeSubject sets a specific subject for which messages on a stream will be purged
 func WithPurgeSubject(subject string) StreamPurgeOpt {
 	return func(req *StreamPurgeRequest) error {
 		req.Subject = subject
@@ -64,7 +64,7 @@ func WithPurgeSubject(subject string) StreamPurgeOpt {
 	}
 }
 
-// WithPurgeSequence is used to set a sprecific sequence number up to which (but not including) messages will be purged from a stream
+// WithPurgeSequence is used to set a specific sequence number up to which (but not including) messages will be purged from a stream
 // Can be combined with [WithPurgeSubject] option, but not with [WithPurgeKeep]
 func WithPurgeSequence(sequence uint64) StreamPurgeOpt {
 	return func(req *StreamPurgeRequest) error {
@@ -164,11 +164,21 @@ func (t PullThresholdMessages) configureConsume(opts *consumeOpts) error {
 	return nil
 }
 
+func (t PullThresholdMessages) configureMessages(opts *consumeOpts) error {
+	opts.ThresholdMessages = int(t)
+	return nil
+}
+
 // PullThresholdBytes sets the byte count on which Consume will trigger
 // new pull request to the server. Defaults to 50% of MaxBytes (if set).
 type PullThresholdBytes int
 
 func (t PullThresholdBytes) configureConsume(opts *consumeOpts) error {
+	opts.ThresholdBytes = int(t)
+	return nil
+}
+
+func (t PullThresholdBytes) configureMessages(opts *consumeOpts) error {
 	opts.ThresholdBytes = int(t)
 	return nil
 }
@@ -197,6 +207,25 @@ func (hb PullHeartbeat) configureMessages(opts *consumeOpts) error {
 	return nil
 }
 
+// StopAfter sets the number of messages after which the consumer is automatically stopped
+type StopAfter int
+
+func (nMsgs StopAfter) configureConsume(opts *consumeOpts) error {
+	if nMsgs <= 0 {
+		return fmt.Errorf("%w: auto stop after value cannot be less than 1", ErrInvalidOption)
+	}
+	opts.StopAfter = int(nMsgs)
+	return nil
+}
+
+func (nMsgs StopAfter) configureMessages(opts *consumeOpts) error {
+	if nMsgs <= 0 {
+		return fmt.Errorf("%w: auto stop after value cannot be less than 1", ErrInvalidOption)
+	}
+	opts.StopAfter = int(nMsgs)
+	return nil
+}
+
 // ConsumeErrHandler sets custom error handler invoked when an error was encountered while consuming messages
 // It will be invoked for both terminal (Consumer Deleted, invalid request body) and non-terminal (e.g. missing heartbeats) errors
 func ConsumeErrHandler(cb ConsumeErrHandlerFunc) PullConsumeOpt {
@@ -206,8 +235,7 @@ func ConsumeErrHandler(cb ConsumeErrHandlerFunc) PullConsumeOpt {
 	})
 }
 
-// ConsumeErrHandler sets custom error handler invoked when an error was encountered while consuming messages
-// It will be invoked for both terminal (Consumer Deleted, invalid request body) and non-terminal (e.g. missing heartbeats) errors
+// WithMessagesErrOnMissingHeartbeat sets whether a missing heartbeat error should be reported when calling Next (Default: true).
 func WithMessagesErrOnMissingHeartbeat(hbErr bool) PullMessagesOpt {
 	return pullOptFunc(func(cfg *consumeOpts) error {
 		cfg.ReportMissingHeartbeats = hbErr
@@ -215,7 +243,7 @@ func WithMessagesErrOnMissingHeartbeat(hbErr bool) PullMessagesOpt {
 	})
 }
 
-// FetchMaxWait sets custom timeout fir fetching predefined batch of messages
+// FetchMaxWait sets custom timeout for fetching predefined batch of messages
 func FetchMaxWait(timeout time.Duration) FetchOpt {
 	return func(req *pullRequest) error {
 		if timeout <= 0 {
@@ -242,10 +270,11 @@ func WithSubjectFilter(subject string) StreamInfoOpt {
 	}
 }
 
-// WithNakDelay can be used to specify the duration after which the message should be redelivered
-func WithNakDelay(delay time.Duration) NakOpt {
-	return func(opts *ackOpts) error {
-		opts.nakDelay = delay
+// WithStreamListSubject can be used to filter results of ListStreams and StreamNames requests
+// to only streams that have given subject in their configuration
+func WithStreamListSubject(subject string) StreamListOpt {
+	return func(req *streamsRequest) error {
+		req.Subject = subject
 		return nil
 	}
 }
@@ -282,7 +311,7 @@ func WithExpectLastSequencePerSubject(seq uint64) PublishOpt {
 	}
 }
 
-// ExpectLastMsgId sets the expected last msgId in the response from the publish.
+// WithExpectLastMsgID sets the expected last msgId in the response from the publish.
 func WithExpectLastMsgID(id string) PublishOpt {
 	return func(opts *pubOpts) error {
 		opts.lastMsgID = id
@@ -315,4 +344,77 @@ func WithStallWait(ttl time.Duration) PublishOpt {
 		opts.stallWait = ttl
 		return nil
 	}
+}
+
+// KV Options
+
+type watchOptFn func(opts *watchOpts) error
+
+func (opt watchOptFn) configureWatcher(opts *watchOpts) error {
+	return opt(opts)
+}
+
+// IncludeHistory instructs the key watcher to include historical values as well.
+func IncludeHistory() WatchOpt {
+	return watchOptFn(func(opts *watchOpts) error {
+		if opts.updatesOnly {
+			return fmt.Errorf("%w: include history can not be used with updates only", ErrInvalidOption)
+		}
+		opts.includeHistory = true
+		return nil
+	})
+}
+
+// UpdatesOnly instructs the key watcher to only include updates on values (without latest values when started).
+func UpdatesOnly() WatchOpt {
+	return watchOptFn(func(opts *watchOpts) error {
+		if opts.includeHistory {
+			return fmt.Errorf("%w: updates only can not be used with include history", ErrInvalidOption)
+		}
+		opts.updatesOnly = true
+		return nil
+	})
+}
+
+// IgnoreDeletes will have the key watcher not pass any deleted keys.
+func IgnoreDeletes() WatchOpt {
+	return watchOptFn(func(opts *watchOpts) error {
+		opts.ignoreDeletes = true
+		return nil
+	})
+}
+
+// MetaOnly instructs the key watcher to retrieve only the entry meta data, not the entry value.
+func MetaOnly() WatchOpt {
+	return watchOptFn(func(opts *watchOpts) error {
+		opts.metaOnly = true
+		return nil
+	})
+}
+
+// DeleteMarkersOlderThan indicates that delete or purge markers older than that
+// will be deleted as part of PurgeDeletes() operation, otherwise, only the data
+// will be removed but markers that are recent will be kept.
+// Note that if no option is specified, the default is 30 minutes. You can set
+// this option to a negative value to instruct to always remove the markers,
+// regardless of their age.
+type DeleteMarkersOlderThan time.Duration
+
+func (ttl DeleteMarkersOlderThan) configurePurge(opts *purgeOpts) error {
+	opts.dmthr = time.Duration(ttl)
+	return nil
+}
+
+type deleteOptFn func(opts *deleteOpts) error
+
+func (opt deleteOptFn) configureDelete(opts *deleteOpts) error {
+	return opt(opts)
+}
+
+// LastRevision deletes if the latest revision matches.
+func LastRevision(revision uint64) KVDeleteOpt {
+	return deleteOptFn(func(opts *deleteOpts) error {
+		opts.revision = revision
+		return nil
+	})
 }

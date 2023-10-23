@@ -93,6 +93,8 @@ type (
 		stallCh      chan struct{}
 		doneCh       chan struct{}
 		rr           *rand.Rand
+		// channel to signal when server is disconnected or conn is closed
+		connStatusCh chan (nats.Status)
 	}
 
 	pubAckResponse struct {
@@ -110,7 +112,7 @@ type (
 )
 
 const (
-	// Default time wait between retries on Publish iff err is NoResponders.
+	// Default time wait between retries on Publish if err is NoResponders.
 	DefaultPubRetryWait = 250 * time.Millisecond
 
 	// Default number of retries
@@ -131,6 +133,10 @@ func (js *jetStream) Publish(ctx context.Context, subj string, data []byte, opts
 
 // PublishMsg publishes a Msg to a stream from JetStream.
 func (js *jetStream) PublishMsg(ctx context.Context, m *nats.Msg, opts ...PublishOpt) (*PubAck, error) {
+	ctx, cancel := wrapContextWithoutDeadline(ctx)
+	if cancel != nil {
+		defer cancel()
+	}
 	o := pubOpts{
 		retryWait:     DefaultPubRetryWait,
 		retryAttempts: DefaultPubRetryAttempts,
@@ -296,6 +302,10 @@ func (js *jetStream) newAsyncReply() (string, error) {
 		js.publisher.replySubject = sub
 		js.publisher.rr = rand.New(rand.NewSource(time.Now().UnixNano()))
 	}
+	if js.publisher.connStatusCh == nil {
+		js.publisher.connStatusCh = js.conn.StatusChanged(nats.RECONNECTING, nats.CLOSED)
+		go js.resetPendingAcksOnReconnect()
+	}
 	var sb strings.Builder
 	sb.WriteString(js.publisher.replyPrefix)
 	rn := js.publisher.rr.Int63()
@@ -376,6 +386,28 @@ func (js *jetStream) handleAsyncReply(m *nats.Msg) {
 		paf.doneCh <- paf.ack
 	}
 	js.publisher.Unlock()
+}
+
+func (js *jetStream) resetPendingAcksOnReconnect() {
+	js.publisher.Lock()
+	connStatusCh := js.publisher.connStatusCh
+	js.publisher.Unlock()
+	for {
+		newStatus, ok := <-connStatusCh
+		if !ok || newStatus == nats.CLOSED {
+			return
+		}
+		js.publisher.Lock()
+		for _, paf := range js.publisher.acks {
+			paf.err = nats.ErrDisconnected
+		}
+		js.publisher.acks = nil
+		if js.publisher.doneCh != nil {
+			close(js.publisher.doneCh)
+			js.publisher.doneCh = nil
+		}
+		js.publisher.Unlock()
+	}
 }
 
 // registerPAF will register for a PubAckFuture.

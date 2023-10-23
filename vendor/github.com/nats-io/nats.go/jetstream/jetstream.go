@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nuid"
@@ -41,6 +42,7 @@ type (
 		StreamConsumerManager
 		StreamManager
 		Publisher
+		KeyValueManager
 	}
 
 	Publisher interface {
@@ -50,10 +52,10 @@ type (
 		// PublishMsg performs a synchronous publish to a stream and waits for ack from server
 		// It accepts subject name (which must be bound to a stream) and nats.Message
 		PublishMsg(ctx context.Context, msg *nats.Msg, opts ...PublishOpt) (*PubAck, error)
-		// PublishAsync performs a asynchronous publish to a stream and returns [PubAckFuture] interface
+		// PublishAsync performs an asynchronous publish to a stream and returns [PubAckFuture] interface
 		// It accepts subject name (which must be bound to a stream) and message data
 		PublishAsync(subject string, payload []byte, opts ...PublishOpt) (PubAckFuture, error)
-		// PublishMsgAsync performs a asynchronous publish to a stream and returns [PubAckFuture] interface
+		// PublishMsgAsync performs an asynchronous publish to a stream and returns [PubAckFuture] interface
 		// It accepts subject name (which must be bound to a stream) and nats.Message
 		PublishMsgAsync(msg *nats.Msg, opts ...PublishOpt) (PubAckFuture, error)
 		// PublishAsyncPending returns the number of async publishes outstanding for this context
@@ -74,9 +76,9 @@ type (
 		// DeleteStream removes a stream with given name
 		DeleteStream(ctx context.Context, stream string) error
 		// ListStreams returns StreamInfoLister enabling iterating over a channel of stream infos
-		ListStreams(context.Context) StreamInfoLister
+		ListStreams(context.Context, ...StreamListOpt) StreamInfoLister
 		// StreamNames returns a  StreamNameLister enabling iterating over a channel of stream names
-		StreamNames(context.Context) StreamNameLister
+		StreamNames(context.Context, ...StreamListOpt) StreamNameLister
 	}
 
 	StreamConsumerManager interface {
@@ -84,6 +86,14 @@ type (
 		// If consumer already exists, it will be updated (if possible).
 		// Consumer interface is returned, serving as a hook to operate on a consumer (e.g. fetch messages)
 		CreateOrUpdateConsumer(ctx context.Context, stream string, cfg ConsumerConfig) (Consumer, error)
+		// CreateConsumer creates a consumer on a given stream with given config.
+		// If consumer already exists, ErrConsumerExists is returned.
+		// Consumer interface is returned, serving as a hook to operate on a consumer (e.g. fetch messages)
+		CreateConsumer(ctx context.Context, stream string, cfg ConsumerConfig) (Consumer, error)
+		// UpdateConsumer updates an existing consumer.
+		// If consumer does not exist, ErrConsumerDoesNotExist is returned.
+		// Consumer interface is returned, serving as a hook to operate on a consumer (e.g. fetch messages)
+		UpdateConsumer(ctx context.Context, stream string, cfg ConsumerConfig) (Consumer, error)
 		// OrderedConsumer returns an OrderedConsumer instance.
 		// OrderedConsumer allows fetching messages from a stream (just like standard consumer),
 		// for in order delivery of messages. Underlying consumer is re-created when necessary,
@@ -94,6 +104,8 @@ type (
 		// DeleteConsumer removes a consumer with given name from a stream
 		DeleteConsumer(ctx context.Context, stream string, consumer string) error
 	}
+
+	StreamListOpt func(*streamsRequest) error
 
 	// AccountInfo contains info about the JetStream usage from the current account.
 	AccountInfo struct {
@@ -157,12 +169,12 @@ type (
 
 	StreamInfoLister interface {
 		Info() <-chan *StreamInfo
-		Err() <-chan error
+		Err() error
 	}
 
 	StreamNameLister interface {
 		Name() <-chan string
-		Err() <-chan error
+		Err() error
 	}
 
 	apiPagedRequest struct {
@@ -175,7 +187,7 @@ type (
 
 		streams chan *StreamInfo
 		names   chan string
-		errs    chan error
+		err     error
 	}
 
 	streamListResponse struct {
@@ -191,17 +203,21 @@ type (
 	}
 
 	streamsRequest struct {
+		apiPagedRequest
 		Subject string `json:"subject,omitempty"`
 	}
 )
 
+// defaultAPITimeout is used if context.Background() or context.TODO() is passed to API calls.
+const defaultAPITimeout = 5 * time.Second
+
 var subjectRegexp = regexp.MustCompile(`^[^ >]*[>]?$`)
 
-// New returns a enw JetStream instance
+// New returns a new JetStream instance.
 //
 // Available options:
-// [WithClientTrace] - enables request/response tracing
-// [WithPublishAsyncErrHandler] - sets error handler for async message publish
+// [WithClientTrace] - enables request/response tracing.
+// [WithPublishAsyncErrHandler] - sets error handler for async message publish.
 // [WithPublishAsyncMaxPending] - sets the maximum outstanding async publishes that can be inflight at one time.
 // [WithDirectGet] - specifies whether client should use direct get requests.
 func New(nc *nats.Conn, opts ...JetStreamOpt) (JetStream, error) {
@@ -297,6 +313,10 @@ func (js *jetStream) CreateStream(ctx context.Context, cfg StreamConfig) (Stream
 	if err := validateStreamName(cfg.Name); err != nil {
 		return nil, err
 	}
+	ctx, cancel := wrapContextWithoutDeadline(ctx)
+	if cancel != nil {
+		defer cancel()
+	}
 	ncfg := cfg
 	// If we have a mirror and an external domain, convert to ext.APIPrefix.
 	if ncfg.Mirror != nil && ncfg.Mirror.Domain != "" {
@@ -336,6 +356,22 @@ func (js *jetStream) CreateStream(ctx context.Context, cfg StreamConfig) (Stream
 			return nil, ErrStreamNameAlreadyInUse
 		}
 		return nil, resp.Error
+	}
+
+	// check that input subject transform (if used) is reflected in the returned StreamInfo
+	if cfg.SubjectTransform != nil && resp.StreamInfo.Config.SubjectTransform == nil {
+		return nil, ErrStreamSubjectTransformNotSupported
+	}
+
+	if len(cfg.Sources) != 0 {
+		if len(cfg.Sources) != len(resp.Config.Sources) {
+			return nil, ErrStreamSourceNotSupported
+		}
+		for i := range cfg.Sources {
+			if len(cfg.Sources[i].SubjectTransforms) != 0 && len(resp.Sources[i].SubjectTransforms) == 0 {
+				return nil, ErrStreamSourceMultipleFilterSubjectsNotSupported
+			}
+		}
 	}
 
 	return &stream{
@@ -378,6 +414,10 @@ func (js *jetStream) UpdateStream(ctx context.Context, cfg StreamConfig) (Stream
 	if err := validateStreamName(cfg.Name); err != nil {
 		return nil, err
 	}
+	ctx, cancel := wrapContextWithoutDeadline(ctx)
+	if cancel != nil {
+		defer cancel()
+	}
 
 	req, err := json.Marshal(cfg)
 	if err != nil {
@@ -397,6 +437,22 @@ func (js *jetStream) UpdateStream(ctx context.Context, cfg StreamConfig) (Stream
 		return nil, resp.Error
 	}
 
+	// check that input subject transform (if used) is reflected in the returned StreamInfo
+	if cfg.SubjectTransform != nil && resp.StreamInfo.Config.SubjectTransform == nil {
+		return nil, ErrStreamSubjectTransformNotSupported
+	}
+
+	if len(cfg.Sources) != 0 {
+		if len(cfg.Sources) != len(resp.Config.Sources) {
+			return nil, ErrStreamSourceNotSupported
+		}
+		for i := range cfg.Sources {
+			if len(cfg.Sources[i].SubjectTransforms) != 0 && len(resp.Sources[i].SubjectTransforms) == 0 {
+				return nil, ErrStreamSourceMultipleFilterSubjectsNotSupported
+			}
+		}
+	}
+
 	return &stream{
 		jetStream: js,
 		name:      cfg.Name,
@@ -408,6 +464,10 @@ func (js *jetStream) UpdateStream(ctx context.Context, cfg StreamConfig) (Stream
 func (js *jetStream) Stream(ctx context.Context, name string) (Stream, error) {
 	if err := validateStreamName(name); err != nil {
 		return nil, err
+	}
+	ctx, cancel := wrapContextWithoutDeadline(ctx)
+	if cancel != nil {
+		defer cancel()
 	}
 	infoSubject := apiSubj(js.apiPrefix, fmt.Sprintf(apiStreamInfoT, name))
 
@@ -434,6 +494,10 @@ func (js *jetStream) DeleteStream(ctx context.Context, name string) error {
 	if err := validateStreamName(name); err != nil {
 		return err
 	}
+	ctx, cancel := wrapContextWithoutDeadline(ctx)
+	if cancel != nil {
+		defer cancel()
+	}
 	deleteSubject := apiSubj(js.apiPrefix, fmt.Sprintf(apiStreamDeleteT, name))
 	var resp streamDeleteResponse
 
@@ -456,7 +520,21 @@ func (js *jetStream) CreateOrUpdateConsumer(ctx context.Context, stream string, 
 	if err := validateStreamName(stream); err != nil {
 		return nil, err
 	}
-	return upsertConsumer(ctx, js, stream, cfg)
+	return upsertConsumer(ctx, js, stream, cfg, consumerActionCreateOrUpdate)
+}
+
+func (js *jetStream) CreateConsumer(ctx context.Context, stream string, cfg ConsumerConfig) (Consumer, error) {
+	if err := validateStreamName(stream); err != nil {
+		return nil, err
+	}
+	return upsertConsumer(ctx, js, stream, cfg, consumerActionCreate)
+}
+
+func (js *jetStream) UpdateConsumer(ctx context.Context, stream string, cfg ConsumerConfig) (Consumer, error) {
+	if err := validateStreamName(stream); err != nil {
+		return nil, err
+	}
+	return upsertConsumer(ctx, js, stream, cfg, consumerActionUpdate)
 }
 
 func (js *jetStream) OrderedConsumer(ctx context.Context, stream string, cfg OrderedConsumerConfig) (Consumer, error) {
@@ -472,6 +550,10 @@ func (js *jetStream) OrderedConsumer(ctx context.Context, stream string, cfg Ord
 	}
 	if cfg.OptStartSeq != 0 {
 		oc.cursor.streamSeq = cfg.OptStartSeq - 1
+	}
+	err := oc.reset()
+	if err != nil {
+		return nil, err
 	}
 
 	return oc, nil
@@ -514,6 +596,10 @@ func validateSubject(subject string) error {
 }
 
 func (js *jetStream) AccountInfo(ctx context.Context) (*AccountInfo, error) {
+	ctx, cancel := wrapContextWithoutDeadline(ctx)
+	if cancel != nil {
+		defer cancel()
+	}
 	var resp accountInfoResponse
 
 	infoSubject := apiSubj(js.apiPrefix, apiAccountInfo)
@@ -537,29 +623,43 @@ func (js *jetStream) AccountInfo(ctx context.Context) (*AccountInfo, error) {
 }
 
 // ListStreams returns StreamInfoLister enabling iterating over a channel of stream infos
-func (js *jetStream) ListStreams(ctx context.Context) StreamInfoLister {
+//
+// Available options:
+// [WithStreamListSubject] - allows filtering returned streams by provided subject
+func (js *jetStream) ListStreams(ctx context.Context, opts ...StreamListOpt) StreamInfoLister {
 	l := &streamLister{
 		js:      js,
 		streams: make(chan *StreamInfo),
-		errs:    make(chan error, 1),
+	}
+	var streamsReq streamsRequest
+	for _, opt := range opts {
+		if err := opt(&streamsReq); err != nil {
+			l.err = err
+			close(l.streams)
+			return l
+		}
 	}
 	go func() {
+		defer close(l.streams)
+		ctx, cancel := wrapContextWithoutDeadline(ctx)
+		if cancel != nil {
+			defer cancel()
+		}
 		for {
-			page, err := l.streamInfos(ctx)
+			page, err := l.streamInfos(ctx, streamsReq)
 			if err != nil && !errors.Is(err, ErrEndOfData) {
-				l.errs <- err
+				l.err = err
 				return
 			}
 			for _, info := range page {
 				select {
 				case l.streams <- info:
 				case <-ctx.Done():
-					l.errs <- ctx.Err()
+					l.err = ctx.Err()
 					return
 				}
 			}
 			if errors.Is(err, ErrEndOfData) {
-				l.errs <- err
 				return
 			}
 		}
@@ -574,34 +674,48 @@ func (s *streamLister) Info() <-chan *StreamInfo {
 }
 
 // Err returns an error channel which will be populated with error from [ListStreams] or [StreamNames] request
-func (s *streamLister) Err() <-chan error {
-	return s.errs
+func (s *streamLister) Err() error {
+	return s.err
 }
 
 // StreamNames returns a [StreamNameLister] enabling iterating over a channel of stream names
-func (js *jetStream) StreamNames(ctx context.Context) StreamNameLister {
+//
+// Available options:
+// [WithStreamListSubject] - allows filtering returned streams by provided subject
+func (js *jetStream) StreamNames(ctx context.Context, opts ...StreamListOpt) StreamNameLister {
 	l := &streamLister{
 		js:    js,
 		names: make(chan string),
-		errs:  make(chan error, 1),
+	}
+	var streamsReq streamsRequest
+	for _, opt := range opts {
+		if err := opt(&streamsReq); err != nil {
+			l.err = err
+			close(l.streams)
+			return l
+		}
 	}
 	go func() {
+		ctx, cancel := wrapContextWithoutDeadline(ctx)
+		if cancel != nil {
+			defer cancel()
+		}
+		defer close(l.names)
 		for {
-			page, err := l.streamNames(ctx)
+			page, err := l.streamNames(ctx, streamsReq)
 			if err != nil && !errors.Is(err, ErrEndOfData) {
-				l.errs <- err
+				l.err = err
 				return
 			}
 			for _, info := range page {
 				select {
 				case l.names <- info:
 				case <-ctx.Done():
-					l.errs <- ctx.Err()
+					l.err = ctx.Err()
 					return
 				}
 			}
 			if errors.Is(err, ErrEndOfData) {
-				l.errs <- err
 				return
 			}
 		}
@@ -611,6 +725,10 @@ func (js *jetStream) StreamNames(ctx context.Context) StreamNameLister {
 }
 
 func (js *jetStream) StreamNameBySubject(ctx context.Context, subject string) (string, error) {
+	ctx, cancel := wrapContextWithoutDeadline(ctx)
+	if cancel != nil {
+		defer cancel()
+	}
 	if err := validateSubject(subject); err != nil {
 		return "", err
 	}
@@ -642,21 +760,25 @@ func (s *streamLister) Name() <-chan string {
 }
 
 // infos fetches the next [StreamInfo] page
-func (s *streamLister) streamInfos(ctx context.Context) ([]*StreamInfo, error) {
+func (s *streamLister) streamInfos(ctx context.Context, streamsReq streamsRequest) ([]*StreamInfo, error) {
 	if s.pageInfo != nil && s.offset >= s.pageInfo.Total {
 		return nil, ErrEndOfData
 	}
 
-	req, err := json.Marshal(
-		apiPagedRequest{Offset: s.offset},
-	)
+	req := streamsRequest{
+		apiPagedRequest: apiPagedRequest{
+			Offset: s.offset,
+		},
+		Subject: streamsReq.Subject,
+	}
+	reqJSON, err := json.Marshal(req)
 	if err != nil {
 		return nil, err
 	}
 
 	slSubj := apiSubj(s.js.apiPrefix, apiStreamListT)
 	var resp streamListResponse
-	_, err = s.js.apiRequestJSON(ctx, slSubj, &resp, req)
+	_, err = s.js.apiRequestJSON(ctx, slSubj, &resp, reqJSON)
 	if err != nil {
 		return nil, err
 	}
@@ -670,21 +792,25 @@ func (s *streamLister) streamInfos(ctx context.Context) ([]*StreamInfo, error) {
 }
 
 // streamNames fetches the next stream names page
-func (s *streamLister) streamNames(ctx context.Context) ([]string, error) {
+func (s *streamLister) streamNames(ctx context.Context, streamsReq streamsRequest) ([]string, error) {
 	if s.pageInfo != nil && s.offset >= s.pageInfo.Total {
 		return nil, ErrEndOfData
 	}
 
-	req, err := json.Marshal(
-		apiPagedRequest{Offset: s.offset},
-	)
+	req := streamsRequest{
+		apiPagedRequest: apiPagedRequest{
+			Offset: s.offset,
+		},
+		Subject: streamsReq.Subject,
+	}
+	reqJSON, err := json.Marshal(req)
 	if err != nil {
 		return nil, err
 	}
 
 	slSubj := apiSubj(s.js.apiPrefix, apiStreams)
 	var resp streamNamesResponse
-	_, err = s.js.apiRequestJSON(ctx, slSubj, &resp, req)
+	_, err = s.js.apiRequestJSON(ctx, slSubj, &resp, reqJSON)
 	if err != nil {
 		return nil, err
 	}
@@ -695,4 +821,14 @@ func (s *streamLister) streamNames(ctx context.Context) ([]string, error) {
 	s.pageInfo = &resp.apiPaged
 	s.offset += len(resp.Streams)
 	return resp.Streams, nil
+}
+
+// wrapContextWithoutDeadline wraps context without deadline with default timeout.
+// If deadline is already set, it will be returned as is, and cancel() will be nil.
+// Caller should check if cancel() is nil before calling it.
+func wrapContextWithoutDeadline(ctx context.Context) (context.Context, context.CancelFunc) {
+	if _, ok := ctx.Deadline(); ok {
+		return ctx, nil
+	}
+	return context.WithTimeout(ctx, defaultAPITimeout)
 }

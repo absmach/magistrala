@@ -30,7 +30,7 @@ import (
 type (
 	// MessagesContext supports iterating over a messages on a stream.
 	MessagesContext interface {
-		// Next retreives nest message on a stream. It will block until the next message is available.
+		// Next retreives next message on a stream. It will block until the next message is available.
 		Next() (Msg, error)
 		// Stop closes the iterator and cancels subscription.
 		Stop()
@@ -80,6 +80,8 @@ type (
 		ReportMissingHeartbeats bool
 		ThresholdMessages       int
 		ThresholdBytes          int
+		StopAfter               int
+		stopAfterMsgsLeft       chan int
 	}
 
 	ConsumeErrHandlerFunc func(consumeCtx ConsumeContext, err error)
@@ -99,6 +101,7 @@ type (
 		connStatusChanged chan nats.Status
 		fetchNext         chan *pullRequest
 		consumeOpts       *consumeOpts
+		delivered         int
 	}
 
 	pendingMsgs struct {
@@ -133,16 +136,23 @@ const (
 	unset              = -1
 )
 
+func min(x, y int) int {
+	if x < y {
+		return x
+	}
+	return y
+}
+
 // Consume returns a ConsumeContext, allowing for processing incoming messages from a stream in a given callback function.
 //
 // Available options:
-// [ConsumeMaxMessages] - sets maximum number of messages stored in a buffer, default is set to 100
-// [ConsumeMaxBytes] - sets maximum number of bytes stored in a buffer
-// [ConsumeExpiry] - sets a timeout for individual batch request, default is set to 30 seconds
-// [ConsumeHeartbeat] - sets an idle heartbeat setting for a pull request, default is set to 5s
+// [PullMaxMessages] - sets maximum number of messages stored in a buffer, default is set to 100
+// [PullMaxBytes] - sets maximum number of bytes stored in a buffer
+// [PullExpiry] - sets a timeout for individual batch request, default is set to 30 seconds
+// [PullHeartbeat] - sets an idle heartbeat setting for a pull request, default is set to 5s
 // [ConsumeErrHandler] - sets custom consume error callback handler
-// [ConsumeThresholdMessages] - sets the byte count on which Consume will trigger new pull request to the server
-// [ConsumeThresholdBytes] - sets the message count on which Consume will trigger new pull request to the server
+// [PullThresholdMessages] - sets the message count on which Consume will trigger new pull request to the server
+// [PullThresholdBytes] - sets the byte count on which Consume will trigger new pull request to the server
 func (p *pullConsumer) Consume(handler MessageHandler, opts ...PullConsumeOpt) (ConsumeContext, error) {
 	if handler == nil {
 		return nil, ErrHandlerRequired
@@ -178,7 +188,7 @@ func (p *pullConsumer) Consume(handler MessageHandler, opts ...PullConsumeOpt) (
 
 	internalHandler := func(msg *nats.Msg) {
 		if sub.hbMonitor != nil {
-			sub.hbMonitor.Reset(2 * consumeOpts.Heartbeat)
+			sub.hbMonitor.Stop()
 		}
 		userMsg, msgErr := checkMsg(msg)
 		if !userMsg && msgErr == nil {
@@ -187,6 +197,7 @@ func (p *pullConsumer) Consume(handler MessageHandler, opts ...PullConsumeOpt) (
 		defer func() {
 			sub.Lock()
 			sub.checkPending()
+			sub.hbMonitor.Reset(2 * consumeOpts.Heartbeat)
 			sub.Unlock()
 		}()
 		if !userMsg {
@@ -213,7 +224,12 @@ func (p *pullConsumer) Consume(handler MessageHandler, opts ...PullConsumeOpt) (
 		handler(p.jetStream.toJSMsg(msg))
 		sub.Lock()
 		sub.decrementPendingMsgs(msg)
+		sub.incrementDeliveredMsgs()
 		sub.Unlock()
+
+		if sub.consumeOpts.StopAfter > 0 && sub.consumeOpts.StopAfter == sub.delivered {
+			sub.Stop()
+		}
 	}
 	inbox := p.jetStream.conn.NewInbox()
 	sub.subscription, err = p.jetStream.conn.Subscribe(inbox, internalHandler)
@@ -224,9 +240,13 @@ func (p *pullConsumer) Consume(handler MessageHandler, opts ...PullConsumeOpt) (
 	sub.Lock()
 	// initial pull
 	sub.resetPendingMsgs()
+	batchSize := sub.consumeOpts.MaxMessages
+	if sub.consumeOpts.StopAfter > 0 {
+		batchSize = min(batchSize, sub.consumeOpts.StopAfter-sub.delivered)
+	}
 	if err := sub.pull(&pullRequest{
 		Expires:   consumeOpts.Expires,
-		Batch:     consumeOpts.MaxMessages,
+		Batch:     batchSize,
 		MaxBytes:  consumeOpts.MaxBytes,
 		Heartbeat: consumeOpts.Heartbeat,
 	}, subject); err != nil {
@@ -275,10 +295,13 @@ func (p *pullConsumer) Consume(handler MessageHandler, opts ...PullConsumeOpt) (
 							}
 							time.Sleep(5 * time.Second)
 						}
-
+						batchSize := sub.consumeOpts.MaxMessages
+						if sub.consumeOpts.StopAfter > 0 {
+							batchSize = min(batchSize, sub.consumeOpts.StopAfter-sub.delivered)
+						}
 						sub.fetchNext <- &pullRequest{
 							Expires:   sub.consumeOpts.Expires,
-							Batch:     sub.consumeOpts.MaxMessages,
+							Batch:     batchSize,
 							MaxBytes:  sub.consumeOpts.MaxBytes,
 							Heartbeat: sub.consumeOpts.Heartbeat,
 						}
@@ -292,9 +315,13 @@ func (p *pullConsumer) Consume(handler MessageHandler, opts ...PullConsumeOpt) (
 					sub.consumeOpts.ErrHandler(sub, err)
 				}
 				if errors.Is(err, ErrNoHeartbeat) {
+					batchSize := sub.consumeOpts.MaxMessages
+					if sub.consumeOpts.StopAfter > 0 {
+						batchSize = min(batchSize, sub.consumeOpts.StopAfter-sub.delivered)
+					}
 					sub.fetchNext <- &pullRequest{
 						Expires:   sub.consumeOpts.Expires,
-						Batch:     sub.consumeOpts.MaxMessages,
+						Batch:     batchSize,
 						MaxBytes:  sub.consumeOpts.MaxBytes,
 						Heartbeat: sub.consumeOpts.Heartbeat,
 					}
@@ -327,6 +354,12 @@ func (s *pullSubscription) decrementPendingMsgs(msg *nats.Msg) {
 	}
 }
 
+// incrementDeliveredMsgs increments delivered message count
+// lock should be held before calling this method
+func (s *pullSubscription) incrementDeliveredMsgs() {
+	s.delivered++
+}
+
 // checkPending verifies whether there are enough messages in
 // the buffer to trigger a new pull request.
 // lock should be held before calling this method
@@ -334,29 +367,32 @@ func (s *pullSubscription) checkPending() {
 	if s.pending.msgCount < s.consumeOpts.ThresholdMessages ||
 		(s.pending.byteCount < s.consumeOpts.ThresholdBytes && s.consumeOpts.MaxBytes != 0) &&
 			atomic.LoadUint32(&s.fetchInProgress) == 1 {
-
-		s.fetchNext <- &pullRequest{
-			Expires:   s.consumeOpts.Expires,
-			Batch:     s.consumeOpts.MaxMessages - s.pending.msgCount,
-			MaxBytes:  s.consumeOpts.MaxBytes - s.pending.byteCount,
-			Heartbeat: s.consumeOpts.Heartbeat,
+		batchSize := s.consumeOpts.MaxMessages - s.pending.msgCount
+		if s.consumeOpts.StopAfter > 0 {
+			batchSize = min(batchSize, s.consumeOpts.StopAfter-s.delivered-s.pending.msgCount)
 		}
+		if batchSize > 0 {
+			s.fetchNext <- &pullRequest{
+				Expires:   s.consumeOpts.Expires,
+				Batch:     batchSize,
+				MaxBytes:  s.consumeOpts.MaxBytes - s.pending.byteCount,
+				Heartbeat: s.consumeOpts.Heartbeat,
+			}
 
-		s.pending.msgCount = s.consumeOpts.MaxMessages
-		s.pending.byteCount = s.consumeOpts.MaxBytes
+			s.pending.msgCount = s.consumeOpts.MaxMessages
+			s.pending.byteCount = s.consumeOpts.MaxBytes
+		}
 	}
 }
 
 // Messages returns MessagesContext, allowing continuously iterating over messages on a stream.
 //
 // Available options:
-// [ConsumeMaxMessages] - sets maximum number of messages stored in a buffer, default is set to 100
-// [ConsumeMaxBytes] - sets maximum number of bytes stored in a buffer
-// [ConsumeExpiry] - sets a timeout for individual batch request, default is set to 30 seconds
-// [ConsumeHeartbeat] - sets an idle heartbeat setting for a pull request, default is set to 5s
-// [ConsumeErrHandler] - sets custom consume error callback handler
-// [ConsumeThresholdMessages] - sets the byte count on which Consume will trigger new pull request to the server
-// [ConsumeThresholdBytes] - sets the message count on which Consume will trigger new pull request to the server
+// [PullMaxMessages] - sets maximum number of messages stored in a buffer, default is set to 100
+// [PullMaxBytes] - sets maximum number of bytes stored in a buffer
+// [PullExpiry] - sets a timeout for individual batch request, default is set to 30 seconds
+// [PullHeartbeat] - sets an idle heartbeat setting for a pull request, default is set to 5s
+// [WithMessagesErrOnMissingHeartbeat] - sets whether a missing heartbeat error should be reported when calling Next
 func (p *pullConsumer) Messages(opts ...PullMessagesOpt) (MessagesContext, error) {
 	consumeOpts, err := parseMessagesOpts(opts...)
 	if err != nil {
@@ -437,9 +473,16 @@ func (s *pullSubscription) Next() (Msg, error) {
 	}()
 
 	isConnected := true
+	if s.consumeOpts.StopAfter > 0 && s.delivered >= s.consumeOpts.StopAfter {
+		s.Stop()
+		return nil, ErrMsgIteratorClosed
+	}
+
 	for {
 		s.checkPending()
 		select {
+		case <-s.done:
+			return nil, ErrMsgIteratorClosed
 		case msg := <-s.msgs:
 			if hbMonitor != nil {
 				hbMonitor.Reset(2 * s.consumeOpts.Heartbeat)
@@ -457,6 +500,7 @@ func (s *pullSubscription) Next() (Msg, error) {
 				continue
 			}
 			s.decrementPendingMsgs(msg)
+			s.incrementDeliveredMsgs()
 			return s.consumer.jetStream.toJSMsg(msg), nil
 		case err := <-s.errs:
 			if errors.Is(err, ErrNoHeartbeat) {
@@ -550,6 +594,13 @@ func (s *pullSubscription) Stop() {
 		return
 	}
 	close(s.done)
+	if s.consumeOpts.stopAfterMsgsLeft != nil {
+		if s.delivered >= s.consumeOpts.StopAfter {
+			close(s.consumeOpts.stopAfterMsgsLeft)
+		} else {
+			s.consumeOpts.stopAfterMsgsLeft <- s.consumeOpts.StopAfter - s.delivered
+		}
+	}
 	atomic.StoreUint32(&s.closed, 1)
 }
 
@@ -571,7 +622,6 @@ func (p *pullConsumer) Fetch(batch int, opts ...FetchOpt) (MessageBatch, error) 
 	}
 
 	return p.fetch(req)
-
 }
 
 // FetchBytes is used to retrieve up to a provided bytes from the stream.
@@ -596,7 +646,7 @@ func (p *pullConsumer) FetchBytes(maxBytes int, opts ...FetchOpt) (MessageBatch,
 	return p.fetch(req)
 }
 
-// Fetch sends a single request to retrieve given number of messages.
+// FetchNoWait sends a single request to retrieve given number of messages.
 // If there are any messages available at the time of sending request,
 // FetchNoWait will return immediately.
 func (p *pullConsumer) FetchNoWait(batch int) (MessageBatch, error) {
@@ -638,7 +688,9 @@ func (p *pullConsumer) fetch(req *pullRequest) (MessageBatch, error) {
 		defer close(res.msgs)
 		for {
 			if receivedMsgs == req.Batch || (req.MaxBytes != 0 && receivedBytes == req.MaxBytes) {
+				p.Lock()
 				res.done = true
+				p.Unlock()
 				return
 			}
 			select {
@@ -777,6 +829,7 @@ func parseConsumeOpts(opts ...PullConsumeOpt) (*consumeOpts, error) {
 		Expires:                 DefaultExpires,
 		Heartbeat:               unset,
 		ReportMissingHeartbeats: true,
+		StopAfter:               unset,
 	}
 	for _, opt := range opts {
 		if err := opt.configureConsume(consumeOpts); err != nil {
@@ -796,6 +849,7 @@ func parseMessagesOpts(opts ...PullMessagesOpt) (*consumeOpts, error) {
 		Expires:                 DefaultExpires,
 		Heartbeat:               unset,
 		ReportMissingHeartbeats: true,
+		StopAfter:               unset,
 	}
 	for _, opt := range opts {
 		if err := opt.configureMessages(consumeOpts); err != nil {

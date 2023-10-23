@@ -28,7 +28,7 @@ type (
 	// Consumer contains methods for fetching/processing messages from a stream, as well as fetching consumer info
 	Consumer interface {
 		// Fetch is used to retrieve up to a provided number of messages from a stream.
-		// This method will always send a single request and wait until either all messages are retreived
+		// This method will always send a single request and wait until either all messages are retrieved
 		// or request times out.
 		Fetch(batch int, opts ...FetchOpt) (MessageBatch, error)
 		// FetchBytes is used to retrieve up to a provided bytes from the stream.
@@ -51,10 +51,20 @@ type (
 		// CachedInfo returns [*ConsumerInfo] cached on a consumer struct
 		CachedInfo() *ConsumerInfo
 	}
+
+	createConsumerRequest struct {
+		Stream string          `json:"stream_name"`
+		Config *ConsumerConfig `json:"config"`
+		Action string          `json:"action"`
+	}
 )
 
 // Info returns [ConsumerInfo] for a given consumer
 func (p *pullConsumer) Info(ctx context.Context) (*ConsumerInfo, error) {
+	ctx, cancel := wrapContextWithoutDeadline(ctx)
+	if cancel != nil {
+		defer cancel()
+	}
 	infoSubject := apiSubj(p.jetStream.apiPrefix, fmt.Sprintf(apiConsumerInfoT, p.stream, p.name))
 	var resp consumerInfoResponse
 
@@ -80,10 +90,15 @@ func (p *pullConsumer) CachedInfo() *ConsumerInfo {
 	return p.info
 }
 
-func upsertConsumer(ctx context.Context, js *jetStream, stream string, cfg ConsumerConfig) (Consumer, error) {
+func upsertConsumer(ctx context.Context, js *jetStream, stream string, cfg ConsumerConfig, action string) (Consumer, error) {
+	ctx, cancel := wrapContextWithoutDeadline(ctx)
+	if cancel != nil {
+		defer cancel()
+	}
 	req := createConsumerRequest{
 		Stream: stream,
 		Config: &cfg,
+		Action: action,
 	}
 	reqJSON, err := json.Marshal(req)
 	if err != nil {
@@ -103,7 +118,7 @@ func upsertConsumer(ctx context.Context, js *jetStream, stream string, cfg Consu
 	}
 
 	var ccSubj string
-	if cfg.FilterSubject != "" {
+	if cfg.FilterSubject != "" && len(cfg.FilterSubjects) == 0 {
 		ccSubj = apiSubj(js.apiPrefix, fmt.Sprintf(apiConsumerCreateWithFilterSubjectT, stream, consumerName, cfg.FilterSubject))
 	} else {
 		ccSubj = apiSubj(js.apiPrefix, fmt.Sprintf(apiConsumerCreateT, stream, consumerName))
@@ -120,6 +135,11 @@ func upsertConsumer(ctx context.Context, js *jetStream, stream string, cfg Consu
 		return nil, resp.Error
 	}
 
+	// check whether multiple filter subjects (if used) are reflected in the returned ConsumerInfo
+	if len(cfg.FilterSubjects) != 0 && len(resp.Config.FilterSubjects) == 0 {
+		return nil, ErrConsumerMultipleFilterSubjectsNotSupported
+	}
+
 	return &pullConsumer{
 		jetStream:     js,
 		stream:        stream,
@@ -129,6 +149,12 @@ func upsertConsumer(ctx context.Context, js *jetStream, stream string, cfg Consu
 		subscriptions: make(map[string]*pullSubscription),
 	}, nil
 }
+
+const (
+	consumerActionCreate         = "create"
+	consumerActionUpdate         = "update"
+	consumerActionCreateOrUpdate = ""
+)
 
 func generateConsName() string {
 	name := nuid.Next()
@@ -142,6 +168,10 @@ func generateConsName() string {
 }
 
 func getConsumer(ctx context.Context, js *jetStream, stream, name string) (Consumer, error) {
+	ctx, cancel := wrapContextWithoutDeadline(ctx)
+	if cancel != nil {
+		defer cancel()
+	}
 	if err := validateConsumerName(name); err != nil {
 		return nil, err
 	}
@@ -172,6 +202,10 @@ func getConsumer(ctx context.Context, js *jetStream, stream, name string) (Consu
 }
 
 func deleteConsumer(ctx context.Context, js *jetStream, stream, consumer string) error {
+	ctx, cancel := wrapContextWithoutDeadline(ctx)
+	if cancel != nil {
+		defer cancel()
+	}
 	if err := validateConsumerName(consumer); err != nil {
 		return err
 	}

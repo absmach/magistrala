@@ -31,8 +31,8 @@ import (
 	mqttpub "github.com/mainflux/mainflux/pkg/messaging/mqtt"
 	"github.com/mainflux/mainflux/pkg/uuid"
 	mp "github.com/mainflux/mproxy/pkg/mqtt"
+	"github.com/mainflux/mproxy/pkg/mqtt/websocket"
 	"github.com/mainflux/mproxy/pkg/session"
-	"github.com/mainflux/mproxy/pkg/websocket"
 	"golang.org/x/sync/errgroup"
 )
 

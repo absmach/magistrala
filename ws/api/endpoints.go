@@ -10,12 +10,9 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/go-zoo/bone"
-	"github.com/gorilla/websocket"
 	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/ws"
 )
 
@@ -42,11 +39,6 @@ func handshake(ctx context.Context, svc ws.Service) http.HandlerFunc {
 		}
 
 		logger.Debug(fmt.Sprintf("Successfully upgraded communication to WS on channel %s", req.chanID))
-		msgs := make(chan []byte)
-
-		// Listen for messages received from the chan messages, and publish them to broker
-		go process(ctx, svc, req, msgs)
-		go listen(conn, msgs)
 	}
 }
 
@@ -113,43 +105,6 @@ func parseSubTopic(subtopic string) (string, error) {
 	subtopic = strings.Join(filteredElems, ".")
 
 	return subtopic, nil
-}
-
-func listen(conn *websocket.Conn, msgs chan<- []byte) {
-	for {
-		// Listen for message from the client, and push them to the msgs channel
-		_, payload, err := conn.ReadMessage()
-
-		if websocket.IsUnexpectedCloseError(err) {
-			logger.Debug(fmt.Sprintf("Closing WS connection: %s", err.Error()))
-			close(msgs)
-			return
-		}
-
-		if err != nil {
-			logger.Warn(fmt.Sprintf("Failed to read message: %s", err.Error()))
-			close(msgs)
-			return
-		}
-
-		msgs <- payload
-	}
-}
-
-func process(ctx context.Context, svc ws.Service, req connReq, msgs <-chan []byte) {
-	for msg := range msgs {
-		m := messaging.Message{
-			Channel:  req.chanID,
-			Subtopic: req.subtopic,
-			Protocol: "websocket",
-			Payload:  msg,
-			Created:  time.Now().UnixNano(),
-		}
-
-		if err := svc.Publish(ctx, req.thingKey, &m); err != nil {
-			logger.Warn(fmt.Sprintf("Failed to publish message: %s", err.Error()))
-		}
-	}
 }
 
 func encodeError(w http.ResponseWriter, err error) {

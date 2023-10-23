@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/metrics"
-	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/ws"
 )
 
@@ -31,16 +30,6 @@ func MetricsMiddleware(svc ws.Service, counter metrics.Counter, latency metrics.
 	}
 }
 
-// Publish instruments Publish method with metrics.
-func (mm *metricsMiddleware) Publish(ctx context.Context, thingKey string, msg *messaging.Message) error {
-	defer func(begin time.Time) {
-		mm.counter.With("method", "publish").Add(1)
-		mm.latency.With("method", "publish").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
-	return mm.svc.Publish(ctx, thingKey, msg)
-}
-
 // Subscribe instruments Subscribe method with metrics.
 func (mm *metricsMiddleware) Subscribe(ctx context.Context, thingKey, chanID, subtopic string, c *ws.Client) error {
 	defer func(begin time.Time) {
@@ -49,14 +38,4 @@ func (mm *metricsMiddleware) Subscribe(ctx context.Context, thingKey, chanID, su
 	}(time.Now())
 
 	return mm.svc.Subscribe(ctx, thingKey, chanID, subtopic, c)
-}
-
-// Unsubscribe instruments Unsubscribe method with metrics.
-func (mm *metricsMiddleware) Unsubscribe(ctx context.Context, thingKey, chanID, subtopic string) error {
-	defer func(begin time.Time) {
-		mm.counter.With("method", "unsubscribe").Add(1)
-		mm.latency.With("method", "unsubscribe").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
-	return mm.svc.Unsubscribe(ctx, thingKey, chanID, subtopic)
 }

@@ -69,6 +69,11 @@ type (
 
 		// NOTE: FilterSubjects requires nats-server v2.10.0+
 		FilterSubjects []string `json:"filter_subjects,omitempty"`
+
+		// Metadata is additional metadata for the Consumer.
+		// Keys starting with `_nats` are reserved.
+		// NOTE: Metadata requires nats-server v2.10.0+
+		Metadata map[string]string `json:"metadata,omitempty"`
 	}
 
 	OrderedConsumerConfig struct {
@@ -78,6 +83,7 @@ type (
 		OptStartTime      *time.Time    `json:"opt_start_time,omitempty"`
 		ReplayPolicy      ReplayPolicy  `json:"replay_policy"`
 		InactiveThreshold time.Duration `json:"inactive_threshold,omitempty"`
+		HeadersOnly       bool          `json:"headers_only,omitempty"`
 
 		// Maximum number of attempts for the consumer to be recreated
 		// Defaults to unlimited

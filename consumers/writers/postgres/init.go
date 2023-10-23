@@ -34,6 +34,13 @@ func Migration() *migrate.MemoryMigrationSource {
 					"DROP TABLE messages",
 				},
 			},
+			{
+				Id: "messages_2",
+				Up: []string{
+					`ALTER TABLE messages DROP CONSTRAINT messages_pkey`,
+					`ALTER TABLE messages ADD PRIMARY KEY (time, publisher, subtopic, name)`,
+				},
+			},
 		},
 	}
 }

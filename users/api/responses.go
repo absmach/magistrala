@@ -139,7 +139,6 @@ func (res viewMembersRes) Empty() bool {
 	return false
 }
 
-
 type deleteClientRes struct {
 	mfclients.Client `json:",inline"`
 }

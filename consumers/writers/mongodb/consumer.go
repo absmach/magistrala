@@ -10,6 +10,7 @@ import (
 	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/mainflux/mainflux/pkg/transformers/json"
 	"github.com/mainflux/mainflux/pkg/transformers/senml"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -45,7 +46,17 @@ func (repo *mongoRepo) saveSenml(ctx context.Context, messages interface{}) erro
 	coll := repo.db.Collection(senmlCollection)
 	var dbMsgs []interface{}
 	for _, msg := range msgs {
-		dbMsgs = append(dbMsgs, msg)
+		// Check if message is already in database.
+		filter := bson.M{"time": msg.Time, "publisher": msg.Publisher, "subtopic": msg.Subtopic, "name": msg.Name}
+
+		count, err := coll.CountDocuments(ctx, filter)
+		if err != nil {
+			return errors.Wrap(errSaveMessage, err)
+		}
+
+		if count == 0 {
+			dbMsgs = append(dbMsgs, msg)
+		}
 	}
 
 	_, err := coll.InsertMany(ctx, dbMsgs)

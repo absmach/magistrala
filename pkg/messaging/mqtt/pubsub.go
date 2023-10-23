@@ -78,40 +78,40 @@ func NewPubSub(url string, qos uint8, timeout time.Duration, logger mflog.Logger
 	return ret, nil
 }
 
-func (ps *pubsub) Subscribe(ctx context.Context, id, topic string, handler messaging.MessageHandler) error {
-	if id == "" {
+func (ps *pubsub) Subscribe(ctx context.Context, cfg messaging.SubscriberConfig) error {
+	if cfg.ID == "" {
 		return ErrEmptyID
 	}
-	if topic == "" {
+	if cfg.Topic == "" {
 		return ErrEmptyTopic
 	}
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
 
-	s, ok := ps.subscriptions[id]
+	s, ok := ps.subscriptions[cfg.ID]
 	// If the client exists, check if it's subscribed to the topic and unsubscribe if needed.
 	switch ok {
 	case true:
-		if ok := s.contains(topic); ok {
-			if err := s.unsubscribe(topic, ps.timeout); err != nil {
+		if ok := s.contains(cfg.Topic); ok {
+			if err := s.unsubscribe(cfg.Topic, ps.timeout); err != nil {
 				return err
 			}
 		}
 	default:
-		client, err := newClient(ps.address, id, ps.timeout)
+		client, err := newClient(ps.address, cfg.ID, ps.timeout)
 		if err != nil {
 			return err
 		}
 		s = subscription{
 			client: client,
 			topics: []string{},
-			cancel: handler.Cancel,
+			cancel: cfg.Handler.Cancel,
 		}
 	}
-	s.topics = append(s.topics, topic)
-	ps.subscriptions[id] = s
+	s.topics = append(s.topics, cfg.Topic)
+	ps.subscriptions[cfg.ID] = s
 
-	token := s.client.Subscribe(topic, byte(ps.qos), ps.mqttHandler(handler))
+	token := s.client.Subscribe(cfg.Topic, byte(ps.qos), ps.mqttHandler(cfg.Handler))
 	if token.Error() != nil {
 		return token.Error()
 	}

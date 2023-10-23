@@ -35,7 +35,12 @@ var (
 )
 
 func TestPublisher(t *testing.T) {
-	err := pubsub.Subscribe(context.TODO(), clientID, fmt.Sprintf("%s.>", chansPrefix), handler{})
+	subCfg := messaging.SubscriberConfig{
+		ID:      clientID,
+		Topic:   fmt.Sprintf("%s.>", chansPrefix),
+		Handler: handler{},
+	}
+	err := pubsub.Subscribe(context.TODO(), subCfg)
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	cases := []struct {
 		desc     string
@@ -256,8 +261,13 @@ func TestPubsub(t *testing.T) {
 	}
 
 	for _, pc := range subcases {
+		subCfg := messaging.SubscriberConfig{
+			ID:      pc.clientID,
+			Topic:   pc.topic,
+			Handler: pc.handler,
+		}
 		if pc.pubsub == true {
-			err := pubsub.Subscribe(context.TODO(), pc.clientID, pc.topic, pc.handler)
+			err := pubsub.Subscribe(context.TODO(), subCfg)
 			if pc.errorMessage == nil {
 				assert.Nil(t, err, fmt.Sprintf("%s expected %+v got %+v\n", pc.desc, pc.errorMessage, err))
 			} else {

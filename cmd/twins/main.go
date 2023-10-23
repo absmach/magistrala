@@ -193,8 +193,13 @@ func newService(ctx context.Context, id string, ps messaging.PubSub, cfg config,
 	counter, latency := internal.MakeMetrics(svcName, "api")
 	svc = api.MetricsMiddleware(svc, counter, latency)
 
-	if err = ps.Subscribe(ctx, id, brokers.SubjectAllChannels, handle(ctx, logger, cfg.ChannelID, svc)); err != nil {
-		return nil, err
+	subCfg := messaging.SubscriberConfig{
+		ID:      id,
+		Topic:   brokers.SubjectAllChannels,
+		Handler: handle(ctx, logger, cfg.ChannelID, svc),
+	}
+	if err = ps.Subscribe(ctx, subCfg); err != nil {
+		logger.Fatal(err.Error())
 	}
 
 	return svc, nil

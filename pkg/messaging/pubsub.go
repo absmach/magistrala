@@ -5,6 +5,17 @@ package messaging
 
 import "context"
 
+type DeliveryPolicy uint8
+
+const (
+	// DeliverNewPolicy will only deliver new messages that are sent after the consumer is created.
+	// This is the default policy.
+	DeliverNewPolicy DeliveryPolicy = iota
+
+	// DeliverAllPolicy starts delivering messages from the very beginning of a stream.
+	DeliverAllPolicy
+)
+
 // Publisher specifies message publishing API.
 type Publisher interface {
 	// Publishes message to the stream.
@@ -23,10 +34,17 @@ type MessageHandler interface {
 	Cancel() error
 }
 
+type SubscriberConfig struct {
+	ID             string
+	Topic          string
+	Handler        MessageHandler
+	DeliveryPolicy DeliveryPolicy
+}
+
 // Subscriber specifies message subscription API.
 type Subscriber interface {
 	// Subscribe subscribes to the message stream and consumes messages.
-	Subscribe(ctx context.Context, id, topic string, handler MessageHandler) error
+	Subscribe(ctx context.Context, cfg SubscriberConfig) error
 
 	// Unsubscribe unsubscribes from the message stream and
 	// stops consuming messages.

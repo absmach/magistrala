@@ -79,22 +79,29 @@ func NewPubSub(ctx context.Context, url string, logger mflog.Logger) (messaging.
 	return ret, nil
 }
 
-func (ps *pubsub) Subscribe(ctx context.Context, id, topic string, handler messaging.MessageHandler) error {
-	if id == "" {
+func (ps *pubsub) Subscribe(ctx context.Context, cfg messaging.SubscriberConfig) error {
+	if cfg.ID == "" {
 		return ErrEmptyID
 	}
-	if topic == "" {
+	if cfg.Topic == "" {
 		return ErrEmptyTopic
 	}
 
-	nh := ps.natsHandler(handler)
+	nh := ps.natsHandler(cfg.Handler)
 
 	consumerConfig := jetstream.ConsumerConfig{
-		Name:          formatConsumerName(topic, id),
-		Durable:       formatConsumerName(topic, id),
-		Description:   fmt.Sprintf("Mainflux consumer of id %s for topic %s", id, topic),
+		Name:          formatConsumerName(cfg.Topic, cfg.ID),
+		Durable:       formatConsumerName(cfg.Topic, cfg.ID),
+		Description:   fmt.Sprintf("Mainflux consumer of id %s for cfg.Topic %s", cfg.ID, cfg.Topic),
 		DeliverPolicy: jetstream.DeliverNewPolicy,
-		FilterSubject: topic,
+		FilterSubject: cfg.Topic,
+	}
+
+	switch cfg.DeliveryPolicy {
+	case messaging.DeliverNewPolicy:
+		consumerConfig.DeliverPolicy = jetstream.DeliverNewPolicy
+	case messaging.DeliverAllPolicy:
+		consumerConfig.DeliverPolicy = jetstream.DeliverAllPolicy
 	}
 
 	consumer, err := ps.stream.CreateOrUpdateConsumer(ctx, consumerConfig)

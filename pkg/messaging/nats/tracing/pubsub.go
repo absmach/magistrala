@@ -42,26 +42,26 @@ func NewPubSub(config server.Config, tracer trace.Tracer, pubsub messaging.PubSu
 }
 
 // Subscribe creates a new subscription and traces the operation.
-func (pm *pubsubMiddleware) Subscribe(ctx context.Context, id string, topic string, handler messaging.MessageHandler) error {
-	ctx, span := tracing.CreateSpan(ctx, subscribeOP, id, topic, "", 0, pm.host, trace.SpanKindClient, pm.tracer)
+func (pm *pubsubMiddleware) Subscribe(ctx context.Context, cfg messaging.SubscriberConfig) error {
+	ctx, span := tracing.CreateSpan(ctx, subscribeOP, cfg.ID, cfg.Topic, "", 0, pm.host, trace.SpanKindClient, pm.tracer)
 	defer span.End()
 
 	span.SetAttributes(defaultAttributes...)
 
-	h := &traceHandler{
+	cfg.Handler = &traceHandler{
 		ctx:      ctx,
-		handler:  handler,
+		handler:  cfg.Handler,
 		tracer:   pm.tracer,
 		host:     pm.host,
-		topic:    topic,
-		clientID: id,
+		topic:    cfg.Topic,
+		clientID: cfg.ID,
 	}
 
-	return pm.pubsub.Subscribe(ctx, id, topic, h)
+	return pm.pubsub.Subscribe(ctx, cfg)
 }
 
 // Unsubscribe removes an existing subscription and traces the operation.
-func (pm *pubsubMiddleware) Unsubscribe(ctx context.Context, id string, topic string) error {
+func (pm *pubsubMiddleware) Unsubscribe(ctx context.Context, id, topic string) error {
 	ctx, span := tracing.CreateSpan(ctx, unsubscribeOp, id, topic, "", 0, pm.host, trace.SpanKindInternal, pm.tracer)
 	defer span.End()
 

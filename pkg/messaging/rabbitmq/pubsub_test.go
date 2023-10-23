@@ -168,7 +168,12 @@ func TestSubscribe(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		err := pubsub.Subscribe(context.TODO(), tc.clientID, tc.topic, tc.handler)
+		subCfg := messaging.SubscriberConfig{
+			ID:      tc.clientID,
+			Topic:   tc.topic,
+			Handler: tc.handler,
+		}
+		err := pubsub.Subscribe(context.TODO(), subCfg)
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected: %s, but got: %s", tc.desc, tc.err, err))
 
 		if tc.err == nil {
@@ -340,9 +345,14 @@ func TestUnsubscribe(t *testing.T) {
 	}
 
 	for _, tc := range cases {
+		subCfg := messaging.SubscriberConfig{
+			ID:      tc.clientID,
+			Topic:   tc.topic,
+			Handler: tc.handler,
+		}
 		switch tc.subscribe {
 		case true:
-			err := pubsub.Subscribe(context.TODO(), tc.clientID, tc.topic, tc.handler)
+			err := pubsub.Subscribe(context.TODO(), subCfg)
 			assert.Equal(t, err, tc.err, fmt.Sprintf("%s: expected: %s, but got: %s", tc.desc, tc.err, err))
 		default:
 			err := pubsub.Unsubscribe(context.TODO(), tc.clientID, tc.topic)
@@ -400,7 +410,12 @@ func TestPubSub(t *testing.T) {
 		if tc.topic != "" {
 			subject = fmt.Sprintf("%s.%s", chansPrefix, tc.topic)
 		}
-		err := pubsub.Subscribe(context.TODO(), tc.clientID, subject, tc.handler)
+		subCfg := messaging.SubscriberConfig{
+			ID:      tc.clientID,
+			Topic:   subject,
+			Handler: tc.handler,
+		}
+		err := pubsub.Subscribe(context.TODO(), subCfg)
 
 		switch tc.err {
 		case nil:

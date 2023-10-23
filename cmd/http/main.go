@@ -8,13 +8,13 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 
 	chclient "github.com/mainflux/callhome/pkg/client"
 	"github.com/mainflux/mainflux"
 	adapter "github.com/mainflux/mainflux/http"
 	"github.com/mainflux/mainflux/http/api"
-	"github.com/mainflux/mainflux/http/tracing"
 	"github.com/mainflux/mainflux/internal"
 	authapi "github.com/mainflux/mainflux/internal/clients/grpc/auth"
 	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
@@ -25,7 +25,10 @@ import (
 	"github.com/mainflux/mainflux/pkg/messaging"
 	"github.com/mainflux/mainflux/pkg/messaging/brokers"
 	brokerstracing "github.com/mainflux/mainflux/pkg/messaging/brokers/tracing"
+	"github.com/mainflux/mainflux/pkg/messaging/handler"
 	"github.com/mainflux/mainflux/pkg/uuid"
+	mproxy "github.com/mainflux/mproxy/pkg/http"
+	"github.com/mainflux/mproxy/pkg/session"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
@@ -34,6 +37,8 @@ const (
 	svcName        = "http_adapter"
 	envPrefix      = "MF_HTTP_ADAPTER_"
 	defSvcHTTPPort = "80"
+	targetHTTPPort = "81"
+	targetHTTPHost = "http://localhost"
 )
 
 type config struct {
@@ -109,8 +114,9 @@ func main() {
 	pub = brokerstracing.NewPublisher(httpServerConfig, tracer, pub)
 
 	svc := newService(pub, auth, logger, tracer)
+	targetServerCfg := server.Config{Port: targetHTTPPort}
 
-	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, cfg.InstanceID), logger)
+	hs := httpserver.New(ctx, cancel, svcName, targetServerCfg, api.MakeHandler(cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, mainflux.Version, logger, cancel)
@@ -122,6 +128,10 @@ func main() {
 	})
 
 	g.Go(func() error {
+		return proxyHTTP(ctx, httpServerConfig, logger, svc)
+	})
+
+	g.Go(func() error {
 		return server.StopSignalHandler(ctx, cancel, logger, svcName, hs)
 	})
 
@@ -130,11 +140,44 @@ func main() {
 	}
 }
 
-func newService(pub messaging.Publisher, tc mainflux.AuthzServiceClient, logger mflog.Logger, tracer trace.Tracer) adapter.Service {
-	svc := adapter.New(pub, tc)
-	svc = tracing.New(tracer, svc)
-	svc = api.LoggingMiddleware(svc, logger)
+func newService(pub messaging.Publisher, tc mainflux.AuthzServiceClient, logger mflog.Logger, tracer trace.Tracer) session.Handler {
+	svc := adapter.NewHandler(pub, logger, tc)
+	svc = handler.NewTracing(tracer, svc)
+	svc = handler.LoggingMiddleware(svc, logger)
 	counter, latency := internal.MakeMetrics(svcName, "api")
-	svc = api.MetricsMiddleware(svc, counter, latency)
+	svc = handler.MetricsMiddleware(svc, counter, latency)
 	return svc
+}
+
+func proxyHTTP(ctx context.Context, cfg server.Config, logger mflog.Logger, handler session.Handler) error {
+	address := fmt.Sprintf("%s:%s", "", cfg.Port)
+	target := fmt.Sprintf("%s:%s", targetHTTPHost, targetHTTPPort)
+	mp, err := mproxy.NewProxy(address, target, handler, logger)
+	if err != nil {
+		return err
+	}
+	http.HandleFunc("/", mp.Handler)
+
+	errCh := make(chan error)
+	switch {
+	case cfg.CertFile != "" || cfg.KeyFile != "":
+		go func() {
+			errCh <- mp.ListenTLS(cfg.CertFile, cfg.KeyFile)
+		}()
+		logger.Info(fmt.Sprintf("%s service https server listening at %s:%s with TLS cert %s and key %s", svcName, cfg.Host, cfg.Port, cfg.CertFile, cfg.KeyFile))
+	default:
+		go func() {
+			errCh <- mp.Listen()
+		}()
+		logger.Info(fmt.Sprintf("%s service http server listening at %s:%s without TLS", svcName, cfg.Host, cfg.Port))
+
+	}
+
+	select {
+	case <-ctx.Done():
+		logger.Info(fmt.Sprintf("proxy HTTP shutdown at %s", target))
+		return nil
+	case err := <-errCh:
+		return err
+	}
 }

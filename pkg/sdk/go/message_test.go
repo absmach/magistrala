@@ -15,23 +15,32 @@ import (
 	"github.com/mainflux/mainflux/http/api"
 	"github.com/mainflux/mainflux/http/mocks"
 	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/errors"
 	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
+	mproxy "github.com/mainflux/mproxy/pkg/http"
+	"github.com/mainflux/mproxy/pkg/session"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
-var errUnexpectedJSONEnd = errors.New("unexpected end of JSON input")
-
-func newMessageService(auth mainflux.AuthServiceClient) adapter.Service {
+func newMessageService(cc mainflux.AuthzServiceClient) session.Handler {
 	pub := mocks.NewPublisher()
 
-	return adapter.New(pub, auth)
+	return adapter.NewHandler(pub, logger.NewMock(), cc)
 }
 
-func newMessageServer(svc adapter.Service) *httptest.Server {
-	mux := api.MakeHandler(svc, instanceID)
-
+func newTargetHTTPServer() *httptest.Server {
+	mux := api.MakeHandler("")
 	return httptest.NewServer(mux)
+}
+
+func newProxyHTTPServer(svc session.Handler, targetServer *httptest.Server) (*httptest.Server, error) {
+	mp, err := mproxy.NewProxy("", targetServer.URL, svc, logger.NewMock())
+	if err != nil {
+		return nil, err
+	}
+	return httptest.NewServer(http.HandlerFunc(mp.Handler)), nil
 }
 
 func TestSendMessage(t *testing.T) {
@@ -41,15 +50,33 @@ func TestSendMessage(t *testing.T) {
 	msg := `[{"n":"current","t":-1,"v":1.6}]`
 	auth := new(authmocks.Service)
 	pub := newMessageService(auth)
-	ts := newMessageServer(pub)
+	target := newTargetHTTPServer()
+	ts, err := newProxyHTTPServer(pub, target)
+	assert.Nil(t, err, fmt.Sprintf("failed to create proxy server with err: %v", err))
 	defer ts.Close()
 	sdkConf := sdk.Config{
 		HTTPAdapterURL:  ts.URL,
-		MsgContentType:  contentType,
+		MsgContentType:  "application/senml+json",
 		TLSVerification: false,
 	}
 
 	mfsdk := sdk.NewSDK(sdkConf)
+
+	auth.On("Authorize", mock.Anything, &mainflux.AuthorizeReq{
+		Subject:     atoken,
+		Object:      chanID,
+		Namespace:   "",
+		SubjectType: "thing",
+		Permission:  "publish",
+		ObjectType:  "group"}).Return(&mainflux.AuthorizeRes{Authorized: true, Id: ""}, nil)
+	auth.On("Authorize", mock.Anything, &mainflux.AuthorizeReq{
+		Subject:     invalidToken,
+		Object:      chanID,
+		Namespace:   "",
+		SubjectType: "thing",
+		Permission:  "publish",
+		ObjectType:  "group"}).Return(&mainflux.AuthorizeRes{Authorized: true, Id: ""}, errors.ErrAuthentication)
+	auth.On("Authorize", mock.Anything, mock.Anything).Return(&mainflux.AuthorizeRes{Authorized: false, Id: ""}, nil)
 
 	cases := map[string]struct {
 		chanID string
@@ -67,13 +94,13 @@ func TestSendMessage(t *testing.T) {
 			chanID: chanID,
 			msg:    msg,
 			auth:   "",
-			err:    errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerKey), http.StatusUnauthorized),
+			err:    errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusBadRequest),
 		},
 		"publish message with invalid authorization token": {
 			chanID: chanID,
 			msg:    msg,
 			auth:   invalidToken,
-			err:    errors.NewSDKErrorWithStatus(errUnexpectedJSONEnd, http.StatusUnauthorized),
+			err:    errors.NewSDKErrorWithStatus(errors.ErrAuthentication, http.StatusBadRequest),
 		},
 		"publish message with wrong content type": {
 			chanID: chanID,
@@ -85,13 +112,13 @@ func TestSendMessage(t *testing.T) {
 			chanID: "",
 			msg:    msg,
 			auth:   atoken,
-			err:    errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, errors.ErrMalformedEntity), http.StatusBadRequest),
+			err:    errors.NewSDKErrorWithStatus(errors.Wrap(adapter.ErrFailedPublish, adapter.ErrMalformedTopic), http.StatusBadRequest),
 		},
 		"publish message unable to authorize": {
 			chanID: chanID,
 			msg:    msg,
 			auth:   "invalid-token",
-			err:    errors.NewSDKErrorWithStatus(errUnexpectedJSONEnd, http.StatusUnauthorized),
+			err:    errors.NewSDKErrorWithStatus(errors.ErrAuthorization, http.StatusBadRequest),
 		},
 	}
 	for desc, tc := range cases {
@@ -109,12 +136,14 @@ func TestSetContentType(t *testing.T) {
 	auth := new(authmocks.Service)
 
 	pub := newMessageService(auth)
-	ts := newMessageServer(pub)
+	target := newTargetHTTPServer()
+	ts, err := newProxyHTTPServer(pub, target)
+	assert.Nil(t, err, fmt.Sprintf("failed to create proxy server with err: %v", err))
 	defer ts.Close()
 
 	sdkConf := sdk.Config{
 		HTTPAdapterURL:  ts.URL,
-		MsgContentType:  contentType,
+		MsgContentType:  "application/senml+json",
 		TLSVerification: false,
 	}
 	mfsdk := sdk.NewSDK(sdkConf)

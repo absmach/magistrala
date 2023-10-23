@@ -106,7 +106,7 @@ func (h *handler) AuthPublish(ctx context.Context, topic *string, payload *[]byt
 	return h.authAccess(ctx, string(s.Password), *topic, "publish")
 }
 
-// AuthSubscribe is called on device publish,
+// AuthSubscribe is called on device subscribe,
 // prior forwarding to the MQTT broker.
 func (h *handler) AuthSubscribe(ctx context.Context, topics *[]string) error {
 	s, ok := session.FromContext(ctx)

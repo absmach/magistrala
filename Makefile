@@ -106,7 +106,7 @@ clean:
 
 cleandocker:
 	# Stops containers and removes containers, networks, volumes, and images created by up
-	docker-compose -f docker/docker-compose.yml down --rmi all -v --remove-orphans
+	docker-compose -f docker/docker-compose.yml --profile $(DOCKER_PROFILE) -p $(DOCKER_PROJECT) down --rmi all -v --remove-orphans
 
 ifdef pv
 	# Remove unused volumes

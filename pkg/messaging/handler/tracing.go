@@ -1,7 +1,7 @@
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
 
-package tracing
+package handler
 
 import (
 	"context"
@@ -30,7 +30,7 @@ type handlerMiddleware struct {
 }
 
 // NewHandler creates a new session.Handler middleware with tracing.
-func NewHandler(tracer trace.Tracer, handler session.Handler) session.Handler {
+func NewTracing(tracer trace.Tracer, handler session.Handler) session.Handler {
 	return &handlerMiddleware{
 		tracer:  tracer,
 		handler: handler,

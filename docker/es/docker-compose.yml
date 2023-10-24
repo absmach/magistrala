@@ -1,0 +1,14 @@
+volumes:
+  mainflux-es-redis-volume:
+
+services:
+  es-redis:
+    image: redis:7.2.0-alpine
+    container_name: mainflux-es-redis
+    restart: on-failure
+    networks:
+      - mainflux-base-net
+    volumes:
+      - mainflux-es-volume:/data
+    profiles:
+      - redis

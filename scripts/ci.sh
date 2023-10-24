@@ -67,6 +67,8 @@ setup_mf() {
     done
     echo "Compile check for rabbitmq..."
     MF_MESSAGE_BROKER_TYPE=rabbitmq make http
+    echo "Compile check for redis..."
+    MF_ES_STORE_TYPE=redis make http
     make -j$NPROC
 }
 

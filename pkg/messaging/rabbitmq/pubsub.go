@@ -16,10 +16,11 @@ import (
 )
 
 const (
-	chansPrefix = "channels"
 	// SubjectAllChannels represents subject to subscribe for all the channels.
 	SubjectAllChannels = "channels.#"
-	exchangeName       = "mainflux"
+
+	exchangeName = "messages"
+	chansPrefix  = "channels"
 )
 
 var (
@@ -45,7 +46,7 @@ type pubsub struct {
 }
 
 // NewPubSub returns RabbitMQ message publisher/subscriber.
-func NewPubSub(url string, logger mflog.Logger) (messaging.PubSub, error) {
+func NewPubSub(url string, logger mflog.Logger, opts ...messaging.Option) (messaging.PubSub, error) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, err
@@ -57,14 +58,24 @@ func NewPubSub(url string, logger mflog.Logger) (messaging.PubSub, error) {
 	if err := ch.ExchangeDeclare(exchangeName, amqp.ExchangeTopic, true, false, false, false, nil); err != nil {
 		return nil, err
 	}
+
 	ret := &pubsub{
 		publisher: publisher{
-			conn: conn,
-			ch:   ch,
+			conn:     conn,
+			channel:  ch,
+			exchange: exchangeName,
+			prefix:   chansPrefix,
 		},
 		logger:        logger,
 		subscriptions: make(map[string]map[string]subscription),
 	}
+
+	for _, opt := range opts {
+		if err := opt(ret); err != nil {
+			return nil, err
+		}
+	}
+
 	return ret, nil
 }
 
@@ -102,23 +113,23 @@ func (ps *pubsub) Subscribe(ctx context.Context, cfg messaging.SubscriberConfig)
 
 	clientID := fmt.Sprintf("%s-%s", cfg.Topic, cfg.ID)
 
-	queue, err := ps.ch.QueueDeclare(clientID, true, false, false, false, nil)
+	queue, err := ps.channel.QueueDeclare(clientID, true, false, false, false, nil)
 	if err != nil {
 		return err
 	}
 
-	if err := ps.ch.QueueBind(queue.Name, cfg.Topic, exchangeName, false, nil); err != nil {
+	if err := ps.channel.QueueBind(queue.Name, cfg.Topic, ps.exchange, false, nil); err != nil {
 		return err
 	}
 
-	msgs, err := ps.ch.Consume(queue.Name, clientID, true, false, false, false, nil)
+	msgs, err := ps.channel.Consume(queue.Name, clientID, true, false, false, false, nil)
 	if err != nil {
 		return err
 	}
 	go ps.handle(msgs, cfg.Handler)
 	s[cfg.ID] = subscription{
 		cancel: func() error {
-			if err := ps.ch.Cancel(clientID, false); err != nil {
+			if err := ps.channel.Cancel(clientID, false); err != nil {
 				return err
 			}
 			return cfg.Handler.Cancel()
@@ -154,7 +165,7 @@ func (ps *pubsub) Unsubscribe(ctx context.Context, id, topic string) error {
 			return err
 		}
 	}
-	if err := ps.ch.QueueUnbind(topic, topic, exchangeName, nil); err != nil {
+	if err := ps.channel.QueueUnbind(topic, topic, exchangeName, nil); err != nil {
 		return err
 	}
 

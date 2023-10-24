@@ -7,7 +7,7 @@ import (
 	"context"
 
 	"github.com/mainflux/mainflux/pkg/events"
-	"github.com/mainflux/mainflux/pkg/events/redis"
+	"github.com/mainflux/mainflux/pkg/events/store"
 	"github.com/mainflux/mainflux/pkg/groups"
 )
 
@@ -23,7 +23,7 @@ type eventStore struct {
 // NewEventStoreMiddleware returns wrapper around things service that sends
 // events to event store.
 func NewEventStoreMiddleware(ctx context.Context, svc groups.Service, url string) (groups.Service, error) {
-	publisher, err := redis.NewPublisher(ctx, url, streamID)
+	publisher, err := store.NewPublisher(ctx, url, streamID)
 	if err != nil {
 		return nil, err
 	}

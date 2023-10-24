@@ -22,7 +22,7 @@ const (
 	channel      = "9b7b1b3f-b1b0-46a8-a717-b8213f9eda3b"
 	subtopic     = "engine"
 	clientID     = "9b7b1b3f-b1b0-46a8-a717-b8213f9eda3b"
-	exchangeName = "mainflux"
+	exchangeName = "messages"
 )
 
 var (

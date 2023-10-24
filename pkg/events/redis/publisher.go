@@ -1,6 +1,9 @@
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
 
+//go:build !nats && !rabbitmq
+// +build !nats,!rabbitmq
+
 package redis
 
 import (
@@ -50,21 +53,22 @@ func (es *pubEventStore) Publish(ctx context.Context, event events.Event) error 
 		Values: values,
 	}
 
-	if err := es.checkRedisConnection(ctx); err != nil {
+	switch err := es.checkRedisConnection(ctx); err {
+	case nil:
+		return es.client.XAdd(ctx, record).Err()
+	default:
 		es.mu.Lock()
 		defer es.mu.Unlock()
 
-		select {
-		case es.unpublishedEvents <- record:
-		default:
-			// If the channel is full (rarely happens), drop the events.
+		// If the channel is full (rarely happens), drop the events.
+		if len(es.unpublishedEvents) == int(events.MaxUnpublishedEvents) {
 			return nil
 		}
 
+		es.unpublishedEvents <- record
+
 		return nil
 	}
-
-	return es.client.XAdd(ctx, record).Err()
 }
 
 func (es *pubEventStore) startPublishingRoutine(ctx context.Context) {

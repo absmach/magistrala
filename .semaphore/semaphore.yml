@@ -19,13 +19,13 @@ blocks:
       jobs:
         - name: Setup Codecov
           commands:
-            - 'curl -Os https://uploader.codecov.io/latest/linux/codecov'
+            - "curl -Os https://uploader.codecov.io/latest/linux/codecov"
             - chmod +x codecov
             - ./codecov
             - cache store codecov ./codecov
         - name: Setup Golangci-lint
           commands:
-            - 'curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.53.3'
+            - "curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.53.3"
             - cache store linter ./bin/golangci-lint
       secrets:
         - name: codecov
@@ -50,10 +50,10 @@ blocks:
 
             - go install google.golang.org/protobuf/cmd/protoc-gen-go@$PROTOC_GEN_VERSION
             - go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@$PROTOC_GRPC_VERSION
-                
+
             - export PATH=$PATH:/usr/local/bin/protoc
             - export PATH=$PATH:$HOME/go/bin
-             
+
             - |
               echo "Setting up Mainflux..."
               for p in $(ls ./*.pb.go); do
@@ -70,7 +70,7 @@ blocks:
                   exit 1
                 fi
               done
-            - |                
+            - |
               for p in $(ls pkg/messaging/*.pb.go); do
                 if ! cmp -s $p $p.tmp; then
                   echo "Proto file and generated Go file $p are out of sync!"
@@ -89,7 +89,7 @@ blocks:
           commands:
             - cd users
             - cache restore linter
-            - './bin/golangci-lint run'
+            - "./bin/golangci-lint run"
         - name: Test Users
           commands:
             - cd users
@@ -110,7 +110,7 @@ blocks:
           commands:
             - make docker_users
       secrets:
-        - name: docker_hub                   
+        - name: docker_hub
   - name: Lint and Test Things
     run:
       when: "change_in(['things', 'cmd/things', 'auth/service.go', 'auth/api/grpc/client.go'])"
@@ -123,7 +123,7 @@ blocks:
           commands:
             - cd things
             - cache restore linter
-            - './bin/golangci-lint run'
+            - "./bin/golangci-lint run"
         - name: Test Things
           commands:
             - cd things
@@ -144,7 +144,7 @@ blocks:
           commands:
             - make docker_things
       secrets:
-        - name: docker_hub             
+        - name: docker_hub
   - name: Lint and Test CoAP
     run:
       when: "change_in(['coap', 'cmd/coap', 'things/api/grpc', 'auth/service.go', 'auth/api/grpc/client.go'])"
@@ -157,7 +157,7 @@ blocks:
           commands:
             - cd coap
             - cache restore linter
-            - './bin/golangci-lint run'
+            - "./bin/golangci-lint run"
         - name: Test CoAP
           commands:
             - cd coap
@@ -178,7 +178,7 @@ blocks:
           commands:
             - make docker_coap
       secrets:
-        - name: docker_hub             
+        - name: docker_hub
   - name: Lint and Test HTTP
     run:
       when: "change_in(['http', 'cmd/http', 'things/api/grpc', 'auth/service.go', 'auth/api/grpc/client.go'])"
@@ -191,7 +191,7 @@ blocks:
           commands:
             - cd http
             - cache restore linter
-            - './bin/golangci-lint run'
+            - "./bin/golangci-lint run"
         - name: Test HTTP
           commands:
             - cd http
@@ -213,7 +213,7 @@ blocks:
             - echo $DOCKER_TOKEN | docker login --username "$DOCKER_USERNAME" --password-stdin
             - docker push mainflux/http:latest
       secrets:
-        - name: docker_hub             
+        - name: docker_hub
   - name: Lint and Test MQTT
     run:
       when: "change_in(['mqtt', 'cmd/mqtt', 'things/api/grpc', 'auth/service.go', 'auth/api/grpc/client.go'])"
@@ -226,7 +226,7 @@ blocks:
           commands:
             - cd mqtt
             - cache restore linter
-            - './bin/golangci-lint run'
+            - "./bin/golangci-lint run"
         - name: Test MQTT
           commands:
             - cd mqtt
@@ -248,7 +248,7 @@ blocks:
             - echo $DOCKER_TOKEN | docker login --username "$DOCKER_USERNAME" --password-stdin
             - docker push mainflux/mqtt:latest
       secrets:
-        - name: docker_hub             
+        - name: docker_hub
   - name: Lint and Test WS
     run:
       when: "change_in(['ws', 'cmd/ws', 'things/api/grpc', 'auth/service.go', 'auth/api/grpc/client.go'])"
@@ -261,7 +261,7 @@ blocks:
           commands:
             - cd ws
             - cache restore linter
-            - './bin/golangci-lint run'
+            - "./bin/golangci-lint run"
         - name: Test WS
           commands:
             - cd ws
@@ -283,7 +283,7 @@ blocks:
             - echo $DOCKER_TOKEN | docker login --username "$DOCKER_USERNAME" --password-stdin
             - docker push mainflux/ws:latest
       secrets:
-        - name: docker_hub             
+        - name: docker_hub
   - name: Lint and Test Bootstrap
     run:
       when: "change_in(['bootstrap', 'cmd/bootstrap','things/policies/postgres/policies.go', 'things/policies/api/grpc/client.go'])"
@@ -296,7 +296,7 @@ blocks:
           commands:
             - cd bootstrap
             - cache restore linter
-            - './bin/golangci-lint run'
+            - "./bin/golangci-lint run"
         - name: Test Bootstrap
           commands:
             - cd bootstrap
@@ -318,7 +318,7 @@ blocks:
             - echo $DOCKER_TOKEN | docker login --username "$DOCKER_USERNAME" --password-stdin
             - docker push mainflux/bootstrap:latest
       secrets:
-        - name: docker_hub             
+        - name: docker_hub
   - name: Lint and Test Certs
     run:
       when: "change_in(['certs', 'cmd/certs', 'things/api/grpc', 'auth/service.go', 'auth/api/grpc/client.go'])"
@@ -331,7 +331,7 @@ blocks:
           commands:
             - cd certs
             - cache restore linter
-            - './bin/golangci-lint run'
+            - "./bin/golangci-lint run"
         - name: Test Certs
           commands:
             - cd certs
@@ -353,7 +353,7 @@ blocks:
             - echo $DOCKER_TOKEN | docker login --username "$DOCKER_USERNAME" --password-stdin
             - docker push mainflux/certs:latest
       secrets:
-        - name: docker_hub             
+        - name: docker_hub
   - name: Lint and Test Provision
     dependencies:
       - Setup
@@ -366,7 +366,7 @@ blocks:
           commands:
             - cd provision
             - cache restore linter
-            - './bin/golangci-lint run'
+            - "./bin/golangci-lint run"
         - name: Test Provision
           commands:
             - cd provision
@@ -388,7 +388,7 @@ blocks:
             - echo $DOCKER_TOKEN | docker login --username "$DOCKER_USERNAME" --password-stdin
             - docker push mainflux/http:latest
       secrets:
-        - name: docker_hub             
+        - name: docker_hub
   - name: Lint and Test Twins
     run:
       when: "change_in(['twins', 'cmd/twins', 'things/api/grpc', 'auth/service.go', 'auth/api/grpc/client.go'])"
@@ -401,7 +401,7 @@ blocks:
           commands:
             - cd twins
             - cache restore linter
-            - './bin/golangci-lint run'
+            - "./bin/golangci-lint run"
         - name: Test Twins
           commands:
             - cd twins
@@ -423,7 +423,7 @@ blocks:
             - echo $DOCKER_TOKEN | docker login --username "$DOCKER_USERNAME" --password-stdin
             - docker push mainflux/twins:latest
       secrets:
-        - name: docker_hub             
+        - name: docker_hub
   - name: Lint and Test Readers
     run:
       when: "change_in(['/readers', 'cmd/cassandra-reader', 'cmd/influxdb-reader', 'cmd/mongodb-reader', 'cmd/postgres-reader', 'cmd/timescale-reader', 'things/api/grpc', 'auth/service.go', 'auth/api/grpc/client.go'])"
@@ -436,7 +436,7 @@ blocks:
           commands:
             - cd readers
             - cache restore linter
-            - './bin/golangci-lint run'
+            - "./bin/golangci-lint run"
         - name: Test Twins
           commands:
             - cd readers
@@ -462,7 +462,7 @@ blocks:
             - docker push mainflux/postgres-reader:latest
             - docker push mainflux/timescale-reader:latest
       secrets:
-        - name: docker_hub             
+        - name: docker_hub
   - name: Lint and Test Consumers
     run:
       when: "change_in(['consumers', 'cmd/cassandra-writer', 'cmd/influxdb-writer', 'cmd/mongodb-writer', 'cmd/postgres-writer', 'cmd/timescale-writer', 'cmd/smpp-notifier', 'cmd/smtp-notifier', 'things/api/grpc', 'auth/service.go', 'auth/api/grpc/client.go'])"
@@ -475,7 +475,7 @@ blocks:
           commands:
             - cd consumers
             - cache restore linter
-            - './bin/golangci-lint run'
+            - "./bin/golangci-lint run"
         - name: Test Consumers
           commands:
             - cd consumers
@@ -502,7 +502,7 @@ blocks:
             - docker push mainflux/timescale-writer:latest
             - docker push mainflux/smtp-notifier:latest
       secrets:
-        - name: docker_hub             
+        - name: docker_hub
   - name: Lint and Test CLI
     run:
       when: "change_in(['cli', 'cmd/cli'])"
@@ -515,7 +515,7 @@ blocks:
           commands:
             - cd cli
             - cache restore linter
-            - './bin/golangci-lint run'
+            - "./bin/golangci-lint run"
         - name: Test CLI
           commands:
             - cd cli
@@ -537,7 +537,7 @@ blocks:
             - echo $DOCKER_TOKEN | docker login --username "$DOCKER_USERNAME" --password-stdin
             - docker push mainflux/cli:latest
       secrets:
-        - name: docker_hub             
+        - name: docker_hub
   - name: Lint and Test LoRa
     run:
       when: "change_in(['lora', 'cmd/lora'])"
@@ -550,7 +550,7 @@ blocks:
           commands:
             - cd lora
             - cache restore linter
-            - './bin/golangci-lint run'
+            - "./bin/golangci-lint run"
         - name: Test LoRa
           commands:
             - cd lora
@@ -572,7 +572,7 @@ blocks:
             - echo $DOCKER_TOKEN | docker login --username "$DOCKER_USERNAME" --password-stdin
             - docker push mainflux/lora:latest
       secrets:
-        - name: docker_hub             
+        - name: docker_hub
   - name: Lint and Test OPC-UA
     run:
       when: "change_in(['/opcua', 'cmd/opcua', 'things/api/grpc', 'auth/service.go', 'auth/api/grpc/client.go'])"
@@ -585,7 +585,7 @@ blocks:
           commands:
             - cd opcua
             - cache restore linter
-            - './bin/golangci-lint run'
+            - "./bin/golangci-lint run"
         - name: Test OPC-UA
           commands:
             - cd opcua
@@ -607,7 +607,7 @@ blocks:
             - echo $DOCKER_TOKEN | docker login --username "$DOCKER_USERNAME" --password-stdin
             - docker push mainflux/opcua:latest
       secrets:
-        - name: docker_hub              
+        - name: docker_hub
   - name: Lint and Test Internal
     run:
       when: "change_in('/internal')"
@@ -620,7 +620,7 @@ blocks:
           commands:
             - cd internal
             - cache restore linter
-            - './bin/golangci-lint run'
+            - "./bin/golangci-lint run"
         - name: Test Internal
           commands:
             - cd internal
@@ -640,7 +640,7 @@ blocks:
           commands:
             - cd logger
             - cache restore linter
-            - './bin/golangci-lint run'
+            - "./bin/golangci-lint run"
         - name: Test Logger
           commands:
             - cd logger
@@ -660,7 +660,7 @@ blocks:
           commands:
             - cd pkg
             - cache restore linter
-            - './bin/golangci-lint run'
+            - "./bin/golangci-lint run"
         - name: Test PKG
           commands:
             - cd pkg
@@ -680,7 +680,7 @@ blocks:
           commands:
             - cd tools
             - cache restore linter
-            - './bin/golangci-lint run'
+            - "./bin/golangci-lint run"
         - name: Test Tools
           commands:
             - cd tools
@@ -697,3 +697,11 @@ blocks:
           commands:
             - MF_MESSAGE_BROKER_TYPE=rabbitmq make mqtt
 
+  - name: Compile Check For Redis
+    dependencies:
+      - Setup
+    task:
+      jobs:
+        - name: Compile For Redis
+          commands:
+            - MF_ES_STORE_TYPE=redis make mqtt

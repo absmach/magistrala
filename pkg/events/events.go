@@ -11,8 +11,8 @@ import (
 const (
 	UnpublishedEventsCheckInterval        = 1 * time.Minute
 	ConnCheckInterval                     = 100 * time.Millisecond
-	MaxUnpublishedEvents           uint64 = 1e6
-	MaxEventStreamLen              int64  = 1e9
+	MaxUnpublishedEvents           uint64 = 1e4
+	MaxEventStreamLen              int64  = 1e6
 )
 
 // Event represents an event.

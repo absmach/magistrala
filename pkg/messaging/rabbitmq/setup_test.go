@@ -65,6 +65,7 @@ func TestMain(m *testing.M) {
 	}
 
 	code := m.Run()
+
 	if err := pool.Purge(container); err != nil {
 		log.Fatalf("Could not purge container: %s", err)
 	}

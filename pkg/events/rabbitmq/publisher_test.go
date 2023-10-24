@@ -1,10 +1,7 @@
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
 
-//go:build !nats && !rabbitmq
-// +build !nats,!rabbitmq
-
-package redis_test
+package rabbitmq_test
 
 import (
 	"context"
@@ -12,24 +9,20 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"strconv"
 	"testing"
 	"time"
 
 	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/mainflux/mainflux/pkg/events"
-	"github.com/mainflux/mainflux/pkg/events/redis"
+	"github.com/mainflux/mainflux/pkg/events/rabbitmq"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
-	streamName  = "mainflux.eventstest"
-	consumer    = "test-consumer"
 	streamTopic = "test-topic"
 	eventsChan  = make(chan map[string]interface{})
 	logger      = mflog.NewMock()
 	errFailed   = errors.New("failed")
-	ctx         = context.TODO()
 )
 
 type testEvent struct {
@@ -57,16 +50,13 @@ func (te testEvent) Encode() (map[string]interface{}, error) {
 }
 
 func TestPublish(t *testing.T) {
-	err := redisClient.FlushAll(ctx).Err()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error on flushing redis: %s", err))
-
-	publisher, err := redis.NewPublisher(ctx, redisURL, streamName)
+	publisher, err := rabbitmq.NewPublisher(ctx, rabbitmqURL, stream)
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error on creating event store: %s", err))
 
-	subcriber, err := redis.NewSubscriber("http://invaliurl.com", streamName, consumer, logger)
+	_, err = rabbitmq.NewSubscriber("http://invaliurl.com", stream, consumer, logger)
 	assert.NotNilf(t, err, fmt.Sprintf("got unexpected error on creating event store: %s", err), err)
 
-	subcriber, err = redis.NewSubscriber(redisURL, streamName, consumer, logger)
+	subcriber, err := rabbitmq.NewSubscriber(rabbitmqURL, stream, consumer, logger)
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error on creating event store: %s", err))
 
 	err = subcriber.Subscribe(ctx, handler{})
@@ -139,9 +129,8 @@ func TestPublish(t *testing.T) {
 
 			receivedEvent := <-eventsChan
 
-			roa, err := strconv.ParseInt(receivedEvent["occurred_at"].(string), 10, 64)
-			assert.Nil(t, err, fmt.Sprintf("%s - got unexpected error: %s", tc.desc, err))
-			if assert.WithinRange(t, time.Unix(0, roa), time.Now().Add(-time.Second), time.Now().Add(time.Second)) {
+			val := int64(receivedEvent["occurred_at"].(float64))
+			if assert.WithinRange(t, time.Unix(0, val), time.Now().Add(-time.Second), time.Now().Add(time.Second)) {
 				delete(receivedEvent, "occurred_at")
 				delete(tc.event, "occurred_at")
 			}
@@ -163,13 +152,10 @@ func TestUnavailablePublish(t *testing.T) {
 	client, err := startContainer()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error on starting container: %s", err))
 
-	err = client.Client.FlushAll(ctx).Err()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error on flushing redis: %s", err))
-
-	publisher, err := redis.NewPublisher(ctx, "http://invaliurl.com", streamName)
+	_, err = rabbitmq.NewPublisher(ctx, "http://invaliurl.com", stream)
 	assert.NotNilf(t, err, fmt.Sprintf("got unexpected error on creating event store: %s", err), err)
 
-	publisher, err = redis.NewPublisher(ctx, client.url, streamName)
+	publisher, err := rabbitmq.NewPublisher(ctx, client.url, stream)
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error on creating event store: %s", err))
 
 	err = client.pool.Client.PauseContainer(client.container.Container.ID)
@@ -181,7 +167,7 @@ func TestUnavailablePublish(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error on unpausing container: %s", err))
 
 	// Wait for the events to be published.
-	time.Sleep(events.UnpublishedEventsCheckInterval)
+	time.Sleep(2 * events.UnpublishedEventsCheckInterval)
 
 	err = publisher.Close()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error on closing publisher: %s", err))
@@ -217,9 +203,6 @@ func spawnGoroutines(publisher events.Publisher, t *testing.T) {
 }
 
 func TestPubsub(t *testing.T) {
-	err := redisClient.FlushAll(ctx).Err()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error on flushing redis: %s", err))
-
 	subcases := []struct {
 		desc         string
 		stream       string
@@ -229,14 +212,14 @@ func TestPubsub(t *testing.T) {
 	}{
 		{
 			desc:         "Subscribe to a stream",
-			stream:       fmt.Sprintf("%s.%s", streamName, streamTopic),
+			stream:       fmt.Sprintf("%s.%s", stream, streamTopic),
 			consumer:     consumer,
 			errorMessage: nil,
 			handler:      handler{false},
 		},
 		{
 			desc:         "Subscribe to the same stream",
-			stream:       fmt.Sprintf("%s.%s", streamName, streamTopic),
+			stream:       fmt.Sprintf("%s.%s", stream, streamTopic),
 			consumer:     consumer,
 			errorMessage: nil,
 			handler:      handler{false},
@@ -245,33 +228,33 @@ func TestPubsub(t *testing.T) {
 			desc:         "Subscribe to an empty stream with an empty consumer",
 			stream:       "",
 			consumer:     "",
-			errorMessage: redis.ErrEmptyStream,
+			errorMessage: rabbitmq.ErrEmptyStream,
 			handler:      handler{false},
 		},
 		{
 			desc:         "Subscribe to an empty stream with a valid consumer",
 			stream:       "",
 			consumer:     consumer,
-			errorMessage: redis.ErrEmptyStream,
+			errorMessage: rabbitmq.ErrEmptyStream,
 			handler:      handler{false},
 		},
 		{
 			desc:         "Subscribe to a valid stream with an empty consumer",
-			stream:       fmt.Sprintf("%s.%s", streamName, streamTopic),
+			stream:       fmt.Sprintf("%s.%s", stream, streamTopic),
 			consumer:     "",
-			errorMessage: redis.ErrEmptyConsumer,
+			errorMessage: rabbitmq.ErrEmptyConsumer,
 			handler:      handler{false},
 		},
 		{
 			desc:         "Subscribe to another stream",
-			stream:       fmt.Sprintf("%s.%s", streamName, streamTopic+"1"),
+			stream:       fmt.Sprintf("%s.%s", stream, streamTopic+"1"),
 			consumer:     consumer,
 			errorMessage: nil,
 			handler:      handler{false},
 		},
 		{
 			desc:         "Subscribe to a stream with malformed handler",
-			stream:       fmt.Sprintf("%s.%s", streamName, streamTopic),
+			stream:       fmt.Sprintf("%s.%s", stream, streamTopic),
 			consumer:     consumer,
 			errorMessage: nil,
 			handler:      handler{true},
@@ -279,7 +262,7 @@ func TestPubsub(t *testing.T) {
 	}
 
 	for _, pc := range subcases {
-		subcriber, err := redis.NewSubscriber(redisURL, pc.stream, pc.consumer, logger)
+		subcriber, err := rabbitmq.NewSubscriber(rabbitmqURL, pc.stream, pc.consumer, logger)
 		if err != nil {
 			assert.Equal(t, err, pc.errorMessage, fmt.Sprintf("%s got expected error: %s - got: %s", pc.desc, pc.errorMessage, err))
 
@@ -288,7 +271,7 @@ func TestPubsub(t *testing.T) {
 
 		assert.Nil(t, err, fmt.Sprintf("%s got unexpected error: %s", pc.desc, err))
 
-		switch err := subcriber.Subscribe(context.TODO(), pc.handler); {
+		switch err := subcriber.Subscribe(ctx, pc.handler); {
 		case err == nil:
 			assert.Nil(t, err, fmt.Sprintf("%s got unexpected error: %s", pc.desc, err))
 		default:

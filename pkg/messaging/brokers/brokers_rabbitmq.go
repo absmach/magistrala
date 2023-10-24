@@ -1,8 +1,8 @@
-//go:build rabbitmq
-// +build rabbitmq
-
 // Copyright (c) Mainflux
 // SPDX-License-Identifier: Apache-2.0
+
+//go:build rabbitmq
+// +build rabbitmq
 
 package brokers
 
@@ -22,8 +22,8 @@ func init() {
 	log.Println("The binary was build using RabbitMQ as the message broker")
 }
 
-func NewPublisher(_ context.Context, url string) (messaging.Publisher, error) {
-	pb, err := rabbitmq.NewPublisher(url)
+func NewPublisher(_ context.Context, url string, opts ...messaging.Option) (messaging.Publisher, error) {
+	pb, err := rabbitmq.NewPublisher(url, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -31,8 +31,8 @@ func NewPublisher(_ context.Context, url string) (messaging.Publisher, error) {
 	return pb, nil
 }
 
-func NewPubSub(_ context.Context, url string, logger mflog.Logger) (messaging.PubSub, error) {
-	pb, err := rabbitmq.NewPubSub(url, logger)
+func NewPubSub(_ context.Context, url string, logger mflog.Logger, opts ...messaging.Option) (messaging.PubSub, error) {
+	pb, err := rabbitmq.NewPubSub(url, logger, opts...)
 	if err != nil {
 		return nil, err
 	}

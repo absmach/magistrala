@@ -12,14 +12,16 @@ volumes:
   mainflux-users-db-volume:
   mainflux-things-db-volume:
   mainflux-things-redis-volume:
-  mainflux-es-redis-volume:
   mainflux-mqtt-broker-volume:
   mainflux-broker-volume:
+  mainflux-es-volume:
   mainflux-spicedb-db-volume:
   mainflux-auth-db-volume:
 
 include:
   - path: brokers/docker-compose.yml
+    env_file: docker/.env
+  - path: es/docker-compose.yml
     env_file: docker/.env
 
 services:
@@ -190,7 +192,7 @@ services:
       MF_THINGS_AUTH_GRPC_SERVER_KEY: ${MF_THINGS_AUTH_GRPC_SERVER_KEY:+/things-grpc-server.key}
       MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
       MF_THINGS_AUTH_GRPC_CLIENT_CA_CERTS: ${MF_THINGS_AUTH_GRPC_CLIENT_CA_CERTS:+/things-grpc-client-ca.crt}
-      MF_THINGS_ES_URL: ${MF_ES_URL}
+      MF_THINGS_ES_URL: ${MF_ES_STORE_URL}
       MF_THINGS_CACHE_URL: ${MF_THINGS_CACHE_URL}
       MF_THINGS_DB_HOST: ${MF_THINGS_DB_HOST}
       MF_THINGS_DB_PORT: ${MF_THINGS_DB_PORT}
@@ -308,7 +310,7 @@ services:
       MF_EMAIL_FROM_ADDRESS: ${MF_EMAIL_FROM_ADDRESS}
       MF_EMAIL_FROM_NAME: ${MF_EMAIL_FROM_NAME}
       MF_EMAIL_TEMPLATE: ${MF_EMAIL_TEMPLATE}
-      MF_USERS_ES_URL: ${MF_ES_URL}
+      MF_USERS_ES_URL: ${MF_ES_STORE_URL}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
       MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
       MF_AUTH_GRPC_URL: ${MF_AUTH_GRPC_URL}
@@ -373,7 +375,7 @@ services:
       MF_MQTT_ADAPTER_WS_TARGET_PORT: ${MF_MQTT_ADAPTER_WS_TARGET_PORT}
       MF_MQTT_ADAPTER_WS_TARGET_PATH: ${MF_MQTT_ADAPTER_WS_TARGET_PATH}
       MF_MQTT_ADAPTER_INSTANCE: ${MF_MQTT_ADAPTER_INSTANCE}
-      MF_MQTT_ADAPTER_ES_URL: ${MF_ES_URL}
+      MF_MQTT_ADAPTER_ES_URL: ${MF_ES_STORE_URL}
       MF_THINGS_AUTH_GRPC_URL: ${MF_THINGS_AUTH_GRPC_URL}
       MF_THINGS_AUTH_GRPC_TIMEOUT: ${MF_THINGS_AUTH_GRPC_TIMEOUT}
       MF_THINGS_AUTH_GRPC_CLIENT_CERT: ${MF_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
@@ -445,15 +447,6 @@ services:
         target: /server_ca${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
-
-  es-redis:
-    image: redis:7.2.0-alpine
-    container_name: mainflux-es-redis
-    restart: on-failure
-    networks:
-      - mainflux-base-net
-    volumes:
-      - mainflux-es-redis-volume:/data
 
   coap-adapter:
     image: mainflux/coap:${MF_RELEASE_TAG}

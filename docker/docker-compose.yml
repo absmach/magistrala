@@ -134,8 +134,6 @@ services:
       - ${MF_NGINX_SSL_PORT}:${MF_NGINX_SSL_PORT}
       - ${MF_NGINX_MQTT_PORT}:${MF_NGINX_MQTT_PORT}
       - ${MF_NGINX_MQTTS_PORT}:${MF_NGINX_MQTTS_PORT}
-      - ${MF_NGINX_COAP_PORT}:${MF_NGINX_COAP_PORT}
-      - ${MF_NGINX_COAPS_PORT}:${MF_NGINX_COAPS_PORT}
     networks:
       - mainflux-base-net
     env_file:

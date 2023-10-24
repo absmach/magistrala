@@ -45,14 +45,15 @@ const (
 )
 
 type config struct {
-	LogLevel       string `env:"MF_OPCUA_ADAPTER_LOG_LEVEL"          envDefault:"info"`
-	ESConsumerName string `env:"MF_OPCUA_ADAPTER_EVENT_CONSUMER"     envDefault:"opcua-adapter"`
-	BrokerURL      string `env:"MF_MESSAGE_BROKER_URL"               envDefault:"nats://localhost:4222"`
-	JaegerURL      string `env:"MF_JAEGER_URL"                       envDefault:"http://jaeger:14268/api/traces"`
-	SendTelemetry  bool   `env:"MF_SEND_TELEMETRY"                   envDefault:"true"`
-	InstanceID     string `env:"MF_OPCUA_ADAPTER_INSTANCE_ID"        envDefault:""`
-	ESURL          string `env:"MF_OPCUA_ADAPTER_ES_URL"             envDefault:"redis://localhost:6379/0"`
-	RouteMapURL    string `env:"MF_OPCUA_ADAPTER_ROUTE_MAP_URL"      envDefault:"redis://localhost:6379/0"`
+	LogLevel       string  `env:"MF_OPCUA_ADAPTER_LOG_LEVEL"          envDefault:"info"`
+	ESConsumerName string  `env:"MF_OPCUA_ADAPTER_EVENT_CONSUMER"     envDefault:"opcua-adapter"`
+	BrokerURL      string  `env:"MF_MESSAGE_BROKER_URL"               envDefault:"nats://localhost:4222"`
+	JaegerURL      string  `env:"MF_JAEGER_URL"                       envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry  bool    `env:"MF_SEND_TELEMETRY"                   envDefault:"true"`
+	InstanceID     string  `env:"MF_OPCUA_ADAPTER_INSTANCE_ID"        envDefault:""`
+	ESURL          string  `env:"MF_OPCUA_ADAPTER_ES_URL"             envDefault:"redis://localhost:6379/0"`
+	RouteMapURL    string  `env:"MF_OPCUA_ADAPTER_ROUTE_MAP_URL"      envDefault:"redis://localhost:6379/0"`
+	TraceRatio     float64 `env:"MF_JAEGER_TRACE_RATIO"               envDefault:"1.0"`
 }
 
 func main() {
@@ -104,7 +105,7 @@ func main() {
 	chanRM := newRouteMapRepositoy(rmConn, channelsRMPrefix, logger)
 	connRM := newRouteMapRepositoy(rmConn, connectionRMPrefix, logger)
 
-	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
+	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
 		exitCode = 1

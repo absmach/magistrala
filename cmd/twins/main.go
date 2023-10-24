@@ -46,16 +46,17 @@ const (
 )
 
 type config struct {
-	LogLevel        string `env:"MF_TWINS_LOG_LEVEL"          envDefault:"info"`
-	StandaloneID    string `env:"MF_TWINS_STANDALONE_ID"      envDefault:""`
-	StandaloneToken string `env:"MF_TWINS_STANDALONE_TOKEN"   envDefault:""`
-	ChannelID       string `env:"MF_TWINS_CHANNEL_ID"         envDefault:""`
-	BrokerURL       string `env:"MF_MESSAGE_BROKER_URL"       envDefault:"nats://localhost:4222"`
-	JaegerURL       string `env:"MF_JAEGER_URL"               envDefault:"http://jaeger:14268/api/traces"`
-	SendTelemetry   bool   `env:"MF_SEND_TELEMETRY"           envDefault:"true"`
-	InstanceID      string `env:"MF_TWINS_INSTANCE_ID"        envDefault:""`
-	ESURL           string `env:"MF_TWINS_ES_URL"             envDefault:"redis://localhost:6379/0"`
-	CacheURL        string `env:"MF_TWINS_CACHE_URL"          envDefault:"redis://localhost:6379/0"`
+	LogLevel        string  `env:"MF_TWINS_LOG_LEVEL"          envDefault:"info"`
+	StandaloneID    string  `env:"MF_TWINS_STANDALONE_ID"      envDefault:""`
+	StandaloneToken string  `env:"MF_TWINS_STANDALONE_TOKEN"   envDefault:""`
+	ChannelID       string  `env:"MF_TWINS_CHANNEL_ID"         envDefault:""`
+	BrokerURL       string  `env:"MF_MESSAGE_BROKER_URL"       envDefault:"nats://localhost:4222"`
+	JaegerURL       string  `env:"MF_JAEGER_URL"               envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry   bool    `env:"MF_SEND_TELEMETRY"           envDefault:"true"`
+	InstanceID      string  `env:"MF_TWINS_INSTANCE_ID"        envDefault:""`
+	ESURL           string  `env:"MF_TWINS_ES_URL"             envDefault:"redis://localhost:6379/0"`
+	CacheURL        string  `env:"MF_TWINS_CACHE_URL"          envDefault:"redis://localhost:6379/0"`
+	TraceRatio      float64 `env:"MF_JAEGER_TRACE_RATIO"       envDefault:"1.0"`
 }
 
 func main() {
@@ -105,7 +106,7 @@ func main() {
 		return
 	}
 
-	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
+	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to init Jaeger: %s", err))
 		exitCode = 1

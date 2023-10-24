@@ -42,12 +42,13 @@ const (
 )
 
 type config struct {
-	LogLevel      string `env:"MF_CERTS_LOG_LEVEL"        envDefault:"info"`
-	CertsURL      string `env:"MF_SDK_CERTS_URL"          envDefault:"http://localhost"`
-	ThingsURL     string `env:"MF_THINGS_URL"             envDefault:"http://things:9000"`
-	JaegerURL     string `env:"MF_JAEGER_URL"             envDefault:"http://jaeger:14268/api/traces"`
-	SendTelemetry bool   `env:"MF_SEND_TELEMETRY"         envDefault:"true"`
-	InstanceID    string `env:"MF_CERTS_INSTANCE_ID"      envDefault:""`
+	LogLevel      string  `env:"MF_CERTS_LOG_LEVEL"        envDefault:"info"`
+	CertsURL      string  `env:"MF_SDK_CERTS_URL"          envDefault:"http://localhost"`
+	ThingsURL     string  `env:"MF_THINGS_URL"             envDefault:"http://things:9000"`
+	JaegerURL     string  `env:"MF_JAEGER_URL"             envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry bool    `env:"MF_SEND_TELEMETRY"         envDefault:"true"`
+	InstanceID    string  `env:"MF_CERTS_INSTANCE_ID"      envDefault:""`
+	TraceRatio    float64 `env:"MF_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
 
 	// Sign and issue certificates without 3rd party PKI
 	SignCAPath    string `env:"MF_CERTS_SIGN_CA_PATH"        envDefault:"ca.crt"`
@@ -120,7 +121,7 @@ func main() {
 
 	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 
-	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
+	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to init Jaeger: %s", err))
 		exitCode = 1

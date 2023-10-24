@@ -46,14 +46,15 @@ const (
 )
 
 type config struct {
-	LogLevel       string `env:"MF_BOOTSTRAP_LOG_LEVEL"        envDefault:"info"`
-	EncKey         string `env:"MF_BOOTSTRAP_ENCRYPT_KEY"      envDefault:"12345678910111213141516171819202"`
-	ESConsumerName string `env:"MF_BOOTSTRAP_EVENT_CONSUMER"   envDefault:"bootstrap"`
-	ThingsURL      string `env:"MF_THINGS_URL"                 envDefault:"http://localhost:9000"`
-	JaegerURL      string `env:"MF_JAEGER_URL"                 envDefault:"http://jaeger:14268/api/traces"`
-	SendTelemetry  bool   `env:"MF_SEND_TELEMETRY"             envDefault:"true"`
-	InstanceID     string `env:"MF_BOOTSTRAP_INSTANCE_ID"      envDefault:""`
-	ESURL          string `env:"MF_BOOTSTRAP_ES_URL"           envDefault:"redis://localhost:6379/0"`
+	LogLevel       string  `env:"MF_BOOTSTRAP_LOG_LEVEL"        envDefault:"info"`
+	EncKey         string  `env:"MF_BOOTSTRAP_ENCRYPT_KEY"      envDefault:"12345678910111213141516171819202"`
+	ESConsumerName string  `env:"MF_BOOTSTRAP_EVENT_CONSUMER"   envDefault:"bootstrap"`
+	ThingsURL      string  `env:"MF_THINGS_URL"                 envDefault:"http://localhost:9000"`
+	JaegerURL      string  `env:"MF_JAEGER_URL"                 envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry  bool    `env:"MF_SEND_TELEMETRY"             envDefault:"true"`
+	InstanceID     string  `env:"MF_BOOTSTRAP_INSTANCE_ID"      envDefault:""`
+	ESURL          string  `env:"MF_BOOTSTRAP_ES_URL"           envDefault:"redis://localhost:6379/0"`
+	TraceRatio     float64 `env:"MF_JAEGER_TRACE_RATIO"         envDefault:"1.0"`
 }
 
 func main() {
@@ -104,7 +105,7 @@ func main() {
 	defer authHandler.Close()
 	logger.Info("Successfully connected to auth grpc server " + authHandler.Secure())
 
-	tp, err := jaeger.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
+	tp, err := jaeger.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to init Jaeger: %s", err))
 		exitCode = 1

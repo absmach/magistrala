@@ -53,16 +53,17 @@ const (
 )
 
 type config struct {
-	LogLevel          string `env:"MF_AUTH_LOG_LEVEL"               envDefault:"info"`
-	SecretKey         string `env:"MF_AUTH_SECRET_KEY"              envDefault:"secret"`
-	JaegerURL         string `env:"MF_JAEGER_URL"                   envDefault:"http://jaeger:14268/api/traces"`
-	SendTelemetry     bool   `env:"MF_SEND_TELEMETRY"               envDefault:"true"`
-	InstanceID        string `env:"MF_AUTH_ADAPTER_INSTANCE_ID"     envDefault:""`
-	AccessDuration    string `env:"MF_AUTH_ACCESS_TOKEN_DURATION"  envDefault:"30m"`
-	RefreshDuration   string `env:"MF_AUTH_REFRESH_TOKEN_DURATION" envDefault:"24h"`
-	SpicedbHost       string `env:"MF_SPICEDB_HOST"                 envDefault:"localhost"`
-	SpicedbPort       string `env:"MF_SPICEDB_PORT"                 envDefault:"50051"`
-	SpicedbSchemaFile string `env:"MF_SPICEDB_SCHEMA_FILE"          envDefault:"./docker/spicedb/schema.zed"`
+	LogLevel          string  `env:"MF_AUTH_LOG_LEVEL"               envDefault:"info"`
+	SecretKey         string  `env:"MF_AUTH_SECRET_KEY"              envDefault:"secret"`
+	JaegerURL         string  `env:"MF_JAEGER_URL"                   envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry     bool    `env:"MF_SEND_TELEMETRY"               envDefault:"true"`
+	InstanceID        string  `env:"MF_AUTH_ADAPTER_INSTANCE_ID"     envDefault:""`
+	AccessDuration    string  `env:"MF_AUTH_ACCESS_TOKEN_DURATION"   envDefault:"30m"`
+	RefreshDuration   string  `env:"MF_AUTH_REFRESH_TOKEN_DURATION"  envDefault:"24h"`
+	SpicedbHost       string  `env:"MF_SPICEDB_HOST"                 envDefault:"localhost"`
+	SpicedbPort       string  `env:"MF_SPICEDB_PORT"                 envDefault:"50051"`
+	SpicedbSchemaFile string  `env:"MF_SPICEDB_SCHEMA_FILE"          envDefault:"./docker/spicedb/schema.zed"`
+	TraceRatio        float64 `env:"MF_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
 }
 
 func main() {
@@ -102,7 +103,7 @@ func main() {
 	}
 	defer db.Close()
 
-	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
+	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to init Jaeger: %s", err))
 		exitCode = 1

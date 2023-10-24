@@ -56,18 +56,19 @@ const (
 )
 
 type config struct {
-	LogLevel        string `env:"MF_USERS_LOG_LEVEL"              envDefault:"info"`
-	SecretKey       string `env:"MF_USERS_SECRET_KEY"             envDefault:"secret"`
-	AdminEmail      string `env:"MF_USERS_ADMIN_EMAIL"            envDefault:""`
-	AdminPassword   string `env:"MF_USERS_ADMIN_PASSWORD"         envDefault:""`
-	PassRegexText   string `env:"MF_USERS_PASS_REGEX"             envDefault:"^.{8,}$"`
-	AccessDuration  string `env:"MF_USERS_ACCESS_TOKEN_DURATION"  envDefault:"15m"`
-	RefreshDuration string `env:"MF_USERS_REFRESH_TOKEN_DURATION" envDefault:"24h"`
-	ResetURL        string `env:"MF_TOKEN_RESET_ENDPOINT"         envDefault:"/reset-request"`
-	JaegerURL       string `env:"MF_JAEGER_URL"                   envDefault:"http://jaeger:14268/api/traces"`
-	SendTelemetry   bool   `env:"MF_SEND_TELEMETRY"               envDefault:"true"`
-	InstanceID      string `env:"MF_USERS_INSTANCE_ID"            envDefault:""`
-	ESURL           string `env:"MF_USERS_ES_URL"                 envDefault:"redis://localhost:6379/0"`
+	LogLevel        string  `env:"MF_USERS_LOG_LEVEL"              envDefault:"info"`
+	SecretKey       string  `env:"MF_USERS_SECRET_KEY"             envDefault:"secret"`
+	AdminEmail      string  `env:"MF_USERS_ADMIN_EMAIL"            envDefault:""`
+	AdminPassword   string  `env:"MF_USERS_ADMIN_PASSWORD"         envDefault:""`
+	PassRegexText   string  `env:"MF_USERS_PASS_REGEX"             envDefault:"^.{8,}$"`
+	AccessDuration  string  `env:"MF_USERS_ACCESS_TOKEN_DURATION"  envDefault:"15m"`
+	RefreshDuration string  `env:"MF_USERS_REFRESH_TOKEN_DURATION" envDefault:"24h"`
+	ResetURL        string  `env:"MF_TOKEN_RESET_ENDPOINT"         envDefault:"/reset-request"`
+	JaegerURL       string  `env:"MF_JAEGER_URL"                   envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry   bool    `env:"MF_SEND_TELEMETRY"               envDefault:"true"`
+	InstanceID      string  `env:"MF_USERS_INSTANCE_ID"            envDefault:""`
+	ESURL           string  `env:"MF_USERS_ES_URL"                 envDefault:"redis://localhost:6379/0"`
+	TraceRatio      float64 `env:"MF_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
 	PassRegex       *regexp.Regexp
 }
 
@@ -126,7 +127,7 @@ func main() {
 	}
 	defer db.Close()
 
-	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
+	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to init Jaeger: %s", err))
 		exitCode = 1

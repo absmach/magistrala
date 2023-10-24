@@ -21,7 +21,7 @@ var (
 )
 
 // NewProvider initializes Jaeger TraceProvider.
-func NewProvider(svcName, url, instanceID string) (*tracesdk.TracerProvider, error) {
+func NewProvider(svcName, url, instanceID string, fraction float64) (*tracesdk.TracerProvider, error) {
 	if url == "" {
 		return nil, errNoURL
 	}
@@ -47,7 +47,7 @@ func NewProvider(svcName, url, instanceID string) (*tracesdk.TracerProvider, err
 	attributes = append(attributes, hostAttr.Attributes()...)
 
 	tp := tracesdk.NewTracerProvider(
-		tracesdk.WithSampler(tracesdk.AlwaysSample()),
+		tracesdk.WithSampler(tracesdk.TraceIDRatioBased(fraction)),
 		tracesdk.WithBatcher(exporter),
 		tracesdk.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,

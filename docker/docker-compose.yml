@@ -149,10 +149,12 @@ services:
     image: postgres:13.3-alpine
     container_name: mainflux-things-db
     restart: on-failure
+    command: postgres -c "max_connections=${MF_POSTGRES_MAX_CONNECTIONS}"
     environment:
       POSTGRES_USER: ${MF_THINGS_DB_USER}
       POSTGRES_PASSWORD: ${MF_THINGS_DB_PASS}
       POSTGRES_DB: ${MF_THINGS_DB_NAME}
+      MF_POSTGRES_MAX_CONNECTIONS: ${MF_POSTGRES_MAX_CONNECTIONS}
     networks:
       - mainflux-base-net
     ports:
@@ -209,6 +211,7 @@ services:
       MF_AUTH_GRPC_CLIENT_KEY: ${MF_AUTH_GRPC_CLIENT_KEY:+/users-grpc-client.key}
       MF_AUTH_GRPC_SERVER_CA_CERTS: ${MF_AUTH_GRPC_SERVER_CA_CERTS:+/users-grpc-server-ca.crt}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
+      MF_JAEGER_TRACE_RATIO: ${MF_JAEGER_TRACE_RATIO}
       MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
     ports:
       - ${MF_THINGS_HTTP_PORT}:${MF_THINGS_HTTP_PORT}
@@ -258,12 +261,12 @@ services:
     image: postgres:15.1-alpine
     container_name: mainflux-users-db
     restart: on-failure
+    command: postgres -c "max_connections=${MF_POSTGRES_MAX_CONNECTIONS}"
     environment:
       POSTGRES_USER: ${MF_USERS_DB_USER}
       POSTGRES_PASSWORD: ${MF_USERS_DB_PASS}
       POSTGRES_DB: ${MF_USERS_DB_NAME}
-    ports:
-      - 6005:5432
+      MF_POSTGRES_MAX_CONNECTIONS: ${MF_POSTGRES_MAX_CONNECTIONS}
     networks:
       - mainflux-base-net
     volumes:
@@ -312,6 +315,7 @@ services:
       MF_EMAIL_TEMPLATE: ${MF_EMAIL_TEMPLATE}
       MF_USERS_ES_URL: ${MF_ES_STORE_URL}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
+      MF_JAEGER_TRACE_RATIO: ${MF_JAEGER_TRACE_RATIO}
       MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
       MF_AUTH_GRPC_URL: ${MF_AUTH_GRPC_URL}
       MF_AUTH_GRPC_TIMEOUT: ${MF_AUTH_GRPC_TIMEOUT}
@@ -383,6 +387,7 @@ services:
       MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
       MF_MESSAGE_BROKER_URL: ${MF_MESSAGE_BROKER_URL}
+      MF_JAEGER_TRACE_RATIO: ${MF_JAEGER_TRACE_RATIO}
       MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
     networks:
       - mainflux-base-net
@@ -424,6 +429,7 @@ services:
       MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
       MF_MESSAGE_BROKER_URL: ${MF_MESSAGE_BROKER_URL}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
+      MF_JAEGER_TRACE_RATIO: ${MF_JAEGER_TRACE_RATIO}
       MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
       MF_HTTP_ADAPTER_INSTANCE_ID: ${MF_HTTP_ADAPTER_INSTANCE_ID}
     ports:
@@ -472,6 +478,7 @@ services:
       MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
       MF_MESSAGE_BROKER_URL: ${MF_MESSAGE_BROKER_URL}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
+      MF_JAEGER_TRACE_RATIO: ${MF_JAEGER_TRACE_RATIO}
       MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
       MF_COAP_ADAPTER_INSTANCE_ID: ${MF_COAP_ADAPTER_INSTANCE_ID}
     ports:
@@ -517,6 +524,7 @@ services:
       MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
       MF_MESSAGE_BROKER_URL: ${MF_MESSAGE_BROKER_URL}
       MF_JAEGER_URL: ${MF_JAEGER_URL}
+      MF_JAEGER_TRACE_RATIO: ${MF_JAEGER_TRACE_RATIO}
       MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
       MF_WS_ADAPTER_INSTANCE_ID: ${MF_WS_ADAPTER_INSTANCE_ID}
     ports:

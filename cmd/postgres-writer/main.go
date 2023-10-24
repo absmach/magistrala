@@ -39,12 +39,13 @@ const (
 )
 
 type config struct {
-	LogLevel      string `env:"MF_POSTGRES_WRITER_LOG_LEVEL"     envDefault:"info"`
-	ConfigPath    string `env:"MF_POSTGRES_WRITER_CONFIG_PATH"   envDefault:"/config.toml"`
-	BrokerURL     string `env:"MF_MESSAGE_BROKER_URL"            envDefault:"nats://localhost:4222"`
-	JaegerURL     string `env:"MF_JAEGER_URL"                    envDefault:"http://jaeger:14268/api/traces"`
-	SendTelemetry bool   `env:"MF_SEND_TELEMETRY"                envDefault:"true"`
-	InstanceID    string `env:"MF_POSTGRES_WRITER_INSTANCE_ID"   envDefault:""`
+	LogLevel      string  `env:"MF_POSTGRES_WRITER_LOG_LEVEL"     envDefault:"info"`
+	ConfigPath    string  `env:"MF_POSTGRES_WRITER_CONFIG_PATH"   envDefault:"/config.toml"`
+	BrokerURL     string  `env:"MF_MESSAGE_BROKER_URL"            envDefault:"nats://localhost:4222"`
+	JaegerURL     string  `env:"MF_JAEGER_URL"                    envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry bool    `env:"MF_SEND_TELEMETRY"                envDefault:"true"`
+	InstanceID    string  `env:"MF_POSTGRES_WRITER_INSTANCE_ID"   envDefault:""`
+	TraceRatio    float64 `env:"MF_JAEGER_TRACE_RATIO"            envDefault:"1.0"`
 }
 
 func main() {
@@ -86,7 +87,7 @@ func main() {
 	}
 	defer db.Close()
 
-	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID)
+	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
 		exitCode = 1

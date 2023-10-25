@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package mocks
@@ -7,9 +7,9 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/ws"
 	"github.com/gorilla/websocket"
-	"github.com/mainflux/mainflux/pkg/messaging"
-	"github.com/mainflux/mainflux/ws"
 )
 
 var _ messaging.PubSub = (*mockPubSub)(nil)

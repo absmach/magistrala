@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package mqtt_test
@@ -10,13 +10,13 @@ import (
 	"log"
 	"testing"
 
-	"github.com/mainflux/mainflux"
-	authmocks "github.com/mainflux/mainflux/auth/mocks"
-	"github.com/mainflux/mainflux/internal/testsutil"
-	"github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/mqtt"
-	"github.com/mainflux/mainflux/mqtt/mocks"
-	"github.com/mainflux/mainflux/pkg/errors"
+	mainflux "github.com/absmach/magistrala"
+	authmocks "github.com/absmach/magistrala/auth/mocks"
+	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/mqtt"
+	"github.com/absmach/magistrala/mqtt/mocks"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/mainflux/mproxy/pkg/session"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

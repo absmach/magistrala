@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package api
@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"time"
 
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/ws"
+	mflog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/ws"
 )
 
 var _ ws.Service = (*loggingMiddleware)(nil)

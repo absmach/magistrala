@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package emailer
@@ -6,8 +6,8 @@ package emailer
 import (
 	"fmt"
 
-	"github.com/mainflux/mainflux/internal/email"
-	"github.com/mainflux/mainflux/users"
+	"github.com/absmach/magistrala/internal/email"
+	"github.com/absmach/magistrala/users"
 )
 
 var _ users.Emailer = (*emailer)(nil)

@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package postgres_test
@@ -11,10 +11,10 @@ import (
 	"testing"
 	"time"
 
+	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
+	"github.com/absmach/magistrala/internal/postgres"
+	upostgres "github.com/absmach/magistrala/users/postgres"
 	"github.com/jmoiron/sqlx"
-	pgclient "github.com/mainflux/mainflux/internal/clients/postgres"
-	"github.com/mainflux/mainflux/internal/postgres"
-	upostgres "github.com/mainflux/mainflux/users/postgres"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"go.opentelemetry.io/otel"

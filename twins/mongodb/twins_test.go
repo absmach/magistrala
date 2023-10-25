@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package mongodb_test
@@ -10,12 +10,12 @@ import (
 	"strings"
 	"testing"
 
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/pkg/uuid"
-	"github.com/mainflux/mainflux/twins"
-	"github.com/mainflux/mainflux/twins/mocks"
-	"github.com/mainflux/mainflux/twins/mongodb"
+	mflog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/absmach/magistrala/twins"
+	"github.com/absmach/magistrala/twins/mocks"
+	"github.com/absmach/magistrala/twins/mongodb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson"
@@ -237,7 +237,7 @@ func TestTwinsRetrieveByAttribute(t *testing.T) {
 
 func TestTwinsRetrieveAll(t *testing.T) {
 	email := "twin-multi-retrieval@example.com"
-	name := "mainflux"
+	name := "magistrala"
 	metadata := twins.Metadata{
 		"type": "test",
 	}

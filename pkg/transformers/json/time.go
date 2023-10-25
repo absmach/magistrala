@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package json
@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/absmach/magistrala/pkg/errors"
 )
 
 var errUnsupportedFormat = errors.New("unsupported time format")

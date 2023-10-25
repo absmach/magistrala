@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mainflux/mainflux/bootstrap"
-	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/absmach/magistrala/bootstrap"
+	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/stretchr/testify/assert"
 )
 

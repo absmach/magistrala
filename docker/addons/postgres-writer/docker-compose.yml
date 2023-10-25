@@ -1,8 +1,8 @@
-# Copyright (c) Mainflux
+# Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
 # This docker-compose file contains optional Postgres and Postgres-writer services
-# for Mainflux platform. Since these are optional, this file is dependent of docker-compose file
+# for Magistrala platform. Since these are optional, this file is dependent of docker-compose file
 # from <project_root>/docker. In order to run these services, execute command:
 # docker-compose -f docker/docker-compose.yml -f docker/addons/postgres-writer/docker-compose.yml up
 # from project root. PostgreSQL default port (5432) is exposed, so you can use various tools for database
@@ -11,55 +11,55 @@
 version: "3.7"
 
 networks:
-  mainflux-base-net:
+  magistrala-base-net:
 
 volumes:
-  mainflux-postgres-writer-volume:
+  magistrala-postgres-writer-volume:
 
 services:
   postgres:
     image: postgres:13.3-alpine
-    container_name: mainflux-postgres
+    container_name: magistrala-postgres
     restart: on-failure
     environment:
-      POSTGRES_USER: ${MF_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${MF_POSTGRES_PASS}
-      POSTGRES_DB: ${MF_POSTGRES_NAME}
+      POSTGRES_USER: ${MG_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${MG_POSTGRES_PASS}
+      POSTGRES_DB: ${MG_POSTGRES_NAME}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
-      - mainflux-postgres-writer-volume:/var/lib/postgresql/data
+      - magistrala-postgres-writer-volume:/var/lib/postgresql/data
 
   postgres-writer:
-    image: mainflux/postgres-writer:${MF_RELEASE_TAG}
-    container_name: mainflux-postgres-writer
+    image: magistrala/postgres-writer:${MG_RELEASE_TAG}
+    container_name: magistrala-postgres-writer
     depends_on:
       - postgres
     restart: on-failure
     environment:
-      MF_POSTGRES_WRITER_LOG_LEVEL: ${MF_POSTGRES_WRITER_LOG_LEVEL}
-      MF_POSTGRES_WRITER_CONFIG_PATH: ${MF_POSTGRES_WRITER_CONFIG_PATH}
-      MF_POSTGRES_WRITER_HTTP_HOST: ${MF_POSTGRES_WRITER_HTTP_HOST}
-      MF_POSTGRES_WRITER_HTTP_PORT: ${MF_POSTGRES_WRITER_HTTP_PORT}
-      MF_POSTGRES_WRITER_HTTP_SERVER_CERT: ${MF_POSTGRES_WRITER_HTTP_SERVER_CERT}
-      MF_POSTGRES_WRITER_HTTP_SERVER_KEY: ${MF_POSTGRES_WRITER_HTTP_SERVER_KEY}
-      MF_POSTGRES_HOST: ${MF_POSTGRES_HOST}
-      MF_POSTGRES_PORT: ${MF_POSTGRES_PORT}
-      MF_POSTGRES_USER: ${MF_POSTGRES_USER}
-      MF_POSTGRES_PASS: ${MF_POSTGRES_PASS}
-      MF_POSTGRES_NAME: ${MF_POSTGRES_NAME}
-      MF_POSTGRES_SSL_MODE: ${MF_POSTGRES_SSL_MODE}
-      MF_POSTGRES_SSL_CERT: ${MF_POSTGRES_SSL_CERT}
-      MF_POSTGRES_SSL_KEY: ${MF_POSTGRES_SSL_KEY}
-      MF_POSTGRES_SSL_ROOT_CERT: ${MF_POSTGRES_SSL_ROOT_CERT}
-      MF_MESSAGE_BROKER_URL: ${MF_MESSAGE_BROKER_URL}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_JAEGER_TRACE_RATIO: ${MF_JAEGER_TRACE_RATIO}
-      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
-      MF_POSTGRES_WRITER_INSTANCE_ID: ${MF_POSTGRES_WRITER_INSTANCE_ID}
+      MG_POSTGRES_WRITER_LOG_LEVEL: ${MG_POSTGRES_WRITER_LOG_LEVEL}
+      MG_POSTGRES_WRITER_CONFIG_PATH: ${MG_POSTGRES_WRITER_CONFIG_PATH}
+      MG_POSTGRES_WRITER_HTTP_HOST: ${MG_POSTGRES_WRITER_HTTP_HOST}
+      MG_POSTGRES_WRITER_HTTP_PORT: ${MG_POSTGRES_WRITER_HTTP_PORT}
+      MG_POSTGRES_WRITER_HTTP_SERVER_CERT: ${MG_POSTGRES_WRITER_HTTP_SERVER_CERT}
+      MG_POSTGRES_WRITER_HTTP_SERVER_KEY: ${MG_POSTGRES_WRITER_HTTP_SERVER_KEY}
+      MG_POSTGRES_HOST: ${MG_POSTGRES_HOST}
+      MG_POSTGRES_PORT: ${MG_POSTGRES_PORT}
+      MG_POSTGRES_USER: ${MG_POSTGRES_USER}
+      MG_POSTGRES_PASS: ${MG_POSTGRES_PASS}
+      MG_POSTGRES_NAME: ${MG_POSTGRES_NAME}
+      MG_POSTGRES_SSL_MODE: ${MG_POSTGRES_SSL_MODE}
+      MG_POSTGRES_SSL_CERT: ${MG_POSTGRES_SSL_CERT}
+      MG_POSTGRES_SSL_KEY: ${MG_POSTGRES_SSL_KEY}
+      MG_POSTGRES_SSL_ROOT_CERT: ${MG_POSTGRES_SSL_ROOT_CERT}
+      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_POSTGRES_WRITER_INSTANCE_ID: ${MG_POSTGRES_WRITER_INSTANCE_ID}
     ports:
-      - ${MF_POSTGRES_WRITER_HTTP_PORT}:${MF_POSTGRES_WRITER_HTTP_PORT}
+      - ${MG_POSTGRES_WRITER_HTTP_PORT}:${MG_POSTGRES_WRITER_HTTP_PORT}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
       - ./config.toml:/config.toml

@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package twins
@@ -27,7 +27,7 @@ type Definition struct {
 	Delta      int64       `json:"delta"`
 }
 
-// Twin is a Mainflux data system representation. Each twin is owned
+// Twin is a Magistrala data system representation. Each twin is owned
 // by a single user, and is assigned with the unique identifier.
 type Twin struct {
 	Owner       string

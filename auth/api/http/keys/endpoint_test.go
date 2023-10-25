@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package keys_test
@@ -14,13 +14,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mainflux/mainflux/auth"
-	httpapi "github.com/mainflux/mainflux/auth/api/http"
-	"github.com/mainflux/mainflux/auth/jwt"
-	"github.com/mainflux/mainflux/auth/mocks"
-	"github.com/mainflux/mainflux/internal/apiutil"
-	"github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/uuid"
+	"github.com/absmach/magistrala/auth"
+	httpapi "github.com/absmach/magistrala/auth/api/http"
+	"github.com/absmach/magistrala/auth/jwt"
+	"github.com/absmach/magistrala/auth/mocks"
+	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 )
 

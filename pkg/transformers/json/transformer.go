@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package json
@@ -7,9 +7,9 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/pkg/messaging"
-	"github.com/mainflux/mainflux/pkg/transformers"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/transformers"
 )
 
 const sep = "/"
@@ -47,7 +47,7 @@ func New(tfs []TimeField) transformers.Transformer {
 	}
 }
 
-// Transform transforms Mainflux message to a list of JSON messages.
+// Transform transforms Magistrala message to a list of JSON messages.
 func (ts *transformerService) Transform(msg *messaging.Message) (interface{}, error) {
 	ret := Message{
 		Publisher: msg.Publisher,

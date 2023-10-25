@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package users
@@ -6,8 +6,8 @@ package users
 import (
 	"context"
 
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/pkg/clients"
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/pkg/clients"
 )
 
 // Service specifies an API that must be fullfiled by the domain service

@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package auth_test
@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mainflux/mainflux/auth"
+	"github.com/absmach/magistrala/auth"
 	"github.com/stretchr/testify/assert"
 )
 

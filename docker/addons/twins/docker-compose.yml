@@ -1,93 +1,93 @@
-# Copyright (c) Mainflux
+# Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
 # This docker-compose file contains optional opcua-adapter and opcua-redis services
-# for the Mainflux platform. Since this services are optional, this file is dependent on the
+# for the Magistrala platform. Since this services are optional, this file is dependent on the
 # docker-compose.yml file from <project_root>/docker/. In order to run these services,
 # core services, as well as the network from the core composition, should be already running.
 
 version: "3.7"
 
 networks:
-  mainflux-base-net:
+  magistrala-base-net:
 
 volumes:
-  mainflux-twins-db-volume:
-  mainflux-twins-db-configdb-volume:
+  magistrala-twins-db-volume:
+  magistrala-twins-db-configdb-volume:
 
 services:
   twins-redis:
     image: redis:7.2.0-alpine
-    container_name: mainflux-twins-redis
+    container_name: magistrala-twins-redis
     restart: on-failure
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
 
   twins-db:
     image: mongo:bionic
-    command: mongod --port ${MF_TWINS_DB_PORT}
-    container_name: mainflux-twins-db
+    command: mongod --port ${MG_TWINS_DB_PORT}
+    container_name: magistrala-twins-db
     restart: on-failure
     environment:
-      MONGO_INITDB_DATABASE: ${MF_TWINS_DB_NAME}
+      MONGO_INITDB_DATABASE: ${MG_TWINS_DB_NAME}
     ports:
-      - ${MF_TWINS_DB_PORT}:${MF_TWINS_DB_PORT}
+      - ${MG_TWINS_DB_PORT}:${MG_TWINS_DB_PORT}
     networks:
-      mainflux-base-net:
+      magistrala-base-net:
     volumes:
-      - mainflux-twins-db-volume:/data/db
-      - mainflux-twins-db-configdb-volume:/data/configdb
+      - magistrala-twins-db-volume:/data/db
+      - magistrala-twins-db-configdb-volume:/data/configdb
 
   twins:
-    image: mainflux/twins:${MF_RELEASE_TAG}
-    container_name: mainflux-twins
+    image: magistrala/twins:${MG_RELEASE_TAG}
+    container_name: magistrala-twins
     restart: on-failure
     environment:
-      MF_TWINS_LOG_LEVEL: ${MF_TWINS_LOG_LEVEL}
-      MF_TWINS_STANDALONE_ID: ${MF_TWINS_STANDALONE_ID}
-      MF_TWINS_STANDALONE_TOKEN: ${MF_TWINS_STANDALONE_TOKEN}
-      MF_TWINS_CHANNEL_ID: ${MF_TWINS_CHANNEL_ID}
-      MF_TWINS_HTTP_HOST: ${MF_TWINS_HTTP_HOST}
-      MF_TWINS_HTTP_PORT: ${MF_TWINS_HTTP_PORT}
-      MF_TWINS_HTTP_SERVER_CERT: ${MF_TWINS_HTTP_SERVER_CERT}
-      MF_TWINS_HTTP_SERVER_KEY: ${MF_TWINS_HTTP_SERVER_KEY}
-      MF_TWINS_CACHE_URL: ${MF_TWINS_CACHE_URL}
-      MF_TWINS_ES_URL: ${MF_ES_STORE_URL}
-      MF_THINGS_STANDALONE_ID: ${MF_THINGS_STANDALONE_ID}
-      MF_THINGS_STANDALONE_TOKEN: ${MF_THINGS_STANDALONE_TOKEN}
-      MF_TWINS_DB_HOST: ${MF_TWINS_DB_HOST}
-      MF_TWINS_DB_PORT: ${MF_TWINS_DB_PORT}
-      MF_TWINS_DB_NAME: ${MF_TWINS_DB_NAME}
-      MF_AUTH_GRPC_URL: ${MF_AUTH_GRPC_URL}
-      MF_AUTH_GRPC_TIMEOUT: ${MF_AUTH_GRPC_TIMEOUT}
-      MF_AUTH_GRPC_CLIENT_CERT: ${MF_AUTH_GRPC_CLIENT_CERT:+/users-grpc-client.crt}
-      MF_AUTH_GRPC_CLIENT_KEY: ${MF_AUTH_GRPC_CLIENT_KEY:+/users-grpc-client.key}
-      MF_AUTH_GRPC_SERVER_CA_CERTS: ${MF_AUTH_GRPC_SERVER_CA_CERTS:+/users-grpc-server-ca.crt}
-      MF_MESSAGE_BROKER_URL: ${MF_MESSAGE_BROKER_URL}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_JAEGER_TRACE_RATIO: ${MF_JAEGER_TRACE_RATIO}
-      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
-      MF_TWINS_INSTANCE_ID: ${MF_TWINS_INSTANCE_ID}
+      MG_TWINS_LOG_LEVEL: ${MG_TWINS_LOG_LEVEL}
+      MG_TWINS_STANDALONE_ID: ${MG_TWINS_STANDALONE_ID}
+      MG_TWINS_STANDALONE_TOKEN: ${MG_TWINS_STANDALONE_TOKEN}
+      MG_TWINS_CHANNEL_ID: ${MG_TWINS_CHANNEL_ID}
+      MG_TWINS_HTTP_HOST: ${MG_TWINS_HTTP_HOST}
+      MG_TWINS_HTTP_PORT: ${MG_TWINS_HTTP_PORT}
+      MG_TWINS_HTTP_SERVER_CERT: ${MG_TWINS_HTTP_SERVER_CERT}
+      MG_TWINS_HTTP_SERVER_KEY: ${MG_TWINS_HTTP_SERVER_KEY}
+      MG_TWINS_CACHE_URL: ${MG_TWINS_CACHE_URL}
+      MG_TWINS_ES_URL: ${MG_ES_STORE_URL}
+      MG_THINGS_STANDALONE_ID: ${MG_THINGS_STANDALONE_ID}
+      MG_THINGS_STANDALONE_TOKEN: ${MG_THINGS_STANDALONE_TOKEN}
+      MG_TWINS_DB_HOST: ${MG_TWINS_DB_HOST}
+      MG_TWINS_DB_PORT: ${MG_TWINS_DB_PORT}
+      MG_TWINS_DB_NAME: ${MG_TWINS_DB_NAME}
+      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
+      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
+      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/users-grpc-client.crt}
+      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/users-grpc-client.key}
+      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/users-grpc-server-ca.crt}
+      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_TWINS_INSTANCE_ID: ${MG_TWINS_INSTANCE_ID}
     ports:
-      - ${MF_TWINS_HTTP_PORT}:${MF_TWINS_HTTP_PORT}
+      - ${MG_TWINS_HTTP_PORT}:${MG_TWINS_HTTP_PORT}
     networks:
-       mainflux-base-net:
+       magistrala-base-net:
     depends_on:
       - twins-db
       - twins-redis
     volumes:
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_USERS_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
-        target: /users-grpc-client${MF_USERS_GRPC_CLIENT_CERT:+.crt}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_USERS_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
+        target: /users-grpc-client${MG_USERS_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_USERS_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
-        target: /users-grpc-client${MF_USERS_GRPC_CLIENT_KEY:+.key}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_USERS_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
+        target: /users-grpc-client${MG_USERS_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_USERS_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
-        target: /users-grpc-server-ca${MF_USERS_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_USERS_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
+        target: /users-grpc-server-ca${MG_USERS_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true

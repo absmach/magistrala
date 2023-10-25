@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 // Package timescale_test contains tests for PostgreSQL repository
@@ -11,9 +11,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/absmach/magistrala/readers/timescale"
 	_ "github.com/jackc/pgx/v5/stdlib" // required for SQL access
 	"github.com/jmoiron/sqlx"
-	"github.com/mainflux/mainflux/readers/timescale"
 	"github.com/ory/dockertest/v3"
 )
 

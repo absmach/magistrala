@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package nats_test
@@ -12,9 +12,9 @@ import (
 	"testing"
 	"time"
 
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/events"
-	"github.com/mainflux/mainflux/pkg/events/nats"
+	mflog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/events/nats"
 	"github.com/stretchr/testify/assert"
 )
 

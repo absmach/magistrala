@@ -1,11 +1,11 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package ws
 
 import (
+	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/gorilla/websocket"
-	"github.com/mainflux/mainflux/pkg/messaging"
 )
 
 // Client handles messaging and websocket connection.

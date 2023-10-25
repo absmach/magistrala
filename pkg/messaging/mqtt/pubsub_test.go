@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package mqtt_test
@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/absmach/magistrala/pkg/messaging"
+	mqttpubsub "github.com/absmach/magistrala/pkg/messaging/mqtt"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-	"github.com/mainflux/mainflux/pkg/messaging"
-	mqttpubsub "github.com/mainflux/mainflux/pkg/messaging/mqtt"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
 )
@@ -121,7 +121,7 @@ func TestSubscribe(t *testing.T) {
 	msgChan := make(chan *messaging.Message)
 
 	// Creating client to Publish messages to subscribed topic.
-	client, err := newClient(address, "mainflux", brokerTimeout)
+	client, err := newClient(address, "magistrala", brokerTimeout)
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	t.Cleanup(func() {

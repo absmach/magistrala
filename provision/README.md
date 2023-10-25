@@ -1,13 +1,13 @@
 # Provision service
 
-Provision service provides an HTTP API to interact with [Mainflux][mainflux].
+Provision service provides an HTTP API to interact with [Magistrala][mainflux].
 Provision service is used to setup initial applications configuration i.e. things, channels, connections and certificates that will be required for the specific use case especially useful for gateway provision.  
 
-For gateways to communicate with [Mainflux][mainflux] configuration is required (mqtt host, thing, channels, certificates...). To get the configuration gateway will send a request to [Bootstrap][bootstrap] service providing `<external_id>` and `<external_key>` in request. To make a request to [Bootstrap][bootstrap] service you can use [Agent][agent] service on a gateway.  
+For gateways to communicate with [Magistrala][mainflux] configuration is required (mqtt host, thing, channels, certificates...). To get the configuration gateway will send a request to [Bootstrap][bootstrap] service providing `<external_id>` and `<external_key>` in request. To make a request to [Bootstrap][bootstrap] service you can use [Agent][agent] service on a gateway.  
 
-To create bootstrap configuration you can use [Bootstrap][bootstrap] or `Provision` service. [Mainflux UI][mfxui] uses [Bootstrap][bootstrap] service for creating gateway configurations.  `Provision` service should provide an easy way of provisioning your gateways i.e creating bootstrap configuration and as many things and channels that your setup requires.  
+To create bootstrap configuration you can use [Bootstrap][bootstrap] or `Provision` service. [Magistrala UI][mfxui] uses [Bootstrap][bootstrap] service for creating gateway configurations.  `Provision` service should provide an easy way of provisioning your gateways i.e creating bootstrap configuration and as many things and channels that your setup requires.  
 
-Also you may use provision service to create certificates for each thing. Each service running on gateway may require more than one thing and channel for communication. Let's say that you are using services [Agent][agent] and [Export](https://github.com/mainflux/export) on a gateway you will need two channels for `Agent` (`data` and `control`) and one for `Export` and one thing. Additionally if you enabled mtls each service will need its own thing and certificate for access to [Mainflux][mainflux]. Your setup could require any number of things and channels this kind of setup we can call `provision layout`.
+Also you may use provision service to create certificates for each thing. Each service running on gateway may require more than one thing and channel for communication. Let's say that you are using services [Agent][agent] and [Export](https://github.com/mainflux/export) on a gateway you will need two channels for `Agent` (`data` and `control`) and one for `Export` and one thing. Additionally if you enabled mtls each service will need its own thing and certificate for access to [Magistrala][mainflux]. Your setup could require any number of things and channels this kind of setup we can call `provision layout`.
 
 Provision service provides a way of specifying this `provision layout` and creating a setup according to that layout by serving requests on `/mapping` endpoint. Provision layout is configured in [config.toml](configs/config.toml).
 
@@ -19,27 +19,27 @@ default values.
 
 | Variable                            | Description                                       | Default                               |
 | ----------------------------------- | ------------------------------------------------- | --------------------------------------|
-| MF_PROVISION_LOG_LEVEL              | Service log level                                 | debug                                 |
-| MF_PROVISION_USER                   | User (email) for accessing Mainflux               | user@example.com                      |
-| MF_PROVISION_PASS                   | Mainflux password                                 | user123                               |
-| MF_PROVISION_API_KEY                | Mainflux authentication token                     |                                       |
-| MF_PROVISION_CONFIG_FILE            | Provision config file                             | config.toml                           |
-| MF_PROVISION_HTTP_PORT              | Provision service listening port                  | 9016                                  |
-| MF_PROVISION_ENV_CLIENTS_TLS        | Mainflux SDK TLS verification                     | false                                 |
-| MF_PROVISION_SERVER_CERT            | Mainflux gRPC secure server cert                  |                                       |
-| MF_PROVISION_SERVER_KEY             | Mainflux gRPC secure server key                   |                                       |
-| MF_PROVISION_USERS_LOCATION         | Users service URL                                 | http://users:9002                     |
-| MF_PROVISION_THINGS_LOCATION        | Things service URL                                | http://things:9000                    |
-| MF_PROVISION_BS_SVC_URL             | Mainflux Bootstrap service URL                    | http://bootstrap:9013/things          |
-| MF_PROVISION_BS_SVC_WHITELIST_URL   | Mainflux Bootstrap service whitelist URL          | http://bootstrap:9013/things/state    |
-| MF_PROVISION_CERTS_SVC_URL          | Certificates service URL                          | http://certs:9019/certs               |
-| MF_PROVISION_X509_PROVISIONING      | Should X509 client cert be provisioned            | false                                 |
-| MF_PROVISION_BS_CONFIG_PROVISIONING | Should thing config be saved in Bootstrap service | true                                  |
-| MF_PROVISION_BS_AUTO_WHITELIST      | Should thing be auto whitelisted                  | true                                  |
-| MF_PROVISION_BS_CONTENT             | Bootstrap service configs content, JSON format    | {}                                    |
-| MF_PROVISION_CERTS_RSA_BITS         | Certificate RSA bits parameter                    | 4096                                  |
-| MF_PROVISION_CERTS_HOURS_VALID      | Number of hours that certificate is valid         | "2400h"                               |
-| MF_SEND_TELEMETRY                   | Send telemetry to mainflux call home server       | true                                  |
+| MG_PROVISION_LOG_LEVEL              | Service log level                                 | debug                                 |
+| MG_PROVISION_USER                   | User (email) for accessing Magistrala               | user@example.com                      |
+| MG_PROVISION_PASS                   | Magistrala password                                 | user123                               |
+| MG_PROVISION_API_KEY                | Magistrala authentication token                     |                                       |
+| MG_PROVISION_CONFIG_FILE            | Provision config file                             | config.toml                           |
+| MG_PROVISION_HTTP_PORT              | Provision service listening port                  | 9016                                  |
+| MG_PROVISION_ENV_CLIENTS_TLS        | Magistrala SDK TLS verification                     | false                                 |
+| MG_PROVISION_SERVER_CERT            | Magistrala gRPC secure server cert                  |                                       |
+| MG_PROVISION_SERVER_KEY             | Magistrala gRPC secure server key                   |                                       |
+| MG_PROVISION_USERS_LOCATION         | Users service URL                                 | http://users:9002                     |
+| MG_PROVISION_THINGS_LOCATION        | Things service URL                                | http://things:9000                    |
+| MG_PROVISION_BS_SVC_URL             | Magistrala Bootstrap service URL                    | http://bootstrap:9013/things          |
+| MG_PROVISION_BS_SVC_WHITELIST_URL   | Magistrala Bootstrap service whitelist URL          | http://bootstrap:9013/things/state    |
+| MG_PROVISION_CERTS_SVC_URL          | Certificates service URL                          | http://certs:9019/certs               |
+| MG_PROVISION_X509_PROVISIONING      | Should X509 client cert be provisioned            | false                                 |
+| MG_PROVISION_BS_CONFIG_PROVISIONING | Should thing config be saved in Bootstrap service | true                                  |
+| MG_PROVISION_BS_AUTO_WHITELIST      | Should thing be auto whitelisted                  | true                                  |
+| MG_PROVISION_BS_CONTENT             | Bootstrap service configs content, JSON format    | {}                                    |
+| MG_PROVISION_CERTS_RSA_BITS         | Certificate RSA bits parameter                    | 4096                                  |
+| MG_PROVISION_CERTS_HOURS_VALID      | Number of hours that certificate is valid         | "2400h"                               |
+| MG_SEND_TELEMETRY                   | Send telemetry to mainflux call home server       | true                                  |
 
 By default, call to `/mapping` endpoint will create one thing and two channels (`control` and `data`) and connect it. If there is a requirement for different provision layout we can use [config](docker/configs/config.toml) file in addition to environment variables.
 
@@ -82,12 +82,12 @@ Example of provision layout below
 ```
 
 ## Authentication
-In order to create necessary entities provision service needs to authenticate against Mainflux. To provide authentication credentials to the provision service you can pass it in an environment variable or in a config file as Mainflux user and password or as API token that can be issued on `/users/tokens/issue`.
+In order to create necessary entities provision service needs to authenticate against Magistrala. To provide authentication credentials to the provision service you can pass it in an environment variable or in a config file as Magistrala user and password or as API token that can be issued on `/users/tokens/issue`.
 
 Additionally users or API token can be passed in Authorization header, this authentication takes precedence over others.
 
-* `username`, `password` - (`MF_PROVISION_USER`, `MF_PROVISION_PASSWORD` in [.env](../.env), `mf_user`, `mf_pass` in [config.toml](../docker/addons/provision/configs/config.toml))
-* API Key - (`MF_PROVISION_API_KEY` in [.env](../.env) or [config.toml](../docker/addons/provision/configs/config.toml))
+* `username`, `password` - (`MG_PROVISION_USER`, `MG_PROVISION_PASSWORD` in [.env](../.env), `mf_user`, `mf_pass` in [config.toml](../docker/addons/provision/configs/config.toml))
+* API Key - (`MG_PROVISION_API_KEY` in [.env](../.env) or [config.toml](../docker/addons/provision/configs/config.toml))
 * `Authorization: Bearer Token` - request authorization header containing either users token.
 
 ## Running
@@ -95,10 +95,10 @@ Provision service can be run as a standalone or in docker composition as addon t
 
 Standalone:
 ```bash
-MF_PROVISION_BS_SVC_URL=http://localhost:9013/things \
-MF_PROVISION_THINGS_LOCATION=http://localhost:9000 \
-MF_PROVISION_USERS_LOCATION=http://localhost:9002 \
-MF_PROVISION_CONFIG_FILE=docker/addons/provision/configs/config.toml \
+MG_PROVISION_BS_SVC_URL=http://localhost:9013/things \
+MG_PROVISION_THINGS_LOCATION=http://localhost:9000 \
+MG_PROVISION_USERS_LOCATION=http://localhost:9002 \
+MG_PROVISION_CONFIG_FILE=docker/addons/provision/configs/config.toml \
 build/mainflux-provision
 ```
 
@@ -109,12 +109,12 @@ docker-compose -f docker/addons/provision/docker-compose.yml up
 
 For the case that credentials or API token is passed in configuration file or environment variables, call to `/mapping` endpoint doesn't require `Authentication` header:
 ```bash
-curl -s -S  -X POST  http://localhost:<MF_PROVISION_HTTP_PORT>/mapping  -H 'Content-Type: application/json' -d '{"external_id": "33:52:77:99:43", "external_key": "223334fw2"}'
+curl -s -S  -X POST  http://localhost:<MG_PROVISION_HTTP_PORT>/mapping  -H 'Content-Type: application/json' -d '{"external_id": "33:52:77:99:43", "external_key": "223334fw2"}'
 ```
 
 In the case that provision service is not deployed with credentials or API key or you want to use user other than one being set in environment (or config file):
 ```bash
-curl -s -S  -X POST  http://localhost:<MF_PROVISION_HTTP_PORT>/mapping -H "Authorization: Bearer <token|api_key>" -H 'Content-Type: application/json' -d '{"external_id": "<external_id>", "external_key": "<external_key>"}'
+curl -s -S  -X POST  http://localhost:<MG_PROVISION_HTTP_PORT>/mapping -H "Authorization: Bearer <token|api_key>" -H 'Content-Type: application/json' -d '{"external_id": "<external_id>", "external_key": "<external_key>"}'
 ```
 
 Or if you want to specify a name for thing different than in `config.toml` you can specify post data as:
@@ -172,8 +172,8 @@ curl -s  -X POST  http://localhost:8190/certs -H "Authorization: Bearer <users_t
 }
 ```
 
-[mainflux]: https://github.com/mainflux/mainflux
-[bootstrap]: https://github.com/mainflux/mainflux/tree/master/bootstrap
+[mainflux]: https://github.com/absmach/magistrala
+[bootstrap]: https://github.com/absmach/magistrala/tree/master/bootstrap
 [export]: https://github.com/mainflux/export
 [agent]: https://github.com/mainflux/agent
-[mfxui]: https://github.com/mainflux/mainflux/ui
+[mfxui]: https://github.com/absmach/magistrala/ui

@@ -3,7 +3,7 @@ The GitHub issue tracker is for bug reports and feature requests. General suppor
 the following locations:
 
 - Google group - https://groups.google.com/forum/#!forum/mainflux
-- Gitter - https://gitter.im/mainflux/mainflux
+- Gitter - https://gitter.im/absmach/magistrala
 -->
 
 **FEATURE REQUEST**

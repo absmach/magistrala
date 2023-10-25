@@ -1,13 +1,13 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package http
 
 import (
-	"github.com/mainflux/mainflux/internal/api"
-	"github.com/mainflux/mainflux/internal/apiutil"
-	mfclients "github.com/mainflux/mainflux/pkg/clients"
-	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/absmach/magistrala/internal/api"
+	"github.com/absmach/magistrala/internal/apiutil"
+	mfclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/pkg/errors"
 )
 
 type createClientReq struct {

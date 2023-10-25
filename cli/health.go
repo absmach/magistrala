@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -10,7 +10,7 @@ func NewHealthCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "health <service>",
 		Short: "Health Check",
-		Long: "Mainflux service Health Check\n" +
+		Long: "Magistrala service Health Check\n" +
 			"usage:\n" +
 			"\tmainflux-cli health <service>",
 		Run: func(cmd *cobra.Command, args []string) {

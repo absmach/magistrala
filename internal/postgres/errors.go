@@ -1,11 +1,11 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package postgres
 
 import (
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 // Postgres error codes:

@@ -1,9 +1,9 @@
-# Mainflux Things and Channels Provisioning Tool
+# Magistrala Things and Channels Provisioning Tool
 
 A simple utility to create a list of channels and things connected to these channels with possibility to create certificates for mTLS use case.
 
 This tool is useful for testing, and it creates a TOML format output (on stdout, can be redirected into the file as needed)
-that can be used by Mainflux MQTT benchmarking tool (`mqtt-bench`).
+that can be used by Magistrala MQTT benchmarking tool (`mqtt-bench`).
 
 ## Installation
 ```
@@ -14,7 +14,7 @@ make
 ### Usage
 ```
 ./provision --help
-Tool for provisioning series of Mainflux channels and things and connecting them together.
+Tool for provisioning series of Magistrala channels and things and connecting them together.
 Complete documentation is available at https://docs.mainflux.io
 
 Usage:

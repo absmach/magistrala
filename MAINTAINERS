@@ -1,4 +1,4 @@
-# Mainflux follows the timeless, highly efficient and totally unfair system
+# Magistrala follows the timeless, highly efficient and totally unfair system
 # known as [Benevolent dictator for
 # life](https://en.wikipedia.org/wiki/Benevolent_Dictator_for_Life), with
 # Drasko DRASKOVIC in the role of BDFL.
@@ -6,8 +6,8 @@
 [bdfl]
 	
 	[[drasko]]
-	Name	= "Drasko DRASKOVIC"
-	Email	= "drasko@mainflux.com"
+	Name	= "Drasko Draskovic"
+	Email	= "draasko.draskovic@abstractmachines.fr"
 	GitHub	= "drasko"
 
 # However, this role serves only in dead-lock events, or in a special and very rare cases
@@ -18,29 +18,13 @@
 # Maintainers have the special role in the project in managing and accepting PRs,
 # overall leading the project and making design decisions on the maintained subsystems.
 #
-# A reference list of all maintainers of the Mainflux project.
+# A reference list of all maintainers of the Magistrala project.
 
 # ADD YOURSELF HERE IN ALPHABETICAL ORDER
 
 [maintainers]
-
-	[[aleksandar]]
-	Name	= "Aleksandar NOVAKOVIC"
-	Email	= "aleksandar@mainflux.com"
-	GitHub	= "anovakovic01"
  
  	[[dusan]]
-	Name	= "Dusan BOROVCANIN"
-	Email	= "dusan@mainflux.com"
-	GitHub	= "dusanb94"
-
-	[[manuel]]
-	Name	= "Manuel IMPERIALE"
-	Email	= "manuel@mainflux.com"
-	GitHub	= "manuIO"
-
-	[[nikola]]
-	Name	= "Nikola MARCETIC"
-	Email	= "nikola@mainflux.com"
-	GitHub	= "nmarcetic"
-
+	Name	= "Dusan Borovcanin"
+	Email	= "dusan.borovcanin@abstractmachines.fr"
+	GitHub	= "dborovcanin"

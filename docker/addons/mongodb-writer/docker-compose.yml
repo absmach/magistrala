@@ -1,8 +1,8 @@
-# Copyright (c) Mainflux
+# Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
 # This docker-compose file contains optional MongoDB and MongoDB-writer services
-# for Mainflux platform. Since these are optional, this file is dependent of docker-compose file
+# for Magistrala platform. Since these are optional, this file is dependent of docker-compose file
 # from <project_root>/docker. In order to run these services, execute command:
 # docker-compose -f docker/docker-compose.yml -f docker/addons/mongodb-writer/docker-compose.yml up
 # from project root. MongoDB default port (27017) is exposed, so you can use various tools for database
@@ -11,51 +11,51 @@
 version: "3.7"
 
 networks:
-  mainflux-base-net:
+  magistrala-base-net:
 
 volumes:
-  mainflux-mongodb-db-volume:
-  mainflux-mongodb-configdb-volume:
+  magistrala-mongodb-db-volume:
+  magistrala-mongodb-configdb-volume:
 
 services:
   mongodb:
     image: mongo:4.4.6
-    container_name: mainflux-mongodb
+    container_name: magistrala-mongodb
     restart: on-failure
     environment:
-      MONGO_INITDB_DATABASE: ${MF_MONGO_NAME}
+      MONGO_INITDB_DATABASE: ${MG_MONGO_NAME}
     ports:
-      - ${MF_MONGO_PORT}:${MF_MONGO_PORT}
+      - ${MG_MONGO_PORT}:${MG_MONGO_PORT}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
-      - mainflux-mongodb-db-volume:/data/db
-      - mainflux-mongodb-configdb-volume:/data/configdb
+      - magistrala-mongodb-db-volume:/data/db
+      - magistrala-mongodb-configdb-volume:/data/configdb
 
   mongodb-writer:
-    image: mainflux/mongodb-writer:${MF_RELEASE_TAG}
-    container_name: mainflux-mongodb-writer
+    image: magistrala/mongodb-writer:${MG_RELEASE_TAG}
+    container_name: magistrala-mongodb-writer
     depends_on:
       - mongodb
     restart: on-failure
     environment:
-      MF_MONGO_WRITER_LOG_LEVEL: ${MF_MONGO_WRITER_LOG_LEVEL}
-      MF_MONGO_WRITER_CONFIG_PATH: ${MF_MONGO_WRITER_CONFIG_PATH}
-      MF_MONGO_WRITER_HTTP_HOST: ${MF_MONGO_WRITER_HTTP_HOST}
-      MF_MONGO_WRITER_HTTP_PORT: ${MF_MONGO_WRITER_HTTP_PORT}
-      MF_MONGO_WRITER_HTTP_SERVER_CERT: ${MF_MONGO_WRITER_HTTP_SERVER_CERT}
-      MF_MONGO_WRITER_HTTP_SERVER_KEY: ${MF_MONGO_WRITER_HTTP_SERVER_KEY}
-      MF_MONGO_HOST: ${MF_MONGO_HOST}
-      MF_MONGO_PORT: ${MF_MONGO_PORT}
-      MF_MONGO_NAME: ${MF_MONGO_NAME}
-      MF_MESSAGE_BROKER_URL: ${MF_MESSAGE_BROKER_URL}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_JAEGER_TRACE_RATIO: ${MF_JAEGER_TRACE_RATIO}
-      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
-      MF_MONGO_WRITER_INSTANCE_ID: ${MF_MONGO_WRITER_INSTANCE_ID}
+      MG_MONGO_WRITER_LOG_LEVEL: ${MG_MONGO_WRITER_LOG_LEVEL}
+      MG_MONGO_WRITER_CONFIG_PATH: ${MG_MONGO_WRITER_CONFIG_PATH}
+      MG_MONGO_WRITER_HTTP_HOST: ${MG_MONGO_WRITER_HTTP_HOST}
+      MG_MONGO_WRITER_HTTP_PORT: ${MG_MONGO_WRITER_HTTP_PORT}
+      MG_MONGO_WRITER_HTTP_SERVER_CERT: ${MG_MONGO_WRITER_HTTP_SERVER_CERT}
+      MG_MONGO_WRITER_HTTP_SERVER_KEY: ${MG_MONGO_WRITER_HTTP_SERVER_KEY}
+      MG_MONGO_HOST: ${MG_MONGO_HOST}
+      MG_MONGO_PORT: ${MG_MONGO_PORT}
+      MG_MONGO_NAME: ${MG_MONGO_NAME}
+      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_MONGO_WRITER_INSTANCE_ID: ${MG_MONGO_WRITER_INSTANCE_ID}
     ports:
-      - ${MF_MONGO_WRITER_HTTP_PORT}:${MF_MONGO_WRITER_HTTP_PORT}
+      - ${MG_MONGO_WRITER_HTTP_PORT}:${MG_MONGO_WRITER_HTTP_PORT}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
       - ./config.toml:/config.toml

@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package api
@@ -11,9 +11,9 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/ws"
 	"github.com/go-zoo/bone"
-	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/ws"
 )
 
 var channelPartRegExp = regexp.MustCompile(`^/channels/([\w\-]+)/messages(/[^?]*)?(\?.*)?$`)

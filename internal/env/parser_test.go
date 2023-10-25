@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package env
@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mainflux/mainflux/internal/clients/grpc"
-	"github.com/mainflux/mainflux/internal/server"
-	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/absmach/magistrala/internal/clients/grpc"
+	"github.com/absmach/magistrala/internal/server"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -63,14 +63,14 @@ func TestParseServerConfig(t *testing.T) {
 			[]Options{
 				{
 					Environment: map[string]string{
-						"MF-HOST":            "localhost",
-						"MF-PORT":            "8080",
-						"MF-SERVER_CERT":     "cert",
-						"MF-SERVER_KEY":      "key",
-						"MF-SERVER_CA_CERTS": "server-ca-certs",
-						"MF-CLIENT_CA_CERTS": "client-ca-certs",
+						"MG-HOST":            "localhost",
+						"MG-PORT":            "8080",
+						"MG-SERVER_CERT":     "cert",
+						"MG-SERVER_KEY":      "key",
+						"MG-SERVER_CA_CERTS": "server-ca-certs",
+						"MG-CLIENT_CA_CERTS": "client-ca-certs",
 					},
-					Prefix: "MF-",
+					Prefix: "MG-",
 				},
 			},
 			nil,
@@ -140,13 +140,13 @@ func TestParseGRPCConfig(t *testing.T) {
 			[]Options{
 				{
 					Environment: map[string]string{
-						"MF-URL":             "val.com",
-						"MF-TIMEOUT":         "1s",
-						"MF-SERVER_CA_CERTS": "server-ca-cert",
-						"MF-CLIENT_CERT":     "client-cert",
-						"MF-CLIENT_KEY":      "client-key",
+						"MG-URL":             "val.com",
+						"MG-TIMEOUT":         "1s",
+						"MG-SERVER_CA_CERTS": "server-ca-cert",
+						"MG-CLIENT_CERT":     "client-cert",
+						"MG-CLIENT_KEY":      "client-key",
 					},
-					Prefix: "MF-",
+					Prefix: "MG-",
 				},
 			},
 			nil,
@@ -212,10 +212,10 @@ func TestParseCustomConfig(t *testing.T) {
 			[]Options{
 				{
 					Environment: map[string]string{
-						"MF-FIELD1": "test val",
-						"MF-FIELD2": "2",
+						"MG-FIELD1": "test val",
+						"MG-FIELD2": "2",
 					},
-					Prefix: "MF-",
+					Prefix: "MG-",
 				},
 			},
 			nil,

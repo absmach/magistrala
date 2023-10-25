@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package tracing
@@ -7,9 +7,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/mainflux/mainflux/internal/server"
-	"github.com/mainflux/mainflux/mqtt"
-	"github.com/mainflux/mainflux/pkg/messaging"
+	"github.com/absmach/magistrala/internal/server"
+	"github.com/absmach/magistrala/mqtt"
+	"github.com/absmach/magistrala/pkg/messaging"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )

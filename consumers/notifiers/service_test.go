@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package notifiers_test
@@ -8,12 +8,12 @@ import (
 	"fmt"
 	"testing"
 
-	authmocks "github.com/mainflux/mainflux/auth/mocks"
-	"github.com/mainflux/mainflux/consumers/notifiers"
-	"github.com/mainflux/mainflux/consumers/notifiers/mocks"
-	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/pkg/messaging"
-	"github.com/mainflux/mainflux/pkg/uuid"
+	authmocks "github.com/absmach/magistrala/auth/mocks"
+	"github.com/absmach/magistrala/consumers/notifiers"
+	"github.com/absmach/magistrala/consumers/notifiers/mocks"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

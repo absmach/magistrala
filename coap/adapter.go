@@ -1,8 +1,8 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 // Package coap contains the domain concept definitions needed to support
-// Mainflux CoAP adapter service functionality. All constant values are taken
+// Magistrala CoAP adapter service functionality. All constant values are taken
 // from RFC, and could be adjusted based on specific use case.
 package coap
 
@@ -11,9 +11,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/pkg/messaging"
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/messaging"
 )
 
 const chansPrefix = "channels"

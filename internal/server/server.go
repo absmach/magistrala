@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 package server
 
@@ -9,7 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/mainflux/mainflux/logger"
+	"github.com/absmach/magistrala/logger"
 )
 
 type Server interface {

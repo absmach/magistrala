@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package errors
@@ -29,7 +29,7 @@ type Error interface {
 
 var _ Error = (*customError)(nil)
 
-// customError represents a Mainflux error.
+// customError represents a Magistrala error.
 type customError struct {
 	msg string
 	err Error

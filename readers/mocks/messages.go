@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package mocks
@@ -7,8 +7,8 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github.com/mainflux/mainflux/pkg/transformers/senml"
-	"github.com/mainflux/mainflux/readers"
+	"github.com/absmach/magistrala/pkg/transformers/senml"
+	"github.com/absmach/magistrala/readers"
 )
 
 var _ readers.MessageRepository = (*messageRepositoryMock)(nil)

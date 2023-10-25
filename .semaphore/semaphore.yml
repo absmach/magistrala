@@ -55,7 +55,7 @@ blocks:
             - export PATH=$PATH:$HOME/go/bin
 
             - |
-              echo "Setting up Mainflux..."
+              echo "Setting up Magistrala..."
               for p in $(ls ./*.pb.go); do
                 mv $p $p.tmp
               done                
@@ -211,7 +211,7 @@ blocks:
         - name: Build HTTP
           commands:
             - echo $DOCKER_TOKEN | docker login --username "$DOCKER_USERNAME" --password-stdin
-            - docker push mainflux/http:latest
+            - docker push magistrala/http:latest
       secrets:
         - name: docker_hub
   - name: Lint and Test MQTT
@@ -246,7 +246,7 @@ blocks:
         - name: Build MQTT
           commands:
             - echo $DOCKER_TOKEN | docker login --username "$DOCKER_USERNAME" --password-stdin
-            - docker push mainflux/mqtt:latest
+            - docker push magistrala/mqtt:latest
       secrets:
         - name: docker_hub
   - name: Lint and Test WS
@@ -281,7 +281,7 @@ blocks:
         - name: Build WS
           commands:
             - echo $DOCKER_TOKEN | docker login --username "$DOCKER_USERNAME" --password-stdin
-            - docker push mainflux/ws:latest
+            - docker push magistrala/ws:latest
       secrets:
         - name: docker_hub
   - name: Lint and Test Bootstrap
@@ -316,7 +316,7 @@ blocks:
         - name: Build Bootstrap
           commands:
             - echo $DOCKER_TOKEN | docker login --username "$DOCKER_USERNAME" --password-stdin
-            - docker push mainflux/bootstrap:latest
+            - docker push magistrala/bootstrap:latest
       secrets:
         - name: docker_hub
   - name: Lint and Test Certs
@@ -351,7 +351,7 @@ blocks:
         - name: Build Certs
           commands:
             - echo $DOCKER_TOKEN | docker login --username "$DOCKER_USERNAME" --password-stdin
-            - docker push mainflux/certs:latest
+            - docker push magistrala/certs:latest
       secrets:
         - name: docker_hub
   - name: Lint and Test Provision
@@ -386,7 +386,7 @@ blocks:
         - name: Build Provision
           commands:
             - echo $DOCKER_TOKEN | docker login --username "$DOCKER_USERNAME" --password-stdin
-            - docker push mainflux/http:latest
+            - docker push magistrala/http:latest
       secrets:
         - name: docker_hub
   - name: Lint and Test Twins
@@ -421,7 +421,7 @@ blocks:
         - name: Build Twins
           commands:
             - echo $DOCKER_TOKEN | docker login --username "$DOCKER_USERNAME" --password-stdin
-            - docker push mainflux/twins:latest
+            - docker push magistrala/twins:latest
       secrets:
         - name: docker_hub
   - name: Lint and Test Readers
@@ -456,11 +456,11 @@ blocks:
         - name: Build Readers
           commands:
             - echo $DOCKER_TOKEN | docker login --username "$DOCKER_USERNAME" --password-stdin
-            - docker push mainflux/cassandra-reader:latest
-            - docker push mainflux/influxdb-reader:latest
-            - docker push mainflux/mongodb-reader:latest
-            - docker push mainflux/postgres-reader:latest
-            - docker push mainflux/timescale-reader:latest
+            - docker push magistrala/cassandra-reader:latest
+            - docker push magistrala/influxdb-reader:latest
+            - docker push magistrala/mongodb-reader:latest
+            - docker push magistrala/postgres-reader:latest
+            - docker push magistrala/timescale-reader:latest
       secrets:
         - name: docker_hub
   - name: Lint and Test Consumers
@@ -495,12 +495,12 @@ blocks:
         - name: Build Consumers
           commands:
             - echo $DOCKER_TOKEN | docker login --username "$DOCKER_USERNAME" --password-stdin
-            - docker push mainflux/cassandra-writer:latest
-            - docker push mainflux/influxdb-writer:latest
-            - docker push mainflux/mongodb-writer:latest
-            - docker push mainflux/postgres-writer:latest
-            - docker push mainflux/timescale-writer:latest
-            - docker push mainflux/smtp-notifier:latest
+            - docker push magistrala/cassandra-writer:latest
+            - docker push magistrala/influxdb-writer:latest
+            - docker push magistrala/mongodb-writer:latest
+            - docker push magistrala/postgres-writer:latest
+            - docker push magistrala/timescale-writer:latest
+            - docker push magistrala/smtp-notifier:latest
       secrets:
         - name: docker_hub
   - name: Lint and Test CLI
@@ -535,7 +535,7 @@ blocks:
         - name: Build CLI
           commands:
             - echo $DOCKER_TOKEN | docker login --username "$DOCKER_USERNAME" --password-stdin
-            - docker push mainflux/cli:latest
+            - docker push magistrala/cli:latest
       secrets:
         - name: docker_hub
   - name: Lint and Test LoRa
@@ -570,7 +570,7 @@ blocks:
         - name: Build LoRa
           commands:
             - echo $DOCKER_TOKEN | docker login --username "$DOCKER_USERNAME" --password-stdin
-            - docker push mainflux/lora:latest
+            - docker push magistrala/lora:latest
       secrets:
         - name: docker_hub
   - name: Lint and Test OPC-UA
@@ -605,7 +605,7 @@ blocks:
         - name: Build OPC-UA
           commands:
             - echo $DOCKER_TOKEN | docker login --username "$DOCKER_USERNAME" --password-stdin
-            - docker push mainflux/opcua:latest
+            - docker push magistrala/opcua:latest
       secrets:
         - name: docker_hub
   - name: Lint and Test Internal
@@ -695,7 +695,7 @@ blocks:
       jobs:
         - name: Compile For RabbitMQ
           commands:
-            - MF_MESSAGE_BROKER_TYPE=rabbitmq make mqtt
+            - MG_MESSAGE_BROKER_TYPE=rabbitmq make mqtt
 
   - name: Compile Check For Redis
     dependencies:
@@ -704,4 +704,4 @@ blocks:
       jobs:
         - name: Compile For Redis
           commands:
-            - MF_ES_STORE_TYPE=redis make mqtt
+            - MG_ES_STORE_TYPE=redis make mqtt

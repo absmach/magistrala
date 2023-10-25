@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package mongodb
@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/mainflux/mainflux/logger"
+	"github.com/absmach/magistrala/logger"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )

@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 // Package tracing contains middlewares that will add spans
@@ -8,7 +8,7 @@ package tracing
 import (
 	"context"
 
-	"github.com/mainflux/mainflux/consumers/notifiers"
+	"github.com/absmach/magistrala/consumers/notifiers"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )

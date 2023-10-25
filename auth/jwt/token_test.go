@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package jwt_test
@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mainflux/mainflux/auth"
-	"github.com/mainflux/mainflux/auth/jwt"
-	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/auth/jwt"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

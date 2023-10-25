@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 // Package main contains http-adapter main function to start the http-adapter service.
@@ -11,22 +11,22 @@ import (
 	"net/http"
 	"os"
 
+	mainflux "github.com/absmach/magistrala"
+	adapter "github.com/absmach/magistrala/http"
+	"github.com/absmach/magistrala/http/api"
+	"github.com/absmach/magistrala/internal"
+	authapi "github.com/absmach/magistrala/internal/clients/grpc/auth"
+	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
+	"github.com/absmach/magistrala/internal/env"
+	"github.com/absmach/magistrala/internal/server"
+	httpserver "github.com/absmach/magistrala/internal/server/http"
+	mflog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/messaging/brokers"
+	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
+	"github.com/absmach/magistrala/pkg/messaging/handler"
+	"github.com/absmach/magistrala/pkg/uuid"
 	chclient "github.com/mainflux/callhome/pkg/client"
-	"github.com/mainflux/mainflux"
-	adapter "github.com/mainflux/mainflux/http"
-	"github.com/mainflux/mainflux/http/api"
-	"github.com/mainflux/mainflux/internal"
-	authapi "github.com/mainflux/mainflux/internal/clients/grpc/auth"
-	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
-	"github.com/mainflux/mainflux/internal/env"
-	"github.com/mainflux/mainflux/internal/server"
-	httpserver "github.com/mainflux/mainflux/internal/server/http"
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/messaging"
-	"github.com/mainflux/mainflux/pkg/messaging/brokers"
-	brokerstracing "github.com/mainflux/mainflux/pkg/messaging/brokers/tracing"
-	"github.com/mainflux/mainflux/pkg/messaging/handler"
-	"github.com/mainflux/mainflux/pkg/uuid"
 	mproxy "github.com/mainflux/mproxy/pkg/http"
 	"github.com/mainflux/mproxy/pkg/session"
 	"go.opentelemetry.io/otel/trace"
@@ -35,19 +35,19 @@ import (
 
 const (
 	svcName        = "http_adapter"
-	envPrefix      = "MF_HTTP_ADAPTER_"
+	envPrefix      = "MG_HTTP_ADAPTER_"
 	defSvcHTTPPort = "80"
 	targetHTTPPort = "81"
 	targetHTTPHost = "http://localhost"
 )
 
 type config struct {
-	LogLevel      string  `env:"MF_HTTP_ADAPTER_LOG_LEVEL"   envDefault:"info"`
-	BrokerURL     string  `env:"MF_MESSAGE_BROKER_URL"       envDefault:"nats://localhost:4222"`
-	JaegerURL     string  `env:"MF_JAEGER_URL"               envDefault:"http://jaeger:14268/api/traces"`
-	SendTelemetry bool    `env:"MF_SEND_TELEMETRY"           envDefault:"true"`
-	InstanceID    string  `env:"MF_HTTP_ADAPTER_INSTANCE_ID" envDefault:""`
-	TraceRatio    float64 `env:"MF_JAEGER_TRACE_RATIO"       envDefault:"1.0"`
+	LogLevel      string  `env:"MG_HTTP_ADAPTER_LOG_LEVEL"   envDefault:"info"`
+	BrokerURL     string  `env:"MG_MESSAGE_BROKER_URL"       envDefault:"nats://localhost:4222"`
+	JaegerURL     string  `env:"MG_JAEGER_URL"               envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry bool    `env:"MG_SEND_TELEMETRY"           envDefault:"true"`
+	InstanceID    string  `env:"MG_HTTP_ADAPTER_INSTANCE_ID" envDefault:""`
+	TraceRatio    float64 `env:"MG_JAEGER_TRACE_RATIO"       envDefault:"1.0"`
 }
 
 func main() {

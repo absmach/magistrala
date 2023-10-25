@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package postgres
@@ -8,9 +8,9 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/mainflux/mainflux/auth"
-	"github.com/mainflux/mainflux/internal/postgres"
-	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/internal/postgres"
+	"github.com/absmach/magistrala/pkg/errors"
 )
 
 var (

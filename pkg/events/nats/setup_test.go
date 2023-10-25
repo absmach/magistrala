@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package nats_test
@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/mainflux/mainflux/pkg/events/nats"
+	"github.com/absmach/magistrala/pkg/events/nats"
 	"github.com/ory/dockertest/v3"
 )
 

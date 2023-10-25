@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package sdk
@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/mainflux/mainflux/internal/apiutil"
-	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/pkg/errors"
 )
 
 const (
@@ -23,10 +23,10 @@ const (
 )
 
 // BootstrapConfig represents Configuration entity. It wraps information about external entity
-// as well as info about corresponding Mainflux entities.
-// MFThing represents corresponding Mainflux Thing ID.
-// MFKey is key of corresponding Mainflux Thing.
-// MFChannels is a list of Mainflux Channels corresponding Mainflux Thing connects to.
+// as well as info about corresponding Magistrala entities.
+// MFThing represents corresponding Magistrala Thing ID.
+// MFKey is key of corresponding Magistrala Thing.
+// MFChannels is a list of Magistrala Channels corresponding Magistrala Thing connects to.
 type BootstrapConfig struct {
 	Channels    interface{} `json:"channels,omitempty"`
 	ExternalID  string      `json:"external_id,omitempty"`

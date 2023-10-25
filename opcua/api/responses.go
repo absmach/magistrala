@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package api
@@ -6,8 +6,8 @@ package api
 import (
 	"net/http"
 
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/opcua"
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/opcua"
 )
 
 var _ mainflux.Response = (*browseRes)(nil)

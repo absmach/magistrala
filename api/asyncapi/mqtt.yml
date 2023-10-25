@@ -1,19 +1,19 @@
 asyncapi: '2.6.0'
-id: 'https://github.com/mainflux/mainflux/blob/master/api/asyncapi/mqtt.yml'
+id: 'https://github.com/absmach/magistrala/blob/master/api/asyncapi/mqtt.yml'
 info:
-  title: Mainflux MQTT Adapter
+  title: Magistrala MQTT Adapter
   version: '1.0.0'
   contact:
-    name: Mainflux Team
-    url: 'https://github.com/mainflux/mainflux'
+    name: Magistrala Team
+    url: 'https://github.com/absmach/magistrala'
     email: info@mainflux.com
   description: |
-    MQTT adapter provides an MQTT API for sending messages through the platform. MQTT adapter uses [mProxy](https://github.com/mainflux/mproxy) for proxying traffic between client and MQTT broker.
+    MQTT adapter provides an MQTT API for sending messages through the platform. MQTT adapter uses [mProxy](https://github.com/magistrala/mproxy) for proxying traffic between client and MQTT broker.
     Additionally, the MQTT adapter and the message broker are replicating the traffic between brokers.
 
   license:
     name: Apache 2.0
-    url: 'https://github.com/mainflux/mainflux/blob/master/LICENSE'
+    url: 'https://github.com/absmach/magistrala/blob/master/LICENSE'
   
   
 defaultContentType: application/json

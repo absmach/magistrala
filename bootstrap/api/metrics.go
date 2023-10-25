@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 //go:build !test
@@ -9,8 +9,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/absmach/magistrala/bootstrap"
 	"github.com/go-kit/kit/metrics"
-	"github.com/mainflux/mainflux/bootstrap"
 )
 
 var _ bootstrap.Service = (*metricsMiddleware)(nil)

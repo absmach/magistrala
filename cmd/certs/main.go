@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 // Package main contains certs main function to start the certs service.
@@ -10,55 +10,55 @@ import (
 	"log"
 	"os"
 
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/certs"
+	"github.com/absmach/magistrala/certs/api"
+	vault "github.com/absmach/magistrala/certs/pki"
+	certspg "github.com/absmach/magistrala/certs/postgres"
+	"github.com/absmach/magistrala/certs/tracing"
+	"github.com/absmach/magistrala/internal"
+	authclient "github.com/absmach/magistrala/internal/clients/grpc/auth"
+	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
+	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
+	"github.com/absmach/magistrala/internal/env"
+	"github.com/absmach/magistrala/internal/postgres"
+	"github.com/absmach/magistrala/internal/server"
+	httpserver "github.com/absmach/magistrala/internal/server/http"
+	mflog "github.com/absmach/magistrala/logger"
+	mfsdk "github.com/absmach/magistrala/pkg/sdk/go"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/jmoiron/sqlx"
 	chclient "github.com/mainflux/callhome/pkg/client"
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/certs"
-	"github.com/mainflux/mainflux/certs/api"
-	vault "github.com/mainflux/mainflux/certs/pki"
-	certspg "github.com/mainflux/mainflux/certs/postgres"
-	"github.com/mainflux/mainflux/certs/tracing"
-	"github.com/mainflux/mainflux/internal"
-	authclient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
-	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
-	pgclient "github.com/mainflux/mainflux/internal/clients/postgres"
-	"github.com/mainflux/mainflux/internal/env"
-	"github.com/mainflux/mainflux/internal/postgres"
-	"github.com/mainflux/mainflux/internal/server"
-	httpserver "github.com/mainflux/mainflux/internal/server/http"
-	mflog "github.com/mainflux/mainflux/logger"
-	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
-	"github.com/mainflux/mainflux/pkg/uuid"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
 
 const (
 	svcName        = "certs"
-	envPrefixDB    = "MF_CERTS_DB_"
-	envPrefixHTTP  = "MF_CERTS_HTTP_"
+	envPrefixDB    = "MG_CERTS_DB_"
+	envPrefixHTTP  = "MG_CERTS_HTTP_"
 	defDB          = "certs"
 	defSvcHTTPPort = "9019"
 )
 
 type config struct {
-	LogLevel      string  `env:"MF_CERTS_LOG_LEVEL"        envDefault:"info"`
-	CertsURL      string  `env:"MF_SDK_CERTS_URL"          envDefault:"http://localhost"`
-	ThingsURL     string  `env:"MF_THINGS_URL"             envDefault:"http://things:9000"`
-	JaegerURL     string  `env:"MF_JAEGER_URL"             envDefault:"http://jaeger:14268/api/traces"`
-	SendTelemetry bool    `env:"MF_SEND_TELEMETRY"         envDefault:"true"`
-	InstanceID    string  `env:"MF_CERTS_INSTANCE_ID"      envDefault:""`
-	TraceRatio    float64 `env:"MF_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
+	LogLevel      string  `env:"MG_CERTS_LOG_LEVEL"        envDefault:"info"`
+	CertsURL      string  `env:"MG_SDK_CERTS_URL"          envDefault:"http://localhost"`
+	ThingsURL     string  `env:"MG_THINGS_URL"             envDefault:"http://things:9000"`
+	JaegerURL     string  `env:"MG_JAEGER_URL"             envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry bool    `env:"MG_SEND_TELEMETRY"         envDefault:"true"`
+	InstanceID    string  `env:"MG_CERTS_INSTANCE_ID"      envDefault:""`
+	TraceRatio    float64 `env:"MG_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
 
 	// Sign and issue certificates without 3rd party PKI
-	SignCAPath    string `env:"MF_CERTS_SIGN_CA_PATH"        envDefault:"ca.crt"`
-	SignCAKeyPath string `env:"MF_CERTS_SIGN_CA_KEY_PATH"    envDefault:"ca.key"`
+	SignCAPath    string `env:"MG_CERTS_SIGN_CA_PATH"        envDefault:"ca.crt"`
+	SignCAKeyPath string `env:"MG_CERTS_SIGN_CA_KEY_PATH"    envDefault:"ca.key"`
 
 	// 3rd party PKI API access settings
-	PkiHost  string `env:"MF_CERTS_VAULT_HOST"    envDefault:""`
-	PkiPath  string `env:"MF_VAULT_PKI_INT_PATH"  envDefault:"pki_int"`
-	PkiRole  string `env:"MF_VAULT_CA_ROLE_NAME"  envDefault:"mainflux"`
-	PkiToken string `env:"MF_VAULT_TOKEN"         envDefault:""`
+	PkiHost  string `env:"MG_CERTS_VAULT_HOST"    envDefault:""`
+	PkiPath  string `env:"MG_VAULT_PKI_INT_PATH"  envDefault:"pki_int"`
+	PkiRole  string `env:"MG_VAULT_CA_ROLE_NAME"  envDefault:"magistrala"`
+	PkiToken string `env:"MG_VAULT_TOKEN"         envDefault:""`
 }
 
 func main() {

@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package policies
@@ -9,13 +9,13 @@ import (
 	"net/http"
 	"strings"
 
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/errors"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-zoo/bone"
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/auth"
-	"github.com/mainflux/mainflux/internal/apiutil"
-	"github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 const contentType = "application/json"

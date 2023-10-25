@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 //go:build !nats && !rabbitmq
@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/absmach/magistrala/pkg/events"
 	"github.com/go-redis/redis/v8"
-	"github.com/mainflux/mainflux/pkg/events"
 )
 
 type pubEventStore struct {

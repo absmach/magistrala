@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package cassandra_test
@@ -9,19 +9,19 @@ import (
 	"testing"
 	"time"
 
-	cwriter "github.com/mainflux/mainflux/consumers/writers/cassandra"
-	casclient "github.com/mainflux/mainflux/internal/clients/cassandra"
-	"github.com/mainflux/mainflux/internal/testsutil"
-	"github.com/mainflux/mainflux/pkg/transformers/json"
-	"github.com/mainflux/mainflux/pkg/transformers/senml"
-	"github.com/mainflux/mainflux/readers"
-	creader "github.com/mainflux/mainflux/readers/cassandra"
+	cwriter "github.com/absmach/magistrala/consumers/writers/cassandra"
+	casclient "github.com/absmach/magistrala/internal/clients/cassandra"
+	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/pkg/transformers/json"
+	"github.com/absmach/magistrala/pkg/transformers/senml"
+	"github.com/absmach/magistrala/readers"
+	creader "github.com/absmach/magistrala/readers/cassandra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 const (
-	keyspace    = "mainflux"
+	keyspace    = "magistrala"
 	subtopic    = "subtopic"
 	msgsNum     = 100
 	limit       = 10

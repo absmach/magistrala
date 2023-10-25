@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package mocks
@@ -8,7 +8,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/mainflux/mainflux/lora"
+	"github.com/absmach/magistrala/lora"
 )
 
 type routeMapMock struct {

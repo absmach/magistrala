@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 //go:build !rabbitmq
@@ -9,9 +9,9 @@ package brokers
 import (
 	"log"
 
-	"github.com/mainflux/mainflux/internal/server"
-	"github.com/mainflux/mainflux/pkg/messaging"
-	"github.com/mainflux/mainflux/pkg/messaging/nats/tracing"
+	"github.com/absmach/magistrala/internal/server"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/messaging/nats/tracing"
 	"go.opentelemetry.io/otel/trace"
 )
 

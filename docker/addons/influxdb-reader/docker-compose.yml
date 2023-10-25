@@ -1,8 +1,8 @@
-# Copyright (c) Mainflux
+# Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
 ###
-# This docker-compose file contains optional InfluxDB-reader service for the Mainflux
+# This docker-compose file contains optional InfluxDB-reader service for the Magistrala
 # platform. Since this service is optional, this file is dependent on the docker-compose.yml
 # file from <project_root>/docker/. In order to run this service, core services,
 # as well as the network from the core composition, should be already running.
@@ -11,79 +11,79 @@
 version: "3.7"
 
 networks:
-  mainflux-base-net:
+  magistrala-base-net:
 
 services:
   influxdb-reader:
-    image: mainflux/influxdb-reader:${MF_RELEASE_TAG}
-    container_name: mainflux-influxdb-reader
+    image: magistrala/influxdb-reader:${MG_RELEASE_TAG}
+    container_name: magistrala-influxdb-reader
     restart: on-failure
     environment:
-      MF_INFLUX_READER_LOG_LEVEL: ${MF_INFLUX_READER_LOG_LEVEL}
-      MF_INFLUX_READER_HTTP_HOST: ${MF_INFLUX_READER_HTTP_HOST}
-      MF_INFLUX_READER_HTTP_PORT: ${MF_INFLUX_READER_HTTP_PORT}
-      MF_INFLUX_READER_HTTP_SERVER_CERT: ${MF_INFLUX_READER_HTTP_SERVER_CERT}
-      MF_INFLUX_READER_HTTP_SERVER_KEY: ${MF_INFLUX_READER_HTTP_SERVER_KEY}
-      MF_INFLUXDB_PROTOCOL: ${MF_INFLUXDB_PROTOCOL}
-      MF_INFLUXDB_HOST: ${MF_INFLUXDB_HOST}
-      MF_INFLUXDB_PORT: ${MF_INFLUXDB_PORT}
-      MF_INFLUXDB_ADMIN_USER: ${MF_INFLUXDB_ADMIN_USER}
-      MF_INFLUXDB_ADMIN_PASSWORD: ${MF_INFLUXDB_ADMIN_PASSWORD}
-      MF_INFLUXDB_NAME: ${MF_INFLUXDB_NAME}
-      MF_INFLUXDB_BUCKET: ${MF_INFLUXDB_BUCKET}
-      MF_INFLUXDB_ORG: ${MF_INFLUXDB_ORG}
-      MF_INFLUXDB_TOKEN: ${MF_INFLUXDB_TOKEN}
-      MF_INFLUXDB_DBURL: ${MF_INFLUXDB_DBURL}
-      MF_INFLUXDB_USER_AGENT: ${MF_INFLUXDB_USER_AGENT}
-      MF_INFLUXDB_TIMEOUT: ${MF_INFLUXDB_TIMEOUT}
-      MF_INFLUXDB_INSECURE_SKIP_VERIFY: ${MF_INFLUXDB_INSECURE_SKIP_VERIFY}
-      MF_THINGS_AUTH_GRPC_URL: ${MF_THINGS_AUTH_GRPC_URL}
-      MF_THINGS_AUTH_GRPC_TIMEOUT: ${MF_THINGS_AUTH_GRPC_TIMEOUT}
-      MF_THINGS_AUTH_GRPC_CLIENT_CERT: ${MF_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
-      MF_THINGS_AUTH_GRPC_CLIENT_KEY: ${MF_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
-      MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
-      MF_AUTH_GRPC_URL: ${MF_AUTH_GRPC_URL}
-      MF_AUTH_GRPC_TIMEOUT: ${MF_AUTH_GRPC_TIMEOUT}
-      MF_AUTH_GRPC_CLIENT_CERT: ${MF_AUTH_GRPC_CLIENT_CERT:+/users-grpc-client.crt}
-      MF_AUTH_GRPC_CLIENT_KEY: ${MF_AUTH_GRPC_CLIENT_KEY:+/users-grpc-client.key}
-      MF_AUTH_GRPC_SERVER_CA_CERTS: ${MF_AUTH_GRPC_SERVER_CA_CERTS:+/users-grpc-server-ca.crt}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
-      MF_INFLUX_READER_INSTANCE_ID: ${MF_INFLUX_READER_INSTANCE_ID}
+      MG_INFLUX_READER_LOG_LEVEL: ${MG_INFLUX_READER_LOG_LEVEL}
+      MG_INFLUX_READER_HTTP_HOST: ${MG_INFLUX_READER_HTTP_HOST}
+      MG_INFLUX_READER_HTTP_PORT: ${MG_INFLUX_READER_HTTP_PORT}
+      MG_INFLUX_READER_HTTP_SERVER_CERT: ${MG_INFLUX_READER_HTTP_SERVER_CERT}
+      MG_INFLUX_READER_HTTP_SERVER_KEY: ${MG_INFLUX_READER_HTTP_SERVER_KEY}
+      MG_INFLUXDB_PROTOCOL: ${MG_INFLUXDB_PROTOCOL}
+      MG_INFLUXDB_HOST: ${MG_INFLUXDB_HOST}
+      MG_INFLUXDB_PORT: ${MG_INFLUXDB_PORT}
+      MG_INFLUXDB_ADMIN_USER: ${MG_INFLUXDB_ADMIN_USER}
+      MG_INFLUXDB_ADMIN_PASSWORD: ${MG_INFLUXDB_ADMIN_PASSWORD}
+      MG_INFLUXDB_NAME: ${MG_INFLUXDB_NAME}
+      MG_INFLUXDB_BUCKET: ${MG_INFLUXDB_BUCKET}
+      MG_INFLUXDB_ORG: ${MG_INFLUXDB_ORG}
+      MG_INFLUXDB_TOKEN: ${MG_INFLUXDB_TOKEN}
+      MG_INFLUXDB_DBURL: ${MG_INFLUXDB_DBURL}
+      MG_INFLUXDB_USER_AGENT: ${MG_INFLUXDB_USER_AGENT}
+      MG_INFLUXDB_TIMEOUT: ${MG_INFLUXDB_TIMEOUT}
+      MG_INFLUXDB_INSECURE_SKIP_VERIFY: ${MG_INFLUXDB_INSECURE_SKIP_VERIFY}
+      MG_THINGS_AUTH_GRPC_URL: ${MG_THINGS_AUTH_GRPC_URL}
+      MG_THINGS_AUTH_GRPC_TIMEOUT: ${MG_THINGS_AUTH_GRPC_TIMEOUT}
+      MG_THINGS_AUTH_GRPC_CLIENT_CERT: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
+      MG_THINGS_AUTH_GRPC_CLIENT_KEY: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
+      MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
+      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
+      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
+      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/users-grpc-client.crt}
+      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/users-grpc-client.key}
+      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/users-grpc-server-ca.crt}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_INFLUX_READER_INSTANCE_ID: ${MG_INFLUX_READER_INSTANCE_ID}
     ports:
-      - ${MF_INFLUX_READER_HTTP_PORT}:${MF_INFLUX_READER_HTTP_PORT}
+      - ${MG_INFLUX_READER_HTTP_PORT}:${MG_INFLUX_READER_HTTP_PORT}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
       - ../../ssl/certs:/etc/ssl/certs
       # Users gRPC client certificates
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_USERS_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
-        target: /users-grpc-client${MF_USERS_GRPC_CLIENT_CERT:+.crt}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_USERS_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
+        target: /users-grpc-client${MG_USERS_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_USERS_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
-        target: /users-grpc-client${MF_USERS_GRPC_CLIENT_KEY:+.key}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_USERS_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
+        target: /users-grpc-client${MG_USERS_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_USERS_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
-        target: /users-grpc-server-ca${MF_USERS_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_USERS_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
+        target: /users-grpc-server-ca${MG_USERS_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_THINGS_AUTH_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
-        target: /things-grpc-client${MF_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_THINGS_AUTH_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
+        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_THINGS_AUTH_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
-        target: /things-grpc-client${MF_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_THINGS_AUTH_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
+        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
-        target: /things-grpc-server-ca${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
+        target: /things-grpc-server-ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true

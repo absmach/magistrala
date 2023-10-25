@@ -1,10 +1,10 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package mocks
 
 import (
-	"github.com/mainflux/mainflux/users"
+	"github.com/absmach/magistrala/users"
 )
 
 type emailerMock struct{}

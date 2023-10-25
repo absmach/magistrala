@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package smtp
@@ -6,13 +6,13 @@ package smtp
 import (
 	"fmt"
 
-	"github.com/mainflux/mainflux/consumers/notifiers"
-	"github.com/mainflux/mainflux/internal/email"
-	"github.com/mainflux/mainflux/pkg/messaging"
+	"github.com/absmach/magistrala/consumers/notifiers"
+	"github.com/absmach/magistrala/internal/email"
+	"github.com/absmach/magistrala/pkg/messaging"
 )
 
 const (
-	footer          = "Sent by Mainflux SMTP Notification"
+	footer          = "Sent by Magistrala SMTP Notification"
 	contentTemplate = "A publisher with an id %s sent the message over %s with the following values \n %s"
 )
 

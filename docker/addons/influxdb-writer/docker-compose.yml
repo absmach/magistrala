@@ -1,74 +1,74 @@
-# Copyright (c) Mainflux
+# Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
 # This docker-compose file contains optional InfluxDB and InfluxDB-writer services
-# for the Mainflux platform. Since this services are optional, this file is dependent on the
+# for the Magistrala platform. Since this services are optional, this file is dependent on the
 # docker-compose.yml file from <project_root>/docker/. In order to run these services,
 # core services, as well as the network from the core composition, should be already running.
 
 version: "3.7"
 
 networks:
-  mainflux-base-net:
+  magistrala-base-net:
 
 volumes:
-  mainflux-influxdb-volume:
+  magistrala-influxdb-volume:
 
 services:
   influxdb:
     image: influxdb:2.5
-    container_name: mainflux-influxdb
+    container_name: magistrala-influxdb
     restart: on-failure
     environment:
-      DOCKER_INFLUXDB_INIT_MODE: ${MF_INFLUXDB_INIT_MODE}
-      DOCKER_INFLUXDB_INIT_USERNAME: ${MF_INFLUXDB_ADMIN_USER}
-      DOCKER_INFLUXDB_INIT_PASSWORD: ${MF_INFLUXDB_ADMIN_PASSWORD}
-      DOCKER_INFLUXDB_ADMIN_URL: ${MF_INFLUXDB_ADMIN_URL}
-      DOCKER_INFLUXDB_INIT_ORG: ${MF_INFLUXDB_ORG}
-      DOCKER_INFLUXDB_INIT_BUCKET: ${MF_INFLUXDB_BUCKET}
-      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${MF_INFLUXDB_TOKEN}
-      INFLUXDB_HTTP_FLUX_ENABLED: ${MF_INFLUXDB_HTTP_ENABLED}
+      DOCKER_INFLUXDB_INIT_MODE: ${MG_INFLUXDB_INIT_MODE}
+      DOCKER_INFLUXDB_INIT_USERNAME: ${MG_INFLUXDB_ADMIN_USER}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${MG_INFLUXDB_ADMIN_PASSWORD}
+      DOCKER_INFLUXDB_ADMIN_URL: ${MG_INFLUXDB_ADMIN_URL}
+      DOCKER_INFLUXDB_INIT_ORG: ${MG_INFLUXDB_ORG}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${MG_INFLUXDB_BUCKET}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${MG_INFLUXDB_TOKEN}
+      INFLUXDB_HTTP_FLUX_ENABLED: ${MG_INFLUXDB_HTTP_ENABLED}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     ports:
-      - ${MF_INFLUXDB_PORT}:${MF_INFLUXDB_PORT}
+      - ${MG_INFLUXDB_PORT}:${MG_INFLUXDB_PORT}
     volumes:
-      - mainflux-influxdb-volume:/var/lib/influxdb
+      - magistrala-influxdb-volume:/var/lib/influxdb
 
   influxdb-writer:
-    image: mainflux/influxdb-writer:${MF_RELEASE_TAG}
-    container_name: mainflux-influxdb-writer
+    image: magistrala/influxdb-writer:${MG_RELEASE_TAG}
+    container_name: magistrala-influxdb-writer
     depends_on:
       - influxdb
     restart: on-failure
     environment:
-      MF_INFLUX_WRITER_LOG_LEVEL: ${MF_INFLUX_WRITER_LOG_LEVEL}
-      MF_INFLUX_WRITER_CONFIG_PATH: ${MF_INFLUX_WRITER_CONFIG_PATH}
-      MF_INFLUX_WRITER_HTTP_HOST: ${MF_INFLUX_WRITER_HTTP_HOST}
-      MF_INFLUX_WRITER_HTTP_PORT: ${MF_INFLUX_WRITER_HTTP_PORT}
-      MF_INFLUX_WRITER_HTTP_SERVER_CERT: ${MF_INFLUX_WRITER_HTTP_SERVER_CERT}
-      MF_INFLUX_WRITER_HTTP_SERVER_KEY: ${MF_INFLUX_WRITER_HTTP_SERVER_KEY}
-      MF_INFLUXDB_PROTOCOL: ${MF_INFLUXDB_PROTOCOL}
-      MF_INFLUXDB_HOST: ${MF_INFLUXDB_HOST}
-      MF_INFLUXDB_PORT: ${MF_INFLUXDB_PORT}
-      MF_INFLUXDB_ADMIN_USER: ${MF_INFLUXDB_ADMIN_USER}
-      MF_INFLUXDB_ADMIN_PASSWORD: ${MF_INFLUXDB_ADMIN_PASSWORD}
-      MF_INFLUXDB_NAME: ${MF_INFLUXDB_NAME}
-      MF_INFLUXDB_BUCKET: ${MF_INFLUXDB_BUCKET}
-      MF_INFLUXDB_ORG: ${MF_INFLUXDB_ORG}
-      MF_INFLUXDB_TOKEN: ${MF_INFLUXDB_TOKEN}
-      MF_INFLUXDB_DBURL: ${MF_INFLUXDB_DBURL}
-      MF_INFLUXDB_USER_AGENT: ${MF_INFLUXDB_USER_AGENT}
-      MF_INFLUXDB_TIMEOUT: ${MF_INFLUXDB_TIMEOUT}
-      MF_INFLUXDB_INSECURE_SKIP_VERIFY: ${MF_INFLUXDB_INSECURE_SKIP_VERIFY}
-      MF_MESSAGE_BROKER_URL: ${MF_MESSAGE_BROKER_URL}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_JAEGER_TRACE_RATIO: ${MF_JAEGER_TRACE_RATIO}
-      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
-      MF_INFLUX_WRITER_INSTANCE_ID: ${MF_INFLUX_WRITER_INSTANCE_ID}
+      MG_INFLUX_WRITER_LOG_LEVEL: ${MG_INFLUX_WRITER_LOG_LEVEL}
+      MG_INFLUX_WRITER_CONFIG_PATH: ${MG_INFLUX_WRITER_CONFIG_PATH}
+      MG_INFLUX_WRITER_HTTP_HOST: ${MG_INFLUX_WRITER_HTTP_HOST}
+      MG_INFLUX_WRITER_HTTP_PORT: ${MG_INFLUX_WRITER_HTTP_PORT}
+      MG_INFLUX_WRITER_HTTP_SERVER_CERT: ${MG_INFLUX_WRITER_HTTP_SERVER_CERT}
+      MG_INFLUX_WRITER_HTTP_SERVER_KEY: ${MG_INFLUX_WRITER_HTTP_SERVER_KEY}
+      MG_INFLUXDB_PROTOCOL: ${MG_INFLUXDB_PROTOCOL}
+      MG_INFLUXDB_HOST: ${MG_INFLUXDB_HOST}
+      MG_INFLUXDB_PORT: ${MG_INFLUXDB_PORT}
+      MG_INFLUXDB_ADMIN_USER: ${MG_INFLUXDB_ADMIN_USER}
+      MG_INFLUXDB_ADMIN_PASSWORD: ${MG_INFLUXDB_ADMIN_PASSWORD}
+      MG_INFLUXDB_NAME: ${MG_INFLUXDB_NAME}
+      MG_INFLUXDB_BUCKET: ${MG_INFLUXDB_BUCKET}
+      MG_INFLUXDB_ORG: ${MG_INFLUXDB_ORG}
+      MG_INFLUXDB_TOKEN: ${MG_INFLUXDB_TOKEN}
+      MG_INFLUXDB_DBURL: ${MG_INFLUXDB_DBURL}
+      MG_INFLUXDB_USER_AGENT: ${MG_INFLUXDB_USER_AGENT}
+      MG_INFLUXDB_TIMEOUT: ${MG_INFLUXDB_TIMEOUT}
+      MG_INFLUXDB_INSECURE_SKIP_VERIFY: ${MG_INFLUXDB_INSECURE_SKIP_VERIFY}
+      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_INFLUX_WRITER_INSTANCE_ID: ${MG_INFLUX_WRITER_INSTANCE_ID}
     ports:
-      - ${MF_INFLUX_WRITER_HTTP_PORT}:${MF_INFLUX_WRITER_HTTP_PORT}
+      - ${MG_INFLUX_WRITER_HTTP_PORT}:${MG_INFLUX_WRITER_HTTP_PORT}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
       - ./config.toml:/config.toml

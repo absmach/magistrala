@@ -1,9 +1,9 @@
 CRT_LOCATION = certs
-O = Mainflux
+O = Magistrala
 OU_CA = mainflux_ca
 OU_CRT = mainflux_crt
 EA = info@mainflux.com
-CN_CA = Mainflux_Self_Signed_CA
+CN_CA = Magistrala_Self_Signed_CA
 CN_SRV = localhost
 THING_SECRET = <THING_SECRET> # e.g. 8f65ed04-0770-4ce4-a291-6d1bf2000f4d
 CRT_FILE_NAME = thing

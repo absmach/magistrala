@@ -1,7 +1,7 @@
-# Mainflux Changelog
+# Magistrala Changelog
 
 ## Generation
-Mainflux release notes for the latest release can be obtained via:
+Magistrala release notes for the latest release can be obtained via:
 ```
 make changelog
 ```
@@ -18,7 +18,7 @@ git log --pretty=oneline --abbrev-commit
 - NOISSUE - Update changelog and readme for release 0.13.0
 - MF-1582 - Fix lora-adapter MQTT client (#1583)
 - NOISSUE - Fix CoAP adapter (#1572)
-- NOISSUE - Unify MF_INFLUX_READER_DB_HOST and MF_INFLUX_WRITER_DB_HOST envars (#1585)
+- NOISSUE - Unify MG_INFLUX_READER_DB_HOST and MG_INFLUX_WRITER_DB_HOST envars (#1585)
 - MF-1580 - Influxdb Writer changes format of update-time to string (#1581)
 - MF-1575 Add 'Name' field to ListMembers response in things svc (#1576)
 - MF-1565 - Document Bearer, Thing and Basic Authorization header (#1566)
@@ -199,18 +199,18 @@ git log --pretty=oneline --abbrev-commit
 - NOISSUE - Add subtopic wildcard for twin attribute's definition (#1214)
 - fix envs for nginx (#1215)
 - Remove twin mqtt related obsolete var and fix es-redis address (#1213)
-- NOISSUE - Remove unused `MF_THINGS_SECRET` env var (#1211)
+- NOISSUE - Remove unused `MG_THINGS_SECRET` env var (#1211)
 - NOISSUE - Fix some typos (#1212)
 - NOISSUE - Remove unknown Bootstrap requests (#1210)
 - NOISSUE - Use `pgcrypto` instead `uuid-ossp` for UUIDs generation (version 4) (#1208)
 - MF-1198 - Add errors package tests (#1207)
 - MF-1025 - timeout env in sec, use parseduration (#1206)
-- MF-1201 - Fix MF_THINGS_AUTH_GRPC_URL mongo reader ENVAR (#1203)
+- MF-1201 - Fix MG_THINGS_AUTH_GRPC_URL mongo reader ENVAR (#1203)
 - NOISSUE - Fix CI (#1204)
 - MF-1180 - Add redis based twins and states cache (#1184)
 - MF-739 - Add ID to the User entity (#1152)
 - NOISSUE - Fix default db name for storage databases (#1194)
-- NOISSUE - Add `MF_DOCKER_IMAGE_NAME_PREFIX` to Makefile (#1173)
+- NOISSUE - Add `MG_DOCKER_IMAGE_NAME_PREFIX` to Makefile (#1173)
 - MF-1154 - Move UUID provider to project root (#1172)
 - Fix typo in error messages (#1193)
 - MF-1190 - Add pkg for library packages (#1191)
@@ -224,7 +224,7 @@ git log --pretty=oneline --abbrev-commit
 - MF-995 - Add Twins tests for endpoint list twins and list states (#1174)
 - NOISSUE - Update dependencies (#1176)
 - MF-1163 - Fix influxdb-reader to use nanoseconds precision (#1171)
-- Rename environment variable MF_MQTT_ADAPTER_PORT to MF_MQTT_ADAPTER_MQTT_PORT in docker environment (#1170)
+- Rename environment variable MG_MQTT_ADAPTER_PORT to MG_MQTT_ADAPTER_MQTT_PORT in docker environment (#1170)
 - Remove thing related code from twins service (#1169)
 - MF-997 - Add twins service swagger file (#1167)
 - MF-1079 - Add MQTT forwarder (#1164)
@@ -341,7 +341,7 @@ git log --pretty=oneline --abbrev-commit
 - MF-898 - Add transactions to postgres connect (#940)
 - Add missing user service tests (#945)
 - Remove Normalizer service from compose (#937)
-- MF-919 - Mainflux message updates (#924)
+- MF-919 - Magistrala message updates (#924)
 - NOISSUE - Remove ARM multi-arch images (#929)
 - MF-906 - Change single creation endpoints to use bulk service calls (#927)
 - MF-922 - Add UpdateUser endpoint (#923)
@@ -493,7 +493,7 @@ git log --pretty=oneline --abbrev-commit
 - Fix CI with fixed plugin versions (#747)
 - fix building problems (#741)
 - fix docker-compose env (#775)
-- Fix MF_THINGS_AUTH_GRPC_PORT in addons' docker-compose files (#781)
+- Fix MG_THINGS_AUTH_GRPC_PORT in addons' docker-compose files (#781)
 - Fix MQTT raw message deserialization (#753)
 - fix variant option for manifest annotate (#765)
 - fix to makefile for OSX/Darwin (#724)
@@ -510,7 +510,7 @@ git log --pretty=oneline --abbrev-commit
 
 
 ### Summary
-https://github.com/mainflux/mainflux/milestone/10?closed=1
+https://github.com/absmach/magistrala/milestone/10?closed=1
 
 ## 0.8.0 - 20. MAR 2019.
 ### Features
@@ -576,7 +576,7 @@ https://github.com/mainflux/mainflux/milestone/10?closed=1
 - NOISSUE - Fix normalizer exposed port in docker-compose (#548)
 
 ### Summary
-https://github.com/mainflux/mainflux/milestone/9?closed=1
+https://github.com/absmach/magistrala/milestone/9?closed=1
 
 
 ## 0.7.0 - 08. DEC 2018.
@@ -601,10 +601,10 @@ https://github.com/mainflux/mainflux/milestone/9?closed=1
 - MF-454 - Use message Time field as a time for InfluxDB points (#455)
 - NOISSUE - Add .dockerignore to project root (#457)
 - Update docker-compose so that every service has debug log level (#453)
-- NOISSUE - Add TLS flag for Mainflux services (#452)
+- NOISSUE - Add TLS flag for Magistrala services (#452)
 - MF-448 - Option for Postgres SSL Mode (#449)
 - MF-443 Update project dependencies (#444)
-- MF-426 - Add optional MF_CA_CERTS env variable to allow GRPC client to use TLS certs (#430)
+- MF-426 - Add optional MG_CA_CERTS env variable to allow GRPC client to use TLS certs (#430)
 - Expose the InfluxDB and Cassandra ports to host (#441)
 - MF-374 - Bring back CoAP adapter (#413)
 
@@ -613,7 +613,7 @@ https://github.com/mainflux/mainflux/milestone/9?closed=1
 - MF-407 - Values of zero are being omitted  (#434)
 
 ### Summary
-https://github.com/mainflux/mainflux/milestone/8?closed=1
+https://github.com/absmach/magistrala/milestone/8?closed=1
 
 
 ## 0.6.0 - 26. OCT 2018.
@@ -653,7 +653,7 @@ https://github.com/mainflux/mainflux/milestone/8?closed=1
 - Vendor correct gRPC version (#340)
 
 ### Summary
-https://github.com/mainflux/mainflux/milestone/6?closed=1
+https://github.com/absmach/magistrala/milestone/6?closed=1
 
 
 ## 0.4.0 - 01. JUN 2018.

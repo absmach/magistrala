@@ -1,7 +1,7 @@
-# Copyright (c) Mainflux
+# Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
-# This docker-compose file contains optional Vault service for Mainflux platform.
+# This docker-compose file contains optional Vault service for Magistrala platform.
 # Since this is optional, this file is dependent of docker-compose file
 # from <project_root>/docker. In order to run these services, execute command:
 # docker-compose -f docker/docker-compose.yml -f docker/addons/vault/docker-compose.yml up
@@ -11,30 +11,30 @@
 version: '3.7'
 
 networks:
-  mainflux-base-net:
+  magistrala-base-net:
 
 volumes:
-  mainflux-vault-volume:
+  magistrala-vault-volume:
 
 services:
   vault:
     image: vault:1.12.2
-    container_name: mainflux-vault
+    container_name: magistrala-vault
     ports:
-      - ${MF_VAULT_PORT}:8200
+      - ${MG_VAULT_PORT}:8200
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
-      - mainflux-vault-volume:/vault/file
-      - mainflux-vault-volume:/vault/logs
+      - magistrala-vault-volume:/vault/file
+      - magistrala-vault-volume:/vault/logs
       - ./config.hcl:/vault/config/config.hcl
       - ./entrypoint.sh:/entrypoint.sh
     environment:
-      VAULT_ADDR: http://127.0.0.1:${MF_VAULT_PORT}
-      MF_VAULT_PORT: ${MF_VAULT_PORT}
-      MF_VAULT_UNSEAL_KEY_1: ${MF_VAULT_UNSEAL_KEY_1}
-      MF_VAULT_UNSEAL_KEY_2: ${MF_VAULT_UNSEAL_KEY_2}
-      MF_VAULT_UNSEAL_KEY_3: ${MF_VAULT_UNSEAL_KEY_3}
+      VAULT_ADDR: http://127.0.0.1:${MG_VAULT_PORT}
+      MG_VAULT_PORT: ${MG_VAULT_PORT}
+      MG_VAULT_UNSEAL_KEY_1: ${MG_VAULT_UNSEAL_KEY_1}
+      MG_VAULT_UNSEAL_KEY_2: ${MG_VAULT_UNSEAL_KEY_2}
+      MG_VAULT_UNSEAL_KEY_3: ${MG_VAULT_UNSEAL_KEY_3}
     entrypoint: /bin/sh
     command: /entrypoint.sh
     cap_add:

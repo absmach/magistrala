@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 // Package main contains influxdb-reader main function to start the influxdb-reader service.
@@ -10,34 +10,34 @@ import (
 	"log"
 	"os"
 
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/internal"
+	authclient "github.com/absmach/magistrala/internal/clients/grpc/auth"
+	influxdbclient "github.com/absmach/magistrala/internal/clients/influxdb"
+	"github.com/absmach/magistrala/internal/env"
+	"github.com/absmach/magistrala/internal/server"
+	httpserver "github.com/absmach/magistrala/internal/server/http"
+	mflog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/absmach/magistrala/readers"
+	"github.com/absmach/magistrala/readers/api"
+	"github.com/absmach/magistrala/readers/influxdb"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	chclient "github.com/mainflux/callhome/pkg/client"
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/internal"
-	authclient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
-	influxdbclient "github.com/mainflux/mainflux/internal/clients/influxdb"
-	"github.com/mainflux/mainflux/internal/env"
-	"github.com/mainflux/mainflux/internal/server"
-	httpserver "github.com/mainflux/mainflux/internal/server/http"
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/uuid"
-	"github.com/mainflux/mainflux/readers"
-	"github.com/mainflux/mainflux/readers/api"
-	"github.com/mainflux/mainflux/readers/influxdb"
 	"golang.org/x/sync/errgroup"
 )
 
 const (
 	svcName        = "influxdb-reader"
-	envPrefixHTTP  = "MF_INFLUX_READER_HTTP_"
-	envPrefixDB    = "MF_INFLUXDB_"
+	envPrefixHTTP  = "MG_INFLUX_READER_HTTP_"
+	envPrefixDB    = "MG_INFLUXDB_"
 	defSvcHTTPPort = "9005"
 )
 
 type config struct {
-	LogLevel      string `env:"MF_INFLUX_READER_LOG_LEVEL"  envDefault:"info"`
-	SendTelemetry bool   `env:"MF_SEND_TELEMETRY"           envDefault:"true"`
-	InstanceID    string `env:"MF_INFLUX_READER_INSTANCE_ID"   envDefault:""`
+	LogLevel      string `env:"MG_INFLUX_READER_LOG_LEVEL"  envDefault:"info"`
+	SendTelemetry bool   `env:"MG_SEND_TELEMETRY"           envDefault:"true"`
+	InstanceID    string `env:"MG_INFLUX_READER_INSTANCE_ID"   envDefault:""`
 }
 
 func main() {

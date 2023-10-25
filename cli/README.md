@@ -1,4 +1,4 @@
-# Mainflux CLI
+# Magistrala CLI
 
 ## Build
 
@@ -12,7 +12,7 @@ make cli
 
 ### Service
 
-#### Get Mainflux Services Health Check
+#### Get Magistrala Services Health Check
 
 ```bash
 mainflux-cli health <service>

@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package policies
@@ -6,8 +6,8 @@ package policies
 import (
 	"context"
 
+	"github.com/absmach/magistrala/auth"
 	"github.com/go-kit/kit/endpoint"
-	"github.com/mainflux/mainflux/auth"
 )
 
 func createPolicyEndpoint(svc auth.Service) endpoint.Endpoint {

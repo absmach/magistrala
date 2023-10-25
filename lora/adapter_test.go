@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package lora_test
@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mainflux/mainflux/lora"
-	"github.com/mainflux/mainflux/lora/mocks"
-	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/absmach/magistrala/lora"
+	"github.com/absmach/magistrala/lora/mocks"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package auth
@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/pkg/errors"
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/pkg/errors"
 )
 
 const (
@@ -29,7 +29,7 @@ const (
 	parentGroupRelation   = "parent_group"
 	viewerRelation        = "viewer"
 
-	mainfluxObject = "mainflux"
+	mainfluxObject = "magistrala"
 	refreshToken   = "refresh_token"
 )
 

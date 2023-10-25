@@ -1,6 +1,6 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 // Package influxdb contains the domain concept definitions needed to
-// support Mainflux InfluxDB writer service functionality.
+// support Magistrala InfluxDB writer service functionality.
 package influxdb

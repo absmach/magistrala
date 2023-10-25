@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package postgres
@@ -6,10 +6,10 @@ package postgres
 import (
 	"fmt"
 
+	"github.com/absmach/magistrala/internal/env"
+	"github.com/absmach/magistrala/pkg/errors"
 	_ "github.com/jackc/pgx/v5/stdlib" // required for SQL access
 	"github.com/jmoiron/sqlx"
-	"github.com/mainflux/mainflux/internal/env"
-	"github.com/mainflux/mainflux/pkg/errors"
 	migrate "github.com/rubenv/sql-migrate"
 )
 
@@ -22,8 +22,8 @@ var (
 type Config struct {
 	Host        string `env:"HOST,notEmpty"           envDefault:"localhost"`
 	Port        string `env:"PORT,notEmpty"           envDefault:"5432"`
-	User        string `env:"USER,notEmpty"           envDefault:"mainflux"`
-	Pass        string `env:"PASS,notEmpty"           envDefault:"mainflux"`
+	User        string `env:"USER,notEmpty"           envDefault:"magistrala"`
+	Pass        string `env:"PASS,notEmpty"           envDefault:"magistrala"`
 	Name        string `env:"NAME"                    envDefault:""`
 	SSLMode     string `env:"SSL_MODE,notEmpty"       envDefault:"disable"`
 	SSLCert     string `env:"SSL_CERT"                envDefault:""`

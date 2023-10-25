@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package grpc
@@ -7,10 +7,10 @@ import (
 	"context"
 	"time"
 
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/auth"
 	"github.com/go-kit/kit/endpoint"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/auth"
 	"google.golang.org/grpc"
 )
 

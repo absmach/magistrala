@@ -7,17 +7,17 @@ VAULT_PID=$!
 
 sleep 2
 
-echo $MF_VAULT_UNSEAL_KEY_1
-echo $MF_VAULT_UNSEAL_KEY_2
-echo $MF_VAULT_UNSEAL_KEY_3
+echo $MG_VAULT_UNSEAL_KEY_1
+echo $MG_VAULT_UNSEAL_KEY_2
+echo $MG_VAULT_UNSEAL_KEY_3
 
-if [[ ! -z "${MF_VAULT_UNSEAL_KEY_1}" ]] &&
-   [[ ! -z "${MF_VAULT_UNSEAL_KEY_2}" ]] &&
-   [[ ! -z "${MF_VAULT_UNSEAL_KEY_3}" ]]; then
+if [[ ! -z "${MG_VAULT_UNSEAL_KEY_1}" ]] &&
+   [[ ! -z "${MG_VAULT_UNSEAL_KEY_2}" ]] &&
+   [[ ! -z "${MG_VAULT_UNSEAL_KEY_3}" ]]; then
 	echo "Unsealing Vault"
-	vault operator unseal ${MF_VAULT_UNSEAL_KEY_1}
-	vault operator unseal ${MF_VAULT_UNSEAL_KEY_2}
-	vault operator unseal ${MF_VAULT_UNSEAL_KEY_3}
+	vault operator unseal ${MG_VAULT_UNSEAL_KEY_1}
+	vault operator unseal ${MG_VAULT_UNSEAL_KEY_2}
+	vault operator unseal ${MG_VAULT_UNSEAL_KEY_3}
 fi
 
 wait $VAULT_PID

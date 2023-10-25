@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package smpp
@@ -6,13 +6,13 @@ package smpp
 import (
 	"time"
 
+	"github.com/absmach/magistrala/consumers/notifiers"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/transformers"
+	"github.com/absmach/magistrala/pkg/transformers/json"
 	"github.com/fiorix/go-smpp/smpp"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdutext"
-	"github.com/mainflux/mainflux/consumers/notifiers"
-	"github.com/mainflux/mainflux/pkg/messaging"
-	"github.com/mainflux/mainflux/pkg/transformers"
-	"github.com/mainflux/mainflux/pkg/transformers/json"
 )
 
 var _ notifiers.Notifier = (*notifier)(nil)

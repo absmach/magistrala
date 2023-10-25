@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 //go:build !test
@@ -8,8 +8,8 @@ package api
 import (
 	"time"
 
+	"github.com/absmach/magistrala/readers"
 	"github.com/go-kit/kit/metrics"
-	"github.com/mainflux/mainflux/readers"
 )
 
 var _ readers.MessageRepository = (*metricsMiddleware)(nil)

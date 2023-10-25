@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package mocks
@@ -7,8 +7,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/mainflux/mainflux/certs"
-	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/absmach/magistrala/certs"
+	"github.com/absmach/magistrala/pkg/errors"
 )
 
 var _ certs.Repository = (*certsRepoMock)(nil)

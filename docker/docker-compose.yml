@@ -1,22 +1,22 @@
-# Copyright (c) Mainflux
+# Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
 version: "3.7"
-name: "mainflux"
+name: "magistrala"
 
 networks:
-  mainflux-base-net:
+  magistrala-base-net:
     driver: bridge
 
 volumes:
-  mainflux-users-db-volume:
-  mainflux-things-db-volume:
-  mainflux-things-redis-volume:
-  mainflux-mqtt-broker-volume:
-  mainflux-broker-volume:
-  mainflux-es-volume:
-  mainflux-spicedb-db-volume:
-  mainflux-auth-db-volume:
+  magistrala-users-db-volume:
+  magistrala-things-db-volume:
+  magistrala-things-redis-volume:
+  magistrala-mqtt-broker-volume:
+  magistrala-broker-volume:
+  magistrala-es-volume:
+  magistrala-spicedb-db-volume:
+  magistrala-auth-db-volume:
 
 include:
   - path: brokers/docker-compose.yml
@@ -27,115 +27,115 @@ include:
 services:
   spicedb:
     image: "authzed/spicedb"
-    container_name: mainflux-spicedb
+    container_name: magistrala-spicedb
     command: "serve"
     restart: "always"
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     ports:
       - "8080:8080"
       - "9090:9090"
       - "50051:50051"
     environment:
-      SPICEDB_GRPC_PRESHARED_KEY: ${MF_SPICEDB_GRPC_PRESHARED_KEY}
-      SPICEDB_DATASTORE_ENGINE: ${MF_SPICEDB_DATASTORE_ENGINE}
-      SPICEDB_DATASTORE_CONN_URI: "${MF_SPICEDB_DATASTORE_ENGINE}://${MF_SPICEDB_DB_USER}:${MF_SPICEDB_DB_PASS}@spicedb-db:${MF_SPICEDB_DB_PORT}/${MF_SPICEDB_DB_NAME}?sslmode=disable"
+      SPICEDB_GRPC_PRESHARED_KEY: ${MG_SPICEDB_GRPC_PRESHARED_KEY}
+      SPICEDB_DATASTORE_ENGINE: ${MG_SPICEDB_DATASTORE_ENGINE}
+      SPICEDB_DATASTORE_CONN_URI: "${MG_SPICEDB_DATASTORE_ENGINE}://${MG_SPICEDB_DB_USER}:${MG_SPICEDB_DB_PASS}@spicedb-db:${MG_SPICEDB_DB_PORT}/${MG_SPICEDB_DB_NAME}?sslmode=disable"
     depends_on:
       - spicedb-migrate
 
   spicedb-migrate:
     image: "authzed/spicedb"
-    container_name: mainflux-spicedb-migrate
+    container_name: magistrala-spicedb-migrate
     command: "migrate head"
     restart: "on-failure"
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     environment:
-      SPICEDB_DATASTORE_ENGINE: ${MF_SPICEDB_DATASTORE_ENGINE}
-      SPICEDB_DATASTORE_CONN_URI: "${MF_SPICEDB_DATASTORE_ENGINE}://${MF_SPICEDB_DB_USER}:${MF_SPICEDB_DB_PASS}@spicedb-db:${MF_SPICEDB_DB_PORT}/${MF_SPICEDB_DB_NAME}?sslmode=disable"
+      SPICEDB_DATASTORE_ENGINE: ${MG_SPICEDB_DATASTORE_ENGINE}
+      SPICEDB_DATASTORE_CONN_URI: "${MG_SPICEDB_DATASTORE_ENGINE}://${MG_SPICEDB_DB_USER}:${MG_SPICEDB_DB_PASS}@spicedb-db:${MG_SPICEDB_DB_PORT}/${MG_SPICEDB_DB_NAME}?sslmode=disable"
     depends_on:
       - spicedb-db
 
   spicedb-db:
     image: "postgres:15.3-alpine"
-    container_name: mainflux-spicedb-db
+    container_name: magistrala-spicedb-db
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     ports:
       - "6010:5432"
     environment:
-      POSTGRES_USER: ${MF_SPICEDB_DB_USER}
-      POSTGRES_PASSWORD: ${MF_SPICEDB_DB_PASS}
-      POSTGRES_DB: ${MF_SPICEDB_DB_NAME}
+      POSTGRES_USER: ${MG_SPICEDB_DB_USER}
+      POSTGRES_PASSWORD: ${MG_SPICEDB_DB_PASS}
+      POSTGRES_DB: ${MG_SPICEDB_DB_NAME}
     volumes:
-      - mainflux-spicedb-db-volume:/var/lib/postgresql/data
+      - magistrala-spicedb-db-volume:/var/lib/postgresql/data
 
   auth-db:
     image: postgres:13.3-alpine
-    container_name: mainflux-auth-db
+    container_name: magistrala-auth-db
     restart: on-failure
     ports:
       - 6004:5432
     environment:
-      POSTGRES_USER: ${MF_AUTH_DB_USER}
-      POSTGRES_PASSWORD: ${MF_AUTH_DB_PASS}
-      POSTGRES_DB: ${MF_AUTH_DB}
+      POSTGRES_USER: ${MG_AUTH_DB_USER}
+      POSTGRES_PASSWORD: ${MG_AUTH_DB_PASS}
+      POSTGRES_DB: ${MG_AUTH_DB}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
-      - mainflux-auth-db-volume:/var/lib/postgresql/data
+      - magistrala-auth-db-volume:/var/lib/postgresql/data
 
   auth:
-    image: mainflux/auth:${MF_RELEASE_TAG}
-    container_name: mainflux-auth
+    image: magistrala/auth:${MG_RELEASE_TAG}
+    container_name: magistrala-auth
     depends_on:
       - auth-db
       - spicedb
     expose:
-      - ${MF_AUTH_GRPC_PORT}
+      - ${MG_AUTH_GRPC_PORT}
     restart: on-failure
     environment:
-      MF_SPICEDB_SCHEMA_FILE: ${MF_SPICEDB_SCHEMA_FILE}
-      MF_SPICEDB_HOST: ${MF_SPICEDB_HOST}
-      MF_SPICEDB_PORT: ${MF_SPICEDB_PORT}
-      MF_AUTH_LOG_LEVEL: ${MF_AUTH_LOG_LEVEL}
-      MF_AUTH_DB_HOST: auth-db
-      MF_AUTH_DB_PORT: ${MF_AUTH_DB_PORT}
-      MF_AUTH_DB_USER: ${MF_AUTH_DB_USER}
-      MF_AUTH_DB_PASS: ${MF_AUTH_DB_PASS}
-      MF_AUTH_DB: ${MF_AUTH_DB}
-      MF_AUTH_HTTP_PORT: ${MF_AUTH_HTTP_PORT}
-      MF_AUTH_GRPC_PORT: ${MF_AUTH_GRPC_PORT}
-      MF_AUTH_SECRET: ${MF_AUTH_SECRET}
-      MF_AUTH_ACCESS_TOKEN_DURATION: ${MF_AUTH_ACCESS_TOKEN_DURATION}
+      MG_SPICEDB_SCHEMA_FILE: ${MG_SPICEDB_SCHEMA_FILE}
+      MG_SPICEDB_HOST: ${MG_SPICEDB_HOST}
+      MG_SPICEDB_PORT: ${MG_SPICEDB_PORT}
+      MG_AUTH_LOG_LEVEL: ${MG_AUTH_LOG_LEVEL}
+      MG_AUTH_DB_HOST: auth-db
+      MG_AUTH_DB_PORT: ${MG_AUTH_DB_PORT}
+      MG_AUTH_DB_USER: ${MG_AUTH_DB_USER}
+      MG_AUTH_DB_PASS: ${MG_AUTH_DB_PASS}
+      MG_AUTH_DB: ${MG_AUTH_DB}
+      MG_AUTH_HTTP_PORT: ${MG_AUTH_HTTP_PORT}
+      MG_AUTH_GRPC_PORT: ${MG_AUTH_GRPC_PORT}
+      MG_AUTH_SECRET: ${MG_AUTH_SECRET}
+      MG_AUTH_ACCESS_TOKEN_DURATION: ${MG_AUTH_ACCESS_TOKEN_DURATION}
     ports:
-      - ${MF_AUTH_HTTP_PORT}:${MF_AUTH_HTTP_PORT}
-      - ${MF_AUTH_GRPC_PORT}:${MF_AUTH_GRPC_PORT}
+      - ${MG_AUTH_HTTP_PORT}:${MG_AUTH_HTTP_PORT}
+      - ${MG_AUTH_GRPC_PORT}:${MG_AUTH_GRPC_PORT}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
-      - ./spicedb/schema.zed:${MF_SPICEDB_SCHEMA_FILE}
+      - ./spicedb/schema.zed:${MG_SPICEDB_SCHEMA_FILE}
 
   nginx:
     image: nginx:1.23.3-alpine
-    container_name: mainflux-nginx
+    container_name: magistrala-nginx
     restart: on-failure
     volumes:
       - ./nginx/nginx-${AUTH-key}.conf:/etc/nginx/nginx.conf.template
       - ./nginx/entrypoint.sh:/docker-entrypoint.d/entrypoint.sh
       - ./nginx/snippets:/etc/nginx/snippets
       - ./ssl/authorization.js:/etc/nginx/authorization.js
-      - ./ssl/certs/mainflux-server.crt:/etc/ssl/certs/mainflux-server.crt
+      - ./ssl/certs/magistrala-server.crt:/etc/ssl/certs/magistrala-server.crt
       - ./ssl/certs/ca.crt:/etc/ssl/certs/ca.crt
-      - ./ssl/certs/mainflux-server.key:/etc/ssl/private/mainflux-server.key
+      - ./ssl/certs/magistrala-server.key:/etc/ssl/private/magistrala-server.key
       - ./ssl/dhparam.pem:/etc/ssl/certs/dhparam.pem
     ports:
-      - ${MF_NGINX_HTTP_PORT}:${MF_NGINX_HTTP_PORT}
-      - ${MF_NGINX_SSL_PORT}:${MF_NGINX_SSL_PORT}
-      - ${MF_NGINX_MQTT_PORT}:${MF_NGINX_MQTT_PORT}
-      - ${MF_NGINX_MQTTS_PORT}:${MF_NGINX_MQTTS_PORT}
+      - ${MG_NGINX_HTTP_PORT}:${MG_NGINX_HTTP_PORT}
+      - ${MG_NGINX_SSL_PORT}:${MG_NGINX_SSL_PORT}
+      - ${MG_NGINX_MQTT_PORT}:${MG_NGINX_MQTT_PORT}
+      - ${MG_NGINX_MQTTS_PORT}:${MG_NGINX_MQTTS_PORT}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     env_file:
       - .env
     depends_on:
@@ -147,404 +147,404 @@ services:
 
   things-db:
     image: postgres:13.3-alpine
-    container_name: mainflux-things-db
+    container_name: magistrala-things-db
     restart: on-failure
-    command: postgres -c "max_connections=${MF_POSTGRES_MAX_CONNECTIONS}"
+    command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
     environment:
-      POSTGRES_USER: ${MF_THINGS_DB_USER}
-      POSTGRES_PASSWORD: ${MF_THINGS_DB_PASS}
-      POSTGRES_DB: ${MF_THINGS_DB_NAME}
-      MF_POSTGRES_MAX_CONNECTIONS: ${MF_POSTGRES_MAX_CONNECTIONS}
+      POSTGRES_USER: ${MG_THINGS_DB_USER}
+      POSTGRES_PASSWORD: ${MG_THINGS_DB_PASS}
+      POSTGRES_DB: ${MG_THINGS_DB_NAME}
+      MG_POSTGRES_MAX_CONNECTIONS: ${MG_POSTGRES_MAX_CONNECTIONS}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     ports:
       - 6006:5432
     volumes:
-      - mainflux-things-db-volume:/var/lib/postgresql/data
+      - magistrala-things-db-volume:/var/lib/postgresql/data
 
   things-redis:
     image: redis:6.2.2-alpine
-    container_name: mainflux-things-redis
+    container_name: magistrala-things-redis
     restart: on-failure
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
-      - mainflux-things-redis-volume:/data
+      - magistrala-things-redis-volume:/data
 
   things:
-    image: mainflux/things:${MF_RELEASE_TAG}
-    container_name: mainflux-things
+    image: magistrala/things:${MG_RELEASE_TAG}
+    container_name: magistrala-things
     depends_on:
       - things-db
       - users
     restart: on-failure
     environment:
-      MF_THINGS_LOG_LEVEL: ${MF_THINGS_LOG_LEVEL}
-      MF_THINGS_STANDALONE_ID: ${MF_THINGS_STANDALONE_ID}
-      MF_THINGS_STANDALONE_TOKEN: ${MF_THINGS_STANDALONE_TOKEN}
-      MF_THINGS_CACHE_KEY_DURATION: ${MF_THINGS_CACHE_KEY_DURATION}
-      MF_THINGS_HTTP_HOST: ${MF_THINGS_HTTP_HOST}
-      MF_THINGS_HTTP_PORT: ${MF_THINGS_HTTP_PORT}
-      MF_THINGS_AUTH_GRPC_HOST: ${MF_THINGS_AUTH_GRPC_HOST}
-      MF_THINGS_AUTH_GRPC_PORT: ${MF_THINGS_AUTH_GRPC_PORT}
+      MG_THINGS_LOG_LEVEL: ${MG_THINGS_LOG_LEVEL}
+      MG_THINGS_STANDALONE_ID: ${MG_THINGS_STANDALONE_ID}
+      MG_THINGS_STANDALONE_TOKEN: ${MG_THINGS_STANDALONE_TOKEN}
+      MG_THINGS_CACHE_KEY_DURATION: ${MG_THINGS_CACHE_KEY_DURATION}
+      MG_THINGS_HTTP_HOST: ${MG_THINGS_HTTP_HOST}
+      MG_THINGS_HTTP_PORT: ${MG_THINGS_HTTP_PORT}
+      MG_THINGS_AUTH_GRPC_HOST: ${MG_THINGS_AUTH_GRPC_HOST}
+      MG_THINGS_AUTH_GRPC_PORT: ${MG_THINGS_AUTH_GRPC_PORT}
       ## Compose supports parameter expansion in environment,
       ## Eg: ${VAR:+replacement} or ${VAR+replacement} -> replacement if VAR is set and non-empty, otherwise empty
       ## Eg :${VAR:-default} or ${VAR-default}  -> value of VAR if set and non-empty, otherwise default
-      MF_THINGS_AUTH_GRPC_SERVER_CERT: ${MF_THINGS_AUTH_GRPC_SERVER_CERT:+/things-grpc-server.crt}
-      MF_THINGS_AUTH_GRPC_SERVER_KEY: ${MF_THINGS_AUTH_GRPC_SERVER_KEY:+/things-grpc-server.key}
-      MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
-      MF_THINGS_AUTH_GRPC_CLIENT_CA_CERTS: ${MF_THINGS_AUTH_GRPC_CLIENT_CA_CERTS:+/things-grpc-client-ca.crt}
-      MF_THINGS_ES_URL: ${MF_ES_STORE_URL}
-      MF_THINGS_CACHE_URL: ${MF_THINGS_CACHE_URL}
-      MF_THINGS_DB_HOST: ${MF_THINGS_DB_HOST}
-      MF_THINGS_DB_PORT: ${MF_THINGS_DB_PORT}
-      MF_THINGS_DB_USER: ${MF_THINGS_DB_USER}
-      MF_THINGS_DB_PASS: ${MF_THINGS_DB_PASS}
-      MF_THINGS_DB_NAME: ${MF_THINGS_DB_NAME}
-      MF_THINGS_DB_SSL_MODE: ${MF_THINGS_DB_SSL_MODE}
-      MF_THINGS_DB_SSL_CERT: ${MF_THINGS_DB_SSL_CERT}
-      MF_THINGS_DB_SSL_KEY: ${MF_THINGS_DB_SSL_KEY}
-      MF_THINGS_DB_SSL_ROOT_CERT: ${MF_THINGS_DB_SSL_ROOT_CERT}
-      MF_AUTH_GRPC_URL: ${MF_AUTH_GRPC_URL}
-      MF_AUTH_GRPC_TIMEOUT: ${MF_AUTH_GRPC_TIMEOUT}
-      MF_AUTH_GRPC_CLIENT_CERT: ${MF_AUTH_GRPC_CLIENT_CERT:+/users-grpc-client.crt}
-      MF_AUTH_GRPC_CLIENT_KEY: ${MF_AUTH_GRPC_CLIENT_KEY:+/users-grpc-client.key}
-      MF_AUTH_GRPC_SERVER_CA_CERTS: ${MF_AUTH_GRPC_SERVER_CA_CERTS:+/users-grpc-server-ca.crt}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_JAEGER_TRACE_RATIO: ${MF_JAEGER_TRACE_RATIO}
-      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
+      MG_THINGS_AUTH_GRPC_SERVER_CERT: ${MG_THINGS_AUTH_GRPC_SERVER_CERT:+/things-grpc-server.crt}
+      MG_THINGS_AUTH_GRPC_SERVER_KEY: ${MG_THINGS_AUTH_GRPC_SERVER_KEY:+/things-grpc-server.key}
+      MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
+      MG_THINGS_AUTH_GRPC_CLIENT_CA_CERTS: ${MG_THINGS_AUTH_GRPC_CLIENT_CA_CERTS:+/things-grpc-client-ca.crt}
+      MG_THINGS_ES_URL: ${MG_ES_STORE_URL}
+      MG_THINGS_CACHE_URL: ${MG_THINGS_CACHE_URL}
+      MG_THINGS_DB_HOST: ${MG_THINGS_DB_HOST}
+      MG_THINGS_DB_PORT: ${MG_THINGS_DB_PORT}
+      MG_THINGS_DB_USER: ${MG_THINGS_DB_USER}
+      MG_THINGS_DB_PASS: ${MG_THINGS_DB_PASS}
+      MG_THINGS_DB_NAME: ${MG_THINGS_DB_NAME}
+      MG_THINGS_DB_SSL_MODE: ${MG_THINGS_DB_SSL_MODE}
+      MG_THINGS_DB_SSL_CERT: ${MG_THINGS_DB_SSL_CERT}
+      MG_THINGS_DB_SSL_KEY: ${MG_THINGS_DB_SSL_KEY}
+      MG_THINGS_DB_SSL_ROOT_CERT: ${MG_THINGS_DB_SSL_ROOT_CERT}
+      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
+      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
+      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/users-grpc-client.crt}
+      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/users-grpc-client.key}
+      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/users-grpc-server-ca.crt}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
     ports:
-      - ${MF_THINGS_HTTP_PORT}:${MF_THINGS_HTTP_PORT}
-      - ${MF_THINGS_AUTH_GRPC_PORT}:${MF_THINGS_AUTH_GRPC_PORT}
+      - ${MG_THINGS_HTTP_PORT}:${MG_THINGS_HTTP_PORT}
+      - ${MG_THINGS_AUTH_GRPC_PORT}:${MG_THINGS_AUTH_GRPC_PORT}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
       # Things gRPC server certificates
       - type: bind
-        source: ${MF_THINGS_AUTH_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
-        target: /things-grpc-server${MF_THINGS_AUTH_GRPC_SERVER_CERT:+.crt}
+        source: ${MG_THINGS_AUTH_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
+        target: /things-grpc-server${MG_THINGS_AUTH_GRPC_SERVER_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_THINGS_AUTH_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
-        target: /things-grpc-server${MF_THINGS_AUTH_GRPC_SERVER_KEY:+.key}
+        source: ${MG_THINGS_AUTH_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
+        target: /things-grpc-server${MG_THINGS_AUTH_GRPC_SERVER_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
-        target: /things-grpc-server-ca${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
+        target: /things-grpc-server-ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_THINGS_AUTH_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
-        target: /things-grpc-client-ca${MF_THINGS_AUTH_GRPC_CLIENT_CA_CERTS:+.crt}
+        source: ${MG_THINGS_AUTH_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
+        target: /things-grpc-client-ca${MG_THINGS_AUTH_GRPC_CLIENT_CA_CERTS:+.crt}
         bind:
           create_host_path: true
       # Users gRPC client certificates
       - type: bind
-        source: ${MF_USERS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /users-grpc-client${MF_USERS_GRPC_CLIENT_CERT:+.crt}
+        source: ${MG_USERS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /users-grpc-client${MG_USERS_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_USERS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /users-grpc-client${MF_USERS_GRPC_CLIENT_KEY:+.key}
+        source: ${MG_USERS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /users-grpc-client${MG_USERS_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_USERS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /users-grpc-server-ca${MF_USERS_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_USERS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /users-grpc-server-ca${MG_USERS_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
   users-db:
     image: postgres:15.1-alpine
-    container_name: mainflux-users-db
+    container_name: magistrala-users-db
     restart: on-failure
-    command: postgres -c "max_connections=${MF_POSTGRES_MAX_CONNECTIONS}"
+    command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
     environment:
-      POSTGRES_USER: ${MF_USERS_DB_USER}
-      POSTGRES_PASSWORD: ${MF_USERS_DB_PASS}
-      POSTGRES_DB: ${MF_USERS_DB_NAME}
-      MF_POSTGRES_MAX_CONNECTIONS: ${MF_POSTGRES_MAX_CONNECTIONS}
+      POSTGRES_USER: ${MG_USERS_DB_USER}
+      POSTGRES_PASSWORD: ${MG_USERS_DB_PASS}
+      POSTGRES_DB: ${MG_USERS_DB_NAME}
+      MG_POSTGRES_MAX_CONNECTIONS: ${MG_POSTGRES_MAX_CONNECTIONS}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
-      - mainflux-users-db-volume:/var/lib/postgresql/data
+      - magistrala-users-db-volume:/var/lib/postgresql/data
 
   users:
-    image: mainflux/users:${MF_RELEASE_TAG}
-    container_name: mainflux-users
+    image: magistrala/users:${MG_RELEASE_TAG}
+    container_name: magistrala-users
     depends_on:
       - users-db
     restart: on-failure
     environment:
-      MF_USERS_LOG_LEVEL: ${MF_USERS_LOG_LEVEL}
-      MF_USERS_SECRET_KEY: ${MF_USERS_SECRET_KEY}
-      MF_USERS_ADMIN_EMAIL: ${MF_USERS_ADMIN_EMAIL}
-      MF_USERS_ADMIN_PASSWORD: ${MF_USERS_ADMIN_PASSWORD}
-      MF_USERS_PASS_REGEX: ${MF_USERS_PASS_REGEX}
-      MF_USERS_ACCESS_TOKEN_DURATION: ${MF_USERS_ACCESS_TOKEN_DURATION}
-      MF_USERS_REFRESH_TOKEN_DURATION: ${MF_USERS_REFRESH_TOKEN_DURATION}
-      MF_TOKEN_RESET_ENDPOINT: ${MF_TOKEN_RESET_ENDPOINT}
-      MF_USERS_HTTP_HOST: ${MF_USERS_HTTP_HOST}
-      MF_USERS_HTTP_PORT: ${MF_USERS_HTTP_PORT}
-      MF_USERS_HTTP_SERVER_CERT: ${MF_USERS_HTTP_SERVER_CERT}
-      MF_USERS_HTTP_SERVER_KEY: ${MF_USERS_HTTP_SERVER_KEY}
-      MF_USERS_GRPC_HOST: ${MF_USERS_GRPC_HOST}
-      MF_USERS_GRPC_PORT: ${MF_USERS_GRPC_PORT}
-      MF_USERS_GRPC_SERVER_CERT: ${MF_USERS_GRPC_SERVER_CERT:+/users-grpc-server.crt}
-      MF_USERS_GRPC_SERVER_KEY: ${MF_USERS_GRPC_SERVER_KEY:+/users-grpc-server.key}
-      MF_USERS_GRPC_SERVER_CA_CERTS: ${MF_USERS_GRPC_SERVER_CA_CERTS:+/users-grpc-server-ca.crt}
-      MF_USERS_GRPC_CLIENT_CA_CERTS: ${MF_USERS_GRPC_CLIENT_CA_CERTS:+/users-grpc-client-ca.crt}
-      MF_USERS_DB_HOST: ${MF_USERS_DB_HOST}
-      MF_USERS_DB_PORT: ${MF_USERS_DB_PORT}
-      MF_USERS_DB_USER: ${MF_USERS_DB_USER}
-      MF_USERS_DB_PASS: ${MF_USERS_DB_PASS}
-      MF_USERS_DB_NAME: ${MF_USERS_DB_NAME}
-      MF_USERS_DB_SSL_MODE: ${MF_USERS_DB_SSL_MODE}
-      MF_USERS_DB_SSL_CERT: ${MF_USERS_DB_SSL_CERT}
-      MF_USERS_DB_SSL_KEY: ${MF_USERS_DB_SSL_KEY}
-      MF_USERS_DB_SSL_ROOT_CERT: ${MF_USERS_DB_SSL_ROOT_CERT}
-      MF_EMAIL_HOST: ${MF_EMAIL_HOST}
-      MF_EMAIL_PORT: ${MF_EMAIL_PORT}
-      MF_EMAIL_USERNAME: ${MF_EMAIL_USERNAME}
-      MF_EMAIL_PASSWORD: ${MF_EMAIL_PASSWORD}
-      MF_EMAIL_FROM_ADDRESS: ${MF_EMAIL_FROM_ADDRESS}
-      MF_EMAIL_FROM_NAME: ${MF_EMAIL_FROM_NAME}
-      MF_EMAIL_TEMPLATE: ${MF_EMAIL_TEMPLATE}
-      MF_USERS_ES_URL: ${MF_ES_STORE_URL}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_JAEGER_TRACE_RATIO: ${MF_JAEGER_TRACE_RATIO}
-      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
-      MF_AUTH_GRPC_URL: ${MF_AUTH_GRPC_URL}
-      MF_AUTH_GRPC_TIMEOUT: ${MF_AUTH_GRPC_TIMEOUT}
+      MG_USERS_LOG_LEVEL: ${MG_USERS_LOG_LEVEL}
+      MG_USERS_SECRET_KEY: ${MG_USERS_SECRET_KEY}
+      MG_USERS_ADMIN_EMAIL: ${MG_USERS_ADMIN_EMAIL}
+      MG_USERS_ADMIN_PASSWORD: ${MG_USERS_ADMIN_PASSWORD}
+      MG_USERS_PASS_REGEX: ${MG_USERS_PASS_REGEX}
+      MG_USERS_ACCESS_TOKEN_DURATION: ${MG_USERS_ACCESS_TOKEN_DURATION}
+      MG_USERS_REFRESH_TOKEN_DURATION: ${MG_USERS_REFRESH_TOKEN_DURATION}
+      MG_TOKEN_RESET_ENDPOINT: ${MG_TOKEN_RESET_ENDPOINT}
+      MG_USERS_HTTP_HOST: ${MG_USERS_HTTP_HOST}
+      MG_USERS_HTTP_PORT: ${MG_USERS_HTTP_PORT}
+      MG_USERS_HTTP_SERVER_CERT: ${MG_USERS_HTTP_SERVER_CERT}
+      MG_USERS_HTTP_SERVER_KEY: ${MG_USERS_HTTP_SERVER_KEY}
+      MG_USERS_GRPC_HOST: ${MG_USERS_GRPC_HOST}
+      MG_USERS_GRPC_PORT: ${MG_USERS_GRPC_PORT}
+      MG_USERS_GRPC_SERVER_CERT: ${MG_USERS_GRPC_SERVER_CERT:+/users-grpc-server.crt}
+      MG_USERS_GRPC_SERVER_KEY: ${MG_USERS_GRPC_SERVER_KEY:+/users-grpc-server.key}
+      MG_USERS_GRPC_SERVER_CA_CERTS: ${MG_USERS_GRPC_SERVER_CA_CERTS:+/users-grpc-server-ca.crt}
+      MG_USERS_GRPC_CLIENT_CA_CERTS: ${MG_USERS_GRPC_CLIENT_CA_CERTS:+/users-grpc-client-ca.crt}
+      MG_USERS_DB_HOST: ${MG_USERS_DB_HOST}
+      MG_USERS_DB_PORT: ${MG_USERS_DB_PORT}
+      MG_USERS_DB_USER: ${MG_USERS_DB_USER}
+      MG_USERS_DB_PASS: ${MG_USERS_DB_PASS}
+      MG_USERS_DB_NAME: ${MG_USERS_DB_NAME}
+      MG_USERS_DB_SSL_MODE: ${MG_USERS_DB_SSL_MODE}
+      MG_USERS_DB_SSL_CERT: ${MG_USERS_DB_SSL_CERT}
+      MG_USERS_DB_SSL_KEY: ${MG_USERS_DB_SSL_KEY}
+      MG_USERS_DB_SSL_ROOT_CERT: ${MG_USERS_DB_SSL_ROOT_CERT}
+      MG_EMAIL_HOST: ${MG_EMAIL_HOST}
+      MG_EMAIL_PORT: ${MG_EMAIL_PORT}
+      MG_EMAIL_USERNAME: ${MG_EMAIL_USERNAME}
+      MG_EMAIL_PASSWORD: ${MG_EMAIL_PASSWORD}
+      MG_EMAIL_FROM_ADDRESS: ${MG_EMAIL_FROM_ADDRESS}
+      MG_EMAIL_FROM_NAME: ${MG_EMAIL_FROM_NAME}
+      MG_EMAIL_TEMPLATE: ${MG_EMAIL_TEMPLATE}
+      MG_USERS_ES_URL: ${MG_ES_STORE_URL}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
+      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
     ports:
-      - ${MF_USERS_HTTP_PORT}:${MF_USERS_HTTP_PORT}
-      - ${MF_USERS_GRPC_PORT}:${MF_USERS_GRPC_PORT}
+      - ${MG_USERS_HTTP_PORT}:${MG_USERS_HTTP_PORT}
+      - ${MG_USERS_GRPC_PORT}:${MG_USERS_GRPC_PORT}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
-      - ./templates/${MF_USERS_RESET_PWD_TEMPLATE}:/email.tmpl
+      - ./templates/${MG_USERS_RESET_PWD_TEMPLATE}:/email.tmpl
       # Users gRPC mTLS server certificates
       - type: bind
-        source: ${MF_USERS_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
-        target: /users-grpc-server${MF_USERS_GRPC_SERVER_CERT:+.crt}
+        source: ${MG_USERS_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
+        target: /users-grpc-server${MG_USERS_GRPC_SERVER_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_USERS_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
-        target: /users-grpc-server${MF_USERS_GRPC_SERVER_KEY:+.key}
+        source: ${MG_USERS_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
+        target: /users-grpc-server${MG_USERS_GRPC_SERVER_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_USERS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
-        target: /users-grpc-server-ca${MF_USERS_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_USERS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
+        target: /users-grpc-server-ca${MG_USERS_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_USERS_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
-        target: /users-grpc-client-ca${MF_USERS_GRPC_CLIENT_CA_CERTS:+.crt}
+        source: ${MG_USERS_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
+        target: /users-grpc-client-ca${MG_USERS_GRPC_CLIENT_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
   jaeger:
     image: jaegertracing/all-in-one:1.38.0
-    container_name: mainflux-jaeger
+    container_name: magistrala-jaeger
     ports:
-      - ${MF_JAEGER_PORT}:${MF_JAEGER_PORT}/udp
-      - ${MF_JAEGER_FRONTEND}:${MF_JAEGER_FRONTEND}
-      - ${MF_JAEGER_COLLECTOR}:${MF_JAEGER_COLLECTOR}
-      - ${MF_JAEGER_CONFIGS}:${MF_JAEGER_CONFIGS}
+      - ${MG_JAEGER_PORT}:${MG_JAEGER_PORT}/udp
+      - ${MG_JAEGER_FRONTEND}:${MG_JAEGER_FRONTEND}
+      - ${MG_JAEGER_COLLECTOR}:${MG_JAEGER_COLLECTOR}
+      - ${MG_JAEGER_CONFIGS}:${MG_JAEGER_CONFIGS}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
 
   mqtt-adapter:
-    image: mainflux/mqtt:${MF_RELEASE_TAG}
-    container_name: mainflux-mqtt
+    image: magistrala/mqtt:${MG_RELEASE_TAG}
+    container_name: magistrala-mqtt
     depends_on:
       - things
       - nats
     restart: on-failure
     environment:
-      MF_MQTT_ADAPTER_LOG_LEVEL: ${MF_MQTT_ADAPTER_LOG_LEVEL}
-      MF_MQTT_ADAPTER_MQTT_PORT: ${MF_MQTT_ADAPTER_MQTT_PORT}
-      MF_MQTT_ADAPTER_MQTT_TARGET_HOST: ${MF_MQTT_ADAPTER_MQTT_TARGET_HOST}
-      MF_MQTT_ADAPTER_MQTT_TARGET_PORT: ${MF_MQTT_ADAPTER_MQTT_TARGET_PORT}
-      MF_MQTT_ADAPTER_FORWARDER_TIMEOUT: ${MF_MQTT_ADAPTER_FORWARDER_TIMEOUT}
-      MF_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK: ${MF_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK}
-      MF_MQTT_ADAPTER_WS_PORT: ${MF_MQTT_ADAPTER_WS_PORT}
-      MF_MQTT_ADAPTER_INSTANCE_ID: ${MF_MQTT_ADAPTER_INSTANCE_ID}
-      MF_MQTT_ADAPTER_WS_TARGET_HOST: ${MF_MQTT_ADAPTER_WS_TARGET_HOST}
-      MF_MQTT_ADAPTER_WS_TARGET_PORT: ${MF_MQTT_ADAPTER_WS_TARGET_PORT}
-      MF_MQTT_ADAPTER_WS_TARGET_PATH: ${MF_MQTT_ADAPTER_WS_TARGET_PATH}
-      MF_MQTT_ADAPTER_INSTANCE: ${MF_MQTT_ADAPTER_INSTANCE}
-      MF_MQTT_ADAPTER_ES_URL: ${MF_ES_STORE_URL}
-      MF_THINGS_AUTH_GRPC_URL: ${MF_THINGS_AUTH_GRPC_URL}
-      MF_THINGS_AUTH_GRPC_TIMEOUT: ${MF_THINGS_AUTH_GRPC_TIMEOUT}
-      MF_THINGS_AUTH_GRPC_CLIENT_CERT: ${MF_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
-      MF_THINGS_AUTH_GRPC_CLIENT_KEY: ${MF_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
-      MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_MESSAGE_BROKER_URL: ${MF_MESSAGE_BROKER_URL}
-      MF_JAEGER_TRACE_RATIO: ${MF_JAEGER_TRACE_RATIO}
-      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
+      MG_MQTT_ADAPTER_LOG_LEVEL: ${MG_MQTT_ADAPTER_LOG_LEVEL}
+      MG_MQTT_ADAPTER_MQTT_PORT: ${MG_MQTT_ADAPTER_MQTT_PORT}
+      MG_MQTT_ADAPTER_MQTT_TARGET_HOST: ${MG_MQTT_ADAPTER_MQTT_TARGET_HOST}
+      MG_MQTT_ADAPTER_MQTT_TARGET_PORT: ${MG_MQTT_ADAPTER_MQTT_TARGET_PORT}
+      MG_MQTT_ADAPTER_FORWARDER_TIMEOUT: ${MG_MQTT_ADAPTER_FORWARDER_TIMEOUT}
+      MG_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK: ${MG_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK}
+      MG_MQTT_ADAPTER_WS_PORT: ${MG_MQTT_ADAPTER_WS_PORT}
+      MG_MQTT_ADAPTER_INSTANCE_ID: ${MG_MQTT_ADAPTER_INSTANCE_ID}
+      MG_MQTT_ADAPTER_WS_TARGET_HOST: ${MG_MQTT_ADAPTER_WS_TARGET_HOST}
+      MG_MQTT_ADAPTER_WS_TARGET_PORT: ${MG_MQTT_ADAPTER_WS_TARGET_PORT}
+      MG_MQTT_ADAPTER_WS_TARGET_PATH: ${MG_MQTT_ADAPTER_WS_TARGET_PATH}
+      MG_MQTT_ADAPTER_INSTANCE: ${MG_MQTT_ADAPTER_INSTANCE}
+      MG_MQTT_ADAPTER_ES_URL: ${MG_ES_STORE_URL}
+      MG_THINGS_AUTH_GRPC_URL: ${MG_THINGS_AUTH_GRPC_URL}
+      MG_THINGS_AUTH_GRPC_TIMEOUT: ${MG_THINGS_AUTH_GRPC_TIMEOUT}
+      MG_THINGS_AUTH_GRPC_CLIENT_CERT: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
+      MG_THINGS_AUTH_GRPC_CLIENT_KEY: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
+      MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
       # Things gRPC mTLS client certificates
       - type: bind
-        source: ${MF_THINGS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /client${MF_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        source: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_THINGS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /client${MF_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /server_ca${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /server_ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
   http-adapter:
-    image: mainflux/http:${MF_RELEASE_TAG}
-    container_name: mainflux-http
+    image: magistrala/http:${MG_RELEASE_TAG}
+    container_name: magistrala-http
     depends_on:
       - things
       - nats
     restart: on-failure
     environment:
-      MF_HTTP_ADAPTER_LOG_LEVEL: ${MF_HTTP_ADAPTER_LOG_LEVEL}
-      MF_HTTP_ADAPTER_HOST: ${MF_HTTP_ADAPTER_HOST}
-      MF_HTTP_ADAPTER_PORT: ${MF_HTTP_ADAPTER_PORT}
-      MF_HTTP_ADAPTER_SERVER_CERT: ${MF_HTTP_ADAPTER_SERVER_CERT}
-      MF_HTTP_ADAPTER_SERVER_KEY: ${MF_HTTP_ADAPTER_SERVER_KEY}
-      MF_THINGS_AUTH_GRPC_URL: ${MF_THINGS_AUTH_GRPC_URL}
-      MF_THINGS_AUTH_GRPC_TIMEOUT: ${MF_THINGS_AUTH_GRPC_TIMEOUT}
-      MF_THINGS_AUTH_GRPC_CLIENT_CERT: ${MF_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
-      MF_THINGS_AUTH_GRPC_CLIENT_KEY: ${MF_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
-      MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
-      MF_MESSAGE_BROKER_URL: ${MF_MESSAGE_BROKER_URL}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_JAEGER_TRACE_RATIO: ${MF_JAEGER_TRACE_RATIO}
-      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
-      MF_HTTP_ADAPTER_INSTANCE_ID: ${MF_HTTP_ADAPTER_INSTANCE_ID}
+      MG_HTTP_ADAPTER_LOG_LEVEL: ${MG_HTTP_ADAPTER_LOG_LEVEL}
+      MG_HTTP_ADAPTER_HOST: ${MG_HTTP_ADAPTER_HOST}
+      MG_HTTP_ADAPTER_PORT: ${MG_HTTP_ADAPTER_PORT}
+      MG_HTTP_ADAPTER_SERVER_CERT: ${MG_HTTP_ADAPTER_SERVER_CERT}
+      MG_HTTP_ADAPTER_SERVER_KEY: ${MG_HTTP_ADAPTER_SERVER_KEY}
+      MG_THINGS_AUTH_GRPC_URL: ${MG_THINGS_AUTH_GRPC_URL}
+      MG_THINGS_AUTH_GRPC_TIMEOUT: ${MG_THINGS_AUTH_GRPC_TIMEOUT}
+      MG_THINGS_AUTH_GRPC_CLIENT_CERT: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
+      MG_THINGS_AUTH_GRPC_CLIENT_KEY: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
+      MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
+      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_HTTP_ADAPTER_INSTANCE_ID: ${MG_HTTP_ADAPTER_INSTANCE_ID}
     ports:
-      - ${MF_HTTP_ADAPTER_PORT}:${MF_HTTP_ADAPTER_PORT}
+      - ${MG_HTTP_ADAPTER_PORT}:${MG_HTTP_ADAPTER_PORT}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
       # Things gRPC mTLS client certificates
       - type: bind
-        source: ${MF_THINGS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /client${MF_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        source: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_THINGS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /client${MF_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /server_ca${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /server_ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
   coap-adapter:
-    image: mainflux/coap:${MF_RELEASE_TAG}
-    container_name: mainflux-coap
+    image: magistrala/coap:${MG_RELEASE_TAG}
+    container_name: magistrala-coap
     depends_on:
       - things
       - nats
     restart: on-failure
     environment:
-      MF_COAP_ADAPTER_LOG_LEVEL: ${MF_COAP_ADAPTER_LOG_LEVEL}
-      MF_COAP_ADAPTER_HOST: ${MF_COAP_ADAPTER_HOST}
-      MF_COAP_ADAPTER_PORT: ${MF_COAP_ADAPTER_PORT}
-      MF_COAP_ADAPTER_SERVER_CERT: ${MF_COAP_ADAPTER_SERVER_CERT}
-      MF_COAP_ADAPTER_SERVER_KEY: ${MF_COAP_ADAPTER_SERVER_KEY}
-      MF_COAP_ADAPTER_HTTP_HOST: ${MF_COAP_ADAPTER_HTTP_HOST}
-      MF_COAP_ADAPTER_HTTP_PORT: ${MF_COAP_ADAPTER_HTTP_PORT}
-      MF_COAP_ADAPTER_HTTP_SERVER_CERT: ${MF_COAP_ADAPTER_HTTP_SERVER_CERT}
-      MF_COAP_ADAPTER_HTTP_SERVER_KEY: ${MF_COAP_ADAPTER_HTTP_SERVER_KEY}
-      MF_THINGS_AUTH_GRPC_URL: ${MF_THINGS_AUTH_GRPC_URL}
-      MF_THINGS_AUTH_GRPC_TIMEOUT: ${MF_THINGS_AUTH_GRPC_TIMEOUT}
-      MF_THINGS_AUTH_GRPC_CLIENT_CERT: ${MF_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
-      MF_THINGS_AUTH_GRPC_CLIENT_KEY: ${MF_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
-      MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
-      MF_MESSAGE_BROKER_URL: ${MF_MESSAGE_BROKER_URL}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_JAEGER_TRACE_RATIO: ${MF_JAEGER_TRACE_RATIO}
-      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
-      MF_COAP_ADAPTER_INSTANCE_ID: ${MF_COAP_ADAPTER_INSTANCE_ID}
+      MG_COAP_ADAPTER_LOG_LEVEL: ${MG_COAP_ADAPTER_LOG_LEVEL}
+      MG_COAP_ADAPTER_HOST: ${MG_COAP_ADAPTER_HOST}
+      MG_COAP_ADAPTER_PORT: ${MG_COAP_ADAPTER_PORT}
+      MG_COAP_ADAPTER_SERVER_CERT: ${MG_COAP_ADAPTER_SERVER_CERT}
+      MG_COAP_ADAPTER_SERVER_KEY: ${MG_COAP_ADAPTER_SERVER_KEY}
+      MG_COAP_ADAPTER_HTTP_HOST: ${MG_COAP_ADAPTER_HTTP_HOST}
+      MG_COAP_ADAPTER_HTTP_PORT: ${MG_COAP_ADAPTER_HTTP_PORT}
+      MG_COAP_ADAPTER_HTTP_SERVER_CERT: ${MG_COAP_ADAPTER_HTTP_SERVER_CERT}
+      MG_COAP_ADAPTER_HTTP_SERVER_KEY: ${MG_COAP_ADAPTER_HTTP_SERVER_KEY}
+      MG_THINGS_AUTH_GRPC_URL: ${MG_THINGS_AUTH_GRPC_URL}
+      MG_THINGS_AUTH_GRPC_TIMEOUT: ${MG_THINGS_AUTH_GRPC_TIMEOUT}
+      MG_THINGS_AUTH_GRPC_CLIENT_CERT: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
+      MG_THINGS_AUTH_GRPC_CLIENT_KEY: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
+      MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
+      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_COAP_ADAPTER_INSTANCE_ID: ${MG_COAP_ADAPTER_INSTANCE_ID}
     ports:
-      - ${MF_COAP_ADAPTER_PORT}:${MF_COAP_ADAPTER_PORT}/udp
-      - ${MF_COAP_ADAPTER_HTTP_PORT}:${MF_COAP_ADAPTER_HTTP_PORT}/tcp
+      - ${MG_COAP_ADAPTER_PORT}:${MG_COAP_ADAPTER_PORT}/udp
+      - ${MG_COAP_ADAPTER_HTTP_PORT}:${MG_COAP_ADAPTER_HTTP_PORT}/tcp
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
       ## Things gRPC mTLS client certificates
       - type: bind
-        source: ${MF_THINGS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /client${MF_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        source: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_THINGS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /client${MF_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /server_ca${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /server_ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 
   ws-adapter:
-    image: mainflux/ws:${MF_RELEASE_TAG}
-    container_name: mainflux-ws
+    image: magistrala/ws:${MG_RELEASE_TAG}
+    container_name: magistrala-ws
     depends_on:
       - things
       - nats
     restart: on-failure
     environment:
-      MF_WS_ADAPTER_LOG_LEVEL: ${MF_WS_ADAPTER_LOG_LEVEL}
-      MF_WS_ADAPTER_HTTP_HOST: ${MF_WS_ADAPTER_HTTP_HOST}
-      MF_WS_ADAPTER_HTTP_PORT: ${MF_WS_ADAPTER_HTTP_PORT}
-      MF_WS_ADAPTER_HTTP_SERVER_CERT: ${MF_WS_ADAPTER_HTTP_SERVER_CERT}
-      MF_WS_ADAPTER_HTTP_SERVER_KEY: ${MF_WS_ADAPTER_HTTP_SERVER_KEY}
-      MF_THINGS_AUTH_GRPC_URL: ${MF_THINGS_AUTH_GRPC_URL}
-      MF_THINGS_AUTH_GRPC_TIMEOUT: ${MF_THINGS_AUTH_GRPC_TIMEOUT}
-      MF_THINGS_AUTH_GRPC_CLIENT_CERT: ${MF_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
-      MF_THINGS_AUTH_GRPC_CLIENT_KEY: ${MF_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
-      MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
-      MF_MESSAGE_BROKER_URL: ${MF_MESSAGE_BROKER_URL}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_JAEGER_TRACE_RATIO: ${MF_JAEGER_TRACE_RATIO}
-      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
-      MF_WS_ADAPTER_INSTANCE_ID: ${MF_WS_ADAPTER_INSTANCE_ID}
+      MG_WS_ADAPTER_LOG_LEVEL: ${MG_WS_ADAPTER_LOG_LEVEL}
+      MG_WS_ADAPTER_HTTP_HOST: ${MG_WS_ADAPTER_HTTP_HOST}
+      MG_WS_ADAPTER_HTTP_PORT: ${MG_WS_ADAPTER_HTTP_PORT}
+      MG_WS_ADAPTER_HTTP_SERVER_CERT: ${MG_WS_ADAPTER_HTTP_SERVER_CERT}
+      MG_WS_ADAPTER_HTTP_SERVER_KEY: ${MG_WS_ADAPTER_HTTP_SERVER_KEY}
+      MG_THINGS_AUTH_GRPC_URL: ${MG_THINGS_AUTH_GRPC_URL}
+      MG_THINGS_AUTH_GRPC_TIMEOUT: ${MG_THINGS_AUTH_GRPC_TIMEOUT}
+      MG_THINGS_AUTH_GRPC_CLIENT_CERT: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
+      MG_THINGS_AUTH_GRPC_CLIENT_KEY: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
+      MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
+      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_WS_ADAPTER_INSTANCE_ID: ${MG_WS_ADAPTER_INSTANCE_ID}
     ports:
-      - ${MF_WS_ADAPTER_HTTP_PORT}:${MF_WS_ADAPTER_HTTP_PORT}
+      - ${MG_WS_ADAPTER_HTTP_PORT}:${MG_WS_ADAPTER_HTTP_PORT}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
       # Things gRPC mTLS client certificates
       - type: bind
-        source: ${MF_THINGS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /client${MF_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        source: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_THINGS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /client${MF_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /server_ca${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /server_ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true

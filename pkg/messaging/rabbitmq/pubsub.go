@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package rabbitmq
@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"sync"
 
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/messaging"
+	mflog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/messaging"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"google.golang.org/protobuf/proto"
 )
@@ -184,7 +184,7 @@ func (ps *pubsub) handle(deliveries <-chan amqp.Delivery, h messaging.MessageHan
 			return
 		}
 		if err := h.Handle(&msg); err != nil {
-			ps.logger.Warn(fmt.Sprintf("Failed to handle Mainflux message: %s", err))
+			ps.logger.Warn(fmt.Sprintf("Failed to handle Magistrala message: %s", err))
 			return
 		}
 	}

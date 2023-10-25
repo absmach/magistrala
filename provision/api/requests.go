@@ -1,6 +1,6 @@
 package api
 
-import "github.com/mainflux/mainflux/internal/apiutil"
+import "github.com/absmach/magistrala/internal/apiutil"
 
 type provisionReq struct {
 	token       string

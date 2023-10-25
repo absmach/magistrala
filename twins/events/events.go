@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package events
@@ -7,9 +7,9 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/mainflux/mainflux/pkg/events"
-	"github.com/mainflux/mainflux/pkg/messaging"
-	"github.com/mainflux/mainflux/twins"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/twins"
 )
 
 const (

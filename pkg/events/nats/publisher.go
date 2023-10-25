@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package nats
@@ -8,9 +8,9 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/mainflux/mainflux/pkg/events"
-	"github.com/mainflux/mainflux/pkg/messaging"
-	broker "github.com/mainflux/mainflux/pkg/messaging/nats"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/messaging"
+	broker "github.com/absmach/magistrala/pkg/messaging/nats"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 )

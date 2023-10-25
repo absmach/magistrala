@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package grpc_test
@@ -10,12 +10,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/auth"
-	grpcapi "github.com/mainflux/mainflux/auth/api/grpc"
-	"github.com/mainflux/mainflux/auth/jwt"
-	"github.com/mainflux/mainflux/auth/mocks"
-	"github.com/mainflux/mainflux/pkg/uuid"
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/auth"
+	grpcapi "github.com/absmach/magistrala/auth/api/grpc"
+	"github.com/absmach/magistrala/auth/jwt"
+	"github.com/absmach/magistrala/auth/mocks"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

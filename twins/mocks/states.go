@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package mocks
@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/mainflux/mainflux/twins"
+	"github.com/absmach/magistrala/twins"
 )
 
 var _ twins.StateRepository = (*stateRepositoryMock)(nil)

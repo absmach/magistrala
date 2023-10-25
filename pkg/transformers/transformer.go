@@ -1,12 +1,12 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package transformers
 
-import "github.com/mainflux/mainflux/pkg/messaging"
+import "github.com/absmach/magistrala/pkg/messaging"
 
 // Transformer specifies API form Message transformer.
 type Transformer interface {
-	// Transform Mainflux message to any other format.
+	// Transform Magistrala message to any other format.
 	Transform(msg *messaging.Message) (interface{}, error)
 }

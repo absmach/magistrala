@@ -1,9 +1,9 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
 
-import mfxsdk "github.com/mainflux/mainflux/pkg/sdk/go"
+import mfxsdk "github.com/absmach/magistrala/pkg/sdk/go"
 
 // Keep SDK handle in global var.
 var sdk mfxsdk.SDK

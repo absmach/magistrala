@@ -10,36 +10,36 @@ default values.
 
 | Variable                         | Description                                         | Default                        |
 | -------------------------------- | --------------------------------------------------- | ------------------------------ |
-| MF_MONGO_READER_LOG_LEVEL        | Service log level                                   | info                           |
-| MF_MONGO_READER_HTTP_HOST        | Service HTTP host                                   | localhost                      |
-| MF_MONGO_READER_HTTP_PORT        | Service HTTP port                                   | 9007                           |
-| MF_MONGO_READER_HTTP_SERVER_CERT | Service HTTP server cert                            | ""                             |
-| MF_MONGO_READER_HTTP_SERVER_KEY  | Service HTTP server key                             | ""                             |
-| MF_MONGO_NAME                    | MongoDB database name                               | messages                       |
-| MF_MONGO_HOST                    | MongoDB database host                               | localhost                      |
-| MF_MONGO_PORT                    | MongoDB database port                               | 27017                          |
-| MF_THINGS_AUTH_GRPC_URL          | Things service Auth gRPC URL                        | localhost:7000                 |
-| MF_THINGS_AUTH_GRPC_TIMEOUT      | Things service Auth gRPC request timeout in seconds | 1s                             |
-| MF_THINGS_AUTH_GRPC_CLIENT_TLS   | Flag that indicates if TLS should be turned on      | false                          |
-| MF_THINGS_AUTH_GRPC_CA_CERTS     | Path to trusted CAs in PEM format                   | ""                             |
-| MF_AUTH_GRPC_URL                 | Users service gRPC URL                              | localhost:7001                 |
-| MF_AUTH_GRPC_TIMEOUT             | Users service gRPC request timeout in seconds       | 1s                             |
-| MF_AUTH_GRPC_CLIENT_TLS          | Flag that indicates if TLS should be turned on      | false                          |
-| MF_AUTH_GRPC_CA_CERT             | Path to trusted CAs in PEM format                   | ""                             |
-| MF_JAEGER_URL                    | Jaeger server URL                                   | http://jaeger:14268/api/traces |
-| MF_SEND_TELEMETRY                | Send telemetry to mainflux call home server         | true                           |
-| MF_MONGO_READER_INSTANCE_ID      | Service instance ID                                 | ""                             |
+| MG_MONGO_READER_LOG_LEVEL        | Service log level                                   | info                           |
+| MG_MONGO_READER_HTTP_HOST        | Service HTTP host                                   | localhost                      |
+| MG_MONGO_READER_HTTP_PORT        | Service HTTP port                                   | 9007                           |
+| MG_MONGO_READER_HTTP_SERVER_CERT | Service HTTP server cert                            | ""                             |
+| MG_MONGO_READER_HTTP_SERVER_KEY  | Service HTTP server key                             | ""                             |
+| MG_MONGO_NAME                    | MongoDB database name                               | messages                       |
+| MG_MONGO_HOST                    | MongoDB database host                               | localhost                      |
+| MG_MONGO_PORT                    | MongoDB database port                               | 27017                          |
+| MG_THINGS_AUTH_GRPC_URL          | Things service Auth gRPC URL                        | localhost:7000                 |
+| MG_THINGS_AUTH_GRPC_TIMEOUT      | Things service Auth gRPC request timeout in seconds | 1s                             |
+| MG_THINGS_AUTH_GRPC_CLIENT_TLS   | Flag that indicates if TLS should be turned on      | false                          |
+| MG_THINGS_AUTH_GRPC_CA_CERTS     | Path to trusted CAs in PEM format                   | ""                             |
+| MG_AUTH_GRPC_URL                 | Users service gRPC URL                              | localhost:7001                 |
+| MG_AUTH_GRPC_TIMEOUT             | Users service gRPC request timeout in seconds       | 1s                             |
+| MG_AUTH_GRPC_CLIENT_TLS          | Flag that indicates if TLS should be turned on      | false                          |
+| MG_AUTH_GRPC_CA_CERT             | Path to trusted CAs in PEM format                   | ""                             |
+| MG_JAEGER_URL                    | Jaeger server URL                                   | http://jaeger:14268/api/traces |
+| MG_SEND_TELEMETRY                | Send telemetry to mainflux call home server         | true                           |
+| MG_MONGO_READER_INSTANCE_ID      | Service instance ID                                 | ""                             |
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`mongodb-reader`](https://github.com/mainflux/mainflux/blob/master/docker/addons/mongodb-reader/docker-compose.yml#L16-L37) service section in
+The service itself is distributed as Docker container. Check the [`mongodb-reader`](https://github.com/absmach/magistrala/blob/master/docker/addons/mongodb-reader/docker-compose.yml#L16-L37) service section in
 docker-compose to see how service is deployed.
 
 To start the service, execute the following shell script:
 
 ```bash
 # download the latest version of the service
-git clone https://github.com/mainflux/mainflux
+git clone https://github.com/absmach/magistrala
 
 cd mainflux
 
@@ -50,25 +50,25 @@ make mongodb-reader
 make install
 
 # Set the environment variables and run the service
-MF_MONGO_READER_LOG_LEVEL=[Service log level] \
-MF_MONGO_READER_HTTP_HOST=[Service HTTP host] \
-MF_MONGO_READER_HTTP_PORT=[Service HTTP port] \
-MF_MONGO_READER_HTTP_SERVER_CERT=[Path to server pem certificate file] \
-MF_MONGO_READER_HTTP_SERVER_KEY=[Path to server pem key file] \
-MF_MONGO_NAME=[MongoDB database name] \
-MF_MONGO_HOST=[MongoDB database host] \
-MF_MONGO_PORT=[MongoDB database port] \
-MF_THINGS_AUTH_GRPC_URL=[Things service Auth gRPC URL] \
-MF_THINGS_AUTH_GRPC_TIMEOUT=[Things service Auth gRPC request timeout in seconds] \
-MF_THINGS_AUTH_GRPC_CLIENT_TLS=[Flag that indicates if TLS should be turned on] \
-MF_THINGS_AUTH_GRPC_CA_CERTS=[Path to trusted CAs in PEM format] \
-MF_AUTH_GRPC_URL=[Users service gRPC URL] \
-MF_AUTH_GRPC_TIMEOUT=[Users service gRPC request timeout in seconds] \
-MF_AUTH_GRPC_CLIENT_TLS=[Flag that indicates if TLS should be turned on] \
-MF_AUTH_GRPC_CA_CERT=[Path to trusted CAs in PEM format] \
-MF_JAEGER_URL=[Jaeger server URL] \
-MF_SEND_TELEMETRY=[Send telemetry to mainflux call home server] \
-MF_MONGO_READER_INSTANCE_ID=[Service instance ID] \
+MG_MONGO_READER_LOG_LEVEL=[Service log level] \
+MG_MONGO_READER_HTTP_HOST=[Service HTTP host] \
+MG_MONGO_READER_HTTP_PORT=[Service HTTP port] \
+MG_MONGO_READER_HTTP_SERVER_CERT=[Path to server pem certificate file] \
+MG_MONGO_READER_HTTP_SERVER_KEY=[Path to server pem key file] \
+MG_MONGO_NAME=[MongoDB database name] \
+MG_MONGO_HOST=[MongoDB database host] \
+MG_MONGO_PORT=[MongoDB database port] \
+MG_THINGS_AUTH_GRPC_URL=[Things service Auth gRPC URL] \
+MG_THINGS_AUTH_GRPC_TIMEOUT=[Things service Auth gRPC request timeout in seconds] \
+MG_THINGS_AUTH_GRPC_CLIENT_TLS=[Flag that indicates if TLS should be turned on] \
+MG_THINGS_AUTH_GRPC_CA_CERTS=[Path to trusted CAs in PEM format] \
+MG_AUTH_GRPC_URL=[Users service gRPC URL] \
+MG_AUTH_GRPC_TIMEOUT=[Users service gRPC request timeout in seconds] \
+MG_AUTH_GRPC_CLIENT_TLS=[Flag that indicates if TLS should be turned on] \
+MG_AUTH_GRPC_CA_CERT=[Path to trusted CAs in PEM format] \
+MG_JAEGER_URL=[Jaeger server URL] \
+MG_SEND_TELEMETRY=[Send telemetry to mainflux call home server] \
+MG_MONGO_READER_INSTANCE_ID=[Service instance ID] \
 $GOBIN/mainflux-mongodb-reader
 
 ```
@@ -77,7 +77,7 @@ $GOBIN/mainflux-mongodb-reader
 
 This service can be deployed using docker containers. Docker compose file is
 available in `<project_root>/docker/addons/mongodb-reader/docker-compose.yml`.
-In order to run all Mainflux core services, as well as mentioned optional ones,
+In order to run all Magistrala core services, as well as mentioned optional ones,
 execute following command:
 
 ```bash

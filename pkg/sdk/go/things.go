@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package sdk
@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/absmach/magistrala/pkg/errors"
 )
 
 const (

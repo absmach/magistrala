@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package postgres
@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/absmach/magistrala/internal/postgres"
+	"github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/jackc/pgtype"
-	"github.com/mainflux/mainflux/internal/postgres"
-	"github.com/mainflux/mainflux/pkg/clients"
-	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/pkg/groups"
 )
 
 type ClientRepository struct {

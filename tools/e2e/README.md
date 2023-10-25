@@ -1,4 +1,4 @@
-# Mainflux Users Groups Things and Channels E2E Testing Tool
+# Magistrala Users Groups Things and Channels E2E Testing Tool
 
 A simple utility to create a list of groups and users connected to these groups and channels and things connected to these channels.
 
@@ -44,13 +44,13 @@ Flags:
   -p, --prefix string          name prefix for users, groups, things and channels
 ```
 
-To use `-H` option, you can specify the address for the Mainflux instance as an argument when running the program. For example, if the Mainflux instance is running on another computer with the IP address 192.168.0.1, you could use the following command:
+To use `-H` option, you can specify the address for the Magistrala instance as an argument when running the program. For example, if the Magistrala instance is running on another computer with the IP address 192.168.0.1, you could use the following command:
 
 ```bash
 go run tools/e2e/cmd/main.go --host 142.93.118.47
 ```
 
-This will tell the program to connect to the Mainflux instance running on the specified IP address.
+This will tell the program to connect to the Magistrala instance running on the specified IP address.
 
 If you want to create a list of channels with certificates:
 

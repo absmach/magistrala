@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package mongodb_test
@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mainflux/mainflux/twins"
-	"github.com/mainflux/mainflux/twins/mongodb"
+	"github.com/absmach/magistrala/twins"
+	"github.com/absmach/magistrala/twins/mongodb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson"

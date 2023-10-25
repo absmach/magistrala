@@ -1,12 +1,12 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
-// Package tracing provides tracing instrumentation for Mainflux Users service.
+// Package tracing provides tracing instrumentation for Magistrala Users service.
 //
-// This package provides tracing middleware for Mainflux Users service.
+// This package provides tracing middleware for Magistrala Users service.
 // It can be used to trace incoming requests and add tracing capabilities to
-// Mainflux Users service.
+// Magistrala Users service.
 //
-// For more details about tracing instrumentation for Mainflux messaging refer
+// For more details about tracing instrumentation for Magistrala messaging refer
 // to the documentation at https://docs.mainflux.io/tracing/.
 package tracing

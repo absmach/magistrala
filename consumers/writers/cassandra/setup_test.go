@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package cassandra_test
@@ -8,9 +8,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/absmach/magistrala/internal/clients/cassandra"
+	mflog "github.com/absmach/magistrala/logger"
 	"github.com/gocql/gocql"
-	"github.com/mainflux/mainflux/internal/clients/cassandra"
-	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/ory/dockertest/v3"
 )
 

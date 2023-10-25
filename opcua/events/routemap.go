@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package events
@@ -7,8 +7,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/absmach/magistrala/opcua"
 	"github.com/go-redis/redis/v8"
-	"github.com/mainflux/mainflux/opcua"
 )
 
 var _ opcua.RouteMapRepository = (*routerMap)(nil)

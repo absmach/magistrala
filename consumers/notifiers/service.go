@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package notifiers
@@ -7,14 +7,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/consumers"
-	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/pkg/messaging"
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/consumers"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/messaging"
 )
 
-// ErrMessage indicates an error converting a message to Mainflux message.
-var ErrMessage = errors.New("failed to convert to Mainflux message")
+// ErrMessage indicates an error converting a message to Magistrala message.
+var ErrMessage = errors.New("failed to convert to Magistrala message")
 
 var _ consumers.AsyncConsumer = (*notifierService)(nil)
 

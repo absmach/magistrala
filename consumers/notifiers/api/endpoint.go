@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package api
@@ -6,10 +6,10 @@ package api
 import (
 	"context"
 
+	notifiers "github.com/absmach/magistrala/consumers/notifiers"
+	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/go-kit/kit/endpoint"
-	notifiers "github.com/mainflux/mainflux/consumers/notifiers"
-	"github.com/mainflux/mainflux/internal/apiutil"
-	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 func createSubscriptionEndpoint(svc notifiers.Service) endpoint.Endpoint {

@@ -6,12 +6,12 @@ ARG VERSION
 ARG COMMIT
 ARG TIME
 
-WORKDIR /go/src/github.com/mainflux/mainflux
+WORKDIR /go/src/github.com/absmach/magistrala
 COPY . .
 RUN apk update \
     && apk add make\
     && make $SVC \
-    && mv build/mainflux-$SVC /exe
+    && mv build/$SVC /exe
 
 FROM scratch
 # Certificates are needed so that mailing util can work.

@@ -1,9 +1,9 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package apiutil
 
-import "github.com/mainflux/mainflux/pkg/errors"
+import "github.com/absmach/magistrala/pkg/errors"
 
 // Errors defined in this file are used by the LoggingErrorEncoder decorator
 // to distinguish and log API request validation errors and avoid that service

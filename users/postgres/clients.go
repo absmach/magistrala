@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package postgres
@@ -7,10 +7,10 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/mainflux/mainflux/internal/postgres"
-	mfclients "github.com/mainflux/mainflux/pkg/clients"
-	pgclients "github.com/mainflux/mainflux/pkg/clients/postgres"
-	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/absmach/magistrala/internal/postgres"
+	mfclients "github.com/absmach/magistrala/pkg/clients"
+	pgclients "github.com/absmach/magistrala/pkg/clients/postgres"
+	"github.com/absmach/magistrala/pkg/errors"
 )
 
 var _ mfclients.Repository = (*clientRepo)(nil)

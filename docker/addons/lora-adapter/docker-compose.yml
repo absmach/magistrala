@@ -1,48 +1,48 @@
-# Copyright (c) Mainflux
+# Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
 # This docker-compose file contains optional lora-adapter and lora-redis services
-# for the Mainflux platform. Since this services are optional, this file is dependent on the
+# for the Magistrala platform. Since this services are optional, this file is dependent on the
 # docker-compose.yml file from <project_root>/docker/. In order to run these services,
 # core services, as well as the network from the core composition, should be already running.
 
 version: "3.7"
 
 networks:
-  mainflux-base-net:
+  magistrala-base-net:
 
 services:
   lora-redis:
     image: redis:7.2.0-alpine
-    container_name: mainflux-lora-redis
+    container_name: magistrala-lora-redis
     restart: on-failure
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
 
   lora-adapter:
-    image: mainflux/lora:${MF_RELEASE_TAG}
-    container_name: mainflux-lora
+    image: magistrala/lora:${MG_RELEASE_TAG}
+    container_name: magistrala-lora
     restart: on-failure
     environment:
-      MF_LORA_ADAPTER_LOG_LEVEL: ${MF_LORA_ADAPTER_LOG_LEVEL}
-      MF_LORA_ADAPTER_MESSAGES_URL: ${MF_LORA_ADAPTER_MESSAGES_URL}
-      MF_LORA_ADAPTER_MESSAGES_TOPIC: ${MF_LORA_ADAPTER_MESSAGES_TOPIC}
-      MF_LORA_ADAPTER_MESSAGES_USER: ${MF_LORA_ADAPTER_MESSAGES_USER}
-      MF_LORA_ADAPTER_MESSAGES_PASS: ${MF_LORA_ADAPTER_MESSAGES_PASS}
-      MF_LORA_ADAPTER_MESSAGES_TIMEOUT: ${MF_LORA_ADAPTER_MESSAGES_TIMEOUT}
-      MF_LORA_ADAPTER_EVENT_CONSUMER: ${MF_LORA_ADAPTER_EVENT_CONSUMER}
-      MF_LORA_ADAPTER_HTTP_HOST: ${MF_LORA_ADAPTER_HTTP_HOST}
-      MF_LORA_ADAPTER_HTTP_PORT: ${MF_LORA_ADAPTER_HTTP_PORT}
-      MF_LORA_ADAPTER_HTTP_SERVER_CERT: ${MF_LORA_ADAPTER_HTTP_SERVER_CERT}
-      MF_LORA_ADAPTER_HTTP_SERVER_KEY: ${MF_LORA_ADAPTER_HTTP_SERVER_KEY}
-      MF_LORA_ADAPTER_ROUTE_MAP_URL: ${MF_LORA_ADAPTER_ROUTE_MAP_URL}
-      MF_LORA_ADAPTER_ES_URL: ${MF_ES_STORE_URL}
-      MF_MESSAGE_BROKER_URL: ${MF_MESSAGE_BROKER_URL}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_JAEGER_TRACE_RATIO: ${MF_JAEGER_TRACE_RATIO}
-      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
-      MF_LORA_ADAPTER_INSTANCE_ID: ${MF_LORA_ADAPTER_INSTANCE_ID}
+      MG_LORA_ADAPTER_LOG_LEVEL: ${MG_LORA_ADAPTER_LOG_LEVEL}
+      MG_LORA_ADAPTER_MESSAGES_URL: ${MG_LORA_ADAPTER_MESSAGES_URL}
+      MG_LORA_ADAPTER_MESSAGES_TOPIC: ${MG_LORA_ADAPTER_MESSAGES_TOPIC}
+      MG_LORA_ADAPTER_MESSAGES_USER: ${MG_LORA_ADAPTER_MESSAGES_USER}
+      MG_LORA_ADAPTER_MESSAGES_PASS: ${MG_LORA_ADAPTER_MESSAGES_PASS}
+      MG_LORA_ADAPTER_MESSAGES_TIMEOUT: ${MG_LORA_ADAPTER_MESSAGES_TIMEOUT}
+      MG_LORA_ADAPTER_EVENT_CONSUMER: ${MG_LORA_ADAPTER_EVENT_CONSUMER}
+      MG_LORA_ADAPTER_HTTP_HOST: ${MG_LORA_ADAPTER_HTTP_HOST}
+      MG_LORA_ADAPTER_HTTP_PORT: ${MG_LORA_ADAPTER_HTTP_PORT}
+      MG_LORA_ADAPTER_HTTP_SERVER_CERT: ${MG_LORA_ADAPTER_HTTP_SERVER_CERT}
+      MG_LORA_ADAPTER_HTTP_SERVER_KEY: ${MG_LORA_ADAPTER_HTTP_SERVER_KEY}
+      MG_LORA_ADAPTER_ROUTE_MAP_URL: ${MG_LORA_ADAPTER_ROUTE_MAP_URL}
+      MG_LORA_ADAPTER_ES_URL: ${MG_ES_STORE_URL}
+      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_LORA_ADAPTER_INSTANCE_ID: ${MG_LORA_ADAPTER_INSTANCE_ID}
     ports:
-      - ${MF_LORA_ADAPTER_HTTP_PORT}:${MF_LORA_ADAPTER_HTTP_PORT}
+      - ${MG_LORA_ADAPTER_HTTP_PORT}:${MG_LORA_ADAPTER_HTTP_PORT}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net

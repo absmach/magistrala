@@ -1,7 +1,7 @@
-# Copyright (c) Mainflux
+# Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
-MF_DOCKER_IMAGE_NAME_PREFIX ?= mainflux
+MG_DOCKER_IMAGE_NAME_PREFIX ?= magistrala
 BUILD_DIR = build
 SERVICES = auth users things http coap ws lora influxdb-writer influxdb-reader mongodb-writer \
 	mongodb-reader cassandra-writer cassandra-reader postgres-writer postgres-reader timescale-writer timescale-reader cli \
@@ -22,32 +22,32 @@ DOCKER_PROJECT ?= $(shell echo $(subst $(space),,$(USER_REPO)_$(BRANCH)) | tr -c
 DOCKER_COMPOSE_COMMANDS_SUPPORTED := up down config
 DEFAULT_DOCKER_COMPOSE_COMMAND  := up
 GRPC_MTLS_CERT_FILES_EXISTS = 0
-DOCKER_PROFILE ?= $(MF_MQTT_BROKER_TYPE)_$(MF_MESSAGE_BROKER_TYPE)
-ifneq ($(MF_MESSAGE_BROKER_TYPE),)
-    MF_MESSAGE_BROKER_TYPE := $(MF_MESSAGE_BROKER_TYPE)
+DOCKER_PROFILE ?= $(MG_MQTT_BROKER_TYPE)_$(MG_MESSAGE_BROKER_TYPE)
+ifneq ($(MG_MESSAGE_BROKER_TYPE),)
+    MG_MESSAGE_BROKER_TYPE := $(MG_MESSAGE_BROKER_TYPE)
 else
-    MF_MESSAGE_BROKER_TYPE=nats
+    MG_MESSAGE_BROKER_TYPE=nats
 endif
 
-ifneq ($(MF_MQTT_BROKER_TYPE),)
-    MF_MQTT_BROKER_TYPE := $(MF_MQTT_BROKER_TYPE)
+ifneq ($(MG_MQTT_BROKER_TYPE),)
+    MG_MQTT_BROKER_TYPE := $(MG_MQTT_BROKER_TYPE)
 else
-    MF_MQTT_BROKER_TYPE=nats
+    MG_MQTT_BROKER_TYPE=nats
 endif
 
-ifneq ($(MF_ES_STORE_TYPE),)
-    MF_ES_STORE_TYPE := $(MF_ES_STORE_TYPE)
+ifneq ($(MG_ES_STORE_TYPE),)
+    MG_ES_STORE_TYPE := $(MG_ES_STORE_TYPE)
 else
-    MF_ES_STORE_TYPE=nats
+    MG_ES_STORE_TYPE=nats
 endif
 
 define compile_service
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) GOARM=$(GOARM) \
-	go build -mod=vendor -tags $(MF_MESSAGE_BROKER_TYPE) --tags $(MF_ES_STORE_TYPE) -ldflags "-s -w \
-	-X 'github.com/mainflux/mainflux.BuildTime=$(TIME)' \
-	-X 'github.com/mainflux/mainflux.Version=$(VERSION)' \
-	-X 'github.com/mainflux/mainflux.Commit=$(COMMIT)'" \
-	-o ${BUILD_DIR}/mainflux-$(1) cmd/$(1)/main.go
+	go build -tags $(MG_MESSAGE_BROKER_TYPE) --tags $(MG_ES_STORE_TYPE) -ldflags "-s -w \
+	-X 'github.com/absmach/magistrala.BuildTime=$(TIME)' \
+	-X 'github.com/absmach/magistrala.Version=$(VERSION)' \
+	-X 'github.com/absmach/magistrala.Commit=$(COMMIT)'" \
+	-o ${BUILD_DIR}/$(1) cmd/$(1)/main.go
 endef
 
 define make_docker
@@ -61,7 +61,7 @@ define make_docker
 		--build-arg VERSION=$(VERSION) \
 		--build-arg COMMIT=$(COMMIT) \
 		--build-arg TIME=$(TIME) \
-		--tag=$(MF_DOCKER_IMAGE_NAME_PREFIX)/$(svc) \
+		--tag=$(MG_DOCKER_IMAGE_NAME_PREFIX)/$(svc) \
 		-f docker/Dockerfile .
 endef
 
@@ -71,7 +71,7 @@ define make_docker_dev
 	docker build \
 		--no-cache \
 		--build-arg SVC=$(svc) \
-		--tag=$(MF_DOCKER_IMAGE_NAME_PREFIX)/$(svc) \
+		--tag=$(MG_DOCKER_IMAGE_NAME_PREFIX)/$(svc) \
 		-f docker/Dockerfile.dev ./build
 endef
 
@@ -115,7 +115,7 @@ cleandocker:
 
 ifdef pv
 	# Remove unused volumes
-	docker volume ls -f name=$(MF_DOCKER_IMAGE_NAME_PREFIX) -f dangling=true -q | xargs -r docker volume rm
+	docker volume ls -f name=$(MG_DOCKER_IMAGE_NAME_PREFIX) -f dangling=true -q | xargs -r docker volume rm
 endif
 
 install:
@@ -142,7 +142,7 @@ dockers_dev: $(DOCKERS_DEV)
 
 define docker_push
 	for svc in $(SERVICES); do \
-		docker push $(MF_DOCKER_IMAGE_NAME_PREFIX)/$$svc:$(1); \
+		docker push $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc:$(1); \
 	done
 endef
 
@@ -157,7 +157,7 @@ release:
 	git checkout $(version)
 	$(MAKE) dockers
 	for svc in $(SERVICES); do \
-		docker tag $(MF_DOCKER_IMAGE_NAME_PREFIX)/$$svc $(MF_DOCKER_IMAGE_NAME_PREFIX)/$$svc:$(version); \
+		docker tag $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc:$(version); \
 	done
 	$(call docker_push,$(version))
 
@@ -197,30 +197,30 @@ endif
 endif
 
 define edit_docker_config
-	sed -i "s/MF_MQTT_BROKER_TYPE=.*/MF_MQTT_BROKER_TYPE=$(1)/" docker/.env
-	sed -i "s/MF_MQTT_BROKER_HEALTH_CHECK=.*/MF_MQTT_BROKER_HEALTH_CHECK=$$\{MF_$(shell echo ${MF_MQTT_BROKER_TYPE} | tr 'a-z' 'A-Z')_HEALTH_CHECK}/" docker/.env
-	sed -i "s/MF_MQTT_ADAPTER_WS_TARGET_PATH=.*/MF_MQTT_ADAPTER_WS_TARGET_PATH=$$\{MF_$(shell echo ${MF_MQTT_BROKER_TYPE} | tr 'a-z' 'A-Z')_WS_TARGET_PATH}/" docker/.env
-	sed -i "s/MF_MESSAGE_BROKER_TYPE=.*/MF_MESSAGE_BROKER_TYPE=$(2)/" docker/.env
+	sed -i "s/MG_MQTT_BROKER_TYPE=.*/MG_MQTT_BROKER_TYPE=$(1)/" docker/.env
+	sed -i "s/MG_MQTT_BROKER_HEALTH_CHECK=.*/MG_MQTT_BROKER_HEALTH_CHECK=$$\{MG_$(shell echo ${MG_MQTT_BROKER_TYPE} | tr 'a-z' 'A-Z')_HEALTH_CHECK}/" docker/.env
+	sed -i "s/MG_MQTT_ADAPTER_WS_TARGET_PATH=.*/MG_MQTT_ADAPTER_WS_TARGET_PATH=$$\{MG_$(shell echo ${MG_MQTT_BROKER_TYPE} | tr 'a-z' 'A-Z')_WS_TARGET_PATH}/" docker/.env
+	sed -i "s/MG_MESSAGE_BROKER_TYPE=.*/MG_MESSAGE_BROKER_TYPE=$(2)/" docker/.env
 	sed -i "s,file: .*.yml,file: $(2).yml," docker/brokers/docker-compose.yml
-	sed -i "s,MF_MESSAGE_BROKER_URL=.*,MF_MESSAGE_BROKER_URL=$$\{MF_$(shell echo ${MF_MESSAGE_BROKER_TYPE} | tr 'a-z' 'A-Z')_URL\}," docker/.env
-	sed -i "s,MF_MQTT_ADAPTER_MQTT_QOS=.*,MF_MQTT_ADAPTER_MQTT_QOS=$$\{MF_$(shell echo ${MF_MQTT_BROKER_TYPE} | tr 'a-z' 'A-Z')_MQTT_QOS\}," docker/.env
+	sed -i "s,MG_MESSAGE_BROKER_URL=.*,MG_MESSAGE_BROKER_URL=$$\{MG_$(shell echo ${MG_MESSAGE_BROKER_TYPE} | tr 'a-z' 'A-Z')_URL\}," docker/.env
+	sed -i "s,MG_MQTT_ADAPTER_MQTT_QOS=.*,MG_MQTT_ADAPTER_MQTT_QOS=$$\{MG_$(shell echo ${MG_MQTT_BROKER_TYPE} | tr 'a-z' 'A-Z')_MQTT_QOS\}," docker/.env
 endef
 
 change_config:
 ifeq ($(DOCKER_PROFILE),nats_nats)
 	sed -i "s/- broker/- nats/g" docker/docker-compose.yml
 	sed -i "s/- rabbitmq/- nats/g" docker/docker-compose.yml
-	sed -i "s,MF_NATS_URL=.*,MF_NATS_URL=nats://nats:$$\{MF_NATS_PORT}," docker/.env
+	sed -i "s,MG_NATS_URL=.*,MG_NATS_URL=nats://nats:$$\{MG_NATS_PORT}," docker/.env
 	$(call edit_docker_config,nats,nats)
 else ifeq ($(DOCKER_PROFILE),nats_rabbitmq)
 	sed -i "s/nats/broker/g" docker/docker-compose.yml
-	sed -i "s,MF_NATS_URL=.*,MF_NATS_URL=nats://nats:$$\{MF_NATS_PORT}," docker/.env
+	sed -i "s,MG_NATS_URL=.*,MG_NATS_URL=nats://nats:$$\{MG_NATS_PORT}," docker/.env
 	sed -i "s/rabbitmq/broker/g" docker/docker-compose.yml
 	$(call edit_docker_config,nats,rabbitmq)
 else ifeq ($(DOCKER_PROFILE),vernemq_nats)
 	sed -i "s/nats/broker/g" docker/docker-compose.yml
 	sed -i "s/rabbitmq/broker/g" docker/docker-compose.yml
-	sed -i "s,MF_NATS_URL=.*,MF_NATS_URL=nats://broker:$$\{MF_NATS_PORT}," docker/.env
+	sed -i "s,MG_NATS_URL=.*,MG_NATS_URL=nats://broker:$$\{MG_NATS_PORT}," docker/.env
 	$(call edit_docker_config,vernemq,nats)
 else ifeq ($(DOCKER_PROFILE),vernemq_rabbitmq)
 	sed -i "s/nats/broker/g" docker/docker-compose.yml
@@ -231,13 +231,13 @@ else
 endif
 
 run: check_certs change_config
-ifeq ($(MF_ES_STORE_TYPE), redis)
-	sed -i "s/MF_ES_STORE_TYPE=.*/MF_ES_STORE_TYPE=redis/" docker/.env
-	sed -i "s/MF_ES_STORE_URL=.*/MF_ES_STORE_URL=$$\{MF_REDIS_URL}/" docker/.env
+ifeq ($(MG_ES_STORE_TYPE), redis)
+	sed -i "s/MG_ES_STORE_TYPE=.*/MG_ES_STORE_TYPE=redis/" docker/.env
+	sed -i "s/MG_ES_STORE_URL=.*/MG_ES_STORE_URL=$$\{MG_REDIS_URL}/" docker/.env
 	docker-compose -f docker/docker-compose.yml --profile $(DOCKER_PROFILE) --profile redis -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 else
-	sed -i "s,MF_ES_STORE_TYPE=.*,MF_ES_STORE_TYPE=$$\{MF_MESSAGE_BROKER_TYPE}," docker/.env
-	sed -i "s,MF_ES_STORE_URL=.*,MF_ES_STORE_URL=$$\{MF_$(shell echo ${MF_MESSAGE_BROKER_TYPE} | tr 'a-z' 'A-Z')_URL\}," docker/.env
+	sed -i "s,MG_ES_STORE_TYPE=.*,MG_ES_STORE_TYPE=$$\{MG_MESSAGE_BROKER_TYPE}," docker/.env
+	sed -i "s,MG_ES_STORE_URL=.*,MG_ES_STORE_URL=$$\{MG_$(shell echo ${MG_MESSAGE_BROKER_TYPE} | tr 'a-z' 'A-Z')_URL\}," docker/.env
 	docker-compose -f docker/docker-compose.yml --profile $(DOCKER_PROFILE) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 endif
 
@@ -245,5 +245,5 @@ run_addons: check_certs
 	$(call change_config)
 	$(foreach SVC,$(RUN_ADDON_ARGS),$(if $(filter $(SVC),$(ADDON_SERVICES) $(EXTERNAL_SERVICES)),,$(error Invalid Service $(SVC))))
 	@for SVC in $(RUN_ADDON_ARGS); do \
-		MF_ADDONS_CERTS_PATH_PREFIX="../."  docker-compose -f docker/addons/$$SVC/docker-compose.yml -p $(DOCKER_PROJECT) --env-file ./docker/.env $(DOCKER_COMPOSE_COMMAND) $(args) & \
+		MG_ADDONS_CERTS_PATH_PREFIX="../."  docker-compose -f docker/addons/$$SVC/docker-compose.yml -p $(DOCKER_PROJECT) --env-file ./docker/.env $(DOCKER_COMPOSE_COMMAND) $(args) & \
 	done

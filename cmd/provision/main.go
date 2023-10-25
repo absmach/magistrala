@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 // Package main contains provision main function to start the provision service.
@@ -12,19 +12,19 @@ import (
 	"os"
 	"reflect"
 
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/internal/env"
+	"github.com/absmach/magistrala/internal/server"
+	httpserver "github.com/absmach/magistrala/internal/server/http"
+	mflog "github.com/absmach/magistrala/logger"
+	mfclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/pkg/errors"
+	mfgroups "github.com/absmach/magistrala/pkg/groups"
+	mfsdk "github.com/absmach/magistrala/pkg/sdk/go"
+	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/absmach/magistrala/provision"
+	"github.com/absmach/magistrala/provision/api"
 	chclient "github.com/mainflux/callhome/pkg/client"
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/internal/env"
-	"github.com/mainflux/mainflux/internal/server"
-	httpserver "github.com/mainflux/mainflux/internal/server/http"
-	mflog "github.com/mainflux/mainflux/logger"
-	mfclients "github.com/mainflux/mainflux/pkg/clients"
-	"github.com/mainflux/mainflux/pkg/errors"
-	mfgroups "github.com/mainflux/mainflux/pkg/groups"
-	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
-	"github.com/mainflux/mainflux/pkg/uuid"
-	"github.com/mainflux/mainflux/provision"
-	"github.com/mainflux/mainflux/provision/api"
 	"golang.org/x/sync/errgroup"
 )
 

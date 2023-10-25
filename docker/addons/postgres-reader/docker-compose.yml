@@ -1,7 +1,7 @@
-# Copyright (c) Mainflux
+# Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
-# This docker-compose file contains optional Postgres-reader service for Mainflux platform.
+# This docker-compose file contains optional Postgres-reader service for Magistrala platform.
 # Since this service is optional, this file is dependent of docker-compose.yml file
 # from <project_root>/docker. In order to run this service, execute command:
 # docker-compose -f docker/docker-compose.yml -f docker/addons/postgres-reader/docker-compose.yml up
@@ -10,73 +10,73 @@
 version: "3.7"
 
 networks:
-  mainflux-base-net:
+  magistrala-base-net:
 
 services:
   postgres-reader:
-    image: mainflux/postgres-reader:${MF_RELEASE_TAG}
-    container_name: mainflux-postgres-reader
+    image: magistrala/postgres-reader:${MG_RELEASE_TAG}
+    container_name: magistrala-postgres-reader
     restart: on-failure
     environment:
-      MF_POSTGRES_READER_LOG_LEVEL: ${MF_POSTGRES_READER_LOG_LEVEL}
-      MF_POSTGRES_READER_HTTP_HOST: ${MF_POSTGRES_READER_HTTP_HOST}
-      MF_POSTGRES_READER_HTTP_PORT: ${MF_POSTGRES_READER_HTTP_PORT}
-      MF_POSTGRES_READER_HTTP_SERVER_CERT: ${MF_POSTGRES_READER_HTTP_SERVER_CERT}
-      MF_POSTGRES_READER_HTTP_SERVER_KEY: ${MF_POSTGRES_READER_HTTP_SERVER_KEY}
-      MF_POSTGRES_HOST: ${MF_POSTGRES_HOST}
-      MF_POSTGRES_PORT: ${MF_POSTGRES_PORT}
-      MF_POSTGRES_USER: ${MF_POSTGRES_USER}
-      MF_POSTGRES_PASS: ${MF_POSTGRES_PASS}
-      MF_POSTGRES_NAME: ${MF_POSTGRES_NAME}
-      MF_POSTGRES_SSL_MODE: ${MF_POSTGRES_SSL_MODE}
-      MF_POSTGRES_SSL_CERT: ${MF_POSTGRES_SSL_CERT}
-      MF_POSTGRES_SSL_KEY: ${MF_POSTGRES_SSL_KEY}
-      MF_POSTGRES_SSL_ROOT_CERT: ${MF_POSTGRES_SSL_ROOT_CERT}
-      MF_THINGS_AUTH_GRPC_URL: ${MF_THINGS_AUTH_GRPC_URL}
-      MF_THINGS_AUTH_GRPC_TIMEOUT: ${MF_THINGS_AUTH_GRPC_TIMEOUT}
-      MF_THINGS_AUTH_GRPC_CLIENT_CERT: ${MF_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
-      MF_THINGS_AUTH_GRPC_CLIENT_KEY: ${MF_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
-      MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
-      MF_AUTH_GRPC_URL: ${MF_AUTH_GRPC_URL}
-      MF_AUTH_GRPC_TIMEOUT: ${MF_AUTH_GRPC_TIMEOUT}
-      MF_AUTH_GRPC_CLIENT_CERT: ${MF_AUTH_GRPC_CLIENT_CERT:+/users-grpc-client.crt}
-      MF_AUTH_GRPC_CLIENT_KEY: ${MF_AUTH_GRPC_CLIENT_KEY:+/users-grpc-client.key}
-      MF_AUTH_GRPC_SERVER_CA_CERTS: ${MF_AUTH_GRPC_SERVER_CA_CERTS:+/users-grpc-server-ca.crt}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
-      MF_POSTGRES_READER_INSTANCE_ID: ${MF_POSTGRES_READER_INSTANCE_ID}
+      MG_POSTGRES_READER_LOG_LEVEL: ${MG_POSTGRES_READER_LOG_LEVEL}
+      MG_POSTGRES_READER_HTTP_HOST: ${MG_POSTGRES_READER_HTTP_HOST}
+      MG_POSTGRES_READER_HTTP_PORT: ${MG_POSTGRES_READER_HTTP_PORT}
+      MG_POSTGRES_READER_HTTP_SERVER_CERT: ${MG_POSTGRES_READER_HTTP_SERVER_CERT}
+      MG_POSTGRES_READER_HTTP_SERVER_KEY: ${MG_POSTGRES_READER_HTTP_SERVER_KEY}
+      MG_POSTGRES_HOST: ${MG_POSTGRES_HOST}
+      MG_POSTGRES_PORT: ${MG_POSTGRES_PORT}
+      MG_POSTGRES_USER: ${MG_POSTGRES_USER}
+      MG_POSTGRES_PASS: ${MG_POSTGRES_PASS}
+      MG_POSTGRES_NAME: ${MG_POSTGRES_NAME}
+      MG_POSTGRES_SSL_MODE: ${MG_POSTGRES_SSL_MODE}
+      MG_POSTGRES_SSL_CERT: ${MG_POSTGRES_SSL_CERT}
+      MG_POSTGRES_SSL_KEY: ${MG_POSTGRES_SSL_KEY}
+      MG_POSTGRES_SSL_ROOT_CERT: ${MG_POSTGRES_SSL_ROOT_CERT}
+      MG_THINGS_AUTH_GRPC_URL: ${MG_THINGS_AUTH_GRPC_URL}
+      MG_THINGS_AUTH_GRPC_TIMEOUT: ${MG_THINGS_AUTH_GRPC_TIMEOUT}
+      MG_THINGS_AUTH_GRPC_CLIENT_CERT: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
+      MG_THINGS_AUTH_GRPC_CLIENT_KEY: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
+      MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
+      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
+      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
+      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/users-grpc-client.crt}
+      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/users-grpc-client.key}
+      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/users-grpc-server-ca.crt}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_POSTGRES_READER_INSTANCE_ID: ${MG_POSTGRES_READER_INSTANCE_ID}
     ports:
-      - ${MF_POSTGRES_READER_HTTP_PORT}:${MF_POSTGRES_READER_HTTP_PORT}
+      - ${MG_POSTGRES_READER_HTTP_PORT}:${MG_POSTGRES_READER_HTTP_PORT}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_USERS_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
-        target: /users-grpc-client${MF_USERS_GRPC_CLIENT_CERT:+.crt}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_USERS_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
+        target: /users-grpc-client${MG_USERS_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_USERS_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
-        target: /users-grpc-client${MF_USERS_GRPC_CLIENT_KEY:+.key}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_USERS_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
+        target: /users-grpc-client${MG_USERS_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_USERS_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
-        target: /users-grpc-server-ca${MF_USERS_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_USERS_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
+        target: /users-grpc-server-ca${MG_USERS_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_THINGS_AUTH_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
-        target: /things-grpc-client${MF_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_THINGS_AUTH_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
+        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_THINGS_AUTH_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
-        target: /things-grpc-client${MF_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_THINGS_AUTH_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
+        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
-        target: /things-grpc-server-ca${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
+        target: /things-grpc-server-ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true

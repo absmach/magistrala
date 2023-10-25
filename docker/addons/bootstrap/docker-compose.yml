@@ -1,4 +1,4 @@
-# Copyright (c) Mainflux
+# Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
 # This docker-compose file contains optional bootstrap services. Since it's optional, this file is
@@ -9,77 +9,77 @@
 version: "3.7"
 
 networks:
-  mainflux-base-net:
+  magistrala-base-net:
 
 volumes:
-  mainflux-bootstrap-db-volume:
+  magistrala-bootstrap-db-volume:
 
 
 services:
   bootstrap-db:
     image: postgres:13.3-alpine
-    container_name: mainflux-bootstrap-db
+    container_name: magistrala-bootstrap-db
     restart: on-failure
     environment:
-      POSTGRES_USER: ${MF_BOOTSTRAP_DB_USER}
-      POSTGRES_PASSWORD: ${MF_BOOTSTRAP_DB_PASS}
-      POSTGRES_DB: ${MF_BOOTSTRAP_DB_NAME}
+      POSTGRES_USER: ${MG_BOOTSTRAP_DB_USER}
+      POSTGRES_PASSWORD: ${MG_BOOTSTRAP_DB_PASS}
+      POSTGRES_DB: ${MG_BOOTSTRAP_DB_NAME}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
-      - mainflux-bootstrap-db-volume:/var/lib/postgresql/data
+      - magistrala-bootstrap-db-volume:/var/lib/postgresql/data
 
   bootstrap:
-    image: mainflux/bootstrap:${MF_RELEASE_TAG}
-    container_name: mainflux-bootstrap
+    image: magistrala/bootstrap:${MG_RELEASE_TAG}
+    container_name: magistrala-bootstrap
     depends_on:
       - bootstrap-db
     restart: on-failure
     ports:
-      - ${MF_BOOTSTRAP_HTTP_PORT}:${MF_BOOTSTRAP_HTTP_PORT}
+      - ${MG_BOOTSTRAP_HTTP_PORT}:${MG_BOOTSTRAP_HTTP_PORT}
     environment:
-      MF_BOOTSTRAP_LOG_LEVEL: ${MF_BOOTSTRAP_LOG_LEVEL}
-      MF_BOOTSTRAP_ENCRYPT_KEY: ${MF_BOOTSTRAP_ENCRYPT_KEY}
-      MF_BOOTSTRAP_EVENT_CONSUMER: ${MF_BOOTSTRAP_EVENT_CONSUMER}
-      MF_BOOTSTRAP_ES_URL: ${MF_ES_STORE_URL}
-      MF_BOOTSTRAP_HTTP_HOST: ${MF_BOOTSTRAP_HTTP_HOST}
-      MF_BOOTSTRAP_HTTP_PORT: ${MF_BOOTSTRAP_HTTP_PORT}
-      MF_BOOTSTRAP_HTTP_SERVER_CERT: ${MF_BOOTSTRAP_HTTP_SERVER_CERT}
-      MF_BOOTSTRAP_HTTP_SERVER_KEY: ${MF_BOOTSTRAP_HTTP_SERVER_KEY}
-      MF_BOOTSTRAP_DB_HOST: ${MF_BOOTSTRAP_DB_HOST}
-      MF_BOOTSTRAP_DB_PORT: ${MF_BOOTSTRAP_DB_PORT}
-      MF_BOOTSTRAP_DB_USER: ${MF_BOOTSTRAP_DB_USER}
-      MF_BOOTSTRAP_DB_PASS: ${MF_BOOTSTRAP_DB_PASS}
-      MF_BOOTSTRAP_DB_NAME: ${MF_BOOTSTRAP_DB_NAME}
-      MF_BOOTSTRAP_DB_SSL_MODE: ${MF_BOOTSTRAP_DB_SSL_MODE}
-      MF_BOOTSTRAP_DB_SSL_CERT: ${MF_BOOTSTRAP_DB_SSL_CERT}
-      MF_BOOTSTRAP_DB_SSL_KEY: ${MF_BOOTSTRAP_DB_SSL_KEY}
-      MF_BOOTSTRAP_DB_SSL_ROOT_CERT: ${MF_BOOTSTRAP_DB_SSL_ROOT_CERT}
-      MF_AUTH_GRPC_URL: ${MF_AUTH_GRPC_URL}
-      MF_AUTH_GRPC_TIMEOUT: ${MF_AUTH_GRPC_TIMEOUT}
-      MF_AUTH_GRPC_CLIENT_CERT: ${MF_AUTH_GRPC_CLIENT_CERT:+/users-grpc-client.crt}
-      MF_AUTH_GRPC_CLIENT_KEY: ${MF_AUTH_GRPC_CLIENT_KEY:+/users-grpc-client.key}
-      MF_AUTH_GRPC_SERVER_CA_CERTS: ${MF_AUTH_GRPC_SERVER_CA_CERTS:+/users-grpc-server-ca.crt}
-      MF_THINGS_URL: ${MF_THINGS_URL}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_JAEGER_TRACE_RATIO: ${MF_JAEGER_TRACE_RATIO}
-      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
-      MF_BOOTSTRAP_INSTANCE_ID: ${MF_BOOTSTRAP_INSTANCE_ID}
+      MG_BOOTSTRAP_LOG_LEVEL: ${MG_BOOTSTRAP_LOG_LEVEL}
+      MG_BOOTSTRAP_ENCRYPT_KEY: ${MG_BOOTSTRAP_ENCRYPT_KEY}
+      MG_BOOTSTRAP_EVENT_CONSUMER: ${MG_BOOTSTRAP_EVENT_CONSUMER}
+      MG_BOOTSTRAP_ES_URL: ${MG_ES_STORE_URL}
+      MG_BOOTSTRAP_HTTP_HOST: ${MG_BOOTSTRAP_HTTP_HOST}
+      MG_BOOTSTRAP_HTTP_PORT: ${MG_BOOTSTRAP_HTTP_PORT}
+      MG_BOOTSTRAP_HTTP_SERVER_CERT: ${MG_BOOTSTRAP_HTTP_SERVER_CERT}
+      MG_BOOTSTRAP_HTTP_SERVER_KEY: ${MG_BOOTSTRAP_HTTP_SERVER_KEY}
+      MG_BOOTSTRAP_DB_HOST: ${MG_BOOTSTRAP_DB_HOST}
+      MG_BOOTSTRAP_DB_PORT: ${MG_BOOTSTRAP_DB_PORT}
+      MG_BOOTSTRAP_DB_USER: ${MG_BOOTSTRAP_DB_USER}
+      MG_BOOTSTRAP_DB_PASS: ${MG_BOOTSTRAP_DB_PASS}
+      MG_BOOTSTRAP_DB_NAME: ${MG_BOOTSTRAP_DB_NAME}
+      MG_BOOTSTRAP_DB_SSL_MODE: ${MG_BOOTSTRAP_DB_SSL_MODE}
+      MG_BOOTSTRAP_DB_SSL_CERT: ${MG_BOOTSTRAP_DB_SSL_CERT}
+      MG_BOOTSTRAP_DB_SSL_KEY: ${MG_BOOTSTRAP_DB_SSL_KEY}
+      MG_BOOTSTRAP_DB_SSL_ROOT_CERT: ${MG_BOOTSTRAP_DB_SSL_ROOT_CERT}
+      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
+      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
+      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/users-grpc-client.crt}
+      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/users-grpc-client.key}
+      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/users-grpc-server-ca.crt}
+      MG_THINGS_URL: ${MG_THINGS_URL}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_BOOTSTRAP_INSTANCE_ID: ${MG_BOOTSTRAP_INSTANCE_ID}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_USERS_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
-        target: /users-grpc-client${MF_USERS_GRPC_CLIENT_CERT:+.crt}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_USERS_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
+        target: /users-grpc-client${MG_USERS_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_USERS_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
-        target: /users-grpc-client${MF_USERS_GRPC_CLIENT_KEY:+.key}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_USERS_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
+        target: /users-grpc-client${MG_USERS_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_USERS_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
-        target: /users-grpc-server-ca${MF_USERS_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_USERS_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
+        target: /users-grpc-server-ca${MG_USERS_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true

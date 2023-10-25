@@ -5,12 +5,12 @@ services:
     extends:
       file: ../nats.yml
       service: broker
-    container_name: mainflux-nats
+    container_name: magistrala-nats
     restart: on-failure
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
-      - mainflux-broker-volume:/data
+      - magistrala-broker-volume:/data
     profiles:
       - nats_nats
       - nats_rabbitmq

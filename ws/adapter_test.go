@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package ws_test
@@ -8,13 +8,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mainflux/mainflux"
-	authmocks "github.com/mainflux/mainflux/auth/mocks"
-	"github.com/mainflux/mainflux/internal/testsutil"
-	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/pkg/messaging"
-	"github.com/mainflux/mainflux/ws"
-	"github.com/mainflux/mainflux/ws/mocks"
+	mainflux "github.com/absmach/magistrala"
+	authmocks "github.com/absmach/magistrala/auth/mocks"
+	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/ws"
+	"github.com/absmach/magistrala/ws/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

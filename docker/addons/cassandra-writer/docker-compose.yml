@@ -1,4 +1,4 @@
-# Copyright (c) Mainflux
+# Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
 # This docker-compose file contains optional Cassandra and cassandra-writer. Since these are optional, this file is
@@ -9,22 +9,22 @@
 version: "3.7"
 
 networks:
-  mainflux-base-net:
+  magistrala-base-net:
 
 volumes:
-  mainflux-cassandra-volume:
+  magistrala-cassandra-volume:
 
 services:
   cassandra:
     image: cassandra:3.11.10
-    container_name: mainflux-cassandra
+    container_name: magistrala-cassandra
     restart: on-failure
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     ports:
-      - ${MF_CASSANDRA_PORT}:${MF_CASSANDRA_PORT}
+      - ${MG_CASSANDRA_PORT}:${MG_CASSANDRA_PORT}
     volumes:
-      - mainflux-cassandra-volume:/var/lib/cassandra
+      - magistrala-cassandra-volume:/var/lib/cassandra
 
   cassandra-init-keyspace:
     image: cassandra:3.11.10
@@ -35,34 +35,34 @@ services:
       - ./init.sh:/init.sh
     entrypoint: ["/init.sh"]
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
 
   cassandra-writer:
-    image: mainflux/cassandra-writer:${MF_RELEASE_TAG}
-    container_name: mainflux-cassandra-writer
+    image: magistrala/cassandra-writer:${MG_RELEASE_TAG}
+    container_name: magistrala-cassandra-writer
     depends_on:
       - cassandra
     restart: on-failure
     environment:
-      MF_CASSANDRA_WRITER_LOG_LEVEL: ${MF_CASSANDRA_WRITER_LOG_LEVEL}
-      MF_CASSANDRA_WRITER_CONFIG_PATH: ${MF_CASSANDRA_WRITER_CONFIG_PATH}
-      MF_CASSANDRA_WRITER_HTTP_HOST: ${MF_CASSANDRA_WRITER_HTTP_HOST}
-      MF_CASSANDRA_WRITER_HTTP_PORT: ${MF_CASSANDRA_WRITER_HTTP_PORT}
-      MF_CASSANDRA_WRITER_HTTP_SERVER_CERT: ${MF_CASSANDRA_WRITER_HTTP_SERVER_CERT}
-      MF_CASSANDRA_WRITER_HTTP_SERVER_KEY: ${MF_CASSANDRA_WRITER_HTTP_SERVER_KEY}
-      MF_CASSANDRA_PORT: ${MF_CASSANDRA_PORT}
-      MF_CASSANDRA_CLUSTER: ${MF_CASSANDRA_CLUSTER}
-      MF_CASSANDRA_KEYSPACE: ${MF_CASSANDRA_KEYSPACE}
-      MF_CASSANDRA_USER: ${MF_CASSANDRA_USER}
-      MF_CASSANDRA_PASS: ${MF_CASSANDRA_PASS}
-      MF_MESSAGE_BROKER_URL: ${MF_MESSAGE_BROKER_URL}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_JAEGER_TRACE_RATIO: ${MF_JAEGER_TRACE_RATIO}
-      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
-      MF_CASSANDRA_WRITER_INSANCE_ID: ${MF_CASSANDRA_WRITER_INSANCE_ID}
+      MG_CASSANDRA_WRITER_LOG_LEVEL: ${MG_CASSANDRA_WRITER_LOG_LEVEL}
+      MG_CASSANDRA_WRITER_CONFIG_PATH: ${MG_CASSANDRA_WRITER_CONFIG_PATH}
+      MG_CASSANDRA_WRITER_HTTP_HOST: ${MG_CASSANDRA_WRITER_HTTP_HOST}
+      MG_CASSANDRA_WRITER_HTTP_PORT: ${MG_CASSANDRA_WRITER_HTTP_PORT}
+      MG_CASSANDRA_WRITER_HTTP_SERVER_CERT: ${MG_CASSANDRA_WRITER_HTTP_SERVER_CERT}
+      MG_CASSANDRA_WRITER_HTTP_SERVER_KEY: ${MG_CASSANDRA_WRITER_HTTP_SERVER_KEY}
+      MG_CASSANDRA_PORT: ${MG_CASSANDRA_PORT}
+      MG_CASSANDRA_CLUSTER: ${MG_CASSANDRA_CLUSTER}
+      MG_CASSANDRA_KEYSPACE: ${MG_CASSANDRA_KEYSPACE}
+      MG_CASSANDRA_USER: ${MG_CASSANDRA_USER}
+      MG_CASSANDRA_PASS: ${MG_CASSANDRA_PASS}
+      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_CASSANDRA_WRITER_INSANCE_ID: ${MG_CASSANDRA_WRITER_INSANCE_ID}
     ports:
-      - ${MF_CASSANDRA_WRITER_HTTP_PORT}:${MF_CASSANDRA_WRITER_HTTP_PORT}
+      - ${MG_CASSANDRA_WRITER_HTTP_PORT}:${MG_CASSANDRA_WRITER_HTTP_PORT}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
       - ./config.toml:/config.toml

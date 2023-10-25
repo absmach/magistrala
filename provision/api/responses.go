@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package api
@@ -6,7 +6,7 @@ package api
 import (
 	"net/http"
 
-	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
+	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 )
 
 type provisionRes struct {

@@ -1,14 +1,14 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
-// Package main contains e2e tool for testing Mainflux.
+// Package main contains e2e tool for testing Magistrala.
 package main
 
 import (
 	"log"
 
+	"github.com/absmach/magistrala/tools/e2e"
 	cc "github.com/ivanpirog/coloredcobra"
-	"github.com/mainflux/mainflux/tools/e2e"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +19,7 @@ func main() {
 
 	rootCmd := &cobra.Command{
 		Use:   "e2e",
-		Short: "e2e is end-to-end testing tool for Mainflux",
+		Short: "e2e is end-to-end testing tool for Magistrala",
 		Long: "Tool for testing end-to-end flow of mainflux by doing a couple of operations namely:\n" +
 			"1. Creating, viewing, updating and changing status of users, groups, things and channels.\n" +
 			"2. Connecting users and groups to each other and things and channels to each other.\n" +

@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package consumer
@@ -8,9 +8,9 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/mainflux/mainflux/bootstrap"
-	"github.com/mainflux/mainflux/pkg/clients"
-	"github.com/mainflux/mainflux/pkg/events"
+	"github.com/absmach/magistrala/bootstrap"
+	"github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/pkg/events"
 )
 
 const (

@@ -1,7 +1,7 @@
-# Copyright (c) Mainflux
+# Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
-# This docker-compose file contains optional Prometheus and Grafana service for Mainflux platform.
+# This docker-compose file contains optional Prometheus and Grafana service for Magistrala platform.
 # Since this service is optional, this file is dependent of docker-compose.yml file
 # from <project_root>/docker. In order to run this service, execute command:
 # docker-compose -f docker/addons/prometheus/docker-compose.yml up
@@ -10,39 +10,39 @@
 version: "3.7"
 
 networks:
-  mainflux-base-net:
+  magistrala-base-net:
 
 volumes:
-  mainflux-prometheus-volume:
+  magistrala-prometheus-volume:
 
 services:
   promethues:
     image: prom/prometheus:v2.42.0
-    container_name: mainflux-prometheus
+    container_name: magistrala-prometheus
     restart: on-failure
     ports:
-      - ${MF_PROMETHEUS_PORT}:${MF_PROMETHEUS_PORT}
+      - ${MG_PROMETHEUS_PORT}:${MG_PROMETHEUS_PORT}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
       - type: bind
         source: ./metrics/prometheus.yml
         target: /etc/prometheus/prometheus.yml
-      - mainflux-prometheus-volume:/prometheus
+      - magistrala-prometheus-volume:/prometheus
 
   grafana:
     image: grafana/grafana:9.4.7
-    container_name: mainflux-grafana
+    container_name: magistrala-grafana
     depends_on:
       - promethues
     restart: on-failure
     ports:
-      - ${MF_GRAFANA_PORT}:${MF_GRAFANA_PORT}
+      - ${MG_GRAFANA_PORT}:${MG_GRAFANA_PORT}
     environment:
-      - GF_SECURITY_ADMIN_USER=${MF_GRAFANA_ADMIN_USER}
-      - GF_SECURITY_ADMIN_PASSWORD=${MF_GRAFANA_ADMIN_PASSWORD}
+      - GF_SECURITY_ADMIN_USER=${MG_GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${MG_GRAFANA_ADMIN_PASSWORD}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
       - type: bind
         source: ./grafana/datasource.yml

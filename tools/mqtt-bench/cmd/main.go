@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 // Package main contains the entry point of the mqtt-bench tool.
@@ -7,7 +7,7 @@ package main
 import (
 	"log"
 
-	bench "github.com/mainflux/mainflux/tools/mqtt-bench"
+	bench "github.com/absmach/magistrala/tools/mqtt-bench"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -19,8 +19,8 @@ func main() {
 	// Command
 	rootCmd := &cobra.Command{
 		Use:   "mqtt-bench",
-		Short: "mqtt-bench is MQTT benchmark tool for Mainflux",
-		Long: `Tool for exctensive load and benchmarking of MQTT brokers used within the Mainflux platform.
+		Short: "mqtt-bench is MQTT benchmark tool for Magistrala",
+		Long: `Tool for exctensive load and benchmarking of MQTT brokers used within the Magistrala platform.
 Complete documentation is available at https://docs.mainflux.io`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if confFile != "" {
@@ -69,7 +69,7 @@ Complete documentation is available at https://docs.mainflux.io`,
 
 	// Config file
 	rootCmd.PersistentFlags().StringVarP(&confFile, "config", "c", "config.toml", "config file for mqtt-bench")
-	rootCmd.PersistentFlags().StringVarP(&bconf.Mf.ConnFile, "mainflux", "m", "connections.toml", "config file for Mainflux connections")
+	rootCmd.PersistentFlags().StringVarP(&bconf.Mf.ConnFile, "magistrala", "m", "connections.toml", "config file for Magistrala connections")
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)

@@ -1,11 +1,11 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package policies
 
-import "github.com/mainflux/mainflux/internal/apiutil"
+import "github.com/absmach/magistrala/internal/apiutil"
 
-// Action represents an enum for the policies used in the Mainflux.
+// Action represents an enum for the policies used in the Magistrala.
 type Action int
 
 const (

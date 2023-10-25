@@ -1,7 +1,7 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
-package mainflux
+package magistrala
 
 // Response contains HTTP response specific methods.
 type Response interface {

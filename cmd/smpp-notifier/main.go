@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 // Package main contains smpp-notifier main function to start the smpp-notifier service.
@@ -10,48 +10,48 @@ import (
 	"log"
 	"os"
 
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/consumers"
+	"github.com/absmach/magistrala/consumers/notifiers"
+	"github.com/absmach/magistrala/consumers/notifiers/api"
+	notifierpg "github.com/absmach/magistrala/consumers/notifiers/postgres"
+	mfsmpp "github.com/absmach/magistrala/consumers/notifiers/smpp"
+	"github.com/absmach/magistrala/consumers/notifiers/tracing"
+	"github.com/absmach/magistrala/internal"
+	authclient "github.com/absmach/magistrala/internal/clients/grpc/auth"
+	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
+	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
+	"github.com/absmach/magistrala/internal/env"
+	"github.com/absmach/magistrala/internal/server"
+	httpserver "github.com/absmach/magistrala/internal/server/http"
+	mflog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/messaging/brokers"
+	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
+	"github.com/absmach/magistrala/pkg/ulid"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/jmoiron/sqlx"
 	chclient "github.com/mainflux/callhome/pkg/client"
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/consumers"
-	"github.com/mainflux/mainflux/consumers/notifiers"
-	"github.com/mainflux/mainflux/consumers/notifiers/api"
-	notifierpg "github.com/mainflux/mainflux/consumers/notifiers/postgres"
-	mfsmpp "github.com/mainflux/mainflux/consumers/notifiers/smpp"
-	"github.com/mainflux/mainflux/consumers/notifiers/tracing"
-	"github.com/mainflux/mainflux/internal"
-	authclient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
-	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
-	pgclient "github.com/mainflux/mainflux/internal/clients/postgres"
-	"github.com/mainflux/mainflux/internal/env"
-	"github.com/mainflux/mainflux/internal/server"
-	httpserver "github.com/mainflux/mainflux/internal/server/http"
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/messaging/brokers"
-	brokerstracing "github.com/mainflux/mainflux/pkg/messaging/brokers/tracing"
-	"github.com/mainflux/mainflux/pkg/ulid"
-	"github.com/mainflux/mainflux/pkg/uuid"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
 
 const (
 	svcName        = "smpp-notifier"
-	envPrefixDB    = "MF_SMPP_NOTIFIER_DB_"
-	envPrefixHTTP  = "MF_SMPP_NOTIFIER_HTTP_"
+	envPrefixDB    = "MG_SMPP_NOTIFIER_DB_"
+	envPrefixHTTP  = "MG_SMPP_NOTIFIER_HTTP_"
 	defDB          = "subscriptions"
 	defSvcHTTPPort = "9014"
 )
 
 type config struct {
-	LogLevel      string  `env:"MF_SMPP_NOTIFIER_LOG_LEVEL"     envDefault:"info"`
-	From          string  `env:"MF_SMPP_NOTIFIER_FROM_ADDR"     envDefault:""`
-	ConfigPath    string  `env:"MF_SMPP_NOTIFIER_CONFIG_PATH"   envDefault:"/config.toml"`
-	BrokerURL     string  `env:"MF_MESSAGE_BROKER_URL"          envDefault:"nats://localhost:4222"`
-	JaegerURL     string  `env:"MF_JAEGER_URL"                  envDefault:"http://jaeger:14268/api/traces"`
-	SendTelemetry bool    `env:"MF_SEND_TELEMETRY"              envDefault:"true"`
-	InstanceID    string  `env:"MF_SMPP_NOTIFIER_INSTANCE_ID"   envDefault:""`
-	TraceRatio    float64 `env:"MF_JAEGER_TRACE_RATIO"          envDefault:"1.0"`
+	LogLevel      string  `env:"MG_SMPP_NOTIFIER_LOG_LEVEL"     envDefault:"info"`
+	From          string  `env:"MG_SMPP_NOTIFIER_FROM_ADDR"     envDefault:""`
+	ConfigPath    string  `env:"MG_SMPP_NOTIFIER_CONFIG_PATH"   envDefault:"/config.toml"`
+	BrokerURL     string  `env:"MG_MESSAGE_BROKER_URL"          envDefault:"nats://localhost:4222"`
+	JaegerURL     string  `env:"MG_JAEGER_URL"                  envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry bool    `env:"MG_SEND_TELEMETRY"              envDefault:"true"`
+	InstanceID    string  `env:"MG_SMPP_NOTIFIER_INSTANCE_ID"   envDefault:""`
+	TraceRatio    float64 `env:"MG_JAEGER_TRACE_RATIO"          envDefault:"1.0"`
 }
 
 func main() {

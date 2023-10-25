@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package mocks
@@ -6,9 +6,9 @@ package mocks
 import (
 	"context"
 
-	mfclients "github.com/mainflux/mainflux/pkg/clients"
-	"github.com/mainflux/mainflux/pkg/errors"
-	mfgroups "github.com/mainflux/mainflux/pkg/groups"
+	mfclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/pkg/errors"
+	mfgroups "github.com/absmach/magistrala/pkg/groups"
 	"github.com/stretchr/testify/mock"
 )
 

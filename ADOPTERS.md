@@ -1,12 +1,12 @@
 # Adopters
 
-As Mainflux Community grows, we'd like to keep track of Mainflux adopters to grow the community, contact other users, share experiences and best practices.
+As Magistrala Community grows, we'd like to keep track of Magistrala adopters to grow the community, contact other users, share experiences and best practices.
 
-To accomplish this, we created a public ledger. The list of organizations and users who consider themselves as Mainflux adopters and that **publicly/officially** shared information and/or details of their adoption journey(optional).
+To accomplish this, we created a public ledger. The list of organizations and users who consider themselves as Magistrala adopters and that **publicly/officially** shared information and/or details of their adoption journey(optional).
 Where users themselves directly maintain the list.
 
 ## Adding yourself as an adopter
-If you are using Mainflux, please consider adding yourself as an adopter with a brief description of your use case by opening a pull request to this file and adding a section describing your adoption of Mainflux technology.
+If you are using Magistrala, please consider adding yourself as an adopter with a brief description of your use case by opening a pull request to this file and adding a section describing your adoption of Magistrala technology.
 
 **Please send PRs to add or remove organizations/users**
 
@@ -25,12 +25,12 @@ Pull request commit must be [signed](https://docs.github.com/en/github/authentic
 * There is no minimum requirement or adaptation size, but we request to list permanent deployments only, i.e., no demo or trial deployments. Commercial or production use is not required. A well-done home lab setup can be equally impressive as a large-scale commercial deployment.
 
 
-**The list of organizations/users that have publicly shared the usage of Mainflux:**
+**The list of organizations/users that have publicly shared the usage of Magistrala:**
 
-**Note**: Several other organizations/users couldn't publicly share their usage details but are active project contributors and Mainflux Community members.
+**Note**: Several other organizations/users couldn't publicly share their usage details but are active project contributors and Magistrala Community members.
 
 
 ## Adopters list (alphabetical)
 
 
-**Note:** The list is maintained by the users themselves. If you find yourself on this list, and you think it's inappropriate. Please contact [project maintainers](https://github.com/mainflux/mainflux/blob/master/MAINTAINERS) and you will be permanently removed from the list.
+**Note:** The list is maintained by the users themselves. If you find yourself on this list, and you think it's inappropriate. Please contact [project maintainers](https://github.com/absmach/magistrala/blob/master/MAINTAINERS) and you will be permanently removed from the list.

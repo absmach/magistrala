@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package postgres
@@ -8,14 +8,14 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/absmach/magistrala/consumers"
+	"github.com/absmach/magistrala/pkg/errors"
+	mfjson "github.com/absmach/magistrala/pkg/transformers/json"
+	"github.com/absmach/magistrala/pkg/transformers/senml"
 	"github.com/gofrs/uuid"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx" // required for DB access
-	"github.com/mainflux/mainflux/consumers"
-	"github.com/mainflux/mainflux/pkg/errors"
-	mfjson "github.com/mainflux/mainflux/pkg/transformers/json"
-	"github.com/mainflux/mainflux/pkg/transformers/senml"
 )
 
 var (

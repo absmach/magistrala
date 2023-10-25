@@ -1,7 +1,0 @@
-.idea/
-*.swp
-.vscode/
-__pycache__
-*.pyc
-gubernator.egg-info/
-.DS_Store

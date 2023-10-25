@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package rabbitmq_test
@@ -11,9 +11,9 @@ import (
 	"syscall"
 	"testing"
 
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/messaging"
-	"github.com/mainflux/mainflux/pkg/messaging/rabbitmq"
+	mflog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/messaging/rabbitmq"
 	"github.com/ory/dockertest/v3"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/stretchr/testify/assert"
@@ -97,7 +97,7 @@ func rabbitHandler(deliveries <-chan amqp.Delivery, h messaging.MessageHandler) 
 			return
 		}
 		if err := h.Handle(&msg); err != nil {
-			logger.Warn(fmt.Sprintf("Failed to handle Mainflux message: %s", err))
+			logger.Warn(fmt.Sprintf("Failed to handle Magistrala message: %s", err))
 			return
 		}
 	}

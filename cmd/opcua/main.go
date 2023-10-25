@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 // Package main contains opcua-adapter main function to start the opcua-adapter service.
@@ -10,31 +10,31 @@ import (
 	"log"
 	"os"
 
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/internal"
+	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
+	redisclient "github.com/absmach/magistrala/internal/clients/redis"
+	"github.com/absmach/magistrala/internal/env"
+	"github.com/absmach/magistrala/internal/server"
+	httpserver "github.com/absmach/magistrala/internal/server/http"
+	mflog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/opcua"
+	"github.com/absmach/magistrala/opcua/api"
+	"github.com/absmach/magistrala/opcua/db"
+	"github.com/absmach/magistrala/opcua/events"
+	"github.com/absmach/magistrala/opcua/gopcua"
+	"github.com/absmach/magistrala/pkg/events/store"
+	"github.com/absmach/magistrala/pkg/messaging/brokers"
+	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/go-redis/redis/v8"
 	chclient "github.com/mainflux/callhome/pkg/client"
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/internal"
-	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
-	redisclient "github.com/mainflux/mainflux/internal/clients/redis"
-	"github.com/mainflux/mainflux/internal/env"
-	"github.com/mainflux/mainflux/internal/server"
-	httpserver "github.com/mainflux/mainflux/internal/server/http"
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/opcua"
-	"github.com/mainflux/mainflux/opcua/api"
-	"github.com/mainflux/mainflux/opcua/db"
-	"github.com/mainflux/mainflux/opcua/events"
-	"github.com/mainflux/mainflux/opcua/gopcua"
-	"github.com/mainflux/mainflux/pkg/events/store"
-	"github.com/mainflux/mainflux/pkg/messaging/brokers"
-	brokerstracing "github.com/mainflux/mainflux/pkg/messaging/brokers/tracing"
-	"github.com/mainflux/mainflux/pkg/uuid"
 	"golang.org/x/sync/errgroup"
 )
 
 const (
 	svcName        = "opc-ua-adapter"
-	envPrefixHTTP  = "MF_OPCUA_ADAPTER_HTTP_"
+	envPrefixHTTP  = "MG_OPCUA_ADAPTER_HTTP_"
 	defSvcHTTPPort = "8180"
 
 	thingsRMPrefix     = "thing"
@@ -45,15 +45,15 @@ const (
 )
 
 type config struct {
-	LogLevel       string  `env:"MF_OPCUA_ADAPTER_LOG_LEVEL"          envDefault:"info"`
-	ESConsumerName string  `env:"MF_OPCUA_ADAPTER_EVENT_CONSUMER"     envDefault:"opcua-adapter"`
-	BrokerURL      string  `env:"MF_MESSAGE_BROKER_URL"               envDefault:"nats://localhost:4222"`
-	JaegerURL      string  `env:"MF_JAEGER_URL"                       envDefault:"http://jaeger:14268/api/traces"`
-	SendTelemetry  bool    `env:"MF_SEND_TELEMETRY"                   envDefault:"true"`
-	InstanceID     string  `env:"MF_OPCUA_ADAPTER_INSTANCE_ID"        envDefault:""`
-	ESURL          string  `env:"MF_OPCUA_ADAPTER_ES_URL"             envDefault:"redis://localhost:6379/0"`
-	RouteMapURL    string  `env:"MF_OPCUA_ADAPTER_ROUTE_MAP_URL"      envDefault:"redis://localhost:6379/0"`
-	TraceRatio     float64 `env:"MF_JAEGER_TRACE_RATIO"               envDefault:"1.0"`
+	LogLevel       string  `env:"MG_OPCUA_ADAPTER_LOG_LEVEL"          envDefault:"info"`
+	ESConsumerName string  `env:"MG_OPCUA_ADAPTER_EVENT_CONSUMER"     envDefault:"opcua-adapter"`
+	BrokerURL      string  `env:"MG_MESSAGE_BROKER_URL"               envDefault:"nats://localhost:4222"`
+	JaegerURL      string  `env:"MG_JAEGER_URL"                       envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry  bool    `env:"MG_SEND_TELEMETRY"                   envDefault:"true"`
+	InstanceID     string  `env:"MG_OPCUA_ADAPTER_INSTANCE_ID"        envDefault:""`
+	ESURL          string  `env:"MG_OPCUA_ADAPTER_ES_URL"             envDefault:"redis://localhost:6379/0"`
+	RouteMapURL    string  `env:"MG_OPCUA_ADAPTER_ROUTE_MAP_URL"      envDefault:"redis://localhost:6379/0"`
+	TraceRatio     float64 `env:"MG_JAEGER_TRACE_RATIO"               envDefault:"1.0"`
 }
 
 func main() {

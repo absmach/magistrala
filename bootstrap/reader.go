@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package bootstrap
@@ -12,7 +12,7 @@ import (
 	"net/http"
 )
 
-// bootstrapRes represent Mainflux Response to the Bootatrap request.
+// bootstrapRes represent Magistrala Response to the Bootatrap request.
 // This is used as a response from ConfigReader and can easily be
 // replace with any other response format.
 type bootstrapRes struct {

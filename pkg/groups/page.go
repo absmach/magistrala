@@ -1,9 +1,9 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package groups
 
-import "github.com/mainflux/mainflux/pkg/clients"
+import "github.com/absmach/magistrala/pkg/clients"
 
 // PageMeta contains page metadata that helps navigation.
 type PageMeta struct {

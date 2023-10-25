@@ -1,11 +1,11 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package mocks
 
 import (
-	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/users"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/users"
 )
 
 var _ users.Hasher = (*hasherMock)(nil)

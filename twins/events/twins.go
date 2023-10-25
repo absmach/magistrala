@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package events
@@ -7,9 +7,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/twins"
 	"github.com/go-redis/redis/v8"
-	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/twins"
 )
 
 const (

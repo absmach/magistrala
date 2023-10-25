@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package api
@@ -7,8 +7,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/absmach/magistrala/pkg/groups"
 	"github.com/go-kit/kit/metrics"
-	"github.com/mainflux/mainflux/pkg/groups"
 )
 
 var _ groups.Service = (*metricsMiddleware)(nil)

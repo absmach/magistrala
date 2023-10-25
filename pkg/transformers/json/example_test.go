@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package json_test
@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	mfjson "github.com/mainflux/mainflux/pkg/transformers/json"
+	mfjson "github.com/absmach/magistrala/pkg/transformers/json"
 )
 
 func ExampleParseFlat() {

@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package mqtt_test
@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
+	mflog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/messaging"
+	mqttpubsub "github.com/absmach/magistrala/pkg/messaging/mqtt"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/messaging"
-	mqttpubsub "github.com/mainflux/mainflux/pkg/messaging/mqtt"
 	"github.com/ory/dockertest/v3"
 )
 

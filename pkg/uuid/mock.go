@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package uuid
@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/mainflux/mainflux"
+	mainflux "github.com/absmach/magistrala"
 )
 
 // Prefix represents the prefix used to generate UUID mocks.

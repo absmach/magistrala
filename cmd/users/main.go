@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 // Package main contains users main function to start the users service.
@@ -12,63 +12,63 @@ import (
 	"regexp"
 	"time"
 
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/internal"
+	authclient "github.com/absmach/magistrala/internal/clients/grpc/auth"
+	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
+	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
+	"github.com/absmach/magistrala/internal/email"
+	"github.com/absmach/magistrala/internal/env"
+	mfgroups "github.com/absmach/magistrala/internal/groups"
+	gapi "github.com/absmach/magistrala/internal/groups/api"
+	gevents "github.com/absmach/magistrala/internal/groups/events"
+	gpostgres "github.com/absmach/magistrala/internal/groups/postgres"
+	gtracing "github.com/absmach/magistrala/internal/groups/tracing"
+	"github.com/absmach/magistrala/internal/postgres"
+	"github.com/absmach/magistrala/internal/server"
+	httpserver "github.com/absmach/magistrala/internal/server/http"
+	mflog "github.com/absmach/magistrala/logger"
+	mfclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/pkg/groups"
+	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/absmach/magistrala/users"
+	capi "github.com/absmach/magistrala/users/api"
+	"github.com/absmach/magistrala/users/emailer"
+	uevents "github.com/absmach/magistrala/users/events"
+	"github.com/absmach/magistrala/users/hasher"
+	clientspg "github.com/absmach/magistrala/users/postgres"
+	ctracing "github.com/absmach/magistrala/users/tracing"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 	chclient "github.com/mainflux/callhome/pkg/client"
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/internal"
-	authclient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
-	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
-	pgclient "github.com/mainflux/mainflux/internal/clients/postgres"
-	"github.com/mainflux/mainflux/internal/email"
-	"github.com/mainflux/mainflux/internal/env"
-	mfgroups "github.com/mainflux/mainflux/internal/groups"
-	gapi "github.com/mainflux/mainflux/internal/groups/api"
-	gevents "github.com/mainflux/mainflux/internal/groups/events"
-	gpostgres "github.com/mainflux/mainflux/internal/groups/postgres"
-	gtracing "github.com/mainflux/mainflux/internal/groups/tracing"
-	"github.com/mainflux/mainflux/internal/postgres"
-	"github.com/mainflux/mainflux/internal/server"
-	httpserver "github.com/mainflux/mainflux/internal/server/http"
-	mflog "github.com/mainflux/mainflux/logger"
-	mfclients "github.com/mainflux/mainflux/pkg/clients"
-	"github.com/mainflux/mainflux/pkg/groups"
-	"github.com/mainflux/mainflux/pkg/uuid"
-	"github.com/mainflux/mainflux/users"
-	capi "github.com/mainflux/mainflux/users/api"
-	"github.com/mainflux/mainflux/users/emailer"
-	uevents "github.com/mainflux/mainflux/users/events"
-	"github.com/mainflux/mainflux/users/hasher"
-	clientspg "github.com/mainflux/mainflux/users/postgres"
-	ctracing "github.com/mainflux/mainflux/users/tracing"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
 
 const (
 	svcName        = "users"
-	envPrefixDB    = "MF_USERS_DB_"
-	envPrefixHTTP  = "MF_USERS_HTTP_"
-	envPrefixGrpc  = "MF_USERS_GRPC_"
+	envPrefixDB    = "MG_USERS_DB_"
+	envPrefixHTTP  = "MG_USERS_HTTP_"
+	envPrefixGrpc  = "MG_USERS_GRPC_"
 	defDB          = "users"
 	defSvcHTTPPort = "9002"
 	defSvcGRPCPort = "9192"
 )
 
 type config struct {
-	LogLevel        string  `env:"MF_USERS_LOG_LEVEL"              envDefault:"info"`
-	SecretKey       string  `env:"MF_USERS_SECRET_KEY"             envDefault:"secret"`
-	AdminEmail      string  `env:"MF_USERS_ADMIN_EMAIL"            envDefault:""`
-	AdminPassword   string  `env:"MF_USERS_ADMIN_PASSWORD"         envDefault:""`
-	PassRegexText   string  `env:"MF_USERS_PASS_REGEX"             envDefault:"^.{8,}$"`
-	AccessDuration  string  `env:"MF_USERS_ACCESS_TOKEN_DURATION"  envDefault:"15m"`
-	RefreshDuration string  `env:"MF_USERS_REFRESH_TOKEN_DURATION" envDefault:"24h"`
-	ResetURL        string  `env:"MF_TOKEN_RESET_ENDPOINT"         envDefault:"/reset-request"`
-	JaegerURL       string  `env:"MF_JAEGER_URL"                   envDefault:"http://jaeger:14268/api/traces"`
-	SendTelemetry   bool    `env:"MF_SEND_TELEMETRY"               envDefault:"true"`
-	InstanceID      string  `env:"MF_USERS_INSTANCE_ID"            envDefault:""`
-	ESURL           string  `env:"MF_USERS_ES_URL"                 envDefault:"redis://localhost:6379/0"`
-	TraceRatio      float64 `env:"MF_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
+	LogLevel        string  `env:"MG_USERS_LOG_LEVEL"              envDefault:"info"`
+	SecretKey       string  `env:"MG_USERS_SECRET_KEY"             envDefault:"secret"`
+	AdminEmail      string  `env:"MG_USERS_ADMIN_EMAIL"            envDefault:""`
+	AdminPassword   string  `env:"MG_USERS_ADMIN_PASSWORD"         envDefault:""`
+	PassRegexText   string  `env:"MG_USERS_PASS_REGEX"             envDefault:"^.{8,}$"`
+	AccessDuration  string  `env:"MG_USERS_ACCESS_TOKEN_DURATION"  envDefault:"15m"`
+	RefreshDuration string  `env:"MG_USERS_REFRESH_TOKEN_DURATION" envDefault:"24h"`
+	ResetURL        string  `env:"MG_TOKEN_RESET_ENDPOINT"         envDefault:"/reset-request"`
+	JaegerURL       string  `env:"MG_JAEGER_URL"                   envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry   bool    `env:"MG_SEND_TELEMETRY"               envDefault:"true"`
+	InstanceID      string  `env:"MG_USERS_INSTANCE_ID"            envDefault:""`
+	ESURL           string  `env:"MG_USERS_ES_URL"                 envDefault:"redis://localhost:6379/0"`
+	TraceRatio      float64 `env:"MG_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
 	PassRegex       *regexp.Regexp
 }
 

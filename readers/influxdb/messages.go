@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package influxdb
@@ -11,11 +11,11 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/absmach/magistrala/pkg/errors"
+	jsont "github.com/absmach/magistrala/pkg/transformers/json"
+	"github.com/absmach/magistrala/pkg/transformers/senml"
+	"github.com/absmach/magistrala/readers"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
-	"github.com/mainflux/mainflux/pkg/errors"
-	jsont "github.com/mainflux/mainflux/pkg/transformers/json"
-	"github.com/mainflux/mainflux/pkg/transformers/senml"
-	"github.com/mainflux/mainflux/readers"
 )
 
 const (

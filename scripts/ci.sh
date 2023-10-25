@@ -45,7 +45,7 @@ setup_protoc() {
 }
 
 setup_mf() {
-    echo "Setting up Mainflux..."
+    echo "Setting up Magistrala..."
     for p in $(ls *.pb.go); do
         mv $p $p.tmp
     done
@@ -66,9 +66,9 @@ setup_mf() {
         fi
     done
     echo "Compile check for rabbitmq..."
-    MF_MESSAGE_BROKER_TYPE=rabbitmq make http
+    MG_MESSAGE_BROKER_TYPE=rabbitmq make http
     echo "Compile check for redis..."
-    MF_ES_STORE_TYPE=redis make http
+    MG_ES_STORE_TYPE=redis make http
     make -j$NPROC
 }
 

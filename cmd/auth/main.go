@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package main
@@ -10,30 +10,30 @@ import (
 	"os"
 	"time"
 
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/auth"
+	api "github.com/absmach/magistrala/auth/api"
+	grpcapi "github.com/absmach/magistrala/auth/api/grpc"
+	httpapi "github.com/absmach/magistrala/auth/api/http"
+	"github.com/absmach/magistrala/auth/jwt"
+	apostgres "github.com/absmach/magistrala/auth/postgres"
+	"github.com/absmach/magistrala/auth/spicedb"
+	"github.com/absmach/magistrala/auth/tracing"
+	"github.com/absmach/magistrala/internal"
+	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
+	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
+	"github.com/absmach/magistrala/internal/env"
+	"github.com/absmach/magistrala/internal/postgres"
+	"github.com/absmach/magistrala/internal/server"
+	grpcserver "github.com/absmach/magistrala/internal/server/grpc"
+	httpserver "github.com/absmach/magistrala/internal/server/http"
+	mflog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/uuid"
 	v1 "github.com/authzed/authzed-go/proto/authzed/api/v1"
 	"github.com/authzed/authzed-go/v1"
 	"github.com/authzed/grpcutil"
 	"github.com/jmoiron/sqlx"
 	chclient "github.com/mainflux/callhome/pkg/client"
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/auth"
-	api "github.com/mainflux/mainflux/auth/api"
-	grpcapi "github.com/mainflux/mainflux/auth/api/grpc"
-	httpapi "github.com/mainflux/mainflux/auth/api/http"
-	"github.com/mainflux/mainflux/auth/jwt"
-	apostgres "github.com/mainflux/mainflux/auth/postgres"
-	"github.com/mainflux/mainflux/auth/spicedb"
-	"github.com/mainflux/mainflux/auth/tracing"
-	"github.com/mainflux/mainflux/internal"
-	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
-	pgclient "github.com/mainflux/mainflux/internal/clients/postgres"
-	"github.com/mainflux/mainflux/internal/env"
-	"github.com/mainflux/mainflux/internal/postgres"
-	"github.com/mainflux/mainflux/internal/server"
-	grpcserver "github.com/mainflux/mainflux/internal/server/grpc"
-	httpserver "github.com/mainflux/mainflux/internal/server/http"
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/uuid"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -43,9 +43,9 @@ import (
 
 const (
 	svcName           = "auth"
-	envPrefixHTTP     = "MF_AUTH_HTTP_"
-	envPrefixGrpc     = "MF_AUTH_GRPC_"
-	envPrefixDB       = "MF_AUTH_DB_"
+	envPrefixHTTP     = "MG_AUTH_HTTP_"
+	envPrefixGrpc     = "MG_AUTH_GRPC_"
+	envPrefixDB       = "MG_AUTH_DB_"
 	defDB             = "auth"
 	defSvcHTTPPort    = "8180"
 	defSvcGRPCPort    = "8181"
@@ -53,17 +53,17 @@ const (
 )
 
 type config struct {
-	LogLevel          string  `env:"MF_AUTH_LOG_LEVEL"               envDefault:"info"`
-	SecretKey         string  `env:"MF_AUTH_SECRET_KEY"              envDefault:"secret"`
-	JaegerURL         string  `env:"MF_JAEGER_URL"                   envDefault:"http://jaeger:14268/api/traces"`
-	SendTelemetry     bool    `env:"MF_SEND_TELEMETRY"               envDefault:"true"`
-	InstanceID        string  `env:"MF_AUTH_ADAPTER_INSTANCE_ID"     envDefault:""`
-	AccessDuration    string  `env:"MF_AUTH_ACCESS_TOKEN_DURATION"   envDefault:"30m"`
-	RefreshDuration   string  `env:"MF_AUTH_REFRESH_TOKEN_DURATION"  envDefault:"24h"`
-	SpicedbHost       string  `env:"MF_SPICEDB_HOST"                 envDefault:"localhost"`
-	SpicedbPort       string  `env:"MF_SPICEDB_PORT"                 envDefault:"50051"`
-	SpicedbSchemaFile string  `env:"MF_SPICEDB_SCHEMA_FILE"          envDefault:"./docker/spicedb/schema.zed"`
-	TraceRatio        float64 `env:"MF_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
+	LogLevel          string  `env:"MG_AUTH_LOG_LEVEL"               envDefault:"info"`
+	SecretKey         string  `env:"MG_AUTH_SECRET_KEY"              envDefault:"secret"`
+	JaegerURL         string  `env:"MG_JAEGER_URL"                   envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry     bool    `env:"MG_SEND_TELEMETRY"               envDefault:"true"`
+	InstanceID        string  `env:"MG_AUTH_ADAPTER_INSTANCE_ID"     envDefault:""`
+	AccessDuration    string  `env:"MG_AUTH_ACCESS_TOKEN_DURATION"   envDefault:"30m"`
+	RefreshDuration   string  `env:"MG_AUTH_REFRESH_TOKEN_DURATION"  envDefault:"24h"`
+	SpicedbHost       string  `env:"MG_SPICEDB_HOST"                 envDefault:"localhost"`
+	SpicedbPort       string  `env:"MG_SPICEDB_PORT"                 envDefault:"50051"`
+	SpicedbSchemaFile string  `env:"MG_SPICEDB_SCHEMA_FILE"          envDefault:"./docker/spicedb/schema.zed"`
+	TraceRatio        float64 `env:"MG_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
 }
 
 func main() {

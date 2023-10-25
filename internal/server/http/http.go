@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package http
@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mainflux/mainflux/internal/server"
-	"github.com/mainflux/mainflux/logger"
+	"github.com/absmach/magistrala/internal/server"
+	"github.com/absmach/magistrala/logger"
 )
 
 const (

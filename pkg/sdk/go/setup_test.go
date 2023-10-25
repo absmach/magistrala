@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package sdk_test
@@ -9,12 +9,12 @@ import (
 	"regexp"
 	"testing"
 
-	mfclients "github.com/mainflux/mainflux/pkg/clients"
-	mfgroups "github.com/mainflux/mainflux/pkg/groups"
-	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
-	"github.com/mainflux/mainflux/pkg/uuid"
-	"github.com/mainflux/mainflux/users/hasher"
-	umocks "github.com/mainflux/mainflux/users/mocks"
+	mfclients "github.com/absmach/magistrala/pkg/clients"
+	mfgroups "github.com/absmach/magistrala/pkg/groups"
+	sdk "github.com/absmach/magistrala/pkg/sdk/go"
+	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/absmach/magistrala/users/hasher"
+	umocks "github.com/absmach/magistrala/users/mocks"
 	"github.com/stretchr/testify/assert"
 )
 

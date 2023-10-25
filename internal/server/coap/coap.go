@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package coap
@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mainflux/mainflux/internal/server"
-	"github.com/mainflux/mainflux/logger"
+	"github.com/absmach/magistrala/internal/server"
+	"github.com/absmach/magistrala/logger"
 	gocoap "github.com/plgd-dev/go-coap/v2"
 	"github.com/plgd-dev/go-coap/v2/mux"
 )

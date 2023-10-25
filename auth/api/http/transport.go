@@ -1,16 +1,16 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 package http
 
 import (
 	"net/http"
 
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/auth/api/http/keys"
+	"github.com/absmach/magistrala/auth/api/http/policies"
+	"github.com/absmach/magistrala/logger"
 	"github.com/go-zoo/bone"
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/auth"
-	"github.com/mainflux/mainflux/auth/api/http/keys"
-	"github.com/mainflux/mainflux/auth/api/http/policies"
-	"github.com/mainflux/mainflux/logger"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 

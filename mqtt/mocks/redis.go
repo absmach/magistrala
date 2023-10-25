@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package mocks
@@ -6,7 +6,7 @@ package mocks
 import (
 	"context"
 
-	"github.com/mainflux/mainflux/mqtt/events"
+	"github.com/absmach/magistrala/mqtt/events"
 )
 
 type MockEventStore struct{}

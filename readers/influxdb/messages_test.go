@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package influxdb_test
@@ -9,13 +9,13 @@ import (
 	"testing"
 	"time"
 
+	iwriter "github.com/absmach/magistrala/consumers/writers/influxdb"
+	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/pkg/transformers/json"
+	"github.com/absmach/magistrala/pkg/transformers/senml"
+	"github.com/absmach/magistrala/readers"
+	ireader "github.com/absmach/magistrala/readers/influxdb"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
-	iwriter "github.com/mainflux/mainflux/consumers/writers/influxdb"
-	"github.com/mainflux/mainflux/internal/testsutil"
-	"github.com/mainflux/mainflux/pkg/transformers/json"
-	"github.com/mainflux/mainflux/pkg/transformers/senml"
-	"github.com/mainflux/mainflux/readers"
-	ireader "github.com/mainflux/mainflux/readers/influxdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

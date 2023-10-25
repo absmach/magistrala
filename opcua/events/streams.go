@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package events
@@ -8,8 +8,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/mainflux/mainflux/opcua"
-	"github.com/mainflux/mainflux/pkg/events"
+	"github.com/absmach/magistrala/opcua"
+	"github.com/absmach/magistrala/pkg/events"
 )
 
 const (

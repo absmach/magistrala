@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/mainflux/mainflux/pkg/errors"
-	mfxsdk "github.com/mainflux/mainflux/pkg/sdk/go"
+	"github.com/absmach/magistrala/pkg/errors"
+	mfxsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/pelletier/go-toml"
 	"github.com/spf13/cobra"
 )

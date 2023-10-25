@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package sdk_test
@@ -9,15 +9,15 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/mainflux/mainflux"
-	authmocks "github.com/mainflux/mainflux/auth/mocks"
-	adapter "github.com/mainflux/mainflux/http"
-	"github.com/mainflux/mainflux/http/api"
-	"github.com/mainflux/mainflux/http/mocks"
-	"github.com/mainflux/mainflux/internal/apiutil"
-	"github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/errors"
-	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
+	mainflux "github.com/absmach/magistrala"
+	authmocks "github.com/absmach/magistrala/auth/mocks"
+	adapter "github.com/absmach/magistrala/http"
+	"github.com/absmach/magistrala/http/api"
+	"github.com/absmach/magistrala/http/mocks"
+	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/errors"
+	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	mproxy "github.com/mainflux/mproxy/pkg/http"
 	"github.com/mainflux/mproxy/pkg/session"
 	"github.com/stretchr/testify/assert"

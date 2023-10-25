@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package bench
@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"time"
 
-	mflog "github.com/mainflux/mainflux/logger"
+	mflog "github.com/absmach/magistrala/logger"
 	"github.com/pelletier/go-toml"
 )
 
@@ -50,7 +50,7 @@ func Benchmark(cfg Config) error {
 
 	mf := mainflux{}
 	if err := toml.Unmarshal(data, &mf); err != nil {
-		return fmt.Errorf("cannot load Mainflux connections config %s \nUse tools/provision to create file", cfg.Mf.ConnFile)
+		return fmt.Errorf("cannot load Magistrala connections config %s \nUse tools/provision to create file", cfg.Mf.ConnFile)
 	}
 
 	resCh := make(chan *runResults)

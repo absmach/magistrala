@@ -1,51 +1,51 @@
-# Copyright (c) Mainflux
+# Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
 # This docker-compose file contains optional opcua-adapter and opcua-redis services
-# for the Mainflux platform. Since this services are optional, this file is dependent on the
+# for the Magistrala platform. Since this services are optional, this file is dependent on the
 # docker-compose.yml file from <project_root>/docker/. In order to run these services,
 # core services, as well as the network from the core composition, should be already running.
 
 version: "3.7"
 
 networks:
-  mainflux-base-net:
+  magistrala-base-net:
 
 volumes:
-  mainflux-opcua-adapter-volume:
-  mainflux-opcua-redis-volume:
+  magistrala-opcua-adapter-volume:
+  magistrala-opcua-redis-volume:
 
 services:
   opcua-redis:
     image: redis:7.2.0-alpine
-    container_name: mainflux-opcua-redis
+    container_name: magistrala-opcua-redis
     restart: on-failure
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
-      - mainflux-opcua-redis-volume:/data
+      - magistrala-opcua-redis-volume:/data
 
   opcua-adapter:
-    image: mainflux/opcua:${MF_RELEASE_TAG}
-    container_name: mainflux-opcua
+    image: magistrala/opcua:${MG_RELEASE_TAG}
+    container_name: magistrala-opcua
     restart: on-failure
     environment:
-      MF_OPCUA_ADAPTER_LOG_LEVEL: ${MF_OPCUA_ADAPTER_LOG_LEVEL}
-      MF_OPCUA_ADAPTER_EVENT_CONSUMER: ${MF_OPCUA_ADAPTER_EVENT_CONSUMER}
-      MF_OPCUA_ADAPTER_HTTP_HOST: ${MF_OPCUA_ADAPTER_HTTP_HOST}
-      MF_OPCUA_ADAPTER_HTTP_PORT: ${MF_OPCUA_ADAPTER_HTTP_PORT}
-      MF_OPCUA_ADAPTER_HTTP_SERVER_CERT: ${MF_OPCUA_ADAPTER_HTTP_SERVER_CERT}
-      MF_OPCUA_ADAPTER_HTTP_SERVER_KEY: ${MF_OPCUA_ADAPTER_HTTP_SERVER_KEY}
-      MF_OPCUA_ADAPTER_ES_URL: ${MF_ES_STORE_URL}
-      MF_OPCUA_ADAPTER_ROUTE_MAP_URL: ${MF_OPCUA_ADAPTER_ROUTE_MAP_URL}
-      MF_MESSAGE_BROKER_URL: ${MF_MESSAGE_BROKER_URL}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_JAEGER_TRACE_RATIO: ${MF_JAEGER_TRACE_RATIO}
-      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
-      MF_OPCUA_ADAPTER_INSTANCE_ID: ${MF_OPCUA_ADAPTER_INSTANCE_ID}
+      MG_OPCUA_ADAPTER_LOG_LEVEL: ${MG_OPCUA_ADAPTER_LOG_LEVEL}
+      MG_OPCUA_ADAPTER_EVENT_CONSUMER: ${MG_OPCUA_ADAPTER_EVENT_CONSUMER}
+      MG_OPCUA_ADAPTER_HTTP_HOST: ${MG_OPCUA_ADAPTER_HTTP_HOST}
+      MG_OPCUA_ADAPTER_HTTP_PORT: ${MG_OPCUA_ADAPTER_HTTP_PORT}
+      MG_OPCUA_ADAPTER_HTTP_SERVER_CERT: ${MG_OPCUA_ADAPTER_HTTP_SERVER_CERT}
+      MG_OPCUA_ADAPTER_HTTP_SERVER_KEY: ${MG_OPCUA_ADAPTER_HTTP_SERVER_KEY}
+      MG_OPCUA_ADAPTER_ES_URL: ${MG_ES_STORE_URL}
+      MG_OPCUA_ADAPTER_ROUTE_MAP_URL: ${MG_OPCUA_ADAPTER_ROUTE_MAP_URL}
+      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_OPCUA_ADAPTER_INSTANCE_ID: ${MG_OPCUA_ADAPTER_INSTANCE_ID}
     ports:
-      - ${MF_OPCUA_ADAPTER_HTTP_PORT}:${MF_OPCUA_ADAPTER_HTTP_PORT}
+      - ${MG_OPCUA_ADAPTER_HTTP_PORT}:${MG_OPCUA_ADAPTER_HTTP_PORT}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
-      - mainflux-opcua-adapter-volume:/store
+      - magistrala-opcua-adapter-volume:/store

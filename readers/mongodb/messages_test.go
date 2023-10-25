@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package mongodb_test
@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
-	mwriter "github.com/mainflux/mainflux/consumers/writers/mongodb"
-	"github.com/mainflux/mainflux/internal/testsutil"
-	"github.com/mainflux/mainflux/pkg/transformers/json"
-	"github.com/mainflux/mainflux/pkg/transformers/senml"
-	"github.com/mainflux/mainflux/readers"
-	mreader "github.com/mainflux/mainflux/readers/mongodb"
+	mwriter "github.com/absmach/magistrala/consumers/writers/mongodb"
+	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/pkg/transformers/json"
+	"github.com/absmach/magistrala/pkg/transformers/senml"
+	"github.com/absmach/magistrala/readers"
+	mreader "github.com/absmach/magistrala/readers/mongodb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/mongo"

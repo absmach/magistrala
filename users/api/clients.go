@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package api
@@ -9,14 +9,14 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/absmach/magistrala/internal/api"
+	"github.com/absmach/magistrala/internal/apiutil"
+	mflog "github.com/absmach/magistrala/logger"
+	mfclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/users"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
-	"github.com/mainflux/mainflux/internal/api"
-	"github.com/mainflux/mainflux/internal/apiutil"
-	mflog "github.com/mainflux/mainflux/logger"
-	mfclients "github.com/mainflux/mainflux/pkg/clients"
-	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/users"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 

@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package api
@@ -8,11 +8,11 @@ import (
 	"errors"
 	"net/http"
 
+	mainflux "github.com/absmach/magistrala"
+	mflog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/ws"
 	"github.com/go-zoo/bone"
 	"github.com/gorilla/websocket"
-	"github.com/mainflux/mainflux"
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/ws"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 

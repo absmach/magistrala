@@ -1,20 +1,20 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package auth
 
 import (
-	"github.com/mainflux/mainflux"
-	authgrpc "github.com/mainflux/mainflux/auth/api/grpc"
-	grpcclient "github.com/mainflux/mainflux/internal/clients/grpc"
-	"github.com/mainflux/mainflux/internal/env"
-	"github.com/mainflux/mainflux/pkg/errors"
-	thingsauth "github.com/mainflux/mainflux/things/api/grpc"
+	mainflux "github.com/absmach/magistrala"
+	authgrpc "github.com/absmach/magistrala/auth/api/grpc"
+	grpcclient "github.com/absmach/magistrala/internal/clients/grpc"
+	"github.com/absmach/magistrala/internal/env"
+	"github.com/absmach/magistrala/pkg/errors"
+	thingsauth "github.com/absmach/magistrala/things/api/grpc"
 )
 
 const (
-	envAuthGrpcPrefix  = "MF_AUTH_GRPC_"
-	envAuthzGrpcPrefix = "MF_THINGS_AUTH_GRPC_"
+	envAuthGrpcPrefix  = "MG_AUTH_GRPC_"
+	envAuthzGrpcPrefix = "MG_THINGS_AUTH_GRPC_"
 )
 
 var errGrpcConfig = errors.New("failed to load grpc configuration")

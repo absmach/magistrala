@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package certs
@@ -10,7 +10,7 @@ import (
 	"encoding/pem"
 	"os"
 
-	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/absmach/magistrala/pkg/errors"
 )
 
 // ConfigsPage contains page related metadata as well as list.

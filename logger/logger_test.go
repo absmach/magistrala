@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package logger_test
@@ -11,7 +11,7 @@ import (
 	"os/exec"
 	"testing"
 
-	mflog "github.com/mainflux/mainflux/logger"
+	mflog "github.com/absmach/magistrala/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) Mainflux
+# Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 #
 
 ###
-# Provisions example user, thing and channel on a clean Mainflux installation.
+# Provisions example user, thing and channel on a clean Magistrala installation.
 #
-# Expects a running Mainflux installation.
+# Expects a running Magistrala installation.
 #
 #
 ###

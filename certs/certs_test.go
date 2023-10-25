@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package certs_test
@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mainflux/mainflux/certs"
-	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/absmach/magistrala/certs"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 

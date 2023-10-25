@@ -1,15 +1,15 @@
 openapi: 3.0.1
 info:
-  title: Mainflux Bootstrap service
+  title: Magistrala Bootstrap service
   description: |
     HTTP API for managing platform things configuration.
     Some useful links:
-    - [The Mainflux repository](https://github.com/mainflux/mainflux)
+    - [The Magistrala repository](https://github.com/absmach/magistrala)
   contact:
     email: info@mainflux.com
   license:
     name: Apache 2.0
-    url: https://github.com/mainflux/mainflux/blob/master/LICENSE
+    url: https://github.com/absmach/magistrala/blob/master/LICENSE
   version: 0.14.0
 
 servers:
@@ -89,7 +89,7 @@ paths:
       description: |
         Update is performed by replacing the current resource data with values
         provided in a request payload. Note that the owner, ID, external ID,
-        external key, Mainflux Thing ID and key cannot be changed.
+        external key, Magistrala Thing ID and key cannot be changed.
       tags:
         - configs
       parameters:
@@ -113,7 +113,7 @@ paths:
       summary: Removes a Config
       description: |
         Removes a Config. In case of successful removal the service will ensure
-        that the removed config is disconnected from all of the Mainflux channels.
+        that the removed config is disconnected from all of the Magistrala channels.
       tags:
         - configs
       parameters:
@@ -224,7 +224,7 @@ paths:
       summary: Updates Config state.
       description: |
         Updating state represents enabling/disabling Config, i.e. connecting
-        and disconnecting corresponding Mainflux Thing to the list of Channels.
+        and disconnecting corresponding Magistrala Thing to the list of Channels.
       tags:
         - configs
       parameters:
@@ -262,11 +262,11 @@ components:
         thing_id:
           type: string
           format: uuid
-          description: Corresponding Mainflux Thing ID.
+          description: Corresponding Magistrala Thing ID.
         mainflux_key:
           type: string
           format: uuid
-          description: Corresponding Mainflux Thing key.
+          description: Corresponding Magistrala Thing key.
         channels:
           type: array
           minItems: 0
@@ -334,11 +334,11 @@ components:
         thing_id:
           type: string
           format: uuid
-          description: Corresponding Mainflux Thing ID.
+          description: Corresponding Magistrala Thing ID.
         thing_key:
           type: string
           format: uuid
-          description: Corresponding Mainflux Thing key.
+          description: Corresponding Magistrala Thing key.
         channels:
           type: array
           minItems: 0
@@ -367,7 +367,7 @@ components:
         thing_id:
           type: string
           format: uuid
-          description: Corresponding Mainflux Thing ID.
+          description: Corresponding Magistrala Thing ID.
         client_cert:
           type: string
           description: Client certificate.
@@ -450,7 +450,7 @@ components:
                 description: External key.
               thing_id:
                 type: string
-                description: ID of the corresponding Mainflux Thing.
+                description: ID of the corresponding Magistrala Thing.
               channels:
                 type: array
                 minItems: 0

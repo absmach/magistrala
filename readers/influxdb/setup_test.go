@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package influxdb_test
@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
+	mflog "github.com/absmach/magistrala/logger"
 	influxdata "github.com/influxdata/influxdb-client-go/v2"
-	mflog "github.com/mainflux/mainflux/logger"
 	"github.com/ory/dockertest/v3"
 )
 

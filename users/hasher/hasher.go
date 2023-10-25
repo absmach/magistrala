@@ -1,11 +1,11 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package hasher
 
 import (
-	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/users"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/users"
 	"golang.org/x/crypto/bcrypt"
 )
 

@@ -1,14 +1,14 @@
-# Mainflux Go SDK
+# Magistrala Go SDK
 
-Go SDK, a Go driver for Mainflux HTTP API.
+Go SDK, a Go driver for Magistrala HTTP API.
 
 Does both system administration (provisioning) and messaging.
 
 ## Installation
-Import `"github.com/mainflux/mainflux/sdk/go"` in your Go package.
+Import `"github.com/absmach/magistrala/sdk/go"` in your Go package.
 
 ```
-import "github.com/mainflux/mainflux/pkg/sdk/go"```
+import "github.com/absmach/magistrala/pkg/sdk/go"```
 
 Then call SDK Go functions to interact with the system.
 
@@ -59,7 +59,7 @@ func (sdk *MfxSDK) DisconnectThing(thingID, chanID, token string) error
     DisconnectThing - connect thing to a channel
 
 func (sdk mfSDK) SendMessage(chanID, msg, token string) error
-    SendMessage - send message on Mainflux channel
+    SendMessage - send message on Magistrala channel
 
 func (sdk mfSDK) SetContentType(ct ContentType) error
     SetContentType - set message content type. Available options are SenML

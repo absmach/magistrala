@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package certs
@@ -7,10 +7,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/certs/pki"
-	"github.com/mainflux/mainflux/pkg/errors"
-	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/certs/pki"
+	"github.com/absmach/magistrala/pkg/errors"
+	mfsdk "github.com/absmach/magistrala/pkg/sdk/go"
 )
 
 var (

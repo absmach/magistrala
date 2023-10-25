@@ -1,11 +1,11 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package grpc
 
 import (
-	"github.com/mainflux/mainflux/auth"
-	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/internal/apiutil"
 )
 
 type identityReq struct {

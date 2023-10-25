@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package api
@@ -6,11 +6,11 @@ package api
 import (
 	"context"
 
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/readers"
 	"github.com/go-kit/kit/endpoint"
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/internal/apiutil"
-	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/readers"
 )
 
 func listMessagesEndpoint(svc readers.MessageRepository, uauth mainflux.AuthServiceClient, taauth mainflux.AuthzServiceClient) endpoint.Endpoint {

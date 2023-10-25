@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package groups
@@ -7,7 +7,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/mainflux/mainflux/pkg/clients"
+	"github.com/absmach/magistrala/pkg/clients"
 )
 
 const (

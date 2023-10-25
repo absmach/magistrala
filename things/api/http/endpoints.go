@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package http
@@ -6,12 +6,12 @@ package http
 import (
 	"context"
 
+	"github.com/absmach/magistrala/internal/apiutil"
+	mfclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/groups"
+	"github.com/absmach/magistrala/things"
 	"github.com/go-kit/kit/endpoint"
-	"github.com/mainflux/mainflux/internal/apiutil"
-	mfclients "github.com/mainflux/mainflux/pkg/clients"
-	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/pkg/groups"
-	"github.com/mainflux/mainflux/things"
 )
 
 func createClientEndpoint(svc things.Service) endpoint.Endpoint {

@@ -12,8 +12,8 @@ scrape_configs:
     enable_http2: true
     static_configs:
     - targets: 
-      - mainflux-things:9000
-      - mainflux-users:9002
-      - mainflux-http:8008
-      - mainflux-ws:8186
-      - mainflux-coap:5683
+      - magistrala-things:9000
+      - magistrala-users:9002
+      - magistrala-http:8008
+      - magistrala-ws:8186
+      - magistrala-coap:5683

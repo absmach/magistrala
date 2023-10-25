@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package api
@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/bootstrap"
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/bootstrap"
 )
 
 var (

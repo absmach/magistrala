@@ -1,9 +1,9 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package events
 
-import "github.com/mainflux/mainflux/pkg/events"
+import "github.com/absmach/magistrala/pkg/events"
 
 var _ events.Event = (*mqttEvent)(nil)
 

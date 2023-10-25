@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 //go:build !test
@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"time"
 
-	mflog "github.com/mainflux/mainflux/logger"
+	mflog "github.com/absmach/magistrala/logger"
 	"github.com/mainflux/mproxy/pkg/session"
 )
 

@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package bootstrap
@@ -7,14 +7,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/mainflux/mainflux/pkg/clients"
+	"github.com/absmach/magistrala/pkg/clients"
 )
 
 // Config represents Configuration entity. It wraps information about external entity
-// as well as info about corresponding Mainflux entities.
-// MFThing represents corresponding Mainflux Thing ID.
-// MFKey is key of corresponding Mainflux Thing.
-// MFChannels is a list of Mainflux Channels corresponding Mainflux Thing connects to.
+// as well as info about corresponding Magistrala entities.
+// MFThing represents corresponding Magistrala Thing ID.
+// MFKey is key of corresponding Magistrala Thing.
+// MFChannels is a list of Magistrala Channels corresponding Magistrala Thing connects to.
 type Config struct {
 	ThingID     string    `json:"thing_id"`
 	Owner       string    `json:"owner,omitempty"`
@@ -30,7 +30,7 @@ type Config struct {
 	State       State     `json:"state"`
 }
 
-// Channel represents Mainflux channel corresponding Mainflux Thing is connected to.
+// Channel represents Magistrala channel corresponding Magistrala Thing is connected to.
 type Channel struct {
 	ID          string                 `json:"id"`
 	Name        string                 `json:"name,omitempty"`

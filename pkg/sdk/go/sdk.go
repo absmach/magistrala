@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package sdk
@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/absmach/magistrala/pkg/errors"
 )
 
 const (
@@ -101,7 +101,7 @@ type Credentials struct {
 	Secret   string `json:"secret,omitempty"`   // password or token
 }
 
-// SDK contains Mainflux API.
+// SDK contains Magistrala API.
 type SDK interface {
 	// CreateUser registers mainflux user.
 	//

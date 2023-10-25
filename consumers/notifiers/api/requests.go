@@ -1,9 +1,9 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package api
 
-import "github.com/mainflux/mainflux/internal/apiutil"
+import "github.com/absmach/magistrala/internal/apiutil"
 
 type createSubReq struct {
 	token   string

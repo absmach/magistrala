@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package sdk_test
@@ -10,20 +10,20 @@ import (
 	"testing"
 	"time"
 
+	authmocks "github.com/absmach/magistrala/auth/mocks"
+	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/internal/groups"
+	gmocks "github.com/absmach/magistrala/internal/groups/mocks"
+	"github.com/absmach/magistrala/internal/testsutil"
+	mflog "github.com/absmach/magistrala/logger"
+	mfclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/pkg/errors"
+	mfgroups "github.com/absmach/magistrala/pkg/groups"
+	sdk "github.com/absmach/magistrala/pkg/sdk/go"
+	"github.com/absmach/magistrala/things"
+	api "github.com/absmach/magistrala/things/api/http"
+	"github.com/absmach/magistrala/things/mocks"
 	"github.com/go-chi/chi/v5"
-	authmocks "github.com/mainflux/mainflux/auth/mocks"
-	"github.com/mainflux/mainflux/internal/apiutil"
-	"github.com/mainflux/mainflux/internal/groups"
-	gmocks "github.com/mainflux/mainflux/internal/groups/mocks"
-	"github.com/mainflux/mainflux/internal/testsutil"
-	mflog "github.com/mainflux/mainflux/logger"
-	mfclients "github.com/mainflux/mainflux/pkg/clients"
-	"github.com/mainflux/mainflux/pkg/errors"
-	mfgroups "github.com/mainflux/mainflux/pkg/groups"
-	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
-	"github.com/mainflux/mainflux/things"
-	api "github.com/mainflux/mainflux/things/api/http"
-	"github.com/mainflux/mainflux/things/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

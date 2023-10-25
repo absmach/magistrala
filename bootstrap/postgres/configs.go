@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package postgres
@@ -11,15 +11,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/absmach/magistrala/bootstrap"
+	"github.com/absmach/magistrala/internal/postgres"
+	mflog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
-	"github.com/mainflux/mainflux/bootstrap"
-	"github.com/mainflux/mainflux/internal/postgres"
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/clients"
-	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 var (
@@ -91,7 +91,7 @@ func (cr configRepository) RetrieveByID(ctx context.Context, owner, id string) (
 		  WHERE mainflux_thing = :mainflux_thing AND owner = :owner`
 
 	dbcfg := dbConfig{
-		MFThing: id,
+		ThingID: id,
 		Owner:   owner,
 	}
 	row, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
@@ -256,7 +256,7 @@ func (cr configRepository) Update(ctx context.Context, cfg bootstrap.Config) err
 	dbcfg := dbConfig{
 		Name:    nullString(cfg.Name),
 		Content: nullString(cfg.Content),
-		MFThing: cfg.ThingID,
+		ThingID: cfg.ThingID,
 		Owner:   cfg.Owner,
 	}
 
@@ -282,7 +282,7 @@ func (cr configRepository) UpdateCert(ctx context.Context, owner, thingID, clien
 	RETURNING mainflux_thing, client_cert, client_key, ca_cert`
 
 	dbcfg := dbConfig{
-		MFThing:    thingID,
+		ThingID:    thingID,
 		ClientCert: nullString(clientCert),
 		Owner:      owner,
 		ClientKey:  nullString(clientKey),
@@ -338,7 +338,7 @@ func (cr configRepository) UpdateConnections(ctx context.Context, owner, id stri
 func (cr configRepository) Remove(ctx context.Context, owner, id string) error {
 	q := `DELETE FROM configs WHERE mainflux_thing = :mainflux_thing AND owner = :owner`
 	dbcfg := dbConfig{
-		MFThing: id,
+		ThingID: id,
 		Owner:   owner,
 	}
 
@@ -357,7 +357,7 @@ func (cr configRepository) ChangeState(ctx context.Context, owner, id string, st
 	q := `UPDATE configs SET state = :state WHERE mainflux_thing = :mainflux_thing AND owner = :owner;`
 
 	dbcfg := dbConfig{
-		MFThing: id,
+		ThingID: id,
 		State:   state,
 		Owner:   owner,
 	}
@@ -610,13 +610,13 @@ func nullTime(t time.Time) sql.NullTime {
 }
 
 type dbConfig struct {
-	MFThing     string          `db:"mainflux_thing"`
+	ThingID     string          `db:"mainflux_thing"`
 	Owner       string          `db:"owner"`
 	Name        sql.NullString  `db:"name"`
 	ClientCert  sql.NullString  `db:"client_cert"`
 	ClientKey   sql.NullString  `db:"client_key"`
 	CaCert      sql.NullString  `db:"ca_cert"`
-	MFKey       string          `db:"mainflux_key"`
+	ThingKey    string          `db:"mainflux_key"`
 	ExternalID  string          `db:"external_id"`
 	ExternalKey string          `db:"external_key"`
 	Content     sql.NullString  `db:"content"`
@@ -625,13 +625,13 @@ type dbConfig struct {
 
 func toDBConfig(cfg bootstrap.Config) dbConfig {
 	return dbConfig{
-		MFThing:     cfg.ThingID,
+		ThingID:     cfg.ThingID,
 		Owner:       cfg.Owner,
 		Name:        nullString(cfg.Name),
 		ClientCert:  nullString(cfg.ClientCert),
 		ClientKey:   nullString(cfg.ClientKey),
 		CaCert:      nullString(cfg.CACert),
-		MFKey:       cfg.ThingKey,
+		ThingKey:    cfg.ThingKey,
 		ExternalID:  cfg.ExternalID,
 		ExternalKey: cfg.ExternalKey,
 		Content:     nullString(cfg.Content),
@@ -641,9 +641,9 @@ func toDBConfig(cfg bootstrap.Config) dbConfig {
 
 func toConfig(dbcfg dbConfig) bootstrap.Config {
 	cfg := bootstrap.Config{
-		ThingID:     dbcfg.MFThing,
+		ThingID:     dbcfg.ThingID,
 		Owner:       dbcfg.Owner,
-		ThingKey:    dbcfg.MFKey,
+		ThingKey:    dbcfg.ThingKey,
 		ExternalID:  dbcfg.ExternalID,
 		ExternalKey: dbcfg.ExternalKey,
 		State:       dbcfg.State,

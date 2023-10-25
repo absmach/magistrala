@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package http_test
@@ -10,11 +10,11 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/mainflux/mainflux"
-	authmocks "github.com/mainflux/mainflux/auth/mocks"
-	"github.com/mainflux/mainflux/internal/testsutil"
-	"github.com/mainflux/mainflux/twins"
-	"github.com/mainflux/mainflux/twins/mocks"
+	mainflux "github.com/absmach/magistrala"
+	authmocks "github.com/absmach/magistrala/auth/mocks"
+	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/twins"
+	"github.com/absmach/magistrala/twins/mocks"
 	"github.com/mainflux/senml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

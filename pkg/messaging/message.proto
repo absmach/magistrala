@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 syntax = "proto3";
@@ -6,7 +6,7 @@ package messaging;
 
 option go_package = "./messaging";
 
-// Message represents a message emitted by the Mainflux adapters layer.
+// Message represents a message emitted by the Magistrala adapters layer.
 message Message {
 	string channel   = 1;
 	string subtopic  = 2;

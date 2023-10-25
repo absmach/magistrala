@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 //go:build !test
@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"time"
 
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/provision"
+	mflog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/provision"
 )
 
 var _ provision.Service = (*loggingMiddleware)(nil)

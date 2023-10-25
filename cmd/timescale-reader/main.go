@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 // Package main contains timescale-reader main function to start the timescale-reader service.
@@ -10,35 +10,35 @@ import (
 	"log"
 	"os"
 
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/internal"
+	authclient "github.com/absmach/magistrala/internal/clients/grpc/auth"
+	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
+	"github.com/absmach/magistrala/internal/env"
+	"github.com/absmach/magistrala/internal/server"
+	httpserver "github.com/absmach/magistrala/internal/server/http"
+	mflog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/absmach/magistrala/readers"
+	"github.com/absmach/magistrala/readers/api"
+	"github.com/absmach/magistrala/readers/timescale"
 	"github.com/jmoiron/sqlx"
 	chclient "github.com/mainflux/callhome/pkg/client"
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/internal"
-	authclient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
-	pgclient "github.com/mainflux/mainflux/internal/clients/postgres"
-	"github.com/mainflux/mainflux/internal/env"
-	"github.com/mainflux/mainflux/internal/server"
-	httpserver "github.com/mainflux/mainflux/internal/server/http"
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/uuid"
-	"github.com/mainflux/mainflux/readers"
-	"github.com/mainflux/mainflux/readers/api"
-	"github.com/mainflux/mainflux/readers/timescale"
 	"golang.org/x/sync/errgroup"
 )
 
 const (
 	svcName        = "timescaledb-reader"
-	envPrefixDB    = "MF_TIMESCALE_"
-	envPrefixHTTP  = "MF_TIMESCALE_READER_HTTP_"
+	envPrefixDB    = "MG_TIMESCALE_"
+	envPrefixHTTP  = "MG_TIMESCALE_READER_HTTP_"
 	defDB          = "messages"
 	defSvcHTTPPort = "9011"
 )
 
 type config struct {
-	LogLevel      string `env:"MF_TIMESCALE_READER_LOG_LEVEL"    envDefault:"info"`
-	SendTelemetry bool   `env:"MF_SEND_TELEMETRY"                envDefault:"true"`
-	InstanceID    string `env:"MF_TIMESCALE_READER_INSTANCE_ID"  envDefault:""`
+	LogLevel      string `env:"MG_TIMESCALE_READER_LOG_LEVEL"    envDefault:"info"`
+	SendTelemetry bool   `env:"MG_SEND_TELEMETRY"                envDefault:"true"`
+	InstanceID    string `env:"MG_TIMESCALE_READER_INSTANCE_ID"  envDefault:""`
 }
 
 func main() {

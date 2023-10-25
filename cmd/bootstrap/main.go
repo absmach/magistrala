@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 // Package main contains bootstrap main function to start the bootstrap service.
@@ -10,35 +10,35 @@ import (
 	"log"
 	"os"
 
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/bootstrap"
+	"github.com/absmach/magistrala/bootstrap/api"
+	"github.com/absmach/magistrala/bootstrap/events/consumer"
+	"github.com/absmach/magistrala/bootstrap/events/producer"
+	bootstrappg "github.com/absmach/magistrala/bootstrap/postgres"
+	"github.com/absmach/magistrala/bootstrap/tracing"
+	"github.com/absmach/magistrala/internal"
+	authclient "github.com/absmach/magistrala/internal/clients/grpc/auth"
+	"github.com/absmach/magistrala/internal/clients/jaeger"
+	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
+	"github.com/absmach/magistrala/internal/env"
+	"github.com/absmach/magistrala/internal/postgres"
+	"github.com/absmach/magistrala/internal/server"
+	httpserver "github.com/absmach/magistrala/internal/server/http"
+	mflog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/events/store"
+	mfsdk "github.com/absmach/magistrala/pkg/sdk/go"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/jmoiron/sqlx"
 	chclient "github.com/mainflux/callhome/pkg/client"
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/bootstrap"
-	"github.com/mainflux/mainflux/bootstrap/api"
-	"github.com/mainflux/mainflux/bootstrap/events/consumer"
-	"github.com/mainflux/mainflux/bootstrap/events/producer"
-	bootstrappg "github.com/mainflux/mainflux/bootstrap/postgres"
-	"github.com/mainflux/mainflux/bootstrap/tracing"
-	"github.com/mainflux/mainflux/internal"
-	authclient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
-	"github.com/mainflux/mainflux/internal/clients/jaeger"
-	pgclient "github.com/mainflux/mainflux/internal/clients/postgres"
-	"github.com/mainflux/mainflux/internal/env"
-	"github.com/mainflux/mainflux/internal/postgres"
-	"github.com/mainflux/mainflux/internal/server"
-	httpserver "github.com/mainflux/mainflux/internal/server/http"
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/events/store"
-	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
-	"github.com/mainflux/mainflux/pkg/uuid"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
 
 const (
 	svcName        = "bootstrap"
-	envPrefixDB    = "MF_BOOTSTRAP_DB_"
-	envPrefixHTTP  = "MF_BOOTSTRAP_HTTP_"
+	envPrefixDB    = "MG_BOOTSTRAP_DB_"
+	envPrefixHTTP  = "MG_BOOTSTRAP_HTTP_"
 	defDB          = "bootstrap"
 	defSvcHTTPPort = "9013"
 
@@ -46,15 +46,15 @@ const (
 )
 
 type config struct {
-	LogLevel       string  `env:"MF_BOOTSTRAP_LOG_LEVEL"        envDefault:"info"`
-	EncKey         string  `env:"MF_BOOTSTRAP_ENCRYPT_KEY"      envDefault:"12345678910111213141516171819202"`
-	ESConsumerName string  `env:"MF_BOOTSTRAP_EVENT_CONSUMER"   envDefault:"bootstrap"`
-	ThingsURL      string  `env:"MF_THINGS_URL"                 envDefault:"http://localhost:9000"`
-	JaegerURL      string  `env:"MF_JAEGER_URL"                 envDefault:"http://jaeger:14268/api/traces"`
-	SendTelemetry  bool    `env:"MF_SEND_TELEMETRY"             envDefault:"true"`
-	InstanceID     string  `env:"MF_BOOTSTRAP_INSTANCE_ID"      envDefault:""`
-	ESURL          string  `env:"MF_BOOTSTRAP_ES_URL"           envDefault:"redis://localhost:6379/0"`
-	TraceRatio     float64 `env:"MF_JAEGER_TRACE_RATIO"         envDefault:"1.0"`
+	LogLevel       string  `env:"MG_BOOTSTRAP_LOG_LEVEL"        envDefault:"info"`
+	EncKey         string  `env:"MG_BOOTSTRAP_ENCRYPT_KEY"      envDefault:"12345678910111213141516171819202"`
+	ESConsumerName string  `env:"MG_BOOTSTRAP_EVENT_CONSUMER"   envDefault:"bootstrap"`
+	ThingsURL      string  `env:"MG_THINGS_URL"                 envDefault:"http://localhost:9000"`
+	JaegerURL      string  `env:"MG_JAEGER_URL"                 envDefault:"http://jaeger:14268/api/traces"`
+	SendTelemetry  bool    `env:"MG_SEND_TELEMETRY"             envDefault:"true"`
+	InstanceID     string  `env:"MG_BOOTSTRAP_INSTANCE_ID"      envDefault:""`
+	ESURL          string  `env:"MG_BOOTSTRAP_ES_URL"           envDefault:"redis://localhost:6379/0"`
+	TraceRatio     float64 `env:"MG_JAEGER_TRACE_RATIO"         envDefault:"1.0"`
 }
 
 func main() {

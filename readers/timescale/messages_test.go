@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package timescale_test
@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
-	twriter "github.com/mainflux/mainflux/consumers/writers/timescale"
-	"github.com/mainflux/mainflux/internal/testsutil"
-	"github.com/mainflux/mainflux/pkg/transformers/json"
-	"github.com/mainflux/mainflux/pkg/transformers/senml"
-	"github.com/mainflux/mainflux/readers"
-	treader "github.com/mainflux/mainflux/readers/timescale"
+	twriter "github.com/absmach/magistrala/consumers/writers/timescale"
+	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/pkg/transformers/json"
+	"github.com/absmach/magistrala/pkg/transformers/senml"
+	"github.com/absmach/magistrala/readers"
+	treader "github.com/absmach/magistrala/readers/timescale"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

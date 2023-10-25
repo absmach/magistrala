@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 //go:build !test
@@ -9,8 +9,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/absmach/magistrala/lora"
 	"github.com/go-kit/kit/metrics"
-	"github.com/mainflux/mainflux/lora"
 )
 
 var _ lora.Service = (*metricsMiddleware)(nil)

@@ -1,12 +1,12 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package cassandra
 
 import (
+	"github.com/absmach/magistrala/internal/env"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/gocql/gocql"
-	"github.com/mainflux/mainflux/internal/env"
-	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 var (
@@ -18,7 +18,7 @@ var (
 // Config contains Cassandra DB specific parameters.
 type Config struct {
 	Hosts    []string `env:"CLUSTER"     envDefault:"127.0.0.1" envSeparator:","`
-	Keyspace string   `env:"KEYSPACE"    envDefault:"mainflux"`
+	Keyspace string   `env:"KEYSPACE"    envDefault:"magistrala"`
 	User     string   `env:"USER"        envDefault:""`
 	Pass     string   `env:"PASS"        envDefault:""`
 	Port     int      `env:"PORT"        envDefault:"9042"`

@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package provision
@@ -19,8 +19,8 @@ import (
 	"os"
 	"time"
 
+	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/docker/docker/pkg/namesgenerator"
-	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
 )
 
 const (
@@ -28,7 +28,7 @@ const (
 	defReaderURL = "http://localhost:9005"
 )
 
-// MfConn - structure describing Mainflux connection set.
+// MfConn - structure describing Magistrala connection set.
 type MfConn struct {
 	ChannelID string
 	ThingID   string
@@ -175,9 +175,9 @@ func Provision(conf Config) error {
 			tmpl := x509.Certificate{
 				SerialNumber: serialNumber,
 				Subject: pkix.Name{
-					Organization:       []string{"Mainflux"},
+					Organization:       []string{"Magistrala"},
 					CommonName:         things[i].Credentials.Secret,
-					OrganizationalUnit: []string{"mainflux"},
+					OrganizationalUnit: []string{"magistrala"},
 				},
 				NotBefore: notBefore,
 				NotAfter:  notAfter,

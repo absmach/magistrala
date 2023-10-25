@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package api
@@ -8,12 +8,12 @@ import (
 	"encoding/json"
 	"net/http"
 
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/internal/postgres"
+	mfclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/gofrs/uuid"
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/internal/apiutil"
-	"github.com/mainflux/mainflux/internal/postgres"
-	mfclients "github.com/mainflux/mainflux/pkg/clients"
-	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 const (

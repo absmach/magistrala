@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package sdk
@@ -6,7 +6,7 @@ package sdk
 import (
 	"time"
 
-	"github.com/mainflux/mainflux/pkg/transformers/senml"
+	"github.com/absmach/magistrala/pkg/transformers/senml"
 )
 
 type createThingsRes struct {

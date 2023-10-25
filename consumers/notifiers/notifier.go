@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package notifiers
@@ -6,7 +6,7 @@ package notifiers
 import (
 	"errors"
 
-	"github.com/mainflux/mainflux/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/messaging"
 )
 
 // ErrNotify wraps sending notification errors.

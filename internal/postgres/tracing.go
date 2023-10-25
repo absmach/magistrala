@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package postgres
@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/absmach/magistrala/internal/clients/postgres"
 	"github.com/jmoiron/sqlx"
-	"github.com/mainflux/mainflux/internal/clients/postgres"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )

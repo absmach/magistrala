@@ -1,11 +1,11 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package http
 
 import (
-	"github.com/mainflux/mainflux/internal/apiutil"
-	"github.com/mainflux/mainflux/twins"
+	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/twins"
 )
 
 const (

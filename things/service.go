@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 package things
 
@@ -6,12 +6,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/internal/apiutil"
-	mfclients "github.com/mainflux/mainflux/pkg/clients"
-	"github.com/mainflux/mainflux/pkg/errors"
-	mfgroups "github.com/mainflux/mainflux/pkg/groups"
-	"github.com/mainflux/mainflux/things/postgres"
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/internal/apiutil"
+	mfclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/pkg/errors"
+	mfgroups "github.com/absmach/magistrala/pkg/groups"
+	"github.com/absmach/magistrala/things/postgres"
 )
 
 const (

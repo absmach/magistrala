@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 // Package main contains things main function to start the things service.
@@ -11,37 +11,37 @@ import (
 	"os"
 	"time"
 
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/internal"
+	authclient "github.com/absmach/magistrala/internal/clients/grpc/auth"
+	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
+	pgclient "github.com/absmach/magistrala/internal/clients/postgres"
+	redisclient "github.com/absmach/magistrala/internal/clients/redis"
+	"github.com/absmach/magistrala/internal/env"
+	mfgroups "github.com/absmach/magistrala/internal/groups"
+	gapi "github.com/absmach/magistrala/internal/groups/api"
+	gpostgres "github.com/absmach/magistrala/internal/groups/postgres"
+	gtracing "github.com/absmach/magistrala/internal/groups/tracing"
+	"github.com/absmach/magistrala/internal/postgres"
+	"github.com/absmach/magistrala/internal/server"
+	grpcserver "github.com/absmach/magistrala/internal/server/grpc"
+	httpserver "github.com/absmach/magistrala/internal/server/http"
+	mflog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/groups"
+	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/absmach/magistrala/things"
+	"github.com/absmach/magistrala/things/api"
+	grpcapi "github.com/absmach/magistrala/things/api/grpc"
+	httpapi "github.com/absmach/magistrala/things/api/http"
+	thcache "github.com/absmach/magistrala/things/cache"
+	thevents "github.com/absmach/magistrala/things/events"
+	thingspg "github.com/absmach/magistrala/things/postgres"
+	localusers "github.com/absmach/magistrala/things/standalone"
+	ctracing "github.com/absmach/magistrala/things/tracing"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-redis/redis/v8"
 	"github.com/jmoiron/sqlx"
 	callhome "github.com/mainflux/callhome/pkg/client"
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/internal"
-	authclient "github.com/mainflux/mainflux/internal/clients/grpc/auth"
-	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
-	pgclient "github.com/mainflux/mainflux/internal/clients/postgres"
-	redisclient "github.com/mainflux/mainflux/internal/clients/redis"
-	"github.com/mainflux/mainflux/internal/env"
-	mfgroups "github.com/mainflux/mainflux/internal/groups"
-	gapi "github.com/mainflux/mainflux/internal/groups/api"
-	gpostgres "github.com/mainflux/mainflux/internal/groups/postgres"
-	gtracing "github.com/mainflux/mainflux/internal/groups/tracing"
-	"github.com/mainflux/mainflux/internal/postgres"
-	"github.com/mainflux/mainflux/internal/server"
-	grpcserver "github.com/mainflux/mainflux/internal/server/grpc"
-	httpserver "github.com/mainflux/mainflux/internal/server/http"
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/groups"
-	"github.com/mainflux/mainflux/pkg/uuid"
-	"github.com/mainflux/mainflux/things"
-	"github.com/mainflux/mainflux/things/api"
-	grpcapi "github.com/mainflux/mainflux/things/api/grpc"
-	httpapi "github.com/mainflux/mainflux/things/api/http"
-	thcache "github.com/mainflux/mainflux/things/cache"
-	thevents "github.com/mainflux/mainflux/things/events"
-	thingspg "github.com/mainflux/mainflux/things/postgres"
-	localusers "github.com/mainflux/mainflux/things/standalone"
-	ctracing "github.com/mainflux/mainflux/things/tracing"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -50,25 +50,25 @@ import (
 
 const (
 	svcName            = "things"
-	envPrefixDB        = "MF_THINGS_DB_"
-	envPrefixHTTP      = "MF_THINGS_HTTP_"
-	envPrefixGRPC      = "MF_THINGS_AUTH_GRPC_"
+	envPrefixDB        = "MG_THINGS_DB_"
+	envPrefixHTTP      = "MG_THINGS_HTTP_"
+	envPrefixGRPC      = "MG_THINGS_AUTH_GRPC_"
 	defDB              = "things"
 	defSvcHTTPPort     = "9000"
 	defSvcAuthGRPCPort = "7000"
 )
 
 type config struct {
-	LogLevel         string  `env:"MF_THINGS_LOG_LEVEL"           envDefault:"info"`
-	StandaloneID     string  `env:"MF_THINGS_STANDALONE_ID"       envDefault:""`
-	StandaloneToken  string  `env:"MF_THINGS_STANDALONE_TOKEN"    envDefault:""`
-	JaegerURL        string  `env:"MF_JAEGER_URL"                 envDefault:"http://jaeger:14268/api/traces"`
-	CacheKeyDuration string  `env:"MF_THINGS_CACHE_KEY_DURATION"  envDefault:"10m"`
-	SendTelemetry    bool    `env:"MF_SEND_TELEMETRY"             envDefault:"true"`
-	InstanceID       string  `env:"MF_THINGS_INSTANCE_ID"         envDefault:""`
-	ESURL            string  `env:"MF_THINGS_ES_URL"              envDefault:"redis://localhost:6379/0"`
-	CacheURL         string  `env:"MF_THINGS_CACHE_URL"           envDefault:"redis://localhost:6379/0"`
-	TraceRatio       float64 `env:"MF_JAEGER_TRACE_RATIO"         envDefault:"1.0"`
+	LogLevel         string  `env:"MG_THINGS_LOG_LEVEL"           envDefault:"info"`
+	StandaloneID     string  `env:"MG_THINGS_STANDALONE_ID"       envDefault:""`
+	StandaloneToken  string  `env:"MG_THINGS_STANDALONE_TOKEN"    envDefault:""`
+	JaegerURL        string  `env:"MG_JAEGER_URL"                 envDefault:"http://jaeger:14268/api/traces"`
+	CacheKeyDuration string  `env:"MG_THINGS_CACHE_KEY_DURATION"  envDefault:"10m"`
+	SendTelemetry    bool    `env:"MG_SEND_TELEMETRY"             envDefault:"true"`
+	InstanceID       string  `env:"MG_THINGS_INSTANCE_ID"         envDefault:""`
+	ESURL            string  `env:"MG_THINGS_ES_URL"              envDefault:"redis://localhost:6379/0"`
+	CacheURL         string  `env:"MG_THINGS_CACHE_URL"           envDefault:"redis://localhost:6379/0"`
+	TraceRatio       float64 `env:"MG_JAEGER_TRACE_RATIO"         envDefault:"1.0"`
 }
 
 func main() {
@@ -168,7 +168,7 @@ func main() {
 		return
 	}
 	mux := chi.NewRouter()
-	httpSvc := httpserver.New(ctx, cancel, "things-clients", httpServerConfig, httpapi.MakeHandler(csvc, gsvc, mux, logger, cfg.InstanceID), logger)
+	httpSvc := httpserver.New(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(csvc, gsvc, mux, logger, cfg.InstanceID), logger)
 
 	grpcServerConfig := server.Config{Port: defSvcAuthGRPCPort}
 	if err := env.Parse(&grpcServerConfig, env.Options{Prefix: envPrefixGRPC}); err != nil {

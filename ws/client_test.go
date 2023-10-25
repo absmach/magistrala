@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package ws_test
@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/absmach/magistrala/ws"
 	"github.com/gorilla/websocket"
-	"github.com/mainflux/mainflux/ws"
 	"github.com/stretchr/testify/assert"
 )
 

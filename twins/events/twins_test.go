@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package events_test
@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mainflux/mainflux/twins"
-	"github.com/mainflux/mainflux/twins/events"
-	"github.com/mainflux/mainflux/twins/mocks"
+	"github.com/absmach/magistrala/twins"
+	"github.com/absmach/magistrala/twins/events"
+	"github.com/absmach/magistrala/twins/mocks"
 	"github.com/stretchr/testify/assert"
 )
 

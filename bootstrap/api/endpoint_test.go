@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package api_test
@@ -18,23 +18,23 @@ import (
 	"strings"
 	"testing"
 
+	mainflux "github.com/absmach/magistrala"
+	authmocks "github.com/absmach/magistrala/auth/mocks"
+	"github.com/absmach/magistrala/bootstrap"
+	bsapi "github.com/absmach/magistrala/bootstrap/api"
+	"github.com/absmach/magistrala/bootstrap/mocks"
+	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/internal/groups"
+	chmocks "github.com/absmach/magistrala/internal/groups/mocks"
+	mflog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/errors"
+	mfgroups "github.com/absmach/magistrala/pkg/groups"
+	mfsdk "github.com/absmach/magistrala/pkg/sdk/go"
+	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/absmach/magistrala/things"
+	thapi "github.com/absmach/magistrala/things/api/http"
+	thmocks "github.com/absmach/magistrala/things/mocks"
 	"github.com/go-chi/chi/v5"
-	"github.com/mainflux/mainflux"
-	authmocks "github.com/mainflux/mainflux/auth/mocks"
-	"github.com/mainflux/mainflux/bootstrap"
-	bsapi "github.com/mainflux/mainflux/bootstrap/api"
-	"github.com/mainflux/mainflux/bootstrap/mocks"
-	"github.com/mainflux/mainflux/internal/apiutil"
-	"github.com/mainflux/mainflux/internal/groups"
-	chmocks "github.com/mainflux/mainflux/internal/groups/mocks"
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/errors"
-	mfgroups "github.com/mainflux/mainflux/pkg/groups"
-	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
-	"github.com/mainflux/mainflux/pkg/uuid"
-	"github.com/mainflux/mainflux/things"
-	thapi "github.com/mainflux/mainflux/things/api/http"
-	thmocks "github.com/mainflux/mainflux/things/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

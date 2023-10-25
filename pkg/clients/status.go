@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package clients
@@ -8,7 +8,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/mainflux/mainflux/internal/apiutil"
+	"github.com/absmach/magistrala/internal/apiutil"
 )
 
 // Status represents Client status.

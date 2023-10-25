@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package bootstrap
@@ -10,13 +10,13 @@ import (
 	"encoding/hex"
 	"time"
 
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/pkg/errors"
-	mfsdk "github.com/mainflux/mainflux/pkg/sdk/go"
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/pkg/errors"
+	mfsdk "github.com/absmach/magistrala/pkg/sdk/go"
 )
 
 var (
-	// ErrThings indicates failure to communicate with Mainflux Things service.
+	// ErrThings indicates failure to communicate with Magistrala Things service.
 	// It can be due to networking error or invalid/unauthenticated request.
 	ErrThings = errors.New("failed to receive response from Things service")
 
@@ -373,7 +373,7 @@ func (bs bootstrapService) identify(ctx context.Context, token string) (string, 
 	return res.GetId(), nil
 }
 
-// Method thing retrieves Mainflux Thing creating one if an empty ID is passed.
+// Method thing retrieves Magistrala Thing creating one if an empty ID is passed.
 func (bs bootstrapService) thing(id, token string) (mfsdk.Thing, error) {
 	var thing mfsdk.Thing
 	var err error

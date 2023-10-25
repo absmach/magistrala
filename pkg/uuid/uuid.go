@@ -1,13 +1,13 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 // Package uuid provides a UUID identity provider.
 package uuid
 
 import (
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/gofrs/uuid"
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 // ErrGeneratingID indicates error in generating UUID.

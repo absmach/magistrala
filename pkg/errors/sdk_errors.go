@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package errors
@@ -18,7 +18,7 @@ type errorRes struct {
 // Failed to read response body.
 var errRespBody = New("failed to read response body")
 
-// SDKError is an error type for Mainflux SDK.
+// SDKError is an error type for Magistrala SDK.
 type SDKError interface {
 	Error
 	StatusCode() int

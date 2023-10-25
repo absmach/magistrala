@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package users
@@ -8,12 +8,12 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/auth"
-	"github.com/mainflux/mainflux/internal/apiutil"
-	mfclients "github.com/mainflux/mainflux/pkg/clients"
-	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/users/postgres"
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/internal/apiutil"
+	mfclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/users/postgres"
 )
 
 const (

@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package mqtt
@@ -10,9 +10,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/lora"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-	"github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/lora"
 )
 
 // Subscriber represents the MQTT broker.

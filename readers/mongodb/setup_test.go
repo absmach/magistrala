@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package mongodb_test
@@ -9,7 +9,7 @@ import (
 	"os"
 	"testing"
 
-	mflog "github.com/mainflux/mainflux/logger"
+	mflog "github.com/absmach/magistrala/logger"
 	"github.com/ory/dockertest/v3"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"

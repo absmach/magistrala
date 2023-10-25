@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package email
@@ -10,7 +10,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/absmach/magistrala/pkg/errors"
 	"gopkg.in/gomail.v2"
 )
 
@@ -35,13 +35,13 @@ type email struct {
 
 // Config email agent configuration.
 type Config struct {
-	Host        string `env:"MF_EMAIL_HOST"         envDefault:"localhost"`
-	Port        string `env:"MF_EMAIL_PORT"         envDefault:"25"`
-	Username    string `env:"MF_EMAIL_USERNAME"     envDefault:"root"`
-	Password    string `env:"MF_EMAIL_PASSWORD"     envDefault:""`
-	FromAddress string `env:"MF_EMAIL_FROM_ADDRESS" envDefault:""`
-	FromName    string `env:"MF_EMAIL_FROM_NAME"    envDefault:""`
-	Template    string `env:"MF_EMAIL_TEMPLATE"     envDefault:"email.tmpl"`
+	Host        string `env:"MG_EMAIL_HOST"         envDefault:"localhost"`
+	Port        string `env:"MG_EMAIL_PORT"         envDefault:"25"`
+	Username    string `env:"MG_EMAIL_USERNAME"     envDefault:"root"`
+	Password    string `env:"MG_EMAIL_PASSWORD"     envDefault:""`
+	FromAddress string `env:"MG_EMAIL_FROM_ADDRESS" envDefault:""`
+	FromName    string `env:"MG_EMAIL_FROM_NAME"    envDefault:""`
+	Template    string `env:"MG_EMAIL_TEMPLATE"     envDefault:"email.tmpl"`
 }
 
 // Agent for mailing.

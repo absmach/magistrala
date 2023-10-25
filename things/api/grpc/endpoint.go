@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package grpc
@@ -6,9 +6,9 @@ package grpc
 import (
 	"context"
 
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/things"
 	"github.com/go-kit/kit/endpoint"
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/things"
 )
 
 func authorizeEndpoint(svc things.Service) endpoint.Endpoint {

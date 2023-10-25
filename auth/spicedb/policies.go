@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package spicedb
@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/absmach/magistrala/auth"
+	mflog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/errors"
 	v1 "github.com/authzed/authzed-go/proto/authzed/api/v1"
 	"github.com/authzed/authzed-go/v1"
-	"github.com/mainflux/mainflux/auth"
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 const defRetrieveAllLimit = 1000

@@ -10,35 +10,35 @@ default values.
 
 | Variable                             | Description                                               | Default                        |
 | ------------------------------------ | --------------------------------------------------------- | ------------------------------ |
-| MF_TIMESCALE_WRITER_LOG_LEVEL        | Service log level                                         | info                           |
-| MF_TIMESCALE_WRITER_CONFIG_PATH      | Configuration file path with Message broker subjects list | /config.toml                   |
-| MF_TIMESCALE_WRITER_HTTP_HOST        | Service HTTP host                                         | localhost                      |
-| MF_TIMESCALE_WRITER_HTTP_PORT        | Service HTTP port                                         | 9012                           |
-| MF_TIMESCALE_WRITER_HTTP_SERVER_CERT | Service HTTP server certificate path                      | ""                             |
-| MF_TIMESCALE_WRITER_HTTP_SERVER_KEY  | Service HTTP server key                                   | ""                             |
-| MF_TIMESCALE_HOST                    | Timescale DB host                                         | timescale                      |
-| MF_TIMESCALE_PORT                    | Timescale DB port                                         | 5432                           |
-| MF_TIMESCALE_USER                    | Timescale user                                            | mainflux                       |
-| MF_TIMESCALE_PASS                    | Timescale password                                        | mainflux                       |
-| MF_TIMESCALE_NAME                    | Timescale database name                                   | messages                       |
-| MF_TIMESCALE_SSL_MODE                | Timescale SSL mode                                        | disabled                       |
-| MF_TIMESCALE_SSL_CERT                | Timescale SSL certificate path                            | ""                             |
-| MF_TIMESCALE_SSL_KEY                 | Timescale SSL key                                         | ""                             |
-| MF_TIMESCALE_SSL_ROOT_CERT           | Timescale SSL root certificate path                       | ""                             |
-| MF_MESSAGE_BROKER_URL                | Message broker instance URL                               | nats://localhost:4222          |
-| MF_JAEGER_URL                        | Jaeger server URL                                         | http://jaeger:14268/api/traces |
-| MF_SEND_TELEMETRY                    | Send telemetry to mainflux call home server               | true                           |
-| MF_TIMESCALE_WRITER_INSTANCE_ID      | Timescale writer instance ID                              | ""                             |
+| MG_TIMESCALE_WRITER_LOG_LEVEL        | Service log level                                         | info                           |
+| MG_TIMESCALE_WRITER_CONFIG_PATH      | Configuration file path with Message broker subjects list | /config.toml                   |
+| MG_TIMESCALE_WRITER_HTTP_HOST        | Service HTTP host                                         | localhost                      |
+| MG_TIMESCALE_WRITER_HTTP_PORT        | Service HTTP port                                         | 9012                           |
+| MG_TIMESCALE_WRITER_HTTP_SERVER_CERT | Service HTTP server certificate path                      | ""                             |
+| MG_TIMESCALE_WRITER_HTTP_SERVER_KEY  | Service HTTP server key                                   | ""                             |
+| MG_TIMESCALE_HOST                    | Timescale DB host                                         | timescale                      |
+| MG_TIMESCALE_PORT                    | Timescale DB port                                         | 5432                           |
+| MG_TIMESCALE_USER                    | Timescale user                                            | mainflux                       |
+| MG_TIMESCALE_PASS                    | Timescale password                                        | mainflux                       |
+| MG_TIMESCALE_NAME                    | Timescale database name                                   | messages                       |
+| MG_TIMESCALE_SSL_MODE                | Timescale SSL mode                                        | disabled                       |
+| MG_TIMESCALE_SSL_CERT                | Timescale SSL certificate path                            | ""                             |
+| MG_TIMESCALE_SSL_KEY                 | Timescale SSL key                                         | ""                             |
+| MG_TIMESCALE_SSL_ROOT_CERT           | Timescale SSL root certificate path                       | ""                             |
+| MG_MESSAGE_BROKER_URL                | Message broker instance URL                               | nats://localhost:4222          |
+| MG_JAEGER_URL                        | Jaeger server URL                                         | http://jaeger:14268/api/traces |
+| MG_SEND_TELEMETRY                    | Send telemetry to mainflux call home server               | true                           |
+| MG_TIMESCALE_WRITER_INSTANCE_ID      | Timescale writer instance ID                              | ""                             |
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`timescale-writer`](https://github.com/mainflux/mainflux/blob/master/docker/addons/timescale-writer/docker-compose.yml#L34-L59) service section in docker-compose to see how service is deployed.
+The service itself is distributed as Docker container. Check the [`timescale-writer`](https://github.com/absmach/magistrala/blob/master/docker/addons/timescale-writer/docker-compose.yml#L34-L59) service section in docker-compose to see how service is deployed.
 
 To start the service, execute the following shell script:
 
 ```bash
 # download the latest version of the service
-git clone https://github.com/mainflux/mainflux
+git clone https://github.com/absmach/magistrala
 
 cd mainflux
 
@@ -49,25 +49,25 @@ make timescale-writer
 make install
 
 # Set the environment variables and run the service
-MF_TIMESCALE_WRITER_LOG_LEVEL=[Service log level] \
-MF_TIMESCALE_WRITER_CONFIG_PATH=[Configuration file path with Message broker subjects list] \
-MF_TIMESCALE_WRITER_HTTP_HOST=[Service HTTP host] \
-MF_TIMESCALE_WRITER_HTTP_PORT=[Service HTTP port] \
-MF_TIMESCALE_WRITER_HTTP_SERVER_CERT=[Service HTTP server cert] \
-MF_TIMESCALE_WRITER_HTTP_SERVER_KEY=[Service HTTP server key] \
-MF_TIMESCALE_HOST=[Timescale host] \
-MF_TIMESCALE_PORT=[Timescale port] \
-MF_TIMESCALE_USER=[Timescale user] \
-MF_TIMESCALE_PASS=[Timescale password] \
-MF_TIMESCALE_NAME=[Timescale database name] \
-MF_TIMESCALE_SSL_MODE=[Timescale SSL mode] \
-MF_TIMESCALE_SSL_CERT=[Timescale SSL cert] \
-MF_TIMESCALE_SSL_KEY=[Timescale SSL key] \
-MF_TIMESCALE_SSL_ROOT_CERT=[Timescale SSL Root cert] \
-MF_MESSAGE_BROKER_URL=[Message broker instance URL] \
-MF_JAEGER_URL=[Jaeger server URL] \
-MF_SEND_TELEMETRY=[Send telemetry to mainflux call home server] \
-MF_TIMESCALE_WRITER_INSTANCE_ID=[Timescale writer instance ID] \
+MG_TIMESCALE_WRITER_LOG_LEVEL=[Service log level] \
+MG_TIMESCALE_WRITER_CONFIG_PATH=[Configuration file path with Message broker subjects list] \
+MG_TIMESCALE_WRITER_HTTP_HOST=[Service HTTP host] \
+MG_TIMESCALE_WRITER_HTTP_PORT=[Service HTTP port] \
+MG_TIMESCALE_WRITER_HTTP_SERVER_CERT=[Service HTTP server cert] \
+MG_TIMESCALE_WRITER_HTTP_SERVER_KEY=[Service HTTP server key] \
+MG_TIMESCALE_HOST=[Timescale host] \
+MG_TIMESCALE_PORT=[Timescale port] \
+MG_TIMESCALE_USER=[Timescale user] \
+MG_TIMESCALE_PASS=[Timescale password] \
+MG_TIMESCALE_NAME=[Timescale database name] \
+MG_TIMESCALE_SSL_MODE=[Timescale SSL mode] \
+MG_TIMESCALE_SSL_CERT=[Timescale SSL cert] \
+MG_TIMESCALE_SSL_KEY=[Timescale SSL key] \
+MG_TIMESCALE_SSL_ROOT_CERT=[Timescale SSL Root cert] \
+MG_MESSAGE_BROKER_URL=[Message broker instance URL] \
+MG_JAEGER_URL=[Jaeger server URL] \
+MG_SEND_TELEMETRY=[Send telemetry to mainflux call home server] \
+MG_TIMESCALE_WRITER_INSTANCE_ID=[Timescale writer instance ID] \
 $GOBIN/mainflux-timescale-writer
 ```
 

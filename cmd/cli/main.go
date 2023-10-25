@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 // Package main contains cli main function to run the cli.
@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/mainflux/mainflux/cli"
-	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
+	"github.com/absmach/magistrala/cli"
+	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/spf13/cobra"
 )
 

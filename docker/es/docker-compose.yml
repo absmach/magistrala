@@ -1,14 +1,14 @@
 volumes:
-  mainflux-es-redis-volume:
+  magistrala-es-redis-volume:
 
 services:
   es-redis:
     image: redis:7.2.0-alpine
-    container_name: mainflux-es-redis
+    container_name: magistrala-es-redis
     restart: on-failure
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
-      - mainflux-es-volume:/data
+      - magistrala-es-volume:/data
     profiles:
       - redis

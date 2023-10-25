@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package bootstrap_test
@@ -11,9 +11,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/mainflux/mainflux"
-	"github.com/mainflux/mainflux/bootstrap"
-	"github.com/mainflux/mainflux/pkg/errors"
+	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/bootstrap"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 

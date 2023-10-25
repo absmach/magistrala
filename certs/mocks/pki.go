@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package mocks
@@ -17,8 +17,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mainflux/mainflux/certs/pki"
-	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/absmach/magistrala/certs/pki"
+	"github.com/absmach/magistrala/pkg/errors"
 )
 
 const keyBits = 2048
@@ -84,9 +84,9 @@ func (a *agent) IssueCert(cn, ttl string) (pki.Cert, error) {
 	tmpl := x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
-			Organization:       []string{"Mainflux"},
+			Organization:       []string{"Magistrala"},
 			CommonName:         cn,
-			OrganizationalUnit: []string{"mainflux"},
+			OrganizationalUnit: []string{"magistrala"},
 		},
 		NotBefore: notBefore,
 		NotAfter:  notAfter,

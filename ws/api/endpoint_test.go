@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package api_test
@@ -12,13 +12,13 @@ import (
 	"strings"
 	"testing"
 
+	mainflux "github.com/absmach/magistrala"
+	authmocks "github.com/absmach/magistrala/auth/mocks"
+	"github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/ws"
+	"github.com/absmach/magistrala/ws/api"
+	"github.com/absmach/magistrala/ws/mocks"
 	"github.com/gorilla/websocket"
-	"github.com/mainflux/mainflux"
-	authmocks "github.com/mainflux/mainflux/auth/mocks"
-	"github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/ws"
-	"github.com/mainflux/mainflux/ws/api"
-	"github.com/mainflux/mainflux/ws/mocks"
 	"github.com/mainflux/mproxy/pkg/session"
 	"github.com/mainflux/mproxy/pkg/websockets"
 	"github.com/stretchr/testify/assert"

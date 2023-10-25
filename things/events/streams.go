@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package events
@@ -6,11 +6,11 @@ package events
 import (
 	"context"
 
-	"github.com/mainflux/mainflux"
-	mfclients "github.com/mainflux/mainflux/pkg/clients"
-	"github.com/mainflux/mainflux/pkg/events"
-	"github.com/mainflux/mainflux/pkg/events/store"
-	"github.com/mainflux/mainflux/things"
+	mainflux "github.com/absmach/magistrala"
+	mfclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/events/store"
+	"github.com/absmach/magistrala/things"
 )
 
 const streamID = "mainflux.things"

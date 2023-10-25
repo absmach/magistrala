@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package http
@@ -6,10 +6,10 @@ package http
 import (
 	"context"
 
+	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/twins"
 	"github.com/go-kit/kit/endpoint"
-	"github.com/mainflux/mainflux/internal/apiutil"
-	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/twins"
 )
 
 func addTwinEndpoint(svc twins.Service) endpoint.Endpoint {

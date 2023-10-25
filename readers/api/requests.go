@@ -1,11 +1,11 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package api
 
 import (
-	"github.com/mainflux/mainflux/internal/apiutil"
-	"github.com/mainflux/mainflux/readers"
+	"github.com/absmach/magistrala/internal/apiutil"
+	"github.com/absmach/magistrala/readers"
 )
 
 const maxLimitSize = 1000

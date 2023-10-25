@@ -5,9 +5,9 @@ services:
     volumes:
       - ./../nats/:/etc/nats
     environment:
-      - MF_NATS_PORT=${MF_NATS_PORT}
-      - MF_NATS_HTTP_PORT=${MF_NATS_HTTP_PORT}
-      - MF_NATS_JETSTREAM_KEY=${MF_NATS_JETSTREAM_KEY}
+      - MG_NATS_PORT=${MG_NATS_PORT}
+      - MG_NATS_HTTP_PORT=${MG_NATS_HTTP_PORT}
+      - MG_NATS_JETSTREAM_KEY=${MG_NATS_JETSTREAM_KEY}
     ports:
-      - ${MF_NATS_PORT}:${MF_NATS_PORT}
-      - ${MF_NATS_HTTP_PORT}:${MF_NATS_HTTP_PORT}
+      - ${MG_NATS_PORT}:${MG_NATS_PORT}
+      - ${MG_NATS_HTTP_PORT}:${MG_NATS_HTTP_PORT}

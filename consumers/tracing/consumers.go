@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package tracing
@@ -7,10 +7,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/mainflux/mainflux/consumers"
-	"github.com/mainflux/mainflux/internal/server"
-	mfjson "github.com/mainflux/mainflux/pkg/transformers/json"
-	"github.com/mainflux/mainflux/pkg/transformers/senml"
+	"github.com/absmach/magistrala/consumers"
+	"github.com/absmach/magistrala/internal/server"
+	mfjson "github.com/absmach/magistrala/pkg/transformers/json"
+	"github.com/absmach/magistrala/pkg/transformers/senml"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )

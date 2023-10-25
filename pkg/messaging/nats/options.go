@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package nats
@@ -6,7 +6,7 @@ package nats
 import (
 	"errors"
 
-	"github.com/mainflux/mainflux/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/nats-io/nats.go/jetstream"
 )
 

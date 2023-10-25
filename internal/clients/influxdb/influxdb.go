@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package influxdb
@@ -7,9 +7,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/absmach/magistrala/internal/env"
+	"github.com/absmach/magistrala/pkg/errors"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
-	"github.com/mainflux/mainflux/internal/env"
-	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 var (
@@ -21,11 +21,11 @@ type Config struct {
 	Protocol           string        `env:"PROTOCOL"              envDefault:"http"`
 	Host               string        `env:"HOST"                  envDefault:"localhost"`
 	Port               string        `env:"PORT"                  envDefault:"8086"`
-	Username           string        `env:"ADMIN_USER"            envDefault:"mainflux"`
-	Password           string        `env:"ADMIN_PASSWORD"        envDefault:"mainflux"`
-	DBName             string        `env:"NAME"                  envDefault:"mainflux"`
+	Username           string        `env:"ADMIN_USER"            envDefault:"magistrala"`
+	Password           string        `env:"ADMIN_PASSWORD"        envDefault:"magistrala"`
+	DBName             string        `env:"NAME"                  envDefault:"magistrala"`
 	Bucket             string        `env:"BUCKET"                envDefault:"mainflux-bucket"`
-	Org                string        `env:"ORG"                   envDefault:"mainflux"`
+	Org                string        `env:"ORG"                   envDefault:"magistrala"`
 	Token              string        `env:"TOKEN"                 envDefault:"mainflux-token"`
 	DBUrl              string        `env:"DBURL"                 envDefault:""`
 	UserAgent          string        `env:"USER_AGENT"            envDefault:"InfluxDBClient"`

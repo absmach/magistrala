@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 // Package main contains entry point for provisioning tool.
@@ -7,7 +7,7 @@ package main
 import (
 	"log"
 
-	"github.com/mainflux/mainflux/tools/provision"
+	"github.com/absmach/magistrala/tools/provision"
 	"github.com/spf13/cobra"
 )
 
@@ -16,8 +16,8 @@ func main() {
 
 	rootCmd := &cobra.Command{
 		Use:   "provision",
-		Short: "provision is provisioning tool for Mainflux",
-		Long: `Tool for provisioning series of Mainflux channels and things and connecting them together.
+		Short: "provision is provisioning tool for Magistrala",
+		Long: `Tool for provisioning series of Magistrala channels and things and connecting them together.
 Complete documentation is available at https://docs.mainflux.io`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := provision.Provision(pconf); err != nil {

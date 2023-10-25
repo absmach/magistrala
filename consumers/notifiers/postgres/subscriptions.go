@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package postgres
@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/absmach/magistrala/consumers/notifiers"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/mainflux/mainflux/consumers/notifiers"
-	"github.com/mainflux/mainflux/pkg/errors"
 )
 
 var _ notifiers.SubscriptionsRepository = (*subscriptionsRepo)(nil)

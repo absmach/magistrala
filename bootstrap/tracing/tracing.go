@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package tracing
@@ -6,7 +6,7 @@ package tracing
 import (
 	"context"
 
-	"github.com/mainflux/mainflux/bootstrap"
+	"github.com/absmach/magistrala/bootstrap"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )

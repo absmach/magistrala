@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package postgres_test
@@ -9,10 +9,10 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/absmach/magistrala/bootstrap"
+	"github.com/absmach/magistrala/bootstrap/postgres"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/gofrs/uuid"
-	"github.com/mainflux/mainflux/bootstrap"
-	"github.com/mainflux/mainflux/bootstrap/postgres"
-	"github.com/mainflux/mainflux/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

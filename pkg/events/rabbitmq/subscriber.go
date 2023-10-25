@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package rabbitmq
@@ -9,10 +9,10 @@ import (
 	"errors"
 	"fmt"
 
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/events"
-	"github.com/mainflux/mainflux/pkg/messaging"
-	broker "github.com/mainflux/mainflux/pkg/messaging/rabbitmq"
+	mflog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/messaging"
+	broker "github.com/absmach/magistrala/pkg/messaging/rabbitmq"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 

@@ -16,6 +16,6 @@ vault() {
 
 readDotEnv
 
-vault operator unseal ${MF_VAULT_UNSEAL_KEY_1}
-vault operator unseal ${MF_VAULT_UNSEAL_KEY_2}
-vault operator unseal ${MF_VAULT_UNSEAL_KEY_3}
+vault operator unseal ${MG_VAULT_UNSEAL_KEY_1}
+vault operator unseal ${MG_VAULT_UNSEAL_KEY_2}
+vault operator unseal ${MG_VAULT_UNSEAL_KEY_3}

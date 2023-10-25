@@ -6,7 +6,7 @@ Auth service provides authentication features as an API for managing authenticat
 User service is using Auth service gRPC API to obtain login token or password reset token. Authentication key consists of the following fields:
 - ID - key ID
 - Type - one of the three types described below
-- IssuerID - an ID of the Mainflux User who issued the key
+- IssuerID - an ID of the Magistrala User who issued the key
 - Subject - user email
 - IssuedAt - the timestamp when the key is issued
 - ExpiresAt - the timestamp after which the key is invalid
@@ -26,7 +26,7 @@ API keys are similar to the User keys. The main difference is that API keys have
 Recovery key is the password recovery key. It's short-lived token used for password recovery process.
 
 For in-depth explanation of the aforementioned scenarios, as well as thorough
-understanding of Mainflux, please check out the [official documentation][doc].
+understanding of Magistrala, please check out the [official documentation][doc].
 
 The following actions are supported:
 
@@ -57,31 +57,31 @@ default values.
 
 | Variable                      | Description                                                              | Default        |
 |-------------------------------|--------------------------------------------------------------------------|----------------|
-| MF_AUTH_LOG_LEVEL             | Service level (debug, info, warn, error)                                 | error          |
-| MF_AUTH_DB_HOST               | Database host address                                                    | localhost      |
-| MF_AUTH_DB_PORT               | Database host port                                                       | 5432           |
-| MF_AUTH_DB_USER               | Database user                                                            | mainflux       |
-| MF_AUTH_DB_PASSWORD           | Database password                                                        | mainflux       |
-| MF_AUTH_DB                    | Name of the database used by the service                                 | auth           |
-| MF_AUTH_DB_SSL_MODE           | Database connection SSL mode (disable, require, verify-ca, verify-full)  | disable        |
-| MF_AUTH_DB_SSL_CERT           | Path to the PEM encoded certificate file                                 |                |
-| MF_AUTH_DB_SSL_KEY            | Path to the PEM encoded key file                                         |                |
-| MF_AUTH_DB_SSL_ROOT_CERT      | Path to the PEM encoded root certificate file                            |                |
-| MF_AUTH_HTTP_PORT             | Auth service HTTP port                                                   | 8180           |
-| MF_AUTH_GRPC_PORT             | Auth service gRPC port                                                   | 8181           |
-| MF_AUTH_SERVER_CERT           | Path to server certificate in pem format                                 |                |
-| MF_AUTH_SERVER_KEY            | Path to server key in pem format                                         |                |
-| MF_AUTH_SECRET                | String used for signing tokens                                           | auth           |
-| MF_AUTH_LOGIN_TOKEN_DURATION  | The login token expiration period                                        | 10h            |
-| MF_JAEGER_URL                 | Jaeger server URL                                                        | localhost:6831 |
-| MF_KETO_READ_REMOTE_HOST      | Keto Read Host                                                           | mainflux-keto  |
-| MF_KETO_WRITE_REMOTE_HOST     | Keto Write Host                                                          | mainflux-keto  |
-| MF_KETO_READ_REMOTE_PORT      | Keto Read Port                                                           | 4466           |
-| MF_KETO_WRITE_REMOTE_PORT     | Keto Write Port                                                          | 4467           |
+| MG_AUTH_LOG_LEVEL             | Service level (debug, info, warn, error)                                 | error          |
+| MG_AUTH_DB_HOST               | Database host address                                                    | localhost      |
+| MG_AUTH_DB_PORT               | Database host port                                                       | 5432           |
+| MG_AUTH_DB_USER               | Database user                                                            | mainflux       |
+| MG_AUTH_DB_PASSWORD           | Database password                                                        | mainflux       |
+| MG_AUTH_DB                    | Name of the database used by the service                                 | auth           |
+| MG_AUTH_DB_SSL_MODE           | Database connection SSL mode (disable, require, verify-ca, verify-full)  | disable        |
+| MG_AUTH_DB_SSL_CERT           | Path to the PEM encoded certificate file                                 |                |
+| MG_AUTH_DB_SSL_KEY            | Path to the PEM encoded key file                                         |                |
+| MG_AUTH_DB_SSL_ROOT_CERT      | Path to the PEM encoded root certificate file                            |                |
+| MG_AUTH_HTTP_PORT             | Auth service HTTP port                                                   | 8180           |
+| MG_AUTH_GRPC_PORT             | Auth service gRPC port                                                   | 8181           |
+| MG_AUTH_SERVER_CERT           | Path to server certificate in pem format                                 |                |
+| MG_AUTH_SERVER_KEY            | Path to server key in pem format                                         |                |
+| MG_AUTH_SECRET                | String used for signing tokens                                           | auth           |
+| MG_AUTH_LOGIN_TOKEN_DURATION  | The login token expiration period                                        | 10h            |
+| MG_JAEGER_URL                 | Jaeger server URL                                                        | localhost:6831 |
+| MG_KETO_READ_REMOTE_HOST      | Keto Read Host                                                           | mainflux-keto  |
+| MG_KETO_WRITE_REMOTE_HOST     | Keto Write Host                                                          | mainflux-keto  |
+| MG_KETO_READ_REMOTE_PORT      | Keto Read Port                                                           | 4466           |
+| MG_KETO_WRITE_REMOTE_PORT     | Keto Write Port                                                          | 4467           |
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`auth`](https://github.com/mainflux/mainflux/blob/master/docker/docker-compose.yml#L71-L94) service section in 
+The service itself is distributed as Docker container. Check the [`auth`](https://github.com/absmach/magistrala/blob/master/docker/docker-compose.yml#L71-L94) service section in 
 docker-compose to see how service is deployed.
 
 
@@ -89,9 +89,9 @@ To start the service outside of the container, execute the following shell scrip
 
 ```bash
 # download the latest version of the service
-go get github.com/mainflux/mainflux
+go get github.com/absmach/magistrala
 
-cd $GOPATH/src/github.com/mainflux/mainflux
+cd $GOPATH/src/github.com/absmach/magistrala
 
 # compile the service
 make auth
@@ -100,10 +100,10 @@ make auth
 make install
 
 # set the environment variables and run the service
-MF_AUTH_LOG_LEVEL=[Service log level] MF_AUTH_DB_HOST=[Database host address] MF_AUTH_DB_PORT=[Database host port] MF_AUTH_DB_USER=[Database user] MF_AUTH_DB_PASS=[Database password] MF_AUTH_DB=[Name of the database used by the service] MF_AUTH_DB_SSL_MODE=[SSL mode to connect to the database with] MF_AUTH_DB_SSL_CERT=[Path to the PEM encoded certificate file] MF_AUTH_DB_SSL_KEY=[Path to the PEM encoded key file] MF_AUTH_DB_SSL_ROOT_CERT=[Path to the PEM encoded root certificate file] MF_AUTH_HTTP_PORT=[Service HTTP port] MF_AUTH_GRPC_PORT=[Service gRPC port] MF_AUTH_SECRET=[String used for signing tokens] MF_AUTH_SERVER_CERT=[Path to server certificate] MF_AUTH_SERVER_KEY=[Path to server key] MF_JAEGER_URL=[Jaeger server URL] MF_AUTH_LOGIN_TOKEN_DURATION=[The login token expiration period] $GOBIN/mainflux-auth
+MG_AUTH_LOG_LEVEL=[Service log level] MG_AUTH_DB_HOST=[Database host address] MG_AUTH_DB_PORT=[Database host port] MG_AUTH_DB_USER=[Database user] MG_AUTH_DB_PASS=[Database password] MG_AUTH_DB=[Name of the database used by the service] MG_AUTH_DB_SSL_MODE=[SSL mode to connect to the database with] MG_AUTH_DB_SSL_CERT=[Path to the PEM encoded certificate file] MG_AUTH_DB_SSL_KEY=[Path to the PEM encoded key file] MG_AUTH_DB_SSL_ROOT_CERT=[Path to the PEM encoded root certificate file] MG_AUTH_HTTP_PORT=[Service HTTP port] MG_AUTH_GRPC_PORT=[Service gRPC port] MG_AUTH_SECRET=[String used for signing tokens] MG_AUTH_SERVER_CERT=[Path to server certificate] MG_AUTH_SERVER_KEY=[Path to server key] MG_JAEGER_URL=[Jaeger server URL] MG_AUTH_LOGIN_TOKEN_DURATION=[The login token expiration period] $GOBIN/mainflux-auth
 ```
 
-If `MF_EMAIL_TEMPLATE` doesn't point to any file service will function but password reset functionality will not work.
+If `MG_EMAIL_TEMPLATE` doesn't point to any file service will function but password reset functionality will not work.
 
 ## Usage
 

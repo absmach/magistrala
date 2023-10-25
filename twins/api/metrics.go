@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 //go:build !test
@@ -9,9 +9,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/twins"
 	"github.com/go-kit/kit/metrics"
-	"github.com/mainflux/mainflux/pkg/messaging"
-	"github.com/mainflux/mainflux/twins"
 )
 
 var _ twins.Service = (*metricsMiddleware)(nil)

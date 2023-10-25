@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package e2e
@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/0x6flab/namegenerator"
+	sdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/gookit/color"
 	"github.com/gorilla/websocket"
-	sdk "github.com/mainflux/mainflux/pkg/sdk/go"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -570,7 +570,7 @@ func sendCoAPMessage(msg string, thing sdk.Thing, chanID string) error {
 }
 
 func sendMQTTMessage(msg string, thing sdk.Thing, chanID string) error {
-	cmd := exec.Command("mosquitto_pub", "--id-prefix", "mainflux", "-u", thing.ID, "-P", thing.Credentials.Secret, "-t", fmt.Sprintf("channels/%s/messages", chanID), "-h", "localhost", "-m", msg)
+	cmd := exec.Command("mosquitto_pub", "--id-prefix", "magistrala", "-u", thing.ID, "-P", thing.Credentials.Secret, "-t", fmt.Sprintf("channels/%s/messages", chanID), "-h", "localhost", "-m", msg)
 	if _, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("MQTT failed to send message from thing %s to channel %s: %w", thing.ID, chanID, err)
 	}

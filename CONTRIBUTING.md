@@ -1,11 +1,11 @@
-# Contributing to Mainflux
+# Contributing to Magistrala
 
-The following is a set of guidelines to contribute to Mainflux and its libraries, which are
-hosted on the [Mainflux Organization](https://github.com/mainflux) on GitHub.
+The following is a set of guidelines to contribute to Magistrala and its libraries, which are
+hosted on the [Abstract Machines Organization](https://github.com/absmach) on GitHub.
 
 This project adheres to the [Contributor Covenant 1.2](http://contributor-covenant.org/version/1/2/0).
 By participating, you are expected to uphold this code. Please report unacceptable behavior to
-[abuse@mainflux.com](mailto:abuse@mainflux.com).
+[abuse@magistrala.com](mailto:abuse@magistrala.com).
 
 ## Reporting issues
 
@@ -13,7 +13,7 @@ Reporting issues are a great way to contribute to the project. We are perpetuall
 thorough bug report.
 
 Before raising a new issue, check [our issue
-list](https://github.com/mainflux/mainflux/issues) to determine if it already contains the
+list](https://github.com/absmach/magistrala/issues) to determine if it already contains the
 problem that you are facing.
 
 A good bug report shouldn't leave others needing to chase you for more information. Please be as detailed as possible. The following questions might serve as a template for writing a detailed
@@ -41,23 +41,23 @@ To contribute to the project, [fork](https://help.github.com/articles/fork-a-rep
 clone your fork repository, and configure the remotes:
 
 ```
-git clone https://github.com/<your-username>/mainflux.git
-cd mainflux
-git remote add upstream https://github.com/mainflux/mainflux.git
+git clone https://github.com/<your-username>/magistrala.git
+cd magistrala
+git remote add upstream https://github.com/absmach/magistrala.git
 ```
 
 If your cloned repository is behind the upstream commits, then get the latest changes from upstream:
 
 ```
 git checkout master
-git pull --rebase upstream master
+git pull --rebase upstream main
 ```
 
-Create a new topic branch from `master` using the naming convention `MF-[issue-number]`
+Create a new topic branch from `master` using the naming convention `MG-[issue-number]`
 to help us keep track of your contribution scope:
 
 ```
-git checkout -b MF-[issue-number]
+git checkout -b MG-[issue-number]
 ```
 
 Commit your changes in logical chunks. When you are ready to commit, make sure
@@ -74,13 +74,13 @@ and `user.email` git configs, you can sign your commit automatically with `git c
 Locally merge (or rebase) the upstream development branch into your topic branch:
 
 ```
-git pull --rebase upstream master
+git pull --rebase upstream main
 ```
 
 Push your topic branch up to your fork:
 
 ```
-git push origin MF-[issue-number]
+git push origin MG-[issue-number]
 ```
 
 [Open a Pull Request](https://help.github.com/articles/using-pull-requests/) with a clear title

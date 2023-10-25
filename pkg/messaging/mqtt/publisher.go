@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package mqtt
@@ -8,8 +8,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/absmach/magistrala/pkg/messaging"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-	"github.com/mainflux/mainflux/pkg/messaging"
 )
 
 var errPublishTimeout = errors.New("failed to publish due to timeout reached")

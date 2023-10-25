@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package opcua
@@ -7,8 +7,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/opcua/db"
+	"github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/opcua/db"
 )
 
 // Service specifies an API that must be fullfiled by the domain service
@@ -46,11 +46,11 @@ type Service interface {
 type Config struct {
 	ServerURI string
 	NodeID    string
-	Interval  string `env:"MF_OPCUA_ADAPTER_INTERVAL_MS"   envDefault:"1000"`
-	Policy    string `env:"MF_OPCUA_ADAPTER_POLICY"        envDefault:""`
-	Mode      string `env:"MF_OPCUA_ADAPTER_MODE"          envDefault:""`
-	CertFile  string `env:"MF_OPCUA_ADAPTER_CERT_FILE"     envDefault:""`
-	KeyFile   string `env:"MF_OPCUA_ADAPTER_KEY_FILE"      envDefault:""`
+	Interval  string `env:"MG_OPCUA_ADAPTER_INTERVAL_MS"   envDefault:"1000"`
+	Policy    string `env:"MG_OPCUA_ADAPTER_POLICY"        envDefault:""`
+	Mode      string `env:"MG_OPCUA_ADAPTER_MODE"          envDefault:""`
+	CertFile  string `env:"MG_OPCUA_ADAPTER_CERT_FILE"     envDefault:""`
+	KeyFile   string `env:"MG_OPCUA_ADAPTER_KEY_FILE"      envDefault:""`
 }
 
 var _ Service = (*adapterService)(nil)

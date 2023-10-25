@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package mocks
@@ -10,8 +10,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/mainflux/mainflux/bootstrap"
-	"github.com/mainflux/mainflux/pkg/errors"
+	"github.com/absmach/magistrala/bootstrap"
+	"github.com/absmach/magistrala/pkg/errors"
 )
 
 const emptyState = -1

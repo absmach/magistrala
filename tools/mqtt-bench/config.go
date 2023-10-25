@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package bench
@@ -64,5 +64,5 @@ type Config struct {
 	MQTT mqttConfig   `toml:"mqtt" mapstructure:"mqtt"`
 	Test testConfig   `toml:"test" mapstructure:"test"`
 	Log  logConfig    `toml:"log" mapstructure:"log"`
-	Mf   mainfluxFile `toml:"mainflux" mapstructure:"mainflux"`
+	Mf   mainfluxFile `toml:"magistrala" mapstructure:"magistrala"`
 }

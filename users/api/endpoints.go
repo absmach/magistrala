@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package api
@@ -6,11 +6,11 @@ package api
 import (
 	"context"
 
+	"github.com/absmach/magistrala/internal/apiutil"
+	mfclients "github.com/absmach/magistrala/pkg/clients"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/users"
 	"github.com/go-kit/kit/endpoint"
-	"github.com/mainflux/mainflux/internal/apiutil"
-	mfclients "github.com/mainflux/mainflux/pkg/clients"
-	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/users"
 )
 
 func registrationEndpoint(svc users.Service) endpoint.Endpoint {
@@ -216,9 +216,9 @@ func updateClientIdentityEndpoint(svc users.Service) endpoint.Endpoint {
 
 // Password reset request endpoint.
 // When successful password reset link is generated.
-// Link is generated using MF_TOKEN_RESET_ENDPOINT env.
+// Link is generated using MG_TOKEN_RESET_ENDPOINT env.
 // and value from Referer header for host.
-// {Referer}+{MF_TOKEN_RESET_ENDPOINT}+{token=TOKEN}
+// {Referer}+{MG_TOKEN_RESET_ENDPOINT}+{token=TOKEN}
 // http://mainflux.com/reset-request?token=xxxxxxxxxxx.
 // Email with a link is being sent to the user.
 // When user clicks on a link it should get the ui with form to

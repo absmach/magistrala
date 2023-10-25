@@ -1,4 +1,4 @@
-# Copyright (c) Mainflux
+# Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
 # This docker-compose file contains optional cassandra-reader. Since it's optional, this file is
@@ -9,71 +9,71 @@
 version: "3.7"
 
 networks:
-  mainflux-base-net:
+  magistrala-base-net:
 
 services:
   cassandra-reader:
-    image: mainflux/cassandra-reader:${MF_RELEASE_TAG}
-    container_name: mainflux-cassandra-reader
+    image: magistrala/cassandra-reader:${MG_RELEASE_TAG}
+    container_name: magistrala-cassandra-reader
     restart: on-failure
     environment:
-      MF_CASSANDRA_READER_LOG_LEVEL: ${MF_CASSANDRA_READER_LOG_LEVEL}
-      MF_CASSANDRA_READER_HTTP_HOST: ${MF_CASSANDRA_READER_HTTP_HOST}
-      MF_CASSANDRA_READER_HTTP_PORT: ${MF_CASSANDRA_READER_HTTP_PORT}
-      MF_CASSANDRA_READER_HTTP_SERVER_CERT: ${MF_CASSANDRA_READER_HTTP_SERVER_CERT}
-      MF_CASSANDRA_READER_HTTP_SERVER_KEY: ${MF_CASSANDRA_READER_HTTP_SERVER_KEY}
-      MF_CASSANDRA_PORT: ${MF_CASSANDRA_PORT}
-      MF_CASSANDRA_CLUSTER: ${MF_CASSANDRA_CLUSTER}
-      MF_CASSANDRA_KEYSPACE: ${MF_CASSANDRA_KEYSPACE}
-      MF_CASSANDRA_USER: ${MF_CASSANDRA_USER}
-      MF_CASSANDRA_PASS: ${MF_CASSANDRA_PASS}
-      MF_THINGS_AUTH_GRPC_URL: ${MF_THINGS_AUTH_GRPC_URL}
-      MF_THINGS_AUTH_GRPC_TIMEOUT: ${MF_THINGS_AUTH_GRPC_TIMEOUT}
-      MF_THINGS_AUTH_GRPC_CLIENT_CERT: ${MF_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
-      MF_THINGS_AUTH_GRPC_CLIENT_KEY: ${MF_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
-      MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
-      MF_AUTH_GRPC_URL: ${MF_AUTH_GRPC_URL}
-      MF_AUTH_GRPC_TIMEOUT: ${MF_AUTH_GRPC_TIMEOUT}
-      MF_AUTH_GRPC_CLIENT_CERT: ${MF_AUTH_GRPC_CLIENT_CERT:+/users-grpc-client.crt}
-      MF_AUTH_GRPC_CLIENT_KEY: ${MF_AUTH_GRPC_CLIENT_KEY:+/users-grpc-client.key}
-      MF_AUTH_GRPC_SERVER_CA_CERTS: ${MF_AUTH_GRPC_SERVER_CA_CERTS:+/users-grpc-server-ca.crt}
-      MF_JAEGER_URL: ${MF_JAEGER_URL}
-      MF_SEND_TELEMETRY: ${MF_SEND_TELEMETRY}
-      MF_CASSANDRA_READER_INSTANCE_ID: ${MF_CASSANDRA_READER_INSTANCE_ID}
+      MG_CASSANDRA_READER_LOG_LEVEL: ${MG_CASSANDRA_READER_LOG_LEVEL}
+      MG_CASSANDRA_READER_HTTP_HOST: ${MG_CASSANDRA_READER_HTTP_HOST}
+      MG_CASSANDRA_READER_HTTP_PORT: ${MG_CASSANDRA_READER_HTTP_PORT}
+      MG_CASSANDRA_READER_HTTP_SERVER_CERT: ${MG_CASSANDRA_READER_HTTP_SERVER_CERT}
+      MG_CASSANDRA_READER_HTTP_SERVER_KEY: ${MG_CASSANDRA_READER_HTTP_SERVER_KEY}
+      MG_CASSANDRA_PORT: ${MG_CASSANDRA_PORT}
+      MG_CASSANDRA_CLUSTER: ${MG_CASSANDRA_CLUSTER}
+      MG_CASSANDRA_KEYSPACE: ${MG_CASSANDRA_KEYSPACE}
+      MG_CASSANDRA_USER: ${MG_CASSANDRA_USER}
+      MG_CASSANDRA_PASS: ${MG_CASSANDRA_PASS}
+      MG_THINGS_AUTH_GRPC_URL: ${MG_THINGS_AUTH_GRPC_URL}
+      MG_THINGS_AUTH_GRPC_TIMEOUT: ${MG_THINGS_AUTH_GRPC_TIMEOUT}
+      MG_THINGS_AUTH_GRPC_CLIENT_CERT: ${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+/things-grpc-client.crt}
+      MG_THINGS_AUTH_GRPC_CLIENT_KEY: ${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+/things-grpc-client.key}
+      MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS: ${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+/things-grpc-server-ca.crt}
+      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
+      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
+      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/users-grpc-client.crt}
+      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/users-grpc-client.key}
+      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/users-grpc-server-ca.crt}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_CASSANDRA_READER_INSTANCE_ID: ${MG_CASSANDRA_READER_INSTANCE_ID}
     ports:
-      - ${MF_CASSANDRA_READER_HTTP_PORT}:${MF_CASSANDRA_READER_HTTP_PORT}
+      - ${MG_CASSANDRA_READER_HTTP_PORT}:${MG_CASSANDRA_READER_HTTP_PORT}
     networks:
-      - mainflux-base-net
+      - magistrala-base-net
     volumes:
       - ../../ssl/certs:/etc/ssl/certs
       # Users gRPC client certificates
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_USERS_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
-        target: /users-grpc-client${MF_USERS_GRPC_CLIENT_CERT:+.crt}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_USERS_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
+        target: /users-grpc-client${MG_USERS_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_USERS_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
-        target: /users-grpc-client${MF_USERS_GRPC_CLIENT_KEY:+.key}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_USERS_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
+        target: /users-grpc-client${MG_USERS_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_USERS_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
-        target: /users-grpc-server-ca${MF_USERS_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_USERS_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
+        target: /users-grpc-server-ca${MG_USERS_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_THINGS_AUTH_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
-        target: /things-grpc-client${MF_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_THINGS_AUTH_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
+        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_THINGS_AUTH_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
-        target: /things-grpc-client${MF_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_THINGS_AUTH_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
+        target: /things-grpc-client${MG_THINGS_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MF_ADDONS_CERTS_PATH_PREFIX}${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
-        target: /things-grpc-server-ca${MF_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
+        target: /things-grpc-server-ca${MG_THINGS_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true

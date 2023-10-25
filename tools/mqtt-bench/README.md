@@ -1,11 +1,11 @@
 # MQTT Benchmarking Tool
 
-A simple MQTT benchmarking tool for Mainflux platform.
+A simple MQTT benchmarking tool for Magistrala platform.
 
-It connects Mainflux things as subscribers over a number of channels and
-uses other Mainflux things to publish messages and create MQTT load.
+It connects Magistrala things as subscribers over a number of channels and
+uses other Magistrala things to publish messages and create MQTT load.
 
-Mainflux things used must be pre-provisioned first, and Mainflux `provision` tool can be used for this purpose.
+Magistrala things used must be pre-provisioned first, and Magistrala `provision` tool can be used for this purpose.
 
 ## Installation
 ```
@@ -18,7 +18,7 @@ The tool supports multiple concurrent clients, publishers and subscribers config
 
 ```
 ./mqtt-bench --help
-Tool for extensive load and benchmarking of MQTT brokers used within Mainflux platform.
+Tool for extensive load and benchmarking of MQTT brokers used within Magistrala platform.
 Complete documentation is available at https://docs.mainflux.io
 
 Usage:
@@ -31,7 +31,7 @@ Flags:
   -n, --count int         Number of messages sent per publisher (default 100)
   -f, --format string     Output format: text|json (default "text")
   -h, --help              help for mqtt-bench
-  -m, --mainflux string   config file for Mainflux connections (default "connections.toml")
+  -m, --mainflux string   config file for Magistrala connections (default "connections.toml")
       --mtls              Use mtls for connection
   -p, --pubs int          Number of publishers (default 10)
   -q, --qos int           QoS for published messages, values 0 1 2
@@ -44,7 +44,7 @@ Flags:
 
 Two output formats supported: human-readable plain text and JSON.
 
-Before use you need a `mfconn.toml` - a TOML file that describes Mainflux connection data (channels, thingIDs, thingKeys, certs).
+Before use you need a `mfconn.toml` - a TOML file that describes Magistrala connection data (channels, thingIDs, thingKeys, certs).
 You can use `provision` tool (in tools/provision) to create this TOML config file.
 
 ```bash

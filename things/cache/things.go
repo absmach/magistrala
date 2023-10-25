@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package cache
@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/things"
 	"github.com/go-redis/redis/v8"
-	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/things"
 )
 
 const (

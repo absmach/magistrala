@@ -1,7 +1,7 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
-package mainflux
+package magistrala
 
 import (
 	"encoding/json"
@@ -18,15 +18,15 @@ const (
 var (
 	// Version represents the last service git tag in git history.
 	// It's meant to be set using go build ldflags:
-	// -ldflags "-X 'github.com/mainflux/mainflux.Version=0.0.0'".
+	// -ldflags "-X 'github.com/absmach/magistrala.Version=0.0.0'".
 	Version = "0.0.0"
 	// Commit represents the service git commit hash.
 	// It's meant to be set using go build ldflags:
-	// -ldflags "-X 'github.com/mainflux/mainflux.Commit=ffffffff'".
+	// -ldflags "-X 'github.com/absmach/magistrala.Commit=ffffffff'".
 	Commit = "ffffffff"
 	// BuildTime represetns the service build time.
 	// It's meant to be set using go build ldflags:
-	// -ldflags "-X 'github.com/mainflux/mainflux.BuildTime=1970-01-01_00:00:00'".
+	// -ldflags "-X 'github.com/absmach/magistrala.BuildTime=1970-01-01_00:00:00'".
 	BuildTime = "1970-01-01_00:00:00"
 )
 

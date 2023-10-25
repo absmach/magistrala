@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 // Package main contains mqtt-adapter main function to start the mqtt-adapter service.
@@ -13,23 +13,23 @@ import (
 	"os"
 	"time"
 
+	mainflux "github.com/absmach/magistrala"
+	authapi "github.com/absmach/magistrala/internal/clients/grpc/auth"
+	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
+	"github.com/absmach/magistrala/internal/env"
+	"github.com/absmach/magistrala/internal/server"
+	mflog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/mqtt"
+	"github.com/absmach/magistrala/mqtt/events"
+	mqtttracing "github.com/absmach/magistrala/mqtt/tracing"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/messaging/brokers"
+	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
+	"github.com/absmach/magistrala/pkg/messaging/handler"
+	mqttpub "github.com/absmach/magistrala/pkg/messaging/mqtt"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/cenkalti/backoff/v4"
 	chclient "github.com/mainflux/callhome/pkg/client"
-	"github.com/mainflux/mainflux"
-	authapi "github.com/mainflux/mainflux/internal/clients/grpc/auth"
-	jaegerclient "github.com/mainflux/mainflux/internal/clients/jaeger"
-	"github.com/mainflux/mainflux/internal/env"
-	"github.com/mainflux/mainflux/internal/server"
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/mqtt"
-	"github.com/mainflux/mainflux/mqtt/events"
-	mqtttracing "github.com/mainflux/mainflux/mqtt/tracing"
-	"github.com/mainflux/mainflux/pkg/errors"
-	"github.com/mainflux/mainflux/pkg/messaging/brokers"
-	brokerstracing "github.com/mainflux/mainflux/pkg/messaging/brokers/tracing"
-	"github.com/mainflux/mainflux/pkg/messaging/handler"
-	mqttpub "github.com/mainflux/mainflux/pkg/messaging/mqtt"
-	"github.com/mainflux/mainflux/pkg/uuid"
 	mp "github.com/mainflux/mproxy/pkg/mqtt"
 	"github.com/mainflux/mproxy/pkg/mqtt/websocket"
 	"github.com/mainflux/mproxy/pkg/session"
@@ -39,24 +39,24 @@ import (
 const svcName = "mqtt"
 
 type config struct {
-	LogLevel              string        `env:"MF_MQTT_ADAPTER_LOG_LEVEL"                    envDefault:"info"`
-	MQTTPort              string        `env:"MF_MQTT_ADAPTER_MQTT_PORT"                    envDefault:"1883"`
-	MQTTTargetHost        string        `env:"MF_MQTT_ADAPTER_MQTT_TARGET_HOST"             envDefault:"localhost"`
-	MQTTTargetPort        string        `env:"MF_MQTT_ADAPTER_MQTT_TARGET_PORT"             envDefault:"1883"`
-	MQTTForwarderTimeout  time.Duration `env:"MF_MQTT_ADAPTER_FORWARDER_TIMEOUT"            envDefault:"30s"`
-	MQTTTargetHealthCheck string        `env:"MF_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK"     envDefault:""`
-	MQTTQoS               uint8         `env:"MF_MQTT_ADAPTER_MQTT_QOS"                     envDefault:"1"`
-	HTTPPort              string        `env:"MF_MQTT_ADAPTER_WS_PORT"                      envDefault:"8080"`
-	HTTPTargetHost        string        `env:"MF_MQTT_ADAPTER_WS_TARGET_HOST"               envDefault:"localhost"`
-	HTTPTargetPort        string        `env:"MF_MQTT_ADAPTER_WS_TARGET_PORT"               envDefault:"8080"`
-	HTTPTargetPath        string        `env:"MF_MQTT_ADAPTER_WS_TARGET_PATH"               envDefault:"/mqtt"`
-	Instance              string        `env:"MF_MQTT_ADAPTER_INSTANCE"                     envDefault:""`
-	JaegerURL             string        `env:"MF_JAEGER_URL"                                envDefault:"http://jaeger:14268/api/traces"`
-	BrokerURL             string        `env:"MF_MESSAGE_BROKER_URL"                        envDefault:"nats://localhost:4222"`
-	SendTelemetry         bool          `env:"MF_SEND_TELEMETRY"                            envDefault:"true"`
-	InstanceID            string        `env:"MF_MQTT_ADAPTER_INSTANCE_ID"                  envDefault:""`
-	ESURL                 string        `env:"MF_MQTT_ADAPTER_ES_URL"                       envDefault:"redis://localhost:6379/0"`
-	TraceRatio            float64       `env:"MF_JAEGER_TRACE_RATIO"                        envDefault:"1.0"`
+	LogLevel              string        `env:"MG_MQTT_ADAPTER_LOG_LEVEL"                    envDefault:"info"`
+	MQTTPort              string        `env:"MG_MQTT_ADAPTER_MQTT_PORT"                    envDefault:"1883"`
+	MQTTTargetHost        string        `env:"MG_MQTT_ADAPTER_MQTT_TARGET_HOST"             envDefault:"localhost"`
+	MQTTTargetPort        string        `env:"MG_MQTT_ADAPTER_MQTT_TARGET_PORT"             envDefault:"1883"`
+	MQTTForwarderTimeout  time.Duration `env:"MG_MQTT_ADAPTER_FORWARDER_TIMEOUT"            envDefault:"30s"`
+	MQTTTargetHealthCheck string        `env:"MG_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK"     envDefault:""`
+	MQTTQoS               uint8         `env:"MG_MQTT_ADAPTER_MQTT_QOS"                     envDefault:"1"`
+	HTTPPort              string        `env:"MG_MQTT_ADAPTER_WS_PORT"                      envDefault:"8080"`
+	HTTPTargetHost        string        `env:"MG_MQTT_ADAPTER_WS_TARGET_HOST"               envDefault:"localhost"`
+	HTTPTargetPort        string        `env:"MG_MQTT_ADAPTER_WS_TARGET_PORT"               envDefault:"8080"`
+	HTTPTargetPath        string        `env:"MG_MQTT_ADAPTER_WS_TARGET_PATH"               envDefault:"/mqtt"`
+	Instance              string        `env:"MG_MQTT_ADAPTER_INSTANCE"                     envDefault:""`
+	JaegerURL             string        `env:"MG_JAEGER_URL"                                envDefault:"http://jaeger:14268/api/traces"`
+	BrokerURL             string        `env:"MG_MESSAGE_BROKER_URL"                        envDefault:"nats://localhost:4222"`
+	SendTelemetry         bool          `env:"MG_SEND_TELEMETRY"                            envDefault:"true"`
+	InstanceID            string        `env:"MG_MQTT_ADAPTER_INSTANCE_ID"                  envDefault:""`
+	ESURL                 string        `env:"MG_MQTT_ADAPTER_ES_URL"                       envDefault:"redis://localhost:6379/0"`
+	TraceRatio            float64       `env:"MG_JAEGER_TRACE_RATIO"                        envDefault:"1.0"`
 }
 
 func main() {

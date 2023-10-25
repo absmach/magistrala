@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -6,8 +6,8 @@ package cli
 import (
 	"encoding/json"
 
-	mfclients "github.com/mainflux/mainflux/pkg/clients"
-	mfxsdk "github.com/mainflux/mainflux/pkg/sdk/go"
+	mfclients "github.com/absmach/magistrala/pkg/clients"
+	mfxsdk "github.com/absmach/magistrala/pkg/sdk/go"
 	"github.com/spf13/cobra"
 )
 

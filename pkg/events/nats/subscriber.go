@@ -1,4 +1,4 @@
-// Copyright (c) Mainflux
+// Copyright (c) Magistrala
 // SPDX-License-Identifier: Apache-2.0
 
 package nats
@@ -10,10 +10,10 @@ import (
 	"fmt"
 	"time"
 
-	mflog "github.com/mainflux/mainflux/logger"
-	"github.com/mainflux/mainflux/pkg/events"
-	"github.com/mainflux/mainflux/pkg/messaging"
-	broker "github.com/mainflux/mainflux/pkg/messaging/nats"
+	mflog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/messaging"
+	broker "github.com/absmach/magistrala/pkg/messaging/nats"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 )
@@ -29,7 +29,7 @@ var (
 
 	jsStreamConfig = jetstream.StreamConfig{
 		Name:              "events",
-		Description:       "Mainflux stream for sending and receiving messages in between Mainflux events",
+		Description:       "Magistrala stream for sending and receiving messages in between Magistrala events",
 		Subjects:          []string{"events.>"},
 		Retention:         jetstream.LimitsPolicy,
 		MaxMsgsPerSubject: 1e9,

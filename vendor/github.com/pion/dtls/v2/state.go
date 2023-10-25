@@ -11,7 +11,7 @@ import (
 	"github.com/pion/dtls/v2/pkg/crypto/elliptic"
 	"github.com/pion/dtls/v2/pkg/crypto/prf"
 	"github.com/pion/dtls/v2/pkg/protocol/handshake"
-	"github.com/pion/transport/v2/replaydetector"
+	"github.com/pion/transport/v3/replaydetector"
 )
 
 // State holds the dtls connection state and implements both encoding.BinaryMarshaler and encoding.BinaryUnmarshaler
@@ -26,6 +26,20 @@ type State struct {
 	PeerCertificates      [][]byte
 	IdentityHint          []byte
 	SessionID             []byte
+
+	// Connection Identifiers must be negotiated afresh on session resumption.
+	// https://datatracker.ietf.org/doc/html/rfc9146#name-the-connection_id-extension
+
+	// localConnectionID is the locally generated connection ID that is expected
+	// to be received from the remote endpoint.
+	// For a server, this is the connection ID sent in ServerHello.
+	// For a client, this is the connection ID sent in the ClientHello.
+	localConnectionID []byte
+	// remoteConnectionID is the connection ID that the remote endpoint
+	// specifies should be sent.
+	// For a server, this is the connection ID received in the ClientHello.
+	// For a client, this is the connection ID received in the ServerHello.
+	remoteConnectionID []byte
 
 	isClient bool
 
@@ -62,6 +76,8 @@ type serializedState struct {
 	PeerCertificates      [][]byte
 	IdentityHint          []byte
 	SessionID             []byte
+	LocalConnectionID     []byte
+	RemoteConnectionID    []byte
 	IsClient              bool
 }
 
@@ -91,6 +107,8 @@ func (s *State) serialize() *serializedState {
 		PeerCertificates:      s.PeerCertificates,
 		IdentityHint:          s.IdentityHint,
 		SessionID:             s.SessionID,
+		LocalConnectionID:     s.localConnectionID,
+		RemoteConnectionID:    s.remoteConnectionID,
 		IsClient:              s.isClient,
 	}
 }
@@ -127,7 +145,13 @@ func (s *State) deserialize(serialized serializedState) {
 
 	// Set remote certificate
 	s.PeerCertificates = serialized.PeerCertificates
+
 	s.IdentityHint = serialized.IdentityHint
+
+	// Set local and remote connection IDs
+	s.localConnectionID = serialized.LocalConnectionID
+	s.remoteConnectionID = serialized.RemoteConnectionID
+
 	s.SessionID = serialized.SessionID
 }
 

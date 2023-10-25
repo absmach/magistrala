@@ -173,7 +173,7 @@ func flight5Generate(c flightConn, state *State, cache *handshakeCache, cfg *han
 		merged = append(merged, raw...)
 	}
 
-	if alertPtr, err := initalizeCipherSuite(state, cache, cfg, serverKeyExchange, merged); err != nil {
+	if alertPtr, err := initializeCipherSuite(state, cache, cfg, serverKeyExchange, merged); err != nil {
 		return nil, alertPtr, err
 	}
 
@@ -277,6 +277,7 @@ func flight5Generate(c flightConn, state *State, cache *handshakeCache, cfg *han
 					},
 				},
 			},
+			shouldWrapCID:            len(state.remoteConnectionID) > 0,
 			shouldEncrypt:            true,
 			resetLocalSequenceNumber: true,
 		})
@@ -284,7 +285,7 @@ func flight5Generate(c flightConn, state *State, cache *handshakeCache, cfg *han
 	return pkts, nil, nil
 }
 
-func initalizeCipherSuite(state *State, cache *handshakeCache, cfg *handshakeConfig, h *handshake.MessageServerKeyExchange, sendingPlainText []byte) (*alert.Alert, error) { //nolint:gocognit
+func initializeCipherSuite(state *State, cache *handshakeCache, cfg *handshakeConfig, h *handshake.MessageServerKeyExchange, sendingPlainText []byte) (*alert.Alert, error) { //nolint:gocognit
 	if state.cipherSuite.IsInitialized() {
 		return nil, nil //nolint
 	}

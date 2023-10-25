@@ -103,11 +103,11 @@ func (c *AesCcm) Encrypt(pkt *recordlayer.RecordLayer, raw []byte) ([]byte, erro
 }
 
 // Decrypt decrypts a single TLS RecordLayer
-func (c *AesCcm) Decrypt(raw []byte) ([]byte, error) {
+func (c *AesCcm) Decrypt(h recordlayer.Header, raw []byte) ([]byte, error) {
 	cipherSuite, ok := c.ccm.Load().(*ciphersuite.CCM)
 	if !ok {
 		return nil, fmt.Errorf("%w, unable to decrypt", errCipherSuiteNotInit)
 	}
 
-	return cipherSuite.Decrypt(raw)
+	return cipherSuite.Decrypt(h, raw)
 }

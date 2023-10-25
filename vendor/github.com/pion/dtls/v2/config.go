@@ -176,6 +176,26 @@ type Config struct {
 	// skip hello verify phase and receive ServerHello after initial ClientHello.
 	// This have implication on DoS attack resistance.
 	InsecureSkipVerifyHello bool
+
+	// ConnectionIDGenerator generates connection identifiers that should be
+	// sent by the remote party if it supports the DTLS Connection Identifier
+	// extension, as determined during the handshake. Generated connection
+	// identifiers must always have the same length. Returning a zero-length
+	// connection identifier indicates that the local party supports sending
+	// connection identifiers but does not require the remote party to send
+	// them. A nil ConnectionIDGenerator indicates that connection identifiers
+	// are not supported.
+	// https://datatracker.ietf.org/doc/html/rfc9146
+	ConnectionIDGenerator func() []byte
+
+	// PaddingLengthGenerator generates the number of padding bytes used to
+	// inflate ciphertext size in order to obscure content size from observers.
+	// The length of the content is passed to the generator such that both
+	// deterministic and random padding schemes can be applied while not
+	// exceeding maximum record size.
+	// If no PaddingLengthGenerator is specified, padding will not be applied.
+	// https://datatracker.ietf.org/doc/html/rfc9146#section-4
+	PaddingLengthGenerator func(uint) uint
 }
 
 func defaultConnectContextMaker() (context.Context, func()) {

@@ -8,8 +8,16 @@ import (
 	"encoding/binary"
 	"errors"
 
+	"github.com/pion/dtls/v2/internal/util"
 	"github.com/pion/dtls/v2/pkg/protocol"
 	"github.com/pion/dtls/v2/pkg/protocol/recordlayer"
+	"golang.org/x/crypto/cryptobyte"
+)
+
+const (
+	// 8 bytes of 0xff.
+	// https://datatracker.ietf.org/doc/html/rfc9146#name-record-payload-protection
+	seqNumPlaceholder = 0xffffffffffffffff
 )
 
 var (
@@ -21,6 +29,7 @@ var (
 
 func generateAEADAdditionalData(h *recordlayer.Header, payloadLen int) []byte {
 	var additionalData [13]byte
+
 	// SequenceNumber MUST be set first
 	// we only want uint48, clobbering an extra 2 (using uint64, Golang doesn't have uint48)
 	binary.BigEndian.PutUint64(additionalData[:], h.SequenceNumber)
@@ -31,6 +40,25 @@ func generateAEADAdditionalData(h *recordlayer.Header, payloadLen int) []byte {
 	binary.BigEndian.PutUint16(additionalData[len(additionalData)-2:], uint16(payloadLen))
 
 	return additionalData[:]
+}
+
+// generateAEADAdditionalDataCID generates additional data for AEAD ciphers
+// according to https://datatracker.ietf.org/doc/html/rfc9146#name-aead-ciphers
+func generateAEADAdditionalDataCID(h *recordlayer.Header, payloadLen int) []byte {
+	var b cryptobyte.Builder
+
+	b.AddUint64(seqNumPlaceholder)
+	b.AddUint8(uint8(protocol.ContentTypeConnectionID))
+	b.AddUint8(uint8(len(h.ConnectionID)))
+	b.AddUint8(uint8(protocol.ContentTypeConnectionID))
+	b.AddUint8(h.Version.Major)
+	b.AddUint8(h.Version.Minor)
+	b.AddUint16(h.Epoch)
+	util.AddUint48(&b, h.SequenceNumber)
+	b.AddBytes(h.ConnectionID)
+	b.AddUint16(uint16(payloadLen))
+
+	return b.BytesOrPanic()
 }
 
 // examinePadding returns, in constant time, the length of the padding to remove

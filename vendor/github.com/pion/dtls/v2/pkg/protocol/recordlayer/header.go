@@ -17,11 +17,16 @@ type Header struct {
 	Version        protocol.Version
 	Epoch          uint16
 	SequenceNumber uint64 // uint48 in spec
+
+	// Optional Fields
+	ConnectionID []byte
 }
 
 // RecordLayer enums
 const (
-	HeaderSize        = 13
+	// FixedHeaderSize is the size of a DTLS record header when connection IDs
+	// are not in use.
+	FixedHeaderSize   = 13
 	MaxSequenceNumber = 0x0000FFFFFFFFFFFF
 )
 
@@ -31,22 +36,33 @@ func (h *Header) Marshal() ([]byte, error) {
 		return nil, errSequenceNumberOverflow
 	}
 
-	out := make([]byte, HeaderSize)
+	hs := FixedHeaderSize + len(h.ConnectionID)
+
+	out := make([]byte, hs)
 	out[0] = byte(h.ContentType)
 	out[1] = h.Version.Major
 	out[2] = h.Version.Minor
 	binary.BigEndian.PutUint16(out[3:], h.Epoch)
 	util.PutBigEndianUint48(out[5:], h.SequenceNumber)
-	binary.BigEndian.PutUint16(out[HeaderSize-2:], h.ContentLen)
+	copy(out[11:11+len(h.ConnectionID)], h.ConnectionID)
+	binary.BigEndian.PutUint16(out[hs-2:], h.ContentLen)
 	return out, nil
 }
 
 // Unmarshal populates a TLS RecordLayer Header from binary
 func (h *Header) Unmarshal(data []byte) error {
-	if len(data) < HeaderSize {
+	if len(data) < FixedHeaderSize {
 		return errBufferTooSmall
 	}
 	h.ContentType = protocol.ContentType(data[0])
+	if h.ContentType == protocol.ContentTypeConnectionID {
+		// If a CID was expected the ConnectionID should have been initialized.
+		if len(data) < FixedHeaderSize+len(h.ConnectionID) {
+			return errBufferTooSmall
+		}
+		h.ConnectionID = data[11 : 11+len(h.ConnectionID)]
+	}
+
 	h.Version.Major = data[1]
 	h.Version.Minor = data[2]
 	h.Epoch = binary.BigEndian.Uint16(data[3:])
@@ -61,4 +77,9 @@ func (h *Header) Unmarshal(data []byte) error {
 	}
 
 	return nil
+}
+
+// Size returns the total size of the header.
+func (h *Header) Size() int {
+	return FixedHeaderSize + len(h.ConnectionID)
 }

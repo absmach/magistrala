@@ -44,12 +44,14 @@ func (s *SupportedPointFormats) Marshal() ([]byte, error) {
 func (s *SupportedPointFormats) Unmarshal(data []byte) error {
 	if len(data) <= supportedPointFormatsSize {
 		return errBufferTooSmall
-	} else if TypeValue(binary.BigEndian.Uint16(data)) != s.TypeValue() {
+	}
+
+	if TypeValue(binary.BigEndian.Uint16(data)) != s.TypeValue() {
 		return errInvalidExtensionType
 	}
 
-	pointFormatCount := int(binary.BigEndian.Uint16(data[4:]))
-	if supportedGroupsHeaderSize+(pointFormatCount) > len(data) {
+	pointFormatCount := int(data[4])
+	if supportedPointFormatsSize+pointFormatCount > len(data) {
 		return errLengthMismatch
 	}
 

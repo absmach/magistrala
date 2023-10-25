@@ -4,6 +4,7 @@
 package dtls
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -21,9 +22,9 @@ import (
 	"github.com/pion/dtls/v2/pkg/protocol/handshake"
 	"github.com/pion/dtls/v2/pkg/protocol/recordlayer"
 	"github.com/pion/logging"
-	"github.com/pion/transport/v2/connctx"
-	"github.com/pion/transport/v2/deadline"
-	"github.com/pion/transport/v2/replaydetector"
+	"github.com/pion/transport/v3/deadline"
+	"github.com/pion/transport/v3/netctx"
+	"github.com/pion/transport/v3/replaydetector"
 )
 
 const (
@@ -45,21 +46,27 @@ func invalidKeyingLabels() map[string]bool {
 	}
 }
 
+type addrPkt struct {
+	rAddr net.Addr
+	data  []byte
+}
+
 // Conn represents a DTLS connection
 type Conn struct {
-	lock           sync.RWMutex     // Internal lock (must not be public)
-	nextConn       connctx.ConnCtx  // Embedded Conn, typically a udpconn we read/write from
-	fragmentBuffer *fragmentBuffer  // out-of-order and missing fragment handling
-	handshakeCache *handshakeCache  // caching of handshake messages for verifyData generation
-	decrypted      chan interface{} // Decrypted Application Data or error, pull by calling `Read`
-
-	state State // Internal state
+	lock           sync.RWMutex      // Internal lock (must not be public)
+	nextConn       netctx.PacketConn // Embedded Conn, typically a udpconn we read/write from
+	fragmentBuffer *fragmentBuffer   // out-of-order and missing fragment handling
+	handshakeCache *handshakeCache   // caching of handshake messages for verifyData generation
+	decrypted      chan interface{}  // Decrypted Application Data or error, pull by calling `Read`
+	rAddr          net.Addr
+	state          State // Internal state
 
 	maximumTransmissionUnit int
+	paddingLengthGenerator  func(uint) uint
 
 	handshakeCompletedSuccessfully atomic.Value
 
-	encryptedPackets [][]byte
+	encryptedPackets []addrPkt
 
 	connectionClosedByUser bool
 	closeLock              sync.Mutex
@@ -81,9 +88,8 @@ type Conn struct {
 	replayProtectionWindow uint
 }
 
-func createConn(ctx context.Context, nextConn net.Conn, config *Config, isClient bool, initialState *State) (*Conn, error) {
-	err := validateConfig(config)
-	if err != nil {
+func createConn(ctx context.Context, nextConn net.PacketConn, rAddr net.Addr, config *Config, isClient bool, initialState *State) (*Conn, error) {
+	if err := validateConfig(config); err != nil {
 		return nil, err
 	}
 
@@ -123,11 +129,18 @@ func createConn(ctx context.Context, nextConn net.Conn, config *Config, isClient
 		replayProtectionWindow = defaultReplayProtectionWindow
 	}
 
+	paddingLengthGenerator := config.PaddingLengthGenerator
+	if paddingLengthGenerator == nil {
+		paddingLengthGenerator = func(uint) uint { return 0 }
+	}
+
 	c := &Conn{
-		nextConn:                connctx.New(nextConn),
+		rAddr:                   rAddr,
+		nextConn:                netctx.NewPacketConn(nextConn),
 		fragmentBuffer:          newFragmentBuffer(),
 		handshakeCache:          newHandshakeCache(),
 		maximumTransmissionUnit: mtu,
+		paddingLengthGenerator:  paddingLengthGenerator,
 
 		decrypted: make(chan interface{}, 1),
 		log:       logger,
@@ -188,6 +201,7 @@ func createConn(ctx context.Context, nextConn net.Conn, config *Config, isClient
 		localGetCertificate:         config.GetCertificate,
 		localGetClientCertificate:   config.GetClientCertificate,
 		insecureSkipHelloVerify:     config.InsecureSkipVerifyHello,
+		connectionIDGenerator:       config.ConnectionIDGenerator,
 	}
 
 	// rfc5246#section-7.4.3
@@ -234,44 +248,49 @@ func createConn(ctx context.Context, nextConn net.Conn, config *Config, isClient
 // Dial connects to the given network address and establishes a DTLS connection on top.
 // Connection handshake will timeout using ConnectContextMaker in the Config.
 // If you want to specify the timeout duration, use DialWithContext() instead.
-func Dial(network string, raddr *net.UDPAddr, config *Config) (*Conn, error) {
+func Dial(network string, rAddr *net.UDPAddr, config *Config) (*Conn, error) {
 	ctx, cancel := config.connectContextMaker()
 	defer cancel()
 
-	return DialWithContext(ctx, network, raddr, config)
+	return DialWithContext(ctx, network, rAddr, config)
 }
 
 // Client establishes a DTLS connection over an existing connection.
 // Connection handshake will timeout using ConnectContextMaker in the Config.
 // If you want to specify the timeout duration, use ClientWithContext() instead.
-func Client(conn net.Conn, config *Config) (*Conn, error) {
+func Client(conn net.PacketConn, rAddr net.Addr, config *Config) (*Conn, error) {
 	ctx, cancel := config.connectContextMaker()
 	defer cancel()
 
-	return ClientWithContext(ctx, conn, config)
+	return ClientWithContext(ctx, conn, rAddr, config)
 }
 
 // Server listens for incoming DTLS connections.
 // Connection handshake will timeout using ConnectContextMaker in the Config.
 // If you want to specify the timeout duration, use ServerWithContext() instead.
-func Server(conn net.Conn, config *Config) (*Conn, error) {
+func Server(conn net.PacketConn, rAddr net.Addr, config *Config) (*Conn, error) {
 	ctx, cancel := config.connectContextMaker()
 	defer cancel()
 
-	return ServerWithContext(ctx, conn, config)
+	return ServerWithContext(ctx, conn, rAddr, config)
 }
 
-// DialWithContext connects to the given network address and establishes a DTLS connection on top.
-func DialWithContext(ctx context.Context, network string, raddr *net.UDPAddr, config *Config) (*Conn, error) {
-	pConn, err := net.DialUDP(network, nil, raddr)
+// DialWithContext connects to the given network address and establishes a DTLS
+// connection on top.
+func DialWithContext(ctx context.Context, network string, rAddr *net.UDPAddr, config *Config) (*Conn, error) {
+	// net.ListenUDP is used rather than net.DialUDP as the latter prevents the
+	// use of net.PacketConn.WriteTo.
+	// https://github.com/golang/go/blob/ce5e37ec21442c6eb13a43e68ca20129102ebac0/src/net/udpsock_posix.go#L115
+	pConn, err := net.ListenUDP(network, nil)
 	if err != nil {
 		return nil, err
 	}
-	return ClientWithContext(ctx, pConn, config)
+
+	return ClientWithContext(ctx, pConn, rAddr, config)
 }
 
 // ClientWithContext establishes a DTLS connection over an existing connection.
-func ClientWithContext(ctx context.Context, conn net.Conn, config *Config) (*Conn, error) {
+func ClientWithContext(ctx context.Context, conn net.PacketConn, rAddr net.Addr, config *Config) (*Conn, error) {
 	switch {
 	case config == nil:
 		return nil, errNoConfigProvided
@@ -279,16 +298,16 @@ func ClientWithContext(ctx context.Context, conn net.Conn, config *Config) (*Con
 		return nil, errPSKAndIdentityMustBeSetForClient
 	}
 
-	return createConn(ctx, conn, config, true, nil)
+	return createConn(ctx, conn, rAddr, config, true, nil)
 }
 
 // ServerWithContext listens for incoming DTLS connections.
-func ServerWithContext(ctx context.Context, conn net.Conn, config *Config) (*Conn, error) {
+func ServerWithContext(ctx context.Context, conn net.PacketConn, rAddr net.Addr, config *Config) (*Conn, error) {
 	if config == nil {
 		return nil, errNoConfigProvided
 	}
 
-	return createConn(ctx, conn, config, false, nil)
+	return createConn(ctx, conn, rAddr, config, false, nil)
 }
 
 // Read reads data from the connection.
@@ -352,6 +371,7 @@ func (c *Conn) Write(p []byte) (int, error) {
 					Data: p,
 				},
 			},
+			shouldWrapCID: len(c.state.remoteConnectionID) > 0,
 			shouldEncrypt: true,
 		},
 	})
@@ -400,7 +420,8 @@ func (c *Conn) writePackets(ctx context.Context, pkts []*packet) error {
 			c.log.Tracef("[handshake:%v] -> %s (epoch: %d, seq: %d)",
 				srvCliStr(c.state.isClient), h.Header.Type.String(),
 				p.record.Header.Epoch, h.Header.MessageSequence)
-			c.handshakeCache.push(handshakeRaw[recordlayer.HeaderSize:], p.record.Header.Epoch, h.Header.MessageSequence, h.Header.Type, c.state.isClient)
+
+			c.handshakeCache.push(handshakeRaw[recordlayer.FixedHeaderSize:], p.record.Header.Epoch, h.Header.MessageSequence, h.Header.Type, c.state.isClient)
 
 			rawHandshakePackets, err := c.processHandshakePacket(p, h)
 			if err != nil {
@@ -421,7 +442,7 @@ func (c *Conn) writePackets(ctx context.Context, pkts []*packet) error {
 	compactedRawPackets := c.compactRawPackets(rawPackets)
 
 	for _, compactedRawPackets := range compactedRawPackets {
-		if _, err := c.nextConn.WriteContext(ctx, compactedRawPackets); err != nil {
+		if _, err := c.nextConn.WriteToContext(ctx, compactedRawPackets, c.rAddr); err != nil {
 			return netError(err)
 		}
 	}
@@ -465,9 +486,44 @@ func (c *Conn) processPacket(p *packet) ([]byte, error) {
 	}
 	p.record.Header.SequenceNumber = seq
 
-	rawPacket, err := p.record.Marshal()
-	if err != nil {
-		return nil, err
+	var rawPacket []byte
+	if p.shouldWrapCID {
+		// Record must be marshaled to populate fields used in inner plaintext.
+		if _, err := p.record.Marshal(); err != nil {
+			return nil, err
+		}
+		content, err := p.record.Content.Marshal()
+		if err != nil {
+			return nil, err
+		}
+		inner := &recordlayer.InnerPlaintext{
+			Content:  content,
+			RealType: p.record.Header.ContentType,
+		}
+		rawInner, err := inner.Marshal() //nolint:govet
+		if err != nil {
+			return nil, err
+		}
+		cidHeader := &recordlayer.Header{
+			Version:        p.record.Header.Version,
+			ContentType:    protocol.ContentTypeConnectionID,
+			Epoch:          p.record.Header.Epoch,
+			ContentLen:     uint16(len(rawInner)),
+			ConnectionID:   c.state.remoteConnectionID,
+			SequenceNumber: p.record.Header.SequenceNumber,
+		}
+		rawPacket, err = cidHeader.Marshal()
+		if err != nil {
+			return nil, err
+		}
+		p.record.Header = *cidHeader
+		rawPacket = append(rawPacket, rawInner...)
+	} else {
+		var err error
+		rawPacket, err = p.record.Marshal()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if p.shouldEncrypt {
@@ -499,22 +555,49 @@ func (c *Conn) processHandshakePacket(p *packet, h *handshake.Handshake) ([][]by
 			return nil, errSequenceNumberOverflow
 		}
 
-		recordlayerHeader := &recordlayer.Header{
-			Version:        p.record.Header.Version,
-			ContentType:    p.record.Header.ContentType,
-			ContentLen:     uint16(len(handshakeFragment)),
-			Epoch:          p.record.Header.Epoch,
-			SequenceNumber: seq,
+		var rawPacket []byte
+		if p.shouldWrapCID {
+			inner := &recordlayer.InnerPlaintext{
+				Content:  handshakeFragment,
+				RealType: protocol.ContentTypeHandshake,
+				Zeros:    c.paddingLengthGenerator(uint(len(handshakeFragment))),
+			}
+			rawInner, err := inner.Marshal() //nolint:govet
+			if err != nil {
+				return nil, err
+			}
+			cidHeader := &recordlayer.Header{
+				Version:        p.record.Header.Version,
+				ContentType:    protocol.ContentTypeConnectionID,
+				Epoch:          p.record.Header.Epoch,
+				ContentLen:     uint16(len(rawInner)),
+				ConnectionID:   c.state.remoteConnectionID,
+				SequenceNumber: p.record.Header.SequenceNumber,
+			}
+			rawPacket, err = cidHeader.Marshal()
+			if err != nil {
+				return nil, err
+			}
+			p.record.Header = *cidHeader
+			rawPacket = append(rawPacket, rawInner...)
+		} else {
+			recordlayerHeader := &recordlayer.Header{
+				Version:        p.record.Header.Version,
+				ContentType:    p.record.Header.ContentType,
+				ContentLen:     uint16(len(handshakeFragment)),
+				Epoch:          p.record.Header.Epoch,
+				SequenceNumber: seq,
+			}
+
+			rawPacket, err = recordlayerHeader.Marshal()
+			if err != nil {
+				return nil, err
+			}
+
+			p.record.Header = *recordlayerHeader
+			rawPacket = append(rawPacket, handshakeFragment...)
 		}
 
-		rawPacket, err := recordlayerHeader.Marshal()
-		if err != nil {
-			return nil, err
-		}
-
-		p.record.Header = *recordlayerHeader
-
-		rawPacket = append(rawPacket, handshakeFragment...)
 		if p.shouldEncrypt {
 			var err error
 			rawPacket, err = c.state.cipherSuite.Encrypt(p.record, rawPacket)
@@ -585,19 +668,19 @@ func (c *Conn) readAndBuffer(ctx context.Context) error {
 	defer poolReadBuffer.Put(bufptr)
 
 	b := *bufptr
-	i, err := c.nextConn.ReadContext(ctx, b)
+	i, rAddr, err := c.nextConn.ReadFromContext(ctx, b)
 	if err != nil {
 		return netError(err)
 	}
 
-	pkts, err := recordlayer.UnpackDatagram(b[:i])
+	pkts, err := recordlayer.ContentAwareUnpackDatagram(b[:i], len(c.state.localConnectionID))
 	if err != nil {
 		return err
 	}
 
 	var hasHandshake bool
 	for _, p := range pkts {
-		hs, alert, err := c.handleIncomingPacket(ctx, p, true)
+		hs, alert, err := c.handleIncomingPacket(ctx, p, rAddr, true)
 		if alert != nil {
 			if alertErr := c.notify(ctx, alert.Level, alert.Description); alertErr != nil {
 				if err == nil {
@@ -605,17 +688,16 @@ func (c *Conn) readAndBuffer(ctx context.Context) error {
 				}
 			}
 		}
-		if hs {
-			hasHandshake = true
-		}
 
 		var e *alertError
-		if errors.As(err, &e) {
-			if e.IsFatalOrCloseNotify() {
-				return e
-			}
-		} else if err != nil {
+		if errors.As(err, &e) && e.IsFatalOrCloseNotify() {
 			return e
+		}
+		if err != nil {
+			return err
+		}
+		if hs {
+			hasHandshake = true
 		}
 	}
 	if hasHandshake {
@@ -636,7 +718,7 @@ func (c *Conn) handleQueuedPackets(ctx context.Context) error {
 	c.encryptedPackets = nil
 
 	for _, p := range pkts {
-		_, alert, err := c.handleIncomingPacket(ctx, p, false) // don't re-enqueue
+		_, alert, err := c.handleIncomingPacket(ctx, p.data, p.rAddr, false) // don't re-enqueue
 		if alert != nil {
 			if alertErr := c.notify(ctx, alert.Level, alert.Description); alertErr != nil {
 				if err == nil {
@@ -645,19 +727,23 @@ func (c *Conn) handleQueuedPackets(ctx context.Context) error {
 			}
 		}
 		var e *alertError
-		if errors.As(err, &e) {
-			if e.IsFatalOrCloseNotify() {
-				return e
-			}
-		} else if err != nil {
+		if errors.As(err, &e) && e.IsFatalOrCloseNotify() {
 			return e
+		}
+		if err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-func (c *Conn) handleIncomingPacket(ctx context.Context, buf []byte, enqueue bool) (bool, *alert.Alert, error) { //nolint:gocognit
+func (c *Conn) handleIncomingPacket(ctx context.Context, buf []byte, rAddr net.Addr, enqueue bool) (bool, *alert.Alert, error) { //nolint:gocognit
 	h := &recordlayer.Header{}
+	// Set connection ID size so that records of content type tls12_cid will
+	// be parsed correctly.
+	if len(c.state.localConnectionID) > 0 {
+		h.ConnectionID = make([]byte, len(c.state.localConnectionID))
+	}
 	if err := h.Unmarshal(buf); err != nil {
 		// Decode error must be silently discarded
 		// [RFC6347 Section-4.1.2.7]
@@ -676,7 +762,7 @@ func (c *Conn) handleIncomingPacket(ctx context.Context, buf []byte, enqueue boo
 		}
 		if enqueue {
 			c.log.Debug("received packet of next epoch, queuing packet")
-			c.encryptedPackets = append(c.encryptedPackets, buf)
+			c.encryptedPackets = append(c.encryptedPackets, addrPkt{rAddr, buf})
 		}
 		return false, nil, nil
 	}
@@ -695,20 +781,64 @@ func (c *Conn) handleIncomingPacket(ctx context.Context, buf []byte, enqueue boo
 		return false, nil, nil
 	}
 
+	// originalCID indicates whether the original record had content type
+	// Connection ID.
+	originalCID := false
+
 	// Decrypt
 	if h.Epoch != 0 {
 		if c.state.cipherSuite == nil || !c.state.cipherSuite.IsInitialized() {
 			if enqueue {
-				c.encryptedPackets = append(c.encryptedPackets, buf)
+				c.encryptedPackets = append(c.encryptedPackets, addrPkt{rAddr, buf})
 				c.log.Debug("handshake not finished, queuing packet")
 			}
 			return false, nil, nil
 		}
 
+		// If a connection identifier had been negotiated and encryption is
+		// enabled, the connection identifier MUST be sent.
+		if len(c.state.localConnectionID) > 0 && h.ContentType != protocol.ContentTypeConnectionID {
+			c.log.Debug("discarded packet missing connection ID after value negotiated")
+			return false, nil, nil
+		}
+
 		var err error
-		buf, err = c.state.cipherSuite.Decrypt(buf)
+		var hdr recordlayer.Header
+		if h.ContentType == protocol.ContentTypeConnectionID {
+			hdr.ConnectionID = make([]byte, len(c.state.localConnectionID))
+		}
+		buf, err = c.state.cipherSuite.Decrypt(hdr, buf)
 		if err != nil {
 			c.log.Debugf("%s: decrypt failed: %s", srvCliStr(c.state.isClient), err)
+			return false, nil, nil
+		}
+		// If this is a connection ID record, make it look like a normal record for
+		// further processing.
+		if h.ContentType == protocol.ContentTypeConnectionID {
+			originalCID = true
+			ip := &recordlayer.InnerPlaintext{}
+			if err := ip.Unmarshal(buf[h.Size():]); err != nil { //nolint:govet
+				c.log.Debugf("unpacking inner plaintext failed: %s", err)
+				return false, nil, nil
+			}
+			unpacked := &recordlayer.Header{
+				ContentType:    ip.RealType,
+				ContentLen:     uint16(len(ip.Content)),
+				Version:        h.Version,
+				Epoch:          h.Epoch,
+				SequenceNumber: h.SequenceNumber,
+			}
+			buf, err = unpacked.Marshal()
+			if err != nil {
+				c.log.Debugf("converting CID record to inner plaintext failed: %s", err)
+				return false, nil, nil
+			}
+			buf = append(buf, ip.Content...)
+		}
+
+		// If connection ID does not match discard the packet.
+		if !bytes.Equal(c.state.localConnectionID, h.ConnectionID) {
+			c.log.Debug("unexpected connection ID")
 			return false, nil, nil
 		}
 	}
@@ -738,6 +868,7 @@ func (c *Conn) handleIncomingPacket(ctx context.Context, buf []byte, enqueue boo
 		return false, &alert.Alert{Level: alert.Fatal, Description: alert.DecodeError}, err
 	}
 
+	isLatestSeqNum := false
 	switch content := r.Content.(type) {
 	case *alert.Alert:
 		c.log.Tracef("%s: <- %s", srvCliStr(c.state.isClient), content.String())
@@ -746,12 +877,12 @@ func (c *Conn) handleIncomingPacket(ctx context.Context, buf []byte, enqueue boo
 			// Respond with a close_notify [RFC5246 Section 7.2.1]
 			a = &alert.Alert{Level: alert.Warning, Description: alert.CloseNotify}
 		}
-		markPacketAsValid()
+		_ = markPacketAsValid()
 		return false, a, &alertError{content}
 	case *protocol.ChangeCipherSpec:
 		if c.state.cipherSuite == nil || !c.state.cipherSuite.IsInitialized() {
 			if enqueue {
-				c.encryptedPackets = append(c.encryptedPackets, buf)
+				c.encryptedPackets = append(c.encryptedPackets, addrPkt{rAddr, buf})
 				c.log.Debugf("CipherSuite not initialized, queuing packet")
 			}
 			return false, nil, nil
@@ -762,14 +893,14 @@ func (c *Conn) handleIncomingPacket(ctx context.Context, buf []byte, enqueue boo
 
 		if c.state.getRemoteEpoch()+1 == newRemoteEpoch {
 			c.setRemoteEpoch(newRemoteEpoch)
-			markPacketAsValid()
+			isLatestSeqNum = markPacketAsValid()
 		}
 	case *protocol.ApplicationData:
 		if h.Epoch == 0 {
 			return false, &alert.Alert{Level: alert.Fatal, Description: alert.UnexpectedMessage}, errApplicationDataEpochZero
 		}
 
-		markPacketAsValid()
+		isLatestSeqNum = markPacketAsValid()
 
 		select {
 		case c.decrypted <- content.Data:
@@ -780,6 +911,18 @@ func (c *Conn) handleIncomingPacket(ctx context.Context, buf []byte, enqueue boo
 	default:
 		return false, &alert.Alert{Level: alert.Fatal, Description: alert.UnexpectedMessage}, fmt.Errorf("%w: %d", errUnhandledContextType, content.ContentType())
 	}
+
+	// Any valid connection ID record is a candidate for updating the remote
+	// address if it is the latest record received.
+	// https://datatracker.ietf.org/doc/html/rfc9146#peer-address-update
+	if originalCID && isLatestSeqNum {
+		if rAddr != c.RemoteAddr() {
+			c.lock.Lock()
+			c.rAddr = rAddr
+			c.lock.Unlock()
+		}
+	}
+
 	return false, nil, nil
 }
 
@@ -810,6 +953,7 @@ func (c *Conn) notify(ctx context.Context, level alert.Level, desc alert.Descrip
 					Description: desc,
 				},
 			},
+			shouldWrapCID: len(c.state.remoteConnectionID) > 0,
 			shouldEncrypt: c.isHandshakeCompletedSuccessfully(),
 		},
 	})
@@ -883,7 +1027,7 @@ func (c *Conn) handshake(ctx context.Context, cfg *handshakeConfig, initialFligh
 					}
 				} else {
 					switch {
-					case errors.Is(err, context.DeadlineExceeded), errors.Is(err, context.Canceled), errors.Is(err, io.EOF):
+					case errors.Is(err, context.DeadlineExceeded), errors.Is(err, context.Canceled), errors.Is(err, io.EOF), errors.Is(err, net.ErrClosed):
 					default:
 						if c.isHandshakeCompletedSuccessfully() {
 							// Keep read loop and pass the read error to Read()
@@ -997,7 +1141,9 @@ func (c *Conn) LocalAddr() net.Addr {
 
 // RemoteAddr implements net.Conn.RemoteAddr
 func (c *Conn) RemoteAddr() net.Addr {
-	return c.nextConn.RemoteAddr()
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+	return c.rAddr
 }
 
 func (c *Conn) sessionKey() []byte {
@@ -1005,7 +1151,7 @@ func (c *Conn) sessionKey() []byte {
 		// As ServerName can be like 0.example.com, it's better to add
 		// delimiter character which is not allowed to be in
 		// neither address or domain name.
-		return []byte(c.nextConn.RemoteAddr().String() + "_" + c.fsm.cfg.serverName)
+		return []byte(c.rAddr.String() + "_" + c.fsm.cfg.serverName)
 	}
 	return c.state.SessionID
 }

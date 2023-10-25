@@ -16,6 +16,8 @@ envsubst '
     ${MF_HTTP_ADAPTER_PORT}
     ${MF_NGINX_MQTT_PORT}
     ${MF_NGINX_MQTTS_PORT}
+    ${MF_NGINX_COAP_PORT}
+    ${MF_NGINX_COAPS_PORT}
     ${MF_WS_ADAPTER_HTTP_PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 
 exec nginx -g "daemon off;"

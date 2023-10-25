@@ -95,7 +95,7 @@ type CipherSuite interface {
 	Init(masterSecret, clientRandom, serverRandom []byte, isClient bool) error
 	IsInitialized() bool
 	Encrypt(pkt *recordlayer.RecordLayer, raw []byte) ([]byte, error)
-	Decrypt(in []byte) ([]byte, error)
+	Decrypt(h recordlayer.Header, in []byte) ([]byte, error)
 }
 
 // CipherSuiteName provides the same functionality as tls.CipherSuiteName

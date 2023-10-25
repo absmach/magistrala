@@ -331,10 +331,9 @@ func (c *Client) ClearPinnedResources() error {
 	return nil
 }
 
-// unpinConnection gracefully unpins the connection associated with the session
-// if there is one. This is done via the pinned connection's
-// UnpinFromTransaction function.
-func (c *Client) unpinConnection() error {
+// UnpinConnection gracefully unpins the connection associated with the session if there is one. This is done via
+// the pinned connection's UnpinFromTransaction function.
+func (c *Client) UnpinConnection() error {
 	if c == nil || c.PinnedConnection == nil {
 		return nil
 	}
@@ -354,12 +353,6 @@ func (c *Client) EndSession() {
 		return
 	}
 	c.Terminated = true
-
-	// Ignore the error when unpinning the connection because we can't do
-	// anything about it if it doesn't work. Typically the only errors that can
-	// happen here indicate that something went wrong with the connection state,
-	// like it wasn't marked as pinned or attempted to return to the wrong pool.
-	_ = c.unpinConnection()
 	c.pool.ReturnSession(c.Server)
 }
 

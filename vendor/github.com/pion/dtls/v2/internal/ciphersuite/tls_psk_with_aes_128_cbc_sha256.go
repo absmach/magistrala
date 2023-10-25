@@ -103,11 +103,11 @@ func (c *TLSPskWithAes128CbcSha256) Encrypt(pkt *recordlayer.RecordLayer, raw []
 }
 
 // Decrypt decrypts a single TLS RecordLayer
-func (c *TLSPskWithAes128CbcSha256) Decrypt(raw []byte) ([]byte, error) {
+func (c *TLSPskWithAes128CbcSha256) Decrypt(h recordlayer.Header, raw []byte) ([]byte, error) {
 	cipherSuite, ok := c.cbc.Load().(*ciphersuite.CBC)
 	if !ok {
 		return nil, fmt.Errorf("%w, unable to decrypt", errCipherSuiteNotInit)
 	}
 
-	return cipherSuite.Decrypt(raw)
+	return cipherSuite.Decrypt(h, raw)
 }

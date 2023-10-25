@@ -564,14 +564,12 @@ func (dve DefaultValueEncoders) ValueMarshalerEncodeValue(_ EncodeContext, vw bs
 		return ValueEncoderError{Name: "ValueMarshalerEncodeValue", Types: []reflect.Type{tValueMarshaler}, Received: val}
 	}
 
-	m, ok := val.Interface().(ValueMarshaler)
-	if !ok {
-		return vw.WriteNull()
+	fn := val.Convert(tValueMarshaler).MethodByName("MarshalBSONValue")
+	returns := fn.Call(nil)
+	if !returns[2].IsNil() {
+		return returns[2].Interface().(error)
 	}
-	t, data, err := m.MarshalBSONValue()
-	if err != nil {
-		return err
-	}
+	t, data := returns[0].Interface().(bsontype.Type), returns[1].Interface().([]byte)
 	return bsonrw.Copier{}.CopyValueFromBytes(vw, t, data)
 }
 
@@ -595,14 +593,12 @@ func (dve DefaultValueEncoders) MarshalerEncodeValue(_ EncodeContext, vw bsonrw.
 		return ValueEncoderError{Name: "MarshalerEncodeValue", Types: []reflect.Type{tMarshaler}, Received: val}
 	}
 
-	m, ok := val.Interface().(Marshaler)
-	if !ok {
-		return vw.WriteNull()
+	fn := val.Convert(tMarshaler).MethodByName("MarshalBSON")
+	returns := fn.Call(nil)
+	if !returns[1].IsNil() {
+		return returns[1].Interface().(error)
 	}
-	data, err := m.MarshalBSON()
-	if err != nil {
-		return err
-	}
+	data := returns[0].Interface().([]byte)
 	return bsonrw.Copier{}.CopyValueFromBytes(vw, bsontype.EmbeddedDocument, data)
 }
 
@@ -626,31 +622,23 @@ func (dve DefaultValueEncoders) ProxyEncodeValue(ec EncodeContext, vw bsonrw.Val
 		return ValueEncoderError{Name: "ProxyEncodeValue", Types: []reflect.Type{tProxy}, Received: val}
 	}
 
-	m, ok := val.Interface().(Proxy)
-	if !ok {
-		return vw.WriteNull()
+	fn := val.Convert(tProxy).MethodByName("ProxyBSON")
+	returns := fn.Call(nil)
+	if !returns[1].IsNil() {
+		return returns[1].Interface().(error)
 	}
-	v, err := m.ProxyBSON()
+	data := returns[0]
+	var encoder ValueEncoder
+	var err error
+	if data.Elem().IsValid() {
+		encoder, err = ec.LookupEncoder(data.Elem().Type())
+	} else {
+		encoder, err = ec.LookupEncoder(nil)
+	}
 	if err != nil {
 		return err
 	}
-	if v == nil {
-		encoder, err := ec.LookupEncoder(nil)
-		if err != nil {
-			return err
-		}
-		return encoder.EncodeValue(ec, vw, reflect.ValueOf(nil))
-	}
-	vv := reflect.ValueOf(v)
-	switch vv.Kind() {
-	case reflect.Ptr, reflect.Interface:
-		vv = vv.Elem()
-	}
-	encoder, err := ec.LookupEncoder(vv.Type())
-	if err != nil {
-		return err
-	}
-	return encoder.EncodeValue(ec, vw, vv)
+	return encoder.EncodeValue(ec, vw, data.Elem())
 }
 
 // JavaScriptEncodeValue is the ValueEncoderFunc for the primitive.JavaScript type.

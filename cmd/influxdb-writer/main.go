@@ -77,7 +77,7 @@ func main() {
 		return
 	}
 
-	tp, err := jaeger.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
+	tp, err := jaeger.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
 		exitCode = 1

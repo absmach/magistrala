@@ -127,7 +127,7 @@ func main() {
 	}
 	defer db.Close()
 
-	tp, err := jaegerclient.NewProvider(svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
+	tp, err := jaegerclient.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to init Jaeger: %s", err))
 		exitCode = 1

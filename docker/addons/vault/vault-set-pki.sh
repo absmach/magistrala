@@ -132,8 +132,8 @@ vaultCleanupFiles
 
 echo "Copying certificate files"
 
-cp -v data/${MG_VAULT_CA_CN}.crt     ${MAINFLUX_DIR}/docker/ssl/certs/mainflux-server.crt
-cp -v data/${MG_VAULT_CA_CN}.key     ${MAINFLUX_DIR}/docker/ssl/certs/mainflux-server.key
+cp -v data/${MG_VAULT_CA_CN}.crt     ${MAINFLUX_DIR}/docker/ssl/certs/magistrala-server.crt
+cp -v data/${MG_VAULT_CA_CN}.key     ${MAINFLUX_DIR}/docker/ssl/certs/magistrala-server.key
 cp -v data/${MG_VAULT_CA_NAME}_int.key        ${MAINFLUX_DIR}/docker/ssl/certs/ca.key
 cp -v data/${MG_VAULT_CA_NAME}_int.crt        ${MAINFLUX_DIR}/docker/ssl/certs/ca.crt
 cp -v data/${MG_VAULT_CA_NAME}_int_bundle.crt ${MAINFLUX_DIR}/docker/ssl/bundle.pem

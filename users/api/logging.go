@@ -44,7 +44,7 @@ func (lm *loggingMiddleware) RegisterClient(ctx context.Context, token string, c
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) IssueToken(ctx context.Context, identity, secret string) (t *mainflux.Token, err error) {
 	defer func(begin time.Time) {
-		message := fmt.Sprintf("Method issue_token of type %s for client %s took %s to complete", t.AccessType, identity, time.Since(begin))
+		message := fmt.Sprintf("Method issue_token of type %s for client %s took %s to complete", t.GetAccessType(), identity, time.Since(begin))
 		if err != nil {
 			lm.logger.Warn(fmt.Sprintf("%s with error: %s.", message, err))
 			return

@@ -6,12 +6,12 @@ package standalone
 import (
 	"context"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/errors"
 	"google.golang.org/grpc"
 )
 
-var _ mainflux.AuthServiceClient = (*singleUserRepo)(nil)
+var _ magistrala.AuthServiceClient = (*singleUserRepo)(nil)
 
 type singleUserRepo struct {
 	id    string
@@ -19,69 +19,69 @@ type singleUserRepo struct {
 }
 
 // NewAuthService creates single user repository for constrained environments.
-func NewAuthService(id, token string) mainflux.AuthServiceClient {
+func NewAuthService(id, token string) magistrala.AuthServiceClient {
 	return singleUserRepo{
 		id:    id,
 		token: token,
 	}
 }
 
-func (repo singleUserRepo) Login(ctx context.Context, in *mainflux.LoginReq, opts ...grpc.CallOption) (*mainflux.Token, error) {
+func (repo singleUserRepo) Login(ctx context.Context, in *magistrala.LoginReq, opts ...grpc.CallOption) (*magistrala.Token, error) {
 	return nil, nil
 }
 
-func (repo singleUserRepo) Refresh(ctx context.Context, in *mainflux.RefreshReq, opts ...grpc.CallOption) (*mainflux.Token, error) {
+func (repo singleUserRepo) Refresh(ctx context.Context, in *magistrala.RefreshReq, opts ...grpc.CallOption) (*magistrala.Token, error) {
 	return nil, nil
 }
 
-func (repo singleUserRepo) Issue(ctx context.Context, in *mainflux.IssueReq, opts ...grpc.CallOption) (*mainflux.Token, error) {
+func (repo singleUserRepo) Issue(ctx context.Context, in *magistrala.IssueReq, opts ...grpc.CallOption) (*magistrala.Token, error) {
 	return nil, nil
 }
 
-func (repo singleUserRepo) Identify(ctx context.Context, in *mainflux.IdentityReq, opts ...grpc.CallOption) (*mainflux.IdentityRes, error) {
+func (repo singleUserRepo) Identify(ctx context.Context, in *magistrala.IdentityReq, opts ...grpc.CallOption) (*magistrala.IdentityRes, error) {
 	if repo.token != in.GetToken() {
 		return nil, errors.ErrAuthentication
 	}
 
-	return &mainflux.IdentityRes{Id: repo.id}, nil
+	return &magistrala.IdentityRes{Id: repo.id}, nil
 }
 
-func (repo singleUserRepo) Authorize(ctx context.Context, in *mainflux.AuthorizeReq, opts ...grpc.CallOption) (*mainflux.AuthorizeRes, error) {
+func (repo singleUserRepo) Authorize(ctx context.Context, in *magistrala.AuthorizeReq, opts ...grpc.CallOption) (*magistrala.AuthorizeRes, error) {
 	if repo.id != in.Subject {
-		return &mainflux.AuthorizeRes{Authorized: false}, errors.ErrAuthorization
+		return &magistrala.AuthorizeRes{Authorized: false}, errors.ErrAuthorization
 	}
 
-	return &mainflux.AuthorizeRes{Authorized: true}, nil
+	return &magistrala.AuthorizeRes{Authorized: true}, nil
 }
 
-func (repo singleUserRepo) AddPolicy(ctx context.Context, in *mainflux.AddPolicyReq, opts ...grpc.CallOption) (*mainflux.AddPolicyRes, error) {
+func (repo singleUserRepo) AddPolicy(ctx context.Context, in *magistrala.AddPolicyReq, opts ...grpc.CallOption) (*magistrala.AddPolicyRes, error) {
 	return nil, nil
 }
 
-func (repo singleUserRepo) DeletePolicy(ctx context.Context, in *mainflux.DeletePolicyReq, opts ...grpc.CallOption) (*mainflux.DeletePolicyRes, error) {
+func (repo singleUserRepo) DeletePolicy(ctx context.Context, in *magistrala.DeletePolicyReq, opts ...grpc.CallOption) (*magistrala.DeletePolicyRes, error) {
 	return nil, nil
 }
 
-func (repo singleUserRepo) ListObjects(ctx context.Context, in *mainflux.ListObjectsReq, opts ...grpc.CallOption) (*mainflux.ListObjectsRes, error) {
+func (repo singleUserRepo) ListObjects(ctx context.Context, in *magistrala.ListObjectsReq, opts ...grpc.CallOption) (*magistrala.ListObjectsRes, error) {
 	return nil, nil
 }
 
-func (repo singleUserRepo) ListAllObjects(ctx context.Context, in *mainflux.ListObjectsReq, opts ...grpc.CallOption) (*mainflux.ListObjectsRes, error) {
+func (repo singleUserRepo) ListAllObjects(ctx context.Context, in *magistrala.ListObjectsReq, opts ...grpc.CallOption) (*magistrala.ListObjectsRes, error) {
 	return nil, nil
 }
 
-func (repo singleUserRepo) CountObjects(ctx context.Context, in *mainflux.CountObjectsReq, opts ...grpc.CallOption) (*mainflux.CountObjectsRes, error) {
+func (repo singleUserRepo) CountObjects(ctx context.Context, in *magistrala.CountObjectsReq, opts ...grpc.CallOption) (*magistrala.CountObjectsRes, error) {
 	return nil, nil
 }
 
-func (repo singleUserRepo) ListSubjects(ctx context.Context, in *mainflux.ListSubjectsReq, opts ...grpc.CallOption) (*mainflux.ListSubjectsRes, error) {
+func (repo singleUserRepo) ListSubjects(ctx context.Context, in *magistrala.ListSubjectsReq, opts ...grpc.CallOption) (*magistrala.ListSubjectsRes, error) {
 	return nil, nil
 }
 
-func (repo singleUserRepo) ListAllSubjects(ctx context.Context, in *mainflux.ListSubjectsReq, opts ...grpc.CallOption) (*mainflux.ListSubjectsRes, error) {
+func (repo singleUserRepo) ListAllSubjects(ctx context.Context, in *magistrala.ListSubjectsReq, opts ...grpc.CallOption) (*magistrala.ListSubjectsRes, error) {
 	return nil, nil
 }
 
-func (repo singleUserRepo) CountSubjects(ctx context.Context, in *mainflux.CountSubjectsReq, opts ...grpc.CallOption) (*mainflux.CountSubjectsRes, error) {
+func (repo singleUserRepo) CountSubjects(ctx context.Context, in *magistrala.CountSubjectsReq, opts ...grpc.CallOption) (*magistrala.CountSubjectsRes, error) {
 	return nil, nil
 }

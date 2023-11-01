@@ -10,7 +10,7 @@ import (
 	"log"
 	"os"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/certs"
 	"github.com/absmach/magistrala/certs/api"
 	vault "github.com/absmach/magistrala/certs/pki"
@@ -145,7 +145,7 @@ func main() {
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, mainflux.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 
@@ -162,7 +162,7 @@ func main() {
 	}
 }
 
-func newService(auth mainflux.AuthServiceClient, db *sqlx.DB, tracer trace.Tracer, logger mflog.Logger, cfg config, dbConfig pgclient.Config, pkiAgent vault.Agent) certs.Service {
+func newService(auth magistrala.AuthServiceClient, db *sqlx.DB, tracer trace.Tracer, logger mflog.Logger, cfg config, dbConfig pgclient.Config, pkiAgent vault.Agent) certs.Service {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	certsRepo := certspg.NewRepository(database, logger)
 	config := mfsdk.Config{

@@ -10,7 +10,7 @@ import (
 	"log"
 	"os"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/consumers"
 	"github.com/absmach/magistrala/consumers/notifiers"
 	"github.com/absmach/magistrala/consumers/notifiers/api"
@@ -151,7 +151,7 @@ func main() {
 	hs := httpserver.New(ctx, cancel, svcName, httpServerConfig, api.MakeHandler(svc, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, mainflux.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 
@@ -168,7 +168,7 @@ func main() {
 	}
 }
 
-func newService(db *sqlx.DB, tracer trace.Tracer, auth mainflux.AuthServiceClient, c config, ec email.Config, logger mflog.Logger) (notifiers.Service, error) {
+func newService(db *sqlx.DB, tracer trace.Tracer, auth magistrala.AuthServiceClient, c config, ec email.Config, logger mflog.Logger) (notifiers.Service, error) {
 	database := notifierpg.NewDatabase(db, tracer)
 	repo := tracing.New(tracer, notifierpg.New(database))
 	idp := ulid.New()

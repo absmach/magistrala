@@ -18,7 +18,7 @@ import (
 	"strings"
 	"testing"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/bootstrap"
 	bsapi "github.com/absmach/magistrala/bootstrap/api"
@@ -168,7 +168,7 @@ func dec(in []byte) ([]byte, error) {
 	return in, nil
 }
 
-func newService(url string, auth mainflux.AuthServiceClient) bootstrap.Service {
+func newService(url string, auth magistrala.AuthServiceClient) bootstrap.Service {
 	things := mocks.NewConfigsRepository()
 	config := mfsdk.Config{
 		ThingsURL: url,
@@ -191,7 +191,7 @@ func generateChannels() map[string]mfgroups.Group {
 	return channels
 }
 
-func newThingsService() (things.Service, mfgroups.Service, mainflux.AuthServiceClient) {
+func newThingsService() (things.Service, mfgroups.Service, magistrala.AuthServiceClient) {
 	auth := new(authmocks.Service)
 	thingCache := thmocks.NewCache()
 	idProvider := uuid.NewMock()

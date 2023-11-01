@@ -7,16 +7,16 @@ import (
 	"context"
 	"time"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
 	"github.com/go-kit/kit/endpoint"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	"google.golang.org/grpc"
 )
 
-const svcName = "mainflux.AuthService"
+const svcName = "magistrala.AuthService"
 
-var _ mainflux.AuthServiceClient = (*grpcClient)(nil)
+var _ magistrala.AuthServiceClient = (*grpcClient)(nil)
 
 type grpcClient struct {
 	issue           endpoint.Endpoint
@@ -36,7 +36,7 @@ type grpcClient struct {
 }
 
 // NewClient returns new gRPC client instance.
-func NewClient(conn *grpc.ClientConn, timeout time.Duration) mainflux.AuthServiceClient {
+func NewClient(conn *grpc.ClientConn, timeout time.Duration) magistrala.AuthServiceClient {
 	return &grpcClient{
 		issue: kitgrpc.NewClient(
 			conn,
@@ -44,7 +44,7 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) mainflux.AuthServic
 			"Issue",
 			encodeIssueRequest,
 			decodeIssueResponse,
-			mainflux.Token{},
+			magistrala.Token{},
 		).Endpoint(),
 		login: kitgrpc.NewClient(
 			conn,
@@ -52,7 +52,7 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) mainflux.AuthServic
 			"Login",
 			encodeLoginRequest,
 			decodeLoginResponse,
-			mainflux.Token{},
+			magistrala.Token{},
 		).Endpoint(),
 		refresh: kitgrpc.NewClient(
 			conn,
@@ -60,7 +60,7 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) mainflux.AuthServic
 			"Refresh",
 			encodeRefreshRequest,
 			decodeRefreshResponse,
-			mainflux.Token{},
+			magistrala.Token{},
 		).Endpoint(),
 		identify: kitgrpc.NewClient(
 			conn,
@@ -68,7 +68,7 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) mainflux.AuthServic
 			"Identify",
 			encodeIdentifyRequest,
 			decodeIdentifyResponse,
-			mainflux.IdentityRes{},
+			magistrala.IdentityRes{},
 		).Endpoint(),
 		authorize: kitgrpc.NewClient(
 			conn,
@@ -76,7 +76,7 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) mainflux.AuthServic
 			"Authorize",
 			encodeAuthorizeRequest,
 			decodeAuthorizeResponse,
-			mainflux.AuthorizeRes{},
+			magistrala.AuthorizeRes{},
 		).Endpoint(),
 		addPolicy: kitgrpc.NewClient(
 			conn,
@@ -84,7 +84,7 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) mainflux.AuthServic
 			"AddPolicy",
 			encodeAddPolicyRequest,
 			decodeAddPolicyResponse,
-			mainflux.AddPolicyRes{},
+			magistrala.AddPolicyRes{},
 		).Endpoint(),
 		deletePolicy: kitgrpc.NewClient(
 			conn,
@@ -92,7 +92,7 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) mainflux.AuthServic
 			"DeletePolicy",
 			encodeDeletePolicyRequest,
 			decodeDeletePolicyResponse,
-			mainflux.DeletePolicyRes{},
+			magistrala.DeletePolicyRes{},
 		).Endpoint(),
 		listObjects: kitgrpc.NewClient(
 			conn,
@@ -100,7 +100,7 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) mainflux.AuthServic
 			"ListObjects",
 			encodeListObjectsRequest,
 			decodeListObjectsResponse,
-			mainflux.ListObjectsRes{},
+			magistrala.ListObjectsRes{},
 		).Endpoint(),
 		listAllObjects: kitgrpc.NewClient(
 			conn,
@@ -108,7 +108,7 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) mainflux.AuthServic
 			"ListAllObjects",
 			encodeListObjectsRequest,
 			decodeListObjectsResponse,
-			mainflux.ListObjectsRes{},
+			magistrala.ListObjectsRes{},
 		).Endpoint(),
 		countObjects: kitgrpc.NewClient(
 			conn,
@@ -116,7 +116,7 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) mainflux.AuthServic
 			"CountObjects",
 			encodeCountObjectsRequest,
 			decodeCountObjectsResponse,
-			mainflux.CountObjectsRes{},
+			magistrala.CountObjectsRes{},
 		).Endpoint(),
 		listSubjects: kitgrpc.NewClient(
 			conn,
@@ -124,7 +124,7 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) mainflux.AuthServic
 			"ListSubjects",
 			encodeListSubjectsRequest,
 			decodeListSubjectsResponse,
-			mainflux.ListSubjectsRes{},
+			magistrala.ListSubjectsRes{},
 		).Endpoint(),
 		listAllSubjects: kitgrpc.NewClient(
 			conn,
@@ -132,7 +132,7 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) mainflux.AuthServic
 			"ListAllSubjects",
 			encodeListSubjectsRequest,
 			decodeListSubjectsResponse,
-			mainflux.ListSubjectsRes{},
+			magistrala.ListSubjectsRes{},
 		).Endpoint(),
 		countSubjects: kitgrpc.NewClient(
 			conn,
@@ -140,14 +140,14 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) mainflux.AuthServic
 			"CountSubjects",
 			encodeCountSubjectsRequest,
 			decodeCountSubjectsResponse,
-			mainflux.CountSubjectsRes{},
+			magistrala.CountSubjectsRes{},
 		).Endpoint(),
 
 		timeout: timeout,
 	}
 }
 
-func (client grpcClient) Issue(ctx context.Context, req *mainflux.IssueReq, _ ...grpc.CallOption) (*mainflux.Token, error) {
+func (client grpcClient) Issue(ctx context.Context, req *magistrala.IssueReq, _ ...grpc.CallOption) (*magistrala.Token, error) {
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
@@ -155,19 +155,19 @@ func (client grpcClient) Issue(ctx context.Context, req *mainflux.IssueReq, _ ..
 	if err != nil {
 		return nil, err
 	}
-	return res.(*mainflux.Token), nil
+	return res.(*magistrala.Token), nil
 }
 
 func encodeIssueRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(issueReq)
-	return &mainflux.IssueReq{Id: req.id, Type: uint32(req.keyType)}, nil
+	return &magistrala.IssueReq{Id: req.id, Type: uint32(req.keyType)}, nil
 }
 
 func decodeIssueResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	return grpcRes, nil
 }
 
-func (client grpcClient) Login(ctx context.Context, req *mainflux.LoginReq, _ ...grpc.CallOption) (*mainflux.Token, error) {
+func (client grpcClient) Login(ctx context.Context, req *magistrala.LoginReq, _ ...grpc.CallOption) (*magistrala.Token, error) {
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
@@ -175,19 +175,19 @@ func (client grpcClient) Login(ctx context.Context, req *mainflux.LoginReq, _ ..
 	if err != nil {
 		return nil, err
 	}
-	return res.(*mainflux.Token), nil
+	return res.(*magistrala.Token), nil
 }
 
 func encodeLoginRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(issueReq)
-	return &mainflux.LoginReq{Id: req.id}, nil
+	return &magistrala.LoginReq{Id: req.id}, nil
 }
 
 func decodeLoginResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	return grpcRes, nil
 }
 
-func (client grpcClient) Refresh(ctx context.Context, req *mainflux.RefreshReq, _ ...grpc.CallOption) (*mainflux.Token, error) {
+func (client grpcClient) Refresh(ctx context.Context, req *magistrala.RefreshReq, _ ...grpc.CallOption) (*magistrala.Token, error) {
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
@@ -195,19 +195,19 @@ func (client grpcClient) Refresh(ctx context.Context, req *mainflux.RefreshReq, 
 	if err != nil {
 		return nil, err
 	}
-	return res.(*mainflux.Token), nil
+	return res.(*magistrala.Token), nil
 }
 
 func encodeRefreshRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(refreshReq)
-	return &mainflux.RefreshReq{Value: req.value}, nil
+	return &magistrala.RefreshReq{Value: req.value}, nil
 }
 
 func decodeRefreshResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	return grpcRes, nil
 }
 
-func (client grpcClient) Identify(ctx context.Context, token *mainflux.IdentityReq, _ ...grpc.CallOption) (*mainflux.IdentityRes, error) {
+func (client grpcClient) Identify(ctx context.Context, token *magistrala.IdentityReq, _ ...grpc.CallOption) (*magistrala.IdentityRes, error) {
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
@@ -217,20 +217,20 @@ func (client grpcClient) Identify(ctx context.Context, token *mainflux.IdentityR
 	}
 
 	ir := res.(identityRes)
-	return &mainflux.IdentityRes{Id: ir.id}, nil
+	return &magistrala.IdentityRes{Id: ir.id}, nil
 }
 
 func encodeIdentifyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(identityReq)
-	return &mainflux.IdentityReq{Token: req.token}, nil
+	return &magistrala.IdentityReq{Token: req.token}, nil
 }
 
 func decodeIdentifyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(*mainflux.IdentityRes)
+	res := grpcRes.(*magistrala.IdentityRes)
 	return identityRes{id: res.GetId()}, nil
 }
 
-func (client grpcClient) Authorize(ctx context.Context, req *mainflux.AuthorizeReq, _ ...grpc.CallOption) (r *mainflux.AuthorizeRes, err error) {
+func (client grpcClient) Authorize(ctx context.Context, req *magistrala.AuthorizeReq, _ ...grpc.CallOption) (r *magistrala.AuthorizeRes, err error) {
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
@@ -245,21 +245,21 @@ func (client grpcClient) Authorize(ctx context.Context, req *mainflux.AuthorizeR
 		Object:      req.GetObject(),
 	})
 	if err != nil {
-		return &mainflux.AuthorizeRes{}, err
+		return &magistrala.AuthorizeRes{}, err
 	}
 
 	ar := res.(authorizeRes)
-	return &mainflux.AuthorizeRes{Authorized: ar.authorized, Id: ar.id}, err
+	return &magistrala.AuthorizeRes{Authorized: ar.authorized, Id: ar.id}, err
 }
 
 func decodeAuthorizeResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(*mainflux.AuthorizeRes)
+	res := grpcRes.(*magistrala.AuthorizeRes)
 	return authorizeRes{authorized: res.Authorized, id: res.Id}, nil
 }
 
 func encodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(authReq)
-	return &mainflux.AuthorizeReq{
+	return &magistrala.AuthorizeReq{
 		Namespace:   req.Namespace,
 		SubjectType: req.SubjectType,
 		Subject:     req.Subject,
@@ -271,7 +271,7 @@ func encodeAuthorizeRequest(_ context.Context, grpcReq interface{}) (interface{}
 	}, nil
 }
 
-func (client grpcClient) AddPolicy(ctx context.Context, in *mainflux.AddPolicyReq, opts ...grpc.CallOption) (*mainflux.AddPolicyRes, error) {
+func (client grpcClient) AddPolicy(ctx context.Context, in *magistrala.AddPolicyReq, opts ...grpc.CallOption) (*magistrala.AddPolicyRes, error) {
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
@@ -285,21 +285,21 @@ func (client grpcClient) AddPolicy(ctx context.Context, in *mainflux.AddPolicyRe
 		Object:      in.GetObject(),
 	})
 	if err != nil {
-		return &mainflux.AddPolicyRes{}, err
+		return &magistrala.AddPolicyRes{}, err
 	}
 
 	apr := res.(addPolicyRes)
-	return &mainflux.AddPolicyRes{Authorized: apr.authorized}, err
+	return &magistrala.AddPolicyRes{Authorized: apr.authorized}, err
 }
 
 func decodeAddPolicyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(*mainflux.AddPolicyRes)
+	res := grpcRes.(*magistrala.AddPolicyRes)
 	return addPolicyRes{authorized: res.Authorized}, nil
 }
 
 func encodeAddPolicyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(policyReq)
-	return &mainflux.AddPolicyReq{
+	return &magistrala.AddPolicyReq{
 		Namespace:   req.Namespace,
 		SubjectType: req.SubjectType,
 		Subject:     req.Subject,
@@ -310,7 +310,7 @@ func encodeAddPolicyRequest(_ context.Context, grpcReq interface{}) (interface{}
 	}, nil
 }
 
-func (client grpcClient) DeletePolicy(ctx context.Context, in *mainflux.DeletePolicyReq, opts ...grpc.CallOption) (*mainflux.DeletePolicyRes, error) {
+func (client grpcClient) DeletePolicy(ctx context.Context, in *magistrala.DeletePolicyReq, opts ...grpc.CallOption) (*magistrala.DeletePolicyRes, error) {
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
@@ -324,21 +324,21 @@ func (client grpcClient) DeletePolicy(ctx context.Context, in *mainflux.DeletePo
 		Object:      in.GetObject(),
 	})
 	if err != nil {
-		return &mainflux.DeletePolicyRes{}, err
+		return &magistrala.DeletePolicyRes{}, err
 	}
 
 	dpr := res.(deletePolicyRes)
-	return &mainflux.DeletePolicyRes{Deleted: dpr.deleted}, err
+	return &magistrala.DeletePolicyRes{Deleted: dpr.deleted}, err
 }
 
 func decodeDeletePolicyResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(*mainflux.DeletePolicyRes)
+	res := grpcRes.(*magistrala.DeletePolicyRes)
 	return deletePolicyRes{deleted: res.GetDeleted()}, nil
 }
 
 func encodeDeletePolicyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(policyReq)
-	return &mainflux.DeletePolicyReq{
+	return &magistrala.DeletePolicyReq{
 		Namespace:   req.Namespace,
 		SubjectType: req.SubjectType,
 		Subject:     req.Subject,
@@ -349,7 +349,7 @@ func encodeDeletePolicyRequest(_ context.Context, grpcReq interface{}) (interfac
 	}, nil
 }
 
-func (client grpcClient) ListObjects(ctx context.Context, in *mainflux.ListObjectsReq, opts ...grpc.CallOption) (*mainflux.ListObjectsRes, error) {
+func (client grpcClient) ListObjects(ctx context.Context, in *magistrala.ListObjectsReq, opts ...grpc.CallOption) (*magistrala.ListObjectsRes, error) {
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
@@ -363,21 +363,21 @@ func (client grpcClient) ListObjects(ctx context.Context, in *mainflux.ListObjec
 		Object:      in.GetObject(),
 	})
 	if err != nil {
-		return &mainflux.ListObjectsRes{}, err
+		return &magistrala.ListObjectsRes{}, err
 	}
 
 	lpr := res.(listObjectsRes)
-	return &mainflux.ListObjectsRes{Policies: lpr.policies}, err
+	return &magistrala.ListObjectsRes{Policies: lpr.policies}, err
 }
 
 func decodeListObjectsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(*mainflux.ListObjectsRes)
+	res := grpcRes.(*magistrala.ListObjectsRes)
 	return listObjectsRes{policies: res.GetPolicies()}, nil
 }
 
 func encodeListObjectsRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(listObjectsReq)
-	return &mainflux.ListObjectsReq{
+	return &magistrala.ListObjectsReq{
 		Namespace:   req.Namespace,
 		SubjectType: req.SubjectType,
 		Subject:     req.Subject,
@@ -388,7 +388,7 @@ func encodeListObjectsRequest(_ context.Context, grpcReq interface{}) (interface
 	}, nil
 }
 
-func (client grpcClient) ListAllObjects(ctx context.Context, in *mainflux.ListObjectsReq, opts ...grpc.CallOption) (*mainflux.ListObjectsRes, error) {
+func (client grpcClient) ListAllObjects(ctx context.Context, in *magistrala.ListObjectsReq, opts ...grpc.CallOption) (*magistrala.ListObjectsRes, error) {
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
@@ -402,14 +402,14 @@ func (client grpcClient) ListAllObjects(ctx context.Context, in *mainflux.ListOb
 		Object:      in.GetObject(),
 	})
 	if err != nil {
-		return &mainflux.ListObjectsRes{}, err
+		return &magistrala.ListObjectsRes{}, err
 	}
 
 	lpr := res.(listObjectsRes)
-	return &mainflux.ListObjectsRes{Policies: lpr.policies}, err
+	return &magistrala.ListObjectsRes{Policies: lpr.policies}, err
 }
 
-func (client grpcClient) CountObjects(ctx context.Context, in *mainflux.CountObjectsReq, opts ...grpc.CallOption) (*mainflux.CountObjectsRes, error) {
+func (client grpcClient) CountObjects(ctx context.Context, in *magistrala.CountObjectsReq, opts ...grpc.CallOption) (*magistrala.CountObjectsRes, error) {
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
@@ -423,21 +423,21 @@ func (client grpcClient) CountObjects(ctx context.Context, in *mainflux.CountObj
 		Object:      in.GetObject(),
 	})
 	if err != nil {
-		return &mainflux.CountObjectsRes{}, err
+		return &magistrala.CountObjectsRes{}, err
 	}
 
 	cp := res.(countObjectsRes)
-	return &mainflux.CountObjectsRes{Count: int64(cp.count)}, err
+	return &magistrala.CountObjectsRes{Count: int64(cp.count)}, err
 }
 
 func decodeCountObjectsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(*mainflux.CountObjectsRes)
+	res := grpcRes.(*magistrala.CountObjectsRes)
 	return countObjectsRes{count: int(res.GetCount())}, nil
 }
 
 func encodeCountObjectsRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(countObjectsReq)
-	return &mainflux.CountObjectsReq{
+	return &magistrala.CountObjectsReq{
 		Namespace:   req.Namespace,
 		SubjectType: req.SubjectType,
 		Subject:     req.Subject,
@@ -448,7 +448,7 @@ func encodeCountObjectsRequest(_ context.Context, grpcReq interface{}) (interfac
 	}, nil
 }
 
-func (client grpcClient) ListSubjects(ctx context.Context, in *mainflux.ListSubjectsReq, opts ...grpc.CallOption) (*mainflux.ListSubjectsRes, error) {
+func (client grpcClient) ListSubjects(ctx context.Context, in *magistrala.ListSubjectsReq, opts ...grpc.CallOption) (*magistrala.ListSubjectsRes, error) {
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
@@ -463,21 +463,21 @@ func (client grpcClient) ListSubjects(ctx context.Context, in *mainflux.ListSubj
 		NextPageToken: in.GetNextPageToken(),
 	})
 	if err != nil {
-		return &mainflux.ListSubjectsRes{}, err
+		return &magistrala.ListSubjectsRes{}, err
 	}
 
 	lpr := res.(listSubjectsRes)
-	return &mainflux.ListSubjectsRes{Policies: lpr.policies}, err
+	return &magistrala.ListSubjectsRes{Policies: lpr.policies}, err
 }
 
 func decodeListSubjectsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(*mainflux.ListSubjectsRes)
+	res := grpcRes.(*magistrala.ListSubjectsRes)
 	return listSubjectsRes{policies: res.GetPolicies()}, nil
 }
 
 func encodeListSubjectsRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(listSubjectsReq)
-	return &mainflux.ListSubjectsReq{
+	return &magistrala.ListSubjectsReq{
 		Namespace:   req.Namespace,
 		SubjectType: req.SubjectType,
 		Subject:     req.Subject,
@@ -488,7 +488,7 @@ func encodeListSubjectsRequest(_ context.Context, grpcReq interface{}) (interfac
 	}, nil
 }
 
-func (client grpcClient) ListAllSubjects(ctx context.Context, in *mainflux.ListSubjectsReq, opts ...grpc.CallOption) (*mainflux.ListSubjectsRes, error) {
+func (client grpcClient) ListAllSubjects(ctx context.Context, in *magistrala.ListSubjectsReq, opts ...grpc.CallOption) (*magistrala.ListSubjectsRes, error) {
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
@@ -502,14 +502,14 @@ func (client grpcClient) ListAllSubjects(ctx context.Context, in *mainflux.ListS
 		Object:      in.GetObject(),
 	})
 	if err != nil {
-		return &mainflux.ListSubjectsRes{}, err
+		return &magistrala.ListSubjectsRes{}, err
 	}
 
 	lpr := res.(listSubjectsRes)
-	return &mainflux.ListSubjectsRes{Policies: lpr.policies}, err
+	return &magistrala.ListSubjectsRes{Policies: lpr.policies}, err
 }
 
-func (client grpcClient) CountSubjects(ctx context.Context, in *mainflux.CountSubjectsReq, opts ...grpc.CallOption) (*mainflux.CountSubjectsRes, error) {
+func (client grpcClient) CountSubjects(ctx context.Context, in *magistrala.CountSubjectsReq, opts ...grpc.CallOption) (*magistrala.CountSubjectsRes, error) {
 	ctx, close := context.WithTimeout(ctx, client.timeout)
 	defer close()
 
@@ -523,21 +523,21 @@ func (client grpcClient) CountSubjects(ctx context.Context, in *mainflux.CountSu
 		Object:      in.GetObject(),
 	})
 	if err != nil {
-		return &mainflux.CountSubjectsRes{}, err
+		return &magistrala.CountSubjectsRes{}, err
 	}
 
 	cp := res.(countSubjectsRes)
-	return &mainflux.CountSubjectsRes{Count: int64(cp.count)}, err
+	return &magistrala.CountSubjectsRes{Count: int64(cp.count)}, err
 }
 
 func decodeCountSubjectsResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res := grpcRes.(*mainflux.CountSubjectsRes)
+	res := grpcRes.(*magistrala.CountSubjectsRes)
 	return countSubjectsRes{count: int(res.GetCount())}, nil
 }
 
 func encodeCountSubjectsRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(countSubjectsReq)
-	return &mainflux.CountSubjectsReq{
+	return &magistrala.CountSubjectsReq{
 		Namespace:   req.Namespace,
 		SubjectType: req.SubjectType,
 		Subject:     req.Subject,

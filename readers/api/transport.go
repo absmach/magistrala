@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/readers"
@@ -49,7 +49,7 @@ const (
 var errUserAccess = errors.New("user has no permission")
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc readers.MessageRepository, uauth mainflux.AuthServiceClient, taauth mainflux.AuthzServiceClient, svcName, instanceID string) http.Handler {
+func MakeHandler(svc readers.MessageRepository, uauth magistrala.AuthServiceClient, taauth magistrala.AuthzServiceClient, svcName, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(encodeError),
 	}
@@ -62,7 +62,7 @@ func MakeHandler(svc readers.MessageRepository, uauth mainflux.AuthServiceClient
 		opts...,
 	))
 
-	mux.GetFunc("/health", mainflux.Health(svcName, instanceID))
+	mux.GetFunc("/health", magistrala.Health(svcName, instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux
@@ -167,7 +167,7 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	w.Header().Set("Content-Type", contentType)
 
-	if ar, ok := response.(mainflux.Response); ok {
+	if ar, ok := response.(magistrala.Response); ok {
 		for k, v := range ar.Headers() {
 			w.Header().Set(k, v)
 		}
@@ -218,10 +218,10 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	}
 }
 
-func authorize(ctx context.Context, req listMessagesReq, uauth mainflux.AuthServiceClient, taauth mainflux.AuthzServiceClient) (err error) {
+func authorize(ctx context.Context, req listMessagesReq, uauth magistrala.AuthServiceClient, taauth magistrala.AuthzServiceClient) (err error) {
 	switch {
 	case req.token != "":
-		if _, err = uauth.Authorize(ctx, &mainflux.AuthorizeReq{
+		if _, err = uauth.Authorize(ctx, &magistrala.AuthorizeReq{
 			SubjectType: userType,
 			SubjectKind: tokenKind,
 			Subject:     req.token,
@@ -237,7 +237,7 @@ func authorize(ctx context.Context, req listMessagesReq, uauth mainflux.AuthServ
 		}
 		return nil
 	case req.key != "":
-		if _, err = taauth.Authorize(ctx, &mainflux.AuthorizeReq{
+		if _, err = taauth.Authorize(ctx, &magistrala.AuthorizeReq{
 			SubjectType: groupType,
 			Subject:     req.key,
 			ObjectType:  thingType,

@@ -15,7 +15,7 @@ import (
 	"sort"
 	"testing"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	authmocks "github.com/absmach/magistrala/auth/mocks"
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/bootstrap/mocks"
@@ -60,7 +60,7 @@ var (
 	}
 )
 
-func newService(url string, auth mainflux.AuthServiceClient) bootstrap.Service {
+func newService(url string, auth magistrala.AuthServiceClient) bootstrap.Service {
 	things := mocks.NewConfigsRepository()
 	config := mfsdk.Config{
 		ThingsURL: url,
@@ -70,7 +70,7 @@ func newService(url string, auth mainflux.AuthServiceClient) bootstrap.Service {
 	return bootstrap.New(auth, things, sdk, encKey)
 }
 
-func newThingsService() (things.Service, mfgroups.Service, mainflux.AuthServiceClient) {
+func newThingsService() (things.Service, mfgroups.Service, magistrala.AuthServiceClient) {
 	auth := new(authmocks.Service)
 	thingCache := thmocks.NewCache()
 	idProvider := uuid.NewMock()

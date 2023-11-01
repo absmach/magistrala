@@ -6,7 +6,7 @@ import (
 	"context"
 	"time"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal/apiutil"
 	mfclients "github.com/absmach/magistrala/pkg/clients"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -31,15 +31,15 @@ const (
 )
 
 type service struct {
-	auth        mainflux.AuthServiceClient
+	auth        magistrala.AuthServiceClient
 	clients     postgres.Repository
 	clientCache Cache
-	idProvider  mainflux.IDProvider
+	idProvider  magistrala.IDProvider
 	grepo       mfgroups.Repository
 }
 
 // NewService returns a new Clients service implementation.
-func NewService(uauth mainflux.AuthServiceClient, c postgres.Repository, grepo mfgroups.Repository, tcache Cache, idp mainflux.IDProvider) Service {
+func NewService(uauth magistrala.AuthServiceClient, c postgres.Repository, grepo mfgroups.Repository, tcache Cache, idp magistrala.IDProvider) Service {
 	return service{
 		auth:        uauth,
 		clients:     c,
@@ -49,13 +49,13 @@ func NewService(uauth mainflux.AuthServiceClient, c postgres.Repository, grepo m
 	}
 }
 
-func (svc service) Authorize(ctx context.Context, req *mainflux.AuthorizeReq) (string, error) {
+func (svc service) Authorize(ctx context.Context, req *magistrala.AuthorizeReq) (string, error) {
 	thingID, err := svc.Identify(ctx, req.GetSubject())
 	if err != nil {
 		return "", errors.ErrAuthentication
 	}
 
-	r := &mainflux.AuthorizeReq{
+	r := &magistrala.AuthorizeReq{
 		SubjectType: groupType,
 		Subject:     req.GetObject(),
 		ObjectType:  thingType,
@@ -74,7 +74,7 @@ func (svc service) Authorize(ctx context.Context, req *mainflux.AuthorizeReq) (s
 }
 
 func (svc service) CreateThings(ctx context.Context, token string, cls ...mfclients.Client) ([]mfclients.Client, error) {
-	user, err := svc.auth.Identify(ctx, &mainflux.IdentityReq{Token: token})
+	user, err := svc.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
 		return []mfclients.Client{}, errors.Wrap(errors.ErrAuthorization, err)
 	}
@@ -110,7 +110,7 @@ func (svc service) CreateThings(ctx context.Context, token string, cls ...mfclie
 	}
 
 	for _, c := range saved {
-		policy := mainflux.AddPolicyReq{
+		policy := magistrala.AddPolicyReq{
 			SubjectType: userType,
 			Subject:     user.GetId(),
 			Relation:    ownerRelation,
@@ -174,7 +174,7 @@ func (svc service) ListClients(ctx context.Context, token string, reqUserID stri
 }
 
 func (svc service) listClientIDs(ctx context.Context, userID, permission string) ([]string, error) {
-	tids, err := svc.auth.ListAllObjects(ctx, &mainflux.ListObjectsReq{
+	tids, err := svc.auth.ListAllObjects(ctx, &magistrala.ListObjectsReq{
 		SubjectType: userType,
 		Subject:     userID,
 		Permission:  permission,
@@ -188,7 +188,7 @@ func (svc service) listClientIDs(ctx context.Context, userID, permission string)
 
 func (svc service) filterAllowedThingIDs(ctx context.Context, userID, permission string, thingIDs []string) ([]string, error) {
 	var ids []string
-	tids, err := svc.auth.ListAllObjects(ctx, &mainflux.ListObjectsReq{
+	tids, err := svc.auth.ListAllObjects(ctx, &magistrala.ListObjectsReq{
 		SubjectType: userType,
 		Subject:     userID,
 		Permission:  permission,
@@ -311,7 +311,7 @@ func (svc service) Share(ctx context.Context, token, id, relation string, userid
 	}
 
 	for _, userid := range userids {
-		addPolicyReq := &mainflux.AddPolicyReq{
+		addPolicyReq := &magistrala.AddPolicyReq{
 			SubjectType: userType,
 			Subject:     userid,
 			Relation:    relation,
@@ -337,7 +337,7 @@ func (svc service) Unshare(ctx context.Context, token, id, relation string, user
 	}
 
 	for _, userid := range userids {
-		delPolicyReq := &mainflux.DeletePolicyReq{
+		delPolicyReq := &magistrala.DeletePolicyReq{
 			SubjectType: userType,
 			Subject:     userid,
 			Relation:    relation,
@@ -378,7 +378,7 @@ func (svc service) ListClientsByGroup(ctx context.Context, token, groupID string
 		return mfclients.MembersPage{}, err
 	}
 
-	tids, err := svc.auth.ListAllObjects(ctx, &mainflux.ListObjectsReq{
+	tids, err := svc.auth.ListAllObjects(ctx, &magistrala.ListObjectsReq{
 		SubjectType: groupType,
 		Subject:     groupID,
 		Permission:  groupRelation,
@@ -419,7 +419,7 @@ func (svc service) Identify(ctx context.Context, key string) (string, error) {
 }
 
 func (svc service) identify(ctx context.Context, token string) (string, error) {
-	user, err := svc.auth.Identify(ctx, &mainflux.IdentityReq{Token: token})
+	user, err := svc.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
 		return "", err
 	}
@@ -428,7 +428,7 @@ func (svc service) identify(ctx context.Context, token string) (string, error) {
 }
 
 func (svc *service) authorize(ctx context.Context, subjType, subjKind, subj, perm, objType, obj string) (string, error) {
-	req := &mainflux.AuthorizeReq{
+	req := &magistrala.AuthorizeReq{
 		SubjectType: subjType,
 		SubjectKind: subjKind,
 		Subject:     subj,

@@ -11,7 +11,7 @@ import (
 	"os"
 	"time"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal"
 	authclient "github.com/absmach/magistrala/internal/clients/grpc/auth"
 	jaegerclient "github.com/absmach/magistrala/internal/clients/jaeger"
@@ -136,7 +136,7 @@ func main() {
 	}
 	defer cacheclient.Close()
 
-	var auth mainflux.AuthServiceClient
+	var auth magistrala.AuthServiceClient
 
 	switch cfg.StandaloneID != "" && cfg.StandaloneToken != "" {
 	case true:
@@ -178,12 +178,12 @@ func main() {
 	}
 	regiterAuthzServer := func(srv *grpc.Server) {
 		reflection.Register(srv)
-		mainflux.RegisterAuthzServiceServer(srv, grpcapi.NewServer(csvc))
+		magistrala.RegisterAuthzServiceServer(srv, grpcapi.NewServer(csvc))
 	}
 	gs := grpcserver.New(ctx, cancel, svcName, grpcServerConfig, regiterAuthzServer, logger)
 
 	if cfg.SendTelemetry {
-		chc := callhome.New(svcName, mainflux.Version, logger, cancel)
+		chc := callhome.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 
@@ -205,7 +205,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth mainflux.AuthServiceClient, cacheClient *redis.Client, keyDuration, esURL string, tracer trace.Tracer, logger mflog.Logger) (things.Service, groups.Service, error) {
+func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, auth magistrala.AuthServiceClient, cacheClient *redis.Client, keyDuration, esURL string, tracer trace.Tracer, logger mflog.Logger) (things.Service, groups.Service, error) {
 	database := postgres.NewDatabase(db, dbConfig, tracer)
 	cRepo := thingspg.NewRepository(database)
 	gRepo := gpostgres.New(database)

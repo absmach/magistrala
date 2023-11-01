@@ -24,7 +24,7 @@ var (
 )
 
 const (
-	issuerName = "mainflux.auth"
+	issuerName = "magistrala.auth"
 	tokenType  = "type"
 )
 

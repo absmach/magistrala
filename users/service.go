@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"time"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/apiutil"
 	mfclients "github.com/absmach/magistrala/pkg/clients"
@@ -39,15 +39,15 @@ var (
 
 type service struct {
 	clients    postgres.Repository
-	idProvider mainflux.IDProvider
-	auth       mainflux.AuthServiceClient
+	idProvider magistrala.IDProvider
+	auth       magistrala.AuthServiceClient
 	hasher     Hasher
 	email      Emailer
 	passRegex  *regexp.Regexp
 }
 
 // NewService returns a new Users service implementation.
-func NewService(crepo postgres.Repository, auth mainflux.AuthServiceClient, emailer Emailer, hasher Hasher, idp mainflux.IDProvider, pr *regexp.Regexp) Service {
+func NewService(crepo postgres.Repository, auth magistrala.AuthServiceClient, emailer Emailer, hasher Hasher, idp magistrala.IDProvider, pr *regexp.Regexp) Service {
 	return service{
 		clients:    crepo,
 		auth:       auth,
@@ -98,20 +98,20 @@ func (svc service) RegisterClient(ctx context.Context, token string, cli mfclien
 	return client, nil
 }
 
-func (svc service) IssueToken(ctx context.Context, identity, secret string) (*mainflux.Token, error) {
+func (svc service) IssueToken(ctx context.Context, identity, secret string) (*magistrala.Token, error) {
 	dbUser, err := svc.clients.RetrieveByIdentity(ctx, identity)
 	if err != nil {
-		return &mainflux.Token{}, err
+		return &magistrala.Token{}, err
 	}
 	if err := svc.hasher.Compare(secret, dbUser.Credentials.Secret); err != nil {
-		return &mainflux.Token{}, errors.Wrap(errors.ErrLogin, err)
+		return &magistrala.Token{}, errors.Wrap(errors.ErrLogin, err)
 	}
 
-	return svc.auth.Issue(ctx, &mainflux.IssueReq{Id: dbUser.ID, Type: 0})
+	return svc.auth.Issue(ctx, &magistrala.IssueReq{Id: dbUser.ID, Type: 0})
 }
 
-func (svc service) RefreshToken(ctx context.Context, refreshToken string) (*mainflux.Token, error) {
-	return svc.auth.Refresh(ctx, &mainflux.RefreshReq{Value: refreshToken})
+func (svc service) RefreshToken(ctx context.Context, refreshToken string) (*magistrala.Token, error) {
+	return svc.auth.Refresh(ctx, &magistrala.RefreshReq{Value: refreshToken})
 }
 
 func (svc service) ViewClient(ctx context.Context, token string, id string) (mfclients.Client, error) {
@@ -235,7 +235,7 @@ func (svc service) GenerateResetToken(ctx context.Context, email, host string) e
 	if err != nil || client.Credentials.Identity == "" {
 		return errors.ErrNotFound
 	}
-	issueReq := &mainflux.IssueReq{
+	issueReq := &magistrala.IssueReq{
 		Id:   client.ID,
 		Type: uint32(auth.RecoveryKey),
 	}
@@ -401,7 +401,7 @@ func (svc service) ListMembers(ctx context.Context, token, objectKind string, ob
 	if _, err := svc.authorize(ctx, userType, tokenKind, token, authzPerm, objectType, objectID); err != nil {
 		return mfclients.MembersPage{}, err
 	}
-	uids, err := svc.auth.ListAllSubjects(ctx, &mainflux.ListSubjectsReq{
+	uids, err := svc.auth.ListAllSubjects(ctx, &magistrala.ListSubjectsReq{
 		SubjectType: userType,
 		Permission:  pm.Permission,
 		Object:      objectID,
@@ -435,7 +435,7 @@ func (svc *service) isOwner(ctx context.Context, clientID, ownerID string) error
 }
 
 func (svc *service) authorize(ctx context.Context, subjType, subjKind, subj, perm, objType, obj string) (string, error) {
-	req := &mainflux.AuthorizeReq{
+	req := &magistrala.AuthorizeReq{
 		SubjectType: subjType,
 		SubjectKind: subjKind,
 		Subject:     subj,
@@ -455,7 +455,7 @@ func (svc *service) authorize(ctx context.Context, subjType, subjKind, subj, per
 }
 
 func (svc service) Identify(ctx context.Context, token string) (string, error) {
-	user, err := svc.auth.Identify(ctx, &mainflux.IdentityReq{Token: token})
+	user, err := svc.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
 		return "", err
 	}
@@ -464,7 +464,7 @@ func (svc service) Identify(ctx context.Context, token string) (string, error) {
 
 func (svc service) updateOwnerPolicy(ctx context.Context, previousOwnerID, ownerID, userID string) error {
 	if previousOwnerID != "" {
-		if _, err := svc.auth.DeletePolicy(ctx, &mainflux.DeletePolicyReq{
+		if _, err := svc.auth.DeletePolicy(ctx, &magistrala.DeletePolicyReq{
 			SubjectType: userType,
 			Subject:     previousOwnerID,
 			Relation:    ownerRelation,
@@ -479,7 +479,7 @@ func (svc service) updateOwnerPolicy(ctx context.Context, previousOwnerID, owner
 
 func (svc service) addOwnerPolicy(ctx context.Context, ownerID, userID string) error {
 	if ownerID != "" {
-		if _, err := svc.auth.AddPolicy(ctx, &mainflux.AddPolicyReq{
+		if _, err := svc.auth.AddPolicy(ctx, &magistrala.AddPolicyReq{
 			SubjectType: userType,
 			Subject:     ownerID,
 			Relation:    ownerRelation,

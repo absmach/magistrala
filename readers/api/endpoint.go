@@ -6,14 +6,14 @@ package api
 import (
 	"context"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/internal/apiutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/readers"
 	"github.com/go-kit/kit/endpoint"
 )
 
-func listMessagesEndpoint(svc readers.MessageRepository, uauth mainflux.AuthServiceClient, taauth mainflux.AuthzServiceClient) endpoint.Endpoint {
+func listMessagesEndpoint(svc readers.MessageRepository, uauth magistrala.AuthServiceClient, taauth magistrala.AuthzServiceClient) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(listMessagesReq)
 		if err := req.validate(); err != nil {

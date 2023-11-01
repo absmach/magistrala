@@ -10,7 +10,7 @@ import (
 	"encoding/hex"
 	"time"
 
-	mainflux "github.com/absmach/magistrala"
+	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/pkg/errors"
 	mfsdk "github.com/absmach/magistrala/pkg/sdk/go"
 )
@@ -103,14 +103,14 @@ type ConfigReader interface {
 }
 
 type bootstrapService struct {
-	auth    mainflux.AuthServiceClient
+	auth    magistrala.AuthServiceClient
 	configs ConfigRepository
 	sdk     mfsdk.SDK
 	encKey  []byte
 }
 
 // New returns new Bootstrap service.
-func New(auth mainflux.AuthServiceClient, configs ConfigRepository, sdk mfsdk.SDK, encKey []byte) Service {
+func New(auth magistrala.AuthServiceClient, configs ConfigRepository, sdk mfsdk.SDK, encKey []byte) Service {
 	return &bootstrapService{
 		configs: configs,
 		sdk:     sdk,
@@ -365,7 +365,7 @@ func (bs bootstrapService) identify(ctx context.Context, token string) (string, 
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 
-	res, err := bs.auth.Identify(ctx, &mainflux.IdentityReq{Token: token})
+	res, err := bs.auth.Identify(ctx, &magistrala.IdentityReq{Token: token})
 	if err != nil {
 		return "", errors.ErrAuthentication
 	}

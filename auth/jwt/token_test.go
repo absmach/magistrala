@@ -22,7 +22,7 @@ func key() auth.Key {
 	return auth.Key{
 		ID:        "66af4a67-3823-438a-abd7-efdb613eaef6",
 		Type:      auth.AccessKey,
-		Issuer:    "mainflux.auth",
+		Issuer:    "magistrala.auth",
 		Subject:   "66af4a67-3823-438a-abd7-efdb613eaef6",
 		IssuedAt:  time.Now().UTC().Add(-10 * time.Second).Round(time.Second),
 		ExpiresAt: exp,
